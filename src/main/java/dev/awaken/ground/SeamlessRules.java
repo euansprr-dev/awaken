@@ -52,26 +52,33 @@ public final class SeamlessRules {
         return s.is(Blocks.GRASS_BLOCK) && !s.getValue(SnowyBlock.SNOWY);
     }
 
-    /** The sides of {@code pos}'s block (a wrapper) that wrap: open beside it, with ground just under, or ending on a soft slab. */
+    /**
+     * The sides of {@code pos}'s block (a wrapper) that wrap: open beside it, with ground just under, or ending on a soft slab.
+     * The shape of the ground only: a side a player bared a moment ago is held back by {@link FreshSides} (SPEC §31.1).
+     */
     public static int wrapMask(BlockGetter level, BlockPos pos) {
         if (level.getBlockState(pos.above()).isSolidRender()) return 0;     // covered: not a lawn, its sides stay as they are
         int mask = 0;
         BlockPos.MutableBlockPos n = new BlockPos.MutableBlockPos();
         for (int i = 0; i < 4; i++) {
-            Direction d = SIDES[i];
-            n.setWithOffset(pos, d);
-            BlockState beside = level.getBlockState(n);
-            if (beside.isSolidRender()) continue;                     // the face is hidden anyway
-            if (isSoftSlab(beside)) {
-                mask |= 1 << i;
-                continue;
-            }
-            n.move(Direction.DOWN);
-            BlockState under = level.getBlockState(n);
-            // a one-block riser: the ground beside, one lower, is solid. A taller riser is a cliff and keeps its dirt face.
-            if (under.isFaceSturdy(level, n, Direction.UP)) mask |= 1 << i;
+            if (sideWraps(level, pos, i, n)) mask |= 1 << i;
         }
         return mask;
+    }
+
+    /** Whether side {@code i} of {@code pos}'s block is a riser's face, uncovered or not (the fresh sides' rule of whether to keep a record). */
+    public static boolean sideWraps(BlockGetter level, BlockPos pos, int i) {
+        return sideWraps(level, pos, i, new BlockPos.MutableBlockPos());
+    }
+
+    private static boolean sideWraps(BlockGetter level, BlockPos pos, int i, BlockPos.MutableBlockPos n) {
+        n.setWithOffset(pos, SIDES[i]);
+        BlockState beside = level.getBlockState(n);
+        if (beside.isSolidRender()) return false;                     // the face is hidden anyway
+        if (isSoftSlab(beside)) return true;
+        n.move(Direction.DOWN);
+        // a one-block riser: the ground beside, one lower, is solid. A taller riser is a cliff and keeps its dirt face.
+        return level.getBlockState(n).isFaceSturdy(level, n, Direction.UP);
     }
 
     /**

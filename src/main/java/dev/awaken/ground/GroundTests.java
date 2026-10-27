@@ -33,8 +33,98 @@ import java.nio.charset.StandardCharsets;
 final class GroundTests {
     private GroundTests() {}
 
+    /**
+     * Fresh sides (SPEC §31.1): a dug hole beside a lawn is dirt on every grass side it bared, grows through its stages where
+     * lit (and not in the dark), and loses its record when filled; a riser the world was made with wraps from the start; the
+     * records save and load.
+     */
+    static void freshTests() {
+        AwakenTests.register("ground_fresh_dig", 60, h -> {
+            ServerLevel level = h.getLevel();
+            // a lawn: stone, dirt, then grass at y 2, 9 by 5
+            for (int x = 0; x < 9; x++) for (int z = 0; z < 5; z++) {
+                h.setBlock(x, 0, z, Blocks.STONE);
+                h.setBlock(x, 1, z, Blocks.DIRT);
+                h.setBlock(x, 2, z, Blocks.GRASS_BLOCK);
+                for (int y = 3; y < 6; y++) h.setBlock(x, y, z, Blocks.AIR);
+            }
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            BlockPos hole = h.absolutePos(new BlockPos(2, 2, 2)), dark = h.absolutePos(new BlockPos(6, 2, 2));
+            h.assertTrue(p.gameMode.destroyBlock(hole), "the mock player digs the lawn");
+            // the four grass blocks round the hole: each one's side toward it is fresh (stage 0, dirt), though the shape rule says riser
+            for (int i = 0; i < 4; i++) {
+                BlockPos g = hole.relative(SeamlessRules.SIDES[i]);
+                int side = (i + 2) & 3;
+                h.assertTrue(SeamlessRules.sideWraps(level, g, side), "the shape is a riser's at " + g);
+                h.assertTrue(GroundFresh.stage(level, g, side) == 0, "a bared side starts as dirt at " + g + ": " + GroundFresh.stage(level, g, side));
+                h.assertTrue(GroundFresh.stage(level, g, (side + 1) & 3) == FreshSides.NONE, "its other sides have no record");
+            }
+            // a second hole, roofed over: no light reaches its sides
+            h.assertTrue(p.gameMode.destroyBlock(dark), "the second hole");
+            h.setBlock(6, 3, 2, Blocks.STONE);
+            AwakenTests.awaitLight(h, new BlockPos(0, 1, 0), new BlockPos(8, 5, 4));
+            BlockPos east = hole.east(), darkEast = dark.east();
+            h.assertTrue(level.getMaxLocalRawBrightness(hole) >= GroundFresh.LIGHT, "the open hole is lit: " + level.getMaxLocalRawBrightness(hole));
+            GroundFresh.grow(level, FreshSides.STAGE_1);
+            h.assertTrue(GroundFresh.stage(level, east, 3) == 1, "lit, stage 1: " + GroundFresh.stage(level, east, 3));
+            h.assertTrue(GroundFresh.stage(level, darkEast, 3) == 0, "dark, still dirt: " + GroundFresh.stage(level, darkEast, 3));
+            GroundFresh.grow(level, FreshSides.STAGE_2 - FreshSides.STAGE_1);
+            h.assertTrue(GroundFresh.stage(level, east, 3) == 2, "lit, stage 2: " + GroundFresh.stage(level, east, 3));
+            GroundFresh.grow(level, FreshSides.WRAPPED - FreshSides.STAGE_2);
+            h.assertTrue(GroundFresh.stage(level, east, 3) == FreshSides.NONE, "grown: no record, it wraps as a natural riser");
+            h.assertTrue(GroundFresh.stage(level, darkEast, 3) == 0, "the dark one is still dirt");
+            // filling the dark hole drops its records (the placing event), as soon as it is placed
+            net.neoforged.neoforge.common.util.BlockSnapshot snap = net.neoforged.neoforge.common.util.BlockSnapshot.create(level.dimension(), level, dark);
+            level.setBlock(dark, Blocks.DIRT.defaultBlockState(), 3);
+            net.neoforged.neoforge.event.EventHooks.onBlockPlace(p, snap, Direction.UP);
+            for (int i = 0; i < 4; i++) {
+                BlockPos g = dark.relative(SeamlessRules.SIDES[i]);
+                h.assertTrue(GroundFresh.stage(level, g, (i + 2) & 3) == FreshSides.NONE, "filled: no record at " + g);
+            }
+            // dig it again: fresh once more
+            h.assertTrue(p.gameMode.destroyBlock(dark), "dug again");
+            h.assertTrue(GroundFresh.stage(level, darkEast, 3) == 0, "dug again: dirt again");
+            h.setBlock(6, 2, 2, Blocks.DIRT);
+            GroundFresh.grow(level, GroundFresh.CHECK);
+            h.assertTrue(GroundFresh.stage(level, darkEast, 3) == FreshSides.NONE, "filled without an event: the next growth drops it");
+            h.succeed();
+        });
+
+        // A riser the world was made with (no break, no event) wraps on the first frame: no record, the shape rule alone
+        AwakenTests.register("ground_fresh_natural", 20, h -> {
+            for (int x = 0; x < 3; x++) for (int z = 0; z < 3; z++) {
+                h.setBlock(x, 0, z, Blocks.DIRT);
+                h.setBlock(x, 1, z, Blocks.GRASS_BLOCK);
+                h.setBlock(x, 2, z, Blocks.AIR);
+            }
+            h.setBlock(1, 2, 1, Blocks.GRASS_BLOCK);
+            BlockPos g = h.absolutePos(new BlockPos(1, 2, 1));
+            h.assertTrue(SeamlessRules.wrapMask(h.getLevel(), g) == 0b1111, "a made step wraps on every side");
+            for (int i = 0; i < 4; i++) h.assertTrue(GroundFresh.stage(h.getLevel(), g, i) == FreshSides.NONE, "and none of them is fresh");
+            h.succeed();
+        });
+
+        // Saved and loaded: the records through their codec, and a key's place (a negative y too) back from its bits
+        AwakenTests.register("ground_fresh_saved", 20, h -> {
+            FreshSides f = new FreshSides();
+            BlockPos a = new BlockPos(-17, -40, 33), b = new BlockPos(30, 250, -1);
+            f.sides.put(FreshSides.key(a, 2), 1234);
+            f.sides.put(FreshSides.key(b, 0), 0);
+            var tag = FreshSides.CODEC.codec().encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, f).getOrThrow();
+            FreshSides back = FreshSides.CODEC.codec().parse(net.minecraft.nbt.NbtOps.INSTANCE, tag).getOrThrow();
+            h.assertTrue(back.sides.equals(f.sides), "the records come back as they went: " + back.sides + " vs " + f.sides);
+            h.assertTrue(FreshSides.pos(net.minecraft.world.level.ChunkPos.containing(a), FreshSides.key(a, 2)).equals(a) && FreshSides.side(FreshSides.key(a, 2)) == 2,
+                    "a key gives back its block and side");
+            h.assertTrue(FreshSides.pos(net.minecraft.world.level.ChunkPos.containing(b), FreshSides.key(b, 0)).equals(b), "and at the top of the world");
+            h.assertTrue(FreshSides.stage(0) == 0 && FreshSides.stage(FreshSides.STAGE_1) == 1 && FreshSides.stage(FreshSides.STAGE_2) == 2
+                    && FreshSides.stage(FreshSides.WRAPPED) == FreshSides.NONE, "the stages by lit ticks");
+            h.succeed();
+        });
+    }
+
     static void register() {
         softTests();
+        freshTests();
         floorTests();
         mountainTests();
         // a one-block riser wraps; a two-block riser (a cliff) does not; a side against a solid block is hidden and stays 0;

@@ -1,5 +1,6 @@
 package dev.awaken.ground.client;
 
+import dev.awaken.ground.FreshSides;
 import dev.awaken.ground.SeamlessRules;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockTintSource;
@@ -73,7 +74,25 @@ final class SeamlessModel extends DelegateBlockStateModel {
             if (state.hasProperty(SnowyBlock.SNOWY) && state.getValue(SnowyBlock.SNOWY)) return;
             int mask = SeamlessRules.wrapMask(level, pos);
             if (mask == 0) return;
-            for (int i = from; i < parts.size(); i++) parts.set(i, convert(parts.get(i), mask));
+            // a side bared a moment ago (SPEC §31.1, fresh sides) keeps its own face, with grass reaching down it by stage
+            int stages = FreshView.stages(pos), grow1 = 0, grow2 = 0;
+            if (stages != 0xFF) {
+                for (int i = 0; i < 4; i++) {
+                    int st = stages >> (i * 2) & 3;
+                    if ((mask >> i & 1) == 0 || st == FreshSides.NONE) continue;
+                    mask &= ~(1 << i);
+                    if (st == 1) grow1 |= 1 << i;
+                    else if (st == 2) grow2 |= 1 << i;
+                }
+            }
+            if ((grow1 | grow2) != 0 && state.is(Blocks.GRASS_BLOCK) && parts.size() > from) {
+                BlockStateModelPart grown = grown(parts.get(from), grow1, grow2);
+                if (grown != null) parts.add(grown);
+            }
+            if (mask == 0) return;
+            for (int i = from; i < parts.size(); i++) {
+                if (!(parts.get(i) instanceof GrownPart)) parts.set(i, convert(parts.get(i), mask));
+            }
         } else {
             int mask = SeamlessRules.creepMask(level, pos);
             if (mask == 0) return;
@@ -186,6 +205,93 @@ final class SeamlessModel extends DelegateBlockStateModel {
         }
     }
 
+    // ---- fresh sides --------------------------------------------------------------------------------------------------------
+
+    private static volatile TextureAtlasSprite @Nullable [] growing;
+
+    /**
+     * The grass growing down freshly bared sides: on each side in {@code grow1} (stage 1) or {@code grow2} (stage 2), one quad
+     * over the side's own face, a hair out, with our sprite {@code block/ground/creep_side_0} or {@code _1} (grey, tinted as
+     * the block's grass by tint index 0, drift included). Culled with the face.
+     */
+    private static @Nullable BlockStateModelPart grown(BlockStateModelPart part, int grow1, int grow2) {
+        TextureAtlasSprite[] sp = growing;
+        if (sp == null) {
+            sp = sprites("side", 2);
+            growing = sp;
+        }
+        @SuppressWarnings("unchecked")
+        List<BakedQuad>[] quads = new List[DIRECTIONS.length];
+        boolean any = false;
+        for (int i = 0; i < 4; i++) {
+            int stage = (grow1 >> i & 1) != 0 ? 1 : (grow2 >> i & 1) != 0 ? 2 : 0;
+            if (stage == 0) continue;
+            Direction d = SeamlessRules.SIDES[i];
+            List<BakedQuad> source = part.getQuads(d);
+            if (source.isEmpty()) continue;
+            quads[d.ordinal()] = List.of(over(source.getFirst(), sp[stage - 1], d));
+            any = true;
+        }
+        return any ? new GrownPart(quads, part.particleMaterial()) : null;
+    }
+
+    /** The side quad's shape, LIFT out along its face, with {@code sprite} over it (each corner keeps its place) on the cut-out layer, tinted. */
+    private static BakedQuad over(BakedQuad side, TextureAtlasSprite sprite, Direction d) {
+        TextureAtlasSprite from = side.materialInfo().sprite();
+        float du = from.getU1() - from.getU0(), dv = from.getV1() - from.getV0();
+        long[] uv = new long[4];
+        Vector3f[] p = new Vector3f[4];
+        for (int i = 0; i < 4; i++) {
+            float fu = du == 0F ? 0F : (UVPair.unpackU(side.packedUV(i)) - from.getU0()) / du;
+            float fv = dv == 0F ? 0F : (UVPair.unpackV(side.packedUV(i)) - from.getV0()) / dv;
+            uv[i] = UVPair.pack(sprite.getU0() + fu * (sprite.getU1() - sprite.getU0()), sprite.getV0() + fv * (sprite.getV1() - sprite.getV0()));
+            p[i] = new Vector3f(side.position(i)).add(d.getStepX() * LIFT, 0F, d.getStepZ() * LIFT);
+        }
+        BakedQuad.MaterialInfo m = side.materialInfo();
+        BakedQuad.MaterialInfo info = new BakedQuad.MaterialInfo(sprite, ChunkSectionLayer.CUTOUT, m.itemRenderType(), m.itemGlintRenderType(),
+                m.itemGlintSpecialRenderType(), 0, m.shadeDirectionOverride(), m.lightEmission(), m.ambientOcclusion());
+        return new BakedQuad(p[0], p[1], p[2], p[3], uv[0], uv[1], uv[2], uv[3], side.direction(), info, side.bakedNormals(), BakedColors.DEFAULT);
+    }
+
+    /** The growing grass's quads, each on its side (culled with that face). */
+    private static final class GrownPart implements BlockStateModelPart {
+        private final List<BakedQuad>[] quads;
+        private final Material.Baked particle;
+
+        GrownPart(List<BakedQuad>[] quads, Material.Baked particle) {
+            this.quads = quads;
+            this.particle = particle;
+        }
+
+        @Override
+        public List<BakedQuad> getQuads(@Nullable Direction direction) {
+            if (direction == null) return List.of();
+            List<BakedQuad> q = this.quads[direction.ordinal()];
+            return q == null ? List.of() : q;
+        }
+
+        @Override
+        @Deprecated
+        public boolean useAmbientOcclusion() {
+            return true;
+        }
+
+        @Override
+        public TriState ambientOcclusion() {
+            return TriState.DEFAULT;
+        }
+
+        @Override
+        public Material.Baked particleMaterial() {
+            return this.particle;
+        }
+
+        @Override
+        public int materialFlags() {
+            return 0;
+        }
+    }
+
     // ---- creep ------------------------------------------------------------------------------------------------------------
 
     private static volatile TextureAtlasSprite @Nullable [] edges, corners;
@@ -194,6 +300,7 @@ final class SeamlessModel extends DelegateBlockStateModel {
     static void clearSprites() {
         edges = null;
         corners = null;
+        growing = null;
     }
 
     private static TextureAtlasSprite[] sprites(String kind, int n) {
