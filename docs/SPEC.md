@@ -7037,8 +7037,9 @@ same roads and plans for a seed, the bench's fingerprint unchanged):
 - a highroad is a way (its hubs, the settlements it rides through, each piece's two ends and what it keeps out of)
   worked out once, its pieces laid one by one: a lattice chunk lays only those whose ellipse comes within its legs'
   reach (100 each way), a lane only those that start or end at its settlement or could still hold a point nearer it
-  than the nearest found (nearest first); Carillon's roads out stay whole (which region they reach depends on a way
-  being found), and commands, framings and the survey still lay whole highroads;
+  than the nearest found (nearest first). Carillon's roads out are laid the same way: which region one heads for
+  turns on whether its way there has any piece at all, so its pieces are laid in order only until one is (once, by
+  whoever asks first) and the rest where they're needed. Commands, framings and the survey still lay whole highroads;
 - a settlement beside a highroad that can't ride on it wherever its site moves (46 blocks at most, 91 for the first
   hamlet) is planned only when a piece's search probes within reach of its ground;
 - the server thread never waits for a town's or wayhouse's site search: its searches ask the planners and pass the

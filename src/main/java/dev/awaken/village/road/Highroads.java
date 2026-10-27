@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * How each road is laid (SPEC §28.9): a highroad between two regions' hubs through the settlements on its way, Carillon's
@@ -119,17 +120,6 @@ final class Highroads {
         return lay(w, way.key() + "#" + k, way.cls(), way.from().get(k), way.to().get(k), way.keep(), w.terrain());
     }
 
-    /** A highroad from hub a to hub b laid whole ({@link #way}): Carillon's roads out. */
-    static List<Road> through(RoadWorld w, String key, int cls, RoadNet.@Nullable Hub a, RoadNet.Hub b, RoadNet.@Nullable Entry start) {
-        Way way = way(w, key, cls, a, b, start);
-        List<Road> out = new ArrayList<>();
-        for (int k = 0; k < way.pieces(); k++) {
-            Road r = piece(w, way, k);
-            if (r != null) out.add(r);
-        }
-        return out;
-    }
-
     /**
      * A highroad from hub a to hub b through the settlements on its way (each entered at one end of its main street and
      * left by the other), kept off every other settlement's ground. {@code start}, when given, replaces a's end (a port).
@@ -202,7 +192,7 @@ final class Highroads {
     static final int MOVE = 46, FIRST_MOVE = 91, MAX_R = 88;
 
     /**
-     * Whether a grid settlement could ride on the way from a to b ({@link #through}'s test on its plan's middle) wherever
+     * Whether a grid settlement could ride on the way from a to b ({@link #way}'s test on its plan's middle) wherever
      * its site moves from its anchor: false, and it can only be kept clear of.
      */
     static boolean mayRide(double ax, double az, double bx, double bz, double d, SettlementGrid.Anchor s) {
@@ -344,31 +334,33 @@ final class Highroads {
         return out.size() > 3 ? out.subList(0, 3) : out;
     }
 
-    static List<Road> port(RoadWorld w, int which) {
+    /**
+     * Carillon's road out as ways laid piece by piece (SPEC §28.9, Cost): north, past the camp to the first hamlet (one
+     * piece, P0#0) and on from its far end; east and south, to the nearest region that way a road reaches. Which region
+     * turns on whether a way has any piece at all, so {@code reaches} lays a way's pieces in order only until one is.
+     */
+    static List<Way> portWays(RoadWorld w, int which, Predicate<Way> reaches) {
         if (!w.city) return List.of();
         int[] s = PORTS[which];
         Terrain t = w.terrain();
         int x = w.cx + s[0], z = w.cz + s[1];
         RoadNet.Entry start = new RoadNet.Entry(x, z, t.top(x, z), s[2], s[3], PORT_NAME, "", Road.PORT, -1);
         List<int[]> cells = portCells(w, which);
-        List<Road> out = new ArrayList<>();
         if (which == 0) {
             // north: past the camp to the first hamlet, then on from its far end
             SettlementGrid.Anchor f = SettlementGrid.first(w.seed, new int[]{w.cx, w.cz});
             VillagePlan fp = Plans.of(f, t);
             if (fp != null) {
+                List<Way> out = new ArrayList<>();
                 RoadNet.Entry in = RoadNet.entryToward(fp, x, z);
-                if (in != null) {
-                    Road r = lay(w, "P0#0", Road.HIGHROAD, start, in, keep(w, List.of(fp), start), t);
-                    if (r != null) out.add(r);
-                }
+                if (in != null) out.add(new Way("P0", Road.HIGHROAD, List.of(start), List.of(in), keep(w, List.of(fp), start)));
                 for (int[] cell : cells) {
                     RoadNet.Hub b = RoadNet.hub(w, cell[0], cell[1]);
                     RoadNet.Entry on = RoadNet.entryToward(fp, b.x(), b.z());
                     if (on == null || b.kind() == RoadNet.HubKind.NONE || in != null && on.x() == in.x() && on.z() == in.z()) continue;
-                    List<Road> on2 = through(w, "P0+", Road.HIGHROAD, null, b, on);
-                    if (on2.isEmpty()) continue;
-                    out.addAll(on2);
+                    Way way = way(w, "P0+", Road.HIGHROAD, null, b, on);
+                    if (!reaches.test(way)) continue;
+                    out.add(way);
                     break;
                 }
                 return out;
@@ -378,10 +370,10 @@ final class Highroads {
         for (int[] cell : cells) {
             RoadNet.Hub b = RoadNet.hub(w, cell[0], cell[1]);
             if (b.kind() == RoadNet.HubKind.NONE) continue;
-            List<Road> rs = through(w, "P" + which, Road.HIGHROAD, null, b, start);
-            if (!rs.isEmpty()) return rs;
+            Way way = way(w, "P" + which, Road.HIGHROAD, null, b, start);
+            if (reaches.test(way)) return List.of(way);
         }
-        return out;
+        return List.of();
     }
 
     // ---- lanes ---------------------------------------------------------------------------------------------------------
@@ -454,31 +446,24 @@ final class Highroads {
         Terrain t = w.terrain();
         VillagePlan p = Plans.of(a, t);
         if (p == null) return List.of();
-        // the highroads and Carillon's roads near it, in order: Carillon's laid whole, a highroad piece by piece, a piece
-        // only where it starts or ends here or could hold a point nearer than the nearest yet (SPEC §28.9, Cost)
+        // the highroads and Carillon's roads near it, in order, piece by piece: a piece only where it starts or ends here
+        // or could hold a point nearer than the nearest yet (SPEC §28.9, Cost)
         List<Way> ways = new ArrayList<>();
         List<Integer> ks = new ArrayList<>();
         List<Road> laid = new ArrayList<>();
-        for (int[] c : laneJoins(w, p)) {
-            if (c.length == 3) {
-                Way way = RoadNet.way(w, c[0], c[1], c[2]);
+        for (int[] c : laneJoins(w, p))
+            for (Way way : c.length == 3 ? List.of(RoadNet.way(w, c[0], c[1], c[2])) : RoadNet.portWays(w, c[0]))
                 for (int k = 0; k < way.pieces(); k++) {
                     ways.add(way);
                     ks.add(k);
                     laid.add(RoadNet.laidPiece(way, k));
                 }
-            } else for (Road r : RoadNet.port(w, c[0])) {
-                ways.add(null);
-                ks.add(0);
-                laid.add(r);
-            }
-        }
         int n = laid.size();
         boolean[] tried = new boolean[n];
         for (int i = 0; i < n; i++) {
             Way way = ways.get(i);
             int k = ks.get(i);
-            tried[i] = way == null || laid.get(i) != null;
+            tried[i] = laid.get(i) != null;
             if (!tried[i] && (way.from().get(k).key().equals(p.key) || way.to().get(k).key().equals(p.key))) {
                 laid.set(i, RoadNet.piece(w, way, k));
                 tried[i] = true;
