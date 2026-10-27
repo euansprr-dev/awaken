@@ -18,7 +18,7 @@ uniform sampler2D SectionSampler; // which sections Sodium has built (FarRendere
 
 layout(std140) uniform FarVoxel {
     vec4 VoxelReach;   // x, y, z: levels 0-2's reach (blocks); w the cross-fade band as a share of it
-    vec4 VoxelMore;    // x the level's floor (y), y sections in the section mask
+    vec4 VoxelMore;    // x the level's floor (y), y sections in the section mask, z the detail run's reach (blocks)
 };
 
 layout(location = 0) in vec3 vRel;
@@ -29,6 +29,7 @@ layout(location = 4) flat in vec3 vNormal;
 layout(location = 5) flat in vec2 vLight;
 layout(location = 6) flat in int vLod;
 layout(location = 7) flat in float vFade;
+layout(location = 8) flat in int vDetail;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -63,6 +64,11 @@ void main() {
     }
     if (vLod < 3) {
         float to = VoxelReach[vLod], band = to * VoxelReach.w;
+        if (d > to + band || (d > to && dither <= (d - to) / band)) discard;
+    }
+    // thin things and plants fade out over the band past their own reach (under a pixel there)
+    if (vDetail != 0) {
+        float to = VoxelMore.z, band = to * VoxelReach.w;
         if (d > to + band || (d > to && dither <= (d - to) / band)) discard;
     }
 #endif

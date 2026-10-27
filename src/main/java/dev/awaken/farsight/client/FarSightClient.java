@@ -101,6 +101,8 @@ public final class FarSightClient {
                     FarPalette.clear();
                 }));
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterSky.class, FarSightClient::afterSky);
+        // perf build C: Sodium draws the near chunks, City Sight the rest (FarNear), set before anything reads the distance
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre.class, FarNear::frame);
         // before Lens (LOWEST), which reads vanilla's render-distance end through FarTerrain
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ViewportEvent.RenderFog.class, FarSightClient::fog);
         // the fog's colour as it ends up (after Lens and the rest): the far land's air is made of it
@@ -150,6 +152,11 @@ public final class FarSightClient {
 
     private static boolean allowed() {
         return enabled() && !ModList.get().isLoaded("distanthorizons");
+    }
+
+    /** Whether Far Sight is switched on (by its setting or autopilot) and allowed here. */
+    static boolean enabledHere() {
+        return allowed();
     }
 
     /**
@@ -499,7 +506,8 @@ public final class FarSightClient {
     private static void fog(ViewportEvent.RenderFog e) {
         if (!drawing()) return;
         FogData fog = e.getFogData();
-        FarTerrain.renderDistanceFog(fog.renderDistanceEnd);
+        // (the real render distance's, when Sodium draws only the near chunks: Lens's haze was made for it)
+        FarTerrain.renderDistanceFog(FarNear.lensFogEnd(fog.renderDistanceEnd));
         fog.renderDistanceStart = fogStart;
         fog.renderDistanceEnd = fogEnd;
         // clear-weather haze stretches out to Far Sight's horizon; rain brings most of it back, thick fog (a boss, the
@@ -534,6 +542,16 @@ public final class FarSightClient {
             return "debug view " + debug;
         }
         if (a.startsWith("wateredge")) return "water edges " + dev.awaken.turbo.wateredge.WaterEdge.autopilot(a.substring(9));
+        if (a.startsWith("occlusion")) {
+            String w = a.substring(9).trim();
+            FarNear.occlusion = w.equals("on") ? Boolean.TRUE : w.equals("off") ? Boolean.FALSE : null;
+            return "Sodium's occlusion culling " + (FarNear.occlusion == null ? "the game's" : FarNear.occlusion ? "on" : "off");
+        }
+        if (a.startsWith("near")) {
+            String w = a.substring(4).trim();
+            FarNear.forced = w.equals("off") ? Integer.valueOf(0) : w.equals("setting") || w.isEmpty() ? null : Integer.valueOf(Integer.parseInt(w));
+            return "near " + FarNear.near() + " chunks (applies next frame)";
+        }
         if (a.startsWith("horizon")) {
             String w = a.substring(7).trim();
             if (w.startsWith("split")) FarHorizon.split = Integer.parseInt(w.substring(5).trim());
@@ -597,6 +615,6 @@ public final class FarSightClient {
                 cols == 0 ? 0.0 : workers.columnNanos.get() / 1000.0 / cols, cols == 0 ? 0.0 : workers.probes.get() / (double) cols, cols,
                 field.genUploaded, field.genAsked, voxels.resident(), VoxelCapture.captured(), VoxelCapture.fromDisk.get(), dev.awaken.farsight.voxel.VoxelAhead.asked(), voxels.inFlight.get(),
                 voxels.meshed.get() == 0 ? 0.0 : voxels.meshNanos.get() / 1e6 / voxels.meshed.get(), voxels.empty.get(), voxels.chunksDrawn, voxels.quadsDrawn, voxels.commands(),
-                (field.memoryBytes() + renderer.memoryBytes() + voxels.memoryBytes() + horizon.memoryBytes()) >> 20) + horizon.status() + split;
+                (field.memoryBytes() + renderer.memoryBytes() + voxels.memoryBytes() + horizon.memoryBytes()) >> 20) + FarNear.status() + voxels.quadsStatus() + horizon.status() + split;
     }
 }

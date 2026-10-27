@@ -217,9 +217,11 @@ final class CityWriter {
             // their limbs too ("elder_wood"), and those are as much the trees' as their logs
             return !key.getNamespace().equals("minecraft") || !(path.endsWith("_wood") || path.endsWith("_hyphae"));
         }
+        // any hanging moss: the pale garden's and the Lumen Forest's vines (left behind, they hung in the air over the
+        // trail and the ring once the canopy above them was cleared)
         return b == Blocks.VINE || b == Blocks.BEE_NEST || b == Blocks.COCOA || b == Blocks.BROWN_MUSHROOM_BLOCK
                 || b == Blocks.RED_MUSHROOM_BLOCK || b == Blocks.MUSHROOM_STEM || b == Blocks.MANGROVE_ROOTS
-                || b == Blocks.PALE_HANGING_MOSS || b == Blocks.SNOW;
+                || b instanceof net.minecraft.world.level.block.HangingMossBlock || b == Blocks.SNOW;
     }
 
     /** Dev repaint of a live chunk. Returns blocks changed. */

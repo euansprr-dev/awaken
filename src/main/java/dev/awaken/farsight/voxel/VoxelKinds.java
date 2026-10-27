@@ -16,17 +16,22 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * How each block reads from past the render distance (SPEC §20, City Sight), cached by block-state id. A block there
  * spans a few pixels at most, so its model reduces to one of a few kinds: a whole cube (opaque ones hide their
  * neighbours' faces, see-through ones such as glass, stairs and leaves don't), its bounding box (slabs, beds, chests:
- * at least 0.4 of a block), a flat sheet (carpets, snow layers), water, or nothing (fences, panes, bars, plants,
- * torches, doors: under a pixel there, and a gap where they stand reads as the real one does, the room behind).
+ * at least 0.4 of a block), a flat sheet (carpets, snow layers), water, or a thin thing (fences, panes, bars, plants,
+ * torches, doors): under a pixel past the render distance, where a gap where they stand reads as the real one does,
+ * the room behind, but kept as their own boxes (or, plants, a cross) for City Sight's detail run, drawn while blocks
+ * are big enough to show them (when Sodium draws only the near chunks, SPEC §20 C).
  */
 public final class VoxelKinds {
     private VoxelKinds() {}
 
-    public static final byte UNKNOWN = 0, AIR = 1, FULL = 2, SOFT = 3, BOX = 4, FLAT = 5, WATER = 6, SKIP = 7;
+    public static final byte UNKNOWN = 0, AIR = 1, FULL = 2, SOFT = 3, BOX = 4, FLAT = 5, WATER = 6, SKIP = 7, THIN = 8;
+    private static final int[] NONE = new int[0];
 
     private static volatile byte[] kinds = new byte[0];
     /** Per state: its box in sixteenths, x0 y0 z0 x1 y1 z1 at 5 bits each (BOX and FLAT). */
     private static volatile int[] boxes = new int[0];
+    /** Per state: a thin thing's boxes, packed as {@link #boxes} (THIN). */
+    private static volatile int[][] parts = new int[0][];
 
     /** The kind of the state with this id (Block.BLOCK_STATE_REGISTRY). */
     public static byte kind(int id) {
@@ -40,6 +45,18 @@ public final class VoxelKinds {
     public static int box(int id) {
         kind(id);
         return boxes[id];
+    }
+
+    /** A thin thing's boxes (THIN), packed as {@link #boxes}; none for anything else. */
+    public static int[] parts(int id) {
+        kind(id);
+        int[] p = parts[id];
+        return p == null ? NONE : p;
+    }
+
+    /** Whether a block of this kind is open for faces and light as air is (nothing, or a thin thing). */
+    public static boolean open(byte k) {
+        return k == AIR || k == SKIP || k == THIN;
     }
 
     public static int x0(int box) {
@@ -71,16 +88,19 @@ public final class VoxelKinds {
             int n = Math.max(id + 1, Block.BLOCK_STATE_REGISTRY.size());
             kinds = java.util.Arrays.copyOf(kinds, n);
             boxes = java.util.Arrays.copyOf(boxes, n);
+            parts = java.util.Arrays.copyOf(parts, n);
         }
         if (kinds[id] != UNKNOWN) return kinds[id];
         int[] box = new int[1];
-        byte k = classify(state, box);
+        int[][] thin = new int[1][];
+        byte k = classify(state, box, thin);
         boxes[id] = box[0];
+        parts[id] = thin[0];
         kinds[id] = k;
         return k;
     }
 
-    private static byte classify(BlockState state, int[] box) {
+    private static byte classify(BlockState state, int[] box, int[][] thin) {
         if (state.isAir()) return AIR;
         boolean water = state.getFluidState().getType().isSame(Fluids.WATER);
         if (state.getBlock() instanceof LiquidBlock) return water ? WATER : FULL;
@@ -107,7 +127,12 @@ public final class VoxelKinds {
             return volume >= 0.7 && all.getXsize() > 0.99 && all.getYsize() > 0.99 && all.getZsize() > 0.99 ? SOFT : BOX;
         }
         if (all.getYsize() <= 0.2 && all.getXsize() * all.getZsize() >= 0.8) return FLAT;
-        return water ? WATER : SKIP;
+        if (water) return WATER;
+        // a thin thing: its bounds, one box (a fence's post and rails as one board, a pane, a door): from where City Sight
+        // draws it a fence's gaps are under a pixel, and each part its own box made a city's panes and fences most of its
+        // quads (the first tour's flight over Carillon)
+        thin[0] = new int[]{pack(all)};
+        return THIN;
     }
 
     private static int pack(AABB b) {
