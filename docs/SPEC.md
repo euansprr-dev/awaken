@@ -5208,7 +5208,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   shimmer, the falling star), through `damageSources().playerAttack` at the move's strength (`ArmsServer.strikeThing`),
   with the impact sound, the hit-stop and the ribbon's flash; the thing decides what a blow does (a core loses a hit).
   Test `arms_strikes_things`.
-- **Guard** (use key, the `blocks_attacks` component Arms gives every sword: no delay, 120° front): the first 4 ticks
+- **Guard** (use key, the `blocks_attacks` component Arms gives every weapon that fights with a style: no delay, a front
+  within 120° of where the head faces, vanilla's `horizontal_blocking_angle`; the Shieldblade 150, the Gauntlets 100): the first 4 ticks
   after the raise deflect a LIGHT or HEAVY (no damage, the attacker's stance takes 18 or 26, Resonance +20, a riposte
   for 12 ticks); after that LIGHT is blocked (70% less), HEAVY breaks the guard (50% less, the guard drops, 15 ticks
   before it can rise); PERILOUS and GRAB pass through. A raise within 8 ticks of lowering one that deflected nothing can
@@ -5224,6 +5225,46 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   untold table (`combat_sim.py --untold`, docs/combat/untold-parry-2026-10-26.md): a Parrier against zombies, deflects
   40% → 70% and damage taken 117 → 58 per 100 blows once they raise into the wider window (Resonance per blow 8.0 →
   8.4); no Gate Lord or summon is untold, so the Lord table is unchanged. Test `arms_untold_parry`.
+- **Shots** (Euan 2026-10-27: "Add blocking for arrows or projectiles, so if I have a weapon I can block the shot").
+  Why a raised weapon seemed to stop nothing: the guard did judge shots, but past its first ticks it only took 70% off
+  and the arrow still reached the body (it stuck in you, its tipped effect and fire took, the hurt thump and kick
+  played); a blaze's or a ghast's fireball counted as fire (Strikes' NONE) and passed every guard and dodge unanswered;
+  and the front was judged by the point on the body a shot reached. Now:
+  - **Which weapons guard**: everything that fights with a style (every sword: vanilla's, other mods' `_sword`, the
+    Hunter blades; every axe; the mace; every forged weapon: daggers, spears, glaives, the War-staff, twinblades and
+    the rest) gets the guard, unless another mod gave it its own. Vanilla's spears and the trident keep their own right
+    mouse and raise nothing.
+  - **What a shot is** (`ArmsServer.shot`): a projectile struck, or the damage is `#is_projectile`: arrows, tridents,
+    fireballs, wither skulls, wind charges, llama spit, our creatures' bolts, other mods' projectiles. A shot is at
+    least LIGHT (`ArmsServer.kind`; Ability BOLT and ARROWS are LIGHT), so a fireball's hit is answered like an arrow's.
+    A blast stays PERILOUS (a ghast's fireball, a wither skull and a firework burst through a guard: dodge them), and a
+    bolt fired by a HEAVY or PERILOUS ability keeps its class (a HEAVY one breaks the guard and lands at half).
+  - **Its front is its own path**: it comes from the way it flies, flat, whoever loosed it and wherever they stand;
+    straight down, by where it meets the body. The guard's angle as for any blow; from outside it, the shot lands as
+    ever, and sticks.
+  - **In the window it glances off** (the style's deflect ticks, 3 to 5): no damage, nothing sticks, no effect or fire.
+    The arrow is set just off the blade, clear of the body, and knocked up and aside back the way it came (0.18 back,
+    0.16 to the side it came in on, 0.26 up, blocks a tick) to drop a few blocks off, harmless: its damage is spent. A
+    bolt or a fireball breaks on the steel by its own hit; anything else with no weight to fall by breaks on it. It pays
+    as a deflect (Resonance, Mastery III's charge, the Weave's beat), but opens no riposte and takes no stance: there's
+    no one in reach.
+  - **After the window it's blocked**: the shot stops on the blade (nothing sticks, nothing takes) and drops at your
+    feet, and only its share (1 minus the style's reduction: the Longsword's 30%) comes through at the tick's end, with
+    no hurt thump: the guard's own answer says it. The share already carries every scaling the shot had (a creature's
+    level, a power's cut), so `ArmsServer.onIncomingPinned` (LOWEST) pins it back after the listeners' second pass.
+  - A shot is never held for the latency grace: holding it would stop it at your body at once and land it after.
+  - **Unanswered on purpose**: a piercing arrow (a Piercing crossbow) goes through any guard, vanilla's rule for
+    shields; a damage type in `#bypasses_shield` (another mod's own choice); a shot that does no damage (a snowball on
+    a player; a thrown potion breaks and splashes as on anyone).
+  - **How it shows**: in first person the guard jolts (knocked back toward the eye, up and away from the side it struck,
+    the tip thrown back 9°, ringing out over 9 ticks; the hands go with it), a spark off the blade back the way it came
+    (`FxClient.guardSpark` on the effects engine, drawn at sword's length from the eye: a white-hot flash, a ring off the
+    edge on a deflect, sparks in the weapon's light), the view's kick and, on a deflect, a smaller snap of the field
+    than a blade's. Its own sound, `arms.glance` (tools/art/specs/audio_arms.py: a lighter, higher ring than a blade's
+    deflect, sparks, the ricochet whining away); a blocked shot plays the block at ×1.2 pitch and 0.8 volume. Everyone
+    near hears it, sees the body's jolt (the clip `arms_guard_jolt`, 6 ticks, then the guard held again) and the spark
+    at its guard (`ArmsPayloads.SHOT`). On an onlooker's screen vanilla ends its own copy of an arrow at the guard, so
+    they see it stop at the blade, not fall. Test `arms_shots`.
 - **Dodge** (sprint pressed with back, left, right or no direction, on the ground; sprint + forward still runs): 6
   ticks, 2.6 blocks, client-predicted, server-validated (position within 1.5 blocks, charges, not in a wind-up or blow:
   a recovery can be dodged out of, which drops the rhythm). Ticks 0–4 evade any class (**the SPEC amendment: the only

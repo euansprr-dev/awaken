@@ -110,6 +110,11 @@ final class ArmsFeel implements CombatFeedback.Sink {
         fov(-0.035F, 9);
     }
 
+    /** A shot glances off the guard: the same snap, smaller (nothing in reach was answered). */
+    static void glanced() {
+        fov(-0.02F, 7);
+    }
+
     static void guardBroken() {
         fov(0.025F, 10);
     }

@@ -40,6 +40,12 @@ final class ArmsAudio {
         play(p, ArmsSounds.BLOCK.get(), 1.0F, 1.0F);
     }
 
+    /** A shot met our guard: its glance off the blade, or the block's lighter knock. */
+    static void shot(Player p, boolean deflected) {
+        if (deflected) play(p, ArmsSounds.GLANCE.get(), 1.0F, 1.0F);
+        else play(p, ArmsSounds.BLOCK.get(), ArmsSounds.SHOT_BLOCK_VOLUME, ArmsSounds.SHOT_BLOCK_PITCH);
+    }
+
     static void guardBreak(Player p) {
         play(p, ArmsSounds.GUARD_BREAK.get(), 1.0F, 1.0F);
     }
