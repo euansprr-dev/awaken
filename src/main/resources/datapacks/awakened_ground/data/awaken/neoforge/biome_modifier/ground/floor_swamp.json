@@ -1,0 +1,12 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": [
+    "minecraft:swamp",
+    "minecraft:mangrove_swamp"
+  ],
+  "features": [
+    "awaken:ground/swamp_twigs_oak",
+    "awaken:ground/swamp_moss_patch"
+  ],
+  "step": "vegetal_decoration"
+}

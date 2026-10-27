@@ -1,0 +1,58 @@
+{
+  "variants": {
+    "type=bottom,tuft=0": {
+      "model": "awaken:block/turf_slab"
+    },
+    "type=bottom,tuft=1": {
+      "model": "awaken:block/turf_slab_tuft_1"
+    },
+    "type=bottom,tuft=2": {
+      "model": "awaken:block/turf_slab_tuft_2"
+    },
+    "type=bottom,tuft=3": {
+      "model": "awaken:block/turf_slab_tuft_3"
+    },
+    "type=bottom,tuft=4": {
+      "model": "awaken:block/turf_slab_tuft_4"
+    },
+    "type=bottom,tuft=5": {
+      "model": "awaken:block/turf_slab_tuft_5"
+    },
+    "type=double,tuft=0": {
+      "model": "minecraft:block/grass_block"
+    },
+    "type=double,tuft=1": {
+      "model": "minecraft:block/grass_block"
+    },
+    "type=double,tuft=2": {
+      "model": "minecraft:block/grass_block"
+    },
+    "type=double,tuft=3": {
+      "model": "minecraft:block/grass_block"
+    },
+    "type=double,tuft=4": {
+      "model": "minecraft:block/grass_block"
+    },
+    "type=double,tuft=5": {
+      "model": "minecraft:block/grass_block"
+    },
+    "type=top,tuft=0": {
+      "model": "awaken:block/turf_slab_top"
+    },
+    "type=top,tuft=1": {
+      "model": "awaken:block/turf_slab_top"
+    },
+    "type=top,tuft=2": {
+      "model": "awaken:block/turf_slab_top"
+    },
+    "type=top,tuft=3": {
+      "model": "awaken:block/turf_slab_top"
+    },
+    "type=top,tuft=4": {
+      "model": "awaken:block/turf_slab_top"
+    },
+    "type=top,tuft=5": {
+      "model": "awaken:block/turf_slab_top"
+    }
+  }
+}

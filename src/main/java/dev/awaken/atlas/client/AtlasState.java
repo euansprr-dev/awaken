@@ -72,6 +72,7 @@ final class AtlasState {
         boolean animate = !m.reset();
         for (AtlasNet.WireTile t : m.tiles()) {
             zones.put(t.tx(), t.tz(), t.zones());
+            zones.putLevels(t.tx(), t.tz(), t.levels());
             long[] old = mine.tile(t.tx(), t.tz()), bits = t.bits().clone();
             if (animate) {
                 for (int w = 0; w < Explored.WORDS; w++) {
@@ -210,7 +211,16 @@ final class AtlasState {
 
     /** The zones as the mesh worker should see them now. */
     ZoneMap.View zoneView() {
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player != null) zones.setMyLevel(dev.awaken.progression.Progression.profile(mc.player).level());
         return zones.view(regions);
+    }
+
+    /** H: colour the land by its rank, or by how a creature there measures against you. */
+    boolean toggleDanger() {
+        boolean me = zones.toggleForMe();
+        mesh.changedAll();
+        return me;
     }
 
     void onTrail(AtlasNet.Trail m) {

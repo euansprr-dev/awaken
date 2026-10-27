@@ -1,0 +1,83 @@
+
+careful:  deaths/10 gates=1.24  first power at 8.0 min  discoveries 25.0
+   level at minute: {10: 2.0, 30: 3.0, 60: 4.0, 120: 6.0}
+   hours to level:  {3: 0.47, 5: 1.0, 10: 4.15, 15: 8.31, 20: 12.74, 25: 17.72, 30: 24.9, 40: 39.96, 45: 47.96, 50: 53.09, 70: 71.72, 100: 90.01, 135: 111.66}
+   hours to rank:   {'D': 5.42, 'C': 18.84, 'B': 49.19, 'A': 73.05, 'S': 91.09, 'Sovereign': 112.78}
+   the deep's metal (kit's metal in hand vs its level; wait after the level, median / p90; before W2): {'D': (6.8, 1.12, 0.0, 0.0, 1.03), 'C': (14.69, 12.92, 0.0, 1.48, 12.92)}
+   main power level -> player level: {2: (10.0, 5.0), 3: (21.0, 13.8), 4: (35.0, 32.6), 5: (56.0, 58.9)}  combat share 0.285
+
+balanced:  deaths/10 gates=1.98  first power at 8.0 min  discoveries 20.0
+   level at minute: {10: 2.0, 30: 3.0, 60: 5.0, 120: 6.0}
+   hours to level:  {3: 0.47, 5: 1.0, 10: 3.93, 15: 7.98, 20: 12.23, 25: 17.18, 30: 24.11, 40: 39.49, 45: 47.75, 50: 52.35, 70: 69.67, 100: 84.98, 135: 103.61}
+   hours to rank:   {'D': 5.12, 'C': 18.33, 'B': 48.79, 'A': 70.65, 'S': 85.87, 'Sovereign': 104.59}
+   the deep's metal (kit's metal in hand vs its level; wait after the level, median / p90; before W2): {'D': (6.46, 1.18, 0.0, 0.0, 1.06), 'C': (14.13, 13.14, 0.0, 2.68, 13.14)}
+   main power level -> player level: {2: (10.0, 4.4), 3: (19.0, 11.7), 4: (32.0, 28.5), 5: (48.0, 51.0)}  combat share 0.334
+
+greedy:  deaths/10 gates=3.6  first power at 8.0 min  discoveries 16.0
+   level at minute: {10: 2.0, 30: 3.0, 60: 4.0, 120: 6.0}
+   hours to level:  {3: 0.47, 5: 1.02, 10: 4.17, 15: 8.61, 20: 13.37, 25: 18.98, 30: 27.85, 40: 46.78, 45: 57.05, 50: 62.05, 70: 78.95, 100: 91.22, 135: 107.29}
+   hours to rank:   {'D': 5.21, 'C': 19.76, 'B': 57.87, 'A': 79.76, 'S': 92.26, 'Sovereign': 108.02}
+   the deep's metal (kit's metal in hand vs its level; wait after the level, median / p90; before W2): {'D': (7.09, 2.45, 0.0, 0.0, 1.72), 'C': (15.47, 13.89, 0.0, 1.85, 13.89)}
+   main power level -> player level: {2: (9.0, 3.9), 3: (16.0, 10.2), 4: (28.0, 25.1), 5: (39.0, 45.4)}  combat share 0.392
+
+builder:  deaths/10 gates=2.04  first power at 8.0 min  discoveries 25.0
+   level at minute: {10: 2.0, 30: 3.0, 60: 5.0, 120: 6.0}
+   hours to level:  {3: 0.48, 5: 1.0, 10: 3.94, 15: 7.91, 20: 12.08, 25: 16.93, 30: 23.19, 40: 37.22, 45: 44.76, 50: 49.66, 70: 67.41, 100: 85.01, 135: 105.73}
+   hours to rank:   {'D': 5.37, 'C': 18.18, 'B': 46.18, 'A': 68.56, 'S': 86.13, 'Sovereign': 107.03}
+   the deep's metal (kit's metal in hand vs its level; wait after the level, median / p90; before W2): {'D': (6.46, 0.86, 0.0, 0.0, 0.81), 'C': (13.92, 12.41, 0.0, 1.67, 12.41)}
+   main power level -> player level: {2: (11.0, 5.3), 3: (22.0, 14.6), 4: (37.0, 34.4), 5: (63.0, 61.0)}  combat share 0.269
+
+Target checks (balanced player):
+   {'level': 5, 'target_hours': [0.75, 1.0], 'balanced_median': 1.0, 'pass': True}
+   {'level': 10, 'target_hours': [3.0, 4.0], 'balanced_median': 3.93, 'pass': True}
+   {'level': 25, 'target_hours': [15.0, 20.0], 'balanced_median': 17.18, 'pass': True}
+   {'level': 50, 'target_hours': [50.0, 60.0], 'balanced_median': 52.35, 'pass': True}
+   {'level': 135, 'target_hours': [95.0, 105.0], 'balanced_median': 103.61, 'pass': True}
+   {'minute': 30, 'target_level': [3, 4], 'balanced_median': 3.0, 'pass': True}
+   {'minute': 60, 'target_level': [5, 6], 'balanced_median': 5.0, 'pass': True}
+   {'main_power_level': 3, 'target_player_level': [17, 23], 'balanced_median': 19.0, 'pass': True}
+   {'main_power_level': 5, 'target_player_level': [41, 49], 'balanced_median': 48.0, 'pass': True}
+   {'gate_rank': 'D', 'deaths_per_10_gates': 1.25, 'target': [1.0, 3.0], 'pass': True}
+   {'gate_rank': 'D', 'push_ev_peak_floor': 4, 'target': [3, 5], 'pass': True}
+   {'gate_rank': 'C', 'deaths_per_10_gates': 1.92, 'target': [1.0, 3.0], 'pass': True}
+   {'gate_rank': 'C', 'push_ev_peak_floor': 5, 'target': [3, 5], 'pass': True}
+   {'gate_rank': 'B', 'deaths_per_10_gates': 2.12, 'target': [1.0, 3.0], 'pass': True}
+   {'gate_rank': 'B', 'push_ev_peak_floor': 4, 'target': [3, 5], 'pass': True}
+
+WILDS_TRIM = 0.8
+Mob farm, kills only (levels per hour), on-level / ten levels below you: {3: 0.64, 10: 0.64, 25: 0.64, 50: 0.64} {3: 0.28, 10: 0.28, 25: 0.28, 50: 0.28}
+Mastery, nothing but fighting: hours to take one power from 1 to 5, by player level: {10: 19.5, 25: 17.4, 45: 15.2}
+
+Push EV, C-rank gate, on-level player:
+   {'stop_at': 1, 'levels_per_hour': 0.29, 'death_rate': 0.035, 'vs_best': 0.59}
+   {'stop_at': 2, 'levels_per_hour': 0.38, 'death_rate': 0.092, 'vs_best': 0.78}
+   {'stop_at': 3, 'levels_per_hour': 0.45, 'death_rate': 0.182, 'vs_best': 0.92}
+   {'stop_at': 4, 'levels_per_hour': 0.49, 'death_rate': 0.324, 'vs_best': 1.0}
+   {'stop_at': 5, 'levels_per_hour': 0.48, 'death_rate': 0.523, 'vs_best': 0.98}
+   {'stop_at': 6, 'levels_per_hour': 0.39, 'death_rate': 0.765, 'vs_best': 0.8}
+   {'stop_at': 7, 'levels_per_hour': 0.26, 'death_rate': 0.961, 'vs_best': 0.53}
+
+Push EV on real D-rank gates (4 floors, the last the Lord's), on-level balanced player: peak at 4
+   {'stop_at': 1, 'levels_per_hour': 0.846, 'death_rate': 0.036, 'lord_rate': 0.023, 'vs_best': 0.66}
+   {'stop_at': 2, 'levels_per_hour': 1.106, 'death_rate': 0.072, 'lord_rate': 0.022, 'vs_best': 0.86}
+   {'stop_at': 3, 'levels_per_hour': 1.261, 'death_rate': 0.133, 'lord_rate': 0.025, 'vs_best': 0.98}
+   {'stop_at': 4, 'levels_per_hour': 1.286, 'death_rate': 0.243, 'lord_rate': 0.757, 'vs_best': 1.0}
+
+Push EV on real C-rank gates (5 floors, the last the Lord's), on-level balanced player: peak at 5
+   {'stop_at': 1, 'levels_per_hour': 0.314, 'death_rate': 0.057, 'lord_rate': 0.022, 'vs_best': 0.62}
+   {'stop_at': 2, 'levels_per_hour': 0.39, 'death_rate': 0.106, 'lord_rate': 0.02, 'vs_best': 0.77}
+   {'stop_at': 3, 'levels_per_hour': 0.445, 'death_rate': 0.181, 'lord_rate': 0.022, 'vs_best': 0.88}
+   {'stop_at': 4, 'levels_per_hour': 0.505, 'death_rate': 0.262, 'lord_rate': 0.023, 'vs_best': 0.99}
+   {'stop_at': 5, 'levels_per_hour': 0.508, 'death_rate': 0.405, 'lord_rate': 0.595, 'vs_best': 1.0}
+
+Push EV on real B-rank gates (4 floors, the last the Lord's), on-level balanced player: peak at 4
+   {'stop_at': 1, 'levels_per_hour': 0.968, 'death_rate': 0.058, 'lord_rate': 0.026, 'vs_best': 0.69}
+   {'stop_at': 2, 'levels_per_hour': 1.213, 'death_rate': 0.115, 'lord_rate': 0.023, 'vs_best': 0.86}
+   {'stop_at': 3, 'levels_per_hour': 1.374, 'death_rate': 0.198, 'lord_rate': 0.028, 'vs_best': 0.97}
+   {'stop_at': 4, 'levels_per_hour': 1.412, 'death_rate': 0.317, 'lord_rate': 0.683, 'vs_best': 1.0}
+
+Deaths per 10 gates by gate rank:
+   careful {'E': (0.77, 2.43, 3.43), 'D': (0.72, 2.22, 2.8), 'C': (1.12, 1.91, 0.23), 'B': (1.29, 1.89, 0.22), 'A': (1.52, 1.74, 0.08), 'S': (1.6, 1.69, 0.05), 'Sovereign': (1.87, 1.52, 0.03)}
+   balanced {'E': (0.87, 3.25, 7.49), 'D': (1.25, 3.15, 7.46), 'C': (1.92, 2.97, 2.38), 'B': (2.12, 2.93, 2.5), 'A': (2.28, 2.56, 0.11), 'S': (2.57, 2.46, 0.04), 'Sovereign': (3.1, 2.27, 0.0)}
+   greedy {'E': (0.97, 3.24, 7.87), 'D': (1.68, 3.23, 8.3), 'C': (3.5, 3.74, 6.47), 'B': (3.76, 3.59, 6.22), 'A': (5.63, 3.79, 4.21), 'S': (6.17, 3.64, 3.68), 'Sovereign': (7.32, 3.38, 2.25)}
+   builder {'E': (1.12, 3.16, 6.73), 'D': (1.31, 3.06, 6.56), 'C': (1.85, 2.82, 1.38), 'B': (2.13, 2.75, 1.26), 'A': (2.39, 2.39, 0.09), 'S': (2.56, 2.33, 0.04), 'Sovereign': (3.42, 1.93, 0.03)}

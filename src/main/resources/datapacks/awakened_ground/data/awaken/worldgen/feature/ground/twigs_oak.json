@@ -1,0 +1,48 @@
+{
+  "type": "minecraft:simple_block",
+  "to_place": {
+    "type": "minecraft:weighted",
+    "entries": [
+      {
+        "data": {
+          "id": "awaken:twigs",
+          "properties": {
+            "wood": "0",
+            "facing": "north"
+          }
+        },
+        "weight": 1
+      },
+      {
+        "data": {
+          "id": "awaken:twigs",
+          "properties": {
+            "wood": "0",
+            "facing": "east"
+          }
+        },
+        "weight": 1
+      },
+      {
+        "data": {
+          "id": "awaken:twigs",
+          "properties": {
+            "wood": "0",
+            "facing": "south"
+          }
+        },
+        "weight": 1
+      },
+      {
+        "data": {
+          "id": "awaken:twigs",
+          "properties": {
+            "wood": "0",
+            "facing": "west"
+          }
+        },
+        "weight": 1
+      }
+    ]
+  }
+}

@@ -135,6 +135,14 @@ public class LairPiece extends StructurePiece implements PieceBeardifierModifier
             }
 
             @Override
+            public void stand(int x, int y, int z, Direction facing, String kind) {
+                m.set(cx + x, fy + y, cz + z);
+                if (!clip.isInside(m)) return;
+                BlockPos at = m.immutable();
+                dev.awaken.core.api.ArmsApi.placeStand(level, at, facing, kind, "", at.asLong());
+            }
+
+            @Override
             public int @org.jspecify.annotations.Nullable [] joint() {
                 return joint == null ? null : new int[]{joint[0] - cx, joint[1] - fy, joint[2] - cz};
             }

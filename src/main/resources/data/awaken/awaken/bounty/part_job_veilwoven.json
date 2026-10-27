@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "title": "A Heart for Veilwoven",
+  "band": 2,
+  "objective": {
+    "type": "collect",
+    "target": "awaken:glacier_heart",
+    "count": 1
+  },
+  "levels": 0.3,
+  "essence": 12,
+  "requires": [
+    "level:42"
+  ],
+  "text": "The Abbot of Frost carries a glacier heart in the Frost Monastery, which is a C-rank gate. Bring it out and show me. You keep it, because Veilwoven gear is made from parts like it.",
+  "featured": true,
+  "keep": true
+}

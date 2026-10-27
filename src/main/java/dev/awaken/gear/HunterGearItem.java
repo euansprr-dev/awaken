@@ -24,7 +24,7 @@ public class HunterGearItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, TooltipDisplay display, Consumer<Component> out, TooltipFlag flag) {
-        out.accept(Component.literal(tier.rank.label + "-rank Hunter gear · " + tier.setName).withColor(tier.rank.colour));
+        out.accept(Component.literal(tier.rank.label + "-rank " + (piece == Piece.BLADE ? "Hunter blade" : "Hunter gear") + " · " + tier.setName).withColor(tier.rank.colour));
         switch (piece) {
             case FOCUS -> {
                 int pct = (int) Math.round(GearCombat.focusBonus(stack) * 100);

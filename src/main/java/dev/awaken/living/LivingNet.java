@@ -36,6 +36,20 @@ public final class LivingNet {
     }
 
     /**
+     * The level of the land under the player (SPEC §21.10), sent when it changes: the client's tint and sound bed read it
+     * against the player's own level. -1: no land (another dimension), nothing weighs.
+     */
+    public record LandMsg(int level) implements CustomPacketPayload {
+        public static final Type<LandMsg> TYPE = new Type<>(Awaken.id("living_land"));
+        public static final StreamCodec<ByteBuf, LandMsg> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, LandMsg::level, LandMsg::new);
+
+        @Override
+        public Type<LandMsg> type() {
+            return TYPE;
+        }
+    }
+
+    /**
      * A hit the player dealt (the damage the target took, crit, Force or -1), or with {@code incoming} a hit the player
      * took from {@code entity} (no glyph: it marks that creature as in a fight).
      */
@@ -253,6 +267,7 @@ public final class LivingNet {
         r.playToClient(Tells.TYPE, Tells.STREAM_CODEC);
         r.playToClient(CampSmoke.TYPE, CampSmoke.STREAM_CODEC);
         r.playToClient(RegionMsg.TYPE, RegionMsg.STREAM_CODEC);
+        r.playToClient(LandMsg.TYPE, LandMsg.STREAM_CODEC);
         r.playToClient(HitFx.TYPE, HitFx.STREAM_CODEC);
         r.playToClient(XpFx.TYPE, XpFx.STREAM_CODEC);
         r.playToClient(LevelUp.TYPE, LevelUp.STREAM_CODEC);

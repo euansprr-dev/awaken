@@ -1,0 +1,127 @@
+# The Soft Land (SPEC §31): seamless ground (P0), soft steps (P1), the floor (P2), mountains (P3). A control platform high over the
+# spawn (flat grass; from the left: a one-block step, a two-block pillar, a path in grass, coarse dirt, gravel; then sand and dirt
+# patches; a soft hill of two half steps with tufts; pebbles and twigs), shot with the setting on, off, and with the lawn drift
+# off; then three lands the world made (Lumen Forest, Elderwood, windswept hills; `terrain visit` loads the chunks, slow on the
+# runner, hence the long waits and the short render distance). Spectator throughout (no falling while chunks load).
+# Look tour (CI): tools/tour-ci.sh tools/autopilot/ground-tour.txt 1500 PACK=perf,world TECTONIC=awakened
+world ground779 creative 779
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+cmd time set 7000
+# the opening's sky flight holds the camera (every shot would be its frame): skip it first, as the W7 tour does
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 40
+key dismiss
+wait 10
+gui 0
+window 1440 900
+hud off
+info
+opt renderDistance 8
+opt simulationDistance 6
+cmd awaken ground status
+# ---- the control platform: ground at y 249, feet at y 250, over the spawn (its chunks are loaded; the city is a floating island) ----
+cmd gamemode spectator
+cmd execute at @s run tp @s ~ 250 ~
+wait 200
+cmd execute at @s run fill ~-14 249 ~-4 ~14 249 ~30 minecraft:grass_block
+cmd execute at @s run fill ~-14 250 ~-4 ~14 258 ~30 minecraft:air
+cmd execute at @s run fill ~-12 250 ~6 ~-9 250 ~7 minecraft:grass_block
+cmd execute at @s run fill ~-7 250 ~6 ~-5 251 ~7 minecraft:grass_block
+cmd execute at @s run fill ~-3 249 ~6 ~3 249 ~7 minecraft:dirt_path
+cmd execute at @s run fill ~5 249 ~6 ~8 249 ~7 minecraft:coarse_dirt
+cmd execute at @s run fill ~10 249 ~6 ~12 249 ~7 minecraft:gravel
+cmd execute at @s run fill ~-3 249 ~10 ~-1 249 ~11 minecraft:sand
+cmd execute at @s run fill ~2 249 ~10 ~4 249 ~11 minecraft:dirt
+cmd execute at @s run fill ~-12 250 ~18 ~12 250 ~19 minecraft:grass_block
+cmd execute at @s run fill ~-12 250 ~17 ~12 250 ~17 awaken:turf_slab[tuft=1]
+cmd execute at @s run setblock ~-10 250 ~17 awaken:turf_slab[tuft=2]
+cmd execute at @s run setblock ~-7 250 ~17 awaken:turf_slab[tuft=3]
+cmd execute at @s run setblock ~-4 250 ~17 awaken:turf_slab[tuft=4]
+cmd execute at @s run setblock ~-1 250 ~17 awaken:turf_slab[tuft=5]
+cmd execute at @s run setblock ~2 250 ~17 awaken:turf_slab[tuft=0]
+cmd execute at @s run setblock ~5 250 ~17 awaken:turf_slab[tuft=3]
+cmd execute at @s run setblock ~8 250 ~17 awaken:turf_slab[tuft=2]
+cmd execute at @s run fill ~-12 250 ~16 ~12 249 ~16 minecraft:grass_block
+cmd execute at @s run setblock ~-9 250 ~14 awaken:pebbles[kind=0,stones=3]
+cmd execute at @s run setblock ~-7 250 ~14 awaken:pebbles[kind=1,stones=2]
+cmd execute at @s run setblock ~-5 250 ~14 awaken:pebbles[kind=2,stones=1]
+cmd execute at @s run setblock ~-3 250 ~14 awaken:pebbles[kind=3,stones=3]
+cmd execute at @s run setblock ~0 250 ~14 awaken:twigs[wood=0,facing=east]
+cmd execute at @s run setblock ~3 250 ~14 awaken:twigs[wood=1,facing=south]
+cmd execute at @s run setblock ~6 250 ~14 awaken:twigs[wood=2,facing=east]
+cmd execute at @s run fill ~-12 250 ~4 ~12 250 ~4 minecraft:short_grass
+wait 200
+look 0 -14
+shot ground_ctrl_on_a
+look 0 -26
+shot ground_ctrl_on_b
+look -35 -18
+shot ground_ctrl_on_c
+cmd awaken ground seamless off
+wait 200
+look 0 -14
+shot ground_ctrl_off_a
+look 0 -26
+shot ground_ctrl_off_b
+look -35 -18
+shot ground_ctrl_off_c
+cmd awaken ground seamless on
+wait 200
+cmd awaken ground drift off
+wait 200
+look 0 -14
+shot ground_ctrl_nodrift
+cmd awaken ground drift on
+wait 120
+# ---- three lands the world made (the visit command loads the chunks and stands you in the biome's heart) ----
+cmd awaken terrain visit awaken:lumen_forest
+wait 1500
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
+wait 2400
+cmd awaken terrain at
+look 30 -8
+shot ground_lumen_a
+look 120 -8
+shot ground_lumen_b
+look 210 -8
+shot ground_lumen_c
+cmd awaken terrain visit awaken:elderwood
+wait 1500
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
+wait 2400
+cmd awaken terrain at
+look 30 -8
+shot ground_elder_a
+look 120 -8
+shot ground_elder_b
+look 210 -8
+shot ground_elder_c
+cmd awaken terrain visit minecraft:windswept_hills
+wait 1500
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
+wait 2400
+cmd awaken terrain at
+look 0 -4
+shot ground_hills_a
+look 90 -4
+shot ground_hills_b
+look 180 -4
+shot ground_hills_c
+look 270 -4
+shot ground_hills_d
+quit

@@ -1,0 +1,20 @@
+{
+  "pools": [
+    {
+      "entries": [
+        {
+          "modifier": [
+            {
+              "type": "minecraft:explosion_decay"
+            }
+          ],
+          "name": "awaken:pebbles",
+          "type": "minecraft:item"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:blocks/pebbles",
+  "type": "minecraft:block"
+}

@@ -64,7 +64,7 @@ final class AlpineTests {
             h.assertTrue(AlpineSurface.snow(0, 260, 0, 0.2f, 0, 0.5f), "snow high on gentle ground");
             h.assertFalse(AlpineSurface.snow(0, 260, 0, 1.5f, 0, 0.5f), "no snow on a steep face");
             h.assertFalse(AlpineSurface.snow(0, 120, 0, 0.2f, 0, 0.5f), "no snow low down");
-            h.assertTrue(AlpineSurface.stone(2f, 0, 0.5f) == 2 && AlpineSurface.stone(1.6f, 0, 0.5f) == 1 && AlpineSurface.stone(0.5f, 0, 0.5f) == 0,
+            h.assertTrue(AlpineSurface.stone(2f, 0, 0.5f) == 2 && AlpineSurface.stone(1.3f, 0, 0.5f) == 1 && AlpineSurface.stone(0.5f, 0, 0.5f) == 0,
                     "rock on cliffs, scree below them, soil on slopes");
             // the pack asks for a flag old worlds lack; this new test world loaded it
             var server = h.getLevel().getServer();

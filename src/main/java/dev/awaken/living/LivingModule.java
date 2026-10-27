@@ -43,12 +43,28 @@ public final class LivingModule {
     /** Share of neutral and hunter spawns that are elites (SPEC §21.0.6). */
     public static final float ELITE_CHANCE = 0.05F;
 
+    /**
+     * The share of neutral and hunter spawns that are elites on land of this level (SPEC §21.10): none roam the heartland
+     * (an elite there is a den's guard), 2% in D land, 4% in C, 5% from B. An elite was 4.4 times a skeleton's health at the
+     * Commons' wall, which killed a level-1 player; the land's rank, not a flat share, decides.
+     */
+    public static float eliteChance(int landLevel) {
+        return switch (dev.awaken.living.region.RegionMap.rankOf(landLevel)) {
+            case 0 -> 0F;
+            case 1 -> 0.02F;
+            case 2 -> 0.04F;
+            default -> ELITE_CHANCE;
+        };
+    }
+
     public static void init(IEventBus modBus) {
         LivingContent.register(modBus);
+        modBus.addListener(net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent.class, dev.awaken.living.combat.WildKin::attributes);
         dev.awaken.living.quest.Relics.register(modBus);
         dev.awaken.living.wayfarer.Scenes.init();
         FirstThread.init(); // the first thread out of Carillon, and chains on the Now line (SPEC §27.6)
         FirstScenes.init(); // its High Gate shot and Ilse's scene by the fire
+        IssueScene.init(); // Hale's issue: the first weapon, free (docs/arms-progression/PLAN.md §3.3)
         modBus.addListener(LivingNet::register);
         XpBudget.register(HUNT, 0.10);
         XpBudget.register("pulse", 0.15);
@@ -83,8 +99,15 @@ public final class LivingModule {
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(EventPriority.LOW, FinalizeSpawnEvent.class, Creatures::onFinalizeSpawn);
         bus.addListener(EntityJoinLevelEvent.class, Creatures::onJoin);
+        bus.addListener(EventPriority.HIGHEST, net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre.class, dev.awaken.living.combat.MarkEvents::onDamage);
+        bus.addListener(net.neoforged.neoforge.event.entity.living.MobSpawnEvent.SpawnPlacementCheck.class, dev.awaken.living.wonder.WonderWatch::onSpawnCheck);
+        bus.addListener(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post.class, dev.awaken.living.wonder.WonderWatch::onPlayerTick);
+        bus.addListener(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post.class, dev.awaken.living.combat.MarkEvents::onPlayerTick);
+        bus.addListener(net.neoforged.neoforge.event.tick.ServerTickEvent.Post.class, dev.awaken.living.combat.MarkEvents::onTick);
+        bus.addListener(net.neoforged.neoforge.event.PlayLevelSoundEvent.AtPosition.class, dev.awaken.living.combat.MarkEvents::onSound);
         bus.addListener(LivingIncomingDamageEvent.class, Creatures::onIncomingDamage);
         bus.addListener(LivingDeathEvent.class, KillXp::onDeath);
+        bus.addListener(net.neoforged.neoforge.event.entity.living.LivingDropsEvent.class, dev.awaken.living.combat.GameDrops::onDrops);
         bus.addListener(EventPriority.LOWEST, CriticalHitEvent.class, Hits::onCrit);
         bus.addListener(LivingDamageEvent.Post.class, Hits::onDamage);
         bus.addListener(LivingDropsEvent.class, LootPillars::onDrops);
@@ -154,13 +177,18 @@ public final class LivingModule {
             XpStream.forget(id);
             Hits.forget(id);
         });
+        // the region map is made on the main thread at start, so worldgen threads find it ready (the signs ask)
+        bus.addListener(net.neoforged.neoforge.event.server.ServerStartedEvent.class, e -> RegionService.map(e.getServer()));
         bus.addListener(net.neoforged.neoforge.event.server.ServerStartedEvent.class, e -> {
             // the GameTest server keeps the old natural herds for the fauna tests (living_ledger checks the rule itself)
             if (e.getServer() instanceof net.minecraft.gametest.framework.GameTestServer) {
                 e.getServer().overworld().getGameRules().set(LivingContent.LIVING_HERDS.get(), false, e.getServer());
+                e.getServer().overworld().getGameRules().set(LivingContent.WILD_FORMS.get(), false, e.getServer());
             }
         });
         bus.addListener(ServerStoppedEvent.class, e -> {
+            dev.awaken.living.wonder.Wonders.reset();
+            dev.awaken.living.wonder.Secrets.reset();
             RegionService.reset();
             RegionTracker.clear();
         });

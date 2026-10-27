@@ -1,0 +1,9 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_badlands",
+  "features": [
+    "awaken:ground/badlands_boulder_badlands",
+    "awaken:ground/badlands_pebbles"
+  ],
+  "step": "vegetal_decoration"
+}

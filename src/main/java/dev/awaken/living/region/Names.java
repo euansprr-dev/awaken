@@ -53,6 +53,19 @@ final class Names {
         };
     }
 
+    private static final String[] RESTS = {"Rest", "Vale", "Hush", "Haven", "Shelter", "Stillwater", "Hollow Rest"};
+
+    /** A quiet vale's name (SPEC §21.10): a land's gentle word and a word for shelter ("Willow Rest", "the Heron Hush"). */
+    static String quiet(RegionMap.Group group, long hash) {
+        Words w = of(group);
+        long h = RegionMap.mix(hash ^ 0x51E7L);
+        String first = w.fair[(int) Math.floorMod(h, (long) w.fair.length)];
+        h = RegionMap.mix(h + 1);
+        String rest = RESTS[(int) Math.floorMod(h, (long) RESTS.length)];
+        h = RegionMap.mix(h + 2);
+        return (RegionMap.unit(h) < 0.3 ? "the " : "") + first + " " + rest;
+    }
+
     static String name(RegionMap.Group group, int band, long hash) {
         Words w = of(group);
         long h = RegionMap.mix(hash);

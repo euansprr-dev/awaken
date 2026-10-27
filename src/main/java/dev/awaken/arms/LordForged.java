@@ -157,6 +157,7 @@ public final class LordForged {
         // the reveal waits for the next tick: the death event fires inside die(), before the kill is counted (an
         // empty-handed kill counts as unarmed only while the hand is still empty when the Lord's death is tallied)
         PENDING.add(new Pending(p, stack(forged, item), forged));
+        ArmsSpoils.noteForged(p);
     }
 
     private record Pending(ServerPlayer player, ItemStack stack, Forged forged) {}

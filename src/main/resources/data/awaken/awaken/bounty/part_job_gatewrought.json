@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "title": "A Mainspring for Gatewrought",
+  "band": 2,
+  "objective": {
+    "type": "collect",
+    "target": "awaken:mainspring",
+    "count": 1
+  },
+  "levels": 0.3,
+  "essence": 10,
+  "requires": [
+    "level:22"
+  ],
+  "text": "The Gearwright Colossus keeps a mainspring in its chest, deep in the Clockwork Foundry, which is a D-rank gate. Beat it, then show me the mainspring. You keep it, because Gatewrought gear is made from parts like it.",
+  "featured": true,
+  "keep": true
+}

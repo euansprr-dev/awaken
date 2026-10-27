@@ -79,10 +79,10 @@ public final class LensClient {
     private static final float[] base = Look.neutral();
     // place looks over the biome's (SPEC §28.5: a plain cave's own, a seep's violet), each weighted 0..1 by its owner
     // every tick, blended in layer order; resolved again when the id or the looks change
-    static final int PLACE_LAYERS = 2;
+    static final int PLACE_LAYERS = 3; // 0 a plain cave, 1 a seep (Delve), 2 a land far above you (Living Wilds' dread)
     private static final String[] placeId = new String[PLACE_LAYERS];
     private static final float[] placeWeight = new float[PLACE_LAYERS];
-    private static final float[][] placeLook = {Look.neutral(), Look.neutral()};
+    private static final float[][] placeLook = {Look.neutral(), Look.neutral(), Look.neutral()};
     private static final boolean[] placeKnown = new boolean[PLACE_LAYERS], placeStale = new boolean[PLACE_LAYERS];
     // a story moment's look over the dimension's (the Ritual of the Bell: awaken:ritual, awaken:void), its easing rate
     private static @org.jspecify.annotations.Nullable String overrideLook;
@@ -319,7 +319,7 @@ public final class LensClient {
     }
 
     /**
-     * A bloom pulse (0..1): the glow lifts at once and eases away over about a second (a power's release, SPEC §31). It rides the same
+     * A bloom pulse (0..1): the glow lifts at once and eases away over about a second (a power's release, SPEC §32). It rides the same
      * boost the ritual's bloom does and never lowers it; with Lens off it draws nothing.
      */
     public static void pulse(float strength) {

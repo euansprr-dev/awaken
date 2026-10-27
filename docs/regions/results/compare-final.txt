@@ -1,0 +1,38 @@
+=== current (300 worlds, 32 bearings each, 500..6450 out)
+  first Lv>= 10: nearest anywhere  P10   600  median   650  P90   700 | per bearing  P10   650  median   850  P90  1950
+  first Lv>= 20: nearest anywhere  P10   800  median  1150  P90  1450 | per bearing  P10  1400  median  2150  P90  3650
+  first Lv>= 45: nearest anywhere  P10  1000  median  1450  P90  1950 | per bearing  P10  1700  median  3500  P90  6200
+  first Lv>= 70: nearest anywhere  P10  1400  median  2000  P90  3000 | per bearing  P10  2700  median  5700  P90  7000
+  first Lv>=100: nearest anywhere  P10  2200  median  3750  P90  4700 | per bearing  P10  4800  median  7000  P90  7000
+  worlds with Lv>=20 within 1,200 on some bearing: 60%   Lv>=45 within 1,800: 85%   Lv>=45 within 2,500: 100%
+  first hamlet spot (700-1,100 out): mean level 9.0, >15 in 8% of worlds, <=10 in 60%
+  border cliffs: share of 100-block steps that gain/lose >12 levels: median 8.13%  P90 8.74%
+  on-level land (700..4,000 out): player level -> nearest land within +-3 (median / P90 blocks) | share of that land in [L-5, L+2] (median %)
+     L3      566 /   566   |  17.2%
+     L5      566 /   566   |  21.1%
+     L8      566 /   566   |  21.7%
+     L12     632 /   800   |  27.3%
+     L18     800 /  1077   |  21.4%
+     L25    1612 /  2236   |   7.5%
+     L35    1612 /  2088   |  10.0%
+     L50    2000 /  3200   |   3.0%
+     L70    2010 /  3000   |   4.0%
+=== proposed (300 worlds, 32 bearings each, 500..6450 out)
+  first Lv>= 10: nearest anywhere  P10   850  median   850  P90   900 | per bearing  P10   850  median  1350  P90  2200
+  first Lv>= 20: nearest anywhere  P10  1500  median  1600  P90  1800 | per bearing  P10  1750  median  2450  P90  3650
+  first Lv>= 45: nearest anywhere  P10  2700  median  2900  P90  3150 | per bearing  P10  3200  median  4350  P90  6150
+  first Lv>= 70: nearest anywhere  P10  3850  median  4100  P90  4500 | per bearing  P10  4600  median  6150  P90  7000
+  first Lv>=100: nearest anywhere  P10  5300  median  5600  P90  6150 | per bearing  P10  6300  median  7000  P90  7000
+  worlds with Lv>=20 within 1,200 on some bearing: 0%   Lv>=45 within 1,800: 0%   Lv>=45 within 2,500: 0%
+  first hamlet spot (700-1,100 out): mean level 9.0, >15 in 0% of worlds, <=10 in 94%
+  border cliffs: share of 100-block steps that gain/lose >12 levels: median 0.64%  P90 1.01%
+  on-level land (700..4,000 out): player level -> nearest land within +-3 (median / P90 blocks) | share of that land in [L-5, L+2] (median %)
+     L3      566 /   566   |   2.5%
+     L5      566 /   566   |   8.9%
+     L8      566 /   566   |  22.6%
+     L12     800 /   800   |  30.9%
+     L18    1281 /  1523   |  23.8%
+     L25    1720 /  1970   |  18.4%
+     L35    2236 /  2441   |  12.1%
+     L50    2973 /  3225   |   4.4%
+     L70    3863 /  7000   |   0.2%

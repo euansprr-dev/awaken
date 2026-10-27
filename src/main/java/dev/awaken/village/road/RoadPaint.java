@@ -283,7 +283,9 @@ final class RoadPaint implements SettlementPaint.Layout {
      * cobbles and setts.
      */
     static BlockState paving(int family, float d, boolean town, int wx, int wz) {
-        int roll = pct(wx, wz, 50);
+        // SPEC §31, P4: a patch four blocks across keeps its ground (so a band reads as a band along the road, not a coin toss a
+        // block), with a ragged edge: now and then a block draws for itself. A town's setts stay a mix of every block.
+        int roll = town || pct(wx, wz, 55) < 14 ? pct(wx, wz, 50) : pct(wx >> 2, wz >> 2, 50);
         boolean crown = d < 0.6f, rut = d >= 0.6f && d < 1.6f;
         if (town) return roll < 45 ? COBBLE : roll < 65 ? STONE_BRICKS : roll < 78 ? ANDESITE : roll < 88 ? MOSSY_COBBLE : roll < 95 ? GRAVEL : CRACKED_STONE_BRICKS;
         return switch (family) {

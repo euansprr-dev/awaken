@@ -165,12 +165,12 @@ RECIPES = {
 }
 
 ROAD = {
-    "E": (3, "Hunter gear · E", "Creature hide, bone and essence: your first set. Recipe book."),
-    "D": (13, "Beastbound gear · D", "Beast trophies and Lord parts, bound in iron from the deep."),
-    "C": (22, "Gatewrought gear · C", "D-rank Lord relics set in diamond: it matches diamond armour."),
-    "B": (42, "Veilwoven gear · B", "C-rank relics, Deepglass and amethyst: the Veil's resonance."),
-    "A": (67, "Lordscale gear · A", "Lords' scales plated in netherite, past it."),
-    "S": (97, "Sovereign Weave · S", "The Herald's halo and starmetal from the fallen stars."),
+    "E": (3, "Hunter gear · E", "Hide from creatures, a bone or flint, a string or feather, and one Essence Shard for each piece. Creatures drop all of it. The recipes are in your recipe book."),
+    "D": (13, "Beastbound gear · D", "Beastbound gear is bound in iron (about 14) and set with a trophy from a named beast or an E-rank Lord. The recipes are in your recipe book."),
+    "C": (22, "Gatewrought gear · C", "Gatewrought gear is set in diamond (about 14) with a relic from a D-rank Lord, and it matches diamond armour. The recipes are in your recipe book."),
+    "B": (42, "Veilwoven gear · B", "Veilwoven gear needs Deepglass and amethyst, and parts from C-rank and B-rank Lords. The recipes are in your recipe book."),
+    "A": (67, "Lordscale gear · A", "Lordscale gear is plated in netherite and set with parts from B-rank and A-rank Lords. The recipes are in your recipe book."),
+    "S": (97, "Sovereign Weave · S", "Sovereign gear is made from starmetal out of fallen stars, and parts from the Herald and the Court. The recipes are in your recipe book."),
 }
 
 # ---------------------------------------------------------------------------------------------------------------------

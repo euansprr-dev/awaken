@@ -160,6 +160,40 @@ final class AtlasTests {
             }
         });
 
+        // levels (SPEC 21.11): every explored cell goes out with the land's level, the same the field gives, so the Atlas can shade by it
+        AwakenTests.register("atlas_levels", 40, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            try {
+                AtlasData d = Discovery.data(p);
+                d.dim(Discovery.dim(p.level())).clear();
+                BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
+                Discovery.reveal(p, at, 64);
+                Explored e = d.peek(Discovery.dim(p.level()));
+                Explored.TileBits t = e.tiles().getFirst();
+                byte[] lv = Discovery.levels(p, Discovery.live(p), t.tx(), t.tz(), t.bits());
+                if (dev.awaken.living.api.Regions.on(p.level())) {
+                    int known = 0;
+                    for (int i = 0; i < lv.length; i++) {
+                        if ((t.bits()[i >> 6] & (1L << (i & 63))) == 0) continue;
+                        int cx = (t.tx() << Explored.TILE_SHIFT) + (i & (Explored.TILE - 1)), cz = (t.tz() << Explored.TILE_SHIFT) + (i >> Explored.TILE_SHIFT);
+                        int want = Math.max(1, Math.min(255, dev.awaken.living.api.Regions.levelAt((net.minecraft.server.level.ServerLevel) p.level(), (cx << 4) + 8, (cz << 4) + 8)));
+                        h.assertTrue((lv[i] & 0xFF) == want, "the cell's level is the field's: " + (lv[i] & 0xFF) + " vs " + want);
+                        known++;
+                    }
+                    h.assertTrue(known > 0, "some cells are explored");
+                } else {
+                    h.assertTrue(lv.length == 0, "no levels outside the overworld");
+                }
+                // the wire carries them
+                var wire = Discovery.wire(p, Discovery.live(p), t.tx(), t.tz(), t.bits());
+                h.assertTrue(wire.levels().length == lv.length, "the tile carries the levels");
+                h.succeed();
+            } finally {
+                Discovery.forget(p);
+                h.getLevel().getServer().getPlayerList().remove(p);
+            }
+        });
+
         // bells: a district's bell clears that district only; the Choir's clears the whole city
         AwakenTests.register("atlas_bell_clears_district", 40, h -> {
             ServerPlayer p = h.makeMockServerPlayerInLevel();

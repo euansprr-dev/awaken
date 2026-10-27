@@ -60,6 +60,11 @@ public final class LivingClient {
     private static String pendingRank = "";
     private static long pendingSince = -1, momentAt = Long.MIN_VALUE / 2;
 
+    /** The level of the land under the player as the server last said (-1 away from the overworld), for the layers that follow the land. */
+    public static int landLevel() {
+        return DreadFx.land();
+    }
+
     public static void init(IEventBus modBus) {
         LivingClientConfig.register();
         PulseSound.init();
@@ -67,6 +72,7 @@ public final class LivingClient {
         AlmanacSection.register();
         CraftsSection.register();
         // rumours: a "?" on the map where you heard something is happening
+        dev.awaken.core.api.MapMarks.register(dev.awaken.living.wonder.WonderWatch::marks);
         dev.awaken.core.api.MapMarks.register(p -> {
             var heard = p.getData(dev.awaken.living.LivingContent.RUMOURS.get()).heard();
             if (heard.isEmpty()) return java.util.List.of();
@@ -75,10 +81,12 @@ public final class LivingClient {
             return out;
         });
         modBus.addListener(RegisterGuiLayersEvent.class, LivingHud::register);
+        FormLayers.init(modBus);
         modBus.addListener(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers.class,
                 e -> e.registerEntityRenderer(dev.awaken.living.LivingContent.WAYFARER.get(), WayfarerRenderer::new));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(LivingNet.RegionMsg.TYPE, (m, ctx) -> onRegion(m));
+            e.register(LivingNet.LandMsg.TYPE, (m, ctx) -> DreadFx.onLand(m));
             e.register(LivingNet.HitFx.TYPE, (m, ctx) -> onHit(m));
             e.register(LivingNet.XpFx.TYPE, (m, ctx) -> onXp(m));
             e.register(LivingNet.LevelUp.TYPE, (m, ctx) -> onLevelUp(m));
@@ -218,6 +226,8 @@ public final class LivingClient {
         if (pendingCaption != null && ticks % 5 == 0) caption();
         if (ticks % 5 == 0) pillars(mc, p);
         plates(mc, p);
+        DreadFx.tick(mc, p);
+        AmbientFx.tick(mc, p);
         if (ticks % 100 == 0) forgetOld();
     }
 

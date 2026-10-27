@@ -1,0 +1,18 @@
+scene      | slope p50/p90 | columns raised | 1-block risers before -> after | half risers after | blocks of riser face before -> after
+meadow     | 0.00 / 0.70   |  20.6%         |   80214 ->    2795 (-97%)        |  153870          | 80220 -> 79736
+             (faces two blocks or taller: 3 before, 3 after: cliffs are left alone)
+hillside   | 0.70 / 1.11   |  23.4%         |  223910 ->  130486 (-42%)        |  189981          | 251297 -> 252864
+             (faces two blocks or taller: 13160 before, 13160 after: cliffs are left alone)
+mountain   | 1.58 / 2.54   |   2.4%         |  264679 ->  254735 (-4%)        |   20640          | 583991 -> 584367
+             (faces two blocks or taller: 143048 before, 143048 after: cliffs are left alone)
+massif     | 1.58 / 2.91   |   3.7%         |  244331 ->  229306 (-6%)        |   31604          | 589270 -> 590047
+             (faces two blocks or taller: 142888 before, 142888 after: cliffs are left alone)
+
+finest erosion cell | scene    | mean |step| between neighbours | one-block risers | after the soft pass
+16                  | hillside | 0.484                         | 223469 (43.1% of pairs) | 130187
+16                  | massif   | 1.135                         | 243842 (47.1% of pairs) | 228827
+32                  | hillside | 0.483                         | 223114 (43.1% of pairs) | 129746
+32                  | massif   | 1.128                         | 245335 (47.3% of pairs) | 230020
+64                  | hillside | 0.482                         | 222941 (43.0% of pairs) | 128925
+64                  | massif   | 1.106                         | 248039 (47.9% of pairs) | 231616
+cost: 3.8 ns a column, 1.0 us a chunk (256 columns), heights only; 122624000 raised

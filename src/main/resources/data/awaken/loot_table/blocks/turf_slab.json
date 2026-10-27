@@ -1,0 +1,57 @@
+{
+  "pools": [
+    {
+      "entries": [
+        {
+          "children": [
+            {
+              "condition": "minecraft:tool/can_silk_touch",
+              "modifier": [
+                {
+                  "condition": {
+                    "blocks": "awaken:turf_slab",
+                    "state": {
+                      "type": "double"
+                    },
+                    "type": "minecraft:match_block"
+                  },
+                  "count": 2,
+                  "type": "minecraft:set_count"
+                },
+                {
+                  "type": "minecraft:explosion_decay"
+                }
+              ],
+              "name": "awaken:turf_slab",
+              "type": "minecraft:item"
+            },
+            {
+              "modifier": [
+                {
+                  "condition": {
+                    "blocks": "awaken:turf_slab",
+                    "state": {
+                      "type": "double"
+                    },
+                    "type": "minecraft:match_block"
+                  },
+                  "count": 2,
+                  "type": "minecraft:set_count"
+                },
+                {
+                  "type": "minecraft:explosion_decay"
+                }
+              ],
+              "name": "awaken:dirt_slab",
+              "type": "minecraft:item"
+            }
+          ],
+          "type": "minecraft:alternatives"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:blocks/turf_slab",
+  "type": "minecraft:block"
+}

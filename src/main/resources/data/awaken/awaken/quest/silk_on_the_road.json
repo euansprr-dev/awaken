@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "title": "Silk on the Road",
+  "band": 2,
+  "requires": [
+    "level:22"
+  ],
+  "scene": "road",
+  "giver": "pell",
+  "summary": "Spiders have strung the road with silk and something is waiting in it. Pell wants the road open and the nest cleared.",
+  "ask": [
+    "Pell: Stop. Not that way. Look up.",
+    "Pell: The trees are strung together with silk, and the thing that strung them is still in there. I carry letters, I'm not paid to be eaten. Can you clear it?"
+  ],
+  "steps": [
+    {
+      "id": "road",
+      "objective": {
+        "type": "kill",
+        "target": "minecraft:spider",
+        "count": 4
+      },
+      "text": "Clear the spiders off the road",
+      "spawn": {
+        "entity": "minecraft:spider",
+        "count": 4,
+        "at": "scene"
+      },
+      "start": [
+        "Something small drops out of the branches. Then something bigger."
+      ],
+      "done": [
+        "Pell: That's the ones I could see. The nest will be further in."
+      ],
+      "reward": {
+        "levels": 0.2
+      }
+    },
+    {
+      "id": "nest",
+      "objective": {
+        "type": "reach",
+        "target": "site",
+        "radius": 10
+      },
+      "text": "Find where the silk comes from",
+      "done": [
+        "A hollow among the roots, wrapped like a parcel. It is very quiet in here."
+      ]
+    },
+    {
+      "id": "mother",
+      "objective": {
+        "type": "kill",
+        "target": "minecraft:spider",
+        "count": 2
+      },
+      "text": "Deal with what is guarding it",
+      "spawn": {
+        "entity": "minecraft:spider",
+        "count": 2,
+        "at": "site"
+      },
+      "start": [
+        "The silk shivers. Whatever is in it knows you are here."
+      ],
+      "done": [
+        "It is done. The silk goes slack and the road behind you is open again."
+      ]
+    },
+    {
+      "id": "back",
+      "objective": {
+        "type": "talk",
+        "target": "pell"
+      },
+      "text": "Tell Pell the road is clear",
+      "done": [
+        "Pell: Clear? All of it? I'll take that on faith, and a little extra for the faith.",
+        "Pell: Here. Don't spend it all in one town."
+      ]
+    }
+  ],
+  "finish": {
+    "levels": 0.6,
+    "item": "awaken:essence_shard",
+    "item_count": 3
+  }
+}

@@ -84,6 +84,7 @@ public final class Wayfarers {
                 return true;
             }
         }
+        if (dev.awaken.living.IssueScene.talk(p, who)) return true; // Hale's issue, while it waits (docs/arms-progression/PLAN.md §3.3)
         if (who.equals("hale") && dev.awaken.living.bounty.Bounties.board(p)) return true;
         // a chain this person gives that can be taken now
         for (var e : QuestBook.all().entrySet()) {

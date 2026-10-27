@@ -409,7 +409,7 @@ nothing the game reads. It shows that the rig can say a stomp (knee to hip heigh
 
 ## 10. Build log
 
-**2026-10-27: Euan approved the plan in full ("Go with all recommendations"); P0 built on this branch (SPEC §31 has the as-built list).**
+**2026-10-27: Euan approved the plan in full ("Go with all recommendations"); P0 built on this branch (SPEC §32 has the as-built list).**
 Changes from the plan as written, found while building:
 - The stamp's plant is at tick 5 (250 ms), not 6 (300 ms), so the wind-up fits the 250 ms cap (D3); the beam's arm reaches the aim at tick 5 (the plan's sheet showed 7).
 - The wind-up runs as a `Running` (key `shockwave_windup`) rather than `Scheduler.after`, so the existing per-tick GameTests drive it; `power_fx_reach_matches_hits` ticks 17 for the stamp (5 + 12).
@@ -417,7 +417,7 @@ Changes from the plan as written, found while building:
 - Sounds ship with subtitles (the audio test requires them).
 - First tour (run 40457072925) toured the opening's balcony camera, not the platform: the script lacked `opening skip`. Fixed and re-run.
 
-**2026-10-27: Euan looked at the proof ("The proof looks right"); P1-P6 built on this branch (SPEC §31, "P1-P6 as built").**
+**2026-10-27: Euan looked at the proof ("The proof looks right"); P1-P6 built on this branch (SPEC §32, "P1-P6 as built").**
 - 54 profiles from one table (`tools/art/specs/power_cast_table.py` -> `data/awaken/powers/casts.json`); ground_slam, meteor_dive, hover, flight
   and leap stay on their family poses (movement already owns their bodies).
 - The 14 heavy powers' wind-ups run generically in `Casting.windUp`; every client holds a caster's events back to the clips' release tick.

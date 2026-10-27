@@ -225,6 +225,24 @@ final class FarSightTests {
         // the light), a slab its top half a block up, a one-block pillar its top; at level 1 (2-block cells) the cube
         // keeps its silhouette and the pillar, a quarter of its cells, thins out instead of swelling. A fence and a poppy
         // go in level 0's detail run only (perf build C): the fence as its boxes, the poppy as its cross.
+        // The Soft Land's pebbles and twigs are a few pixels' worth of stone: City Sight draws them as nothing (as their bounds they were
+        // grey boxes over every far meadow, Euan 2026-10-27), its slabs as the slabs they are, a poppy still as its cross
+        AwakenTests.register("farsight_voxels_ground_cover", 20, h -> {
+            for (var p : dev.awaken.ground.GroundCover.PEBBLES.get().getStateDefinition().getPossibleStates()) {
+                byte k = dev.awaken.farsight.voxel.VoxelKinds.kind(Block.BLOCK_STATE_REGISTRY.getId(p));
+                h.assertTrue(k == dev.awaken.farsight.voxel.VoxelKinds.SKIP, "pebbles draw nothing from afar: " + p + " " + k);
+            }
+            for (var t : dev.awaken.ground.GroundCover.TWIGS.get().getStateDefinition().getPossibleStates()) {
+                byte k = dev.awaken.farsight.voxel.VoxelKinds.kind(Block.BLOCK_STATE_REGISTRY.getId(t));
+                h.assertTrue(k == dev.awaken.farsight.voxel.VoxelKinds.SKIP, "twigs draw nothing from afar: " + t + " " + k);
+            }
+            byte slab = dev.awaken.farsight.voxel.VoxelKinds.kind(Block.BLOCK_STATE_REGISTRY.getId(dev.awaken.ground.SoftSlabs.TURF_SLAB.get().defaultBlockState()));
+            h.assertTrue(slab == dev.awaken.farsight.voxel.VoxelKinds.BOX, "a turf slab is a box: " + slab);
+            byte fence = dev.awaken.farsight.voxel.VoxelKinds.kind(Block.BLOCK_STATE_REGISTRY.getId(Blocks.OAK_FENCE.defaultBlockState()));
+            h.assertTrue(fence == dev.awaken.farsight.voxel.VoxelKinds.THIN, "a fence is still a thin thing: " + fence);
+            h.succeed();
+        });
+
         AwakenTests.registerIsolated("farsight_voxels_mesh", 100, h -> {
             ServerLevel level = h.getLevel();
             BlockPos o = h.absolutePos(BlockPos.ZERO);

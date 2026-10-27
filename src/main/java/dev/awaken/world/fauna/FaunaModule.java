@@ -184,7 +184,8 @@ public final class FaunaModule {
         @Override
         public boolean elite(ServerLevel level, BlockPos pos, FaunaRole role, net.minecraft.util.RandomSource random) {
             return (role == FaunaRole.NEUTRAL || role == FaunaRole.HUNTER) && dev.awaken.living.api.Regions.on(level)
-                    && random.nextFloat() < dev.awaken.living.LivingModule.ELITE_CHANCE;
+                    && random.nextFloat() < dev.awaken.living.LivingModule.eliteChance(
+                    dev.awaken.living.api.Regions.creatureLevel(level, pos, dev.awaken.living.api.Regions.Role.NEUTRAL));
         }
 
         @Override

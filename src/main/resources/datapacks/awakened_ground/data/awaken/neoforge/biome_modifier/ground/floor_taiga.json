@@ -1,0 +1,17 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": [
+    "minecraft:taiga",
+    "minecraft:old_growth_pine_taiga",
+    "minecraft:old_growth_spruce_taiga",
+    "minecraft:snowy_taiga"
+  ],
+  "features": [
+    "awaken:ground/taiga_fallen_spruce",
+    "awaken:ground/taiga_boulder_forest",
+    "awaken:ground/taiga_pebbles",
+    "awaken:ground/taiga_twigs_spruce",
+    "awaken:ground/taiga_moss_patch"
+  ],
+  "step": "vegetal_decoration"
+}

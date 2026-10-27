@@ -293,7 +293,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
                 ? new String[]{"drag turn  ·  right-drag or WASD move  ·  scroll zoom  ·  Tab gates  ·  T point me there  ·  C you  ·  Shift+M table  ·  M close",
                         "drag turn  ·  WASD move  ·  scroll zoom  ·  Tab gates  ·  T point me there  ·  C you  ·  M close",
                         "drag · WASD · scroll · Tab · T · C · M close"}
-                : new String[]{"drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  Tab gates  ·  C you  ·  L legend",
+                : new String[]{"drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  Tab gates  ·  C you  ·  L legend  ·  H danger for you",
                         "drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  C you",
                         "drag orbit  ·  right-drag pan  ·  scroll zoom  ·  C you", "drag · right-drag · scroll · C"};
         int left = scene ? Math.round(width * 0.025f) : x0 + 2;
@@ -567,7 +567,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
 
     private int dangerY, moreGates;
     private boolean dangerWrap;
-    private static final String[] DANGER_LEVELS = {"1", "8", "20", "45", "80"};
+    private static final String[] DANGER_LEVELS = {"1", "10", "25", "45", "70", "100"};
     private java.util.List<net.minecraft.util.FormattedCharSequence> noGates = java.util.List.of();
     private static final String NO_GATES = "You haven't seen a gate yet. Their light shows from far off: look for a pillar in the sky.";
 
@@ -633,15 +633,17 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         }
         // the danger key: what a region's colour means
         int ky = dangerY;
-        plain(g, "DANGER", x + 6, ky + 1, Glass.LABEL | 0xFF000000);
+        plain(g, AtlasState.get().zones.forMe() ? "FOR YOU" : "DANGER", x + 6, ky + 1, Glass.LABEL | 0xFF000000);
         int kx = x + 6 + font.width("DANGER") + 6;
         if (dangerWrap) {
             kx = x + 6;
             ky += 11;
         }
-        String[] lv = DANGER_LEVELS;
-        for (int b = 0; b < ZoneMap.BAND_COLOUR.length; b++) {
-            g.fill(kx, ky + 2, kx + 6, ky + 8, ZoneMap.BAND_COLOUR[b]);
+        boolean me = AtlasState.get().zones.forMe();
+        String[] lv = me ? ZoneMap.HEAT_NAME : DANGER_LEVELS;
+        int[] col = me ? ZoneMap.HEAT_COLOUR : ZoneMap.BAND_COLOUR;
+        for (int b = 0; b < lv.length; b++) {
+            g.fill(kx, ky + 2, kx + 6, ky + 8, col[b]);
             plain(g, lv[b], kx + 8, ky + 1, Glass.LABEL | 0xFF000000);
             kx += 8 + font.width(lv[b]) + 6;
         }
@@ -925,6 +927,10 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         }
         if (e.key() == InputConstants.KEY_L) {
             showLegend = !showLegend;
+            return true;
+        }
+        if (e.key() == InputConstants.KEY_H) {
+            AtlasState.get().toggleDanger();
             return true;
         }
         if (e.key() == InputConstants.KEY_C && Minecraft.getInstance().player != null) {

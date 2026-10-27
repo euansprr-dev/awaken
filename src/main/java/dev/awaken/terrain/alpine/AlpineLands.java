@@ -31,6 +31,8 @@ public final class AlpineLands {
             DeferredRegister.create(Registries.DENSITY_FUNCTION_TYPE, Awaken.MODID);
     private static final DeferredRegister<MapCodec<? extends MaterialCondition>> CONDITIONS =
             DeferredRegister.create(Registries.MATERIAL_CONDITION_TYPE, Awaken.MODID);
+    private static final DeferredRegister<MapCodec<? extends net.minecraft.world.level.levelgen.feature.Feature>> FEATURES =
+            DeferredRegister.create(Registries.FEATURE_TYPE, Awaken.MODID);
     private static final DeferredRegister<MapCodec<? extends PlacementModifier>> PLACEMENT =
             DeferredRegister.create(Registries.PLACEMENT_MODIFIER_TYPE, Awaken.MODID);
 
@@ -38,13 +40,16 @@ public final class AlpineLands {
         DENSITY.register("eroded", () -> ErodedFunction.CODEC);
         DENSITY.register("ridge_room", () -> RidgeRoomFunction.CODEC);
         CONDITIONS.register("alpine", () -> AlpineCondition.CODEC);
+        CONDITIONS.register("strata", () -> StrataCondition.CODEC);
         PLACEMENT.register("treeline", () -> TreelineFilter.CODEC);
+        FEATURES.register("snow_drifts", () -> SnowDriftsFeature.CODEC);
     }
 
     public static void init(IEventBus modBus) {
         DENSITY.register(modBus);
         CONDITIONS.register(modBus);
         PLACEMENT.register(modBus);
+        FEATURES.register(modBus);
         modBus.addListener(AddPackFindersEvent.class, e -> e.addPackFinders(Awaken.id("datapacks/awakened_alpine"), PackType.SERVER_DATA,
                 Component.literal("Awakened Alpine"), PackSource.BUILT_IN, false, Pack.Position.TOP));
         AlpineTests.register();

@@ -1,0 +1,15 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": [
+    "minecraft:birch_forest",
+    "minecraft:old_growth_birch_forest",
+    "awaken:elderwood"
+  ],
+  "features": [
+    "awaken:ground/birch_fallen_birch",
+    "awaken:ground/birch_boulder_forest",
+    "awaken:ground/birch_pebbles",
+    "awaken:ground/birch_twigs_birch"
+  ],
+  "step": "vegetal_decoration"
+}

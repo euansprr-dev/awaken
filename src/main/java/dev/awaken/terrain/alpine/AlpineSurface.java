@@ -17,7 +17,10 @@ public final class AlpineSurface {
     /** Mean snow line (y) and how far it wanders, drops on north faces, and lifts on south faces. */
     public static final float SNOW_LINE = 186f, SNOW_WANDER = 9f, NORTH_DROP = 22f, SOUTH_LIFT = 14f;
     /** Slopes (rise per block): snow holds up to the first, scree from the second, bare rock from the third. */
-    public static final float SNOW_SLOPE = 1.25f, SCREE_SLOPE = 1.45f, ROCK_SLOPE = 1.8f;
+    public static final float SNOW_SLOPE = 1.25f, SCREE_SLOPE = 1.15f, ROCK_SLOPE = 1.5f;
+    /** The Soft Land (SPEC §31, P3): scree and rock reach lower down every steep slope (they were 1.45 and 1.8, cliffs only), and
+     *  from this slope the soil starts to show loose ground in patches: coarse dirt and gravel. */
+    public static final float LOOSE_FROM = 0.7f;
     /** Ground heights (y) over which erosion fades in: none on lowland, full on mountains. */
     public static final float ERODE_FROM = 74f, ERODE_FULL = 140f;
 
@@ -93,6 +96,52 @@ public final class AlpineSurface {
         int h = x * 374761393 + z * 668265263;
         h = (h ^ (h >>> 13)) * 1274126177;
         return Integer.toUnsignedLong(h ^ (h >>> 16)) / 4294967296f;
+    }
+
+    /**
+     * Loose ground on soil that is steepening (slope {@link #LOOSE_FROM} up to the scree's): 0 none (grass stays), 1 coarse dirt,
+     * 2 gravel, in patches 7 blocks across that grow with the slope. Near and far agree on the thresholds; the patches are too
+     * small to show from afar.
+     */
+    public static int loose(float x, float z, float gx, float gz, float jitter) {
+        float slope = (float) Math.sqrt(gx * gx + gz * gz) + 0.12f * (jitter - 0.5f);
+        if (slope < LOOSE_FROM || slope >= SCREE_SLOPE) return 0;
+        float p = Erosion.smooth(LOOSE_FROM, SCREE_SLOPE, slope);
+        float n = valueNoise(x, z, 7f, 31);
+        return n >= 0.80f - 0.25f * p ? 1 : n <= 0.10f + 0.20f * p ? 2 : 0;
+    }
+
+    /** A 0..1 noise on 6-block cells: in the scree band, its low end is grass pockets, its high end rock showing through. */
+    public static float pocket(float x, float z) {
+        return valueNoise(x, z, 6f, 17);
+    }
+
+    /**
+     * The rock at (x, y, z) in layers: 0 stone, 1 andesite, 2 tuff, 3 granite, 4 calcite (a thin pale band). Three blocks a
+     * layer, a cycle of eight, the layers tilted by a slow noise (about 4 blocks over 40) so a cliff has strata that dip, not
+     * ruled lines. Pure of position; the rock rule and the tests read it.
+     */
+    public static int strata(int x, int y, int z) {
+        float wobble = (valueNoise(x, z, 40f, 61) - 0.5f) * 8f + (valueNoise(x, z, 11f, 62) - 0.5f) * 2f;
+        int yy = (int) Math.floor(y + wobble);
+        if (Math.floorMod(Math.floorDiv(yy, 2), 31) == 17) return 4;
+        int b = Math.floorMod(Math.floorDiv(yy, 3), 8);
+        return b == 1 || b == 7 ? 1 : b == 3 ? 2 : b == 5 ? 3 : 0;
+    }
+
+    /**
+     * Snow in layers below the snow's edge: how many layers (0..3) a drift lays on the ground at (x, y, z) in the band of about 9
+     * blocks under the line (where {@link #snow} has no block yet): thicker toward the line, in patches, never on steep ground.
+     */
+    public static int driftLayers(float x, float y, float z, float gx, float gz, float jitter) {
+        float slope = (float) Math.sqrt(gx * gx + gz * gz);
+        if (slope > 1.3f) return 0;
+        float d = snowLine(x, z, gx, gz) - (y + patches(x, z));
+        if (d <= 0f || d >= 9f) return 0;
+        float p = 1f - d / 9f;
+        float n = valueNoise(x, z, 5f, 71);
+        if (n > p * 0.85f) return 0;
+        return Math.clamp(1 + (int) (p * 3f * (0.5f + 0.5f * jitter)), 1, 3);
     }
 
     /** 0 soil, 1 scree (loose stone), 2 bare rock: by slope, feathered per block by {@code jitter} (0..1). */

@@ -58,6 +58,13 @@ final class RecipeUnlocks {
         Map<Item, List<RecipeHolder<?>>> map = new HashMap<>();
         for (RecipeHolder<?> r : rm.getRecipes()) {
             if (!r.id().identifier().getNamespace().equals(Awaken.MODID) || r.value().isSpecial()) continue;
+            // a recipe that takes a Blueprint is learned from the Blueprint, not from a bone it also uses (docs/arms-progression/PLAN.md G5)
+            List<Item> blueprints = r.value().placementInfo().ingredients().stream().flatMap(Ingredient::items).map(Holder::value)
+                    .filter(i -> dev.awaken.arms.ArmsItems.blueprintStyle(i) != null).distinct().toList();
+            if (!blueprints.isEmpty()) {
+                for (Item bp : blueprints) map.computeIfAbsent(bp, k -> new ArrayList<>()).add(r);
+                continue;
+            }
             for (Ingredient ing : r.value().placementInfo().ingredients()) {
                 ing.items().map(Holder::value).distinct().forEach(item -> {
                     List<RecipeHolder<?>> list = map.computeIfAbsent(item, k -> new ArrayList<>());

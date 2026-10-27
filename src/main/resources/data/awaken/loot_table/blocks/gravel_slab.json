@@ -1,0 +1,31 @@
+{
+  "pools": [
+    {
+      "entries": [
+        {
+          "modifier": [
+            {
+              "condition": {
+                "blocks": "awaken:gravel_slab",
+                "state": {
+                  "type": "double"
+                },
+                "type": "minecraft:match_block"
+              },
+              "count": 2,
+              "type": "minecraft:set_count"
+            },
+            {
+              "type": "minecraft:explosion_decay"
+            }
+          ],
+          "name": "awaken:gravel_slab",
+          "type": "minecraft:item"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:blocks/gravel_slab",
+  "type": "minecraft:block"
+}

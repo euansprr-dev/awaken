@@ -40,7 +40,7 @@ public final class RoadWorld {
 
     private static volatile @Nullable RoadWorld current;
 
-    private RoadWorld(long seed, int cx, int cz, NoiseBasedChunkGenerator gen, RandomState rs, LevelHeightAccessor heights, boolean city) {
+    private RoadWorld(long seed, int cx, int cz, NoiseBasedChunkGenerator gen, RandomState rs, LevelHeightAccessor heights, boolean city, int rules) {
         this.seed = seed;
         this.cx = cx;
         this.cz = cz;
@@ -53,7 +53,7 @@ public final class RoadWorld {
         // the probe names a region once, from any thread: a sampler of its own each time (no caches to share)
         this.regions = new RegionMap(seed, cx, cz, (x, z) -> land(source.createResolver(
                 rs.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().build()))
-                .getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(63), QuartPos.fromBlock(z))));
+                .getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(63), QuartPos.fromBlock(z))), rules);
     }
 
     /** The land at a region's heart, named the way the region service names it (the archetype's vanilla name). */
@@ -96,7 +96,7 @@ public final class RoadWorld {
         var type = stem.type().value();
         int[] c = SettlementGrid.centre();
         RoadWorld w = new RoadWorld(seed, c[0], c[1], gen, rs, LevelHeightAccessor.create(type.minY(), type.height()),
-                dev.awaken.terrain.api.CityBasin.current() != null);
+                dev.awaken.terrain.api.CityBasin.current() != null, dev.awaken.living.region.RegionService.rulesOnDisk(server));
         RoadTimer.server = server.getRunningThread();
         RoadTimer.watch(server);
         w.prepare();
@@ -114,7 +114,7 @@ public final class RoadWorld {
 
     /** Tests and the studio: a world over a generator made for a seed (no server levels). */
     public static RoadWorld of(long seed, int cx, int cz, NoiseBasedChunkGenerator gen, RandomState rs, LevelHeightAccessor heights, boolean city) {
-        RoadWorld w = new RoadWorld(seed, cx, cz, gen, rs, heights, city);
+        RoadWorld w = new RoadWorld(seed, cx, cz, gen, rs, heights, city, RegionMap.RULES);
         w.prepare();
         return w;
     }

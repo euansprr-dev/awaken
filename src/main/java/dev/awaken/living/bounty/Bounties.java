@@ -57,7 +57,8 @@ public final class Bounties {
 
     /** A taken bounty's Journal line (the title says what; this says how far). */
     public static String task(BountyDef d) {
-        return d.objective().type().equals("collect") ? "Gather " + d.objective().count() + ", then see Hale" : "Hunt them, then see Hale";
+        if (!d.objective().type().equals("collect")) return "Hunt them, then see Hale";
+        return d.keep() ? "Find one, then show Hale" : "Gather " + d.objective().count() + ", then see Hale";
     }
 
     /** The player's level band (0: 1-8 ... 4: 80+), as the region bands. */
@@ -78,9 +79,11 @@ public final class Bounties {
             BountyDef d = e.getValue();
             if (Math.abs(d.band() - band) > 0 || !Requirements.met(p, d.requires())) continue;
             if (s.offered.contains(e.getKey()) || s.taken.stream().anyMatch(t -> t.id().equals(e.getKey()))) continue;
+            if (d.featured() && Progression.profile(p).counter(doneKey(e.getKey())) > 0) continue;
             pool.add(e.getKey());
         }
         Collections.shuffle(pool, new java.util.Random(p.getUUID().getLeastSignificantBits() ^ day * 31 + s.done));
+        pool.sort((a, b) -> Boolean.compare(defs.get(b).featured(), defs.get(a).featured())); // stable: featured first, the rest as shuffled
         int add = s.offered.isEmpty() ? want : 1;
         for (int i = 0; i < Math.min(add, pool.size()); i++) s.offered.add(pool.get(i));
         s.refilled = day;
@@ -118,6 +121,11 @@ public final class Bounties {
         return true;
     }
 
+    /** The counter that records a featured notice as done (it isn't put up again). */
+    static String doneKey(String id) {
+        return "awaken:featured_done/" + id;
+    }
+
     static String reward(BountyDef d) {
         return "Pays " + Math.round(d.levels() * 100) + "% of a level" + (d.essence() > 0 ? " and " + d.essence() + " essence." : ".");
     }
@@ -151,7 +159,8 @@ public final class Bounties {
 
     private static void turnIn(ServerPlayer p, BountyState s, int i, BountyDef d) {
         BountyState.Taken t = s.taken.remove(i);
-        if (d.objective().type().equals("collect")) take(p, d.objective().target(), d.objective().count());
+        if (d.objective().type().equals("collect") && !d.keep()) take(p, d.objective().target(), d.objective().count());
+        if (d.featured()) Progression.setCounter(p, doneKey(t.id()), 1);
         String claim = "awaken:claim/bounty/" + t.id() + "/" + s.done;
         if (Progression.profile(p).counter(claim) == 0) {
             Progression.setCounter(p, claim, 1);
