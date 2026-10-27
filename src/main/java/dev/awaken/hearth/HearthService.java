@@ -103,6 +103,8 @@ public final class HearthService {
             scanQueue.clear();
             REST.clear();
             RESPAWNING.clear();
+            BED_WAITING.clear();
+            BED_ASKED.clear();
             forgetPeople();
         });
     }
@@ -424,16 +426,24 @@ public final class HearthService {
 
     // ---- respawn ----------------------------------------------------------------------------------------------------
     //
-    // Once you use your fire or Anchor you wake there after any fall, anywhere, until you choose another bed yourself: a
-    // bed or respawn anchor you sleep in (or set your spawn at) outside your Hearth's land, and you're told so (SPEC
-    // §28.10). Nothing else moves it: not the old body's bed copied onto the new one at every respawn, not a reset to
-    // nothing, not our own systems (an inn room is lent for one fall, then given back), not /spawnpoint. With no bed
-    // elsewhere (none set, or gone) a player with a Hearth wakes there rather than at world spawn.
+    // Once you use your fire or Anchor you wake there after any fall, anywhere, until you choose another bed yourself
+    // (SPEC §28.10). Sleeping in a bed (or using a respawn anchor) off your land doesn't move it: your Hearth stays your
+    // spawn and, once you're up, a card asks whether to wake at that bed instead; only Y moves it. Nothing else does: not
+    // the old body's bed copied onto the new one at every respawn, not a reset to nothing, not our own systems (an inn
+    // room is lent for one fall, then given back), not /spawnpoint. With no bed elsewhere (none set, or gone) a player
+    // with a Hearth wakes there rather than at world spawn.
 
     /** The server tick each player's respawn ran: their old bed, copied onto the new body in that tick, is no choice. */
     private static final Map<UUID, Integer> RESPAWNING = new HashMap<>();
-    /** Set while one of our own systems moves a respawn point ({@link #systemRespawn}). */
+    /** Set while one of our own systems moves a respawn point ({@link #systemRespawn}) or the player's Y does. */
     private static boolean systemSpawn;
+    /** A bed slept in off your land: offered once you're up. */
+    private record BedAsk(ServerPlayer.RespawnConfig bed, long day) {}
+    /** Beds waiting to be offered, and the bed last offered to each player (asked once a play-day per bed). */
+    private static final Map<UUID, BedAsk> BED_WAITING = new HashMap<>(), BED_ASKED = new HashMap<>();
+    /** The offer's key in {@link Offers} and how long the card waits for Y. */
+    static final String BED_OFFER = "bed";
+    private static final int BED_OFFER_TTL = 20 * 45;
 
     private static void onSetSpawn(PlayerSetSpawnEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer sp) || systemSpawn || e.isForced() || e.getNewSpawn() == null) return;
@@ -443,27 +453,79 @@ public final class HearthService {
         BlockPos bed = e.getNewSpawn();
         if (level == null || !level.isLoaded(bed) || !isBed(level.getBlockState(bed))) return;
         HearthPlayer hp = player(sp);
-        hp.lent = null;
         String dim = e.getSpawnLevel().identifier().toString();
         Optional<HearthRecord> home = data(server).hearthsOf(sp.getUUID()).stream()
                 .filter(h -> h.dimension.equals(dim) && h.contains(bed)).findFirst();
         if (home.isPresent()) {
             // a bed at home: you wake at home (this one, of those you share)
+            hp.lent = null;
             hp.respawnAtHearth = true;
             hp.respawnHearth = home.get().owner;
             return;
         }
+        if (!hp.respawnAtHearth || wakeHearth(sp).isEmpty()) {
+            hp.lent = null; // no Hearth to keep: the bed is your spawn, as in vanilla
+            return;
+        }
+        // your Hearth stays your spawn (and no "Respawn point set"); the bed is offered once you're up
+        e.setCanceled(true);
+        ServerPlayer.RespawnConfig chosen = new ServerPlayer.RespawnConfig(
+                net.minecraft.world.level.storage.LevelData.RespawnData.of(e.getSpawnLevel(), bed, sp.getYRot(), sp.getXRot()), false);
+        long day = PlayDays.current(server);
+        BedAsk asked = BED_ASKED.get(sp.getUUID());
+        if (asked != null && asked.day == day && asked.bed.isSamePosition(chosen)) return; // asked about this bed today
+        BED_WAITING.put(sp.getUUID(), new BedAsk(chosen, day));
+    }
+
+    /** Once a second: a bed waiting to be offered, once the player is up (asleep, the card would wait behind the bed). */
+    static void offerWaitingBed(ServerPlayer sp) {
+        if (sp.isSleeping()) return;
+        BedAsk ask = BED_WAITING.remove(sp.getUUID());
+        if (ask == null) return;
+        Optional<HearthRecord> h = wakeHearth(sp);
+        if (h.isEmpty() || !player(sp).respawnAtHearth) return;
+        BED_ASKED.put(sp.getUUID(), ask);
+        String home = h.get().displayName();
+        Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Wake at this bed instead?"))
+                .body(Component.literal(home + " is still where you wake if you fall. You can make this bed your spawn instead."))
+                .choice(Offers.offer(sp, BED_OFFER, BED_OFFER_TTL, p -> chooseBed(p, ask.bed)), "Wake at this bed", "Keep " + home)
+                .ttl(BED_OFFER_TTL).priority(4).build());
+        DirectorLog.log(sp, "hearth", "offered the bed at " + ask.bed.respawnData().pos().toShortString() + " (" + home + " kept)");
+    }
+
+    /** Whether a bed is waiting to be offered to this player (tests). */
+    static boolean bedWaiting(UUID player) {
+        return BED_WAITING.containsKey(player);
+    }
+
+    /** Y on the bed's card: the bed becomes the player's spawn, and they're told how to come home again. */
+    static void chooseBed(ServerPlayer sp, ServerPlayer.RespawnConfig bed) {
+        MinecraftServer server = sp.level().getServer();
+        ServerLevel level = server.getLevel(bed.respawnData().globalPos().dimension());
+        BlockPos at = bed.respawnData().pos();
+        if (level == null || level.isLoaded(at) && !isBed(level.getBlockState(at))) {
+            sp.sendOverlayMessage(Component.literal("That bed is gone."));
+            return;
+        }
         Optional<HearthRecord> was = wakeHearth(sp);
-        if (!hp.respawnAtHearth || was.isEmpty()) return;
+        systemSpawn = true;
+        try {
+            sp.setRespawnPosition(bed, true);
+        } finally {
+            systemSpawn = false;
+        }
+        HearthPlayer hp = player(sp);
+        hp.lent = null;
         hp.respawnAtHearth = false;
-        HearthRecord h = was.get();
+        String home = was.map(HearthRecord::displayName).orElse("home");
+        String use = was.map(h -> h.hearthfire() ? "fire" : "Anchor").orElse("fire");
         Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("You'll wake at this bed now"))
-                .body(Component.literal("If you fall, you wake here, not at " + h.displayName() + ". Use your "
-                        + (h.hearthfire() ? "fire" : "Anchor") + " there to wake at home again."))
+                .body(Component.literal("If you fall, you wake here, not at " + home + ". Use your " + use + " there to wake at home again."))
                 .ttl(20 * 8).priority(4).build());
-        dev.awaken.Awaken.LOG.info("[hearth] {} chose a bed at {} in {}: they wake there now, not at {} ({})",
-                sp.getGameProfile().name(), bed.toShortString(), dim, h.displayName(), h.pos.toShortString());
-        DirectorLog.log(sp, "hearth", "chose a bed at " + bed.toShortString() + " in " + dim + ": wakes there now, not at " + h.displayName() + " (told)");
+        String dim = bed.respawnData().globalPos().dimension().identifier().toString();
+        dev.awaken.Awaken.LOG.info("[hearth] {} chose a bed at {} in {}: they wake there now, not at {}", sp.getGameProfile().name(),
+                at.toShortString(), dim, home);
+        DirectorLog.log(sp, "hearth", "chose a bed at " + at.toShortString() + " in " + dim + ": wakes there now, not at " + home + " (told)");
         HearthViews.refresh(sp);
     }
 
@@ -626,6 +688,7 @@ public final class HearthService {
 
     private static void onPlayerTick(PlayerTickEvent.Post e) {
         if (!(e.getEntity() instanceof ServerPlayer sp) || sp.tickCount % 20 != 0 || !enabled()) return;
+        if (!BED_WAITING.isEmpty()) offerWaitingBed(sp);
         if (!(sp.level() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) {
             REST.remove(sp.getUUID());
             if (sp.getData(HearthContent.HERE.get()).in()) sp.setData(HearthContent.HERE.get(), dev.awaken.hearth.player.RoomHere.NONE);

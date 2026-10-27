@@ -38,7 +38,8 @@ import net.minecraft.world.phys.Vec3;
  * GameTests for waking at your Hearth (SPEC §28.10), one per way it was lost: falling twice (the old body's bed, copied
  * onto the new body at every respawn, read as a bed chosen elsewhere and switched home off: Euan woke at world spawn,
  * 27 Oct), a fall in a gate after quitting and coming back, an inn room lent for one fall and given back, and a bed
- * chosen elsewhere (the one thing that moves it, and it says so). Each fall is the server's own respawn.
+ * slept in elsewhere (home is kept and the bed offered; only Y on that card moves it, and it says so). Each fall is the
+ * server's own respawn.
  */
 final class RespawnTests {
     private RespawnTests() {}
@@ -213,15 +214,24 @@ final class RespawnTests {
                 away = bed(level, r.pos, 60);
                 sp.setRespawnPosition(spawnAt(level, home), true);
                 h.assertTrue(hp.respawnAtHearth, "a bed on your own land keeps home");
-                // a bed chosen elsewhere moves it, and you're told
+                // sleeping in a bed off your land keeps your Hearth as your spawn, and offers the bed once you're up
                 sp.setRespawnPosition(spawnAt(level, away), true);
-                h.assertFalse(hp.respawnAtHearth, "a bed elsewhere moves where you wake");
+                h.assertTrue(hp.respawnAtHearth && sp.getRespawnConfig() != null && sp.getRespawnConfig().respawnData().pos().equals(home),
+                        "sleeping elsewhere doesn't move your spawn");
+                HearthService.offerWaitingBed(sp);
+                h.assertTrue(Offers.open(sp.getUUID(), HearthService.BED_OFFER), "the card offers the bed");
+                sp.setRespawnPosition(spawnAt(level, away), true);
+                h.assertFalse(HearthService.bedWaiting(sp.getUUID()), "the same bed is asked about once a day");
+                // Y: the bed is your spawn, and you're told
+                h.assertTrue(Offers.accept(sp, HearthService.BED_OFFER), "Y on the card");
+                h.assertFalse(hp.respawnAtHearth, "the bed you chose is where you wake");
+                h.assertTrue(sp.getRespawnConfig() != null && sp.getRespawnConfig().respawnData().pos().equals(away), "and it is your spawn");
                 h.assertTrue(DirectorLog.recent(sp.getUUID(), 20).stream().anyMatch(e -> e.detail().contains("chose a bed")), "and says so");
                 h.assertTrue(HearthService.wakesAt(sp).isEmpty(), "the guide says the bed you chose");
-                // a bed at home chooses home again; then away once more
+                // a bed at home chooses home again; then the bed elsewhere once more
                 sp.setRespawnPosition(spawnAt(level, home), true);
                 h.assertTrue(hp.respawnAtHearth, "sleeping at home chooses home again");
-                sp.setRespawnPosition(spawnAt(level, away), true);
+                HearthService.chooseBed(sp, spawnAt(level, away));
                 h.assertFalse(hp.respawnAtHearth, "and the bed elsewhere once more");
                 sp = fall(sp);
                 h.assertTrue(sp.blockPosition().closerThan(away, 3), "you wake at the bed you chose (at " + where(sp) + ")");

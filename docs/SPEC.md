@@ -7784,12 +7784,20 @@ bed set your point; giving the room back left you none).
 **The rule.** Once you use your fire or Anchor (or set the Ember down, or sleep in a bed on your Hearth's land) you wake
 there after any fall, anywhere: the overworld, a gate, the Descent (the Hearth's listener runs after the Descent's
 checkpoint, as before), other dimensions. Only the End fight's exit is left to vanilla. It holds until you choose another
-bed yourself.
-- **Choosing another bed** (`HearthService.onSetSpawn`): a spawn the player sets in play, not forced, at a bed or a
-  respawn anchor (the block there is checked), outside the land of every Hearth they belong to. A bed on the land of a
-  Hearth they belong to chooses that Hearth (`respawn_hearth` = its owner) and turns waking there back on. Choosing a bed
-  elsewhere tells you: a notice "You'll wake at this bed now" ("If you fall, you wake here, not at <name>. Use your
-  fire/Anchor there to wake at home again."), a `[hearth]` log line and a director-log line.
+bed yourself (Euan 2026-10-27: "I'd want my hearth to always be my spawn, even if I sleep in a different bed. Unless I
+really want to update it and it's a choice").
+- **Sleeping elsewhere keeps home** (`HearthService.onSetSpawn`): a spawn the player sets in play (not forced) at a bed or
+  a respawn anchor (the block there is checked) outside the land of every Hearth they belong to is cancelled while they
+  wake at a Hearth: no "Respawn point set", the spawn stays as it was. Once they're up (checked once a second, never
+  while asleep) a choice card asks "Wake at this bed instead?" ("<name> is still where you wake if you fall. You can make
+  this bed your spawn instead."; Y "Wake at this bed", N "Keep <name>", 45 s, `Offers` key `bed`). Each bed is asked
+  about once a play-day.
+- **Choosing another bed**: only Y on that card (`HearthService.chooseBed`, the bed re-checked). It sets the spawn
+  ("Respawn point set"), turns waking at home off and tells you: a notice "You'll wake at this bed now" ("If you fall,
+  you wake here, not at <name>. Use your fire/Anchor there to wake at home again."), a `[hearth]` log line and a
+  director-log line. Without a Hearth (or with waking there off) a bed is your spawn as in vanilla.
+- A bed on the land of a Hearth they belong to chooses that Hearth (`respawn_hearth` = its owner) and turns waking there
+  back on.
 - **Never a choice**: the old body's point copied in a respawn (any spawn set in the server tick a respawn ran is
   ignored), a reset to nothing, a forced point (`/spawnpoint`), and our own systems, which move a respawn point through
   `HearthHooks.lendRespawn` / `returnRespawn` (`HearthHooks.Lookup.systemRespawn`).
@@ -7810,8 +7818,8 @@ bed yourself.
   respawn, each by the fire with home kept; with the flag off and no bed, still home), `hearth_respawn_gate_relog` (the
   save holds it, quit and come back through the login's load, a fall in the gates level wakes by the fire),
   `hearth_respawn_inn_keeps` (a room's one fall at the inn, home after; a room given back unused), and
-  `hearth_respawn_bed_elsewhere` (a reset and a bed at home keep it; a bed elsewhere moves it and says so; the fall wakes
-  there; that bed broken, home).
+  `hearth_respawn_bed_elsewhere` (a reset and a bed at home keep it; sleeping elsewhere keeps it and offers the bed, once
+  a day; Y moves it and says so; the fall wakes there; that bed broken, home).
 
 ---------------------------------------------------------------------------------------------------------------------
 

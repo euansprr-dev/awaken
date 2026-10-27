@@ -159,8 +159,8 @@ Package `dev.awaken.hearth.settle` (and `TierRules`, `stage/HomeStage`, `kit/Hom
 
 **Anchor and data** (`HearthService`, `HearthData`, `HearthRecord`). One Hearth per player, overworld only, saved in
 `data/awaken/hearths.dat`. `HearthHooks` installed (nearest / hearthOf). Respawn: placing or using your Anchor sets
-`respawnAtHearth`; `PlayerRespawnPositionEvent` sends you to a safe spot beside it after any fall, anywhere. Only a bed or
-respawn anchor you choose off your land switches it off (and says so); the respawn's own copy of your old bed, a reset,
+`respawnAtHearth`; `PlayerRespawnPositionEvent` sends you to a safe spot beside it after any fall, anywhere. Sleeping in a bed off your land keeps it and offers that bed
+on a choice card once you're up; only Y switches home off (and says so); the respawn's own copy of your old bed, a reset,
 `/spawnpoint` and an inn room (lent for one fall through `HearthHooks.lendRespawn`) never do; with no bed elsewhere you wake
 at home, never at world spawn (SPEC §28.10). Only the
 owner (or an op) can break it. Upkeep runs once a second per Hearth, staggered by owner, and never allocates.
