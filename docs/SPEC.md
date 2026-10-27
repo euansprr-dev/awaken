@@ -5114,18 +5114,37 @@ of the plan). No mixins.
   full nothing. Settings (feel): `firstPersonMoves` (P1-P3) and `firstPersonTouches` (P4), both on.
 - **Station scenes** (P5, `anims.client.station`): at a crafting table (used within 10 ticks of its screen opening, not
   sneaking: sneak + use is the plain screen) the screen is replaced by `StationScreen` (kind `TABLE`), the vanilla
-  crafting menu with its grid and result drawn on the table in the world instead of on the screen. The view turns to the table's top and
-  narrows (×0.64) over 12 ticks (6 coming back within 12 s), out over 10; the player's own look never moves. Each
+  crafting menu with its grid and result drawn on the table in the world instead of on the screen. Each
   ingredient lies on its square (the grid square to the block, row 0 the far one; the way in snapped to an axis), the
-  result floats over the middle turning, the square under the cursor is outlined (Holo blue). A click on a square or on
-  the result is the same click on that slot (`slotClicked`, the menu's own path: stacks, splits, shift-clicks, the server
-  checks), and the grid's screen places are never hovered or drawn. Your inventory is a glass strip at the foot of the
-  screen. Your hands (world source `anims_station`, 200) rest off the table's near corners and one goes out to every
+  result floats over the top's far edge (0.5 out from the middle, 0.25 up; over the middle it hid the far middle square)
+  turning, the square under the cursor (and every square a drag has passed over,
+  showing what it will get) is outlined (Holo blue).
+  - **Layout** (`anims.station.StationView`, common so the tests run it headless): your inventory is a glass strip at
+    the foot of the screen (vanilla's image, `top` = screen height - 165, the strip over its rows), the hint over it
+    (wrapped to the room's width, centred), and above the hint the *room*: the middle half of the screen's width with
+    JEI loaded (at least the strip's width), else the screen's width less 8 each side, from 6 px down to 4 px over the
+    hint. The screen reports room and strip as its area (`getLeftPos`/`getTopPos`/`getImageWidth`/`getImageHeight`),
+    so JEI's list and bookmarks keep to the sides. Hints: "Works just like a crafting grid. Sneak as you open it for the
+    usual screen." and the furnace's.
+  - **The view** frames the station: from your eye, the yaw, pitch and vertical field of view that fit every slot (a
+    grid square ±0.15, the result ±0.15, a furnace's opening) inside the room, 6 % to spare, turned so they sit in its
+    middle (`StationView.frame`, recomputed each tick; at most 100° or 1.5× your FOV setting). It eases in over 12 ticks
+    (6 coming back within 12 s), out over 10; the player's own look never moves. Standing 1 to 4 blocks from a table at
+    any GUI scale the framing stays under 100°; pressed right against it (under 1 block) the near edge can reach the hint.
+  - **Clicks are vanilla's**: the scene screen is vanilla's own container screen, and a station slot is under the
+    cursor where the world shows its square (`isHovering` answers from a ray through the view as drawn; the slots'
+    old screen places are never hovered or drawn). So every mouse and key rule of the crafting grid holds: left click
+    lays the held stack or takes it, right click lays one or takes half, left-drag splits evenly, right-drag lays one
+    per square, double-click collects, shift-click on the result crafts all it can into the inventory and a plain click
+    takes one craft, number keys, Q and the pick key work on the hovered square or slot, shift-click from the inventory
+    moves into the grid; all through the menu's own clicks, which the server checks. Only a point inside the room picks
+    a square: a click on the strip, the hint or a side panel never reaches the station. A click outside the room and
+    the strip drops what you carry, as off any container screen. Your hands (world source `anims_station`, 200) rest off the table's near corners and one goes out to every
   square whose contents change (and to the result as it is taken), over 9 ticks; moving, jumping, E or Esc leave.
   A hand moves only within 6 ticks of your own click on a slot, so a furnace cooking on its own moves none; taking a
   result moves the hand to the result only. Furnaces (kind `FURNACE`: furnace, smoker, blast furnace, any
   `AbstractFurnaceScreen`): worked from the front (the way in against `FACING`), the view turned to the front's middle
-  (a little below its middle) and narrowed ×0.78; what cooks sits upright in the mouth (0.68 up, 0.06 out), the fuel in the firebox (0.24 up), the
+  (a little below its middle) and framed like the table; what cooks sits upright in the mouth (0.68 up, 0.06 out), the fuel in the firebox (0.24 up), the
   result floats out at the right (0.34 out, 0.36 across, 0.62 up) turning; a slot is picked by the nearest one the ray
   passes within 0.16 of, outlined flat to the front; the cooking (Holo blue) and the fuel left (fire) run as two thin
   lines over the strip; the hands wait at your sides under the frame (the fuel is the off hand's, the rest the main's). The
@@ -5135,7 +5154,11 @@ of the plan). No mixins.
   legs) has its view x and y scaled by tan(35°) / tan(world FOV / 2), so it lands where the world shows it on screen even
   with the view narrowed or widened (a station's zoom, the speed FOV).
 - Test: `anims_fp_clips` (the file reads, every clip the body and the touches play is in it, every one-shot gives the
-  hands back). Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),
+  hands back). The table scene: `anims_station_frame` (seven GUI sizes from 320×240 to 1280×720, with and without JEI,
+  standing 1 to 4 blocks off each side: every slot lies inside the room and a click on its middle picks it),
+  `anims_station_panel_click` (a square under the strip while leaning in: a click there picks nothing), and the clicks
+  vanilla's screen sends on a real crafting menu: `anims_station_right_click`, `_right_drag`, `_left_drag`,
+  `_shift_result`. Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),
   `anims-touch.txt` (P4: filmed with the pilot's clip recorder, since a command reaches the client a few ticks late),
   `anims-station.txt` (P5), PACK=feel, HUD on. Pilot lines `use`, `attack`, `usehold <ticks>` press the real keys;
   `station <slot> [button]` clicks a slot of the open station scene.
