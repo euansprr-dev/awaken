@@ -7426,6 +7426,11 @@ or smoothed terrain faces, no texture above 16×16.
 - **Tour**: `tools/autopilot/ground-p0.txt` (CI look tour): a control scene (step, pillar, path, coarse dirt, gravel, sand
   beside grass) on and off, five biomes at eye height, the drift on and off.
 
+- **The pack** (skeleton, so every later phase shares it): `datapacks/awakened_ground` behind the feature flag
+  `awaken:awakened_ground` (declared in META-INF/feature_flags.json; `GroundModule.PACK_ID`), the way Lands, Alpine and
+  Villages are: a world created with the flag loads it, an older world never does. P1, P2 and P4 put their worldgen in it
+  (P3 extends Awakened Alpine's own pack and flag).
+
 ### 31.2 Planned (PLAN.md sections 4-9; not built)
 P1 soft steps (the foot rule on the natural WG heightmap at `local_modifications`, before the painters; our slab blocks,
 tufts inside the slab's block, spawn tags, `GroundTop`, Ascent tests); P2 the floor (retuned vanilla features, pebbles,
