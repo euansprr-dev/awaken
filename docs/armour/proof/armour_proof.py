@@ -148,18 +148,19 @@ def mail(face, i, j, fw, fh, o):
 
 
 def scale(face, i, j, fw, fh, o):
+    """Scales three texels wide and three tall, each row offset by one: a lit crown, a base tone, a shadowed lower lip and a seam."""
     r = o.get("ramp", "lord")
-    row = j // 2
-    c = (i + (row % 2)) // 2
-    step = o.get("base", 3) + FACE[face]
-    if j % 2 == 0:
-        step += 2                           # the lit edge of each scale
-    else:
-        step -= 1
-    if (c + row) % 5 == 0 and j % 2 == 1:
-        step += 1
+    row = j // 3
+    c = (i + (row % 2)) % 3
+    k = j % 3
+    step = o.get("base", 3) + (1 if face == "up" else 0)
+    step += {0: 2, 1: 0, 2: -2}[k]
+    if c == 0:
+        step -= 1                           # the seam between two scales
+    elif c == 1 and k == 0:
+        step += 1                           # the crown catches the light
     step += bevel(face, i, j, fw, fh, top=1) if o.get("bevel", True) else 0
-    if o.get("rim") and face in SIDES and (j >= fh - 1 or i == 0):
+    if o.get("rim") and face in SIDES and (j >= fh - 1 or i == 0) and fh > 3:
         return col(o["rim"], 4), None
     return col(r, step), None
 
@@ -167,9 +168,9 @@ def scale(face, i, j, fw, fh, o):
 def hide(face, i, j, fw, fh, o):
     r = o.get("ramp", "pelt")
     step = o.get("base", 3) + FACE[face]
-    if (i * 5 + j * 3) % 7 in (0, 1):
-        step -= 1
-    elif (i * 3 + j * 5) % 9 == 0:
+    if (i * 5 + (j // 2) * 3) % 7 in (0, 1):
+        step -= 1                           # a strand, two texels long
+    elif (i * 3 + (j // 2) * 5) % 9 == 0:
         step += 1
     if o.get("fringe") and face in SIDES and j >= fh - 1:
         step += 1 if i % 2 == 0 else -2
