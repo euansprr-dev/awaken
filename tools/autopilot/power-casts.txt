@@ -1,6 +1,6 @@
 # Power casts, the proof (docs/power-anims/PLAN.md, phase P0): the stamp (Shockwave) and the beam (Energy) in first
-# person, the third-person front and from behind, filmed with the clip recorder (clips: run-autopilot/clips/pc_*), and a few
-# stills. Run with PACK=feel (the animation library, Bendable Cuboids and Shoulder Surfing are what third person is made of),
+# person, the third-person front and from behind, filmed with the clip recorder (clips: run-autopilot/clips/pc_*) in slow
+# motion (/tick rate 4: the CI runner renders a few frames a second, so at full speed a 15-tick cast is two frames). Run with PACK=feel (the animation library, Bendable Cuboids and Shoulder Surfing are what third person is made of),
 # HUD on. Watch: the boot rising into the bottom of the frame and the plant; the wave starting under the planted foot; the
 # beam leaving the main palm in first person and from behind and the front; the gather at the chest; nothing through the body.
 # Look tour: tools/tour-ci.sh tools/autopilot/power-casts.txt 1500 PACK=feel
@@ -44,86 +44,82 @@ look 0 6
 wait 20
 shotnow pc_rest_fp
 
+# every cast is filmed at a fifth of the speed (the game's own tick rate, so the animation, the effects and the hit-stop
+# all slow together), then the rate is put back
 # ---- the stamp, first person: boot up, hang, plant, wave ----
-cmd awaken ascent pilot rec pc_stomp_fp 30 2
-wait 3
-cmd awaken admin power cast shockwave
+cmd awaken admin power reset
+cmd tick rate 4
 wait 4
-shotnow pc_stomp_fp_a
-wait 3
-shotnow pc_stomp_fp_b
-wait 3
-shotnow pc_stomp_fp_c
-wait 3
-shotnow pc_stomp_fp_d
-wait 60
+cmd awaken ascent pilot rec pc_stomp_fp 40 2
+cmd awaken admin power cast shockwave
+wait 48
+cmd tick rate 20
+wait 40
 
 # ---- the stamp, third person: from the front (the knee, the hang, the plant), then from behind ----
 cmd awaken admin power reset
-cmd awaken admin energy full
 camera front
 look 0 4
 wait 20
-cmd awaken ascent pilot rec pc_stomp_front 34 2
-wait 3
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc_stomp_front 40 2
 cmd awaken admin power cast shockwave
-wait 90
+wait 48
+cmd tick rate 20
+wait 30
 cmd awaken admin power reset
-cmd awaken admin energy full
-camera third
+camera back
 look 0 4
 wait 20
-cmd awaken ascent pilot rec pc_stomp_back 34 2
-wait 3
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc_stomp_back 40 2
 cmd awaken admin power cast shockwave
-wait 90
+wait 48
+cmd tick rate 20
+wait 40
 
 # ---- the beam, first person: the gather at the chest, the fist to the aim, the beam from the palm, the hold ----
 cmd awaken admin power reset
-cmd awaken admin energy full
 camera first
 look 0 3
 wait 30
-cmd awaken ascent pilot rec pc_beam_fp 60 2
-wait 3
-cmd awaken admin power cast beam
+cmd tick rate 4
 wait 4
-shotnow pc_beam_fp_a
-wait 3
-shotnow pc_beam_fp_b
-wait 3
-shotnow pc_beam_fp_c
-wait 10
+cmd awaken ascent pilot rec pc_beam_fp 44 2
+cmd awaken admin power cast beam
+wait 52
+cmd tick rate 20
+wait 20
 shotnow pc_beam_fp_hold
-wait 40
-shotnow pc_beam_fp_hold2
 wait 100
 
 # ---- the beam, third person: from the front (both palms, the core), then from behind (the beam from the palm) ----
 cmd awaken admin power reset
-cmd awaken admin energy full
 camera front
 look 0 3
 wait 30
-cmd awaken ascent pilot rec pc_beam_front 60 2
-wait 3
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc_beam_front 44 2
 cmd awaken admin power cast beam
-wait 14
+wait 52
+cmd tick rate 20
+wait 20
 shotnow pc_beam_front_hold
-wait 30
-shotnow pc_beam_front_hold2
 wait 100
 cmd awaken admin power reset
-cmd awaken admin energy full
-camera third
+camera back
 look 0 3
 wait 30
-cmd awaken ascent pilot rec pc_beam_back 60 2
-wait 3
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc_beam_back 44 2
 cmd awaken admin power cast beam
-wait 14
+wait 52
+cmd tick rate 20
+wait 20
 shotnow pc_beam_back_hold
-wait 30
-shotnow pc_beam_back_hold2
 wait 110
 quit
