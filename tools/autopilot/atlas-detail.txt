@@ -1,0 +1,87 @@
+# The Atlas at every zoom (SPEC §16.8, 2026-10-27): the same spot by Carillon's High Gate from the closest zoom to the
+# farthest (each of the five levels: a column of 1, 2, 4, 8 and 16 blocks), then one shot mid-orbit. A look tour for CI:
+#   tools/tour-ci.sh tools/autopilot/atlas-detail.txt 900 PACK=perf,world TECTONIC=awakened
+# `atlas stats` after each shot logs the slices built per level, the quads, the GPU memory and the build times.
+world atlasDetail creative 20261027
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 4000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+info
+hud off
+# know the city and a ring of land round it, so the far zooms have something to show
+cmd awaken city view square
+wait 160
+cmd awaken atlas ring city
+wait 20
+cmd tp @s ~360 ~ ~
+wait 140
+cmd awaken atlas reveal 220
+cmd tp @s ~ ~ ~360
+wait 140
+cmd awaken atlas reveal 220
+cmd tp @s ~-360 ~ ~
+wait 140
+cmd awaken atlas reveal 220
+cmd tp @s ~-360 ~ ~
+wait 140
+cmd awaken atlas reveal 220
+cmd tp @s ~ ~ ~-360
+wait 140
+cmd awaken atlas reveal 220
+cmd tp @s ~ ~ ~-360
+wait 140
+cmd awaken atlas reveal 220
+cmd tp @s ~360 ~ ~
+wait 140
+cmd awaken atlas reveal 220
+cmd tp @s ~360 ~ ~
+wait 140
+cmd awaken atlas reveal 220
+# the spot: by the High Gate, in the walls
+cmd awaken city view studio_high_gate
+wait 160
+cmd awaken atlas stats
+cmd atlas open 20 55 2.5
+wait 120
+shot atlas_z1_closest
+cmd atlas stats
+cmd atlas view 20 55 1
+wait 100
+shot atlas_z2_close
+cmd atlas stats
+cmd atlas view 20 55 0.35
+wait 120
+shot atlas_z3_middle
+cmd atlas stats
+cmd atlas view 20 55 0.17
+wait 140
+shot atlas_z4_far
+cmd atlas stats
+cmd atlas view 20 58 0.08
+wait 160
+shot atlas_z5_farther
+cmd atlas stats
+cmd atlas view 20 60 0.035
+wait 180
+shot atlas_z6_farthest
+cmd atlas stats
+# mid-orbit, at the middle zoom (the moving picture: 60% resolution, smoothed)
+cmd atlas view 20 55 0.25
+wait 120
+cmd atlas spin 40
+wait 15
+shot atlas_orbit
+cmd atlas spin 0
+cmd atlas stats
+screen close
+quit
