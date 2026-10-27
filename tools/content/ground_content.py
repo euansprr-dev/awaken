@@ -165,12 +165,80 @@ def tags_and_lang():
     write(f"{MERGE}/assets/awaken/lang/en_us.json", {f"block.awaken.{k}": v for k, v in NAMES.items()})
 
 
+# ---- P2: pebbles and twigs -----------------------------------------------------------------------------------------------
+PEBBLE_KINDS = ["stone", "andesite", "granite", "diorite"]
+# the stones of a pebbles block, in sixteenths: (from, to, turn in degrees about its own centre)
+PEBBLE_SETS = {
+    1: [([5.5, 0, 5], [10.5, 2.5, 9.5], 0)],
+    2: [([3, 0, 4], [7.5, 2, 8.5], 22.5), ([9, 0, 8], [12.5, 3, 12], -22.5)],
+    3: [([2.5, 0, 3.5], [6.5, 2, 7.5], -22.5), ([8.5, 0, 2.5], [12, 2.5, 6.5], 22.5), ([6, 0, 9], [10.5, 3, 13], 0)],
+}
+TWIG_WOODS = ["oak_log", "birch_log", "spruce_log"]
+TWIG_STICKS = [([1, 0, 6.5], [14, 1.2, 8.2], 0), ([3, 0, 8.8], [15, 1, 10], 22.5), ([0, 0, 4], [9, 1, 5.3], -22.5)]
+
+
+def box(frm, to, turn, tex="#t"):
+    faces = {f: {"texture": tex} for f in ("down", "up", "north", "south", "west", "east")}
+    el = {"from": frm, "to": to, "faces": faces}
+    if turn:
+        el["rotation"] = {"origin": [(frm[0] + to[0]) / 2, 0, (frm[2] + to[2]) / 2], "axis": "y", "angle": turn}
+    return el
+
+
+def cover_assets():
+    for k, tex in enumerate(PEBBLE_KINDS):
+        for n, stones in PEBBLE_SETS.items():
+            write(f"{ASSETS}/models/block/pebbles_{k}_{n}.json", {"textures": {"particle": mc("block/" + tex), "t": mc("block/" + tex)},
+                                                                    "elements": [box(a, b, t) for a, b, t in stones]})
+    variants = {}
+    for k in range(4):
+        for n in range(1, 4):
+            variants[f"kind={k},stones={n}"] = [{"model": aw(f"block/pebbles_{k}_{n}"), "y": y} for y in (0, 90, 180, 270)]
+    write(f"{ASSETS}/blockstates/pebbles.json", {"variants": variants})
+    write(f"{ASSETS}/items/pebbles.json", {"model": {"type": mc("model"), "model": aw("block/pebbles_0_3")}})
+    for w, tex in enumerate(TWIG_WOODS):
+        write(f"{ASSETS}/models/block/twigs_{w}.json", {"textures": {"particle": mc("block/" + tex), "t": mc("block/" + tex)},
+                                                          "elements": [box(a, b, t) for a, b, t in TWIG_STICKS]})
+    variants = {}
+    for w in range(3):
+        for facing, y in (("east", 0), ("south", 90), ("west", 180), ("north", 270)):
+            variants[f"wood={w},facing={facing}"] = {"model": aw(f"block/twigs_{w}"), "y": y}
+    write(f"{ASSETS}/blockstates/twigs.json", {"variants": variants})
+    write(f"{ASSETS}/items/twigs.json", {"model": {"type": mc("model"), "model": aw("block/twigs_0")}})
+    write(f"{DATA}/loot_table/blocks/pebbles.json", {"type": mc("block"), "pools": [{"rolls": 1, "entries": [
+        {"type": mc("item"), "name": aw("pebbles"), "modifier": [{"type": mc("explosion_decay")}]}]}], "random_sequence": aw("blocks/pebbles")})
+    write(f"{DATA}/loot_table/blocks/twigs.json", {"type": mc("block"), "pools": [{"rolls": 1, "entries": [
+        {"type": mc("item"), "name": mc("stick"), "modifier": [
+            {"type": mc("set_count"), "count": {"type": mc("uniform"), "min": 1, "max": 2}}, {"type": mc("explosion_decay")}]}]}],
+        "random_sequence": aw("blocks/twigs")})
+    # tags for the footsteps work later: what the ground is made of underfoot
+    tags = {
+        "awaken:ground/litter": [mc("leaf_litter")],
+        "awaken:ground/brush": [mc(n) for n in ("short_grass", "tall_grass", "fern", "large_fern", "bush")] + [aw("turf_slab")],
+        "awaken:ground/gravel": [mc("gravel"), aw("gravel_slab"), aw("pebbles")],
+        "awaken:ground/small_things": [aw("pebbles"), aw("twigs")],
+        # the rock a boulder is made of (and its slabs): wild life perches on it as on bare stone (wildlife.client.Sites)
+        "awaken:ground/perch_rock": [mc(n) for n in ("mossy_cobblestone", "cobblestone", "sandstone", "red_sandstone", "stone_slab", "andesite_slab",
+                                                      "granite_slab", "diorite_slab", "tuff_slab", "cobblestone_slab", "mossy_cobblestone_slab",
+                                                      "sandstone_slab", "red_sandstone_slab")],
+    }
+    for tag, values in tags.items():
+        ns, path = tag.split(":")
+        write(f"{MERGE}/data/{ns}/tags/block/{path}.json", {"values": values})
+    lang = {"block.awaken.pebbles": "Pebbles", "block.awaken.twigs": "Twigs"}
+    path = f"{MERGE}/assets/awaken/lang/en_us.json"
+    existing = json.load(open(path)) if os.path.exists(path) else {}
+    existing.update(lang)
+    write(path, existing)
+
+
 def main():
     plain_models()
     turf_models()
     loot()
     tags_and_lang()
-    print("ground_content: wrote", len(NAMES), "soft slabs")
+    cover_assets()
+    print("ground_content: wrote", len(NAMES), "soft slabs, pebbles and twigs")
 
 
 if __name__ == "__main__":

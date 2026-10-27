@@ -1,0 +1,9 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "awaken:lumen_forest",
+  "features": [
+    "awaken:ground/lumen_boulder_forest",
+    "awaken:ground/lumen_pebbles"
+  ],
+  "step": "vegetal_decoration"
+}

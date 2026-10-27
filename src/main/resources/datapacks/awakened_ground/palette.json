@@ -1,0 +1,200 @@
+{
+  "forest": {
+    "biomes": [
+      "minecraft:forest",
+      "minecraft:flower_forest",
+      "minecraft:dark_forest"
+    ],
+    "entries": [
+      {
+        "name": "fallen_oak",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "boulder_forest",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "pebbles",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "twigs_oak",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "moss_patch",
+        "ranks": "EDC"
+      }
+    ]
+  },
+  "birch": {
+    "biomes": [
+      "minecraft:birch_forest",
+      "minecraft:old_growth_birch_forest",
+      "awaken:elderwood"
+    ],
+    "entries": [
+      {
+        "name": "fallen_birch",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "boulder_forest",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "pebbles",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "twigs_birch",
+        "ranks": "EDCBAS"
+      }
+    ]
+  },
+  "lumen": {
+    "biomes": [
+      "awaken:lumen_forest"
+    ],
+    "entries": [
+      {
+        "name": "boulder_forest",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "pebbles",
+        "ranks": "EDCBAS"
+      }
+    ]
+  },
+  "taiga": {
+    "biomes": [
+      "minecraft:taiga",
+      "minecraft:old_growth_pine_taiga",
+      "minecraft:old_growth_spruce_taiga",
+      "minecraft:snowy_taiga"
+    ],
+    "entries": [
+      {
+        "name": "fallen_spruce",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "boulder_forest",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "pebbles",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "twigs_spruce",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "moss_patch",
+        "ranks": "EDC"
+      }
+    ]
+  },
+  "highland": {
+    "biomes": [
+      "#minecraft:is_hill",
+      "#minecraft:is_mountain"
+    ],
+    "entries": [
+      {
+        "name": "boulder_highland",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "pebbles",
+        "ranks": "EDCBAS"
+      }
+    ]
+  },
+  "plains": {
+    "biomes": [
+      "minecraft:plains",
+      "minecraft:sunflower_plains",
+      "minecraft:meadow",
+      "minecraft:cherry_grove"
+    ],
+    "entries": [
+      {
+        "name": "boulder_plains",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "pebbles",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "bush",
+        "ranks": "EDC"
+      }
+    ]
+  },
+  "savanna": {
+    "biomes": [
+      "#minecraft:is_savanna"
+    ],
+    "entries": [
+      {
+        "name": "boulder_plains",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "pebbles",
+        "ranks": "EDCBAS"
+      }
+    ]
+  },
+  "desert": {
+    "biomes": [
+      "minecraft:desert"
+    ],
+    "entries": [
+      {
+        "name": "boulder_desert",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "pebbles",
+        "ranks": "EDCBAS"
+      }
+    ]
+  },
+  "badlands": {
+    "biomes": [
+      "#minecraft:is_badlands"
+    ],
+    "entries": [
+      {
+        "name": "boulder_badlands",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "pebbles",
+        "ranks": "EDCBAS"
+      }
+    ]
+  },
+  "swamp": {
+    "biomes": [
+      "minecraft:swamp",
+      "minecraft:mangrove_swamp"
+    ],
+    "entries": [
+      {
+        "name": "twigs_oak",
+        "ranks": "EDCBAS"
+      },
+      {
+        "name": "moss_patch",
+        "ranks": "EDC"
+      }
+    ]
+  }
+}

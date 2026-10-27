@@ -1,0 +1,15 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": [
+    "minecraft:plains",
+    "minecraft:sunflower_plains",
+    "minecraft:meadow",
+    "minecraft:cherry_grove"
+  ],
+  "features": [
+    "awaken:ground/plains_boulder_plains",
+    "awaken:ground/plains_pebbles",
+    "awaken:ground/plains_bush"
+  ],
+  "step": "vegetal_decoration"
+}

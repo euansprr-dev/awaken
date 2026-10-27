@@ -19,6 +19,12 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
+import dev.awaken.ground.cover.PebblesBlock;
+import dev.awaken.ground.cover.TwigsBlock;
+import net.minecraft.core.Direction;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
@@ -28,6 +34,7 @@ final class GroundTests {
 
     static void register() {
         softTests();
+        floorTests();
         // a one-block riser wraps; a two-block riser (a cliff) does not; a side against a solid block is hidden and stays 0;
         // a side against a plant counts as open
         AwakenTests.register("ground_wrap_mask", 20, h -> {
@@ -309,5 +316,110 @@ final class GroundTests {
         } catch (java.io.IOException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    // ---- P2: the floor -----------------------------------------------------------------------------------------------------
+
+    private static boolean exists(String path) {
+        return GroundTests.class.getResource(path) != null;
+    }
+
+    private static void floorTests() {
+        // the palette is whole: every placed feature, own feature and biome modifier it names is in the pack, our boulder
+        // features and every block state they place decode
+        AwakenTests.register("ground_floor_data", 20, h -> {
+            String base = "/datapacks/awakened_ground/data/awaken/";
+            JsonObject table = read("/datapacks/awakened_ground/palette.json");
+            int placed = 0;
+            for (var group : table.entrySet()) {
+                JsonObject g = group.getValue().getAsJsonObject();
+                JsonArray entries = g.getAsJsonArray("entries");
+                h.assertTrue(!entries.isEmpty() && g.getAsJsonArray("biomes").size() > 0, group.getKey() + " has biomes and entries");
+                h.assertTrue(exists(base + "neoforge/biome_modifier/ground/floor_" + group.getKey() + ".json")
+                        || exists(base + "neoforge/biome_modifier/ground/floor_" + group.getKey() + "_1.json"), group.getKey() + " has its biome modifier");
+                for (JsonElement e : entries) {
+                    String name = group.getKey() + "_" + e.getAsJsonObject().get("name").getAsString();
+                    JsonObject pf = read(base + "worldgen/placed_feature/ground/" + name + ".json");
+                    String feature = pf.get("feature").getAsString();
+                    h.assertTrue(!pf.getAsJsonArray("placement").isEmpty(), name + " places somewhere");
+                    if (feature.startsWith("awaken:ground/")) {
+                        JsonObject f = read(base + "worldgen/feature/ground/" + feature.substring("awaken:ground/".length()) + ".json");
+                        if (f.get("type").getAsString().equals("awaken:boulder")) {
+                            var parsed = BoulderFeature.CODEC.codec().parse(JsonOps.INSTANCE, f);
+                            h.assertTrue(parsed.result().isPresent(), feature + " decodes: " + parsed.error());
+                        } else {
+                            for (JsonElement w : f.getAsJsonObject("to_place").getAsJsonArray("entries")) {
+                                var st = BlockState.CODEC.parse(JsonOps.INSTANCE, w.getAsJsonObject().get("data"));
+                                h.assertTrue(st.result().isPresent(), feature + " places a real state: " + st.error());
+                            }
+                        }
+                    }
+                    placed++;
+                }
+            }
+            h.assertTrue(placed >= 25, "the palette places " + placed + " features");
+            h.succeed();
+        });
+
+        // pebbles and twigs: no collision, a whole block under them, not on a half slab, gone when it goes; every state has a model
+        AwakenTests.register("ground_floor_blocks", 20, h -> {
+            BlockState pebbles = GroundCover.PEBBLES.get().defaultBlockState(), twigs = GroundCover.TWIGS.get().defaultBlockState();
+            h.setBlock(new BlockPos(1, 0, 1), Blocks.STONE);
+            h.setBlock(new BlockPos(3, 0, 1), SoftSlabs.TURF_SLAB.get());
+            var level = h.getLevel();
+            h.assertTrue(pebbles.canSurvive(level, h.absolutePos(new BlockPos(1, 1, 1))), "pebbles lie on stone");
+            h.assertFalse(pebbles.canSurvive(level, h.absolutePos(new BlockPos(3, 1, 1))), "pebbles don't lie on a half slab (they'd float)");
+            h.assertFalse(twigs.canSurvive(level, h.absolutePos(new BlockPos(5, 1, 1))), "twigs need ground");
+            for (BlockState s : GroundCover.PEBBLES.get().getStateDefinition().getPossibleStates()) {
+                h.assertTrue(s.getCollisionShape(level, BlockPos.ZERO).isEmpty() && !s.getShape(level, BlockPos.ZERO).isEmpty(), s + " has no collision and an outline");
+            }
+            for (BlockState s : GroundCover.TWIGS.get().getStateDefinition().getPossibleStates()) {
+                h.assertTrue(s.getCollisionShape(level, BlockPos.ZERO).isEmpty(), s + " has no collision");
+            }
+            h.assertTrue(PebblesBlock.KIND.getPossibleValues().size() == 4 && TwigsBlock.WOOD.getPossibleValues().size() == 3, "four stones, three barks");
+            h.assertTrue(twigs.setValue(TwigsBlock.FACING, Direction.NORTH).getShape(level, BlockPos.ZERO) != twigs.setValue(TwigsBlock.FACING, Direction.EAST).getShape(level, BlockPos.ZERO), "twigs lie along their way");
+            // assets exist for every state (the generator wrote them)
+            for (int k = 0; k < 4; k++) for (int n = 1; n <= 3; n++) {
+                h.assertTrue(exists("/assets/awaken/models/block/pebbles_" + k + "_" + n + ".json"), "model pebbles_" + k + "_" + n);
+            }
+            for (int w = 0; w < 3; w++) h.assertTrue(exists("/assets/awaken/models/block/twigs_" + w + ".json"), "model twigs_" + w);
+            h.succeed();
+        });
+
+        // a boulder: a rounded mass of its palette's rock, half sunk, crowned with slabs; none over water; none without natural ground
+        AwakenTests.registerIsolated("ground_floor_boulder", 60, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos o = h.absolutePos(new BlockPos(0, 4, 0));
+            int x0 = o.getX() - 8, z0 = o.getZ() - 8, y0 = o.getY();
+            for (int dx = 0; dx <= 16; dx++) for (int dz = 0; dz <= 16; dz++) for (int y = y0 - 3; y <= y0 + 6; y++)
+                level.setBlock(new BlockPos(x0 + dx, y, z0 + dz), y < y0 ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), 2);
+            BoulderFeature forest = new BoulderFeature("forest", 3, 3);
+            BlockPos at = new BlockPos(o.getX(), y0, o.getZ());
+            h.assertTrue(forest.paint(level, at, 3, 99, level.getSeaLevel()), "a boulder grows on stone ground");
+            int rock = 0, slabs = 0, high = 0, mossy = 0;
+            for (int dx = 0; dx <= 16; dx++) for (int dz = 0; dz <= 16; dz++) for (int y = y0 - 3; y <= y0 + 6; y++) {
+                BlockState s = level.getBlockState(new BlockPos(x0 + dx, y, z0 + dz));
+                if (y >= y0 && !s.isAir()) {
+                    rock++;
+                    if (s.is(BlockTags.SLABS)) slabs++;
+                    if (s.is(Blocks.MOSSY_COBBLESTONE)) mossy++;
+                    if (y >= y0 + 1) high++;
+                }
+            }
+            h.assertTrue(rock >= 15 && rock <= 140, "a mass of rock above the ground: " + rock);
+            h.assertTrue(slabs > 0, "its crown is softened with slabs: " + slabs);
+            h.assertTrue(high > 0, "it stands at least two blocks high");
+            h.assertTrue(mossy > 0, "the forest palette is mossy: " + mossy);
+            // a second one over water is refused, and a ground that isn't natural is refused
+            for (int dx = 0; dx <= 16; dx++) for (int dz = 0; dz <= 16; dz++) for (int y = y0 - 3; y <= y0 + 6; y++)
+                level.setBlock(new BlockPos(x0 + dx, y, z0 + dz), y < y0 ? Blocks.STONE.defaultBlockState() : y == y0 ? Blocks.WATER.defaultBlockState() : Blocks.AIR.defaultBlockState(), 2);
+            h.assertFalse(forest.paint(level, at, 2, 5, level.getSeaLevel()), "no boulder in water");
+            for (int dx = 0; dx <= 16; dx++) for (int dz = 0; dz <= 16; dz++) for (int y = y0 - 3; y <= y0 + 6; y++)
+                level.setBlock(new BlockPos(x0 + dx, y, z0 + dz), y < y0 ? Blocks.GLASS.defaultBlockState() : Blocks.AIR.defaultBlockState(), 2);
+            h.assertFalse(forest.paint(level, at, 2, 5, level.getSeaLevel()), "no boulder on glass");
+            for (int dx = 0; dx <= 16; dx++) for (int dz = 0; dz <= 16; dz++) for (int y = y0 - 3; y <= y0 + 6; y++)
+                level.setBlock(new BlockPos(x0 + dx, y, z0 + dz), Blocks.AIR.defaultBlockState(), 2);
+            h.succeed();
+        });
     }
 }

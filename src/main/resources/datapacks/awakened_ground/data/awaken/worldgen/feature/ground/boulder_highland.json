@@ -1,0 +1,6 @@
+{
+  "type": "awaken:boulder",
+  "palette": "highland",
+  "min_radius": 2,
+  "max_radius": 5
+}

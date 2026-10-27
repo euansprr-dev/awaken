@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "wood=0,facing=east": {
+      "model": "awaken:block/twigs_0",
+      "y": 0
+    },
+    "wood=0,facing=north": {
+      "model": "awaken:block/twigs_0",
+      "y": 270
+    },
+    "wood=0,facing=south": {
+      "model": "awaken:block/twigs_0",
+      "y": 90
+    },
+    "wood=0,facing=west": {
+      "model": "awaken:block/twigs_0",
+      "y": 180
+    },
+    "wood=1,facing=east": {
+      "model": "awaken:block/twigs_1",
+      "y": 0
+    },
+    "wood=1,facing=north": {
+      "model": "awaken:block/twigs_1",
+      "y": 270
+    },
+    "wood=1,facing=south": {
+      "model": "awaken:block/twigs_1",
+      "y": 90
+    },
+    "wood=1,facing=west": {
+      "model": "awaken:block/twigs_1",
+      "y": 180
+    },
+    "wood=2,facing=east": {
+      "model": "awaken:block/twigs_2",
+      "y": 0
+    },
+    "wood=2,facing=north": {
+      "model": "awaken:block/twigs_2",
+      "y": 270
+    },
+    "wood=2,facing=south": {
+      "model": "awaken:block/twigs_2",
+      "y": 90
+    },
+    "wood=2,facing=west": {
+      "model": "awaken:block/twigs_2",
+      "y": 180
+    }
+  }
+}

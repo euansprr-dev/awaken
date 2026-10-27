@@ -1,0 +1,122 @@
+{
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#t"
+        },
+        "east": {
+          "texture": "#t"
+        },
+        "north": {
+          "texture": "#t"
+        },
+        "south": {
+          "texture": "#t"
+        },
+        "up": {
+          "texture": "#t"
+        },
+        "west": {
+          "texture": "#t"
+        }
+      },
+      "from": [
+        1,
+        0,
+        6.5
+      ],
+      "to": [
+        14,
+        1.2,
+        8.2
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#t"
+        },
+        "east": {
+          "texture": "#t"
+        },
+        "north": {
+          "texture": "#t"
+        },
+        "south": {
+          "texture": "#t"
+        },
+        "up": {
+          "texture": "#t"
+        },
+        "west": {
+          "texture": "#t"
+        }
+      },
+      "from": [
+        3,
+        0,
+        8.8
+      ],
+      "rotation": {
+        "angle": 22.5,
+        "axis": "y",
+        "origin": [
+          9.0,
+          0,
+          9.4
+        ]
+      },
+      "to": [
+        15,
+        1,
+        10
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#t"
+        },
+        "east": {
+          "texture": "#t"
+        },
+        "north": {
+          "texture": "#t"
+        },
+        "south": {
+          "texture": "#t"
+        },
+        "up": {
+          "texture": "#t"
+        },
+        "west": {
+          "texture": "#t"
+        }
+      },
+      "from": [
+        0,
+        0,
+        4
+      ],
+      "rotation": {
+        "angle": -22.5,
+        "axis": "y",
+        "origin": [
+          4.5,
+          0,
+          4.65
+        ]
+      },
+      "to": [
+        9,
+        1,
+        5.3
+      ]
+    }
+  ],
+  "textures": {
+    "particle": "minecraft:block/spruce_log",
+    "t": "minecraft:block/spruce_log"
+  }
+}

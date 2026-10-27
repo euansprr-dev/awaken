@@ -22,15 +22,21 @@ public final class GroundModule {
     private GroundModule() {}
 
     /** The data pack every worldgen part of the Soft Land lives in (P1-P5), behind the feature flag of the same name: new worlds only. */
+    /** Rock a boulder is made of besides the overworld's base stones: wild life perches on it ({@code wildlife.client.Sites}). */
+    public static final net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> PERCH_ROCK =
+            net.minecraft.tags.TagKey.create(Registries.BLOCK, Awaken.id("ground/perch_rock"));
+
     public static final String PACK_ID = "mod/awaken:datapacks/awakened_ground";
 
     private static final DeferredRegister<MapCodec<? extends Feature>> FEATURES = DeferredRegister.create(Registries.FEATURE_TYPE, Awaken.MODID);
     static {
         FEATURES.register("soft_steps", () -> SoftStepsFeature.CODEC);
+        FEATURES.register("boulder", () -> BoulderFeature.CODEC);
     }
 
     public static void init(IEventBus modBus) {
         SoftSlabs.init(modBus);
+        GroundCover.init(modBus);
         FEATURES.register(modBus);
         modBus.addListener(AddPackFindersEvent.class, e -> e.addPackFinders(Awaken.id("datapacks/awakened_ground"), PackType.SERVER_DATA,
                 Component.literal("Awakened Ground"), PackSource.BUILT_IN, false, Pack.Position.TOP));

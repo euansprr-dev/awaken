@@ -1,0 +1,128 @@
+{
+  "type": "minecraft:simple_block",
+  "to_place": {
+    "type": "minecraft:weighted",
+    "entries": [
+      {
+        "data": {
+          "id": "awaken:pebbles",
+          "properties": {
+            "kind": "0",
+            "stones": "1"
+          }
+        },
+        "weight": 12
+      },
+      {
+        "data": {
+          "id": "awaken:pebbles",
+          "properties": {
+            "kind": "0",
+            "stones": "2"
+          }
+        },
+        "weight": 9
+      },
+      {
+        "data": {
+          "id": "awaken:pebbles",
+          "properties": {
+            "kind": "0",
+            "stones": "3"
+          }
+        },
+        "weight": 3
+      },
+      {
+        "data": {
+          "id": "awaken:pebbles",
+          "properties": {
+            "kind": "1",
+            "stones": "1"
+          }
+        },
+        "weight": 8
+      },
+      {
+        "data": {
+          "id": "awaken:pebbles",
+          "properties": {
+            "kind": "1",
+            "stones": "2"
+          }
+        },
+        "weight": 6
+      },
+      {
+        "data": {
+          "id": "awaken:pebbles",
+          "properties": {
+            "kind": "1",
+            "stones": "3"
+          }
+        },
+        "weight": 2
+      },
+      {
+        "data": {
+          "id": "awaken:pebbles",
+          "properties": {
+            "kind": "2",
+            "stones": "1"
+          }
+        },
+        "weight": 4
+      },
+      {
+        "data": {
+          "id": "awaken:pebbles",
+          "properties": {
+            "kind": "2",
+            "stones": "2"
+          }
+        },
+        "weight": 3
+      },
+      {
+        "data": {
+          "id": "awaken:pebbles",
+          "properties": {
+            "kind": "2",
+            "stones": "3"
+          }
+        },
+        "weight": 1
+      },
+      {
+        "data": {
+          "id": "awaken:pebbles",
+          "properties": {
+            "kind": "3",
+            "stones": "1"
+          }
+        },
+        "weight": 4
+      },
+      {
+        "data": {
+          "id": "awaken:pebbles",
+          "properties": {
+            "kind": "3",
+            "stones": "2"
+          }
+        },
+        "weight": 3
+      },
+      {
+        "data": {
+          "id": "awaken:pebbles",
+          "properties": {
+            "kind": "3",
+            "stones": "3"
+          }
+        },
+        "weight": 1
+      }
+    ]
+  }
+}

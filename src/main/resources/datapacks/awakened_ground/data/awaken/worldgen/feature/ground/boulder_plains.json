@@ -1,0 +1,6 @@
+{
+  "type": "awaken:boulder",
+  "palette": "plains",
+  "min_radius": 1,
+  "max_radius": 2
+}
