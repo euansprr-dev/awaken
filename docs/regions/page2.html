@@ -1,0 +1,671 @@
+<title>The Wild Grows Teeth</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; the interactive walk, the ladder and the Atlas figure break out wider.
+   Same cool ink-and-glass look as the first Shape of Danger page; the six rank colours are the Atlas's and mean rank only.
+   The creature sketches sit on a fixed dark stage so their colours read in both themes. */
+:root {
+  --bg: #eef2f5;
+  --surface: #ffffff;
+  --surface-2: #e4eaef;
+  --ink: #14202b;
+  --muted: #526477;
+  --rule: #cdd8e1;
+  --accent: #0a7894;
+  --accent-soft: #d5ecf3;
+  --warn: #b04a12;
+  --warn-soft: #f7e6da;
+  --ok: #1d7a4d;
+  --stage: #17232e;
+  --rank-e: #2fae6f;
+  --rank-d: #cfa800;
+  --rank-c: #e27a2c;
+  --rank-b: #d63f3c;
+  --rank-a: #8b50d4;
+  --rank-s: #3a2278;
+  --heat-grey: #8a96a3;
+  --heat-blue: #2f86e0;
+  --heat-orange: #e6761a;
+  --heat-red: #d93a49;
+  --font-display: "Rajdhani", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a1117;
+    --surface: #111b24;
+    --surface-2: #17242f;
+    --ink: #e0eaf2;
+    --muted: #93a7b9;
+    --rule: #25384a;
+    --accent: #4cc9ee;
+    --accent-soft: #123342;
+    --warn: #f0a36b;
+    --warn-soft: #3a2415;
+    --ok: #5fd08f;
+    --stage: #0c151d;
+    --rank-e: #5fd08f;
+    --rank-d: #e8cf55;
+    --rank-c: #f28f45;
+    --rank-b: #ef5b58;
+    --rank-a: #b27bf0;
+    --rank-s: #6c47c6;
+    --heat-grey: #9aa6b2;
+    --heat-blue: #6fb3ff;
+    --heat-orange: #ff9a3c;
+    --heat-red: #ff4f5e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a1117;
+  --surface: #111b24;
+  --surface-2: #17242f;
+  --ink: #e0eaf2;
+  --muted: #93a7b9;
+  --rule: #25384a;
+  --accent: #4cc9ee;
+  --accent-soft: #123342;
+  --warn: #f0a36b;
+  --warn-soft: #3a2415;
+  --ok: #5fd08f;
+  --stage: #0c151d;
+  --rank-e: #5fd08f;
+  --rank-d: #e8cf55;
+  --rank-c: #f28f45;
+  --rank-b: #ef5b58;
+  --rank-a: #b27bf0;
+  --rank-s: #6c47c6;
+  --heat-grey: #9aa6b2;
+  --heat-blue: #6fb3ff;
+  --heat-orange: #ff9a3c;
+  --heat-red: #ff4f5e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.55;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 46px; }
+.wrap > * { min-width: 0; }
+.col { max-width: 700px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.08; margin: 0; text-wrap: balance; letter-spacing: 0.01em; }
+h1 { font-size: clamp(2.6rem, 7vw, 4.2rem); }
+h2 { font-size: clamp(1.7rem, 4vw, 2.3rem); margin-bottom: 14px; }
+h3 { font-size: 1.25rem; }
+p { margin: 0 0 12px; }
+a { color: var(--accent); }
+.kicker { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+.lede { font-size: 1.22rem; line-height: 1.5; margin-top: 18px; max-width: 36em; }
+.answer { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 14px 18px; border-radius: 0 6px 6px 0; margin-top: 22px; font-size: 1.08rem; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.small { font-size: 0.9rem; color: var(--muted); }
+.figure { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 18px; }
+.figure > h3 { margin-bottom: 4px; }
+.figure .cap { color: var(--muted); font-size: 0.93rem; margin-bottom: 12px; }
+.facts { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.facts li { padding-left: 18px; position: relative; }
+.facts li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 8px; height: 8px; border-radius: 2px; background: var(--accent); }
+.fix { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 6px; padding: 12px 16px; font-size: 0.96rem; margin-top: 16px; }
+.fix b { color: var(--warn); }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+td.n, th.n { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.scroll { overflow-x: auto; }
+.rank { display: inline-block; min-width: 1.6em; text-align: center; font: 700 0.85rem var(--font-mono); color: #fff; border-radius: 4px; padding: 1px 6px; }
+.rank.e { background: var(--rank-e); } .rank.d { background: var(--rank-d); } .rank.c { background: var(--rank-c); }
+.rank.b { background: var(--rank-b); } .rank.a { background: var(--rank-a); } .rank.s { background: var(--rank-s); }
+:root:not([data-theme="dark"]) .rank.d { color: #2a2200; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .rank.d, :root:not([data-theme="light"]) .rank.e { color: #07140d; } }
+:root[data-theme="dark"] .rank.d, :root[data-theme="dark"] .rank.e { color: #07140d; }
+
+/* the three layers */
+.layers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 760px) { .layers { grid-template-columns: minmax(0, 1fr); } }
+.layer { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; }
+.layer .h { font: 600 0.74rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.layer .t { font: 700 1.6rem var(--font-display); margin-bottom: 4px; }
+.layer p { font-size: 0.96rem; margin: 0; }
+
+/* the walk */
+.walk { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 800px) { .walk { grid-template-columns: minmax(0, 1fr); } }
+.controls { display: grid; gap: 12px; margin-bottom: 14px; }
+.controls label { font: 600 0.74rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; }
+.controls label b { color: var(--ink); font-weight: 600; }
+input[type=range] { width: 100%; accent-color: var(--accent); min-height: 28px; }
+select { font: 600 0.95rem var(--font-mono); background: var(--surface-2); color: var(--ink); border: 1px solid var(--rule); border-radius: 6px; padding: 6px 10px; }
+.jumps { display: flex; flex-wrap: wrap; gap: 6px; }
+button.jump, button.tab { font: 600 0.82rem var(--font-mono); letter-spacing: 0.04em; background: var(--surface-2); color: var(--ink); border: 1px solid var(--rule); border-radius: 6px; padding: 6px 10px; cursor: pointer; min-height: 34px; }
+button.jump[aria-pressed="true"], button.tab[aria-selected="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.stage { background: var(--stage); border-radius: 8px; padding: 10px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-items: end; }
+.stage svg { width: 100%; height: auto; display: block; }
+.stage .cp { grid-column: 1 / -1; font: 400 0.72rem var(--font-mono); color: #8da2b4; letter-spacing: 0.04em; }
+.rows { display: grid; gap: 0; margin: 0; }
+.rows > div { display: grid; grid-template-columns: 8.2em minmax(0, 1fr); gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+.rows dt { font: 600 0.72rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+.rows dd { margin: 0; font-size: 0.97rem; }
+.chip { display: inline-block; font: 700 0.85rem var(--font-mono); border-radius: 12px; padding: 1px 10px; color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chip { color: #0a1117; } }
+:root[data-theme="dark"] .chip { color: #0a1117; }
+.chip.grey { background: var(--heat-grey); } .chip.blue { background: var(--heat-blue); } .chip.orange { background: var(--heat-orange); } .chip.red { background: var(--heat-red); }
+.big { font: 700 2.4rem/1 var(--font-display); }
+.glow { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: -2px; margin-right: 6px; border: 1px solid var(--rule); }
+
+/* ladder */
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; }
+.tabs button { flex: 0 0 auto; }
+.rungs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 960px) { .rungs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .rungs { grid-template-columns: minmax(0, 1fr); } }
+.rung { background: var(--surface-2); border-radius: 8px; padding: 10px 12px 12px; display: grid; gap: 8px; align-content: start; }
+.rung .top { display: flex; align-items: center; gap: 8px; }
+.rung .nm { font: 700 1.2rem var(--font-display); line-height: 1.1; }
+.rung p { margin: 0; font-size: 0.92rem; line-height: 1.45; }
+.rung .stage { grid-template-columns: minmax(0, 1fr); padding: 6px; }
+
+/* moments */
+.moments { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 860px) { .moments { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 540px) { .moments { grid-template-columns: minmax(0, 1fr); } }
+.moment { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; }
+.moment h3 { font-size: 1.15rem; margin: 6px 0 4px; }
+.moment p { font-size: 0.93rem; margin: 0; }
+
+/* bars to scale */
+.barset { display: grid; gap: 6px; }
+.barrow { display: grid; grid-template-columns: 2.2em minmax(0, 1fr) 3.6em; gap: 10px; align-items: center; font: 400 0.82rem var(--font-mono); }
+.barrow .tr { height: 14px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.barrow .fl { height: 100%; border-radius: 3px; }
+.twocol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+@media (max-width: 720px) { .twocol { grid-template-columns: minmax(0, 1fr); } }
+.twocol h4 { font: 600 0.74rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+
+/* audit */
+.audit .meter { height: 10px; background: var(--surface-2); border-radius: 5px; overflow: hidden; min-width: 90px; }
+.audit .meter i { display: block; height: 100%; background: var(--accent); border-radius: 5px; }
+.audit .st { font: 600 0.72rem var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; }
+.audit .st.ok { color: var(--ok); } .audit .st.part { color: var(--warn); } .audit .st.none { color: var(--heat-red); }
+
+/* atlas */
+.atlas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 640px) { .atlas { grid-template-columns: minmax(0, 1fr); } }
+.atlas canvas { width: 100%; aspect-ratio: 3 / 2; display: block; border-radius: 4px; background: var(--surface-2); }
+.atlas .t { font: 600 1.15rem var(--font-display); margin-bottom: 6px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); margin-top: 12px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+
+/* wonders */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.chips li { background: var(--surface-2); border-radius: 14px; padding: 3px 12px; font-size: 0.92rem; }
+.chips li.new { background: var(--accent-soft); }
+
+/* decisions */
+.decisions { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; counter-reset: d 15; }
+.decisions li { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px 14px 70px; position: relative; }
+.decisions li::before { counter-increment: d; content: counter(d); position: absolute; left: 12px; top: 12px; font: 700 1.9rem/1 var(--font-display); color: var(--accent); width: 46px; text-align: center; }
+.decisions h3 { margin-bottom: 4px; }
+.decisions p { margin-bottom: 6px; }
+.decisions .why { color: var(--muted); font-size: 0.93rem; margin: 0; }
+.decisions .rec { display: inline-block; font: 600 0.72rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ok); border: 1px solid var(--ok); border-radius: 4px; padding: 0 6px; margin-left: 8px; vertical-align: 3px; }
+.phases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 860px) { .phases { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 540px) { .phases { grid-template-columns: minmax(0, 1fr); } }
+.phase { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.phase .h { font: 600 0.74rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.phase .t { font: 700 1.5rem var(--font-display); }
+.phase p { font-size: 0.93rem; margin: 0; }
+.phase .hrs { font: 600 0.85rem var(--font-mono); color: var(--accent); }
+footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rule); padding-top: 18px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="glowf" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <radialGradient id="halo4"><stop offset="0" stop-color="#b07cff" stop-opacity=".28"/><stop offset="1" stop-color="#b07cff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="halo5"><stop offset="0" stop-color="#05060d" stop-opacity=".95"/><stop offset=".6" stop-color="#2a1f66" stop-opacity=".55"/><stop offset="1" stop-color="#6c47c6" stop-opacity="0"/></radialGradient>
+    <linearGradient id="light5" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#8f7bff"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<header class="col">
+  <div class="kicker">Plan for Euan's approval · 27 October 2026 · nothing is built yet</div>
+  <h1>The Wild Grows Teeth</h1>
+  <p class="lede">Walk out of the city and the world should change shape under your feet. A pig grows tusks. A zombie puts on a helmet and then a crown. The trees fill with silk, the birds stop singing, and the Living Wilds finally have the wonders, secrets and legends to make you want to see it all.</p>
+  <div class="answer"><b>The short answer.</b> Make rank something you see, hear and fight. Every common creature gets five forms (ranks D to S): a new body, a new move and a new voice at each step, not a recolour. The land around them is dressed and sounds the part. The rest of the Living Wilds goes in as the reasons to walk into it.</div>
+</header>
+
+<section aria-labelledby="h-layers">
+  <div class="col"><h2 id="h-layers">Three layers, one idea</h2></div>
+  <div class="layers">
+    <div class="layer"><div class="h">What you see</div><div class="t">Bodies</div><p>Tusks, horns, plates, spines and crowns hung on the vanilla creatures, plus scars and a glow. Rank sets the glow colour. The biome sets the material: moss and bark in forests, sun-baked bone in deserts, rime in the snow.</p></div>
+    <div class="layer"><div class="h">What they do</div><div class="t">Moves</div><p>One new move per rung, always wound up where you can see it, always something you can answer with your dodge, block or parry. A pig lowers its head. A zombie raises a shield. A spider goes quiet.</p></div>
+    <div class="layer"><div class="h">What the world shows</div><div class="t">Land</div><p>Signs dressed into new ground by rank, drifting particles and a sound bed, fewer and shyer animals the further you go, and the set pieces: wonders, secrets and legends.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-walk">
+  <div class="col"><h2 id="h-walk">Walk outward from the city</h2>
+  <p>Drag the slider. The level is the highest a land can be at that distance (many lands are milder), from the ceiling you approved. The sketches are concept drawings of what a pig and a zombie would look like there. They are not final art.</p></div>
+  <div class="figure walk-fig" style="margin-top:14px">
+    <div class="walk">
+      <div>
+        <div class="controls">
+          <label for="dist">Distance from the city <b id="distv">0 blocks</b></label>
+          <input id="dist" type="range" min="0" max="8000" step="50" value="2500" aria-describedby="walkhint">
+          <div class="jumps" id="jumps" role="group" aria-label="Jump to a rank"></div>
+          <label for="plv">Your level <select id="plv"><option>5</option><option>15</option><option selected>30</option><option>50</option><option>80</option></select></label>
+        </div>
+        <div class="stage" id="stage" role="img" aria-label="Concept sketches of a pig and a zombie as they would look in the land at this distance"></div>
+      </div>
+      <dl class="rows" id="rows"></dl>
+    </div>
+    <p class="small" id="walkhint" style="margin:10px 0 0">The plate chip is the colour you would see on a creature at the ceiling, from the rule you approved: grey ten or more levels below you, blue up to four above, orange from five above, red from fifteen above.</p>
+  </div>
+</section>
+
+<section aria-labelledby="h-ladder">
+  <div class="col"><h2 id="h-ladder">The ladders</h2>
+  <p>Twelve species in the first drop. Land E, the first 850 blocks or so, stays exactly as it is, so the first hour is untouched. From D up, each rung changes the shape, the move and the voice. Names are working names. Pick a species.</p></div>
+  <div class="figure" style="margin-top:14px">
+    <div class="tabs" id="tabs" role="tablist" aria-label="Species"></div>
+    <div class="rungs" id="rungs" role="tabpanel"></div>
+    <p class="small" style="margin:12px 0 0">Zombies also cover husks, drowned and villagers; skeletons also strays, bogged and parched. Within a land the mix is about 70% the land's own rung, 25% the rung below and 5% the rung above (a taste of what is further on, never in E land). Across a rank border it is half and half over three levels.</p>
+  </div>
+</section>
+
+<section aria-labelledby="h-moments">
+  <div class="col"><h2 id="h-moments">Six moments the walk should have</h2></div>
+  <div class="moments">
+    <div class="moment"><span class="rank d">D</span><h3>The first Tusker</h3><p>A pig that does not run. It lowers its head and paws the ground. Nobody told you.</p></div>
+    <div class="moment"><span class="rank c">C</span><h3>A web forest</h3><p>The canopy is strung with silk. You hear a chitter overhead, and then it stops.</p></div>
+    <div class="moment"><span class="rank b">B</span><h3>Ash-fall</h3><p>Embers drift down over the sand. Skeletons wear scorched rags, and everything is orange at dusk.</p></div>
+    <div class="moment"><span class="rank b">B</span><h3>Thunderhorns at dusk</h3><p>A herd crosses a ridge. The ground hums before you see them.</p></div>
+    <div class="moment"><span class="rank a">A</span><h3>Revenant night</h3><p>On a new moon the gravefield opens. Bells toll somewhere you cannot see.</p></div>
+    <div class="moment"><span class="rank s">S</span><h3>The hush</h3><p>The birds are gone. Your footsteps and a low bed are all there is, and something with a crown watches from a hill.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-land">
+  <div class="col"><h2 id="h-land">The land looks the part</h2>
+  <ul class="facts">
+    <li><b>Signs, in new ground.</b> A worldgen feature reads the same land rule and dresses it: scratched trunks and mud wallows in D, skulls on fence posts and webs strung between trees in C, bare snags and the ribs of something huge in B, gravefields in A, weeping stones in S. Vanilla blocks and a handful of soft blocks of our own, with no loot. Never on a road, in a settlement or in a Hearth. Rust-stained outcrops in D land are the surface sign of iron (a pull only; iron stays in lodes by depth).</li>
+    <li><b>An ambient layer for each rank.</b> Dust, then ash, then embers or cold motes, then drifting violet specks. A low sound bed, and a gentle colour grade through Lens. It sits under the screen cooling you already get when a land is far above your level.</li>
+    <li><b>A quieter land.</b> Passive animals thin out and bolt from far away, birds and insects thin with them and fall silent in A and S. Hunting pays more per animal, and alphas still carry hide, so hide stays in supply.</li>
+  </ul></div>
+  <div class="figure" style="margin-top:16px">
+    <div class="twocol">
+      <div><h4>Signs per chunk</h4><div class="barset" id="bars-signs"></div></div>
+      <div><h4>Passive animals left (share of today)</h4><div class="barset" id="bars-quiet"></div></div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="h-atlas">
+  <div class="col"><h2 id="h-atlas">The Atlas, smooth</h2>
+  <p>Today the Atlas paints each region one flat colour. The server will send a level for every explored 16 by 16 cell, and the map will blend between them, so you can see a land rising toward the red before you reach it. A switch on the legend flips between the land's rank and how hard it is for you (the plate's blue, orange and red). Old worlds shade what they already explored at the next login.</p></div>
+  <div class="figure" style="margin-top:14px">
+    <div class="atlas">
+      <div><div class="t">Today</div><canvas id="at-now" width="120" height="80" role="img" aria-label="A toy map with flat patches, one colour per region"></canvas></div>
+      <div><div class="t">Proposed</div><canvas id="at-new" width="120" height="80" role="img" aria-label="The same toy map with the colour blending smoothly from green through gold, orange and red to violet"></canvas></div>
+    </div>
+    <div class="legend" id="atlegend"></div>
+    <p class="small" style="margin:10px 0 0">A made-up map to show the idea, not your world.</p>
+  </div>
+</section>
+
+<section aria-labelledby="h-audit">
+  <div class="col"><h2 id="h-audit">Finishing the Living Wilds</h2>
+  <p>I counted what is in the repo. Phases B and E are done. The rest of C and D, all of F and one line of G are what is left, plus the regions leftovers you listed.</p></div>
+  <div class="figure audit" style="margin-top:14px">
+    <div class="scroll">
+    <table>
+      <thead><tr><th>Phase</th><th>Built</th><th>Left</th><th>State</th></tr></thead>
+      <tbody>
+        <tr><td><b>B</b> combat layer, regions, XP</td><td>All of it, and regions v2: the field, dread, warnings, wild kin that fight back, heat-coloured plates, alphas carrying hide</td><td>Tusks and scars, wild kin art, a quieter land, Atlas shading</td><td><span class="st part">part</span></td></tr>
+        <tr><td><b>C</b> Wayfarers, chains, bounties</td><td><div class="meter" aria-label="9 of 20 chains"><i style="width:45%"></i></div>9 of 20 chains, all for levels 1 to 20; bounties, relics, the Journal</td><td>11 chains. Nothing at all exists for C land and up</td><td><span class="st part">45%</span></td></tr>
+        <tr><td><b>D</b> World Pulse, camps</td><td><div class="meter" aria-label="9 of 28 happenings"><i style="width:32%"></i></div>9 of about 28 happenings; herds, packs, camps and nests</td><td>19 happenings. None is tied to a rank</td><td><span class="st part">32%</span></td></tr>
+        <tr><td><b>E</b> crafts</td><td>Six crafts, perks, meals, herbs</td><td></td><td><span class="st ok">done</span></td></tr>
+        <tr><td><b>F</b> wonders, secrets, legends</td><td>Only the underground half: caves, grottos and the legendary fishing spot, built by Between the Gates</td><td>Wonders, surface secrets, eight legendary beasts, treasure maps. No code exists</td><td><span class="st none">0%</span></td></tr>
+        <tr><td><b>G</b> settlers, village, roads</td><td>Built by Between the Gates: settlers, your village's name, roads, caravans</td><td>Migrations crossing your fields (fences turn them)</td><td><span class="st ok">nearly</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+  <div class="col" style="margin-top:18px">
+    <h3 style="margin-bottom:6px">Phase F, ranked by land</h3>
+    <p><b>Wonders.</b> One per region, picked from a library by the region's land and rank, built as structures in new ground and warded, so no hostile spawns within 40 blocks. You can look in peace. Getting there is the hard part. Sixteen kinds first:</p>
+    <ul class="chips">
+      <li>Frozen Gate</li><li>Bell Tree</li><li>Glass Sea</li><li>Upside-down Falls</li><li>Giant's Arch</li><li>Singing Canyon</li><li>Sunken Spire</li><li>Statue Field</li><li>Petrified Herd</li><li>Star Crater</li><li>Chain Bridge</li><li>Mirror Lake</li>
+      <li class="new">Boar Throne (D, C)</li><li class="new">Web Cathedral (C)</li><li class="new">Gravefield of the Revenants (A)</li><li class="new">The Weeping Stones (S)</li>
+    </ul>
+    <p class="small" style="margin-top:8px">The last four are new, built from the forms. Rank flavours the same kind: the Statue Field in B land has cracks that glow.</p>
+    <p style="margin-top:14px"><b>Secrets and maps.</b> Three surface secrets per region, from eight kinds (a cairn over a buried cache, a spirit's grave with a lore log, a three-stone puzzle shrine, a hollow behind a waterfall, an old camp with a journal, a standing stone that glows on one moon, a den with a gift, a ruined shrine). The region card says "Secrets found 1 / ??". Treasure maps from camps, ruins and merchants are clues, never a pin.</p>
+    <p><b>Legends.</b> Eight in all, three first: Old Greymane (a white stag who walks with the migrations and can be calmed with the Herdcaller Horn), Hush (a silent hound that hunts on new-moon nights) and the Glass Wyrm. One of each per world, rumours first, and when one falls it is gone for good and everyone hears.</p>
+    <p><b>The rest of C and D.</b> Eleven chains by rank (D 4, C 3, B 2, A 1, S 1), each a reason to meet a form, such as "The Tusker of Black Glades" and "Silk Road". Nineteen happenings, ten of them tied to ranks: Tusker Moot, Silk Bloom, Ashfall, Thunderhead Herd, Crown Hunt, Revenant Night, Gravebell, Weeping, the Hush, and the migration across your fields.</p>
+  </div>
+</section>
+
+<section aria-labelledby="h-games">
+  <div class="col"><h2 id="h-games">What other games teach</h2>
+  <p>The lesson that shaped this: colour alone reads as a reskin, and stat-only evolution disappoints. Change the silhouette, the move and the voice.</p></div>
+  <div class="figure" style="margin-top:14px"><div class="scroll">
+    <table>
+      <thead><tr><th>Game</th><th>What it shows</th><th>We take</th></tr></thead>
+      <tbody>
+        <tr><td><b>Breath of the Wild</b></td><td>Bokoblins come in red, blue, black, silver (gold in Master Mode), so the colour says the tier at a glance (<a href="https://zeldawiki.wiki/wiki/Bokoblins">Zelda Wiki</a>)</td><td>A colour you can read from far away</td></tr>
+        <tr><td><b>Elden Ring</b></td><td>One base enemy, several forms with different attacks: the <a href="https://eldenring.fandom.com/wiki/Putrid_Corpse">Putrid Corpse</a> has maggot, rot, blood-blister and burning forms. Some players on <a href="https://steamcommunity.com/app/1245620/discussions/0/6982351509017034882">Steam</a> say reskins feel repetitive</td><td>A form changes the attack, not only the paint</td></tr>
+        <tr><td><b>Valheim</b></td><td>The biome is the tier. Greydwarfs and Shamans in the Black Forest, Fulings and Berserkers (700 health) on the Plains (<a href="https://game8.co/games/Valheim/archives/320152">Game8</a>; sources disagree on some placements)</td><td>The land owns the creature ladder</td></tr>
+        <tr><td><b>Monster Hunter Wilds</b></td><td>Arch-Tempered monsters hit harder with bigger health pools. One <a href="https://steamcommunity.com/app/2246340/discussions/0/599646660884180818">player</a> says the only difference is damage and aggression and asks for variants that look distinct (an opinion, not Capcom)</td><td>The look and the moves have to change too</td></tr>
+      </tbody>
+    </table>
+  </div></div>
+</section>
+
+<section aria-labelledby="h-decisions">
+  <div class="col"><h2 id="h-decisions">Sixteen decisions</h2><p>They continue the regions plan's numbering (the first fifteen are approved and built). Each has the answer I'd pick. Say "go with all recommendations", or change any of them.</p></div>
+  <ol class="decisions" style="margin-top:18px">
+    <li><h3>Every common creature gets five forms<span class="rec">Yes</span></h3><p>D to S, each with a new body, one new move and a new voice. Land E stays vanilla.</p><p class="why">Nobody has to reach a gate to see the world change.</p></li>
+    <li><h3>The first drop's species<span class="rec">Yes</span></h3><p>Zombie, skeleton, spider, creeper, enderman, slime, witch, pig, cow, sheep, chicken, mooshroom. Wolf, fox, goat and horse come later.</p><p class="why">These are what you meet most. Sheep, chicken and mooshroom get D to B first and A and S on a second pass.</p></li>
+    <li><h3>One kit on the vanilla bodies<span class="rec">Yes</span></h3><p>Overlay, glow and attached pieces, with no mixin. Rank sets the glow colour, the biome sets the material. A setting offers Full, Lite (no attached pieces) or Off. The plate chip stays relative to you; the glow is absolute so a party sees the same thing.</p><p class="why">Two colour systems, so the Almanac carries a key and the Atlas gets a toggle.</p></li>
+    <li><h3>One telegraphed move per rung<span class="rec">Yes</span></h3><p>A second on alphas from C up. Tells run from 1.2 seconds in D down to 0.7 in S. A move hits for at most 1.3 times a normal blow at that level, and is delivered with its class named, so guard, deflect and dodge answer it.</p><p class="why">Danger you can read, not danger you guess at.</p></li>
+    <li><h3>Voices drop and layer by rung<span class="rec">Yes</span></h3><p>A creature's own sounds drop in pitch and gain a growl, and each move has its own tell sound.</p><p class="why">You should hear a Boarlord before you see it.</p></li>
+    <li><h3>The first sight of a form is a moment<span class="rec">Yes</span></h3><p>An Almanac page, a tenth of a level, and one line in the corner. No toast stack.</p><p class="why">The discovery feeds the same "new thing" the Director already watches.</p></li>
+    <li><h3>The mix inside a land<span class="rec">Yes</span></h3><p>About 70% the land's rung, 25% the rung below, 5% the rung above (never in E land, never in the first hour). Half and half across a rank border.</p><p class="why">Two zombies are rarely the same, and a new form shows up before its land does.</p></li>
+    <li><h3>A quieter land<span class="rec">Yes</span></h3><p>Passive animals at 80%, 55%, 35%, 20% and 10% of today's by rank from D to S, bolting from far away, never at a settlement or Hearth. Birds and insects thin and go silent in A and S.</p><p class="why">Hunting pays more per animal and alphas still carry hide, so supply holds.</p></li>
+    <li><h3>The land is dressed by rank<span class="rec">Yes</span></h3><p>Signs in new chunks, a handful of our own soft blocks, rust-stained outcrops as the surface sign of iron. The Arms planner is told, since it is a pull and not a source.</p><p class="why">Old worlds get signs only in ground not yet generated.</p></li>
+    <li><h3>An ambient layer per rank<span class="rec">Yes</span></h3><p>Particles, a sound bed, a gentle grade. It turns off with the existing dread setting.</p><p class="why">Atmosphere, not a plate, so it stays on in pure survival.</p></li>
+    <li><h3>The Atlas shades smoothly<span class="rec">Yes</span></h3><p>A level per explored cell from the server, a blended colour, and a switch between rank and "how hard for me".</p><p class="why">About a thousand bytes more per map tile.</p></li>
+    <li><h3>Wonders<span class="rec">Yes</span></h3><p>One per region, sixteen kinds first, warded, flavoured by rank. A discovery of 0.15 of a level, rising to 0.5 at S, a Codex page and an Atlas icon.</p><p class="why">The reason to go somewhere dangerous.</p></li>
+    <li><h3>Surface secrets and treasure maps<span class="rec">Yes</span></h3><p>Three secrets per region from eight kinds. Maps are clues with terrain words, never a pin.</p><p class="why">Underground secrets stay Between the Gates'.</p></li>
+    <li><h3>Eight legends, three first<span class="rec">Yes</span></h3><p>Old Greymane, Hush and the Glass Wyrm. One of each per world, rumours first, they fall for good.</p><p class="why">Something every player in a world shares.</p></li>
+    <li><h3>Finish chains and happenings<span class="rec">Yes</span></h3><p>The other 11 chains by rank and 19 more happenings, ten tied to forms and ranks.</p><p class="why">Every rank gets stories and events, not only levels 1 to 20.</p></li>
+    <li><h3>Order and who builds<span class="rec">Yes</span></h3><p>Six builds below, one builder each at extra-high effort, no sub-agents. The mobs owner is asked first for one small change (making the telegraph helpers public), and Arms is told about the dressing.</p><p class="why">Each build ends with its tests green on CI and one tour.</p></li>
+  </ol>
+</section>
+
+<section aria-labelledby="h-order">
+  <div class="col"><h2 id="h-order">Order and estimate</h2>
+  <p>About <b>25 to 30 builder hours</b>, and 12 to 14 hours on the clock with three builders side by side. For scale, the Living Wilds' phases B to E took about six hours on 25 October. This is bigger because it is art and worldgen. The least certain parts are the bodies (art needs review rounds) and the wonders (structures). You would see the first Tusker after the first build.</p></div>
+  <div class="phases" style="margin-top:14px">
+    <div class="phase"><div class="h">Build 1</div><div class="t">Bodies</div><div class="hrs">4 to 5 h</div><p>Form state, the layers, the kit and overlays. Pig, cow, zombie and skeleton first, then the rest. A parade tour.</p></div>
+    <div class="phase"><div class="h">Build 2</div><div class="t">Moves and voices</div><div class="hrs">4 to 5 h</div><p>The move runner, about twelve shapes, tells, voices, the pacing check.</p></div>
+    <div class="phase"><div class="h">Build 3</div><div class="t">Land and Atlas</div><div class="hrs">4 to 5 h</div><p>Signs, the ambient layer, a quieter land, the smooth Atlas. One tour for both.</p></div>
+    <div class="phase"><div class="h">Build 4</div><div class="t">Wonders, first half</div><div class="hrs">3 to 4 h</div><p>The wonder engine, six wonders, the surface secrets.</p></div>
+    <div class="phase"><div class="h">Build 5</div><div class="t">Wonders and legends</div><div class="hrs">4 to 5 h</div><p>Ten more wonders, treasure maps, three legends.</p></div>
+    <div class="phase"><div class="h">Build 6</div><div class="t">Chains and happenings</div><div class="hrs">5 to 6 h</div><p>Eleven chains, nineteen happenings, the migration across fields.</p></div>
+  </div>
+</section>
+
+<section class="col" aria-labelledby="h-risks">
+  <h2 id="h-risks">What could go wrong, and what I have not seen</h2>
+  <ul class="facts">
+    <li><b>I have not seen any of it on screen.</b> That includes last turn's wild animals fighting and the blue, orange and red plate colours: they are tested by rules and goals, not by eye. Art is the schedule here, so every build gets a parade tour and contact sheets before it is called done.</li>
+    <li><b>Texture packs.</b> A pack like Fresh Animations changes vanilla models. If it renames a part, the attached pieces fall back to Lite automatically. A pack that moves a part without renaming it could float a tusk, which is a known limit.</li>
+    <li><b>Fairness.</b> Every move is wound up and capped, a rallying pack is capped by the existing summon budget, and the first hour never meets a form.</li>
+    <li><b>Not claimed.</b> That these names are final, that the moves are balanced (the pacing sim checks the long marks and a playtest checks the feel), or that old worlds get signs and wonders in ground that is already generated.</li>
+  </ul>
+</section>
+
+<footer class="col">The long form is <span class="mono">docs/regions/PLAN-2.md</span> on branch <span class="mono">pack/regions-plan</span>. The field, the warnings and the plate colours from the first plan are already built and on CI.</footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var RANKS = ["E", "D", "C", "B", "A", "S"], FROM = [1, 10, 25, 45, 70, 100];
+  var REACH = [[0, 1], [240, 1], [700, 8], [1000, 12], [1500, 20], [2000, 30], [3000, 52], [4000, 74], [5500, 105], [8000, 150]];
+  var GL = ["#62D99A", "#E4D063", "#F29A48", "#EC5656", "#B07CFF", "#9C8BFF"];
+  var RCSS = ["var(--rank-e)", "var(--rank-d)", "var(--rank-c)", "var(--rank-b)", "var(--rank-a)", "var(--rank-s)"];
+  var RCLS = ["e", "d", "c", "b", "a", "s"];
+
+  function ceiling(d) {
+    for (var i = 1; i < REACH.length; i++) {
+      if (d <= REACH[i][0]) { var a = REACH[i - 1], b = REACH[i]; return a[1] + (b[1] - a[1]) * (d - a[0]) / (b[0] - a[0]); }
+    }
+    return REACH[REACH.length - 1][1];
+  }
+  function rankOf(l) { var r = 0; for (var i = 0; i < FROM.length; i++) if (l >= FROM[i]) r = i; return r; }
+  function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  /* ---------- concept sketches (blocky, on a dark stage) ---------- */
+  function tri(x1, y1, x2, y2, x3, y3, fill) { return '<polygon points="' + x1 + "," + y1 + " " + x2 + "," + y2 + " " + x3 + "," + y3 + '" fill="' + fill + '"/>'; }
+  function rect(x, y, w, h, fill, extra) { return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + fill + '"' + (extra || "") + "/>"; }
+  function motes(cx, cy, rx, ry, col, n, seed) {
+    var s = "";
+    for (var i = 0; i < n; i++) {
+      var a = (i * 2.399 + seed) % 6.283, k = 0.55 + ((i * 37 + seed * 11) % 45) / 100;
+      s += '<circle cx="' + (cx + Math.cos(a) * rx * k).toFixed(1) + '" cy="' + (cy + Math.sin(a) * ry * k).toFixed(1) + '" r="' + (1.2 + (i % 3) * 0.6) + '" fill="' + col + '" opacity="' + (0.45 + (i % 4) * 0.12).toFixed(2) + '"/>';
+    }
+    return s;
+  }
+  function pig(r) {
+    var g = GL[r], bone = "#f1e8d2", s = '<svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">';
+    if (r >= 4) s += '<ellipse cx="100" cy="86" rx="98" ry="62" fill="url(#halo' + r + ')"/>';
+    s += '<ellipse cx="96" cy="132" rx="70" ry="5" fill="#000" opacity=".35"/>';
+    var sc = r >= 4 ? 1.1 : 1;
+    s += '<g transform="translate(100 130) scale(' + sc + ') translate(-100 -130)">';
+    [48, 68, 102, 122].forEach(function (x, i) { s += rect(x, 100, 11, 26, i % 2 ? "#d48a8a" : "#e3a0a0"); });
+    if (r >= 2) [48, 122].forEach(function (x) { s += rect(x - 1, 118, 13, 8, "#6d7480"); });
+    s += rect(40, 58, 92, 46, "#eaa9a9");
+    if (r >= 1) {
+      var bh = 5 + (r - 1) * 3.5, bc = r >= 4 ? bone : "#85585a";
+      for (var x = 46; x < 128; x += 10) s += tri(x, 58, x + 5, 58 - bh, x + 10, 58, bc);
+      s += '<path d="M58 63 L70 92 M78 62 L88 82 M100 66 L108 90" stroke="#b36a6e" stroke-width="2" fill="none" stroke-linecap="round"/>';
+    }
+    if (r >= 2) { s += rect(54, 55, 24, 15, "#8d93a0", ' stroke="#5c6270" stroke-width="1.5"'); s += rect(84, 55, 24, 15, "#8d93a0", ' stroke="#5c6270" stroke-width="1.5"'); }
+    s += rect(130, 62, 30, 30, "#efb1b1") + rect(158, 74, 10, 14, "#d98585") + rect(136, 53, 10, 10, "#d48a8a");
+    s += rect(147, 69, 5, 5, r >= 3 ? g : "#1c1f26", r >= 3 ? ' filter="url(#glowf)"' : "");
+    if (r >= 1) {
+      var th = 8 + (r - 1) * 3.5;
+      s += tri(148, 92, 154, 92, 150, 92 - th, bone) + tri(158, 91, 164, 91, 162, 91 - th * 1.05, bone);
+    }
+    if (r >= 3) {
+      s += '<polyline points="46,78 58,70 66,82 80,72 92,86 106,76 120,90" fill="none" stroke="' + g + '" stroke-width="2.6" filter="url(#glowf)" stroke-linejoin="round"/>';
+      s += '<circle cx="174" cy="72" r="3" fill="#dfe8f0" opacity=".5"/><circle cx="180" cy="64" r="4.5" fill="#dfe8f0" opacity=".38"/><circle cx="188" cy="55" r="6" fill="#dfe8f0" opacity=".25"/>';
+    }
+    if (r >= 4) s += tri(134, 54, 140, 54, 137, 40, bone) + tri(142, 54, 148, 54, 145, 36, bone) + tri(150, 56, 156, 56, 153, 42, bone);
+    if (r === 5) {
+      s += tri(146, 92, 153, 92, 148, 66, "url(#light5)") + tri(156, 92, 163, 92, 161, 62, "url(#light5)");
+      s += '<polyline points="50,70 64,82 76,66 92,80 110,68 124,84" fill="none" stroke="#e9e3ff" stroke-width="2" filter="url(#glowf)"/>';
+      s += rect(60, 36, 12, 7, "#8d93a0", ' transform="rotate(-12 66 40)" opacity=".8"') + rect(100, 30, 14, 7, "#8d93a0", ' transform="rotate(10 107 34)" opacity=".8"');
+    }
+    s += "</g>";
+    if (r >= 4) s += motes(100, 70, 92, 48, g, r === 5 ? 6 : 12, r);
+    return s + "</svg>";
+  }
+  function zombie(r) {
+    var g = GL[r], bone = "#f1e8d2", s = '<svg viewBox="0 0 130 170" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">';
+    if (r >= 4) s += '<ellipse cx="65" cy="88" rx="64" ry="82" fill="url(#halo' + r + ')"/>';
+    if (r === 5) s += '<ellipse cx="30" cy="150" rx="26" ry="5" fill="#000" opacity=".5"/><ellipse cx="14" cy="154" rx="14" ry="3" fill="#000" opacity=".3"/>';
+    s += '<ellipse cx="65" cy="163" rx="40" ry="5" fill="#000" opacity=".35"/>';
+    var sc = r >= 4 ? 1.07 : 1;
+    s += '<g transform="translate(65 160) scale(' + sc + ') translate(-65 -160)">';
+    s += rect(42, 108, 22, 50, "#393b78") + rect(66, 108, 22, 50, "#393b78");
+    s += rect(40, 48, 50, 60, "#3c70aa");
+    s += rect(16, 50, 22, 58, "#6fa05f") + rect(92, 50, 22, 58, "#6fa05f");
+    s += rect(45, 8, 40, 40, "#6fa05f");
+    if (r >= 1) {
+      for (var x = 40; x < 90; x += 8) s += tri(x, 104, x + 8, 104, x + 4, 112 + (x % 3) * 2, "#a58a5a");
+      s += rect(18, 84, 6, 11, bone) + '<path d="M52 14 L60 30" stroke="#3d5c33" stroke-width="2" fill="none"/>';
+    }
+    if (r >= 2) {
+      s += rect(41, 3, 48, 16, "#8a8f99", ' stroke="#5c6270" stroke-width="1.5"') + rect(34, 46, 17, 11, "#7d828c") + rect(79, 46, 17, 11, "#7d828c");
+      s += rect(0, 66, 26, 36, "#6b5a46", ' stroke="#8a8f99" stroke-width="2"') + '<circle cx="13" cy="84" r="5" fill="#8a8f99"/>';
+    }
+    if (r >= 3) {
+      s += tri(16, 108, 22, 108, 19, 120, bone) + tri(24, 108, 30, 108, 27, 120, bone) + tri(94, 108, 100, 108, 97, 120, bone) + tri(102, 108, 108, 108, 105, 120, bone);
+      s += '<polyline points="48,56 58,66 52,78 64,86 58,98" fill="none" stroke="' + g + '" stroke-width="2.4" filter="url(#glowf)" stroke-linejoin="round"/>';
+    }
+    s += rect(54, 26, 8, 6, r >= 3 ? g : "#161a12", r >= 3 ? ' filter="url(#glowf)"' : "") + rect(68, 26, 8, 6, r >= 3 ? g : "#161a12", r >= 3 ? ' filter="url(#glowf)"' : "");
+    if (r >= 4) s += '<path d="M24 56 L24 106 M104 56 L104 106 M52 112 L52 154 M78 112 L78 154" stroke="' + g + '" stroke-width="2" filter="url(#glowf)" fill="none"/>';
+    if (r === 5) {
+      for (var i = 0; i < 5; i++) s += tri(46 + i * 8, 8, 52 + i * 8, 8, 49 + i * 8, -4 - (i % 2) * 6, bone);
+      s += '<polyline points="50,60 60,72 54,86 66,96" fill="none" stroke="#e9e3ff" stroke-width="2" filter="url(#glowf)"/>';
+    }
+    s += "</g>";
+    if (r >= 4) s += motes(65, 70, 60, 70, g, r === 5 ? 6 : 12, r + 3);
+    return s + "</svg>";
+  }
+
+  /* ---------- the walk ---------- */
+  var FORMS = {
+    pig: ["Pig", "Tusker", "Rootbreaker", "Ember boar", "Boarlord", "Hollow tusk"],
+    zombie: ["Zombie", "Gnawer", "Ironhusk", "Reaver", "Revenant", "Hollow King"]
+  };
+  var SEE = [
+    "Vanilla creatures, exactly as now. This is the first hour.",
+    "Scars, rags and small tusks. Breath mist on cold mornings. A gold glint in the eyes at night.",
+    "Plates and scrap iron, bigger horns, spine rows. Shields. The glow turns orange.",
+    "Cracks and veins that glow red, with a trail of motes. Ember, cold or spore by biome.",
+    "Oversized parts, antlers and crowns, a violet halo. The ground shakes when the big moves land.",
+    "A dark halo, void veins, parts that float. The grass bends away from it."
+  ];
+  var HEAR = [
+    "Normal voices and birdsong.",
+    "A little lower, with a growl under the call.",
+    "Lower still, a second growl layered in.",
+    "Deep, with a rasp. A tell sound before each move.",
+    "Very low, with a ring after the call. Birds are nearly gone.",
+    "A far echo. No birds at all, only footsteps and a low bed."
+  ];
+  var SIGNS = [0, 0.25, 0.5, 0.9, 1.3, 1.6];
+  var QUIET = [1, 0.8, 0.55, 0.35, 0.2, 0.1];
+  var LAND = [
+    "No signs. Roads, hamlets and the camp all sit here.",
+    "Scratched trunks, mud wallows, bone piles, rust-stained outcrops.",
+    "Skulls on posts, a broken cart, a cold camp, silk between the trees.",
+    "Bare snags, the ribs of something huge, scorched rings, smoke vents.",
+    "Gravefields of mossy wall-heads with soul lanterns. Black spires.",
+    "Weeping stones with a slow drip of violet motes."
+  ];
+  function heat(gap) { return gap <= -10 ? ["grey", "grey, trivial"] : gap < 5 ? ["blue", "blue, easy"] : gap < 15 ? ["orange", "orange, a fight that takes skill"] : ["red", "red, winnable only by an insane fighter"]; }
+
+  var dist = document.getElementById("dist"), plv = document.getElementById("plv"), distv = document.getElementById("distv");
+  var stage = document.getElementById("stage"), rows = document.getElementById("rows"), jumps = document.getElementById("jumps");
+  var JUMP = [0, 900, 1800, 2800, 3900, 5400];
+  RANKS.forEach(function (n, i) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "jump"; b.textContent = n; b.setAttribute("aria-pressed", "false"); b.setAttribute("aria-label", "Jump to rank " + n);
+    b.addEventListener("click", function () { dist.value = JUMP[i]; update(); });
+    jumps.appendChild(b);
+  });
+  function update() {
+    var d = +dist.value, lvl = Math.round(ceiling(d)), r = rankOf(lvl), p = +plv.value, h = heat(lvl - p);
+    distv.textContent = fmt(d) + " blocks";
+    Array.prototype.forEach.call(jumps.children, function (b, i) { b.setAttribute("aria-pressed", String(i === r)); });
+    stage.innerHTML = pig(r) + zombie(r) + '<div class="cp">' + (r === 0 ? "Concept sketch · vanilla" : "Concept sketch · " + FORMS.pig[r] + " and " + FORMS.zombie[r]) + "</div>";
+    var mix = r === 0 ? "All vanilla." : "About 70% " + RANKS[r] + " forms, 25% " + (r === 1 ? "vanilla" : RANKS[r - 1] + " forms") + (r < 5 && r >= 1 ? ", 5% " + RANKS[r + 1] + " (a taste of further on)." : ".");
+    rows.innerHTML =
+      row("Land", '<span class="big">' + lvl + '</span> <span class="rank ' + RCLS[r] + '">' + RANKS[r] + "</span> <span class=\"small\">worst case at " + fmt(d) + " blocks</span>") +
+      row("Glow", '<span class="glow" style="background:' + GL[r] + '"></span>' + (r === 0 ? "none" : RANKS[r] + " " + ["", "gold", "orange", "red", "violet", "indigo"][r])) +
+      row("A creature here", '<span class="chip ' + h[0] + '">Lv ' + lvl + "</span> to a level-" + p + " player: " + h[1]) +
+      row("Pig · zombie", esc(FORMS.pig[r]) + " · " + esc(FORMS.zombie[r])) +
+      row("The mix", esc(mix)) +
+      row("You see", esc(SEE[r])) +
+      row("You hear", esc(HEAR[r])) +
+      row("The land", esc(LAND[r]) + ' <span class="small">Signs per chunk: ' + SIGNS[r] + ". Animals left: " + Math.round(QUIET[r] * 100) + "%.</span>");
+  }
+  function row(t, v) { return "<div><dt>" + t + "</dt><dd>" + v + "</dd></div>"; }
+  dist.addEventListener("input", update);
+  plv.addEventListener("change", update);
+
+  /* ---------- the ladders ---------- */
+  var LAD = {
+    Pig: [["Tusker", "Two tusks, scars and a bristle ridge. When struck it does the Gore: head down, paws, then a short charge."], ["Rootbreaker", "Curved tusks and hide plates. Root-up: a stomp heaves a ring of ground. The herd rallies when one is hit."], ["Ember boar", "Glowing cracks along its back and steam from its snout. Trample: a long charge straight through you, leaving a scorched trail."], ["Boarlord", "A third bigger, a mane of bone spines and a crown of tusks. Quake: a stomp that sends a ring out and drops rubble."], ["Hollow tusk", "Tusks of pale light and a dark halo. Its roar staggers everyone close."]],
+    Cow: [["Bullock", "Horns and scars. A back-kick when struck from behind."], ["Aurochs", "Big horns and a hump. A charge, with the head lowered first."], ["Thunderhorn", "Glowing cracks. A stomp that sends a shock ring."], ["Stormbull", "Static crawls on its horns. Lightning where it charges."], ["Skyhorn", "Motes lift off it, and its bellow carries across the land."]],
+    Zombie: [["Gnawer", "Torn rags and a bone showing. Groan: calls two or three zombies within 24 blocks."], ["Ironhusk", "A scrap helm, a pauldron, a dented shield. Shield bash after the shield rises; hit it from the side."], ["Reaver", "Long raking claws and ember cracks. Pounce: crouches and glows, then lunges 6 blocks."], ["Revenant", "Lit eyes and burning seams. Rise: stands again once at 40% health unless you finish it fast."], ["Hollow King", "A thorn crown and a shadow that trails. Dread call: the ground cracks and four lesser ones rise in a ring."]],
+    Skeleton: [["Bonepicker", "Strafes and keeps its range."], ["Marksman", "A long glowing draw, then a piercing shot. The arrow shines first."], ["Volley", "Raises its bow to the sky, then three arrows fan out and rain on a patch."], ["Wraith archer", "A smoke body that blinks away after a shot."], ["Bone warden", "A ring of bones turns round it, and arrows pass through the gaps."]],
+    Spider: [["Webspinner", "Webs strung between trees at its territory, and webs under your feet when it hits."], ["Ambusher", "Waits still in a canopy or ceiling. A faint chitter as you pass, then it stops, and it drops."], ["Spitter", "An acid arc that leaves a cloud. The abdomen swells first."], ["Broodmother", "Bursts into spiderlings when it dies or is struck hard."], ["Void weaver", "Strands pull you in, and it steps along its own web."]],
+    Creeper: [["Hisser", "A longer fuse and a bigger blast, so it is readable."], ["Stormbred", "Naturally charged, with sparks crawling on it."], ["Cinder", "Red cracks. Leaves a small fire patch."], ["Sapper", "The blast pulls you in first, then throws you."], ["Stormwalker", "Lightning where it goes off."]],
+    Enderman: [["Marked", "Calm until looked at, as now, with scars and a darker eye."], ["Stalker", "Appears behind you after a looked-away breath."], ["Rift-eye", "A small rift pulls loose items and arrows toward it."], ["Gaze-bound", "Looking away is what angers it."], ["Nowhere", "It is simply not where you looked."]],
+    Slime: [["Gel", "Splits into more, smaller ones."], ["Acidic", "Leaves a slow puddle."], ["Boiler", "Bounces up to a slam."], ["Mother", "A cluster of smaller ones orbits it."], ["Ocean-heart", "One slow, huge, glowing slime."]],
+    Witch: [["Hedge witch", "A thrown potion, with a tell."], ["Coven", "Two of them, healing each other."], ["Hexer", "A root curse on a marked circle."], ["Brewmother", "A cloud of her own."], ["Storm-caller", "Rain, then one bolt on a mark."]],
+    Sheep: [["Bighorn", "Curled horns. A headbutt that launches you."], ["Ironram", "Iron-banded horns. A charge."], ["Cinderfleece", "Smouldering wool, sparks when hit."], ["Stormfleece", "Static in the wool, a shock when it lands."], ["Moonram", "Pale wool that lights the ground."]],
+    Chicken: [["Spurhen", "Spurs and a flap-jump."], ["Cockerel", "A crest and a loud crow that rallies others."], ["Firecrest", "A plume of embers."], ["Roc-chick", "One and a half times the size. It glides."], ["Sunfowl", "A bright crest that blinds for a moment."]],
+    Mooshroom: [["Sporecow", "A spore puff when struck, blinding you for two seconds."], ["Mycelid", "The caps grow big."], ["Bloom", "Spores that heal its herd."], ["Blightbull", "A poison cloud."], ["Heartshroom", "A glowing heart-cap that pulses before it moves."]]
+  };
+  var tabs = document.getElementById("tabs"), rungs = document.getElementById("rungs");
+  var names = Object.keys(LAD), cur = "Pig";
+  names.forEach(function (n) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "tab"; b.setAttribute("role", "tab"); b.textContent = n;
+    b.setAttribute("aria-selected", String(n === cur));
+    b.addEventListener("click", function () { cur = n; show(); });
+    tabs.appendChild(b);
+  });
+  function show() {
+    Array.prototype.forEach.call(tabs.children, function (b) { b.setAttribute("aria-selected", String(b.textContent === cur)); });
+    var html = "";
+    LAD[cur].forEach(function (c, i) {
+      var r = i + 1, art = cur === "Pig" ? pig(r) : cur === "Zombie" ? zombie(r) : "";
+      html += '<div class="rung">' + (art ? '<div class="stage">' + art + "</div>" : "") +
+        '<div class="top"><span class="rank ' + RCLS[r] + '">' + RANKS[r] + '</span><span class="nm">' + esc(c[0]) + "</span></div><p>" + esc(c[1]) + "</p></div>";
+    });
+    rungs.innerHTML = html;
+  }
+  show();
+
+  /* ---------- bars to scale ---------- */
+  function bars(id, vals, max, unit, dec) {
+    var el = document.getElementById(id), h = "";
+    vals.forEach(function (v, i) {
+      h += '<div class="barrow"><span class="rank ' + RCLS[i] + '">' + RANKS[i] + '</span><div class="tr"><div class="fl" style="width:' + (v / max * 100).toFixed(1) + "%;background:" + RCSS[i] + '"></div></div><span>' + (dec ? v.toFixed(2) : Math.round(v * 100) + "%") + "</span></div>";
+    });
+    el.innerHTML = h;
+  }
+  bars("bars-signs", SIGNS, 1.6, "", true);
+  bars("bars-quiet", QUIET, 1, "", false);
+
+  /* ---------- the Atlas toy ---------- */
+  var HEARTS = [[12, 40, 4], [34, 16, 14], [30, 58, 20], [58, 36, 36], [66, 10, 52], [62, 66, 60], [88, 24, 85], [92, 58, 110], [108, 40, 140]];
+  function ramp(l) {
+    var t = Math.log(Math.max(1, l)) / Math.log(120);
+    var stops = [[0, [98, 217, 154]], [0.45, [228, 208, 99]], [0.62, [242, 154, 72]], [0.78, [236, 86, 86]], [0.9, [176, 124, 255]], [1, [108, 71, 198]]];
+    t = Math.min(1, t);
+    for (var i = 1; i < stops.length; i++) if (t <= stops[i][0]) {
+      var a = stops[i - 1], b = stops[i], k = (t - a[0]) / (b[0] - a[0]);
+      return [0, 1, 2].map(function (c) { return Math.round(a[1][c] + (b[1][c] - a[1][c]) * k); });
+    }
+    return stops[stops.length - 1][1];
+  }
+  function atlas(id, smooth) {
+    var cv = document.getElementById(id), ctx = cv.getContext("2d"), W = cv.width, H = cv.height, img = ctx.createImageData(W, H);
+    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+      var sw = 0, sl = 0, best = 1e9, bl = 1;
+      for (var i = 0; i < HEARTS.length; i++) {
+        var hx = HEARTS[i][0], hy = HEARTS[i][1], d = Math.hypot(x - hx, y - hy);
+        var w = Math.exp(-d / 9); sw += w; sl += w * Math.log(HEARTS[i][2]);
+        if (d < best) { best = d; bl = HEARTS[i][2]; }
+      }
+      var l = smooth ? Math.exp(sl / sw) : bl, c;
+      if (smooth) c = ramp(l);
+      else { var q = FROM.slice().reverse().find(function (f) { return l >= f; }) || 1; c = ramp(q * 1.05); }
+      if (!smooth && best < 1.6) c = [c[0] * 0.55, c[1] * 0.55, c[2] * 0.55];
+      var o = (y * W + x) * 4; img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  atlas("at-now", false); atlas("at-new", true);
+  document.getElementById("atlegend").innerHTML = [["1", "#62D99A"], ["10", "#E4D063"], ["25", "#F29A48"], ["45", "#EC5656"], ["70", "#B07CFF"], ["100", "#6C47C6"]].map(function (a) { return '<span><i style="background:' + a[1] + '"></i>' + a[0] + "</span>"; }).join("");
+
+  update();
+})();
+</script>
