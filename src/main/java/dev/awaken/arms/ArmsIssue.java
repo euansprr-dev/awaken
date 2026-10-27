@@ -71,6 +71,7 @@ public final class ArmsIssue implements ArmsApi.Hooks {
         Signal.toast(p, Component.literal("PATTERN · ").withColor(0x6FB3FF).append(Component.literal((st == null ? style : st.def().name()) + " Blueprint").withColor(0xD6ECFF))
                 .append(Component.literal(" · " + source).withColor(0xC8C2B0)));
         Progression.markNewThing(p, "pattern:" + style);
+        ArmsArmoury.sendView(p);
         return true;
     }
 
@@ -111,6 +112,17 @@ public final class ArmsIssue implements ArmsApi.Hooks {
     }
 
     @Override
+    public boolean issueTaken(ServerPlayer p) {
+        migrate(p);
+        return ArmsProgress.of(p).issued;
+    }
+
+    @Override
+    public void openRack(ServerPlayer p) {
+        ArmsArmoury.open(p, ArmsArmoury.HALE);
+    }
+
+    @Override
     public void openIssue(ServerPlayer p) {
         OFFERED.put(p.getUUID(), p.level().getGameTime());
         AwakenNet.send(p, new ArmsPayloads.IssueOffer(OPTIONS));
@@ -137,7 +149,7 @@ public final class ArmsIssue implements ArmsApi.Hooks {
         Signal.toast(p, Component.literal("ISSUED · ").withColor(0xE2B450).append(weapon.getName(new ItemStack(weapon)).copy().withColor(0xFFE3A0))
                 .append(Component.literal(" · " + (st == null ? style : st.def().name())).withColor(0xC8C2B0)));
         ArmsApi.say(p, "Hale: Good choice. That one's yours. I've put its pattern in your pack too, so you can make more of them later. "
-                + "The spare blade is a Fang, and everything you forge starts from one. When you want a different style, come and see me. "
+                + "The spare blade is a Fang, and everything you forge starts from one. When you want a different style, crouch and talk to me, and I'll show you the rack. "
                 + "I sell the patterns for essence, and the more you've done, the more I'll show you.");
         Progression.markNewThing(p, "issue");
     }

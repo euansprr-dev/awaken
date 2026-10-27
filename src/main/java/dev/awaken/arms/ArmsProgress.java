@@ -28,13 +28,15 @@ public final class ArmsProgress {
     /** Lord kills since the last weapon of any kind, and kills of elites, Wardens and camp hearts since the last Marked weapon. */
     int lordsWithoutWeapon, markedWithout;
     boolean firstMarked;
+    /** The weapon being tracked on the task card: "daggers:E", or empty. */
+    String tracked;
     /** Gates that have already taught this fighter (the last 64 ids), people who have, and Pattern Stands taken (a position each). */
     final List<Integer> claimedGates;
     final Set<String> claimedPeople;
     final Set<Long> claimedStands;
 
     ArmsProgress(Set<String> styles, boolean issued, boolean migrated, int shardMisses, int lordsWithoutWeapon, int markedWithout,
-                 boolean firstMarked, List<Integer> claimedGates, Set<String> claimedPeople, Set<Long> claimedStands) {
+                 boolean firstMarked, String tracked, List<Integer> claimedGates, Set<String> claimedPeople, Set<Long> claimedStands) {
         this.styles = new HashSet<>(styles);
         this.issued = issued;
         this.migrated = migrated;
@@ -42,13 +44,14 @@ public final class ArmsProgress {
         this.lordsWithoutWeapon = lordsWithoutWeapon;
         this.markedWithout = markedWithout;
         this.firstMarked = firstMarked;
+        this.tracked = tracked;
         this.claimedGates = new ArrayList<>(claimedGates);
         this.claimedPeople = new HashSet<>(claimedPeople);
         this.claimedStands = new HashSet<>(claimedStands);
     }
 
     static ArmsProgress fresh() {
-        return new ArmsProgress(Set.of(), false, false, 0, 0, 0, false, List.of(), Set.of(), Set.of());
+        return new ArmsProgress(Set.of(), false, false, 0, 0, 0, false, "", List.of(), Set.of(), Set.of());
     }
 
     static final MapCodec<ArmsProgress> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -60,10 +63,11 @@ public final class ArmsProgress {
             Codec.INT.optionalFieldOf("lordsWithoutWeapon", 0).forGetter(p -> p.lordsWithoutWeapon),
             Codec.INT.optionalFieldOf("markedWithout", 0).forGetter(p -> p.markedWithout),
             Codec.BOOL.optionalFieldOf("firstMarked", false).forGetter(p -> p.firstMarked),
+            Codec.STRING.optionalFieldOf("tracked", "").forGetter(p -> p.tracked),
             Codec.INT.listOf().optionalFieldOf("claimedGates", List.of()).forGetter(p -> List.copyOf(p.claimedGates)),
             Codec.STRING.listOf().optionalFieldOf("claimedPeople", List.of()).forGetter(p -> List.copyOf(p.claimedPeople)),
             Codec.LONG.listOf().optionalFieldOf("claimedStands", List.of()).forGetter(p -> List.copyOf(p.claimedStands))
-    ).apply(i, (v, st, is, mg, sm, lw, mw, fm, cg, cp, cs) -> new ArmsProgress(Set.copyOf(st), is, mg, sm, lw, mw, fm, cg, Set.copyOf(cp), Set.copyOf(cs))));
+    ).apply(i, (v, st, is, mg, sm, lw, mw, fm, tr, cg, cp, cs) -> new ArmsProgress(Set.copyOf(st), is, mg, sm, lw, mw, fm, tr, cg, Set.copyOf(cp), Set.copyOf(cs))));
 
     public static ArmsProgress of(ServerPlayer p) {
         return p.getData(ArmsContent.PROGRESS);

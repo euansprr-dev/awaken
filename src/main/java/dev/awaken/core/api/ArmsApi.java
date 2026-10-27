@@ -25,6 +25,12 @@ public final class ArmsApi {
 
         /** Opens the pick of a first weapon on the fighter's screen. */
         void openIssue(ServerPlayer player);
+
+        /** Whether the fighter has taken the Association's issue (Hale shows the rack to those who have). */
+        boolean issueTaken(ServerPlayer player);
+
+        /** Opens the Armoury at Hale's rack. */
+        void openRack(ServerPlayer player);
     }
 
     private static Hooks hooks;
@@ -48,6 +54,14 @@ public final class ArmsApi {
 
     public static void openIssue(ServerPlayer player) {
         if (hooks != null) hooks.openIssue(player);
+    }
+
+    public static boolean issueTaken(ServerPlayer player) {
+        return hooks != null && hooks.issueTaken(player);
+    }
+
+    public static void openRack(ServerPlayer player) {
+        if (hooks != null) hooks.openRack(player);
     }
 
     /** The living module says what people say ("Hale: ...") on screen; arms asks it to, without knowing how. */

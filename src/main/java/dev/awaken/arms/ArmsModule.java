@@ -41,6 +41,7 @@ public final class ArmsModule {
         dev.awaken.core.api.WeaveHooks.install(ArmsWeaves.INSTANCE);
         ArmsForge.init();
         dev.awaken.core.api.ArmsApi.install(ArmsIssue.INSTANCE);
+        ArmsTrack.init();
         modBus.addListener(ArmsModule::registerPayloads);
         modBus.addListener(EventPriority.LOW, ArmsModule::guardComponents);
         var bus = NeoForge.EVENT_BUS;
@@ -53,6 +54,7 @@ public final class ArmsModule {
                 ArmsWeaves.sync(sp);
                 ArmsMastery.sync(sp);
                 ArmsIssue.migrate(sp);
+                ArmsArmoury.sendView(sp);
             }
         });
         bus.addListener(EventPriority.HIGHEST, ArmsServer::onIncomingDamage);
@@ -68,7 +70,7 @@ public final class ArmsModule {
         bus.addListener(EventPriority.LOW, ArmsIssue::onDrops);
         bus.addListener(ArmsIssue::onPlayerTick);
         bus.addListener(EventPriority.HIGH, ArmsForge::onUseBlock);
-        bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> ArmsForge.forget(e.getEntity().getUUID()));
+        bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> { ArmsForge.forget(e.getEntity().getUUID()); ArmsArmoury.forget(e.getEntity().getUUID()); });
         bus.addListener(EventPriority.HIGH, ArmsModule::onUseStartOff);
         bus.addListener(ArmsServer::onUseStart);
         bus.addListener(ArmsServer::onUseStop);
@@ -88,6 +90,11 @@ public final class ArmsModule {
         r.playToServer(ArmsPayloads.IssuePick.TYPE, ArmsPayloads.IssuePick.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) ArmsIssue.onPick(sp, msg.style());
         });
+        r.playToServer(ArmsPayloads.ArmouryAct.TYPE, ArmsPayloads.ArmouryAct.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) ArmsArmoury.onAct(sp, msg);
+        });
+        r.playToClient(ArmsPayloads.ArmouryView.TYPE, ArmsPayloads.ArmouryView.STREAM_CODEC);
+        r.playToClient(ArmsPayloads.ArmouryDetail.TYPE, ArmsPayloads.ArmouryDetail.STREAM_CODEC);
         r.playToClient(ArmsPayloads.IssueOffer.TYPE, ArmsPayloads.IssueOffer.STREAM_CODEC);
         r.playToClient(ArmsPayloads.Result.TYPE, ArmsPayloads.Result.STREAM_CODEC);
         r.playToClient(ArmsPayloads.Seen.TYPE, ArmsPayloads.Seen.STREAM_CODEC);

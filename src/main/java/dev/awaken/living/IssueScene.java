@@ -57,6 +57,11 @@ public final class IssueScene {
 
     /** Talking to Hale or Ilse: true when it was theirs to hand over (Ilse only after her own scene, never over the first thread's step). */
     public static boolean talk(ServerPlayer p, String who) {
+        if (who.equals("hale") && p.isShiftKeyDown() && ArmsApi.issueTaken(p)) {
+            QuestEngine.sayLine(p, "Hale: Patterns? Have a look. The more you've done, the more I'll show you.");
+            ArmsApi.openRack(p);
+            return true;
+        }
         if (!ready(p)) return false;
         if (who.equals("hale")) {
             offer(p, true);
