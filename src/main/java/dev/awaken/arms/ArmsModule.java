@@ -42,6 +42,7 @@ public final class ArmsModule {
         ArmsForge.init();
         dev.awaken.core.api.ArmsApi.install(ArmsIssue.INSTANCE);
         ArmsTrack.init();
+        ArmsTrails.init();
         modBus.addListener(ArmsModule::registerPayloads);
         modBus.addListener(EventPriority.LOW, ArmsModule::guardComponents);
         var bus = NeoForge.EVENT_BUS;

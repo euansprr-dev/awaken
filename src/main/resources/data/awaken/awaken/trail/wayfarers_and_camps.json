@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "title": "Wayfarers and Camps",
+  "area": "world",
+  "blurb": "People out in the wild who ask for help and teach what they know.",
+  "weight": 112,
+  "opens": [
+    "level:3"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "register",
+      "text": "Register with the Association.",
+      "done": [
+        "counter:awaken:carillon_registered"
+      ],
+      "hint": "The Registry is in Carillon."
+    },
+    {
+      "id": "camp",
+      "text": "Reach the Wayfarer camp.",
+      "done": [
+        "counter:awaken:camp_reached"
+      ],
+      "hint": "Ilse and Hettie are there. Look for the smoke north of the High Gate."
+    },
+    {
+      "id": "bounty",
+      "text": "Finish a bounty from Hale's board.",
+      "done": [
+        "count:awaken:bounties_done:1"
+      ],
+      "where": "quartermaster",
+      "hint": "Take one from his post and bring back what it asks for."
+    }
+  ],
+  "finish": {
+    "line": "You know the people out there.",
+    "levels": 0.05
+  }
+}

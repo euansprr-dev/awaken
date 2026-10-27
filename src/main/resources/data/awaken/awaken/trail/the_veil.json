@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "title": "The Veil",
+  "area": "deep",
+  "blurb": "Stillness, spirit sight and leaving your body.",
+  "weight": 120,
+  "opens": [
+    "unlock:awaken:meditation"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "meditate",
+      "text": "Meditate: sneak and hold G, standing still.",
+      "done": [
+        "count:awaken:meditate_ticks:200"
+      ],
+      "hint": "A ring of dots fills round the crosshair. Meditating doubles your energy regeneration."
+    },
+    {
+      "id": "project",
+      "text": "Spend time in the Veil, out of your body.",
+      "done": [
+        "count:awaken:veil_ticks:200"
+      ]
+    },
+    {
+      "id": "speak",
+      "text": "Speak with a spirit.",
+      "done": [
+        "count:awaken:spirits_spoken:1"
+      ],
+      "hint": "Spirits tell what the place used to be."
+    },
+    {
+      "id": "secret",
+      "text": "Find a secret only the Veil shows.",
+      "done": [
+        "count:awaken:secrets_found:1"
+      ]
+    }
+  ],
+  "finish": {
+    "line": "You have seen behind the Veil.",
+    "levels": 0.05
+  }
+}

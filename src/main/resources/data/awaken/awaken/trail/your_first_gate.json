@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "title": "Your First Gate",
+  "area": "gates",
+  "blurb": "A rift in the world with a floor to clear and a Lord at the end.",
+  "weight": 100,
+  "opens": [
+    "level:3"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "floor",
+      "text": "Clear a floor.",
+      "done": [
+        "count:awaken:floors_cleared:1"
+      ],
+      "hint": "Defeat everything on it, then step to the shrine."
+    },
+    {
+      "id": "gate",
+      "text": "Clear a whole gate and take its Lord.",
+      "done": [
+        "count:awaken:gates_cleared:1"
+      ],
+      "hint": "Take what you can carry out. Dying in a gate loses the Satchel."
+    },
+    {
+      "id": "twist",
+      "text": "Meet a gate's twist.",
+      "done": [
+        "count:awaken:twists_seen:1"
+      ],
+      "hint": "A twist changes the rules of one gate."
+    },
+    {
+      "id": "clean",
+      "text": "Clear a gate without being hit.",
+      "done": [
+        "count:awaken:gates_no_hit:1"
+      ],
+      "hint": "It is hard, and it pays."
+    }
+  ],
+  "finish": {
+    "line": "You know the gates.",
+    "levels": 0.05
+  }
+}

@@ -124,6 +124,7 @@ final class ArmsPatterns {
 
     private static void award(ServerPlayer p, ArmsHomes.Home home, String key, String source) {
         if (!claimGate(p, key)) return;
+        dev.awaken.progression.Progression.count(p, "awaken:patterns_from_gates"); // trail steps (docs/trails/PLAN.md §4.2)
         teach(p, home, source);
     }
 
@@ -159,6 +160,7 @@ final class ArmsPatterns {
             ArmsProgress g = ArmsProgress.of(p);
             if (!g.claimedPeople.add(t.person())) return;
             p.setData(ArmsContent.PROGRESS, g);
+            dev.awaken.progression.Progression.count(p, "awaken:patterns_from_people");
             dev.awaken.core.api.ArmsApi.say(p, t.line());
             if (!ArmsIssue.INSTANCE.learn(p, h.style(), cap(t.person()) + "'s teaching")) {
                 int price = ArmsHomes.rackPrice(h.rank());

@@ -174,6 +174,7 @@ public final class ArmsStands {
             Signal.toast(p, Component.literal("You have already taken the pattern from this stand."));
             return;
         }
+        dev.awaken.progression.Progression.count(p, "awaken:patterns_from_stands");
         ArmsProgress g = ArmsProgress.of(p);
         g.claimedStands.add(claimKey(level, pos));
         p.setData(ArmsContent.PROGRESS, g);
@@ -232,6 +233,7 @@ public final class ArmsStands {
     /** The smith's pattern was paid for: it is known at once (the Blueprint came with the trade). */
     static void villageBought(ServerPlayer p, String style) {
         ArmsIssue.remember(p, style);
+        dev.awaken.progression.Progression.count(p, "awaken:patterns_from_villages");
         String name = ArmsIssue.optionName(style);
         Signal.toast(p, Component.literal("PATTERN · ").withColor(0x6FB3FF).append(Component.literal((name == null ? style : name) + " Blueprint · from the village smith").withColor(0xD6ECFF)));
         Progression.markNewThing(p, "pattern:" + style);
