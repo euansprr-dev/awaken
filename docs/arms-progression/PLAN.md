@@ -1,6 +1,8 @@
 # Arms progression: where every weapon comes from (plan for Euan's approval, 2026-10-27)
 
-Status: plan only, nothing built, nothing approved yet. Branch `pack/arms-progression-plan`. Approval page:
+Status: **approved 2026-10-27 with changes** (Euan, in chat to the plan session: "go ahead with everything else that's
+recommended", with patterns taught by gates, villages and structures instead of the first-elite rule, and weapons from
+boss fights); still plan only, nothing built. Branch `pack/arms-progression-plan`. Approval page:
 https://claude.ai/artifact/DA4J66cpZkKinGbm6X18ML (source `docs/arms-progression/page.html`).
 Labels used below: **VERIFIED** (read in this repo at 7de77457 or computed from it), **RESEARCH** (an outside source,
 §2), **PROPOSAL** (not built, nothing measured), **UNVERIFIED** (to be checked by the first builder).
@@ -19,14 +21,15 @@ you have dug for iron. So:
 1. Every item and every ingredient says what it is and where to get more, in plain words, and a test fails if one
    doesn't (§3.5).
 2. Hale hands every new hunter one real weapon at the High Gate, free, with its Blueprint and a spare Fang (§3.3).
-3. Every one of the 16 styles has one home, a person or a place that teaches it, and Hale's rack sells it by rank as the
-   floor, so no one is ever locked out (§3.4).
+3. **The gates give the pattern and the world gives the materials** (Euan's rule): every gate has a creature that carries
+   its style's Blueprint, structures show patterns on stands built to be looked at, village smiths sell them by their
+   land's rank, six people teach early, and Hale's rack sells every one as the floor, so no one is ever locked out (§3.4).
 4. One list, the **Armoury**, answers "what can I make, what do I need, where is it": at Hale's rack, at your Forge and
    in the band, with a **Track** button that puts the missing parts on the screen (§3.2, §3.5).
 5. Each new tier announces itself with a named job on Hale's board for its signature part, and never needs more than one
    trophy, one metal run and the essence you already earn (§3.6).
-6. Found weapons (Marked, Lord-forged, named) can be **raised** to your tier at the Forge, so finding and making both
-   stay worth doing (§3.7).
+6. Every boss fight drops a weapon (the Lord-forged one, else a Marked one in the Lord's own style), and found weapons
+   can be **raised** to your tier at the Forge, so finding and making both stay worth doing (§3.7).
 7. Gear stays the floor, not the lever: the sim says skill decides fights, so the first gear can be generous (§3.8).
 
 ## 1. The audit: what a new hunter gets today
@@ -110,15 +113,16 @@ only fan pages). The design below uses the *pattern* (a visible tree with locked
 3. **Making and finding both matter.** You *make* the weapon that fits your build and your tier. You *find* the ones
    with a story, and the Forge can always raise a found weapon to your tier, keeping what makes it special.
 
-### 3.2 The Armoury: one list, three doors
+### 3.2 The Armoury: one list, four doors
 
 The Armoury is the single answer to "what can I make and what do I need". It is a screen (a QuietScreen, like "Your
-Hearth", SPEC §13 "Hearth guide") and a section of the band. Three doors lead in:
+Hearth", SPEC §13 "Hearth guide") and a section of the band. Four doors lead in:
 
 | Door | Where | What you can do there |
 |---|---|---|
 | **Hale's rack** | the High Gate yard, from the first minute out of the city | read everything; buy the Blueprints your rank opens, for essence only (Hale supplies the ink); take your issue (§3.3) |
 | **Your Forge** | at home (and any placed Forge) | the same list; draw any Blueprint you know for 4 paper, 1 lapis, 1 shard (the Study halves the paper); raise a weapon (§3.7); attune and temper as today |
+| **A village smithy** | any village or town smith (its Forge) | draw patterns you know, raise, attune; the smith's rack sells two patterns of his land's rank (§3.4) |
 | **The band** | K, Powers, THE ARMOURY | read what you know, track a recipe; buying and drawing need a door |
 
 What changes at the Forge: a use with an **empty hand opens the Armoury** (no more sneak, no more cycling). Tempering
@@ -182,7 +186,7 @@ minutes, level 5 at 58):
 | 0:20-0:45 | the first Essence Shard drops; a card says what it is ("What awakened creatures leave behind. Hunters at night drop about one for every two kills. Armour, weapons and patterns are made with it."), filed in the Journal as a find | the Finds director |
 | 0:27 | level 3: the Hunter gear E recipes arrive; the toast now says what you need and where it comes from: "Hide from creatures, a bone or flint and a string or feather, and one Essence Shard for each piece." The Armoury appears in the band | level road text, Armoury |
 | first night | the first armour piece (a Hood: 4 hide, 1 shard) in about five kills, the set (about 15 hide, 7 shards) over the night | the Now line: "You can make a Wildhide Hood" (exists), with Track for the rest |
-| ~1 h | the first gate, an E elite, the first Marked chance | existing |
+| ~1 h | the first gate: its **bearer** (a creature wielding the gate's style) drops the gate's pattern, a second style, free; an E elite may drop a Marked weapon | the gate card, the bearer's weapon, the reveal |
 
 Essence supply for that kit: about 12 night-hunter kills, or two rifts and a few kills. Two small changes make sure bad
 luck can't stall it: a **no-drought rule** (the 5th kill in a row with no shard drops one; per player, E and D ranks
@@ -194,79 +198,113 @@ Handing over a first stack would teach the wrong lesson ("shards come from a per
 
 ### 3.4 How each style is found (question 2)
 
-**The rule:** every style has **one home**, a person or a place, and **Hale's rack** is the floor. The rack stocks a
-style at the rank of the Lord who masters it (a rule a player can remember), for essence only, 4 at E, 6 at D, 8 at C,
-10 at B, 12 at A (PROPOSAL, tuned in build against the essence income in `docs/modules/mobs.md`).
+Euan, 2026-10-27, after the first version: "I think unlocking them in gates is a good idea, and then also maybe in
+villages ... if I go in a C-tier gate, and then I defeat all the mobs, then at least one of them should drop a blueprint
+for a specific weapon ... you get the blueprint in gates, and then you need to get the materials in the world to then
+build that blueprint." And: "it shouldn't only be from villages, it should also be structures overall. But not just in a
+boring chest ... built really nicely ... set on a nice rack or something ... but you still know that that's something you
+can take." And, of the tooltips: "found in a X rank gate, or in a level X-X structure".
 
-| Style | In plain words | Home (teaches it) | Hale's rack opens | Its master (Lord-forged) |
-|---|---|---|---|---|
-| Longsword | Balanced. Good at guarding and answering. | everyone has it (no Blueprint) | - | none (the default) |
-| Daggers | Fast and close. You hit hardest from behind. | the Hive (E gates, riftborn camps) | E | Hive Regent |
-| Axe | Wide, heavy cuts that break a guard. | the Ember Mines | E | Ember Tyrant |
-| Maul | Slow and heavy. Breaks armour, slams the ground. | the Bell Crypt | E | Bell Warden |
-| Scythe | Wide sweeps that cut spirits. | the Fungal Hollow | E | Mother of Spores |
-| War-staff | Each hit charges your power energy. | the Overgrown Temple | E | Root Saint |
-| Spear | Long reach. Keep things off you and thrust. | **Hettie** (Ten Sheep Short) | D | Drowned Archivist |
-| Rapier | Precise thrusts. Counters hit hard. | **Pell** (Pell's Message) | D | Glass Serpent |
-| Chain-blade | A blade on a chain: mid-range, pulls things in. | **Marta** (The Caravan Road) | D | Lantern Broker |
-| Gauntlets | Fists: strings of punches and counters. | the Clockwork Foundry | D | Gearwright Colossus |
-| Glaive | Big sweeping arcs for crowds. | **Gus** (The Hermit's Horn) | C | Abbot of Frost |
-| Shieldblade | Blade and shield: block first, bash back. | the Mirror Palace | C | Mirror Knight |
-| Precursor Arm | An energy blade that changes length. | the Precursor Lab | C | Unit Zero |
-| Katana | Draw and cut. The guard is the sheath. | the Nightmare gates | C | Sleeper |
-| Twinblades | Two blades, always spinning. | **Wren** (Wren's Rope) | B | Sky Leviathan |
-| Greatblade | Slow two-handed cuts that don't flinch. | **Oren** (Oren's First Steel) | A | Hollow Herald |
+**The rule: the gates give the pattern, the world gives the materials.** A Blueprint is the gates' light (with the essence
+and the Core Shards); the hunt's Part and the deep's metal still come from the world, so the three loops hold (SPEC
+§28.0.7). **A pattern is never left in a plain chest.** It is carried by a creature, shown on a stand, or sold from a rack,
+somewhere built to be looked at, and it always reads as something you can take.
 
-(Styles and Lords are from SPEC §25; the Hale rack is a rule, not a guess: *a style's rack rank is its master Lord's
-rank*. The Greatblade is taught early by Oren and sold at A, so early access is a reward and the rack is the floor.)
+Five doors lead to the same pattern; each style has exactly one **gate that teaches it** (its Lord's gate, so a rank's gates
+teach that rank's styles), and Hale's rack is the floor under all of them.
 
-**How the home teaches** (PROPOSAL):
+| Style | In plain words | The gate that teaches it | Hale's rack | Also taught early by | Its master (Lord-forged) |
+|---|---|---|---|---|---|
+| Longsword | Balanced. Good at guarding and answering. | everyone has it (no Blueprint) | - | - | none |
+| Daggers | Fast and close. You hit hardest from behind. | the Hive (E) | E | - | Hive Regent |
+| Axe | Wide, heavy cuts that break a guard. | the Ember Mines (E) | E | - | Ember Tyrant |
+| Maul | Slow and heavy. Breaks armour, slams the ground. | the Bell Crypt (E) | E | - | Bell Warden |
+| Scythe | Wide sweeps that cut spirits. | the Fungal Hollow (E) | E | - | Mother of Spores |
+| War-staff | Each hit charges your power energy. | the Overgrown Temple (E) | E | - | Root Saint |
+| Spear | Long reach. Keep things off you and thrust. | the Drowned Archive (D) | D | Hettie (Ten Sheep Short) | Drowned Archivist |
+| Rapier | Precise thrusts. Counters hit hard. | the Glass Desert (D) | D | Pell (Pell's Message) | Glass Serpent |
+| Chain-blade | A blade on a chain: mid-range, pulls things in. | the Lantern Night Market (D) | D | Marta (The Caravan Road) | Lantern Broker |
+| Gauntlets | Fists: strings of punches and counters. | the Clockwork Foundry (D) | D | - | Gearwright Colossus |
+| Glaive | Big sweeping arcs for crowds. | the Frost Monastery (C) | C | Gus (The Hermit's Horn) | Abbot of Frost |
+| Shieldblade | Blade and shield: block first, bash back. | the Mirror Palace (C) | C | - | Mirror Knight |
+| Precursor Arm | An energy blade that changes length. | the Precursor Lab (C) | C | - | Unit Zero |
+| Katana | Draw and cut. The guard is the sheath. | the Nightmare gates (C) | C | - | Sleeper |
+| Twinblades | Two blades, always spinning. | the Sky Archipelago (B) | B | Wren (Wren's Rope) | Sky Leviathan |
+| Greatblade | Slow two-handed cuts that don't flinch. | the Abyssal Shrine (A) | A | Oren (Oren's First Steel) | Hollow Herald |
 
-- **People (6):** the chain's last step pays the Blueprint, in the person's own plain voice. Oren: "A big blade is
-  just a hammer that's been taught manners. I'll show you once." Data only (the quests' `reward` already takes an item).
-  A person who has already taught you something you know pays the pattern's price in essence instead.
-- **Places (9):** the **first elite you down in a gate of that theme**, or the heart of a riftborn camp of that theme,
-  drops that theme's Blueprint, once per player per theme, with the reveal ("A pattern, wrapped in the nest's wax: the
-  Hive's Daggers"). In a gate it lands in the Satchel like any elite loot, so it is yours when you walk out. If you
-  already know the style it pays its rack price in essence. One generic rule keyed by a data file
-  (`data/awaken/arms/style_homes.json`: theme, style, person), not nine special cases.
-- **The Forge** draws any Blueprint you know (copies for a friend, a lost one), never one you don't.
-- **Use** earns depth, not access: mastery (five steps, 20 to 800 kills, SPEC §25) stays where it is, shown in the
-  Armoury. Gating a style behind another style's kills would punish trying something new.
+(Styles, Lords and gate themes: SPEC §25 and `mobs/def/Theme.java`. The rack rule is *a style's rack rank is its master
+Lord's rank*. The six people are early shortcuts to styles whose gates are further up the ranks; the Greatblade is taught
+early by Oren and sold at A.)
 
-**How a player learns a style exists, in the world first:** the rack shows weapons you can see and handle; the people
-teach in dialogue; the first elite of a place drops a thing you can pick up; and each Lord's weapon, its master, carries
-the same style, so the first Lord-forged reveal says "this is the Daggers' master" and the Armoury lists the style.
-JEI and the page are the receipt, never the first mention (SPEC §26: the world pulls, the HUD confirms).
+**1. Gates (the main door).** Each gate has one **bearer**: on its first floor one creature (an elite if the floor has one,
+else a normal creature) wields the gate's style's own weapon, a creature's held weapon being only a look
+(`AwakenMob.gearStack`, SPEC §25 S0), with a faint blueprint-white glint so you can tell which one it is. Defeat the floor and the bearer
+has fallen: the pattern drops to every fighter on the floor, each their own, at the bearer's feet with the reveal ("PATTERN ·
+Daggers · the Hive's"). It is the *gate's own style* if you don't know it; if you do, **an unknown style of the gate's
+rank**; if you know that whole rank, its price in essence. If you reach the floor's shrine without downing the bearer, the
+Lord's hoard carries it for you instead (per player, once), so **every gate you clear pays**. A pattern goes straight into
+your pack and is known at once: **never the Satchel**, because it is knowledge and a death later can't take it. Once per
+gate per player. A gate below your rank still teaches its own rank's band. The trigger is the bearer's death, not the
+existing floor-clear (which fires on reaching the floor's shrine, `Runs.floorCleared`, and doesn't prove every creature is
+down); `Runs.onKill` already sees each kill.
 
-**"How would I ever know that?"** (Euan, 2026-10-27, reading the first version: "even if it says somewhere, how do you
-know how to find anything that's going to teach you this?"). He is right: as first written, the nine places were a
-surprise you found by playing, and only the six people had a door you could walk to. The fix is a rule, **you are told at
-a place you will already be, never in a menu you have to go and find**, and it is carried by five tellings (PROPOSAL):
+**2. Structures (the world's own doors).** Any built place worth a visit can hold a **Pattern Stand** (a new block,
+`awaken:pattern_stand`, owned by arms; the structure's own module places it through `ArmsApi.placeStand`). It is built
+into the place so it looks as if it belongs: a slanted drafting stand under the pylons of a Precursor vault, a weapon rack
+in a smithy, a lectern at the top of a spire, a bier under a bell in a crypt, a fallen hunter's bedroll and weapon rack in a
+lair. The style's weapon of that tier hangs above it and the pattern is pinned in the Blueprint paper's white line. A soft
+blue-white light and the System's find cue ("PATTERN · Katana · use to take it") say it is yours to take, with no wall of
+text. You take it with an empty hand, **once per stand per player** (the claim id is the stand's position, so "a reward is
+granted at most once per claim id" holds): the stand stays for everyone else and dims for you. A pattern you already
+know pays its price in essence instead.
 
-1. **Gates tell you on their card.** Gates are the loop every hunter runs (pillars, the Horizon line, the first gate
-   announced and raised), so the home needs no hunt: the gate card, once it shows the theme (scouted, SPEC §13 gate
-   card), adds one line for a style you don't know: "The first elite here carries a pattern: Daggers." The Hive's gate
-   says Daggers, the Foundry's says Gauntlets. Nothing is shown for a style you already know.
-2. **Camps tell you when you reach them.** A riftborn camp's name and caption gets the same line when you come near it
-   (UNVERIFIED: which surface a camp has today: a Horizon site, a caption, or neither; the builder checks and adds the
-   one that fits).
-3. **People say what they pay in their own offer.** A chain's ask names the reward in plain speech ("If you help me find
-   the ten sheep, I'll show you how to use a spear. It keeps wolves off."), so the person's door is the offer itself.
-   Found scenes already announce themselves with a flare (SPEC §21.5).
-4. **Hale's rack says it on the plaque, and Hale can be asked.** Each E pattern's plaque reads "4 essence, or free:
-   the first elite in a Hive gate". Talking to Hale with nothing else to say offers "Anything on patterns?": he names the
-   nearest home you have *met* (a gate you've seen, a camp you've reached, a person you know) with a distance and a
-   direction, the same pattern as the clerk's "Anything for me?" (SPEC §27.8). When you reach a rank he says what the rack
-   gained: "D-rank. I've put four more patterns on the rack."
-5. **What you've met is kept for you.** Seeing a home you can't use yet (a gate card for a style you'd want) files it in
-   "What waits" through `core.api.Promises` ("Daggers · the Hive's first elite · 320 m NE"), and the Armoury's style list
-   shows one line for each style whose home you have met. Homes you haven't met are never listed (SPEC hard rule:
-   undiscovered things are never listed), which is why the first three tellings sit at the places themselves.
+| Structure | Owner | Where the stand is | Its rank |
+|---|---|---|---|
+| Precursor vaults, monoliths, ocean labs, sky platforms | `above`, `wilds` | the inner chamber | the door's rank (the Horizon line already says it) |
+| Tether Spire crowns and hero-tree crowns | `wilds` | the crown (the payoff answers the line, SPEC §27.5) | the region's level |
+| Riftborn camps, hollow dens | `living/camp` | the camp's heart carries it like a bearer; a den holds a fallen hunter's stand | the camp's level |
+| Named beasts' lairs | `world/fauna/lair` | a fallen hunter's rack | the lair's level |
+| Villages, towns, wayhouses | `village` | the smithy's rack (sold, below) | the village's level |
 
-**And you never have to find any of it.** Hale sells every pattern at its rank, so a player who never learns that places
-teach loses nothing but a few essence. The homes are the reason a gate is more than a gate and the reason a person's job
-pays more than shards; they are never the only way in.
+A structure's **rank is the rank of its level** (the plate bands: E 1-9, D 10-24, C 25-44, B 45-69, A 70-99, S 100+;
+`docs/regions/PLAN.md` is realigning region bands to them). Its pattern is drawn from that rank's band by the structure's
+seed, so every structure has its own and shows the same one every time.
+
+**3. Villages (the second door).** A village's rank is its region's: a village in a level 70 land is an A village. Its
+smith's rack shows **two patterns of that rank's band**, picked by the village's seed and never one you know, and sells
+them for **emeralds**, the coin (E 6, D 10, C 16, B 24, A 32; PROPOSAL against an iron sword's 6), with standing in the
+price like every trade (a stranger pays a little over, a friend and kin under, `village/Trade.java`). So a high-level
+village sells patterns Hale's rack won't show for hours: you travel somewhere hard to buy something early. The smithy's
+forge is an Armoury door (draw patterns you know, Raise, attune): the builder places an `awaken:forge` beside the anvil
+where there is none (UNVERIFIED which smithies have one). **Not finished weapons:** a bought weapon would skip the Part
+and the metal, which is what makes a tier earned. If Euan wants a "buy" path later, the smith can sell the Parts of his
+land.
+
+**4. People (six early shortcuts).** As before: the chain's last step pays the Blueprint in the person's own plain voice.
+Oren: "A big blade is a hammer that's been taught manners. I'll show you once." A style you know pays its price in essence.
+
+**5. Hale's rack (the floor).** Every pattern at its rank for essence only (4 at E, then 6, 8, 10, 12), so a player who
+never finds any other door loses only a few shards.
+
+**How a player finds out any of this** (Euan: "even if it says somewhere, how do you know how to find anything that's
+going to teach you this?"). The rule is **you are told at a place you will already be, never in a menu you have to go and find**:
+
+1. **Gate cards** say it once the card shows the theme: "The first floor carries a pattern: Daggers." Nothing shows for a
+   style you already know, and the bearer's weapon says the same thing in the room.
+2. **Camps and structures** say it when you come near: the stand glints and the find cue names the style; a camp's name
+   carries the line (UNVERIFIED which surface a camp has today).
+3. **People** name their reward in their own offer ("If you help me find the ten sheep, I'll show you how to use a spear.
+   It keeps wolves off.").
+4. **Hale's plaques** read "4 essence, or free: the Hive's gates teach it", and "Anything on patterns?" names the nearest home
+   you have *met*, with a direction (the clerk's "Anything for me?", SPEC §27.8). At each rank he says what the rack gained.
+5. **The tooltip says it everywhere.** A Blueprint's tooltip and its JEI line read "Found in: C-rank gates, level 25-44
+   structures, villages of level 25-44. Hale sells it at C-rank for 8 essence." (rank and level only, as Euan asked); the
+   theme's name (the Frost Monastery) appears once you have cleared that theme (the spoiler rule).
+6. **What you've met is kept for you:** a home you've seen and can't use yet is filed under "What waits"
+   (`core.api.Promises`: "Katana · the Nightmare gates · 320 m NE"). Homes you haven't met are never listed.
+
+Use earns depth, not access: mastery (five steps, 20 to 800 kills, SPEC §25) stays where it is. Gating a style behind another
+style's kills would punish trying something new.
 
 ### 3.5 Clarity (question 3)
 
@@ -281,7 +319,8 @@ Sabre, Edge, Warblade, Oathblade are good names; the *type line* is what was mis
 Wildhide Fang                                    Daggers Blueprint
 E-rank Hunter blade                              A design. Put it in the crafting grid with a Fang and parts,
 A short blade that fights like a sword.          and it comes back out when the weapon is made.
-Every forged weapon is made from one.            Another copy: Hale's rack at the High Gate, or a Forge at home.
+Every forged weapon is made from one.            Found in: E-rank gates, level 1-9 structures, villages of level 1-9.
+                                                 Hale sells it at E-rank for 4 essence; a Forge can draw copies.
 Made from: 2 Parts, 1 Binding, 1 Essence Shard
 
 Essence Shard                                    Forge
@@ -313,8 +352,10 @@ waits" through `core.api.Promises`: "Hale's D-rank patterns · needs D-rank · H
 
 - Every Awaken Crafting recipe adds a chip row: style, tier, "Blueprint: Hale's rack or a Forge", the level road step.
 - Every ingredient slot's tooltip carries its source line; tag slots show their plain name and what is in them.
-- Three new categories: **Armoury** (Hale's prices by rank), **Blueprint** (the Forge draw, with the Study's discount) and
-  **Raise** (§3.7). A Blueprint's "Recipes" tab now says where it comes from.
+- Three new categories: **Armoury** (Hale's prices by rank, the village smiths' by level), **Blueprint** (the Forge draw,
+  with the Study's discount) and **Raise** (§3.7).
+- A Blueprint's tooltip and its JEI "Obtain" line read from `style_homes.json`: "Found in: C-rank gates, level 25-44 structures,
+  villages of level 25-44. Hale sells it at C-rank for 8 essence." The gate's theme appears once you have cleared it.
 - The Essence Shard Codex page lists creatures first.
 - The spoiler guard is unchanged: undiscovered items and their recipes stay hidden.
 - The recipe book unlocks a style's recipes **when you hold its Blueprint**, not when you hold a bone (G5): one new
@@ -359,6 +400,7 @@ has the metal in hand at about the level: iron 6.3 h against level 13 at 6.3 h, 
 | **Forged** (crafted) | you make it, at your tier | the tier's weapon: reliable, chosen, attunable and temperable | your build; always current |
 | **Marked** (blue) | an elite, a Warden or a riftborn camp's heart drops a forged weapon of your tier with 1-2 Marks | the same weapon with a quirk you didn't choose | try something new |
 | **Named** | a place gives it: a theme's last-floor cache, a region's secret, a troubled village's reward, a chain's end; **told by a rumour first** (an Atlas "?") | a fixed weapon with a name, 1-2 Marks and one plain line of history | a keepsake from somewhere you went |
+| **Boss weapon** (blue, two Marks) | every Gate Lord kill that isn't a Lord-forged drop; guardians, Sovereigns and named beasts too (below) | a forged weapon of the boss's rank in the boss's own style | the boss fight always pays in steel |
 | **Lord-forged** (ember-gold) | 35% a Lord kill, certain by the third without one (unchanged) | the Lord's weapon and its signature move as the Art | a trophy of a kill |
 | **Legendary** | authored, tied to the story | unique model and moveset twist | the long goal (S9, later) |
 
@@ -368,6 +410,21 @@ add a **pity** (certain by the 25th elite, Warden or heart without one; per play
 give Marked drops the Lord-forged reveal in miniature (a short pillar and the same toast). At the sim's mix (5% of
 overworld kills are elites) 4% is about one in 500 kills; the sim doesn't say kills an hour, so **Phase E adds a gear row
 to `pacing_sim.py`** (kits, Blueprints, Marked) and the pity is set from it. UNVERIFIED: how often this fires today.
+
+**Boss weapons** (Euan, 2026-10-27: "weapon drops from boss fights would be great, would be a really good reward").
+Every boss kill drops a weapon to every fighter in the room, straight into the pack (never the Satchel), with the
+Lord-forged reveal's smaller twin: a pillar of the boss's colour and the System naming it ("SPOILS · Hive Regent's Daggers"):
+
+- **Gate Lord:** the Lord-forged weapon (35%, certain by the third without one, unchanged), **else a Marked weapon of the
+  Lord's own style at the gate's rank, with two Marks.** A broken gate's Lord drops one more Marked weapon. No Lord kill
+  ends empty-handed and the Lord-forged stays the chase.
+- **Descent guardians, Sovereigns, the final bosses:** a Marked weapon of their stratum's rank in a themed style, two Marks
+  (their own Lord-forged-style weapons arrive with S9's named weapons).
+- **Named beasts** (the overworld's bosses): the first kill of each beast drops a Marked weapon of your tier; later kills
+  15% (PROPOSAL; the Phase E sim row sets it).
+
+It is rolled per fighter in the hoard (like `Loot.boss` and the Power Cores), so a party each gets their own. A spare
+weapon can be **salvaged** at any Armoury door for essence (the tier's pattern price), so drops are never clutter (optional).
 
 **Raise (the answer to "finding versus making").** At a Forge, the Armoury's *Raise* tab takes the weapon in your hand
 and lifts it to your next tier for that tier's parts (the same Fang, Parts, Binding, metal and shards the crafted version
@@ -398,22 +455,23 @@ Euan to confirm the stance.
 
 | Thing | Where | Saved? | Notes |
 |---|---|---|---|
-| Style homes, rack ranks, prices | `data/awaken/arms/style_homes.json` (schemaVersion 1; read on both sides like `archetypes.json`) | data | one row per style |
+| Style homes, rack ranks, prices | `data/awaken/arms/style_homes.json` (schemaVersion 1; read on both sides like `archetypes.json`) | data | one row per style: its gate theme and rank, the rack rank and price, the early teacher; also the village price by rank and the plate bands |
 | Source lines | `data/awaken/arms/sources.json`, written by `tools/arms/sources.py` | data | checked by `arms_sources` |
-| What a player knows | `awaken:arms_memory` (now schemaVersion 3): `styles` (learned set), `issued`, `shardMisses`, `markedMisses`, `claimedHomes` | yes, kept through death | per player; migration backfills `styles` from Blueprints held and styled weapons made |
+| What a player knows | `awaken:arms_memory` (now schemaVersion 3): `styles` (learned set), `issued`, `shardMisses`, `markedMisses`, `claimedGates` (the last 64 gate ids), `claimedStands` (stand ids, a long each), `claimedPeople` | yes, kept through death | per player; migration backfills `styles` from Blueprints held and styled weapons made |
 | Tier cards, the issue | derived; no extra state | - | the rack and the screen read the rule |
 | Armoury screen and Track | client screen; `arms_armoury` payload (open, buy, draw, raise, track); the tracked item is per player | track: attachment, saved | the server re-checks every price and rank |
-| Public API | `core.api.ArmsApi` (new, small): `knows(player, style)`, `learn(player, style, source)`, `homeFor(theme)` | - | gates, living and progression call this; they never reach into arms |
+| Pattern Stand | block `awaken:pattern_stand` (kinds: rack, lectern, plinth, bier), one block entity: the style and tier, no per-player state | the world | the claim is the player's memory above; a stand dims for a player who has claimed it |
+| Bearer | an `AwakenMob` tag `awaken_bearer` and a held weapon (`gearStack`) | with the creature | dies with the gate; the Lord's hoard is the fallback |
+| Public API | `core.api.ArmsApi` (new, small): `knows(player, style)`, `learn(player, style, source)`, `homeFor(theme)`, `placeStand(level, pos, rank, kind, seed)`, `bearer(mob, gate)` | - | gates, living, village, above, wilds and progression call this; they never reach into arms |
 
 - **Multiplayer-safe:** every counter, memory and issue is per player; the rack and Forge are shared and never run out;
-  Blueprints are items that can be traded (a guild can lend patterns, and a Forge can draw copies for a friend); a found
-  Blueprint is rolled per player like the Lord's hoard (it goes to each fighter near the kill), "loot moves, it is never
-  copied"; Marked drops stay ground items as today.
+  Blueprints are items that can be traded (a guild can lend patterns, and a Forge can draw copies for a friend); a pattern
+  is given per player (to each fighter on the floor, to each player who claims a stand), "a reward is granted at most once
+  per claim id"; boss weapons are rolled per fighter in the hoard; Marked drops stay ground items as today.
 - **Old saves:** players who already drew Blueprints keep them and are marked as knowing those styles; the issue is offered
   once to an awakened E-rank player with no styled weapon; nobody is charged for anything they already hold.
 - **Public repo:** only names, numbers and rules; no secrets.
-- **Seams:** `living` (Hale's scene, the rack placement, chain rewards, Hale's "Anything on patterns?"), `gates` (the first elite of a theme and one line on the gate card), `living/camp` (a camp heart and its caption), `progression` (`RecipeUnlocks`, the new-thing clock), `mobs` (the shard pity),
-  `compat/client/jei`. Each is a few lines through `ArmsApi` or data, agreed with its owner before building.
+- **Seams:** `gates` (the bearer on the first floor, the Lord's hoard fallback, boss weapons, one line on the gate card), `village` (the smith's rack, the village's rank, the smithy forge door, the stand), `above` and `wilds` (stands in vaults, monoliths, labs, platforms, spires and crowns), `living` (Hale's scene, the rack placement, chain rewards, Hale's "Anything on patterns?"), `living/camp` (a camp heart as a bearer, its caption), `world/fauna/lair` (a fallen hunter's stand), `mobs` (the shard pity, boss weapons for guardians, Sovereigns and named beasts), `progression` (`RecipeUnlocks`, the new-thing clock), `compat/client/jei`, and the regions plan (`docs/regions/PLAN.md`, the level bands). Each is a few lines through `ArmsApi` or data, agreed with its owner before building.
 
 ## 5. Phases, effort, tests, risks
 
@@ -423,63 +481,76 @@ mastery and their tests, ran about 4.5 hours from first to last commit on 2026-1
 
 | Phase | Scope | Effort | Gate |
 |---|---|---|---|
-| **A · Say where it comes from** | tooltips (Fang, Blueprint, Shard, Forge), Hide/Part/Binding words, `sources.json` and its generator, the Essence page, JEI chips and slot tooltips, the recipe-book fix, plain level road text | 2-3 h | `arms_sources`; ships on its own, no design change |
-| **B · The first hour** | Hale's issue and rack (menu first, the model rack if time), the first-shard find, the shard pity, Ilse's pay, the Now line | 2-3 h | `arms_issue`; **Euan plays the first 30 minutes** |
+| **A · Say where it comes from** | tooltips (Fang, Blueprint with its "Found in", Shard, Forge), Hide/Part/Binding words, `sources.json` and its generator, the Essence page, JEI chips and slot tooltips, the recipe-book fix, plain level road text | 2-3 h | `arms_sources`; ships on its own, no design change |
+| **B · The first hour** | Hale's issue and rack (menu first, the model rack if time), the first-shard find, the shard pity, Ilse's and Marta's pay, the Now line | 2-3 h | `arms_issue`; **Euan plays the first 30 minutes** |
 | **C · The Armoury** | the screen, the band section, Track, Blueprint routing (rack by rank, Forge choose-list, learned styles, migration), the Forge's empty-hand door | 3-4 h | `arms_armoury`, `arms_rack` |
-| **D · Teachers and places** | the six chain rewards, the nine place hooks (`style_homes.json`), the reveal, plain dialogue, the gate-card and camp lines, the rack plaques, Hale's "Anything on patterns?", the "What waits" entries | 3-4 h | `arms_homes` (a person and a place each teach once; the card line shows only for a style you don't know) |
-| **E · Finds and Raise** | Marked pity, first-guaranteed, camp hearts, the miniature reveal, Raise, first-forged moments, the capability clock, the sim gear row | 2-3 h | `arms_raise`, `arms_marked_pity` |
+| **D · Gates, camps and people teach** | the bearer on a gate's first floor and the hoard fallback, the camp heart as a bearer, `style_homes.json`, the gate-card and camp lines, the six chain rewards, the rack plaques, Hale's "Anything on patterns?", the "What waits" entries, plain dialogue | 3-4 h | `arms_gate_pattern` (the bearer drops once per fighter, the fallback pays, a known style gives another of its rank, never the Satchel), `arms_homes` |
+| **E · Boss weapons, finds and Raise** | the boss hoard weapon per fighter and its reveal, guardians, Sovereigns and named beasts, Marked pity and the guaranteed first, Raise, salvage, first-forged moments, the capability clock, the sim gear row | 3-4 h | `arms_boss_weapon`, `arms_raise`, `arms_marked_pity` |
 | **F · Tiers announced** | part jobs on Hale's board, tier cards, foreshadow, Oren's lines, the Horizon pulls | 1.5-2 h | `arms_tier_cards` |
+| **G · Villages and structures** | the smith's two patterns for emeralds and the village's rank, the smithy forge door, the Pattern Stand block and its model, placing it in vaults, labs, platforms, spires, lairs and dens | 3-5 h | `arms_village_patterns`, `arms_stand` (once per player, dims, a known style pays essence) |
 
-**Total about 13-19 builder-hours; with two builders (A+B then C, with D beside it, then E and F) about a day of wall
-clock**, plus CI runs and Euan's play. **S9 named weapons** (about 30 first) are a separate later job, about 3-4 hours
-once the art pipeline's batch rate (24 to 42 weapons every 20 to 40 minutes) and the writing are counted. Bottlenecks that don't
-compress: GameTest runs on CI, Euan's play, and the three-Lord session.
+**Total about 18-25 builder-hours; with three builders (A+B, then C with D and G beside it, then E and F) about a day and a half of wall
+clock**, plus CI runs and Euan's play. G waits on the regions plan's level bands (`docs/regions/PLAN.md`) for the village's rank and touches
+the village, above and wilds modules, so it is its own builder. **S9 named weapons** (about 30 first) are a separate later job, about
+3-4 hours once the art pipeline's batch rate (24 to 42 weapons every 20 to 40 minutes) and the writing are counted. Bottlenecks that
+don't compress: GameTest runs on CI, Euan's play, and the three-Lord session.
 
-**Tests** (one per mechanism; the full suite once at hand-off, CI the rest): `arms_sources`, `arms_issue` (once per player,
-the pick gives weapon, Blueprint and Fang, Ilse's fallback), `arms_rack` (stock by rank, price, refusal below rank, a find
-you already know pays its price), `arms_homes` (a person and a place each teach once), `arms_marked_pity`, `arms_raise`
-(keeps Marks, Art, attunement; costs the next tier's parts), `arms_tier_cards`, `progression_shard_pity`,
-`arms_recipe_unlock` (a Blueprint recipe appears with its Blueprint, not a bone).
+**Tests** (one per mechanism; the full suite once at hand-off, CI the rest): `arms_sources`, `arms_issue` (once per player, the
+pick gives weapon, Blueprint and Fang, Ilse's fallback), `arms_rack` (stock by rank, price, refusal below rank), `arms_gate_pattern`,
+`arms_homes` (a person teaches once; a known style pays its price), `arms_village_patterns` (two patterns of the village's rank, never
+a known one, emerald price with standing), `arms_stand`, `arms_boss_weapon` (every fighter in the hoard gets one, the Lord-forged
+replaces it), `arms_marked_pity`, `arms_raise` (keeps Marks, Art, attunement; costs the next tier's parts), `arms_tier_cards`,
+`progression_shard_pity`, `arms_recipe_unlock` (a Blueprint recipe appears with its Blueprint, not a bone).
 
-**Risks:** Hale's yard belongs to the city and living modules (the rack needs a spot beside him, agreed with their
-owners); the generic first-elite hook touches `gates/run`; Lords being too hard slows C and up; about 60 lines of new
-player-facing text, each read aloud (`docs/arms-progression/` keeps the copy, plain speech rule); the Armoury screen is
-the largest piece (3D previews optional).
+**Risks:** Hale's yard belongs to the city and living modules (the rack needs a spot beside him, agreed with their owners); the
+bearer and the boss weapon touch `gates/run`; the stand is placed by four other modules' structure code; the village's rank waits for
+the regions plan; Lords being too hard slows C and up; about 80 lines of new player-facing text, each read aloud (plain speech
+rule); the Armoury screen and the stand's model are the largest pieces (3D previews optional).
 
-## 6. Decisions for Euan (with recommendations)
+## 6. Decisions (numbered; Euan answered 2026-10-27)
 
-1. **Ship the clarity pass on its own, now (Phase A).** Tooltips, plain words, source lines with a CI test, JEI, the
-   recipe-book fix. *Recommend yes.* It answers "where do I get a Fang" tonight and changes no number.
-2. **A first weapon from Hale:** pick one of Daggers, Axe or Maul at the High Gate; you get the finished Wildhide weapon,
-   its Blueprint and a spare Fang; Ilse hands it over if you miss him. *Recommend yes.* Alternative: hand nothing over
-   (everyone crafts their first weapon).
-3. **The Armoury is the one door for Blueprints:** Hale's rack (essence only, stocked by the master Lord's rank, 4 to 12
-   essence), your Forge (paper, lapis, essence; any pattern you know), a real rack of weapons in his yard. The random cycle
-   goes. *Recommend yes.* Alternative: menu only; Forge only.
-4. **Every style has a home:** six people teach (Spear: Hettie, Rapier: Pell, Chain-blade: Marta, Glaive: Gus,
-   Twinblades: Wren, Greatblade: Oren) and nine places teach (the first elite of the theme drops its Blueprint). A style
-   you know pays its price in essence instead. **Each home tells you at the place you'll already be:** the gate card and
-   the camp say what the first elite carries, a person's offer names its reward, Hale's rack plaques say where each pattern
-   is free, and "Anything on patterns?" asks Hale. Hale's rack stays the floor. *Recommend yes.* Alternative: rack only
-   (cheaper, no world discovery).
-5. **Names and words:** keep Fang, Cleaver, Sabre, Edge, Warblade, Oathblade, add a plain type line, and use Hide, Part and
-   Binding everywhere. *Recommend yes.* Alternative: rename all six blades to "<Tier> Blade".
-6. **The Armoury page in the band, Track, and Now-line hints** with a compass to known places. *Recommend yes.*
-7. **Essence:** say where it comes from, add the no-drought rule (the 5th kill with none drops one, E and D only), and have
-   Ilse's Moth Lights and Marta's Wheel pay shards (3 between them). *Recommend yes.* It already drops from creatures; this only stops bad luck.
-8. **Tiers announce themselves:** foreshadow, open, and a part job on Hale's board for each tier's signature part.
-   *Recommend yes.*
-9. **Finds:** keep Marked at 4% and 10%, add camp hearts at 10%, a pity (certain by the 25th), and a guaranteed first one;
-   named weapons are told by rumour and found at places, about 30 first, built after Phase E. *Recommend yes; set the
-   pity from the sim row in Phase E.*
-10. **Raise:** a found weapon can be raised to your tier at the Forge for that tier's parts, keeping its Marks, Art and
-    attunement. *Recommend yes.* Alternative: found weapons keep their tier and fall behind.
-11. **Difficulty stance:** gear tiers stay one point of damage apart, no item-level multiplier, nothing here touches a
-    Lord's numbers (those wait for the three-Lord session). *Recommend confirm.*
-12. **Order:** A and B first, then C with D beside it, then E and F; hold named weapons. *Recommend approve A to F.*
+Euan: "go ahead with everything else that's recommended". So 1-3 and 5-12 stand as recommended below, **4 changed** as he
+asked, and 13-15 are his three additions, with the design written for his check.
+
+1. **Ship the clarity pass on its own, now (Phase A).** Tooltips, plain words, source lines with a CI test, JEI (a Blueprint says
+   "Found in: C-rank gates, level 25-44 structures..."), the recipe-book fix. *Approved.*
+2. **A first weapon from Hale:** pick one of Daggers, Axe or Maul at the High Gate; you get the finished Wildhide weapon, its
+   Blueprint and a spare Fang; Ilse hands it over if you miss him. *Approved.*
+3. **The Armoury is the one door for Blueprints:** Hale's rack (essence only, stocked by the master Lord's rank, 4 to 12 essence),
+   your Forge and a village smithy's (paper, lapis, essence; any pattern you know), a real rack of weapons in his yard, a choose-list
+   instead of the random cycle. *Approved.*
+4. **Homes: CHANGED.** The **gates give the pattern**: each gate's bearer drops its style's Blueprint on the first floor (else the Lord's
+   hoard), and every gate you clear pays; a style you know gives another of that rank. **Structures** show patterns on stands built
+   into the place (never a plain chest). **Villages** sell two patterns of their rank for emeralds. Six people teach early. Hale's rack
+   is the floor. Each tells you at the place, and a tooltip says "found in an X-rank gate, or a level X-X structure". *Approved as
+   Euan described it; the design is in §3.4.*
+5. **Names and words:** keep Fang, Cleaver, Sabre, Edge, Warblade, Oathblade, add a plain type line; use Hide, Part and Binding
+   everywhere. *Approved.*
+6. **The Armoury page in the band, Track, and Now-line hints** with a compass to known places. *Approved.*
+7. **Essence:** say where it comes from, the no-drought rule (the 5th kill with none drops one, E and D only), and Ilse's Moth Lights and
+   Marta's Wheel pay shards (3 between them). *Approved.*
+8. **Tiers announce themselves:** foreshadow, open, and a part job on Hale's board for each tier's signature part. *Approved.*
+9. **Marked weapons:** keep 4% and 10%, camp hearts at 10%, a pity (certain by the 25th), a guaranteed first one; named weapons told by
+   rumour and found at places, about 30 first, after Phase E. *Approved; the pity is set from the Phase E sim row.*
+10. **Raise:** a found weapon can be raised to your tier at the Forge for that tier's parts, keeping its Marks, Art and attunement.
+    *Approved.*
+11. **Difficulty stance:** tiers stay one point of damage apart, no item-level multiplier, nothing here touches a Lord's numbers (those
+    wait for the three-Lord session). *Approved.*
+12. **Order:** A and B first, then C with D and G beside it, then E and F; named weapons wait. *Approved, with G added.*
+13. **Boss weapons (Euan's request).** Every boss kill drops a weapon to every fighter, straight to the pack with a reveal: the
+    Lord-forged weapon (35%, certain by the third), else a Marked weapon in the Lord's own style with two Marks; guardians,
+    Sovereigns and named beasts too. *Design in §3.7; Euan to check the numbers when he plays it.*
+14. **Villages sell patterns (Euan's request).** Two patterns of the village's rank, for emeralds, by its region's level; the smithy's
+    forge is an Armoury door. Not finished weapons (they would skip the Part and the metal). *Design in §3.4.3; alternative if he wants it:
+    the smith also sells the Parts of his land.*
+15. **Structures hold patterns on stands, not in chests (Euan's request).** A Pattern Stand built into vaults, labs, platforms, spires,
+    lairs and dens, claimed once per player, with the weapon of that tier hung above it and a light that says "take me". *Design in §3.4.2.*
 
 ## 7. Not verified, and left out on purpose
 
+- UNVERIFIED (new): whether a gate's first floor always has an elite to be the bearer; which village smithies already place a Forge; which surface
+  a camp has for a name (a Horizon site, a caption); the village's rank function (the regions plan's level bands); whether a gate's creatures can all
+  be counted at the floor's end (the bearer's death is the trigger, not the shrine).
 - UNVERIFIED: how often a Marked weapon drops in play (needs the sim row); the recipe-book toast after Phase 5 of The Way
   Forward; whether the Wayfarer chains' `reward` accepts a second item beside `levels`; the exact spot beside Hale for a rack.
 - Monster Hunter's in-game Smithy wording (fan sources only); Elden Ring's exact stone tiers vary by source.
