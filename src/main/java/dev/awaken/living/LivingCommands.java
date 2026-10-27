@@ -118,9 +118,10 @@ final class LivingCommands {
                                 .map(s -> s.done().isEmpty() ? "" : s.done().getFirst()).orElse("");
                         return FirstScenes.gateShot(p, hale, true) ? 1 : 0;
                     }))
-                    // ten blocks off Ilse with the letters still yours (the Now line counts them), then five off and her scene
-                    .then(Commands.literal("letters").executes(c -> ilseStand(c.getSource(), 10) ? 1 : 0))
-                    .then(Commands.literal("ilse").executes(c -> ilseStand(c.getSource(), 5) && FirstScenes.devIlse(c.getSource().getPlayerOrException()) ? 1 : 0))
+                    // ten blocks off Ilse with the letters still yours (the Now line counts them), then five off and her scene;
+                    // from a new world too: the opening is skipped and the camp founded first (Euan 2026-10-27)
+                    .then(Commands.literal("letters").executes(c -> toIlse(c.getSource(), 10, false)))
+                    .then(Commands.literal("ilse").executes(c -> toIlse(c.getSource(), 5, true)))
                     .then(Commands.literal("took").executes(c -> {
                         FirstScenes.ready(c.getSource().getPlayerOrException(), LivingNet.FirstSceneReady.TOOK);
                         return 1;
@@ -483,13 +484,46 @@ final class LivingCommands {
         return 1;
     }
 
-    /** Dev and tours: the errand at Ilse's step, and the player {@code dist} blocks off her, facing her, the fire beside. */
-    private static boolean ilseStand(CommandSourceStack src, int dist) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+    /** Seconds a new world's camp is waited for (it's founded, and Ilse placed, on the scenes' 5 s tick once you're near). */
+    private static final int ILSE_WAIT = 30;
+
+    /**
+     * Dev: straight to Ilse from anywhere, a brand-new world too. The opening is skipped as the opening's own skip does it
+     * (registered, Bram's letters and his errand started), then you're taken to the camp and stood off Ilse once she's
+     * there; {@code scene}: her scene starts.
+     */
+    private static int toIlse(CommandSourceStack src, int dist, boolean scene) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
+        var server = p.level().getServer();
+        if (dev.awaken.core.api.OpeningHooks.inOpening(p) || !Progression.profile(p).awakened()) dev.awaken.core.api.OpeningHooks.skip(p);
+        if (dev.awaken.living.wayfarer.Scenes.resident(server, "ilse") != null) return atIlse(p, dist, scene) ? 1 : 0;
+        var at = dev.awaken.living.wayfarer.Scenes.campStand(server);
+        p.teleportTo(server.overworld(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, java.util.Set.of(), 180F, 10F, true);
+        src.sendSuccess(() -> Component.literal("Taking you to the camp. Ilse will be there in a few seconds."), false);
+        awaitIlse(p, dist, scene, ILSE_WAIT);
+        return 1;
+    }
+
+    private static void awaitIlse(ServerPlayer p, int dist, boolean scene, int tries) {
+        var server = p.level().getServer();
+        dev.awaken.core.Later.run(server, 20, () -> {
+            if (p.hasDisconnected()) return;
+            if (dev.awaken.living.wayfarer.Scenes.resident(server, "ilse") != null) atIlse(p, dist, scene);
+            else if (tries > 1) awaitIlse(p, dist, scene, tries - 1);
+            else p.sendSystemMessage(Component.literal("Ilse hasn't come to the camp yet. Run the command again in a moment."));
+        });
+    }
+
+    private static boolean atIlse(ServerPlayer p, int dist, boolean scene) {
+        return ilseStand(p, dist) && (!scene || FirstScenes.devIlse(p));
+    }
+
+    /** Dev and tours: the errand at Ilse's step, and the player {@code dist} blocks off her, facing her, the fire beside. */
+    private static boolean ilseStand(ServerPlayer p, int dist) {
         String chain = FirstThread.chainId();
         var ilse = dev.awaken.living.wayfarer.Scenes.resident(p.level().getServer(), "ilse");
         if (chain == null || ilse == null || !dev.awaken.living.quest.QuestEngine.devStep(p, chain, "ilse")) {
-            src.sendFailure(Component.literal("No Ilse near the camp yet: /awaken living camp first, then wait a few seconds."));
+            p.sendSystemMessage(Component.literal("Ilse isn't at the camp yet. Run the command again in a moment."));
             return false;
         }
         var fire = dev.awaken.living.wayfarer.Camp.fire(p.level().getServer());

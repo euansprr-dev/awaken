@@ -6066,6 +6066,10 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 - **Quest fields** (`QuestDef.Step`, schema 1, both optional): `tally` shows a step's count even when it's one ("· 0/1");
   `night` says why a step needs the dark. Objective type `hearth`: done when the player has a Hearth.
 - Dev and tours: `/awaken living first gate|letters|ilse|took|camp`; tour `tools/autopilot/first-scenes.txt` (CI).
+  `letters` and `ilse` work from a brand-new world (Euan 2026-10-27: "skip the whole start"). An unfinished opening is
+  skipped as `/awaken opening skip` does it: registered, Bram's letters, his errand. Then you're taken to the camp, and
+  once Ilse is there (up to 30 s, the camp's 5 s tick) the errand jumps to her step and you stand 10 blocks off her
+  (`letters`, you hand them over yourself) or 5 with her scene begun (`ilse`).
 - Tests: `progression_first_thread`, `progression_now_priorities`, `gates_first_gate_on_purpose`,
   `progression_first_scenes` (the gate's shot once; the letters counted; Ilse's scene to the coal; the Ember; the thread
   letting go), `living_camp_keeps` (laid round its fire; nothing hunts there; a monster sent out; the bedroll's rule; a
