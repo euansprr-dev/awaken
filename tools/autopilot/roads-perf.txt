@@ -1,0 +1,65 @@
+# Roads perf (SPEC §28.9, Cost): what planning W7's roads and settlements costs while a player flies and teleports
+# across new land on Euan's terrain. The roads' timer logs "[road] timer 30 s: ..." (lattice chunks planned and waited
+# for, the worst wait and its thread, the server thread's waits, the planner's queue, the lattice chunks still unknown
+# ahead) and "[road] the server thread waited ..." for any wait there over 50 ms; the server logs "Can't keep up!" when
+# its ticks fall two seconds behind. A spectator, HUD off; a shot at each stop to see the roads came.
+# Run on GitHub (the terrain Euan plays): tools/tour-ci.sh tools/autopilot/roads-perf.txt 3600 PACK=perf,world TECTONIC=awakened
+world autopilot_roads_perf creative 26102610
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+# the opening's sky flight holds the camera and ends on a question a closed screen never answers: skip it first
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+# the Ascent's gift card holds the director while it's up: put it away
+wait 40
+key dismiss
+wait 10
+screen close
+cmd time set 6000
+cmd gamerule advance_time false
+cmd gamemode spectator
+hud off
+# ---- 1. up the road north out of the camp and on: 24 blocks a second for 90 s (about 2,200 blocks of new land)
+# (over the camp road's sixth point in this world: "awaken village road camp" lays the road north on the server thread
+# when it isn't laid yet, a command's wait the tour isn't measuring)
+cmd tp @s 813.5 240 302.5 180 25
+wait 200
+info
+glide 0 0 -1.2 1800
+wait 1800
+info
+shot roads_perf_01_north
+# ---- 2. east, faster: 40 blocks a second for 60 s (2,400 blocks)
+cmd tp @s ~ ~ ~ -90 25
+glide 2 0 0 1200
+wait 1200
+info
+shot roads_perf_02_east
+# ---- 3. teleports into land no one has seen, 7,000 out and then 7,000 the other way: a minute at each
+cmd tp @s 5500 240 -5500 0 25
+wait 1200
+info
+shot roads_perf_03_far_south_east
+cmd tp @s -6500 240 4500 180 25
+wait 1200
+info
+shot roads_perf_04_far_north_west
+# ---- 4. a steady 10 blocks a second from there for a minute (exploring once the planner can keep ahead)
+glide 0.5 0 0 1200
+wait 1200
+info
+shot roads_perf_05_on
+wait 600
+quit

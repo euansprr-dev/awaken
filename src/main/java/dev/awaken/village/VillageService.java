@@ -88,7 +88,8 @@ public final class VillageService {
         // so claimed the ground of the tests near it, and an Ember or a sister Anchor was refused "inside a village")
         boolean quiet = server instanceof net.minecraft.gametest.framework.GameTestServer;
         for (ServerPlayer p : quiet ? List.<ServerPlayer>of() : level.players()) {
-            for (SettlementGrid.Anchor a : SettlementGrid.near(seed, p.getBlockX(), p.getBlockZ(), 420, centre)) {
+            // (SPEC §28.9) a town or wayhouse whose site isn't found yet joins a later pass: the server thread never plans
+            for (SettlementGrid.Anchor a : SettlementGrid.near(seed, p.getBlockX(), p.getBlockZ(), 420, centre, false)) {
                 if (LIVE.containsKey(a.key()) || ABSENT.contains(a.key())) continue;
                 if (!Plans.known(a.key())) {
                     plan(level, a);

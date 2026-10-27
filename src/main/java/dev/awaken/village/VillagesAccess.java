@@ -148,7 +148,8 @@ final class VillagesAccess implements Villages.Access {
     public boolean reserved(Level level, BlockPos pos, int margin) {
         if (level.dimension() != Level.OVERWORLD || level.getServer() == null || !VillageService.enabled(level.getServer())) return false;
         long seed = level.getServer().overworld().getSeed();
-        for (SettlementGrid.Anchor a : SettlementGrid.near(seed, pos.getX(), pos.getZ(), VillagePlannerReach.FAR + margin, SettlementGrid.centre())) {
+        // a town or wayhouse whose site isn't found yet has no plan yet either: never waits for the search
+        for (SettlementGrid.Anchor a : SettlementGrid.near(seed, pos.getX(), pos.getZ(), VillagePlannerReach.FAR + margin, SettlementGrid.centre(), false)) {
             VillagePlan p = Plans.cached(a.key());
             if (p != null) {
                 if (Math.hypot(p.ox - pos.getX(), p.oz - pos.getZ()) <= p.radius() + margin) return true;

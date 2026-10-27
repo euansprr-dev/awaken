@@ -46,6 +46,25 @@ public final class RoadTests {
             h.assertTrue(posts.stream().anyMatch(m -> m.arms().get(0).name().endsWith("10–24")) && posts.stream().anyMatch(m -> m.arms().get(0).name().endsWith("25–44")), "D and C posts");
             h.succeed();
         });
+        // the roads' bench lays a whole area over the real noise: only when asked for by name (-Ptests=roadbench_)
+        if (System.getProperty("awaken.tests", "").contains("roadbench_")) AwakenTests.register("roadbench_area", 1200, RoadTests::bench);
+    }
+
+    /** {@link RoadBench} for the seed, radius and cold distance in road-bench.request (or 26102610 1600 2400), written to road-bench.txt. */
+    private static void bench(GameTestHelper h) {
+        java.nio.file.Path dir = h.getLevel().getServer().getServerDirectory();
+        try {
+            java.nio.file.Path ask = dir.resolve("road-bench.request");
+            String[] a = java.nio.file.Files.exists(ask) ? java.nio.file.Files.readString(ask).trim().split("\\s+") : new String[0];
+            long seed = a.length > 0 && !a[0].isEmpty() ? Long.parseLong(a[0]) : 26102610L;
+            int radius = a.length > 1 ? Integer.parseInt(a[1]) : 1600, far = a.length > 2 ? Integer.parseInt(a[2]) : 2400;
+            java.nio.file.Files.writeString(dir.resolve("road-bench.txt"), RoadBench.run(h.getLevel(), seed, radius, far));
+        } catch (java.io.IOException | RuntimeException e) {
+            Awaken.LOG.error("[road] bench failed", e);
+            h.fail("road bench: " + e);
+            return;
+        }
+        h.succeed();
     }
 
     /**

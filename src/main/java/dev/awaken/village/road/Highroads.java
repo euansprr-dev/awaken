@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * How each road is laid (SPEC §28.9): a highroad between two regions' hubs through the settlements on its way, Carillon's
@@ -68,30 +69,90 @@ final class Highroads {
 
     // ---- highroads -----------------------------------------------------------------------------------------------------
 
-    static List<Road> trunk(RoadWorld w, int gx, int gz, int dir) {
+    /**
+     * A highroad's way before any of it is laid (SPEC §28.9, Cost): where each piece runs from and to, stop by stop, and
+     * what the pieces keep out of. Piece k is laid as {@code key#k}, alone, so a chunk can ask for only the pieces that
+     * may come near it: each keeps inside its search's ellipse.
+     */
+    record Way(String key, int cls, List<RoadNet.Entry> from, List<RoadNet.Entry> to, RoadPlanner.Keep keep) {
+        int pieces() {
+            return from.size();
+        }
+
+        /** Piece k's search ellipse {sx, sz, ex, ez, reach} (a little wider than RoadPlanner's, for rounding). */
+        double[] ellipse(int k) {
+            RoadNet.Entry f = from.get(k), e = to.get(k);
+            double sx = f.x() + f.dx() * 12.0, sz = f.z() + f.dz() * 12.0, ex = e.x() + e.dx() * 12.0, ez = e.z() + e.dz() * 12.0;
+            double d = Math.hypot(ex - sx, ez - sz);
+            int c = (int) Math.clamp(Math.round(d / 40.0), 12, 32) + 1;
+            return new double[]{sx, sz, ex, ez, d * RoadPlanner.STRETCH + 2.0 * c + 2};
+        }
+
+        /** Whether piece k may have a point in the square {@code r} each way of (x, z). */
+        boolean mayCome(int k, int x, int z, int r) {
+            double[] el = ellipse(k);
+            double ds = toSquare(el[0], el[1], x, z, r), de = toSquare(el[2], el[3], x, z, r);
+            double dm = toSquare((el[0] + el[2]) / 2, (el[1] + el[3]) / 2, x, z, r);
+            return Math.max(ds + de, 2 * dm) <= el[4];
+        }
+
+        /** How near piece k's points may come to (x, z) at best (every point of the ellipse is at least this far). */
+        double nearest(int k, double x, double z) {
+            double[] el = ellipse(k);
+            return (Math.hypot(x - el[0], z - el[1]) + Math.hypot(x - el[2], z - el[3]) - el[4]) / 2 - 1;
+        }
+
+        private static double toSquare(double px, double pz, int x, int z, int r) {
+            return Math.hypot(Math.max(0, Math.abs(px - x) - r), Math.max(0, Math.abs(pz - z) - r));
+        }
+    }
+
+    static Way trunkWay(RoadWorld w, int gx, int gz, int dir) {
         RoadNet.Hub a = RoadNet.hub(w, gx, gz), b = RoadNet.hub(w, gx + (dir == 0 ? 1 : 0), gz + (dir == 1 ? 1 : 0));
-        if (a.kind() == RoadNet.HubKind.NONE || b.kind() == RoadNet.HubKind.NONE) return List.of();
         String key = "T" + gx + "," + gz + "," + dir;
-        return through(w, key, Road.HIGHROAD, a, b, null);
+        if (a.kind() == RoadNet.HubKind.NONE || b.kind() == RoadNet.HubKind.NONE) return new Way(key, Road.HIGHROAD, List.of(), List.of(), (x, z) -> false);
+        return way(w, key, Road.HIGHROAD, a, b, null);
+    }
+
+    /** Lays a way's piece k (null where no way is found). */
+    static @Nullable Road piece(RoadWorld w, Way way, int k) {
+        return lay(w, way.key() + "#" + k, way.cls(), way.from().get(k), way.to().get(k), way.keep(), w.terrain());
+    }
+
+    /** A highroad from hub a to hub b laid whole ({@link #way}): Carillon's roads out. */
+    static List<Road> through(RoadWorld w, String key, int cls, RoadNet.@Nullable Hub a, RoadNet.Hub b, RoadNet.@Nullable Entry start) {
+        Way way = way(w, key, cls, a, b, start);
+        List<Road> out = new ArrayList<>();
+        for (int k = 0; k < way.pieces(); k++) {
+            Road r = piece(w, way, k);
+            if (r != null) out.add(r);
+        }
+        return out;
     }
 
     /**
      * A highroad from hub a to hub b through the settlements on its way (each entered at one end of its main street and
      * left by the other), kept off every other settlement's ground. {@code start}, when given, replaces a's end (a port).
      */
-    static List<Road> through(RoadWorld w, String key, int cls, RoadNet.@Nullable Hub a, RoadNet.Hub b, RoadNet.@Nullable Entry start) {
+    static Way way(RoadWorld w, String key, int cls, RoadNet.@Nullable Hub a, RoadNet.Hub b, RoadNet.@Nullable Entry start) {
         Terrain t = w.terrain();
         double ax = start != null ? start.x() : a.x(), az = start != null ? start.z() : a.z();
         double d = Math.hypot(b.x() - ax, b.z() - az);
-        if (d < 48) return List.of();
-        // the settlements near the straight way: those well between the ends ride on it, the rest are kept clear of
+        if (d < 48) return new Way(key, cls, List.of(), List.of(), (x, z) -> false);
+        // the settlements near the straight way: those well between the ends ride on it, the rest are kept clear of (one
+        // that can't ride on it wherever its site moves is planned only if a road's search comes near it: SPEC §28.9, Cost)
         List<VillagePlan> on = new ArrayList<>(), clear = new ArrayList<>();
+        List<SettlementGrid.Anchor> aside = new ArrayList<>();
         List<double[]> along = new ArrayList<>();
         int[] centre = {w.cx, w.cz};
         double mx = (ax + b.x()) / 2, mz = (az + b.z()) / 2;
         for (SettlementGrid.Anchor s : SettlementGrid.gridNear(w.seed, (int) mx, (int) mz, (int) (d / 2 + 0.36 * d + 120), centre)) {
             if (a != null && s.equals(a.anchor()) || s.equals(b.anchor())) continue;
             if (!corridor(ax, az, b.x(), b.z(), s.x(), s.z(), 0.36 * d + 140)) continue;
+            if (!mayRide(ax, az, b.x(), b.z(), d, s)) {
+                aside.add(s);
+                continue;
+            }
             VillagePlan p = Plans.of(s, t);
             if (p == null) continue;
             double tt = ((p.ox - ax) * (b.x() - ax) + (p.oz - az) * (b.z() - az)) / (d * d);
@@ -109,9 +170,9 @@ final class Highroads {
         keepOut.addAll(stops);
         if (a != null && a.anchor() != null && Plans.cached(a.anchor().key()) != null) keepOut.add(Plans.cached(a.anchor().key()));
         if (b.anchor() != null && Plans.cached(b.anchor().key()) != null) keepOut.add(Plans.cached(b.anchor().key()));
-        RoadPlanner.Keep keep = keep(w, keepOut, start);
+        RoadPlanner.Keep keep = keep(w, keepOut, aside, start);
         // the way, stop by stop
-        List<Road> out = new ArrayList<>();
+        List<RoadNet.Entry> froms = new ArrayList<>(), tos = new ArrayList<>();
         RoadNet.Entry from = start != null ? start : hubEnd(w, a, stops.isEmpty() ? b.x() : stops.getFirst().ox, stops.isEmpty() ? b.z() : stops.getFirst().oz);
         for (int k = 0; k <= stops.size() && from != null; k++) {
             RoadNet.Entry to;
@@ -129,27 +190,52 @@ final class Highroads {
                 }
             } else to = hubEnd(w, b, from.x(), from.z());
             if (to == null) break;
-            Road r = lay(w, key + "#" + k, cls, from, to, keep, t);
-            if (r != null) out.add(r);
+            // piece k (k counts the pieces: a stop dropped above doesn't take a number)
+            froms.add(from);
+            tos.add(to);
             from = next;
         }
-        return out;
+        return new Way(key, cls, froms, tos, keep);
+    }
+
+    /** How far a grid settlement's site moves from its anchor at most (the planner's search, on its 16-block steps), and its radius. */
+    static final int MOVE = 46, FIRST_MOVE = 91, MAX_R = 88;
+
+    /**
+     * Whether a grid settlement could ride on the way from a to b ({@link #through}'s test on its plan's middle) wherever
+     * its site moves from its anchor: false, and it can only be kept clear of.
+     */
+    static boolean mayRide(double ax, double az, double bx, double bz, double d, SettlementGrid.Anchor s) {
+        double move = (s.first() ? FIRST_MOVE : MOVE) + 1e-6;
+        double tt = ((s.x() - ax) * (bx - ax) + (s.z() - az) * (bz - az)) / (d * d);
+        double perp = Math.abs((s.x() - ax) * (bz - az) - (s.z() - az) * (bx - ax)) / d;
+        return tt > 0.12 - move / d && tt < 0.88 + move / d && perp < Math.min(0.22 * d, 200) + move;
+    }
+
+    static RoadPlanner.Keep keep(RoadWorld w, List<VillagePlan> around, RoadNet.@Nullable Entry port) {
+        return keep(w, around, List.of(), port);
     }
 
     /**
      * The columns a road keeps out of: other settlements' planned ground (its streets, houses, yards, fields and pens, and
-     * a few blocks round them), the city's reserve (but a port's own way out), the camp.
+     * a few blocks round them), the city's reserve (but a port's own way out), the camp. The settlements {@code aside}
+     * are planned only when the road's search first comes within reach of their ground (most never are).
      */
-    static RoadPlanner.Keep keep(RoadWorld w, List<VillagePlan> around, RoadNet.@Nullable Entry port) {
-        int n = around.size();
+    static RoadPlanner.Keep keep(RoadWorld w, List<VillagePlan> around, List<SettlementGrid.Anchor> aside, RoadNet.@Nullable Entry port) {
+        int n = around.size(), m = aside.size();
         VillagePlan[] ps = around.toArray(new VillagePlan[0]);
+        SettlementGrid.Anchor[] as = aside.toArray(new SettlementGrid.Anchor[0]);
+        java.util.concurrent.atomic.AtomicReferenceArray<Optional<VillagePlan>> got = new java.util.concurrent.atomic.AtomicReferenceArray<>(m);
         int campX = w.cx + CAMP_X, campZ = w.cz + CAMP_Z;
         return (x, z) -> {
-            for (int i = 0; i < n; i++) {
-                VillagePlan p = ps[i];
-                int dx = x - p.ox, dz = z - p.oz;
-                if (dx * dx + dz * dz > (p.r + 8) * (p.r + 8)) continue;
-                if (built(p, x, z) || built(p, x + 3, z) || built(p, x - 3, z) || built(p, x, z + 3) || built(p, x, z - 3)) return true;
+            for (int i = 0; i < n; i++) if (kept(ps[i], x, z)) return true;
+            for (int i = 0; i < m; i++) {
+                SettlementGrid.Anchor s = as[i];
+                int dx = x - s.x(), dz = z - s.z(), reach = (s.first() ? FIRST_MOVE : MOVE) + MAX_R + 9;
+                if (dx * dx + dz * dz > reach * reach) continue;
+                Optional<VillagePlan> p = got.get(i);
+                if (p == null) got.set(i, p = Optional.ofNullable(Plans.of(s, w.terrain())));
+                if (p.isPresent() && kept(p.get(), x, z)) return true;
             }
             if (w.city) {
                 int dx = x - campX, dz = z - campZ;
@@ -162,6 +248,13 @@ final class Highroads {
             }
             return false;
         };
+    }
+
+    /** Whether a road keeps out of a column for a settlement: its built ground, or within three blocks of it. */
+    static boolean kept(VillagePlan p, int x, int z) {
+        int dx = x - p.ox, dz = z - p.oz;
+        if (dx * dx + dz * dz > (p.r + 8) * (p.r + 8)) return false;
+        return built(p, x, z) || built(p, x + 3, z) || built(p, x - 3, z) || built(p, x, z + 3) || built(p, x, z - 3);
     }
 
     /** A settlement's built ground: its houses, streets, square, walls and landmarks (a road may pass its fields and pens). */
@@ -294,12 +387,12 @@ final class Highroads {
 
     // ---- lanes ---------------------------------------------------------------------------------------------------------
 
-    static List<Road> branch(RoadWorld w, SettlementGrid.Anchor a) {
-        Terrain t = w.terrain();
-        VillagePlan p = Plans.of(a, t);
-        if (p == null) return List.of();
-        // the highroads and Carillon's roads near it: if one runs through it, it needs no lane
-        List<Road> roads = new ArrayList<>();
+    /**
+     * The roads a settlement's lane may join, in the order it looks at them: the highroads ({gx, gz, dir}) whose straight
+     * line between hearts comes within a lane's reach of it, then Carillon's roads out ({which}).
+     */
+    static List<int[]> laneJoins(RoadWorld w, VillagePlan p) {
+        List<int[]> out = new ArrayList<>();
         int pitch = dev.awaken.living.region.RegionMap.PITCH;
         int gx = Math.floorDiv(p.ox, pitch), gz = Math.floorDiv(p.oz, pitch);
         for (int i = gx - 2; i <= gx + 1; i++)
@@ -308,17 +401,107 @@ final class Highroads {
                     int ni = i + (dir == 0 ? 1 : 0), nj = j + (dir == 1 ? 1 : 0);
                     if (w.regions.swallowed(i, j) || w.regions.swallowed(ni, nj)) continue;
                     int[] ha = w.regions.heart(i, j), hb = w.regions.heart(ni, nj);
-                    if (mayPass(ha[0], ha[1], hb[0], hb[1], p.ox, p.oz, LANE_REACH)) roads.addAll(RoadNet.trunk(w, i, j, dir));
+                    if (mayPass(ha[0], ha[1], hb[0], hb[1], p.ox, p.oz, LANE_REACH)) out.add(new int[]{i, j, dir});
                 }
         if (w.city) for (int k = 0; k < 3; k++) {
             for (int[] seg : portReach(w, k)) {
                 if (!mayPass(seg[0], seg[1], seg[2], seg[3], p.ox, p.oz, LANE_REACH)) continue;
-                roads.addAll(RoadNet.port(w, k));
+                out.add(new int[]{k});
                 break;
             }
         }
-        for (Road r : roads) if (r.from().settlement().equals(p.key) || r.to().settlement().equals(p.key)) return List.of();
-        // the nearest point of a road to the settlement
+        return out;
+    }
+
+    /**
+     * Whether a settlement's lane could start a leg in a lattice chunk, judged from the roads it may join that are laid
+     * already (SPEC §28.9, Cost). The lane runs from one of its street ends to the point of those roads nearest the end,
+     * the nearest point to the settlement's middle being under {@link #LANE_REACH} away, and keeps inside its search's
+     * ellipse (stretch {@link RoadPlanner#STRETCH}, a lattice of at most 32, its ends 12 out): every point of it lies
+     * within (1 + stretch) / 2 (δ + E + 24) + 32 + 12 of the street end it leaves by, where δ bounds how far the nearest
+     * point is (any point of a road laid already, else the lane's reach) and E is how far the furthest street end is from
+     * the middle. A leg that
+     * starts in a chunk has every point within {@link RoadNet#LEG_REACH} of the chunk's middle each way. False means the
+     * lane starts nothing there, so it needn't be laid to say so.
+     */
+    static boolean laneMayStart(RoadWorld w, VillagePlan p, int chunkX, int chunkZ) {
+        List<RoadNet.Entry> ends = RoadNet.entries(p);
+        if (ends.isEmpty()) return false;
+        double far = 0, delta = LANE_REACH;
+        for (RoadNet.Entry e : ends) far = Math.max(far, Math.hypot(e.x() - p.ox, e.z() - p.oz));
+        for (int[] c : laneJoins(w, p)) {
+            List<Road> laid = RoadNet.laidAs(c.length == 3 ? "T" + c[0] + "," + c[1] + "," + c[2] : "P" + c[0]);
+            if (laid == null) continue;
+            for (Road r : laid) delta = Math.min(delta, nearest(r, p));
+        }
+        double reach = (1 + RoadPlanner.STRETCH) / 2 * (delta + far + 24) + 32 + 12;
+        int cx = (chunkX << 4) + 8, cz = (chunkZ << 4) + 8;
+        for (RoadNet.Entry e : ends) {
+            double dx = Math.max(0, Math.abs(e.x() - cx) - RoadNet.LEG_REACH), dz = Math.max(0, Math.abs(e.z() - cz) - RoadNet.LEG_REACH);
+            if (Math.hypot(dx, dz) <= reach) return true;
+        }
+        return false;
+    }
+
+    /** How near a road's points (past its first and last two, off bridges and boardwalks) come to a settlement's middle. */
+    static double nearest(Road r, VillagePlan p) {
+        double best = Double.MAX_VALUE;
+        for (int i = 2; i < r.points() - 2; i++)
+            if ((r.flags()[i] & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK)) == 0) best = Math.min(best, Math.hypot(r.x()[i] - p.ox, r.z()[i] - p.oz));
+        return best;
+    }
+
+    static List<Road> branch(RoadWorld w, SettlementGrid.Anchor a) {
+        Terrain t = w.terrain();
+        VillagePlan p = Plans.of(a, t);
+        if (p == null) return List.of();
+        // the highroads and Carillon's roads near it, in order: Carillon's laid whole, a highroad piece by piece, a piece
+        // only where it starts or ends here or could hold a point nearer than the nearest yet (SPEC §28.9, Cost)
+        List<Way> ways = new ArrayList<>();
+        List<Integer> ks = new ArrayList<>();
+        List<Road> laid = new ArrayList<>();
+        for (int[] c : laneJoins(w, p)) {
+            if (c.length == 3) {
+                Way way = RoadNet.way(w, c[0], c[1], c[2]);
+                for (int k = 0; k < way.pieces(); k++) {
+                    ways.add(way);
+                    ks.add(k);
+                    laid.add(RoadNet.laidPiece(way, k));
+                }
+            } else for (Road r : RoadNet.port(w, c[0])) {
+                ways.add(null);
+                ks.add(0);
+                laid.add(r);
+            }
+        }
+        int n = laid.size();
+        boolean[] tried = new boolean[n];
+        for (int i = 0; i < n; i++) {
+            Way way = ways.get(i);
+            int k = ks.get(i);
+            tried[i] = way == null || laid.get(i) != null;
+            if (!tried[i] && (way.from().get(k).key().equals(p.key) || way.to().get(k).key().equals(p.key))) {
+                laid.set(i, RoadNet.piece(w, way, k));
+                tried[i] = true;
+            }
+        }
+        // if one runs through it, it needs no lane
+        for (Road r : laid) if (r != null && (r.from().settlement().equals(p.key) || r.to().settlement().equals(p.key))) return List.of();
+        double near = LANE_REACH;
+        for (Road r : laid) if (r != null) near = Math.min(near, nearest(r, p));
+        List<double[]> rest = new ArrayList<>();
+        for (int i = 0; i < n; i++) if (!tried[i]) rest.add(new double[]{ways.get(i).nearest(ks.get(i), p.ox, p.oz), i});
+        rest.sort((u, v) -> Double.compare(u[0], v[0]));
+        for (double[] u : rest) {
+            if (u[0] > near) break;
+            int i = (int) u[1];
+            Road r = RoadNet.piece(w, ways.get(i), ks.get(i));
+            laid.set(i, r);
+            if (r != null) near = Math.min(near, nearest(r, p));
+        }
+        // the nearest point of a road to the settlement (a piece left unlaid has none as near)
+        List<Road> roads = new ArrayList<>();
+        for (Road r : laid) if (r != null) roads.add(r);
         Road best = null;
         int bi = -1;
         double bd = LANE_REACH;
