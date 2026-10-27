@@ -28,6 +28,7 @@
         "radius": 10
       },
       "text": "Leave the city through the High Gate",
+      "place": "High Gate",
       "done": [
         "Hale: Got your licence? Good, go on through. It's not too dangerous out here near the city, but keep your eyes open."
       ]
@@ -40,6 +41,7 @@
         "radius": 16
       },
       "text": "Take the letters to the Wayfarer camp up the north road",
+      "place": "Wayfarer camp",
       "reward": {
         "levels": 0.1
       }
@@ -51,6 +53,7 @@
         "target": "ilse"
       },
       "text": "Deliver the letters",
+      "place": "Ilse",
       "tally": true,
       "done": [
         "Ilse: You must be one of Bram's new hunters. He said he'd send someone. Have you got our letters?",

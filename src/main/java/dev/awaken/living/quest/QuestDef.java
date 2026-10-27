@@ -12,7 +12,8 @@ import java.util.Optional;
  * A Wayfarer chain (SPEC §21, PLAN §2.2), from {@code data/<ns>/awaken/quest/<chain>.json}, schema 1. Lines are authored
  * (no language model), keyed so a step can say them when it starts and when it's done. A step whose {@code needs} the
  * player lacks (an Ascent tier, a flag) waits and says so. {@code tally} shows a step's count even when it's one
- * ("Deliver the letters · 0/1"); {@code night} says why a step needs the dark (a bedroll won't sleep it away).
+ * ("Deliver the letters · 0/1"); {@code night} says why a step needs the dark (a bedroll won't sleep it away);
+ * {@code place} names where the step sends you on the Now line ("Wayfarer camp", SPEC §27.11; else the step's words).
  */
 public record QuestDef(int schemaVersion, String title, int band, List<String> requires, String scene, String giver,
                        List<Step> steps, Optional<String> relic, Reward finish, String summary, List<String> ask) {
@@ -38,7 +39,7 @@ public record QuestDef(int schemaVersion, String title, int band, List<String> r
 
     public record Step(String id, Objective objective, String text, List<String> start, List<String> done,
                        Reward reward, Optional<String> needs, String needsText, Optional<Spawn> spawn, Optional<String> move,
-                       boolean tally, Optional<String> night) {
+                       boolean tally, Optional<String> night, Optional<String> place) {
         public static final Codec<Step> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("id").forGetter(Step::id),
                 Objective.CODEC.fieldOf("objective").forGetter(Step::objective),
@@ -51,7 +52,8 @@ public record QuestDef(int schemaVersion, String title, int band, List<String> r
                 Spawn.CODEC.optionalFieldOf("spawn").forGetter(Step::spawn),
                 Codec.STRING.optionalFieldOf("move").forGetter(Step::move),
                 Codec.BOOL.optionalFieldOf("tally", false).forGetter(Step::tally),
-                Codec.STRING.optionalFieldOf("night").forGetter(Step::night)
+                Codec.STRING.optionalFieldOf("night").forGetter(Step::night),
+                Codec.STRING.optionalFieldOf("place").forGetter(Step::place)
         ).apply(i, Step::new));
     }
 

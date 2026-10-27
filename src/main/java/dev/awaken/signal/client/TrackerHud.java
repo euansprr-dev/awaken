@@ -3,8 +3,6 @@ package dev.awaken.signal.client;
 import dev.awaken.Awaken;
 import dev.awaken.core.AwakenConfig;
 import dev.awaken.core.api.HorizonHooks;
-import dev.awaken.core.api.NowHooks;
-import dev.awaken.core.client.AwakenKeys;
 import dev.awaken.signal.ui.Rect;
 import dev.awaken.signal.ui.SignalLayout;
 import dev.awaken.signal.ui.SignalText;
@@ -15,12 +13,11 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent;
 
-import java.util.List;
-
 /**
- * The Now tracker: one quiet line in the top-left corner with the best thing you could do next (and a compass when it
- * has a place), plus "1 decision waiting · K" when a choice card folded away. Under it, the Horizon line (SPEC §17):
- * the nearest place worth exploring, which gates, requests and points never take. Shows nothing when there is nothing.
+ * The Now line, top left (SPEC §27.11; Euan 2026-10-27: "the top left is pulling me in so many directions"): only where
+ * you're going, and only when you're going somewhere. The destination you chose on the Atlas, else the current task
+ * step's place, with its compass; otherwise nothing. What the Now tracker suggests stays in the band's lists and "Anything
+ * for me?". Under it, the Horizon line (SPEC §17) when the player turns it on (off by default).
  */
 final class TrackerHud {
     private TrackerHud() {}
@@ -28,14 +25,6 @@ final class TrackerHud {
     static boolean enabled() {
         try {
             return AwakenConfig.Client.NOW_TRACKER.get();
-        } catch (IllegalStateException notLoaded) {
-            return true;
-        }
-    }
-
-    static boolean v2() {
-        try {
-            return AwakenConfig.Client.SYSTEM_STYLE.get() == AwakenConfig.Client.SystemStyle.V2;
         } catch (IllegalStateException notLoaded) {
             return true;
         }
@@ -55,41 +44,27 @@ final class TrackerHud {
         bossBottom = Math.max(bossBottom, e.getY() + 5);
     }
 
-    private record Lines(String line1, String compass, String line2, int colour1, Rect rect) {}
+    private record Line(String text, String compass, boolean destination, Rect rect) {}
 
-    private static Lines cached;
+    private static Line cached;
     private static int cacheKey;
 
-    private static Lines build(Minecraft mc, Font font, List<NowHooks.Suggestion> list, int waiting, int sw, int sh, double s) {
+    /** "◆ E-rank gate" for the destination you chose, "◇ Wayfarer camp" for the task's place, then the compass. */
+    private static Line build(Minecraft mc, Font font, dev.awaken.signal.NowCorner.Place h, int sw, int sh, double s) {
         int maxText = SignalLayout.trackerTextWidth(sw, s);
-        String line1 = null, compass = "";
-        int colour1 = Glass.TEXT;
-        if (!list.isEmpty()) {
-            NowHooks.Suggestion top = list.get(0);
-            compass = NowClient.compass(top).map(c -> "  " + c).orElse("");
-            int room = maxText - font.width(compass);
-            line1 = SignalText.ellipsize("◇ " + top.text().getString(), Math.max(30, room), font::width);
-            if (top.priority() >= 90) colour1 = Glass.WARN;
-        }
-        String line2 = waiting <= 0 ? null : SignalText.ellipsize("◇ " + waiting + (waiting == 1 ? " decision waiting · " : " decisions waiting · ")
-                + SystemHud.key(AwakenKeys.STATUS), maxText, font::width);
-        int textW = 0, lines = 0;
-        if (line1 != null) {
-            textW = font.width(line1) + font.width(compass);
-            lines++;
-        }
-        if (line2 != null) {
-            textW = Math.max(textW, font.width(line2));
-            lines++;
-        }
-        return new Lines(line1, compass, line2, colour1, SignalLayout.tracker(sw, sh, s, textW, lines, lowered(mc)));
+        String compass = NowClient.compass(h.at(), h.dimension()).map(c -> "  " + c).orElse("");
+        int room = maxText - font.width(compass);
+        String text = SignalText.ellipsize((h.destination() ? "\u25C6 " : "\u25C7 ") + h.name(), Math.max(30, room), font::width);
+        int textW = font.width(text) + font.width(compass);
+        return new Line(text, compass, h.destination(), SignalLayout.tracker(sw, sh, s, textW, 1, lowered(mc)));
     }
 
+    /** The Horizon line is the player's choice now (SPEC §27.11): off unless turned on. */
     static boolean horizonEnabled() {
         try {
             return AwakenConfig.Client.HORIZON_LINE.get();
         } catch (IllegalStateException notLoaded) {
-            return true;
+            return false;
         }
     }
 
@@ -104,33 +79,30 @@ final class TrackerHud {
         if (horizonEnabled()) renderHorizon(g, dt, mc, bars, now);
     }
 
-    /** The Now card; returns where it drew (null when it had nothing to show). */
+    /** The Now card; returns where it drew (null when there is nowhere you're going). */
     private static Rect renderNow(GuiGraphicsExtractor g, DeltaTracker dt, Minecraft mc, int bars) {
-        List<NowHooks.Suggestion> list = NowClient.suggestions();
-        int waiting = v2() ? SystemHud.waiting() : 0;
-        if (list.isEmpty() && waiting == 0) return null;
+        dev.awaken.signal.NowCorner.Place h = NowClient.current();
+        if (h == null) return null;
 
         Font font = mc.font;
         int sw = g.guiWidth(), sh = g.guiHeight();
         double s = SystemHud.scale();
-        // the text only changes with the suggestions, the decisions, or where you stand and look: build it then
-        int key = NowClient.version();
-        key = 31 * key + waiting;
+        // the text only changes with the place, or where you stand and look: build it then
+        int key = NowClient.headingVersion();
         key = 31 * key + mc.player.getBlockX();
+        key = 31 * key + mc.player.getBlockY();
         key = 31 * key + mc.player.getBlockZ();
         key = 31 * key + Math.round(mc.player.getYRot() / 5f);
         key = 31 * key + sw * 1000 + (int) Math.round(s * 100);
         if (key != cacheKey || cached == null) {
             cacheKey = key;
-            cached = build(mc, font, list, waiting, sw, sh, s);
+            cached = build(mc, font, h, sw, sh, s);
         }
-        Lines c = cached;
-        String line1 = c.line1, compass = c.compass, line2 = c.line2;
-        int colour1 = c.colour1;
+        Line c = cached;
         Rect r = c.rect;
         // a boss fight: step below the bars rather than print over their names (narrow screens, long lines)
         if (bars > 0 && r.right() > sw / 2 - 92 && r.y() < bars + 3) r = new Rect(r.x(), bars + 3, r.w(), r.h());
-        float alpha = Math.min(1f, (NowClient.sinceChange() + dt.getGameTimeDeltaPartialTick(false)) / 8f);
+        float alpha = Math.min(1f, (NowClient.sinceHeading() + dt.getGameTimeDeltaPartialTick(false)) / 8f);
 
         g.pose().pushMatrix();
         g.pose().translate(r.x(), r.y());
@@ -143,13 +115,8 @@ final class TrackerHud {
             g.fill(0, 0, w0, h0, Glass.a(Glass.GLASS, 0.55f));
             g.fill(0, 0, 1, h0, Glass.a(Glass.EDGE, 0.8f));
         }
-        int ty = 3;
-        if (line1 != null) {
-            HudLook.text(g, font, line1, 4, ty, Glass.a(colour1, Math.max(0.35f, alpha)), true);
-            if (!compass.isEmpty()) HudLook.text(g, font, compass, 4 + font.width(line1), ty, Glass.a(Glass.EDGE, 1f), true);
-            ty += SignalLayout.LINE;
-        }
-        if (line2 != null) HudLook.text(g, font, line2, 4, ty, Glass.a(Glass.AMBER, 1f), true);
+        HudLook.text(g, font, c.text, 4, 3, Glass.a(c.destination ? Glass.TITLE : Glass.TEXT, Math.max(0.35f, alpha)), true);
+        if (!c.compass.isEmpty()) HudLook.text(g, font, c.compass, 4 + font.width(c.text), 3, Glass.a(Glass.EDGE, 1f), true);
         g.pose().popMatrix();
         return r;
     }

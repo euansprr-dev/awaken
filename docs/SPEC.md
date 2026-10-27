@@ -291,7 +291,8 @@ then New Game+ "Ascension" tiers.
 
 difficulty: STORY | HUNTER (default) | HARDLINE | HARDCORE · storyLength: 0.5 | 1.0 | 1.5 · features: gates, descent,
 lucidium, veil, above, hearth, story, anomalies, landmarks, wards, wilds (bools) · cameraShake · signalTypeSpeed ·
-playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the rest of `AwakenConfig.Client`.
+playtestMode (off). Client: nowTracker, horizonLineShown (§17, off by default since §27.11), systemScale and the rest
+of `AwakenConfig.Client`.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -414,6 +415,10 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   wards for sites placed by code; structures just join `#awaken:warded`), `ArrivalHooks` (`report(player, Way, ticks)` for
   movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
   `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
+- `dev.awaken.core.api.Destinations` (§16.8, §27.11; 2026-10-27) — where the player chose to go: `Target(name,
+  dimension, at, kind)`; server `get(ServerPlayer)`, `set(ServerPlayer, Target | null)`, `clear`; client `mine()` (the
+  server's last word), `request(Optional<Target>)` (the Atlas asks; empty clears). `ARRIVED` 16, `ARRIVED_UP` 48. The
+  signal module installs both sides (`signal.Destination`, payloads `signal_destination`, `signal_set_destination`).
 - `dev.awaken.progression.Progression.xpLedger(player)` — XP by `XpSource` and by world-XP source key (§17 telemetry).
   `Progression.onXpGranted(listener)` (every grant after scaling), `Progression.worldXp(player, source, fraction,
   afterBudget)` (a multiplier applied after the budget), `XpBudget.register(source, perTenMinutes)` (§21.3).
@@ -2679,6 +2684,27 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     at every orbit and zoom). The moving picture takes the level from the full-size picture's scale. Up to 8192 puffs.
   - Frame cost is judged on OpenGL: on Vulkan, MoltenVK presents at the display's rate (120 Hz) even with vsync off, so
     a capped tour can't show it.
+  - **Destinations** (Euan, 2026-10-27: "We need to make sure I can actually choose destinations on the map too";
+    `atlas.client.AtlasDestination`, `signal.Destination`, `core.api.Destinations`): a click that doesn't move (3 GUI px
+    at most between press and release; not a drag, not a double-click's second) picks the place under the cursor: a
+    gate (anywhere along its pillar), a mark or a rumour, a party pin (within 12 px), else a region's or district's name
+    chip, else a spot on ground you know ("A spot in the Commons"); a click on nothing lets the pick go. A small card
+    beside it names it, with **› Set as destination** (Enter); on the destination itself **✕ Clear destination**. The
+    legend's picked gate offers the same ("Set as destination" / "Clear destination", T), where "Point me there" was
+    (the client-only map pin is gone). Setting it says "That's your destination now. The top left of your screen will
+    point the way." The destination stands on the table in its own look: a white-gold pin with a beam above it and a
+    slow ring at its foot, "DESTINATION" over its name (on the clouds where the land isn't known). Drag to orbit,
+    right-drag, a click on a legend row to glide and the double-click party pin are unchanged (a double-click drops
+    the first click's pick). The key line starts "click a place to go there".
+  - The server keeps one per player (attachment `awaken:destination`, schemaVersion 1, kept through death): name (48
+    characters at most), dimension (the one the player stands in when the Atlas asks), block, kind (`gate`, `mark`,
+    `rumour`, `region`, `pin`, `spot`, else `place`). Sent on change, login, respawn and dimension change. Every 20
+    ticks: within 16 blocks across and 48 up or down (a rumour, whose height is a guess: across only), in its dimension,
+    it clears itself with a fleeting toast "Destination reached · <name>". Setting another replaces it. A mark's height
+    is taken from the Atlas's ground where the land is known (a landmark's mark says 64).
+  - Tests: `signal_destination_arrival` (not yet at 60 blocks or 80 above; there within 16; a rumour across only;
+    never in another dimension), `signal_destination_saved` (the Atlas's request named and placed in your dimension, the
+    codec, a whole save and load, Clear, a nameless request ignored).
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,
@@ -2932,7 +2958,8 @@ How you arrived (`wilds.arrival`, behind `core.api.ArrivalHooks`; config `featur
 The Horizon line (`core.api.HorizonHooks`; signal `HorizonSync`, `TrackerHud`):
 - A second HUD card under the Now tracker (or in its place), in the Horizon's pale sea-green (#9FE6D6), drawn through
   `HudLook` (the calm FRAME card with the projected look): "△ Sealed Vault  ↗ 420 m". Its own client setting
-  `horizonLine`; nothing in the Now tracker (gates 45, requests 42, unspent points 55) can take it.
+  `horizonLineShown`, off by default since 2026-10-27 (§27.11: the corner shows only where you're going); nothing in
+  the Now tracker (gates 45, requests 42, unspent points 55) can take it.
 - Sources list the sites near a player; each names a need (empty: on foot; `wings` for the sky). The line is the nearest
   site the player can reach (`Reach` answers: the Flight power, a Frame with Jet Boots and essence; later the tiers),
   a raised one (a spirit's whisper) first. A tease (the nearest site they can't reach: "Sky Platform · needs Wings",
@@ -6032,6 +6059,8 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   spend 55 and the next level's unlock 15; under a waiting Reassessment 72, rifts and danger), with a compass to its
   place: a "reach" step's marker; a "talk" step's person (Kestrel: the Roost, `OpeningHooks.place("roost")`; Hale: his
   quartermaster spot; Ilse and Hettie: the camp; a Wayfarer: their scene). Before, tracked chains never reached the HUD.
+  Since §27.11 (2026-10-27) the corner shows the step's place from the task card (the quest step's `place`, its
+  compass), not this suggestion; the suggestion stays in the band's lists.
 - **The camp is findable**: its marker falls back to its nominal spot until someone has come near (the compass knows the
   way); a Horizon site "Wayfarer camp" until the player has stood within 24 of it (counter
   `awaken:camp_reached`); and a signal fire on a bale by Ilse (`Scenes.campFire`), its smoke a column seen from the High
@@ -6144,7 +6173,8 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
     minutes; those first minutes don't count against the 5, or a tip offered at registration lapses as the world
     settles), then shows for its `show_for`.
   - The first stretch (`assets/awaken/tips/first/`): `band` (registration + 6 s: "K opens your band: what you hold, what
-    waits for you, and the way up."; done when K opens), `now` (registration + 26 s: the two lines at the top), `atlas`
+    waits for you, and the way up."; done when K opens), `now` (registration + 26 s: "The top left of your screen shows where you're heading, with an arrow. To go
+    somewhere else, open your map with M and click a place.", §27.11), `atlas`
     (the first way out through the walls; done when the Atlas opens), `power` (the first power chosen; done at the first
     cast), `level` (a level-up with points; done when a point is spent: "You grow by finding new things, hunting, and
     clearing gate floors."), `gate` (the first gate placed; done on entering a gate), `night` (the first dusk outside
@@ -6197,8 +6227,11 @@ the System scale, never under two screen pixels a font pixel, widest line 185 px
 and done/total, then only what matters now, one line each: the current step bright with ▸, the next two dim, and a step
 that just ticked (a soft green flash, then it fades out over 2.5 s); a long step is shortened with "…" (the Journal has
 the whole of it). Keys are drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"), and a
-compass to a place nearby ("↗ 9 m"). While the System's toasts are up it eases down under them. Hidden with the HUD.
-The Now line, top left, keeps the where; the card keeps the what.
+compass to a hint nearby ("↗ 9 m", the ledge). While the System's toasts are up it eases down under them. Hidden with
+the HUD. The Now line, top left, keeps the where (§27.11): a step that sends you somewhere carries its place (`Row.at`
+and `Row.place`, the name the Now line gives it: null for the step's own words, "" for a hint nearby, which stays the
+card's), and its compass is the Now line's, not the card's. The quest step's optional `place` names it ("High Gate",
+"Wayfarer camp", "Ilse"); the task payload carries the dimension it was sent from.
 The server decides (`progression.Checklist`, sent only when it changes, payload `signal_task`; nothing while the
 opening runs):
 - **Your body remembers** first, from the awakening: "Hold [Shift] as you land to roll", "Double-tap [Ctrl] to sprint
@@ -6212,6 +6245,30 @@ opening runs):
   The first thread reads: Take the letters from Bram, Leave the city through the High Gate, Take the letters to the
   Wayfarer camp up the north road, Deliver the letters 0/1, Place your Ember where you want your home.
 - Test: `progression_checklist` (the moves tick one by one, then the errand takes the card).
+
+### 27.11 The Now line shows only where you're going (Euan's playtest, 2026-10-27)
+"I also don't like how the top left is pulling me in so many directions. This should only appear when a checklist is
+active and requires me to go somewhere, or if I choose a destination on the map." (His screen: "◇ E-rank gate · 270 m"
+over "△ Sealed Vault · a sealed… ↘ 381 m", two places two ways.)
+- **The corner shows at most one place** (`signal.NowCorner`, drawn by `signal.client.TrackerHud`): the destination
+  you chose on the Atlas (§16.8), "◆ E-rank gate  ↖ 270 m" in white; else the current task step's place when it sends
+  you somewhere (§27.10: a row with a place name), "◇ Wayfarer camp  ↗ 120 m"; else nothing. Its compass counts height
+  (§27.1) and only in the place's dimension. A step's place that moves less than 24 blocks (Ilse walking) is the same
+  place: no fade, no new thread.
+- **Gone from the corner:** what the Now tracker suggests (the nearest gate, the best idea, a lesson, a rift, a request,
+  the way home underground) and "N decisions waiting · K" (the K menu's badges count them). The suggestions are still
+  collected and synced (`NowSync`): the band's Now section and the Journal's "Anything for me?" list them.
+- **The Horizon line** under it is a client setting, off by default (`horizonLineShown`; a new key, so a saved
+  `horizonLine = true` doesn't keep it on).
+- **The Signal's thread** (§27.7) runs toward the corner's place, not the top suggestion: once when a place is new (a
+  destination the moment the map closes, even if a thread ran lately), once more on standing still 8 s with it.
+- **Urgent lines** (priority 90+, `NowSync.URGENT`) no longer have the corner: each is said once as a fleeting toast
+  when it first comes up (not filed). The opening's own (`opening:` ids) aren't: "The gate is opening · waiting for N
+  hunters" is the square's own line (`OpeningHud`), and Bram walks you to the Registry and says so. The others today are
+  the ritual hall's ("Go through the doors", "Waiting for N hunters…").
+- Tests: `signal_corner_nothing` (no task, a step with no place, the ledge hint: nothing), `signal_corner_task_place`
+  (the current step's place, named, in the task's dimension; an unnamed one says its own words),
+  `signal_corner_destination_wins`; with §16.8's `signal_destination_arrival` and `signal_destination_saved`.
 
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
 
@@ -7792,12 +7849,14 @@ really sharp, with the clouds and everything".
   your wrist to the card's near bottom edge (`holo.client.HoloScene`, drawn by the wrist layer). The card scans in from 120 ms
   and the land prints in from the middle, faster than on the table.
 - **The legend** floats on its own glass over your head, on the near side: GATES (the four nearest you know, with
-  their distance; Tab steps through them, a click picks one and the map glides to it), the picked gate's **Point me
-  there** (T), KNOWN LANDS (click to fly there) and the DANGER key. It never reaches lower than 56% of the height.
-- **Point me there** (scene and table): the Now line leads with "Go to the D-rank gate" (`NowClient.pin`, id
-  `awaken:map_pin`, priority 86, client-side), with its compass and the Signal's thread, until you're within 12 blocks.
+  their distance; Tab steps through them, a click picks one and the map glides to it), the picked gate's **Set as
+  destination** (T), KNOWN LANDS (click to fly there) and the DANGER key. It never reaches lower than 56% of the height.
+- **Set as destination** (scene and table; was "Point me there", 2026-10-27): any place clicked on the map, or the
+  legend's gate, becomes your destination, saved on the server (§16.8); the Now line leads to it (§27.11) with its
+  compass and the Signal's thread until you're within 16 blocks.
 - **Keys** (one line along the bottom): drag turns the map, right-drag or WASD moves across it (your body stays still),
-  scroll or +/- zooms, Q/E turn, R/F tilt, C comes back to you, Tab gates, T point me there, 1–5 open a band page, M,
+  scroll or +/- zooms, Q/E turn, R/F tilt, C comes back to you, Tab gates, T sets the gate as your destination, a
+  click picks a place (Enter sets it), 1–5 open a band page, M,
   Esc, K or Space close (250 ms back to your eyes). The table takes the same held keys and Tab/T.
 - **The table instead,** at once: Shift+M, or M again within 0.3 s of opening (from the scene); in a fight
   (`SystemHud.inCombat`: hurt in the last 5 s or a hostile within 8); with reduced motion; with the setting "Map opens

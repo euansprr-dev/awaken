@@ -36,7 +36,11 @@ final class TaskHud {
     /** Rows after the current one, and the most lines one step may wrap over. */
     static final int AHEAD = 2, MAX_LINES = 3;
 
-    private static SignalPayloads.Task task = new SignalPayloads.Task("", "", List.of());
+    private static SignalPayloads.Task task = empty();
+
+    private static SignalPayloads.Task empty() {
+        return new SignalPayloads.Task("", "", List.of(), net.minecraft.resources.Identifier.withDefaultNamespace("overworld"));
+    }
     private static long since, ticks;
     private static final long[] TICKED = new long[16];
     /** Where the card sits (GUI px from the top), easing down under toasts and back. */
@@ -63,7 +67,25 @@ final class TaskHud {
     }
 
     static void clear() {
-        task = new SignalPayloads.Task("", "", List.of());
+        task = empty();
+    }
+
+    /**
+     * The current step's place, when it sends you somewhere (SPEC §27.11): the Now line shows it with its compass. A
+     * hint nearby (a ledge to try) is the card's own and isn't one.
+     */
+    static SignalPayloads.@org.jspecify.annotations.Nullable TaskRow place() {
+        return dev.awaken.signal.NowCorner.taskPlace(task);
+    }
+
+    /** The task as the server last sent it. */
+    static SignalPayloads.Task task() {
+        return task;
+    }
+
+    /** The card points only at a hint nearby; a step's real place has the Now line's compass, top left. */
+    private static boolean pointsHere(SignalPayloads.TaskRow r) {
+        return r.marked() && r.place().isEmpty();
     }
 
     /** The rows shown now: a step that just ticked (while it lingers), the current one, and the next {@link #AHEAD}. */
@@ -154,7 +176,7 @@ final class TaskHud {
         List<String> compasses = new java.util.ArrayList<>(shown.size()), keys = new java.util.ArrayList<>(shown.size());
         for (int i : shown) {
             SignalPayloads.TaskRow r = t.rows().get(i);
-            compasses.add(r.marked() ? compass(mc, r) : "");
+            compasses.add(pointsHere(r) ? compass(mc, r) : "");
             keys.add(r.text().contains("{key}") ? keyName(r.key()) : "");
         }
         if (was != null && was.task == t && was.guiScale == gui && was.shown.equals(shown) && was.compasses.equals(compasses) && was.keys.equals(keys)) {
@@ -180,7 +202,7 @@ final class TaskHud {
             boolean now = !r.done() && !current;
             if (now) current = true;
             String mark = r.done() ? "\u2714" : now ? "\u25B8" : "\u00B7";
-            String tail = (r.need() > 0 ? " " + r.have() + "/" + r.need() : "") + (r.marked() ? "  " + compasses.get(k) : "");
+            String tail = (r.need() > 0 ? " " + r.have() + "/" + r.need() : "") + (pointsHere(r) ? "  " + compasses.get(k) : "");
             boolean hasKey = r.text().contains("{key}");
             int keyW = hasKey ? font.width(keys.get(k)) + 4 : 0;
             // a long step wraps over up to three lines; the key cap sits in the line like a word
@@ -199,7 +221,7 @@ final class TaskHud {
         int w = font.width(at < 0 ? r.text() : r.text().substring(0, at));
         if (at >= 0) w += font.width(key) + 6 + font.width(r.text().substring(at + 5));
         if (r.need() > 0) w += font.width(" " + r.have() + "/" + r.need());
-        if (r.marked()) w += font.width("  " + compass);
+        if (pointsHere(r)) w += font.width("  " + compass);
         return w;
     }
 

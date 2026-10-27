@@ -37,10 +37,34 @@ public final class NowSync {
     /** Collects now and sends if different from the last payload. Returns whether it sent. */
     static boolean update(ServerPlayer p) {
         Sent next = new Sent(p.level().dimension().identifier(), NowHooks.collect(p, MAX));
-        if (!changed(LAST.get(p.getUUID()), next)) return false;
+        Sent before = LAST.get(p.getUUID());
+        if (!changed(before, next)) return false;
         LAST.put(p.getUUID(), next);
         AwakenNet.send(p, new SignalPayloads.Now(next.dimension(), next.suggestions()));
+        urgent(p, before, next);
         return true;
+    }
+
+    /** From this priority a line is urgent: said once as a toast when it comes up (SPEC §27.11). */
+    public static final int URGENT = 90;
+
+    /**
+     * The corner shows only where you're going now, so an urgent line ("Go through the doors") is said once, as a toast
+     * that isn't filed, when it first comes up. The opening's own lines aren't: its square shows the wait and Bram walks
+     * you to the Registry.
+     */
+    static void urgent(ServerPlayer p, Sent before, Sent next) {
+        for (NowHooks.Suggestion s : next.suggestions()) {
+            if (s.priority() < URGENT || s.id().startsWith("opening:") || had(before, s.id())) continue;
+            Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, s.text())
+                    .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 5).fleeting().build());
+        }
+    }
+
+    private static boolean had(Sent before, String id) {
+        if (before == null) return false;
+        for (NowHooks.Suggestion s : before.suggestions()) if (s.id().equals(id)) return true;
+        return false;
     }
 
     private static boolean changed(Sent before, Sent next) {

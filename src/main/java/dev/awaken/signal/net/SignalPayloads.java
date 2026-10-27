@@ -55,12 +55,13 @@ public final class SignalPayloads {
      * hold "{key}", drawn as the key cap of {@code key} (a key mapping's name); {@code need} above 1 shows "have/need";
      * {@code at} (with {@code marked}) is a place nearby to do it. An empty title clears the panel.
      */
-    public record TaskRow(String text, String key, boolean done, int have, int need, boolean marked, net.minecraft.core.BlockPos at) {
+    public record TaskRow(String text, String key, boolean done, int have, int need, boolean marked, net.minecraft.core.BlockPos at, String place) {
         public static final StreamCodec<ByteBuf, TaskRow> STREAM_CODEC = new StreamCodec<>() {
             @Override
             public TaskRow decode(ByteBuf b) {
                 return new TaskRow(ByteBufCodecs.STRING_UTF8.decode(b), ByteBufCodecs.STRING_UTF8.decode(b), b.readBoolean(),
-                        ByteBufCodecs.VAR_INT.decode(b), ByteBufCodecs.VAR_INT.decode(b), b.readBoolean(), net.minecraft.core.BlockPos.STREAM_CODEC.decode(b));
+                        ByteBufCodecs.VAR_INT.decode(b), ByteBufCodecs.VAR_INT.decode(b), b.readBoolean(), net.minecraft.core.BlockPos.STREAM_CODEC.decode(b),
+                        ByteBufCodecs.STRING_UTF8.decode(b));
             }
 
             @Override
@@ -72,18 +73,58 @@ public final class SignalPayloads {
                 ByteBufCodecs.VAR_INT.encode(b, r.need());
                 b.writeBoolean(r.marked());
                 net.minecraft.core.BlockPos.STREAM_CODEC.encode(b, r.at());
+                ByteBufCodecs.STRING_UTF8.encode(b, r.place());
             }
         };
     }
 
-    public record Task(String id, String title, java.util.List<TaskRow> rows) implements CustomPacketPayload {
+    /**
+     * {@code dimension}: where the player stood when it was sent (a row's place counts only there). A row's {@code place}
+     * names where it sends you, for the Now line (SPEC §27.11); empty when its mark is only a hint nearby (a ledge).
+     */
+    public record Task(String id, String title, java.util.List<TaskRow> rows, Identifier dimension) implements CustomPacketPayload {
         public static final Type<Task> TYPE = new Type<>(Awaken.id("signal_task"));
         public static final StreamCodec<ByteBuf, Task> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.STRING_UTF8, Task::id,
                 ByteBufCodecs.STRING_UTF8, Task::title,
                 TaskRow.STREAM_CODEC.apply(ByteBufCodecs.list(16)), Task::rows,
+                Identifier.STREAM_CODEC, Task::dimension,
                 Task::new);
         @Override public Type<Task> type() { return TYPE; }
+    }
+
+    /** Server → client: the player's destination (SPEC §16.8), or none ({@code set} false). */
+    public record Destination(boolean set, String name, Identifier dimension, net.minecraft.core.BlockPos at, String kind) implements CustomPacketPayload {
+        public static final Type<Destination> TYPE = new Type<>(Awaken.id("signal_destination"));
+        public static final StreamCodec<ByteBuf, Destination> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.BOOL, Destination::set,
+                ByteBufCodecs.STRING_UTF8, Destination::name,
+                Identifier.STREAM_CODEC, Destination::dimension,
+                net.minecraft.core.BlockPos.STREAM_CODEC, Destination::at,
+                ByteBufCodecs.STRING_UTF8, Destination::kind,
+                Destination::new);
+        @Override public Type<Destination> type() { return TYPE; }
+
+        public static Destination of(Optional<dev.awaken.core.api.Destinations.Target> t) {
+            return t.map(d -> new Destination(true, d.name(), d.dimension(), d.at(), d.kind()))
+                    .orElseGet(() -> new Destination(false, "", Identifier.withDefaultNamespace("overworld"), net.minecraft.core.BlockPos.ZERO, ""));
+        }
+
+        public Optional<dev.awaken.core.api.Destinations.Target> target() {
+            return set ? Optional.of(new dev.awaken.core.api.Destinations.Target(name, dimension, at, kind)) : Optional.empty();
+        }
+    }
+
+    /** Client → server: make this place (in the dimension the player stands in) the destination; {@code set} false clears it. */
+    public record SetDestination(boolean set, String name, net.minecraft.core.BlockPos at, String kind) implements CustomPacketPayload {
+        public static final Type<SetDestination> TYPE = new Type<>(Awaken.id("signal_set_destination"));
+        public static final StreamCodec<ByteBuf, SetDestination> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.BOOL, SetDestination::set,
+                ByteBufCodecs.stringUtf8(96), SetDestination::name,
+                net.minecraft.core.BlockPos.STREAM_CODEC, SetDestination::at,
+                ByteBufCodecs.stringUtf8(16), SetDestination::kind,
+                SetDestination::new);
+        @Override public Type<SetDestination> type() { return TYPE; }
     }
 
     /** Client → server: the player answered a window's action (accepted = Y, false = N). */

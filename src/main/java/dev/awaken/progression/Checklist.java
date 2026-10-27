@@ -35,10 +35,25 @@ import java.util.UUID;
 public final class Checklist {
     private Checklist() {}
 
-    /** One step: its words ("{key}" where the key cap goes), the key's mapping name, done, a count, a place to do it. */
-    public record Row(String text, String key, boolean done, int have, int need, @Nullable BlockPos at) {
+    /**
+     * One step: its words ("{key}" where the key cap goes), the key's mapping name, done, a count, a place to do it, and
+     * what to call that place on the Now line (SPEC §27.11): null, the step's own words; "" when the place is only a hint
+     * nearby (a ledge to try), which the card points at and the Now line leaves alone.
+     */
+    public record Row(String text, String key, boolean done, int have, int need, @Nullable BlockPos at, @Nullable String place) {
+        public Row(String text, String key, boolean done, int have, int need, @Nullable BlockPos at) {
+            this(text, key, done, have, need, at, null);
+        }
+
         public static Row of(String text, boolean done) {
             return new Row(text, "", done, 0, 0, null);
+        }
+
+        /** The name the Now line gives this row's place ("" when it gives none). */
+        String placeName() {
+            if (at == null) return "";
+            if (place != null) return place;
+            return text.replace("{key}", "").replaceAll("\\s+", " ").strip();
         }
     }
 
@@ -72,7 +87,7 @@ public final class Checklist {
     };
     static final String MOVES_TITLE = "Your body remembers";
 
-    private static final Map<UUID, Task> SENT = new HashMap<>();
+    private static final Map<UUID, SignalPayloads.Task> SENT = new HashMap<>();
     private static final Map<UUID, BlockPos> LEDGE = new HashMap<>();
 
     static void init() {
@@ -116,7 +131,7 @@ public final class Checklist {
                 current = true;
                 if (m[0].equals("awaken:body_mantle")) at = LEDGE.get(p.getUUID());
             }
-            rows.add(new Row(m[1], m[2], did, 0, 0, at));
+            rows.add(new Row(m[1], m[2], did, 0, 0, at, "")); // a ledge to try is a hint, not somewhere to go
         }
         if (all && done == 0) Progression.setCounter(p, MOVES_DONE, Math.max(1, now));
         return new Task("moves", MOVES_TITLE, rows);
@@ -127,22 +142,22 @@ public final class Checklist {
         if (t % 10 != 0) return;
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             if (t % 40 == 0) findLedge(p);
-            Task task = now(p);
-            Task was = SENT.get(p.getUUID());
-            if (task == null ? was == null : task.equals(was)) continue;
-            if (task == null) SENT.remove(p.getUUID());
-            else SENT.put(p.getUUID(), task);
-            AwakenNet.send(p, payload(task));
+            SignalPayloads.Task task = payload(now(p), p.level().dimension().identifier());
+            SignalPayloads.Task was = SENT.get(p.getUUID());
+            if (task.equals(was) || was == null && task.title().isEmpty()) continue;
+            SENT.put(p.getUUID(), task);
+            AwakenNet.send(p, task);
         }
     }
 
-    static SignalPayloads.Task payload(@Nullable Task t) {
-        if (t == null) return new SignalPayloads.Task("", "", List.of());
+    public static SignalPayloads.Task payload(@Nullable Task t, net.minecraft.resources.Identifier dimension) {
+        if (t == null) return new SignalPayloads.Task("", "", List.of(), dimension);
         List<SignalPayloads.TaskRow> rows = new ArrayList<>(t.rows().size());
         for (Row r : t.rows()) {
-            rows.add(new SignalPayloads.TaskRow(r.text(), r.key(), r.done(), r.have(), r.need(), r.at() != null, r.at() == null ? BlockPos.ZERO : r.at()));
+            rows.add(new SignalPayloads.TaskRow(r.text(), r.key(), r.done(), r.have(), r.need(), r.at() != null, r.at() == null ? BlockPos.ZERO : r.at(),
+                    r.placeName()));
         }
-        return new SignalPayloads.Task(t.id(), t.title(), List.copyOf(rows.subList(0, Math.min(16, rows.size()))));
+        return new SignalPayloads.Task(t.id(), t.title(), List.copyOf(rows.subList(0, Math.min(16, rows.size()))), dimension);
     }
 
     /**
