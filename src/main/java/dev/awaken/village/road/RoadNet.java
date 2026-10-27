@@ -199,20 +199,11 @@ public final class RoadNet {
         return f != null && f.isDone();
     }
 
-    private static final java.util.Set<Long> SITES_SOON = ConcurrentHashMap.newKeySet();
-
-    /** A region's sites, found on the road planner (once; nothing if another thread is already finding them). */
+    /** A region's sites, found by the road planners (nothing if another thread is already finding them). */
     private static void sitesSoon(RoadWorld w, int gx, int gz) {
         long key = cellKey(gx, gz);
-        if (SITES.containsKey(key) || !SITES_SOON.add(key)) return;
-        planner().execute(() -> {
-            try {
-                sites(w, gx, gz);
-            } catch (RuntimeException e) {
-                Awaken.LOG.error("[road] finding region {} {}'s sites failed", gx, gz, e);
-            } finally {
-                SITES_SOON.remove(key);
-            }
+        if (!SITES.containsKey(key)) RoadPlanners.job("S" + gx + "," + gz, RoadPlanners.SOON, 0, () -> {
+            if (!SITES.containsKey(key)) sites(w, gx, gz);
         });
     }
 
@@ -360,6 +351,9 @@ public final class RoadNet {
 
     private static final ConcurrentHashMap<Long, CompletableFuture<List<Road.Leg>>> LEGS = new ConcurrentHashMap<>();
 
+    /** A leg's points all lie within this of its start chunk's middle (each way). */
+    static final int LEG_REACH = 100;
+
     /** The legs whose structure starts in this chunk (none off the lattice). */
     public static List<Road.Leg> startsIn(int chunkX, int chunkZ) {
         if (Math.floorMod(chunkX, Road.LATTICE) != 0 || Math.floorMod(chunkZ, Road.LATTICE) != 0) return List.of();
@@ -368,10 +362,12 @@ public final class RoadNet {
         long key = ((long) chunkX << 32) ^ (chunkZ & 0xffffffffL);
         var known = LEGS.get(key);
         if (known != null && known.isDone()) return known.join();
+        // world generation is about to wait for what the planners haven't made yet: they make it beside it, first
+        if (known == null && !RoadPlanners.on()) fanOut(w, chunkX, chunkZ, RoadPlanners.URGENT, 0);
         long t0 = System.nanoTime();
         List<Road.Leg> legs = once(LEGS, key, () -> {
             List<Road.Leg> out = new ArrayList<>();
-            for (Road r : roadsNear(w, (chunkX << 4) + 8, (chunkZ << 4) + 8, 100))
+            for (Road r : roadsNear(w, (chunkX << 4) + 8, (chunkZ << 4) + 8, LEG_REACH))
                 for (Road.Leg l : r.legs()) if (l.startX() == chunkX && l.startZ() == chunkZ) out.add(l);
             return out;
         });
@@ -400,6 +396,14 @@ public final class RoadNet {
     /** The highroads and Carillon's roads out that may pass within {@code reach} of a point (no lanes: those cascade). */
     public static List<Road> highroadsNear(RoadWorld w, int x, int z, int reach) {
         List<Road> out = new ArrayList<>();
+        for (int[] c : trunksNear(w, x, z, reach)) out.addAll(trunk(w, c[0], c[1], c[2]));
+        for (int p : portsNear(w, x, z, reach)) out.addAll(port(w, p));
+        return out;
+    }
+
+    /** The highroads (region cell and way, {gx, gz, dir}) whose straight line between hearts comes near a point. */
+    private static List<int[]> trunksNear(RoadWorld w, int x, int z, int reach) {
+        List<int[]> out = new ArrayList<>();
         int pitch = RegionMap.PITCH;
         int gx = Math.floorDiv(x, pitch), gz = Math.floorDiv(z, pitch);
         for (int i = gx - 2; i <= gx + 1; i++)
@@ -408,14 +412,19 @@ public final class RoadNet {
                     int ni = i + (dir == 0 ? 1 : 0), nj = j + (dir == 1 ? 1 : 0);
                     if (w.regions.swallowed(i, j) || w.regions.swallowed(ni, nj)) continue;
                     int[] a = w.regions.heart(i, j), b = w.regions.heart(ni, nj);
-                    if (!Highroads.mayPass(a[0], a[1], b[0], b[1], x, z, reach)) continue;
-                    out.addAll(trunk(w, i, j, dir));
+                    if (Highroads.mayPass(a[0], a[1], b[0], b[1], x, z, reach)) out.add(new int[]{i, j, dir});
                 }
+        return out;
+    }
+
+    /** Carillon's roads out whose ways come near a point. */
+    private static List<Integer> portsNear(RoadWorld w, int x, int z, int reach) {
+        List<Integer> out = new ArrayList<>();
         if (w.city) {
             for (int p = 0; p < 3; p++) {
                 for (int[] seg : Highroads.portReach(w, p)) {
                     if (!Highroads.mayPass(seg[0], seg[1], seg[2], seg[3], x, z, reach)) continue;
-                    out.addAll(port(w, p));
+                    out.add(p);
                     break;
                 }
             }
@@ -423,25 +432,58 @@ public final class RoadNet {
         return out;
     }
 
+    /**
+     * Queues what a lattice chunk's legs are made of as jobs the planners share: the plans of the settlements whose lanes
+     * may reach it and the hubs of the regions whose highroads may pass it, then those highroads and Carillon's roads out,
+     * then the lanes. A piece made or being made is left alone.
+     */
+    static void fanOut(RoadWorld w, int chunkX, int chunkZ, int tier, long order) {
+        int x = (chunkX << 4) + 8, z = (chunkZ << 4) + 8;
+        List<SettlementGrid.Anchor> grid = SettlementGrid.gridNear(w.seed, x, z, Highroads.LANE_REACH + LEG_REACH, new int[]{w.cx, w.cz});
+        for (SettlementGrid.Anchor a : grid)
+            if (!Plans.asked(a.key())) RoadPlanners.job("p" + a.key(), tier, order * 4, () -> {
+                if (!Plans.asked(a.key())) Plans.of(a, w.terrain());
+            });
+        List<int[]> trunks = trunksNear(w, x, z, LEG_REACH);
+        for (int[] c : trunks) {
+            hubSoon(w, c[0], c[1], tier, order * 4);
+            hubSoon(w, c[0] + (c[2] == 0 ? 1 : 0), c[1] + (c[2] == 1 ? 1 : 0), tier, order * 4);
+        }
+        for (int[] c : trunks) roadSoon("T" + c[0] + "," + c[1] + "," + c[2], tier, order * 4 + 1, () -> trunk(w, c[0], c[1], c[2]));
+        for (int p : portsNear(w, x, z, LEG_REACH)) roadSoon("P" + p, tier, order * 4 + 1, () -> port(w, p));
+        for (SettlementGrid.Anchor a : grid) roadSoon("B" + a.key(), tier, order * 4 + 2, () -> branch(w, a));
+    }
+
+    private static void hubSoon(RoadWorld w, int gx, int gz, int tier, long order) {
+        long key = cellKey(gx, gz);
+        if (!HUBS.containsKey(key)) RoadPlanners.job("H" + gx + "," + gz, tier, order, () -> {
+            if (!HUBS.containsKey(key)) hub(w, gx, gz);
+        });
+    }
+
+    private static void roadSoon(String key, int tier, long order, Runnable make) {
+        if (!ROADS.containsKey(key)) RoadPlanners.job(key, tier, order, () -> {
+            if (!ROADS.containsKey(key)) make.run();
+        });
+    }
+
     // ---- laying ahead of the players -------------------------------------------------------------------------------------
 
-    private static java.util.concurrent.@Nullable ExecutorService ahead;
-    private static final java.util.Set<Long> QUEUED = ConcurrentHashMap.newKeySet();
     /** How far ahead of each player the roads are laid (past the generation front), and lattice chunks queued a pass. */
-    static final int AHEAD = 1100, PER_PASS = 8;
+    static final int AHEAD = 1100, PER_PASS = 16;
 
     /**
-     * Every two seconds: the lattice chunks round each player whose legs aren't known yet go to a planner thread of their
-     * own, nearest first, so the roads, towns, wayhouses and settlements there are laid before the land generates and world
-     * generation seldom waits for them (it asks the same cache: a chunk that needs a road being laid waits for that one).
+     * Every two seconds: the lattice chunks round each player whose legs aren't known yet go to the road planners, nearest
+     * first, each as the pieces it's made of ({@link #fanOut}), so the roads, towns, wayhouses and settlements there are
+     * laid before the land generates and world generation seldom waits for them (it asks the same cache: a chunk that needs
+     * a road being laid waits for that one).
      */
     public static void prefetch(net.minecraft.server.MinecraftServer server) {
-        RoadTimer.tick(server, QUEUED.size(), unknown);
+        RoadTimer.tick(server, RoadPlanners.queued(), unknown);
         if (server.getTickCount() % 40 != 21) return;
         RoadWorld w = RoadWorld.get();
         if (w == null) return;
         int behind = 0;
-        var pool = planner();
         for (net.minecraft.server.level.ServerPlayer p : server.overworld().players()) {
             int pcx = p.getBlockX() >> 4, pcz = p.getBlockZ() >> 4;
             int reach = AHEAD / 16 / Road.LATTICE + 1;
@@ -451,7 +493,7 @@ public final class RoadNet {
                 for (int j = lz - reach; j <= lz + reach; j++) {
                     int cx = i * Road.LATTICE, cz = j * Road.LATTICE;
                     long key = ((long) cx << 32) ^ (cz & 0xffffffffL);
-                    if (known(cx, cz) || QUEUED.contains(key)) continue;
+                    if (LEGS.containsKey(key) || RoadPlanners.pending("L" + key)) continue;
                     long d = (long) (cx - pcx) * (cx - pcx) + (long) (cz - pcz) * (cz - pcz);
                     if (d * 256 > (long) AHEAD * AHEAD) continue;
                     want.add(new long[]{d, cx, cz, key});
@@ -460,40 +502,19 @@ public final class RoadNet {
             behind += want.size();
             for (int k = 0; k < Math.min(PER_PASS, want.size()); k++) {
                 long[] u = want.get(k);
-                QUEUED.add(u[3]);
-                pool.submit(() -> {
-                    try {
-                        startsIn((int) u[1], (int) u[2]);
-                    } catch (RuntimeException e) {
-                        Awaken.LOG.error("[road] laying ahead at chunk {} {} failed", u[1], u[2], e);
-                    } finally {
-                        QUEUED.remove(u[3]);
-                    }
-                });
+                fanOut(w, (int) u[1], (int) u[2], RoadPlanners.AHEAD, u[0]);
+                RoadPlanners.job("L" + u[3], RoadPlanners.AHEAD, u[0] * 4 + 3, () -> startsIn((int) u[1], (int) u[2]));
             }
         }
         unknown = behind;
     }
 
-    private static synchronized java.util.concurrent.ExecutorService planner() {
-        if (ahead == null) ahead = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "Awaken road planner");
-            t.setDaemon(true);
-            t.setPriority(Thread.MIN_PRIORITY);
-            return t;
-        });
-        return ahead;
-    }
-
     /** Lattice chunks within reach of the players whose legs weren't known at the last pass (the timer's line). */
     private static int unknown;
 
-    /** The planner thread stops with the server (a pass under way finishes into the cleared caches harmlessly). */
-    public static synchronized void stopAhead() {
-        if (ahead != null) ahead.shutdownNow();
-        ahead = null;
-        QUEUED.clear();
-        SITES_SOON.clear();
+    /** The planners stop with the server (a piece under way finishes into the cleared caches harmlessly). */
+    public static void stopAhead() {
+        RoadPlanners.stop();
     }
 
     // ---- what the network looks like, for commands and the survey -------------------------------------------------------

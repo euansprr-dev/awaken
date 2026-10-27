@@ -59,6 +59,7 @@ public final class RoadBench {
             for (int k = 0; k < 4; k++) {
                 double a = Math.PI / 4 + k * Math.PI / 2;
                 int cx = Road.lattice(centre[0] + Math.cos(a) * far), cz = Road.lattice(centre[1] + Math.sin(a) * far);
+                RoadPlanners.settle();
                 RoadNet.clear();
                 Plans.clear();
                 w.forget();
@@ -70,8 +71,9 @@ public final class RoadBench {
                         cx, cz, far, legs.size(), ms, RoadNet.planned - r0, RoadNet.planNanos / 1e6, Plans.made() - p0, Plans.stats(), RoadNet.SITE_NS.sum() / 1e6,
                         RoadNet.DRY_NS.sum() / 1e6, GenTerrain.COLUMNS.sum() - col0);
             }
-            line(out, "cold chunks: %d ms on average", coldSum / 4);
+            line(out, "cold chunks: %d ms on average (%d road planners beside the asking thread)", coldSum / 4, RoadPlanners.threads());
             // the area: every lattice chunk, nearest first, then its settlements and hubs
+            RoadPlanners.settle();
             RoadNet.clear();
             Plans.clear();
             w.forget();
@@ -82,6 +84,12 @@ public final class RoadBench {
                 for (int cz = Math.floorDiv(centre[1] - radius, 16 * lat) * lat; cz <= Math.floorDiv(centre[1] + radius, 16 * lat) * lat; cz += lat)
                     if (Math.hypot(cx * 16 + 8 - centre[0], cz * 16 + 8 - centre[1]) <= radius) chunks.add(new int[]{cx, cz});
             chunks.sort((u, v) -> Double.compare(Math.hypot(u[0] * 16 - centre[0], u[1] * 16 - centre[1]), Math.hypot(v[0] * 16 - centre[0], v[1] * 16 - centre[1])));
+            // the planners lay it nearest first, as ahead of a player standing at the centre; world generation follows
+            for (int k = 0; k < chunks.size(); k++) {
+                int[] c = chunks.get(k);
+                RoadNet.fanOut(w, c[0], c[1], RoadPlanners.AHEAD, k);
+                RoadPlanners.job("L" + c[0] + "," + c[1], RoadPlanners.AHEAD, k * 4L + 3, () -> RoadNet.startsIn(c[0], c[1]));
+            }
             long fp = 0xcbf29ce484222325L;
             int legs = 0;
             for (int[] c : chunks) {
@@ -117,6 +125,7 @@ public final class RoadBench {
                     (System.nanoTime() - s1) / 1e9, GenTerrain.COLUMNS.sum() - col0, RoadNet.planned, Plans.made());
             line(out, "fingerprint %016x", fp);
         } finally {
+            RoadPlanners.settle();
             RoadNet.clear();
             Plans.clear();
             dev.awaken.village.world.FirstHamlet.use(hadFirst);

@@ -40,8 +40,10 @@ public final class Plans {
             long t0 = System.nanoTime();
             p = VillagePlanner.plan(request(a), dev.awaken.village.road.RoadWorld.shared(t));
             long ns = System.nanoTime() - t0;
-            planNanos += ns;
-            plans++;
+            synchronized (Plans.class) {
+                planNanos += ns;
+                plans++;
+            }
             if (p != null) Awaken.LOG.info("[village] planned {} in {} ms", p, String.format(java.util.Locale.ROOT, "%.1f", ns / 1e6));
             else Awaken.LOG.info("[village] no site near {} {} for {} ({}; {} ms)", a.x(), a.z(), a.key(), VillagePlanner.WHY.get(),
                     String.format(java.util.Locale.ROOT, "%.1f", ns / 1e6));
