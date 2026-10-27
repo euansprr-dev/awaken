@@ -7443,3 +7443,39 @@ setting (D13).
 - **Not in P0** (plan phases P1-P6): profiles for the other 57 casts, sound played on the clients at the muzzle, the Lens pulse and looks, the
   action camera's drop in the shoulder view, the off-hand/CORE light line, the release on the clip's frame for casters with latency, one
   "Cast animation" comfort setting. The weapon pops out of view when a stow clip starts (a lowering is polish).
+
+**P1-P6 (built 2026-10-27, same branch): the other casts and the system under them.**
+- **The table is data.** `tools/art/specs/power_cast_table.py` has one row per power (gesture and accents in third and first person, wind-up,
+  screen moment, Lens look, origin, begin sound); `power_gestures.py` (third person, figure-term poses, straight and bent twins, the clipping check)
+  and `fp_gestures.py` (first person: fist clips that stow what the hands hold, offset clips for quick casts) register the clips as `p_<power>`,
+  `p_<power>_hold`, `p_<power>_end` and `fp_p_<power>`, `fp_p_<power>_hold`, with a `release` event on the profile's release tick;
+  `power_gestures.write_table()` writes `data/awaken/powers/casts.json`, which `powers.fx.CastProfiles` reads (ids are the rows' order). 54 profiles;
+  left on their family poses: `ground_slam`, `meteor_dive`, `hover`, `flight` (already designed) and `leap` (its landing slam is an explicit pose a
+  profile would replace). 208 third-person clips (547 KB), 62 first-person clips.
+- **Wind-ups run in `Casting`** (`windUp`): a profile with `windup` > 0 sends the pose beat (`Fx.pose`) and its begin sound on the press, spends energy
+  and cooldown, and runs the power's own behaviour `windup` ticks later (a `<id>_windup` Running) aimed where you look then. The 14: Shockwave, Spire,
+  Frost Nova 5; Terrain Rip, Collapse, Rampart, Legion, Citadel, Void Maw, Storm Call 6; Thunderclap 4; Brace 3; Gravity Flip, Drone Swarm 5.
+  `windup` must equal the gesture's release tick (the generator asserts it).
+- **Everything lands on the release frame, on every client** (D4): `FxClient.defer` holds each effect, beam and sound from a caster whose profile pose has
+  not reached its release tick until it does (a ring of 64; the pose, the gathering light and the let-go never wait). An observer's first event of an instant
+  power (its RELEASE beat) starts the pose, then the effect waits the same ticks. `Cast.sound` for a profile power sends an `FxKind.SOUND` event
+  (`Fx.sound`: registry id in colour, volume in scale, pitch in aux) that each client plays at the release frame (`ClientLevel.playLocalSound`), so the
+  server no longer plays those sounds on the press tick. `Fx.Emit.anim`/`noAnim` do nothing for a profile power (a family pose would replace its own);
+  `Casting` adds a pose beat if a cast sent none.
+- **The screen moment** (`CastFeel.MOMENTS`: thump_heavy, thump_light, recoil_light, release_big, push, breath, lift, none) plays on the release tick
+  (`CastAnims.tick`) and at a channel's let-go (`endMoment`): your view kick and hold through Arms' `CombatFeedback`, the field of view through `FxScreen`, a
+  flash and a Lens bloom pulse on the big ones; others feel it by distance (16 blocks). Reduced motion halves it; the camera shake setting turns the kicks off.
+- **Lens** (`lens.client.LensClient.pulse`, `assets/awaken/lens/looks_powers.json`, `CastLens`): your own cast's look for its length (Flow, Foresight, Overload,
+  Legion, Citadel, Void Maw; the beam and Prism Lance while held), never over a story's or Arms' moment, only while Lens draws.
+- **Beams from the core** (`origin: "core"` in a profile; Prism Lance): `Anchors.CORE` (the sternum sampled from the model; in your first person a point low in
+  the view); its orb and beam start there.
+- **Sound** (`tools/art/specs/audio_power_kits.py`): the 43 vanilla-remix `power.*` events are now authored (115 files, 1.4 MB): Kinetic weight, Velocity air,
+  gravity low pulses, Energy rising light, Shadow ink, Mind pads, Architect set stone, Tech clicks and lasers, Spirit bells; `fail`, `learn` and `danger` stay.
+  Not listened to by Euan yet.
+- **Comfort** (D13): Full is the default; Reduced is the body's reduced-motion setting (halves the boot, the kick, the field's push and the tremble); Off is the
+  existing "Cast animations" setting (no profile pose, no boot).
+- **Tests**: `power_cast_profiles` (every name in both clip files, a key on the release tick, wind-up = release, moments, Lens looks, begin sounds),
+  `power_cast_windup`, `power_cast_beats` (every profile power sends its beat and no family pose beside it); `power_fx_reach_matches_hits` gives the
+  wind-up powers their ticks. Tour: `tools/autopilot/power-casts-2.txt`.
+- **Open** (needs the game or Euan): the first-person gestures are authored from the numbers, not yet seen except the stamp and the beam; the weapon pops out of
+  view on a fist clip; the sounds are unheard; `ground_slam`, `meteor_dive`, `hover`, `flight` and `leap` first person and the Lens look timings are untouched.
