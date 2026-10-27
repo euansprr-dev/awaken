@@ -109,7 +109,8 @@ final class Muzzles {
      * caller keeps its old constant offset).
      */
     static boolean palm(Entity e, boolean off, float pt, boolean firstPerson, double[] out) {
-        if (firstPerson && fist(off, out)) return true;
+        // first person: only a cast profile's fists are the palm (a sprint's pumping fist is not where a charge starts)
+        if (firstPerson && CastAnims.profileOf(e.getId()) != 0 && fist(off, out)) return true;
         if (sampled(e.getId(), off ? PALM_OFF : PALM, out)) return true;
         return baked(e, off ? PALM_OFF : PALM, pt, out);
     }
