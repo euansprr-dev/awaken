@@ -46,6 +46,13 @@ final class AtlasTests {
             h.assertTrue(failed == null, String.valueOf(failed));
             h.succeed();
         });
+        // the clouds at every zoom: a puff glides into its parent cell's puff as the zoom crosses a level, so the blanket
+        // never resets; the level follows screen pixels smoothly
+        AwakenTests.register("atlas_cloud_lattice", 20, h -> {
+            String failed = dev.awaken.atlas.client.CloudLattice.selfTest();
+            h.assertTrue(failed == null, String.valueOf(failed));
+            h.succeed();
+        });
         // the record: cells mark once, tiles merge, and the saved form round-trips with its schema
         AwakenTests.register("atlas_bits_codec", 20, h -> {
             Explored e = new Explored();

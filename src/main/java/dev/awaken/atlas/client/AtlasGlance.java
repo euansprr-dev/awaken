@@ -89,7 +89,7 @@ final class AtlasGlance {
                 AtlasState.night(mc.level), true, 0, 10f, 0, null); // 2 px a block: the finest level, kept built round you
         RenderSystem.backupProjectionMatrix();
         try {
-            painter.paint(RenderSystem.getDevice(), s, target.getTexture(), target.getTextureView(), target.depth, target.depthView, W, H, 1f, true, false);
+            painter.paint(RenderSystem.getDevice(), s, target.getTexture(), target.getTextureView(), target.depth, target.depthView, W, H, 1f, true, 0f);
         } finally {
             RenderSystem.restoreProjectionMatrix();
         }

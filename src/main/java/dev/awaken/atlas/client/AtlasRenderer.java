@@ -79,18 +79,20 @@ final class AtlasRenderer extends PictureInPictureRenderer<AtlasRenderState> {
         // of a second after it stops, one full-resolution picture. Still: only the clouds drift, redrawn about 60 times
         // a second, so the wind reads as smooth motion; nothing moving, the last picture is still right
         boolean live = now - lastMove < SETTLE_NANOS;
+        // the clouds follow the zoom on the full-size picture's scale, so the smaller moving one draws the same blanket
+        float clouds = CloudLattice.level(s.zoom() * guiScale);
         GpuTextureView shown;
         boolean redraw;
         if (live) {
             int lw = Math.max(1, Math.round(w * LIVE_SCALE)), lh = Math.max(1, Math.round(h * LIVE_SCALE));
             if (low == null || low.getWidth(0) != lw || low.getHeight(0) != lh) lowTextures(device, lw, lh);
             redraw = moved || !lowShown || s.animate() && now - lastDraw >= DRIFT_NANOS;
-            if (redraw) painter.paint(device, s, low, lowView, lowDepth, lowDepthView, lw, lh, guiScale * LIVE_SCALE, true, true);
+            if (redraw) painter.paint(device, s, low, lowView, lowDepth, lowDepthView, lw, lh, guiScale * LIVE_SCALE, true, clouds);
             lowShown = true;
             shown = lowView;
         } else {
             redraw = resized || moved || lowShown || s.age() < 1.5f || s.animate() && now - lastDraw >= DRIFT_NANOS;
-            if (redraw) painter.paint(device, s, color, colorView, depth, depthView, w, h, guiScale, true, false);
+            if (redraw) painter.paint(device, s, color, colorView, depth, depthView, w, h, guiScale, true, clouds);
             lowShown = false;
             shown = colorView;
         }
