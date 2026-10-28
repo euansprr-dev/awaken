@@ -1113,6 +1113,20 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
   without its question, drawn large and typed by the scene) and the question's card (a TRUTH card: the question and
   its keys, no caption) show; the tear frame is the tear and the world only. The gate card says nothing for a spent
   ritual hall and shows no "Breaks in" row for scripted gates.
+- The ritual's sound (2026-10-28, Codex's opening-audio, reviewed): 18 of its clips are built offline from CC0
+  BigSoundBank recordings (`tools/art/sources/ritual/`, `ritual_recordings.py`; stone, bell, arc, wind, pressure),
+  keeping their transients (`audio_mix.py` checks only their -6 dBTP ceiling). One client mixer (`story.client.
+  RitualAudio`) plays every cue: at most 6 voices counting the room bed (a stereo hall bed from WAITING through
+  JUDGEMENT, the void's own bed in the black; the hall's fades under it), at most 2 heavy transients at once, a guidance
+  cue replaces a footstep or detail when the room is full, and spatial voices duck to 45% while a rule's words are read.
+  The gaze is three layers (release at the eyes, a rush that travels the beam in 12 ticks, the strike where it lands);
+  a statue's whoosh plays 17 ticks into its 25-tick wind-up and never if the wind-up ends first. A walking statue's
+  footfalls come from the same distance clock its walk clip uses (a step each 0.8 s of clip, never a catch-up burst),
+  placed under the planted foot on the rendered body yaw, with a small nearby shake. Impacts shake the camera at most
+  1.25 degrees for at most 12 ticks, a second impact can strengthen but never extend it, and 4 quiet ticks part two;
+  kicks are capped at 3 / 2 degrees. `cameraShake` off or reduced motion turns all of it off. Chat, the inventory or
+  the K menu never silence the scene; a pause freezes its clock (nothing replays after). Client settings
+  (`awaken-ritual-audio-client.toml`): `effects` 1.0, `ambience` 1.0, `impactMotion` 0.7.
 
 - Ritual audio revision (2026-10-28): physical stone, pressure, arc, wind and bell layers use archived CC0 recordings
   with hashes, source pages and repeatable processing in `tools/art/sources/ritual/` and `ritual_recordings.py`.

@@ -28,11 +28,11 @@ final class RitualCamera {
     }
 
     static boolean shakeOn() {
-        if (dev.awaken.core.api.FirstPerson.reducedMotion.getAsBoolean()) return false;
+        boolean reduced = dev.awaken.core.api.FirstPerson.reducedMotion.getAsBoolean();
         try {
-            return dev.awaken.story.RitualAudioRules.motionEnabled(AwakenConfig.Client.CAMERA_SHAKE.get(), false);
+            return dev.awaken.story.RitualAudioRules.motionEnabled(AwakenConfig.Client.CAMERA_SHAKE.get(), reduced);
         } catch (RuntimeException e) {
-            return true;
+            return !reduced;
         }
     }
 

@@ -281,8 +281,9 @@ public final class RitualClient {
             if (beat != StoryPayloads.RitualScene.NONE) reset();
             return;
         }
-        if (sceneLevel != null && sceneLevel != mc.level) { reset(); return; }
-        if (mc.isPaused()) { RitualAudio.suspend(); return; }
+        // A level change (the tear's way home) leaves the scene's held toasts, Lens and words alone: only the sound is
+        // the old level's, and RitualAudio drops it itself. Cues from before the next scene packet are ignored (onCue).
+        if (mc.isPaused()) return; // the scene clock (and every queued whoosh, toll and heartbeat) waits with the server
         ticks++;
         RitualAudio.tick();
         if (DEBUG && inScene() && ticks % 40 == 0) {

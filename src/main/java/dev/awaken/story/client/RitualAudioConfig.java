@@ -13,7 +13,11 @@ final class RitualAudioConfig {
     private static final ModConfigSpec.DoubleValue IMPACTS = B.comment("Ritual impact camera strength; cameraShake off or reduced motion disables it.").defineInRange("impactMotion", 0.7, 0.0, 1.0);
     private static final ModConfigSpec SPEC = B.build();
     static void init() {
-        ModLoadingContext.get().getActiveContainer().registerConfig(ModConfig.Type.CLIENT, SPEC, Awaken.MODID + "-ritual-audio-client.toml");
+        try {
+            ModLoadingContext.get().getActiveContainer().registerConfig(ModConfig.Type.CLIENT, SPEC, Awaken.MODID + "-ritual-audio-client.toml");
+        } catch (RuntimeException e) {
+            Awaken.LOG.warn("Ritual audio client settings could not be registered; the defaults apply", e);
+        }
     }
     private static float value(ModConfigSpec.DoubleValue v, float fallback) {
         try { return v.get().floatValue(); } catch (RuntimeException ex) { return fallback; }

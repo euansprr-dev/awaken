@@ -29,7 +29,7 @@ final class RitualAudio {
     private static long readingUntil, nextHeart, voidToll;
     private static int scene = StoryPayloads.RitualScene.NONE;
     private static boolean suspended;
-    private static Bed bed;
+    private static Bed bed, fading;
 
     private static final class Step {
         int id = -1;
@@ -43,7 +43,8 @@ final class RitualAudio {
 
     private static boolean playable() {
         var mc = Minecraft.getInstance();
-        return level != null && mc.level == level && mc.player != null && mc.gui.screen() == null && !mc.isPaused();
+        // Chat, the inventory or the K menu never silence the hall; a pause freezes the scene clock and the engine holds the voices.
+        return level != null && mc.level == level && mc.player != null;
     }
 
     static void scene(int before, int after) {
@@ -76,14 +77,15 @@ final class RitualAudio {
             voices[i] = null;
         }
         if (bed != null) manager.stop(bed);
-        bed = null;
+        if (fading != null) manager.stop(fading);
+        bed = fading = null;
         budget.clear();
         nextSound.clear();
         for (Step step : steps) { step.id = -1; step.clock.clear(); }
         for (Pending p : swings) p.id = -1;
     }
 
-    /** Menus/pause discard sounds and queued attacks; closing them never replays missed beats. */
+    /** Leaving the scene's level discards sounds and queued attacks; coming back never replays missed beats. */
     static void suspend() {
         if (!suspended) stopAll();
         suspended = true;
@@ -98,6 +100,12 @@ final class RitualAudio {
         boolean hall = scene >= RitualClient.WAITING && scene < RitualClient.END;
         boolean dark = scene == StoryPayloads.RitualScene.VOID;
         if (hall || dark) {
+            if (bed != null && bed.dark != dark) { // the hall's air never carries into the black: it fades under the new bed
+                if (fading != null) Minecraft.getInstance().getSoundManager().stop(fading);
+                fading = bed;
+                fading.end();
+                bed = null;
+            }
             if (bed == null || bed.isStopped()) {
                 bed = new Bed(dark);
                 Minecraft.getInstance().getSoundManager().play(bed);
@@ -221,6 +229,7 @@ final class RitualAudio {
         for (int i = 0; i < voices.length; i++) if (voices[i] != null && RitualClient.ticks - voices[i].born > 2
                 && !manager.isActive(voices[i])) voices[i] = null;
         if (bed != null && bed.isStopped()) bed = null;
+        if (fading != null && fading.isStopped()) fading = null;
     }
     private static void stop(SoundEvent event) {
         for (int i = 0; i < voices.length; i++) if (voices[i] != null && voices[i].event == event) {
