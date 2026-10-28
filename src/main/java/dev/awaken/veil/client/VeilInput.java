@@ -43,6 +43,16 @@ final class VeilInput {
         if (Minecraft.getInstance().getConnection() != null) ClientPacketDistributor.sendToServer(p);
     }
 
+    static void nextLine(String topic) {
+        if (!topic.startsWith("npc_dialogue/veil/") || !VeilClientState.spirit()) return;
+        String[] bits = topic.substring("npc_dialogue/veil/".length()).split("/");
+        if (bits.length != 2) return;
+        try {
+            int entity = Integer.parseInt(bits[0]), heard = Integer.parseInt(bits[1]);
+            if (heard > 0) send(new VeilPayloads.NextLine(entity, heard));
+        } catch (NumberFormatException ignored) { /* a malformed topic cannot request a line */ }
+    }
+
     static void preTick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
@@ -86,6 +96,17 @@ final class VeilInput {
         for (KeyMapping k : mc.options.keyHotbarSlots) while (k.consumeClick()) { /* no spectator teleports */ }
         if (mc.gui.screen() != null) return;
         boolean possessing = VeilClientState.possessing();
+        if (use && !possessing) {
+            if (dev.awaken.core.api.Dialogue.use(true)) use = false;
+            else {
+                Entity speaker = pick(mc, 7, en -> en instanceof VeilSpirit);
+                if (speaker != null) {
+                    send(new VeilPayloads.Action(VeilPayloads.Action.TALK, speaker.getId(), BlockPos.ZERO));
+                    dev.awaken.core.api.Dialogue.capture();
+                    use = false;
+                }
+            }
+        }
         while (AwakenKeys.FOCUS.consumeClick()) {
             Entity e = pick(mc, 7, en -> en instanceof VeilSpirit);
             if (e != null) send(new VeilPayloads.Action(VeilPayloads.Action.TALK, e.getId(), BlockPos.ZERO));

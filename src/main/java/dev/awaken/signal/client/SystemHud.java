@@ -53,7 +53,10 @@ public final class SystemHud {
 
         Story(SignalWindow w) {
             this.w = w;
-            this.pager = new StoryPager(w.title().getString(), w.body().map(Component::getString).orElse(""));
+            this.pager = w.dialogue()
+                    ? new StoryPager("", w.title().getString() + w.body().map(b -> ": " + b.getString()).orElse("")
+                            + w.footer().map(f -> " " + f.getString()).orElse(""))
+                    : new StoryPager(w.title().getString(), w.body().map(Component::getString).orElse(""));
         }
     }
 
@@ -362,6 +365,27 @@ public final class SystemHud {
     /** Whether a story line is on screen or waiting to be said. */
     static boolean speaking() {
         return story != null || !STORIES.isEmpty();
+    }
+
+    static boolean dialogueActive() {
+        return story != null && story.w.dialogue()
+                || story == null && !STORIES.isEmpty() && STORIES.peekFirst().dialogue()
+                || DECK.current() != null && DECK.current().window().dialogue();
+    }
+
+    static void advanceDialogue() {
+        if (story == null) { tickStory(Minecraft.getInstance()); return; }
+        if (!story.w.dialogue() || story.w.action().isPresent()) return;
+        if (!story.pager.done()) {
+            nextChunk(Minecraft.getInstance());
+            story.first = false;
+            story.closingAt = -1;
+        } else {
+            String topic = story.w.topic();
+            story = null;
+            dev.awaken.core.api.Dialogue.finished(topic);
+            tickStory(Minecraft.getInstance());
+        }
     }
 
     private static void tickStory(Minecraft mc) {

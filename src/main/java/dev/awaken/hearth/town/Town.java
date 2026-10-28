@@ -335,7 +335,7 @@ public final class Town {
         String line = d.line(rank);
         if (!d.chatter().isEmpty() && sp.getRandom().nextInt(3) == 0) line = d.chatter().get(sp.getRandom().nextInt(d.chatter().size()));
         if (!mine) {
-            Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(Townsfolk.displayName(id)))
+            Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(Townsfolk.displayName(id))).dialogue()
                     .body(Component.literal("“" + line + "” They're busy looking after someone else's Hearth.")).ttl(20 * 6).build());
             return;
         }
@@ -345,7 +345,7 @@ public final class Town {
             case "mira" -> mira(sp, level, d, line);
             case "teodor" -> teodor(sp, level, d, line);
             case "sun" -> sun(sp, level, d, line);
-            default -> Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(Townsfolk.displayName(id)))
+            default -> Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(Townsfolk.displayName(id))).dialogue()
                     .body(Component.literal("“" + line + "”")).ttl(20 * 8).build());
         }
     }
@@ -360,7 +360,7 @@ public final class Town {
             Upgrades.offerTemper(sp, level, where, InteractionHand.MAIN_HAND, "oren");
             return;
         }
-        Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(Townsfolk.displayName("oren_blacksmith")))
+        Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(Townsfolk.displayName("oren_blacksmith"))).dialogue()
                 .body(Component.literal("“" + line + "”"))
                 .footer(Component.literal("Hold a weapon or armour piece and talk to him to temper it")).ttl(20 * 8).build());
     }
@@ -368,7 +368,7 @@ public final class Town {
     private static void mira(ServerPlayer sp, ServerLevel level, Townsfolk.Def d, String line) {
         HearthPlayer hp = HearthService.player(sp);
         long today = PlayDays.current(level.getServer());
-        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name() + " the " + d.role())).body(Component.literal("“" + line + "”"));
+        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name() + " the " + d.role())).dialogue().body(Component.literal("“" + line + "”"));
         // a Lookout at home: Mira hears one more a play-day from up there
         boolean second = hp.rumourDay == today && hp.rumourDay2 != today
                 && HearthService.homeOf(sp).map(h -> h.hasRoom(dev.awaken.hearth.room.RoomType.LOOKOUT)).orElse(false);
@@ -394,7 +394,7 @@ public final class Town {
             identify(sp, held);
             return;
         }
-        Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name() + " the " + d.role()))
+        Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name() + " the " + d.role())).dialogue()
                 .body(Component.literal("“" + line + "”"))
                 .choice(Offers.offer(sp, "codex", 20 * 30, Town::readCodex), "Read my Codex aloud", "Not now")
                 .footer(Component.literal("Hold an item to have it identified")).ttl(20 * 30).build());
@@ -403,7 +403,7 @@ public final class Town {
     private static void sun(ServerPlayer sp, ServerLevel level, Townsfolk.Def d, String line) {
         Profile p = Progression.profile(sp);
         boolean fractured = p.fractureUntil() > level.getGameTime();
-        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name() + " the " + d.role())).body(Component.literal("“" + line + "”"));
+        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name() + " the " + d.role())).dialogue().body(Component.literal("“" + line + "”"));
         if (fractured) {
             w.row(Component.literal("Fracture"), Component.literal(((p.fractureUntil() - level.getGameTime()) / 1200 + 1) + " min left"));
             w.choice(Offers.offer(sp, "heal", 20 * 30, pl -> {

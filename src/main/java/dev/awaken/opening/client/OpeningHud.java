@@ -140,6 +140,17 @@ final class OpeningHud {
         }
     }
 
+    static boolean dialogueActive() {
+        return !LINES.isEmpty() && OpeningClient.ticks() < busyUntil;
+    }
+
+    static void advanceDialogue() {
+        if (!dialogueActive()) return;
+        LINES.clear();
+        busyUntil = OpeningClient.ticks();
+        pump();
+    }
+
     /** Something is on screen or waiting its turn. */
     static boolean busy() {
         return OpeningClient.ticks() < busyUntil || !QUEUE.isEmpty();

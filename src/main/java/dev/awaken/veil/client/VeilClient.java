@@ -38,6 +38,7 @@ public final class VeilClient {
     private static LoopSound drift;
 
     public static void init(IEventBus modBus) {
+        dev.awaken.core.api.Dialogue.onFinished(VeilInput::nextLine);
         modBus.addListener(VeilClient::onPayloads);
         modBus.addListener(VeilClient::onLayers);
         modBus.addListener(VeilClient::onRenderers);

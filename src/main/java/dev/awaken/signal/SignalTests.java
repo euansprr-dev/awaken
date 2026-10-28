@@ -393,6 +393,44 @@ final class SignalTests {
             h.succeed();
         });
 
+        AwakenTests.register("signal_dialogue_use_once", 20, h -> {
+            var press = new dev.awaken.core.api.Dialogue.Press();
+            var advance = dev.awaken.core.api.Dialogue.Press.Result.ADVANCE;
+            var consume = dev.awaken.core.api.Dialogue.Press.Result.CONSUME;
+            var pass = dev.awaken.core.api.Dialogue.Press.Result.PASS;
+            h.assertTrue(press.use(true, false) == pass, "first NPC interaction reaches the server");
+            press.capture();
+            h.assertTrue(press.use(true, false) == consume, "holding cannot resend while its reply is in flight");
+            press.release();
+            h.assertTrue(press.use(true, false) == consume, "a fast second click waits for the server reply instead of restarting");
+            h.assertTrue(press.use(false, true) == consume && press.use(true, true) == consume, "offhand and held reply do not skip its first line");
+            press.release();
+            StoryPager speech = new StoryPager("", "Hale: Take your time. Read the next line before taking the weapon.");
+            List<String> first = speech.next(80, StoryPager.MAX_LINES, SignalText::approxWidth);
+            int chunks = speech.chunksTaken();
+            h.assertTrue(press.use(true, true) == advance, "fresh press advances");
+            speech.next(80, StoryPager.MAX_LINES, SignalText::approxWidth);
+            h.assertTrue(speech.chunksTaken() == chunks + 1 && !first.isEmpty(), "exactly one subtitle chunk advances");
+            h.assertTrue(press.use(false, true) == consume && press.use(true, true) == consume, "neither second hand nor held repeats advance again");
+            h.assertTrue(press.use(true, false) == consume, "last line cannot fall through into item use or conversation restart");
+            press.release();
+            h.assertTrue(press.use(true, false) == pass, "a new click after the conversation can interact normally");
+            press.capture();
+            press.release();
+            for (int i = 0; i < 20; i++) press.tick();
+            h.assertTrue(press.use(true, false) == pass, "a speaker with no reply cannot leave use locked");
+            var choice = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Hale"))
+                    .dialogue().choice("signaltest:weapon", "Take it", "Wait").build();
+            var deck = new ChoiceDeck();
+            deck.offer(choice, 200);
+            h.assertTrue(choice.dialogue() && SignalWindow.Presentation.resolve(choice) == SignalWindow.Presentation.CHOICE
+                    && deck.pending().size() == 1, "NPC speech marking preserves the explicit choice");
+            var encoded = SignalWindow.CODEC.encodeStart(NbtOps.INSTANCE, choice).getOrThrow();
+            var decoded = SignalWindow.CODEC.parse(NbtOps.INSTANCE, encoded).getOrThrow();
+            h.assertTrue(decoded.dialogue() && decoded.action().equals(choice.action()), "dialogue/choice semantics survive network codec");
+            h.succeed();
+        });
+
         AwakenTests.register("signal_story_pager_keeps_every_word", 20, h -> {
             String body = "You just couldn't see them. Now the world has noticed you back: the motes in the grass, the lines over the ore, the thing watching from the trees.";
             StoryPager pager = new StoryPager("The gates were always there.", body);

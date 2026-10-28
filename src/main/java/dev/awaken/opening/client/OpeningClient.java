@@ -74,6 +74,10 @@ public final class OpeningClient {
 
     public static void init(IEventBus modBus) {
         OpeningConfig.register();
+        dev.awaken.core.api.Dialogue.register(100, new dev.awaken.core.api.Dialogue.Source() {
+            public boolean active() { return OpeningHud.dialogueActive(); }
+            public void advance() { OpeningHud.advanceDialogue(); }
+        });
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(OpeningPayloads.Scene.TYPE, (msg, ctx) -> onScene(msg));
             e.register(OpeningPayloads.Cue.TYPE, (msg, ctx) -> onCue(msg));

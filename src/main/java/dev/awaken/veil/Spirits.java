@@ -236,6 +236,15 @@ public final class Spirits {
 
     private static final Map<UUID, Conversation> CONV = new HashMap<>();
 
+    static void next(ServerPlayer sp, int entityId, int heard) {
+        Conversation c = CONV.get(sp.getUUID());
+        Projection.Spirit s = Projection.live(sp);
+        Entity e = sp.level().getEntity(entityId);
+        if (c == null || s == null || c.next() != heard || s.age - c.lastAge() > 600
+                || !(e instanceof VeilSpirit ghost) || !c.spiritId().equals(ghost.spiritId())) return;
+        talk(sp, entityId);
+    }
+
     /** Look at a spirit and press Focus: the next line of its story. */
     static void talk(ServerPlayer sp, int entityId) {
         Projection.Spirit s = Projection.live(sp);
@@ -265,7 +274,8 @@ public final class Spirits {
         CONV.put(sp.getUUID(), new Conversation(id, line + 1, s.age));
         Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(def.displayName()))
                 .body(Component.literal(def.lines().get(line)))
-                .footer(Component.literal((line + 1) + " / " + total + (line + 1 < total ? "   [G] go on" : "")))
+                .footer(Component.literal((line + 1) + " / " + total))
+                .dialogue().topic("npc_dialogue/veil/" + entityId + "/" + (line + 1 < total ? line + 1 : 0))
                 .ttl(20 * 12).priority(9).build()); // asked for: never folded into a combat toast
         sp.level().playSound(null, ghost.getX(), ghost.getEyeY(), ghost.getZ(), VeilContent.WHISPER.get(), SoundSource.NEUTRAL, 0.6F,
                 0.8F + 0.1F * def.factionIndex());
