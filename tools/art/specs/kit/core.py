@@ -53,7 +53,8 @@ class Move:
 
     def __init__(self, mid, cls, windup, active, recover, title="", hold=0, track=6.0, lock=None, advance=0.0, rise=0.0,
                  damage=1.0, knock=0.5, ability=None, origin=None, rng=(0.0, 4.0), kinds=(), signature=False, hit=(),
-                 stages=None, lag=None, plant=("l", "r"), disc=0.0, ground=None, bite=None, disc_at=None, edge=None):
+                 stages=None, lag=None, plant=("l", "r"), disc=0.0, ground=None, bite=None, disc_at=None, edge=None,
+                 through=None):
         self.id, self.cls, self.title = mid, cls, title
         self.windup, self.active, self.recover, self.hold = int(windup), int(active), int(recover), int(hold)
         self.track = track
@@ -72,6 +73,9 @@ class Move:
         # [(guard bones, [(bone, axis, most degrees)])]: what never goes into the ground, and what turns to keep it out
         # (the wrist first, then the arm); bite: the active key (0..1) where the first entry's guard meets the ground
         self.ground, self.bite = ground, bite
+        # the follow-through key, given whole: the library carries only arm bones on past contact, so a body without
+        # them (a bell on legs) writes its own or holds its contact pose through the first quarter of the recovery
+        self.through = through
         self.capsules = []
 
     def seconds(self, stage):
@@ -510,7 +514,7 @@ def stage_clips(rig, mv, rest=None):
         strike = [k for i, k in enumerate(strike) if i == 0 or _moved(strike[i - 1][1], k[1]) >= CARRY]
     keys += strike
     stuck = [b for b, _, _ in mv.ground[0][1]] if mv.ground and mv.bite is not None else ()
-    through = _through(end, peak, stuck) if mv.cls != "NONE" else end
+    through = mv.through if mv.through is not None else _through(end, peak, stuck) if mv.cls != "NONE" else end
     keys.append((W + A + THROUGH * R, through))
     # the recovery's own keys, none closer than 0.15 of the recovery after the follow-through (a big pose change in
     # two ticks would jerk); the next one keeps its order

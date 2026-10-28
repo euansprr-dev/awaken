@@ -1,0 +1,154 @@
+{
+ "schemaVersion": 1,
+ "id": "bell_warden",
+ "moves": "bell_warden",
+ "intro": {
+  "pose": "kneel",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "stab",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "stab_b"
+      ],
+      [
+       "stab_b",
+       "clapper"
+      ]
+     ]
+    },
+    {
+     "move": "clapper",
+     "weight": 3
+    },
+    {
+     "move": "toll",
+     "weight": 3
+    },
+    {
+     "move": "echo",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "rake",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "summon",
+   "pool": [
+    {
+     "move": "stab",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "stab_b"
+      ],
+      [
+       "stab_b",
+       "clapper"
+      ]
+     ]
+    },
+    {
+     "move": "clapper",
+     "weight": 2
+    },
+    {
+     "move": "toll",
+     "weight": 3
+    },
+    {
+     "move": "echo",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "rush",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "stab"
+      ]
+     ]
+    },
+    {
+     "move": "rake",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "summon",
+     "weight": 1
+    }
+   ]
+  },
+  {
+   "transition": "peal",
+   "pool": [
+    {
+     "move": "stab",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "stab_b",
+       "clapper"
+      ]
+     ]
+    },
+    {
+     "move": "clapper",
+     "weight": 2,
+     "then": [
+      [
+       "toll"
+      ]
+     ]
+    },
+    {
+     "move": "shatter",
+     "weight": 3
+    },
+    {
+     "move": "toll",
+     "weight": 2
+    },
+    {
+     "move": "rush",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "clapper"
+      ]
+     ]
+    },
+    {
+     "move": "rake",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "peal",
+     "weight": 2
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

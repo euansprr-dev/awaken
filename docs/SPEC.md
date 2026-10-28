@@ -9509,6 +9509,47 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     past 0.74 are dropped.
   - The Saint's hand and arm turns come from matrices. Of their two Euler forms, it writes the one nearest its rest, so
     keys never spin a bone the long way between them.
+- **The Bell Warden, the Bell That Walks** (body and motion, `kit/bosses/bell_warden.py`). "The bell above you is not
+  a bell." A great bronze bell, 2.75 blocks across the lip, its mouth hanging 1.8 blocks up on four long crab legs that
+  unfold from under the rim: up and out to knees above its shoulder (4.25 blocks), then down to points on the floor 3.5
+  blocks out on the diagonals, a wide stance you can walk into. Its crown still carries the crypt-stone yoke it hung from, with a broken
+  chain and a cut rope trailing from it (4.6 blocks to the top). The clapper hangs out of the mouth like a heavy tongue,
+  and inside the mouth, in the dark, a pale gold face watches you, its jaw dropping as it rings. 75 cubes (450 faces).
+  Values: old bronze from pale gold at the lip to dark at the waist, verdigris dripping off every ledge, an inscription
+  round its waist and a crack up its side lit ghost gold, the throat dark with a faint glow, the legs dark bronze with
+  green at the joints and polished points, the yoke and knee caps crypt stone. The hitbox stays 1.4 x 3.0 at scale 1.
+  - **It moves like a crab carrying a bell**: a trot, the front left with the back right, each pair lifting its points
+    high and reaching on as the other carries it, the planted points pulling back exactly as far as it travels (1.7
+    blocks a stride walking, 2.8 running). The bell rides low into each step and rolls toward the pair that holds it,
+    and the clapper swings fore and aft in its mouth. Every leg is solved to its point on the floor on every tick.
+  - **Its blows.** The stab rears a front leg high over its knee as the bell leans away, then stabs it down a block and
+    a half ahead and the bell's weight comes down onto it (3.1 blocks), the other front leg next. Clapper Strike rocks
+    back on its hind legs, the mouth lifting toward you and the tongue swinging far back inside it, holds, then pitches
+    forward hard and lashes the tongue out onto the floor two blocks ahead (5.1 with its shockwave). Toll Wave draws its
+    tongue and face up into the mouth and rises on its legs, holds, then slams its rim on the floor, the points sliding
+    out under its weight, and hums there a moment. Echo Bolts tips its mouth up at you so you can see the face, which
+    hums three times, the jaw dropping and a front point tapping with each. Whoever is behind it gets a back leg raked
+    across behind it, the face turned round to look back under the rim (4.0). The Statues Move rings itself: three great
+    swings side to side on braced legs, the clapper flung against each side of its mouth. Bell Rush crouches low and
+    scuttles at you rim first (8.9). Shattered Bronze crouches and shudders faster and faster, then throws itself up on
+    its points. The Grand Peal (the signature) rises on its points and swings itself ringing, wider each time, the rope
+    and chain flying, then slams its rim down. Its intro, once it has risen, is a single swing that rings it once.
+  - **Waiting and rising.** It waits sitting on its rim like any bell, its legs folded up its sides like a shut umbrella
+    (the intro's "kneel"); it rises by throwing them out, setting the points down far out round it and pushing itself up.
+  - **The death**: a shudder, the front left leg gives and it lurches down that way, the others give, and it drops onto
+    its rim with a last dull ring. It rattles round on its rim the way a dropped bell does, lower and lower, and comes to
+    rest with its legs flat out round it like a dead crab's. The face is shut inside.
+  - **Ground.** The points, the clapper's ball and the ends of the rope and chain stay out of the floor in every clip;
+    the clapper meets it on purpose in Clapper Strike.
+  - **Meter.** Worst kink outside a strike 4.5° (the rake); held 1-13%; dips 0-30%, and 52% in the strings that open
+    with the stab, whose blow swings through a smaller pose than its peak just after the first active tick.
+- **Kit changes with the Bell That Walks:**
+  - `kit/ik.py`: two-bone limbs set by where their ends go (`limb`, `rest_limb`), a bone laid along a direction
+    (`orient`: the clapper and the rope hang plumb whatever the bell does), turns written the shortest way, and `retrack`,
+    which rewrites a baked clip tick by tick. The Bell's standing legs are retracked after staging, so its points never
+    slide in a follow-through or a settle.
+  - `Move(through=...)`: a move can give its follow-through key whole. The library carries only arm bones on past
+    contact, so a body without them held its contact pose still for the first quarter of every recovery.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
