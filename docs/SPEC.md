@@ -9742,6 +9742,42 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   - **Meter.** Worst kink outside a strike 4.8° (the Choir's hands parting); held at most 11% on every move; dips
     30-38%.
 
+- **The Mirror Knight, the Masked Duelist** (body and motion, `kit/bosses/mirror_knight.py`). "Footsteps that match
+  yours." A lean, tall swordsman of the old court, side-on in his guard: a blue twill doublet with silver frogging, a
+  leather baldric, slashed sleeves showing lace, a falling lace collar, cloth breeches and turned-down bucket boots, buff
+  gloves; a wide felt hat cocked up on one side with a great white plume sweeping back, and his hair tied in a queue with
+  a blue ribbon. Where his face should be there is a mirror: a blank, bright glass mask with a silver rim, one streak of
+  light across it and a hairline crack, two black slits for eyes with a violet glow behind. Mirror panes are set into
+  his thigh guards and skirts. A swept-hilt rapier in his right hand, a shell-guard dagger in his left, the scabbard
+  hanging from his belt. Blue, silver, lace, felt and glass. 3.0 blocks to his crown, 3.4 to the hat's; 85 cubes (510
+  faces) on the biped plan. The hitbox is 1.1 x 3.4 (size 0.6 x 1.8 at scale 1.9). He stands like a fencer, light and
+  turned, where the Pedlar is a showman and the Pilgrim a crushed weight.
+  - **The rest pose is his guard.** Hips turned 40° off you, the front foot pointing at you and the back foot across,
+    the rapier's point level at your eyes and the dagger held low across his body. The legs' rest is the planter's own
+    solution, so every planted key starts where the rest does.
+  - **The idle.** A light bounce in the knees, the point drawing slow circles at your eyes, a tilt of the head to look
+    you over and now and then a sharp beat of the blade. **The walk is a fencer's advance**: the front foot reaches and
+    lands heel first, the back foot follows low, the body glides level and side-on with the point on you. Running, he
+    squares his hips and carries the blade out ahead, the dagger arm pumping.
+  - **His blows.** The Quick Thrust draws the hand back a little and shoots the arm straight out ahead of a step, the
+    back leg straightening. The Cutover flicks the point up and over to his right shoulder and cuts down across to his
+    left hip, his body turning through behind it. The Feint rises with the hilt over his head and the point hanging
+    down at you, holds it (you dodge too early), then drops into a long low thrust under your guard. The Mirror Lunge
+    sinks onto his back leg with the blade level by his face, runs at you with the point arriving first, and lands in
+    a long lunge. The Perfect Parry crosses both blades in a high bind before his mask, and each blow that lands on it
+    jolts them up; the Riposte after it drops the blade to his left hip and whips it up across to his right shoulder,
+    the back of the hand leading. Whoever is behind him gets the Blind Thrust: he looks back over his left shoulder
+    and thrusts straight back under his own raised arm. The Mirror Split squares him up with both arms flung wide, the
+    blades level out like a mirror's wings; he turns his mask left and right and stamps, and his reflections step out of
+    him. Through the Glass draws him in small, blade upright before the mask, and slips him sideways as through a pane.
+    Shatter (the signature) takes the rapier in both hands, raises it point-down over his hat as he rises tall looking
+    up at it, then drops him onto his left knee and drives it into the floor, and the palace breaks. His intro: heels
+    together, he salutes with the hilt to his mask, sweeps the blade down and out, and steps into his guard with a
+    stamp.
+  - **The death.** He staggers back, his knee goes, he leans on the blade like a cane and it slides; he tips over onto
+    his side, the hat rolls off, and last of all the mask falls from his face (4.4 s).
+  - **Meter.** Worst kink outside a strike 5.0° (the Split's hands); held at most 11% on every move; dips at most 34%.
+
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

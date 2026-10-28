@@ -248,7 +248,7 @@ final class GateBestiary {
                 .ab(a(GUARD, "Riposte"), a(CHARGE, "Mirror Lunge")).build());
         out.add(m("the_unblinking", "The Unblinking", Theme.MIRROR, Tier.WARDEN, Model.ENDERMAN, "Never blinks: teleports when you look away, gaze like a blade").hp(34).dmg(6.5).spd(0.3).scale(1.2F).tint(0xE0E8F8).traits(HUNTER)
                 .ab(a(BLINK, "Never Blinks"), a(BEAM, "Silver Gaze").bolt(BoltKind.GLASS), a(DECOY, "Reflections").n(2)).build());
-        out.add(m("mirror_knight", "The Mirror Knight", Theme.MIRROR, Tier.LORD, Model.MIMIC, "Wears your face, parries perfectly, splits into reflections").hp(30).dmg(5).spd(0.28).scale(1.4F).hold(Items.DIAMOND_SWORD).wear(EquipmentSlot.CHEST, Items.DIAMOND_CHESTPLATE).wear(EquipmentSlot.HEAD, Items.DIAMOND_HELMET).traits(MIMIC, REFLECT).bar(BossBarColor.WHITE).arena(22)
+        out.add(m("mirror_knight", "The Mirror Knight", Theme.MIRROR, Tier.LORD, Model.MIMIC, "Wears your face, parries perfectly, splits into reflections").hp(30).dmg(5).spd(0.28).scale(1.9F).size(0.6F, 1.8F).hold(Items.DIAMOND_SWORD).wear(EquipmentSlot.CHEST, Items.DIAMOND_CHESTPLATE).wear(EquipmentSlot.HEAD, Items.DIAMOND_HELMET).traits(MIMIC, REFLECT).bar(BossBarColor.WHITE).arena(22)
                 .intro("Footsteps that match yours.")
                 .phase(1.0F, "The Mirror Knight raises your blade.", a(GUARD, "Perfect Parry"), a(CHARGE, "Mirror Lunge"))
                 .phase(0.66F, "It splits.", a(DECOY, "Mirror Split").n(3), a(BLINK, "Through the Glass"), a(CHARGE, "Mirror Lunge"))

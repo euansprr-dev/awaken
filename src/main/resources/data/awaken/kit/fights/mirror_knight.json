@@ -1,0 +1,174 @@
+{
+ "schemaVersion": 1,
+ "id": "mirror_knight",
+ "moves": "mirror_knight",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "thrust",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "feint",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "parry",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "riposte"
+      ]
+     ]
+    },
+    {
+     "move": "lunge",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "thrust"
+      ]
+     ]
+    },
+    {
+     "move": "back",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "split",
+   "pool": [
+    {
+     "move": "thrust",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "cut"
+      ],
+      [
+       "riposte"
+      ]
+     ]
+    },
+    {
+     "move": "feint",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "parry",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "riposte"
+      ]
+     ]
+    },
+    {
+     "move": "glass",
+     "weight": 2
+    },
+    {
+     "move": "split",
+     "weight": 1
+    },
+    {
+     "move": "lunge",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "thrust"
+      ]
+     ]
+    },
+    {
+     "move": "back",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "shatter",
+   "pool": [
+    {
+     "move": "shatter",
+     "weight": 1
+    },
+    {
+     "move": "split",
+     "weight": 1
+    },
+    {
+     "move": "glass",
+     "weight": 2
+    },
+    {
+     "move": "thrust",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "cut",
+       "riposte"
+      ]
+     ]
+    },
+    {
+     "move": "feint",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "parry",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "riposte"
+      ]
+     ]
+    },
+    {
+     "move": "lunge",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "thrust",
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "back",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.25
+ }
+}
