@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "hue=0": {
+      "model": "awaken:block/crypt_rose_glass_0"
+    },
+    "hue=1": {
+      "model": "awaken:block/crypt_rose_glass_1"
+    },
+    "hue=2": {
+      "model": "awaken:block/crypt_rose_glass_2"
+    },
+    "hue=3": {
+      "model": "awaken:block/crypt_rose_glass_3"
+    },
+    "hue=4": {
+      "model": "awaken:block/crypt_rose_glass_4"
+    }
+  }
+}

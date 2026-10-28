@@ -123,5 +123,19 @@
   "subtitles.awaken.gate.rig.press": "A press slams down",
   "subtitles.awaken.gate.rig.lift": "A press lifts",
   "subtitles.awaken.gate.rig.ring": "Checkpoint",
-  "subtitles.awaken.gate.rig.medal": "Course run"
+  "subtitles.awaken.gate.rig.medal": "Course run",
+  "block.awaken.crypt_limestone": "Crypt Limestone",
+  "block.awaken.crypt_limestone_worn": "Worn Limestone",
+  "block.awaken.crypt_limestone_crumbling": "Crumbling Limestone",
+  "block.awaken.crypt_tracery": "Carved Tracery",
+  "block.awaken.crypt_flagstone": "Worn Flagstones",
+  "block.awaken.crypt_flagstone_wet": "Wet Flagstones",
+  "block.awaken.crypt_patina": "Patina Bronze",
+  "block.awaken.crypt_candles": "Candle Cluster",
+  "block.awaken.crypt_moon_glass": "Moon Glass",
+  "block.awaken.crypt_rose_glass": "Rose Glass",
+  "block.awaken.crypt_niche": "Ossuary Niche",
+  "block.awaken.crypt_vestment": "Drowned Vestment",
+  "block.awaken.crypt_bell_rope": "Bell Rope",
+  "block.awaken.crypt_lily_candle": "Lily Candle"
 }

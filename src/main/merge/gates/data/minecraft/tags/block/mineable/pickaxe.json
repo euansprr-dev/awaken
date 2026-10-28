@@ -16,6 +16,14 @@
     "awaken:gate_void_glass",
     "awaken:gate_signal_lamp",
     "awaken:gate_mirror_cracked",
-    "awaken:gate_well_rim"
+    "awaken:gate_well_rim",
+    "awaken:crypt_limestone",
+    "awaken:crypt_limestone_worn",
+    "awaken:crypt_limestone_crumbling",
+    "awaken:crypt_tracery",
+    "awaken:crypt_flagstone",
+    "awaken:crypt_flagstone_wet",
+    "awaken:crypt_patina",
+    "awaken:crypt_niche"
   ]
 }

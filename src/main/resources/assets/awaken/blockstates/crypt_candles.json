@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "candles=1,lit=false": {
+      "model": "awaken:block/crypt_candles_1"
+    },
+    "candles=1,lit=true": {
+      "model": "awaken:block/crypt_candles_1_lit"
+    },
+    "candles=2,lit=false": {
+      "model": "awaken:block/crypt_candles_2"
+    },
+    "candles=2,lit=true": {
+      "model": "awaken:block/crypt_candles_2_lit"
+    },
+    "candles=3,lit=false": {
+      "model": "awaken:block/crypt_candles_3"
+    },
+    "candles=3,lit=true": {
+      "model": "awaken:block/crypt_candles_3_lit"
+    },
+    "candles=4,lit=false": {
+      "model": "awaken:block/crypt_candles_4"
+    },
+    "candles=4,lit=true": {
+      "model": "awaken:block/crypt_candles_4_lit"
+    },
+    "candles=5,lit=false": {
+      "model": "awaken:block/crypt_candles_5"
+    },
+    "candles=5,lit=true": {
+      "model": "awaken:block/crypt_candles_5_lit"
+    }
+  }
+}

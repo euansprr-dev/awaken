@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/crypt_vestment"
+    },
+    "facing=east": {
+      "model": "awaken:block/crypt_vestment",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/crypt_vestment",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/crypt_vestment",
+      "y": 270
+    }
+  }
+}

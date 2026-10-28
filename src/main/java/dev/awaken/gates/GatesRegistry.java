@@ -192,6 +192,41 @@ public final class GatesRegistry {
             RIME_BRICK, FROST_WINDOW, MIRROR, LAB_PANEL, LAB_RACK, DREAM_PAPER, CLOUD, SKY, VOID_GLASS, SIGNAL_LAMP, MIRROR_CRACKED, WELL_RIM);
     public static final List<DeferredItem<BlockItem>> INTERIOR_ITEMS = INTERIOR_BLOCKS.stream().map(ITEMS::registerSimpleBlockItem).toList();
 
+    // ---- gate worlds' blocks (SPEC §38.6; textures tools/art/specs/gate_worlds_*.py) ----------------------------------
+
+    /** Bell Crypt: limestone in three states of wear, carved tracery, worn and wet flagstones. */
+    public static final DeferredBlock<Block> CRYPT_LIMESTONE = BLOCKS.registerSimpleBlock("crypt_limestone", stoneLike(MapColor.STONE, SoundType.STONE, 0));
+    public static final DeferredBlock<Block> CRYPT_LIMESTONE_WORN = BLOCKS.registerSimpleBlock("crypt_limestone_worn", stoneLike(MapColor.STONE, SoundType.STONE, 0));
+    public static final DeferredBlock<Block> CRYPT_LIMESTONE_CRUMBLING = BLOCKS.registerSimpleBlock("crypt_limestone_crumbling", stoneLike(MapColor.STONE, SoundType.STONE, 0));
+    public static final DeferredBlock<Block> CRYPT_TRACERY = BLOCKS.registerSimpleBlock("crypt_tracery", stoneLike(MapColor.STONE, SoundType.STONE, 0));
+    public static final DeferredBlock<Block> CRYPT_FLAGSTONE = BLOCKS.registerSimpleBlock("crypt_flagstone", stoneLike(MapColor.COLOR_GRAY, SoundType.STONE, 0));
+    public static final DeferredBlock<Block> CRYPT_FLAGSTONE_WET = BLOCKS.registerSimpleBlock("crypt_flagstone_wet", stoneLike(MapColor.COLOR_GRAY, SoundType.MUD_BRICKS, 0));
+    /** Patina bronze: the great bells. Strike it and the Belfry's rule answers. */
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Bronze> CRYPT_PATINA = BLOCKS.registerBlock("crypt_patina",
+            dev.awaken.gates.block.WorldBlocks.Bronze::new, stoneLike(MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0));
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Candles> CRYPT_CANDLES = BLOCKS.registerBlock("crypt_candles",
+            dev.awaken.gates.block.WorldBlocks.Candles::new,
+            p -> soft(MapColor.SAND, SoundType.CANDLE, 0.1F, 0).apply(p).noOcclusion().lightLevel(dev.awaken.gates.block.WorldBlocks.Candles::light));
+    /** Moonlight that isn't there: the lancets' glass. */
+    public static final DeferredBlock<net.minecraft.world.level.block.TransparentBlock> CRYPT_MOON_GLASS = BLOCKS.registerBlock("crypt_moon_glass",
+            net.minecraft.world.level.block.TransparentBlock::new, glassy(MapColor.COLOR_LIGHT_BLUE, SoundType.GLASS, 10));
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.RoseGlass> CRYPT_ROSE_GLASS = BLOCKS.registerBlock("crypt_rose_glass",
+            dev.awaken.gates.block.WorldBlocks.RoseGlass::new, glassy(MapColor.COLOR_PURPLE, SoundType.GLASS, 6));
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Facing> CRYPT_NICHE = BLOCKS.registerBlock("crypt_niche",
+            p -> new dev.awaken.gates.block.WorldBlocks.Facing(p, false), stoneLike(MapColor.SAND, SoundType.BONE_BLOCK, 5));
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Facing> CRYPT_VESTMENT = BLOCKS.registerBlock("crypt_vestment",
+            p -> new dev.awaken.gates.block.WorldBlocks.Facing(p, true), p -> soft(MapColor.COLOR_CYAN, SoundType.WOOL, 0.2F, 0).apply(p).noOcclusion().noCollision());
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Thin> CRYPT_BELL_ROPE = BLOCKS.registerBlock("crypt_bell_rope",
+            p -> new dev.awaken.gates.block.WorldBlocks.Thin(p, Block.box(6, 0, 6, 10, 16, 10)),
+            p -> soft(MapColor.COLOR_BROWN, SoundType.WOOL, 0.3F, 0).apply(p).noOcclusion());
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Thin> CRYPT_LILY_CANDLE = BLOCKS.registerBlock("crypt_lily_candle",
+            p -> new dev.awaken.gates.block.WorldBlocks.Thin(p, Block.box(1, 0, 1, 15, 1.5, 15)),
+            p -> soft(MapColor.PLANT, SoundType.LILY_PAD, 0.1F, 6).apply(p).noOcclusion());
+    public static final List<DeferredBlock<? extends Block>> WORLD_BLOCKS = List.of(CRYPT_LIMESTONE, CRYPT_LIMESTONE_WORN, CRYPT_LIMESTONE_CRUMBLING,
+            CRYPT_TRACERY, CRYPT_FLAGSTONE, CRYPT_FLAGSTONE_WET, CRYPT_PATINA, CRYPT_CANDLES, CRYPT_MOON_GLASS, CRYPT_ROSE_GLASS, CRYPT_NICHE,
+            CRYPT_VESTMENT, CRYPT_BELL_ROPE, CRYPT_LILY_CANDLE);
+    public static final List<DeferredItem<BlockItem>> WORLD_ITEMS = WORLD_BLOCKS.stream().map(ITEMS::registerSimpleBlockItem).toList();
+
     // ---- the Gate Rig's Mirror Hall (SPEC §17): the turning mirror, the lens, the seal --------------------------------
 
     public static final DeferredBlock<RigBlocks.Mirror> RIG_MIRROR = BLOCKS.registerBlock("gate_rig_mirror",
@@ -274,6 +309,12 @@ public final class GatesRegistry {
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_LAB = sound("gate.ambient.lab");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_GLASS = sound("gate.ambient.glass");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_WIND = sound("gate.ambient.wind");
+    // gate worlds (SPEC §38.6): each world's sound bed, its additions, and the bells
+    public static final List<String> WORLD_SOUNDS = List.of("belfry", "ossuary", "shaft", "field", "rest", "drip", "toll", "storm",
+            "hum", "strike", "great_bell", "ringer");
+    static {
+        for (String w : WORLD_SOUNDS) sound("gate.world." + w);
+    }
 
     // the Gate Rig (tools/art/specs/audio_rig.py): the collapse, the mirrors and the light, the wells, the cave-in
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_CRACK = sound("gate.rig.crack");
@@ -374,6 +415,7 @@ public final class GatesRegistry {
         for (var item : List.of(FRAME_ITEM, FRAME_CRACKED_ITEM, SHRINE_ITEM, SEAL_ITEM, CACHE_ITEM, BARS_ITEM, RUNE_ITEM, ENTRANCE_ITEM,
                 LANTERN_ITEM, UPDRAFT_ITEM)) e.accept(item.get());
         for (var item : INTERIOR_ITEMS) e.accept(item.get());
+        for (var item : WORLD_ITEMS) e.accept(item.get());
         for (var item : RIG_ITEMS) e.accept(item.get());
     }
 }

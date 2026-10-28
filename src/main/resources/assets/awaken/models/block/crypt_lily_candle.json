@@ -1,0 +1,142 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/crypt_lily_pad",
+    "pad": "awaken:block/crypt_lily_pad",
+    "wax": "awaken:block/crypt_wax",
+    "flame": "awaken:block/crypt_flame"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0.25,
+        0
+      ],
+      "to": [
+        16,
+        0.25,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#pad"
+        },
+        "down": {
+          "texture": "#pad"
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        0.25,
+        7
+      ],
+      "to": [
+        9,
+        5,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            11,
+            2,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            11,
+            2,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            11,
+            2,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            11,
+            2,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            11,
+            2,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            11,
+            2,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        8,
+        5,
+        7
+      ],
+      "to": [
+        8,
+        8,
+        9
+      ],
+      "faces": {
+        "west": {
+          "texture": "#flame"
+        },
+        "east": {
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        7,
+        5,
+        8
+      ],
+      "to": [
+        9,
+        8,
+        8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#flame"
+        },
+        "south": {
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}
