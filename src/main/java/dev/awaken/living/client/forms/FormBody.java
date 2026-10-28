@@ -48,6 +48,10 @@ final class FormBody implements SubmitNodeCollector.CustomGeometryRenderer {
     int fadeClip = -1;
     float fadeTime, fadeAt = -1;
 
+    /** The turn into the killing blow (degrees), chosen once as the fall starts. */
+    float fallTurn;
+    boolean fallChosen;
+
     /** The six core parts' pose for the armour (x, y, z, xRot, yRot, zRot, xScale, yScale, zScale each), filled when the gear is drawn. */
     final float[] armour = new float[6 * 9];
 
