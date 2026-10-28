@@ -268,7 +268,7 @@ public final class QuestEngine {
     public static void sayLines(ServerPlayer p, List<String> lines) {
         for (String l : lines) {
             Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(l))
-                    .presentation(SignalWindow.Presentation.STORY).ttl(20 * 5).build());
+                    .dialogue().ttl(20 * 5).build());
         }
     }
 

@@ -36,6 +36,11 @@ public final class SignalClient {
         // the player's own clicks and keys: what the server says right after answers them (SPEC §26.2)
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered.class, e -> Herald.acted());
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ScreenEvent.MouseButtonPressed.Post.class, e -> Herald.acted());
+        dev.awaken.core.api.Dialogue.register(50, new dev.awaken.core.api.Dialogue.Source() {
+            // the System's speech takes the use key only inside a conversation the player started (Dialogue.talking)
+            public boolean active() { return dev.awaken.core.api.Dialogue.talking() && (classic() ? ClassicHud.dialogueActive() : SystemHud.dialogueActive()); }
+            public void advance() { if (classic()) ClassicHud.advanceDialogue(); else SystemHud.advanceDialogue(); }
+        });
         SignalSections.register();
         Journal.register();
         // the Atlas asks for a destination through core.api (SPEC §16.8); the server answers with the one now set

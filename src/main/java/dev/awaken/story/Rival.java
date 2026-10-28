@@ -57,7 +57,7 @@ final class Rival {
                 continue;
             }
             if ((now - sc.startAt()) >= i * 20L * 6) {
-                Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Vael"))
+                Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Vael")).dialogue()
                         .body(Component.literal(sc.lines().get(i))).ttl(20 * 6).priority(6).build());
                 sc.next()[0] = i + 1;
             }
