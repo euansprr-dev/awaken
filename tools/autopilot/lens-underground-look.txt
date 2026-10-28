@@ -85,9 +85,10 @@ look 90 55
 wait 30
 shot ug_tool
 # ---- 4. the surface at noon, the same hands
-cmd tp @s 640 200 640
+# one fixed spot (spreadplayers is random), so before and after shots compare pixel for pixel
+cmd tp @s 640.5 200 640.5
 wait 160
-cmd spreadplayers 640 640 0 24 false @s
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
 wait 160
 look 90 15
 wait 40
