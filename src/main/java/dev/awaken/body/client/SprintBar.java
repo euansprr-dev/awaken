@@ -23,6 +23,13 @@ final class SprintBar {
     private static int readyAt = -100;
     private static boolean charging;
 
+    /** The movement clock starts over on logout; its HUD must forget the previous session too. */
+    static void reset() {
+        shown = 0;
+        readyAt = -100;
+        charging = false;
+    }
+
     static void render(GuiGraphicsExtractor g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gui.hud.isHidden() || mc.player.isSpectator()) return;
@@ -43,7 +50,8 @@ final class SprintBar {
         // the moment it's ready again: one flash and a tick of light, then it goes
         if (charging && !busy) readyAt = now;
         charging = busy;
-        boolean flashing = now - readyAt < 14;
+        int readyAge = now - readyAt;
+        boolean flashing = readyAge >= 0 && readyAge < 14;
         shown += ((busy || flashing ? 1F : 0F) - shown) * (busy ? 0.25F : 0.08F);
         if (shown < 0.02F) return;
         int cx = g.guiWidth() / 2, half = Math.round(91 * fill), y = g.guiHeight() - 24;
@@ -54,7 +62,7 @@ final class SprintBar {
             g.fill(cx - half, y, cx + half, y + 2, Glass.a(BLUE, a));
         }
         if (flashing && !FeelConfig.reduced()) {
-            float f = 1 - (now - readyAt + dt.getGameTimeDeltaPartialTick(false)) / 14F;
+            float f = 1 - (readyAge + dt.getGameTimeDeltaPartialTick(false)) / 14F;
             HudLook.glow(g, cx - 97, y - 4, 194, 10, 0xD8F0FF, 0.7F * Math.max(0, f));
         }
     }

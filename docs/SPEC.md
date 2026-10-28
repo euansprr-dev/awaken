@@ -3559,7 +3559,8 @@ server checks every move exactly as before (a free-run move is the same claim a 
   `body.client.SprintBar`, a 2-pixel Holo-blue (#7FC3FF) line in the free gap just above the hotbar (Aether's gold line
   sits over the XP bar, so the two never meet), filled from the middle like Aether's: it drains while the sprint
   runs, fills as it recharges (80 ticks less 10 a rank, at least 30), flashes once with a tick of light when it's
-  ready (not under reduced motion), then fades; at rest, ready, nothing is drawn.
+  ready (not under reduced motion), then fades; at rest, ready, nothing is drawn. Logout clears the line's fade,
+  charging flag and ready timestamp with the movement clock; a negative ready age never flashes on rejoin.
 - Not yet: Euan's feel check of the whole pass (camera, free-run, weight).
 
 ### 17.16 The Wilds: the hero trees' crowns

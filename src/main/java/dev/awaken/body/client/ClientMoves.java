@@ -791,6 +791,7 @@ public final class ClientMoves {
     /** Forget everything (logout, a new world). */
     static void reset() {
         RunnerMoves.reset();
+        SprintBar.reset();
         tac = sliding = mantling = stairSliding = vaulting = perchHold = false;
         jumpSuppressed = false;
         tacReadyAt = slideReadyAt = 0;
