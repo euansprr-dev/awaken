@@ -47,7 +47,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast wall
-wait 8
+wait 3
 shotnow pl_wall_1_front
 camera back
 wait 3
@@ -71,7 +71,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast wall
-wait 8
+wait 3
 shotnow pl_wall_3_front
 camera back
 wait 3
@@ -95,7 +95,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast wall
-wait 8
+wait 3
 shotnow pl_wall_5_front
 camera back
 wait 3
@@ -119,7 +119,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast ramp
-wait 6
+wait 1
 shotnow pl_ramp_1_front
 camera back
 wait 3
@@ -143,7 +143,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast ramp
-wait 6
+wait 1
 shotnow pl_ramp_3_front
 camera back
 wait 3
@@ -167,7 +167,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast ramp
-wait 6
+wait 1
 shotnow pl_ramp_5_front
 camera back
 wait 3
@@ -191,7 +191,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast floor
-wait 5
+wait 0
 shotnow pl_floor_1_front
 camera back
 wait 3
@@ -215,7 +215,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast floor
-wait 5
+wait 0
 shotnow pl_floor_3_front
 camera back
 wait 3
@@ -239,7 +239,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast floor
-wait 5
+wait 0
 shotnow pl_floor_5_front
 camera back
 wait 3
@@ -263,7 +263,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast cone
-wait 6
+wait 1
 shotnow pl_cone_1_front
 camera back
 wait 3
@@ -287,7 +287,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast cone
-wait 6
+wait 1
 shotnow pl_cone_3_front
 camera back
 wait 3
@@ -311,7 +311,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast cone
-wait 6
+wait 1
 shotnow pl_cone_5_front
 camera back
 wait 3
@@ -335,7 +335,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast rampart
-wait 7
+wait 2
 shotnow pl_rampart_1_front
 camera back
 wait 3
@@ -359,7 +359,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast rampart
-wait 7
+wait 2
 shotnow pl_rampart_3_front
 camera back
 wait 3
@@ -383,7 +383,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast rampart
-wait 7
+wait 2
 shotnow pl_rampart_5_front
 camera back
 wait 3
@@ -407,7 +407,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast spire
-wait 6
+wait 1
 shotnow pl_spire_1_front
 camera back
 wait 3
@@ -431,7 +431,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast spire
-wait 6
+wait 1
 shotnow pl_spire_3_front
 camera back
 wait 3
@@ -455,7 +455,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast spire
-wait 6
+wait 1
 shotnow pl_spire_5_front
 camera back
 wait 3
@@ -482,7 +482,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast collapse
-wait 7
+wait 2
 shotnow pl_collapse_1_front
 camera back
 wait 3
@@ -509,7 +509,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast collapse
-wait 7
+wait 2
 shotnow pl_collapse_3_front
 camera back
 wait 3
@@ -536,7 +536,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast collapse
-wait 7
+wait 2
 shotnow pl_collapse_5_front
 camera back
 wait 3
@@ -560,7 +560,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast citadel
-wait 7
+wait 2
 shotnow pl_citadel_1_front
 camera back
 wait 3
@@ -584,7 +584,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast citadel
-wait 7
+wait 2
 shotnow pl_citadel_3_front
 camera back
 wait 3
@@ -608,7 +608,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast citadel
-wait 7
+wait 2
 shotnow pl_citadel_5_front
 camera back
 wait 3
@@ -632,7 +632,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast grapple
-wait 5
+wait 0
 shotnow pl_grapple_1_front
 camera back
 wait 3
@@ -656,7 +656,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast grapple
-wait 5
+wait 0
 shotnow pl_grapple_3_front
 camera back
 wait 3
@@ -680,7 +680,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast grapple
-wait 5
+wait 0
 shotnow pl_grapple_5_front
 camera back
 wait 3
@@ -704,7 +704,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast jet_burst
-wait 3
+wait 0
 shotnow pl_jet_burst_1_front
 camera back
 wait 3
@@ -728,7 +728,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast jet_burst
-wait 3
+wait 0
 shotnow pl_jet_burst_3_front
 camera back
 wait 3
@@ -752,7 +752,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast jet_burst
-wait 3
+wait 0
 shotnow pl_jet_burst_5_front
 camera back
 wait 3
@@ -776,7 +776,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast drone
-wait 5
+wait 0
 shotnow pl_drone_1_front
 camera back
 wait 3
@@ -800,7 +800,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast drone
-wait 5
+wait 0
 shotnow pl_drone_3_front
 camera back
 wait 3
@@ -824,7 +824,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast drone
-wait 5
+wait 0
 shotnow pl_drone_5_front
 camera back
 wait 3
@@ -848,7 +848,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast turret
-wait 6
+wait 1
 shotnow pl_turret_1_front
 camera back
 wait 3
@@ -872,7 +872,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast turret
-wait 6
+wait 1
 shotnow pl_turret_3_front
 camera back
 wait 3
@@ -896,7 +896,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast turret
-wait 6
+wait 1
 shotnow pl_turret_5_front
 camera back
 wait 3
@@ -920,7 +920,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast railgun
-wait 25
+wait 20
 shotnow pl_railgun_1_front
 camera back
 wait 3
@@ -944,7 +944,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast railgun
-wait 25
+wait 20
 shotnow pl_railgun_3_front
 camera back
 wait 3
@@ -968,7 +968,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast railgun
-wait 25
+wait 20
 shotnow pl_railgun_5_front
 camera back
 wait 3
@@ -992,7 +992,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast nanite_skin
-wait 5
+wait 0
 shotnow pl_nanite_skin_1_front
 camera back
 wait 3
@@ -1016,7 +1016,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast nanite_skin
-wait 5
+wait 0
 shotnow pl_nanite_skin_3_front
 camera back
 wait 3
@@ -1040,7 +1040,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast nanite_skin
-wait 5
+wait 0
 shotnow pl_nanite_skin_5_front
 camera back
 wait 3
@@ -1064,7 +1064,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast drone_swarm
-wait 6
+wait 1
 shotnow pl_drone_swarm_1_front
 camera back
 wait 3
@@ -1088,7 +1088,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast drone_swarm
-wait 6
+wait 1
 shotnow pl_drone_swarm_3_front
 camera back
 wait 3
@@ -1112,7 +1112,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast drone_swarm
-wait 6
+wait 1
 shotnow pl_drone_swarm_5_front
 camera back
 wait 3

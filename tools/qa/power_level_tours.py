@@ -48,6 +48,9 @@ def releases():
     return {r["power"]: r["release"] for r in rows}
 
 
+CMD_WAIT = 5  # the autopilot waits this long after every cmd line, the cast's included
+
+
 def timing(pid, mode, max_ticks, release):
     """Ticks after the cast to the front shot, then to the back shot (after the camera's own two)."""
     if mode == "toggle":
@@ -82,7 +85,7 @@ def segment(pid, name, mode, max_ticks, level, release):
         "cmd tick rate 5",
         "wait 2",
         f"cmd awaken admin power cast {pid}",
-        f"wait {front}",
+        f"wait {max(0, front - CMD_WAIT)}",
         f"shotnow pl_{pid}_{level}_front",
         "camera back",
         f"wait {back}",

@@ -47,7 +47,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast spirit_palm
-wait 4
+wait 0
 shotnow pl_spirit_palm_1_front
 camera back
 wait 3
@@ -71,7 +71,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast spirit_palm
-wait 4
+wait 0
 shotnow pl_spirit_palm_3_front
 camera back
 wait 3
@@ -95,7 +95,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast spirit_palm
-wait 4
+wait 0
 shotnow pl_spirit_palm_5_front
 camera back
 wait 3
@@ -119,7 +119,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast mend
-wait 8
+wait 3
 shotnow pl_mend_1_front
 camera back
 wait 3
@@ -143,7 +143,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast mend
-wait 8
+wait 3
 shotnow pl_mend_3_front
 camera back
 wait 3
@@ -167,7 +167,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast mend
-wait 8
+wait 3
 shotnow pl_mend_5_front
 camera back
 wait 3
@@ -191,7 +191,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast third_eye
-wait 6
+wait 1
 shotnow pl_third_eye_1_front
 camera back
 wait 3
@@ -215,7 +215,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast third_eye
-wait 6
+wait 1
 shotnow pl_third_eye_3_front
 camera back
 wait 3
@@ -239,7 +239,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast third_eye
-wait 6
+wait 1
 shotnow pl_third_eye_5_front
 camera back
 wait 3
@@ -263,7 +263,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast cord_lash
-wait 4
+wait 0
 shotnow pl_cord_lash_1_front
 camera back
 wait 3
@@ -287,7 +287,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast cord_lash
-wait 4
+wait 0
 shotnow pl_cord_lash_3_front
 camera back
 wait 3
@@ -311,7 +311,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast cord_lash
-wait 4
+wait 0
 shotnow pl_cord_lash_5_front
 camera back
 wait 3
@@ -335,7 +335,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast bulwark
-wait 6
+wait 1
 shotnow pl_bulwark_1_front
 camera back
 wait 3
@@ -359,7 +359,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast bulwark
-wait 6
+wait 1
 shotnow pl_bulwark_3_front
 camera back
 wait 3
@@ -383,7 +383,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast bulwark
-wait 6
+wait 1
 shotnow pl_bulwark_5_front
 camera back
 wait 3
@@ -407,7 +407,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast hundred_palms
-wait 3
+wait 0
 shotnow pl_hundred_palms_1_front
 camera back
 wait 3
@@ -431,7 +431,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast hundred_palms
-wait 3
+wait 0
 shotnow pl_hundred_palms_3_front
 camera back
 wait 3
@@ -455,7 +455,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast hundred_palms
-wait 3
+wait 0
 shotnow pl_hundred_palms_5_front
 camera back
 wait 3
@@ -479,7 +479,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast void_maw
-wait 7
+wait 2
 shotnow pl_void_maw_1_front
 camera back
 wait 3
@@ -503,7 +503,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast void_maw
-wait 7
+wait 2
 shotnow pl_void_maw_3_front
 camera back
 wait 3
@@ -527,7 +527,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast void_maw
-wait 7
+wait 2
 shotnow pl_void_maw_5_front
 camera back
 wait 3
@@ -551,7 +551,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast waking_dream
-wait 7
+wait 2
 shotnow pl_waking_dream_1_front
 camera back
 wait 3
@@ -575,7 +575,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast waking_dream
-wait 7
+wait 2
 shotnow pl_waking_dream_3_front
 camera back
 wait 3
@@ -599,7 +599,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast waking_dream
-wait 7
+wait 2
 shotnow pl_waking_dream_5_front
 camera back
 wait 3
@@ -623,7 +623,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast storm_call
-wait 7
+wait 2
 shotnow pl_storm_call_1_front
 camera back
 wait 3
@@ -647,7 +647,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast storm_call
-wait 7
+wait 2
 shotnow pl_storm_call_3_front
 camera back
 wait 3
@@ -671,7 +671,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast storm_call
-wait 7
+wait 2
 shotnow pl_storm_call_5_front
 camera back
 wait 3
@@ -695,7 +695,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast ember_step
-wait 3
+wait 0
 shotnow pl_ember_step_1_front
 camera back
 wait 3
@@ -719,7 +719,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast ember_step
-wait 3
+wait 0
 shotnow pl_ember_step_3_front
 camera back
 wait 3
@@ -743,7 +743,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast ember_step
-wait 3
+wait 0
 shotnow pl_ember_step_5_front
 camera back
 wait 3
@@ -767,7 +767,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast frost_nova
-wait 6
+wait 1
 shotnow pl_frost_nova_1_front
 camera back
 wait 3
@@ -791,7 +791,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast frost_nova
-wait 6
+wait 1
 shotnow pl_frost_nova_3_front
 camera back
 wait 3
@@ -815,7 +815,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast frost_nova
-wait 6
+wait 1
 shotnow pl_frost_nova_5_front
 camera back
 wait 3
@@ -839,7 +839,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast ghost_step
-wait 3
+wait 0
 shotnow pl_ghost_step_1_front
 camera back
 wait 3
@@ -863,7 +863,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast ghost_step
-wait 3
+wait 0
 shotnow pl_ghost_step_3_front
 camera back
 wait 3
@@ -887,7 +887,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast ghost_step
-wait 3
+wait 0
 shotnow pl_ghost_step_5_front
 camera back
 wait 3
@@ -911,7 +911,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast twin_strike
-wait 5
+wait 0
 shotnow pl_twin_strike_1_front
 camera back
 wait 3
@@ -935,7 +935,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast twin_strike
-wait 5
+wait 0
 shotnow pl_twin_strike_3_front
 camera back
 wait 3
@@ -959,7 +959,7 @@ wait 14
 cmd tick rate 5
 wait 2
 cmd awaken admin power cast twin_strike
-wait 5
+wait 0
 shotnow pl_twin_strike_5_front
 camera back
 wait 3
