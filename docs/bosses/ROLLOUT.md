@@ -54,11 +54,11 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Gearwright Colossus | Lord | Clockwork | Brute | kit | C, the Clock Tower | ✓ 41eee64c | ✓ 41eee64c | — |
 | The Root Saint | Lord | Temple | Caster | kit | A, the Rooted Saint | ✓ 6c3f815b | ✓ 6c3f815b | — |
 | The Bell Warden | Lord | Bell | Construct | kit | A, the Bell That Walks | ✓ 72f262a4 | ✓ 72f262a4 | — |
-| The Glass Serpent | Lord | Glass | Serpent | cube serpent ×2.2 | B, the Hourglass | — | — | — |
-| The Hive Regent | Lord | Hive | Flier | bee ×4 | drawn | — | — | — |
-| The Drowned Archivist | Lord | Drowned | Caster | drowned ×1.9 | drawn | — | — | — |
-| The Lantern Broker | Lord | Lantern | Construct | cube lantern | drawn | — | — | — |
-| The Abbot of Frost | Lord | Frost | Caster | evoker ×1.7 | drawn | — | — | — |
+| The Glass Serpent | Lord | Glass | Serpent | kit | B, the Hourglass | ✓ ec80f180 | ✓ ec80f180 | — |
+| The Hive Regent | Lord | Hive | Flier | bee ×4 | A, the Empress | — | — | — |
+| The Drowned Archivist | Lord | Drowned | Caster | drowned ×1.9 | A, the Lectern | — | — | — |
+| The Lantern Broker | Lord | Lantern | Construct | cube lantern | A, the Pedlar | — | — | — |
+| The Abbot of Frost | Lord | Frost | Caster | evoker ×1.7 | B, the Pilgrim | — | — | — |
 | The Mirror Knight | Lord | Mirror | Duelist | player ×1.4 | — | — | — | — |
 | The Sleeper | Lord | Nightmare | Brute | zombie ×2.2 | — | — | — | — |
 | The Sky Leviathan | Lord | Sky | Serpent | cube serpent ×3.2 | — | — | — | — |
@@ -109,12 +109,14 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 - **The Hive Regent:** A the Empress (an upright queen, her banded abdomen a train behind her, four tall glass wings,
   two amber stinger daggers), B the Living Hive (a flying stepped hive held up by rows of wings, the queen rising out of
   its top, a cloud of drones), C the Hornet (long and low, wings swept back, the stinger curled forward under it).
+  **Picked A**, 2026-10-28.
 - **The Drowned Archivist:** A the Lectern (grown into his reading stand, the sea pouring off the open book, a quill
   like a spear), B the Diver (an old diving suit, his face against a window full of water, a case of chained books on
-  his back), C the Tide of Pages (held up inside a column of sea water, rings of books circling it).
+  his back), C the Tide of Pages (held up inside a column of sea water, rings of books circling it). **Picked A**,
+  2026-10-28.
 - **The Lantern Broker:** A the Pedlar (a pack frame taller than him hung with his whole shop of lanterns), B the
   Lantern Head (a gentleman whose head is a lantern in a top hat, a cape of moth wings), C the Walking Stall (a curtained
-  booth on four heron legs, four long arms reaching out of it).
+  booth on four heron legs, four long arms reaching out of it). **Picked A**, 2026-10-28.
 - **The Abbot of Frost:** A the Frozen Saint (tall and thin, robes frozen in layers, a mitre of ice, a censer), B the
   Pilgrim (hunched under a glacier with the monastery's heart frozen in it), C the Snow Owl (a cloak of frost feathers,
-  an owl's hood with ear tufts and pale eyes).
+  an owl's hood with ear tufts and pale eyes). **Picked B**, 2026-10-28.
