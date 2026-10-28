@@ -82,12 +82,14 @@ public final class LivingClient {
         });
         modBus.addListener(RegisterGuiLayersEvent.class, LivingHud::register);
         FormLayers.init(modBus);
+        dev.awaken.living.client.forms.FormBodies.init(modBus);
         modBus.addListener(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers.class,
                 e -> e.registerEntityRenderer(dev.awaken.living.LivingContent.WAYFARER.get(), WayfarerRenderer::new));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(LivingNet.RegionMsg.TYPE, (m, ctx) -> onRegion(m));
             e.register(LivingNet.LandMsg.TYPE, (m, ctx) -> DreadFx.onLand(m));
             e.register(LivingNet.HitFx.TYPE, (m, ctx) -> onHit(m));
+            e.register(LivingNet.FormCue.TYPE, (m, ctx) -> dev.awaken.living.client.forms.FormBodies.onCue(m));
             e.register(LivingNet.XpFx.TYPE, (m, ctx) -> onXp(m));
             e.register(LivingNet.LevelUp.TYPE, (m, ctx) -> onLevelUp(m));
             e.register(LivingNet.Shown.TYPE, (m, ctx) -> shown = m.shown());

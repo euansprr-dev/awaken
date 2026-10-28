@@ -112,6 +112,10 @@ public final class LivingModule {
         Progression.onXpGranted(XpStream::granted);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(EventPriority.LOW, FinalizeSpawnEvent.class, Creatures::onFinalizeSpawn);
+        bus.addListener(net.neoforged.neoforge.event.entity.EntityEvent.Size.class, dev.awaken.living.combat.FormShape::onSize);
+        bus.addListener(LivingDamageEvent.Post.class, dev.awaken.living.combat.Combos::onDamage);
+        bus.addListener(net.neoforged.neoforge.event.tick.ServerTickEvent.Post.class, dev.awaken.living.combat.Combos::onTick);
+        bus.addListener(net.neoforged.neoforge.event.tick.EntityTickEvent.Post.class, dev.awaken.living.combat.Combos::onEntityTick);
         bus.addListener(EntityJoinLevelEvent.class, Creatures::onJoin);
         bus.addListener(EventPriority.HIGHEST, net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre.class, dev.awaken.living.combat.MarkEvents::onDamage);
         bus.addListener(net.neoforged.neoforge.event.entity.living.MobSpawnEvent.SpawnPlacementCheck.class, dev.awaken.living.wonder.WonderWatch::onSpawnCheck);
