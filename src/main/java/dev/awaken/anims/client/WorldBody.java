@@ -70,7 +70,9 @@ final class WorldBody {
     static float lens(Minecraft mc) {
         float world = mc.gameRenderer.mainCamera().getFov();
         if (world <= 1F) return 1F;
-        return (float) (Math.tan(Math.toRadians(HAND_FOV) / 2) / Math.tan(Math.toRadians(world) / 2));
+        float hand = dev.awaken.anims.client.station.StationClient.ownsCamera()
+                ? mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.hudFov : HAND_FOV;
+        return (float) (Math.tan(Math.toRadians(hand) / 2) / Math.tan(Math.toRadians(world) / 2));
     }
 
     /** A foot nearer the eye than this is drawn in the hand pass, pushed out to it. */
@@ -102,7 +104,7 @@ final class WorldBody {
         nearLegsThisFrame = false;
         if (broken) return;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || !mc.options.getCameraType().isFirstPerson() || mc.getCameraEntity() != mc.player) return;
+        if (mc.player == null || mc.level == null || !mc.options.getCameraType().isFirstPerson() || mc.getCameraEntity() != mc.player && !dev.awaken.anims.client.station.StationClient.ownsCamera()) return;
         try {
             RIG.clear();
             List<FirstPerson.WorldSource> sources = FirstPerson.worldSources();
