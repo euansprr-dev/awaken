@@ -31,7 +31,7 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
  * add from the keys is taken off first, since each state steers in its own way. A collision shows up next tick as the
  * body ending short of where it was sent, and that part of the velocity is gone (a wall stops you; a floor lands you).
  * <p>
- * Controls (Phase 0): the movement key (Left Alt) fires and holds the rope; letting go flies on with the swing's
+ * Controls (Phase 0): the rope key (Left Alt, its own since §17.30) fires and holds the rope; letting go flies on with the swing's
  * speed; jump on the rope jumps off it. Forward pumps the swing at the bottom of the arc, sideways turns it, sneak
  * reels in. Jump in the air opens the wings; jump while gliding takes flight; sprint boosts, jump climbs and sneak
  * sinks while flying; sneak while gliding folds the wings into a dive.
@@ -48,6 +48,8 @@ public final class AscentMoves {
     /** Skyborn's Aether (0..1, SPEC §17.8), predicted here; the server keeps its own at the cheapest drain. */
     static double aether = 1;
     static int aetherOutAt = -100;
+    /** This glide began because the meter ran dry in flight: sprint still held takes flight again once it refills. */
+    private static boolean glideFromEmpty;
     static final AscentRules.Kin K = new AscentRules.Kin();
     private static final double[] S = new double[3], AIR = new double[3];
     private static final float[] LINE = new float[2], VIEW = new float[2];
@@ -195,7 +197,7 @@ public final class AscentMoves {
         if (!(e.getEntity() instanceof LocalPlayer p) || p != mc.player) return;
         ClientInput in = e.getInput();
         Input k = in.keyPresses;
-        boolean tether = AwakenKeys.MOVEMENT.isDown() && mc.gui.screen() == null;
+        boolean tether = AwakenKeys.ROPE.isDown() && mc.gui.screen() == null;
         boolean jump = k.jump(), sneak = k.shift(), sprint = k.sprint();
         boolean tetherPressed = tether && !tetherWas, jumpPressed = jump && !jumpWas, sneakPressed = sneak && !sneakWas;
         boolean sprintPressed = sprint && !sprintWas;
@@ -301,8 +303,9 @@ public final class AscentMoves {
             case GLIDE -> {
                 if (tetherPressed && has(AscentPayloads.Tier.TETHER) && fire(p)) {
                     fold(p);
-                } else if (jumpPressed && has(AscentPayloads.Tier.SKYBORN)) {
-                    startSoar(p);
+                } else if (has(AscentPayloads.Tier.SKYBORN)
+                        && (jumpPressed || AscentRules.sprintTakesFlight(sprintPressed, sprint, glideFromEmpty, aether)) && startSoar(p)) {
+                    // flight again: a jump, or sprint whenever the meter allows (SPEC §17.8)
                 } else if (sneakPressed) {
                     fold(p);
                     toCarry(p, "wings folded");
@@ -1206,6 +1209,7 @@ public final class AscentMoves {
         if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
         AscentRules.glideCatch(K, p.getYRot(), p.getXRot());
         deployAt = ticks;
+        glideFromEmpty = false;
         AscentFlow.gain(0.06F);
         boomArmed = K.speed() < AscentRules.BOOM_SPEED;
         setState(p, AscentState.GLIDE);
@@ -1266,15 +1270,18 @@ public final class AscentMoves {
         AscentSounds.local(p, AscentContent.WINGS_FOLD.get(), 0.7F, 0.75F);
         AscentRules.glideCatch(K, p.getYRot(), p.getXRot());
         setState(p, AscentState.GLIDE);
+        glideFromEmpty = true;
     }
 
-    private static void startSoar(LocalPlayer p) {
+    /** Takes flight; false (a weak beat) when the meter can't lift. */
+    private static boolean startSoar(LocalPlayer p) {
         if (aether < AscentRules.AETHER_START) {
             // not enough to lift: a weak beat that catches nothing
             AscentSounds.local(p, AscentContent.FLAP.get(), 0.4F, 0.7F);
             aetherOutAt = ticks;
-            return;
+            return false;
         }
+        glideFromEmpty = false;
         if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
         boolean fromGlide = state == AscentState.GLIDE;
         soarAt = ticks;
@@ -1283,6 +1290,7 @@ public final class AscentMoves {
         flap(p);
         trace("takes flight");
         AscentRules.soarStep(K, p.getYRot(), p.getXRot(), 0, 0, false, false, false, S);
+        return true;
     }
 
     private static void flap(LocalPlayer p) {
@@ -1421,6 +1429,7 @@ public final class AscentMoves {
         wallNX = wallNZ = 0;
         slamming = false;
         heldForYou = false;
+        glideFromEmpty = false;
         airMovesUsed = 0;
         state = AscentState.NONE;
         stateAge = 0;

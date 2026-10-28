@@ -4032,6 +4032,26 @@ manual; stop the build at the first block; the payoff answers only the line; dan
 
 ---------------------------------------------------------------------------------------------------------------------
 
+### 17.30 The rope's own key, and sprint back into flight (Euan's play, 2026-10-28: "The rope on left option is the same keybind as the dash")
+- **Keys.** The rope has its own mapping, `key.awaken.rope` ("Rope (hold)", AWAKEN's category, Left Alt), read by
+  `AscentMoves`, routes, the pilot, the shoulder view and the vow's words. The movement power's slot
+  (`key.awaken.movement`) defaults to mouse button 4. Before, both were Left Alt and holding the Tether silenced the
+  slot (`MovementHooks.ownsMovementKey`), so a dash power there never fired. `ownsMovementKey` now holds only when a
+  player binds both to the same key (the rope wins, as before). An old save keeps the movement power on Left Alt; once,
+  on the first tick, a movement key on the rope's key goes to its new default, options are saved, and the tip
+  `first/keys_split` names both keys (`core.client.KeySplit`; the marker `config/awaken-keys-split.txt` keeps it to
+  once). Which of the two keeps Left Alt is decision 1 on the rope plan's page; swapping is two defaults.
+- **Default key clashes** (AWAKEN against vanilla 26.3's own defaults; NeoForge marks them red in Controls): G is Focus
+  and vanilla's Quick Actions; O is Look and vanilla's Friends; X and C are Powers 2 and 3 and vanilla's creative
+  toolbar keys (creative only). Every letter a left hand reaches from WASD is taken; Caps Lock is no hold key on macOS
+  (it sends the lock's state, not the key).
+- **Sprint back into flight** (`AscentRules.sprintTakesFlight`, GameTest `ascent_sprint_flies_again`). The cause:
+  boosting empties the meter, which folds flight into a glide (§17.8); the glide counts as out of flight, so the meter
+  refills, but only a jump took a glide back into flight, so sprint did nothing until a tap of jump. Now in a Skyborn
+  glide a sprint press takes flight whenever (too little Aether gives the weak beat, as a jump does), and sprint still
+  held through a glide the empty meter forced takes flight again once the meter is back to 25% (about 5 s in the sun).
+  Sprint held into a plain glide (a run off a cliff) stays a glide.
+
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
 
 The world is drawn at a lower resolution and rebuilt to the screen's; menus, the HUD and all GUI text stay native.

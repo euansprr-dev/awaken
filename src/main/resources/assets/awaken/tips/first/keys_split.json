@@ -1,0 +1,10 @@
+{
+  "text": "Your rope has its own key now: {key.awaken.rope}. Your movement power moved to {key.awaken.movement}. You can change either one in Controls, under AWAKEN.",
+  "short": "Rope: {key.awaken.rope} · power: {key.awaken.movement}",
+  "priority": 90,
+  "show_for": 260,
+  "retire_after_done": 1,
+  "retire_after_shown": 1,
+  "cooldown": 600,
+  "awake": "any"
+}

@@ -136,7 +136,7 @@ final class VowScene {
             if (age >= 60) stage = -1;
         } else if (stage == 1) {
             if (age == 50) {
-                say(Component.translatable("awaken.ascent.vow.how", AwakenKeys.MOVEMENT.getTranslatedKeyMessage()), 160, false);
+                say(Component.translatable("awaken.ascent.vow.how", AwakenKeys.ROPE.getTranslatedKeyMessage()), 160, false);
             }
             if (age == 100) LensClient.clearOverride(60);
             if (age == 220) say(Component.translatable("awaken.ascent.vow.mast"), 100000, false);

@@ -20,7 +20,7 @@ import java.util.Map;
  * player, kept on death, synced to its owner only. The network form also carries transient fields the HUD needs to
  * extrapolate energy between syncs (max, regen, pause) and the powers currently running.
  *
- * <p>Slots: 0-3 = Z X C V, 4 = Ultimate (R), 5 = Movement (Left Alt). Mutate through {@link Powers}.
+ * <p>Slots: 0-3 = Z X C V, 4 = Ultimate (R), 5 = Movement (mouse button 4; Left Alt is the rope since SPEC §17.30). Mutate through {@link Powers}.
  *
  * <p>Schema 2 adds mastery: points toward each owned power's next level ({@link Mastery}). A schema-1 save loads with
  * no mastery and is written back as schema 2.

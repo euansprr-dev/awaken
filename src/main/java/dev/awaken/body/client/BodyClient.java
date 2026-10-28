@@ -94,7 +94,9 @@ public final class BodyClient {
             }
 
             @Override public boolean ownsMovementKey(net.minecraft.world.entity.player.Player p) {
-                return dev.awaken.body.ascent.client.AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.TETHER);
+                // the rope has its own key (SPEC §17.30); only someone who binds both to one key gives it to the rope
+                return dev.awaken.body.ascent.client.AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.TETHER)
+                        && dev.awaken.core.client.AwakenKeys.MOVEMENT.same(dev.awaken.core.client.AwakenKeys.ROPE);
             }
         });
         StatusSections.add(StatusSections.Tab.POWERS, new BodySection());

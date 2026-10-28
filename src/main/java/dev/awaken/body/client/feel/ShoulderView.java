@@ -45,6 +45,6 @@ public final class ShoulderView {
     /** In the air (an Ascent state) or holding the rope key: the body turns to what you look at. */
     static boolean steering() {
         return dev.awaken.body.ascent.client.AscentMoves.state() != dev.awaken.body.ascent.AscentState.NONE
-                || dev.awaken.core.client.AwakenKeys.MOVEMENT.isDown();
+                || dev.awaken.core.client.AwakenKeys.ROPE.isDown();
     }
 }
