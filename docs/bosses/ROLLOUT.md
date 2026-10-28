@@ -71,7 +71,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Hollow Herald | Lord | Abyss | Caster | kit | C, the Ring-Head | ✓ b91a71b6 | ✓ b91a71b6 | — |
 | The Rootmother | Guardian | Rim | Crawler | kit | B, the Long-Legs | ✓ ee462916 | ✓ ee462916 | — |
 | The Thornback | Guardian | Gardens | Beast | kit | B, the Thorn Pangolin | ✓ e2e9a90b | ✓ e2e9a90b | — |
-| The Choirmaster | Guardian | Choir | Caster | witch ×2 | C, the Cantor | — | — | — |
+| The Choirmaster | Guardian | Choir | Caster | kit | C, the Cantor | ✓ 951aa818 | ✓ 951aa818 | — |
 | The Ossuary King | Guardian | Orchard | Brute | wither skeleton ×2 | A, the Orchard King | — | — | — |
 | The Great Listener | Guardian | Silent | Brute | cube listener ×1.8 | B, the Hush Bat | — | — | — |
 | The Furnace Engine | Guardian | Foundry | Brute | iron golem ×1.8 | — | — | — | — |
