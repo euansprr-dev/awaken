@@ -33,6 +33,7 @@ public interface WorldEngine {
     static WorldEngine of(String kind) {
         return switch (kind) {
             case "hall" -> new HallEngine();
+            case "passages" -> new PassageEngine();
             default -> null;
         };
     }

@@ -113,8 +113,16 @@ public final class GateWorldBellTests {
         String dir = System.getenv("AWAKEN_WORLD_DUMP");
         if (dir != null && (dumpName != null || !bad.isEmpty())) {
             try {
-                w.dump(java.nio.file.Path.of(dir), dumpName != null ? dumpName : "FAIL-" + f.world.replace(':', '_').replace('/', '_') + "-" + f.floor,
-                        e.x(), sy, e.z());
+                String name = dumpName != null ? dumpName : "FAIL-" + f.world.replace(':', '_').replace('/', '_') + "-" + f.floor;
+                w.dump(java.nio.file.Path.of(dir), name, e.x(), sy, e.z());
+                StringBuilder rooms = new StringBuilder();
+                for (Room r : f.rooms) {
+                    rooms.append(r.id).append(' ').append(r.type).append(" slots ").append(r.gx).append(',').append(r.gz).append(' ')
+                            .append(r.gw).append('x').append(r.gh).append(" dy ").append(r.dy).append(r.rig != null ? " rig" : "").append(" doors");
+                    for (Room.Door d : r.doors) rooms.append(" [").append(d.gx).append(',').append(d.gz).append(" side ").append(d.side).append(" to ").append(d.toRoom).append(']');
+                    rooms.append('\n');
+                }
+                java.nio.file.Files.writeString(java.nio.file.Path.of(dir, name + "-rooms.txt"), rooms + bad.toString());
             } catch (java.io.IOException ex) {
                 bad.append(" dump failed: ").append(ex.getMessage());
             }
@@ -182,5 +190,6 @@ public final class GateWorldBellTests {
             h.succeed();
         });
         world("gateworlds_belfry", "sunken_belfry", 8);
+        world("gateworlds_ossuary", "ossuary_ways", 8);
     }
 }

@@ -8624,8 +8624,8 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
 - **Stage 0** (built 2026-10-28): plots, the frame, the place map, recipes and their loader, per-world biomes, the engine
   interface, the director, the Atlas and the arrival payload. No recipes ship yet, so every floor is today's rooms in its plot.
 - **Stage 1** (in progress): the world floor contract (38.5), the Bell Crypt's blocks and the Sunken Belfry (38.6); tests
-  `gateworlds_bell_recipes` and `gateworlds_belfry`. The Bell Crypt's other engines are next; until each exists its world's
-  floors are today's rooms.
+  `gateworlds_bell_recipes`, `gateworlds_belfry` and `gateworlds_ossuary`. The Bell Crypt's other engines are next; until
+  each exists its world's floors are today's rooms.
 
 ### 38.5 The world floor contract (Stage 1)
 
@@ -8681,3 +8681,19 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   hidden light every slot, lancets of moon glass whose light lands on the water, small bells hung with lamps inside. Moods:
   Tolling adds a monster to each fight room, Storm breaks some lancets open to the dark, Requiem and Still are the quiet
   ones.
+- **Chains** (`ChainLayout`, shared by the passages and void worlds): the spine winds across the plot as places joined by
+  one-slot links (a seeded, bounded search; first with rock round every place, then allowing places to touch; a spine too
+  long folds plain neighbours into one place). A built room is crossed straight through, in line with its way in, so the
+  Rig can rebuild it; branches hang off their parent through a link of their own, or open straight off it, or off the
+  nearest place with room. A floor whose Rig room doesn't rebuild tries its next variation.
+- **The Ossuary Ways** (`PassageEngine`): the crypt under the Belfry where the bell-ringers were laid. Rooms are rounded
+  chambers under low domes, joined by winding passages three wide (a gentle S, or a quarter turn round a corner). Every
+  wall is banded like a real ossuary: a worn plinth, bone ends, a row of skulls and candles set into the wall above head
+  height, bones laid lengthwise, bone ends again. The arrival is a chamber at the foot of a stair that climbs away into the
+  dark you came down; the hub is the Bone Rotunda (a round domed hall, a pillar of skulls with candles at its foot, two
+  skull bands and a ring of lit niches); a quiet chamber halfway holds the charnel well (a round shaft to black water, a
+  lamp on a chain inside it, a bell rope down for anyone who falls in); long rooms are the Lantern Row (burial shelves,
+  lamps hung down the middle); the end is the ringers' tomb (a raised sarcophagus, candles all round); other chambers
+  have bone heaps, a coffin or bone pillars. Light is the candles plus hidden light (12) four apart and at every doorway
+  (`WorldPlan.doorLights`). Moods: Tolling adds a monster to each fight room, Requiem lights every candle, Still leaves
+  some out, Storm wets the floors.

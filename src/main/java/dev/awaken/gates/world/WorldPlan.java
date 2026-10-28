@@ -172,6 +172,18 @@ final class WorldPlan {
         }
     }
 
+    /** A hidden light at head height just inside every doorway of the world's own places, so no way goes dark at a door. */
+    void doorLights(Sculpt s, int baseY, BlockState light) {
+        for (Room w : b.rooms) {
+            if (built(w)) continue;
+            for (Room.Door d : w.doors) {
+                int x = switch (d.side) { case 1 -> d.gx * 16 + 15; case 3 -> d.gx * 16; default -> d.gx * 16 + 7; };
+                int z = switch (d.side) { case 0 -> d.gz * 16; case 2 -> d.gz * 16 + 15; default -> d.gz * 16 + 7; };
+                s.putOpen(x, baseY + d.y + 1, z, light);
+            }
+        }
+    }
+
     /**
      * Screens round a place the bars close: every open block of its slot-edge rows that face another place, from its
      * floor to the top of the world, becomes {@code screen} (stone with grilles, a rood screen), except its doorways.
