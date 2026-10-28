@@ -1,6 +1,7 @@
 package dev.awaken.living.population;
 
 import com.mojang.serialization.JsonOps;
+import dev.awaken.core.PlayDays;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.living.api.Wildness;
 import net.minecraft.core.BlockPos;
@@ -25,6 +26,8 @@ public final class WildHerdTests {
         AwakenTests.registerIsolated("wild_herd_flee", 400, WildHerdTests::flee);
         AwakenTests.registerIsolated("wild_pack_hunt", 200, WildHerdTests::packHunt);
         AwakenTests.registerIsolated("wild_herd_bench", 400, WildHerdTests::bench);
+        AwakenTests.registerIsolated("wild_spoor", 100, WildHerdTests::spoor);
+        AwakenTests.registerIsolated("wild_tracking", 100, WildHerdTests::tracking);
     }
 
     /** Sizes by band, old saves loading as they were, and a cell made in the wild holding herds and a pack. */
@@ -220,6 +223,11 @@ public final class WildHerdTests {
         l.died(nearest);
         h.assertTrue(sheep.count == before - 1, "the kill costs the flock one: " + sheep.count);
         h.assertTrue(brain.mood == PackBrain.Mood.FEED, "the pack feeds at the kill");
+        boolean bones = false;
+        for (Spoor.Mark m : Spoor.of(level).near(nearest.getX(), nearest.getZ(), 2)) {
+            if (m.kind() == Spoor.Kind.KILL && m.pop() == wolves.id && m.prey().equals("minecraft:sheep")) bones = true;
+        }
+        h.assertTrue(bones, "the kill leaves bones that say wolves killed a sheep");
         l.releaseAll(level);
         h.succeed();
     }
@@ -284,5 +292,110 @@ public final class WildHerdTests {
             h.assertTrue(ms < AwakenTests.cpuBudget(0.5), "three herds of thirty and two packs: " + String.format("%.3f", ms) + " ms a tick");
             h.assertTrue(worst < AwakenTests.cpuBudget(10), "no tick over ten milliseconds: " + String.format("%.2f", worst));
         });
+    }
+
+    /**
+     * Signs (SPEC §41.3): a herd that moves leaves prints pointing its way; a herd without bodies left prints along its path
+     * and droppings at last night's bed near a player, each laid once.
+     */
+    private static void spoor(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos c = field(h, 24);
+        Ledger l = new Ledger();
+        Ledger.Pop cows = herd(l, "minecraft:cow", c.getX() - 10, c.getZ(), 6, 0.6F);
+        h.assertTrue(l.materialize(level, cows, new double[]{c.getX() - 10, c.getZ()}, 10) == 6, "six cows");
+        HerdBrain brain = l.herdBrain(cows.id);
+        List<PathfinderMob> herd = l.living(level, cows.id);
+        brain.think(l, level, 10, 6000, 1);
+        for (PathfinderMob m : herd) {
+            m.snapTo(m.getX() + 8, m.getY(), m.getZ());
+            m.setOnGround(true);
+        }
+        brain.think(l, level, 10, 6000, 21);
+        Spoor.Mark prints = null;
+        for (Spoor.Mark m : Spoor.of(level).near(c.getX(), c.getZ(), 24)) if (m.pop() == cows.id && m.kind() == Spoor.Kind.PRINTS) prints = m;
+        h.assertTrue(prints != null && prints.count() == 6 && prints.hoofed(), "the herd's prints: six, hooves");
+        h.assertTrue(Math.abs(Math.floorMod((int) prints.yaw() + 90 + 180, 360) - 180) < 5, "they point east, the way it went: " + prints.yaw());
+
+        Ledger.Pop far = abstractHerd(l, c, 8);
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        p.snapTo(c.getX(), c.getY(), c.getZ());
+        AwakenTests.onEnd(h, () -> {
+            level.getServer().getPlayerList().remove(p);
+            l.releaseAll(level);
+        });
+        long now = level.getGameTime();
+        Spoor.of(level).backfill(level, l, 10, 6000, now);
+        int laid = 0, dung = 0;
+        for (Spoor.Mark m : Spoor.of(level).near(c.getX(), c.getZ(), 40)) {
+            if (m.pop() != far.id) continue;
+            if (m.kind() == Spoor.Kind.PRINTS) {
+                laid++;
+                h.assertTrue(m.age(now) > 0 && m.age(now) <= Spoor.BACK_STEP * Spoor.BACK_STEPS, "a back-filled print is from the last two hours: " + m.age(now));
+            }
+            if (m.kind() == Spoor.Kind.DUNG) dung++;
+        }
+        h.assertTrue(laid >= 4, "the unseen herd left prints along its path: " + laid);
+        h.assertTrue(dung == 1, "and its droppings at last night's bed: " + dung);
+        int before = Spoor.of(level).near(c.getX(), c.getZ(), 40).size();
+        Spoor.of(level).backfill(level, l, 10, 6000, now);
+        h.assertTrue(Spoor.of(level).near(c.getX(), c.getZ(), 40).size() == before, "each is laid once");
+        h.succeed();
+    }
+
+    /**
+     * Reading and the trail (SPEC §41.3): crouching over a sign reads it (research one), two reads send the motes to the next
+     * sign laid after them, a few more to the herd itself, and its bed goes on the Atlas.
+     */
+    private static void tracking(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos c = field(h, 24);
+        Ledger l = new Ledger();
+        Ledger.Pop far = abstractHerd(l, c, 8);
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        p.snapTo(c.getX(), c.getY(), c.getZ());
+        dev.awaken.living.hunt.Tracking.useLedger(l);
+        AwakenTests.onEnd(h, () -> {
+            dev.awaken.living.hunt.Tracking.useLedger(null);
+            dev.awaken.living.hunt.Tracking.forget(p);
+            level.getServer().getPlayerList().remove(p);
+        });
+        long now = level.getGameTime();
+        Spoor.of(level).backfill(level, l, 10, 6000, now);
+        List<Spoor.Mark> trail = new ArrayList<>();
+        for (Spoor.Mark m : Spoor.of(level).near(c.getX(), c.getZ(), 40)) if (m.pop() == far.id) trail.add(m);
+        trail.sort(java.util.Comparator.comparingLong(Spoor.Mark::laid));
+        h.assertTrue(trail.size() >= 6, "a trail to follow: " + trail.size());
+        h.assertTrue(dev.awaken.living.hunt.Tracking.describe(trail.get(1), 0, now).startsWith("Hoof prints"), "a kind you don't know reads as hooves");
+        h.assertTrue(dev.awaken.living.hunt.Tracking.describe(trail.get(1), 1, now).startsWith("Aurochs tracks"), "one you know by name");
+
+        Spoor.Mark first = trail.getFirst();
+        p.snapTo(first.x(), first.y(), first.z());
+        p.setOnGround(true);
+        p.setShiftKeyDown(true);
+        for (int i = 0; i < 4; i++) dev.awaken.living.hunt.Tracking.crouch(level, p);
+        var state = dev.awaken.living.hunt.Tracking.state(p);
+        h.assertTrue(state.points(far.species) == 1, "crouched a second over it, the sign is read: research " + state.points(far.species));
+        h.assertTrue(dev.awaken.living.hunt.Tracking.stage(p) == 1, "the trail begins");
+        p.snapTo(c.getX(), c.getY(), c.getZ());
+        dev.awaken.living.hunt.Tracking.read(level, p, trail.get(1));
+        dev.awaken.living.hunt.Tracking.update(level, p);
+        h.assertTrue(dev.awaken.living.hunt.Tracking.stage(p) == 2, "two read: the motes come");
+        h.assertTrue(dev.awaken.living.hunt.Tracking.target(p) == trail.get(2).id(), "toward the next sign laid after them");
+        for (int i = 2; i < 5; i++) dev.awaken.living.hunt.Tracking.read(level, p, trail.get(i));
+        dev.awaken.living.hunt.Tracking.update(level, p);
+        h.assertTrue(dev.awaken.living.hunt.Tracking.stage(p) == 3, "a few more: straight to the quarry");
+        double[] at = l.where(far, PlayDays.current(level.getServer()), level.getOverworldClockTime()), motes = dev.awaken.living.hunt.Tracking.motes(p);
+        h.assertTrue(Math.hypot(motes[0] - at[0], motes[2] - at[1]) < 1, "where the herd is now");
+        h.assertTrue(!dev.awaken.living.hunt.Tracking.state(p).found().isEmpty(), "its bed is on the Atlas");
+        h.succeed();
+    }
+
+    /** A herd with no bodies whose three pastures lie near (x, z): its signs are back-filled. */
+    private static Ledger.Pop abstractHerd(Ledger l, BlockPos c, int n) {
+        int x = c.getX(), z = c.getZ();
+        Ledger.Pop p = new Ledger.Pop(l.nextId++, "herd", "minecraft:cow", x, z, List.of(x - 8, z - 4, x + 8, z, x, z + 8), n, n, 10, 43L, -1, 0.6F, false);
+        l.add(new Ledger.Cell(Ledger.key(Math.floorDiv(x, Ledger.CELL), Math.floorDiv(z, Ledger.CELL)), new ArrayList<>(List.of(p))));
+        return p;
     }
 }

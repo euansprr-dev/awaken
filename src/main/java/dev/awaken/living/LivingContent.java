@@ -96,6 +96,13 @@ public final class LivingContent {
                     .sync((holder, to) -> holder == to, net.minecraft.network.codec.ByteBufCodecs.fromCodecWithRegistries(dev.awaken.living.craft.CraftState.CODEC))
                     .build());
 
+    /** What a hunter has learned (SPEC §41.3): research per kind and the beds, dens and kill sites found; synced, kept through death. */
+    public static final Supplier<AttachmentType<dev.awaken.living.hunt.HuntState>> HUNT = ATTACHMENTS.register("hunt",
+            () -> AttachmentType.builder(() -> dev.awaken.living.hunt.HuntState.EMPTY).serialize(dev.awaken.living.hunt.HuntState.CODEC.fieldOf("hunt"))
+                    .copyOnDeath()
+                    .sync((holder, to) -> holder == to, net.minecraft.network.codec.ByteBufCodecs.fromCodecWithRegistries(dev.awaken.living.hunt.HuntState.CODEC))
+                    .build());
+
     /** What a player has heard of happenings (SPEC §21.6): "?" marks on their map, synced to them, kept through death. */
     public static final Supplier<AttachmentType<dev.awaken.living.pulse.Rumours.State>> RUMOURS = ATTACHMENTS.register("rumours",
             () -> AttachmentType.builder(() -> dev.awaken.living.pulse.Rumours.State.EMPTY).serialize(dev.awaken.living.pulse.Rumours.State.CODEC.fieldOf("rumours"))

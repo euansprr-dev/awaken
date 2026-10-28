@@ -9578,3 +9578,43 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
   downwind is let near, standing is seen, crouched upwind is smelled), `wild_herd_flee` (twenty stampede from a sprinter, 15+
   blocks away), `wild_pack_hunt` (the nearest straggler, every wolf on it, the flock runs, the kill costs one), `wild_herd_bench`.
 - **Commands**: `/awaken living ledger` shows each population's band, alpha and brain mood.
+
+### 41.3 Signs and tracking (Stage 3)
+- **Signs** (`living.population.Spoor`, per world, not saved): **prints** (a patch of many feet, pointing the way the animals
+  went, hooves for cows, pigs, sheep, horses, donkeys, goats, mossbacks, frost stags and crag rams, paws for the rest),
+  **droppings** (on a flattened oval where a herd bedded) and **bones** (on a dark stain where a pack fed). Seen for two in-game
+  hours (prints; six with the Tracks perk) or a day (droppings, bones), fading as they age; at most 1,024 in a world, oldest first.
+  - Laid live: a herd or pack with bodies leaves a patch of prints under the body nearest its middle each time its middle has
+    moved 6 blocks; a bedded herd its droppings once a night (from 16000 to 23000); a pack's kill its bones.
+  - Back-filled: every 2 s, for each population within the ledger's reach of a player, prints along its `Ledger.where` path
+    every 400 ticks over the last 2,400 (keyed, so each is laid once), a herd's droppings at last night's bed (18000) and a
+    pack's bones where its herd was at its hunting hour (wolves 8000, ours 18000), only where a player is within 80 blocks and
+    the ground is loaded and dry. A population with bodies back-fills only from before its bodies came. So the newest prints
+    lie nearest the herd: a trail read in order walks you to it. After a restart the back-filled signs come back from the clock.
+- **Drawn** (`living.client.SpoorFx`): prints pressed dark into the ground under a soft crumbled rim, their alpha the sign's
+  freshness (how long ago is visible); a herd's patch is up to eight lanes of prints, `0.4 + 0.6·√n` wide. With the **Tracks**
+  perk prints glow amber instead (the perk now reads "Tracks on the ground glow amber and last three times as long, and a
+  creature you've read leaves glowing tracks for 30 seconds"). Droppings are small dark lumps on a pale flattened oval; bones a
+  skull and seven bones on a dark stain. The server sends the 64 nearest within 48 blocks each second they change.
+- **Reading** (`living.hunt.Tracking`): crouch on the ground within 2.2 blocks of a sign for one second (half a second once the
+  kind is studied to level 2). The line says what, how many, which way and how long ago, more exactly the better you know the
+  kind: unstudied, "Hoof prints: several went north-east, within the last hour."; studied, "Aurochs tracks: about 12 went
+  north-east, within the last hour." Droppings: "...bedded down here"; bones: "...killed a wild ram here". A soft brushing sound;
+  3 Hunting craft XP; a tip ("Crouch over them...") the first time a sign is near someone who has read none.
+- **The trail**: reading signs of one population builds its trail (a sign of another population starts a new one). Two read:
+  the band's amber **scout motes** (a thread of nine drifting from you, up to 12 blocks) lead to the **next sign** (the first
+  laid after the last one read, else the newest unread, within 64 blocks), which pulses amber with rings and a thin light. Five
+  read (four at research level 1, three from level 2): the motes (fourteen, warmer, up to 16 blocks) lead to the **quarry**
+  itself: its alpha's body, else the body nearest the herd's middle, else where the clock puts it. The Now line follows the
+  stage ("Follow the motes to the next sign of the aurochs." / "The aurochs are about 140 blocks north-east. Come at them from
+  downwind."). The trail fades five in-game hours after the last read, or when the population is gone; it is not saved.
+- **Research** (attachment `awaken:hunt`, `HuntState`, schemaVersion 1, synced to its owner, kept through death): a point per
+  sign read; levels at 5, 15 and 30 points ("you know their signs", "their ways", "them well"); hunts add ten in stage 4, which
+  also shows weak spots and parts by level. **Atlas**: beds (droppings read, or the quarry's bed tonight when the trail finds
+  it), dens (a pack's) and kill sites, the newest 24, the same kind within 16 blocks replacing the older.
+- **Cost**: a crouch check every 5 ticks and a trail update a second per player over the signs within 64 blocks (a list scan);
+  back-filling is a few `where` calls per population every 2 s.
+- **Tests**: `wild_spoor` (a moving herd's prints point its way; an unseen herd's back-filled prints and bed, laid once),
+  `wild_tracking` (crouching reads, two reads send the motes to the next sign, a few more to the herd, its bed on the Atlas),
+  `wild_pack_hunt` (the kill leaves bones naming the prey). **Command**: `/awaken wild signs` lists the signs within 48 blocks
+  and your trail.

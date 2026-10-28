@@ -74,6 +74,7 @@ public final class LivingClient {
         JournalSection.register();
         AlmanacSection.register();
         CraftsSection.register();
+        SpoorFx.init();
         // rumours: a "?" on the map where you heard something is happening
         dev.awaken.core.api.MapMarks.register(dev.awaken.living.wonder.WonderWatch::marks);
         dev.awaken.core.api.MapMarks.register(p -> {
@@ -103,6 +104,8 @@ public final class LivingClient {
             e.register(LivingNet.Happenings.TYPE, (m, ctx) -> PulseFx.onTells(m));
             e.register(LivingNet.BossBind.TYPE, (m, ctx) -> BossPlate.onBind(m));
             e.register(LivingNet.BossLine.TYPE, (m, ctx) -> BossPlate.onLine(m));
+            e.register(LivingNet.Spoor.TYPE, (m, ctx) -> SpoorFx.onSpoor(m));
+            e.register(LivingNet.Trail.TYPE, (m, ctx) -> SpoorFx.onTrail(m));
         });
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
@@ -111,6 +114,7 @@ public final class LivingClient {
         bus.addListener(SubmitCustomGeometryEvent.class, LivingFx::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, PulseFx::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, CraftFx::submit);
+        bus.addListener(SubmitCustomGeometryEvent.class, SpoorFx::submit);
         bus.addListener(ClientTickEvent.Post.class, CraftFx::tick);
         bus.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LivingPlates::extract);
         // the Boss Plate (SPEC §35.1): before anyone else reads a bar, so ours are cancelled and sized first
@@ -119,6 +123,7 @@ public final class LivingClient {
         bus.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, BossPlate::extract);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> BossPlate.reset());
+        bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> SpoorFx.reset());
     }
 
     private static void reset() {

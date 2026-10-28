@@ -29,6 +29,8 @@ final class PackBrain implements Ledger.Brain {
     @Nullable UUID prey;
     double killX, killZ;
     long huntedDay = -1;
+    /** Where the pack last left prints (NaN: not yet). */
+    final double[] printed = {Double.NaN, Double.NaN};
 
     PackBrain(Ledger.Pop pop) {
         this.pop = pop;
@@ -55,6 +57,7 @@ final class PackBrain implements Ledger.Brain {
         }
         px /= pack.size();
         pz /= pack.size();
+        Spoor.step(level, pop, pack, px, pz, printed);
         PathfinderMob alpha = pop.alpha ? pack.getFirst() : null;
         if (alpha != null && mood != Mood.RETREAT && alpha.getHealth() < alpha.getMaxHealth() * RETREAT_AT) {
             mood = Mood.RETREAT;
@@ -155,6 +158,9 @@ final class PackBrain implements Ledger.Brain {
         mood = Mood.FEED;
         killX = dead.getX();
         killZ = dead.getZ();
+        Ledger.Pop herd = l.pop(pop.herd);
+        Spoor.of(level).lay(Spoor.Kind.KILL, killX, dead.getY(), killZ, dead.getYRot(), pop, l.living(level, pop.id).size(), level.getGameTime(),
+                herd != null ? herd.species : net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(dead.getType()).toString(), 0);
         until = level.getServer().getTickCount() + FEED_TICKS;
         prey = null;
         for (PathfinderMob m : l.living(level, pop.id)) {

@@ -180,11 +180,15 @@ public final class LivingModule {
                 dev.awaken.living.pulse.Pulse.tick(e.getServer());
                 if (!quiet) dev.awaken.living.population.Ledger.tick(e.getServer());
                 if (!quiet) dev.awaken.living.population.Ledger.brainTick(e.getServer());
+                dev.awaken.living.hunt.Tracking.tick(e.getServer());
                 if (!quiet) dev.awaken.living.camp.Camps.tick(e.getServer());
                 dev.awaken.living.wayfarer.Camp.ward(e.getServer());
             }
             dev.awaken.living.quest.Relics.wardTick(e.getServer());
             if (shown(e.getServer())) dev.awaken.living.craft.CraftEvents.tick(e.getServer());
+        });
+        bus.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> {
+            if (e.getEntity() instanceof ServerPlayer sp) dev.awaken.living.hunt.Tracking.forget(sp);
         });
         bus.addListener(PlayerEvent.PlayerLoggedInEvent.class, e -> {
             if (e.getEntity() instanceof ServerPlayer sp) {
@@ -215,6 +219,7 @@ public final class LivingModule {
         });
         LivingCommands.register();
         dev.awaken.living.wild.WildCommands.register();
+        dev.awaken.living.hunt.Tracking.register();
         LivingTests.register();
         dev.awaken.living.wild.WildTests.register();
     }

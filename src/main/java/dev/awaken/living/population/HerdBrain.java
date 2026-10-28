@@ -49,6 +49,10 @@ final class HerdBrain implements Ledger.Brain {
     /** Where each animal is running to, while the herd runs (it gets there in legs). */
     private final java.util.Map<UUID, double[]> runTo = new java.util.HashMap<>();
 
+    /** Where the herd last left prints (NaN: not yet), and the play-day it last left its droppings at its bed. */
+    final double[] printed = {Double.NaN, Double.NaN};
+    long dunged = -1;
+
     private record Ripple(UUID id, int at, double x, double z, double speed) {}
 
     HerdBrain(Ledger.Pop pop) {
@@ -82,6 +86,12 @@ final class HerdBrain implements Ledger.Brain {
         }
         offX *= 0.99;
         offZ *= 0.99;
+        Spoor.step(level, pop, herd, mx, mz, printed);
+        long t = Math.floorMod(tod, 24000L);
+        if (mood == Mood.BED && dunged != day && t >= 16000 && t < 23000) {
+            dunged = day;
+            Spoor.bed(level, pop, herd, mx, mz);
+        }
         sense(l, level, herd, mx, mz, now);
         if (running() && now >= until) {
             mood = Mood.ALERT;

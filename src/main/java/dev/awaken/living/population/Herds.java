@@ -79,4 +79,18 @@ public final class Herds {
         Identifier id = Identifier.tryParse(species);
         return id == null ? null : BuiltInRegistries.ENTITY_TYPE.getOptional(id).orElse(null);
     }
+
+    /** What a hunter calls a kind, one and many: the wild names of the vanilla herds, ours by id ("frost stag", "frost stags"). */
+    private static final java.util.Map<String, String[]> NAMES = java.util.Map.of(
+            "minecraft:cow", new String[]{"aurochs", "aurochs"}, "minecraft:pig", new String[]{"boar", "boar"},
+            "minecraft:sheep", new String[]{"wild ram", "wild rams"}, "minecraft:horse", new String[]{"wild horse", "wild horses"},
+            "minecraft:donkey", new String[]{"wild donkey", "wild donkeys"}, "minecraft:goat", new String[]{"goat", "goats"},
+            "minecraft:wolf", new String[]{"wolf", "wolves"});
+
+    public static String name(String species, boolean many) {
+        String[] n = NAMES.get(species);
+        if (n != null) return n[many ? 1 : 0];
+        String one = species.substring(species.indexOf(':') + 1).replace('_', ' ');
+        return many && !one.endsWith("s") ? one + "s" : one;
+    }
 }
