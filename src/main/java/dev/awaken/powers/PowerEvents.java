@@ -2,9 +2,11 @@ package dev.awaken.powers;
 
 import dev.awaken.core.Forces;
 import dev.awaken.powers.catalog.MindPowers;
+import dev.awaken.powers.catalog.VelocityPowers;
 import dev.awaken.powers.catalog.ShadowPowers;
 import dev.awaken.powers.catalog.SpiritPowers;
 import dev.awaken.powers.content.PowerContent;
+import dev.awaken.powers.ladder.StepHooks;
 import dev.awaken.progression.Counters;
 import dev.awaken.progression.Progression;
 import net.minecraft.server.MinecraftServer;
@@ -19,7 +21,11 @@ import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
+import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -54,6 +60,8 @@ final class PowerEvents {
         bus.addListener(PowerEvents::onChangeDimension);
         bus.addListener(PowerEvents::onJoin);
         bus.addListener(PowerEvents::onPlace);
+        bus.addListener(PowerEvents::onProjectileImpact);
+        bus.addListener(PowerEvents::onDetonate);
         bus.addListener(PowerEvents::onServerStarting);
         bus.addListener(PowerEvents::onServerStopping);
     }
@@ -103,6 +111,13 @@ final class PowerEvents {
                 return;
             }
         }
+        // Turret's Shield (4)
+        if (victim instanceof dev.awaken.powers.content.PowerDrone d && d.shield > 0) event.setAmount(StepHooks.turretShield(d, event.getAmount()));
+        // Afterimage's Snare: what strikes your copy is slowed; Dominate's Marked Prey: what your puppet strikes is marked
+        if (attacker instanceof LivingEntity striker && !(attacker instanceof Player)) {
+            StepHooks.copyStruck(victim, striker);
+            MindPowers.puppetStruck(striker, victim);
+        }
 
         if (victim instanceof ServerPlayer sp) onPlayerHurt(event, sp, src, attacker);
         if (attacker instanceof ServerPlayer sp && victim != sp) onPlayerHits(event, sp, victim, src);
@@ -119,16 +134,50 @@ final class PowerEvents {
         }
         boolean fromSomething = attacker != null || src.getDirectEntity() != null;
         if (fromSomething && st.has(PowerState.Buffs.FORESIGHT, now)) {
-            st.clearBuff(PowerState.Buffs.FORESIGHT);
+            // A Heartbeat Ahead (5): the buff holds more than one miss
+            if (st.adjust(PowerState.Buffs.FORESIGHT, now, -1) < 1) st.clearBuff(PowerState.Buffs.FORESIGHT);
             event.setCanceled(true);
             MindPowers.dodge(sp, attacker instanceof LivingEntity le ? le : null);
+            return;
+        }
+        // Mountain Stance's plates each catch a whole hit; Halo Ward's stop a projectile each
+        if (fromSomething && st.buff(PowerState.Buffs.BRACE_PLATES, now) >= 1) {
+            int left = (int) st.adjust(PowerState.Buffs.BRACE_PLATES, now, -1);
+            event.setCanceled(true);
+            StepHooks.plateCatch(sp, src, left, "brace");
+            return;
+        }
+        if (src.is(DamageTypeTags.IS_PROJECTILE) && st.buff(PowerState.Buffs.BARRIER_PLATES, now) >= 1) {
+            int left = (int) st.adjust(PowerState.Buffs.BARRIER_PLATES, now, -1);
+            event.setCanceled(true);
+            StepHooks.plateCatch(sp, src, left, "barrier");
+            if (src.getDirectEntity() != null && !(src.getDirectEntity() instanceof LivingEntity)) src.getDirectEntity().discard();
+            return;
+        }
+        if (src.is(DamageTypeTags.IS_PROJECTILE) && StepHooks.sheltered(sp, src)) {
+            event.setCanceled(true);
             return;
         }
         float amount = event.getAmount();
         double bulwark = st.buff(PowerState.Buffs.BULWARK, now);
         if (bulwark > 0) amount *= (float) (1 - bulwark);
         double brace = st.buff(PowerState.Buffs.BRACE, now);
-        if (brace > 0) amount *= (float) (1 - brace);
+        if (brace > 0) {
+            double unmoved = st.buff(PowerState.Buffs.BRACE_PROJECTILE, now);
+            if (unmoved > 0 && src.is(DamageTypeTags.IS_PROJECTILE)) {
+                amount *= (float) (1 - unmoved);
+                StepHooks.glance(sp, src, "brace");
+            }
+            st.adjust(PowerState.Buffs.BRACE_ABSORBED, now, amount * brace);
+            amount *= (float) (1 - brace);
+        }
+        double calm = st.buff(PowerState.Buffs.HOVER_CALM, now);
+        if (calm > 0 && src.is(DamageTypeTags.IS_PROJECTILE)) {
+            amount *= (float) (1 - calm);
+            StepHooks.glance(sp, src, "hover");
+        }
+        double guard = st.buff(PowerState.Buffs.GUARD, now);
+        if (guard > 0) amount *= (float) (1 - guard);
         if (attacker instanceof Mob && st.has(PowerState.Buffs.READ_INTENT, now)) amount *= 0.85f;
         event.setAmount(amount);
 
@@ -140,8 +189,15 @@ final class PowerEvents {
                 Combat.hurtFrom(sp, null, melee, (float) (event.getOriginalAmount() * reflect), null, true);
                 Combat.knockFrom(melee, sp.position(), 0.8, 0.2);
             }
+            // Soul Guard (Aura 5): the wisps strike back
+            double soul = st.buff(PowerState.Buffs.AURA_GUARD, now);
+            if (soul > 0) StepHooks.soulGuard(sp, melee, (float) (event.getOriginalAmount() * soul));
             if (nanite > 0) {
-                Combat.hurtFrom(sp, null, melee, (float) Math.max(1, event.getOriginalAmount() * nanite), Forces.Force.CHARGE, true);
+                float shock = (float) Math.max(1, event.getOriginalAmount() * nanite);
+                Combat.hurtFrom(sp, null, melee, shock, Forces.Force.CHARGE, true);
+                // Arc Shock (Nanite Skin 3): the shock jumps on to a second foe
+                double arc = st.buff(PowerState.Buffs.NANITE_ARC, now);
+                if (arc > 0) StepHooks.chainBlow(sp, melee, shock * (float) arc, "nanite_skin");
             }
         }
     }
@@ -156,6 +212,12 @@ final class PowerEvents {
         if (backstab > 0) {
             amount *= (float) backstab;
             st.clearBuff(PowerState.Buffs.BACKSTAB);
+            double blind = st.buff(PowerState.Buffs.BACKSTAB_BLIND, now);
+            if (blind > 0) {
+                Moves.effect(victim, net.minecraft.world.effect.MobEffects.BLINDNESS, (int) blind, 0);
+                if (victim instanceof net.minecraft.world.entity.Mob m && m.getTarget() == sp) m.setTarget(null);
+                st.clearBuff(PowerState.Buffs.BACKSTAB_BLIND);
+            }
             Fx.impact(sp.level(), victim.getBoundingBox().getCenter(), 0x8F6BFF);
             Fx.feel(sp, victim, 50, 1.5f);
         }
@@ -164,8 +226,26 @@ final class PowerEvents {
             amount *= 1.8f;
             ShadowPowers.breakCloak(sp, victim, cloak);
         }
-        if (victim instanceof Enemy && st.has(PowerState.Buffs.READ_INTENT, now)) amount *= 1.15f;
+        if (victim instanceof Enemy && st.has(PowerState.Buffs.READ_INTENT, now)) {
+            amount *= 1.15f;
+            // Open Book (5): a read foe's weak point takes a critical blow
+            if (st.has(PowerState.Buffs.READ_CRIT, now) && SpiritPowers.isMelee(src, sp)) {
+                amount *= (float) st.buff(PowerState.Buffs.READ_CRIT, now);
+                Fx.of(sp, "read_intent", dev.awaken.powers.fx.FxKind.IMPACT, victim.getEyePosition()).scale(1.1).send();
+            }
+        }
+        if (dev.awaken.powers.ladder.Riders.marked(sp, victim, now)) amount *= 1.1f;
+        double momentum = st.buff(PowerState.Buffs.MOMENTUM, now);
+        if (momentum > 0 && SpiritPowers.isMelee(src, sp)) {
+            amount *= (float) momentum;
+            st.clearBuff(PowerState.Buffs.MOMENTUM);
+        }
         event.setAmount(amount);
+        StepHooks.frostHit(sp, victim);
+        StepHooks.dealt(sp, victim, amount);
+        if (SpiritPowers.isMelee(src, sp)) StepHooks.mimic(sp, victim, amount);
+        double chain = st.buff(PowerState.Buffs.CHAIN_BLOWS, now);
+        if (chain > 0 && SpiritPowers.isMelee(src, sp)) StepHooks.chainBlow(sp, victim, amount * (float) chain);
         double twin = st.buff(PowerState.Buffs.TWIN, now);
         if (twin > 0 && SpiritPowers.isMelee(src, sp)) SpiritPowers.twinEcho(sp, victim, amount, twin);
     }
@@ -174,6 +254,8 @@ final class PowerEvents {
         if (!(event.getEntity() instanceof ServerPlayer sp)) return;
         PowerState st = PowerState.peek(sp);
         if (st != null && st.has(PowerState.Buffs.NO_FALL, Casting.now(sp))) event.setCanceled(true);
+        // Spring (Floor 3): a landing on the floor throws you back up instead of hurting
+        if (StepHooks.spring(sp, event.getDistance())) event.setCanceled(true);
     }
 
     // ---- targeting --------------------------------------------------------------------------------------------------
@@ -204,8 +286,12 @@ final class PowerEvents {
             return;
         }
         Allies.remove(dead);
-        if (event.getSource().getEntity() instanceof ServerPlayer killer && Combat.airborne(killer)) {
-            Progression.count(killer, "awaken:kills_airborne");
+        if (event.getSource().getEntity() instanceof ServerPlayer killer) {
+            if (Combat.airborne(killer)) Progression.count(killer, "awaken:kills_airborne");
+            VelocityPowers.flowKill(killer);
+        }
+        if (dead instanceof dev.awaken.powers.content.ShadowSoldier soldier) {
+            dev.awaken.powers.catalog.ShadowPowers.soldierFell(soldier);
         }
     }
 
@@ -265,7 +351,21 @@ final class PowerEvents {
         clearMemory();
     }
 
+    // ---- constructs that answer later (Architect's ladder, SPEC 36) ---------------------------------------------------
+
+    private static void onProjectileImpact(ProjectileImpactEvent event) {
+        if (!(event.getRayTraceResult() instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) return;
+        if (!(event.getProjectile().level() instanceof ServerLevel level) || !Constructs.isConstruct(level, hit.getBlockPos())) return;
+        if (StepHooks.wallStruck(event.getProjectile(), hit.getBlockPos(), hit.getLocation(), hit.getDirection())) event.setCanceled(true);
+    }
+
+    private static void onDetonate(ExplosionEvent.Detonate event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) return;
+        event.getAffectedBlocks().removeIf(p -> Constructs.isConstruct(level, p) && StepHooks.blastProof(level, p));
+    }
+
     static void clearMemory() {
+        dev.awaken.powers.ladder.BuildZones.clear();
         Allies.clear();
         TimeSlow.clear();
         Zones.clear();

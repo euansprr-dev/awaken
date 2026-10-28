@@ -91,7 +91,7 @@ public final class CastClips {
 
     /** The family a style reads as, when nothing else says (variant styles: heat, charge, soul, frost...). */
     static Family family(FxStyle style) {
-        return switch (style) {
+        return switch (style.plain()) {
             case KINETIC -> Family.KINETIC;
             case VELOCITY -> Family.VELOCITY;
             case FLIGHT, GRAVITY -> Family.FLIGHT;
@@ -100,7 +100,8 @@ public final class CastClips {
             case ARCHITECT -> Family.ARCHITECT;
             case TECH -> Family.TECH;
             case SPIRIT, SOUL, FROST -> Family.SPIRIT;
-            case ENERGY, HEAT, CHARGE, PRISM, NEUTRAL -> Family.ENERGY;
+            // plain() never returns an awakened style; they read as their plain one
+            default -> Family.ENERGY;
         };
     }
 

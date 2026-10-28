@@ -124,6 +124,13 @@ public final class ClientPowers {
         }
     }
 
+    /** Every live danger mark's entity (Danger Sense's edge arcs). */
+    static void eachDanger(java.util.function.IntConsumer f) {
+        for (Map.Entry<Integer, Mark> en : MARKS.entrySet()) {
+            if (en.getValue().colour() == 0xFFFF3B3B && en.getValue().until() >= clientTicks) f.accept(en.getKey());
+        }
+    }
+
     static int markColour(int entityId) {
         if (MARKS.isEmpty()) return 0;
         Mark m = MARKS.get(entityId);

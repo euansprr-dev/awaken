@@ -761,5 +761,274 @@
         "attenuation_distance": 18
       }
     ]
+  },
+  "power.evolve": {
+    "subtitle": "subtitles.awaken.power.evolve",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_evolve_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:powers/power_lad_evolve_1",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "power.evolve_sting": {
+    "subtitle": "subtitles.awaken.power.evolve_sting",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_evolve_sting_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:powers/power_lad_evolve_sting_1",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "power.evolve_awaken": {
+    "subtitle": "subtitles.awaken.power.evolve_awaken",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_evolve_awaken_0",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "power.tier3_kinetic": {
+    "subtitle": "subtitles.awaken.power.tier3_kinetic",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier3_kinetic_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:powers/power_lad_tier3_kinetic_1",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "power.tier5_kinetic": {
+    "subtitle": "subtitles.awaken.power.tier5_kinetic",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier5_kinetic_0",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_lad_tier5_kinetic_1",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "power.tier3_velocity": {
+    "subtitle": "subtitles.awaken.power.tier3_velocity",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier3_velocity_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:powers/power_lad_tier3_velocity_1",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "power.tier5_velocity": {
+    "subtitle": "subtitles.awaken.power.tier5_velocity",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier5_velocity_0",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_lad_tier5_velocity_1",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "power.tier3_flight": {
+    "subtitle": "subtitles.awaken.power.tier3_flight",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier3_flight_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:powers/power_lad_tier3_flight_1",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "power.tier5_flight": {
+    "subtitle": "subtitles.awaken.power.tier5_flight",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier5_flight_0",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_lad_tier5_flight_1",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "power.tier3_energy": {
+    "subtitle": "subtitles.awaken.power.tier3_energy",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier3_energy_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:powers/power_lad_tier3_energy_1",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "power.tier5_energy": {
+    "subtitle": "subtitles.awaken.power.tier5_energy",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier5_energy_0",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_lad_tier5_energy_1",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "power.tier3_shadow": {
+    "subtitle": "subtitles.awaken.power.tier3_shadow",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier3_shadow_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:powers/power_lad_tier3_shadow_1",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "power.tier5_shadow": {
+    "subtitle": "subtitles.awaken.power.tier5_shadow",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier5_shadow_0",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_lad_tier5_shadow_1",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "power.tier3_mind": {
+    "subtitle": "subtitles.awaken.power.tier3_mind",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier3_mind_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:powers/power_lad_tier3_mind_1",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "power.tier5_mind": {
+    "subtitle": "subtitles.awaken.power.tier5_mind",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier5_mind_0",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_lad_tier5_mind_1",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "power.tier3_architect": {
+    "subtitle": "subtitles.awaken.power.tier3_architect",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier3_architect_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:powers/power_lad_tier3_architect_1",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "power.tier5_architect": {
+    "subtitle": "subtitles.awaken.power.tier5_architect",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier5_architect_0",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_lad_tier5_architect_1",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "power.tier3_tech": {
+    "subtitle": "subtitles.awaken.power.tier3_tech",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier3_tech_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:powers/power_lad_tier3_tech_1",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "power.tier5_tech": {
+    "subtitle": "subtitles.awaken.power.tier5_tech",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier5_tech_0",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_lad_tier5_tech_1",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "power.tier3_spirit": {
+    "subtitle": "subtitles.awaken.power.tier3_spirit",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier3_spirit_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:powers/power_lad_tier3_spirit_1",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "power.tier5_spirit": {
+    "subtitle": "subtitles.awaken.power.tier5_spirit",
+    "sounds": [
+      {
+        "name": "awaken:powers/power_lad_tier5_spirit_0",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_lad_tier5_spirit_1",
+        "attenuation_distance": 28
+      }
+    ]
   }
 }

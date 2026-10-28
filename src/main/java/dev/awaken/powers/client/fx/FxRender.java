@@ -40,29 +40,35 @@ final class FxRender {
     private static RenderType addMesh, addSprites, litSprites, brightSprites, underlay;
 
     private static final SubmitNodeCollector.CustomGeometryRenderer MESHES = (pose, vc) -> {
+        long t0 = FxStats.begin();
         try {
             drawMeshes(vc);
         } catch (RuntimeException ex) {
             fail(ex);
         }
+        FxStats.end(t0);
     };
     private static final SubmitNodeCollector.CustomGeometryRenderer ADD_SPRITES = (pose, vc) -> safeSprites(vc, FxPool.ADD);
     private static final SubmitNodeCollector.CustomGeometryRenderer LIT_SPRITES = (pose, vc) -> safeSprites(vc, FxPool.LIT);
     private static final SubmitNodeCollector.CustomGeometryRenderer BRIGHT_SPRITES = (pose, vc) -> safeSprites(vc, FxPool.BRIGHT);
     private static final SubmitNodeCollector.CustomGeometryRenderer UNDERLAY = (pose, vc) -> {
+        long t0 = FxStats.begin();
         try {
             drawUnderlay(vc);
         } catch (RuntimeException ex) {
             fail(ex);
         }
+        FxStats.end(t0);
     };
 
     private static void safeSprites(VertexConsumer vc, int bucket) {
+        long t0 = FxStats.begin();
         try {
             drawSprites(vc, bucket);
         } catch (RuntimeException ex) {
             fail(ex);
         }
+        FxStats.end(t0);
     }
 
     private static void fail(RuntimeException ex) {
@@ -81,9 +87,12 @@ final class FxRender {
     private static float whiteU, whiteV;
 
     static void onExtract(ExtractLevelRenderStateEvent e) {
+        FxStats.nextFrame(); // the last frame's FX time is complete (SPEC 36.9: /awaken fx stats, bench)
+        long t0 = FxStats.begin();
         pt = e.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         FxWorld.extract(pt);
         FxAfterimages.extract(pt);
+        FxStats.end(t0);
     }
 
     /** Set if drawing ever throws: effects stop drawing for the session instead of crashing every frame. */
@@ -91,11 +100,13 @@ final class FxRender {
 
     static void onSubmit(SubmitCustomGeometryEvent e) {
         if (broken) return;
+        long t0 = FxStats.begin();
         try {
             submit(e);
         } catch (RuntimeException ex) {
             fail(ex);
         }
+        FxStats.end(t0);
     }
 
     private static void submit(SubmitCustomGeometryEvent e) {
@@ -268,7 +279,7 @@ final class FxRender {
     }
 
     /** A glow colour for the current pass: premultiplied for additive light, shaded for the underlay. */
-    private static int tint(int argb) {
+    static int tint(int argb) {
         return under ? shade(argb) : premul(argb);
     }
 
@@ -326,7 +337,7 @@ final class FxRender {
         quadTex(vc, s, x + c - sn, yy, z + sn + c, x + c + sn, yy, z + sn - c, x - c + sn, yy, z - sn - c, x - c - sn, yy, z - sn + c, colour, light);
     }
 
-    private static void quadTex(VertexConsumer vc, TextureAtlasSprite s, float x0, float y0, float z0, float x1, float y1, float z1,
+    static void quadTex(VertexConsumer vc, TextureAtlasSprite s, float x0, float y0, float z0, float x1, float y1, float z1,
                                 float x2, float y2, float z2, float x3, float y3, float z3, int colour, int light) {
         float u0 = s.getU0(), u1 = s.getU1(), v0 = s.getV0(), v1 = s.getV1();
         int o = OverlayTexture.NO_OVERLAY;
@@ -383,6 +394,14 @@ final class FxRender {
                 case Shape.SHELL -> {
                     if (darkPass) continue;
                     shell(vc, sh, fade);
+                }
+                case Shape.ORBIT -> {
+                    if (darkPass) continue;
+                    FxLadderDraw.orbit(vc, sh, fade);
+                }
+                case Shape.SIGIL -> {
+                    if (darkPass) continue;
+                    FxLadderDraw.sigil(vc, sh, fade);
                 }
                 case Shape.BEAM -> {
                     if (darkPass || under) continue; // soft glows: no under-copy
@@ -454,7 +473,7 @@ final class FxRender {
     }
 
     /** A shape held in the local player's hand while the camera is in first person. */
-    private static boolean ownHand(Shape sh) {
+    static boolean ownHand(Shape sh) {
         if (sh.anchor != Anchors.HAND && sh.anchor != Anchors.OFFHAND) return false;
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         return mc.player != null && sh.follow == mc.player.getId() && mc.options.getCameraType().isFirstPerson();
@@ -486,6 +505,7 @@ final class FxRender {
                 case Shape.TETHER -> tether(vc, sh, fade);
                 case Shape.SEAMS -> FxSeams.draw(vc, sh, fade);
                 case Shape.SLASH -> slash(vc, sh, fade);
+                case Shape.FISSURE -> FxLadderDraw.fissure(vc, sh, fade);
                 default -> {
                 }
             }
@@ -915,6 +935,23 @@ final class FxRender {
 
     static double camZ() {
         return cz;
+    }
+
+    /** Camera right and up axes (world space), for shapes that lie in a plane. */
+    static float camRx() {
+        return rx;
+    }
+
+    static float camRy() {
+        return ry;
+    }
+
+    static float camRz() {
+        return rz;
+    }
+
+    static boolean underlay() {
+        return under;
     }
 
     static float time() {

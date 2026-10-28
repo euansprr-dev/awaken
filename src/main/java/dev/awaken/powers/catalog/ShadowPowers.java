@@ -1,5 +1,6 @@
 package dev.awaken.powers.catalog;
 
+import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
 
 import dev.awaken.core.Forces;
@@ -36,6 +37,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 /** Shadow: the shadow army fantasy, in its own words. Scales with SPI. */
 public final class ShadowPowers {
@@ -96,13 +99,45 @@ public final class ShadowPowers {
             if (to.distanceToSqr(from) < 1) return Result.fail("blocked");
             Moves.teleport(c.player, to);
         }
-        PowerState.of(c.player).buff(PowerState.Buffs.BACKSTAB, c.now() + 60, c.is(1) ? 2.2 : 1.6);
+        PowerState st = PowerState.of(c.player);
+        double backstab = c.is(1) ? 2.2 : 1.6;
+        // Ink Wake (2) holds the backstab longer; Blinding (3) makes it blind
+        long window = c.now() + 60 + (long) c.num(2, "window", 0);
+        st.buff(PowerState.Buffs.BACKSTAB, window, backstab);
+        if (c.step(3)) st.buff(PowerState.Buffs.BACKSTAB_BLIND, window, c.num(3, "blind", 20));
         if (c.is(2)) Moves.effect(c.player, MobEffects.INVISIBILITY, 40, 0);
         // vanish in ink, reappear behind them with a slash of shadow; the mark shows the backstab is ready
         Fx.at(c, FxKind.BLINK, from).to(to).send();
         if (t != null) Fx.at(c, FxKind.AURA, t.position()).caster(t).aux(FxKind.Aura.MARK.ordinal()).ticks(60).noAnim().send();
         c.sound(from, PowerSounds.SHADOW, 0.9f, 1f);
         c.sound(to, PowerSounds.SHADOW, 0.9f, 1.3f);
+        if (c.step(5)) {
+            // Night Cut: the crescent lands the backstab by itself; tendrils from the pool hold the foes round you
+            if (t != null) {
+                st.clearBuff(PowerState.Buffs.BACKSTAB);
+                float cut = (float) (c.player.getAttributeValue(Attributes.ATTACK_DAMAGE) * backstab);
+                c.hurt(t, Math.max(cut, c.dmg(4f)), null);
+                if (st.has(PowerState.Buffs.BACKSTAB_BLIND, c.now())) {
+                    Moves.effect(t, MobEffects.BLINDNESS, (int) st.buff(PowerState.Buffs.BACKSTAB_BLIND, c.now()), 0);
+                    st.clearBuff(PowerState.Buffs.BACKSTAB_BLIND);
+                }
+            }
+            for (LivingEntity e : Combat.foesAround(c.player, to, c.num(5, "radius", 3f))) {
+                if (e == t) continue;
+                Moves.effect(e, MobEffects.SLOWNESS, (int) c.num(5, "hold", 20), 6);
+                Fx.at(c, FxKind.TETHER, to.add(0, 0.2, 0)).to(e.position().add(0, 0.3, 0)).ticks(12).plain().flag(FxEvent.QUIET).send();
+            }
+        }
+        if (c.step(4)) {
+            // Return: the ink pool stays where you left; press again within 2 s to step back to it
+            Vec3 pool = from;
+            c.followUp((int) c.num(4, "back", 40), () -> {
+                Vec3 now = c.player.position();
+                Moves.teleport(c.player, pool);
+                Fx.at(c, FxKind.BLINK, now).to(pool).plain().send();
+                c.sound(pool, PowerSounds.SHADOW, 0.9f, 0.8f);
+            });
+        }
         return Result.OK;
     }
 
@@ -110,6 +145,7 @@ public final class ShadowPowers {
         int ticks = c.ticks(120);
         PowerState st = PowerState.of(c.player);
         st.buff(PowerState.Buffs.CLOAK, c.now() + ticks, c.is(2) ? 2 : 1);
+        if (c.step(3)) st.buff(PowerState.Buffs.CLOAK_FREE, c.now() + ticks, 1);
         Moves.effect(c.player, MobEffects.INVISIBILITY, ticks, 0);
         for (Mob m : c.level.getEntitiesOfClass(Mob.class, c.player.getBoundingBox().inflate(32), m -> m.getTarget() == c.player)) m.setTarget(null);
         Moves.postOn(c.player, Moves.FX_CLOAK);
@@ -117,11 +153,21 @@ public final class ShadowPowers {
         Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.CLOAK.ordinal()).ticks(ticks).noAnim().send();
         c.sound(PowerSounds.CLOAK, 1f, 1f);
         Running r = Casting.start(c, ticks);
+        // Nightfall (5): a dome of dusk round you where foes lose your allies too
+        double dusk = c.num(5, "dusk", 0f);
+        if (dusk > 0) Fx.at(c, FxKind.SMOKE, c.pos()).scale(dusk).noAnim().send();
         r.tick(rr -> {
             if (!st.has(PowerState.Buffs.CLOAK, c.now())) rr.stop(Running.Why.DONE);
+            if (dusk > 0 && rr.age % 10 == 0) {
+                for (Mob m : c.level.getEntitiesOfClass(Mob.class, c.player.getBoundingBox().inflate(dusk), m -> m.getTarget() != null)) {
+                    LivingEntity t = m.getTarget();
+                    if (t == c.player || t instanceof net.minecraft.world.entity.player.Player || Combat.isAlly(c.player, t)) m.setTarget(null);
+                }
+            }
         }).end((rr, why) -> {
             Fx.end(c, c.player, FxKind.Aura.CLOAK.ordinal() + 1);
             st.clearBuff(PowerState.Buffs.CLOAK);
+            st.clearBuff(PowerState.Buffs.CLOAK_FREE);
             c.player.removeEffect(MobEffects.INVISIBILITY);
             Moves.postOff(c.player, Moves.FX_CLOAK);
             shadowPuff(c, c.pos());
@@ -133,6 +179,24 @@ public final class ShadowPowers {
     public static void breakCloak(net.minecraft.server.level.ServerPlayer player, LivingEntity victim, double mode) {
         PowerState st = PowerState.of(player);
         st.clearBuff(PowerState.Buffs.CLOAK);
+        st.clearBuff(PowerState.Buffs.CLOAK_FREE);
+        var cloak = dev.awaken.powers.PowerRegistry.get("cloak");
+        if (cloak != null) {
+            Cast mark = Cast.of(player, cloak);
+            // Ambush Mark (4): the first strike leaves a crescent that bleeds
+            if (mark.step(4)) {
+                Fx.at(mark, FxKind.SMOKE, victim.position()).scale(0.9).noAnim().send();
+                float dps = mark.num(4, "dps", 1.0f) * mark.dmg(1f);
+                int bleed = (int) mark.num(4, "bleed", 60);
+                for (int t = 10; t <= bleed; t += 10) {
+                    dev.awaken.powers.Scheduler.after(t, () -> {
+                        if (!victim.isAlive() || player.isRemoved()) return;
+                        Combat.hurtFrom(player, null, victim, dps * 0.5f, Forces.Force.SPIRIT, true);
+                        Fx.at(mark, FxKind.IMPACT, victim.getBoundingBox().getCenter()).scale(0.5).plain().flag(FxEvent.QUIET).send();
+                    });
+                }
+            }
+        }
         if (mode >= 2) {
             var type = dev.awaken.powers.PowerRegistry.get("cloak");
             if (type != null) {
@@ -173,7 +237,8 @@ public final class ShadowPowers {
     }
 
     static Result echoSwap(Cast c) {
-        Entity other = nearestSummon(c, 32);
+        // Ink Line (2): it reaches further
+        Entity other = nearestSummon(c, 32 + c.num(2, "range", 0));
         if (other == null) return Result.fail("no_summon");
         Vec3 mine = c.pos();
         Vec3 theirs = other.position();
@@ -198,17 +263,38 @@ public final class ShadowPowers {
                 }
             }
         }
+        // Left Behind (5): a shadow copy stays where you were and draws them
+        if (c.step(5)) {
+            Vec3 side = c.flatLook().yRot((float) (Math.PI / 2)).scale(1.2);
+            Moves.decoy(c, mine.add(side), (int) c.num(5, "copy", 60), 0, 0, 14, "echo_swap");
+            Fx.at(c, FxKind.AFTERIMAGE, mine.add(side)).ticks(20).plain().send();
+        }
+        // Double Swap (4): press again to swap back, free
+        if (c.step(4)) c.followUp((int) c.num(4, "back", 40), () -> swapBack(c, other));
         return Result.OK;
+    }
+
+    private static void swapBack(Cast c, Entity other) {
+        if (!other.isAlive() || !c.player.isAlive() || other.level() != c.player.level()) return;
+        Vec3 mine = c.pos();
+        Vec3 theirs = other.position();
+        other.teleportTo(mine.x, mine.y, mine.z);
+        Moves.teleport(c.player, theirs);
+        Fx.at(c, FxKind.BLINK, mine).to(theirs).noAnim().send();
+        c.sound(theirs, PowerSounds.SHADOW, 0.9f, 1.4f);
     }
 
     static Result legion(Cast c) {
         int spi = Progression.stat(c.player, Stat.SPI);
-        int count = c.is(1) ? 2 : c.is(2) ? 8 : Math.min(8, 4 + Math.max(0, spi - 5) / 15);
+        // Rim Light (2): one more soldier
+        int count = (c.is(1) ? 2 : c.is(2) ? 8 : Math.min(8, 4 + Math.max(0, spi - 5) / 15)) + (int) c.num(2, "extra", 0);
+        boolean captain = c.step(5);
         double hpMul = c.is(1) ? 2.5 : c.is(2) ? 0.45 : 1.0;
         float dmg = c.dmg();
         int life = c.ticks(400);
         double hp = 20 * PowerMath.levelScale(Progression.profile(c.player).level()) * 0.8 * hpMul;
-        Moves.makeRoom(c.player, count);
+        Moves.makeRoom(c.player, count + (captain ? 1 : 0));
+        List<ShadowSoldier> risen = new java.util.ArrayList<>();
         // a circle of shadow opens under you and the soldiers climb out of it
         Fx.at(c, FxKind.GLYPH, c.pos()).scale(3.2).ticks(60).send();
         int spawned = 0;
@@ -232,13 +318,61 @@ public final class ShadowPowers {
                 if (scale != null) scale.setBaseValue(0.8);
             }
             c.level.addFreshEntity(s);
+            risen.add(s);
             var rise = Fx.at(c, FxKind.SUMMON, spot).scale(c.is(1) ? 1.4 : 1);
             if (spawned > 0) rise.noAnim().range(48);
             rise.send();
             spawned++;
         }
+        // The Risen Guard (5): a captain twice their size rises at the ring's heart, built to last the whole time
+        if (captain) {
+            ShadowSoldier k = PowerContent.SHADOW_SOLDIER.get().create(c.level, EntitySpawnReason.MOB_SUMMONED);
+            if (k != null) {
+                Vec3 at = c.pos().add(c.flatLook().scale(1.5));
+                Vec3 spot = c.level.noCollision(k, k.getType().getDimensions().makeBoundingBox(at).inflate(0.5)) ? at : c.pos();
+                k.snapTo(spot.x, spot.y, spot.z, c.yRot(), 0);
+                k.setup(c.player, life, dmg * 1.5f);
+                var maxHp = k.getAttribute(Attributes.MAX_HEALTH);
+                if (maxHp != null) maxHp.setBaseValue(hp * 4);
+                k.setHealth((float) hp * 4);
+                var scale = k.getAttribute(Attributes.SCALE);
+                if (scale != null) scale.setBaseValue(2.0);
+                c.level.addFreshEntity(k);
+                risen.add(k);
+                Fx.at(c, FxKind.SUMMON, spot).scale(2.2).noAnim().send();
+                spawned++;
+            }
+        }
         if (spawned == 0) return Result.fail("blocked");
         c.sound(PowerSounds.SUMMON, 1.3f, 0.7f);
+        // Ink Death (4) reads the risen through this (soldierFell); Charge (3) sends them in with a lunge
+        if (c.step(3) || c.step(4)) Casting.start(c, life).data = risen;
+        if (c.step(3)) {
+            for (ShadowSoldier s : risen) {
+                LivingEntity foe = Combat.foesAround(c.player, s.position(), 14).stream()
+                        .min(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(s))).orElse(null);
+                if (foe == null) continue;
+                s.setTarget(foe);
+                Vec3 to = foe.position().subtract(s.position());
+                Combat.push(s, Moves.flat(to).normalize().scale(Math.min(1.4, 0.35 + to.length() * 0.12)).add(0, 0.25, 0));
+                dev.awaken.powers.Scheduler.after(7, () -> {
+                    if (!s.isAlive() || !foe.isAlive() || s.distanceToSqr(foe) > 3.5 * 3.5) return;
+                    Moves.swing(s, net.minecraft.world.InteractionHand.MAIN_HAND);
+                    Combat.hurtFrom(c.player, s, foe, dmg, Forces.Force.SPIRIT, true);
+                    Fx.at(c, FxKind.IMPACT, foe.getBoundingBox().getCenter()).dir(to).scale(0.9).plain().send();
+                });
+            }
+        }
         return Result.OK;
+    }
+
+    /** Ink Death (4): a fallen soldier spills a pool of ink that slows foes. */
+    public static void soldierFell(ShadowSoldier s) {
+        if (!(s.getOwner() instanceof net.minecraft.server.level.ServerPlayer owner)) return;
+        PowerState st = PowerState.peek(owner);
+        Running r = st == null ? null : st.running("awaken:legion");
+        if (r == null || r.c.powerLevel < 4 || !(r.data instanceof List<?> risen) || !risen.contains(s)) return;
+        dev.awaken.powers.ladder.Riders.lingerAt(r.c, s.position(), "slow", (int) r.c.num(4, "ink", 60), 2.5f, 0);
+        Fx.at(r.c, FxKind.SMOKE, s.position()).scale(1.6).noAnim().send();
     }
 }

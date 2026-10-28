@@ -29,6 +29,18 @@ public final class Cast {
     public final boolean predicted;
     /** An FX event carrying this cast's profile beat has been sent (Casting adds a pose beat if a power sent none). */
     public boolean poseSent;
+    /** What the power's ladder adds at the level this cast started at (SPEC 36.3). */
+    public final dev.awaken.powers.ladder.Kit kit;
+    /** Rider bookkeeping (powers.ladder.Riders): the tick of the last throttled rider and chain hits this tick. */
+    public long riderTick = Long.MIN_VALUE, chainTick = Long.MIN_VALUE;
+    public int chainCount;
+    /** A hit refund already paid this cast. */
+    public boolean refunded;
+    /** The ladder's sound layer (levels 3 and 5) has gone out with this cast's first sound. */
+    private boolean tierSounded;
+    /** A second press this cast opened (SPEC 36.3, "press again"): what it does and for how many ticks. */
+    @Nullable Runnable followUp;
+    int followUpTicks;
     private final float yRot;
     private final float xRot;
     private final float strafe;
@@ -47,6 +59,7 @@ public final class Cast {
         this.variant = Math.max(0, Math.min(type.variants.size() - 1, variant));
         this.powerLevel = Math.max(1, powerLevel);
         this.v = type.variant(this.variant);
+        this.kit = dev.awaken.powers.ladder.PowerLadder.kit(type, this.powerLevel);
         this.slot = slot;
         this.predicted = predicted;
         this.yRot = yRot;
@@ -142,11 +155,40 @@ public final class Cast {
     }
 
     public double radius(double base) {
-        return base * v.radius();
+        return base * v.radius() * kit.radius;
+    }
+
+    /** A reach or travel distance, grown by the ladder's extend steps. */
+    public double range(double base) {
+        return base * kit.range;
     }
 
     public int ticks(int base) {
-        return Math.max(1, Math.round(base * v.duration() * (1 + 0.05f * (powerLevel - 1))));
+        return Math.max(1, Math.round(base * v.duration() * (1 + 0.05f * (powerLevel - 1)) * kit.duration));
+    }
+
+    /** Ticks to a full charge, shortened by the ladder's charge steps. */
+    public int chargeTicks(int base) {
+        return Math.max(1, Math.round(base * kit.charge));
+    }
+
+    /**
+     * Opens a second press: for {@code ticks} the power's key runs {@code then} instead of casting again, free, and the
+     * cooldown starts when it is used or the window closes (Shadow Step's Return, Afterimage's swap, Titanfall's plunge).
+     */
+    public void followUp(int ticks, Runnable then) {
+        this.followUp = then;
+        this.followUpTicks = Math.max(1, ticks);
+    }
+
+    /** True from ladder level {@code n} up: a step's own code (capstones, steps no rider fits). */
+    public boolean step(int n) {
+        return powerLevel >= n;
+    }
+
+    /** A number of step {@code level}'s own code, from the ladder table; {@code def} below that level (so it reads as "off"). */
+    public float num(int level, String key, float def) {
+        return powerLevel >= level ? dev.awaken.powers.ladder.PowerLadder.num(type.path, level, key, def) : def;
     }
 
     public Forces.@Nullable Force force() {
@@ -176,8 +218,16 @@ public final class Cast {
      * on the server, as before.
      */
     public void sound(Vec3 at, Holder<SoundEvent> sound, float volume, float pitch) {
-        if (dev.awaken.powers.fx.CastProfiles.byPower(type.path) != null) Fx.sound(this, at, sound, volume, pitch);
-        else level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, pitch);
+        if (dev.awaken.powers.fx.CastProfiles.byPower(type.path) != null) {
+            Fx.sound(this, at, sound, volume, pitch); // each client adds the level's layer from the event's level bits (LadderFx.tierSound)
+            return;
+        }
+        level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, pitch);
+        if (powerLevel >= 3 && !tierSounded) {
+            // a power without a cast profile plays its sounds here, so its ladder layer (SPEC 36.5) goes with the first of them
+            tierSounded = true;
+            level.playSound(null, at.x, at.y, at.z, PowerSounds.tier(type.family, powerLevel), SoundSource.PLAYERS, Math.min(1f, volume) * 0.9f, 1f);
+        }
     }
 
     public <T extends ParticleOptions> void particles(T p, Vec3 at, int count, double spread, double speed) {

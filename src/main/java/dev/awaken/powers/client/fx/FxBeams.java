@@ -41,6 +41,7 @@ final class FxBeams {
         } finally {
             FxRender.keepNear = false;
         }
+        if (sh.helix > 0) FxLadderDraw.helix(vc, sh, fade, ax, ay, az, bx, by, bz, tt);
     }
 
     /** Per tick: how far the local player's aim beam reaches (blocks, then living things). */

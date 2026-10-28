@@ -37,6 +37,8 @@ final class FxWorld {
     static int shapeCap = SHAPES.length;
     static int liveShapes;
     static int ticks;
+    /** Counts effect builds; every shape remembers the build that made it (the ladder decorates its event's shapes). */
+    static int serial;
 
     // ---- per effect -------------------------------------------------------------------------------------------------
 
@@ -106,6 +108,7 @@ final class FxWorld {
                 s.live = true;
                 s.type = type;
                 s.life = Math.max(1, life);
+                s.serial = serial;
                 liveShapes++;
                 return s;
             }
@@ -171,8 +174,11 @@ final class FxWorld {
                     s.z = TMP[2];
                 }
             }
-            if (s.type == Shape.TRAIL) s.pushHistory(s.x, s.y, s.z);
-            if (s.emitter != 0) FxRecipes.emit(s);
+            // a delayed ladder layer (age below 0) waits: no trail history, no emitter yet
+            if (s.age >= 0) {
+                if (s.type == Shape.TRAIL) s.pushHistory(s.x, s.y, s.z);
+                if (s.emitter != 0) FxRecipes.emit(s);
+            }
             live++;
         }
         liveShapes = live;
@@ -214,6 +220,16 @@ final class FxWorld {
                 }
             }
             if ((s.flags & Shape.AIM) != 0 && mc.player != null && s.follow == mc.player.getId()) FxBeams.aim(s, mc, pt);
+            if ((s.flags & Shape.LOOK) != 0 && s.follow >= 0) {
+                Entity e = lvl.getEntity(s.follow);
+                if (e != null) {
+                    float yaw = e.getViewYRot(pt) * net.minecraft.util.Mth.DEG_TO_RAD, pitch = e.getViewXRot(pt) * net.minecraft.util.Mth.DEG_TO_RAD;
+                    float cp = net.minecraft.util.Mth.cos(pitch);
+                    s.nx = -net.minecraft.util.Mth.sin(yaw) * cp;
+                    s.ny = -net.minecraft.util.Mth.sin(pitch);
+                    s.nz = net.minecraft.util.Mth.cos(yaw) * cp;
+                }
+            }
             s.rex = s.ex;
             s.rey = s.ey;
             s.rez = s.ez;

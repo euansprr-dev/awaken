@@ -79,32 +79,55 @@ public final class Moves {
         return new Vec3(h.x * hl, y, h.z * hl);
     }
 
-    /** The furthest safe spot along a direction (the player's box fits there), stopping at walls. */
+    /**
+     * The furthest safe spot along a direction (the player's box fits there), stopping at walls. Aimed down into the ground
+     * (a crosshair a little low), it glides along the ground at the last free height instead of stopping at the first step,
+     * and holds that height to the end (past a ledge it never drops back to the line's height).
+     */
     public static Vec3 blinkTarget(ServerPlayer p, Vec3 dir, double max) {
         Vec3 start = p.position();
         Vec3 best = start;
         Vec3 u = dir.normalize();
         AABB box = p.getBoundingBox();
+        boolean glide = false;
         for (double d = 0.5; d <= max; d += 0.5) {
             Vec3 at = start.add(u.scale(d));
-            AABB moved = box.move(at.subtract(start));
-            if (!p.level().noCollision(p, moved)) break;
+            if (glide) at = new Vec3(at.x, best.y, at.z);
+            if (!p.level().noCollision(p, box.move(at.subtract(start)))) {
+                if (glide || u.y >= 0) break;
+                glide = true;
+                at = new Vec3(at.x, best.y, at.z);
+                if (!p.level().noCollision(p, box.move(at.subtract(start)))) break;
+            }
             best = at;
         }
         return best;
     }
 
-    /** Like {@link #blinkTarget} but may pass through solid walls up to {@code wallLimit} blocks thick. */
+    /**
+     * Like {@link #blinkTarget} but may pass through solid walls up to {@code wallLimit} blocks thick. Aimed down into the
+     * ground it glides along it like a blink (the ground is not a wall to phase through), and still passes walls at that height.
+     */
     public static Vec3 phaseTarget(ServerPlayer p, Vec3 dir, double max, int wallLimit) {
         Vec3 start = p.position();
         Vec3 best = start;
         Vec3 u = dir.normalize();
         AABB box = p.getBoundingBox();
         double inWall = 0;
+        boolean glide = false;
         for (double d = 0.5; d <= max + wallLimit; d += 0.5) {
             Vec3 at = start.add(u.scale(d));
-            AABB moved = box.move(at.subtract(start));
-            if (p.level().noCollision(p, moved)) {
+            if (glide) at = new Vec3(at.x, best.y, at.z);
+            boolean free = p.level().noCollision(p, box.move(at.subtract(start)));
+            if (!free && !glide && u.y < 0 && inWall == 0) {
+                Vec3 level = new Vec3(at.x, best.y, at.z);
+                if (p.level().noCollision(p, box.move(level.subtract(start)))) {
+                    glide = true;
+                    at = level;
+                    free = true;
+                }
+            }
+            if (free) {
                 best = at;
                 inWall = 0;
                 if (d >= max) break;
@@ -218,6 +241,12 @@ public final class Moves {
      * for {@code popDamage} in a small radius.
      */
     public static @Nullable Mannequin decoy(Cast c, Vec3 at, int ticks, float popDamage, double popRadius, double tauntRadius, String key) {
+        return decoy(c, at, ticks, popDamage, popRadius, tauntRadius, key, null);
+    }
+
+    /** As above; {@code onPop} runs for each foe the burst hits (a ladder step's extra, SPEC 36). */
+    public static @Nullable Mannequin decoy(Cast c, Vec3 at, int ticks, float popDamage, double popRadius, double tauntRadius, String key,
+                                            java.util.function.@Nullable Consumer<LivingEntity> onPop) {
         ServerLevel level = c.level;
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("immovable", true);
@@ -253,6 +282,7 @@ public final class Moves {
                 for (LivingEntity f : Combat.foesAround(c.player, p, popRadius)) {
                     c.hurt(f, popDamage, Forces.Force.SPIRIT);
                     effect(f, MobEffects.BLINDNESS, 40, 0);
+                    if (onPop != null) onPop.accept(f);
                 }
                 level.sendParticles(ParticleTypes.EXPLOSION, p.x, p.y, p.z, 1, 0, 0, 0, 0);
             }

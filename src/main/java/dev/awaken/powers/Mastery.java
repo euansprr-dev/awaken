@@ -56,6 +56,14 @@ public final class Mastery {
     /** Ordinary kills pay while kill tokens last: 6 in a burst, then one every 10 s (an AoE at a mob farm). */
     public static final float KILL_TOKENS = 6f;
     static final int TOKEN_TICKS = 200;
+    /**
+     * Use-based earning (SPEC 36.8) for the passives that never hit: a second on a wall in a run (Wall Stride), a second run on
+     * water (Water Run), a warned blow that then misses you (Danger Sense). Each power takes at most {@link #USE_CAP} a minute
+     * from use, about what a main power earns in a minute of fighting (tools/sim/pacing_sim.py: ~81 MP), so a passive you lean
+     * on levels about as fast as your main one and standing at a wall pays no more than that.
+     */
+    public static final float WALL_SECOND = 6f, WATER_SECOND = 5f, DODGED = 15f;
+    public static final float USE_CAP = 90f;
     /** Powers that leave summons behind; their summons' strikes count toward them. */
     private static final Set<String> SUMMONERS = Set.of("awaken:legion", "awaken:drone", "awaken:turret", "awaken:drone_swarm");
 
@@ -209,6 +217,23 @@ public final class Mastery {
         return KILL;
     }
 
+    /** Pays a passive's use (SPEC 36.8) toward its bar, within its per-minute cap. Returns what was paid. */
+    public static float use(ServerPlayer player, String powerId, float mp) {
+        PowerType type = PowerRegistry.get(powerId);
+        if (type == null || mp <= 0 || Powers.loadout(player).get(key(type)) == null) return 0;
+        PowerState.Track t = PowerState.of(player).track(type);
+        long minute = player.level().getServer().overworld().getGameTime() / 1200;
+        if (t.useMinute != minute) {
+            t.useMinute = minute;
+            t.usePaid = 0;
+        }
+        float pay = Math.min(mp, USE_CAP - t.usePaid);
+        if (pay <= 0) return 0;
+        t.usePaid += pay;
+        add(player, type, pay);
+        return pay;
+    }
+
     // ---- the bar --------------------------------------------------------------------------------------------------
 
     /**
@@ -252,12 +277,7 @@ public final class Mastery {
     }
 
     private static void announce(ServerPlayer player, PowerType type, int level) {
-        // toast-sized: the first sentence is what shows (144 px), the rest stays in Recent messages
-        String body = level >= Loadout.MAX_LEVEL
-                ? "Mastered: full strength. It grew through use."
-                : "+12% damage, -4% cooldown. It grew through use.";
-        Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(type.name + " · level " + level))
-                .body(Component.literal(body)).presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6).build());
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(), PowerSounds.LEARN.get(), SoundSource.PLAYERS, 0.7f, 1.3f);
+        // the ladder's moment names the new step and what it does (SPEC 36.6)
+        dev.awaken.powers.ladder.Evolution.levelled(player, type, level - 1, level);
     }
 }

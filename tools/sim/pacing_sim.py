@@ -209,6 +209,17 @@ def mastery_per_combat_minute(level):
     return energy * (LANDED + (1 - LANDED) * FIGHT_MP) + KILLS_PER_COMBAT_MIN * MAIN_SHARE * KILL_MP
 
 
+# Use-based earning (SPEC 36.8, JAVA Mastery.use): the passives that never hit earn from use, capped per minute per power.
+WALL_SECOND_MP, WATER_SECOND_MP, DODGED_MP = 6, 5, 15  # JAVA Mastery.WALL_SECOND / WATER_SECOND / DODGED
+USE_CAP_MP = 90                                         # JAVA Mastery.USE_CAP (per minute)
+
+
+def use_minutes_to(level, mp_per_min):
+    """Minutes of use for a passive earning mp_per_min (capped) to go from level 1 to `level`."""
+    rate = min(USE_CAP_MP, mp_per_min)
+    return sum(MASTERY_NEED[l] for l in range(1, level)) / rate
+
+
 def death_risk(floor, ratio, skill):
     # Per-floor chance of dying. ratio = player level / gate's content level. (The prologue's Bell Crypt; real gates
     # use gate_floor_risk below, built on what the gates actually contain.)

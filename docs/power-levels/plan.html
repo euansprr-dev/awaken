@@ -1,0 +1,486 @@
+<title>Power Levels</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; the beam strip and the ladder tables break out inside their own scroll frames.
+   Colour: AWAKEN's holo blue for the plan; the game's own Signal glass for the mock-ups (same in both themes, it is the game). */
+:root{--bg:#F1F4F8;--surface:#FFFFFF;--ink:#121820;--muted:#566274;--line:#D3DAE4;--accent:#1D6BC9;--accent-soft:#E2EDFB;
+--bad:#BD4129;--bad-soft:#FBE7E2;--good:#12786A;--good-soft:#D9F2EC;--warn:#9A6500;--warn-soft:#FBF0D2;--shot:#0B0F16;
+--glass:#0F1724;--edge:#7FC3FF;--amber:#FFCF7A;--pale:#B9C6D6;--gwhite:#F4F8FF;
+--kin:#E08F1F;--vel:#FF4A3D;--fli:#A7CDE3;--ene:#7FC3FF;--sha:#8F6BFF;--min:#D088C2;--arc:#D9BA80;--tec:#47C6B0;--spi:#86E0A0;
+--display:'Barlow Condensed','Arial Narrow',sans-serif;--body:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E131A;--surface:#161D27;--ink:#E6ECF4;--muted:#97A3B5;--line:#283342;--accent:#7FC3FF;--accent-soft:#15273A;
+--bad:#FF8F78;--bad-soft:#35201B;--good:#62D6BB;--good-soft:#11302A;--warn:#F0BD55;--warn-soft:#33270E;--shot:#070A0F;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E131A;--surface:#161D27;--ink:#E6ECF4;--muted:#97A3B5;--line:#283342;--accent:#7FC3FF;--accent-soft:#15273A;
+--bad:#FF8F78;--bad-soft:#35201B;--good:#62D6BB;--good-soft:#11302A;--warn:#F0BD55;--warn-soft:#33270E;--shot:#070A0F;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:56px;padding-top:40px}
+section{min-width:0}
+h1,h2,h3{font-family:var(--display);line-height:1.05;margin:0;text-wrap:balance;font-weight:600}
+h1{font-size:clamp(44px,8vw,76px);font-weight:700}
+h2{font-size:clamp(28px,4vw,40px);margin-bottom:14px}
+h3{font-size:22px;letter-spacing:.01em}
+p{margin:0 0 12px;max-width:68ch}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.88em}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+.lead{font-size:19px;max-width:64ch}
+.quote{font-style:italic;color:var(--muted);max-width:70ch;border-left:2px solid var(--line);padding-left:14px;margin:18px 0 0}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:26px}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.fact b{font:600 34px/1 var(--display);color:var(--accent);font-variant-numeric:tabular-nums}
+.fact span{font-size:14px;color:var(--muted)}
+.ask{margin-top:22px;border-left:4px solid var(--accent);background:var(--accent-soft);padding:14px 18px;border-radius:0 6px 6px 0}
+.ask p{margin:0}
+ul.plain{margin:0;padding-left:20px;max-width:72ch}ul.plain li{margin-bottom:8px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:20px;min-width:0}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font:600 11px/1.2 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:var(--surface)}
+tbody th{font-weight:600}
+/* the beam strip */
+.strip{background:var(--shot);border-radius:8px;overflow-x:auto;padding:14px}
+.frames{display:grid;grid-template-columns:repeat(5,minmax(190px,1fr));gap:12px;min-width:1000px}
+.frame{display:flex;flex-direction:column;gap:8px}
+.frame canvas{width:100%;aspect-ratio:5/3;display:block;border-radius:4px;background:#0B0F16}
+.frame .lv{font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#7FC3FF}
+.frame h3{color:#F4F8FF;font-size:26px}
+.frame p{color:#B9C6D6;font-size:13.5px;line-height:1.45;margin:0}
+.frame p.does{color:#FFCF7A}
+.frame.l5 .lv{color:#FFD27A}
+.motion{display:flex;gap:10px;align-items:center;margin-top:10px;color:var(--muted);font-size:14px}
+button.tog{font:500 13px var(--mono);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:6px 10px;cursor:pointer}
+button.tog:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+/* step anatomy */
+.anat td:first-child{font-weight:600;white-space:nowrap}
+.anat td.y{color:var(--good)}
+.anat td.k{color:var(--accent);font-weight:600}
+/* game UI mock-ups (the Signal's glass, SPEC section 5) */
+.mocks{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.mock{background:linear-gradient(180deg,#1A2433,#0B0F16);border-radius:8px;padding:22px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.mock .cap{color:#B9C6D6;font-size:13.5px;margin:0}
+.sig{position:relative;background:rgba(15,23,36,.88);border:1px solid rgba(127,195,255,.35);padding:16px 18px;color:#F4F8FF;font-family:var(--body)}
+.sig:before,.sig:after{content:"";position:absolute;width:12px;height:12px;border:2px solid #7FC3FF}
+.sig:before{left:-2px;top:-2px;border-right:0;border-bottom:0}.sig:after{right:-2px;bottom:-2px;border-left:0;border-top:0}
+.sig .k{font:500 11px/1 var(--mono);letter-spacing:.16em;color:#7FC3FF;text-transform:uppercase}
+.sig .t{font:700 34px/1 var(--display);letter-spacing:.04em;margin:6px 0 8px;color:#F4F8FF}
+.sig .t.aw{color:#FFD27A}
+.sig .b{font-size:14px;color:#D6E0EC;margin:0}
+.sig .f{font:500 12px var(--mono);color:#FFCF7A;margin-top:10px}
+.keys{display:flex;gap:8px;justify-content:center}
+.key{width:46px;height:46px;border:1px solid #2B3A50;background:#121A26;border-radius:4px;display:grid;place-items:center;font:600 13px var(--mono);color:#7A8BA2;position:relative}
+.key.hot{border-color:#FFB347;color:#FFE2B0;box-shadow:0 0 0 2px rgba(255,179,71,.35),0 0 22px rgba(255,154,60,.55)}
+.key.hot:after{content:"";position:absolute;inset:3px;border:1px solid rgba(255,214,140,.7);border-radius:2px}
+.ladder-mock{display:flex;flex-direction:column;gap:6px}
+.rung{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;font-size:13.5px;color:#9FB0C4}
+.rung i{width:14px;height:14px;border:1px solid #3A4A60;transform:rotate(45deg);margin:4px 0 0 3px}
+.rung.done{color:#E6ECF4}.rung.done i{background:#7FC3FF;border-color:#7FC3FF}
+.rung.next{color:#FFE2B0}.rung.next i{border-color:#FFCF7A;box-shadow:0 0 10px rgba(255,207,122,.6)}
+.rung b{font-family:var(--display);font-size:18px;letter-spacing:.03em;color:inherit;margin-right:6px}
+.bar{height:6px;background:#1E2938;border-radius:3px;overflow:hidden;margin-top:6px}.bar span{display:block;height:100%;width:34%;background:#FFCF7A}
+/* ladders */
+details.fam{border:1px solid var(--line);border-radius:6px;background:var(--surface);margin-top:10px}
+details.fam>summary{cursor:pointer;font:600 22px var(--display);padding:12px 16px;display:flex;align-items:center;gap:10px;list-style:none}
+details.fam>summary::-webkit-details-marker{display:none}
+details.fam>summary:after{content:"+";margin-left:auto;font-family:var(--mono);color:var(--muted)}
+details.fam[open]>summary:after{content:"−"}
+details.fam summary small{font:500 12px var(--mono);color:var(--muted);letter-spacing:.06em}
+.fdot{width:12px;height:12px;border-radius:2px;display:inline-block}
+.fdot.kinetic{background:var(--kin)}.fdot.velocity{background:var(--vel)}.fdot.flight{background:var(--fli)}.fdot.energy{background:var(--ene)}
+.fdot.shadow{background:var(--sha)}.fdot.mind{background:var(--min)}.fdot.architect{background:var(--arc)}.fdot.tech{background:var(--tec)}.fdot.spirit{background:var(--spi)}
+.tw{overflow-x:auto;border-top:1px solid var(--line)}
+table.ladder{min-width:980px;font-size:13.5px}
+table.ladder td{width:22%}
+table.ladder tbody th{width:12%;font:600 17px/1.2 var(--display)}
+table.ladder td b{display:block;font:600 16px/1.2 var(--display);letter-spacing:.02em;color:var(--accent)}
+table.ladder td span{display:block}
+table.ladder .look{color:var(--ink)}
+table.ladder .does{color:var(--good);margin-top:4px}
+table.ladder .body{color:var(--muted);font-size:12.5px;margin-top:4px}
+.tag{font:500 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:2px 5px;border-radius:3px;vertical-align:2px}
+.tag.s{background:var(--good-soft);color:var(--good)}.tag.h{background:var(--accent-soft);color:var(--accent)}
+.note{font:400 12px/1.4 var(--body);color:var(--muted);margin-top:6px}
+/* decisions */
+.decisions{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:12px}
+.decisions li{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.decisions .n{font:600 13px var(--mono);color:var(--muted)}
+.decisions .q{font:600 20px/1.15 var(--display)}
+.decisions .r{color:var(--good);font-weight:600}
+.decisions .r:before{content:"Recommended: ";font-weight:400;color:var(--muted)}
+.decisions .w{color:var(--muted);font-size:14.5px}
+.phases td:nth-child(3){font-variant-numeric:tabular-nums;white-space:nowrap}
+.foot{color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:18px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">AWAKEN · plan for approval · 28 Oct 2026</div>
+  <h1>Power Levels</h1>
+  <p class="lead">Every level-up should change the power itself: how it looks, what it does, and at levels 3 and 5 how your body casts it and how it sounds. Level 5 is the power's Awakened form. Here is the audit, the design, a ladder for all 63 powers, and 12 decisions for you.</p>
+  <p class="quote">"Let's say the beam ... levels up from the simple beam to around the beam there's an extra like spinny spiral ... It has to genuinely look insane." (you, 28 Oct)</p>
+  <div class="facts">
+    <div class="fact"><b>63</b><span>powers, each with its own ladder</span></div>
+    <div class="fact"><b>4</b><span>named steps per power (levels 2 to 5)</span></div>
+    <div class="fact"><b>~3 h</b><span>to the proof you look at in game</span></div>
+    <div class="fact"><b>10–14 h</b><span>of builder time for all of it</span></div>
+  </div>
+  <div class="ask"><p><b>What I need from you:</b> a yes, or changes, on the 12 decisions at the bottom. Each has my recommendation. The ladders are drafts: change any name or step you like.</p></div>
+</header>
+
+<section>
+  <h2>What a level does today</h2>
+  <ul class="plain">
+    <li><b>Only numbers change.</b> Each level adds 12% damage and takes 4% off the cooldown. Nothing a power <i>does</i> changes at any level.</li>
+    <li><b>23 powers look exactly the same at level 5 as at level 1</b>, the Beam among them. The other 40 draw some parts 10% bigger. No power's animation, sound or icon changes.</li>
+    <li><b>The level-up message says "+12% damage, -4% cooldown"</b> for every power, including Wall, which does no damage.</li>
+    <li><b>Using a Power Core plays vanilla sparkles</b> (Minecraft's dust and end-rod particles).</li>
+    <li><b>Wall Stride, Water Run and Danger Sense can never level through use.</b> Mastery only counts hits and fights, and they do neither.</li>
+  </ul>
+  <p>The good news is that the level already reaches every player nearby on each effect, so others can see your level's look with no new network traffic. Nothing draws from it yet.</p>
+</section>
+
+<section>
+  <h2>The Beam, level by level</h2>
+  <p>Your example, worked through. Each step adds a layer and a change in play, and the look tells you what changed. These sketches show the idea; the real thing is drawn by the game's own effects engine (ribbons, rings and glow, never vanilla particles).</p>
+  <div class="strip">
+    <div class="frames">
+      <div class="frame"><canvas id="b1" aria-label="Level 1 beam: a three-layer beam of orange light with rings riding down it"></canvas><div class="lv">Level 1 · today</div><h3>Beam</h3><p>A three-layer beam: wide faint glow, orange body, white core. Rings ride down it.</p></div>
+      <div class="frame"><canvas id="b2" aria-label="Level 2: one bright ribbon spirals round the beam"></canvas><div class="lv">Level 2</div><h3>Helix</h3><p>A bright ribbon spirals round the beam and spins; embers peel off it.</p><p class="does">Held on one foe, it builds up to 20% more damage over 1.5 s, and the spiral tightens as it builds.</p></div>
+      <div class="frame"><canvas id="b3" aria-label="Level 3: a double helix, the beam passes through the first foe into a second"></canvas><div class="lv">Level 3</div><h3>Lance</h3><p>A second ribbon turns the other way. A flare bursts at every body it passes through.</p><p class="does">Pierces the first foe and hits a second for 60%. New: the off hand grips the wrist; a deep hum under the beam.</p></div>
+      <div class="frame"><canvas id="b4" aria-label="Level 4: a molten pool and a turning ring of light where the beam lands"></canvas><div class="lv">Level 4</div><h3>Corona</h3><p>Where it lands, a molten pool spreads and a ring of light turns round the end.</p><p class="does">The pool burns foes standing in it for 2 s.</p></div>
+      <div class="frame l5"><canvas id="b5" aria-label="Level 5: the beam is born from a ring of runes at the palm, three gold ribbons and a white-gold core"></canvas><div class="lv">Level 5 · Awakened</div><h3>Sunspear</h3><p>Born from a ring of runes at your palm. Three ribbons, a white-gold core.</p><p class="does">Letting go sends a last pulse down the beam that bursts for 20% of what it dealt. A new stance, and its own sound.</p></div>
+    </div>
+  </div>
+  <div class="motion"><button class="tog" id="tog" type="button" aria-pressed="false">Pause</button><span>The sketches turn slowly. They're drawn on the page, not taken from the game.</span></div>
+</section>
+
+<section>
+  <h2>What every step brings</h2>
+  <div class="tbl"><table class="anat">
+    <thead><tr><th></th><th>Level 2</th><th>Level 3</th><th>Level 4</th><th>Level 5 · Awakened</th></tr></thead>
+    <tbody>
+      <tr><td>A name</td><td class="y">yes</td><td class="y">yes</td><td class="y">yes</td><td class="k">the form's name</td></tr>
+      <tr><td>The look</td><td>a first new layer</td><td>a second layer</td><td>a third layer</td><td class="k">a signature look in the family's awakened colours</td></tr>
+      <tr><td>What it does</td><td>a small change (reach, speed, a status)</td><td>a new behaviour: a slightly different attack</td><td>a second boost</td><td class="k">the capstone move</td></tr>
+      <tr><td>The body</td><td>as level 1</td><td>an accent: a second hand joins, a step, a hang</td><td>as level 3</td><td class="k">a new cast, in first and third person</td></tr>
+      <tr><td>The sound</td><td>as level 1</td><td>a deeper layer under the cast</td><td>as level 3</td><td class="k">the power's own signature sound</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:14px">Every step keeps the ones before it and works with every variant. No step changes what a key does or where a move goes (the Dash bug from 27 Oct can't come back: its test runs at every level). Movement powers never get air jumps, gliding or flight from a step; the Ascent keeps those.</p>
+</section>
+
+<section>
+  <h2>Levelling up is a moment</h2>
+  <div class="mocks">
+    <div class="mock">
+      <div class="keys"><div class="key">X</div><div class="key hot">Z</div><div class="key">C</div><div class="key">V</div></div>
+      <p class="cap"><b style="color:#F4F8FF">In a fight:</b> a short sting and the key flares with its new frame. Nothing pops up, nothing pauses. Your next cast of it blooms once.</p>
+    </div>
+    <div class="mock">
+      <div class="sig"><div class="k">Beam · Level 3</div><div class="t">LANCE</div><p class="b">Your beam now pierces the first enemy and hits a second for 60%.</p><div class="f">Press Z to try it.</div></div>
+      <p class="cap"><b style="color:#F4F8FF">When it's calm:</b> the System names the new form and says exactly what it does. The new layer blooms round you for two seconds, and players near you see it. A Power Core plays this same moment.</p>
+    </div>
+    <div class="mock">
+      <div class="sig"><div class="k">Beam · Level 3 of 5</div>
+        <div class="ladder-mock" style="margin-top:10px">
+          <div class="rung done"><i></i><div><b>Helix</b>builds damage while held</div></div>
+          <div class="rung done"><i></i><div><b>Lance</b>pierces into a second foe</div></div>
+          <div class="rung next"><i></i><div><b>Corona</b>a burning pool where it lands<div class="bar"><span></span></div>Mastery 34% to Corona</div></div>
+          <div class="rung"><i></i><div><b>Sunspear</b>the Awakened form: a last pulse on letting go</div></div>
+        </div>
+      </div>
+      <p class="cap"><b style="color:#F4F8FF">In the K menu:</b> each power's card shows its ladder: what you have, what's next and how close you are, and the Awakened form waiting at the top.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Every power's ladder</h2>
+  <p>Drafts for you to steer. Each cell: the name, what it looks like, <span style="color:var(--good)">what it does</span>. Level 5 adds the new cast. The families with a starter power are open; click a family to open it.</p>
+  <details class="fam" open><summary><span class="fdot kinetic"></span>Kinetic <small>7 powers</small></summary>
+<div class="tw"><table class="ladder"><thead><tr><th>Power</th><th>Level 2</th><th>Level 3</th><th>Level 4</th><th>Level 5 · Awakened</th></tr></thead><tbody>
+<tr><th>Haymaker <span class="tag s">starter</span></th><td><b>Knuckle Shards</b><span class="look">Shards of amber light orbit the charging fist and close in as the charge fills.</span><span class="does">Full charge comes 20% sooner.</span></td><td><b>Shockfist</b><span class="look">A cone of force bursts out of the far side of the target along the punch.</span><span class="does">Foes behind the target take half damage and are pushed back.</span></td><td><b>Cannonball</b><span class="look">A launched target trails dust and a ring of force where it lands.</span><span class="does">A fully charged target flies as a projectile and hits whatever it crashes into.</span></td><td><b>Meteor Fist</b><span class="look">Your forearm is wrapped in a spiral of embers while you charge. The punch tunnels the air with rings, and a ghost fist lands again a third of a second later.</span><span class="does">A second impact for 40% of the first.</span><span class="body">Body: A stepping lunge punch with the off arm thrown back.</span></td></tr>
+<tr><th>Shockwave <span class="tag s">starter</span></th><td><b>Stone Crest</b><span class="look">The wave carries a curling crest of dust and stone along its front.</span><span class="does">Reaches 15% further.</span></td><td><b>Spine</b><span class="look">The wave leaves a crack along its path that erupts half a second later into a row of stone spikes.</span><span class="does">The spikes hit anything still in the line.</span></td><td><b>Rolling Thunder</b><span class="look">The wave widens as it travels and kicks up the ground&#x27;s own blocks.</span><span class="does">Foes are thrown higher and stay down for half a second.</span></td><td><b>Landbreaker</b><span class="look">The stamp splits the earth: a rolling wall of upturned slabs rides the crest and a glowing fissure runs behind it, cooling from gold to red.</span><span class="does">Foes hit are stunned for half a second and the fissure burns for 2 s.</span><span class="body">Body: The knee comes higher with a hang at the top; both fists drop as the foot plants.</span></td></tr>
+<tr><th>Ground Slam </th><td><b>Fault Lines</b><span class="look">Glowing amber cracks run out from the impact and cool from gold to red over 2 s.</span><span class="does">Foes standing on the cracks are slowed for a second.</span></td><td><b>Aftershock</b><span class="look">A second, lower ring rolls out half a second later with its own thump.</span><span class="does">The aftershock hits again for half damage.</span></td><td><b>Upheaval</b><span class="look">Slabs of the real ground jut up round the impact and drop back.</span><span class="does">Foes in the inner half are popped into the air.</span></td><td><b>Worldbreaker</b><span class="look">You hang a beat in the air with light wound round both fists, then a dome of force flattens the dust, the crater rim glows and slabs rise in a ring.</span><span class="does">The slam pulls foes inward first, then the aftershock throws them out.</span><span class="body">Body: Both fists raised overhead, a hang, a two-fisted drive into the ground.</span></td></tr>
+<tr><th>Leap <div class="note">The plunge is predicted on your client like the leap itself. No step adds an air jump (the Ascent&#x27;s Leaper owns those).</div></th><td><b>Comet Arc</b><span class="look">An amber ribbon traces your arc from the feet; a burst of dust at take-off.</span><span class="does">15% further.</span></td><td><b>Hard Landing</b><span class="look">Your landing cracks Fault Lines into the ground.</span><span class="does">The landing hits harder and slows foes for a second.</span></td><td><b>Rebound</b><span class="look">A ring of force snaps up off the landing.</span><span class="does">Foes are thrown up, and you can&#x27;t be knocked back for a second after.</span></td><td><b>Titanfall</b><span class="look">At the top of the arc, press again to drive straight down: a three-point landing, a glowing crater and a ring of rising slabs.</span><span class="does">The plunge hits like a Ground Slam from that height.</span><span class="body">Body: Knee and fist hit the ground together; the head comes up last.</span></td></tr>
+<tr><th>Terrain Rip </th><td><b>Molten Seams</b><span class="look">The ripped chunk glows along its cracks and trails dust as it flies.</span><span class="does">A 15% wider splash.</span></td><td><b>Shrapnel</b><span class="look">The chunk bursts on impact into three tumbling rocks.</span><span class="does">Each rock hits a different foe nearby.</span></td><td><b>Twin Rip</b><span class="look">Your off hand tears out a second chunk a beat after the first.</span><span class="does">A second throw at the next closest foe.</span></td><td><b>Mountain Hurl</b><span class="look">You heave a three-block slab overhead with both hands; it tumbles end over end and lands as a rolling line of shock.</span><span class="does">The landing becomes a Shockwave along the line of the throw.</span><span class="body">Body: A two-handed overhead heave.</span></td></tr>
+<tr><th>Brace </th><td><b>Bronze Skin</b><span class="look">A bronze sheen flows over you and your feet crack the ground.</span><span class="does">Reflects 10% more back at attackers.</span></td><td><b>Counter Shove</b><span class="look">When it ends, a ring of force shoves out from your feet.</span><span class="does">The shove hits for part of what you absorbed.</span></td><td><b>Unmoved</b><span class="look">Arrows spark off the sheen and drop.</span><span class="does">Projectiles do half damage while you&#x27;re braced.</span></td><td><b>Mountain Stance</b><span class="look">Stone plates rise and circle you, catching what&#x27;s thrown at you; when it ends they burst outward.</span><span class="does">The plates block three hits and cut the foes near you as they fly.</span><span class="body">Body: Fists crossed at the chest, then slammed apart.</span></td></tr>
+<tr><th>Thunderclap <span class="tag h">hidden</span></th><td><b>Static Hands</b><span class="look">Arcs dance between your hands during the wind-up.</span><span class="does">The stun lasts 0.2 s longer.</span></td><td><b>Forking</b><span class="look">Each bolt forks to one more foe.</span><span class="does">Every strike chains once.</span></td><td><b>Thunderhead</b><span class="look">A storm knot hangs over you for 3 s after the clap.</span><span class="does">It drops one bolt a second on a foe near you.</span></td><td><b>Heaven&#x27;s Clap</b><span class="look">Hands raised overhead, the clap throws a flat disc of lightning and a pillar strikes you.</span><span class="does">For 3 s your blows chain lightning to a second foe.</span><span class="body">Body: An overhead clap, the body rising onto the toes.</span></td></tr>
+</tbody></table></div></details>
+<details class="fam"><summary><span class="fdot velocity"></span>Velocity <small>6 powers</small></summary>
+<div class="tw"><table class="ladder"><thead><tr><th>Power</th><th>Level 2</th><th>Level 3</th><th>Level 4</th><th>Level 5 · Awakened</th></tr></thead><tbody>
+<tr><th>Dash <div class="note">Direction never changes: a dash goes the way you move at every level and in every variant (SPEC section 6).</div></th><td><b>Sonic Ring</b><span class="look">A crisp sonic ring and a pressure cone at the start; the red ribbons double.</span><span class="does">Foes you pass through are shoved aside.</span></td><td><b>Momentum</b><span class="look">Your leading fist glows red for a second after a dash.</span><span class="does">Your next blow within a second hits 25% harder.</span></td><td><b>Chain Charge</b><span class="look">Each chained air dash adds a red ring that stacks round you.</span><span class="does">From the third dash in a chain, half the energy comes back.</span></td><td><b>Redline</b><span class="look">Your path stays drawn in the air as a red line of light that snaps a beat later.</span><span class="does">The snap cuts foes along the path for 60%.</span><span class="body">Body: A lower, longer lean with one arm trailing.</span></td></tr>
+<tr><th>Flow </th><td><b>Ripple</b><span class="look">The slowdown arrives as a shell sweeping out from you; colour drains outside it.</span><span class="does">Lasts half a second longer.</span></td><td><b>Afterimages</b><span class="look">You leave red afterimages as you move.</span><span class="does">Each kill during Flow adds half a second (2 s at most).</span></td><td><b>Tempo</b><span class="look">Flow ends with a red snap round you.</span><span class="does">20% faster movement and attacks for 3 s after.</span></td><td><b>Red Hour</b><span class="look">Every foe you hit gets a hanging red slash mark; when Flow ends every mark snaps at once.</span><span class="does">The marks deal 30% of the damage you did during Flow.</span><span class="body">Body: A breath in with the eyes closed, then a sharp open.</span></td></tr>
+<tr><th>Afterimage </th><td><b>Vivid</b><span class="look">The copy holds your pose sharply inside a glowing red outline.</span><span class="does">Lasts a second longer.</span></td><td><b>Mimic</b><span class="look">The copy swings once at the nearest foe.</span><span class="does">Its blow hits for half of yours.</span></td><td><b>Snare</b><span class="look">Red threads hang off the copy.</span><span class="does">Foes that strike it are slowed.</span></td><td><b>Phantom Rush</b><span class="look">The copy bursts into a ring of red crescents.</span><span class="does">Press again within 2 s to swap places with it.</span><span class="body">Body: A hard sideways step out of your own body.</span></td></tr>
+<tr><th>Wall Stride <div class="note">Agree with the body module first: it owns wall-running (SPEC section 17).</div></th><td><b>Spark Steps</b><span class="look">Red sparks kick off each step on the wall.</span><span class="does">Half a second longer on the wall.</span></td><td><b>Kick-off</b><span class="look">Leaving the wall leaves a red ring behind you.</span><span class="does">A burst of speed as you leave.</span></td><td><b>Steady</b><span class="look">A thin red line marks your path along the wall.</span><span class="does">You don&#x27;t sink at all.</span></td><td><b>Street Runner</b><span class="look">A red speed ribbon trails you along the wall and you flip off the end.</span><span class="does">Each new wall within a second of the last adds a second to the run.</span><span class="body">Body: The flip off the wall&#x27;s end.</span></td></tr>
+<tr><th>Water Run </th><td><b>Wake</b><span class="look">The water parts in a V-shaped wake with spray.</span><span class="does">No slowdown as you step onto water.</span></td><td><b>Skip</b><span class="look">Each stride leaves a ring of light on the surface.</span><span class="does">A leap off water keeps your speed.</span></td><td><b>Still Water</b><span class="look">The water stills in a circle under you.</span><span class="does">You can stand on water for 2 s.</span></td><td><b>Tidewalker</b><span class="look">Every step leaves a glowing ring; at full sprint you throw a bow wave.</span><span class="does">The wave pushes foes in the water away.</span><span class="body">Body: Sprint posture leaning into the wave.</span></td></tr>
+<tr><th>Lightning Step <span class="tag h">hidden</span></th><td><b>Bright Path</b><span class="look">The path stays lit for a second.</span><span class="does">2 blocks further.</span></td><td><b>Static Field</b><span class="look">Where you land, crackle spreads over the ground.</span><span class="does">Foes in it are slowed for 2 s.</span></td><td><b>Double Flash</b><span class="look">A spare charge sparks at your heels.</span><span class="does">A second flash within a second costs nothing.</span></td><td><b>Thunder Step</b><span class="look">A bolt strikes from the sky at both ends of your path.</span><span class="does">Everything on the path is stunned for half a second.</span><span class="body">Body: A snap of two fingers, then you are gone.</span></td></tr>
+</tbody></table></div></details>
+<details class="fam"><summary><span class="fdot flight"></span>Flight <small>6 powers</small></summary>
+<div class="tw"><table class="ladder"><thead><tr><th>Power</th><th>Level 2</th><th>Level 3</th><th>Level 4</th><th>Level 5 · Awakened</th></tr></thead><tbody>
+<tr><th>Hover <div class="note">No step adds flight or a glide: the Ascent&#x27;s Wings own those.</div></th><td><b>Wind Rings</b><span class="look">Rings of wind turn under your feet.</span><span class="does">A second longer.</span></td><td><b>Updraft</b><span class="look">Wind spirals up round you.</span><span class="does">Hold jump to rise slowly.</span></td><td><b>Calm Air</b><span class="look">Arrows bend away as they reach the wind round you.</span><span class="does">Arrows that reach you do half damage.</span></td><td><b>Skyhold</b><span class="look">A disc of pale light forms under your feet.</span><span class="does">Allies can stand on it while you hover.</span><span class="body">Body: Arms spread low, palms down.</span></td></tr>
+<tr><th>Flight <div class="note">Agree with the Ascent first (Skyborn and the Sovereign form are its own).</div></th><td><b>Contrails</b><span class="look">White ribbons stream from hands and feet.</span><span class="does">Drains 10% less.</span></td><td><b>Sonic Wake</b><span class="look">At top speed a vapour cone forms round you and booms.</span><span class="does">10% faster at the top.</span></td><td><b>Long Haul</b><span class="look">The contrails stretch and hold longer.</span><span class="does">Drains another 10% less.</span></td><td><b>Jetstream</b><span class="look">A burst with a boom ring and a long contrail.</span><span class="does">Double-tap forward for a 2 s burst of speed.</span><span class="body">Body: A tuck into a dive line.</span></td></tr>
+<tr><th>Gravity Well </th><td><b>Lens</b><span class="look">A dark core with a bright violet rim; dust spirals inward.</span><span class="does">Pulls 15% harder.</span></td><td><b>Debris Ring</b><span class="look">Chunks of the ground orbit the core.</span><span class="does">The chunks hit foes they pass.</span></td><td><b>Crush</b><span class="look">The knot visibly tightens as it runs.</span><span class="does">Its damage climbs over its length.</span></td><td><b>Black Star</b><span class="look">A tilted disc of violet light spins round the core; at the end it collapses and bursts.</span><span class="does">The burst hits for 30% of what the well dealt.</span><span class="body">Body: Both hands press down and twist.</span></td></tr>
+<tr><th>Telekinesis </th><td><b>Grip</b><span class="look">A ring of violet runes clamps the lifted mob.</span><span class="does">Hold a second longer.</span></td><td><b>Pair</b><span class="look">A second ring takes the mob next to it.</span><span class="does">Lifts a second foe near the first.</span></td><td><b>Tumble</b><span class="look">Lifted mobs tumble slowly in the air.</span><span class="does">They hit whatever they pass.</span></td><td><b>Orbit Throw</b><span class="look">What you lift orbits round you; the throw curves to your aim with a violet trail.</span><span class="does">Throws everything you hold at once, each at its own target.</span><span class="body">Body: A two-handed gather, then a swing out like a sling.</span></td></tr>
+<tr><th>Meteor Dive </th><td><b>Burning Entry</b><span class="look">A comet trail and a shock cone as you dive.</span><span class="does">Dives 15% faster.</span></td><td><b>Crater Rim</b><span class="look">A ring of molten rock where you land.</span><span class="does">It burns for 2 s.</span></td><td><b>Rebound</b><span class="look">You bounce once into a second, smaller impact.</span><span class="does">A second hit for half.</span></td><td><b>Starfall</b><span class="look">Three smaller meteors fall round the impact a beat after you.</span><span class="does">Each meteor hits the nearest foe.</span><span class="body">Body: A rising spin before the drop.</span></td></tr>
+<tr><th>Gravity Flip <span class="tag h">hidden</span></th><td><b>Upside Dust</b><span class="look">Dust and pebbles fall upward with the foes.</span><span class="does">Foes hang half a second longer.</span></td><td><b>Collision</b><span class="look">Foes in the air drift together.</span><span class="does">They crash into each other.</span></td><td><b>Weightless</b><span class="look">A pale shimmer stays on you.</span><span class="does">You float for 2 s after.</span></td><td><b>Inverted Sky</b><span class="look">The sky flips twice: up, down, up, then the crash.</span><span class="does">Two drops instead of one.</span><span class="body">Body: Both hands turn over twice.</span></td></tr>
+</tbody></table></div></details>
+<details class="fam" open><summary><span class="fdot energy"></span>Energy <small>6 powers</small></summary>
+<div class="tw"><table class="ladder"><thead><tr><th>Power</th><th>Level 2</th><th>Level 3</th><th>Level 4</th><th>Level 5 · Awakened</th></tr></thead><tbody>
+<tr><th>Beam <span class="tag s">starter</span><div class="note">Prism: the centre beam keeps every layer, the side beams the core and one ribbon. Focused: a tighter spiral.</div></th><td><b>Helix</b><span class="look">A bright ribbon of light spirals round the beam and spins; embers peel off along it.</span><span class="does">Held on one target, the beam builds up to 20% more damage over 1.5 s, and the spiral tightens as it builds.</span></td><td><b>Lance</b><span class="look">A second ribbon turns the other way (a double helix) and a flare bursts at every body it passes through.</span><span class="does">Pierces the first foe and carries on to a second at 60%.</span></td><td><b>Corona</b><span class="look">Where the beam lands, a molten pool spreads and a ring of light turns round the end.</span><span class="does">The pool burns foes standing in it for 2 s.</span></td><td><b>Sunspear</b><span class="look">The beam is born from a ring of runes at your palm. Three ribbons, a white-gold core, and on letting go a last pulse runs down the beam and bursts at the end.</span><span class="does">The last pulse deals 20% of what the beam dealt.</span><span class="body">Body: A wide braced stance, the off hand flat on the forearm; on letting go, the palm closes.</span></td></tr>
+<tr><th>Charged Shot <span class="tag s">starter</span></th><td><b>Coil</b><span class="look">A spinning coil of lightning wraps the charge orb.</span><span class="does">Charges 15% faster.</span></td><td><b>Arc</b><span class="look">On a hit the bolt jumps to a second foe.</span><span class="does">The jump hits for half.</span></td><td><b>Overcharge</b><span class="look">Hold past full and the orb turns white and spits sparks.</span><span class="does">An overcharged bolt pierces.</span></td><td><b>Thunder Lance</b><span class="look">A full charge fires a lance that leaves a crackling line for 2 s, and a bolt from the sky strikes the target.</span><span class="does">The line shocks foes that cross it.</span><span class="body">Body: The bolt hand pulled back to the ear, then thrown like a spear.</span></td></tr>
+<tr><th>Nova </th><td><b>Orbits</b><span class="look">Two rings of light orbit the shell as it grows.</span><span class="does">10% wider.</span></td><td><b>Searing Shell</b><span class="look">The shell holds a second longer.</span><span class="does">Foes touching it burn.</span></td><td><b>Flare Arcs</b><span class="look">Plasma arcs leap from the shell to foes past its edge.</span><span class="does">Up to three of them, at half damage.</span></td><td><b>Daystar</b><span class="look">You rise a little as a white-gold sun forms at your chest; the release is a shell, a ring on the ground and a pillar of light.</span><span class="does">Foes are blinded for a second and the afterglow burns.</span><span class="body">Body: Arms open wide, head back.</span></td></tr>
+<tr><th>Barrier </th><td><b>Hex Shell</b><span class="look">Hex cells light up where the shield is struck.</span><span class="does">Lasts 2 s longer.</span></td><td><b>Stored Charge</b><span class="look">The shield brightens as it takes damage.</span><span class="does">The break shock grows with what it absorbed.</span></td><td><b>Second Skin</b><span class="look">When it breaks, a thinner shell flickers back.</span><span class="does">It re-forms once at a third strength for 3 s.</span></td><td><b>Halo Ward</b><span class="look">Three shield plates orbit you and catch arrows; the break is a burst of light.</span><span class="does">The plates stop three projectiles.</span><span class="body">Body: Palms pushed out, then drawn round in a circle.</span></td></tr>
+<tr><th>Overload </th><td><b>Gathering Arcs</b><span class="look">Arcs crawl over you while you gather.</span><span class="does">The afterglow lasts 2 s longer.</span></td><td><b>Fork</b><span class="look">The blast throws lightning to foes beyond it.</span><span class="does">Forks to five foes.</span></td><td><b>Live Wire</b><span class="look">Your energy hits crackle during the afterglow.</span><span class="does">They jump to a second foe.</span></td><td><b>Critical Mass</b><span class="look">You&#x27;re lifted while you gather; the blast pulls in, then explodes, and leaves a ring of plasma.</span><span class="does">Pull then blast, and the ring burns for 3 s.</span><span class="body">Body: Lifted, curled in, then thrown open.</span></td></tr>
+<tr><th>Prism Lance <span class="tag h">hidden</span></th><td><b>Refraction</b><span class="look">Each split throws a flare of split colour.</span><span class="does">The split beams reach 4 blocks further.</span></td><td><b>Pierce</b><span class="look">Split beams leave a flare at each body.</span><span class="does">Split beams pierce once.</span></td><td><b>Bounce</b><span class="look">Split beams glance off walls.</span><span class="does">Split beams bounce once.</span></td><td><b>Spectrum Crown</b><span class="look">A crown of six prisms rises over your head and each fires its own beam.</span><span class="does">Six beams find six different foes.</span><span class="body">Body: The chest opened, the head lifted to the crown.</span></td></tr>
+</tbody></table></div></details>
+<details class="fam" open><summary><span class="fdot shadow"></span>Shadow <small>4 powers</small></summary>
+<div class="tw"><table class="ladder"><thead><tr><th>Power</th><th>Level 2</th><th>Level 3</th><th>Level 4</th><th>Level 5 · Awakened</th></tr></thead><tbody>
+<tr><th>Shadow Step <span class="tag s">starter</span></th><td><b>Ink Wake</b><span class="look">A trail of ink smoke with violet rims follows the step.</span><span class="does">The backstab window is a second longer.</span></td><td><b>Blinding</b><span class="look">A burst of ink at the back of the target&#x27;s head.</span><span class="does">The backstab blinds for a second.</span></td><td><b>Return</b><span class="look">An ink pool stays where you left.</span><span class="does">Press again within 2 s to step back to it.</span></td><td><b>Night Cut</b><span class="look">You arrive in a low crouch and a crescent of shadow slashes through the target by itself; tendrils from the pool hold foes nearby.</span><span class="does">The crescent lands the backstab for you, and tendrils hold foes near you for a second.</span><span class="body">Body: A low crouch arrival with a hand sweeping across.</span></td></tr>
+<tr><th>Cloak </th><td><b>Haze</b><span class="look">A faint shimmer; allies see your outline.</span><span class="does">A second longer.</span></td><td><b>Shade Step</b><span class="look">Your hands trail ink while cloaked.</span><span class="does">While cloaked, Shadow Step and Echo Swap cost nothing.</span></td><td><b>Ambush Mark</b><span class="look">The first strike leaves a violet crescent on the foe.</span><span class="does">The mark bleeds for 3 s.</span></td><td><b>Nightfall</b><span class="look">A dome of dusk falls round you.</span><span class="does">Foes inside lose track of your allies too.</span><span class="body">Body: Arms crossed, then drawn down like a hood.</span></td></tr>
+<tr><th>Echo Swap </th><td><b>Ink Line</b><span class="look">An ink thread draws between the two places.</span><span class="does">Reaches 4 blocks further.</span></td><td><b>Hobble</b><span class="look">Ink clings to the foes struck.</span><span class="does">Struck foes are slowed.</span></td><td><b>Double Swap</b><span class="look">The thread hangs a moment.</span><span class="does">Swap back within 2 s for free.</span></td><td><b>Left Behind</b><span class="look">A shadow copy stays where you were.</span><span class="does">It draws attacks for 3 s.</span><span class="body">Body: A clap that leaves your outline standing.</span></td></tr>
+<tr><th>Legion <span class="tag h">hidden</span></th><td><b>Rim Light</b><span class="look">Soldiers rise from ink pools with violet eyes and lit edges.</span><span class="does">One more soldier.</span></td><td><b>Charge</b><span class="look">Soldiers rise already running.</span><span class="does">They open with a lunge.</span></td><td><b>Ink Death</b><span class="look">Fallen soldiers spill ink.</span><span class="does">The ink slows foes.</span></td><td><b>The Risen Guard</b><span class="look">A circle of runes spreads under you and the soldiers rise in a ring round a captain twice their size.</span><span class="does">The captain is a knight that lasts the whole time.</span><span class="body">Body: One hand raised, palm up, then closed.</span></td></tr>
+</tbody></table></div></details>
+<details class="fam"><summary><span class="fdot mind"></span>Mind <small>5 powers</small></summary>
+<div class="tw"><table class="ladder"><thead><tr><th>Power</th><th>Level 2</th><th>Level 3</th><th>Level 4</th><th>Level 5 · Awakened</th></tr></thead><tbody>
+<tr><th>Danger Sense </th><td><b>Edge Arc</b><span class="look">A warning arc on the edge of your screen points to the threat.</span><span class="does">You know where it&#x27;s coming from.</span></td><td><b>Sooner</b><span class="look">The red glow starts brighter.</span><span class="does">Warns 0.2 s earlier.</span></td><td><b>Read the Shot</b><span class="look">Arrows aimed at you show as golden lines before they fly.</span><span class="does">You see a shot&#x27;s line.</span></td><td><b>Sixth Sense</b><span class="look">A gold ripple when you dodge a warned blow.</span><span class="does">The attacker is slowed for a second.</span><span class="body">Body: None (a passive).</span></td></tr>
+<tr><th>Dominate </th><td><b>Crown</b><span class="look">A gold crown glyph turns over the puppet&#x27;s head.</span><span class="does">A second longer.</span></td><td><b>Marked Prey</b><span class="look">What the puppet hits glows pink.</span><span class="does">Those foes take 15% more from you.</span></td><td><b>Last Order</b><span class="look">The puppet&#x27;s end is a psychic burst.</span><span class="does">The burst hits foes round it.</span></td><td><b>Puppet King</b><span class="look">Gold threads run from your fingers to the puppet.</span><span class="does">The puppet hits half again as hard, and an elite can be bent for the full time.</span><span class="body">Body: Fingers raised like a puppeteer&#x27;s.</span></td></tr>
+<tr><th>Read Intent </th><td><b>Rings</b><span class="look">Read foes get pink rings at their feet.</span><span class="does">Reads 4 blocks further.</span></td><td><b>Tells</b><span class="look">A red flash a moment before a read foe attacks.</span><span class="does">You see their next blow coming.</span></td><td><b>Through Walls</b><span class="look">The rings show through walls.</span><span class="does">Reads through walls.</span></td><td><b>Open Book</b><span class="look">A read foe&#x27;s weak point glows.</span><span class="does">Hits on it are critical.</span><span class="body">Body: Fingers to the temple, then a slow point.</span></td></tr>
+<tr><th>Decoy </th><td><b>Crisp</b><span class="look">The decoy has a pink rim and taunts.</span><span class="does">A second longer.</span></td><td><b>Echo Cast</b><span class="look">The decoy mouths your casts.</span><span class="does">It repeats your casts at 30%.</span></td><td><b>Confusion</b><span class="look">The burst leaves spinning pink runes over foes.</span><span class="does">Foes strike each other for 2 s.</span></td><td><b>Hall of Mirrors</b><span class="look">Three decoys in a triangle that run together and burst at once.</span><span class="does">Three times the burst.</span><span class="body">Body: A flick of the hand three ways.</span></td></tr>
+<tr><th>Foresight <span class="tag h">hidden</span></th><td><b>Ghost Lines</b><span class="look">Faint lines show where foes are about to move.</span><span class="does">You see their paths.</span></td><td><b>Longer</b><span class="look">The slowdown fades in more gently.</span><span class="does">Half a second longer.</span></td><td><b>Counter</b><span class="look">The blow that misses meets a gold flash.</span><span class="does">The attacker is staggered.</span></td><td><b>A Heartbeat Ahead</b><span class="look">Ghosts of foes show where they&#x27;ll be in a second.</span><span class="does">The first two blows miss, not one.</span><span class="body">Body: Eyes closed, then open wide.</span></td></tr>
+</tbody></table></div></details>
+<details class="fam"><summary><span class="fdot architect"></span>Architect <small>8 powers</small></summary>
+<div class="tw"><table class="ladder"><thead><tr><th>Power</th><th>Level 2</th><th>Level 3</th><th>Level 4</th><th>Level 5 · Awakened</th></tr></thead><tbody>
+<tr><th>Wall </th><td><b>Blueprint</b><span class="look">The wall is drawn in glowing blueprint lines first, then fills in block by block.</span><span class="does">Builds twice as fast and lasts 5 s longer.</span></td><td><b>Ricochet</b><span class="look">Arrows strike sparks off it.</span><span class="does">Arrows that hit it fly back toward the shooter.</span></td><td><b>Crystal</b><span class="look">The hard light sets into crystal facets.</span><span class="does">Twice as tough.</span></td><td><b>Mirror Wall</b><span class="look">A wall of polished light that throws back what hits it.</span><span class="does">Reflects projectiles and beams.</span><span class="body">Body: Both palms pushed out flat.</span></td></tr>
+<tr><th>Ramp </th><td><b>Blueprint</b><span class="look">Drawn in blueprint lines, then filled.</span><span class="does">Builds twice as fast and lasts 5 s longer.</span></td><td><b>Rush</b><span class="look">Glowing chevrons run up the surface.</span><span class="does">Running up it gives a burst of speed.</span></td><td><b>Rails</b><span class="look">Rails of light along both sides.</span><span class="does">Foes that step on it are pushed off the side.</span></td><td><b>Launch Ramp</b><span class="look">The end flips up as you reach it.</span><span class="does">It throws you in a long arc.</span><span class="body">Body: A sweeping upward palm.</span></td></tr>
+<tr><th>Floor </th><td><b>Blueprint</b><span class="look">Drawn in blueprint lines, then filled.</span><span class="does">Builds twice as fast and lasts 5 s longer.</span></td><td><b>Spring</b><span class="look">The surface ripples when stepped on.</span><span class="does">Landing on it bounces you up.</span></td><td><b>Hold</b><span class="look">Thicker seams.</span><span class="does">Lasts twice as long.</span></td><td><b>Sky Bridge</b><span class="look">The floor keeps building ahead as you walk.</span><span class="does">It extends for 6 s.</span><span class="body">Body: Hands sliding apart along a line.</span></td></tr>
+<tr><th>Cone </th><td><b>Blueprint</b><span class="look">Drawn in blueprint lines, then filled.</span><span class="does">Builds twice as fast and lasts 5 s longer.</span></td><td><b>Lantern</b><span class="look">Light drips from the roof.</span><span class="does">You heal slowly under it.</span></td><td><b>Shatterproof</b><span class="look">Arrows shatter on the eaves.</span><span class="does">Takes no damage from arrows.</span></td><td><b>Pagoda</b><span class="look">A three-tier roof with lit eaves.</span><span class="does">Heals and pushes foes out from under it.</span><span class="body">Body: Hands drawing the roof&#x27;s tiers.</span></td></tr>
+<tr><th>Rampart </th><td><b>Blueprint</b><span class="look">Drawn in blueprint lines, then filled.</span><span class="does">Builds twice as fast and lasts 5 s longer.</span></td><td><b>Arrow Slits</b><span class="look">Battlements glow.</span><span class="does">They fire bolts at foes.</span></td><td><b>Gatehouse</b><span class="look">The door glows for friends.</span><span class="does">The door opens only for you and allies.</span></td><td><b>Keep</b><span class="look">A corner tower rises with a beacon on top.</span><span class="does">The beacon slows foes nearby.</span><span class="body">Body: Arms raised to frame a tower.</span></td></tr>
+<tr><th>Spire </th><td><b>Seams</b><span class="look">Seams of light run up the column as it rises.</span><span class="does">The throw is 15% higher.</span></td><td><b>Spiked Rim</b><span class="look">Spikes ring the base.</span><span class="does">Foes thrown take damage when they land.</span></td><td><b>Tall</b><span class="look">The column rises higher.</span><span class="does">A bigger launch.</span></td><td><b>Spiral Tower</b><span class="look">A spiral of steps winds up round the spire.</span><span class="does">You can climb it after the launch; it stands for 10 s.</span><span class="body">Body: A spiralling upward sweep.</span></td></tr>
+<tr><th>Collapse </th><td><b>Gather</b><span class="look">Blocks lift and circle you before they fly.</span><span class="does">Pulls in from 25% further.</span></td><td><b>Seek</b><span class="look">Each block leaves a blueprint line in the air.</span><span class="does">Each block picks a different foe.</span></td><td><b>Shatter</b><span class="look">Blocks burst into glowing shards on impact.</span><span class="does">Shards hit foes nearby.</span></td><td><b>Avalanche of Light</b><span class="look">Every block becomes a glowing comet trailing blueprint lines.</span><span class="does">Every block stuns.</span><span class="body">Body: Both arms pulled down like a rope.</span></td></tr>
+<tr><th>Citadel <span class="tag h">hidden</span></th><td><b>Runes</b><span class="look">Runes turn across the dome.</span><span class="does">A second longer.</span></td><td><b>Spires</b><span class="look">Four spires rise at the edge.</span><span class="does">They fire bolts at foes.</span></td><td><b>Sanctuary</b><span class="look">The ground inside glows.</span><span class="does">Heals more.</span></td><td><b>Crown Citadel</b><span class="look">A crown of spires and a beacon of light.</span><span class="does">Foes inside burn; allies inside are healed.</span><span class="body">Body: Arms raised in a slow arc.</span></td></tr>
+</tbody></table></div></details>
+<details class="fam"><summary><span class="fdot tech"></span>Tech <small>7 powers</small></summary>
+<div class="tw"><table class="ladder"><thead><tr><th>Power</th><th>Level 2</th><th>Level 3</th><th>Level 4</th><th>Level 5 · Awakened</th></tr></thead><tbody>
+<tr><th>Snap Cable </th><td><b>Holo Cable</b><span class="look">The cable shows bright teal segments and a reticle where it&#x27;ll land.</span><span class="does">2 blocks further.</span></td><td><b>Stun Hook</b><span class="look">A hooked mob sparks.</span><span class="does">It&#x27;s stunned for half a second.</span></td><td><b>Quick Reel</b><span class="look">The cable hums tighter.</span><span class="does">Reels 20% faster.</span></td><td><b>Reel Kick</b><span class="look">You arrive at a hooked mob feet first, with a teal shock ring.</span><span class="does">A flying kick on arrival.</span><span class="body">Body: A side-on cast, then a tuck.</span></td></tr>
+<tr><th>Jet Burst </th><td><b>Shock Diamonds</b><span class="look">A blue-cored exhaust with bright shock diamonds.</span><span class="does">10% faster.</span></td><td><b>Scorch</b><span class="look">The exhaust lingers as a burning streak.</span><span class="does">Burns longer.</span></td><td><b>Hang</b><span class="look">The jets sputter on for a moment.</span><span class="does">A moment of hover after the burst.</span></td><td><b>Afterburner Boom</b><span class="look">A sonic boom ring and a scorching trail line.</span><span class="does">The boom pushes foes away.</span><span class="body">Body: A crouch, then a launch.</span></td></tr>
+<tr><th>Drone </th><td><b>Holo Wings</b><span class="look">The drones wear holographic wings and reticles.</span><span class="does">A second longer.</span></td><td><b>Marks</b><span class="look">Their targets get a reticle.</span><span class="does">Marked foes take 10% more from you.</span></td><td><b>Burst Fire</b><span class="look">Three-shot bursts.</span><span class="does">Fires in bursts.</span></td><td><b>Overwatch</b><span class="look">Laser threads link the drones into a triangle.</span><span class="does">The threads cut what crosses them.</span><span class="body">Body: A tap on the wrist, then a flat palm.</span></td></tr>
+<tr><th>Turret </th><td><b>Scan Cone</b><span class="look">A holographic scan cone sweeps.</span><span class="does">Sees 4 blocks further.</span></td><td><b>Slowing Shots</b><span class="look">Its shots leave frost-blue hex marks.</span><span class="does">Shots slow.</span></td><td><b>Shield</b><span class="look">A hex shield round its base.</span><span class="does">It takes half damage.</span></td><td><b>Sentinel</b><span class="look">A long barrel unfolds and charges.</span><span class="does">Fires a charged rail every 5 s.</span><span class="body">Body: A kneel to set it down.</span></td></tr>
+<tr><th>Railgun </th><td><b>Coils</b><span class="look">Coil rings spin along your arm as it charges.</span><span class="does">Charges 15% faster.</span></td><td><b>Vacuum Tunnel</b><span class="look">Rings hang along the line of fire.</span><span class="does">Foes in the line are knocked back.</span></td><td><b>Quick Charge</b><span class="look">The coils glow white.</span><span class="does">Charges another 15% faster.</span></td><td><b>Gauss Lance</b><span class="look">The line stays as a blazing teal thread that explodes along its length half a second later.</span><span class="does">The second blast hits everything in the line.</span><span class="body">Body: Braced side-on, the recoil throwing the shoulder back.</span></td></tr>
+<tr><th>Nanite Skin </th><td><b>Hex Scales</b><span class="look">Hex scales ripple over you.</span><span class="does">A second longer.</span></td><td><b>Arc Shock</b><span class="look">The shock jumps.</span><span class="does">A melee hit&#x27;s shock jumps to a second foe.</span></td><td><b>Repair</b><span class="look">Scales flow over your armour.</span><span class="does">Repairs your armour as it runs.</span></td><td><b>Living Armour</b><span class="look">Plates form on your shoulders and forearms; at the end they burst into a swarm.</span><span class="does">The swarm attacks foes near you.</span><span class="body">Body: Arms crossed, the plates closing over them.</span></td></tr>
+<tr><th>Drone Swarm <span class="tag h">hidden</span></th><td><b>Holo Swarm</b><span class="look">Holographic trails behind every drone.</span><span class="does">A second longer.</span></td><td><b>Laser Lines</b><span class="look">Drones fire visible laser lines.</span><span class="does">Their shots pierce.</span></td><td><b>Retarget</b><span class="look">A reticle jumps to the next foe.</span><span class="does">Drones switch targets the moment one dies.</span></td><td><b>Swarm Lance</b><span class="look">At the end the drones form a ring and fire one combined beam.</span><span class="does">The beam hits everything in a line.</span><span class="body">Body: A hand raised to the ring.</span></td></tr>
+</tbody></table></div></details>
+<details class="fam" open><summary><span class="fdot spirit"></span>Spirit <small>14 powers</small></summary>
+<div class="tw"><table class="ladder"><thead><tr><th>Power</th><th>Level 2</th><th>Level 3</th><th>Level 4</th><th>Level 5 · Awakened</th></tr></thead><tbody>
+<tr><th>Spirit Palm <span class="tag s">starter</span></th><td><b>Lotus</b><span class="look">The palm print is ringed with jade lotus petals.</span><span class="does">Pushes 15% harder.</span></td><td><b>Through</b><span class="look">The print passes on through the target.</span><span class="does">It hits the foe behind too.</span></td><td><b>Heavy Echo</b><span class="look">The echo arrives as a deeper blue print.</span><span class="does">The echo slows.</span></td><td><b>Guardian Palm</b><span class="look">A giant translucent jade hand slams forward behind your strike.</span><span class="does">The giant hand hits everything in front of you.</span><span class="body">Body: A full-body step into the palm.</span></td></tr>
+<tr><th>Aura </th><td><b>Wisps</b><span class="look">Jade wisps circle your feet in a fight.</span><span class="does">Reaches a block further.</span></td><td><b>Calm</b><span class="look">Your aura brightens out of combat.</span><span class="does">Heals faster out of combat.</span></td><td><b>Drag</b><span class="look">The pulse ripples outward.</span><span class="does">The pulse slows foes.</span></td><td><b>Soul Guard</b><span class="look">Wisps orbit you and dart at what hits you.</span><span class="does">They strike back at attackers.</span><span class="body">Body: None (a passive).</span></td></tr>
+<tr><th>Mend </th><td><b>Lotus Ring</b><span class="look">A ring of lotus light opens under you.</span><span class="does">Heals 10% more.</span></td><td><b>Ward</b><span class="look">A thin jade shell holds after.</span><span class="does">3 s of damage resistance after.</span></td><td><b>Shared</b><span class="look">The ring spreads to allies.</span><span class="does">Allies heal as much as you.</span></td><td><b>Bloom</b><span class="look">A jade lotus opens under you and petals rise.</span><span class="does">Everyone on it heals for 4 s.</span><span class="body">Body: Palms together, then opened like a flower.</span></td></tr>
+<tr><th>Third Eye </th><td><b>Eye Mark</b><span class="look">A glowing eye opens on your brow (others see it).</span><span class="does">A second longer.</span></td><td><b>Exposed</b><span class="look">Seen foes glow brighter.</span><span class="does">Seen foes take 10% more from you.</span></td><td><b>Secrets</b><span class="look">Hidden things glow too.</span><span class="does">Shows hidden doors, chests and traps.</span></td><td><b>All-Seeing</b><span class="look">An eye opens in the sky above you.</span><span class="does">Sees 64 blocks.</span><span class="body">Body: Fingers to the brow, head tipped back.</span></td></tr>
+<tr><th>Cord Lash </th><td><b>Braided</b><span class="look">The cord braids with soul light.</span><span class="does">2 blocks further.</span></td><td><b>Twin Lash</b><span class="look">The cord splits in two.</span><span class="does">Hauls two foes.</span></td><td><b>Dazed</b><span class="look">The foe arrives with stars of soul light.</span><span class="does">Dazed for longer.</span></td><td><b>Soul Chain</b><span class="look">The hauled foe is chained to another nearby.</span><span class="does">They&#x27;re pulled into each other.</span><span class="body">Body: A two-handed whip and pull.</span></td></tr>
+<tr><th>Bulwark <span class="tag h">hidden</span></th><td><b>Runes</b><span class="look">Runes turn round the dome.</span><span class="does">A second longer.</span></td><td><b>Repel</b><span class="look">The dome&#x27;s edge ripples outward.</span><span class="does">Pushes foes out harder.</span></td><td><b>Rest</b><span class="look">The ground inside glows jade.</span><span class="does">Allies inside heal slowly.</span></td><td><b>Lotus Dome</b><span class="look">The dome forms as overlapping petals that open outward at the end.</span><span class="does">The opening throws foes away.</span><span class="body">Body: Arms raised and opened like petals.</span></td></tr>
+<tr><th>Hundred Palms <span class="tag h">hidden</span></th><td><b>Prints</b><span class="look">More palm prints, layered.</span><span class="does">10% more palms.</span></td><td><b>Seeking</b><span class="look">The prints curve toward foes.</span><span class="does">Palms home in.</span></td><td><b>Last Palm</b><span class="look">The final palm is twice the size.</span><span class="does">The finisher launches further.</span></td><td><b>Thousand Arms</b><span class="look">A spirit figure rises behind you and strikes with its own arms beside yours.</span><span class="does">The figure&#x27;s palms add 30%.</span><span class="body">Body: A rooted stance, palms in a blur.</span></td></tr>
+<tr><th>Void Maw <span class="tag h">hidden</span></th><td><b>Fangs</b><span class="look">A ring of shadow fangs round the maw.</span><span class="does">Pulls 15% harder.</span></td><td><b>Hunger</b><span class="look">The throat glows deeper.</span><span class="does">Swallows foes at a little more health.</span></td><td><b>Chew</b><span class="look">The maw spits debris.</span><span class="does">The debris hits foes round it.</span></td><td><b>The Hollow Mouth</b><span class="look">The maw closes with a visible bite.</span><span class="does">The bite heals you for what it swallows.</span><span class="body">Body: An arm thrust out, the hand clenching shut.</span></td></tr>
+<tr><th>Waking Dream <span class="tag h">hidden</span></th><td><b>Shimmer</b><span class="look">What you shape shimmers like a dream.</span><span class="does">Shapes 15% faster.</span></td><td><b>Bigger</b><span class="look">Doors and bridges come wider.</span><span class="does">Shapes bigger.</span></td><td><b>Lasting</b><span class="look">The shimmer fades slower.</span><span class="does">Lasts twice as long.</span></td><td><b>Lucid Architecture</b><span class="look">Stairs spiral, bridges arch, with rails of light.</span><span class="does">Shapes follow the land&#x27;s lines.</span><span class="body">Body: Hands shaping a curve in the air.</span></td></tr>
+<tr><th>Storm Call <span class="tag h">hidden</span></th><td><b>Clouds</b><span class="look">A dark cloud gathers before the strikes.</span><span class="does">Strikes 10% harder.</span></td><td><b>Chain</b><span class="look">Each strike jumps once.</span><span class="does">Strikes chain to a second foe.</span></td><td><b>More</b><span class="look">More forks in every bolt.</span><span class="does">One more strike.</span></td><td><b>Eye of the Storm</b><span class="look">The storm follows you for 6 s.</span><span class="does">It keeps striking foes near you.</span><span class="body">Body: Arms raised, then pulled down.</span></td></tr>
+<tr><th>Ember Step <span class="tag h">hidden</span></th><td><b>Flame Ribbons</b><span class="look">Ribbons of flame stream from your heels.</span><span class="does">The trail is 20% longer.</span></td><td><b>Lasting</b><span class="look">The trail burns longer.</span><span class="does">Burns 2 s longer.</span></td><td><b>Flare</b><span class="look">The trail flares when foes cross it.</span><span class="does">Embers burst on them.</span></td><td><b>Phoenix Step</b><span class="look">A firebird of flame flies the path with you.</span><span class="does">The firebird burns everything it passes.</span><span class="body">Body: A low spinning step.</span></td></tr>
+<tr><th>Frost Nova <span class="tag h">hidden</span></th><td><b>Crystals</b><span class="look">Ice crystals spike up round the ring.</span><span class="does">10% wider.</span></td><td><b>Shatter</b><span class="look">Frozen foes crack when hit.</span><span class="does">Hitting a frozen foe bursts the frost.</span></td><td><b>Frost Field</b><span class="look">Frost lingers on the ground.</span><span class="does">Slows for 3 s.</span></td><td><b>Winter Bloom</b><span class="look">A huge ice flower blooms round you and shatters.</span><span class="does">The shatter hits again.</span><span class="body">Body: A stamp, then the hands opening upward.</span></td></tr>
+<tr><th>Ghost Step <span class="tag h">hidden</span></th><td><b>Soul Trail</b><span class="look">A pale trail hangs along the step.</span><span class="does">2 blocks further.</span></td><td><b>Phase Chill</b><span class="look">Foes you pass through frost over.</span><span class="does">They&#x27;re slowed.</span></td><td><b>Further</b><span class="look">The trail stretches.</span><span class="does">2 more blocks.</span></td><td><b>Through the Veil</b><span class="look">A glowing doorway stays where you went in.</span><span class="does">Allies can follow through it for 3 s.</span><span class="body">Body: A step through, the hand trailing.</span></td></tr>
+<tr><th>Twin Strike <span class="tag h">hidden</span></th><td><b>Visible Twin</b><span class="look">A soul-blue outline of you repeats each blow.</span><span class="does">A second longer.</span></td><td><b>Stronger</b><span class="look">The twin&#x27;s outline sharpens.</span><span class="does">The echo hits for 70%.</span></td><td><b>Longer</b><span class="look">The twin lingers.</span><span class="does">2 s longer.</span></td><td><b>Twin Souls</b><span class="look">The twin becomes a full figure beside you.</span><span class="does">It repeats your power casts too, at half.</span><span class="body">Body: A step that splits into two.</span></td></tr>
+</tbody></table></div></details>
+
+</section>
+
+<section>
+  <h2>Strength, frame rate and other players</h2>
+  <div class="two">
+    <div class="card"><h3>Strength stays on the curve</h3><p>Today a level-5 power does about 1.5 times its level-1 damage. The flat bonus becomes +6% a level, and the steps carry the rest, so level 5 lands about as strong as today. The gates stay balanced, and what you gain is a new shape, not just a bigger number (decision 3).</p></div>
+    <div class="card"><h3>Frame rate</h3><p>Nobody has measured what power effects cost per frame yet, so that comes first: a timer and a bench that replays a crowded gate fight. A higher level must be better composed, not more particles: mostly ribbons and rings, which are cheap. The gate: in that bench on your M4, level 5 costs at most 0.5 ms more per frame than level 1.</p></div>
+    <div class="card"><h3>Other players</h3><p>Your level already rides on every effect sent to players within 72 blocks. Their game draws your level's look, gesture and sound, with no new network traffic. The server decides what every step does. Steps that help others (a heal, a dome) are written for allies.</p></div>
+    <div class="card"><h3>Every power can grow</h3><p>Wall Stride levels from wall-running, Water Run from running on water, Danger Sense from warned blows that miss you. Walls level from the arrows they stop, sight powers from hits on what they show, and movement from dodging. All of it is capped per minute, so you can't farm it.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>How it gets built</h2>
+  <div class="tbl"><table class="phases">
+    <thead><tr><th>Phase</th><th>What</th><th>Time</th></tr></thead>
+    <tbody>
+      <tr><th>Measure</th><td>A frame timer and the gate bench, so we know today's cost.</td><td>part of the proof</td></tr>
+      <tr><th>Proof</th><td>The ladder system, three new kinds of shape (spiral ribbons, orbiting pieces, rune rings), awakened colours, the levelling moment, the K menu ladder and key frames, honest words. <b>The Beam's whole ladder</b>, and level 2 for the other starters. A showcase command casts a power at levels 1 to 5 side by side. <b>Then you look in game.</b></td><td>~3 h</td></tr>
+      <tr><th>Starters</th><td>Haymaker, Shockwave, Charged Shot, Spirit Palm, Shadow Step and Dash, all five levels.</td><td rowspan="5">~7–11 h</td></tr>
+      <tr><th>Families 1</th><td>Kinetic and Velocity.</td></tr>
+      <tr><th>Families 2</th><td>Energy, Flight and Gravity.</td></tr>
+      <tr><th>Families 3</th><td>Shadow, Mind and Spirit.</td></tr>
+      <tr><th>Families 4</th><td>Architect and Tech; levelling through use for every power; the strength check in the pacing sim.</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:14px">How the estimate is made: the power-animation plan estimated 20 hours and took about 2, because most of it was generated from tables. This one has about 250 hand-written changes in play, so it shrinks less. Every phase ships on its own, passes the GameTests on CI, and sits behind a server switch that turns the ladders off if something goes wrong.</p>
+</section>
+
+<section>
+  <h2>Decisions</h2>
+  <ol class="decisions">
+    <li><span class="n">1</span><span class="q">What does a level-up give?</span><span class="r">A named step each level: a new look and a change in play, a new cast and sound at 3 and 5, the Awakened form at 5</span><span class="w">"Not just a little bit more damage": each level changes what the power is, and you can see it.</span></li>
+    <li><span class="n">2</span><span class="q">Max level?</span><span class="r">Keep 5</span><span class="w">Four real steps per power beats more, thinner ones. If you max a power and miss levelling, more levels can come later.</span></li>
+    <li><span class="n">3</span><span class="q">How strong is level 5?</span><span class="r">About as strong as today: +6% a level, the steps carry the rest</span><span class="w">The gates stay balanced. The alternative is keeping +12% and adding steps on top: about 1.8 times at level 5.</span></li>
+    <li><span class="n">4</span><span class="q">What does the K menu show?</span><span class="r">The whole ladder: every step's name and line, the next in full</span><span class="w">You see what you're working toward. They're your own powers, not undiscovered secrets.</span></li>
+    <li><span class="n">5</span><span class="q">When does the levelling moment play?</span><span class="r">In full when it's calm; a sting and a flaring key in a fight</span><span class="w">It never interrupts a fight, and it always says what changed.</span></li>
+    <li><span class="n">6</span><span class="q">Proof first?</span><span class="r">Yes: the Beam's whole ladder, the moment and the K menu, then your look in game</span><span class="w">Taste is the risk. One power done in full settles the bar before 62 more.</span></li>
+    <li><span class="n">7</span><span class="q">Can every power level through use?</span><span class="r">Yes, with per-minute caps</span><span class="w">"You can always level up your powers": nothing stuck at level 1.</span></li>
+    <li><span class="n">8</span><span class="q">Order after the proof?</span><span class="r">The starters, then family by family</span><span class="w">The powers everyone has come first.</span></li>
+    <li><span class="n">9</span><span class="q">Names on steps?</span><span class="r">Yes (Beam, Helix, Lance, Corona, Sunspear)</span><span class="w">A name makes a step something you earned. Plain words under each.</span></li>
+    <li><span class="n">10</span><span class="q">Do others see your level?</span><span class="r">Yes, always</span><span class="w">A level-5 friend should look it. Their own effects setting still thins it, as today.</span></li>
+    <li><span class="n">11</span><span class="q">One builder or two after the proof?</span><span class="r">One</span><span class="w">Your rule from today. Two would save about 4–5 hours of waiting and use more.</span></li>
+    <li><span class="n">12</span><span class="q">Power Core hover (Codex is adding it)?</span><span class="r">It shows the next step's name and line from the ladder</span><span class="w">One source for level text. I'll ask the orchestrator to tell Codex.</span></li>
+  </ol>
+</section>
+
+<p class="foot">Full plan: <code>docs/power-levels/PLAN.md</code> on branch <code>claude/power-levels-plan-0eb980</code>, with the audit, the failure cases, the tests and the budgets. Ladder data: <code>docs/power-levels/ladders_draft.py</code>. Nothing in the game has changed yet.</p>
+
+</div>
+
+<script>
+(() => {
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const C = {core:'255,250,240', body:'255,154,60', halo:'255,120,40', gold:'255,205,90', goldCore:'255,246,216'};
+  const frames = [1,2,3,4,5].map(n => ({n, el: document.getElementById('b'+n), ctx: null, w: 0, h: 0, vis: true}));
+
+  function size(f){
+    const r = f.el.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1);
+    f.w = Math.max(160, r.width); f.h = f.w * 0.6;
+    f.el.width = Math.round(f.w * d); f.el.height = Math.round(f.h * d);
+    f.ctx = f.el.getContext('2d'); f.ctx.setTransform(d,0,0,d,0,0);
+  }
+
+  function line(c, x1,y1,x2,y2, w, rgba){ c.strokeStyle = rgba; c.lineWidth = w; c.lineCap='round'; c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke(); }
+  function glow(c, x,y,r, rgb, a){ const g = c.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,`rgba(${rgb},${a})`); g.addColorStop(1,`rgba(${rgb},0)`); c.fillStyle=g; c.beginPath(); c.arc(x,y,r,0,7); c.fill(); }
+  function star(c, x,y,r, rgb, a, rot){ c.save(); c.translate(x,y); c.rotate(rot); c.fillStyle=`rgba(${rgb},${a})`; c.beginPath();
+    for(let i=0;i<8;i++){ const rr = i%2? r*0.18 : r; const an = i*Math.PI/4; c.lineTo(Math.cos(an)*rr, Math.sin(an)*rr);} c.closePath(); c.fill(); c.restore(); }
+
+  function figure(c, x, ground, s, rim){
+    // a dark silhouette with a rim of the beam's light on its front edge
+    c.save(); c.globalCompositeOperation='source-over';
+    c.fillStyle='#1B2433';
+    c.beginPath(); c.arc(x, ground-58*s, 7*s, 0, 7); c.fill();
+    c.fillRect(x-7*s, ground-50*s, 14*s, 26*s);
+    c.fillRect(x-6*s, ground-24*s, 5*s, 24*s); c.fillRect(x+1*s, ground-24*s, 5*s, 24*s);
+    c.restore();
+    if (rim){ c.save(); c.globalCompositeOperation='lighter'; line(c, x+7*s, ground-50*s, x+7*s, ground-24*s, 1.2, `rgba(${rim},0.55)`); c.restore(); }
+  }
+
+  function caster(c, ground, rim){
+    const x = 34;
+    figure(c, x, ground, 1, rim);
+    c.save(); c.fillStyle='#1B2433'; c.strokeStyle='#1B2433'; c.lineWidth=5; c.lineCap='round';
+    c.beginPath(); c.moveTo(x+4, ground-46); c.lineTo(x+26, ground-44); c.stroke(); c.restore();
+    return {x: x+29, y: ground-44};
+  }
+
+  function helix(c, p0, p1, t, strands, k, r, spin, rgb, width){
+    const dx = p1.x-p0.x, dy = p1.y-p0.y, len = Math.hypot(dx,dy), ux = dx/len, uy = dy/len, nx = -uy, ny = ux;
+    const seg = Math.ceil(len/2);
+    for (let s=0; s<strands; s++){
+      const ph = s * Math.PI*2/strands, dir = (strands===2 && s===1) ? -1 : 1;
+      let px=null, py=null;
+      for (let i=0;i<=seg;i++){
+        const u = i/seg, a = u*len*k + ph + dir*t*spin, taper = Math.min(1, u*6, (1-u)*10);
+        const off = Math.sin(a)*r*taper, depth = Math.cos(a);
+        const x = p0.x + ux*u*len + nx*off, y = p0.y + uy*u*len + ny*off;
+        if (px!==null){ const al = (0.35 + 0.65*(depth*0.5+0.5)) * taper; line(c, px,py,x,y, width*(0.6+0.4*(depth*0.5+0.5)), `rgba(${rgb},${al.toFixed(3)})`); }
+        px=x; py=y;
+      }
+    }
+  }
+
+  function beam(c, p0, p1, gold, flick){
+    const body = gold? C.gold : C.body, core = gold? C.goldCore : C.core, halo = gold? '255,180,70' : C.halo;
+    line(c, p0.x,p0.y,p1.x,p1.y, 16, `rgba(${halo},${0.10+flick*0.03})`);
+    line(c, p0.x,p0.y,p1.x,p1.y, 8, `rgba(${halo},0.16)`);
+    line(c, p0.x,p0.y,p1.x,p1.y, 4.2, `rgba(${body},0.85)`);
+    line(c, p0.x,p0.y,p1.x,p1.y, 1.6, `rgba(${core},0.95)`);
+  }
+
+  function rings(c, p0, p1, t, rgb){
+    const dx=p1.x-p0.x, len=Math.abs(dx);
+    for (let i=0;i<3;i++){
+      const u = ((t*0.35 + i/3) % 1), x = p0.x + dx*u, y = p0.y + (p1.y-p0.y)*u;
+      c.strokeStyle = `rgba(${rgb},${(0.5*(1-u)).toFixed(3)})`; c.lineWidth=1.2;
+      c.beginPath(); c.ellipse(x, y, 2.2, 6+u*7, 0, 0, 7); c.stroke();
+    }
+  }
+
+  function draw(f, t){
+    const c = f.ctx, W = f.w, H = f.h, ground = H*0.82, n = f.n;
+    c.globalCompositeOperation='source-over';
+    const bg = c.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#101826'); bg.addColorStop(1,'#07090D'); c.fillStyle=bg; c.fillRect(0,0,W,H);
+    c.strokeStyle='rgba(127,195,255,0.06)'; c.lineWidth=1;
+    for (let i=0;i<9;i++){ const x = W*i/8; c.beginPath(); c.moveTo(W/2+(x-W/2)*0.35, ground); c.lineTo(x, H); c.stroke(); }
+    line(c, 0, ground, W, ground, 1, 'rgba(127,195,255,0.12)');
+    const gold = n===5, rim = gold? C.gold : C.body;
+    const palm = caster(c, ground, rim);
+    const tx1 = n===3 ? W*0.62 : W*0.80;
+    figure(c, tx1, ground, 0.95, rim);
+    if (n===3) figure(c, W*0.86, ground, 0.85, rim);
+    const end = {x: tx1-5, y: palm.y+1};
+    const far = n===3 ? {x: W*0.86-5, y: palm.y+2} : end;
+    const flick = 0.5+0.5*Math.sin(t*9);
+    c.globalCompositeOperation='lighter';
+    if (n===4){ // the molten pool and its glow on the ground
+      c.save(); c.translate(end.x, ground); c.scale(1, 0.22);
+      glow(c, 0, 0, 38, '255,120,40', 0.55); glow(c, 0, 0, 20, '255,190,90', 0.5); c.restore();
+      for (let i=0;i<6;i++){ const u=((t*0.5+i/6)%1); glow(c, end.x-14+i*6, ground-4-u*26, 1.6, '255,170,80', 0.9*(1-u)); }
+    }
+    if (n===5){ // the rune ring at the palm, seen edge-on along the aim
+      c.save(); c.translate(palm.x+3, palm.y); c.strokeStyle='rgba(255,210,122,0.9)'; c.lineWidth=1.3;
+      c.beginPath(); c.ellipse(0,0,5,20,0,0,7); c.stroke(); c.beginPath(); c.ellipse(0,0,3,13,0,0,7); c.stroke();
+      for (let i=0;i<12;i++){ const a = i*Math.PI/6 + t*0.8, y = Math.sin(a)*20, x = Math.cos(a)*5; if (Math.cos(a)>-0.2) glow(c, x, y, 2.2, '255,220,140', 0.9); }
+      c.restore(); glow(c, palm.x+3, palm.y, 26, '255,200,90', 0.35);
+    }
+    beam(c, palm, far, gold, flick);
+    if (n===3) { line(c, end.x+8, end.y, far.x, far.y, 2.6, 'rgba(255,190,110,0.5)'); }
+    if (n===1) rings(c, palm, end, t, '255,170,90');
+    if (n===2) helix(c, palm, end, t, 1, 0.16, 7, 3.2, '255,236,190', 1.8);
+    if (n===3) helix(c, palm, end, t, 2, 0.16, 7.5, 3.2, '255,236,190', 1.7);
+    if (n===4) { helix(c, palm, end, t, 2, 0.16, 7.5, 3.2, '255,236,190', 1.7);
+      c.save(); c.translate(end.x, end.y); c.rotate(t*1.2); c.strokeStyle='rgba(255,200,120,0.85)'; c.lineWidth=1.5; c.beginPath(); c.ellipse(0,0,5,15,0,0,7); c.stroke(); c.restore(); }
+    if (n===5) helix(c, palm, end, t, 3, 0.15, 8.5, 3.6, '255,232,160', 1.7);
+    glow(c, palm.x, palm.y, gold? 12 : 9, gold? '255,240,200' : '255,220,170', 0.9);
+    const hit = n===5 ? 0.85 + 0.15*Math.sin(t*3) : 0.7;
+    glow(c, end.x, end.y, gold? 22 : 15, gold? '255,215,120' : '255,160,70', hit);
+    star(c, end.x, end.y, gold? 14 : 10, gold? C.goldCore : C.core, 0.9, t*0.7);
+    if (n===3) { glow(c, far.x, far.y, 10, '255,160,70', 0.6); star(c, far.x, far.y, 7, C.core, 0.75, -t*0.7); }
+    if (n===5) { // the last pulse riding down the beam
+      const u = (t*0.45) % 1; const x = palm.x + (end.x-palm.x)*u, y = palm.y + (end.y-palm.y)*u; glow(c, x, y, 10, '255,246,216', 0.85*(1-u*0.4)); }
+    c.globalCompositeOperation='source-over';
+  }
+
+  let playing = !reduce, t0 = performance.now(), held = 0;
+  function frame(now){
+    const t = playing ? (now - t0)/1000 : held;
+    for (const f of frames) if (f.vis && f.ctx) draw(f, t);
+    if (playing) requestAnimationFrame(frame);
+  }
+  function setup(){ for (const f of frames) size(f); for (const f of frames) draw(f, held); }
+  setup();
+  window.addEventListener('resize', setup);
+  if ('IntersectionObserver' in window){
+    const io = new IntersectionObserver(es => es.forEach(e => { const f = frames.find(x => x.el === e.target); if (f) f.vis = e.isIntersecting; }));
+    frames.forEach(f => io.observe(f.el));
+  }
+  const tog = document.getElementById('tog');
+  function label(){ tog.textContent = playing ? 'Pause' : 'Play'; tog.setAttribute('aria-pressed', String(!playing)); }
+  tog.addEventListener('click', () => {
+    if (playing){ held = (performance.now()-t0)/1000; playing = false; }
+    else { t0 = performance.now() - held*1000; playing = true; requestAnimationFrame(frame); }
+    label();
+  });
+  label();
+  if (playing) requestAnimationFrame(frame);
+})();
+</script>

@@ -58,6 +58,10 @@ public final class FlyingBlocks {
         /** Keeps flying through targets it hits (wall rams). */
         public boolean pierce;
         public int stun;
+        /** Runs once where the block comes down (a ladder step's burst, SPEC 36). */
+        public java.util.function.@Nullable Consumer<Vec3> onLand;
+        /** Runs for every foe it strikes, with the damage dealt (a cast's riders, SPEC 36). */
+        public java.util.function.@Nullable BiConsumer<LivingEntity, Float> onHit;
         final Set<Integer> hit = new HashSet<>();
 
         Flyer(ServerLevel level, ServerPlayer owner, Display.BlockDisplay display, BlockState state, Vec3 pos, Vec3 vel, float damage,
@@ -145,6 +149,7 @@ public final class FlyingBlocks {
             Combat.hurtFrom(f.owner, f.display, e, f.damage, f.force, true);
             Combat.knockFrom(e, from, 0.9, 0.35);
             if (f.stun > 0) Combat.stun(e, f.stun);
+            if (f.onHit != null) f.onHit.accept(e, f.damage);
             struck = true;
             if (!f.pierce) break;
         }
@@ -166,11 +171,13 @@ public final class FlyingBlocks {
                 if (f.hit.contains(e.getId())) continue;
                 Combat.hurtFrom(f.owner, f.display, e, f.damage * 0.6f, f.force, true);
                 Combat.knockFrom(e, at, 0.6, 0.3);
+                if (f.onHit != null) f.onHit.accept(e, f.damage * 0.6f);
             }
         }
         f.level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, f.state), at.x, at.y, at.z, (int) (12 * f.size), 0.4 * f.size, 0.3, 0.4 * f.size, 0.15);
         f.level.sendParticles(ParticleTypes.POOF, at.x, at.y, at.z, 3, 0.3, 0.2, 0.3, 0.02);
         f.level.playSound(null, at.x, at.y, at.z, PowerSounds.IMPACT.get(), SoundSource.PLAYERS, Math.min(1.2f, 0.5f + f.size * 0.3f), 0.8f + f.level.getRandom().nextFloat() * 0.3f);
         Fx.quake(f.level, at, 10 + f.size * 4, 1.2f * f.size);
+        if (f.onLand != null) f.onLand.accept(at);
     }
 }

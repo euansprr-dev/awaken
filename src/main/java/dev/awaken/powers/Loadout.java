@@ -24,9 +24,12 @@ import java.util.Map;
  *
  * <p>Schema 2 adds mastery: points toward each owned power's next level ({@link Mastery}). A schema-1 save loads with
  * no mastery and is written back as schema 2.
+ *
+ * <p>Schema 3 adds {@code seen}: the level each power's ladder moment was last shown for (SPEC 36.6). An older save loads
+ * with seen = its level (no flood of windows) and {@link #migratedFrom} set, so the player gets one window about ladders.
  */
 public final class Loadout {
-    public static final int SCHEMA = 2;
+    public static final int SCHEMA = 3;
     public static final int SLOTS = 6;
     public static final int ULTIMATE = 4;
     public static final int MOVEMENT = 5;
@@ -42,7 +45,10 @@ public final class Loadout {
                 ByteBufCodecs.STRING_UTF8, Owned::id, ByteBufCodecs.VAR_INT, Owned::variant, ByteBufCodecs.VAR_INT, Owned::level, Owned::new);
     }
 
-    /** end = game time the cooldown ends; total = its full length (for the HUD sweep). */
+    /** A cooldown entry whose total is this is no cooldown: a ladder step's second press is open until {@code end} (SPEC 36.3). */
+    public static final int AGAIN = -1;
+
+    /** end = game time the cooldown ends; total = its full length (for the HUD sweep), or {@link #AGAIN}. */
     public record Cooldown(long end, int total) {
         public static final Codec<Cooldown> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.LONG.fieldOf("end").forGetter(Cooldown::end),
@@ -75,6 +81,10 @@ public final class Loadout {
     float energy = -1;
     /** Mastery bars by power id (schema 2). A power at the top level keeps no bar. */
     final Map<String, Bar> mastery = new HashMap<>();
+    /** The level each power's ladder moment was shown for (schema 3); a power missing here was seen at level 1. */
+    final Map<String, Integer> seen = new HashMap<>();
+    /** The schema this loadout was read from when older than the current one (0: current or new); not saved. */
+    int migratedFrom;
 
     // transient, network only
     float maxEnergy = 125;
@@ -105,6 +115,11 @@ public final class Loadout {
         return b == null ? 0 : b.points;
     }
 
+    /** The level this power's ladder moment was last shown for (1 when never). */
+    public int seen(String id) {
+        return seen.getOrDefault(id, 1);
+    }
+
     /** 0..1 of the way to the next level; 1 at the top level. */
     public float masteryProgress(String id) {
         Owned o = owned.get(id);
@@ -127,7 +142,13 @@ public final class Loadout {
 
     public long cooldownLeft(String id, long now) {
         Cooldown c = cooldowns.get(id);
-        return c == null ? 0 : Math.max(0, c.end() - now);
+        return c == null || c.total() == AGAIN ? 0 : Math.max(0, c.end() - now);
+    }
+
+    /** True while a ladder step's second press is open for this power (its key does the step's follow-up, free). */
+    public boolean again(String id, long now) {
+        Cooldown c = cooldowns.get(id);
+        return c != null && c.total() == AGAIN && c.end() > now;
     }
 
     public boolean isActive(String id) {
@@ -156,13 +177,14 @@ public final class Loadout {
             Codec.STRING.listOf().fieldOf("slots").forGetter(l -> Arrays.asList(l.slots)),
             Codec.unboundedMap(Codec.STRING, Cooldown.CODEC).optionalFieldOf("cooldowns", Map.of()).forGetter(l -> Map.copyOf(l.cooldowns)),
             Codec.FLOAT.optionalFieldOf("energy", -1f).forGetter(l -> l.energy),
-            Codec.unboundedMap(Codec.STRING, Codec.FLOAT).optionalFieldOf("mastery", Map.of()).forGetter(Loadout::masteryMap)
+            Codec.unboundedMap(Codec.STRING, Codec.FLOAT).optionalFieldOf("mastery", Map.of()).forGetter(Loadout::masteryMap),
+            Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("seen", Map.of()).forGetter(l -> Map.copyOf(l.seen))
     ).apply(i, Loadout::fromParts));
 
     public static final Codec<Loadout> CODEC = MAP_CODEC.codec();
 
     private static Loadout fromParts(int schema, List<Owned> owned, List<String> slots, Map<String, Cooldown> cds, float energy,
-                                     Map<String, Float> mastery) {
+                                     Map<String, Float> mastery, Map<String, Integer> seen) {
         Loadout l = new Loadout();
         for (Owned o : owned) l.owned.put(o.id(), o);
         for (int s = 0; s < SLOTS && s < slots.size(); s++) l.slots[s] = slots.get(s);
@@ -170,6 +192,12 @@ public final class Loadout {
         l.energy = energy;
         // schema 1 had no mastery: nothing to migrate, the bars start empty; every load is written back as current
         for (var e : mastery.entrySet()) if (e.getValue() > 0 && l.owned.containsKey(e.getKey())) l.mastery.put(e.getKey(), new Bar(e.getValue()));
+        for (var e : seen.entrySet()) if (l.owned.containsKey(e.getKey())) l.seen.put(e.getKey(), e.getValue());
+        if (schema < 3) {
+            // before ladders: the levels they already had count as seen; one window tells them what changed (SPEC 36.6)
+            for (Owned o : l.owned.values()) if (o.level() > 1) l.seen.put(o.id(), o.level());
+            if (!l.owned.isEmpty()) l.migratedFrom = schema;
+        }
         l.schema = SCHEMA;
         return l;
     }
@@ -204,7 +232,7 @@ public final class Loadout {
             buf.writeFloat(e.getValue().points);
         }
     }, buf -> {
-        Loadout l = fromParts(SCHEMA, OWNED_LIST.decode(buf), STRING_LIST.decode(buf), COOLDOWN_MAP.decode(buf), buf.readFloat(), Map.of());
+        Loadout l = fromParts(SCHEMA, OWNED_LIST.decode(buf), STRING_LIST.decode(buf), COOLDOWN_MAP.decode(buf), buf.readFloat(), Map.of(), Map.of());
         l.maxEnergy = buf.readFloat();
         l.regenPerTick = buf.readFloat();
         l.pauseUntil = buf.readLong();
