@@ -8844,10 +8844,28 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
 - **Strikes are noise** (`StrikeNoise`): rock or ore (not loose ground) broken under the rock by a player calls every
   mob in `#awaken:delve/hears_strikes` (hushling, drip lurker) within 24 that has no target: it paths to the block.
   A Hushed pick makes none; a player's call rests 40 ticks.
-- **Not done**: band room tones and drips from recordings, the breath re-voiced, "the cave answers" when a heart
-  breaks: waiting on Euan's approval of CC0 recordings. Lights don't lean or dim with the breath.
+- **Recorded sounds** (Euan approved four CC0 BigSoundBank recordings by Joseph Sardin, 2026-10-28; sources, licence
+  and the rebuild in `tools/art/sources/delve/README.md`, cut by `tools/art/specs/audio_cave_recorded.py`; files in
+  `sounds/delve/`, events written by `audio_caves.py` into merge/delve_sense):
+  - **The band's room tone** `delve.band.room` (Cave #1, a 12 s crossfaded loop, its hiss eased above 5.2 kHz): round
+    the listener while under (`Depths`), level 0.55 / 0.7 / 0.8 and pitch 1 / 0.88 / 0.76 for the Shallows, the Middle
+    Dark and the Deep, times the square root of "under" and the Conductor's nature level, half in the deep dark, none
+    under water; streamed.
+  - **The breath re-voiced** `delve.cave.breath` (Cave #1's lows under 700 Hz, a 10 s loop); the synthesised
+    `amb_cave_breath` is gone.
+  - **Stone settling re-voiced** `delve.cave.settle` (the four loudest separate falls in Fall of Stone); the
+    synthesised `amb_cave_settle_*` are gone. CaveSound plays them as before.
+  - **"The cave answers"** `delve.cave.answers` (`CaveAnswers`): 30 ticks after a heart breaks, from 18 blocks off in a
+    direction fixed by the lode at the heart's height, a hammer's knock (Hammer fall on concrete) and then an anvil's
+    last strike (Anvil #1) slowed to 0.6, in a convolved cave room, 6.6 s; volume 3 (heard within 48), pitched to the
+    ore: coal 0.75, copper 0.84, iron 0.89, redstone 0.94, gold 1, lapis 1.06, emerald 1.12, diamond 1.19, Deepglass
+    0.67.
+  - Drips stay synthesised (none of the four is a drip).
+- **Not done**: lights don't lean or dim with the breath; nothing heard in game yet.
 - **Tests** `delve_bands` (band by height; hushlings not in the Shallows), `delve_strike_noise` (a hushling 13 off is
-  called and paths; a Hushed pick calls none; a second strike within the rest calls none).
+  called and paths; a Hushed pick calls none; a second strike within the rest calls none), `delve_band_sounds` (the
+  four events registered, their sounds.json entries name shipping recordings under 400 KB; an answer waits, then
+  plays).
 
 ### 34.6 Delver lamps (built, P2)
 - **Block** `awaken:delver_lamp` (`lit` false/true; light 3 dead, 14 lit; iron, immovable, cutout model: a clouded

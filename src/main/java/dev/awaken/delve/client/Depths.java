@@ -1,7 +1,9 @@
 package dev.awaken.delve.client;
 
+import dev.awaken.core.audio.client.Soundscape;
 import dev.awaken.delve.CaveStyle;
 import dev.awaken.delve.api.Bands;
+import dev.awaken.delve.sense.SenseModule;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -18,7 +20,9 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
  * out, closing about 52), coloured by the band, thinner where you stand in light, so a far tunnel fades into coloured
  * dark instead of black. Only where "under" (eased), never under water or in lava, snow or blindness's own fog. Under a
  * styled land (SPEC §34.7) the air leans half way to that land's colour: green-brown under woods, amber under sand,
- * blue under snow, each crystal's own under the crystal lands.
+ * blue under snow, each crystal's own under the crystal lands. Each band has its <b>room tone</b>: a recorded cave's air
+ * round the listener, lower and fuller the deeper (pitch 1, 0.88, 0.76), under the Conductor's nature level, half in
+ * the deep dark.
  */
 final class Depths {
     private Depths() {}
@@ -34,12 +38,16 @@ final class Depths {
     static final float STYLE_MIX = 0.5F;
     private static final long[] CAPTIONED = new long[Bands.Band.values().length];
     private static float lit;
+    /** The room tone's level and pitch by band (Shallows, Middle Dark, Deep). */
+    static final float[] ROOM = {0.55F, 0.7F, 0.8F}, ROOM_PITCH = {1.0F, 0.88F, 0.76F};
+    private static SenseLoop room;
 
     static void tick() {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         if (level == null || mc.player == null || !SenseState.active || SenseState.under < 0.5F) {
             band = null;
+            room(mc, null);
             return;
         }
         Bands.Band b = Bands.of(Mth.floor(SenseState.y));
@@ -49,11 +57,25 @@ final class Depths {
             CaveHud.show(b.title, b.words);
         }
         band = b;
+        room(mc, b);
         if (level.getGameTime() % 20 == 0) {
             int x = Mth.floor(SenseState.x), z = Mth.floor(SenseState.z);
             style = CaveStyle.of(level.getBiome(new BlockPos(x, level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z), z)));
         }
         lit = level.getBrightness(LightLayer.BLOCK, BlockPos.containing(SenseState.x, SenseState.y, SenseState.z)) / 15F;
+    }
+
+    private static void room(Minecraft mc, Bands.Band b) {
+        float goal = b == null || SenseState.underwater ? 0F : ROOM[b.ordinal()] * (float) Math.sqrt(SenseState.under)
+                * Mth.clamp(Soundscape.natureLevel(), 0F, 1F) * (SenseState.biome == SenseState.DEEP_DARK ? 0.5F : 1F);
+        if (room != null && (room.isStopped() || room.age > 40 && !mc.getSoundManager().isActive(room))) room = null;
+        if (room == null) {
+            if (goal < 0.01F) return;
+            room = new SenseLoop(SenseModule.BAND_ROOM.get(), true, 0, 0, 0, ROOM_PITCH[b.ordinal()], 0.01F);
+            mc.getSoundManager().play(room);
+        }
+        room.goal = goal;
+        if (b != null) room.pitchGoal = ROOM_PITCH[b.ordinal()];
     }
 
     /** The band's look id for Lens's place layer 0 (a plain cave's look by band). */
@@ -97,6 +119,8 @@ final class Depths {
     }
 
     static void reset() {
+        if (room != null) room.end();
+        room = null;
         band = null;
         style = CaveStyle.NONE;
         java.util.Arrays.fill(CAPTIONED, 0L);

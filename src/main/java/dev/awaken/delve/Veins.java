@@ -135,6 +135,7 @@ public final class Veins {
         Finds.Find f = Finds.Find.of("lode", line, line, hint(l.ore()), l.ore().tint, false);
         Finds.tell(p, first ? f.big("Lode") : f);
         level.playSound(null, l.heartPos(), DelveContent.VEIN_GIVES.get(), SoundSource.BLOCKS, 1.6F, 1.0F);
+        CaveAnswers.heartBroke(level, l);
         long[] cells = left.toLongArray();
         DelveNet.send(p, new DelveNet.VeinOpen(l.id(), l.ore().ordinal(), l.heart(), cells, WINDOW, true));
         BlockPos h = l.heartPos();
