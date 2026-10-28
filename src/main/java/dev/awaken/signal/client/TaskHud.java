@@ -57,6 +57,39 @@ final class TaskHud {
         }
         if (!same) since = ticks;
         task = t;
+        SHOW.changed();
+    }
+
+    // ---- the clear screen (SPEC §40.6): 8 s after a change; a step that teaches a key stays until it's pressed ----------
+
+    private static final dev.awaken.signal.ui.CornerShow.TaskCard SHOW = new dev.awaken.signal.ui.CornerShow.TaskCard();
+    /** How strongly the card shows (eased a tick at a time: in fast, out slowly). */
+    private static float shown = 1F, shownO = 1F;
+
+    private static void tickShow(Minecraft mc) {
+        shownO = shown;
+        boolean want;
+        if (dev.awaken.core.api.HudState.classic() || task.title().isEmpty()) want = !task.title().isEmpty();
+        else {
+            SignalPayloads.TaskRow cur = null;
+            for (SignalPayloads.TaskRow r : task.rows()) {
+                if (!r.done()) {
+                    cur = r;
+                    break;
+                }
+            }
+            boolean teaches = cur != null && cur.text().contains("{key}") && !cur.key().isEmpty();
+            KeyMapping k = teaches ? KeyMapping.get(cur.key()) : null;
+            want = SHOW.tick(k != null, k != null && k.isDown(), dev.awaken.core.api.HudState.fighting())
+                    || dev.awaken.core.api.HudState.glancing();
+        }
+        shown = want ? Math.min(1F, shown + 0.25F) : Math.max(0F, shown - 1F / 14F);
+    }
+
+    /** How strongly the card shows this frame, eased. */
+    private static float shown(float pt) {
+        float k = Mth.lerp(pt, shownO, shown);
+        return k * k * (3 - 2 * k);
     }
 
     static void tick() {
@@ -66,10 +99,13 @@ final class TaskHud {
         top += (want - top) * 0.25F;
         Minecraft mc = Minecraft.getInstance();
         if (!task.title().isEmpty() && mc.player != null) layout = measure(task, mc.font, mc, layout);
+        tickShow(mc);
     }
 
     static void clear() {
         task = empty();
+        SHOW.reset();
+        shown = shownO = 1F;
     }
 
     /**
@@ -121,8 +157,10 @@ final class TaskHud {
         public float below(float partialTick, float width) {
             Minecraft mc = Minecraft.getInstance();
             Layout lay = layout;
-            boolean card = showing(mc, task, lay);
-            return SignalLayout.stackBelow(Mth.lerp(partialTick, topO, top), card ? (float) (lay.w * lay.scale) : 0, card ? (float) (lay.h * lay.scale) : 0,
+            float k = shown(partialTick);
+            boolean card = showing(mc, task, lay) && k > 0.01F;
+            // a card stepping aside gives its room back as it fades, so the run panel eases up under it
+            return SignalLayout.stackBelow(Mth.lerp(partialTick, topO, top), card ? (float) (lay.w * lay.scale) : 0, card ? (float) (lay.h * lay.scale * k) : 0,
                     mc.getWindow().getGuiScaledWidth(), width, TrackerHud.bossBottom());
         }
 
@@ -139,12 +177,14 @@ final class TaskHud {
         if (!showing(mc, t, lay)) return;
         Font font = mc.font;
         float pt = dt.getGameTimeDeltaPartialTick(false);
-        float fade = Mth.clamp((ticks - since + pt) / 10F, 0, 1);
+        float k = shown(pt);
+        if (k <= 0.01F) return;
+        float fade = Mth.clamp((ticks - since + pt) / 10F, 0, 1) * k;
         double s = lay.scale;
         int w = lay.w, h = lay.h;
         int sw = g.guiWidth();
         float y = SignalLayout.clearBossBars(Mth.lerp(pt, topO, top), sw, (float) (w * s), TrackerHud.bossBottom());
-        int x = (int) Math.round(sw - w * s - SignalLayout.MARGIN);
+        int x = (int) Math.round(sw - w * s - SignalLayout.MARGIN + (1 - k) * 8); // slides in from the edge
 
         g.pose().pushMatrix();
         g.pose().translate(x, y);

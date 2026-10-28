@@ -9427,11 +9427,44 @@ in reach 23% of a fight today, 49% with these rules).
   a block; a usable block in reach under the view (doors, trapdoors, gates, buttons, levers, beds, bells, anything with a block
   entity or a screen); a person or creature not fighting you. Never while locked. Fades in fast (18/s), out slower (8/s).
 
+### 40.6 The clear screen (`holo.client.HudDirector`, rules `holo.ui.ClearRules`, `signal.ui.CornerShow`)
+- The holo client installs `HudState`'s director; every layer goes through `HudMotion.pre`, which skips a piece at 0, draws
+  one between through the fading graphics, and places the hotbar and power bar. Setting `screen` in `awaken-holo-client.toml`:
+  CLEAR (default), CLEAR_CROSSHAIR (same, crosshair kept), CLASSIC (every layer as before, the calm HUD's own 35% fade with it).
+  No director (a server) is Classic.
+- **Fighting**: the player was hurt, struck a creature, is locked on, Arms' fight camera is on, or something hostile within 16
+  blocks has a target (or stands within 5 blocks in sight); it lasts 4 s (80 ticks) after the last cause.
+- **Pieces** (eased: in over 150 ms, out over 650 ms):
+  - Vanilla hearts, armour, food, XP level: hidden (the vitals and the wrist carry them). The XP strip (`contextual_info_bar`)
+    shows only while riding a mount that jumps (its jump bar lives there). Air, the boss bars, effects, chat, titles, the
+    selected item's name: as before.
+  - Hotbar: pops up for 2 s (40 ticks) when the selected slot changes (scroll, 1 to 9, pick block) and while glancing; it
+    slides 26 px down out of view as it goes.
+  - Vitals (`awaken:vitals`, `holo.client.Vitals`): health as a thin segmented line (124 px, one segment a heart, 20 segments
+    above 40 health) low in the middle, in a fight, when hurt or at 30% or less (it breathes). A blow
+    leaves its share amber for 420 ms, then it drains at 55% of the line a second; the blow flashes the line (130 ms) and
+    shakes it a pixel (220 ms); a heal lights its new segments (380 ms); absorption is a gold thread over it. Ascent's Aether
+    line sits 4 px under it (shown while spent, while soaring, or in a fight); food 8 px under, 60 px wide, only at 14 or
+    less, pulsing at 6 or less. The lines open from their middle and close to it. Over the hotbar while it shows.
+  - Power bar: shown in a fight, while a power is busy (energy below full, a cooldown, an active power, a slot changed) or
+    while glancing; drawn at 80% toward the bottom-right corner.
+  - Level chip: 3 s with fresh XP, and while glancing.
+  - Now line (`TrackerHud`): 8 s when the place is new, while within 50 m, after looking more than 70° away from it for 3 s,
+    or standing still for 2 s; held 3 s after, so it never blinks; aside in a fight. Slides 8 px in from the edge.
+  - Task card (`TaskHud`): 8 s after the server sends a change; a step that teaches a key stays until that key is pressed (then
+    8 s), even in a fight; otherwise aside in a fight; shown while glancing. Its room in the top-right stack shrinks as it fades.
+  - Gate panel (`RunHudLayer`): one line (rank, gate, floor) and the collapse clock under it, which never hides; the full panel
+    for 6 s whenever anything but the clocks changes, while the noise is 12 or more, while glancing, and in Classic.
+  - Creature plates (`PlateRules.thin`): the creature you mean (`Aim.target()`) keeps the full plate (the bright rim when
+    locked), and so do one under your look and a notable beast; the others fighting you show a thin plate, the bar alone.
+- Autopilot: `holo screen clear|clear_crosshair|classic|auto`, `holo fight on|off`.
+
 ### 40.8 Settings (`config/awaken-aim-client.toml`)
 `enabled` (true), `camera` (FOLLOW / SNAP / OFF), `flick_switch` (true), `show_mark` (true), `threat_arcs` (true), `sounds` (true).
 
 ### 40.9 Tests
 `aim_soft_pick`, `aim_caps`, `aim_power_bend_cap` (the pure rules), `aim_flier_locked_hits` (a creature 3.2 blocks over the feet:
 meant, struck; a hostile beside it, not meant, out of the band), `aim_step_in`, `aim_no_wall`, `aim_no_player`,
-`aim_flier_brought_down`.
+`aim_flier_brought_down`. The clear screen: `hud_states`, `hud_classic_unchanged`, `hud_now_line_returns`,
+`hud_task_card_teaches`, `hud_thin_plates`.
 

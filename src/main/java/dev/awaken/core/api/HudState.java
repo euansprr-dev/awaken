@@ -28,6 +28,11 @@ public final class HudState {
         boolean glancing();
 
         float alpha(Identifier layer);
+
+        /** The GUI y of the vitals' {@code row} (0 health, 1 Aether, 2 food), low in the middle, over the hotbar while it shows. */
+        default int vitalsY(int guiHeight, int row) {
+            return guiHeight - 32 + row * 4;
+        }
     }
 
     private static Director director = new Director() {
@@ -36,6 +41,9 @@ public final class HudState {
         @Override public boolean glancing() { return false; }
         @Override public float alpha(Identifier layer) { return 1F; }
     };
+
+    /** Half the vitals lines' width (GUI px): health, Aether and food share one centre. */
+    public static final int VITALS_HALF = 62;
 
     public static void install(Director d) {
         director = d;
@@ -67,5 +75,10 @@ public final class HudState {
     /** How strongly a HUD layer shows now, 0..1 (1 in Classic). */
     public static float alpha(Identifier layer) {
         return director.alpha(layer);
+    }
+
+    /** Where the vitals' {@code row} sits (0 health, 1 Aether, 2 food): Ascent draws its Aether line there on the clear screen. */
+    public static int vitalsY(int guiHeight, int row) {
+        return director.vitalsY(guiHeight, row);
     }
 }

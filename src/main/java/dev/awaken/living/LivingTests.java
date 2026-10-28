@@ -34,6 +34,23 @@ final class LivingTests {
         dev.awaken.living.population.LedgerTests.register();
         dev.awaken.living.camp.CampTests.register();
         dev.awaken.living.craft.CraftTests.register();
+        // the clear screen (SPEC §40.6): the creature you mean keeps the full plate; the others fighting you get a thin bar;
+        // one under your look or a notable beast keeps its full plate; Classic thins nothing
+        AwakenTests.register("hud_thin_plates", 20, h -> {
+            long now = 1000;
+            var other = new PlateRules.Candidate(7, 5, now - 10, Long.MIN_VALUE, false, false);
+            var meant = new PlateRules.Candidate(8, 5, now - 10, Long.MIN_VALUE, false, false);
+            var looked = new PlateRules.Candidate(9, 5, now - 10, now, false, false);
+            var notable = new PlateRules.Candidate(10, 5, now - 10, Long.MIN_VALUE, true, false);
+            var calm = new PlateRules.Candidate(11, 5, Long.MIN_VALUE, now, false, false);
+            h.assertTrue(PlateRules.thin(true, other, now, 8), "another fighting you: thin");
+            h.assertFalse(PlateRules.thin(true, meant, now, 8), "the one you mean: full");
+            h.assertFalse(PlateRules.thin(true, looked, now, 8), "under your look: full");
+            h.assertFalse(PlateRules.thin(true, notable, now, 8), "a notable beast: full");
+            h.assertFalse(PlateRules.thin(true, calm, now, 8), "not in a fight: as before");
+            h.assertFalse(PlateRules.thin(false, other, now, 8), "Classic: as before");
+            h.succeed();
+        });
         // the Boss Plate's payloads carry a bar's binding and its lines intact (SPEC §35.1)
         AwakenTests.register("boss_plate_bind", 20, h -> {
             java.util.UUID bar = java.util.UUID.randomUUID();

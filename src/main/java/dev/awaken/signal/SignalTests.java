@@ -43,6 +43,49 @@ final class SignalTests {
         Signal.onAction("signaltest", (p, action, accepted) -> ANSWERS.incrementAndGet());
         NowHooks.register(p -> TEST_NOW.getOrDefault(p.getUUID(), List.of()));
 
+        // the clear screen's Now line (SPEC §40.6): 8 s when new, then it fades while you walk toward the place; it comes back
+        // when you look more than 70° away for 3 s, stand still 2 s or come within 50 m; it holds 3 s so it never blinks
+        AwakenTests.register("hud_now_line_returns", 20, h -> {
+            var now = new dev.awaken.signal.ui.CornerShow.NowLine();
+            int fresh = dev.awaken.signal.ui.CornerShow.NowLine.FRESH, hold = dev.awaken.signal.ui.CornerShow.NowLine.HOLD;
+            int t = 0;
+            for (; t < fresh; t++) h.assertTrue(now.tick(t, 5, 400, true, false), "new: shown at " + t);
+            for (int i = 0; i < hold; i++, t++) h.assertTrue(now.tick(t, 5, 400, true, false), "held after it went quiet, " + i);
+            h.assertFalse(now.tick(t++, 5, 400, true, false), "walking toward it: gone");
+            // turned away: back after 3 s, not before
+            for (int i = 0; i < dev.awaken.signal.ui.CornerShow.NowLine.TURN_TICKS - 1; i++, t++)
+                h.assertFalse(now.tick(t, 120, 400, true, false), "not yet back, " + i);
+            h.assertTrue(now.tick(t++, 120, 400, true, false), "turned away 3 s: back");
+            // let it go again, then stand still: back after 2 s
+            for (int i = 0; i <= hold; i++, t++) now.tick(t, 5, 400, true, false);
+            h.assertFalse(now.tick(t++, 5, 400, true, false), "walking on: gone again");
+            boolean back = false;
+            for (int i = 0; i < dev.awaken.signal.ui.CornerShow.NowLine.STILL_TICKS; i++, t++) back = now.tick(t, 5, 400, false, false);
+            h.assertTrue(back, "stood still 2 s: back");
+            // near the place it stays; in a fight it steps aside
+            for (int i = 0; i < 200; i++, t++) h.assertTrue(now.tick(t, 5, 30, true, false), "within 50 m it stays");
+            h.assertFalse(now.tick(t, 5, 30, true, true), "a fight: aside");
+            h.succeed();
+        });
+
+        // the task card (SPEC §40.6): 8 s after a change; a step that teaches a key stays until the key is pressed, then 8 s
+        AwakenTests.register("hud_task_card_teaches", 20, h -> {
+            var card = new dev.awaken.signal.ui.CornerShow.TaskCard();
+            int show = dev.awaken.signal.ui.CornerShow.TaskCard.SHOW;
+            h.assertFalse(card.tick(false, false, false), "nothing changed: hidden");
+            card.changed();
+            for (int i = 0; i < show - 1; i++) h.assertTrue(card.tick(false, false, false), "shown after a change, " + i);
+            h.assertFalse(card.tick(false, false, false), "gone at 8 s");
+            card.changed();
+            for (int i = 0; i < show * 3; i++) h.assertTrue(card.tick(true, false, true), "a lesson stays, even in a fight, " + i);
+            h.assertTrue(card.tick(true, true, false), "pressed: still shown");
+            for (int i = 0; i < show - 1; i++) h.assertTrue(card.tick(true, false, false), "8 s from the press, " + i);
+            h.assertFalse(card.tick(true, false, false), "then gone");
+            card.changed();
+            h.assertFalse(card.tick(false, false, true), "a plain change steps aside in a fight");
+            h.succeed();
+        });
+
         // the task card wraps a long step instead of cutting it (Euan, 2026-10-27): no line wider than the card, the words and the
         // key kept in order, the count and compass on the last line or one of their own, an ellipsis only past the last line
         AwakenTests.register("signal_task_wrap", 20, h -> {

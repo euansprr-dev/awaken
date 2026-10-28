@@ -46,6 +46,7 @@ public final class HoloModule {
             root.then(Commands.literal("holo").then(demo));
         });
         HoloTests.register();
+        HudTests.register();
     }
 
     private static int demo(ServerPlayer p, int mode) {
