@@ -357,7 +357,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
 
     @Override
     protected int getModelTint(HeroRenderState s) {
-        return look(s).tint;
+        return look(s).kitTint;  // painted in its own colours: the theme's tint would wash them (SPEC §35.4)
     }
 
     @Override

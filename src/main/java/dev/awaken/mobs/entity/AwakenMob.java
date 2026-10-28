@@ -946,18 +946,20 @@ public class AwakenMob extends Monster {
         if (l == null) look = l = new AwLook();
         MobDef d = def();
         int flags = entityData.get(DATA_FLAGS);
-        int tint = d.tint;
-        if ((flags & F_FROSTED) != 0) tint = mix(tint, 0xBFE8FF, 0.45F);
-        if ((flags & F_CHARGED) != 0) tint = mix(tint, 0xE6F4FF, 0.3F);
-        if ((flags & F_RISEN) != 0) tint = mix(tint, 0x9AA8D0, 0.35F);
+        int tint = d.tint, kit = 0xFFFFFF;
+        if ((flags & F_FROSTED) != 0) { tint = mix(tint, 0xBFE8FF, 0.45F); kit = mix(kit, 0xBFE8FF, 0.45F); }
+        if ((flags & F_CHARGED) != 0) { tint = mix(tint, 0xE6F4FF, 0.3F); kit = mix(kit, 0xE6F4FF, 0.3F); }
+        if ((flags & F_RISEN) != 0) { tint = mix(tint, 0x9AA8D0, 0.35F); kit = mix(kit, 0x9AA8D0, 0.35F); }
         boolean haunted = (flags & F_HAUNTED) != 0 || (flags & F_DECOY) != 0;
         float alpha = 1.0F;
         if (haunted) {
             alpha = (flags & F_PHASED) != 0 ? 0.25F + 0.1F * Mth.sin((tickCount + partialTicks) * 0.8F) : 0.62F;
             tint = mix(tint, 0xB8C4FF, 0.35F);
+            kit = mix(kit, 0xB8C4FF, 0.35F);
         }
         l.translucent = haunted;
         l.tint = ((int) (alpha * 255) << 24) | (tint & 0xFFFFFF);
+        l.kitTint = ((int) (alpha * 255) << 24) | (kit & 0xFFFFFF);
         int tele = entityData.get(DATA_TELEGRAPH);
         l.telegraph = tele > 0 ? Math.min(1.0F, tele / 20.0F) : 0.0F;
         float pulse = 0.5F + 0.5F * Mth.sin((tickCount + partialTicks) * (tele > 0 ? 0.9F : 0.12F));

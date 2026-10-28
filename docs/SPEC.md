@@ -9150,6 +9150,9 @@ should show a boss bar of our own. What he approved (PLAN §7):
   waits until the head is 75° off, then lurches) is replaced. On the server the body is the facing the script sets; on
   the client it eases after the synced facing (30% of the gap a tick, at most 18°), and the head turns within its
   range of the body.
+- **Its own colours.** A kit body is painted in its own colours, so the Bestiary's tint (the creature's or its
+  theme's) is not multiplied over it: only frost, charge, the risen pall and a haunting tint it (`AwLook.kitTint`,
+  the same mixes from white). A rig marked translucent draws with `entityTranslucent` (ice, water).
 - **The setting.** `kitBodies` (client, `awaken-mobs-client.toml`) is on by default. Off draws every creature's old
   body after the next resource reload (renderers are made then); the server's moves still run.
 
