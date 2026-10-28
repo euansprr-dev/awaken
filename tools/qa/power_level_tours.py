@@ -54,11 +54,14 @@ def releases():
 CMD_WAIT = 5  # the autopilot waits this long after every cmd line, the cast's included
 
 
+HELD = ("beam", "telekinesis")  # channels that hold rather than charge
+
+
 def timing(pid, mode, max_ticks, release):
     """Ticks after the cast to the front shot, then to the back shot (after the camera's own two)."""
     if mode == "toggle":
         return 10, 12
-    if mode == "channel" and pid in ("beam", "telekinesis"):
+    if mode == "channel" and pid in HELD:
         return 8, 6
     if mode == "channel":  # a charge: it fires when the hold runs out
         return max_ticks + 1, 3
@@ -99,7 +102,9 @@ def segment(pid, name, mode, max_ticks, level, release, passive=False):
     ]
     if mode == "toggle":
         lines.append(f"cmd awaken admin power cast {pid}")
-    lines += ["cmd tick rate 20", "wait 30", ""]
+    # a held channel runs its full length (nobody lets go): wait it out, or the next level's cast is "busy"
+    held = max_ticks if mode == "channel" and pid in HELD else 0
+    lines += ["cmd tick rate 20", f"wait {30 + held}", ""]
     return lines
 
 

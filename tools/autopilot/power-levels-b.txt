@@ -54,7 +54,7 @@ camera back
 wait 6
 shotnow pl_beam_1_back
 cmd tick rate 20
-wait 30
+wait 150
 
 # ---- Beam 3
 cmd tp @e[type=minecraft:husk] 0.5 120 0.5
@@ -78,7 +78,7 @@ camera back
 wait 6
 shotnow pl_beam_3_back
 cmd tick rate 20
-wait 30
+wait 150
 
 # ---- Beam 5
 cmd tp @e[type=minecraft:husk] 0.5 120 0.5
@@ -102,7 +102,7 @@ camera back
 wait 6
 shotnow pl_beam_5_back
 cmd tick rate 20
-wait 30
+wait 150
 
 # ---- Nova 1
 cmd tp @e[type=minecraft:husk] 0.5 120 0.5

@@ -276,7 +276,7 @@ camera back
 wait 6
 shotnow pl_telekinesis_1_back
 cmd tick rate 20
-wait 30
+wait 90
 
 # ---- Telekinesis 3
 cmd tp @e[type=minecraft:husk] 0.5 120 0.5
@@ -300,7 +300,7 @@ camera back
 wait 6
 shotnow pl_telekinesis_3_back
 cmd tick rate 20
-wait 30
+wait 90
 
 # ---- Telekinesis 5
 cmd tp @e[type=minecraft:husk] 0.5 120 0.5
@@ -324,7 +324,7 @@ camera back
 wait 6
 shotnow pl_telekinesis_5_back
 cmd tick rate 20
-wait 30
+wait 90
 
 # ---- Meteor Dive 1
 cmd tp @e[type=minecraft:husk] 0.5 120 0.5
