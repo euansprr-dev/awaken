@@ -121,8 +121,8 @@ Package `dev.awaken.hearth.settle` (and `TierRules`, `stage/HomeStage`, `kit/Hom
 - **The Mine head** (`RoomType.MINE_HEAD`, `MineHead`): a hatch over 16+ blocks of climbable shaft; each evening the ore of
   its foot's depth comes up, and the lode's it cut. The Mine Echo works it too (no dice).
 - **Tiers** (`TierRules`): II four rooms with a Fine one and a field or a pen; III a Grand room; IV a bell tower and four
-  people; V eight (with the old ranks and materials). Radii 48 / 56 / 64 / 80 / 96. The Anchor's flame shows the tier
-  (`HearthAnchorBlock.TIER`). At IV the village is named on the Atlas and in the place caption ("your village").
+  people; V eight (with the old ranks and materials). Radii 48 / 56 / 64 / 80 / 96. The Anchor (a hearthstone brazier, light 15, a warm pool
+  of light on the ground: SPEC §28.11) shows the tier in its fire, lip and collar (`HearthAnchorBlock.TIER`). At IV the village is named on the Atlas and in the place caption ("your village").
 - **The kit** (`kit/HomeKit`): drainpipe, trellis, window box, wall ivy, hoist beam craftable and dropping when broken
   outside Carillon. **Wiring**: a Study halves the Blueprints' paper; a Greenhouse triples herb ripeness.
 - Admin: `/awaken admin hearth people | know | arrive | talk | tier | evening | wren | harvest | stage [settle | view]`.
@@ -227,7 +227,8 @@ tracker widths (148 px, 100 with a compass) by `GuideTests`.
 
 **Oren's cottage** (`guide/Cottage`, `CottagePlan`). Once per player, six seconds after the Anchor takes root, a choice
 card: "A cottage from Oren? · Free: your first Sanctuary." [Y] Raise it · [N] I'll build my own (no only marks it
-declined; the screen keeps the offer, moved to its bottom: "Changed your mind?"). Yes starts a job:
+declined; the screen keeps the offer, moved to its bottom: "Changed your mind?"). Yes starts a search, then a day's build
+(SPEC §28.11):
 - *Site*: 112 candidate centres 10–22 blocks from the Anchor, the door facing it, ranked by heightmap flatness and
   distance (one tick), then two full checks a tick: every column of the 12 × 13 box must be terrain (dirt, sand, stone,
   terracotta, gravel, clay, snow, mud...) with only plants, snow, vines and natural (non-persistent) leaves above it, up
@@ -235,12 +236,15 @@ declined; the screen keeps the offer, moved to its bottom: "Changed your mind?")
   4 or cut up 2, the rim may rise 1; it keeps 2 blocks from the Anchor and 3 from the Spire. Anything a player makes
   (planks, cobble, farmland, paths, placed leaves, chests) rejects the spot. None in 40 tries → a notice ("No room for a
   cottage... clear a patch about 12 blocks across... then ask again in your Hearth") and the screen's Try again.
-- *Build*: trees one a tick, then the plants and the bumps in one pass, then four blocks a tick (about seven seconds) in
-  order foundation → walls → plate and ceiling → roof → chimney → furnishing, layer by layer and row by row, a row's
-  material's place sound at most every three ticks and embers on new blocks; Oren walks to the door and swings a mace as a hammer. It never
-  replaces a block that isn't terrain or a plant (someone building there meanwhile keeps it). The server stopping
-  mid-build places the rest at once. On completion: the Anchor chime, "Oren's cottage · Your first Sanctuary is up.",
-  `HearthRecord.cottage` (a cell inside, saved) and a rescan, so "Sanctuary recognised" follows within a second.
+- *Build*: the site cleared at once, then one in-game day for the cottage (`CottageBuild`, saved on the Hearth as
+  `cottage_build`, schema 1): foundation 14%, frame (posts and plate) 14%, walls 24%, roof (ceiling first) 28%, chimney
+  5%, furnishing 15% of the day, layer by layer and row by row. The work follows the game ticks or the clock, whichever
+  moved more, so it catches up (64 blocks a tick, quietly) after a logout, a restart or the chunks unloading. Each live
+  block plays its place sound with embers; Oren walks the site with a mace as a hammer and swings at each one. A block
+  never goes into a cell where something stands (held and retried; doors and beds go in whole) and never replaces a
+  block that isn't terrain or a plant. On completion: the Anchor chime, "Oren's cottage is finished · Your first
+  Sanctuary is ready beside your Anchor.", `HearthRecord.cottage` (a cell inside, saved) and a rescan. The guide's card
+  says what he's on and when it'll stand ("It'll be ready by tomorrow evening.").
 - *Design* (`CottagePlan`, local frame, turned to face the Anchor): 9 × 9 on a stone plinth that fills down to the
   ground; log corner, door and mid posts; a stone lower course with weathered patches; plank walls four high; seven
   two-tall windows with open trapdoor shutters, flower boxes under the two front ones and a light over the door; a log
@@ -327,7 +331,8 @@ survive four minutes of waves in a desert arena; failing Fractures you for 8 min
 ## Commands
 `/awaken hearth info` · `/awaken hearth echoes` · `/awaken hearth guide` · `/awaken admin trial <D|C|B|A|S|penalty>` ·
 `/awaken admin town arrive <npc id or first name>` · `/awaken admin hearth scan` ·
-`/awaken admin hearth cottage` (raise it now) `| reset` (forget the once) `| offer` `| view <outside|inside|side>`
+`/awaken admin hearth cottage` (raise it now) `| reset` (forget the once) `| offer` `| hurry` (finish the day's work)
+`| view <outside|inside|side>`
 (camera spots for screenshots).
 
 Autopilot: `tools/autopilot/hearth-guide.txt` (the integrator runs it).
@@ -341,7 +346,8 @@ generator decode · pure rules (break counting, lap comparison, compass, arena b
 Now line fits, the guide data round-trips, the site rules) · `hearth_cottage_is_a_sanctuary` (two cottages, one turned and
 in the desert palette, both scan as Sanctuaries; the guide says Oren built one) · `hearth_why_not_reasons` (roofless →
 sees the sky; a gap → an opening at that block; a hole in the roof → there; no mat → missing: a Meditation Mat; fixed →
-a Sanctuary) · `hearth_cottage_offer_once` (one card, never twice, not after a no, the screen still offers it).
+a Sanctuary) · `hearth_cottage_offer_once` (one card, never twice, not after a no, the screen still offers it) ·
+`hearth_cottage_builds_over_a_day` and `hearth_anchor_light` (`guide/CottageBuildTests`, SPEC §28.11).
 
 ## Decisions
 - Trials live in their own `awaken:trials` dimension (the builder brief asked for it) rather than the Stillpoint's trial wing

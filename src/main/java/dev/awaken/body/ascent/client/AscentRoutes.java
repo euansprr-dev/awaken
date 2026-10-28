@@ -113,7 +113,7 @@ public final class AscentRoutes {
         if (recording) {
             Options o = Minecraft.getInstance().options;
             int k = bit(o.keyUp, 1) | bit(o.keyDown, 2) | bit(o.keyLeft, 4) | bit(o.keyRight, 8) | bit(o.keyJump, 16)
-                    | bit(o.keyShift, 32) | bit(o.keySprint, 64) | bit(AwakenKeys.MOVEMENT, 128);
+                    | bit(o.keyShift, 32) | bit(o.keySprint, 64) | bit(AwakenKeys.ROPE, 128);
             FRAMES.add(new Frame(k, p.getYRot(), p.getXRot()));
             if (FRAMES.size() >= 20 * 60 * 5) stop(); // five minutes at most
         }
@@ -151,7 +151,7 @@ public final class AscentRoutes {
         o.keyJump.setDown((k & 16) != 0);
         o.keyShift.setDown((k & 32) != 0);
         o.keySprint.setDown((k & 64) != 0);
-        AwakenKeys.MOVEMENT.setDown((k & 128) != 0);
+        AwakenKeys.ROPE.setDown((k & 128) != 0);
     }
 
     private static Path path(String route) {

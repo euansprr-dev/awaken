@@ -123,3 +123,4 @@ Counters that content in data/awaken/awaken/** reads. Each owning module must co
 | `awaken:armoury_forge`, `awaken:armoury_opened` | arms | trail/the_forge, trail/your_first_weapon |
 | `awaken:blueprint_copies`, `awaken:weapons_attuned`, `awaken:weapons_raised` | arms | trail/the_forge, trail/boss_weapons |
 | `awaken:patterns_bought`, `awaken:patterns_from_gates`, `awaken:patterns_from_people`, `awaken:patterns_from_stands`, `awaken:patterns_from_villages` | arms | trail/finding_patterns |
+| `awaken:delve/pick_pulled`, `awaken:delve/verses_woken` (the furthest verse woken, 0-6) | delve | trail/the_delvers_pick |

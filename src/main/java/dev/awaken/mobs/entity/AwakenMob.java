@@ -566,6 +566,11 @@ public class AwakenMob extends Monster {
         return flag(F_FALLEN) || flag(F_DORMANT) || flag(F_FUSING) || watched || staggerTicks > 0 || (abilities != null && abilities.holdsStill());
     }
 
+    /** Whether its idle wandering waits (a named beast watching someone who walked into its territory). */
+    protected boolean idleHeld() {
+        return false;
+    }
+
     @Nullable AbilityRunner runner() {
         return abilities;
     }

@@ -137,12 +137,20 @@ final class ArmsHands {
     private static final org.joml.Vector3f D = new org.joml.Vector3f();
     private static final org.joml.Quaternionf Q = new org.joml.Quaternionf();
 
+    private static boolean far;
+
+    /** Whether the move on the hands now is led by its double weapon's other end (its trail runs along that end). */
+    static boolean far() {
+        return far;
+    }
+
     /**
      * The lab's swing (FpSwings), when it has one for the move: an arc about the sword arm's pivot, the edge leading,
      * through the target under the crosshair on the hit tick. A held heavy waits at the heavy's drawn-back start (and
      * trembles), an armed Plunge at the Plunge's. Mirrored for a left main arm. False: the row's own swing below.
      */
     private static boolean lab(LocalPlayer p, FirstPerson.View v) {
+        far = false;
         var style = ArmsPredict.style != null ? ArmsPredict.style : preview != null ? Archetypes.get(Arms.LONGSWORD) : null;
         if (style == null) return false;
         Archetype.Move m;
@@ -166,6 +174,7 @@ final class ArmsHands {
         boolean ours = ArmsItems.of(p.getMainHandItem().getItem()) != null;
         FpSwings.Style st = FpSwings.style(style.id());
         boolean has = m != null && FpSwings.sample(st, m, t, ours, D, Q);
+        far = has && FpSwings.far(st, m);
         if (!has) {
             D.zero();
             Q.identity();
@@ -179,6 +188,10 @@ final class ArmsHands {
         // which hand strikes: a weapon in each hand (the Daggers) strikes with the off hand too, the main's move mirrored
         FpSwings.Hand hand = !has || preview != null ? FpSwings.Hand.MAIN : FpSwings.hand(st, m);
         boolean mainMoves = has && hand != FpSwings.Hand.OFF, offMoves = has && hand != FpSwings.Hand.MAIN;
+        // a weapon in each hand: the hand not striking draws back to the next strike's set while this one lands (Swing
+        // Studio round 4; Euan 2026-10-28: "let the idle hand draw back while the other strikes")
+        boolean idle = has && !tremble && hand != FpSwings.Hand.BOTH && FpSwings.idle(st, m, t, ours, IDLE_D, IDLE_Q);
+        boolean mainIdle = idle && !mainMoves, offIdle = idle && !offMoves;
         // a change of source (a chained strike, a move ended or refused, the charge taken up): each hand carried from
         // where it was shown into the new one, never a jump (SwingBlend)
         float now = handsNow();
@@ -189,14 +202,16 @@ final class ArmsHands {
             Archetype.MoveDef def = m == null ? null : style.move(m);
             float ticks = def == null ? REST_BLEND : Mth.clamp(def.windup() * 0.8F, 1F, 2.5F);
             sourceMotion(st, m, t, ours, has && !tremble);
-            MAIN_B.begin(now, mainMoves ? D : ZERO, mainMoves ? Q : ID, mainMoves ? VD : ZERO, mainMoves ? VW : ZERO, ticks);
-            OFF_B.begin(now, offMoves ? D : ZERO, offMoves ? Q : ID, offMoves ? VD : ZERO, offMoves ? VW : ZERO, ticks);
+            MAIN_B.begin(now, mainMoves ? D : mainIdle ? IDLE_D : ZERO, mainMoves ? Q : mainIdle ? IDLE_Q : ID, mainMoves ? VD : ZERO,
+                    mainMoves ? VW : ZERO, ticks);
+            OFF_B.begin(now, offMoves ? D : offIdle ? IDLE_D : ZERO, offMoves ? Q : offIdle ? IDLE_Q : ID, offMoves ? VD : ZERO,
+                    offMoves ? VW : ZERO, ticks);
         }
-        boolean mainShown = mainMoves || MAIN_B.active(now), offShown = offMoves || OFF_B.active(now);
-        if (mainMoves) MAIN_D.set(D); else MAIN_D.zero();
-        if (mainMoves) MAIN_Q.set(Q); else MAIN_Q.identity();
-        if (offMoves) OFF_D.set(D); else OFF_D.zero();
-        if (offMoves) OFF_Q.set(Q); else OFF_Q.identity();
+        boolean mainShown = mainMoves || mainIdle || MAIN_B.active(now), offShown = offMoves || offIdle || OFF_B.active(now);
+        if (mainMoves) MAIN_D.set(D); else if (mainIdle) MAIN_D.set(IDLE_D); else MAIN_D.zero();
+        if (mainMoves) MAIN_Q.set(Q); else if (mainIdle) MAIN_Q.set(IDLE_Q); else MAIN_Q.identity();
+        if (offMoves) OFF_D.set(D); else if (offIdle) OFF_D.set(IDLE_D); else OFF_D.zero();
+        if (offMoves) OFF_Q.set(Q); else if (offIdle) OFF_Q.set(IDLE_Q); else OFF_Q.identity();
         MAIN_B.apply(now, MAIN_D, MAIN_Q);
         OFF_B.apply(now, OFF_D, OFF_Q);
         if (!mainShown && !offShown) return false;
@@ -218,7 +233,8 @@ final class ArmsHands {
     private static long shownNanos;
     private static boolean shownCharging;
     private static final org.joml.Vector3f VD = new org.joml.Vector3f(), VW = new org.joml.Vector3f(), ZERO = new org.joml.Vector3f(),
-            DA = new org.joml.Vector3f();
+            DA = new org.joml.Vector3f(), IDLE_D = new org.joml.Vector3f();
+    private static final org.joml.Quaternionf IDLE_Q = new org.joml.Quaternionf();
     private static final org.joml.Quaternionf ID = new org.joml.Quaternionf(), QA = new org.joml.Quaternionf(), QC = new org.joml.Quaternionf();
 
     /** The new source's motion at {@code t} into VD, VW (zero for a held pose). */
@@ -266,8 +282,8 @@ final class ArmsHands {
             FirstPerson.View.fist(v.gripOff, 1, -inv * G.x, G.y, G.z);
         } else if (both != null && p.getOffhandItem().isEmpty()) {
             // a two-handed weapon with the off hand free: the off hand closes on the handle below the main, through
-            // every swing and the guard (SPEC §25 "Swing Studio": the katana, greatblade, maul, spear, glaive, scythe and
-            // war-staff); a stance's own off fist still takes the hand (Hands' hideOff)
+            // every swing and the guard (SPEC §25 "Swing Studio": the katana, greatblade, maul, spear, glaive, scythe,
+            // war-staff and twin blades); a stance's own off fist still takes the hand (Hands' hideOff)
             onMain(G.set(both), g, g > 0 ? jolt(partial) * g : 0, inv);
             FirstPerson.View.fist(v.gripOff, 1, inv * G.x, G.y, G.z);
         }

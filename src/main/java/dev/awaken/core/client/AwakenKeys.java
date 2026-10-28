@@ -20,7 +20,14 @@ public final class AwakenKeys {
     public static final KeyMapping POWER_3 = key("power_3", InputConstants.KEY_C);
     public static final KeyMapping POWER_4 = key("power_4", InputConstants.KEY_V);
     public static final KeyMapping ULTIMATE = key("ultimate", InputConstants.KEY_R);
-    public static final KeyMapping MOVEMENT = key("movement", InputConstants.KEY_LALT);
+    /**
+     * The movement power's slot (a dash, a blink). Its own key since the rope took Left Alt (SPEC §17.30): the two
+     * shared it, and holding the rope silenced the slot.
+     */
+    public static final KeyMapping MOVEMENT = new KeyMapping("key.awaken.movement", KeyConflictContext.IN_GAME,
+            InputConstants.Type.MOUSE, InputConstants.MOUSE_BUTTON_4, CATEGORY);
+    /** The rope (the Ascent's Tether): held to swing, let go to fly. Left Alt, the thumb's key. */
+    public static final KeyMapping ROPE = key("rope", InputConstants.KEY_LALT);
     public static final KeyMapping STATUS = key("status", InputConstants.KEY_K);
     public static final KeyMapping FOCUS = key("focus", InputConstants.KEY_G);
     public static final KeyMapping REALITY_CHECK = key("reality_check", InputConstants.KEY_H);
@@ -37,7 +44,7 @@ public final class AwakenKeys {
 
     static void register(RegisterKeyMappingsEvent event) {
         event.registerCategory(CATEGORY);
-        for (KeyMapping k : new KeyMapping[]{POWER_1, POWER_2, POWER_3, POWER_4, ULTIMATE, MOVEMENT, STATUS, FOCUS,
+        for (KeyMapping k : new KeyMapping[]{POWER_1, POWER_2, POWER_3, POWER_4, ULTIMATE, MOVEMENT, ROPE, STATUS, FOCUS,
                 REALITY_CHECK, ACCEPT, DISMISS, BIND, PLAYTEST_FLAG}) {
             event.register(k);
         }

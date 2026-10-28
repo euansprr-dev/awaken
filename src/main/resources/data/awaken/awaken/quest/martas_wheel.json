@@ -5,7 +5,7 @@
   "requires": [],
   "scene": "road",
   "giver": "marta",
-  "summary": "Marta's lead wagon threw a wheel on the road. Eight sticks get her rolling again, and she pays in road news.",
+  "summary": "Marta's wagon lost a wheel. Bring her 8 sticks and she'll tell you what's out there.",
   "ask": [
     "Marta: You there. Hunter? Good. Hunters have arms.",
     "Marta: The lead wagon threw a wheel and the spokes went to splinters. Eight sticks and I'm rolling again."

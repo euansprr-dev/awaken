@@ -639,6 +639,18 @@ Plan v2 · System v2 (details in docs/modules/system-ui.md):
   crosshair and never exceed 20% of the screen height. Client settings: `systemStyle`, `nowTracker`, `systemScale`
   (0.75–1.5, toasts don't scale). The Now tracker syncs every 40 ticks, only when changed, and steps below the boss
   bars when they would overlap it.
+- Story lines (speech, the Signal's voice; `signal.ui.StoryPager`, 2026-10-28 after Euan saw Oren cut mid-sentence):
+  a subtitle page is whole sentences, as many as fit the lines the screen has room for between the crosshair and the
+  action bar (2 to 3), and the box sizes to the page. A sentence is never cut across pages unless it alone is longer
+  than a page, and then after a comma, colon or dash where one leaves more than a stub. Nothing is ever ellipsized or
+  dropped. A page holds for max(50, min(400, 30 + 1.2 × chars)) ticks after typing. Test
+  `living_quest_lines_fit_the_box` pages every quest line at every GUI size and scale.
+- A non-urgent card asked while a story line is on screen or queued waits until the speech has ended and 10 ticks
+  have passed (at most a minute), so an offer comes after the lines that explain it (`ChoiceDeck`, test
+  `signal_choice_waits_for_speech`). Warnings and priority 9+ never wait.
+- A card's body shows whole when it fits three lines (else its first sentence). A card with two or more body lines is
+  200 wide and may grow to just above the power bar (at most 30% of the height), shrinking toward scale 0.75 before it
+  drops a line; other cards keep the 20% rule.
 
 Plan v2 · overworld creatures (details in docs/modules/fauna.md):
 - Spawn category `awaken:fauna` (16 per player, NeoForge enum extension). Role caps per player: ambient 8 (3 before
@@ -655,6 +667,17 @@ Plan v2 · overworld creatures (details in docs/modules/fauna.md):
 - Every named beast has a lair placed by world generation (one structure set each; spacing 112 chunks for P1's three,
   96 for P2's, 40 for the Mycelord). The lair's beast appears when an awakened level-3+ player is within 96 blocks and
   returns an hour of play after it falls. Roaming beasts spawn at weight 1.
+- **Fliers hold in open air** (Euan, 2026-10-28: the Empress Moth sat still inside a birch canopy; `mobs.entity.FlightRoom`,
+  test `mobs_flier_room`): a flier's idle spot needs room for its drawn body, not only its hitbox (reach from the body's
+  centre: Empress Moth 2.2 blocks, Plumed Coil and Dune Wyrm 2.6, times its scale; others half their width + 0.25; 0.75
+  headroom), and a straight way there clear of blocks (fliers steer straight, no pathfinding). A big flier (reach 1.5+)
+  circles its home slowly, holds in its clearing or over the canopy (rising straight out of the clearing first), and
+  one pick in seven or so settles on a solid top for 5–11 s. A flight that stops closing in for 40 ticks ends, so the
+  flier chooses again (before, a flight into leaves never arrived and it never chose again). A big flier with no room and
+  no way out for three picks (one saved inside a canopy) is lifted over the treetops in a puff of dust; a roaming big
+  flier that spawned under a canopy rises over it before it takes its home there. A flying named beast that notices you
+  stops circling and hangs in the air, turning to face you while you stay in sight; its warning, then a roar when it
+  turns on you, then a told dive.
 - Meeting a family's creature at level 3+ tells of its nearest lair (within 3,000 blocks); finding a lair pays 0.15 of
   a level once per beast kind. Block-changing talents (lichen, flowers, mushrooms) never act inside a Hearth radius.
 - Twelve family materials (`<family>_<thing>`) and the beasts' parts join the Hunter gear tags (E hides, cores and
@@ -4032,6 +4055,26 @@ manual; stop the build at the first block; the payoff answers only the line; dan
 
 ---------------------------------------------------------------------------------------------------------------------
 
+### 17.30 The rope's own key, and sprint back into flight (Euan's play, 2026-10-28: "The rope on left option is the same keybind as the dash")
+- **Keys.** The rope has its own mapping, `key.awaken.rope` ("Rope (hold)", AWAKEN's category, Left Alt), read by
+  `AscentMoves`, routes, the pilot, the shoulder view and the vow's words. The movement power's slot
+  (`key.awaken.movement`) defaults to mouse button 4. Before, both were Left Alt and holding the Tether silenced the
+  slot (`MovementHooks.ownsMovementKey`), so a dash power there never fired. `ownsMovementKey` now holds only when a
+  player binds both to the same key (the rope wins, as before). An old save keeps the movement power on Left Alt; once,
+  on the first tick, a movement key on the rope's key goes to its new default, options are saved, and the tip
+  `first/keys_split` names both keys (`core.client.KeySplit`; the marker `config/awaken-keys-split.txt` keeps it to
+  once). Which of the two keeps Left Alt is decision 1 on the rope plan's page; swapping is two defaults.
+- **Default key clashes** (AWAKEN against vanilla 26.3's own defaults; NeoForge marks them red in Controls): G is Focus
+  and vanilla's Quick Actions; O is Look and vanilla's Friends; X and C are Powers 2 and 3 and vanilla's creative
+  toolbar keys (creative only). Every letter a left hand reaches from WASD is taken; Caps Lock is no hold key on macOS
+  (it sends the lock's state, not the key).
+- **Sprint back into flight** (`AscentRules.sprintTakesFlight`, GameTest `ascent_sprint_flies_again`). The cause:
+  boosting empties the meter, which folds flight into a glide (§17.8); the glide counts as out of flight, so the meter
+  refills, but only a jump took a glide back into flight, so sprint did nothing until a tap of jump. Now in a Skyborn
+  glide a sprint press takes flight whenever (too little Aether gives the weak beat, as a jump does), and sprint still
+  held through a glide the empty meter forced takes flight again once the meter is back to 25% (about 5 s in the sun).
+  Sprint held into a plain glide (a run off a cliff) stays a glide.
+
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
 
 The world is drawn at a lower resolution and rebuilt to the screen's; menus, the HUD and all GUI text stay native.
@@ -4232,7 +4275,9 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 ### 21.5 Wayfarers, quests and bounties (Phase C, as built 2026-10-25)
 - **Chains** (`living.quest`): data `data/<ns>/awaken/quest/<chain>.json`, schema 1: `title`, `band` (0..4),
   `requires` (progression tokens), `scene` (`resident` for a fixed giver, else the scene kind it's found in: `cliff`,
-  `road`, `crag`), `giver`, `ask` (the giver's lines before the choice card), `summary`, `steps[]`, `relic`, `finish`
+  `road`, `crag`), `giver`, `ask` (the giver's lines before the choice card: who they are, what they offer and what
+  they need, in plain words, never assuming what the player holds or has done), `summary` (the card's body: what you
+  agree to, with the counts, in at most three card lines), `steps[]`, `relic`, `finish`
   (progression `Reward`). A step: `id`, `objective` {`type` talk|reach|kill|collect|deliver|use|discover, `target`,
   `count`, `radius`}, `text` (its Journal line), `start`/`done` lines, `reward`, `needs` + `needs_text` (a step waits for
   it; `tier:<need>` asks the Horizon's reach answers, so the Ascent's tiers and movement powers count), `spawn`
@@ -4257,7 +4302,8 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - **Wayfarer** entity (`awaken:wayfarer`): a player-shaped person in their own skin
   (`textures/entity/wayfarer/<who>.png`, tools/art/specs/wayfarers.py), never hurt, never despawns. Use to talk: a step
   waiting on them moves on (or says what it needs), a delivery changes hands, Hale reads the bounty board, a chain they
-  give is offered on a choice card (Help / Not now), else one of their idle lines. People: Wren, Hettie, Ilse, Gus,
+  give is offered on a choice card (Help / Not now) that shows once their ask has been said (it lives 30 s plus the
+  ask's estimated speaking time, `Wayfarers.offerTtl`; test `living_quest_offer_after_ask`), else one of their idle lines. People: Wren, Hettie, Ilse, Gus,
   Pell, Hale, Marta (`Wayfarers.PEOPLE`).
 - **The first drop, all eight chains** (The Last Delivery is written and waits for Carillon's B3b to call
   `Quests.talk` for Kestrel; it opens on `counter:awaken:carillon_registered`): Ten Sheep Short (Hettie, 1-8), Moth Lights (Ilse, 1-8), Wren's Rope (cliff,
@@ -4878,7 +4924,9 @@ magic.
   golden-hour vista reads warmer and richer, not greyer (the orchestrator's note on L1's sheet). Faces turned from the sun shade only as it lowers (none
   at noon, when Minecraft's sun is straight overhead and the game's own face shading stays; all by golden hour). The
   model fades out under solid cover (1 to 7 blocks of it: a ledge is shade, a roofed room is left as the game lit it,
-  torches and all), toward the end of the render distance (85-100%), in the game's thick fog (as the haze does) and
+  torches and all; a column with open sky in one of its four neighbours counts that neighbour's cover, so the ground
+  under an eave or a gable's rake takes the lawn's shade instead of a room's, with no step along the roof line: Euan's
+  cottage, 2026-10-28; four more heightfield reads, only where the column is covered), toward the end of the render distance (85-100%), in the game's thick fog (as the haze does) and
   within 1.45 blocks. Strength: the sun's height (none at the horizon crossing), a faint moon (0.4) by night, rain
   (−85%) and thunder (−50%); 0 where there's no overworld sky. Golden hour is the more of the sunrise colour's strength
   and the sun's height (full below sin 0.1, none above 0.5; the sunrise colour alone only peaks as the sun touches the
@@ -5817,6 +5865,61 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     long tip comes nearer the eye after the hit, so it looks fastest just after it: 0.64-0.79), the axe's sweep and
     art, the daggers' slash, the maul's uppercut contact, the scythe's reap contact and riposte, the chain-blade's
     backhand lash and the war-staff's backhand (drift 88, 138 ms).
+  - *Round 3, the chain* (Euan 2026-10-28: "when you're doing combos... the second slice is not even visible... it looks
+    like a mess of movement and trails"): round 2's follow-through carried the blade out of the frame and waited there
+    for the next press, so a chained strike spent its wind-up below the view and the trail drew it in from nowhere.
+    Now a strike that leads on (it has a cadence, or a mastery link) ends in view: its carry is cut back until the
+    blade's middle ends inside 0.85 of the frame (at least 40% of its travel kept), and a blow that ends low (a slam, a
+    chop) is hauled up over at most 1.5 ticks until its tip is above -0.4 of the screen's height. It holds there
+    through the chain's window (to the cadence's end), then comes home as before. The next strike of the same hand
+    winds up from that pose, not from rest, its draw back cut until the blade's middle at the set is inside 0.9 of
+    the frame. Every wind-up moves the tip at most 0.3 of the screen a frame at 60 fps (a longer draw back takes more
+    of the wind-up), and one with no room for a set (under half a tick) goes straight to where the drive leaves
+    from. `tools/art/swing_chain.py` plays each chain as the runtime does (the earliest press or mid-window, carried by
+    `SwingBlend`, 60 fps). Across the 67 chain strikes, mashing: chained strikes out of view in their wind-up and blow
+    32 -> 6, the drive out of view 30 -> 7; mid-window 29 -> 4. GameTest `arms_chain_flow`: every same-hand link starts
+    where the one before it holds the blade on its earliest press (43 links, within 0.02 blocks and 3 degrees). Cost:
+    the settle after a leading blow is now seen (the report's drift, 2 -> 27 moves, 88-150 ms), and a chained strike's
+    shorter draw back lands at 0.42-0.72 of its peak speed in 7 moves. Left: the scythe's haul (its own shape), the
+    daggers' and twin blades' rhythm (a 1-tick wind-up every 4 ticks).
+  - *Round 4, the idle hand* (Euan 2026-10-28: "let the idle hand draw back while the other strikes"): a style whose
+    feel spec sets `idleHand` (the daggers; the gauntlets may follow) bakes, for each chain strike thrown by one hand
+    and followed by the other's (or both), the other hand's track: still until this strike's hit, then drawn over 1.5
+    ticks (done by the earliest press) toward the next strike's set, only as far as keeps its tip 0.15 (ndc) on its
+    own side of the view so the two blades never knot mid-screen, held through the window, home by the move's end.
+    The next strike starts from there and its own wind-up draws the rest of the way. `fp_swings.json` schema 6 adds
+    the move's optional `idle` keys ([t, dx, dy, dz, qx, qy, qz, qw], authored for its own hand like any move, mirrored
+    for the off hand); `FpSwings.idle` samples it and `ArmsHands` shows it on the hand not striking, carried by
+    `SwingBlend` like a strike. A strike of both hands now starts where the main hand held the strike before it.
+    `arms_chain_flow` checks these links too (46). The twin blades are one double-ended blade in one hand, so the idle
+    hand does not apply to them.
+  - *Round 5, the figure-eight* (Euan 2026-10-28: "give the twin blades a two-handed hold on the shaft and alternate
+    which end leads each strike, a figure-eight"): the twin blades close the off hand on the shaft 0.11 below the main
+    (a two-handed weapon, below). A feel spec's move `far` leads with the weapon's other end: its pose is the cut's
+    own, turned 180 degrees about the blade's flat through the weapon's middle, so the far blade runs the near one's
+    exact path. A chain strike whose next strike leads with the other end carries on round off its hit, turning the
+    weapon half a turn the same way the cut was going (1 - (1 - x)^2 from the hit to the earliest press: the blow
+    whirls straight on and slows, never a stop and go), its hands rising as it turns until the weapon's middle is at
+    least -0.7 on the screen (ndc), so the far blade comes up into view and the trailing one never dives off the
+    bottom. Left there, it turns on round the same way as it goes home. Strike 2 is `far`: blade one cuts, whirls, and
+    blade two comes over to cut back; it whirls on and blade one stands up for strike 3; the spins take either end.
+    The bake marks a far move `far: true` (schema 6, optional); `FpSwings.far` reads it and the first-person trail runs
+    along that end (from its middle to its point). `arms_chain_flow` checks the ends take turns.
+  - *Round 6, the daggers smoothed* (Euan 2026-10-28: "glitchy and not smooth... it doesn't smoothly switch hands...
+    sometimes it strikes in unnatural ways, and sometimes it does tiny near glitchy movements"):
+    - A feel spec's thrust `push` (the daggers: 1.6) makes a stab one push from where the hand is (the last strike's
+      end, the idle hand's draw, or rest) to full reach, gathering speed into the hit (x^push). A 1-tick stab used to be
+      a load, a set, a drive and a stop of a frame each. Its set (`set_time` -1) is the one the idle hand draws back to.
+    - The idle hand sets off from where it already is: holding the end of its own last strike, or the draw it made
+      while the other struck. It used to start from rest, so the hand that had just struck sank back and rose again at
+      every change of hands.
+    - It draws all the way to the next strike's set, unless that would bring its tip within 0.35 (ndc) of the striking
+      blade's (replaces round 4's own-half rule, which left strike 3's backhand to fling the rest of its draw in one
+      frame).
+    - Before a strike of both hands, it waits where the main hand is on the press (mirrored), so the two leave
+      together.
+    - Strike 5's off-hand slash carries 14 degrees with a 0.1 drop and comes straight home on the screen. It used to
+      dive to three screens below the view.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
@@ -5826,8 +5929,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     off). The swish plays on the blade's clock, its whoosh peaking as the blade crosses (the fighter's on the frame it
     falls due, those near on the server's tick, `ArmsState.swishAt`); a blow landing before the row's sound could peak
     plays `arms.swish_quick` (its pass 38 ms in), the katana's cuts `arms.swish_katana` (thinner, a clean high whistle,
-    56 ms). Two-handed weapons (katana, greatblade, maul, spear, glaive, scythe, war-staff) close the off hand on the
-    handle below the main (0.11 to 0.40 blocks down it) when the off hand is empty, through every swing and the guard;
+    56 ms). Two-handed weapons (katana, greatblade, maul, spear, glaive, scythe, war-staff, twin blades) close the off
+    hand on the handle below the main (0.11 to 0.40 blocks down it) when the off hand is empty, through every swing and the guard;
     a stance's own off fist still takes the hand.
   - *Live tuning* (`SwingTuning`; `/awaken swing tune on [path] | off`, `ab`, `blind`, `note <words>`, `last`; the
     state kept in `awaken-arms-client.toml`): while on, the swings come from `<folder>/fp_swings.json` (the folder: the
@@ -8054,6 +8157,67 @@ really want to update it and it's a choice").
 
 ---------------------------------------------------------------------------------------------------------------------
 
+### 28.11 The Anchor's brazier and Oren's day of building (Euan 2026-10-28: "Too blocky and overall no light source too, and the fire is tiny. Also when the cottage get's built, let's actually make the NPC build it over one in game day or so")
+**The Anchor** (`HearthAnchorBlock`, art `tools/art/specs/hearth.py`, models `hearth_anchor_t1..t5`). A step up from the
+first campfire, never a step down: a hearthstone brazier, no longer a full cube.
+- *Shape* (texels): a dressed-stone plinth 0-2 (16 wide), a step 2-3 (14), a stem 3-8 (10) cut with a slit onto the fire
+  and two runes, a bronze collar 7-8 (12), the bowl's foot 8-10 (14) and a hollow rim 10-13 (16, walls 2 thick round a
+  12 × 12 mouth) with six vents onto the fire. A lit bed of coals at 11 fills the bowl, the Lord's Heart lies in it, and
+  the fire burns from 11 up to the model's ceiling at 32: two full diagonal planes, two straight ones across the mouth and
+  a near-white core on two planes between (16 × 32 frames, 12 frames). Its height by tier: 15, 16.5, 18, 19.5, 21 texels.
+  The collision shape follows the model; the block is `noOcclusion`.
+- *By tier*: I hearthstone lip and bronze collar, ember-orange fire, the runes a dull ember; II an iron lip and collar,
+  a taller, steadier fire; III a gilt lip and collar, a gold fire, the runes burning; IV gold corner caps, bell-gold; V
+  white-gold under the crown of light. The vents and the slit always glow (full-bright), the coals hotter each tier.
+- *Light*: 15 at every tier (was 14 below IV). On the client every Anchor that `animateTick` sees burning is remembered
+  in a fixed 16-entry table (`HearthAnchorBlock.SEEN_*`, no allocation) and the city's light pass (`HomeClient.GLOW`)
+  pools warm light on the ground round it (radius 9.5 + 0.8 a tier, strength 0.28 + 0.02 a tier, flickering) with a halo
+  round the fire 1.45 above its foot; an entry drops when the block is gone or unseen for 30 s.
+- *Particles*: two or three tongues a call from the whole mouth, embers off the tips, a spark now and then even at I;
+  sparks, a glow and the crown's motes from IV as before. Checked from every side with `tools/art/block_preview.py`
+  (four corners, straight on, above, and at night).
+
+**Oren builds the cottage over a day** (`guide/Cottage`, `CottageBuild`). Yes to the offer still finds a site as before
+(runtime: a restart mid-search leaves the offer open). Then:
+- *The day's work*: the site is cleared at once (trees felled, plants and bumps gone) and the build is saved on the
+  Hearth (`HearthRecord.cottageBuild`, key `cottage_build`, schema 1: who asked, the origin and turn, the palette, the
+  ground under every column and which were grass as they were before clearing, the work done, the game time and clock
+  last read, the next plan entry, the held entries). The plan is rebuilt from that after a restart, so it is always the
+  same cottage. One day (24,000 ticks, 20 minutes) for the whole of it, by stage: foundation 14%, frame 14% (the posts
+  and the wall plate: a timber skeleton first), walls 24%, roof 28% (the ceiling first), chimney 5%, furnishing 15%,
+  each stage's blocks spread evenly over its share. A cottage started at noon stands by noon tomorrow.
+- *Honest catch-up*: every tick the work done grows by the game ticks or the overworld clock, whichever moved more (a
+  night slept through counts; a clock set back counts only the ticks). While the chunks are unloaded or the owner is
+  away the time still counts; when the site is loaded again the due blocks go in, up to 64 a tick, without a sound or
+  embers each (more than three due at once is catching up). The server stopping saves it; nothing is placed at once.
+- *Live*: each block plays its own place sound and a few Hearth embers; Oren (holding a mace as a hammer) walks to a
+  spot just outside the site on the block's side (inside the room for the furniture), looks at the block and swings
+  when within 8. He gets the mace back off him when it's done.
+- *In the way*: a block whose cell holds any living thing (a player, Oren, a sheep) is held and tried again every two
+  seconds (every half second once the rest is up); a door's top half and a bed's head wait for their first half, and a
+  first half waits until both cells are clear. A block someone built in the meantime is still never replaced. The
+  cottage is finished when every entry is placed or passed.
+- *Words*: on starting, "Oren is building your cottage · He's starting on the foundation beside your Anchor. It'll be
+  ready by tomorrow evening. He keeps working while you're away." The guide's card says what he's doing and when it'll
+  stand ("Oren is building your cottage. He's on the roof now. It'll be ready by this evening."; the time of day from
+  the clock: morning, around midday, afternoon, evening, tonight; "in a minute or two" near the end; "He's waiting for
+  someone to step out of the way." when only held blocks are left). Done: "Oren's cottage is finished · Your first
+  Sanctuary is ready beside your Anchor..." to whoever asked and every member online; the asker's once-marker as before.
+- *Multiplayer*: one build per Hearth (a second ask while one runs is refused), ticked by the server for every Hearth,
+  online or not; the notices go to the household.
+- Admin: `/awaken admin hearth cottage hurry` (as if the rest of the day had passed; it catches up over a few ticks);
+  `reset` also drops a build in progress.
+- *The ground round it is the land's* (Euan 2026-10-28, "Around the cottage the colors are different for the grass"):
+  the build leaves the margin's ground and biome as they were (it only clears plants above it and lays the path), so
+  the grass is the same green as the lawn beside it. The pale strip Euan saw was the row under the south gable's rake
+  (roof stairs 5-9 blocks up): Lens's lit composite took it for a roofed room and left it unshaded beside a shaded
+  lawn. Fixed in Lens (§22, "the model fades out under solid cover"): a column with open sky beside it shades as the
+  open ground does.
+- Tests: `hearth_cottage_builds_over_a_day` (nothing at the start; half a day away catches up to exactly half, foundation
+  and frame up, no roof or furniture; a block where something stands is held; the save round-trips mid-build; the rest of
+  the day finishes it, the held block included; every margin column keeps its ground and biome, the path aside) · `hearth_anchor_light` (light 15 at every tier, 14 beside it, 11 three
+  out and one down, not a full cube).
+
 ## 29. Wild life (the wild's small ambient life, client-only; Euan 2026-10-26, built without an approval page)
 
 Euan, after a forest walk: "I barely saw any insects or birds, so the sounds felt a bit off ... when you're exploring and
@@ -8675,10 +8839,10 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
   every step done plus up to four to do, a linear trail two; the card counts the done ones; a step longer than the card wraps over up to three lines, `signal.ui.TaskWrap`, with key caps kept in the line, seen on the third tour) and its current step on the **Now line** (priority 55). Only Follow changes the HUD;
   one trail is followed at a time, and the Armoury's Track gives the card up (`TrailsApi.unfollow`). "Anything for me?"
   (`Advice`) names the best next step.
-- **Catalogue shipped** (24 trails): Home (7): Set Your Fire, Your Hearth, A Room for Everything, Your Village, The Forge, Trophies and
+- **Catalogue shipped** (25 trails): Home (7): Set Your Fire, Your Hearth, A Room for Everything, Your Village, The Forge, Trophies and
   Echoes, The Training Grounds. Weapons (4): Your First Weapon, Finding Patterns, Making Your Next Weapon, Boss Weapons. Body (3):
-  Moving Like a Hunter, The Line, Wings. Gates (1): Your First Gate. World (2): Out in the Commons, Wayfarers and Camps. Deep (4):
-  The Veil, Dreams, The Precursors, The Well. Not yet written: Powers, Story, Villages, Beasts and Lairs, Digging Down, Rumours.
+  Moving Like a Hunter, The Line, Wings. Gates (1): Your First Gate. World (2): Out in the Commons, Wayfarers and Camps. Deep (5):
+  The Veil, Dreams, The Precursors, The Well, The Delver's Pick (§34.4). Not yet written: Powers, Story, Villages, Beasts and Lairs, Digging Down, Rumours.
 - **Counters added** for steps (docs/COUNTERS.md): `rested`, `armoury_forge`, `armoury_opened`, `blueprint_copies`, `weapons_attuned`,
   `weapons_raised`, `patterns_bought`, `patterns_from_gates`, `patterns_from_people`, `patterns_from_stands`, `patterns_from_villages`.
 - **Admin**: `/awaken admin trails list | open <id> | follow <id> | done <id> | reset`. Autopilot: `trails now|browse [area]|open`,
@@ -8855,6 +9019,13 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   run). Each wake: the tier, a low ring, light gathering round the hand (`delve_pick_woke`), a moment window ("The pick
   wakes: I · Kindle" and the gift in words). `awaken:delve/verses_woken` is the furthest verse woken: a pick given
   later (pulled, handed over, re-forged) comes at it. The tooltip shows the verse, each gift woken, and "Next: ...".
+- **Trail** "The Delver's Pick" (`trail/the_delvers_pick.json`, area deep, linear; Euan 2026-10-28: "add the Delver's Pick
+  to the Journal and Trails, so it's findable before you have it and shows the next step after"): opens with a home or a
+  pulled pick; step one is the pull (`counter:awaken:delve/pick_pulled`) with the place `adit`, then one step per verse on
+  `count:awaken:delve/verses_woken:<n>`, the Forge rites pointing at `hearth`. `cave.PickTrail` registers `adit`: the nearest
+  adit (any ore) within 400 of your home (of you, with no home, asked again once you're 96 away), searched off the server
+  thread as the Hearth's metal search is; a home with no adit in reach is handed the pick, as the metal card does, so the
+  first step can always be done. Test `delve_pick_trail` (one step per verse in order, the place, the hand-over on flat land).
 - **Gifts** (`PickGifts`; client `PickFx`):
   - *Kindle*: sneak and start striking bare rock (strike family ROCK): an **ember** sticks in the air cell on that face
     for 5 minutes, three a player (a fourth puts out your oldest), none within 5 of another of yours. Drawn light, no

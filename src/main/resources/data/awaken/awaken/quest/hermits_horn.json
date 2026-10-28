@@ -5,7 +5,7 @@
   "requires": ["level:8"],
   "scene": "crag",
   "giver": "gus",
-  "summary": "Gus wants a shard of the Stonehorn's horn. The ram lives up on the crags.",
+  "summary": "Gus wants a shard of the Stonehorn's horn. Climb the crags and kill the ram.",
   "ask": [
     "Gus: You climb? Good. I don't anymore. Knees.",
     "Gus: There's a ram up there with horns of solid rock. Bring me a piece and I'll make you something worth the bruises."

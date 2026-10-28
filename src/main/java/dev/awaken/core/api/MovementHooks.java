@@ -45,8 +45,9 @@ public final class MovementHooks {
         default void castStarting(Player p, String powerId, String family, boolean motionPredicted) {}
 
         /**
-         * The movement key belongs to the body for this player (the Ascent's rope, once the Tether is held): the
-         * movement slot's power steps aside and never casts from it.
+         * The movement key belongs to the body for this player: the movement slot's power steps aside and never casts
+         * from it. Since the rope got its own key (SPEC §17.30) only when a player binds the rope and the movement power
+         * to the same key, once the Tether is held.
          */
         default boolean ownsMovementKey(Player p) { return false; }
     }

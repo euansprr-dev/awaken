@@ -188,7 +188,7 @@ public final class AscentPilot {
         set(o.keyJump, HOLD[JUMP] > 0);
         set(o.keyShift, HOLD[SNEAK] > 0);
         set(o.keySprint, HOLD[SPRINT] > 0);
-        set(AwakenKeys.MOVEMENT, HOLD[TETHER] > 0);
+        set(AwakenKeys.ROPE, HOLD[TETHER] > 0);
     }
 
     private static void set(KeyMapping k, boolean down) {

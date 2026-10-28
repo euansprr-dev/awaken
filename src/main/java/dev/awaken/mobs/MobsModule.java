@@ -43,6 +43,7 @@ public final class MobsModule {
         MobsCommands.register();
         MobsTests.register();
         dev.awaken.mobs.entity.BossHomeTests.register();
+        dev.awaken.mobs.entity.FlightTests.register();
     }
 
     /** Ours stagger through their own stance (the wind-up ends, they stand still); any other mob is slowed to a stop. */

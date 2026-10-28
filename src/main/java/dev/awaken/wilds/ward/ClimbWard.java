@@ -63,7 +63,7 @@ public final class ClimbWard {
 
         /** The rope-held tip with the player's own key for the rope: whole, or short for a toast ({@code .short}). */
         Component tip(String half) {
-            return Component.translatable("awaken.wilds.climb.tip." + id + half, Component.keybind("key.awaken.movement"));
+            return Component.translatable("awaken.wilds.climb.tip." + id + half, Component.keybind("key.awaken.rope"));
         }
 
         static @Nullable Site of(WardHooks.Ward w) {
