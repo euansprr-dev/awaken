@@ -4,6 +4,7 @@
   python3 tools/qa/power_level_tours.py        -> tools/autopilot/power-levels-{a,b,c,d}.txt
   tools/tour-ci.sh tools/autopilot/power-levels-a.txt 2400 PACK=feel   (one per group, all four at once)
 
+The HUD is off (F1) so the chat and hints never cover a cast; one shot a tour shows the bar's tier frames.
 Each cast is slowed to a quarter speed (/tick rate 5: the runner renders a few frames a second) and shot twice: from the
 front at the release (the level's gesture and the first of its look), then from behind a few ticks on (what it does to
 the husks). Charges that fire when the hold runs out are shot at that tick; held beams and toggles mid-way. The arena is
@@ -30,7 +31,7 @@ LEVELS = (1, 3, 5)
 # what a power needs standing before it casts: a construct to throw, a decoy to swap with
 BEFORE = {"collapse": "rampart", "echo_swap": "decoy"}
 HUSK = '{NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}'
-HUSKS = [(1.3, 2.8), (-1.5, 7.5), (2.5, 11.5)]  # the first in melee reach, beside the front camera's line
+HUSKS = [(1.8, 1.4), (-1.5, 7.5), (2.5, 11.5)]  # the first in melee reach at your side, out of the front camera's line
 
 
 def catalog():
@@ -115,8 +116,9 @@ def tour(group, families, powers, release):
         "wait 40",
         "window 1440 900",
         "gui 0",
-        "hud on",
+        "hud off",
         "cmd gamerule awaken:fauna_spawning false",
+        "cmd gamerule show_advancement_messages false",
         "cmd gamerule send_command_feedback false",
         "cmd gamerule spawn_mobs false",
         "cmd gamerule advance_time false",
@@ -146,7 +148,20 @@ def tour(group, families, powers, release):
             continue
         for lv in LEVELS:
             body += segment(pid, name, mode, max_ticks, lv, release, named and slot == "PASSIVE")
-    return head + body + ["quit", ""]
+    return head + body + hud_shot(group, families, powers) + ["quit", ""]
+
+
+def hud_shot(group, families, powers):
+    """The bar with the group's first three powers at level 5 (their tier frames), chat cleared by "shot"."""
+    picks = [(pid, slot) for pid, _, fam, slot, _, _ in powers if (pid in families or fam in families) and slot != "PASSIVE"]
+    lines = ["# ---- the HUD's tier frames at level 5"] + arena()
+    seen = set()
+    for pid, slot in picks:
+        if slot in seen:
+            continue
+        seen.add(slot)
+        lines.append(f"cmd awaken admin power showcase {pid} 5")
+    return lines + ["camera back", "look 0 4", "hud on", "wait 20", f"shot pl_hud_{group}", "hud off", ""]
 
 
 def main():

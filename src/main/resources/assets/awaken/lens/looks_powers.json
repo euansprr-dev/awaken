@@ -267,9 +267,9 @@
       "hazeDesaturate": 0.0
     },
     "awaken:awake_nova": {
-      "_name": "Daystar (Nova at level 5): a sun at your chest, everything washed in white-gold",
-      "exposure": 1.1,
-      "contrast": 1.08,
+      "_name": "Daystar (Nova at level 5): a sun at your chest, the world warmed white-gold around it",
+      "exposure": 1.04,
+      "contrast": 1.12,
       "saturation": 1.0,
       "warmth": 0.18,
       "shadowTint": [
@@ -283,9 +283,9 @@
         0.86
       ],
       "splitTone": 0.14,
-      "vignette": 0.12,
-      "bloom": 2.0,
-      "bloomThreshold": 0.5,
+      "vignette": 0.18,
+      "bloom": 1.7,
+      "bloomThreshold": 0.58,
       "haze": 0.0,
       "hazeStart": 0.5,
       "hazeDesaturate": 0.0
