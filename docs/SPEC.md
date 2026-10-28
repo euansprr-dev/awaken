@@ -238,8 +238,14 @@ loaded (a preview never reads or loads a chunk, §38.1); stepping in prepares a 
 scaling) is fixed when it is prepared. If the budget is full, the unspawned part of a
 company waits in saved state, with its original party scaling and spawn index. It resumes when space becomes available,
 without replacing any members already killed. A capped empty arena stays open and unfinished; cavern zones wait separately.
-Prepared enemies wait visibly; entering their room
-(or damaging one from the same gate/floor) wakes that encounter, not its neighbours. Caverns prepare their 16-block
+Prepared enemies wait visibly and alive, never frozen (orchestrator, 2026-10-28: Euan reported mobs that "just stopped
+moving" as a bug, so no NoAI): their AI stays on, they take no target, and `gates.run.Dormant` (a top-priority move and
+look goal) keeps them idling near their spot: breathing and swaying through their own idle clips, looking about, now
+and then a shuffle or a stroll of up to 2.5 blocks, and walking back if they drift more than 4. Entering their room
+(or damaging one from the same gate/floor) wakes that encounter, not its neighbours. A woken enemy first has a 14-tick
+wake beat (`Encounters.WAKE_BEAT`): it stops, turns toward whoever woke it (what hit it, else the nearest player) and
+cannot target yet; then it takes that player as its target and fights. The goal is not saved; loading a waiting enemy
+attaches it again (and clears a NoAI an earlier build saved). Caverns prepare their 16-block
 zones and wake only the entered zone; cleared zones also reject reinforcements. A room/zone may target within its
 own bounds plus 8 blocks beyond its doorway;
 floor-wide pressure enemies target within 32 blocks on their actual gate/floor. Arena bars still close on entry; only

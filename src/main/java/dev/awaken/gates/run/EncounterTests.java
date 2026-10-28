@@ -14,6 +14,7 @@ import dev.awaken.gates.content.Twist;
 import dev.awaken.gates.world.GateLayout;
 import dev.awaken.gates.world.Room;
 import dev.awaken.mobs.entity.AwakenMob;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
@@ -162,27 +163,53 @@ public final class EncounterTests {
                 var kb = new GateMobs.Key(g.id, 0, 1, b.id);
                 Mob first = (Mob) level.getEntity(GateMobs.aliveIds(ka).iterator().next());
                 Mob other = (Mob) level.getEntity(GateMobs.aliveIds(kb).iterator().next());
-                h.assertTrue(first.isNoAi() && other.isNoAi(), "connected rooms contain visible waiting enemies before entry");
+                // dormant, never frozen: AI on, idling near its spot, no target, walked back if it drifts
+                h.assertTrue(Encounters.waiting(first) && Encounters.waiting(other) && !first.isNoAi() && !other.isNoAi(),
+                        "connected rooms hold waiting enemies with their AI on before entry");
                 h.assertFalse(GateHooks.mayTarget(first, p), "a preview does not acquire an approaching player");
+                first.setTarget(p);
+                h.assertTrue(first.getTarget() == null, "a waiting encounter takes no target");
+                Dormant dormant = (Dormant) first.goalSelector.getAvailableGoals().stream().map(w -> w.getGoal())
+                        .filter(x -> x instanceof Dormant).findFirst().orElseThrow();
+                BlockPos home = first.blockPosition();
+                BlockPos mid = GateService.roomFloor(g, f, a, a.centerX(), a.centerZ());
+                BlockPos away = mid.distSqr(home) > 25 ? mid : GateService.roomFloor(g, f, a, a.centerX() + (mid.getX() > home.getX() ? 5 : -5), a.centerZ());
+                first.snapTo(away.getX() + .5, away.getY(), away.getZ() + .5);
+                first.setOnGround(true); // ground navigation plans no path in the air (in play the goal retries as it lands)
+                dormant.tick();
+                BlockPos back = first.getNavigation().getTargetPos();
+                h.assertTrue(back != null && back.distSqr(home) <= 4, "a dormant mob that drifts walks back to its spot (to " + back + ", home " + home + ")");
                 GateLiveTests.put(level, p, g, f, a);
                 GateLiveTests.put(level, mate, g, f, a);
                 // A real damage event also engages a preview; other room stays asleep for both players.
                 first.hurtServer(level, p.damageSources().playerAttack(p), 1);
-                h.assertTrue(!first.isNoAi() && GateHooks.mayTarget(first, mate), "an attacked encounter wakes and may fight another player in it");
-                h.assertTrue(other.isNoAi() && !GateHooks.mayTarget(other, mate), "the adjacent encounter does not all aggro");
-                var before = GateMobs.aliveIds(ka);
-                Rooms.enter(level, p, g, f, a, a.centerX(), a.centerZ());
-                Rooms.enter(level, mate, g, f, a, a.centerX(), a.centerZ());
-                h.assertTrue(GateMobs.aliveIds(ka).equals(before), "two players entering share the same company");
-                Room far = f.rooms.stream().max(java.util.Comparator.comparingInt(r -> Math.abs(r.centerX() - a.centerX()) + Math.abs(r.centerZ() - a.centerZ()))).orElseThrow();
-                var at = GateService.roomFloor(g, f, far, far.centerX(), far.centerZ());
-                mate.snapTo(at.getX() + .5, at.getY(), at.getZ() + .5);
-                h.assertFalse(GateHooks.mayTarget(first, mate), "an engaged room cannot target the far end of the floor");
-            } finally {
+                h.assertTrue(!Encounters.waiting(first) && Encounters.waking(first) && !GateHooks.mayTarget(first, mate),
+                        "an attacked encounter wakes and first turns to you (the wake beat)");
+                h.assertTrue(Encounters.waiting(other) && !GateHooks.mayTarget(other, mate), "the adjacent encounter does not all aggro");
+                final GateRecord fg = g;
+                final ServerPlayer fp = p, fmate = mate;
+                h.runAfterDelay(Encounters.WAKE_BEAT + 2, () -> {
+                    try {
+                        h.assertTrue(!Encounters.waking(first) && GateHooks.mayTarget(first, fmate), "after the beat it may fight another player in its room");
+                        var before = GateMobs.aliveIds(ka);
+                        Rooms.enter(level, fp, fg, f, a, a.centerX(), a.centerZ());
+                        Rooms.enter(level, fmate, fg, f, a, a.centerX(), a.centerZ());
+                        h.assertTrue(GateMobs.aliveIds(ka).equals(before), "two players entering share the same company");
+                        Room far = f.rooms.stream().max(java.util.Comparator.comparingInt(r -> Math.abs(r.centerX() - a.centerX()) + Math.abs(r.centerZ() - a.centerZ()))).orElseThrow();
+                        var at = GateService.roomFloor(fg, f, far, far.centerX(), far.centerZ());
+                        fmate.snapTo(at.getX() + .5, at.getY(), at.getZ() + .5);
+                        h.assertFalse(GateHooks.mayTarget(first, fmate), "an engaged room cannot target the far end of the floor");
+                    } finally {
+                        if (Runs.run(fmate).active()) Runs.endRun(fmate, fg, false);
+                        GateLiveTests.teardown(level, fp, fg);
+                    }
+                    h.succeed();
+                });
+            } catch (RuntimeException e) {
                 if (mate != null && Runs.run(mate).active()) Runs.endRun(mate, g, false);
                 GateLiveTests.teardown(level, p, g);
+                throw e;
             }
-            h.succeed();
         });
 
         AwakenTests.registerIsolated("gates_cavern_zone_clear", 100, h -> {
@@ -212,7 +239,7 @@ public final class EncounterTests {
                 p.snapTo(member.getX(), member.getY(), member.getZ());
                 var at = Where.at(level.getServer(), p.blockPosition());
                 Rooms.enter(level, p, g, f, cavern, at.x(), at.z());
-                h.assertTrue(fs.triggered.contains(zoneKey) && !member.isNoAi(), "cavern members stand in and wake with their own zone");
+                h.assertTrue(fs.triggered.contains(zoneKey) && !Encounters.waiting(member), "cavern members stand in and wake with their own zone");
                 // This zone itself may be partial (normal + elite); finish each owed member before calling it cleared.
                 for (int pass = 0; pass < 4; pass++) {
                     for (var id : GateMobs.aliveIds(key)) level.getEntity(id).discard();

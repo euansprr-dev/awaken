@@ -6,6 +6,7 @@ import dev.awaken.gates.GateService;
 import dev.awaken.gates.world.FloorLayout;
 import dev.awaken.gates.world.GateLayout;
 import dev.awaken.gates.world.Room;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -13,11 +14,17 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
-/** Visible, waiting encounters, and the boundary shared by targeting and boss-bar membership. Server thread only. */
+/**
+ * Visible, waiting encounters, and the boundary shared by targeting and boss-bar membership. A waiting encounter keeps
+ * its AI (never NoAI: a mob standing frozen reads as a bug): it idles near its spot (Dormant) and takes no target until
+ * it wakes, then turns toward you for the wake beat before it fights. Server thread only.
+ */
 public final class Encounters {
     private Encounters() {}
 
-    private static final String WAITING = "awaken_encounter_waiting";
+    private static final String WAITING = "awaken_encounter_waiting", HOME = "awaken_encounter_home", WAKE = "awaken_encounter_wake";
+    /** The wake beat, in ticks: a woken encounter turns toward you before the fight starts. */
+    static final int WAKE_BEAT = 14;
     /** Allows a fight across its doorway without recruiting the rest of the floor. */
     static final int DOOR_REACH = 8;
 
@@ -28,26 +35,37 @@ public final class Encounters {
         var fs = g.floor(key.area(), key.floor());
         if (fs.triggered.contains(key.room()) || !lord && !fs.prepared.contains(key.room()) && !fs.pendingCompanies.containsKey(key.room())) return;
         entity.getPersistentData().putBoolean(WAITING, true);
+        entity.getPersistentData().putLong(HOME, mob.blockPosition().asLong());
         mob.setTarget(null);
         mob.getNavigation().stop();
-        mob.getMoveControl().setWait();
-        mob.setNoAi(true);
+        Dormant.attach(mob, mob.blockPosition());
     }
 
     static boolean waiting(Entity e) {
         return e.getPersistentData().getBooleanOr(WAITING, false);
     }
 
+    /** Woken and still in its wake beat: it turns toward you and does not fight yet. */
+    static boolean waking(Entity e) {
+        return e.getPersistentData().getLongOr(WAKE, Long.MIN_VALUE) > e.level().getGameTime();
+    }
+
     private static void release(Entity entity) {
         if (!waiting(entity)) return;
         entity.getPersistentData().remove(WAITING);
-        if (entity instanceof Mob mob) mob.setNoAi(false);
+        entity.getPersistentData().remove(HOME);
+        entity.getPersistentData().putLong(WAKE, entity.level().getGameTime() + WAKE_BEAT);
     }
 
     static void onLoad(Entity entity, GateMobs.Key key) {
         if (!(entity.level() instanceof ServerLevel level) || !waiting(entity)) return;
         GateRecord g = GateRegistry.get(level.getServer()).gate(key.gate());
+        // an encounter held by an earlier build stood with NoAI; this one idles instead
+        if (entity instanceof Mob mob && mob.isNoAi()) mob.setNoAi(false);
         if (g != null && g.floor(key.area(), key.floor()).triggered.contains(key.room())) release(entity);
+        if (entity instanceof Mob mob) {
+            Dormant.attach(mob, BlockPos.of(entity.getPersistentData().getLongOr(HOME, mob.blockPosition().asLong())));
+        }
     }
 
     static void wake(ServerLevel level, GateRecord g, FloorLayout f, int key) {
@@ -75,7 +93,7 @@ public final class Encounters {
     }
 
     public static boolean mayTarget(LivingEntity mob, LivingEntity target) {
-        return !GateService.isGateLevel(mob.level()) || !waiting(mob) && inBoundary(mob, target);
+        return !GateService.isGateLevel(mob.level()) || !waiting(mob) && !waking(mob) && inBoundary(mob, target);
     }
 
     private static boolean inBoundary(Entity mob, Entity target) {
