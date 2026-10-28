@@ -24,6 +24,7 @@ final class VillageTests {
         AwakenTests.register("village_plan_deterministic", 400, VillageTests::deterministic);
         AwakenTests.registerIsolated("village_trade", 400, VillageTests::trade);
         dev.awaken.village.road.RoadTests.register();
+        AwakenTests.register("wild_tamers", 400, WildTamers::test);
     }
 
     /**

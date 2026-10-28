@@ -426,6 +426,7 @@ of `AwakenConfig.Client`.
   `Progression.onXpGranted(listener)` (every grant after scaling), `Progression.worldXp(player, source, fraction,
   afterBudget)` (a multiplier applied after the budget), `XpBudget.register(source, perTenMinutes)` (§21.3).
 - `dev.awaken.living.api.Regions` — the region map (§21.2): `levelAt`, `regionAt`, `creatureLevel`, `bandOf`.
+- `dev.awaken.living.api.Wildness` — how wild a place is, separate from danger (§41.1): `land`, `at`, `band`, `bandAt`, `addTamer`.
 - `dev.awaken.living.api.Quests` — the Wayfarer chains (§21.5): `advance(ServerPlayer, Identifier "awaken:<type>/<target>")`
   (owners report uses and discoveries a step may wait for: `awaken:use/ascent_zip`, `awaken:discover/<key>`; an
   `amount` overload), `talk(ServerPlayer, who)` (another module's person, e.g. "kestrel", "oren": call it first from your
@@ -9467,3 +9468,65 @@ readout says "Too far to tell" for a moment and nothing is set. The server check
   forgets), `binoculars_mark` (sky, unknown, above the world, past the border and too far refused; a spot becomes the destination;
   the readout's words).
 
+
+## 41. The Wild Lands (wildness, the wild's plants, herds and packs, hunts; plan and page docs/wild-lands/page.html, https://claude.ai/artifact/7V6wXujthPYV4V5aYu6Nfw; Euan approved all ten recommendations 2026-10-28: "Go with all recommendations for the plan")
+
+Settled land feels tamed; the further from people, the wilder the land grows: long grass, big bushes, old trees, real herds
+with packs hunting them, and Monster Hunter-style hunts (signs, tracking, part breaks, carving). The ten decisions, all approved:
+1. **Wildness is separate from danger.** The region levels say how dangerous land is; wildness says how untouched it is.
+2. **Life follows wildness, not danger rank.** QuietLand stops thinning herds in harder land; A and S land keep their hush of
+   birds and insects.
+3. **New chunks, including Euan's current world.** Vegetation applies to newly made land in any Awakened Ground world, New
+   World (7) included; explored land keeps its blocks. Herds, packs and hunts work everywhere at once.
+4. **Bigger herds.** Up to 30 in a herd, up to 40 ledger bodies near a player (24 before); lowered first if it costs too much.
+5. **The full hunt loop.** Fresh tracks everyone sees, scout motes after reading signs, parts that visibly break, the quarry
+   limping to its bed, three carves per hunter.
+6. **The first quarries.** Herd and pack alphas on the new form bodies, plus the twelve named beasts; Creature Kit beasts only
+   once one passes Euan's bar.
+7. **Two builders after Stage 0.** A plants session builds stages 1a and 1b; the planning session builds stages 2 to 4. No
+   sub-agents in either.
+8. **The wild's own plants.** About two dozen new 16×16 blocks in Minecraft's own manner; a style sheet goes to Euan before any
+   plant goes into the world.
+9. **Grass that lives.** Herds crop grazing lawns and press trails; long grass springs back over days (slowly, near players only).
+10. **Long grass is cover, both ways.** Crouched in long grass or rye, creatures see you from much closer, and monsters hiding
+    there are as hard to spot (plates and the band still warn).
+
+Stages: 0 the field (41.1); 1a the plants (style sheet first, then the blocks, art, sway, drops, sounds); 1b the land (grass
+heights by wildness, hedgerows, thickets, old giants, snags, deadfall, mowing near people, the palette's ranks slot, grass
+colour; the terrain lean below); 2 herds and packs; 3 signs and tracking; 4 the hunt; 5 Far Sight's far tint, grasshoppers and
+flushing birds, village hunt notices. Each stage's numbers are added here as it is built.
+
+### 41.1 The wildness field (Stage 0)
+- **API** `dev.awaken.living.api.Wildness` (server only; `land` is thread-safe, the rest are for the server thread): `land(level, x, z)` the land's own value worked out afresh
+  (what generation and the record use), `at(level, x, z)` the value now (the chunk's record where loaded, else the land; then
+  Hearths), `band(w)` / `bandAt(level, pos)`, `hearthKeep`, `addTamer(Tamer)`. 0 is tamed, 1 deep wild; overworld only (other
+  dimensions read 1). Bands: **Tamed** under 0.2, **Pasture** under 0.45, **Wild** under 0.7, then **Deep wild**.
+- **Tamers** each give the share of the land they leave untouched, `touch(d, radius, reach, strength) = 1 - strength·exp(-(max(0,
+  d - radius)/reach)^1.6)`; the shares multiply into `keep`. Each is looked for out to its radius plus 2.5 reaches (its touch is
+  about 1% there). Registered by the village module (`village.WildTamers`), read from the seed and the road index only, never
+  from live villages, so a chunk's value doesn't depend on what has loaded:
+  - Carillon: its core radius, reach 520. Towns (the regions whose `RoadNet.townCell` roll holds one, at the region's heart):
+    116, reach 380. Villages and mining villages on the grid: 60, reach 260. Hamlets (the first hamlet included): 38, reach 200.
+    Wayhouses: 14, reach 120.
+  - Laid roads (`RoadNet.distanceWithin`): strength 0.7, reach 70. A chunk worked out before a road near it was planned keeps
+    no ribbon for it (roads are planned ahead of the chunks they cross, so this is rare at the edges of a road's reach).
+  - Places are gathered once per 64-block tile per thread (the tile's centre plus each kind's look and the tile's half diagonal),
+    so a chunk's sixteen cells share one gathering.
+- **Combine**: `w = keep + 0.035·rank·keep + (noise1100 − 0.5)·0.32·√keep + (noise260 − 0.5)·0.14·√keep`, clamped to 0..1.
+  `rank` is the land's rank 0 (E) to 5 (S) from the region map. The noises are smooth value noise on 1,100- and 260-block
+  lattices from the world seed: forest-sized and copse-sized patches. Fully tamed land stays tamed whatever the noise.
+- **Hearths** tame live, on top of the record: fully to 48 blocks, fading over 140, at strength 0.8 (a home keeps at most a
+  fifth of its land's wildness). `at` multiplies the record by `hearthKeep`.
+- **The terrain lean** (rugged ground, deep forest and valleys a little wilder) comes in Stage 1b with the vegetation that
+  reads it, so the field and the plants change together.
+- **The record** (`living.wild.WildRecord`, chunk attachment `awaken:wild`, schemaVersion 1): sixteen cells of 4×4 blocks,
+  each the land's value at its centre in 0..255, saved with the chunk and synced to the players who see it (16 bytes). Chunks
+  without one (new, or from before the Wild Lands) queue as they load and are filled up to 8 a tick within 0.4 ms (a chunk
+  costs about 0.2 ms); a read of an unfilled loaded chunk fills it at once. Once written a record never changes, so wildness
+  never shifts under a player.
+- **Command** `/awaken wild here` (admin): the value and band where you stand, the land's own value, the Hearth's share and the
+  cost of working it out; `/awaken wild map [radius]` (default 512): a 33 by 17 map of the bands round you in chat, north up,
+  and the share of each band.
+- **Tests**: `wild_field` (the fade, tamed land stays tamed, smooth patches, most open land wild, the bands), `wild_record`
+  (filled at the cells' centres, read by block, saved and synced intact), `wild_tamers` (over a roads' world for a seed: a
+  settlement's ground and a town region's heart read Tamed, open land far from them Wild or Deep).

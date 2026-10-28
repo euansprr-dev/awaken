@@ -65,6 +65,7 @@ public final class LivingModule {
         FirstThread.init(); // the first thread out of Carillon, and chains on the Now line (SPEC §27.6)
         FirstScenes.init(); // its High Gate shot and Ilse's scene by the fire
         IssueScene.init(); // Hale's issue: the first weapon, free (docs/arms-progression/PLAN.md §3.3)
+        dev.awaken.living.wild.WildRecord.init(modBus); // the Wild Lands (SPEC §41): each chunk's wildness, kept
         modBus.addListener(LivingNet::register);
         // the Boss Plate's data (SPEC §35.1): binds and lines to the players who see a boss's bar
         dev.awaken.core.api.BossPlates.install(new dev.awaken.core.api.BossPlates.Sink() {
@@ -211,7 +212,9 @@ public final class LivingModule {
             RegionTracker.clear();
         });
         LivingCommands.register();
+        dev.awaken.living.wild.WildCommands.register();
         LivingTests.register();
+        dev.awaken.living.wild.WildTests.register();
     }
 
     /** Whether this world shows the band's layer: plates, numbers, the stream, the moment (pure survival hides them). */
