@@ -39,6 +39,10 @@ public final class DelveModule {
             if (e.getEntity() instanceof ServerPlayer p) Veins.tickPlayer(p);
         });
         bus.addListener((ServerTickEvent.Post e) -> CaveIns.tick(e.getServer()));
+        // hearts broken before their region's plan was in (SPEC §28.9)
+        bus.addListener((ServerTickEvent.Post e) -> Veins.tick(e.getServer()));
+        // the lode worker's waiting plans go before the levels close
+        bus.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> LodePlans.stopping());
         // the Delver's Pick (SPEC §34.4): its hum, kept through death
         bus.addListener((ServerTickEvent.Post e) -> WakingPick.tick(e.getServer()));
         bus.addListener(EventPriority.LOW, false, (net.neoforged.neoforge.event.entity.living.LivingDropsEvent e) -> WakingPick.onDrops(e));

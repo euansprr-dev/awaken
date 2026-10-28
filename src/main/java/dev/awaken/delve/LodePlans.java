@@ -2,11 +2,16 @@ package dev.awaken.delve;
 
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import net.minecraft.core.BlockPos;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -26,26 +31,99 @@ public final class LodePlans {
 
     private record Key(long seed, int rx, int rz) {}
 
-    private static final ConcurrentHashMap<Key, List<Lode>> CACHE = new ConcurrentHashMap<>();
+    /**
+     * The plans, a future each: the first asker plans the region and anyone else asking waits on the future, not on a
+     * lock the map holds (so clearing it never waits on a plan). The server thread never waits: it reads done plans only.
+     */
+    private static final ConcurrentHashMap<Key, CompletableFuture<List<Lode>>> CACHE = new ConcurrentHashMap<>();
     /** Lodes a test laid by hand: answered by every query, never written by worldgen. */
     static final List<Lode> EXTRA = new CopyOnWriteArrayList<>();
+    /** Regions asked of the worker and not planned yet. */
+    private static final java.util.Set<Key> ASKED = ConcurrentHashMap.newKeySet();
+    private static final ThreadPoolExecutor WORKER = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
+        Thread t = new Thread(r, "Awaken lode plans");
+        t.setDaemon(true);
+        t.setPriority(Thread.MIN_PRIORITY);
+        return t;
+    });
 
-    /** The lodes planned for region (rx, rz). */
+    /** The lodes planned for region (rx, rz), planned now if no one has (worldgen and workers; the server thread reads {@link #ready}). */
     public static List<Lode> region(long seed, int rx, int rz) {
         if (CACHE.size() > 4096) CACHE.clear();
-        return CACHE.computeIfAbsent(new Key(seed, rx, rz), k -> plan(k.seed, k.rx, k.rz));
+        Key k = new Key(seed, rx, rz);
+        CompletableFuture<List<Lode>> f = CACHE.get(k);
+        if (f == null) {
+            CompletableFuture<List<Lode>> mine = new CompletableFuture<>();
+            f = CACHE.putIfAbsent(k, mine);
+            if (f == null) {
+                try {
+                    mine.complete(plan(seed, rx, rz));
+                } catch (Throwable t) {
+                    CACHE.remove(k, mine);
+                    mine.completeExceptionally(t);
+                    throw t;
+                }
+                return mine.join();
+            }
+        }
+        return f.join();
+    }
+
+    /**
+     * The region's plan if it's done, else null (and the worker is asked for it): never plans, never waits, so the
+     * server thread can ask it under a flying player. A region not planned yet has no lodes to whoever asks this way.
+     */
+    public static @Nullable List<Lode> ready(long seed, int rx, int rz) {
+        Key k = new Key(seed, rx, rz);
+        CompletableFuture<List<Lode>> f = CACHE.get(k);
+        if (f != null && f.isDone() && !f.isCompletedExceptionally()) return f.join();
+        if (f == null && ASKED.add(k)) {
+            WORKER.execute(() -> {
+                try {
+                    region(k.seed, k.rx, k.rz);
+                } catch (RuntimeException e) {
+                    dev.awaken.Awaken.LOG.warn("[delve] lode region {} {} failed to plan: {}", k.rx, k.rz, e.toString());
+                } finally {
+                    ASKED.remove(k);
+                }
+            });
+        }
+        return null;
+    }
+
+    /** Drops the worker's waiting plans (the server is stopping; the one being planned finishes and is dropped with the cache). */
+    public static void stopping() {
+        WORKER.getQueue().clear();
+        ASKED.clear();
     }
 
     /** Every lode whose box reaches the column box (x0, z0)-(x1, z1), test lodes included when {@code extra}. */
     static List<Lode> touching(long seed, int x0, int z0, int x1, int z1, boolean extra) {
+        return touching(seed, x0, z0, x1, z1, extra, false);
+    }
+
+    /** As {@link #touching(long, int, int, int, int, boolean)}; with {@code ready}, only regions already planned (see {@link #ready}). */
+    static List<Lode> touching(long seed, int x0, int z0, int x1, int z1, boolean extra, boolean ready) {
         List<Lode> out = new ArrayList<>();
         int rx0 = Math.floorDiv(x0 - REACH, REGION), rx1 = Math.floorDiv(x1 + REACH, REGION);
         int rz0 = Math.floorDiv(z0 - REACH, REGION), rz1 = Math.floorDiv(z1 + REACH, REGION);
         for (int rx = rx0; rx <= rx1; rx++) for (int rz = rz0; rz <= rz1; rz++) {
-            for (Lode l : region(seed, rx, rz)) if (l.touches(x0, z0, x1, z1)) out.add(l);
+            List<Lode> plan = ready ? ready(seed, rx, rz) : region(seed, rx, rz);
+            if (plan != null) for (Lode l : plan) if (l.touches(x0, z0, x1, z1)) out.add(l);
         }
         if (extra) for (Lode l : EXTRA) if (l.touches(x0, z0, x1, z1)) out.add(l);
         return out;
+    }
+
+    /** Whether every region a query of that box reads is planned (asking the worker for the rest). */
+    static boolean planned(long seed, int x0, int z0, int x1, int z1) {
+        boolean all = true;
+        for (int rx = Math.floorDiv(x0 - REACH, REGION); rx <= Math.floorDiv(x1 + REACH, REGION); rx++) {
+            for (int rz = Math.floorDiv(z0 - REACH, REGION); rz <= Math.floorDiv(z1 + REACH, REGION); rz++) {
+                if (ready(seed, rx, rz) == null) all = false;
+            }
+        }
+        return all;
     }
 
     /** The lode one of whose blocks is at {@code pos}, or null. */
@@ -56,6 +134,11 @@ public final class LodePlans {
     }
 
     // ---- the plan -----------------------------------------------------------------------------------------------------
+
+    /** A region's plan made here and not kept (tests: what the worker will answer, without planning it for them). */
+    static List<Lode> planNow(long seed, int rx, int rz) {
+        return plan(seed, rx, rz);
+    }
 
     private static List<Lode> plan(long seed, int rx, int rz) {
         if (Thread.currentThread() == serverThread) SERVER_PLANS.incrementAndGet();
