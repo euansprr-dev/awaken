@@ -597,6 +597,35 @@ final class FarSightTests {
             });
         });
 
+        AwakenTests.registerIsolated("farsight_trees_crowns", 20, h -> {
+            // far trees take the real trees' proportions from their height: a tall broadleaf forest (the lumen forest's
+            // trees stand 17 tall, a crown 6 deep and 11 wide) grows wide caps, never columns; an oak wood stays oaks
+            int ring = 2, n = Rings.PATCH * Rings.PATCH;
+            for (int tallTrees : new int[] {17, 6}) {
+                int[] height = new int[n], colour = new int[n], info = new int[n], crown = new int[n];
+                for (int k = 0; k < n; k++) {
+                    height[k] = FarColumns.packHeight(80f);
+                    info[k] = FarColumns.abgr(0, tallTrees * 4, 255, 128);
+                    crown[k] = FarColumns.abgr(0x2E5A6E, FarPalette.BROADLEAF);
+                }
+                int[] out = new int[FarTrees.MAX * FarTrees.INTS];
+                int planted = FarTrees.plant(ring, 3, 5, height, colour, info, crown, 63, out);
+                h.assertTrue(planted > 20, "a dense forest plants: " + planted);
+                for (int t = 0; t < planted; t++) {
+                    float tall = (out[t * FarTrees.INTS + 1] >> 16 & 255) / 4f, width = (out[t * FarTrees.INTS + 2] >>> 24) / 8f;
+                    float deep = tall - out[t * FarTrees.INTS + 3] / 4f;
+                    if (tallTrees > 12) {
+                        h.assertTrue(width > deep && width >= 0.45f * tall, "a tall tree's crown is a wide cap: " + width + " wide, "
+                                + deep + " deep on a tree " + tall + " tall");
+                    } else {
+                        h.assertTrue(width >= 3f && width <= 7f && deep >= 2f && deep <= 0.7f * tall, "an oak's crown: " + width
+                                + " wide, " + deep + " deep on a tree " + tall + " tall");
+                    }
+                }
+            }
+            h.succeed();
+        });
+
         AwakenTests.registerIsolated("farsight_trees_basin", 20, h -> {
             // a dense far forest over a ring 3 patch that holds a city basin: no tree in the reserve, every other one on
             // its cell's ground (the shader then stands it on the mesh as drawn there)
