@@ -177,8 +177,24 @@ public final class ForceInteractions {
         Long last = seen.get(r);
         if (last == null || now - last > 20 * 60) {
             seen.put(r, now);
-            Signal.toast(player, Component.literal(r.title + " — " + r.effect));
+            dev.awaken.core.api.NoticeEvents.tell(player, explanation(r));
         }
+    }
+
+    static dev.awaken.core.api.NoticeEvents.Event explanation(Reaction r) {
+        String detail = switch (r) {
+            case SPORE_CHAIN -> "Heat damage on a spore-tagged creature starts linked bursts. Each burst hits within 3.5 blocks and burns targets for 3 seconds; successive bursts lose 10% damage.";
+            case STUN_SPREAD -> "Charge on a wet target spreads through wet creatures within 8 blocks. Others are stunned for 2.5 seconds; you are also stunned for 1 second if caught in the water.";
+            case VOLATILE_DETONATION -> "Gravity brings nearby volatile creatures together. Both explode, each blasting a 4.5-block radius without breaking terrain. Your allies are protected from these blasts.";
+            case MIRROR_SHATTER -> "Spirit damage shatters a mirror-tagged target for extra damage and sends a half-strength shock to nearby mirror-tagged creatures.";
+            case STEAM -> "Heat meeting frost removes the target's frost and fire and creates a 4-block steam cloud for 8 seconds. The steam blinds creatures and hides sneaking players.";
+            case OVERCHARGE -> "Hit your own Echo or summon with Charge: its attack damage doubles for up to 10 seconds, then it disappears. This spends the summoned ally; it is not a permanent upgrade.";
+            case WALL_THROW -> "Use Telekinesis or Gravity Well on blocks made by Architect powers to throw them as damaging projectiles.";
+            default -> "No elemental reaction occurred.";
+        };
+        return new dev.awaken.core.api.NoticeEvents.Event("force/" + r.name(), "Elemental reaction", r.title,
+                r.effect + ".", java.util.List.of(detail, "Repeat it by combining the same force and target condition. This is a temporary interaction, not a learned power."),
+                dev.awaken.core.api.NoticeEvents.Kind.COMBAT, 0x7FC3FF);
     }
 
     /** Heat meets Spores: each spore-tagged thing bursts in turn, spreading to the next within 6 blocks. */

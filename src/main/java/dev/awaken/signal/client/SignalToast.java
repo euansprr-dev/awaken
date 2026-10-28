@@ -18,6 +18,7 @@ final class SignalToast implements Toast {
 
     private String title;
     private String detail;
+    private final java.util.List<String> hints;
     /** The detail wrapped to the toast's width: one or two lines, worked out when the text changes, not per frame. */
     private String line1 = "", line2 = "";
     /** Vanilla reserves a toast's slots once, when it's added: a short toast that later grows stays one line. */
@@ -31,6 +32,11 @@ final class SignalToast implements Toast {
     private final Runnable onDone;
 
     SignalToast(String title, String detail, int colour, Runnable onDone) {
+        this(title, detail, colour, "", onDone);
+    }
+
+    SignalToast(String title, String detail, int colour, String hint, Runnable onDone) {
+        this.hints = hint.isBlank() ? java.util.List.of() : SignalText.wrap(hint, SignalLayout.TOAST_W - 16, net.minecraft.client.Minecraft.getInstance().font::width);
         this.title = title;
         this.detail = detail;
         this.colour = colour;
@@ -109,6 +115,7 @@ final class SignalToast implements Toast {
             g.text(font, line1, 9, 18, Glass.a(Glass.TEXT, 0.85f), false);
             if (!line2.isEmpty()) g.text(font, line2, 9, 29, Glass.a(Glass.TEXT, 0.85f), false);
         }
+        for (int i = 0; i < hints.size(); i++) g.text(font, hints.get(i), 9, h - 12 - (hints.size() - 1 - i) * 11, Glass.a(Glass.EDGE, 0.9f), false);
     }
 
     private void projected(GuiGraphicsExtractor g, Font font) {
@@ -132,6 +139,7 @@ final class SignalToast implements Toast {
             HudLook.text(g, font, line1, 9, 18, Glass.a(Glass.TEXT, 0.9f * a), false);
             if (!line2.isEmpty()) HudLook.text(g, font, line2, 9, 29, Glass.a(Glass.TEXT, 0.9f * a), false);
         }
+        for (int i = 0; i < hints.size(); i++) HudLook.text(g, font, hints.get(i), 9, h - 12 - (hints.size() - 1 - i) * 11, Glass.a(Glass.EDGE, a), false);
         g.disableScissor();
         g.pose().popMatrix();
     }
@@ -149,7 +157,7 @@ final class SignalToast implements Toast {
 
     @Override
     public int height() {
-        return line2.isEmpty() ? SignalLayout.TOAST_H : TWO_LINE_H;
+        return (line2.isEmpty() ? SignalLayout.TOAST_H : TWO_LINE_H) + (hints.size() * 11);
     }
 
     @Override

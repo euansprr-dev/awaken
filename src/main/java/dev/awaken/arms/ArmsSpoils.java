@@ -123,13 +123,9 @@ final class ArmsSpoils {
         ItemStack stack = stack(rank, home, p.getRandom());
         if (stack.isEmpty()) return;
         ArmsIssue.giveItem(p, stack);
-        List<String> marks = new ArrayList<>();
-        for (String id : Marks.of(stack).marks()) {
-            Marks.Mark m = Marks.get(id);
-            if (m != null) marks.add(m.name());
-        }
-        Signal.toast(p, Component.literal("SPOILS · ").withColor(0x6FB3FF).append(stack.getHoverName().copy().withColor(0xD6ECFF))
-                .append(Component.literal(" · " + String.join(", ", marks)).withColor(0xC8C2B0)));
+        ArmsNotices.reward(p, "weapon/spoils/" + java.util.UUID.randomUUID(), "Gate spoils", stack,
+                "You received a weapon with two Marks. Each Mark adds a conditional combat effect.",
+                List.of("The weapon was added to your inventory, or dropped beside you if it was full."));
         p.level().playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.2F, 0.9F);
         dev.awaken.progression.Progression.markNewThing(p, "spoils");
     }

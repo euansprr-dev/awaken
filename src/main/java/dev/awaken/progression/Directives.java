@@ -100,7 +100,9 @@ public final class Directives {
         p.directives.add(new Profile.DirectiveState(OPENING, true, today, today + Math.max(4, def.expiresDays()), Progression.snapshot(p, cs)));
         p.counters.put("awaken:directive_offered/" + OPENING, today + 1);
         p.counters.merge("awaken:directive_offers", 1L, Long::sum);
-        Signal.toast(player, Component.literal("Directive · " + def.text() + " Your first gate will open somewhere outside the city walls."));
+        ProgressionNotices.tell(player, "directive/" + OPENING + "/accepted/" + today, "Directive accepted", def.text(),
+                "Your first gate will open somewhere outside the city walls.", dev.awaken.core.api.NoticeEvents.Kind.TASK,
+                "Clear the first floor of a gate, then follow your task card.", "Reward: " + RewardWords.describe(def.reward()));
         DirectorLog.log(player, "directive", "the Registry's own: " + OPENING + ", accepted");
         Progression.markDirty(player);
         return true;
@@ -137,7 +139,9 @@ public final class Directives {
                 Set<String> cs = new HashSet<>();
                 def.condition().counters(cs);
                 p.directives.set(i, new Profile.DirectiveState(key, true, d.offeredDay(), d.expiresDay(), Progression.snapshot(p, cs)));
-                Signal.toast(player, Component.literal("Directive accepted"));
+                ProgressionNotices.tell(player, "directive/" + key + "/accepted/" + d.offeredDay(), "Directive accepted", def.text(),
+                        "This task is now active. Complete it before day " + d.expiresDay() + ".", dev.awaken.core.api.NoticeEvents.Kind.TASK,
+                        "Progress starts when you accept. See Journal for the current objective.", "Reward: " + RewardWords.describe(def.reward()));
             }
             Progression.markDirty(player);
             return;
@@ -155,8 +159,9 @@ public final class Directives {
                 p.counters.merge("awaken:directive_done/" + d.id(), 1L, Long::sum);
                 p.counters.merge(Counters.DIRECTIVES_KEPT_STREAK, 1L, Long::sum);
                 dev.awaken.core.audio.AudioCues.ui(player, dev.awaken.core.audio.UiSound.QUEST_DONE);
-                Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Directive complete"))
-                        .body(Component.literal(def.text())).row(Component.literal("Reward"), Component.literal(describe(def.reward()))).build());
+                ProgressionNotices.tell(player, "directive/" + d.id() + "/" + p.counter("awaken:directive_done/" + d.id()),
+                        "Directive complete", def.text(), "You completed the directive and earned its reward.", dev.awaken.core.api.NoticeEvents.Kind.TASK,
+                        RewardWords.describe(def.reward()), "The directive has left your active task list.");
                 RewardHooks.apply(player, def.reward(), Progression.XpSource.DIRECTIVE);
                 Progression.evaluate(player, Counters.DIRECTIVES_KEPT_STREAK);
                 Progression.markDirty(player);

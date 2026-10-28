@@ -57,10 +57,11 @@ public final class Regimen {
         }
         p.regimen = new Profile.RegimenState(today, drills, List.of(), Progression.snapshot(p, counters));
         if (drills.isEmpty()) return;
-        var w = SignalWindow.builder(SignalWindow.Kind.DIRECTIVE, Component.literal("Daily Regimen"));
-        for (String id : drills) w.row(Component.literal("•"), Component.literal(Content.DRILLS.get(id).text()));
-        w.footer(Component.literal("Optional · +1 point and a tenth of a level"));
-        Signal.send(player, w.ttl(20 * 10).build());
+        var lines = new ArrayList<String>();
+        for (String id : drills) lines.add(Content.DRILLS.get(id).text());
+        lines.add("Optional: complete every drill for one stat point and XP worth a tenth of a current level. See the Journal task list for progress.");
+        dev.awaken.core.api.NoticeEvents.tell(player, new dev.awaken.core.api.NoticeEvents.Event("regimen/" + today,
+                "Daily tasks", "Daily Regimen", "Today's optional drills are ready in Journal.", lines, dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x86C9F0));
         Progression.markDirty(player);
     }
 
@@ -75,7 +76,9 @@ public final class Regimen {
             if (def != null && def.condition().test(p, r.baseline())) {
                 done.add(id);
                 changed = true;
-                Signal.toast(player, Component.literal("Regimen: " + def.text() + " ✓"));
+                ProgressionNotices.tell(player, "regimen/" + r.day() + "/" + id, "Drill complete", def.text(),
+                        "This drill is complete. Finish today's remaining drills for the regimen reward.", dev.awaken.core.api.NoticeEvents.Kind.TASK,
+                        "The current checklist is in Journal.");
             }
         }
         if (!changed) return;
@@ -86,9 +89,9 @@ public final class Regimen {
             Progression.grantLevels(player, REWARD_LEVELS, Progression.XpSource.REGIMEN);
             p.counters.merge("awaken:regimens_done", 1L, Long::sum);
             dev.awaken.core.audio.AudioCues.ui(player, dev.awaken.core.audio.UiSound.QUEST_DONE);
-            Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Regimen complete"))
-                    .body(Component.literal("+1 point and a tenth of a level"))
-                    .presentation(SignalWindow.Presentation.TOAST).build());
+            ProgressionNotices.tell(player, "regimen/" + r.day() + "/complete", "Daily tasks complete", "Daily Regimen",
+                    "+1 stat point and XP worth a tenth of a current level.", dev.awaken.core.api.NoticeEvents.Kind.REWARD,
+                    "Assign the point on Status. Normal progression XP modifiers apply to the XP reward.");
         }
         Progression.markDirty(player);
     }

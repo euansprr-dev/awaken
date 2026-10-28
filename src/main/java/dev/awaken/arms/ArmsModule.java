@@ -89,6 +89,7 @@ public final class ArmsModule {
         SwingTests.register();
         FightFeelTests.register();
         AimStrikeTests.register();
+        ArmsNoticeTests.register();
         ArmsProgressionTests.register();
     }
 

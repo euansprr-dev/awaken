@@ -109,6 +109,7 @@ public final class PowerState {
     long lastDangerHash;
     int flowTickBank;
 
+    long previewAt = Long.MIN_VALUE;
     boolean loadoutDirty;
 
     void refreshPerks(ServerPlayer player, long now) {
