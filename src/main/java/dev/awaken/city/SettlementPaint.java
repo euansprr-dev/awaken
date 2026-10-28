@@ -271,6 +271,56 @@ public final class SettlementPaint {
         return new int[]{cells, lights};
     }
 
+    /** A settlement's painted block at a plan cell (null: it paints nothing there, the land's own). */
+    public interface Painted {
+        @Nullable BlockState at(int x, int ry, int z);
+    }
+
+    /** Reads a settlement's paint cell by cell, painting each chunk the first time it's read (tests: SPEC §28.11's spots). */
+    public static Painted painted(Layout l, long worldSeed) {
+        java.util.Map<Long, CityBuffer> chunks = new java.util.HashMap<>();
+        return (x, ry, z) -> {
+            int cx = (x + l.originX()) >> 4, cz = (z + l.originZ()) >> 4;
+            return chunks.computeIfAbsent(net.minecraft.world.level.ChunkPos.pack(cx, cz), k -> paint(l, cx, cz, worldSeed, new CityBuffer(16, 16))).get(x, ry, z);
+        };
+    }
+
+    /**
+     * A settlement's paint as ground (plan cells, heights from its street level): its own blocks, and where it paints
+     * nothing the land's own, read as solid up to the plan's lift and open over it. For choosing where its people stand.
+     */
+    public static net.minecraft.world.level.BlockGetter ground(Layout l, long worldSeed) {
+        Painted paint = painted(l, worldSeed);
+        BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        return new net.minecraft.world.level.BlockGetter() {
+            @Override
+            public net.minecraft.world.level.block.entity.@Nullable BlockEntity getBlockEntity(net.minecraft.core.BlockPos pos) {
+                return null;
+            }
+
+            @Override
+            public BlockState getBlockState(net.minecraft.core.BlockPos pos) {
+                BlockState s = paint.at(pos.getX(), pos.getY(), pos.getZ());
+                return s != null ? s : pos.getY() <= l.lift(pos.getX(), pos.getZ()) ? stone : air;
+            }
+
+            @Override
+            public net.minecraft.world.level.material.FluidState getFluidState(net.minecraft.core.BlockPos pos) {
+                return getBlockState(pos).getFluidState();
+            }
+
+            @Override
+            public int getHeight() {
+                return CityBuffer.H;
+            }
+
+            @Override
+            public int getMinY() {
+                return CityBuffer.YMIN;
+            }
+        };
+    }
+
     /** A fingerprint of a chunk's paint (tests: the same plan paints the same blocks). */
     public static long fingerprint(Layout l, int chunkX, int chunkZ, long worldSeed) {
         CityBuffer buf = paint(l, chunkX, chunkZ, worldSeed, new CityBuffer(16, 16));

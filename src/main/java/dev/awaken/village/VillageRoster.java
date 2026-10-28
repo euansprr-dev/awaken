@@ -1,6 +1,7 @@
 package dev.awaken.village;
 
 import dev.awaken.citizens.api.RosterBuilder;
+import dev.awaken.citizens.api.Settlements;
 import dev.awaken.city.CityPlan;
 import dev.awaken.city.SettlementPaint;
 import dev.awaken.village.plan.VillagePlan;
@@ -29,6 +30,7 @@ public final class VillageRoster {
     private final RosterBuilder b = new RosterBuilder();
     private VillagePlan p;
     private long worldSeed;
+    private net.minecraft.world.level.@org.jspecify.annotations.Nullable BlockGetter ground;
     /** Each street's point nodes. */
     private int[][] streetNode;
     private final Map<String, Integer> places = new HashMap<>();
@@ -190,9 +192,13 @@ public final class VillageRoster {
         // the well: the washer at its south side, the trough beside her
         int wx = p.well[0], wz = p.well[1];
         b.water(wx, wz);
-        int wnode = spot(wx + 0.5, 0, wz + 2.5);
-        wash = b.place("wash", wnode, wx + 0.5, 0, wz + 2.5).yaw(180).district(green).spot(wx + 0.5, wz + 2.5).id();
-        b.washplace(wx + 1, 0, wz + 2, wash);
+        // (SPEC §28.11) on open ground south of it: a town's well is a fountain's basin, and its rim is no place to stand
+        int wsz = wz + 2;
+        while (wsz < wz + 6 && !open(wx, wsz)) wsz++;
+        if (!open(wx, wsz)) wsz = wz + 2;
+        int wnode = spot(wx + 0.5, 0, wsz + 0.5);
+        wash = b.place("wash", wnode, wx + 0.5, 0, wsz + 0.5).yaw(180).district(green).spot(wx + 0.5, wsz + 0.5).id();
+        b.washplace(wx + 1, 0, wsz, wash);
         // the notice board: read from its face
         int f = p.notice[2];
         double nx = p.notice[0] + 0.5 + (f == 1 ? 1.2 : f == 3 ? -1.2 : 0), nz = p.notice[1] + 0.5 + (f == 2 ? 1.2 : f == 0 ? -1.2 : 0);
@@ -207,14 +213,20 @@ public final class VillageRoster {
                     .district(green).spot(bx + 0.5, bz + 0.5).id();
             benchPlaces.add(pl);
         }
-        int gx = wx - 3, gz = wz - 2;
-        // the children's game spreads over the green (a place holds as many as its spots: past them, people stand in a heap)
-        RosterBuilder.Place pp = b.place("play", spot(gx + 0.5, 0, gz + 0.5), gx + 0.5, 0, gz + 0.5).district(green).cap(12);
-        spread(pp, gx, gz, 4, 12, true);
+        // (SPEC §28.11) the children's game spreads over open green, never round a fountain or a well: a spot for every
+        // child and two over, a step and a half apart (past them, the ledger's rings round the game)
+        int kids = 0;
+        for (VillagePlan.Person v : p.people) if (v.age() == 0) kids++;
+        int[] gc = openMiddle(wx - 3, wz - 2, p.greenR + 4);
+        int gx = gc[0], gz = gc[1], playN = Math.clamp(kids + 2, 12, 40);
+        RosterBuilder.Place pp = b.place("play", spot(gx + 0.5, 0, gz + 0.5), gx + 0.5, 0, gz + 0.5).district(green).cap(playN);
+        spread(pp, gx, gz, Math.max(4, (int) Math.ceil(Math.sqrt(2.0 * playN / Math.PI)) + 1), playN, true);
         play = pp.id();
-        // the green: somewhere to stand and talk, for errands and evenings (reached by the notice board's path)
-        RosterBuilder.Place ep = b.place("stand", spot(nx, 0, nz), nx, 0, nz).district(green).cap(10);
-        spread(ep, wx, wz, Math.max(3, p.greenR - 1), 10, true);
+        // the green: somewhere to stand and talk, for errands and evenings (reached by the notice board's path); room for
+        // a third of the village at once
+        int edgeN = Math.clamp(p.people.size() / 3, 10, 40);
+        RosterBuilder.Place ep = b.place("stand", spot(nx, 0, nz), nx, 0, nz).district(green).cap(edgeN);
+        spread(ep, wx, wz, Math.max(3, p.greenR - 1), edgeN, true);
         greenEdge = ep.id();
         // the bell: its ringer at the foot of the post or the tower
         VillagePlan.Bell bl = p.bell;
@@ -226,16 +238,25 @@ public final class VillageRoster {
         // the forge
         if (p.forge != null) {
             VillagePlan.Forge fg = p.forge;
-            anvil = b.place("anvil", spot(fg.smithX() + 0.5, fg.lift(), fg.smithZ() + 0.5), fg.smithX() + 0.5, fg.lift(), fg.smithZ() + 0.5)
-                    .yaw(yawTo(fg.smithX(), fg.smithZ(), fg.anvilX(), fg.anvilZ())).spot(fg.smithX() + 0.5, fg.smithZ() + 0.5).id();
+            // (SPEC §28.11) the smith's node is the step outside the shed's open side, so his way to the street never runs
+            // through a post or the furnace; from it he paths in to the anvil
+            int[] sm = smithCell(fg);
+            int[] step = shedStep(fg, sm[0], sm[1]);
+            int fnode = step != null ? spot(step[0] + 0.5, p.lift(step[0], step[1]), step[1] + 0.5) : spot(sm[0] + 0.5, fg.lift(), sm[1] + 0.5);
+            anvil = b.place("anvil", fnode, sm[0] + 0.5, fg.lift(), sm[1] + 0.5)
+                    .yaw(yawTo(sm[0], sm[1], fg.anvilX(), fg.anvilZ())).approach(step != null).spot(sm[0] + 0.5, sm[1] + 0.5).id();
             int k = buildingOf(fg.plot());
             if (k >= 0) b.smithy(lotOf[k], doorPlace[k], anvil, fg.anvilX(), fg.lift(), fg.anvilZ());
         }
         // fields, pens, the woodlot, the pier's end, the mill's door
         for (VillagePlan.Field fd : p.fields) {
             double cx = (fd.x0() + fd.x1()) / 2.0 + 0.5, cz = (fd.z0() + fd.z1()) / 2.0 + 0.5;
-            int wkx = fd.workX(), wkz = fd.workZ();
-            int pl = b.place("stand", spot(wkx + 0.5, fd.lift() + 1, wkz + 0.5), wkx + 0.5, fd.lift() + 1, wkz + 0.5).yaw(yawTo(wkx, wkz, cx, cz))
+            // (SPEC §28.11) feet among the crops on the farmland's row, not a row over them (a drop that tramples it), and
+            // off the channel's composter: the nearest free cell of the field's own row
+            int[] wk = fieldCell(fd);
+            int wkx = wk[0], wkz = wk[1];
+            int wry = p.lift(wkx, wkz);
+            int pl = b.place("stand", spot(wkx + 0.5, wry, wkz + 0.5), wkx + 0.5, wry, wkz + 0.5).yaw(yawTo(wkx, wkz, cx, cz))
                     .cap(2).spot(wkx + 0.5, wkz + 0.5).id();
             fieldPlaces.add(pl);
         }
@@ -247,6 +268,8 @@ public final class VillageRoster {
         }
         for (int k = 0; k < p.posts.size(); k++) {
             int[] po = p.posts.get(k);
+            // (SPEC §28.11) a town's gate post three in from the gate can fall in the wall's curve: the nearest open cell
+            if (k < p.gatePosts && !open(po[0], po[1])) po = nearestOpen(po, 4);
             int node = spot(po[0] + 0.5, po[2], po[1] + 0.5);
             if (k < p.gatePosts) {
                 postPlaces.add(b.place("post", node, po[0] + 0.5, po[2], po[1] + 0.5).spot(po[0] + 0.5, po[1] + 0.5).id());
@@ -388,6 +411,103 @@ public final class VillageRoster {
         ev.addAll(benchPlaces);
         ev.add(greenEdge);
         eveningRoute = b.route("wander", ev.isEmpty() ? new int[]{notice} : ev.stream().mapToInt(Integer::intValue).toArray());
+    }
+
+    /**
+     * The open cell nearest (x, z), within r, with open cells all round it and nothing in the way for two cells (a
+     * fountain's rim, a well, a lamp): where a gathering's middle goes. (x, z) itself when there's none.
+     */
+    private int[] openMiddle(int x, int z, int r) {
+        for (int d = 0; d <= r; d++) {
+            int best = -1, bx = x, bz = z;
+            for (int dz = -d; dz <= d; dz++)
+                for (int dx = -d; dx <= d; dx++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != d || !clearAround(x + dx, z + dz, 2)) continue;
+                    int dd = dx * dx + dz * dz;
+                    if (best < 0 || dd < best) {
+                        best = dd;
+                        bx = x + dx;
+                        bz = z + dz;
+                    }
+                }
+            if (best >= 0) return new int[]{bx, bz};
+        }
+        return new int[]{x, z};
+    }
+
+    /** The open cell nearest a plan point {x, z, lift} within r (its own lift), or the point itself when there's none. */
+    private int[] nearestOpen(int[] po, int r) {
+        int[] best = po;
+        int bd = Integer.MAX_VALUE;
+        for (int dz = -r; dz <= r; dz++)
+            for (int dx = -r; dx <= r; dx++) {
+                int x = po[0] + dx, z = po[1] + dz, dd = dx * dx + dz * dz;
+                if (dd >= bd || dd > r * r || !open(x, z)) continue;
+                bd = dd;
+                best = new int[]{x, z, p.lift(x, z)};
+            }
+        return best;
+    }
+
+    private boolean clearAround(int x, int z, int r) {
+        for (int dz = -r; dz <= r; dz++) for (int dx = -r; dx <= r; dx++) if (!open(x + dx, z + dz)) return false;
+        return true;
+    }
+
+    /**
+     * (SPEC §28.11) Whether feet fit in cell (x, z) over plan height ry as the painter paints it: a neighbour's eave, a
+     * composter or a post can stand where the plan sees open ground. Painted lazily, only the chunks asked about.
+     */
+    private boolean free(int x, int ry, int z) {
+        if (ground == null) ground = SettlementPaint.ground(p, worldSeed);
+        return Settlements.standable(ground, x, ry + 1, z);
+    }
+
+    /** The smith's cell: the planned one when it's free, else the nearest free cell round the anvil inside the shed. */
+    private int[] smithCell(VillagePlan.Forge f) {
+        int[] best = {f.smithX(), f.smithZ()};
+        if (free(f.smithX(), f.lift(), f.smithZ())) return best;
+        int bd = Integer.MAX_VALUE;
+        for (int dz = -1; dz <= 1; dz++)
+            for (int dx = -1; dx <= 1; dx++) {
+                int x = f.anvilX() + dx, z = f.anvilZ() + dz;
+                int dd = (x - f.smithX()) * (x - f.smithX()) + (z - f.smithZ()) * (z - f.smithZ());
+                if ((dx == 0 && dz == 0) || x < f.x0() || x > f.x1() || z < f.z0() || z > f.z1() || dd >= bd || !free(x, f.lift(), z)) continue;
+                bd = dd;
+                best = new int[]{x, z};
+            }
+        return best;
+    }
+
+    /** A farmer's cell: the planned one when it's free, else the nearest free cell of the field on its lift, within 2. */
+    private int[] fieldCell(VillagePlan.Field f) {
+        int[] best = {f.workX(), f.workZ()};
+        int lift = p.lift(f.workX(), f.workZ());
+        if (free(f.workX(), lift, f.workZ())) return best;
+        int bd = Integer.MAX_VALUE;
+        for (int dz = -2; dz <= 2; dz++)
+            for (int dx = -2; dx <= 2; dx++) {
+                int x = f.workX() + dx, z = f.workZ() + dz, dd = dx * dx + dz * dz;
+                if (dd >= bd || x < f.x0() || x > f.x1() || z < f.z0() || z > f.z1() || p.lift(x, z) != lift || !free(x, lift, z)) continue;
+                bd = dd;
+                best = new int[]{x, z};
+            }
+        return best;
+    }
+
+    /** The cell just outside a forge shed's open side, past the smith's spot; null when it isn't ground to stand on. */
+    private int @org.jspecify.annotations.Nullable [] shedStep(VillagePlan.Forge f, int sx, int sz) {
+        int ox = sx, oz = sz;
+        if (sz == f.z0()) oz--;
+        else if (sz == f.z1()) oz++;
+        else if (sx == f.x0()) ox--;
+        else if (sx == f.x1()) ox++;
+        else return null;
+        byte k = p.kind(ox, oz);
+        boolean ground = k == CityPlan.FREE || k == CityPlan.YARD || CityPlan.walkable(k);
+        if (!ground || Math.abs(p.lift(ox, oz) - f.lift()) > 1) return null;
+        for (CityPlan.Prop pr : p.props) if (pr.contains(ox, oz)) return null;
+        return new int[]{ox, oz};
     }
 
     /** A cell people can stand on: paving or the green, with no prop, lamp, bell or well on it. */

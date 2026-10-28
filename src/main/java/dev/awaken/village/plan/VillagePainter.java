@@ -499,24 +499,36 @@ final class VillagePainter {
         int face = towardSmithy(smithy, f.anvilX(), f.anvilZ());
         c.set(f.anvilX(), g + 1, f.anvilZ(), ANVIL_FACING[(face + 1) & 3]);
         // the furnace against the smithy's wall, at the shed's far end from the anvil
-        int bx = f.x0(), bz = f.z0();
-        for (int z = f.z0(); z <= f.z1(); z++)
-            for (int x = f.x0(); x <= f.x1(); x++)
-                if (touches(smithy, x, z) && Math.abs(x - f.anvilX()) + Math.abs(z - f.anvilZ()) >= 2) {
+        int[] fu = furnace(smithy, f.x0(), f.z0(), f.x1(), f.z1(), f.anvilX(), f.anvilZ());
+        c.set(fu[0], g + 1, fu[1], BLAST_FURNACE[(face + 2) & 3]);
+        c.set(fu[0], g + 2, fu[1], COBBLE_SLAB);
+        // the Hearth's forge beside the anvil: an Armoury door where a hunter draws patterns, raises weapons and tempers gear
+        int[] fo = forgeBlock(f.x0(), f.z0(), f.x1(), f.z1(), f.anvilX(), f.anvilZ(), fu);
+        if (fo != null) c.set(fo[0], g + 1, fo[1], FORGE[(face + 2) & 3]);
+    }
+
+    /** The forge shed's furnace cell: against the smithy's wall, at the shed's far end from the anvil. */
+    static int[] furnace(CityPlan.Plot smithy, int x0, int z0, int x1, int z1, int ax, int az) {
+        int bx = x0, bz = z0;
+        for (int z = z0; z <= z1; z++)
+            for (int x = x0; x <= x1; x++)
+                if (touches(smithy, x, z) && Math.abs(x - ax) + Math.abs(z - az) >= 2) {
                     bx = x;
                     bz = z;
                 }
-        c.set(bx, g + 1, bz, BLAST_FURNACE[(face + 2) & 3]);
-        c.set(bx, g + 2, bz, COBBLE_SLAB);
-        // the Hearth's forge beside the anvil: an Armoury door where a hunter draws patterns, raises weapons and tempers gear
+        return new int[]{bx, bz};
+    }
+
+    /** The Hearth forge's cell: the first side of the anvil inside the shed that is no corner and not the furnace. */
+    static int @org.jspecify.annotations.Nullable [] forgeBlock(int x0, int z0, int x1, int z1, int ax, int az, int[] furnace) {
         int[][] beside = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
         for (int[] d : beside) {
-            int fx = f.anvilX() + d[0], fz = f.anvilZ() + d[1];
-            boolean corner = (fx == f.x0() || fx == f.x1()) && (fz == f.z0() || fz == f.z1());
-            if (fx < f.x0() || fx > f.x1() || fz < f.z0() || fz > f.z1() || corner || (fx == bx && fz == bz)) continue;
-            c.set(fx, g + 1, fz, FORGE[(face + 2) & 3]);
-            break;
+            int fx = ax + d[0], fz = az + d[1];
+            boolean corner = (fx == x0 || fx == x1) && (fz == z0 || fz == z1);
+            if (fx < x0 || fx > x1 || fz < z0 || fz > z1 || corner || (fx == furnace[0] && fz == furnace[1])) continue;
+            return new int[]{fx, fz};
         }
+        return null;
     }
 
     static boolean touches(CityPlan.Plot q, int x, int z) {
