@@ -20,7 +20,7 @@ import java.util.WeakHashMap;
  * in a day, and the back-filled ones are laid again from the clock after a restart.
  */
 public final class Spoor {
-    public enum Kind { PRINTS, DUNG, KILL }
+    public enum Kind { PRINTS, DUNG, KILL, BLOOD }
 
     /**
      * One sign: where (y the ground), the way the animals went (prints; Minecraft yaw), what left it and how many, its
@@ -33,8 +33,8 @@ public final class Spoor {
         }
     }
 
-    /** How long a sign is seen: prints two in-game hours (six with the Tracks perk), droppings and bones a day. */
-    public static final int PRINTS_LIFE = 2400, TRACKS_LIFE = 7200, DUNG_LIFE = 24000, KILL_LIFE = 24000;
+    /** How long a sign is seen: prints two in-game hours (six with the Tracks perk), a wounded quarry's blood three, droppings and bones a day. */
+    public static final int PRINTS_LIFE = 2400, TRACKS_LIFE = 7200, BLOOD_LIFE = 3600, DUNG_LIFE = 24000, KILL_LIFE = 24000;
     /** Signs kept in one world at most (the oldest go first). */
     static final int CAP = 1024;
     /** A moving herd leaves a patch of prints every this many blocks. */
@@ -65,6 +65,7 @@ public final class Spoor {
             case PRINTS -> tracks ? TRACKS_LIFE : PRINTS_LIFE;
             case DUNG -> DUNG_LIFE;
             case KILL -> KILL_LIFE;
+            case BLOOD -> BLOOD_LIFE;
         };
     }
 
@@ -85,8 +86,13 @@ public final class Spoor {
 
     /** Lays a sign; a keyed one (back-filled) only once. Returns it, or null when its key was laid already. */
     Mark lay(Kind kind, double x, double y, double z, float yaw, Ledger.Pop pop, int count, long laid, String prey, long key) {
+        return lay(kind, x, y, z, yaw, pop.species, pop.id, count, laid, prey, key);
+    }
+
+    /** A sign left by anything (a hunted beast's blood, a hunter's kill); {@code pop} -1 for none of the ledger's. */
+    public Mark lay(Kind kind, double x, double y, double z, float yaw, String species, int pop, int count, long laid, String prey, long key) {
         if (key != 0 && !keys.add(key)) return null;
-        Mark m = new Mark(nextId++, kind, x, y, z, yaw, pop.species, pop.id, count, laid, hoofed(pop.species), prey, key);
+        Mark m = new Mark(nextId++, kind, x, y, z, yaw, species, pop, count, laid, hoofed(species), prey, key);
         marks.add(m);
         if (marks.size() > CAP) forget(marks.removeFirst());
         return m;

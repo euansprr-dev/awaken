@@ -103,6 +103,16 @@ public final class LivingContent {
                     .sync((holder, to) -> holder == to, net.minecraft.network.codec.ByteBufCodecs.fromCodecWithRegistries(dev.awaken.living.hunt.HuntState.CODEC))
                     .build());
 
+    /** A quarry's fight (SPEC §41.4): damage per part, parts broken, whether it limped, its hunters; saved with it. */
+    public static final Supplier<AttachmentType<dev.awaken.living.hunt.Quarry.State>> QUARRY = ATTACHMENTS.register("quarry",
+            () -> AttachmentType.builder(dev.awaken.living.hunt.Quarry.State::new)
+                    .serialize(dev.awaken.living.hunt.Quarry.State.CODEC.fieldOf("quarry"), s -> !s.hunters.isEmpty() || !s.broken.isEmpty()).build());
+
+    /** A quarry's carcass (SPEC §41.4): the game time it goes; saved, synced to everyone who sees it (it lies on its side). */
+    public static final Supplier<AttachmentType<Long>> CARCASS = ATTACHMENTS.register("carcass",
+            () -> AttachmentType.builder(() -> 0L).serialize(com.mojang.serialization.Codec.LONG.fieldOf("until"), t -> t > 0)
+                    .sync(ByteBufCodecs.VAR_LONG).build());
+
     /** What a player has heard of happenings (SPEC §21.6): "?" marks on their map, synced to them, kept through death. */
     public static final Supplier<AttachmentType<dev.awaken.living.pulse.Rumours.State>> RUMOURS = ATTACHMENTS.register("rumours",
             () -> AttachmentType.builder(() -> dev.awaken.living.pulse.Rumours.State.EMPTY).serialize(dev.awaken.living.pulse.Rumours.State.CODEC.fieldOf("rumours"))

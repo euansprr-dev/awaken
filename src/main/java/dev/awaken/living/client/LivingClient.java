@@ -68,6 +68,7 @@ public final class LivingClient {
         return DreadFx.land();
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static void init(IEventBus modBus) {
         LivingClientConfig.register();
         PulseSound.init();
@@ -85,6 +86,15 @@ public final class LivingClient {
             return out;
         });
         modBus.addListener(RegisterGuiLayersEvent.class, LivingHud::register);
+        // a quarry's carcass lies on its side as a creature does at the end of its fall, without the red of the hurt (SPEC §41.4)
+        modBus.addListener(net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent.class, e ->
+                e.registerEntityModifier((Class) net.minecraft.client.renderer.entity.LivingEntityRenderer.class, (entity, state) -> {
+                    if (entity instanceof net.minecraft.world.entity.LivingEntity le && dev.awaken.living.hunt.Carcass.is(le)
+                            && state instanceof net.minecraft.client.renderer.entity.state.LivingEntityRenderState s) {
+                        s.deathTime = 20F;
+                        s.hasRedOverlay = false;
+                    }
+                }));
         FormLayers.init(modBus);
         dev.awaken.living.client.forms.FormBodies.init(modBus);
         modBus.addListener(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers.class,

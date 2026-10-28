@@ -9618,3 +9618,47 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
   `wild_tracking` (crouching reads, two reads send the motes to the next sign, a few more to the herd, its bed on the Atlas),
   `wild_pack_hunt` (the kill leaves bones naming the prey). **Command**: `/awaken wild signs` lists the signs within 48 blocks
   and your trail.
+
+### 41.4 The hunt (Stage 4)
+- **Quarries** (`living.hunt.Quarry`): a ledger herd's or pack's alpha (decision 6) and the named beasts (`CreatureTag` BEAST).
+  The Creature Kit's beasts join once one passes Euan's bar.
+- **Parts** by body plan (share = the part of the quarry's health it takes to break):
+  - horned (cow, goat, sheep, mossback, crag ram): horns (head, 15%, a crag horn), hide (body, 30%, the land tier's hide), tail
+    (rear, 10%, two string); frost stag the same with antlers (an antler tine);
+  - tusked (pig): tusks (head, 15%, a briar tusk), bristled back (body, 30%, hide);
+  - maned (horse, donkey): mane (head, 12%, three string), hide, tail;
+  - packs (wolf, gloomstalker, wisp hound, canopy prowler, thornling): fangs (head, 15%, three bones), pelt (body, 30%, hide), tail
+    (rear, 12%);
+  - beasts and the rest: head (15%, the land tier's hunter core), back plates (30%, hide), tail (12%, core), claws (legs, 12%,
+    three bones).
+  An item that doesn't exist falls back to a bone; "hide" and "core" draw from `hunter_hide_<tier>` / `hunter_core_<tier>` by the
+  land's rank, so the land still owns the hunt's parts (§21.10).
+- **Where a blow lands**: an arrow's position, else the striker's look into the body's box; low (under 30% of its height) the
+  legs, the front top the head, the back end the rear, the rest the body (a plan without legs gives them to the body).
+  Damage counts toward that zone's part (`LivingDamageEvent.Pre`). **Break**: the part drops where it was (with a burst of its
+  pieces), a crack and a heavy thud, the quarry stops, reels away from the blow and is slowed for 2 s; "You broke its horns!"
+  to everyone within 32. Each part breaks once.
+- **Weak spot** by plan (horned and antlered: the flank; tusked: the haunch; maned: the neck; packs: the head; beasts: the
+  legs): a hunter who has studied the kind to level 2 hits it 25% harder there, and the trail tells them where when it finds
+  the quarry ("Aim for the flank: that's where they're weakest.").
+- **The limp**: at a third of its health a herd's alpha stops fighting, is slowed and walks to tonight's bed (its herd's
+  brain leaves it be, `Ledger.LIMPING`), once a fight; there it rests and mends a point every 2 s. Hit again, it rises and
+  fights. A pack's alpha retreats to its den with its pack (§41.2). Every quarry under a third of its health **bleeds**: a
+  blood sign every 3 blocks it moves (dark red drops, seen three in-game hours), read like any sign and part of its herd's trail
+  ("Blood: the wounded aurochs went north-east, only minutes ago."). It stops bleeding back over half its health.
+- **The body** (`living.hunt.Carcass`): when a quarry someone hurt dies, its fall plays out, then a still copy (same kind, size,
+  age and colour; no AI, invulnerable, silent; attachment `awaken:carcass` = the game time it goes, synced so the client lays it
+  on its side as at the end of a fall, without the red) lies there for a minute. Every hunter who hurt it carves it three times
+  (use it): an alpha's first carve is always the land's hide, then hide 40%, its first part 25%, meat 25% (beef, pork, mutton;
+  leather for goats and horses; bone for the rest), two string 10%. Someone who didn't fight it can't. Each hunter studies the
+  kind for ten research. When every hunter has carved, or the minute is up, it goes in a puff and its bones stay as a sign
+  ("Bones: a hunter carved an aurochs here..."). The game's own drops still fall. A body loaded after its minute is gone; one
+  loaded within it can be carved by anyone (who fought it isn't saved).
+- **Saved**: `awaken:quarry` on the quarry (schemaVersion 1: damage per part, parts broken, whether it limped, its hunters).
+- **Not yet**: a broken part vanishing from the body (form bodies draw from the hero kit, which has no part names to hide; today
+  a break is the burst, the stagger and the drop), the carve's own first-person hand animation (the arm swings), an alpha heart,
+  hunt trophies for the Trophy Hall (boss-only today), the Journal's hunt line and Trails' hunt steps, research on the band's
+  plate. They come with the next pass.
+- **Tests**: `wild_hunt` (zones on the body; a tenth on the head doesn't break the horns, a sixth does: they drop, it staggers;
+  at a third it limps and bleeds its herd's trail toward its bed; its body lies still, a stranger can't carve, three carves,
+  then it's gone and its bones stay).

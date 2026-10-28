@@ -96,7 +96,7 @@ final class SpoorFx {
 
     /**
      * Each piece is {x, y, z, yaw (radians), shape, size}: shapes 0 a hoof, 1 a paw, 2 a dropping, 3 a bone, 4 a skull,
-     * 5 the bed's flattened oval, 6 the kill's stain. Every piece sits on the ground under it; one with none in reach is left out.
+     * 5 the bed's flattened oval, 6 the kill's stain, 7 a drop of blood. Every piece sits on the ground under it; one with none in reach is left out.
      */
     private static void lay(ClientLevel level, Sign s) {
         LivingNet.SpoorMark m = s.m;
@@ -126,6 +126,12 @@ final class SpoorFx {
                 for (int i = 0; i < lumps; i++) {
                     double d = r.nextDouble() * 1.4, t = r.nextDouble() * Math.PI * 2;
                     piece(level, s, m.x() + Math.cos(t) * d, m.y(), m.z() + Math.sin(t) * d, r.nextDouble() * Math.PI, 2, 0.8 + r.nextDouble() * 0.5);
+                }
+            }
+            case 3 -> {
+                for (int i = 0; i < 3 + r.nextInt(3); i++) {
+                    double along = (r.nextDouble() - 0.5) * 1.6, side = (r.nextDouble() - 0.5) * 0.7;
+                    piece(level, s, m.x() + fx * along + sx * side, m.y(), m.z() + fz * along + sz * side, yaw + (r.nextDouble() - 0.5) * 0.6, 7, 0.7 + r.nextDouble() * 0.6);
                 }
             }
             default -> {
@@ -225,7 +231,7 @@ final class SpoorFx {
     /** How much of a sign is left to see: 1 fresh, 0 gone (prints over their life; droppings and bones hold, then fade). */
     private static float fade(Sign s, long now, boolean tracks) {
         int kind = s.m.kind();
-        float life = Spoor.life(Spoor.Kind.values()[Math.min(kind, 2)], tracks);
+        float life = Spoor.life(Spoor.Kind.values()[Math.min(kind, 3)], tracks);
         float a = 1 - s.age(now) / life;
         return kind == 0 ? Mth.clamp(a, 0, 1) : Mth.clamp(a * 3, 0, 1);
     }
@@ -250,6 +256,11 @@ final class SpoorFx {
                     case 2 -> box(vc, x, y, z, fx, fz, sx, sz, 0.07 * k, 0.06 * k, 0.07 * k, argb(0.95F * f, 0x4A3A22), argb(0.95F * f, 0x352818));
                     case 3 -> box(vc, x, y, z, fx, fz, sx, sz, 0.32 * k, 0.035, 0.05, argb(f, 0xE2D9C2), argb(f, 0xB9AE95));
                     case 4 -> box(vc, x, y, z, fx, fz, sx, sz, 0.12, 0.1, 0.16, argb(f, 0xE6DDC6), argb(f, 0xBCB199));
+                    case 7 -> {
+                        // a drop of blood: dark red, a smear of it along the way the wounded went
+                        oval(vc, x, y - 0.003, z, fx, fz, sx, sz, 0.14 * k, 0.09 * k, argb(0.85F * f, 0x5A0C08));
+                        flat(vc, x + fx * 0.12 * k, y, z + fz * 0.12 * k, fx, fz, sx, sz, 0.05 * k, 0.02 * k, argb(0.8F * f, 0x6E1410));
+                    }
                     case 5 -> oval(vc, x, y - 0.006, z, fx, fz, sx, sz, 1.0 * k, 0.65 * k, argb(0.34F * f, 0xA49C5A));
                     default -> oval(vc, x, y - 0.006, z, fx, fz, sx, sz, 0.95 * k, 0.7 * k, argb(0.55F * f, 0x3C1610));
                 }

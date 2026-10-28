@@ -154,6 +154,14 @@ public final class Tracking {
         long day = PlayDays.current(level.getServer());
         if (m.kind() == Spoor.Kind.DUNG) s = s.find(new HuntState.Found(HuntState.Found.BED, (int) m.x(), (int) m.z(), m.species(), day));
         if (m.kind() == Spoor.Kind.KILL) s = s.find(new HuntState.Found(HuntState.Found.KILL, (int) m.x(), (int) m.z(), m.species(), day));
+        if (m.pop() < 0) {
+            // a named beast's blood or a hunter's kill: read, studied, no trail of the ledger's to follow
+            p.setData(LivingContent.HUNT, s);
+            TipHooks.done(p, TIP);
+            Crafts.gain(p, Craft.HUNTING, READ_XP, 0);
+            p.sendSystemMessage(Component.literal(describe(m, studied, now)));
+            return;
+        }
         if (h.pop != m.pop()) {
             h.pop = m.pop();
             h.species = m.species();
@@ -173,7 +181,10 @@ public final class Tracking {
         level.playSound(null, m.x(), m.y(), m.z(), SoundEvents.BRUSH_GENERIC, SoundSource.PLAYERS, 0.5F, 0.8F);
         String line = describe(m, studied, now);
         if (h.stage == 2 && was < 2) line += " Your band has the scent now: follow the amber motes to the next sign.";
-        else if (h.stage == 3 && was < 3) line += " Your band knows where they are now: the motes lead straight to them.";
+        else if (h.stage == 3 && was < 3) {
+            line += " Your band knows where they are now: the motes lead straight to them.";
+            if (s.level(m.species()) >= 2) line += " Aim for " + Quarry.plan(m.species()).weakName() + ": that's where they're weakest.";
+        }
         if (s.level(m.species()) > studied) line += " You know " + Herds.name(m.species(), true) + " better now (" + studyName(s.level(m.species())) + ").";
         p.sendSystemMessage(Component.literal(line));
         update(level, p);
@@ -216,7 +227,9 @@ public final class Tracking {
             }
             case DUNG -> "Droppings and flattened grass: " + (studied == 0 ? "a herd" : count(m.count(), studied) + " " + many)
                     + " bedded down here, " + when + ".";
-            case KILL -> "Bones and blood: " + (studied == 0 ? "a pack" : many) + " killed " + (m.prey().isEmpty() ? "something"
+            case BLOOD -> "Blood: the wounded " + (studied == 0 ? "beast" : one) + " went " + compass(m.yaw()) + ", " + when + ".";
+            case KILL -> m.species().equals(Carcass.HUNTER) ? "Bones: a hunter carved " + (m.prey().isEmpty() ? "something" : "a " + Herds.name(m.prey(), false)) + " here, " + when + "."
+                    : "Bones and blood: " + (studied == 0 ? "a pack" : many) + " killed " + (m.prey().isEmpty() ? "something"
                     : "a " + Herds.name(m.prey(), false)) + " here, " + when + ".";
         };
     }

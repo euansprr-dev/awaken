@@ -231,7 +231,7 @@ final class HerdBrain implements Ledger.Brain {
         while (it.hasNext()) {
             Ripple r = it.next();
             if (r.at > now) continue;
-            if (!(level.getEntity(r.id) instanceof PathfinderMob m) || !m.isAlive() || m.getTarget() != null) {
+            if (!(level.getEntity(r.id) instanceof PathfinderMob m) || !m.isAlive() || m.getTarget() != null || m.entityTags().contains(Ledger.LIMPING)) {
                 it.remove();
                 continue;
             }
@@ -245,7 +245,7 @@ final class HerdBrain implements Ledger.Brain {
     private void runOn(Ledger l, ServerLevel level, List<PathfinderMob> herd) {
         for (PathfinderMob m : herd) {
             double[] t = runTo.get(m.getUUID());
-            if (t == null || !m.getNavigation().isDone() || m.getTarget() != null) continue;
+            if (t == null || !m.getNavigation().isDone() || m.getTarget() != null || m.entityTags().contains(Ledger.LIMPING)) continue;
             if (Math.hypot(t[0] - m.getX(), t[1] - m.getZ()) < 3) {
                 runTo.remove(m.getUUID());
                 continue;
@@ -287,7 +287,7 @@ final class HerdBrain implements Ledger.Brain {
         };
         for (int i = 0; i < n; i++) {
             PathfinderMob m = herd.get(i);
-            if (m.getTarget() != null) continue;
+            if (m.getTarget() != null || m.entityTags().contains(Ledger.LIMPING)) continue;
             if (mood == Mood.ALERT) m.getLookControl().setLookAt(threatX, m.getEyeY(), threatZ);
             if (Math.hypot(m.getX() - cx, m.getZ() - cz) <= reach * STRAY || !m.getNavigation().isDone()) continue;
             double rr = reach * 0.6 * Math.sqrt((i + 0.5) / n), a = i * 2.39996;

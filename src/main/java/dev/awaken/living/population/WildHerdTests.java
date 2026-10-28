@@ -28,6 +28,7 @@ public final class WildHerdTests {
         AwakenTests.registerIsolated("wild_herd_bench", 400, WildHerdTests::bench);
         AwakenTests.registerIsolated("wild_spoor", 100, WildHerdTests::spoor);
         AwakenTests.registerIsolated("wild_tracking", 100, WildHerdTests::tracking);
+        AwakenTests.registerIsolated("wild_hunt", 100, WildHerdTests::hunt);
     }
 
     /** Sizes by band, old saves loading as they were, and a cell made in the wild holding herds and a pack. */
@@ -397,5 +398,72 @@ public final class WildHerdTests {
         Ledger.Pop p = new Ledger.Pop(l.nextId++, "herd", "minecraft:cow", x, z, List.of(x - 8, z - 4, x + 8, z, x, z + 8), n, n, 10, 43L, -1, 0.6F, false);
         l.add(new Ledger.Cell(Ledger.key(Math.floorDiv(x, Ledger.CELL), Math.floorDiv(z, Ledger.CELL)), new ArrayList<>(List.of(p))));
         return p;
+    }
+
+    /**
+     * The hunt (SPEC §41.4): where blows land on a body; enough on the head breaks the horns (they drop, it staggers); at a
+     * third of its health a herd's alpha limps off bleeding; its body lies on its side for its hunters to carve, three each.
+     */
+    private static void hunt(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos c = field(h, 24);
+        Ledger l = new Ledger();
+        Ledger.Pop pop = new Ledger.Pop(l.nextId++, "herd", "minecraft:cow", c.getX(), c.getZ(), List.of(c.getX() - 20, c.getZ(), c.getX() - 20, c.getZ(),
+                c.getX() - 20, c.getZ()), 3, 3, 10, 44L, -1, 0.9F, true);
+        l.add(new Ledger.Cell(Ledger.key(-91, -91), new ArrayList<>(List.of(pop))));
+        h.assertTrue(l.materialize(level, pop, new double[]{c.getX(), c.getZ()}, 10) == 3, "three cows");
+        PathfinderMob bull = l.living(level, pop.id).getFirst();
+        var tag = dev.awaken.core.api.CreatureTag.of(bull);
+        bull.setData(dev.awaken.core.api.CoreApi.CREATURE_TAG.get(), new dev.awaken.core.api.CreatureTag(tag.level(), dev.awaken.core.api.CreatureTag.Kind.NEUTRAL, true, tag.title()));
+        h.assertTrue(dev.awaken.living.hunt.Quarry.is(bull), "the herd's alpha is a quarry");
+        ServerPlayer p = h.makeMockServerPlayerInLevel(), other = h.makeMockServerPlayerInLevel();
+        p.snapTo(c.getX() - 3, c.getY(), c.getZ());
+        dev.awaken.living.hunt.Tracking.useLedger(l);
+        AwakenTests.onEnd(h, () -> {
+            dev.awaken.living.hunt.Tracking.useLedger(null);
+            level.getServer().getPlayerList().remove(p);
+            level.getServer().getPlayerList().remove(other);
+            l.releaseAll(level);
+        });
+
+        bull.setYBodyRot(0); // facing south (+z)
+        double x = bull.getX(), y = bull.getY(), z = bull.getZ(), hgt = bull.getBbHeight(), half = bull.getBbWidth() / 2;
+        h.assertTrue(dev.awaken.living.hunt.Quarry.zone(bull, new net.minecraft.world.phys.Vec3(x, y + hgt * 0.9, z + half)) == dev.awaken.living.hunt.Quarry.Zone.HEAD, "the front top is the head");
+        h.assertTrue(dev.awaken.living.hunt.Quarry.zone(bull, new net.minecraft.world.phys.Vec3(x, y + hgt * 0.6, z - half)) == dev.awaken.living.hunt.Quarry.Zone.REAR, "the back end the rear");
+        h.assertTrue(dev.awaken.living.hunt.Quarry.zone(bull, new net.minecraft.world.phys.Vec3(x, y + hgt * 0.1, z)) == dev.awaken.living.hunt.Quarry.Zone.LEGS, "low the legs");
+
+        float max = bull.getMaxHealth();
+        dev.awaken.living.hunt.Quarry.hit(level, bull, dev.awaken.living.hunt.Quarry.Zone.HEAD, max * 0.1F, p);
+        h.assertTrue(dev.awaken.living.hunt.Quarry.state(bull).broken.isEmpty(), "a tenth isn't enough to break the horns");
+        dev.awaken.living.hunt.Quarry.hit(level, bull, dev.awaken.living.hunt.Quarry.Zone.HEAD, max * 0.06F, p);
+        h.assertTrue(dev.awaken.living.hunt.Quarry.state(bull).broken.contains("horns"), "the horns break");
+        h.assertTrue(bull.hasEffect(net.minecraft.world.effect.MobEffects.SLOWNESS), "it staggers");
+        h.assertTrue(!level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, bull.getBoundingBox().inflate(3)).isEmpty(), "and the horn drops");
+        h.assertTrue(dev.awaken.living.hunt.Quarry.state(bull).hunters.contains(p.getUUID()), "who struck it is its hunter");
+
+        bull.setHealth(max * 0.3F);
+        dev.awaken.living.hunt.Quarry.wounded(level, bull);
+        h.assertTrue(bull.entityTags().contains(Ledger.LIMPING) && dev.awaken.living.hunt.Quarry.state(bull).limped, "at a third it limps off");
+        bull.snapTo(bull.getX() + 4, bull.getY(), bull.getZ());
+        bull.setOnGround(true);
+        dev.awaken.living.hunt.Quarry.step(level);
+        boolean blood = false;
+        for (Spoor.Mark m : Spoor.of(level).near(bull.getX(), bull.getZ(), 2)) if (m.kind() == Spoor.Kind.BLOOD && m.pop() == pop.id) blood = true;
+        h.assertTrue(blood, "and bleeds a trail you can read as its herd's");
+        h.assertTrue(!bull.getNavigation().isDone(), "toward its bed");
+
+        var body = dev.awaken.living.hunt.Carcass.lay(level, bull, java.util.Set.of(p.getUUID()));
+        h.assertTrue(body != null && dev.awaken.living.hunt.Carcass.is(body) && body.isNoAi(), "its body lies still");
+        h.assertTrue(!dev.awaken.living.hunt.Carcass.carve(level, other, body, true), "one who didn't fight it can't carve it");
+        int before = p.getInventory().getContainerSize();
+        for (int i = 0; i < 3; i++) h.assertTrue(dev.awaken.living.hunt.Carcass.carve(level, p, body, true), "carve " + (i + 1));
+        int items = 0;
+        for (int i = 0; i < before; i++) if (!p.getInventory().getItem(i).isEmpty()) items++;
+        h.assertTrue(items >= 1, "the carves are in the hunter's pack");
+        h.assertTrue(body.isRemoved(), "carved out, the body is gone");
+        boolean bones = false;
+        for (Spoor.Mark m : Spoor.of(level).near(body.getX(), body.getZ(), 1)) if (m.kind() == Spoor.Kind.KILL && m.species().equals(dev.awaken.living.hunt.Carcass.HUNTER)) bones = true;
+        h.assertTrue(bones, "its bones stay as a sign");
+        h.succeed();
     }
 }

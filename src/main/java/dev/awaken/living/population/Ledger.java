@@ -49,6 +49,8 @@ import java.util.UUID;
 public final class Ledger extends SavedData {
     static final int SCHEMA = 2, CELL = 512, NEAR = 96, FAR = 128, PER_PLAYER = 40;
     public static final String TAG = "awaken_ledger";
+    /** A wounded quarry walking to its bed (SPEC §41.4): its herd's brain leaves it be. */
+    public static final String LIMPING = "awaken_limping";
 
     /** Herds, their hunters, the flyers' roosts, by fauna land. */
     static final Map<String, String> HERDS = Map.of("greenwild", "mossback", "frostwild", "frost_stag", "sunscorch", "dune_ray",
@@ -507,6 +509,12 @@ public final class Ledger extends SavedData {
             boolean pack = by != null && by.entityTags().contains(TAG);
             h.alarm(l, level, fx, fz, pack ? HerdBrain.Cause.PACK : HerdBrain.Cause.HIT, level.getServer().getTickCount());
         }
+    }
+
+    /** The population a ledger body belongs to, or null. */
+    public @Nullable Pop popOfBody(Entity e) {
+        int id = popOf(e);
+        return id < 0 ? null : byId.get(id);
     }
 
     /** The population a body belongs to, or -1. */
