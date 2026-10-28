@@ -38,12 +38,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase spirit_palm 1
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -62,12 +62,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase spirit_palm 3
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -86,12 +86,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase spirit_palm 5
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -110,12 +110,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase mend 1
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -134,12 +134,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase mend 3
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -158,12 +158,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase mend 5
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -182,12 +182,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase third_eye 1
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -206,12 +206,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase third_eye 3
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -230,12 +230,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase third_eye 5
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -254,12 +254,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase cord_lash 1
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -278,12 +278,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase cord_lash 3
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -302,12 +302,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase cord_lash 5
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -326,12 +326,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase bulwark 1
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -350,12 +350,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase bulwark 3
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -374,12 +374,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase bulwark 5
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -398,12 +398,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase hundred_palms 1
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -422,12 +422,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase hundred_palms 3
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -446,12 +446,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase hundred_palms 5
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -470,12 +470,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase void_maw 1
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -494,12 +494,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase void_maw 3
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -518,12 +518,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase void_maw 5
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -542,12 +542,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase waking_dream 1
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -566,12 +566,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase waking_dream 3
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -590,12 +590,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase waking_dream 5
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -614,12 +614,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase storm_call 1
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -638,12 +638,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase storm_call 3
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -662,12 +662,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase storm_call 5
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -686,12 +686,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase ember_step 1
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -710,12 +710,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase ember_step 3
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -734,12 +734,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase ember_step 5
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -758,12 +758,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase frost_nova 1
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -782,12 +782,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase frost_nova 3
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -806,12 +806,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase frost_nova 5
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -830,12 +830,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase ghost_step 1
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -854,12 +854,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase ghost_step 3
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -878,12 +878,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase ghost_step 5
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -902,12 +902,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase twin_strike 1
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -926,12 +926,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase twin_strike 3
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -950,12 +950,12 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase twin_strike 5
 camera front
-look 0 4
+look 0 10
 wait 14
 cmd tick rate 5
 wait 2
@@ -974,14 +974,14 @@ cmd kill @e[type=minecraft:husk]
 cmd fill -14 200 -6 14 214 21 minecraft:air
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd tp @s 0.5 200 0.5 0 0
-cmd summon minecraft:husk 1.8 200 1.4 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
-cmd summon minecraft:husk -1.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 1.2 200 1.9 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -0.6 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd summon minecraft:husk 2.5 200 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
 cmd awaken admin power showcase spirit_palm 5
 cmd awaken admin power showcase hundred_palms 5
 cmd awaken admin power showcase ember_step 5
 camera back
-look 0 4
+look 0 10
 hud on
 wait 20
 shot pl_hud_c

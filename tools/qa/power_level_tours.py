@@ -31,7 +31,9 @@ LEVELS = (1, 3, 5)
 # what a power needs standing before it casts: a construct to throw, a decoy to swap with
 BEFORE = {"collapse": "rampart", "echo_swap": "decoy"}
 HUSK = '{NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}'
-HUSKS = [(1.8, 1.4), (-1.5, 7.5), (2.5, 11.5)]  # the first in melee reach at your side, out of the front camera's line
+# the first in melee reach at your side (out of the front camera's line), the second where your aim meets the floor
+HUSKS = [(1.2, 1.9), (-0.6, 7.5), (2.5, 11.5)]
+AIM = 10  # degrees down: a placed power (a well, a maw, a turret) lands on the floor by the husks, not on the far wall
 
 
 def catalog():
@@ -82,14 +84,14 @@ def segment(pid, name, mode, max_ticks, level, release, passive=False):
     front, back = timing(pid, mode, max_ticks, release)
     lines = [f"# ---- {name} {level}"] + arena()
     if passive:  # a passive's look is always on: stand in it
-        return lines + [f"cmd awaken admin power showcase {pid} {level}", "camera front", "look 0 4", "wait 40",
+        return lines + [f"cmd awaken admin power showcase {pid} {level}", "camera front", f"look 0 {AIM}", "wait 40",
                         f"shotnow pl_{pid}_{level}_front", "camera back", "wait 8", f"shotnow pl_{pid}_{level}_back", ""]
     if pid in BEFORE:
         lines += [f"cmd awaken admin power showcase {BEFORE[pid]} 1", f"cmd awaken admin power cast {BEFORE[pid]}", "wait 12"]
     lines += [
         f"cmd awaken admin power showcase {pid} {level}",
         "camera front",
-        "look 0 4",
+        f"look 0 {AIM}",
         "wait 14",
         "cmd tick rate 5",
         "wait 2",
@@ -166,7 +168,7 @@ def hud_shot(group, families, powers):
             continue
         seen.add(slot)
         lines.append(f"cmd awaken admin power showcase {pid} 5")
-    return lines + ["camera back", "look 0 4", "hud on", "wait 20", f"shot pl_hud_{group}", "hud off", ""]
+    return lines + ["camera back", f"look 0 {AIM}", "hud on", "wait 20", f"shot pl_hud_{group}", "hud off", ""]
 
 
 def main():
