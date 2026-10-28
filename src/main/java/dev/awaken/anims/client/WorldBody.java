@@ -131,7 +131,10 @@ final class WorldBody {
         RenderType type = RenderTypes.entityTranslucent(mc.player.getSkin().body().texturePath());
         Vec3 cam = e.getLevelRenderState().cameraRenderState.pos;
         POS.set(Mth.floor(cam.x), Mth.floor(cam.y), Mth.floor(cam.z));
-        int light = LightCoordsUtil.pack(mc.level.getBrightness(LightLayer.BLOCK, POS), mc.level.getBrightness(LightLayer.SKY, POS));
+        // your own render state's light where the game gathered it (a torch in your hand lights your feet too, SPEC §28.3)
+        var avatar = e.getLevelRenderState().playerRenderState.avatarRenderState;
+        int light = avatar != null ? avatar.lightCoords
+                : LightCoordsUtil.pack(mc.level.getBrightness(LightLayer.BLOCK, POS), mc.level.getBrightness(LightLayer.SKY, POS));
         PoseStack ps = e.getPoseStack();
         SubmitNodeCollector out = e.getSubmitNodeCollector();
         for (FirstPerson.Limb l : FirstPerson.Limb.values()) {

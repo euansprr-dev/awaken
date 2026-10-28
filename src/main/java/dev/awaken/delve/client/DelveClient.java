@@ -33,6 +33,8 @@ public final class DelveClient {
         SenseClient.init(modBus);
         modBus.addListener(RegisterParticleProvidersEvent.class, DelveParticles::register);
         modBus.addListener(RegisterRenderPipelinesEvent.class, DelveRender::onRegister);
+        // held light reaches what stands in it: dropped items, mobs, players, your own hands (SPEC §28.3)
+        modBus.addListener(net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent.class, TorchGlow::modifiers);
         // last on our bus, so a block another mod claimed keeps its own particles
         modBus.addListener(EventPriority.LOWEST, false, RegisterClientExtensionsEvent.class, StrikeFx::register);
         DelveClientConfig.register(modBus);

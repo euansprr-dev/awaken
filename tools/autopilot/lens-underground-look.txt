@@ -1,0 +1,99 @@
+# Lens underground (Euan 2026-10-29, mining: "Shaders whole mining are completely broken, my tool is black, shadows are
+# broken, and when I break block it stays black for a while"). A dug room deep in stone (a standing block, a pillar, a
+# shelf, a notch in the ceiling, a sealed pocket behind the west wall), Bright gamma as Euan plays, Lens Cinematic:
+#   1. no torch, an iron pickaxe in hand: the game's own frame (lensdebug 1), then Lens
+#   2. a torch in the other hand: every face of the ledges lit, the hand and the pick lit
+#   3. the wall into the pocket broken (a dropped block in the light): 2 ticks after the break, then settled
+#   4. the surface at noon, the same hands, to show the open land unchanged
+# A look tour (CI is fine):
+#   tools/tour-ci.sh tools/autopilot/lens-underground-look.txt 900 PACK=perf,feel LENS=cinematic
+world lensunder creative 20261029
+waitworld
+wait 40
+# the new-world sky shot holds the camera on the sky until it is skipped
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule awaken:living_herds false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+cmd time set 6000
+# ---- the room: 16x17x16 of stone in one chunk column, a 7x3x7 room inside it (floor y 10), its features, a pocket
+# behind the west wall. The shell is filled twice: a fill that lands before the chunk is loaded fails ("not loaded")
+cmd tp @s 600 120 600
+wait 160
+cmd fill 592 3 592 607 19 607 minecraft:stone
+wait 60
+cmd fill 592 3 592 607 19 607 minecraft:stone
+wait 20
+cmd fill 597 11 597 603 13 603 minecraft:air
+cmd setblock 599 11 598 minecraft:stone
+cmd fill 598 11 601 598 12 601 minecraft:stone
+cmd fill 597 11 602 599 11 603 minecraft:stone
+cmd fill 599 14 600 600 15 601 minecraft:air
+cmd fill 594 11 599 595 13 601 minecraft:air
+cmd kill @e[type=minecraft:item]
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+cmd item replace entity @s weapon.offhand with minecraft:air
+cmd tp @s 601.5 11 601.5 90 12
+wait 60
+camera first
+wait 40
+look 90 12
+wait 40
+# ---- 1. no torch
+lensdebug 1
+shot ug_dark_game
+lensdebug 0
+wait 30
+shot ug_dark
+# ---- 2. a torch in the other hand
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 60
+shot ug_torch
+look 60 30
+wait 30
+shot ug_torch_ledges
+look 90 12
+wait 30
+lensdebug 1
+shot ug_torch_game
+lensdebug 0
+wait 30
+# ---- 3. the wall into the pocket broken (it drops its block in the light)
+cmd setblock 596 12 600 minecraft:air destroy
+wait 2
+shotnow ug_break_now
+wait 4
+shotnow ug_break_quarter
+wait 30
+shot ug_break_settled
+# ---- the held tool, close: looking down at the floor with both hands up
+look 90 55
+wait 30
+shot ug_tool
+# ---- 4. the surface at noon, the same hands
+# one fixed spot (spreadplayers is random), so before and after shots compare pixel for pixel
+cmd tp @s 640.5 200 640.5
+wait 160
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
+wait 160
+look 90 15
+wait 40
+shot surf_noon
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 20
+shot surf_noon_pick
+quit
