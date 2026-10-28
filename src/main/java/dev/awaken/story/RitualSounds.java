@@ -8,7 +8,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * The Ritual of the Bell's sounds (synthesised by tools/art/specs/ritual_sounds.py into sounds/ritual/, events and
+ * The Ritual of the Bell's sounds (prepared by tools/art/specs/ritual_sounds.py into sounds/ritual/, events and
  * subtitles in src/main/merge/story/). The client plays them from the ritual's cues; nothing here plays on its own.
  */
 public final class RitualSounds {
@@ -38,6 +38,13 @@ public final class RitualSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> HEARTBEAT = sound("heartbeat");
     public static final DeferredHolder<SoundEvent, SoundEvent> TEAR = sound("tear");
     public static final DeferredHolder<SoundEvent, SoundEvent> VOID = sound("void");
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> FOOTSTEP1 = sound("footstep1");
+    public static final DeferredHolder<SoundEvent, SoundEvent> FOOTSTEP2 = sound("footstep2");
+    public static final DeferredHolder<SoundEvent, SoundEvent> FOOTSTEP3 = sound("footstep3");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GAZE_TRAVEL = sound("gaze_travel");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GAZE_IMPACT = sound("gaze_impact");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HALL = sound("hall");
 
     static void init(IEventBus modBus) {
         SOUNDS.register(modBus);

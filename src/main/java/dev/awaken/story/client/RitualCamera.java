@@ -14,7 +14,7 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
 final class RitualCamera {
     private RitualCamera() {}
 
-    private static float shake, shakeDecay;
+    private static final dev.awaken.story.RitualAudioRules.Shake IMPULSE = new dev.awaken.story.RitualAudioRules.Shake();
     private static float fovPunch, fovDecay;
     private static float kickYaw, kickPitch;
     /** The pull: how strongly the view is drawn to {@link #target} (eased each tick toward {@link #pullWant}). */
@@ -23,12 +23,14 @@ final class RitualCamera {
     private static float zoom, zoomO, zoomWant;
 
     static void reset() {
-        shake = fovPunch = kickYaw = kickPitch = pull = pullO = pullWant = zoom = zoomO = zoomWant = 0;
+        IMPULSE.clear();
+        fovPunch = kickYaw = kickPitch = pull = pullO = pullWant = zoom = zoomO = zoomWant = 0;
     }
 
     static boolean shakeOn() {
+        if (dev.awaken.core.api.FirstPerson.reducedMotion.getAsBoolean()) return false;
         try {
-            return AwakenConfig.Client.CAMERA_SHAKE.get();
+            return dev.awaken.story.RitualAudioRules.motionEnabled(AwakenConfig.Client.CAMERA_SHAKE.get(), false);
         } catch (RuntimeException e) {
             return true;
         }
@@ -36,10 +38,7 @@ final class RitualCamera {
 
     static void shake(float deg, int ticks) {
         if (!shakeOn()) return;
-        if (deg > shake) {
-            shake = deg;
-            shakeDecay = deg / Math.max(1, ticks);
-        }
+        IMPULSE.request(deg * RitualAudioConfig.motion(), ticks);
     }
 
     /** A shake that falls off with distance from where it happened. */
@@ -47,13 +46,13 @@ final class RitualCamera {
         var p = Minecraft.getInstance().player;
         if (p == null) return;
         double d = p.position().distanceTo(at);
-        if (d < range) shake(deg * (float) (1 - d / range), ticks);
+        if (d < range) shake(deg * dev.awaken.story.RitualAudioRules.distance(d, range), ticks);
     }
 
     static void fovPunch(float amount, int ticks) {
         if (!shakeOn()) return;
-        fovPunch = amount;
-        fovDecay = Math.abs(amount) / Math.max(1, ticks);
+        fovPunch = amount * RitualAudioConfig.motion();
+        fovDecay = Math.abs(fovPunch) / Math.max(1, ticks);
     }
 
     /** The view jerks away from a blow that came from {@code from}. */
@@ -63,12 +62,13 @@ final class RitualCamera {
         Vec3 d = p.position().subtract(from);
         float yawTo = (float) (Mth.atan2(d.z, d.x) * Mth.RAD_TO_DEG) - 90F;
         float rel = Mth.wrapDegrees(yawTo - p.getYRot());
-        kickYaw += Mth.clamp(rel, -90, 90) / 90F * deg;
-        kickPitch -= deg * 0.5F;
+        kickYaw = Mth.clamp(kickYaw + Mth.clamp(rel, -90, 90) / 90F * deg * RitualAudioConfig.motion(), -3, 3);
+        kickPitch = Mth.clamp(kickPitch - deg * 0.5F * RitualAudioConfig.motion(), -2, 2);
     }
 
     static void tick() {
-        shake = Math.max(0, shake - shakeDecay);
+        if (!shakeOn()) { IMPULSE.clear(); fovPunch = kickYaw = kickPitch = 0; }
+        IMPULSE.tick();
         if (fovPunch > 0) fovPunch = Math.max(0, fovPunch - fovDecay);
         else if (fovPunch < 0) fovPunch = Math.min(0, fovPunch + fovDecay);
         kickYaw *= 0.6F;
@@ -118,7 +118,8 @@ final class RitualCamera {
             e.setYaw(e.getYaw() + Mth.wrapDegrees(yaw - e.getYaw()) * ease);
             e.setPitch(e.getPitch() + (pitch - e.getPitch()) * ease);
         }
-        if (shake > 0.001F || Math.abs(kickYaw) > 0.01F) {
+        float shake = IMPULSE.value();
+        if (shakeOn() && (shake > 0.001F || Math.abs(kickYaw) > 0.01F)) {
             double t = (RitualClient.ticks + pt) * 0.9;
             e.setYaw(e.getYaw() + shake * (float) Math.sin(t * 3.1) * 0.6F + kickYaw);
             e.setPitch(e.getPitch() + shake * (float) Math.sin(t * 4.7 + 1.3) * 0.6F + kickPitch);
