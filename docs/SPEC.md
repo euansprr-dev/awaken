@@ -1257,9 +1257,12 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
 
 Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools/autopilot.sh`):
 - A script names the knobs it needs on the runner in a line `# ci knobs: RD=10` (`tools/tour-ci.sh` puts them before
-  the command line's, and the last of a name wins). roads-perf and roads-perf-quit run at render distance 10 on the
-  runner: at 16, minutes of new land streaming in once the flight no longer froze lost its paravirtual GPU (MoltenVK
-  `kIOGPUCommandBufferCallbackErrorHang`, runs 40731247114 and 40733154266).
+  the command line's, and the last of a name wins).
+- roads-perf doesn't finish on the runner since the flight stopped freezing: a few minutes of new land streaming in
+  loses its paravirtual GPU (MoltenVK `kIOGPUCommandBufferCallbackErrorHang`, a crash) at render distance 16 (runs
+  40731247114, 40733154266) and at 10 too (run 40739715225, while still, waiting for the land to settle), so the
+  render distance isn't the cause. Lens Swift's chain was on in all three. world-depth-w7 lost it once the same way
+  (run 40370286479). roads-perf-quit (the first flight and a quit 30 s in) finishes (run 40735814003).
 - The pilot's `glide` sets the player's velocity every tick, so the edge hold (§28.9) eases it at the edge of the land
   the client has, and the log says so (`[edgehold] held N ticks ...`).
 - Look tours run on GitHub's macOS runners (`.github/workflows/tours.yml`, dispatched by `tools/tour-ci.sh`, decided

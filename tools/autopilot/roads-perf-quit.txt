@@ -3,9 +3,6 @@
 # IntegratedServer.halt task never ran); with the packet cap the stop runs every task still queued ("[packetcap] ran N
 # tasks still queued ..."). A clean quit: the tour ends with no watchdog dump. The edge hold logs "[edgehold] held ...".
 # Run on GitHub: tools/tour-ci.sh tools/autopilot/roads-perf-quit.txt 1800 PACK=perf,world TECTONIC=awakened
-# On the runner at render distance 10: at 16, minutes of new land streaming in lost its paravirtual GPU (runs
-# 40731247114 and 40733154266, once the flight no longer froze).
-# ci knobs: RD=10
 world autopilot_roads_perf creative 26102610
 waitworld
 camera first
