@@ -64,6 +64,7 @@ public final class DelveClient {
             CaveInFx.tick();
             ForkSong.tick();
             PickSong.tick();
+            Motes.tick();
         });
         bus.addListener(SubmitCustomGeometryEvent.class, LampGlow::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, TorchGlow::submit);
@@ -74,6 +75,7 @@ public final class DelveClient {
             CaveInFx.reset();
             ForkSong.reset();
             PickSong.reset();
+            Motes.reset();
             HeavyCharge.reset();
             TorchGlow.reset();
             StrikeFx.reset();

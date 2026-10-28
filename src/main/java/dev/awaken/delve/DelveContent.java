@@ -140,6 +140,8 @@ public final class DelveContent {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> GLINT = PARTICLES.register("delve_glint", () -> new SimpleParticleType(false));
     /** A mote of the Deep drifting off Deepglass. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MOTE = PARTICLES.register("delve_mote", () -> new SimpleParticleType(false));
+    /** Dust in the air your light reaches (SPEC §34.5): the mote's sprite, lit by the world, so it shows only in light. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> LIGHT_MOTE = PARTICLES.register("delve_light_mote", () -> new SimpleParticleType(false));
 
     // ---- sounds (tools/art/specs/audio_delve.py) ------------------------------------------------------------------------
 

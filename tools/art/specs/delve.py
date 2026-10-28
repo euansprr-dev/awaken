@@ -866,6 +866,8 @@ def content():
     # particles
     for name, fn in PARTICLES.items():
         write(os.path.join(ASSETS, "particles", name + ".json"), {"textures": [f"awaken:{name}_{i}" for i in range(len(fn()))]})
+    # dust in your light: the mote's own frames, lit by the world (SPEC §34.5)
+    write(os.path.join(ASSETS, "particles", "delve_light_mote.json"), {"textures": [f"awaken:delve_mote_{i}" for i in range(len(mote_frames()))]})
     recipes()
     tags()
     worldgen()

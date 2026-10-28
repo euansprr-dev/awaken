@@ -8655,3 +8655,13 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   thread on the head's spine) and the stone's parts sheet.
 - **Test** `delve_waking_pick` (one pick per carrier, the stone stays, the pull counted, stone-tier drops, the hum's
   16-block reach).
+
+### 34.5 The air below (P1e: motes built; cave air waits for P3)
+- **Motes in your light** (`delve.client.Motes`, particle `awaken:delve_light_mote`: the mote's frames, lit by the world
+  so it shows only where light falls): underground (`under` ≥ 0.3, not in water), carrying a light in either hand
+  (`HeldLight`, the offhand's when it wins) or wearing the miner's lamp (12, flame), dust hangs in the air within 70% of
+  the light's reach of your eyes, three in four in front of you, only in air; spawned at 30/90 a tick × `under` so about
+  30 live (life 70-110 ticks, size 0.018-0.038, alpha 0.6, a slow wander, barely falling), tinted 35% toward the
+  light's colour from dust grey; half at Decreased particles, none at Minimal.
+- **Cave air in Lens** is not built here: it needs new fields and operations in Lens's composites (the Lens module's
+  files). It comes with P3's band looks, coordinated with the Lens session.
