@@ -378,9 +378,10 @@ final class AscentCommands {
         ServerPlayer p = src.getPlayerOrException();
         if (AscentServer.tiers(p) == 0) grant(src, "all");
         int n = AscentSandbox.build(p);
-        src.sendSuccess(() -> Component.literal("Sandbox: " + n + " giant trees ahead. Hold the rope key (Left Alt) at a trunk or branch "
-                + "to swing, W at the bottom to pump, let go to fly, Space to jump off the rope. Space in the air opens the wings; "
-                + "Space again while gliding takes flight (Ctrl to boost).").withStyle(ChatFormatting.AQUA), false);
+        src.sendSuccess(() -> Component.literal("Sandbox: " + n + " giant trees ahead, and a city street behind the tower. Hold the rope "
+                + "key (Left Alt) in the air to swing: it finds something good to swing from where you're heading, lets go at the top, "
+                + "and keeps swinging while you hold it. Tap it at a ledge to pull yourself up. Space jumps off the rope. Space in the "
+                + "air opens the wings; Space again while gliding takes flight (Ctrl to boost).").withStyle(ChatFormatting.AQUA), false);
         return n;
     }
 }
