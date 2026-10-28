@@ -498,6 +498,12 @@ of `AwakenConfig.Client`.
   dimension, at, kind)`; server `get(ServerPlayer)`, `set(ServerPlayer, Target | null)`, `clear`; client `mine()` (the
   server's last word), `request(Optional<Target>)` (the Atlas asks; empty clears). `ARRIVED` 16, `ARRIVED_UP` 48. The
   signal module installs both sides (`signal.Destination`, payloads `signal_destination`, `signal_set_destination`).
+- `dev.awaken.core.api.Passage` (§28.9, "Arrivals"; 2026-10-29) — Awaken's own teleports wait for their land off the
+  server thread: `go(player, level, x, z, move)` runs `move` at once when every chunk within `EdgeHold.BODY` of (x, z)
+  is loaded at FULL, else puts the `awaken:arrival` ticket on the 3×3 round it and runs `move` once those are made (no
+  join on the server thread), the player in a passage meanwhile; `go(player, TeleportTransition)` (the player's
+  `teleport(t)`); `warm(level, x, z)` (makes the land without moving anyone, for a respawn); `ready(level, x, z)`;
+  `waiting(player)`. `MOST_MS` 60 s. Payload `passage_wait` (server → client: on, off).
 - `dev.awaken.progression.Progression.xpLedger(player)` — XP by `XpSource` and by world-XP source key (§17 telemetry).
   `Progression.onXpGranted(listener)` (every grant after scaling), `Progression.worldXp(player, source, fraction,
   afterBudget)` (a multiplier applied after the budget), `XpBudget.register(source, perTenMinutes)` (§21.3).
@@ -8725,6 +8731,32 @@ for the session on the first failure. Off, both hooks return at once and the gam
 `turbo_packet_cap_floods` floods the GameTest server's own queue with 400 tasks of 1 ms each. They run in order over
 at least 8 ticks, and no tick handles them for longer than the budget plus 3 ms. The drain alone, on a queue of its
 own, keeps to its budget and leaves the rest.
+**Arrivals** (core, `core.api.Passage` and `core.client.PassageClient`, 2026-10-29; the orchestrator: "make Awaken's
+own teleports wait for their land off the server thread"). In run 40741943440 two cold teleports held the server 24 s
+and 51 s in `Entity.teleportSetPosition`, waiting for chunks not made yet: a teleport is a task between ticks, so
+neither the edge hold nor the packet cap covers it. Awaken's own travel goes through one helper, `Passage.go(player,
+level, x, z, move)`:
+- When every chunk within `EdgeHold.BODY` of the arrival is loaded at FULL (the chunks the arrival and the reads
+  round the player's box touch; `getChunkNow`), `move` runs at once and nothing shows.
+- Otherwise it puts the `awaken:arrival` ticket on the 3×3 chunks round the arrival
+  (`addTicketAndLoadWithRadius`; loading, keeps the dimension awake, lets go 15 s after the land is made, as vanilla's
+  portal ticket does) and waits for them with `thenRunAsync` on the server's executor: nothing joins on the server
+  thread, which keeps ticking.
+- The player waits in a passage: the client goes to a deep dusk where a pale line of land draws itself out from the
+  middle, nearly across after a few seconds and breathing, motes settling into it from above and below (brighter where
+  the line has reached), with "The land where you're going is still forming." after 1.6 s. Input is held
+  (`InputLock`, owner `passage`) and paced notices wait. It closes in 0.35 s and lifts over 0.9 s once moved. The world
+  runs on behind it, so it never reads as a frozen frame; nothing hurts the player meanwhile (a kill still does).
+- Once the land is made, `move` runs (the code's own teleport and whatever followed it), and the dusk lifts. Each
+  wait logs `[passage] NAME waited N ms for the land at X Z in DIMENSION`.
+- A newer move replaces an older one. Logging out, dying or respawning (a new player object) drops it. Past 60 s of
+  wall clock (`MOST_MS`; the GameTest server ticks back to back) the move runs anyway, as it would have without the
+  helper, logged `(not made yet: moved anyway)`.
+- `Passage.warm(level, x, z)` makes the land without moving anyone, for a move the game makes itself later.
+Vanilla's `/tp` and other mods' teleports stay as they are: the packet cap and the watch cover them.
+`core_passage_far` sends a mock player 1,200,000 blocks out: the call comes straight back (under 250 ms) with the
+player where they were and in a passage; the move runs only once its land is made (`ready` true inside it, the
+teleport itself under 250 ms), and the passage is over.
 Framings lay only the highroads through a place: the lanes round it would plan the regions about (48 s on the runner).
 Euan's 42 s freeze in a D-rank trial (2026-10-28, build 5cd4d985: "the mobs just stopped moving") was a player coming
 back from another level. Vanilla keeps an entity's supporting block (`mainSupportingBlockPos`) through a teleport to
