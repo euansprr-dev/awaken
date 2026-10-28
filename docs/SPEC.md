@@ -426,7 +426,7 @@ of `AwakenConfig.Client`.
   `Progression.onXpGranted(listener)` (every grant after scaling), `Progression.worldXp(player, source, fraction,
   afterBudget)` (a multiplier applied after the budget), `XpBudget.register(source, perTenMinutes)` (§21.3).
 - `dev.awaken.living.api.Regions` — the region map (§21.2): `levelAt`, `regionAt`, `creatureLevel`, `bandOf`.
-- `dev.awaken.living.api.Wildness` — how wild a place is, separate from danger (§41.1): `land`, `at`, `band`, `bandAt`, `addTamer`, `setCover`, `coverAt`.
+- `dev.awaken.living.api.Wildness` — how wild a place is, separate from danger (§41.1): `land`, `at`, `band`, `bandAt`, `addTamer`, `setCover`, `coverAt`, `setGround`/`ground()` (grazing and trails, §41.2).
 - `dev.awaken.living.api.Quests` — the Wayfarer chains (§21.5): `advance(ServerPlayer, Identifier "awaken:<type>/<target>")`
   (owners report uses and discoveries a step may wait for: `awaken:use/ascent_zip`, `awaken:discover/<key>`; an
   `amount` overload), `talk(ServerPlayer, who)` (another module's person, e.g. "kestrel", "oren": call it first from your
@@ -9573,10 +9573,17 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
   (a wave held back keeps its order); a search is ~0.2 ms on the M4. Bench (`wild_herd_bench`): three herds of 30 and two
   packs of 6 near one player, grazing, then a sprinter runs through and leaves: 0.23-0.29 ms a tick average after warm-up,
   worst tick 3.4 ms (asserted under 0.5 and 10, ×3 on CI; the first stampede knock warms the game's damage code).
-- **Not yet**: grazing lawns, trails and the cover value wait for the plants' API (stage 1a); they land in stage 2's second part.
+- **Grass that lives** (decision 9, stage 2's second part): `Wildness.Ground` (`setGround`, `ground()`; `crop(level, pos)`,
+  `trample(level, pos, strength)` with `LIGHT` 1, `HERD` 2, `STAMPEDE` 3), registered by the module that grows the grass (the
+  ground module's `WildPlants`, one line in its init beside `setCover`); until then nothing changes. A grazing herd's brain takes
+  a mouthful a second (two for eight or more), from a different idle animal each time, half of which crop the grass at its
+  feet, so a pasture becomes a lawn. Drifting or fleeing, up to 8 moving animals a second press their way (HERD), so the routes
+  a herd walks every dawn and dusk become trails; a stampede presses every moving animal every 4 ticks (STAMPEDE); a chasing
+  pack presses lightly (LIGHT). The cover value comes from the plants through `Wildness.setCover` (§41.1).
 - **Tests**: `wild_ledger` (sizes by band, schema 1 loads, a far cell's herds and packs), `wild_herd_senses` (crouched
   downwind is let near, standing is seen, crouched upwind is smelled), `wild_herd_flee` (twenty stampede from a sprinter, 15+
-  blocks away), `wild_pack_hunt` (the nearest straggler, every wolf on it, the flock runs, the kill costs one), `wild_herd_bench`.
+  blocks away), `wild_pack_hunt` (the nearest straggler, every wolf on it, the flock runs, the kill costs one), `wild_herd_bench`,
+  `wild_grass` (grazing crops and presses nothing; a stampede presses at STAMPEDE strength).
 - **Commands**: `/awaken living ledger` shows each population's band, alpha and brain mood.
 
 ### 41.3 Signs and tracking (Stage 3)

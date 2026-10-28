@@ -103,6 +103,36 @@ final class HerdBrain implements Ledger.Brain {
         if (!running() && !(mood == Mood.ALERT && now < until)) mood = base(tod);
         double[] at = l.where(pop, day, tod);
         steer(l, level, herd, at[0] + offX, at[1] + offZ);
+        wear(level, herd);
+    }
+
+    /** Mouthfuls a grazing herd takes a second (half of them land), and how many moving animals press the grass a second. */
+    static final int TREAD_MAX = 8;
+    private int bite;
+
+    /**
+     * Grass that lives (SPEC §41.2): grazing, an animal or two a second crops the grass at its feet, so a herd's pasture
+     * becomes a lawn; drifting, fleeing or stampeding, the animals on the move press their way flat, so the routes it walks
+     * every day become trails. The grass itself is the plants' ({@link Wildness#ground}).
+     */
+    void wear(ServerLevel level, List<PathfinderMob> herd) {
+        Wildness.Ground g = Wildness.ground();
+        int strength = mood == Mood.STAMPEDE ? Wildness.STAMPEDE : running() || mood == Mood.DRIFT ? Wildness.HERD : 0;
+        if (mood == Mood.GRAZE) {
+            int bites = herd.size() >= 8 ? 2 : 1;
+            for (int k = 0; k < bites; k++) {
+                PathfinderMob m = herd.get(Math.floorMod(bite++, herd.size()));
+                if (m.getNavigation().isDone() && m.onGround() && level.getRandom().nextBoolean()) g.crop(level, m.blockPosition());
+            }
+        } else if (strength > 0) {
+            int pressed = 0;
+            for (int i = 0; i < herd.size() && pressed < TREAD_MAX; i++) {
+                PathfinderMob m = herd.get(Math.floorMod(bite++, herd.size()));
+                if (m.getNavigation().isDone() || !m.onGround()) continue;
+                g.trample(level, m.blockPosition(), strength);
+                pressed++;
+            }
+        }
     }
 
     /** Graze by day, drift between pastures at dawn and dusk, bed down at night (Ledger.where's own day). */
@@ -258,6 +288,7 @@ final class HerdBrain implements Ledger.Brain {
     private void trample(Ledger l, ServerLevel level) {
         for (PathfinderMob m : l.living(level, pop.id)) {
             if (m.getNavigation().isDone()) continue;
+            if (m.onGround()) Wildness.ground().trample(level, m.blockPosition(), Wildness.STAMPEDE);
             for (ServerPlayer p : level.players()) {
                 if (p.isSpectator() || p.isCreative() || trampled.contains(p.getUUID())) continue;
                 if (Math.hypot(p.getX() - m.getX(), p.getZ() - m.getZ()) > 1.3 || Math.abs(p.getY() - m.getY()) > 1.5) continue;

@@ -106,6 +106,32 @@ public final class Wildness {
         return Math.clamp(cover.at(level, pos), 0.0, 1.0);
     }
 
+    /**
+     * The wild's grass, as herds wear it (SPEC §41 decision 9): a grazing animal crops the plant at its feet, a moving herd
+     * presses its way flat (strength {@link #LIGHT} one body, {@link #HERD} a herd on the move, {@link #STAMPEDE}). Registered by
+     * the module that grows the grass (the ground module's {@code WildPlants}); until then nothing changes. Server thread.
+     */
+    public interface Ground {
+        default boolean crop(ServerLevel level, BlockPos pos) {
+            return false;
+        }
+
+        default boolean trample(ServerLevel level, BlockPos pos, int strength) {
+            return false;
+        }
+    }
+
+    public static final int LIGHT = 1, HERD = 2, STAMPEDE = 3;
+    private static volatile Ground ground = new Ground() {};
+
+    public static void setGround(Ground g) {
+        ground = g;
+    }
+
+    public static Ground ground() {
+        return ground;
+    }
+
     /** A Hearth tames its land and 140 blocks round it, softly (SPEC §41.1): a home is never in the deep wild. */
     public static double hearthKeep(ServerLevel level, int x, int z) {
         double keep = 1.0;

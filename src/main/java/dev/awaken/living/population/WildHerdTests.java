@@ -29,6 +29,7 @@ public final class WildHerdTests {
         AwakenTests.registerIsolated("wild_spoor", 100, WildHerdTests::spoor);
         AwakenTests.registerIsolated("wild_tracking", 100, WildHerdTests::tracking);
         AwakenTests.registerIsolated("wild_hunt", 100, WildHerdTests::hunt);
+        AwakenTests.registerIsolated("wild_grass", 100, WildHerdTests::grass);
     }
 
     /** Sizes by band, old saves loading as they were, and a cell made in the wild holding herds and a pack. */
@@ -465,5 +466,52 @@ public final class WildHerdTests {
         for (Spoor.Mark m : Spoor.of(level).near(body.getX(), body.getZ(), 1)) if (m.kind() == Spoor.Kind.KILL && m.species().equals(dev.awaken.living.hunt.Carcass.HUNTER)) bones = true;
         h.assertTrue(bones, "its bones stay as a sign");
         h.succeed();
+    }
+
+    /** Grass that lives (SPEC §41.2): a grazing herd crops the grass at its feet; a stampede presses its way flat. */
+    private static void grass(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos c = field(h, 24);
+        Ledger l = new Ledger();
+        Ledger.Pop pop = herd(l, "minecraft:cow", c.getX(), c.getZ(), 12, 0.8F);
+        h.assertTrue(l.materialize(level, pop, new double[]{c.getX(), c.getZ()}, 10) >= 10, "a herd of twelve");
+        int[] crops = {0}, pressed = {0}, strongest = {0};
+        Wildness.Ground was = Wildness.ground();
+        Wildness.setGround(new Wildness.Ground() {
+            @Override
+            public boolean crop(ServerLevel lv, BlockPos pos) {
+                crops[0]++;
+                return true;
+            }
+
+            @Override
+            public boolean trample(ServerLevel lv, BlockPos pos, int strength) {
+                pressed[0]++;
+                strongest[0] = Math.max(strongest[0], strength);
+                return true;
+            }
+        });
+        AwakenTests.onEnd(h, () -> {
+            Wildness.setGround(was);
+            l.releaseAll(level);
+        });
+        HerdBrain brain = l.herdBrain(pop.id);
+        for (PathfinderMob m : l.living(level, pop.id)) {
+            m.setOnGround(true);
+            m.getNavigation().stop();
+        }
+        for (int i = 0; i < 12; i++) {
+            brain.mood = HerdBrain.Mood.GRAZE;
+            brain.wear(level, l.living(level, pop.id));
+        }
+        h.assertTrue(crops[0] > 0 && pressed[0] == 0, "grazing, it crops the grass and presses none: " + crops[0] + ", " + pressed[0]);
+        brain.alarm(l, level, c.getX() - 6, c.getZ(), HerdBrain.Cause.HIT, 100);
+        h.assertTrue(brain.mood == HerdBrain.Mood.STAMPEDE, "a hit wild herd of twelve stampedes");
+        int[] now = {100};
+        h.succeedWhen(() -> {
+            now[0]++;
+            l.think(level, 10, 6000, now[0]);
+            h.assertTrue(pressed[0] > 0 && strongest[0] == Wildness.STAMPEDE, "the stampede presses its way flat: " + pressed[0]);
+        });
     }
 }

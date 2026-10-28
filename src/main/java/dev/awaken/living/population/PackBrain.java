@@ -92,7 +92,10 @@ final class PackBrain implements Ledger.Brain {
                     prey = null;
                     for (PathfinderMob m : pack) m.setTarget(null);
                 } else {
-                    for (PathfinderMob m : pack) if (m.getTarget() != target) m.setTarget(target);
+                    for (PathfinderMob m : pack) {
+                        if (m.getTarget() != target) m.setTarget(target);
+                        if (m.onGround()) dev.awaken.living.api.Wildness.ground().trample(level, m.blockPosition(), dev.awaken.living.api.Wildness.LIGHT);
+                    }
                 }
             }
             case STALK -> {
