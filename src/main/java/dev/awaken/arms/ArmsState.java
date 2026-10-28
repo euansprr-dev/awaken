@@ -57,6 +57,8 @@ final class ArmsState {
     boolean holdOpen, waitHit;
     // the waiting strike not yet shown to anyone near (the arm, the swish, the body's clip): a hold never shows it
     boolean waitSeen;
+    // when the shown move's swish plays for those near (the tick its whoosh peaks as the blade crosses: FpSwings), 0 none
+    long swishAt;
     // a Plunge armed in a fall: its press, when, the furthest it has fallen; and the landing's power once it strikes
     int plungeSeq = -1;
     long plungeAt;
@@ -99,5 +101,6 @@ final class ArmsState {
         unleashed = false;
         waitHit = false;
         waitSeen = false;
+        swishAt = 0;
     }
 }

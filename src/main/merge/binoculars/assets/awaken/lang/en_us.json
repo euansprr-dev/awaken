@@ -1,0 +1,11 @@
+{
+  "key.awaken.binoculars": "Binoculars",
+  "item.awaken.binoculars": "Binoculars",
+  "binoculars.awaken.marked": "That's your destination now. The top left of your screen will point the way.",
+  "binoculars.awaken.too_far": "Too far to tell",
+  "binoculars.awaken.peek": "This is how other players see you with your binoculars up. Back to your view in five seconds.",
+  "subtitles.awaken.binoculars.raise": "Binoculars raised",
+  "subtitles.awaken.binoculars.eyecup": "Binoculars at the eyes",
+  "subtitles.awaken.binoculars.step": "Binoculars focus clicks",
+  "subtitles.awaken.binoculars.lower": "Binoculars lowered"
+}

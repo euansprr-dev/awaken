@@ -326,7 +326,10 @@ of `AwakenConfig.Client`.
   slide down stairs (§17.22; `sliding` is true too). `core.api.AirHooks`
   (`register(Source)`, `Source.airAt(Level, x, y, z, double[] out)`): moving air the free states feel (§17.6).
   `core.api.CameraHooks` (client): `installToggle(BooleanSupplier)`, `toggleView()` (the View key asks it first; with
-  Shoulder Surfing it flips first person and the shoulder view, §17.13).
+  Shoulder Surfing it flips first person and the shoulder view, §17.13), `zoom()` / `installZoom(DoubleSupplier)` (the
+  binoculars' magnification now, 1 when none, §39: Far Sight's panorama steps aside while it is over 1.05).
+  `core.api.FarGround` (client): `install(Sampler, BooleanSupplier ready)`, `ground(x, z)` (the far land's ground top, NaN when
+  unknown; thread-safe, sampled off the render thread), `ready()` (the far land drew lately). Far Sight installs it (§39.8).
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
@@ -1730,9 +1733,17 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   hidden-surface removal works. Measured at the Roost: about 1.1 M quads, 1.6 to 4.7 ms on a loaded M4.
   Water (2026-10-27, Euan: a lake in the lumen forest drew in hard bands from afar, worked out offline from his save:
   Sodium's real water to 240 m, City Sight's to the edge of the chunks it held, about 340 m, the far terrain's past it):
-  City Sight's water surface is lit and reflects the sky by the horizon as the far terrain's water does (lit 0.4 toward
-  white, the fog's colour by (1 - facing)^5 × 0.55), where it drew its plain tinted texture, darker and bluer than both
-  beside it. Its colour blends over the biomes within 4 blocks in the chunk (`VoxelMesher.BLEND`; the game blends 2),
+  City Sight's water surface reflects the sky by the horizon as the far terrain's water does (the fog's colour by
+  (1 - facing)^5 × 0.55). All far water is drawn as the game draws it (2026-10-28, Euan: a lighter turquoise band with a
+  stepped near edge 40-60 blocks out, then paler flat water: both far layers were lit brighter than the real water, and
+  Sodium culls sections by 3D distance, so from a height the real floor's sections drop out chunk by chunk before the
+  surface's and the far water kept under the real surface showed through, with its own lit surface, in chunk steps):
+  the water texture's grey 0.694 at alpha 0.706 over the floor, the floor lit by the sky light the water leaves it
+  (15 - depth, the water dampening 1 a block) through the game's lightmap curve and gamma. City Sight bakes that into
+  its water tint, block by block (`VoxelMesher.overFloor`: the floor block's average colour, `Looks.colour`); the far
+  terrain draws it in `seaFloor`, and where it lies under a real water surface (the outer band) it draws only the lit
+  floor, which the real surface then covers as the missing floor section would. Water tints now differ by depth, so
+  City Sight's greedy merge joins fewer water quads (not measured). Its colour blends over the biomes within 4 blocks in the chunk (`VoxelMesher.BLEND`; the game blends 2),
   each 4-block biome cell weighed by its blocks: unblended, the lumen forest's teal water (#2a93a6) against the river's
   blue drew hard-edged stepped patches. Coarse levels lay a lake's surface at its highest water block in the cell, 14/16
   up, as level 0 does (a cell's top put it a block high or low by how the surface met the cells: Lens's ripples missed it
@@ -5759,6 +5770,74 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   views and the third-person edge lead (a thrust: the point lead). `audit` checks every move's working part ("Working
   parts" above; exit 1 when one fails). `film` overlays the game's own frames (the clip
   recorder's, in a tour) the same way. Sheets for the review set in docs/combat/anim-lab/.
+- **Swing Studio** (plan docs/weapon-anims/plan.html, page https://claude.ai/artifact/NZVvwxBumfRvcwRiiA45co; Euan
+  approved all six decisions 2026-10-28: "go ahead with the entire plan... so that it genuinely feels extremely
+  satisfying"; his notes: swings aim too far up, the katana is floaty, "each strike starts from rest... it kind of feels
+  like it glitches or teleports"). The loop that turns per-weapon notes into better swings, round after round:
+  - *Feel specs* (`tools/arms/feel/<style>.json`, read by `tools/art/swing_studio.py`): the knobs a round changes
+    (weight fields, the cut's pivot, target, draw, drive, carry, exit, rise; per form and per move; the camera's decay;
+    the bite; the swish's lead; the off hand's gap). No spec: the style bakes exactly as before (round 0 rebakes
+    today's keys bit for bit). `bake [--round N] [--out PATH]` keeps third person's wrists from the game's file (a
+    first-person round never moves them; `--solve` solves them again). Schema 5 adds per move `swish` (the tick its
+    swish starts), `swishSound` (the studio's sound in place of the row's), `bite` [rate, ticks]; per style `offHand`
+    and `vanillaOffHand`; the file's `round`.
+  - *The second-generation cut* (a spec's `cut`): a lever about a shoulder-like pivot (0.62, -0.52, -0.30) through a
+    target at chest height (0, -0.24, -1.15); loaded with an eased draw to a set at the frame's edge, held a moment,
+    driven explosively (progress^power over `drive` ticks) so the hit is the fastest moment; then one continuous fall of
+    speed (1 - (1 - x)^k, k matched to the drive's end so nothing stutters) carrying the blade on and down out of the
+    frame, where it waits for the chain's next press (the cadence window's start) before rising home from below. A
+    whiff flows through; a landed hit's resistance comes from the runtime (hit-stop, then the bite).
+  - *The report* (`swing_studio.py report [style ...] [--json OUT]`): per move the contact height (the blade's middle on
+    screen at the hit), the share of the cut's fast motion above the eye line, the speed at the hit against the peak,
+    the drive's length, how soon it slows after the hit, slow motion left in view after it (drift), the swish's peak
+    against the hit, the view swinging back past level, hands on; each against its class's range (cuts: contact
+    -0.45..-0.10, above the eye at most 40%, the hit at least 0.85 of the peak; drift at most 50/75/100 ms for
+    snap/blade/heavy; swish within 35 ms). `strip60` draws a move at 60 fps, `ab` a move from an older file over
+    today's. Rounds are logged in docs/weapon-anims/ROUNDS.md.
+  - *Round 1, the katana*: contact -0.23 (was -0.04), fast motion above the eye 22% (89%), drift 75 ms (288), the
+    backhand's hit 1.0 of its peak (0.62). Rounds go katana, the vanilla sword (the Longsword), greatblade, axe, maul
+    and mace, daggers, spear, then the rest; a round may move a move's wind-up, recovery or hit-stop by at most a tick
+    when the note is about speed (it rides a build, its damage-per-second change stated, and this SPEC updated).
+    Vanilla spears and the trident wait until the Spear is signed off. First person first; third person per weapon
+    after its first person is signed off (until then third person's wrists stay as they are).
+  - *Round 2, every style*: a spec for each of the 16 (the longsword, precursor and shieldblade on the katana's recipe;
+    the axe's chops aimed at chest height, target y -0.14; the rest on the studio's defaults for their weight). With the
+    specs the other shapes are second-generation too. *Thrusts*: a beat at full reach (snap 0.25, blade 0.35, heavy
+    0.5 ticks), snapped back to the ready line (snap 0.6, else 1 tick), held there for the chain's next press, home in
+    1.25/1.5/2 ticks. *Spins*: the turn gathers to its fastest on the hit, 60% of the way round (progress^power,
+    power at least 1.6), the rest carried off that speed in one slowing (1 - (1 - x)^3), then down out of the view and
+    home. *The scythe's haul*: the sweep slows into the hook (a reversal), then one eased haul back through the target
+    in a tick, crossing it at its fastest, then home from below (its speed rules are not judged: a haul is a pull along
+    the blade). *The bash*: held on the foe half a tick, then pulled back in (1 - (1 - x)^3). Other first-generation
+    shapes come home in 1.5/2/2.5 ticks (snap/blade/heavy). The cut's rise home is 1.75/2.5/3 ticks; the wrist's lead
+    and the drop ride the carry's own fall of speed (nothing moves on once the blade has stopped). A chain lash, thrown
+    over the shoulder, is judged like an overhead (above the eye at most 60%). Across the 179 moves the report went
+    from contact out of range 74, above the eye 82, the hit below its peak 24, drive 15, bite 71, drift 172 to 2, 1, 8,
+    0, 0, 2; cuts mostly above the eye 78 of 131 to 1. Left for their rounds: the glaive's and war-staff's sweeps (the
+    long tip comes nearer the eye after the hit, so it looks fastest just after it: 0.64-0.79), the axe's sweep and
+    art, the daggers' slash, the maul's uppercut contact, the scythe's reap contact and riposte, the chain-blade's
+    backhand lash and the war-staff's backhand (drift 88, 138 ms).
+  - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
+    `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
+    the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
+    it). The hands' clock follows the server's tick rate (`TickRateManager.nanosecondsPerTick`). The bite: after a landed
+    blow's hit-stop the hands run at `biteRate` for `biteTicks` (snap 0.5 x 0.5, blade 0.35 x 0.75, heavy 0.25 x 1.25),
+    then make the time up by the move's end (`ArmsPredict.viewTime`; the server's clock never bites; off with hit-stop
+    off). The swish plays on the blade's clock, its whoosh peaking as the blade crosses (the fighter's on the frame it
+    falls due, those near on the server's tick, `ArmsState.swishAt`); a blow landing before the row's sound could peak
+    plays `arms.swish_quick` (its pass 38 ms in), the katana's cuts `arms.swish_katana` (thinner, a clean high whistle,
+    56 ms). Two-handed weapons (katana, greatblade, maul, spear, glaive, scythe, war-staff) close the off hand on the
+    handle below the main (0.11 to 0.40 blocks down it) when the off hand is empty, through every swing and the guard;
+    a stance's own off fist still takes the hand.
+  - *Live tuning* (`SwingTuning`; `/awaken swing tune on [path] | off`, `ab`, `blind`, `note <words>`, `last`; the
+    state kept in `awaken-arms-client.toml`): while on, the swings come from `<folder>/fp_swings.json` (the folder: the
+    path given, else `AWAKEN_TUNING`, else /Volumes/MEDIA/Awaken-tuning if present, else `awaken-tuning` in the game
+    folder), looked at once a second, read on a worker and put in use only between moves. A newer schema or a round
+    older than the jar's is refused with a line in chat. `prev.json` beside it is the A/B; blind mode names the two X and
+    Y at random; notes go to `notes.jsonl` with the style, move, round and version that was playing. Off: the jar's.
+  - Tests: `arms_swing_blend` (no jump, no overshoot, the new pose by the end, the lean carried), `arms_swing_reload`
+    (a set read whole, swapped in and out, a newer schema refused), `arms_feel_rules` (every swish starts by its hit,
+    every bite slows without stopping, the two-handed weapons and only they hold with both hands).
 - **Third person** (Player Animation Library, optional, through `core.api.PlayerClips`; `ArmsClips`, `ArmsBodies`):
   a full-body clip per move from tools/art/specs/arms_moves.py, its keys on the timing table's rows (cocked at the
   wind-up's end, through at the active ticks' end, home by the endTick), each with a bent twin; the guard held while
@@ -9167,3 +9246,113 @@ Tyrant first, and nothing rolls out to more creatures until the Tyrant passes Eu
   Living Forge, and today's body for scale. After Euan's pick: the model with a parts library, about 120-200 cubes,
   material ramps and a value hierarchy.
 - **R2, motion; R3, the Tyrant's fight; then R4 Unit Zero and R5 Mother.** As the plan; each lands here when built.
+
+## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
+
+Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our
+own lens edge. Approved: stages 0 to 2, key I, tap and hold, the twin edge, steps 2× to 12×, a slow walk. Decided later, after
+Euan has played stage 2: real focus by depth, and Far focus in Far Sight.
+
+### 39.1 What it is for
+Spotting: a ruin from a ridge, a creature in a valley, a far range. Three things beyond a plain zoom: the readout (how far, which
+way), marking the centre as your destination, and reading a creature's plate at range.
+
+### 39.2 The key and the state
+- **Key** `key.awaken.binoculars`, default **I**, in Awaken's key group, conflict context in-game. **Tap and hold** (default): a
+  press shorter than `tapMs` (250) keeps them up, a longer press is a peek and they drop on release. Settings: hold only, toggle
+  only (`GlassKey`).
+- **State** (`GlassState`): down, raising (`raiseMs` 330), up, lowering (`lowerMs` 220); both halved with reduced motion. A raise can
+  turn back halfway: the hands follow the raise's progress, never a fixed clip.
+- **What lowers them**: the key; sprinting (eased); and at once, in the same frame (zoom, look speed and HUD back): attack, use
+  (except right-click marking, 39.7), any screen opening, getting hurt, death, a dimension change, a cast, the hands gripping the
+  world (a hang, wall-run or the world layer's arms), switching to a vanilla spyglass, the setting turned off.
+- **When they can't come up**: a screen is open, you're using a spyglass, a cast is on, the hands grip the world, or you're a
+  spectator. The press is simply ignored.
+- **Third person**: raising in third person (or Shoulder Surfing's view) switches to first person and back when they come down.
+
+### 39.3 The zoom (`GlassRules`, `GlassSpring`, feel `assets/awaken/binoculars/feel.json`, schemaVersion 1)
+- **Steps** 2, 3, 4, 6, 8, 12. The first raise ever goes to 4×; afterwards the last step is remembered in the client settings.
+  Scroll while up changes the step, never the hotbar; vanilla's wheel handler adds up a trackpad's small scrolls, and each event
+  moves at most one step. While down the wheel is the hotbar's as always.
+- **FOV**: `fov = 2·atan(tan(base/2)/mag)`, never under 1°, set per frame in `ViewportEvent.ComputeFov`, on top of whatever FOV
+  you'd have (the FOV slider and FOV effects still work). Zoom is not scaled by the FOV effects slider: it's an action, not an effect.
+- **Curve**: a spring on log(mag), slightly underdamped: a step overshoots by `overshoot` (2%) of itself and settles in `settleMs`
+  (120). The first pull after the raise settles in `pullMs` (300). Reduced motion: no overshoot. Stepped in 2 ms slices, so 30
+  and 240 fps behave the same.
+- **Zoom starts** when the raise reaches `eyecup` (0.82) and the lens edge is in by `eyecupEnd` (0.85). Any lowering takes the zoom
+  off at once (the eyecups have left the eyes); the hands then finish the lower.
+- **Look speed**: matched to the zoom (`k = slider/mag`; the mouse sensitivity becomes `((s·0.6+0.2)·∛k − 0.2)/0.6`, which keeps
+  vanilla's cubed curve exact) through `CalculatePlayerTurnEvent`; a slider 50 to 150%. No cinematic camera, no smoothing.
+- **Sway**: `sway`·√mag degrees (0.04° at 1×: about 0.4% of the screen at 4×), two slow sines on the camera's yaw and pitch only,
+  so aim never drifts; crouching a third (`swayCrouch`); off with reduced motion or the setting.
+- **Focus pull**: a short softness that clears as the view arrives: `focusRaiseMs` (250) after the raise, `focusStepMs` (120) after a
+  step to `focusFromStep` (6×) or more. Drawn as stepped box-blur post chains (`awaken:binoculars_focus_1..3`) swapped in the
+  player's active post effects, like the screen moments. Off with reduced motion.
+- **Moving**: a slow walk (`walk` 0.2 of normal, the spyglass's) while they're up. 26.3's `ClientInput.moveVector` is protected
+  and the project has no access transformer, so it is a client-side transient `MOVEMENT_SPEED` modifier
+  (`awaken:binoculars_walk`, ADD_MULTIPLIED_TOTAL, re-added if an attribute sync drops it), the way the tactical sprint
+  changes speed; its share is divided back out of the speed FOV effect (`ComputeFovModifierEvent`), so it never narrows
+  the view. Sprinting lowers them (raising stops a sprint). Swimming, riding, gliding and flying are allowed.
+- **Which FOV**: the camera computes its angles, then the world's FOV, then the hand pass's (always 70) through the same
+  `ComputeFov` event. Only the first FOV after the angles (or the frame's start) is zoomed, so the hands and the binoculars in
+  them never zoom.
+
+### 39.4 The hands and the look (`client.GlassHands`, `client.GlassOverlay`)
+- **Raise**: a Hands view stance (§24, not fp clips: a clip can't turn back halfway) from the raise's progress: what you hold eases away (`View.climb`), both fists come up to
+  the barrels' sides and the binoculars (our model, the display-only item `awaken:binoculars`) rise to the eyes. From `eyecup` to 1
+  the binoculars come toward the eye and the fists leave the frame; the lens edge fades in. Past `eyecupEnd` nothing is drawn
+  and the fists wait under the frame (so vanilla's hands stay hidden). Up to 0.6 of the raise they rise from below, tilted
+  objectives-down 38°; 0.6 to 0.85 they come to the eyes. The binoculars are drawn by the binoculars' own `RenderHandEvent`
+  listener at HIGHEST, registered before Hands (`BinocularsClient` initialises before the anims client), on a clean stack,
+  through `ItemDisplayContext.NONE` at scale 0.5.
+- **Lens edge** (our own art, `textures/gui/binoculars/edge_twin.png`, `edge_single.png`): soft dark outside, a thin brass inner ring,
+  a faint colour fringe at the rim, a hint of glass. Setting: twin (default), single, off.
+- **HUD** while at the eyes: hidden except chat, subtitles, titles, the action bar line, the tab list and Awaken's notices (the
+  `awaken:signal` layer: toasts, the Now line that points to a marked spot). Our own layer sits above `camera_overlays`. The readout, bottom centre on the glass: `8× · 312 m · NE`. F1 hides the readout and keeps the edge.
+- **Readout**: the distance to what's at the centre: a block ray through loaded chunks (every 4th frame, out to the render
+  distance), then Far Sight's ground (39.8), else "far". Bearing in compass letters.
+
+### 39.5 Sounds (our own, `tools/art/specs/binoculars_sounds.py`, events and subtitles in `src/main/merge/binoculars`)
+`binoculars.raise` (fabric and strap), `binoculars.eyecup` (soft rubber, a breath of glass), `binoculars.step` (one detent of the
+focus wheel), `binoculars.lower`. Only your own client plays them, quiet and near the ear. No vanilla spyglass sounds.
+
+### 39.6 Others see it (`BinocularsNet`, `BinocularsRelay`, `client.GlassOthers`)
+- `awaken:binoculars` C2S (up or down, sent when it changes); the server relays `awaken:binoculars_relay` (entity id, up) to the
+  players tracking you, at most 4 changes per 20 ticks (the last one waits and always arrives). A dead player's word is ignored;
+  death, respawn and a dimension change put them down for everyone; logout forgets. Starting to track someone whose binoculars are
+  up tells you at once. Nothing is saved; a server without the payload simply never passes it on.
+- **Pose**: both arms raised to the eyes (`AWAKEN_BINOCULARS` arm pose, an enum extension of `HumanoidModel.ArmPose`, set on both
+  arms by a render-state modifier), and the binoculars drawn at the head by a render layer.
+
+### 39.7 Mark a spot (stage 2)
+Right-click while up makes the centre point your destination: `Destinations.request` with kind `spot`, named "A spot you saw
+through binoculars", and the Atlas's words "That's your destination now...". Only when the centre is markable
+(`GlassRules.markable`: something was hit, inside the world's height and border, within what the readout could tell); else the
+readout says "Too far to tell" for a moment and nothing is set. The server checks it as every destination request (§16.8).
+
+### 39.8 Reaching far (stage 2)
+- **Far Sight**: while `CameraHooks.zoom()` > 1.05 its horizon panorama isn't drawn (at 8× it would be blurry); the far land draws
+  live. Far Sight installs a ground sampler (`core.api.FarGround`) so the readout and marking reach past loaded land in
+  single player (while its far land drew in the last fifth of a second).
+- **Plates at range**: while the view is magnified (`CameraHooks.zoom()` > 1.05), holding the centre on a creature past the normal
+  read range for `PlateRules.GLASS_DWELL` (10 ticks) shows its plate out to `PlateRules.GLASS_REACH` (160) blocks: only the one you
+  hold on (`PlateRules.lookRange(per, zoom)`, used by `LivingClient.plates`; a far creature joins the candidates by itself, the
+  40-block box stays). Uses only what your game already has about it; nothing new from the server. Tested in `living_plate_rules`.
+- **Creatures** beyond the server's tracking range (animals 160, monsters 128) aren't there to draw; not changed.
+
+### 39.9 Settings (`config/awaken-binoculars-client.toml`) and commands
+- `enabled` (true; off frees the key), `key_mode` (TAP_HOLD, HOLD, TOGGLE), `look_speed` (100, 50..150 %), `sway` (true), `edge`
+  (TWIN, SINGLE, OFF), `readout` (true), `last_step` (4).
+- `/awaken binoculars peek` (client): third person from the front for five seconds with them up, to see yourself.
+- **Files**: model, texture and lens edges from `tools/art/specs/binoculars.py` (`items/binoculars.json`,
+  `models/item/binoculars.json`, `textures/item/binoculars.png`, `textures/gui/binoculars/edge_*.png` with blur); sounds from
+  `tools/art/specs/binoculars_sounds.py` (`sounds/ui_binoculars_*.ogg`, ui loudness window); focus chains
+  `post_effect/binoculars_focus_{1,2,3}.json` (box blur, radius 4, 2.5, 1.2).
+- **Tests** (`binoculars_`): `binoculars_state` (the key's three modes, a raise that turns back, every cause of lowering, the
+  instant ones in the same frame), `binoculars_zoom` (steps, memory, one step a scroll, FOV 30 to 110 with speed effects, the
+  spring's overshoot and settle at 120 and 30 fps, reduced motion), `binoculars_sense` (on-screen look speed within 2% at every
+  step and sensitivity; the slider), `binoculars_feel` (the file reads and matches the built-in numbers; broken files keep them),
+  `binoculars_relay` (only trackers hear it, the rate limit, the last word arrives, death lowers, the dead are ignored, logout
+  forgets), `binoculars_mark` (sky, unknown, above the world, past the border and too far refused; a spot becomes the destination;
+  the readout's words).
+

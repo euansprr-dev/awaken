@@ -4,6 +4,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
@@ -47,9 +48,21 @@ public final class VoxelMesher {
         default boolean cross(int id) {
             return false;
         }
+
+        /** The colour (0xRRGGBB) state {@code id}'s face toward dir shows from afar: its texture's average, tinted. */
+        default int colour(int id, int dir, @Nullable Holder<Biome> biome) {
+            return 0x808080;
+        }
+
+        /** The player's brightness setting (0 moody, 1 bright): how far a dim light level lifts in the game's lightmap. */
+        default float brightness() {
+            return 0.5f;
+        }
     }
 
     public static final int LEVELS = 4, INTS = 4;
+    /** The water texture's average grey and opacity (water_still.png), as the game blends it over what lies under it. */
+    public static final float WATER_GREY = 0.694f, WATER_ALPHA = 0.706f;
     /** Blocks each way water's colour blends over (the game's default blend is 2: a little wider, seen from afar). */
     static final int BLEND = 4;
     private static final int[] DX = {0, 0, 0, 0, -1, 1}, DY = {-1, 1, 0, 0, 0, 0}, DZ = {0, 0, -1, 1, 0, 0};
@@ -222,7 +235,8 @@ public final class VoxelMesher {
         if (look < 0) return 0;
         int tint = 0xFFFFFF;
         if (!curtain && (look >>> 16) != 0) {
-            tint = id == waterId ? waterTint(x, y, z, (look >>> 16) - 1) : looks.tint(id, (look >>> 16) - 1, snap.biome(x, y, z)) & 0xFFFFFF;
+            tint = id == waterId ? overFloor(x, y, z, waterTint(x, y, z, (look >>> 16) - 1))
+                    : looks.tint(id, (look >>> 16) - 1, snap.biome(x, y, z)) & 0xFFFFFF;
         }
         int sky = curtain ? 0 : step(snap.skyLight(nx, ny, nz)), block = curtain ? 0 : step(snap.blockLight(nx, ny, nz));
         return PRESENT | (long) offset << 52 | (long) block << 48 | (long) sky << 44 | (long) tint << 16 | (look & 0xFFFF);
@@ -412,6 +426,37 @@ public final class VoxelMesher {
         return (int) ((r + n / 2) / n) << 16 | (int) ((g + n / 2) / n) << 8 | (int) ((b + n / 2) / n);
     }
 
+    /**
+     * A water surface's tint with its floor seen through it, as the game draws water: its texture (grey
+     * {@link #WATER_GREY}, {@link #WATER_ALPHA} opaque) over the floor, which each block of water above dims a sky light
+     * level, by the game's daytime lightmap at the player's brightness. City Sight's water is one opaque face, so the floor
+     * goes into its tint: drawn as the plain tinted texture it stood lighter and flatter than the real water beside it,
+     * the floor's dark seagrass and the depth's dimming gone (Euan, 2026-10-28).
+     */
+    private int overFloor(int x, int y, int z, int water) {
+        int fy = y, d = 0;
+        while (fy >= 0 && Block.BLOCK_STATE_REGISTRY.byId(ids[index(x, fy, z)]) instanceof BlockState st && st.is(Blocks.WATER)) {
+            fy--;
+            d++;
+        }
+        // under the snapshot (deep water, where the floor is dark anyway): grey stone
+        int floor = fy >= 0 ? looks.colour(ids[index(x, fy, z)], 1, snap.biome(x, fy, z)) : 0x707070;
+        float lit = dayLight(Math.max(0, 15 - d), looks.brightness()) * (1f - WATER_ALPHA) / WATER_GREY;
+        int out = 0;
+        for (int sh = 0; sh <= 16; sh += 8) {
+            float v = WATER_ALPHA * (water >> sh & 255) + lit * (floor >> sh & 255);
+            out |= Math.min(255, Math.round(v)) << sh;
+        }
+        return out;
+    }
+
+    /** The game's daytime lightmap at sky light {@code sky} as a share of the open sky's (lightmap.fsh, no block light). */
+    public static float dayLight(int sky, float brightness) {
+        float f = sky / 15f, c = f / (4f - 3f * f), inv = 1f - c;
+        float bright = 1f - inv * inv * inv * inv;
+        return c + (bright - c) * brightness;
+    }
+
     /** Water's sides where it meets open air (a fall, a fountain's rim seen from outside), up to its surface. */
     private void waterSides(int x, int y, int z) {
         int look = looks.face(waterId, 2);
@@ -592,7 +637,8 @@ public final class VoxelMesher {
             }
         }
         int sky = step(skyMax), block = step(blockMax);
-        int tint = (look >>> 16) == 0 ? 0xFFFFFF : cell < 0 ? waterTint(mx, my, mz, (look >>> 16) - 1)
+        int surface = cy * c + (cell < 0 ? -1 - coarseTop[ci] : 0);
+        int tint = (look >>> 16) == 0 ? 0xFFFFFF : cell < 0 ? overFloor(mx, surface, mz, waterTint(mx, surface, mz, (look >>> 16) - 1))
                 : looks.tint(id, (look >>> 16) - 1, snap.biome(mx, my, mz)) & 0xFFFFFF;
         return PRESENT | (long) (offset & 255) << 52 | (long) block << 48 | (long) sky << 44 | (long) tint << 16 | (look & 0xFFFF);
     }

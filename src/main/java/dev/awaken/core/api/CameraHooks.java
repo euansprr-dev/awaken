@@ -21,4 +21,19 @@ public final class CameraHooks {
     public static boolean toggleView() {
         return toggle.getAsBoolean();
     }
+
+    private static volatile java.util.function.DoubleSupplier zoom = () -> 1.0;
+
+    /** The binoculars install their magnification (SPEC §39). */
+    public static void installZoom(java.util.function.DoubleSupplier z) {
+        zoom = z;
+    }
+
+    /**
+     * How magnified the view is now: 1 when nothing zooms (the binoculars down). Far Sight's panorama, sized for the
+     * normal view, steps aside while it is over 1.05.
+     */
+    public static double zoom() {
+        return zoom.getAsDouble();
+    }
 }

@@ -47,6 +47,9 @@ public final class LivingClient {
     static long ticks;
     static boolean shown = true;
     static double lookRange = PlateRules.lookRange(0);
+    /** The creature the binoculars' look rests on past the normal range, and since when (ticks). */
+    private static int glassId = -1;
+    private static long glassSince;
     static final List<PlateRules.Candidate> PICKED = new ArrayList<>();
     private static final List<PlateRules.Candidate> CANDIDATES = new ArrayList<>();
     static final List<ItemEntity> PILLARS = new ArrayList<>();
@@ -276,7 +279,9 @@ public final class LivingClient {
             PICKED.clear();
             return;
         }
-        lookRange = PlateRules.lookRange(Progression.profile(p).stat(Stat.PER));
+        int per = Progression.profile(p).stat(Stat.PER);
+        double near = PlateRules.lookRange(per);
+        lookRange = PlateRules.lookRange(per, dev.awaken.core.api.CameraHooks.zoom());
         // what the band reads: the creature under the crosshair, if no wall stands between
         Vec3 eye = p.getEyePosition(), to = eye.add(p.getViewVector(1).scale(lookRange));
         EntityHitResult hit = ProjectileUtil.getEntityHitResult(p, eye, to, new AABB(eye, to).inflate(1.0),
@@ -284,6 +289,16 @@ public final class LivingClient {
         if (hit != null) {
             var block = mc.level.clip(new ClipContext(eye, hit.getLocation(), ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, p));
             if (block.getType() != HitResult.Type.MISS && block.getLocation().distanceToSqr(eye) < hit.getLocation().distanceToSqr(eye)) hit = null;
+        }
+        // past the normal range (the binoculars): the look has to rest on it a moment first
+        if (hit != null && hit.getLocation().distanceTo(eye) > near) {
+            if (hit.getEntity().getId() != glassId) {
+                glassId = hit.getEntity().getId();
+                glassSince = ticks;
+            }
+            if (ticks - glassSince < PlateRules.GLASS_DWELL) hit = null;
+        } else {
+            glassId = -1;
         }
         if (hit != null) {
             int id = hit.getEntity().getId();
@@ -312,6 +327,11 @@ public final class LivingClient {
             }
             CANDIDATES.add(new PlateRules.Candidate(e.getId(), d, FIGHT.getOrDefault(e.getId(), Long.MIN_VALUE),
                     LOOK.getOrDefault(e.getId(), Long.MIN_VALUE), notable && SEEN.contains(e.getId()), excluded));
+        }
+        // a creature read through the binoculars, farther than the box above reaches
+        if (hit != null && hit.getEntity() instanceof LivingEntity far && far.distanceTo(p) > 40) {
+            CANDIDATES.add(new PlateRules.Candidate(far.getId(), far.distanceTo(p), FIGHT.getOrDefault(far.getId(), Long.MIN_VALUE),
+                    LOOK.getOrDefault(far.getId(), Long.MIN_VALUE), false, far instanceof Player || far instanceof TamableAnimal t && t.isTame()));
         }
         PlateRules.pick(CANDIDATES, PICKED, ticks, lookRange);
         for (PlateRules.Candidate c : PICKED) {

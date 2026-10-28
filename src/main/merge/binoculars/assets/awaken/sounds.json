@@ -1,0 +1,34 @@
+{
+  "binoculars.raise": {
+    "subtitle": "subtitles.awaken.binoculars.raise",
+    "sounds": [
+      {
+        "name": "awaken:ui_binoculars_raise"
+      }
+    ]
+  },
+  "binoculars.eyecup": {
+    "subtitle": "subtitles.awaken.binoculars.eyecup",
+    "sounds": [
+      {
+        "name": "awaken:ui_binoculars_eyecup"
+      }
+    ]
+  },
+  "binoculars.step": {
+    "subtitle": "subtitles.awaken.binoculars.step",
+    "sounds": [
+      {
+        "name": "awaken:ui_binoculars_step"
+      }
+    ]
+  },
+  "binoculars.lower": {
+    "subtitle": "subtitles.awaken.binoculars.lower",
+    "sounds": [
+      {
+        "name": "awaken:ui_binoculars_lower"
+      }
+    ]
+  }
+}
