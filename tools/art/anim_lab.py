@@ -813,6 +813,12 @@ def bake(out=SWINGS, solve=False, round_=None):
                             + [round(float(v), 3) for v in cam])
             moves[mv] = {"form": form_of(m)[0], "weight": SS.weight_class(sid), "hand": m["swing"].get("hand", "main"),
                          "keys": keys, "bite": SS.bite_of(sid, mv)}
+            if SS.idle_next(st, mv):  # the hand not striking: drawn back to the next strike's set (Swing Studio round 4)
+                idle = []
+                for tt in np.arange(0, total + 1e-6, KEY_DT):
+                    d, R = SS.idle_pose(st, mv, held, float(tt))
+                    idle.append([round(float(tt), 3)] + [round(float(v), 4) for v in d] + [round(float(v), 5) for v in mat_quat(R)])
+                moves[mv]["idle"] = idle
             moves[mv]["swish"], sound = SS.swish_of(sid, mv, m)
             if sound:
                 moves[mv]["swishSound"] = sound
@@ -837,7 +843,7 @@ def bake(out=SWINGS, solve=False, round_=None):
             main_at = hand_grip if hand_grip is not None else held.grip
             styles[sid]["offHand"] = [round(float(v), 4) for v in main_at - held.axis * gap]
             styles[sid]["vanillaOffHand"] = [round(float(v), 4) for v in grip_v - Fv[:, 0] * gap]
-    json.dump({"schemaVersion": 5, "generatedBy": "tools/art/anim_lab.py bake", "round": round_, "dt": KEY_DT,
+    json.dump({"schemaVersion": 6, "generatedBy": "tools/art/anim_lab.py bake", "round": round_, "dt": KEY_DT,
                "wristDt": WRIST_DT, "flipped3": flipped3, "grip3": grips3(), "styles": styles},
               open(out, "w"), separators=(",", ":"))
     return out

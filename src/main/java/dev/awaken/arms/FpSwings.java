@@ -33,7 +33,7 @@ public final class FpSwings {
     /** Floats a key carries: the hand's move (3), its turn (4), the view's lean (yaw, pitch, roll degrees). */
     static final int STRIDE = 10;
     /** The newest file this build reads: a newer one (a later lab) is refused, never half-read. */
-    public static final int SCHEMA = 5;
+    public static final int SCHEMA = 6;
 
     /** Which hand a move strikes with (a weapon in each hand, the Daggers): the main, the off (the main's mirrored), both. */
     public enum Hand { MAIN, OFF, BOTH }
@@ -47,10 +47,12 @@ public final class FpSwings {
     /**
      * Swing Studio's per move: {@code swish} the tick its swish starts so the whoosh peaks as the blade crosses the target
      * (0: on the press) and {@code swishSound} the studio's sound in place of the row's own (null: the row's), and the bite, after a landed hit's hit-stop the hands running at {@code biteRate} for
-     * {@code biteTicks} through the body (0 ticks: none).
+     * {@code biteTicks} through the body (0 ticks: none). {@code idle} (schema 6, round 4; empty for none): a weapon in
+     * each hand, the hand not striking, laid out like {@code keys} and authored for its own hand: still until the blow
+     * lands, then drawn back to the next strike's set and held there for the press.
      */
     public record Clip(float[] keys, Hand hand, float[] wristRight, float[] wristLeft, float[] straightRight, float[] straightLeft,
-                       float swish, @Nullable String swishSound, float biteRate, float biteTicks) {
+                       float swish, @Nullable String swishSound, float biteRate, float biteTicks, float[] idle) {
         public int size() {
             return keys.length / STRIDE;
         }
@@ -119,12 +121,8 @@ public final class FpSwings {
                 Archetype.Move m = Archetype.Move.byKey(mv.getKey());
                 if (m == null) continue;
                 JsonObject row = mv.getValue().getAsJsonObject();
-                JsonArray keys = row.getAsJsonArray("keys");
-                float[] k = new float[keys.size() * STRIDE];
-                for (int i = 0; i < keys.size(); i++) {
-                    JsonArray key = keys.get(i).getAsJsonArray();
-                    for (int j = 0; j < STRIDE && j + 1 < key.size(); j++) k[i * STRIDE + j] = key.get(j + 1).getAsFloat();
-                }
+                float[] k = keys(row.getAsJsonArray("keys"));
+                float[] idle = row.has("idle") ? keys(row.getAsJsonArray("idle")) : NONE;
                 JsonElement hand = row.get("hand");
                 Hand h = hand == null ? Hand.MAIN : Hand.valueOf(hand.getAsString().toUpperCase(java.util.Locale.ROOT));
                 JsonObject wrist = row.getAsJsonObject("wrist3");
@@ -134,7 +132,7 @@ public final class FpSwings {
                 String sound = row.has("swishSound") ? row.get("swishSound").getAsString() : null;
                 moves.put(m, new Clip(k, h, floats(wrist, "right"), floats(wrist, "left"), floats(straight, "right"),
                         floats(straight, "left"), swish, sound, bite == null ? 1F : bite.get(0).getAsFloat(),
-                        bite == null ? 0F : bite.get(1).getAsFloat()));
+                        bite == null ? 0F : bite.get(1).getAsFloat(), idle));
             }
             Vector3f grip = vec(st.getAsJsonArray("grip"));
             styles.put(e.getKey(), new Style(moves, quat(st.getAsJsonArray("vanilla")), grip, vec(st.getAsJsonArray("vanillaGrip")),
@@ -159,6 +157,16 @@ public final class FpSwings {
     /** Puts a whole set in use (Swing Studio's tuning, client thread, between moves); null puts the jar's back. */
     public static void swap(@Nullable Data d) {
         data = d == null ? JAR : d;
+    }
+
+    /** Rows of [t, the key's floats...] into STRIDE floats a key (missing ones 0: an idle hand leans no view). */
+    private static float[] keys(JsonArray rows) {
+        float[] k = new float[rows.size() * STRIDE];
+        for (int i = 0; i < rows.size(); i++) {
+            JsonArray key = rows.get(i).getAsJsonArray();
+            for (int j = 0; j < STRIDE && j + 1 < key.size(); j++) k[i * STRIDE + j] = key.get(j + 1).getAsFloat();
+        }
+        return k;
     }
 
     private static float[] floats(@Nullable JsonObject o, String key) {
@@ -274,9 +282,23 @@ public final class FpSwings {
     public static boolean sample(@Nullable Style st, Archetype.Move m, float t, boolean ours, Vector3f d, Quaternionf q) {
         Clip c = st == null ? null : st.moves().get(m);
         if (c == null || c.size() == 0) return false;
-        float[] k = c.keys();
+        return sample(st, c.keys(), t, ours, d, q);
+    }
+
+    /**
+     * The hand not striking a move at {@code t} ticks of it (Clip's idle; for its own hand, mirrored by the caller like
+     * an off-hand strike). False when it has none (it rests).
+     */
+    public static boolean idle(@Nullable Style st, Archetype.@Nullable Move m, float t, boolean ours, Vector3f d, Quaternionf q) {
+        Clip c = st == null || m == null ? null : st.moves().get(m);
+        if (c == null || c.idle().length == 0) return false;
+        return sample(st, c.idle(), t, ours, d, q);
+    }
+
+    private static boolean sample(Style st, float[] k, float t, boolean ours, Vector3f d, Quaternionf q) {
+        int n = k.length / STRIDE;
         float x = Math.max(0, t / data.dt());
-        int i = Math.min(c.size() - 1, (int) x), j = Math.min(c.size() - 1, i + 1);
+        int i = Math.min(n - 1, (int) x), j = Math.min(n - 1, i + 1);
         float u = Math.min(1F, x - i);
         int a = i * STRIDE, b = j * STRIDE;
         d.set(k[a] + (k[b] - k[a]) * u, k[a + 1] + (k[b + 1] - k[a + 1]) * u, k[a + 2] + (k[b + 2] - k[a + 2]) * u);

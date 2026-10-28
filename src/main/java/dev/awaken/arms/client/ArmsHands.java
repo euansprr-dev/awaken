@@ -179,6 +179,10 @@ final class ArmsHands {
         // which hand strikes: a weapon in each hand (the Daggers) strikes with the off hand too, the main's move mirrored
         FpSwings.Hand hand = !has || preview != null ? FpSwings.Hand.MAIN : FpSwings.hand(st, m);
         boolean mainMoves = has && hand != FpSwings.Hand.OFF, offMoves = has && hand != FpSwings.Hand.MAIN;
+        // a weapon in each hand: the hand not striking draws back to the next strike's set while this one lands (Swing
+        // Studio round 4; Euan 2026-10-28: "let the idle hand draw back while the other strikes")
+        boolean idle = has && !tremble && hand != FpSwings.Hand.BOTH && FpSwings.idle(st, m, t, ours, IDLE_D, IDLE_Q);
+        boolean mainIdle = idle && !mainMoves, offIdle = idle && !offMoves;
         // a change of source (a chained strike, a move ended or refused, the charge taken up): each hand carried from
         // where it was shown into the new one, never a jump (SwingBlend)
         float now = handsNow();
@@ -189,14 +193,16 @@ final class ArmsHands {
             Archetype.MoveDef def = m == null ? null : style.move(m);
             float ticks = def == null ? REST_BLEND : Mth.clamp(def.windup() * 0.8F, 1F, 2.5F);
             sourceMotion(st, m, t, ours, has && !tremble);
-            MAIN_B.begin(now, mainMoves ? D : ZERO, mainMoves ? Q : ID, mainMoves ? VD : ZERO, mainMoves ? VW : ZERO, ticks);
-            OFF_B.begin(now, offMoves ? D : ZERO, offMoves ? Q : ID, offMoves ? VD : ZERO, offMoves ? VW : ZERO, ticks);
+            MAIN_B.begin(now, mainMoves ? D : mainIdle ? IDLE_D : ZERO, mainMoves ? Q : mainIdle ? IDLE_Q : ID, mainMoves ? VD : ZERO,
+                    mainMoves ? VW : ZERO, ticks);
+            OFF_B.begin(now, offMoves ? D : offIdle ? IDLE_D : ZERO, offMoves ? Q : offIdle ? IDLE_Q : ID, offMoves ? VD : ZERO,
+                    offMoves ? VW : ZERO, ticks);
         }
-        boolean mainShown = mainMoves || MAIN_B.active(now), offShown = offMoves || OFF_B.active(now);
-        if (mainMoves) MAIN_D.set(D); else MAIN_D.zero();
-        if (mainMoves) MAIN_Q.set(Q); else MAIN_Q.identity();
-        if (offMoves) OFF_D.set(D); else OFF_D.zero();
-        if (offMoves) OFF_Q.set(Q); else OFF_Q.identity();
+        boolean mainShown = mainMoves || mainIdle || MAIN_B.active(now), offShown = offMoves || offIdle || OFF_B.active(now);
+        if (mainMoves) MAIN_D.set(D); else if (mainIdle) MAIN_D.set(IDLE_D); else MAIN_D.zero();
+        if (mainMoves) MAIN_Q.set(Q); else if (mainIdle) MAIN_Q.set(IDLE_Q); else MAIN_Q.identity();
+        if (offMoves) OFF_D.set(D); else if (offIdle) OFF_D.set(IDLE_D); else OFF_D.zero();
+        if (offMoves) OFF_Q.set(Q); else if (offIdle) OFF_Q.set(IDLE_Q); else OFF_Q.identity();
         MAIN_B.apply(now, MAIN_D, MAIN_Q);
         OFF_B.apply(now, OFF_D, OFF_Q);
         if (!mainShown && !offShown) return false;
@@ -218,7 +224,8 @@ final class ArmsHands {
     private static long shownNanos;
     private static boolean shownCharging;
     private static final org.joml.Vector3f VD = new org.joml.Vector3f(), VW = new org.joml.Vector3f(), ZERO = new org.joml.Vector3f(),
-            DA = new org.joml.Vector3f();
+            DA = new org.joml.Vector3f(), IDLE_D = new org.joml.Vector3f();
+    private static final org.joml.Quaternionf IDLE_Q = new org.joml.Quaternionf();
     private static final org.joml.Quaternionf ID = new org.joml.Quaternionf(), QA = new org.joml.Quaternionf(), QC = new org.joml.Quaternionf();
 
     /** The new source's motion at {@code t} into VD, VW (zero for a held pose). */

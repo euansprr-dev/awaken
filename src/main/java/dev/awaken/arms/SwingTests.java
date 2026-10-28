@@ -136,7 +136,8 @@ final class SwingTests {
     /**
      * Round 3's chain (Euan 2026-10-28: "the second slice is not even visible"): each strike of a chain, struck by the
      * same hand as the one before it, starts where that one holds the blade on the earliest press it chains from, so
-     * the blend has nothing to carry and the next blow is wound up in view, never from below the frame.
+     * the blend has nothing to carry and the next blow is wound up in view, never from below the frame; round 4's: one
+     * struck by the other hand of a pair starts where that hand drew back to while the last one landed.
      */
     static void chainFlow(GameTestHelper h) {
         Vector3f a = new Vector3f(), b = new Vector3f();
@@ -150,12 +151,16 @@ final class SwingTests {
             for (int i = 0; i + 1 < chain.size(); i++) {
                 Archetype.Move prev = chain.get(i), next = chain.get(i + 1);
                 Archetype.MoveDef def = style.move(prev);
-                if (def == null || FpSwings.hand(st, prev) != FpSwings.hand(st, next)) continue;
+                if (def == null) continue;
                 float press = def.hasCadence() ? def.cadence().get(0) : def.windup() + def.active() + ArmsRules.MASTERY_LINK;
-                if (!FpSwings.sample(st, prev, press, true, a, qa) || !FpSwings.sample(st, next, 0, true, b, qb)) continue;
+                // the hand that throws the next strike (both hands play the main's): the same as this one's, or the
+                // idle hand drawn back while this one struck (round 4, the daggers)
+                boolean same = (FpSwings.hand(st, prev) == FpSwings.Hand.OFF) == (FpSwings.hand(st, next) == FpSwings.Hand.OFF);
+                boolean there = same ? FpSwings.sample(st, prev, press, true, a, qa) : FpSwings.idle(st, prev, press, true, a, qa);
+                if (!there || !FpSwings.sample(st, next, 0, true, b, qb)) continue;
                 float turn = (float) Math.toDegrees(2 * Math.acos(Math.min(1F, Math.abs(qa.dot(qb)))));
                 h.assertTrue(a.distance(b) < 0.02F && turn < 3F,
-                        style.id() + " " + next.key + " starts where " + prev.key + " holds the blade (" + a.distance(b) + ", " + turn + " degrees)");
+                        style.id() + " " + next.key + " starts where its hand is after " + prev.key + " (" + a.distance(b) + ", " + turn + " degrees)");
                 links++;
             }
         }

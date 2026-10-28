@@ -101,3 +101,18 @@ Left: the scythe's haul, the twin blades' spins (strikes 4-5), the daggers' and 
 every 4 ticks: the idle hand could draw back while the other strikes), and the steps still over 0.3 (mostly first
 strikes thrown up from rest).
 
+## Round 4: the idle hand (2026-10-28)
+
+Note (Euan, same day): "do the daggers and twin blades rhythm next: let the idle hand draw back while the other strikes."
+
+The daggers strike one hand at a time, a 1-tick wind-up every 4 ticks, and the hand not striking sat at rest, so each
+stab came out of nowhere. Now, from the moment one dagger lands, the other draws back toward the next strike's set and
+waits there; the next stab only has the last part of its draw left. The idle dagger stays on its own side of the view
+(its tip at least 0.15 from the middle): drawn all the way to the next set, the two blades piled up in the centre.
+Strike 4 is both hands crossing, by design, and now starts where the main hand held strike 3.
+
+The twin blades are one double-ended blade held in one hand (every move the main hand's), so there is no idle hand to
+draw back. Their round-3 chain is in view; their rhythm needs its own idea.
+
+Chain links that start exactly where their hand already is: 43 -> 46 (the daggers' 1 -> 2, 2 -> 3, 3 -> 4).
+

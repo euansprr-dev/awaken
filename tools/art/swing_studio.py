@@ -203,20 +203,121 @@ CHAIN_SET = 0.9  # and a chained strike's set
 CARRY_KEEP = 0.4  # a leading strike's follow-through keeps at least this much of its travel
 LOAD_STEP = 0.3  # the most the tip moves (ndc) in a 60 fps frame while it draws back
 _START = {}
+_BUSY = set()
 
 
 def chain_start(st, mv, held):
-    """Where the strike before this one in the chain holds the blade when this one is pressed ((d, R)), or None: this
-    one starts from rest, or the other hand strikes."""
+    """Where this strike's hand is when it is pressed ((d, R)): where the strike before it holds the blade (the same
+    hand), or where the idle hand drew back to while that one struck (idle_pose); None: it starts from rest."""
     prev, _ = chain_links(st, mv)
     if prev is None:
         return None
     key = (st["id"], mv, held.wid)
+    if key in _BUSY:  # the idle hand's target is this strike's own set: asked while working that out, it starts from rest
+        return None
     if key not in _START:
-        pmv, at = prev
-        hands = {pmv: hand_of(st, pmv), mv: hand_of(st, mv)}
-        _START[key] = L.rig_pose(st, st["moves"][pmv], held, float(at)) if hands[pmv] == hands[mv] else None
+        _BUSY.add(key)
+        try:
+            pmv, at = prev
+            if side(hand_of(st, pmv)) == side(hand_of(st, mv)):
+                _START[key] = L.rig_pose(st, st["moves"][pmv], held, float(at))
+            elif idle_next(st, pmv) == mv:
+                _START[key] = idle_pose(st, pmv, held, float(at))
+            else:
+                _START[key] = None
+        finally:
+            _BUSY.discard(key)
     return _START[key]
+
+
+def chained(st, mv):
+    """Whether this strike starts where its hand already is, not from rest (chain_start, without working it out)."""
+    prev, _ = chain_links(st, mv)
+    if prev is None:
+        return False
+    return side(hand_of(st, prev[0])) == side(hand_of(st, mv)) or idle_next(st, prev[0]) == mv
+
+
+def side(hand):
+    """The hand whose pose leads a move: the off hand's own, else the main's (both hands play the main's)."""
+    return "off" if hand == "off" else "main"
+
+
+# ---- the idle hand (round 4: a weapon in each hand) ---------------------------------------------------------------------
+
+IDLE_DRAW = 1.5  # ticks the idle hand takes to draw back to the next strike's set, from the striking hand's hit
+
+
+def idle_next(st, mv):
+    """The next strike, when the hand not striking this one strikes it (or both do) and the style has its idle hand
+    drawn back (a feel spec's idleHand): Euan 2026-10-28, "let the idle hand draw back while the other strikes"."""
+    if not feel(st["id"]).get("idleHand") or hand_of(st, mv) == "both":
+        return None
+    chain = st.get("chain", []) + st.get("masteryChain", [])
+    if mv not in chain or chain.index(mv) + 1 >= len(chain):
+        return None
+    nxt = chain[chain.index(mv) + 1]
+    h = hand_of(st, nxt)
+    return nxt if h == "both" or side(h) != side(hand_of(st, mv)) else None
+
+
+def set_time(st, mv):
+    """When a move's drive leaves its set (ticks)."""
+    m = st["moves"][mv]
+    form = L.form_of(m)[0]
+    kn = cut_knobs(st["id"], mv, form) if form in L.CUTS else None
+    return cut_times(m, kn)[1] if kn is not None else L.phases(m, weight(st["id"]))[0]
+
+
+_READY = {}
+
+
+def ready_pose(st, mv, held):
+    """A move's pose at its set, just before the drive: where the idle hand waits for it."""
+    key = (st["id"], mv, held.wid)
+    if key not in _READY:
+        _READY[key] = L.rig_pose(st, st["moves"][mv], held, max(0.0, set_time(st, mv) - 0.01))
+    return _READY[key]
+
+
+IDLE_HALF = 0.15  # the idle hand's tip stays this far (ndc) on its own side of the view: two blades never knot mid-screen
+
+
+def idle_target(st, mv, held):
+    """Where the idle hand waits for the strike it throws next: toward that strike's set, only as far as keeps its tip on
+    its own half of the view (the strike's own wind-up draws the rest of the way)."""
+    rest = (np.zeros(3), np.eye(3))
+    ready = ready_pose(st, mv, held)
+    for a in np.linspace(1.0, 0.0, 21):
+        p = L.lerp_pose(rest, ready, a)
+        if _tip_ndc(held, p)[0] >= IDLE_HALF:
+            return p
+    return rest
+
+
+def idle_pose(st, mv, held, t):
+    """The idle hand at t ticks into this move ((d, R), authored for its own hand like any move), or None: it rests.
+    Still until the striking hand's hit, so nothing pulls the eye off the blow; then drawn back to the next strike's
+    set over IDLE_DRAW (done by the earliest press), held there through the chain's window, home by the move's end."""
+    nmv = idle_next(st, mv)
+    if nmv is None:
+        return None
+    m = st["moves"][mv]
+    rest = (np.zeros(3), np.eye(3))
+    _, win = chain_links(st, mv)
+    hit = L.hit_tick(m)
+    total = m["windup"] + m["active"] + m["recovery"]
+    drawn = min(hit + IDLE_DRAW, win[0]) if win else hit + IDLE_DRAW
+    end = min(win[1], total) if win else total
+    target = idle_target(st, nmv, held)
+    if t <= hit:
+        return rest
+    if t < drawn:
+        return L.lerp_pose(rest, target, L.ease_in_out_sine((t - hit) / max(1e-6, drawn - hit)))
+    back = min(1.5, total - end)
+    if t < end or back <= 0:
+        return target
+    return L.lerp_pose(target, rest, L.ease_in_out_sine(min(1.0, (t - end) / back)))
 
 
 def hand_of(st, mv):
@@ -285,7 +386,7 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
     mv = move_name(st, m)
     prev, nxt = chain_links(st, mv)
     drop = kn["exit_drop"]
-    if prev is not None and chain_start(st, mv, held) is not None:
+    if chained(st, mv):
         # a chained strike's set stays in view too: a shorter draw back from where the last one ended, never a dip
         # out of the frame and a blade that reappears only on the hit
         pre = _on_screen_set(held, at, pre, kn["creep"], lag, roll0)
@@ -624,6 +725,7 @@ def live(sid, moves=None, spec=None):
     if spec is not None:
         _FEEL[sid] = spec
     _START.clear()
+    _READY.clear()
     st = L.table()[sid]
     held = L.Held("gatewrought_" + sid)
     out = {}

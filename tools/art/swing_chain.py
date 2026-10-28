@@ -140,6 +140,15 @@ def hand_of(swings, sid, mv):
     return swings[sid]["moves"].get(mv, {}).get("hand", "main")
 
 
+def idle_of(sid, mv, t, swings):
+    """The hand not striking (the clip's idle track, round 4), or None: it rests."""
+    keys = swings[sid]["moves"].get(mv, {}).get("idle")
+    if not keys:
+        return None
+    clip = {"keys": [k + [0.0, 0.0, 0.0] for k in keys]}
+    return L.new_pose(sid, "_idle", t, {sid: {"moves": {"_idle": clip}}})
+
+
 def play(sid, swings=None, rhythm="mash", wid=None):
     """Frames [(t, move index, the striking blade's tip ndc, mid ndc, mid z, local t)] through one pass of the chain."""
     swings = swings or L.load_swings()
@@ -158,6 +167,8 @@ def play(sid, swings=None, rhythm="mash", wid=None):
         lt = t - s0
         hand = hand_of(swings, sid, mv)
         d, R = sample(sid, mv, lt, swings)
+        idle = idle_of(sid, mv, lt, swings) if hand != "both" else None
+        other = "off" if hand == "main" else "main"
         if i != cur:
             cur = i
             m = st["moves"][mv]
@@ -168,12 +179,15 @@ def play(sid, swings=None, rhythm="mash", wid=None):
                 moves = hand == "both" or h == hand or (hand == "main" and h == "main")
                 if moves:
                     b.begin(t, d, R, vd, w, ticks)
+                elif idle is not None and h == other:
+                    b.begin(t, *idle, np.zeros(3), np.zeros(3), ticks)
                 else:
                     b.begin(t, np.zeros(3), np.eye(3), np.zeros(3), np.zeros(3), ticks)
         shown = {}
         for h, b in blends.items():
             moves = hand == "both" or h == hand
-            shown[h] = b.apply(t, *(d, R) if moves else (np.zeros(3), np.eye(3)))
+            src = (d, R) if moves else idle if idle is not None and h == other else (np.zeros(3), np.eye(3))
+            shown[h] = b.apply(t, *src)
         sd, sR = shown["off" if hand == "off" else "main"]
         tip = sR @ held.tip + H0 + sd
         grip = sR @ held.grip + H0 + sd
@@ -254,7 +268,7 @@ def report(styles=None, rhythm="mash", js=None, swings=None):
 
 def strip(out, sid, rhythm="mash", swings=None):
     """The chain at 60 fps, one cell a frame, each strike's hit ringed red, the striking blade's tip traced."""
-    from PIL import Image, ImageDraw
+    from PIL import Image, ImageChops, ImageDraw, ImageOps
     swings = swings or L.load_swings()
     st = L.table()[sid]
     sch, frames, held = play(sid, swings, rhythm)
@@ -264,11 +278,11 @@ def strip(out, sid, rhythm="mash", swings=None):
         t, i, tn, mn, z, lt, shown = f
         mv = sch[i][0]
         hand = hand_of(swings, sid, mv)
-        d, R = shown["off" if hand == "off" else "main"]
-        if hand == "off":  # draw the striking blade where it is, mirrored for the off hand
-            d = d * np.array([-1, 1, 1])
-            R = np.diag([-1, 1, 1]) @ R @ np.diag([-1, 1, 1])
-        im = L.frame(held, d, R).resize((192, 108), Image.LANCZOS)
+        d, R = shown["main"]
+        im = L.frame(held, d, R)
+        if swings[sid].get("twin"):  # the off hand's blade too: drawn as a right hand, the frame mirrored
+            im = ImageChops.lighter(im, ImageOps.mirror(L.frame(held, *shown["off"])))
+        im = im.resize((192, 108), Image.LANCZOS)
         dr = ImageDraw.Draw(im)
         trail = (trail + [tn])[-6:]
         pts = [((p[0] + 1) * 96, (1 - p[1]) * 54) for p in trail]

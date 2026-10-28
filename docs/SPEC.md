@@ -5823,6 +5823,17 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     the settle after a leading blow is now seen (the report's drift, 2 -> 27 moves, 88-150 ms), and a chained strike's
     shorter draw back lands at 0.42-0.72 of its peak speed in 7 moves. Left: the scythe's haul (its own shape), the
     daggers' and twin blades' rhythm (a 1-tick wind-up every 4 ticks).
+  - *Round 4, the idle hand* (Euan 2026-10-28: "let the idle hand draw back while the other strikes"): a style whose
+    feel spec sets `idleHand` (the daggers; the gauntlets may follow) bakes, for each chain strike thrown by one hand
+    and followed by the other's (or both), the other hand's track: still until this strike's hit, then drawn over 1.5
+    ticks (done by the earliest press) toward the next strike's set, only as far as keeps its tip 0.15 (ndc) on its
+    own side of the view so the two blades never knot mid-screen, held through the window, home by the move's end.
+    The next strike starts from there and its own wind-up draws the rest of the way. `fp_swings.json` schema 6 adds
+    the move's optional `idle` keys ([t, dx, dy, dz, qx, qy, qz, qw], authored for its own hand like any move, mirrored
+    for the off hand); `FpSwings.idle` samples it and `ArmsHands` shows it on the hand not striking, carried by
+    `SwingBlend` like a strike. A strike of both hands now starts where the main hand held the strike before it.
+    `arms_chain_flow` checks these links too (46). The twin blades are one double-ended blade in one hand, so the idle
+    hand does not apply to them.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
