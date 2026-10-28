@@ -222,7 +222,7 @@ final class RitualRenderers {
             if (clip < 0) clip = kneel;
             Track t = track(e.getId());
             stageClip(getModel(), s, t, stage == RitualStatue.STRIKE && age > 0.6 ? 100 : stage, clip, now, stage == RitualStatue.STRIKE && age > 0.6 ? age - 0.6 : age);
-            if (stage == RitualStatue.WALK) s.time = (e.walkAnimation.position(pt)) * 0.55F; // locked to distance, never sliding
+            if (stage == RitualStatue.WALK) s.time = dev.awaken.mobs.Ritual.walkSeconds(e, pt); // locked to distance, never sliding
             s.look = stage == RitualStatue.KNEEL || stage == RitualStatue.WINDUP || stage == RitualStatue.STRIKE ? 0.15F : 1;
             boolean angry = stage == RitualStatue.GLARE || stage == RitualStatue.WINDUP || stage == RitualStatue.STRIKE;
             s.glow = stage == RitualStatue.KNEEL ? 0.18F : angry ? 1.0F : 0.6F;

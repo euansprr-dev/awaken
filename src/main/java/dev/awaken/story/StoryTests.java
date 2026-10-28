@@ -30,6 +30,7 @@ final class StoryTests {
 
     static void register() {
         RitualTests.register();
+        RitualAudioTests.register();
         TogetherTests.register();
         AwakenTests.register("story_triggers", 20, h -> {
             Profile p = new Profile();

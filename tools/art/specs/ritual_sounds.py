@@ -1,5 +1,6 @@
 """The Ritual of the Bell's sounds (docs/proposals/the-ritual.md): the hall, the rules, the Seated One waking and
-judging, the end, the void and the awakening. Eighteen events, all synthesised here with the audio kit
+judging, the end, the void and the awakening. Physical/beam sounds now use CC0 recordings in ritual_recordings.py.
+The remaining System and void tones are synthesized here with the audio kit
 (tools/art/audiokit.py): modal bronze, struck glass (the System), a distant choir (something bigger than you), stone
 friction and fracture, synthesised rooms. D Phrygian like the Bell Crypt; the System's glass keeps D major pentatonic;
 the tear carries the Signal's sigh (D A Bb A) rising to D.
@@ -9,16 +10,15 @@ the tear carries the Signal's sigh (D A Bb A) rising to D.
 
 Writes src/main/resources/assets/awaken/sounds/ritual/<name>.ogg (44.1 kHz Vorbis), the events story.ritual.<name> in
 src/main/merge/story/assets/awaken/sounds.json and their subtitles in the story lang file (other keys kept as they are).
-Sounds placed in the hall are mono (OpenAL only places mono sources); the ones played on the listener (words, drain,
-tear, void) are stereo. Every file is mastered inside the sfx window of audio_mix.py (-20 +- 4 dBFS gated RMS, true
-peak under -1 dBFS) by this spec's own master() (hits keep their shape; see its comment): the bell, the eyes, the doors
-and the close are the loudest moments; the candle, the heartbeat and the void bed are made soft by their event volume,
-so audio_mix.py --fix never re-levels them. Build prints RMS, LUFS and how much the limiter took.
+Physical sounds are mono for OpenAL placement; hall ambience and the remaining System/void layers are stereo.
+The recorded assets retain natural transient-to-tail dynamics: their individual ceilings are -7.5 to -29 dBTP,
+with a decoded ceiling below -6 dBTP. Their exact measurements/provenance live in tools/art/sources/ritual/.
+audio_mix.py recognizes that manifest and never forces these recordings to its generic RMS window.
+The System's glass, candle, drain, heartbeat, tear and void retain the existing synthesis, played at a quieter mix.
 
-Sync points for the director: the doors meet (the BOOM) at DOOR_SHUT = 1.9 s; the eyes bloom at EYES_BLOOM = 2.8 s;
-the darkness opens at TEAR_OPEN = 0.85 s; the hand's impact is 0.06 s into "close" and it cuts to black at 0.46 s.
-"drain" ends at its peak: stop it when "close" plays, or the cut to silence is lost. The heartbeat is 1.3 s (made to
-repeat every ~1.6 s); the void bed loops seamlessly at 12 s.
+Sync points match the unchanged director: doors meet at 28 ticks (1.4 s); eyes bloom at 58 ticks (2.9 s);
+gaze charge lasts 45 ticks (2.25 s); the swing starts 17 ticks into the 25-tick wind-up; walk contacts are every
+0.8 s of the distance-driven 1.6 s clip. The hand's impact remains at 0.06 s, cutting to black at 0.46 s.
 Deterministic: every random source is seeded. build(out) is a no-op so build_all.py (textures) does not render audio.
 """
 import json
@@ -35,6 +35,7 @@ ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
 sys.path.insert(0, ART)
 import audiokit as K  # noqa: E402
 from audio_mix import TARGETS  # noqa: E402
+import ritual_recordings as REC
 
 SND = os.path.join(ROOT, "src/main/resources/assets/awaken/sounds/ritual")
 MERGE = os.path.join(ROOT, "src/main/merge/story/assets/awaken")
@@ -392,11 +393,6 @@ def great_bell(f1, L, seed, strike=1.0):
     return x + 0.05 * sub
 
 
-def bell(seed):
-    L = 9.6
-    b = Bus(L)
-    b.add(far_wall(great_bell(hzm("D3"), L, seed)), 0.0, 1.0, "nave", 0.5)
-    return fade_out(b.render(), 2.4)
 
 
 # ---- 2. the doors ----------------------------------------------------------------------------------------------------
@@ -405,77 +401,10 @@ DOOR_SHUT = 1.9  # the doors meet (the BOOM)
 DOOR_STONE = ((120, 1.0, 1.0), (300, 1.1, 0.8), (700, 1.2, 0.45), (1700, 1.4, 0.16))
 
 
-def doors(seed):
-    L = 4.0
-    T = DOOR_SHUT
-    b = Bus(L)
-    # two doors, the right one a beat behind; each speeds up as it swings, then the last heavy drag
-    a = grind(T, [(0, 0), (0.15, 0.5), (0.9, 0.8), (1.6, 1.0), (T - 0.05, 0.85), (T, 0.0)], seed + 1,
-              res=DOOR_STONE, rate=(8, 24), grit=0.15)
-    c = grind(T, [(0, 0), (0.3, 0.4), (1.0, 0.75), (1.7, 0.95), (T - 0.04, 0.8), (T, 0.0)], seed + 2,
-              res=tuple((f * 1.2, w, g) for f, w, g in DOOR_STONE), rate=(10, 22), grit=0.15)
-    b.add(K.lowpass(a, 3000, 2), 0.0, 0.1, "nave", 0.3)
-    b.add(K.lowpass(c, 3000, 2), 0.0, 0.08, "nave", 0.3)
-    # the iron pivots groan under the weight
-    n = K.ns(T)
-    piv = grind(T, [(0, 0), (0.3, 0.6), (1.2, 0.8), (T, 0.2)], seed + 3,
-                res=((310, 0.25, 1.0), (780, 0.25, 0.6), (1530, 0.3, 0.3)), rate=(7, 14), grit=0.0, drag=0.0)
-    b.add(piv, 0.0, 0.03, "nave", 0.4)
-    # the mass moving: a low weight under it all
-    rum = unit(K.lowpass(K.noise(n, "brown", seed + 4), 90, 3)) * bp(n, [(0, 0), (0.3, 0.6), (T, 1.0)])
-    rum += 0.5 * K.sine(41.0, n) * bp(n, [(0, 0), (0.5, 0.4), (T, 1.0)])
-    b.add(rum, 0.0, 0.07, "nave", 0.2, hp=80)
-    b.add(debris(T, 10, 0.2, T, seed + 5, 0.9, shape=1.0), 0.0, 0.1, "nave", 0.3)
-    # BOOM: stone on stone, the whole hall answers
-    hit = boom(2.0, 62, 30, 1.1, tau=0.1, drive=1.8, attack=0.005)
-    put(hit, thud(1.0, 700, 0.28, seed + 6), 0.0, 0.6)
-    put(hit, slab([96, 212, 365, 590, 870], 0.6, K.ns(1.2), seed + 7), 0.0, 0.45)
-    put(hit, crack(seed + 8, 1.6), 0.004, 0.35)
-    b.add(far_wall(glue(hit, 1.8)), T, 1.0, "nave", 0.5, hp=70)
-    b.add(dust(L - T, seed + 9, 260, 4500) * bp(K.ns(L - T), [(0, 0), (0.1, 1), (1.2, 0.5), (L - T, 0)]),
-          T + 0.05, 0.04, "nave", 0.4)
-    b.add(debris(L - T, 16, 0.06, 1.6, seed + 10, 0.8), T, 0.25, "nave", 0.4)
-    return fade_out(b.render(), 1.0)
 
 
 # ---- 3. every flame dies -------------------------------------------------------------------------------------------
 
-def flames_out(seed):
-    L = 1.6
-    T = 0.42  # the moment they all go
-    b = Bus(L)
-    n0 = K.ns(T)
-    # the flames, for an instant: a soft roar and crackle, pulled inward with the air
-    fire = unit(K.lowpass(K.noise(n0, "pink", seed + 1), 700, 2)) * (0.8 + 0.2 * K.smooth_noise(n0, 14, seed + 2))
-    fire += 0.5 * K.crackle(n0, rate=60, seed=seed + 3, bright=0.5)
-    b.add(fire * bp(n0, [(0, 0.5), (T * 0.7, 0.8), (T, 0.0)]), 0.0, 0.1, "hall", 0.2)
-    # the inward suck: a reversed whoosh, rising and brightening, stopping dead on the moment
-    puffsrc = K.bandnoise(K.ns(0.09), 1400, 0.7, seed + 4) * K.perc(K.ns(0.09), 0.002, 0.06)
-    rev = reversed_swell(puffsrc, room("hall"), 1.2, close=0.01)[-n0:]
-    rush = sweep(K.noise(n0, "pink", seed + 5), lambda t: 350 * (3800 / 350) ** min(1.0, t / T), 1.3)
-    suck = rev * 0.5 + pk(unit(rush) * bp(n0, [(0, 0), (T * 0.5, 0.2), (T, 1.0)]) ** 2) * 0.4
-    suck *= bp(n0, [(0, 0), (T * 0.6, 0.35), (T - 0.012, 1.0), (T, 0.0)]) ** 1.5
-    b.add(suck, 0.0, 0.8, "hall", 0.1)
-    # pfff: a hundred small flames snuffed together
-    r = K.rng(seed + 6)
-    pf = np.zeros(K.ns(0.4))
-    for k in range(40):
-        d = r.uniform(0.04, 0.12)
-        kn = K.ns(d)
-        p = K.bandnoise(kn, r.uniform(700, 2600), 1.2, seed + 50 + k) * K.perc(kn, r.uniform(0.003, 0.01), d * 0.6)
-        put(pf, p, r.uniform(0, 0.07) ** 1.3 * 3, r.uniform(0.3, 1.0))
-    b.add(pk(K.lowpass(pf, 3200, 2)), T, 0.4, "hall", 0.08)
-    y = b.render()
-    # the air dies with them: everything shuts within a fifth of a second...
-    g = np.ones(len(y))
-    c0, c1 = K.ns(T + 0.1), K.ns(T + 0.32)
-    g[c0:c1] = 1 - (1 - 0.02) * K._rise(c1 - c0)
-    g[c1:] = 0.02
-    y *= g
-    # ...and the silence lands: a deep, sudden thump
-    put(y, boom(0.9, 52, 30, 0.3, tau=0.06, drive=1.4, attack=0.004), T, 0.9)
-    put(y, thud(0.3, 160, 0.08, seed + 7), T, 0.3)
-    return fade_out(y, 0.5)
 
 
 # ---- 4. one candle -------------------------------------------------------------------------------------------------
@@ -531,233 +460,34 @@ def words(seed):
 EYES_BLOOM = 2.8
 
 
-def eyes(seed):
-    L = 7.5
-    T = EYES_BLOOM
-    b = Bus(L)
-    nb = K.ns(T)
-    u = np.arange(nb) / nb
-    # the build: something under the floor wakes. Sub and rumble, trembling faster as it rises
-    tr = np.cumsum(3 + 7 * u ** 2) / SR
-    sub = (K.sine(hzm("D1"), nb) + 0.6 * K.sine(hzm("D2"), nb)) * (0.75 + 0.25 * np.sin(2 * np.pi * tr))
-    b.add(sub * u ** 1.8, 0.0, 0.25, "nave", 0.15, hp=60)
-    rum = unit(K.lowpass(K.noise(nb, "brown", seed + 1), 110, 3)) * u ** 2.2
-    b.add(rum, 0.0, 0.18, "nave", 0.25)
-    # monks under it, then the choir cluster rising and tightening into the chord
-    hum = K.choir(hzm("D2"), nb, "o", 6, seed + 2, bright=0.25) + 0.7 * K.choir(hzm("A2"), nb, "o", 6, seed + 3, bright=0.25)
-    b.add(K.lowpass(hum, 900, 2) * K.swell(nb, 0.85, 1.2) * 0.04, 0.0, 1.0, "nave", 0.6)
-    for i, (m0, m1) in enumerate(((57, 62), (58, 65), (60, 69), (62, 74), (63, 77))):
-        fc = K.hz(m0 + (m1 - m0) * u ** 2.6)
-        c = choir_glide(fc, "a" if i % 2 else "o", 6, seed + 10 + i, bright=0.3 + 0.1 * (i % 3))
-        b.add(c * (0.03 + 0.97 * u ** 2.4) * 0.045, 0.0, 1.0, "nave", 0.6)
-    air = sweep(K.noise(nb, "white", seed + 4), lambda t: 2000 * (9000 / 2000) ** (t / T), 0.8)
-    b.add(unit(air) * u ** 3, 0.0, 0.05, "nave", 0.4)
-    # a reversed bloom sucks into the moment
-    src = Bus(1.4)
-    for i, m in enumerate(("D5", "A5", "D6", "F6")):
-        src.add(glass_note(m, 1.4, 0.6, 0.6, 1.2, seed + 40 + i))
-    src.add(boom(1.4, 70, 40, 0.6, drive=0), 0.0, 0.6)
-    b.add(reversed_swell(src.dry, room("nave"), 2.4), T - 2.4, 0.3)
-    # BLOOM: the deep impact...
-    hit = boom(3.0, 58, 26, 1.8, tau=0.16, drive=1.8, attack=0.006)
-    put(hit, thud(1.5, 900, 0.45, seed + 5), 0.0, 0.4)
-    drum = K.modal(55.0, [1.0, 1.59, 2.14, 2.65], [1.0, 0.6, 0.4, 0.2], [1.0, 0.6, 0.4, 0.3], K.ns(1.5), attack=0.002, seed=seed + 6)
-    put(hit, pk(drum * K.perc(K.ns(1.5), 0.002, 1.0)), 0.0, 0.35)
-    b.add(glue(hit, 1.6), T, 1.0, "nave", 0.5, hp=70)
-    # ...the blazing shimmer chord...
-    for i, m in enumerate(("D6", "A6", "D7", "F7", "A7", "D8")):
-        g = glass_note(m, L - T, 0.6, 0.85, 3.6 - 0.3 * i, seed + 60 + i, core=0.5, glint=0.15)
-        b.add(g, T + 0.004 * i, 0.32 - 0.03 * i, "nave", 0.55)
-    nr = K.ns(L - T)
-    t = K.tvec(nr)
-    r = K.rng(seed + 7)
-    sh = np.zeros(nr)
-    for k_ in range(24):  # many slightly detuned high voices flickering: light too bright to look at
-        m = ("D6", "A6", "D7", "A7", "F7")[k_ % 5]
-        f = hzm(m) * 2 ** (r.normal(0, 7) / 1200)
-        flick = 0.55 + 0.45 * K.smooth_noise(nr, r.uniform(6, 14), seed + 100 + k_)
-        sh += np.sin(2 * np.pi * f * t + r.uniform(0, 6.28)) * flick
-    sh *= K.perc(nr, 0.02, 3.2)
-    b.add(unit(sh) * 0.1, T, 1.0, "nave", 0.6)
-    for i, m in enumerate(("D5", "A5")):
-        b.add(K.fm_bell(hzm(m), nr, 4.0, 2.8, 3.5, seed + 70 + i), T, 0.12, "nave", 0.6)
-    # ...and the choir, full voice, held and let go
-    for i, (m, g, v) in enumerate((("D3", 0.7, "a"), ("A3", 0.6, "a"), ("D4", 0.6, "a"), ("F4", 0.45, "a"),
-                                   ("A4", 0.5, "a"), ("D5", 0.35, "o"))):
-        c = K.choir(hzm(m), nr, v, 6, seed + 80 + i, bright=0.42)
-        b.add(c * K.adsr(nr, 0.06, 0.6, 0.6, 3.2) * g * 0.18, T, 1.0, "nave", 0.6)
-    og = organ(hzm("D2"), nr, seed + 90) * K.adsr(nr, 0.05, 0.8, 0.6, 3.5)
-    b.add(K.lowpass(og, 1200, 2) * 0.1, T, 1.0, "nave", 0.5)
-    return fade_out(b.render(), 1.6)
 
 
 # ---- 7. the gaze charges -------------------------------------------------------------------------------------------
 
-def gaze_charge(seed):
-    L = 2.3
-    n = K.ns(L)
-    u = np.arange(n) / n
-    b = Bus(L)
-    # the whine: rising, its vibrato faster and narrower as it tightens, a fifth above it, a partner beating closer
-    vr = np.cumsum(5 + 40 * u ** 2) / SR
-    vib = 2 ** ((40 * (1 - u) ** 1.5 + 6) * np.sin(2 * np.pi * vr) / 1200)
-    f = 260 * (2600 / 260) ** (u ** 1.6) * vib
-    w = K.sine(f, n) + 0.3 * K.sine(2 * f, n) + 0.12 * K.sine(3 * f, n)
-    w += 0.4 * K.sine(1.5 * f, n) + 0.5 * K.sine(f * 2 ** (30 * (1 - u) / 1200), n)
-    pulse = 0.7 + 0.3 * np.sin(2 * np.pi * np.cumsum(6 + 34 * u ** 2) / SR)
-    b.add(w * pulse, 0.0, 0.12, "hall", 0.35)
-    # growing crackle
-    cr = K.crackle(n, rate=140, seed=seed + 1, bright=0.7, burstiness=0.5) * u ** 2
-    b.add(cr, 0.0, 0.35, "hall", 0.3)
-    # a low throb, quickening
-    th = (K.sine(48.0, n) + 0.4 * K.sine(96.0, n)) * (0.5 + 0.5 * np.sin(2 * np.pi * np.cumsum(2.5 + 9 * u ** 1.5) / SR)) ** 2
-    b.add(th, 0.0, 0.28, "hall", 0.15, hp=80)
-    air = sweep(K.noise(n, "white", seed + 2), lambda tt: 1500 * (8000 / 1500) ** (tt / L), 1.2)
-    b.add(unit(air) * u, 0.0, 0.05, "hall", 0.3)
-    # everything swells from almost nothing; it ends abruptly, the room cut with it
-    y = b.render() * (0.04 + 0.96 * u ** 1.8)
-    k = K.ns(0.006)
-    y[-k:] *= K._rise(k)[::-1]
-    return y
 
 
 # ---- 8. the gaze fires ---------------------------------------------------------------------------------------------
 
-def gaze_fire(seed):
-    L = 1.5
-    b = Bus(L)
-    n = K.ns(L)
-    t = K.tvec(n)
-    # the searing blast
-    blast = K.lowpass(K.highpass(K.noise(n, "white", seed + 1), 300, 1), 9000, 2)
-    hit = pk(blast * K.perc(n, 0.006, 0.5, hold=0.08)) * 0.6  # it sears for a moment, then dies
-    # the beam: a hard buzzing tone falling from the charge's last note, through a burning band
-    f = 2600 * np.exp(-t / 0.03) + 180 + 40 * np.exp(-t / 0.3)
-    amps = K.saw_amps(2800, bright=0.8, tilt=0.9, cap=110)
-    tone = K.table_osc(K.harmonic_table(amps), f * (1 + 0.01 * K.smooth_noise(n, 40, seed + 2)), n)
-    tone = pk(K.bandpass(tone, 1600, 0.6) * K.perc(n, 0.006, 0.6, hold=0.18))
-    hit += tone * 0.4
-    # the high sizzle
-    sz = unit(K.highpass(K.crackle(n, rate=420, seed=seed + 3, bright=0.95, burstiness=0.3), 3000, 2))
-    sz = 2.5 * np.tanh(sz / 2.5)  # crackle is all spikes: round them so the sizzle reads as a texture
-    b.add(sz * K.perc(n, 0.008, 0.5, hold=0.22), 0.0, 0.12, "nave", 0.3)
-    fizz = K.highpass(K.noise(n, "white", seed + 4), 5000, 2) * (0.6 + 0.4 * np.sin(2 * np.pi * 70 * t)) * K.perc(n, 0.008, 0.5, hold=0.18)
-    b.add(unit(fizz), 0.0, 0.05, "nave", 0.3)
-    # the concussion
-    put(hit, boom(1.2, 78, 34, 0.45, tau=0.07, drive=1.8, attack=0.006), 0.0, 0.85)
-    put(hit, thud(0.4, 320, 0.1, seed + 5), 0.0, 0.5)
-    b.add(glue(hit, 2.4), 0.0, 1.0, "nave", 0.35, hp=90)
-    return fade_out(b.render(), 0.5)
 
 
 # ---- 9. twelve statues stand ---------------------------------------------------------------------------------------
 
-def statue_rise(seed):
-    L = 2.8
-    b = Bus(L)
-    low = ((110, 1.0, 1.0), (260, 1.1, 0.8), (620, 1.2, 0.45), (1500, 1.4, 0.16))
-    for i in range(4):
-        st = 0.05 + 0.18 * i
-        d = 1.55 - 0.1 * i
-        g = grind(d, [(0, 0), (0.12, 0.7), (d * 0.6, 1.0), (d - 0.06, 0.6), (d, 0)], seed + 10 + i,
-                  res=tuple((fc * (1 + 0.12 * i), w, a) for fc, w, a in low), rate=(8, 20 + 3 * i), grit=0.2)
-        b.add(K.lowpass(g, 3500, 2), st, 0.07 - 0.008 * i, "nave", 0.35)
-    r = K.rng(seed + 1)
-    for k in range(9):  # cracking free of their kneeling poses
-        b.add(crack(seed + 20 + k, r.uniform(0.7, 1.4)), r.uniform(0.05, 1.5), r.uniform(0.35, 0.75), "nave", 0.35)
-    n = K.ns(L)
-    rum = unit(K.lowpass(K.noise(n, "brown", seed + 2), 110, 3)) * bp(n, [(0, 0), (0.4, 0.8), (1.6, 1.0), (L, 0.2)])
-    b.add(rum, 0.0, 0.08, "nave", 0.25, hp=80)
-    for k, tt in enumerate((1.62, 1.8, 1.97, 2.12)):  # feet planted, one after another
-        hit = boom(0.8, 72, 38, 0.3, tau=0.05, drive=1.8, attack=0.004)
-        put(hit, thud(0.4, 600, 0.12, seed + 30 + k), 0.0, 0.5)
-        b.add(glue(hit, 1.6), tt, 0.85 - 0.08 * k, "nave", 0.4, hp=80)
-    b.add(dust(L, seed + 3, 380, 5000) * bp(n, [(0, 0), (0.4, 0.6), (1.8, 1.0), (L, 0.3)]), 0.0, 0.035, "nave", 0.4)
-    b.add(debris(L, 26, 0.2, 2.6, seed + 4, 0.9, shape=1.2), 0.0, 0.22, "nave", 0.35)
-    return fade_out(b.render(), 0.6)
 
 
 # ---- 10. a stone weapon swings -------------------------------------------------------------------------------------
 
-def swing(seed):
-    L = 0.9
-    P = 0.42  # the blade passes closest
-    b = Bus(L)
-    n = K.ns(L)
-    env = bp(n, [(0, 0), (P * 0.5, 0.25), (P, 1.0), (P + 0.18, 0.3), (L - 0.05, 0.0), (L, 0)]) ** 2.0
-    cen = lambda t: 170 + 480 * np.exp(-((t - P) / 0.16) ** 2)  # noqa: E731
-    w = unit(sweep(K.noise(n, "pink", seed + 1), cen, 1.6)) * env
-    edge = unit(sweep(K.noise(n, "white", seed + 2), lambda t: 3.2 * cen(t), 3.0)) * env ** 1.5
-    t = K.tvec(n)
-    push = K.sine(55 + 30 * np.exp(-((t - P) / 0.15) ** 2), n) * env
-    air = unit(K.lowpass(K.noise(n, "white", seed + 3), 130, 2)) * env
-    b.add(w, 0.0, 0.8, "hall", 0.2)
-    b.add(edge, 0.0, 0.12, "hall", 0.2)
-    b.add(push, 0.0, 0.22)
-    b.add(air, 0.0, 0.3)
-    return fade_out(b.render(), 0.1)
 
 
 # ---- 11. it lands --------------------------------------------------------------------------------------------------
 
-def impact(seed):
-    L = 1.2
-    b = Bus(L)
-    hit = boom(1.0, 86, 42, 0.5, tau=0.06, drive=2.2, attack=0.003)
-    put(hit, slab([140, 262, 410, 630, 905], 0.4, K.ns(0.8), seed + 6), 0.0, 0.8)
-    put(hit, thud(0.6, 1200, 0.3, seed + 1, attack=0.001), 0.0, 0.8)
-    put(hit, crack(seed + 2, 1.3), 0.002, 0.55)
-    put(hit, crack(seed + 3, 0.8), 0.035, 0.3)
-    b.add(glue(hit, 2.6), 0.0, 1.0, "nave", 0.3, hp=90)
-    b.add(debris(L, 18, 0.03, 0.9, seed + 4, 1.0, shape=2.0), 0.0, 0.45, "nave", 0.3)
-    n = K.ns(0.8)
-    puff = unit(K.lowpass(K.noise(n, "pink", seed + 5), 2500, 2)) * K.perc(n, 0.01, 0.45)
-    b.add(puff, 0.01, 0.06, "nave", 0.3)
-    return fade_out(b.render(), 0.35)
 
 
 # ---- 12. the floor gives way ---------------------------------------------------------------------------------------
 
-def pit(seed):
-    L = 1.6
-    b = Bus(L)
-    n = K.ns(L)
-    hit = boom(1.2, 70, 36, 0.6, tau=0.08, drive=2.0, attack=0.004) * 0.85
-    put(hit, slab([118, 231, 377, 560, 790], 0.45, K.ns(1.0), seed + 6), 0.0, 0.75)
-    put(hit, thud(0.6, 1000, 0.3, seed + 7), 0.0, 0.7)
-    put(hit, crack(seed + 1, 1.8), 0.0, 0.6)
-    b.add(glue(hit, 2.4), 0.0, 1.0, "nave", 0.35, hp=80)
-    rum = unit(K.lowpass(K.noise(n, "brown", seed + 2), 120, 3)) * bp(n, [(0, 0.3), (0.12, 1.0), (0.8, 0.8), (L, 0)])
-    b.add(rum, 0.0, 0.25, "nave", 0.3, hp=70)
-    # the crumble falls away into the dark: denser at first, darker as it goes down
-    cr = debris(L, 60, 0.0, 1.3, seed + 3, 0.8, shape=1.4)
-    r = K.rng(seed + 4)
-    for k in range(10):  # chunks tumbling
-        tt = r.uniform(0.02, 1.1) ** 1.2
-        put(cr, thud(0.25, r.uniform(250, 600), 0.06, seed + 40 + k), tt, r.uniform(0.4, 0.9) * (1 - 0.5 * tt))
-    cr = sweep_lp(cr, lambda t: 7000 * (500 / 7000) ** min(1.0, t / 1.3))
-    b.add(pk(cr), 0.0, 0.85, "nave", 0.35)
-    b.add(dust(L, seed + 5, 500, 3500) * bp(n, [(0, 0), (0.1, 1.0), (L, 0)]), 0.0, 0.04, "nave", 0.3)
-    return fade_out(b.render(), 0.4)
 
 
 # ---- 13. the hall shakes -------------------------------------------------------------------------------------------
 
-def rumble(seed):
-    L = 3.6
-    b = Bus(L)
-    n = K.ns(L)
-    env = bp(n, [(0, 0), (0.45, 1.0), (2.3, 0.85), (L, 0)])
-    shake = 0.72 + 0.28 * np.abs(K.smooth_noise(n, 7, seed + 1))
-    low = unit(K.lowpass(K.noise(n, "brown", seed + 2), 85, 3))
-    low += 0.6 * (K.sine(33.0, n) + 0.6 * K.sine(49.0, n)) * (0.7 + 0.3 * K.smooth_noise(n, 3, seed + 3))
-    b.add(low * shake * env, 0.0, 0.7, "nave", 0.2)
-    walls = unit(K.bandpass(K.noise(n, "pink", seed + 4), 260, 1.2)) * (0.6 + 0.4 * K.smooth_noise(n, 5, seed + 5))
-    b.add(walls * env, 0.0, 0.14, "nave", 0.3)
-    b.add(grind(L, [(0, 0), (0.5, 0.5), (2.0, 0.6), (L, 0)], seed + 6, rate=(5, 12), grit=0.2), 0.0, 0.08, "nave", 0.35)
-    b.add(dust(L, seed + 7, 500, 5200) * env, 0.0, 0.05, "nave", 0.4)
-    b.add(debris(L, 22, 0.3, 3.2, seed + 8, 0.9, shape=1.0), 0.0, 0.25, "nave", 0.4)
-    return fade_out(b.render(), 0.5)
 
 
 # ---- 14. the light drains into its palm (UI, stereo) ----------------------------------------------------------------
@@ -831,35 +561,6 @@ def drain(seed):
 
 # ---- 15. the hand closes -------------------------------------------------------------------------------------------
 
-def close(seed):
-    L = 2.5
-    T = 0.06  # the impact (a tiny breath before it)
-    CUT = 0.46  # then nothing
-    b = Bus(L)
-    pre = K.bandpass(K.noise(K.ns(T), "white", seed + 1), 1800, 0.8) * K._rise(K.ns(T)) ** 3
-    b.add(pk(pre) * 0.3, 0.0)
-    hit = boom(1.2, 72, 34, 0.9, tau=0.12, drive=2.6, attack=0.003) * 0.55
-    put(hit, slab([72, 113, 168, 244, 352], 0.45, K.ns(0.6), seed + 6), 0.0, 1.0)
-    # the crush: everything at once, saturated
-    n = K.ns(0.5)
-    cr = K.bandpass(K.noise(n, "white", seed + 2), 700, 0.5) + 0.5 * K.bandpass(K.noise(n, "white", seed + 7), 1900, 0.8)
-    cr = np.tanh(4 * unit(cr)) * K.perc(n, 0.001, 0.4)
-    put(hit, K.lowpass(cr, 5000, 2), 0.0, 1.0)
-    put(hit, thud(0.5, 600, 0.25, seed + 3), 0.0, 0.9)
-    put(hit, crack(seed + 4, 2.0), 0.0, 0.6)
-    put(hit, K.crackle(n, rate=900, seed=seed + 5, bright=0.5, burstiness=0.2) * K.perc(n, 0.001, 0.12), 0.0, 0.25)
-    b.add(glue(hit, 2.6), T, 1.0)
-    y = b.render()
-    # the world snaps shut: a hard cut, and only the faintest of tails
-    gate = np.ones(len(y))
-    c0, c1 = K.ns(CUT), K.ns(CUT + 0.025)
-    gate[c0:c1] = 1 - (1 - 0.018) * K._rise(c1 - c0)
-    gate[c1:] = 0.018
-    y = y * gate
-    tl = K.ns(L - CUT)
-    ring = K.sine(hzm("D8"), tl) * K.adsr(tl, 0.15, 0.2, 0.7, 1.6) * K.perc(tl, 0.001, 2.4)
-    put(y, ring, CUT, 0.004)  # the ears ringing in the black
-    return fade_out(y, 0.8)
 
 
 # ---- 16. a heartbeat in the dark (UI) ------------------------------------------------------------------------------
@@ -956,24 +657,30 @@ def void(seed):
 # name: (render, gated RMS dBFS, mono, event volume, attenuation blocks or None, subtitle[, give dB])
 # give: how far under its target RMS a sound may land so its peaks stay unlimited (default GIVE)
 SOUNDS = OrderedDict([
-    ("bell", (bell, -16.5, True, 1.0, 96, "Great bell tolls", 1.0)),
-    ("doors", (doors, -17.0, True, 1.0, 64, "Stone doors grind shut")),
-    ("flames_out", (flames_out, -19.0, True, 1.0, 64, "Every flame dies")),
+    ("bell", (None, -16.5, True, 1.0, 96, "Great bell tolls", 1.0)),
+    ("doors", (None, -17.0, True, 1.0, 64, "Stone doors grind shut")),
+    ("flames_out", (None, -19.0, True, 1.0, 64, "Every flame dies")),
     ("candle", (candle, -23.0, True, 0.5, 24, "Candle lights", 1.0)),
     ("words", (words, -19.0, False, 1.0, None, "A rule is carved in light")),
-    ("eyes", (eyes, -17.0, True, 1.0, 96, "The Seated One opens its eyes", 1.5)),
-    ("gaze_charge", (gaze_charge, -21.5, True, 1.0, 48, "The Seated One's gaze gathers", 2.0)),
-    ("gaze_fire", (gaze_fire, -18.0, True, 1.0, 64, "The gaze sears")),
-    ("statue_rise", (statue_rise, -18.0, True, 1.0, 64, "Statues rise")),
-    ("swing", (swing, -22.0, True, 1.0, 24, "Stone weapon swings", 2.0)),
-    ("impact", (impact, -18.5, True, 1.0, 32, "Stone weapon strikes")),
-    ("pit", (pit, -18.5, True, 1.0, 48, "The floor collapses")),
-    ("rumble", (rumble, -19.0, True, 1.0, 96, "The hall shakes")),
+    ("eyes", (None, -17.0, True, 1.0, 96, "The Seated One opens its eyes", 1.5)),
+    ("gaze_charge", (None, -21.5, True, 1.0, 48, "The Seated One's gaze gathers", 2.0)),
+    ("gaze_fire", (None, -18.0, True, 1.0, 64, "The gaze sears")),
+    ("statue_rise", (None, -18.0, True, 1.0, 64, "Statues rise")),
+    ("swing", (None, -22.0, True, 1.0, 24, "Stone weapon swings", 2.0)),
+    ("impact", (None, -18.5, True, 1.0, 32, "Stone weapon strikes")),
+    ("pit", (None, -18.5, True, 1.0, 48, "The floor collapses")),
+    ("rumble", (None, -19.0, True, 1.0, 96, "The hall shakes")),
     ("drain", (drain, -22.5, False, 1.0, None, "Light drains into its palm", 1.5)),
-    ("close", (close, -16.0, True, 1.0, None, "The hand closes")),
+    ("close", (None, -16.0, True, 1.0, None, "The hand closes")),
     ("heartbeat", (heartbeat, -21.0, True, 0.8, None, "Heartbeat")),
     ("tear", (tear, -19.5, False, 1.0, None, "The darkness tears open")),
     ("void", (void, -23.5, False, 0.5, None, "Cold, dark stillness", 0.5)),
+    ("footstep1", (None, -28, True, 1, 36, "Stone foot lands")),
+    ("footstep2", (None, -28, True, 1, 36, "Stone foot lands")),
+    ("footstep3", (None, -28, True, 1, 36, "Stone foot lands")),
+    ("gaze_travel", (None, -30, True, 1, 40, "The gaze rushes past")),
+    ("gaze_impact", (None, -24, True, 1, 48, "The gaze strikes stone")),
+    ("hall", (None, -40, False, 1, None, "Air stirs in the hall")),
 ])
 STREAM_OVER = 6.0  # seconds: longer files are streamed
 GIVE = 3.0
@@ -1011,6 +718,7 @@ def master(x, rms, ceiling, give):
 
 
 def render(name):
+    if name in REC.NAMES: return REC.render(name), 0.0
     fn, rms, mono = SOUNDS[name][:3]
     give = SOUNDS[name][6] if len(SOUNDS[name]) > 6 else GIVE
     seed = 7000 + list(SOUNDS).index(name) * 37
@@ -1060,6 +768,18 @@ def build_sounds(only=()):
     if missing:
         raise SystemExit("not rendered yet: " + ", ".join(missing))
     write_json(durs)
+    report = {}
+    import hashlib
+    for n in REC.NAMES:
+        p = os.path.join(SND, n + ".ogg")
+        decoded = K.read_audio(p)
+        peak = K.true_peak(decoded)
+        assert peak < -6, (n, peak)
+        assert decoded.ndim == (2 if n == "hall" else 1), n
+        report[n] = {"seconds": round(len(decoded) / SR, 3), "channels": 2 if decoded.ndim == 2 else 1,
+                     "gated_rms_dbfs": round(K.gated_rms(decoded), 2), "true_peak_dbtp": round(peak, 2),
+                     "sha256": hashlib.sha256(open(p, "rb").read()).hexdigest()}
+    (REC.SOURCE / "measurements.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     print(f"ritual sounds: {len(todo)} rendered, {len(SOUNDS)} events in merge/story")
 
 

@@ -315,6 +315,8 @@ of `AwakenConfig.Client`.
 - `dev.awaken.core.PlayDays` — current play-day counter.
 - `dev.awaken.mobs.Mobs` — `spawnScaled(ServerLevel, EntityType, pos, level, modifiers)`, rosters by theme.
 - `dev.awaken.mobs.Ritual` — the Ritual of the Bell's cast: `spawnSeated`, `spawnStatue` (stages set on the entities).
+  Presentation reads `walkSeconds(Entity, partial)` (the same distance phase used by the renderer), `walking`,
+  `windingUp` and `plantedFoot`; story audio never reaches into the mob renderer or changes its gait.
 - `dev.awaken.gates.Gates` (ritual) — `ritualPlan(seed)`, `ritualHall(server, gateId)` (`RitualHall`: every position in
   the hall), `isRitual(server, gateId)`.
 - `dev.awaken.gates.Gates` (trials) — `leaperTrialPlan(seed)`: the Leaper's Gauntlet's plan, opened with
@@ -1111,6 +1113,37 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
   without its question, drawn large and typed by the scene) and the question's card (a TRUTH card: the question and
   its keys, no caption) show; the tear frame is the tear and the world only. The gate card says nothing for a spent
   ritual hall and shows no "Breaks in" row for scripted gates.
+
+- Ritual audio revision (2026-10-28): physical stone, pressure, arc, wind and bell layers use archived CC0 recordings
+  with hashes, source pages and repeatable processing in `tools/art/sources/ritual/` and `ritual_recordings.py`.
+  The old physical oscillator recipes are removed. The System glass/candle/drain/heartbeat/tear/void retain their
+  established tonal identity at quieter gains. Recorded transients retain their natural attack and decay; decoded
+  true peak is below −6 dBTP, individual targets −7.5..−29 dBTP. `audio_mix.py --fix` must not RMS-normalize assets
+  listed in a city/ritual recording manifest. World events are mono with explicit 24..96 block attenuation; the hall
+  and Void beds and System words/drain/tear are stereo and listener-relative. The hall bed stays dry in SPR and
+  reports one voice to the world Conductor. These are presentation changes; director timing, hit tests and damage
+  remain exactly as above, with no persistent state or packet changes.
+- Every moving statue gets planted-foot audio from the renderer's unchanged `walkAnimation.position * 0.55`
+  phase: a 1.6 s clip, left contact at phase 0, right at 0.8. Three real stone-contact variants mix friction and low
+  pressure. Contact positions follow vanilla model-axis flips and body yaw. Tick sampling includes statues behind the camera; initial/late tracking, stopping, phase resets and jumps
+  never replay missed contacts. Contacts have 36 block sound range and a restrained 12 block camera impulse.
+  Wind-up whooshes begin at tick 17 of the existing 25 tick wind-up and are dropped if the statue stopped winding
+  up. The door recording meets at the director's 28 ticks (1.4 s), the eyes bloom at 58 ticks (2.9 s), and the beam
+  charge ends at 45 ticks (2.25 s). Beam release, its moving 12 tick air/arc trail, target impact and room decay are
+  different recordings/layers; the existing immediate impact and damage time remain unchanged. SHAKE cues no longer
+  duplicate each beam/weapon impact's rumble, and HIT no longer duplicates the world impact through the UI.
+- The ritual owns at most six voices including its room bed, at most two heavy transients, and one group footfall
+  per four ticks. Guidance and heavy cues can replace a small detail at capacity. Identical great bell cues are
+  spaced by at least 100 ticks, candles six ticks, heavy repeat impacts four ticks; missed sounds are discarded.
+  Hall ambience fades in over ticks, ducks from gain 0.5 to 0.16 while guidance is visible (world one-shots duck to
+  45%), then fades out at END. The hand closing stops the drain and all room tails before its short impact; the
+  Void is quieter than the hall. Pause/menus, scene handoff, logout and client-level changes stop all voices and
+  delayed cues; resuming establishes fresh foot baselines and does not replay missed attacks or the Void toll.
+- `awaken-ritual-audio-client.toml` adds `effects` and `ambience` (0..1, default 1) and `impactMotion` (0..1,
+  default 0.7), alongside normal sound-category sliders. Impact shake is capped at 1.25 degrees and twelve ticks;
+  simultaneous impacts strengthen it without extending or summing it, with four quiet ticks before a new impulse.
+  Kick yaw/pitch are bounded at ±3/±2 degrees; shake falls linearly to zero at its event radius. `cameraShake` off or
+  the shared reduced-motion setting disables impact shake, kicks and FOV punches. Authored scene framing is unchanged.
 
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.

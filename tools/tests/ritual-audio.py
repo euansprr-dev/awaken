@@ -1,0 +1,52 @@
+"""Compile the actual client ritual mixer against deterministic engine stubs; no game/audio device.
+Exercises cue ownership, windup cancellation, offscreen foot sampling, scene refresh and cleanup.
+Requires Java 25. Full Gradle compilation verifies the real Minecraft/NeoForge API separately.
+"""
+from pathlib import Path
+import tempfile, subprocess, os, shutil
+ROOT=Path(__file__).resolve().parents[2]
+JAVA=Path(os.environ['JAVA_HOME'])/'bin' if os.environ.get('JAVA_HOME') else Path('/Volumes/MEDIA/.jdks/jdk-25.0.5+8/Contents/Home/bin')
+if not (JAVA/'javac').exists(): JAVA=Path(shutil.which('javac') or 'javac').resolve().parent
+STUBS={
+'net/minecraft/world/phys/Vec3.java':'''package net.minecraft.world.phys; public record Vec3(double x,double y,double z){public static final Vec3 ZERO=new Vec3(0,0,0);public double distanceTo(Vec3 p){return Math.sqrt((x-p.x)*(x-p.x)+(y-p.y)*(y-p.y)+(z-p.z)*(z-p.z));}public Vec3 lerp(Vec3 p,float t){return new Vec3(x+(p.x-x)*t,y+(p.y-y)*t,z+(p.z-z)*t);}}''',
+'net/minecraft/world/entity/Entity.java':'''package net.minecraft.world.entity; import net.minecraft.world.phys.Vec3; public class Entity {public int id;public float phase;public boolean moving,windup;public Vec3 at=Vec3.ZERO;public int getId(){return id;}public Vec3 position(){return at;}}''',
+'net/minecraft/client/multiplayer/ClientLevel.java':'''package net.minecraft.client.multiplayer;import java.util.*;import net.minecraft.world.entity.Entity; public class ClientLevel{public final List<Entity> entities=new ArrayList<>();public Iterable<Entity> entitiesForRendering(){return entities;}public Entity getEntity(int id){return entities.stream().filter(x->x.id==id).findFirst().orElse(null);}}''',
+'net/minecraft/sounds/SoundEvent.java':'''package net.minecraft.sounds; public record SoundEvent(String name){}''',
+'net/minecraft/sounds/SoundSource.java':'''package net.minecraft.sounds; public enum SoundSource{PLAYERS,HOSTILE,AMBIENT}''',
+'net/minecraft/client/resources/sounds/SoundInstance.java':'''package net.minecraft.client.resources.sounds;public interface SoundInstance {enum Attenuation{NONE,LINEAR} static Object createUnseededRandom(){return null;}}''',
+'net/minecraft/client/resources/sounds/AbstractTickableSoundInstance.java':'''package net.minecraft.client.resources.sounds;import net.minecraft.sounds.*;public abstract class AbstractTickableSoundInstance implements SoundInstance{public final SoundEvent event;protected double x,y,z;protected float volume=1,pitch=1;protected boolean relative,looping;protected Attenuation attenuation=Attenuation.LINEAR;private boolean stopped;protected AbstractTickableSoundInstance(SoundEvent e,SoundSource s,Object r){event=e;}public boolean isStopped(){return stopped;}protected void stop(){stopped=true;}public float getVolume(){return volume;}public boolean canStartSilent(){return false;}public abstract void tick();}''',
+'net/minecraft/client/Minecraft.java':'''package net.minecraft.client;import java.util.*;import net.minecraft.client.multiplayer.ClientLevel;import net.minecraft.client.resources.sounds.*;import net.minecraft.world.entity.Entity;public class Minecraft{private static final Minecraft MC=new Minecraft();public static Minecraft getInstance(){return MC;}public ClientLevel level=new ClientLevel();public Entity player=new Entity();public boolean paused;public Gui gui=new Gui();public static class Gui{public Object screen;public Object screen(){return screen;}}public boolean isPaused(){return paused;}public Manager manager=new Manager();public Manager getSoundManager(){return manager;}public static class Manager{public Set<AbstractTickableSoundInstance> active=new HashSet<>();public void play(AbstractTickableSoundInstance x){active.add(x);}public void stop(AbstractTickableSoundInstance x){active.remove(x);}public boolean isActive(AbstractTickableSoundInstance x){return active.contains(x);}}}''',
+'dev/awaken/core/audio/client/Soundscape.java':'''package dev.awaken.core.audio.client;public class Soundscape{public static void register(java.util.function.IntSupplier s){}}''',
+'dev/awaken/mobs/Ritual.java':'''package dev.awaken.mobs;import net.minecraft.world.entity.Entity;import net.minecraft.world.phys.Vec3;public class Ritual{public static boolean walking(Entity e){return e.moving;}public static float walkSeconds(Entity e,float pt){return e.phase;}public static Vec3 plantedFoot(Entity e,int foot){return e.at;}public static boolean windingUp(Entity e){return e!=null&&e.windup;}}''',
+'dev/awaken/story/net/StoryPayloads.java':'''package dev.awaken.story.net;public class StoryPayloads{public static class RitualScene{public static final int NONE=-1,VOID=-2,TEAR=-3;}}''',
+'dev/awaken/story/client/RitualAudioConfig.java':'''package dev.awaken.story.client;class RitualAudioConfig{static float effects(){return 1;}static float ambience(){return 1;}}''',
+'dev/awaken/story/client/RitualCamera.java':'''package dev.awaken.story.client;import net.minecraft.world.phys.Vec3;class RitualCamera{static void shakeNear(Vec3 p,float d,int t,int r){}}''',
+'dev/awaken/story/client/RitualFx.java':'''package dev.awaken.story.client;import net.minecraft.world.phys.Vec3;class RitualFx{static Vec3 eyes(int pt){return Vec3.ZERO;}}''',
+}
+# Preserve actual field access rather than building alternate sound code.
+STUBS['net/minecraft/world/phys/Vec3.java']='''package net.minecraft.world.phys; public class Vec3{public final double x,y,z;public static final Vec3 ZERO=new Vec3(0,0,0);public Vec3(double x,double y,double z){this.x=x;this.y=y;this.z=z;}public double distanceTo(Vec3 p){return Math.sqrt((x-p.x)*(x-p.x)+(y-p.y)*(y-p.y)+(z-p.z)*(z-p.z));}public Vec3 lerp(Vec3 p,float t){return new Vec3(x+(p.x-x)*t,y+(p.y-y)*t,z+(p.z-z)*t);}}'''
+clips=['BELL','WORDS','DOORS','FLAMES_OUT','CANDLE','IMPACT','RUMBLE','EYES','STATUE_RISE','GAZE_CHARGE','GAZE_FIRE','GAZE_IMPACT','GAZE_TRAVEL','SWING','PIT','DRAIN','CLOSE','TEAR','HEARTBEAT','VOID','HALL','FOOTSTEP1','FOOTSTEP2','FOOTSTEP3']
+STUBS['dev/awaken/story/RitualSounds.java']='package dev.awaken.story;import net.minecraft.sounds.SoundEvent;public class RitualSounds{public record Holder(SoundEvent value){public SoundEvent get(){return value;}}'+''.join('public static final Holder '+n+'=new Holder(new SoundEvent("'+n+'"));' for n in clips)+'}'
+STUBS['dev/awaken/story/client/RitualClient.java']='''package dev.awaken.story.client;import net.minecraft.world.phys.Vec3;class RitualClient{static long ticks;static Vec3 altar=Vec3.ZERO;static final int WAITING=0,DOORS=1,JUDGEMENT=6,END=7,WAKING=5;static final int TOLL=0,WORD=1,CUE_DOORS=2,LIGHTS_OUT=3,CANDLE=4,PLATE_MISS=7,RULE_STRIKE=9,HIT=10,SHAKE=11,EYES=12,RISE=13,GAZE_CHARGE=14,GAZE_FIRE=15,SWING=16,IMPACT=17,PIT=18,DRAIN=19,DEATH=21;static class Cue{int kind,id,ticks;float f=1;Vec3 a=Vec3.ZERO,b=Vec3.ZERO;}}'''
+STUBS['dev/awaken/story/client/RitualAudioHarness.java']='''package dev.awaken.story.client;
+import net.minecraft.client.Minecraft;import net.minecraft.client.multiplayer.ClientLevel;import net.minecraft.world.entity.Entity;import static dev.awaken.story.client.RitualClient.*;
+public class RitualAudioHarness{
+static final Minecraft mc=Minecraft.getInstance();static void check(boolean b,String m){if(!b)throw new AssertionError(m);}static void cue(int kind,int id){Cue c=new Cue();c.kind=kind;c.id=id;RitualAudio.cue(c);}static void tick(){RitualClient.ticks++;RitualAudio.tick();}static long count(String name){return mc.manager.active.stream().filter(x->x.event.name().equals(name)).count();}
+static void fresh(int scene){RitualAudio.reset();RitualClient.ticks=100;mc.level=new ClientLevel();mc.gui.screen=null;mc.paused=false;RitualAudio.scene(-1,scene);}
+public static void main(String[] args){
+fresh(JUDGEMENT);for(int k:new int[]{TOLL,WORD,GAZE_CHARGE,IMPACT,RISE})cue(k,0);cue(LIGHTS_OUT,0);check(mc.manager.active.size()==5,"bed reserves one of six voices before its first tick");tick();check(mc.manager.active.size()==6,"total voice budget includes bed");
+fresh(JUDGEMENT);cue(GAZE_FIRE,1);check(mc.manager.active.size()==3,"release, target impact and moving trail coexist");tick();check(mc.manager.active.size()==4,"one hall bed added");cue(IMPACT,2);check(count("IMPACT")==0,"third heavy impulse refused");mc.gui.screen=new Object();tick();check(mc.manager.active.isEmpty(),"menu stops every voice");mc.gui.screen=null;tick();check(mc.manager.active.size()==1,"resume starts room only, no stale beam replay");
+fresh(JUDGEMENT);Entity e=new Entity();e.id=9;e.windup=true;mc.level.entities.add(e);cue(SWING,9);for(int i=0;i<16;i++)tick();check(count("SWING")==0,"whoosh waits for last windup segment");e.windup=false;tick();check(count("SWING")==0,"cancelled windup stays quiet");e.windup=true;cue(SWING,9);for(int i=0;i<17;i++)tick();check(count("SWING")==1,"live windup emits once at tick17");
+fresh(JUDGEMENT);e=new Entity();e.id=2;e.moving=true;e.phase=.79f;mc.level.entities.add(e);tick();check(mc.manager.active.size()==1,"late observer establishes foot baseline");e.phase=.81f;tick();check(mc.manager.active.size()==2,"one offscreen tracked foot contact");e.moving=false;tick();e.phase=1.61f;e.moving=true;tick();check(mc.manager.active.size()==2,"stopping resets foot phase without replay");mc.level=new ClientLevel();tick();check(mc.manager.active.isEmpty(),"level transfer stops voices");
+fresh(END);cue(DRAIN,0);check(count("DRAIN")==1,"drain audible");cue(DEATH,0);check(count("DRAIN")==0&&count("CLOSE")==1&&mc.manager.active.size()==1,"closing hand cuts every tail");RitualAudio.scene(END,-2);tick();check(mc.manager.active.size()==1,"void starts its own bed");RitualAudio.scene(-2,-2);tick();check(mc.manager.active.size()==1,"scene refresh cannot restart toll or heartbeat");RitualAudio.reset();check(mc.manager.active.isEmpty(),"logout clears all voices");
+System.out.println("Ritual audio lifecycle harness: PASS");}}
+'''
+with tempfile.TemporaryDirectory(prefix='awaken-ritual-audio-') as td:
+ root=Path(td)
+ for name,source in STUBS.items():
+  p=root/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(source)
+ for rel in ['story/RitualAudioRules.java','story/client/RitualAudio.java']:
+  p=root/'dev/awaken'/rel;p.parent.mkdir(parents=True,exist_ok=True);p.write_text((ROOT/'src/main/java/dev/awaken'/rel).read_text())
+ sources=[str(p) for p in root.rglob('*.java')]
+ subprocess.run([str(JAVA/'javac'),'-d',str(root/'classes'),*sources],check=True)
+ subprocess.run([str(JAVA/'java'),'-cp',str(root/'classes'),'dev.awaken.story.client.RitualAudioHarness'],check=True)
