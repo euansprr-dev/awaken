@@ -105,6 +105,83 @@ final class LivingTests {
             }
             h.succeed();
         });
+        // Euan 2026-10-28: Oren's lines were cut mid-sentence and his card came before he'd said what it was about
+        AwakenTests.register("living_quest_lines_fit_the_box", 20, h -> {
+            int[][] sizes = {{378, 246}, {480, 270}, {640, 360}, {960, 540}};
+            double[] scales = {0.75, 1.0, 1.5};
+            List<String> bad = new ArrayList<>();
+            for (var e : dev.awaken.living.quest.QuestBook.all().entrySet()) {
+                var d = e.getValue();
+                List<String> lines = new ArrayList<>(d.ask());
+                for (var st : d.steps()) {
+                    lines.addAll(st.start());
+                    lines.addAll(st.done());
+                }
+                for (int[] sz : sizes) {
+                    for (double sc : scales) {
+                        int max = dev.awaken.signal.ui.StoryPager.maxLines(sz[0], sz[1], sc);
+                        int width = dev.awaken.signal.ui.SignalLayout.storyTextWidth(dev.awaken.signal.ui.SignalLayout.story(sz[0], sz[1], sc, max, null));
+                        boolean strict = sc == 1.0 && sz[0] <= 480; // the owner's screen and the usual one: whole sentences only
+                        for (String line : lines) {
+                            var pager = new dev.awaken.signal.ui.StoryPager("", line);
+                            List<String> words = new ArrayList<>();
+                            for (int guard = 0; !pager.done() && guard < 40; guard++) {
+                                List<String> page = pager.next(width, max, dev.awaken.signal.ui.SignalText::approxWidth);
+                                String text = String.join(" ", page);
+                                if (page.size() > max) bad.add(e.getKey() + ": a page taller than the box: " + text);
+                                for (String l : page) if (dev.awaken.signal.ui.SignalText.approxWidth(l) > width) bad.add(e.getKey() + ": wider than the box: " + l);
+                                if (!text.matches(strict ? ".*[.!?…][\"'”’)]?$" : ".*[.!?…,:;][\"'”’)]?$"))
+                                    bad.add(e.getKey() + " at " + sz[0] + "x" + sz[1] + "@" + sc + ": a page stops mid-sentence: " + text);
+                                words.addAll(List.of(text.split(" ")));
+                            }
+                            if (!String.join(" ", words).equals(line.trim().replaceAll("\\s+", " "))) bad.add(e.getKey() + ": words lost from: " + line);
+                        }
+                    }
+                }
+                // the card says in plain words what you agree to, whole
+                String body = dev.awaken.signal.ui.SignalText.cardBody(d.summary(), dev.awaken.signal.ui.SignalLayout.CARD_W_BODY - 12, dev.awaken.signal.ui.SignalText::approxWidth);
+                if (d.summary().isBlank() || !body.equals(d.summary().trim())) bad.add(e.getKey() + ": the offer card can't show the whole summary: " + d.summary());
+            }
+            h.assertTrue(bad.isEmpty(), bad.size() + " problems: " + String.join(" | ", bad.subList(0, Math.min(5, bad.size()))));
+            h.succeed();
+        });
+
+        AwakenTests.register("living_quest_offer_after_ask", 20, h -> {
+            // the client as it plays a giver's ask (480x270 at scale 1, the default type speed) with the card sent alongside
+            int max = dev.awaken.signal.ui.StoryPager.maxLines(480, 270, 1.0);
+            int width = dev.awaken.signal.ui.SignalLayout.storyTextWidth(dev.awaken.signal.ui.SignalLayout.story(480, 270, 1.0, max, null));
+            int checked = 0;
+            for (var e : dev.awaken.living.quest.QuestBook.all().entrySet()) {
+                var d = e.getValue();
+                if (d.ask().isEmpty()) continue;
+                int speech = 0;
+                for (String line : d.ask()) {
+                    var pager = new dev.awaken.signal.ui.StoryPager("", line);
+                    while (!pager.done()) {
+                        int chars = 0;
+                        for (String l : pager.next(width, max, dev.awaken.signal.ui.SignalText::approxWidth)) chars += l.length();
+                        speech += dev.awaken.signal.ui.StoryPager.typeTicks(chars, 3.0) + dev.awaken.signal.ui.StoryPager.holdTicks(chars);
+                    }
+                    speech += dev.awaken.signal.ui.StoryPager.FADE_TICKS + 1;
+                }
+                var deck = new dev.awaken.signal.ui.ChoiceDeck();
+                var card = dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE, net.minecraft.network.chat.Component.literal(d.title()))
+                        .body(net.minecraft.network.chat.Component.literal(d.summary())).choice("living_quest:" + e.getKey(), "Help", "Not now").build();
+                deck.offer(card, dev.awaken.living.wayfarer.Wayfarers.offerTtl(d.ask()), true);
+                int shownAt = -1;
+                for (int t = 0; t < speech + 60 && shownAt < 0; t++) {
+                    deck.tick(0, 0, false, t < speech);
+                    if (deck.current() != null) shownAt = t;
+                }
+                h.assertTrue(shownAt >= speech, e.getKey() + ": the card came at " + shownAt + " before the ask ended at " + speech);
+                h.assertTrue(shownAt >= 0 && shownAt <= speech + dev.awaken.signal.ui.ChoiceDeck.GAP_TICKS + 2, e.getKey() + ": the card came late or never: " + shownAt);
+                h.assertTrue(deck.current().ticksLeft() >= dev.awaken.signal.ui.ChoiceDeck.FOLD_TICKS, e.getKey() + ": the card has its full time left once shown");
+                checked++;
+            }
+            h.assertTrue(checked > 5, "the quests with an ask were checked: " + checked);
+            h.succeed();
+        });
+
         AwakenTests.register("progression_first_scenes", 100, h -> {
             var server = h.getLevel().getServer();
             net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();

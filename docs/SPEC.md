@@ -639,6 +639,18 @@ Plan v2 · System v2 (details in docs/modules/system-ui.md):
   crosshair and never exceed 20% of the screen height. Client settings: `systemStyle`, `nowTracker`, `systemScale`
   (0.75–1.5, toasts don't scale). The Now tracker syncs every 40 ticks, only when changed, and steps below the boss
   bars when they would overlap it.
+- Story lines (speech, the Signal's voice; `signal.ui.StoryPager`, 2026-10-28 after Euan saw Oren cut mid-sentence):
+  a subtitle page is whole sentences, as many as fit the lines the screen has room for between the crosshair and the
+  action bar (2 to 3), and the box sizes to the page. A sentence is never cut across pages unless it alone is longer
+  than a page, and then after a comma, colon or dash where one leaves more than a stub. Nothing is ever ellipsized or
+  dropped. A page holds for max(50, min(400, 30 + 1.2 × chars)) ticks after typing. Test
+  `living_quest_lines_fit_the_box` pages every quest line at every GUI size and scale.
+- A non-urgent card asked while a story line is on screen or queued waits until the speech has ended and 10 ticks
+  have passed (at most a minute), so an offer comes after the lines that explain it (`ChoiceDeck`, test
+  `signal_choice_waits_for_speech`). Warnings and priority 9+ never wait.
+- A card's body shows whole when it fits three lines (else its first sentence). A card with two or more body lines is
+  200 wide and may grow to just above the power bar (at most 30% of the height), shrinking toward scale 0.75 before it
+  drops a line; other cards keep the 20% rule.
 
 Plan v2 · overworld creatures (details in docs/modules/fauna.md):
 - Spawn category `awaken:fauna` (16 per player, NeoForge enum extension). Role caps per player: ambient 8 (3 before
@@ -4232,7 +4244,9 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 ### 21.5 Wayfarers, quests and bounties (Phase C, as built 2026-10-25)
 - **Chains** (`living.quest`): data `data/<ns>/awaken/quest/<chain>.json`, schema 1: `title`, `band` (0..4),
   `requires` (progression tokens), `scene` (`resident` for a fixed giver, else the scene kind it's found in: `cliff`,
-  `road`, `crag`), `giver`, `ask` (the giver's lines before the choice card), `summary`, `steps[]`, `relic`, `finish`
+  `road`, `crag`), `giver`, `ask` (the giver's lines before the choice card: who they are, what they offer and what
+  they need, in plain words, never assuming what the player holds or has done), `summary` (the card's body: what you
+  agree to, with the counts, in at most three card lines), `steps[]`, `relic`, `finish`
   (progression `Reward`). A step: `id`, `objective` {`type` talk|reach|kill|collect|deliver|use|discover, `target`,
   `count`, `radius`}, `text` (its Journal line), `start`/`done` lines, `reward`, `needs` + `needs_text` (a step waits for
   it; `tier:<need>` asks the Horizon's reach answers, so the Ascent's tiers and movement powers count), `spawn`
@@ -4257,7 +4271,8 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - **Wayfarer** entity (`awaken:wayfarer`): a player-shaped person in their own skin
   (`textures/entity/wayfarer/<who>.png`, tools/art/specs/wayfarers.py), never hurt, never despawns. Use to talk: a step
   waiting on them moves on (or says what it needs), a delivery changes hands, Hale reads the bounty board, a chain they
-  give is offered on a choice card (Help / Not now), else one of their idle lines. People: Wren, Hettie, Ilse, Gus,
+  give is offered on a choice card (Help / Not now) that shows once their ask has been said (it lives 30 s plus the
+  ask's estimated speaking time, `Wayfarers.offerTtl`; test `living_quest_offer_after_ask`), else one of their idle lines. People: Wren, Hettie, Ilse, Gus,
   Pell, Hale, Marta (`Wayfarers.PEOPLE`).
 - **The first drop, all eight chains** (The Last Delivery is written and waits for Carillon's B3b to call
   `Quests.talk` for Kestrel; it opens on `counter:awaken:carillon_registered`): Ten Sheep Short (Hettie, 1-8), Moth Lights (Ilse, 1-8), Wren's Rope (cliff,
@@ -8675,10 +8690,10 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
   every step done plus up to four to do, a linear trail two; the card counts the done ones; a step longer than the card wraps over up to three lines, `signal.ui.TaskWrap`, with key caps kept in the line, seen on the third tour) and its current step on the **Now line** (priority 55). Only Follow changes the HUD;
   one trail is followed at a time, and the Armoury's Track gives the card up (`TrailsApi.unfollow`). "Anything for me?"
   (`Advice`) names the best next step.
-- **Catalogue shipped** (24 trails): Home (7): Set Your Fire, Your Hearth, A Room for Everything, Your Village, The Forge, Trophies and
+- **Catalogue shipped** (25 trails): Home (7): Set Your Fire, Your Hearth, A Room for Everything, Your Village, The Forge, Trophies and
   Echoes, The Training Grounds. Weapons (4): Your First Weapon, Finding Patterns, Making Your Next Weapon, Boss Weapons. Body (3):
-  Moving Like a Hunter, The Line, Wings. Gates (1): Your First Gate. World (2): Out in the Commons, Wayfarers and Camps. Deep (4):
-  The Veil, Dreams, The Precursors, The Well. Not yet written: Powers, Story, Villages, Beasts and Lairs, Digging Down, Rumours.
+  Moving Like a Hunter, The Line, Wings. Gates (1): Your First Gate. World (2): Out in the Commons, Wayfarers and Camps. Deep (5):
+  The Veil, Dreams, The Precursors, The Well, The Delver's Pick (§34.4). Not yet written: Powers, Story, Villages, Beasts and Lairs, Digging Down, Rumours.
 - **Counters added** for steps (docs/COUNTERS.md): `rested`, `armoury_forge`, `armoury_opened`, `blueprint_copies`, `weapons_attuned`,
   `weapons_raised`, `patterns_bought`, `patterns_from_gates`, `patterns_from_people`, `patterns_from_stands`, `patterns_from_villages`.
 - **Admin**: `/awaken admin trails list | open <id> | follow <id> | done <id> | reset`. Autopilot: `trails now|browse [area]|open`,
@@ -8855,6 +8870,13 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   run). Each wake: the tier, a low ring, light gathering round the hand (`delve_pick_woke`), a moment window ("The pick
   wakes: I · Kindle" and the gift in words). `awaken:delve/verses_woken` is the furthest verse woken: a pick given
   later (pulled, handed over, re-forged) comes at it. The tooltip shows the verse, each gift woken, and "Next: ...".
+- **Trail** "The Delver's Pick" (`trail/the_delvers_pick.json`, area deep, linear; Euan 2026-10-28: "add the Delver's Pick
+  to the Journal and Trails, so it's findable before you have it and shows the next step after"): opens with a home or a
+  pulled pick; step one is the pull (`counter:awaken:delve/pick_pulled`) with the place `adit`, then one step per verse on
+  `count:awaken:delve/verses_woken:<n>`, the Forge rites pointing at `hearth`. `cave.PickTrail` registers `adit`: the nearest
+  adit (any ore) within 400 of your home (of you, with no home, asked again once you're 96 away), searched off the server
+  thread as the Hearth's metal search is; a home with no adit in reach is handed the pick, as the metal card does, so the
+  first step can always be done. Test `delve_pick_trail` (one step per verse in order, the place, the hand-over on flat land).
 - **Gifts** (`PickGifts`; client `PickFx`):
   - *Kindle*: sneak and start striking bare rock (strike family ROCK): an **ember** sticks in the air cell on that face
     for 5 minutes, three a player (a fourth puts out your oldest), none within 5 of another of yours. Drawn light, no

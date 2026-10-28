@@ -7,9 +7,9 @@
   ],
   "scene": "road",
   "giver": "pell",
-  "summary": "Spiders have strung the road with silk and something is waiting in it. Pell wants the road open and the nest cleared.",
+  "summary": "Spiders have strung the road with silk. Kill 4 of them, then find their nest and clear it.",
   "ask": [
-    "Pell: Stop. Not that way. Look up.",
+    "Pell: Careful on this stretch. Look up at the trees.",
     "Pell: The trees are strung together with silk, and the thing that strung them is still in there. I carry letters, I'm not paid to be eaten. Can you clear it?"
   ],
   "steps": [

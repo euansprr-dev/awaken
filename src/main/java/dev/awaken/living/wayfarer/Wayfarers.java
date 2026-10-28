@@ -7,6 +7,7 @@ import dev.awaken.living.quest.QuestState;
 import dev.awaken.progression.Requirements;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
+import dev.awaken.signal.ui.StoryPager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import org.jspecify.annotations.Nullable;
@@ -96,12 +97,22 @@ public final class Wayfarers {
         return false;
     }
 
-    /** A chain offered on a choice card: Y takes it into the Journal, N leaves it (it can be asked for again). */
+    /**
+     * A chain offered on a choice card: Y takes it into the Journal, N leaves it (it can be asked for again). The giver
+     * says their lines first; the card says in plain words what you agree to and shows once they've finished (the
+     * client holds a card asked during speech), so it lives 30 s past the time the lines take to say.
+     */
     static void offer(ServerPlayer p, String chain, QuestDef d, long scene) {
         if (!d.ask().isEmpty()) QuestEngine.sayLines(p, d.ask());
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.title()))
                 .body(Component.literal(d.summary().isEmpty() ? "Help?" : d.summary()))
-                .choice(ACTION + ":" + chain + "#" + scene, "Help", "Not now").ttl(20 * 30).build());
+                .choice(ACTION + ":" + chain + "#" + scene, "Help", "Not now")
+                .ttl(offerTtl(d.ask())).build());
+    }
+
+    /** How long an offer stays open: 30 s, plus the time its ask takes to say (the card shows after it). */
+    public static int offerTtl(List<String> ask) {
+        return 20 * 30 + StoryPager.readTicks(ask);
     }
 
     public static final String ACTION = "living_quest";
