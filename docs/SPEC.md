@@ -5326,9 +5326,12 @@ of the plan). No mixins.
 - **Station scenes** (P5, `anims.client.station`): at a crafting table (used within 10 ticks of its screen opening, not
   sneaking: sneak + use is the plain screen) the screen is replaced by `StationScreen` (kind `TABLE`), the vanilla
   crafting menu with its grid and result drawn on the table in the world instead of on the screen. Each
-  ingredient lies on its square (the grid square to the block, row 0 the far one; the way in snapped to an axis), the
-  result floats over the top's far edge (0.5 out from the middle, 0.25 up; over the middle it hid the far middle square)
-  turning, the square under the cursor (and every square a drag has passed over,
+  ingredient lies flat, centred on its drawn square (the texture's: 2-pixel squares a square every 3 pixels, middles on
+  pixels 5, 8 and 11 of 16, so `CELL` = 3/16 and the grid 9/16 across; row 0 the far one; the way in snapped to an
+  axis; a flat item 0.16 across, a block half that), the result lies flat on the top's near border (0.41 in from the
+  middle toward you, 0.17 across, turning slowly where it lies), inside the table's own block so it never reaches into a
+  wall, and flat it never hides a square (it once floated over the far edge and went into the wall behind; over the
+  middle it hid the far middle square), the square under the cursor (and every square a drag has passed over,
   showing what it will get) is outlined (Holo blue).
   - **Layout** (`anims.station.StationView`, common so the tests run it headless): your inventory is a glass strip at
     the foot of the screen (vanilla's image, `top` = screen height - 165, the strip over its rows), the hint over it
@@ -5338,7 +5341,7 @@ of the plan). No mixins.
     so JEI's list and bookmarks keep to the sides. Hints: "Works just like a crafting grid. Sneak as you open it for the
     usual screen." and the furnace's.
   - **The view** frames the station: from your eye, the yaw, pitch and vertical field of view that fit every slot (a
-    grid square ±0.15, the result ±0.15, a furnace's opening) inside the room, 6 % to spare, turned so they sit in its
+    grid square ±3/32, the result ±0.085, a furnace's opening) inside the room, 6 % to spare, turned so they sit in its
     middle (`StationView.frame`, recomputed each tick; at most 100° or 1.5× your FOV setting). It eases in over 12 ticks
     (6 coming back within 12 s), out over 10; the player's own look never moves. Standing 1 to 4 blocks from a table at
     any GUI scale the framing stays under 100°; pressed right against it (under 1 block) the near edge can reach the hint.
@@ -5367,6 +5370,8 @@ of the plan). No mixins.
 - Test: `anims_fp_clips` (the file reads, every clip the body and the touches play is in it, every one-shot gives the
   hands back). The table scene: `anims_station_frame` (seven GUI sizes from 320×240 to 1280×720, with and without JEI,
   standing 1 to 4 blocks off each side: every slot lies inside the room and a click on its middle picks it),
+  `anims_station_cells` (each way in: every ingredient on a drawn square's middle, row 0 far, the result on the near
+  border, all inside the table's block, a click straight down picks each),
   `anims_station_panel_click` (a square under the strip while leaning in: a click there picks nothing), and the clicks
   vanilla's screen sends on a real crafting menu: `anims_station_right_click`, `_right_drag`, `_left_drag`,
   `_shift_result`. Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),

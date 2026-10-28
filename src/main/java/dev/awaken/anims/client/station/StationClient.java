@@ -40,7 +40,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Station scenes (Hands P5; SPEC §24). At a crafting table the view leans in over the table top, the 3×3 grid IS the
- * table top (each ingredient lies on its square in the world, the result floats over the far edge), and your hands lay
+ * table top (each ingredient lies on its square in the world, the result on the near border), and your hands lay
  * every ingredient on its square and take the result. At a furnace, smoker or blast furnace the view crouches to its
  * front: what cooks sits in the mouth, the fuel in the firebox below, the result floats out beside it, and the cooking
  * and the fuel left run along the strip. The screen ({@link StationScreen}) is the station's vanilla menu, so every item
@@ -272,7 +272,8 @@ public final class StationClient {
     // ---- the world: the items on the station, the hovered slot --------------------------------------------------------
 
     private static final double[] P = new double[3];
-    private static final VoxelShape CELL = Shapes.box(-0.14, 0, -0.14, 0.14, 0.02, 0.14);
+    /** A table square's outline: the square between its lines (StationView.CELL). */
+    private static final VoxelShape CELL = Shapes.box(-0.084, 0, -0.084, 0.084, 0.02, 0.084);
     /** A furnace slot's outline: a thin square flat to the front (facing along z, or along x). */
     private static final VoxelShape FACE_Z = Shapes.box(-0.14, -0.14, -0.02, 0.14, 0.14, 0.02), FACE_X = Shapes.box(-0.02, -0.14, -0.14, 0.02, 0.14, 0.14);
 
@@ -296,29 +297,35 @@ public final class StationClient {
             spot(i, P, 0);
             ItemStackRenderState r = ITEMS[i];
             boolean result = i == kind.result;
-            mc.getItemModelResolver().updateForTopItem(r, st, result ? ItemDisplayContext.GROUND : ItemDisplayContext.FIXED, mc.level, null, i);
+            mc.getItemModelResolver().updateForTopItem(r, st, result && furnace ? ItemDisplayContext.GROUND : ItemDisplayContext.FIXED, mc.level, null, i);
             ps.pushPose();
             ps.translate(P[0] - cam.x, P[1] - cam.y, P[2] - cam.z);
-            if (result) {
+            if (result && furnace) {
                 // the result floats, turning slowly
                 ps.translate(0, 0.03 * Mth.sin(t * 0.1F), 0);
                 ps.rotateDegrees(Axis.YP, t * 2.5F);
                 ps.scale(0.55F, 0.55F, 0.55F);
+            } else if (result) {
+                // the table's result lies flat on the near border, turning slowly where it lies
+                ps.rotateDegrees(Axis.YP, t * 1.5F);
+                ps.rotateDegrees(Axis.XP, 90F);
+                ps.scale(0.17F, 0.17F, 0.17F);
             } else if (furnace) {
                 // upright in the mouth (or the firebox), facing out
                 ps.rotateDegrees(Axis.YP, 180F - yaw);
                 ps.scale(0.3F, 0.3F, 0.3F);
             } else {
-                // an ingredient lies flat on its square, square to the table
+                // an ingredient lies flat on its square, square to the table (a flat item a little over the square
+                // between the lines, a block half that)
                 ps.rotateDegrees(Axis.YP, 180F - yaw);
                 ps.rotateDegrees(Axis.XP, 90F);
-                ps.scale(0.26F, 0.26F, 0.26F);
+                ps.scale(0.16F, 0.16F, 0.16F);
             }
             r.submit(ps, e.getSubmitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
             ps.popPose();
         }
         for (int i = 0; i < kind.slots; i++) {
-            if (i == kind.result || i != s.hovered && !s.dragging(i)) continue;
+            if (furnace && i == kind.result || i != s.hovered && !s.dragging(i)) continue;
             spot(i, P, 0);
             ps.pushPose();
             ps.translate(P[0] - cam.x, P[1] - cam.y, P[2] - cam.z);
