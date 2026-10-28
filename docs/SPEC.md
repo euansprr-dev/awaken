@@ -8456,9 +8456,17 @@ laid already, then a near-freeze; then 2 s at the start and 33 s at the first te
 finder reading a chunk still generating, then one tick of 4.5 minutes in it; the ledge finder now reads only chunks
 already whole). A watch on the server thread (`RoadTimer.watch`) logs any tick (or task between ticks) over two seconds
 with its stack, always (a player's log says what held the server; on a tour over one second, sampled 20 times a
-second), again every 10 s while the same tick runs, each time with the first frames of every busy world generation
-(`Worker-Main-*`), IO (`IO-Worker-*`) and Awaken thread (a chunk the server thread waits for waits on them; the idle ones
-counted); a tick counts from the players' packets on (26.3 handles them before `tickServer`, and a move into land not
+second), again every 10 s while the same tick runs, each time with the first frames of every thread not waiting for
+work, of any name (a chunk the server thread waits for waits on one of them; those waiting for work counted), Road
+starts' lattice chunks not given back with what each waits for (its roads, the worldgen dispatcher to take it up, its
+step) and how long, each level's worldgen and light dispatchers (queue head, asleep, both executors' state), its light
+tasks, generation tasks not yet run and chunk tasks for the server thread, and the chunk under each player followed to
+what it waits on (`ChunkWaits`: its status, the step it started, its ticket and queue levels, its generation task; then
+the neighbour furthest behind what its next step needs, and that one's, down to a step started and not finished or one
+whose neighbours are ready and that never started; read only, from the watch's thread, the fields widened by the access
+transformer; `village_stall_watch_reads`). Run 40709834352 is why: the flight waited 6.6 minutes in vanilla's fall-damage
+fluid check (`EntityFluidInteraction.hasFluidAndLoaded`, a FULL `getChunk` that doesn't load but waits on a chunk under
+way) with every world generation, IO and Awaken thread idle and no roads being laid. A tick counts from the players' packets on (26.3 handles them before `tickServer`, and a move into land not
 generated yet waits there in NeoForge's `Entity.setPosRaw`). It logs any chunk the server thread had to wait for further than view distance from every player in its level,
 with the chunk's own tickets and who asked (once a minute a caller; a chunk without a getChunk's own "unknown" ticket
 rode in another chunk's wait, so the stack names that wait, not who asked for it). The camp command (`/awaken village road camp`) never lays a road on the server thread: a
@@ -8468,7 +8476,22 @@ stands the player on it once it's laid (run 40448865954: at once). Still left, o
 minutes), vanilla's own movement check (`handleMovePlayer`, fall damage, the fluid under the player) blocking on a chunk
 whose lattice chunks' roads world generation is laying itself while the two planners fall behind. On the Mac a cold
 teleport waits ~11 s and the planners keep 1,100 blocks ahead. Road starts (below, Turbo, built 2026-10-28) free world
-generation while a lattice chunk waits; the chunks that need that one still wait for it.
+generation while a lattice chunk waits; the chunks that need that one still wait for it. The minutes-long flight freeze
+is not the roads' (runs 40715105903 with Road starts off and 40716396298 with it on and the deeper watch, both on
+a1d5816c's code, both froze 6-7 minutes the same way): the server's tick never came. 26.3 handles every queued packet
+before each tick (`PacketProcessor.processQueuedPackets`, `while (!queue.isEmpty())`), and a client has no chunk gate
+(`LocalPlayer.tick`), so a player moving faster than the server generates land sends move packets into chunks not
+made yet. Each one waits on the server thread for the chunk under its position (NeoForge's `Entity.setPosRaw`, then
+vanilla's fall-damage fluid check), and the client keeps sending, so the one tick runs the queue for minutes (the
+chunk under the player moved from 50,11 to 201,-117 within it, each one finished in turn) until the client stops (the
+quit). The level's one worldgen executor was busy all along (features, structure starts' site and height reads; the
+terrain noise runs on the background pool), Road starts gave every lattice chunk back (184 of 184, the longest 22 s
+waiting for its roads, 7 s for the dispatcher), and the worldgen, IO and Awaken pools were otherwise idle. The quit
+hang that follows such a freeze (run 40716396298's watchdog dump) is the same freeze's: the client's
+`IntegratedServer.halt` queues a task for the server thread (`executeBlocking`, after its `isRunning` check) and joins
+it, but the server, held in that tick, handles the host's disconnect first, stops itself ("Stopping singleplayer server
+as player logged out") and never runs the task, so the Render thread waits forever (the world is saved). Not decided
+yet: bound the packet loop per tick (a Turbo mixin), or hold fast movement at the edge of the land the client has.
 Framings lay only the highroads through a place: the lanes round it would plan the regions about (48 s on the runner).
 Euan's 42 s freeze in a D-rank trial (2026-10-28, build 5cd4d985: "the mobs just stopped moving") was a player coming
 back from another level. Vanilla keeps an entity's supporting block (`mainSupportingBlockPos`) through a teleport to
@@ -8497,7 +8520,7 @@ and a lattice chunk whose legs aren't known; every other chunk's structure start
 Minecraft 26.3, NeoForge 26.3.0.95 (`RoadStarts.MINECRAFT/NEOFORGE`); probe: the hook marks itself applied the first
 time it runs (`village_road_starts_applied` on the GameTest server's own chunks); setting `roadStarts` in
 `config/awaken-roadstarts-server.toml` (a local config: the machine's, read at mod load, before any world generates;
-default on); off for the session on the first failure (a planner's failure, a submit or a step that throws), and a
+default on; a tour turns it off with the knob `ROADSTARTS=off`); off for the session on the first failure (a planner's failure, a submit or a step that throws), and a
 chunk whose planning failed lays its roads inline in the step, as before. Off, the hook returns at once and the step is
 vanilla's (the access transformer only widens a field). The roads are the same either way (each piece made once by
 whoever asks first; bench fingerprint 590ebda7cf744cf3, 92,028 columns, the same as without it).

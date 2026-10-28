@@ -134,8 +134,8 @@ final class RoadTimer {
      * From the server's start until it stops: on a tour the server thread sampled 20 times a second (how much of its
      * ticking went on planning, and the stack of any tick over a second); in play only the tick counter, read twice a
      * second, and a stack when a tick has run two seconds, so a player's log says what held the server. A tick still
-     * running is told again every {@link #RETELL_NS}, each time with what the world generation and our own threads are
-     * doing (a chunk the server thread waits for waits on them).
+     * running is told again every {@link #RETELL_NS}, each time with what every thread not waiting for work is doing, Road
+     * starts' lattice chunks not given back, and the chunk under each player followed to what it waits on (ChunkWaits).
      */
     static void watch(net.minecraft.server.MinecraftServer s) {
         boolean tour = System.getProperty("awaken.autopilot") != null;
@@ -168,22 +168,21 @@ final class RoadTimer {
                     boolean ticking = calls(stack, "net.minecraft.server.MinecraftServer", "processPacketsAndTick");
                     if (!ticking && !calls(stack, "net.minecraft.util.thread.BlockableEventLoop", "doRunTask")) continue;
                     tellAt = now - since + RETELL_NS;
-                    int gen = 0;
+                    int gen = 0, idle = 0, busy = 0;
                     StringBuilder others = new StringBuilder();
-                    int idle = 0;
+                    // every thread that isn't waiting for work, of any name: whoever is making (or holding) the chunk
                     for (var e : Thread.getAllStackTraces().entrySet()) {
                         Thread o = e.getKey();
                         if (o == st || o == Thread.currentThread()) continue;
                         if (calls(e.getValue(), RoadNet.class.getName(), "startsIn")) gen++;
-                        String name = o.getName();
-                        if (!name.startsWith("Worker-Main") && !name.startsWith("IO-Worker") && !name.startsWith("Awaken ")) continue;
                         if (idle(e.getValue())) idle++;
-                        else others.append("\n  ").append(name).append(": ").append(top(e.getValue(), 14));
+                        else if (busy++ < 32) others.append("\n  ").append(o.getName()).append(" [").append(o.getState()).append("]: ").append(top(e.getValue(), 14));
                     }
-                    RoadNet.log("tick {} has run {} ms{}: {} (roads being laid for {} other threads, {} lattice chunks set aside){}{}{}", tick,
+                    RoadNet.log("tick {} has run {} ms{}: {} (roads being laid for {} other threads, {} lattice chunks set aside){}\n  Road starts {}; {}{}{}{}", tick,
                             ms(now - since), ticking ? "" : " (a task between ticks)", top(stack, 24), gen, RoadNet.setAside(),
-                            planning(stack) ? " (road or settlement planning)" : "", others,
-                            idle > 0 ? "\n  (" + idle + " worldgen, IO and Awaken threads idle)" : "");
+                            planning(stack) ? " (road or settlement planning)" : "", dev.awaken.turbo.roadstarts.RoadStarts.status(),
+                            dev.awaken.turbo.roadstarts.RoadStarts.outstanding(), ChunkWaits.describe(s), others,
+                            "\n  (" + idle + " threads waiting for work" + (busy > 32 ? ", " + (busy - 32) + " more busy not shown" : "") + ")");
                 }
             }
         }, "Awaken stall watch");
@@ -266,10 +265,25 @@ final class RoadTimer {
         return false;
     }
 
-    /** A pool's thread waiting for work. */
+    /** Frames of a thread waiting for work (a pool's, a queue's, a timer's, a socket's, the JVM's own). */
+    private static final String[][] WAITING_FOR_WORK = {
+            {"java.util.concurrent.ForkJoinPool", "awaitWork"}, {"java.util.concurrent.ThreadPoolExecutor", "getTask"},
+            {"java.util.concurrent.LinkedBlockingQueue", "take"}, {"java.util.concurrent.LinkedBlockingDeque", "takeFirst"},
+            {"java.util.concurrent.ArrayBlockingQueue", "take"}, {"java.util.concurrent.LinkedTransferQueue", "take"},
+            {"java.util.concurrent.SynchronousQueue", "take"}, {"java.util.concurrent.DelayQueue", "take"},
+            {"java.util.TimerThread", "mainLoop"}, {"java.lang.ref.ReferenceQueue", "remove"},
+            {"java.lang.ref.Reference", "waitForReferencePendingList"}, {"java.lang.Thread", "sleep"},
+            {"java.lang.Thread", "sleepNanos"}, {"io.netty.channel.kqueue.Native", "keventWait"}, {"io.netty.channel.epoll.Native", "epollWait"},
+            {"sun.nio.ch.KQueue", "poll"}, {"sun.nio.ch.EPoll", "wait"}, {"sun.nio.ch.Net", "accept"},
+    };
+
+    /** A thread waiting for work (of any pool or kind): not one making or holding a chunk. */
     private static boolean idle(StackTraceElement[] stack) {
-        return stack.length == 0 || calls(stack, "java.util.concurrent.ForkJoinPool", "awaitWork")
-                || calls(stack, "java.util.concurrent.ThreadPoolExecutor", "getTask");
+        if (stack.length == 0) return true;
+        for (int i = 0; i < Math.min(stack.length, 8); i++) {
+            for (String[] w : WAITING_FOR_WORK) if (stack[i].getMethodName().equals(w[1]) && stack[i].getClassName().equals(w[0])) return true;
+        }
+        return false;
     }
 
     /** The stack's first {@code most} frames, our own and the game's, down to the tick. */
