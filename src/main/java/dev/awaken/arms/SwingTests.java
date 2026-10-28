@@ -102,7 +102,8 @@ final class SwingTests {
         h.succeed();
     }
 
-    private static final Set<String> TWO_HANDED = Set.of("katana", "greatblade", "maul", "spear", "glaive", "scythe", "warstaff");
+    private static final Set<String> TWO_HANDED = Set.of("katana", "greatblade", "maul", "spear", "glaive", "scythe", "warstaff",
+            "twinblades");
 
     /**
      * The baked file's feel rules: every swish starts on the press or after it and before the blow's active ticks end,
@@ -165,6 +166,12 @@ final class SwingTests {
             }
         }
         h.assertTrue(links > 30, "the chains' links are checked (" + links + ")");
+        // the Twin Blades' figure-eight (round 5): the ends take turns down the light chain, so the link above from a
+        // strike to one led by the other end holds only because the first carried on round end for end by the press
+        FpSwings.Style tw = FpSwings.style("twinblades");
+        boolean[] far = new boolean[3];
+        for (int i = 0; i < 3; i++) far[i] = FpSwings.far(tw, Archetype.Move.byKey("strike_" + (i + 1)));
+        h.assertTrue(tw != null && !far[0] && far[1] && !far[2], "the twin blades' ends take turns: strike 2 leads with the other end");
         h.succeed();
     }
 }

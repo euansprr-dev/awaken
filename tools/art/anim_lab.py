@@ -819,6 +819,8 @@ def bake(out=SWINGS, solve=False, round_=None):
                     d, R = SS.idle_pose(st, mv, held, float(tt))
                     idle.append([round(float(tt), 3)] + [round(float(v), 4) for v in d] + [round(float(v), 5) for v in mat_quat(R)])
                 moves[mv]["idle"] = idle
+            if SS.far_led(st, mv):  # led by a double weapon's other end: its trail follows that end (Swing Studio round 5)
+                moves[mv]["far"] = True
             moves[mv]["swish"], sound = SS.swish_of(sid, mv, m)
             if sound:
                 moves[mv]["swishSound"] = sound

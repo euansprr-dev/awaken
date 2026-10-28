@@ -49,10 +49,11 @@ public final class FpSwings {
      * (0: on the press) and {@code swishSound} the studio's sound in place of the row's own (null: the row's), and the bite, after a landed hit's hit-stop the hands running at {@code biteRate} for
      * {@code biteTicks} through the body (0 ticks: none). {@code idle} (schema 6, round 4; empty for none): a weapon in
      * each hand, the hand not striking, laid out like {@code keys} and authored for its own hand: still until the blow
-     * lands, then drawn back to the next strike's set and held there for the press.
+     * lands, then drawn back to the next strike's set and held there for the press. {@code far} (round 5): a double
+     * weapon led by its other end, turned end for end (the Twin Blades' figure-eight): its trail runs along that end.
      */
     public record Clip(float[] keys, Hand hand, float[] wristRight, float[] wristLeft, float[] straightRight, float[] straightLeft,
-                       float swish, @Nullable String swishSound, float biteRate, float biteTicks, float[] idle) {
+                       float swish, @Nullable String swishSound, float biteRate, float biteTicks, float[] idle, boolean far) {
         public int size() {
             return keys.length / STRIDE;
         }
@@ -132,7 +133,7 @@ public final class FpSwings {
                 String sound = row.has("swishSound") ? row.get("swishSound").getAsString() : null;
                 moves.put(m, new Clip(k, h, floats(wrist, "right"), floats(wrist, "left"), floats(straight, "right"),
                         floats(straight, "left"), swish, sound, bite == null ? 1F : bite.get(0).getAsFloat(),
-                        bite == null ? 0F : bite.get(1).getAsFloat(), idle));
+                        bite == null ? 0F : bite.get(1).getAsFloat(), idle, row.has("far") && row.get("far").getAsBoolean()));
             }
             Vector3f grip = vec(st.getAsJsonArray("grip"));
             styles.put(e.getKey(), new Style(moves, quat(st.getAsJsonArray("vanilla")), grip, vec(st.getAsJsonArray("vanillaGrip")),
@@ -196,6 +197,12 @@ public final class FpSwings {
     public static Hand hand(@Nullable Style st, Archetype.@Nullable Move m) {
         Clip c = st == null || m == null ? null : st.moves().get(m);
         return c == null ? Hand.MAIN : c.hand();
+    }
+
+    /** Whether a move is led by its double weapon's other end (Clip's far). */
+    public static boolean far(@Nullable Style st, Archetype.@Nullable Move m) {
+        Clip c = st == null || m == null ? null : st.moves().get(m);
+        return c != null && c.far();
     }
 
     public static float dt() {

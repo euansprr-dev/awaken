@@ -54,7 +54,7 @@ WEIGHT_CUT = {  # each class's drive and bite (heavier: longer, harder, deeper)
 BITE = {"snap": [0.5, 0.5], "blade": [0.35, 0.75], "heavy": [0.25, 1.25]}  # runtime bite: rate, ticks
 CAM_TAU = {"fast": 0.9, "ease": 1.2, "drag": 1.7}
 TWO_HANDED = {"katana": 0.11, "greatblade": 0.13, "maul": 0.16, "spear": 0.30, "glaive": 0.34, "scythe": 0.36,
-              "warstaff": 0.40}  # the off hand's gap down the handle (blocks)
+              "warstaff": 0.40, "twinblades": 0.11}  # the off hand's gap down the handle (blocks)
 # where each swish sound's whoosh peaks after it starts (ticks; tools/art/specs/audio_arms.py pass times): the rows' own
 # (light, heavy, thrust), and the studio's: quick for a blow that lands before the row's own could peak, the katana's cut
 SWISH_LEAD = {"light": 1.95, "heavy": 2.9, "thrust": 1.6, "art": 0.0, "quick": 0.77, "katana": 1.12}
@@ -201,6 +201,7 @@ CHAIN_MARGIN = 0.85  # a leading strike's blade middle stays this far inside the
 CHAIN_TIP_Y = 0.4  # and its tip (a maul's head) this near the middle of the screen's height: read, not a sliver
 CHAIN_SET = 0.9  # and a chained strike's set
 CARRY_KEEP = 0.4  # a leading strike's follow-through keeps at least this much of its travel
+TWIRL_MID_Y = -0.7  # a weapon turning end for end keeps its middle (the hands) at least this high on the screen (ndc)
 LOAD_STEP = 0.3  # the most the tip moves (ndc) in a 60 fps frame while it draws back
 _START = {}
 _BUSY = set()
@@ -241,6 +242,47 @@ def chained(st, mv):
 def side(hand):
     """The hand whose pose leads a move: the off hand's own, else the main's (both hands play the main's)."""
     return "off" if hand == "off" else "main"
+
+
+# ---- the figure-eight (round 5: a double weapon's ends take turns) ----------------------------------------------------
+
+def far_led(st, mv):
+    """Whether this strike leads with a double weapon's other end (a feel spec's move "far"): Euan 2026-10-28, "give the
+    twin blades a two-handed hold on the shaft and alternate which end leads each strike, a figure-eight"."""
+    return bool(feel(st["id"]).get("moves", {}).get(mv, {}).get("far"))
+
+
+def chain_next(st, mv):
+    """The strike after this one in the chain, or None."""
+    chain = st.get("chain", []) + st.get("masteryChain", [])
+    if mv not in chain or chain.index(mv) + 1 >= len(chain):
+        return None
+    return chain[chain.index(mv) + 1]
+
+
+def _middle(held):
+    """A double weapon's middle along its length (where it turns end for end)."""
+    a = held.P @ held.axis
+    return held.grip + held.axis * ((a.max() + a.min()) / 2 - held.grip @ held.axis)
+
+
+def _turned(held, pose, deg):
+    """The pose with the weapon turned deg about its flat's normal through its middle: at 180 its other end lies exactly
+    where this one did (a double weapon is the same both ways round), so the lever's whole path is kept."""
+    if abs(math.remainder(deg, 360.0)) < 1e-9:
+        return pose
+    d, R = pose
+    Rf = L.axis_rot(held.face, deg)
+    mid = _middle(held)
+    return d + R @ mid - R @ Rf @ mid, R @ Rf
+
+
+def _turn_sense(held, at):
+    """+1 or -1: the sense of turn about the flat that carries on the cut's own (the blade keeps going round)."""
+    R0, R1 = at(0.0)[1], at(5.0)[1]
+    W = R1 @ R0.T
+    w = np.array([W[2, 1] - W[1, 2], W[0, 2] - W[2, 0], W[1, 0] - W[0, 1]])
+    return 1.0 if w @ (R0 @ held.face) >= 0 else -1.0
 
 
 # ---- the idle hand (round 4: a weapon in each hand) ---------------------------------------------------------------------
@@ -397,11 +439,31 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
                                                        nxt[0] if nxt else None)
     lag0 = lag * 0.6
     cocked = at(-pre, lag0, roll0 * 0.85)
+    # the figure-eight (round 5): a far strike is the lever's path with the weapon end for end; a strike whose next one
+    # leads with the other end carries on round off the hit, half a turn by the next press, so the other end comes over
+    # to lead it (and a strike left there turns on round as it goes home)
+    turn = 180.0 if far_led(st, mv) else 0.0
+    after = chain_next(st, mv)
+    twirl = nxt is not None and after is not None and far_led(st, after) != far_led(st, mv)
+    sense = _turn_sense(held, at) if twirl or turn else 1.0
+    # turned about hands held low, half the weapon dives off the bottom of the screen: the hands rise as it turns
+    lift, lk = np.zeros(3), 0.0
+    if twirl:
+        hold = _lifted(held, at(stop, -lag * 0.3, 0.0, 1.0, drop))
+        w = H0 + hold[0] + hold[1] @ _middle(held)
+        lift[1] = max(0.0, TWIRL_MID_Y - ndc(w)[1]) * -w[2] / F_
+
+    def out(pose, extra=0.0):
+        d, R = _turned(held, pose, turn + sense * extra)
+        return d + lift * lk, R
+
     start = rest
     if t < c:
         # a chained strike winds up from where the one before it holds the blade, not from rest (with no wind-up to
         # speak of, the whole time before the drive is that move)
         start = chain_start(st, mv, held) or rest
+        if turn:  # where the last strike holds it, read on this strike's own (end for end) lever
+            start = _turned(held, start, -turn)
         if start is not rest and reach <= 0 < c:
             reach = c * 0.85
         if reach > 0:
@@ -417,15 +479,22 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
     if t < reach:  # the load: out of rest (or the last strike's end) along the arc to the cocked pose
         x = t / reach
         k = L.ease_out_cubic(x) if kn["load"] == "out" else L.ease_in_out_sine(x)
-        return L.lerp_pose(start, cocked, k)
+        return out(L.lerp_pose(start, cocked, k))
     if t < c:  # the set: held there, a hair further back, the spring loaded
         k = L.ease_out_sine((t - reach) / max(1e-6, c - reach)) if reach > 0 else 1.0
-        return at(-pre - kn["creep"] * k, lag0 + (lag - lag0) * k, roll0 * (0.85 + 0.15 * k))
+        return out(at(-pre - kn["creep"] * k, lag0 + (lag - lag0) * k, roll0 * (0.85 + 0.15 * k)))
     th0 = -pre - kn["creep"]
     if t < hit:  # the drive: slow out of the set, explosive into the hit, the wrist whipping the blade square
         x = (t - c) / max(1e-6, hit - c)
         p = x ** kn["power"]
-        return at(th0 * (1 - p), lag * (1 - x) ** 1.5, roll0 * (1 - x) ** 1.6, x)
+        return out(at(th0 * (1 - p), lag * (1 - x) ** 1.5, roll0 * (1 - x) ** 1.6, x))
+    # the twirl: from the hit, the blow whirling straight on and slowing (1 - (1 - x)^2), round by the next press (from
+    # the bite's end the cut stopped dead and the turn set off again: a stop and go; eased in, a second peak past the hit)
+    spun = 0.0
+    if twirl and t > hit:
+        x = min(1.0, (t - hit) / max(0.5, nxt[0] - hit))
+        spun = 180.0 * (1 - (1 - x) ** 2)
+        lk = spun / 180.0
     if t < exit_t:
         # through the target and on: one continuous fall of speed from the hit's own (1 - (1 - x)^k leaves at k times
         # the mean, matched to the drive's end so nothing stutters), the wrist leading a touch, carried on and down out of
@@ -437,7 +506,7 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
         y = 1 - (1 - x) ** k
         # the wrist's lead and the drop ride the same fall of speed, so nothing moves on once the blade has stopped
         lead = -lag * 0.3 * math.sin(math.pi * 0.5 * min(1.0, y / 0.5))
-        return at(stop * y, lead, 0.0, 1.0, drop * y)
+        return out(at(stop * y, lead, 0.0, 1.0, drop * y), spun)
     # out of the frame it waits for the chain's next press (the next strike leaves from down there: SwingBlend carries the
     # pose), then rises home
     low = at(stop, -lag * 0.3, 0.0, 1.0, drop)
@@ -449,19 +518,24 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
         if ready is not low:
             haul = max(0.5, min(1.5, nxt[0] - exit_t))
             if t < up:
-                return L.lerp_pose(low, ready, L.ease_in_out_sine(min(1.0, (t - exit_t) / haul)))
+                return out(L.lerp_pose(low, ready, L.ease_in_out_sine(min(1.0, (t - exit_t) / haul))), spun)
             low = ready
     else:
         gone = _off_screen(held, low)
         up = exit_t if not cad or not gone else min(max(exit_t, cad[0] + 0.25), total - min(kn["rise"], 1.5))
     rise = min(kn["rise"], total - up)
     x = min(1.0, max(0.0, t - up) / max(1e-6, rise))
+    # left end for end: it turns on round the same way as it goes home (rest holds it the right way round)
+    if twirl:
+        lk = 1.0 - L.ease_in_out_sine(x)
+    if math.remainder(turn + spun, 360.0):
+        spun += 180.0 * L.ease_in_out_sine(x)
     if kn["lowered"] <= 0:
-        return L.lerp_pose(low, rest, L.ease_in_out_sine(x))
+        return out(L.lerp_pose(low, rest, L.ease_in_out_sine(x)), spun)
     lowered = (np.array([0.0, -kn["lowered"], 0.0]), np.eye(3))
     if x < 0.35:  # down and out of the frame, then up into the rest pose, fast then settling
-        return L.lerp_pose(low, lowered, L.ease_in_out_sine(x / 0.35))
-    return L.lerp_pose(lowered, rest, 1 - (1 - (x - 0.35) / 0.65) ** 4)
+        return out(L.lerp_pose(low, lowered, L.ease_in_out_sine(x / 0.35)), spun)
+    return out(L.lerp_pose(lowered, rest, 1 - (1 - (x - 0.35) / 0.65) ** 4), spun)
 
 
 def _lifted(held, pose):
@@ -492,6 +566,16 @@ def _on_screen_end(held, at, stop, drop, lag):
         if _readable(held, at(stop * k, -lag * 0.3, 0.0, 1.0, drop * k), tip_y=False):
             return stop * k, drop * k
     return stop * CARRY_KEEP, drop * CARRY_KEEP
+
+
+def lead_points(held, far, d, R):
+    """The striking blade's (tip, grip) in view space: a far-led strike's are the other end's (the weapon end for end)."""
+    tip, grip = held.tip, held.grip
+    if far:
+        mid = _middle(held)
+        tip, grip = 2 * mid - tip, 2 * mid - grip
+    H0 = np.array([L.HX, L.HY, L.HZ])
+    return R @ tip + H0 + d, R @ grip + H0 + d
 
 
 def _tip_ndc(held, pose):
@@ -602,8 +686,7 @@ def rows(sid, mv, swings, wid=None):
     prev = None
     for k in keys:
         d, R = L.new_pose(sid, mv, k[0], swings)
-        tip = R @ held.tip + H0 + d
-        grip = R @ held.grip + H0 + d
+        tip, grip = lead_points(held, swings[sid]["moves"][mv].get("far"), d, R)
         mid = grip + (tip - grip) * L.MID
         ax = (tip - grip) / np.linalg.norm(tip - grip)
         mn = ndc(mid)

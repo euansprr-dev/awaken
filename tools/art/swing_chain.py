@@ -189,8 +189,7 @@ def play(sid, swings=None, rhythm="mash", wid=None):
             src = (d, R) if moves else idle if idle is not None and h == other else (np.zeros(3), np.eye(3))
             shown[h] = b.apply(t, *src)
         sd, sR = shown["off" if hand == "off" else "main"]
-        tip = sR @ held.tip + H0 + sd
-        grip = sR @ held.grip + H0 + sd
+        tip, grip = S.lead_points(held, swings[sid]["moves"][mv].get("far"), sd, sR)
         mid = grip + (tip - grip) * L.MID
         mir = -1 if hand == "off" else 1
         tn, mn = S.ndc(tip), S.ndc(mid)
@@ -223,8 +222,12 @@ def judge(sid, swings=None, rhythm="mash"):
         allf = [f for f in frames if f[1] == i]
         # a jump: the tip's move between two frames away from the blow itself (the drive and the cut through are fast
         # by design; anywhere else a big step reads as a teleport, and the ribbon draws it)
+        # a double weapon carried on round end for end off the blow (round 5's figure-eight) is the blow going on: its
+        # far end comes over from out of the view by design
+        nx = S.chain_next(st, mv)
+        spin_to = (m.get("cadence") or [0])[0] if nx and S.far_led(st, nx) != S.far_led(st, mv) else 0
         jumps = [float(np.linalg.norm(allf[k][2] - allf[k - 1][2])) for k in range(1, len(allf))
-                 if not (hit * 0.5 <= allf[k][5] <= hit + 0.67)
+                 if not (hit * 0.5 <= allf[k][5] <= max(hit + 0.67, spin_to))
                  and (onscreen(allf[k][2], allf[k][4], 1.2) or onscreen(allf[k - 1][2], allf[k - 1][4], 1.2))]
         # turns back on itself before the hit beyond the one draw back: the tip's screen velocity reversing by more
         # than 120 degrees (the "tiny movements")

@@ -1,7 +1,7 @@
 {
   "style": "twinblades",
-  "round": 3,
-  "_notes": "Round 2: the studio's shapes; the spins gather to their fastest on the hit and carry off it; the opening cut starts from a lower set and drives harder.",
+  "round": 5,
+  "_notes": "Round 2: the studio's shapes; the spins gather to their fastest on the hit and carry off it; the opening cut starts from a lower set and drives harder. Round 5 (Euan 2026-10-28): both hands on the shaft; the ends take turns, a figure-eight: each cut carries on round half a turn off its hit so the other blade comes over to lead the next (strike_2 leads with the far end).",
   "cut": {},
   "thrust": {},
   "moves": {
@@ -10,6 +10,9 @@
         "power": 3.4,
         "pre_k": 0.85
       }
+    },
+    "strike_2": {
+      "far": true
     }
   }
 }

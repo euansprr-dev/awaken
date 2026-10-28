@@ -137,12 +137,20 @@ final class ArmsHands {
     private static final org.joml.Vector3f D = new org.joml.Vector3f();
     private static final org.joml.Quaternionf Q = new org.joml.Quaternionf();
 
+    private static boolean far;
+
+    /** Whether the move on the hands now is led by its double weapon's other end (its trail runs along that end). */
+    static boolean far() {
+        return far;
+    }
+
     /**
      * The lab's swing (FpSwings), when it has one for the move: an arc about the sword arm's pivot, the edge leading,
      * through the target under the crosshair on the hit tick. A held heavy waits at the heavy's drawn-back start (and
      * trembles), an armed Plunge at the Plunge's. Mirrored for a left main arm. False: the row's own swing below.
      */
     private static boolean lab(LocalPlayer p, FirstPerson.View v) {
+        far = false;
         var style = ArmsPredict.style != null ? ArmsPredict.style : preview != null ? Archetypes.get(Arms.LONGSWORD) : null;
         if (style == null) return false;
         Archetype.Move m;
@@ -166,6 +174,7 @@ final class ArmsHands {
         boolean ours = ArmsItems.of(p.getMainHandItem().getItem()) != null;
         FpSwings.Style st = FpSwings.style(style.id());
         boolean has = m != null && FpSwings.sample(st, m, t, ours, D, Q);
+        far = has && FpSwings.far(st, m);
         if (!has) {
             D.zero();
             Q.identity();
@@ -273,8 +282,8 @@ final class ArmsHands {
             FirstPerson.View.fist(v.gripOff, 1, -inv * G.x, G.y, G.z);
         } else if (both != null && p.getOffhandItem().isEmpty()) {
             // a two-handed weapon with the off hand free: the off hand closes on the handle below the main, through
-            // every swing and the guard (SPEC §25 "Swing Studio": the katana, greatblade, maul, spear, glaive, scythe and
-            // war-staff); a stance's own off fist still takes the hand (Hands' hideOff)
+            // every swing and the guard (SPEC §25 "Swing Studio": the katana, greatblade, maul, spear, glaive, scythe,
+            // war-staff and twin blades); a stance's own off fist still takes the hand (Hands' hideOff)
             onMain(G.set(both), g, g > 0 ? jolt(partial) * g : 0, inv);
             FirstPerson.View.fist(v.gripOff, 1, inv * G.x, G.y, G.z);
         }

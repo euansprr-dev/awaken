@@ -116,3 +116,22 @@ draw back. Their round-3 chain is in view; their rhythm needs its own idea.
 
 Chain links that start exactly where their hand already is: 43 -> 46 (the daggers' 1 -> 2, 2 -> 3, 3 -> 4).
 
+## Round 5: the twin blades' figure-eight (2026-10-28)
+
+Note (Euan, same day): "give the twin blades a two-handed hold on the shaft and alternate which end leads each strike,
+a figure-eight."
+
+Both hands now hold the shaft, the off hand just below the main. The ends take turns. Strike 1 cuts with the near blade
+and does not stop on the hit: it whirls straight on, slowing, half a turn by the moment the next press can come, and the
+hands rise as it turns, so the far blade swings up from below into view. Strike 2 cuts back with that far blade along
+the exact path the near one would have taken, then whirls on, and the near blade stands up for strike 3. The spins
+(strikes 4 and 5) use both ends anyway. If the chain stops after a strike, the blade keeps turning the same way as it
+goes home. The trail follows whichever blade leads.
+
+Tried and dropped: starting the turn after the bite (the cut stopped dead, then the turn set off again faster than the
+hit) and easing the turn in (a dip after the hit, then a second peak faster than it). From the hit, fast and slowing, the
+turn is the blow carrying on.
+
+Numbers: twin blades strikes 2 and 3 stay fully in view (mash jump 0.28 and 0.21, steady 0.11 and 0.21). Every other
+style's chain is unchanged (totals as round 4). Strike 1's own blade is in view less (0.88 -> 0.75), because it whirls
+off the bottom as the far blade comes up.
