@@ -137,6 +137,19 @@ public final class Rooms {
         return e;
     }
 
+    /**
+     * A world's signature creature (SPEC §38.8) with a body of its own from the mobs module, made a monster of this
+     * floor like any other; null when the mobs module has no such creature yet (the caller makes do with an elite).
+     */
+    public static LivingEntity signature(ServerLevel level, GateRecord g, FloorLayout f, int roomKey, String creature, BlockPos pos) {
+        int lv = g.scripted ? 0 : Progression.contentLevel(g.plan.rank());
+        LivingEntity e = MobHooks.spawnCreature(level, creature, pos, lv, g.key());
+        if (e == null) return null;
+        GateMobs.register(e, new GateMobs.Key(g.id, f.area, f.floor, roomKey));
+        Modifiers.onSpawn(g, e);
+        return e;
+    }
+
     /** A Lord met by a party: +50% health per extra player (the hoard is already one per player). */
     static void partyLord(LivingEntity e, int party) {
         if (party <= 1) return;

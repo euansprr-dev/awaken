@@ -9152,7 +9152,8 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   gate, Lords' floors, secrets, mastery opening the deep world and the wonder, worlds switched off, saving plans and the Atlas).
 - **Stage 0** (built 2026-10-28): plots, the frame, the place map, recipes and their loader, per-world biomes, the engine
   interface, the director, the Atlas and the arrival payload. No recipes ship yet, so every floor is today's rooms in its plot.
-- **Stage 1** (in progress): the world floor contract (38.5), the Bell Crypt's blocks and its four floor worlds (38.6); tests
+- **Stage 1** (built 2026-10-28; its gaps closed the same evening: the swinging bells, the air, the Bell Tower set, the
+  signature hook): the world floor contract (38.5), the Bell Crypt's blocks and its four floor worlds (38.6); tests
   `gateworlds_bell_recipes`, `gateworlds_belfry`, `gateworlds_ossuary`, `gateworlds_field` and `gateworlds_shaft`; the
   arrival, the journey down and the Atlas page (38.7), test `gateworlds_atlas_view`; the live layer (38.8): events, the
   bell rule, the Ringer, residents' looks, secrets, keepsakes and the catch, tests `gateworlds_live` and
@@ -9260,6 +9261,22 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   landings, balconies, chambers and the foot, on every third step, along the foot of the shaft wall, at every doorway and
   along the bridge. Moods: Tolling adds a monster to each fight room, Requiem lights every candle, Still leaves half out,
   Storm thins the mist and brightens the light down the shaft.
+- **Swinging bells** (`WorldProps`, built with the gaps 2026-10-28): the bay bells, the rope shaft's bells and the void
+  islands' bells (any hung bell of radius 3.2 or less, at most 32 a floor; `WorldPlan.hungBell`) are carved as their canon,
+  chains and lamp only and marked `prop` (id "bell:<radius × 10>", the bell's box). While anyone is within 96 on the floor
+  each shows as a block display of `bell_prop` (a cast-bell model with a lit mouth, 2·radius wide and the bell's height,
+  hung from its canon so the display's pitch swings it about the hinge, lit by its lamp's block light, at least 6; turned
+  0 or 90 by its position). Ringing one (any strike, the Tolling, the Swing, the Ringer's tolls) swings it: 26° for a full
+  strike (0.7 of that for a struck rule bell), adding to what's left of the last swing up to 36°, dying to a third in 70
+  ticks; the period 18 + 4 × its height in ticks. The server sets the pitch every 3 ticks and the display eases between
+  (teleport duration 3). Props with nobody within 128 go, checked every 2 s. Never saved: one loaded from disk leaves at once
+  (`GateEvents`, tag `awaken_world_prop`) and is made again when someone comes near. The Great Bell, the Still Bell, the
+  Field's own bells, the Shaft's bell column and the Rest's half-cast bell stay blocks (too big, or not hung to swing).
+- **The Bell Tower** (`bell_tower`, the theme's set piece, 38.8 "Sets"): a little stone belfry on a plinth, its bell under
+  the cap with a lit mouth (light 6). Placed at home it tolls the hours from dawn to dusk (six at 6 in the morning, twelve
+  at noon, nine at 9 in the evening; 2.5 s apart; silent from 9 at night to 6 in the morning), rings once when used or
+  given a redstone pulse; all by scheduled ticks (state `tolls` 0..12 left this hour, `powered`). Mined with a pickaxe, it
+  drops itself.
 
 ### 38.7 Arrivals, the journey down and the Atlas page (Stage 1)
 
@@ -9313,7 +9330,11 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
 - **The Ringer**: the 8th bell struck on one floor (anyone's) tolls three times and brings the Ringer, once a floor
   (`FloorState.world` "ringer"): an elite of the floor's theme named "The Ringer", double health, about 8 blocks from the
   bell in its room. "You've rung too many bells. The Ringer is coming." to everyone within 48. Everyone within 48 when it
-  comes has met the world's signature creature (`the_ringer`, on the Atlas). Its own body comes with the mob forms work.
+  comes has met the world's signature creature (`the_ringer`, on the Atlas). Its own body: `MobHooks.spawnCreature(level,
+  "awaken:the_ringer", ...)` (a default on the spawner, null until the mobs module's Creature Kit makes it; asked of the
+  boss plan's session 2026-10-28), made a monster of the floor by `Rooms.signature`; while it's null the elite above
+  stands in. Every wonder world's signature comes the same way (`spawnCreature` with the recipe's `signature` as an id),
+  never through `spawnBoss`, whose unknown ids become a Lord.
 - **Events** (a recipe's `events`, each once a floor and saved as "ev:<id>"; a room on the way from the arrival to the end
   runs it when anyone first reaches it or a room past it): **the Tolling** (halfway): the 12 nearest bells within 64 ring
   one after another, 6 ticks apart, and dust comes down round everyone within 48 (a world with no bells of its own hears
@@ -9347,7 +9368,12 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   Clapper) drops when the Ringer dies on a Belfry floor to everyone on a run within 48; the Ossuary's Bone Handbell comes
   with the sealed niche, the Shaft's Little Tower Bell with the lowest bell, the Field's Field Bell with the silent bell, the
   Rest's Bellmaker's Clapper with arriving. Keepsakes hang like any trophy, so each counts once toward the Trophy Hall's
-  bonus. The five together as a working bell tower at home is not built yet.
+  bonus.
+- **Sets** (`WorldSets`): the keepsake that completes a theme (every one of its worlds with a keepsake has given you
+  yours) also gives the theme's set piece, once, with "You have every keepsake from the <theme>. <its line>". Nothing new
+  is saved: the Atlas knows each keepsake and the last comes once. The Bell Crypt's is the Bell Tower (38.6): "All five
+  bells of the crypt, hung together in a little tower. Set it up at home: it rings the hours from dawn to dusk, and you can
+  ring it yourself." Each later theme adds its piece here.
 - **The catch** (drop worlds, the Shaft): while you're on such a floor the server notes every 4 ticks where you stand on
   the ground in a room, out of water; a fall of more than 9 blocks that has taken you 4 below that ledge puts you back on
   it, facing the way you stood, for 3 damage, with "You fell, and the shaft gave you back to the last ledge you stood on."
@@ -9362,8 +9388,8 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   the twelve vanilla species, §21.13). Until then a world's monsters look as they do anywhere.
 - **Saved**: `FloorState.world` (a set of strings, optional in the save, so floors saved before it load with none).
   Everything else (strike counts, the Flood's progress, timed cues, ledges) lives in `WorldLive` while the server runs.
-- **Not in Stage 1**: the bells don't swing (no moving bell bodies; a proposal: display-entity bell props, 32 a floor at
-  most), the Ringer has no body of its own, and the five keepsakes don't yet make a bell tower at home.
+- **Waiting on others**: the Ringer's body and the residents' paint (the mobs module, above). Everything else of Stage 1 is
+  built.
 
 ### 38.9 Sound and small life (Stage 1)
 
@@ -9396,11 +9422,28 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   kind made a half second, out of view or 16+ off, faded in over a second and out at the end of their life, gone past 36
   blocks. They move themselves without collision physics and keep to the air, water or floor they were made in. `dust`:
   motes drifting round you (one every other tick); `drips`: a drip heard where it lands under a ceiling near you every 2
-  to 7 s; the Storm mood: far thunder every 25 to 70 s. Sprites (16 px, their own colours, 2-3 frames) from
-  `tools/art/specs/gate_worlds_bell.py`. The Belfry has bats, pale fish, moths and drips; the Ossuary moths, rats and
-  drips; the Shaft bats, dust and drips; the Field moths and pale fish; the Rest moths.
+  to 7 s. Sprites (16 px, their own colours, 2-3 frames) from `tools/art/specs/gate_worlds_bell.py`. The Belfry has
+  bats, pale fish, moths and drips; the Ossuary moths, rats and drips; the Shaft bats, dust and drips; the Field moths and
+  pale fish; the Rest moths.
+- **The air** (`gates.client.WorldAir`, client only, built with the gaps 2026-10-28): the world's `life` with its mood's
+  `life` added (a mood's optional list; at most 16 on the arrival) also names the air, from five shared sprites tinted per
+  kind (`gate_air_wisp`, `_streak`, `_flake`, `_orb`, `_flash`; `tools/art/specs/gate_worlds_air.py`); at most 260 near
+  you, made only in open air. `shaft_dust`: pale motes turning slowly along Gate Air's light shafts within 40, lit by the
+  shaft. `mist`: low wisps lying on Gate Air's water within 20. `smoke`: a thread off a warm light (a candle, a lamp)
+  within 20. `rain`: streaks down the light shafts from their tops (the broken lancets) within 36, else all round you in an
+  open world. `lightning`: every 25 to 70 s a flash at every shaft top within 72 and the thunder after it, a tick per
+  three blocks later (far off, thunder alone). `procession`: every 20 to 45 s seven ghost lights walk, two blocks apart,
+  from a warm light 14 to 36 from you along the lights chained nearest to nearest (up to 14), lit fully, then fade.
+  `far_toll`: a far bell every two to three minutes, a little louder each time on the floor (0.25 up by 0.12 to 0.85).
+  For the themes to come: `ash`, `snow`, `petals`, `paper`, `sand` (falling round you, drifting), `spores`, `embers`
+  (rising), `fireflies` (blinking) and `steam` (off warm water). Known kinds are `GateWorld.LIFE`. The Bell Crypt: the
+  Belfry adds shaft dust, mist, smoke and the far toll; the Ossuary smoke and shaft dust; the Field mist, smoke and the
+  far toll; the Shaft shaft dust and smoke; the Rest smoke and shaft dust; every world's Requiem adds the procession and
+  its Storm rain and lightning.
 - **Test** `gateworlds_sounds`: every `gate.world.*` event has its sounds.json entry and files, every world's bed is
-  registered, every `life` entry is a known kind; `gateworlds_live` also checks that a bell hums over you.
+  registered, every `life` entry (a recipe's and its moods') is a known kind; `gateworlds_live` also checks that a bell
+  hums over you and that a hung bell near you shows as a prop and swings when rung; `gateworlds_sets` that the hours toll
+  right and that the fifth Bell Crypt keepsake brings the Bell Tower.
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 

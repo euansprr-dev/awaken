@@ -70,6 +70,7 @@ public final class WorldRules {
             boolean hand = bell != null && bell.id().equals(FloorLayout.Mark.HANDBELL);
             level.playSound(null, pos, bell == null ? GatesRegistry.SND_WORLD_STRIKE.get() : WorldLive.voice(bell), SoundSource.BLOCKS,
                     hand ? 1.4F : 2.5F, bell == null ? 1F : WorldLive.pitch(bell) * (0.96F + p.getRandom().nextFloat() * 0.08F));
+            if (bell != null && !hand) WorldProps.swing(g, f, bell, 0.7F);
         }
         List<ServerPlayer> near = WorldLive.near(level, g, f, pos, SHOW_R);
         if (!near.contains(p)) near.add(p);

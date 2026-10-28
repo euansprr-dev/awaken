@@ -59,6 +59,8 @@ public final class FloorLayout {
      */
     public record Mark(String kind, String id, int x0, int y0, int z0, int x1, int y1, int z1) {
         public static final String BELL = "bell", SECRET = "secret", BASIN = "basin", TRIGGER = "trigger";
+        /** Something the live layer shows as a display entity and moves (a swinging bell: id "bell:" + 10 x radius). */
+        public static final String PROP = "prop";
         /** A bell mark's id for a handbell on the floor (the rest are hung bells; "still" and "lowest" are named ones). */
         public static final String HANDBELL = "handbell";
 

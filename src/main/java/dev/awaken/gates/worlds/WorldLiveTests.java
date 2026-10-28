@@ -96,6 +96,20 @@ public final class WorldLiveTests {
                 WorldLive.hum(level, p, g, f, hl);
                 h.assertTrue(!hl.hummed.isEmpty(), "a bell hums over you");
 
+                // the hung bells near you hang as props and swing when they ring (SPEC §38.6)
+                List<FloorLayout.Mark> props = f.marks(FloorLayout.Mark.PROP);
+                h.assertTrue(!props.isEmpty() && props.size() <= 32, "the floor has swinging bells (" + props.size() + ")");
+                FloorLayout.Mark pm = props.get(0);
+                p.teleportTo(level, o.getX() + pm.cx(), o.getY() + pm.y0() - 4, o.getZ() + pm.cz(), Set.of(), 0, 0, true);
+                WorldProps.near(level, p, g, f);
+                WorldProps.Prop prop = WorldProps.of(g, f).get(0);
+                h.assertTrue(prop.display != null && WorldProps.prop(prop.display), "a bell near you hangs as a prop");
+                WorldProps.swing(g, f, pm, 1F);
+                long t0 = level.getGameTime() - level.getGameTime() % WorldProps.STEP + WorldProps.STEP;
+                WorldProps.tick(level, t0);
+                WorldProps.tick(level, t0 + WorldProps.STEP);
+                h.assertTrue(Math.abs(prop.display.getXRot()) > 1, "a rung bell swings (pitch " + prop.display.getXRot() + ")");
+
                 // the odd rope: coming into the Bellmaker's Rest finds the secret and its keepsake
                 int restId = f.placeWorlds.keySet().iterator().next();
                 Room rest = f.room(restId);
@@ -162,15 +176,40 @@ public final class WorldLiveTests {
                         problems.add(id.getPath() + ": missing " + file);
                 }
             }
-            Set<String> life = Set.of("moths", "bats", "pale_fish", "rats", "dust", "drips");
             for (var e : GateWorlds.all().entrySet()) {
                 GateWorld.Dressing d = e.getValue().dressing();
                 if (!d.sound().isEmpty() && !BuiltInRegistries.SOUND_EVENT.containsKey(net.minecraft.resources.Identifier.parse(d.sound())))
                     problems.add(e.getKey() + "'s bed " + d.sound() + " isn't registered");
-                for (String k : d.life()) if (!life.contains(k)) problems.add(e.getKey() + ": unknown life " + k);
+                for (String k : d.life()) if (!GateWorld.LIFE.contains(k)) problems.add(e.getKey() + ": unknown life " + k);
+                for (GateWorld.Mood m : e.getValue().moods())
+                    for (String k : m.life()) if (!GateWorld.LIFE.contains(k)) problems.add(e.getKey() + "/" + m.id() + ": unknown life " + k);
             }
             h.assertTrue(count >= 19, "the Bell Crypt's sounds are registered (" + count + ")");
             h.assertTrue(problems.isEmpty(), problems.size() + " problems: " + String.join("; ", problems.subList(0, Math.min(8, problems.size()))));
+            h.succeed();
+        });
+
+        AwakenTests.register("gateworlds_sets", 40, h -> {
+            // the Bell Crypt's last keepsake gives its bell tower, which tolls the hours from dawn to dusk
+            h.assertTrue(dev.awaken.gates.block.WorldBlocks.BellTower.tollsAt(0) == 6, "dawn (6 o'clock) is six tolls");
+            h.assertTrue(dev.awaken.gates.block.WorldBlocks.BellTower.tollsAt(6000) == 12, "noon is twelve");
+            h.assertTrue(dev.awaken.gates.block.WorldBlocks.BellTower.tollsAt(18000) == 0, "midnight is silent");
+            ServerPlayer p = GateLiveTests.player(h);
+            GateAtlas atlas = new GateAtlas();
+            List<String> crypt = GateWorlds.ofTheme(dev.awaken.gates.content.Theme.BELL_CRYPT);
+            for (String w : crypt) atlas.arrive(w, "still", 1);
+            for (String w : crypt) if (!GateWorlds.get(w).dressing().keepsake().isEmpty()) atlas.entry(w).keepsake = true;
+            String last = null;
+            for (String w : crypt) if (!GateWorlds.get(w).dressing().keepsake().isEmpty()) last = w;
+            h.assertTrue(last != null && crypt.size() == 5, "the Bell Crypt has five worlds with keepsakes");
+            atlas.entry(last).keepsake = false;
+            p.setData(GatesRegistry.ATLAS.get(), atlas);
+            h.assertTrue(!WorldSets.complete(atlas, dev.awaken.gates.content.Theme.BELL_CRYPT), "four keepsakes aren't the set");
+            p.getInventory().clearContent();
+            WorldLive.keepsake(p, last);
+            boolean tower = false;
+            for (int i = 0; i < p.getInventory().getContainerSize(); i++) tower |= p.getInventory().getItem(i).is(GatesRegistry.BELL_TOWER.get().asItem());
+            h.assertTrue(tower, "the fifth keepsake brings the bell tower");
             h.succeed();
         });
 

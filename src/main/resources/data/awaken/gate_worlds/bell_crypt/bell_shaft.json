@@ -29,13 +29,20 @@
       "id": "requiem",
       "name": "Requiem",
       "weight": 1.5,
-      "biome": "awaken:gate_world/bell_shaft_requiem"
+      "biome": "awaken:gate_world/bell_shaft_requiem",
+      "life": [
+        "procession"
+      ]
     },
     {
       "id": "storm",
       "name": "Storm",
       "weight": 1.5,
-      "biome": "awaken:gate_world/bell_shaft_storm"
+      "biome": "awaken:gate_world/bell_shaft_storm",
+      "life": [
+        "rain",
+        "lightning"
+      ]
     }
   ],
   "blocks": {
@@ -62,7 +69,9 @@
   "life": [
     "bats",
     "dust",
-    "drips"
+    "drips",
+    "shaft_dust",
+    "smoke"
   ],
   "residents": "drowned_vestments",
   "sound": "awaken:gate.world.shaft",

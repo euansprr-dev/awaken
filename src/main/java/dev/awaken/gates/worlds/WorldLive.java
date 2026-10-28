@@ -113,6 +113,7 @@ public final class WorldLive {
         PLACE.clear();
         LATER.clear();
         WorldRules.clear();
+        WorldProps.clear();
     }
 
     static void later(int ticks, Runnable r) {
@@ -135,6 +136,7 @@ public final class WorldLive {
         if (gl == null) return;
         for (Live l : LIVE.values()) if (l.flood != null && l.flood.step(gl)) l.flood = null;
         if (!LEDGES.isEmpty()) for (ServerPlayer p : gl.players()) ledge(gl, p);
+        WorldProps.tick(gl, now);
     }
 
     /** A player stepped onto a floor (WorldsLive.arrive): nothing carries over from the last one. */
@@ -190,6 +192,7 @@ public final class WorldLive {
         // a Flood the server stopped halfway rises the rest of the way; water it couldn't reach (an unloaded chunk) when it can
         if (fs.world.contains(FLOOD) && !fs.world.contains(FLOOD_DONE) && live.flood == null) live.flood = Flood.of(g, f, false);
         hum(level, p, g, f, live);
+        WorldProps.near(level, p, g, f);
     }
 
     /** A hung bell over you hums softly as you pass under it (within its rim, 32 below it at most). */
@@ -320,6 +323,7 @@ public final class WorldLive {
         SoundEvent s = voice(m);
         BlockPos pos = hand ? at(g, f, m) : at(g, f, m).above((m.y1() - m.y0()) / 2);
         level.playSound(null, pos, s, SoundSource.BLOCKS, hand ? 1.2F : (float) (2.5 + m.r() * 0.3), pitch(m) * pitchBy);
+        if (!hand) WorldProps.swing(g, f, m, 1F);
     }
 
     /** Dust shaken down round each player within reach. */
@@ -565,6 +569,7 @@ public final class WorldLive {
         ItemStack s = HearthHooks.keepsake(w.dressing().keepsake(), name, PlayDays.current(p.level().getServer()));
         if (!s.isEmpty() && !p.addItem(s)) p.drop(s, false, net.minecraft.util.Prediction.SERVER_ONLY);
         p.sendSystemMessage(Component.literal("A keepsake from " + w.name() + ": " + name + ". Hang it in your Trophy Hall at home."));
+        WorldSets.after(p, w);
         WorldsLive.sync(p);
     }
 
@@ -589,14 +594,18 @@ public final class WorldLive {
             BlockPos far = null;
             for (BlockPos s : spots) if (far == null || Math.abs(s.distSqr(pos) - 64) < Math.abs(far.distSqr(pos) - 64)) far = s;
             if (far == null) far = p.blockPosition();
-            LivingEntity e = Rooms.spawn(level, g, f, -1, MobRole.Role.ELITE, far);
-            if (e == null) return;
-            e.setCustomName(Component.literal("The Ringer"));
-            e.setCustomNameVisible(true);
-            AttributeInstance hp = e.getAttribute(Attributes.MAX_HEALTH);
-            if (hp != null) {
-                hp.setBaseValue(hp.getBaseValue() * 2);
-                e.setHealth(e.getMaxHealth());
+            // its own body when the mobs module has one (the Creature Kit), else an elite of the theme in its name
+            LivingEntity e = Rooms.signature(level, g, f, -1, WorldLook.id(w.dressing().signature()), far);
+            if (e == null) {
+                e = Rooms.spawn(level, g, f, -1, MobRole.Role.ELITE, far);
+                if (e == null) return;
+                e.setCustomName(Component.literal("The Ringer"));
+                e.setCustomNameVisible(true);
+                AttributeInstance hp = e.getAttribute(Attributes.MAX_HEALTH);
+                if (hp != null) {
+                    hp.setBaseValue(hp.getBaseValue() * 2);
+                    e.setHealth(e.getMaxHealth());
+                }
             }
             e.getPersistentData().putString(RINGER_TAG, f.world);
             WorldsLive.dressSignature(e, f.world, w.dressing().signature());

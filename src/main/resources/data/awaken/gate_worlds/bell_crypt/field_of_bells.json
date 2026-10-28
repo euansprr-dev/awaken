@@ -28,13 +28,20 @@
       "id": "requiem",
       "name": "Requiem",
       "weight": 1.5,
-      "biome": "awaken:gate_world/field_of_bells_requiem"
+      "biome": "awaken:gate_world/field_of_bells_requiem",
+      "life": [
+        "procession"
+      ]
     },
     {
       "id": "storm",
       "name": "Storm",
       "weight": 1.5,
-      "biome": "awaken:gate_world/field_of_bells_storm"
+      "biome": "awaken:gate_world/field_of_bells_storm",
+      "life": [
+        "rain",
+        "lightning"
+      ]
     }
   ],
   "blocks": {
@@ -60,7 +67,10 @@
   ],
   "life": [
     "moths",
-    "pale_fish"
+    "pale_fish",
+    "mist",
+    "smoke",
+    "far_toll"
   ],
   "residents": "",
   "sound": "awaken:gate.world.field",

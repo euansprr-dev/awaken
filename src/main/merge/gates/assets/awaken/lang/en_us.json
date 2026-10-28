@@ -157,5 +157,7 @@
   "subtitles.awaken.gate.world.ossuary": "Bones settle in the passages",
   "subtitles.awaken.gate.world.shaft": "Ropes creak far above",
   "subtitles.awaken.gate.world.field": "Bells ring far across the water",
-  "subtitles.awaken.gate.world.rest": "Old wood creaks in a quiet room"
+  "subtitles.awaken.gate.world.rest": "Old wood creaks in a quiet room",
+  "block.awaken.bell_prop": "Swinging Bell",
+  "block.awaken.bell_tower": "The Bell Tower"
 }

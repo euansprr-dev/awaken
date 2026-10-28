@@ -31,7 +31,9 @@
     "half_cast_bell"
   ],
   "life": [
-    "moths"
+    "moths",
+    "smoke",
+    "shaft_dust"
   ],
   "sound": "awaken:gate.world.rest",
   "rule": "bells",

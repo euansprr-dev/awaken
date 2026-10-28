@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * A world floor's small life and the sounds set round you (SPEC §38.9), all on the client, never saved or sent: moths
  * round its lights, bats under its vaults, pale fish under its water, rats along its floors, dust in its air; drips off
- * the stone near you; far thunder in a Storm. The world's recipe names which ({@code life}, carried on the arrival). At
+ * the stone near you. The world's recipe names which ({@code life}, carried on the arrival). At
  * most {@value #MOST} creatures near you, made out of sight or well off and faded in, gone past {@value #GONE} blocks.
  */
 final class WorldLife {
@@ -42,7 +42,7 @@ final class WorldLife {
 
     private static final List<Life> LIVE = new ArrayList<>();
     private static final int[] COUNT = new int[4];
-    private static int ticks, nextDrip = 60, nextThunder = 400;
+    private static int ticks, nextDrip = 60;
 
     static void register(RegisterParticleProvidersEvent e) {
         e.registerSpriteSet(GatesRegistry.P_MOTH.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Life(l, x, y, z, s, MOTH));
@@ -64,10 +64,6 @@ final class WorldLife {
         if (life.contains("drips") && --nextDrip <= 0) {
             nextDrip = 40 + pl.getRandom().nextInt(100);
             drip(mc, pl);
-        }
-        if (a.mood().equals("storm") && --nextThunder <= 0) {
-            nextThunder = 500 + pl.getRandom().nextInt(900);
-            mc.getSoundManager().play(SimpleSoundInstance.forLocalAmbience(GatesRegistry.SND_WORLD_STORM.get(), 0.75F + pl.getRandom().nextFloat() * 0.2F, 0.8F));
         }
         if (ticks % 10 != 0) return;
         java.util.Arrays.fill(COUNT, 0);

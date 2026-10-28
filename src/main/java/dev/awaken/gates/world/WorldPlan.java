@@ -277,6 +277,29 @@ final class WorldPlan {
                 (int) Math.ceil(cz + r) - 1);
     }
 
+    /** Swinging bells a floor holds at most (display entities, SPEC §38.6), and the biggest that swings. */
+    static final int PROPS = 32;
+    static final double PROP_R = 3.2;
+    private int props;
+
+    /**
+     * A hung bell (lip at absolute {@code lipY}, the floor's base {@code base}): while the floor has room for one and it's
+     * small enough it's a prop the live layer swings (a {@code prop} mark, "bell:" + ten times its radius; only its
+     * canon, chains and a light are carved), else it's carved whole. Either way it's a bell mark.
+     */
+    void hungBell(Sculpt s, String id, double cx, int lipY, int base, double cz, double R, int H, int chainTo,
+                  BlockState bronze, BlockState lamp, BlockState chain) {
+        bell(id, cx, lipY - base, cz, R, H);
+        if (props >= PROPS || R > PROP_R) {
+            BellPieces.bell(s, cx, lipY, cz, R, H, chainTo, bronze, lamp, chain, false);
+            return;
+        }
+        props++;
+        mark(FloorLayout.Mark.PROP, "bell:" + Math.round(R * 10), (int) Math.floor(cx - R), lipY - base, (int) Math.floor(cz - R),
+                (int) Math.ceil(cx + R) - 1, lipY - base + H - 1, (int) Math.ceil(cz + R) - 1);
+        BellPieces.hanger(s, cx, lipY, cz, H, chainTo, bronze, WorldMats.light(10), chain);
+    }
+
     /** A handbell waiting for {@link #handbells}: where it's wanted, its turned state, the secret it keeps and that box. */
     private record Hand(int base, int x, int h, int z, BlockState state, String secret, int[] with) {}
 

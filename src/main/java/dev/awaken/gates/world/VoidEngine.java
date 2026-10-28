@@ -202,8 +202,7 @@ final class VoidEngine implements WorldEngine {
                 // a bell hung low over the island, its lamp lit: the dead gather under it
                 double bx = sh.cx() + (Hash.unit(seed, r.id, 3) - 0.5) * 4, bz = sh.cz() + (Hash.unit(seed, r.id, 5) - 0.5) * 4;
                 double R = 1.8 + r.gw * 0.9;
-                BellPieces.bell(s, Math.floor(bx) + 0.5, W + 6 + r.gw * 2, Math.floor(bz) + 0.5, R, (int) (R * 2.2), 0, bronze, lamp, chain0, false);
-                p.bell(Math.floor(bx) + 0.5, 6 + r.gw * 2, Math.floor(bz) + 0.5, R, (int) (R * 2.2));
+                p.hungBell(s, "", Math.floor(bx) + 0.5, W + 6 + r.gw * 2, W, Math.floor(bz) + 0.5, R, (int) (R * 2.2), 0, bronze, lamp, chain0);
                 lights.add(new FloorAir.Light((int) bx, 6 + r.gw * 2, (int) bz, 0x8fd0ff, 8f, 0.7f));
             }
         }

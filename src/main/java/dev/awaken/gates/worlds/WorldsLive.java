@@ -62,8 +62,17 @@ public final class WorldsLive {
         AwakenNet.send(p, new WorldPayloads.Arrival(g.id, f.area, f.floor, world, w == null ? "" : w.name(), mood,
                 m == null || m.name().isEmpty() ? "" : m.name(), w == null ? "" : w.rarity().label(),
                 w == null ? "" : w.tier().name().toLowerCase(Locale.ROOT), w == null ? "" : w.line(), where(g, f),
-                w == null ? "" : w.dressing().sound(), w == null ? List.of() : w.dressing().life(), first, card,
+                w == null ? "" : w.dressing().sound(), life(w, m), first, card,
                 GateService.world(g, f, 0, 0, 0), WorldLive.air(g, f)));
+    }
+
+    /** The world's life and air, with its mood's added (at most what the arrival carries). */
+    static List<String> life(GateWorld w, GateWorld.Mood m) {
+        if (w == null) return List.of();
+        if (m == null || m.life().isEmpty()) return w.dressing().life();
+        List<String> all = new ArrayList<>(w.dressing().life());
+        for (String k : m.life()) if (!all.contains(k)) all.add(k);
+        return all.size() > 16 ? all.subList(0, 16) : all;
     }
 
     /** The title card's floor line: the toast it replaces on a world floor. */

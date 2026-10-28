@@ -181,6 +181,49 @@ def tex_patina(P):
     return _canvas(P, f)
 
 
+def tex_bell_prop(P):
+    """A swinging bell's skin, 64 px so a bell five blocks wide keeps a block's detail: brown bronze under green,
+    verdigris run down from the shoulder in long drips, the sound bow worn bright, a cast band near the lip."""
+    S = 64
+    br, vg = P.ramp("bronze_p"), P.ramp("verd")
+    n = P.value_noise(S, S, P.rng_for("crypt", "bell_prop"), scale=6, octaves=4)
+    rnd = P.rng_for("crypt", "bell_prop_drips")
+    drip = [rnd.randrange(10, 50) if rnd.random() < 0.5 else rnd.randrange(0, 8) for _ in range(S)]
+    for i in range(1, S - 1):  # drips run in threads two or three wide
+        if drip[i - 1] > 20 and drip[i + 1] > 20:
+            drip[i] = max(drip[i], (drip[i - 1] + drip[i + 1]) // 2 - 3)
+    c = P.Canvas(S, S)
+    for y in range(S):
+        for x in range(S):
+            if y >= 56:  # the sound bow, worn bright where hands and ropes touched it
+                col = br[4] if (x * 3 + y) % 7 else br[3]
+            elif 49 <= y <= 51:  # a cast band
+                col = br[3] if y == 49 else br[1]
+            elif y < drip[x]:
+                col = vg[min(4, 1 + int(n[y][x] * 2 + (1 - y / max(1, drip[x])) * 1.8))]
+            elif n[y][x] > 0.72:
+                col = vg[1]
+            else:
+                col = br[1 + int(n[y][x] * 3)]
+            c.set(x, y, col)
+    return c
+
+
+def tex_bell_mouth(P):
+    """Looking up into a bell: dark bronze rings round a lamp (the glow is its own layer)."""
+    S = 32
+    br = P.ramp("bronze_p")
+    c, g = P.Canvas(S, S), P.Canvas(S, S)
+    for y in range(S):
+        for x in range(S):
+            d = ((x - 15.5) ** 2 + (y - 15.5) ** 2) ** 0.5
+            c.set(x, y, br[0] if d > 13 else br[1] if int(d) % 4 else br[2])
+            if d < 6:
+                a = int(255 * min(1, (6 - d) / 3))
+                g.set(x, y, (168, 214, 255, a) if d > 2.5 else (236, 246, 255, 255))
+    return c, g
+
+
 def tex_wax(P):
     wx = P.ramp("wax")
     return _canvas(P, lambda x, y: wx[5] if x % 4 == 0 else wx[4] if x % 4 == 1 else wx[3] if (y * 7 + x) % 9 else wx[2])
@@ -382,6 +425,8 @@ def textures():
     t["crypt_vestment"] = tex_vestment(P)
     t["crypt_bell_rope"] = tex_rope(P)
     t["crypt_lily_pad"] = tex_lily(P)
+    t["crypt_bell_prop"] = tex_bell_prop(P)
+    t["crypt_bell_mouth"], t["crypt_bell_mouth_glow"] = tex_bell_mouth(P)
     return t
 
 
@@ -552,6 +597,34 @@ def models():
                                         _box([4.75, 5, 4.75], [11.25, 8, 11.25], "#bronze"),
                                         _box([4, 3.75, 4], [12, 5, 12], "#bronze"),
                                         _box([7.4, 2.25, 7.4], [8.6, 3.75, 8.6], "#bronze")]}
+    # a hung bell the live layer swings (a block display scaled to the bell, 38.6): stepped like a cast bell, its
+    # skin's drips running on from tier to tier, the mouth dark round a lamp that glows
+    tiers = [(0, 2, 0), (2, 6, 1), (6, 10, 2), (10, 13, 3), (13, 15, 4.5), (15, 16, 6.5)]
+    els = []
+    for y0, y1, inset in tiers:
+        faces = {d: {"texture": "#bronze", "uv": [0, 16 - y1, 16, 16 - y0]} for d in ("north", "south", "west", "east")}
+        faces["up"] = {"texture": "#bronze", "uv": [inset, 0, 16 - inset, 2]}
+        if y0 == 0:
+            faces["down"] = {"texture": "#mouth"}
+        els.append({"from": [inset, y0, inset], "to": [16 - inset, y1, 16 - inset], "faces": faces})
+    els.append({"from": [3, -0.05, 3], "to": [13, -0.05, 13], "faces": {"down": {"texture": "#glow"}}, "light_emission": 15})
+    m["bell_prop"] = {"parent": "minecraft:block/block", "ambientocclusion": False,
+                      "textures": {"particle": b + "crypt_patina", "bronze": b + "crypt_bell_prop", "mouth": b + "crypt_bell_mouth",
+                                   "glow": b + "crypt_bell_mouth_glow"},
+                      "elements": els}
+    # the Bell Crypt's set piece (38.8 "Sets"): a little stone belfry on a plinth, its bell hung under the cap, the mouth lit
+    tower = [_box([1, 0, 1], [15, 3, 15], "#stone"),
+             _box([1.5, 3, 1.5], [3.5, 13, 3.5], "#post"), _box([12.5, 3, 1.5], [14.5, 13, 3.5], "#post"),
+             _box([1.5, 3, 12.5], [3.5, 13, 14.5], "#post"), _box([12.5, 3, 12.5], [14.5, 13, 14.5], "#post"),
+             _box([1, 13, 1], [15, 14.5, 15], "#stone"), _box([3, 14.5, 3], [13, 16, 13], "#roof"),
+             _box([4.5, 5.5, 4.5], [11.5, 7, 11.5], "#bronze"), _box([5, 7, 5], [11, 9.5, 11], "#bronze"),
+             _box([5.75, 9.5, 5.75], [10.25, 11.5, 10.25], "#bronze"), _box([6.75, 11.5, 6.75], [9.25, 12.5, 9.25], "#bronze"),
+             _box([7.5, 12.5, 7.5], [8.5, 13, 8.5], "#bronze"), _box([7.5, 4.25, 7.5], [8.5, 5.5, 8.5], "#bronze"),
+             {"from": [5, 5.45, 5], "to": [11, 5.45, 11], "faces": {"down": {"texture": "#glow"}}, "light_emission": 15}]
+    m["bell_tower"] = {"parent": "minecraft:block/block", "ambientocclusion": False,
+                       "textures": {"particle": b + "crypt_limestone", "stone": b + "crypt_limestone_worn", "post": b + "crypt_tracery",
+                                    "roof": b + "crypt_patina", "bronze": b + "crypt_bell_prop", "glow": b + "crypt_bell_mouth_glow"},
+                       "elements": tower}
     return m
 
 
@@ -559,7 +632,7 @@ def blockstates():
     b = "awaken:block/"
     s = {}
     for name in ("crypt_limestone", "crypt_limestone_worn", "crypt_limestone_crumbling", "crypt_tracery", "crypt_flagstone",
-                 "crypt_flagstone_wet", "crypt_patina", "crypt_moon_glass", "crypt_bell_rope", "crypt_lily_candle"):
+                 "crypt_flagstone_wet", "crypt_patina", "crypt_moon_glass", "crypt_bell_rope", "crypt_lily_candle", "bell_prop", "bell_tower"):
         s[name] = {"variants": {"": {"model": b + name}}}
     s["crypt_candles"] = {"variants": {f"candles={n},lit={'true' if lit else 'false'}": {"model": b + f"crypt_candles_{n}" + ("_lit" if lit else "")}
                                        for n in range(1, 6) for lit in (False, True)}}
@@ -569,6 +642,9 @@ def blockstates():
                                 for f, r in (("north", 0), ("east", 90), ("south", 180), ("west", 270))}}
     return s
 
+
+# the theme's set piece (38.8 "Sets"): placed at home, kept when broken
+SET_BLOCKS = ("bell_tower",)
 
 ITEM_MODEL = {"crypt_candles": "crypt_candles_3_lit", "crypt_rose_glass": "crypt_rose_glass_0"}
 
@@ -586,6 +662,15 @@ def content():
             "pools": [{"rolls": 1, "bonus_rolls": 0, "entries": [{"type": "minecraft:item", "name": f"awaken:{name}"}],
                        "conditions": [{"condition": "minecraft:survives_explosion"}]}]})
     _merge(os.path.join(MERGE, "gates/assets/awaken/lang/en_us.json"), {f"block.awaken.{k}": v[0] for k, v in BLOCKS.items()})
+    _merge(os.path.join(MERGE, "gates/assets/awaken/lang/en_us.json"), {"block.awaken.bell_prop": "Swinging Bell",
+                                                                        "block.awaken.bell_tower": "The Bell Tower"})
+    for name in SET_BLOCKS:
+        _write(os.path.join(ASSETS, f"items/{name}.json"), {"model": {"type": "minecraft:model", "model": "awaken:block/" + name}})
+        _write(os.path.join(RES, f"data/awaken/loot_table/blocks/{name}.json"), {
+            "type": "minecraft:block", "random_sequence": f"awaken:blocks/{name}",
+            "pools": [{"rolls": 1, "bonus_rolls": 0, "entries": [{"type": "minecraft:item", "name": f"awaken:{name}"}],
+                       "conditions": [{"condition": "minecraft:survives_explosion"}]}]})
+    _merge(os.path.join(MERGE, "gates/data/minecraft/tags/block/mineable/pickaxe.json"), {"values": [f"awaken:{k}" for k in SET_BLOCKS]})
     _merge(os.path.join(MERGE, "gates/data/minecraft/tags/block/mineable/pickaxe.json"),
            {"values": [f"awaken:{k}" for k, v in BLOCKS.items() if v[1] == "pickaxe"]})
     _merge(os.path.join(MERGE, "gates/data/minecraft/tags/block/climbable.json"), {"values": ["awaken:crypt_bell_rope"]})

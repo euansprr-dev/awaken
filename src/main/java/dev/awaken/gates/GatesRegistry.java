@@ -225,10 +225,17 @@ public final class GatesRegistry {
     /** A handbell in a stone yoke on the floor: the bell anyone can reach and strike (SPEC §38.8). */
     public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Handbell> CRYPT_HANDBELL = BLOCKS.registerBlock("crypt_handbell",
             dev.awaken.gates.block.WorldBlocks.Handbell::new, p -> stoneLike(MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0).apply(p).noOcclusion());
+    /** A swinging bell's body: never placed, only shown by a block display (SPEC §38.6). */
+    public static final DeferredBlock<Block> BELL_PROP = BLOCKS.registerBlock("bell_prop", Block::new,
+            p -> stoneLike(MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0).apply(p).noOcclusion().noLootTable());
     public static final List<DeferredBlock<? extends Block>> WORLD_BLOCKS = List.of(CRYPT_LIMESTONE, CRYPT_LIMESTONE_WORN, CRYPT_LIMESTONE_CRUMBLING,
             CRYPT_TRACERY, CRYPT_FLAGSTONE, CRYPT_FLAGSTONE_WET, CRYPT_PATINA, CRYPT_CANDLES, CRYPT_MOON_GLASS, CRYPT_ROSE_GLASS, CRYPT_NICHE,
             CRYPT_VESTMENT, CRYPT_BELL_ROPE, CRYPT_LILY_CANDLE, CRYPT_HANDBELL);
     public static final List<DeferredItem<BlockItem>> WORLD_ITEMS = WORLD_BLOCKS.stream().map(ITEMS::registerSimpleBlockItem).toList();
+    /** The Bell Crypt's set piece, yours when all five of its keepsakes are (SPEC §38.8, "Sets"). */
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.BellTower> BELL_TOWER = BLOCKS.registerBlock("bell_tower",
+            dev.awaken.gates.block.WorldBlocks.BellTower::new, p -> stoneLike(MapColor.STONE, SoundType.STONE, 6).apply(p).noOcclusion());
+    public static final List<DeferredItem<BlockItem>> SET_ITEMS = List.of(ITEMS.registerSimpleBlockItem(BELL_TOWER));
 
     // ---- the Gate Rig's Mirror Hall (SPEC §17): the turning mirror, the lens, the seal --------------------------------
 
@@ -382,6 +389,17 @@ public final class GatesRegistry {
             PARTICLES.register("gate_world_fish", () -> new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_RAT =
             PARTICLES.register("gate_world_rat", () -> new SimpleParticleType(false));
+    // a world's air (SPEC §38.9 "Air"; sprites from tools/art/specs/gate_worlds_air.py), tinted on the client
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_WISP =
+            PARTICLES.register("gate_air_wisp", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_STREAK =
+            PARTICLES.register("gate_air_streak", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_FLAKE =
+            PARTICLES.register("gate_air_flake", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_ORB =
+            PARTICLES.register("gate_air_orb", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_FLASH =
+            PARTICLES.register("gate_air_flash", () -> new SimpleParticleType(false));
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Awaken.id(name)));
@@ -448,6 +466,7 @@ public final class GatesRegistry {
                 LANTERN_ITEM, UPDRAFT_ITEM)) e.accept(item.get());
         for (var item : INTERIOR_ITEMS) e.accept(item.get());
         for (var item : WORLD_ITEMS) e.accept(item.get());
+        for (var item : SET_ITEMS) e.accept(item.get());
         for (var item : RIG_ITEMS) e.accept(item.get());
     }
 }
