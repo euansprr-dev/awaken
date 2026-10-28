@@ -8530,3 +8530,56 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
   steps and hints), and the rail's unread count rising as trails open. **Not built / unverified**: the task card and Now line with a followed trail on a real
   screen (the first tour caught the first-hour card covering it; fixed, and the second tour showed the trail on the card ticking as steps were done; the card's count was off until every done step was sent, fixed and tested, not re-toured; the Now line shows the followed step below the Hale and camp lines, as designed at priority 55); a step's `{key}` caps; a `tip` (none shipped yet); several
   followed trails; the Powers, Story and the remaining World trails; the Armoury's Track as a step type.
+
+## 34. Power levels (a ladder per power; plan docs/power-levels/PLAN.md, page https://claude.ai/artifact/B83sHv2LdXY6okcjmEMJBt; Euan approved all twelve recommendations 2026-10-28: "go ahead with the full plan here at true triple AAAA level")
+
+A level used to change only numbers (+12% damage, -4% cooldown, +5% duration). Now every power climbs a named ladder: levels
+2-5 each add one **step** with a look (what you and everyone near you see) and a play change; levels 3 and 5 also bring a sound
+layer, level 5 a new cast gesture and the power's **Awakened** form (its family's awakened palette on every effect it makes).
+
+**34.1 Data.** `tools/art/specs/power_ladder_table.py` is the one source (the approved draft, moved): per power, four steps of
+name, look, does (and body at level 5), the step's riders and look layers. It writes `data/awaken/powers/ladders.json`
+(schemaVersion 1; read by both sides from the jar, like casts.json) and the text into
+`src/main/merge/powers_ladder/assets/awaken/lang/en_us.json` (`awaken.ladder.<power>.<level>.name|look|does|body`).
+`powers.ladder.PowerLadder` is the API: `step(power, level)`, `name(power, level)`, `text(power, level)` (Codex's Power Core hover
+reads this, decision 12).
+
+**34.2 Strength.** The flat bonus is +6% damage per level (was +12%); cooldown -4% and duration +5% per level stay. Steps carry
+the rest, so a level-5 power is about x1.45-1.55 a level-1 one in a fight (pacing sim, 34.9).
+
+**34.3 Riders** (server, `powers.ladder.Riders`): a step's shared mechanics, one implementation each, read from the step's data.
+On a hit of the cast (`Combat.hurt` with a cast, a bolt or summon carrying the cast's ladder): `chain` (arcs to n more foes for a
+share), `echo` (the hit lands again after a delay for a share), `aftershock` (a delayed pulse round the hit), `linger` (a ground
+patch that burns, slows or holds), `status` (burn, slow, weaken, stun, mark), `push` (extra knock), `refund` (energy back).
+Read by behaviours: `extend` (radius, range, duration, charge time), `pierce`, `split`, `ramp`, `guard`. Rider damage never
+starts riders again, rides the boss cap and the ally rules of 6.x, and is server-side only. Capstones (level 5) and steps no rider
+fits are code in the family catalog class, gated by `c.step(n)`. A cast keeps the level it started at.
+
+**34.4 Wire.** `FxEvent` carries the power (`PowerRegistry` index + 1, 0 none; one varint): the client draws the step looks of
+that power at the level in flag bits 8-10. `Fx.beam` and bolts carry the cast so beams and shots show their level too.
+
+**34.5 Looks** (client, `powers.client.fx.ladder`): layers from the step data, drawn on top of the power's own recipe, each
+riding one event kind the power sends: helix (strands round a beam or shot), orbit (sprites circling an anchor, closing in),
+sigil (a family rune disc at the palm or on the ground), fissure (glowing ground cracks cooling gold to red), rings (with a
+delay), burst (shards, petals, feathers, plates, embers, runes), column, forks, dome, trail, bloom, ghost (the impact again,
+later and fainter) and scale. Level 5 draws every effect of the power in its family's awakened style (new `FxStyle` values
+after the old ones). New sprites: family sigils, lotus petal, flame feather, stone plate. Budgets: levels 2 and 4 add at most one
+mesh and +20% sprites, level 3 at most two meshes, level 5 at most four; a held level-5 beam at most 12 meshes and 80 sprites.
+
+**34.6 The moment.** A level-up in a fight plays a short sting (a bloom on you, a rising chime, the key's frame flashes). When
+calm (or once the fight ends) a Signal window names the new step and what it does, with the `EVOLVE` bloom and a chord every
+viewer near sees and hears. Power Cores use the same moment (no vanilla particles). `Loadout` schema 3 keeps `seen` (the level
+each power's moment was shown for); loading an older save sets seen = level and shows one window about ladders.
+
+**34.7 Menus.** The K menu's power card shows the ladder: five rungs with their names, the current one lit, the next step's
+text and the mastery bar. The HUD key frame grows with the level (corner ticks at 2, side bars at 3, a double frame at 4, an
+awakened glow at 5). Text is plain speech (34.1's lang file).
+
+**34.8 Earning.** Wall Stride, Water Run and Danger Sense earn mastery from use (34.8 numbers in `Mastery`): time on the wall or
+water, a warning that fired.
+
+**34.9 Checks.** GameTests: `power_ladder_complete` (every power has four steps with text, every look rides an event kind the
+power sends, every rider is known), `power_ladder_every_level_casts`, one per rider mechanism, Dash direction and reach at
+every level, `power_ladder_save_migrates`, `power_ladder_moment_once`, `power_ladder_earning`. `/awaken powers showcase <power>
+<level>` casts a power at a level for tours; `/awaken fx stats` and `/awaken fx bench <power> <level> <count>` (client) time
+power FX drawing (`FxRender` timer). Gate: a level-5 bench costs at most +0.5 ms p50 and +1 ms p99 over level 1.
