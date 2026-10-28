@@ -36,6 +36,8 @@ final class FightRunner {
     private float yaw;
     private @Nullable Ability ability;
     private final ArrayDeque<String> string = new ArrayDeque<>(4);
+    /** The studio's queue (/awaken bosses studio): every move once, in table order, a breath apart; then it fights. */
+    private final ArrayDeque<String> studio = new ArrayDeque<>();
     private final int[] hit = new int[16];
     private int hits, gap = 20, navTicks;
     private boolean introduced;
@@ -65,10 +67,34 @@ final class FightRunner {
     /** Everyone left: back to the intro, nothing playing. */
     void reset() {
         stop();
+        studio.clear();
         introduced = false;
         pendingPhase = -1;
         gap = 20;
         boss.syncKit(-1, 0, AwakenBoss.KIT_POSE_INTRO);
+    }
+
+    /** Plays one move now, whatever the pool would pick (tests, the studio). False if the table has no such move. */
+    boolean play(ServerLevel level, String id) {
+        stop();
+        string.clear();
+        introduced = true;
+        return begin(level, id, boss.getTarget());
+    }
+
+    /** The move playing now, or null. */
+    @Nullable String playing() {
+        return move >= 0 ? moves.get(move).id() : null;
+    }
+
+    /** The studio: every move in turn (with no target needed), then the fight as usual. */
+    void studio() {
+        stop();
+        string.clear();
+        studio.clear();
+        for (KitMoves.Move m : moves.moves()) studio.add(m.id());
+        introduced = true;
+        gap = 30;
     }
 
     /** A phase threshold was crossed: its transition plays as soon as the current move ends. */
@@ -82,6 +108,14 @@ final class FightRunner {
             return;
         }
         LivingEntity target = boss.getTarget();
+        if (!studio.isEmpty()) {
+            if (gap > 0) {
+                gap--;
+                return;
+            }
+            begin(level, studio.poll(), target);
+            return;
+        }
         if (!introduced) {
             boss.syncKit(-1, 0, AwakenBoss.KIT_POSE_INTRO);
             if (target == null || !target.isAlive()) return;
@@ -228,8 +262,9 @@ final class FightRunner {
         t = 0;
         hits = 0;
         yaw = boss.yBodyRot;
-        ability = m.ability().map(boss::ability).orElse(null);
-        if (ability != null && target != null) boss.abilityRunner().prepare(level, ability, target, windup + hold);
+        // an ability needs someone to aim at (the studio plays its moves with nobody there: the body only)
+        ability = target != null ? m.ability().map(boss::ability).orElse(null) : null;
+        if (ability != null) boss.abilityRunner().prepare(level, ability, target, windup + hold);
         boss.getNavigation().stop();
         boss.syncKit(i, hold, 0);
         if (m.kind() != Strikes.Kind.NONE) {
@@ -275,7 +310,7 @@ final class FightRunner {
         }
         if (t < wind + active + recover) return; // the recovery: no turning, the opening
         stop();
-        gap = string.isEmpty() ? 6 + boss.getRandom().nextInt(9) : 0;
+        gap = !studio.isEmpty() ? 30 : string.isEmpty() ? 6 + boss.getRandom().nextInt(9) : 0;
     }
 
     private void stop() {

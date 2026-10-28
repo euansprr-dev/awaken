@@ -85,6 +85,26 @@ public class AwakenBoss extends AwakenMob {
     }
 
     /** The fight script's runner (server), or null when it fights the old way. */
+    /** The Creature Lab's studio (/awaken bosses studio): every move in turn, then the fight. False without a kit fight. */
+    public boolean studio() {
+        FightRunner f = fight();
+        if (f == null) return false;
+        f.studio();
+        return true;
+    }
+
+    /** Plays one of its kit moves now (admin, tests). */
+    public boolean playKitMove(String id) {
+        FightRunner f = fight();
+        return f != null && level() instanceof ServerLevel sl && f.play(sl, id);
+    }
+
+    /** The kit move playing now (server side), or null. */
+    public @Nullable String kitPlaying() {
+        FightRunner f = fight;
+        return f != null ? f.playing() : null;
+    }
+
     @Nullable FightRunner fight() {
         if (!fightChecked && !level().isClientSide()) {
             fightChecked = true;

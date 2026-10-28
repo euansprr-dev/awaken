@@ -8588,12 +8588,24 @@ should show a boss bar of our own. What he approved (PLAN §7):
 
 ### 34.2 The kit's data (one source, both sides)
 - **Source.**
-  - `tools/art/specs/kit/` holds the body plans, the move library and the Creature Lab.
-  - `tools/art/specs/bosses/<id>.py` holds each body's proportions, parts, paint, move picks and signature keys.
-  - `python3 tools/art/build_all.py kit` writes everything below, deterministically.
+  - `tools/art/specs/kit/` holds the body plans (`plans.py`), the move library (`moves.py`), the core (`core.py`: key
+    poses to clips, forward kinematics matching `ModelPart`, foot planting, capsules, checks, writers), paint helpers
+    and the Creature Lab (`lab.py`).
+  - `tools/art/specs/kit/bosses/<id>.py` holds each body's proportions, parts, paint, move picks, its own moves and its
+    fight script.
+  - `python3 tools/art/specs/kit_bodies.py build` (or `build_all.py kit_bodies`) writes everything below,
+    deterministically, and stops on any check.
 - **Rig.** `assets/awaken/kit/rigs/<id>.rig` uses the hero rig text format (`HeroRig.parse`: `rig`, `bone`, `cube`,
-  `look`, `clip`, `track` records). It is read from the jar on both sides by `mobs.boss.KitRigs`. The server never poses
-  it; it only checks it.
+  `look`, `clip`, `track` records). `mobs.boss.Kits` reads it from the jar on both sides (`HeroRig` is plain data with
+  no Minecraft classes, so a dedicated server can load it). The server never poses it; it only checks it.
+- **Textures.** `textures/entity/kit/<id>.png`, `_glow` (drawn emissive) and `_blink`/`_glow_blink` (the life layer's
+  blink). They are separate from `textures/entity/mobs/<id>.png`, so the old body keeps its own texture as the fallback.
+- **Size.** Bodies are modelled at true size (the renderer draws them at scale 1). The def's scale still sets the
+  hitbox, so it is chosen to fit the body: the Ember Tyrant 3.0 (1.8 × 5.85 blocks), Unit Zero 1.65 (1 × 3), Mother of
+  Spores 0.75 (3 × 3).
+- **Feet.** Every key pose of a planted move has its feet solved by two-bone IK in the hip's frame (`core.plant`):
+  the thighs, knees and ankles are recomputed so a body that crouches, twists or leans keeps both feet exactly where it
+  stood. The library's crouch depths scale with the leg (`rig.size` = leg / 36 px).
 - **Moves.** `data/awaken/kit/moves/<id>.json` (`KitMoves`, schemaVersion 1). Per move:
   - `id`, `title` and `class` (LIGHT, HEAVY, PERILOUS or GRAB);
   - the ticks: `windup`, `hold` (HEAVY only, ≤ 12), `active` and `recover`;
@@ -8605,25 +8617,33 @@ should show a boss bar of our own. What he approved (PLAN §7):
   - `ability`: an ability of the def that fires at the first active tick, from `origin` (a point in body space).
     Its ring, beam or marks then start where the move says;
   - `range` ([min, max] blocks to the target's edge), `kinds` (gap, combo, delay, area, ranged, behind, signature,
-    transition, death, intro) and `signature`.
+    summon, intro) and `signature`. For a blow with no ability that isn't a gap closer, the build lowers `max` to what
+    its capsules reach at a standing player's height (under 1.9 blocks), less the hitbox's half width: it is only
+    picked from where it can land;
+  - a shockwave (`disc` in the source) adds twelve ground spokes of that radius from the contact tick on, so a stomp
+    or a drop also reaches whoever is behind;
+  - `rise` below zero is a real descent (Mother of Spores' Drop falls 3 blocks onto the floor; fliers have no gravity).
 - **Fights.** `data/awaken/kit/fights/<id>.json` (`FightScripts`, schemaVersion 1):
   - `moves`: the move table it uses;
   - `intro`: a `pose` (`kneel`, `idle` or `hover`) and the `move` it plays when the fight starts;
-  - `phases`: one per `MobDef` phase, in order. Each phase has a `pool` and an optional `transition` (move, line) for
-    entering it. A pool entry has a `move`, a `weight`, `when` (`any`, `near`, `far`, `behind` or `air`) and `then`
+  - `phases`: one per `MobDef` phase, in order. Each phase has a `pool` and an optional `transition` (a move) for
+    entering it. A pool entry has a `move`, a `weight`, `when` (`ANY`, `NEAR` ≤ 4 blocks, `FAR` ≥ 8, `BEHIND` more than
+    110° off its facing, or `AIR`; upper case, the build writes them so) and `then`
     (alternative strings: lists of move ids played in order, each step only if the target is still in that move's
     range);
   - `enrage`: `below` (0.15) and `speed` (1.2): faster, never more damage;
-  - `death`: a move.
+  - `death`: optional and unused for now (the body plays its rig's `death` clip).
 - **Checks** (load and `kit_*` tests). A missing or broken file means the boss wears its old body and fights as before,
   logged once. Every move's clips exist (`<move>_windup`, `_active`, `_recover`), and their lengths match the ticks
   within one tick. Every wind-up is at least its class's minimum: LIGHT 8, HEAVY 12, PERILOUS 14 and GRAB 12. A hold
   is only on a HEAVY move. Every boss's script covers gap, combo, delay, area, ranged, behind and signature.
 
-### 34.3 The fight runner (server, `mobs.boss.FightRunner`)
-- **Who gets one.** An `AwakenBoss` whose def id has a fight script and a move table gets a `FightRunner` instead of
-  `ToldMelee`. Its `AbilityRunner` stays, but is *scripted*: it starts nothing itself, still runs charges and leaps,
-  and fires a move's ability on request (`AbilityRunner.fire`).
+### 34.3 The fight runner (server, `mobs.entity.FightRunner`, beside `AwakenBoss`)
+- **Who gets one.** An `AwakenBoss` whose def id has a kit with a fight script gets a `FightRunner`, and its goal is
+  `FightRunner.Engaged` instead of `ToldMelee` or `KeepRange` (it holds the move and look flags while it has a live
+  target). Its `AbilityRunner` stays, but is *scripted*: it starts nothing itself, still runs charges and leaps, and
+  fires a move's ability on request (`AbilityRunner.fire`). An ability needs a target: a move played with nobody there
+  (the studio) moves the body only.
 - **A move.** It runs wind-up (+ hold) → active → recover:
   - **Wind-up.** The tell is `setTell` with the move's class, and a heavy shows its name only if it is a signature.
     The body turns toward the target at `track` degrees a tick until `lock`, then commits. A hold is chosen for a
@@ -8636,36 +8656,45 @@ should show a boss bar of our own. What he approved (PLAN §7):
   entries whose `when` and `range` hold. A string carries on without a gap. A posture break (`Stances.broken`), a
   stagger, dormant or fallen pauses it. Out of range of every entry it walks (navigation) toward the target.
 - **Phases.** A phase threshold crossed between moves plays the phase's `transition` move: it is invulnerable for that
-  move (`shieldTicks`), its part breaks off, and the phase line goes to the plate. Phases enter in order, one
+  move (`shieldTicks`), its part breaks off, and the phase line goes to the plate (players on the bar; chat for the
+  rest). Phases enter in order, one
   transition each, even under burst damage.
-- **Enrage and death.** Enrage multiplies the ticks by 1/`speed` (rounded, never under the class minimum). Death plays
-  the death move. The body stays (the vanilla death time is extended to the move's length, at most 80 ticks) before the
-  drops.
+- **Enrage and death.** Enrage multiplies the wind-up and recovery ticks by 1/`speed` (rounded, the wind-up never
+  under its class's minimum; the strike keeps its ticks). Both sides compute it alike (`KitMoves.played`, health is
+  synced). Death plays the rig's `death` clip: the body stays (vanilla's death time holds at 19 for the clip's length
+  plus 6 ticks, at most 80) before the drops.
 - **The intro.** Until it has a target it holds its intro pose. On the first target it plays the intro move, and the
   intro line goes to the plate.
 - **Sync.** `DATA_KIT` (int) holds the move index + 1 in bits 0-9, the hold ticks in bits 10-15, the pose in bits 16-19
   (0 normal, 1 intro pose, 2 broken kneel) and a serial in bits 20-27. `DATA_KIT_AT` (int) holds the game time the move
   started. A late joiner reads where the move is from the game time.
 - **Saves.** Nothing is saved mid-move. A reload starts at idle; the intro pose holds if it never had a target.
+- **Reset.** When everyone has left (the boss's existing reset), the script goes back to its intro pose with nothing
+  playing.
+- **Other bars.** A Hearth trial binds its bar with entity -1 (the plate draws from the bar alone). The Breaks'
+  roaming-Lord bar is left to phase 3 (PLAN §6).
 
 ### 34.4 The kit runtime (client, `mobs.client.kit`)
 - `KitRenderer` draws an `AwakenBoss` whose rig loaded, through `HeroModel` (extended in place, not forked). The layers:
   1. **Locomotion**: idle, then walk and run blended by speed and locked to distance (as hero rigs are).
-  2. **The action layer**: the synced move's `_windup` (stretched to wind-up + hold, held at its last key through the
-     hold with a tremble), `_active` and `_recover`, eased 0.1 s in and out.
-  3. **Turn steps**: the drawn body yaw follows the entity's in a step when they are more than 45° apart (`turn_l` or
-     `turn_r`, 0.4 s).
-  4. **Ground contact**: the pelvis lowers to the lower foot's ground (one block query per foot within 32 blocks,
-     cached per tick).
+  2. **The action layer**: the synced move's `_windup` (played over the wind-up, then held still on its last key
+     through the hold), `_active` and `_recover`; the previous move fades out over 0.15 s under the new one.
+  3. **Turn steps**: while no move plays and the body turns faster than 3° a tick, `turn_l` or `turn_r` (0.4 s) loops,
+     weighted by how fast it turns (full at 45° in 0.4 s).
+  4. **Ground contact**: within 32 blocks and on the ground, each foot finds the ground's top under it (collision
+     shapes); the body lowers to the lower one (at most 0.6 block) and the higher foot's leg reaches up by two-bone IK
+     (`HeroModel.Leg`).
   5. **Reactions**: the blow's direction (`CombatFeedback`) picks `hurt_l`, `hurt_r` or `hurt` (from the front). A
      broken stance holds `kneel`, then plays `rise`.
   6. **The life layer** on top, unchanged.
-- **The setting.** `kitBodies` (client, mobs) is on by default. Off draws every creature's old body; the server's moves
-  still run.
+- **The setting.** `kitBodies` (client, `awaken-mobs-client.toml`) is on by default. Off draws every creature's old
+  body after the next resource reload (renderers are made then); the server's moves still run.
 
 ### 34.5 The Creature Lab (`tools/art/specs/kit/lab.py`, offline)
-For every kit body it produces a contact sheet per move: frames, the striking bone's path, the capsules, the foot
-contacts and the tell's length. It also makes a GIF per move and for the locomotion. The checks stop the build when:
+`python3 tools/art/specs/kit_bodies.py lab DIR [ids]` makes one sheet per kit body: four views (one by night with only
+its light), the body beside a player at true size with its height in blocks and its face count, and a strip per move
+(rest, gather, peak, contact, follow-through, settle) with contact's capsules drawn over it and the move's numbers.
+GIFs are not made yet. The checks (`core.check`) stop the build, and the sheet repeats any in red, when:
 - a planted foot slides more than 0.1 block;
 - a wind-up's peak pose is too close to idle (mean bone angle < 12°);
 - a part floats, i.e. a bone's cubes are more than 1 px from its parent's;
@@ -8673,6 +8702,25 @@ contacts and the tell's length. It also makes a GIF per move and for the locomot
 - a body is over 1,200 faces.
 
 ### 34.6 Admin
-- `/awaken bosses studio <id>` spawns the boss in a lit test arena over a stone floor and plays its moves in turn. Then
-  it fights.
-- `/awaken bosses moves <id>` lists the moves with their timing.
+- `/awaken bosses studio <id>` (admin) clears a 23 × 23 arena 14 blocks high, 14 blocks ahead of you, over smooth
+  stone with light blocks under its ceiling, spawns the boss in its middle and plays every move of its table in turn,
+  1.5 s apart (abilities only fire if it has you as a target: in survival). Then it fights.
+- `/awaken bosses moves <id>` (admin) lists the moves with their class, timing, range and ability.
+
+### 34.7 The showcase (phase 1)
+- **The Ember Tyrant** (Brute, 6.5 blocks): a hunched basalt body with a molten core, oversized forearms veined with
+  magma under iron bracers, shoulder plates, obsidian horns, a great axe. Moves: `hammer` (Magma Fist, HEAVY, held 1 in
+  3), `backhand` (LIGHT, stooped low to reach you), `chop_a` → `chop_b` (LIGHTs with the axe), `charge` (GRAB, 7.5
+  blocks), `stomp` (HEAVY, a 2.4-block shockwave, for whoever is behind), `eruption` (PERILOUS, the signature),
+  `roar` (intro), `stoke` (Stoke the Imps, phase 2's transition), `meltdown` (PERILOUS, phase 3's transition).
+- **Unit Zero** (Duelist, 3.5 blocks with its halo): pale ceramic plates over dark joints, a square halo on a stalk
+  that spins in its idle, a visor, one cold blue down its seams. It waits kneeling. Moves: `lance` (Zero Lance,
+  PERILOUS, the halo spinning up and tilting), `step` (Phase Step, a LIGHT after the blink), `sever_a` → `sever_b` →
+  `sever_c` (Severing; the third HEAVY and held), `spin` (behind), `deploy` (Deploy Coils), `orbital` (Orbital Mark, the
+  halo rises; phase 2's transition), `zero_point` (PERILOUS, the signature; phase 3's transition), `wake` (intro). Its
+  death folds back to the kneel.
+- **Mother of Spores** (Flier, 4 blocks): a stepped dome cap with glowing spots, a ragged veil of gills open at the
+  front round a pale face, two long lash tendrils and four short trailing ones, spore sacs. Moves: `lash` → `lash_b`
+  (Tendril Lash, LIGHTs), `swoop` (the gap closer), `lob` (Spore Lob), `drop` (the Drop: HEAVY, held, she falls to the
+  floor with a 3-block shockwave), `rain` (Spore Rain, PERILOUS, the signature), `birth` (Birth), `halo` (Spore Halo,
+  phase 2's transition), `bloom` (Bloom, phase 3's transition), `unfurl` (intro).
