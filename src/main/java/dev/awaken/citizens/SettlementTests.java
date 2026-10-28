@@ -111,6 +111,9 @@ final class SettlementTests {
         Settlement before = Citizens.swapCarillon(city);
         Crowd pool = city.crowd;
         int capPlayer = pool.capPlayer, capWorld = pool.capWorld;
+        // the pool's caps and nearness are measured here, not who sees whom arrive (citizens_arrivals_unseen) or the
+        // ground they arrive on (the flat test world under Carillon's plan)
+        pool.rules = false;
         AwakenTests.Live[] player = {AwakenTests.survivalPlayer(h, "w0-a", BlockPos.ZERO.above(2))};
         // the shared test world keeps every earlier test's players: only this test's own decide here
         Citizens.onlyPlayers = List.of(player[0].player());
@@ -135,6 +138,7 @@ final class SettlementTests {
                 Citizens.onlyPlayers = null;
                 pool.capPlayer = capPlayer;
                 pool.capWorld = capWorld;
+                pool.rules = true;
                 if (player[0] != null) player[0].leave();
                 if (hamlet[0] != null) Settlements.unregister(hamlet[0].id);
                 Citizens.swapCarillon(before);

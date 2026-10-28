@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -19,6 +20,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.npc.Npc;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+
+import java.util.List;
 
 import static dev.awaken.citizens.CitizensData.INSIDE;
 import static dev.awaken.citizens.CitizensData.STAND;
@@ -66,6 +69,8 @@ public class CitizenBody extends PathfinderMob implements Npc {
     private int refTick;
     private boolean stuck;
     private int stuckSince;
+    /** When a stuck body may next try to be put right (SPEC §28.11: only out of everyone's sight), and next be nudged out of a block. */
+    private int rescueAt, nudgeAt;
     /** Set by the think: the nearest player, squared distance (for greetings and looks). */
     double nearestSq = Double.MAX_VALUE;
     int lastAct = -1;
@@ -308,10 +313,8 @@ public class CitizenBody extends PathfinderMob implements Npc {
                 l.afterDwell(rec, now);
                 return;
             }
-            int s = d.spot[rec];
             double tx, tz;
-            if (s >= 0) {
-                l.spotWorld(s, d.place[rec], l.tmp);
+            if (l.spotAt(rec, l.tmp)) {
                 tx = l.tmp[0];
                 tz = l.tmp[2];
             } else if (!Double.isNaN(l.rx[rec])) {
@@ -480,6 +483,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
         nearestSq = best;
         thinkAt = tickCount + Math.max(1, Math.min(40, (int) (best / 256.0)));
         c.crowd.thinks++;
+        if (isInWall()) nudgeOut(level);
         c.work.show(this, rec, now);
         if (lookTarget != null && tickCount <= lookUntil && !lookTarget.isRemoved()) getLookControl().setLookAt(lookTarget, 40f, 40f);
         else if (near != null && best < 9 * 9) {
@@ -508,9 +512,9 @@ public class CitizenBody extends PathfinderMob implements Npc {
             stuckSince = tickCount;
             c.crowd.stuck++;
         } else if (stuck && tickCount - stuckSince >= 200) {
-            // ten seconds and nowhere: put them on their next node, but never in front of anyone
-            if (c.crowd.unseen(level, this) || tickCount - stuckSince >= 300) {
-                rescue(c, l);
+            // ten seconds and nowhere: put them on their spot or next node, but only where nobody sees them go or arrive
+            // (SPEC §28.11: never in front of anyone, however long it takes)
+            if (tickCount >= rescueAt && rescue(l, level)) {
                 c.crowd.rescues++;
                 stuck = false;
                 refX = getX();
@@ -536,25 +540,47 @@ public class CitizenBody extends PathfinderMob implements Npc {
     }
 
     private boolean farFromSpot(Ledger l) {
-        int s = l.d.spot[rec];
-        if (s < 0) return false;
-        l.spotWorld(s, l.d.place[rec], l.tmp);
+        if (!l.spotAt(rec, l.tmp)) return false;
         return sq(getX() - l.tmp[0]) + sq(getZ() - l.tmp[2]) > 0.6 * 0.6;
     }
 
-    private void rescue(Settlement c, Ledger l) {
-        releasePath();
+    /** Puts a stuck body on its spot or its next node when no player sees it go or arrive; false: not yet. */
+    private boolean rescue(Ledger l, ServerLevel level) {
+        rescueAt = tickCount + 40;
         CitizensData d = l.d;
-        if (d.state[rec] == STAND && d.spot[rec] >= 0) {
-            l.spotWorld(d.spot[rec], d.place[rec], l.tmp);
-            teleportTo(l.tmp[0], l.tmp[1], l.tmp[2]);
-            return;
-        }
+        boolean spot = d.state[rec] == STAND && l.spotAt(rec, l.tmp);
         int target = d.next[rec] >= 0 ? d.next[rec] : d.goal[rec];
-        teleportTo(l.g.x[target], l.g.y[target] + 1, l.g.z[target]);
-        d.at[rec] = target;
-        d.next[rec] = -1;
-        d.prog[rec] = 0;
+        if (!spot) {
+            l.tmp[0] = l.g.x[target];
+            l.tmp[1] = l.g.y[target] + 1;
+            l.tmp[2] = l.g.z[target];
+        }
+        List<ServerPlayer> players = Citizens.players(level);
+        if (!Footing.unseen(level, players, getX(), getY(), getZ()) || !Footing.unseen(level, players, l.tmp[0], l.tmp[1], l.tmp[2])) return false;
+        releasePath();
+        teleportTo(l.tmp[0], l.tmp[1], l.tmp[2]);
+        if (!spot) {
+            d.at[rec] = target;
+            d.next[rec] = -1;
+            d.prog[rec] = 0;
+        }
+        return true;
+    }
+
+    /**
+     * (SPEC §28.11, Euan 2026-10-28: "the forge man is dying in a wall") Inside a block: out to the nearest free cell (a
+     * step or two), never left to choke. True when it moved.
+     */
+    boolean nudgeOut(ServerLevel level) {
+        if (tickCount < nudgeAt) return false;
+        nudgeAt = tickCount + 10;
+        Settlement c = home;
+        double[] out = c != null ? c.ledger.tmp : new double[3];
+        if (!Footing.nearest(level, getX(), getY(), getZ(), Footing.NUDGE, out, Footing.NOBODY)) return false;
+        releasePath();
+        teleportTo(out[0], out[1], out[2]);
+        if (c != null) c.crowd.nudges++;
+        return true;
     }
 
     /** The clock jumped: the ledger re-seats everyone; this body goes and one comes back where the ledger says. */
@@ -603,6 +629,11 @@ public class CitizenBody extends PathfinderMob implements Npc {
 
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
+        if (source.is(DamageTypes.IN_WALL)) {
+            // never hurt by the block they're in: out of it instead
+            nudgeOut(level);
+            return false;
+        }
         boolean hit = super.hurtServer(level, source, damage);
         Settlement c = home;
         if (hit && c != null && rec >= 0) c.hurt(this, rec, source);

@@ -7973,6 +7973,78 @@ really want to update it and it's a choice").
   `hearth_respawn_bed_elsewhere` (a reset and a bed at home keep it; sleeping elsewhere keeps it and offers the bed, once
   a day; Y moves it and says so; the fall wakes there; that bed broken, home).
 
+### 28.11 Where people stand and appear (Euan 2026-10-28 on ea7289c9: "the celebrating is so bunched up it looks glitchy, people are spawning in front of me like ghosts, and the forge man is dying in a wall while doing his job")
+**The causes.** (1) A place holds as many people as its spots; past them everyone stood on its node with a seeded 0.9
+step aside, a knot. A town's children's game sat on a corner of the fountain with 12 spots for every child in town, all
+waving their arms at once. (2) The Crowd gave a body to anyone within 56 in plain view, so people popped up in front of
+you: a town finishing its plan with you in it, a settlement waking, the nearest-40 set changing as people walked, a
+trouble staging someone with no body onto a spot in view (or teleporting a body more than 20 away), and a stuck body's
+rescue after 15 s even in view. (3) Nothing checked where a body was put: one made mid-way along the smith's straight
+edge from his spot to the street came into the world inside the forge shed's corner post, and choked.
+
+**Rings (`Ledger`).** A full place (one with spots) seats the rest on rings round its middle: the first ring
+`RING_GAP` (1.4) outside its farthest spot, each next one 1.4 further, slots 1.4 apart round each (64 at most; a
+record on slot k holds spot `-2 - k`, saved as before and rebuilt on load). The nearest ring fills first, each person
+from their own seeded slot round it, so a crowd fills outward and round, never a line. People on a ring face the middle
+and turn 25° either way to a neighbour every ten seconds or so. A place with no spots keeps the old step aside.
+- **Ground** (`Ledger.Ground`, the level's through `Footing`): a spot with a block, water, fire or magma on it, or no
+  floor, is never claimed (`badSpot`, until the roster is rebuilt); a ring slot must be open ground (`Footing.open`:
+  standable on its row, a row down, or a row up onto a full block, never a fountain's rim, a slab or a wall top) with
+  nothing over the head (the heightmap), so never in a fountain, a pond, a shed or under an awning. Unloaded ground is
+  trusted and checked again when a body is placed.
+- Children at a play place take another spot (or slot) every twenty seconds or so; anyone on a ring and children at
+  play cycle their own acts (`CitizenWork.crowdAct`: a word, a cheer, a look round, arms crossed; play, a cheer, a wave),
+  spells of 8 to 16 s out of step with each other.
+
+**Arrivals (`Crowd`, `Footing.unseen`).** Nearest first as before, but someone without a body yet takes a slot only
+where they can appear: stepping out of a door (it opens), or where no player is within `NEAR` (24) at all, and no
+player within `FAR` (44) is looking their way (an 80° half-cone) with a clear line to the head or middle. Past 44 a
+body in plain view fades in as a speck at the edge of its 56. 24 places are checked a pass. A player who just came
+(logged in, respawned, or moved 48 in one pass) gets 3 s of grace while their view loads. Counters: `held` (kept back),
+`nudges`.
+- **Never in a block**: a body is made only on a standable cell (feet and head clear, a floor): the place itself, else
+  the nearest within `NUDGE` (3), else not yet. A body in a wall (`isInWall`, or IN_WALL damage, which it never takes)
+  is put on the nearest free cell.
+- **Rescue** (stuck ten seconds): only when no player sees the body go or arrive (both points `unseen`), tried every
+  2 s, however long it takes; never in view.
+- **A village's staged people** (`CityEvents.stage`, not Carillon's): nobody is put anywhere. Someone more than 12 from
+  their spot, or indoors, walks the streets to it (out of their door, or in from out of sight), then the last steps
+  straight; nearer, they step there. No two staged people stand within 1.1 (`STAGE_GAP`), and none in a block or water:
+  the nearest free cell instead. Carillon's scenes are as they were.
+
+**Plans (`VillageRoster`, `VillagePlanner`).** Found by `village_work_spots_free`: the smith's spot was a corner post
+of the forge shed west or north of the world's middle (the planner halves the shed with `/ 2`, which rounds toward
+zero there, so the anvil sits a cell over and the smith's pick beside it landed on the post: the wall he died in); a
+town's gate posts three in from the gate fell in the wall's curve; the farmers' work spots were a row over the crops;
+in a town, a neighbour's stair eave stood in the smith's cell and a channel's composter in a farmer's.
+- **The smith** (`VillagePlanner.Work.smith`): the cell asked for if free, else the nearest free cell round the anvil,
+  the open side first; free means inside the shed and not a post, the anvil, the furnace or the Hearth's forge (the
+  painter's own rules, `VillagePainter.furnace` / `forgeBlock`). Nothing painted moves: worlds already made keep their
+  sheds, only where he stands changes. His node is the cell outside the shed's open side and he paths in to the anvil
+  (`approach`), so his way to the street never runs through a post or the furnace.
+- **Checked against the paint** (`VillageRoster.free`, over `SettlementPaint.ground`, the painter's blocks for the
+  chunks asked about, and `Settlements.standable`, the engine's own rule): the plan can't see what a neighbour paints
+  beside the shed, so the roster takes the smith's cell only if feet fit there as painted, else the nearest free cell
+  round the anvil inside the shed (his node is then the cell itself). A farmer's cell likewise, else the nearest free
+  cell of the field on its own lift within 2.
+- **Gate posts**: on a cell that isn't open ground, the nearest open cell within 4 (posts aren't painted).
+- **Fields**: the work spot's row is the farmland's (feet among the crops, no drop that tramples them).
+- **The pool's own test** (`citizens_many_settlements`) turns the rules off (`Crowd.rules`): it measures caps and
+  nearness on a flat test world Carillon's plan wasn't made for, so neither the sight rule nor the ground check applies.
+- The children's game centres on the nearest cell with two open cells all round it (never a fountain, well or lamp),
+  with a spot for every child and two more (12-40). The green's standing place takes a third of the village (10-40). The
+  washer stands on the first open cell south of the well (a town's well is a fountain basin).
+- A standing cell may have a bottom slab or a step underfoot (0.5); ring slots only a carpet or snow (0.25), so never a
+  fountain's rim.
+- A changed roster seats everyone afresh by the hour (§28.4).
+
+- Tests: `citizens_gathering_spread` (forty people at a place of four spots, one with a wall on it, water beside it:
+  three on spots, 37 on rings, all at least 1.2 apart with a neighbour within 2, none in the wall or the water, all
+  within the second ring; the slots come back on load), `village_work_spots_free` (every non-bench spot of a village and
+  a town as painted: feet and head clear over a floor), `citizens_arrivals_unseen` (the sight rule's cases: 10 behind,
+  30 ahead in the open hidden; 30 behind, 50 ahead, 30 ahead behind a wall let come; the hamlet round a player: nobody
+  appears within 24 or in view but out of a door; the player down the road looking away: they come).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 29. Wild life (the wild's small ambient life, client-only; Euan 2026-10-26, built without an approval page)

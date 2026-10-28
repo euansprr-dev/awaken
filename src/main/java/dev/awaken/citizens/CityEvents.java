@@ -318,8 +318,10 @@ final class CityEvents {
     /**
      * CitizenHooks.stage: a named citizen walks to {@code at} and stands there facing {@code yaw} (NaN: the way
      * they stand anyway), doing {@code act} once standing, {@code prop} in hand; {@code at} null hands them back to their
-     * day. Called again to move them on (the Registry walk: Bram a few steps ahead of you). A body far from the spot
-     * (or none yet) is put there; one in sight walks. A stage nobody renews lapses after {@link #STAGE_LAPSE}.
+     * day. Called again to move them on (the Registry walk: Bram a few steps ahead of you). In Carillon a body far from
+     * the spot (or none yet) is put there; one in sight walks. (SPEC §28.11) In a village nobody is put anywhere: someone
+     * far from their spot walks there along the streets (out of their door, or in from out of sight), and no two staged
+     * people share a spot or stand in a block or in water. A stage nobody renews lapses after {@link #STAGE_LAPSE}.
      */
     void stage(String who, net.minecraft.world.phys.@Nullable Vec3 at, float yaw, String act, String prop) {
         stage(r.namedIndex(who), at, yaw, act, prop);
@@ -333,16 +335,21 @@ final class CityEvents {
             if (d.role[i] == Roles.STAGED) release(i);
             return;
         }
+        boolean built = !c.site.carillon();
+        if (built) at = clearStage(i, at);
         if (d.role[i] != Roles.STAGED) {
             // from whatever they were doing (the infirmary's bedside too)
             l.release(i);
+            if (built) walkIn(i, at, false);
             d.role[i] = Roles.STAGED;
             d.event[i] = -1;
             d.place[i] = -1;
             d.spot[i] = -1;
-            d.at[i] = c.net.nearest(at.x, at.z, false);
+            if (!built) d.at[i] = c.net.nearest(at.x, at.z, false);
+        } else if (built) {
+            walkIn(i, at, true);
         }
-        d.state[i] = STAND;
+        if (!built) d.state[i] = STAND;
         l.rx[i] = at.x;
         l.ry[i] = at.y;
         l.rz[i] = at.z;
@@ -356,9 +363,72 @@ final class CityEvents {
         CitizenBody b = body(i);
         if (b != null) {
             b.faceYaw = yaw;
-            if (b.distanceToSqr(at) > 20 * 20) b.teleportTo(at.x, at.y, at.z);
+            if (!built && b.distanceToSqr(at) > 20 * 20) b.teleportTo(at.x, at.y, at.z);
         }
         d.setDirty();
+    }
+
+    /** How near two staged people may stand (centre to centre). */
+    static final double STAGE_GAP = 1.1;
+    /** Further than this from their spot, a village's staged citizen walks the streets to it. */
+    static final double WALK_IN = 12;
+
+    /**
+     * (SPEC §28.11) A village's staged citizen heads for their spot: walking the streets when it's far (or they're
+     * indoors: out of their door), standing straight there when it's near. Already staged: a walk on its way keeps on
+     * (to the node by the spot, which may have moved), a stand that's now far sets off again.
+     */
+    private void walkIn(int i, net.minecraft.world.phys.Vec3 at, boolean again) {
+        CitizenBody b = body(i);
+        int goal = c.net.nearest(at.x, at.z, false);
+        if (again && d.state[i] == WALK) {
+            if (goal >= 0) d.goal[i] = goal;
+            return;
+        }
+        double fx, fz;
+        boolean indoors = d.state[i] == INSIDE || d.state[i] == ABSENT;
+        if (b != null) {
+            fx = b.getX();
+            fz = b.getZ();
+        } else if (again && !Double.isNaN(l.rx[i])) {
+            fx = l.rx[i];
+            fz = l.rz[i];
+        } else if (!indoors && l.position(i, l.tmp)) {
+            fx = l.tmp[0];
+            fz = l.tmp[2];
+        } else {
+            fx = c.net.x[d.at[i]];
+            fz = c.net.z[d.at[i]];
+        }
+        double far2 = (fx - at.x) * (fx - at.x) + (fz - at.z) * (fz - at.z);
+        if (goal >= 0 && (indoors || far2 > WALK_IN * WALK_IN)) {
+            if (b != null) d.at[i] = c.net.nearest(fx, fz, false);
+            d.next[i] = -1;
+            d.prog[i] = 0;
+            d.goal[i] = goal;
+            d.state[i] = WALK;
+        } else {
+            d.state[i] = STAND;
+            if (goal >= 0) d.at[i] = goal;
+        }
+    }
+
+    /** A staged spot with ground to stand on and nobody else staged on it: the one asked for, or the nearest cell that is. */
+    private net.minecraft.world.phys.Vec3 clearStage(int i, net.minecraft.world.phys.Vec3 at) {
+        if (Footing.standableIfLoaded(c.level, at.x, at.y, at.z) && !stageTaken(i, at.x, at.z)) return at;
+        if (Footing.nearest(c.level, at.x, at.y, at.z, Footing.NUDGE, l.tmp, (x, z) -> stageTaken(i, x, z)))
+            return new net.minecraft.world.phys.Vec3(l.tmp[0], l.tmp[1], l.tmp[2]);
+        return at;
+    }
+
+    /** Whether another staged citizen stands within {@link #STAGE_GAP} of (x, z). */
+    boolean stageTaken(int i, double x, double z) {
+        for (int j = 0; j < r.records; j++) {
+            if (j == i || d.role[j] != Roles.STAGED || Double.isNaN(l.rx[j])) continue;
+            double dx = l.rx[j] - x, dz = l.rz[j] - z;
+            if (dx * dx + dz * dz < STAGE_GAP * STAGE_GAP) return true;
+        }
+        return false;
     }
 
     /**

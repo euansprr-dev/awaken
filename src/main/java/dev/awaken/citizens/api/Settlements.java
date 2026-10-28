@@ -109,4 +109,12 @@ public final class Settlements {
     public static int bodies(int id) {
         return access == null ? 0 : access.bodies(id);
     }
+
+    /**
+     * (SPEC §28.11) Whether one of its people can stand with their feet in cell (x, y, z): a floor, two clear rows, no
+     * water or fire. The engine's own rule, for a builder choosing where its people stand.
+     */
+    public static boolean standable(net.minecraft.world.level.BlockGetter ground, int x, int y, int z) {
+        return dev.awaken.citizens.Footing.standable(ground, x, y, z);
+    }
 }

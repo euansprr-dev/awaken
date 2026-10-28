@@ -734,6 +734,34 @@ public final class VillagePlanner {
             return d <= 3 ? 2 * d : 6 + (d - 3);
         }
 
+        /**
+         * (SPEC §28.11, Euan 2026-10-28: "the forge man is dying in a wall") Where the smith stands: the cell asked for if
+         * it's free, else the nearest free cell round the anvil, away from the smithy first. Free is inside the shed and
+         * none of what the painter puts there: a corner post (the halves above round toward zero, so west or north of the
+         * world's middle the anvil sits a cell over and the first pick was a post), the anvil, the furnace, the Hearth's
+         * forge. Nothing painted moves: only where he stands.
+         */
+        static int[] smith(Plot smithy, int x0, int z0, int x1, int z1, int ax, int az, int wantX, int wantZ) {
+            int[] fu = VillagePainter.furnace(smithy, x0, z0, x1, z1, ax, az);
+            int[] fo = VillagePainter.forgeBlock(x0, z0, x1, z1, ax, az, fu);
+            int[][] around = {{wantX - ax, wantZ - az}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+            int[] best = null;
+            int bestScore = Integer.MAX_VALUE;
+            for (int k = 0; k < around.length; k++) {
+                int x = ax + around[k][0], z = az + around[k][1];
+                if (x < x0 || x > x1 || z < z0 || z > z1 || x == ax && z == az) continue;
+                boolean corner = (x == x0 || x == x1) && (z == z0 || z == z1);
+                if (corner && !VillagePainter.touches(smithy, x, z) || x == fu[0] && z == fu[1] || fo != null && x == fo[0] && z == fo[1]) continue;
+                // the one asked for first, then away from the smithy's wall (the open side), then the diagonals
+                int score = k == 0 ? -100 : (VillagePainter.touches(smithy, x, z) ? 10 : 0) + k;
+                if (score < bestScore) {
+                    bestScore = score;
+                    best = new int[]{x, z};
+                }
+            }
+            return best != null ? best : new int[]{wantX, wantZ};
+        }
+
         /** The forge: an open shed against the smithy's side, its anvil under the roof, the smith's spot beside it. */
         void forge(int id) {
             Plot p = plan.plots.get(id);
@@ -761,7 +789,8 @@ public final class VillagePlanner {
                     smx = Math.clamp(smx, x0, x1);
                     smz = Math.clamp(smz, z0, z1);
                 }
-                plan.forge = new VillagePlan.Forge(id, x0, z0, x1, z1, p.lift(), ax, az, sd == N || sd == S ? ax + 1 : smx, sd == N || sd == S ? smz : az + 1);
+                int[] sm = smith(p, x0, z0, x1, z1, ax, az, sd == N || sd == S ? ax + 1 : smx, sd == N || sd == S ? smz : az + 1);
+                plan.forge = new VillagePlan.Forge(id, x0, z0, x1, z1, p.lift(), ax, az, sm[0], sm[1]);
                 return;
             }
         }
