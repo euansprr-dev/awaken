@@ -9,6 +9,7 @@ import dev.awaken.mobs.MobSounds;
 import dev.awaken.mobs.MobTypes;
 import dev.awaken.mobs.Mobs;
 import dev.awaken.mobs.def.BoltKind;
+import dev.awaken.mobs.def.Ability;
 import dev.awaken.mobs.def.MobDef;
 import dev.awaken.mobs.def.Model;
 import dev.awaken.mobs.def.Tier;
@@ -22,6 +23,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerBossEvent;
+import dev.awaken.core.api.BossPlates;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -173,7 +175,8 @@ public class AwakenMob extends Monster {
             goalSelector.addGoal(3, new MobGoals.FlyHunt(this));
             goalSelector.addGoal(7, new MobGoals.FlyWander(this));
         } else {
-            if (d.has(Trait.RANGED)) goalSelector.addGoal(3, new MobGoals.KeepRange(this, 9.0F));
+            if (scriptedFight()) goalSelector.addGoal(3, new FightRunner.Engaged(this)); // its fight script moves it (SPEC §34.3)
+            else if (d.has(Trait.RANGED)) goalSelector.addGoal(3, new MobGoals.KeepRange(this, 9.0F));
             else goalSelector.addGoal(3, new MobGoals.ToldMelee(this));
             if (d.has(Trait.LISTENER)) goalSelector.addGoal(4, new MobGoals.SeekSound(this));
             if (d.tier.isBoss()) goalSelector.addGoal(5, new MoveTowardsRestrictionGoal(this, 1.0));
@@ -567,6 +570,22 @@ public class AwakenMob extends Monster {
         return abilities;
     }
 
+    /** The ability runner, made on first use (a kit boss's FightRunner fires abilities through it). */
+    AbilityRunner abilityRunner() {
+        if (abilities == null) abilities = new AbilityRunner(this);
+        return abilities;
+    }
+
+    /** An ability of any phase by name, or null. */
+    @Nullable Ability ability(String name) {
+        return abilityRunner().find(name);
+    }
+
+    /** Whether a fight script drives this mob instead of the told melee (a kit boss, SPEC §34.3). */
+    protected boolean scriptedFight() {
+        return false;
+    }
+
     // ---- damage ------------------------------------------------------------------------------------------------
 
     @Override
@@ -790,6 +809,16 @@ public class AwakenMob extends Monster {
         if (bar == null && (syncedRole() == MobRole.Role.WARDEN || syncedRole() == MobRole.Role.BOSS || syncedRole() == MobRole.Role.NIGHTMARE)) ensureBar();
         watchers.add(player);
         if (bar != null && sameStorey(player)) bar.addPlayer(player);
+        if (bar != null) bindPlate(player);
+    }
+
+    /** Ties this mob's bar to it for the player's Boss Plate (SPEC §34.1): its kind, phase marks and glow. */
+    protected void bindPlate(ServerPlayer player) {
+        if (bar == null) return;
+        MobDef d = def();
+        float[] marks = new float[Math.max(0, d.phases.size() - 1)];
+        for (int i = 1; i < d.phases.size(); i++) marks[i - 1] = d.phases.get(i).below();
+        BossPlates.bind(player, bar.getId(), getId(), syncedRole() == MobRole.Role.WARDEN ? BossPlates.Kind.WARDEN : BossPlates.Kind.LORD, marks, d.glow);
     }
 
     @Override
