@@ -189,6 +189,7 @@ final class MobGoals {
         private final AwakenMob mob;
         private int retarget, attackCooldown, tellLeft = -1, diveTicks;
         private float angle;
+        private boolean far;
 
         FlyHunt(AwakenMob mob) {
             this.mob = mob;
@@ -203,6 +204,10 @@ final class MobGoals {
         public void tick() {
             LivingEntity t = mob.getTarget();
             if (t == null) return;
+            if (mob.scriptedFight()) {
+                scripted(t);
+                return;
+            }
             mob.getLookControl().setLookAt(t, 30.0F, 30.0F);
             if (attackCooldown > 0) attackCooldown--;
             boolean ranged = mob.def().has(Trait.RANGED);
@@ -240,6 +245,26 @@ final class MobGoals {
             float r = ranged ? 7.0F : 3.5F + mob.getBbWidth();
             double y = t.getY() + 2.0 + mob.getRandom().nextFloat() * 2.0 + (mob.getBbHeight() > 2 ? 1.5 : 0);
             mob.getMoveControl().setWantedPosition(t.getX() + Mth.cos(angle) * r, y, t.getZ() + Mth.sin(angle) * r, 1.0);
+        }
+
+        /**
+         * A kit flier (SPEC §34.3): its fight script's moves are its attacks, so no dives. It holds still while a move
+         * plays (the capsules are drawn from where it is) and between moves drifts low round the target, its body floating
+         * in its own model, now close enough to lash, now out where its gap-closer and its ranged moves reach.
+         */
+        private void scripted(LivingEntity t) {
+            if (mob.fightBusy()) {
+                mob.getMoveControl().setWantedPosition(mob.getX(), mob.getY(), mob.getZ(), 0.6);
+                return;
+            }
+            mob.getLookControl().setLookAt(t, 30.0F, 30.0F);
+            if (--retarget > 0) return;
+            retarget = 12;
+            if (mob.getRandom().nextInt(4) == 0) far = !far;
+            angle += 0.4F + mob.getRandom().nextFloat() * 0.3F;
+            float r = (mob.getBbWidth() + t.getBbWidth()) * 0.5F + (far ? 6.0F : 1.0F);
+            double y = t.getY() + 0.3 + mob.getRandom().nextFloat() * 0.4;
+            mob.getMoveControl().setWantedPosition(t.getX() + Mth.cos(angle) * r, y, t.getZ() + Mth.sin(angle) * r, far ? 1.0 : 0.8);
         }
     }
 

@@ -586,6 +586,11 @@ public class AwakenMob extends Monster {
         return false;
     }
 
+    /** Whether its fight script is playing a move now (a kit flier holds still for it). */
+    boolean fightBusy() {
+        return false;
+    }
+
     // ---- damage ------------------------------------------------------------------------------------------------
 
     @Override

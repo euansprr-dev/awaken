@@ -8644,6 +8644,10 @@ should show a boss bar of our own. What he approved (PLAN §7):
   target). Its `AbilityRunner` stays, but is *scripted*: it starts nothing itself, still runs charges and leaps, and
   fires a move's ability on request (`AbilityRunner.fire`). An ability needs a target: a move played with nobody there
   (the studio) moves the body only.
+- **A kit flier** (Mother of Spores) keeps `FlyHunt`, but it never dives: the script's moves are its attacks. While a
+  move plays it holds still, because the capsules are drawn from where it is. Between moves it drifts low round the
+  target, its feet 0.3-0.7 above the target's, since its body floats in its own model. It sits 1 block from the target's
+  edge, and each retarget (12 ticks) has a 1 in 4 chance to swap that for 6 blocks out, where the swoop and the lob reach.
 - **A move.** It runs wind-up (+ hold) → active → recover:
   - **Wind-up.** The tell is `setTell` with the move's class, and a heavy shows its name only if it is a signature.
     The body turns toward the target at `track` degrees a tick until `lock`, then commits. A hold is chosen for a

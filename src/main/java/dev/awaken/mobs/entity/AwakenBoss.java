@@ -84,7 +84,11 @@ public class AwakenBoss extends AwakenMob {
         return k != null && k.fight() != null;
     }
 
-    /** The fight script's runner (server), or null when it fights the old way. */
+    @Override
+    boolean fightBusy() {
+        return fight != null && fight.busy();
+    }
+
     /** The Creature Lab's studio (/awaken bosses studio): every move in turn, then the fight. False without a kit fight. */
     public boolean studio() {
         FightRunner f = fight();
@@ -105,6 +109,7 @@ public class AwakenBoss extends AwakenMob {
         return f != null ? f.playing() : null;
     }
 
+    /** The fight script's runner (server), or null when it fights the old way. */
     @Nullable FightRunner fight() {
         if (!fightChecked && !level().isClientSide()) {
             fightChecked = true;
