@@ -9820,6 +9820,46 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   - **Meter.** Worst kink outside a strike 5.5° (the Sleepwalkers' arm); held at most 14% on every move; dips at most
     35%. A first windup key at 0.35 of the windup or later gets the kit's counter key at 0.3, which holds every bone
     but the arms at rest there; the Sleeper's first keys are all at 0.3 or earlier.
+- **The Sky Leviathan, the Ray** (body and motion, `kit/bosses/sky_leviathan.py`). "The ground is much too far below."
+  A ray ten blocks across that flies the way a manta swims. On top it is storm slate veined with lightning that branches
+  out from its spine to its wingtips, with pale cloud patches on its shoulders; beneath it is pale as a cloud's
+  underside, with its gill slits in two rows of five. Two ringed horns curl up either side of its wide mouth (gill
+  rakers inside it), its small eyes glow at the corners of its head, six pearls glow along its spine, and behind it
+  trails a whip of a tail that ends in a fork of lightning. 160 px from wingtip to wingtip, 92 from the horns to the
+  back of the disc and the tail 112 more; it flies 16 px over the bottom of its box. 79 cubes (474 faces) on 43 bones.
+  The hitbox is 4.5 x 1.9 (size 1.4 x 0.6 at scale 3.2), a flat box under the disc. It is the only boss that is a flier
+  with no legs at all: everything it does, it does with its wings and its tail.
+  - **Chains, not panels.** Each wing is a chain of six segments (three strips each, so the edges step a pixel at a
+    time), root to tip, and the tail a chain of eight; every beat is a wave that runs out along them, the tips lagging
+    the roots, and springs swing the outer segments, the tail and the horns' tips on top. One pose call (`_pose`) sets
+    the disc's pitch, yaw, roll and shift, each wing's lift, curl, sweep and twist, the tail's lift, curl and sway, the
+    head, jaw, horns (curled tighter or unrolled into a scoop) and the pelvic fins. The pearls swell and dim by scale
+    tracks.
+  - **The idle.** Flying in place, two slow beats a loop, each running out to the wingtips with the leading edge
+    feathering down on the downstroke; the tail waves behind it in an S, the mouth opens and closes, and a glow runs
+    down the pearls. **Flying**, it lowers its nose, sweeps its wings back and streams its tail, a ripple running along
+    the wings' edges faster the faster it goes; it banks into its turns.
+  - **Its blows.** The slap banks it with the near wing raised high over its back and curled, then brings the wing down
+    like a whip, the tip cracking down ahead of it and the disc rolling after it, the tail whipping across (one wing,
+    then the other, in a string). The Horn Ram draws it back nose up, its horns unrolling into a scoop either side of
+    its gaping mouth, and it surges at you head first with its wings swept back. The Wingbeat sinks it and raises both
+    wings high over its back, curled until their tips nearly meet, holds them, and brings them down in one enormous
+    stroke that throws it up into the air. The Leviathan Dive climbs on two strong beats nose high, tips over at the
+    top and dives at you like a dart, wings swept back, then pulls up out of it with its wings flared. Whoever is
+    behind gets the tail: it rises in an arc over its back like a scorpion's, the fork crackling, and cracks down.
+    Gravity Tide rolls it over onto its back, pale belly to the sky and its wings cupped, and it swims there upside down
+    while the sky tilts, then rolls back. The Pearl Barrage arches its back with its wings lifted and the pearls fire
+    one after another down its spine, each a jolt through it. The Storm Eye (the signature) lifts it with its wings
+    curling up into a bowl and its tail raised over it, the disc wheeling faster and faster, the pearls swelling one by
+    one; then it throws its wings flat and wide, the tail cracks down, the pearls flare and the lightning comes down.
+    Its intro draws its wings round itself like a cloak and throws them up and out in one great beat with a call.
+    Broken, it sags in the air nose down with its wings drooping, and rises out of it with one great beat.
+  - **The death.** It convulses with its wings flung up, beats once more, weakly, then rolls over onto its back and
+    sinks, wings limp and tail trailing, and its pearls go out (4.4 s).
+  - **Meter.** Worst kink outside a strike 3.1°; held at most 5% on every move; dips at most 36%. The readability check
+    averages every keyed bone's largest angle, so on a rig of long chains the outer segments (which a wave keeps small)
+    pull the mean down: the Ray's windup peaks are drawn big (the slap's near wing at lift 52 and curl 70) to clear 12°.
+    A slap after the dive kept its horns and tail carried through the link (the wings cross zero there).
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 

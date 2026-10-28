@@ -305,7 +305,7 @@ final class GateBestiary {
                 .ab(a(RAIN, "Lightning Call").n(2).bolt(BoltKind.CHARGE), a(BOLT, "Static").n(2).bolt(BoltKind.CHARGE)).build());
         out.add(m("the_gale", "The Gale", Theme.SKY, Tier.WARDEN, Model.BREEZE, "Gale Force and updraft traps over the void").hp(32).dmg(6).spd(0.3).scale(1.8F).traits(HUNTER)
                 .ab(a(GUST, "Gale Force").radius(8).power(0.8F).heavy(), a(LIFT, "Updraft Trap"), a(BOLT, "Wind Spears").n(4).bolt(BoltKind.GRAVITY)).build());
-        out.add(m("sky_leviathan", "The Sky Leviathan", Theme.SKY, Tier.LORD, Model.SERPENT, "Dives through the sky, tilts gravity, then the Storm Eye").hp(34).dmg(5).spd(0.32).scale(3.2F).bar(BossBarColor.BLUE).arena(28)
+        out.add(m("sky_leviathan", "The Sky Leviathan", Theme.SKY, Tier.LORD, Model.SERPENT, "Dives through the sky, tilts gravity, then the Storm Eye").hp(34).dmg(5).spd(0.32).scale(3.2F).size(1.4F, 0.6F).bar(BossBarColor.BLUE).arena(28)
                 .intro("The ground is much too far below.")
                 .phase(1.0F, "The Sky Leviathan circles.", a(CHARGE, "Leviathan Dive").heavy(), a(GUST, "Wingbeat").radius(10).power(0.6F))
                 .phase(0.66F, "The sky tilts.", a(LIFT, "Gravity Tide").radius(4), a(BOLT, "Pearl Barrage").n(6).bolt(BoltKind.GRAVITY), a(CHARGE, "Leviathan Dive"))
