@@ -9426,6 +9426,48 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     end of the fall the arms, threads and frill lift to lie along the floor.
   - **Meter.** Worst kink outside a strike 4.8° (the lob's wind-up loop); held 0-15%; dips 32-37% (the lashes, the swoop
     into a lash, lob into lob). The intro holds its bud on purpose (32%).
+- **The Gearwright Colossus, the Clock Tower** (body and motion, `kit/bosses/gearwright_colossus.py`). A clock tower that
+  walked out of the foundry, 8.4 blocks to its weathervane: hips 3.2 blocks up on long jointed iron legs (the knee
+  forward, the shin raked back, the foot flat, cogs at the knees), a riveted green-copper shaft with brass cornices and
+  iron buttresses to 5.75 blocks, a lit dial on its chest whose small hands go round (the minute hand once an idle
+  loop), an open belfry for a head with a bell swinging inside it, and a stepped iron spire. Its arms are the clock's
+  hands, flat blades on cogs at its shoulders, the minute hand (left, 54 px) longer than the hour hand (right, 38 px),
+  splayed out at rest. A brass pendulum with an iron weight hangs between its legs and swings in time with the clock.
+  119 cubes on the Brute plan (leg 51). Values: the dial and the lamps (belfry, the hands' inlays, the weight) the
+  white-blue of an arc, then brass, then green copper, then dark iron. The hitbox stays the golem's at scale 1.8
+  (2.5 x 4.9), the body modelled at true size above it.
+  - **It moves like a drinking bird**: too tall to reach you standing, the tower stays rigid and tips at the hips, the
+    legs folding under it and the hips drawing back over its heels, and it rights itself after every blow. The minute
+    hand sweeps across the front at a standing player's waist (reach 4.7 blocks); the hour hand climbs to twelve, its
+    blade turning edge-on first, and chops down to six (4.0). Piston Slam swings the pendulum up behind it, holds, and
+    brings it down through its legs onto the floor in front (5.2). Colossal Stride is two great strides at you, braking
+    back on its heels. Whoever is behind it gets the weight whipped back between its legs (3.2). Spark Halo: both hands
+    to ten and two while the face's hands race round (the minute hand three turns, the hour hand one), then the hours
+    fly off as sparks. Overload Arc: both hands to twelve, then down together onto you, the face's hands spinning. Arc
+    Strikes: the hands cross, climb to twelve, and the belfry throws back as the bell tolls. Release Drones lifts the
+    spire off the belfry like a lid. The intro is the clock striking three, the hands clicking a step out on each stroke.
+    The walk rocks onto each planted foot, the pendulum swinging across the stride (3.9 blocks a cycle, run 5.6).
+  - **The death**: the clock stops with a jolt, the knees give with the feet still under it, it sinks up onto its
+    knees, the shins back along the floor, and the tower tips forward, hinged over its knees, until it lies on its face
+    with its legs out behind it. A key between each pair keeps the legs above the floor on the way down.
+  - **Ground.** The weight and the hands' points stay out of the floor everywhere but the fall (the slam meets it on
+    purpose); in the fall the legs, hands and weight lift back where they would go in. Feet dip 1-2 px at most.
+  - **Meter.** Worst kink outside a strike 3.7°; held 0-14% on its blows; dips up to 34%.
+- **Kit changes with the Clock Tower** (all bodies; the Tyrant and Unit Zero rebuilt with them):
+  - `core.plant` measures the foot against its rest pose (it had taken the rest rotation twice) and takes `at` (each
+    ankle's offset from where it stands) and `turn` (each foot's heading about the vertical).
+  - `core.ground_feet`: a move that advances or rises can't plant its feet, so a foot its pose puts more than 1.5 px
+    into the floor is set on it instead, where the step had it and pointing the way it pointed; a foot in the air stays.
+    `stage_clips` uses it on every key it doesn't plant. (Unit Zero's feet had gone 4-6 px under in its steps.)
+  - `keep_above` and `ground_pass` take an optional preferred way for each turn (a fourth value, +1 or -1), so a fist
+    reaches forward to the floor rather than flipping back.
+  - **Reactions for any biped** (`plans.biped_reactions`): the kneel goes down onto one knee with the front foot planted
+    and the fist reaching to the floor from the shoulder first (`kneel_on`), the bow on the way already reaching half of
+    it; the rise comes back through a crouch; both blend through extra keys (`_blend`), which ease the hips and lift a
+    moving foot just clear of the floor instead of rolling it through. The death (`biped_fall`) sags, drops to a tall
+    kneel on both shins and topples forward on its knees as far as its body allows without going into the floor, the arms
+    flung forward. The Tyrant's and Unit Zero's kneel, rise and death come from it (worst snap 36-62°, nothing deeper
+    than 5.4 px), except Unit Zero's blades in its own fall.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 

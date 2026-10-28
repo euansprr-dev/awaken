@@ -181,7 +181,8 @@ def _chain(rig, pose, node):
 
 def keep_above(rig, pose, guard, adjust, bite=False):
     """The key pose with its guarded parts (a weapon, a fist) out of the ground: each adjuster in turn (bone, axis,
-    most degrees: the wrist, then the arm) turns by the least that does it. With bite the lowest guarded point lands
+    most degrees[, the way it prefers: +1 or -1]: the wrist, then the arm) turns by the least that does it (every turn its
+    preferred way before any the other way, so a fist that reaches forward never swings back instead). With bite the lowest guarded point lands
     on the ground itself (within a pixel above it), so a blow that hits the ground meets it instead of passing
     through."""
     lo, hi = GROUND - 1.0, GROUND - 0.2
@@ -203,11 +204,13 @@ def keep_above(rig, pose, guard, adjust, bite=False):
     cur, v = pose, low(pose)
     if ok(v) or (bite and v < lo and not adjust):
         return pose
-    for b, ax, most in adjust:
+    for b, ax, most, *way in adjust:
         best, bestv = None, None
-        for d in range(2, int(most) + 1, 2):
-            for sg in (1, -1):
-                q = turned(cur, b, ax, sg * d)
+        steps = range(2, int(most) + 1, 2)
+        turns = [way[0] * d for d in steps] + [-way[0] * d for d in steps] if way else [sg * d for d in steps for sg in (1, -1)]
+        for td in turns:
+            if True:
+                q = turned(cur, b, ax, td)
                 qv = low(q)
                 if ok(qv):
                     return q
@@ -247,19 +250,20 @@ def ground_pass(rig, ground, clips=None, skip=("death",)):
                 poses = [sample(rig, name, t) for t in times]
                 if max(lowest(rig, p, guard) for p in poses) <= GROUND - 0.2:
                     continue
-                delta = {(b, ax): [0.0] * len(times) for b, ax, _ in adjust}
-                prev = {(b, ax): 0.0 for b, ax, _ in adjust}
+                delta = {(a[0], a[1]): [0.0] * len(times) for a in adjust}
+                prev = {(a[0], a[1]): 0.0 for a in adjust}
                 for k, p in enumerate(poses):
                     cur = {b: dict(v) for b, v in p.items()}
                     v = lowest(rig, cur, guard)
-                    for b, ax, most in adjust:
+                    for b, ax, most, *way in adjust:
                         if v <= GROUND - 0.2:
                             prev[(b, ax)] = 0.0
                             continue
                         # the turn nearest the last tick's that clears (else the one that gets closest), so the
                         # correction moves on smoothly and never flips side from one tick to the next
                         was = prev[(b, ax)]
-                        cands = sorted(set(range(-int(most), int(most) + 1, 2)) - {0}, key=lambda d: (abs(d - was), abs(d)))
+                        cands = sorted(set(range(-int(most), int(most) + 1, 2)) - {0},
+                                       key=lambda d: (bool(way) and d * way[0] < 0 and was == 0, abs(d - was), abs(d)))
                         best, bestv = 0.0, v
                         for d in cands:
                             q = dict(cur)
@@ -485,7 +489,7 @@ def stage_clips(rig, mv, rest=None):
             p = dict(p)
             q = p["pelvis"]
             p["pelvis"] = {"rot": q.get("rot", (0, 0, 0)), "pos": tuple(v * size for v in q.get("pos", (0, 0, 0)))}
-        return plant(rig, p, sides)
+        return plant(rig, p, sides) if sides else ground_feet(rig, p)
     W, A, R = mv.seconds("windup"), mv.seconds("active"), mv.seconds("recover")
     w = [(f, p) for f, p in mv.stages.get("windup", [])]
     a = [(f, p) for f, p in mv.stages.get("active", [])]
@@ -588,10 +592,11 @@ def _euler(m):
     return math.atan2(m[2][1], m[2][2]), b, math.atan2(m[1][0], m[0][0])
 
 
-def plant(rig, pose, sides=("l", "r")):
+def plant(rig, pose, sides=("l", "r"), at=None, turn=None):
     """The pose with each named foot back where it stands at rest: the thigh's pitch and roll and the knee's bend come
     from two-bone IK in the hip's frame, and the foot counter-rotates to stay flat. The leg bones a pose names for those
-    feet are replaced; everything else is kept."""
+    feet are replaced; everything else is kept. at: {side: (dx, dy, dz)} model pixels from where that foot stands at
+    rest (a stride's feet), y down. turn: {side: radians} the foot lies turned by about the vertical (flat still)."""
     if not sides or not any(("thigh_" + s) in rig.by_name for s in sides):
         return pose
     rest_fr = frames(rig, {})
@@ -604,6 +609,8 @@ def plant(rig, pose, sides=("l", "r")):
         Mp, Tp = fr[th.parent.name]
         hip = tuple(Tp[i] + R._mv(Mp, th.pivot)[i] for i in range(3))
         target = rest_fr[ft.name][1]
+        if at and side in at:
+            target = tuple(target[i] + at[side][i] for i in range(3))
         d = R._mv(_t(Mp), tuple(target[i] - hip[i] for i in range(3)))
         a, b = sh.pivot[1], ft.pivot[1]
         L = min(math.sqrt(sum(c * c for c in d)), a + b - 1e-3)
@@ -613,11 +620,36 @@ def plant(rig, pose, sides=("l", "r")):
         rz = math.atan2(-d[0], d[1])
         rx = math.atan2(d[2], y1) - math.atan2(z0, y0)
         Mleg = R._mm(R._mm(Mp, R._rot(rx, 0, rz)), R._rot(k, 0, 0))
-        fx, fy, fz = _euler(R._mm(_t(Mleg), rest_fr[ft.name][0]))
-        out[th.name] = (rx / DEG, 0.0, rz / DEG)
-        out[sh.name] = (k / DEG, 0.0, 0.0)
-        out[ft.name] = (fx / DEG, fy / DEG, fz / DEG)
+        flat = rest_fr[ft.name][0]
+        if turn and side in turn:
+            flat = R._mm(R._rot(0, turn[side], 0), flat)
+        fx, fy, fz = _euler(R._mm(_t(Mleg), flat))
+        # those are the bones' whole turns; a pose holds what it adds to their rest (a leg bent at rest stays bent)
+        out[th.name] = (rx / DEG - th.rot[0], -th.rot[1], rz / DEG - th.rot[2])
+        out[sh.name] = (k / DEG - sh.rot[0], -sh.rot[1], -sh.rot[2])
+        out[ft.name] = (fx / DEG - ft.rot[0], fy / DEG - ft.rot[1], fz / DEG - ft.rot[2])
     return out
+
+
+SINK = 1.5  # pixels a posed foot may go into the floor before it is put on it (a small dip of the hips stays as posed:
+# re-planting near-straight legs for it would snap the knees)
+
+
+def ground_feet(rig, pose, sides=("l", "r")):
+    """The pose with any foot that would go into the floor (more than SINK) put on it instead, where the pose's step had it (its ankle's
+    x and z, and the way it points): for a move that travels or lifts, whose feet are posed rather than planted. A foot
+    in the air stays."""
+    sink = [s for s in sides if ("foot_" + s) in rig.by_name and lowest(rig, as_sample(pose), ["foot_" + s]) > GROUND + SINK]
+    if not sink:
+        return pose
+    rest_fr = frames(rig, {})
+    fr = frames(rig, as_sample(pose))
+    at, turn = {}, {}
+    for s in sink:
+        (Mw, was), (Mn, now) = rest_fr["foot_" + s], fr["foot_" + s]
+        at[s] = (now[0] - was[0], 0.0, now[2] - was[2])
+        turn[s] = math.atan2(-Mn[0][2], -Mn[2][2]) - math.atan2(-Mw[0][2], -Mw[2][2])  # its toe's heading from rest's
+    return plant(rig, pose, sink, at=at, turn=turn)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
