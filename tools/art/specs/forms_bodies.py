@@ -367,6 +367,19 @@ PANTS = {
     "zombie": ["#121334", "#1a1c4b", "#232764", "#2e347c"],
     "husk": ["#1d150e", "#2d2117", "#403022", "#55412f"],
 }
+# The vanilla look each form starts from (C), in our own palettes
+SKIN_HOME = {
+    "zombie": ["#15230f", "#213a18", "#2f5223", "#3e692d", "#4f7b39", "#62904a"],
+    "husk": ["#3a3122", "#5a4d34", "#86744d", "#a89263", "#c1a66c", "#dabf85"],
+}
+CLOTH_HOME = {
+    "zombie": ["#03302f", "#065a58", "#008684", "#00a2a1", "#22bcb9"],
+    "husk": ["#2e2a20", "#4a4433", "#6a614a", "#857a5d", "#a19573"],
+}
+PANTS_HOME = {
+    "zombie": ["#161344", "#221d5c", "#302873", "#3d3690"],
+    "husk": ["#2a2419", "#3e3526", "#544834", "#6b5c43"],
+}
 BONE = ["#3b3428", "#6a5f4b", "#9f9076", "#cdbf9f", "#ece2c8"]
 FAMILY_TINT = {0: None, 1: ("#e6cf9a", 0.16), 2: ("#cfe6f2", 0.22)}
 MOSS = ["#24391c", "#36552a", "#4b7337", "#62904a"]
@@ -382,9 +395,38 @@ def tint_ramp(cols, fam):
     return R.Ramp(*["#%02x%02x%02x" % R.lerpc(R.hexc(h), to, t[1] * (0.4 + 0.6 * k / (len(cols) - 1)))[:3] for k, h in enumerate(cols)])
 
 
+# How far each rank has come from the creature the player knows (Euan 2026-10-28: "from one level to the next it looks like a
+# completely different animal"). C still wears the vanilla creature's own colours, darkened a touch; each rank is a step on; S is the
+# full form. Our own palettes, read off the vanilla look; no vanilla pixels are used.
+DRIFT = {2: 0.18, 3: 0.42, 4: 0.7, 5: 1.0}
+
+
+def _resample(cols, n):
+    cs = [R.hexc(c) for c in cols]
+    out = []
+    for k in range(n):
+        x = k * (len(cs) - 1) / (n - 1)
+        a = int(x)
+        b = min(a + 1, len(cs) - 1)
+        out.append(R.lerpc(cs[a], cs[b], x - a))
+    return out
+
+
+def toward(home, far, rung, lag=0):
+    """A palette between the vanilla creature's colours (home) and the form's (far), as far along as the rank (lag holds a part back
+    a rank, so it turns later than the rest)."""
+    t = DRIFT.get(rung - lag, 0.0)
+    n = max(len(home), len(far))
+    return ["#%02x%02x%02x" % R.lerpc(h, f, t)[:3] for h, f in zip(_resample(home, n), _resample(far, n))]
+
+
+def drift(rung, lag=0):
+    return DRIFT.get(rung - lag, 0.0)
+
+
 def rot_pattern(seed, rung):
     """Decay: broad soft patches of darker and lighter skin (two values, never speckle), a little more broken from B."""
-    return R.p_blotch(seed, scale=6, amount=0.38 + 0.05 * rung, levels=2)
+    return R.p_blotch(seed, scale=6, amount=0.2 + 0.35 * drift(rung), levels=2)
 
 
 def weathering(P, rig, fam, rng, cubes, patches):
@@ -436,11 +478,11 @@ def paint_zombie(r, rung, species, fam):
     P = R.Painter(r, f"forms|{r.id}|{species}|{fam}")
     import random
     rng = random.Random(R._h(r.id, species, fam))
-    skin = tint_ramp(SKIN[species], fam)
-    cloth = tint_ramp(CLOTH[species], fam)
-    pants = tint_ramp(PANTS[species], fam)
+    skin = tint_ramp(toward(SKIN_HOME[species], SKIN[species], rung), fam)
+    cloth = tint_ramp(toward(CLOTH_HOME[species], CLOTH[species], rung), fam)
+    pants = tint_ramp(toward(PANTS_HOME[species], PANTS[species], rung), fam)
     bone = tint_ramp(BONE, fam) if fam != 2 else R.Ramp("#3e4752", "#6f7c88", "#a3b1bc", "#d1dde5", "#eef5f9")
-    darker = 0.25 * (rung - 2)
+    darker = 0.75 * drift(rung)
     rot = rot_pattern(rung * 7 + 3, rung)
     for cu in r.cubes:
         n = cu.name

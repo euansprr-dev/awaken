@@ -4732,6 +4732,12 @@ Replaces §21.11 decision 18's kit. Built 2026-10-28 by one builder, no sub-agen
     keeps the rank's colour (`Moves.tellColour`).
 13. **Coats.** A sheep's wool (dyed colour, gone when sheared) and a pig's saddle are drawn as a coat layer over the body
     (`forms/body/<rig>_<species>_<family>_wool|saddle`, tinted by the wool colour); the base skin leaves those cubes clear.
+15. **A gradual change** (Euan 2026-10-28, after the first renders: "from one level to the next it looks like a completely different
+    animal"; keep the bodies, slow the texture change). Each paint runs from the vanilla creature's own colours (our palettes, read off the
+    vanilla look) to the form's by `DRIFT` = C 0.18, B 0.42, A 0.7, S 1.0 (`forms_bodies.toward`): a C pig is still pink, a C creeper bright
+    green, a C zombie still wears the cyan shirt, a C sheep a pale face, a C chicken is white. Rot, cracks, bristle and curls grow with it,
+    a spider's chevron fades in, a cock's hackles and sickles colour a rank at a time and its wing bows two ranks later; a mooshroom keeps its
+    pale patches. The shapes are unchanged.
 14. **Perf.** Per entity one `FormBody`, created on first sight, reused; no allocation per frame; halos past 48 blocks skipped; the life layer's
     springs past 32 as elsewhere. Rigs: at most 60 bones (tested). Server: one cue per move, one dimension refresh per form change.
 - Not yet (F3 follow-ups): presence motes at A and S and heavy footfalls, distance LOD for sub-pixel growth, a voice layer per family

@@ -270,6 +270,10 @@ BONES = {
     "skeleton": ["#2a2722", "#57524a", "#8a8476", "#b8b2a1", "#dcd7c7", "#f4f1e6"],
     "stray": ["#20272d", "#46535c", "#71808b", "#9eadb7", "#c7d3da", "#e8f1f4"],
 }
+BONES_HOME = {   # the vanilla skeleton's cool grey bone, the stray's grey-green
+    "skeleton": ["#3a393a", "#5f5e5f", "#878687", "#a4a3a4", "#bdbcbd", "#d8d7d8"],
+    "stray": ["#36423f", "#5a6a68", "#7f908f", "#9caeac", "#b3c3c4", "#ccdadb"],
+}
 RAGS = {"skeleton": ["#1b1714", "#2c2621", "#3e352e", "#51463c"], "stray": ["#141c20", "#22303a", "#334652", "#475f6c"]}
 
 
@@ -292,10 +296,11 @@ def paint_skeleton(r, rung, species, fam):
     p = K[rung]
     P = R.Painter(r, f"forms|{r.id}|{species}|{fam}")
     rng = random.Random(R._h(r.id, species, fam))
-    bone = B.tint_ramp(BONES[species], fam)
-    old = R.Ramp(*BONES[species][:5])   # the fused plates and horns: older, darker bone
+    bones = B.toward(BONES_HOME[species], BONES[species], rung)
+    bone = B.tint_ramp(bones, fam)
+    old = R.Ramp(*bones[:5])   # the fused plates and horns: older, darker bone
     rags = B.tint_ramp(RAGS[species], fam)
-    cracks = R.p_strokes(cell=5, length=3, dark=0.55, light=0.15, density=0.22, seed=rung, tops=False)
+    cracks = R.p_strokes(cell=5, length=3, dark=0.25 + 0.3 * B.drift(rung), light=0.15, density=0.1 + 0.12 * B.drift(rung), seed=rung, tops=False)
 
     def suture(face, i, j):
         # fused bone: a zigzag seam where the plates grew together, pitted a little
@@ -604,6 +609,10 @@ CARAPACE = {
     "spider": ["#0d0b0b", "#1b1716", "#2b2523", "#3d3431", "#524641", "#6a5b54"],
     "cave_spider": ["#071214", "#0d2125", "#153338", "#1f4a50", "#2c6168", "#3c7b82"],
 }
+CARAPACE_HOME = {
+    "spider": ["#120f0d", "#211b17", "#2f2823", "#3a322b", "#4a3f36", "#5d5047"],
+    "cave_spider": ["#020a09", "#071513", "#0d201c", "#122a25", "#1a3832", "#25483f"],
+}
 MARK = {"spider": ("#5a2a22", "#7d3b2e"), "cave_spider": ("#24504f", "#3b7a77")}
 
 
@@ -611,10 +620,11 @@ def paint_spider(r, rung, species, fam):
     p = SP[rung]
     P = R.Painter(r, f"forms|{r.id}|{species}|{fam}")
     rng = random.Random(R._h(r.id, species, fam))
-    shell = B.tint_ramp(CARAPACE[species], fam)
+    shell = B.tint_ramp(B.toward(CARAPACE_HOME[species], CARAPACE[species], rung), fam)
     hair = R.p_fur(depth=0.9, every=2, seed=rung, length=3)
     bristle = R.p_strokes(cell=3, length=2, dark=0.45, light=0.3, density=0.5, seed=rung + 5)
-    mark = [R.hexc(x) for x in MARK[species]]
+    # the chevron on the back comes in with the rank: barely there at C
+    mark = [R.lerpc(R.hexc(CARAPACE_HOME[species][3]), R.hexc(x), 0.25 + 0.75 * B.drift(rung)) for x in MARK[species]]
     rank = R.hexc(B.RANK[rung])
     for cu in r.cubes:
         n = cu.name
@@ -842,6 +852,8 @@ def creeper_clips(r, rung, p):
     _petals(st, n, [(0.0, 0), (0.3, 90), (1.2, 86), (1.5, 0)])
 
 
+CREEPER_HOME = ["#0f3d0d", "#216e1d", "#3c9a35", "#52b846", "#72ca63", "#9ed894"]   # the vanilla creeper's bright green
+PETAL_HOME = ["#1a4a12", "#2f7a22", "#4ea33a", "#6cc152", "#93d77a", "#b8e6a2"]
 CREEPER = ["#0f2410", "#1b3d1b", "#2a5a28", "#3d7a37", "#55994a", "#76b763"]
 
 
@@ -849,11 +861,11 @@ def paint_creeper(r, rung, species, fam):
     p = CR[rung]
     P = R.Painter(r, f"forms|{r.id}|{species}|{fam}")
     rng = random.Random(R._h(r.id, species, fam))
-    skin = B.tint_ramp(CREEPER, fam)
+    skin = B.tint_ramp(B.toward(CREEPER_HOME, CREEPER, rung), fam)
     # vanilla's mottle (patches of lighter and darker green), kept but in broader patches
     mottle = R.p_blotch(rung * 5 + 1, scale=3, amount=0.8, levels=3)
     rank = R.hexc(B.RANK[rung])
-    petal = B.tint_ramp(["#1d3a14", "#2f5a1e", "#477d2a", "#62a038", "#86c050", "#a9d872"], fam)
+    petal = B.tint_ramp(B.toward(PETAL_HOME, ["#1d3a14", "#2f5a1e", "#477d2a", "#62a038", "#86c050", "#a9d872"], rung), fam)
     for cu in r.cubes:
         n = cu.name
         if n.startswith(("petal", "crownp")):

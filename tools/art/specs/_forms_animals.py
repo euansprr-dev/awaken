@@ -208,6 +208,7 @@ def pig(rung):
 
 
 HIDE = {
+    "home": ["#7a3330", "#b04e4b", "#d0625f", "#e2807b", "#eb968f", "#f4b4ae"],   # the vanilla pig's pink
     "pig": ["#3b1f1f", "#6b3838", "#a5605a", "#d58b80", "#eeb0a2", "#f8d0c4"],
     "boar": ["#1d1412", "#33241f", "#4d3a31", "#6a5145", "#8a6b5b", "#ab8a76"],
 }
@@ -219,11 +220,10 @@ def paint_pig(r, rung, species, fam):
     coat = R.Painter(r, f"forms|{r.id}|{species}|{fam}|coat")
     rng = random.Random(R._h(r.id, species, fam))
     # the hide darkens toward a boar's as it climbs: C still pink under the bristle, A and S dark
-    k = (rung - 2) / 3.0
-    cols = ["#%02x%02x%02x" % R.lerpc(R.hexc(a), R.hexc(b), 0.25 + 0.7 * k)[:3] for a, b in zip(HIDE["pig"], HIDE["boar"])]
-    hide = B.tint_ramp(cols, fam)
-    bristle = R.combine(R.p_strokes(cell=3, length=3, dark=0.6 + 0.3 * k, light=0.3, density=0.6, seed=rung),
-                        R.p_blotch(rung * 7 + 4, scale=4, amount=0.4, levels=2))
+    k = B.drift(rung)
+    hide = B.tint_ramp(B.toward(HIDE["home"], HIDE["boar"], rung), fam)
+    bristle = R.combine(R.p_strokes(cell=3, length=3, dark=0.3 + 0.6 * k, light=0.3, density=0.25 + 0.4 * k, seed=rung),
+                        R.p_blotch(rung * 7 + 4, scale=4, amount=0.15 + 0.25 * k, levels=2))
     tusk = B.tint_ramp(H.BONES["skeleton"], fam)
     for cu in r.cubes:
         n = cu.name
@@ -239,7 +239,7 @@ def paint_pig(r, rung, species, fam):
         elif n.startswith("xtal"):
             P.paint(cu, B.ramp_to(B.RANK[rung]), 2.2, None, grad=1.6, rim=1.2, ao=1.0)
         elif n == "snout":
-            P.paint(cu, B.tint_ramp(HIDE["pig"], fam), 3.0 - k, None)
+            P.paint(cu, B.tint_ramp(B.toward(HIDE["home"], HIDE["pig"], rung), fam), 3.2 - k, None)
             f = P.face("snout", "north")
             f.set(1, 1, R.hexc("#1a0c0b"))
             f.set(f.w - 2, 1, R.hexc("#1a0c0b"))
@@ -327,6 +327,7 @@ def cow(rung):
 
 COWHIDE = {
     "cow": ["#120c09", "#261a13", "#3d2a1e", "#57402e", "#6e5442", "#8a6d58"],
+    "mooshroom_home": ["#3a0507", "#6a0c10", "#8e0f12", "#a31012", "#b8282a", "#cc4446"],
     "mooshroom": ["#2a0606", "#4f0d0c", "#7c1714", "#a5231d", "#c8382e", "#e05a4d"],
 }
 
@@ -335,8 +336,9 @@ def paint_cow(r, rung, species, fam):
     p = COW[rung]
     P = R.Painter(r, f"forms|{r.id}|{species}|{fam}")
     rng = random.Random(R._h(r.id, species, fam))
-    hide = B.tint_ramp(COWHIDE[species], fam)
-    pale = B.tint_ramp(["#5c5650", "#8e877e", "#bdb5a9", "#ddd6ca", "#f1ece2"], fam)
+    hide = B.tint_ramp(B.toward(COWHIDE.get(species + "_home", COWHIDE[species]), COWHIDE[species], rung), fam)
+    pale = B.tint_ramp(["#5c5650", "#8e877e", "#bdb5a9", "#ddd6ca", "#f1ece2"] if species == "cow"
+                       else ["#5a4a4a", "#857171", "#ab9696", "#c4b0b0", "#d8c8c8"], fam)
     shag = R.p_strokes(cell=3, length=4, dark=0.7, light=0.35, density=0.7, seed=rung + 3)
     patches = R.p_blotch(rung * 3 + 11, scale=5, amount=1.0, levels=2)
     horn_ramp = B.tint_ramp(["#17120d", "#3b3127", "#6e604f", "#a59781", "#d6cbb6"], fam)
@@ -362,10 +364,10 @@ def paint_cow(r, rung, species, fam):
         elif n == "tuft":
             P.paint(cu, hide, 1.6, shag)
         else:
-            # vanilla's white patches (cow) on a dark hide, the shaggy shoulders heavier from B
+            # vanilla's pale patches on the hide (a cow's white, a mooshroom's grey), the shaggy shoulders heavier from B
             def pat(f, i, j, n=n):
                 v = patches(f, i, j)
-                if species == "cow" and n in ("torso", "head", "neck", "hump") and v is not None and v > 0.3:
+                if n in ("torso", "head", "neck", "hump") and v is not None and v > 0.3:
                     return tuple(pale.at(2.6 + (0.3 if j == 0 else 0)))
                 return shag(f, i, j) if n in ("hump", "neck") else 0.0
             P.paint(cu, hide, 2.4, pat, noise=0.5)
@@ -440,12 +442,17 @@ def paint_sheep(r, rung, species, fam):
     P = R.Painter(r, f"forms|{r.id}|{species}|{fam}")
     coat = R.Painter(r, f"forms|{r.id}|{species}|{fam}|coat")
     rng = random.Random(R._h(r.id, species, fam))
-    skin = B.tint_ramp(["#3a2f29", "#5e4c41", "#86705f", "#ab947f", "#cbb7a1", "#e2d2be"], fam)
-    face = B.tint_ramp(["#100c0b", "#211a17", "#352b26", "#4b3e36", "#62524a"], fam)
-    # the wool in greys (the game tints it to the sheep's colour): curls, matted into clumps, lighter on top
-    wool = R.Ramp("#5a5754", "#85827d", "#aca8a2", "#cdc9c2", "#e6e2db", "#f7f4ef")
-    curls = R.p_strokes(cell=2, length=2, dark=0.6, light=0.5, density=0.8, seed=rung + 9)   # tight curls, not combed lines
-    clumps = R.p_blotch(rung * 13 + 2, scale=3, amount=0.6, levels=3)
+    # the vanilla sheep's pale face and legs at C; a ram's dark face by S
+    skin = B.tint_ramp(B.toward(["#6b574b", "#93796a", "#b59a8a", "#cdb4a4", "#e0cdbf", "#efe2d8"],
+                                ["#3a2f29", "#5e4c41", "#86705f", "#ab947f", "#cbb7a1", "#e2d2be"], rung), fam)
+    face = B.tint_ramp(B.toward(["#5e4a3f", "#8d7262", "#b9998a", "#d2b8a8", "#e6d4c6"],
+                                ["#100c0b", "#211a17", "#352b26", "#4b3e36", "#62524a"], rung), fam)
+    # the wool in greys (the game tints it to the sheep's colour): near white and soft at C, curled and matted by S
+    k = B.drift(rung)
+    wool = R.Ramp(*B.toward(["#a9a6a1", "#c4c1bc", "#dad7d2", "#e9e7e3", "#f4f2ef", "#fdfcfa"],
+                            ["#5a5754", "#85827d", "#aca8a2", "#cdc9c2", "#e6e2db", "#f7f4ef"], rung))
+    curls = R.p_strokes(cell=2, length=2, dark=0.25 + 0.35 * k, light=0.5, density=0.5 + 0.3 * k, seed=rung + 9)   # tight curls
+    clumps = R.p_blotch(rung * 13 + 2, scale=3, amount=0.2 + 0.4 * k, levels=3)
     horn_ramp = B.tint_ramp(["#231c14", "#4b3e2f", "#7c6b55", "#ab9a7f", "#d4c6ab"], fam)
     for cu in r.cubes:
         n = cu.name
@@ -675,8 +682,10 @@ def paint_chicken(r, rung, species, fam):
     rng = random.Random(R._h(r.id, species, fam))
     k = (rung - 2) / 3.0
     white = B.tint_ramp(FEATHER["chicken"], fam)
-    hackle = B.tint_ramp(HACKLE, fam)
-    sickle = B.tint_ramp(SICKLE, fam)
+    # a white hen at C: the cock's red-gold hackles and dark sickles come in a rank at a time (the wing bows two ranks later)
+    hackle = B.tint_ramp(B.toward(FEATHER["chicken"], HACKLE, rung), fam)
+    bows = B.tint_ramp(B.toward(FEATHER["chicken"], HACKLE, rung, lag=2), fam)
+    sickle = B.tint_ramp(B.toward(FEATHER["chicken"], SICKLE, rung), fam)
     feathers = R.p_feathers(fw=3, fh=2, depth=0.8)
     comb = R.Ramp("#3d0806", "#7a120d", "#b31d16", "#de3326", "#f2604e")
     leg = B.tint_ramp(["#4a3010", "#7d5419", "#b07c24", "#d9a73a", "#f0cb63"], fam)
@@ -697,7 +706,7 @@ def paint_chicken(r, rung, species, fam):
             P.paint(cu, B.ramp_to(B.RANK[rung]), 2.2, None, grad=1.6, rim=1.2, ao=1.0)
         elif n in ("neck", "head") or n.startswith("wing"):
             # the cock's hackles and wing bows go red-gold from C, more at each rank
-            P.paint(cu, hackle if (n == "neck" or (n.startswith("wing") and rung >= 3)) else white, 2.7, feathers, noise=0.4)
+            P.paint(cu, hackle if n == "neck" else bows if n.startswith("wing") else white, 2.7, feathers, noise=0.4)
         else:
             P.paint(cu, white, 2.8 - 0.5 * k, feathers, noise=0.4)
     head = P.face("head", "north")
