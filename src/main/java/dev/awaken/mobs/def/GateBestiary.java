@@ -324,7 +324,7 @@ final class GateBestiary {
                 .ab(a(BOLT, "Hollow Bolt").n(3).bolt(BoltKind.VOID), a(PULL, "Draw In")).build());
         out.add(m("the_nothing", "The Nothing", Theme.ABYSS, Tier.WARDEN, Model.WITHER, "Three heads of nothing; an event horizon that pulls").hp(38).dmg(6.5).spd(0.28).scale(0.6F).traits(HUNTER)
                 .ab(a(BOLT, "Nothing Skulls").n(3).bolt(BoltKind.VOID), a(PULL, "Event Horizon").power(0.7F).heavy(), a(DARKNESS, "Unlight")).build());
-        out.add(m("hollow_herald", "The Hollow Herald", Theme.ABYSS, Tier.LORD, Model.SHADE, "Void bolts, an unlit shrine, then the Event Horizon").hp(32).dmg(5).spd(0.28).scale(1.4F).bar(BossBarColor.PURPLE).arena(24)
+        out.add(m("hollow_herald", "The Hollow Herald", Theme.ABYSS, Tier.LORD, Model.SHADE, "Void bolts, an unlit shrine, then the Event Horizon").hp(32).dmg(5).spd(0.28).scale(1.4F).size(0.85F, 3.65F).grounded().bar(BossBarColor.PURPLE).arena(24)
                 .intro("Nothing. No sound at all.")
                 .phase(1.0F, "The Herald speaks without sound.", a(BOLT, "Void Bolts").n(5).bolt(BoltKind.VOID), a(PULL, "Draw Near"))
                 .phase(0.66F, "The shrine empties.", a(SUMMON, "Spawn of Nothing").summon("void_spawn").n(3), a(DARKNESS, "Unlit"), a(BOLT, "Void Bolts").n(5).bolt(BoltKind.VOID))

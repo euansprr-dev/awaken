@@ -9860,6 +9860,47 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     averages every keyed bone's largest angle, so on a rig of long chains the outer segments (which a wave keeps small)
     pull the mean down: the Ray's windup peaks are drawn big (the slap's near wing at lift 52 and curl 70) to clear 12°.
     A slap after the dive kept its horns and tail carried through the link (the wings cross zero there).
+- **The Hollow Herald, the Ring-Head** (body and motion, `kit/bosses/hollow_herald.py`). "Nothing. No sound at all."
+  Very tall and thin, 82 px to the top of its head, in a long blue-black tailcoat cut away at the front, the tails
+  lined in violet and hanging to the backs of its knees. Where its head should be a ring of violet-black glass stands on
+  its high collar, lit along its inner edge, with nothing inside it: you see straight through its head. Black trousers
+  with a violet stripe, white spats over long pointed shoes; arms longer than its legs, the right hanging so low its
+  white-gloved fingers nearly touch the floor, the left folded up like an insect's, holding a blank scroll to its breast
+  (a black wax seal on a ribbon). A herald's pewter chain across its shoulders, an empty ring for its badge. 63 cubes
+  (378 faces) on 27 bones. The hitbox is 1.2 x 5.1 (size 0.85 x 3.65 at scale 1.4); its SHADE model would fly, so it is
+  `grounded()` and walks.
+  - **One pose call.** `_pose` sets the hips' turn and shift, the spine, chest and neck, the ring's own turn on its
+    collar, where each wrist goes (a point in the room or on a bone, by IK), the right hand's line (keeping the
+    forearm's twist, so the wrist hinges and never spins), the scroll kept level, the way its sheet hangs, the finger
+    curls, and the feet planted, or the legs as whole turns when it kneels (`_knees` puts both knees on the floor
+    whatever the hips do). `_ring_at` puts the ring's middle anywhere at any turn, so it can be lifted off its collar,
+    held overhead or rolled away across the floor; scale tracks swell it.
+  - **The idle.** It stands still, very tall, swaying a little like something tall in a wind; the ring turns to look
+    about and tilts the way a bird's head does, and the fingers of its hanging hand curl now and then. It walks in long
+    high-kneed strides, the long arm swinging late.
+  - **Its blows.** The rake: the body turns away with the arm drawn back low, then the arm sweeps round across you at
+    waist height, the fingers spread like tines; the backhand brings it back the other way (a string). The Long Step
+    rears and takes one enormous stride, its hand reaching for you along the floor. Whoever is behind gets the upper
+    body turned right round on its hips. Draw Near holds the arm out to you, palm up, and beckons three times, its knees
+    giving and its hips turning toward you with each curl of the fingers. Void Bolts holds the blank scroll up and
+    points at you with the other hand, jabbing, the ring pulsing with each of five bolts. Unlit covers the ring with
+    both hands and rocks behind them. Spawn of Nothing bows until the ring faces the floor, its hand flat on the floor;
+    each of three shudders jolts it at the hips and swings the scroll arm back. Collapse spreads its arms high and wide,
+    arching back, holds them, and brings its hands together before its ring in a clap that makes no sound. Void Halo
+    lifts the ring off its collar and holds it flat overhead, turning, while the body sways under it and the scroll arm
+    is thrown out with each burst. The Event Horizon (the signature) spreads its arms and leans back while the ring
+    rises and grows to nearly three times its size, turning a quarter turn; it strains against the pull, knees giving,
+    the tails streaming and shivering; at the end it snaps shut and the Herald jerks forward, hunched. Its intro stands
+    bowed and folded, breathing in its bow, straightens to its height, holds out the blank scroll and tilts its ring at
+    you. Broken, it folds onto both knees, the right hand turning forward as it reaches down to lie flat on the floor.
+  - **The death.** It goes rigid on its toes, the ring looking about; its knees go; it bows until its collar points at
+    the floor and the ring tumbles forward off it, lands on its edge, rolls away to its left and falls flat with a
+    wobble (4.8 s).
+  - **Meter.** Worst kink outside a strike 4.1°; held at most 13% on every move; dips at most 19%. The strike and the
+    recovery are chained backward from rest (`_unwrap`): IK solves each key on its own, and the two ways of writing one
+    turn (x+180, 180-y, z+180) agree only at rest, so a recovery chained forward could spin the long way round to get
+    home. A snap belongs on the active's last key or the follow-through: stage_clips keeps recovery keys only between
+    0.33 and 0.74 of the recovery, and the Horizon's first snap (at 0.2) was dropped.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
