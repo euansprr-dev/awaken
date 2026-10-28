@@ -28,6 +28,7 @@ final class ArmsHud {
     private static final int HURT_TICKS = 24;
     private static final int ARC_DOTS = 15;
     private static float shown;
+    private static final float[] ANCHOR = new float[3];
 
     static void render(GuiGraphicsExtractor g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
@@ -40,7 +41,13 @@ final class ArmsHud {
         boolean busy = fights && (charge >= 0 || res > 0 || ArmsPredict.ticks - ArmsPredict.fightAt < 100);
         shown += ((busy ? 1F : 0F) - shown) * 0.15F;
         if (shown < 0.02F) return;
-        int cx = g.guiWidth() / 2, cy = g.guiHeight() / 2;
+        // under the lock's ring when there is one (SPEC §40.4), else under the middle of the screen
+        float cx = g.guiWidth() / 2F, cy = g.guiHeight() / 2F, ar = 11F;
+        if (dev.awaken.core.api.Aim.anchor(ANCHOR)) {
+            cx = ANCHOR[0];
+            cy = ANCHOR[1];
+            ar = ANCHOR[2] + 5F;
+        }
         // the arc: 15 dots across the lower half-circle under the crosshair
         boolean full = res >= 1;
         float fill = charge >= 0 ? charge : res;
@@ -48,11 +55,11 @@ final class ArmsHud {
         for (int i = 0; i < ARC_DOTS; i++) {
             float f = i / (float) (ARC_DOTS - 1);
             float ang = Mth.PI * (0.85F - 0.7F * f); // fills left to right, like any meter
-            int x = cx + Math.round(Mth.cos(ang) * 11), y = cy + Math.round(Mth.sin(ang) * 11);
+            int x = Math.round(cx + Mth.cos(ang) * ar), y = Math.round(cy + Mth.sin(ang) * ar);
             boolean lit = f <= fill;
             dot(g, x, y, 1, lit ? colour : DIM, (lit ? 0.95F : 0.35F) * shown);
         }
-        if (full || ArmsPredict.glinting()) HudLook.glow(g, cx - 12, cy + 7, 24, 6, GOLD, 0.45F * shown);
+        if (full || ArmsPredict.glinting()) HudLook.glow(g, Math.round(cx - ar - 1), Math.round(cy + ar - 4), Math.round(ar * 2 + 2), 6, GOLD, 0.45F * shown);
         // the dodge's charges, beside the sprint line above the hotbar
         int charges = ArmsPredict.dodgeCharges;
         var style = ArmsPredict.style;
@@ -60,7 +67,7 @@ final class ArmsHud {
             Archetype.Dodge d = style.def().dodge();
             int y = g.guiHeight() - 24;
             for (int i = 0; i < d.charges(); i++) {
-                int x = cx + 95 + i * 5;
+                int x = g.guiWidth() / 2 + 95 + i * 5;
                 boolean lit = i < charges;
                 g.fill(x - 1, y - 2, x + 4, y + 3, Glass.a(0x000000, 0.2F * shown));
                 g.fill(x, y - 1, x + 3, y + 2, Glass.a(lit ? HOLO : DIM, (lit ? 0.9F : 0.5F) * shown));

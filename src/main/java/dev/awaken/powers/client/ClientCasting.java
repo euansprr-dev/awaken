@@ -92,7 +92,14 @@ final class ClientCasting {
                 predicted = true;
             }
         }
-        ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.PRESS, predicted, p.getYRot(), p.getXRot(), keys));
+        // aimed a little toward the locked or marked creature (SPEC §40.3); a cast that moves you keeps your own look
+        if (predicted) {
+            AIM[0] = p.getYRot();
+            AIM[1] = p.getXRot();
+        } else {
+            dev.awaken.core.api.Aim.bend(p.getYRot(), p.getXRot(), AIM);
+        }
+        ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.PRESS, predicted, AIM[0], AIM[1], keys));
         dev.awaken.core.api.MovementHooks.clientCastStarting(p, t.id.toString(), t.family.name(), predicted); // the body: sprint ends, a slide yields to motion
         if (!toggleOff) dev.awaken.powers.client.fx.FxClient.predictCast(p, t);
         if (t.mode == PowerType.Mode.CHANNEL) channeling[slot] = true;
@@ -107,11 +114,14 @@ final class ClientCasting {
         }
     }
 
+    private static final float[] AIM = new float[2];
+
     private static void release(int slot) {
         channeling[slot] = false;
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null) return;
-        ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.RELEASE, false, p.getYRot(), p.getXRot(), 0));
+        dev.awaken.core.api.Aim.bend(p.getYRot(), p.getXRot(), AIM);
+        ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.RELEASE, false, AIM[0], AIM[1], 0));
         dev.awaken.powers.client.fx.FxClient.predictRelease(p);
     }
 

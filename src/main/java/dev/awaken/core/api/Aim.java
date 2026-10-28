@@ -124,4 +124,39 @@ public final class Aim {
     public static boolean locked() {
         return locked.getAsBoolean();
     }
+
+    /** A power's aim bent toward the locked or marked creature, within the cap (out: yaw, pitch). */
+    public interface Bend {
+        void bend(float yaw, float pitch, float[] out);
+    }
+
+    private static Bend bend = (yaw, pitch, out) -> {
+        out[0] = yaw;
+        out[1] = pitch;
+    };
+
+    public static void installBend(Bend b) {
+        bend = b;
+    }
+
+    /** The look a cast is sent with (client): the player's own, or bent at most 10° toward the creature they mean. */
+    public static void bend(float yaw, float pitch, float[] out) {
+        bend.bend(yaw, pitch, out);
+    }
+
+    /** Where the reticle is drawn this frame: GUI x, y and its ring's radius into {@code out}; false when none is. */
+    public interface Anchor {
+        boolean at(float[] out);
+    }
+
+    private static Anchor anchor = out -> false;
+
+    public static void installAnchor(Anchor a) {
+        anchor = a;
+    }
+
+    /** The reticle's centre and radius this frame (client): Arms draws its Resonance arc under the ring, not the screen's middle. */
+    public static boolean anchor(float[] out) {
+        return anchor.at(out);
+    }
 }

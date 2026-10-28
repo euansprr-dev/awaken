@@ -518,6 +518,11 @@ of `AwakenConfig.Client`.
   the edge of its box, a person within `PERSON_CAP` 8°, seen), `stepIn(style)`, `GROUNDED_TICKS` 50, and the geometry
   (`gap`, `offEdge`, `angle`, `sees`). Client: `target()` (the locked or marked creature's id, -1) and `locked()`, installed
   by the aim module. Arms, powers and the rope read it; there is one picker (`aim.AimRules`).
+  Client also: `bend(yaw, pitch, out)` (a cast's look bent toward the creature, §40.3) and `anchor(out)` (the reticle's GUI
+  centre and radius this frame: Arms draws its Resonance arc under it).
+- `dev.awaken.core.api.HudState` (client, §40.6) — the clear screen: `screen()` (`CLEAR`, `CLEAR_CROSSHAIR`, `CLASSIC`),
+  `classic()`, `crosshair()`, `fighting()`, `glancing()`, `alpha(layerId)` (how strongly a HUD layer shows now; 1 in Classic).
+  The holo module installs the director; until then everything shows as it always has.
 - `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
   mobs module grounds normal and elite fliers, never a kit flier).
 
@@ -9357,6 +9362,73 @@ in reach 23% of a fight today, 49% with these rules).
   control idle, its dive lost, for `GROUNDED_TICKS` 50 (2.5 s; a broken stance keeps it down at least that long), open to an
   Execution. Then it rises (a small lift) and waits half a second before its next dive. A kit flier's fight script decides its
   own (boss-plan's call); bosses and wardens never come down this way. A flier saved while down loads flying.
+
+### 40.3 The mark and the lock (client; `aim.client.Lock`, rules `aim.AimRules`)
+- **The mark**: every other tick, the creature nearest the middle of the view: within 25° (to its box's edge) and 24 blocks
+  (eye to box), seen, hostile or hunting you (`Enemy`, a mob's synced aggression, or a hostile `CreatureTag`), never a person.
+  Score = degrees off + 0.35 per block; the marked one keeps it against one up to 8° nearer the middle (no flicker). At most
+  the best 6 get a sight check; the arrays are reused. Strikes steer to it and powers bend to it; its brackets show while a
+  weapon is in hand or a fight is on.
+- **The lock key** `key.awaken.lock`, default **middle mouse**, in Awaken's key group. Read before vanilla's keys each tick: it
+  locks the mark (or a creature under the crosshair), or lets go. Sharing pick block's key, a press that locked or let go is
+  the lock's alone; with nothing to lock it picks the block, as always.
+- **Locked**, the view follows the creature's body (58% up it) every frame: eased (`TURN_EASE` 10: the share of the gap closed a
+  second, exponential), never more than 300°/s, the short way round, resting inside 0.6°; pitch at 85% and within ±80°. The
+  turn moves `yRotO`/`xRotO` with `yRot`/`xRot` (as `Entity.turn`), so the frame's blend never jumps. The mouse keeps a quarter
+  of its turn (`keepSensitivity`: vanilla cubes the setting). Drawing a bow or crossbow, the pull drops to 30% and the mouse
+  keeps 80%: drop and lead stay yours. Never turned: under a screen, a scene (`InputLock`), the binoculars, sleep, F1, as a
+  spectator, or while your look steers you (flying, gliding, hanging, wall-running, 16+ ticks in the air: the rope, a fall).
+- **Camera setting** FOLLOW (default) / SNAP (turns to it once when you lock, then the view is yours, as Monster Hunter's target
+  camera) / OFF. Reduced motion uses SNAP in place of FOLLOW.
+- **Switching**: the wheel (up: the next creature to the left, down: to the right; the hotbar stays) or a flick: the mouse's
+  movement summed with a 100 ms fade reaching 60 window pixels, at most one switch per 220 ms. The pick: among foes within 80°
+  of the view and 40 blocks, the nearest on the screen (by angles from the locked one) within 60° of the flick's way, seen.
+- **It lets go** on the key, after 1.5 s unseen, past 40 blocks, on a teleport (8+ blocks in a tick) or a new level, death or
+  logging out. **When the locked creature dies** the ring breaks, and the lock moves to the nearest foe within 60° of the view and
+  12 blocks, seen, else lets go.
+- **What reads it**: a press sends the lock, else the creature under the crosshair, else the mark (`ArmsPredict.pressTarget`);
+  the step in (40.1) is the client's own push at the move's start: `min(step, gap - reach + 0.35)` blocks over the ground
+  (a push of that / 2.2, vanilla's ground friction), toward the creature, only when the gap is past the move's reach - 0.15
+  and within reach + step. A cast's look is bent toward the locked or marked creature's body when it lies within 10° (then
+  straight at it), else left alone; a cast whose motion was predicted (a dash) keeps your own look. One cap for every power:
+  a power that seeks (its own fat ray) takes it from there, so the plan's separate 18° for seekers was not needed. A guard faces
+  where you look, so a lock faces it toward the creature.
+- In the air, gliding, flying or on the rope the lock keeps its creature and strikes and powers still go to it; only the view is
+  left alone. Stage 4 (an air lunge) waits for Euan's play of stages 1 to 3.
+
+### 40.4 The lock's look (`aim.client.Reticle`, art `tools/art/specs/aim_reticle.py`, sounds `tools/art/specs/aim_sounds.py`)
+- A GUI layer above the crosshair's, placed by projecting the creature's middle with the frame's camera (as the Boss Plate's
+  lift-off). Every shape is a white line with its own glow (`textures/gui/aim/<name>.png` and `_glow.png`, linear filtered):
+  drawn as the glow in black at 34% (it reads on a bright sky), the glow tinted at 62%, then the line 45% toward white (a hot
+  core). Colours: the band's cyan `#7FE3FF`; tells white (light), amber `#FFB340` (heavy), red `#FF4A3D` (perilous), violet
+  `#B77BFF` (grab).
+- **Size**: the body's projected half-size × 1.08 + 5, kept between 11 and 44 GUI px, eased.
+- **The mark**: four corner brackets round it, springing in from 1.55× to 1.02× (a damped spring, `spring(ms)`: about 200 ms
+  with a small overshoot), a slow breath, 78% strong.
+- **The lock**: the ring (broken at the diagonals, fine dots inside) turning 16°/s, springing shut from 1.9× with a 70° spin;
+  the four ticks fly in from 2.6× a beat (45 ms) behind; the System's diamond drops in over it (80 ms) and breathes. A switch
+  slides the ring to the next creature over 130 ms. Every blow that lands on it kicks the ring out 9% and flashes it white
+  (170 ms). Let go, the ring opens out and fades (220 ms); when the creature falls a white flash and ten splinters fly off the
+  ring (520 ms). A locked creature off the frame shows the diamond and an arc at that edge, pointing the way.
+- **Tells on the ring**: the creature's synced tell (`Strikes.tell`) tints the ring 65% toward its class colour and draws a
+  second ring that closes from 2.15× onto the lock ring over the tell's count, meeting it as the blow lands: the moment to
+  guard, deflect or dodge is where you're already looking. The mark shows it too.
+- **Arms' Resonance arc** rides under the ring (`Aim.anchor`: the ring's centre and radius + 5) instead of the screen's middle.
+- **Blows out of view** (setting `threat_arcs`): a creature within 12 blocks telling a blow whose middle is off the frame puts
+  an arc on that side of an ellipse round the screen's middle (by the way it lies from your look; behind is the bottom), in the
+  tell's colour, growing and brightening over its last 12 ticks. At most 4. Only tells: you still turn or dodge in time.
+- **Sounds** (UI, your client only; setting `sounds`): `aim.lock` (air drawn in, D6 and A6 struck, a warm tick), `aim.switch`
+  (one F#6 tick), `aim.release` (A5 to D5), `aim.break` (a B6 glint and a short fizz), in the System's glass voice.
+- Reduced motion: no springs, spins, slides or splinters; the shapes simply appear.
+
+### 40.5 The dot (`aim.client.Dot`)
+- On the clear screen the crosshair is not drawn (`HudState.crosshair()` false). A small soft dot shows in the middle instead,
+  only when it helps: a block, tool (`minecraft:tool` component), bucket, bow or crossbow in either hand; the attack key held on
+  a block; a usable block in reach under the view (doors, trapdoors, gates, buttons, levers, beds, bells, anything with a block
+  entity or a screen); a person or creature not fighting you. Never while locked. Fades in fast (18/s), out slower (8/s).
+
+### 40.8 Settings (`config/awaken-aim-client.toml`)
+`enabled` (true), `camera` (FOLLOW / SNAP / OFF), `flick_switch` (true), `show_mark` (true), `threat_arcs` (true), `sounds` (true).
 
 ### 40.9 Tests
 `aim_soft_pick`, `aim_caps`, `aim_power_bend_cap` (the pure rules), `aim_flier_locked_hits` (a creature 3.2 blocks over the feet:

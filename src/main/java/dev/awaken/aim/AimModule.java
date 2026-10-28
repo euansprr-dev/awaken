@@ -11,6 +11,7 @@ public final class AimModule {
     private AimModule() {}
 
     public static void init(IEventBus modBus) {
+        AimSounds.register(modBus);
         AimTests.register();
     }
 }
