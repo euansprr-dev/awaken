@@ -652,7 +652,7 @@ public class AwakenMob extends Monster {
 
     @Override
     public boolean canAttack(LivingEntity target) {
-        return !(target instanceof AwakenMob) && super.canAttack(target);
+        return !(target instanceof AwakenMob) && dev.awaken.core.api.GateHooks.mayTarget(this, target) && super.canAttack(target);
     }
 
     @Override
@@ -771,9 +771,13 @@ public class AwakenMob extends Monster {
 
     // ---- bars ----------------------------------------------------------------------------------------------------
 
+    private Component barName() {
+        return syncedRole() == MobRole.Role.WARDEN ? getDisplayName().copy().append(" · Warden") : getDisplayName();
+    }
+
     protected void ensureBar() {
         if (bar != null || level().isClientSide()) return;
-        bar = new ServerBossEvent(Mth.createInsecureUUID(random), getDisplayName(), def().barColor,
+        bar = new ServerBossEvent(Mth.createInsecureUUID(random), barName(), def().barColor,
                 role().role() == MobRole.Role.BOSS ? def().tier.overlay() : BossEvent.BossBarOverlay.PROGRESS);
         bar.setProgress(getHealth() / getMaxHealth());
         if (role().role() == MobRole.Role.BOSS) bar.setDarkenScreen(def().tier == Tier.FINAL || def().tier == Tier.SOVEREIGN);
@@ -800,7 +804,7 @@ public class AwakenMob extends Monster {
     }
 
     private boolean sameStorey(ServerPlayer p) {
-        return Math.abs(p.getY() - getY()) <= BAR_STOREY;
+        return Math.abs(p.getY() - getY()) <= BAR_STOREY && dev.awaken.core.api.GateHooks.showsBossBar(this, p);
     }
 
     private void refreshBarPlayers() {
@@ -814,7 +818,7 @@ public class AwakenMob extends Monster {
     @Override
     public void setCustomName(@Nullable Component name) {
         super.setCustomName(name);
-        if (bar != null) bar.setName(getDisplayName());
+        if (bar != null) bar.setName(barName());
     }
 
     public @Nullable ServerBossEvent bar() {
@@ -901,7 +905,7 @@ public class AwakenMob extends Monster {
         decoyTicks = in.getIntOr("awaken_decoy", 0);
         stolen = in.read("awaken_stolen", ItemStack.CODEC).orElse(ItemStack.EMPTY);
         entityData.set(DATA_ROLE, (byte) role().role().ordinal());
-        if (bar != null) bar.setName(getDisplayName());
+        if (bar != null) bar.setName(barName());
     }
 
     // ---- client look ---------------------------------------------------------------------------------------------

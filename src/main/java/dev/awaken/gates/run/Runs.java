@@ -178,6 +178,10 @@ public final class Runs {
             fs.enteredAt = now(server);
             if (gl != null && f != null) Rooms.floorFirstEntered(gl, g, f);
         }
+        if (gl != null && f != null) {
+            Where at = Where.at(server, p.blockPosition());
+            if (at != null && at.room() != null) Rooms.prepareAround(gl, g, f, at.room());
+        }
         Modifiers.applyTo(p, g);
         Twists.arrive(p, g, run, f);
         if (area == 0 && floor < g.plan.floors()) GateService.pregenFloor(server, g, 0, floor + 1);
@@ -229,6 +233,7 @@ public final class Runs {
         if (Rooms.admitAtBars(gl, p, g, f)) return;
         Room r = w.room();
         if (r != null) {
+            Rooms.prepareAround(gl, g, f, r);
             Rooms.enter(gl, p, g, f, r, w.x(), w.z());
             if (r.id == f.end && !f.bossFloor) floorCleared(p, g, run, f);
         }

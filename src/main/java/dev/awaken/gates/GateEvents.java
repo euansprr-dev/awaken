@@ -79,6 +79,7 @@ final class GateEvents {
     private static void onStarted(ServerStartedEvent e) {
         resetStatics();
         GateService.onStarted(e.getServer());
+        GateMobs.restore(e.getServer());
     }
 
     private static void onStopped(ServerStoppedEvent e) {
@@ -145,6 +146,9 @@ final class GateEvents {
         }
         if (!GateService.inGate(dead)) return;
         RunEvents.onGateMobDeath(level, g, dead, killer, role);
+        // Death, not the corpse's eventual removal, ends saved membership (a stop during the death animation is safe).
+        GateMobs.Key key = GateMobs.remove(dead);
+        if (key != null) RunEvents.mobGone(level, key);
     }
 
     private static void onJoin(EntityJoinLevelEvent e) {

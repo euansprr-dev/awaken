@@ -16,6 +16,10 @@ import java.util.Set;
 public final class FloorState {
     /** Room triggers: room id, or (room id << 8 | zone) for cavern zones. */
     public final Set<Integer> triggered = new LinkedHashSet<>();
+    /** Encounters already populated, independently of whether anyone has engaged them. */
+    public final Set<Integer> prepared = new LinkedHashSet<>();
+    /** Live encounter members, including entities in unloaded chunks. UUID string -> room/zone key. */
+    public final Map<String, Integer> living = new HashMap<>();
     public final Set<Integer> clearedRooms = new LinkedHashSet<>();
     /** Arena wave reached per room (1 or 2). */
     public final Map<Integer, Integer> waves = new HashMap<>();
@@ -79,10 +83,15 @@ public final class FloorState {
                     List.copyOf(f.puzzlesSolved), List.copyOf(f.lanternsTaken), List.copyOf(f.locked))),
             Maps.CODEC.fieldOf("maps").forGetter(f -> new Maps(str(f.waves), str(f.runes), str(f.water))),
             Flags.CODEC.fieldOf("flags").forGetter(f -> new Flags(f.enteredAt, f.pressureWaves, f.warden, f.alarm, f.shrineOpen, f.spiritDone, f.collapsed)),
-            RigState.CODEC.optionalFieldOf("rig").forGetter(f -> f.rig.empty() ? java.util.Optional.empty() : java.util.Optional.of(f.rig))
-    ).apply(i, (s, m, fl, rig) -> {
+            RigState.CODEC.optionalFieldOf("rig").forGetter(f -> f.rig.empty() ? java.util.Optional.empty() : java.util.Optional.of(f.rig)),
+            Codec.INT.listOf().optionalFieldOf("prepared").forGetter(f -> java.util.Optional.of(List.copyOf(f.prepared))),
+            Maps.M.optionalFieldOf("living", Map.of()).forGetter(f -> Map.copyOf(f.living))
+    ).apply(i, (s, m, fl, rig, prepared, living) -> {
         FloorState f = new FloorState();
         f.triggered.addAll(s.triggered);
+        // Old saves already populated every triggered encounter; never spawn those a second time.
+        f.prepared.addAll(prepared.orElse(s.triggered));
+        f.living.putAll(living);
         f.clearedRooms.addAll(s.cleared);
         f.puzzlesSolved.addAll(s.solved);
         f.lanternsTaken.addAll(s.lanterns);

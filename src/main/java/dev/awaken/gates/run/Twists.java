@@ -515,26 +515,33 @@ public final class Twists {
 
     // ---- the Lord ---------------------------------------------------------------------------------------------------
 
-    static void bossArena(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f, Room r) {
-        if (g.plan.friendly() && f.area == 0) {
-            Rooms.lock(level, g, f, r, false);
-            Signal.toast(p, Component.literal(Rooms.capital(g.plan.theme().bossName) + " is waiting for you. Talk to them."));
-            return;
-        }
+    static void prepareBoss(ServerLevel level, GateRecord g, FloorLayout f, Room r) {
+        if (g.plan.friendly() && f.area == 0 || (f.area == 0 ? g.bossDead : g.annexBossDead)
+                || (f.area == 0 ? g.boss : g.annexBoss).isPresent()) return;
         Room.Feature spot = r.feature(Room.FeatureKind.BOSS_SPOT);
         BlockPos at = GateService.roomFloor(g, f, r, spot == null ? r.centerX() : spot.x(), spot == null ? r.centerZ() : spot.z());
         LivingEntity lord = Rooms.spawn(level, g, f, r.id, MobRole.Role.BOSS, at);
         if (lord != null) {
             if (f.area == 0) g.boss = java.util.Optional.of(lord.getUUID());
             else g.annexBoss = java.util.Optional.of(lord.getUUID());
-        } else {
-            // the Lord can't take form (Peaceful): the gate yields rather than locking you in forever
+        }
+        if (r.normals > 0) Rooms.spawnGroup(level, g, f, r, r.id, r.normals, 0, 4);
+        GateRegistry.get(level.getServer()).setDirty();
+    }
+
+    static void bossArena(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f, Room r) {
+        if (g.plan.friendly() && f.area == 0) {
+            Rooms.lock(level, g, f, r, false);
+            Signal.toast(p, Component.literal(Rooms.capital(g.plan.theme().bossName) + " is waiting for you. Talk to them."));
+            return;
+        }
+        if ((f.area == 0 ? g.boss : g.annexBoss).isEmpty()) {
+            // A prepared Lord that couldn't take form (Peaceful) yields on entry, never while merely previewed.
             DirectorLog.log(p, "gate", "the Lord of gate " + g.id + " couldn't appear; the gate yields");
             Runs.lordDefeated(level, g, f, null, p);
             return;
         }
-        if (r.normals > 0) Rooms.spawnGroup(level, g, f, r, r.id, r.normals, 0, 4);
-        GateRegistry.get(level.getServer()).setDirty();
+        BlockPos at = GateService.roomFloor(g, f, r, r.centerX(), r.centerZ());
         boolean keeper = f.area == 1 && g.plan.is(Twist.GATE_WITHIN);
         String name = keeper ? "the inner gate's keeper" : f.area == 1 ? "the Lord's echo" : g.plan.theme().bossName;
         for (ServerPlayer o : level.players()) {

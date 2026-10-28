@@ -24,10 +24,11 @@ import java.util.UUID;
  * Cells: never-used ones come from {@code nextCell}; released cells wait in {@code releasedCells} until their chunks are
  * erased while the server runs (once out of memory) or their region files are deleted while the level is closed, then
  * return to {@code freeCells}. Schema 2 adds each cell's generation (how often it was reused while running): entities
- * saved with an older generation are stale and leave when loaded.
+ * saved with an older generation are stale and leave when loaded. Schema 3 adds prepared encounters and the saved
+ * live-member roster, so chunk/entity load order cannot restart a fight.
  */
 public final class GateRegistry extends SavedData {
-    public static final int SCHEMA = 2;
+    public static final int SCHEMA = 3;
 
     private int nextId = 1;
     private int nextCell = 0;
