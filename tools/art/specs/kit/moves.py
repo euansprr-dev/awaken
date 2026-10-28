@@ -217,7 +217,7 @@ def _weapon_ground(side, weapon_bone):
 
 
 def cleave(P, mid="cleave", side="l", title="", weight=1.0, cls="LIGHT", windup=12, active=4, recover=10, weapon=None, weapon_r=8.0,
-           weapon_bone="axe", kinds=("combo",), rng=(0, 5.0), damage=1.0, advance=0.6):
+           weapon_bone="axe", kinds=("combo",), rng=(0, 5.0), damage=1.0, advance=0.6, edge=None):
     """A one-handed cleave: the weapon hauled up over its shoulder with the body coiled away and the free fist thrown
     forward; then the body unwinds, the blade comes down across the front and bites the ground, and the free fist yanks
     back to the hip."""
@@ -241,11 +241,12 @@ def cleave(P, mid="cleave", side="l", title="", weight=1.0, cls="LIGHT", windup=
     return Move(mid, cls, windup, active, recover, title=title, track=8.0, rng=rng, kinds=kinds, damage=damage, knock=0.5,
                 advance=advance, hit=[(weapon_bone, weapon, weapon_r)],
                 stages={"windup": [(0.3, gather), (1.0, peak)], "active": [(0.5, cut), (1.0, cut)], "recover": [(0.55, hoist)]},
-                lag={"head": 0.04, a: 0, f: 0, h: 0, weapon_bone: 0}, ground=_weapon_ground(side, weapon_bone), bite=0.5)
+                lag={"head": 0.04, a: 0, f: 0, h: 0, "grip_" + side: 0, weapon_bone: 0}, ground=_weapon_ground(side, weapon_bone),
+                bite=0.5, edge=(weapon_bone,) + tuple(edge) if edge else None)
 
 
 def sweep(P, mid="sweep", side="l", title="", weight=1.0, cls="LIGHT", windup=9, active=4, recover=14, weapon=None, weapon_r=8.0,
-          weapon_bone="axe", kinds=("combo",), rng=(0, 5.0), damage=1.0, advance=0.4):
+          weapon_bone="axe", kinds=("combo",), rng=(0, 5.0), damage=1.0, advance=0.4, edge=None):
     """A one-handed backhand sweep at waist height: the weapon low across the front on the far side, the body turned
     with it; then it rips the blade flat across and out to its own side, the body unwinding and the free arm flung out
     the other way. Starts where a cleave ends, so the two make a string."""
@@ -268,7 +269,7 @@ def sweep(P, mid="sweep", side="l", title="", weight=1.0, cls="LIGHT", windup=9,
     return Move(mid, cls, windup, active, recover, title=title, track=8.0, rng=rng, kinds=kinds, damage=damage, knock=0.6,
                 advance=advance, hit=[(weapon_bone, weapon, weapon_r)],
                 stages={"windup": [(0.34, lift), (1.0, load)], "active": [(0.5, rip), (1.0, rip)], "recover": [(0.5, rise)]},
-                lag={"head": 0.04}, ground=_weapon_ground(side, weapon_bone))
+                lag={"head": 0.04}, ground=_weapon_ground(side, weapon_bone), edge=(weapon_bone,) + tuple(edge) if edge else None)
 
 
 def fist_slam(P, mid="fist_slam", side="r", title="", weight=1.0, cls="HEAVY", windup=22, hold=10, active=5, recover=20, ability=None,

@@ -53,7 +53,7 @@ class Move:
 
     def __init__(self, mid, cls, windup, active, recover, title="", hold=0, track=6.0, lock=None, advance=0.0, rise=0.0,
                  damage=1.0, knock=0.5, ability=None, origin=None, rng=(0.0, 4.0), kinds=(), signature=False, hit=(),
-                 stages=None, lag=None, plant=("l", "r"), disc=0.0, ground=None, bite=None, disc_at=None):
+                 stages=None, lag=None, plant=("l", "r"), disc=0.0, ground=None, bite=None, disc_at=None, edge=None):
         self.id, self.cls, self.title = mid, cls, title
         self.windup, self.active, self.recover, self.hold = int(windup), int(active), int(recover), int(hold)
         self.track = track
@@ -67,6 +67,8 @@ class Move:
         self.plant = plant  # feet that stay put through the move (checked by the lab)
         self.disc = disc  # a shockwave on the ground round it from contact on: radius in blocks (0: none)
         self.disc_at = disc_at  # the shockwave's middle: None round the body, "hit" under the blow's first hit
+        self.edge = edge  # (weapon bone, the blade's middle, its edge) in its space: the weapon turns on its haft so the
+        # edge leads the blow
         # [(guard bones, [(bone, axis, most degrees)])]: what never goes into the ground, and what turns to keep it out
         # (the wrist first, then the arm); bite: the active key (0..1) where the first entry's guard meets the ground
         self.ground, self.bite = ground, bite
@@ -410,6 +412,64 @@ def _depth(rig, b):
     return n
 
 
+def _lerp_pose(p, q, f):
+    out = {}
+    for b in set(p) | set(q):
+        u, v = p.get(b, (0, 0, 0)), q.get(b, (0, 0, 0))
+        r = [a + (c - a) * f for a, c in zip(_rot(u), _rot(v))]
+        out[b] = _mk(r, [a + (c - a) * f for a, c in zip(_pos(u), _pos(v))], isinstance(u, dict) or isinstance(v, dict))
+    return out
+
+
+def edge_twist(rig, bone, mid, edge, before, at):
+    """The turn on the weapon's haft (its y, degrees) that sets its edge along the way the blade moves into pose at
+    (from before), and how well it then leads (cos, 1 is dead on)."""
+    pa = body(point(frames(rig, as_sample(before)), bone, (0, mid[1], 0)))
+    pb = body(point(frames(rig, as_sample(at)), bone, (0, mid[1], 0)))
+    v = [pb[i] - pa[i] for i in range(3)]
+    n = math.sqrt(sum(x * x for x in v)) or 1.0
+    best = (0, -2.0)
+    for th in range(-180, 180, 5):
+        q = dict(at)
+        q[bone] = (0, th, 0)
+        fr = frames(rig, as_sample(q))
+        m, e = body(point(fr, bone, mid)), body(point(fr, bone, edge))
+        d = [e[i] - m[i] for i in range(3)]
+        dn = math.sqrt(sum(x * x for x in d)) or 1.0
+        c = sum(d[i] * v[i] for i in range(3)) / (dn * n)
+        if c > best[1]:
+            best = (th, c)
+    return best
+
+
+def _edge_keys(rig, mv, keys, W, A, R):
+    """The weapon turns in the hand over the wind-up so its edge leads the strike (edge_twist at contact, the blade's
+    path taken from just before it), holds through the follow-through, and turns back over the recovery."""
+    bone, mid, edge = mv.edge
+    tc = W + next(f for f, _ in mv.stages["active"] if f > 0) * A
+    contact = next(p for t, p in keys if abs(t - tc) < 1e-6)
+    peak = next(p for t, p in keys if abs(t - W) < 1e-6)
+    th, _ = edge_twist(rig, bone, mid, edge, _lerp_pose(peak, contact, 0.85), contact)
+    mv.edge_turn = th
+    tt = W + A + THROUGH * R
+    end = W + A + R
+    out = []
+    for t, p in keys:
+        if t <= 0 or t >= end:
+            k = 0.0
+        elif t < W:
+            k = ease_io(t / W)
+        elif t <= tt + 1e-6:
+            k = 1.0
+        else:
+            k = max(0.0, 1 - (t - tt) / (0.82 * R + W + A - tt))
+        if k:
+            p = dict(p)
+            p[bone] = (0, th * k, 0)
+        out.append((t, p))
+    return out
+
+
 def stage_clips(rig, mv, rest=None):
     """The move's one clip, {@code move_<id>}: rest, a small counter-move (anticipation), the wind-up's keys to its
     peak, the strike through contact, a follow-through past contact, the recovery's keys, a settle past rest, and rest.
@@ -474,6 +534,8 @@ def stage_clips(rig, mv, rest=None):
             cur = dict(cur)
             cur.update(sw)
             keys[k] = (keys[k][0], cur)
+    if mv.edge and a:
+        keys = _edge_keys(rig, mv, keys, W, A, R)
     if mv.ground and mv.bite is not None:  # the blow meets the ground at contact; ground_pass keeps the rest out of it
         guard, adjust = mv.ground[0]
         at = [k for k, (t, _) in enumerate(keys) if abs(t - (W + mv.bite * A)) < 1e-6]

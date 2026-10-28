@@ -29,6 +29,7 @@ P = plans.Biped(leg=40, thigh=20, foot=(22, 6, 26), pelvis=(40, 16, 28), spine=(
                 head=(24, 17, 26), arm=(22, 28, 22), forearm=(34, 30, 34), hand=(40, 22, 38), stance=17, hunch=36, leg_w=(22, 18))
 HUNCH = (14, 22)  # the spine's and the chest's rest pitch: the torso leans 36 degrees forward
 AXE_TIP = (0, 66, -15)  # the blade's middle, in the axe bone's space
+AXE_EDGE = ((0, 66, -15), (0, 66, -27))  # the blade's middle and its edge: the edge faces -z
 
 
 def body():
@@ -140,7 +141,10 @@ def body():
     hl.cube("hand_l", -8, 0, -8, 16, 12, 16)
     hl.cube("knuckles_l", -7, 7, -10, 14, 4, 3)
     # the great axe: a long haft trailing back and down from the left fist, the head's blade scoring the ground behind
-    axe = hl.bone("axe", (0, 6, 0), (84, 0, 0))
+    # the grip holds the axe's tilt; the axe under it turns on its own haft (its y), so a blow can turn the edge into
+    # the swing (Move.edge)
+    grip = hl.bone("grip_l", (0, 6, 0), (84, 0, 0))
+    axe = grip.bone("axe", (0, 0, 0))
     axe.cube("haft", -2.5, -8, -2.5, 5, 80, 5)
     axe.cube("pommel", -3.5, -12, -3.5, 7, 5, 7)
     axe.cube("grip", -3, 2, -3, 6, 14, 6)
@@ -166,9 +170,9 @@ def clips(r):
         M.fist_slam(P, "hammer", side="r", title="Magma Fist", weight=1.4, windup=22, hold=10, active=5, recover=20, ability="Magma Fist",
                     kinds=("area", "near"), rng=(0, 4.6), damage=0.7, knock=1.0, weapon_bone="axe", disc=2.8),
         M.backhand(P, "backhand", side="r", weight=1.4, windup=10, active=4, recover=12, rng=(0, 4.0), damage=0.8, low=24, arm=(-30, 0, -40)),
-        M.cleave(P, "chop_a", side="l", weight=1.4, windup=12, active=4, recover=18, weapon=AXE_TIP, weapon_r=8, weapon_bone="axe",
+        M.cleave(P, "chop_a", side="l", weight=1.4, windup=12, active=4, recover=18, weapon=AXE_TIP, weapon_r=8, weapon_bone="axe", edge=AXE_EDGE,
                  kinds=("combo",), rng=(1.5, 6.5), damage=1.0, advance=0.8),
-        M.sweep(P, "chop_b", side="l", weight=1.4, windup=9, active=4, recover=16, weapon=AXE_TIP, weapon_r=8, weapon_bone="axe",
+        M.sweep(P, "chop_b", side="l", weight=1.4, windup=9, active=4, recover=16, weapon=AXE_TIP, weapon_r=8, weapon_bone="axe", edge=AXE_EDGE,
                 kinds=("combo",), rng=(0, 6.5), damage=1.0, advance=0.6),
         M.shoulder_charge(P, "charge", side="r", weight=1.4, windup=16, active=12, recover=20, advance=7.5, rng=(5, 14), damage=1.2),
         M.stomp(P, "stomp", side="l", weight=1.4, windup=14, active=4, recover=16, kinds=("area", "behind"), rng=(0, 4.2), damage=1.1),

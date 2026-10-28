@@ -9328,6 +9328,14 @@ For all three kit bodies (the tools write every body the same way).
   - A long weapon can't pass under a low hand from in front of the body to behind it without going through the ground.
     So a recovery that brings it back raises the hand and lets the head swing under it (the cleave's hoist, the
     sweep's rise), and a blow from rest whose weapon trails behind lifts it the same way first (the sweep's lift).
+- **The edge leads** (`Move.edge`, `core.edge_twist`, Euan 2026-10-28: "his axe sharp edge isn't facing the direction
+  of the swing"). A bladed weapon names its blade's middle and its edge in its own space. At contact the weapon turns
+  on its haft (its own y) by the angle, in 5° steps, that best sets the edge along the blade's path into contact
+  (taken from 85% of the way from the peak). It turns into that over the wind-up (eased), holds through the
+  follow-through, and turns back by the settle. The weapon hangs from a grip bone that holds its tilt (the Forge's
+  `grip_l`, 84°), so its own y really is the haft. Today: the cleave turns 135° (edge along the blow at impact 0.72;
+  just before it, the head is pulled along its haft as in a real chop, which no turn can lead), and the sweep turns -75°
+  (0.98-0.99). At the bite the edge faces the ground under the haft.
 - **The Forge's moves** (one-handed, Euan 2026-10-28: "he hits as if he had two hands instead of one axe in one
   hand"). The axe rests at 84° in the left hand, its head on the ground behind it.
   - **The cleave** (`moves.cleave`, chop_a, LIGHT 12/4/18): the axe hauled up over its left shoulder, the body coiled
