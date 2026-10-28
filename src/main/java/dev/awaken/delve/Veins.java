@@ -15,6 +15,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,7 +48,7 @@ public final class Veins {
         Lode best = null;
         double bestD = (double) radius * radius;
         long bestAt = 0;
-        for (Lode l : LodePlans.touching(level.getSeed(), pos.getX() - radius, pos.getZ() - radius, pos.getX() + radius, pos.getZ() + radius, true)) {
+        for (Lode l : LodePlans.touching(level.getSeed(), pos.getX() - radius, pos.getZ() - radius, pos.getX() + radius, pos.getZ() + radius, true, true)) {
             if (l.ore() != ore) continue;
             double d = l.nearest(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, at);
             if (d > bestD || !present(level, l)) continue;
@@ -61,7 +62,7 @@ public final class Veins {
     public static Optional<Lodes.View> heartAt(ServerLevel level, BlockPos pos) {
         if (level.dimension() != Level.OVERWORLD) return Optional.empty();
         long p = pos.asLong();
-        for (Lode l : LodePlans.touching(level.getSeed(), pos.getX(), pos.getZ(), pos.getX(), pos.getZ(), true)) {
+        for (Lode l : LodePlans.touching(level.getSeed(), pos.getX(), pos.getZ(), pos.getX(), pos.getZ(), true, true)) {
             if (l.heart() == p) return Optional.of(view(level, l, p, 0));
         }
         return Optional.empty();
@@ -88,8 +89,11 @@ public final class Veins {
         return loaded == 0 || ore >= Math.max(2, loaded / 8);
     }
 
+    /** The lode holding {@code pos} among the plans already made (and the test lodes); never plans on the caller's thread. */
     static Lode lodeAt(ServerLevel level, BlockPos pos) {
-        return level.dimension() == Level.OVERWORLD ? LodePlans.at(level.getSeed(), pos.asLong()) : null;
+        if (level.dimension() != Level.OVERWORLD) return null;
+        for (Lode l : LodePlans.touching(level.getSeed(), pos.getX(), pos.getZ(), pos.getX(), pos.getZ(), true, true)) if (l.holds(pos.asLong())) return l;
+        return null;
     }
 
     // ---- the vein gives -----------------------------------------------------------------------------------------------
@@ -104,10 +108,50 @@ public final class Veins {
         if (!(e.getPlayer() instanceof ServerPlayer p) || !(e.getLevel() instanceof ServerLevel level)) return;
         BlockState s = e.getState();
         if (!(s.getBlock() instanceof LodeHeartBlock)) return;
-        Lode l = lodeAt(level, e.getPos());
-        if (l == null || l.heart() != e.getPos().asLong()) return;
+        broke(level, p.getUUID(), p, e.getPos());
+    }
+
+    /** A heart block broke at {@code pos} under {@code who}: its lode opens now, or once its region's plan is in. */
+    static void broke(ServerLevel level, UUID who, @Nullable ServerPlayer p, BlockPos pos) {
+        Lode l = lodeAt(level, pos);
+        if (l == null && level.dimension() == Level.OVERWORLD && !planned(level, pos)) {
+            // its region's plan isn't in (the cache dropped it, or a restart): settled once the worker has planned it
+            BROKEN.add(new Broken(level, who, pos.asLong()));
+            return;
+        }
+        settle(level, p, l, pos.asLong());
+    }
+
+    private static void settle(ServerLevel level, @Nullable ServerPlayer p, @Nullable Lode l, long pos) {
+        if (l == null || l.heart() != pos) return;
         if (!DelveData.get(level).breakHeart(l.id())) return;
-        give(level, p, l);
+        if (p != null) give(level, p, l);
+    }
+
+    private static boolean planned(ServerLevel level, BlockPos pos) {
+        return LodePlans.planned(level.getSeed(), pos.getX(), pos.getZ(), pos.getX(), pos.getZ());
+    }
+
+    /** A heart broken before its region's plan was in: who broke it, where. */
+    private record Broken(ServerLevel level, UUID player, long pos) {}
+
+    private static final List<Broken> BROKEN = new ArrayList<>();
+
+    /** Hearts waiting on their plan, settled as it comes in (the one who broke it gets the lode if they're still here). */
+    static void tick(net.minecraft.server.MinecraftServer server) {
+        if (BROKEN.isEmpty()) return;
+        for (var it = BROKEN.iterator(); it.hasNext(); ) {
+            Broken b = it.next();
+            BlockPos pos = BlockPos.of(b.pos());
+            if (!planned(b.level(), pos)) continue;
+            it.remove();
+            settle(b.level(), server.getPlayerList().getPlayer(b.player()), lodeAt(b.level(), pos), b.pos());
+        }
+    }
+
+    /** Hearts waiting on a plan (tests). */
+    static int waiting() {
+        return BROKEN.size();
     }
 
     /** The heart of {@code l} has just broken under {@code p}. */
@@ -210,6 +254,7 @@ public final class Veins {
     static void clear() {
         WINDOWS.clear();
         SENT.clear();
+        BROKEN.clear();
     }
 
     // ---- telling the client what's near -------------------------------------------------------------------------------
@@ -225,7 +270,8 @@ public final class Veins {
             return;
         }
         BlockPos at = p.blockPosition();
-        List<Lode> near = LodePlans.touching(level.getSeed(), at.getX() - NEAR, at.getZ() - NEAR, at.getX() + NEAR, at.getZ() + NEAR, true);
+        // only plans already made: a region still being planned shows nothing yet (SPEC §28.9)
+        List<Lode> near = LodePlans.touching(level.getSeed(), at.getX() - NEAR, at.getZ() - NEAR, at.getX() + NEAR, at.getZ() + NEAR, true, true);
         LongOpenHashSet ids = new LongOpenHashSet();
         List<DelveNet.Near> out = new ArrayList<>();
         for (Lode l : near) {

@@ -35,6 +35,7 @@ public final class CaveModule {
             if (e.getEntity() instanceof ServerPlayer p) AwakenNet.send(p, new CaveNet.Logs(CaveItems.read(p)));
         });
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> CavePlaces.forget(e.getEntity().getUUID()));
+        bus.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> CaveHorizon.stopping());
         bus.addListener((ServerStoppedEvent e) -> {
             CavePlaces.clear();
             CaveHorizon.clear();

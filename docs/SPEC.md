@@ -8276,9 +8276,19 @@ asks at most two new candidates a look with at most 8 waiting, and a candidate n
 search is the same call as before (`CaveHorizon.search`, which plans the lode regions it needs on the worker), so the
 answers are identical. `LodePlans.serverPlans()` counts region plans made on the server thread. Test
 `delve_horizon_flyover`: 40 looks 96 blocks apart over new land plan no region on the server thread, each look under
-250 ms, and once the worker has answered the sinkholes equal a search on the spot. `Veins` (breaking, the hum) still
-plans on the server thread, but only for regions round generated chunks, which worldgen has already planned unless the
-cache was cleared (a restart or 4,096 regions).
+250 ms, and once the worker has answered the sinkholes equal a search on the spot.
+**And Veins (2026-10-28, roads-perf run 40695382405: two 1.0-1.2 s ticks in `Veins.tickPlayer` -> `LodePlans.region`):**
+`LodePlans`' cache holds a future per region: the first asker plans it, others wait on the future, never on a lock the
+map holds. `LodePlans.ready` reads a done plan or asks the lode worker (`Awaken lode plans`, one daemon thread, low
+priority) and returns none: the server thread reads plans only this way (`touching(..., ready)`), so the veins sent to
+the player, the hum, the Fork, the lamps' names and the map show nothing in a region until its plan is in. A heart broken
+where its region isn't planned yet (a restart, or the cache's 4,096) waits (`Veins.broke`, settled each server tick once
+`LodePlans.planned` holds) and then opens the lode its plan names, for the one who broke it if they're still here.
+Worldgen and the workers plan as before, so every answer is the same. On `ServerStoppingEvent` both workers' queues are
+dropped (the job running finishes; both threads are daemons). Test `delve_veins_flyover` (40 points 96 apart: the veins
+near, the hum's search and the block underfoot plan nothing on the server thread; a heart broken before its plan waits,
+then settles on the worker's plan). The quit hang on that tour ended after "Saving chunks" for every level, inside the
+levels' close (waiting on chunk work), not in delve: its workers hold no chunk and nothing waits on them under a lock.
 **Away from the overworld** (Euan 2026-10-28: "Nothing should plan or load overworld content for a player who isn't
 in the overworld"): every system that reads a player's position for planning, generation or chunk tickets, checked for
 the levels a player can stand in away from the overworld (awaken:gates, trials, stillpoint, endless, halo, lucidium,

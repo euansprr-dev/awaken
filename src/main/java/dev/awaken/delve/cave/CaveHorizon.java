@@ -23,8 +23,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -48,7 +49,7 @@ final class CaveHorizon {
     private static final Set<Long> ASKED = ConcurrentHashMap.newKeySet();
     /** Bumped by {@link #clear}: an answer from before it is dropped. */
     private static final AtomicInteger GEN = new AtomicInteger();
-    private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(r -> {
+    private static final ThreadPoolExecutor WORKER = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
         Thread t = new Thread(r, "Awaken cave horizon");
         t.setDaemon(true);
         t.setPriority(Thread.MIN_PRIORITY);
@@ -69,6 +70,12 @@ final class CaveHorizon {
         GEN.incrementAndGet();
         FOUND.clear();
         ASKED.clear();
+    }
+
+    /** The server is stopping: the waiting searches go (the one running finishes and is dropped). */
+    static void stopping() {
+        WORKER.getQueue().clear();
+        clear();
     }
 
     static List<HorizonHooks.Site> sites(ServerPlayer p) {
