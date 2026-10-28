@@ -86,6 +86,18 @@ public final class Casting {
         dev.awaken.core.api.TipHooks.done(player, dev.awaken.Awaken.id("first/power"));
         PowerState st = PowerState.of(player);
         long now = now(player);
+        PowerState.FollowUp follow = st.followUps.remove(id);
+        if (follow != null && follow.until() >= now) {
+            // a ladder step's second press: free, and the cooldown that waited for it starts now
+            try {
+                follow.run().run();
+            } catch (RuntimeException e) {
+                dev.awaken.Awaken.LOG.error("Power {} follow-up failed", id, e);
+            }
+            startCooldown(player, l, type, owned, st);
+            Powers.markDirty(player);
+            return PowerType.Result.OK;
+        }
         if (type.mode == PowerType.Mode.TOGGLE || type.mode == PowerType.Mode.CHANNEL) {
             Running r = st.running(id);
             if (r != null) {
@@ -126,10 +138,16 @@ public final class Casting {
             return r;
         }
         if (cost > 0) spend(player, l, cost, now);
+        // a ladder step's guard (SPEC 34.3): damage taken is cut for a while after the cast
+        if (c.kit.guard != null) st.buff(PowerState.Buffs.GUARD, now + c.kit.guard.ticks(), c.kit.guard.share());
         Mastery.cast(player, type, cost, now);
         Running channel = st.running(id);
         boolean deferred = channel != null && channel.channel && !channel.stopping();
-        if (!deferred) startCooldown(player, l, type, owned, st);
+        if (c.followUp != null) {
+            // the HUD and the client's key see the window as an AGAIN entry where the cooldown would be
+            st.followUps.put(id, new PowerState.FollowUp(type, now + c.followUpTicks, c.followUp));
+            l.cooldowns.put(id, new Loadout.Cooldown(now + c.followUpTicks, Loadout.AGAIN));
+        } else if (!deferred) startCooldown(player, l, type, owned, st);
         Progression.count(player, type.family.counter());
         if (type.dashLike) onDash(player, st);
         if (carries(type)) dev.awaken.core.api.ArrivalHooks.report(player, dev.awaken.core.api.ArrivalHooks.Way.POWER, MOVE_HOLD);
@@ -164,6 +182,16 @@ public final class Casting {
             }
         });
         return PowerType.Result.OK;
+    }
+
+    /** Closes a cast's second press early (the leap landed before the plunge): its cooldown starts now. */
+    public static void endFollowUp(Cast c) {
+        PowerState st = PowerState.of(c.player);
+        if (st.followUps.remove(c.type.id.toString()) == null) return;
+        Loadout l = Powers.loadout(c.player);
+        Loadout.Owned o = l.get(c.type.id.toString());
+        if (o != null) startCooldown(c.player, l, c.type, o, st);
+        Powers.markDirty(c.player);
     }
 
     /** A power's move counts as movement for this long after its cast (SPEC §17 "how you arrived"). */
@@ -348,6 +376,19 @@ public final class Casting {
             }
         }
         if (now % 200 == 0 && !l.cooldowns.isEmpty()) l.cooldowns.values().removeIf(cd -> cd.end() < now);
+        if (!st.followUps.isEmpty()) {
+            // a second press not taken: the cooldown it held back starts
+            var it = st.followUps.entrySet().iterator();
+            while (it.hasNext()) {
+                var f = it.next();
+                if (f.getValue().until() >= now) continue;
+                it.remove();
+                Loadout.Owned o = l.get(f.getKey());
+                if (o != null) startCooldown(player, l, f.getValue().type(), o, st);
+                st.loadoutDirty = true;
+            }
+        }
+        dev.awaken.powers.ladder.Evolution.tick(player, l, now);
 
         // airborne dash chains end on landing
         boolean ground = player.onGround() || player.isInWater();

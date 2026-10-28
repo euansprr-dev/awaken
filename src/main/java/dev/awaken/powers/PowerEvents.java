@@ -129,6 +129,8 @@ final class PowerEvents {
         if (bulwark > 0) amount *= (float) (1 - bulwark);
         double brace = st.buff(PowerState.Buffs.BRACE, now);
         if (brace > 0) amount *= (float) (1 - brace);
+        double guard = st.buff(PowerState.Buffs.GUARD, now);
+        if (guard > 0) amount *= (float) (1 - guard);
         if (attacker instanceof Mob && st.has(PowerState.Buffs.READ_INTENT, now)) amount *= 0.85f;
         event.setAmount(amount);
 
@@ -156,6 +158,12 @@ final class PowerEvents {
         if (backstab > 0) {
             amount *= (float) backstab;
             st.clearBuff(PowerState.Buffs.BACKSTAB);
+            double blind = st.buff(PowerState.Buffs.BACKSTAB_BLIND, now);
+            if (blind > 0) {
+                Moves.effect(victim, net.minecraft.world.effect.MobEffects.BLINDNESS, (int) blind, 0);
+                if (victim instanceof net.minecraft.world.entity.Mob m && m.getTarget() == sp) m.setTarget(null);
+                st.clearBuff(PowerState.Buffs.BACKSTAB_BLIND);
+            }
             Fx.impact(sp.level(), victim.getBoundingBox().getCenter(), 0x8F6BFF);
             Fx.feel(sp, victim, 50, 1.5f);
         }
@@ -165,6 +173,12 @@ final class PowerEvents {
             ShadowPowers.breakCloak(sp, victim, cloak);
         }
         if (victim instanceof Enemy && st.has(PowerState.Buffs.READ_INTENT, now)) amount *= 1.15f;
+        if (dev.awaken.powers.ladder.Riders.marked(sp, victim, now)) amount *= 1.1f;
+        double momentum = st.buff(PowerState.Buffs.MOMENTUM, now);
+        if (momentum > 0 && SpiritPowers.isMelee(src, sp)) {
+            amount *= (float) momentum;
+            st.clearBuff(PowerState.Buffs.MOMENTUM);
+        }
         event.setAmount(amount);
         double twin = st.buff(PowerState.Buffs.TWIN, now);
         if (twin > 0 && SpiritPowers.isMelee(src, sp)) SpiritPowers.twinEcho(sp, victim, amount, twin);

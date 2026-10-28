@@ -1,14 +1,24 @@
-"""Power ladders, draft for approval (docs/power-levels/PLAN.md section 6). One row per power: what levels 2-5 add.
+"""Power ladders (SPEC 34, docs/power-levels/PLAN.md): the one source for what levels 2-5 of every power add.
 
-Each step is (name, look, does). The look is what you and everyone near you see; does is the change in play. Level 5 also
-has body (the new cast gesture) and is the power's Awakened form. Levels 3 and 5 also bring a sound layer (the family's,
-section 6.3 of the plan). Plain words: this text is what the K menu and the evolution moment show.
+One P row per power with four steps, each (name, look, does); level 5 also has body (the new cast gesture) and is the power's
+Awakened form. The look is what you and everyone near you see, does the change in play: plain words, this text is what the K
+menu, the evolution moment and the Power Core hover show. Below the rows, one M row per step gives what the game runs: the
+step's riders (shared mechanics, powers.ladder.Riders), its look layers (powers.client.fx.ladder.LadderFx) and the numbers its
+own code reads (c.num). Levels 3 and 5 also bring the family's sound layer, level 5 the awakened palette and gesture.
 
-Once approved this file moves to tools/art/specs/power_ladder_table.py and writes data/awaken/powers/ladders.json (the
-way power_cast_table.py writes casts.json). Run it to print the markdown table: python3 docs/power-levels/ladders_draft.py md
+    python3 tools/art/specs/power_ladder_table.py build   writes src/main/resources/data/awaken/powers/ladders.json and
+                                                          src/main/merge/powers_ladder/assets/awaken/lang/en_us.json
+    python3 tools/art/specs/power_ladder_table.py md      prints the markdown table (PLAN.md section 6)
 """
 import html
+import json
+import os
 import sys
+from collections import OrderedDict
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
+sys.path.insert(0, HERE)
 
 L = []
 
@@ -384,6 +394,218 @@ P("twin_strike", "Twin Strike", "Spirit", "active",
   ("Twin Souls", "The twin becomes a full figure beside you.", "It repeats your power casts too, at half.", "A step that splits into two."), hidden=True)
 
 
+# ---- what the game runs ----------------------------------------------------------------------------------------------
+# Riders: the shared mechanics (SPEC 34.3). Shares are of the hit that started them; ticks are game ticks (20 a second).
+RIDERS = {"extend", "chain", "echo", "aftershock", "linger", "status", "push", "refund", "pierce", "split", "ramp", "guard"}
+LINGERS = {"burn", "slow", "frost", "void", "hold", "heal", "shock"}
+STATUSES = {"burn", "slow", "weak", "stun", "mark", "blind", "root", "lift"}
+
+
+def extend(radius=0.0, range=0.0, duration=0.0, charge=0.0):
+    """Bigger, further, longer: fractions added (0.15 = 15% more); charge is a fraction off the time to full charge."""
+    return dict(k="extend", radius=radius, range=range, duration=duration, charge=charge)
+
+
+def chain(n, share, reach=6.0):
+    """Each hit arcs on to n more foes within reach for a share of it."""
+    return dict(k="chain", n=n, share=share, reach=reach)
+
+
+def echo(share, delay):
+    """The hit lands again on the same foe after delay ticks, for a share."""
+    return dict(k="echo", share=share, delay=delay)
+
+
+def aftershock(share, delay, radius):
+    """A pulse round the hit after delay ticks: every foe within radius takes a share (once per cast every 10 ticks)."""
+    return dict(k="aftershock", share=share, delay=delay, radius=radius)
+
+
+def linger(kind, ticks, radius, dps=0.0):
+    """A ground patch at the hit that burns, slows, freezes, pulls, holds, heals allies or shocks, for ticks."""
+    assert kind in LINGERS, kind
+    return dict(k="linger", kind=kind, ticks=ticks, radius=radius, dps=dps)
+
+
+def status(effect, ticks, amp=0):
+    """A state on the foe hit: burn, slow, weak, stun, mark (glows, takes 10% more from you), blind, root, lift."""
+    assert effect in STATUSES, effect
+    return dict(k="status", effect=effect, ticks=ticks, amp=amp)
+
+
+def push(force, lift=0.0):
+    return dict(k="push", force=force, lift=lift)
+
+
+def refund(energy, kill=False):
+    """Energy back on a hit (or only on a kill)."""
+    return dict(k="refund", energy=energy, kill=kill)
+
+
+def pierce(n, share=1.0):
+    """The power's own code: goes through n more foes, each for a share."""
+    return dict(k="pierce", n=n, share=share)
+
+
+def split(n, share):
+    """The power's own code: splits into n for a share each."""
+    return dict(k="split", n=n, share=share)
+
+
+def ramp(share, ticks):
+    """The power's own code: a held power's damage climbs by share over ticks."""
+    return dict(k="ramp", share=share, ticks=ticks)
+
+
+def guard(ticks, share):
+    """Damage you take is cut by share for ticks after the cast."""
+    return dict(k="guard", ticks=ticks, share=share)
+
+
+# Look layers (SPEC 34.5): each rides one or more event kinds the power sends ("on"), at a place ("at": origin, end, hand,
+# offhand, body, feet, head, back, ground, target), in one of the style's colours ("col": core, mid, edge, accent).
+LOOKS = {"helix", "orbit", "sigil", "fissure", "rings", "burst", "column", "forks", "dome", "trail", "bloom", "ghost", "grow"}
+SPRITES = {"glow", "spark", "flare", "bolt", "wisp", "ember", "ring", "rune", "hex", "mote", "shard", "slash", "palm", "wind",
+           "smoke", "dust", "halo", "petal", "feather", "plate", "sigil"}
+KINDS = {"CAST", "CHARGE", "CHARGE_END", "IMPACT", "SLAM", "RING", "NOVA", "CONE", "BEAM", "BOLT", "LIGHTNING", "STRIKE", "DASH",
+         "BLINK", "TRAIL", "AFTERIMAGE", "SMOKE", "DOME", "VORTEX", "TETHER", "AURA", "PALM", "ECHO", "FLURRY", "HEAL", "FROST",
+         "FIRE_TRAIL", "EXHAUST", "CONSTRUCT", "PILLAR", "HOLO", "RAIL", "SUMMON", "PSI", "GLYPH", "METEOR", "LIFT"}
+PLACES = {"origin", "end", "hand", "offhand", "body", "feet", "head", "back", "ground", "target"}
+COLS = {"core", "mid", "edge", "accent"}
+
+
+def _look(kind, on, **kw):
+    on = [on] if isinstance(on, str) else list(on)
+    for o in on:
+        assert o in KINDS, o
+    assert kw.get("at", "origin") in PLACES, kw.get("at")
+    assert kw.get("col", "mid") in COLS, kw.get("col")
+    assert kw.get("sprite", "glow") in SPRITES, kw.get("sprite")
+    return dict(k=kind, on=on, **kw)
+
+
+def helix(on, strands=1, turns=1.0, radius=0.22, width=0.05, spin=0.25, col="mid"):
+    """Strands winding round a beam, shot or rail: turns per block, spin in turns a tick."""
+    return _look("helix", on, strands=strands, turns=turns, radius=radius, width=width, spin=spin, col=col)
+
+
+def orbit(on, sprite="shard", n=6, r0=0.8, r1=0.3, spin=0.25, size=0.16, at="hand", tilt=0.0, life=0, col="mid"):
+    """n sprites circling a place, from radius r0 to r1 over their life (life 0: the event's own length)."""
+    return _look("orbit", on, sprite=sprite, n=n, r0=r0, r1=r1, spin=spin, size=size, at=at, tilt=tilt, life=life, col=col)
+
+
+def sigil(on, at="hand", size=0.7, spin=0.04, face="aim", life=0, col="mid"):
+    """The family's rune disc, facing the aim (a palm) or lying flat (face up)."""
+    assert face in ("aim", "up")
+    return _look("sigil", on, at=at, size=size, spin=spin, face=face, life=life, col=col)
+
+
+def fissure(on, n=3, length=5.0, width=0.16, cool=40, along="radial", at="ground", col="mid"):
+    """Glowing cracks in the ground that cool from gold to red: radial from the place, or along the event's direction."""
+    assert along in ("radial", "dir")
+    return _look("fissure", on, n=n, length=length, width=width, cool=cool, along=along, at=at, col=col)
+
+
+def rings(on, n=1, delay=0, gap=4, r0=0.3, r1=3.0, width=0.3, life=10, at="origin", face="up", col="mid"):
+    """n expanding rings, the first after delay ticks, then every gap ticks; flat (up) or facing the event's direction (dir)."""
+    assert face in ("up", "dir")
+    return _look("rings", on, n=n, delay=delay, gap=gap, r0=r0, r1=r1, width=width, life=life, at=at, face=face, col=col)
+
+
+def burst(on, sprite, n=10, speed=0.3, life=14, size=0.2, grav=0.0, at="origin", col="mid", delay=0):
+    return _look("burst", on, sprite=sprite, n=n, speed=speed, life=life, size=size, grav=grav, at=at, col=col, delay=delay)
+
+
+def column(on, height=6.0, width=0.6, life=14, at="origin", col="mid", delay=0):
+    return _look("column", on, height=height, width=width, life=life, at=at, col=col, delay=delay)
+
+
+def forks(on, n=3, reach=3.0, life=6, at="origin", col="core"):
+    """Lightning forks from the place to n points within reach (seeded, so every viewer sees the same)."""
+    return _look("forks", on, n=n, reach=reach, life=life, at=at, col=col)
+
+
+def dome(on, radius=2.0, life=14, at="origin", col="mid", delay=0):
+    return _look("dome", on, radius=radius, life=life, at=at, col=col, delay=delay)
+
+
+def trail(on, width=0.3, life=14, at="body", col="mid"):
+    """A ribbon following the caster (or the place's entity) for life ticks."""
+    return _look("trail", on, width=width, life=life, at=at, col=col)
+
+
+def bloom(on, size=1.0, at="origin", col="core", delay=0):
+    """A white-hot flash and halo."""
+    return _look("bloom", on, size=size, at=at, col=col, delay=delay)
+
+
+def ghost(on, delay=6, scale=0.6):
+    """The event's own effect again, delay ticks later, smaller and fainter (a second impact you can see)."""
+    return _look("ghost", on, delay=delay, scale=scale)
+
+
+def grow(on, k=1.15):
+    """The event's own meshes drawn k times bigger."""
+    return _look("grow", on, scale=k)
+
+
+def every(ticks, look):
+    """At most once every `ticks` per caster: for layers on events a held power repeats (a beam re-sends five times a second)."""
+    look["every"] = ticks
+    return look
+
+
+M = OrderedDict()  # power -> {level: dict(riders, looks, num, code)}
+
+
+def S(pid, level, riders=(), looks=(), code=False, **num):
+    """What step `level` of a power runs: riders, look layers, and the numbers its own code reads (code=True: its play change is code)."""
+    assert 2 <= level <= 5
+    for r in riders:
+        assert r["k"] in RIDERS, r
+    for lk in looks:
+        assert lk["k"] in LOOKS, lk
+    M.setdefault(pid, {})[level] = dict(riders=list(riders), looks=list(looks), num=num, code=bool(code or num))
+
+
+import power_ladder_steps  # noqa: E402,F401  (the M rows, family by family)
+
+
+def build(root=None):
+    root = root or ROOT
+    ids = [p["id"] for p in L]
+    for pid in M:
+        assert pid in ids, f"steps for an unknown power {pid}"
+    powers = OrderedDict()
+    lang = OrderedDict()
+    for p in L:
+        steps = []
+        for i, s in enumerate(p["steps"]):
+            lvl = i + 2
+            m = M.get(p["id"], {}).get(lvl, dict(riders=[], looks=[], num={}, code=False))
+            steps.append(OrderedDict(level=lvl, riders=m["riders"], looks=m["looks"], num=m["num"], code=m["code"]))
+            key = f"awaken.ladder.{p['id']}.{lvl}"
+            lang[key + ".name"] = s[0]
+            lang[key + ".look"] = s[1]
+            lang[key + ".does"] = s[2]
+            if lvl == 5:
+                lang[key + ".body"] = s[3]
+        powers[p["id"]] = OrderedDict(family=p["fam"], starter=p["starter"], hidden=p["hidden"], steps=steps)
+    jp = os.path.join(root, "src/main/resources/data/awaken/powers/ladders.json")
+    with open(jp, "w") as fh:
+        json.dump({"schemaVersion": 1, "__comment": "GENERATED by tools/art/specs/power_ladder_table.py: edit that, not this file.",
+                   "powers": powers}, fh, indent=1)
+        fh.write("\n")
+    lp = os.path.join(root, "src/main/merge/powers_ladder/assets/awaken/lang/en_us.json")
+    os.makedirs(os.path.dirname(lp), exist_ok=True)
+    with open(lp, "w") as fh:
+        json.dump(lang, fh, indent=1, ensure_ascii=False)
+        fh.write("\n")
+    done = sum(1 for p in L for lv in range(2, 6) if M.get(p["id"], {}).get(lv, {}).get("looks"))
+    print(f"ladders.json: {len(powers)} powers, {done}/{len(L) * 4} steps with looks; lang: {len(lang)} lines")
+    return jp, lp
+
+
 # ---- output --------------------------------------------------------------------------------------------------------
 FAMS = ["Kinetic", "Velocity", "Flight", "Energy", "Shadow", "Mind", "Architect", "Tech", "Spirit"]
 
@@ -431,9 +653,14 @@ def html_rows():
 
 
 if __name__ == "__main__":
-    assert len(L) == 63, len(L)
-    assert len({p["id"] for p in L}) == 63
-    for p in L:
+    # run through the module itself, so the step rows (power_ladder_steps imports this module) land in the same table
+    import power_ladder_table as T
+    assert len(T.L) == 63, len(T.L)
+    assert len({p["id"] for p in T.L}) == 63
+    for p in T.L:
         assert len(p["steps"]) == 4 and all(len(s) == 3 for s in p["steps"][:3]) and len(p["steps"][3]) == 4, p["id"]
     mode = sys.argv[1] if len(sys.argv) > 1 else "md"
-    print(md() if mode == "md" else html_rows())
+    if mode == "build":
+        T.build()
+    else:
+        print(T.md() if mode == "md" else T.html_rows())

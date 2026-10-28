@@ -1,5 +1,6 @@
 package dev.awaken.powers.catalog;
 
+import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
 
 import dev.awaken.core.Forces;
@@ -96,13 +97,45 @@ public final class ShadowPowers {
             if (to.distanceToSqr(from) < 1) return Result.fail("blocked");
             Moves.teleport(c.player, to);
         }
-        PowerState.of(c.player).buff(PowerState.Buffs.BACKSTAB, c.now() + 60, c.is(1) ? 2.2 : 1.6);
+        PowerState st = PowerState.of(c.player);
+        double backstab = c.is(1) ? 2.2 : 1.6;
+        // Ink Wake (2) holds the backstab longer; Blinding (3) makes it blind
+        long window = c.now() + 60 + (long) c.num(2, "window", 0);
+        st.buff(PowerState.Buffs.BACKSTAB, window, backstab);
+        if (c.step(3)) st.buff(PowerState.Buffs.BACKSTAB_BLIND, window, c.num(3, "blind", 20));
         if (c.is(2)) Moves.effect(c.player, MobEffects.INVISIBILITY, 40, 0);
         // vanish in ink, reappear behind them with a slash of shadow; the mark shows the backstab is ready
         Fx.at(c, FxKind.BLINK, from).to(to).send();
         if (t != null) Fx.at(c, FxKind.AURA, t.position()).caster(t).aux(FxKind.Aura.MARK.ordinal()).ticks(60).noAnim().send();
         c.sound(from, PowerSounds.SHADOW, 0.9f, 1f);
         c.sound(to, PowerSounds.SHADOW, 0.9f, 1.3f);
+        if (c.step(5)) {
+            // Night Cut: the crescent lands the backstab by itself; tendrils from the pool hold the foes round you
+            if (t != null) {
+                st.clearBuff(PowerState.Buffs.BACKSTAB);
+                float cut = (float) (c.player.getAttributeValue(Attributes.ATTACK_DAMAGE) * backstab);
+                c.hurt(t, Math.max(cut, c.dmg(4f)), null);
+                if (st.has(PowerState.Buffs.BACKSTAB_BLIND, c.now())) {
+                    Moves.effect(t, MobEffects.BLINDNESS, (int) st.buff(PowerState.Buffs.BACKSTAB_BLIND, c.now()), 0);
+                    st.clearBuff(PowerState.Buffs.BACKSTAB_BLIND);
+                }
+            }
+            for (LivingEntity e : Combat.foesAround(c.player, to, c.num(5, "radius", 3f))) {
+                if (e == t) continue;
+                Moves.effect(e, MobEffects.SLOWNESS, (int) c.num(5, "hold", 20), 6);
+                Fx.at(c, FxKind.TETHER, to.add(0, 0.2, 0)).to(e.position().add(0, 0.3, 0)).ticks(12).plain().flag(FxEvent.QUIET).send();
+            }
+        }
+        if (c.step(4)) {
+            // Return: the ink pool stays where you left; press again within 2 s to step back to it
+            Vec3 pool = from;
+            c.followUp((int) c.num(4, "back", 40), () -> {
+                Vec3 now = c.player.position();
+                Moves.teleport(c.player, pool);
+                Fx.at(c, FxKind.BLINK, now).to(pool).plain().send();
+                c.sound(pool, PowerSounds.SHADOW, 0.9f, 0.8f);
+            });
+        }
         return Result.OK;
     }
 

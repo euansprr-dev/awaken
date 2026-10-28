@@ -59,7 +59,7 @@ final class PowerFxTests {
                     .colour(0xFF123456).scale(4.5).aux(-2.5).seed(-123456789).ticks(77).flag(FxEvent.ULT | FxEvent.FOLLOW).variant(2)
                     .anim(CastAnim.FLURRY).build();
             e = new FxEvent(e.kind(), e.style(), 4242, -1, e.x(), e.y(), e.z(), e.dx(), e.dy(), e.dz(), e.colour(), e.scale(), e.aux(), e.seed(),
-                    e.ticks(), e.flags());
+                    e.ticks(), e.flags(), 17);
             ByteBuf buf = Unpooled.buffer();
             FxPayloads.Fx.STREAM_CODEC.encode(buf, new FxPayloads.Fx(e));
             int size = buf.readableBytes();

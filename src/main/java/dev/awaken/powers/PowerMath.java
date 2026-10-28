@@ -47,8 +47,9 @@ public final class PowerMath {
         return 1.0 + 0.015 * Math.max(0, stat - 5);
     }
 
+    /** +6% a level (SPEC 34.2): the ladder's steps carry the rest of a level's strength. */
     public static double powerLevelScale(int powerLevel) {
-        return 1.0 + 0.12 * (Math.max(1, powerLevel) - 1);
+        return 1.0 + 0.06 * (Math.max(1, powerLevel) - 1);
     }
 
     public static float damage(float base, int playerLevel, int stat, int powerLevel, float variantMul) {

@@ -40,8 +40,18 @@ public final class PowerState {
     final List<Running> running = new ArrayList<>();
     private final Map<String, Buff> buffs = new HashMap<>();
 
+    /** A ladder step's second press (SPEC 34.3): within its window the key runs {@code run}, free; the cooldown waits for it. */
+    record FollowUp(PowerType type, long until, Runnable run) {}
+
+    final Map<String, FollowUp> followUps = new HashMap<>();
+
     // dash chains
     int dashChain;
+
+    /** Dashes in the current airborne chain before this one (a ladder step counts them). */
+    public int dashChain() {
+        return dashChain;
+    }
     boolean wasOnGround = true;
 
     // combat
@@ -189,5 +199,11 @@ public final class PowerState {
         public static final String BULWARK = "bulwark";
         public static final String OVERLOAD_COST = "overload_cost";
         public static final String CONDUIT = "conduit";
+        /** A ladder step's guard: damage taken is cut by the value (SPEC 34.3). */
+        public static final String GUARD = "ladder_guard";
+        /** Dash's Momentum (SPEC 34): the next blow within a second hits harder (value = the multiplier). */
+        public static final String MOMENTUM = "ladder_momentum";
+        /** Shadow Step's Blinding: the backstab blinds for this many ticks. */
+        public static final String BACKSTAB_BLIND = "ladder_backstab_blind";
     }
 }

@@ -67,5 +67,8 @@
   "subtitles.awaken.power.stomp_plant": "A foot stamps",
   "subtitles.awaken.power.beam_gather": "Light gathers",
   "subtitles.awaken.power.beam_loop": "A beam hums",
-  "subtitles.awaken.power.beam_end": "A beam fades"
+  "subtitles.awaken.power.beam_end": "A beam fades",
+  "subtitles.awaken.power.evolve": "A power grows",
+  "subtitles.awaken.power.evolve_sting": "A power grows",
+  "subtitles.awaken.power.evolve_awaken": "A power awakens"
 }

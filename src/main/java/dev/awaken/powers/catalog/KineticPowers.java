@@ -7,6 +7,8 @@ import dev.awaken.powers.Combat;
 import dev.awaken.powers.FlyingBlocks;
 import dev.awaken.powers.ForceInteractions;
 import dev.awaken.powers.Fx;
+import dev.awaken.powers.ladder.Riders;
+import dev.awaken.powers.ladder.Steps;
 import dev.awaken.powers.Moves;
 import dev.awaken.powers.PowerSounds;
 import dev.awaken.powers.PowerState;
@@ -54,7 +56,10 @@ final class KineticPowers {
                 .variant(Variant.of("Pounce", "Higher; the landing hits far harder").dmg(1.8f))
                 .predict((p, variant, level, strafe, forward) -> {
                     Vec3 f = Moves.flat(p.getLookAngle());
-                    double h = variant == 1 ? 1.5 : 1.1;
+                    // Comet Arc (2) carries further: the same table on both sides, so the client's prediction agrees
+                    var type = dev.awaken.powers.PowerRegistry.get("leap");
+                    double further = type == null ? 1 : dev.awaken.powers.ladder.PowerLadder.kit(type, level).range;
+                    double h = (variant == 1 ? 1.5 : 1.1) * further;
                     double y = variant == 2 ? 1.15 : variant == 1 ? 0.8 : 0.95;
                     return new Vec3(f.x * h, y, f.z * h);
                 })
@@ -102,18 +107,31 @@ final class KineticPowers {
         BlockPos ground = findGround(c, 24);
         double height = ground == null ? 0 : c.player.getY() - (ground.getY() + 1);
         if (Combat.airborne(c.player) && height > 1.5) {
-            Moves.launch(c.player, new Vec3(0, -2.4, 0));
-            Moves.noFall(c, 80);
-            double startY = c.player.getY();
-            Running r = Casting.start(c, 70);
+            // Worldbreaker (5): a beat's hang in the air, light round both fists, before the drive down
+            int hang = c.step(5) ? 6 : 0;
+            Moves.launch(c.player, hang > 0 ? Vec3.ZERO : new Vec3(0, -2.4, 0));
+            Moves.noFall(c, 80 + hang);
+            Running r = Casting.start(c, 70 + hang);
             // the dive: a comet trail and both fists raised, then the slam on landing
             Fx.at(c, FxKind.TRAIL, c.pos()).aux(2).ticks(70).send();
             r.tick(rr -> {
-                if (rr.age > 1 && (c.player.onGround() || c.player.isInWater())) {
+                if (rr.age < hang) {
+                    Moves.launch(c.player, Vec3.ZERO);
+                    return;
+                }
+                if (rr.age == hang && hang > 0) {
+                    rr.value = c.player.getY();
+                    Moves.launch(c.player, new Vec3(0, -2.4, 0));
+                    c.sound(PowerSounds.WHOOSH, 1f, 0.5f);
+                    return;
+                }
+                if (rr.age > hang + 1 && (c.player.onGround() || c.player.isInWater())) {
+                    double startY = hang > 0 ? rr.value : r.pos.y;
                     slamImpact(c, Math.min(14, Math.max(0, startY - c.player.getY()) * 0.6));
                     rr.stop();
                 }
             });
+            r.pos = c.pos();
             c.sound(PowerSounds.WHOOSH, 1f, 0.6f);
             return Result.OK;
         }
@@ -125,6 +143,15 @@ final class KineticPowers {
         Vec3 at = c.pos();
         double radius = c.radius(4.5);
         float dmg = c.dmg(c.type.damage + (float) bonus);
+        if (c.step(5) && c.type.path.equals("ground_slam")) {
+            // Worldbreaker: the slam pulls foes in first; the aftershock then throws them out
+            float pull = c.num(5, "pull", 0.7f);
+            for (LivingEntity e : Combat.foesAround(c.player, at.add(0, 0.5, 0), radius * 1.5)) {
+                Vec3 in = at.subtract(e.position());
+                if (in.lengthSqr() > 1) Combat.push(e, in.normalize().scale(pull).add(0, 0.1, 0));
+            }
+        }
+        double inner = radius * c.num(4, "inner", 0f);
         int hit = 0;
         LivingEntity first = null;
         for (LivingEntity e : Combat.foesAround(c.player, at.add(0, 0.5, 0), radius)) {
@@ -134,6 +161,8 @@ final class KineticPowers {
                 if (hit <= 4) Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).dir(e.position().subtract(at)).scale(0.9).noAnim().send();
             }
             Combat.knockFrom(e, at, 0.6, 0.55);
+            // Upheaval (4): the foes in the inner half are popped into the air
+            if (inner > 0 && e.distanceToSqr(at) < inner * inner) Combat.push(e, new Vec3(0, c.num(4, "lift", 0.65f), 0));
             if (c.is(2)) Combat.stun(e, 20);
         }
         for (LivingEntity e : Combat.bystandersAround(c.player, at.add(0, 0.5, 0), radius)) Combat.knockFrom(e, at, 0.45, 0.4);
@@ -159,14 +188,38 @@ final class KineticPowers {
         c.sound(PowerSounds.WHOOSH, 1f, 0.8f);
         Fx.at(c, FxKind.DASH, c.pos()).dir(c.player.getDeltaMovement()).ticks(20).send();
         Running r = Casting.start(c, 100);
+        if (c.step(5)) {
+            // Titanfall: press again in the air to drive straight down
+            c.followUp(90, () -> {
+                if (c.player.onGround() || r.stopping()) return;
+                r.value = c.player.getY();
+                r.count = 1;
+                Moves.launch(c.player, new Vec3(0, -2.6, 0));
+                Fx.at(c, FxKind.TRAIL, c.pos()).aux(2).ticks(30).plain().send();
+                c.sound(PowerSounds.WHOOSH, 1f, 0.5f);
+            });
+        }
         r.tick(rr -> {
             if (rr.age > 4 && (c.player.onGround() || c.player.isInWater())) {
                 Vec3 at = c.pos();
-                double landing = 3.0;
-                Moves.blast(c, at.add(0, 0.5, 0), landing, c.dmg(), null, 0.8, 0.4);
-                Fx.at(c, FxKind.SLAM, at).scale(landing).flag(FxEvent.REACH).flag(FxEvent.FULL, c.is(2)).anim(CastAnim.SLAM).send();
-                c.sound(at, PowerSounds.IMPACT, 0.8f, 1.1f);
-                Fx.quake(c.level, at, 8, 1.2f);
+                if (rr.count == 1) {
+                    // the plunge lands like a Ground Slam from that height
+                    slamImpact(c, Math.min(14, Math.max(0, rr.value - c.player.getY()) * 0.6));
+                } else {
+                    double landing = 3.0;
+                    // Hard Landing (3) hits harder
+                    Moves.blast(c, at.add(0, 0.5, 0), landing, c.dmg() * c.num(3, "land", 1f), null, 0.8, 0.4);
+                    Fx.at(c, FxKind.SLAM, at).scale(landing).flag(FxEvent.REACH).flag(FxEvent.FULL, c.is(2)).anim(CastAnim.SLAM).send();
+                    c.sound(at, PowerSounds.IMPACT, 0.8f, 1.1f);
+                    Fx.quake(c.level, at, 8, 1.2f);
+                }
+                if (c.step(4)) {
+                    // Rebound: you can't be knocked back for a second after
+                    Moves.addMod(c.player, Attributes.KNOCKBACK_RESISTANCE, "leap_steady", 1.0, AttributeModifier.Operation.ADD_VALUE);
+                    dev.awaken.powers.Scheduler.after((int) c.num(4, "steady", 20),
+                            () -> Moves.removeMod(c.player, Attributes.KNOCKBACK_RESISTANCE, "leap_steady"));
+                }
+                Casting.endFollowUp(c);
                 rr.stop();
             }
         });
@@ -178,10 +231,11 @@ final class KineticPowers {
         // wind-up: the fist cocked back over the shoulder, energy gathering at the knuckles
         Fx.at(c, FxKind.CHARGE, c.player.getEyePosition()).ticks(c.type.maxDuration).scale(1.1).send();
         Running r = Casting.channel(c, c.type.maxDuration);
+        int full = c.chargeTicks(20); // Knuckle Shards (2): full charge sooner
         r.tick(rr -> {
-            if (rr.age == 20) c.sound(PowerSounds.CHARGE_UP, 0.6f, 1.6f);
+            if (rr.age == full) c.sound(PowerSounds.CHARGE_UP, 0.6f, 1.6f);
         }).end((rr, why) -> {
-            double charge = Math.min(1.0, rr.age / 20.0);
+            double charge = Math.min(1.0, rr.age / (double) full);
             Fx.end(c, c.player, 0);
             if (why == Running.Why.CANCELLED) return;
             LivingEntity t = Combat.aimEntity(c.player, c.player.getEyePosition(), c.player.getLookAngle(), 4.5, 0.6, true);
@@ -203,7 +257,19 @@ final class KineticPowers {
                 }
                 default -> Combat.knockFrom(t, c.pos(), 0.8 + 1.4 * charge, 0.45 + 0.6 * charge);
             }
-            Fx.at(c, FxKind.IMPACT, at).dir(c.player.getLookAngle()).scale(1.1 + 1.6 * charge).flag(FxEvent.FULL, charge >= 1).send();
+            Vec3 look = c.player.getLookAngle();
+            if (c.step(3)) {
+                // Shockfist: a cone of force bursts out of the far side, along the punch
+                double reach = c.num(3, "reach", 3.5f);
+                for (LivingEntity e : Combat.foesInCone(c.player, at, look, reach, 35)) {
+                    if (e == t) continue;
+                    Combat.hurtFrom(c.player, null, e, dmg * c.num(3, "behind", 0.5f), null, true);
+                    Combat.knockFrom(e, at, 1.0 + 0.6 * charge, 0.3);
+                }
+            }
+            // Cannonball: a fully charged target flies and hits what it crashes into
+            if (c.step(4) && charge >= 1 && !c.is(2)) Steps.carry(c, t, dmg * c.num(4, "fly", 0.6f), 20);
+            Fx.at(c, FxKind.IMPACT, at).target(t).dir(look).scale(1.1 + 1.6 * charge).flag(FxEvent.FULL, charge >= 1).send();
             if (c.is(2)) Fx.at(c, FxKind.SLAM, t.position()).scale(2.2).noAnim().send();
             c.sound(at, PowerSounds.PUNCH, 1.2f, 1.1f - 0.3f * (float) charge);
             c.feel(t, (int) (40 + 40 * charge), 1.5f + 3f * (float) charge);
@@ -279,7 +345,7 @@ final class KineticPowers {
 
     /** The stamp: the wave leaves when the foot lands (the profile's wind-up, run by Casting) from where you look then. */
     static Result shockwave(Cast c) {
-        double range = c.is(1) ? 7 : c.is(2) ? 14 : 9;
+        double range = c.range(c.is(1) ? 7 : c.is(2) ? 14 : 9);
         double half = c.is(1) ? 50 : c.is(2) ? 15 : 30;
         Vec3 origin = c.pos().add(0, 0.5, 0);
         Vec3 dir = c.flatLook();
@@ -305,6 +371,15 @@ final class KineticPowers {
             }
         });
         Fx.quake(c.level, origin, 10, 1.5f);
+        Vec3 tip = origin.add(dir.scale(range));
+        // Spine (3): the crack the wave leaves erupts into a row of stone spikes
+        if (c.step(3)) Steps.lineAfter(c, origin, tip, (int) c.num(3, "delay", 10), dmg * c.num(3, "spine", 0.5f), 1.0, null, FxKind.SLAM);
+        if (c.step(5)) {
+            // Landbreaker: the fissure burns behind the crest
+            int burn = (int) c.num(5, "burn", 40);
+            float dps = c.num(5, "dps", 1.0f) * c.dmg(1f);
+            for (double d = 1.5; d < range; d += 2.5) Riders.lingerAt(c, origin.add(dir.scale(d)), "burn", burn, 1.3f, dps, false);
+        }
         return Result.OK;
     }
 

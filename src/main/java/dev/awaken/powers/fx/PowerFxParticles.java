@@ -54,6 +54,11 @@ public final class PowerFxParticles {
     public static final Sprite POOL = sprite("decal_pool", 1, false);
     /** A smooth 64 px radial gradient for big halos (pixel-art bands turn into blocky squares when scaled up). */
     public static final Sprite HALO = sprite("halo", 1, true);
+    // the ladder's (SPEC 34.5): a rune disc per family (frame = PowerType.Family ordinal), a lotus petal, a flame feather, a stone plate
+    public static final Sprite SIGIL = sprite("sigil", 9, true);
+    public static final Sprite PETAL = sprite("petal", 2, true);
+    public static final Sprite FEATHER = sprite("feather", 2, true);
+    public static final Sprite PLATE = sprite("plate", 2, false);
 
     private static Sprite sprite(String name, int frames, boolean additive) {
         // false: these never get past the vanilla particle limiter; our pool has its own caps

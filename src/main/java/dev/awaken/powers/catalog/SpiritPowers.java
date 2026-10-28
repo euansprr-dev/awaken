@@ -14,6 +14,8 @@ import dev.awaken.powers.Combat;
 import dev.awaken.powers.Constructs;
 import dev.awaken.powers.ForceInteractions;
 import dev.awaken.powers.Fx;
+import dev.awaken.powers.ladder.Riders;
+import dev.awaken.powers.ladder.Steps;
 import dev.awaken.powers.Moves;
 import dev.awaken.powers.PowerSounds;
 import dev.awaken.powers.PowerState;
@@ -192,18 +194,39 @@ public final class SpiritPowers {
         LivingEntity t = Combat.aimEntity(c, 4.5, 0.6);
         if (t == null) return Result.fail("no_target");
         c.hurt(t, c.dmg(), Forces.Force.SPIRIT);
-        Combat.knockFrom(t, c.pos(), 2.0, 0.35);
+        // Lotus (2): pushes harder
+        Combat.knockFrom(t, c.pos(), 2.0 * (1 + c.num(2, "push", 0f)), 0.35);
         Vec3 at = t.getBoundingBox().getCenter();
         // the palm print flies from the hand, rings punch through the target
         Vec3 from = c.eye().add(c.look().scale(0.6)).add(0, -0.3, 0);
         Fx.at(c, FxKind.PALM, from).dir(at.subtract(from)).scale(1.3).send();
-        Fx.at(c, FxKind.IMPACT, at).dir(c.look()).scale(1.6).noAnim().send();
+        Fx.at(c, FxKind.IMPACT, at).target(t).dir(c.look()).scale(1.6).noAnim().send();
         c.sound(at, PowerSounds.SPIRIT, 1.2f, 1f);
         c.feel(t, 60, 2.5f);
+        if (c.kit.pierce != null) {
+            // Through (3): the print carries on into the foe behind
+            for (LivingEntity e : Steps.nearest(c, at.add(c.look().scale(2.2)), 2.4, 1, t)) {
+                Combat.hurtFrom(c.player, null, e, c.dmg() * c.kit.pierce.share(), Forces.Force.SPIRIT, true);
+                Combat.knockFrom(e, c.pos(), 1.6, 0.3);
+                Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).dir(c.look()).scale(1.1).plain().send();
+            }
+        }
+        if (c.step(5)) {
+            // Guardian Palm: a giant jade hand slams forward behind the strike and hits everything in front of you
+            float reach = c.num(5, "reach", 6f);
+            Fx.at(c, FxKind.PALM, c.eye().add(0, -0.2, 0)).dir(c.look().scale(reach)).scale(3.4).plain().send();
+            for (LivingEntity e : Combat.foesInCone(c.player, c.pos(), c.look(), reach, 32)) {
+                if (e == t) continue;
+                Combat.hurtFrom(c.player, null, e, c.dmg() * c.num(5, "giant", 0.6f), Forces.Force.SPIRIT, true);
+                Combat.knockFrom(e, c.pos(), 1.8, 0.35);
+            }
+        }
         float echo = c.dmg() * (c.is(1) ? 1.0f : 0.5f);
         Scheduler.after(20, () -> {
             if (!t.isAlive() || c.player.isRemoved()) return;
             Combat.hurtFrom(c.player, null, t, echo, Forces.Force.SPIRIT, true);
+            // Heavy Echo (4): the echo slows
+            if (c.step(4)) Moves.effect(t, MobEffects.SLOWNESS, (int) c.num(4, "slow", 40), 1);
             Vec3 p = t.getBoundingBox().getCenter();
             Fx.at(c, FxKind.ECHO, p).dir(c.look()).scale(c.is(1) ? 1.4 : 1.1).style(FxStyle.SOUL).noAnim().send();
             c.level.playSound(null, p.x, p.y, p.z, PowerSounds.SPIRIT.get(), net.minecraft.sounds.SoundSource.PLAYERS, 0.8f, 1.5f);

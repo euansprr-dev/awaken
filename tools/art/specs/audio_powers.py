@@ -32,6 +32,7 @@ import audiokit as K  # noqa: E402
 import ritual_sounds as R  # noqa: E402
 import audio_arms as AA  # noqa: E402  (helpers: rec, pick, shift, trim, cloth, sub, _blow, tame, master)
 import audio_power_kits as KITS  # noqa: E402  (a sound for every `power.*` event the catalog plays)
+import audio_power_ladder as LADDER  # noqa: E402  (the ladder's moment and the families' tier layers, SPEC 34)
 from audio_mix import TARGETS  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
@@ -132,6 +133,11 @@ for _name, (_fn, _v, _rms, _att, _crest) in KITS.KIT.items():
     EVENTS["kit_" + _name] = (_fn, _v, _rms, _att, _crest)
 
 
+# the ladder (SPEC 34): power.evolve*, power.tier3_<family>, power.tier5_<family>
+for _name, (_fn, _v, _rms, _att, _crest) in LADDER.EVENTS.items():
+    EVENTS["lad_" + _name] = (_fn, _v, _rms, _att, _crest)
+
+
 def seed_of(event, k):
     return 9700 + list(EVENTS).index(event) * 61 + k * 7
 
@@ -171,7 +177,7 @@ def write_json():
         entries = []
         for k in range(variants):
             entries.append(OrderedDict(name=f"awaken:powers/power_{event}_{k}", attenuation_distance=att))
-        sid = event[4:] if event.startswith("kit_") else event
+        sid = event[4:] if event.startswith(("kit_", "lad_")) else event
         old = cur.get("power." + sid, {})
         cur["power." + sid] = OrderedDict(subtitle=old.get("subtitle", "subtitles.awaken.power." + sid), sounds=entries)
     os.makedirs(MERGE, exist_ok=True)
@@ -180,7 +186,7 @@ def write_json():
         f.write("\n")
     lpath = os.path.join(MERGE, "lang/en_us.json")
     lang = json.load(open(lpath)) if os.path.exists(lpath) else {}
-    for event, text in SUBTITLES.items():
+    for event, text in list(SUBTITLES.items()) + [(k, v) for k, v in LADDER.SUBTITLES.items() if v]:
         lang["subtitles.awaken.power." + event] = text
     with open(lpath, "w") as f:
         json.dump(lang, f, indent=2)

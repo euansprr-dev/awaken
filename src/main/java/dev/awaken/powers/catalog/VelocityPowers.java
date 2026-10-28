@@ -8,10 +8,12 @@ import dev.awaken.powers.Cast;
 import dev.awaken.powers.Casting;
 import dev.awaken.powers.Combat;
 import dev.awaken.powers.Fx;
+import dev.awaken.powers.ladder.Steps;
 import dev.awaken.powers.Moves;
 import dev.awaken.powers.PowerMath;
 import dev.awaken.powers.PowerSounds;
 import dev.awaken.powers.PowerState;
+import dev.awaken.powers.Powers;
 import dev.awaken.powers.PowerType;
 import dev.awaken.powers.PowerType.Family;
 import dev.awaken.powers.PowerType.Result;
@@ -108,6 +110,8 @@ final class VelocityPowers {
     }
 
     static Result dash(Cast c) {
+        PowerState st = PowerState.of(c.player);
+        boolean chained = !c.player.onGround() && st.dashChain() >= 2;
         if (c.is(1)) {
             Vec3 to = Moves.blinkTarget(c.player, c.steered(), 6 + c.powerLevel * 0.5);
             Vec3 from = c.pos();
@@ -115,27 +119,46 @@ final class VelocityPowers {
             Moves.teleport(c.player, to);
             Fx.at(c, FxKind.BLINK, from).to(to).anim(CastAnim.DASH).send();
             c.sound(PowerSounds.WHOOSH, 1f, 1.6f);
+            dashSteps(c, st, chained, from.add(0, 0.9, 0), to.add(0, 0.9, 0), 0);
             return Result.OK;
         }
         Vec3 motion = dashMotion(c.player, c.variant, c.powerLevel, c.strafe(), c.forward());
         if (!c.predicted) Moves.launch(c.player, motion);
         Moves.noFall(c, 30);
         // sonic ring, speed lines, red afterimages and a wind ribbon
-        Fx.at(c, FxKind.DASH, c.pos()).dir(motion == null ? c.flatLook() : motion).ticks(9).send();
+        Vec3 dir = motion == null ? c.flatLook() : motion;
+        Fx.at(c, FxKind.DASH, c.pos()).dir(dir).ticks(9).send();
         c.sound(PowerSounds.WHOOSH, 0.9f, 1.2f + c.player.getRandom().nextFloat() * 0.2f);
         Running r = Casting.start(c, 7);
         float dmg = c.dmg();
+        // Sonic Ring (2): foes you pass through are shoved aside, off the line you run
+        double shove = c.num(2, "shove", 0f);
+        Vec3 start = c.pos().add(0, 0.9, 0);
         r.tick(rr -> {
             Vec3 p = c.pos().add(0, 0.9, 0);
             for (LivingEntity e : Combat.foesAround(c.player, p, 1.6)) {
                 if (rr.hit.add(e.getId())) {
                     c.hurt(e, dmg, null);
                     Combat.knockFrom(e, c.pos(), 0.4, 0.2);
+                    if (shove > 0) {
+                        Vec3 side = new Vec3(-dir.z, 0, dir.x).normalize();
+                        if (side.dot(e.position().subtract(c.pos())) < 0) side = side.scale(-1);
+                        Combat.push(e, side.scale(shove).add(0, 0.15, 0));
+                    }
                     Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).dir(c.player.getDeltaMovement()).scale(0.7).noAnim().send();
                 }
             }
-        });
+        }).end((rr, why) -> dashSteps(c, st, chained, start, c.pos().add(0, 0.9, 0), (int) c.num(5, "delay", 12) - 7));
         return Result.OK;
+    }
+
+    /** Dash's ladder past its own move (SPEC 34): Momentum's next blow, Chain Charge's energy back, Redline's snap. */
+    private static void dashSteps(Cast c, PowerState st, boolean chained, Vec3 from, Vec3 to, int snapDelay) {
+        if (c.step(3)) st.buff(PowerState.Buffs.MOMENTUM, c.now() + (long) c.num(3, "ticks", 20), 1 + c.num(3, "bonus", 0.25f));
+        if (c.step(4) && chained) Powers.restoreEnergy(c.player, PowerMath.cost(c.type.cost, c.v.cost()) * c.num(4, "share", 0.5f));
+        if (c.step(5) && from.distanceToSqr(to) > 1) {
+            Steps.lineAfter(c, from, to, Math.max(1, snapDelay), c.dmg() * c.num(5, "snap", 0.6f), 0.9, null, FxKind.LIGHTNING);
+        }
     }
 
     static Result flow(Cast c) {

@@ -41,7 +41,7 @@ public final class Fx {
         FxStyle style = def != null ? def.style() : FxStyle.of(c.type.family);
         Emit e = new Emit(c.level, FxEvent.of(kind, style, at), at);
         e.profiled = CastProfiles.byPower(c.type.path) != null;
-        e.b.caster(c.player).seed(c.player.getRandom().nextInt()).variant(c.variant);
+        e.b.caster(c.player).seed(c.player.getRandom().nextInt()).variant(c.variant).power(PowerRegistry.index(c.type) + 1);
         e.power = c.powerLevel;
         e.caster = c.player;
         CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
@@ -168,8 +168,31 @@ public final class Fx {
             return this;
         }
 
+        /**
+         * A ladder rider's or step's own effect (SPEC 34.3): the power's style, level and looks, but no pose, no profile beat and
+         * no ultimate screen beat, so a chain arc or an echo never restarts a cast animation or shakes the screen.
+         */
+        /** A side effect (a rider's arc, a capstone's extra hit): no pose, no screen beat, no look layers of its own. */
+        public Emit plain() {
+            b.clearPose().unflag(FxEvent.ULT).flag(FxEvent.RIDER);
+            ultBeat = false;
+            return this;
+        }
+
         public Emit range(double r) {
             this.range = r;
+            return this;
+        }
+
+        /** The power level the event draws at (an effect not sent from a cast: the evolution moment, a summon). */
+        public Emit level(int level) {
+            this.power = Math.max(1, level);
+            return this;
+        }
+
+        /** The power whose ladder looks the event draws. */
+        public Emit powerOf(PowerType type) {
+            b.power(PowerRegistry.index(type) + 1);
             return this;
         }
 
@@ -281,17 +304,35 @@ public final class Fx {
 
     /** Beam visuals to the caster and everyone near: a layered beam (white core, coloured body, wide halo). */
     public static void beam(ServerPlayer caster, Entity from, Vec3 end, int argb, int ticks, float width, float range, boolean follow) {
+        beam(null, caster, from, end, argb, ticks, width, range, follow);
+    }
+
+    /** A cast's beam: it also carries the power and its level, so every viewer draws the ladder's looks on it (SPEC 34.4). */
+    public static void beam(@Nullable Cast c, ServerPlayer caster, Entity from, Vec3 end, int argb, int ticks, float width, float range, boolean follow) {
+        beam(c, caster, from, end, argb, ticks, width, range, follow, true);
+    }
+
+    /** A cast's beam; {@code layers} false draws it in the ladder's palette without its look layers (a split or side beam). */
+    public static void beam(@Nullable Cast c, ServerPlayer caster, Entity from, Vec3 end, int argb, int ticks, float width, float range, boolean follow,
+                            boolean layers) {
         FxStyle style = styleFor(argb);
         Vec3 start = from.getEyePosition();
-        FxEvent e = FxEvent.of(FxKind.BEAM, style, start).caster(from).to(end).colour(argb).aux(width).scale(range)
-                .ticks(ticks).flag(FxEvent.FOLLOW, follow).seed(caster.getRandom().nextInt()).build();
-        send(caster.level(), e, start, end, caster, 96);
+        FxEvent.Builder b = FxEvent.of(FxKind.BEAM, style, start).caster(from).to(end).colour(argb).aux(width).scale(range)
+                .ticks(ticks).flag(FxEvent.FOLLOW, follow).seed(caster.getRandom().nextInt());
+        if (c != null) b.power(PowerRegistry.index(c.type) + 1).variant(c.variant).flag(Math.max(0, Math.min(7, c.powerLevel - 1)) << LEVEL_SHIFT);
+        if (!layers) b.flag(FxEvent.RIDER);
+        send(caster.level(), b.build(), start, end, caster, 96);
     }
 
     /** One step of a bolt in flight (Bolts): a glowing streak. */
     public static void streak(ServerLevel level, Vec3 a, Vec3 b, int argb, int count, int duration) {
+        streak(level, a, b, argb, count, duration, 0, 1);
+    }
+
+    /** A cast's bolt step: it carries the power and level (power = registry index + 1) for the ladder's looks. */
+    public static void streak(ServerLevel level, Vec3 a, Vec3 b, int argb, int count, int duration, int power, int powerLevel) {
         FxEvent e = FxEvent.of(FxKind.BOLT, styleFor(argb), a).to(b).colour(argb).ticks(duration).scale(0.5 + 0.25 * count)
-                .seed(level.getRandom().nextInt()).build();
+                .seed(level.getRandom().nextInt()).power(power).flag(Math.max(0, Math.min(7, powerLevel - 1)) << LEVEL_SHIFT).build();
         send(level, e, a, b, null, RANGE);
     }
 

@@ -12,6 +12,7 @@ import dev.awaken.powers.Casting;
 import dev.awaken.powers.Combat;
 import dev.awaken.powers.ForceInteractions;
 import dev.awaken.powers.Fx;
+import dev.awaken.powers.ladder.Riders;
 import dev.awaken.powers.Moves;
 import dev.awaken.powers.PowerSounds;
 import dev.awaken.powers.PowerState;
@@ -113,24 +114,26 @@ final class EnergyPowers {
     }
 
     static Result beam(Cast c) {
-        double range = c.is(2) ? 32 : 24;
+        double range = c.range(c.is(2) ? 32 : 24);
         c.sound(PowerSounds.BEAM_GATHER, 0.9f, 1f);
         // the light gathers at the palm while the arm comes up, then the layered beam itself (see beamRay)
         Fx.at(c, FxKind.CHARGE, hand(c.player)).ticks(c.type.maxDuration).scale(0.7).send();
         Running r = Casting.channel(c, c.type.maxDuration);
+        BeamHeld held = new BeamHeld();
         r.end((rr, why) -> {
             Fx.end(c, c.player, 0);
             c.sound(PowerSounds.BEAM_END, 0.8f, 1f);
+            if (c.step(5) && why != Running.Why.CANCELLED && rr.age > 6) sunspear(c, held, range);
         });
         r.tick(rr -> {
             Vec3 eye = c.player.getEyePosition();
             Vec3 look = c.player.getLookAngle();
             boolean pulse = rr.age % 4 == 0;
-            beamRay(c, rr, eye, look, range, c.dmg(), pulse, true, c.is(2) ? 0.07f : 0.12f);
+            beamRay(c, rr, held, eye, look, range, c.dmg(), pulse, true, c.is(2) ? 0.07f : 0.12f);
             if (c.is(1)) {
                 for (int s = -1; s <= 1; s += 2) {
                     Vec3 side = look.yRot((float) Math.toRadians(12 * s));
-                    beamRay(c, rr, eye, side, range * 0.8, c.dmg() * 0.55f, pulse, false, 0.08f);
+                    beamRay(c, rr, null, eye, side, range * 0.8, c.dmg() * 0.55f, pulse, false, 0.08f);
                 }
             }
             // the hum starts when the arm is up (tick 5) and is re-laid every half second over a 0.62 s file
@@ -139,13 +142,44 @@ final class EnergyPowers {
         return Result.OK;
     }
 
-    /** One beam ray: damage on pulse ticks, burn, steam from ice, visuals every 4 ticks. */
-    static void beamRay(Cast c, Running rr, Vec3 eye, Vec3 dir, double range, float dmg, boolean pulse, boolean follow, float width) {
+    /** What a held beam remembers between pulses (SPEC 34, Beam's ladder): the body it has been on and since when, and what it dealt. */
+    static final class BeamHeld {
+        @Nullable LivingEntity on;
+        int since;
+        float dealt;
+    }
+
+    /**
+     * One beam ray: damage on pulse ticks, burn, steam from ice, visuals every 4 ticks. {@code held} is the main ray's memory
+     * (null for Prism's side rays, which draw without the ladder's layers): Helix builds up on one target, Lance goes through it.
+     */
+    static void beamRay(Cast c, Running rr, @Nullable BeamHeld held, Vec3 eye, Vec3 dir, double range, float dmg, boolean pulse, boolean follow,
+                        float width) {
         BeamHit hit = trace(c.player, eye, dir, range);
+        Vec3 end = hit.end();
         if (pulse) {
-            if (hit.target() != null) {
-                c.hurt(hit.target(), dmg, Forces.Force.HEAT);
-                if (rr.age % 20 == 0) hit.target().igniteForSeconds(2);
+            LivingEntity t = hit.target();
+            if (t != null) {
+                float d = dmg;
+                if (held != null && c.kit.ramp != null) {
+                    if (held.on != t) {
+                        held.on = t;
+                        held.since = rr.age;
+                    }
+                    d *= 1 + c.kit.ramp.share() * Math.min(1f, (rr.age - held.since) / (float) Math.max(1, c.kit.ramp.ticks()));
+                }
+                if (c.hurt(t, d, Forces.Force.HEAT) && held != null) held.dealt += d;
+                if (rr.age % 20 == 0) t.igniteForSeconds(2);
+                if (held != null && c.kit.pierce != null) {
+                    // Lance: a flare at the body and on through it to the next in the line
+                    Vec3 at = t.getBoundingBox().getCenter();
+                    Fx.at(c, FxKind.IMPACT, at).dir(dir).scale(0.7).plain().send();
+                    Vec3 from = at.add(dir.scale(t.getBbWidth() * 0.75 + 0.3));
+                    BeamHit next = trace(c.player, from, dir, Math.max(0, range - eye.distanceTo(from)));
+                    if (next.target() != null && next.target() != t && c.hurt(next.target(), d * c.kit.pierce.share(), Forces.Force.HEAT))
+                        held.dealt += d * c.kit.pierce.share();
+                    end = next.end();
+                }
             } else if (hit.block() != null) {
                 BlockState s = c.level.getBlockState(hit.block().getBlockPos());
                 if ((s.is(BlockTags.ICE) || s.is(BlockTags.SNOW) || s.is(Blocks.POWDER_SNOW)) && rr.age - rr.count > 40) {
@@ -154,9 +188,25 @@ final class EnergyPowers {
                     ForceInteractions.count(c.player, ForceInteractions.Reaction.STEAM);
                 }
             }
-            Fx.beam(c.player, c.player, hit.end(), BEAM, 6, width, (float) range, follow);
+            Fx.beam(c, c.player, c.player, end, BEAM, 6, width, (float) range, follow, held != null);
         }
         // embers, splash glow and scorch marks at the end of the beam are drawn by the client from the beam itself
+    }
+
+    /** Sunspear (Beam 5): on letting go, a last pulse runs down the beam and bursts at the end for a share of what the beam dealt. */
+    static void sunspear(Cast c, BeamHeld held, double range) {
+        Vec3 eye = c.player.getEyePosition();
+        BeamHit hit = trace(c.player, eye, c.player.getLookAngle(), range);
+        Fx.beam(c, c.player, c.player, hit.end(), BEAM, 5, 0.3f, (float) range, false, false);
+        float share = c.num(5, "pulse", 0.2f) * held.dealt;
+        Vec3 at = hit.end();
+        int travel = Math.max(1, (int) Math.round(eye.distanceTo(at) / 12));
+        dev.awaken.powers.Scheduler.after(travel, () -> {
+            if (!c.player.isAlive()) return;
+            Fx.at(c, FxKind.NOVA, at).scale(2.4).plain().send();
+            c.sound(at, PowerSounds.tier(c.type.family, 5), 1f, 1f);
+            if (share > 0) for (LivingEntity e : Combat.foesAround(c.player, at, 2.4)) c.hurt(e, share, Forces.Force.HEAT);
+        });
     }
 
     static Result nova(Cast c) {
@@ -231,7 +281,9 @@ final class EnergyPowers {
             Fx.at(c, FxKind.CAST, hand(c.player)).anim(CastAnim.PUSH2).send();
             for (int i = -1; i <= 1; i++) {
                 Vec3 d = c.look().yRot((float) Math.toRadians(i * 6));
-                Bolts.fire(c.level, c.player, c.player, hand(c.player), d, 2.4f, c.dmg(), Forces.Force.CHARGE, 0xFF9AD8FF, 40, 0f).stun = 6;
+                var b = Bolts.fire(c.level, c.player, c.player, hand(c.player), d, 2.4f, c.dmg(), Forces.Force.CHARGE, 0xFF9AD8FF, 40, 0f);
+                b.stun = 6;
+                b.cast = c;
             }
             c.sound(PowerSounds.SHOT, 1f, 1.4f);
             return Result.OK;
@@ -240,10 +292,13 @@ final class EnergyPowers {
         // crackling orb at the hand; the bolt itself is drawn as it flies (Bolts)
         Fx.at(c, FxKind.CHARGE, hand(c.player)).ticks(c.type.maxDuration).scale(0.9).send();
         Running r = Casting.channel(c, c.type.maxDuration);
+        int fullAt = c.chargeTicks(30); // Coil (2): charges sooner
         r.tick(rr -> {
-            if (rr.age == 29) c.sound(PowerSounds.CHARGE_UP, 0.6f, 2f);
+            if (rr.age == fullAt - 1) c.sound(PowerSounds.CHARGE_UP, 0.6f, 2f);
         }).end((rr, why) -> {
-            double charge = Math.min(1.0, rr.age / 30.0);
+            double charge = Math.min(1.0, rr.age / (double) fullAt);
+            // Overcharge (4): held past full, the orb turns white and the bolt pierces
+            boolean over = c.step(4) && rr.age >= fullAt + c.num(4, "over", 10);
             Fx.at(c, FxKind.CHARGE_END, hand(c.player)).flag(FxEvent.FULL, charge > 0.95).noAnim().send();
             if (why == Running.Why.CANCELLED) return;
             Fx.at(c, FxKind.CAST, hand(c.player)).anim(CastAnim.AIM).send();
@@ -251,6 +306,8 @@ final class EnergyPowers {
             var b = Bolts.fire(c.level, c.player, c.player, hand(c.player), c.player.getLookAngle(), 2.6f, dmg, Forces.Force.CHARGE,
                     0xFF9AD8FF, 40, charge > 0.95 ? 2.5f : 0f);
             b.stun = 10 + (int) (20 * charge);
+            b.cast = c;
+            if (over) b.pierce = 1;
             if (c.is(1)) b.bounces = 2;
             // a muzzle burst at the palm, and the bolt's landing where the aim meets something (it flies 2.6 blocks a tick)
             Fx.at(c, FxKind.IMPACT, hand(c.player)).dir(c.player.getLookAngle()).scale(1 + charge).noAnim().send();
@@ -260,15 +317,29 @@ final class EnergyPowers {
             Vec3 look = c.player.getLookAngle();
             float landing = (float) (1.2 + 1.4 * charge);
             boolean full = charge > 0.95;
+            Vec3 muzzle = hand(c.player);
             dev.awaken.powers.Scheduler.after(flight, () -> {
                 if (c.player.isRemoved()) return;
                 Fx.at(c, FxKind.IMPACT, lands).dir(look).scale(landing).flag(FxEvent.FULL, full).noAnim().send();
                 if (full) Fx.at(c, FxKind.NOVA, lands).scale(2.5).noAnim().send();
+                if (full && c.step(5)) thunderLance(c, muzzle, lands);
             });
             c.sound(PowerSounds.SHOT, 1f, 1.4f - 0.5f * (float) charge);
             c.feel(null, 0, 0.8f + 1.5f * (float) charge);
         });
         return Result.OK;
+    }
+
+    /** Thunder Lance (Charged Shot 5): a bolt from the sky on the landing, and a crackling line along the shot that shocks what crosses it. */
+    static void thunderLance(Cast c, Vec3 from, Vec3 to) {
+        int ticks = (int) c.num(5, "line", 40);
+        float dps = c.num(5, "dps", 1.5f) * c.dmg(1f);
+        Fx.at(c, FxKind.STRIKE, to).scale(1.2).plain().send();
+        Fx.at(c, FxKind.LIGHTNING, from).to(to).ticks(ticks).scale(1.1).plain().flag(FxEvent.QUIET).send();
+        double len = from.distanceTo(to);
+        Vec3 step = to.subtract(from).normalize();
+        for (double d = 1.5; d < len; d += 2.5) Riders.lingerAt(c, from.add(step.scale(d)), "shock", ticks, 1.2f, dps, false);
+        c.sound(to, PowerSounds.tier(c.type.family, 5), 1f, 1f);
     }
 
     static Result overload(Cast c) {
