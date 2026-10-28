@@ -1,0 +1,160 @@
+{
+ "schemaVersion": 1,
+ "id": "ember_tyrant",
+ "moves": "ember_tyrant",
+ "intro": {
+  "pose": "idle",
+  "move": "roar"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "hammer",
+     "weight": 3
+    },
+    {
+     "move": "backhand",
+     "weight": 3,
+     "when": "NEAR"
+    },
+    {
+     "move": "chop_a",
+     "weight": 3,
+     "then": [
+      [
+       "chop_b"
+      ],
+      [
+       "chop_b",
+       "hammer"
+      ]
+     ]
+    },
+    {
+     "move": "charge",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "stomp",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "eruption",
+     "weight": 1
+    }
+   ]
+  },
+  {
+   "transition": "stoke",
+   "pool": [
+    {
+     "move": "hammer",
+     "weight": 3
+    },
+    {
+     "move": "backhand",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "chop_a",
+       "chop_b"
+      ]
+     ]
+    },
+    {
+     "move": "chop_a",
+     "weight": 3,
+     "then": [
+      [
+       "chop_b"
+      ],
+      [
+       "chop_b",
+       "hammer"
+      ]
+     ]
+    },
+    {
+     "move": "charge",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "stomp",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "eruption",
+     "weight": 2
+    }
+   ]
+  },
+  {
+   "transition": "meltdown",
+   "pool": [
+    {
+     "move": "hammer",
+     "weight": 3,
+     "then": [
+      [
+       "stomp"
+      ]
+     ]
+    },
+    {
+     "move": "backhand",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "chop_a",
+       "chop_b"
+      ]
+     ]
+    },
+    {
+     "move": "chop_a",
+     "weight": 3,
+     "then": [
+      [
+       "chop_b",
+       "hammer"
+      ]
+     ]
+    },
+    {
+     "move": "charge",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "eruption"
+      ]
+     ]
+    },
+    {
+     "move": "stomp",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "eruption",
+     "weight": 2
+    },
+    {
+     "move": "meltdown",
+     "weight": 1
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.25
+ }
+}

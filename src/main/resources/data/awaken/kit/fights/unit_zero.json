@@ -1,0 +1,143 @@
+{
+ "schemaVersion": 1,
+ "id": "unit_zero",
+ "moves": "unit_zero",
+ "intro": {
+  "pose": "kneel",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "lance",
+     "weight": 2
+    },
+    {
+     "move": "step",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "sever_b",
+       "sever_c"
+      ]
+     ]
+    },
+    {
+     "move": "sever_a",
+     "weight": 3,
+     "then": [
+      [
+       "sever_b"
+      ],
+      [
+       "sever_b",
+       "sever_c"
+      ]
+     ]
+    },
+    {
+     "move": "spin",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "orbital",
+   "pool": [
+    {
+     "move": "lance",
+     "weight": 3
+    },
+    {
+     "move": "step",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "sever_b",
+       "sever_c"
+      ]
+     ]
+    },
+    {
+     "move": "sever_a",
+     "weight": 3,
+     "then": [
+      [
+       "sever_b",
+       "sever_c"
+      ]
+     ]
+    },
+    {
+     "move": "spin",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "orbital",
+     "weight": 2
+    },
+    {
+     "move": "deploy",
+     "weight": 1
+    }
+   ]
+  },
+  {
+   "transition": "zero_point",
+   "pool": [
+    {
+     "move": "lance",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "step"
+      ]
+     ]
+    },
+    {
+     "move": "step",
+     "weight": 3,
+     "then": [
+      [
+       "sever_b",
+       "sever_c"
+      ]
+     ]
+    },
+    {
+     "move": "sever_a",
+     "weight": 2,
+     "then": [
+      [
+       "sever_b",
+       "sever_c"
+      ]
+     ]
+    },
+    {
+     "move": "spin",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "orbital",
+     "weight": 2
+    },
+    {
+     "move": "zero_point",
+     "weight": 2
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.25
+ }
+}

@@ -10,6 +10,10 @@ HunterTier, Rank, Theme, Model, BoltKind, Ability, GateBestiary, MobScaling), so
 What the code does not settle (how a player plays, where bodies stand, how often a flier is in reach) is ASSUMED below,
 each with its reason; docs/combat/sim-2026-10-26.md lists them with their sources.
 
+A kit Lord (SPEC §34, data/awaken/kit) fights as FightRunner does: its fight script picks moves by weight, `when` and
+range, each move winds up (held 1 in 3 if HEAVY), strikes with its capsules and fires its ability under the move's
+class, and phases enter through their transition. `--override kit.on=0` fights it the old way, to compare.
+
 What it does NOT check: feel, animation, latency, multiplayer, powers, potions, eating mid-fight, gate modifiers.
 
 Run:  python3 tools/sim/combat_sim.py                        (as built, 400 seeds, summary table; ~10 s on 4 cores)
@@ -53,6 +57,7 @@ P_TIER = "src/main/java/dev/awaken/mobs/def/Tier.java"
 P_BEST = "src/main/java/dev/awaken/mobs/def/GateBestiary.java"
 P_SCALING = "src/main/java/dev/awaken/mobs/MobScaling.java"
 P_GOALS = "src/main/java/dev/awaken/mobs/entity/MobGoals.java"
+P_KIT = "src/main/resources/data/awaken/kit"  # the Creature Kit's move tables and fight scripts (SPEC §34.2-34.3)
 
 LIGHT, HEAVY, PERILOUS, GRAB, NONE = "LIGHT", "HEAVY", "PERILOUS", "GRAB", "NONE"
 RANK_ORDER = ["E", "D", "C", "B", "A", "S"]
@@ -315,11 +320,37 @@ def parse_told_melee():
     return {"tell_boss": boss, "tell_normal": normal, "heavy_extra": heavy_extra, "heavy_every": every, "heavy_mult": 1 + mult}
 
 
+def parse_kits():
+    """Every kit boss's move table and fight script (FightRunner fights them instead of the AbilityRunner and ToldMelee)."""
+    path = os.path.join(ROOT, P_KIT, "index.json")
+    if not os.path.exists(path):
+        return {}
+    out = {}
+    for k in json.load(open(path))["kits"]:
+        fp = os.path.join(ROOT, P_KIT, "fights", k + ".json")
+        if not os.path.exists(fp):
+            continue
+        moves = {m["id"]: m for m in json.load(open(os.path.join(ROOT, P_KIT, "moves", k + ".json")))["moves"]}
+        out[k] = {"moves": moves, "fight": json.load(open(fp))}
+    return out
+
+
+def kit_reach(m, half):
+    """How far a move's capsules reach from the body's edge, in front and behind (blocks), its root motion included."""
+    caps = [c for tick in m.get("hits", []) for c in tick]
+    if not caps:
+        return (0.0, 0.0)
+    adv = m.get("motion", {}).get("advance", 0.0)
+    front = max(max(math.hypot(c[0], c[2]), math.hypot(c[3], c[5])) + c[6] for c in caps) - half + adv
+    back = max(max(-c[2], -c[5]) + c[6] for c in caps) - half
+    return (front, back)
+
+
 def load_world():
     meta = parse_ability_meta()
     return {"arch": parse_archetype(), "rules": parse_rules(), "weapons": parse_weapons(), "tiers": parse_tiers(),
             "ranks": parse_ranks(), "themes": parse_themes(), "models": parse_models(), "bolts": parse_bolts(),
-            "mobs": parse_bestiary(meta), "scaling": parse_scaling(), "melee": parse_told_melee()}
+            "mobs": parse_bestiary(meta), "scaling": parse_scaling(), "melee": parse_told_melee(), "kits": parse_kits()}
 
 
 # ---- CONFIG: the game's numbers (parsed) plus the ASSUMED play and geometry ------------------------------------------
@@ -386,6 +417,13 @@ def default_config(W):
             "effects": 0,       # 1: an evaded or deflected ability no longer burns, poisons or weakens (Abilities.java:76-79)
         },
         "item_level": {"on": 0, "per_level": 0.075},  # PowerMath.java:42-44 levelScale, mirrored on the weapon
+        # the Creature Kit (SPEC §34.3): a kit Lord fights by its fight script and move table (on: 0 = the old way, to
+        # compare). ASSUMED geometry, since the sim has no positions: in reach you stand 0.3-2.0 blocks from its edge
+        # and behind it this often; out of reach 3-12 blocks. A kit flier orbits low (MobGoals.FlyHunt.scripted) 1 block
+        # from your edge, or 6 when it drifts out (1 retarget in 4): in reach about as often as it sits close.
+        "kit": {"on": 1, "near": [0.3, 2.0], "far": [3.0, 12.0], "behind": 0.15, "flier_uptime": 0.6,
+                "flier_near": [0.6, 1.4], "flier_far": [4.0, 8.0],
+                "damage": 1.0},  # damage: what-if, every move's damage x this
         "abilities": {},  # ability.<lord>.<phase>.<index>.<field>=value (phase and index from 0, as in GateBestiary)
         "diamond_damage": 7.0,  # vanilla diamond sword (gear/GearTests.java:293-296)
         "fight_cap_s": 600,
@@ -470,7 +508,7 @@ def armor_after(dmg, armor, toughness):
 class Blow:
     __slots__ = ("est", "land", "told", "landed", "factor", "flat", "expose", "pos", "posture_ok", "armor", "force",
                  "fx", "name", "src", "alive", "plan", "plan_t", "melee", "fire_s", "knock", "front", "lord", "minion",
-                 "heavy_melee", "is_ability")
+                 "heavy_melee", "is_ability", "kit")
 
     def __init__(self, name, told, landed, est, factor=1.0, expose=1.0, pos=0.0, posture_ok=False, armor=True, force=None,
                  fx=None, src="lord", melee=False, flat=0.0, fire_s=0, knock=0, front=1.0):
@@ -482,6 +520,7 @@ class Blow:
         self.minion = None
         self.heavy_melee = False
         self.is_ability = False
+        self.kit = None  # a kit move's capsules: (front, back) reach from its edge, blocks
 
 
 class Move:
@@ -516,8 +555,15 @@ class Fight:
         model = W["models"][ld["model"]]
         self.flies = model["move"] == "FLY"
         RC = cfg["reach"]
+        self.kit = W["kits"].get(ld["id"]) if cfg["kit"]["on"] else None
+        if self.kit is not None:
+            half = model["width"] * ld["scale"] * 0.5
+            for m in self.kit["moves"].values():
+                m["_reach"] = kit_reach(m, half)
         if lc["uptime"] >= 0:
             self.uptime = lc["uptime"]
+        elif self.kit is not None and self.flies:
+            self.uptime = cfg["kit"]["flier_uptime"]
         else:
             self.uptime = RC.get(ld["id"], RC["flier"] if self.flies else RC["ground"])
         self.mean_out = RC["out_flier"] if self.flies else RC["out_ground"]
@@ -560,6 +606,17 @@ class Fight:
         self.dive_left = 0
         self.dive_blow = None
         self.phase_offset = rng.randrange(140)
+        # the fight runner (FightRunner.java): the move playing, its stretched timings, the string, the gap
+        self.k_move = None
+        self.k_t = self.k_w = self.k_act = self.k_rec = 0
+        self.k_string = []
+        self.k_gap = 20
+        self.k_intro = False
+        self.k_pending = -1
+        self.k_blows = []
+        self.k_ab = None
+        self.k_ab_blows = []
+        self.k_d, self.k_behind, self.k_d_state = 1.0, False, None
         # posture (ArmsRules.java:26-32)
         self.pmax = self.R["POSTURE_LORD"]
         self.pval = 0.0
@@ -624,7 +681,7 @@ class Fight:
         self.st = {"in_reach": 0, "ticks": 0, "deflects": 0, "blocks": 0, "breaks_guard": 0, "evades": 0, "perfect": 0,
                    "breaks": 0, "executions": 0, "arts": 0, "ripostes": 0, "slipcuts": 0, "strikes": 0, "whiffs": 0,
                    "dmg_by_move": {}, "taken_by": {}, "death_by": None, "phase_ticks": [0, 0, 0], "broken_ticks": 0,
-                   "minions_spawned": 0, "heals": 0}
+                   "minions_spawned": 0, "heals": 0, "kit_moves": {}}
 
     # ---- helpers --------------------------------------------------------------------------------------------------------
 
@@ -728,6 +785,9 @@ class Fight:
             self.shield -= 1
         if self.decoys:
             self.decoys = [d for d in self.decoys if d > t]
+        if self.kit is not None:
+            self.kit_tick(t)
+            return
         self.runner_tick(t)
         if self.active is None:
             self.check_phase(t)
@@ -864,6 +924,12 @@ class Fight:
             self.stop_melee(t)
 
     def interrupt(self, t):
+        if self.k_move is not None:
+            # a posture break ends the move and its string (FightRunner.interrupt)
+            self.cancel(self.k_blows + self.k_ab_blows, t)
+            self.k_move, self.k_ab, self.k_blows, self.k_ab_blows = None, None, [], []
+            self.k_string = []
+            self.k_gap = 6 + self.rng.randrange(9)
         if self.active is not None:
             self.cancel(self.active_blows, t)
         self.active = None
@@ -919,6 +985,175 @@ class Fight:
             self.st["heals"] += 1
         elif k == "FRENZY":
             self.frenzy = 200
+
+    # ---- the Creature Kit's fight runner (FightRunner.java, SPEC §34.3) -------------------------------------------------
+
+    def kit_speed(self):
+        en = self.kit["fight"].get("enrage", {})
+        return en.get("speed", 1.0) if self.l_hp < self.l_max * en.get("below", 0.0) else 1.0
+
+    def kit_where(self, t):
+        """Where the player stands (ASSUMED, see CONFIG kit): drawn again whenever reach changes."""
+        near = self.in_reach(t)
+        if self.k_d_state != near:
+            K = self.cfg["kit"]
+            if self.flies:
+                lo, hi = K["flier_near"] if near else K["flier_far"]
+            else:
+                lo, hi = K["near"] if near else K["far"]
+            self.k_d = lo + (hi - lo) * self.rng.random()
+            self.k_behind = near and self.rng.random() < K["behind"]
+            self.k_d_state = near
+        return self.k_d, self.k_behind
+
+    def kit_usable(self, e, d, behind, t):
+        m = self.kit["moves"].get(e["move"])
+        if m is None or not (m["range"][0] <= d <= m["range"][1]):
+            return False
+        if m.get("ability"):
+            a = self.kit_ability(m["ability"])
+            if a is not None and a["kind"] in ("SUMMON", "DECOY", "HEAL") and not self.usable(a, t):
+                return False  # AbilityRunner.room
+        w = e.get("when", "ANY")
+        return {"ANY": True, "NEAR": d <= 4, "FAR": d >= 8, "BEHIND": behind, "AIR": False}.get(w, True)
+
+    def kit_ability(self, name):
+        for ph in self.ld["phases"]:
+            for a in ph["abilities"]:
+                if a["name"] == name:
+                    return a
+        return None
+
+    def kit_tick(self, t):
+        if self.k_move is not None:
+            self.kit_step(t)
+            return
+        self.kit_phase(t)
+        F = self.kit["fight"]
+        if not self.k_intro:
+            self.k_intro = True
+            intro = F.get("intro", {}).get("move")
+            if intro and self.kit_begin(intro, t):
+                return
+        if self.k_pending >= 0:
+            p, self.k_pending = self.k_pending, -1
+            tr = F["phases"][p].get("transition")
+            self.k_string = []
+            if tr and self.kit_begin(tr, t):
+                self.shield = self.k_w + self.k_act + self.k_rec  # invulnerable while its transition plays
+                return
+        if self.stagger > 0 or t < self.broken_until:
+            self.k_string = []
+            return
+        d, behind = self.kit_where(t)
+        if self.k_string:
+            nxt = self.k_string.pop(0)
+            m = self.kit["moves"].get(nxt)
+            if m is not None and m["range"][0] <= d <= m["range"][1] and self.kit_begin(nxt, t):
+                return
+            self.k_string = []
+        if self.k_gap > 0:
+            self.k_gap -= 1
+            return
+        pool = [e for e in F["phases"][min(self.phase, len(F["phases"]) - 1)]["pool"] if self.kit_usable(e, d, behind, t)]
+        if not pool:
+            # it walks in to where its close moves reach and looks again (FightRunner.approach, every 10 ticks)
+            if self.in_reach(t):
+                self.k_d = min(self.k_d, self.kit_stop())
+            self.k_gap = 10
+            return
+        r = self.rng.randrange(sum(max(1, e.get("weight", 1)) for e in pool))
+        for e in pool:
+            r -= max(1, e.get("weight", 1))
+            if r < 0:
+                break
+        self.kit_begin(e["move"], t)
+        if e.get("then"):
+            self.k_string = list(self.rng.choice(e["then"]))
+
+    def kit_stop(self):
+        F = self.kit["fight"]
+        reach = 0.0
+        for e in F["phases"][min(self.phase, len(F["phases"]) - 1)]["pool"]:
+            m = self.kit["moves"].get(e["move"])
+            if m is None or m["range"][0] > 0 or e.get("when", "ANY") in ("FAR", "BEHIND"):
+                continue
+            reach = max(reach, m["range"][1])
+        return min(3.5, max(0.5, reach - 0.3)) if reach > 0 else 3.5
+
+    def kit_phase(self, t):
+        """AwakenBoss.checkPhase between moves: a crossed line queues that phase's transition (FightRunner.enterPhase)."""
+        frac = self.l_hp / self.l_max
+        want = 0
+        for i in range(1, len(self.ld["phases"])):
+            if frac < self.ld["phases"][i]["below"]:
+                want = i
+        if want <= self.phase:
+            return
+        self.phase = want
+        self.abilities = self.ld["phases"][want]["abilities"]
+        self.k_pending = want
+
+    def kit_begin(self, mid, t):
+        m = self.kit["moves"].get(mid)
+        if m is None:
+            return False
+        cls, ti = m["class"], m["time"]
+        hold = ti.get("hold", 0) if cls == HEAVY and ti.get("hold", 0) > 0 and self.rng.randrange(3) == 0 else 0
+        sp = max(1.0, self.kit_speed())
+        least = 1 if cls == NONE else {LIGHT: 8, HEAVY: 12, GRAB: 12, PERILOUS: 14}.get(cls, 6)  # KitMoves.minWindup
+        w = min(ti["windup"], max(least, int(math.floor(ti["windup"] / sp + 0.5))))
+        self.k_move, self.k_t = m, 0
+        self.k_w, self.k_act, self.k_rec = w + hold, max(1, ti["active"]), max(1, int(math.floor(ti["recover"] / sp + 0.5)))
+        self.st["kit_moves"][mid] = self.st["kit_moves"].get(mid, 0) + 1
+        land0 = t + self.k_w + 1  # the first active tick
+        K = self.cfg["kit"]
+        self.k_blows = []
+        first = next((k for k, caps in enumerate(m.get("hits", [])) if caps), -1)
+        if first >= 0 and m.get("damage", 0) > 0:
+            # its capsules: one blow a move (each target is hit once), told and landed as its class, landing only if
+            # you stand where they reach then (a gap-closer travels to you: it lands); ASSUMED 8 ticks out of reach per
+            # block of knock
+            kind = cls if cls != NONE else HEAVY
+            b = Blow(m.get("title") or mid, kind, kind, land0 + first, factor=m["damage"] * K["damage"], posture_ok=True,
+                     fire_s=self.MC["ignite_s"] if self.ignite else 0, knock=int(8 * m.get("knock", 0)))
+            if "gap" not in m.get("kinds", []):
+                b.kit = m["_reach"]
+            self.k_blows.append(self.new_blow(b))
+        # its ability, aimed now and fired as the move strikes, under the move's own class (AbilityRunner.fire)
+        self.k_ab, self.k_ab_blows, self.k_ab_delays = None, [], []
+        a = self.kit_ability(m["ability"]) if m.get("ability") else None
+        if a is not None:
+            if cls != NONE:
+                a = dict(a, told=cls)
+            self.k_ab = a
+            for dd, b in self.ability_blows(a, land0, t):
+                self.k_ab_blows.append(self.new_blow(b))
+                self.k_ab_delays.append(dd)
+        return True
+
+    def kit_step(self, t):
+        self.k_t += 1
+        if self.k_t <= self.k_w:
+            return
+        k = self.k_t - self.k_w - 1
+        m = self.k_move
+        if k < self.k_act:
+            if k == 0:
+                for b in self.k_blows:
+                    if b.alive:
+                        first = next(i for i, caps in enumerate(m["hits"]) if caps)
+                        self.push(b, t + first)
+                if self.k_ab is not None:
+                    self.active_blows, self.active_delays = self.k_ab_blows, self.k_ab_delays
+                    self.execute(self.k_ab, t)
+                if "gap" in m.get("kinds", []):
+                    self.forced_in = max(self.forced_in, t + self.k_act + 10)  # it arrives beside you
+            return
+        if self.k_t < self.k_w + self.k_act + self.k_rec:
+            return
+        self.k_move, self.k_ab, self.k_blows, self.k_ab_blows = None, None, [], []
+        self.k_gap = 0 if self.k_string else 6 + self.rng.randrange(9)
 
     def stop_melee(self, t):
         if self.melee_running:
@@ -1068,6 +1303,10 @@ class Fight:
                 continue
             if b.melee and b.lord and not self.in_reach(t):
                 continue  # stepped out: a whiff (MobGoals.java:131)
+            if b.kit is not None:
+                d, behind = self.kit_where(t)
+                if d > (b.kit[1] if behind else b.kit[0]):
+                    continue  # not where its capsules are (FightRunner.strike)
             if self.rng.random() >= b.expose:
                 continue
             self.land_blow(b, t)
@@ -1756,6 +1995,8 @@ PRESETS["recommended-hp"] = PRESETS["recommended"] + [
     "lords.glass_serpent.hp=25", "lords.lantern_broker.hp=34", "lords.abbot_of_frost.hp=32", "lords.mirror_knight.hp=27.5",
     "lords.unit_zero.hp=32.5", "lords.sky_leviathan.hp=23.5", "lords.hollow_herald.hp=28.5",
     "ability.hive_regent.0.0.heavy=false",
+    # the three kit Lords fight by their move tables now (SPEC §34.3; docs/bosses/sim-2026-10-28.md): their own health
+    "lords.ember_tyrant.hp=30.5", "lords.unit_zero.hp=30", "lords.mother_of_spores.hp=22.5",
 ]
 
 

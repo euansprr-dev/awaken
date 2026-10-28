@@ -72,9 +72,17 @@ public final class AbilityRunner {
         return (active != null && active.roots()) || chargeTicks > 0 || leapTicks > 0;
     }
 
+    /** A kit boss's runner (SPEC §34.3): it starts nothing itself; its FightRunner fires abilities as moves strike. */
+    private boolean scripted;
+
+    void scripted(boolean on) {
+        scripted = on;
+    }
+
     void tick(ServerLevel level) {
         if (chargeTicks > 0) tickCharge(level);
         if (leapTicks > 0) tickLeap(level);
+        if (scripted) return;
         if (active != null) {
             tickWindup(level);
             return;
@@ -216,6 +224,78 @@ public final class AbilityRunner {
         return false;
     }
 
+    // ---- kit moves (SPEC §34.3): a move's wind-up aims and marks the ability, its strike fires it ----------------------
+
+    /** The named ability of any phase, or null. */
+    @Nullable Ability find(String name) {
+        for (MobDef.Phase p : mob.def().phases) for (Ability a : p.abilities()) if (a.name().equals(name)) return a;
+        return null;
+    }
+
+    /** Whether a kit move's ability has room now: a summon its budget, a decoy its cap, a heal someone hurt (the rest: always). */
+    boolean room(ServerLevel level, Ability a) {
+        return switch (a.kind()) {
+            case SUMMON -> Mobs.minionRoom(level, mob, a.count());
+            case DECOY -> level.getEntitiesOfClass(AwakenMob.class, mob.getBoundingBox().inflate(24), AwakenMob::isDecoy).size() < 3;
+            case HEAL -> Abilities.alliesHurt(level, mob, a.radius());
+            default -> true;
+        };
+    }
+
+    /** A move's wind-up begins: aim at the target and place the ability's marks, as an ability's own wind-up does. */
+    void prepare(ServerLevel level, Ability a, LivingEntity t, int windup) {
+        aimTarget = t;
+        aim = a.kind() == Ability.Kind.BEAM || a.kind() == Ability.Kind.BOLT || a.kind() == Ability.Kind.CHARGE ? Abilities.chest(t) : t.position();
+        total = left = Math.max(1, windup);
+        marks.clear();
+        if (!mob.abilityMarks(level, a, t, marks)) {
+            switch (a.kind()) {
+                case RAIN -> rainMarks(level, a);
+                case SUMMON -> marks.addAll(Abilities.summonSpots(level, mob, a.count()));
+                case BLINK -> marks.add(Abilities.blinkSpot(mob, t));
+                default -> { }
+            }
+        }
+    }
+
+    /** One wind-up tick of a move's ability: follow the target while it tracks, and show where it will land. */
+    void windup(ServerLevel level, Ability a, int remaining, boolean tracking) {
+        LivingEntity t = aimTarget;
+        if (tracking && t != null && t.isAlive()) {
+            switch (a.kind()) {
+                case BEAM, BOLT, CHARGE -> aim = Abilities.chest(t);
+                case ARROWS, CONE, FANGS, LEAP -> aim = t.position();
+                default -> { }
+            }
+        }
+        left = Math.max(1, remaining);
+        if (!mob.abilityTell(level, a, left, total, aim, marks) && left % 3 == 0) show(level, a);
+    }
+
+    /**
+     * The move strikes: the ability fires as {@code kind} (the move's own class, so it lands as it was told), its area
+     * centred on {@code origin} (the fist, the palm) when it has one.
+     */
+    void fire(ServerLevel level, Ability a, @Nullable Vec3 origin, Strikes.Kind kind) {
+        LivingEntity t = aimTarget;
+        this.origin = origin;
+        try {
+            Strikes.deliver(mob, kind, () -> {
+                if (!mob.abilityStrike(level, a, t, aim, marks)) execute(level, a, t);
+                return true;
+            });
+        } finally {
+            this.origin = null;
+        }
+    }
+
+    /** Where a kit move's area ability centres (null: the body's feet, as abilities always have). */
+    private @Nullable Vec3 origin;
+
+    private Vec3 centre() {
+        return origin != null ? origin : mob.position();
+    }
+
     private void show(ServerLevel level, Ability a) {
         int colour = mob.def().glow;
         boolean heavy = a.heavy();
@@ -250,12 +330,12 @@ public final class AbilityRunner {
     private void execute(ServerLevel level, Ability a, @Nullable LivingEntity t) {
         switch (a.kind()) {
             case SLAM -> {
-                Abilities.area(level, mob, a, mob.position(), a.radius(), 0, 0.9);
-                Abilities.slamFx(level, mob, mob.position(), a.radius());
+                Abilities.area(level, mob, a, centre(), a.radius(), 0, 0.9);
+                Abilities.slamFx(level, mob, centre(), a.radius());
             }
             case BURST -> {
-                Abilities.area(level, mob, a, mob.position(), a.radius(), a.inner(), 0.6);
-                for (float r = Math.max(1, a.inner()); r <= a.radius(); r += 2.5F) Telegraph.ring(level, mob.position(), r, 24, mob.def().glow, true);
+                Abilities.area(level, mob, a, centre(), a.radius(), a.inner(), 0.6);
+                for (float r = Math.max(1, a.inner()); r <= a.radius(); r += 2.5F) Telegraph.ring(level, centre(), r, 24, mob.def().glow, true);
                 mob.playLevelSound(MobSounds.BOSS_TOLL.get(), 2.0F, 0.6F);
             }
             case LEAP -> {

@@ -37,10 +37,13 @@ public final class LivingClientConfig {
     public static final ModConfigSpec.EnumValue<FormsMode> FORMS = B
             .comment("How creatures in harder land look (SPEC 21.13): FULL (from rank C a body of their own), LITE (the vanilla body with lit eyes) or OFF.")
             .defineEnum("forms", FormsMode.FULL);
+    public static final ModConfigSpec.BooleanValue BOSS_PLATE = B
+            .comment("Our bosses' and Wardens' bars as the Boss Plate: Holo glass at the top of the screen with the level in heat colour, phase marks, stance and their lines (SPEC 34.1). Off: the vanilla bar.")
+            .define("bossPlate", true);
     public static final ModConfigSpec SPEC = B.build();
 
     // cached once a tick
-    static boolean plates = true, xpStream = true, dread = true;
+    static boolean plates = true, xpStream = true, dread = true, bossPlate = true;
     static Numbers numbers = Numbers.FULL;
     static Moment moment = Moment.FULL;
     static FormsMode forms = FormsMode.FULL;
@@ -66,6 +69,7 @@ public final class LivingClientConfig {
             numbers = DAMAGE_NUMBERS.get();
             moment = LEVEL_MOMENT.get();
             forms = FORMS.get();
+            bossPlate = BOSS_PLATE.get();
         } catch (RuntimeException notLoaded) {
             // defaults until the config loads
         }

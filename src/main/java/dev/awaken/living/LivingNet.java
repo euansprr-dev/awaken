@@ -257,6 +257,43 @@ public final class LivingNet {
     }
 
     /**
+     * Server → client: a boss bar belongs to {@code entity} (SPEC §34.1, {@code core.api.BossPlates}): the client draws the
+     * Boss Plate for it instead of vanilla's bar. {@code kind}: BossPlates.Kind ordinal; {@code marks}: the health fractions
+     * where phases begin; {@code glow}: the boss's own colour (the plate's rim).
+     */
+    public record BossBind(java.util.UUID bar, int entity, int kind, java.util.List<Float> marks, int glow) implements CustomPacketPayload {
+        public static final Type<BossBind> TYPE = new Type<>(Awaken.id("living_boss_bind"));
+        public static final StreamCodec<ByteBuf, BossBind> STREAM_CODEC = StreamCodec.composite(
+                net.minecraft.core.UUIDUtil.STREAM_CODEC, BossBind::bar,
+                ByteBufCodecs.VAR_INT, BossBind::entity,
+                ByteBufCodecs.VAR_INT, BossBind::kind,
+                ByteBufCodecs.FLOAT.apply(ByteBufCodecs.list(8)), BossBind::marks,
+                ByteBufCodecs.INT, BossBind::glow,
+                BossBind::new);
+
+        @Override
+        public Type<BossBind> type() {
+            return TYPE;
+        }
+    }
+
+    /** Server → client: a line under a boss's plate ({@code kind}: BossPlates.Line ordinal; {@code colour} RGB). */
+    public record BossLine(java.util.UUID bar, String text, int kind, int colour) implements CustomPacketPayload {
+        public static final Type<BossLine> TYPE = new Type<>(Awaken.id("living_boss_line"));
+        public static final StreamCodec<ByteBuf, BossLine> STREAM_CODEC = StreamCodec.composite(
+                net.minecraft.core.UUIDUtil.STREAM_CODEC, BossLine::bar,
+                ByteBufCodecs.stringUtf8(256), BossLine::text,
+                ByteBufCodecs.VAR_INT, BossLine::kind,
+                ByteBufCodecs.INT, BossLine::colour,
+                BossLine::new);
+
+        @Override
+        public Type<BossLine> type() {
+            return TYPE;
+        }
+    }
+
+    /**
      * A formed creature's move (SPEC §21.13), to everyone tracking it: its body acts out {@code move} (the clip
      * {@code <move>_windup}, stretched over {@code windupTicks}, then {@code <move>_strike}) from server game time
      * {@code startTick}; {@code holdTicks} holds the wind-up's peak. An empty move ends whatever was playing (a wind-up
@@ -295,6 +332,8 @@ public final class LivingNet {
         r.playToClient(LevelUp.TYPE, LevelUp.STREAM_CODEC);
         r.playToClient(Shown.TYPE, Shown.STREAM_CODEC);
         r.playToClient(StormStrike.TYPE, StormStrike.STREAM_CODEC);
+        r.playToClient(BossBind.TYPE, BossBind.STREAM_CODEC);
+        r.playToClient(BossLine.TYPE, BossLine.STREAM_CODEC);
         r.playToClient(FormCue.TYPE, FormCue.STREAM_CODEC);
     }
 }

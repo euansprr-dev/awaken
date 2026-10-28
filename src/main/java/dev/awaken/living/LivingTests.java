@@ -34,6 +34,20 @@ final class LivingTests {
         dev.awaken.living.population.LedgerTests.register();
         dev.awaken.living.camp.CampTests.register();
         dev.awaken.living.craft.CraftTests.register();
+        // the Boss Plate's payloads carry a bar's binding and its lines intact (SPEC §34.1)
+        AwakenTests.register("boss_plate_bind", 20, h -> {
+            java.util.UUID bar = java.util.UUID.randomUUID();
+            var buf = io.netty.buffer.Unpooled.buffer();
+            LivingNet.BossBind bind = new LivingNet.BossBind(bar, 42, dev.awaken.core.api.BossPlates.Kind.WARDEN.ordinal(), List.of(0.66F, 0.33F), 0xFF7A1E);
+            LivingNet.BossBind.STREAM_CODEC.encode(buf, bind);
+            h.assertTrue(LivingNet.BossBind.STREAM_CODEC.decode(buf).equals(bind), "a bind survives the wire");
+            LivingNet.BossLine line = new LivingNet.BossLine(bar, "Countdown: three.", dev.awaken.core.api.BossPlates.Line.PHASE.ordinal(), 0x4AA8FF);
+            LivingNet.BossLine.STREAM_CODEC.encode(buf, line);
+            h.assertTrue(LivingNet.BossLine.STREAM_CODEC.decode(buf).equals(line), "and so does a line");
+            buf.release();
+            h.succeed();
+        });
+
         // SPEC §27.6: registration starts Bram's errand (his letters for Ilse), tracked and on the Now line over bookkeeping; the Registry's
         // Directive is the first floor, already taken on, with its progress on the line; no gate forms before level 3
         // the Now line's order (SPEC §27.6): a tracked chain's step, then a taken Directive, then points, then the road
