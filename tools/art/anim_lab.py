@@ -489,7 +489,7 @@ def rig_pose(style_row, m, held, t):
     if form in ("stab", "jab", "bash", "hook", "upper", "over"):
         tk = SS.thrust_knobs(sid, SS.move_name(style_row, m)) if form == "stab" else None
         return thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, (c, hit, ea, fe, total), tk,
-                           home_ticks)
+                           home_ticks, lambda: SS.chain_start(style_row, SS.move_name(style_row, m), held))
     if form == "spin":
         return spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, (c, hit, ea, fe, total), home_ticks)
 
@@ -590,7 +590,8 @@ THRUST_FROM = {
 }
 
 
-def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, ph, tk=None, home_ticks=None):
+def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, ph, tk=None, home_ticks=None,
+                start_of=None):
     c, hit, ea, fe, total = ph
     if form in ("jab", "hook", "upper", "over"):
         return punch_pose(form, m, held, wt, t, g, rest, windup_pose, back_home, ph)
@@ -630,6 +631,15 @@ def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, ba
     def at(d, twist):
         return g(start + r * d, axis_rot(r, twist) @ R0)
 
+    if tk is not None and tk.get("push") and t < hit:
+        # Swing Studio round 6: one push from where the hand is (the last strike's end, the idle hand's draw, or rest)
+        # to full reach, gathering speed into the hit. A dagger's 1-tick stab was a load, a set, a drive and a stop of a
+        # frame each: a stutter (Euan 2026-10-28: "tiny near glitchy movements"). Before 0: the set the idle hand draws
+        # back to for it (swing_studio.set_time)
+        if t < 0:
+            return at(back_d - pull, -12)
+        p = (t / max(1e-6, hit)) ** tk["push"]
+        return lerp_pose((start_of() if start_of else None) or rest, at(out_d, 22), p)
     if t < c:
         return windup_pose(at(back_d, -8), at(back_d - pull, -12))
     if t < hit:  # driven in: nearly even for a snap, the point arriving on the hit

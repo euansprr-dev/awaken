@@ -308,6 +308,8 @@ def set_time(st, mv):
     m = st["moves"][mv]
     form = L.form_of(m)[0]
     kn = cut_knobs(st["id"], mv, form) if form in L.CUTS else None
+    if form == "stab" and (thrust_knobs(st["id"], mv) or {}).get("push"):
+        return -1.0  # a push leaves from where the hand is: its set is the idle hand's to draw to, before it starts
     return cut_times(m, kn)[1] if kn is not None else L.phases(m, weight(st["id"]))[0]
 
 
@@ -318,29 +320,63 @@ def ready_pose(st, mv, held):
     """A move's pose at its set, just before the drive: where the idle hand waits for it."""
     key = (st["id"], mv, held.wid)
     if key not in _READY:
-        _READY[key] = L.rig_pose(st, st["moves"][mv], held, max(0.0, set_time(st, mv) - 0.01))
+        at = set_time(st, mv)
+        _READY[key] = L.rig_pose(st, st["moves"][mv], held, at if at < 0 else max(0.0, at - 0.01))
     return _READY[key]
 
 
-IDLE_HALF = 0.15  # the idle hand's tip stays this far (ndc) on its own side of the view: two blades never knot mid-screen
+IDLE_GAP = 0.35  # the idle hand's tip stays this far (ndc) from the striking blade's: two blades never knot mid-screen
 
 
-def idle_target(st, mv, held):
-    """Where the idle hand waits for the strike it throws next: toward that strike's set, only as far as keeps its tip on
-    its own half of the view (the strike's own wind-up draws the rest of the way)."""
+def _screen_tip(held, pose, hand):
+    """A hand's tip on the screen, its pose authored for its own hand (the off hand's mirrored)."""
+    n = _tip_ndc(held, pose)
+    return np.array([-n[0], n[1]]) if side(hand) == "off" else n
+
+
+def idle_source(st, mv, held):
+    """Where the hand not striking this move is when it is pressed: holding the end of its own last strike (or the draw
+    it made while the other struck), else at rest. Round 6: it set off from rest, so the hand that had just struck sank
+    back and rose again at every change of hands (Euan 2026-10-28: "it doesn't smoothly switch hands")."""
     rest = (np.zeros(3), np.eye(3))
+    prev, _ = chain_links(st, mv)
+    if prev is None:
+        return rest
+    pmv, at = prev
+    idle = "off" if side(hand_of(st, mv)) == "main" else "main"
+    ph = hand_of(st, pmv)
+    if ph == "both" or side(ph) == idle:
+        return L.rig_pose(st, st["moves"][pmv], held, float(at))
+    return idle_pose(st, pmv, held, float(at)) or rest
+
+
+def idle_target(st, mv, held, cur):
+    """Where the idle hand waits for the strike it throws next (mv), while the other throws cur: that strike's set,
+    or as far toward it as keeps its tip IDLE_GAP from the striking blade's (the strike's own wind-up draws the rest)."""
+    src = idle_source(st, cur, held)
     ready = ready_pose(st, mv, held)
+    if hand_of(st, mv) == "both":
+        # both hands throw it on the main's track (the off's mirrored), from where the main is on the press: the idle
+        # hand waits there too, so the two leave together (from its own set it was carried across on the way)
+        _, win = chain_links(st, cur)
+        ready = L.rig_pose(st, st["moves"][cur], held, float(win[0]))
+    m = st["moves"][cur]
+    hand = hand_of(st, mv)
+    idle = "off" if side(hand_of(st, cur)) == "main" else "main"
+    hold = L.rig_pose(st, m, held, L.hit_tick(m) + 1.0)
+    other = _screen_tip(held, hold, hand_of(st, cur))
     for a in np.linspace(1.0, 0.0, 21):
-        p = L.lerp_pose(rest, ready, a)
-        if _tip_ndc(held, p)[0] >= IDLE_HALF:
+        p = L.lerp_pose(src, ready, a)
+        if np.linalg.norm(_screen_tip(held, p, idle) - other) >= IDLE_GAP:
             return p
-    return rest
+    return src
 
 
 def idle_pose(st, mv, held, t):
     """The idle hand at t ticks into this move ((d, R), authored for its own hand like any move), or None: it rests.
-    Still until the striking hand's hit, so nothing pulls the eye off the blow; then drawn back to the next strike's
-    set over IDLE_DRAW (done by the earliest press), held there through the chain's window, home by the move's end."""
+    Where it was (idle_source) until the striking hand's hit, so nothing pulls the eye off the blow; then drawn to the
+    next strike's set over IDLE_DRAW (done by the earliest press), held there through the chain's window, home by the
+    move's end."""
     nmv = idle_next(st, mv)
     if nmv is None:
         return None
@@ -351,11 +387,12 @@ def idle_pose(st, mv, held, t):
     total = m["windup"] + m["active"] + m["recovery"]
     drawn = min(hit + IDLE_DRAW, win[0]) if win else hit + IDLE_DRAW
     end = min(win[1], total) if win else total
-    target = idle_target(st, nmv, held)
+    src = idle_source(st, mv, held)
+    target = idle_target(st, nmv, held, mv)
     if t <= hit:
-        return rest
+        return src
     if t < drawn:
-        return L.lerp_pose(rest, target, L.ease_in_out_sine((t - hit) / max(1e-6, drawn - hit)))
+        return L.lerp_pose(src, target, L.ease_in_out_sine((t - hit) / max(1e-6, drawn - hit)))
     back = min(1.5, total - end)
     if t < end or back <= 0:
         return target
