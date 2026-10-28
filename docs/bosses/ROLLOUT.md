@@ -69,11 +69,11 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Sleeper | Lord | Nightmare | Brute | kit | B, the Four-Poster | ✓ 6255ae1d | ✓ 6255ae1d | — |
 | The Sky Leviathan | Lord | Sky | Serpent | kit | B, the Ray | ✓ ea291205 | ✓ ea291205 | — |
 | The Hollow Herald | Lord | Abyss | Caster | kit | C, the Ring-Head | ✓ b91a71b6 | ✓ b91a71b6 | — |
-| The Rootmother | Guardian | Rim | Crawler | spider ×2.4 | — | — | — | — |
-| The Thornback | Guardian | Gardens | Beast | ravager | — | — | — | — |
-| The Choirmaster | Guardian | Choir | Caster | witch ×2 | — | — | — | — |
-| The Ossuary King | Guardian | Orchard | Brute | wither skeleton ×2 | — | — | — | — |
-| The Great Listener | Guardian | Silent | Brute | cube listener ×1.8 | — | — | — | — |
+| The Rootmother | Guardian | Rim | Crawler | spider ×2.4 | B, the Long-Legs | — | — | — |
+| The Thornback | Guardian | Gardens | Beast | ravager | B, the Thorn Pangolin | — | — | — |
+| The Choirmaster | Guardian | Choir | Caster | witch ×2 | C, the Cantor | — | — | — |
+| The Ossuary King | Guardian | Orchard | Brute | wither skeleton ×2 | A, the Orchard King | — | — | — |
+| The Great Listener | Guardian | Silent | Brute | cube listener ×1.8 | B, the Hush Bat | — | — | — |
 | The Furnace Engine | Guardian | Foundry | Brute | iron golem ×1.8 | — | — | — | — |
 | The Drowned Moon | Guardian | Inverted | Flier | elder guardian ×1.6 | — | — | — | — |
 | The Architect of Rooms | Guardian | Dreaming | Caster | evoker ×1.8 | — | — | — | — |
@@ -151,3 +151,28 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   a ring of violet-black glass where its head should be with nothing inside it, arms to the floor, a blank scroll).
   **Picked C**, 2026-10-29: the clearest of the three from far off (you see straight through its head), not another robe
   (the Root Saint, the Pilgrim and the Archivist all wear one), and its long limbs give it a walk and reach of its own.
+- **The Rootmother** (kit id `guardian_rim`, as every Guardian's kit takes its mob's id): A the Moss Widow (a heavy
+  spider, root legs, a boulder of turf for an abdomen, a glowing brood sac), B the Long-Legs (a harvestman taller than a
+  house, a small knotted body held high on eight long bowed root legs, eggs and moss streamers hanging under it), C the
+  Turf Mantle (a slab of the Rim with young trees on it, walking on root legs). **Picked B**, 2026-10-29: nothing else
+  has its shape, Rootfall is her body dropping down between her legs, and the lances are her legs stabbing. A reads as
+  a big vanilla spider; C is one more thing carried on legs (the Bell, the Four-Poster).
+- **The Thornback** (`guardian_gardens`): A the Hedge Boar (a bramble crest and thorn tusks), B the Thorn Pangolin
+  (overlapping thorned leaf scales down an arched back to a long tail, blossoms between them; it rolls up to charge),
+  C the Topiary Lion (a clipped hedge lion with a mane of roses). **Picked B**, 2026-10-29: the clearest side view of
+  the three, and its charge is a ball of thorns coming down the ledges. A is today's ravager with a hedge on it; C reads
+  as cute.
+- **The Choirmaster** (`guardian_choir`): A the Conch Siren (a singer rising from a great conch she drags), B the
+  Lionfish Diva (a fan of fin spines behind her like a choir collar, a gown of trailing fins), C the Cantor (a great
+  pale octopus standing up on its arms, two raised to lead, singing through its siphon). **Picked C**, 2026-10-29: the
+  only octopus, it walks the way one does, and every move is an arm. B's fan echoes the Root Saint's sunburst and would
+  be a third woman's shape after the Crowned Host and the Empress; A's shell hides her.
+- **The Ossuary King** (`guardian_orchard`): A the Orchard King (a giant crowned skeleton with an apple tree growing up
+  through his ribs and spreading over his skull, glowing red apples, a rotten cloak, a bone sword), B the Ossuary
+  Colossus (a hulk built of stacked skulls), C the Knuckle King (an ape's build, a tree from his back). **Picked A**,
+  2026-10-29: it says "the orchard grew from his ribs" at a glance, and his getting up once is a skeleton putting
+  itself back together. B reads as a golem with holes in it; C's side view is muddled.
+- **The Great Listener** (`guardian_silent`): A the Ear (a gaunt giant whose head is one great ear), B the Hush Bat (a
+  blind bat as big as a barn walking on its folded wings, huge ears, eyes stitched shut), C the Many-Eared (a tick-like
+  mass grown over with ears). **Picked B**, 2026-10-29: a bat finds you by screaming, which is the fight. A repeats the
+  Herald's tall thin build with an object for a head; C is a second leggy crawler beside the Long-Legs.
