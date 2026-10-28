@@ -28,5 +28,6 @@ public final class LensModule {
 
     public static void init(IEventBus modBus) {
         PARTICLES.register(modBus);
+        LensTests.register();
     }
 }
