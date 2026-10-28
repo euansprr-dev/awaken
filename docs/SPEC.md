@@ -8114,7 +8114,16 @@ whoever asks first; bench fingerprint 590ebda7cf744cf3, 92,028 columns, the same
 `village_road_starts_wait` (a cold lattice chunk 3,600 out over vanilla's real noise, handed off on a stand-in for the
 executor): back in 9 ms (the first hand-off loads its classes), the executor's next task ran 0.5 ms later while the
 roads were planned (4.5 s; inline it would have waited those 4.5 s), the server ticked on (the longest tick 99 ms),
-the step ran on the executor in 0.01 ms.
+the step ran on the executor in 0.01 ms; with the road starts thread, the chunk's roads in 3.2 s (an urgent planner
+job alone, before it: 4.5-5.8 s). The roads-perf tour on CI (run 40689237794, on 88efb16b): the spawn 268 s (the
+runner's spread: 184-320 s), and the flight over new land still froze the server for seven minutes, but at every long
+tick the watch counted no road being laid for another thread and no lattice chunk set aside: the caves held it.
+`CaveHorizon.near` asks `CaveSites.find`, which plans a whole lode region on the server thread (`LodePlans.walls`:
+full noise columns through `getBaseColumn`, ~2.7 ms each on the runner), region after region as a player flies. The
+first tour on 4d099bde (run 40686122729, six and a half minutes) was the same (its long tick in `getBaseColumn`),
+though the watch was then blind to set-aside chunks. Smaller server-thread waits on chunks still generating under a
+flying player, a second each: `Scenes.dryLand` and `SkyRig.groundUnder` (`Level.getHeight`), `Reveal.motes`,
+`LandmarkMarkers.compute`. All outside the roads: routed.
 **Away from the overworld** (Euan 2026-10-28: "Nothing should plan or load overworld content for a player who isn't
 in the overworld"): every system that reads a player's position for planning, generation or chunk tickets, checked for
 the levels a player can stand in away from the overworld (awaken:gates, trials, stillpoint, endless, halo, lucidium,
