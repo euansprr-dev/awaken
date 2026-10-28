@@ -51,7 +51,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Ember Tyrant (the Living Forge) | Lord | Ember | Brute | kit | C | ✓ 3488e8d5 | ✓ c1e3c8ed | — |
 | Unit Zero | Lord | Precursor | Duelist | kit (phase 1) | A, the Sentinel | ✓ b94e7457 | ✓ b94e7457 | — |
 | Mother of Spores | Lord | Fungal | Flier | kit (phase 1) | C, the Crowned Host | ✓ 64932c3a | ✓ 64932c3a | — |
-| The Gearwright Colossus | Lord | Clockwork | Brute | iron golem ×1.8 | C, the Clock Tower | — | — | — |
+| The Gearwright Colossus | Lord | Clockwork | Brute | kit | C, the Clock Tower | ✓ 41eee64c | ✓ 41eee64c | — |
 | The Root Saint | Lord | Temple | Caster | creaking ×1.8 | A, the Rooted Saint | — | — | — |
 | The Bell Warden | Lord | Bell | Construct | cube bell | A, the Bell That Walks | — | — | — |
 | The Glass Serpent | Lord | Glass | Serpent | cube serpent ×2.2 | B, the Hourglass | — | — | — |
