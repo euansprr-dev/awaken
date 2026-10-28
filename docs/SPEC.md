@@ -1172,7 +1172,9 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
   1.25 degrees for at most 12 ticks, a second impact can strengthen but never extend it, and 4 quiet ticks part two;
   kicks are capped at 3 / 2 degrees. `cameraShake` off or reduced motion turns all of it off. Chat, the inventory or
   the K menu never silence the scene; a pause freezes its clock (nothing replays after). Client settings
-  (`awaken-ritual-audio-client.toml`): `effects` 1.0, `ambience` 1.0, `impactMotion` 0.7.
+  (`awaken-ritual-audio-client.toml`): `effects` 1.0, `ambience` 1.0, `impactMotion` 0.7. Follow-up: `3446.flac`
+  (Bell 1 o'clock) is the same take the city's bells are built from; swap it for another bell recording so the ritual
+  and the city don't share a voice.
 
 - Ritual audio revision (2026-10-28): physical stone, pressure, arc, wind and bell layers use archived CC0 recordings
   with hashes, source pages and repeatable processing in `tools/art/sources/ritual/` and `ritual_recordings.py`.
@@ -5646,7 +5648,10 @@ of the plan). No mixins.
     shoulder (0.35 under the eye, clear of the floor), and only a working hand reaches into the frame.
   - **A real mouth:** every furnace, smoker and blast furnace in the world gets a block model with a recessed mouth
     (all four facings, lit and unlit): the five outer faces and a stone frame stay, the cavity is x 3–13, y 2–13, z 0–9
-    model pixels with stone walls, a closed back and a coal bed, and a lit one glows at the back of the coals. Items sit
+    model pixels with soot-dark walls and back (vanilla's cobbled deepslate, by name) and a coal bed, and a lit one glows at
+    the back of the coals. The cavity's faces are lit from the air in front of the mouth (cullface north, so vanilla's
+    block renderer reads the light there instead of inside the solid furnace, which is always 0; Sodium unchecked): an unlit furnace
+    reads as a deep sooty hollow, not a black hole, and the cavity is culled when a solid block covers the front. Items sit
     3/16 inside the mouth at scale 0.24: what cooks on the left, the finished result on the right (±0.15, y + 0.57),
     the fuel on the coals (y + 0.26). They stay still while vanilla's flame, smoke and cooking go on. Each slot is
     picked within 0.16 of its middle and gets the front-facing outline; the cooking (Holo blue) and the fuel left (fire)
