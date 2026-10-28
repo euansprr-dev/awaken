@@ -9404,6 +9404,28 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   - **Meter.** Worst kink outside a strike 4.1°; held 0-11% on its blows; dips 26% in Severing and 2% from the lance
     into the step. Deploy Coils (30%) and the intro (50%) hold their poses on purpose. The meter now counts angles the
     short way round, so a spinning halo's whole turns don't read as pose.
+- **Mother of Spores, the Crowned Host** (body and motion, `kit/bosses/mother_of_spores.py`). The fungus wears her: a
+  pale woman hung in the air as if from strings (hips 2 blocks up, 6 blocks to the top of the crown, the hitbox stays
+  3 x 3), back arched, head fallen to one side, arms limp and open, her legs one root tail of five segments on springs
+  with a glowing tip; a ruff of gills at her neck, shelf fungus on her left shoulder, a ragged frill where the legs
+  became the tail, dark growth with three spore sacs on her back. Out of her back and skull a crown of twelve stalks
+  fans out, each over its own side, each in two segments with a stepped glowing club, four forking. 106 cubes, no plan
+  (a Flier). Values: the sea-green glow brightest, then her bone-pale skin, the pale gills and stalks, the mauve flesh,
+  the dark plum growth.
+  - **The crown is the weapon** and she is the puppet it jerks. Crown Lash: one side of the crown rears back over her
+    shoulder as she twists away, then whips over and down in front, the clubs landing at a standing player's chest
+    (reach 1.0-1.2 blocks past the hitbox). The swoop pitches her forward with the crown swept back like folded wings and
+    rakes it down as she arrives. Spore Lob: the tallest stalk winds back round the side with her body rolling after it
+    (so lobs in a row loop on) and lets go reaching up and out, the spore leaving its club 4.7 blocks up. The Drop: she
+    is hauled up, arms out, the crown shut into a spire, hangs the hold, and falls with the crown bursting open onto the
+    floor. Spore Rain: arms up, face to the sky, the crown open like a wheel and pulsing twice. Birth: curled round
+    herself and shuddering, then arched back as the sacs burst. Spore Halo: the crown shuts, she turns once (`_spin`, a
+    whole turn added after the clip is staged, so it never spins back) and it flares. Bloom: the crown closes over her
+    like a bud, then everything opens at once; the intro opens the same bud.
+  - **Ground.** The tail's tip curls up off the floor in every clip; a club that would go in lifts on its stalk; at the
+    end of the fall the arms, threads and frill lift to lie along the floor.
+  - **Meter.** Worst kink outside a strike 4.8° (the lob's wind-up loop); held 0-15%; dips 32-37% (the lashes, the swoop
+    into a lash, lob into lob). The intro holds its bud on purpose (32%).
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
