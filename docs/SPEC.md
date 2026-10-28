@@ -5854,6 +5854,46 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     long tip comes nearer the eye after the hit, so it looks fastest just after it: 0.64-0.79), the axe's sweep and
     art, the daggers' slash, the maul's uppercut contact, the scythe's reap contact and riposte, the chain-blade's
     backhand lash and the war-staff's backhand (drift 88, 138 ms).
+  - *Round 3, the chain* (Euan 2026-10-28: "when you're doing combos... the second slice is not even visible... it looks
+    like a mess of movement and trails"): round 2's follow-through carried the blade out of the frame and waited there
+    for the next press, so a chained strike spent its wind-up below the view and the trail drew it in from nowhere.
+    Now a strike that leads on (it has a cadence, or a mastery link) ends in view: its carry is cut back until the
+    blade's middle ends inside 0.85 of the frame (at least 40% of its travel kept), and a blow that ends low (a slam, a
+    chop) is hauled up over at most 1.5 ticks until its tip is above -0.4 of the screen's height. It holds there
+    through the chain's window (to the cadence's end), then comes home as before. The next strike of the same hand
+    winds up from that pose, not from rest, its draw back cut until the blade's middle at the set is inside 0.9 of
+    the frame. Every wind-up moves the tip at most 0.3 of the screen a frame at 60 fps (a longer draw back takes more
+    of the wind-up), and one with no room for a set (under half a tick) goes straight to where the drive leaves
+    from. `tools/art/swing_chain.py` plays each chain as the runtime does (the earliest press or mid-window, carried by
+    `SwingBlend`, 60 fps). Across the 67 chain strikes, mashing: chained strikes out of view in their wind-up and blow
+    32 -> 6, the drive out of view 30 -> 7; mid-window 29 -> 4. GameTest `arms_chain_flow`: every same-hand link starts
+    where the one before it holds the blade on its earliest press (43 links, within 0.02 blocks and 3 degrees). Cost:
+    the settle after a leading blow is now seen (the report's drift, 2 -> 27 moves, 88-150 ms), and a chained strike's
+    shorter draw back lands at 0.42-0.72 of its peak speed in 7 moves. Left: the scythe's haul (its own shape), the
+    daggers' and twin blades' rhythm (a 1-tick wind-up every 4 ticks).
+  - *Round 4, the idle hand* (Euan 2026-10-28: "let the idle hand draw back while the other strikes"): a style whose
+    feel spec sets `idleHand` (the daggers; the gauntlets may follow) bakes, for each chain strike thrown by one hand
+    and followed by the other's (or both), the other hand's track: still until this strike's hit, then drawn over 1.5
+    ticks (done by the earliest press) toward the next strike's set, only as far as keeps its tip 0.15 (ndc) on its
+    own side of the view so the two blades never knot mid-screen, held through the window, home by the move's end.
+    The next strike starts from there and its own wind-up draws the rest of the way. `fp_swings.json` schema 6 adds
+    the move's optional `idle` keys ([t, dx, dy, dz, qx, qy, qz, qw], authored for its own hand like any move, mirrored
+    for the off hand); `FpSwings.idle` samples it and `ArmsHands` shows it on the hand not striking, carried by
+    `SwingBlend` like a strike. A strike of both hands now starts where the main hand held the strike before it.
+    `arms_chain_flow` checks these links too (46). The twin blades are one double-ended blade in one hand, so the idle
+    hand does not apply to them.
+  - *Round 5, the figure-eight* (Euan 2026-10-28: "give the twin blades a two-handed hold on the shaft and alternate
+    which end leads each strike, a figure-eight"): the twin blades close the off hand on the shaft 0.11 below the main
+    (a two-handed weapon, below). A feel spec's move `far` leads with the weapon's other end: its pose is the cut's
+    own, turned 180 degrees about the blade's flat through the weapon's middle, so the far blade runs the near one's
+    exact path. A chain strike whose next strike leads with the other end carries on round off its hit, turning the
+    weapon half a turn the same way the cut was going (1 - (1 - x)^2 from the hit to the earliest press: the blow
+    whirls straight on and slows, never a stop and go), its hands rising as it turns until the weapon's middle is at
+    least -0.7 on the screen (ndc), so the far blade comes up into view and the trailing one never dives off the
+    bottom. Left there, it turns on round the same way as it goes home. Strike 2 is `far`: blade one cuts, whirls, and
+    blade two comes over to cut back; it whirls on and blade one stands up for strike 3; the spins take either end.
+    The bake marks a far move `far: true` (schema 6, optional); `FpSwings.far` reads it and the first-person trail runs
+    along that end (from its middle to its point). `arms_chain_flow` checks the ends take turns.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
@@ -5863,8 +5903,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     off). The swish plays on the blade's clock, its whoosh peaking as the blade crosses (the fighter's on the frame it
     falls due, those near on the server's tick, `ArmsState.swishAt`); a blow landing before the row's sound could peak
     plays `arms.swish_quick` (its pass 38 ms in), the katana's cuts `arms.swish_katana` (thinner, a clean high whistle,
-    56 ms). Two-handed weapons (katana, greatblade, maul, spear, glaive, scythe, war-staff) close the off hand on the
-    handle below the main (0.11 to 0.40 blocks down it) when the off hand is empty, through every swing and the guard;
+    56 ms). Two-handed weapons (katana, greatblade, maul, spear, glaive, scythe, war-staff, twin blades) close the off
+    hand on the handle below the main (0.11 to 0.40 blocks down it) when the off hand is empty, through every swing and the guard;
     a stance's own off fist still takes the hand.
   - *Live tuning* (`SwingTuning`; `/awaken swing tune on [path] | off`, `ab`, `blind`, `note <words>`, `last`; the
     state kept in `awaken-arms-client.toml`): while on, the swings come from `<folder>/fp_swings.json` (the folder: the

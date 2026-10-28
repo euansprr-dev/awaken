@@ -68,3 +68,70 @@ Left for their own rounds:
 - The axe's sweep (strike 4) and art (0.71, 0.76), the daggers' slash (strike 3, 0.80).
 - The maul's uppercut contact (-0.09), the scythe's reap contact (-0.09) and riposte (43% above the eye).
 - The chain-blade's backhand lash (drift 88 ms) and the war-staff's backhand (138 ms).
+
+## Round 3: the chain (2026-10-28)
+
+Note (Euan, same day): "most of them are still decent, but when you're doing combos, a lot of the time the weapon, the
+second slice, is not even visible... Some of them are so fast that when you're clicking fast, it looks like just a
+mess... the trail teleports and follows the teleportation... the hammer, the second swing, you barely even see it."
+He also said the weight improved: the katana feels fast, the hammer slower, the axe good.
+
+What was wrong: the studio judged each move alone. Round 2 carried every follow-through down out of the frame and held it
+there for the next press, so in a chain the next strike wound up from below the view and only appeared on its hit. The
+new `tools/art/swing_chain.py` plays the chains the way the game does and showed it: second and third strikes were on
+screen for 15-45% of their wind-up and blow, the blade dipping 2-12 screen heights below the frame.
+
+The fix (every style, in the studio's cut and the shared wind-up):
+- A strike that leads on ends in view (the carry cut back, at least 40% kept), a low blow is hauled up to a readable
+  height, and it holds there through the chain's window.
+- The next strike of the same hand winds up from that pose, its draw back kept in view.
+- No wind-up flings the tip more than 0.3 of the screen a frame; with no room for a set it goes straight to the drive.
+
+| chain strikes (67), out | round 2, mash | round 3, mash | round 2, mid-window | round 3, mid-window |
+|---|---|---|---|---|
+| out of view (wind-up and blow under 90% seen) | 32 | 6 | 29 | 4 |
+| drive out of view | 30 | 7 | 28 | 5 |
+| a step over 0.3 of the screen outside the blow | 42 | 29 | 49 | 31 |
+| turns back on itself | 6 | 3 | 1 | 2 |
+
+The single-move report: bite, contact and drive hold; drift 2 -> 27 (the settle after a leading blow is now in view),
+seven chained strikes hit at 0.42-0.72 of their peak (shorter draw back).
+
+Left: the scythe's haul, the twin blades' spins (strikes 4-5), the daggers' and twin blades' rhythm (a 1-tick wind-up
+every 4 ticks: the idle hand could draw back while the other strikes), and the steps still over 0.3 (mostly first
+strikes thrown up from rest).
+
+## Round 4: the idle hand (2026-10-28)
+
+Note (Euan, same day): "do the daggers and twin blades rhythm next: let the idle hand draw back while the other strikes."
+
+The daggers strike one hand at a time, a 1-tick wind-up every 4 ticks, and the hand not striking sat at rest, so each
+stab came out of nowhere. Now, from the moment one dagger lands, the other draws back toward the next strike's set and
+waits there; the next stab only has the last part of its draw left. The idle dagger stays on its own side of the view
+(its tip at least 0.15 from the middle): drawn all the way to the next set, the two blades piled up in the centre.
+Strike 4 is both hands crossing, by design, and now starts where the main hand held strike 3.
+
+The twin blades are one double-ended blade held in one hand (every move the main hand's), so there is no idle hand to
+draw back. Their round-3 chain is in view; their rhythm needs its own idea.
+
+Chain links that start exactly where their hand already is: 43 -> 46 (the daggers' 1 -> 2, 2 -> 3, 3 -> 4).
+
+## Round 5: the twin blades' figure-eight (2026-10-28)
+
+Note (Euan, same day): "give the twin blades a two-handed hold on the shaft and alternate which end leads each strike,
+a figure-eight."
+
+Both hands now hold the shaft, the off hand just below the main. The ends take turns. Strike 1 cuts with the near blade
+and does not stop on the hit: it whirls straight on, slowing, half a turn by the moment the next press can come, and the
+hands rise as it turns, so the far blade swings up from below into view. Strike 2 cuts back with that far blade along
+the exact path the near one would have taken, then whirls on, and the near blade stands up for strike 3. The spins
+(strikes 4 and 5) use both ends anyway. If the chain stops after a strike, the blade keeps turning the same way as it
+goes home. The trail follows whichever blade leads.
+
+Tried and dropped: starting the turn after the bite (the cut stopped dead, then the turn set off again faster than the
+hit) and easing the turn in (a dip after the hit, then a second peak faster than it). From the hit, fast and slowing, the
+turn is the blow carrying on.
+
+Numbers: twin blades strikes 2 and 3 stay fully in view (mash jump 0.28 and 0.21, steady 0.11 and 0.21). Every other
+style's chain is unchanged (totals as round 4). Strike 1's own blade is in view less (0.88 -> 0.75), because it whirls
+off the bottom as the far blade comes up.
