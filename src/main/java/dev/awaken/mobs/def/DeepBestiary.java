@@ -115,7 +115,7 @@ final class DeepBestiary {
     }
 
     private static void guardians(List<MobDef> out) {
-        out.add(m("guardian_rim", "The Rootmother", Theme.RIM, Tier.GUARDIAN, Model.SPIDER, "Moss webs and root lances; the Rim wakes with her").hp(30).dmg(4.5).spd(0.3).scale(2.4F).tint(0x98C878).bar(BossBarColor.GREEN).arena(22)
+        out.add(m("guardian_rim", "The Rootmother", Theme.RIM, Tier.GUARDIAN, Model.SPIDER, "Moss webs and root lances; the Rim wakes with her").hp(30).dmg(4.5).spd(0.3).scale(2.4F).size(0.85F, 1.45F).tint(0x98C878).bar(BossBarColor.GREEN).arena(22)
                 .intro("The roots under the Rim are hers.")
                 .phase(1.0F, "The Rootmother descends.", a(ROOT, "Moss Web").radius(3), a(LEAP, "Rootfall").radius(3.5F).heavy())
                 .phase(0.5F, "The Rim wakes.", a(SUMMON, "Brood").summon("rim_crawler").n(3), a(FANGS, "Root Lances").n(14), a(LEAP, "Rootfall").radius(3.5F))

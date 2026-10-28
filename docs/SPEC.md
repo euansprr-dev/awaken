@@ -9901,6 +9901,34 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     turn (x+180, 180-y, z+180) agree only at rest, so a recovery chained forward could spin the long way round to get
     home. A snap belongs on the active's last key or the follow-through: stage_clips keeps recovery keys only between
     0.33 and 0.74 of the recovery, and the Horizon's first snap (at 0.2) was dropped.
+- **The Rootmother, the Long-Legs** (body and motion, `kit/bosses/guardian_rim.py`). "The Rootmother descends."
+  A harvestman of root and moss: a small knot of a body, bark-grained, capped with moss, carried 44 px up on eight long
+  legs of root bark whose mossy knees ride high above her, each femur 38 px and each shin 70, so her claws stand three
+  blocks out from her middle. An eye turret on her back, two root fangs and two feelers under her front, a silk sac of
+  glowing eggs slung under her body, and three streamers of moss and silk swaying from it. 109 cubes (654 faces) on 50
+  bones. The hitbox is 2.0 x 3.5 (size 0.85 x 1.45 at scale 2.4); the legs stay out of it, as a spider's do.
+  - **The legs.** Every pose places each claw by IK (`_pose`'s feet, poles that send the knees up and out) and the
+    standing legs are re-planted every tick (`_plant`), so the body can bob, lean and swing between them while the
+    claws stay where they stand. Each hip is turned to face down its leg: a leg straight out to her side has its knee's
+    hinge along the body's z, where ZYX Euler angles lock (y = 90), and its keys spun x against z by a hundred degrees
+    a tick. A raised leg aims about 0.6 of its length from the hip, or it folds.
+  - **The idle.** She bobs slowly between her legs; one front leg on each side lifts and feels the air; the feelers
+    work and the egg sac sways. She walks in alternating fours like a harvestman, each leg a ripple behind the last,
+    and runs in long reaching strides.
+  - **Her blows.** The stab: a front leg rears up high over her and stabs down two blocks before her as her body drops
+    after it, then the other side (a string, then the Scythe). The Scythe swings her body away and lifts a second leg
+    far out to her left, holds, and sweeps it round low across the floor in front of her and on out past her right.
+    Whoever is behind gets a back leg raised high over her and stabbed down. Moss Web lifts both front legs to throw.
+    Rootfall rises tall, springs, and lands on you with all eight legs spread. Root Lances (the signature) raises four
+    legs high like spears, holds them shaking, and drives them down into the floor round her. Brood shakes the egg sac
+    and lowers it to the floor. Her intro rises tall, lifts her front legs to feel the air, her body swaying out of
+    step with them, then lets herself down toward you.
+  - **The death.** She shudders up on her legs; her front legs give, then the rest, and her body drops to the floor
+    and bounces; her legs draw in and up over her the way a dead harvestman's do, one twitches, and she is still
+    (4.6 s). The curled legs turn nearly about-face from rest, so the death's keys are unwrapped (each turn within
+    half a turn of the key before), and the streamers swing forward under her as she falls (swung back they run out
+    of room once she is down).
+  - **Meter.** Worst kink outside a strike 3.5°; held at most 12% on every move; dips at most 39%.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
