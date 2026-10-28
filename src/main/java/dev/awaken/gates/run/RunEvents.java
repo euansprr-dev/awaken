@@ -26,10 +26,17 @@ public final class RunEvents {
 
     public static void register(IEventBus bus) {
         bus.addListener((ItemEntityPickupEvent.Pre e) -> Runs.onPickup(e));
-        bus.addListener((LivingIncomingDamageEvent e) -> Modifiers.onIncomingDamage(e));
+        bus.addListener((LivingIncomingDamageEvent e) -> {
+            Modifiers.onIncomingDamage(e);
+            if (!e.isCanceled() && e.getAmount() > 0) Encounters.onDamage(e);
+        });
         bus.addListener((LivingHealEvent e) -> Modifiers.onHeal(e));
         bus.addListener((LivingDropsEvent e) -> Modifiers.onDrops(e));
-        bus.addListener((LivingChangeTargetEvent e) -> Twists.onTarget(e));
+        bus.addListener((LivingChangeTargetEvent e) -> {
+            Twists.onTarget(e); // Inverted retains its explicit cancellation contract.
+            LivingEntity target = e.getNewAboutToBeSetTarget();
+            if (!e.isCanceled() && target != null && !Encounters.mayTarget(e.getEntity(), target)) e.setNewAboutToBeSetTarget(null);
+        });
         bus.addListener((net.neoforged.neoforge.event.entity.EntityEvent.Size e) -> RigWellsLive.onSize(e));
     }
 

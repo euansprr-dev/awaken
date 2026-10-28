@@ -99,6 +99,7 @@ public final class GateLiveTests {
                 // Echoing: the dead get up once; Volatile: the dead burst (no block damage)
                 h.assertTrue(Forces.has(mob, Forces.Tag.ECHO) && Forces.has(mob, Forces.Tag.VOLATILE), "modifier tags reach the monster");
                 var key = new GateMobs.Key(g.id, 0, 1, r.id);
+                int preparedNeighbours = GateMobs.alive(key) - 1; // pre-entry preparation already populated this room
                 if (mob instanceof AwakenMob am) {
                     // Awaken creatures rise by themselves: the first death is a fall (mobs module)
                     am.hurtServer(level, p.damageSources().playerAttack(p), 1_000_000F);
@@ -119,16 +120,17 @@ public final class GateLiveTests {
                 plain.hurtServer(level, p.damageSources().playerAttack(p), 1_000_000F);
                 h.assertFalse(plain.isAlive(), "the monster died");
                 plain.discard();
-                h.assertTrue(GateMobs.alive(key) == 0, "its room is empty for a moment, alive " + GateMobs.alive(key));
+                h.assertTrue(GateMobs.alive(key) == preparedNeighbours, "the fallen member is absent for a moment, alive " + GateMobs.alive(key));
                 RunEvents.pendingNow(level.getServer());
-                h.assertTrue(GateMobs.alive(key) == 1, "an Echoing monster rises once, alive " + GateMobs.alive(key));
-                LivingEntity risen = (LivingEntity) level.getEntity(GateMobs.aliveIds(key).iterator().next());
+                h.assertTrue(GateMobs.alive(key) == preparedNeighbours + 1, "an Echoing monster rises once, alive " + GateMobs.alive(key));
+                LivingEntity risen = GateMobs.aliveIds(key).stream().map(level::getEntity).filter(e -> e instanceof LivingEntity le && Forces.hasRisen(le))
+                        .map(e -> (LivingEntity) e).findFirst().orElse(null);
                 h.assertTrue(risen != null && !Forces.has(risen, Forces.Tag.ECHO) && Forces.hasRisen(risen), "the risen one won't rise again");
                 risen.hurtServer(level, p.damageSources().playerAttack(p), 1_000_000F);
                 h.assertFalse(risen.isAlive(), "the risen one stays down");
                 risen.discard();
                 RunEvents.pendingNow(level.getServer());
-                h.assertTrue(GateMobs.alive(key) == 0, "the second death is final, alive " + GateMobs.alive(key));
+                h.assertTrue(GateMobs.alive(key) == preparedNeighbours, "the second death is final, alive " + GateMobs.alive(key));
                 h.assertTrue(level.getBlockState(under).equals(floorBefore), "Volatile bursts break no blocks");
                 Gates.forceExtract(p, false);
                 h.assertTrue(p.getAttributeValue(Attributes.GRAVITY) > 0.07, "gravity is back to normal outside");
@@ -150,7 +152,8 @@ public final class GateLiveTests {
                 p = player(h);
                 h.assertTrue(Runs.enter(p, g), "entered");
                 FloorLayout f = GateLayout.of(plan).floor(0, 1);
-                Room r = biggestCombat(f);
+                Room r = f.rooms.stream().filter(o -> o.type.combat() && o.normals + o.elites > 0 && !o.spawnSpots.isEmpty())
+                        .max(java.util.Comparator.comparingInt(o -> o.area())).orElseThrow();
                 put(level, p, g, f, r);
                 long now = GateService.now(level.getServer());
                 RunState run = Runs.run(p);
@@ -158,7 +161,13 @@ public final class GateLiveTests {
                 run.noise = 30;
                 RunEvents.tickNow(p);
                 AABB around = p.getBoundingBox().inflate(48);
-                h.assertTrue(level.getEntitiesOfClass(GateShade.class, around).size() == 1, "Mirror: your shadow steps out after 40 s");
+                h.assertTrue(level.getEntitiesOfClass(GateShade.class, around).isEmpty(), "no distant spot in this small room yet");
+                // A failed placement must not consume the once-per-floor Mirror or Listener cooldown.
+                BlockPos edge = GateService.roomFloor(g, f, r, r.x0(), r.z0());
+                p.teleportTo(level, edge.getX() + .5, edge.getY(), edge.getZ() + .5, Set.of(), 0, 0, true);
+                RunEvents.tickNow(p);
+                around = p.getBoundingBox().inflate(48);
+                h.assertTrue(level.getEntitiesOfClass(GateShade.class, around).size() == 1, "Mirror retries once an engaged room has a distant spot");
                 h.assertTrue(!level.getEntitiesOfClass(LivingEntity.class, around,
                         e -> e.getCustomName() != null && e.getCustomName().getString().equals("Listener")).isEmpty(), "Silence: noise draws a Listener");
                 RunEvents.tickNow(p);

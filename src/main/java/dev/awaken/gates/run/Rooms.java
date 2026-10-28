@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Rooms waking up: monsters appear when a player first steps into a room, arenas seal until empty, the Lord's arena
+ * Rooms waking up: nearby monsters wait visibly before entry, arenas seal until empty, the Lord's arena
  * seals until the Lord falls, shrines open when the floor's condition is met. Server thread only.
  */
 public final class Rooms {
@@ -132,6 +132,7 @@ public final class Rooms {
         GateMobs.register(e, new GateMobs.Key(g.id, f.area, f.floor, roomKey));
         dev.awaken.gates.worlds.WorldsLive.dress(e, f, home);
         Modifiers.onSpawn(g, e);
+        Encounters.hold(e, new GateMobs.Key(g.id, f.area, f.floor, roomKey), role == MobRole.Role.BOSS);
         if (role == MobRole.Role.BOSS && f.area == 0) dev.awaken.core.api.ArmsApi.lordWields(e);
         if (role != MobRole.Role.BOSS && !g.scripted) dev.awaken.core.api.ArmsApi.gateSpawn(e, g.key(), f.area, f.floor, role == MobRole.Role.ELITE); // the bearer of the gate's pattern (docs/arms-progression/PLAN.md §3.4)
         return e;
@@ -168,51 +169,142 @@ public final class Rooms {
     }
 
     static int spawnGroup(ServerLevel level, GateRecord g, FloorLayout f, Room r, int roomKey, int normals, int elites, int offset) {
-        List<BlockPos> spots = spots(level, g, f, r);
+        FloorState fs = g.floor(f.area, f.floor);
+        if (!fs.pendingCompanies.containsKey(roomKey)) {
+            if (g.scripted) {
+                normals = (normals + 1) / 2;
+                elites = Math.min(elites, 1);
+            } else {
+                int[] company = partyCompany(normals, elites, partyOnFloor(level, g, f));
+                normals = company[0];
+                elites = company[1];
+            }
+            // Freeze this wave's party scaling and progress once, even if capacity becomes available over several visits.
+            fs.pendingCompanies.put(roomKey, new FloorState.Company(normals, elites, offset, 0));
+            GateRegistry.get(level.getServer()).setDirty();
+        }
+        return resumeGroup(level, g, f, r, roomKey);
+    }
+
+    private static int resumeGroup(ServerLevel level, GateRecord g, FloorLayout f, Room r, int roomKey) {
+        FloorState fs = g.floor(f.area, f.floor);
+        FloorState.Company company = fs.pendingCompanies.get(roomKey);
+        if (company == null) return 0;
+        int cap = r.type == Room.Type.ARENA ? ARENA_CAP : GATE_CAP;
+        if (company.next < company.normals + company.elites && GateMobs.inGate(g.id) >= cap) return 0;
+        List<BlockPos> spots;
+        if (roomKey >= 256) {
+            int zone = roomKey & 255, gx = r.gx + zone % r.gw, gz = r.gz + zone / r.gw;
+            spots = new ArrayList<>();
+            for (int[] at : r.spawnSpots) if ((at[0] >> 4) == gx && (at[1] >> 4) == gz) {
+                BlockPos pos = GateService.roomFloor(g, f, r, at[0], at[1]);
+                if (level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
+                        && level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty()) spots.add(pos);
+            }
+            if (spots.isEmpty()) spots.add(GateService.roomFloor(g, f, r, gx * 16 + 8, gz * 16 + 8));
+        } else spots = spots(level, g, f, r);
         int n = 0;
-        if (g.scripted) {
-            // the story's first gate: half the company, so a wooden sword and one power can carry a room
-            normals = (normals + 1) / 2;
-            elites = Math.min(elites, 1);
-        } else {
-            int[] company = partyCompany(normals, elites, partyOnFloor(level, g, f));
-            normals = company[0];
-            elites = company[1];
+        while (company.next < company.normals + company.elites && GateMobs.inGate(g.id) < cap) {
+            int i = company.next++;
+            BlockPos at = spots.get((i + company.offset) % spots.size());
+            if (spawn(level, g, f, roomKey, i < company.elites ? MobRole.Role.ELITE : MobRole.Role.NORMAL, at) != null) n++;
         }
-        for (int i = 0; i < normals + elites; i++) {
-            BlockPos p = spots.get((i + offset) % spots.size());
-            if (spawn(level, g, f, roomKey, i < elites ? MobRole.Role.ELITE : MobRole.Role.NORMAL, p) != null) n++;
-        }
+        if (company.next == company.normals + company.elites) fs.pendingCompanies.remove(roomKey);
+        GateRegistry.get(level.getServer()).setDirty();
         return n;
     }
 
     // ---- triggers ---------------------------------------------------------------------------------------------------
 
-    /** A player stepped into room r (zone = slot index inside caverns). */
-    static void enter(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f, Room r, int floorX, int floorZ) {
+    /** Populate the current room and its connected neighbours before a player reaches their doorways. */
+    static void prepareAround(ServerLevel level, GateRecord g, FloorLayout f, Room current) {
+        prepare(level, g, f, current);
+        for (Room.Door door : current.doors) {
+            Room next = f.room(door.toRoom);
+            // a neighbour waits for its chunks: a preview never reads or loads one (SPEC §38.1); entry prepares it anyway
+            if (next != null && loaded(level, g, f, next)) prepare(level, g, f, next);
+        }
+    }
+
+    /** Whether every spot a room's company could take (its spawn spots, centre and Lord's spot) is in a loaded chunk. */
+    static boolean loaded(ServerLevel level, GateRecord g, FloorLayout f, Room r) {
+        var chunks = level.getChunkSource();
+        BlockPos c = GateService.roomFloor(g, f, r, r.centerX(), r.centerZ());
+        if (chunks.getChunkNow(c.getX() >> 4, c.getZ() >> 4) == null) return false;
+        Room.Feature lord = r.feature(Room.FeatureKind.BOSS_SPOT);
+        if (lord != null) {
+            BlockPos at = GateService.roomFloor(g, f, r, lord.x(), lord.z());
+            if (chunks.getChunkNow(at.getX() >> 4, at.getZ() >> 4) == null) return false;
+        }
+        for (int[] spot : r.spawnSpots) {
+            BlockPos at = GateService.roomFloor(g, f, r, spot[0], spot[1]);
+            if (chunks.getChunkNow(at.getX() >> 4, at.getZ() >> 4) == null) return false;
+        }
+        return true;
+    }
+
+    static void prepare(ServerLevel level, GateRecord g, FloorLayout f, Room r) {
         FloorState fs = g.floor(f.area, f.floor);
-        int key = r.id;
-        if (r.type == Room.Type.CAVERN) {
-            int zone = (floorX >> 4) - r.gx + ((floorZ >> 4) - r.gz) * r.gw;
-            key = cavernKey(r, zone);
-            if (fs.triggered.add(key)) {
-                int count = Hash.unit(r.seed, zone, 3) < 0.6 ? Math.max(1, Math.round(r.normals * 1.6F / r.area())) : 0;
-                if (count > 0) spawnGroup(level, g, f, r, key, count, zone % 7 == 3 ? 1 : 0, zone * 3);
-                GateRegistry.get(level.getServer()).setDirty();
+        if (fs.clearedRooms.contains(r.id)) return;
+        // Later arena waves can also wait for the shared budget; resume their unspawned members, never the whole wave.
+        if (fs.prepared.contains(r.id)) {
+            if (fs.pendingCompanies.containsKey(r.id)) {
+                resumeGroup(level, g, f, r, r.id);
+                if (GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) == 0) emptied(level, g, f, r);
             }
             return;
         }
-        if (!fs.triggered.add(key)) {
+        if (r.type == Room.Type.CAVERN) {
+            boolean complete = true;
+            for (int zone = 0; zone < r.area(); zone++) {
+                int key = cavernKey(r, zone);
+                if (fs.prepared.contains(key) || fs.clearedRooms.contains(key)) continue;
+                int count = Hash.unit(r.seed, zone, 3) < 0.6 ? Math.max(1, Math.round(r.normals * 1.6F / r.area())) : 0;
+                spawnGroup(level, g, f, r, key, count, count > 0 && zone % 7 == 3 ? 1 : 0, zone * 3);
+                if (fs.pendingCompanies.containsKey(key)) complete = false;
+                else fs.prepared.add(key);
+            }
+            if (complete) fs.prepared.add(r.id);
+        } else {
+            if (r.type == Room.Type.BOSS) {
+                Twists.prepareBoss(level, g, f, r);
+                resumeGroup(level, g, f, r, r.id);
+            } else if (r.type.combat()) {
+                if (r.type == Room.Type.ARENA) fs.waves.putIfAbsent(r.id, 1);
+                spawnGroup(level, g, f, r, r.id, r.normals, r.elites, 0);
+            }
+            if (!fs.pendingCompanies.containsKey(r.id)) {
+                fs.prepared.add(r.id);
+                if (fs.triggered.contains(r.id) && r.type.combat() && r.type != Room.Type.BOSS
+                        && GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) == 0) emptied(level, g, f, r);
+            }
+        }
+        GateRegistry.get(level.getServer()).setDirty();
+    }
+
+    /** A player stepped into room r (zone = slot index inside caverns). Preparation never seals a doorway. */
+    static void enter(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f, Room r, int floorX, int floorZ) {
+        prepare(level, g, f, r);
+        FloorState fs = g.floor(f.area, f.floor);
+        int key = r.type == Room.Type.CAVERN
+                ? cavernKey(r, (floorX >> 4) - r.gx + ((floorZ >> 4) - r.gz) * r.gw) : r.id;
+        boolean first = fs.triggered.add(key);
+        if (first) Encounters.wake(level, g, f, key);
+        if (r.type == Room.Type.CAVERN) {
+            if (!fs.pendingCompanies.containsKey(key) && GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, key)) == 0) fs.clearedRooms.add(key);
+            if (first) GateRegistry.get(level.getServer()).setDirty();
+            return;
+        }
+        if (!first) {
             if (!fs.locked.contains(r.id)) resealUnfinished(level, p, g, f, r, fs);
             return;
         }
         GateRegistry.get(level.getServer()).setDirty();
         switch (r.type) {
             case ARENA -> {
+                if (GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) == 0 && fs.pendingCompanies.containsKey(r.id)) break;
                 gatherParty(level, p, g, f, r);
                 lock(level, g, f, r, true);
-                fs.waves.put(r.id, 1);
-                spawnGroup(level, g, f, r, r.id, r.normals, r.elites, 0);
                 Signal.toast(p, Component.literal("The arena seals."));
             }
             case BOSS -> {
@@ -222,31 +314,26 @@ public final class Rooms {
                 Twists.bossArena(level, p, g, f, r);
             }
             default -> {
-                if (r.type.combat() && r.normals + r.elites > 0) spawnGroup(level, g, f, r, r.id, r.normals, r.elites, 0);
-                else fs.clearedRooms.add(r.id);
+                if (!r.type.combat()) fs.clearedRooms.add(r.id);
             }
         }
-        if (fs.triggered.contains(r.id) && GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) == 0 && r.type.combat()
-                && r.type != Room.Type.BOSS) {
+        if (GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) == 0 && r.type.combat() && r.type != Room.Type.BOSS) {
             emptied(level, g, f, r);
         }
     }
 
-    /**
-     * Walking back into a fight everyone left (death, extract, logout): the bars came down when the gate emptied, so
-     * they go up again. A Lord that is gone altogether (nothing tracked in its room) takes form again.
-     */
+    /** Walking back into an unfinished fight re-seals it. An empty runtime cache never creates another company. */
     private static void resealUnfinished(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f, Room r, FloorState fs) {
-        if (r.type == Room.Type.ARENA && !fs.clearedRooms.contains(r.id)) {
+        if (r.type == Room.Type.ARENA && !fs.clearedRooms.contains(r.id)
+                && GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) > 0) {
             gatherParty(level, p, g, f, r);
             lock(level, g, f, r, true);
             Signal.toast(p, Component.literal("The arena seals."));
-            if (GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) == 0) emptied(level, g, f, r);
         } else if (r.type == Room.Type.BOSS && !(g.plan.friendly() && f.area == 0) && !(f.area == 0 ? g.bossDead : g.annexBossDead)) {
             gatherParty(level, p, g, f, r);
             lock(level, g, f, r, true);
             skyEdge(level, g, f);
-            if (GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) == 0) Twists.bossArena(level, p, g, f, r);
+            Twists.bossArena(level, p, g, f, r);
         }
     }
 
@@ -345,6 +432,7 @@ public final class Rooms {
             for (Room r : f.rooms) {
                 if ((r.type == Room.Type.HALL || r.type == Room.Type.NORMAL || r.type == Room.Type.CACHE) && r.normals + r.elites > 0) {
                     fs.triggered.add(r.id);
+                    fs.prepared.add(r.id);
                     List<BlockPos> spots = spots(level, g, f, r);
                     for (int i = 0; i < r.normals + r.elites; i++) {
                         LivingEntity e = spawn(level, g, f, r.id, i < r.elites ? MobRole.Role.ELITE : MobRole.Role.NORMAL, spots.get(i % spots.size()));
@@ -367,7 +455,11 @@ public final class Rooms {
         if (g == null) return;
         FloorLayout f = GateLayout.of(g.plan).floor(key.area(), key.floor());
         if (f == null) return;
-        if (key.room() >= 256) return; // cavern zones gate nothing
+        if (key.room() >= 256) {
+            if (g.floor(key.area(), key.floor()).pendingCompanies.containsKey(key.room())) return;
+            if (g.floor(key.area(), key.floor()).clearedRooms.add(key.room())) GateRegistry.get(level.getServer()).setDirty();
+            return;
+        }
         Room r = f.room(key.room());
         if (r == null || r.type == Room.Type.BOSS) return;
         emptied(level, g, f, r);
@@ -380,14 +472,21 @@ public final class Rooms {
 
     static void emptied(ServerLevel level, GateRecord g, FloorLayout f, Room r) {
         FloorState fs = g.floor(f.area, f.floor);
+        if (fs.clearedRooms.contains(r.id)) return;
+        if (fs.pendingCompanies.containsKey(r.id)) {
+            if (r.type == Room.Type.ARENA && fs.locked.contains(r.id)) lock(level, g, f, r, false);
+            return;
+        }
         if (r.type == Room.Type.ARENA) {
             int wave = fs.waves.getOrDefault(r.id, 1);
             if (wave == 1 && r.wave2Normals + r.wave2Elites > 0) {
                 fs.waves.put(r.id, 2);
                 GateRegistry.get(level.getServer()).setDirty();
-                // a wave that couldn't take form counts as beaten: never leave a sealed arena with nothing to fight
-                if (spawnGroup(level, g, f, r, r.id, r.wave2Normals, r.wave2Elites, 5) > 0) {
-                    broadcast(level, g, f, Component.literal("Second wave."));
+                // Capacity-delayed members remain pending; a wave with no spawnable bodies must never leave an empty sealed arena.
+                int spawned = spawnGroup(level, g, f, r, r.id, r.wave2Normals, r.wave2Elites, 5);
+                if (spawned > 0 || fs.pendingCompanies.containsKey(r.id)) {
+                    if (spawned > 0) broadcast(level, g, f, Component.literal("Second wave."));
+                    else lock(level, g, f, r, false);
                     return;
                 }
             }

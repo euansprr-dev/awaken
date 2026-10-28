@@ -107,6 +107,16 @@ final class GateAccess implements GateHooks.Access {
         if (g != null) GateService.release(level.getServer(), g);
     }
 
+    @Override
+    public boolean mayTarget(net.minecraft.world.entity.LivingEntity mob, net.minecraft.world.entity.LivingEntity target) {
+        return dev.awaken.gates.run.Encounters.mayTarget(mob, target);
+    }
+
+    @Override
+    public boolean showsBossBar(Entity mob, ServerPlayer player) {
+        return dev.awaken.gates.run.Encounters.showsBossBar(mob, player);
+    }
+
     private static GatePlan withFloors(GatePlan p, int floors) {
         return p.withFloors(floors);
     }

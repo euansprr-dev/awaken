@@ -36,7 +36,6 @@ public final class RunRegressionTests {
                 GatePlan plan = GateLiveTests.plan(5151, Theme.BELL_CRYPT, Layout.ARENA_CHAIN, Twist.NONE, 0);
                 g = GateLiveTests.standUp(h, plan, 0, 1);
                 p = GateLiveTests.player(h);
-                h.assertTrue(Runs.enter(p, g), "entered");
                 FloorLayout f = GateLayout.of(plan).floor(0, 1);
                 Room arena = arenaOf(f);
                 h.assertTrue(arena != null, "an Arena Chain floor has an arena");
@@ -45,10 +44,11 @@ public final class RunRegressionTests {
                     var marker = EntityTypes.MARKER.create(level, EntitySpawnReason.COMMAND);
                     GateMobs.register(marker, new GateMobs.Key(g.id, 0, 1, -1));
                 }
+                h.assertTrue(Runs.enter(p, g), "entered");
                 Rooms.enter(level, p, g, f, arena, 0, 0);
                 FloorState fs = g.floor(0, 1);
                 h.assertFalse(fs.locked.contains(arena.id), "no monster could come, so the arena stays open");
-                h.assertTrue(fs.clearedRooms.contains(arena.id), "and counts as beaten");
+                h.assertTrue(!fs.clearedRooms.contains(arena.id) && fs.pendingCompanies.containsKey(arena.id), "budget pressure defers the company; it does not beat the arena for free");
             } finally {
                 GateLiveTests.teardown(level, p, g);
             }

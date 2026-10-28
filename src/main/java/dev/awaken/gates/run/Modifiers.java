@@ -247,12 +247,12 @@ public final class Modifiers {
             if (!p.onGround() && p.getDeltaMovement().y > 0.2) run.noise += 1;
             Long lastListener = LISTENER_AT.get(p.getUUID());
             if (run.noise >= 24 && (lastListener == null || now - lastListener > 600) && r != null && !r.type.safe() && f != null) {
-                LISTENER_AT.put(p.getUUID(), now);
-                run.noise = 6;
                 BlockPos at = Pressure.spotNear(level, g, f, p, 9);
                 if (at != null) {
                     LivingEntity l = Rooms.spawn(level, g, f, -1, MobRole.Role.ELITE, at);
                     if (l != null) {
+                        LISTENER_AT.put(p.getUUID(), now);
+                        run.noise = 6;
                         l.setCustomName(Component.literal("Listener"));
                         var fr = l.getAttribute(Attributes.FOLLOW_RANGE);
                         if (fr != null) fr.setBaseValue(Math.max(fr.getBaseValue(), 40));
@@ -266,11 +266,11 @@ public final class Modifiers {
         if (g.plan.has(Modifier.MIRROR) && !g.plan.friendly() && f != null) {
             String key = g.id + ":" + run.area + ":" + run.floor + ":" + run.runIndex;
             if (!key.equals(SHADE_FLOOR.get(p.getUUID())) && now - run.floorStartedAt > 40 * 20 && r != null && !r.type.safe()) {
-                SHADE_FLOOR.put(p.getUUID(), key);
                 BlockPos at = Pressure.spotNear(level, g, f, p, 8);
                 if (at != null) {
                     GateShade shade = GatesRegistry.SHADE.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
                     if (shade != null) {
+                        SHADE_FLOOR.put(p.getUUID(), key);
                         boolean glass = g.plan.has(Modifier.GLASS);
                         double dmg = p.getAttributeValue(Attributes.ATTACK_DAMAGE) * (glass ? 1.0 : 0.6);
                         shade.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, p.getYRot() + 180, 0);
