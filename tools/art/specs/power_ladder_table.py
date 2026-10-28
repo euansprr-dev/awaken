@@ -107,12 +107,12 @@ P("lightning_step", "Lightning Step", "Velocity", "movement",
   ("Bright Path", "The path stays lit for a second.", "2 blocks further."),
   ("Static Field", "Where you land, crackle spreads over the ground.", "Foes in it are slowed for 2 s."),
   ("Double Flash", "A spare charge sparks at your heels.", "A second flash within a second costs nothing."),
-  ("Thunder Step", "A bolt strikes from the sky at both ends of your path.", "Everything on the path is stunned for half a second.", "A snap of two fingers, then you are gone."), hidden=True)
+  ("Thunder Step", "A bolt strikes from the sky at both ends of your path.", "Everything on and beside the path is stunned half a second longer.", "A snap of two fingers, then you are gone."), hidden=True)
 
 # ---- Flight and gravity: rising, orbiting, inward -------------------------------------------------------------------
 P("hover", "Hover", "Flight", "active",
   ("Wind Rings", "Rings of wind turn under your feet.", "A second longer."),
-  ("Updraft", "Wind spirals up round you.", "Hold jump to rise slowly."),
+  ("Updraft", "Wind spirals up round you.", "You drift half again as fast while you hover."),
   ("Calm Air", "Arrows bend away as they reach the wind round you.", "Arrows that reach you do half damage."),
   ("Skyhold", "A disc of pale light forms under your feet.", "Allies can stand on it while you hover.", "Arms spread low, palms down."),
   note="No step adds flight or a glide: the Ascent's Wings own those.")
@@ -183,7 +183,7 @@ P("overload", "Overload", "Energy", "ultimate",
 P("prism_lance", "Prism Lance", "Energy", "ultimate",
   ("Refraction", "Each split throws a flare of split colour.", "The split beams reach 4 blocks further."),
   ("Pierce", "Split beams leave a flare at each body.", "Split beams pierce once."),
-  ("Bounce", "Split beams glance off walls.", "Split beams bounce once."),
+  ("Bounce", "Split beams glance off what they hit.", "Each split beam bounces on to one more foe."),
   ("Spectrum Crown", "A crown of six prisms rises over your head and each fires its own beam.",
    "Six beams find six different foes.", "The chest opened, the head lifted to the crown."), hidden=True)
 
@@ -219,7 +219,7 @@ P("danger_sense", "Danger Sense", "Mind", "passive",
   ("Sixth Sense", "A gold ripple when you dodge a warned blow.", "The attacker is slowed for a second.", "None (a passive)."))
 P("dominate", "Dominate", "Mind", "active",
   ("Crown", "A gold crown glyph turns over the puppet's head.", "A second longer."),
-  ("Marked Prey", "What the puppet hits glows pink.", "Those foes take 15% more from you."),
+  ("Marked Prey", "What the puppet hits glows pink.", "Those foes take 10% more from you."),
   ("Last Order", "The puppet's end is a psychic burst.", "The burst hits foes round it."),
   ("Puppet King", "Gold threads run from your fingers to the puppet.", "The puppet hits half again as hard, and an elite can be bent for the full time.",
    "Fingers raised like a puppeteer's."))
@@ -241,45 +241,45 @@ P("foresight", "Foresight", "Mind", "active",
 
 # ---- Architect: grids, seams, the made thing -------------------------------------------------------------------------
 P("wall", "Wall", "Architect", "active",
-  ("Blueprint", "The wall is drawn in glowing blueprint lines first, then fills in block by block.", "Builds twice as fast and lasts 5 s longer."),
+  ("Blueprint", "The wall is drawn in glowing blueprint lines first, then fills in block by block.", "Ready again in half the time, and lasts 5 s longer."),
   ("Ricochet", "Arrows strike sparks off it.", "Arrows that hit it fly back toward the shooter."),
-  ("Crystal", "The hard light sets into crystal facets.", "Twice as tough."),
-  ("Mirror Wall", "A wall of polished light that throws back what hits it.", "Reflects projectiles and beams.", "Both palms pushed out flat."))
+  ("Crystal", "The hard light sets into crystal facets.", "Lasts twice as long, and blasts can't break it."),
+  ("Mirror Wall", "A wall of polished light that throws back what hits it.", "Anything shot at it comes back at the shooter as a lance of light.", "Both palms pushed out flat."))
 P("ramp", "Ramp", "Architect", "active",
-  ("Blueprint", "Drawn in blueprint lines, then filled.", "Builds twice as fast and lasts 5 s longer."),
+  ("Blueprint", "Drawn in blueprint lines, then filled.", "Ready again in half the time, and lasts 5 s longer."),
   ("Rush", "Glowing chevrons run up the surface.", "Running up it gives a burst of speed."),
   ("Rails", "Rails of light along both sides.", "Foes that step on it are pushed off the side."),
   ("Launch Ramp", "The end flips up as you reach it.", "It throws you in a long arc.", "A sweeping upward palm."))
 P("floor", "Floor", "Architect", "active",
-  ("Blueprint", "Drawn in blueprint lines, then filled.", "Builds twice as fast and lasts 5 s longer."),
+  ("Blueprint", "Drawn in blueprint lines, then filled.", "Ready again in half the time, and lasts 5 s longer."),
   ("Spring", "The surface ripples when stepped on.", "Landing on it bounces you up."),
   ("Hold", "Thicker seams.", "Lasts twice as long."),
   ("Sky Bridge", "The floor keeps building ahead as you walk.", "It extends for 6 s.", "Hands sliding apart along a line."))
 P("cone", "Cone", "Architect", "active",
-  ("Blueprint", "Drawn in blueprint lines, then filled.", "Builds twice as fast and lasts 5 s longer."),
+  ("Blueprint", "Drawn in blueprint lines, then filled.", "Ready again in half the time, and lasts 5 s longer."),
   ("Lantern", "Light drips from the roof.", "You heal slowly under it."),
-  ("Shatterproof", "Arrows shatter on the eaves.", "Takes no damage from arrows."),
-  ("Pagoda", "A three-tier roof with lit eaves.", "Heals and pushes foes out from under it.", "Hands drawing the roof's tiers."))
+  ("Shatterproof", "Arrows shatter on the eaves.", "Shots can't hurt you under it."),
+  ("Pagoda", "A three-tier roof with lit eaves.", "Heals faster, and pushes foes out from under it.", "Hands drawing the roof's tiers."))
 P("rampart", "Rampart", "Architect", "active",
-  ("Blueprint", "Drawn in blueprint lines, then filled.", "Builds twice as fast and lasts 5 s longer."),
+  ("Blueprint", "Drawn in blueprint lines, then filled.", "Ready again in half the time, and lasts 5 s longer."),
   ("Arrow Slits", "Battlements glow.", "They fire bolts at foes."),
   ("Gatehouse", "The door glows for friends.", "The door opens only for you and allies."),
   ("Keep", "A corner tower rises with a beacon on top.", "The beacon slows foes nearby.", "Arms raised to frame a tower."))
 P("spire", "Spire", "Architect", "active",
   ("Seams", "Seams of light run up the column as it rises.", "The throw is 15% higher."),
   ("Spiked Rim", "Spikes ring the base.", "Foes thrown take damage when they land."),
-  ("Tall", "The column rises higher.", "A bigger launch."),
-  ("Spiral Tower", "A spiral of steps winds up round the spire.", "You can climb it after the launch; it stands for 10 s.", "A spiralling upward sweep."))
+  ("Tall", "The column rises higher.", "A taller pillar and a bigger launch."),
+  ("Spiral Tower", "A spiral of steps winds up round the spire.", "A spiral stair winds up the pillar, so you can climb back to the top.", "A spiralling upward sweep."))
 P("collapse", "Collapse", "Architect", "active",
   ("Gather", "Blocks lift and circle you before they fly.", "Pulls in from 25% further."),
   ("Seek", "Each block leaves a blueprint line in the air.", "Each block picks a different foe."),
   ("Shatter", "Blocks burst into glowing shards on impact.", "Shards hit foes nearby."),
   ("Avalanche of Light", "Every block becomes a glowing comet trailing blueprint lines.", "Every block stuns.", "Both arms pulled down like a rope."))
 P("citadel", "Citadel", "Architect", "ultimate",
-  ("Runes", "Runes turn across the dome.", "A second longer."),
-  ("Spires", "Four spires rise at the edge.", "They fire bolts at foes."),
+  ("Runes", "Runes turn across the dome.", "Stands 3 s longer."),
+  ("Spires", "Four spires rise at the edge.", "They fire bolts at foes outside."),
   ("Sanctuary", "The ground inside glows.", "Heals more."),
-  ("Crown Citadel", "A crown of spires and a beacon of light.", "Foes inside burn; allies inside are healed.", "Arms raised in a slow arc."), hidden=True)
+  ("Crown Citadel", "A crown of spires and a beacon of light.", "Foes inside burn, and you and your friends inside heal faster.", "Arms raised in a slow arc."), hidden=True)
 
 # ---- Tech: precise, thin, holographic ------------------------------------------------------------------------------
 P("grapple", "Snap Cable", "Tech", "movement",

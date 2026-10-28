@@ -96,7 +96,7 @@ final class RunnerServer {
             if (link != m.links || m.links > RunnerRules.links(Body.runnerRank(p)) || w.id() == m.lastWall || now - m.lastWallJumpAt > 40) return false;
         }
         m.runClimb = false;
-        m.runUntil = now + RunnerRules.runLength(link, Body.runnerRank(p), Body.wallStride(p)) + RunnerRules.RUN_GRACE
+        m.runUntil = now + RunnerRules.runLength(link, Body.runnerRank(p), Body.wallStrideLevel(p)) + RunnerRules.RUN_GRACE
                 + p.getData(dev.awaken.body.ascent.AscentContent.MEMORY).level(dev.awaken.body.ascent.AscentMemory.Track.RUNNER);
         m.runAxis = w.axis();
         m.runSide = w.side();
@@ -446,6 +446,7 @@ final class RunnerServer {
                 endRun(m, now);
             } else {
                 m.lastMove = now;
+                if (!m.runClimb) dev.awaken.powers.ladder.StepHooks.strideTick(p, now); // Wall Stride's looks (SPEC 34)
                 // wall contact on every tick, from where the server has the body
                 RunnerRules.Wall w = RunnerRules.wallOn(p.level(), ctx, M, p.getX(), p.getY(), p.getZ(), m.runAxis, m.runSide,
                         RunnerRules.RUN_REACH + RunnerRules.SERVER_TOL, 0, 0);

@@ -125,7 +125,11 @@ public final class Combat {
     /** A cast's hit (by its caster, or by something it sent: a bolt): a landed hit runs the ladder's riders (SPEC 34.3). */
     public static boolean hurtBy(Cast c, @Nullable Entity direct, LivingEntity target, float amount, Forces.@Nullable Force force) {
         boolean landed = hurtFrom(c.player, direct, target, amount, force, true);
-        if (landed) dev.awaken.powers.ladder.Riders.onHit(c, target, amount, force);
+        if (landed) {
+            dev.awaken.powers.ladder.Riders.onHit(c, target, amount, force);
+            dev.awaken.powers.ladder.StepHooks.liveWire(c, target, amount);
+            dev.awaken.powers.ladder.StepHooks.decoyEcho(c, target, amount);
+        }
         return landed;
     }
 

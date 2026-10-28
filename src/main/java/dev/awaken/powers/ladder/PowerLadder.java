@@ -106,6 +106,16 @@ public final class PowerLadder {
         return k;
     }
 
+    /** The cooldown's scale at a level: every step up to it that names a {@code cd} multiplies it (Blueprint halves it). */
+    public static float cdScale(String power, int level) {
+        float k = 1f;
+        for (Step s : steps(power)) {
+            Float v = s.level() <= level ? s.num().get("cd") : null;
+            if (v != null) k *= v;
+        }
+        return k;
+    }
+
     /** A number a step's own code reads, or {@code def} when the table has none. */
     public static float num(String power, int level, String key, float def) {
         Step s = step(power, level);

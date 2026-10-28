@@ -58,6 +58,49 @@ public final class Steps {
         });
     }
 
+    /**
+     * A line of shock rolling out from {@code from} along {@code dir}, a block and a half a tick and hugging the ground: every
+     * foe within {@code width} of its front takes {@code dmg} once and is thrown up a little; a stone burst marks the front.
+     */
+    public static void roll(Cast c, Vec3 from, Vec3 dir, double len, float dmg, double width, Forces.@Nullable Force force) {
+        Vec3 flat = new Vec3(dir.x, 0, dir.z);
+        if (flat.lengthSqr() < 1e-6) return;
+        rollTick(c, from, flat.normalize(), len, 0, from.y, dmg, width, force, new HashSet<>());
+    }
+
+    private static void rollTick(Cast c, Vec3 from, Vec3 dir, double len, double done, double y, float dmg, double width,
+                                 Forces.@Nullable Force force, Set<Integer> struck) {
+        if (c.player.isRemoved() || done >= len) return;
+        double next = Math.min(len, done + 1.5);
+        Vec3 a = from.add(dir.scale(done));
+        Vec3 b = from.add(dir.scale(next));
+        double ground = groundY(c, b.x, y, b.z);
+        if (Double.isNaN(ground)) return; // the line breaks off at a cliff or a wall
+        b = new Vec3(b.x, ground, b.z);
+        for (LivingEntity e : Combat.alongLine(c.player, new Vec3(a.x, y + 0.5, a.z), b.add(0, 0.5, 0), width)) {
+            if (!struck.add(e.getId())) continue;
+            Combat.hurtFrom(c.player, null, e, dmg, force, true);
+            Combat.knockFrom(e, a, 0.6, 0.45);
+            Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).scale(0.7).plain().flag(FxEvent.QUIET).send();
+        }
+        Fx.at(c, FxKind.SLAM, b).scale(1.1).plain().flag(FxEvent.QUIET).send();
+        Vec3 at = b;
+        Scheduler.after(1, () -> rollTick(c, new Vec3(from.x, at.y, from.z), dir, len, next, at.y, dmg, width, force, struck));
+    }
+
+    /** The top of the ground under (x, z) within two blocks of {@code y}, or NaN when there is none. */
+    private static double groundY(Cast c, double x, double y, double z) {
+        net.minecraft.core.BlockPos.MutableBlockPos p = new net.minecraft.core.BlockPos.MutableBlockPos();
+        int top = (int) Math.floor(y) + 2;
+        for (int by = top; by >= top - 4; by--) {
+            p.set(Math.floor(x), by, Math.floor(z));
+            if (!c.level.getBlockState(p).getCollisionShape(c.level, p).isEmpty()) {
+                return by == top ? Double.NaN : by + 1.0;
+            }
+        }
+        return Double.NaN;
+    }
+
     /** A body thrown hard: for {@code ticks} it hits the first foes it passes (each once, at most three) for {@code dmg}. */
     public static void carry(Cast c, LivingEntity flying, float dmg, int ticks) {
         Set<Integer> struck = new HashSet<>();

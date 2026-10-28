@@ -71,6 +71,21 @@ public final class Fx {
         return e;
     }
 
+    /** A power's side effect outside a cast (a damage hook): its style and the player's level of it, {@code plain()}. */
+    public static Emit of(ServerPlayer player, String power, FxKind kind, Vec3 at) {
+        return looks(player, power, kind, at).plain();
+    }
+
+    /** A passive's own effect outside a cast (Wall Stride's run): its style, the player's level and that level's looks. */
+    public static Emit looks(ServerPlayer player, String power, FxKind kind, Vec3 at) {
+        PowerType type = PowerRegistry.get(power);
+        if (type == null) throw new IllegalArgumentException("no power " + power);
+        PowerFxDefs.Def def = PowerFxDefs.get(type.path);
+        FxStyle style = def != null ? def.style() : FxStyle.of(type.family);
+        Loadout.Owned o = Powers.loadout(player).get(type.id.toString());
+        return at((ServerLevel) player.level(), kind, style, at).caster(player).powerOf(type).level(o != null ? o.level() : 1);
+    }
+
     /** A pending effect: chain setters, then {@link #send()}. */
     public static final class Emit {
         private final ServerLevel level;
@@ -169,10 +184,9 @@ public final class Fx {
         }
 
         /**
-         * A ladder rider's or step's own effect (SPEC 34.3): the power's style, level and looks, but no pose, no profile beat and
-         * no ultimate screen beat, so a chain arc or an echo never restarts a cast animation or shakes the screen.
+         * A ladder rider's or step's own effect (SPEC 34.3): the power's style and level, but no pose, no profile beat, no
+         * ultimate screen beat and no look layers of its own, so a chain arc or an echo never restarts a cast or cascades.
          */
-        /** A side effect (a rider's arc, a capstone's extra hit): no pose, no screen beat, no look layers of its own. */
         public Emit plain() {
             b.clearPose().unflag(FxEvent.ULT).flag(FxEvent.RIDER);
             ultBeat = false;

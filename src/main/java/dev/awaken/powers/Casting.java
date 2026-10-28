@@ -207,12 +207,16 @@ public final class Casting {
         PowerState st = PowerState.of(player);
         long now = now(player);
         if (type.family == PowerType.Family.ENERGY && st.has(PowerState.Buffs.OVERLOAD_COST, now)) cost *= 0.5f;
+        // Cloak's Shade Step (SPEC 34): the shadow moves are free while you're unseen
+        if (st.has(PowerState.Buffs.CLOAK_FREE, now) && st.has(PowerState.Buffs.CLOAK, now)
+                && (type.id.getPath().equals("shadow_step") || type.id.getPath().equals("echo_swap"))) cost = 0;
         return cost;
     }
 
     static void startCooldown(ServerPlayer player, Loadout l, PowerType type, Loadout.Owned owned, PowerState st) {
         st.refreshPerks(player, now(player));
         int cd = PowerMath.cooldown(type.cooldown, type.variant(owned.variant()).cooldown(), owned.level(), st.cdrPerk);
+        cd = Math.max(1, Math.round(cd * dev.awaken.powers.ladder.PowerLadder.cdScale(type.path, owned.level())));
         l.cooldowns.put(type.id.toString(), new Loadout.Cooldown(now(player) + cd, cd));
     }
 
@@ -412,7 +416,7 @@ public final class Casting {
         for (Running r : snapshot) {
             if (r.ended) continue;
             if (r.channel && !r.stopping()) {
-                float drain = r.c.type.drain / 20f * r.c.v.cost();
+                float drain = r.c.type.drain / 20f * r.c.v.cost() * r.drainScale;
                 if (r.c.type.family == PowerType.Family.ENERGY && st.has(PowerState.Buffs.OVERLOAD_COST, now)) drain *= 0.5f;
                 if (drain > 0) {
                     if (l.energy < drain) {

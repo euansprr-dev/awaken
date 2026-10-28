@@ -66,23 +66,23 @@ S("terrain_rip", 5, [],
    rings("SLAM", n=2, gap=3, r0=0.5, r1=4.0, width=0.45, life=11, col="core")], hurl=1.0)
 
 S("brace", 2, [],
-  [fissure("SLAM", n=3, length=1.7, width=0.1, cool=30)], reflect=0.1)
+  [fissure("RING", n=3, length=1.7, width=0.1, cool=30)], reflect=0.1)
 S("brace", 3, [],
-  [rings("CHARGE_END", n=1, r0=0.4, r1=4.2, width=0.5, life=10, col="core")], shove=0.4)
+  [rings("SLAM", n=1, r0=0.4, r1=4.2, width=0.5, life=10, col="core")], shove=0.4)
 S("brace", 4, [],
-  [sigil("SLAM", at="ground", size=1.7, spin=0.02, face="up", life=0, col="edge")], projectile=0.5)
+  [sigil("AURA", at="ground", size=1.7, spin=0.02, face="up", life=0, col="edge")], projectile=0.5)
 S("brace", 5, [],
-  [orbit("AURA", "plate", n=5, r0=1.15, r1=1.1, spin=0.08, size=0.42, at="body"),
-   burst("CHARGE_END", "plate", n=10, speed=0.6, life=16, size=0.4, grav=0.05)], blocks=3, share=0.5)
+  [orbit("AURA", "plate", n=3, r0=1.15, r1=1.1, spin=0.08, size=0.42, at="body"),
+   burst("SLAM", "plate", n=10, speed=0.6, life=16, size=0.4, grav=0.05)], blocks=3, share=0.5)
 
 S("thunderclap", 2, [],
   [forks("CAST", n=3, reach=0.7, life=8, at="hand")], stun=4)
 S("thunderclap", 3, [chain(1, 0.5, 5.0)],
   [forks("STRIKE", n=2, reach=2.4, life=6)])
 S("thunderclap", 4, [],
-  [orbit("RING", "bolt", n=5, r0=0.5, r1=0.7, spin=0.2, size=0.2, at="head", life=60, col="core")], storm=60)
+  [orbit("RING", "bolt", n=5, r0=0.5, r1=0.7, spin=0.2, size=0.2, at="head", life=60, col="core")], storm=60, share=0.35)
 S("thunderclap", 5, [],
-  [rings("RING", n=1, r0=0.5, r1=6.5, width=0.18, life=8, col="core"), column("CAST", height=12, width=0.45, life=10, at="feet")], chainbuff=60)
+  [rings("RING", n=1, r0=0.5, r1=6.5, width=0.18, life=8, col="core"), column("CAST", height=12, width=0.45, life=10, at="feet")], chainbuff=60, chain=0.5)
 
 # ---- Velocity: streaks, red, the line you leave ---------------------------------------------------------------------
 S("dash", 2, [],
@@ -144,7 +144,7 @@ S("lightning_step", 5, [],
 S("hover", 2, [extend(duration=0.25)],
   [orbit("AURA", "wind", n=6, r0=0.75, r1=0.7, spin=0.2, size=0.32, at="feet")])
 S("hover", 3, [],
-  [orbit("AURA", "wind", n=8, r0=0.95, r1=0.5, spin=0.3, size=0.28, at="body", col="edge")], rise=0.06)
+  [orbit("AURA", "wind", n=8, r0=0.95, r1=0.5, spin=0.3, size=0.28, at="body", col="edge")], drift=0.5)
 S("hover", 4, [],
   [orbit("AURA", "mote", n=10, r0=1.4, r1=1.4, spin=0.12, size=0.12, at="body", tilt=0.5, col="core")], arrows=0.5)
 S("hover", 5, [],
@@ -153,7 +153,7 @@ S("hover", 5, [],
 S("flight", 2, [],
   [trail("AURA", width=0.08, life=0, at="hand", col="core"), trail("AURA", width=0.08, life=0, at="feet", col="core")], drain=0.1)
 S("flight", 3, [],
-  [every(30, rings("RING", n=1, r0=0.5, r1=3.0, width=0.3, life=8, face="dir", col="edge"))], speed=0.1)
+  [every(30, rings("TRAIL", n=1, r0=0.5, r1=3.0, width=0.3, life=8, face="dir", col="edge"))], speed=0.1)
 S("flight", 4, [],
   [trail("AURA", width=0.16, life=0, at="back", col="edge")], drain=0.1)
 S("flight", 5, [],
@@ -333,10 +333,10 @@ S("foresight", 5, [],
 
 # ---- Architect: grids, seams, the made thing -------------------------------------------------------------------------
 for _p in ("wall", "ramp", "floor", "cone", "rampart"):
-    S(_p, 2, [], [burst("CONSTRUCT", "plate", n=8, speed=0.08, life=24, size=0.3, col="edge")], fast=2.0, longer=100)
+    S(_p, 2, [], [burst("CONSTRUCT", "plate", n=8, speed=0.08, life=24, size=0.3, col="edge")], cd=0.5, longer=100)
 S("wall", 3, [], [burst("CONSTRUCT", "spark", n=8, speed=0.2, life=10, size=0.14, col="core")], ricochet=1)
 S("wall", 4, [], [burst("CONSTRUCT", "shard", n=10, speed=0.06, life=30, size=0.24, col="core")], tough=2.0)
-S("wall", 5, [], [bloom("CONSTRUCT", size=1.0)], mirror=1)
+S("wall", 5, [], [bloom("CONSTRUCT", size=1.0)], mirror=5.0)
 S("ramp", 3, [], [burst("CONSTRUCT", "spark", n=6, speed=0.15, life=14, size=0.14, col="core")], rush=40)
 S("ramp", 4, [], [burst("CONSTRUCT", "mote", n=10, speed=0.05, life=30, size=0.14, col="core")], rails=0.6)
 S("ramp", 5, [], [bloom("CONSTRUCT", size=0.9)], launch=1.4)
@@ -344,9 +344,9 @@ S("floor", 3, [], [burst("CONSTRUCT", "mote", n=8, speed=0.05, life=24, size=0.1
 S("floor", 4, [], [burst("CONSTRUCT", "plate", n=8, speed=0.04, life=30, size=0.3, col="core")], hold=2.0)
 S("floor", 5, [], [bloom("CONSTRUCT", size=0.9)], bridge=120)
 S("cone", 3, [], [burst("CONSTRUCT", "mote", n=10, speed=0.03, life=40, size=0.14, grav=0.004, col="core")], heal=0.5)
-S("cone", 4, [], [burst("CONSTRUCT", "shard", n=8, speed=0.06, life=26, size=0.22, col="core")], arrows=0.0)
+S("cone", 4, [], [burst("CONSTRUCT", "shard", n=8, speed=0.06, life=26, size=0.22, col="core")], shelter=1)
 S("cone", 5, [], [bloom("CONSTRUCT", size=1.0)], pagoda=1)
-S("rampart", 3, [], [burst("CONSTRUCT", "spark", n=8, speed=0.1, life=16, size=0.14, col="core")], bolts=40)
+S("rampart", 3, [], [burst("CONSTRUCT", "spark", n=8, speed=0.1, life=16, size=0.14, col="core")], bolts=40, bolt=4.0)
 S("rampart", 4, [], [burst("CONSTRUCT", "mote", n=8, speed=0.04, life=26, size=0.14, col="accent")], gate=1)
 S("rampart", 5, [], [bloom("CONSTRUCT", size=1.0)], keep=1)
 
@@ -357,7 +357,7 @@ S("spire", 3, [],
 S("spire", 4, [],
   [grow("PILLAR", 1.3)], tall=0.3)
 S("spire", 5, [],
-  [orbit("PILLAR", "plate", n=8, r0=1.4, r1=1.2, spin=0.08, size=0.4, at="origin", life=40, tilt=0.4)], tower=200)
+  [orbit("PILLAR", "plate", n=8, r0=1.4, r1=1.2, spin=0.08, size=0.4, at="origin", life=40, tilt=0.4)], stair=1)
 
 S("collapse", 2, [extend(radius=0.25)],
   [orbit("RING", "plate", n=8, r0=2.0, r1=1.2, spin=0.18, size=0.35, at="body", life=16)])
@@ -370,7 +370,7 @@ S("collapse", 5, [status("stun", 16)],
 
 S("citadel", 2, [extend(duration=0.1)],
   [orbit("DOME", "rune", n=10, r0=4.5, r1=4.5, spin=0.04, size=0.3, at="origin", tilt=0.2)])
-S("citadel", 3, [], [column("CONSTRUCT", height=10, width=0.4, life=20)], spires=40)
+S("citadel", 3, [], [column("CONSTRUCT", height=10, width=0.4, life=20)], spires=40, bolt=3.0)
 S("citadel", 4, [], [sigil("GLYPH", at="ground", size=5.0, spin=0.01, face="up", life=0)], heal=0.5)
 S("citadel", 5, [], [column("DOME", height=18, width=0.7, life=30, col="core")], burn=1.0)
 

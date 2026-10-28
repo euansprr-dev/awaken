@@ -44,6 +44,8 @@ final class PowerHud {
         int w = g.guiWidth();
         int h = g.guiHeight();
         long now = ClientPowers.now();
+        Loadout.Owned sense = l.get("awaken:danger_sense");
+        if (sense != null && sense.level() >= 2) dangerArcs(g, mc, w, h);
 
         int rowWidth = 6 * SLOT + 5 * GAP + 4;
         int hotbarRight = w / 2 + 91;
@@ -226,5 +228,40 @@ final class PowerHud {
             default -> s;
         };
         return a.length() > max ? a.substring(0, max) : a;
+    }
+
+    /**
+     * Danger Sense's Edge Arc (SPEC 34): a short red arc at the screen's edge on the side each warned threat is on, brighter the
+     * more it is behind you.
+     */
+    private static void dangerArcs(GuiGraphicsExtractor g, Minecraft mc, int w, int h) {
+        var p = mc.player;
+        var level = mc.level;
+        if (p == null || level == null) return;
+        float yaw = p.getYRot() * net.minecraft.util.Mth.DEG_TO_RAD;
+        double fx = -Math.sin(yaw), fz = Math.cos(yaw);
+        int cx = w / 2, cy = h / 2;
+        double rx = w * 0.44, ry = h * 0.40;
+        ClientPowers.eachDanger(id -> {
+            var e = level.getEntity(id);
+            if (e == null) return;
+            double dx = e.getX() - p.getX(), dz = e.getZ() - p.getZ();
+            double len = Math.sqrt(dx * dx + dz * dz);
+            if (len < 0.5) return;
+            dx /= len;
+            dz /= len;
+            // the angle from straight ahead, clockwise: 0 is up the screen, pi is behind you (the bottom edge)
+            double ahead = dx * fx + dz * fz;
+            double right = dx * -fz + dz * fx;
+            double a = Math.atan2(right, ahead);
+            int alpha = (int) (110 + 120 * (1 - ahead) / 2);
+            for (int k = -4; k <= 4; k++) {
+                double t = a + k * 0.045;
+                int x = cx + (int) Math.round(Math.sin(t) * rx);
+                int y = cy - (int) Math.round(Math.cos(t) * ry);
+                int fade = Math.max(30, alpha - Math.abs(k) * 22);
+                g.fill(x - 2, y - 2, x + 2, y + 2, (fade << 24) | 0xFF3B3B);
+            }
+        });
     }
 }

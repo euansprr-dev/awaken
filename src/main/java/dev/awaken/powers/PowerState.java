@@ -23,7 +23,7 @@ public final class PowerState {
         return STATES.computeIfAbsent(player.getUUID(), k -> new PowerState());
     }
 
-    static @Nullable PowerState peek(Player player) {
+    public static @Nullable PowerState peek(Player player) {
         return STATES.get(player.getUUID());
     }
 
@@ -122,6 +122,9 @@ public final class PowerState {
         flowTickBank++;
     }
 
+    /** Danger Sense's Sixth Sense: threats it warned of (entity id to the tick), to see a warned blow dodged. */
+    public final Map<Integer, Long> warned = new HashMap<>();
+
     // ---- buffs ------------------------------------------------------------------------------------------------------
 
     public void buff(String key, long until, double value) {
@@ -136,6 +139,14 @@ public final class PowerState {
             return 0;
         }
         return b.value();
+    }
+
+    /** Adds {@code delta} to a live buff's value, keeping its end; returns the new value (0 when it isn't live). */
+    public double adjust(String key, long now, double delta) {
+        Buff b = buffs.get(key);
+        if (b == null || b.until() < now) return 0;
+        buffs.put(key, new Buff(b.until(), b.value() + delta));
+        return b.value() + delta;
     }
 
     public boolean has(String key, long now) {
@@ -205,5 +216,23 @@ public final class PowerState {
         public static final String MOMENTUM = "ladder_momentum";
         /** Shadow Step's Blinding: the backstab blinds for this many ticks. */
         public static final String BACKSTAB_BLIND = "ladder_backstab_blind";
+        /** Brace's Counter Shove: damage the brace took off, summed for the shove when it ends. */
+        public static final String BRACE_ABSORBED = "ladder_brace_absorbed";
+        /** Brace's Unmoved: projectiles are cut by this much more while braced. */
+        public static final String BRACE_PROJECTILE = "ladder_brace_projectile";
+        /** Brace's Mountain Stance: the plates left; each one catches a whole hit. */
+        public static final String BRACE_PLATES = "ladder_brace_plates";
+        /** Hover's Calm Air: projectiles are cut by this much while you hover. */
+        public static final String HOVER_CALM = "ladder_hover_calm";
+        /** Barrier's Halo Ward: plates left to stop a projectile each. */
+        public static final String BARRIER_PLATES = "ladder_barrier_plates";
+        /** Overload's Live Wire: during the afterglow, an energy hit jumps to a second foe for this share. */
+        public static final String LIVE_WIRE = "ladder_live_wire";
+        /** Cloak's Shade Step: while cloaked, Shadow Step and Echo Swap cost nothing. */
+        public static final String CLOAK_FREE = "ladder_cloak_free";
+        /** Read Intent's Open Book: blows on a read foe are critical. */
+        public static final String READ_CRIT = "ladder_read_crit";
+        /** Thunderclap's Heaven's Clap: blows chain lightning to a second foe for this share of the hit. */
+        public static final String CHAIN_BLOWS = "ladder_chain_blows";
     }
 }

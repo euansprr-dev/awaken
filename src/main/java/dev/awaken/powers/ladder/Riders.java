@@ -225,6 +225,12 @@ public final class Riders {
     }
 
     /** Damage from this player to a foe they marked is 10% higher (PowerEvents). */
+    /** Marks {@code victim} for {@code by} until {@code until} (a step's mark outside a cast hit: Dominate's Marked Prey). */
+    public static void mark(ServerPlayer by, LivingEntity victim, long until) {
+        Mark old = MARKS.get(victim);
+        if (old == null || old.until() < until) MARKS.put(victim, new Mark(by.getUUID(), until));
+    }
+
     public static boolean marked(ServerPlayer by, LivingEntity victim, long now) {
         Mark m = MARKS.get(victim);
         return m != null && m.until() >= now && m.owner().equals(by.getUUID());

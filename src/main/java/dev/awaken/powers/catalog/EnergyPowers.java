@@ -22,6 +22,8 @@ import dev.awaken.powers.PowerType.Result;
 import dev.awaken.powers.PowerType.Slot;
 import dev.awaken.powers.PowerType.Variant;
 import dev.awaken.powers.Running;
+import dev.awaken.powers.ladder.Steps;
+import dev.awaken.powers.Scheduler;
 import dev.awaken.powers.Zones;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.Rank;
@@ -219,18 +221,29 @@ final class EnergyPowers {
             Fx.at(c, FxKind.VORTEX, at).scale(radius + 2).ticks(9).noAnim().send();
             Running r = Casting.start(c, 9);
             r.tick(rr -> {
-                if (rr.age == 8) novaBlast(c, at, radius);
+                if (rr.age == 8) novaBlast(c, c.pos().add(0, 1, 0), radius);
             });
             return Result.OK;
         }
+        if (c.step(5)) {
+            // Daystar: you rise a little as a sun forms at your chest, then it goes off
+            Moves.launch(c.player, new Vec3(0, c.num(5, "rise", 0.35f), 0));
+            Moves.noFall(c, 60);
+            Fx.at(c, FxKind.CHARGE, at).ticks(6).scale(1.4).noAnim().send();
+            c.sound(PowerSounds.NOVA, 0.7f, 1.6f);
+        }
+        int delay = c.step(5) ? 5 : 0;
         if (c.is(1)) {
-            Running r = Casting.start(c, 12);
+            Running r = Casting.start(c, 12 + delay);
             r.tick(rr -> {
-                if (rr.age == 0 || rr.age == 10) novaBlast(c, at, radius * (rr.age == 0 ? 0.8 : 1.0));
+                if (rr.age == delay || rr.age == delay + 10) novaBlast(c, c.pos().add(0, 1, 0), radius * (rr.age == delay ? 0.8 : 1.0));
             });
             return Result.OK;
         }
-        novaBlast(c, at, radius);
+        if (delay == 0) novaBlast(c, at, radius);
+        else Casting.start(c, delay + 1).tick(rr -> {
+            if (rr.age == delay) novaBlast(c, c.pos().add(0, 1, 0), radius);
+        });
         return Result.OK;
     }
 
@@ -246,15 +259,43 @@ final class EnergyPowers {
         c.sound(at, PowerSounds.NOVA, 1.3f, 1f);
         Fx.quake(c.level, at, 16, 3f);
         c.feel(null, 0, 2.5f);
+        // Flare Arcs (4): plasma leaps from the shell to foes just past it
+        if (c.step(4)) {
+            int arcs = 0, max = (int) c.num(4, "arcs", 3);
+            for (LivingEntity e : Steps.nearest(c, at, radius + c.num(4, "reach", 4f), 12, null)) {
+                if (arcs >= max) break;
+                if (e.distanceToSqr(at) <= radius * radius) continue;
+                Vec3 edge = at.add(e.getBoundingBox().getCenter().subtract(at).normalize().scale(radius));
+                Fx.at(c, FxKind.LIGHTNING, edge).to(e.getBoundingBox().getCenter()).ticks(7).plain().send();
+                Combat.hurtFrom(c.player, null, e, dmg * c.num(4, "share", 0.5f), Forces.Force.HEAT, true);
+                arcs++;
+            }
+        }
+        // Searing Shell (3): the shell holds a moment and burns what touches it
+        if (c.step(3)) {
+            int hold = (int) c.num(3, "hold", 20);
+            int burn = (int) c.num(3, "burn", 40);
+            Casting.start(c, "nova_shell", hold).tick(rr -> {
+                if (rr.age % 5 != 0) return;
+                for (LivingEntity e : Combat.foesAround(c.player, at, radius + 0.8)) {
+                    if (e.distanceToSqr(at) < (radius - 1.4) * (radius - 1.4)) continue;
+                    e.igniteForSeconds(burn / 20f);
+                    if (rr.hit.add(e.getId())) Combat.hurtFrom(c.player, null, e, c.dmg(1f), Forces.Force.HEAT, true);
+                }
+            });
+        }
     }
 
     static Result barrier(Cast c) {
         int intStat = Progression.stat(c.player, Stat.INT);
         float amount = (float) ((6 + 0.25 * intStat) * c.v.dmg() * (1 + 0.15 * (c.powerLevel - 1)));
         int ticks = c.ticks(200);
+        PowerState st = PowerState.of(c.player);
         Moves.addMod(c.player, Attributes.MAX_ABSORPTION, "barrier", amount, AttributeModifier.Operation.ADD_VALUE);
         c.player.setAbsorptionAmount(Math.max(c.player.getAbsorptionAmount(), amount));
-        if (c.is(1)) PowerState.of(c.player).buff(PowerState.Buffs.BRACE_REFLECT, c.now() + ticks, 0.33);
+        if (c.is(1)) st.buff(PowerState.Buffs.BRACE_REFLECT, c.now() + ticks, 0.33);
+        // Halo Ward (5): plates that stop arrows outright (PowerEvents)
+        if (c.step(5)) st.buff(PowerState.Buffs.BARRIER_PLATES, c.now() + ticks, c.num(5, "blocks", 3));
         c.sound(PowerSounds.BARRIER, 1f, 1.2f);
         // a bubble with a bright rim and a hex skin that follows you
         Fx.at(c, FxKind.DOME, c.pos().add(0, 1, 0)).scale(1.35).ticks(ticks).flag(FxEvent.FOLLOW).send();
@@ -264,16 +305,38 @@ final class EnergyPowers {
         }).end((rr, why) -> {
             Fx.end(c, c.player, -2);
             Moves.removeMod(c.player, Attributes.MAX_ABSORPTION, "barrier");
-            if (c.is(1)) PowerState.of(c.player).clearBuff(PowerState.Buffs.BRACE_REFLECT);
+            if (c.is(1)) st.clearBuff(PowerState.Buffs.BRACE_REFLECT);
             if (why == Running.Why.DONE) {
                 Vec3 at = c.pos().add(0, 1, 0);
-                Moves.blast(c, at, 4, c.dmg(), Forces.Force.CHARGE, 1.0, 0.3);
+                // Stored Charge (3): the break shock carries part of what the shield took
+                float shock = c.dmg() + amount * c.num(3, "stored", 0f);
+                Moves.blast(c, at, 4, shock, Forces.Force.CHARGE, 1.0, 0.3);
                 ForceInteractions.chargeEchoes(c.player, at, 4);
                 Fx.at(c, FxKind.NOVA, at).scale(4).style(FxStyle.CHARGE).flag(FxEvent.REACH).noAnim().send();
                 c.sound(PowerSounds.BARRIER_BREAK, 1.2f, 1f);
+                // Second Skin (4): a thinner shell flickers back, once
+                if (c.step(4)) Scheduler.after(4, () -> secondSkin(c, amount * c.num(4, "strength", 0.33f), (int) c.num(4, "reform", 60)));
+            } else {
+                st.clearBuff(PowerState.Buffs.BARRIER_PLATES);
             }
         });
         return Result.OK;
+    }
+
+    private static void secondSkin(Cast c, float amount, int ticks) {
+        if (!c.player.isAlive()) return;
+        Moves.addMod(c.player, Attributes.MAX_ABSORPTION, "barrier_skin", amount, AttributeModifier.Operation.ADD_VALUE);
+        c.player.setAbsorptionAmount(Math.max(c.player.getAbsorptionAmount(), amount));
+        Fx.at(c, FxKind.DOME, c.pos().add(0, 1, 0)).scale(1.25).ticks(ticks).flag(FxEvent.FOLLOW).plain().send();
+        c.sound(PowerSounds.BARRIER, 0.7f, 1.6f);
+        Running r = Casting.start(c, "barrier_skin", ticks);
+        r.tick(rr -> {
+            if (rr.age > 2 && c.player.getAbsorptionAmount() <= 0.01f) rr.stop(Running.Why.DONE);
+        }).end((rr, why) -> {
+            Fx.end(c, c.player, -2);
+            Moves.removeMod(c.player, Attributes.MAX_ABSORPTION, "barrier_skin");
+            PowerState.of(c.player).clearBuff(PowerState.Buffs.BARRIER_PLATES);
+        });
     }
 
     static Result chargedShot(Cast c) {
@@ -345,8 +408,9 @@ final class EnergyPowers {
     static Result overload(Cast c) {
         PowerState st = PowerState.of(c.player);
         if (c.is(2)) {
-            int ticks = c.ticks(300);
+            int ticks = c.ticks(300) + (int) c.num(2, "glow", 0);
             st.buff(PowerState.Buffs.CONDUIT, c.now() + ticks, 1);
+            if (c.step(4)) st.buff(PowerState.Buffs.LIVE_WIRE, c.now() + ticks, c.num(4, "live", 0.4f));
             st.buff(PowerState.Buffs.OVERLOAD_COST, c.now() + ticks, 1);
             c.sound(PowerSounds.OVERLOAD, 1f, 1.5f);
             Fx.at(c, FxKind.CAST, c.pos()).anim(CastAnim.SKYWARD).send();
@@ -365,6 +429,19 @@ final class EnergyPowers {
         Fx.at(c, FxKind.CHARGE, c.pos().add(0, 1, 0)).ticks(20).scale(1.8).send();
         Fx.at(c, FxKind.VORTEX, c.pos().add(0, 1, 0)).scale(4).ticks(20).style(FxStyle.CHARGE).noAnim().send();
         Running r = Casting.start(c, 20);
+        // Critical Mass (5): you're lifted as you gather, and the gathering drags them in before it goes off
+        if (c.step(5)) r.tick(rr -> {
+            Vec3 v = c.player.getDeltaMovement();
+            Moves.launch(c.player, new Vec3(v.x * 0.5, Math.max(v.y, rr.age < 12 ? 0.06 : 0.0), v.z * 0.5));
+            c.player.resetFallDistance();
+            if (rr.age == 12) {
+                Vec3 at = c.pos().add(0, 1, 0);
+                for (LivingEntity e : Combat.foesAround(c.player, at, c.radius(9) + 3)) {
+                    Combat.push(e, at.subtract(e.position()).normalize().scale(c.num(5, "pull", 0.8f)).add(0, 0.15, 0));
+                }
+                c.sound(PowerSounds.GRAVITY, 1.2f, 0.6f);
+            }
+        });
         r.end((rr, why) -> {
             Moves.removeMod(c.player, Attributes.MOVEMENT_SPEED, "overload_windup");
             Fx.end(c, c.player, 0);
@@ -388,9 +465,22 @@ final class EnergyPowers {
             c.sound(at, PowerSounds.BLAST, 2f, 0.6f);
             Fx.quake(c.level, at, 32, 6f);
             c.feel(first, first != null ? 80 : 0, 6f);
+            // Fork (3): lightning thrown on to the foes just beyond the blast
+            if (c.step(3)) {
+                int forks = 0, max = (int) c.num(3, "forks", 5);
+                for (LivingEntity e : Steps.nearest(c, at, radius + 7, 16, null)) {
+                    if (forks >= max) break;
+                    if (e.distanceToSqr(at) <= radius * radius) continue;
+                    Fx.at(c, FxKind.LIGHTNING, at).to(e.getBoundingBox().getCenter()).ticks(8).scale(1.2).plain().send();
+                    Combat.hurtFrom(c.player, null, e, dmg * c.num(3, "share", 0.4f), Forces.Force.CHARGE, true);
+                    Combat.stun(e, 10);
+                    forks++;
+                }
+            }
             if (c.is(0)) {
-                int ticks = c.ticks(160);
+                int ticks = c.ticks(160) + (int) c.num(2, "glow", 0);
                 st.buff(PowerState.Buffs.OVERLOAD, c.now() + ticks, 0.25);
+                if (c.step(4)) st.buff(PowerState.Buffs.LIVE_WIRE, c.now() + ticks, c.num(4, "live", 0.4f));
                 st.buff(PowerState.Buffs.OVERLOAD_COST, c.now() + ticks, 1);
                 Moves.postOn(c.player, Moves.FX_OVERLOAD);
                 Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.OVERLOAD.ordinal()).ticks(ticks).noAnim().send();
@@ -407,6 +497,11 @@ final class EnergyPowers {
     static Result prismLance(Cast c) {
         c.sound(PowerSounds.BEAM, 1f, 0.7f);
         int splits = c.is(1) ? 6 : 4;
+        // Refraction (2): the split beams reach further
+        double splitReach = 9 + c.num(2, "reach", 0);
+        boolean pierce = c.kit.pierce != null;
+        boolean bounce = c.step(4);
+        int crown = c.step(5) ? (int) c.num(5, "crown", 6) : 0;
         Fx.at(c, FxKind.CHARGE, hand(c.player)).ticks(c.type.maxDuration).scale(1.2).send();
         // an ultimate: the screen beat lands as the lance opens
         Fx.at(c, FxKind.ULT, c.pos()).scale(28).noAnim().send();
@@ -422,25 +517,68 @@ final class EnergyPowers {
                 Vec3 end = wall.getType() == HitResult.Type.MISS ? to : wall.getLocation();
                 if (pulse) {
                     for (LivingEntity e : Combat.alongLine(c.player, eye, end, 0.6)) c.hurt(e, c.dmg(), Forces.Force.HEAT);
-                    Fx.beam(c.player, c.player, end, PRISM, 6, 0.22f, 40, true);
+                    Fx.beam(c, c.player, c.player, end, PRISM, 6, 0.22f, 40, true, true);
                 }
+                if (pulse && crown > 0) crownBeams(c, rr.age, crown, null);
                 return;
             }
             BeamHit hit = trace(c.player, eye, look, 32);
             if (!pulse) return;
-            Fx.beam(c.player, c.player, hit.end(), PRISM, 6, 0.18f, 32, true);
+            Fx.beam(c, c.player, c.player, hit.end(), PRISM, 6, 0.18f, 32, true, true);
+            // Spectrum Crown (5): six prisms over your head, each on its own foe
+            if (crown > 0) crownBeams(c, rr.age, crown, hit.target());
             if (hit.target() == null) return;
             c.hurt(hit.target(), c.dmg(), Forces.Force.HEAT);
             int n = 0;
-            for (LivingEntity o : Combat.foesAround(c.player, hit.end(), 9)) {
+            java.util.Set<Integer> lit = new java.util.HashSet<>();
+            lit.add(hit.target().getId());
+            for (LivingEntity o : Combat.foesAround(c.player, hit.end(), splitReach)) {
                 if (o == hit.target() || n >= splits) continue;
                 n++;
+                lit.add(o.getId());
                 c.hurt(o, c.dmg(3), Forces.Force.HEAT);
-                Fx.beam(c.player, hit.target(), o.getBoundingBox().getCenter(), rainbow(n), 6, 0.08f, 9, false);
+                Fx.beam(c, c.player, hit.target(), o.getBoundingBox().getCenter(), rainbow(n), 6, 0.08f, (float) splitReach, false, false);
+                Vec3 from = hit.target().getBoundingBox().getCenter(), at = o.getBoundingBox().getCenter();
+                // Pierce (3): the split beam carries on through to the next body behind
+                if (pierce) {
+                    Vec3 on = at.add(at.subtract(from).normalize().scale(6));
+                    for (LivingEntity p : Combat.alongLine(c.player, at, on, 0.6)) {
+                        if (!lit.add(p.getId())) continue;
+                        Combat.hurtFrom(c.player, null, p, c.dmg(3) * c.kit.pierce.share(), Forces.Force.HEAT, true);
+                        Fx.beam(c, c.player, o, p.getBoundingBox().getCenter(), rainbow(n), 6, 0.06f, 6, false, false);
+                        break;
+                    }
+                }
+                // Bounce (4): and glances on to one more foe near where it struck
+                if (bounce) {
+                    for (LivingEntity q : Steps.nearest(c, at, 5, 3, o)) {
+                        if (!lit.add(q.getId())) continue;
+                        Combat.hurtFrom(c.player, null, q, c.dmg(3) * 0.7f, Forces.Force.HEAT, true);
+                        Fx.beam(c, c.player, o, q.getBoundingBox().getCenter(), rainbow(n + 1), 6, 0.06f, 5, false, false);
+                        break;
+                    }
+                }
             }
             if (rr.age % 12 == 0) c.sound(hit.end(), PowerSounds.BEAM, 0.6f, 1.6f);
         });
         return Result.OK;
+    }
+
+    /** Spectrum Crown: a ring of prisms over your head, each throwing a beam at a different foe in front of you. */
+    private static void crownBeams(Cast c, int age, int n, @Nullable LivingEntity skip) {
+        Vec3 head = c.player.getEyePosition().add(0, 0.9, 0);
+        Vec3 look = c.player.getLookAngle();
+        int i = 0;
+        for (LivingEntity e : Steps.nearest(c, head.add(look.scale(10)), 14, n + 1, skip)) {
+            if (i >= n) break;
+            if (e.getBoundingBox().getCenter().subtract(head).dot(look) < 0) continue;
+            double a = Math.PI * 2 * i / n + age * 0.08;
+            Vec3 prism = head.add(Math.cos(a) * 0.55, 0, Math.sin(a) * 0.55);
+            Vec3 to = e.getBoundingBox().getCenter();
+            Combat.hurtFrom(c.player, null, e, c.dmg(3), Forces.Force.HEAT, true);
+            Fx.at(c, FxKind.BEAM, prism).to(to).colour(rainbow(i)).aux(0.07).scale(14).ticks(6).plain().send();
+            i++;
+        }
     }
 
     static int rainbow(int i) {

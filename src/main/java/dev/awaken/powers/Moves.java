@@ -218,6 +218,12 @@ public final class Moves {
      * for {@code popDamage} in a small radius.
      */
     public static @Nullable Mannequin decoy(Cast c, Vec3 at, int ticks, float popDamage, double popRadius, double tauntRadius, String key) {
+        return decoy(c, at, ticks, popDamage, popRadius, tauntRadius, key, null);
+    }
+
+    /** As above; {@code onPop} runs for each foe the burst hits (a ladder step's extra, SPEC 34). */
+    public static @Nullable Mannequin decoy(Cast c, Vec3 at, int ticks, float popDamage, double popRadius, double tauntRadius, String key,
+                                            java.util.function.@Nullable Consumer<LivingEntity> onPop) {
         ServerLevel level = c.level;
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("immovable", true);
@@ -253,6 +259,7 @@ public final class Moves {
                 for (LivingEntity f : Combat.foesAround(c.player, p, popRadius)) {
                     c.hurt(f, popDamage, Forces.Force.SPIRIT);
                     effect(f, MobEffects.BLINDNESS, 40, 0);
+                    if (onPop != null) onPop.accept(f);
                 }
                 level.sendParticles(ParticleTypes.EXPLOSION, p.x, p.y, p.z, 1, 0, 0, 0, 0);
             }
