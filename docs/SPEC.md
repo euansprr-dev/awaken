@@ -5112,8 +5112,18 @@ of the plan). No mixins.
   back over 3 ticks while the hand's last fist sinks 0.8 away (a world arm lets go in the world instead). A pair's twin
   goes with the off hand. Letting go of the lip (a drop, `fp_ledge_back`, a wall jump), the rope (`fp_rope_release`,
   `fp_rope_launch`) or the line brings the weapon back at once; a climb out keeps it away to the end of `fp_mantle`. The
-  tactical sprint, slide (its main hand), roll, wall-run, vault and hop keep it in hand. Third person is unchanged (the
-  body's climb clips still show held items: hiding them for other players needs a client query of remote climbs).
+  tactical sprint, slide (its main hand), roll, wall-run, vault and hop keep it in hand.
+  Third person (2026-10-28): both held items, including a pair's twin, are hidden during a ledge hang and moves between
+  holds, pipe/ladder grip, vertical wall climb, mantle/climb out, climbs over or onto rails (`HIGH`, `ONTO`, `OVER`),
+  and the Ascent's rope, zip and rappel. `body.client.BodyHeldItems` clears only the extracted hand meshes and stacks,
+  after Arms has populated them; the player's equipment never changes. The next extraction restores current equipment
+  as soon as climbing ends, including after an interrupted mantle or climb-out. The local player uses movement
+  prediction; observers use the server's current transient `body_stowed` Boolean attachment (updated only on change,
+  after movement validation, and sent on initial tracking too). It works without the animation library. A climb-out's
+  server window is the same 10 ticks as its path plus the existing 6-tick Runner grace, ended sooner by the client's
+  completion/interruption; other windows retain their existing motion limits. Death/replacement, logout and dimension
+  changes retain no stow state. No save schema changes. Tests: `body_climb_stow` (state, ends, isolation, resets) and
+  `tools/tests/body-held-items.py` (actual modifier, both hands, paired-item appearance, prediction and next-frame restoration).
 - **Look-lag** (P2): the hands trail fast turns of the view on a damped spring (up to 0.06 sideways, 0.045 up, 4° of
   roll), halved with reduced motion (`FirstPerson.reducedMotion`, the body's setting).
 - **Near legs** (P2): a foot nearer the eye than 1.15 is drawn in the hand pass, pushed out along its line of sight to

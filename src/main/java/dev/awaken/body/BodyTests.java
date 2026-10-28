@@ -105,6 +105,7 @@ final class BodyTests {
 
     static void register() {
         AwakenTests.register("body_clips", 20, BodyTests::clips);
+        AwakenTests.register("body_climb_stow", 20, BodyStowTests::check);
         AwakenTests.register("body_action_camera", 20, BodyTests::actionCamera);
         AwakenTests.register("body_free_run", 20, BodyTests::freeRun);
         AwakenTests.registerIsolated("body_mantle_ledges", 100, BodyTests::mantleLedges);

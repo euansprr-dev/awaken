@@ -741,7 +741,7 @@ public final class RunnerMoves {
             // a load before the push up (set before the path: its first tick runs at once)
             leapLoad = LEAP_LOAD;
             leapDip = clearBelow(level, ctx, 0.1) ? 0.1 : 0;
-            startPath(p, CLIMB, stand[0], stand[1], stand[2], 8 + LEAP_LOAD, null, now);
+            startPath(p, CLIMB, stand[0], stand[1], stand[2], RunnerRules.CLIMB_OUT_TICKS, null, now);
             dev.awaken.body.client.feel.FeelDirector.leapLoad();
             ClientMoves.suppressJump();
             BodyAnims.runner(p.getId(), BodyClips.MANTLE);
@@ -858,6 +858,7 @@ public final class RunnerMoves {
                 boolean toHang = pathToHang;
                 state = State.NONE;
                 if (toHang) sendEnd(Move.LEDGE_HANG);
+                else if (pathKind == CLIMB) sendEnd(Move.LEDGE_JUMP);
                 return;
             }
         }
@@ -891,6 +892,7 @@ public final class RunnerMoves {
             settleAt = now + (pathKind == GRAB || pathKind == LOWER || pathKind == EAVE ? 5 : 1);
         } else {
             state = State.NONE;
+            if (pathKind == CLIMB) sendEnd(Move.LEDGE_JUMP);
             ClientMoves.trace("climbed out");
         }
     }
@@ -1012,6 +1014,7 @@ public final class RunnerMoves {
     }
 
     static void stop(LocalPlayer p, String why) {
+        if (state == State.PATH && pathKind == CLIMB) sendEnd(Move.LEDGE_JUMP);
         endRun(p, true, why);
         endHang(p, true, why);
         GripMoves.end(p, true, why);

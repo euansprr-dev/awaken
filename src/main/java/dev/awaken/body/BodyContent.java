@@ -29,6 +29,10 @@ public final class BodyContent {
     static final Supplier<AttachmentType<BodyMotion>> MOTION = ATTACHMENTS.register("body_motion",
             () -> AttachmentType.builder(BodyMotion::new).build());
 
+    /** Appearance only: current climb, sent to existing and new observers; never saved or copied on death. */
+    public static final Supplier<AttachmentType<Boolean>> STOWED = ATTACHMENTS.register("body_stowed",
+            () -> AttachmentType.builder(() -> false).sync(net.minecraft.network.codec.ByteBufCodecs.BOOL).build());
+
     public static final DeferredHolder<SoundEvent, SoundEvent> ROLL = sound("body.roll");
     public static final DeferredHolder<SoundEvent, SoundEvent> SPRINT = sound("body.sprint");
     public static final DeferredHolder<SoundEvent, SoundEvent> SLIDE = sound("body.slide");
