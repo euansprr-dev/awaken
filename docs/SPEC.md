@@ -9983,8 +9983,11 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     3 px move of the tip. Each clip's solves start from the rest and follow on tick by tick, so a loop meets itself. On
     top of the solve, the arm writhes along its length in the two ways that leave its tip where it is (`_null`), so no
     standing arm is ever still and none slides. Through a blow they brace: they grip and curl tighter through the
-    wind-up, hold it into the recovery (a string's next blow links on still braced), and let go before it ends. The
-    pinned arms are keyed every other tick.
+    wind-up, hold it into the recovery (a string's next blow links on still braced), and let go before it ends. A
+    pinned arm's tick is dropped where the curve through its neighbours passes within 1.5 degrees of it, so slow
+    stretches are keyed every other tick and fast ones every tick. In each move, the arms off the floor (her front arms,
+    or all eight in the Jet) are ground-passed along their whole length, lifted at the joints above, so a blow that
+    comes down on the floor lies along it and never goes into it.
   - **The idle.** She breathes, her mantle swelling (a scale track) and swaying up behind her, and hums, her horn's
     mouth opening a little with each breath. Her front arms lead a slow measure, rising and falling out of step. Her
     standing arms writhe, and now and then one lifts its tip off the floor and sets it down again. She walks on her arms

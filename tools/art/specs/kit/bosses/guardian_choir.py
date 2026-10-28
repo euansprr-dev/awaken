@@ -560,13 +560,19 @@ def _plant(r, clip, arms, where=None, t0=0.0, grip=None):
                 out[b] = ik.delta(rot, r.by_name[b].rot)
         return out
     ik.retrack(r, clip, fn)
-    # keyed every other tick (a curve through them), so her rig stays the size of the others'
+    # a tick's key dropped where the curve through its neighbours passes within 1.5 degrees of it (slow stretches keyed
+    # every other tick, fast ones every tick), so her rig stays near the size of the others'
     c = r.clips[clip]
     for k in arms:
         for i in range(N):
             keys = c.tracks.get((f"a{k}_{i}", "rot"))
-            if keys and len(keys) > 3:
-                c.tracks[(f"a{k}_{i}", "rot")] = keys[:-1:2] + [keys[-1]]
+            if not keys or len(keys) < 4:
+                continue
+            kept = [keys[0]]
+            for j in range(1, len(keys) - 1):
+                if j % 2 == 0 or max(abs(keys[j][1][x] - (keys[j - 1][1][x] + keys[j + 1][1][x]) / 2) for x in range(3)) > 1.5:
+                    kept.append(keys[j])
+            c.tracks[(f"a{k}_{i}", "rot")] = kept + [keys[-1]]
 
 
 def _swell(r, clip, keys):
@@ -1017,6 +1023,13 @@ def clips(r):
             _swell(r, core.clip_name(m), m.swell)
     everyday = [n for n in r.clips if n != "death"]
     core.ground_pass(r, GROUND, clips=everyday)
+    # the arms off the floor in a move (her front arms, or all of them in the jet) bring their whole length down onto
+    # it, never into it: their middles and tips guarded, lifted at the joints above them
+    for m in mv:
+        stand = getattr(m, "stand", STANDS.get(m.id, STAND))
+        free = [k for k in range(8) if k not in stand]
+        core.ground_pass(r, [([f"a{k}_{j}" for j in range(3, N)], [(f"a{k}_2", 0, 30, -1), (f"a{k}_1", 0, 30, -1), (f"a{k}_0", 0, 20, -1)])
+                             for k in free], clips=[core.clip_name(m)])
     return mv
 
 
