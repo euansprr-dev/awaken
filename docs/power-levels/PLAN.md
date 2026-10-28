@@ -1,7 +1,7 @@
 # Power levels: every level-up transforms the power
 
 Status: PLAN, waiting for Euan's approval (2026-10-28). Nothing in `src/` changes on this branch. Branch
-`claude/power-levels-plan-0eb980`. Page: (link added on publish). Ladder data: `docs/power-levels/ladders_draft.py` (run it to print
+`claude/power-levels-plan-0eb980`. Page: https://claude.ai/artifact/B83sHv2LdXY6okcjmEMJBt (a copy is `docs/power-levels/plan.html`). Ladder data: `docs/power-levels/ladders_draft.py` (run it to print
 section 6's tables).
 
 Euan, 2026-10-28: "When leveling up a power, it should have a real difference that makes it super satisfying to level up. Better
