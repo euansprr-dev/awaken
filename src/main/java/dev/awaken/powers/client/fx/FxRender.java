@@ -87,7 +87,7 @@ final class FxRender {
     private static float whiteU, whiteV;
 
     static void onExtract(ExtractLevelRenderStateEvent e) {
-        FxStats.nextFrame(); // the last frame's FX time is complete (SPEC 34.9: /awaken fx stats, bench)
+        FxStats.nextFrame(); // the last frame's FX time is complete (SPEC 36.9: /awaken fx stats, bench)
         long t0 = FxStats.begin();
         pt = e.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         FxWorld.extract(pt);

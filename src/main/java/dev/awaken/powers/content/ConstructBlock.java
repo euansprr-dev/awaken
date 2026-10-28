@@ -73,7 +73,7 @@ public final class ConstructBlock extends Block {
 
     public static int firstDelay(int ticks) {
         int rem = ticks % STAGE;
-        // a construct that outlives the usual 30 s (ladder steps, SPEC 34) holds its first, unbroken age longer
+        // a construct that outlives the usual 30 s (ladder steps, SPEC 36) holds its first, unbroken age longer
         return ticks >= LIFETIME ? STAGE + (ticks - LIFETIME) : (rem == 0 ? STAGE : rem);
     }
 

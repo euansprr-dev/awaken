@@ -29,7 +29,7 @@ public final class Cast {
     public final boolean predicted;
     /** An FX event carrying this cast's profile beat has been sent (Casting adds a pose beat if a power sent none). */
     public boolean poseSent;
-    /** What the power's ladder adds at the level this cast started at (SPEC 34.3). */
+    /** What the power's ladder adds at the level this cast started at (SPEC 36.3). */
     public final dev.awaken.powers.ladder.Kit kit;
     /** Rider bookkeeping (powers.ladder.Riders): the tick of the last throttled rider and chain hits this tick. */
     public long riderTick = Long.MIN_VALUE, chainTick = Long.MIN_VALUE;
@@ -38,7 +38,7 @@ public final class Cast {
     public boolean refunded;
     /** The ladder's sound layer (levels 3 and 5) has gone out with this cast's first sound. */
     private boolean tierSounded;
-    /** A second press this cast opened (SPEC 34.3, "press again"): what it does and for how many ticks. */
+    /** A second press this cast opened (SPEC 36.3, "press again"): what it does and for how many ticks. */
     @Nullable Runnable followUp;
     int followUpTicks;
     private final float yRot;
@@ -224,7 +224,7 @@ public final class Cast {
         }
         level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, pitch);
         if (powerLevel >= 3 && !tierSounded) {
-            // a power without a cast profile plays its sounds here, so its ladder layer (SPEC 34.5) goes with the first of them
+            // a power without a cast profile plays its sounds here, so its ladder layer (SPEC 36.5) goes with the first of them
             tierSounded = true;
             level.playSound(null, at.x, at.y, at.z, PowerSounds.tier(type.family, powerLevel), SoundSource.PLAYERS, Math.min(1f, volume) * 0.9f, 1f);
         }

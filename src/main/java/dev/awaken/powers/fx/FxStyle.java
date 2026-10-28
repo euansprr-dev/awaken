@@ -26,7 +26,7 @@ public enum FxStyle {
     FROST(0xFFFFFFFF, 0xFFA7CDE3, 0xFF406A8C, 0xFFE6F6FF),
     PRISM(0xFFFFFFFF, 0xFFE9D8FF, 0xFF8F6BFF, 0xFF7FC3FF),
     NEUTRAL(0xFFFFFFFF, 0xFFD6ECFF, 0xFF7FC3FF, 0xFFF2A541),
-    // Awakened (SPEC 34.5): a level-5 power draws every effect in its family's awakened palette: hotter cores, a richer mid,
+    // Awakened (SPEC 36.5): a level-5 power draws every effect in its family's awakened palette: hotter cores, a richer mid,
     // and an accent of gold (or the family's own second colour) where the plain style had dust or void
     KINETIC_AWAKENED(0xFFFFF8E8, 0xFFFFB347, 0xFFC4400F, 0xFFFF6A2A),
     VELOCITY_AWAKENED(0xFFFFFFFF, 0xFFFF3355, 0xFF8A0F2A, 0xFFFFD27A),

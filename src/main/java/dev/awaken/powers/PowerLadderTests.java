@@ -24,7 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-/** GameTests for the power ladders (SPEC 34.9): the table, every level casting, each shared rider, saves, the moment, earning. */
+/** GameTests for the power ladders (SPEC 36.9): the table, every level casting, each shared rider, saves, the moment, earning. */
 final class PowerLadderTests {
     private PowerLadderTests() {}
 
@@ -114,7 +114,7 @@ final class PowerLadderTests {
             h.succeed();
         });
 
-        // One per shared rider mechanism (SPEC 34.3), on the step that carries it: a hit arcs on, lands again, pulses round,
+        // One per shared rider mechanism (SPEC 36.3), on the step that carries it: a hit arcs on, lands again, pulses round,
         // leaves a burning patch, stuns and lifts; a guard cuts damage after the cast; an extend reaches further.
         rider("power_ladder_rider_chain", "thunderclap", 3, (h, c, a, b) -> {
             float hp = b.getHealth();
@@ -259,7 +259,7 @@ final class PowerLadderTests {
             h.succeed();
         });
 
-        // A second press (SPEC 34.3): Shadow Step 4 steps you back to the pool, free, and only then starts its cooldown.
+        // A second press (SPEC 36.3): Shadow Step 4 steps you back to the pool, free, and only then starts its cooldown.
         AwakenTests.register("power_ladder_follow_up", 40, h -> {
             floor(h, 10);
             ServerPlayer sp = player(h, new BlockPos(0, 1, -6));

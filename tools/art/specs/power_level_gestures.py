@@ -1,4 +1,4 @@
-"""The ladder's gestures (SPEC 34, docs/power-levels/PLAN.md 4.5): each power's cast at levels 3 and 5, written as edits on its
+"""The ladder's gestures (SPEC 36, docs/power-levels/PLAN.md 4.5): each power's cast at levels 3 and 5, written as edits on its
 level-1 clips (power_gestures.py, power_casts.py's family clips) so they keep its character. Importing this module registers
 
     p_<power>_l3, p_<power>_l5                  the begin clip (an instant cast) or the begin, _hold and _end of a channel

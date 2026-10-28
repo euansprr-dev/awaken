@@ -120,13 +120,13 @@ public final class Powers {
         }
         l.owned.put(id, new Loadout.Owned(id, o.variant(), o.level() + 1));
         Mastery.coreLevelled(l, id, o.level(), o.level() + 1);
-        // the ladder's moment: a sting in a fight, the step's window and bloom when calm (SPEC 34.6)
+        // the ladder's moment: a sting in a fight, the step's window and bloom when calm (SPEC 36.6)
         dev.awaken.powers.ladder.Evolution.levelled(player, type, o.level(), o.level() + 1);
         markDirty(player);
         return LearnResult.LEVELLED;
     }
 
-    /** An older save's one window about ladders is still to show (Loadout schema 3, SPEC 34.6). */
+    /** An older save's one window about ladders is still to show (Loadout schema 3, SPEC 36.6). */
     public static boolean ladderIntroPending(Loadout l) {
         return l.migratedFrom > 0;
     }

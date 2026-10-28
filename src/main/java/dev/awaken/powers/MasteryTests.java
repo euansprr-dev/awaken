@@ -81,7 +81,7 @@ final class MasteryTests {
             float dmgCore = Cast.of(byCore, beam).dmg(), dmgUse = Cast.of(byUse, beam).dmg();
             float levelOne = PowerMath.damage(beam.damage, dev.awaken.progression.Progression.profile(byUse).level(),
                     dev.awaken.progression.Progression.stat(byUse, beam.scaling), 1, 1f);
-            // a level is +6% (SPEC 34.2)
+            // a level is +6% (SPEC 36.2)
             h.assertTrue(Math.abs(dmgCore - dmgUse) < 1e-4 && dmgUse > levelOne * 1.05f, "same, stronger damage: " + dmgCore + " vs " + dmgUse
                     + " (level 1: " + levelOne + ")");
             h.assertTrue(PowerMath.cooldown(beam.cooldown, 1f, a.get(id).level(), 0) == PowerMath.cooldown(beam.cooldown, 1f, b.get(id).level(), 0)

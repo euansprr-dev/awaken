@@ -141,7 +141,7 @@ final class PowerHud {
     }
 
     /**
-     * The slot's frame grows with the power's ladder (SPEC 34.7): corner ticks at level 2, side bars at 3, a double frame at 4,
+     * The slot's frame grows with the power's ladder (SPEC 36.7): corner ticks at level 2, side bars at 3, a double frame at 4,
      * and at 5 the frame glows in the family's colour. {@code flash} (1 -> 0) lights it up just after a level-up.
      */
     static void tier(GuiGraphicsExtractor g, int x, int y, int level, int family, float flash) {
@@ -231,7 +231,7 @@ final class PowerHud {
     }
 
     /**
-     * Danger Sense's Edge Arc (SPEC 34): a short red arc at the screen's edge on the side each warned threat is on, brighter the
+     * Danger Sense's Edge Arc (SPEC 36): a short red arc at the screen's edge on the side each warned threat is on, brighter the
      * more it is behind you.
      */
     private static void dangerArcs(GuiGraphicsExtractor g, Minecraft mc, int w, int h) {

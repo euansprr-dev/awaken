@@ -1,4 +1,4 @@
-"""What each ladder step runs (SPEC 34.3-34.5), family by family: its riders, its look layers and the numbers its own code reads
+"""What each ladder step runs (SPEC 36.3-36.5), family by family: its riders, its look layers and the numbers its own code reads
 (power code asks with c.num(level, key, def) and c.step(level)). The names and texts are the P rows in power_ladder_table.py.
 
 A look rides an event kind the power really sends (the "on" list); tools/art/specs/power_ladder_table.py build checks the names,

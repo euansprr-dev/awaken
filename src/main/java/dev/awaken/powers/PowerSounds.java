@@ -14,7 +14,7 @@ public final class PowerSounds {
 
     public static final DeferredHolder<SoundEvent, SoundEvent> FAIL = s("power.fail");
     public static final DeferredHolder<SoundEvent, SoundEvent> LEARN = s("power.learn");
-    // the ladder (SPEC 34): its moment, and the families' level-3 and level-5 layers under a power's own sound
+    // the ladder (SPEC 36): its moment, and the families' level-3 and level-5 layers under a power's own sound
     public static final DeferredHolder<SoundEvent, SoundEvent> EVOLVE = s("power.evolve");
     public static final DeferredHolder<SoundEvent, SoundEvent> EVOLVE_STING = s("power.evolve_sting");
     public static final DeferredHolder<SoundEvent, SoundEvent> EVOLVE_AWAKEN = s("power.evolve_awaken");

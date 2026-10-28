@@ -46,7 +46,7 @@ public final class Bolts {
         public int bounces;
         /** Stun ticks on hit. */
         public int stun;
-        /** The cast that fired it: its hits run the ladder's riders and its streak carries the power's looks (SPEC 34.4). */
+        /** The cast that fired it: its hits run the ladder's riders and its streak carries the power's looks (SPEC 36.4). */
         public @Nullable Cast cast;
         /** Foes it still goes through (a ladder's pierce), each further one taking {@link #pierceShare} of the last. */
         public int pierce;

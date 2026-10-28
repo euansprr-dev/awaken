@@ -85,7 +85,7 @@ final class PowersCommands {
                 c.getSource().sendSuccess(() -> Component.literal(r.ok() ? "Cast " + t.name : "Failed: " + r.reason()), false);
                 return r.ok() ? 1 : 0;
             })));
-            // the ladder (SPEC 34.9): a power at a level on its key, ready to cast; and a level's moment again
+            // the ladder (SPEC 36.9): a power at a level on its key, ready to cast; and a level's moment again
             power.then(Commands.literal("showcase").then(Commands.argument("id", StringArgumentType.word()).suggests(POWERS)
                     .then(Commands.argument("level", IntegerArgumentType.integer(1, Loadout.MAX_LEVEL))
                             .executes(c -> showcase(c.getSource(), StringArgumentType.getString(c, "id"), IntegerArgumentType.getInteger(c, "level"), 0))

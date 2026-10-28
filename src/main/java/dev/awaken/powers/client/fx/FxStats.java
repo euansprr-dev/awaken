@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.Locale;
 
 /**
- * What power FX cost to draw (SPEC 34.9): the time FxRender spends building geometry and extracting the world each frame.
+ * What power FX cost to draw (SPEC 36.9): the time FxRender spends building geometry and extracting the world each frame.
  * {@code /awaken fx stats} prints p50 / p99 over the last frames; {@code /awaken fx bench <power> <level> <count>} puts the
  * power at that level on its key (the admin showcase), casts it {@code count} times a second and a half apart and prints the
  * frames of the run. The gate: a level-5 bench at most +0.5 ms p50 and +1 ms p99 over level 1. Render thread only.

@@ -25,7 +25,7 @@ import java.util.Map;
  * <p>Schema 2 adds mastery: points toward each owned power's next level ({@link Mastery}). A schema-1 save loads with
  * no mastery and is written back as schema 2.
  *
- * <p>Schema 3 adds {@code seen}: the level each power's ladder moment was last shown for (SPEC 34.6). An older save loads
+ * <p>Schema 3 adds {@code seen}: the level each power's ladder moment was last shown for (SPEC 36.6). An older save loads
  * with seen = its level (no flood of windows) and {@link #migratedFrom} set, so the player gets one window about ladders.
  */
 public final class Loadout {
@@ -45,7 +45,7 @@ public final class Loadout {
                 ByteBufCodecs.STRING_UTF8, Owned::id, ByteBufCodecs.VAR_INT, Owned::variant, ByteBufCodecs.VAR_INT, Owned::level, Owned::new);
     }
 
-    /** A cooldown entry whose total is this is no cooldown: a ladder step's second press is open until {@code end} (SPEC 34.3). */
+    /** A cooldown entry whose total is this is no cooldown: a ladder step's second press is open until {@code end} (SPEC 36.3). */
     public static final int AGAIN = -1;
 
     /** end = game time the cooldown ends; total = its full length (for the HUD sweep), or {@link #AGAIN}. */
@@ -194,7 +194,7 @@ public final class Loadout {
         for (var e : mastery.entrySet()) if (e.getValue() > 0 && l.owned.containsKey(e.getKey())) l.mastery.put(e.getKey(), new Bar(e.getValue()));
         for (var e : seen.entrySet()) if (l.owned.containsKey(e.getKey())) l.seen.put(e.getKey(), e.getValue());
         if (schema < 3) {
-            // before ladders: the levels they already had count as seen; one window tells them what changed (SPEC 34.6)
+            // before ladders: the levels they already had count as seen; one window tells them what changed (SPEC 36.6)
             for (Owned o : l.owned.values()) if (o.level() > 1) l.seen.put(o.id(), o.level());
             if (!l.owned.isEmpty()) l.migratedFrom = schema;
         }

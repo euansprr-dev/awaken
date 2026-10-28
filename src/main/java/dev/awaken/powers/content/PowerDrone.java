@@ -33,7 +33,7 @@ public final class PowerDrone extends PowerSummon {
     private int fireInterval = 16;
     private double range = 16;
     private @Nullable LivingEntity focus;
-    /** The cast that sent it: its shots carry the ladder's riders, pierce and looks (SPEC 34). */
+    /** The cast that sent it: its shots carry the ladder's riders, pierce and looks (SPEC 36). */
     public dev.awaken.powers.@Nullable Cast cast;
     /** Burst Fire (Drone 4): shots per burst, three ticks apart, with a longer pause between bursts. */
     public int burst = 1;

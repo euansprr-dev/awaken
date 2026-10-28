@@ -59,7 +59,7 @@ final class PowerCastTests {
             throw new IllegalStateException(ex);
         }
         Set<Integer> ids = new HashSet<>();
-        // every row, the ladder's level rows too (SPEC 34: the same id and timing, their own clips, held to the same rules)
+        // every row, the ladder's level rows too (SPEC 36: the same id and timing, their own clips, held to the same rules)
         for (CastProfiles.Profile p : CastProfiles.allLevels()) {
             CastProfiles.Profile base = CastProfiles.byId(p.id());
             if (base == p) h.assertTrue(ids.add(p.id()) && CastProfiles.byPower("awaken:" + p.power()) == p, p.power() + ": ids and lookups agree");

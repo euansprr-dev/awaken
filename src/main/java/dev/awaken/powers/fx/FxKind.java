@@ -88,7 +88,7 @@ public enum FxKind {
     POSE,
     /** A power's sound, played by every client in range at pos on the cast's release frame: colour = the sound event's registry id, scale = volume, aux = pitch. */
     SOUND,
-    /** A power climbed its ladder (SPEC 34.6): a bloom on the caster; aux 0 = a fight's sting, 1 = the full moment; the level rides the flags. */
+    /** A power climbed its ladder (SPEC 36.6): a bloom on the caster; aux 0 = a fight's sting, 1 = the full moment; the level rides the flags. */
     EVOLVE;
 
     private static final FxKind[] VALUES = values();

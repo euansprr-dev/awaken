@@ -32,7 +32,7 @@ public final class PowerRegistry {
         ORDER.add(type);
     }
 
-    /** A power's place in registration order: both sides build the registry from one jar, so FX events carry it (SPEC 34.4). */
+    /** A power's place in registration order: both sides build the registry from one jar, so FX events carry it (SPEC 36.4). */
     public static int index(PowerType type) {
         PowerCatalog.bootstrap();
         Integer i = INDEX.get(type);

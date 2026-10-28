@@ -138,7 +138,7 @@ public final class Casting {
             return r;
         }
         if (cost > 0) spend(player, l, cost, now);
-        // a ladder step's guard (SPEC 34.3): damage taken is cut for a while after the cast
+        // a ladder step's guard (SPEC 36.3): damage taken is cut for a while after the cast
         if (c.kit.guard != null) st.buff(PowerState.Buffs.GUARD, now + c.kit.guard.ticks(), c.kit.guard.share());
         Mastery.cast(player, type, cost, now);
         Running channel = st.running(id);
@@ -207,7 +207,7 @@ public final class Casting {
         PowerState st = PowerState.of(player);
         long now = now(player);
         if (type.family == PowerType.Family.ENERGY && st.has(PowerState.Buffs.OVERLOAD_COST, now)) cost *= 0.5f;
-        // Cloak's Shade Step (SPEC 34): the shadow moves are free while you're unseen
+        // Cloak's Shade Step (SPEC 36): the shadow moves are free while you're unseen
         if (st.has(PowerState.Buffs.CLOAK_FREE, now) && st.has(PowerState.Buffs.CLOAK, now)
                 && (type.id.getPath().equals("shadow_step") || type.id.getPath().equals("echo_swap"))) cost = 0;
         return cost;

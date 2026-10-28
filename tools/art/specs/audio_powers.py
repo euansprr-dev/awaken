@@ -32,7 +32,7 @@ import audiokit as K  # noqa: E402
 import ritual_sounds as R  # noqa: E402
 import audio_arms as AA  # noqa: E402  (helpers: rec, pick, shift, trim, cloth, sub, _blow, tame, master)
 import audio_power_kits as KITS  # noqa: E402  (a sound for every `power.*` event the catalog plays)
-import audio_power_ladder as LADDER  # noqa: E402  (the ladder's moment and the families' tier layers, SPEC 34)
+import audio_power_ladder as LADDER  # noqa: E402  (the ladder's moment and the families' tier layers, SPEC 36)
 from audio_mix import TARGETS  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
@@ -133,7 +133,7 @@ for _name, (_fn, _v, _rms, _att, _crest) in KITS.KIT.items():
     EVENTS["kit_" + _name] = (_fn, _v, _rms, _att, _crest)
 
 
-# the ladder (SPEC 34): power.evolve*, power.tier3_<family>, power.tier5_<family>
+# the ladder (SPEC 36): power.evolve*, power.tier3_<family>, power.tier5_<family>
 for _name, (_fn, _v, _rms, _att, _crest) in LADDER.EVENTS.items():
     EVENTS["lad_" + _name] = (_fn, _v, _rms, _att, _crest)
 

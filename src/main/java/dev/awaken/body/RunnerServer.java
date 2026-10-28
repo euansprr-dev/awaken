@@ -446,7 +446,7 @@ final class RunnerServer {
                 endRun(m, now);
             } else {
                 m.lastMove = now;
-                if (!m.runClimb) dev.awaken.powers.ladder.StepHooks.strideTick(p, now); // Wall Stride's looks (SPEC 34)
+                if (!m.runClimb) dev.awaken.powers.ladder.StepHooks.strideTick(p, now); // Wall Stride's looks (SPEC 36)
                 // wall contact on every tick, from where the server has the body
                 RunnerRules.Wall w = RunnerRules.wallOn(p.level(), ctx, M, p.getX(), p.getY(), p.getZ(), m.runAxis, m.runSide,
                         RunnerRules.RUN_REACH + RunnerRules.SERVER_TOL, 0, 0);

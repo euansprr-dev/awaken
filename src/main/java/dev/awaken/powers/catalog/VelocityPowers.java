@@ -85,7 +85,7 @@ public final class VelocityPowers {
                     if (c.player.isSprinting() && c.level.getFluidState(c.player.blockPosition().below()).is(net.minecraft.tags.FluidTags.WATER)) {
                         c.player.resetFallDistance();
                         if (c.player.tickCount % 2 == 0) c.particles(ParticleTypes.SPLASH, c.pos(), 2, 0.2, 0.05);
-                        // running on water pays Water Run's mastery (SPEC 34.8), a second at a time
+                        // running on water pays Water Run's mastery (SPEC 36.8), a second at a time
                         if (c.player.tickCount % 20 < PowerType.PASSIVE_PERIOD) dev.awaken.powers.Mastery.use(c.player, "awaken:water_run", dev.awaken.powers.Mastery.WATER_SECOND);
                         // a red wake that lasts while you keep running
                         Fx.at(c, FxKind.TRAIL, c.pos()).ticks(12).noAnim().send();
@@ -165,7 +165,7 @@ public final class VelocityPowers {
         return Result.OK;
     }
 
-    /** Dash's ladder past its own move (SPEC 34): Momentum's next blow, Chain Charge's energy back, Redline's snap. */
+    /** Dash's ladder past its own move (SPEC 36): Momentum's next blow, Chain Charge's energy back, Redline's snap. */
     private static void dashSteps(Cast c, PowerState st, boolean chained, Vec3 from, Vec3 to, int snapDelay) {
         if (c.step(3)) st.buff(PowerState.Buffs.MOMENTUM, c.now() + (long) c.num(3, "ticks", 20), 1 + c.num(3, "bonus", 0.25f));
         if (c.step(4) && chained) Powers.restoreEnergy(c.player, PowerMath.cost(c.type.cost, c.v.cost()) * c.num(4, "share", 0.5f));

@@ -221,7 +221,7 @@ public final class Moves {
         return decoy(c, at, ticks, popDamage, popRadius, tauntRadius, key, null);
     }
 
-    /** As above; {@code onPop} runs for each foe the burst hits (a ladder step's extra, SPEC 34). */
+    /** As above; {@code onPop} runs for each foe the burst hits (a ladder step's extra, SPEC 36). */
     public static @Nullable Mannequin decoy(Cast c, Vec3 at, int ticks, float popDamage, double popRadius, double tauntRadius, String key,
                                             java.util.function.@Nullable Consumer<LivingEntity> onPop) {
         ServerLevel level = c.level;

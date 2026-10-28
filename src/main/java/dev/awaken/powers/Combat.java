@@ -122,7 +122,7 @@ public final class Combat {
         return hurtBy(c, null, target, amount, force);
     }
 
-    /** A cast's hit (by its caster, or by something it sent: a bolt): a landed hit runs the ladder's riders (SPEC 34.3). */
+    /** A cast's hit (by its caster, or by something it sent: a bolt): a landed hit runs the ladder's riders (SPEC 36.3). */
     public static boolean hurtBy(Cast c, @Nullable Entity direct, LivingEntity target, float amount, Forces.@Nullable Force force) {
         boolean landed = hurtFrom(c.player, direct, target, amount, force, true);
         if (landed) {

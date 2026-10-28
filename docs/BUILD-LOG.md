@@ -49,7 +49,7 @@ powers, mobs, gates (wave 1) · descent, lucidium (wave 2a) · veil, hearth, abo
 
 ## 2026-10-28
 
-### Power levels (SPEC 34), branch `claude/power-levels-plan-0eb980`
+### Power levels (SPEC 36), branch `claude/power-levels-plan-0eb980`
 - A ladder for each of the 63 powers: four named steps (levels 2-5), each a real change in what the power does, its
   look on every viewer and the HUD/K-menu tier frames; +6% damage a level (was +12%); save schema 3 with level-up
   moments that wait out a fight; second presses; shared riders (chain, echo, aftershock, linger, status, push, refund,

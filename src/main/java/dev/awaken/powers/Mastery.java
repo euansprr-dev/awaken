@@ -57,7 +57,7 @@ public final class Mastery {
     public static final float KILL_TOKENS = 6f;
     static final int TOKEN_TICKS = 200;
     /**
-     * Use-based earning (SPEC 34.8) for the passives that never hit: a second on a wall in a run (Wall Stride), a second run on
+     * Use-based earning (SPEC 36.8) for the passives that never hit: a second on a wall in a run (Wall Stride), a second run on
      * water (Water Run), a warned blow that then misses you (Danger Sense). Each power takes at most {@link #USE_CAP} a minute
      * from use, about what a main power earns in a minute of fighting (tools/sim/pacing_sim.py: ~81 MP), so a passive you lean
      * on levels about as fast as your main one and standing at a wall pays no more than that.
@@ -217,7 +217,7 @@ public final class Mastery {
         return KILL;
     }
 
-    /** Pays a passive's use (SPEC 34.8) toward its bar, within its per-minute cap. Returns what was paid. */
+    /** Pays a passive's use (SPEC 36.8) toward its bar, within its per-minute cap. Returns what was paid. */
     public static float use(ServerPlayer player, String powerId, float mp) {
         PowerType type = PowerRegistry.get(powerId);
         if (type == null || mp <= 0 || Powers.loadout(player).get(key(type)) == null) return 0;
@@ -277,7 +277,7 @@ public final class Mastery {
     }
 
     private static void announce(ServerPlayer player, PowerType type, int level) {
-        // the ladder's moment names the new step and what it does (SPEC 34.6)
+        // the ladder's moment names the new step and what it does (SPEC 36.6)
         dev.awaken.powers.ladder.Evolution.levelled(player, type, level - 1, level);
     }
 }

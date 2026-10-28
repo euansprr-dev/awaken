@@ -209,7 +209,7 @@ def mastery_per_combat_minute(level):
     return energy * (LANDED + (1 - LANDED) * FIGHT_MP) + KILLS_PER_COMBAT_MIN * MAIN_SHARE * KILL_MP
 
 
-# Use-based earning (SPEC 34.8, JAVA Mastery.use): the passives that never hit earn from use, capped per minute per power.
+# Use-based earning (SPEC 36.8, JAVA Mastery.use): the passives that never hit earn from use, capped per minute per power.
 WALL_SECOND_MP, WATER_SECOND_MP, DODGED_MP = 6, 5, 15  # JAVA Mastery.WALL_SECOND / WATER_SECOND / DODGED
 USE_CAP_MP = 90                                         # JAVA Mastery.USE_CAP (per minute)
 

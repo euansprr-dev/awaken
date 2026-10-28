@@ -24,7 +24,7 @@ import static dev.awaken.powers.client.fx.FxWorld.R;
 import static dev.awaken.powers.client.fx.FxWorld.alpha;
 
 /**
- * The ladder's looks (SPEC 34.5): every FX event carries its power and level, and after the power's own recipe has built,
+ * The ladder's looks (SPEC 36.5): every FX event carries its power and level, and after the power's own recipe has built,
  * the look layers of each step up to that level are drawn on top, riding the event kinds the table names. Level 5 also
  * draws the power's every effect in its family's awakened palette ({@link #restyle}). Seeds come from the event, so every
  * viewer sees the same layers; counts go through the budget like every recipe.
@@ -60,7 +60,7 @@ final class LadderFx {
     private static final it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap TIER_LAST = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
 
     /**
-     * The ladder's sound layer (SPEC 34.5): with the first sound of a level-3+ cast, the family's tier layer plays under it (level 5
+     * The ladder's sound layer (SPEC 36.5): with the first sound of a level-3+ cast, the family's tier layer plays under it (level 5
      * its awakened one), on the frame the power's own sound does, from the event's level bits (no packet of its own).
      */
     static void tierSound(FxEvent e, net.minecraft.client.multiplayer.ClientLevel level) {

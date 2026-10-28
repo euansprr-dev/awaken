@@ -351,7 +351,7 @@ final class PowerEvents {
         clearMemory();
     }
 
-    // ---- constructs that answer later (Architect's ladder, SPEC 34) ---------------------------------------------------
+    // ---- constructs that answer later (Architect's ladder, SPEC 36) ---------------------------------------------------
 
     private static void onProjectileImpact(ProjectileImpactEvent event) {
         if (!(event.getRayTraceResult() instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) return;

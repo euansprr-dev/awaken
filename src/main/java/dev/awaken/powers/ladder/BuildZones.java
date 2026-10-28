@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Architect constructs whose ladder steps keep working after the cast (SPEC 34): a Ricochet or Mirror wall, a Crystal
+ * Architect constructs whose ladder steps keep working after the cast (SPEC 36): a Ricochet or Mirror wall, a Crystal
  * wall blasts can't break, a Shatterproof cone. Events (a shot landing, a blast, a hit) look a block up here to learn who
  * built it and at which step. In memory only, like the constructs' own memory: after a restart they stand as plain light.
  */

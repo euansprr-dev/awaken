@@ -71,7 +71,7 @@ final class ClientCasting {
         if (o == null) return;
         long now = ClientPowers.now();
         if (l.again(id, now)) {
-            // a ladder step's second press (SPEC 34.3): free and unpredicted; the server runs the step's follow-up
+            // a ladder step's second press (SPEC 36.3): free and unpredicted; the server runs the step's follow-up
             var keyed = p.input.keyPresses;
             int keys = PowerPayloads.keysOf(keyed.forward(), keyed.backward(), keyed.left(), keyed.right());
             ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.PRESS, false, p.getYRot(), p.getXRot(), keys));
@@ -146,7 +146,7 @@ final class ClientCasting {
     /** Still Water: ticks the surface still holds you after you stop sprinting. */
     private static int waterStand;
 
-    /** Sprinting across water: the surface holds you like ground. The ladder (SPEC 34) adds Wake, Skip and Still Water. */
+    /** Sprinting across water: the surface holds you like ground. The ladder (SPEC 36) adds Wake, Skip and Still Water. */
     private static void waterRun(LocalPlayer p, int level) {
         if (p.input.keyPresses.shift() || p.isUnderWater()) {
             waterStand = 0;

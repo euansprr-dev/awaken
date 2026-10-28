@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Moves that several ladder steps' own code shares (SPEC 34.3, "a step's code"): a pulse a beat later, a line that erupts, a
+ * Moves that several ladder steps' own code shares (SPEC 36.3, "a step's code"): a pulse a beat later, a line that erupts, a
  * thrown body that hits what it crashes into, the nearest foes. Damage goes through {@link Combat#hurtFrom} like a rider's, so it
  * never starts riders again; every effect is sent {@code plain()} (no pose, no look layers of its own).
  */

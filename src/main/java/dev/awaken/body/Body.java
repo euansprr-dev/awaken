@@ -54,7 +54,7 @@ public final class Body {
         return dev.awaken.powers.Powers.owns(p, RunnerRules.STRIDE_POWER);
     }
 
-    /** Wall Stride's level (0 without it): its ladder (SPEC 34) lengthens, steadies and chains the run. */
+    /** Wall Stride's level (0 without it): its ladder (SPEC 36) lengthens, steadies and chains the run. */
     public static int wallStrideLevel(Player p) {
         return dev.awaken.powers.ladder.StepHooks.strideLevel(p);
     }

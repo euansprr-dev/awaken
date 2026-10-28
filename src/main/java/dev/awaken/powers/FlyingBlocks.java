@@ -58,9 +58,9 @@ public final class FlyingBlocks {
         /** Keeps flying through targets it hits (wall rams). */
         public boolean pierce;
         public int stun;
-        /** Runs once where the block comes down (a ladder step's burst, SPEC 34). */
+        /** Runs once where the block comes down (a ladder step's burst, SPEC 36). */
         public java.util.function.@Nullable Consumer<Vec3> onLand;
-        /** Runs for every foe it strikes, with the damage dealt (a cast's riders, SPEC 34). */
+        /** Runs for every foe it strikes, with the damage dealt (a cast's riders, SPEC 36). */
         public java.util.function.@Nullable BiConsumer<LivingEntity, Float> onHit;
         final Set<Integer> hit = new HashSet<>();
 

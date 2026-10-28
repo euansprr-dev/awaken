@@ -110,7 +110,7 @@ def write(root=None):
 def build(out):
     """build_all.py entry."""
     import fp_gestures  # noqa: F401
-    import power_level_gestures  # noqa: F401  (the ladder's level clips, SPEC 34)
+    import power_level_gestures  # noqa: F401  (the ladder's level clips, SPEC 36)
     write(out.root)
 
 

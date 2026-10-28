@@ -53,7 +53,7 @@ public final class RunnerMoves {
     static int runAge, runLen, runGrip, runStart = -100, runEnd = -100, runLink;
     private static int runMiss;
     private static boolean runStride;
-    /** Wall Stride's level for this run (0 without it; SPEC 34). */
+    /** Wall Stride's level for this run (0 without it; SPEC 36). */
     private static int runStrideLevel;
     static int runAxis, runSide;
     static double runPlane, runVy, runSpeed, runTx, runTz;

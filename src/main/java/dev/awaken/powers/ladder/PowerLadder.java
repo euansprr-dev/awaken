@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Every power's ladder (SPEC 34): levels 2-5 each add a named step with a look and a play change. The table is
+ * Every power's ladder (SPEC 36): levels 2-5 each add a named step with a look and a play change. The table is
  * {@code data/awaken/powers/ladders.json}, written with its text ({@code awaken.ladder.<power>.<level>.name|look|does|body})
  * by tools/art/specs/power_ladder_table.py; both sides read it from the jar. Public API for other modules (Codex hover,
  * the Journal): {@link #name}, {@link #does}, {@link #text}.

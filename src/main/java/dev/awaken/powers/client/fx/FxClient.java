@@ -121,7 +121,7 @@ public final class FxClient {
         e = LadderFx.restyle(e);
         CastAnim anim = e.anim();
         boolean own = mc.player != null && e.caster() == mc.player.getId();
-        // the caster's level picks the row: the same timing, that level's gesture (SPEC 34)
+        // the caster's level picks the row: the same timing, that level's gesture (SPEC 36)
         CastProfiles.Profile prof = e.caster() >= 0 ? CastProfiles.at(CastProfiles.byId(e.profile()), dev.awaken.powers.Fx.levelOf(e)) : null;
         if (prof != null) {
             onProfile(e, prof, own);
@@ -135,7 +135,7 @@ public final class FxClient {
 
     private static void build(FxEvent e) {
         try {
-            // the power's own recipe, then the look layers of its ladder steps on what it drew (SPEC 34.5)
+            // the power's own recipe, then the look layers of its ladder steps on what it drew (SPEC 36.5)
             LadderFx.begin();
             FxRecipes.build(e);
             LadderFx.decorate(e);

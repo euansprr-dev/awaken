@@ -479,7 +479,7 @@ def write_table(root=None):
         import fp_gestures
         import power_level_gestures
         row.update(fp_gestures.table_fields(power, r, p))
-        # the ladder's levels 3 and 5 (SPEC 34): the same timing, their own clips
+        # the ladder's levels 3 and 5 (SPEC 36): the same timing, their own clips
         row["levels"] = {str(lv): f for lv, f in power_level_gestures.LEVELS[power].items()}
         rows.append(row)
     path = os.path.join(root or os.path.join(PC.ROOT, "src/main/resources"), "data/awaken/powers/casts.json")

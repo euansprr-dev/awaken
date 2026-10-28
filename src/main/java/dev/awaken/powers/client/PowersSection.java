@@ -221,7 +221,7 @@ final class PowersSection implements StatusSections.Section {
     }
 
     /**
-     * The power's ladder under its card (SPEC 34.7): the four steps past level 1 with what each changes, the ones you have lit in
+     * The power's ladder under its card (SPEC 36.7): the four steps past level 1 with what each changes, the ones you have lit in
      * the family's colour and the next one marked. With no {@code g} it only measures; returns its height.
      */
     private static int ladder(@Nullable GuiGraphicsExtractor g, Font font, PowerType t, int level, int x, int y, int w) {

@@ -1,4 +1,4 @@
-"""Power ladders (SPEC 34, docs/power-levels/PLAN.md): the one source for what levels 2-5 of every power add.
+"""Power ladders (SPEC 36, docs/power-levels/PLAN.md): the one source for what levels 2-5 of every power add.
 
 One P row per power with four steps, each (name, look, does); level 5 also has body (the new cast gesture) and is the power's
 Awakened form. The look is what you and everyone near you see, does the change in play: plain words, this text is what the K
@@ -395,7 +395,7 @@ P("twin_strike", "Twin Strike", "Spirit", "active",
 
 
 # ---- what the game runs ----------------------------------------------------------------------------------------------
-# Riders: the shared mechanics (SPEC 34.3). Shares are of the hit that started them; ticks are game ticks (20 a second).
+# Riders: the shared mechanics (SPEC 36.3). Shares are of the hit that started them; ticks are game ticks (20 a second).
 RIDERS = {"extend", "chain", "echo", "aftershock", "linger", "status", "push", "refund", "pierce", "split", "ramp", "guard"}
 LINGERS = {"burn", "slow", "frost", "void", "hold", "heal", "shock"}
 STATUSES = {"burn", "slow", "weak", "stun", "mark", "blind", "root", "lift"}
@@ -462,7 +462,7 @@ def guard(ticks, share):
     return dict(k="guard", ticks=ticks, share=share)
 
 
-# Look layers (SPEC 34.5): each rides one or more event kinds the power sends ("on"), at a place ("at": origin, end, hand,
+# Look layers (SPEC 36.5): each rides one or more event kinds the power sends ("on"), at a place ("at": origin, end, hand,
 # offhand, body, feet, head, back, ground, target), in one of the style's colours ("col": core, mid, edge, accent).
 LOOKS = {"helix", "orbit", "sigil", "fissure", "rings", "burst", "column", "forks", "dome", "trail", "bloom", "ghost", "grow"}
 SPRITES = {"glow", "spark", "flare", "bolt", "wisp", "ember", "ring", "rune", "hex", "mote", "shard", "slash", "palm", "wind",

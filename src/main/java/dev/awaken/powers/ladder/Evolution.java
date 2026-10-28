@@ -19,7 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 
 /**
- * The moment a power climbs its ladder (SPEC 34.6). In a fight: a short sting (a small bloom on you, a rising chime) and the
+ * The moment a power climbs its ladder (SPEC 36.6). In a fight: a short sting (a small bloom on you, a rising chime) and the
  * moment waits; when calm (now, or once the fight ends): the EVOLVE bloom everyone near sees, a chord, and a Signal window
  * that names the new step and says what it does. Loadout {@code seen} keeps each power's moment to once per level.
  */

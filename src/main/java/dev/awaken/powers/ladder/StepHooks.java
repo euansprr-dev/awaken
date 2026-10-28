@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The ladder steps that answer the damage hooks (SPEC 34.3) rather than a cast: Brace's plates and glances, Thunderclap's chained
+ * The ladder steps that answer the damage hooks (SPEC 36.3) rather than a cast: Brace's plates and glances, Thunderclap's chained
  * blows, Flow's tally, Afterimage's copies. {@code PowerEvents} reads the buffs a cast set and calls these for the effect.
  */
 public final class StepHooks {
@@ -120,7 +120,7 @@ public final class StepHooks {
         if (now % 3 != 0) return;
         var o = dev.awaken.powers.Powers.loadout(sp).get(STRIDE);
         if (o == null) return;
-        // a second on the wall in a run pays Wall Stride's mastery (SPEC 34.8)
+        // a second on the wall in a run pays Wall Stride's mastery (SPEC 36.8)
         if (now % 21 == 0) dev.awaken.powers.Mastery.use(sp, STRIDE, dev.awaken.powers.Mastery.WALL_SECOND);
         if (o.level() < 2) return;
         Fx.looks(sp, "wall_run", FxKind.TRAIL, sp.position()).ticks(12).dir(sp.getDeltaMovement()).send();

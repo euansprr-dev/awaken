@@ -579,7 +579,7 @@ def s_glyph_circle():
     return [b]
 
 
-# ---- the ladder's sprites (SPEC 34.5) ----------------------------------------------------------------------------------
+# ---- the ladder's sprites (SPEC 36.5) ----------------------------------------------------------------------------------
 
 def _seal(b, c, r_out=14.6, r_in=11.8, ticks=24):
     """The ring every family sigil sits in: a bright outer circle, a dimmer inner one, short ticks between."""

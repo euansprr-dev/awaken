@@ -1,4 +1,4 @@
-"""The power ladder's sounds (SPEC 34.5-34.6), rendered and mastered by audio_powers.py with the family kits.
+"""The power ladder's sounds (SPEC 36.5-36.6), rendered and mastered by audio_powers.py with the family kits.
 
   evolve          a power climbed a step, calm: a rising sweep into a warm major chord with a bell on top
   evolve_sting    the same in a fight: a short rising chime that stays out of the way

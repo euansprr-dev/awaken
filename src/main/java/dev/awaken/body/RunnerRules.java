@@ -166,7 +166,7 @@ public final class RunnerRules {
     }
 
     /**
-     * A run's length with Wall Stride at {@code level} (0 = without it). Its ladder (SPEC 34): Spark Steps (2) a half second
+     * A run's length with Wall Stride at {@code level} (0 = without it). Its ladder (SPEC 36): Spark Steps (2) a half second
      * longer, Street Runner (5) a second more on each wall chained from the last.
      */
     public static int runLength(int link, Rank rank, int level) {

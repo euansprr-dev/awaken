@@ -58,7 +58,7 @@ public final class CastProfiles {
 
     private static final List<Profile> LIST = new ArrayList<>();
     private static final Map<String, Profile> BY_POWER = new HashMap<>();
-    /** The ladder's level rows (SPEC 34): per profile id, [level 3, level 5] (the same id and timing, their own clips). */
+    /** The ladder's level rows (SPEC 36): per profile id, [level 3, level 5] (the same id and timing, their own clips). */
     private static final Map<Integer, Profile[]> LEVELS = new HashMap<>();
 
     static {
@@ -100,7 +100,7 @@ public final class CastProfiles {
     }
 
     /**
-     * The profile at a power level: levels 3-4 and 5 have their own clips (the family's accent, the level-5 gesture; SPEC 34), with
+     * The profile at a power level: levels 3-4 and 5 have their own clips (the family's accent, the level-5 gesture; SPEC 36), with
      * the same id, timing and moments, so a level never changes when the power happens. Null in, null out.
      */
     public static @Nullable Profile at(@Nullable Profile p, int level) {

@@ -21,7 +21,7 @@ final class Shape {
     static final int SHELL = 12;     // sprites on a sphere around the anchor facing outward (hex skin): radius a
     static final int EMITTER = 13;   // draws nothing; only runs its emitter (auras, trails of sparks, fire paths)
     static final int SLASH = 14;     // a blade's arc about anchor + e: axes n (0) and u (90 deg), from angle c through range, radius a, band b, d ticks
-    // the ladder's (SPEC 34.5)
+    // the ladder's (SPEC 36.5)
     static final int ORBIT = 15;     // emitParam sprites circling the anchor in the plane of n: radius a->b, spin c (rad/tick), size d
     static final int SIGIL = 16;     // a flat rune disc at the anchor facing n (or the follow entity's look, flag LOOK): size a->b, spin c
     static final int FISSURE = 17;   // glowing ground cracks through the points in hx/hy/hz, emitParam points each, width a; cools c0 -> c1 -> c2
@@ -81,7 +81,7 @@ final class Shape {
 
     /** The effect build that made this shape ({@link FxWorld#serial}): the ladder decorates the shapes its event built. */
     int serial;
-    /** Ladder strands winding round a beam (SPEC 34.5 helix): how many, turns a block, radius, width, spin (turns a tick), colour. */
+    /** Ladder strands winding round a beam (SPEC 36.5 helix): how many, turns a block, radius, width, spin (turns a tick), colour. */
     int helix;
     float hTurns, hRadius, hWidth, hSpin;
     int hCol;

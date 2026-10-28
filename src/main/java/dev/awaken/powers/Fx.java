@@ -184,7 +184,7 @@ public final class Fx {
         }
 
         /**
-         * A ladder rider's or step's own effect (SPEC 34.3): the power's style and level, but no pose, no profile beat, no
+         * A ladder rider's or step's own effect (SPEC 36.3): the power's style and level, but no pose, no profile beat, no
          * ultimate screen beat and no look layers of its own, so a chain arc or an echo never restarts a cast or cascades.
          */
         public Emit plain() {
@@ -321,7 +321,7 @@ public final class Fx {
         beam(null, caster, from, end, argb, ticks, width, range, follow);
     }
 
-    /** A cast's beam: it also carries the power and its level, so every viewer draws the ladder's looks on it (SPEC 34.4). */
+    /** A cast's beam: it also carries the power and its level, so every viewer draws the ladder's looks on it (SPEC 36.4). */
     public static void beam(@Nullable Cast c, ServerPlayer caster, Entity from, Vec3 end, int argb, int ticks, float width, float range, boolean follow) {
         beam(c, caster, from, end, argb, ticks, width, range, follow, true);
     }

@@ -187,7 +187,7 @@ final class ArchitectPowers {
         e.send();
     }
 
-    // ---- the ladder's constructs (SPEC 34): what each one does after it stands ----------------------------------------
+    // ---- the ladder's constructs (SPEC 36): what each one does after it stands ----------------------------------------
 
     /** Players (you and your friends) whose feet stand on one of these blocks. */
     private static List<Player> standingOn(Cast c, Set<BlockPos> blocks, AABB box) {

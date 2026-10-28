@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import java.util.Locale;
 
 /**
- * One shared mechanic of a ladder step (SPEC 34.3), as tools/art/specs/power_ladder_table.py wrote it. Fields are named for
+ * One shared mechanic of a ladder step (SPEC 36.3), as tools/art/specs/power_ladder_table.py wrote it. Fields are named for
  * what they mean in at least one kind; a kind reads only its own. Shares are of the hit that started them, ticks game ticks.
  */
 public record Rider(Kind kind, int n, float share, float reach, int delay, float radius, int ticks, float dps, int amp, float force,

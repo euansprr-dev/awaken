@@ -144,7 +144,7 @@ final class EnergyPowers {
         return Result.OK;
     }
 
-    /** What a held beam remembers between pulses (SPEC 34, Beam's ladder): the body it has been on and since when, and what it dealt. */
+    /** What a held beam remembers between pulses (SPEC 36, Beam's ladder): the body it has been on and since when, and what it dealt. */
     static final class BeamHeld {
         @Nullable LivingEntity on;
         int since;

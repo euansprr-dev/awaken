@@ -1971,7 +1971,7 @@ final class FxRecipes {
         }
     }
 
-    // ---- the ladder (SPEC 34.6) ---------------------------------------------------------------------------------------
+    // ---- the ladder (SPEC 36.6) ---------------------------------------------------------------------------------------
 
     /** Each family's mote for its climb: Flight's feathers, Spirit's petals, Architect's plates... */
     private static final Sprite[] CLIMB = {SHARD, WIND, FEATHER, EMBER, WISP, RUNE, PLATE, HEX, PETAL};

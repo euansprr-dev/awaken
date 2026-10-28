@@ -6,7 +6,7 @@ import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 
 /**
- * Drawing for the ladder's shapes (SPEC 34.5): strands winding round a beam, sprites in orbit, a rune disc facing the aim,
+ * Drawing for the ladder's shapes (SPEC 36.5): strands winding round a beam, sprites in orbit, a rune disc facing the aim,
  * glowing cracks in the ground. Camera-relative and allocation-free like the rest of {@link FxRender}.
  */
 final class FxLadderDraw {

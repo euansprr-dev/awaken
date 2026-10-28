@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
  * @param colour ARGB override; 0 = the style's own colours
  * @param flags  low 16 bits: {@link #ULT}, {@link #FOLLOW}, ...; high 16 bits: the caster's {@link CastAnim}
  * @param power  the power that sent it ({@code PowerRegistry} index + 1, 0 none): the client draws that power's ladder looks
- *               at the level in the flags (SPEC 34.4)
+ *               at the level in the flags (SPEC 36.4)
  */
 public record FxEvent(FxKind kind, FxStyle style, int caster, int target, double x, double y, double z,
                       float dx, float dy, float dz, int colour, float scale, float aux, int seed, int ticks, int flags, int power) {

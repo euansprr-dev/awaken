@@ -1,4 +1,4 @@
-# Power levels' FX cost (SPEC 34.9): the bench casts each power 20 times at level 1, then at level 5, and logs what FxRender
+# Power levels' FX cost (SPEC 36.9): the bench casts each power 20 times at level 1, then at level 5, and logs what FxRender
 # spent a frame ("[fx] bench <power> at level <n>": p50, p99, max). The gate: level 5 at most +0.5 ms p50 and +1 ms p99 over
 # level 1. Frame times need the Mac's GPU: run it there, alone (it measures ms), never on CI:
 #   SLOT_WHO=power-levels tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/perf-power-levels.txt PACK=feel

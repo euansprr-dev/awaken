@@ -24,7 +24,7 @@ import java.util.UUID;
 import java.util.WeakHashMap;
 
 /**
- * The ladder's shared mechanics (SPEC 34.3), on the server. {@link #onHit} runs a cast's on-hit riders after one of its hits
+ * The ladder's shared mechanics (SPEC 36.3), on the server. {@link #onHit} runs a cast's on-hit riders after one of its hits
  * landed (Combat.hurtBy). Rider damage goes through {@link Combat#hurtFrom}, so it keeps the boss cap and the ally rules and
  * never starts riders again. Echo, aftershock and linger fire at most once per cast every {@link #THROTTLE} ticks (a held
  * beam pulses five times a second); a chain throws at most 2n arcs a tick, however many foes a blast caught.

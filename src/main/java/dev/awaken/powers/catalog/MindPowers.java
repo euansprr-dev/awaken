@@ -104,7 +104,7 @@ public final class MindPowers {
                 Vec3 from = m.getEyePosition(), to = p.getBoundingBox().getCenter();
                 Fx.of(p, "danger_sense", FxKind.BEAM, from).to(to).colour(0xFFFFD27A).aux(0.025).scale(from.distanceTo(to)).ticks(6).send();
             }
-            // note who was in reach, to see the blow dodged: it pays mastery (SPEC 34.8), and Sixth Sense (5) slows the one who missed
+            // note who was in reach, to see the blow dodged: it pays mastery (SPEC 36.8), and Sixth Sense (5) slows the one who missed
             if (d2 < reach * reach) st.warned.put(m.getId(), now);
         }
         if (!st.warned.isEmpty()) sixthSense(c, st, now);
