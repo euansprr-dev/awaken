@@ -108,7 +108,9 @@ final class SwingTests {
     /**
      * The baked file's feel rules: every swish starts on the press or after it and before the blow's active ticks end,
      * so the whoosh never trails the blow; every bite slows the hands without stopping them; the two-handed weapons,
-     * and only they, close the off hand on the handle below the main, a hand's width or more from it.
+     * and only they, close the off hand on the handle below the main, a hand's width or more from it. Round 8: every
+     * chain strike says where a press still down waits, at or before its hit; every style holds its guard with the hand
+     * on the weapon in view (Euan 2026-10-29: "blocking with most weapons hides the weapon under your view").
      */
     static void feelRules(GameTestHelper h) {
         for (Archetypes.Loaded a : Archetypes.all()) {
@@ -122,7 +124,17 @@ final class SwingTests {
                 h.assertTrue(c.swish() >= 0 && c.swish() <= def.windup() + Math.max(def.active(), 1) + 0.01F,
                         a.id() + " " + e.getKey().key + "'s swish starts by its hit (" + c.swish() + ")");
                 h.assertTrue(c.biteTicks() == 0 || c.biteRate() > 0 && c.biteRate() <= 1, a.id() + " " + e.getKey().key + "'s bite slows, never stops");
+                if (e.getKey().strike()) {
+                    h.assertTrue(c.set() >= 0 && c.set() <= def.windup(), a.id() + " " + e.getKey().key + " waits at its set, by its hit (" + c.set() + ")");
+                }
             }
+            Vector3f d = new Vector3f(), at = new Vector3f();
+            Quaternionf q = new Quaternionf();
+            h.assertTrue(FpSwings.guard(st, true, d, q) && Math.abs(q.lengthSquared() - 1) < 1e-3F, a.id() + " has a guard");
+            // the hand on the weapon in guard, as the eye sees it at a 70 degree view: on the screen, ahead of the eye
+            q.transform(at.set(st.hand())).add(d).add(0.56F, -0.52F, -0.72F);
+            float f = 1F / (float) Math.tan(Math.toRadians(35)), x = at.x / -at.z * f / (16F / 9F), y = at.y / -at.z * f;
+            h.assertTrue(at.z < -0.2F && Math.abs(x) < 1 && Math.abs(y) < 1, a.id() + "'s guard holds its hand in view (" + x + ", " + y + ")");
             boolean two = TWO_HANDED.contains(a.id());
             h.assertTrue((st.offHand() != null) == two && (st.vanillaOffHand() != null) == two,
                     a.id() + (two ? " is held in both hands" : " is held in one"));

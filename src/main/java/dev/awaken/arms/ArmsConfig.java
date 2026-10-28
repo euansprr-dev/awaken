@@ -17,6 +17,11 @@ public final class ArmsConfig {
             .comment("Arms: guard, deflect and dodge on every melee weapon, told enemy blows, posture and the weapons' moves (SPEC §25).",
                     "Off: vanilla melee everywhere; Arms weapons swing as plain swords.")
             .define("enabled", true);
+    public static final ModConfigSpec.BooleanValue DIRECTIONAL_KNOCKBACK = B
+            .comment("An Arms blow pushes the way the blade went: a side cut sideways (never toward you), a thrust straight back,",
+                    "an overhead pins, an uppercut lifts, a kill throws the body further (SPEC §25 \"Fight Feel\").",
+                    "Off: vanilla's push, straight away from where you look.")
+            .define("directionalKnockback", true);
     public static final ModConfigSpec SPEC = B.build();
 
     static void register() {
@@ -34,6 +39,14 @@ public final class ArmsConfig {
         if (enabledOverride != null) return enabledOverride;
         try {
             return !SPEC.isLoaded() || ENABLED.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    public static boolean directionalKnockback() {
+        try {
+            return !SPEC.isLoaded() || DIRECTIONAL_KNOCKBACK.get();
         } catch (RuntimeException e) {
             return true;
         }

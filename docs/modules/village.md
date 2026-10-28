@@ -46,6 +46,18 @@ Speech: `data/awaken/village/village_lines.json` (read by `citizens.Lines` under
   midday meal, guests at the inn and lamps lit in the evening, asleep at midnight but for the Watch.
 - `village_trade` — emeralds paid once per claim, prices by standing, standing from trade (four a day), a notice
   filled, a night at the inn (respawn there once).
+- `village_work_spots_free` (in `dev.awaken.citizens.GatheringTests`, SPEC §28.11) — every spot a village and a town
+  plan (the smith's, the washer's, the children's game, the green, fields, stalls; benches aside) has its feet and head
+  clear over a floor, read from the painter's own blocks. With it, `citizens_gathering_spread` (a full place's crowd on
+  rings 1.4 apart, never in water or a wall) and `citizens_arrivals_unseen` (nobody appears within 24 of a player or in
+  their view but out of a door).
+
+Where people stand (SPEC §28.11): a place's spots are only where `VillageRoster.open` says (paving or green, no prop,
+lamp or bell); the children's game centres on open green clear of the fountain or well, a spot per child; the washer
+stands south of the well past a fountain's rim; the smith's node is outside the forge shed and he paths in. The smith's
+and the farmers' cells are checked against the painter's blocks (`VillageRoster.free`: a town neighbour's eave or a
+channel's composter moves them to the nearest free cell). Past a place's spots the people engine seats the rest on
+rings round it.
 
 Render a dump: `python3 -I tools/city/render.py run/village-dump.bin <out-dir> 4` or a close-up
 `... run/village-rooms.bin out.png crop -30 -30 20 20 12 62`.

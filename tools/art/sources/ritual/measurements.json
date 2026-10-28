@@ -1,0 +1,128 @@
+{
+  "bell": {
+    "channels": 1,
+    "gated_rms_dbfs": -28.65,
+    "seconds": 8.5,
+    "sha256": "8b84202b2d3e97fca311518c752a67af0650cb0c2811359fa1cea9591dace80f",
+    "true_peak_dbtp": -9.11
+  },
+  "close": {
+    "channels": 1,
+    "gated_rms_dbfs": -26.37,
+    "seconds": 0.497,
+    "sha256": "00eb555aee78a20442edfd5b5404aeca4fd5ff4a9535c322a65e7d3775d85fae",
+    "true_peak_dbtp": -7.56
+  },
+  "doors": {
+    "channels": 1,
+    "gated_rms_dbfs": -32.23,
+    "seconds": 4.8,
+    "sha256": "cd742a009698f52644cce5394c37ea7085e881901311a5fa1ea22e6a51ce09eb",
+    "true_peak_dbtp": -8.93
+  },
+  "eyes": {
+    "channels": 1,
+    "gated_rms_dbfs": -31.36,
+    "seconds": 4.0,
+    "sha256": "ca5112e1d4ae6deff7a868583d6ae57240e914c14cc071ca65cf2b8e6046a6a3",
+    "true_peak_dbtp": -12.23
+  },
+  "flames_out": {
+    "channels": 1,
+    "gated_rms_dbfs": -31.4,
+    "seconds": 1.4,
+    "sha256": "140fe6f294fe6bd6b3dbb2be3a2496b82fee51bec244a622d2a36b5129db83be",
+    "true_peak_dbtp": -17.22
+  },
+  "footstep1": {
+    "channels": 1,
+    "gated_rms_dbfs": -35.8,
+    "seconds": 1.45,
+    "sha256": "3094a6e97d0b03feaa863c1b02fbfad625e42dc3dd83ce69f9c6d547390bc5f2",
+    "true_peak_dbtp": -11.83
+  },
+  "footstep2": {
+    "channels": 1,
+    "gated_rms_dbfs": -35.14,
+    "seconds": 1.45,
+    "sha256": "8c43cf923aedfacbc8318f0c15fae1e2516d23d514faffb7f503ffa0d1cc15d3",
+    "true_peak_dbtp": -12.23
+  },
+  "footstep3": {
+    "channels": 1,
+    "gated_rms_dbfs": -37.5,
+    "seconds": 1.45,
+    "sha256": "7c8cdeee80d4e83aac019063562e2460143e50692540c9f7a8be34b291585db5",
+    "true_peak_dbtp": -12.16
+  },
+  "gaze_charge": {
+    "channels": 1,
+    "gated_rms_dbfs": -31.07,
+    "seconds": 2.25,
+    "sha256": "079e5f7915be0921fa9b8e61b5ba2a9fdda99f7408ba57c416da37e89fc5594b",
+    "true_peak_dbtp": -14.75
+  },
+  "gaze_fire": {
+    "channels": 1,
+    "gated_rms_dbfs": -27.28,
+    "seconds": 2.5,
+    "sha256": "ee4687c23632e1d72e1d9a985b5e11fa0aa199cc2509a63c6aa8c3f8cf343046",
+    "true_peak_dbtp": -8.42
+  },
+  "gaze_impact": {
+    "channels": 1,
+    "gated_rms_dbfs": -35.66,
+    "seconds": 3.6,
+    "sha256": "c7b1be7f02f9ca8c93e5527286acd6ea8975bf3cded4de65b53bb61ebfe0b527",
+    "true_peak_dbtp": -8.75
+  },
+  "gaze_travel": {
+    "channels": 1,
+    "gated_rms_dbfs": -29.91,
+    "seconds": 0.623,
+    "sha256": "5a214afe7099782666a49542b5d5384a1f01737e7fa3724787a6747b9548e5f9",
+    "true_peak_dbtp": -17.93
+  },
+  "hall": {
+    "channels": 2,
+    "gated_rms_dbfs": -41.83,
+    "seconds": 23.0,
+    "sha256": "d35449ee4cf14de47f1a0eb130e4c48b3d78bbd2463c797cf5a5bcaf001e5719",
+    "true_peak_dbtp": -28.95
+  },
+  "impact": {
+    "channels": 1,
+    "gated_rms_dbfs": -35.66,
+    "seconds": 3.6,
+    "sha256": "28a15e19643a06d5850d713ccd98aea8fe7ed94234c6fb81355487a72f50848e",
+    "true_peak_dbtp": -8.75
+  },
+  "pit": {
+    "channels": 1,
+    "gated_rms_dbfs": -36.21,
+    "seconds": 4.2,
+    "sha256": "51f1402a192b228cb8a5bac3129b244e5df6a7d42bafb62dac9aae6aabacdcab",
+    "true_peak_dbtp": -8.75
+  },
+  "rumble": {
+    "channels": 1,
+    "gated_rms_dbfs": -34.22,
+    "seconds": 3.4,
+    "sha256": "067d0a9ce601c241d9727fcd7eecf8c3e6ff0ed3f3fa5ceeb7101c0fe753ef64",
+    "true_peak_dbtp": -17.13
+  },
+  "statue_rise": {
+    "channels": 1,
+    "gated_rms_dbfs": -28.37,
+    "seconds": 3.5,
+    "sha256": "6abb6b70973c6f24a2b22a2f311dc6f75294d3741b4d885ca57aa614073f5a77",
+    "true_peak_dbtp": -11.92
+  },
+  "swing": {
+    "channels": 1,
+    "gated_rms_dbfs": -29.99,
+    "seconds": 0.717,
+    "sha256": "0f802dd10025daf4e05c13ff1b0ae27e95cd0e2bbde5e1c0fa56a60f6da47ae7",
+    "true_peak_dbtp": -14.88
+  }
+}

@@ -21,6 +21,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.MobSpawnSettings;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.neoforge.event.EventHooks;
 
@@ -89,7 +90,11 @@ final class Reveal {
             float a = r.nextFloat() * Mth.TWO_PI;
             float d = radius + r.nextFloat() * 3.0F;
             double x = p.getX() + Mth.cos(a) * d, z = p.getZ() + Mth.sin(a) * d;
-            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(x), Mth.floor(z));
+            int bx = Mth.floor(x), bz = Mth.floor(z);
+            // finished chunks only: one still generating at the edge of a flight would be waited for on the server thread
+            LevelChunk chunk = level.getChunkSource().getChunkNow(bx >> 4, bz >> 4);
+            if (chunk == null) continue;
+            int y = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx & 15, bz & 15) + 1;
             if (Math.abs(y - p.getY()) > 8) continue;
             level.sendParticles(p, i % 3 == 0 ? ParticleTypes.GLOW : ParticleTypes.END_ROD, true, false, x, y + 0.2, z, 1, 0.1, 0.3, 0.1, 0.01);
         }
@@ -107,7 +112,10 @@ final class Reveal {
             float d = 5.0F + r.nextFloat() * 7.0F;
             // Minecraft yaw 0 faces +z.
             double x = p.getX() - Mth.sin(a) * d, z = p.getZ() + Mth.cos(a) * d;
-            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(x), Mth.floor(z));
+            int bx = Mth.floor(x), bz = Mth.floor(z);
+            LevelChunk chunk = level.getChunkSource().getChunkNow(bx >> 4, bz >> 4);
+            if (chunk == null) continue; // as motes: finished chunks only
+            int y = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx & 15, bz & 15) + 1;
             BlockPos at = BlockPos.containing(x, y, z);
             if (Math.abs(y - p.getY()) > 10 || !level.getFluidState(at).isEmpty() || !level.getFluidState(at.below()).isEmpty()) continue;
             if (!level.noCollision(type.getSpawnAABB(x, y, z))) continue;

@@ -179,7 +179,10 @@ nothing else is on screen. Accept or `/awaken story skip` lifts it: the tear fra
 the toasts and the first-power cards come after.
 
 **Sounds** (`tools/art/specs/ritual_sounds.py`, events `story.ritual.*`): bell, doors, flames_out, candle, words, eyes,
-gaze_charge, gaze_fire, statue_rise, swing, impact, pit, rumble, drain, close, heartbeat, tear, void.
+gaze_charge, gaze_fire, gaze_travel, gaze_impact, statue_rise, swing, impact, pit, rumble, footstep1-3, hall, drain,
+close, heartbeat, tear, void. The stone, bell and beam clips are recorded (CC0, `tools/art/sources/ritual/README.md`);
+the words, candle, drain, heartbeat, tear and void stay synthesised. `story.client.RitualAudio` mixes them (SPEC, "the
+ritual's sound"); `python3 tools/tests/ritual-audio.py` checks its lifecycle against stubs, no game needed.
 
 **Tours.** `tools/autopilot/ritual.txt` photographs every beat in first and third person, the void, the tear and the
 first power; admin commands `/awaken admin story ritual hall|start|beat <1-7>|plate <0-2>|status`.

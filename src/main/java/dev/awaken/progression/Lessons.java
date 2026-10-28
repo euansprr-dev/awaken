@@ -138,7 +138,7 @@ public final class Lessons {
             if (g.done().test(p, null)) {
                 Progression.setCounter(player, key, 1);
                 DirectorLog.log(player, "level-road", "goal met: " + s.id());
-                if (seen.remove(key)) toast(player, s.def().title(), g.toast().isEmpty() ? "Done" : g.toast());
+                if (seen.remove(key)) toast(player, key, s.def().title(), g.toast().isEmpty() ? "That's this goal done." : g.toast());
             } else {
                 seen.add(key);
             }
@@ -158,7 +158,7 @@ public final class Lessons {
                 changed = true;
                 Progression.setCounter(player, e.progressKey(), i);
                 DirectorLog.log(player, "lesson", l.id() + ": " + s.id() + " done");
-                if (seen.remove(key) && !s.toastTitle().isEmpty()) toast(player, s.toastTitle(), s.toastText());
+                if (seen.remove(key) && !s.toastTitle().isEmpty()) toast(player, key, s.toastTitle(), s.toastText());
                 continue;
             }
             seen.add(key);
@@ -178,12 +178,12 @@ public final class Lessons {
     /** Toasts sent for finished steps and goals (tests check that only things done while asked are announced). */
     static int toastsSent;
 
-    private static void toast(ServerPlayer player, String title, String text) {
+    private static void toast(ServerPlayer player, String key, String title, String text) {
         toastsSent++;
-        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(title))
-                .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6);
-        if (!text.isEmpty()) w.body(Component.literal(text));
-        Signal.send(player, w.build());
+        String meaning = text.isEmpty() ? "That's this step done." : text;
+        dev.awaken.core.api.NoticeEvents.tell(player, new dev.awaken.core.api.NoticeEvents.Event(
+                "lesson/" + key, "Lesson completed", title, meaning, List.of("If there's more to learn, your task card shows the next step."),
+                dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x7FC3FF));
     }
 
     private static void answer(ServerPlayer player, String action, boolean yes) {

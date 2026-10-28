@@ -723,6 +723,17 @@ final class LivingTests {
             h.succeed();
         });
 
+        AwakenTests.register("forms_fall_turn", 20, h -> {
+            // a body facing south (yaw 0: its front +z, its left +x) struck toward the east (+x)
+            float side = dev.awaken.living.combat.FormShape.fallTurn(1, 0, 0, 1, 0);   // a beast falls onto its left: already east
+            h.assertTrue(Math.abs(side) < 0.5F, "a beast struck toward its left falls as it stands: " + side);
+            float fwd = dev.awaken.living.combat.FormShape.fallTurn(0, -1, 0, 1, 0);   // a walker falls forward: a quarter turn
+            h.assertTrue(Math.abs(Math.abs(fwd) - 90) < 0.5F, "a walker turns a quarter to fall east: " + fwd);
+            float back = dev.awaken.living.combat.FormShape.fallTurn(0, -1, 0, 0, -1);   // struck from the front: never into the striker
+            h.assertTrue(Math.abs(back) <= dev.awaken.living.combat.FormShape.MAX_FALL_TURN, "a blow from the front turns at most a quarter and a bit: " + back);
+            h.assertTrue(dev.awaken.living.combat.FormShape.fallTurn(0, 0, 0, 1, 0) == 0, "a body that falls in place does not turn");
+            h.succeed();
+        });
         AwakenTests.register("forms_cue", 20, h -> {
             // the cue a body acts a move out from round-trips (late joiners place the phase from its start tick)
             var cue = new LivingNet.FormCue(42, "lunge", 123_456L, 20, 18);

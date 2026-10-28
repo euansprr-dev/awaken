@@ -49,6 +49,7 @@ public final class VillageModule {
         dev.awaken.village.road.RoadAtlas.init(modBus);
         // (SPEC §28.9, Turbo) a lattice chunk waiting for its roads frees the overworld's world generation meanwhile
         dev.awaken.turbo.roadstarts.RoadStarts.init(modBus);
+        dev.awaken.turbo.packetcap.PacketCap.init(modBus); // Turbo: the server's packets get a tick's time (SPEC §28.9)
         VillageContent.register(modBus);
         modBus.addListener(VillageModule::onAddPackFinders);
         modBus.addListener(VillageNet::register);

@@ -21,7 +21,7 @@ on:
         default: '1500'
         type: string
       knobs:
-        description: tools/autopilot.sh knobs, KEY=VAL separated by spaces (PACK BACKEND LENS RD XMX ZGC CITY TECTONIC DH)
+        description: tools/autopilot.sh knobs, KEY=VAL separated by spaces (PACK BACKEND LENS RD XMX ZGC CITY TECTONIC DH ROADSTARTS)
         default: ''
         type: string
       id:
@@ -60,8 +60,8 @@ jobs:
           [ -f "$SCRIPT" ] || fail "no $SCRIPT on this branch (push it first)"
           [[ "$TOUR_TIMEOUT" =~ ^[0-9]{2,4}$ ]] && [ "$TOUR_TIMEOUT" -le 3600 ] || fail "timeout must be seconds, at most 3600"
           for kv in $KNOBS; do
-            [[ "$kv" =~ ^(PACK|BACKEND|LENS|RD|XMX|ZGC|CITY|TECTONIC|DH)=[A-Za-z0-9,._-]+$ ]] \
-              || fail "not a knob: only PACK BACKEND LENS RD XMX ZGC CITY TECTONIC DH=<plain value>"
+            [[ "$kv" =~ ^(PACK|BACKEND|LENS|RD|XMX|ZGC|CITY|TECTONIC|DH|ROADSTARTS)=[A-Za-z0-9,._-]+$ ]] \
+              || fail "not a knob: only PACK BACKEND LENS RD XMX ZGC CITY TECTONIC DH ROADSTARTS=<plain value>"
           done
           ! grep -q '^farsight on' "$SCRIPT" || fail "Far Sight tours stay on the Mac: the runner's GPU scrambles Far Sight's far mesh"
           name=$(basename "$SCRIPT" .txt)

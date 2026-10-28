@@ -108,11 +108,13 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
      * plane (degrees, + toward the off hand) and optionally the tip's tilt forward (degrees: a chop, a thrust). The
      * hand travels between poses on an arc about the shoulder.
      */
-    public record Swing(List<Float> from, List<Float> to, float lunge) {
+    public record Swing(List<Float> from, List<Float> to, float lunge, String form) {
         static final Codec<Swing> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.FLOAT.listOf(3, 4).fieldOf("from").forGetter(Swing::from),
                 Codec.FLOAT.listOf(3, 4).fieldOf("to").forGetter(Swing::to),
-                Codec.FLOAT.optionalFieldOf("lunge", 0F).forGetter(Swing::lunge)
+                Codec.FLOAT.optionalFieldOf("lunge", 0F).forGetter(Swing::lunge),
+                // the move's shape (slash, chop, stab, rise...): the blow pins or lifts by it (SPEC §25 "Fight Feel")
+                Codec.STRING.optionalFieldOf("form", "").forGetter(Swing::form)
         ).apply(i, Swing::new));
     }
 
@@ -135,8 +137,13 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
                 Codec.INT.fieldOf("glintHitstop").forGetter(Charge::glintHitstop)
         ).apply(i, Charge::new));
 
+        /**
+         * Charged in full: let go at the glint or any time after (Euan 2026-10-29: "the yellow ting happens before the
+         * full charge, and then nothing different happens for that attack sometimes"). It was a window of 2 ticks either
+         * side of the glint, and the ting played at its middle: let go on hearing it and the window had shut.
+         */
         public boolean perfect(int held) {
-            return Math.abs(held - glint) <= 2;
+            return held >= glint;
         }
     }
 

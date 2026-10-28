@@ -27,6 +27,42 @@ final class VeilTests {
     private VeilTests() {}
 
     static void register() {
+        AwakenTests.register("veil_dialogue_continuation", 100, h -> {
+            ServerPlayer p = spiritAt(h, h.absolutePos(BlockPos.ZERO).above(2));
+            ServerPlayer other = spiritAt(h, p.blockPosition());
+            h.assertTrue(Projection.start(p, true, null) && Projection.start(other, true, null), "both players project");
+            var entry = SignalLines.SPIRITS.entrySet().stream().filter(e -> e.getValue().lines().size() >= 3).findFirst().orElseThrow();
+            String id = entry.getKey();
+            var def = entry.getValue();
+            var ghost = VeilContent.VEIL_SPIRIT.get().create(h.getLevel(), net.minecraft.world.entity.EntitySpawnReason.TRIGGERED);
+            h.assertTrue(ghost != null, "spirit exists");
+            ghost.setSpirit(id, def.factionIndex());
+            ghost.snapTo(p.getX() + 1, p.getY(), p.getZ(), 0, 0);
+            h.getLevel().addFreshEntity(ghost);
+            try {
+                var mem = p.getData(VeilContent.MEMORY.get());
+                Spirits.talk(p, ghost.getId());
+                h.assertTrue(mem.spiritLines.getOrDefault(id, 0) == 1, "first line heard");
+                Spirits.next(other, ghost.getId(), 1);
+                h.assertTrue(other.getData(VeilContent.MEMORY.get()).spiritLines.getOrDefault(id, 0) == 0, "another player cannot continue this conversation");
+                Spirits.next(p, ghost.getId(), 1);
+                Spirits.next(p, ghost.getId(), 1);
+                h.assertTrue(mem.spiritLines.get(id) == 2, "duplicate request cannot skip a line");
+                ghost.snapTo(p.getX() + 30, p.getY(), p.getZ(), 0, 0);
+                Spirits.next(p, ghost.getId(), 2);
+                h.assertTrue(mem.spiritLines.get(id) == 2, "distant speaker cannot continue");
+                ghost.snapTo(p.getX() + 1, p.getY(), p.getZ(), 0, 0);
+                for (int i = 2; i < def.lines().size(); i++) Spirits.next(p, ghost.getId(), i);
+                h.assertTrue(mem.spiritsComplete.contains(id), "last line completes normally");
+                Spirits.next(p, ghost.getId(), def.lines().size());
+                h.assertTrue(mem.spiritLines.get(id) == def.lines().size(), "completed continuation cannot restart");
+            } finally {
+                ghost.discard();
+                Projection.end(p, Projection.EndReason.RETURNED);
+                Projection.end(other, Projection.EndReason.RETURNED);
+            }
+            h.succeed();
+        });
         AwakenTests.register("veil_cord_maths", 40, VeilTests::cordMaths);
         AwakenTests.register("veil_restore_after_logout", 100, VeilTests::restoreAfterLogout);
         AwakenTests.register("veil_body_damage_warns", 100, VeilTests::bodyDamageWarns);

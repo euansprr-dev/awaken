@@ -34,6 +34,8 @@ public final class FormLayers {
     private FormLayers() {}
 
     static final ContextKey<Forms.Form> FORM = new ContextKey<>(Awaken.id("living_form"));
+    /** How far into its fall a dying creature is, kept here because a fall drawn along the blow (Fight Feel) clears the state's own. */
+    static final ContextKey<Float> DYING = new ContextKey<>(Awaken.id("living_form_dying"));
 
     /** Beyond this (squared) distance the eyes are a pixel: not drawn. */
     private static final double FAR_SQ = 96.0 * 96.0;
@@ -56,7 +58,9 @@ public final class FormLayers {
     private static void modifiers(RegisterRenderStateModifiersEvent e) {
         e.registerEntityModifier((Class) MobRenderer.class, (entity, state) -> {
             Forms.Form f = Forms.of((net.minecraft.world.entity.Entity) entity);
-            ((LivingEntityRenderState) state).setRenderData(FORM, f.worn() ? f : null);
+            LivingEntityRenderState s = (LivingEntityRenderState) state;
+            s.setRenderData(FORM, f.worn() ? f : null);
+            s.setRenderData(DYING, f.worn() && s.deathTime > 0 ? s.deathTime : null); // boxed only while it falls
         });
     }
 
@@ -88,7 +92,8 @@ public final class FormLayers {
             int hurt = LivingEntityRenderer.getOverlayCoords(s, 0.0F);
             if (sockets != null) collector.order(1).submitModel(getParentModel(), s, pose, sockets, light, hurt, -1, null, s.outlineColor);
             if (glow[r] != null) {
-                float a = s.deathTime > 0 ? Math.max(0.0F, 1.0F - s.deathTime / 20.0F) : 1.0F; // the light goes out as it falls
+                Float dying = s.getRenderData(DYING);
+                float a = dying != null ? Math.max(0.0F, 1.0F - dying / 20.0F) : 1.0F; // the light goes out as it falls
                 collector.order(2).submitModel(getParentModel(), s, pose, glow[r], LightCoordsUtil.FULL_BRIGHT, hurt, ARGB.white(a), null, s.outlineColor);
             }
         }

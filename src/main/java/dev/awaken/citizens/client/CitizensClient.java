@@ -15,6 +15,10 @@ public final class CitizensClient {
     private CitizensClient() {}
 
     public static void init(IEventBus modBus) {
+        dev.awaken.core.api.Dialogue.register(25, new dev.awaken.core.api.Dialogue.Source() {
+            public boolean active() { return CitizenFx.dialogueActive(); }
+            public void advance() { CitizenFx.advanceDialogue(); }
+        });
         modBus.addListener((EntityRenderersEvent.RegisterRenderers e) -> {
             e.registerEntityRenderer(CitizensContent.CITIZEN.get(), CitizenRenderer::new);
             e.registerEntityRenderer(CitizensContent.CRITTER.get(), CritterRenderer::new);

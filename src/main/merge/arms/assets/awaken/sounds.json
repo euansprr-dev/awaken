@@ -564,5 +564,45 @@
         "attenuation_distance": 24
       }
     ]
+  },
+  "arms.kill": {
+    "subtitle": "subtitles.awaken.arms.kill",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_kill_0",
+        "volume": 0.9,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:arms/arms_kill_1",
+        "volume": 0.9,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:arms/arms_kill_2",
+        "volume": 0.9,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "arms.cleave": {
+    "subtitle": "subtitles.awaken.arms.cleave",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_cleave_0",
+        "volume": 0.75,
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_cleave_1",
+        "volume": 0.75,
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_cleave_2",
+        "volume": 0.75,
+        "attenuation_distance": 18
+      }
+    ]
   }
 }

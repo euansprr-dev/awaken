@@ -15,11 +15,9 @@ diffuse cave beds in the pack; these are what it lacks: sounds with a place.
                            plink, sometimes a smaller drop thrown back up
   amb_cave_drip_pool_*     a drop into a pool: rounder and lower, a soft plop under it
   amb_cave_drip_acid_*     sulfur caves: a drop off a sulfur spike into an acid pool, sizzling as it lands
-  amb_cave_settle_*        stone settling under the weight above, far off: a deep thud, a grinding crunch, grit
-                           trickling down after it (rare)
+  delve/settle_*, delve/cave_breath, delve/band_room, delve/cave_answers
+                           recorded (CC0), cut by audio_cave_recorded.py; only their events are written here
   amb_cave_far_water       a loop: an underground stream heard from a distance, its highs gone, the cave round it
-  amb_cave_breath          a loop: air moving through a passage that leads out, breathing in slow swells, a hollow
-                           note in the rock (the game lowers its pitch with depth)
   amb_cave_sulfur_vent_*   sulfur caves: gas seeping from the rock, a sputtering hiss with a low push under it
   amb_cave_sulfur_bubble_* sulfur caves: thick acid bubbling up in a pool, one to three slow blops
   delve_deep_hum           a loop (stereo, streamed): the deep's hum below y 0, a low D in pure partials that beat
@@ -156,26 +154,6 @@ def drip_acid(seed):
     return finish(x, "cave", 0.33, 11000)
 
 
-# ---- stone settling ------------------------------------------------------------------------------------------------
-
-def settle(seed):
-    r = K.rng(seed)
-    n = K.ns(4.6)
-    thud_n = K.ns(1.4)
-    thud = K.sine(K.glide(thud_n, r.uniform(62, 78), r.uniform(34, 42)), thud_n) * K.perc(thud_n, 0.012, 0.9)
-    thud += 0.6 * K.lowpass(K.bandnoise(thud_n, 120, 1.2, seed), 260, 2) * K.perc(thud_n, 0.008, 0.45)
-    x = at(n, 0.0, thud) * 0.9                                                                  # the weight shifts
-    cn = K.ns(r.uniform(0.7, 1.2))
-    crunch = K.bandpass(K.crackle(cn, 260, seed + 1, 0.3, 0.6), 700, 0.6) * K.swell(cn, 0.3, 1.4)
-    x += at(n, 0.02, _norm(crunch)) * 0.45                                                     # rock grinds on rock
-    t = 0.45 + r.uniform(0, 0.3)
-    for k in range(int(r.integers(3, 7))):                                                     # grit trickling down after
-        g = burst(0.01, r.uniform(1800, 3400), 1.1, 0.006, seed + 10 + k)
-        x += at(n, t, g) * r.uniform(0.08, 0.2) * (0.85 ** k)
-        t += r.uniform(0.08, 0.32)
-    return finish(K.lowpass(x, 4200, 2), "hall", 0.55, 4500)
-
-
 # ---- loops ---------------------------------------------------------------------------------------------------------
 
 def far_water(seed):
@@ -196,21 +174,6 @@ def far_water(seed):
     x = K.lowpass(x, 2100, 2)                                                                  # far: its highs gone
     x = x + 0.6 * K.mono(K.convolve(x, ir("hall")))[:n]
     return K.loop_seamless(K.highpass(x, 60, 2), seam)
-
-
-def breath(seed):
-    L, seam = 21.0, 2.0  # 19 s
-    n = K.ns(L)
-    body = _norm(K.bandpass(K.noise(n, "pink", seed + 1), 380, 0.5))
-    hiss = _norm(K.bandpass(K.noise(n, "pink", seed + 2), 1600, 0.8))
-    cen = 140 * 2 ** (0.12 * K.smooth_noise(n, 0.08, seed + 3))
-
-    def resp(tsec, f):
-        return K.bp_resp(cen[min(n - 1, int(tsec * K.SR))], 6.0)(f)
-    hollow = _norm(K.stft_filter(K.noise(n, "pink", seed + 4), resp))                           # the passage's own note
-    g = _swells(n, seed + 5, 0.13, 0.28, 1.4)                                                  # breathing in slow swells
-    x = (0.58 * body + 0.14 * hiss * g + 0.28 * hollow) * g
-    return K.loop_seamless(K.lowpass(x, 3400, 2), seam)
 
 
 # ---- sulfur caves --------------------------------------------------------------------------------------------------
@@ -359,15 +322,13 @@ def _variants(stem, fn, count, rms):
 
 
 # file, render, rms (dBFS gated), channels (loops are the files without a variant number in LOOPS)
-LOOPS = {"amb_cave_far_water", "amb_cave_breath", "delve_deep_hum", "delve_deep_seep", "amb_world_hollows_a",
+LOOPS = {"amb_cave_far_water", "delve_deep_hum", "delve_deep_seep", "amb_world_hollows_a",
          "amb_world_hollows_b", "amb_world_hollows_c"}
 FILES = [
     *[(f, fn, rms, 1) for f, fn, rms in _variants("amb_cave_drip", drip, 6, -28.0)],
     *[(f, fn, rms, 1) for f, fn, rms in _variants("amb_cave_drip_pool", drip_pool, 4, -28.0)],
     *[(f, fn, rms, 1) for f, fn, rms in _variants("amb_cave_drip_acid", drip_acid, 3, -28.0)],
-    *[(f, fn, rms, 1) for f, fn, rms in _variants("amb_cave_settle", settle, 4, -27.0)],
     ("amb_cave_far_water", far_water, -28.5, 1),
-    ("amb_cave_breath", breath, -28.5, 1),
     *[(f, fn, rms, 1) for f, fn, rms in _variants("amb_cave_sulfur_vent", sulfur_vent, 3, -28.0)],
     *[(f, fn, rms, 1) for f, fn, rms in _variants("amb_cave_sulfur_bubble", sulfur_bubble, 4, -28.0)],
     ("delve_deep_hum", deep_hum, -23.0, 2),
@@ -382,13 +343,15 @@ EVENTS = [
     ("delve.cave.drip", "Water drips", "amb_cave_drip", 6, 16, False),
     ("delve.cave.drip_pool", "A drop falls into a pool", "amb_cave_drip_pool", 4, 16, False),
     ("delve.cave.drip_acid", "Acid drips and sizzles", "amb_cave_drip_acid", 3, 16, False),
-    ("delve.cave.settle", "Stone settles", "amb_cave_settle", 4, 32, False),
+    ("delve.cave.settle", "Stone settles", "delve/settle", 4, 32, False),
     ("delve.cave.far_water", "Water runs somewhere in the dark", "amb_cave_far_water", 0, 32, False),
-    ("delve.cave.breath", "Air breathes in from the way out", "amb_cave_breath", 0, 24, False),
+    ("delve.cave.breath", "Air breathes in from the way out", "delve/cave_breath", 0, 24, False),
     ("delve.cave.sulfur_vent", "Gas hisses from the rock", "amb_cave_sulfur_vent", 3, 16, False),
     ("delve.cave.sulfur_bubble", "An acid pool bubbles", "amb_cave_sulfur_bubble", 4, 16, False),
     ("delve.deep.hum", "The deep hums", "delve_deep_hum", 0, 16, True),
     ("delve.deep.seep", "Something in the deep hums back", "delve_deep_seep", 0, 16, True),
+    ("delve.band.room", "The cave's air hums around you", "delve/band_room", 0, 16, True),
+    ("delve.cave.answers", "The cave answers", "delve/cave_answers", 0, 48, False),
 ]
 
 

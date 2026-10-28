@@ -70,6 +70,7 @@ public final class CitizensModule {
         CityLifeTests.register();
         SettlementTests.register();
         VillageDayTests.register();
+        GatheringTests.register();
     }
 
     /** A Carillon citizen's stable id for other modules (CitizenHooks.witnesses). */
@@ -133,7 +134,10 @@ public final class CitizensModule {
 
     /** Speaking to someone: they answer the way their settlement knows you (a trapped one is pulled out). */
     private static void onInteract(PlayerInteractEvent.EntityInteract e) {
-        if (!(e.getEntity() instanceof ServerPlayer p) || !(e.getTarget() instanceof CitizenBody b) || b.rec < 0) return;
+        if (!(e.getTarget() instanceof CitizenBody b)) return;
+        e.setCanceled(true);
+        e.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
+        if (e.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND || !(e.getEntity() instanceof ServerPlayer p) || b.rec < 0) return;
         dev.awaken.citizens.Settlement c = b.home;
         if (c == null || !c.live) return;
         if (c.data.role[b.rec] == Roles.TRAPPED && c.events.rescue(p, b.blockPosition())) {

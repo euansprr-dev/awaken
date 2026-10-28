@@ -88,9 +88,18 @@ public final class ArmsMastery {
         p.setData(ArmsContent.MEMORY, m);
         int was = step(before), now = step(after);
         if (now > was) {
-            Signal.toast(p, Component.literal("MASTERY · ").withStyle(Style.EMPTY.withColor(0xE2B450))
-                    .append(Component.literal(style.def().name() + " " + NUMERAL[now]).withStyle(Style.EMPTY.withColor(0xFFE3A0)))
-                    .append(Component.literal(" · " + GIVES[now]).withStyle(Style.EMPTY.withColor(0xC8C2B0))));
+            String effect = switch (now) {
+                case 1 -> "Your light attacks now end with a finishing strike.";
+                case 2 -> "You get " + ArmsNotices.seconds(SLIPCUT_BONUS / 20.0) + " longer to follow up a Slipcut.";
+                case 3 -> "Your deflects do 50% more posture damage and build 50% more Resonance.";
+                case 4 -> "You build all Resonance 20% faster.";
+                default -> "You can use your weapon Art from " + ART_AT + "% Resonance.";
+            };
+            dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event(
+                    "weapon_mastery/" + style.id() + "/" + now, "Weapon mastery", style.def().name() + " " + NUMERAL[now], effect,
+                    List.of("You earned it by beating enemies with this style, and it works whenever you fight with it.",
+                            "You keep every earlier step, and there's no new key to learn."),
+                    dev.awaken.core.api.NoticeEvents.Kind.PERMANENT, 0xE2B450));
             sync(p);
         }
         return now;

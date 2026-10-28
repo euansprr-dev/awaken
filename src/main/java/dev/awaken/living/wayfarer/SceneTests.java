@@ -3,12 +3,15 @@ package dev.awaken.living.wayfarer;
 import dev.awaken.core.test.AwakenTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 
 /**
  * The scene finder's GameTest (SPEC §21.5): a cliff ledge and flat road ground in real terrain, never on forbidden land;
- * and the Wayfarers' camp's (SPEC §27.6): laid round its fire, keeping its ground, its bedrolls' rule.
+ * and the Wayfarers' camp's (SPEC §27.6): laid round its fire, keeping its ground, its bedrolls' rule; and dry land
+ * sought only in finished chunks (SPEC §28.9).
  */
 public final class SceneTests {
     private SceneTests() {}
@@ -50,6 +53,25 @@ public final class SceneTests {
                 h.assertTrue(Scenes.findSpot(level, base.offset(24, 0, 0), "road", RandomSource.create(2L), 0, 6) == null, "nor a road there");
             } finally {
                 Scenes.forbidden = was;
+            }
+            h.succeed();
+        });
+
+        // a chunk loaded but still generating (under a player flying over new land) is passed by, never waited for on
+        // the server thread (SPEC §28.9's audit): the camp's search once held the tick a second at a time on one
+        AwakenTests.register("living_dry_land_never_waits", 20, h -> {
+            ServerLevel level = h.getLevel();
+            var cache = level.getChunkSource();
+            ChunkPos o = ChunkPos.containing(h.absolutePos(BlockPos.ZERO));
+            ChunkPos c = new ChunkPos(o.x() - 400 - (int) (level.getGameTime() % 64), o.z() + 400);
+            h.assertTrue(cache.getChunkNow(c.x(), c.z()) == null, "chunk " + c + " isn't loaded yet");
+            cache.addTicketAndLoadWithRadius(TicketType.PORTAL, c, 0);
+            try {
+                h.assertTrue(cache.hasChunk(c.x(), c.z()) && cache.getChunkNow(c.x(), c.z()) == null, "loaded, still generating");
+                h.assertTrue(Scenes.dryLand(level, c.getMiddleBlockPosition(0), 0) == null, "no ground found there yet");
+                h.assertTrue(cache.getChunkNow(c.x(), c.z()) == null, "and the chunk wasn't made on the server thread");
+            } finally {
+                cache.removeTicketWithRadius(TicketType.PORTAL, c, 0);
             }
             h.succeed();
         });

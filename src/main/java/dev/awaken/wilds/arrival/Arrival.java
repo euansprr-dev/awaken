@@ -106,6 +106,9 @@ public final class Arrival implements ArrivalHooks.Tracker {
 
     /** One tick of one player: read the way, close the sample every {@link #SAMPLE} ticks, check wards now and then. */
     static void step(ServerPlayer p, State s, long now) {
+        // on the death screen a player is out of its level and its chunk unloads: reading the way there loaded it back
+        // from disk on the server thread every tick (SPEC §28.9's audit)
+        if (p.isRemoved() || !p.isAlive()) return;
         Way w = classify(p, s, now);
         if (w.ordinal() > s.slot) s.slot = w.ordinal();
         if (Math.floorMod(now, (long) SAMPLE) == 0) {

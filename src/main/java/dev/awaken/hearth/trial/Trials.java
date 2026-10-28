@@ -20,6 +20,7 @@ import dev.awaken.progression.content.Content;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -44,8 +45,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -239,7 +242,7 @@ public final class Trials {
         int cell = data.allocate(kind == Kind.PENALTY);
         BlockPos centre = TrialChunkGenerator.centre(cell);
         trials.getChunk(centre.getX() >> 4, centre.getZ() >> 4);
-        data.returns.put(sp.getUUID(), new TrialData.Return(sp.level().dimension().identifier().toString(), sp.getX(), sp.getY(), sp.getZ(), sp.getYRot()));
+        data.returns.put(sp.getUUID(), new TrialData.Return(sp.level().dimension().identifier().toString(), sp.getX(), standingY(sp), sp.getZ(), sp.getYRot()));
         data.setDirty();
         Session s = new Session(sp.getUUID(), kind, target, trials, centre, true, practice, cell);
         SESSIONS.put(sp.getUUID(), s);
@@ -552,6 +555,25 @@ public final class Trials {
         Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.REASSESSMENT, Component.literal("Reassessment failed"))
                 .body(Component.literal(reason + " The Monolith will listen again next play-day."))
                 .priority(6).build());
+    }
+
+    /**
+     * The height the way home comes back at: the player's own, or in the air (a Penalty Zone opens mid-jump or on the
+     * wing) the ground under them, so coming home is never a fall. Read from their chunk only once it's finished; one
+     * still generating would be waited for on the server thread, and keeps the height as it is.
+     */
+    public static double standingY(ServerPlayer sp) {
+        if (sp.onGround()) return sp.getY();
+        LevelChunk chunk = sp.level().getChunkSource().getChunkNow(sp.getBlockX() >> 4, sp.getBlockZ() >> 4);
+        if (chunk == null) return sp.getY();
+        BlockPos.MutableBlockPos under = new BlockPos.MutableBlockPos();
+        for (int y = Math.min(sp.getBlockY(), chunk.getMaxY()); y > chunk.getMinY(); y--) {
+            BlockState b = chunk.getBlockState(under.set(sp.getBlockX(), y - 1, sp.getBlockZ()));
+            VoxelShape shape = b.getCollisionShape(chunk, under);
+            if (!shape.isEmpty()) return Math.min(sp.getY(), y - 1 + shape.max(Direction.Axis.Y));
+            if (!b.getFluidState().isEmpty()) return y;
+        }
+        return sp.getY();
     }
 
     /** Back to where the player stood before the trial (or their Hearth, or the world spawn). */

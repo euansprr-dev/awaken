@@ -1,18 +1,12 @@
 package dev.awaken.story.client;
 
 import dev.awaken.lens.client.LensClient;
-import dev.awaken.story.RitualSounds;
 import dev.awaken.story.net.StoryPayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.gui.components.toasts.RecipeToast;
 import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.client.resources.sounds.SoundInstance;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
@@ -23,7 +17,6 @@ import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.ToastAddEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -53,6 +46,7 @@ public final class RitualClient {
 
     /** Client ticks since joining (the scene's clock), and this frame's partial tick. */
     static long ticks;
+    private static net.minecraft.client.multiplayer.ClientLevel sceneLevel;
 
     /** One moment being drawn or heard. */
     static final class Cue {
@@ -81,6 +75,8 @@ public final class RitualClient {
     }
 
     public static void init(IEventBus modBus) {
+        RitualAudioConfig.init();
+        RitualAudio.init();
         modBus.addListener(RegisterGuiLayersEvent.class, RitualHud::register);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
         NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeCameraAngles.class, RitualCamera::angles);
@@ -151,13 +147,15 @@ public final class RitualClient {
         RitualFx.reset();
         RitualCamera.reset();
         RitualHud.reset();
-        stopLoops();
+        RitualAudio.reset();
+        sceneLevel = null;
     }
 
     // ---- network ----------------------------------------------------------------------------------------------------
 
     public static void onScene(StoryPayloads.RitualScene s) {
         int was = beat;
+        sceneLevel = Minecraft.getInstance().level;
         if (s.beat() != was) {
             for (Cue c : CUES) c.live = false; // a word or a telegraph never outlives its beat
             RitualHud.newBeat();
@@ -172,30 +170,31 @@ public final class RitualClient {
             door = s.door();
             plates = List.copyOf(s.plates());
         }
+        RitualAudio.scene(was, beat);
         switch (beat) {
             case StoryPayloads.RitualScene.VOID -> {
                 LensClient.override("awaken:void", 12);
                 LensClient.ritual(0.75F, 0.35F);
                 RitualFx.lightsOut();
                 RitualHud.question(s.text());
-                startVoid();
+
             }
             case StoryPayloads.RitualScene.TEAR -> {
-                stopLoops();
+
                 tearAt = ticks;
                 LensClient.tear(36);
                 LensClient.clearOverride(40);
                 LensClient.ritual(0F, 0F);
                 RitualHud.tear();
                 RitualHud.flash(0x9ED2FF, 0.45F, 14); // a blue flash as the black opens
-                ui(RitualSounds.TEAR.get(), 1F, 1F);
+
             }
             case StoryPayloads.RitualScene.NONE -> {
                 RitualFx.lightsOut();
                 if (was != StoryPayloads.RitualScene.TEAR) LensClient.clearOverride(40);
                 LensClient.ritual(0F, 0F);
                 releaseInput();
-                stopLoops();
+
             }
             case WAITING -> LensClient.clearOverride(40);
             default -> {
@@ -209,6 +208,7 @@ public final class RitualClient {
     }
 
     public static void onCue(StoryPayloads.RitualCue m) {
+        if (sceneLevel == null || sceneLevel != Minecraft.getInstance().level) return;
         Cue c = null;
         long oldest = Long.MAX_VALUE;
         for (Cue x : CUES) {
@@ -230,7 +230,7 @@ public final class RitualClient {
         c.ticks = m.ticks();
         c.start = ticks;
         c.live = true;
-        sound(c);
+        RitualAudio.cue(c);
         switch (c.kind) {
             case LIGHTS_OUT -> {
                 LensClient.override("awaken:ritual", 6);
@@ -242,7 +242,7 @@ public final class RitualClient {
             case EYES -> {
                 if (c.f > 0) {
                     LensClient.ritual(0.45F, 1.0F);
-                    RitualCamera.shake(1.4F, 30);
+                    RitualCamera.shakeNear(c.a, 1.4F, 30, 64);
                     RitualCamera.fovPunch(-0.12F, 40);
                     RitualHud.flash(0x00FFF2D0, 0.55F, 14);
                 } else LensClient.ritual(0.4F, 0.25F);
@@ -252,7 +252,7 @@ public final class RitualClient {
                 RitualHud.flash(0x00FF5A3C, 0.25F, 8);
             }
             case GAZE_CHARGE -> LensClient.ritual(0.4F, 0.45F);
-            case SHAKE -> RitualCamera.shake(c.f * 2.4F, Math.max(6, c.ticks));
+            case SHAKE -> RitualCamera.shakeNear(c.a, c.f * 2.4F, Math.max(6, c.ticks), 36);
             case HIT -> {
                 RitualCamera.shake(1.6F, 10);
                 RitualCamera.kick(c.a, 6F);
@@ -281,7 +281,11 @@ public final class RitualClient {
             if (beat != StoryPayloads.RitualScene.NONE) reset();
             return;
         }
+        // A level change (the tear's way home) leaves the scene's held toasts, Lens and words alone: only the sound is
+        // the old level's, and RitualAudio drops it itself. Cues from before the next scene packet are ignored (onCue).
+        if (mc.isPaused()) return; // the scene clock (and every queued whoosh, toll and heartbeat) waits with the server
         ticks++;
+        RitualAudio.tick();
         if (DEBUG && inScene() && ticks % 40 == 0) {
             var s = RitualFx.seatedEntity();
             dev.awaken.Awaken.LOG.info("[story] ritual client: beat {} age {} seated {} found {} stage {} light {} eyes {} palm {}", beat,
@@ -292,7 +296,6 @@ public final class RitualClient {
         RitualCamera.tick();
         RitualFx.tick();
         RitualHud.tick();
-        if (beat == StoryPayloads.RitualScene.VOID) tickVoid(mc);
         if (tearAt >= 0 && ticks - tearAt >= TEAR_QUIET) tearAt = -1;
         releaseToasts(mc);
     }
@@ -326,124 +329,4 @@ public final class RitualClient {
         return dev.awaken.core.client.InputLock.held(INPUT);
     }
 
-    // ---- sound ------------------------------------------------------------------------------------------------------
-
-    private static final RandomSource RANDOM = RandomSource.create();
-    private static long lastCandle = -10;
-    private static @Nullable SoundInstance drainSound;
-
-    private static void at(SoundEvent e, Vec3 p, float vol, float pitch) {
-        Minecraft.getInstance().getSoundManager().play(new SimpleSoundInstance(e, SoundSource.HOSTILE, vol, pitch, RANDOM, p.x, p.y, p.z));
-    }
-
-    private static void ui(SoundEvent e, float pitch, float vol) {
-        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(e, pitch, vol));
-    }
-
-    private static void sound(Cue c) {
-        switch (c.kind) {
-            case TOLL -> at(RitualSounds.BELL.get(), c.a, c.id >= 0 ? 1.6F : 3.0F, c.f);
-            case WORD -> ui(RitualSounds.WORDS.get(), c.id == 2 ? 0.84F : 1F, 0.9F);
-            case CUE_DOORS -> at(RitualSounds.DOORS.get(), c.a, 2.5F, 1F);
-            case LIGHTS_OUT -> at(RitualSounds.FLAMES_OUT.get(), c.a, 2.5F, 1F);
-            case CANDLE -> {
-                if (ticks - lastCandle >= 2) {
-                    lastCandle = ticks;
-                    at(RitualSounds.CANDLE.get(), c.a, 0.9F, 0.8F + c.f * 0.6F);
-                }
-            }
-            case PLATE_MISS -> at(RitualSounds.BELL.get(), c.b, 0.9F, 0.55F);
-            case RULE_STRIKE -> {
-                at(RitualSounds.SWING.get(), c.a, 1.4F, 0.8F);
-                at(RitualSounds.IMPACT.get(), c.b, 1.6F, 0.9F);
-            }
-            case HIT -> ui(RitualSounds.IMPACT.get(), 1.1F, 0.6F);
-            case SHAKE -> {
-                if (c.f >= 0.3F) at(RitualSounds.RUMBLE.get(), c.a, 2.0F * c.f, 1F);
-            }
-            case EYES -> {
-                if (c.f == 0) at(RitualSounds.EYES.get(), c.a, 4.0F, 1F);
-            }
-            case RISE -> at(RitualSounds.STATUE_RISE.get(), c.a, 3.0F, 1F);
-            case GAZE_CHARGE -> at(RitualSounds.GAZE_CHARGE.get(), c.a, 3.0F, 1F);
-            case GAZE_FIRE -> {
-                at(RitualSounds.GAZE_FIRE.get(), c.a, 3.0F, 1F);
-                at(RitualSounds.GAZE_FIRE.get(), c.b, 2.0F, 0.8F);
-            }
-            case SWING -> at(RitualSounds.SWING.get(), c.a, 1.5F, 0.7F);
-            case IMPACT -> at(RitualSounds.IMPACT.get(), c.a, 2.0F, 1F);
-            case PIT -> {
-                if (c.f == 1) at(RitualSounds.PIT.get(), altar, 2.5F, 1F);
-            }
-            case DRAIN -> {
-                drainSound = SimpleSoundInstance.forUI(RitualSounds.DRAIN.get(), 1F, 1F);
-                Minecraft.getInstance().getSoundManager().play(drainSound);
-            }
-            case DEATH -> {
-                // the drain's rise is cut by the hand closing: the silence after it is the point
-                if (drainSound != null) Minecraft.getInstance().getSoundManager().stop(drainSound);
-                drainSound = null;
-                ui(RitualSounds.CLOSE.get(), 1F, 1.2F);
-            }
-            default -> {}
-        }
-    }
-
-    // ---- the void: a heartbeat in the dark, a cold bed, a few motes of blue ------------------------------------------
-
-    private static @Nullable VoidLoop voidLoop;
-    private static long nextBeat;
-
-    private static long voidToll = -1;
-
-    private static void startVoid() {
-        if (voidLoop == null || voidLoop.isStopped()) {
-            voidLoop = new VoidLoop();
-            Minecraft.getInstance().getSoundManager().play(voidLoop);
-        }
-        nextBeat = ticks + 50;
-        voidToll = ticks + 22; // black, and one bell toll
-    }
-
-    private static void tickVoid(Minecraft mc) {
-        if (voidToll >= 0 && ticks >= voidToll) {
-            voidToll = -1;
-            ui(RitualSounds.BELL.get(), 0.6F, 0.7F);
-        }
-        if (ticks >= nextBeat) {
-            ui(RitualSounds.HEARTBEAT.get(), 1F, 0.9F);
-            nextBeat = ticks + 34;
-        }
-    }
-
-    private static void stopLoops() {
-        if (voidLoop != null) voidLoop.end();
-        voidLoop = null;
-        if (drainSound != null) Minecraft.getInstance().getSoundManager().stop(drainSound);
-        drainSound = null;
-    }
-
-    private static final class VoidLoop extends net.minecraft.client.resources.sounds.AbstractTickableSoundInstance {
-        private int fade = 0;
-        private boolean ending;
-
-        VoidLoop() {
-            super(RitualSounds.VOID.get(), SoundSource.AMBIENT, SoundInstance.createUnseededRandom());
-            this.looping = true;
-            this.relative = true;
-            this.attenuation = SoundInstance.Attenuation.NONE;
-            this.volume = 0.01F;
-        }
-
-        void end() {
-            ending = true;
-        }
-
-        @Override
-        public void tick() {
-            fade = Math.clamp(fade + (ending ? -2 : 1), 0, 40);
-            volume = Math.max(0.01F, fade / 40F * 0.8F);
-            if (ending && fade == 0) stop();
-        }
-    }
 }

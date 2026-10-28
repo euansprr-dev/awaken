@@ -69,6 +69,7 @@ public final class ArmsClient {
         modBus.addListener((RegisterRenderStateModifiersEvent e) ->
                 e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, (entity, state) -> {
                     ArmsFeel.modify(entity, state);
+                    ArmsRecoil.modify(entity, state); // after the freeze: the spring is let go as the freeze ends
                     ArmsOffHand.modify(entity, state);
                     ArmsWrist.modify(entity, state); // last: its hands' items as the others left them, marked with their arm
                 }));
@@ -98,7 +99,13 @@ public final class ArmsClient {
             SwingTuning.tick();
         });
         // a swish come due on the blade's clock plays on the frame it falls in, not the next tick
-        bus.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre.class, e -> ArmsPredict.frame());
+        bus.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre.class, e -> {
+            ArmsRecoil.frame();
+            ArmsPredict.frame();
+        });
+        // the struck body's tip and fall: last, and never for a body someone else draws (they cancel the event)
+        bus.addListener(EventPriority.LOWEST, net.neoforged.neoforge.client.event.RenderLivingEvent.Pre.class, ArmsRecoil::onPre);
+        bus.addListener(EventPriority.LOWEST, net.neoforged.neoforge.client.event.RenderLivingEvent.Post.class, ArmsRecoil::onPost);
         SwingTuning.init();
         bus.addListener(EventPriority.LOW, MovementInputUpdateEvent.class, ArmsPredict::onInput);
         bus.addListener(ViewportEvent.ComputeCameraAngles.class, ArmsFeel::onCameraAngles);
@@ -106,6 +113,7 @@ public final class ArmsClient {
         bus.addListener(net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent.class, BladeTrail::onSubmit);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             ArmsPredict.reset();
+            ArmsRecoil.reset();
             ArmsCodex.reset();
             ArmouryCache.reset();
         });

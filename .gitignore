@@ -51,3 +51,6 @@ awaken-registry.json
 
 ### Python ###
 __pycache__/
+
+# CC0 cave recordings (BigSoundBank): fetched by hand, see tools/art/sources/delve/README.md
+tools/art/sources/delve/*.mp3

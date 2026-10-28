@@ -88,7 +88,9 @@ public final class QuestEngine {
         s.active.add(new QuestState.Active(chain, 0, 0, java.util.Optional.of(id), p.level().getGameTime()));
         if (s.tracked.isEmpty()) s.tracked = chain;
         save(p, s);
-        Signal.toast(p, Component.literal("Journal · " + d.title()));
+        dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("quest/" + chain + "/start", "Quest started",
+                d.title(), d.steps().getFirst().text(), java.util.List.of(d.summary(), "Track it in your Journal to see the step you're on and where to go."),
+                dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x7FC3FF));
         begin(p, id, d.steps().getFirst());
         return true;
     }
@@ -211,7 +213,9 @@ public final class QuestEngine {
             s.active.set(i, a.withStep(next));
             QuestDef.Step n = d.steps().get(next);
             begin(p, a.scene().orElse(0L), n);
-            Signal.toast(p, Component.literal(d.title() + " · " + n.text()));
+            dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("quest/" + a.chain() + "/step/" + next,
+                    "Quest advanced", d.title(), n.text(), java.util.List.of("Done: " + step.text(), "Your Journal shows the step you're on."),
+                    dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x7FC3FF));
         }
     }
 
@@ -222,16 +226,19 @@ public final class QuestEngine {
         s.done.add(chain);
         if (s.tracked.equals(chain)) s.tracked = s.active.isEmpty() ? "" : s.active.getFirst().chain();
         String claim = "awaken:claim/quest/" + chain + "/finish";
-        if (Progression.profile(p).counter(claim) == 0) {
+        boolean paid = Progression.profile(p).counter(claim) == 0;
+        if (paid) {
             Progression.setCounter(p, claim, 1);
             RewardHooks.apply(p, d.finish(), Progression.XpSource.WORLD);
             d.relic().ifPresent(relic -> giveRelic(p, s, chain, relic));
             dev.awaken.core.api.ArmsApi.questDone(p, chain); // whoever teaches a style at the end of a chain pays it (docs/arms-progression/PLAN.md §3.4)
         }
         Progression.count(p, "awaken:quests_done");
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Chain complete · " + d.title()))
-                .body(Component.literal(d.summary().isEmpty() ? "Written in your journal." : d.summary()))
-                .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6).build());
+        dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("quest/" + chain + "/complete", "Quest complete",
+                d.title(), paid ? "You finished it, and its reward is yours." : "You finished it again. It only pays the first time.",
+                paid && d.finish() != null ? java.util.List.of(d.summary(), "Reward: " + dev.awaken.progression.RewardWords.describe(d.finish()) + ".",
+                        "It's saved as done, so it only pays once.") : java.util.List.of(d.summary()),
+                dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x7FC3FF));
     }
 
     private static void giveRelic(ServerPlayer p, QuestState s, String chain, String relic) {
@@ -268,7 +275,7 @@ public final class QuestEngine {
     public static void sayLines(ServerPlayer p, List<String> lines) {
         for (String l : lines) {
             Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(l))
-                    .presentation(SignalWindow.Presentation.STORY).ttl(20 * 5).build());
+                    .dialogue().ttl(20 * 5).build());
         }
     }
 

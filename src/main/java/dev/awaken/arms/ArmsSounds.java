@@ -56,6 +56,9 @@ public final class ArmsSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> HURT = sound("hurt");
     public static final DeferredHolder<SoundEvent, SoundEvent> HEARTBEAT = sound("heartbeat");
     public static final DeferredHolder<SoundEvent, SoundEvent> HIT_BLUNT = sound("hit_blunt");
+    /** A killing blow, over its impact; one more body in a sweep, a semitone higher each (SPEC §25 "Fight Feel"). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> KILL = sound("kill");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CLEAVE = sound("cleave");
 
     /** From this damage multiplier a blow lands as a heavy one (the finishers, a heavy, a riposte). */
     static final float HEAVY_MOTION = 1.4F;
@@ -106,6 +109,24 @@ public final class ArmsSounds {
     /** A heavy blow on a body without a heavy sound of its own lands a little lower. */
     public static float impactPitch(Entity target, Archetype.@Nullable MoveDef def) {
         return heavy(def) && BodyMaterial.of(target) != BodyMaterial.FLESH ? 0.9F : 1.0F;
+    }
+
+    /** A kill drops by what falls: stone and slime low, bone, armour and a spirit higher. */
+    public static float killPitch(Entity target) {
+        return switch (BodyMaterial.of(target)) {
+            case FLESH -> 1.0F;
+            case ARMOR -> 1.06F;
+            case BONE -> 1.12F;
+            case WOOD -> 1.04F;
+            case STONE -> 0.9F;
+            case SPIRIT -> 1.2F;
+            case SLIME -> 0.88F;
+        };
+    }
+
+    /** The cleave's body {@code bodies} (2..4): a semitone higher for each body past the first. */
+    public static float cleavePitch(int bodies) {
+        return (float) Math.pow(SEMITONE, Math.max(1, Math.min(3, bodies - 1)));
     }
 
     private static boolean heavy(Archetype.@Nullable MoveDef def) {

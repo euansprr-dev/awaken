@@ -1,0 +1,58 @@
+{
+  "0580": {
+    "page": "https://bigsoundbank.com/tombstone-opening-s0580.html",
+    "licence": "CC0-1.0",
+    "author": "Joseph SARDIN",
+    "file": "0580.flac",
+    "wav_sha256": "2c79684618226838ea09ef55719dd4cd41aecb165536a2bf9be03972e1f81745",
+    "sha256": "5cf80edf1ab1b12326d8beeeecee08def885144586b4d192a69bd532f10bbb20"
+  },
+  "1022": {
+    "page": "https://bigsoundbank.com/fall-of-stone-s1022.html",
+    "licence": "CC0-1.0",
+    "author": "Joseph SARDIN",
+    "file": "1022.flac",
+    "wav_sha256": "f27b9cc4d8bfd2417eb474a508ae8623ddc6cb0e43f03badecf738d7bfeb3203",
+    "sha256": "6b60b2fe4e9f9149108499e39d3759be389c2545ce8c8ad70e81f591d5f6397a"
+  },
+  "3113": {
+    "page": "https://bigsoundbank.com/thunder-2-s3113.html",
+    "licence": "CC0-1.0",
+    "author": "Joseph SARDIN & Axeline T.",
+    "file": "3113.flac",
+    "wav_sha256": "88b9cc1944d63662da3989114683ac616b0e93480d8b5fe4547fca7f52de17c2",
+    "sha256": "f0dc1b6482bf3921641a70782f87cd2cc833eea76b11093c9ade3f5a1366f1b5"
+  },
+  "0595": {
+    "page": "https://bigsoundbank.com/wind-s0595.html",
+    "licence": "CC0-1.0",
+    "author": "Joseph SARDIN",
+    "file": "0595.flac",
+    "wav_sha256": "38452331ec079f5cc67e98d154642deeab13629ebf0e0ffd971bd4fdc25a2f71",
+    "sha256": "17c1f987fe5aa2e171e4c5aece7fab994e0f34b7df779470c6b41d7b73968625"
+  },
+  "0950": {
+    "page": "https://bigsoundbank.com/long-welding-1-s0950.html",
+    "licence": "CC0-1.0",
+    "author": "Joseph SARDIN",
+    "file": "0950.flac",
+    "wav_sha256": "6f5669779be27c23cdca8b7e11468393c06751bff5db8ac2d8dcb8c77e6ed2fd",
+    "sha256": "5c12cf5811cc49ee649323ca7918032e22788fa7ffbb7e6d74a4dc0deafc6b53"
+  },
+  "1023": {
+    "page": "https://bigsoundbank.com/explosion-far-away-s1023.html",
+    "licence": "CC0-1.0",
+    "author": "Joseph SARDIN",
+    "file": "1023.flac",
+    "wav_sha256": "9b77f30f6a27b2e7a32dce4a39ed14d4c19933341bcbcc01350c225a90a5f700",
+    "sha256": "ac374a6b25bbf689f2c44c9f5104acfc932f70a352b77d0b7affe881b0493e48"
+  },
+  "3446": {
+    "page": "https://bigsoundbank.com/bell-1-o-clock-s3446.html",
+    "licence": "CC0-1.0",
+    "author": "Joseph SARDIN & Axeline T.",
+    "file": "3446.flac",
+    "wav_sha256": "f9f598a9236b709d4560cb9ce2067172a3eac8ec2189a26185c65d990251764a",
+    "sha256": "b4e78ec79f878d1852877cbd3de5a5b66f02980e7b1d7b65ed3cefb622e2c043"
+  }
+}

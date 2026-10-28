@@ -46,6 +46,15 @@ public final class VeilPayloads {
         @Override public Type<Action> type() { return TYPE; }
     }
 
+    /** Continue exactly the spirit line the client has finished, without replaying a delayed/duplicate request. */
+    public record NextLine(int entityId, int heard) implements CustomPacketPayload {
+        public static final Type<NextLine> TYPE = new Type<>(Awaken.id("veil_next_line"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, NextLine> STREAM_CODEC = StreamCodec.ofMember(
+                (m, b) -> { b.writeVarInt(m.entityId); b.writeVarInt(m.heard); },
+                b -> new NextLine(b.readVarInt(), b.readVarInt()));
+        @Override public Type<NextLine> type() { return TYPE; }
+    }
+
     /** Movement intent for a possessed creature, sent every tick while possessing. */
     public record PossessInput(float forward, float strafe, boolean jump, boolean sprint, float yaw, float pitch) implements CustomPacketPayload {
         public static final Type<PossessInput> TYPE = new Type<>(Awaken.id("veil_possess_input"));

@@ -40,7 +40,9 @@ public final class SystemHud {
     static final int OPEN_TICKS = 4, CLOSE_TICKS = 6, STORY_FADE = StoryPager.FADE_TICKS;
     private static final int MAX_STORIES = 8, MAX_PANELS = 2;
 
-    record ToastItem(String title, String detail, int colour) {}
+    record ToastItem(String title, String detail, int colour, boolean journal) {
+        ToastItem(String title, String detail, int colour) { this(title, detail, colour, false); }
+    }
 
     private static final class Story {
         final SignalWindow w;
@@ -53,7 +55,10 @@ public final class SystemHud {
 
         Story(SignalWindow w) {
             this.w = w;
-            this.pager = new StoryPager(w.title().getString(), w.body().map(Component::getString).orElse(""));
+            this.pager = w.dialogue()
+                    ? new StoryPager("", w.title().getString() + w.body().map(b -> ": " + b.getString()).orElse("")
+                            + w.footer().map(f -> " " + f.getString()).orElse(""))
+                    : new StoryPager(w.title().getString(), w.body().map(Component::getString).orElse(""));
         }
     }
 
@@ -134,6 +139,16 @@ public final class SystemHud {
         }
         else Herald.offer(text, tier, topic, colour);
         if (response) Herald.took();
+    }
+
+    /** Already saved by the server: a small explanation, never an automatic panel or dialogue. */
+    static void event(dev.awaken.core.api.NoticeEvents.Event event) {
+        BURST.offer(ticks, new ToastItem(event.title(), event.summary(), event.colour(), true));
+    }
+
+    static void tickSavedEvents() {
+        ticks++;
+        tickToasts(Minecraft.getInstance());
     }
 
     /** An info panel the director let through. */
@@ -320,8 +335,13 @@ public final class SystemHud {
     private static void addToast(Minecraft mc, ToastBurst.Out<ToastItem> out) {
         String title, detail;
         int colour;
-        if (out.merged()) {
-            title = out.items().size() + " new things · " + key(AwakenKeys.STATUS);
+        ToastItem explanation = out.items().stream().filter(ToastItem::journal).findFirst().orElse(null);
+        if (out.merged() && explanation != null) {
+            title = explanation.title();
+            detail = explanation.detail();
+            colour = explanation.colour();
+        } else if (out.merged()) {
+            title = out.items().size() + " new things (press " + key(AwakenKeys.STATUS) + ")";
             List<String> names = new ArrayList<>();
             for (ToastItem t : out.items()) names.add(t.title());
             detail = String.join(" · ", names);
@@ -335,7 +355,11 @@ public final class SystemHud {
         double mult = mc.options.notificationDisplayTime().get();
         long[] live = {ticks + Math.round(SignalToast.BASE_MS * mult / 50.0) + 40};
         LIVE_TOASTS.add(live);
-        mc.gui.toastManager().addToast(new SignalToast(title, detail, colour, () -> live[0] = 0));
+        boolean saved = explanation != null;
+        String more = saved && out.merged() ? "this and " + (out.items().size() - 1) + " more" : "more";
+        String hint = !saved ? "" : AwakenKeys.STATUS.isUnbound() ? "Set a Status key in Controls to read " + more + " in your Journal"
+                : "Press " + key(AwakenKeys.STATUS) + " to read " + more + " in your Journal";
+        mc.gui.toastManager().addToast(new SignalToast(title, detail, colour, hint, () -> live[0] = 0));
     }
 
     private static void tickPanel() {
@@ -362,6 +386,33 @@ public final class SystemHud {
     /** Whether a story line is on screen or waiting to be said. */
     static boolean speaking() {
         return story != null || !STORIES.isEmpty();
+    }
+
+    /** NPC speech on screen or next to be said, or a speaker's choice card (a press then waits for its keys). */
+    static boolean dialogueActive() {
+        return story != null && story.w.dialogue()
+                || story == null && !STORIES.isEmpty() && STORIES.peekFirst().dialogue()
+                || DECK.current() != null && DECK.current().window().dialogue();
+    }
+
+    /** One press: finish the line being typed, else the next page, else the next line (the server may send it). */
+    static void advanceDialogue() {
+        if (story == null) { tickStory(Minecraft.getInstance()); return; }
+        if (!story.w.dialogue() || story.w.action().isPresent()) return;
+        if (story.closingAt < 0 && story.age < story.typeTicks) { // the first press finishes the line being typed
+            story.age = story.typeTicks;
+            return;
+        }
+        if (!story.pager.done()) {
+            nextChunk(Minecraft.getInstance());
+            story.first = false;
+            story.closingAt = -1;
+        } else {
+            String topic = story.w.topic();
+            story = null;
+            dev.awaken.core.api.Dialogue.finished(topic);
+            tickStory(Minecraft.getInstance());
+        }
     }
 
     private static void tickStory(Minecraft mc) {
@@ -613,7 +664,7 @@ public final class SystemHud {
             ty += SignalLayout.LINE;
         }
         if (cut) {
-            String more = "+" + (lines.size() - show) + " more · " + key(AwakenKeys.STATUS);
+            String more = "Press " + key(AwakenKeys.STATUS) + " to see " + (lines.size() - show) + " more";
             HudLook.text(g, font, SignalText.ellipsize(more, tw, font::width), tx, ty, Glass.a(Glass.LABEL, alpha), false);
             ty += SignalLayout.LINE;
         }
@@ -670,6 +721,15 @@ public final class SystemHud {
             int lx = (w0 - font.width(full)) / 2; // centred on the whole line so it doesn't shift while typing
             if (!part.isEmpty()) HudLook.text(g, font, part, lx, ty, Glass.a(colour, alpha), true);
             ty += SignalLayout.LINE;
+        }
+        // a speaker waits on you: a small bobbing chevron beside the last line, only while a press would go on
+        if (left >= 0 && st.closingAt < 0 && st.w.dialogue() && dev.awaken.core.api.Dialogue.talking()) {
+            double t = (st.age - st.typeTicks + pt) * 0.22;
+            int c = Glass.a(Glass.EDGE, alpha * (0.6f + 0.4f * (float) Math.sin(t)));
+            int cx = bx + widest + 12, cy = ty - SignalLayout.LINE + 2 + (int) Math.round(Math.sin(t));
+            g.fill(cx - 2, cy, cx + 3, cy + 1, c);
+            g.fill(cx - 1, cy + 1, cx + 2, cy + 2, c);
+            g.fill(cx, cy + 2, cx + 1, cy + 3, c);
         }
         g.pose().popMatrix();
     }

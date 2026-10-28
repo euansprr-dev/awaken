@@ -35,6 +35,8 @@ public final class CoreModule {
     public static final DeferredHolder<SoundEvent, SoundEvent> SIGNAL_WARNING = sound("signal.warning");
     public static final DeferredHolder<SoundEvent, SoundEvent> LEVEL_UP = sound("level_up");
     public static final DeferredHolder<SoundEvent, SoundEvent> RANK_UP = sound("rank_up");
+    /** The edge hold's headwind (SPEC §28.9; its file from tools/art/specs/audio_edge_hold.py, merge/core_edge). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EDGE_HEADWIND = sound("edge.headwind");
 
     public static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Awaken.id(name)));

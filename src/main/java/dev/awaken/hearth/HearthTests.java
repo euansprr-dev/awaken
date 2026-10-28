@@ -283,6 +283,16 @@ final class HearthTests {
         });
 
         AwakenTests.register("hearth_trials_dimension", 100, h -> {
+            // a trial opened in the air (a Penalty Zone mid-jump, on the wing) comes home to the ground under the player
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            h.setBlock(new BlockPos(1, 1, 1), Blocks.STONE);
+            for (int y = 2; y <= 8; y++) h.setBlock(new BlockPos(1, y, 1), Blocks.AIR);
+            BlockPos aloft = h.absolutePos(new BlockPos(1, 7, 1)), ground = h.absolutePos(new BlockPos(1, 2, 1));
+            sp.snapTo(aloft.getX() + 0.5, aloft.getY() + 0.4, aloft.getZ() + 0.5, 0, 0);
+            sp.setOnGround(false);
+            h.assertTrue(Trials.standingY(sp) == ground.getY(), "home at the ground (" + ground.getY() + "), not " + Trials.standingY(sp));
+            sp.setOnGround(true);
+            h.assertTrue(Trials.standingY(sp) == sp.getY(), "on the ground, where they stand");
             var regs = h.getLevel().registryAccess();
             h.assertTrue(regs.lookupOrThrow(net.minecraft.core.registries.Registries.DIMENSION_TYPE)
                     .get(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION_TYPE, dev.awaken.Awaken.id("trials"))).isPresent(),
