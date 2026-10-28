@@ -2,6 +2,12 @@
 
 Newest first. Each entry: what landed, how it was verified, what's next.
 
+## 2026-10-28
+
+- CI tours' start-up crash fixed: the feel profile seeds Shoulder Surfing 5.2.0's default `shouldersurfing-client.toml`
+  (pack/mods.json "configs"), so NeoForge's config watcher no longer reloads it before the renderer exists; 5 of 5
+  back-to-back `ci-probe` PACK=feel runs clean (40681474609, 40682691762, 40683720708, 40684834568, 40685767479).
+
 ## 2026-10-23
 
 ### Foundation (main branch `build/awaken-v1`)
