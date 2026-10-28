@@ -97,6 +97,14 @@ final class FightRunner {
         gap = 30;
     }
 
+    /** Its stance broke or it was staggered: the move in progress ends there, and so does its string (SPEC §24). */
+    void interrupt() {
+        if (move < 0) return;
+        stop();
+        string.clear();
+        gap = 6 + boss.getRandom().nextInt(9);
+    }
+
     /** A phase threshold was crossed: its transition plays as soon as the current move ends. */
     void enterPhase(int phase) {
         pendingPhase = phase;

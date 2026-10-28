@@ -85,6 +85,13 @@ public class AwakenBoss extends AwakenMob {
     }
 
     @Override
+    public boolean stagger(int ticks) {
+        if (!super.stagger(ticks)) return false;
+        if (fight != null) fight.interrupt();
+        return true;
+    }
+
+    @Override
     boolean fightBusy() {
         return fight != null && fight.busy();
     }
