@@ -73,6 +73,8 @@ public final class VillageModule {
         NeoForge.EVENT_BUS.addListener(dev.awaken.village.road.RoadAccess::chunkLoaded);
         // a player changing level stands on nothing the old one held: its first tick reads only where it is
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, dev.awaken.village.road.Arrivals::changed);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, (ServerTickEvent.Pre e) -> dev.awaken.village.road.RoadAccess.serverTick(true));
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ServerTickEvent.Post e) -> dev.awaken.village.road.RoadAccess.serverTick(false));
         NeoForge.EVENT_BUS.addListener(Inn::onRespawn);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onBroken);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onExploded);

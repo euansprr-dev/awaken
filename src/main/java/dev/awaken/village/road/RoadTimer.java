@@ -32,6 +32,25 @@ final class RoadTimer {
         return Thread.currentThread() == server;
     }
 
+    /** When the server's tick under way began (0 between ticks). */
+    private static volatile long tickFrom;
+    /** A tick that has run this long is late: the planners' jobs ahead of the players wait for it. */
+    static final long LATE_NS = 40_000_000L;
+
+    /** The server's tick begins and ends (the planners ahead hold back while one is late). */
+    static void tickBegins() {
+        tickFrom = System.nanoTime();
+    }
+
+    static void tickEnds() {
+        tickFrom = 0;
+    }
+
+    static boolean serverLate() {
+        long t = tickFrom;
+        return t != 0 && System.nanoTime() - t > LATE_NS;
+    }
+
     /** A lattice chunk's legs, asked before they were known: planned on this thread, or waited for (another was planning them). */
     static void startsIn(int chunkX, int chunkZ, long ns, boolean planned) {
         String who = Thread.currentThread().getName();
@@ -55,9 +74,17 @@ final class RoadTimer {
     static void server(long ns, String what) {
         synchronized (RoadTimer.class) {
             onServer++;
+            serverWaitsEver++;
             serverNs += ns;
         }
         if (ns >= STALL_NS) RoadNet.log("the server thread waited {} ms for {}", ms(ns), what);
+    }
+
+    /** Every wait of the server thread's for the roads or settlements since the server started (the tests). */
+    private static long serverWaitsEver;
+
+    static synchronized long serverWaits() {
+        return serverWaitsEver;
     }
 
     /** Every 30 s while anything happened: the window's sums. */
@@ -91,6 +118,7 @@ final class RoadTimer {
             worst = "";
         }
         FAR_TOLD.clear();
+        tickFrom = 0;
     }
 
     // ---- the server thread watched -------------------------------------------------------------------------------------

@@ -12,10 +12,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * The road planners (SPEC §28.9, Cost): a few minimum-priority threads (half the cores, two to six) that make the
- * network's pieces before anyone waits for them, the most urgent job first: what world generation is waiting for, then
- * the towns' and wayhouses' sites the server thread's searches asked for, then what lies ahead of the players, nearest
- * first. A job only asks for a piece (a plan, a hub, a road, a lattice chunk's legs): each piece is still made once by
+ * The road planners (SPEC §28.9, Cost): a few minimum-priority threads (half the cores, one to six, always two cores
+ * left for the game) that make the network's pieces before anyone waits for them, the most urgent job first: what world
+ * generation is waiting for, then the towns' and wayhouses' sites the server thread's searches asked for, then what lies
+ * ahead of the players, nearest first (held back while the server is late with a tick). A job only asks for a piece (a plan, a hub, a road, a lattice chunk's legs): each piece is still made once by
  * whichever thread asks first while the others wait for it, so the network is exactly what one thread would lay, and no
  * thread ever waits for a job still queued.
  */
@@ -52,8 +52,12 @@ final class RoadPlanners {
     private static final ConcurrentHashMap<String, Long> PENDING = new ConcurrentHashMap<>();
 
     static int threads() {
-        return Math.clamp(Integer.getInteger("awaken.roadPlanners", Math.max(2, Runtime.getRuntime().availableProcessors() / 2)), 1, 6);
+        int cores = Runtime.getRuntime().availableProcessors();
+        return Math.clamp(Integer.getInteger("awaken.roadPlanners", Math.min(cores / 2, cores - 2)), 1, 6);
     }
+
+    /** The longest a job ahead of the players holds back for a late tick (it runs then anyway: the queue keeps moving). */
+    static final long HOLD_NS = 1_000_000_000L;
 
     private static synchronized ThreadPoolExecutor pool() {
         if (pool == null) {
@@ -76,6 +80,8 @@ final class RoadPlanners {
         if (!mine[0]) return;
         pool().execute(new Job(rank, SEQ.incrementAndGet(), () -> {
             PENDING.remove(key, rank);
+            // ahead of the players, a job starts between the server's ticks or within a late one's first 40 ms
+            if (tier == AHEAD) for (long t0 = System.nanoTime(); RoadTimer.serverLate() && System.nanoTime() - t0 < HOLD_NS; ) LockSupport.parkNanos(5_000_000L);
             try {
                 work.run();
             } catch (RuntimeException e) {

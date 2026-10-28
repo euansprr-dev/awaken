@@ -8017,10 +8017,20 @@ same roads and plans for a seed, the bench's fingerprint unchanged):
 - one shared reading of the land (`SharedLand`, behind `RoadWorld.terrain()`: 64 stripes of 4,096 recent columns and
   4,096 older ones), so a site search, the plan on its site, a village's fallback hamlet, a town's wider wall and the
   roads over it read each column once;
-- planners (`RoadPlanners`: half the cores, two to six, minimum priority) sharing a lattice chunk's work as jobs ranked
-  urgent (world generation waits for it), soon (a site search the server thread asked for) and ahead (nearest first):
-  its settlements' plans, its highroads' hubs, then their pieces and Carillon's roads, then the lanes; each piece is
-  still made once by whoever asks first, and no thread waits for a job still queued;
+- planners (`RoadPlanners`: half the cores, one to six, always two cores left for the game, `-Dawaken.roadPlanners=N`;
+  minimum priority, which macOS ignores, so the cap is what leaves the server its cores) sharing a lattice chunk's work
+  as jobs ranked urgent (world generation waits for it), soon (a site search the server thread asked for) and ahead
+  (nearest first): its settlements' plans, its highroads' hubs, then their pieces and Carillon's roads, then the lanes;
+  each piece is still made once by whoever asks first, and no thread waits for a job still queued. A job ahead of the
+  players starts between the server's ticks or within a tick's first 40 ms (`RoadTimer.serverLate`, from the server
+  tick's start and end; held a second at most, so the queue keeps moving). The pass ahead (`RoadNet.ahead`, on the
+  server thread twice a second) only queues: a lattice chunk's fan-out (the region map and the grid, a few ms) runs
+  on a planner. The laid roads' index by chunk is read without a lock (copy-on-write lists, a batch's points filed in
+  one copy): a creature's road distance on the server thread had waited 31 ms for a planner filing a batch.
+  `village_tick_holds` holds it: a wave of ~360 lattice chunks queued 2,400 out and world generation waiting on a cold
+  lattice chunk beside it, then 15 s of the server thread's road calls for a player flying 40 blocks a second over new
+  land. On the Mac (five planners, another build sharing the cores): no wait, the most work in a call 0.45 ms of CPU
+  (19 ms by the clock: the cores were shared), the longest tick 196 ms, the planners busy every tick;
 - a lattice chunk lays a lane only if it can reach it, judged from the roads the lane may join that are laid already:
   a lane runs from a street end to the point of those roads nearest the settlement's middle and keeps inside its
   search's ellipse (every point within 1.225 (δ + E + 24) + 44 of that street end, δ the nearest laid point or 650, E

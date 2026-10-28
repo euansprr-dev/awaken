@@ -76,10 +76,7 @@ public final class RoadNet {
         PIECES.clear();
         SITES.clear();
         LEGS.clear();
-        synchronized (ALL) {
-            ALL.clear();
-            BY_CHUNK.clear();
-        }
+        BY_CHUNK.clear();
         planNanos = planned = reads = 0;
         SITE_NS.reset();
         DRY_NS.reset();
@@ -640,29 +637,36 @@ public final class RoadNet {
         RoadWorld w = RoadWorld.get();
         if (w == null) return;
         int behind = 0;
-        for (net.minecraft.server.level.ServerPlayer p : server.overworld().players()) {
-            int pcx = p.getBlockX() >> 4, pcz = p.getBlockZ() >> 4;
-            int reach = AHEAD / 16 / Road.LATTICE + 1;
-            List<long[]> want = new ArrayList<>();
-            int lx = Math.floorDiv(pcx, Road.LATTICE), lz = Math.floorDiv(pcz, Road.LATTICE);
-            for (int i = lx - reach; i <= lx + reach; i++)
-                for (int j = lz - reach; j <= lz + reach; j++) {
-                    int cx = i * Road.LATTICE, cz = j * Road.LATTICE;
-                    long key = ((long) cx << 32) ^ (cz & 0xffffffffL);
-                    if (LEGS.containsKey(key) || RoadPlanners.pending("L" + key)) continue;
-                    long d = (long) (cx - pcx) * (cx - pcx) + (long) (cz - pcz) * (cz - pcz);
-                    if (d * 256 > (long) AHEAD * AHEAD) continue;
-                    want.add(new long[]{d, cx, cz, key});
-                }
-            want.sort((u, v) -> Long.compare(u[0], v[0]));
-            behind += want.size();
-            for (int k = 0; k < Math.min(PER_PASS, want.size()); k++) {
-                long[] u = want.get(k);
-                fanOut(w, (int) u[1], (int) u[2], RoadPlanners.AHEAD, u[0]);
-                RoadPlanners.job("L" + u[3], RoadPlanners.AHEAD, u[0] * 4 + 3, () -> startsIn((int) u[1], (int) u[2]));
-            }
-        }
+        for (net.minecraft.server.level.ServerPlayer p : server.overworld().players()) behind += ahead(w, p.getBlockX() >> 4, p.getBlockZ() >> 4, PER_PASS);
         unknown = behind;
+    }
+
+    /**
+     * One pass ahead of a player at chunk (pcx, pcz): the nearest {@code most} lattice chunks within {@link #AHEAD} whose
+     * legs aren't known or queued are handed to the planners (the caller only queues them: the server thread never fans
+     * out or plans here); how many are left.
+     */
+    static int ahead(RoadWorld w, int pcx, int pcz, int most) {
+        int reach = AHEAD / 16 / Road.LATTICE + 1;
+        List<long[]> want = new ArrayList<>();
+        int lx = Math.floorDiv(pcx, Road.LATTICE), lz = Math.floorDiv(pcz, Road.LATTICE);
+        for (int i = lx - reach; i <= lx + reach; i++)
+            for (int j = lz - reach; j <= lz + reach; j++) {
+                int cx = i * Road.LATTICE, cz = j * Road.LATTICE;
+                long key = ((long) cx << 32) ^ (cz & 0xffffffffL);
+                if (LEGS.containsKey(key) || RoadPlanners.pending("L" + key) || RoadPlanners.pending("F" + key)) continue;
+                long d = (long) (cx - pcx) * (cx - pcx) + (long) (cz - pcz) * (cz - pcz);
+                if (d * 256 > (long) AHEAD * AHEAD) continue;
+                want.add(new long[]{d, cx, cz, key});
+            }
+        want.sort((u, v) -> Long.compare(u[0], v[0]));
+        for (int k = 0; k < Math.min(most, want.size()); k++) {
+            long[] u = want.get(k);
+            // the fan-out reads the region map and the grid (up to a few ms): a planner does it, just ahead of the pieces it queues
+            RoadPlanners.job("F" + u[3], RoadPlanners.AHEAD, u[0] * 4, () -> fanOut(w, (int) u[1], (int) u[2], RoadPlanners.AHEAD, u[0]));
+            RoadPlanners.job("L" + u[3], RoadPlanners.AHEAD, u[0] * 4 + 3, () -> startsIn((int) u[1], (int) u[2]));
+        }
+        return want.size();
     }
 
     /** Lattice chunks within reach of the players whose legs weren't known at the last pass (the timer's line). */
@@ -705,21 +709,22 @@ public final class RoadNet {
 
     // ---- the laid roads by chunk (who walks where, for the Atlas) ---------------------------------------------------------
 
-    private static final List<Road> ALL = new ArrayList<>();
-    private static final ConcurrentHashMap<Long, List<int[]>> BY_CHUNK = new ConcurrentHashMap<>();
+    /** A laid road's point, filed under its chunk. */
+    private record Spot(Road road, int point) {}
+
+    // Readers (the server thread: a creature's road distance, the Atlas) take no lock: each chunk's list is copy-on-write,
+    // and a batch's points go into it in one copy (SPEC §28.9, Cost: the server never waits for planning).
+    private static final ConcurrentHashMap<Long, List<Spot>> BY_CHUNK = new ConcurrentHashMap<>();
 
     /** Files a newly laid road's points by chunk. */
     static List<Road> index(List<Road> roads) {
-        synchronized (ALL) {
-            for (Road r : roads) {
-                int id = ALL.size();
-                ALL.add(r);
-                for (int i = 0; i < r.points(); i++) {
-                    long k = net.minecraft.world.level.ChunkPos.pack((int) Math.floor(r.x()[i]) >> 4, (int) Math.floor(r.z()[i]) >> 4);
-                    BY_CHUNK.computeIfAbsent(k, kk -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(new int[]{id, i});
-                }
+        java.util.HashMap<Long, List<Spot>> batch = new java.util.HashMap<>();
+        for (Road r : roads)
+            for (int i = 0; i < r.points(); i++) {
+                long k = net.minecraft.world.level.ChunkPos.pack((int) Math.floor(r.x()[i]) >> 4, (int) Math.floor(r.z()[i]) >> 4);
+                batch.computeIfAbsent(k, kk -> new ArrayList<>()).add(new Spot(r, i));
             }
-        }
+        batch.forEach((k, spots) -> BY_CHUNK.computeIfAbsent(k, kk -> new java.util.concurrent.CopyOnWriteArrayList<>()).addAll(spots));
         return roads;
     }
 
@@ -729,15 +734,11 @@ public final class RoadNet {
         Nearest best = null;
         for (int dx = -1; dx <= 1; dx++)
             for (int dz = -1; dz <= 1; dz++) {
-                List<int[]> l = BY_CHUNK.get(net.minecraft.world.level.ChunkPos.pack(cx + dx, cz + dz));
+                List<Spot> l = BY_CHUNK.get(net.minecraft.world.level.ChunkPos.pack(cx + dx, cz + dz));
                 if (l == null) continue;
-                for (int[] e : l) {
-                    Road r;
-                    synchronized (ALL) {
-                        r = ALL.get(e[0]);
-                    }
-                    double d = Math.hypot(r.x()[e[1]] - x, r.z()[e[1]] - z);
-                    if (d <= reach && (best == null || d < best.distance())) best = new Nearest(r, e[1], d);
+                for (Spot e : l) {
+                    double d = Math.hypot(e.road().x()[e.point()] - x, e.road().z()[e.point()] - z);
+                    if (d <= reach && (best == null || d < best.distance())) best = new Nearest(e.road(), e.point(), d);
                 }
             }
         return best;
@@ -749,15 +750,9 @@ public final class RoadNet {
         double best = Double.MAX_VALUE;
         for (int dx = -w; dx <= w; dx++)
             for (int dz = -w; dz <= w; dz++) {
-                List<int[]> l = BY_CHUNK.get(net.minecraft.world.level.ChunkPos.pack(cx + dx, cz + dz));
+                List<Spot> l = BY_CHUNK.get(net.minecraft.world.level.ChunkPos.pack(cx + dx, cz + dz));
                 if (l == null) continue;
-                for (int[] e : l) {
-                    Road r;
-                    synchronized (ALL) {
-                        r = ALL.get(e[0]);
-                    }
-                    best = Math.min(best, Math.hypot(r.x()[e[1]] - x, r.z()[e[1]] - z));
-                }
+                for (Spot e : l) best = Math.min(best, Math.hypot(e.road().x()[e.point()] - x, e.road().z()[e.point()] - z));
             }
         return best <= reach ? best : -1;
     }
