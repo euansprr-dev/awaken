@@ -262,12 +262,15 @@ public final class AbilityRunner {
         if (!mob.abilityTell(level, a, left, total, aim, marks) && left % 3 == 0) show(level, a);
     }
 
-    /** The move strikes: the ability fires, its area centred on {@code origin} (the fist, the palm) when it has one. */
-    void fire(ServerLevel level, Ability a, @Nullable Vec3 origin) {
+    /**
+     * The move strikes: the ability fires as {@code kind} (the move's own class, so it lands as it was told), its area
+     * centred on {@code origin} (the fist, the palm) when it has one.
+     */
+    void fire(ServerLevel level, Ability a, @Nullable Vec3 origin, Strikes.Kind kind) {
         LivingEntity t = aimTarget;
         this.origin = origin;
         try {
-            Strikes.deliver(mob, a.strike(), () -> {
+            Strikes.deliver(mob, kind, () -> {
                 if (!mob.abilityStrike(level, a, t, aim, marks)) execute(level, a, t);
                 return true;
             });

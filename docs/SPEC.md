@@ -8642,8 +8642,10 @@ should show a boss bar of our own. What he approved (PLAN §7):
 - **Who gets one.** An `AwakenBoss` whose def id has a kit with a fight script gets a `FightRunner`, and its goal is
   `FightRunner.Engaged` instead of `ToldMelee` or `KeepRange` (it holds the move and look flags while it has a live
   target). Its `AbilityRunner` stays, but is *scripted*: it starts nothing itself, still runs charges and leaps, and
-  fires a move's ability on request (`AbilityRunner.fire`). An ability needs a target: a move played with nobody there
-  (the studio) moves the body only.
+  fires a move's ability on request (`AbilityRunner.fire`). The ability strikes under the move's own class (its own
+  class only for a NONE move such as a summon), so it lands as it was told: the hammer's Magma Fist is a HEAVY you can
+  guard, as its tell says, not the PERILOUS a heavy ability is on its own. An ability needs a target: a move played
+  with nobody there (the studio) moves the body only.
 - **A kit flier** (Mother of Spores) keeps `FlyHunt`, but it never dives: the script's moves are its attacks. While a
   move plays it holds still, because the capsules are drawn from where it is. Between moves it drifts low round the
   target, its feet 0.3-0.7 above the target's, since its body floats in its own model. It sits 1 block from the target's

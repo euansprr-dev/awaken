@@ -305,7 +305,7 @@ final class FightRunner {
         if (k < active) {
             if (k == 0) {
                 boss.setTelegraph(0, false);
-                if (ability != null) boss.abilityRunner().fire(level, ability, world(m.origin()));
+                if (ability != null) boss.abilityRunner().fire(level, ability, world(m.origin()), m.kind() != Strikes.Kind.NONE ? m.kind() : ability.strike());
             }
             face();
             float adv = m.motion().advance() / active, up = m.motion().rise() / active;

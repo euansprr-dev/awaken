@@ -80,8 +80,7 @@ public final class KitTests {
             AwakenBoss boss = spawn(level, h, "ember_tyrant");
             Pig pig = EntityTypes.PIG.create(level, EntitySpawnReason.MOB_SUMMONED);
             pig.setPos(h.absoluteVec(new Vec3(4.5, 1, 9.5)));
-            pig.setNoAi(true);
-            pig.setPermanentlyInvulnerable(true);
+            pig.setNoAi(true); // not invulnerable: Mob.getTarget drops a target that can't be seen as an enemy
             level.addFreshEntity(pig);
             boss.setTarget(pig);
             boss.setHealth(boss.getMaxHealth() * 0.6F);
@@ -97,6 +96,17 @@ public final class KitTests {
                 boss.discard();
                 pig.discard();
             });
+        });
+
+        // a posture break (Strikes.stagger) ends the move mid-swing: the opening is real
+        AwakenTests.register("kit_break_interrupts", 20, h -> {
+            ServerLevel level = h.getLevel();
+            AwakenBoss boss = spawn(level, h, "ember_tyrant");
+            h.assertTrue(boss.playKitMove("hammer"), "the hammer plays");
+            h.assertTrue(boss.stagger(40), "it staggers");
+            h.assertTrue(boss.kitPlaying() == null && boss.kitMove() < 0, "the hammer ends there");
+            boss.discard();
+            h.succeed();
         });
 
         // everyone left: the script resets to its intro pose with nothing playing
