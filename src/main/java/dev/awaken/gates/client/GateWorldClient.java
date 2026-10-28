@@ -17,9 +17,28 @@ public final class GateWorldClient {
     private static volatile WorldPayloads.Arrival current;
     private static volatile long arrivedAt;
 
+    private static volatile WorldPayloads.AtlasView atlas = new WorldPayloads.AtlasView(0, 0, java.util.List.of());
+
     static void arrive(WorldPayloads.Arrival a) {
         current = a.world().isEmpty() ? null : a;
         arrivedAt = System.currentTimeMillis();
+        if (current != null) WorldCard.arrive(a);
+    }
+
+    static void atlas(WorldPayloads.AtlasView v) {
+        atlas = v;
+    }
+
+    /** Your Atlas of Gates as the server last sent it (the Codex's Atlas page). */
+    public static WorldPayloads.AtlasView atlas() {
+        return atlas;
+    }
+
+    static void clear() {
+        current = null;
+        atlas = new WorldPayloads.AtlasView(0, 0, java.util.List.of());
+        WorldCard.reset();
+        WorldJourney.reset();
     }
 
     /** The world floor you're on, or null. */

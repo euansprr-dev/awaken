@@ -7,6 +7,7 @@ import dev.awaken.gates.content.GatePlan;
 import dev.awaken.gates.content.Layout;
 import dev.awaken.gates.content.Theme;
 import dev.awaken.gates.content.Twist;
+import dev.awaken.gates.worlds.GateAtlas;
 import dev.awaken.gates.worlds.GateWorld;
 import dev.awaken.gates.worlds.GateWorlds;
 import dev.awaken.progression.Rank;
@@ -212,6 +213,30 @@ public final class GateWorldBellTests {
                     for (GateWorld.Mood m : w.moods()) h.assertTrue(m.biome().isEmpty() || src.has(m.biome()), id + "'s mood " + m.id() + " has its biome");
                 }
             }
+            h.succeed();
+        });
+        AwakenTests.register("gateworlds_atlas_view", 200, h -> {
+            // what the Codex's Atlas shows: found worlds in full, unfound ones as outlines, secret ones only once found
+            GateAtlas atlas = new GateAtlas();
+            atlas.arrive(BELL + "sunken_belfry", "tolling", 3);
+            atlas.secret(BELL + "sunken_belfry", "odd_rope");
+            atlas.met("the_ringer");
+            var v = dev.awaken.gates.worlds.WorldsLive.view(atlas);
+            long bells = GateWorlds.all().values().stream().filter(w -> w.theme() == dev.awaken.gates.content.Theme.BELL_CRYPT).count();
+            h.assertTrue(v.found() == 1 && v.total() >= bells, "found 1 of every world: " + v.found() + " of " + v.total());
+            var belfry = v.cards().stream().filter(c -> c.world().equals(BELL + "sunken_belfry")).findFirst().orElse(null);
+            h.assertTrue(belfry != null && belfry.found() && belfry.name().equals("The Sunken Belfry"), "the Belfry's card is filled in");
+            h.assertTrue(belfry.moods().equals(List.of("Tolling")) && belfry.moodsAll() == 4, "moods seen " + belfry.moods());
+            h.assertTrue(belfry.secrets().equals(List.of("The odd rope")) && belfry.secretsAll() == 2, "secrets " + belfry.secrets());
+            h.assertTrue(belfry.met().equals("The Ringer") && belfry.visits() == 1, "met " + belfry.met());
+            var field = v.cards().stream().filter(c -> c.world().equals(BELL + "field_of_bells")).findFirst().orElse(null);
+            h.assertTrue(field != null && !field.found() && field.name().isEmpty() && field.rarity().equals("Rare"),
+                    "an unfound world is an outline with its rarity");
+            h.assertTrue(v.cards().stream().noneMatch(c -> c.world().equals(BELL + "bellmakers_rest")), "a secret world has no card until found");
+            atlas.arrive(BELL + "bellmakers_rest", "", 4);
+            var v2 = dev.awaken.gates.worlds.WorldsLive.view(atlas);
+            h.assertTrue(v2.found() == 2 && v2.total() == v.total(), "finding the secret world counts it");
+            h.assertTrue(v2.cards().stream().anyMatch(c -> c.world().equals(BELL + "bellmakers_rest") && c.found()), "and gives it a card");
             h.succeed();
         });
         world("gateworlds_belfry", "sunken_belfry", 8);

@@ -8624,7 +8624,8 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
 - **Stage 0** (built 2026-10-28): plots, the frame, the place map, recipes and their loader, per-world biomes, the engine
   interface, the director, the Atlas and the arrival payload. No recipes ship yet, so every floor is today's rooms in its plot.
 - **Stage 1** (in progress): the world floor contract (38.5), the Bell Crypt's blocks and its four floor worlds (38.6); tests
-  `gateworlds_bell_recipes`, `gateworlds_belfry`, `gateworlds_ossuary`, `gateworlds_field` and `gateworlds_shaft`.
+  `gateworlds_bell_recipes`, `gateworlds_belfry`, `gateworlds_ossuary`, `gateworlds_field` and `gateworlds_shaft`; the
+  arrival, the journey down and the Atlas page (38.7), test `gateworlds_atlas_view`.
 
 ### 38.5 The world floor contract (Stage 1)
 
@@ -8725,3 +8726,34 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   landings, balconies, chambers and the foot, on every third step, along the foot of the shaft wall, at every doorway and
   along the bridge. Moods: Tolling adds a monster to each fight room, Requiem lights every candle, Still leaves half out,
   Storm thins the mist and brightens the light down the shaft.
+
+### 38.7 Arrivals, the journey down and the Atlas page (Stage 1)
+
+- **The journey down**: breaking the Seal to a world floor sends `WorldPayloads.Journey` (the world, its sound bed, and
+  its glow: the mean colour of its first 16 lights) just before the teleport, which stays immediate and lands you at the
+  floor's arrival yaw (its best view). The client's screen goes dark at once (everything but chat), motes stream up past
+  you, the next world's light rises from below and its sound bed starts. The dark lifts over 1.4 s once the floor is
+  ready (its arrival told, the chunk under you loaded, the section queue empty or 3 s gone), never before 1.5 s nor
+  after 6 s. Paced messages are held while it's dark. A rooms floor keeps the plain teleport.
+- **The title card** (`WorldCard`): every arrival on a world floor (floor 1 too), once the dark has lifted, asks the
+  notification director for the moment (IMPORTANT, topic `gate_world`, every 5 ticks) and holds every other paced message
+  while it's up; with no moment in 12 s (30 s for a first find) it's filed in the Journal as "Arrived · name" with the
+  world's line. On a world floor it replaces the "Floor N" toast: its floor line carries the floor, the second or inner
+  gate and "the Lord waits". It shows the name (scale width/190, 2 to 3.2) surfacing letter by letter from the middle,
+  a rule in the tier's colour drawn out under it with a diamond at its heart (everyday B4BCC6, deep 8FA8E8, wonder
+  E8C46A, secret 9EE0B8, rare E88AA8), then tier · mood · floor in spaced capitals (an everyday world names no tier),
+  then the world's line, over a soft band of dark. A first find adds "A NEW WORLD · RARITY" above in the rarity's colour
+  (common C9CED4, uncommon 7FD39A, rare 6FA8FF, mythic E0A0FF), a glint running along the rule and a longer hold:
+  9.5 s against 6.5, then 1.2 s out. Leaving the floor ends it.
+- **The sound bed** (`WorldBed`): the world's `sound` loops all round you (not positional) at 0.55, in over 3 s from the
+  journey's start, out over 2 s when you leave or the world changes; nothing when the pack lacks the sound.
+- **The Atlas page** (`AtlasSection`, the band's Codex page, order 300): `WorldPayloads.AtlasView` is sent on login and
+  on every arrival (and on a secret or keepsake found). The section shows once you've found a world: "ATLAS OF GATES"
+  with "WORLDS FOUND · n OF total" (every enabled world, secret ones included), a theme once you've found one of its
+  worlds ("BELL CRYPT", "2 of 4"), and a card per world in tier then name order. A found world's card: its painting
+  (128 x 72, `textures/gui/gate_atlas/<theme>/<world>.png`, drawn pixel for pixel; painted by
+  `tools/art/specs/gate_worlds_paintings.py`), name, tier · rarity, its line, "Moods n/m · Secrets n/m", a star once
+  its keepsake is yours; hovering tells the visits, the moods seen and how many more it has, the secrets found or
+  kept, the signature creature if you've met it. An unfound world is a dark outline in its rarity's colour with "?",
+  "Not found yet" and its tier · rarity. A secret world has no card until found.
+

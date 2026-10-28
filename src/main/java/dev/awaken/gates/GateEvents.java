@@ -102,6 +102,7 @@ final class GateEvents {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         RunEvents.onLogin(p);
         GatePayloads.syncBeacons(p);
+        dev.awaken.gates.worlds.WorldsLive.sync(p);
     }
 
     private static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
