@@ -2120,9 +2120,9 @@ Gates in a party:
   for whoever is near, as before); a gate rolled for someone never forms within 256 blocks of a Hearth they don't own
   or share, and a gate whose break comes due within 256 blocks of a Hearth its owner doesn't share (one placed after
   the gate formed) folds away instead of breaking. A veteran's A-rank gates and breaks never land on a newcomer's home.
-- Cells: a released gate cell is erased and reused while the server runs (`RegionRecycler`); the registry (schema 2)
-  keeps each cell's generation, entities stamp theirs (`awaken_cell_gen`), and one saved with an older generation of
-  its cell leaves when loaded. The stop-time cleanup still deletes whatever was left.
+- Cells: a released gate cell is erased and reused while the server runs (`RegionRecycler`), the lowest free one first
+  (§38.1); the registry (schema 2) keeps each cell's generation, entities stamp theirs (`awaken_cell_gen`), and one saved
+  with an older generation of its cell leaves when loaded. The stop-time cleanup still deletes whatever was left.
 
 Shared rewards (credit the party in range; separate rolls per player; `core.api.Parties.sharing` is the one rule for
 who: party members online, alive, not spectating, in the same level within 32 blocks of the kill):
@@ -8560,6 +8560,14 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   before. `FloorLayout` carries its `plot` (null before 6), the y range it paints (`yLo`, `yHi`, `paints(y)`; tests and tools
   filter a chunk's blocks by floor with it), and on a world floor its `places`, `world`, `mood`, `biome`, `air` and `model`.
   `Where` asks `roomAt(x, y, z)`. The fall check is unchanged (below y 0 puts you back at the floor's entrance).
+- **An instance keeps to itself** (checked 2026-10-28 after a 42 s freeze on Euan's server, likely overworld planning around
+  a gate's coordinates; the roads work audits that side): a world floor is built and lit only from its saved plan, inside its
+  cell, in the gate dimension. Worlds call no other module with a position, add no chunk tickets of their own (a gate's
+  build still loads 7 x 7 chunks at its entrance and 5 x 5 at the next floor's, as before), and never read or load a
+  chunk that isn't loaded (the Flood fills a chunk when it loads). World biomes have no features, carvers, spawns or tags,
+  and the gate generator places no structures, so nothing else plans in them. A floor plans in under 50 ms and carves a
+  chunk in under 4 ms on average (tests). A new gate takes the **lowest free cell**, not the first freed, so live gates
+  stay close to the dimension's origin (cells are 1,024 apart, 64 to a row).
 - **The place map** (`PlaceMap`): which place (room) holds a floor-local spot, in 4-block cells, each with a ground place and
   optionally an upper place from a split height (a gallery over an aisle). World floors answer "which room is this?" with it;
   rooms floors keep the 16-block slot grid (`PlaceMap.ofSlots` gives the same answer, cell for cell). Places are `Room`s, so
