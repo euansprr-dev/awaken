@@ -9606,6 +9606,34 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     pivots laid end to end, plus a block), so a body that stretches out of its box (the lunge, 8 blocks behind it) never
     vanishes while its box is off screen.
 
+- **The Hive Regent, the Empress** (body and motion, `kit/bosses/hive_regent.py`). An upright queen hanging in the air on
+  the hum of four tall glass wings. Her gown is a skep: three stiff tiers of wax comb, honey glowing in the cells and a
+  gold hem, swinging on hinges. Her banded abdomen leaves from under the back hem as a train, gold and chitin with fur
+  between the bands, ending in a stinger. A violet-black chitin bodice with a jewel and a wax ruff; two upper arms with
+  amber daggers and two small lower arms held at her waist; a narrow crowned head with big amber compound eyes,
+  mandibles and feelers. 88 cubes (528 faces), no plan; the first translucent kit rig (the wings are glass, painted with
+  an outline, a vein along the leading edge and a fan of veins). The hitbox is 1.2 x 4.8 (size 0.6 x 2.4 at scale 2); she
+  flies, as the bee model did.
+  - **She never stops humming**: the wings beat three times a second, each pair a beat apart, the body bobbing on every
+    stroke, while she sways slowly and her feelers search. Flying, she leans in with the wings swept and the train and
+    gown streaming behind.
+  - **Her blows.** Regal Cut draws one dagger up behind her shoulder, her body turning away with it, and cuts it down
+    across you (the second cut comes from the other hand). The Sting rears with the train drawn up behind her, holds,
+    then whips it forward under her like a scorpion's tail, the stinger driving out at your chest. Royal Dive climbs
+    with both daggers drawn back, holds at the top and dives at you daggers first, the wings swept flat. Stinger Volley
+    swings the train forward under her to aim and pumps it twice. Brood lifts and curls the train, which pulses three
+    times as the brood crawls out. Honey Rain (the signature) sinks, gathering, then rises with all four arms up, her
+    face to the roof and the wings beating wide. Royal Jelly folds her wings down and lifts the jelly to her mouth in the
+    lower hands; Frenzy throws her head back and shrieks with every arm flung out and the train thrashing. Whoever is
+    behind her sees her look back over her shoulder and gets the train whipped across at knee height. Her intro
+    rises curled up, the wings flat down her back, then opens them, shows herself with every arm wide and settles to
+    face you.
+  - **Broken and the death.** Broken, the hum fails and she sinks with her wings drooping. She dies on a last shriek
+    with every wing flung out, slumps as the hum stops and falls, the wings folding over her.
+  - **Ground.** The train swings under her in the Sting and the Volley; it hooks up as it passes each way (its first
+    joints keep the body's time, `lag` 0), and a floor pass keeps the stinger and the hem out of the floor.
+  - **Meter.** Worst kink outside a strike 3.7°; held under 12% on every move, 10% on the intro; dips 14-22%.
+
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

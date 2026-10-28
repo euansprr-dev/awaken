@@ -61,7 +61,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Root Saint | Lord | Temple | Caster | kit | A, the Rooted Saint | ✓ 6c3f815b | ✓ 6c3f815b | — |
 | The Bell Warden | Lord | Bell | Construct | kit | A, the Bell That Walks | ✓ 72f262a4 | ✓ 72f262a4 | — |
 | The Glass Serpent | Lord | Glass | Serpent | kit | B, the Hourglass | ✓ ec80f180 | ✓ ec80f180 | — |
-| The Hive Regent | Lord | Hive | Flier | bee ×4 | A, the Empress | — | — | — |
+| The Hive Regent | Lord | Hive | Flier | kit | A, the Empress | ✓ EMPRESS | ✓ EMPRESS | — |
 | The Drowned Archivist | Lord | Drowned | Caster | drowned ×1.9 | A, the Lectern | — | — | — |
 | The Lantern Broker | Lord | Lantern | Construct | cube lantern | A, the Pedlar | — | — | — |
 | The Abbot of Frost | Lord | Frost | Caster | evoker ×1.7 | B, the Pilgrim | — | — | — |
