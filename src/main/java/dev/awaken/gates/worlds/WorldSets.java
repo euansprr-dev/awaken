@@ -43,6 +43,15 @@ public final class WorldSets {
                 "An hourglass that keeps the desert's time. Turn it and it tells you how long it is until sunset or sunrise."));
         PIECES.put(Theme.LANTERN_NIGHT_MARKET, new Piece(() -> GatesRegistry.theme("lucky_cat"), "The Lucky Cat",
                 "A lucky cat from the market's busiest stall. Once a day it has a small gift for you."));
+        PIECES.put(Theme.FROST_MONASTERY, new Piece(() -> GatesRegistry.theme("singing_bowl"), "The Singing Bowl",
+                "The monks' singing bowl. Strike it and anyone close by shakes off the cold, the slowness and the weakness. It needs"
+                        + " a minute to stop ringing before it works again."));
+        PIECES.put(Theme.MIRROR_PALACE, new Piece(() -> GatesRegistry.theme("hand_mirror"), "The Hand Mirror",
+                "A little mirror from the palace. Look into it and it shows you the way back to your bed."));
+        PIECES.put(Theme.PRECURSOR_LAB, new Piece(() -> GatesRegistry.theme("humming_cube"), "The Humming Cube",
+                "A cube from the lab that hums when someone stands near it, and powers redstone while it does."));
+        PIECES.put(Theme.NIGHTMARE, new Piece(() -> GatesRegistry.theme("night_light"), "The Night Light",
+                "A child's night light from the house. Use it and every monster nearby glows, so nothing creeps up on you in the dark."));
     }
 
     public static Piece of(Theme t) {

@@ -50,7 +50,7 @@ import java.util.function.Function;
 public final class ThemeBlocks {
     private ThemeBlocks() {}
 
-    public enum Shape { CUBE, COLUMN, GLASS, PLANT, HANG, CARPET, FALL, TOUCH, PROP, FOLD }
+    public enum Shape { CUBE, COLUMN, GLASS, PLANT, HANG, CARPET, FALL, TOUCH, PROP, FOLD, SKETCH, CLOUD }
 
     /** One block: its id, shape, map colour, sound, light and (props, touchstones) its outline in pixels. */
     public record Def(String name, Shape shape, MapColor color, SoundType sound, int light, double[] box, boolean soft) {
@@ -68,7 +68,7 @@ public final class ThemeBlocks {
     }
 
     private static final Shape C = Shape.CUBE, COL = Shape.COLUMN, G = Shape.GLASS, PL = Shape.PLANT, H = Shape.HANG, CA = Shape.CARPET,
-            F = Shape.FALL, T = Shape.TOUCH, PR = Shape.PROP, FO = Shape.FOLD;
+            F = Shape.FALL, T = Shape.TOUCH, PR = Shape.PROP, FO = Shape.FOLD, SK = Shape.SKETCH, CL = Shape.CLOUD;
 
     /** Every theme's blocks, in the order of the creative tab. */
     public static final List<Def> DEFS = List.of(
@@ -177,7 +177,65 @@ public final class ThemeBlocks {
             Def.soft("market_cloth", C, MapColor.COLOR_RED, SoundType.WOOL, 0),
             Def.box("market_goods", PR, MapColor.COLOR_ORANGE, SoundType.WOOD, 4, 1, 0, 1, 15, 12, 15),
             Def.soft("market_boat_lamp", CA, MapColor.COLOR_YELLOW, SoundType.WOOL, 10),
-            Def.box("market_wish_lantern", T, MapColor.COLOR_RED, SoundType.BAMBOO_WOOD, 12, 4, 0, 4, 12, 15, 12)
+            Def.box("market_wish_lantern", T, MapColor.COLOR_RED, SoundType.BAMBOO_WOOD, 12, 4, 0, 4, 12, 15, 12),
+            // Frost Monastery (38.12)
+            Def.of("frost_stone", C, MapColor.TERRACOTTA_WHITE, SoundType.STONE, 0),
+            Def.of("frost_stone_carved", C, MapColor.TERRACOTTA_WHITE, SoundType.STONE, 6),
+            Def.of("frost_tiles", C, MapColor.COLOR_BLUE, SoundType.DEEPSLATE_TILES, 0),
+            Def.soft("frost_timber", COL, MapColor.COLOR_RED, SoundType.WOOD, 0),
+            Def.of("frost_plaster", C, MapColor.SNOW, SoundType.PACKED_MUD, 0),
+            Def.soft("frost_snow", C, MapColor.SNOW, SoundType.SNOW, 0),
+            Def.soft("frost_ice", G, MapColor.ICE, SoundType.GLASS, 0),
+            Def.soft("frost_ice_glowing", G, MapColor.ICE, SoundType.GLASS, 10),
+            Def.soft("frost_icicles", H, MapColor.ICE, SoundType.GLASS, 4),
+            Def.soft("frost_flags", H, MapColor.COLOR_RED, SoundType.WOOL, 0),
+            Def.box("frost_butter_lamp", PR, MapColor.GOLD, SoundType.LANTERN, 13, 5, 0, 5, 11, 7, 11),
+            Def.soft("frost_crystal", PL, MapColor.ICE, SoundType.AMETHYST_CLUSTER, 9),
+            Def.soft("frost_cloud", CL, MapColor.SNOW, SoundType.WOOL, 0),
+            Def.box("frost_prayer_wheel", T, MapColor.GOLD, SoundType.METAL, 6, 3, 0, 3, 13, 15, 13),
+            // Mirror Palace
+            Def.of("palace_marble", C, MapColor.QUARTZ, SoundType.CALCITE, 0),
+            Def.of("palace_marble_veined", C, MapColor.QUARTZ, SoundType.CALCITE, 4),
+            Def.of("palace_checker", C, MapColor.QUARTZ, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("palace_gilt", C, MapColor.GOLD, SoundType.METAL, 0),
+            Def.soft("palace_mirror", G, MapColor.METAL, SoundType.GLASS, 0),
+            Def.soft("palace_mirror_cracked", G, MapColor.METAL, SoundType.GLASS, 0),
+            Def.soft("palace_glass_floor", G, MapColor.NONE, SoundType.GLASS, 0),
+            Def.of("palace_white", C, MapColor.SNOW, SoundType.CALCITE, 11),
+            Def.soft("palace_shadow", CA, MapColor.COLOR_LIGHT_GRAY, SoundType.WOOL, 0),
+            Def.soft("palace_curtain", C, MapColor.COLOR_PURPLE, SoundType.WOOL, 0),
+            Def.soft("palace_chandelier", H, MapColor.GOLD, SoundType.CHAIN, 14),
+            Def.box("palace_candelabra", PR, MapColor.GOLD, SoundType.METAL, 13, 4, 0, 4, 12, 14, 12),
+            Def.soft("palace_crystal", PL, MapColor.QUARTZ, SoundType.AMETHYST_CLUSTER, 8),
+            Def.box("mirror_stand", T, MapColor.METAL, SoundType.GLASS, 6, 3, 0, 3, 13, 16, 13),
+            // Precursor Lab
+            Def.of("lab_panel", C, MapColor.TERRACOTTA_WHITE, SoundType.METAL, 0),
+            Def.of("lab_panel_lit", C, MapColor.TERRACOTTA_WHITE, SoundType.METAL, 10),
+            Def.of("lab_floor", C, MapColor.COLOR_GRAY, SoundType.METAL, 0),
+            Def.of("lab_frame", COL, MapColor.COLOR_BLACK, SoundType.NETHERITE_BLOCK, 0),
+            Def.soft("lab_glass", G, MapColor.COLOR_CYAN, SoundType.GLASS, 0),
+            Def.of("lab_rack", C, MapColor.COLOR_BLACK, SoundType.METAL, 6),
+            Def.soft("lab_tank", G, MapColor.COLOR_GREEN, SoundType.GLASS, 12),
+            Def.soft("lab_cables", H, MapColor.COLOR_BLACK, SoundType.CHAIN, 3),
+            Def.soft("lab_light", H, MapColor.TERRACOTTA_WHITE, SoundType.LANTERN, 14),
+            Def.soft("lab_hologram", PL, MapColor.COLOR_CYAN, SoundType.AMETHYST_CLUSTER, 9),
+            Def.soft("lab_moss", CA, MapColor.PLANT, SoundType.MOSS_CARPET, 0),
+            Def.of("lab_sketch", SK, MapColor.COLOR_CYAN, SoundType.METAL, 0),
+            Def.box("lab_console", T, MapColor.COLOR_GRAY, SoundType.METAL, 8, 2, 0, 2, 14, 14, 14),
+            // Nightmare
+            Def.soft("dream_wallpaper", C, MapColor.COLOR_PURPLE, SoundType.WOOD, 0),
+            Def.soft("dream_wallpaper_torn", C, MapColor.COLOR_PURPLE, SoundType.WOOD, 0),
+            Def.soft("dream_boards", C, MapColor.WOOD, SoundType.WOOD, 0),
+            Def.soft("dream_wood", COL, MapColor.COLOR_BROWN, SoundType.WOOD, 0),
+            Def.soft("dream_plush", C, MapColor.COLOR_MAGENTA, SoundType.WOOL, 0),
+            Def.soft("dream_sheet", C, MapColor.TERRACOTTA_WHITE, SoundType.WOOL, 0),
+            Def.of("dream_dark", C, MapColor.COLOR_BLACK, SoundType.SCULK, 3),
+            Def.box("dream_lamp", PR, MapColor.COLOR_YELLOW, SoundType.LANTERN, 14, 4, 0, 4, 12, 16, 12),
+            Def.soft("dream_candle", PL, MapColor.COLOR_YELLOW, SoundType.CANDLE, 11),
+            Def.soft("dream_motes", H, MapColor.COLOR_PURPLE, SoundType.EMPTY, 8),
+            Def.soft("dream_toy", C, MapColor.COLOR_RED, SoundType.WOOD, 0),
+            Def.soft("dream_window", G, MapColor.COLOR_LIGHT_BLUE, SoundType.GLASS, 9),
+            Def.box("dream_music_box", T, MapColor.COLOR_PINK, SoundType.WOOD, 6, 3, 0, 4, 13, 10, 12)
     );
 
     /** The touchstones that stay lit once touched (a brazier fed); the rest fade back after a few seconds. */
@@ -202,6 +260,8 @@ public final class ThemeBlocks {
             case TOUCH -> p -> new Touchstone(p, boxOf(d), STAYS_LIT.contains(d.name()));
             case PROP -> p -> new Shaped(p, boxOf(d), true);
             case FOLD -> p -> new Folding(p, boxOf(d));
+            case SKETCH -> p -> new Folding(p, Shapes.block());
+            case CLOUD -> p -> new Shaped(p, Shapes.block(), false);
         };
     }
 
@@ -214,6 +274,8 @@ public final class ThemeBlocks {
         int light = d.light();
         p = p.mapColor(d.color()).sound(d.sound());
         if (d.shape() == Shape.TOUCH) p = p.lightLevel(s -> s.getValue(Touchstone.LIT) ? light : light / 3);
+        // a sketch glows faintly until it's drawn
+        else if (d.shape() == Shape.SKETCH) p = p.lightLevel(s -> s.getValue(Folding.OPEN) ? 0 : light);
         else p = p.lightLevel(s -> light);
         p = d.soft() ? p.strength(0.6F) : p.strength(1.5F, 6.0F).requiresCorrectToolForDrops();
         switch (d.shape()) {
@@ -221,6 +283,8 @@ public final class ThemeBlocks {
                     .isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false).strength(0.4F);
             case PLANT, HANG, FALL -> p = p.noOcclusion().noCollision().instabreak().isValidSpawn((s, l, pos, t) -> false)
                     .isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false);
+            // a cloud is a whole block you fall through (it hides its neighbours' faces, so a sea of it is cheap to draw)
+            case CLOUD -> p = p.noCollision().isValidSpawn((s, l, pos, t) -> false).isSuffocating((s, l, pos) -> false);
             case CARPET, PROP, TOUCH, FOLD -> p = p.noOcclusion().isValidSpawn((s, l, pos, t) -> false);
             default -> {}
         }
@@ -566,6 +630,140 @@ public final class ThemeBlocks {
         }
     }
 
+    /**
+     * The Frost Monastery's set piece, the Singing Bowl: strike it and it hums, and anyone near it shakes off the cold
+     * and whatever slows them (slowness, mining fatigue, weakness). Then it rests a while before it'll sing again.
+     */
+    public static final class SingingBowl extends Shaped {
+        public static final BooleanProperty LIT = net.minecraft.world.level.block.state.properties.BlockStateProperties.LIT;
+
+        public SingingBowl(BlockBehaviour.Properties p) {
+            super(p, Block.box(3, 0, 3, 13, 6, 13), true);
+            registerDefaultState(stateDefinition.any().setValue(LIT, false));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(LIT);
+        }
+
+        @Override
+        protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+            if (level.isClientSide()) return InteractionResult.SUCCESS;
+            if (state.getValue(LIT)) {
+                player.sendOverlayMessage(net.minecraft.network.chat.Component.literal("The bowl is still humming. Give it a moment."));
+                return InteractionResult.SUCCESS_SERVER;
+            }
+            level.setBlock(pos, state.setValue(LIT, true), Block.UPDATE_ALL);
+            level.scheduleTick(pos, this, 20 * 60);
+            level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 1.4F, 0.6F);
+            for (Player q : level.getEntitiesOfClass(Player.class, new net.minecraft.world.phys.AABB(pos).inflate(8))) {
+                q.setTicksFrozen(0);
+                q.removeEffect(net.minecraft.world.effect.MobEffects.SLOWNESS);
+                q.removeEffect(net.minecraft.world.effect.MobEffects.MINING_FATIGUE);
+                q.removeEffect(net.minecraft.world.effect.MobEffects.WEAKNESS);
+            }
+            return InteractionResult.SUCCESS_SERVER;
+        }
+
+        @Override
+        protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+            if (state.getValue(LIT)) level.setBlock(pos, state.setValue(LIT, false), Block.UPDATE_ALL);
+        }
+    }
+
+    /** The Mirror Palace's set piece, the Hand Mirror: look into it and it shows you the way to where you last slept. */
+    public static final class HandMirror extends Shaped {
+        public HandMirror(BlockBehaviour.Properties p) {
+            super(p, Block.box(4, 0, 6, 12, 15, 10), true);
+        }
+
+        @Override
+        protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+            if (!(level instanceof ServerLevel sl) || !(player instanceof ServerPlayer sp)) return InteractionResult.SUCCESS;
+            ServerPlayer.RespawnConfig rc = sp.getRespawnConfig();
+            net.minecraft.core.GlobalPos home = rc == null ? null : rc.respawnData().globalPos();
+            if (home == null || !home.dimension().equals(sl.dimension())) {
+                sp.sendOverlayMessage(net.minecraft.network.chat.Component.literal(home == null
+                        ? "The mirror shows you yourself, and nothing behind you. You haven't slept anywhere yet."
+                        : "The mirror shows a bed a whole world away from here."));
+            } else {
+                net.minecraft.world.phys.Vec3 a = sp.getEyePosition(), b = net.minecraft.world.phys.Vec3.atCenterOf(home.pos());
+                net.minecraft.world.phys.Vec3 dir = b.subtract(a).normalize();
+                for (int i = 1; i <= 12; i++) {
+                    net.minecraft.world.phys.Vec3 v = a.add(dir.scale(i * 1.2)).add(0, -0.4, 0);
+                    sl.sendParticles(sp, ParticleTypes.END_ROD, true, false, v.x, v.y, v.z, 1, 0.02, 0.02, 0.02, 0.0);
+                }
+                sp.sendOverlayMessage(net.minecraft.network.chat.Component.literal("Your bed is about " + Math.round(a.distanceTo(b)) + " blocks that way."));
+            }
+            sl.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.8F, 1.6F);
+            return InteractionResult.SUCCESS_SERVER;
+        }
+    }
+
+    /** The Precursor Lab's set piece, the Humming Cube: it gives a redstone signal while anyone stands within four blocks. */
+    public static final class HummingCube extends Shaped {
+        public static final BooleanProperty POWERED = net.minecraft.world.level.block.state.properties.BlockStateProperties.POWERED;
+
+        public HummingCube(BlockBehaviour.Properties p) {
+            super(p, Block.box(4, 0, 4, 12, 8, 12), true);
+            registerDefaultState(stateDefinition.any().setValue(POWERED, false));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(POWERED);
+        }
+
+        @Override
+        protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState old, boolean moved) {
+            if (!level.isClientSide()) level.scheduleTick(pos, this, 10);
+        }
+
+        @Override
+        protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+            boolean near = level.getNearestPlayer(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 4, false) != null;
+            if (near != state.getValue(POWERED)) {
+                level.setBlock(pos, state.setValue(POWERED, near), Block.UPDATE_ALL);
+                level.updateNeighborsAt(pos, this);
+                level.playSound(null, pos, near ? SoundEvents.BEACON_ACTIVATE : SoundEvents.BEACON_DEACTIVATE, SoundSource.BLOCKS, 0.4F, 1.8F);
+            }
+            level.scheduleTick(pos, this, 10);
+        }
+
+        @Override
+        protected boolean isSignalSource(BlockState state) {
+            return true;
+        }
+
+        @Override
+        protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, net.minecraft.core.Direction dir) {
+            return state.getValue(POWERED) ? 15 : 0;
+        }
+    }
+
+    /** The Nightmare's set piece, the Night Light: switch it on and every monster within 24 blocks shows through walls a while. */
+    public static final class NightLight extends Shaped {
+        public NightLight(BlockBehaviour.Properties p) {
+            super(p, Block.box(5, 0, 5, 11, 9, 11), true);
+        }
+
+        @Override
+        protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+            if (!(level instanceof ServerLevel sl)) return InteractionResult.SUCCESS;
+            int n = 0;
+            for (net.minecraft.world.entity.monster.Monster m : sl.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,
+                    new net.minecraft.world.phys.AABB(pos).inflate(24), e -> e.isAlive())) {
+                m.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.GLOWING, 200, 0));
+                n++;
+            }
+            player.sendOverlayMessage(net.minecraft.network.chat.Component.literal(n == 0 ? "Nothing under the bed. Nothing anywhere near."
+                    : n == 1 ? "There's one out there. Now you can see it." : "There are " + n + " of them out there. Now you can see them."));
+            sl.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.7F, 0.8F);
+            return InteractionResult.SUCCESS_SERVER;
+        }
+    }
+
     /** The set pieces' ids and makers, registered with their items in the creative tab's set row. */
     public static Map<String, DeferredBlock<? extends Block>> registerSets(DeferredRegister.Blocks blocks) {
         Map<String, DeferredBlock<? extends Block>> out = new LinkedHashMap<>();
@@ -588,6 +786,16 @@ public final class ThemeBlocks {
         out.put("lucky_cat", blocks.registerBlock("lucky_cat", LuckyCat::new,
                 p -> p.mapColor(MapColor.GOLD).sound(SoundType.DECORATED_POT).strength(0.6F).noOcclusion().randomTicks()
                         .lightLevel(s -> s.getValue(LuckyCat.FULL) ? 8 : 3)));
+        out.put("singing_bowl", blocks.registerBlock("singing_bowl", SingingBowl::new,
+                p -> p.mapColor(MapColor.GOLD).sound(SoundType.METAL).strength(1.5F, 6.0F).noOcclusion()
+                        .lightLevel(s -> s.getValue(SingingBowl.LIT) ? 9 : 2)));
+        out.put("hand_mirror", blocks.registerBlock("hand_mirror", HandMirror::new,
+                p -> p.mapColor(MapColor.METAL).sound(SoundType.GLASS).strength(0.6F).noOcclusion().lightLevel(s -> 5)));
+        out.put("humming_cube", blocks.registerBlock("humming_cube", HummingCube::new,
+                p -> p.mapColor(MapColor.COLOR_CYAN).sound(SoundType.METAL).strength(1.5F, 6.0F).noOcclusion()
+                        .lightLevel(s -> s.getValue(HummingCube.POWERED) ? 12 : 5)));
+        out.put("night_light", blocks.registerBlock("night_light", NightLight::new,
+                p -> p.mapColor(MapColor.COLOR_LIGHT_BLUE).sound(SoundType.GLASS).strength(0.6F).noOcclusion().lightLevel(s -> 11)));
         return out;
     }
 }

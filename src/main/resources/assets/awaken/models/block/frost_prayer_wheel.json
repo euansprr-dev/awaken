@@ -1,0 +1,207 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/frost_prayer_wheel",
+    "drum": "awaken:block/frost_prayer_wheel",
+    "cap": "awaken:block/frost_prayer_wheel_top",
+    "post": "awaken:block/frost_timber"
+  },
+  "elements": [
+    {
+      "from": [
+        7.25,
+        0,
+        7.25
+      ],
+      "to": [
+        8.75,
+        2,
+        8.75
+      ],
+      "faces": {
+        "down": {
+          "texture": "#post"
+        },
+        "up": {
+          "texture": "#post"
+        },
+        "north": {
+          "texture": "#post"
+        },
+        "south": {
+          "texture": "#post"
+        },
+        "west": {
+          "texture": "#post"
+        },
+        "east": {
+          "texture": "#post"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        2,
+        4
+      ],
+      "to": [
+        12,
+        13,
+        12
+      ],
+      "faces": {
+        "down": {
+          "texture": "#drum",
+          "uv": [
+            0,
+            1,
+            16,
+            15
+          ]
+        },
+        "up": {
+          "texture": "#drum",
+          "uv": [
+            0,
+            1,
+            16,
+            15
+          ]
+        },
+        "north": {
+          "texture": "#drum",
+          "uv": [
+            0,
+            1,
+            16,
+            15
+          ]
+        },
+        "south": {
+          "texture": "#drum",
+          "uv": [
+            0,
+            1,
+            16,
+            15
+          ]
+        },
+        "west": {
+          "texture": "#drum",
+          "uv": [
+            0,
+            1,
+            16,
+            15
+          ]
+        },
+        "east": {
+          "texture": "#drum",
+          "uv": [
+            0,
+            1,
+            16,
+            15
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3.5,
+        12.5,
+        3.5
+      ],
+      "to": [
+        12.5,
+        13.5,
+        12.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#cap"
+        },
+        "up": {
+          "texture": "#cap"
+        },
+        "north": {
+          "texture": "#cap"
+        },
+        "south": {
+          "texture": "#cap"
+        },
+        "west": {
+          "texture": "#cap"
+        },
+        "east": {
+          "texture": "#cap"
+        }
+      }
+    },
+    {
+      "from": [
+        3.5,
+        2,
+        3.5
+      ],
+      "to": [
+        12.5,
+        3,
+        12.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#cap"
+        },
+        "up": {
+          "texture": "#cap"
+        },
+        "north": {
+          "texture": "#cap"
+        },
+        "south": {
+          "texture": "#cap"
+        },
+        "west": {
+          "texture": "#cap"
+        },
+        "east": {
+          "texture": "#cap"
+        }
+      }
+    },
+    {
+      "from": [
+        7.25,
+        13.5,
+        7.25
+      ],
+      "to": [
+        8.75,
+        15,
+        8.75
+      ],
+      "faces": {
+        "down": {
+          "texture": "#cap"
+        },
+        "up": {
+          "texture": "#cap"
+        },
+        "north": {
+          "texture": "#cap"
+        },
+        "south": {
+          "texture": "#cap"
+        },
+        "west": {
+          "texture": "#cap"
+        },
+        "east": {
+          "texture": "#cap"
+        }
+      }
+    }
+  ]
+}

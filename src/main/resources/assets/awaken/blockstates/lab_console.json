@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/lab_console"
+    },
+    "lit=true": {
+      "model": "awaken:block/lab_console_lit"
+    }
+  }
+}

@@ -22,8 +22,12 @@ final class ChainLayout {
     }
 
     static final int LO = 1, HI = 14;
+    /** The fold's three link slots in a row along x (SPEC §38.12): the first and last slot column and the row; null if none. */
+    int[] fold;
 
     final WorldPlan p;
+    /** The slots places and links may take (an endless world keeps its outer band empty: 38.12). */
+    int lo = LO, hi = HI;
     final long seed;
     final int variation;
     /** Link places by world room id. */
@@ -39,6 +43,10 @@ final class ChainLayout {
     private final List<int[]> rects = new ArrayList<>(), linkAt = new ArrayList<>();
     private int budget;
     private boolean strict;
+    /** Laid as a hall's line: its Rig rooms keep to their two doors. */
+    private boolean line;
+    /** A hall too long for its row: its big places stand one slot along it, two deep. */
+    private boolean narrow;
 
     ChainLayout(WorldPlan p, long seed, int variation) {
         this.p = p;
@@ -85,20 +93,115 @@ final class ChainLayout {
         return branches(sizer);
     }
 
+    /**
+     * Lays the spine as one straight hall along slot row {@link #ROW} from west to east (SPEC §38.12, "Folds"): each place
+     * on the row, a one-slot link between neighbours, and in the middle three links in a row, the fold. A long way is
+     * squeezed until it fits (see below). Branches hang north and south as in a chain. False (with a reason) when it can't.
+     */
+    boolean layLine(Sizer sizer) {
+        List<List<Integer>> groups = new ArrayList<>();
+        for (int id : p.spine) groups.add(new ArrayList<>(List.of(id)));
+        if (groups.size() < 2) return WorldEngine.fail("a fold needs two places on its way") != null;
+        line = true;
+        // too long for the row, each step in turn until it fits: neighbours share a place three at a time and open
+        // straight into each other (no link between, from the ends in); the big places stand one slot along the hall and
+        // two deep; neighbours share four or five at a time; a cache shares a place too
+        int[] gaps = null;
+        for (int[] st : new int[][]{{3, 0, 0}, {3, 1, 0}, {4, 1, 0}, {5, 1, 0}, {5, 1, 1}}) {
+            narrow = st[1] > 0;
+            while (width(groups, sizer) > hi - lo + 1 && fold(groups, st[0], st[2] > 0)) {
+            }
+            if ((gaps = gaps(groups, sizer)) != null) break;
+        }
+        if (gaps == null) return WorldEngine.fail("the hall doesn't fit the plot (" + span(groups, sizer, new int[groups.size() - 1]) + "+3 slots of "
+                + (hi - lo + 1) + ", " + groups.size() + " places: " + groups + ")") != null;
+        int x = lo + (hi - lo + 1 - span(groups, sizer, gaps)) / 2, mid = (groups.size() - 2) / 2;
+        int prev = -1;
+        for (int k = 0; k < groups.size(); k++) {
+            List<Integer> g = groups.get(k);
+            int[] sz = line(sizer.size(g.get(0)), g.get(0));
+            if (k > 0) {
+                // the links before this place: one, the fold's three, or none where the row is short
+                int n = gaps[k - 1];
+                if (n == 3) fold = new int[]{x, x + 2, ROW};
+                for (int i = 0; i < n; i++) {
+                    int lw = p.extra(x++, ROW, 1, 1, 0);
+                    if (!p.join(prev, lw)) return WorldEngine.fail("a link doesn't touch its places") != null;
+                    links.put(lw, new Link(lw, 3, 1));
+                    prev = lw;
+                }
+            }
+            int w = p.host(g.get(0), x, ROW, sz[0], sz[1], 0);
+            for (int i = 1; i < g.size(); i++) p.merge(g.get(i), g.get(0));
+            if (prev >= 0 && !p.join(prev, w)) return WorldEngine.fail("a link doesn't touch its places") != null;
+            x += sz[0];
+            spine.add(w);
+            places.add(w);
+            depth.put(w, 0);
+            prev = w;
+        }
+        return branches(sizer);
+    }
+
+    /** The hall's row: places stand on it (two-slot ones reach a row south). */
+    static final int ROW = 7;
+
+    /** A place's size on the hall: as wide as it's long, at most two rows deep. */
+    private int[] line(int[] sz, int id) {
+        if (narrow && !WorldPlan.built(p.room(id))) return new int[]{1, Math.min(2, Math.max(sz[0], sz[1]))};
+        if (sz[1] > sz[0] && !WorldPlan.built(p.room(id))) return new int[]{sz[1], sz[0]};
+        return sz;
+    }
+
+    private int width(List<List<Integer>> groups, Sizer sizer) {
+        int w = 0;
+        for (List<Integer> g : groups) w += line(sizer.size(g.get(0)), g.get(0))[0];
+        return w + groups.size() - 1 + 2;
+    }
+
+    /** The links in each gap of the hall: one, the fold's three in the middle gap, none from the ends in until it fits; null if it can't. */
+    private int[] gaps(List<List<Integer>> groups, Sizer sizer) {
+        int n = groups.size() - 1, mid = (groups.size() - 2) / 2;
+        int[] gaps = new int[n];
+        java.util.Arrays.fill(gaps, 1);
+        gaps[mid] = 3;
+        for (int i = 0, lo2 = 0, hi2 = n - 1; span(groups, sizer, gaps) > hi - lo + 1; i++) {
+            if (lo2 > hi2) return null;
+            int at = i % 2 == 0 ? lo2++ : hi2--;
+            if (at != mid) gaps[at] = 0;
+        }
+        return gaps;
+    }
+
+    private int span(List<List<Integer>> groups, Sizer sizer, int[] gaps) {
+        int w = 0;
+        for (List<Integer> g : groups) w += line(sizer.size(g.get(0)), g.get(0))[0];
+        for (int n : gaps) w += n;
+        return w;
+    }
+
     private boolean fold(List<List<Integer>> groups) {
+        return fold(groups, 3, false);
+    }
+
+    private boolean fold(List<List<Integer>> groups, int cap, boolean loose) {
         for (int i = groups.size() - 2; i >= 1; i--) {
-            if (plain(groups.get(i)) && plain(groups.get(i + 1)) && groups.get(i).size() + groups.get(i + 1).size() <= 3) {
-                groups.get(i).addAll(groups.remove(i + 1));
+            if (plain(groups.get(i), loose) && plain(groups.get(i + 1), loose) && groups.get(i).size() + groups.get(i + 1).size() <= cap) {
+                List<Integer> g = groups.get(i);
+                g.addAll(groups.remove(i + 1));
+                // a cache never hosts: the place is the fight's, the cache's chest stands in it
+                if (loose) g.sort((a, b) -> Boolean.compare(p.room(a).type == Room.Type.CACHE, p.room(b).type == Room.Type.CACHE));
                 return true;
             }
         }
         return false;
     }
 
-    private boolean plain(List<Integer> g) {
+    private boolean plain(List<Integer> g, boolean loose) {
         for (int id : g) {
             Room L = p.room(id);
             if (WorldPlan.built(L) || id == p.logic.start || id == p.logic.end) return false;
+            if (loose && L.type == Room.Type.CACHE) continue;
             if (L.type != Room.Type.NORMAL && L.type != Room.Type.ELITE && L.type != Room.Type.HALL && L.type != Room.Type.SHAFT) return false;
         }
         return true;
@@ -114,9 +217,9 @@ final class ChainLayout {
         if (k == 0) {
             // the arrival stands near an edge of the plot, so the way has the whole plot to wind across
             List<int[]> starts = new ArrayList<>();
-            for (int gx = LO; gx + sz[0] - 1 <= HI; gx++) {
-                for (int gz = LO; gz + sz[1] - 1 <= HI; gz++) {
-                    int edge = Math.min(Math.min(gx - LO, HI - gx - sz[0] + 1), Math.min(gz - LO, HI - gz - sz[1] + 1));
+            for (int gx = lo; gx + sz[0] - 1 <= hi; gx++) {
+                for (int gz = lo; gz + sz[1] - 1 <= hi; gz++) {
+                    int edge = Math.min(Math.min(gx - lo, hi - gx - sz[0] + 1), Math.min(gz - lo, hi - gz - sz[1] + 1));
                     if (edge > 1) continue;
                     starts.add(new int[]{gx, gz, (int) (Hash.of(seed, gx * 31 + gz, 61 + variation) & 0xffff)});
                 }
@@ -229,8 +332,8 @@ final class ChainLayout {
         return out;
     }
 
-    private static boolean inside(int x, int z) {
-        return x >= LO && x <= HI && z >= LO && z <= HI;
+    private boolean inside(int x, int z) {
+        return x >= lo && x <= hi && z >= lo && z <= hi;
     }
 
     /**
@@ -238,7 +341,7 @@ final class ChainLayout {
      * place keeps rock round it and the way between places is always a link.
      */
     private boolean fits(int gx, int gz, int gw, int gh, int lx, int lz) {
-        if (gx < LO || gz < LO || gx + gw - 1 > HI || gz + gh - 1 > HI) return false;
+        if (gx < lo || gz < lo || gx + gw - 1 > hi || gz + gh - 1 > hi) return false;
         for (int x = gx; x < gx + gw; x++) for (int z = gz; z < gz + gh; z++) if (occ[x + z * 16]) return false;
         if (!strict) return true;
         for (int x = gx - 1; x <= gx + gw; x++) {
@@ -272,14 +375,15 @@ final class ChainLayout {
         }
         for (int id : order) {
             int parentW = p.host[p.parent[id]];
-            if (!branch(id, parentW, sizer)) {
+            // on a hall's line a Rig room's side door would open into its trial (a well): its branches hang off another place
+            if ((line && rigHost(parentW)) || !branch(id, parentW, sizer)) {
                 // its parent is boxed in: it opens off the nearest place that has room (it only has to be reachable)
                 Room par = p.world(parentW);
                 List<Integer> near = new ArrayList<>(places);
                 near.sort((a, b) -> Double.compare(dist(p.world(a), par), dist(p.world(b), par)));
                 boolean done = false;
                 for (int o : near) {
-                    if (o == parentW || p.sealable(p.world(o))) continue;
+                    if (o == parentW || p.sealable(p.world(o)) || (line && rigHost(o))) continue;
                     if (branch(id, o, sizer)) {
                         done = true;
                         break;
@@ -289,6 +393,11 @@ final class ChainLayout {
             }
         }
         return true;
+    }
+
+    private boolean rigHost(int worldRoom) {
+        for (int i = 0; i < p.host.length; i++) if (p.host[i] == worldRoom && WorldPlan.built(p.room(i))) return true;
+        return false;
     }
 
     private boolean branch(int id, int parentW, Sizer sizer) {

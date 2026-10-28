@@ -1,0 +1,266 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/dream_lamp",
+    "lamp": "awaken:block/dream_lamp",
+    "glow": "awaken:block/dream_lamp_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        5.5,
+        0,
+        5.5
+      ],
+      "to": [
+        10.5,
+        1.5,
+        10.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#lamp",
+          "uv": [
+            0,
+            10,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#lamp",
+          "uv": [
+            0,
+            10,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#lamp",
+          "uv": [
+            0,
+            10,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#lamp",
+          "uv": [
+            0,
+            10,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#lamp",
+          "uv": [
+            0,
+            10,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#lamp",
+          "uv": [
+            0,
+            10,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.5,
+        1.5,
+        7.5
+      ],
+      "to": [
+        8.5,
+        8,
+        8.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#lamp",
+          "uv": [
+            6,
+            10,
+            8,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#lamp",
+          "uv": [
+            6,
+            10,
+            8,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#lamp",
+          "uv": [
+            6,
+            10,
+            8,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#lamp",
+          "uv": [
+            6,
+            10,
+            8,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#lamp",
+          "uv": [
+            6,
+            10,
+            8,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#lamp",
+          "uv": [
+            6,
+            10,
+            8,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        8,
+        4
+      ],
+      "to": [
+        12,
+        15,
+        12
+      ],
+      "faces": {
+        "down": {
+          "texture": "#lamp",
+          "uv": [
+            0,
+            1,
+            16,
+            8
+          ]
+        },
+        "up": {
+          "texture": "#lamp",
+          "uv": [
+            0,
+            1,
+            16,
+            8
+          ]
+        },
+        "north": {
+          "texture": "#lamp",
+          "uv": [
+            0,
+            1,
+            16,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#lamp",
+          "uv": [
+            0,
+            1,
+            16,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#lamp",
+          "uv": [
+            0,
+            1,
+            16,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#lamp",
+          "uv": [
+            0,
+            1,
+            16,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        8,
+        4
+      ],
+      "to": [
+        12,
+        15,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            1,
+            16,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            1,
+            16,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            1,
+            16,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            1,
+            16,
+            8
+          ]
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}

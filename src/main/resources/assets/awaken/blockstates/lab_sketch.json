@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "open=false": {
+      "model": "awaken:block/lab_sketch"
+    },
+    "open=true": {
+      "model": "awaken:block/lab_sketch_drawn"
+    }
+  }
+}

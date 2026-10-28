@@ -484,8 +484,11 @@ final class WorldPlan {
             if (L.rig == null) continue;
             Room w = b.rooms.get(host[i]);
             if (w.gw == L.gw && w.gh == L.gh && w.onPath && w.pathIn != null && w.pathOut != null && w.type == L.type) {
+                // the Gravity Wells measure the room's height (38.12), so they're planned again at the programme room's
+                int h0 = w.height;
+                if (L.rig.kind == RigRoom.Kind.GRAVITY_WELLS) w.height = L.height;
                 w.rig = RigRooms.rebuild(b, w, L.rig.kind);
-                if (w.rig != null) w.height = L.height;
+                w.height = w.rig != null ? L.height : h0;
             }
             RigRooms.finish(w);
         }

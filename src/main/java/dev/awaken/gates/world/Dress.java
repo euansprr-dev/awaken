@@ -39,6 +39,10 @@ abstract class Dress {
             case CLOCKWORK_FOUNDRY -> new FoundryDress(c);
             case GLASS_DESERT -> new DesertDress(c);
             case LANTERN_NIGHT_MARKET -> new MarketDress(c);
+            case FROST_MONASTERY -> new FrostDress(c);
+            case MIRROR_PALACE -> new PalaceDress(c);
+            case PRECURSOR_LAB -> new LabDress(c);
+            case NIGHTMARE -> new DreamDress(c);
             default -> new FungalDress(c);
         };
     }
@@ -62,6 +66,16 @@ abstract class Dress {
     /** The rail along a bridge or a roof's edge over a street (38.11). */
     BlockState rail() {
         return GatePainter.state("minecraft:dark_oak_fence");
+    }
+
+    /** The glass floor over a mirrored underfloor (38.12), or null for none. */
+    BlockState underGlass() {
+        return null;
+    }
+
+    /** Whether a floor block of a place can be stood on as dressed (a maze's walls can't): spawn spots keep to these. */
+    boolean walk(Room r, int x, int z) {
+        return true;
     }
 
     /** After every place is carved, before each is dressed. */

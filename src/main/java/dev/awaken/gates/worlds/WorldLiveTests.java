@@ -281,7 +281,9 @@ public final class WorldLiveTests {
             for (var t : List.of(dev.awaken.gates.content.Theme.FUNGAL_HOLLOW, dev.awaken.gates.content.Theme.EMBER_MINES,
                     dev.awaken.gates.content.Theme.HIVE, dev.awaken.gates.content.Theme.OVERGROWN_TEMPLE,
                     dev.awaken.gates.content.Theme.DROWNED_ARCHIVE, dev.awaken.gates.content.Theme.CLOCKWORK_FOUNDRY,
-                    dev.awaken.gates.content.Theme.GLASS_DESERT, dev.awaken.gates.content.Theme.LANTERN_NIGHT_MARKET)) {
+                    dev.awaken.gates.content.Theme.GLASS_DESERT, dev.awaken.gates.content.Theme.LANTERN_NIGHT_MARKET,
+                    dev.awaken.gates.content.Theme.FROST_MONASTERY, dev.awaken.gates.content.Theme.MIRROR_PALACE,
+                    dev.awaken.gates.content.Theme.PRECURSOR_LAB, dev.awaken.gates.content.Theme.NIGHTMARE)) {
                 h.assertTrue(WorldSets.of(t) != null && WorldSets.of(t).item().get() != null, t.id + " has its set piece");
                 long keeps = GateWorlds.ofTheme(t).stream().filter(w -> !GateWorlds.get(w).dressing().keepsake().isEmpty()).count();
                 h.assertTrue(keeps == 5, t.id + " has a keepsake in each of its five worlds (" + keeps + ")");

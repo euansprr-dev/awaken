@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "theme": "nightmare",
+  "name": "The Upside-Down House",
+  "line": "The same house, but you're walking on the ceiling. The furniture is all up above you.",
+  "tier": "deep",
+  "rarity": "uncommon",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "square": 1,
+    "roof": 16
+  },
+  "biome": "awaken:gate_world/upside_down",
+  "moods": [
+    {
+      "id": "deep_sleep",
+      "name": "Deep sleep",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "fever",
+      "name": "Fever",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/upside_down_fever",
+      "life": [
+        "mist"
+      ]
+    },
+    {
+      "id": "lullaby",
+      "name": "Lullaby",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/upside_down_lullaby",
+      "life": [
+        "dust",
+        "fireflies"
+      ]
+    },
+    {
+      "id": "wake",
+      "name": "Waking",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/upside_down_wake",
+      "life": [
+        "rain"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:dream_wallpaper",
+    "torn": "awaken:dream_wallpaper_torn",
+    "floor": "awaken:dream_boards",
+    "trim": "awaken:dream_wood",
+    "wood": "awaken:dream_wood",
+    "plush": "awaken:dream_plush",
+    "sheet": "awaken:dream_sheet",
+    "dark": "awaken:dream_dark",
+    "lamp": "awaken:dream_lamp",
+    "candle": "awaken:dream_candle",
+    "motes": "awaken:dream_motes",
+    "toy": "awaken:dream_toy",
+    "wall_glow": "awaken:dream_window",
+    "touch": "awaken:dream_music_box",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "ceiling_furniture"
+  ],
+  "life": [
+    "dust",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.dream_deep",
+  "events": [
+    "lullaby",
+    "the_wakening"
+  ],
+  "rule": "lullaby",
+  "secrets": [
+    {
+      "id": "the_first_tune",
+      "name": "The first tune"
+    },
+    {
+      "id": "the_fallen_bed",
+      "name": "The fallen bed"
+    }
+  ],
+  "keepsake": "ceiling_star",
+  "keepsake_name": "A Glow Star from the Ceiling",
+  "keepsake_from": "the_fallen_bed"
+}

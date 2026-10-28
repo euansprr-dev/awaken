@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/singing_bowl"
+    },
+    "lit=true": {
+      "model": "awaken:block/singing_bowl_lit"
+    }
+  }
+}

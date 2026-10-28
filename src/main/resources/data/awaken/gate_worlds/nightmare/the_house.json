@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "theme": "nightmare",
+  "name": "The House",
+  "line": "Your house, or nearly. The rooms are far too big, and the furniture is taller than you are.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "square": 1,
+    "roof": 14,
+    "wobble": 0.3
+  },
+  "biome": "awaken:gate_world/the_house",
+  "moods": [
+    {
+      "id": "deep_sleep",
+      "name": "Deep sleep",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "fever",
+      "name": "Fever",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/the_house_fever",
+      "life": [
+        "mist"
+      ]
+    },
+    {
+      "id": "lullaby",
+      "name": "Lullaby",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/the_house_lullaby",
+      "life": [
+        "dust",
+        "fireflies"
+      ]
+    },
+    {
+      "id": "wake",
+      "name": "Waking",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_house_wake",
+      "life": [
+        "rain"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:dream_wallpaper",
+    "torn": "awaken:dream_wallpaper_torn",
+    "floor": "awaken:dream_boards",
+    "trim": "awaken:dream_wood",
+    "wood": "awaken:dream_wood",
+    "plush": "awaken:dream_plush",
+    "sheet": "awaken:dream_sheet",
+    "dark": "awaken:dream_dark",
+    "lamp": "awaken:dream_lamp",
+    "candle": "awaken:dream_candle",
+    "motes": "awaken:dream_motes",
+    "toy": "awaken:dream_toy",
+    "wall_glow": "awaken:dream_window",
+    "touch": "awaken:dream_music_box",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "giant_furniture"
+  ],
+  "life": [
+    "dust",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.dream_house",
+  "events": [
+    "the_alarm"
+  ],
+  "rule": "lullaby",
+  "secrets": [
+    {
+      "id": "the_first_tune",
+      "name": "The first tune"
+    },
+    {
+      "id": "the_toy_box",
+      "name": "The toy box"
+    },
+    {
+      "id": "the_crack_of_light",
+      "name": "The light under the door",
+      "leads_to": "awaken:nightmare/nursery"
+    }
+  ],
+  "keepsake": "tin_soldier",
+  "keepsake_name": "A Tin Soldier",
+  "keepsake_from": "the_toy_box"
+}

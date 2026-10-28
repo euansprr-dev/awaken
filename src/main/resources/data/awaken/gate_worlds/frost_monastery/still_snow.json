@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "theme": "frost_monastery",
+  "name": "The Still Snow",
+  "line": "A valley so quiet the snow forgets to fall. It just hangs in the air around you.",
+  "tier": "wonder",
+  "rarity": "rare",
+  "kind": "open",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "lid": 20,
+    "slope": 0.5
+  },
+  "biome": "awaken:gate_world/still_snow",
+  "moods": [
+    {
+      "id": "still",
+      "name": "Still",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "blizzard",
+      "name": "Blizzard",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/still_snow_blizzard",
+      "life": [
+        "snow",
+        "mist"
+      ]
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/still_snow_aurora",
+      "life": [
+        "snow"
+      ]
+    },
+    {
+      "id": "thaw",
+      "name": "Thaw",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/still_snow_thaw",
+      "life": [
+        "drips",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:frost_stone",
+    "wall_glow": "awaken:frost_stone_carved",
+    "trim": "awaken:frost_stone_carved",
+    "floor": "awaken:frost_tiles",
+    "snow": "awaken:frost_snow",
+    "plaster": "awaken:frost_plaster",
+    "timber": "awaken:frost_timber",
+    "ice": "awaken:frost_ice",
+    "ice_glow": "awaken:frost_ice_glowing",
+    "icicles": "awaken:frost_icicles",
+    "flags": "awaken:frost_flags",
+    "lamp": "awaken:frost_butter_lamp",
+    "crystal": "awaken:frost_crystal",
+    "cloud": "awaken:frost_cloud",
+    "touch": "awaken:frost_prayer_wheel",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_stupa",
+    "hanging_snow"
+  ],
+  "life": [
+    "snow",
+    "mist",
+    "far_toll"
+  ],
+  "sound": "awaken:gate.world.frost_wind",
+  "events": [
+    "blizzard",
+    "the_still"
+  ],
+  "rule": "prayer",
+  "secrets": [
+    {
+      "id": "the_first_prayer",
+      "name": "The first prayer"
+    },
+    {
+      "id": "the_still_heart",
+      "name": "The still heart"
+    },
+    {
+      "id": "the_still",
+      "name": "The snow standing still"
+    }
+  ],
+  "keepsake": "monks_bowl",
+  "keepsake_name": "The Snow Monk's Bowl",
+  "keepsake_from": "snow_monk",
+  "tall": true,
+  "signature": "snow_monk"
+}

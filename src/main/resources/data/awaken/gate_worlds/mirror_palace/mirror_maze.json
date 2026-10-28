@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "theme": "mirror_palace",
+  "name": "The Mirror Maze",
+  "line": "A maze made of mirrors. Every way you look, there's another you, and every way looks like the way out.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "square": 1,
+    "roof": 9,
+    "wobble": 0.3
+  },
+  "biome": "awaken:gate_world/mirror_maze",
+  "moods": [
+    {
+      "id": "bright",
+      "name": "Bright",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "shattered",
+      "name": "Shattered",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/mirror_maze_shattered",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "candlelit",
+      "name": "Candlelit",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/mirror_maze_candlelit",
+      "life": [
+        "fireflies"
+      ]
+    },
+    {
+      "id": "doubled",
+      "name": "Doubled",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/mirror_maze_doubled",
+      "life": [
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:palace_marble",
+    "wall_glow": "awaken:palace_marble_veined",
+    "floor": "awaken:palace_checker",
+    "trim": "awaken:palace_gilt",
+    "mirror": "awaken:palace_mirror",
+    "mirror_cracked": "awaken:palace_mirror_cracked",
+    "glass": "awaken:palace_glass_floor",
+    "white": "awaken:palace_white",
+    "shadow": "awaken:palace_shadow",
+    "curtain": "awaken:palace_curtain",
+    "chandelier": "awaken:palace_chandelier",
+    "candelabra": "awaken:palace_candelabra",
+    "crystal": "awaken:palace_crystal",
+    "touch": "awaken:mirror_stand",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_maze"
+  ],
+  "life": [
+    "dust",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.palace_halls",
+  "events": [
+    "shatter"
+  ],
+  "rule": "reflections",
+  "secrets": [
+    {
+      "id": "the_first_look",
+      "name": "The first look"
+    },
+    {
+      "id": "the_true_mirror",
+      "name": "The true mirror"
+    },
+    {
+      "id": "the_cold_glass",
+      "name": "The cold glass",
+      "leads_to": "awaken:mirror_palace/room_behind_glass"
+    }
+  ],
+  "keepsake": "true_shard",
+  "keepsake_name": "A Shard of the True Mirror",
+  "keepsake_from": "the_true_mirror"
+}

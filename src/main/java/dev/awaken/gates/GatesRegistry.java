@@ -375,7 +375,13 @@ public final class GatesRegistry {
             "desert_wind", "desert_city", "desert_glass", "market_street", "market_water", "market_festival",
             "page", "pages", "tide", "bookworm", "valve", "overdrive", "powercut", "clockwork", "chime", "sandstorm", "shimmer",
             "walker", "wish", "fireworks", "release", "festival", "spirits",
-            "arrive_drowned_archive", "arrive_clockwork_foundry", "arrive_glass_desert", "arrive_lantern_night_market");
+            "arrive_drowned_archive", "arrive_clockwork_foundry", "arrive_glass_desert", "arrive_lantern_night_market",
+            // the C themes (38.12)
+            "frost_chant", "frost_ice", "frost_wind", "palace_halls", "palace_under", "palace_white",
+            "lab_hum", "lab_servers", "lab_sim", "dream_house", "dream_hall", "dream_deep",
+            "wheel", "bells", "blizzard", "icecrack", "still", "monk", "mirror", "shatter", "doubled", "whale", "reflection",
+            "console", "lockdown", "breach", "glitch", "draw", "musicbox", "lullaby", "alarm", "stirs", "sleepwalker", "fold",
+            "arrive_frost_monastery", "arrive_mirror_palace", "arrive_precursor_lab", "arrive_nightmare");
     private static final java.util.Map<String, DeferredHolder<SoundEvent, SoundEvent>> THEME_SOUND = new java.util.HashMap<>();
     static {
         for (String n : THEME_SOUNDS) THEME_SOUND.put(n, sound("gate.world." + n));

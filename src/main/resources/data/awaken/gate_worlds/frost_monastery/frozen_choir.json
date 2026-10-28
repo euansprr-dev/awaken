@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "theme": "frost_monastery",
+  "name": "The Frozen Choir",
+  "line": "A hall of ice where the monks who sang too long are still standing, frozen in the middle of their song.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "roof": 14
+  },
+  "biome": "awaken:gate_world/frozen_choir",
+  "moods": [],
+  "blocks": {
+    "wall": "awaken:frost_stone",
+    "wall_glow": "awaken:frost_stone_carved",
+    "trim": "awaken:frost_stone_carved",
+    "floor": "awaken:frost_tiles",
+    "snow": "awaken:frost_snow",
+    "plaster": "awaken:frost_plaster",
+    "timber": "awaken:frost_timber",
+    "ice": "awaken:frost_ice",
+    "ice_glow": "awaken:frost_ice_glowing",
+    "icicles": "awaken:frost_icicles",
+    "flags": "awaken:frost_flags",
+    "lamp": "awaken:frost_butter_lamp",
+    "crystal": "awaken:frost_crystal",
+    "cloud": "awaken:frost_cloud",
+    "touch": "awaken:frost_prayer_wheel",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "frozen_monks"
+  ],
+  "life": [
+    "snow",
+    "mist"
+  ],
+  "sound": "awaken:gate.world.frost_chant",
+  "events": [],
+  "rule": "prayer",
+  "secrets": [
+    {
+      "id": "the_last_note",
+      "name": "The last note"
+    }
+  ],
+  "keepsake": "last_note",
+  "keepsake_name": "The Choir's Last Note",
+  "keepsake_from": "the_last_note"
+}

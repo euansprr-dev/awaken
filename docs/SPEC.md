@@ -9166,6 +9166,9 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
 - **Stage 3** (built 2026-10-28): the open sky's dimension, open land and streets, the four D themes' blocks, dress, props,
   rules, events, the Festival, twenty worlds, sets, biomes with their skies, sound and paintings (38.11); tests
   `gateworlds_<world>` for each of the sixteen and `gateworlds_sky`.
+- **Stage 4** (built 2026-10-29): islands, the endless plain, the fold and the mirrored underfloor on the cave engine, the
+  four C themes' blocks, dress, props, rules, events, moments, twenty worlds, sets, biomes, sound and paintings (38.12);
+  tests `gateworlds_<world>` for each of the sixteen and `gateworlds_repeats`.
 
 ### 38.5 The world floor contract (Stage 1)
 
@@ -9191,7 +9194,9 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
 - **Blocks by role** (`WorldMats`): a recipe's `blocks` map names a block per role (`wall`, `floor`, `trim`, `bronze`...);
   an engine asks for a role with a fallback, so one engine builds many worlds.
 - **Budgets**: a world floor plans in under 50 ms and carves a chunk in under 4 ms on average, 40 ms at worst (measured by
-  every world's test from its second plan on: the first warms up class loading and the JIT, which alone can pass 40 ms).
+  every world's test from its second plan on: the first warms up class loading and the JIT, which alone can pass 40 ms;
+  a chunk over 10 ms is carved again and the faster run counts, since a collector's pause or a compile on a shared CI
+  machine isn't the carve's).
 - **World tests** (`WorldCheck`, `GateWorldBellTests`): each world is planned over many gates (every layout, rank, twist and
   mood), every chunk carved, and walked on foot from the arrival (stairs, ropes and shallow water included; a Rig room is
   crossed by its mechanism, from its way in to its way on): every monster spot, key, cache and feature reachable, every room
@@ -9680,6 +9685,142 @@ Built 2026-10-28. Four themes, twenty worlds, on the cave engine (38.10) with a 
   whole column and never more than the gate has to spare; with the open lands switched off none are picked);
   `gates_dimension_json` checks both dimensions (only the open sky's has sky light); `gateworlds_sets` covers the four new
   pieces and keepsakes.
+
+### 38.12 The C themes, voids and folds: Frost Monastery, Mirror Palace, Precursor Lab, Nightmare (Stage 4)
+
+Built 2026-10-29. Four themes, twenty worlds, on the cave engine with four new shapes (params, so any recipe can use them).
+
+- **Islands** (`isles`, or kind `isles`): every place is an island in the air or the dark, a ragged slab narrowing to a
+  point `under` blocks below its floor, the air over it open to its roof (at most 24) so the dress can stand things on
+  it; links are bridges four deep with the dress's rail; the arrival gets two slots square. In the dark (a night or dream
+  world) a bridge has hidden light over its deck three apart, and an island's light grid runs a block or two out into the
+  air past its ragged rim, so the way round its edge stays lit. `clouds` lays a sea of cloud
+  blocks (the theme's `cloud`) that far under the floor: you see it below and fall through it. A fall is caught like a drop
+  world's (38.8): "You fell, and the air carried you back to the last ground you stood on." Used by the Cliff Stair and the
+  Sleeper's Dream.
+- **The endless plain** (`plain`, or kind `plain`; the White): one floor three deep over the whole plot, open
+  `PLAIN_H` = 14 over it, nothing walled but a one-block skin round the plot's very edge. The recipe's `band` (4) keeps the
+  places in slots 4 to 11; the band round them is empty floor that repeats every 32 blocks, and the live layer turns you
+  round before the edge: within 24 blocks of it you're moved 32 in, which looks the same (`WorldLive.repeat`; fog from your
+  feet hides the edge). A place on the plain isn't cut (it's only where it is); its secret is a room standing on it.
+- **The fold** (kind `fold`; the Endless Hall): the spine is one straight hall along slot row 7 from west to east
+  (`ChainLayout.layLine`): each place on the row, one link slot between neighbours, and in the middle three link slots in a
+  row, the fold (a `fold` mark over the three). A way too long for the row is squeezed, a step at a time until it fits:
+  plain neighbours share a place three at a time and neighbours open straight into each other (no link between, from the
+  ends in); then the big places (arenas, the end) stand one slot along the hall and two deep; then four or five share a
+  place; then a cache shares one too (never hosting it). A Rig room on the hall keeps to its two doors (a side door could
+  open into a Gravity Well): its branches hang off the nearest other place. A hall is six wide (slot blocks 5 to 10) and five high, square-cut like a
+  house's, and each slot is the same turned about its middle (point-symmetric). Walk on through the fold's middle slot and
+  you're moved back one slot, as if the hall went on ("This hall doesn't seem to end." on the third time); go through
+  twice, then turn round and walk back, and the hall turns round with you (you're put at the same spot turned about the
+  fold's middle, facing the other way), so you come out going on toward the end: "You turned round, and the hall turned
+  round with you. Its end is just ahead." Only the walker moves; monsters never cross. The dress decorates the fold's slots
+  from slot-local coordinates only, point-symmetric (doors at x 3 and 12 on opposite walls, candles likewise, read off the
+  hall's carved walls alone so one door never sets off the next). The hall's light is hidden at head height three apart
+  down its middle, a block either side of the line (slot blocks 1, 4, 7 on one side, 8, 11, 14 on the other), and a
+  doorway's light at a slot's edge gets its twin a block over, so every slot is the same turned round.
+- **The mirrored underfloor** (`mirror`; the Inverted Palace): run last, after the dress, every block above the floor is
+  reflected about it down to 34 below, under a floor of glass (`Dress.underGlass`) wherever the floor has air over it: you
+  look down into the same rooms upside down.
+- **Tall rooms**: `tower` (the Server Abyss, 40) as 38.10.
+- **Blocks** (`ThemeBlocks`, 54 and four sets; art `tools/art/specs/gate_worlds_{frost,palace,lab,dream}.py`):
+  - **Frost Monastery**: frost stone and carved stone, tiles, timber (an axis), plaster, packed snow, ice and glowing ice
+    (translucent), icicles, prayer flags, butter lamps, ice crystals, cloud, the prayer wheel (touchstone).
+  - **Mirror Palace**: marble and veined marble (glowing veins), checker, gilt, mirror and cracked mirror, the glass floor,
+    palace white (the White's lit floor, light 11), shadow (a carpet), curtains, chandeliers, candelabras, crystals, the mirror stand
+    (touchstone).
+  - **Precursor Lab**: panels and lit panels, floor plates, black frame (an axis), lab glass, server racks (blinking
+    lights), specimen tanks (glowing, translucent), hanging cables, work lights, holograms, green spill (a carpet), the
+    **sketched block** and the console (touchstone). The sketched block is cyan lines on dark blue until someone looks at
+    it (`open`, drawn in grey); it's dark (no light of its own: the Simulation has thousands of them), and it folds back to
+    a sketch 80 ticks after nobody is within six. `WorldLive.draw` fills in what lies along a player's line of sight every
+    half second on the Simulation.
+  - **Nightmare**: plum wallpaper and torn wallpaper, worn boards, dark posts (an axis), tufted cushion, white sheet, the dark
+    between dreams (a few far lights in it), bedside lamps, candles, drifting motes, toy blocks, night windows (glowing),
+    the music box (touchstone).
+- **The dress** (`FrostDress`, `PalaceDress`, `LabDress`, `DreamDress`):
+  - **Frost**: the Cloisters' halls (16-block lots with pitched roofs) on the skyline, covered walks round the places
+    (posts, a roof at four, snow on it, hidden light under the roof on every fourth diagonal), strings of flags, prayer wheels turning on carved feet; ice faces, icicles,
+    crystals and frozen falls in the Ice Caves; icicles under the Cliff Stair's overhangs, flags on its bridges, its shrine
+    on the highest island (the_highest_shrine; the end's island when none is great); the Still Snow's valley on the skyline and its stupa in the great place;
+    the Frozen Choir's rings of frozen monks.
+  - **Palace**: mirror walls between gilt pilasters every six (curtains beside them; cracked in the shattered mood),
+    checker floors, gilt-gridded ceilings, chandeliers and candelabras; the Mirror Maze's maze of mirror walls (cells of
+    four, dug from the middle, gilt-capped, three high, door mouths kept clear), where spawn spots are only its walkways;
+    the Inverted Palace drawn under its glass; the White's lit floor (a staggered grid of light every four, so it repeats),
+    shadows, a mirror tree with crystal buds in the great place, a lone gilt door standing in the first place
+    (the_lone_door), and the whale: a long grey whale of concrete hanging 26 over the floor with mirror eyes (grey, so it
+    shows against the white fog).
+  - **Lab**: panel walls, plate floors, benches with holograms, tanks every five (broken ones mossed over), rows of racks,
+    a core of tanks ringed in frame in the facility's great place; frame ribs and cables along tunnels; the Simulation all
+    sketch but its trees and boulders; the Garden Dome's moss, birches, azaleas and flowers under a lit ceiling. Racks and
+    tanks are kept off the walkways, so nothing spawns in them.
+  - **Nightmare**: wallpaper walls (torn here and there) with windows, boards and posts, furniture (tables, chairs, beds,
+    toys) standing on the floor, or hanging from the ceiling in Upside Down (its floor and ceiling swapped); the Sleeper's
+    Dream's islands each a dream (a bedroom, a garden, a heap of cushions with a stair), candles along its bridges; the
+    Endless Hall's doors and candles; the Nursery's cot under a mobile, lamp and toys.
+- **Rig rooms** (the themes' own, §17): Mirror Halls in the Mirror Palace and the Lab, Gravity Wells in the Lab and the
+  Nightmare, a Gauntlet in the Frost Monastery (content version 5 on). The Gravity Wells measure their room's height, so
+  a world plans them again at the programme room's height. The Mirror Hall's cache stands in its pavilion, which only a spirit (Ghost Step)
+  walks into, so the world test doesn't ask a walker to reach it.
+- **Props**: `wheel:N`, a prayer wheel N tenths of a block wide, a display entity turning on its upright axis.
+- **Rules** (`WorldThemes`; as 38.10, the eighth touch brings one named elite and two more):
+  - **prayer** (prayer wheel): slowness IV 3 s and frozen 8 s; "The prayer wheels have been turning too long. The Frost
+    Warden is coming down to see who's praying so hard." The Frost Warden.
+  - **reflections** (mirror stand): blindness 3 s and glowing 5 s; "Too many mirrors looked into. The Mirror Warden is coming
+    to see who's been staring." The Mirror Warden.
+  - **power** (console): slowness III 2 s and weakness II 3 s; "Too many consoles woken up. Security is coming to see who's
+    logged in." The Security Unit.
+  - **lullaby** (music box): slowness V and weakness II 4 s; "The music box has played too often. Something that hates that
+    tune is coming to stop it." The Sandman.
+- **Events**: `the_bells` (half way: the monastery rings and a trail shows the way on), `blizzard` (a third: snow clouds,
+  everyone slowed, monsters within 40 slowed more), `doubled` (half way: up to two "Your Reflection"s step out), `shatter` (a
+  third: every mirror within 20 cracks, monsters blinded), `breach` (half way: a tank breaks, two monsters come out),
+  `lockdown` (a third: darkness 6 s, monsters quicker, then "The alarm stops. The lights come back, white."), `lullaby` (half
+  way: everyone slowed, monsters slowed a lot), `the_alarm` (a third: everyone quicker, monsters weaker). The wonders'
+  moments, two thirds along, each found on the Atlas and then followed by its signature (a named elite with twice the
+  health until the mobs module gives them bodies): `the_still` (the Still Snow: the wind stops, the snow hangs, the flags
+  glow; the Snow Monk), `the_whale` (the White: the whale opens its eye and swims off; Your Reflection), `the_crash` (the
+  Simulation: everything drawn is wiped back to sketch within 24, blindness; the Glitch), `the_sleeper_stirs` (the
+  Sleeper's Dream: nausea as the dream lurches; the Sleepwalker).
+- **The worlds** (`gate_worlds_recipes.py`):
+  - Frost Monastery (still, blizzard, aurora, thaw; lead the_cold_draught, touch the_first_prayer): the Cloisters (open,
+    tall; the_bell_rope; a prayer bead), the Ice Caves (caves; the_frozen_monk; an ice bead), the Cliff Stair (deep, open
+    isles over clouds; the_highest_shrine; a cliff bell), the Still Snow (wonder, open; the_still_heart and the_still; the
+    Snow Monk's bowl), the Frozen Choir (secret; the_last_note).
+  - Mirror Palace (bright, shattered, candlelit, doubled; lead the_cold_glass, touch the_first_look): the Gallery
+    (the_portrait; a gilt frame), the Mirror Maze (the_true_mirror; a true shard), the Inverted Palace (deep, mirrored;
+    the_way_down; an upside-down crown), the White (wonder, plain; the_lone_door and the_whale; the Reflection's eye), the
+    Room Behind the Glass (secret; the_backwards_clock).
+  - Precursor Lab (running, lockdown, breach, reboot; lead the_open_vent, touch the_first_login): the Facility
+    (the_logbook; an access card), the Server Abyss (tower 40; the_cold_drive), Containment (deep; the_empty_tank; a
+    specimen tag), the Simulation (wonder; the_unfinished and the_crash; a glitch shard), the Garden Dome (secret;
+    the_last_seed).
+  - Nightmare (deep_sleep, fever, lullaby, wake; lead the_crack_of_light, touch the_first_tune): the House (the_toy_box; a
+    tin soldier), the Endless Hall (fold; the_door_left_open; the hall key), Upside Down (deep; the_fallen_bed; a ceiling
+    star), the Sleeper's Dream (wonder, isles; the_night_window and the_sleeper_stirs; a sleeper's feather), the Nursery
+    (secret; the_lullaby).
+- **Sets** (38.8): the Singing Bowl (strike it and everyone close by shakes off cold, slowness and weakness; a minute to
+  ring out), the Hand Mirror (look into it for the way back to your bed), the Humming Cube (gives a redstone signal of 15
+  while anyone stands within four) and the Night Light (use it and every monster within 24 glows for 10 s).
+- **Biomes** (`gate_worlds_biomes.py`, 221 in all): as 38.10. The Frost Monastery's open worlds sit high under a cold sky
+  (sun 30, a pale blue light); over them a mood brings its sky: blizzard (white, light 0.6), aurora (night, a green sky
+  light, bright stars), thaw (grey, light 0.8). The White's fog is white from your feet (#f4f4f8, start 0, end 96).
+- **Sound** (`tools/art/specs/audio_gate_worlds_c.py`, 7.8 MB; gate_world sound about 24 MB in all, under the 40 MB
+  budget): beds frost_chant, frost_ice, frost_wind, palace_halls, palace_under, palace_white, lab_hum, lab_servers, lab_sim,
+  dream_house, dream_hall, dream_deep; events wheel, bells, blizzard, icecrack, still, monk, mirror, shatter, doubled,
+  whale, reflection, console, lockdown, breach, glitch, draw, musicbox, lullaby, alarm, stirs, sleepwalker, fold; an
+  arrival sting a theme. Recorded where we have it (the Frost Spires' and the lands' wind, the church bell and handbell,
+  the Delve's cracks, the Halo station's hum and chirps, the holo screens, the elder wood's creaks, the wild's owls), made
+  where nothing records it (the monks' chant, a whale's song, klaxons, glitches, the music box's tines). Every one has a
+  plain subtitle.
+- **Small life**: `snow`, `mist`, `drips`, `far_toll`, `dust`, `moths`, `steam` from 38.9.
+- **Atlas paintings**: `tools/art/specs/gate_worlds_paintings_c.py`, one a world.
+- **Lens**: as 38.11, the Lens owner's to add.
+- **Tests**: `gateworlds_<world>` for the sixteen (as 38.10: the islands' bridges, the plain and the fold are all walked
+  and lit); `gateworlds_repeats` (over four Endless Hall gates each fold's three slots are one slot repeated and the same
+  turned about the fold's middle, block for block through the hall and its skin; over three White gates the plain's outer
+  band is the same 32 blocks over, both ways and at both edges); `gateworlds_sets` covers the four new pieces and keepsakes.
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 

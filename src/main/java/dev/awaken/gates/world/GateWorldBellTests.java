@@ -38,6 +38,12 @@ public final class GateWorldBellTests {
             "glass_desert/buried_colossus", "glass_desert/glass_caves", "glass_desert/sunken_city", "glass_desert/mirage",
             "lantern_night_market/lantern_street", "lantern_night_market/rooftops", "lantern_night_market/floating_market",
             "lantern_night_market/festival");
+    /** Stage 4's floor worlds (SPEC §38.12): the C themes, an endless plain, islands in the dark and a fold among them. */
+    public static final List<String> C_WORLDS = List.of(
+            "frost_monastery/cloisters", "frost_monastery/ice_caves", "frost_monastery/cliff_stair", "frost_monastery/still_snow",
+            "mirror_palace/gallery", "mirror_palace/mirror_maze", "mirror_palace/inverted_palace", "mirror_palace/the_white",
+            "precursor_lab/facility", "precursor_lab/server_abyss", "precursor_lab/containment", "precursor_lab/simulation",
+            "nightmare/the_house", "nightmare/endless_hall", "nightmare/upside_down", "nightmare/sleepers_dream");
 
     public static GatePlan plan(long seed, int i) {
         return plan(seed, i, Theme.BELL_CRYPT);
@@ -93,6 +99,8 @@ public final class GateWorldBellTests {
                     .append(r.spawnSpots.size()).append(" spawn spots out of reach;");
             for (Room.Feature ft : r.features) {
                 if (ft.kind() == Room.FeatureKind.UPDRAFT || ft.kind() == Room.FeatureKind.RIFT_WALL) continue;
+                // the Mirror Hall's cache is in its pavilion, which only a spirit walks into (SPEC §17)
+                if (ft.kind() == Room.FeatureKind.CACHE && r.rig != null && r.rig.kind == RigRoom.Kind.MIRROR_HALL) continue;
                 if (w.near(ft.x(), y + ft.y(), ft.z(), 2) == null)
                     bad.append(" room ").append(r.id).append(' ').append(ft.kind()).append(" at ").append(ft.x()).append(' ').append(ft.z()).append(" out of reach;");
             }
@@ -149,7 +157,10 @@ public final class GateWorldBellTests {
                 }
             }
             if (dark > 0) bad.append(" the way is dark (").append(dark).append(" steps under 7, first at ").append(darkest[0]).append(' ')
-                    .append(darkest[1]).append(' ').append(darkest[2]).append(": ").append(darkest[3]).append(");");
+                    .append(darkest[1]).append(' ').append(darkest[2]).append(": ").append(darkest[3]).append(", in ")
+                    .append(w.at(darkest[0], darkest[1], darkest[2]).getBlock().getDescriptionId()).append(" on ")
+                    .append(w.at(darkest[0], darkest[1] - 1, darkest[2]).getBlock().getDescriptionId()).append(" under ")
+                    .append(w.at(darkest[0], darkest[1] + 1, darkest[2]).getBlock().getDescriptionId()).append(");");
         }
         String dir = System.getenv("AWAKEN_WORLD_DUMP");
         if (dir != null && (dumpName != null || !bad.isEmpty())) {
@@ -390,6 +401,49 @@ public final class GateWorldBellTests {
         for (String id : CAVE_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
         // the D themes (38.11)
         for (String id : D_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
+        // the C themes (38.12)
+        for (String id : C_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
+        AwakenTests.register("gateworlds_repeats", 1200, h -> {
+            // a world that moves you has to look the same where it puts you (38.12): the fold's three slots are one slot
+            // again and again, each the same turned about its middle; the endless plain's outer band repeats every 32
+            int folds = 0, plains = 0;
+            for (int i = 0; i < 4; i++) {
+                GatePlan p = dressed(plan(0xF01DL + i * 7919L, i, Theme.NIGHTMARE), "awaken:nightmare/endless_hall", "deep_sleep");
+                for (FloorLayout f : FloorBuilder.build(p).main) {
+                    if (!f.isWorld()) continue;
+                    for (FloorLayout.Mark m : f.marks(FloorLayout.Mark.FOLD)) {
+                        WorldCheck w = new WorldCheck(p, f);
+                        folds++;
+                        for (int x = m.x0(); x <= m.x1(); x++) for (int z = m.z0() + 4; z <= m.z0() + 11; z++) for (int y = m.y0() - 1; y <= m.y1() + 1; y++) {
+                            var b = w.at(x, f.baseY + y, z).getBlock();
+                            var next = x + 16 <= m.x1() ? w.at(x + 16, f.baseY + y, z).getBlock() : b;
+                            var turned = w.at(m.x0() + m.x1() - x, f.baseY + y, m.z0() + m.z1() - z).getBlock();
+                            String at = " at " + x + " " + y + " " + z + " (" + b.getDescriptionId() + ") of " + p;
+                            h.assertTrue(b == next, "the fold's slots differ: " + next.getDescriptionId() + at);
+                            h.assertTrue(b == turned, "the fold isn't the same turned round: " + turned.getDescriptionId() + at);
+                        }
+                    }
+                }
+            }
+            for (int i = 0; i < 3; i++) {
+                GatePlan p = dressed(plan(0x3417EL + i * 7919L, i, Theme.MIRROR_PALACE), "awaken:mirror_palace/the_white", "bright");
+                for (FloorLayout f : FloorBuilder.build(p).main) {
+                    if (!f.isWorld()) continue;
+                    WorldCheck w = new WorldCheck(p, f);
+                    plains++;
+                    int side = WorldCheck.SIDE;
+                    for (int a = 1; a < 32; a++) for (int c = 1; c < side - 1; c++) for (int y = -2; y <= CaveEngine.Cave.PLAIN_H; y++) {
+                        int yy = f.baseY + y;
+                        String at = " at " + a + "/" + c + " " + y + " of " + p;
+                        h.assertTrue(w.at(a, yy, c) == w.at(a + 32, yy, c) && w.at(c, yy, a) == w.at(c, yy, a + 32), "the plain's near band doesn't repeat" + at);
+                        h.assertTrue(w.at(side - 1 - a, yy, c) == w.at(side - 33 - a, yy, c) && w.at(c, yy, side - 1 - a) == w.at(c, yy, side - 33 - a),
+                                "the plain's far band doesn't repeat" + at);
+                    }
+                }
+            }
+            h.assertTrue(folds > 0 && plains > 0, "folds and plains were built (" + folds + ", " + plains + ")");
+            h.succeed();
+        });
         AwakenTests.register("gateworlds_sky", 400, h -> {
             // an open land stands under the open sky (its floor is built in that dimension) and only while the gate has a
             // whole column to spare for it; without the open sky's dimension no gate picks one (the GameTest server

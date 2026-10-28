@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "theme": "nightmare",
+  "name": "The Sleeper's Dream",
+  "line": "Bits of a dream floating in the dark: a bedroom here, a staircase there, a garden going nowhere.",
+  "tier": "wonder",
+  "rarity": "rare",
+  "kind": "isles",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "under": 14,
+    "tunnel": 1.6,
+    "roof": 12
+  },
+  "biome": "awaken:gate_world/sleepers_dream",
+  "moods": [
+    {
+      "id": "deep_sleep",
+      "name": "Deep sleep",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "fever",
+      "name": "Fever",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/sleepers_dream_fever",
+      "life": [
+        "mist"
+      ]
+    },
+    {
+      "id": "lullaby",
+      "name": "Lullaby",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/sleepers_dream_lullaby",
+      "life": [
+        "dust",
+        "fireflies"
+      ]
+    },
+    {
+      "id": "wake",
+      "name": "Waking",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/sleepers_dream_wake",
+      "life": [
+        "rain"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:dream_wallpaper",
+    "torn": "awaken:dream_wallpaper_torn",
+    "floor": "awaken:dream_boards",
+    "trim": "awaken:dream_wood",
+    "wood": "awaken:dream_wood",
+    "plush": "awaken:dream_plush",
+    "sheet": "awaken:dream_sheet",
+    "dark": "awaken:dream_dark",
+    "lamp": "awaken:dream_lamp",
+    "candle": "awaken:dream_candle",
+    "motes": "awaken:dream_motes",
+    "toy": "awaken:dream_toy",
+    "wall_glow": "awaken:dream_window",
+    "touch": "awaken:dream_music_box",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "dream_isles"
+  ],
+  "life": [
+    "dust",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.dream_deep",
+  "events": [
+    "the_alarm",
+    "the_sleeper_stirs"
+  ],
+  "rule": "lullaby",
+  "secrets": [
+    {
+      "id": "the_first_tune",
+      "name": "The first tune"
+    },
+    {
+      "id": "the_night_window",
+      "name": "The night window"
+    },
+    {
+      "id": "the_sleeper_stirs",
+      "name": "The Sleeper stirring"
+    }
+  ],
+  "keepsake": "sleepers_feather",
+  "keepsake_name": "A Feather from the Sleeper's Pillow",
+  "keepsake_from": "sleepwalker",
+  "signature": "sleepwalker"
+}

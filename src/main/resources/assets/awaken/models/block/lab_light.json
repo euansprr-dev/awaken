@@ -1,0 +1,136 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/lab_light",
+    "shade": "awaken:block/lab_light",
+    "glow": "awaken:block/lab_light_glow",
+    "cable": "awaken:block/lab_frame"
+  },
+  "elements": [
+    {
+      "from": [
+        7.5,
+        8,
+        7.5
+      ],
+      "to": [
+        8.5,
+        16,
+        8.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#cable"
+        },
+        "up": {
+          "texture": "#cable"
+        },
+        "north": {
+          "texture": "#cable"
+        },
+        "south": {
+          "texture": "#cable"
+        },
+        "west": {
+          "texture": "#cable"
+        },
+        "east": {
+          "texture": "#cable"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        4,
+        4
+      ],
+      "to": [
+        12,
+        8,
+        12
+      ],
+      "faces": {
+        "down": {
+          "texture": "#shade",
+          "uv": [
+            0,
+            0,
+            16,
+            8
+          ]
+        },
+        "up": {
+          "texture": "#shade",
+          "uv": [
+            0,
+            0,
+            16,
+            8
+          ]
+        },
+        "north": {
+          "texture": "#shade",
+          "uv": [
+            0,
+            0,
+            16,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#shade",
+          "uv": [
+            0,
+            0,
+            16,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#shade",
+          "uv": [
+            0,
+            0,
+            16,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#shade",
+          "uv": [
+            0,
+            0,
+            16,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        4.5,
+        3.98,
+        4.5
+      ],
+      "to": [
+        11.5,
+        3.98,
+        11.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            12,
+            16,
+            16
+          ]
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}

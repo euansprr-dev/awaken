@@ -23,6 +23,14 @@
     "awaken:market_timber",
     "awaken:market_paper_wall",
     "awaken:market_goods",
-    "awaken:market_wish_lantern"
+    "awaken:market_wish_lantern",
+    "awaken:frost_timber",
+    "awaken:frost_prayer_wheel",
+    "awaken:dream_wallpaper",
+    "awaken:dream_wallpaper_torn",
+    "awaken:dream_boards",
+    "awaken:dream_wood",
+    "awaken:dream_toy",
+    "awaken:dream_music_box"
   ]
 }

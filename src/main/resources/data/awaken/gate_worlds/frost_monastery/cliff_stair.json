@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "theme": "frost_monastery",
+  "name": "The Cliff Stair",
+  "line": "Pillars of rock standing up out of a sea of cloud, rope bridges between them, and a little shrine on every one.",
+  "tier": "deep",
+  "rarity": "uncommon",
+  "kind": "open",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "lid": 18,
+    "isles": 1,
+    "clouds": 24,
+    "under": 30,
+    "tunnel": 1.6
+  },
+  "biome": "awaken:gate_world/cliff_stair",
+  "moods": [
+    {
+      "id": "still",
+      "name": "Still",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "blizzard",
+      "name": "Blizzard",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/cliff_stair_blizzard",
+      "life": [
+        "snow",
+        "mist"
+      ]
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/cliff_stair_aurora",
+      "life": [
+        "snow"
+      ]
+    },
+    {
+      "id": "thaw",
+      "name": "Thaw",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/cliff_stair_thaw",
+      "life": [
+        "drips",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:frost_stone",
+    "wall_glow": "awaken:frost_stone_carved",
+    "trim": "awaken:frost_stone_carved",
+    "floor": "awaken:frost_tiles",
+    "snow": "awaken:frost_snow",
+    "plaster": "awaken:frost_plaster",
+    "timber": "awaken:frost_timber",
+    "ice": "awaken:frost_ice",
+    "ice_glow": "awaken:frost_ice_glowing",
+    "icicles": "awaken:frost_icicles",
+    "flags": "awaken:frost_flags",
+    "lamp": "awaken:frost_butter_lamp",
+    "crystal": "awaken:frost_crystal",
+    "cloud": "awaken:frost_cloud",
+    "touch": "awaken:frost_prayer_wheel",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_ledges",
+    "sea_of_clouds"
+  ],
+  "life": [
+    "snow",
+    "mist",
+    "far_toll"
+  ],
+  "sound": "awaken:gate.world.frost_wind",
+  "events": [
+    "blizzard",
+    "the_wakening"
+  ],
+  "rule": "prayer",
+  "secrets": [
+    {
+      "id": "the_first_prayer",
+      "name": "The first prayer"
+    },
+    {
+      "id": "the_highest_shrine",
+      "name": "The highest shrine"
+    }
+  ],
+  "keepsake": "cliff_bell",
+  "keepsake_name": "A Bell from the Highest Shrine",
+  "keepsake_from": "the_highest_shrine",
+  "tall": true
+}

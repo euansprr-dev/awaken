@@ -28,6 +28,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Relative;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
@@ -39,6 +40,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,15 +96,34 @@ public final class WorldLive {
     static final class Ledge {
         Key floor;
         /** A drop world's shaft, or the Rooftops' streets (38.11): the same catch, its own words. */
-        boolean drop, lava, streets;
+        boolean drop, lava, streets, isles;
         Vec3 pos;
         float yaw;
     }
+
+    /**
+     * A player on a world that repeats (SPEC §38.12): a hall's fold (its slots, how often you've gone through, whether
+     * it has turned round for you) or an endless plain's band (in blocks).
+     */
+    static final class Repeat {
+        Key floor;
+        BlockPos origin;
+        FloorLayout.Mark fold;
+        int band, loops;
+        boolean opened;
+        double lastX = Double.NaN;
+    }
+
+    /** An endless plain turns you round this far from its edge, by this much (its band repeats every {@code WRAP}). */
+    static final double WRAP_AT = 24, WRAP = 32;
+    /** A fold's slot: you go back one each time you walk through its middle. */
+    static final double FOLD_SLOT = 16;
 
     record Timed(long at, long seq, Runnable run) {}
 
     static final Map<Key, Live> LIVE = new HashMap<>();
     static final Map<UUID, Ledge> LEDGES = new HashMap<>();
+    static final Map<UUID, Repeat> REPEATS = new HashMap<>();
     /** The room of the place world each player stands in, if any. */
     static final Map<UUID, Integer> PLACE = new HashMap<>();
     static final PriorityQueue<Timed> LATER = new PriorityQueue<>(Comparator.comparingLong(Timed::at).thenComparingLong(Timed::seq));
@@ -112,6 +133,7 @@ public final class WorldLive {
     public static void clear() {
         LIVE.clear();
         LEDGES.clear();
+        REPEATS.clear();
         PLACE.clear();
         LATER.clear();
         WorldRules.clear();
@@ -139,12 +161,14 @@ public final class WorldLive {
         // the Flood is the Belfry's (never under the open sky); ledges and props are wherever their floor is
         for (Live l : LIVE.values()) if (l.flood != null && l.flood.step(gl)) l.flood = null;
         if (!LEDGES.isEmpty()) for (ServerLevel lv : GateService.levels(server)) for (ServerPlayer p : lv.players()) ledge(lv, p);
+        if (!REPEATS.isEmpty()) for (ServerLevel lv : GateService.levels(server)) for (ServerPlayer p : lv.players()) repeat(lv, p);
         WorldProps.tick(gl, now);
     }
 
     /** A player stepped onto a floor (WorldsLive.arrive): nothing carries over from the last one. */
     static void left(ServerPlayer p) {
         PLACE.remove(p.getUUID());
+        REPEATS.remove(p.getUUID());
         Ledge l = LEDGES.get(p.getUUID());
         if (l != null) l.pos = null;
     }
@@ -160,6 +184,7 @@ public final class WorldLive {
         UUID id = p.getUUID();
         if (f.world.isEmpty()) {
             LEDGES.remove(id);
+            REPEATS.remove(id);
             PLACE.remove(id);
             return;
         }
@@ -172,7 +197,10 @@ public final class WorldLive {
             ledge.pos = null;
         }
         ledge.streets = w.param("deep", 0) > 0;
-        ledge.drop = w.kind().equals("drop") || ledge.streets;
+        // a drop world's shaft, the streets, and the air under an island (38.12) all catch a fall
+        ledge.isles = w.kind().equals("isles") || w.param("isles", 0) > 0;
+        ledge.drop = w.kind().equals("drop") || ledge.streets || ledge.isles;
+        repeats(p, g, f, w, key);
         ledge.lava = w.dressing().blocks().getOrDefault("fluid", "").equals("minecraft:lava");
         places(p, g, f, r);
         nooks(p, g, f, r);
@@ -200,6 +228,7 @@ public final class WorldLive {
         hum(level, p, g, f, live);
         WorldProps.near(level, p, g, f);
         if (f.world.endsWith("/inkwell") && (level.getGameTime() + p.getId()) % 4 == 0) unfold(level, p);
+        if (f.world.endsWith("/simulation")) draw(level, p);
     }
 
     /** A hung bell over you hums softly as you pass under it (within its rim, 32 below it at most). */
@@ -656,6 +685,94 @@ public final class WorldLive {
         return !e.getPersistentData().getStringOr(RINGER_TAG, "").isEmpty();
     }
 
+    // ---- worlds that repeat (38.12) -----------------------------------------------------------------------------------
+
+    /** Keeps a player's place on a floor that repeats (a fold, an endless plain), or forgets it on one that doesn't. */
+    static void repeats(ServerPlayer p, GateRecord g, FloorLayout f, GateWorld w, Key key) {
+        List<FloorLayout.Mark> folds = f.marks(FloorLayout.Mark.FOLD);
+        int band = (int) w.param("band", 0) * 16;
+        if (folds.isEmpty() && band <= 0) {
+            REPEATS.remove(p.getUUID());
+            return;
+        }
+        Repeat rp = REPEATS.computeIfAbsent(p.getUUID(), k -> new Repeat());
+        if (!key.equals(rp.floor)) {
+            rp.floor = key;
+            rp.loops = 0;
+            rp.opened = false;
+            rp.lastX = Double.NaN;
+        }
+        rp.origin = GateService.world(g, f, 0, 0, 0);
+        rp.fold = folds.isEmpty() ? null : folds.get(0);
+        rp.band = band;
+    }
+
+    /**
+     * Every tick for a player on a floor that repeats. An endless plain turns you round before its edge: a step from the
+     * band's outer part puts you one repeat in, the same white all round. A fold: walk on through its middle slot and you
+     * step back to that slot's start, as if the hall went on; go through twice, turn round and walk back, and the hall
+     * turns round with you (its slots are the same turned about their middle), so you come out going on toward its end.
+     * Only the walker moves; monsters never cross.
+     */
+    static void repeat(ServerLevel level, ServerPlayer p) {
+        Repeat rp = REPEATS.get(p.getUUID());
+        if (rp == null || rp.origin == null || !p.isAlive() || p.isSpectator()) return;
+        double lx = p.getX() - rp.origin.getX(), ly = p.getY() - rp.origin.getY(), lz = p.getZ() - rp.origin.getZ();
+        if (lx < 0 || lz < 0 || lx > dev.awaken.gates.world.Plots.SIDE || lz > dev.awaken.gates.world.Plots.SIDE) {
+            rp.lastX = Double.NaN;
+            return;
+        }
+        if (rp.band > 0) {
+            double side = dev.awaken.gates.world.Plots.SIDE;
+            double dx = lx < WRAP_AT ? WRAP : lx > side - WRAP_AT ? -WRAP : 0, dz = lz < WRAP_AT ? WRAP : lz > side - WRAP_AT ? -WRAP : 0;
+            if (dx != 0 || dz != 0) p.teleportTo(level, dx, 0, dz, Relative.ALL, 0F, 0F, false);
+            return;
+        }
+        FloorLayout.Mark m = rp.fold;
+        if (m == null) return;
+        double last = rp.lastX;
+        rp.lastX = lx;
+        boolean in = lz >= m.z0() && lz <= m.z1() + 1 && ly >= m.y0() - 1 && ly <= m.y1() + 1;
+        if (!in || Double.isNaN(last) || rp.opened) return;
+        double mid = (m.x0() + m.x1() + 1) / 2.0, on = mid + FOLD_SLOT / 2, back = mid - FOLD_SLOT / 2;
+        if (last <= on && lx > on) {
+            rp.loops++;
+            rp.lastX = lx - FOLD_SLOT;
+            p.teleportTo(level, -FOLD_SLOT, 0, 0, Relative.ALL, 0F, 0F, false);
+            if (rp.loops == 3) p.sendOverlayMessage(Component.literal("This hall doesn't seem to end."));
+        } else if (last >= back && lx < back && rp.loops >= 2) {
+            rp.opened = true;
+            double nx = rp.origin.getX() + 2 * mid - lx, nz = rp.origin.getZ() + (m.z0() + m.z1() + 1) - lz;
+            p.teleportTo(level, nx, 0, nz, EnumSet.of(Relative.Y, Relative.Y_ROT, Relative.X_ROT, Relative.DELTA_X, Relative.DELTA_Y,
+                    Relative.DELTA_Z, Relative.ROTATE_DELTA), 180F, 0F, false);
+            p.sendOverlayMessage(Component.literal("You turned round, and the hall turned round with you. Its end is just ahead."));
+            WorldThemes.play(level, p.blockPosition(), "fold", 1.2F, 1F);
+        }
+    }
+
+    /** The Simulation draws itself where you look (38.12): its sketched blocks within a few of your line of sight fill in. */
+    static void draw(ServerLevel level, ServerPlayer p) {
+        Vec3 eye = p.getEyePosition(), look = p.getLookAngle();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        boolean any = false;
+        for (int step = 0; step < 5; step++) {
+            double t = 2 + step * 3;
+            int cx = (int) Math.floor(eye.x + look.x * t), cy = (int) Math.floor(eye.y + look.y * t), cz = (int) Math.floor(eye.z + look.z * t);
+            for (int dx = -3; dx <= 3; dx++) {
+                for (int dy = -3; dy <= 3; dy++) {
+                    for (int dz = -3; dz <= 3; dz++) {
+                        m.set(cx + dx, cy + dy, cz + dz);
+                        BlockState s = level.getBlockState(m);
+                        if (!(s.getBlock() instanceof ThemeBlocks.Folding) || s.getValue(ThemeBlocks.Folding.OPEN)) continue;
+                        ThemeBlocks.Folding.open(level, m.immutable(), s);
+                        any = true;
+                    }
+                }
+            }
+        }
+        if (any && (level.getGameTime() + p.getId()) % 3 == 0) WorldThemes.play(level, p.blockPosition(), "draw", 0.35F, 1F);
+    }
+
     // ---- the catch on a drop world -----------------------------------------------------------------------------------
 
     static void ledge(ServerLevel level, ServerPlayer p) {
@@ -691,6 +808,7 @@ public final class WorldLive {
         level.playSound(null, BlockPos.containing(l.pos), GatesRegistry.SND_WORLD_CATCH.get(), SoundSource.PLAYERS, 1F, 1F);
         level.sendParticles(GatesRegistry.P_GLINT.get(), l.pos.x, l.pos.y + 1, l.pos.z, 16, 0.4, 0.6, 0.4, 0.02);
         p.sendOverlayMessage(Component.literal(l.streets ? "You fell into the streets, and the market lifted you back up onto the roofs."
+                : l.isles ? "You fell, and the air carried you back to the last ground you stood on."
                 : "You fell, and the shaft gave you back to the last ledge you stood on."));
     }
 

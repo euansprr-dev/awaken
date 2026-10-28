@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "theme": "frost_monastery",
+  "name": "The Ice Caves",
+  "line": "Caves of blue ice under the monastery. The light comes through the walls, and the floor rings when you walk on it.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "roof": 12,
+    "wobble": 1.6
+  },
+  "biome": "awaken:gate_world/ice_caves",
+  "moods": [
+    {
+      "id": "still",
+      "name": "Still",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "blizzard",
+      "name": "Blizzard",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/ice_caves_blizzard",
+      "life": [
+        "snow",
+        "mist"
+      ]
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/ice_caves_aurora",
+      "life": [
+        "snow"
+      ]
+    },
+    {
+      "id": "thaw",
+      "name": "Thaw",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/ice_caves_thaw",
+      "life": [
+        "drips",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:frost_stone",
+    "wall_glow": "awaken:frost_stone_carved",
+    "trim": "awaken:frost_stone_carved",
+    "floor": "awaken:frost_tiles",
+    "snow": "awaken:frost_snow",
+    "plaster": "awaken:frost_plaster",
+    "timber": "awaken:frost_timber",
+    "ice": "awaken:frost_ice",
+    "ice_glow": "awaken:frost_ice_glowing",
+    "icicles": "awaken:frost_icicles",
+    "flags": "awaken:frost_flags",
+    "lamp": "awaken:frost_butter_lamp",
+    "crystal": "awaken:frost_crystal",
+    "cloud": "awaken:frost_cloud",
+    "touch": "awaken:frost_prayer_wheel",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "ice_walls",
+    "frozen_falls"
+  ],
+  "life": [
+    "snow",
+    "drips",
+    "mist"
+  ],
+  "sound": "awaken:gate.world.frost_ice",
+  "events": [
+    "blizzard"
+  ],
+  "rule": "prayer",
+  "secrets": [
+    {
+      "id": "the_first_prayer",
+      "name": "The first prayer"
+    },
+    {
+      "id": "the_frozen_monk",
+      "name": "The frozen monk"
+    },
+    {
+      "id": "the_cold_draught",
+      "name": "The cold draught",
+      "leads_to": "awaken:frost_monastery/frozen_choir"
+    }
+  ],
+  "keepsake": "ice_bead",
+  "keepsake_name": "An Ice Bead That Never Melts",
+  "keepsake_from": "the_frozen_monk"
+}

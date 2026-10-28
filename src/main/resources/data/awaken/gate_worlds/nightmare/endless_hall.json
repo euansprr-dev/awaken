@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "theme": "nightmare",
+  "name": "The Endless Hall",
+  "line": "A hallway with doors all along it, and it doesn't end. Not the way you're walking, anyway.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "fold",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "square": 1,
+    "roof": 10
+  },
+  "biome": "awaken:gate_world/endless_hall",
+  "moods": [
+    {
+      "id": "deep_sleep",
+      "name": "Deep sleep",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "fever",
+      "name": "Fever",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/endless_hall_fever",
+      "life": [
+        "mist"
+      ]
+    },
+    {
+      "id": "lullaby",
+      "name": "Lullaby",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/endless_hall_lullaby",
+      "life": [
+        "dust",
+        "fireflies"
+      ]
+    },
+    {
+      "id": "wake",
+      "name": "Waking",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/endless_hall_wake",
+      "life": [
+        "rain"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:dream_wallpaper",
+    "torn": "awaken:dream_wallpaper_torn",
+    "floor": "awaken:dream_boards",
+    "trim": "awaken:dream_wood",
+    "wood": "awaken:dream_wood",
+    "plush": "awaken:dream_plush",
+    "sheet": "awaken:dream_sheet",
+    "dark": "awaken:dream_dark",
+    "lamp": "awaken:dream_lamp",
+    "candle": "awaken:dream_candle",
+    "motes": "awaken:dream_motes",
+    "toy": "awaken:dream_toy",
+    "wall_glow": "awaken:dream_window",
+    "touch": "awaken:dream_music_box",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_fold"
+  ],
+  "life": [
+    "dust",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.dream_hall",
+  "events": [
+    "lullaby"
+  ],
+  "rule": "lullaby",
+  "secrets": [
+    {
+      "id": "the_first_tune",
+      "name": "The first tune"
+    },
+    {
+      "id": "the_door_left_open",
+      "name": "The door left open"
+    },
+    {
+      "id": "the_crack_of_light",
+      "name": "The light under the door",
+      "leads_to": "awaken:nightmare/nursery"
+    }
+  ],
+  "keepsake": "hall_key",
+  "keepsake_name": "A Key to Every Door",
+  "keepsake_from": "the_door_left_open"
+}

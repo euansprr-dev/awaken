@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/frost_prayer_wheel"
+    },
+    "lit=true": {
+      "model": "awaken:block/frost_prayer_wheel_lit"
+    }
+  }
+}

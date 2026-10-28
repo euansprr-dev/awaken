@@ -175,6 +175,77 @@ MARKET_MOODS = {
     "ghost_market": ("#1a3a3a", 0.8, [("minecraft:soul", 0.0008)], ("awaken:gate.world.spirits", 0.003)),
 }
 
+# Stage 4 (38.12): the C themes. The Frost Monastery's open lands sit high on a mountain under a cold sky; the White is
+# white all the way out (its fog starts at your feet).
+FROST = {
+    "cloisters": ("#c8d8e8", "#8ab4e8", "#3a6a90", "#0a2030", 24.0, 150.0, "awaken:gate.world.frost_chant",
+                  [("minecraft:snowflake", 0.002)], ("awaken:gate.world.bells", 0.001)),
+    "ice_caves": ("#1a3040", "#0a1620", "#3a6a90", "#0a2030", 8.0, 110.0, "awaken:gate.world.frost_ice",
+                  [("minecraft:snowflake", 0.002), ("minecraft:glow", 0.0008)], ("awaken:gate.world.icecrack", 0.003)),
+    "cliff_stair": ("#d0dcec", "#7aa8e0", "#3a6a90", "#0a2030", 30.0, 170.0, "awaken:gate.world.frost_wind",
+                    [("minecraft:snowflake", 0.003)], ("awaken:gate.world.bells", 0.0008)),
+    "still_snow": ("#dce4f0", "#9ab8e0", "#3a6a90", "#0a2030", 20.0, 140.0, "awaken:gate.world.frost_wind",
+                   [("minecraft:snowflake", 0.004), ("minecraft:end_rod", 0.0002)], ("awaken:gate.world.icecrack", 0.001)),
+    "frozen_choir": ("#203048", "#0e1624", "#3a6a90", "#0a2030", 6.0, 64.0, "awaken:gate.world.frost_chant",
+                     [("minecraft:snowflake", 0.003)], ("awaken:gate.world.wheel", 0.002)),
+}
+FROST_MOODS = {
+    "blizzard": ("#e8eef8", 0.35, [("minecraft:snowflake", 0.03)], ("awaken:gate.world.blizzard", 0.004)),
+    "aurora": ("#203a50", 1.0, [("minecraft:end_rod", 0.0006)], None),
+    "thaw": ("#3a4a50", 0.8, [("minecraft:dripping_water", 0.006)], ("awaken:gate.world.icecrack", 0.006)),
+}
+PALACE = {
+    "gallery": ("#3a3440", "#1a1620", "#3a4a60", "#0a1020", 10.0, 120.0, "awaken:gate.world.palace_halls",
+                [("minecraft:white_ash", 0.001), ("minecraft:end_rod", 0.0002)], ("awaken:gate.world.mirror", 0.0015)),
+    "mirror_maze": ("#3a3a48", "#1a1a24", "#3a4a60", "#0a1020", 6.0, 80.0, "awaken:gate.world.palace_halls",
+                    [("minecraft:white_ash", 0.001)], ("awaken:gate.world.doubled", 0.001)),
+    "inverted_palace": ("#2a2838", "#14121c", "#3a4a60", "#0a1020", 10.0, 120.0, "awaken:gate.world.palace_under",
+                        [("minecraft:end_rod", 0.0004)], ("awaken:gate.world.mirror", 0.002)),
+    "the_white": ("#f4f4f8", "#ffffff", "#c0d0e0", "#e0e8f0", 0.0, 96.0, "awaken:gate.world.palace_white",
+                  [("minecraft:white_ash", 0.002)], ("awaken:gate.world.whale", 0.0004)),
+    "room_behind_glass": ("#2a2030", "#140e18", "#3a4a60", "#0a1020", 6.0, 64.0, "awaken:gate.world.palace_under",
+                          [("minecraft:white_ash", 0.002)], ("awaken:gate.world.mirror", 0.002)),
+}
+PALACE_MOODS = {
+    "shattered": ("#4a4a5a", 0.8, [("minecraft:white_ash", 0.006)], ("awaken:gate.world.shatter", 0.001)),
+    "candlelit": ("#4a2e18", 0.85, [("minecraft:small_flame", 0.0004)], None),
+    "doubled": ("#2a2a3a", 0.7, [("minecraft:end_rod", 0.0008)], ("awaken:gate.world.doubled", 0.003)),
+}
+LAB = {
+    "facility": ("#4a5860", "#1a2428", "#3aa0a0", "#0a2a2a", 10.0, 110.0, "awaken:gate.world.lab_hum",
+                 [("minecraft:white_ash", 0.0008)], ("awaken:gate.world.console", 0.001)),
+    "server_abyss": ("#101a24", "#060c12", "#3aa0a0", "#0a2a2a", 6.0, 100.0, "awaken:gate.world.lab_servers",
+                     [("minecraft:glow", 0.001)], ("awaken:gate.world.console", 0.002)),
+    "containment": ("#14281e", "#08140e", "#3aa0a0", "#0a2a2a", 6.0, 90.0, "awaken:gate.world.lab_hum",
+                    [("minecraft:glow", 0.0008), ("minecraft:dripping_water", 0.002)], ("awaken:gate.world.breach", 0.0006)),
+    "simulation": ("#06101c", "#020610", "#3aa0a0", "#0a2a2a", 8.0, 120.0, "awaken:gate.world.lab_sim",
+                   [("minecraft:end_rod", 0.0006)], ("awaken:gate.world.glitch", 0.0008)),
+    "garden_dome": ("#1e3a24", "#0c1a10", "#3aa0a0", "#0a2a2a", 8.0, 80.0, "awaken:gate.world.lab_sim",
+                    [("minecraft:spore_blossom_air", 0.002)], ("awaken:gate.world.console", 0.001)),
+}
+LAB_MOODS = {
+    "lockdown": ("#5a1010", 0.8, [], ("awaken:gate.world.lockdown", 0.002)),
+    "breach": ("#1a4a20", 0.7, [("minecraft:dripping_water", 0.004)], ("awaken:gate.world.breach", 0.002)),
+    "reboot": ("#101828", 0.6, [("minecraft:end_rod", 0.0008)], ("awaken:gate.world.glitch", 0.002)),
+}
+DREAM = {
+    "the_house": ("#2a2034", "#120c1a", "#3a3060", "#0a0818", 8.0, 96.0, "awaken:gate.world.dream_house",
+                  [("minecraft:white_ash", 0.001)], ("awaken:gate.world.musicbox", 0.0008)),
+    "endless_hall": ("#241a2e", "#0e0a14", "#3a3060", "#0a0818", 4.0, 48.0, "awaken:gate.world.dream_hall",
+                     [("minecraft:white_ash", 0.001)], ("awaken:gate.world.musicbox", 0.0006)),
+    "upside_down": ("#2a1a30", "#140a18", "#3a3060", "#0a0818", 8.0, 96.0, "awaken:gate.world.dream_deep",
+                    [("minecraft:white_ash", 0.002)], ("awaken:gate.world.stirs", 0.0004)),
+    "sleepers_dream": ("#140a24", "#08041a", "#3a3060", "#0a0818", 16.0, 140.0, "awaken:gate.world.dream_deep",
+                       [("minecraft:end_rod", 0.0004), ("minecraft:white_ash", 0.001)], ("awaken:gate.world.stirs", 0.0006)),
+    "nursery": ("#3a2a3a", "#1a101a", "#3a3060", "#0a0818", 6.0, 56.0, "awaken:gate.world.dream_house",
+                [("minecraft:white_ash", 0.002)], ("awaken:gate.world.musicbox", 0.003)),
+}
+DREAM_MOODS = {
+    "fever": ("#5a2020", 0.7, [("minecraft:crimson_spore", 0.002)], None),
+    "lullaby": ("#3a2a4a", 1.0, [("minecraft:end_rod", 0.0006)], ("awaken:gate.world.musicbox", 0.004)),
+    "wake": ("#4a4a5a", 1.2, [("minecraft:falling_water", 0.004)], ("awaken:gate.world.alarm", 0.001)),
+}
+
 # The real sky over the open lands (gates_sky, 38.11): sun_angle 0 is noon, 90 sunset, 180 midnight. Every sky attribute is
 # spatially interpolated, so a biome carries it; the Market's lands are always night (its recipes say night 1).
 NIGHT = {"sun_angle": 180.0, "moon_angle": 0.0, "star_brightness": 0.6, "sky_light_factor": 0.24, "sky_light_color": "#7a7aff"}
@@ -186,6 +257,9 @@ SKY = {
     "rooftops": dict(NIGHT, sky_light_color="#8a80ff", star_brightness=0.8),
     "floating_market": dict(NIGHT, sky_light_color="#8090ff"),
     "festival": dict(NIGHT, sky_light_color="#b080ff", star_brightness=0.4),
+    "cloisters": {"sun_angle": 30.0, "sky_light_color": "#e8f0ff"},
+    "cliff_stair": {"sun_angle": 20.0, "sky_light_color": "#f0f4ff"},
+    "still_snow": {"sun_angle": 62.0, "sky_light_color": "#d8e0ff", "star_brightness": 0.3},
 }
 # a mood's sky over an open world: its own fog and sky colours (not a tint) and its light
 MOOD_SKY = {
@@ -193,6 +267,9 @@ MOOD_SKY = {
                     "sky_light_color": "#ffc890", "sky_light_factor": 0.85},
     "sandstorm": {"fog": "#b89868", "sky": "#a89070", "sky_light_factor": 0.55},
     "night": dict(NIGHT, fog="#141830", sky="#0a1028"),
+    "blizzard": {"fog": "#e0e8f0", "sky": "#c0c8d0", "sky_light_factor": 0.6},
+    "aurora": dict(NIGHT, fog="#102030", sky="#081830", sky_light_color="#80ffd0", star_brightness=0.9),
+    "thaw": {"fog": "#a8b8c8", "sky": "#8898b0", "sky_light_factor": 0.8},
 }
 
 # theme: its worlds, its moods (every world but the secret one has them), its secret world, its water colour if not the table's
@@ -206,6 +283,10 @@ THEMES = {
     "clockwork_foundry": (FOUNDRY, FOUNDRY_MOODS, "orrery"),
     "glass_desert": (DESERT, DESERT_MOODS, "hourglass"),
     "lantern_night_market": (MARKET, MARKET_MOODS, "brokers_vault"),
+    "frost_monastery": (FROST, FROST_MOODS, "frozen_choir"),
+    "mirror_palace": (PALACE, PALACE_MOODS, "room_behind_glass"),
+    "precursor_lab": (LAB, LAB_MOODS, "garden_dome"),
+    "nightmare": (DREAM, DREAM_MOODS, "nursery"),
 }
 
 

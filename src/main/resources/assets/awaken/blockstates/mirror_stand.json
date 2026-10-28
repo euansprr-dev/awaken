@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/mirror_stand"
+    },
+    "lit=true": {
+      "model": "awaken:block/mirror_stand_lit"
+    }
+  }
+}

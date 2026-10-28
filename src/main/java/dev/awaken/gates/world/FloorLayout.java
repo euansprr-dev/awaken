@@ -67,6 +67,11 @@ public final class FloorLayout {
         public static final String TOUCH = "touch";
         /** A hidden nook whose secret ({@code id}) is found by standing in it (SPEC §38.10). */
         public static final String NOOK = "nook";
+        /**
+         * A hall's fold (SPEC §38.12): its three slots' blocks. Walk on through its middle and you're back at its start;
+         * turn round after going through twice and the hall turns round with you, so you come out at its far end.
+         */
+        public static final String FOLD = "fold";
         /** A bell mark's id for a handbell on the floor (the rest are hung bells; "still" and "lowest" are named ones). */
         public static final String HANDBELL = "handbell";
 

@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/lab_frame"
+    },
+    "axis=z": {
+      "model": "awaken:block/lab_frame",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "awaken:block/lab_frame",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

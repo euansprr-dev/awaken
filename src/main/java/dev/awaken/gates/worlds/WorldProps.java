@@ -32,7 +32,8 @@ import java.util.Map;
  * Swinging bells (SPEC §38.6): a floor's {@code prop} marks shown as block displays hung at their canon while anyone is
  * near, and swung when they ring. The display turns about its own position (the hinge) by its pitch, which the game
  * eases between updates, so a swing costs one rotation a bell every few ticks. The same displays slide the Swarm's comb
- * (38.10), turn the Foundry's gears and carry the Orrery's planets round their sun (38.11). Never saved: a prop loaded
+ * (38.10), turn the Foundry's gears and carry the Orrery's planets round their sun (38.11), and spin the Monastery's
+ * prayer wheels (38.12). Never saved: a prop loaded
  * from disk leaves at once and is made again when someone comes near.
  */
 public final class WorldProps {
@@ -55,6 +56,8 @@ public final class WorldProps {
         final boolean comb;
         /** A gear lying flat that turns (the Works Floor), a planet going round (the Orrery: 38.11). */
         final boolean gear, orb;
+        /** A prayer wheel standing on its foot, turning slowly (the Cloisters: 38.12). */
+        final boolean wheel;
         Display.BlockDisplay display;
         float amp;
         long since;
@@ -65,6 +68,7 @@ public final class WorldProps {
             this.comb = mark.id().startsWith("comb:");
             this.gear = mark.id().startsWith("gear:");
             this.orb = mark.id().startsWith("orb:");
+            this.wheel = mark.id().startsWith("wheel:");
             this.r = Integer.parseInt(mark.id().substring(mark.id().indexOf(':') + 1)) / 10.0;
             this.h = mark.y1() - mark.y0() + 1;
             this.yaw = (Hash.of(mark.x0(), mark.z0(), 41) & 1) == 0 ? 0f : 90f;
@@ -104,6 +108,7 @@ public final class WorldProps {
             if (pr.display != null && !pr.display.isRemoved()) continue;
             double x = o.getX() + pr.mark.cx(), y = o.getY() + pr.mark.y1() + 1, z = o.getZ() + pr.mark.cz();
             if (pr.gear || pr.orb) y = o.getY() + pr.mark.y0() + 0.5;
+            if (pr.wheel) y = o.getY() + pr.mark.y0();
             if (p.distanceToSqr(x, y, z) > NEAR * NEAR || !level.hasChunkAt(BlockPos.containing(x, y, z))) continue;
             pr.display = spawn(level, x, y, z, pr, o);
         }
@@ -114,6 +119,7 @@ public final class WorldProps {
         BlockState bell = pr.comb ? GatesRegistry.theme("hive_comb_capped").defaultBlockState()
                 : pr.gear ? GatesRegistry.theme("foundry_gear").defaultBlockState()
                 : pr.orb ? GatesRegistry.theme("foundry_brass").defaultBlockState()
+                : pr.wheel ? GatesRegistry.theme("frost_prayer_wheel").defaultBlockState()
                 : GatesRegistry.BELL_PROP.get().defaultBlockState();
         tag.put("block_state", BlockState.CODEC.encodeStart(NbtOps.INSTANCE, bell).getOrThrow());
         float w = (float) (pr.r * 2);
@@ -123,6 +129,7 @@ public final class WorldProps {
                 ? new Transformation(new Vector3f(-w / 2, -pr.h, -0.5f), new Quaternionf(), new Vector3f(w, pr.h, 1), new Quaternionf())
                 : pr.gear ? new Transformation(new Vector3f(-w / 2, -0.125f, -w / 2), new Quaternionf(), new Vector3f(w, 0.25f, w), new Quaternionf())
                 : pr.orb ? new Transformation(new Vector3f(-ball / 2, -ball / 2, -ball / 2), new Quaternionf(), new Vector3f(ball, ball, ball), new Quaternionf())
+                : pr.wheel ? new Transformation(new Vector3f(-w / 2, 0, -w / 2), new Quaternionf(), new Vector3f(w, pr.h, w), new Quaternionf())
                 : new Transformation(new Vector3f(-w / 2, -pr.h, -w / 2), new Quaternionf(), new Vector3f(w, pr.h, w), new Quaternionf());
         pr.bx = x;
         pr.by = y;
@@ -131,11 +138,12 @@ public final class WorldProps {
         tag.putInt("teleport_duration", STEP);
         tag.putFloat("view_range", 2.5f);
         // lit by the lamp inside it, not by the dark at its canon
-        BlockPos lamp = pr.gear || pr.orb ? BlockPos.containing(x, y, z) : BlockPos.containing(x, y - pr.h / 2.0, z);
+        BlockPos lamp = pr.gear || pr.orb ? BlockPos.containing(x, y, z) : pr.wheel ? BlockPos.containing(x, y + 0.5, z)
+                : BlockPos.containing(x, y - pr.h / 2.0, z);
         int light = Math.max(pr.orb ? 11 : 6, level.getBrightness(LightLayer.BLOCK, lamp));
         tag.put("brightness", Brightness.CODEC.encodeStart(NbtOps.INSTANCE, new Brightness(light, 0)).getOrThrow());
         double sx = pr.orb ? x + pr.r : x;
-        float yaw = pr.gear || pr.orb ? 0f : pr.yaw;
+        float yaw = pr.gear || pr.orb || pr.wheel ? 0f : pr.yaw;
         Entity e = EntityType.loadEntityRecursive(EntityTypes.BLOCK_DISPLAY, tag, level, EntitySpawnReason.TRIGGERED, ent -> {
             ent.snapTo(sx, y, z, yaw, 0f);
             return ent;
@@ -196,6 +204,13 @@ public final class WorldProps {
                     if (tick % STEP != 0) continue;
                     double dir = (Hash.of(pr.mark.x0(), pr.mark.z0(), 43) & 1) == 0 ? 1 : -1;
                     d.setYRot(net.minecraft.util.Mth.wrapDegrees((float) (dir * pace * tick * 6.0 / pr.r)));
+                    continue;
+                }
+                if (pr.wheel) {
+                    // a prayer wheel turns one way, slowly, each a little out of step with the next
+                    if (tick % STEP != 0) continue;
+                    double phase = (Hash.of(pr.mark.x0(), pr.mark.z0(), 53) & 255) * 1.4;
+                    d.setYRot(net.minecraft.util.Mth.wrapDegrees((float) (tick * pace * 2.0 + phase)));
                     continue;
                 }
                 if (pr.orb) {
