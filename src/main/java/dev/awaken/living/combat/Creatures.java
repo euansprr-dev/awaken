@@ -104,8 +104,10 @@ public final class Creatures {
             // a wild animal in D land or higher fights back (SPEC §21.10): neutral, scaled, a little bigger, sometimes an alpha
             int land = Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL);
             boolean settled = Regions.landCap(level, mob.blockPosition()) != Integer.MAX_VALUE;
-            if (scale && reason != null && WildKin.fights(mob.getType(), WildKin.wild(reason), mob.isBaby(), settled, land)) {
-                boolean alpha = mob.getRandom().nextFloat() < LivingModule.eliteChance(land);
+            // the ledger's herds (SPEC §41.2) are the wild's own, and a deep-wild herd's first body is its alpha
+            boolean ledger = dev.awaken.living.population.Ledger.spawning();
+            if (scale && reason != null && WildKin.fights(mob.getType(), WildKin.wild(reason) || ledger, mob.isBaby(), settled, land)) {
+                boolean alpha = dev.awaken.living.population.Ledger.alphaWanted() || !ledger && mob.getRandom().nextFloat() < LivingModule.eliteChance(land);
                 int lv = Regions.creatureLevel(level, mob.blockPosition(), alpha ? Regions.Role.ELITE : Regions.Role.NEUTRAL);
                 applyScaling(mob, lv, alpha, WildKin.growth(dev.awaken.living.region.RegionMap.rankOf(land)));
                 String title = alpha ? "Alpha of " + Regions.regionAt(level, mob.getBlockX(), mob.getBlockZ()).name() : "";

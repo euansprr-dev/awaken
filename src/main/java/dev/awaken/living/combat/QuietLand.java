@@ -12,21 +12,22 @@ import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * A quieter land (SPEC §21.11, decision 23): the further the rank, the fewer animals graze, the shyer the ones that do, and the less birdsong. Natural
- * spawns of animals are thinned by rank (E all, D four fifths, C a half and a bit, B a third, A a fifth, S a tenth) except at a settlement and in a
- * Hearth's calm (which are below D by their caps), wild kin keep their distance from a player who is not sneaking, and the wild life layer
- * (birds, insects) thins and falls nearly silent in A and S. Hunting pays more as animals thin (the extra food per rank), and an alpha carries hide.
+ * A quieter land (SPEC §21.11, decision 23, as changed by the Wild Lands, SPEC §41 decision 2): animals follow wildness, not
+ * danger. Natural spawns of animals thin in tamed land and pasture (people's land holds fewer wild animals; the wild's herds
+ * come from the ledger) and never by rank, so the deep wild of a hard land is full of life. A settlement's own land and a
+ * Hearth's calm keep every spawn (its farm animals). The rank still makes wild kin shyer of a player who is not sneaking,
+ * and the wild life layer (birds, insects) still thins by rank and falls nearly silent in A and S: the dread keeps its hush.
  */
 public final class QuietLand {
     private QuietLand() {}
 
-    /** The share of natural animal spawns kept, by rank E to S. */
-    public static final float[] KEEP = {1F, 0.8F, 0.55F, 0.35F, 0.2F, 0.1F};
+    /** The share of natural animal spawns kept, by wildness band (Tamed, Pasture, Wild, Deep wild). */
+    public static final float[] KEEP = {0.7F, 0.9F, 1F, 1F};
     /** The share of the small ambient life (birds, insects) kept, by rank. */
     public static final float[] WILD = {1F, 0.8F, 0.5F, 0.3F, 0.08F, 0.02F};
 
-    public static float keep(int rank) {
-        return KEEP[Math.max(0, Math.min(5, rank))];
+    public static float keep(dev.awaken.living.api.Wildness.Band band) {
+        return KEEP[band.ordinal()];
     }
 
     /** The ambient life's share in the land of this level (-1 = unknown: all). */
@@ -39,13 +40,14 @@ public final class QuietLand {
         return 6F + 4F * Math.max(1, Math.min(5, rank));
     }
 
-    /** Whether a natural spawn of this creature is turned away: an animal, nature's own, in land of rank D or up, not on a settlement's land. */
+    /** Whether a natural spawn of this creature is turned away: an animal, nature's own, in tamed land or pasture, not on a settlement's land. */
     public static boolean thins(ServerLevel level, Mob mob, EntitySpawnReason reason, RandomSource rnd) {
         if (!Regions.on(level) || mob.getType().getCategory() != MobCategory.CREATURE) return false;
         if (reason != EntitySpawnReason.NATURAL && reason != EntitySpawnReason.CHUNK_GENERATION) return false;
-        int rank = RegionMap.rankOf(Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL));
-        if (rank <= 0 || Regions.landCap(level, mob.blockPosition()) != Integer.MAX_VALUE) return false;
-        return rnd.nextFloat() >= keep(rank);
+        if (dev.awaken.living.population.Ledger.spawning() || Regions.landCap(level, mob.blockPosition()) != Integer.MAX_VALUE) return false;
+        // during generation the chunk isn't loaded yet: the land's own value (no record)
+        double w = dev.awaken.living.api.Wildness.land(level, mob.getBlockX(), mob.getBlockZ());
+        return rnd.nextFloat() >= keep(dev.awaken.living.api.Wildness.band(w));
     }
 
     /** Wild kin shy from a player on their feet; a sneaking hunter walks up to them. */

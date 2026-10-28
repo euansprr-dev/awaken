@@ -41,6 +41,8 @@ public final class GroundModule {
         GroundFresh.init(modBus);
         dev.awaken.ground.wild.WildBlocks.init(modBus);
         dev.awaken.ground.wild.gen.WildGen.init(modBus);
+        // the herds' and hunters' eyes read the plants' cover (SPEC §41.2)
+        dev.awaken.living.api.Wildness.setCover(dev.awaken.ground.wild.WildLife::coverAt);
         modBus.addListener(AddPackFindersEvent.class, e -> e.addPackFinders(Awaken.id("datapacks/awakened_ground"), PackType.SERVER_DATA,
                 Component.literal("Awakened Ground"), PackSource.BUILT_IN, false, Pack.Position.TOP));
         GroundTests.register();

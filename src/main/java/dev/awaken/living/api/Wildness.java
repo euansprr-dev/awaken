@@ -109,6 +109,25 @@ public final class Wildness {
         return band(at(level, pos.getX(), pos.getZ()));
     }
 
+    /**
+     * How hidden someone at a place is, 0..1 (SPEC §41 decision 10: long grass is cover, both ways): registered by the module
+     * that grows the cover (the wild's plants). Creatures that hunt by sight, and herds, see a person in cover from closer.
+     */
+    @FunctionalInterface
+    public interface Cover {
+        double at(Level level, BlockPos pos);
+    }
+
+    private static volatile Cover cover = (level, pos) -> 0;
+
+    public static void setCover(Cover c) {
+        cover = c;
+    }
+
+    public static double coverAt(Level level, BlockPos pos) {
+        return Math.clamp(cover.at(level, pos), 0.0, 1.0);
+    }
+
     /** A Hearth tames its land and 140 blocks round it, softly (SPEC §41.1): a home is never in the deep wild. */
     public static double hearthKeep(ServerLevel level, int x, int z) {
         double keep = 1.0;

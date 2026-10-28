@@ -262,6 +262,8 @@ public final class WildTests {
         double edge = WildPlants.coverAt(level, h.absolutePos(new BlockPos(1, 1, 2)));
         double open = WildPlants.coverAt(level, h.absolutePos(new BlockPos(5, 1, 5)));
         h.assertTrue(Math.abs(mid - 1.0) < 1e-6, "the middle of the rye hides you: " + mid);
+        h.assertTrue(Math.abs(dev.awaken.living.api.Wildness.coverAt(level, h.absolutePos(new BlockPos(2, 1, 2))) - mid) < 1e-6,
+                "the herds read the same cover through Wildness.coverAt");
         h.assertTrue(edge < mid && edge > 0.7, "its edge a little less: " + edge);
         h.assertTrue(open == 0.0, "the open lawn hides nothing: " + open);
         h.assertTrue(Math.abs(WildPlants.coverAt(level, h.absolutePos(new BlockPos(2, 0, 2))) - mid) < 1e-6, "given the ground, the plant on it");
