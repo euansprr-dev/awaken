@@ -1,16 +1,15 @@
-"""The Ember Tyrant (SPEC §34, docs/bosses/PLAN.md §5): a horned brute at true size, about six and a half blocks tall.
+"""The Ember Tyrant (SPEC §35.9, docs/bosses/REWORK.md R1): the Living Forge, Euan's pick from the silhouette round.
 
-A Brute: a hunched basalt body with a molten crystal core in its chest, oversized forearms veined with magma under iron
-bracers, iron plates on its shoulders, curling obsidian horns, and a great axe in its right hand. Its light story is the
-heat: the core, the eyes, the cracks and the axe's edge all burn the same orange.
+A walking mountain of basalt, lopsided: a right arm burst into a molten fist, a slighter left arm dragging a great
+axe, a carapace with three chimneys on its back, and a horned skull carried low in front. Its light story is the
+forge: the core behind its ribs, the vents, the fist's fissures, the eyes and the axe's edge all burn the same orange.
 
-Moves: Magma Fist (the overhead two-hand hammer, HEAVY, held on a third of its swings), a left backhand (LIGHT), an axe
-chop string (two LIGHTs), a shoulder charge (GRAB), a stomp for whoever is behind it, Eruption (it rears back and slams
-both fists, PERILOUS, the signature), Stoke the Imps (its second phase: a roar that calls the imps) and Meltdown (its
-third: the core goes white and the ground round it melts).
+Moves (today's, re-sided for the new body until R2 rebuilds them): Magma Fist (the overhead two-hand hammer, HEAVY),
+the fist's backhand (LIGHT), an axe chop string (two LIGHTs), a shoulder charge with the fist's shoulder (GRAB), a
+stomp for whoever is behind it, Eruption (PERILOUS, the signature), Stoke the Imps and Meltdown (its transitions).
 """
 from kit import moves as M
-from kit import plans
+from kit import parts, plans
 from kit.core import stage_clips
 from kit.paint import cracks, edge_glow, radial
 import fauna_rig as R
@@ -19,68 +18,153 @@ from fauna_rig import Ramp, hexc, p_stone, combine, p_strokes, SIDES
 ID = "ember_tyrant"
 SCALE = 3.0  # the hitbox (the def's scale on vanilla's piglin brute: 1.8 x 5.85 blocks); the body is modelled at true size
 
-P = plans.Biped(leg=40, thigh=20, foot=(14, 5, 18), pelvis=(28, 12, 20), spine=(26, 12, 18), chest=(46, 26, 28), neck=(12, 6, 12),
-                head=(18, 16, 18), arm=(14, 24, 14), forearm=(20, 26, 20), hand=(16, 11, 16), stance=9, hunch=14, leg_w=(14, 12))
-
-AXE_TIP = (0, 6, -36)  # the blade's middle, in the axe bone's space
+# The Living Forge (REWORK.md R1, Euan's pick C, 2026-10-28): a walking mountain, lopsided. Short thick legs, the torso
+# pitched far forward, a rock carapace stepping up off its back with three chimneys, a long neck carrying a horned skull
+# low in front like a hunting beast, a right arm burst into a molten fist the size of a cart, and a slighter left arm
+# dragging the great axe behind it. Value story: the skull and horns are the lightest thing on it, the heat the
+# brightest; the rock is dark, the iron in between.
+P = plans.Biped(leg=40, thigh=20, foot=(22, 6, 26), pelvis=(40, 16, 28), spine=(36, 16, 28), chest=(60, 32, 40), neck=(16, 16, 16),
+                head=(24, 17, 26), arm=(22, 28, 22), forearm=(34, 30, 34), hand=(40, 22, 38), stance=17, hunch=36, leg_w=(22, 18))
+HUNCH = (14, 22)  # the spine's and the chest's rest pitch: the torso leans 36 degrees forward
+AXE_TIP = (0, 66, -15)  # the blade's middle, in the axe bone's space
 
 
 def body():
-    r = plans.biped(ID, P, tex=(512, 512))
-    b = r.by_name
-    # head: a heavy brow, an underslung jaw with tusks, and horns that curl out, up and forward
-    b["head"].cube("brow", -9.5, -12, -12, 19, 4, 4)
-    jaw = b["head"].bone("jaw", (0, -2, -3))
-    jaw.cube("jaw", -7, 0, -9, 14, 5, 11)
-    jaw.cube("tusk_l", 4, -4, -9, 2, 4, 2)
-    jaw.cube("tusk_r", -6, -4, -9, 2, 4, 2, mirror=True)
+    r = R.Rig(ID, tex=(1024, 1024))
+    hip = 24 - P.leg
+    pel = r.bone("pelvis", (0, hip, 0))
+    pel.cube("pelvis", -20, -12, -14, 40, 16, 28)
+    pel.cube("belt", -21, -3, -15, 42, 5, 30)
+    for k, (x, w, rz) in enumerate(((-13, 12, 8), (0, 12, 0), (13, 12, -8))):  # iron tassets over the hips
+        parts.plate(pel, f"tasset{k}", (x, 2, -15), (-6, 0, rz), (-w / 2, 0, -1, w, 12, 2))
+    # legs: short, thick and planted, the right one heavier (it carries the fist)
     for side, nm in ((1, "l"), (-1, "r")):
         mir = side < 0
-        h1 = b["head"].bone("horn1_" + nm, (side * 8, -12, -2), (0, side * -10, side * -28))
-        h1.cube("horn1_" + nm, 0 if side > 0 else -9, -3, -3, 9, 6, 6, mirror=mir)
-        h2 = h1.bone("horn2_" + nm, (side * 8, 0, 0), (-10, side * -20, side * -50))
-        h2.cube("horn2_" + nm, 0 if side > 0 else -8, -2.5, -2.5, 8, 5, 5, mirror=mir)
-        h3 = h2.bone("horn3_" + nm, (side * 7, 0, 0), (-30, side * -30, side * -40))
-        h3.cube("horn3_" + nm, 0 if side > 0 else -7, -1.5, -1.5, 7, 3, 3, mirror=mir)
-        # shoulder plates ride the upper arm, so they lift with it; each carries a spike
-        pl = b["arm_" + nm].bone("plate_" + nm, (0, 0, 0))
-        pl.cube("plate_" + nm, -10, -7, -10, 20, 9, 20, mirror=mir)
-        pl.cube("spike_" + nm, side * 3 - 2, -13, -2, 4, 6, 4, mirror=mir)
-        # iron bracers on the oversized forearms (the magma veins show above and below them)
-        b["forearm_" + nm].cube("bracer_" + nm, -11, 6, -11, 22, 11, 22, mirror=mir)
-        b["hand_" + nm].cube("knuckle_" + nm, -7, 7, -9, 14, 4, 3, mirror=mir)
-    # the chest: the molten core, a ridge of spines down the upper back
-    core = b["chest"].bone("core", (0, -14, -15))
-    core.cube("core", -6, -6, -2, 12, 12, 3)
-    for k, (y, hgt) in enumerate(((-26, 8), (-18, 7), (-10, 6))):
-        b["chest"].cube(f"dorsal{k}", -2.5, y, 12, 5, hgt, 5)
-    # belt and the hanging tasset at the front
-    b["pelvis"].cube("belt", -15, -2, -11, 30, 5, 22)
-    ts = b["pelvis"].bone("tasset", (0, 3, -11))
-    ts.cube("tasset", -8, 0, -1, 16, 13, 2)
-    # the axe: a long haft through the right fist, the blade hanging at the front end
-    axe = b["hand_r"].bone("axe", (0, 6, 0), (-52, 0, 0))  # carried low, the haft up and forward
-    axe.cube("haft", -1.5, -1.5, -38, 3, 3, 48)
-    axe.cube("blade", -1, -3, -42, 2, 19, 12)
-    axe.cube("beard", -1, 16, -38, 2, 4, 6)
-    axe.cube("pick", -1, -9, -36, 2, 6, 4)
-    r.shadow = 2.2
+        w = 20 if side > 0 else 24
+        th = pel.bone("thigh_" + nm, (side * P.stance, 0, 2))
+        th.cube("thigh_" + nm, -w / 2, -3, -w / 2, w, 23, w, mirror=mir)
+        th.cube("knee_" + nm, -w / 2 + 2, 13, -w / 2 - 3, w - 4, 9, 4, mirror=mir)
+        th.cube("hipslab_" + nm, w / 2 - 1 if side > 0 else -w / 2 - 4, -4, -8, 5, 14, 16, mirror=mir)  # a rock slab on the hip
+        sn = th.bone("shin_" + nm, (0, 20, 0))
+        sw = w - 4
+        sn.cube("shin_" + nm, -sw / 2, 0, -sw / 2, sw, 14, sw, mirror=mir)
+        sn.cube("greave_" + nm, -sw / 2 + 2, 1, -sw / 2 - 3, sw - 4, 10, 4, mirror=mir)
+        ft = sn.bone("foot_" + nm, (0, 14, 0))
+        ft.cube("foot_" + nm, -w / 2 - 1, 0, -15, w + 2, 6, 24, mirror=mir)
+        ft.cube("ankle_" + nm, -w / 2 + 1, -2, -6, w - 2, 3, 14, mirror=mir)
+        for k in range(3):  # three blunt claws
+            ft.cube(f"claw{k}_" + nm, -w / 2 + 1 + k * (w - 2) / 3 + (w - 2) / 6 - 2.5, 2, -19, 5, 4, 5, mirror=mir)
+        ft.cube("heel_" + nm, -3, 1, 8, 6, 4, 4, mirror=mir)
+    # the torso, pitched far forward
+    sp = pel.bone("spine", (0, -10, 2), (HUNCH[0], 0, 0))
+    sp.cube("spine", -18, -17, -14, 36, 18, 28)
+    sp.cube("spineback", -14, -15, 12, 28, 12, 6)
+    ch = sp.bone("chest", (0, -16, 0), (HUNCH[1], 0, 0))
+    ch.cube("chest", -34, -32, -20, 60, 32, 40)  # heavier on its right (-x), where the fist hangs
+    ch.cube("collar", -28, -38, -14, 50, 6, 30)
+    # the ribcage: the core burns behind bone bars, framed by two rock slabs, so it reads as a furnace in a chest
+    ch.cube("pec_r", -34, -31, -24, 23, 22, 5)
+    ch.cube("pec_l", 11, -31, -24, 15, 20, 5)
+    core = ch.bone("core", (0, -18, -21))
+    core.cube("core", -10, -10, -1, 20, 20, 3)
+    parts.bars(ch, "rib", -11, -28, -25, 22, 5, 2, h=2, d=3)
+    ch.cube("sternum", -2, -30, -26, 4, 22, 3)
+    ch.cube("belly", -26, -6, -22, 48, 6, 6)
+    # the carapace: shingled slabs over the back, each lifting off the one below and thicker as it climbs to the
+    # shoulders (a humped ridge, the mountain), with three short chimneys standing up out of it
+    for k, (w, h, d, y, rx, rz) in enumerate(((50, 14, 8, -2, -6, 3), (58, 14, 10, -12, -10, -2), (62, 14, 12, -22, -14, 2),
+                                             (54, 12, 12, -31, -20, -3), (38, 10, 10, -38, -28, 2))):
+        parts.plate(ch, f"shell{k}", (-4, y, 18), (rx, 0, rz), (-w / 2, -h, 0, w, h, d))
+    for k, (x, y, z, sizes, rz) in enumerate(((-22, -26, 32, ((11, 8, 11), (9, 7, 9), (7, 5, 7)), 10), (-4, -33, 25, ((13, 9, 13), (11, 8, 11), (9, 6, 9)), 0),
+                                              (14, -26, 31, ((9, 7, 9), (7, 6, 7), (5, 4, 5)), -10))):
+        cb = ch.bone(f"chimney{k}", (x, y, z), (-sum(HUNCH) - 12, 0, rz))  # upright in the world, raked back a little
+        parts.taper(cb, f"chimney{k}_", 0, 0, 0, sizes)
+        top = sum(sz[1] for sz in sizes)
+        cb.cube(f"vent{k}", -sizes[-1][0] / 2 + 1, -top - 2, -sizes[-1][2] / 2 + 1, sizes[-1][0] - 2, 2, sizes[-1][2] - 2)
+    # the neck: long and thrust forward out of the chest's top front, a ridge of spines along it
+    nk = ch.bone("neck", (-4, -24, -18), (44, 0, 0))
+    nk.cube("neck", -8, -20, -8, 16, 22, 16)
+    nk.cube("throat", -6, -18, -10, 12, 14, 3)
+    for k in range(4):
+        nk.cube(f"nspine{k}", -2, -19 + k * 5, 6, 4, 4, 6 - k)
+    # the skull: a long horned mask, level, low in front of the body; the lightest value on it
+    hd = nk.bone("head", (0, -19, -2), (-HUNCH[0] - HUNCH[1] - 44 + 8, 0, 0))  # level, dipped a little: it hunts
+    hd.cube("head", -12, -11, -24, 24, 17, 26)
+    for side, nm in ((1, "l"), (-1, "r")):  # the brow in two plates dipping to the middle: it scowls
+        parts.plate(hd, "brow_" + nm, (0, -11, -24), (0, 0, side * -12), (0 if side > 0 else -14, -3, -3, 14, 5, 8), mirror=side < 0)
+    hd.cube("snout", -8, -2, -30, 16, 7, 7)
+    hd.cube("crest", -5, -15, -14, 10, 4, 16)
+    for side, nm in ((1, "l"), (-1, "r")):
+        mir = side < 0
+        hd.cube("cheek_" + nm, side * 12 - (0 if side > 0 else 3), -7, -22, 3, 11, 16, mirror=mir)
+        # horns: thick at the root, swept back over the shoulders in stepped segments, the tips turning up
+        parts.segments(hd, "horn_" + nm, (side * 8, -11, -6), (-74, side * 8, side * -22), ((8, 12), (7, 12), (5, 11), (4, 9), (2, 6)),
+                       (10, 0, side * 6), mirror=mir)
+    jaw = hd.bone("jaw", (0, 5, -2))
+    jaw.cube("jaw", -10, 0, -25, 20, 7, 24)
+    for side, nm in ((1, "l"), (-1, "r")):
+        jaw.cube("tusk_" + nm, side * 8 - 1.5, -5, -25, 3, 5, 3, mirror=side < 0)
+        jaw.cube("fang_" + nm, side * 4 - 1, -2, -24, 2, 2, 2, mirror=side < 0)
+    # the right arm: burst into a molten fist the size of a cart, a broken shackle on its wrist
+    shr = ch.bone("shoulder_r", (-32, -26, 0), (-sum(HUNCH) - 14, 0, 16))  # the fist hangs out and forward of the body
+    parts.taper(shr, "pauldron_r", -2, 8, 0, ((30, 12, 30), (26, 8, 26), (18, 6, 18)))
+    shr.cube("band_r", -18, -1, -16, 32, 5, 32)
+    parts.plate(shr, "spaul_r", (-12, -10, 0), (0, 0, 24), (-6, -14, -10, 12, 14, 20))
+    ar = shr.bone("arm_r", (-6, 2, 0))
+    ar.cube("arm_r", -11, -2, -11, 22, 28, 22, mirror=True)
+    far = ar.bone("forearm_r", (0, 26, 0))
+    far.cube("forearm_r", -17, -1, -17, 34, 30, 34, mirror=True)
+    parts.plate(far, "fplate_r", (-17, 2, 0), (0, 0, 6), (-4, 0, -14, 5, 22, 28), mirror=True)
+    far.cube("ftop_r", -13, -3, -15, 26, 3, 30, mirror=True)
+    far.cube("shackle_r", -19, 21, -19, 38, 6, 38, mirror=True)
+    parts.chain(far, "chain_r", (-12, 27, -12), 4, link=(3, 6, 3))
+    hr = far.bone("hand_r", (0, 29, 0))
+    hr.cube("hand_r", -20, 0, -17, 40, 18, 36, mirror=True)
+    for k in range(4):  # the knuckles stand proud along the front, the folded fingers tuck under them
+        hr.cube(f"knuckle{k}_r", -19 + k * 9.75, 8, -22, 9, 10, 8, mirror=True)
+        hr.cube(f"finger{k}_r", -18.5 + k * 9.75, 18, -19, 8, 5, 14, mirror=True)
+    hr.cube("thumb_r", 17, 6, -21, 7, 9, 15, mirror=True)
+    # the left arm: slighter, a spiked pauldron, an iron bracer, and the great axe in its fist
+    shl = ch.bone("shoulder_l", (22, -26, 2), (-sum(HUNCH), 0, -8))
+    parts.taper(shl, "pauldron_l", 2, 6, 0, ((22, 10, 22), (16, 6, 16)))
+    for k, (x, z) in enumerate(((0, -4), (5, 5))):
+        parts.segments(shl, f"pspike{k}_", (x + 2, -10, z), (-10, 0, -20 - k * 10), ((4, 6), (2, 5)), (0, 0, -10))
+    al = shl.bone("arm_l", (4, 2, 0))
+    al.cube("arm_l", -8, -2, -8, 16, 24, 16)
+    fal = al.bone("forearm_l", (0, 22, 0))
+    fal.cube("forearm_l", -9, -1, -9, 18, 24, 18)
+    fal.cube("bracer_l", -10, 9, -10, 20, 11, 20)
+    hl = fal.bone("hand_l", (0, 23, 0))
+    hl.cube("hand_l", -8, 0, -8, 16, 12, 16)
+    hl.cube("knuckles_l", -7, 7, -10, 14, 4, 3)
+    # the great axe: a long haft trailing back and down from the left fist, the head's blade scoring the ground behind
+    axe = hl.bone("axe", (0, 6, 0), (66, 0, 0))
+    axe.cube("haft", -2.5, -8, -2.5, 5, 80, 5)
+    axe.cube("pommel", -3.5, -12, -3.5, 7, 5, 7)
+    axe.cube("grip", -3, 2, -3, 6, 14, 6)
+    for k, (h, z0, d) in enumerate(((40, -2, 10), (30, -12, 8), (18, -20, 6))):  # the blade in stepped tiers
+        axe.cube(f"blade{k}", -2, 70 - h / 2 - 4, z0 - d, 4, h, d)
+    axe.cube("edge", -1.5, 57, -27, 3, 18, 1)
+    axe.cube("backspike", -2, 60, 2, 4, 8, 10)
+    axe.cube("collar_axe", -3.5, 48, -3.5, 7, 5, 7)
+    r.look = [("head", 0.55, 0.5), ("neck", 0.25, 0.2)]
+    r.size = P.leg / 36.0
+    r.shadow = 2.6
     return r
 
 
 def clips(r):
     plans.biped_locomotion(r, P, weight=1.6, temper="feral")
     plans.biped_reactions(r, weight=1.6)
-    # in its idle the right arm carries the axe's weight: hold the blade off the ground
     mv = [
         M.overhead_slam(P, "hammer", title="Magma Fist", weight=1.4, windup=22, hold=10, active=5, recover=20, ability="Magma Fist",
                         kinds=("area", "near"), rng=(0, 4.6), damage=0.7, knock=1.0),
-        M.backhand(P, "backhand", side="l", weight=1.4, windup=10, active=4, recover=12, rng=(0, 4.0), damage=0.8, low=24, arm=(-30, 0, -40)),
-        M.chop(P, "chop_a", side="r", weight=1.4, windup=12, active=4, recover=10, weapon=AXE_TIP, weapon_r=8, weapon_bone="axe", diagonal=1.0,
+        M.backhand(P, "backhand", side="r", weight=1.4, windup=10, active=4, recover=12, rng=(0, 4.0), damage=0.8, low=24, arm=(-30, 0, -40)),
+        M.chop(P, "chop_a", side="l", weight=1.4, windup=12, active=4, recover=10, weapon=AXE_TIP, weapon_r=8, weapon_bone="axe", diagonal=1.0,
                kinds=("combo",), rng=(0, 5.2), damage=1.0, advance=0.8),
-        M.chop(P, "chop_b", side="r", weight=1.4, windup=9, active=4, recover=14, weapon=AXE_TIP, weapon_r=8, weapon_bone="axe", diagonal=-1.0,
+        M.chop(P, "chop_b", side="l", weight=1.4, windup=9, active=4, recover=14, weapon=AXE_TIP, weapon_r=8, weapon_bone="axe", diagonal=-1.0,
                kinds=("combo",), rng=(0, 5.2), damage=1.0, advance=0.6),
-        M.shoulder_charge(P, "charge", side="l", weight=1.4, windup=16, active=12, recover=20, advance=7.5, rng=(5, 14), damage=1.2),
+        M.shoulder_charge(P, "charge", side="r", weight=1.4, windup=16, active=12, recover=20, advance=7.5, rng=(5, 14), damage=1.2),
         M.stomp(P, "stomp", side="l", weight=1.4, windup=14, active=4, recover=16, kinds=("area", "behind"), rng=(0, 4.2), damage=1.1),
         M.overhead_slam(P, "eruption", title="Eruption", weight=1.6, cls="PERILOUS", windup=26, active=6, recover=26, ability="Eruption",
                         kinds=("area", "ranged"), rng=(0, 16), damage=0.8, knock=1.4, signature=True, rear=1.7),
@@ -89,6 +173,8 @@ def clips(r):
         M.roar(P, "meltdown", title="Meltdown", weight=1.4, cls="PERILOUS", windup=18, active=30, recover=16, ability="Meltdown",
                kinds=("area",)),
     ]
+    # the left fist is the slighter one: its share of the hammer's hit is its own size
+    mv[0].hit = [("hand_l", (0, 13, 0), 9), ("hand_r", M.hand_tip(P), P.hand[0] / 2 + 1)]
     for m in mv:
         stage_clips(r, m)
     return mv
@@ -145,89 +231,98 @@ FIGHT = {
 
 
 def paint(r, P_):
-    skin = Ramp("#0e0a0a", "#181211", "#231a18", "#30231f", "#3e2d27", "#4e3a31", "#62483c", "#7a5a4a")
-    horn = Ramp("#070606", "#110e0e", "#1c1716", "#2a2220", "#3a2e2a", "#4e3e36")
-    iron = Ramp("#101115", "#1a1c21", "#26292f", "#33373f", "#434852", "#575d68", "#717884")
+    """Four materials in a value order: heat brightest, then bone (the skull, horns, ribs and claws lead the eye), then
+    iron, then the dark rock of the body. Rock is cut into slabs by darker seams so the big faces never read flat."""
+    rock = Ramp("#0c0908", "#141010", "#1d1715", "#271f1c", "#332824", "#40322c", "#4f3e36", "#614c41")
+    shell = Ramp("#120e0d", "#1c1715", "#28211e", "#352b27", "#443832", "#56473f", "#6b5a50", "#857163")
+    bone = Ramp("#2e2620", "#463a30", "#5e5042", "#786856", "#93826c", "#ad9c84", "#c6b69c", "#ddd0b6")
+    iron = Ramp("#0f1013", "#181a1f", "#23262c", "#2f333a", "#3d424b", "#4f555f", "#666d78")
     rust = Ramp("#2a140c", "#3e1e10", "#562a14", "#6e3a1c")
-    leather = Ramp("#140c08", "#21140c", "#301d12", "#422818", "#563420")
-    wood = Ramp("#140c07", "#20140c", "#2e1d12", "#3e2818", "#4e331f")
-    magma = ("#ff4a10", "#ff7a1e", "#ffae3a", "#ffd870")
+    wood = Ramp("#120b07", "#1d130c", "#2a1b11", "#382417", "#46301e")
+    heat = ("#ff4a10", "#ff7a1e", "#ffae3a", "#ffd870")
     rng = P_.rng
-    rock = combine(p_stone(rng, 0.9, 5), p_strokes(3, 2, 0.35, 0.25, 0.5, seed=7))
-    for c in ("pelvis", "spine", "chest", "neck", "head", "arm_l", "arm_r", "forearm_l", "forearm_r", "hand_l", "hand_r",
-              "thigh_l", "thigh_r", "shin_l", "shin_r", "jaw"):
-        P_.paint(c, skin, 3.4, rock, noise=0.5)
-    for c in ("foot_l", "foot_r"):
-        P_.paint(c, skin, 2.6, p_stone(rng, 0.6, 3))
-    # the magma in it: cracks on the chest, the back, the thighs, and veins all over the forearms
-    for c, n in (("chest", 3), ("spine", 2), ("thigh_l", 1), ("thigh_r", 1), ("arm_l", 1), ("arm_r", 1), ("neck", 1), ("pelvis", 1)):
-        cracks(P_, c, SIDES, skin.at(0), magma, n=n, seed=c)
-    for c in ("forearm_l", "forearm_r", "hand_l", "hand_r"):
-        cracks(P_, c, SIDES + ("top",), skin.at(0), magma, n=4, seed=c, alpha=245)
-    # the core: white-hot at the middle, a dark crust round it
-    radial(P_, "core", "north", ["#fff6d0", "#ffd870", "#ffae3a", "#ff7a1e", "#ff4a10", "#c22a08"], skin=Ramp("#5a1a08", "#8a2c0c", "#c2481a", "#f07a2c"))
-    for fname in ("west", "east", "top", "bottom"):
-        P_.paint("core", Ramp("#3a1206", "#5a1a08", "#7a280e"), 1.6, faces=(fname,))
-        edge_glow(P_, "core", fname, "#ff7a1e", rows=1, alpha=200, side="top")
-    # horns: obsidian ridged across, ember at the tips
-    for k in (1, 2, 3):
-        for nm in ("l", "r"):
-            c = f"horn{k}_{nm}"
-            P_.paint(c, horn, 2.0 + k * 0.4, lambda f, i, j: (-0.8 if f.name in SIDES and i % 3 == 0 else 0.3))
-            if k == 3:
-                for fname in SIDES:
-                    edge_glow(P_, c, fname, "#ff7a1e", rows=2, alpha=170, side="right" if nm == "l" else "left")
-    P_.paint("brow", skin, 2.4, p_stone(rng, 0.8, 3))
-    for c in ("tusk_l", "tusk_r"):
-        P_.paint(c, Ramp("#6e6050", "#8e806c", "#b0a28a", "#d0c4aa"), 2.0)
-    # the face: deep eye sockets under the brow, embers for eyes; a mouth glowing from inside
-    f = P_.face("head", "north")
-    for i, j in f.each():
-        if 7 <= j <= 9 and (2 <= i <= 6 or 11 <= i <= 15):
-            f.set(i, j, skin.at(0))
-    with P_.eyes():
-        for x0 in (3, 12):
-            for dx in range(3):
-                P_.face("head", "north").set(x0 + dx, 8, hexc("#2a0a04"))
-                P_.face("head", "north", glow=True).set(x0 + dx, 8, hexc("#ffd060" if dx == 1 else "#ff8a20", 255))
-    jf = P_.face("jaw", "north")
-    jg = P_.face("jaw", "north", glow=True)
-    for i in range(1, jf.w - 1):
-        jf.set(i, 0, skin.at(0))
-        jg.set(i, 0, hexc("#ff6a1a", 170))
-        if i % 3 == 1:
-            jf.set(i, 1, hexc("#b0a28a"))
-    # iron: plates, bracers, knuckles, rust on the edges
+    of = lambda *ps: parts.cubes_of(r, *ps)
+    seams = lambda cell: combine(p_stone(rng, 0.7, cell), p_strokes(4, 3, 0.35, 0.2, 0.35, seed=7))
+    body_rock = ["pelvis", "spine", "spineback", "chest", "collar", "pec_r", "pec_l", "belly", "neck", "arm_r", "forearm_r", "hand_r",
+                 "arm_l", "forearm_l", "hand_l", "ftop_r", "thumb_r"] + of("thigh_", "shin_", "foot_", "ankle_", "heel_", "hipslab_", "knuckle", "finger", "pauldron_", "fplate_r", "spaul_r", "knee_", "greave_", "throat")
+    for c in body_rock:
+        if c in P_.cubes:
+            P_.paint(c, rock, 3.0, seams(13), grad=1.6, rim=1.2, ao=1.2, noise=0.9, nscale=10)
+    for c in of("shell"):
+        # the carapace: weathered slabs, ash-pale on their upper edges, dark underneath
+        P_.paint(c, shell, 3.4, combine(p_stone(rng, 1.2, 5), lambda f, i, j: (1.2 if f.name == "top" else 0.6 if j <= 1 else 0)), noise=0.6)
+    # bone: the skull mask, horns, ribs, claws, spines; banded where horn grows
+    for c in ["head", "brow_l", "brow_r", "snout", "crest", "rib0", "rib1", "rib2", "rib3", "rib4", "sternum", "jaw"] + of("cheek_", "tusk_", "fang_", "claw", "nspine"):
+        if c in P_.cubes:
+            P_.paint(c, bone, 4.2 if c not in ("jaw", "sternum", "throat") else 3.2, p_strokes(5, 2, 0.5, 0.3, 0.3, seed=11), grad=1.4, rim=1.0, ao=1.4, noise=0.7, nscale=8)
+    for c in of("horn_", "pspike"):
+        P_.paint(c, bone, 3.4, lambda f, i, j: (-0.9 if f.name in SIDES and j % 4 == 0 else 0.2))
+    # iron: banded, riveted, rusted at the bottom edges
     ironp = lambda f, i, j: (0.8 if j == 0 else -0.7 if (i + j) % 7 == 0 else 0)
-    for c in ("plate_l", "plate_r", "bracer_l", "bracer_r", "knuckle_l", "knuckle_r", "spike_l", "spike_r"):
-        P_.paint(c, iron, 3.2, ironp, noise=0.4)
-    for c in ("plate_l", "plate_r", "bracer_l", "bracer_r"):
+    for c in ["belt", "band_r", "shackle_r", "bracer_l", "knuckles_l", "collar_axe", "pommel", "grip"] + of("tasset", "chain_r", "chimney"):
+        P_.paint(c, iron, 3.0, ironp, noise=0.4)
         for fname in SIDES:
             fc = P_.face(c, fname)
             for i, j in fc.each():
                 if j == fc.h - 1 and R._h(c, fname, i) % 3 == 0:
                     fc.set(i, j, rust.at(2))
-        for k, fname in enumerate(("north", "south")):  # rivets
+    for c in ("belt", "band_r", "shackle_r", "bracer_l"):
+        for fname in ("north", "south", "east", "west"):
             fc = P_.face(c, fname)
-            for i in range(2, fc.w - 1, 5):
-                fc.set(i, 2, iron.at(6))
-    for c in ("dorsal0", "dorsal1", "dorsal2"):
-        P_.paint(c, horn, 2.6)
-        edge_glow(P_, c, "south", "#ff7a1e", rows=1, alpha=150, side="top")
-    P_.paint("belt", leather, 3.0, lambda f, i, j: (0.8 if j == 0 else -0.6 if j == f.h - 1 else 0))
-    bf = P_.face("belt", "north")
-    for i in range(bf.w // 2 - 3, bf.w // 2 + 3):
-        for j in range(1, 4):
-            bf.set(i, j, iron.at(5 if j == 1 else 4))
-    P_.paint("tasset", leather, 2.6, p_strokes(2, 3, 0.4, 0.3, 0.6, seed=3))
-    # the axe: a dark haft bound in iron, a black blade with an edge that burns
-    P_.paint("haft", wood, 2.6, lambda f, i, j: (1.0 if f.name in SIDES and i % 9 < 2 else 0))
-    for c in ("blade", "beard", "pick"):
-        P_.paint(c, iron, 2.4, lambda f, i, j: (-0.6 if (i * 3 + j) % 11 == 0 else 0))
+            for i in range(2, fc.w - 1, 6):
+                fc.set(i, 1, iron.at(6))
+    # heat: the fist has burst (deep fissures all over it), the chest and the right leg are cracked, the chimneys vent
+    for c in ("forearm_r", "hand_r", "fplate_r", "ftop_r") + tuple(of("knuckle")):
+        cracks(P_, c, SIDES + ("top",), rock.at(0), heat, n=3 if c in ("forearm_r", "hand_r") else 1, seed=c, alpha=245)
+    for c, n in (("pec_r", 1), ("thigh_r", 1), ("arm_r", 1)):
+        cracks(P_, c, ("north", "west"), rock.at(0), heat, n=n, seed=c, alpha=200)
+    for k in range(3):
+        v = f"vent{k}"
+        P_.paint(v, Ramp("#5a1a08", "#8a2c0c"), 1.0)
+        for fname in ("top",) + SIDES:
+            radial(P_, v, fname, ["#fff2c0", "#ffd870", "#ffae3a", "#ff7a1e"], alpha=255)
+        for fname in SIDES:
+            edge_glow(P_, f"chimney{k}_2", fname, "#ff7a1e", rows=2, alpha=190, side="top")
+    # the core behind the ribs: white-hot in the middle
+    radial(P_, "core", "north", ["#fff6d0", "#ffe08a", "#ffb648", "#ff8a24", "#ff5a14", "#c2300a"], skin=Ramp("#5a1a08", "#8a2c0c", "#c2481a", "#f07a2c"))
+    for fname in ("west", "east", "top", "bottom"):
+        P_.paint("core", Ramp("#3a1206", "#5a1a08", "#7a280e"), 1.6, faces=(fname,))
+    # light leaks from the furnace onto the rib bars' undersides
+    for k in range(5):
+        edge_glow(P_, f"rib{k}", "north", "#ff8a2a", rows=1, alpha=150, side="bottom")
+    # the face: two embers deep under the brow, the mouth lit from inside
+    f = P_.face("head", "north")
+    for i, j in f.each():
+        if j <= 3:
+            f.set(i, j, bone.at(0))  # the brow's shadow
+        elif (2 <= i <= 9 or 14 <= i <= 21) and 3 <= j <= 7:
+            f.set(i, j, rock.at(0))  # deep sockets
+        elif 11 <= i <= 12 and j >= 3:
+            f.set(i, j, bone.at(6))  # the bridge between them catches the light
+    with P_.eyes():
+        for x0 in (3, 15):
+            for dx in range(6):
+                for dy in (4, 5, 6):
+                    if (dx in (0, 5)) and dy != 5:
+                        continue
+                    P_.face("head", "north").set(x0 + dx, dy, hexc("#1a0602"))
+                    hot = dx in (2, 3) and dy == 5
+                    P_.face("head", "north", glow=True).set(x0 + dx, dy, hexc("#fff0a0" if hot else "#ffae3a" if dy == 5 else "#ff6a1a", 255))
+    for c in ("snout", "jaw"):
+        fc, gc = P_.face(c, "north"), P_.face(c, "north", glow=True)
+        row = fc.h - 1 if c == "snout" else 0
+        for i in range(fc.w):
+            fc.set(i, row, rock.at(0))
+            gc.set(i, row, hexc("#ff6a1a", 170))
+    # the axe: a dark haft bound in iron, a black stepped blade whose edge burns
+    P_.paint("haft", wood, 2.6, lambda f, i, j: (1.4 if f.name in SIDES and j % 12 < 2 else 0))
+    for c in of("blade", "backspike"):
+        P_.paint(c, iron, 2.6, lambda f, i, j: (-0.7 if (i * 3 + j) % 11 == 0 else 0.6 if j == 0 else 0))
+    P_.paint("edge", iron, 4.0)
+    for fname in ("top", "bottom") + SIDES:
+        edge_glow(P_, "edge", fname, "#ffb048", rows=99, alpha=240)
     for fname in ("west", "east"):
-        edge_glow(P_, "blade", fname, "#ff8a2a", rows=2, alpha=230, side="left" if fname == "west" else "right")
-        edge_glow(P_, "beard", fname, "#ff8a2a", rows=1, alpha=200, side="bottom")
-    edge_glow(P_, "blade", "north", "#ffb048", rows=12, alpha=230)
+        edge_glow(P_, "blade2", fname, "#ff8a2a", rows=2, alpha=200, side="left" if fname == "west" else "right")
     return P_.skin, P_.glow
 
 

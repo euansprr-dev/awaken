@@ -9243,8 +9243,20 @@ Tyrant first, and nothing rolls out to more creatures until the Tyrant passes Eu
   - The baseline: `docs/bosses/baseline-2026-10-28.md`.
 - **R1, the Tyrant's look.** `kit_bodies.py silhouettes DIR` (`kit/silhouettes.py`) draws three directions in plain
   blocks at true size beside a player (front, side, a value-blocked 3/4): A the Furnace King, B the Iron Warlord, C the
-  Living Forge, and today's body for scale. After Euan's pick: the model with a parts library, about 120-200 cubes,
-  material ramps and a value hierarchy.
+  Living Forge, and today's body for scale. **Euan picked C, the Living Forge (2026-10-28).** The model
+  (`kit/bosses/ember_tyrant.py`, built from `kit/parts.py`: stepped tapers, angled plates on their own bones, stepped
+  horn chains, hanging chains, bars) keeps the Brute plan's bone names, so the moves, foot planting and look still bind:
+  - **Shape.** 130 cubes on 55 bones, a 1024² sheet, about 8.3 blocks to the chimney tops. Short thick legs, the
+    torso pitched 36° forward, five shingled carapace slabs climbing to the shoulders with three chimneys, a long neck
+    carrying a horned skull level and low in front, a right arm burst into a molten fist (knuckles, folded fingers,
+    thumb, a broken shackle and its chain), and a slighter left arm dragging the great axe behind it.
+  - **Sides.** The fist is the right (the backhand and the shoulder charge); the axe is the left (both chops). The
+    hammer's left-hand hit is the left fist's own size.
+  - **Value order.** Heat brightest (the core behind bone ribs, the vents, the fist's fissures, the eyes, the axe's
+    edge), then bone (the skull, horns, ribs, claws), then iron (belt, tassets, shoulder band, shackle, chimneys),
+    then dark rock.
+  - **Not changed yet.** The hitbox stays 1.8 by 5.85 blocks (the body is wider: the fist reaches past it) and the
+    moves are today's, re-sided; both are R2 and R3 work.
 - **R2, motion; R3, the Tyrant's fight; then R4 Unit Zero and R5 Mother.** As the plan; each lands here when built.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
