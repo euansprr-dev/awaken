@@ -35,6 +35,7 @@ public interface WorldEngine {
             case "hall" -> new HallEngine();
             case "passages" -> new PassageEngine();
             case "void" -> new VoidEngine();
+            case "drop" -> new ShaftEngine();
             default -> null;
         };
     }

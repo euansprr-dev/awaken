@@ -116,6 +116,11 @@ public final class GateWorldBellTests {
                     for (Room.Door d : r.doors) rooms.append(" [").append(d.gx).append(',').append(d.gz).append(" side ").append(d.side).append(" to ").append(d.toRoom).append(']');
                     rooms.append('\n');
                 }
+                if (goal != null) {
+                    rooms.append("route:");
+                    for (int[] n : w.route(goal[0], goal[1], goal[2])) rooms.append(' ').append(n[0]).append(',').append(n[1]).append(',').append(n[2]);
+                    rooms.append('\n');
+                }
                 java.nio.file.Files.writeString(java.nio.file.Path.of(dir, name + "-rooms.txt"), rooms + bad.toString());
             } catch (java.io.IOException ex) {
                 bad.append(" dump failed: ").append(ex.getMessage());
@@ -173,14 +178,15 @@ public final class GateWorldBellTests {
                 long t = System.nanoTime();
                 GateLayout l = FloorBuilder.build(p);
                 double planMs = (System.nanoTime() - t) / 1e6 / Math.max(1, p.worlds().size());
-                planWorst = Math.max(planWorst, planMs);
+                // the first plan warms the code up (class loading, the JIT): budgets are measured from the second on
+                if (i > 0) planWorst = Math.max(planWorst, planMs);
                 for (FloorLayout f : l.main) {
                     if (!f.isWorld()) {
                         h.assertTrue(p.worldFor(f.area, f.floor) == null, world + " gave no floor " + f.floor + " (" + WorldEngine.WHY.get() + ") of " + p + " (today's rooms instead)");
                         continue;
                     }
                     floors++;
-                    String why = check(p, f, ms, i < 2 ? world + "-" + i + "-f" + f.floor : null);
+                    String why = check(p, f, i > 0 ? ms : new double[2], i < 2 ? world + "-" + i + "-f" + f.floor : null);
                     h.assertTrue(why.isEmpty(), world + " floor " + f.floor + " (" + f.mood + ") of " + p + ":" + why);
                 }
             }
@@ -211,5 +217,6 @@ public final class GateWorldBellTests {
         world("gateworlds_belfry", "sunken_belfry", 8);
         world("gateworlds_ossuary", "ossuary_ways", 8);
         world("gateworlds_field", "field_of_bells", 8);
+        world("gateworlds_shaft", "bell_shaft", 8);
     }
 }

@@ -8623,9 +8623,8 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   gate, Lords' floors, secrets, mastery opening the deep world and the wonder, worlds switched off, saving plans and the Atlas).
 - **Stage 0** (built 2026-10-28): plots, the frame, the place map, recipes and their loader, per-world biomes, the engine
   interface, the director, the Atlas and the arrival payload. No recipes ship yet, so every floor is today's rooms in its plot.
-- **Stage 1** (in progress): the world floor contract (38.5), the Bell Crypt's blocks and the Sunken Belfry (38.6); tests
-  `gateworlds_bell_recipes`, `gateworlds_belfry`, `gateworlds_ossuary` and `gateworlds_field`. The Bell Shaft is next;
-  until its engine exists its floors are today's rooms.
+- **Stage 1** (in progress): the world floor contract (38.5), the Bell Crypt's blocks and its four floor worlds (38.6); tests
+  `gateworlds_bell_recipes`, `gateworlds_belfry`, `gateworlds_ossuary`, `gateworlds_field` and `gateworlds_shaft`.
 
 ### 38.5 The world floor contract (Stage 1)
 
@@ -8651,7 +8650,7 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
 - **Blocks by role** (`WorldMats`): a recipe's `blocks` map names a block per role (`wall`, `floor`, `trim`, `bronze`...);
   an engine asks for a role with a fallback, so one engine builds many worlds.
 - **Budgets**: a world floor plans in under 50 ms and carves a chunk in under 4 ms on average, 40 ms at worst (measured by
-  every world's test).
+  every world's test from its second plan on: the first warms up class loading and the JIT, which alone can pass 40 ms).
 - **World tests** (`WorldCheck`, `GateWorldBellTests`): each world is planned over many gates (every layout, rank, twist and
   mood), every chunk carved, and walked on foot from the arrival (stairs, ropes and shallow water included; a Rig room is
   crossed by its mechanism, from its way in to its way on): every monster spot, key, cache and feature reachable, every room
@@ -8706,3 +8705,23 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   the water as a drowned chamber on a dark plinth, dammed two blocks above the surface so the water stays out of its band.
   Light: candles round each island's rim, hidden light four apart over islands, along causeways and at every doorway
   landing. The light check follows the way on foot (`WorldCheck.dry`); swimming counts only where there's no other way.
+- **The Bell Shaft** (`ShaftEngine`, tall): a hollow tower of bells. The shaft (a rounded square 56 across) fills the plot's
+  middle four slots from its foot (24 above the plot's bottom) to a roof 22 over the top landing; tracery string courses
+  ring it a landing's height apart. The programme's spine is a ring of landings in the slots round it, going round one way,
+  each a step (8, or as little as 4 on a plot too short for 8) lower than the one before; a stair inside the lower landing,
+  the doorway's width, climbs to the door. A landing is a ringers' room vaulted towards the shaft, with bell ropes down its
+  back wall; on a straight side it opens onto a balcony out to the shaft's edge with a railing of tracery and bars two high
+  (nobody steps onto it and off) and candles a step back from it; round the shaft's corners two balconies split the rock on
+  the diagonal. The Rig room stands in the ring as built on a straight side, reaching out into the rock, crossed in line
+  (landings of the world's own fill in until it fits) and level with the landing before it; a spine too long for the ring
+  or the plot shares landings (three plain rooms at most). The arrival is the top landing, facing the shaft; the clapper
+  bridge runs from its balcony straight out to the shaft's middle line and along it to a round stand in the top bell's
+  mouth (its clapper hanging over you). The bell column hangs down the middle, each bell from the one above's mouth (those
+  under the bridge from the stand's underside), the lowest at least 8 over the floor. The last landing's stair goes down
+  the shaft wall to the foot: wet flagstones, a ring of candles round the middle, the end's shrine under the lowest bell.
+  When the end is sealed, or on the Lord's floor, the foot is a calm place and the end (a domed chamber) or the Lord's arena
+  is cut into the rock beside it, reached by a passage at the foot. Side rooms are domed chambers back in the rock at their
+  landing's height (or off the foot), never off a built room or one the bars close. Light: hidden light four apart over
+  landings, balconies, chambers and the foot, on every third step, along the foot of the shaft wall, at every doorway and
+  along the bridge. Moods: Tolling adds a monster to each fight room, Requiem lights every candle, Still leaves half out,
+  Storm thins the mist and brightens the light down the shaft.
