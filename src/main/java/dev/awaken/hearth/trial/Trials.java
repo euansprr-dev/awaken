@@ -9,6 +9,7 @@ import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.api.MobHooks;
 import dev.awaken.core.api.MobRole;
+import dev.awaken.core.api.Passage;
 import dev.awaken.hearth.HearthContent;
 import dev.awaken.hearth.HearthService;
 import dev.awaken.hearth.Offers;
@@ -591,12 +592,19 @@ public final class Trials {
             pos = new Vec3(r.x(), r.y(), r.z());
             yaw = r.yaw();
         }
+        BlockPos hearth = null;
         if (dest == null || dest.dimension() == DIMENSION) {
             dest = server.overworld();
-            pos = HearthService.wakeHearth(sp).map(h -> HearthService.safeSpotNear(server.overworld(), h.pos))
-                    .orElse(Vec3.atBottomCenterOf(server.overworld().getRespawnData().pos()));
+            hearth = HearthService.wakeHearth(sp).map(h -> h.pos).orElse(null);
+            pos = Vec3.atBottomCenterOf(hearth != null ? hearth : server.overworld().getRespawnData().pos());
         }
-        sp.teleport(new TeleportTransition(dest, pos, Vec3.ZERO, yaw, 0f, TeleportTransition.PLAY_PORTAL_SOUND));
+        ServerLevel to = dest;
+        Vec3 at = pos;
+        BlockPos anchor = hearth;
+        float face = yaw;
+        // home once its land is made (SPEC §28.9, "Arrivals"); the spot by the Hearth is found once it's there
+        Passage.go(sp, to, at.x, at.z, () -> sp.teleport(new TeleportTransition(to, anchor != null ? HearthService.safeSpotNear(to, anchor) : at,
+                Vec3.ZERO, face, 0f, TeleportTransition.PLAY_PORTAL_SOUND)));
     }
 
     // ---- events -----------------------------------------------------------------------------------------------------

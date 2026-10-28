@@ -5,6 +5,7 @@ import dev.awaken.core.AwakenNet;
 import dev.awaken.core.CoreModule;
 import dev.awaken.core.CorePayloads;
 import dev.awaken.core.EdgeHold;
+import net.minecraft.gametest.framework.GameTestServer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.server.level.ServerLevel;
@@ -47,32 +48,57 @@ public final class Passage {
         final ServerPlayer player;
         final ServerLevel to;
         final double x, z;
-        final Runnable move;
+        final Runnable move, dropped;
         final long since = Util.getMillis();
         boolean done;
 
-        Wait(ServerPlayer player, ServerLevel to, double x, double z, Runnable move) {
+        Wait(ServerPlayer player, ServerLevel to, double x, double z, Runnable move, Runnable dropped) {
             this.player = player;
             this.to = to;
             this.x = x;
             this.z = z;
             this.move = move;
+            this.dropped = dropped;
+        }
+
+        /** Not moving after all: whatever the caller does in that case. */
+        void drop() {
+            done = true;
+            try {
+                dropped.run();
+            } catch (RuntimeException e) {
+                Awaken.LOG.error("[passage] the dropped move for {} failed", player.getGameProfile().name(), e);
+            }
         }
     }
+
+    /**
+     * On the GameTest server Awaken's tests read where a teleport left the player in the same tick, so there the move
+     * runs at once, as it did before ({@code core_passage_far} turns the wait on for itself, in a batch of its own).
+     */
+    private static boolean waitInTests;
 
     /** Moves under way, by player (server thread only). */
     private static final Map<UUID, Wait> WAITS = new HashMap<>();
 
     /** {@code move} once the land round (x, z) in {@code to} is made: now if it is, else off the tick, with the transition. */
     public static void go(ServerPlayer p, ServerLevel to, double x, double z, Runnable move) {
+        go(p, to, x, z, move, () -> {});
+    }
+
+    /**
+     * {@link #go} with {@code dropped}, run instead of {@code move} if the move is dropped (the player logged out, died
+     * or respawned, or a newer move replaced it): for a caller whose bookkeeping must happen either way.
+     */
+    public static void go(ServerPlayer p, ServerLevel to, double x, double z, Runnable move, Runnable dropped) {
         Wait old = WAITS.remove(p.getUUID());
-        if (old != null) old.done = true;
-        if (ready(to, x, z)) {
+        if (old != null) old.drop();
+        if (ready(to, x, z) || !waitInTests && to.getServer() instanceof GameTestServer) {
             if (old != null) send(p, false);
             move.run();
             return;
         }
-        Wait w = new Wait(p, to, x, z, move);
+        Wait w = new Wait(p, to, x, z, move, dropped);
         WAITS.put(p.getUUID(), w);
         if (old == null) send(p, true);
         MinecraftServer server = to.getServer();
@@ -125,6 +151,7 @@ public final class Passage {
         WAITS.remove(w.player.getUUID(), w);
         ServerPlayer p = w.player;
         if (!present(p)) {
+            w.drop();
             if (!p.hasDisconnected()) send(current(p), false);
             return;
         }
@@ -134,7 +161,8 @@ public final class Passage {
         } catch (RuntimeException e) {
             Awaken.LOG.error("[passage] the move for {} failed", p.getGameProfile().name(), e);
         }
-        send(current(p), false);
+        // a move that starts another passage (a second leg) keeps the dusk up
+        if (!waiting(p)) send(current(p), false);
         Awaken.LOG.info("[passage] {} waited {} ms for the land at {} {} in {}{}", p.getGameProfile().name(), waited, Mth.floor(w.x),
                 Mth.floor(w.z), w.to.dimension().identifier(), late ? " (not made yet: moved anyway)" : "");
     }
@@ -162,7 +190,7 @@ public final class Passage {
             Wait w = it.next();
             if (!present(w.player)) {
                 it.remove();
-                w.done = true;
+                w.drop();
                 if (!w.player.hasDisconnected()) send(current(w.player), false);
             } else if (now - w.since > MOST_MS) {
                 if (late == null) late = new ArrayList<>();
@@ -176,6 +204,11 @@ public final class Passage {
     public static void hurt(LivingIncomingDamageEvent e) {
         if (e.getEntity() instanceof ServerPlayer p && !WAITS.isEmpty() && waiting(p)
                 && !e.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) e.setCanceled(true);
+    }
+
+    /** {@code core_passage_far} only: whether moves on the GameTest server wait for their land. */
+    public static void waitInTests(boolean wait) {
+        waitInTests = wait;
     }
 
     public static void clear() {

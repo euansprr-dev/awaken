@@ -20,10 +20,15 @@ final class PassageTests {
 
     static void register() {
         // the test server ticks back to back, so the land's time is wall-clock: a high tick limit and a deadline of its own
-        AwakenTests.register("core_passage_far", 200_000, h -> {
+        // in a batch of its own: other tests' teleports through the helper move at once, and this turns the wait on
+        AwakenTests.registerIsolated("core_passage_far", 200_000, h -> {
             ServerLevel level = h.getLevel();
             ServerPlayer p = h.makeMockServerPlayerInLevel();
-            AwakenTests.onEnd(h, () -> level.getServer().getPlayerList().remove(p));
+            Passage.waitInTests(true);
+            AwakenTests.onEnd(h, () -> {
+                Passage.waitInTests(false);
+                level.getServer().getPlayerList().remove(p);
+            });
             // far past anything made, and a new spot each run (a rerun shares the world)
             double x = 1_200_000 + (Util.getMillis() / 1000 % 997) * 64 + 8.5, z = -1_150_000 + 8.5;
             h.assertFalse(Passage.ready(level, x, z), "the far land isn't made yet");

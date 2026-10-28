@@ -144,8 +144,12 @@ public final class RoadCommands {
         }
         double dx = best.getX() - ex, dz = best.getZ() - ez, dy = best.getY() + 1 - ey;
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.hypot(dx, dz)));
-        p.teleportTo((ServerLevel) p.level(), ex, ey - 1.62, ez, Set.of(), yaw, pitch, true);
-        src.sendSuccess(() -> Component.literal("Watching the caravan"), false);
+        double fx = ex, fy = ey - 1.62, fz = ez;
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(p, (ServerLevel) p.level(), fx, fz, () -> {
+            p.teleportTo((ServerLevel) p.level(), fx, fy, fz, Set.of(), yaw, pitch, true);
+            src.sendSuccess(() -> Component.literal("Watching the caravan"), false);
+        });
         return 1;
     }
 
@@ -175,8 +179,11 @@ public final class RoadCommands {
         double x = r.x()[i], z = r.z()[i], y = r.y()[i] + 1 + (fly ? 2 : 0);
         double dx = r.x()[j] - x, dz = r.z()[j] - z, dy = r.y()[j] - r.y()[i];
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.max(1, Math.hypot(dx, dz))));
-        p.teleportTo((ServerLevel) p.level(), x, y, z, Set.of(), yaw, Math.clamp(pitch + 4, -30, 30), true);
-        src.sendSuccess(() -> Component.literal(String.format(Locale.ROOT, "%s, point %d of %d: %s to %s", r.key(), i, r.points(), r.from().name(), r.to().name())), false);
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(p, (ServerLevel) p.level(), x, z, () -> {
+            p.teleportTo((ServerLevel) p.level(), x, y, z, Set.of(), yaw, Math.clamp(pitch + 4, -30, 30), true);
+            src.sendSuccess(() -> Component.literal(String.format(Locale.ROOT, "%s, point %d of %d: %s to %s", r.key(), i, r.points(), r.from().name(), r.to().name())), false);
+        });
         return 1;
     }
 
@@ -203,9 +210,12 @@ public final class RoadCommands {
         double rx = of.x()[wi] - best.x(), rz = of.z()[wi] - best.z(), l = Math.max(1e-3, Math.hypot(rx, rz));
         double ex = best.x() + 0.5 + rx / l * 4.5, ez = best.z() + 0.5 + rz / l * 4.5;
         float yaw = (float) Math.toDegrees(Math.atan2(-(best.x() + 0.5 - ex), best.z() + 0.5 - ez));
-        p.teleportTo((ServerLevel) p.level(), ex, best.y() + 1, ez, Set.of(), yaw, -8, true);
         Road.Marker m = best;
-        src.sendSuccess(() -> Component.literal("Waymarker: " + m.arms().stream().map(a -> a.name() + (a.distance() > 0 ? " " + a.distance() : "")).toList()), false);
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(p, (ServerLevel) p.level(), ex, ez, () -> {
+            p.teleportTo((ServerLevel) p.level(), ex, m.y() + 1, ez, Set.of(), yaw, -8, true);
+            src.sendSuccess(() -> Component.literal("Waymarker: " + m.arms().stream().map(a -> a.name() + (a.distance() > 0 ? " " + a.distance() : "")).toList()), false);
+        });
         return 1;
     }
 

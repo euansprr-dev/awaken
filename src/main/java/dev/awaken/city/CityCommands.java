@@ -117,28 +117,31 @@ final class CityCommands {
         }
         ServerPlayer p = src.getPlayerOrException();
         ServerLevel level = src.getServer().overworld();
-        // street views stand on open ground: the nearest street, square or quay cell to the named spot
-        CityViews.View at = v;
-        if (CityViews.ALONG.contains(name)) at = along(l.plan, v);
-        else if (CityViews.GROUND.contains(name)) {
-            // past the basin the ground lies as it lies: the eye and the target are heights over it (the Commons step)
-            int wx = l.cx + (int) Math.floor(v.x()), wz = l.cz + (int) Math.floor(v.z());
-            level.getChunk(wx >> 4, wz >> 4);
-            int g = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, wx, wz) - 1 - l.streetY;
-            at = new CityViews.View(v.x(), v.ry() + g, v.z(), v.tx(), v.tr() + g, v.tz());
-        } else if (CityViews.EXACT.contains(name)) at = v;
-        else if (name.startsWith("studio_") && v.ry() < 25 && !CityPlan.walkable(l.plan.kind((int) Math.floor(v.x()), (int) Math.floor(v.z())))
-                && !CityPlan.water(l.plan.kind((int) Math.floor(v.x()), (int) Math.floor(v.z()))) && l.plan.inside((int) Math.floor(v.x()), (int) Math.floor(v.z()))) {
-            // a framing from above the streets: over open ground, at its height above it
-            int[] cell = openCell(l.plan, (int) Math.floor(v.x()), (int) Math.floor(v.z()));
-            at = new CityViews.View(cell[0] + 0.5, v.ry(), cell[1] + 0.5, v.tx(), v.tr(), v.tz());
-        } else if (v.ry() < 12) {
-            int[] cell = openCell(l.plan, (int) Math.floor(v.x()), (int) Math.floor(v.z()));
-            at = new CityViews.View(cell[0] + 0.5, l.plan.lift(cell[0], cell[1]) + 1.0, cell[1] + 0.5, v.tx(), v.tr(), v.tz());
-        }
-        p.teleportTo(level, l.cx + at.x(), l.streetY + at.ry(), l.cz + at.z(), Set.of(), at.yaw(), at.pitch(), true);
-        dev.awaken.Awaken.LOG.info("[city] view {} at {} {} {} yaw {} pitch {}", name, l.cx + v.x(), l.streetY + v.ry(), l.cz + v.z(),
-                v.yaw(), v.pitch());
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(p, level, l.cx + v.x(), l.cz + v.z(), () -> {
+            // street views stand on open ground: the nearest street, square or quay cell to the named spot
+            CityViews.View at = v;
+            if (CityViews.ALONG.contains(name)) at = along(l.plan, v);
+            else if (CityViews.GROUND.contains(name)) {
+                // past the basin the ground lies as it lies: the eye and the target are heights over it (the Commons step)
+                int wx = l.cx + (int) Math.floor(v.x()), wz = l.cz + (int) Math.floor(v.z());
+                level.getChunk(wx >> 4, wz >> 4);
+                int g = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, wx, wz) - 1 - l.streetY;
+                at = new CityViews.View(v.x(), v.ry() + g, v.z(), v.tx(), v.tr() + g, v.tz());
+            } else if (CityViews.EXACT.contains(name)) at = v;
+            else if (name.startsWith("studio_") && v.ry() < 25 && !CityPlan.walkable(l.plan.kind((int) Math.floor(v.x()), (int) Math.floor(v.z())))
+                    && !CityPlan.water(l.plan.kind((int) Math.floor(v.x()), (int) Math.floor(v.z()))) && l.plan.inside((int) Math.floor(v.x()), (int) Math.floor(v.z()))) {
+                // a framing from above the streets: over open ground, at its height above it
+                int[] cell = openCell(l.plan, (int) Math.floor(v.x()), (int) Math.floor(v.z()));
+                at = new CityViews.View(cell[0] + 0.5, v.ry(), cell[1] + 0.5, v.tx(), v.tr(), v.tz());
+            } else if (v.ry() < 12) {
+                int[] cell = openCell(l.plan, (int) Math.floor(v.x()), (int) Math.floor(v.z()));
+                at = new CityViews.View(cell[0] + 0.5, l.plan.lift(cell[0], cell[1]) + 1.0, cell[1] + 0.5, v.tx(), v.tr(), v.tz());
+            }
+            p.teleportTo(level, l.cx + at.x(), l.streetY + at.ry(), l.cz + at.z(), Set.of(), at.yaw(), at.pitch(), true);
+            dev.awaken.Awaken.LOG.info("[city] view {} at {} {} {} yaw {} pitch {}", name, l.cx + v.x(), l.streetY + v.ry(), l.cz + v.z(),
+                    v.yaw(), v.pitch());
+        });
         return 1;
     }
 
@@ -239,7 +242,9 @@ final class CityCommands {
         double dx = l.cx - f.x(), dz = l.cz - f.z(), len = Math.max(1, Math.hypot(dx, dz));
         double sx = f.x() + 0.5 + dx / len * 14, sz = f.z() + 0.5 + dz / len * 14;
         double yaw = Math.toDegrees(Math.atan2(-(f.x() + 0.5 - sx), f.z() + 0.5 - sz));
-        p.teleportTo(src.getServer().overworld(), sx, f.y() + 1, sz, Set.of(), (float) yaw, 0F, true);
+        ServerLevel level = src.getServer().overworld();
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(p, level, sx, sz, () -> p.teleportTo(level, sx, f.y() + 1, sz, Set.of(), (float) yaw, 0F, true));
         return 1;
     }
 

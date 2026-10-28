@@ -149,11 +149,13 @@ final class FaunaCommands {
             return 0;
         }
         BlockPos at = found.getFirst();
-        level.getChunk(at.getX() >> 4, at.getZ() >> 4);
-        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ());
-        sp.teleportTo(level, at.getX() + 0.5, y + 0.1, at.getZ() + 0.5, Set.<Relative>of(), sp.getYRot(), 10.0F, true);
         String biome = found.getSecond().unwrapKey().map(k -> k.identifier().toString()).orElse("?");
-        c.getSource().sendSuccess(() -> Component.literal("Went to " + biome + " (" + name + ") at " + at.getX() + ", " + y + ", " + at.getZ()), false);
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(sp, level, at.getX() + 0.5, at.getZ() + 0.5, () -> {
+            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ());
+            sp.teleportTo(level, at.getX() + 0.5, y + 0.1, at.getZ() + 0.5, Set.<Relative>of(), sp.getYRot(), 10.0F, true);
+            c.getSource().sendSuccess(() -> Component.literal("Went to " + biome + " (" + name + ") at " + at.getX() + ", " + y + ", " + at.getZ()), false);
+        });
         return 1;
     }
 

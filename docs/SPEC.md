@@ -301,6 +301,10 @@ back by play-days. After the "Break the Signal" ending no gate breaks; after "Wa
 
 Themes (15), layouts (8), modifiers (14), twists (8), bosses: exactly as in `docs/plan.html` gate generator.
 
+Arrivals (§28.9, 2026-10-29): leaving a gate (cleared, failed, lost, or its gate gone at login) and `/awaken gates
+frame|hop` wait for the overworld land off the server thread through `Passage.go`; the gate's own bookkeeping (released,
+unsealed, beacons) runs whether the move does or is dropped. Going in doesn't wait: the interior is made first.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 8. The Descent
@@ -308,6 +312,8 @@ Themes (15), layouts (8), modifiers (14), twists (8), bosses: exactly as in `doc
 The Well: landmark structure within 400–700 blocks of world spawn (a Precursor ring around a deep shaft). Jumping in (or the
 Well's lift) enters stratum 1. Strata = dimensions `awaken:stratum_1` … `awaken:stratum_10`, each its own generator +
 biome + one rule; drops (portal pits) lead to the next. Endless = `awaken:endless` (cells, stacking rules).
+Arrivals (§28.9, 2026-10-29): Descent travel (waystones, the climb, the camps) waits for its land through `Passage.go`
+in place of its own portal ticket, and a death in the Descent warms the checkpoint camp's land for the wake there.
 Rules: 1 none · 2 wind gusts · 3 rising water every 5 min · 4 the dead rise once · 5 sound draws Listeners ·
 6 machines wake (power puzzles) · 7 gravity flips with the tides · 8 rooms change when unobserved · 9 your shadow fights you ·
 10 the Seed (finale). Waystone per stratum: checkpoint + fast travel. Strain when climbing up without the Deep Lift:
@@ -323,6 +329,8 @@ min. Lucidity 0–100: reality check (H) +12 in dreams, dream sign spotted +15, 
 (alarm block wakes you, sleep again within 1 in-game hour) +25 start, Recall stat (journal entries) +0.5/entry.
 ≥50 lucid: flight, intent-manifest (hold H on a wall: door/stair/bridge from snapshot palette). ≥80 summon from memory.
 Dying in a dream: wake "Shaken" (no penalty). Not ready → normal sleep. Hold sneak while sleeping: dreamless.
+Arrivals (§28.9, 2026-10-29): waking from a dream and the dream rescue wait for the bed's land through `Passage.go`;
+going into a dream doesn't (the cell is built first).
 
 Veil: sneak + G held 10 s, still, not in combat → Body (mannequin-like entity with skin + gear, chunk ticket) +
 player switched to spectator-backed spirit mode with cord radius (SPI). Awareness fog radius = PER/SPI derived. Ores and
@@ -349,6 +357,11 @@ Echoes: bind fallen elites/bosses (B key within 10 s, chance by SPI and rank), c
 Story: prologue (scripted Bell Crypt → death → Stillpoint "Will you accept?" → Accept/Accept), Acts I–III gated by rank,
 Revelations via Signal, Codex rumour board, the Rival's beats at D/C/B/A/S, endings at the Seed (Become / Break / Wake),
 then New Game+ "Ascension" tiers.
+
+Arrivals (§28.9, 2026-10-29): pylon jumps, the Halo and its return pad, and the Clone Vat's wake wait for their land
+through `Passage.go` (`Travel.teleport`); a pylon whose land isn't loaded is checked on arrival, and its essence given
+back if it's gone. A Hearth trial's way home waits the same way, and a fall warms the Hearth's land for the respawn
+(§28.10).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -8753,6 +8766,23 @@ level, x, z, move)`:
   wall clock (`MOST_MS`; the GameTest server ticks back to back) the move runs anyway, as it would have without the
   helper, logged `(not made yet: moved anyway)`.
 - `Passage.warm(level, x, z)` makes the land without moving anyone, for a move the game makes itself later.
+- `go(..., move, dropped)`: `dropped` runs instead of `move` when the move is dropped, for a caller whose bookkeeping
+  must happen either way (a gate's exit releases the gate). A move that starts a second leg (a lair's own land, then
+  the spot beside its den) keeps the dusk up between them.
+- On the GameTest server moves run at once, as before (the tests read where a teleport left the player in the same
+  tick); `core_passage_far` turns the wait on for itself, in a batch of its own.
+Routed through it (one call each, the destination's reads inside the move): gate exits, the lost-gate and gone-gate
+returns and `gates frame|hop` (§7); a Hearth trial's way home; Above's `Travel.teleport` (pylon jumps, the Halo, its
+return pad, the Clone Vat's wake; §10); Descent travel and the Delve's grotto command (§8); waking from a dream and the
+dream rescue (§9); and the `/awaken` travel commands: `living view|goto|face|wonder|way`, `terrain city|visit|lookout|
+herovisit|landmarkvisit`, `fauna goto`, `fauna lair goto`, `landmark goto`, `anomaly goto`, `city view|floater`,
+`village view`, `road caravan|walk|marker`. Warmed: a Hearth's land when a player falls and will wake there (§28.10),
+and the Descent's checkpoint camp on a death down there. Left as they were, each already made or near: going into a
+gate (its interior is made first) and down a gate's floors; starting a trial (its cell is built on the spot); going into
+a dream; the Veil's projection and the Stillpoint (their own transit guard, their places made); story scenes (the
+opening, the prologue, rituals) in built places; powers (short range); the dream visions and the Well (already wait
+with their own tickets off the thread); and staging commands that build or read beside you. The Atlas has no fast
+travel of its own (its waystones are the Descent's).
 Vanilla's `/tp` and other mods' teleports stay as they are: the packet cap and the watch cover them.
 `core_passage_far` sends a mock player 1,200,000 blocks out: the call comes straight back (under 250 ms) with the
 player where they were and in a passage; the move runs only once its land is made (`ready` true inside it, the
@@ -8847,7 +8877,7 @@ stratum_1 to stratum_10, the Nether, the End):
 | Far Sight ahead (`VoxelAhead`, the collector) | each level's own players, a ticket in that level | safe |
 | City pregen (`CityPregen`) | world creation only | safe |
 | Gate build and break tickets (`GateService`, `Breaks`) | the gate's own overworld spot, never a player's | safe |
-| Teleports (`DescentTravel`, `Well`, `HomeCommands`) | the destination, loaded async with a PORTAL ticket | safe |
+| Teleports (`Passage`: `DescentTravel`, `HomeCommands` and Awaken's other travel; `Well`) | the destination, loaded async (the `awaken:arrival` ticket; the Well's PORTAL ticket) | safe |
 | Vanilla's supporting block across a level change | the old level's block, read in the new one | **fixed** (`Arrivals`) |
 | NeoForge's `Entity.setPosRaw` patch | loads a same-level teleport's target chunk inline | the chunk the player goes to: by design |
 | Wilds' arrival (`Arrival.step`, every tick) | a player on the death screen too: removed from its level, its chunk unloads and is read back from disk each tick (the trial-fall tour: overworld 26,-100, home) | not a level mix-up; **fixed**: a dead or removed player is skipped |
@@ -8899,6 +8929,9 @@ really want to update it and it's a choice").
   director-log line. Without a Hearth (or with waking there off) a bed is your spawn as in vanilla.
 - A bed on the land of a Hearth they belong to chooses that Hearth (`respawn_hearth` = its owner) and turns waking there
   back on.
+- **The land is ready** (§28.9, "Arrivals", 2026-10-29): a fall warms the Hearth's land (`Passage.warm` from a
+  lowest-priority `LivingDeathEvent` listener, when the player will wake there), so it's made or read in by the time
+  they press Respawn; vanilla's respawn itself stays vanilla's.
 - **Never a choice**: the old body's point copied in a respawn (any spawn set in the server tick a respawn ran is
   ignored), a reset to nothing, a forced point (`/spawnpoint`), and our own systems, which move a respawn point through
   `HearthHooks.lendRespawn` / `returnRespawn` (`HearthHooks.Lookup.systemRespawn`).

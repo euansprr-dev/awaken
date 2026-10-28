@@ -113,13 +113,16 @@ final class LandmarkCommands {
         }
         ServerLevel level = p.level();
         double x = target.getX() + 0.5, z = target.getZ() + VIEW + 0.5;
-        level.getChunk(Mth.floor(x) >> 4, Mth.floor(z) >> 4); // load where you'll stand
-        double y = Spots.surface(level, Mth.floor(x), Mth.floor(z)).getY() + 1 + (kind == LandmarkKind.OCEAN_LAB ? 0 : 6);
-        float pitch = kind == LandmarkKind.SKY_PLATFORM ? -35.0F : 10.0F;
-        p.teleportTo(level, x, y, z, java.util.Set.of(), 180.0F, pitch, true);
-        LandmarkMarkers.forget(p.getUUID());
         BlockPos t = target;
-        c.getSource().sendSuccess(() -> Component.literal(kindId + " at " + t.getX() + " " + t.getZ() + "; you stand " + VIEW + " blocks south."), false);
+        int lift = kind == LandmarkKind.OCEAN_LAB ? 0 : 6;
+        float pitch = kind == LandmarkKind.SKY_PLATFORM ? -35.0F : 10.0F;
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(p, level, x, z, () -> {
+            double y = Spots.surface(level, Mth.floor(x), Mth.floor(z)).getY() + 1 + lift;
+            p.teleportTo(level, x, y, z, java.util.Set.of(), 180.0F, pitch, true);
+            LandmarkMarkers.forget(p.getUUID());
+            c.getSource().sendSuccess(() -> Component.literal(kindId + " at " + t.getX() + " " + t.getZ() + "; you stand " + VIEW + " blocks south."), false);
+        });
         return 1;
     }
 

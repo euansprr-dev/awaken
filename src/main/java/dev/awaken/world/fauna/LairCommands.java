@@ -95,20 +95,20 @@ final class LairCommands {
                     : level.getChunkSource().getGenerator().findNearestMapStructure(level, HolderSet.direct(h.get()), sp.blockPosition(), 6, false);
             if (found != null) {
                 BlockPos at = found.getFirst();
-                level.getChunk(at.getX() >> 4, at.getZ() >> 4);
-                LairRegistry.Entry e = LairRegistry.get(level.getServer()).nearest(beast, at, 160);
-                BlockPos to = e != null ? e.den().south(14) : at.offset(8, 0, 8);
-                level.getChunk(to.getX() >> 4, to.getZ() >> 4);
-                int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, to.getX(), to.getZ());
-                // P3: down in the water beside the shrine, inside the nest's chamber
-                if (e != null && style.placement == LairStyle.Placement.SEABED) y = e.den().getY() + 3;
-                if (e != null && style.placement == LairStyle.Placement.CAVE) {
-                    to = e.den().east(5);
-                    y = e.den().getY();
-                }
-                sp.teleportTo(level, to.getX() + 0.5, y + 0.1, to.getZ() + 0.5, Set.<Relative>of(), 180.0F, 15.0F, true);
-                String where = (e != null ? e.den() : at).toShortString();
-                c.getSource().sendSuccess(() -> Component.literal("Went to " + style.title + " near " + where), false);
+                // the lair's own land first (its den is registered as it's made), then where you'll stand (SPEC §28.9, "Arrivals")
+                dev.awaken.core.api.Passage.go(sp, level, at.getX() + 0.5, at.getZ() + 0.5, () -> {
+                    LairRegistry.Entry e = LairRegistry.get(level.getServer()).nearest(beast, at, 160);
+                    // P3: down in the water beside the shrine, inside the nest's chamber
+                    BlockPos to = e == null ? at.offset(8, 0, 8) : style.placement == LairStyle.Placement.CAVE ? e.den().east(5) : e.den().south(14);
+                    dev.awaken.core.api.Passage.go(sp, level, to.getX() + 0.5, to.getZ() + 0.5, () -> {
+                        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, to.getX(), to.getZ());
+                        if (e != null && style.placement == LairStyle.Placement.SEABED) y = e.den().getY() + 3;
+                        if (e != null && style.placement == LairStyle.Placement.CAVE) y = e.den().getY();
+                        sp.teleportTo(level, to.getX() + 0.5, y + 0.1, to.getZ() + 0.5, Set.<Relative>of(), 180.0F, 15.0F, true);
+                        String where = (e != null ? e.den() : at).toShortString();
+                        c.getSource().sendSuccess(() -> Component.literal("Went to " + style.title + " near " + where), false);
+                    });
+                });
                 return 1;
             }
             c.getSource().sendSuccess(() -> Component.literal("No " + beast + " lair within reach: building one ahead of you"), false);

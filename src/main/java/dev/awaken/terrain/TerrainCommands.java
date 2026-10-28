@@ -124,44 +124,46 @@ final class TerrainCommands {
         var start = found.getFirst();
         var chunk = level.getChunk(start.getX() >> 4, start.getZ() >> 4, net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);
         var st = chunk.getStartForStructure(structure.get().value());
-        net.minecraft.core.BlockPos foot = start;
-        int top = 40;
+        net.minecraft.core.BlockPos base = start;
+        int height = 40;
         if (st != null) {
             for (var piece : st.getPieces()) {
                 if (piece instanceof dev.awaken.terrain.hero.HeroPiece hp) {
-                    foot = hp.centre();
-                    top = hp.getBoundingBox().maxY() - foot.getY();
+                    base = hp.centre();
+                    height = hp.getBoundingBox().maxY() - base.getY();
                 }
             }
         }
-        int vx = foot.getX(), vz = foot.getZ() + distance;
-        level.getChunk(vx >> 4, vz >> 4);
-        // the ground there, under any tree (a limb or a root crest is not the ground)
-        int vy = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, vx, vz);
-        while (vy > level.getMinY() + 1) {
-            var below = level.getBlockState(new net.minecraft.core.BlockPos(vx, vy - 1, vz));
-            if (!below.is(net.minecraft.tags.BlockTags.LOGS) && !below.is(net.minecraft.tags.BlockTags.LEAVES) && !below.canBeReplaced()) break;
-            vy--;
-        }
-        vy = Math.max(vy, level.getSeaLevel() + 1) + above; // over the sea: from its surface, not its floor
-        double aim = foot.getY() + top * 0.42 - (vy + 1.62);
-        float pitch = (float) -Math.toDegrees(Math.atan2(aim, Math.max(4, distance)));
-        sp.teleportTo(level, vx + 0.5, vy + 0.1, vz + 0.5, Set.<Relative>of(), 180.0F, pitch, true);
-        Awaken.LOG.info("[terrain] herovisit {} foot {} {} {} top +{}, viewed from {} {} {}", tree.getSerializedName(), foot.getX(), foot.getY(),
-                foot.getZ(), top, vx, vy, vz);
-        // light beside the trunk's south face, low to high (worldgen lighting check)
-        StringBuilder light = new StringBuilder();
-        for (int k = 4; k <= top; k += 8) {
-            for (int d = 3; d <= 12; d++) {
-                var p = foot.offset(0, k, d);
-                if (!level.getBlockState(p).isAir()) continue;
-                light.append(String.format(" +%d:%d@%d", k, level.getBrightness(net.minecraft.world.level.LightLayer.SKY, p), d));
-                break;
+        net.minecraft.core.BlockPos foot = base;
+        int top = height, vx = foot.getX(), vz = foot.getZ() + distance;
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(sp, level, vx + 0.5, vz + 0.5, () -> {
+            // the ground there, under any tree (a limb or a root crest is not the ground)
+            int vy = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, vx, vz);
+            while (vy > level.getMinY() + 1) {
+                var below = level.getBlockState(new net.minecraft.core.BlockPos(vx, vy - 1, vz));
+                if (!below.is(net.minecraft.tags.BlockTags.LOGS) && !below.is(net.minecraft.tags.BlockTags.LEAVES) && !below.canBeReplaced()) break;
+                vy--;
             }
-        }
-        Awaken.LOG.info("[terrain] herovisit {} sky light south of the trunk:{}", tree.getSerializedName(), light);
-        net.minecraft.core.BlockPos f = foot;
-        c.getSource().sendSuccess(() -> Component.literal(tree.getSerializedName() + " at " + f.toShortString()), false);
+            vy = Math.max(vy, level.getSeaLevel() + 1) + above; // over the sea: from its surface, not its floor
+            double aim = foot.getY() + top * 0.42 - (vy + 1.62);
+            float pitch = (float) -Math.toDegrees(Math.atan2(aim, Math.max(4, distance)));
+            sp.teleportTo(level, vx + 0.5, vy + 0.1, vz + 0.5, Set.<Relative>of(), 180.0F, pitch, true);
+            Awaken.LOG.info("[terrain] herovisit {} foot {} {} {} top +{}, viewed from {} {} {}", tree.getSerializedName(), foot.getX(), foot.getY(),
+                    foot.getZ(), top, vx, vy, vz);
+            // light beside the trunk's south face, low to high (worldgen lighting check)
+            StringBuilder light = new StringBuilder();
+            for (int k = 4; k <= top; k += 8) {
+                for (int d = 3; d <= 12; d++) {
+                    var p = foot.offset(0, k, d);
+                    if (!level.getBlockState(p).isAir()) continue;
+                    light.append(String.format(" +%d:%d@%d", k, level.getBrightness(net.minecraft.world.level.LightLayer.SKY, p), d));
+                    break;
+                }
+            }
+            Awaken.LOG.info("[terrain] herovisit {} sky light south of the trunk:{}", tree.getSerializedName(), light);
+            c.getSource().sendSuccess(() -> Component.literal(tree.getSerializedName() + " at " + foot.toShortString()), false);
+        });
         return 1;
     }
 
@@ -254,14 +256,16 @@ final class TerrainCommands {
 
     /** Stands the player at (x, z) on the given surface (the ground under trees, or the treetops for a lookout). */
     private static void stand(ServerPlayer sp, ServerLevel level, int x, int z, int above, Heightmap.Types surface) {
-        level.getChunk(x >> 4, z >> 4);
-        int y = level.getHeight(surface, x, z);
-        // on the ground means under the trees: a trunk's top or a limb is no ground (the treetops are for a lookout)
-        while (surface == Heightmap.Types.MOTION_BLOCKING_NO_LEAVES && y > level.getMinY() + 1) {
-            var below = level.getBlockState(new net.minecraft.core.BlockPos(x, y - 1, z));
-            if (!below.is(net.minecraft.tags.BlockTags.LOGS) && !below.is(net.minecraft.tags.BlockTags.LEAVES) && !below.canBeReplaced()) break;
-            y--;
-        }
-        sp.teleportTo(level, x + 0.5, y + 0.1 + above, z + 0.5, Set.<Relative>of(), sp.getYRot(), sp.getXRot(), true);
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(sp, level, x + 0.5, z + 0.5, () -> {
+            int y = level.getHeight(surface, x, z);
+            // on the ground means under the trees: a trunk's top or a limb is no ground (the treetops are for a lookout)
+            while (surface == Heightmap.Types.MOTION_BLOCKING_NO_LEAVES && y > level.getMinY() + 1) {
+                var below = level.getBlockState(new net.minecraft.core.BlockPos(x, y - 1, z));
+                if (!below.is(net.minecraft.tags.BlockTags.LOGS) && !below.is(net.minecraft.tags.BlockTags.LEAVES) && !below.canBeReplaced()) break;
+                y--;
+            }
+            sp.teleportTo(level, x + 0.5, y + 0.1 + above, z + 0.5, Set.<Relative>of(), sp.getYRot(), sp.getXRot(), true);
+        });
     }
 }

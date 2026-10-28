@@ -211,6 +211,11 @@ public final class DescentModule {
             if (Strata.isDescent(level.dimension()) && enabled()) {
                 DeepPacks.onDeath(sp);
                 Zones.left(sp);
+                // they wake at the checkpoint's camp: its land is made while they're down (SPEC §28.9, "Arrivals")
+                int cp = DescentSync.data(sp).checkpoint;
+                ServerLevel camp = cp >= 1 ? level.getServer().getLevel(Strata.dimensionOf(cp)) : null;
+                BlockPos at = DescentTravel.arrivalPos(Math.max(1, cp), DescentTravel.Arrival.CAMP);
+                if (camp != null) dev.awaken.core.api.Passage.warm(camp, at.getX() + 0.5, at.getZ() + 0.5);
             }
             return;
         }

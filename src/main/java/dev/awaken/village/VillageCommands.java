@@ -234,10 +234,13 @@ final class VillageCommands {
         }
         double dx = v[3] - v[0], dy = v[4] - v[1], dz = v[5] - v[2];
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.hypot(dx, dz)));
-        // framings give the eye; the player stands 1.62 under it (a spectator stays exactly there)
-        p.teleportTo(level, plan.ox + v[0], plan.baseY + v[1] - 1.62, plan.oz + v[2], Set.of(), yaw, pitch, true);
-        dev.awaken.Awaken.LOG.info("[village] view {} {} of {} at {} {} {}", key, name, plan, plan.ox + v[0], plan.baseY + v[1], plan.oz + v[2]);
-        src.sendSuccess(() -> Component.literal(plan.name + ": " + name), false);
+        double[] e = v;
+        // framings give the eye; the player stands 1.62 under it (a spectator stays exactly there), once its land is made (SPEC §28.9)
+        dev.awaken.core.api.Passage.go(p, level, plan.ox + e[0], plan.oz + e[2], () -> {
+            p.teleportTo(level, plan.ox + e[0], plan.baseY + e[1] - 1.62, plan.oz + e[2], Set.of(), yaw, pitch, true);
+            dev.awaken.Awaken.LOG.info("[village] view {} {} of {} at {} {} {}", key, name, plan, plan.ox + e[0], plan.baseY + e[1], plan.oz + e[2]);
+            src.sendSuccess(() -> Component.literal(plan.name + ": " + name), false);
+        });
         return 1;
     }
 
