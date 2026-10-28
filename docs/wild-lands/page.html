@@ -1,0 +1,395 @@
+<title>The Wild Lands</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a field guide. One reading column, wide figures that break out of it, decision cards at the end. */
+:root {
+  --bg: #eef1ea; --paper: #f8faf5; --ink: #1d2a22; --muted: #5d6b62; --rule: #cdd6cc;
+  --accent: #b9771f; --accent-soft: #f3e3c6; --good: #2f6b45; --warn: #a0521c;
+  --b0: #e8dec4; --b1: #d6d8a0; --b2: #96ba62; --b3: #2f6e48;
+  --display: "Alegreya SC", "Iowan Old Style", Georgia, serif;
+  --body: "Alegreya Sans", "Gill Sans", "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121b16; --paper: #18241d; --ink: #e3eadf; --muted: #9cab9f; --rule: #2d3b32;
+  --accent: #e3a44a; --accent-soft: #3a2e1b; --good: #7cc394; --warn: #e6965a;
+  --b0: #5b5640; --b1: #6b6d3f; --b2: #4f7a3a; --b3: #2b5a3d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121b16; --paper: #18241d; --ink: #e3eadf; --muted: #9cab9f; --rule: #2d3b32;
+  --accent: #e3a44a; --accent-soft: #3a2e1b; --good: #7cc394; --warn: #e6965a;
+  --b0: #5b5640; --b1: #6b6d3f; --b2: #4f7a3a; --b3: #2b5a3d; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 17px/1.55 var(--body); }
+.wrap { max-width: 1060px; margin: 0 auto; padding-block: 28px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.1rem, 5vw, 3.2rem); letter-spacing: .01em; }
+h2 { font-size: 1.6rem; margin-top: 56px; padding-top: 14px; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.15rem; margin-top: 26px; }
+p, li { margin: .55em 0; }
+.eyebrow { font: 500 .78rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 1.2rem; color: var(--ink); }
+.muted { color: var(--muted); }
+.small { font-size: .9rem; }
+.mono, td.n, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.tag { display: inline-block; font: 500 .72rem/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 3px; background: var(--accent-soft); color: var(--accent); vertical-align: middle; }
+.tag.fact { background: transparent; border: 1px solid var(--good); color: var(--good); }
+.tag.mock { background: transparent; border: 1px solid var(--warn); color: var(--warn); }
+figure { margin: 22px 0; }
+figure img { display: block; width: 100%; height: auto; border-radius: 4px; image-rendering: pixelated; }
+figure img.photo { image-rendering: auto; }
+figcaption { font-size: .9rem; color: var(--muted); margin-top: 8px; max-width: 80ch; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; }
+.grid2 > *, .grid3 > * { min-width: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .88rem; color: var(--muted); margin-top: 8px; }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 10px; margin-right: 6px; border-radius: 2px; background: var(--c); vertical-align: middle; }
+.tbl { overflow-x: auto; margin: 16px 0; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 500 .74rem/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td.n { text-align: right; white-space: nowrap; }
+.callout { background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 16px 18px; }
+.chart { width: 100%; height: auto; display: block; }
+.chart .ax { font: 11px var(--mono); fill: var(--muted); }
+.chart .lab { font: 12px var(--body); fill: var(--ink); }
+.arc { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; counter-reset: s; }
+.arc div { background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 12px; font-size: .92rem; }
+.arc b { display: block; font-family: var(--display); font-size: 1.02rem; margin-bottom: 4px; }
+.arc b::before { counter-increment: s; content: counter(s) ". "; color: var(--accent); }
+.matrix { display: grid; grid-template-columns: auto 1fr 1fr; gap: 6px; font-size: .92rem; }
+.matrix > div { padding: 10px 12px; border-radius: 5px; background: var(--paper); border: 1px solid var(--rule); }
+.matrix .h { background: transparent; border: none; font: 500 .74rem/1.3 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); align-self: end; }
+.decision { border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; background: var(--paper); }
+.decision h3 { margin: 0 0 6px; font-size: 1.08rem; }
+.decision .rec { color: var(--good); font-weight: 700; }
+ol.decisions { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+.stage { display: grid; grid-template-columns: 76px 1fr auto; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+.stage .k { font: 500 .8rem var(--mono); color: var(--accent); }
+.stage .h { font: 500 .85rem var(--mono); color: var(--muted); white-space: nowrap; }
+@media (max-width: 560px) { .stage { grid-template-columns: 1fr; gap: 4px; } .matrix { grid-template-columns: 1fr; } .matrix .h:first-child { display: none; } }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+
+<header class="col">
+  <div class="eyebrow">AWAKEN · plan for approval · 28 October 2026</div>
+  <h1>The Wild Lands</h1>
+  <p class="lede">Settled land should feel tamed. The further you get from people, the wilder it should grow: long grass, big bushes, old trees, and real herds with packs hunting them. Then you go out and hunt, Monster Hunter style.</p>
+  <p class="muted">This page is the plan. Nothing is built yet. It ends with seven decisions; every one has a recommendation, so "go with the recommendations" is a complete answer.</p>
+</header>
+
+<section class="col">
+  <h2>What you asked for</h2>
+  <p>You want the world to vary between civilised and wild in a way that feels natural, with no hard borders. The wilder a place, the bigger its vegetation and the bigger its herds and packs. And you want hunting to become a thing you do: find signs, track something, fight it, carve it, craft from it.</p>
+  <p><b>A strong result:</b> walking out of a village, you can feel the land change. The lane has short grass and sheep, the fields beyond go long and gold, and an hour out you crest a hill and see thirty aurochs grazing below with wolves lying in the grass at the treeline. You find fresh prints, follow them, and fight the herd's bull.</p>
+  <p><b>A weak result:</b> more grass everywhere, or more animals everywhere. The same everywhere is the problem we have today.</p>
+  <p><b>Not acceptable:</b> lag from big herds, visible lines where the land changes, settled land turned into jungle, or already-explored land rewritten.</p>
+</section>
+
+<section>
+  <div class="col">
+    <h2>What the world does today</h2>
+    <p><span class="tag fact">measured</span> I read your world, New World (7), without changing it: all 12,935 generated chunks (about 3.3 km²), every plant and every saved animal, and set them against how settled each place is (distance to Carillon, Bramgrove, Goldbury, your Hearth and the roads, using the real road blocks).</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Land, by how settled it is</th><th>Chunks</th><th>Short grass</th><th>Tall grass</th><th>Bushes</th><th>Animals per km²</th></tr></thead>
+    <tbody>
+      <tr><td>Most settled (tamed)</td><td class="n">2,468</td><td class="n">22.7</td><td class="n">2.8</td><td class="n">0.47</td><td class="n">586</td></tr>
+      <tr><td>Pasture</td><td class="n">2,062</td><td class="n">23.9</td><td class="n">1.6</td><td class="n">0.62</td><td class="n">391</td></tr>
+      <tr><td>Wild</td><td class="n">1,714</td><td class="n">20.2</td><td class="n">1.5</td><td class="n">0.60</td><td class="n">195</td></tr>
+      <tr><td>Deepest wild</td><td class="n">3,312</td><td class="n">22.5</td><td class="n">1.6</td><td class="n">0.38</td><td class="n">391</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">Plants are counted per chunk (256 columns). Bands use the wildness field proposed below, built from your real roads and settlements. How closely each column follows wildness (correlation, 1 = perfectly): tall grass −0.12, short grass −0.02, bushes −0.05, animals −0.03.</p>
+  <div class="col">
+    <p>So the land is the same everywhere. If anything, the most settled land has the most tall grass and the most animals. About one chunk in twenty has an animal at all, in groups of two to four.</p>
+  </div>
+  <div class="grid2">
+    <figure><img src="img/today_tall.png" alt="Map of tall grass and bushes today: an even light speckle with no pattern"><figcaption><span class="tag fact">today</span> Tall grass and bushes per chunk over the land you've explored (darker is more). Grey is ungenerated. The speckle has no shape.</figcaption></figure>
+    <figure><img src="img/today_anim.png" alt="Map of animals today: scattered dots with no pattern"><figcaption><span class="tag fact">today</span> Animals per chunk, same area. Scattered pairs, no herds you could see from a hill.</figcaption></figure>
+  </div>
+</section>
+
+<section class="col">
+  <h2>Why it's like that</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>What you see</th><th>Cause in the code</th></tr></thead>
+    <tbody>
+      <tr><td>Grass is the same everywhere</td><td>Plants come from each biome's fixed counts per chunk. Nothing in the game knows how settled a place is. The Soft Land's ground palette has an empty <span class="mono">ranks</span> slot waiting for something like this.</td></tr>
+      <tr><td>Animals are the same everywhere</td><td>Vanilla places farm animals per biome when a chunk is made. Our fauna spawn by biome under per-player caps (5 neutral, 5 hunters).</td></tr>
+      <tr><td>Herds are small and all alike</td><td>The ledger (<span class="mono">living.population.Ledger</span>) gives every 512-block cell up to two herds of 6 to 10, capped at 12 bodies, 24 near a player. Only our five fauna grazers, never cows, horses or goats.</td></tr>
+      <tr><td>Packs don't really hunt</td><td>A pack's position is a formula ("24 blocks off its herd at night"). Kills happen as dice when nobody watches. The bodies never stalk or chase.</td></tr>
+      <tr><td>Harder land is emptier, not wilder</td><td><span class="mono">QuietLand</span> thins animal spawns by danger rank (B keeps a third, S a tenth). That is the opposite of what you're asking for, so it has to change (decision 2).</td></tr>
+      <tr><td>Hunting is just killing</td><td>Alphas exist (wild kin, "Alpha of &lt;region&gt;") and named beasts have lairs, but there are no signs to read, no tracking, no parts to break and no carving.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Most of the pieces you need already exist: regions, the ledger, wild kin and alphas, the new form bodies (aurochs, boar, ram), lairs, the Hunting craft's amber Tracks, the wind, Arms' hide tags, Trails and the Atlas. What's missing is one idea that ties them together: how wild a place is.</p>
+</section>
+
+<section>
+  <div class="col">
+    <h2>The idea: wildness is not danger</h2>
+    <p>The region levels already say how dangerous land is. Wildness is a second, separate measure: how untouched it is. Keeping them apart gives the world four kinds of place instead of one.</p>
+  </div>
+  <div class="matrix">
+    <div class="h"></div><div class="h">Settled</div><div class="h">Wild</div>
+    <div class="h">Low level</div>
+    <div>The Commons, Bramgrove. Lawns, lanes, sheep in twos. Safe and calm.</div>
+    <div><b>A calm wild.</b> Long grass, big gentle herds, wolves. The best first hunting ground for a new player.</div>
+    <div class="h">High level</div>
+    <div>A town in B land. Tamed fields, but what comes out of the woods is dangerous.</div>
+    <div><b>The deep wild.</b> Huge herds of formed beasts, big packs, alphas, named beasts. The real hunts.</div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <h2>The wildness field</h2>
+    <p>One number from 0 to 1 for every place. It is worked out from the place itself, so every computer gets the same answer, nothing is simulated, and it costs almost nothing.</p>
+    <ul>
+      <li><b>People tame the land around them.</b> The city (out to about 850 blocks from its centre), towns (about 500 past their edge), villages (about 320), hamlets (about 240), wayhouses, and your Hearth. Their effect fades smoothly, never at a line.</li>
+      <li><b>Roads are ribbons of tamed land.</b> About 70 blocks either side of a highroad, 40 of a lane, so the safe way through the wild is also the tamed way.</li>
+      <li><b>Remoteness does the rest.</b> Far from all of these, land goes wild by itself.</li>
+      <li><b>Harder land leans a little wilder</b> (about 0.03 a rank), and <b>rugged ground, deep forest and valleys</b> lean wilder too.</li>
+      <li><b>Organic noise</b> (patches about 1,100 and 260 blocks across) leaves a wild copse near a village and a calm glade in the deep wild.</li>
+    </ul>
+    <p>Four bands give it words: <b>Tamed</b> (under 0.2), <b>Pasture</b> (to 0.45), <b>Wild</b> (to 0.7) and <b>Deep wild</b>.</p>
+  </div>
+  <figure>
+    <img src="img/wild_real.png" alt="Wildness over the land Euan has explored: pale around Carillon, Bramgrove and Goldbury and along the roads, deep green between them">
+    <figcaption><span class="tag fact">your world</span> The field over the 2.6 km square you've explored, from its real roads (brown) and real settlements: Carillon (grey, bottom), Bramgrove (small, middle), Goldbury (top left) and your Hearth (orange). North is up. Pale is tamed; deep green is deep wild.</figcaption>
+  </figure>
+  <div class="legend"><span style="--c: var(--b0)">Tamed</span><span style="--c: var(--b1)">Pasture</span><span style="--c: var(--b2)">Wild</span><span style="--c: var(--b3)">Deep wild</span></div>
+  <figure>
+    <img src="img/wild_map.png" alt="Wildness over 11 km of Euan's world: a web of pale roads and settlements with deep green wild land between them">
+    <figcaption><span class="tag mock">approximate</span> The same rules over 11 km of your seed, using the real region map and settlement grid. Roads are drawn straight between hubs here; in the game the field uses the real road net. The wild becomes rooms between a web of roads and settlements. Past 2 km out, about half the land is deep wild and an eighth is tamed.</figcaption>
+  </figure>
+  <div class="col"><h3>Walking out from Carillon</h3></div>
+  <figure>
+    <svg viewBox="-16 0 776 240" role="img" aria-label="Wildness along a walk from Carillon to Goldbury and on west" class="chart">
+<rect x="46" y="163.6" width="700" height="36.4" fill="var(--b0)" opacity="0.55"/>
+<text x="40" y="185.8" text-anchor="end" class="ax">Tamed</text>
+<rect x="46" y="118.1" width="700" height="45.5" fill="var(--b1)" opacity="0.55"/>
+<text x="40" y="144.8" text-anchor="end" class="ax">Pasture</text>
+<rect x="46" y="72.6" width="700" height="45.5" fill="var(--b2)" opacity="0.55"/>
+<text x="40" y="99.4" text-anchor="end" class="ax">Wild</text>
+<rect x="46" y="18.0" width="700" height="54.6" fill="var(--b3)" opacity="0.55"/>
+<text x="40" y="49.3" text-anchor="end" class="ax">Deep</text>
+<polyline points="46.0,200.0 50.3,200.0 54.7,200.0 59.0,200.0 63.3,200.0 67.7,200.0 72.0,200.0 76.3,200.0 80.6,200.0 85.0,200.0 89.3,200.0 93.6,199.5 98.0,198.2 102.3,196.5 106.6,194.7 111.0,192.7 115.3,190.7 119.6,188.9 123.9,187.6 128.3,186.7 132.6,186.7 136.9,187.4 141.3,189.1 145.6,191.6 149.9,194.7 154.3,197.6 158.6,199.8 162.9,200.0 164.0,200.0 168.3,200.0 172.7,194.5 177.0,181.1 181.3,162.7 185.6,142.1 190.0,123.0 194.3,105.9 198.6,91.2 203.0,79.3 207.3,70.2 211.6,65.0 216.0,63.5 220.3,66.0 224.6,73.0 228.9,84.4 233.3,101.7 237.6,121.7 241.9,142.9 246.3,160.3 250.6,164.7 254.9,165.6 256.1,165.6 260.5,167.6 264.8,162.7 269.1,156.1 273.5,140.9 277.8,125.9 282.1,115.6 286.5,109.4 290.8,109.2 295.1,111.7 299.5,117.2 303.8,124.5 308.1,137.0 312.4,146.5 316.8,156.5 321.1,170.2 325.4,178.9 329.8,186.7 334.1,194.7 338.4,198.5 342.8,200.0 347.1,200.0 351.4,200.0 355.7,200.0 359.5,200.0 363.9,200.0 368.2,200.0 372.5,200.0 376.9,199.6 381.2,196.5 385.5,189.4 389.8,179.3 394.2,166.9 398.5,162.1 402.8,148.3 407.2,134.3 411.5,120.8 415.8,111.2 420.2,98.6 424.5,91.2 428.8,79.7 433.1,69.0 437.5,61.7 441.8,53.1 446.1,45.8 450.5,40.0 454.8,38.2 459.1,34.0 463.5,30.6 467.8,27.5 472.1,25.8 476.4,23.3 480.8,21.8 485.1,20.2 489.4,19.3 493.8,19.5 498.1,18.0 502.4,18.0 506.8,18.0 511.1,18.0 515.4,18.0 519.7,18.0 524.1,18.0 528.4,18.0 532.7,18.0 537.1,18.0 541.4,18.0 542.5,18.0 546.8,19.3 551.1,19.6 555.5,21.5 559.8,22.9 564.1,24.6 568.5,26.6 572.8,29.3 577.1,31.3 581.5,35.3 585.8,40.8 590.1,47.5 594.4,56.9 598.8,67.0 603.1,72.6 607.4,85.7 611.8,100.8 616.1,117.7 620.4,136.3 624.8,156.3 629.1,175.8 633.4,185.1 637.7,197.3 642.1,200.0 646.4,200.0 650.7,198.2 655.1,191.8 659.4,182.7 663.7,167.8 668.1,155.4 672.4,148.3 676.7,150.7 681.0,152.5 685.4,152.1 689.7,156.0 694.0,158.5 698.4,165.6 702.7,163.1 707.0,157.0 711.4,149.2 715.7,142.1 720.0,144.5 724.3,148.9 728.7,162.7 733.0,166.1 737.3,155.8 741.7,131.2 746.0,112.8" fill="none" stroke="var(--ink)" stroke-width="2"/>
+<line x1="46.0" x2="46.0" y1="18" y2="200" stroke="var(--muted)" stroke-dasharray="3 3"/>
+<text x="50.0" y="30" class="lab">Carillon</text>
+<line x1="164.0" x2="164.0" y1="18" y2="200" stroke="var(--muted)" stroke-dasharray="3 3"/>
+<text x="168.0" y="30" class="lab">Bramgrove</text>
+<line x1="256.1" x2="256.1" y1="18" y2="200" stroke="var(--muted)" stroke-dasharray="3 3"/>
+<text x="260.1" y="30" class="lab">your Hearth</text>
+<line x1="359.5" x2="359.5" y1="18" y2="200" stroke="var(--muted)" stroke-dasharray="3 3"/>
+<text x="363.5" y="30" class="lab">Goldbury</text>
+<text x="46.0" y="216" text-anchor="middle" class="ax">0 km</text>
+<text x="181.3" y="216" text-anchor="middle" class="ax">1 km</text>
+<text x="316.6" y="216" text-anchor="middle" class="ax">2 km</text>
+<text x="452.0" y="216" text-anchor="middle" class="ax">3 km</text>
+<text x="587.3" y="216" text-anchor="middle" class="ax">4 km</text>
+<text x="722.6" y="216" text-anchor="middle" class="ax">5 km</text>
+<text x="380.0" y="234" text-anchor="middle" class="ax">walked along the roads from the city gate</text></svg>
+    <figcaption>Wildness along the road north to Bramgrove, on to your Hearth and Goldbury, then west into the open. The land breathes: tamed by each settlement, wilder between them, and staying wild once you leave the roads. No 100 blocks change by more than about one band, except crossing a road.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="col">
+    <h2>What changes on the land</h2>
+    <p>The same patch of land, drawn three ways. <span class="tag mock">mock-up</span> These are drawn with the Soft Land plan's block renderer; the animals are plain box stand-ins, not the game's models.</p>
+  </div>
+  <div class="grid3">
+    <figure><img class="photo" src="img/scene_tamed.jpg" alt="Tamed: a lane, a fence, a wheat field, short grass and a few sheep"><figcaption><b>Tamed.</b> Mown short grass, a lane and fence, a wheat strip, a few flowers, sheep in twos and threes.</figcaption></figure>
+    <figure><img class="photo" src="img/scene_wild.jpg" alt="Wild: long grass in swathes, a big old oak, a herd of nine grazing"><figcaption><b>Wild.</b> Long grass in swathes, gold-tipped in patches, big bushes, a fallen log, an old oak, a herd of nine.</figcaption></figure>
+    <figure><img class="photo" src="img/scene_deep.jpg" alt="Deep wild: dense long grass, two great oaks, thickets, a herd of eighteen with a dark bull and wolves at the edge"><figcaption><b>Deep wild.</b> Dense long grass, thickets with berries, great oaks, a herd of eighteen around its bull, three wolves watching from the left.</figcaption></figure>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Per chunk, roughly</th><th>Today (everywhere)</th><th>Tamed</th><th>Pasture</th><th>Wild</th><th>Deep wild</th></tr></thead>
+    <tbody>
+      <tr><td>Short grass</td><td class="n">22</td><td class="n">15–22</td><td class="n">30</td><td class="n">40</td><td class="n">45</td></tr>
+      <tr><td>Tall grass and ferns (in swathes)</td><td class="n">2</td><td class="n">0–1</td><td class="n">4</td><td class="n">25</td><td class="n">55</td></tr>
+      <tr><td>Big bushes (leaf mounds 2–5 wide)</td><td class="n">0</td><td class="n">0</td><td class="n">0.5</td><td class="n">2</td><td class="n">4</td></tr>
+      <tr><td>Wildflowers</td><td class="n">8</td><td class="n">8</td><td class="n">14</td><td class="n">8</td><td class="n">6</td></tr>
+      <tr><td>Fallen logs, thickets</td><td class="n">few</td><td class="n">none</td><td class="n">few</td><td class="n">some</td><td class="n">many</td></tr>
+      <tr><td>Old giant trees</td><td class="n">none</td><td class="n">none</td><td class="n">none</td><td class="n">rare</td><td class="n">1 in 6 chunks</td></tr>
+      <tr><td>Grass colour</td><td>one tint with patches</td><td>a touch greener</td><td>as now</td><td>warmer, seed heads</td><td>deeper, tawny patches</td></tr>
+    </tbody>
+  </table></div>
+  <div class="col">
+    <p>Flowers peak in pasture because grazed meadows bloom; real wild grass crowds them out. Forests get the wildness too: thick undergrowth, ferns, moss, berry thickets and fallen trunks in the deep wild, an open floor near people.</p>
+    <p><b>How:</b> new features in the Awakened Ground pack (long-grass swathes, big bushes, thickets, old giants), a tidy-up pass that mows tall grass near people, the palette's empty slot filled by wildness, and the lawn colour reading a small per-chunk wildness record. Far Sight reads the same field, so far meadows have the same tint and tree density as near ones.</p>
+    <p><b>Only new chunks change.</b> Land you've already explored keeps its blocks. In your current world, the new features start at the edge of what you've explored (decision 3).</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <h2>Herds and packs</h2>
+    <p>The ledger already keeps animals as numbers and gives them bodies only near players. It grows into something you can see from a hilltop.</p>
+  </div>
+  <div class="grid2">
+    <figure><img src="img/today_anim.png" alt="Animals today: scattered dots"><figcaption><span class="tag fact">today</span> Animals per chunk, as above.</figcaption></figure>
+    <figure><img src="img/prop_anim.png" alt="Animals proposed: few near settlements, large clumps of herds in the wild"><figcaption><span class="tag mock">illustrative</span> The same land with the plan's numbers: a few farm animals by people, herds clumped in the wild.</figcaption></figure>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Tamed</th><th>Pasture</th><th>Wild</th><th>Deep wild</th></tr></thead>
+    <tbody>
+      <tr><td>Who lives there</td><td>Farm animals in twos and fours (as now)</td><td>Small wild groups</td><td>Herds and a pack</td><td>Big herds, big packs, alphas, named beasts</td></tr>
+      <tr><td>Herd size</td><td class="n">2–4</td><td class="n">4–8</td><td class="n">8–16</td><td class="n">16–30</td></tr>
+      <tr><td>Pack size</td><td class="n">none</td><td class="n">2–3</td><td class="n">3–5</td><td class="n">5–8 with an alpha</td></tr>
+      <tr><td>Animals per km²</td><td class="n">300–500</td><td class="n">~500</td><td class="n">800–1,000</td><td class="n">1,500–2,500</td></tr>
+    </tbody>
+  </table></div>
+  <div class="col">
+    <h3>Who the herds are</h3>
+    <p>Vanilla animals join our fauna. A wild herd of cows is an <b>aurochs</b> herd, pigs a <b>boar</b> sounder, sheep a flock of <b>wild rams</b>; from C land they wear the new form bodies (mob-forms built them today), so a B-land aurochs herd really is a herd of horned beasts. Horses and donkeys run in plains herds, goats on crags, and our mossbacks, frost stags, dune rays and crag rams stay where they live. Wolves hunt by day and dusk; our gloomstalkers, wisp hounds and thornlings by night.</p>
+    <h3>One brain per herd</h3>
+    <p>Each herd near a player has one small brain on the server that thinks once a second. The animals just follow it. Its moods: <b>graze</b> (spread out, heads down), <b>drift</b> to the next pasture along its usual route (so herds wear paths), <b>water</b>, <b>bed down</b> at night in a tight group, <b>alert</b> (heads up, bunching), <b>flee</b> and, for big herds in wild land, <b>stampede</b>.</p>
+    <p>What startles them: you on your feet inside their flight distance (wilder herds are warier), your scent carried <b>downwind</b> (the game's wind already exists, so a hunter learns to come from downwind and crouched), a pack attacking, or one of them being hit. The alarm ripples from the near side to the far side over half a second, so a herd turns like a wave instead of all at once. It runs away from the danger over ground it can cross, then regroups.</p>
+    <p>Packs have their own brain: <b>rest</b> at the den, <b>prowl</b> toward their herd, <b>stalk</b> from downwind, <b>chase</b> the straggler (the slowest, youngest or rearmost), <b>feed</b> at the kill, and <b>retreat</b> when the alpha is badly hurt. A pack can turn on you if you walk into its kill.</p>
+    <p>Herds are world state, the same for everyone; their state is saved in the ledger. Far from players nothing simulates: where a herd is follows from its seed and the clock, as it does today, and each night the pack's hunting is settled in one step.</p>
+    <h3>Signs</h3>
+    <p>Hoof and paw prints along the herd's real path (fresh ones for everyone, fading over a couple of in-game hours; your Tracks perk makes them glow amber and last), droppings where herds bed, kill sites with bones where packs fed, trampled grass along migration routes. Each tells you what passed, how many and how long ago.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <h2>The hunt</h2>
+    <p>What Monster Hunter gets right, and what we take:</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>In Monster Hunter</th><th>Why it works</th><th>In AWAKEN</th></tr></thead>
+    <tbody>
+      <tr><td>Tracks and scoutflies (World): gathering a monster's traces levels the flies, which first lead to the next trace, then straight to the monster.</td><td>Finding the quarry is a hunt in itself, and you get better at finding each kind over time.</td><td>Reading signs feeds the band. After a few, its amber <b>scout motes</b> drift toward the next sign; after more, straight to the quarry, and it goes on your Atlas and Now line. Each kind you hunt is studied for good (the Codex learns its weak spots and parts); the trail itself fades.</td></tr>
+      <tr><td>Part breaks: horns snap, tails sever, and that part drops.</td><td>Every hit visibly matters; you aim for what you need.</td><td>Each quarry has 2–4 parts (horns, tusks, back plates, tail). Enough damage to a part breaks it: it vanishes from the body, the beast staggers, and the part is yours.</td></tr>
+      <tr><td>Carving: each hunter carves the body a few times.</td><td>A short ritual that says "you earned this", fair in a group.</td><td>The quarry's body stays a minute. Every hunter who fought carves it three times, with a short hand animation. Hide comes by the land's tier; horns, sinew and rarely an alpha heart by species.</td></tr>
+      <tr><td>Limping back to its nest; turf wars; herds with alphas (Wilds).</td><td>The fight has an arc and the world is alive around it.</td><td>A beaten quarry flees to its bed to rest; you follow. Its herd scatters or stampedes when the fight starts; its pack comes to its call.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="col"><h3>A hunt, start to finish</h3></div>
+  <div class="arc">
+    <div><b>Signs</b>Fresh prints by a stream: big cloven hooves, a lot of them, this morning.</div>
+    <div><b>Trail</b>You read three more. Amber motes lift from your band and drift north-east.</div>
+    <div><b>Approach</b>From downwind, crouched. The herd grazes. Its bull is the size of a cart.</div>
+    <div><b>Fight</b>It roars, the herd stampedes past you, the bull charges. You break a horn.</div>
+    <div><b>Chase</b>At a third of its health it limps to its bedding ground. You follow its blood trail.</div>
+    <div><b>Carve</b>Three carves: aurochs hide (B), a broken horn, sinew. A trophy for the Hall.</div>
+    <div><b>Craft</b>The horn and hide go into Arms' patterns and the hunter gear of that tier.</div>
+  </div>
+  <div class="col">
+    <p><b>The quarries, first:</b> the alphas of herds and packs, on the new form bodies, and the twelve named beasts in their lairs (they already exist). The Creature Kit's beasts join only after one passes your bar.</p>
+    <p><b>Where it plugs in:</b> parts go into Arms' existing hunter tags (hide by land tier, so "the land owns the hunt's parts" still holds); trophies hang in the Trophy Hall; the Hunting craft pays as it does; the Journal shows the hunt you're tracking; Trails gets hunt steps; the Atlas keeps the signs you've read, the beds and dens you've found, and kill sites. Village notice boards can post a hunt ("the bull that breaks our fences") later, in stage 5.</p>
+  </div>
+</section>
+
+<section class="col">
+  <h2>Ways to do it</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Option</th><th>What it is</th><th>Why not / why</th></tr></thead>
+    <tbody>
+      <tr><td>A. Tune what exists</td><td>Bigger ledger herds, more grass in the palette, keep QuietLand.</td><td>Cheap, but the land is still the same everywhere: more of everything, with no civilised-to-wild change. Misses the point.</td></tr>
+      <tr><td>B. Wilder by region</td><td>Each region gets a wildness roll, like its level.</td><td>Regions are 1,600 blocks wide, so a village would sit in jungle and the change would come at region borders. Not natural.</td></tr>
+      <tr><td><b>C. A wildness field (recommended)</b></td><td>One smooth value from people, roads, remoteness, terrain and noise, read by vegetation, herds and hunts.</td><td>Natural gradients, real variation, cheap, the same on every machine, and every system reads one number.</td></tr>
+      <tr><td>D. A living simulation</td><td>Wildness that grows back or retreats as players settle and hunt, every animal simulated.</td><td>The most alive, but it costs server time and can't change land already made. Your Hearth taming its land is the small part of this worth having, and it's in C.</td></tr>
+    </tbody>
+  </table></div>
+  <p>What would change my mind: if the in-game look of the deep wild feels too thick to walk through, the tall-grass curve comes down (one number); if herds of 30 cost too much on your Mac, the cap comes down before anything else.</p>
+</section>
+
+<section class="col">
+  <h2>How it's built</h2>
+  <h3>The pieces</h3>
+  <ul>
+    <li><b><span class="mono">living.api.Wildness</span></b>: <span class="mono">at(level, x, z)</span> → 0..1 and <span class="mono">band(...)</span>. The village module registers settlements and roads as tamers (the same pattern as <span class="mono">SettledCalm</span>), so module lines hold. Roads come from the road net's own plan, which is fixed from the seed, so a chunk comes out the same whichever order chunks are made in.</li>
+    <li><b>A wildness record per chunk</b>: 16 values (4×4-block cells), worked out once and kept with the chunk, sent to players so the grass colour can read it. For old chunks it's simply computed when first needed; their blocks are never touched.</li>
+    <li><b>Vegetation</b>: features in the Awakened Ground pack, placed by a <span class="mono">wildness</span> rule that any placed feature can use, plus the mowing pass near people.</li>
+    <li><b>The ledger, version 2</b>: herd and pack sizes by wildness, vanilla herd species, routes, saved brain state. Version 1 saves load with defaults.</li>
+    <li><b>Herd and pack brains</b>: server only, one per herd near a player, once a second.</li>
+    <li><b>Hunts</b>: signs and scout motes, the quarry's parts and breaks, the carcass and carving, research per player.</li>
+  </ul>
+  <h3>Rules that always hold</h3>
+  <ul>
+    <li>Explored blocks are never rewritten. Wildness never changes a creature's level or a region's rank.</li>
+    <li>Within a settlement's own ground there are no wild herds, no stampedes and no mowing of player-placed plants.</li>
+    <li>A herd never stampedes through a settlement or your Hearth; tamed land turns it.</li>
+    <li>Nothing about one hunter's research or carves changes another's. Herds and signs are shared.</li>
+  </ul>
+  <h3>Cost</h3>
+  <p>The field: about 1.5 µs a lookup for the region level (measured) plus a few for settlements and roads, 16 lookups a chunk, so well under a millisecond per new chunk on worldgen threads. Herds: at most 40 ledger animals near a player (24 today), one brain per herd, a second's thought, steering only animals that stray from their place. Target: all herds and packs near one player under 0.5 ms a tick, checked by a GameTest bench before anything ships.</p>
+  <h3>What could go wrong</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Risk</th><th>What we do</th></tr></thead>
+    <tbody>
+      <tr><td>A visible edge where new land meets explored land</td><td>Expected in your current world (decision 3). The colour change is gentle; the long grass starts at the edge.</td></tr>
+      <tr><td>Herds get stuck or split on rough ground</td><td>The brain gives up a route after a timeout and picks another; animals out of sight that can't keep up quietly rejoin the count.</td></tr>
+      <tr><td>Too many animals, lag</td><td>Hard caps per herd and per player; the far part of a big herd stays a number.</td></tr>
+      <tr><td>A world without roads or Carillon</td><td>The field uses what exists; without roads it reads settlements and remoteness.</td></tr>
+      <tr><td>Long grass hides creatures and items</td><td>Plates and the band still show threats; tall grass only grows thick in wild and deep land.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="col">
+  <h2>How we'll know it works</h2>
+  <ul>
+    <li><b>The land follows wildness:</b> on a test world, tall grass per chunk goes from about 0 near people to 50+ in the deep wild (correlation with wildness 0.6 or more; today −0.12). Deep wild holds at least four times the animals of tamed land (today it holds fewer).</li>
+    <li><b>No lines:</b> the field never jumps more than one band in 100 blocks away from a road, and a chunk is the same whatever order it's made in.</li>
+    <li><b>Herds act like herds:</b> a GameTest herd of 20 stays together grazing for ten minutes, flees more than 30 blocks within five seconds of a sprinting player, approaches closer to a crouched one from downwind, and regroups.</li>
+    <li><b>Packs hunt:</b> a test pack picks the rearmost animal, and the ledger count drops by one when it kills.</li>
+    <li><b>Hunts:</b> reading signs raises the trail; a part breaks at its threshold and drops once; each hunter gets their own three carves and no more.</li>
+    <li><b>Cost:</b> the herd bench stays under 0.5 ms a tick with three herds of 30 and two packs near one player.</li>
+    <li><b>Nothing breaks:</b> the full GameTest suite on CI, and old saves load.</li>
+    <li><b>The real judge is you in game.</b> Builders run no tours, so the feel of the wild, the herds' movement and the hunt is your check.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="col">
+    <h2>Order of work</h2>
+    <p>Each stage is useful on its own, is tested, and goes to CI before the next.</p>
+  </div>
+  <div class="stage"><span class="k">Stage 0</span><span>The field: <span class="mono">Wildness</span>, the per-chunk record, <span class="mono">/awaken wild here | map</span>, tests.</span><span class="h">3–4 h</span></div>
+  <div class="stage"><span class="k">Stage 1</span><span>The land: long-grass swathes, big bushes, thickets, old giants, mowing, the palette slot, grass colour.</span><span class="h">5–7 h</span></div>
+  <div class="stage"><span class="k">Stage 2</span><span>Herds and packs: ledger v2, vanilla herds, herd and pack brains, stampedes, QuietLand's change.</span><span class="h">7–9 h</span></div>
+  <div class="stage"><span class="k">Stage 3</span><span>Signs and tracking: prints, droppings, kill sites, reading signs, scout motes, research, Atlas marks.</span><span class="h">5–6 h</span></div>
+  <div class="stage"><span class="k">Stage 4</span><span>The hunt: quarries, parts and breaks, limping, carving, parts into Arms and gear, trophies, Journal and Trails.</span><span class="h">7–9 h</span></div>
+  <div class="stage"><span class="k">Stage 5</span><span>Far Sight's far tint and tree density, village hunt notices, worn herd paths.</span><span class="h">3–4 h</span></div>
+  <p class="col muted small">About 30–39 builder hours in all. Stage 2 is the biggest unknown (herd movement on real terrain); stage 4 needs a few new part items in Arms' sources list, which I'll add through Arms' own generator and note in SPEC. Coordination notes are in the shared folder for mob-forms (hiding a broken horn's bone), the Creature Kit and lock-on.</p>
+</section>
+
+<section>
+  <div class="col">
+    <h2>Decisions for you</h2>
+    <p>Seven, each with a recommendation.</p>
+  </div>
+  <ol class="decisions">
+    <li class="decision"><h3>1. Wildness and danger are separate</h3><p>A calm far valley can be full of wild life; a town in hard land is still tamed. <span class="rec">Recommend: yes.</span></p></li>
+    <li class="decision"><h3>2. Life follows wildness, not danger rank</h3><p>QuietLand stops thinning herds in harder land. A and S land keep their hush of birds and insects for the dread. <span class="rec">Recommend: yes.</span> The alternative is keeping QuietLand, which makes the deep wild emptier the harder it gets.</p></li>
+    <li class="decision"><h3>3. New chunks, including your current world</h3><p>Vegetation applies to newly made land in any world with the Awakened Ground pack, including New World (7). What you've explored stays as it is, so there is an edge where the new land starts. Herds, packs and hunts work everywhere straight away. <span class="rec">Recommend: yes.</span> The alternative is new worlds only.</p></li>
+    <li class="decision"><h3>4. Bigger herds</h3><p>Herds up to 30, and up to 40 ledger animals near a player (24 today); the rest of a big herd stays a number in the ledger. <span class="rec">Recommend: yes,</span> lowered first if it costs too much.</p></li>
+    <li class="decision"><h3>5. The Monster Hunter loop</h3><p>Fresh tracks everyone can see, the band's scout motes after reading signs, parts that visibly break, the quarry limping to its bed, three carves per hunter. <span class="rec">Recommend: all of it.</span></p></li>
+    <li class="decision"><h3>6. The first quarries</h3><p>Herd and pack alphas on the new form bodies, plus the twelve named beasts. Creature Kit beasts only once one passes your bar. <span class="rec">Recommend: yes.</span></p></li>
+    <li class="decision"><h3>7. One builder, in order</h3><p>I build stages 0 to 5 myself, in order, with no sub-agents. Splitting would pay a little: after stage 0, the land (stage 1) and the creatures (stages 2–4) touch different files, and a second builder could save about a day of waiting. <span class="rec">Recommend: one builder</span> unless you want it sooner.</p></li>
+  </ol>
+</section>
+
+<section class="col small">
+  <h2>Sources and evidence</h2>
+  <ul>
+    <li>Your world, read only: <span class="mono">Awaken-play/run-pack/saves/New World (7)</span>, seed 764383433107166945, centre (490, −411), rules 3. Scanner, harness and numbers in <span class="mono">docs/wild-lands/proto/</span> on branch <span class="mono">claude/wild-lands-plan-bc5271</span>.</li>
+    <li>Scoutfly levels and tracks (Monster Hunter: World): <a href="https://monsterhunterworld.wiki.fextralife.com/Scoutflies">Fextralife wiki</a>, <a href="https://monsterhunterworld.wiki.fextralife.com/Ecological+Research">Ecological Research</a>. Fan wikis; the exact numbers there are community estimates.</li>
+    <li>Carves, part breaks and weapon choice: <a href="https://gameinformer.com/b/features/archive/2013/02/15/the-ultimate-hunt-why-you-should-play-monster-hunter">Game Informer, "The Ultimate Hunt" (2013)</a>; <a href="https://www.avclub.com/game-theory-monster-hunter-wilds-tail-severing">A.V. Club on tail severing in Wilds</a>.</li>
+    <li>Herds with alphas, packs and turf wars in Wilds: <a href="https://www.gamereactor.eu/now-they-go-in-packs-capcom-details-how-open-world-and-creature-population-will-change-player-strategy-in-monster-hunter-wilds-1400333/">Gamereactor, Capcom on packs</a>; <a href="https://automaton-media.com/en/news/monster-hunter-wilds-trailer-drop-reveals-dynamic-world-new-mounts-pack-like-monster-behaviors-and-much-more/">Automaton</a>.</li>
+    <li>Herd movement from simple local rules: Reynolds, <a href="https://www.cs.princeton.edu/courses/archive/spr01/cs598b/papers/reynolds87.pdf">"Flocks, Herds, and Schools" (SIGGRAPH 1987)</a>. We use a lighter version: one brain per herd, slots and spacing, not every animal thinking.</li>
+    <li>Animals thin out near roads and people: Benítez-López et al., <a href="https://models.pbl.nl/image/Benitez-Lopez_et_al.,_2010">Biological Conservation 143 (2010)</a>; Fahrig and Rytwinski's review, <a href="https://dlc.dlib.indiana.edu/dlc/items/cc0edf1f-5b34-4e9c-bff7-a3176188501c">"Effects of Roads on Animal Abundance"</a>. This is why roads are ribbons of tamed land in the field.</li>
+  </ul>
+</section>
+
+</div>
