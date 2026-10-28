@@ -8530,3 +8530,96 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
   steps and hints), and the rail's unread count rising as trails open. **Not built / unverified**: the task card and Now line with a followed trail on a real
   screen (the first tour caught the first-hour card covering it; fixed, and the second tour showed the trail on the card ticking as steps were done; the card's count was off until every done step was sent, fixed and tested, not re-toured; the Now line shows the followed step below the Hale and camp lines, as designed at priority 55); a step's `{key}` caps; a `tip` (none shipped yet); several
   followed trails; the Powers, Story and the remaining World trails; the Armoury's Track as a step type.
+
+## 38. Gate Worlds (every gate floor a world of its own; page https://claude.ai/artifact/T6AdCwtMo7vvpDiNA2wJRf; Euan approved all seven recommendations 2026-10-28: "Go with all recomentations, this is great")
+
+Euan: gates feel like block rooms; make each floor feel like entering a new world, "holy shit, jaw dropped", every kid's dream
+RPG. The plan: 90 worlds (per theme two everyday, a deep one, a wonder and a secret one, plus 15 rare), four moods each,
+about 230 new blocks, the seven-layer atmosphere checklist, a different world on every floor, darker shaped light, Gate Air in
+Lens (built by the Lens owner from this section), an open-sky gate dimension (Stage 3), per-world looks for each theme's
+monsters plus 15 signature creatures (through the mob forms work), and the RPG layer (the Atlas of Gates in the Codex,
+keepsakes, title cards, the journey down, a rule per world, secrets, rarity, theme mastery). Built in stages, each merged and
+switchable on its own: 0 foundation, 1 the Bell Crypt complete (Euan's go or stop), 2 the other E themes, 3 D themes and the
+open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `gates` (`dev.awaken.gates.worlds` and
+`dev.awaken.gates.world`). The fights, keys, shrines, Lords, twists and modifiers inside stay what they are.
+
+### 38.1 Room for height: plots (content version 6)
+
+- `GatePlan.CONTENT_VERSION` is **6**. A version 6 gate gives every floor its own **plot** (`Plots`): the cell's four
+  256 x 256 quadrants, each an upper tier (y 128..255) and a lower tier (y 0..127), eight plots for the six main and two annex
+  floors a gate can have. The dimension stays 256 tall. Version 5 and older gates keep the stacked 32-block bands
+  (`Cells.floorY`, `Cells.floorAtY`) exactly; nothing they built moves.
+- **Assignment** is a function of the saved plan only (`FloorBuilder.plotFor`): floors in order (main 1..n, then annex 1 and 2;
+  the ritual and the trials have one), tall worlds first get a whole quadrant column (y 0..255) while every floor still fits
+  (n floors with k tall use n + k tiers of 8, at most 4 tall), earliest first; the rest take upper tiers, then lower ones.
+  Whether a floor is tall is saved with its pick (`FloorWorld.tall`), so plots never move even if a recipe goes away.
+- **Today's rooms in a plot**: a floor with no world builds exactly the rooms version 5 built (same seed, same rooms, same
+  blocks), standing at its plot's bottom + 48 (`Plots.ROOMS_BASE`) with its grid at the quadrant's slot + 1. Unentered version 5
+  gates are rebuilt as version 6 on the next start, as every gate update has; a gate someone entered keeps its version.
+- **Finding things**: `GateLayout.floorAt(x, z, y)` (cell-local x and z, absolute y) checks the plots on version 6 and the bands
+  before. `FloorLayout` carries its `plot` (null before 6), the y range it paints (`yLo`, `yHi`, `paints(y)`; tests and tools
+  filter a chunk's blocks by floor with it), and on a world floor its `places`, `world`, `mood`, `biome`, `air` and `model`.
+  `Where` asks `roomAt(x, y, z)`. The fall check is unchanged (below y 0 puts you back at the floor's entrance).
+- **The place map** (`PlaceMap`): which place (room) holds a floor-local spot, in 4-block cells, each with a ground place and
+  optionally an upper place from a split height (a gallery over an aisle). World floors answer "which room is this?" with it;
+  rooms floors keep the 16-block slot grid (`PlaceMap.ofSlots` gives the same answer, cell for cell). Places are `Room`s, so
+  `Where`, `Rooms`, `Pressure` and the Rig keep their answer type; a place's `gx..gh` are its bounding slots.
+
+### 38.2 Worlds, recipes and engines
+
+- **A recipe** is `data/<ns>/gate_worlds/<theme>/<world>.json` (`GateWorld`, `schema` 1), id `<ns>:<theme>/<world>`:
+  `theme`, `name`, `line` (the Atlas line, plain speech), `tier` (everyday, deep, wonder, secret, rare), `rarity` (common 10,
+  uncommon 4, rare 1, mythic 0.2 as weights), `kind` (the engine), `tall`, `roles` (`floor`, `boss`), `mastery` (floors of the
+  theme cleared that open it early; default deep 4, wonder 10, others 0), `weight`, `enabled`, `biome`, `moods` (`id`, `name`,
+  `weight`, `biome`), `params` (numbers for the engine) and the dressing (`blocks` by role, `hero`, `life`, `residents`, `sound`,
+  `events`, `rule`, `secrets` with `leads_to`, `keepsake`, `signature`). The loader (`GateWorlds`, a server reload listener)
+  skips a recipe with a problem and logs why; `gateworlds_recipes` fails when any file doesn't load or names a biome that
+  doesn't exist or the gates dimension doesn't list.
+- **Shape is stable**: a released world's `kind`, `params` and `hero` never change. A new shape is a new world (or a content
+  version), because a floor someone stands on is rebuilt from its recipe after a restart.
+- **Engines** (`WorldEngine`, by kind; `WorldEngine.of`): a pure, deterministic sculptor. `plan(Ctx)` turns the plan, floor,
+  plot, recipe, mood, seed and variation (0..2) into a `FloorLayout` with its places, place map, light, Gate Air data and a
+  `WorldModel` that carves any chunk of the plot on worldgen threads. A plan that can't make a floor complete on foot (every
+  place, key, cache and the end reachable from the arrival) returns null: the next variation is tried, and after three, or on
+  an exception, or for a kind this build has no engine for, or a role the recipe doesn't hold (a Lord's floor needs `boss`),
+  the floor is today's rooms in its plot. Stage 0 ships no engines (every floor is rooms); Stage 1 adds the Bell Crypt's.
+- **Biomes per world** (`GateBiomeSource`): on version 6 a floor's plot shows its `biome` (the mood's, else the world's, else
+  the theme's), sampled by height, so fog, sky, particles and sound follow the world with nothing synced. Every world biome is
+  listed in `data/awaken/dimension/gates.json` and gets a Lens look (`looks_gates.json`, by the Lens owner).
+
+### 38.3 The world director and the Atlas
+
+- **When**: `GateService.create` dresses every new plan (`GateWorlds.dress`) before the gate is recorded, and the start-up
+  rebuild of unentered older gates dresses the rebuilt plan; picks are saved in the plan (`worlds`: `area`, `floor`, `world`,
+  `mood`, `tall`). Never dressed: plans before version 6, the story's ritual, the Ascension trials, plans already dressed.
+  Server switches: `gateWorlds` (default on; off, new gates build rooms) and `gateWorldsOff` (world ids never picked).
+- **Picking** (pure: same plan, Atlas and catalogue give the same picks; its own random stream, so the Director's rolls are
+  unchanged): per floor, the open worlds of the floor's theme (the annex's floors use the annex theme): enabled, not switched
+  off, not secret, holding the floor's role, and open to the gate's rank (the theme's rank + 1 for deep, + 2 for wonder) or by
+  mastery (the owner has cleared that many of the theme's floors). From B rank a rare world replaces the pool on about one floor
+  in 25. Never the same world twice in a gate while another fits, never the world you were last in; weight = recipe weight x
+  rarity x 1 / (1 + times you've been there)^2; the mood the same way by mood weight and times in that mood. A floor nothing
+  fits stays rooms. Secret worlds are reached by finding their secret, never rolled.
+- **The Atlas** (`GateAtlas`, attachment `awaken:gate_atlas`, schema 1, kept through death, per player): per world the first
+  play-day, arrivals, arrivals per mood, secrets found and the keepsake; floors cleared per theme (mastery); the last 12
+  arrivals (world#mood); creatures met. Filled on arrival (`WorldsLive.arrive`) and on an ordinary floor cleared
+  (`WorldsLive.cleared`). The director reads the gate owner's (online) Atlas; friends each fill their own.
+- **Arrival** (`WorldPayloads.Arrival`): on arriving on a floor the client is told its world, name, mood, rarity, tier, line,
+  whether it's a first find, and its Gate Air data with the world position of its floor-local origin (an empty world clears).
+  `GateWorldClient` holds it: `current()`, `air()`, `origin()` (null and empty off a world floor or outside the gates).
+- **Gate Air data** (`FloorAir`, floor-local, sent with the arrival): lights (position, colour, reach, strength; at most 96),
+  shafts (from, to, radius, colour, strength; 24), mist layers (height, thickness, colour, density; 6) and still water planes
+  (height and rectangle; 12). Lens's Gate Air reads it each frame: mist takes the colour of the nearest 32 lights, 12 shafts
+  are marched, still water reflects; at most 1.5 ms a frame on Cinematic at 1440p on the M4, off on Swift and with Lens off.
+  Every world must pass the atmosphere checklist without it.
+
+### 38.4 Tests and where things stand
+
+- **Tests** (`gateworlds_`): `gateworlds_plots` (every floor of 400 varied plans inside its own plot and found again at its
+  arrival; no shared plots; version 5 bands unchanged; tall plots granted only while every floor fits; a Double Gate's annex
+  floors show the annex theme), `gateworlds_same_rooms` (version 6 builds version 5's rooms on every floor and paints the same
+  blocks, moved; a few room pieces pick a block's variant by its height, such as bookshelf or sodden shelf, ore, obsidian and honey, so
+  only those pairs may swap on a moved floor of a new gate, and gates already open never move), `gateworlds_place_map`, `gateworlds_recipes`, `gateworlds_director` (determinism, back to back, twice in a
+  gate, Lords' floors, secrets, mastery opening the deep world and the wonder, worlds switched off, saving plans and the Atlas).
+- **Stage 0** (built 2026-10-28): plots, the frame, the place map, recipes and their loader, per-world biomes, the engine
+  interface, the director, the Atlas and the arrival payload. No recipes ship yet, so every floor is today's rooms in its plot.

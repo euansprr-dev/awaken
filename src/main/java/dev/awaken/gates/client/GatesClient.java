@@ -58,6 +58,7 @@ public final class GatesClient {
             RigGhost.run(msg);
         });
         e.register(dev.awaken.gates.net.RigPayloads.Ghost.TYPE, (msg, ctx) -> RigGhost.ghost(msg));
+        e.register(dev.awaken.gates.net.WorldPayloads.Arrival.TYPE, (msg, ctx) -> GateWorldClient.arrive(msg));
         e.register(GatePayloads.SatchelView.TYPE, (msg, ctx) -> {
             ClientGates.satchel = List.copyOf(msg.items());
             ClientGates.satchelXp = msg.xp();

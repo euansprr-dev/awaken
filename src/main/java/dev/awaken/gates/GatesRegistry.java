@@ -338,6 +338,10 @@ public final class GatesRegistry {
             () -> AttachmentType.builder(RunState::none).serialize(RunState.MAP_CODEC, RunState::active).build());
     public static final Supplier<AttachmentType<GateMemory>> MEMORY = ATTACHMENTS.register("gate_memory",
             () -> AttachmentType.builder(GateMemory::new).serialize(GateMemory.MAP_CODEC).copyOnDeath().build());
+    /** The Atlas of Gates and the world director's memory (SPEC §38). */
+    public static final Supplier<AttachmentType<dev.awaken.gates.worlds.GateAtlas>> ATLAS = ATTACHMENTS.register("gate_atlas",
+            () -> AttachmentType.builder(dev.awaken.gates.worlds.GateAtlas::new)
+                    .serialize(dev.awaken.gates.worlds.GateAtlas.MAP_CODEC, a -> !a.isEmpty()).copyOnDeath().build());
     public static final Supplier<AttachmentType<GearStash>> STASH = ATTACHMENTS.register("gate_stash",
             () -> AttachmentType.builder(() -> GearStash.EMPTY).serialize(GearStash.MAP_CODEC, s -> !s.isEmpty()).copyOnDeath().build());
 

@@ -183,6 +183,7 @@ public final class Runs {
         if (area == 0 && floor < g.plan.floors()) GateService.pregenFloor(server, g, 0, floor + 1);
         if (area == 1 && floor == 1) GateService.pregenFloor(server, g, 1, 2);
         RigDirector.sendScene(p);
+        dev.awaken.gates.worlds.WorldsLive.arrive(p, g, f);
         if (floor > 1 || area == 1) {
             Signal.toast(p, Component.literal((area == 1 ? (g.plan.is(Twist.GATE_WITHIN) ? "Inner gate · " : "Second gate · ") : "")
                     + "Floor " + floor + (f != null && f.bossFloor ? " · the Lord waits" : "")));
@@ -266,6 +267,7 @@ public final class Runs {
         }
         GateRegistry.get(server).setDirty();
         run.floorsCleared++;
+        dev.awaken.gates.worlds.WorldsLive.cleared(p, f);
         double reward = floorReward(p, g, f.area, f.floor);
         double bonus = reward * (1 - Curve.KILL_SHARE);
         run.satchelXp += bonus;

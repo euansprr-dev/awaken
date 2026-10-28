@@ -527,7 +527,7 @@ public final class InteriorTests {
         int chunkZ = (Cells.originZ(cell) >> 4) + f.originSlotZ + sz;
         int bx0 = sx * 16, bz0 = sz * 16;
         GatePainter.paint(l, cell, chunkX, chunkZ, (x, y, z, s) -> {
-            if (Cells.floorAtY(y) == f.floor) out.put(key(bx0 + x, y, bz0 + z), s);
+            if (f.paints(y)) out.put(key(bx0 + x, y, bz0 + z), s);
         });
     }
 

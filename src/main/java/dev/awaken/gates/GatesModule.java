@@ -17,6 +17,7 @@ public final class GatesModule {
     public static void init(IEventBus modBus) {
         GatesRegistry.init(modBus);
         modBus.addListener(GatesModule::registerPayloads);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(dev.awaken.gates.worlds.GateWorlds::addReload);
         GateEvents.register();
         GateAccess.install();
         GateParty.install();
@@ -33,6 +34,7 @@ public final class GatesModule {
         dev.awaken.gates.run.TogetherRunTests.register();
         TogetherGateTests.register();
         RigTests.register();
+        dev.awaken.gates.world.GateWorldTests.register();
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent e) {
@@ -40,6 +42,7 @@ public final class GatesModule {
         r.playToClient(GatePayloads.Beacons.TYPE, GatePayloads.Beacons.STREAM_CODEC);
         r.playToClient(GatePayloads.RunHud.TYPE, GatePayloads.RunHud.STREAM_CODEC);
         r.playToClient(GatePayloads.SatchelView.TYPE, GatePayloads.SatchelView.STREAM_CODEC);
+        r.playToClient(dev.awaken.gates.net.WorldPayloads.Arrival.TYPE, dev.awaken.gates.net.WorldPayloads.Arrival.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.RigPayloads.Scene.TYPE, dev.awaken.gates.net.RigPayloads.Scene.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.RigPayloads.Cue.TYPE, dev.awaken.gates.net.RigPayloads.Cue.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.RigPayloads.Run.TYPE, dev.awaken.gates.net.RigPayloads.Run.STREAM_CODEC);

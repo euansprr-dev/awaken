@@ -101,6 +101,8 @@ public final class GateService {
         GateRegistry reg = GateRegistry.get(server);
         int cell = reg.allocateCell();
         long day = PlayDays.current(server);
+        // each floor's world and mood, picked now and saved with the plan (SPEC §38)
+        plan = dev.awaken.gates.worlds.GateWorlds.dress(server, plan, owner);
         GateRecord g = new GateRecord(id, plan, ground, axis, cell, day, day + breaksInDays, GateState.BUILDING, owner);
         g.trace.addAll(trace);
         g.scripted = scripted;
@@ -394,7 +396,7 @@ public final class GateService {
                 // content changed and nobody entered: rebuild on the new version in a fresh cell
                 reg.releaseCell(g.cell);
                 g.cell = reg.allocateCell();
-                g.plan = g.plan.rebuilt(GatePlan.CONTENT_VERSION);
+                g.plan = dev.awaken.gates.worlds.GateWorlds.dress(server, g.plan.rebuilt(GatePlan.CONTENT_VERSION), g.owner);
                 g.interiorReady = false;
                 g.state = GateState.BUILDING;
                 g.trace.add("rebuilt for content version " + GatePlan.CONTENT_VERSION);

@@ -108,7 +108,6 @@ final class GateAccess implements GateHooks.Access {
     }
 
     private static GatePlan withFloors(GatePlan p, int floors) {
-        return new GatePlan(p.seed(), p.contentVersion(), p.rank(), p.theme(), p.layout(), p.modifiers(), p.twist(), floors, p.boss(),
-                p.annexTheme(), p.annexRule());
+        return p.withFloors(floors);
     }
 }

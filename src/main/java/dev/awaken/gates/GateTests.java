@@ -477,7 +477,7 @@ final class GateTests {
                         int cx = (Cells.originX(cell) >> 4) + bf.originSlotX + gx, cz = (Cells.originZ(cell) >> 4) + bf.originSlotZ + gz;
                         level.getChunk(cx, cz);
                         GatePainter.paint(l, cell, cx, cz, (x, y, z, s) -> {
-                            if (Cells.floorAtY(y) == bf.floor) level.setBlock(new BlockPos(cx * 16 + x, y, cz * 16 + z), s, 818);
+                            if (bf.paints(y)) level.setBlock(new BlockPos(cx * 16 + x, y, cz * 16 + z), s, 818);
                         });
                     }
                 }
@@ -619,7 +619,7 @@ final class GateTests {
                 int chunkZ = (Cells.originZ(cell) >> 4) + f.originSlotZ + sz;
                 int bx0 = sx * 16, bz0 = sz * 16;
                 GatePainter.paint(l, cell, chunkX, chunkZ, (x, y, z, s) -> {
-                    if (Cells.floorAtY(y) == f.floor) out.put(key(bx0 + x, y, bz0 + z), s);
+                    if (f.paints(y)) out.put(key(bx0 + x, y, bz0 + z), s);
                 });
             }
         }

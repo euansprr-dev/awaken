@@ -8,7 +8,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/** One floor: a grid of slots, the rooms on it, and where it starts and ends. Immutable once built. */
+/**
+ * One floor: a grid of slots, the rooms on it, and where it starts and ends. Immutable once built. A world floor (SPEC
+ * §38) also carries its plot, the place map its rooms (places) are found by, its world and mood, the biome it shows, its
+ * Gate Air data and the model that carves it.
+ */
 public final class FloorLayout {
     /** 0 = main dungeon, 1 = annex (Double Gate second dungeon or the inner gate). */
     public final int area;
@@ -27,9 +31,33 @@ public final class FloorLayout {
     public final int end;
     /** Monsters planned on this floor (kill XP is split across them). */
     public final int plannedMobs;
+    /** The floor's plot (content version 6+), or null for the stacked bands of older gates. */
+    public final Plots.Plot plot;
+    /** The y range this floor paints (both inclusive): its band, or a world's height inside its plot. */
+    public final int yLo, yHi;
+    /** Places of a world floor, any shape and stacked; null on rooms floors (the slot grid answers). */
+    public final PlaceMap places;
+    /** The world recipe id and mood ("" on rooms floors), and the biome the floor shows ("" = the theme's). */
+    public final String world, mood, biome;
+    public final FloorAir air;
+    /** Carves a world floor's chunks; null on rooms floors ({@link GatePainter} paints them). */
+    public final WorldModel model;
+
+    /** What a floor is framed by beyond its rooms: where it stands, how it's found, what it is. */
+    record Frame(Plots.Plot plot, int yLo, int yHi, PlaceMap places, String world, String mood, String biome, FloorAir air,
+                 WorldModel model) {
+        static Frame band(Plots.Plot plot, int baseY) {
+            return new Frame(plot, baseY - Cells.BAND_BELOW, baseY + Cells.BAND_ABOVE - 1, null, "", "", "", FloorAir.NONE, null);
+        }
+    }
 
     FloorLayout(int area, int floor, int baseY, int originSlotX, int originSlotZ, int w, int h, Theme theme,
                 boolean bossFloor, List<Room> rooms, int start, int end) {
+        this(area, floor, baseY, originSlotX, originSlotZ, w, h, theme, bossFloor, rooms, start, end, Frame.band(null, baseY));
+    }
+
+    FloorLayout(int area, int floor, int baseY, int originSlotX, int originSlotZ, int w, int h, Theme theme,
+                boolean bossFloor, List<Room> rooms, int start, int end, Frame frame) {
         this.area = area;
         this.floor = floor;
         this.baseY = baseY;
@@ -50,6 +78,24 @@ public final class FloorLayout {
         this.start = start;
         this.end = end;
         this.plannedMobs = planned;
+        this.plot = frame.plot();
+        this.yLo = frame.yLo();
+        this.yHi = frame.yHi();
+        this.places = frame.places();
+        this.world = frame.world();
+        this.mood = frame.mood();
+        this.biome = frame.biome();
+        this.air = frame.air();
+        this.model = frame.model();
+    }
+
+    /** Whether this floor paints height y (tests and tools filter a chunk's blocks by floor with it). */
+    public boolean paints(int y) {
+        return y >= yLo && y <= yHi;
+    }
+
+    public boolean isWorld() {
+        return model != null;
     }
 
     public Room room(int id) {
@@ -63,11 +109,18 @@ public final class FloorLayout {
         return id < 0 ? null : rooms.get(id);
     }
 
-    /** Room at cell-local block coordinates (x, z inside the cell), or null. */
+    /** Room at cell-local block coordinates (x, z inside the cell), or null. On a world floor: the ground place. */
     public Room roomAtLocal(int cellLocalX, int cellLocalZ) {
+        if (places != null) return room(places.groundAt(toFloorX(cellLocalX), toFloorZ(cellLocalZ)));
         int gx = Math.floorDiv(cellLocalX, 16) - originSlotX;
         int gz = Math.floorDiv(cellLocalZ, 16) - originSlotZ;
         return roomAtSlot(gx, gz);
+    }
+
+    /** Room at cell-local x/z and absolute y: a world floor's places can stack (a gallery over an aisle). */
+    public Room roomAt(int cellLocalX, int y, int cellLocalZ) {
+        if (places != null) return room(places.at(toFloorX(cellLocalX), y - baseY, toFloorZ(cellLocalZ)));
+        return roomAtLocal(cellLocalX, cellLocalZ);
     }
 
     /** Whether a cell slot column belongs to this floor's grid (plus a one-slot margin of solid rock). */
