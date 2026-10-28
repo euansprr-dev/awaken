@@ -7964,6 +7964,61 @@ really want to update it and it's a choice").
 
 ---------------------------------------------------------------------------------------------------------------------
 
+### 28.11 The Anchor's brazier and Oren's day of building (Euan 2026-10-28: "Too blocky and overall no light source too, and the fire is tiny. Also when the cottage get's built, let's actually make the NPC build it over one in game day or so")
+**The Anchor** (`HearthAnchorBlock`, art `tools/art/specs/hearth.py`, models `hearth_anchor_t1..t5`). A step up from the
+first campfire, never a step down: a hearthstone brazier, no longer a full cube.
+- *Shape* (texels): a dressed-stone plinth 0-2 (16 wide), a step 2-3 (14), a stem 3-8 (10) cut with a slit onto the fire
+  and two runes, a bronze collar 7-8 (12), the bowl's foot 8-10 (14) and a hollow rim 10-13 (16, walls 2 thick round a
+  12 × 12 mouth) with six vents onto the fire. A lit bed of coals at 11 fills the bowl, the Lord's Heart lies in it, and
+  the fire burns from 11 up to the model's ceiling at 32: two full diagonal planes, two straight ones across the mouth and
+  a near-white core on two planes between (16 × 32 frames, 12 frames). Its height by tier: 15, 16.5, 18, 19.5, 21 texels.
+  The collision shape follows the model; the block is `noOcclusion`.
+- *By tier*: I hearthstone lip and bronze collar, ember-orange fire, the runes a dull ember; II an iron lip and collar,
+  a taller, steadier fire; III a gilt lip and collar, a gold fire, the runes burning; IV gold corner caps, bell-gold; V
+  white-gold under the crown of light. The vents and the slit always glow (full-bright), the coals hotter each tier.
+- *Light*: 15 at every tier (was 14 below IV). On the client every Anchor that `animateTick` sees burning is remembered
+  in a fixed 16-entry table (`HearthAnchorBlock.SEEN_*`, no allocation) and the city's light pass (`HomeClient.GLOW`)
+  pools warm light on the ground round it (radius 9.5 + 0.8 a tier, strength 0.28 + 0.02 a tier, flickering) with a halo
+  round the fire 1.45 above its foot; an entry drops when the block is gone or unseen for 30 s.
+- *Particles*: two or three tongues a call from the whole mouth, embers off the tips, a spark now and then even at I;
+  sparks, a glow and the crown's motes from IV as before. Checked from every side with `tools/art/block_preview.py`
+  (four corners, straight on, above, and at night).
+
+**Oren builds the cottage over a day** (`guide/Cottage`, `CottageBuild`). Yes to the offer still finds a site as before
+(runtime: a restart mid-search leaves the offer open). Then:
+- *The day's work*: the site is cleared at once (trees felled, plants and bumps gone) and the build is saved on the
+  Hearth (`HearthRecord.cottageBuild`, key `cottage_build`, schema 1: who asked, the origin and turn, the palette, the
+  ground under every column and which were grass as they were before clearing, the work done, the game time and clock
+  last read, the next plan entry, the held entries). The plan is rebuilt from that after a restart, so it is always the
+  same cottage. One day (24,000 ticks, 20 minutes) for the whole of it, by stage: foundation 14%, frame 14% (the posts
+  and the wall plate: a timber skeleton first), walls 24%, roof 28% (the ceiling first), chimney 5%, furnishing 15%,
+  each stage's blocks spread evenly over its share. A cottage started at noon stands by noon tomorrow.
+- *Honest catch-up*: every tick the work done grows by the game ticks or the overworld clock, whichever moved more (a
+  night slept through counts; a clock set back counts only the ticks). While the chunks are unloaded or the owner is
+  away the time still counts; when the site is loaded again the due blocks go in, up to 64 a tick, without a sound or
+  embers each (more than three due at once is catching up). The server stopping saves it; nothing is placed at once.
+- *Live*: each block plays its own place sound and a few Hearth embers; Oren (holding a mace as a hammer) walks to a
+  spot just outside the site on the block's side (inside the room for the furniture), looks at the block and swings
+  when within 8. He gets the mace back off him when it's done.
+- *In the way*: a block whose cell holds any living thing (a player, Oren, a sheep) is held and tried again every two
+  seconds (every half second once the rest is up); a door's top half and a bed's head wait for their first half, and a
+  first half waits until both cells are clear. A block someone built in the meantime is still never replaced. The
+  cottage is finished when every entry is placed or passed.
+- *Words*: on starting, "Oren is building your cottage · He's starting on the foundation beside your Anchor. It'll be
+  ready by tomorrow evening. He keeps working while you're away." The guide's card says what he's doing and when it'll
+  stand ("Oren is building your cottage. He's on the roof now. It'll be ready by this evening."; the time of day from
+  the clock: morning, around midday, afternoon, evening, tonight; "in a minute or two" near the end; "He's waiting for
+  someone to step out of the way." when only held blocks are left). Done: "Oren's cottage is finished · Your first
+  Sanctuary is ready beside your Anchor..." to whoever asked and every member online; the asker's once-marker as before.
+- *Multiplayer*: one build per Hearth (a second ask while one runs is refused), ticked by the server for every Hearth,
+  online or not; the notices go to the household.
+- Admin: `/awaken admin hearth cottage hurry` (as if the rest of the day had passed; it catches up over a few ticks);
+  `reset` also drops a build in progress.
+- Tests: `hearth_cottage_builds_over_a_day` (nothing at the start; half a day away catches up to exactly half, foundation
+  and frame up, no roof or furniture; a block where something stands is held; the save round-trips mid-build; the rest of
+  the day finishes it, the held block included) · `hearth_anchor_light` (light 15 at every tier, 14 beside it, 11 three
+  out and one down, not a full cube).
+
 ## 29. Wild life (the wild's small ambient life, client-only; Euan 2026-10-26, built without an approval page)
 
 Euan, after a forest walk: "I barely saw any insects or birds, so the sounds felt a bit off ... when you're exploring and

@@ -16,7 +16,7 @@ import java.util.Optional;
  */
 public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boolean respawnHere, BlockPos anchor,
                         List<RoomCard> rooms, List<RecipeView> recipes, List<Person> town, List<Person> coming,
-                        Upgrade upgrade, int cottage, Home home) {
+                        Upgrade upgrade, int cottage, String cottageNote, Home home) {
 
     /**
      * The home as the Hearth reads it (W1): its name, Comfort (out of {@code Comfort.MAX}) and what would add a point,
@@ -104,6 +104,7 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
         b.writeVarInt(u.needs.size());
         for (Need n : u.needs) b.writeUtf(n.text, 96).writeBoolean(n.met);
         b.writeVarInt(d.cottage);
+        b.writeUtf(d.cottageNote, 256);
         Home h = d.home;
         b.writeUtf(h.name, 64).writeVarInt(h.comfort).writeUtf(h.style, 64).writeUtf(h.comfortNext, 96).writeVarInt(h.restedMinutes);
         b.writeVarInt(h.land.size());
@@ -161,6 +162,7 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
         for (int i = 0; i < nn; i++) needs.add(new Need(b.readUtf(96), b.readBoolean()));
         Upgrade up = new Upgrade(maxed, next, uRadius, uRest, rank, rankMet, parts, discount, affordable, needs);
         int cottage = b.readVarInt();
+        String cottageNote = b.readUtf(256);
         String name = b.readUtf(64);
         int comfort = b.readVarInt();
         String style = b.readUtf(64), comfortNext = b.readUtf(96);
@@ -178,7 +180,7 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
             views.add(new RoomView(roomName, grade, readings, b.readUtf(48), b.readUtf(96), b.readBlockPos()));
         }
         Home home = new Home(name, comfort, style, comfortNext, land, restedMinutes, views);
-        return new GuideData(tier, radius, rest, sRest, respawn, anchor, rooms, recipes, town, coming, up, cottage, home);
+        return new GuideData(tier, radius, rest, sRest, respawn, anchor, rooms, recipes, town, coming, up, cottage, cottageNote, home);
     }
 
     private static void writePeople(FriendlyByteBuf b, List<Person> people) {

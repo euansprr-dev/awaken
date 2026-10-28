@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
@@ -37,6 +38,12 @@ public final class HomeClient {
     static final float EMBER_POOL = 5.2F, EMBER_POOL_A = 0.34F, EMBER_HALO = 0.75F, EMBER_CORE = 0.07F;
     /** A Hearthfire's own glow over its block light (warmer, wider, softer). */
     static final float FIRE_POOL = 7.5F, FIRE_POOL_A = 0.22F, FIRE_HALO = 1.25F, FIRE_CORE = 0.12F;
+    /** The Anchor's brazier, by tier: a wider, warmer pool than the campfire's and a halo round the fire above the rim. */
+    static final float ANCHOR_POOL = 9.5F, ANCHOR_POOL_STEP = 0.8F, ANCHOR_POOL_A = 0.28F, ANCHOR_POOL_A_STEP = 0.02F,
+            ANCHOR_HALO = 1.7F, ANCHOR_CORE = 0.16F;
+    /** An Anchor not seen burning for this long (out of animateTick's reach) drops out of the glow. */
+    static final long ANCHOR_FORGET = 20 * 30;
+    private static final BlockPos.MutableBlockPos ANCHOR_AT = new BlockPos.MutableBlockPos();
 
     static void payloads(RegisterClientPayloadHandlersEvent e) {
         e.register(HomeNet.Kindled.TYPE, (msg, ctx) -> kindled(msg));
@@ -224,6 +231,21 @@ public final class HomeClient {
             float f = out.flicker(b.hashCode());
             out.halo(x, b.getY() + 0.55, z, FIRE_HALO, FIRE_CORE, f);
             out.pool(x, b.getY() + 0.03, z, FIRE_POOL, FIRE_POOL_A * f);
+        }
+        // every Anchor burning nearby: the pool spreads and warms a little with each tier
+        for (int i = dev.awaken.hearth.block.HearthAnchorBlock.seen - 1; i >= 0; i--) {
+            ANCHOR_AT.set(dev.awaken.hearth.block.HearthAnchorBlock.SEEN_POS[i]);
+            BlockState st = level.getBlockState(ANCHOR_AT);
+            if (!st.is(HearthContent.HEARTH_ANCHOR.get()) || now - dev.awaken.hearth.block.HearthAnchorBlock.SEEN_AT[i] > ANCHOR_FORGET) {
+                dev.awaken.hearth.block.HearthAnchorBlock.forget(i);
+                continue;
+            }
+            double x = ANCHOR_AT.getX() + 0.5, y = ANCHOR_AT.getY(), z = ANCHOR_AT.getZ() + 0.5;
+            if (out.far(x, y, z)) continue;
+            int tier = st.getValue(dev.awaken.hearth.block.HearthAnchorBlock.TIER);
+            float f = out.flicker(ANCHOR_AT.hashCode());
+            out.halo(x, y + 1.45, z, ANCHOR_HALO + 0.12F * tier, ANCHOR_CORE, f);
+            out.pool(x, y + 0.03, z, ANCHOR_POOL + ANCHOR_POOL_STEP * tier, (ANCHOR_POOL_A + ANCHOR_POOL_A_STEP * tier) * f);
         }
     };
 }
