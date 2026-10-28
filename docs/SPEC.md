@@ -5990,7 +5990,20 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     winds up from that pose, not from rest, its draw back cut until the blade's middle at the set is inside 0.9 of
     the frame. Every wind-up moves the tip at most 0.3 of the screen a frame at 60 fps (a longer draw back takes more
     of the wind-up), and one with no room for a set (under half a tick) goes straight to where the drive leaves
-    from. `tools/art/swing_chain.py` plays each chain as the runtime does (the earliest press or mid-window, carried by
+    from. The Fight Feel review (2026-10-28) found that rule measured on a straight line between the two poses, so a
+    draw back that swung round near the eye still flung the blade a whole screen in a frame (the war-staff's, the
+    chain-blade's, the glaive's opening cut leaving the view). Now the load is measured on its real path (`_load_track`:
+    the most the tip, the blade's middle or the grip moves on the screen each step, a point out of the frame counting
+    0.15 of its travel, and the blade's turn, never over 0.75 of the blow's own speed at the hit) and timed along it, so
+    what is out of view goes round quickly. A cut whose load can't fit before its drive is drawn back less, down to 45%
+    of its draw, with its drive shortened to match (never under half a tick), so the blow still lands at its speed and
+    the load gets the time saved; a thrust's, a spin's and the scythe's load are timed the same way (turning at most
+    120 degrees a tick) and may take the whole wind-up. Mashing, chain strikes with a jump over 0.3: 29 -> 13 (in time,
+    31 -> 15); out of view 5 -> 3. Left: the spins that follow a cut (the war-staff's fourth, the twin blades' fourth)
+    still swing one end past the eye on the way into the twirl (1.08 and 0.89 of the screen in a frame); the fix is
+    to start the twirl from the angle nearest the last cut's end, which changes round 5's figure-eight; the shield-blade's
+    bash (0.59) and the scythe's haul (0.49). Cost: three chained slashes are 44% above the eye (the gate's 40), their
+    drives shorter. `tools/art/swing_chain.py` plays each chain as the runtime does (the earliest press or mid-window, carried by
     `SwingBlend`, 60 fps). Across the 67 chain strikes, mashing: chained strikes out of view in their wind-up and blow
     32 -> 6, the drive out of view 30 -> 7; mid-window 29 -> 4. GameTest `arms_chain_flow`: every same-hand link starts
     where the one before it holds the blade on its earliest press (43 links, within 0.02 blocks and 3 degrees). Cost:
@@ -6079,13 +6092,16 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       0.04/0.06/0.09 blocks (snap/blade/heavy, `ArmsRules.heft` as the swings weigh them; x1.3 strong; half under
       reduced motion), up for a lift and down for a pin by half that, turned 6-12 degrees with the cut and tipped 4-8
       degrees away (by weight), all scaled by size (1.5 / (width x height + 0.3), from a quarter to double: about 1 for
-      a zombie). The shove and the turn ride the render state; the tip and the fall a pose pushed in
+      a zombie; half under reduced motion; at once with hit-stop off). A blow landing mid-recoil adds its spring to the
+      one still settling (its clock held through the new freeze), so the body never snaps back to rest first. The
+      shove and the turn ride the render state; the tip and the fall a pose pushed in
       `RenderLivingEvent.Pre` at the lowest priority and popped in Post (a body another listener draws itself cancels
       Pre and is left to its own clip). Skipped for our own creatures (they play their clips from `CombatFeedback.blow`,
       now fed the server's direction), Lords and the camera's own body. 32 slots, no allocation, nothing at all once
       the last recoil is over.
     - A body a blow killed falls the way the blade went: vanilla's flip zeroed and our own fall about the flat axis
-      across the blow, on vanilla's timing (the square root over 20 ticks), so it still sinks and puffs out as before.
+      across the killing blow, held upright through the kill's freeze, then on vanilla's timing (the square root over
+      20 ticks), so it still sinks and puffs out as before.
       Switch (both): `recoil` (awaken-arms-client.toml).
     - The kill moment, for the one who struck (switch `killMoment`): the freeze 40 ms longer to at most 160 and never
       shorter (`ArmsRules.killHitstop`, added by the viewer so the switch is theirs; a freeze the 4-tick gap skipped
@@ -6093,6 +6109,12 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       what falls: stone and slime low, bone, armour and a spirit higher), the ribbon flares toward white for 160 ms,
       and the last foe lets the view breathe out (field of view +2.5% over 14 ticks). Observers see the same freeze
       and fall.
+    - The freeze lets go instead of jumping (`ArmsFeel`, every struck body, also before Fight Feel): it trembles along
+      the blow (0.045 blocks, easing to 40% through the beat; diagonal when the blow's way isn't known), and when it
+      ends, what the body moved while held (the push, its walk and animation clock) is caught up over 110 ms on a cubic
+      ease-out, so it launches out of the hit rather than appearing where the push had already carried it (more than
+      2.5 blocks is shown as it is). A body struck while still held keeps its hold; struck while letting go, its new
+      hold starts where it is shown.
     - The cleave: the one freeze of a sweep grows by 12 ms for each extra body it strikes on that tick (up to 3), the
       kick by a fifth per extra body (up to x1.6), and each extra body plays `arms.cleave` a semitone higher. Feel only:
       no extra damage or Resonance.

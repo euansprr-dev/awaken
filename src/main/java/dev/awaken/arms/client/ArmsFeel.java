@@ -30,16 +30,31 @@ import java.util.Map;
 final class ArmsFeel implements CombatFeedback.Sink {
     static final ArmsFeel INSTANCE = new ArmsFeel();
 
+    /**
+     * A struck body's freeze: held where the blow met it while the beat lasts, trembling along the blow, then let go
+     * over {@link #RELEASE}. What it moved while held (its push, its animation's clock) is caught up on a fast ease-out,
+     * so the body launches out of the hit instead of jumping to where the push has already carried it.
+     */
     private static final class Freeze {
-        final long until;
-        boolean captured;
+        final long from, until;
+        boolean captured, released;
         double x, y, z;
         float age, walkPos, walkSpeed;
+        // what the release has left to catch up (held minus real, on the frame it let go)
+        double ox, oy, oz;
+        float oAge, oWalk;
+        /** Struck again while the last freeze was letting go: the catch-up it had left starts this one's hold. */
+        boolean carry;
 
-        Freeze(long until) {
+        Freeze(long from, long until) {
+            this.from = from;
             this.until = until;
         }
     }
+
+    /** How long a freeze takes to let go, and the furthest it catches up (a teleport is just shown). */
+    static final long RELEASE = 110_000_000L;
+    private static final double RELEASE_MAX_SQ = 2.5 * 2.5;
 
     private static final Map<Integer, Freeze> FROZEN = new HashMap<>();
     /** The striker's hold: wall-clock nanos it ends, and how long all holds so far have paused the hands. */
@@ -52,7 +67,30 @@ final class ArmsFeel implements CombatFeedback.Sink {
     @Override
     public void hitstop(int entityId, int ms) {
         if (ms <= 0 || entityId < 0 || !ArmsComfort.hitStop()) return;
-        FROZEN.put(entityId, new Freeze(System.nanoTime() + ms * 1_000_000L));
+        long now = System.nanoTime();
+        Freeze f = new Freeze(now, now + ms * 1_000_000L);
+        Freeze old = FROZEN.get(entityId);
+        if (old != null && old.captured) {
+            if (now <= old.until) {
+                // still held: hold on from there (a fresh capture would jump to where the push has got it)
+                f.captured = true;
+                f.x = old.x;
+                f.y = old.y;
+                f.z = old.z;
+                f.age = old.age;
+                f.walkPos = old.walkPos;
+                f.walkSpeed = old.walkSpeed;
+            } else if (old.released) {
+                float k = release(now - old.until);
+                f.carry = true;
+                f.ox = old.ox * k;
+                f.oy = old.oy * k;
+                f.oz = old.oz * k;
+                f.oAge = old.oAge * k;
+                f.oWalk = old.oWalk * k;
+            }
+        }
+        FROZEN.put(entityId, f);
     }
 
     @Override
@@ -202,7 +240,7 @@ final class ArmsFeel implements CombatFeedback.Sink {
             holdUntil = 0;
         }
         if (kickTicks > 0) kickTicks--;
-        if (!FROZEN.isEmpty()) for (Iterator<Freeze> it = FROZEN.values().iterator(); it.hasNext(); ) if (it.next().until < now) it.remove();
+        if (!FROZEN.isEmpty()) for (Iterator<Freeze> it = FROZEN.values().iterator(); it.hasNext(); ) if (it.next().until + RELEASE < now) it.remove();
     }
 
     private static final float[] LEAN = new float[3];
@@ -259,35 +297,66 @@ final class ArmsFeel implements CombatFeedback.Sink {
     private static Archetype.@org.jspecify.annotations.Nullable Move leanMove;
     private static long leanNanos;
 
-    /** Render-state modifier for every entity: a frozen body holds its pose and trembles. */
+    /** The release's share left {@code since} nanos after the hold ended: a cubic ease-out, fast first. */
+    static float release(long since) {
+        if (since >= RELEASE) return 0F;
+        float u = 1F - Math.max(0, since) / (float) RELEASE;
+        return u * u * u;
+    }
+
+    private static final float[] BLOW = new float[2];
+
+    /** Render-state modifier for every entity: a frozen body holds its pose and trembles, then is let go smoothly. */
     static void modify(Entity entity, EntityRenderState state) {
         if (FROZEN.isEmpty()) return;
         Freeze f = FROZEN.get(entity.getId());
         if (f == null) return;
         long now = System.nanoTime();
-        if (now > f.until) return;
         LivingEntityRenderState living = state instanceof LivingEntityRenderState l ? l : null;
         if (!f.captured) {
+            if (now > f.until) return; // never drawn while held: nothing to let go
             f.captured = true;
-            f.x = state.x;
-            f.y = state.y;
-            f.z = state.z;
-            f.age = state.ageInTicks;
+            f.x = state.x + (f.carry ? f.ox : 0);
+            f.y = state.y + (f.carry ? f.oy : 0);
+            f.z = state.z + (f.carry ? f.oz : 0);
+            f.age = state.ageInTicks + (f.carry ? f.oAge : 0);
             if (living != null) {
-                f.walkPos = living.walkAnimationPos;
+                f.walkPos = living.walkAnimationPos + (f.carry ? f.oWalk : 0);
                 f.walkSpeed = living.walkAnimationSpeed;
             }
         }
-        // a shake across the blow, faster than a frame's worth of motion so it reads as impact, not drift
-        double tremble = ((now / 16_000_000L) % 2 == 0 ? 1 : -1) * 0.035;
-        state.x = f.x + tremble;
-        state.y = f.y;
-        state.z = f.z - tremble;
-        state.ageInTicks = f.age;
-        if (living != null) {
-            living.walkAnimationPos = f.walkPos;
-            living.walkAnimationSpeed = f.walkSpeed;
+        if (now <= f.until) {
+            // a shake along the blow, faster than a frame's worth of motion so it reads as impact, not drift; hardest
+            // on the hit, easing as the beat goes (diagonal when the blow's way isn't known)
+            float u = (now - f.from) / (float) Math.max(1L, f.until - f.from);
+            double amp = ((now / 16_000_000L) % 2 == 0 ? 1 : -1) * 0.045 * (1 - 0.6 * u);
+            boolean along = CombatFeedback.blowOn(entity.getId(), BLOW) > 0;
+            state.x = f.x + amp * (along ? BLOW[0] : 0.78);
+            state.y = f.y;
+            state.z = f.z + amp * (along ? BLOW[1] : -0.78);
+            state.ageInTicks = f.age;
+            if (living != null) {
+                living.walkAnimationPos = f.walkPos;
+                living.walkAnimationSpeed = f.walkSpeed;
+            }
+            return;
         }
+        if (!f.released) {
+            f.released = true;
+            f.ox = f.x - state.x;
+            f.oy = f.y - state.y;
+            f.oz = f.z - state.z;
+            if (f.ox * f.ox + f.oy * f.oy + f.oz * f.oz > RELEASE_MAX_SQ) f.ox = f.oy = f.oz = 0;
+            f.oAge = f.age - state.ageInTicks;
+            f.oWalk = living == null ? 0 : f.walkPos - living.walkAnimationPos;
+        }
+        float k = release(now - f.until);
+        if (k <= 0) return;
+        state.x += f.ox * k;
+        state.y += f.oy * k;
+        state.z += f.oz * k;
+        state.ageInTicks += f.oAge * k;
+        if (living != null) living.walkAnimationPos += f.oWalk * k;
     }
 
     static void reset() {
