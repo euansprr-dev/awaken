@@ -30,6 +30,7 @@ final class RoadTickTests {
         AwakenTests.register("village_far_chunk_named", 40, RoadTickTests::farChunkNamed);
         AwakenTests.registerIsolated("village_road_starts_wait", 2_000_000, RoadTickTests::startsWait);
         AwakenTests.register("village_road_starts_applied", 20, RoadTickTests::startsApplied);
+        AwakenTests.register("village_stall_watch_reads", 20, RoadTickTests::watchReads);
     }
 
     /** A roads' world over vanilla's real noise (seed 26102610) in use, and what puts the server's own back. */
@@ -152,7 +153,7 @@ final class RoadTickTests {
             return t;
         });
         long[] stepNs = {-1}, handNs = {-1}, probeNs = {-1}, worstTick = {0}, ticks = {0}, last = {System.nanoTime()}, aside0 = {0};
-        String[] stepOn = {""};
+        String[] stepOn = {""}, outWaiting = {""};
         boolean[] probeWaiting = {false}, done = {false};
         java.util.concurrent.atomic.AtomicReference<java.util.concurrent.CompletableFuture<java.util.List<Road.Leg>>> later = new java.util.concurrent.atomic.AtomicReference<>();
         h.assertTrue(!RoadNet.known(cx, cz), "lattice chunk " + cx + "," + cz + " is cold");
@@ -173,6 +174,7 @@ final class RoadTickTests {
                 probeNs[0] = System.nanoTime() - p0;
                 var f = later.get();
                 probeWaiting[0] = f != null && !f.isDone();
+                outWaiting[0] = dev.awaken.turbo.roadstarts.RoadStarts.outstanding();
             });
         });
         long t0 = System.nanoTime();
@@ -200,12 +202,31 @@ final class RoadTickTests {
                 h.assertTrue(f.join().equals(RoadNet.startsIn(cx, cz)), "the step's legs are the chunk's legs");
                 h.assertTrue(dev.awaken.turbo.roadstarts.RoadStarts.later(cx, cz, worldgen, () -> null) == null, "a chunk whose legs are known isn't set aside");
                 h.assertTrue(dev.awaken.turbo.roadstarts.RoadStarts.setAside() == aside0[0] + 1, "one chunk set aside: " + dev.awaken.turbo.roadstarts.RoadStarts.status());
+                // the stall watch names a chunk not given back, and what it waits for, until it is
+                h.assertTrue(outWaiting[0].contains(" " + cx + "," + cz + " waits for its roads"), "the watch named the chunk waiting for its roads: " + outWaiting[0]);
+                String out = dev.awaken.turbo.roadstarts.RoadStarts.outstanding();
+                h.assertTrue(!out.contains(" " + cx + "," + cz + " "), "the chunk given back is no longer named: " + out);
             } finally {
                 worldgen.shutdownNow();
                 o.restore().run();
             }
             h.succeed();
         });
+    }
+
+    /**
+     * The stall watch's chunk reads (ChunkWaits) on the server's own chunks: the dispatchers' line, the chunk under the test
+     * generated ("done"), a chunk far out with no holder; the fields it reads are widened by the access transformer.
+     */
+    private static void watchReads(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        var map = level.getChunkSource().chunkMap;
+        String line = ChunkWaits.level(level), here = ChunkWaits.chain(map, ChunkPos.containing(h.absolutePos(net.minecraft.core.BlockPos.ZERO)));
+        String far = ChunkWaits.chain(map, new ChunkPos(1_500_000, 1_500_000));
+        h.assertTrue(line.contains(": worldgen ") && line.contains("; light ") && line.contains(" generation tasks not yet run"), "the dispatchers read: " + line);
+        h.assertTrue(here.endsWith(": done"), "the chunk under the test is generated: " + here);
+        h.assertTrue(far.endsWith(" (no holder)"), "a chunk far out has no holder: " + far);
+        h.succeed();
     }
 
     /** Road starts' probe: the hook ran on this server's chunk generation (its mixin applied), and it's on. */

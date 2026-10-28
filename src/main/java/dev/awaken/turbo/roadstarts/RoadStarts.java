@@ -23,6 +23,7 @@ import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -55,6 +56,13 @@ public final class RoadStarts {
     private static final ThreadLocal<Boolean> RERUN = ThreadLocal.withInitial(() -> false);
     /** Lattice chunks set aside and taken up again (the test, the log). */
     static final AtomicLong SET_ASIDE = new AtomicLong(), TAKEN_UP = new AtomicLong();
+    /**
+     * Lattice chunks set aside and not given back yet, by packed position: what each waits for, since when (the stall
+     * watch: a take-up the worldgen dispatcher never ran would hold every chunk that needs it, with all its threads idle).
+     */
+    private static final ConcurrentHashMap<Long, Stage> OUT = new ConcurrentHashMap<>();
+
+    private record Stage(String what, long since) {}
     /** Whether a level's generator places the roads (cached by its structure state). */
     private static volatile @Nullable ChunkGeneratorStructureState roadState, plainState;
 
@@ -62,7 +70,10 @@ public final class RoadStarts {
         RoadStartsConfig.register();
         modBus.addListener(ModConfigEvent.Loading.class, e -> refresh());
         modBus.addListener(ModConfigEvent.Reloading.class, e -> refresh());
-        NeoForge.EVENT_BUS.addListener(ServerAboutToStartEvent.class, e -> refresh());
+        NeoForge.EVENT_BUS.addListener(ServerAboutToStartEvent.class, e -> {
+            OUT.clear(); // a world closed mid-take-up leaves its chunks here
+            refresh();
+        });
     }
 
     private static void refresh() {
@@ -134,33 +145,58 @@ public final class RoadStarts {
             Awaken.LOG.info("[roadstarts] on: lattice chunk {},{} waits for its roads off the worldgen executor", chunkX, chunkZ);
         }
         CompletableFuture<T> out = new CompletableFuture<>();
+        long key = ChunkPos.pack(chunkX, chunkZ);
+        OUT.put(key, new Stage("its roads", System.nanoTime()));
         legs.whenComplete((v, e) -> {
             // laying that failed leaves the legs unmade: the step lays them itself, as it would have
             if (e != null) fail(e);
             try {
-                worldgen.execute(() -> takeUp(step, out));
+                OUT.replace(key, new Stage("the worldgen dispatcher to take it up", System.nanoTime()));
+                worldgen.execute(() -> takeUp(key, step, out));
             } catch (RuntimeException x) {
                 fail(x);
+                OUT.remove(key);
                 out.completeExceptionally(x);
             }
         });
         return out;
     }
 
-    private static <T> void takeUp(Supplier<CompletableFuture<T>> step, CompletableFuture<T> out) {
+    private static <T> void takeUp(long key, Supplier<CompletableFuture<T>> step, CompletableFuture<T> out) {
+        OUT.replace(key, new Stage("its structure starts step", System.nanoTime()));
         RERUN.set(true);
         try {
             step.get().whenComplete((c, e) -> {
+                // forgotten first: whoever sees the chunk given back no longer finds it outstanding
+                OUT.remove(key);
                 if (e != null) out.completeExceptionally(e);
                 else out.complete(c);
             });
             TAKEN_UP.incrementAndGet();
         } catch (RuntimeException | Error e) {
             fail(e);
+            OUT.remove(key);
             out.completeExceptionally(e);
         } finally {
             RERUN.set(false);
         }
+    }
+
+    /** The lattice chunks set aside and not given back yet, with what each waits for and how long (the stall watch). */
+    public static String outstanding() {
+        if (OUT.isEmpty()) return "every lattice chunk set aside given back";
+        long now = System.nanoTime();
+        StringBuilder b = new StringBuilder().append(OUT.size()).append(" lattice chunks not given back:");
+        int n = 0;
+        for (var e : OUT.entrySet()) {
+            if (n++ == 8) {
+                b.append(" ...");
+                break;
+            }
+            b.append(' ').append(ChunkPos.getX(e.getKey())).append(',').append(ChunkPos.getZ(e.getKey())).append(" waits for ")
+                    .append(e.getValue().what()).append(" (").append((now - e.getValue().since()) / 1_000_000_000L).append(" s);");
+        }
+        return b.toString();
     }
 
     private static boolean roads(ChunkGeneratorStructureState state) {

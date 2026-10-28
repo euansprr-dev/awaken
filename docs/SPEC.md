@@ -8288,9 +8288,17 @@ laid already, then a near-freeze; then 2 s at the start and 33 s at the first te
 finder reading a chunk still generating, then one tick of 4.5 minutes in it; the ledge finder now reads only chunks
 already whole). A watch on the server thread (`RoadTimer.watch`) logs any tick (or task between ticks) over two seconds
 with its stack, always (a player's log says what held the server; on a tour over one second, sampled 20 times a
-second), again every 10 s while the same tick runs, each time with the first frames of every busy world generation
-(`Worker-Main-*`), IO (`IO-Worker-*`) and Awaken thread (a chunk the server thread waits for waits on them; the idle ones
-counted); a tick counts from the players' packets on (26.3 handles them before `tickServer`, and a move into land not
+second), again every 10 s while the same tick runs, each time with the first frames of every thread not waiting for
+work, of any name (a chunk the server thread waits for waits on one of them; those waiting for work counted), Road
+starts' lattice chunks not given back with what each waits for (its roads, the worldgen dispatcher to take it up, its
+step) and how long, each level's worldgen and light dispatchers (queue head, asleep, both executors' state), its light
+tasks, generation tasks not yet run and chunk tasks for the server thread, and the chunk under each player followed to
+what it waits on (`ChunkWaits`: its status, the step it started, its ticket and queue levels, its generation task; then
+the neighbour furthest behind what its next step needs, and that one's, down to a step started and not finished or one
+whose neighbours are ready and that never started; read only, from the watch's thread, the fields widened by the access
+transformer; `village_stall_watch_reads`). Run 40709834352 is why: the flight waited 6.6 minutes in vanilla's fall-damage
+fluid check (`EntityFluidInteraction.hasFluidAndLoaded`, a FULL `getChunk` that doesn't load but waits on a chunk under
+way) with every world generation, IO and Awaken thread idle and no roads being laid. A tick counts from the players' packets on (26.3 handles them before `tickServer`, and a move into land not
 generated yet waits there in NeoForge's `Entity.setPosRaw`). It logs any chunk the server thread had to wait for further than view distance from every player in its level,
 with the chunk's own tickets and who asked (once a minute a caller; a chunk without a getChunk's own "unknown" ticket
 rode in another chunk's wait, so the stack names that wait, not who asked for it). The camp command (`/awaken village road camp`) never lays a road on the server thread: a
