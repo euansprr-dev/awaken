@@ -1,0 +1,54 @@
+# The edge hold's cue (SPEC §28.9): roads-perf-quit's setup and its flight north over new land, with shots mid-glide
+# while the hold is on (the headwind isn't heard on a shot; the pale mist closing in toward the edge is seen). "shotnow"
+# skips the shot settle, which would wait until the land caught up and the hold let go; each shot logs the cue's
+# strength ("edge hold cue 0.80, edge 14 ahead"). Then the saving quit 30 s in, before the runner's GPU tires.
+# Run on GitHub: tools/tour-ci.sh tools/autopilot/roads-edge-cue.txt 1800
+# ci knobs: PACK=perf,world TECTONIC=awakened
+world autopilot_roads_perf creative 26102610
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+# the opening's sky flight holds the camera and ends on a question a closed screen never answers: skip it first
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+# the Ascent's gift card holds the director while it's up: put it away
+wait 40
+key dismiss
+wait 10
+screen close
+cmd time set 6000
+cmd gamerule advance_time false
+cmd gamemode spectator
+hud off
+# up the road north out of the camp, as in roads-perf-quit
+cmd awaken village road camp
+wait 300
+cmd tp @s ~ 240 ~ 180 25
+wait 200
+shot 01-before
+# 24 blocks a second over new land: the hold eases in where the land isn't made yet
+glide 0 0 -1.2 1800
+wait 100
+shotnow 02-glide-5s
+wait 100
+shotnow 03-glide-10s
+wait 100
+shotnow 04-glide-15s
+wait 100
+shotnow 05-glide-20s
+wait 100
+shotnow 06-glide-25s
+wait 100
+shotnow 07-glide-30s
+quit

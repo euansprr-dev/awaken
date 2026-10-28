@@ -78,7 +78,8 @@ import java.util.Map;
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder; with
  *                                                -Dawaken.autopilot.settle=&lt;s&gt; (CI tours) it first waits, at most that
  *                                                long, until the terrain around is loaded and built
- * shotnow &lt;name&gt;                                  the same this tick (no settle; for short moments)
+ * shotnow &lt;name&gt;                                  the same this tick (no settle; for short moments); logs the
+ *                                                edge hold's cue when it shows
  * leave                                          save and quit to the title (a following "world" line rejoins)
  * quit                                           save and quit to the title, then close the game
  * </pre>
@@ -510,8 +511,11 @@ public final class Autopilot {
             }
             case "shotnow" -> { // a shot this tick, without "shot"'s 3-tick settle (for moments shorter than that)
                 String name = arg.trim();
+                // with the edge hold's cue as it was (a held glide's shots: which one shows the mist)
+                float cue = dev.awaken.core.client.EdgeHoldClient.shown(), edge = dev.awaken.core.client.EdgeHoldClient.edgeShown();
                 Screenshot.grab(mc.gameDirectory, name + ".png", mc.gameRenderer.mainRenderTarget(), 1,
-                        msg -> Awaken.LOG.info("[autopilot] screenshot {}", name));
+                        msg -> Awaken.LOG.info("[autopilot] screenshot {}{}", name,
+                                cue > 0 ? String.format(java.util.Locale.ROOT, " (edge hold cue %.2f, edge %.0f ahead)", cue, edge) : ""));
                 waitTicks = 1;
             }
             case "camera" -> { // first | back | front
