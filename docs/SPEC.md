@@ -8664,4 +8664,6 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   30 live (life 70-110 ticks, size 0.018-0.038, alpha 0.6, a slow wander, barely falling), tinted 35% toward the
   light's colour from dust grey; half at Decreased particles, none at Minimal.
 - **Cave air in Lens** is not built here: it needs new fields and operations in Lens's composites (the Lens module's
-  files). It comes with P3's band looks, coordinated with the Lens session.
+  files). It comes with P3's band looks, coordinated with the Lens session. Its look fields are fixed now because
+  the gate-worlds plan sets them in its own looks: `caveAirNear` and `caveAirFar` (blocks where the haze starts and
+  closes, about 8 and 40-60) and `caveAirTint` (its colour), per look.
