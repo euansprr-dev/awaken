@@ -44,7 +44,7 @@ final class Motes {
         if (emission <= 0) return;
         float reach = Math.min(HeldLight.MAX_REACH, emission * HeldLight.REACH_PER_LEVEL) * 0.7F;
         owed += MAX / LIFE * SenseState.under * (ps == ParticleStatus.DECREASED ? 0.5F : 1F);
-        int tint = mix(DUST, rgb, 0.35F);
+        int tint = mix(Depths.style == dev.awaken.delve.CaveStyle.NONE ? DUST : Depths.style.dust, rgb, 0.35F);
         Vec3 eye = mc.player.getEyePosition(), look = mc.player.getViewVector(1F);
         for (int tries = 0; owed >= 1F && tries < 4; tries++) {
             owed -= 1F;

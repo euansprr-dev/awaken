@@ -8766,3 +8766,25 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   doesn't count lit halls yet.
 - **Test** `delve_lamp_lattice` (lights only in the reached hall, ≤ 120, none in a sealed pocket, every hall cell
   lit, all gone with the lamp).
+
+### 34.7 Cave styles from the land above (built, P4)
+- **Decoration, no cave biomes**: the feature `awaken:delve/styles` (`delve.CaveStyleFeature`, underground_decoration,
+  every overworld chunk) reads the biome over the chunk's middle (`CaveStyle.of`, OCEAN_FLOOR_WG height) and makes 20
+  tries for a pocket of cave air from y -56 to 10 below the ground, dressing its roof, floor or a wall. Only bare stone,
+  deepslate, tuff, granite, diorite, andesite and calcite are dressed (lodes, ores and places stay). New chunks only.
+- **Styles** (`CaveStyle`; an underground biome, ocean or river gives none):
+  - **Roots** (forests, taiga, jungle, Elderwood, Lumen Forest): rooted dirt in the roof with hanging roots, glow
+    berries on cave vines 2-5 long (berries on every other), moss and moss carpet on the floor.
+  - **Sunshard** (Glass Steppe), **Frostspar** (Frost Spires): a growth on the floor (a crystal base in the rock, one to
+    three crystal blocks standing on it, its cluster on top, a few small ones round it); with no floor, a seam.
+    **Fault seam** (Shattered Highlands): a seam of 4-7 blocks in the nearest wall at chest height. The crystals are the
+    Lands' own blocks by id (none when the Lands pack is off); mined, they're the Forge's catalysts (HEAT, FROST, GRAVITY).
+  - **Sand** (deserts, badlands): smooth sandstone and sandstone patches on the floor, sandstone in the roof, a band of
+    cut sandstone round the pocket's walls.
+  - **Ice** (snowy and icy lands): packed ice patches in the floor (a blue ice heart now and then) and roof, ice hanging
+    one or two from the roof.
+- **Its air** (client, `Depths`): once a second while under, the style of the camera column's land (WORLD_SURFACE);
+  the cave air's colour leans half way from the band's to the style's (roots 0x4E6B3A, sunshard 0xB07A2E, frostspar
+  0x4A7FA8, fault seam 0x6A4C8C, sand 0xA8783A, ice 0x3E78A8), and the motes in your light take the style's dust (amber
+  under sand, pale blue under snow, green-gold under woods).
+- **Test** `delve_cave_styles` (which land gives which style; each style dresses a stone room's roof and floor).

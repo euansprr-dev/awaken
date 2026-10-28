@@ -131,6 +131,7 @@ public final class DelveContent {
     static {
         FEATURES.register("lodes", () -> LodeFeature.CODEC);
         FEATURES.register("delver_lamps", () -> LampFeature.CODEC);
+        FEATURES.register("cave_styles", () -> CaveStyleFeature.CODEC);
     }
 
     // ---- the Delver lamps (SPEC §34.6) ----------------------------------------------------------------------------------

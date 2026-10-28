@@ -70,6 +70,7 @@ final class DelveTests {
         PickTests.register();
         LampTests.register();
         BandTests.register();
+        StyleTests.register();
     }
 
     // ---- a heart opens its vein -------------------------------------------------------------------------------------
