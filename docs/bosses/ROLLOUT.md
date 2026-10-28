@@ -69,7 +69,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Sleeper | Lord | Nightmare | Brute | kit | B, the Four-Poster | ✓ 6255ae1d | ✓ 6255ae1d | — |
 | The Sky Leviathan | Lord | Sky | Serpent | kit | B, the Ray | ✓ ea291205 | ✓ ea291205 | — |
 | The Hollow Herald | Lord | Abyss | Caster | kit | C, the Ring-Head | ✓ b91a71b6 | ✓ b91a71b6 | — |
-| The Rootmother | Guardian | Rim | Crawler | spider ×2.4 | B, the Long-Legs | — | — | — |
+| The Rootmother | Guardian | Rim | Crawler | kit | B, the Long-Legs | ✓ ee462916 | ✓ ee462916 | — |
 | The Thornback | Guardian | Gardens | Beast | ravager | B, the Thorn Pangolin | — | — | — |
 | The Choirmaster | Guardian | Choir | Caster | witch ×2 | C, the Cantor | — | — | — |
 | The Ossuary King | Guardian | Orchard | Brute | wither skeleton ×2 | A, the Orchard King | — | — | — |
