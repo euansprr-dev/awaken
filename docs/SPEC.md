@@ -4861,7 +4861,9 @@ magic.
   golden-hour vista reads warmer and richer, not greyer (the orchestrator's note on L1's sheet). Faces turned from the sun shade only as it lowers (none
   at noon, when Minecraft's sun is straight overhead and the game's own face shading stays; all by golden hour). The
   model fades out under solid cover (1 to 7 blocks of it: a ledge is shade, a roofed room is left as the game lit it,
-  torches and all), toward the end of the render distance (85-100%), in the game's thick fog (as the haze does) and
+  torches and all; a column with open sky in one of its four neighbours counts that neighbour's cover, so the ground
+  under an eave or a gable's rake takes the lawn's shade instead of a room's, with no step along the roof line: Euan's
+  cottage, 2026-10-28; four more heightfield reads, only where the column is covered), toward the end of the render distance (85-100%), in the game's thick fog (as the haze does) and
   within 1.45 blocks. Strength: the sun's height (none at the horizon crossing), a faint moon (0.4) by night, rain
   (−85%) and thunder (−50%); 0 where there's no overworld sky. Golden hour is the more of the sunrise colour's strength
   and the sun's height (full below sin 0.1, none above 0.5; the sunrise colour alone only peaks as the sun touches the
@@ -8014,9 +8016,15 @@ first campfire, never a step down: a hearthstone brazier, no longer a full cube.
   online or not; the notices go to the household.
 - Admin: `/awaken admin hearth cottage hurry` (as if the rest of the day had passed; it catches up over a few ticks);
   `reset` also drops a build in progress.
+- *The ground round it is the land's* (Euan 2026-10-28, "Around the cottage the colors are different for the grass"):
+  the build leaves the margin's ground and biome as they were (it only clears plants above it and lays the path), so
+  the grass is the same green as the lawn beside it. The pale strip Euan saw was the row under the south gable's rake
+  (roof stairs 5-9 blocks up): Lens's lit composite took it for a roofed room and left it unshaded beside a shaded
+  lawn. Fixed in Lens (§22, "the model fades out under solid cover"): a column with open sky beside it shades as the
+  open ground does.
 - Tests: `hearth_cottage_builds_over_a_day` (nothing at the start; half a day away catches up to exactly half, foundation
   and frame up, no roof or furniture; a block where something stands is held; the save round-trips mid-build; the rest of
-  the day finishes it, the held block included) · `hearth_anchor_light` (light 15 at every tier, 14 beside it, 11 three
+  the day finishes it, the held block included; every margin column keeps its ground and biome, the path aside) · `hearth_anchor_light` (light 15 at every tier, 14 beside it, 11 three
   out and one down, not a full cube).
 
 ## 29. Wild life (the wild's small ambient life, client-only; Euan 2026-10-26, built without an approval page)

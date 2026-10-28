@@ -6,6 +6,7 @@ import dev.awaken.hearth.HearthRecord;
 import dev.awaken.hearth.HearthService;
 import dev.awaken.hearth.block.HearthAnchorBlock;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
@@ -13,11 +14,14 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** GameTests for SPEC §28.11: Oren's cottage goes up over a day and catches up honestly; the Anchor is a real light. */
@@ -37,6 +41,18 @@ public final class CottageBuildTests {
             HearthRecord rec = new HearthRecord(owner, "test", new BlockPos(cx + 14, baseY + 1, cz + 14), HearthService.OVERWORLD);
             int[] ground = new int[Cottage.WIDTH * Cottage.DEPTH];
             Cottage.Site site = new Cottage.Site(origin, Rotation.NONE, baseY, ground, List.of(), CottagePlan.MEADOW);
+            // the land round the footprint (the cleared margin, the eave's row included) as it was: the grass's colour is
+            // its biome's moved by LawnDrift's (x, z), so the same block on the same biome is the same green
+            Map<BlockPos, BlockState> land = new HashMap<>();
+            Map<BlockPos, Holder<Biome>> biomes = new HashMap<>();
+            for (int z = CottagePlan.MIN_Z; z <= CottagePlan.MAX_Z; z++) {
+                for (int x = CottagePlan.MIN_X; x <= CottagePlan.MAX_X; x++) {
+                    if ((x >= 0 && x <= 8 && z >= 0 && z <= 8) || (x == CottagePlan.CHIMNEY_X && z == CottagePlan.CHIMNEY_Z)) continue;
+                    BlockPos g = CottagePlan.at(origin, Rotation.NONE, x, 0, z);
+                    land.put(g, level.getBlockState(g));
+                    biomes.put(g, level.getBiome(g));
+                }
+            }
             CottageBuild b = Cottage.begin(level, rec, owner, site);
             // someone standing where the front wall's stone course goes
             BlockPos wallCell = CottagePlan.at(origin, Rotation.NONE, 2, 1, 0);
@@ -76,6 +92,15 @@ public final class CottageBuildTests {
                         "the held block went in once they moved: " + level.getBlockState(wallCell));
                 h.assertTrue(level.getBlockState(CottagePlan.at(origin, Rotation.NONE, 2, 1, 7)).is(BlockTags.BEDS)
                         && level.getBlockState(CottagePlan.at(origin, Rotation.NONE, 4, 1, 0)).is(BlockTags.DOORS), "bed and door are in");
+                // the ground round it is the land's own: the same grass on the same biome (only the path to the door is new)
+                int kept = 0;
+                for (Map.Entry<BlockPos, BlockState> e : land.entrySet()) {
+                    BlockState now = level.getBlockState(e.getKey());
+                    h.assertTrue(now == e.getValue() || now.is(Blocks.DIRT_PATH), "the ground at " + e.getKey() + " was " + e.getValue() + ", is " + now);
+                    h.assertTrue(level.getBiome(e.getKey()).equals(biomes.get(e.getKey())), "the biome at " + e.getKey() + " is the land's");
+                    if (now == e.getValue()) kept++;
+                }
+                h.assertTrue(kept >= land.size() - 3, "the margin stays grass: " + kept + " of " + land.size());
                 clear(level, cx, baseY, cz);
             });
         });
