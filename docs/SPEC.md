@@ -8096,9 +8096,10 @@ mixin as a backstop, with a server config switch, off on first failure"). 26.3 r
 on its level's one worldgen executor (`ChunkStatusTasks.generateStructureStarts`), so an overworld lattice chunk whose
 legs weren't known held all of the level's chunk generation while it waited for its roads. The hook, a HEAD inject
 there (own common config `awaken.roadstarts.mixins.json`, not required, `defaultRequire` 0, listed in
-`neoforge.mods.toml`), hands such a chunk back as a future (`RoadStarts.later`): an urgent planner job fans the
-chunk's pieces out to the other planners and makes its legs (`RoadNet.legsLater`; a chunk already being made is waited
-on and its pieces asked for urgently), then the step runs again on the level's worldgen dispatcher (opened by the access
+`neoforge.mods.toml`), hands such a chunk back as a future (`RoadStarts.later`): a thread of the roads' own ("Awaken
+road starts", one, as the executor is one) lays its legs exactly as the executor did inline, fanning its pieces out to
+the planners first (`RoadNet.legsLater`; a chunk already being made is waited on and its pieces asked for urgently), so
+the roads come as fast as without it; then the step runs again on the level's worldgen dispatcher (opened by the access
 transformer `META-INF/accesstransformer.cfg`: `ChunkMap.worldgenTaskDispatcher`, at the chunk's own queue level), the
 legs known, so it answers at once; the pipeline resumes the chunk when the future completes, as it does after
 vanilla's own asynchronous noise step. Only for the overworld, with structures on, a generator that places the roads

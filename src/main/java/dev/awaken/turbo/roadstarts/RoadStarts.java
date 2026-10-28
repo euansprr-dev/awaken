@@ -31,9 +31,10 @@ import java.util.function.Supplier;
  * Road starts (SPEC §28.9, Cost; Turbo): 26.3 runs a chunk's structure starts inline on its level's one "worldgen"
  * executor, so an overworld lattice chunk whose roads weren't planned yet held all of the level's chunk generation while
  * it waited for them, and the server thread with it whenever it needed any chunk meanwhile (Euan's 42 s trial freeze
- * waited behind one). With this on, such a chunk's structure starts hand back a future instead: an urgent road planner
- * makes its legs, then the step runs on the executor exactly as it would have (the legs known, it answers at once), and
- * the executor generates every other chunk meanwhile. Chunks that need the waiting one still wait for it.
+ * waited behind one). With this on, such a chunk's structure starts hand back a future instead: a thread of the roads'
+ * own lays its legs as the executor did inline, then the step runs on the executor exactly as it would have (the legs
+ * known, it answers at once), and the executor generates every other chunk meanwhile. Chunks that need the waiting one
+ * still wait for it.
  *
  * <p>A Turbo feature: the hook is a common mixin at the head of {@code ChunkStatusTasks.generateStructureStarts}
  * (dev.awaken.turbo.roadstarts.mixin, its own config, not required) with an access transformer for ChunkMap's worldgen
@@ -121,7 +122,7 @@ public final class RoadStarts {
 
     /**
      * The handoff (the test drives it directly): null when the lattice chunk's legs needn't be waited for; else a future
-     * that, once a planner has made them, runs {@code step} on {@code worldgen} (where it would have run) and completes
+     * that, once they're laid, runs {@code step} on {@code worldgen} (where it would have run) and completes
      * with what it gives.
      */
     public static <T> @Nullable CompletableFuture<T> later(int chunkX, int chunkZ, Executor worldgen, Supplier<CompletableFuture<T>> step) {
@@ -134,7 +135,7 @@ public final class RoadStarts {
         }
         CompletableFuture<T> out = new CompletableFuture<>();
         legs.whenComplete((v, e) -> {
-            // a planner that failed leaves the legs unmade: the step lays them itself, as it would have
+            // laying that failed leaves the legs unmade: the step lays them itself, as it would have
             if (e != null) fail(e);
             try {
                 worldgen.execute(() -> takeUp(step, out));

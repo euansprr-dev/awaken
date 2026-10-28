@@ -459,9 +459,10 @@ public final class RoadNet {
 
     /**
      * For world generation about to wait for a lattice chunk's legs (the Turbo backstop {@code RoadStarts}, SPEC §28.9):
-     * null when it needn't (off the lattice, no roads, the legs known), else a future done once they are, made by an
-     * urgent planner job that first fans the chunk's pieces out to the other planners (or by whoever is making them
-     * already, its pieces then asked for urgently too). The step that waited runs once it's done and answers at once.
+     * null when it needn't (off the lattice, no roads, the legs known), else a future done once they are, laid on the
+     * road starts thread exactly as world generation's executor laid them inline (its pieces fanned out to the planners
+     * first), or by whoever is making them already (its pieces then asked for urgently too). The step that waited runs
+     * once it's done and answers at once.
      */
     public static @Nullable CompletableFuture<?> legsLater(int chunkX, int chunkZ) {
         if (Math.floorMod(chunkX, Road.LATTICE) != 0 || Math.floorMod(chunkZ, Road.LATTICE) != 0) return null;
@@ -476,20 +477,24 @@ public final class RoadNet {
         }
         return LATER.computeIfAbsent(key, k -> {
             CompletableFuture<Void> f = new CompletableFuture<>();
-            RoadPlanners.job("U" + k, RoadPlanners.URGENT, 0, () -> {
+            RoadPlanners.forWorldgen(() -> {
                 try {
-                    fanOut(w, chunkX, chunkZ, RoadPlanners.URGENT, 0);
                     startsIn(chunkX, chunkZ);
                     f.complete(null);
                 } catch (RuntimeException e) {
+                    Awaken.LOG.error("[road] laying lattice chunk {},{}'s legs for world generation failed", chunkX, chunkZ, e);
                     f.completeExceptionally(e);
-                    throw e;
                 } finally {
                     LATER.remove(k, f);
                 }
             });
             return f;
         });
+    }
+
+    /** Lattice chunks world generation has set aside for their legs (the stall watch's line). */
+    static int setAside() {
+        return LATER.size();
     }
 
     /** Whether a lattice chunk's legs are known yet (the planner ahead of the players asks this). */

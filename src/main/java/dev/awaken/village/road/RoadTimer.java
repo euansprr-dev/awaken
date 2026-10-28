@@ -166,8 +166,9 @@ final class RoadTimer {
                     int gen = 0;
                     for (var e : Thread.getAllStackTraces().entrySet())
                         if (e.getKey() != st && calls(e.getValue(), RoadNet.class.getName(), "startsIn")) gen++;
-                    RoadNet.log("tick {} has run {} ms{}: {} (roads being laid for {} other threads){}", tick, ms(now - since),
-                            ticking ? "" : " (a task between ticks)", top(stack), gen, planning(stack) ? " (road or settlement planning)" : "");
+                    RoadNet.log("tick {} has run {} ms{}: {} (roads being laid for {} other threads, {} lattice chunks set aside){}", tick,
+                            ms(now - since), ticking ? "" : " (a task between ticks)", top(stack), gen, RoadNet.setAside(),
+                            planning(stack) ? " (road or settlement planning)" : "");
                 }
             }
         }, "Awaken stall watch");

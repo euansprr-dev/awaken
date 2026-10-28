@@ -90,6 +90,22 @@ final class RoadPlanners {
         }));
     }
 
+    /**
+     * World generation's own waits, set aside (the Turbo backstop {@code RoadStarts}): one thread, as the level's worldgen
+     * executor is one, laying a lattice chunk's legs as that executor did inline (fanning its pieces out to the planners
+     * first), so the roads come as fast as without it while the executor generates the other chunks.
+     */
+    private static @Nullable ThreadPoolExecutor starts;
+
+    static synchronized void forWorldgen(Runnable work) {
+        if (starts == null) starts = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new java.util.concurrent.LinkedBlockingQueue<>(), r -> {
+            Thread t = new Thread(r, "Awaken road starts");
+            t.setDaemon(true);
+            return t;
+        });
+        starts.execute(work);
+    }
+
     static boolean pending(String key) {
         return PENDING.containsKey(key);
     }
@@ -120,6 +136,8 @@ final class RoadPlanners {
     static synchronized void stop() {
         if (pool != null) pool.shutdownNow();
         pool = null;
+        if (starts != null) starts.shutdownNow();
+        starts = null;
         PENDING.clear();
     }
 }
