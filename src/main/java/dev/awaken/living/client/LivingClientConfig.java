@@ -35,7 +35,7 @@ public final class LivingClientConfig {
     public enum FormsMode { FULL, LITE, OFF }
 
     public static final ModConfigSpec.EnumValue<FormsMode> FORMS = B
-            .comment("How creatures in harder land look (SPEC 21.11): FULL (scars, plates, tusks, horns, a glow), LITE (no attached pieces) or OFF.")
+            .comment("How creatures in harder land look (SPEC 21.13): FULL (from rank C a body of their own), LITE (the vanilla body with lit eyes) or OFF.")
             .defineEnum("forms", FormsMode.FULL);
     public static final ModConfigSpec SPEC = B.build();
 

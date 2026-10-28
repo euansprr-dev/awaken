@@ -4562,6 +4562,7 @@ Continues §21.10's numbering (16-31). The long form is PLAN-2.md; this is what 
 18. **One kit on the vanilla bodies, no mixin.** `living.client.FormLayers` adds a layer to each species' renderer: a skin overlay (the parent model drawn again with `textures/entity/forms/<layout>/o<rung>_<family>.png`), the kit (a second model of the vanilla class whose own cubes were cleared and replaced by the
     kit's pieces, `assets/awaken/forms/kit.json`, drawn with `k<rung>_<family>.png`), and an emissive glow (`g<rung>.png`, a white mask tinted by the rank's colour: D gold, C orange, B red, A violet, S indigo, the Atlas's). The biome family (green, sun, frost; from the biome's base temperature) sets the material.
     Client setting `forms` (awaken-living-client.toml): FULL, LITE (no kit) or OFF. The plate chip stays relative to the viewer; the glow is absolute rank.
+    **Superseded 2026-10-28 by §21.13** (form bodies from C; the kit, `kit.json`, the overlays and `forms_geom.py` are retired; D keeps the vanilla body with the forms' eyes).
 19. **Moves (Build 2):** one telegraphed move per rung (a second on alphas from C), tells 1.2 s (D) down to 0.7 s (S), damage at most 1.3 times a normal blow, delivered with `Strikes.deliver` naming its class.
 20. **Voices (Build 2):** `PlayLevelSoundEvent.AtEntity` lowers the pitch and layers a growl by rung; each move has a tell sound.
 21. **First sight** of a form is a discovery (a tenth of a level, `form/<species>/<rung>`), an Almanac line, no toast stack.
@@ -4677,6 +4678,74 @@ Numbers below were measured on a script copy of the field (two seeds, 32 km acro
    150 to 0.42 × pitch from the heart; was three); one wonder per region as before.
 - `RegionMap.levelAt` in the wide world costs about the same as before (25 hearts' cached levels, nine province hearts, a few noise samples). Test
   `living_region_wide`; `living_region_map` pins rules 2.
+
+### 21.13 Forms, rebuilt (plan docs/forms/PLAN.md; Euan 2026-10-28: the levelled forms "look rushed"; approved all five decisions: real form bodies, animals and spiders grow while walkers stay under two blocks and gain bulk, the land's crystal in the rank's colour at A and S, two-hit attacks from B with the alpha's roar and the creeper's moves, F0-F3 straight through; "animations on par with Fresh Animations' zombie")
+Replaces §21.11 decision 18's kit. Built 2026-10-28 by one builder, no sub-agents.
+1. **A body of its own from C.** A formed creature at rung 2-5 (C-S) is drawn as a hero rig of ours instead of the vanilla body:
+   `RenderLivingEvent.Pre` is cancelled and `living.client.forms.FormRenderer` (a `MobRenderer` over `HeroRenderState`, one per rig, built in
+   `EntityRenderersEvent.AddLayers`) submits the body at the same place. A render state modifier on `MobRenderer` fills a per-entity `FormBody`
+   (weak map, reused, no per-frame allocation) after vanilla's extract, so name tag, fire, outline, shadow and the vanilla state the layers need
+   stay vanilla's. No mixin. D (rung 1), a baby, setting LITE, and a rig that failed to build keep the vanilla body with the forms' eyes
+   (`FormLayers`, `textures/entity/forms/<layout>/o1, g<rung>`); OFF is vanilla. A failure to pose is logged once and that creature falls back.
+2. **Rigs.** `living.forms.FormRigs`: `form_<body>_<rung>` for the eight bodies (zombie, skeleton, spider, creeper, pig, cow, sheep, chicken) at
+   rungs 2-5, 32 rigs, generated data (`FormData`, from `tools/art/specs/forms_bodies.py` with `_forms_hostiles.py` and `_forms_animals.py`;
+   build `python3 tools/art/build_all.py forms_bodies`). Husk, stray, cave spider and mooshroom wear their family's rig with their own paint (a
+   cave spider at 0.7); the biome family (green, sun, frost) is a paint per species. Textures: `textures/entity/forms/body/<rig>_<species>_<family>`
+   (+ `_shut` for the blink, `_glow` emissive) and the coats; about 1.7 MB in all. Every rig passes `check_rig` at build time (every cube attached
+   to its bone's chain, nothing floating, nothing over the face's eye band, whole pixels, in reach). `HeroModel` gained an overload
+   `HeroModel(ModelPart, HeroRig, LifeProfile)`; its graph is unchanged (the boss plan's).
+3. **Ladders.** Zombie → ghoul (hunch, open jaw, long clawed forearms, ribs; A knuckle-walk, S crystal crown and grave cape). Skeleton → bone knight
+   (ribcage of bars, a heart light from B, jaw, horns, pauldrons, greaves, tasset; S bone cloak). Spider → brood stalker (coxa-leg-shin legs
+   solved to the ground, fangs, lit sac, plates, bladed legs, an eye crown at S). Creeper → bloom (a sepal ring and petals round the head, the
+   front left clear; veins glow from B; the petals flare to 78° as it swells; S crown petals). Pig → boar (hump, spines, plates, tusks).
+   Cow → aurochs (hump, lyre horns as their own bones, boss plate; mooshroom's mushrooms painted only for it). Sheep → ram (curling horns, wool
+   on gear bones). Chicken → fighting cock (upright, spurs, crest, sickle tail). Posture and mass tell rank before colour.
+4. **The gear-bone rule.** Core bones (`head`, `torso`, `arm_r/l`, `leg_r/l`) hold only their core cubes; growth hangs on child bones named
+   `gear*` at the parent's pivot. `FormGear` sizes vanilla's armour meshes to the union of each core bone's cubes (only the torso stretches
+   tall; a skeleton's limbs measure against 2-pixel bones) and poses them from the body's composed bones; held items stand at `hand_r/l`.
+   Life roles come from bone names (head, jaw, torso, arm, leg; skirt, cape, chain dangle), so gear names avoid those tokens.
+5. **Clips** (per rig, additive, the life layer on top): idle, walk, run, angry, bite (the melee swing), hurt, death (each body's own fall:
+   a skeleton crumples and its skull rolls, a spider rolls onto its back, animals fall on their side), roar, and per move `<kind>_windup` and
+   `<kind>_strike` (or one `once` clip). A blade skeleton stands in `angry_melee`; a bow skeleton aims with `angry`. Chicken has `air`.
+   The walk is driven by ground distance so a cycle covers its stride; the zombie keeps Fresh Animations' rhythm (arm sway, head bob) with
+   our own variation, and every other body follows the same weight.
+6. **Cue.** `LivingNet.FormCue(entity, move, startTick, holdTicks, windupTicks)` to trackers when a move winds up (`MarkGoal`), an empty move
+   when it is cut short, and for the creeper's moves (`Combos`). The client stretches the wind-up to the move's real length, then plays the strike;
+   a late joiner computes the phase from `startTick`. A lost cue loses only the acting: the ground tell and sound still warn. D sends none.
+7. **Eyes.** Lit in the rank's colour (D gold, C orange, B red, A violet, S indigo), set in modelled sockets; they close with the blink, flare in
+   a wind-up and go out over the fall. A soft additive halo round each (`textures/entity/forms/halo.png`, `RenderTypes.eyes`): faint by day,
+   strong at night, swelling in a wind-up, within 48 blocks.
+8. **True size** (`living.combat.FormShape`, `EntityEvent.Size`, both sides from the synced form, `refreshDimensions` when set or loaded): width,
+   height in blocks for C, B, A, S: pig 1.0/1.0, 1.2/1.15, 1.4/1.35, 1.6/1.5; cow 1.1/1.55, 1.3/1.75, 1.5/1.95, 1.7/2.15; sheep 1.0/1.4,
+   1.15/1.55, 1.3/1.7, 1.45/1.85; chicken 0.5/0.85, 0.6/1.0, 0.75/1.25, 0.9/1.5; spider 1.6/1.0, 1.9/1.1, 2.2/1.25, 2.5/1.4; creeper 0.65/1.8,
+   0.7/1.95, 0.8/2.1, 0.9/2.3; zombie 0.7/1.95, 0.8/1.9, 0.9/1.85, 0.9/1.98; skeleton 0.65, 0.7, 0.8, 0.85 wide at 1.99. Applied as factors over
+   vanilla, so the elite scale attribute and eye height carry over. Walkers stay under two blocks (doors).
+9. **Two blows from B** (`Combos`): a formed creature's melee hit (B, A, S; never a creeper) is followed `SECOND_AFTER` = 10 ticks later (the
+   target's hurt cooldown) by a second blow of 0.5/0.6/0.7 times its attack (never more than a normal blow), a LIGHT strike through
+   `Strikes.deliver`, only if the target is still in reach and sight: stepping back is the answer. One follow-up at a time per creature.
+10. **The alpha's roar.** A crowned creature (mark bit 1) from C roars once, the first time it turns on someone in sight within 16 blocks
+    (`MarkGoal.ALPHA`: a 16-tick wind-up, no blow), and its kin nearby take up the hunt.
+11. **The creeper's moves** (§21.11's "not built" closed): at the start of a swell, at most once each 8 s: C a sidestep hop (so a lined-up shot
+    misses), B a seed left where it stood that bursts 1.5 s later (power 1.6, no block damage), A lights the fuses of up to two creepers within
+    6 blocks of you (each takes its own full swell), S drags you toward it while it swells (within 7 blocks). The explosion stays vanilla's.
+12. **Tells by class, not rank.** A tell's dust says what to do: LIGHT white, HEAVY amber, PERILOUS red, GRAB violet; a move that is no blow
+    keeps the rank's colour (`Moves.tellColour`).
+13. **Coats.** A sheep's wool (dyed colour, gone when sheared) and a pig's saddle are drawn as a coat layer over the body
+    (`forms/body/<rig>_<species>_<family>_wool|saddle`, tinted by the wool colour); the base skin leaves those cubes clear.
+15. **A gradual change** (Euan 2026-10-28, after the first renders: "from one level to the next it looks like a completely different
+    animal"; keep the bodies, slow the texture change). Each paint runs from the vanilla creature's own colours (our palettes, read off the
+    vanilla look) to the form's by `DRIFT` = C 0.18, B 0.42, A 0.7, S 1.0 (`forms_bodies.toward`): a C pig is still pink, a C creeper bright
+    green, a C zombie still wears the cyan shirt, a C sheep a pale face, a C chicken is white. Rot, cracks, bristle and curls grow with it,
+    a spider's chevron fades in, a cock's hackles and sickles colour a rank at a time and its wing bows two ranks later; a mooshroom keeps its
+    pale patches. The shapes are unchanged.
+14. **Perf.** Per entity one `FormBody`, created on first sight, reused; no allocation per frame; halos past 48 blocks skipped; the life layer's
+    springs past 32 as elsewhere. Rigs: at most 60 bones (tested). Server: one cue per move, one dimension refresh per form change.
+- Not yet (F3 follow-ups): presence motes at A and S and heavy footfalls, distance LOD for sub-pixel growth, a voice layer per family
+  (`audio_living.py`), the wind-up light trail at S, a gallery command. The vanilla cow and pig variants (warm, cold) are not read: the form's
+  own family paints them.
+- Dev: `/awaken living form <species> <rung> [family]`, `/awaken living formrow <species> [family]`; tour `tools/autopilot/forms-parade.txt`.
+- Tests: `forms_bodies` (every species and rung has a rig that passes its checks, its clips, its paints and coats), `forms_size` (the hitbox follows the form on the server),
+  `forms_cue` (the cue codec round-trips; the second blow's caps), plus `living_form_mix`, `living_form_state`, `living_form_moves`.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 
