@@ -44,7 +44,10 @@ public class NamedBeast extends FaunaMob {
     private static final Identifier PHASE_SPEED = Awaken.id("fauna_beast_phase_speed");
     private static final BossEvent.BossBarColor[] PHASE_COLOURS = {BossEvent.BossBarColor.YELLOW, BossEvent.BossBarColor.RED};
 
-    private int phase, warnCooldown, closeTicks, calmTicks;
+    /** Ticks a flier that noticed someone keeps hovering, turned to face them (refreshed while they stay in sight). */
+    static final int WATCH_TICKS = 30;
+    private int phase, warnCooldown, closeTicks, calmTicks, watchTicks;
+    private @Nullable Player watched;
     private boolean guaranteedCore;
 
     public NamedBeast(EntityType<? extends NamedBeast> type, Level level) {
@@ -91,6 +94,10 @@ public class NamedBeast extends FaunaMob {
         super.customServerAiStep(level);
         if (abilities != null && abilities.active() == null) checkPhase(level);
         if ((tickCount + getId()) % 10 == 0) territory(level);
+        if (watchTicks > 0) {
+            if (--watchTicks == 0) watched = null;
+            else if (getTarget() == null && watched != null) face(watched);
+        }
         if (registered() && (tickCount + getId()) % 40 == 0) FaunaHooks.server().beastSeen(this);
         if (bar != null) {
             boolean show = getTarget() != null;
@@ -109,7 +116,7 @@ public class NamedBeast extends FaunaMob {
     /** Every half second: hold the territory (warn, provoke, leash, heal and reset). Overridable. */
     protected void territory(ServerLevel level) {
         MobDef d = def();
-        if (!hasHome()) setHomeTo(blockPosition(), d.arena);
+        if (!hasHome()) setHomeTo(firstHome(), d.arena);
         if (warnCooldown > 0) warnCooldown -= 10;
         LivingEntity t = getTarget();
         Vec3 home = Vec3.atBottomCenterOf(getHomePosition());
@@ -135,6 +142,7 @@ public class NamedBeast extends FaunaMob {
             return;
         }
         getLookControl().setLookAt(p, 30.0F, 30.0F);
+        if (d.flies()) watch(p);
         if (warnCooldown <= 0) {
             warnCooldown = 120;
             warn(level, p);
@@ -145,6 +153,39 @@ public class NamedBeast extends FaunaMob {
         } else {
             closeTicks = Math.max(0, closeTicks - 10);
         }
+    }
+
+    /**
+     * Where a beast with no home makes one: where it is, but a big flier that came in under a canopy first rises into
+     * open air over it (it spawned out of sight), so its home and its idle hold have room for its wings.
+     */
+    private BlockPos firstHome() {
+        if (def().flies() && FlightRoom.big(this) && !FlightRoom.free(this)) {
+            Vec3 up = FlightRoom.roomAbove(this, getX(), getY(), getZ());
+            if (up != null) {
+                snapTo(up.x, up.y, up.z);
+                return BlockPos.containing(up);
+            }
+        }
+        return blockPosition();
+    }
+
+    /** A flier that notices someone stops its circling and hangs in the air, turning to face them: it is waiting. */
+    private void watch(Player p) {
+        if (watchTicks <= 0) getMoveControl().setWantedPosition(getX(), getY(), getZ(), 0.4);
+        watched = p;
+        watchTicks = WATCH_TICKS;
+    }
+
+    private void face(Player p) {
+        float yaw = (float) (Math.atan2(p.getZ() - getZ(), p.getX() - getX()) * (180.0 / Math.PI)) - 90.0F;
+        setYRot(net.minecraft.util.Mth.approachDegrees(getYRot(), yaw, 6.0F));
+        yBodyRot = getYRot();
+    }
+
+    @Override
+    protected boolean idleHeld() {
+        return watchTicks > 0 && getTarget() == null;
     }
 
     /** One snort, a flash and a line on the action bar: you are in its territory. */
