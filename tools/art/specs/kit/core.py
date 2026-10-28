@@ -631,15 +631,15 @@ def plant(rig, pose, sides=("l", "r"), at=None, turn=None):
     return out
 
 
-SINK = 1.5  # pixels a posed foot may go into the floor before it is put on it (a small dip of the hips stays as posed:
+FOOT_SINK = 1.5  # pixels a posed foot may go into the floor before it is put on it (a small dip of the hips stays as posed:
 # re-planting near-straight legs for it would snap the knees)
 
 
 def ground_feet(rig, pose, sides=("l", "r")):
-    """The pose with any foot that would go into the floor (more than SINK) put on it instead, where the pose's step had it (its ankle's
+    """The pose with any foot that would go into the floor (more than FOOT_SINK) put on it instead, where the pose's step had it (its ankle's
     x and z, and the way it points): for a move that travels or lifts, whose feet are posed rather than planted. A foot
     in the air stays."""
-    sink = [s for s in sides if ("foot_" + s) in rig.by_name and lowest(rig, as_sample(pose), ["foot_" + s]) > GROUND + SINK]
+    sink = [s for s in sides if ("foot_" + s) in rig.by_name and lowest(rig, as_sample(pose), ["foot_" + s]) > GROUND + FOOT_SINK]
     if not sink:
         return pose
     rest_fr = frames(rig, {})

@@ -6,6 +6,10 @@ Standard names
   Brute and Duelist: pelvis > spine > chest > neck > head (> jaw); chest > shoulder_l|r > arm_l|r > forearm_l|r >
     hand_l|r (> weapon); pelvis > thigh_l|r > shin_l|r > foot_l|r.
   Flier (a hovering body): core > cap / body, head, wing or veil chains, tendrils; it never stands, so it has no feet.
+  Caster (an upper body on a base instead of legs: a robe on roots, a lectern, a column of water): base > robe > pelvis >
+    spine > chest > neck > head; chest > shoulder_l|r > arm_l|r > forearm_l|r > hand_l|r. The base stands on the ground
+    and never steps (it glides, or something of its own carries it), so it has no feet; it bends at the robe and the
+    waist.
 
 Sizes are model pixels; the ground is at y = 24 and the body faces -z. "Chunky blocks": few, big cubes with a strong
 silhouette, then one oversized feature per boss (forearms, a halo, a cap) and one light story (a core, eyes, cracks).
@@ -75,6 +79,40 @@ def biped(rid, P, tex=(512, 512)):
     r.look = [("head", 0.55, 0.5), ("neck", 0.25, 0.2)]
     r.size = P.leg / 36.0  # the move library's crouch depths scale with the leg
     return r
+
+
+class Caster:
+    """Proportions of a Caster: the heights of its joints over the ground and its limbs' lengths, model pixels."""
+
+    def __init__(self, knee=18, waist=40, chest=48, neck=58, shoulder=(9.5, 56), arm=13, forearm=11, head=60):
+        self.knee, self.waist, self.chest, self.neck, self.head = knee, waist, chest, neck, head
+        self.shoulder, self.arm, self.forearm = shoulder, arm, forearm
+
+
+def caster(rid, C, tex=(512, 512), arm_rest=None):
+    """A Caster's skeleton with no cubes (each Caster's base and robe are its own): returns the rig and its bones by
+    name. arm_rest: {side: (rx, ry, rz)} the arms' rest turns (a Caster's hands rest where its prayer or its book has
+    them)."""
+    r = R.Rig(rid, tex)
+    arm_rest = arm_rest or {}
+    b = {}
+    b["base"] = r.bone("base", (0, 24, 0))
+    b["robe"] = b["base"].bone("robe", (0, -C.knee, 0))
+    b["pelvis"] = b["robe"].bone("pelvis", (0, -(C.waist - C.knee), 0))
+    b["spine"] = b["pelvis"].bone("spine", (0, 0, 0))
+    b["chest"] = b["spine"].bone("chest", (0, -(C.chest - C.waist), 0))
+    b["neck"] = b["chest"].bone("neck", (0, -(C.neck - C.chest), 0))
+    b["head"] = b["neck"].bone("head", (0, -(C.head - C.neck), 0))
+    sx, sy = C.shoulder
+    for side, nm in ((1, "l"), (-1, "r")):
+        sh = b["chest"].bone("shoulder_" + nm, (side * sx, -(sy - C.chest), 0))
+        arm = sh.bone("arm_" + nm, (0, 0, 0), arm_rest.get(nm, (0, 0, 0)))
+        fa = arm.bone("forearm_" + nm, (0, C.arm, 0))
+        hd = fa.bone("hand_" + nm, (0, C.forearm, 0))
+        b.update({"shoulder_" + nm: sh, "arm_" + nm: arm, "forearm_" + nm: fa, "hand_" + nm: hd})
+    r.look = [("head", 0.5, 0.4), ("neck", 0.2, 0.1)]
+    r.size = 1.0
+    return r, b
 
 
 def flier(rid, tex=(512, 512), hover=40):

@@ -9468,6 +9468,47 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     kneel on both shins and topples forward on its knees as far as its body allows without going into the floor, the arms
     flung forward. The Tyrant's and Unit Zero's kneel, rise and death come from it (worst snap 36-62°, nothing deeper
     than 5.4 px), except Unit Zero's blades in its own fall.
+- **The Root Saint, the Rooted Saint** (body and motion, `kit/bosses/root_saint.py`). A robed stone saint in prayer that
+  the temple's roots have grown through, about 5.3 blocks to the top of its sunburst (the hood at 4.4): a hooded head
+  with amber slit eyes, a stone sunburst on a stalk at its back (a disc, twelve rays, roots wound through it), the hands
+  pressed together before a glowing amber heart in its chest, gold-edged stoles, a red scapular hanging from its belt,
+  two bronze censers on chains at its hips, and a robe that widens to a hem with a band of root at the knee. Eight roots
+  run out from under the hem along the floor in a ring, arching between the hem and their tips; the ring is a bone of
+  its own, so the saint can fall out of it. 141 cubes (846 faces) on the new Caster plan. Values: the heart, the eyes and
+  the censers' windows lit amber; the stone weathered pale (hands and head lightest, the hem darkest, moss creeping up
+  it), the cloth red, the roots dark bark. The hitbox stays the creaking's at scale 1.8 (1.6 x 4.9).
+  - **It moves like a statue that prays**: it never walks; it slides on its roots, the planted tips pulling back exactly
+    as far as it travels and the lifted ones reaching ahead (2 blocks a cycle walking, 3 running), its censers swinging.
+    Most of its bend is at the waist, with a fold at the robe's knee for the deepest bows. Its blows leave one hand in
+    prayer. The backhand sweep draws the hand back across its chest, then the straight arm sweeps flat across the front
+    between a player's waist and head, right hand then left (reach 3.1 blocks). Saint's Palm raises the right hand high
+    overhead, holds, then folds the statue over at the knee and slams the palm flat on the floor 2.5 blocks ahead (5.6
+    with the shockwave). Root Lance raises the hand as the three front roots coil, then drives both down toward you.
+    Root Grasp reaches the open left hand down at you and closes it into a fist as the front roots grip. Whoever is
+    behind it gets the three back roots whipped up and over, the hood looking back over its shoulder (2.6). Root Ring
+    raises the joined hands over its head as every root rears, holds, then drives them down to its chest as the roots
+    plunge. Grow Creakers presses its palms toward the floor, then lifts them palms up. Thorn Halo (the signature) throws
+    its arms wide to the sky and arches back while the sunburst turns a whole turn. The haul shoots the front roots out
+    and reels the saint five blocks along them, its straight right arm driving out at the end. The intro lifts its bowed
+    head, opens its hands to you and closes them again.
+  - **The death**: its prayer stops with a jolt and the hands fall to its sides. Then the whole statue tips forward on
+    the front edge of its hem, slowly and then all at once, out of its ring of roots. It lands on its face with its arms
+    flung ahead and bounces, and the sunburst is knocked flat to one side.
+  - **Ground.** The roots' tips, the censers and the scapular stay out of the floor in every clip; the hands too, except
+    the palm, which meets it on purpose. In the fall the hands and censers lift back where they would go in.
+  - **Meter.** Worst kink outside a strike 5.1° (sweep); held 1-15%. Dips up to 30% where the strike comes at the
+    start of the active stage; 41-51% in strings that open with the lance or the haul. The meter counts a move's contact
+    from its first active tick, and the lance has no hit shapes while the haul lands only after its slide, so those
+    numbers include each move's own swing from wind-up to blow.
+- **Kit changes with the Rooted Saint:**
+  - **The Caster plan** (`plans.caster`): an upper body on a base, with no feet:
+    base > robe > pelvis > spine > chest > neck > head, and chest > shoulder > arm > forearm > hand.
+  - `core.ground_feet`'s own 1.5 px is now `FOOT_SINK`. It had shadowed the guard check's `SINK` (2 px) for every body.
+  - `stage_clips` adds its counter-move at 0.3 of the wind-up whenever a move's first wind-up key is at 0.35 or later.
+    A key just after the counter brakes the limb hard, so the Saint keeps its first wind-up keys at 0.6. Recovery keys
+    past 0.74 are dropped.
+  - The Saint's hand and arm turns come from matrices. Of their two Euler forms, it writes the one nearest its rest, so
+    keys never spin a bone the long way between them.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
