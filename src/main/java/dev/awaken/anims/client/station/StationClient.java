@@ -42,8 +42,8 @@ import org.jspecify.annotations.Nullable;
  * Station scenes (Hands P5; SPEC §24). At a crafting table the view leans in over the table top, the 3×3 grid IS the
  * table top (each ingredient lies on its square in the world, the result on the near border), and your hands lay
  * every ingredient on its square and take the result. At a furnace, smoker or blast furnace the view crouches to its
- * front: input and output sit inside its recessed mouth, with fuel below, and the cooking
- * and the fuel left run along the strip. The screen ({@link StationScreen}) is the station's vanilla menu, so every item
+ * mouth (StationCamera): what cooks sits on the left inside the recessed mouth, the finished result on the right, the
+ * fuel on the coals below, and the cooking and the fuel left run along the strip. The screen ({@link StationScreen}) is the station's vanilla menu, so every item
  * moves by the menu's own clicks and the server checks them; only the station's slots are drawn in the world instead of
  * on the screen. A hand moves only after your own click (cooking on its own moves none). Sneak + use opens the plain
  * screen; moving, jumping, E or Esc leaves. Drawn for you (others see you at the station as before).
@@ -95,7 +95,10 @@ public final class StationClient {
 
     public static void tick() {
         ticks++;
-        if (StationCamera.lost() || StationCamera.active() && (!on() || Minecraft.getInstance().player == null || !Minecraft.getInstance().player.isAlive())) {
+        // the lowered view gives up (and the screen shuts) if it lost its level, the scene ended, you died, or a block
+        // came between it and your eyes (a second player can place one while you work)
+        if (StationCamera.lost() || StationCamera.active() && (!on() || Minecraft.getInstance().player == null
+                || !Minecraft.getInstance().player.isAlive() || StationCamera.blocked())) {
             StationCamera.end(); open = false; table = null;
             if (Minecraft.getInstance().gui.screen() instanceof StationScreen<?> && Minecraft.getInstance().player != null) Minecraft.getInstance().player.closeContainer();
         }
@@ -376,10 +379,11 @@ public final class StationClient {
             // resting: just off the near corners, below the edge (in frame at its foot, clear of the grid)
             double restX, restY, restZ;
             if (kind == Kind.FURNACE) {
-                // below the lowered view: only a working hand comes into the frame
-                restX = eye.x + fx * 0.3 + rx * side * 0.38;
-                restY = eye.y - 1.05;
-                restZ = eye.z + fz * 0.3 + rz * side * 0.38;
+                // beside the lowered view, by the shoulder and clear of the floor (the eye is 0.57 over it): only a
+                // working hand comes into the frame, reaching in from the side
+                restX = eye.x + fx * 0.1 + rx * side * 0.4;
+                restY = eye.y - 0.35;
+                restZ = eye.z + fz * 0.1 + rz * side * 0.4;
             } else {
                 restX = c.x - fx * 0.62 + rx * side * 0.42;
                 restY = c.y - 0.08;

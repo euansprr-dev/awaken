@@ -5539,37 +5539,40 @@ of the plan). No mixins.
   square whose contents change (and to the result as it is taken), over 9 ticks; moving, jumping, E or Esc leave.
   A hand moves only within 6 ticks of your own click on a slot, so a furnace cooking on its own moves none; taking a
   result moves the hand to the result only.
-  - **Furnaces** (kind `FURNACE`: vanilla furnace, smoker and blast furnace): the camera lowers to the mouth's height
-    (block y + 0.57), keeping the player's horizontal position and actual body/look unchanged. A client-only camera
-    entity uses the supported camera and final-FOV hooks, with the same 12/6-tick ease in and 10-tick ease out. Front
-    access is 0.85–4.5 blocks from the block centre; the far item's edge must project inside the opening (0.30 blocks
-    either side). Rear, side, too-close or obstructed lowering paths retain the ordinary furnace screen. Eight corner
-    rays with a 0.12-block margin prevent the view crossing floors, walls or low ceilings, including a block placed
-    during interaction. Movement, jumping, E/Esc, camera takeover, death, dimension change and logout restore ownership;
-    the player's body stays out of their lowered first-person view. Reopening and changing station cannot retain it.
-  - **A real recessed mouth:** native chunk models for all four facings and lit/unlit states retain the five outer
-    faces and a front stone frame. The cavity is x 3–13, y 2–13, z 0–9 model pixels, with inward stone walls, an opaque
-    back and coal bed; lit furnaces light the rear coals. Normal item models at scale 0.24 sit 3/16 block inside:
-    input on the left and output on the right (±0.15, y + 0.57), fuel below (centre, y + 0.26). They stay still inside
-    the opening while vanilla's lit state, smoke and cooking continue. All three slots pick within 0.16 of their
-    centre and get the front-facing hover outline; cooking (Holo blue) and remaining fuel (fire) retain the two thin
-    progress lines above the inventory strip. Fuel uses the off hand, input/output the main hand. The hint says
-    "Cook on the left, add fuel below, and take finished items on the right. Sneak to open the usual screen."
-  - **Contents with the screen closed:** server-owned read-only views follow vanilla inventories, including smelting,
-    hopper changes and multiple nearby players. Per player, discover the nearest 64 supported furnaces within 16
-    blocks every 40 ticks from only the nine already-loaded nearby chunks; compare the three tracked slots every
-    5 ticks and send only changes/removals. Interacting seeds the authoritative view immediately before menu opening.
-    No world-wide scan, chunk loading or inventory mutation; no packets/copies for unchanged contents. Range exit,
-    unload, block replacement, dimension change and logout retire views; returning/rejoining reads current contents.
-    The scene itself uses its real vanilla menu while open. Render only in range and from the front, with ordinary
-    depth testing and opaque cavity walls: no through-wall or always-on-top contents. This is visible to every nearby
-    viewer independently of `stationScenes`; that setting controls only the interaction scene. All recipes, fuel,
-    extraction, XP and saves stay vanilla; no saved data or schema migration is added.
-  - **Compatibility:** supported model/reload/render hooks, no mixins. Replace only complete, single-variant cube
-    models; leave custom wrappers/non-cube models unchanged. If another mod owns a furnace block-entity renderer,
-    retain its original geometry and skip this scene and item renderer. A later model override also disables this
-    scene and contents. Refer to vanilla textures without bundling Mojang assets. Recipe book access remains sneak +
-    use. Setting `stationScenes` (feel), on; the interaction hands/camera are local to the player using the station.
+  - **Furnaces** (kind `FURNACE`: vanilla furnace, smoker and blast furnace; Codex's furnace-interior, reviewed
+    2026-10-28): the view drops to the mouth's height (block y + 0.57) where you stand; your body and your look are not
+    moved. A client-only camera entity (StationCamera, unregistered, like the opening's OpeningCamera) carries the
+    lowered view, eased in and out like the table (12/6 ticks in, 10 out); the field of view is set through the
+    final-FOV hook, since a camera that is not the player gets no FOV-modifier event. The scene opens only from the
+    front, 0.85 to 4.5 blocks from the block's middle, and only while the far item's edge still shows through the mouth
+    (0.30 either side of it); from the side, the back, too close, or with something in the way you get the plain furnace
+    screen. Eight rays 0.12 out from the eye's corners keep the drop from passing through a floor, wall or low ceiling;
+    they are cast when the scene opens and again every tick (never every frame), so a block placed into the path while
+    you work gives the view back and shuts the screen. Moving, jumping, E or Esc, another camera, death, a new level and
+    logging out also give it back. Your own body is hidden from the lowered view; the hands rest beside it, by the
+    shoulder (0.35 under the eye, clear of the floor), and only a working hand reaches into the frame.
+  - **A real mouth:** every furnace, smoker and blast furnace in the world gets a block model with a recessed mouth
+    (all four facings, lit and unlit): the five outer faces and a stone frame stay, the cavity is x 3–13, y 2–13, z 0–9
+    model pixels with stone walls, a closed back and a coal bed, and a lit one glows at the back of the coals. Items sit
+    3/16 inside the mouth at scale 0.24: what cooks on the left, the finished result on the right (±0.15, y + 0.57),
+    the fuel on the coals (y + 0.26). They stay still while vanilla's flame, smoke and cooking go on. Each slot is
+    picked within 0.16 of its middle and gets the front-facing outline; the cooking (Holo blue) and the fuel left (fire)
+    still run as two thin lines over the strip; fuel is the off hand's, the rest the main hand's. The hint reads "Cook on
+    the left, add fuel below, and take finished items on the right. Sneak as you open it for the usual screen."
+  - **What's inside, screen shut:** the server sends each player read-only copies of the three slots of nearby
+    furnaces (FurnaceContents, payload `furnace_contents`): the nearest 64 within 16 blocks, found every 40 ticks in the
+    nine loaded chunks around them (`getChunkNow`, never a load), compared every 5 ticks, and only changes and
+    removals sent. Using a furnace sends its contents at once, before the menu opens. Leaving range, an unloaded chunk,
+    a replaced block, a new dimension and logging out drop a view; coming back reads it fresh. Nothing is saved and
+    nothing in the furnace is changed. The items are drawn only within 16 blocks and from in front of the mouth, depth
+    tested behind the opaque cavity walls (never through a wall); everyone nearby sees them whatever their
+    `stationScenes` setting, which only turns the scene on or off. Recipes, fuel, taking items, XP and saves stay
+    vanilla's. (A hacked client could read the contents of a furnace behind a wall within 16 blocks; a furnace shows
+    its contents openly anyway, so this is accepted.)
+  - **Other mods and packs:** no mixins. Only a plain single-variant cube furnace model is replaced; a resource pack's
+    or mod's non-cube or wrapped model is left alone, and then the furnace has no scene and no items in its mouth (the
+    plain screen opens). A mod that gives furnaces their own block-entity renderer keeps its look the same way. The
+    models use vanilla's own textures by name; no Mojang file is copied. Setting `stationScenes` (feel), on.
 - **The lens** (P5): the hand pass draws at a fixed 70°; anything the world anchors (arms on a pipe, at a table; near
   legs) has its view x and y scaled by tan(35°) / tan(world FOV / 2), so it lands where the world shows it on screen even
   with the view narrowed or widened (a station's zoom, the speed FOV). The lowered furnace camera uses the actual HUD

@@ -52,9 +52,13 @@ final class StationCamera extends Entity {
         Minecraft mc = Minecraft.getInstance();
         if (!active() || mc.player == null || lowered == null) return;
         Vec3 real = mc.player.getEyePosition(partial);
-        // A second player can place a block during the interaction. Give the view back instead of looking through it.
-        if (!StationView.clearEyePath(mc.level, mc.player, real, lowered)) { end(); mc.player.closeContainer(); return; }
         camera.place(real.lerp(lowered, weight), yaw, pitch);
+    }
+
+    /** A block now between your eyes and the lowered view (checked each tick, not each frame: eight ray casts). */
+    static boolean blocked() {
+        Minecraft mc = Minecraft.getInstance();
+        return active() && mc.player != null && lowered != null && !StationView.clearEyePath(mc.level, mc.player, mc.player.getEyePosition(1), lowered);
     }
 
     static void end() {
