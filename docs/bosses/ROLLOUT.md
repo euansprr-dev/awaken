@@ -68,7 +68,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Mirror Knight | Lord | Mirror | Duelist | kit | C, the Masked Duelist | ✓ 71bf61a2 | ✓ 71bf61a2 | — |
 | The Sleeper | Lord | Nightmare | Brute | kit | B, the Four-Poster | ✓ 6255ae1d | ✓ 6255ae1d | — |
 | The Sky Leviathan | Lord | Sky | Serpent | kit | B, the Ray | ✓ ea291205 | ✓ ea291205 | — |
-| The Hollow Herald | Lord | Abyss | Caster | cube shade ×1.4 | C, the Ring-Head | — | — | — |
+| The Hollow Herald | Lord | Abyss | Caster | kit | C, the Ring-Head | ✓ b91a71b6 | ✓ b91a71b6 | — |
 | The Rootmother | Guardian | Rim | Crawler | spider ×2.4 | — | — | — | — |
 | The Thornback | Guardian | Gardens | Beast | ravager | — | — | — | — |
 | The Choirmaster | Guardian | Choir | Caster | witch ×2 | — | — | — | — |
