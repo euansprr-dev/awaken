@@ -66,6 +66,20 @@ public final class LivingModule {
         FirstScenes.init(); // its High Gate shot and Ilse's scene by the fire
         IssueScene.init(); // Hale's issue: the first weapon, free (docs/arms-progression/PLAN.md §3.3)
         modBus.addListener(LivingNet::register);
+        // the Boss Plate's data (SPEC §34.1): binds and lines to the players who see a boss's bar
+        dev.awaken.core.api.BossPlates.install(new dev.awaken.core.api.BossPlates.Sink() {
+            @Override
+            public void bind(ServerPlayer player, java.util.UUID bar, int entity, dev.awaken.core.api.BossPlates.Kind kind, float[] marks, int glow) {
+                java.util.List<Float> m = new java.util.ArrayList<>(Math.min(8, marks.length));
+                for (int i = 0; i < marks.length && i < 8; i++) m.add(marks[i]);
+                dev.awaken.core.AwakenNet.send(player, new LivingNet.BossBind(bar, entity, kind.ordinal(), m, glow));
+            }
+
+            @Override
+            public void line(ServerPlayer player, java.util.UUID bar, String text, dev.awaken.core.api.BossPlates.Line kind, int colour) {
+                dev.awaken.core.AwakenNet.send(player, new LivingNet.BossLine(bar, text, kind.ordinal(), colour));
+            }
+        });
         XpBudget.register(HUNT, 0.10);
         XpBudget.register("pulse", 0.15);
         XpBudget.register("camp", 0.10);

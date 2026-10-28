@@ -53,6 +53,7 @@ final class LivingPlates {
         Profile prof = Progression.profile(mc.player);
         for (var c : LivingClient.PICKED) {
             if (!(mc.level.getEntity(c.id()) instanceof LivingEntity ent)) continue;
+            if (BossPlate.onScreen(ent.getId())) continue; // its plate flew up to the top of the screen (SPEC §34.1)
             float vis = PlateRules.visibility(c, LivingClient.ticks, LivingClient.lookRange) * LivingClient.fadeIn(c.id());
             if (vis <= 0.02F) continue;
             CreatureTag tag = CreatureTag.of(ent);

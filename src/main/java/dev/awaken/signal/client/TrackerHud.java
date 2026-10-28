@@ -39,9 +39,13 @@ final class TrackerHud {
     /** Where the boss bars drawn this frame end (0 when none); they draw before this layer and the run panel. */
     private static int bossBottom;
 
-    /** Each boss bar as vanilla places it: the bar is 5 tall, its name sits above it. */
+    /**
+     * Each boss bar as vanilla places it: the bar is 5 tall, its name sits above it. A bar drawn another way (the Boss
+     * Plate, SPEC §34.1, cancels vanilla's and sizes its slot) ends its increment after the slot's top, 9 over the bar.
+     */
     static void onBossBar(CustomizeGuiOverlayEvent.BossEventProgress e) {
-        bossBottom = Math.max(bossBottom, e.getY() + 5);
+        if (e.getIncrement() <= 0) return;
+        bossBottom = Math.max(bossBottom, e.getY() + e.getIncrement() - 14);
     }
 
     /** Before any layer of a frame: the bars are counted afresh. */

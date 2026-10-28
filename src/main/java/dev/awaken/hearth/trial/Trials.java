@@ -267,6 +267,9 @@ public final class Trials {
     private static void begin(ServerPlayer sp, Session s) {
         s.nextStageAt = s.level.getGameTime() + (s.teleported ? 60 : 5);
         s.bar.addPlayer(sp);
+        // on the Boss Plate's glass (SPEC §34.1): no creature, so it draws from the bar alone
+        dev.awaken.core.api.BossPlates.bind(sp, s.bar.getId(), -1, dev.awaken.core.api.BossPlates.Kind.LORD, new float[0],
+                s.kind == Kind.PENALTY ? 0xFF6A5A : 0xFFCF7A);
         s.bar.setProgress(1f);
         s.level.playSound(null, sp.blockPosition(), HearthContent.SND_TRIAL.get(), SoundSource.PLAYERS, 1f, 1f);
         String title = s.kind == Kind.PENALTY ? "Penalty Zone" : s.target.label + "-rank Reassessment";
