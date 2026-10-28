@@ -189,6 +189,36 @@ final class OnboardingTests {
         });
 
         // A recipe that takes a Blueprint is learned from the Blueprint, not from a bone it also uses (arms progression PLAN G5).
+        // The mat is available before owning a Hearth or reaching its later Meditation lesson, but needs a 3-wide grid.
+        AwakenTests.register("hearth_meditation_mat_discovery", 40, h -> {
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            var key = ResourceKey.create(Registries.RECIPE, dev.awaken.Awaken.id("meditation_mat"));
+            var manager = sp.level().getServer().getRecipeManager();
+            var recipe = (net.minecraft.world.item.crafting.ShapedRecipe) manager.byKey(key).orElseThrow().value();
+            var wool = net.minecraft.core.registries.BuiltInRegistries.ITEM.getOrThrow(net.minecraft.tags.ItemTags.WOOL).stream().toList();
+            for (var colour : wool) {
+                sp.getInventory().clearContent();
+                sp.getRecipeBook().remove(key);
+                sp.getInventory().add(new ItemStack(colour));
+                RecipeUnlocks.check(sp);
+                h.assertTrue(sp.getRecipeBook().contains(key), "each wool colour reveals the mat before a Hearth or level 11");
+                var row = net.minecraft.world.item.crafting.CraftingInput.of(3, 1,
+                        List.of(new ItemStack(colour), new ItemStack(Items.AMETHYST_SHARD), new ItemStack(Items.WOOL.blue())));
+                var result = manager.getRecipeFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING, row, sp.level());
+                h.assertTrue(result.isPresent() && result.get().id().equals(key) && result.get().value().assemble(row).is(dev.awaken.hearth.HearthContent.MEDITATION_MAT.get().asItem()),
+                        "mixed wool colours in WAW produce one Meditation Mat");
+            }
+            sp.getInventory().clearContent();
+            sp.getRecipeBook().remove(key);
+            sp.getInventory().add(new ItemStack(Items.AMETHYST_SHARD));
+            RecipeUnlocks.check(sp);
+            h.assertTrue(sp.getRecipeBook().contains(key), "amethyst also discovers it");
+            var inventoryGrid = net.minecraft.world.item.crafting.CraftingInput.of(2, 2,
+                    List.of(new ItemStack(Items.WOOL.white()), new ItemStack(Items.AMETHYST_SHARD), new ItemStack(Items.WOOL.white()), ItemStack.EMPTY));
+            h.assertFalse(recipe.matches(inventoryGrid, sp.level()), "the 2-by-2 inventory cannot fit the mat's row: guidance must name the crafting table");
+            h.succeed();
+        });
+
         AwakenTests.register("arms_recipe_unlock", 40, h -> {
             ServerPlayer sp = h.makeMockServerPlayerInLevel();
             Progression.awaken(sp);

@@ -31,7 +31,8 @@ final class HearthSection extends dev.awaken.signal.client.UiSection {
     @Override
     public boolean visible() {
         HearthView v = view();
-        return v.has() || !v.echoes().isEmpty();
+        var player = Minecraft.getInstance().player;
+        return v.has() || !v.echoes().isEmpty() || player != null && dev.awaken.progression.Progression.profile(player).awakened();
     }
 
     @Override
@@ -41,6 +42,9 @@ final class HearthSection extends dev.awaken.signal.client.UiSection {
         long duty = v.echoes().stream().filter(e -> !e.duty().isEmpty()).count();
         String echoes = "Echoes " + v.echoes().size() + " · " + field + "/" + v.fieldCap() + " marching · " + duty + " on duty";
         if (!v.has()) {
+            ui.text("Meditation Mat", Glass.TEXT);
+            ui.text(dev.awaken.hearth.guide.Guide.MAT_RECIPE, Glass.LABEL);
+            ui.text(dev.awaken.hearth.guide.Guide.MAT_USE, Glass.LABEL);
             ui.text("No Hearth yet · the Wayfarers keep a fire up the north road: carry a coal from it and set it down where you'd live",
                     Glass.a(Glass.LABEL, 1f));
             if (!v.echoes().isEmpty()) ui.text(echoes, Glass.a(Glass.VIOLET, 1f));
@@ -72,5 +76,8 @@ final class HearthSection extends dev.awaken.signal.client.UiSection {
         ui.text("Town · " + (v.town().isEmpty() ? "Nobody has moved in yet" : String.join(", ", v.town())), Glass.a(Glass.TEXT, 1f));
         ui.text(echoes, Glass.a(Glass.VIOLET, 1f));
         ui.text("Trophies " + v.trophies() + " · Records " + v.records() + " · Pads " + v.pads(), Glass.a(Glass.LABEL, 1f));
+        ui.text("Meditation Mat", Glass.TEXT);
+        ui.text(dev.awaken.hearth.guide.Guide.MAT_RECIPE, Glass.LABEL);
+        ui.text(dev.awaken.hearth.guide.Guide.MAT_USE, Glass.LABEL);
     }
 }

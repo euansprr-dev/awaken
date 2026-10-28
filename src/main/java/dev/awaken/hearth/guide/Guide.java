@@ -61,6 +61,10 @@ public final class Guide {
     /** {@link HearthPlayer#tips} marker: the player has opened their Hearth at least once. */
     public static final String TIP_SEEN = "guide_seen";
 
+    /** The mat's basic crafting guidance, shared by its item tooltip and the existing Journal's Hearth page. */
+    public static final String MAT_RECIPE = "At a crafting table, put wool, an amethyst shard, then wool across one row. Any wool colours work.";
+    public static final String MAT_USE = "Place it beside your bed for better dreams. You can meditate without a mat.";
+
     /** Recipes the Anchor teaches when it takes root: the Hearth's furniture. */
     public static final List<String> FURNITURE_RECIPES = List.of("meditation_mat", "forge", "trophy_mount", "role_pad_guard",
             "role_pad_haul", "role_pad_farm", "role_pad_mine", "role_pad_train");
