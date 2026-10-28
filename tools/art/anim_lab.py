@@ -913,7 +913,7 @@ def bake(out=SWINGS, solve=False, round_=None):
     for sid, st in table().items():
         held = Held("gatewrought_" + sid)
         Fv, grip_v = vanilla_frame()
-        Fs, _ = held_frame(held)
+        Fs, side_s = held_frame(held)
         moves = {}
         for mv, m in st["moves"].items():
             if "swing" not in m:
@@ -939,6 +939,8 @@ def bake(out=SWINGS, solve=False, round_=None):
             if SS.far_led(st, mv):  # led by a double weapon's other end: its trail follows that end (Swing Studio round 5)
                 moves[mv]["far"] = True
             moves[mv]["swish"], sound = SS.swish_of(sid, mv, m)
+            if mv.startswith("strike_"):  # where a press still down waits: the drive's start (Swing Studio round 8)
+                moves[mv]["set"] = SS.set_of(st, mv, held)
             if sound:
                 moves[mv]["swishSound"] = sound
             wrist = wrists.get(sid, {}).get(mv, ({}, 0.0))[0]  # third person: the wrist, per arm (ArmsWrist)
@@ -957,6 +959,8 @@ def bake(out=SWINGS, solve=False, round_=None):
                        "vanilla": [round(float(v), 5) for v in mat_quat(C)],
                        "grip": [round(float(v), 4) for v in held.grip], "vanillaGrip": [round(float(v), 4) for v in grip_v],
                        "moves": moves}
+        gd, gR = SS.guard_pose(sid, held, Fs, side_s)  # the guard, up across the body in view (round 8)
+        styles[sid]["guard"] = [round(float(v), 4) for v in gd] + [round(float(v), 5) for v in mat_quat(gR)]
         gap = SS.off_gap(sid)
         if gap:  # a two-handed weapon: the off hand closes down the handle below the main (a vanilla item: down its own)
             main_at = hand_grip if hand_grip is not None else held.grip

@@ -51,9 +51,10 @@ public final class FpSwings {
      * each hand, the hand not striking, laid out like {@code keys} and authored for its own hand: still until the blow
      * lands, then drawn back to the next strike's set and held there for the press. {@code far} (round 5): a double
      * weapon led by its other end, turned end for end (the Twin Blades' figure-eight): its trail runs along that end.
+     * {@code set} (round 8; -1 for none): when the drive begins, the strike's set, where a press still down waits.
      */
     public record Clip(float[] keys, Hand hand, float[] wristRight, float[] wristLeft, float[] straightRight, float[] straightLeft,
-                       float swish, @Nullable String swishSound, float biteRate, float biteTicks, float[] idle, boolean far) {
+                       float swish, @Nullable String swishSound, float biteRate, float biteTicks, float[] idle, boolean far, float set) {
         public int size() {
             return keys.length / STRIDE;
         }
@@ -63,10 +64,11 @@ public final class FpSwings {
      * A style's moves, how a vanilla item held in it is turned to the same targets, the grips (where its forged weapon's
      * and a vanilla item's swing turn about) and where the hand closes on its weapon (hand space, from vanilla's rest: the
      * arm drawn to it, FirstPerson.View's grips); a two-handed weapon's off hand down the handle below it (null: one hand),
-     * on the forged weapon and on a vanilla item.
+     * on the forged weapon and on a vanilla item. {@code guard} (round 8; null: the old block turn): the hand's move and
+     * turn [dx, dy, dz, qx, qy, qz, qw] with the forged weapon up in guard, across the body in view.
      */
     public record Style(Map<Archetype.Move, Clip> moves, Quaternionf vanilla, Vector3f grip, Vector3f vanillaGrip, boolean twin,
-                        Vector3f hand, @Nullable Vector3f offHand, @Nullable Vector3f vanillaOffHand) {}
+                        Vector3f hand, @Nullable Vector3f offHand, @Nullable Vector3f vanillaOffHand, float @Nullable [] guard) {}
 
     /**
      * One whole read of the file: its schema, the studio's round, the key steps, every style, and third person's flipped
@@ -133,13 +135,15 @@ public final class FpSwings {
                 String sound = row.has("swishSound") ? row.get("swishSound").getAsString() : null;
                 moves.put(m, new Clip(k, h, floats(wrist, "right"), floats(wrist, "left"), floats(straight, "right"),
                         floats(straight, "left"), swish, sound, bite == null ? 1F : bite.get(0).getAsFloat(),
-                        bite == null ? 0F : bite.get(1).getAsFloat(), idle, row.has("far") && row.get("far").getAsBoolean()));
+                        bite == null ? 0F : bite.get(1).getAsFloat(), idle, row.has("far") && row.get("far").getAsBoolean(),
+                        row.has("set") ? row.get("set").getAsFloat() : -1F));
             }
             Vector3f grip = vec(st.getAsJsonArray("grip"));
             styles.put(e.getKey(), new Style(moves, quat(st.getAsJsonArray("vanilla")), grip, vec(st.getAsJsonArray("vanillaGrip")),
                     st.has("twin") && st.get("twin").getAsBoolean(), st.has("handGrip") ? vec(st.getAsJsonArray("handGrip")) : grip,
                     st.has("offHand") ? vec(st.getAsJsonArray("offHand")) : null,
-                    st.has("vanillaOffHand") ? vec(st.getAsJsonArray("vanillaOffHand")) : null));
+                    st.has("vanillaOffHand") ? vec(st.getAsJsonArray("vanillaOffHand")) : null,
+                    st.has("guard") ? floats(st.getAsJsonArray("guard"), 7) : null));
         }
         return new Data(schema, root.has("round") ? root.get("round").getAsInt() : 0, dt, wristDt, Map.copyOf(styles),
                 java.util.Set.copyOf(flipped), Map.copyOf(grip3));
@@ -181,6 +185,13 @@ public final class FpSwings {
         return out;
     }
 
+    private static float[] floats(JsonArray a, int n) {
+        if (a.size() != n) throw new IllegalArgumentException("expected " + n + " floats, got " + a.size());
+        float[] out = new float[n];
+        for (int i = 0; i < n; i++) out[i] = a.get(i).getAsFloat();
+        return out;
+    }
+
     private static Quaternionf quat(JsonArray a) {
         return new Quaternionf(a.get(0).getAsFloat(), a.get(1).getAsFloat(), a.get(2).getAsFloat(), a.get(3).getAsFloat());
     }
@@ -213,6 +224,25 @@ public final class FpSwings {
     public static @Nullable String swishSound(@Nullable Style st, Archetype.@Nullable Move m) {
         Clip c = st == null || m == null ? null : st.moves().get(m);
         return c == null ? null : c.swishSound();
+    }
+
+    /** When a strike's drive begins (ticks of its clip; Clip's set), or -1 when the file doesn't say. */
+    public static float set(@Nullable Style st, Archetype.@Nullable Move m) {
+        Clip c = st == null || m == null ? null : st.moves().get(m);
+        return c == null ? -1F : c.set();
+    }
+
+    /**
+     * The guard (Style's guard): the hand's move into {@code d} and its turn into {@code q} with the weapon up, a vanilla
+     * item turned from its own hold to the same place as {@link #sample} turns it. False without one.
+     */
+    public static boolean guard(@Nullable Style st, boolean ours, Vector3f d, Quaternionf q) {
+        float[] g = st == null ? null : st.guard();
+        if (g == null) return false;
+        d.set(g[0], g[1], g[2]);
+        q.set(g[3], g[4], g[5], g[6]);
+        if (!ours) toVanilla(st, d, q);
+        return true;
     }
 
     /** When a move's swish starts (ticks; 0 on the press, as before the studio). */
@@ -312,14 +342,16 @@ public final class FpSwings {
         Q0.set(k[a + 3], k[a + 4], k[a + 5], k[a + 6]);
         Q1.set(k[b + 3], k[b + 4], k[b + 5], k[b + 6]);
         Q0.slerp(Q1, u, q);
-        if (!ours) {
-            // R_vanilla = R . C; and the grip: d + R grip_ours - R_vanilla grip_vanilla
-            q.transform(A.set(st.grip()));
-            d.add(A);
-            q.mul(st.vanilla());
-            q.transform(B.set(st.vanillaGrip()));
-            d.sub(B);
-        }
+        if (!ours) toVanilla(st, d, q);
         return true;
+    }
+
+    /** A pose of the forged weapon onto a vanilla item's: R_vanilla = R . C; and the grip: d + R grip_ours - R_vanilla grip_vanilla. */
+    private static void toVanilla(Style st, Vector3f d, Quaternionf q) {
+        q.transform(A.set(st.grip()));
+        d.add(A);
+        q.mul(st.vanilla());
+        q.transform(B.set(st.vanillaGrip()));
+        d.sub(B);
     }
 }

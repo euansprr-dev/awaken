@@ -654,8 +654,9 @@ final class ArmsTests {
         h.assertTrue(mastered != null && mastered.move() == Archetype.Move.STRIKE_4, "mastered, the finisher's recovery carries on into the mastery strike");
         h.assertTrue(Math.abs(ArmsRules.motion(s1, 3, false) - s1.motion() * 1.24F) < 1e-4, "three rhythm steps: +24%");
         Archetype.MoveDef heavy = a.move(Archetype.Move.HEAVY);
-        h.assertTrue(heavy != null && heavy.charge().isPresent() && heavy.charge().get().perfect(heavy.charge().get().glint() + 2)
-                && !heavy.charge().get().perfect(heavy.charge().get().glint() + 3), "the glint: a release within 2 ticks is perfect");
+        h.assertTrue(heavy != null && heavy.charge().isPresent() && heavy.charge().get().perfect(heavy.charge().get().glint())
+                && heavy.charge().get().perfect(heavy.charge().get().max()) && !heavy.charge().get().perfect(heavy.charge().get().glint() - 1),
+                "the glint is the full charge: a release on it or any time after is the full blow, never before it");
         h.assertTrue(ArmsRules.recovery(s1, a, a.def().baseSpeed() * 2) < s1.recovery() && ArmsRules.recovery(s1, a, a.def().baseSpeed()) == s1.recovery(),
                 "faster arms recover sooner");
         h.succeed();

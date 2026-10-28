@@ -137,8 +137,13 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
                 Codec.INT.fieldOf("glintHitstop").forGetter(Charge::glintHitstop)
         ).apply(i, Charge::new));
 
+        /**
+         * Charged in full: let go at the glint or any time after (Euan 2026-10-29: "the yellow ting happens before the
+         * full charge, and then nothing different happens for that attack sometimes"). It was a window of 2 ticks either
+         * side of the glint, and the ting played at its middle: let go on hearing it and the window had shut.
+         */
         public boolean perfect(int held) {
-            return Math.abs(held - glint) <= 2;
+            return held >= glint;
         }
     }
 

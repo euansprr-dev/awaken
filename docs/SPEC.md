@@ -5604,12 +5604,27 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   as a new press, restarting the swing every tick; now only a press the key was not already down for counts, and the
   repeats are swallowed. Every new press strikes wherever it points; outside a fight (100 ticks) a block the weapon
   cuts faster than a bare hand (a web, bamboo, leaves; never in creative) is still cut. The old rule (any block under the
-  crosshair outside a fight is mined) meant a click at the ground mined with no swing at all. Held = a heavy (charges from 6 ticks, the glint at 16, full at
-  24; a release within 2 ticks of the glint is perfect: motion 2.4, posture 20, 110 ms hit-stop). **Tap or hold**
+  crosshair outside a fight is mined) meant a click at the ground mined with no swing at all. Held = a heavy (charges from 6 ticks, full at the glint, 16;
+  a release on the glint or any time after is the full blow: motion 2.4, posture 20, 110 ms hit-stop; held on to 24
+  with Resonance full it is the Art). **The glint is the full charge** (Euan 2026-10-29: "the yellow ting happens before
+  the full charge, and then nothing different happens for that attack sometimes"): it was a window of 2 ticks either
+  side of the glint with the ting at its middle, so a release on hearing it came after the window shut, and the charge
+  arc went on filling to 24 past the ting. Now the arc is full and gold at the ting and stays so; the server counts a
+  tick short as full (`ArmsServer.GLINT_GRACE`: its count starts when it hears the charge, a tick or so late). **Tap or hold**
   (Euan 2026-10-26: "when you long click to power up your attack... on the first click, before letting go, it already
   attacks"): the press starts the chain's strike at once, so a tap is never late, but for a style whose heavy charges
-  the strike's hit waits at its wind-up's end while the key stays down (the hands hold there, `ArmsPredict.waitHit`).
-  Let go before the charge's 6 ticks and it is a tap (`PRESS_TAP`): the strike lands then. Still down at 6 ticks and
+  the strike's hit waits at its wind-up's end while the key stays down (`ArmsPredict.waitHit`). The hands hold at the
+  strike's set, where its drive begins (`fp_swings.json`'s `set`, Swing Studio round 8), not at the hit (Euan
+  2026-10-29: "it attacks on the click when you are still loading": at the hit the blade had already struck, to the
+  eye, before the charge took it, and a dagger's 1-tick stab froze on the target for most of every click). Let go
+  before the charge's 6 ticks and it is a tap (`PRESS_TAP`): the strike lands then, its drive from the set to the hit
+  run 1.6 times as fast (`ArmsPredict.RUSH`), giving back some of the wait. The key's release is read every frame
+  (`ArmsPredict.frame`), not on the next tick (up to 50 ms late). While a strike waits, the client's chain clock waits
+  as the server's does (its start a tick later for every tick past the wind-up, as `ArmsServer.moveTick`), so both
+  time the next press alike: unmoved, the client ran each dagger strike a tick or two ahead of the server, cut the last
+  strike's carry short, and took presses the server's buffer refused, so strikes never landed and the chain fell out
+  of step (the server's MOVE then swapped the clip mid-swing). A hit's hold freezes the hands only while the strike it
+  came from is still on them: a late one froze the next strike mid-swing. Still down at 6 ticks and
   the strike is dropped unlanded and the charge begins (`PRESS_CHARGE`; a strike the same press queued mid-combo is
   dropped too). The charge holds at full for as long as the key is down, trembling, and goes only on the release (no
   auto-release; held past full it counts as full). The server never holds a blow on the client's word alone: with no
@@ -6096,6 +6111,24 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       25 -> 43 (the blades come home from further). Left: the scythe's reap and whirl (its own path, a fifth of the
       screen), the shield-blade bash's wind-up from the slash's far end (0.70 in a frame), the war-staff's twirl carry
       (0.58).
+  - *Round 8, the set, the guard* (Euan 2026-10-29: "daggers still feel laggy and glitchy sometimes... as if it skips a
+    beat"; "charging an attack still doesn't work well. It attacks on the click when you are still loading"; "blocking
+    with most weapons hides the weapon under your view"):
+    - Every chain strike's clip says where its drive begins (`set`, `swing_studio.set_of`: the last moment before the
+      hit its blade's middle is near still; 0 for a quick stab driven from its start, the daggers' strikes 1, 2 and 4).
+      A press still down waits there (the tap or hold rule, §25 above), never at the hit. Test `arms_feel_rules`: every
+      strike's set is at or before its hit.
+    - Every style holds a guard of its own (`guard`, `swing_studio.guard_pose`), put on the item's hand transform, the
+      hands' grips and a pair's twin (mirrored): the grip low on the right (ndc 0.5, -0.76, 0.62 ahead of the eye), the
+      blade rising to the left at 46 degrees on the screen, its tip leant 30 degrees away along the eye's ray (which
+      moves nothing on the screen), its cutting side up and turned 40 degrees out toward what comes, its flat still to
+      the eye. The gauntlets' fist sits higher (0.36, -0.5) and nearly upright (72); the daggers' pair each come up on
+      their own side (0.44, -0.7, 66: crossed, their tips met in the middle). Vanilla 1.8's block turn, which the
+      guard used before, put 14 of 16 styles' tips under the frame; it stays only for a file without a guard. A
+      vanilla item takes the guard as it takes a swing (`FpSwings.guard`). Test `arms_feel_rules`: every style's guard
+      holds the hand on the weapon in view.
+    - Left: the daggers' haul from strike 3's far end back to strike 4's set (0.35 of the screen in a frame at 60 fps,
+      over the 0.3 gate); the guard is unseen in game.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
@@ -6208,7 +6241,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   flesh). The fighter's from their prediction and the HIT result; everyone near from `Seen` MOVE and HIT (observers
   also see the struck body's freeze).
 - **HUD** (`arms_hud`, above the crosshair layer): a 15-dot arc under the crosshair for Resonance or the heavy's charge
-  (gold when full or at the glint), the dodge's two pips beside the sprint line, and a red shard on a ring round the
+  (full and gold at the glint, the full charge), the dodge's two pips beside the sprint line, and a red shard on a ring round the
   crosshair pointing to where the last blow on you came from (any held item; 24 ticks). Nothing at rest.
 - **Network**: `arms_press` (strike, charge, release; seq, look, aimed id), `arms_dodge`, `arms_result` (to the
   fighter: move, hit, deflect, block, guard break, perfect dodge, evade, break, refuse, dodge, resonance, hurt) and

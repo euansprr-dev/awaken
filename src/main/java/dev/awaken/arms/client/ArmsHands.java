@@ -1,7 +1,6 @@
 package dev.awaken.arms.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import dev.awaken.arms.Archetype;
 import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.Arms;
@@ -90,15 +89,7 @@ final class ArmsHands {
         int inv = arm == HumanoidArm.RIGHT ? 1 : -1;
         ArmsHands.equip = equip;
         ps.translate(inv * HX, HY + equip * -0.6F, HZ);
-        float g = guard(p, partial);
-        if (g > 0) {
-            // across the body, edge out (vanilla's own blocking pose, eased in), knocked back by a shot on it
-            float j = jolt(partial) * g;
-            ps.translate(inv * -0.141F * g + joltSide * JOLT_X * j, 0.08F * g + JOLT_Y * j, 0.141F * g + JOLT_Z * j);
-            ps.rotateDegrees(Axis.XP, -102.25F * g + JOLT_TIP * j);
-            ps.rotateDegrees(Axis.YP, inv * 13.37F * g);
-            ps.rotateDegrees(Axis.ZP, inv * 78.05F * g);
-        }
+        guardOn(ps, p, stack, partial, inv);
         if (BladeTrail.open(p.getId()) && ArmsItems.of(stack.getItem()) == null) {
             // a vanilla blade: where its sprite's edge is drawn (our weapons sample their own mesh as they draw)
             M.set(ps.last().pose()).translate(1.13F / 16F, 3.2F / 16F, 1.13F / 16F) // both hands: as handheld.json
@@ -107,6 +98,46 @@ final class ArmsHands {
         }
         return true;
     }
+
+    /**
+     * The guard on a hand's pose stack (at its resting place) while the guard is up: the weapon across the body, mirrored
+     * for a left hand ({@code inv} -1; a pair's twin is the main's mirrored, so the two cross).
+     */
+    static void guardOn(PoseStack ps, LocalPlayer p, ItemStack stack, float partial, int inv) {
+        float g = guard(p, partial);
+        if (g <= 0) return;
+        float j = jolt(partial) * g;
+        Archetypes.Loaded style = Arms.styleOf(stack);
+        guardMove(style == null ? null : FpSwings.style(style.id()), ArmsItems.of(stack.getItem()) != null, g, j, inv, GD, GQ);
+        if (inv < 0) {
+            GD.x = -GD.x;
+            GQ.set(GQ.x, -GQ.y, -GQ.z, GQ.w);
+        }
+        ps.translate(GD.x, GD.y, GD.z);
+        ps.rotate(GQ);
+    }
+
+    /**
+     * The guard's move and turn about the hand's place (authored right-handed), {@code g} of the way up, jolted by
+     * {@code j}: the style's own (Swing Studio round 8: across the body in view, its tip up to the left; Euan 2026-10-29:
+     * "blocking with most weapons hides the weapon under your view"), else vanilla 1.8's block turn.
+     */
+    private static void guardMove(FpSwings.@Nullable Style st, boolean ours, float g, float j, int inv, org.joml.Vector3f d,
+                                  org.joml.Quaternionf q) {
+        if (FpSwings.guard(st, ours, d, GQ2)) {
+            d.mul(g);
+            ID.slerp(GQ2, g, q);
+        } else {
+            q.identity().rotateX(-102.25F * g * Mth.DEG_TO_RAD).rotateY(13.37F * g * Mth.DEG_TO_RAD).rotateZ(78.05F * g * Mth.DEG_TO_RAD);
+            d.set(-0.141F * g, 0.08F * g, 0.141F * g);
+        }
+        // a shot on it: knocked back toward the eye, up and away from the side it struck, its tip thrown back
+        d.add(inv * joltSide * JOLT_X * j, JOLT_Y * j, JOLT_Z * j);
+        GQ2.rotationX(JOLT_TIP * j * Mth.DEG_TO_RAD).mul(q, q);
+    }
+
+    private static final org.joml.Vector3f GD = new org.joml.Vector3f();
+    private static final org.joml.Quaternionf GQ = new org.joml.Quaternionf(), GQ2 = new org.joml.Quaternionf();
 
     /** The guard's blend: up over its first ticks of use. */
     private static float guard(LocalPlayer p, float partial) {
@@ -271,12 +302,17 @@ final class ArmsHands {
         if (st == null) return;
         boolean ours = ArmsItems.of(p.getMainHandItem().getItem()) != null;
         int inv = p.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
-        float g = guard(p, partial);
-        onMain(G.set(ours ? st.hand() : st.vanillaGrip()), g, g > 0 ? jolt(partial) * g : 0, inv);
+        float g = guard(p, partial), j = g > 0 ? jolt(partial) * g : 0;
+        if (g > 0) guardMove(st, ours, g, j, inv, GD, GUARD);
+        onMain(G.set(ours ? st.hand() : st.vanillaGrip()), g);
         FirstPerson.View.fist(v.gripMain, 1, inv * G.x, G.y, G.z);
         org.joml.Vector3f both = ours ? st.offHand() : st.vanillaOffHand();
         if (!ArmsOffHand.shownTwin(p).isEmpty()) {
             G.set(st.hand());
+            if (g > 0) { // the twin up in guard too, mirrored: the pair crossed
+                GUARD.transform(G);
+                G.add(GD);
+            }
             OFF_Q.transform(G);
             G.add(OFF_D).add(HX, HY + ArmsOffHand.equip() * -0.6F, HZ); // the twin rises with the main hand
             FirstPerson.View.fist(v.gripOff, 1, -inv * G.x, G.y, G.z);
@@ -284,18 +320,19 @@ final class ArmsHands {
             // a two-handed weapon with the off hand free: the off hand closes on the handle below the main, through
             // every swing and the guard (SPEC §25 "Swing Studio": the katana, greatblade, maul, spear, glaive, scythe,
             // war-staff and twin blades); a stance's own off fist still takes the hand (Hands' hideOff)
-            onMain(G.set(both), g, g > 0 ? jolt(partial) * g : 0, inv);
+            onMain(G.set(both), g);
             FirstPerson.View.fist(v.gripOff, 1, inv * G.x, G.y, G.z);
         }
     }
 
-    /** A point on the main weapon (hand space, authored right-handed) to where it is this frame: the guard, the swing. */
-    private static void onMain(org.joml.Vector3f at, float g, float j, int inv) {
+    /**
+     * A point on the main weapon (hand space, authored right-handed) to where it is this frame: the guard (GUARD and GD,
+     * set by the caller from guardMove: the hands go with the blade), the swing.
+     */
+    private static void onMain(org.joml.Vector3f at, float g) {
         if (g > 0) {
-            // the guard (transform below): across the body, edge out, and its jolt (the hands go with the blade)
-            GUARD.identity().rotateX((-102.25F * g + JOLT_TIP * j) * Mth.DEG_TO_RAD).rotateY(13.37F * g * Mth.DEG_TO_RAD).rotateZ(78.05F * g * Mth.DEG_TO_RAD);
             GUARD.transform(at);
-            at.add(-0.141F * g + inv * joltSide * JOLT_X * j, 0.08F * g + JOLT_Y * j, 0.141F * g + JOLT_Z * j);
+            at.add(GD);
         }
         MAIN_Q.transform(at);
         at.add(MAIN_D).add(HX, HY + equip * -0.6F, HZ);
