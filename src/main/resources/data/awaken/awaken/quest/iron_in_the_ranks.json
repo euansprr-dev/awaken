@@ -7,10 +7,10 @@
   ],
   "scene": "crag",
   "giver": "gus",
-  "summary": "The dead on the high road have started wearing scrap iron, and they stand in rows. Gus wants to know who taught them.",
+  "summary": "The dead on the high road march in rows now. Go and look, then kill 5 of them.",
   "ask": [
-    "Gus: Come here. Up on the crag, quiet.",
-    "Gus: They've got helmets now. Dented ones, mismatched, but helmets. And they stand in rows. The dead didn't used to care about rows."
+    "Gus: Come up here, and keep your voice down.",
+    "Gus: The dead on the high road have got helmets now. Dented, mismatched, but helmets. And they stand in rows. The dead never used to care about rows."
   ],
   "steps": [
     {

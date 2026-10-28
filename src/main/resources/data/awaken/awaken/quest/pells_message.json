@@ -5,7 +5,7 @@
   "requires": ["level:8"],
   "scene": "road",
   "giver": "pell",
-  "summary": "Pell fell carrying a message for the Association. Get him something to eat, then run the message to Quartermaster Hale.",
+  "summary": "Pell is hurt. Bring him 3 bread, then take his letter to Quartermaster Hale.",
   "ask": [
     "Pell: Don't. Don't touch the leg. Either leg. Don't touch either leg.",
     "Pell: I've a message for the Association that can't wait, and I can't walk. And I haven't eaten in two days."

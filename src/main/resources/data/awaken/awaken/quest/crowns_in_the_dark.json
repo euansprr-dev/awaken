@@ -7,10 +7,10 @@
   ],
   "scene": "crag",
   "giver": "gus",
-  "summary": "Gus has seen something on a far crag wearing a crown of bone, and the dead around it walk in step.",
+  "summary": "Gus saw something wearing a crown of bone on a far crag. Climb up and break its court.",
   "ask": [
-    "Gus: I've seen it. I'm sure now.",
-    "Gus: A king, or something that wants to be. Crown of bone, the others move when it moves. I'm too old for this, but you aren't."
+    "Gus: There's something out on the far crag, and now I've seen it with my own eyes.",
+    "Gus: It wears a crown of bone, and the dead around it move when it moves. I'm too old to go up there, but you aren't."
   ],
   "steps": [
     {
@@ -74,7 +74,7 @@
       "text": "Take the crown to Gus",
       "done": [
         "Gus: Bone. Plain bone. All that fuss over a hat.",
-        "Gus: Here. I'll keep the crown, you keep the thanks of every road within a week's walk."
+        "Gus: Here. I'll keep the crown. You keep the thanks of every road within a week's walk."
       ]
     }
   ],

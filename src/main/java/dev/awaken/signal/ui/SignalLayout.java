@@ -31,6 +31,8 @@ public final class SignalLayout {
     public static final int MAX_TOASTS = 3;
 
     public static final int CARD_W = 170;
+    /** A choice card whose body says what you agree to (two or more lines) is this wide. */
+    public static final int CARD_W_BODY = 200;
     public static final int PANEL_W = 200;
     public static final int STORY_MAX_W = 300;
     public static final int STORY_PAD = 3;
@@ -70,40 +72,69 @@ public final class SignalLayout {
 
     // ---- choice card ----------------------------------------------------------------------------------------------
 
-    /** Unscaled height of a choice card: question, optional body line, then "[Y] …" and "[N] …". */
-    public static int choiceHeight(int questionLines, boolean bodyLine) {
-        return 4 + questionLines * LINE + (bodyLine ? LINE : 0) + 2 + 2 * LINE + 3;
+    /** Unscaled height of a choice card: question, body lines (what you agree to), then "[Y] …" and "[N] …". */
+    public static int choiceHeight(int questionLines, int bodyLines) {
+        return 4 + questionLines * LINE + Math.max(0, bodyLines) * LINE + 2 + 2 * LINE + 3;
     }
 
-    public static final int CHOICE_MIN_H = choiceHeight(1, false);
+    public static int choiceHeight(int questionLines, boolean bodyLine) {
+        return choiceHeight(questionLines, bodyLine ? 1 : 0);
+    }
+
+    public static final int CHOICE_MIN_H = choiceHeight(1, 0);
+    /** A choice card's body (what you're agreeing to) shows up to this many lines. */
+    public static final int CHOICE_BODY_LINES = 3;
+    /** The power bar's block (two rows of slots and its energy bar) takes the bottom right this tall. */
+    public static final int POWER_BAR_H = 56;
+    /** A card whose body says what you agree to may be this tall, if the room above the power bar allows. */
+    public static final double MAX_HEIGHT_BODY = 0.30;
 
     /** A laid-out card: its screen rect, the scale to draw at, and how many lines of each kind fit. */
-    public record Card(Rect rect, double scale, int lines, boolean extra) {
+    public record Card(Rect rect, double scale, int lines, boolean extra, int bodyLines) {
+        public Card(Rect rect, double scale, int lines, boolean extra) {
+            this(rect, scale, lines, extra, extra ? 1 : 0);
+        }
+
         /** Width available for text inside the card, in unscaled px. */
         public int textWidth() {
             return (int) Math.floor(rect.w() / scale) - 12;
         }
     }
 
-    /**
-     * The choice card. {@code wantQuestionLines} (1–2) and {@code wantBody} say what the text needs; the card keeps the
-     * question first and drops the body line when the screen is short.
-     */
     public static Card choice(int w, int h, double scale, int wantQuestionLines, boolean wantBody) {
-        int maxH = maxHeight(h);
-        double s = Math.min(clampScale(scale), maxH / (double) CHOICE_MIN_H);
-        s = Math.min(s, (w - 2.0 * MARGIN - STORY_MIN_SPAN) / CARD_W);
-        int budget = (int) Math.floor(maxH / s + 1e-6);
+        return choice(w, h, scale, wantQuestionLines, wantBody ? 1 : 0);
+    }
+
+    /**
+     * The choice card. {@code wantQuestionLines} (1–2) and {@code wantBodyLines} (0–3) say what the text needs. A card
+     * with one line of body or none stays within {@link #MAX_HEIGHT}; one whose body says what you agree to may grow
+     * down to just above the power bar (at most {@link #MAX_HEIGHT_BODY}), and shrinks toward {@link #MIN_SCALE} before
+     * it drops anything. When it must, it drops the question's second line first, then body lines from the end.
+     */
+    public static Card choice(int w, int h, double scale, int wantQuestionLines, int wantBodyLines) {
         int q = Math.max(1, Math.min(2, wantQuestionLines));
-        boolean b = wantBody;
+        int b = Math.max(0, Math.min(CHOICE_BODY_LINES, wantBodyLines));
+        int maxH = maxHeight(h);
+        if (b > 1) maxH = Math.max(maxH, Math.min((int) Math.floor(h * MAX_HEIGHT_BODY), h - POWER_BAR_H - slotTop(h)));
+        int cardW = choiceWidth(b);
+        double s = Math.min(clampScale(scale), maxH / (double) CHOICE_MIN_H);
+        s = Math.min(s, (w - 2.0 * MARGIN - STORY_MIN_SPAN) / cardW);
+        if (b > 1 && choiceHeight(q, b) * s > maxH) s = Math.max(Math.min(s, MIN_SCALE), maxH / (double) choiceHeight(q, b));
+        int budget = (int) Math.floor(maxH / s + 1e-6);
         while (choiceHeight(q, b) > budget) {
-            if (b) b = false;
+            if (b == 1) b = 0;
             else if (q > 1) q--;
+            else if (b > 0) b--;
             else break;
         }
-        int cw = (int) Math.round(CARD_W * s);
+        int cw = (int) Math.round(cardW * s);
         int ch = Math.min(maxH, (int) Math.ceil(choiceHeight(q, b) * s));
-        return new Card(inSlot(w, h, cw, ch), s, q, b);
+        return new Card(inSlot(w, h, cw, ch), s, q, b > 0, b);
+    }
+
+    /** Unscaled width of a choice card wanting {@code bodyLines} of body. */
+    public static int choiceWidth(int bodyLines) {
+        return bodyLines > 1 ? CARD_W_BODY : CARD_W;
     }
 
     // ---- panel (gate card) ----------------------------------------------------------------------------------------
@@ -165,6 +196,13 @@ public final class SignalLayout {
             r = new Rect(MARGIN + (span - rw) / 2, top, rw, rh);
         }
         return new Card(r, s, lines, false);
+    }
+
+    /** How many story lines fit between the crosshair's clearance and {@link #STORY_BOTTOM} at {@code scale}. */
+    public static int storyLinesThatFit(int h, double scale) {
+        double s = clampScale(scale);
+        int room = h - STORY_BOTTOM - (h / 2 + CROSSHAIR / 2 + CROSSHAIR_GAP);
+        return (int) Math.floor((room / s - 2 * STORY_PAD) / LINE);
     }
 
     /** Width for story text in unscaled px. */

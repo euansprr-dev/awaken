@@ -358,18 +358,54 @@ final class SignalTests {
             int guard = 0;
             boolean pushed = false;
             while (!pager.done() && guard++ < 50) {
-                List<String> chunk = pager.next(150, SignalText::approxWidth);
-                h.assertTrue(!chunk.isEmpty() && chunk.size() <= StoryPager.MAX_LINES, "1-2 lines per subtitle");
+                List<String> chunk = pager.next(150, 2, SignalText::approxWidth);
+                h.assertTrue(!chunk.isEmpty() && chunk.size() <= 2, "1-2 lines per subtitle: " + chunk);
                 for (String l : chunk) h.assertTrue(SignalText.approxWidth(l) <= 150, "line fits: " + l);
                 if (!pushed && guard == 2) { // the width changes under a chunk: put it back and cut it narrower
-                    pager.pushBack(chunk, false);
+                    pager.pushBack();
                     pushed = true;
                     continue;
                 }
-                for (String l : chunk) words.addAll(List.of(l.split(" ")));
+                String page = String.join(" ", chunk);
+                // a page never stops mid-clause: it ends a sentence, or (a sentence longer than a page) at a comma or colon
+                h.assertTrue(page.matches(".*[.!?,:;]$"), "a page ends at a sentence or clause: " + page);
+                words.addAll(List.of(page.split(" ")));
             }
             String all = "The gates were always there. " + body;
             h.assertTrue(String.join(" ", words).equals(all), "every word, in order: " + String.join(" ", words));
+            // with room, a page is whole sentences together and none is cut
+            StoryPager wide = new StoryPager("", "Oren: I'm Oren, the smith. Most hunters buy cheap blades off a cart. They snap.");
+            List<String> one = wide.next(290, 3, SignalText::approxWidth);
+            h.assertTrue(wide.done() && String.join(" ", one).endsWith("They snap."), "short sentences share a page: " + one);
+            h.succeed();
+        });
+
+        AwakenTests.register("signal_choice_waits_for_speech", 20, h -> {
+            ChoiceDeck deck = new ChoiceDeck();
+            deck.offer(choice("signaltest:offer"), 20 * 60, true); // asked while the giver is still talking
+            for (int i = 0; i < 300; i++) {
+                deck.tick(0, 0, false, true);
+                h.assertTrue(deck.current() == null, "no card while the speech goes on (tick " + i + ")");
+            }
+            for (int i = 0; i < ChoiceDeck.GAP_TICKS - 1; i++) deck.tick(0, 0, false, false);
+            h.assertTrue(deck.current() == null, "a beat after the last line first");
+            deck.tick(0, 0, false, false);
+            deck.tick(0, 0, false, false);
+            h.assertTrue(deck.current() != null && deck.current().action.equals("signaltest:offer"), "the card comes once they've finished");
+            // a warning never waits; a card asked in silence doesn't either
+            ChoiceDeck urgent = new ChoiceDeck();
+            urgent.offer(SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("Run?")).choice("signaltest:warn", "Yes", "No").ttl(600).build(), 600, true);
+            urgent.tick(0, 0, false, true);
+            h.assertTrue(urgent.current() != null, "a warning shows over speech");
+            ChoiceDeck quiet = new ChoiceDeck();
+            quiet.offer(choice("signaltest:quiet"), 600, false);
+            quiet.tick(0, 0, false, true);
+            h.assertTrue(quiet.current() != null, "a card asked before the speech isn't held back by it");
+            // speech that never ends can't hide a card for good
+            ChoiceDeck stuck = new ChoiceDeck();
+            stuck.offer(choice("signaltest:stuck"), ChoiceDeck.SPEECH_WAIT_TICKS + 100, true);
+            for (int i = 0; i < ChoiceDeck.SPEECH_WAIT_TICKS + 2; i++) stuck.tick(0, 0, false, true);
+            h.assertTrue(stuck.current() != null, "a card waits for speech at most a minute");
             h.succeed();
         });
 
@@ -566,6 +602,16 @@ final class SignalTests {
                         storyChecks(bad, at, w, hgt, s, c.rect(), cross);
                     }
                 }
+                for (int q = 1; q <= 2; q++) { // an offer: its body says in full what you agree to
+                    SignalLayout.Card c = SignalLayout.choice(w, hgt, s, q, SignalLayout.CHOICE_BODY_LINES);
+                    check(bad, at + " offer " + q, c.rect(), cross, w, hgt);
+                    if (c.bodyLines() < SignalLayout.CHOICE_BODY_LINES) bad.add(at + " offer drops body lines " + c.bodyLines());
+                    if (c.rect().bottom() > hgt - SignalLayout.POWER_BAR_H) bad.add(at + " offer reaches the power bar " + c.rect());
+                    if (c.rect().h() > hgt * SignalLayout.MAX_HEIGHT_BODY + 1) bad.add(at + " offer taller than 30% " + c.rect());
+                    if (SignalLayout.choiceHeight(c.lines(), c.bodyLines()) * c.scale() > c.rect().h() + 1) bad.add(at + " offer content taller than its rect");
+                    for (Rect t : toasts) if (c.rect().intersects(t)) bad.add(at + " offer under a toast " + c.rect());
+                    storyChecks(bad, at, w, hgt, s, c.rect(), cross);
+                }
                 for (int n : new int[]{0, 1, 3, 8, 20}) {
                     for (boolean footer : new boolean[]{false, true}) {
                         SignalLayout.Card p = SignalLayout.panel(w, hgt, s, n, footer);
@@ -633,7 +679,7 @@ final class SignalTests {
     }
 
     private static void storyChecks(List<String> bad, String at, int w, int h, double s, Rect avoid, Rect cross) {
-        for (int lines = 1; lines <= 2; lines++) {
+        for (int lines = 1; lines <= StoryPager.maxLines(w, h, s); lines++) {
             SignalLayout.Card st = SignalLayout.story(w, h, s, lines, avoid);
             check(bad, at + " story " + lines, st.rect(), cross, w, h);
             if (avoid != null && st.rect().intersects(avoid)) bad.add(at + " story under the card " + st.rect() + " vs " + avoid);
