@@ -4,7 +4,7 @@
   "band": 0,
   "scene": "resident",
   "giver": "hettie",
-  "summary": "Something takes one of Hettie's sheep every night. Follow the tracks to its den and end it.",
+  "summary": "Something takes one of Hettie's sheep every night. Follow its tracks and clear its den.",
   "ask": [
     "Hettie: Forty sheep in spring. Thirty now. One a night, and never a sound.",
     "Hettie: The tracks go off past the stones. I'm too old to follow them into the dark. You aren't."

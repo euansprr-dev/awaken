@@ -72,6 +72,17 @@ public final class SignalText {
         return s;
     }
 
+    /**
+     * What a choice card says under its question: the whole body when it fits the card's body lines (an offer says in
+     * full what you agree to), else its first sentence.
+     */
+    public static String cardBody(String body, int width, ToIntFunction<String> measure) {
+        if (body == null) return "";
+        String all = body.replace('\n', ' ').trim();
+        if (wrap(all, width, measure).size() <= SignalLayout.CHOICE_BODY_LINES) return all;
+        return firstSentence(all);
+    }
+
     /** The one detail line a toast shows: the body's first sentence, else the rows, else the footer. */
     public static String toastDetail(SignalWindow w) {
         String body = w.body().map(Component::getString).map(SignalText::firstSentence).orElse("");

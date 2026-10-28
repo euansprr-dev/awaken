@@ -5,7 +5,7 @@
   "requires": ["level:8", "tier:tether"],
   "scene": "cliff",
   "giver": "wren",
-  "summary": "Someone cut Wren's line and left her on a ledge. Get her down, then find out what happened to her crate.",
+  "summary": "Someone cut Wren's line. Get her down with your rope, then look for her crate.",
   "ask": [
     "Wren: Hi! Hello. Up here. Please don't laugh.",
     "Wren: Somebody cut my line. I had a crate of bell bronze for the city, and now I have a ledge."

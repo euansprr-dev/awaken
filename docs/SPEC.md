@@ -639,6 +639,18 @@ Plan v2 · System v2 (details in docs/modules/system-ui.md):
   crosshair and never exceed 20% of the screen height. Client settings: `systemStyle`, `nowTracker`, `systemScale`
   (0.75–1.5, toasts don't scale). The Now tracker syncs every 40 ticks, only when changed, and steps below the boss
   bars when they would overlap it.
+- Story lines (speech, the Signal's voice; `signal.ui.StoryPager`, 2026-10-28 after Euan saw Oren cut mid-sentence):
+  a subtitle page is whole sentences, as many as fit the lines the screen has room for between the crosshair and the
+  action bar (2 to 3), and the box sizes to the page. A sentence is never cut across pages unless it alone is longer
+  than a page, and then after a comma, colon or dash where one leaves more than a stub. Nothing is ever ellipsized or
+  dropped. A page holds for max(50, min(400, 30 + 1.2 × chars)) ticks after typing. Test
+  `living_quest_lines_fit_the_box` pages every quest line at every GUI size and scale.
+- A non-urgent card asked while a story line is on screen or queued waits until the speech has ended and 10 ticks
+  have passed (at most a minute), so an offer comes after the lines that explain it (`ChoiceDeck`, test
+  `signal_choice_waits_for_speech`). Warnings and priority 9+ never wait.
+- A card's body shows whole when it fits three lines (else its first sentence). A card with two or more body lines is
+  200 wide and may grow to just above the power bar (at most 30% of the height), shrinking toward scale 0.75 before it
+  drops a line; other cards keep the 20% rule.
 
 Plan v2 · overworld creatures (details in docs/modules/fauna.md):
 - Spawn category `awaken:fauna` (16 per player, NeoForge enum extension). Role caps per player: ambient 8 (3 before
@@ -4232,7 +4244,9 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 ### 21.5 Wayfarers, quests and bounties (Phase C, as built 2026-10-25)
 - **Chains** (`living.quest`): data `data/<ns>/awaken/quest/<chain>.json`, schema 1: `title`, `band` (0..4),
   `requires` (progression tokens), `scene` (`resident` for a fixed giver, else the scene kind it's found in: `cliff`,
-  `road`, `crag`), `giver`, `ask` (the giver's lines before the choice card), `summary`, `steps[]`, `relic`, `finish`
+  `road`, `crag`), `giver`, `ask` (the giver's lines before the choice card: who they are, what they offer and what
+  they need, in plain words, never assuming what the player holds or has done), `summary` (the card's body: what you
+  agree to, with the counts, in at most three card lines), `steps[]`, `relic`, `finish`
   (progression `Reward`). A step: `id`, `objective` {`type` talk|reach|kill|collect|deliver|use|discover, `target`,
   `count`, `radius`}, `text` (its Journal line), `start`/`done` lines, `reward`, `needs` + `needs_text` (a step waits for
   it; `tier:<need>` asks the Horizon's reach answers, so the Ascent's tiers and movement powers count), `spawn`
@@ -4257,7 +4271,8 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - **Wayfarer** entity (`awaken:wayfarer`): a player-shaped person in their own skin
   (`textures/entity/wayfarer/<who>.png`, tools/art/specs/wayfarers.py), never hurt, never despawns. Use to talk: a step
   waiting on them moves on (or says what it needs), a delivery changes hands, Hale reads the bounty board, a chain they
-  give is offered on a choice card (Help / Not now), else one of their idle lines. People: Wren, Hettie, Ilse, Gus,
+  give is offered on a choice card (Help / Not now) that shows once their ask has been said (it lives 30 s plus the
+  ask's estimated speaking time, `Wayfarers.offerTtl`; test `living_quest_offer_after_ask`), else one of their idle lines. People: Wren, Hettie, Ilse, Gus,
   Pell, Hale, Marta (`Wayfarers.PEOPLE`).
 - **The first drop, all eight chains** (The Last Delivery is written and waits for Carillon's B3b to call
   `Quests.talk` for Kestrel; it opens on `counter:awaken:carillon_registered`): Ten Sheep Short (Hettie, 1-8), Moth Lights (Ilse, 1-8), Wren's Rope (cliff,

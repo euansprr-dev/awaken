@@ -7,7 +7,7 @@
   ],
   "scene": "resident",
   "giver": "bram",
-  "summary": "Bram asked you to take a bundle of letters to Ilse at the Wayfarer camp up the north road. She'll explain the rest.",
+  "summary": "Take Bram's letters to Ilse at the Wayfarer camp up the north road. She'll explain the rest.",
   "ask": [
     "Bram: Ilse runs a camp for new hunters up the north road. Take these letters to her, and she'll explain the rest."
   ],
