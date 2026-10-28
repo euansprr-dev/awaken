@@ -203,7 +203,12 @@ CHAIN_SET = 0.9  # and a chained strike's set
 CARRY_KEEP = 0.4  # a leading strike's follow-through keeps at least this much of its travel
 TWIRL_MID_Y = -0.7  # a weapon turning end for end keeps its middle (the hands) at least this high on the screen (ndc)
 LOAD_STEP = 0.3  # the most the tip moves (ndc) in a 60 fps frame while it draws back
+LOAD_OFF = 0.15  # a point of the blade out of the frame counts this share of its travel against LOAD_STEP
+LOAD_KEEP = 0.45  # a draw back cut to fit its time keeps at least this much of itself
+LOAD_SPIN = 0.75  # and turns the blade at most this share of its blow's speed at the hit
+LOAD_TURN = 120.0  # a thrust's or a spin's draw back turns the blade at most this (degrees a tick)
 _START = {}
+_FIT = {}
 _BUSY = set()
 
 
@@ -321,6 +326,9 @@ def ready_pose(st, mv, held):
     key = (st["id"], mv, held.wid)
     if key not in _READY:
         at = set_time(st, mv)
+        if at > 0 and key not in _BUSY:
+            L.rig_pose(st, st["moves"][mv], held, 0.0)  # its load's fit: a draw back cut to its time sets later
+            at = _FIT[key][4] if key in _FIT else at
         _READY[key] = L.rig_pose(st, st["moves"][mv], held, at if at < 0 else max(0.0, at - 0.01))
     return _READY[key]
 
@@ -494,21 +502,30 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
         d, R = _turned(held, pose, turn + sense * extra)
         return d + lift * lk, R
 
-    start = rest
-    if t < c:
+    start, track = rest, None
+    if c > 0:
         # a chained strike winds up from where the one before it holds the blade, not from rest (with no wind-up to
         # speak of, the whole time before the drive is that move)
+        key = (sid, mv, held.wid)
+        busy = key in _BUSY
         start = chain_start(st, mv, held) or rest
         if turn:  # where the last strike holds it, read on this strike's own (end for end) lever
             start = _turned(held, start, -turn)
-        if start is not rest and reach <= 0 < c:
+        if start is not rest and reach <= 0:
             reach = c * 0.85
-        if reach > 0:
-            # never a fling: a long draw back takes more of the wind-up, so the tip moves at most LOAD_STEP of the
-            # screen a frame at 60 fps (the sine's peak is pi/2 times its mean; Euan 2026-10-28: "a mess of movement")
-            far = float(np.linalg.norm(_tip_ndc(held, start) - _tip_ndc(held, cocked)))
-            reach = min(max(reach, far * math.pi / 2 / (3 * LOAD_STEP)), max(reach, c * 0.9))
-        if 0 < reach and c - reach < 0.5:
+        if reach > 0 and not busy:
+            # never a fling (Euan 2026-10-28: "a mess of movement"): the blade in view moves at most LOAD_STEP of the
+            # screen a frame as it draws back, measured on its real path (the arc, the perspective, a double weapon's
+            # leading end) and timed along it, so what is out of the frame goes round quickly unseen; a draw back that
+            # can't fit before the drive is cut back (the Fight Feel review: the war-staff's flung a whole screen
+            # in a frame). Its set and its drive leave from there.
+            if key not in _FIT:
+                _FIT[key] = _fit_load(held, far_led(st, mv), at, out, start, pre, kn, lag, roll0, reach, c, hit)
+            pre_was = pre
+            pre, reach, cocked, track, c = _FIT[key]
+            if pre != pre_was:
+                bite_end, exit_t = cut_times(m, kn, carry_ticks(kn, pre, stop, hit - c), nxt[0] if nxt else None)[3:5]
+        elif 0 < reach and c - reach < 0.5:
             # no room to hold a set: the draw back goes straight to where the drive leaves from (a set squeezed into
             # a sliver of a tick was a twist faster than the blow itself)
             reach = c
@@ -516,6 +533,8 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
     if t < reach:  # the load: out of rest (or the last strike's end) along the arc to the cocked pose
         x = t / reach
         k = L.ease_out_cubic(x) if kn["load"] == "out" else L.ease_in_out_sine(x)
+        if track is not None:  # the sine's progress laid along the path as seen
+            k = float(np.interp(k * track[-1], track, np.linspace(0.0, 1.0, len(track))))
         return out(L.lerp_pose(start, cocked, k))
     if t < c:  # the set: held there, a hair further back, the spring loaded
         k = L.ease_out_sine((t - reach) / max(1e-6, c - reach)) if reach > 0 else 1.0
@@ -629,6 +648,63 @@ def _on_screen_set(held, at, pre, creep, lag, roll0):
         if mid[2] < 0 and abs(n[0]) <= CHAIN_SET and abs(n[1]) <= CHAIN_SET:
             return pre * k
     return pre * 0.2
+
+
+def _load_track(held, far, out, start, cocked, spin, n=32):
+    """The load from start to cocked as it is seen: its running cost in frames at n + 1 even steps of the lerp, each
+    step's the larger of the most its tip, middle or grip moves on the screen against LOAD_STEP (a point out of the
+    frame, as the chain's judge has it, counts LOAD_OFF of its travel: it goes round unseen in first person) and the
+    blade's turn against spin, its most in a frame (seen whole in third person, a wind-up is never quicker than its
+    blow)."""
+    prev = None
+    cum = [0.0]
+    for s in np.linspace(0.0, 1.0, n + 1):
+        d, R = out(L.lerp_pose(start, cocked, float(s)))
+        tip, grip = lead_points(held, far, d, R)
+        pts = (tip, grip + (tip - grip) * L.MID, grip)
+        ax = (tip - grip) / np.linalg.norm(tip - grip)
+        if prev is not None:
+            step = math.degrees(math.acos(max(-1.0, min(1.0, float(ax @ prev[1]))))) / max(1e-6, spin)
+            for p, q in zip(prev[0], pts):
+                if p[2] >= 0 or q[2] >= 0:
+                    continue  # behind the eye: its ndc means nothing (the turn still counts)
+                seen = any(z[2] < 0 and np.all(np.abs(ndc(z)) < 1.2) for z in (p, q))
+                seg = float(np.linalg.norm(ndc(q) - ndc(p)))
+                step = max(step, (seg if seen else seg * LOAD_OFF) / LOAD_STEP)
+            cum.append(cum[-1] + max(step, 1e-4))
+        prev = (pts, ax)
+    return np.array(cum)
+
+
+def _fit_load(held, far, at, out, start, pre, kn, lag, roll0, reach, c, hit):
+    """(pre, reach, cocked, track, drive start): the draw back and how long it takes, so it keeps to its budget
+    (_load_track) on the load's sine (its peak pi/2 times its mean). One that can't fit before the drive is cut back
+    toward the hit (a quick chained cut leaves from nearer it), down to LOAD_KEEP of itself, and its drive shortened to
+    match (never under half a tick), so the blow lands as fast as it would have and the load has that much longer."""
+    best = None
+    drive0 = hit - c
+    for k in np.linspace(1.0, LOAD_KEEP, 12):
+        p = pre * float(k)
+        drive = drive0 * (p + kn["creep"]) / (pre + kn["creep"])
+        if drive < min(drive0, 0.5) - 1e-9:
+            break  # no drive quicker than half a tick: cut back further, the blow would land slower
+        cc = hit - drive
+        r = reach * cc / max(1e-6, c)  # the load's share of the wind-up kept
+        spin = LOAD_SPIN * kn["power"] * (p + kn["creep"]) / max(1e-6, drive) / 3
+        cocked = at(-p, lag * 0.6, roll0 * 0.85)
+        track = _load_track(held, far, out, start, cocked, spin)
+        need = track[-1] * math.pi / 2 / 3
+        r = max(r, need)
+        if cc - r < 0.5:  # no room to hold a set: the draw back goes straight to where the drive leaves from
+            r = cc
+            cocked = at(-p - kn["creep"], lag, roll0)
+            track = _load_track(held, far, out, start, cocked, spin)
+            need = track[-1] * math.pi / 2 / 3
+        if best is None or need / r < best[0]:
+            best = (need / r, p, r, cocked, track, cc)
+        if need <= r + 1e-6:
+            return p, r, cocked, track, cc
+    return best[1:]
 
 
 def _off_screen(held, pose):
@@ -845,6 +921,7 @@ def live(sid, moves=None, spec=None):
     if spec is not None:
         _FEEL[sid] = spec
     _START.clear()
+    _FIT.clear()
     _READY.clear()
     st = L.table()[sid]
     held = L.Held("gatewrought_" + sid)

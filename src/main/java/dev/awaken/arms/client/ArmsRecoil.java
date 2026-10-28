@@ -31,14 +31,48 @@ final class ArmsRecoil {
     /** Bodies recoiling at once. */
     static final int POOL = 32;
 
-    /** One body's recoil. */
+    /** One spring: its start (the freeze's end), the blow's way and what it moves, by weight and size. */
+    static final class Layer {
+        long start;
+        float dx, dz, shove, rise, turn, tip, k;
+        /** Its clock stood still from {@code holdAt} for {@code holdFor} (a blow after it froze the body again). */
+        long holdAt = Long.MAX_VALUE, holdFor;
+        boolean live;
+
+        /** The spring's travel now, as a share of its peak, times the body's size. */
+        float at(long now) {
+            if (!live) return 0;
+            long t = now - start;
+            if (now > holdAt) t -= Math.min(now - holdAt, holdFor);
+            return ArmsRules.recoil(t / 1e9F) * k;
+        }
+
+        void copy(Layer o) {
+            start = o.start;
+            dx = o.dx;
+            dz = o.dz;
+            shove = o.shove;
+            rise = o.rise;
+            turn = o.turn;
+            tip = o.tip;
+            k = o.k;
+            holdAt = o.holdAt;
+            holdFor = o.holdFor;
+            live = o.live;
+        }
+    }
+
+    /**
+     * One body's recoil: the newest blow's spring, and the one before it still settling (the two add, as springs do,
+     * so a blow landing mid-recoil never snaps the body back to rest first).
+     */
     static final class Slot {
         int entity = Integer.MIN_VALUE;
-        long start, until;
-        float dx, dz, shove, rise, turn, tip, k;
+        long until, killAt, killFreeze;
+        final Layer now = new Layer(), was = new Layer();
         boolean kill;
         // this frame's values, for the pose in Pre
-        float tipNow, fallNow;
+        float tipNow, fallNow, fallX, fallZ;
     }
 
     private static final Slot[] SLOTS = new Slot[POOL];
@@ -64,37 +98,65 @@ final class ArmsRecoil {
         if (e == mc.getCameraEntity()) return;
         Slot s = slot(e.getId());
         long now = System.nanoTime();
+        long freeze = ArmsComfort.hitStop() ? Math.max(0, freezeMs) * 1_000_000L : 0L;
+        // the spring still settling carries on under the new one, its clock held through the new freeze
+        if (s.entity == e.getId() && s.now.live && now < s.until) {
+            s.was.copy(s.now);
+            if (s.was.holdAt == Long.MAX_VALUE) {
+                s.was.holdAt = now;
+                s.was.holdFor = freeze;
+            }
+        } else {
+            s.was.live = false;
+        }
         float weight = heft.weight * (b.strong() ? ArmsRules.STRONG_WEIGHT : 1F);
         float w = Mth.clamp((weight - ArmsRules.Heft.SNAP.weight) / (ArmsRules.Heft.HEAVY.weight * ArmsRules.STRONG_WEIGHT - ArmsRules.Heft.SNAP.weight), 0, 1);
-        float k = sizeScale(e.getBbWidth(), e.getBbHeight());
-        s.entity = e.getId();
-        s.start = now + Math.max(0, freezeMs) * 1_000_000L;
-        s.kill |= b.kill();
-        s.until = s.start + (s.kill ? KILL_LIFE : LIFE);
-        anyUntil = Math.max(anyUntil, s.until);
-        s.dx = b.dirX();
-        s.dz = b.dirZ();
-        s.k = k;
-        s.shove = heft.shove * (b.strong() ? ArmsRules.STRONG_WEIGHT : 1F) * (ArmsComfort.reduced() ? 0.5F : 1F);
+        Layer n = s.now;
+        n.live = true;
+        n.start = now + freeze;
+        n.holdAt = Long.MAX_VALUE;
+        n.holdFor = 0;
+        n.dx = b.dirX();
+        n.dz = b.dirZ();
+        n.k = sizeScale(e.getBbWidth(), e.getBbHeight()) * (ArmsComfort.reduced() ? 0.5F : 1F);
+        n.shove = heft.shove * (b.strong() ? ArmsRules.STRONG_WEIGHT : 1F);
         // a pinning blow drives the body down, a lifting one up
-        s.rise = b.lift() * 0.5F;
+        n.rise = b.lift() * 0.5F;
         // the near side moves along the cut: a cut to the right turns the body's yaw down
-        s.turn = -b.sideShare() * Mth.lerp(w, 6F, 12F);
-        s.tip = Mth.lerp(w, 4F, 8F);
+        n.turn = -b.sideShare() * Mth.lerp(w, 6F, 12F);
+        n.tip = Mth.lerp(w, 4F, 8F);
+        s.entity = e.getId();
+        if (b.kill() && !s.kill) {
+            s.kill = true;
+            s.killAt = now;
+            s.killFreeze = freeze;
+            s.fallX = n.dx;
+            s.fallZ = n.dz;
+        }
+        s.until = n.start + (s.kill ? KILL_LIFE : LIFE);
+        anyUntil = Math.max(anyUntil, s.until);
+    }
+
+    /** A body's death clock, less the kill's freeze: it holds upright through the beat, then falls on vanilla's timing. */
+    static float fall(float deathTime, long since, long freeze) {
+        float held = Math.min(since, freeze) / 50_000_000F;
+        float t = deathTime - held;
+        return t <= 1F ? 0F : Math.min(1F, Mth.sqrt((t - 1F) / 20F * 1.6F));
     }
 
     private static Slot slot(int entity) {
         for (Slot s : SLOTS) if (s.entity == entity) return s;
         long now = System.nanoTime();
-        for (Slot s : SLOTS) {
-            if (s.entity == Integer.MIN_VALUE || now > s.until) {
-                s.kill = false;
-                return s;
-            }
-        }
+        for (Slot s : SLOTS) if (s.entity == Integer.MIN_VALUE || now > s.until) return fresh(s);
         Slot s = SLOTS[next];
         next = (next + 1) % POOL;
+        return fresh(s);
+    }
+
+    private static Slot fresh(Slot s) {
+        s.entity = Integer.MIN_VALUE;
         s.kill = false;
+        s.now.live = s.was.live = false;
         return s;
     }
 
@@ -111,17 +173,20 @@ final class ArmsRecoil {
         if (s == null) return;
         long now = System.nanoTime();
         if (now > s.until || entity.isRemoved()) {
-            s.entity = Integer.MIN_VALUE;
+            fresh(s);
             return;
         }
-        float x = ArmsRules.recoil((now - s.start) / 1e9F) * s.k;
-        state.x += s.dx * s.shove * x;
-        state.y += s.rise * s.shove * x;
-        state.z += s.dz * s.shove * x;
-        living.bodyRot += s.turn * x;
-        s.tipNow = s.tip * x;
-        // a body the blow killed: vanilla's flip, on vanilla's timing, turned to fall along the blow
-        s.fallNow = s.kill && living.deathTime > 0 ? Math.min(1F, Mth.sqrt(Math.max(0, living.deathTime - 1F) / 20F * 1.6F)) : 0F;
+        Layer a = s.now, b = s.was;
+        float xa = a.at(now), xb = b.at(now);
+        state.x += a.dx * a.shove * xa + b.dx * b.shove * xb;
+        state.y += a.rise * a.shove * xa + b.rise * b.shove * xb;
+        state.z += a.dz * a.shove * xa + b.dz * b.shove * xb;
+        living.bodyRot += a.turn * xa + b.turn * xb;
+        // one tip about the newest blow's axis: the older one's projected onto it
+        s.tipNow = a.tip * xa + b.tip * xb * (a.dx * b.dx + a.dz * b.dz);
+        // a body the blow killed: vanilla's flip on vanilla's timing (held through the kill's freeze), turned to
+        // fall along the killing blow
+        s.fallNow = s.kill && living.deathTime > 0 ? fall(living.deathTime, now - s.killAt, s.killFreeze) : 0F;
         state.setRenderData(KEY, s);
     }
 
@@ -135,11 +200,11 @@ final class ArmsRecoil {
         Slot s = state.getRenderData(KEY);
         if (s == null || (s.tipNow == 0 && s.fallNow == 0) || depth >= PUSHED.length) return;
         if (s.fallNow > 0) state.deathTime = 0; // no flip to the side: our fall instead
-        float a = (s.tipNow + 90F * s.fallNow) * Mth.DEG_TO_RAD;
         PoseStack pose = e.getPoseStack();
         pose.pushPose();
-        // about the flat axis across the blow, at the feet: the top goes along the blow
-        pose.rotate(Q.identity().rotateAxis(a, s.dz, 0, -s.dx));
+        // about the flat axis across the blow, at the feet: the top goes along the blow (the fall along the killing one)
+        if (s.fallNow > 0) pose.rotate(Q.identity().rotateAxis(90F * s.fallNow * Mth.DEG_TO_RAD, s.fallZ, 0, -s.fallX));
+        if (s.tipNow != 0) pose.rotate(Q.identity().rotateAxis(s.tipNow * Mth.DEG_TO_RAD, s.now.dz, 0, -s.now.dx));
         PUSHED[depth++] = state;
     }
 
@@ -156,10 +221,7 @@ final class ArmsRecoil {
 
     static void reset() {
         anyUntil = 0;
-        for (Slot s : SLOTS) {
-            s.entity = Integer.MIN_VALUE;
-            s.kill = false;
-        }
+        for (Slot s : SLOTS) fresh(s);
         frame();
     }
 }

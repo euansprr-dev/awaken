@@ -470,12 +470,18 @@ def rig_pose(style_row, m, held, t):
         # a chained strike draws back from where the one before it holds the blade, and never flings it there faster
         # than the studio's LOAD_STEP a frame (Swing Studio round 3)
         start = SS.chain_start(style_row, SS.move_name(style_row, m), held) if t < c else None
+        track = None
         if SS.feel(sid) and t < c:
-            far = float(np.linalg.norm(SS._tip_ndc(held, start or rest) - SS._tip_ndc(held, cocked)))
-            reach = min(max(reach, far * math.pi / 2 / (3 * SS.LOAD_STEP)), max(reach, c * 0.9))
+            # measured on the path as seen and timed along it, as a cut's load is (swing_studio._load_track), with all
+            # of the wind-up to take if it needs it; its turn kept to a fast blow's own (LOAD_TURN a tick)
+            far = SS.far_led(style_row, SS.move_name(style_row, m))
+            track = SS._load_track(held, far, lambda p: p, start or rest, cocked, SS.LOAD_TURN / 3)
+            reach = min(max(reach, track[-1] * math.pi / 2 / 3), c if creep is None else max(reach, c * 0.9))
         if t < reach or creep is None:
-            k = ease_out_cubic(t / reach) if wt["home"] == "fast" else ease_in_out_sine(t / reach)
-            return lerp_pose(start or rest, cocked, min(1.0, k))
+            k = min(1.0, ease_out_cubic(t / reach) if wt["home"] == "fast" else ease_in_out_sine(t / reach))
+            if track is not None:
+                k = float(np.interp(k * track[-1], track, np.linspace(0.0, 1.0, len(track))))
+            return lerp_pose(start or rest, cocked, k)
         return lerp_pose(cocked, creep, ease_out_sine((t - reach) / max(1e-6, c - reach)))
 
     home_ticks = SS.home_ticks(sid)
