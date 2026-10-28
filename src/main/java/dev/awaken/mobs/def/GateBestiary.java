@@ -229,7 +229,7 @@ final class GateBestiary {
                 .ab(a(SUMMON, "Chant").summon("frost_wisp").n(1), a(NOVA, "Frost Nova").n(10).bolt(BoltKind.FROST), a(RAIN, "Ice Spikes").n(3).bolt(BoltKind.FROST)).build());
         out.add(m("the_yeti", "The Yeti", Theme.FROST, Tier.WARDEN, Model.POLAR_BEAR, "Avalanche Slam and freezing breath").hp(38).dmg(7).spd(0.3).scale(1.4F).traits(HUNTER)
                 .ab(a(SLAM, "Avalanche Slam").radius(4).bolt(BoltKind.FROST).heavy(), a(CHARGE, "Snow Charge"), a(CONE, "Frost Breath").bolt(BoltKind.FROST).fx(MobEffects.SLOWNESS, 60, 2)).build());
-        out.add(m("abbot_of_frost", "The Abbot of Frost", Theme.FROST, Tier.LORD, Model.EVOKER, "Frost Hymns and Ice Spikes; the choir joins; then the Glacial Vow").hp(28).dmg(4.5).spd(0.25).scale(1.7F).tint(0xD8F0FF).bar(BossBarColor.WHITE).arena(22)
+        out.add(m("abbot_of_frost", "The Abbot of Frost", Theme.FROST, Tier.LORD, Model.EVOKER, "Frost Hymns and Ice Spikes; the choir joins; then the Glacial Vow").hp(28).dmg(4.5).spd(0.25).scale(1.9F).size(0.9F, 2.0F).tint(0xD8F0FF).bar(BossBarColor.WHITE).arena(22)
                 .intro("Chanting above a sea of clouds.")
                 .phase(1.0F, "The Abbot begins the hymn.", a(BOLT, "Frost Hymn").n(5).bolt(BoltKind.FROST), a(RAIN, "Ice Spikes").n(4).bolt(BoltKind.FROST))
                 .phase(0.66F, "The choir joins.", a(SUMMON, "The Choir").summon("frost_wisp").n(2), a(AURA, "Blizzard").radius(9).bolt(BoltKind.FROST).fx(MobEffects.SLOWNESS, 40, 1), a(RAIN, "Ice Spikes").n(5).bolt(BoltKind.FROST))

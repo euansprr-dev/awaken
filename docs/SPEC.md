@@ -9705,6 +9705,43 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     ground; the hat slides over his face, he slumps, and last of all the staff tips and falls (3.4 s).
   - **Meter.** Worst kink outside a strike 5.4° (the lash's chain arm); held at most 5% on every move; dips 1-25%.
 
+- **The Abbot of Frost, the Pilgrim** (body and motion, `kit/bosses/abbot_of_frost.py`). "Chanting above a sea of
+  clouds." A huge monk bent nearly double under a block of glacier ice bigger than he is, roped and chained to his back,
+  and frozen deep in it, glowing gold through the ice, the monastery's heart. Indigo wool gone grey with frost, snow
+  thick on his hood, his shoulders and the ice, hemp straps over his shoulders that his fists never let go of, a rope
+  belt; his face is a dark hollow in the hood with two pale eyes and a frost-white beard hanging icicles, a string of
+  ice beads at his neck, rags round his hands and feet, faded prayer flags strung between the ice's spikes, and his
+  breath smoking out of the hood. He has no staff and no weapon: his fists, his weight and the glacier. 3.6 blocks to
+  his hood, 5.3 to the ice's crown; 100 cubes (about 640 faces), translucent (the ice, its drips, the beads and his
+  breath). The ice is no box but a core with lumps of older ice frozen onto it, in layers, cracked; the heart is drawn
+  before it and the ice round the heart glows gold. The hitbox is 1.7 x 3.8 (size 0.9 x 2.0 at scale 1.9).
+  - **The robe pools.** Where he sinks low enough that the robe's hem would meet the ground, the lower robe shortens
+    into the knee by just that much, tick by tick (`_pool`, a scale track), instead of being flung out of the floor.
+  - **The idle.** Slow, laboured breaths that lift the glacier a little and let it down, his breath smoking on each;
+    his head turning to look round from under the hood; now and then he hitches the load up his back with a shrug and
+    it settles with a thump. **The walk is a trudge**: his whole body lurches onto each planted foot, the head bobs,
+    the glacier sways a beat behind, and his fists stay on the straps.
+  - **His blows.** The Backhand takes his right fist off its strap back to his left shoulder and swings it out across
+    in front of him with all his weight turning behind it; Two Fists raises both over the hood as high as the ice lets
+    him, holds, and brings them down together on the ground before him. Whoever is behind him gets the Weight: he
+    throws himself back on his heels so the glacier swings down onto them. The Frost Hymn opens his left hand off its
+    strap palm up like a cantor's and lifts his face to sing five notes, a breath of frost on each. Ice Spikes sinks him
+    low hauling on the straps, then heaves so the glacier jumps off his back and drops on him again with a thump he
+    takes in his knees. The Choir presses his palms together before his face; he bows and rocks, praying, and the heart
+    beats in the ice with each rock (a scale track on the heart). Blizzard flings his arms wide, face to the sky, and
+    sways him side to side under the ice. The Avalanche puts his head down and charges crouched, three heavy strides,
+    and skids to a stop leaning back against the weight. Frost Nova curls him up tight on himself and then throws him open with a
+    roar. The Glacial Vow (the signature) gathers him low with his fists on the glacier's sides, then straightens
+    him to his full height for the only time, and throws him down on his knees, swinging the whole glacier up over his
+    head and down onto the ground before him like a hammer; he hauls it back over onto his back, gets a foot under
+    him and rises. His intro: palms together,
+    chanting, he sinks onto one knee under the weight, heaves himself up off it, hitches the glacier up and lifts his
+    face to you.
+  - **The death.** His knees give and he goes down on both; his fists slide off the straps to the ground, and the
+    glacier presses him down flat onto his face (4.0 s).
+  - **Meter.** Worst kink outside a strike 4.8° (the Choir's hands parting); held at most 11% on every move; dips
+    30-38%.
+
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our
