@@ -8529,6 +8529,26 @@ packets inside land the server has already sent them, so the server has made it.
 `core_edge_hold_math` checks the path's edge straight, through a corner, west of the origin and from a chunk that's
 missing. A flight at 40 b/s toward land missing beyond 40 blocks eases by at most 12% a tick and never stops. It never
 crosses before the land comes, and it's back to full speed within two ticks of it.
+**Packet cap** (Turbo, `dev.awaken.turbo.packetcap`, 2026-10-28). The server's queued packets are handled in order for
+at most 50 ms a tick (`PacketCap.BUDGET_NS`, a tick's time, the first packet always), and the rest wait for the next
+tick. The hook is a HEAD inject in `PacketProcessor.processQueuedPackets`, for the server's processor only
+(`server.packetProcessor()`); the client's is never capped. A flood, or a move packet waiting on a chunk, now holds a
+tick only as long as its own wait, and the tick runs: mobs, time and the server's tasks with it. Packets take
+microseconds in play, so only a flood or a wait meets the budget. Ticks that leave packets log one line at most once a
+minute (`[packetcap] N ticks left packets for the next tick (the longest handling M ms)`).
+It also closes the quit race. Once `stopped` is set, just before `stopServer`, a new task runs on the caller's own
+thread (`MinecraftServer.scheduleExecutables`), so only tasks queued before it can be left behind. At the head of
+`stopServer` (every level still open) every task still queued runs, inside `managedBlock`, where `shouldRun` runs a
+task however fresh, for at most 2 s. An integrated server runs any queued during the save once more at the tail,
+because `stopped` isn't volatile and a thread may not have seen it. So the client's `IntegratedServer.halt` task runs
+and its join returns.
+Its own common config `awaken.packetcap.mixins.json` (not required, `defaultRequire` 0, listed in `neoforge.mods.toml`).
+Version lock Minecraft 26.3, NeoForge 26.3.0.95 (`PacketCap.MINECRAFT/NEOFORGE`). Probe: the hook marks itself applied
+the first time it runs. Setting `packetCap` in `config/awaken-packetcap-server.toml` (a local config, default on). Off
+for the session on the first failure. Off, both hooks return at once and the game is vanilla's.
+`turbo_packet_cap_floods` floods the GameTest server's own queue with 400 tasks of 1 ms each. They run in order over
+at least 8 ticks, and no tick handles them for longer than the budget plus 3 ms. The drain alone, on a queue of its
+own, keeps to its budget and leaves the rest.
 Framings lay only the highroads through a place: the lanes round it would plan the regions about (48 s on the runner).
 Euan's 42 s freeze in a D-rank trial (2026-10-28, build 5cd4d985: "the mobs just stopped moving") was a player coming
 back from another level. Vanilla keeps an entity's supporting block (`mainSupportingBlockPos`) through a teleport to
