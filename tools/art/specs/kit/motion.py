@@ -139,8 +139,9 @@ class Blend:
             sx, sv = self.sx.setdefault(bone, [0.0, 0.0]), self.sv.setdefault(bone, [0.0, 0.0])
             if self.seeded and dt > 0:
                 lu = self.up[bone]
-                sx[0] -= gain * (ax - lu[0])
-                sx[1] -= gain * (az - lu[1])
+                # the parents' turn the short way round, as KitBlend does (a ball rolled a whole turn is no turn)
+                sx[0] -= gain * ((ax - lu[0] + math.pi) % (2 * math.pi) - math.pi)
+                sx[1] -= gain * ((az - lu[1] + math.pi) % (2 * math.pi) - math.pi)
                 om = 2 * math.pi * hz
                 steps = min(16, math.ceil(dt / STEP))  # KitBlend.STEP: slices, so a stiff spring never blows up
                 h = dt / steps

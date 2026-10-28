@@ -9929,6 +9929,45 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     half a turn of the key before), and the streamers swing forward under her as she falls (swung back they run out
     of room once she is down).
   - **Meter.** Worst kink outside a strike 3.5°; held at most 12% on every move; dips at most 39%.
+- **The Thornback, the Thorn Pangolin** (body and motion, `kit/bosses/guardian_gardens.py`). "Something heavy moves in
+  the hanging gardens." A pangolin the length of a cart, 7 blocks from snout to tail tip, the arch of its back 2.3
+  blocks up. Its scales are broad holly leaves, dark glossy green with pale rims and midribs and ochre thorns at their
+  tips and edges, in eight rows that lift on their own bones (neck, shoulders, middle, hips and four down the tail);
+  its flanks are scaled in smaller overlapping leaves, and pink garden roses grow between the rows. Soft brown skin
+  under them, a small head low on a long snout with a tongue that flicks out of it. It walks on its knuckles, its
+  great front claws folded back under its hands. 116 cubes (696 faces) on 35 bones. The hitbox is 2.2 x 2.3, round its
+  body (the tail out behind it).
+  - **The ball.** A `roll` bone sits at the curled body's middle (found once the body is built), and `curl` (0 to 1)
+    rolls it up: the back and neck curl forward, the head tucks under, the tail comes under and round, and the legs
+    fold in under it over the first 60% of the curl. Curled, it is 1.5 blocks wide and 2.8 long. Every pose that
+    lies on the floor (the ball, the body on its side) is let down or lifted on the roll bone until its lowest part
+    rests on the floor.
+  - **The idle.** It breathes, its snout low and sniffing from side to side over the floor, its tongue flicking out;
+    it lifts its head to scent the air, one front foot rising; a ripple runs back down its scales from its neck to
+    its tail. It walks one foot at a time, its back rolling with the steps and its snout swinging low; it runs in a
+    lumbering trot.
+  - **Its blows.** The claw rakes one great front claw out wide from its side and across in front of it, then the
+    other (a string, then the Maul); its scales stay up through the string. The Maul rears half up on its hind legs
+    with both claws spread over you, holds, and drops its front onto you. Whoever is behind gets its body bent round
+    to look back along itself and its tail swung across. The Thornback Charge tucks its head, rolls up into a ball
+    and rocks back, holds, and rolls 8 blocks at you, turning 326 degrees as it goes (a radian for every 22.5 px it
+    rolls), clenching and loosening, its scales clattering; it skids, rocks and unrolls, its snout first and its legs
+    coming out over the whole recovery. The Gale of Petals rears right up on its hind legs with its tail set on the
+    floor as a prop (`_prop` lifts the tail's root until none of it is under the floor) and its arms tucked to its
+    chest, shakes itself from snout to tail like a dog, and comes down reaching for the floor with its front feet.
+    Thorn Spray (the signature) hunches with its tail up while its scales rise row by row from its neck to its tail,
+    rattling, then throws itself open with every scale on end. Lurkers puts its snout to the floor and digs with one
+    claw and then the other. Its intro (from its ball) scents the air, rises half up on its hind legs with its scales
+    lifting, and comes down onto its claws.
+  - **The spin.** The library's settle and follow-through scale the last pose's turns, which would spin a ball that
+    rolled a whole turn most of the way back. So the Charge's clip is keyed from its own keys (`_own`), and its roll
+    bone's turn is keyed again from unwrapped turns, ending at 360 (KitBlend wraps a turn into the next move, and the
+    tail tip's springs read the parents' turn the short way round, as the meter now does too).
+  - **The death.** It rears up a little with its head flung back and its scales lifting, staggers to its left, goes
+    over onto its side and bounces, draws itself in loosely round itself with its tail coming over, breathes once and
+    is still (4.8 s). Its hands and feet rest 0.3 px above the floor: the ground pass takes anything 0.2 px or less
+    above it as in it, and was twisting the arms at rest.
+  - **Meter.** Worst kink outside a strike 4.8°; held at most 11% on every move; dips at most 27%.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 

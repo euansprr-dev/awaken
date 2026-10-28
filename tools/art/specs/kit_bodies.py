@@ -29,7 +29,7 @@ import fauna_rig as R  # noqa: E402
 from kit import core  # noqa: E402
 
 BOSSES = ["ember_tyrant", "unit_zero", "mother_of_spores", "gearwright_colossus", "root_saint", "bell_warden", "glass_serpent", "hive_regent", "drowned_archivist", "lantern_broker", "abbot_of_frost", "mirror_knight", "the_sleeper",
-          "sky_leviathan", "hollow_herald", "guardian_rim"]
+          "sky_leviathan", "hollow_herald", "guardian_rim", "guardian_gardens"]
 
 
 def designs(only=None):

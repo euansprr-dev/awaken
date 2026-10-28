@@ -120,7 +120,7 @@ final class DeepBestiary {
                 .phase(1.0F, "The Rootmother descends.", a(ROOT, "Moss Web").radius(3), a(LEAP, "Rootfall").radius(3.5F).heavy())
                 .phase(0.5F, "The Rim wakes.", a(SUMMON, "Brood").summon("rim_crawler").n(3), a(FANGS, "Root Lances").n(14), a(LEAP, "Rootfall").radius(3.5F))
                 .parts(P("rootmother_silk", "Rootmother Silk", "moss")).build());
-        out.add(m("guardian_gardens", "The Thornback", Theme.GARDENS, Tier.GUARDIAN, Model.RAVAGER, "Charges along the ledges and blows petals hard enough to knock you off").hp(32).dmg(5).spd(0.3).tint(0xA0D090).bar(BossBarColor.GREEN).arena(24)
+        out.add(m("guardian_gardens", "The Thornback", Theme.GARDENS, Tier.GUARDIAN, Model.RAVAGER, "Charges along the ledges and blows petals hard enough to knock you off").hp(32).dmg(5).spd(0.3).size(2.2F, 2.3F).tint(0xA0D090).bar(BossBarColor.GREEN).arena(24)
                 .intro("Something heavy moves in the hanging gardens.")
                 .phase(1.0F, "The Thornback lowers its horns.", a(CHARGE, "Thornback Charge").heavy(), a(GUST, "Gale of Petals").radius(10).power(0.8F))
                 .phase(0.5F, "The vines tighten.", a(NOVA, "Thorn Spray").n(14).bolt(BoltKind.THORN), a(SUMMON, "Lurkers").summon("vine_lurker").n(2), a(CHARGE, "Thornback Charge"))
