@@ -1,7 +1,7 @@
 # Bosses, premium rework (plan, awaiting Euan's approval)
 
 Written 2026-10-28 after Euan's first look at the three kit bosses. Process: `.claude/PLANNING-PROCESS.md`.
-The approval page carries the same plan with pictures. Nothing here is built yet, apart from the quick fixes listed
+The approval page (https://claude.ai/artifact/3MpmzQ6mv8LGNH7TyURkfJ) carries the same plan with pictures. Nothing here is built yet, apart from the quick fixes listed
 under "Already fixed" (commit 8a95cecc and the turn-step fix after it).
 
 ## What Euan asked for
