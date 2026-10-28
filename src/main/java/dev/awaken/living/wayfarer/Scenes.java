@@ -530,7 +530,11 @@ public final class Scenes extends SavedData {
     private static void campFire(ServerLevel level, BlockPos camp) {
         if (!near(level, camp, 256)) return;
         BlockPos column = camp.offset(-3, 0, 3);
-        if (!level.hasChunkAt(column)) return;
+        // the scan's chunks finished, as dryLand's: one still generating would be waited for on the server thread (and a
+        // fire there missed, so lit twice)
+        for (int cx = camp.getX() - 6 >> 4; cx <= camp.getX() + 6 >> 4; cx++) for (int cz = camp.getZ() - 6 >> 4; cz <= camp.getZ() + 6 >> 4; cz++) {
+            if (level.getChunkSource().getChunkNow(cx, cz) == null) return;
+        }
         for (BlockPos q : BlockPos.betweenClosed(camp.offset(-6, -3, -6), camp.offset(6, 3, 6))) {
             if (level.getBlockState(q).is(net.minecraft.world.level.block.Blocks.CAMPFIRE)) return;
         }
