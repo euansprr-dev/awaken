@@ -8530,3 +8530,22 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
   steps and hints), and the rail's unread count rising as trails open. **Not built / unverified**: the task card and Now line with a followed trail on a real
   screen (the first tour caught the first-hour card covering it; fixed, and the second tour showed the trail on the card ticking as steps were done; the card's count was off until every done step was sent, fixed and tested, not re-toured; the Now line shows the followed step below the Hale and camp lines, as designed at priority 55); a step's `{key}` caps; a `tip` (none shipped yet); several
   followed trails; the Powers, Story and the remaining World trails; the Armoury's Track as a step type.
+
+## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
+
+Builds on §28.3 (W2) and §28.5 (W5); the plan's audit (`docs/mining/proof/`) is what it was designed against: Tectonic
+seals noise caves within ~12 blocks of the ground, so the sky-open mouths are unmarked slots (median 106 m from any
+spot in Euan's world); 99% of iron was vanilla's scatter; the Hearth never said where; our sparks were round dots over
+vanilla's crack particles.
+
+### 34.0 Decisions (approved)
+1. Caves are where metal lives, and the trip is a story. 2. New land: vanilla's scattered iron, copper, coal and gold at
+35%; early lodes open onto cave walls. 3. Our own frequent mouths (hill mouth, Delver adit, doline, cleft) about every
+200 m with tells (breath, draught, cairn); Tectonic untouched. 4. The Hearth points to the nearest mouth with the metal
+it lacks ("Mark it on my map"), honest when it knows none. 5. The strike rebuilt: chips of the block's texture, spark
+streaks, a breath of dust, new cracks; vanilla's crack particles replaced. 6. True strikes on ores. 7. The Delver's
+Pick and its six verses replace the tool ladder; Hunter mattock recipes retire. 8. The pick is pulled from the stone at
+the first adit (handed over at the Hearth when no adit is near). 9. Cave air (bands, Lens haze, motes, shafts, the Deep
+breathes). 10. Delver lamps. 11. Strike and cave sounds from CC0 recordings (each download listed to Euan first).
+12. The Hollows in every cave by depth, drawn by strikes, wary of light. 13. One session, P1 (the first iron trip)
+first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
