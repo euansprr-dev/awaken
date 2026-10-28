@@ -8329,7 +8329,7 @@ and a lattice chunk whose legs aren't known; every other chunk's structure start
 Minecraft 26.3, NeoForge 26.3.0.95 (`RoadStarts.MINECRAFT/NEOFORGE`); probe: the hook marks itself applied the first
 time it runs (`village_road_starts_applied` on the GameTest server's own chunks); setting `roadStarts` in
 `config/awaken-roadstarts-server.toml` (a local config: the machine's, read at mod load, before any world generates;
-default on); off for the session on the first failure (a planner's failure, a submit or a step that throws), and a
+default on; a tour turns it off with the knob `ROADSTARTS=off`); off for the session on the first failure (a planner's failure, a submit or a step that throws), and a
 chunk whose planning failed lays its roads inline in the step, as before. Off, the hook returns at once and the step is
 vanilla's (the access transformer only widens a field). The roads are the same either way (each piece made once by
 whoever asks first; bench fingerprint 590ebda7cf744cf3, 92,028 columns, the same as without it).
