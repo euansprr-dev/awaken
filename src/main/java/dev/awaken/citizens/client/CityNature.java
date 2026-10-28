@@ -50,7 +50,7 @@ public final class CityNature {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         Entity p = mc.getCameraEntity();
-        if (level == null || p == null || mc.isPaused() || !CityLife.known()) return;
+        if (level == null || p == null || mc.isPaused() || !CityLife.known() || !CityLife.inside(p.getX(), p.getZ(), 16)) return;
         CityPlan plan = CityLife.plan();
         if (plan == null) return;
         long now = level.getGameTime();
@@ -58,14 +58,14 @@ public final class CityNature {
         boolean day = tod < 12000 || tod > 23500;
         double x = p.getX() - CityLife.cx, z = p.getZ() - CityLife.cz;
         double river = toRiver(plan.river, x, z);
-        if (day && river < GULLS && due(0, now, 120, 320)) play(SEAGULL, 0.6F * (float) (1 - river / GULLS));
+        if (day && river < GULLS && due(0, now, 600, 1400)) play(SEAGULL, 0.6F * (float) (1 - river / GULLS));
         if (day && river < CHORUS && due(1, now, 3600, 7200)) play(SEAGULL_LONG, 0.35F * (float) (1 - river / CHORUS));
         int d = plan.district((int) Math.floor(x), (int) Math.floor(z));
-        if (tod < 11000 && d >= 0 && d < DOVES.length && DOVES[d] && due(2, now, 500, 1400)) play(DOVE, 0.3F);
+        if (tod < 11000 && d >= 0 && d < DOVES.length && DOVES[d] && due(2, now, 1400, 2800)) play(DOVE, 0.3F);
         if (tod > 13500 && tod < 22500) {
             double owl = Math.abs(Math.hypot(x, z) - plan.wallRadius);
             for (CityPlan.District t : plan.districts) owl = Math.min(owl, Math.hypot(t.bellX() - x, t.bellZ() - z));
-            if (owl < OWLS && due(3, now, 600, 1600)) play(OWL, 0.4F * (float) (1 - owl / OWLS));
+            if (owl < OWLS && due(3, now, 1800, 3600)) play(OWL, 0.4F * (float) (1 - owl / OWLS));
         }
     }
 
@@ -82,14 +82,21 @@ public final class CityNature {
     }
 
     private static boolean due(int slot, long now, int min, int max) {
+        if (NEXT[slot] == 0) {
+            NEXT[slot] = now + min + R.nextInt(Math.max(1, max - min));
+            return false;
+        }
         if (now < NEXT[slot]) return false;
         NEXT[slot] = now + min + R.nextInt(Math.max(1, max - min));
         return true;
     }
 
+    static void clear() { java.util.Arrays.fill(NEXT, 0); }
+
     private static void play(Identifier sound, float volume) {
+        volume *= 0.6F * CityAudio.outdoorGain();
         if (volume <= 0.02F) return;
-        Minecraft.getInstance().getSoundManager().play(new SimpleSoundInstance(sound, SoundSource.AMBIENT, volume,
+        CityAudio.playNature(new SimpleSoundInstance(sound, SoundSource.AMBIENT, volume,
                 0.95F + R.nextFloat() * 0.1F, R, false, 0, SoundInstance.Attenuation.NONE, 0, 0, 0, true));
     }
 }

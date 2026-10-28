@@ -1071,13 +1071,13 @@ public final class CityCritters {
         if (c.speed > 0.01F) {
             clip(c, "walk");
             // four beats a stride; heavy, low hooves
-            if ((c.tickCount + c.seed) % 7 == 0) sound(level, c, CitySounds.HOOF, 0.4F, 0.78F + r.nextFloat() * 0.12F);
-            if ((c.tickCount + c.seed) % 40 == 0) sound(level, c, CitySounds.CART_ROLL, 0.5F, 0.9F + r.nextFloat() * 0.2F);
+            if ((c.tickCount + c.seed) % 7 == 0) sound(level, c, CitySounds.HOOF, 0.18F, 0.78F + r.nextFloat() * 0.12F);
+            if ((c.tickCount + c.seed) % 100 == 0) sound(level, c, CitySounds.CART_ROLL, 0.28F, 0.9F + r.nextFloat() * 0.2F);
         } else {
             if (c.clip != CLIPS[c.kind].get("toss") || c.tickCount - c.clipStart > 24) clip(c, "idle");
             if (r.nextInt(240) == 0) {
                 clip(c, "toss");
-                sound(level, c, CitySounds.HARNESS_BELLS, 0.5F, 1F);
+                sound(level, c, CitySounds.HARNESS_BELLS, 0.2F, 1F);
                 sound(level, c, CitySounds.HORSE_SNORT, 0.4F, 0.85F);
             }
         }
@@ -1186,7 +1186,7 @@ public final class CityCritters {
     }
 
     private static void sound(ClientLevel level, CityCritter c, SoundEvent ev, float vol, float pitch) {
-        if (ev == null) return;
+        if (ev == null || dist2Player(c) > 24 * 24) return;
         level.playLocalSound(c.getX(), c.getY(), c.getZ(), ev, SoundSource.NEUTRAL, vol, pitch, false);
     }
 

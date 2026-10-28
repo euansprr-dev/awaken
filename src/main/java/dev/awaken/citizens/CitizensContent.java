@@ -101,7 +101,11 @@ public final class CitizensContent {
     }
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
-        return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Awaken.id(name)));
+        return SOUNDS.register(name, () -> switch (name) {
+            case "city.bell.hour" -> SoundEvent.createFixedRangeEvent(Awaken.id(name), 192);
+            case "city.bell.district", "city.bell.alarm" -> SoundEvent.createFixedRangeEvent(Awaken.id(name), 112);
+            default -> SoundEvent.createVariableRangeEvent(Awaken.id(name));
+        });
     }
 
     static void register(IEventBus modBus) {

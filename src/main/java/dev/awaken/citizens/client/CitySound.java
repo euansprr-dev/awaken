@@ -32,9 +32,9 @@ import java.util.List;
  *   <li>one-shots on their own clocks: hammers at the four smithies through the working day (now and then the
  *   bellows), the stalls by day, boats creaking along the river, songbirds in the gardens (a dawn chorus), gulls over the
  *   quay, and at night the Watch's handbell on its rounds;</li>
- *   <li>the Choir's carillon from the spire at dawn, noon and dusk (our own three tunes), heard across the city.</li>
+ *   <li>the server owns tower bells; there is no additional client tune over its peal.</li>
  * </ul>
- * Each place list comes from the plan once. Loops are checked every 10 ticks (at most 3 of a kind, nearest first);
+ * Each place list comes from the plan once. Loops are checked every 10 ticks (one of each kind, nearest first);
  * nothing allocates per tick but a new sound.
  */
 public final class CitySound {
@@ -43,8 +43,7 @@ public final class CitySound {
     private static final SoundEvent FOUNTAIN = CitizensContent.FOUNTAIN.get(), LAP = CitizensContent.LAP.get(), MILL = CitizensContent.MILL.get(),
             TAVERN = CitizensContent.TAVERN.get(), ANVIL = CitizensContent.ANVIL.get(), BELLOWS = CitizensContent.BELLOWS.get(),
             STALL = CitizensContent.STALL.get(), BOAT = CitizensContent.BOAT.get(), SONGBIRD = CitizensContent.SONGBIRD.get(),
-            HANDBELL = CitizensContent.HANDBELL.get(), DAWN = CitizensContent.CARILLON_DAWN.get(), NOON = CitizensContent.CARILLON_NOON.get(),
-            DUSK = CitizensContent.CARILLON_DUSK.get();
+            HANDBELL = CitizensContent.HANDBELL.get();
 
     /** One kind of place: its points (world x, y, z), how near it starts, how many may play. */
     static final class Places {
@@ -64,20 +63,18 @@ public final class CitySound {
 
     private static Places fountains, laps, mills, taverns;
     private static final List<double[]> ANVILS = new ArrayList<>(), STALLS = new ArrayList<>(), RIVER = new ArrayList<>(), TREES = new ArrayList<>();
-    private static double[] spire;
     private static boolean built;
     private static int clock;
-    private static long lastTod = -1;
     private static final long[] NEXT = new long[8];
     private static final RandomSource R = RandomSource.create();
 
     private static void build(CityPlan plan) {
         built = true;
         int cx = CityLife.cx, sy = CityLife.sy, cz = CityLife.cz;
-        fountains = new Places(FOUNTAIN, 22, 2);
-        laps = new Places(LAP, 22, 3);
-        mills = new Places(MILL, 30, 2);
-        taverns = new Places(TAVERN, 20, 2);
+        fountains = new Places(FOUNTAIN, 18, 1);
+        laps = new Places(LAP, 16, 1);
+        mills = new Places(MILL, 24, 1);
+        taverns = new Places(TAVERN, 16, 1);
         ANVILS.clear();
         STALLS.clear();
         RIVER.clear();
@@ -110,7 +107,6 @@ public final class CitySound {
             int d = plan.district(tr[0], tr[1]);
             if (d == 6 || d == 4 || (tr[2] == 2)) TREES.add(new double[]{cx + tr[0] + 0.5, sy + plan.lift(tr[0], tr[1]) + 5, cz + tr[1] + 0.5});
         }
-        for (CityPlan.Landmark l : plan.landmarks) if (l.id().equals("choir")) spire = new double[]{cx + l.x() + 0.5, sy + 61, cz + l.z() + 0.5};
         // the smithies' anvils (the roster's data, from the plan's plots marked as forges by the citizens file)
         for (double[] a : smithies()) ANVILS.add(new double[]{cx + a[0] + 0.5, sy + 1.5, cz + a[1] + 0.5});
     }
@@ -151,84 +147,70 @@ public final class CitySound {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         Entity p = mc.getCameraEntity();
-        if (level == null || p == null || mc.isPaused() || !CityLife.known()) return;
+        if (level == null || p == null || !CityLife.known()) {
+            if (built) clear();
+            return;
+        }
+        if (mc.isPaused()) return;
         CityPlan plan = CityLife.plan();
         if (plan == null) return;
         if (!built) build(plan);
         int tod = (int) Math.floorMod(level.getOverworldClockTime(), 24000L);
         long now = level.getGameTime();
         double x = p.getX(), y = p.getY(), z = p.getZ();
-        carillon(level, tod, x, z);
         if (++clock % 10 == 0) {
-            loops(fountains, x, y, z, 0.8F);
-            loops(laps, x, y, z, 0.8F);
-            loops(mills, x, y, z, 0.9F);
+            loops(fountains, x, y, z, 0.4F);
+            loops(laps, x, y, z, 0.35F);
+            loops(mills, x, y, z, 0.4F);
             float tav = tod >= 11000 && tod < 18500 ? (tod < 12500 ? (tod - 11000) / 1500F : tod > 17500 ? (18500 - tod) / 1000F : 1F) : 0F;
-            loops(taverns, x, y, z, tav * 0.9F);
+            loops(taverns, x, y, z, tav * 0.38F);
         }
         boolean day = tod < 12000 || tod > 23500;
-        // forges through the working day, one blow pattern every few seconds from the nearest smithy in reach
-        if (tod >= 900 && tod < 10800 && due(0, now, 50, 120)) {
+        // forges through the working day, one blow pattern every nine to eighteen seconds from the nearest smithy in reach
+        if (tod >= 900 && tod < 10800 && due(0, now, 180, 360)) {
             double[] a = nearest(ANVILS, x, z, 48);
             if (a != null) {
-                play(level, a, ANVIL, 0.85F, 0.95F + R.nextFloat() * 0.1F);
-                if (R.nextFloat() < 0.25F) play(level, a, BELLOWS, 0.6F, 0.9F + R.nextFloat() * 0.2F);
+                play(level, a, ANVIL, 0.48F, 0.95F + R.nextFloat() * 0.1F);
+                if (R.nextFloat() < 0.25F) play(level, a, BELLOWS, 0.35F, 0.9F + R.nextFloat() * 0.2F);
             }
         }
-        if (tod >= 1000 && tod < 11500 && due(1, now, 40, 110)) {
+        if (tod >= 1000 && tod < 11500 && due(1, now, 240, 600)) {
             double[] s = random(STALLS, x, z, 22);
-            if (s != null) play(level, s, STALL, 0.55F, 0.9F + R.nextFloat() * 0.25F);
+            if (s != null) play(level, s, STALL, 0.30F, 0.9F + R.nextFloat() * 0.25F);
         }
-        if (due(2, now, 90, 260)) {
+        if (due(2, now, 400, 900)) {
             double[] b = random(RIVER, x, z, 26);
-            if (b != null) play(level, b, BOAT, 0.5F, 0.85F + R.nextFloat() * 0.3F);
+            if (b != null) play(level, b, BOAT, 0.3F, 0.85F + R.nextFloat() * 0.3F);
         }
         boolean chorus = tod > 22800 || tod < 1500;
-        if (day && due(3, now, chorus ? 14 : 50, chorus ? 50 : 150)) {
+        if (day && !CityNature.INSTALLED && due(3, now, chorus ? 200 : 400, chorus ? 420 : 900)) {
             double[] t = random(TREES, x, z, 30);
-            if (t != null) play(level, t, SONGBIRD, chorus ? 0.55F : 0.4F, 0.9F + R.nextFloat() * 0.3F);
+            if (t != null) play(level, t, SONGBIRD, chorus ? 0.3F : 0.22F, 0.9F + R.nextFloat() * 0.3F);
         }
         // gulls over the river: AmbientSounds' recorded ones when it's there (CityNature), ours otherwise
-        if (day && !CityNature.INSTALLED && due(4, now, 120, 320)) {
+        if (day && !CityNature.INSTALLED && due(4, now, 600, 1400)) {
             double[] g = random(RIVER, x, z, 60);
             if (g != null) {
                 double[] high = {g[0] + (R.nextDouble() - 0.5) * 20, g[1] + 22 + R.nextDouble() * 10, g[2] + (R.nextDouble() - 0.5) * 20};
-                play(level, high, CitySounds.GULL_CALL, 0.7F, 0.85F + R.nextFloat() * 0.3F);
+                play(level, high, CitySounds.GULL_CALL, 0.35F, 0.85F + R.nextFloat() * 0.3F);
             }
         }
         // the Watch on its rounds: a lantern-bearer rings the handbell now and then
-        if (!day && due(5, now, 600, 1400)) {
+        if (!day && due(5, now, 2400, 4800)) {
             for (Entity en : level.entitiesForRendering()) {
                 if (en instanceof CitizenBody b && CityGlow.carries(b) && b.distanceToSqr(x, y, z) < 40 * 40) {
-                    level.playLocalSound(b.getX(), b.getY() + 1.4, b.getZ(), HANDBELL, SoundSource.NEUTRAL, 0.25F, 1.05F, false);
+                    level.playLocalSound(b.getX(), b.getY() + 1.4, b.getZ(), HANDBELL, SoundSource.AMBIENT, 0.25F, 1.05F, false);
                     break;
                 }
             }
         }
     }
 
-    /** The carillon: when the clock passes dawn (0), noon (6000) or dusk (12000), the spire plays that hour's tune. */
-    private static void carillon(ClientLevel level, int tod, double x, double z) {
-        long prev = lastTod;
-        lastTod = tod;
-        if (prev < 0 || spire == null) return;
-        SoundEvent tune = null;
-        if (crossed(prev, tod, 0)) tune = DAWN;
-        else if (crossed(prev, tod, 6000)) tune = NOON;
-        else if (crossed(prev, tod, 12000)) tune = DUSK;
-        if (tune == null || Math.hypot(spire[0] - x, spire[2] - z) > 420) return;
-        level.playLocalSound(spire[0], spire[1], spire[2], tune, SoundSource.AMBIENT, 4.0F, 1F, false);
-    }
-
-    private static boolean crossed(long prev, long now, long mark) {
-        // the clock moves forward by a tick at a time (a jump of more than a minute is a /time set: no tune)
-        long d = Math.floorMod(now - prev, 24000L);
-        if (d == 0 || d > 1200) return false;
-        long since = Math.floorMod(now - mark, 24000L);
-        return since < d;
-    }
-
     private static boolean due(int slot, long now, int min, int max) {
+        if (NEXT[slot] == 0) {
+            NEXT[slot] = now + min + R.nextInt(Math.max(1, max - min));
+            return false;
+        }
         if (now < NEXT[slot]) return false;
         NEXT[slot] = now + min + R.nextInt(Math.max(1, max - min));
         return true;
@@ -270,10 +252,10 @@ public final class CitySound {
         for (int s = 0; s < pl.most; s++) {
             Loop l = pl.playing[s];
             if (l == null) continue;
-            double d = Math.hypot(l.px - x, l.pz - z);
+            double d = Math.sqrt((l.px - x) * (l.px - x) + (l.pz - z) * (l.pz - z) + (l.at[1] - y) * (l.at[1] - y));
             if (d > pl.start + 8 || level <= 0.01F) l.ending = true;
             if (l.isStopped() || (l.ending && !mc.getSoundManager().isActive(l))) pl.playing[s] = null;
-            else l.target = level;
+            else l.target = level * CityAudio.insideGain(l.at[0], l.at[1], l.at[2]);
         }
         if (level <= 0.01F) return;
         for (int s = 0; s < pl.most; s++) {
@@ -281,14 +263,14 @@ public final class CitySound {
             double best = pl.start * pl.start;
             double[] pick = null;
             for (double[] q : pl.at) {
-                double d = (q[0] - x) * (q[0] - x) + (q[2] - z) * (q[2] - z);
+                double d = (q[0] - x) * (q[0] - x) + (q[2] - z) * (q[2] - z) + (q[1] - y) * (q[1] - y);
                 if (d >= best || taken(pl, q)) continue;
                 best = d;
                 pick = q;
             }
             if (pick == null) return;
             Loop l = new Loop(pl.event, pick);
-            l.target = level;
+            l.target = level * CityAudio.insideGain(pick[0], pick[1], pick[2]);
             pl.playing[s] = l;
             mc.getSoundManager().play(l);
         }
@@ -299,9 +281,19 @@ public final class CitySound {
         return false;
     }
 
+    static int voices() {
+        int n = 0;
+        if (fountains != null && fountains.playing[0] != null) n++;
+        if (laps != null && laps.playing[0] != null) n++;
+        if (mills != null && mills.playing[0] != null) n++;
+        if (taverns != null && taverns.playing[0] != null) n++;
+        return n;
+    }
+
     static void clear() {
         built = false;
-        lastTod = -1;
+        clock = 0;
+        java.util.Arrays.fill(NEXT, 0);
         for (Places pl : new Places[]{fountains, laps, mills, taverns}) {
             if (pl == null) continue;
             for (int s = 0; s < pl.most; s++) {

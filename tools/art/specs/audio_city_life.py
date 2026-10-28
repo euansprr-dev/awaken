@@ -1,6 +1,6 @@
 """CARILLON's soundscape (M4 B3b, SPEC §16.0 decision 28): the districts' beds, the places that sound, the animals'
-voices and the Choir's carillon. Synthesised from scratch with tools/art/audiokit.py (numpy only, seeded); nothing is
-recorded or copied. Where the game already has the right voice (cats, dogs, hooves) the client references it by id.
+voices. Most existing ambience is synthesized with tools/art/audiokit.py (numpy only, seeded).
+Bells are CC0 recordings processed by audio_city.py; provenance is in tools/art/sources/city. Where the game already has the right voice (cats, dogs, hooves) the client references it by id.
 
     python3 tools/art/specs/audio_city_life.py              render everything, write the events, subtitles, manifests
     python3 tools/art/specs/audio_city_life.py beds         only the bed stems and manifests
@@ -13,7 +13,7 @@ Three kinds of file:
   - Place loops (sounds/amb_city_<name>.ogg, mono, seamless): played at their place by citizens.client.CitySound:
     fountains, water lapping at the quays, the mill wheels, a tavern's muffled evening.
   - One-shots (sounds/city/<name><n>.ogg, mono, several variants each): forges, stalls, boats, songbirds, the animals,
-    the carillon's three tunes (dawn, noon, dusk; mono like the rest, so the spire is where they come from).
+    legacy carillon event ids (recorded, widely spaced strokes; automatic playback is server-only).
 
 The crowd is the hard one: a murmur of formant voices (glottal harmonics shaped by vowel formants, syllables and
 phrases with falling intonation, consonant hiss between), placed at distances round the listener, darkened and
@@ -544,59 +544,8 @@ def cart_roll(seed):
     return (_norm(rumble) * 0.8 + _norm(clacks) * 0.7 + creak) * env
 
 
-def cart_bells(seed):
-    """The collar's brass bells shaken by a toss of the head: a bright jingle that settles."""
-    r = K.rng(seed)
-    n = K.ns(1.6)
-    x = np.zeros(n)
-    t = 0.0
-    for k in range(int(r.integers(8, 16))):
-        i = int(t * SR)
-        f = r.choice([2350, 2790, 3130, 3520]) * r.uniform(0.99, 1.01)
-        ring = metal_ring(f, 0.35, n - i, int(r.integers(1 << 30)), 0.5) * (1 - k / 18) * r.uniform(0.4, 1)
-        x[i:] += ring
-        t += r.uniform(0.02, 0.09) * (1 + k * 0.08)
-    return x
-
-
-# ---- the carillon (shipped mono, from the Choir's spire) ------------------------------------------------------------
-
-SMALL = [(1.0, 1.0, 1.0), (2.0, 0.7, 0.7), (2.4, 0.45, 0.45), (3.0, 0.35, 0.35), (4.0, 0.2, 0.25), (5.2, 0.12, 0.15)]
-# our own tunes: dawn rises, noon is the city's theme, dusk settles (MIDI notes, beats)
-TUNES = {
-    "dawn": [(74, 1), (76, 1), (78, 1), (81, 2), (78, 1), (81, 1), (83, 1), (86, 3)],
-    "noon": [(74, 1), (78, 1), (81, 1), (86, 2), (85, 1), (81, 1), (83, 1), (81, 2), (78, 1), (79, 1), (81, 1), (78, 2),
-             (76, 1), (74, 1), (76, 1), (74, 3)],
-    "dusk": [(86, 2), (83, 1), (81, 1), (78, 2), (76, 1), (78, 1), (74, 4)],
-}
-
-
-def carillon(name, seed):
-    beat = {"dawn": 0.42, "noon": 0.36, "dusk": 0.55}[name]
-    notes = TUNES[name]
-    total = sum(b for _, b in notes) * beat + 6.0
-    n = K.ns(total)
-    x = np.zeros(n)
-    r = K.rng(seed)
-    t = 0.2
-    for m, b in notes:
-        f = 440 * 2 ** ((m - 69) / 12)
-        i = int(t * SR)
-        L = n - i
-        tone = np.zeros(L)
-        tt = np.arange(L) / SR
-        for ratio, amp, dt in SMALL:
-            fr = f * ratio
-            t60 = 3.2 * dt * (600 / f) ** 0.5
-            tone += amp * np.sin(2 * np.pi * fr * tt + r.uniform(0, 6)) * np.sin(2 * np.pi * (fr + 0.8 * ratio) * tt) ** 2 * 10 ** (-3 * tt / t60)
-        strike = K.bandpass(r.standard_normal(K.ns(0.02)), 3000, 1.0) * 0.2
-        tone[:len(strike)] += strike
-        x[i:] += tone * (1.0 if b > 1 else 0.85)
-        t += b * beat * (1 + 0.03 * r.standard_normal())
-    # heard across the roofs from high up: a long, open tail
-    ir = K.reverb_ir(t60=3.2, predelay=0.05, bright=0.45, width=1.0, early=0.4, size=2.2, seed=seed)
-    wet = K.convolve(x, ir)[:n]
-    return K.stereo(x) * 0.7 + wet * 0.55
+# Recorded bell assets share one processing path and provenance manifest.
+from audio_city import cart_bells, carillon
 
 
 # =====================================================================================================================
@@ -818,7 +767,7 @@ def write_events():
         lang["subtitles.awaken." + eid] = sub
     for eid, tune in CARILLON.items():
         ev[eid] = {"subtitle": "subtitles.awaken.city.carillon",
-                   "sounds": [{"name": f"awaken:city/carillon_{tune}", "attenuation_distance": 320, "stream": True}]}
+                   "sounds": [{"name": f"awaken:city/carillon_{tune}", "attenuation_distance": 192, "stream": True}]}
     lang["subtitles.awaken.city.carillon"] = "The Choir's carillon plays"
     for st, _, _ in STEMS:  # the ambience slot reads its stems' files straight from the manifest
         ev.pop("layer.city." + st, None)
@@ -843,7 +792,7 @@ def write_manifests():
             keep = [k for k, s in enumerate(stems) if s not in quiet]  # a stem left out isn't decoded at all
             m = {"schemaVersion": 1, "source": "ambient", "title": title, "sampleRate": SR, "frames": frames,
                  "stems": [{"name": stems[k], "file": "awaken:" + stem_file(stems[k]), "attack": 6, "duck": 8, "release": 10} for k in keep],
-                 "levels": [{"name": nm, "gains": [g[k] for k in keep]} for nm, g in zip(("calm", "tension", "combat", "lord"), gains)]}
+                 "levels": [{"name": nm, "gains": [round(g[k] * 0.65, 4) for k in keep]} for nm, g in zip(("calm", "tension", "combat", "lord"), gains)]}
             with open(os.path.join(MANIFESTS, folder, d + ".json"), "w") as f:
                 json.dump(m, f, indent=2)
                 f.write("\n")
@@ -866,7 +815,7 @@ def render_shots():
     for eid, ((name, fn, n), _, _, _) in SHOTS.items():
         for k in range(n):
             x = K.mono(fn(sum(map(ord, name)) * 13 + k * 101))
-            y = K.master(x, -22.0, ceil - 0.7)
+            y = x if name == "cart_bells" else K.master(x, -22.0, ceil - 0.7)
             K.write_ogg(os.path.join(SOUNDS, f"city/{name}{k + 1}.ogg"), y, q, None)
         print(f"  {name:15s} x{n}")
     at, atol, aceil, aq = TARGETS["amb"]
@@ -875,8 +824,8 @@ def render_shots():
         K.write_ogg(os.path.join(SOUNDS, name + ".ogg"), y, aq, None)
         print(f"  {name:20s} {len(y) / SR:5.1f} s  RMS {K.gated_rms(y):6.1f}")
     for eid, tune in CARILLON.items():
-        # mono, so the spire is a place: its 320-block falloff applies (a stereo sound plays unplaced, as loud everywhere)
-        y = K.master(K.mono(carillon(tune, 4400 + len(tune))), -21.0, ceil - 0.7)
+        # Legacy positional event ids stay available; their recorded strokes retain their measured headroom.
+        y = K.mono(carillon(tune, 4400 + len(tune)))
         K.write_ogg(os.path.join(SOUNDS, f"city/carillon_{tune}.ogg"), y, q, None)
         print(f"  carillon_{tune:5s} {len(y) / SR:5.1f} s")
 

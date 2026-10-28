@@ -358,6 +358,6 @@ final class Recognition {
         line = Lines.fill(line, c.events.aboutName(), district(pick), "", hour(tod));
         int kind = job == Roster.CRIER ? 2 : 1;
         if (aloud(pick, line, job == Roster.CRIER ? 110 : 60, kind, job == Roster.CRIER ? 28 : 18, now) && job == Roster.CRIER)
-            c.level.playSound(null, pick.blockPosition(), CitizensContent.HANDBELL.get(), SoundSource.NEUTRAL, 1.4f, 1f);
+            c.level.playSound(null, pick.blockPosition(), CitizensContent.HANDBELL.get(), SoundSource.AMBIENT, 0.35f, 1f);
     }
 }
