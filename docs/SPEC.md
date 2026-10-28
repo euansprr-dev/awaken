@@ -9778,6 +9778,49 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     his side, the hat rolls off, and last of all the mask falls from his face (4.4 s).
   - **Meter.** Worst kink outside a strike 5.0° (the Split's hands); held at most 11% on every move; dips at most 34%.
 
+- **The Sleeper, the Four-Poster** (body and motion, `kit/bosses/the_sleeper.py`). "You've been here before. You
+  haven't." A great old four-poster bed that walks on its posts. Below the frame each post is a turned leg with a carved
+  knee and a claw gripping a ball for a foot; above it the posts carry a canopy with a gilt-fringed valance and torn
+  velvet curtains bunched at the posts, and a dreamcatcher hangs from its front, its web glowing pink. A crescent moon
+  and stars are carved on the headboard and a shut eye on the footboard. In the bed, propped on his pillows under a
+  faded patchwork quilt (moth holes and all) with the sheet turned down over it, the Sleeper: an ashen grey giant in a
+  striped nightcap, asleep with his mouth open, one hand clutching the sheet, the other arm far too long and hanging
+  out over the side so that its fist drags on the floor. Under the bed, behind the torn dust ruffle, it is dark, and
+  pink eyes look out. Rose, plum, faded dusk and ochre patches, cream linen, dark wood and gilt. 38 x 54 px, the
+  finials 4.4 blocks up; 164 cubes (984 faces). The hitbox is 2.2 x 4.0 (size 1.0 x 1.8 at scale 2.2). It is the only
+  boss that is furniture: a quadruped whose rider never wakes until the signature.
+  - **One pose call drives it all** (`_pose`): the bed's lift, pitch, roll, yaw and shift, where each foot stands (leg
+    IK, every foot set plumb), the Sleeper's torso, head, jaw and lids (they sink into his head to open his eyes), where
+    his fist goes (arm IK; by default dragging on the floor beside the bed, wherever the bed has turned), the
+    dreamcatcher's swing and spin, and the dark under the bed (drawn up into the frame when it rears or lies down).
+    Every curtain bunch, the dreamcatcher and the tattered canopy cloth are hung plumb on every key, and springs swing
+    them on top. The curtains draw shut by scale tracks on their bunches.
+  - **The idle.** He breathes slowly, the quilt lifting and the bed rising a little on each breath, and snores; the bed
+    rests a front leg and sets it down again; he twitches in his sleep, his head rolling and his knuckles curling on the
+    floor. **The walk** is a heavy four-beat walk on its posts, the frame rolling over each leg as it takes the weight
+    and the fist dragging; **running**, it bounds like a rocking horse, front pair then back pair, pitching fore and aft.
+    It turns by stepping its diagonal pairs round.
+  - **Its blows.** The stomp rears a front post high with the bed's weight sitting back, then stamps it down a long step
+    ahead as the bed drops onto it (one post, then the other, in a string). The Restless Fist: the bed braces and rolls
+    away as he drags his fist back, then he heaves the arm up high over the bed's side half sitting up, holds it, and
+    brings it down by the bed's front corner with all its weight rolling after. Whoever is behind gets kicked by both
+    back posts, like a mule. Runaway Bed sinks back with its foot end lowered, paws the floor with a front claw, and
+    bolts at you in three bounds, skidding up on its back legs. Heavy Eyelids: he yawns, the bed settles lower like
+    someone getting comfortable, and the curtains draw shut all round; behind them it breathes and rocks deep asleep
+    until it stirs and they open. Night Terrors: he tosses and turns, the bed rocking with him on braced legs. Dreamstep
+    sinks him into his pillows and the bed into a crouch with the curtains half shut, shivering, and it rises somewhere
+    else. Sleepwalkers sits him half up with his head lolling and reaches his arm straight out ahead of the bed, the hand
+    hanging limp. Rude Awakening (the signature): the bed shudders and rears up on its back posts, its front claws
+    pawing high, and the Sleeper sits bolt upright with his eyes open for the first time, flings his arm up and screams;
+    the bed crashes down onto its front posts and his fist with it, then he sinks back and his eyes close. It waits
+    lying low on its folded legs like any bed; its intro shakes it like a wet dog from foot end to canopy, and his fist
+    thumps the floor once.
+  - **The death.** A front leg gives, all four splay and it crashes onto its frame; he sits up one last time with his
+    eyes open and looks round, lies back, and the curtains draw shut round him (4.6 s).
+  - **Meter.** Worst kink outside a strike 5.5° (the Sleepwalkers' arm); held at most 14% on every move; dips at most
+    35%. A first windup key at 0.35 of the windup or later gets the kit's counter key at 0.3, which holds every bone
+    but the arms at rest there; the Sleeper's first keys are all at 0.3 or earlier.
+
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

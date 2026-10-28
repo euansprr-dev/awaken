@@ -286,7 +286,7 @@ final class GateBestiary {
                 .ab(a(BLINK, "Doorway"), a(DARKNESS, "Lights Off")).build());
         out.add(m("the_waking", "The Waking", Theme.NIGHTMARE, Tier.WARDEN, Model.WARDEN, "A wake-up call that tears at the spirit").hp(36).dmg(6.5).spd(0.28).traits(HUNTER)
                 .ab(a(BEAM, "Wake-Up Call").bolt(BoltKind.DREAM).power(1.9F).wind(34).heavy(), a(SLAM, "Thrash").radius(4), a(SUMMON, "Bad Dreams").summon("night_terror").n(2)).build());
-        out.add(m("the_sleeper", "The Sleeper", Theme.NIGHTMARE, Tier.LORD, Model.ZOMBIE, "Sleepwalks between dream and waking; when it wakes, everything does").hp(30).dmg(4.5).spd(0.24).scale(2.2F).traits(HAUNTED).bar(BossBarColor.PINK).arena(22)
+        out.add(m("the_sleeper", "The Sleeper", Theme.NIGHTMARE, Tier.LORD, Model.ZOMBIE, "Sleepwalks between dream and waking; when it wakes, everything does").hp(30).dmg(4.5).spd(0.24).scale(2.2F).size(1.0F, 1.8F).traits(HAUNTED).bar(BossBarColor.PINK).arena(22)
                 .intro("You've been here before. You haven't.")
                 .phase(1.0F, "The Sleeper stirs.", a(SLAM, "Restless Fist").radius(4.5F), a(DARKNESS, "Heavy Eyelids"))
                 .phase(0.66F, "It turns over in its sleep.", a(SUMMON, "Night Terrors").summon("night_terror").n(2), a(BLINK, "Dreamstep"), a(SLAM, "Restless Fist").radius(4.5F))
