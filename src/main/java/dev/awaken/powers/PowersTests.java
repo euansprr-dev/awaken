@@ -228,6 +228,23 @@ final class PowersTests {
             });
         });
 
+        // a blink aimed a little low glides along the ground (it stopped dead at its first step into the floor)
+        AwakenTests.register("powers_blink_low_aim", 40, h -> {
+            floor(h, 18); // past the step's 14 blocks from where it starts, so it never runs off the edge
+            // clear of the test's own block (a blink across it stopped at once), stepping away from it (yaw 180 looks north)
+            ServerPlayer sp = player(h, new BlockPos(0, 1, -3));
+            h.runAfterDelay(3, () -> {
+                PowerType step = PowerRegistry.get("lightning_step");
+                Powers.learn(sp, step.id, 0);
+                double z0 = sp.getZ(), y0 = sp.getY();
+                PowerType.Result r = Casting.cast(sp, step, -1, false, 180f, 12f);
+                h.assertTrue(r.ok(), "the step casts looking down: " + r.reason());
+                h.assertTrue(z0 - sp.getZ() > 4 && Math.abs(sp.getY() - y0) < 0.01,
+                        "it goes forward along the ground: " + (z0 - sp.getZ()) + "," + (sp.getY() - y0));
+                h.succeed();
+            });
+        });
+
         AwakenTests.register("powers_energy_gate", 40, h -> {
             ServerPlayer sp = player(h, new BlockPos(0, 1, 0));
             PowerType nova = PowerRegistry.get("nova");
