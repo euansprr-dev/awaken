@@ -1,6 +1,6 @@
 # The Singing Deep: mining, caves and the pick, rebuilt (plan for Euan's approval, 2026-10-28)
 
-Plan only. Nothing here is built. Euan's message of 28 Oct is the brief (quoted in full in the session that wrote this);
+Approval page: https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x (private; share from its Share menu). Plan only. Nothing here is built. Euan's message of 28 Oct is the brief (quoted in full in the session that wrote this);
 the process is `.claude/PLANNING-PROCESS.md`. Evidence lives in `docs/mining/proof/` (a probe run on read-only copies of
 Euan's own world). SPEC sections this builds on: §28.3 (W2, the deep's metal), §28.5 (W5, cave places), §21.9 (the Mining
 craft), §22 (Lens), §24 (Hands), §27.11 (the Now corner), gear (`docs/modules/gear.md`).
@@ -428,21 +428,25 @@ pass. Turning the flag off stops new mouths and thinning; generated land stays a
    chips read as stone, not as effects; minimal alone loses the hit.
 6. **True strikes**: a seam on ores you can aim for (faster, a chime, a chance of one more ore); holding still still
    works. **Yes**: skill in every ore instead of a speed tier.
-7. **The Delver's Pick**, pulled from the stone in your first adit, waking through six verses (Kindle, Echo, Tempered,
-   Glass, Hush, Call); vanilla picks stay; the Hunter mattock's recipes retire. **Yes**: progression earned underground
-   that changes how you explore; nothing breaks more than three blocks.
-8. **Cave air**: three depth bands with their own air, light and sound; short-range coloured haze in Lens; motes in your
+7. **The Delver's Pick**, waking through six verses (Kindle, Echo, Tempered, Glass, Hush, Call), replaces the tool
+   ladder; vanilla picks stay; the Hunter mattock's recipes retire. **Yes**: progression earned underground that changes
+   how you explore; nothing breaks more than three blocks.
+8. **The pick is pulled from the stone** at the end of your first adit (handed over at the Hearth when no adit is near).
+   **Yes**: it turns the first trip into a moment and arrives early enough to matter.
+9. **Cave air**: three depth bands with their own air, light and sound; short-range coloured haze in Lens; motes in your
    light; light shafts at openings; the Deep breathes. **Yes**.
-9. **Delver lamps**: strike one and the cavern floods with light that stays (invisible light sources, shared). **Yes**:
-   the cinematic reveal, a safe camp and a place that's yours.
-10. **Sounds from CC0 recordings** for the strike and the caves, processed like the city bells (each download listed to
+10. **Delver lamps**: strike one and the cavern floods with light that stays (invisible light sources, shared). **Yes**:
+    the cinematic reveal, a safe camp and a place that's yours.
+11. **Sounds from CC0 recordings** for the strike and the caves, processed like the city bells (each download listed to
     you first); synthesis only for magic. **Yes**: you said synthesised sounds read fake.
-11. **Fights**: the Hollows in every cave by depth, drawn by your strikes, wary of light; a lode guardian left to the
+12. **Fights**: the Hollows in every cave by depth, drawn by your strikes, wary of light; a lode guardian left to the
     boss planner. **Yes**.
-12. **Your current world**: keep playing it (new land gets mouths and cave-wall lodes as you explore; everything else
-    works now); a fresh world shows the whole thing from the first evening. **Keep it**, try a fresh world when P1 lands.
 13. **How to build it**: one session, P1 first (~7 h, the whole first iron trip), then P2-P4 (~12 h). Or split P2-P4
     into three sessions after P1 to save ~7 h of wall clock. **One session**, as you asked.
+
+Not a decision, a note: **your current world** keeps working. New land you explore gets mouths and cave-wall lodes;
+everything else (the strike, the pick, cave air, lamps in new places, the Hollows) works now. A fresh world shows the
+whole thing from the first evening.
 
 One thing seeing would settle: the particle look. If Euan wants, P1's first commit can be the particles alone so he can
 judge the chips and streaks in game before the rest lands.
