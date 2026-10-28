@@ -46,6 +46,12 @@ final class CaveTests {
                 "The old Delvers cut an adit into the hillside 210 m north-east of your home. It should still have iron in it.", "the adit's line");
         h.assertValueEqual(MouthPointer.line(hill, home, "iron"),
                 "There's a cave mouth in the hillside 180 m south of your home. The cave behind it runs past iron.", "the hill mouth's line");
+        Spec doline = new Spec(CaveKind.MOUTH, 1000, 70, 1180, 0, 13L, false, 0, 0, 0, new int[]{Mouth.DOLINE, 7, 16, 9, 16, 0, 0, 0, 0, 1});
+        Spec cleft = new Spec(CaveKind.MOUTH, 1000, 70, 1180, 0, 14L, false, 0, 0, 0, new int[]{Mouth.CLEFT, 24, 6, 3, 14, 0, 0, 0, 0, 0});
+        h.assertValueEqual(MouthPointer.line(doline, home, "iron"),
+                "There's a sinkhole in the ground 180 m south of your home. The cave at the bottom of it runs past iron.", "the doline's line");
+        h.assertValueEqual(MouthPointer.line(cleft, home, "iron"),
+                "There's a narrow gorge cut into the cliff 180 m south of your home. It leads into a cave that runs past iron.", "the cleft's line");
         h.assertTrue(MouthPointer.leads(level.getSeed(), adit, dev.awaken.delve.Ore.IRON), "an iron adit leads to iron");
         h.assertFalse(MouthPointer.leads(level.getSeed(), adit, dev.awaken.delve.Ore.COPPER), "an iron adit doesn't lead to copper");
         BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
@@ -100,9 +106,10 @@ final class CaveTests {
                 g.set(x, y, z, Blocks.AIR.defaultBlockState());
         }
         if (s.kind() == CaveKind.MOUTH) {
-            // open ground in front of the mouth, the sky over it; the hill rises behind the lip
+            // open ground in front of the mouth, the sky over it; the hill rises behind the lip (a doline's ground is flat)
             Frame f = new Frame(s.x(), s.y(), s.z(), s.rot());
-            for (int lx = -16; lx <= 16; lx++) for (int lz = -12; lz < 0; lz++) for (int y = s.y(); y <= g.maxY(); y++) {
+            int back = s.p(Mouth.FORM) == Mouth.DOLINE ? 24 : 0;
+            for (int lx = -16; lx <= 16; lx++) for (int lz = -12; lz < back; lz++) for (int y = s.y(); y <= g.maxY(); y++) {
                 int x = f.x(lx, lz), z = f.z(lx, lz);
                 if (g.inside(x, y, z)) g.set(x, y, z, Blocks.AIR.defaultBlockState());
             }

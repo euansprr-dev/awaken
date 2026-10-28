@@ -245,7 +245,7 @@ public final class CavePlaces {
             else if (s.kind() == CaveKind.CHUTE) sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(s.x(), s.y(), s.z()), 2, s.rot()));
             // a mouth: its lip, the arch's width; depth packs its turn (2 bits), its form (1) and the arch's height
             else if (s.kind() == CaveKind.MOUTH) sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(s.x(), s.y(), s.z()), s.p(Mouth.W),
-                    (s.rot() & 3) | (s.p(Mouth.FORM) & 1) << 2 | s.p(Mouth.H) << 3));
+                    (s.rot() & 3) | (s.p(Mouth.FORM) & 3) << 2 | s.p(Mouth.H) << 4));
             else {
                 // a grotto's own light: its curtain (depth 0) and its pool (depth 1); radius carries its turn
                 int[] c = Grotto.curtain(s), q = Grotto.pool(s);

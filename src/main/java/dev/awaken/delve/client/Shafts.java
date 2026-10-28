@@ -49,6 +49,10 @@ final class Shafts {
             if (s.kind() == CaveKind.SINKHOLE.ordinal()) {
                 double x = s.at().getX() + 0.5, z = s.at().getZ() + 0.5, top = s.at().getY() + 1.5;
                 SHAFTS.add(new Shaft(new Vec3(x, top, z), new Vec3(x + 1.5, top - Math.max(8, s.depth()), z + 0.8), Math.max(1.5F, s.radius() * 0.45F), day));
+            } else if (s.kind() == CaveKind.MOUTH.ordinal() && (s.depth() >> 2 & 3) == 2) {
+                // a doline: straight down its well
+                double x = s.at().getX() + 0.5, z = s.at().getZ() + 0.5, top = s.at().getY() + 1.5;
+                SHAFTS.add(new Shaft(new Vec3(x, top, z), new Vec3(x + 0.6, top - Math.max(8, s.depth() >> 4), z + 0.4), Math.max(1.2F, s.radius() * 0.35F), day));
             } else if (s.kind() == CaveKind.MOUTH.ordinal()) {
                 // the mouth's way in is its frame's forward: rot 0 south, 1 west, 2 north, 3 east
                 int rot = s.depth() & 3;

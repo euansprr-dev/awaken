@@ -123,12 +123,17 @@ final class CaveFx {
     /**
      * A mouth's tells: its breath (pale lobes exhaled out of the arch's upper half, drifting out and climbing past the lip,
      * from as far as 160 m) and its draught (streaks out of the throat, within 28 m). The site's radius is the arch's
-     * width; its depth packs the turn (forward = into the hill), the form and the arch's height.
+     * width (a doline's: across); its depth packs the turn (forward = into the hill), the form (two bits) and the arch's
+     * height (a doline's: how deep).
      */
     private static void mouth(Minecraft mc, CaveNet.Site s, double d2, float breath, boolean far) {
-        int rot = s.depth() & 3, h = Math.max(4, s.depth() >> 3), w = Math.max(3, s.radius());
+        int rot = s.depth() & 3, h = Math.max(4, s.depth() >> 4), w = Math.max(3, s.radius());
         double fx = rot == 1 ? -1 : rot == 3 ? 1 : 0, fz = rot == 0 ? 1 : rot == 2 ? -1 : 0;
         double cx = s.at().getX() + 0.5, cy = s.at().getY(), cz = s.at().getZ() + 0.5;
+        if ((s.depth() >> 2 & 3) == 2) {
+            doline(mc, s, d2, breath, far, cx, cy, cz, w, h);
+            return;
+        }
         if (far && d2 < 160 * 160) {
             float rate = breath * (0.25F + w / 24F) * (d2 < 64 * 64 ? 1F : 0.6F);
             if (R.nextFloat() < rate) {
@@ -142,6 +147,25 @@ final class CaveFx {
             double o = (R.nextDouble() - 0.5) * (w - 1), in = 1.5 + R.nextDouble() * 3;
             mc.level.addParticle(CaveContent.DRAUGHT.get(), cx + fx * in - fz * o, cy + 0.3 + R.nextDouble() * (h - 1.5), cz + fz * in + fx * o,
                     -fx * (0.05 + R.nextDouble() * 0.03), 0.004, -fz * (0.05 + R.nextDouble() * 0.03));
+        }
+    }
+
+    /**
+     * A doline's tells: its breath rises straight up out of the hole (the hole's {@code w} across, {@code h} deep) and,
+     * within 28 m, the draught's streaks climb its walls.
+     */
+    private static void doline(Minecraft mc, CaveNet.Site s, double d2, float breath, boolean far, double cx, double cy, double cz, int w, int h) {
+        if (far && d2 < 160 * 160) {
+            float rate = breath * (0.25F + w / 24F) * (d2 < 64 * 64 ? 1F : 0.6F);
+            if (R.nextFloat() < rate) {
+                double a = R.nextDouble() * Math.PI * 2, o = R.nextDouble() * w * 0.35;
+                mc.particleEngine.createParticle(CaveContent.MIST.get(), cx + Math.cos(a) * o, cy - 1 - R.nextDouble() * h * 0.4, cz + Math.sin(a) * o,
+                        (R.nextDouble() - 0.5) * 0.01, 0.035 + R.nextDouble() * 0.02, (R.nextDouble() - 0.5) * 0.01);
+            }
+        }
+        if (d2 < 28 * 28 && R.nextFloat() < 0.4F) {
+            double a = R.nextDouble() * Math.PI * 2, o = w * 0.4;
+            mc.level.addParticle(CaveContent.DRAUGHT.get(), cx + Math.cos(a) * o, cy - 0.5 - R.nextDouble() * h * 0.6, cz + Math.sin(a) * o, 0, 0.06 + R.nextDouble() * 0.03, 0);
         }
     }
 

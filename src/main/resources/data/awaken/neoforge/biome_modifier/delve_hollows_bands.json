@@ -1,6 +1,12 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": "#minecraft:is_overworld",
+  "biomes": {
+    "type": "neoforge:and",
+    "values": [
+      "#minecraft:is_overworld",
+      { "type": "neoforge:not", "value": "#c:is_underground" }
+    ]
+  },
   "spawners": [
     {
       "type": "awaken:drip_lurker",

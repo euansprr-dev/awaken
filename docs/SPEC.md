@@ -8550,7 +8550,7 @@ breathes). 10. Delver lamps. 11. Strike and cave sounds from CC0 recordings (eac
 12. The Hollows in every cave by depth, drawn by strikes, wary of light. 13. One session, P1 (the first iron trip)
 first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
 
-### 34.1 Mouths (built, P1d: hill mouth and adit; doline and cleft come with P4)
+### 34.1 Mouths (built, P1d: hill mouth and adit; P4: cleft and doline)
 - **Place** `awaken:delve/mouth` (`delve.cave.Mouth`, `CaveKind.MOUTH`, appended so older kinds keep their ordinals),
   structure set `delve/mouths`: random spread 12/4, salt 734018553, `#minecraft:is_overworld`, new land only. Spec at
   the lip's floor, rot forward = into the hill; p: form, throat length, its drop, arch width, height, the lode's heart
@@ -8562,6 +8562,26 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
 - **Hill mouth**: 8+ of rise in 16, open front, arch 5/7/9 wide and 6-11 high (an ellipse, a rough top, roots and vines
   over the lip), throat 16-40 falling about one in two (a drop of two where the hash says), ground over the end, dry; a
   joint to natural cave air is required.
+- **Order by the ground** (P4): an adit, else a cleft, else a hill mouth, else a doline.
+- **Cleft** (P4): a cliff, 9+ of rise in 6 and 14+ in 14, open in front; a slot 2-4 wide (p W), 16-28 long, its floor
+  level through the first 4 then falling one in three to the end; open to the sky (p H: the cliff's height over the lip
+  + 2, 8-40) for the first 65% of its length, then the roof steps down to a passage four high; the walls rough and
+  leaning apart a little upward, the slot wandering up to about a block each way once inside; vines down both walls,
+  hanging roots where the rock closes over, a stone or two wedged across the slot 6-8 over the floor (only where rock
+  holds it on both sides within 5), moss carpet on the floor; ground over its end, dry; a joint to cave air is required.
+- **Doline** (P4): flat ground (six points round at r + 3 within 2 of the middle), r 3-5 (p W = 2r + 1, 7-11 across),
+  10 to min(25, 4r + 5) deep (p DROP, and p H the same); spec at the middle, level with the ground, forward = the way out
+  at the bottom. A round hole with a rough edge, the turf's lip overhanging by one with hanging roots under it, vines
+  down the walls; the floor fallen rock, coarse dirt and moss; a ledge of fallen rock (cobble, mossy cobble, coarse
+  dirt) two wide down the wall from the near side, the fewest half-turns-and-more that keep it no steeper than one down
+  in 1.6 along it (so every step is a walk or a jump), reaching out to the lip at the top; a way out of the side at the
+  bottom 3 wide and 3 high, r + 3 long, toward the cave air it joins (required). The tells: the breath rises straight
+  up out of the hole, the draught's streaks climb its walls, its light shaft falls straight down.
+- **Site packing** (P4): the client site's depth is turn | form << 2 (two bits) | height << 4.
+- **Names and words**: dolines "The Fallen Floor", "The Sunken Ring", "The Well of Roots"...; clefts "The Narrow Way",
+  "The Split Rock", "The Slot"...; the Hearth's line "There's a sinkhole in the ground 180 m south of your home. The cave
+  at the bottom of it runs past iron." / "There's a narrow gorge cut into the cliff 180 m south of your home. It leads
+  into a cave that runs past iron."; the map mark "The sinkhole" / "The gorge".
 - **Cairn** on the open ground in front: stacked cobble walls and an iron-bar spike; at an adit a fence post with a
   lantern.
 - **Tells** (client, `CaveFx`, from the place's site in `CavePlaces.near`: lip, arch width, and turn | form << 2 |
@@ -8582,8 +8602,9 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   map** (`Destinations.set`, kind `spot`, "The old adit" / "The cave mouth"); nothing is set without that click. None
   found: "I don't know of any old workings near your home. Iron shows in cave walls: find a cave and follow its walls."
   Forge and temper shortfalls don't point yet.
-- **Tests**: `delve_cave_routes` walks every kind (the mouth staged as an adit on even seeds, a hill mouth on odd);
-  `delve_hearth_points` (the two lines, which mouths lead to which metal, the honest line on flat land, the card's
+- **Tests**: `delve_cave_routes` walks every kind (the mouth staged as each form in turn by its seed: adit, hill mouth,
+  doline, cleft);
+  `delve_hearth_points` (the four forms' lines, which mouths lead to which metal, the honest line on flat land, the card's
   3/16 row).
 
 ### 34.2 Metal lives in the caves (built, P1c)
@@ -8736,7 +8757,9 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   arch along its way in (9 blocks); each three camera-facing additive ribbons in pale sunlight, bright at the top,
   gone below.
 - **The Hollows by band**: `delve_hollows_bands` adds drip lurkers (10), chime crickets (12) and hushlings (8) to every
-  overworld biome; fauna's own rule (cave ground under a roof, dark, the role caps) still decides, and asks
+  overworld biome but the cave biomes (`neoforge:and` with `neoforge:not #c:is_underground`: dripstone caves, lush caves
+  and the deep dark keep fauna's own Hollows, never twice); terrain's `terrain_biome_table_parity` rows carry the three;
+  fauna's own rule (cave ground under a roof, dark, the role caps) still decides, and asks
   `Bands.allows` (no hushling in the Shallows). Higher levels in the Deep are fauna's levels as they are.
 - **Strikes are noise** (`StrikeNoise`): rock or ore (not loose ground) broken under the rock by a player calls every
   mob in `#awaken:delve/hears_strikes` (hushling, drip lurker) within 24 that has no target: it paths to the block.

@@ -134,9 +134,12 @@ public final class MouthPointer {
         double dx = s.x() - home.getX(), dz = s.z() - home.getZ();
         int m = Math.max(10, (int) Math.round(Math.sqrt(dx * dx + dz * dz) / 10.0) * 10);
         String where = m + " m " + compass(dx, dz) + " of your home";
-        return s.p(Mouth.FORM) == Mouth.ADIT
-                ? "The old Delvers cut an adit into the hillside " + where + ". It should still have " + metal + " in it."
-                : "There's a cave mouth in the hillside " + where + ". The cave behind it runs past " + metal + ".";
+        return switch (s.p(Mouth.FORM)) {
+            case Mouth.ADIT -> "The old Delvers cut an adit into the hillside " + where + ". It should still have " + metal + " in it.";
+            case Mouth.DOLINE -> "There's a sinkhole in the ground " + where + ". The cave at the bottom of it runs past " + metal + ".";
+            case Mouth.CLEFT -> "There's a narrow gorge cut into the cliff " + where + ". It leads into a cave that runs past " + metal + ".";
+            default -> "There's a cave mouth in the hillside " + where + ". The cave behind it runs past " + metal + ".";
+        };
     }
 
     static String honest(String metal) {
@@ -156,8 +159,13 @@ public final class MouthPointer {
         String key = a.home().asLong() + ":" + a.metal() + ":" + s.id();
         if (key.equals(OFFERED.get(p.getUUID()))) return;
         OFFERED.put(p.getUUID(), key);
-        boolean adit = s.p(Mouth.FORM) == Mouth.ADIT;
-        PENDING.put(p.getUUID(), new Destinations.Target(adit ? "The old adit" : "The cave mouth", Level.OVERWORLD.identifier(),
+        String name = switch (s.p(Mouth.FORM)) {
+            case Mouth.ADIT -> "The old adit";
+            case Mouth.DOLINE -> "The sinkhole";
+            case Mouth.CLEFT -> "The gorge";
+            default -> "The cave mouth";
+        };
+        PENDING.put(p.getUUID(), new Destinations.Target(name, Level.OVERWORLD.identifier(),
                 new BlockPos(s.x(), s.y(), s.z()), "spot"));
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Old workings"))
                 .body(Component.literal(line(s, a.home(), a.metal())))
