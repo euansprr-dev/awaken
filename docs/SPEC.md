@@ -568,7 +568,9 @@ Powers:
   baselines measure a fresh chain.
 
 Hearth:
-- Reassessment trials run in their own dimension `awaken:trials` (not the Stillpoint). Upgrade costs ×0.85 per rank above
+- Reassessment trials run in their own dimension `awaken:trials` (not the Stillpoint). A trial's way home comes back to
+  where the player stood, or, started in the air (a Penalty Zone opens mid-jump or on the wing), to the ground under
+  them, read from their chunk once it's finished (`Trials.standingY`, §28.9). Upgrade costs ×0.85 per rank above
   the upgrade's tier, compounding. Vael lives in town from A until S (`townsfolk/vael_rival.json`).
 - Echo kills are credited to the owner (for gate kill XP) but never count as bare-handed kills.
 
@@ -684,7 +686,8 @@ Plan v2 · overworld creatures (details in docs/modules/fauna.md):
 - Named beasts: from level 3, 40+ blocks away, 30-minute world cooldown, 384 blocks apart, at most 12; 45% Power Core;
   first kill pays 0.5 level, first sighting 0.1 (beasts 0.25) through `Progression.discover`. Their boss bar shows only
   while they have a target.
-- The reveal pulse plays once per player at awakening (old awakened saves get it once).
+- The reveal pulse plays once per player at awakening (old awakened saves get it once). Its motes and its creatures
+  (`world.fauna.Reveal`) stand only on finished chunks: one still generating is passed by, never waited for (§28.9).
 - P2: six more families (the Mire, the Canopy, Duskwood, Blossomwood, the Crags, Sporewild; 22 creatures). Greenwild
   hands over dark forest, cherry grove, flower and birch forests; Sunscorch keeps savanna and badlands.
 - Every named beast has a lair placed by world generation (one structure set each; spacing 112 chunks for P1's three,
@@ -742,7 +745,8 @@ Plan v2 · landmarks (details in docs/modules/landmarks.md):
   before); never inside a Hearth or a gate. Mira tells one landmark
   rumour a day when no gate is worth one (`core.api.WorldHooks.landmarkRumour`).
 - Faint light shafts over ruins at dusk (fainter at night) and the Well's pillars at night, within 288 blocks; nothing
-  by day. Every ruin has an outer cache (2–4 essence). The Scanner hears the Well and skips ruins already reached.
+  by day. A ruin is marked once its start chunk is loaded and finished (`LandmarkMarkers.compute`: one still generating
+  waits for the next pass, never for the server thread; §28.9). Every ruin has an outer cache (2–4 essence). The Scanner hears the Well and skips ruins already reached.
 - Config `features.landmarks` switches discovery, hints, rumours and markers off.
 
 Plan v2 · the Hearth guide (details in docs/modules/hearth.md):
@@ -3088,7 +3092,8 @@ Precursor wards (`wilds.ward`, config `features.wards`):
   `wilds.ward_mark`, `wilds.ward_crumble`, `wilds.ward_hold` (tools/art/specs/audio_wilds.py; sprites tools/art/specs/wilds.py).
 
 How you arrived (`wilds.arrival`, behind `core.api.ArrivalHooks`; config `features.wilds`):
-- Every tick the server reads each player's way of moving; a quarter second keeps its most telling way (in `Way` order:
+- Every tick the server reads each living player's way of moving (one on the death screen is out of its level, its
+  chunk unloading: skipped, §28.9); a quarter second keeps its most telling way (in `Way` order:
   STILL < WALK < SPRINT < SWIM < CLIMB < RIDE < AIRBORNE < POWER < ASCENT < LINE < BUILT) and 80 of them (20 s) are kept.
   BUILT: standing on (any corner of the feet) or climbing a block the player placed in the last 10 minutes (last 512
   placements). POWER: 2 s after a cast of a movement-slot power, a dash or Hover, and every tick Flight or Hover runs.
@@ -3438,8 +3443,9 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
 
 ### 17.9 Phase 2: Wings, the sky platform's way up and its core
 - **The rig** (`above.ruin.SkyRig`): placed once on each sky platform the first time its start chunk loads (queued on
-  `ChunkEvent.Load`, built on a later server tick once the core's and the chain's columns are loaded; done when the
-  core is there), so old worlds' platforms get it too and the blueprint never changes. From the deck's centre (cx, deck,
+  `ChunkEvent.Load`, built on a later server tick once every chunk it reads or builds in, the core out to 17 along x
+  and z with `groundUnder`'s columns, is loaded and finished, never one still generating, which the server thread
+  would wait for (§28.9); done when the core is there), so old worlds' platforms get it too and the blueprint never changes. From the deck's centre (cx, deck,
   cz): a pier of trim three cells wide on the (+x, +z) diagonal from 7 to 12 out (local a, b in 7..12, |a - b| <= 1),
   the rim's trim studs on it cleared; a chain from under its end (12, 12) down to the lowest ring. The diagonal: the
   blueprint's four torn-up islands hang 19 out on each side (up to 3 off the line, 3.8 wide) with their tether chains
@@ -4401,7 +4407,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   centre, up the High Gate road; classic worlds 300 north of spawn; on the nearest dry, level ground, found once and
   kept; the camp round Ilse's fire, its safe ground and Ilse's scene: §27.6), Hale on Carillon's `CityHooks.spot("quartermaster")` by the High Gate yard (classic: at the camp). A found scene: per player every 25 minutes outdoors (the first after 12), never inside a Hearth's radius or the
   city reserve, for the lowest-band chain they can take that isn't a resident's; a spot 64-160 blocks off in loaded
-  chunks only (cliff: a top with a 6+ drop beside it, its foot marked; crag: y 100+; road/camp: flat ground), plus a
+  and finished chunks only (`Scenes.dryLand`, `drop`: a chunk still generating is passed by, §28.9) (cliff: a top with a 6+ drop beside it, its foot marked; crag: y 100+; road/camp: flat ground), plus a
   `site` 40-80 from it (plain ground 56 off if the land offers none). An untaken scene fades after two play-days; a
   finished chain's scene goes and its Wayfarer leaves once nobody is within 16. The Horizon line names an open scene
   ("Wren, stranded"; a cliff scene needs the Tether), and it sends up a distress flare (the Hilltop Test): 20 s in every
@@ -8257,8 +8263,13 @@ tick the watch counted no road being laid for another thread and no lattice chun
 full noise columns through `getBaseColumn`, ~2.7 ms each on the runner), region after region as a player flies. The
 first tour on 4d099bde (run 40686122729, six and a half minutes) was the same (its long tick in `getBaseColumn`),
 though the watch was then blind to set-aside chunks. Smaller server-thread waits on chunks still generating under a
-flying player, a second each: `Scenes.dryLand` and `SkyRig.groundUnder` (`Level.getHeight`), `Reveal.motes`,
-`LandmarkMarkers.compute`. All outside the roads: routed.
+flying player, a second each: `Scenes.dryLand` and `SkyRig.groundUnder` (`Level.getHeight`), `world.fauna.Reveal.motes`,
+`LandmarkMarkers.compute`. Fixed (2026-10-28): `hasChunk`, `isLoaded` and `Level.getHeight` only ask whether a chunk is
+loaded, and a loaded one may still be generating, so reading it waits for it. Each now reads a chunk only once
+`getChunkNow` hands it back (loaded and finished, the server thread only) and passes by one still generating:
+`Scenes.dryLand` and its `drop`, `Reveal.motes` and its `burst` (the same pulse), `LandmarkMarkers.compute` (the next
+pass marks it); the sky rig waits until every chunk it reads or builds in is finished (`SkyRig.finished`).
+`living_dry_land_never_waits`: a chunk loaded and still generating is passed by and still isn't made after.
 **Away from the overworld** (Euan 2026-10-28: "Nothing should plan or load overworld content for a player who isn't
 in the overworld"): every system that reads a player's position for planning, generation or chunk tickets, checked for
 the levels a player can stand in away from the overworld (awaken:gates, trials, stillpoint, endless, halo, lucidium,
@@ -8282,8 +8293,9 @@ stratum_1 to stratum_10, the Nether, the End):
 | Teleports (`DescentTravel`, `Well`, `HomeCommands`) | the destination, loaded async with a PORTAL ticket | safe |
 | Vanilla's supporting block across a level change | the old level's block, read in the new one | **fixed** (`Arrivals`) |
 | NeoForge's `Entity.setPosRaw` patch | loads a same-level teleport's target chunk inline | the chunk the player goes to: by design |
-| Wilds' arrival (`Arrival.step`, every tick) | a player on the death screen too: removed from its level, its chunk unloads and is read back from disk each tick (the trial-fall tour: overworld 26,-100, home) | not a level mix-up; outside roads and villages: routed |
-| Trials' return point | keeps Y mid-air, so a fall in the arena ends in a death at home | outside roads and villages: routed |
+| Wilds' arrival (`Arrival.step`, every tick) | a player on the death screen too: removed from its level, its chunk unloads and is read back from disk each tick (the trial-fall tour: overworld 26,-100, home) | not a level mix-up; **fixed**: a dead or removed player is skipped |
+| Trials' return point | kept Y mid-air, so a fall in the arena ended in a death at home | **fixed**: the ground under a player who started in the air, from their finished chunk (`Trials.standingY`; `hearth_trials_dimension`) |
+| Scenes, sky rig, reveal pulse, landmark markers | a chunk loaded but still generating under a flying player, read through `Level.getHeight` or `getChunk` | **fixed**: finished chunks only (`getChunkNow`), see Cost |
 
 Where the instances stand: every instance level's generator is ours and builds only its own cells; outside them it
 writes void (gates, trials, halo, lucidium), the cloud sea (stillpoint: a pure function of the seed, any thread) or

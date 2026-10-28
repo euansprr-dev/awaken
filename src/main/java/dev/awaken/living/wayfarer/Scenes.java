@@ -27,6 +27,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
@@ -341,8 +342,11 @@ public final class Scenes extends SavedData {
         int most = 0;
         for (int dx = -2; dx <= 2; dx += 2) {
             for (int dz = -2; dz <= 2; dz += 2) {
-                if (dx == 0 && dz == 0 || !level.hasChunkAt(new BlockPos(x + dx, 0, z + dz))) continue;
-                most = Math.max(most, y - level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x + dx, z + dz));
+                if (dx == 0 && dz == 0) continue;
+                int nx = x + dx, nz = z + dz;
+                LevelChunk chunk = level.getChunkSource().getChunkNow(nx >> 4, nz >> 4);
+                if (chunk == null) continue;
+                most = Math.max(most, y - (chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, nx & 15, nz & 15) + 1));
             }
         }
         return most;
@@ -414,7 +418,7 @@ public final class Scenes extends SavedData {
     }
 
     /**
-     * The nearest dry, level, solid ground to {@code around} within {@code radius} (rings 8 blocks apart, loaded chunks
+     * The nearest dry, level, solid ground to {@code around} within {@code radius} (rings 8 blocks apart, finished chunks
      * only, never the city reserve), or null.
      */
     static @Nullable BlockPos dryLand(ServerLevel level, BlockPos around, int radius) {
@@ -428,8 +432,11 @@ public final class Scenes extends SavedData {
             for (int k = 0; k < steps; k++) {
                 double a = 2 * Math.PI * k / steps;
                 int x = around.getX() + (int) Math.round(Math.cos(a) * r), z = around.getZ() + (int) Math.round(Math.sin(a) * r);
-                if (!level.hasChunkAt(new BlockPos(x, 0, z)) || !cityOk && CityBasin.reserved(x, z)) continue;
-                int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+                if (!cityOk && CityBasin.reserved(x, z)) continue;
+                // finished chunks only: one still generating (land a player flies over) would be waited for on the server thread
+                LevelChunk chunk = level.getChunkSource().getChunkNow(x >> 4, z >> 4);
+                if (chunk == null) continue;
+                int y = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x & 15, z & 15) + 1;
                 BlockPos at = new BlockPos(x, y, z);
                 if (!level.getFluidState(at.below()).isEmpty() || !level.getFluidState(at).isEmpty() || !level.getBlockState(at.below()).isSolid()) continue;
                 if (drop(level, x, y, z) > 1 || HearthHooks.inside(level, at)) continue;

@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
@@ -72,10 +73,12 @@ final class LandmarkMarkers {
             for (RuinLocator.Found f : RuinLocator.near(level, me, RANGE, Landmarks.RUINS, null, false, 8, 4)) {
                 if (out.size() >= LandmarkNet.MAX) break;
                 ChunkPos c = ChunkPos.containing(f.pos());
-                if (!level.hasChunk(c.x(), c.z())) continue;
+                // finished chunks only: a loaded one may still be generating, and reading it would wait on the server thread
+                LevelChunk chunk = level.getChunkSource().getChunkNow(c.x(), c.z());
+                if (chunk == null) continue;
                 Structure structure = structures.get(f.kind().structure).map(Holder::value).orElse(null);
                 if (structure == null) continue;
-                StructureStart start = level.getChunk(c.x(), c.z()).getStartForStructure(structure);
+                StructureStart start = chunk.getStartForStructure(structure);
                 if (start == null || !start.isValid()) continue;
                 BoundingBox b = start.getBoundingBox();
                 BlockPos centre = b.getCenter();
