@@ -44,6 +44,7 @@ Hard rules:
 | `living` | The Living Wilds (§21): regions, the Holo combat layer, Wayfarers and quests, bounties, the World Pulse and happenings, populations and camps, crafts, wonders, settlers and villages |
 | `arms` | Weapons and combat (§25): the three verbs (strike, guard, dodge) on every melee weapon, fighting styles on one timing table, deflect, block, posture, Resonance, the feel of a blow (`core.api.CombatFeedback`), its sounds |
 | `trails` | Trails (§33): optional guidance for every part of the game, short lists of things to try that open at a moment, wait in the Journal and reach the task card only when followed |
+| `aim` | Lock-on (§40): the mark and the lock, their look, the arcs for tells out of view, the dot; `core.api.Aim` (the server's check of the creature a press meant) |
 
 Rules for builders:
 - Touch only your module's package, your module's resources (namespaced file names), and your merge folder
@@ -512,6 +513,13 @@ of `AwakenConfig.Client`.
   `guards(ItemStack)`, `fights(LivingEntity)`, `posture(LivingEntity)` (0..1, server), `broken(LivingEntity)` (server),
   `tellSound(Strikes.Kind)` (the class's one voice; the mobs module plays it with each tell), `untold(DamageSource)`
   (a creature's own melee with no wind-up to read: not ours, not `#awaken:told_melee`; its guard window is wider, §25).
+- `dev.awaken.core.api.Aim` (§40) — the creature you mean. Server: `meant(player, entity, yaw, pitch, reach)` / `meantId`
+  (alive, this level, within reach + `PRESS_SLACK` 0.6 of the eye, within `AIM_CAP` 35° of the press's look or the body's to
+  the edge of its box, a person within `PERSON_CAP` 8°, seen), `stepIn(style)`, `GROUNDED_TICKS` 50, and the geometry
+  (`gap`, `offEdge`, `angle`, `sees`). Client: `target()` (the locked or marked creature's id, -1) and `locked()`, installed
+  by the aim module. Arms, powers and the rope read it; there is one picker (`aim.AimRules`).
+- `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
+  mobs module grounds normal and elite fliers, never a kit flier).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -9317,4 +9325,41 @@ readout says "Too far to tell" for a moment and nothing is set. The server check
   `binoculars_relay` (only trackers hear it, the rate limit, the last word arrives, death lowers, the dead are ignored, logout
   forgets), `binoculars_mark` (sky, unknown, above the world, past the border and too far refused; a spot becomes the destination;
   the readout's words).
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 40. Clear screen and lock-on (plan docs/hud-lockon/plan.html; Euan approved all six recommendations 2026-10-28: "Go ahead with all recommendations")
+
+Module `dev.awaken.aim` (the mark, the lock, its look, the threat arcs and the dot; client settings
+`config/awaken-aim-client.toml`), with the HUD states in `holo`. Approved: stages 0 to 3 now, the lock on middle mouse (pick block
+still works when nothing is marked), the glance on hold Tab, the locked camera follows (Snap a setting), fliers brought down for
+2.5 s, everything on by default with Classic one setting away. Stage 4 (an air lunge on the rope and in flight, an item wheel)
+waits until Euan has played 1 to 3. The replay behind the numbers: `docs/hud-lockon/proof/flysim.py` (a katana keeps a Bell Wisp
+in reach 23% of a fight today, 49% with these rules).
+
+### 40.1 The creature you mean (server; `core.api.Aim`, `arms.ArmsServer`)
+- A press (strike, and a heavy's release) names a creature; the server takes it as the **meant** one only if `Aim.meant` passes:
+  alive, in this level, within the style's longest reach (an Art's wave range, the Precursor blade grown over five steps) + its
+  step + 0.6 of the eye, within 35° of the press's look or the body's (measured to the edge of its box, so a big body counts when
+  any of it is near the middle), and seen (eye to its eye or its middle, no blocks). A person passes only within 8°: today's
+  click on a person still lands, a lock never picks one. Anything else is an ordinary sweep.
+- The meant creature ignores the arc (as the aimed one did) and the height band: it is struck wherever the weapon's reach,
+  measured from the eye to the nearest point of its box, gets to it. Every other creature keeps today's band (bottom over
+  eye + 1.5 or top under feet - 1 is out).
+- **Step in**: a chain's first strike or a heavy reaches the meant creature its style's step further: daggers, gauntlets and
+  twinblades 1.2, maul and greatblade 0.6, spear, glaive and chainblade 0.4, the rest 1.0 (`Aim.stepIn`). The step is the
+  player's own movement (the client's, 40.3), so the server's movement checks still apply; the server only allows the reach.
+  Later strikes in the chain strike where you stand.
+- Never changed: wind-up, active and recovery, damage, posture, hit-stop, the guard's windows, dodge timing and charges, tells.
+
+### 40.2 Fliers brought down (`Strikes.ground`, `mobs.AwakenMob.ground`)
+- A **normal or elite** flier whose stance breaks, or whose melee blow (its dive) is deflected, comes down: gravity on, its flight
+  control idle, its dive lost, for `GROUNDED_TICKS` 50 (2.5 s; a broken stance keeps it down at least that long), open to an
+  Execution. Then it rises (a small lift) and waits half a second before its next dive. A kit flier's fight script decides its
+  own (boss-plan's call); bosses and wardens never come down this way. A flier saved while down loads flying.
+
+### 40.9 Tests
+`aim_soft_pick`, `aim_caps`, `aim_power_bend_cap` (the pure rules), `aim_flier_locked_hits` (a creature 3.2 blocks over the feet:
+meant, struck; a hostile beside it, not meant, out of the band), `aim_step_in`, `aim_no_wall`, `aim_no_player`,
+`aim_flier_brought_down`.
 

@@ -109,7 +109,7 @@ public class AwakenMob extends Monster {
     private ItemStack stolen = ItemStack.EMPTY;
     int fleeTicks;
     @Nullable Player robbed;
-    private int fallenTicks, fuseTicks, decoyTicks, hopCooldown, guardTicks, frenzyTicks, auraTicks, auraPulse, staggerTicks;
+    private int fallenTicks, fuseTicks, decoyTicks, hopCooldown, guardTicks, frenzyTicks, auraTicks, auraPulse, staggerTicks, groundedTicks;
     private float auraRadius, auraDamage;
     private BoltKind auraBolt = BoltKind.PLAIN;
     private @Nullable MobEffectInstance auraEffect;
@@ -326,6 +326,26 @@ public class AwakenMob extends Monster {
         return staggerTicks > 0;
     }
 
+    /**
+     * Brought down (SPEC §40): a normal or elite flier whose stance broke or whose dive was deflected drops out of the
+     * air and stands open on the ground for {@code ticks}, then rises. A kit flier's fight script decides its own.
+     */
+    public boolean ground(int ticks) {
+        if (!isAlive() || !def().flies() || scriptedFight() || flag(F_DECOY)) return false;
+        if (def().tier != Tier.NORMAL && def().tier != Tier.ELITE) return false;
+        stagger(ticks);
+        groundedTicks = Math.max(groundedTicks, ticks);
+        setNoGravity(false);
+        Vec3 v = getDeltaMovement();
+        setDeltaMovement(v.x * 0.3, Math.min(v.y, -0.35), v.z * 0.3);
+        needsSync = true;
+        return true;
+    }
+
+    public boolean grounded() {
+        return groundedTicks > 0;
+    }
+
     public MobRole.Role syncedRole() {
         int i = entityData.get(DATA_ROLE);
         MobRole.Role[] r = MobRole.Role.values();
@@ -424,6 +444,12 @@ public class AwakenMob extends Monster {
         if (flag(F_HAUNTED)) tickPhasing(level);
         if (guardTicks > 0 && --guardTicks == 0) setFlag(F_GUARDING, false);
         if (staggerTicks > 0) staggerTicks--;
+        if (groundedTicks > 0 && --groundedTicks == 0) {
+            Vec3 v = getDeltaMovement();
+            setDeltaMovement(v.x, 0.32, v.z); // up again
+        }
+        // a flier always flies unless brought down (a save taken while down comes back with gravity on)
+        if (groundedTicks == 0 && d.flies() && !isNoGravity()) setNoGravity(true);
         if (frenzyTicks > 0 && --frenzyTicks == 0) endFrenzy();
         if (auraTicks > 0) tickAura(level);
         if (fleeTicks > 0) fleeTicks--;

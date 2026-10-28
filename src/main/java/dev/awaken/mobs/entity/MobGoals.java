@@ -209,6 +209,14 @@ final class MobGoals {
                 return;
             }
             mob.getLookControl().setLookAt(t, 30.0F, 30.0F);
+            if (mob.grounded()) {
+                // brought down: the dive it was telling is lost, and it waits a moment once up again
+                if (tellLeft >= 0) mob.setTell(0, Strikes.Kind.NONE);
+                tellLeft = -1;
+                attackCooldown = Math.max(attackCooldown, 10);
+                retarget = 0;
+                return;
+            }
             if (attackCooldown > 0) attackCooldown--;
             boolean ranged = mob.def().has(Trait.RANGED);
             double reach = (mob.getBbWidth() + t.getBbWidth()) * 0.5 + 1.3;
