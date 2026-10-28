@@ -5188,8 +5188,9 @@ magic.
   cave at light 0 (the lightmap's ambient on Bright, about 6% grey on stone) and a hand or tool held there to pure
   black, so every face the light didn't reach read as a hard black shape. A cave stays as dark and moody as the game
   made it, never a black void; a Lightless gate is still as dark as the game draws it. Cover: Cinematic and Ultra per
-  pixel, 0.5 to 1.5 blocks of solid heightfield (`g`) over the surface's own column (so a dark doorway seen from the
-  street too; not the open sky, far terrain or Holo plates; not past the heightfield's trusted reach); Swift by the
+  pixel, 0.5 to 1.5 blocks of solid heightfield (`g`) over the air in front of the surface (its point 0.3 blocks
+  toward the camera, so a trunk's or a cliff's own column never counts as its cover; a dark doorway seen from the
+  street does count; not the open sky, far terrain or Holo plates; not past the heightfield's trusted reach); Swift by the
   camera (texel 21 r: the client's MOTION_BLOCKING_NO_LEAVES top above the eye + 0.5, eased over about a sixth of a
   second). The open land, by day and by night, is untouched.
 - **Look fields** (looks*.json, inherited from `default`; texels 17-19): `light` 1.0, `shade` 0.32, `shadeTint`

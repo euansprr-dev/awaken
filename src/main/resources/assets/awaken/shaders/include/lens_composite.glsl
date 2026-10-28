@@ -509,7 +509,8 @@ void main() {
 #ifdef LENS_LIGHT
     float under = 0.0;
     if (!open && !plate && F(15).x > 0.0 && max(abs(pRel.x), abs(pRel.z)) < F(15).z) {
-        vec3 hw = pRel + F(12).xyz;
+        // the air in front of the surface (a step toward the camera), so a trunk's or a cliff's own column is never its cover
+        vec3 hw = pRel * (1.0 - 0.3 / max(length(pRel), 0.3)) + F(12).xyz;
         under = smoothstep(0.5, 1.5, heightAt(ivec2(floor(hw.xz)), 0).g - hw.y);
     }
 #else
