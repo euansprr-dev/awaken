@@ -46,6 +46,25 @@ final class WorldAir {
         e.registerSpriteSet(GatesRegistry.P_FLAKE.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Air(l, x, y, z, xa, ya, za, s, FLAKE));
         e.registerSpriteSet(GatesRegistry.P_ORB.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Air(l, x, y, z, xa, ya, za, s, ORB));
         e.registerSpriteSet(GatesRegistry.P_FLASH.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Air(l, x, y, z, xa, ya, za, s, FLASH));
+        // the server's coloured motes and flakes (a rule's trail, an event's drift): lit like the air's own
+        e.registerSpriteSet(GatesRegistry.P_TRAIL.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> {
+            Air a = new Air(l, x, y, z, xa, ya, za, s, ORB);
+            a.setColor(o.getRed(), o.getGreen(), o.getBlue());
+            a.glow = true;
+            a.peak = 0.95F;
+            a.scale(0.45F);
+            a.setLifetime(50 + r.nextInt(30));
+            return a;
+        });
+        e.registerSpriteSet(GatesRegistry.P_DRIFT.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> {
+            Air a = new Air(l, x, y, z, xa, ya, za, s, FLAKE);
+            a.setColor(o.getRed(), o.getGreen(), o.getBlue());
+            a.peak = 0.85F;
+            a.sway = 0.03F;
+            a.scale(1.1F);
+            a.setLifetime(100 + r.nextInt(80));
+            return a;
+        });
     }
 
     static void tick() {

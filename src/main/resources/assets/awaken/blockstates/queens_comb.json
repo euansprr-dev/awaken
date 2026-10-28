@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "full=true": {
+      "model": "awaken:block/queens_comb"
+    },
+    "full=false": {
+      "model": "awaken:block/queens_comb_empty"
+    }
+  }
+}

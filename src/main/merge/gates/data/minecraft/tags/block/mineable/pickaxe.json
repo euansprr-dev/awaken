@@ -26,6 +26,22 @@
     "awaken:crypt_patina",
     "awaken:crypt_niche",
     "awaken:crypt_handbell",
-    "awaken:bell_tower"
+    "awaken:bell_tower",
+    "awaken:fungal_rock",
+    "awaken:fungal_rock_veined",
+    "awaken:spore_jar",
+    "awaken:ember_basalt",
+    "awaken:ember_basalt_cracked",
+    "awaken:ember_slag",
+    "awaken:mine_lamp",
+    "awaken:magma_crust",
+    "awaken:ember_forge",
+    "awaken:temple_stone",
+    "awaken:temple_stone_mossy",
+    "awaken:temple_carving",
+    "awaken:temple_tiles",
+    "awaken:temple_brazier",
+    "awaken:temple_idol",
+    "awaken:little_idol"
   ]
 }

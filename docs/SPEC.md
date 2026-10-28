@@ -9160,6 +9160,9 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   `gateworlds_catch`, and every world's test also checks its marks (each handbell stands where it's marked, each secret
   has something to find, the Flood's basins are dry and walled in) and that each of its recipe's secrets is placed on
   some floor.
+- **Stage 2** (built 2026-10-28): the cave engine, the four cave themes' blocks, dress, rules, events, nooks, secret places,
+  twenty worlds, sets, biomes, sound and paintings (38.10); tests `gateworlds_<world>` for each of the sixteen, and
+  `gateworlds_touch`.
 
 ### 38.5 The world floor contract (Stage 1)
 
@@ -9373,7 +9376,7 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   yours) also gives the theme's set piece, once, with "You have every keepsake from the <theme>. <its line>". Nothing new
   is saved: the Atlas knows each keepsake and the last comes once. The Bell Crypt's is the Bell Tower (38.6): "All five
   bells of the crypt, hung together in a little tower. Set it up at home: it rings the hours from dawn to dusk, and you can
-  ring it yourself." Each later theme adds its piece here.
+  ring it yourself." The cave themes' pieces are in 38.10.
 - **The catch** (drop worlds, the Shaft): while you're on such a floor the server notes every 4 ticks where you stand on
   the ground in a room, out of water; a fall of more than 9 blocks that has taken you 4 below that ledge puts you back on
   it, facing the way you stood, for 3 damage, with "You fell, and the shaft gave you back to the last ledge you stood on."
@@ -9444,6 +9447,114 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   registered, every `life` entry (a recipe's and its moods') is a known kind; `gateworlds_live` also checks that a bell
   hums over you and that a hung bell near you shows as a prop and swings when rung; `gateworlds_sets` that the hours toll
   right and that the fifth Bell Crypt keepsake brings the Bell Tower.
+
+### 38.10 The cave themes: Fungal Hollow, Ember Mines, Hive, Overgrown Temple (Stage 2)
+
+Built 2026-10-28. Four themes, twenty worlds, one engine: every one of them is caves shaped by its recipe and grown by its
+theme.
+
+- **The cave engine** (`gates.world.CaveEngine`, recipe `kind: "caves"`): the floor's programme is strung on a chain of
+  winding tunnels (`ChainLayout`) and each place becomes a cavern: its plan shape made ragged by noise (`wobble`), its roof a
+  dome over its middle (`roof` plus 4 a slot of size), a mouth from each doorway well into it whatever the ragged wall does.
+  Kinds: the arrival (low, its anchor two blocks off the back wall), caverns, the great cavern (the biggest calm one on the
+  way: `tower` high at least, where the hero piece stands), the end, links (tunnels, `tunnel` half-wide, arched), built rooms
+  (the Lord's arena and Rig rooms stand on the chain as they are) and the secret place. Params: `tunnel` (2.1), `wobble`
+  (2.0), `roof` (11), `tower`, `sky` (36, a sea's roof), `lake` (a lake three deep in the great cavern and the big calm
+  ones, its surface level with the floor; the carve opens only those three, never the bed under them), `sea` (the whole
+  plot open from a bed six down to the sky, filled with the theme's fluid; places are islands with a landing at each
+  doorway, links causeways), `hex` (comb: rounded hexagons, flat north and south) and `square` (courts). Hidden light 12
+  three apart at head height over every place and along every tunnel (four apart left the ragged pockets and the diagonal
+  tunnels under 7), stepping up onto anything standing there, and down each doorway's mouth; the door lights as everywhere.
+- **The secret place**: a recipe secret with `leads_to` names a secret world of the theme (never a floor of its own). It is
+  dug off a calm cavern, two slots square where there's room, else one, joined through one slot; it carries that world's
+  name and biome (`placeWorlds`, `placeBiomes`), and coming into it finds the secret that leads there.
+- **The dress** (`gates.world.Dress` and one per theme): the skin of every wall, floor and ceiling; what grows on floors,
+  hangs from roofs and stands in tunnels (never over a doorway's mouth or within three of a place's anchor); the theme's
+  hero pieces; the screens; the mist; and the touchstones, nooks and secret place. Giant growths keep their stems off the
+  spawn spots.
+  - **Fungal Hollow**: hollow rock and its veined face, loam floors with glowing moss, glowcaps (stems, caps, gills) from
+    small to the Canopy's forest of giants, lumen roots hanging (you can climb them), glowcap sprouts and mycelium threads,
+    the Glowing Deep's falls of glowing water into its lake (over it, never in it), the Bloom's gill fins round its great
+    cavern, spore puffballs, and the Spore Jar.
+  - **Ember Mines**: mine basalt and its glowing cracks, slag, ash, timber frames every five blocks of tunnel with a lamp
+    on every other, rails down the straight ones, the chasm's bridge over its lava lake, the forge's falls of molten stone,
+    the Cooling Sea's crust islands with lamps on posts and slag causeways (posts kept 3.5 off the doorways), ember
+    crystals, the bellows and the Ever-Ember Forge.
+  - **Hive**: hive wax light and dark, honey comb and capped comb, glowing honey, packed wax floors, pollen, honey drips,
+    the Comb's honey pools, the Brood Hall's wax ledges every seven blocks up, the Swarm's comb slides, beeswax candles,
+    hive petals, royal comb, wax drums and the Queen's Comb.
+  - **Overgrown Temple**: temple stone and its mossy and glowing carved faces, temple tiles, roots as thick as towers
+    across the Root Halls, flowering vines (climbable), moss, ferns, lantern bulbs, the courts' colonnades, the Great
+    Tree's trunk, the Waterfall Temple's falls, four-faced idols by the walls, braziers, the canopy and the Little Idol.
+  - **Blocks** (`gates.block.ThemeBlocks`, 52 with their sets; art `tools/art/specs/gate_worlds_<theme>.py` on the shared
+    kit `_gw_kit.py`: textures, glow overlays, models, blockstates, items, loot, lang, mineable and climbable tags). Every
+    theme has glowing parts (emissive faces, light 3 to 15) and animated ones (falls, embers, honey; frametime 3).
+- **The rules** (`gates.worlds.WorldThemes`): each theme's touchstone answers a touch (strike or use) as the bell answers in
+  the crypt: the world shows the way on in its own colour, glints on the secrets near you, does something to the monsters
+  within 10 (never a Lord) and lights the stone (a brazier stays lit; the rest fade back). One player's touches count once
+  every 15 ticks. The eighth touch on a floor brings one named elite of the theme and two more, once:
+  - **spores** (puffball): slowness II and weakness 3 s; "The air is thick with spores now. Something in the hollow has
+    woken up to them." The Spore Warden.
+  - **embers** (bellows): 3 s of fire and slowness 2 s; "The mine's too hot. The Foreman's coming down to see who's working
+    the bellows." The Foreman.
+  - **hum** (wax drum): slowness III and weakness II for 2.5 s; "You've drummed too long. The hive's guards are coming to
+    stop the noise." The Hive Guard.
+  - **offerings** (brazier): slowness V 3 s; "Too many fires lit. The temple's keeper is coming to see who's making
+    offerings." The Temple Keeper.
+  - Touchstones stand in every place but the arrival (two in a great cavern, three in a temple's): where they fit, else
+    nearer the mouths. The first in a calm place keeps the theme's touch secret for the floor (old_puffball,
+    foremans_bellows, humming_drum, first_offering), so touching it finds it.
+- **Events** (once a floor, run from where the one who brings it stands, on arriving in a room part way along):
+  `spore_burst` (half way: the hollow breathes out, monsters within 40 glow for 20 s), `tremor` (a third: dust and ash,
+  everyone slowed 2 s), `the_hum` (half way: two drones come), `the_rains` (a third: six waves of rain mist), `the_wakening`
+  (two thirds: the braziers within 48 light themselves one after another). The wonders' moments, two thirds along: `the_bloom`
+  (Inside the Bloom: the gills open, moths rise in a spiral 40 high and you've met the Spore Mother) and the signatures
+  `slag_wyrm` (the Cooling Sea), `queens_choir` (the Swarm) and `root_saint` (the Great Tree): its own body when the mobs
+  module has one (`Rooms.signature`), else a named elite with twice the health (the wyrm fire-proof), carrying the world for
+  its keepsake (`keepsake_from` the signature's id). On the Lord's floor of a world whose signature is the theme's Lord (the
+  Great Tree's Root Saint) the Lord is the one that comes: no second.
+- **Nooks**: a secret found by standing in it (`NOOK` marks; the room checks find it after the place check, so a nook in a
+  secret place counts for that world). Dug into a cavern's wall where it bulges out most (a crawl two high, three deep), or
+  at the middle of the sea's great island and the Honey Lake's.
+- **The Mycelium Mind hears you**: say anything in chat inside it and its threads light the way from where you stand to
+  everyone near; the first time, it shares a thought ("The threads answer all at once, without words: yours is the first
+  voice down here in a very long time.", the secret `the_thought`, its keepsake).
+- **The magma's catch**: on a floor whose fluid is lava, falling in puts you back on the last ground you stood on, fire
+  out and five seconds of fire resistance: "The magma spat you back out onto the last ground you stood on."
+- **The worlds** (recipes from `tools/art/specs/gate_worlds_recipes.py`; four moods each, the first the world's own biome):
+  - Fungal Hollow (quiet, bloom, drought, migration): the Glowing Deep (lake; behind_the_falls, glowfall vial), the Root
+    Warrens (narrow, ragged; root_heart, lumen root), the Spore Canopy (deep; hollow_stem, glowcap slice), Inside the Bloom
+    (wonder; heart_gill and the_bloom, bloom spore; the Spore Mother), the Mycelium Mind (secret; the_mind and the_thought,
+    thought thread).
+  - Ember Mines (banked, eruption, ashfall, shift_change): the Working Mine (old_lift, foreman's lamp), the Open Chasm
+    (lava lake; the_dropped_lamp, dropped lamp), the Forge Below (deep; first_anvil, first hammer), the Cooling Sea (wonder,
+    a magma sea; the_crust_shrine; the wyrm scale from the Slag Wyrm), the Heart Seam (secret; the_heart, ember heart).
+  - Hive (drowsy, swarming, harvest, wax_moon): the Comb (hex; sealed_cell, sealed honey), the Brood Hall (deep; the_nursery,
+    nursery cell), the Honey Lake (a sea of honey-coloured water; drowned_comb), the Swarm (wonder, hex; still_cell; the choir
+    wing from the Queen's Choir), the Queen's Garden (secret; the_queens_seat, queen's crown).
+  - Overgrown Temple (still, monsoon, fireflies, overgrowth): the Jungle Courts (square; overgrown_shrine, jade offering), the
+    Root Halls (root_cellar, cellar seed), the Waterfall Temple (deep; behind_the_water, falls pearl), the Great Tree (wonder;
+    heartwood; the saint's branch from the Root Saint), the Sleeping Idol (secret; the_idols_mouth, idol's eye).
+  - Every everyday world but the secret ones also keeps the theme's touch secret, and the two everyday ones the secret that
+    leads to the theme's secret world (the_threads, the_warm_wall, the_sweet_air, the_green_door).
+- **Sets** (38.8): the Spore Jar (a jar of the Hollow's spores that lights a room; tap it and they swirl up), the
+  Ever-Ember Forge (use raw food on it and it cooks), the Queen's Comb (it fills with honey about once a Minecraft day; take
+  it with a glass bottle) and the Little Idol (the crops within four blocks of it grow as if tended).
+- **Biomes** (`tools/art/specs/gate_worlds_biomes.py`, 85 with the Bell Crypt's): each world's own and one per other mood
+  (fog, sky, water and its fog, ambient particles and additions, the theme's music `awaken:music.gate.<theme>`).
+- **Sound** (`tools/art/specs/audio_gate_worlds_caves.py`, 6.9 MB; gate_world sound 9.8 MB in all, under the 40 MB budget):
+  three beds a theme (the Hollow's glow, roots and bloom; the mine's works, chasm and sea; the hive's comb, brood and lake;
+  the temple's courts, halls and falls), an arrival sting a theme, and the events: puff, bellows, drum, brazier, tremor,
+  swarm, rains, wakening, bloom, surface, choir, saint. Every one has a plain subtitle.
+- **Small life and air**: the worlds name `spores`, `embers`, `fireflies`, `steam`, `ash`, `petals`, `drips`, `smoke`, `mist`,
+  `moths`, `bats` and `rats` from 38.9's kinds, per world and mood.
+- **Atlas paintings**: one a world (`tools/art/specs/gate_worlds_paintings_caves.py`, `textures/gui/gate_atlas/<theme>/<world>.png`).
+- **Tests**: `gateworlds_<world>` for the sixteen everyday, deep and wonder worlds (six plans each, every floor in every
+  mood: on foot from the arrival to the end, lit to 7 outside built rooms, water staying put, every spawn spot and feature
+  in reach, every touchstone where it's marked, every nook walkable, every recipe secret placed on some floor, the secret
+  place's world's secrets marked, carve and plan inside budget); `gateworlds_touch` (a puffball struck lights and chokes the
+  monster beside it, the eighth touch brings the Spore Warden, a nook is found by standing in it, the Mind answers a word);
+  `gateworlds_sets` also checks each cave theme's piece and its five keepsake worlds.
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 

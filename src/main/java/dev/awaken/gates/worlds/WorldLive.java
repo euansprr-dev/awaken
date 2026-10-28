@@ -92,7 +92,7 @@ public final class WorldLive {
     /** Where a player last stood safely on a drop world's floor. */
     static final class Ledge {
         Key floor;
-        boolean drop;
+        boolean drop, lava;
         Vec3 pos;
         float yaw;
     }
@@ -169,7 +169,9 @@ public final class WorldLive {
             ledge.pos = null;
         }
         ledge.drop = w.kind().equals("drop");
+        ledge.lava = w.dressing().blocks().getOrDefault("fluid", "").equals("minecraft:lava");
         places(p, g, f, r);
+        nooks(p, g, f, r);
         Live live = live(g, f);
         FloorState fs = g.floor(f.area, f.floor);
         int at = live.path.indexOf(r.id);
@@ -227,7 +229,7 @@ public final class WorldLive {
             }
             // the Flood waits on the first key (a cache, a solved puzzle, the shrine), or rises behind you three quarters down
             case "flood" -> Math.min(n - 1, (3 * n) / 4);
-            default -> -1;
+            default -> WorldThemes.trigger(ev, n);
         };
     }
 
@@ -240,7 +242,7 @@ public final class WorldLive {
             case "bone_fall" -> boneFall(level, p, g, f, r);
             case "the_silence" -> silence(level, g, f);
             case "the_swing" -> swing(level, g, f, p.blockPosition());
-            default -> {}
+            default -> WorldThemes.run(ev, level, p, g, f, r);
         }
     }
 
@@ -521,6 +523,18 @@ public final class WorldLive {
 
     // ---- places that are worlds of their own -----------------------------------------------------------------------
 
+    /** A hidden nook (SPEC §38.10): its secret is found by standing in it. */
+    static void nooks(ServerPlayer p, GateRecord g, FloorLayout f, Room r) {
+        String world = r == null ? f.world : f.worldOf(r);
+        BlockPos o = GateService.world(g, f, 0, 0, 0);
+        int x = p.getBlockX() - o.getX(), y = p.getBlockY() - o.getY(), z = p.getBlockZ() - o.getZ();
+        for (FloorLayout.Mark m : f.marks) {
+            if (!m.kind().equals(FloorLayout.Mark.NOOK) || !m.contains(x, y, z)) continue;
+            GateAtlas.Entry e = p.getData(GatesRegistry.ATLAS.get()).entry(world);
+            if (e == null || !e.secrets.contains(m.id())) found(p, world, m.id());
+        }
+    }
+
     static void places(ServerPlayer p, GateRecord g, FloorLayout f, Room r) {
         UUID id = p.getUUID();
         String inner = f.placeWorlds.get(r.id);
@@ -641,7 +655,15 @@ public final class WorldLive {
 
     static void ledge(ServerLevel level, ServerPlayer p) {
         Ledge l = LEDGES.get(p.getUUID());
-        if (l == null || !l.drop || !p.isAlive() || p.isSpectator() || p.getAbilities().flying || p.isFallFlying()) return;
+        if (l == null || !(l.drop || l.lava) || !p.isAlive() || p.isSpectator() || p.getAbilities().flying || p.isFallFlying()) return;
+        if (l.lava && l.pos != null && p.isInLava()) {
+            // a magma world gives you back too: on the last ground you stood on, the fire put out
+            caught(level, p, l);
+            p.clearFire();
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 100, 0));
+            p.sendOverlayMessage(Component.literal("The magma spat you back out onto the last ground you stood on."));
+            return;
+        }
         if (p.onGround()) {
             if (p.isInWater() || p.isInLava() || (now + p.getId()) % 4 != 0) return;
             Where w = Where.at(level.getServer(), p.blockPosition());
@@ -651,7 +673,7 @@ public final class WorldLive {
             }
             return;
         }
-        if (l.pos == null || p.isInWater() || p.fallDistance <= CATCH_FALL || p.getY() > l.pos.y - 4) return;
+        if (!l.drop || l.pos == null || p.isInWater() || p.fallDistance <= CATCH_FALL || p.getY() > l.pos.y - 4) return;
         caught(level, p, l);
     }
 

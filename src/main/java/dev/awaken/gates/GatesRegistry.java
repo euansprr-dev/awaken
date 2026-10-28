@@ -235,7 +235,20 @@ public final class GatesRegistry {
     /** The Bell Crypt's set piece, yours when all five of its keepsakes are (SPEC §38.8, "Sets"). */
     public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.BellTower> BELL_TOWER = BLOCKS.registerBlock("bell_tower",
             dev.awaken.gates.block.WorldBlocks.BellTower::new, p -> stoneLike(MapColor.STONE, SoundType.STONE, 6).apply(p).noOcclusion());
-    public static final List<DeferredItem<BlockItem>> SET_ITEMS = List.of(ITEMS.registerSimpleBlockItem(BELL_TOWER));
+    /** Every theme after the Bell Crypt's world blocks (SPEC §38.10 on), by id, from one table. */
+    public static final java.util.Map<String, DeferredBlock<? extends Block>> THEME_BLOCKS = dev.awaken.gates.block.ThemeBlocks.register(BLOCKS);
+    public static final List<DeferredItem<BlockItem>> THEME_ITEMS = THEME_BLOCKS.values().stream().map(ITEMS::registerSimpleBlockItem).toList();
+    /** The themes' set pieces after the Bell Tower (38.8 "Sets"). */
+    public static final java.util.Map<String, DeferredBlock<? extends Block>> SETS = dev.awaken.gates.block.ThemeBlocks.registerSets(BLOCKS);
+    public static final List<DeferredItem<BlockItem>> SET_ITEMS = java.util.stream.Stream.<DeferredBlock<? extends Block>>concat(java.util.stream.Stream.of(BELL_TOWER),
+            SETS.values().stream()).map(ITEMS::registerSimpleBlockItem).toList();
+
+    /** A theme block by id (SPEC §38.10), for code that names one. */
+    public static Block theme(String id) {
+        DeferredBlock<? extends Block> b = THEME_BLOCKS.get(id);
+        if (b == null) b = SETS.get(id);
+        return b.get();
+    }
 
     // ---- the Gate Rig's Mirror Hall (SPEC §17): the turning mirror, the lens, the seal --------------------------------
 
@@ -340,6 +353,25 @@ public final class GatesRegistry {
     static {
         for (String w : WORLD_SOUNDS) sound("gate.world." + w);
     }
+    /**
+     * Every theme after the Bell Crypt's sounds (SPEC §38.10 on), registered as gate.world.&lt;name&gt;: three beds a theme, its
+     * touchstone, its events and moments, and its arrival sting (arrive_&lt;theme&gt;). From tools/art/specs/audio_gate_worlds_e.py.
+     */
+    public static final List<String> THEME_SOUNDS = List.of(
+            "hollow_glow", "hollow_roots", "hollow_bloom", "mine_works", "mine_chasm", "mine_sea",
+            "hive_comb", "hive_brood", "hive_lake", "temple_courts", "temple_halls", "temple_falls",
+            "puff", "bellows", "drum", "brazier", "tremor", "swarm", "rains", "wakening", "bloom", "surface", "choir", "saint",
+            "arrive_fungal_hollow", "arrive_ember_mines", "arrive_hive", "arrive_overgrown_temple");
+    private static final java.util.Map<String, DeferredHolder<SoundEvent, SoundEvent>> THEME_SOUND = new java.util.HashMap<>();
+    static {
+        for (String n : THEME_SOUNDS) THEME_SOUND.put(n, sound("gate.world." + n));
+    }
+
+    /** A theme's sound by its name (gate.world.&lt;name&gt;), or null when this build has none by that name. */
+    public static SoundEvent worldSound(String name) {
+        DeferredHolder<SoundEvent, SoundEvent> h = THEME_SOUND.get(name);
+        return h == null ? null : h.get();
+    }
 
     // the Gate Rig (tools/art/specs/audio_rig.py): the collapse, the mirrors and the light, the wells, the cave-in
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_CRACK = sound("gate.rig.crack");
@@ -400,6 +432,36 @@ public final class GatesRegistry {
             PARTICLES.register("gate_air_orb", () -> new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_FLASH =
             PARTICLES.register("gate_air_flash", () -> new SimpleParticleType(false));
+    /** A glowing mote the server sends in a colour (a world's rule showing the way: spores, cinders, pollen, fireflies). */
+    public static final DeferredHolder<ParticleType<?>, ParticleType<net.minecraft.core.particles.ColorParticleOption>> P_TRAIL =
+            PARTICLES.register("gate_world_trail", () -> coloured(false));
+    /** Something light falling or blown in a colour (spore dust, ash, petals, leaves), sent by the server for a world's event. */
+    public static final DeferredHolder<ParticleType<?>, ParticleType<net.minecraft.core.particles.ColorParticleOption>> P_DRIFT =
+            PARTICLES.register("gate_world_drift", () -> coloured(false));
+
+    private static ParticleType<net.minecraft.core.particles.ColorParticleOption> coloured(boolean always) {
+        return new ParticleType<>(always) {
+            @Override
+            public com.mojang.serialization.MapCodec<net.minecraft.core.particles.ColorParticleOption> codec() {
+                return net.minecraft.core.particles.ColorParticleOption.codec(this);
+            }
+
+            @Override
+            public net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, net.minecraft.core.particles.ColorParticleOption> streamCodec() {
+                return net.minecraft.core.particles.ColorParticleOption.streamCodec(this);
+            }
+        };
+    }
+
+    /** A {@link #P_TRAIL} mote of a colour. */
+    public static net.minecraft.core.particles.ColorParticleOption trail(int rgb) {
+        return net.minecraft.core.particles.ColorParticleOption.create(P_TRAIL.get(), 0xFF000000 | rgb);
+    }
+
+    /** A {@link #P_DRIFT} flake of a colour. */
+    public static net.minecraft.core.particles.ColorParticleOption drift(int rgb) {
+        return net.minecraft.core.particles.ColorParticleOption.create(P_DRIFT.get(), 0xFF000000 | rgb);
+    }
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Awaken.id(name)));
@@ -466,6 +528,7 @@ public final class GatesRegistry {
                 LANTERN_ITEM, UPDRAFT_ITEM)) e.accept(item.get());
         for (var item : INTERIOR_ITEMS) e.accept(item.get());
         for (var item : WORLD_ITEMS) e.accept(item.get());
+        for (var item : THEME_ITEMS) e.accept(item.get());
         for (var item : SET_ITEMS) e.accept(item.get());
         for (var item : RIG_ITEMS) e.accept(item.get());
     }

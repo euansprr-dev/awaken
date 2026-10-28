@@ -705,5 +705,281 @@
         "pitch": 0.7
       }
     ]
+  },
+  "gate.world.puff": {
+    "subtitle": "subtitles.awaken.gate.world.puff",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/puff_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:gate_world/puff_2",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.bellows": {
+    "subtitle": "subtitles.awaken.gate.world.bellows",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/bellows_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:gate_world/bellows_2",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.drum": {
+    "subtitle": "subtitles.awaken.gate.world.drum",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/drum_1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:gate_world/drum_2",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "gate.world.brazier": {
+    "subtitle": "subtitles.awaken.gate.world.brazier",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/brazier_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:gate_world/brazier_2",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.tremor": {
+    "subtitle": "subtitles.awaken.gate.world.tremor",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/tremor_1",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "awaken:gate_world/tremor_2",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "gate.world.swarm": {
+    "subtitle": "subtitles.awaken.gate.world.swarm",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/swarm",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "gate.world.rains": {
+    "subtitle": "subtitles.awaken.gate.world.rains",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/rains_1",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "awaken:gate_world/rains_2",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "gate.world.wakening": {
+    "subtitle": "subtitles.awaken.gate.world.wakening",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/wakening",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "gate.world.bloom": {
+    "subtitle": "subtitles.awaken.gate.world.bloom",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/bloom",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "gate.world.surface": {
+    "subtitle": "subtitles.awaken.gate.world.surface",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/surface",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "gate.world.choir": {
+    "subtitle": "subtitles.awaken.gate.world.choir",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/choir",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "gate.world.saint": {
+    "subtitle": "subtitles.awaken.gate.world.saint",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/saint",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "gate.world.arrive_fungal_hollow": {
+    "subtitle": "subtitles.awaken.gate.world.arrive_fungal_hollow",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/arrive_fungal_hollow",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.arrive_ember_mines": {
+    "subtitle": "subtitles.awaken.gate.world.arrive_ember_mines",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/arrive_ember_mines",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.arrive_hive": {
+    "subtitle": "subtitles.awaken.gate.world.arrive_hive",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/arrive_hive",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.arrive_overgrown_temple": {
+    "subtitle": "subtitles.awaken.gate.world.arrive_overgrown_temple",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/arrive_overgrown_temple",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.hollow_glow": {
+    "subtitle": "subtitles.awaken.gate.world.hollow_glow",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_hollow_glow",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.hollow_roots": {
+    "subtitle": "subtitles.awaken.gate.world.hollow_roots",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_hollow_roots",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.hollow_bloom": {
+    "subtitle": "subtitles.awaken.gate.world.hollow_bloom",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_hollow_bloom",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.mine_works": {
+    "subtitle": "subtitles.awaken.gate.world.mine_works",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_mine_works",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.mine_chasm": {
+    "subtitle": "subtitles.awaken.gate.world.mine_chasm",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_mine_chasm",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.mine_sea": {
+    "subtitle": "subtitles.awaken.gate.world.mine_sea",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_mine_sea",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.hive_comb": {
+    "subtitle": "subtitles.awaken.gate.world.hive_comb",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_hive_comb",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.hive_brood": {
+    "subtitle": "subtitles.awaken.gate.world.hive_brood",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_hive_brood",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.hive_lake": {
+    "subtitle": "subtitles.awaken.gate.world.hive_lake",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_hive_lake",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.temple_courts": {
+    "subtitle": "subtitles.awaken.gate.world.temple_courts",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_temple_courts",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.temple_halls": {
+    "subtitle": "subtitles.awaken.gate.world.temple_halls",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_temple_halls",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.temple_falls": {
+    "subtitle": "subtitles.awaken.gate.world.temple_falls",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_temple_falls",
+        "stream": true
+      }
+    ]
   }
 }

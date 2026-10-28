@@ -1,0 +1,460 @@
+package dev.awaken.gates.world;
+
+import dev.awaken.gates.worlds.GateWorld;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * The cave world (SPEC §38.10, Stage 2): the programme's rooms become caverns strung on winding tunnels ({@link
+ * ChainLayout}), shaped by noise, domed and lit by what grows or burns in them. One engine for every theme's caves: its
+ * recipe's {@code params} set the shape (how high the roofs, how wide the tunnels, lakes in the big caverns, a sea with
+ * islands, hexagonal comb) and its theme's {@link Dress} grows the world in it (mushrooms, timber, comb, roots) and its
+ * hero pieces. The Lord's arena and Rig rooms stand on the chain as built rooms.
+ */
+final class CaveEngine implements WorldEngine {
+    static final int BASE = 40, DEEP = 6;
+
+    enum Kind { ARRIVAL, CAVERN, GREAT, END, LINK, BUILT, SECRET }
+
+    @Override
+    public FloorLayout plan(Ctx c) {
+        return new Cave(c).run();
+    }
+
+    /** One floor in the making: its places and their shapes, what the dress asks for, the carve. */
+    static final class Cave {
+        final Ctx c;
+        final WorldPlan p;
+        final ChainLayout chain;
+        final GateWorld world;
+        final int W;
+        final long seed;
+        final String mood;
+        final WorldMats m;
+        final Map<Integer, Kind> kinds = new HashMap<>();
+        final Map<Integer, PassageEngine.Shape> shapes = new HashMap<>();
+        /** A place's roof over its middle, blocks above its floor. */
+        final Map<Integer, Integer> roofs = new HashMap<>();
+        final List<FloorAir.Light> lights = new ArrayList<>();
+        final List<FloorAir.Shaft> shafts = new ArrayList<>();
+        final List<FloorAir.Water> waters = new ArrayList<>();
+        /** Ground nobody stands on (a stem, a pillar, a pool): x, z, radius. */
+        final List<double[]> blocked = new ArrayList<>();
+        /** The shape: tunnel half-width, how ragged the walls, roof heights, the deep cavern's tower. */
+        final double hw, wobble;
+        final int roof, tower, sky;
+        final boolean lakes, sea, hex, square;
+        final BlockState floor, wall, trim, fluid, light;
+        final Dress dress;
+        int secret = -1, great = -1;
+        Sculpt s;
+
+        Cave(Ctx c) {
+            this.c = c;
+            this.p = new WorldPlan(c);
+            this.world = c.world();
+            this.W = c.plot().minY() + BASE;
+            this.seed = c.seed();
+            this.mood = c.mood() == null ? "" : c.mood();
+            this.chain = new ChainLayout(p, seed, c.variation());
+            this.m = new WorldMats(world);
+            hw = param("tunnel", 2.1);
+            wobble = param("wobble", 2.0);
+            roof = (int) param("roof", 11);
+            tower = (int) param("tower", 0);
+            sky = (int) param("sky", 36);
+            lakes = param("lake", 0) > 0;
+            sea = param("sea", 0) > 0;
+            hex = param("hex", 0) > 0;
+            square = param("square", 0) > 0;
+            wall = m.get("wall", "minecraft:deepslate");
+            floor = m.get("floor", "minecraft:mud");
+            trim = m.get("trim", "minecraft:polished_deepslate");
+            fluid = m.get("fluid", "minecraft:water");
+            light = WorldMats.light(12);
+            dress = Dress.of(this);
+        }
+
+        double param(String k, double dflt) {
+            return world == null ? dflt : world.param(k, dflt);
+        }
+
+        boolean hero(String id) {
+            List<String> h = world == null ? List.of() : world.dressing().hero();
+            return h.isEmpty() || h.contains(id);
+        }
+
+        boolean lava() {
+            return fluid.getBlock() == Blocks.LAVA;
+        }
+
+        FloorLayout run() {
+            dress.programme();
+            if (!chain.lay(this::size)) return WorldEngine.fail("the chain doesn't fit: " + WorldEngine.WHY.get());
+            kinds();
+            secretPlace();
+            sculpt();
+            String biome = world == null ? "" : world.biomeFor(mood);
+            FloorLayout f = p.finish(this::walk, new WorldPlan.Look(W, biome, air(), new WorldPlan.SculptModel(s), Float.NaN));
+            if (f == null) return WorldEngine.fail("the programme didn't carry over: " + WorldEngine.WHY.get());
+            for (var e : kinds.entrySet()) {
+                if (e.getValue() == Kind.BUILT && !WorldPlan.built(f.room(e.getKey()))) return WorldEngine.fail("a Rig room didn't rebuild");
+            }
+            return f;
+        }
+
+        int[] size(int id) {
+            Room L = p.room(id);
+            if (WorldPlan.built(L)) return new int[]{L.gw, L.gh};
+            if (id == p.logic.start) return sea ? new int[]{2, 2} : new int[]{1, 1};
+            if (id == p.logic.end) return new int[]{2, 2};
+            return switch (L.type) {
+                case HUB, ARENA, CAVERN -> new int[]{2, 2};
+                case HALL -> Hash.unit(seed, id, 13) < 0.5 ? new int[]{1, 2} : new int[]{2, 1};
+                default -> new int[]{1, 1};
+            };
+        }
+
+        void kinds() {
+            for (int w : chain.links.keySet()) kinds.put(w, Kind.LINK);
+            int biggest = -1, area = 0;
+            for (int w : chain.places) {
+                Room r = p.world(w);
+                boolean built = false;
+                for (int i = 0; i < p.host.length; i++) built |= p.host[i] == w && WorldPlan.built(p.room(i));
+                Kind k = built ? Kind.BUILT : w == p.host[p.logic.start] ? Kind.ARRIVAL : w == p.host[p.logic.end] ? Kind.END : Kind.CAVERN;
+                kinds.put(w, k);
+                if (k == Kind.CAVERN && r.gw * r.gh > area && !p.sealable(r)) {
+                    area = r.gw * r.gh;
+                    biggest = w;
+                }
+            }
+            // the deep cavern: the biggest calm one on the way, where the world's hero piece stands
+            if (biggest >= 0 && area >= 4) {
+                great = biggest;
+                kinds.put(great, Kind.GREAT);
+            }
+            for (int w : chain.places) {
+                Room r = p.world(w);
+                Kind k = kinds.get(w);
+                if (k == Kind.BUILT) continue;
+                shapes.put(w, PassageEngine.Shape.of(r, r.gw == r.gh && !hex && !square));
+                int h = roof + (r.gw + r.gh - 2) * 4;
+                if (k == Kind.GREAT) h = Math.max(h + 8, tower);
+                if (k == Kind.ARRIVAL) h = Math.max(7, roof - 2);
+                if (sea) h = sky;
+                roofs.put(w, h);
+                r.height = Math.min(h + 4, 120);
+                if (k == Kind.ARRIVAL) {
+                    int back = back(r);
+                    p.anchor(w, r.centerX() + GatePainter.DX[back] * 2, r.centerZ() + GatePainter.DZ[back] * 2);
+                }
+            }
+        }
+
+        /** The side of a place away from its first doorway. */
+        static int back(Room r) {
+            return r.doors.isEmpty() ? 0 : (r.doors.get(0).side + 2) % 4;
+        }
+
+        /**
+         * A secret world of the theme (a recipe secret that {@code leads_to} one), hidden off a calm cavern: an extra
+         * place two slots square where there's room, else one, joined by a narrow way the dress hides.
+         */
+        void secretPlace() {
+            if (world == null) return;
+            String to = "";
+            for (GateWorld.Secret sc : world.dressing().secrets()) if (!sc.leadsTo().isEmpty()) to = sc.leadsTo();
+            if (to.isEmpty()) return;
+            List<Integer> calm = new ArrayList<>();
+            for (int w : chain.places) {
+                Kind k = kinds.get(w);
+                if ((k == Kind.CAVERN || k == Kind.GREAT) && !p.sealable(p.world(w))) calm.add(w);
+            }
+            calm.sort((a, b) -> Long.compare(Hash.of(seed, a, 307), Hash.of(seed, b, 307)));
+            for (int sz = 2; sz >= 1; sz--) {
+                for (int w : calm) {
+                    Room r = p.world(w);
+                    for (int side = 0; side < 4; side++) {
+                        int[] at = beside(r, side, sz);
+                        if (at == null || !p.free(at[0], at[1], sz, sz)) continue;
+                        // the way in is one slot: through the side's middle slot
+                        int sid = p.extra(at[0], at[1], sz, sz, 0);
+                        if (!p.join(w, sid)) continue;
+                        secret = sid;
+                        kinds.put(sid, Kind.SECRET);
+                        Room sr = p.world(sid);
+                        shapes.put(sid, PassageEngine.Shape.of(sr, true));
+                        roofs.put(sid, roof + sz * 4);
+                        sr.height = Math.min(roof + sz * 4 + 4, 120);
+                        p.placeWorlds.put(sid, to);
+                        GateWorld inner = dev.awaken.gates.worlds.GateWorlds.get(to);
+                        if (inner != null && !inner.biome().isEmpty()) p.placeBiomes.put(sid, inner.biome());
+                        return;
+                    }
+                }
+            }
+        }
+
+        /** The slots beside a place's side for a square of {@code sz}, touching its edge: x, z (inside the margin), or null. */
+        static int[] beside(Room r, int side, int sz) {
+            int x, z;
+            switch (side) {
+                case 0 -> { x = r.gx; z = r.gz - sz; }
+                case 2 -> { x = r.gx; z = r.gz + r.gh; }
+                case 1 -> { x = r.gx + r.gw; z = r.gz; }
+                default -> { x = r.gx - sz; z = r.gz; }
+            }
+            if (x < ChainLayout.LO || z < ChainLayout.LO || x + sz - 1 > ChainLayout.HI || z + sz - 1 > ChainLayout.HI) return null;
+            return new int[]{x, z};
+        }
+
+        // ---- the shape ----------------------------------------------------------------------------------------------
+
+        /** A place's plan distance at a point (negative inside), its walls made ragged by the world's noise. */
+        double d(int id, double x, double z) {
+            PassageEngine.Shape sh = shapes.get(id);
+            if (sh == null) return 99;
+            double base = hex ? hexD(sh, x, z) : sh.d(x, z);
+            return base + (Hash.noise(seed + id, x, z, 6.5) - 0.5) * 2 * wobble;
+        }
+
+        /** A rounded hexagon's distance (the comb), flat sides north and south. */
+        static double hexD(PassageEngine.Shape sh, double x, double z) {
+            double u = Math.abs(x - sh.cx()), v = Math.abs(z - sh.cz());
+            double r = Math.min(sh.a(), sh.b());
+            double q = Math.max(v, u * 0.866 + v * 0.5);
+            return q - r * 0.92;
+        }
+
+        /** How far into its middle (0 at the middle, 1 at the wall). */
+        double q(int id, double x, double z) {
+            PassageEngine.Shape sh = shapes.get(id);
+            return sh == null ? 1 : sh.q(x, z);
+        }
+
+        /** A cavern's roof over a point: low at its walls, its full height in the middle, a little uneven. */
+        double ceil(int id, double x, double z) {
+            int h = roofs.getOrDefault(id, roof);
+            double q = Math.min(1, q(id, x, z));
+            return 3.5 + (h - 3.5) * Math.sqrt(Math.max(0, 1 - q * q)) + (Hash.noise(seed + id * 7L, x, z, 4.5) - 0.5) * 3;
+        }
+
+        /** Inside a cavern's lake (the big ones' middles, away from the doors). */
+        boolean inLake(int id, double x, double z) {
+            if (!lakes || sea) return false;
+            Kind k = kinds.get(id);
+            Room r = p.world(id);
+            if (k != Kind.GREAT && !(k == Kind.CAVERN && r.gw * r.gh >= 4 && !p.sealable(r))) return false;
+            return q(id, x, z) + (Hash.noise(seed, x, z, 5) - 0.5) * 0.12 < 0.5;
+        }
+
+        // ---- the carve ----------------------------------------------------------------------------------------------
+
+        void sculpt() {
+            s = new Sculpt(this::skin, c.plot().minY(), c.plot().maxY());
+            if (sea) {
+                // the sea: open from its bed to the roof over the whole plot but its margin, filled to just under the floor
+                int x0 = 8, x1 = 247;
+                s.carve(x0, W - DEEP + 1, x0, x1, W + sky + 4, x1, (x, y, z) -> {
+                    double edge = Math.max(Math.max(x0 - x, x - x1 - 1), Math.max(x0 - z, z - x1 - 1));
+                    double top = W + sky * (0.75 + 0.25 * Hash.noise(seed, x, z, 24)) + (Hash.noise(seed, x, z, 7) - 0.5) * 6;
+                    return Math.max(edge, Math.max(W - DEEP + 1 - y, y - top));
+                });
+                s.fillOpen(x0, W - DEEP + 1, x0, x1, W - 1, x1, (x, y, z) -> -1, fluid);
+                waters.add(new FloorAir.Water(-1, x0, x0, x1, x1));
+            }
+            for (var e : kinds.entrySet()) {
+                Room r = p.world(e.getKey());
+                switch (e.getValue()) {
+                    case LINK -> tunnel(r, chain.links.get(e.getKey()));
+                    case BUILT -> {
+                        if (sea) s.box(r.gx * 16 - 1, W - DEEP, r.gz * 16 - 1, (r.gx + r.gw) * 16, W + 1, (r.gz + r.gh) * 16, wall);
+                    }
+                    default -> cavern(r, e.getValue());
+                }
+            }
+            p.thresholds(s, W, floor, trim);
+            dress.world();
+            for (var e : kinds.entrySet()) {
+                Room r = p.world(e.getKey());
+                switch (e.getValue()) {
+                    case LINK -> dress.tunnel(r, chain.links.get(e.getKey()));
+                    case BUILT -> {}
+                    case SECRET -> dress.secret(r);
+                    default -> dress.cavern(r, e.getValue());
+                }
+            }
+            glow();
+            p.doorLights(s, W, light);
+            p.screens(s, W, dress::screen);
+            p.handbells(s);
+            s.seal();
+        }
+
+        BlockState skin(int x, int y, int z, boolean fl, boolean ceil) {
+            return dress.skin(x, y, z, fl, ceil);
+        }
+
+        /** A cavern (or the sea's island): its plan made ragged, its roof a dome, a mouth from each doorway to its middle. */
+        void cavern(Room r, Kind k) {
+            int id = r.id;
+            int x0 = r.gx * 16, z0 = r.gz * 16, x1 = x0 + r.gw * 16 - 1, z1 = z0 + r.gh * 16 - 1;
+            if (sea) {
+                island(r);
+                return;
+            }
+            int top = W + roofs.get(id) + 3;
+            s.carve(x0, W, z0, x1, top, z1, (x, y, z) -> {
+                double h = y - W;
+                return Math.max(d(id, x, z), Math.max(-h, h - ceil(id, x, z)));
+            });
+            // a mouth from each doorway well in, whatever the ragged wall does there
+            PassageEngine.Shape sh = shapes.get(id);
+            for (Room.Door dr : r.doors) {
+                double ax = dr.centerX() + 0.5, az = dr.centerZ() + 0.5;
+                double bx = ax + (sh.cx() - ax) * 0.55, bz = az + (sh.cz() - az) * 0.55;
+                int lx = (int) Math.floor(Math.min(ax, bx)) - 3, hx = (int) Math.ceil(Math.max(ax, bx)) + 3;
+                int lz = (int) Math.floor(Math.min(az, bz)) - 3, hz = (int) Math.ceil(Math.max(az, bz)) + 3;
+                s.carve(lx, W, lz, hx, W + 5, hz, (x, y, z) -> Math.max(
+                        Sculpt.capsule(x, y, z, ax, W + 1.6, az, bx, W + 1.6, bz, 2.4), W - y));
+            }
+            if (inLakeAny(id)) lake(r);
+        }
+
+        boolean inLakeAny(int id) {
+            PassageEngine.Shape sh = shapes.get(id);
+            return sh != null && inLake(id, sh.cx(), sh.cz());
+        }
+
+        /** A lake in a cavern's middle: three deep, its surface level with the floor so you can wade out of it. */
+        void lake(Room r) {
+            int id = r.id;
+            int x0 = r.gx * 16, z0 = r.gz * 16, x1 = x0 + r.gw * 16 - 1, z1 = z0 + r.gh * 16 - 1;
+            // open only from three under the floor to the floor (the carve's shell reaches past its box: unbounded, the
+            // lake's bed would open too and the water stand on air)
+            s.carve(x0, W - 3, z0, x1, W - 1, z1, (x, y, z) -> inLake(id, x, z) ? Math.max(W - 3 - y, y - W) : 1);
+            s.fillOpen(x0, W - 3, z0, x1, W - 1, z1, (x, y, z) -> inLake(id, x, z) ? -1 : 1, fluid);
+            PassageEngine.Shape sh = shapes.get(id);
+            int ra = (int) (sh.a() * 0.5), rb = (int) (sh.b() * 0.5);
+            if (waters.size() < FloorAir.MAX_WATERS)
+                waters.add(new FloorAir.Water(-1, (int) sh.cx() - ra, (int) sh.cz() - rb, (int) sh.cx() + ra, (int) sh.cz() + rb));
+        }
+
+        /** An island in the sea: a ragged slab from the bed to the surface, its top the floor. */
+        void island(Room r) {
+            int id = r.id;
+            int x0 = r.gx * 16, z0 = r.gz * 16, x1 = x0 + r.gw * 16 - 1, z1 = z0 + r.gh * 16 - 1;
+            s.op(x0, W - DEEP, z0, x1, W - 1, z1, (b, x, y, z) -> {
+                double under = (W - 1 - y) * 0.35;
+                if (d(id, x + 0.5, z + 0.5) + under < 0) b.mark(x, y, z, Sculpt.SOLID);
+            });
+            // a landing from each doorway onto the island
+            for (Room.Door dr : r.doors) {
+                int[] box = WorldPlan.doorBox(dr, 7);
+                s.op(box[0], W - 2, box[2], box[1], W - 1, box[3], (b, x, y, z) -> {
+                    if (insideSlots(r, x, z)) b.mark(x, y, z, Sculpt.SOLID);
+                });
+            }
+        }
+
+        static boolean insideSlots(Room r, int x, int z) {
+            return x >= r.gx * 16 && x < (r.gx + r.gw) * 16 && z >= r.gz * 16 && z < (r.gz + r.gh) * 16;
+        }
+
+        /** A tunnel winding across its slot from doorway to doorway, arched, a little wider where it turns. */
+        void tunnel(Room r, ChainLayout.Link l) {
+            int ox = r.gx * 16, oz = r.gz * 16;
+            ChainLayout.Way way = ChainLayout.Way.of(r, l, seed);
+            if (sea) {
+                // a causeway at the surface
+                s.op(ox, W - DEEP, oz, ox + 15, W - 1, oz + 15, (b, x, y, z) -> {
+                    double[] w = way.at(x + 0.5, z + 0.5);
+                    if (w == null) return;
+                    double lat = Math.abs(w[0]) + (W - 1 - y) * 0.3;
+                    if (lat < hw + 0.2) b.mark(x, y, z, Sculpt.SOLID);
+                });
+                return;
+            }
+            int top = W + 9;
+            s.carve(ox, W, oz, ox + 15, top, oz + 15, (x, y, z) -> {
+                double[] w = way.at(x, z);
+                if (w == null) return 99;
+                double lat = Math.abs(w[0]);
+                double half = hw + (Hash.noise(seed, x, z, 4) - 0.5) * 0.8;
+                double h = y - W, arch = 4.2 + Math.max(0, half * half - lat * lat) * 0.35;
+                return Math.max(lat - half, Math.max(-h, h - arch));
+            });
+        }
+
+        /**
+         * Hidden light three apart at head height over every place and along every tunnel (four leaves the ragged walls'
+         * pockets and the diagonal tunnels dark, since light spreads block by block); where something stands there, on
+         * top of it.
+         */
+        void glow() {
+            for (var e : kinds.entrySet()) {
+                Room r = p.world(e.getKey());
+                Kind k = e.getValue();
+                if (k == Kind.BUILT) continue;
+                int x0 = r.gx * 16, z0 = r.gz * 16, x1 = x0 + r.gw * 16 - 1, z1 = z0 + r.gh * 16 - 1;
+                if (k == Kind.LINK) {
+                    ChainLayout.Way way = ChainLayout.Way.of(r, chain.links.get(r.id), seed);
+                    s.op(x0, W + 1, z0, x1, W + 1, z1, (b, x, y, z) -> {
+                        double[] w = way.at(x + 0.5, z + 0.5);
+                        if (w == null || Math.abs(w[0]) > 1.6 || Math.floorMod((int) Math.round(w[1]), 3) != 1) return;
+                        lightOver(b, x, y, z);
+                    });
+                    continue;
+                }
+                int id = r.id;
+                int mx = (x0 + x1 + 1) / 2, mz = (z0 + z1 + 1) / 2;
+                s.op(x0, W + 1, z0, x1, W + 1, z1, (b, x, y, z) -> {
+                    if (Math.floorMod(x - mx, 3) != 0 || Math.floorMod(z - mz, 3) != 0) return;
+                    if (d(id, x + 0.5, z + 0.5) < 0) lightOver(b, x, y, z);
+                });
+                // down each doorway's mouth too, which runs on past the ragged wall
+                PassageEngine.Shape sh = shapes.get(id);
+                if (sh == null) continue;
+                for (Room.Door dr : r.doors) {
+                    double ax = dr.centerX() + 0.5, az = dr.centerZ() + 0.5;
+                    double vx = (sh.cx() - ax) * 0.55, vz = (sh.cz() - az) * 0.55, len = Math.hypot(vx, vz);
+                    for (double t = 2.5; t < len; t += 3) {
+                        int lx = (int) Math.floor(ax + vx * t / len), lz = (int) Math.floor(az + vz * t / len);
+                        s.op(lx, W + 1, lz, lx, W + 1, lz, this::lightOver);
+                    }
+                }
+            }
+        }
+
+        void lightOver(Sculpt.Buf b, int x, int y, int z) {
+            for (int yy = y; yy <= y + 2; yy++) {
+                if (b.open(x, yy, z)) {
+                    b.set(x, yy, z, light);
+                    return;
+                }
+            }
+        }
+
+        // ---- what the floor walks on and how its air glows ----------------------------------------------------------
+
+        boolean walk(Room r, int x, int z) {
+            Kind k = kinds.get(r.id);
+            if (k == null || k == Kind.LINK || k == Kind.BUILT) return false;
+            double px = x + 0.5, pz = z + 0.5;
+            if (d(r.id, px, pz) > -2.2 || inLake(r.id, px, pz)) return false;
+            for (double[] bl : blocked) if (Math.hypot(px - bl[0], pz - bl[1]) < bl[2] + 1.2) return false;
+            return true;
+        }
+
+        FloorAir air() {
+            List<FloorAir.Light> all = lights.size() > FloorAir.MAX_LIGHTS ? lights.subList(0, FloorAir.MAX_LIGHTS) : lights;
+            return new FloorAir(new ArrayList<>(all), shafts, dress.mists(), waters);
+        }
+    }
+}

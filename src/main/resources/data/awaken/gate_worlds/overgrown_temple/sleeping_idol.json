@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "theme": "overgrown_temple",
+  "name": "The Sleeping Idol",
+  "line": "A stone face as big as a hill, asleep, with a doorway where its mouth should be.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "roof": 16
+  },
+  "biome": "awaken:gate_world/sleeping_idol",
+  "moods": [],
+  "blocks": {
+    "wall": "awaken:temple_stone",
+    "wall_mossy": "awaken:temple_stone_mossy",
+    "carving": "awaken:temple_carving",
+    "floor": "awaken:temple_tiles",
+    "trim": "awaken:temple_carving",
+    "root": "awaken:temple_root",
+    "vines": "awaken:temple_vines",
+    "moss": "awaken:temple_moss",
+    "touch": "awaken:temple_brazier",
+    "idol": "awaken:temple_idol",
+    "fern": "awaken:temple_fern",
+    "bulb": "awaken:temple_lantern_bulb",
+    "canopy": "awaken:temple_canopy",
+    "fall": "awaken:temple_waterfall",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_face"
+  ],
+  "life": [
+    "mist",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.temple_halls",
+  "events": [],
+  "rule": "offerings",
+  "secrets": [
+    {
+      "id": "the_idols_mouth",
+      "name": "Inside the idol's mouth"
+    }
+  ],
+  "keepsake": "idols_eye",
+  "keepsake_name": "The Idol's Eye",
+  "keepsake_from": "the_idols_mouth"
+}

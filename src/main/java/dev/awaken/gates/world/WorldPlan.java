@@ -120,6 +120,12 @@ final class WorldPlan {
         anchors.put(worldRoom, new int[]{x, z});
     }
 
+    /** Within {@code r} of any place's anchor (where its features stand: nothing grows over them). */
+    boolean nearAnchor(double x, double z, double r) {
+        for (int[] a : anchors.values()) if (Math.hypot(x - a[0] - 0.5, z - a[1] - 0.5) < r) return true;
+        return false;
+    }
+
     int[] anchorOf(Room w) {
         int[] a = anchors.get(w.id);
         return a != null ? a : new int[]{w.centerX(), w.centerZ()};
@@ -301,7 +307,7 @@ final class WorldPlan {
     }
 
     /** A handbell waiting for {@link #handbells}: where it's wanted, its turned state, the secret it keeps and that box. */
-    private record Hand(int base, int x, int h, int z, BlockState state, String secret, int[] with) {}
+    private record Hand(int base, int x, int h, int z, BlockState state, String secret, int[] with, boolean touch) {}
 
     private final List<Hand> hands = new ArrayList<>();
 
@@ -315,7 +321,15 @@ final class WorldPlan {
      * y above the base: a niche it opens), or the bell alone when that's null.
      */
     void handbell(BlockState hb, int base, int x, int h, int z, net.minecraft.core.Direction face, String secret, int[] with) {
-        hands.add(new Hand(base, x, h, z, WorldMats.facing(hb, face), secret, with));
+        hands.add(new Hand(base, x, h, z, WorldMats.facing(hb, face), secret, with, false));
+    }
+
+    /**
+     * A world's rule block (a touchstone: SPEC §38.10) set like a handbell, marked {@code touch}; one that keeps a secret
+     * marks it as a handbell does.
+     */
+    void touch(BlockState st, int base, int x, int h, int z, String secret, int[] with) {
+        hands.add(new Hand(base, x, h, z, st, secret, with, true));
     }
 
     /**
@@ -328,8 +342,10 @@ final class WorldPlan {
         for (Hand hd : hands) {
             int[] at = handSpot(s, hd);
             if (at == null) continue;
-            s.putOpen(at[0], hd.base() + hd.h(), at[1], hd.state());
-            mark(FloorLayout.Mark.BELL, FloorLayout.Mark.HANDBELL, at[0], hd.h(), at[1], at[0], hd.h(), at[1]);
+            if (hd.touch()) s.putOverGrowth(at[0], hd.base() + hd.h(), at[1], hd.state());
+            else s.putOpen(at[0], hd.base() + hd.h(), at[1], hd.state());
+            if (hd.touch()) mark(FloorLayout.Mark.TOUCH, "", at[0], hd.h(), at[1], at[0], hd.h(), at[1]);
+            else mark(FloorLayout.Mark.BELL, FloorLayout.Mark.HANDBELL, at[0], hd.h(), at[1], at[0], hd.h(), at[1]);
             if (hd.secret().isEmpty()) continue;
             int[] w = hd.with() != null ? hd.with() : new int[]{at[0], hd.h(), at[1], at[0], hd.h(), at[1]};
             mark(FloorLayout.Mark.SECRET, hd.secret(), Math.min(at[0], Math.min(w[0], w[3])), Math.min(hd.h(), Math.min(w[1], w[4])),
@@ -431,7 +447,7 @@ final class WorldPlan {
             java.util.Set<Long> taken = new java.util.HashSet<>();
             // a feature stands a block clear of every handbell (a vault's bars would close round one)
             for (FloorLayout.Mark m : marks) {
-                if (!m.id().equals(FloorLayout.Mark.HANDBELL)) continue;
+                if (!m.id().equals(FloorLayout.Mark.HANDBELL) && !m.kind().equals(FloorLayout.Mark.TOUCH)) continue;
                 for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) taken.add(((long) (m.x0() + dx) << 32) ^ ((m.z0() + dz) & 0xFFFFFFFFL));
             }
             for (Room L : ls) {

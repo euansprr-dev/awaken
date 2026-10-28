@@ -27,6 +27,14 @@ public final class WorldSets {
         PIECES.put(Theme.BELL_CRYPT, new Piece(GatesRegistry.BELL_TOWER, "The Bell Tower",
                 "All five bells of the crypt, hung together in a little tower. Set it up at home: it rings the hours from dawn to"
                         + " dusk, and you can ring it yourself."));
+        PIECES.put(Theme.FUNGAL_HOLLOW, new Piece(() -> GatesRegistry.theme("spore_jar"), "The Spore Jar",
+                "A jar of the Hollow's spores that never stop glowing. Tap it and they swirl up."));
+        PIECES.put(Theme.EMBER_MINES, new Piece(() -> GatesRegistry.theme("ember_forge"), "The Ever-Ember Forge",
+                "A miner's forge whose coals never go out. Hold raw food over it and it cooks."));
+        PIECES.put(Theme.HIVE, new Piece(() -> GatesRegistry.theme("queens_comb"), "The Queen's Comb",
+                "A comb from the queen's own garden. Fill a glass bottle from it, and it slowly fills itself up again."));
+        PIECES.put(Theme.OVERGROWN_TEMPLE, new Piece(() -> GatesRegistry.theme("little_idol"), "The Little Idol",
+                "A little idol from the temple. Set it near your crops and they grow faster around it."));
     }
 
     public static Piece of(Theme t) {

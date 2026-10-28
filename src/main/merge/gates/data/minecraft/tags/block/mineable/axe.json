@@ -2,6 +2,18 @@
   "values": [
     "awaken:gate_glowcap",
     "awaken:gate_glowcap_gills",
-    "awaken:gate_sodden_shelf"
+    "awaken:gate_sodden_shelf",
+    "awaken:glowcap_stem",
+    "awaken:mine_timber",
+    "awaken:mine_planks",
+    "awaken:ember_bellows",
+    "awaken:hive_wax",
+    "awaken:hive_wax_dark",
+    "awaken:hive_comb",
+    "awaken:hive_comb_capped",
+    "awaken:hive_drum",
+    "awaken:hive_royal",
+    "awaken:queens_comb",
+    "awaken:temple_root"
   ]
 }

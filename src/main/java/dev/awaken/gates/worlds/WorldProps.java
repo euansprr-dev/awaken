@@ -50,12 +50,16 @@ public final class WorldProps {
         final double r;
         final int h;
         final float yaw;
+        /** A wall of comb that slides back and forth (the Swarm, SPEC §38.10), not a bell. */
+        final boolean comb;
         Display.BlockDisplay display;
         float amp;
         long since;
+        double bx, by, bz;
 
         Prop(FloorLayout.Mark mark) {
             this.mark = mark;
+            this.comb = mark.id().startsWith("comb:");
             this.r = Integer.parseInt(mark.id().substring(mark.id().indexOf(':') + 1)) / 10.0;
             this.h = mark.y1() - mark.y0() + 1;
             this.yaw = (Hash.of(mark.x0(), mark.z0(), 41) & 1) == 0 ? 0f : 90f;
@@ -98,10 +102,15 @@ public final class WorldProps {
 
     static Display.BlockDisplay spawn(ServerLevel level, double x, double y, double z, Prop pr, BlockPos o) {
         CompoundTag tag = new CompoundTag();
-        BlockState bell = GatesRegistry.BELL_PROP.get().defaultBlockState();
+        BlockState bell = pr.comb ? GatesRegistry.theme("hive_comb_capped").defaultBlockState() : GatesRegistry.BELL_PROP.get().defaultBlockState();
         tag.put("block_state", BlockState.CODEC.encodeStart(NbtOps.INSTANCE, bell).getOrThrow());
         float w = (float) (pr.r * 2);
-        Transformation t = new Transformation(new Vector3f(-w / 2, -pr.h, -w / 2), new Quaternionf(), new Vector3f(w, pr.h, w), new Quaternionf());
+        Transformation t = pr.comb
+                ? new Transformation(new Vector3f(-w / 2, -pr.h, -0.5f), new Quaternionf(), new Vector3f(w, pr.h, 1), new Quaternionf())
+                : new Transformation(new Vector3f(-w / 2, -pr.h, -w / 2), new Quaternionf(), new Vector3f(w, pr.h, w), new Quaternionf());
+        pr.bx = x;
+        pr.by = y;
+        pr.bz = z;
         tag.put("transformation", Transformation.CODEC.encodeStart(NbtOps.INSTANCE, t).getOrThrow());
         tag.putInt("teleport_duration", STEP);
         tag.putFloat("view_range", 2.5f);
@@ -148,6 +157,14 @@ public final class WorldProps {
                     continue;
                 }
                 any = true;
+                if (pr.comb) {
+                    // a comb wall slides two blocks each way across its cavern, slowly, out of step with the others
+                    if (tick % STEP != 0) continue;
+                    double off = 2.2 * Math.sin(2 * Math.PI * tick / 220.0 + (pr.mark.x0() * 0.37 + pr.mark.z0() * 0.61));
+                    double ya = Math.toRadians(pr.yaw);
+                    d.setPos(pr.bx + Math.cos(ya) * off, pr.by, pr.bz + Math.sin(ya) * off);
+                    continue;
+                }
                 if (pr.amp <= 0 || tick % STEP != 0) continue;
                 long t = tick - pr.since;
                 float a = pr.amp * (float) Math.exp(-t / DAMP);

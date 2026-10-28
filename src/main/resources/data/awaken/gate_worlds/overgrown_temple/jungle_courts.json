@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "theme": "overgrown_temple",
+  "name": "The Jungle Courts",
+  "line": "Old courtyards under a roof of leaves, with braziers waiting for someone to light them.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "square": 1,
+    "wobble": 0.6,
+    "roof": 14
+  },
+  "biome": "awaken:gate_world/jungle_courts",
+  "moods": [
+    {
+      "id": "still",
+      "name": "Still",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "monsoon",
+      "name": "Monsoon",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/jungle_courts_monsoon",
+      "life": [
+        "rain"
+      ]
+    },
+    {
+      "id": "fireflies",
+      "name": "Fireflies",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/jungle_courts_fireflies",
+      "life": [
+        "fireflies"
+      ]
+    },
+    {
+      "id": "overgrowth",
+      "name": "Overgrowth",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/jungle_courts_overgrowth",
+      "life": [
+        "petals",
+        "spores"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:temple_stone",
+    "wall_mossy": "awaken:temple_stone_mossy",
+    "carving": "awaken:temple_carving",
+    "floor": "awaken:temple_tiles",
+    "trim": "awaken:temple_carving",
+    "root": "awaken:temple_root",
+    "vines": "awaken:temple_vines",
+    "moss": "awaken:temple_moss",
+    "touch": "awaken:temple_brazier",
+    "idol": "awaken:temple_idol",
+    "fern": "awaken:temple_fern",
+    "bulb": "awaken:temple_lantern_bulb",
+    "canopy": "awaken:temple_canopy",
+    "fall": "awaken:temple_waterfall",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "colonnade"
+  ],
+  "life": [
+    "drips",
+    "mist",
+    "fireflies",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.temple_courts",
+  "events": [
+    "the_rains",
+    "the_wakening"
+  ],
+  "rule": "offerings",
+  "secrets": [
+    {
+      "id": "first_offering",
+      "name": "The first offering"
+    },
+    {
+      "id": "overgrown_shrine",
+      "name": "The overgrown shrine"
+    },
+    {
+      "id": "the_green_door",
+      "name": "The green door",
+      "leads_to": "awaken:overgrown_temple/sleeping_idol"
+    }
+  ],
+  "keepsake": "jade_offering",
+  "keepsake_name": "A Jade Offering",
+  "keepsake_from": "overgrown_shrine"
+}

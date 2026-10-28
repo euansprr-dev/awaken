@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/glowcap_stem"
+    },
+    "axis=z": {
+      "model": "awaken:block/glowcap_stem",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "awaken:block/glowcap_stem",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

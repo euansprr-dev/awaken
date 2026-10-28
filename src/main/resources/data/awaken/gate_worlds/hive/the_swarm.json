@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "theme": "hive",
+  "name": "The Swarm",
+  "line": "The walls of comb in here move around you. Listen for the singing.",
+  "tier": "wonder",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "hex": 1,
+    "roof": 12,
+    "wobble": 0.6
+  },
+  "biome": "awaken:gate_world/the_swarm",
+  "moods": [
+    {
+      "id": "drowsy",
+      "name": "Drowsy",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "swarming",
+      "name": "Swarming",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/the_swarm_swarming",
+      "life": [
+        "fireflies",
+        "dust"
+      ]
+    },
+    {
+      "id": "harvest",
+      "name": "Harvest",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/the_swarm_harvest",
+      "life": [
+        "drips",
+        "petals"
+      ]
+    },
+    {
+      "id": "wax_moon",
+      "name": "Wax moon",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/the_swarm_wax_moon",
+      "life": [
+        "fireflies",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:hive_wax",
+    "rim": "awaken:hive_wax_dark",
+    "wall_glow": "awaken:hive_comb",
+    "capped": "awaken:hive_comb_capped",
+    "honey": "awaken:hive_honey_glow",
+    "floor": "awaken:hive_floor",
+    "floor_soft": "awaken:hive_pollen",
+    "trim": "awaken:hive_wax_dark",
+    "drip": "awaken:hive_drip",
+    "touch": "awaken:hive_drum",
+    "royal": "awaken:hive_royal",
+    "petals": "awaken:hive_petals",
+    "candle": "awaken:hive_candle",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "moving_walls"
+  ],
+  "life": [
+    "drips",
+    "dust",
+    "fireflies"
+  ],
+  "sound": "awaken:gate.world.hive_brood",
+  "events": [
+    "the_hum",
+    "queens_choir"
+  ],
+  "rule": "hum",
+  "secrets": [
+    {
+      "id": "humming_drum",
+      "name": "The humming drum"
+    },
+    {
+      "id": "still_cell",
+      "name": "The still cell"
+    }
+  ],
+  "keepsake": "choir_wing",
+  "keepsake_name": "A Wing from the Queen's Choir",
+  "keepsake_from": "queens_choir",
+  "signature": "queens_choir"
+}

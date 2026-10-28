@@ -153,6 +153,72 @@ public final class WorldLiveTests {
             h.succeed();
         });
 
+        AwakenTests.registerIsolated("gateworlds_touch", 400, h -> {
+            // a cave world's rule (38.10) on a painted Glowing Deep floor: a puffball answers, the monsters near it choke on
+            // its spores, too many bring the Spore Warden; a nook is found by standing in it, and the Mycelium Mind hears you
+            ServerLevel level = h.getLevel();
+            String deep = "awaken:fungal_hollow/glowing_deep";
+            GatePlan plan = null;
+            FloorLayout f = null;
+            for (int i = 0; i < 12 && (f == null || !f.isWorld() || f.marks(FloorLayout.Mark.TOUCH).isEmpty() || f.marks(FloorLayout.Mark.NOOK).isEmpty()
+                    || f.placeWorlds.isEmpty()); i++) {
+                plan = GateWorldBellTests.dressed(GateWorldBellTests.plan(0xF00DL + i * 7919L, i * 4, dev.awaken.gates.content.Theme.FUNGAL_HOLLOW), deep, "quiet");
+                f = GateLayout.of(plan).floor(0, 1);
+            }
+            h.assertTrue(f != null && f.isWorld() && !f.marks(FloorLayout.Mark.TOUCH).isEmpty() && !f.marks(FloorLayout.Mark.NOOK).isEmpty(),
+                    "a Glowing Deep floor with puffballs and a nook");
+            GateLiveTests.testLevel(level);
+            ServerPlayer p = null;
+            GateRecord g = null;
+            try {
+                g = GateLiveTests.standUp(h, plan, 0, 1);
+                p = GateLiveTests.player(h);
+                h.assertTrue(Runs.enter(p, g), "entered");
+                FloorState fs = g.floor(0, 1);
+                FloorLayout.Mark tm = f.marks(FloorLayout.Mark.TOUCH).get(0);
+                BlockPos puff = GateService.world(g, f, tm.x0(), tm.y0(), tm.z0());
+                h.assertTrue(level.getBlockState(puff).getBlock() instanceof dev.awaken.gates.block.ThemeBlocks.Touchstone, "a puffball stands at its mark");
+                p.teleportTo(level, puff.getX() + 1.5, puff.getY(), puff.getZ() + 0.5, Set.of(), 0, 0, true);
+                LivingEntity mob = Rooms.spawn(level, g, f, -1, MobRole.Role.NORMAL, puff.east(3));
+                // struck as a player strikes it: the block answers the Hollow's rule and lights
+                level.getBlockState(puff).attack(level, puff, p);
+                h.assertTrue(level.getBlockState(puff).getValue(dev.awaken.gates.block.ThemeBlocks.Touchstone.LIT), "the struck puffball glows");
+                if (mob != null) h.assertTrue(mob.hasEffect(MobEffects.SLOWNESS) && mob.hasEffect(MobEffects.WEAKNESS), "a monster near it chokes");
+                for (int i = 1; i < WorldThemes.TOO_MANY; i++) {
+                    WorldThemes.clear();
+                    WorldThemes.touch(p, puff);
+                }
+                h.assertTrue(fs.world.contains("too_many"), "the Spore Warden comes at the " + WorldThemes.TOO_MANY + "th puff");
+
+                // a nook: standing in it finds its secret
+                FloorLayout.Mark nook = f.marks(FloorLayout.Mark.NOOK).get(0);
+                BlockPos at = GateService.world(g, f, (nook.x0() + nook.x1()) / 2, nook.y0(), (nook.z0() + nook.z1()) / 2);
+                p.teleportTo(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), 0, 0, true);
+                Room in = null;
+                for (Room r : f.rooms) if (r.containsSlot(((nook.x0() + nook.x1()) / 2) >> 4, ((nook.z0() + nook.z1()) / 2) >> 4)) in = r;
+                if (in != null) WorldLive.places(p, g, f, in);
+                WorldLive.nooks(p, g, f, in);
+                String nookWorld = in == null ? f.world : f.worldOf(in);
+                GateAtlas atlas = p.getData(GatesRegistry.ATLAS.get());
+                h.assertTrue(atlas.entry(nookWorld) != null && atlas.entry(nookWorld).secrets.contains(nook.id()), "standing in the nook finds " + nook.id());
+
+                // the Mycelium Mind: say something in it and it answers
+                if (!f.placeWorlds.isEmpty()) {
+                    int mindId = f.placeWorlds.keySet().iterator().next();
+                    Room mind = f.room(mindId);
+                    BlockPos c = GateService.world(g, f, mind.centerX(), 0, mind.centerZ());
+                    p.teleportTo(level, c.getX() + 0.5, c.getY() + 1, c.getZ() + 0.5, Set.of(), 0, 0, true);
+                    WorldThemes.chat(new net.neoforged.neoforge.event.ServerChatEvent(p, "hello", net.minecraft.network.chat.Component.literal("hello")));
+                    GateAtlas.Entry e = p.getData(GatesRegistry.ATLAS.get()).entry(f.placeWorlds.get(mindId));
+                    h.assertTrue(e != null && e.secrets.contains("the_thought"), "the Mind shares a thought when you speak in it");
+                }
+            } finally {
+                WorldLive.clear();
+                GateLiveTests.teardown(level, p, g);
+            }
+            h.succeed();
+        });
+
         AwakenTests.register("gateworlds_sounds", 20, h -> {
             // every gate.world sound is in sounds.json with its files there, every world's bed is one, its life is known
             List<String> problems = new ArrayList<>();
@@ -210,6 +276,12 @@ public final class WorldLiveTests {
             boolean tower = false;
             for (int i = 0; i < p.getInventory().getContainerSize(); i++) tower |= p.getInventory().getItem(i).is(GatesRegistry.BELL_TOWER.get().asItem());
             h.assertTrue(tower, "the fifth keepsake brings the bell tower");
+            for (var t : List.of(dev.awaken.gates.content.Theme.FUNGAL_HOLLOW, dev.awaken.gates.content.Theme.EMBER_MINES,
+                    dev.awaken.gates.content.Theme.HIVE, dev.awaken.gates.content.Theme.OVERGROWN_TEMPLE)) {
+                h.assertTrue(WorldSets.of(t) != null && WorldSets.of(t).item().get() != null, t.id + " has its set piece");
+                long keeps = GateWorlds.ofTheme(t).stream().filter(w -> !GateWorlds.get(w).dressing().keepsake().isEmpty()).count();
+                h.assertTrue(keeps == 5, t.id + " has a keepsake in each of its five worlds (" + keeps + ")");
+            }
             h.succeed();
         });
 

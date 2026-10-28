@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "theme": "fungal_hollow",
+  "name": "The Root Warrens",
+  "line": "Tight tunnels through roots that pulse with light. Keep your head down.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "tunnel": 1.6,
+    "roof": 7,
+    "wobble": 2.4
+  },
+  "biome": "awaken:gate_world/root_warrens",
+  "moods": [
+    {
+      "id": "quiet",
+      "name": "Quiet",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "bloom",
+      "name": "Bloom",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/root_warrens_bloom",
+      "life": [
+        "spores",
+        "moths"
+      ]
+    },
+    {
+      "id": "drought",
+      "name": "Drought",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/root_warrens_drought",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "migration",
+      "name": "Migration",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/root_warrens_migration",
+      "life": [
+        "moths",
+        "fireflies"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:fungal_rock",
+    "wall_glow": "awaken:fungal_rock_veined",
+    "floor": "awaken:fungal_loam",
+    "floor_glow": "awaken:fungal_moss",
+    "trim": "awaken:fungal_rock_veined",
+    "stem": "awaken:glowcap_stem",
+    "cap": "awaken:glowcap_cap",
+    "gills": "awaken:glowcap_gills",
+    "roots": "awaken:lumen_roots",
+    "sprouts": "awaken:glowcap_sprouts",
+    "threads": "awaken:mycelium_threads",
+    "fall": "awaken:fungal_glowfall",
+    "touch": "awaken:spore_puffball",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "hanging_roots"
+  ],
+  "life": [
+    "spores",
+    "drips",
+    "mist",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.hollow_roots",
+  "events": [
+    "spore_burst"
+  ],
+  "rule": "spores",
+  "secrets": [
+    {
+      "id": "old_puffball",
+      "name": "The old puffball"
+    },
+    {
+      "id": "root_heart",
+      "name": "The root's heart"
+    },
+    {
+      "id": "the_threads",
+      "name": "The threads in the wall",
+      "leads_to": "awaken:fungal_hollow/mycelium_mind"
+    }
+  ],
+  "keepsake": "lumen_root",
+  "keepsake_name": "A Lumen Root",
+  "keepsake_from": "root_heart"
+}

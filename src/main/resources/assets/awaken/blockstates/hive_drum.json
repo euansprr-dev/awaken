@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/hive_drum"
+    },
+    "lit=true": {
+      "model": "awaken:block/hive_drum_lit"
+    }
+  }
+}

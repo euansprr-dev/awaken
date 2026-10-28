@@ -1,0 +1,197 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/temple_stone",
+    "stone": "awaken:block/temple_stone_mossy",
+    "face": "awaken:block/temple_idol_face",
+    "eyes": "awaken:block/temple_idol_eyes",
+    "leaf": "awaken:block/temple_canopy"
+  },
+  "elements": [
+    {
+      "from": [
+        3.0,
+        0.0,
+        3.0
+      ],
+      "to": [
+        13.0,
+        3.0,
+        13.0
+      ],
+      "faces": {
+        "down": {
+          "texture": "#stone"
+        },
+        "up": {
+          "texture": "#stone"
+        },
+        "north": {
+          "texture": "#stone"
+        },
+        "south": {
+          "texture": "#stone"
+        },
+        "west": {
+          "texture": "#stone"
+        },
+        "east": {
+          "texture": "#stone"
+        }
+      }
+    },
+    {
+      "from": [
+        4.0,
+        3.0,
+        4.0
+      ],
+      "to": [
+        12.0,
+        9.0,
+        12.0
+      ],
+      "faces": {
+        "down": {
+          "texture": "#stone"
+        },
+        "up": {
+          "texture": "#stone"
+        },
+        "north": {
+          "texture": "#stone"
+        },
+        "south": {
+          "texture": "#stone"
+        },
+        "west": {
+          "texture": "#stone"
+        },
+        "east": {
+          "texture": "#stone"
+        }
+      }
+    },
+    {
+      "from": [
+        4.5,
+        9.0,
+        4.5
+      ],
+      "to": [
+        11.5,
+        15.0,
+        11.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#face",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#face",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#face",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#face",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        4.5,
+        9.0,
+        4.5
+      ],
+      "to": [
+        11.5,
+        15.0,
+        11.5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#stone"
+        },
+        "down": {
+          "texture": "#stone"
+        }
+      }
+    },
+    {
+      "from": [
+        4.48,
+        9.0,
+        4.48
+      ],
+      "to": [
+        11.52,
+        15.0,
+        11.52
+      ],
+      "faces": {
+        "north": {
+          "texture": "#eyes",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#eyes",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#eyes",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#eyes",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}

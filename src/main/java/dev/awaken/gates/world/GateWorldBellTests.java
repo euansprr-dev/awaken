@@ -25,13 +25,22 @@ public final class GateWorldBellTests {
     private GateWorldBellTests() {}
 
     public static final String BELL = "awaken:bell_crypt/";
-    static final List<String> MOODS = List.of("still", "tolling", "requiem", "storm");
+    /** Stage 2's floor worlds (SPEC §38.10), theme/world. */
+    public static final List<String> CAVE_WORLDS = List.of(
+            "fungal_hollow/glowing_deep", "fungal_hollow/root_warrens", "fungal_hollow/spore_canopy", "fungal_hollow/inside_the_bloom",
+            "ember_mines/working_mine", "ember_mines/open_chasm", "ember_mines/forge_below", "ember_mines/cooling_sea",
+            "hive/the_comb", "hive/brood_hall", "hive/honey_lake", "hive/the_swarm",
+            "overgrown_temple/jungle_courts", "overgrown_temple/root_halls", "overgrown_temple/waterfall_temple", "overgrown_temple/great_tree");
 
     public static GatePlan plan(long seed, int i) {
+        return plan(seed, i, Theme.BELL_CRYPT);
+    }
+
+    public static GatePlan plan(long seed, int i, Theme t) {
         Layout lay = Layout.values()[i % Layout.values().length];
         Twist tw = i % 4 == 3 ? Twist.GATE_WITHIN : Twist.NONE;
-        return new GatePlan(seed, GatePlan.CONTENT_VERSION, Rank.of(i % 5), Theme.BELL_CRYPT, lay, List.of(), tw, 3 + i % 4,
-                Theme.BELL_CRYPT.bossId(), Theme.HIVE, 0);
+        return new GatePlan(seed, GatePlan.CONTENT_VERSION, Rank.of(i % 5), t, lay, List.of(), tw, 3 + i % 4,
+                t.bossId(), t == Theme.HIVE ? Theme.FUNGAL_HOLLOW : Theme.HIVE, 0);
     }
 
     /** Every floor of the main gate in one world and mood (where its roles allow). */
@@ -56,7 +65,17 @@ public final class GateWorldBellTests {
         if (e == null) return "no arrival";
         int sy = f.baseY + s.dy + e.y();
         walkAll(w, f, e.x(), sy, e.z());
-        if (!w.reached(e.x(), sy, e.z())) return "the arrival isn't somewhere you can stand (" + e.x() + " " + sy + " " + e.z() + ")";
+        if (!w.reached(e.x(), sy, e.z())) {
+            String why = "the arrival isn't somewhere you can stand (" + e.x() + " " + sy + " " + e.z() + ": " + w.at(e.x(), sy, e.z()).getBlock().getDescriptionId()
+                    + " on " + w.at(e.x(), sy - 1, e.z()).getBlock().getDescriptionId() + ")";
+            String dir = System.getenv("AWAKEN_WORLD_DUMP");
+            if (dir != null) try {
+                w.dump(java.nio.file.Path.of(dir), "FAIL-" + f.world.replace(':', '_').replace('/', '_') + "-" + f.floor, e.x(), sy, e.z());
+            } catch (java.io.IOException ex) {
+                why += " dump failed";
+            }
+            return why;
+        }
         StringBuilder bad = new StringBuilder();
         for (Room r : f.rooms) {
             int y = f.baseY + r.dy;
@@ -75,8 +94,16 @@ public final class GateWorldBellTests {
         }
         bad.append(marks(w, f));
         List<int[]> leaks = w.leaks();
-        if (!leaks.isEmpty()) bad.append(" water would flow at ").append(leaks.get(0)[0]).append(' ').append(leaks.get(0)[1]).append(' ')
-                .append(leaks.get(0)[2]).append(" (").append(leaks.size()).append(");");
+        if (!leaks.isEmpty()) {
+            int[] lk = leaks.get(0);
+            bad.append(" water would flow at ").append(lk[0]).append(' ').append(lk[1]).append(' ').append(lk[2]).append(" (").append(leaks.size()).append(") into");
+            for (int[] d : new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 0, -1}, {0, -1, 0}}) {
+                var n = w.at(lk[0] + d[0], lk[1] + d[1], lk[2] + d[2]);
+                if (n.getBlock() != net.minecraft.world.level.block.Blocks.WATER && w.pass(lk[0] + d[0], lk[1] + d[1], lk[2] + d[2]))
+                    bad.append(' ').append(n.getBlock().getDescriptionId()).append(" at ").append(d[0]).append(',').append(d[1]).append(',').append(d[2]);
+            }
+            bad.append(';');
+        }
         // the way to the end on foot (swimming only where there's no other way), lit to 7 or more outside the built
         // rooms (today's painter lights those)
         w.light();
@@ -90,7 +117,18 @@ public final class GateWorldBellTests {
             if (dryGoal != null) goal = dryGoal;
             else walkAll(w, f, e.x(), sy, e.z());
         }
-        if (goal == null) bad.append(" the end can't be reached;");
+        if (goal == null) {
+            bad.append(" the end can't be reached;");
+            for (Room r : f.rooms) {
+                if (r.rig == null || r.pathIn == null || r.pathOut == null) continue;
+                int[] in = outside(r.pathIn, f.baseY), out = outside(r.pathOut, f.baseY);
+                if (w.near(in[0], in[1], in[2], 2) == null || w.reached(out[0], out[1], out[2])) continue;
+                bad.append(" the way out of Rig room ").append(r.id).append(" at ").append(out[0]).append(' ').append(out[1]).append(' ').append(out[2])
+                        .append(" is ").append(w.at(out[0], out[1], out[2]).getBlock().getDescriptionId()).append(" over ")
+                        .append(w.at(out[0], out[1] - 1, out[2]).getBlock().getDescriptionId()).append(" under ")
+                        .append(w.at(out[0], out[1] + 1, out[2]).getBlock().getDescriptionId()).append(';');
+            }
+        }
         else {
             int dark = 0;
             int[] darkest = null;
@@ -148,13 +186,30 @@ public final class GateWorldBellTests {
                     + ", under it " + w.at(m.x0(), f.baseY + m.y0() - 1, m.z0()).getBlock().getDescriptionId() + ")";
         }
         if (missing > 0) bad.append(' ').append(missing).append(" of ").append(hands).append(" handbells aren't there").append(first).append(';');
+        // a world's touchstones (its rule's blocks, 38.10) stand where they're marked; its nooks can be walked into
+        int touches = 0, gone = 0, shut = 0;
+        String where = "";
+        for (FloorLayout.Mark m : f.marks(FloorLayout.Mark.TOUCH)) {
+            touches++;
+            var there = w.at(m.x0(), f.baseY + m.y0(), m.z0());
+            if (there.getBlock() instanceof dev.awaken.gates.block.ThemeBlocks.Touchstone) continue;
+            if (gone++ == 0) where = " (" + there.getBlock().getDescriptionId() + " at " + m.x0() + " " + m.y0() + " " + m.z0() + ")";
+        }
+        if (gone > 0) bad.append(' ').append(gone).append(" of ").append(touches).append(" touchstones aren't there").append(where).append(';');
+        for (FloorLayout.Mark m : f.marks(FloorLayout.Mark.NOOK)) {
+            if (w.near((m.x0() + m.x1()) / 2, f.baseY + m.y0(), (m.z0() + m.z1()) / 2, 2) == null) {
+                if (shut++ == 0) bad.append(" the nook ").append(m.id()).append(" at ").append(m.x0()).append(' ').append(m.y0()).append(' ')
+                        .append(m.z0()).append(" can't be walked into;");
+            }
+        }
         for (FloorLayout.Mark m : f.marks(FloorLayout.Mark.SECRET)) {
             boolean has = false;
             for (int x = m.x0(); x <= m.x1() && !has; x++)
                 for (int y = m.y0(); y <= m.y1() && !has; y++)
                     for (int z = m.z0(); z <= m.z1() && !has; z++) {
                         var st = w.at(x, f.baseY + y, z);
-                        has = st.is(GatesRegistry.CRYPT_HANDBELL.get()) || (m.id().equals("odd_rope") && st.is(GatesRegistry.CRYPT_BELL_ROPE.get()));
+                        has = st.is(GatesRegistry.CRYPT_HANDBELL.get()) || (m.id().equals("odd_rope") && st.is(GatesRegistry.CRYPT_BELL_ROPE.get()))
+                                || st.getBlock() instanceof dev.awaken.gates.block.ThemeBlocks.Touchstone;
                     }
             if (!has) bad.append(" the secret ").append(m.id()).append(" has nothing to find at ").append(m.x0()).append(' ').append(m.z0()).append(';');
         }
@@ -225,17 +280,23 @@ public final class GateWorldBellTests {
         };
     }
 
-    /** One world's test: plans over many gates and every mood, every one of its floors checked. */
-    static void world(String test, String world, int plans) {
+    /**
+     * One world's test: plans over many gates and every mood, every one of its floors checked, and every secret it keeps
+     * placed somewhere: a mark (a handbell, a touchstone, a nook), the secret place it leads to, or one of its events.
+     * The secret world it leads to has its own secrets placed inside that place (a thought is said aloud, not placed).
+     */
+    static void world(String test, String id, int plans) {
         AwakenTests.register(test, 2400, h -> {
-            GateWorld w = GateWorlds.get(BELL + world);
-            h.assertTrue(w != null, "the recipe " + world + " loads");
+            GateWorld w = GateWorlds.get(id);
+            h.assertTrue(w != null, "the recipe " + id + " loads");
+            String world = id.substring(id.indexOf('/') + 1);
+            List<String> moods = w.moods().stream().map(GateWorld.Mood::id).toList();
             double[] ms = new double[2];
             double planWorst = 0;
             int floors = 0;
-            java.util.Set<String> secrets = new java.util.HashSet<>();
+            java.util.Set<String> secrets = new java.util.HashSet<>(), places = new java.util.HashSet<>();
             for (int i = 0; i < plans; i++) {
-                GatePlan p = dressed(plan(0x5E11L + i * 104729L, i), BELL + world, MOODS.get(i % MOODS.size()));
+                GatePlan p = dressed(plan(0x5E11L + i * 104729L, i, w.theme()), id, moods.get(i % moods.size()));
                 long t = System.nanoTime();
                 GateLayout l = FloorBuilder.build(p);
                 double planMs = (System.nanoTime() - t) / 1e6 / Math.max(1, p.worlds().size());
@@ -248,12 +309,22 @@ public final class GateWorldBellTests {
                     }
                     floors++;
                     for (FloorLayout.Mark m : f.marks(FloorLayout.Mark.SECRET)) secrets.add(m.id());
+                    for (FloorLayout.Mark m : f.marks(FloorLayout.Mark.NOOK)) secrets.add(m.id());
+                    places.addAll(f.placeWorlds.values());
                     String why = check(p, f, i > 0 ? ms : new double[2], i < 2 ? world + "-" + i + "-f" + f.floor : null);
                     h.assertTrue(why.isEmpty(), world + " floor " + f.floor + " (" + f.mood + ") of " + p + ":" + why);
                 }
             }
             h.assertTrue(floors > 0, "some floors were " + world);
-            for (GateWorld.Secret sc : w.dressing().secrets()) h.assertTrue(secrets.contains(sc.id()), world + "'s secret " + sc.id() + " is never placed");
+            for (GateWorld.Secret sc : w.dressing().secrets()) {
+                boolean placed = secrets.contains(sc.id()) || w.dressing().events().contains(sc.id())
+                        || (!sc.leadsTo().isEmpty() && places.contains(sc.leadsTo()));
+                h.assertTrue(placed, world + "'s secret " + sc.id() + " is never placed");
+                GateWorld inner = sc.leadsTo().isEmpty() ? null : GateWorlds.get(sc.leadsTo());
+                if (inner != null) for (GateWorld.Secret in : inner.dressing().secrets())
+                    h.assertTrue(secrets.contains(in.id()) || in.id().equals("the_thought") || in.id().equals("choir_hymn") || in.id().equals("odd_rope")
+                            || places.isEmpty(), sc.leadsTo() + "'s secret " + in.id() + " is never placed in its place");
+            }
             h.assertTrue(ms[0] < 4 && ms[1] < 40, String.format("chunks carve inside the budget: average %.2f ms, worst %.2f ms", ms[0], ms[1]));
             h.assertTrue(planWorst < 50, String.format("floors plan inside the budget: worst %.1f ms", planWorst));
             dev.awaken.Awaken.LOG.info("[gates] {}: {} floors, chunks {} ms average, {} ms worst, plans {} ms worst", world, floors,
@@ -264,10 +335,13 @@ public final class GateWorldBellTests {
 
     public static void register() {
         AwakenTests.register("gateworlds_bell_recipes", 200, h -> {
+            // every theme's recipes load, have their engine, and show their own biomes (the Bell Crypt's five and the rest)
             ServerLevel gates = h.getLevel().getServer().getLevel(GatesRegistry.GATES);
             GateBiomeSource src = gates == null ? null : (GateBiomeSource) gates.getChunkSource().getGenerator().getBiomeSource();
-            for (String id : List.of("sunken_belfry", "ossuary_ways", "bell_shaft", "field_of_bells", "bellmakers_rest")) {
-                GateWorld w = GateWorlds.get(BELL + id);
+            for (String b : List.of("sunken_belfry", "ossuary_ways", "bell_shaft", "field_of_bells", "bellmakers_rest"))
+                h.assertTrue(GateWorlds.get(BELL + b) != null, "the Bell Crypt's " + b + " loads");
+            for (String id : GateWorlds.all().keySet()) {
+                GateWorld w = GateWorlds.get(id);
                 h.assertTrue(w != null && w.problem().isEmpty(), "the recipe " + id + " loads");
                 h.assertTrue(w.tier() == GateWorld.Tier.SECRET || WorldEngine.of(w.kind()) != null, id + " has its engine");
                 if (src != null) {
@@ -301,9 +375,11 @@ public final class GateWorldBellTests {
             h.assertTrue(v2.cards().stream().anyMatch(c -> c.world().equals(BELL + "bellmakers_rest") && c.found()), "and gives it a card");
             h.succeed();
         });
-        world("gateworlds_belfry", "sunken_belfry", 8);
-        world("gateworlds_ossuary", "ossuary_ways", 8);
-        world("gateworlds_field", "field_of_bells", 8);
-        world("gateworlds_shaft", "bell_shaft", 8);
+        world("gateworlds_belfry", BELL + "sunken_belfry", 8);
+        world("gateworlds_ossuary", BELL + "ossuary_ways", 8);
+        world("gateworlds_field", BELL + "field_of_bells", 8);
+        world("gateworlds_shaft", BELL + "bell_shaft", 8);
+        // the cave themes (38.10): every world a floor can be (a secret world is a place on its host's floors)
+        for (String id : CAVE_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
     }
 }
