@@ -44,6 +44,7 @@ Hard rules:
 | `living` | The Living Wilds (§21): regions, the Holo combat layer, Wayfarers and quests, bounties, the World Pulse and happenings, populations and camps, crafts, wonders, settlers and villages |
 | `arms` | Weapons and combat (§25): the three verbs (strike, guard, dodge) on every melee weapon, fighting styles on one timing table, deflect, block, posture, Resonance, the feel of a blow (`core.api.CombatFeedback`), its sounds |
 | `trails` | Trails (§33): optional guidance for every part of the game, short lists of things to try that open at a moment, wait in the Journal and reach the task card only when followed |
+| `aim` | Lock-on (§40): the mark and the lock, their look, the arcs for tells out of view, the dot; `core.api.Aim` (the server's check of the creature a press meant) |
 
 Rules for builders:
 - Touch only your module's package, your module's resources (namespaced file names), and your merge folder
@@ -515,6 +516,20 @@ of `AwakenConfig.Client`.
   `guards(ItemStack)`, `fights(LivingEntity)`, `posture(LivingEntity)` (0..1, server), `broken(LivingEntity)` (server),
   `tellSound(Strikes.Kind)` (the class's one voice; the mobs module plays it with each tell), `untold(DamageSource)`
   (a creature's own melee with no wind-up to read: not ours, not `#awaken:told_melee`; its guard window is wider, §25).
+- `dev.awaken.core.api.Aim` (§40) — the creature you mean. Server: `meant(player, entity, yaw, pitch, reach)` / `meantId`
+  (alive, this level, within reach + `PRESS_SLACK` 0.6 of the eye, within `AIM_CAP` 35° of the press's look or the body's to
+  the edge of its box, a person within `PERSON_CAP` 8°, seen), `stepIn(style)`, `GROUNDED_TICKS` 50, and the geometry
+  (`gap`, `offEdge`, `angle`, `sees`). Client: `target()` (the locked or marked creature's id, -1) and `locked()`, installed
+  by the aim module. Arms, powers and the rope read it; there is one picker (`aim.AimRules`).
+  Client also: `bend(yaw, pitch, out)` (a cast's look bent toward the creature, §40.3) and `anchor(out)` (the reticle's GUI
+  centre and radius this frame: Arms draws its Resonance arc under it).
+- `dev.awaken.core.api.HudState` (client, §40.6) — the clear screen: `screen()` (`CLEAR`, `CLEAR_CROSSHAIR`, `CLASSIC`),
+  `classic()`, `crosshair()`, `fighting()`, `glancing()`, `alpha(layerId)` (how strongly a HUD layer shows now; 1 in Classic).
+  `vitalsY(guiHeight, row)` and `VITALS_HALF` (where the health, Aether and food lines sit; Ascent draws its Aether line
+  there), `aether()` / `installAether` (the player's Aether 0..1, -1 before Skyborn; for the glance).
+  The holo module installs the director; until then everything shows as it always has.
+- `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
+  mobs module grounds normal and elite fliers, never a kit flier).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -9665,3 +9680,155 @@ Gate: a level-5 bench costs at most +0.5 ms p50 and +1 ms p99 over level 1.
 - Outside the powers module, the body's wall-run reads Wall Stride's level (`Body.wallStrideLevel`, `RunnerRules.runLength`,
   `runTarget`, `strideKick`; `RunnerServer` calls `StepHooks.strideTick`): Spark Steps (2), Kick-off (3), Steady (4), Street
   Runner (5). The only cross-module change; Codex's Power Core hover reads `PowerLadder.text` (their queue).
+---------------------------------------------------------------------------------------------------------------------
+
+## 40. Clear screen and lock-on (plan docs/hud-lockon/plan.html; Euan approved all six recommendations 2026-10-28: "Go ahead with all recommendations")
+
+Module `dev.awaken.aim` (the mark, the lock, its look, the threat arcs and the dot; client settings
+`config/awaken-aim-client.toml`), with the HUD states in `holo`. Approved: stages 0 to 3 now, the lock on middle mouse (pick block
+still works when nothing is marked), the glance on hold Tab, the locked camera follows (Snap a setting), fliers brought down for
+2.5 s, everything on by default with Classic one setting away. Stage 4 (an air lunge on the rope and in flight, an item wheel)
+waits until Euan has played 1 to 3. The replay behind the numbers: `docs/hud-lockon/proof/flysim.py` (a katana keeps a Bell Wisp
+in reach 23% of a fight today, 49% with these rules).
+
+### 40.1 The creature you mean (server; `core.api.Aim`, `arms.ArmsServer`)
+- A press (strike, and a heavy's release) names a creature; the server takes it as the **meant** one only if `Aim.meant` passes:
+  alive, in this level, within the style's longest reach (an Art's wave range, the Precursor blade grown over five steps) + its
+  step + 0.6 of the eye, within 35° of the press's look or the body's (measured to the edge of its box, so a big body counts when
+  any of it is near the middle), and seen (eye to its eye or its middle, no blocks). A person passes only within 8°: today's
+  click on a person still lands, a lock never picks one. Anything else is an ordinary sweep.
+- The meant creature ignores the arc (as the aimed one did) and the height band: it is struck wherever the weapon's reach,
+  measured from the eye to the nearest point of its box, gets to it. Every other creature keeps today's band (bottom over
+  eye + 1.5 or top under feet - 1 is out).
+- **Step in**: a chain's first strike or a heavy reaches the meant creature its style's step further: daggers, gauntlets and
+  twinblades 1.2, maul and greatblade 0.6, spear, glaive and chainblade 0.4, the rest 1.0 (`Aim.stepIn`). The step is the
+  player's own movement (the client's, 40.3), so the server's movement checks still apply; the server only allows the reach.
+  Later strikes in the chain strike where you stand.
+- Never changed: wind-up, active and recovery, damage, posture, hit-stop, the guard's windows, dodge timing and charges, tells.
+
+### 40.2 Fliers brought down (`Strikes.ground`, `mobs.AwakenMob.ground`)
+- A **normal or elite** flier whose stance breaks, or whose melee blow (its dive) is deflected, comes down: gravity on, its flight
+  control idle, its dive lost, for `GROUNDED_TICKS` 50 (2.5 s; a broken stance keeps it down at least that long), open to an
+  Execution. Then it rises (a small lift) and waits half a second before its next dive. A kit flier's fight script decides its
+  own (boss-plan's call); bosses and wardens never come down this way. A flier saved while down loads flying.
+
+### 40.3 The mark and the lock (client; `aim.client.Lock`, rules `aim.AimRules`)
+- **The mark**: every other tick, the creature nearest the middle of the view: within 25° (to its box's edge) and 24 blocks
+  (eye to box), seen, hostile or hunting you (`Enemy`, a mob's synced aggression, or a hostile `CreatureTag`), never a person.
+  Score = degrees off + 0.35 per block; the marked one keeps it against one up to 8° nearer the middle (no flicker). At most
+  the best 6 get a sight check; the arrays are reused. Strikes steer to it and powers bend to it; its brackets show while a
+  weapon is in hand or a fight is on.
+- **The lock key** `key.awaken.lock`, default **middle mouse**, in Awaken's key group. Read before vanilla's keys each tick: it
+  locks the mark (or a creature under the crosshair), or lets go. Sharing pick block's key, a press that locked or let go is
+  the lock's alone; with nothing to lock it picks the block, as always.
+- **Locked**, the view follows the creature's body (58% up it) every frame: eased (`TURN_EASE` 10: the share of the gap closed a
+  second, exponential), never more than 300°/s, the short way round, resting inside 0.6°; pitch at 85% and within ±80°. The
+  turn moves `yRotO`/`xRotO` with `yRot`/`xRot` (as `Entity.turn`), so the frame's blend never jumps. The mouse keeps a quarter
+  of its turn (`keepSensitivity`: vanilla cubes the setting). Drawing a bow or crossbow, the pull drops to 30% and the mouse
+  keeps 80%: drop and lead stay yours. Never turned: under a screen, a scene (`InputLock`), the binoculars, sleep, F1, as a
+  spectator, or while your look steers you (flying, gliding, hanging, wall-running, 16+ ticks in the air: the rope, a fall).
+- **Camera setting** FOLLOW (default) / SNAP (turns to it once when you lock, then the view is yours, as Monster Hunter's target
+  camera) / OFF. Reduced motion uses SNAP in place of FOLLOW.
+- **Switching**: the wheel (up: the next creature to the left, down: to the right; the hotbar stays) or a flick: the mouse's
+  movement summed with a 100 ms fade reaching 60 window pixels, at most one switch per 220 ms. The pick: among foes within 80°
+  of the view and 40 blocks, the nearest on the screen (by angles from the locked one) within 60° of the flick's way, seen.
+- **It lets go** on the key, after 1.5 s unseen, past 40 blocks, on a teleport (8+ blocks in a tick) or a new level, death or
+  logging out. **When the locked creature dies** the ring breaks, and the lock moves to the nearest foe within 60° of the view and
+  12 blocks, seen, else lets go.
+- **What reads it**: a press sends the lock, else the creature under the crosshair, else the mark (`ArmsPredict.pressTarget`);
+  the step in (40.1) is the client's own push at the move's start: `min(step, gap - reach + 0.35)` blocks over the ground
+  (a push of that / 2.2, vanilla's ground friction), toward the creature, only when the gap is past the move's reach - 0.15
+  and within reach + step. A cast's look is bent toward the locked or marked creature's body when it lies within 10° (then
+  straight at it), else left alone; a cast whose motion was predicted (a dash) keeps your own look. One cap for every power:
+  a power that seeks (its own fat ray) takes it from there, so the plan's separate 18° for seekers was not needed. A guard faces
+  where you look, so a lock faces it toward the creature.
+- In the air, gliding, flying or on the rope the lock keeps its creature and strikes and powers still go to it; only the view is
+  left alone. Stage 4 (an air lunge) waits for Euan's play of stages 1 to 3.
+
+### 40.4 The lock's look (`aim.client.Reticle`, art `tools/art/specs/aim_reticle.py`, sounds `tools/art/specs/aim_sounds.py`)
+- A GUI layer above the crosshair's, placed by projecting the creature's middle with the frame's camera (as the Boss Plate's
+  lift-off). Every shape is a white line with its own glow (`textures/gui/aim/<name>.png` and `_glow.png`, linear filtered):
+  drawn as the glow in black at 34% (it reads on a bright sky), the glow tinted at 62%, then the line 45% toward white (a hot
+  core). Colours: the band's cyan `#7FE3FF`; tells white (light), amber `#FFB340` (heavy), red `#FF4A3D` (perilous), violet
+  `#B77BFF` (grab).
+- **Size**: the body's projected half-size × 1.08 + 5, kept between 11 and 44 GUI px, eased.
+- **The mark**: four corner brackets round it, springing in from 1.55× to 1.02× (a damped spring, `spring(ms)`: about 200 ms
+  with a small overshoot), a slow breath, 78% strong.
+- **The lock**: the ring (broken at the diagonals, fine dots inside) turning 16°/s, springing shut from 1.9× with a 70° spin;
+  the four ticks fly in from 2.6× a beat (45 ms) behind; the System's diamond drops in over it (80 ms) and breathes. A switch
+  slides the ring to the next creature over 130 ms. Every blow that lands on it kicks the ring out 9% and flashes it white
+  (170 ms). Let go, the ring opens out and fades (220 ms); when the creature falls a white flash and ten splinters fly off the
+  ring (520 ms). A locked creature off the frame shows the diamond and an arc at that edge, pointing the way.
+- **Tells on the ring**: the creature's synced tell (`Strikes.tell`) tints the ring 65% toward its class colour and draws a
+  second ring that closes from 2.15× onto the lock ring over the tell's count, meeting it as the blow lands: the moment to
+  guard, deflect or dodge is where you're already looking. The mark shows it too.
+- **Arms' Resonance arc** rides under the ring (`Aim.anchor`: the ring's centre and radius + 5) instead of the screen's middle.
+- **Blows out of view** (setting `threat_arcs`): a creature within 12 blocks telling a blow whose middle is off the frame puts
+  an arc on that side of an ellipse round the screen's middle (by the way it lies from your look; behind is the bottom), in the
+  tell's colour, growing and brightening over its last 12 ticks. At most 4. Only tells: you still turn or dodge in time.
+- **Sounds** (UI, your client only; setting `sounds`): `aim.lock` (air drawn in, D6 and A6 struck, a warm tick), `aim.switch`
+  (one F#6 tick), `aim.release` (A5 to D5), `aim.break` (a B6 glint and a short fizz), in the System's glass voice.
+- Reduced motion: no springs, spins, slides or splinters; the shapes simply appear.
+
+### 40.5 The dot (`aim.client.Dot`)
+- On the clear screen the crosshair is not drawn (`HudState.crosshair()` false). A small soft dot shows in the middle instead,
+  only when it helps: a block, tool (`minecraft:tool` component), bucket, bow or crossbow in either hand; the attack key held on
+  a block; a usable block in reach under the view (doors, trapdoors, gates, buttons, levers, beds, bells, anything with a block
+  entity or a screen); a person or creature not fighting you. Never while locked. Fades in fast (18/s), out slower (8/s).
+
+### 40.6 The clear screen (`holo.client.HudDirector`, rules `holo.ui.ClearRules`, `signal.ui.CornerShow`)
+- The holo client installs `HudState`'s director; every layer goes through `HudMotion.pre`, which skips a piece at 0, draws
+  one between through the fading graphics, and places the hotbar and power bar. Setting `screen` in `awaken-holo-client.toml`:
+  CLEAR (default), CLEAR_CROSSHAIR (same, crosshair kept), CLASSIC (every layer as before, the calm HUD's own 35% fade with it).
+  No director (a server) is Classic.
+- **Fighting**: the player was hurt, struck a creature, is locked on, Arms' fight camera is on, or something hostile within 16
+  blocks has a target (or stands within 5 blocks in sight); it lasts 4 s (80 ticks) after the last cause.
+- **Pieces** (eased: in over 150 ms, out over 650 ms):
+  - Vanilla hearts, armour, food, XP level: hidden (the vitals and the wrist carry them). The XP strip (`contextual_info_bar`)
+    shows only while riding a mount that jumps (its jump bar lives there). Air, the boss bars, effects, chat, titles, the
+    selected item's name: as before.
+  - Hotbar: pops up for 2 s (40 ticks) when the selected slot changes (scroll, 1 to 9, pick block) and while glancing; it
+    slides 26 px down out of view as it goes.
+  - Vitals (`awaken:vitals`, `holo.client.Vitals`): health as a thin segmented line (124 px, one segment a heart, 20 segments
+    above 40 health) low in the middle, in a fight, when hurt or at 30% or less (it breathes). A blow
+    leaves its share amber for 420 ms, then it drains at 55% of the line a second; the blow flashes the line (130 ms) and
+    shakes it a pixel (220 ms); a heal lights its new segments (380 ms); absorption is a gold thread over it. Ascent's Aether
+    line sits 4 px under it (shown while spent, while soaring, or in a fight); food 8 px under, 60 px wide, only at 14 or
+    less, pulsing at 6 or less. The lines open from their middle and close to it. Over the hotbar while it shows.
+  - Power bar: shown in a fight, while a power is busy (energy below full, a cooldown, an active power, a slot changed) or
+    while glancing; drawn at 80% toward the bottom-right corner.
+  - Level chip: 3 s with fresh XP, and while glancing.
+  - Now line (`TrackerHud`): 8 s when the place is new, while within 50 m, after looking more than 70° away from it for 3 s,
+    or standing still for 2 s; held 3 s after, so it never blinks; aside in a fight. Slides 8 px in from the edge.
+  - Task card (`TaskHud`): 8 s after the server sends a change; a step that teaches a key stays until that key is pressed (then
+    8 s), even in a fight; otherwise aside in a fight; shown while glancing. Its room in the top-right stack shrinks as it fades.
+  - Gate panel (`RunHudLayer`): one line (rank, gate, floor) and the collapse clock under it, which never hides; the full panel
+    for 6 s whenever anything but the clocks changes, while the noise is 12 or more, while glancing, and in Classic.
+  - Creature plates (`PlateRules.thin`): the creature you mean (`Aim.target()`) keeps the full plate (the bright rim when
+    locked), and so do one under your look and a notable beast; the others fighting you show a thin plate, the bar alone.
+- Autopilot: `holo screen clear|clear_crosshair|classic|auto`, `holo fight on|off`.
+
+### 40.7 The Tab glance (`holo.client.Glance`, rules `holo.ui.GlanceRules`)
+- The key is vanilla's player list (Tab), so in multiplayer its list shows with the panel. Off in Classic, while a screen is
+  open, with the HUD hidden and in spectator.
+- Held: the off-hand forearm comes up with the band (`Wrist`, eased in 260 ms, down in 200 ms; the main hand sinks out of
+  view; vanilla's hands come back from below as it lowers), only in first person, with the band on, no holo menu on the
+  wrist and the holo pipelines working. A press under 250 ms (5 ticks) is a tap: the panel alone for 4 s (80 ticks).
+- The panel: flat and readable in the band's glass, 184 GUI px wide, just above the wrist's place on screen (kept inside
+  the screen), unfolding from its corner nearest the wrist (wide first, then tall, 220 ms) along a beam of light from the
+  band, which flares as it leaves. Rows (`GlanceRules.rows`): level and rank (the rank's colour) with the XP line under them;
+  health, Aether (once Skyborn; `HudState.aether()`, installed by Ascent), food and armour as labelled segmented bars with
+  their values; the task's title and count, its current step (keys named as bound) and the next one (`signal.client.SignalGlance`);
+  where you're heading with its distance and a needle (up is ahead). The hotbar, power bar and level chip show while
+  glancing (§40.6), and so do the task card and the full gate panel. Texts are built once a tick while it shows.
+- Sounds: the band's open and close (`HoloAudio`).
+
+### 40.8 Settings (`config/awaken-aim-client.toml`)
+`enabled` (true), `camera` (FOLLOW / SNAP / OFF), `flick_switch` (true), `show_mark` (true), `threat_arcs` (true), `sounds` (true).
+
+### 40.9 Tests
+`aim_soft_pick`, `aim_caps`, `aim_power_bend_cap` (the pure rules), `aim_flier_locked_hits` (a creature 3.2 blocks over the feet:
+meant, struck; a hostile beside it, not meant, out of the band), `aim_step_in`, `aim_no_wall`, `aim_no_player`,
+`aim_flier_brought_down`. The clear screen: `hud_states`, `hud_classic_unchanged`, `hud_now_line_returns`,
+`hud_task_card_teaches`, `hud_thin_plates`, `hud_glance_rows`.
+

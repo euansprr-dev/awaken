@@ -44,6 +44,11 @@ final class FlyerMoveControl extends MoveControl<AwakenMob> {
 
     @Override
     public void tick() {
+        if (mob.grounded()) {
+            // brought down (SPEC §40): gravity has it until it rises again
+            operation = Operation.WAIT;
+            return;
+        }
         if (operation != Operation.MOVE_TO) {
             // Hover: bleed off speed and bob a little so fliers don't look frozen.
             Vec3 v = mob.getDeltaMovement();

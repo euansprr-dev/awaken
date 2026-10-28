@@ -128,4 +128,22 @@ public final class Strikes {
     public static boolean stagger(LivingEntity e, int ticks) {
         return staggers.stagger(e, ticks);
     }
+
+    // ---- fliers brought down (server, SPEC §40) ---------------------------------------------------------------------
+
+    public interface Grounder {
+        /** Brings a flier out of the air for {@code ticks}: it drops, lands and stands open. True when it took. */
+        boolean ground(LivingEntity e, int ticks);
+    }
+
+    private static Grounder grounder = (e, ticks) -> false;
+
+    public static void installGrounder(Grounder g) {
+        grounder = g;
+    }
+
+    /** A deflected dive, a broken stance: a flier that can be brought down comes down (others: nothing). */
+    public static boolean ground(LivingEntity e, int ticks) {
+        return grounder.ground(e, ticks);
+    }
 }

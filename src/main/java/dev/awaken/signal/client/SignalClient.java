@@ -98,6 +98,7 @@ public final class SignalClient {
 
     private static void tick() {
         NowClient.tick();
+        TrackerHud.tick();
         TaskHud.tick();
         Tips.tick();
         HorizonClient.tick();
@@ -117,6 +118,7 @@ public final class SignalClient {
         RecentLog.clear();
         NowClient.clear();
         TaskHud.clear();
+        TrackerHud.clear();
         HorizonClient.clear();
     }
 }

@@ -117,12 +117,14 @@ final class Wrist {
         HoloPanel p = HoloClient.wristPanel();
         // the band booting (it just went on, no panel holds the wrist) draws the same forearm
         boolean boot = HoloBoot.active() && (p == null || !p.timeline.active());
-        if (!boot && (p == null || !p.timeline.active() || p.anchor != HoloPanel.Anchor.WRIST)) return;
+        // the Tab glance (SPEC §40.7) raises the same forearm when no menu holds the wrist
+        boolean glance = !boot && (p == null || !p.timeline.active()) && Glance.armShown();
+        if (!boot && !glance && (p == null || !p.timeline.active() || p.anchor != HoloPanel.Anchor.WRIST)) return;
         // the band draws in the holo pipelines: without them (the inventory can still be holo through its GUI ones)
         // the hands stay vanilla's
         if (!HoloPipelines.ok()) return;
         // from the first tick of a close the re-equip owns the hands' height: let the event (and the hooks after us) run
-        boolean handsBack = boot ? HoloBoot.handsBack() : p.timeline.closing() && closeTicks >= 1;
+        boolean handsBack = boot ? HoloBoot.handsBack() : glance ? Glance.lowering() : p.timeline.closing() && closeTicks >= 1;
         if (!handsBack) e.setCanceled(true);
         Minecraft mc = Minecraft.getInstance();
         long frame = HoloClient.frame();
@@ -133,9 +135,9 @@ final class Wrist {
         if (avatar == null || avatar.isInvisible) return;
         if (forcedSkin != null) avatar.skin = forcedSkin;
         AvatarRenderer<?> renderer = mc.getEntityRenderDispatcher().getRenderer(avatar);
-        HoloTimeline t = boot ? null : p.timeline;
+        HoloTimeline t = boot || glance ? null : p.timeline;
         float pt = e.getPartialTick();
-        float a = boot ? HoloBoot.arm(pt) : Math.max(0, Math.min(1.1f, t.arm()));
+        float a = boot ? HoloBoot.arm(pt) : glance ? Glance.arm() : Math.max(0, Math.min(1.1f, t.arm()));
         HumanoidArm wristArm = avatar.mainArm.getOpposite();
         int side = wristArm == HumanoidArm.LEFT ? -1 : 1;
         boolean slim = avatar.skin.model() == PlayerModelType.SLIM;
@@ -168,6 +170,11 @@ final class Wrist {
             sweep = HoloBoot.sweep(pt);
             lit = HoloBoot.lit(pt);
             ring = HoloBoot.ring(pt);
+        } else if (glance) {
+            glow = Math.min(1f, a * 1.2f);
+            flare = Glance.flare() * Math.min(1f, a * 1.2f);
+            sweep = lit = 1f;
+            ring = 1f;
         } else {
             float b = t.band();
             glow = Math.min(1f, b) * Math.min(1f, a * 1.2f);

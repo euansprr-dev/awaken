@@ -129,7 +129,7 @@ public final class ArmsPredict {
     static void press(LocalPlayer p, Minecraft mc) {
         Archetypes.Loaded st = Arms.styleOf(p.getMainHandItem());
         if (st == null) return;
-        int target = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : -1;
+        int target = pressTarget(mc);
         int s = nextSeq();
         presses++;
         pressHeld = true;
@@ -176,6 +176,38 @@ public final class ArmsPredict {
         begin(p, st, d.move(), d.step(), d.cadence(), s);
     }
 
+    /** The creature a press means (SPEC §40.1): the lock, else what the crosshair is on, else the mark; the server checks it. */
+    private static int pressTarget(Minecraft mc) {
+        int aim = dev.awaken.core.api.Aim.target();
+        if (dev.awaken.core.api.Aim.locked()) return pressed = aim;
+        return pressed = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : aim;
+    }
+
+    /** The creature the last press meant, for the step in. */
+    private static int pressed = -1;
+
+    /** Blocks a ground push carries the body: vanilla's ground friction keeps 0.546 of it a tick, so it goes about 2.2 times itself. */
+    private static final double STEP_CARRY = 2.2;
+
+    /**
+     * The step in (SPEC §40.1): a chain's first strike or a heavy started just out of reach of the creature you meant carries
+     * you toward it, at most the style's step, on the ground only. The server allows that reach for the meant creature alone.
+     */
+    private static void stepIn(LocalPlayer p, Archetypes.Loaded st, Archetype.Move m, int chainStep, Archetype.MoveDef def) {
+        if (!(m == Archetype.Move.HEAVY || (m.strike() && chainStep == 0)) || pressed < 0 || dodging) return;
+        if (!p.onGround() || p.isPassenger() || p.isInLiquid() || !(p.level().getEntity(pressed) instanceof net.minecraft.world.entity.LivingEntity t)
+                || !t.isAlive() || t instanceof net.minecraft.world.entity.player.Player) return;
+        double reach = def.reach() + 0.3, gap = dev.awaken.core.api.Aim.gap(p.getEyePosition(), t.getBoundingBox());
+        float step = dev.awaken.core.api.Aim.stepIn(st.id());
+        if (gap <= reach - 0.15 || gap > reach + step) return;
+        double need = Math.min(step, gap - reach + 0.35);
+        double dx = t.getX() - p.getX(), dz = t.getZ() - p.getZ(), len = Math.sqrt(dx * dx + dz * dz);
+        if (len < 1.0E-3) return;
+        double v = need / STEP_CARRY;
+        Vec3 dm = p.getDeltaMovement();
+        p.setDeltaMovement(dx / len * v, dm.y, dz / len * v);
+    }
+
     static int mastery(Archetypes.Loaded st) {
         return st.index() < mastery.length ? mastery[st.index()] : 0;
     }
@@ -210,6 +242,7 @@ public final class ArmsPredict {
         waitShown = waitHit;
         swishAt = -1;
         biteAt = -1;
+        stepIn(p, st, m, st2, def);
         if (!waitHit) {
             swing(p, st, m, cad);
             ArmsFx.move(p, st, m, cad, perfect);
@@ -388,7 +421,7 @@ public final class ArmsPredict {
             return;
         }
         charging = false;
-        int target = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : -1;
+        int target = pressTarget(mc);
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_RELEASE, p.getYRot(), p.getXRot(), target));
         int held = c.min() + (ticks - chargeStart);
         if (st.move(Archetype.Move.ART) != null && ArmsRules.artReady(held, c, resonance, ArmsMastery.artAt(mastery(st)))) {

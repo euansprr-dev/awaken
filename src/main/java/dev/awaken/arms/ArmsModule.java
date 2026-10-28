@@ -86,6 +86,7 @@ public final class ArmsModule {
         registerCommands();
         ArmsTests.register();
         SwingTests.register();
+        AimStrikeTests.register();
         ArmsProgressionTests.register();
     }
 
