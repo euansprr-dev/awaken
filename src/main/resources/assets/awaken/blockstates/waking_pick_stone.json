@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/waking_pick_stone"
+    },
+    "facing=east": {
+      "model": "awaken:block/waking_pick_stone",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/waking_pick_stone",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/waking_pick_stone",
+      "y": 270
+    }
+  }
+}

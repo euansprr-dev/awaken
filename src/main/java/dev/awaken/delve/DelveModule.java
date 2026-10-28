@@ -39,6 +39,10 @@ public final class DelveModule {
             if (e.getEntity() instanceof ServerPlayer p) Veins.tickPlayer(p);
         });
         bus.addListener((ServerTickEvent.Post e) -> CaveIns.tick(e.getServer()));
+        // the Delver's Pick (SPEC §34.4): its hum, kept through death
+        bus.addListener((ServerTickEvent.Post e) -> WakingPick.tick(e.getServer()));
+        bus.addListener(EventPriority.LOW, false, (net.neoforged.neoforge.event.entity.living.LivingDropsEvent e) -> WakingPick.onDrops(e));
+        bus.addListener((PlayerEvent.PlayerRespawnEvent e) -> WakingPick.onRespawn(e));
         // the wall lodes read the overworld's own noise caves (SPEC §34.2)
         bus.addListener((LevelEvent.Load e) -> {
             if (e.getLevel() instanceof ServerLevel level && level.dimension() == Level.OVERWORLD) {
@@ -51,12 +55,14 @@ public final class DelveModule {
             Veins.forget(e.getEntity().getUUID());
             HeavyStrikes.forget(e.getEntity().getUUID());
             TrueStrikes.forget(e.getEntity().getUUID());
+            WakingPick.forget(e.getEntity().getUUID());
         });
         bus.addListener((ServerStoppedEvent e) -> {
             Veins.clear();
             CaveIns.clear();
             HeavyStrikes.clear();
             TrueStrikes.clear();
+            WakingPick.clear();
             LodePlans.EXTRA.clear();
             LodePlans.columns(0L, null);
         });

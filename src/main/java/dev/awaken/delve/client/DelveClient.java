@@ -43,6 +43,7 @@ public final class DelveClient {
             e.register(DelveNet.CaveWarn.TYPE, (m, ctx) -> CaveInFx.warn(m));
             e.register(DelveNet.HeavyFx.TYPE, (m, ctx) -> HeavyCharge.landed(m));
             e.register(DelveNet.ForkRing.TYPE, (m, ctx) -> ForkSong.ring(m));
+            e.register(DelveNet.PickHum.TYPE, (m, ctx) -> PickSong.told(m));
             e.register(DelveNet.Demo.TYPE, (m, ctx) -> StrikeFeel.demo(m));
             e.register(DelveNet.TrueStrikeSync.TYPE, (m, ctx) -> {
                 var p = net.minecraft.client.Minecraft.getInstance().player;
@@ -62,6 +63,7 @@ public final class DelveClient {
             VeinFx.tick();
             CaveInFx.tick();
             ForkSong.tick();
+            PickSong.tick();
         });
         bus.addListener(SubmitCustomGeometryEvent.class, LampGlow::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, TorchGlow::submit);
@@ -71,6 +73,7 @@ public final class DelveClient {
             VeinFx.reset();
             CaveInFx.reset();
             ForkSong.reset();
+            PickSong.reset();
             HeavyCharge.reset();
             TorchGlow.reset();
             StrikeFx.reset();

@@ -381,6 +381,65 @@ def tuning_fork():
     return outline(c)
 
 
+def delvers_pick():
+    """The Delver's Pick, asleep (SPEC §34.4): a pick held at a slant, an old ash handle bound in leather at the grip, a
+    worn dark-iron head curving both ways, a thread of unlit Deepglass set along the head's spine (it wakes later)."""
+    fe = [hx(h) for h in P.RAMPS["iron"]]
+    wd = [hx(h) for h in P.RAMPS["wood"]]
+    lt = [hx(h) for h in P.RAMPS["leather"]]
+    dg = [hx(h) for h in P.RAMPS["deepglass"]]
+    rows = [
+        "......HHHh......",
+        "....HHhhhhHH....",
+        "...Hhh.ggg.hHH..",
+        "..Hh....W...hHh.",
+        ".Hh....W.....hH.",
+        ".h....W.......h.",
+        "h....W..........",
+        ".....W..........",
+        "....W...........",
+        "...W............",
+        "...w............",
+        "..L.............",
+        ".Ll.............",
+        "Ll..............",
+        "l...............",
+        "................",
+    ]
+    pal = {"H": fe[3], "h": fe[2], "W": wd[3], "w": wd[2], "L": lt[3], "l": lt[2], "g": dg[3]}
+    c = Canvas()
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch in pal:
+                c.set(x, y, pal[ch])
+    # the head's lit upper edge and its worn points
+    for (x, y) in ((6, 0), (7, 0), (8, 0), (4, 1), (5, 1), (10, 1), (11, 1)):
+        c.set(x, y, fe[4])
+    c.set(0, 6, fe[4])
+    c.set(14, 5, fe[4])
+    return outline(c)
+
+
+def pick_stone_tex():
+    """The pick in the stone's parts on one sheet: the handle's wood (x 0-3), the head's iron (x 4-11, its spine's dark
+    Deepglass at y 7-8), the leather grip (x 12-15)."""
+    fe = [hx(h) for h in P.RAMPS["iron"]]
+    wd = [hx(h) for h in P.RAMPS["wood"]]
+    lt = [hx(h) for h in P.RAMPS["leather"]]
+    dg = [hx(h) for h in P.RAMPS["deepglass"]]
+    r = rng_for("pick_stone")
+    c = Canvas()
+    for y in range(16):
+        for x in range(4):
+            c.set(x, y, wd[2 + (1 if (x + y // 3) % 3 == 0 else 0) + (1 if x == 1 else 0) - (1 if x == 3 else 0)])
+        for x in range(4, 12):
+            v = 2 + (1 if r.random() < 0.35 else 0) + (1 if y < 3 else 0) - (1 if y > 12 else 0)
+            c.set(x, y, dg[3] if y in (7, 8) and 5 <= x <= 10 else fe[max(1, min(4, v))])
+        for x in range(12, 16):
+            c.set(x, y, lt[2 + (1 if (y + x) % 4 == 0 else 0)])
+    return c
+
+
 def piton_icon():
     ir = [hx(h) for h in P.RAMPS["iron"]]
     c = Canvas()
@@ -553,6 +612,8 @@ def build(out):
     out.item("starmetal_ingot", starmetal_ingot())
     out.item("bell_bronze_ingot", ingot_icon("bronze", accent="deepglass"))
     out.item("tuning_fork", tuning_fork())
+    out.item("waking_pick", delvers_pick())
+    out.block("waking_pick_stone", pick_stone_tex())
     out.item("piton", piton_icon())
     out.item("runner_rope", rope_icon())
     out.item("miners_lamp", lamp_icon())
@@ -617,6 +678,38 @@ def piton_models():
                 v["y"] = y
             variants[f"facing={facing},roped={r}"] = v
     write(os.path.join(ASSETS, "blockstates/piton.json"), {"variants": variants})
+
+
+def pick_stone_model():
+    """The pick in the stone (facing north: the drift's end face to the south): a mound of cobbled deepslate, the head
+    driven into it at a slant with one point showing, the handle leaning out of it toward you."""
+    def box(f, t, tex, uv=None, rot=None):
+        e = {"from": f, "to": t, "faces": {d: ({"texture": tex, "uv": uv} if uv else {"texture": tex}) for d in ("north", "south", "east", "west", "up", "down")}}
+        if rot:
+            e["rotation"] = rot
+        return e
+    lean = {"angle": -22.5, "axis": "x", "origin": [8, 3, 9]}
+    elements = [
+        box([3, 0, 5], [13, 3, 15], "#rock"),
+        box([5, 3, 8], [11, 5, 14], "#rock"),
+        # the head: its point showing out of the mound, the rest in the rock
+        box([4.5, 3.5, 9], [11.5, 5.5, 10.5], "#pick", uv=[4, 2, 11, 4], rot=lean),
+        box([3.5, 2.5, 9], [5, 4.5, 10.5], "#pick", uv=[4, 1, 6, 3], rot=lean),
+        # the handle and its grip
+        box([7.25, 4, 9.25], [8.75, 13, 10.75], "#pick", uv=[0, 0, 2, 9], rot=lean),
+        box([7, 13, 9], [9, 16, 11], "#pick", uv=[12, 0, 14, 3], rot=lean),
+    ]
+    write(os.path.join(ASSETS, "models/block/waking_pick_stone.json"), {
+        "parent": "minecraft:block/block", "ambientocclusion": False,
+        "textures": {"rock": "minecraft:block/cobbled_deepslate", "pick": "awaken:block/waking_pick_stone", "particle": "minecraft:block/cobbled_deepslate"},
+        "elements": elements})
+    variants = {}
+    for facing, y in (("north", 0), ("east", 90), ("south", 180), ("west", 270)):
+        v = {"model": "awaken:block/waking_pick_stone"}
+        if y:
+            v["y"] = y
+        variants[f"facing={facing}"] = v
+    write(os.path.join(ASSETS, "blockstates/waking_pick_stone.json"), {"variants": variants})
 
 
 def rope_model():
@@ -699,6 +792,8 @@ def tags():
         write(os.path.join(t, f"awaken/tags/item/tier_metal_{k}.json"), {"values": [v]})
     sets = ["wildhide", "beastbound", "gatewrought", "veilwoven", "lordscale", "sovereign"]
     write(os.path.join(t, "awaken/tags/item/mining_tools.json"), {"values": ["#minecraft:pickaxes"] + [{"id": f"awaken:{s}_mattock", "required": False} for s in sets]})
+    # the Delver's Pick is a pickaxe (enchanting, the dig motion, the strike)
+    write(os.path.join(t, "minecraft/tags/item/pickaxes.json"), {"values": ["awaken:waking_pick"]})
 
 
 def worldgen():
@@ -759,6 +854,10 @@ def content():
     for n in ("deepglass_shard", "raw_starmetal", "starmetal_ingot", "bell_bronze_ingot", "runner_rope", "miners_lamp"):
         item_generated(n)
     item_handheld("tuning_fork")
+    item_handheld("waking_pick")
+    pick_stone_model()
+    lang["item.awaken.waking_pick"] = "Delver's Pick"
+    lang["block.awaken.waking_pick_stone"] = "The Delver's Pick, in the Stone"
     lang.update({"item.awaken.deepglass_shard": "Deepglass Shard", "item.awaken.raw_starmetal": "Raw Starmetal",
                  "item.awaken.starmetal_ingot": "Starmetal Ingot", "item.awaken.bell_bronze_ingot": "Bell Bronze Ingot",
                  "item.awaken.tuning_fork": "Tuning Fork", "item.awaken.runner_rope": "Runner's Rope", "item.awaken.miners_lamp": "Miner's Lamp"})

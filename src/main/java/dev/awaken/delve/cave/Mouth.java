@@ -181,7 +181,9 @@ final class Mouth {
         int fe = floorAt(s, L);
         f.carve(k, -1, fe, L, 1, fe + 3, L);
         for (int lx = -1; lx <= 1; lx++) floor(f, k, lx, fe, L);
+        // the Delver's Pick in the stone before the face (facing out of it: the model's north)
         f.mark(k, "pick", 0, fe, L);
+        f.put(k, 0, fe, L, dev.awaken.delve.DelveContent.WAKING_PICK_STONE.get().defaultBlockState());
         f.put(k, -1, fe, L - 1, Blocks.BARREL.defaultBlockState());
     }
 

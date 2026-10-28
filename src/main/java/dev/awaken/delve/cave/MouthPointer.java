@@ -77,6 +77,8 @@ public final class MouthPointer {
         Checklist.Row gather = new Checklist.Row("Gather " + need.metal() + " ingots for " + need.what(), "", false, need.have(), need.need(), null);
         Answer a = ask(p, level, need);
         if (a == null) return new Checklist.Task("delve:metal", title, List.of(gather));
+        // no adit near home: no pick in a stone to find, so the Hearth hands it over (SPEC §34.4)
+        if (a.mouth() == null || a.mouth().p(Mouth.FORM) != Mouth.ADIT) dev.awaken.delve.WakingPick.handOver(p);
         if (a.mouth() == null) return new Checklist.Task("delve:metal", title, List.of(gather, Checklist.Row.of(honest(need.metal()), false)));
         offer(p, a);
         BlockPos at = new BlockPos(a.mouth().x(), a.mouth().y(), a.mouth().z());

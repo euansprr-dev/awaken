@@ -95,6 +95,18 @@ public final class DelveNet {
     }
 
     /** The Tuning Fork rang: the ore it was tuned to and, when a lode of it lies within 48, the block to sing toward. */
+    /** The Delver's Pick's hum (SPEC §34.4): the nearest lode block within its reach (ore ordinal, -1: none). */
+    public record PickHum(int ore, long target) implements CustomPacketPayload {
+        public static final Type<PickHum> TYPE = new Type<>(Awaken.id("delve_pick_hum"));
+        public static final StreamCodec<ByteBuf, PickHum> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, PickHum::ore, ByteBufCodecs.LONG, PickHum::target, PickHum::new);
+
+        @Override
+        public Type<PickHum> type() {
+            return TYPE;
+        }
+    }
+
     public record ForkRing(int ore, boolean found, long target) implements CustomPacketPayload {
         public static final Type<ForkRing> TYPE = new Type<>(Awaken.id("delve_fork_ring"));
         public static final StreamCodec<ByteBuf, ForkRing> STREAM_CODEC = StreamCodec.composite(
@@ -174,6 +186,7 @@ public final class DelveNet {
         r.playToClient(CaveWarn.TYPE, CaveWarn.STREAM_CODEC);
         r.playToClient(HeavyFx.TYPE, HeavyFx.STREAM_CODEC);
         r.playToClient(ForkRing.TYPE, ForkRing.STREAM_CODEC);
+        r.playToClient(PickHum.TYPE, PickHum.STREAM_CODEC);
         r.playToClient(Demo.TYPE, Demo.STREAM_CODEC);
         r.playToClient(TrueStrikeSync.TYPE, TrueStrikeSync.STREAM_CODEC);
         r.playToServer(HeavyStrike.TYPE, HeavyStrike.STREAM_CODEC, (m, ctx) -> {

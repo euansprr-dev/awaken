@@ -97,6 +97,14 @@ public final class DelveContent {
     public static final DeferredItem<TuningForkItem> TUNING_FORK = ITEMS.registerItem("tuning_fork", TuningForkItem::new,
             p -> p.stacksTo(1).durability(256).rarity(Rarity.UNCOMMON));
 
+    /** The Delver's Pick (SPEC §34.4): asleep, it mines like a stone pick. Kept through death ({@link WakingPick}). */
+    public static final DeferredItem<WakingPick.PickItem> WAKING_PICK = ITEMS.registerItem("waking_pick", WakingPick.PickItem::new,
+            p -> p.pickaxe(net.minecraft.world.item.ToolMaterial.STONE, 1.0F, -2.8F).rarity(Rarity.RARE));
+    /** The pick in the stone at an adit's end: each player pulls their own; unbreakable, no item. */
+    public static final DeferredBlock<PickStoneBlock> WAKING_PICK_STONE = BLOCKS.registerBlock("waking_pick_stone", PickStoneBlock::new,
+            p -> p.mapColor(MapColor.DEEPSLATE).strength(-1F, 3600000F).sound(SoundType.DEEPSLATE).noOcclusion().noLootTable()
+                    .pushReaction(PushReaction.IMMOVEABLE));
+
     public static final DeferredBlock<PitonBlock> PITON = BLOCKS.registerBlock("piton", PitonBlock::new,
             p -> p.mapColor(MapColor.METAL).strength(1.5F, 6F).sound(SoundType.CHAIN).noOcclusion().noCollision()
                     .pushReaction(PushReaction.POPPED));

@@ -8634,3 +8634,24 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   drawn back low. Eases out within 3 ticks of letting go; 0.4 with reduced motion. A view nudge of 0.22° a bite (0.45°
   true) through `CombatFeedback.kick`. Third person keeps vanilla's swing.
 - **Settings** (`awaken-delve-client.toml`): `strike_particles`, `true_strikes` (both on).
+
+### 34.4 The Delver's Pick (built, P1d: asleep; the verses come with P2)
+- **Item** `awaken:waking_pick`, "Delver's Pick" (the cave module's relic keeps `awaken:delvers_pick`, the Delver's Old
+  Pick, carried for the fork's reach). Asleep it is a stone pickaxe (1 damage, -2.8 speed), rare, in
+  `#minecraft:pickaxes` (so the dig motion, the strike and enchanting take it). Kept through death (`WakingPick.onDrops`
+  and `onRespawn`, as Relics do).
+- **The pick in the stone** `awaken:waking_pick_stone` (no item, unbreakable, immovable): a mound of cobbled deepslate
+  with the pick's head driven in and its handle leaning out, at the adit's "pick" mark before the end face. Use it:
+  your own pick if you don't carry one ("You already carry the Delver's Pick. This one stays for whoever comes next."
+  otherwise); the first pull counts `awaken:delve/pick_pulled` and shows a moment: "It's asleep, but it still knows
+  metal. Hold it and it hums when its head points at a lode nearby."
+- **No adit near home**: when the Hearth's search finds no adit (none at all, or a hill mouth), the Hearth hands the
+  pick over once (never pulled, not carried): "There's no old adit near your home, so your Hearth kept this for you".
+- **Hum**: twice a second while it's in your main hand the server finds the nearest lode block within 16 of your eyes
+  (any ore; a lone broken heart doesn't count) and sends `delve_pick_hum` when it changes; the client (`PickSong`) hums
+  at the ore's fork pitch ×2 (to 2.0), from nothing outside 40° off your view to full facing it, louder nearer
+  (0.7 × 6/(6+d)), round the listener. The deep hum's loop for now; to be re-voiced from a recording.
+- **Art** (`tools/art/specs/delve.py`): the icon (worn dark-iron head, ash handle, leather grip, an unlit Deepglass
+  thread on the head's spine) and the stone's parts sheet.
+- **Test** `delve_waking_pick` (one pick per carrier, the stone stays, the pull counted, stone-tier drops, the hum's
+  16-block reach).
