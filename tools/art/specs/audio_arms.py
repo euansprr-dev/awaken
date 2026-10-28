@@ -161,6 +161,30 @@ def swish_light(seed):
     return b.render()
 
 
+def swish_quick(seed):
+    """A strike with almost no wind-up (a riposte, a slipcut, a released heavy): the same clean pass, but on the press
+    (Swing Studio plays it when the blade's clock says, and these blows land within a tick)."""
+    r = K.rng(seed)
+    pass_t = r.uniform(0.032, 0.045)
+    x = swish(0.26, pass_t, r.uniform(400, 480), r.uniform(1450, 1750), 1.5, seed, tone=0.4, tone_f=r.uniform(820, 1000))
+    b = R.Bus(0.4)
+    b.add(x, 0.0, 1.0, "field", 0.1)
+    b.add(cloth(0.14, seed + 3, r), 0.0, 0.1)
+    return b.render()
+
+
+def swish_katana(seed):
+    """The katana's cut (Swing Studio, Euan 2026-10-28: the katana felt floaty): thinner and quicker than a longsword's,
+    a tight pass with a clean high whistle off the single edge, and very little cloth: the blade, not the arm."""
+    r = K.rng(seed)
+    pass_t = r.uniform(0.05, 0.062)
+    x = swish(0.28, pass_t, r.uniform(470, 540), r.uniform(1600, 1850), 1.9, seed, tone=0.7, tone_f=r.uniform(1050, 1250), edge=0.3)
+    b = R.Bus(0.35)
+    b.add(x, 0.0, 1.0, "field", 0.08)
+    b.add(cloth(0.1, seed + 3, r), 0.0, 0.06)
+    return b.render()
+
+
 def swish_heavy(seed):
     """A heavy's rising cut: slower, deeper, more air moved, a thrum under it."""
     r = K.rng(seed)
@@ -583,6 +607,8 @@ EVENTS = OrderedDict([
     ("swish_light", (swish_light, 4, -15.0, 16, "Blade swings", False, 12.0, 0.75)),
     ("swish_heavy", (swish_heavy, 3, -14.0, 18, "Heavy blade swings", False, 12.0, 0.85)),
     ("swish_thrust", (swish_thrust, 3, -15.0, 16, "Blade thrusts", False, 12.0, 0.75)),
+    ("swish_quick", (swish_quick, 3, -15.0, 16, "Blade swings", False, 12.0, 0.75)),
+    ("swish_katana", (swish_katana, 4, -15.5, 16, "Katana cuts", False, 12.0, 0.75)),
     ("hit_flesh", (hit_flesh, 5, -13.0, 18, "Blade strikes", True, 12.0, 1.0)),
     ("hit_flesh_heavy", (hit_flesh_heavy, 3, -12.0, 22, "Heavy blow lands", True, 12.0, 1.0)),
     ("hit_armor", (hit_armor, 4, -13.0, 20, "Blade strikes armour", True, 12.5, 1.0)),

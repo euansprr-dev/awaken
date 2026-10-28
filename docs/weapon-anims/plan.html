@@ -1,0 +1,457 @@
+<title>Swing Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Saira+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (~72ch) with wide figures and tables; a forge-steel neutral, Holo blue for the proposal, ember for today. */
+:root {
+  --bg: #f3f4f6; --panel: #ffffff; --ink: #161a21; --muted: #5b6372; --rule: #d9dde4;
+  --accent: #1f6fb8; --accent-soft: #e2eef9; --ember: #c2571b; --ember-soft: #fbeadf;
+  --gold: #a87b12; --good: #217a4b; --bad: #b3322b;
+  --display: "Saira Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12151b; --panel: #1a1f27; --ink: #e6e9ee; --muted: #9aa3b2; --rule: #2c333f;
+  --accent: #6cb4f5; --accent-soft: #1b2d42; --ember: #f0904f; --ember-soft: #3a2518;
+  --gold: #e0b443; --good: #5cc98d; --bad: #f07a70; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #12151b; --panel: #1a1f27; --ink: #e6e9ee; --muted: #9aa3b2; --rule: #2c333f;
+  --accent: #6cb4f5; --accent-soft: #1b2d42; --ember: #f0904f; --ember-soft: #3a2518;
+  --gold: #e0b443; --good: #5cc98d; --bad: #f07a70; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+.col { max-width: 72ch; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.1; text-wrap: balance; letter-spacing: 0.01em; }
+h1 { font-size: clamp(2.6rem, 6vw, 3.6rem); margin: 6px 0 8px; font-weight: 700; }
+h2 { font-size: 1.95rem; margin: 52px 0 10px; font-weight: 700; padding-top: 14px; border-top: 2px solid var(--ink); }
+h3 { font-size: 1.3rem; margin: 26px 0 6px; font-weight: 600; }
+p { margin: 8px 0; }
+.eyebrow { font: 600 0.78rem/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.15rem; color: var(--ink); max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font: 0.82rem/1.4 var(--mono); color: var(--muted); margin-top: 10px; }
+.status { display: inline-block; font: 600 0.75rem/1 var(--mono); padding: 5px 8px; border-radius: 3px; background: var(--ember-soft); color: var(--ember); letter-spacing: 0.05em; text-transform: uppercase; }
+.short { background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--accent); padding: 14px 20px; margin: 22px 0; }
+.short ul { margin: 6px 0; padding-left: 20px; }
+.short li { margin: 6px 0; }
+.tbl { overflow-x: auto; margin: 12px 0 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; background: var(--panel); }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+th { font: 600 0.74rem/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); background: var(--bg); }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 0.84rem; white-space: nowrap; }
+.tag { font: 600 0.7rem/1 var(--mono); padding: 3px 6px; border-radius: 3px; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.04em; }
+.keep { background: var(--accent-soft); color: var(--accent); }
+.ext { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent); }
+.rep { background: var(--ember-soft); color: var(--ember); }
+.bad { color: var(--bad); font-weight: 600; }
+.good { color: var(--good); font-weight: 600; }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+.fig { background: var(--panel); border: 1px solid var(--rule); padding: 14px 14px 10px; margin: 16px 0; }
+.fig svg { width: 100%; height: auto; display: block; }
+.fig .cap { font-size: 0.86rem; color: var(--muted); margin-top: 6px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font: 0.8rem/1.4 var(--mono); color: var(--muted); margin-bottom: 8px; }
+.sw { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; }
+.sw.today { background: var(--ember); } .sw.proto { background: var(--accent); }
+svg .frame { fill: var(--bg); stroke: var(--rule); stroke-width: 1.5; }
+svg .grid { stroke: var(--rule); stroke-width: 1; }
+svg .eye { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 5 5; }
+svg .cross { stroke: var(--ink); stroke-width: 1.6; fill: none; }
+svg .lab { fill: var(--muted); font: 12px var(--mono); }
+svg .p { fill: none; stroke-width: 2.4; stroke-linejoin: round; }
+svg .p.today { stroke: var(--ember); } svg .p.proto { stroke: var(--accent); }
+svg .dot.today { fill: var(--ember); } svg .dot.proto { fill: var(--accent); }
+svg .hit { fill: none; stroke-width: 2.2; } svg .hit.today { stroke: var(--ember); } svg .hit.proto { stroke: var(--accent); }
+svg .hitline { stroke: var(--gold); stroke-width: 1.5; stroke-dasharray: 4 3; }
+svg .band { fill: var(--accent-soft); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 14px 0; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 12px 16px; min-width: 0; }
+.card h4 { margin: 2px 0 6px; font: 600 0.8rem/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.card.s h4 { color: var(--good); } .card.w h4 { color: var(--gold); } .card.u h4 { color: var(--bad); }
+.loop { counter-reset: s; list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 8px; }
+.loop li { counter-increment: s; background: var(--panel); border: 1px solid var(--rule); padding: 10px 14px 10px 52px; position: relative; min-width: 0; }
+.loop li::before { content: counter(s); position: absolute; left: 14px; top: 9px; font: 700 1.3rem/1 var(--display); color: var(--accent); width: 26px; text-align: center; }
+.cmd { background: var(--panel); border: 1px solid var(--rule); padding: 12px 16px; margin: 12px 0; }
+.cmd dl { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 6px 16px; margin: 0; }
+.cmd dt { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); overflow-wrap: anywhere; }
+.cmd dd { margin: 0; }
+@media (max-width: 560px) { .cmd dl { grid-template-columns: 1fr; } .cmd dd { margin-bottom: 8px; } }
+pre { background: var(--panel); border: 1px solid var(--rule); padding: 12px 14px; overflow-x: auto; font: 0.8rem/1.5 var(--mono); }
+.dec { background: var(--panel); border: 1px solid var(--rule); padding: 12px 16px; margin: 10px 0; }
+.dec .q { font-weight: 600; }
+.dec .rec { color: var(--good); font-weight: 600; }
+.note { font-size: 0.88rem; color: var(--muted); }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+<div class="eyebrow">Awaken · Arms · first-person weapon animation</div>
+<h1>Swing Studio</h1>
+<p class="lede">A plan to make every weapon's swing feel right in first person, our weapons and vanilla's, and a loop that turns your notes into a better swing you can feel in game within minutes, round after round.</p>
+<div class="meta"><span class="status">Plan · waiting for your OK · nothing built</span><span>28 Oct 2026</span><span>branch claude/weapon-anims-plan-1678a2</span><span>SPEC §24 Hands, §25 Arms</span></div>
+
+<div class="short">
+<div class="eyebrow">In short</div>
+<ul>
+<li><b>"Too far up" is real, and I can measure it.</b> Every cut is built as a lever turning about a point below the bottom-right corner of the screen, so the blade sweeps over the top half before it lands. 34 of our 48 cuts do most of their fast moving above your eye line, and the tip meets the target level with the crosshair, pointing up.</li>
+<li><b>The floaty katana has several causes stacked.</b> After each cut the blade drifts back across the screen for about 0.3 s. The swoosh plays before the blade arrives. The katana is swung with one visible hand. And every combo link snaps the blade back to rest.</li>
+<li><b>The fix is a system, not one tweak.</b> Each weapon gets a feel spec: its feel written as numbers. Every swing is checked against it with numbers and pictures, and you feel each change live in your game, without a restart, with an A/B switch against the last version.</li>
+<li><b>First build:</b> the loop, the fixes every weapon needs, and a re-shaped katana. <b>After that:</b> you send a note and have the change in your hands in about 15 minutes.</li>
+<li><b>Third person follows</b> each weapon once you sign off its first person, re-derived from the first-person blade the way the katana's and greatblade's third person already are.</li>
+</ul>
+</div>
+
+<h2>1 · What you asked for</h2>
+<div class="col">
+<p><b>The job.</b> You fight in first person most of the time. You want every swing, our 16 styles and the vanilla swords, axes and mace, to feel like a top action game: sharp, heavy where it should be, connected to what it hits.</p>
+<p><b>The pain.</b> It's decent but wonky in places. Some swings feel like they hit too far up instead of naturally. The katana feels floaty, like you're not cutting with a sharp blade and real strength. Third person needs a lot of work, but first person comes first.</p>
+<p><b>What you asked for.</b> A systematic way to test and improve, over and over, from your notes per weapon, until each one is perfect.</p>
+</div>
+<div class="two">
+<div class="card s"><h4>A strong result</h4>You say "the katana is floaty"; within 15 minutes your game has a new katana and you can flip between it and the old one on the same swing. Each weapon reaches "that's it" in a few rounds, and nothing you already liked gets worse.</div>
+<div class="card w"><h4>A weak result</h4>Each change needs a rebuild and a restart. The numbers get better but you can't feel the difference. One weapon gets fixed while another quietly gets worse.</div>
+<div class="card u"><h4>Unacceptable</h4>Blows landing at a different time than the server judges them. Blocking, the crafting-table hands or the climb stow breaking. Tuning files written into your play copy without you switching them on.</div>
+</div>
+<div class="col">
+<p><b>Must not break:</b> the guard and its jolt when a shot hits it (projectile blocking), the station scenes (crafting table, furnace), climbing putting the weapon away, the charge and tap rules, the edge-first and working-part audits, the blade ribbon, and third person as it is today until its own stage.</p>
+<p><b>Not in this plan:</b> new moves or combos, combat balance, creature animation (the boss plan's Creature Kit), power casts (the power-levels plan).</p>
+</div>
+
+<h2>2 · What I found</h2>
+<div class="col">
+<p>I read the swing code end to end and measured every baked swing with the animation lab's own maths. Everything below is the real game data, <span class="mono">fp_swings.json</span>, measured offline. No game was run.</p>
+</div>
+
+<h3>How a swing is made today</h3>
+<div class="tbl"><table>
+<thead><tr><th>Part</th><th>What it actually does</th><th>Keep?</th></tr></thead>
+<tbody>
+<tr><td>Timing table <code>archetypes.json</code></td><td>Wind-up, active and recovery ticks per move. The server judges by it, the client predicts by it. Read from the jar on purpose, so it can't drift between the two.</td><td><span class="tag keep">keep</span></td></tr>
+<tr><td>The lab's baker <code>tools/art/anim_lab.py bake</code></td><td>Generates every swing from its form (slash, chop, slam...) and one of three weights (snap, blade, heavy), using one pivot and one target point shared by every weapon. Writes keys every 12.5 ms into <code>fp_swings.json</code> (1.2 MB). There is no per-weapon feel: the katana and the longsword use the same "blade" numbers.</td><td><span class="tag ext">grow into the solver</span></td></tr>
+<tr><td><code>FpSwings</code></td><td>Reads that file once, from the jar. Any change needs a rebuild and a restart.</td><td><span class="tag ext">add live reload</span></td></tr>
+<tr><td><code>ArmsHands</code></td><td>Plays the current move's keys from its start. Never blends from the move before. Draws only the main hand's arm on the weapon. The off hand only shows for pairs (daggers, gauntlets).</td><td><span class="tag ext">blend, two hands</span></td></tr>
+<tr><td><code>ArmsAudio</code> swoosh</td><td>Plays on the press. Three files (light, heavy, thrust) with their loudest moment fixed at about 0.1 s and 0.15 s, whatever the move's real timing.</td><td><span class="tag rep">time it to the blade</span></td></tr>
+<tr><td>View lean (camera keys) and the hit kick</td><td>Leans the view into the cut, then settles on a slow damped wave that overshoots and lasts about 7 ticks.</td><td><span class="tag rep">reshape</span></td></tr>
+<tr><td>Hit-stop, ribbon, guard, jolt, station scenes, climb stow</td><td>Work, and are tested.</td><td><span class="tag keep">untouched</span></td></tr>
+<tr><td>Third person from the first-person blade <code>arms_rig4.py</code></td><td>For 8 styles, third person is solved from first person's keys and frozen in its own file. Changing first person doesn't change third person until it is re-solved.</td><td><span class="tag keep">re-run per weapon later</span></td></tr>
+<tr><td>Lab sheets, <code>strip</code>, <code>audit</code>, <code>film</code></td><td>Onion-skins, frame strips and the working-part audit. Good tools, but they judge shape, not feel. There is no measure of speed, height, drift or sync.</td><td><span class="tag ext">grow into the feel report</span></td></tr>
+</tbody></table></div>
+
+<h3>Reproducing it: katana, first strike</h3>
+<div class="col"><p>The level draw cut. The orange line is the blade tip on your screen today, a dot every 12.5 ms, with the big ring at the moment it hits. The blue line is a lab-only prototype of the re-shaped cut (section 5), made by changing the baker's numbers in a scratch copy. It was not run in game.</p></div>
+<div class="fig">
+<div class="legend"><span><i class="sw today"></i>today</span><span><i class="sw proto"></i>lab prototype</span><span>+ crosshair · ring = contact point at the hit</span></div>
+<svg viewBox="0 0 694 414" role="img" aria-label="Katana strike 1, the blade tip on screen, today and the lab prototype">
+<defs><clipPath id="fr"><rect x="34" y="14" width="640" height="360"/></clipPath></defs>
+<rect x="34" y="14" width="640" height="360" class="frame"/>
+<line x1="34" x2="674" y1="104.0" y2="104.0" class="grid"/>
+<line x1="34" x2="674" y1="284.0" y2="284.0" class="grid"/>
+<line x1="34" x2="674" y1="194.0" y2="194.0" class="eye"/>
+<text x="668" y="188.0" class="lab" text-anchor="end">eye line</text>
+<path d="M345.0,194.0h18M354.0,185.0v18" class="cross"/>
+<g clip-path="url(#fr)"><polyline points="404.5,183.2 412.9,172.2 444.0,143.4 505.6,112.3 580.3,102.4 631.2,116.9 649.7,134.6 676.3,143.2 751.7,158.6 686.4,142.7 582.6,128.8 460.8,132.7 325.9,180.9 282.7,212.1 254.2,238.5 245.0,248.2 253.3,240.3 231.0,265.6 215.4,285.7 205.7,299.5 200.7,307.4 199.0,310.8 199.0,311.9 201.0,311.0 206.9,308.5 216.4,304.2 228.9,298.3 243.8,290.9 260.3,282.1 277.8,272.4 295.5,261.8 313.1,250.8 329.9,239.7 345.7,228.7 360.1,218.2 372.9,208.5 383.9,200.0 392.7,192.9 399.2,187.6 403.2,184.3 404.5,183.2" class="p today"/>
+<circle cx="404.5" cy="183.2" r="1.8" class="dot today"/>
+<circle cx="412.9" cy="172.2" r="1.8" class="dot today"/>
+<circle cx="444.0" cy="143.4" r="1.8" class="dot today"/>
+<circle cx="505.6" cy="112.3" r="1.8" class="dot today"/>
+<circle cx="580.3" cy="102.4" r="1.8" class="dot today"/>
+<circle cx="631.2" cy="116.9" r="1.8" class="dot today"/>
+<circle cx="649.7" cy="134.6" r="1.8" class="dot today"/>
+<circle cx="676.3" cy="143.2" r="1.8" class="dot today"/>
+<circle cx="751.7" cy="158.6" r="1.8" class="dot today"/>
+<circle cx="686.4" cy="142.7" r="1.8" class="dot today"/>
+<circle cx="582.6" cy="128.8" r="1.8" class="dot today"/>
+<circle cx="460.8" cy="132.7" r="1.8" class="dot today"/>
+<circle cx="325.9" cy="180.9" r="3.2" class="dot today"/>
+<circle cx="282.7" cy="212.1" r="1.8" class="dot today"/>
+<circle cx="254.2" cy="238.5" r="1.8" class="dot today"/>
+<circle cx="245.0" cy="248.2" r="1.8" class="dot today"/>
+<circle cx="253.3" cy="240.3" r="1.8" class="dot today"/>
+<circle cx="231.0" cy="265.6" r="1.8" class="dot today"/>
+<circle cx="215.4" cy="285.7" r="1.8" class="dot today"/>
+<circle cx="205.7" cy="299.5" r="1.8" class="dot today"/>
+<circle cx="200.7" cy="307.4" r="1.8" class="dot today"/>
+<circle cx="199.0" cy="310.8" r="1.8" class="dot today"/>
+<circle cx="199.0" cy="311.9" r="1.8" class="dot today"/>
+<circle cx="201.0" cy="311.0" r="1.8" class="dot today"/>
+<circle cx="206.9" cy="308.5" r="1.8" class="dot today"/>
+<circle cx="216.4" cy="304.2" r="1.8" class="dot today"/>
+<circle cx="228.9" cy="298.3" r="1.8" class="dot today"/>
+<circle cx="243.8" cy="290.9" r="1.8" class="dot today"/>
+<circle cx="260.3" cy="282.1" r="1.8" class="dot today"/>
+<circle cx="277.8" cy="272.4" r="1.8" class="dot today"/>
+<circle cx="295.5" cy="261.8" r="1.8" class="dot today"/>
+<circle cx="313.1" cy="250.8" r="1.8" class="dot today"/>
+<circle cx="329.9" cy="239.7" r="1.8" class="dot today"/>
+<circle cx="345.7" cy="228.7" r="1.8" class="dot today"/>
+<circle cx="360.1" cy="218.2" r="1.8" class="dot today"/>
+<circle cx="372.9" cy="208.5" r="1.8" class="dot today"/>
+<circle cx="383.9" cy="200.0" r="1.8" class="dot today"/>
+<circle cx="392.7" cy="192.9" r="1.8" class="dot today"/>
+<circle cx="399.2" cy="187.6" r="1.8" class="dot today"/>
+<circle cx="403.2" cy="184.3" r="1.8" class="dot today"/>
+<circle cx="404.5" cy="183.2" r="1.8" class="dot today"/>
+</g>
+<circle cx="350.9" cy="201.5" r="6" class="hit today"/>
+<g clip-path="url(#fr)"><polyline points="404.5,183.2 536.9,125.7 622.2,147.3 648.2,173.2 653.6,184.1 654.2,185.6 675.7,187.9 698.9,190.6 724.0,194.0 668.4,184.8 580.3,177.4 467.5,181.1 331.8,218.2 278.4,248.0 270.2,253.4 183.7,330.0 97.1,445.6 17.2,482.0 -39.9,482.0 -65.4,482.0 -69.2,482.0 99.1,482.0 275.5,442.9 366.7,353.0 403.4,325.5 404.5,275.0 404.5,232.8 404.5,207.1 404.5,193.0 404.5,186.3 404.5,183.8 404.5,183.2 404.5,183.2 404.5,183.2 404.5,183.2 404.5,183.2 404.5,183.2 404.5,183.2 404.5,183.2 404.5,183.2 404.5,183.2" class="p proto"/>
+<circle cx="404.5" cy="183.2" r="1.8" class="dot proto"/>
+<circle cx="536.9" cy="125.7" r="1.8" class="dot proto"/>
+<circle cx="622.2" cy="147.3" r="1.8" class="dot proto"/>
+<circle cx="648.2" cy="173.2" r="1.8" class="dot proto"/>
+<circle cx="653.6" cy="184.1" r="1.8" class="dot proto"/>
+<circle cx="654.2" cy="185.6" r="1.8" class="dot proto"/>
+<circle cx="675.7" cy="187.9" r="1.8" class="dot proto"/>
+<circle cx="698.9" cy="190.6" r="1.8" class="dot proto"/>
+<circle cx="724.0" cy="194.0" r="1.8" class="dot proto"/>
+<circle cx="668.4" cy="184.8" r="1.8" class="dot proto"/>
+<circle cx="580.3" cy="177.4" r="1.8" class="dot proto"/>
+<circle cx="467.5" cy="181.1" r="1.8" class="dot proto"/>
+<circle cx="331.8" cy="218.2" r="3.2" class="dot proto"/>
+<circle cx="278.4" cy="248.0" r="1.8" class="dot proto"/>
+<circle cx="270.2" cy="253.4" r="1.8" class="dot proto"/>
+<circle cx="183.7" cy="330.0" r="1.8" class="dot proto"/>
+<circle cx="97.1" cy="445.6" r="1.8" class="dot proto"/>
+<circle cx="275.5" cy="442.9" r="1.8" class="dot proto"/>
+<circle cx="366.7" cy="353.0" r="1.8" class="dot proto"/>
+<circle cx="403.4" cy="325.5" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="275.0" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="232.8" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="207.1" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="193.0" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="186.3" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="183.8" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="183.2" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="183.2" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="183.2" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="183.2" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="183.2" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="183.2" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="183.2" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="183.2" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="183.2" r="1.8" class="dot proto"/>
+<circle cx="404.5" cy="183.2" r="1.8" class="dot proto"/>
+</g>
+<circle cx="352.8" cy="235.1" r="6" class="hit proto"/>
+<text x="34" y="392" class="lab">left edge of the screen</text>
+<text x="674" y="392" class="lab" text-anchor="end">right edge</text>
+</svg>
+<div class="cap">Today the tip climbs into the top half on the wind-up, humps over at about a third of the way up the screen during the cut, and crosses the target level with the crosshair, pointing up and away. The prototype's cut runs flatter, lands at chest height, and leaves the frame low.</div>
+</div>
+<div class="fig">
+<div class="legend"><span><i class="sw today"></i>today</span><span><i class="sw proto"></i>lab prototype</span><span>degrees the blade turns per tick</span></div>
+<svg viewBox="0 0 696 226" role="img" aria-label="How fast the blade turns over the move, today and the prototype">
+<line x1="40" x2="680" y1="192.0" y2="192.0" class="grid"/><text x="34" y="196.0" class="lab" text-anchor="end">0</text>
+<line x1="40" x2="680" y1="135.8" y2="135.8" class="grid"/><text x="34" y="139.8" class="lab" text-anchor="end">50</text>
+<line x1="40" x2="680" y1="79.5" y2="79.5" class="grid"/><text x="34" y="83.5" class="lab" text-anchor="end">100</text>
+<line x1="40" x2="680" y1="23.2" y2="23.2" class="grid"/><text x="34" y="27.2" class="lab" text-anchor="end">150</text>
+<text x="40.0" y="208" class="lab" text-anchor="middle">0</text>
+<text x="104.0" y="208" class="lab" text-anchor="middle">50</text>
+<text x="168.0" y="208" class="lab" text-anchor="middle">100</text>
+<text x="232.0" y="208" class="lab" text-anchor="middle">150</text>
+<text x="296.0" y="208" class="lab" text-anchor="middle">200</text>
+<text x="360.0" y="208" class="lab" text-anchor="middle">250</text>
+<text x="424.0" y="208" class="lab" text-anchor="middle">300</text>
+<text x="488.0" y="208" class="lab" text-anchor="middle">350</text>
+<text x="552.0" y="208" class="lab" text-anchor="middle">400</text>
+<text x="616.0" y="208" class="lab" text-anchor="middle">450</text>
+<text x="680.0" y="208" class="lab" text-anchor="middle">500</text>
+<rect x="296.0" y="12" width="112.0" height="180" class="band"/><text x="352.0" y="38" class="lab" text-anchor="middle">prototype: below the frame</text>
+<line x1="232.0" x2="232.0" y1="12" y2="192" class="hitline"/><text x="237.0" y="24" class="lab">the hit</text>
+<text x="680" y="223" class="lab" text-anchor="end">ms into the move</text>
+<polyline points="40.0,192.0 56.0,179.3 72.0,156.7 88.0,141.6 104.0,137.1 120.0,143.9 136.0,160.7 152.0,168.9 168.0,141.6 184.0,149.3 200.0,114.1 216.0,73.8 232.0,32.9 248.0,134.3 264.0,156.9 280.0,184.4 296.0,177.1 312.0,167.4 328.0,175.5 344.0,182.0 360.0,186.9 376.0,190.1 392.0,191.7 408.0,189.7 424.0,185.2 440.0,180.9 456.0,176.9 472.0,173.4 488.0,170.5 504.0,168.2 520.0,166.6 536.0,165.8 552.0,165.8 568.0,166.6 584.0,168.2 600.0,170.5 616.0,173.4 632.0,176.9 648.0,180.9 664.0,185.2 680.0,189.7" class="p today"/>
+<polyline points="40.0,192.0 56.0,68.8 72.0,115.5 88.0,152.4 104.0,177.4 120.0,189.9 136.0,177.1 152.0,177.1 168.0,177.2 184.0,159.4 200.0,129.9 216.0,83.7 232.0,26.4 248.0,129.0 264.0,183.0 280.0,112.4 296.0,138.6 312.0,159.6 328.0,175.4 344.0,185.9 360.0,191.1 376.0,135.7 392.0,54.3 408.0,46.1 424.0,115.0 440.0,189.6 456.0,192.0 472.0,192.0 488.0,192.0 504.0,192.0 520.0,192.0 536.0,192.0 552.0,192.0 568.0,192.0 584.0,192.0 600.0,192.0 616.0,192.0 632.0,192.0 648.0,192.0 664.0,192.0 680.0,192.0" class="p proto"/>
+</svg>
+<div class="cap">The drive itself is already fast (140° in a tick). What makes it floaty is everything around it: today the blade keeps gliding at a slow 20°/tick across the frame from 300 to 500 ms. The prototype turns back while it's below the frame and is home and still by 375 ms.</div>
+</div>
+
+<h3>Baseline numbers</h3>
+<div class="tbl"><table>
+<thead><tr><th>Move</th><th class="n">Contact height</th><th class="n">Fast motion above eye line</th><th class="n">Blade drifting in view after the cut</th><th class="n">Blade speed at the hit vs its fastest</th></tr></thead>
+<tbody>
+<tr><td>Katana 1, level draw cut</td><td class="n">−0.04</td><td class="n bad">89%</td><td class="n bad">288 ms</td><td class="n">100%</td></tr>
+<tr><td>Katana 2, rising cut</td><td class="n">−0.12</td><td class="n">25%</td><td class="n bad">313 ms</td><td class="n bad">62%</td></tr>
+<tr><td>Katana 3, chop</td><td class="n">−0.03</td><td class="n bad">90%</td><td class="n bad">425 ms</td><td class="n">100%</td></tr>
+<tr><td>Longsword 1 (every vanilla sword)</td><td class="n">−0.07</td><td class="n bad">89%</td><td class="n bad">338 ms</td><td class="n">100%</td></tr>
+<tr><td>Longsword 2 (every vanilla sword)</td><td class="n">−0.09</td><td class="n">20%</td><td class="n bad">313 ms</td><td class="n bad">65%</td></tr>
+<tr><td>Greatblade 1</td><td class="n">−0.02</td><td class="n bad">100%</td><td class="n bad">288 ms</td><td class="n">100%</td></tr>
+<tr><td>Axe 1 (vanilla axes)</td><td class="n">−0.25</td><td class="n">67%</td><td class="n">175 ms</td><td class="n">100%</td></tr>
+<tr><td>Maul 1 (the mace)</td><td class="n">+0.01</td><td class="n bad">100%</td><td class="n bad">475 ms</td><td class="n">100%</td></tr>
+<tr><td>Katana 1, lab prototype</td><td class="n good">−0.23</td><td class="n good">33%</td><td class="n good">13 ms</td><td class="n">100%</td></tr>
+</tbody></table></div>
+<p class="note">Contact height: where the striking part of the blade crosses the target, in screen units (0 is the crosshair, −1 the bottom edge). Fast motion: the part of the move where the blade turns faster than a quarter of its top speed. Drift: time after the follow-through that the blade is on screen moving slowly. The prototype row is the lab only.</p>
+
+<h3>Root causes</h3>
+<div class="tbl"><table>
+<thead><tr><th>What you feel</th><th>Cause</th><th>Evidence</th><th>Fix</th></tr></thead>
+<tbody>
+<tr><td>Hitting too far up</td><td>One shared pivot below the bottom-right corner, and a rule that the blade crosses the target "seen along its length rising from the lower right". The tip arcs over the top, and at the hit it points up and away.</td><td>34 of 48 cuts do ≥60% of their fast motion above the eye line. The median tip height at the hit is the crosshair's own.</td><td>Cuts authored on screen: where they cross, how straight, how much the blade lies across. Chest height by default.</td></tr>
+<tr><td>Floaty: the blade glides home</td><td>The way home is 41–62% of every move: a slow, even ease back across the middle of the screen.</td><td>Katana 1: 288 ms of slow drift in view. Maul 1: 475 ms.</td><td>The follow-through carries the blade out of frame; it comes back up from below, fast, then settles.</td></tr>
+<tr><td>Floaty: sound before the blade</td><td>The swoosh starts on the press, its loudest moment fixed per sound file, not per move.</td><td>33 of 67 combo strikes are about 40–155 ms off. The katana's first cut is about 50 ms early; the maul's third about 155 ms early.</td><td>Each move says when its swoosh peaks, on the blade's own clock. The katana gets its own cut sound.</td></tr>
+<tr><td>Heavy blows rock the view (likely, to test)</td><td>The view leans with the blade through the drive instead of kicking on the hit, then settles on a damped wave that swings past centre.</td><td>Maul 1: an 8° dip at the hit swings back to 1° the other way and drifts for half a second. Greatblade 1 the same with roll. The katana's settles in about 125 ms, so it isn't the katana's problem.</td><td>A kick on the hit and a clean settle, set per weapon. Proven or dropped by an A/B round.</td></tr>
+<tr><td>Weightless katana</td><td>Two-handed weapons are swung with one visible arm. The off hand is only drawn for pairs.</td><td>Katana, Greatblade, Maul, Spear, Glaive, Scythe, War-staff. Our own hold notes say "two hands at the middle".</td><td>The off hand on the grip, keyed through every swing.</td></tr>
+<tr><td>Wonky combos</td><td>A new strike starts from rest, wherever the last one's blade was.</td><td>28 of 35 combo links jump the tip by over a seventh of the screen height in one frame at your earliest press. The Maul's 2→3 jumps more than the whole screen.</td><td>Each strike blends out of the pose the last one left.</td></tr>
+<tr><td>Wonky backhands</td><td>On rising and backhand cuts the wind-up is faster than the cut itself.</td><td>Katana 2 and Longsword 2 reach the hit at 62–65% of their top speed; the top speed is in the wind-up.</td><td>A rule: the fastest moment is the hit. Rebake.</td></tr>
+<tr><td>No bite</td><td>A hit and a miss look the same after the hit-stop.</td><td>One follow-through for both.</td><td>On a confirmed hit the hands' clock slows for a short beat after the hit-stop: the blade meets resistance, then tears through.</td></tr>
+</tbody></table></div>
+<p class="note">Still to test, not proven: whether the 12.5 ms key spacing shows as a stutter at high frame rates in the drive (a 140°/tick drive moves 35° per key). The report will measure it, and the drive can be keyed denser if it shows.</p>
+
+<h3>Other sessions</h3>
+<div class="col"><p>The boss plan's Creature Kit animates creature rigs with vanilla keyframe clips, a different body and a different maths from a first-person blade, so there is nothing to share but one idea, which I take: lab checks that stop the build. The power casts share <code>CombatFeedback</code> (hit-stop and kicks) with Arms. I use it as it is and change no signature. Neither plan touches Arms' files.</p></div>
+
+<h2>3 · Options, and what I recommend</h2>
+<div class="tbl"><table>
+<thead><tr><th>Option</th><th>What it is</th><th>Why not / why</th></tr></thead>
+<tbody>
+<tr><td><b>A. Targeted repair</b></td><td>Change the baker's shared numbers (lower target, quicker way home), add blending, two hands and sound timing. Rebuild for every note.</td><td>Fixes the two things you named, but every later note costs a build and a restart. Shared numbers move every weapon at once, so tuning the katana can spoil the axe.</td></tr>
+<tr><td><b>B. Swing Studio</b> <span class="tag keep">recommended</span></td><td>A feel spec per weapon (data), a feel report that checks every swing, live reload in your game with an A/B switch, a log of every round, plus the fixes from A built into the runtime once.</td><td>Your notes map to named knobs. Most rounds need no build. Each weapon is tuned alone, and the report shows any other weapon that moved.</td></tr>
+<tr><td><b>C. An in-game animation editor</b></td><td>Drag key poses in game, scrub a timeline, save.</td><td>A big build, and it makes you the animator. You want to describe what feels wrong, not pose arms. Parked, and B doesn't rule it out later.</td></tr>
+</tbody></table></div>
+<div class="col"><p>What would change my mind: if you'd rather tune by hand yourself than describe it, C wins. If after the first build the live loop doesn't make rounds faster than a rebuild would, B shrinks back to A.</p>
+<p><b>Splitting the work:</b> I don't recommend it. The loop needs one owner who keeps the context of every round. Third person could become its own session later, once first person is signed off.</p></div>
+
+<h2>4 · How it works</h2>
+
+<h3>The loop, from your side</h3>
+<ol class="loop">
+<li><b>You swing, you say what's off.</b> Tell the orchestrator or me, in your words: "katana second swing is floaty". If you want it pinned to the exact swing, type <code>/awaken swing note katana second swing floaty</code> right after it. That saves the weapon, the move, the round and whether it hit.</li>
+<li><b>I find it in the numbers.</b> The note becomes measures (the word list below). I reproduce it in the feel report before I change anything. If I can't find it in the numbers, I say so and send you two candidate versions to pick from instead of guessing.</li>
+<li><b>I change the feel spec, never the code if I can help it,</b> rebake (a few seconds), and check the report: this move improves, its class rules pass, no other weapon moved.</li>
+<li><b>Your game picks it up live.</b> A chat line says "Katana: round 4 loaded". No restart.</li>
+<li><b>You compare.</b> <code>/awaken swing ab</code> flips between this round and the last on the same swing. Say which is better.</li>
+<li><b>I log it and keep it.</b> The round, your words, what I changed, the numbers before and after, and your verdict go into the rounds log, and the change is committed so the next build carries it for good. A worse round is simply rolled back.</li>
+</ol>
+
+<div class="cmd">
+<div class="eyebrow">Commands you'll have in game (after the first build)</div>
+<dl>
+<dt>/awaken swing tune on | off</dt><dd>Your game starts or stops reading tuning rounds from the tuning folder. Remembered between launches. Off by default.</dd>
+<dt>/awaken swing ab</dt><dd>Flip between this round and the last one. The chat says which one is live.</dd>
+<dt>/awaken swing blind</dt><dd>The same flip, labelled only 1 and 2, for close calls.</dd>
+<dt>/awaken swing note &lt;words&gt;</dt><dd>Pins your note to the last swing you made.</dd>
+<dt>/awaken swing last</dt><dd>Says what the last swing was: "Katana, strike 2, rising cut, round 4, hit".</dd>
+<dt>/tick rate 5</dt><dd>Slow motion (vanilla's command; cheats on). Today it would break the swing, because the hands keep real time. I make the hands follow the game's tick rate, so the whole swing, hit-stop and sound slow down together. <code>/tick rate 20</code> to go back.</dd>
+</dl>
+</div>
+
+<h3>What a feel spec says</h3>
+<div class="col"><p>One small file per weapon class, with optional lines per move. Every number has a plain name. The baker turns it into keys, and the report holds every move to its ranges. The starting values below are mine. Your rounds will move them, and the spec keeps what you approved.</p></div>
+<div class="tbl"><table>
+<thead><tr><th>Class</th><th>The feel in words</th><th>Drive and contact</th><th>After the hit</th><th>Camera, hands, sound</th></tr></thead>
+<tbody>
+<tr><td><b>Katana</b></td><td>A sharp, strong cut. A short loaded pause, then a straight line through the target.</td><td>Cocked pose on screen for ≥1 tick; drive ≤55 ms, fastest at the hit; crosses at chest height.</td><td>A small bite on a hit, then it carries clean out of frame low. Out of view within 100 ms.</td><td>Two hands. A crisp short kick. Its own steel "shhk" peaking on the hit ±20 ms.</td></tr>
+<tr><td><b>Longsword</b> and vanilla swords</td><td>Balanced, quick, controlled.</td><td>Drive 50–75 ms; crosses just under the crosshair.</td><td>Moderate carry, quick return, partly in view.</td><td>One hand, the off hand free. A light kick.</td></tr>
+<tr><td><b>Greatblade</b></td><td>Momentum. Slow to start, unstoppable once moving.</td><td>A long visible cock; the drive explodes late; fastest at the hit.</td><td>A long carry that drags the view with it; hauled back.</td><td>Two hands. A big kick that follows the blade. A deep swoosh.</td></tr>
+<tr><td><b>Axe</b> and vanilla axes</td><td>Head-heavy chops that bite.</td><td>The wrist whips the head through; head first.</td><td>The strongest bite (it sticks a beat), then yanked out.</td><td>One hand. A short downward kick.</td></tr>
+<tr><td><b>Maul</b> and the mace</td><td>Crushing.</td><td>Raised high in view, falling faster and faster.</td><td>A dead stop on contact, no carry.</td><td>Two hands. A dip and a thump.</td></tr>
+<tr><td><b>Daggers</b></td><td>Quick and precise.</td><td>Drive ≤25 ms, straight to the crosshair.</td><td>A tiny carry, a snap back.</td><td>The hands alternate. Barely a kick.</td></tr>
+<tr><td><b>Spear, Rapier</b></td><td>Thrusts on the aim.</td><td>The point on the crosshair line the whole drive.</td><td>A short recoil.</td><td>Spear two hands. A forward push.</td></tr>
+<tr><td><b>Glaive, Scythe, War-staff</b></td><td>Wide sweeps with weight.</td><td>Low, flat arcs across the front.</td><td>A long carry.</td><td>Two hands. The view turns with the sweep.</td></tr>
+<tr><td><b>Twinblades, Gauntlets, Chain-blade, Shieldblade, Precursor</b></td><td>Their forms stay as they are.</td><td colspan="3">Same measures; the class ranges come from your first rounds on them.</td></tr>
+</tbody></table></div>
+
+<h3>From your words to what I change</h3>
+<div class="tbl"><table>
+<thead><tr><th>You say</th><th>I look at</th><th>Knobs I'd turn</th></tr></thead>
+<tbody>
+<tr><td>"too high", "aims up"</td><td>contact height, fast motion above the eye line, wind-up height, blade angle at the hit</td><td>where it crosses, how much the blade lies across, the cocked pose</td></tr>
+<tr><td>"floaty", "weightless", "no strength"</td><td>drive time, speed at the hit vs top speed, bite, drift in view, swoosh offset, view settle, hands on</td><td>drive curve, bite, follow-through exit, recovery path, sound time, kick shape</td></tr>
+<tr><td>"sluggish", "slow"</td><td>time to the cocked pose, the pause before the drive</td><td>anticipation length (visual); the wind-up ticks only with your OK (decision 4)</td></tr>
+<tr><td>"weak", "doesn't hit hard"</td><td>kick size, hit-stop, step in, the impact sound</td><td>kick, step in, hit-stop (with your OK), sound layer</td></tr>
+<tr><td>"wonky", "jerky", "snaps"</td><td>pose jump between moves, sudden speed spikes, loops in the path</td><td>blend length, path smoothing, wind-up route</td></tr>
+<tr><td>"looks wrong", "like a wave"</td><td>edge lead, blade attitude, the frame strip</td><td>the hold, the roll into the cut</td></tr>
+</tbody></table></div>
+
+<h3>How I check a swing without you</h3>
+<div class="col">
+<p><b>The feel report</b> (one command, every move or one weapon) gives the numbers above per move, each with its class range, pass or fail, and the change since the last round. It also gives three pictures per move:</p>
+<ul>
+<li><b>A frame strip at 60 fps.</b> The lab draws the weapon as the game composes it, frame by frame at real spacing, so slow parts show as crowded frames and fast parts as gaps. Animators read motion this way.</li>
+<li><b>The tip on the screen</b> with the eye line and crosshair, like the chart above, this round over the last one.</li>
+<li><b>The speed curve</b> with its phases marked (load, pause, drive, hit, bite, carry, home) and the swoosh's peak on it.</li>
+</ul>
+<p><b>Rules that stop a bad round.</b> A GameTest, <code>arms_feel_rules</code>, reads the baked swings and holds every move to rules that are true for every weapon. The fastest moment is the hit. Cuts cross below the eye line. No combo link jumps. The swoosh peaks within 25 ms of the hit. Two-handed weapons keep both hands on. Plus each class's ranges. The existing working-part audit and <code>arms_fp_swings</code> stay. CI runs them on every push.</p>
+<p><b>What the lab can't tell:</b> how it feels at your frame rate with sound and hit-stop. That's your verdict, and it wins over the numbers. When you approve something the rules call wrong, the rule moves, and the log says so.</p>
+</div>
+
+<h3>The runtime changes (first build only)</h3>
+<div class="tbl"><table>
+<thead><tr><th>Change</th><th>Evidence</th><th>What it keeps</th><th>Test</th></tr></thead>
+<tbody>
+<tr><td>Swings reload from the tuning folder while <code>tune on</code>; the A/B and blind switch; the note and last commands</td><td>Every round would otherwise need a build and a restart</td><td>The jar's swings when tuning is off, the folder is empty, or a file is broken</td><td><code>arms_swing_reload</code>: a bad file keeps the old swings; a good one swaps in only between moves</td></tr>
+<tr><td>Each strike blends out of the last one's pose</td><td>28 of 35 combo links jump</td><td>The server's timing; the blend only uses the wind-up's own time</td><td><code>arms_swing_blend</code></td></tr>
+<tr><td>Off-hand grip keys for two-handed weapons</td><td>7 styles swung one-handed</td><td>With anything in your off hand (a torch, a shield) it stays one-handed, as today</td><td><code>arms_grip</code> grows</td></tr>
+<tr><td>Swoosh scheduled on the blade's clock per move</td><td>33 of 67 strikes off by 40–155 ms</td><td>Nobody else hears a held charge (the tap rule)</td><td><code>arms_feel_rules</code></td></tr>
+<tr><td>Bite: the hands' clock slows briefly after a confirmed hit</td><td>A hit and a miss look the same</td><td>The hit-stop, the server's clock</td><td><code>arms_feel_rules</code> (the bite stays inside the recovery)</td></tr>
+<tr><td>View kick reshaped and set per move</td><td>Heavy blows: an 8° dip that swings past centre and drifts for 500 ms</td><td>The comfort settings: reduced motion halves it, camera shake off turns it off</td><td>The existing comfort test</td></tr>
+<tr><td>The hands follow the game's tick rate</td><td>Slow motion today desyncs the swing</td><td>Normal play is unchanged at 20 ticks a second</td><td>Covered by the reload test</td></tr>
+</tbody></table></div>
+
+<h3>Where things live</h3>
+<pre>tools/arms/feel/&lt;class&gt;.json      the feel specs (source of truth for feel; small, readable)
+tools/art/anim_lab.py             bake reads the specs; new: report, strip60, ab
+docs/weapon-anims/ROUNDS.md       the log: every round, your words, change, numbers, verdict
+src/.../arms/fp_swings.json       baked keys in the jar (schema 5: + off-hand grip, sound time, kick, bite, round id)
+/Volumes/MEDIA/Awaken-tuning/     live rounds for your game (outside the repo and your play copy)
+   swings/fp_swings.json            this round   ·   swings/prev.json  the last one   ·   notes.jsonl  your pinned notes</pre>
+<div class="col">
+<p><b>Rules for the tuning folder.</b> Your game reads it only while <code>tune on</code>. A file from a newer schema than your build is refused with a chat line ("Round 6 needs the next build"). A round number lower than the one built into your jar is ignored, so an old round never overrides a newer build. The reload parses off the render thread and swaps between moves, never mid-swing. Only first-person visuals, the view's lean and the swoosh's timing come from it. The server never reads it, so nothing about damage or timing can change through it, and other players are unaffected.</p>
+<p><b>Rounds that need code</b> (a new sound file, a new kind of knob) ride the next build. I hand those back as usual and say which notes they answer.</p>
+</div>
+
+<h3>Failure cases</h3>
+<div class="tbl"><table>
+<thead><tr><th>Case</th><th>What happens</th></tr></thead>
+<tbody>
+<tr><td>A tuning file is broken or half-written</td><td>Your game keeps the swings it has and says why in chat. I write files whole, then move them into place.</td></tr>
+<tr><td>A round loads mid-combo</td><td>It waits until the current move ends.</td></tr>
+<tr><td>Tuning left on after we're done</td><td>On joining a world the chat says "Swing tuning is on: round N". Accepted rounds are in the jar anyway.</td></tr>
+<tr><td>Your note is vague ("feels off")</td><td>I ask one short question, or send two versions as A and B.</td></tr>
+<tr><td>The numbers pass, but you say it's worse</td><td>Your verdict wins. The round is rolled back and the rule is adjusted, logged.</td></tr>
+<tr><td>A class change moves another weapon</td><td>The report lists every move that changed. Only the weapon in the note may change, unless the round says the whole class.</td></tr>
+<tr><td>First and third person drift apart while tuning</td><td>Expected until a weapon's third-person stage. Third person stays exactly as today until then.</td></tr>
+</tbody></table></div>
+<div class="col"><p class="note">Performance: no allocation per frame. Polling the folder once a second is a file-time check. Parsing a 1.2 MB file takes about 50 ms, off the render thread. Nothing is sent over the network. Notes stay on your disk.</p></div>
+
+<h2>5 · Before and after</h2>
+<h3>The katana, the case you named</h3>
+<div class="two">
+<div class="card"><h4>Today</h4>You click. The swoosh starts and the blade rises up and out of the right edge. About 50 ms after the swoosh peaks, the blade sweeps back in over the top third and meets the target level with the crosshair, pointing up. The view leans 2° with the blade. The blade glides back across the bottom of the screen for 0.3 s. Click again early and it jumps to rest before the next cut.</div>
+<div class="card"><h4>After (planned; the motion numbers are the lab prototype's)</h4>You click. Both hands bring the katana back to the right shoulder and it holds there, visibly loaded, for about 40 ms. It drives through on a flat line, crossing at chest height (−0.23) as the swoosh peaks. On a hit it bites for a beat, then tears through and leaves the frame low left. The view snaps and settles. It comes back up from below the frame and is still by 375 ms, so a quick second click flows on with no jump.</div>
+</div>
+<h3>"This swing goes too far up" on the greatblade</h3>
+<div class="col"><p>Your note pins Greatblade, strike 1. The report shows all of its fast motion above the eye line and the tip at the hit at +0.10. I lower its crossing and lay the blade more across; the report shows the new height, every other greatblade move unchanged, and the class rules passing. Your game loads round N+1, and you A/B it on the next swing.</p></div>
+<h3>A note the numbers can't see</h3>
+<div class="col"><p>"The axe feels cheap." Nothing in the report is out of range. I don't guess silently: I offer two directions as A and B (a bigger bite and a lower thump sound, or a heavier wind-up), and you pick by feel. Your pick becomes the axe's spec.</p></div>
+<h3>Something fails</h3>
+<div class="col"><p>A round's file arrives cut off on the external drive. Your game says "Katana round 5 couldn't be read, keeping round 4" and plays on. I rewrite it.</p></div>
+
+<h2>6 · Testing and stages</h2>
+<div class="tbl"><table>
+<thead><tr><th>Stage</th><th>What</th><th>Done when</th><th class="n">Builder time</th></tr></thead>
+<tbody>
+<tr><td><b>0 · The studio (lab)</b></td><td>Feel specs (today's numbers written as specs first, so a rebake changes nothing), the feel report, the 60 fps strip, tip and speed charts, the A/B sheet, the rounds log, a baseline report of all 179 swings.</td><td>Rebaking from the specs reproduces today's file exactly; the baseline report is in the notes folder.</td><td class="n">2–3 h</td></tr>
+<tr><td><b>1 · The runtime</b></td><td>Everything in "The runtime changes". Schema 5, read by the same code as schema 4.</td><td>GameTests green locally (my prefix) and on CI. With tuning off and today's swings, the game behaves as before except the fixes.</td><td class="n">4–6 h</td></tr>
+<tr><td><b>2 · The named problems</b></td><td>The cut geometry (where it crosses, how straight, the blade across), the exit low and the rise home, the hit as the fastest moment, the bite. Applied to the katana first, then every cut class. Vanilla swords, axes and the mace come with their styles. The katana's own cut sound. Shipped as rounds 1 and 2 on top of today's round 0, so you can A/B against what you have now.</td><td>Every move passes the general rules. The katana passes its class. The report shows before and after for all 179.</td><td class="n">3–5 h</td></tr>
+<tr><td colspan="4"><b>Hand-back:</b> branch, commit, CI run to the orchestrator. The orchestrator merges, you relaunch once, then <code>/awaken swing tune on</code>.</td></tr>
+<tr><td><b>3 · Your rounds</b></td><td>Weapon by weapon, your order. Data rounds go live. Code rounds are batched into a build.</td><td>You say "that's it" for a weapon. Its spec is marked signed off.</td><td class="n">10–20 min a data round</td></tr>
+<tr><td><b>4 · Third person follows</b></td><td>For each signed-off weapon: re-solve its third person from the new first-person blade (<code>arms_rig4.py</code>, today's 8 styles), then extend the rig to the one-handed styles about their own shoulder. The same report adds third-person rules (blade out of the body, both hands on, edge leading) and the first-over-third sheets. Then third-person rounds in F5 the same way.</td><td>Your sign-off in F5, weapon by weapon.</td><td class="n">~1 h a rigged weapon; 4–6 h once for the one-handed rig</td></tr>
+</tbody></table></div>
+<div class="col">
+<p><b>Gates before hand-back:</b> GameTests green on CI. No move fails the working-part audit or crosses outside its old crosshair margin. Every combo link's jump under 0.05. Every swoosh within 25 ms of its hit. No drift in view over 60 ms on the katana. Guard, jolt, station and climb-stow tests unchanged and green.</p>
+<p><b>The real gate is you:</b> the first build's katana A/B against round 0, in your game.</p>
+<p><b>Rollback:</b> <code>/awaken swing tune off</code> returns your game to the jar's swings at once. Any round reverts by switching back. A bad build reverts by reverting the merge, because schema 5 still reads schema 4 files.</p>
+<p><b>What could change the scope:</b> if blending needs the server to know the blend (it shouldn't, since it's visual only); if the 12.5 ms keys stutter at high frame rates (denser keys in the drive, a bigger file); if two hands on the long polearms crowd the view (then one hand for those, your call in a round).</p>
+</div>
+
+<h2>7 · Decisions for you</h2>
+<div class="dec"><div class="q">1. Build the Swing Studio as described: feel specs, the feel report, live tuning with A/B, the rounds log, and the runtime fixes. First person first, third person per weapon after you sign off its first person.</div><div class="rec">Recommended: yes.</div></div>
+<div class="dec"><div class="q">2. Live tuning in your game: it reads rounds from <code>/Volumes/MEDIA/Awaken-tuning</code> while you've typed <code>/awaken swing tune on</code>. I write rounds there and never into your play copy.</div><div class="rec">Recommended: yes.</div></div>
+<div class="dec"><div class="q">3. Two hands on two-handed weapons in first person (Katana, Greatblade, Maul, Spear, Glaive, Scythe, War-staff), when your off hand is empty.</div><div class="rec">Recommended: yes.</div></div>
+<div class="dec"><div class="q">4. When a note is about speed ("the katana should come out faster"), may a round change that move's wind-up, recovery or hit-stop by up to 1 tick? That changes combat timing slightly. It rides a build, and I'll show the damage-per-second change with it. Otherwise rounds only change how the existing time is used.</div><div class="rec">Recommended: yes, up to 1 tick a round, logged in SPEC.</div></div>
+<div class="dec"><div class="q">5. Vanilla spears and the trident still use vanilla's own swing (they aren't in Arms, because their right mouse is their charge and throw, where Arms puts the guard). Bring them in now, or after the Spear is signed off?</div><div class="rec">Recommended: after the Spear is signed off, with the right-mouse question solved then.</div></div>
+<div class="dec"><div class="q">6. Order of weapons for rounds.</div><div class="rec">Recommended: katana, vanilla sword, greatblade, axe, maul and mace, daggers, spear, then the rest. Or whatever order you test in.</div></div>
+
+<p class="note" style="margin-top:30px">Plan written under Euan's planning process. Evidence: measurements of fp_swings.json and archetypes.json with the lab's own maths (scripts in docs/weapon-anims/proof/). The prototype is a scratch variant of the baker and was never run in game. Nothing in the game has been changed.</p>
+</div>

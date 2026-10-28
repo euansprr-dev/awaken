@@ -236,6 +236,7 @@ final class ArmsServer {
         // a chain strike begun by a press still down waits at its hit for the press's end: a tap lands it, a hold
         // becomes the charge instead (the swing starts at once either way: a tap is never late)
         s.waitHit = move.strike() && s.holdOpen && seq == s.holdSeq;
+        s.swishAt = 0;
         s.drawn = ArmsRules.drawn(style.def().traits(), move, now - s.moveEnd);
         s.style = style;
         s.move = move;
@@ -264,13 +265,21 @@ final class ArmsServer {
         if (!s.waitHit) shown(p, s);
     }
 
-    /** The running move as everyone near sees and hears it: the vanilla arm (without the clips), the swish, the clip. */
+    /**
+     * The running move as everyone near sees and hears it: the vanilla arm (without the clips), the swish, the clip. The
+     * swish plays where the swing's own clock puts it (FpSwings: its whoosh peaks as the blade crosses), so those near
+     * hear it with the blow, not on the press; a waited strike shown on its tap is already at its hit and plays at once.
+     */
     static void shown(ServerPlayer p, ArmsState s) {
+        boolean waited = s.waitSeen;
         s.waitSeen = false;
         Archetype.MoveDef def = s.style == null || s.move == null ? null : s.style.move(s.move);
         if (def == null) return;
         p.swing(InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true);
-        soundForOthers(p, ArmsSounds.swish(def), 1.0F, ArmsSounds.swishPitch(s.cadence));
+        int at = waited ? 0 : Math.round(FpSwings.swish(FpSwings.style(s.style.id()), s.move));
+        s.swishAt = 0;
+        if (at > 0) s.swishAt = s.moveStart + at;
+        else soundForOthers(p, ArmsSounds.swish(def, FpSwings.swishSound(FpSwings.style(s.style.id()), s.move)), 1.0F, ArmsSounds.swishPitch(s.cadence));
         seen(p, new ArmsPayloads.Seen(p.getId(), ArmsPayloads.MOVE, -1, s.style.index(), s.move.ordinal()));
     }
 
@@ -325,6 +334,10 @@ final class ArmsServer {
             }
             s.waitHit = false;
             if (s.waitSeen) shown(p, s);
+        }
+        if (s.swishAt != 0 && now >= s.swishAt) {
+            s.swishAt = 0;
+            soundForOthers(p, ArmsSounds.swish(def, FpSwings.swishSound(FpSwings.style(s.style.id()), s.move)), 1.0F, ArmsSounds.swishPitch(s.cadence));
         }
         if (rel >= def.windup() && rel < def.activeEnd() && Arms.fights(p)) {
             if (s.move == Archetype.Move.ART && !s.unleashed) {

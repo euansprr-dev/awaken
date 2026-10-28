@@ -95,7 +95,11 @@ public final class ArmsClient {
         bus.addListener(ClientTickEvent.Post.class, e -> {
             ArmsPredict.tick();
             ArmsAutopilot.tick();
+            SwingTuning.tick();
         });
+        // a swish come due on the blade's clock plays on the frame it falls in, not the next tick
+        bus.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre.class, e -> ArmsPredict.frame());
+        SwingTuning.init();
         bus.addListener(EventPriority.LOW, MovementInputUpdateEvent.class, ArmsPredict::onInput);
         bus.addListener(ViewportEvent.ComputeCameraAngles.class, ArmsFeel::onCameraAngles);
         bus.addListener(ViewportEvent.ComputeFov.class, ArmsFeel::onFov);

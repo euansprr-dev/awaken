@@ -1,0 +1,25 @@
+{
+  "style": "katana",
+  "round": 1,
+  "_notes": "Round 1 (Euan 2026-10-28: the katana feels floaty; swings aim too far up). Contact at chest height; a shorter draw so the set shows at the frame's right edge; an explosive drive (power 3) so the hit is the fastest moment; carried on out of the frame, where it waits for the chain's next press, then back up home. The backhand (strike_2) drives faster and carries out to the right instead of hanging in view.",
+  "cut": {
+    "power": 3.0
+  },
+  "forms": {
+    "slash": {
+      "post": 16,
+      "stop": 58,
+      "pre": 48
+    }
+  },
+  "moves": {
+    "strike_2": {
+      "cut": {
+        "drive": 0.75,
+        "carry": 60,
+        "stop": null,
+        "pre": null
+      }
+    }
+  }
+}

@@ -5767,6 +5767,74 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   views and the third-person edge lead (a thrust: the point lead). `audit` checks every move's working part ("Working
   parts" above; exit 1 when one fails). `film` overlays the game's own frames (the clip
   recorder's, in a tour) the same way. Sheets for the review set in docs/combat/anim-lab/.
+- **Swing Studio** (plan docs/weapon-anims/plan.html, page https://claude.ai/artifact/NZVvwxBumfRvcwRiiA45co; Euan
+  approved all six decisions 2026-10-28: "go ahead with the entire plan... so that it genuinely feels extremely
+  satisfying"; his notes: swings aim too far up, the katana is floaty, "each strike starts from rest... it kind of feels
+  like it glitches or teleports"). The loop that turns per-weapon notes into better swings, round after round:
+  - *Feel specs* (`tools/arms/feel/<style>.json`, read by `tools/art/swing_studio.py`): the knobs a round changes
+    (weight fields, the cut's pivot, target, draw, drive, carry, exit, rise; per form and per move; the camera's decay;
+    the bite; the swish's lead; the off hand's gap). No spec: the style bakes exactly as before (round 0 rebakes
+    today's keys bit for bit). `bake [--round N] [--out PATH]` keeps third person's wrists from the game's file (a
+    first-person round never moves them; `--solve` solves them again). Schema 5 adds per move `swish` (the tick its
+    swish starts), `swishSound` (the studio's sound in place of the row's), `bite` [rate, ticks]; per style `offHand`
+    and `vanillaOffHand`; the file's `round`.
+  - *The second-generation cut* (a spec's `cut`): a lever about a shoulder-like pivot (0.62, -0.52, -0.30) through a
+    target at chest height (0, -0.24, -1.15); loaded with an eased draw to a set at the frame's edge, held a moment,
+    driven explosively (progress^power over `drive` ticks) so the hit is the fastest moment; then one continuous fall of
+    speed (1 - (1 - x)^k, k matched to the drive's end so nothing stutters) carrying the blade on and down out of the
+    frame, where it waits for the chain's next press (the cadence window's start) before rising home from below. A
+    whiff flows through; a landed hit's resistance comes from the runtime (hit-stop, then the bite).
+  - *The report* (`swing_studio.py report [style ...] [--json OUT]`): per move the contact height (the blade's middle on
+    screen at the hit), the share of the cut's fast motion above the eye line, the speed at the hit against the peak,
+    the drive's length, how soon it slows after the hit, slow motion left in view after it (drift), the swish's peak
+    against the hit, the view swinging back past level, hands on; each against its class's range (cuts: contact
+    -0.45..-0.10, above the eye at most 40%, the hit at least 0.85 of the peak; drift at most 50/75/100 ms for
+    snap/blade/heavy; swish within 35 ms). `strip60` draws a move at 60 fps, `ab` a move from an older file over
+    today's. Rounds are logged in docs/weapon-anims/ROUNDS.md.
+  - *Round 1, the katana*: contact -0.23 (was -0.04), fast motion above the eye 22% (89%), drift 75 ms (288), the
+    backhand's hit 1.0 of its peak (0.62). Rounds go katana, the vanilla sword (the Longsword), greatblade, axe, maul
+    and mace, daggers, spear, then the rest; a round may move a move's wind-up, recovery or hit-stop by at most a tick
+    when the note is about speed (it rides a build, its damage-per-second change stated, and this SPEC updated).
+    Vanilla spears and the trident wait until the Spear is signed off. First person first; third person per weapon
+    after its first person is signed off (until then third person's wrists stay as they are).
+  - *Round 2, every style*: a spec for each of the 16 (the longsword, precursor and shieldblade on the katana's recipe;
+    the axe's chops aimed at chest height, target y -0.14; the rest on the studio's defaults for their weight). With the
+    specs the other shapes are second-generation too. *Thrusts*: a beat at full reach (snap 0.25, blade 0.35, heavy
+    0.5 ticks), snapped back to the ready line (snap 0.6, else 1 tick), held there for the chain's next press, home in
+    1.25/1.5/2 ticks. *Spins*: the turn gathers to its fastest on the hit, 60% of the way round (progress^power,
+    power at least 1.6), the rest carried off that speed in one slowing (1 - (1 - x)^3), then down out of the view and
+    home. *The scythe's haul*: the sweep slows into the hook (a reversal), then one eased haul back through the target
+    in a tick, crossing it at its fastest, then home from below (its speed rules are not judged: a haul is a pull along
+    the blade). *The bash*: held on the foe half a tick, then pulled back in (1 - (1 - x)^3). Other first-generation
+    shapes come home in 1.5/2/2.5 ticks (snap/blade/heavy). The cut's rise home is 1.75/2.5/3 ticks; the wrist's lead
+    and the drop ride the carry's own fall of speed (nothing moves on once the blade has stopped). A chain lash, thrown
+    over the shoulder, is judged like an overhead (above the eye at most 60%). Across the 179 moves the report went
+    from contact out of range 74, above the eye 82, the hit below its peak 24, drive 15, bite 71, drift 172 to 2, 1, 8,
+    0, 0, 2; cuts mostly above the eye 78 of 131 to 1. Left for their rounds: the glaive's and war-staff's sweeps (the
+    long tip comes nearer the eye after the hit, so it looks fastest just after it: 0.64-0.79), the axe's sweep and
+    art, the daggers' slash, the maul's uppercut contact, the scythe's reap contact and riposte, the chain-blade's
+    backhand lash and the war-staff's backhand (drift 88, 138 ms).
+  - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
+    `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
+    the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
+    it). The hands' clock follows the server's tick rate (`TickRateManager.nanosecondsPerTick`). The bite: after a landed
+    blow's hit-stop the hands run at `biteRate` for `biteTicks` (snap 0.5 x 0.5, blade 0.35 x 0.75, heavy 0.25 x 1.25),
+    then make the time up by the move's end (`ArmsPredict.viewTime`; the server's clock never bites; off with hit-stop
+    off). The swish plays on the blade's clock, its whoosh peaking as the blade crosses (the fighter's on the frame it
+    falls due, those near on the server's tick, `ArmsState.swishAt`); a blow landing before the row's sound could peak
+    plays `arms.swish_quick` (its pass 38 ms in), the katana's cuts `arms.swish_katana` (thinner, a clean high whistle,
+    56 ms). Two-handed weapons (katana, greatblade, maul, spear, glaive, scythe, war-staff) close the off hand on the
+    handle below the main (0.11 to 0.40 blocks down it) when the off hand is empty, through every swing and the guard;
+    a stance's own off fist still takes the hand.
+  - *Live tuning* (`SwingTuning`; `/awaken swing tune on [path] | off`, `ab`, `blind`, `note <words>`, `last`; the
+    state kept in `awaken-arms-client.toml`): while on, the swings come from `<folder>/fp_swings.json` (the folder: the
+    path given, else `AWAKEN_TUNING`, else /Volumes/MEDIA/Awaken-tuning if present, else `awaken-tuning` in the game
+    folder), looked at once a second, read on a worker and put in use only between moves. A newer schema or a round
+    older than the jar's is refused with a line in chat. `prev.json` beside it is the A/B; blind mode names the two X and
+    Y at random; notes go to `notes.jsonl` with the style, move, round and version that was playing. Off: the jar's.
+  - Tests: `arms_swing_blend` (no jump, no overshoot, the new pose by the end, the lean carried), `arms_swing_reload`
+    (a set read whole, swapped in and out, a newer schema refused), `arms_feel_rules` (every swish starts by its hit,
+    every bite slows without stopping, the two-handed weapons and only they hold with both hands).
 - **Third person** (Player Animation Library, optional, through `core.api.PlayerClips`; `ArmsClips`, `ArmsBodies`):
   a full-body clip per move from tools/art/specs/arms_moves.py, its keys on the timing table's rows (cocked at the
   wind-up's end, through at the active ticks' end, home by the endTick), each with a bent twin; the guard held while

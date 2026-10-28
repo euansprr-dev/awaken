@@ -64,6 +64,51 @@
       }
     ]
   },
+  "arms.swish_quick": {
+    "subtitle": "subtitles.awaken.arms.swish_quick",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_swish_quick_0",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:arms/arms_swish_quick_1",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:arms/arms_swish_quick_2",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "arms.swish_katana": {
+    "subtitle": "subtitles.awaken.arms.swish_katana",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_swish_katana_0",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:arms/arms_swish_katana_1",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:arms/arms_swish_katana_2",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:arms/arms_swish_katana_3",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      }
+    ]
+  },
   "arms.hit_flesh": {
     "subtitle": "subtitles.awaken.arms.hit_flesh",
     "sounds": [
