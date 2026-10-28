@@ -4,12 +4,14 @@ A walking mountain of basalt, lopsided: a right arm burst into a molten fist, a 
 axe, a carapace with three chimneys on its back, and a horned skull carried low in front. Its light story is the
 forge: the core behind its ribs, the vents, the fist's fissures, the eyes and the axe's edge all burn the same orange.
 
-Moves (today's, re-sided for the new body until R2 rebuilds them): Magma Fist (the overhead two-hand hammer, HEAVY),
-the fist's backhand (LIGHT), an axe chop string (two LIGHTs), a shoulder charge with the fist's shoulder (GRAB), a
-stomp for whoever is behind it, Eruption (PERILOUS, the signature), Stoke the Imps and Meltdown (its transitions).
+Moves (SPEC §35.10): Magma Fist (the molten fist raised high and brought down alone, HEAVY), the fist's backhand
+(LIGHT), the axe string (a one-handed cleave that bites the ground some 7 blocks out, then a flat sweep at waist height,
+two LIGHTs), a shoulder charge with the fist's shoulder (GRAB), a stomp for whoever is behind it, Eruption (the fist
+again, PERILOUS, the signature), Stoke the Imps and Meltdown (its transitions). The axe stays in the left hand and
+never goes into the ground; the fist never holds it.
 """
 from kit import moves as M
-from kit import parts, plans
+from kit import core, parts, plans
 from kit.core import stage_clips
 from kit.paint import cracks, edge_glow, radial
 import fauna_rig as R
@@ -138,7 +140,7 @@ def body():
     hl.cube("hand_l", -8, 0, -8, 16, 12, 16)
     hl.cube("knuckles_l", -7, 7, -10, 14, 4, 3)
     # the great axe: a long haft trailing back and down from the left fist, the head's blade scoring the ground behind
-    axe = hl.bone("axe", (0, 6, 0), (66, 0, 0))
+    axe = hl.bone("axe", (0, 6, 0), (84, 0, 0))
     axe.cube("haft", -2.5, -8, -2.5, 5, 80, 5)
     axe.cube("pommel", -3.5, -12, -3.5, 7, 5, 7)
     axe.cube("grip", -3, 2, -3, 6, 14, 6)
@@ -151,6 +153,7 @@ def body():
     r.size = P.leg / 36.0
     r.shadow = 2.6
     # secondary parts that trail the body (SPEC §35.10): the shackle's chain swings, the tassets flap, the shell shifts
+    r.guard = ["axe"]  # the great axe never goes into the ground, in any clip (core.check)
     r.springs = [(f"chain_r{k}", 1.0, 2.2, 0.18) for k in range(4)] + [(f"tasset{k}", 0.6, 3.5, 0.3) for k in range(3)] \
         + [(f"shell{k}", 0.08, 6.0, 0.5) for k in range(5)]
     return r
@@ -160,26 +163,28 @@ def clips(r):
     plans.biped_locomotion(r, P, weight=1.6, temper="feral")
     plans.biped_reactions(r, weight=1.6)
     mv = [
-        M.overhead_slam(P, "hammer", title="Magma Fist", weight=1.4, windup=22, hold=10, active=5, recover=20, ability="Magma Fist",
-                        kinds=("area", "near"), rng=(0, 4.6), damage=0.7, knock=1.0),
+        M.fist_slam(P, "hammer", side="r", title="Magma Fist", weight=1.4, windup=22, hold=10, active=5, recover=20, ability="Magma Fist",
+                    kinds=("area", "near"), rng=(0, 4.6), damage=0.7, knock=1.0, weapon_bone="axe", disc=2.8),
         M.backhand(P, "backhand", side="r", weight=1.4, windup=10, active=4, recover=12, rng=(0, 4.0), damage=0.8, low=24, arm=(-30, 0, -40)),
-        M.chop(P, "chop_a", side="l", weight=1.4, windup=12, active=4, recover=10, weapon=AXE_TIP, weapon_r=8, weapon_bone="axe", diagonal=1.0,
-               kinds=("combo",), rng=(0, 5.2), damage=1.0, advance=0.8),
-        M.chop(P, "chop_b", side="l", weight=1.4, windup=9, active=4, recover=14, weapon=AXE_TIP, weapon_r=8, weapon_bone="axe", diagonal=-1.0,
-               kinds=("combo",), rng=(0, 5.2), damage=1.0, advance=0.6),
+        M.cleave(P, "chop_a", side="l", weight=1.4, windup=12, active=4, recover=18, weapon=AXE_TIP, weapon_r=8, weapon_bone="axe",
+                 kinds=("combo",), rng=(1.5, 6.5), damage=1.0, advance=0.8),
+        M.sweep(P, "chop_b", side="l", weight=1.4, windup=9, active=4, recover=16, weapon=AXE_TIP, weapon_r=8, weapon_bone="axe",
+                kinds=("combo",), rng=(0, 6.5), damage=1.0, advance=0.6),
         M.shoulder_charge(P, "charge", side="r", weight=1.4, windup=16, active=12, recover=20, advance=7.5, rng=(5, 14), damage=1.2),
         M.stomp(P, "stomp", side="l", weight=1.4, windup=14, active=4, recover=16, kinds=("area", "behind"), rng=(0, 4.2), damage=1.1),
-        M.overhead_slam(P, "eruption", title="Eruption", weight=1.6, cls="PERILOUS", windup=26, active=6, recover=26, ability="Eruption",
-                        kinds=("area", "ranged"), rng=(0, 16), damage=0.8, knock=1.4, signature=True, rear=1.7),
+        M.fist_slam(P, "eruption", side="r", title="Eruption", weight=1.6, cls="PERILOUS", windup=26, active=6, recover=26, ability="Eruption",
+                    kinds=("area", "ranged"), rng=(0, 16), damage=0.8, knock=1.4, signature=True, rear=1.7, weapon_bone="axe"),
         M.roar(P, "roar", weight=1.4, windup=12, active=28, recover=14),
         M.roar(P, "stoke", title="Stoke the Imps", weight=1.4, windup=12, active=24, recover=12, ability="Stoke the Imps", kinds=("summon",)),
         M.roar(P, "meltdown", title="Meltdown", weight=1.4, cls="PERILOUS", windup=18, active=30, recover=16, ability="Meltdown",
                kinds=("area",)),
     ]
-    # the left fist is the slighter one: its share of the hammer's hit is its own size
-    mv[0].hit = [("hand_l", (0, 13, 0), 9), ("hand_r", M.hand_tip(P), P.hand[0] / 2 + 1)]
     for m in mv:
         stage_clips(r, m)
+    # the great axe stays out of the ground in every clip but the fall: the wrist turns first, then the elbow and shoulder
+    own = {core.clip_name(m) for m in mv if m.ground}  # those had their own pass
+    core.ground_pass(r, [(r.guard, [("hand_l", 0, 70), ("forearm_l", 0, 40), ("arm_l", 0, 45)])],
+                     clips=[n for n in r.clips if n not in own and n != "death"])
     return mv
 
 

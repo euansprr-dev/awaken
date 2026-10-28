@@ -35,6 +35,7 @@ import fauna_rig as R
 FADE = 0.15
 HALF_LIFE = 0.07  # KitBlend.HALF_LIFE
 SWING = 0.7  # KitBlend.SWING
+STEP = 1 / 120  # KitBlend.STEP
 FPS = 60
 GIF_FPS = 20
 STILL_SPEED = 15.0  # deg/s
@@ -140,10 +141,13 @@ class Blend:
                 sx[0] -= gain * (ax - lu[0])
                 sx[1] -= gain * (az - lu[1])
                 om = 2 * math.pi * hz
-                for c in range(2):
-                    acc = -om * om * sx[c] - 2 * damp * om * sv[c]
-                    sv[c] += acc * dt
-                    sx[c] += sv[c] * dt
+                steps = min(16, math.ceil(dt / STEP))  # KitBlend.STEP: slices, so a stiff spring never blows up
+                h = dt / steps
+                for _ in range(steps):
+                    for c in range(2):
+                        acc = -om * om * sx[c] - 2 * damp * om * sv[c]
+                        sv[c] += acc * h
+                        sx[c] += sv[c] * h
             self.up[bone] = (ax, az)
             swing.append((bone, sx))
         for bone, sx in swing:

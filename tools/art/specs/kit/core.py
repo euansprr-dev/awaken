@@ -53,7 +53,7 @@ class Move:
 
     def __init__(self, mid, cls, windup, active, recover, title="", hold=0, track=6.0, lock=None, advance=0.0, rise=0.0,
                  damage=1.0, knock=0.5, ability=None, origin=None, rng=(0.0, 4.0), kinds=(), signature=False, hit=(),
-                 stages=None, lag=None, plant=("l", "r"), disc=0.0):
+                 stages=None, lag=None, plant=("l", "r"), disc=0.0, ground=None, bite=None, disc_at=None):
         self.id, self.cls, self.title = mid, cls, title
         self.windup, self.active, self.recover, self.hold = int(windup), int(active), int(recover), int(hold)
         self.track = track
@@ -66,6 +66,10 @@ class Move:
         self.lag = lag or {}
         self.plant = plant  # feet that stay put through the move (checked by the lab)
         self.disc = disc  # a shockwave on the ground round it from contact on: radius in blocks (0: none)
+        self.disc_at = disc_at  # the shockwave's middle: None round the body, "hit" under the blow's first hit
+        # [(guard bones, [(bone, axis, most degrees)])]: what never goes into the ground, and what turns to keep it out
+        # (the wrist first, then the arm); bite: the active key (0..1) where the first entry's guard meets the ground
+        self.ground, self.bite = ground, bite
         self.capsules = []
 
     def seconds(self, stage):
@@ -132,6 +136,181 @@ def _moved(p, q):
         rp, rq = _rot(p.get(b, (0, 0, 0))), _rot(q.get(b, (0, 0, 0)))
         out = max(out, max(abs(rp[i] - rq[i]) for i in range(3)))
     return out
+
+
+GROUND = 24.0  # the ground in model space (pixels, y down)
+SINK = 2.0  # pixels a guarded part may dip into the ground between keys before the build fails
+EASE = 14.0  # degrees a tick a ground correction may grow or fade by
+
+
+def lowest(rig, fr, bones):
+    """The lowest cube corner of these bones, model y (larger is lower). fr: frames(), or a sampled pose (then only
+    each bone's own chain is walked)."""
+    out = -1e9
+    for b in bones:
+        node = rig.by_name.get(b)
+        if node is None:
+            continue
+        M, T = fr[b] if b in fr and isinstance(fr[b], tuple) else _chain(rig, fr, node)
+        for c in node.cubes:
+            for x in (c.x, c.x + c.w):
+                for y in (c.y, c.y + c.h):
+                    for z in (c.z, c.z + c.d):
+                        out = max(out, M[1][0] * x + M[1][1] * y + M[1][2] * z + T[1])
+    return out
+
+
+def _chain(rig, pose, node):
+    """One bone's (M, T) for a sampled pose, walking only its ancestors (frames() for a single bone)."""
+    path = []
+    while node is not None:
+        path.append(node)
+        node = node.parent
+    M, T = ((1, 0, 0), (0, 1, 0), (0, 0, 1)), (0, 0, 0)
+    for b in reversed(path):
+        p = pose.get(b.name, {})
+        dp, dr, ds = p.get("pos", (0, 0, 0)), p.get("rot", (0, 0, 0)), p.get("scale", (1, 1, 1))
+        piv = (b.pivot[0] + dp[0], b.pivot[1] + dp[1], b.pivot[2] + dp[2])
+        T = tuple(T[i] + R._mv(M, piv)[i] for i in range(3))
+        rot = (b.rot[0] * DEG + dr[0], b.rot[1] * DEG + dr[1], b.rot[2] * DEG + dr[2])
+        M = R._mm(R._mm(M, R._rot(*rot)), ((ds[0], 0, 0), (0, ds[1], 0), (0, 0, ds[2])))
+    return M, T
+
+
+def keep_above(rig, pose, guard, adjust, bite=False):
+    """The key pose with its guarded parts (a weapon, a fist) out of the ground: each adjuster in turn (bone, axis,
+    most degrees: the wrist, then the arm) turns by the least that does it. With bite the lowest guarded point lands
+    on the ground itself (within a pixel above it), so a blow that hits the ground meets it instead of passing
+    through."""
+    lo, hi = GROUND - 1.0, GROUND - 0.2
+
+    def low(p):
+        return lowest(rig, as_sample(p), guard)
+
+    def ok(v):
+        return lo <= v <= hi if bite else v <= hi
+
+    def turned(p, b, ax, d):
+        q = dict(p)
+        v = q.get(b, (0, 0, 0))
+        r = list(_rot(v))
+        r[ax] += d
+        q[b] = _mk(r, _pos(v), isinstance(v, dict))
+        return q
+
+    cur, v = pose, low(pose)
+    if ok(v) or (bite and v < lo and not adjust):
+        return pose
+    for b, ax, most in adjust:
+        best, bestv = None, None
+        for d in range(2, int(most) + 1, 2):
+            for sg in (1, -1):
+                q = turned(cur, b, ax, sg * d)
+                qv = low(q)
+                if ok(qv):
+                    return q
+                # otherwise remember the turn that gets closest
+                miss = abs(qv - (lo + hi) / 2) if bite else qv
+                if bestv is None or miss < bestv:
+                    best, bestv = q, miss
+        if best is not None:
+            cur = best
+    return cur
+
+
+def sinks(rig, clip, guard):
+    """How deep (pixels) the guarded parts go into the ground anywhere in a clip, sampled every tick."""
+    c = rig.clips[clip]
+    worst = 0.0
+    for k in range(int(c.length / TICK) + 1):
+        worst = max(worst, lowest(rig, sample(rig, clip, min(c.length, k * TICK)), guard) - GROUND)
+    return worst
+
+
+def ground_pass(rig, ground, clips=None, skip=("death",)):
+    """Keeps guarded parts out of the ground in whole clips, tick by tick (SPEC §35.10). ground: [(guard bones,
+    [(bone, axis, most degrees)])], as Move.ground. At each tick where a guard would go into the ground, the adjusters
+    turn in order (the wrist, then the elbow, then the shoulder) by the least that clears it; the turns are spread to
+    the ticks either side and eased (a wide hold, then a soft average), so the correction leads in and out instead of
+    snapping; then the adjusters' tracks are re-keyed a tick apart with it added. Repeats once on what is left."""
+    names = clips if clips is not None else [n for n in rig.clips if n not in skip]
+    for name in names:
+        c = rig.clips[name]
+        n = int(round(c.length / TICK))
+        if n < 1:
+            continue
+        times = [min(c.length, k * TICK) for k in range(n + 1)]
+        for _ in range(2):
+            for guard, adjust in ground:
+                poses = [sample(rig, name, t) for t in times]
+                if max(lowest(rig, p, guard) for p in poses) <= GROUND - 0.2:
+                    continue
+                delta = {(b, ax): [0.0] * len(times) for b, ax, _ in adjust}
+                prev = {(b, ax): 0.0 for b, ax, _ in adjust}
+                for k, p in enumerate(poses):
+                    cur = {b: dict(v) for b, v in p.items()}
+                    v = lowest(rig, cur, guard)
+                    for b, ax, most in adjust:
+                        if v <= GROUND - 0.2:
+                            prev[(b, ax)] = 0.0
+                            continue
+                        # the turn nearest the last tick's that clears (else the one that gets closest), so the
+                        # correction moves on smoothly and never flips side from one tick to the next
+                        was = prev[(b, ax)]
+                        cands = sorted(set(range(-int(most), int(most) + 1, 2)) - {0}, key=lambda d: (abs(d - was), abs(d)))
+                        best, bestv = 0.0, v
+                        for d in cands:
+                            q = dict(cur)
+                            e = dict(q.get(b, {"pos": (0, 0, 0), "rot": (0, 0, 0), "scale": (1, 1, 1)}))
+                            r = list(e.get("rot", (0, 0, 0)))
+                            r[ax] += d * DEG
+                            e["rot"] = tuple(r)
+                            q[b] = e
+                            qv = lowest(rig, q, guard)
+                            if qv <= GROUND - 0.2:
+                                best, bestv = d, qv
+                                break
+                            if qv < bestv - 1e-6 and (was == 0 or d * was > 0):
+                                best, bestv = d, qv
+                        prev[(b, ax)] = best
+                        if best:
+                            delta[(b, ax)][k] = best
+                            e = dict(cur.get(b, {"pos": (0, 0, 0), "rot": (0, 0, 0), "scale": (1, 1, 1)}))
+                            r = list(e.get("rot", (0, 0, 0)))
+                            r[ax] += best * DEG
+                            e["rot"] = tuple(r)
+                            cur[b] = e
+                            v = bestv
+                for (b, ax), ds in delta.items():
+                    if not any(ds):
+                        continue
+                    m = len(ds)
+                    # the least correction that covers every tick's need and never changes by more than EASE degrees
+                    # a tick, so it leads in and out without lifting a bite next to it more than it must; then a
+                    # soft average for the corners (never below a tick's need)
+                    def env(i, sgn):
+                        best = 0.0
+                        for j in range(m):
+                            dist = abs(i - j)
+                            if c.loop:
+                                dist = min(dist, m - 1 - dist)
+                            v = sgn * ds[j] - EASE * dist
+                            if v > best:
+                                best = v
+                        return best
+                    tent = [env(i, 1) - env(i, -1) for i in range(m)]
+                    tat = lambda i: tent[i % (m - 1)] if c.loop else tent[max(0, min(m - 1, i))]
+                    eased = [sum(tat(i + j) * w for j, w in ((-1, 1), (0, 2), (1, 1))) / 4 for i in range(m)]
+                    eased = [e if abs(e) >= abs(d) or d == 0 else d for e, d in zip(eased, ds)]
+                    if c.loop:
+                        eased[-1] = eased[0]
+                    old = c.tracks.get((b, "rot"))
+                    keys = []
+                    for k, t in enumerate(times):
+                        base = list(R._interp(old, t)) if old else [0.0, 0.0, 0.0]
+                        base[ax] += eased[k]
+                        keys.append((t, tuple(base), "cat"))
+                    c.tracks[(b, "rot")] = keys
 
 
 def clip_name(mv):
@@ -210,11 +389,12 @@ def _scaled(pose, k, only=None):
     return out
 
 
-def _through(end, peak):
-    """The follow-through: the contact pose carried on the way the swing was going (peak to contact), a little."""
+def _through(end, peak, stuck=()):
+    """The follow-through: the contact pose carried on the way the swing was going (peak to contact), a little. The
+    stuck bones (the arm of a blow that bit the ground) stay on contact: the ground stopped them, the body goes on."""
     out = dict(end)
     for b, v in end.items():
-        if not b.startswith(ARMS):
+        if not b.startswith(ARMS) or b in stuck:
             continue
         e, p = _rot(v), _rot(peak.get(b, (0, 0, 0)))
         r = [e[i] + max(-FOLLOW_MAX, min(FOLLOW_MAX, (e[i] - p[i]) * FOLLOW)) for i in range(3)]
@@ -265,7 +445,8 @@ def stage_clips(rig, mv, rest=None):
         # would stop the blow dead at contact: the follow-through carries it on instead
         strike = [k for i, k in enumerate(strike) if i == 0 or _moved(strike[i - 1][1], k[1]) >= CARRY]
     keys += strike
-    through = _through(end, peak) if mv.cls != "NONE" else end
+    stuck = [b for b, _, _ in mv.ground[0][1]] if mv.ground and mv.bite is not None else ()
+    through = _through(end, peak, stuck) if mv.cls != "NONE" else end
     keys.append((W + A + THROUGH * R, through))
     # the recovery's own keys, none closer than 0.15 of the recovery after the follow-through (a big pose change in
     # two ticks would jerk); the next one keeps its order
@@ -293,13 +474,29 @@ def stage_clips(rig, mv, rest=None):
             cur = dict(cur)
             cur.update(sw)
             keys[k] = (keys[k][0], cur)
+    if mv.ground and mv.bite is not None:  # the blow meets the ground at contact; ground_pass keeps the rest out of it
+        guard, adjust = mv.ground[0]
+        at = [k for k, (t, _) in enumerate(keys) if abs(t - (W + mv.bite * A)) < 1e-6]
+        if at:
+            t, p = keys[at[0]]
+            p = keep_above(rig, p, guard, adjust, bite=True)
+            keys[at[0]] = (t, p)
+            # the follow-through keeps the stuck arm where the bite put it
+            for k, (t, q) in enumerate(keys):
+                if abs(t - (W + A + THROUGH * R)) < 1e-6:
+                    q = dict(q)
+                    q.update({b: p[b] for b in stuck if b in p})
+                    keys[k] = (t, q)
     lag = {}
     for b in rig.by_name:
         if b.startswith(LEGS) or b == "pelvis":
             continue
         d = max(0, _depth(rig, b) - 2)
-        lag[b] = max(mv.lag.get(b, 0.0), BREAK * d)
+        # a 0 in the move's own lag keeps that bone on its parent's time (a weapon that must land on its mark)
+        lag[b] = 0.0 if mv.lag.get(b) == 0 else max(mv.lag.get(b, 0.0), BREAK * d)
     bake(keyed(rig, clip_name(mv), W + A + R, keys, lag=lag, hold_until=(W + A)))
+    if mv.ground:  # between the keys too
+        ground_pass(rig, mv.ground, clips=[clip_name(mv)])
     mv.peak_t, mv.link_t = W, W + A + THROUGH * R
     mv.link = max(1, int(round(THROUGH * mv.recover)))
 
@@ -423,9 +620,10 @@ def capsules(rig, mv):
         if mv.disc and k >= mv.active // 2:
             # the shockwave: spokes along the ground from its middle, close enough that nothing stands between them
             n = 12
+            cx, cz = (round(tips[0][0][0], 3), round(tips[0][0][2], 3)) if mv.disc_at == "hit" and tips else (0.0, 0.0)
             for i in range(n):
                 a = 2 * math.pi * i / n
-                caps.append([0.0, 0.3, 0.0, round(math.sin(a) * mv.disc, 3), 0.3, round(math.cos(a) * mv.disc, 3), 0.55])
+                caps.append([cx, 0.3, cz, round(cx + math.sin(a) * mv.disc, 3), 0.3, round(cz + math.cos(a) * mv.disc, 3), 0.55])
         out.append(caps)
     return out
 
@@ -560,6 +758,14 @@ def check(rig, moves):
     if faces(rig) > FACE_BUDGET:
         problems.append(f"{rig.id}: {faces(rig)} faces, over the {FACE_BUDGET} budget")
     problems += [f"{rig.id}: {s}" for s in floating(rig)]
+    guard = list(getattr(rig, "guard", ()))  # parts that never go into the ground, in any clip
+    if guard:
+        for name in rig.clips:
+            if name == "death":  # it falls with them
+                continue
+            deep = sinks(rig, name, guard)
+            if deep > SINK:
+                problems.append(f"{rig.id}/{name}: {'/'.join(guard)} goes {deep:.1f} px into the ground")
     for mv in moves:
         p = f"{rig.id}/{mv.id}"
         if mv.cls != "NONE" and mv.windup < MIN_WINDUP[mv.cls]:
@@ -571,6 +777,10 @@ def check(rig, moves):
             dist = pose_distance(rig, peak)
             if dist < 12:
                 problems.append(f"{p}: its wind-up peak is only {dist:.1f} degrees from rest (unreadable)")
+        for guard, _ in mv.ground or ():
+            deep = sinks(rig, clip_name(mv), guard)
+            if deep > SINK:
+                problems.append(f"{p}: {'/'.join(guard)} goes {deep:.1f} px into the ground")
         if mv.advance == 0 and mv.rise == 0:
             for side in mv.plant:
                 s = foot_slide(rig, clip_name(mv), side, samples=24)

@@ -206,3 +206,99 @@ def spin_cut(P, mid="spin", side="r", title="", windup=12, active=6, recover=12,
                 stages={"windup": [(1.0, coil)], "active": [(0.5, sweep1), (1.0, sweep2)],
                         "recover": [(0.5, {"pelvis": {"rot": (2, -60 * sg, 0), "pos": (0, -1, 0)}, "chest": (0, -20 * sg, 0)})]},
                 lag={a: 0.02, f: 0.03})
+
+
+# One-handed great weapons (the Living Forge's axe, SPEC §35.10): the weapon arm swings while the body twists under it
+# and the free arm counters the other way, so it reads as one heavy thing in one hand, never as two hands on a haft.
+# ground: (guarded bones, adjusters) for core.keep_above; the wrist turns first, then the arm.
+
+def _weapon_ground(side, weapon_bone):
+    return [([weapon_bone], [("hand_" + side, 0, 70), ("forearm_" + side, 0, 40), ("arm_" + side, 0, 40)])]
+
+
+def cleave(P, mid="cleave", side="l", title="", weight=1.0, cls="LIGHT", windup=12, active=4, recover=10, weapon=None, weapon_r=8.0,
+           weapon_bone="axe", kinds=("combo",), rng=(0, 5.0), damage=1.0, advance=0.6):
+    """A one-handed cleave: the weapon hauled up over its shoulder with the body coiled away and the free fist thrown
+    forward; then the body unwinds, the blade comes down across the front and bites the ground, and the free fist yanks
+    back to the hip."""
+    sg = _sgn(side)  # +yRot turns the body to its right; for a left-handed blow the coil is to the left (-y)
+    o = _other(side)
+    a, f, h = "arm_" + side, "forearm_" + side, "hand_" + side
+    gather = {"pelvis": {"rot": (0, 0, 0), "pos": (0, -1.5, 0)}, "chest": (-4, -10 * sg, 0), a: (-50, 0, 14 * sg), f: (-40, 0, 0),
+              h: (20, 0, 0)}
+    peak = {"pelvis": {"rot": (-4, -10 * sg, 0), "pos": (0, -0.5, 1.5)}, "spine": (-6, -14 * sg, 0), "chest": (-14, -30 * sg, 6 * sg),
+            "head": (-2, 22 * sg, 0), a: (-168, -10 * sg, 22 * sg), f: (-62, 0, 0), h: (30, 0, 0),
+            "arm_" + o: (-62, 10 * sg, 8 * sg), "forearm_" + o: (-40, 0, 0)}
+    # the arm and the haft near one line, forward and down across the front, written a little into the ground so the
+    # ground pass stops the edge on it (the Forge's axe meets it some 7 blocks out; the haft hits on the way)
+    cut = {"pelvis": {"rot": (10, 6 * sg, 0), "pos": (0, -4 * weight, -1)}, "spine": (10, 8 * sg, 0), "chest": (24, 14 * sg, 0),
+           "head": (8, -10 * sg, 0), a: (-90, 0, -4 * sg), f: (-20, 0, 0), h: (-66, 0, 0),
+           "arm_" + o: (34, 0, 14 * sg), "forearm_" + o: (-52, 0, 0)}
+    # then it hoists the weapon out: the arm comes up and the head swings under the raised hand, so a long weapon can
+    # trail behind again without ploughing the ground on the way
+    hoist = {"chest": (10, 12 * sg, 0), "spine": (4, 4 * sg, 0), a: (-120, 4 * sg, 10 * sg), f: (-20, 0, 0), h: (40, 0, 0),
+             "arm_" + o: (10, 0, 6 * sg)}
+    return Move(mid, cls, windup, active, recover, title=title, track=8.0, rng=rng, kinds=kinds, damage=damage, knock=0.5,
+                advance=advance, hit=[(weapon_bone, weapon, weapon_r)],
+                stages={"windup": [(0.3, gather), (1.0, peak)], "active": [(0.5, cut), (1.0, cut)], "recover": [(0.55, hoist)]},
+                lag={"head": 0.04, a: 0, f: 0, h: 0, weapon_bone: 0}, ground=_weapon_ground(side, weapon_bone), bite=0.5)
+
+
+def sweep(P, mid="sweep", side="l", title="", weight=1.0, cls="LIGHT", windup=9, active=4, recover=14, weapon=None, weapon_r=8.0,
+          weapon_bone="axe", kinds=("combo",), rng=(0, 5.0), damage=1.0, advance=0.4):
+    """A one-handed backhand sweep at waist height: the weapon low across the front on the far side, the body turned
+    with it; then it rips the blade flat across and out to its own side, the body unwinding and the free arm flung out
+    the other way. Starts where a cleave ends, so the two make a string."""
+    sg = _sgn(side)
+    o = _other(side)
+    a, f, h = "arm_" + side, "forearm_" + side, "hand_" + side
+    # the blade held out low across the front on the far side, then ripped flat across to its own side, a block or
+    # so off the ground all the way (the Forge's: from 6 blocks out on its right to 5 on its left)
+    load = {"pelvis": {"rot": (6, 14 * sg, 0), "pos": (0, -3 * weight, 0)}, "spine": (8, 14 * sg, 0), "chest": (16, 14 * sg, 0),
+            "head": (4, -14 * sg, 0), a: (-100, 10 * sg, 0), f: (-24, 0, 0), h: (-40, 0, 0),
+            "arm_" + o: (20, 0, 10 * sg), "forearm_" + o: (-50, 0, 0)}
+    rip = {"pelvis": {"rot": (4, -14 * sg, 0), "pos": (0, -3 * weight, 0)}, "spine": (4, -14 * sg, 0), "chest": (10, -20 * sg, 0),
+           "head": (2, 16 * sg, 0), a: (-70, 0, 30 * sg), f: (-10, 0, 0), h: (-80, 0, 0),
+           "arm_" + o: (-40, 0, -50 * sg), "forearm_" + o: (-20, 0, 0)}
+    # it brings the weapon back the way the cleave does: up under a raised hand, then down behind
+    rise = {"chest": (4, -6 * sg, 0), a: (-120, 0, 16 * sg), f: (-20, 0, 0), h: (40, 0, 0), "arm_" + o: (-10, 0, -14 * sg)}
+    # from rest a long weapon trails behind: it comes up under a raised hand first (in a string the blow before has
+    # already brought it round, and the link goes straight to the load)
+    lift = {"chest": (4, 6 * sg, 0), a: (-120, 4 * sg, 10 * sg), f: (-20, 0, 0), h: (40, 0, 0)}
+    return Move(mid, cls, windup, active, recover, title=title, track=8.0, rng=rng, kinds=kinds, damage=damage, knock=0.6,
+                advance=advance, hit=[(weapon_bone, weapon, weapon_r)],
+                stages={"windup": [(0.34, lift), (1.0, load)], "active": [(0.5, rip), (1.0, rip)], "recover": [(0.5, rise)]},
+                lag={"head": 0.04}, ground=_weapon_ground(side, weapon_bone))
+
+
+def fist_slam(P, mid="fist_slam", side="r", title="", weight=1.0, cls="HEAVY", windup=22, hold=10, active=5, recover=20, ability=None,
+              kinds=("area",), rng=(0, 4.0), damage=1.2, knock=0.9, signature=False, rear=1.0, weapon_bone=None, fist=None, fist_r=None,
+              disc=0.0):
+    """One great fist raised high and brought down on the ground in front, the body rearing back and dropping behind
+    it; the other arm (and what it holds) swings back and out for balance, never joining in. disc: a shockwave round
+    where the fist lands (a long arm meets the ground well out in front; the burst covers the ground between)."""
+    sg = _sgn(side)
+    o = _other(side)
+    a, f, h = "arm_" + side, "forearm_" + side, "hand_" + side
+    w = weight
+    crouch = {"pelvis": {"rot": (6, 0, 0), "pos": (0, -3 * w, 1)}, "chest": (10, 8 * sg, 0), a: (-30, 0, 10 * sg), f: (-40, 0, 0),
+              "arm_" + o: (10, 0, 10 * sg)}
+    peak = {"pelvis": {"rot": (-6 * rear, -8 * sg, 0), "pos": (0, 1.5, 2 * rear)}, "spine": (-10 * rear, -8 * sg, 0),
+            "chest": (-18 * rear, -18 * sg, 6 * sg), "head": (-10, 10 * sg, 0), a: (-172, 8 * sg, 14 * sg), f: (-44, 0, 0), h: (-20, 0, 0),
+            "arm_" + o: (-30, 0, -30 * sg), "forearm_" + o: (-30, 0, 0)}
+    contact = {"pelvis": {"rot": (16, 4.5 * sg, 0), "pos": (0, -7 * w, -1)}, "spine": (14, 4.5 * sg, 0), "chest": (28, 10 * sg, 0),
+               "head": (10, -8 * sg, 0), a: (-30, 0, -4 * sg), f: (-100, 0, 0), h: (-40, 0, 0),
+               "arm_" + o: (30, 0, -40 * sg), "forearm_" + o: (-50, 0, 0)}
+    settle = dict(contact)
+    settle["chest"] = (22, 7 * sg, 0)
+    settle["pelvis"] = {"rot": (12, 6 * sg, 0), "pos": (0, -5 * w, -1)}
+    over = {"pelvis": {"rot": (-3, 0, 0), "pos": (0, 0.6, 0)}, "chest": (-4, 0, 0), "head": (-3, 0, 0)}
+    ground = [([h], [(f, 0, 40), (a, 0, 40)])]
+    if weapon_bone:  # what the other hand holds stays out of the ground too
+        ground.append(([weapon_bone], [("hand_" + o, 0, 70), ("forearm_" + o, 0, 40), ("arm_" + o, 0, 40)]))
+    return Move(mid, cls, windup, active, recover, title=title, hold=hold if cls == "HEAVY" else 0, track=5.0 / w, ability=ability,
+                origin=(0, 0, 2.2), rng=rng, kinds=kinds, damage=damage, knock=knock, signature=signature,
+                hit=[(h, fist if fist is not None else hand_tip(P), fist_r if fist_r is not None else P.hand[0] / 2 + 1)],
+                stages={"windup": [(0.3, crouch), (1.0, peak)], "active": [(0.45, contact), (1.0, settle)],
+                        "recover": [(0.4, settle), (0.8, over)]},
+                lag={"head": 0.05}, ground=ground, bite=0.45, disc=disc, disc_at="hit" if disc else None)

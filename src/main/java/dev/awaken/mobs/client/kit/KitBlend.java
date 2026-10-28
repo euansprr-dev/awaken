@@ -27,6 +27,8 @@ public final class KitBlend {
     static final float PAUSE = 0.04F;
     /** The furthest a secondary part swings from where its parents hold it, radians (about 40°). */
     static final float SWING = 0.7F;
+    /** The longest slice a spring is stepped in, seconds. */
+    static final float STEP = 1 / 120F;
 
     private ModelPart[] parts = new ModelPart[0];
     private float[] out = new float[0], off = new float[0], vel = new float[0], outVel = new float[0];
@@ -210,12 +212,16 @@ public final class KitBlend {
                 float daz = Mth.wrapDegrees((az - lastUp[o + 1]) * Mth.RAD_TO_DEG) * Mth.DEG_TO_RAD - dYaw * 0.5F;
                 sx[o] -= springGain[i] * dax;
                 sx[o + 1] -= springGain[i] * daz;
+                // in slices of at most 1/120 s: a stiff spring stepped a whole slow frame at once would blow up and flip
                 float w = springW[i], z = springZeta[i];
-                for (int c = 0; c < 2; c++) {
-                    float a = -w * w * sx[o + c] - 2 * z * w * sv[o + c];
-                    sv[o + c] += a * dt;
-                    sx[o + c] += sv[o + c] * dt;
-                }
+                int steps = Math.min(16, (int) Math.ceil(dt / STEP));
+                float h = dt / steps;
+                for (int k = 0; k < steps; k++)
+                    for (int c = 0; c < 2; c++) {
+                        float a = -w * w * sx[o + c] - 2 * z * w * sv[o + c];
+                        sv[o + c] += a * h;
+                        sx[o + c] += sv[o + c] * h;
+                    }
             } else {
                 sx[o] = sx[o + 1] = sv[o] = sv[o + 1] = 0;
             }

@@ -9277,7 +9277,8 @@ For all three kit bodies (the tools write every body the same way).
   Every key has its planted feet solved. A pose held over two keys swells by 7%, so no body stands frozen.
   Successive breaking: every joint past the chest trails its parent by 0.018 s (`BREAK`), so the hips lead, then the
   chest, the shoulder, the elbow, the hand and the weapon. Legs and hips are never lagged, and the strike still lands
-  inside its own ticks (`hold_until`).
+  inside its own ticks (`hold_until`). A move's own lag of 0 keeps that bone on its parent's time: the cleave's arm,
+  hand and weapon, so the blade lands on its mark.
 - **Spacing.** A strike key that moves under 8° from the one before (`CARRY`) is dropped, so the blow carries through
   contact into the follow-through instead of stopping dead. The recovery's own keys sit at least 0.15 of the recovery
   apart, counting from the follow-through, so no big pose change lands in two ticks.
@@ -9306,10 +9307,42 @@ For all three kit bodies (the tools write every body the same way).
 - **Secondary parts** (rig `spring <bone> <gain> <hz> <damping>`). A spring part is left behind by `gain` of its
   parents' pitch and roll change (and half the body's turn), then swings back on its spring. Every spring reads its
   parents before any spring moves them, so a chain's links never feed each other. Its swing eases into ±0.7 rad
-  (tanh), never stopping dead. Today:
+  (tanh), never stopping dead. It steps in slices of at most 1/120 s (at most 16 a frame, `KitBlend.STEP`), so a stiff
+  spring stays steady at any frame rate: the carapace's 6 Hz slabs shook at 20 fps on whole-frame steps. Today:
   - the Forge's fist chain (1.0, 2.2 Hz, 0.18), tassets (0.6, 3.5 Hz, 0.3) and carapace slabs (0.08, 6 Hz, 0.5);
   - Mother's veils (0.5, 3 Hz, 0.3) and tendril tips (0.8, 2.5 Hz, 0.25).
 - **Feet through moves.** Ground contact (35.4) now runs during moves too; it was off while a move played.
+- **The ground rule** (`core.ground_pass`, `Move.ground`, `rig.guard`). A weapon or a fist never goes into the ground
+  (y 24 in model space) in any clip but the fall. The build fails past 2 px (`SINK`), checked every tick of every
+  clip for `rig.guard` (the Forge: the axe) and of each move for its own guards.
+  - Each move names its guards and their adjusters, `[(guard bones, [(bone, axis, most degrees)])]`, the wrist first,
+    then the elbow and the shoulder.
+  - **The pass.** At every tick where a guard would sink, the adjusters turn by the least that clears it, starting
+    from the last tick's turn, so the correction moves on smoothly and never flips side. The correction then grows and
+    fades by at most 14° a tick (`EASE`), with a soft average for the corners, and never drops below a tick's need.
+    The adjusters' tracks are re-keyed a tick apart with it added, twice over. A move's clip has its own pass. The
+    rig-wide pass covers the other clips (locomotion, reactions), never a move twice.
+  - **Bite.** A blow that hits the ground (`Move.bite`, its share of the active stage) has its contact key solved so
+    the guard's lowest point lands on the ground (within 0.2-1 px above it). Its weapon arm is stuck through the
+    follow-through: the ground stopped it, and the body carries on down.
+  - A long weapon can't pass under a low hand from in front of the body to behind it without going through the ground.
+    So a recovery that brings it back raises the hand and lets the head swing under it (the cleave's hoist, the
+    sweep's rise), and a blow from rest whose weapon trails behind lifts it the same way first (the sweep's lift).
+- **The Forge's moves** (one-handed, Euan 2026-10-28: "he hits as if he had two hands instead of one axe in one
+  hand"). The axe rests at 84° in the left hand, its head on the ground behind it.
+  - **The cleave** (`moves.cleave`, chop_a, LIGHT 12/4/18): the axe hauled up over its left shoulder, the body coiled
+    left and the fist thrown forward. Then the body unwinds, the arm and haft come down across the front in near one
+    line, and the edge bites the ground some 7 blocks out. The fist yanks back to the hip. It hoists the axe out (the
+    arm up, the head under the hand) and lets it trail behind again. Range 1.5-6.5 blocks.
+  - **The sweep** (`moves.sweep`, chop_b, LIGHT 9/4/16): the blade held low across the front on its right, about a
+    block off the ground, ripped flat across to its left at waist height, the free arm flung the other way. Range
+    0-6.5: in the string it links on wherever the cleave's step left the target.
+  - **Magma Fist and Eruption** (`moves.fist_slam`): the fist alone, raised high and brought down on the ground
+    dead ahead, some 5 blocks out (the hunched shoulder is already 3 out, so a long arm meets the ground there). The
+    axe arm swings out and back for balance and never joins in; it stays out of the ground too. Magma Fist's burst
+    (`Move.disc` 2.8 with `disc_at="hit"`) is a shockwave round where the fist lands, so it covers the ground between
+    the fist and the body, and nothing behind (`kit_hit_volume`: someone 2.5 blocks in front is hit, someone behind
+    is not).
 - **Sound on the marks** (server, `FightRunner.marks`):
   - the swing at the whoosh mark;
   - an area blow's impact at its contact mark;
