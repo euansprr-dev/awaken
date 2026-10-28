@@ -85,6 +85,8 @@ public final class VelocityPowers {
                     if (c.player.isSprinting() && c.level.getFluidState(c.player.blockPosition().below()).is(net.minecraft.tags.FluidTags.WATER)) {
                         c.player.resetFallDistance();
                         if (c.player.tickCount % 2 == 0) c.particles(ParticleTypes.SPLASH, c.pos(), 2, 0.2, 0.05);
+                        // running on water pays Water Run's mastery (SPEC 34.8), a second at a time
+                        if (c.player.tickCount % 20 < PowerType.PASSIVE_PERIOD) dev.awaken.powers.Mastery.use(c.player, "awaken:water_run", dev.awaken.powers.Mastery.WATER_SECOND);
                         // a red wake that lasts while you keep running
                         Fx.at(c, FxKind.TRAIL, c.pos()).ticks(12).noAnim().send();
                         // Tidewalker (5): the bow wave shoves foes in the water out of your way

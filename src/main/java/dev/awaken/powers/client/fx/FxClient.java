@@ -63,7 +63,11 @@ public final class FxClient {
         FirstPerson.listen(FxClient::onFirstPerson);
 
         var bus = NeoForge.EVENT_BUS;
-        bus.addListener(ClientTickEvent.Post.class, e -> tick());
+        bus.addListener(ClientTickEvent.Post.class, e -> {
+            tick();
+            FxStats.tick();
+        });
+        bus.addListener(net.neoforged.neoforge.client.event.RegisterClientCommandsEvent.class, FxStats::commands);
         bus.addListener(ExtractLevelRenderStateEvent.class, FxRender::onExtract);
         bus.addListener(SubmitCustomGeometryEvent.class, FxRender::onSubmit);
         bus.addListener(ViewportEvent.ComputeFov.class, FxScreen::onFov);

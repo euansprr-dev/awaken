@@ -104,10 +104,10 @@ public final class MindPowers {
                 Vec3 from = m.getEyePosition(), to = p.getBoundingBox().getCenter();
                 Fx.of(p, "danger_sense", FxKind.BEAM, from).to(to).colour(0xFFFFD27A).aux(0.025).scale(from.distanceTo(to)).ticks(6).send();
             }
-            // Sixth Sense (5): note who was in reach, to see the blow dodged
-            if (c.step(5) && d2 < reach * reach) st.warned.put(m.getId(), now);
+            // note who was in reach, to see the blow dodged: it pays mastery (SPEC 34.8), and Sixth Sense (5) slows the one who missed
+            if (d2 < reach * reach) st.warned.put(m.getId(), now);
         }
-        if (c.step(5) && !st.warned.isEmpty()) sixthSense(c, st, now);
+        if (!st.warned.isEmpty()) sixthSense(c, st, now);
         for (Projectile pr : c.level.getEntitiesOfClass(Projectile.class, p.getBoundingBox().inflate(12), x -> x.getOwner() != p && !x.onGround())) {
             Vec3 v = pr.getDeltaMovement();
             if (v.lengthSqr() < 0.04) continue;
@@ -330,6 +330,7 @@ public final class MindPowers {
     }
 
     /** Sixth Sense (5): a warned foe that lost its reach without landing a blow was dodged, so it's slowed. */
+    /** A warned foe that leaves reach without landing its blow: a dodge (mastery; Sixth Sense at 5 slows it). */
     private static void sixthSense(Cast c, PowerState st, long now) {
         var it = st.warned.entrySet().iterator();
         while (it.hasNext()) {
@@ -348,6 +349,8 @@ public final class MindPowers {
                 it.remove();
             } else if (m.distanceToSqr(c.player) > reach * reach) {
                 it.remove();
+                dev.awaken.powers.Mastery.use(c.player, "awaken:danger_sense", dev.awaken.powers.Mastery.DODGED);
+                if (!c.step(5)) continue;
                 Moves.effect(m, MobEffects.SLOWNESS, (int) c.num(5, "slow", 20), 2);
                 Fx.at(c, FxKind.PSI, c.pos()).ticks(8).plain().send();
                 Fx.at(c, FxKind.PSI, c.pos()).ticks(8).send();

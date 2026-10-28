@@ -71,6 +71,9 @@ public final class PowerState {
         /** Kill tokens: ordinary kills pay mastery while tokens last; one returns every 10 s, at most 6. */
         float killTokens = Mastery.KILL_TOKENS;
         long tokensAt;
+        /** Use-based earning (SPEC 34.8): the minute it counts in and what it has paid in that minute. */
+        long useMinute = -1;
+        float usePaid;
 
         Track(PowerType type) {
             this.type = type;

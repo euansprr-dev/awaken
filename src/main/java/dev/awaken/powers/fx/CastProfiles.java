@@ -96,7 +96,7 @@ public final class CastProfiles {
         return new Profile(p.id(), p.power(), p.windup(), p.release(), p.fallback(), r.has("begin3p") ? r.get("begin3p").getAsString() : p.begin3p(),
                 r.has("hold3p") ? str(r, "hold3p") : p.hold3p(), p.holdAt(), r.has("end3p") ? str(r, "end3p") : p.end3p(),
                 r.has("begin1p") ? r.get("begin1p").getAsString() : p.begin1p(), r.has("hold1p") ? str(r, "hold1p") : p.hold1p(), p.channel(),
-                p.moment(), p.endMoment(), p.lens(), p.origin(), p.beginSound());
+                p.moment(), p.endMoment(), r.has("lens") ? str(r, "lens") : p.lens(), p.origin(), p.beginSound());
     }
 
     /**

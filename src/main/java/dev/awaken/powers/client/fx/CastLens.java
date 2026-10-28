@@ -24,6 +24,11 @@ final class CastLens {
             case "awaken:cast_legion" -> 32;
             case "awaken:cast_citadel" -> 30;
             case "awaken:cast_void" -> 70;
+            // the big level-5 forms (SPEC 34.5)
+            case "awaken:awake_flow" -> 80;
+            case "awaken:awake_gravity_well", "awaken:awake_overload" -> 40;
+            case "awaken:awake_legion" -> 36;
+            case "awaken:awake_nova" -> 30;
             default -> 24;
         };
     }

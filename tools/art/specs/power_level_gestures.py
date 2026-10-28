@@ -304,6 +304,11 @@ def _first_person(power, level, spec, row):
     return dict(begin1p=name, hold1p=None)
 
 
+# The big level-5 forms get their own short Lens look on your screen (assets/awaken/lens/looks_powers.json, CastLens).
+LENS5 = {"flow": "awaken:awake_flow", "gravity_well": "awaken:awake_gravity_well", "beam": "awaken:awake_beam", "nova": "awaken:awake_nova",
+         "overload": "awaken:awake_overload", "legion": "awaken:awake_legion"}
+
+
 def register_all():
     LEVELS.clear()
     for power, row in T.R.items():
@@ -312,6 +317,8 @@ def register_all():
         for level, spec in ((3, L3[fam]), (5, L5[power])):
             fields = _three_p(power, level, spec)
             fields.update(_first_person(power, level, spec, row))
+            if level == 5 and power in LENS5:
+                fields["lens"] = LENS5[power]
             by[level] = fields
         LEVELS[power] = by
 

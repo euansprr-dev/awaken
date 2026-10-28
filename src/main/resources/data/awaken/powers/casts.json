@@ -262,7 +262,8 @@
      "hold3p": null,
      "end3p": null,
      "begin1p": "fp_p_flow_l5",
-     "hold1p": null
+     "hold1p": null,
+     "lens": "awaken:awake_flow"
     }
    }
   },
@@ -328,7 +329,8 @@
      "hold3p": null,
      "end3p": null,
      "begin1p": "fp_p_gravity_well_l5",
-     "hold1p": null
+     "hold1p": null,
+     "lens": "awaken:awake_gravity_well"
     }
    }
   },
@@ -427,7 +429,8 @@
      "hold3p": null,
      "end3p": null,
      "begin1p": "fp_p_nova_l5",
-     "hold1p": null
+     "hold1p": null,
+     "lens": "awaken:awake_nova"
     }
    }
   },
@@ -526,7 +529,8 @@
      "hold3p": null,
      "end3p": null,
      "begin1p": "fp_p_overload_l5",
-     "hold1p": null
+     "hold1p": null,
+     "lens": "awaken:awake_overload"
     }
    }
   },
@@ -691,7 +695,8 @@
      "hold3p": null,
      "end3p": null,
      "begin1p": "fp_p_legion_l5",
-     "hold1p": null
+     "hold1p": null,
+     "lens": "awaken:awake_legion"
     }
    }
   },
@@ -1780,7 +1785,8 @@
      "hold3p": "p_beam_l5_hold",
      "end3p": "p_beam_l5_end",
      "begin1p": "fp_beam_gather",
-     "hold1p": "fp_beam_hold"
+     "hold1p": "fp_beam_hold",
+     "lens": "awaken:awake_beam"
     }
    }
   }

@@ -40,29 +40,35 @@ final class FxRender {
     private static RenderType addMesh, addSprites, litSprites, brightSprites, underlay;
 
     private static final SubmitNodeCollector.CustomGeometryRenderer MESHES = (pose, vc) -> {
+        long t0 = FxStats.begin();
         try {
             drawMeshes(vc);
         } catch (RuntimeException ex) {
             fail(ex);
         }
+        FxStats.end(t0);
     };
     private static final SubmitNodeCollector.CustomGeometryRenderer ADD_SPRITES = (pose, vc) -> safeSprites(vc, FxPool.ADD);
     private static final SubmitNodeCollector.CustomGeometryRenderer LIT_SPRITES = (pose, vc) -> safeSprites(vc, FxPool.LIT);
     private static final SubmitNodeCollector.CustomGeometryRenderer BRIGHT_SPRITES = (pose, vc) -> safeSprites(vc, FxPool.BRIGHT);
     private static final SubmitNodeCollector.CustomGeometryRenderer UNDERLAY = (pose, vc) -> {
+        long t0 = FxStats.begin();
         try {
             drawUnderlay(vc);
         } catch (RuntimeException ex) {
             fail(ex);
         }
+        FxStats.end(t0);
     };
 
     private static void safeSprites(VertexConsumer vc, int bucket) {
+        long t0 = FxStats.begin();
         try {
             drawSprites(vc, bucket);
         } catch (RuntimeException ex) {
             fail(ex);
         }
+        FxStats.end(t0);
     }
 
     private static void fail(RuntimeException ex) {
@@ -81,9 +87,12 @@ final class FxRender {
     private static float whiteU, whiteV;
 
     static void onExtract(ExtractLevelRenderStateEvent e) {
+        FxStats.nextFrame(); // the last frame's FX time is complete (SPEC 34.9: /awaken fx stats, bench)
+        long t0 = FxStats.begin();
         pt = e.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         FxWorld.extract(pt);
         FxAfterimages.extract(pt);
+        FxStats.end(t0);
     }
 
     /** Set if drawing ever throws: effects stop drawing for the session instead of crashing every frame. */
@@ -91,11 +100,13 @@ final class FxRender {
 
     static void onSubmit(SubmitCustomGeometryEvent e) {
         if (broken) return;
+        long t0 = FxStats.begin();
         try {
             submit(e);
         } catch (RuntimeException ex) {
             fail(ex);
         }
+        FxStats.end(t0);
     }
 
     private static void submit(SubmitCustomGeometryEvent e) {

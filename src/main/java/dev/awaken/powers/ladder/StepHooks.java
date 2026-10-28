@@ -119,7 +119,10 @@ public final class StepHooks {
     public static void strideTick(ServerPlayer sp, long now) {
         if (now % 3 != 0) return;
         var o = dev.awaken.powers.Powers.loadout(sp).get(STRIDE);
-        if (o == null || o.level() < 2) return;
+        if (o == null) return;
+        // a second on the wall in a run pays Wall Stride's mastery (SPEC 34.8)
+        if (now % 21 == 0) dev.awaken.powers.Mastery.use(sp, STRIDE, dev.awaken.powers.Mastery.WALL_SECOND);
+        if (o.level() < 2) return;
         Fx.looks(sp, "wall_run", FxKind.TRAIL, sp.position()).ticks(12).dir(sp.getDeltaMovement()).send();
     }
 
