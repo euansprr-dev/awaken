@@ -1,0 +1,44 @@
+# Roads perf, the quit (SPEC §28.9, the packet cap): roads-perf's setup and its first flight north over new land, then
+# a saving quit 30 s into it, while the server is busiest. The quit after the old flight freeze hung forever (the client's
+# IntegratedServer.halt task never ran); with the packet cap the stop runs every task still queued ("[packetcap] ran N
+# tasks still queued ..."). A clean quit: the tour ends with no watchdog dump. The edge hold logs "[edgehold] held ...".
+# Run on GitHub: tools/tour-ci.sh tools/autopilot/roads-perf-quit.txt 1800 PACK=perf,world TECTONIC=awakened
+world autopilot_roads_perf creative 26102610
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+# the opening's sky flight holds the camera and ends on a question a closed screen never answers: skip it first
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+# the Ascent's gift card holds the director while it's up: put it away
+wait 40
+key dismiss
+wait 10
+screen close
+cmd time set 6000
+cmd gamerule advance_time false
+cmd gamemode spectator
+hud off
+# ---- 1. up the road north out of the camp and on: 24 blocks a second, the quit 30 s in (about 700 blocks of new land)
+# (the camp command has the road planners lay the road and stands us on it from the server thread once it's laid;
+# then up over it: the server's "Teleported" line shows where it stood us, near 813 302 in this world)
+cmd awaken village road camp
+wait 300
+cmd tp @s ~ 240 ~ 180 25
+wait 200
+info
+glide 0 0 -1.2 1800
+wait 600
+info
+quit

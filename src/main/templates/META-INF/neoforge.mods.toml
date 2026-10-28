@@ -60,6 +60,12 @@ config="awaken.tiles.mixins.json"
 [[mixins]]
 config="awaken.roadstarts.mixins.json"
 
+# Packet cap (SPEC §28.9): the server's queued packets get a tick's time before each tick, the rest the next tick, so a
+# player outrunning world generation can't hold the tick for minutes; the tasks still queued run as the server stops (the
+# quit's halt). Common mixins under the Turbo contract (dev.awaken.turbo.packetcap.mixin); not required, a server switch.
+[[mixins]]
+config="awaken.packetcap.mixins.json"
+
 [[accessTransformers]]
 file="META-INF/accesstransformer.cfg"
 

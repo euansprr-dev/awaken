@@ -1,0 +1,12 @@
+{
+  "required": false,
+  "package": "dev.awaken.turbo.packetcap.mixin",
+  "mixins": [
+    "MinecraftServerMixin",
+    "PacketProcessorMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  },
+  "minVersion": "0.8"
+}
