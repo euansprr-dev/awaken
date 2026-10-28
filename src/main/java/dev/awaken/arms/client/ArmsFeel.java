@@ -129,6 +129,11 @@ final class ArmsFeel implements CombatFeedback.Sink {
         fov(-0.075F, 22);
     }
 
+    /** The fight's last foe falls: the view breathes out (SPEC §25 "Fight Feel"). */
+    static void lastFoe() {
+        fov(0.025F, 14);
+    }
+
     /** The Art lets go: the frame opens with its wave. */
     static void art() {
         fov(0.06F, 16);

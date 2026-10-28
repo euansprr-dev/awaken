@@ -6,6 +6,7 @@ import dev.awaken.arms.Arms;
 import dev.awaken.arms.ArmsConfig;
 import dev.awaken.arms.ArmsMastery;
 import dev.awaken.arms.ArmsRules;
+import dev.awaken.arms.Blow;
 import dev.awaken.arms.FpSwings;
 import dev.awaken.arms.net.ArmsPayloads;
 import dev.awaken.body.Body;
@@ -553,24 +554,36 @@ public final class ArmsPredict {
             }
             case ArmsPayloads.HIT -> {
                 fightAt = ticks;
-                ArmsAudio.impact(p, r.entity(), style, r.aux2());
-                hitFx(p, r.entity(), style, r.aux2());
+                Blow b = Blow.unpack(r.aux2());
+                boolean killMoment = b.kill() && ArmsComfort.killMoment();
+                int ms = killMoment ? ArmsRules.killHitstop(r.aux()) : r.aux();
+                ArmsAudio.impact(p, r.entity(), style, b.move());
+                hitFx(p, r.entity(), style, b, ms);
                 ArmsStances.struck(r.entity());
-                if (r.aux() > 0) {
-                    CombatFeedback.hitstop(r.entity(), r.aux());
-                    CombatFeedback.hold(r.aux());
-                    Archetype.Move m = Archetype.Move.byId(r.aux2());
+                if (ms > 0) {
+                    CombatFeedback.hitstop(r.entity(), ms);
+                    CombatFeedback.hold(ms);
+                    Archetype.Move m = Archetype.Move.byId(b.move());
                     if (m == move) bite();
                     Archetype.MoveDef def = style == null || m == null ? null : style.move(m);
                     if (m == Archetype.Move.EXECUTION) ArmsFeel.executed();
                     if (def != null) {
                         java.util.List<Float> from = def.swing().from(), to = def.swing().to();
-                        // along the blow's travel on screen (y up there, pitch down here)
+                        // along the blow's travel on screen (y up there, pitch down here); a kill kicks harder, and
+                        // each extra body of a cleave a fifth more
                         float dx = to.get(0) - from.get(0), dy = to.get(1) - from.get(1);
                         float n = Math.max(1e-3F, (float) Math.sqrt(dx * dx + dy * dy));
-                        float s = Math.min(2.4F, r.aux() / 40F);
+                        float s = Math.min(2.4F, r.aux() / 40F) * (killMoment ? KILL_KICK : 1F)
+                                * (1 + CLEAVE_KICK * Mth.clamp(b.cleave() - 1, 0, ArmsRules.CLEAVE_EXTRA_MAX));
                         CombatFeedback.kick(dx / n * s, -dy / n * s, dx / n * s * 0.4F, 6);
                     }
+                }
+                Entity struck = mc.level == null ? null : mc.level.getEntity(r.entity());
+                if (struck != null && b.cleave() >= 2) ArmsAudio.cleave(struck, b.cleave());
+                if (struck != null && killMoment) {
+                    ArmsAudio.kill(struck);
+                    BladeTrail.flare(p.getId());
+                    if (b.last()) ArmsFeel.lastFoe();
                 }
             }
             case ArmsPayloads.DEFLECT -> {
@@ -644,13 +657,18 @@ public final class ArmsPredict {
     /** The world yaw a blow on us last came from, and the tick it landed (the HUD's shard). */
     static int hurtYaw, hurtAt = -1000;
 
-    /** Sparks where our blade landed. */
-    private static void hitFx(Entity by, int targetId, Archetypes.@Nullable Loaded st, int moveId) {
+    /** A kill's view kick, against a hit's; each extra body of a cleave adds this share to it (SPEC §25 "Fight Feel"). */
+    static final float KILL_KICK = 1.3F, CLEAVE_KICK = 0.2F;
+
+    /** Sparks where a blade landed, and the struck body's recoil once its freeze ({@code ms}) lets go. */
+    private static void hitFx(Entity by, int targetId, Archetypes.@Nullable Loaded st, Blow b, int ms) {
         Minecraft mc = Minecraft.getInstance();
         Entity t = mc.level == null ? null : mc.level.getEntity(targetId);
-        Archetype.Move m = Archetype.Move.byId(moveId);
+        Archetype.Move m = Archetype.Move.byId(b.move());
         Archetype.MoveDef def = st == null || m == null ? null : st.move(m);
-        if (t != null && def != null) ArmsFx.hit(t, by, def);
+        if (t == null || def == null) return;
+        ArmsFx.hit(t, by, def, b);
+        ArmsRecoil.struck(t, b, ArmsRules.heft(st.id()), ms);
     }
 
     /** Another fighter near us: their move's arc, their blow's sparks and freeze, a stance breaking. */
@@ -679,8 +697,10 @@ public final class ArmsPredict {
             case ArmsPayloads.HIT -> {
                 Entity by = mc.level.getEntity(s.other());
                 Archetypes.Loaded st = by instanceof net.minecraft.world.entity.LivingEntity l ? Arms.styleOf(l.getMainHandItem()) : null;
-                if (by != null) hitFx(by, s.entity(), st, s.aux2());
-                CombatFeedback.hitstop(s.entity(), s.aux());
+                Blow b = Blow.unpack(s.aux2());
+                int ms = b.kill() && ArmsComfort.killMoment() ? ArmsRules.killHitstop(s.aux()) : s.aux();
+                if (by != null) hitFx(by, s.entity(), st, b, ms);
+                CombatFeedback.hitstop(s.entity(), ms);
             }
             case ArmsPayloads.BREAK -> BROKEN.put(s.entity(), ticks + s.aux());
             case ArmsPayloads.SHOT -> {

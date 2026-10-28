@@ -591,6 +591,37 @@ def heartbeat(seed):
     return R.fade_out(b.render(), 0.08)
 
 
+def kill(seed):
+    """A killing blow (SPEC §25 "Fight Feel"), laid over the impact: the body's whole weight going down (a low drop,
+    the ground answering under it) and the steel ringing out after it, so the kill stands apart from the hits by ear.
+    No edge of its own: the impact it plays over already cut."""
+    r = K.rng(seed)
+    drop = rec(pick(["impactSoft_heavy_000", "impactSoft_heavy_002", "impactSoft_heavy_004"], r))
+    punch = rec(pick(["impactPunch_heavy_001", "impactPunch_heavy_003", "impactPunch_heavy_004"], r))
+    tail = ring(r.uniform(640, 760), 0.75, 1.0, seed + 2, 0.5)
+    layers = [
+        (trim(K.lowpass(shift(drop, r.uniform(0.62, 0.7)), 800, 2), 0.4), 0.0, 1.0),
+        (trim(K.lowpass(shift(punch, r.uniform(0.66, 0.74)), 1600, 2), 0.3), 0.001, 0.6),
+        (sub(0.45, 82, 30, 0.2, drive=2.0), 0.0, 0.9),
+        (tail, 0.03, 0.32),
+    ]
+    return _blow(layers, 1.0, drive=1.8)
+
+
+def cleave(seed):
+    """One more body in the same sweep (SPEC §25 "Fight Feel"): a bright second bite of the edge with a short ring,
+    played a semitone higher for each extra body, so a cleave through three rises."""
+    r = K.rng(seed)
+    slice_ = K.highpass(rec(pick(["knifeSlice", "knifeSlice2"], r)), 2000, 2)
+    punch = rec(pick(["impactPunch_medium_000", "impactPunch_medium_001", "impactPunch_medium_003"], r))
+    layers = [
+        (trim(shift(slice_, r.uniform(1.1, 1.25)), 0.12), 0.0, 0.8),
+        (trim(K.lowpass(shift(punch, r.uniform(1.0, 1.1)), 2600, 2), 0.2), 0.001, 0.7),
+        (ring(r.uniform(900, 1050), 0.35, 0.45, seed + 2, 0.6), 0.004, 0.22),
+    ]
+    return _blow(layers, 0.45, drive=1.5)
+
+
 def _has(name):
     try:
         rec(name)
@@ -635,6 +666,8 @@ EVENTS = OrderedDict([
     ("heartbeat", (heartbeat, 2, -16.0, 8, "Heartbeat pounds", False, 12.0, 0.55)),
     ("hit_blunt", (hit_blunt, 4, -12.0, 22, "Heavy blow crashes home", True, 12.0, 1.0)),
     ("glance", (glance, 4, -13.5, 24, "Shot glances off a blade", True, 13.5, 1.0)),
+    ("kill", (kill, 3, -13.0, 24, "Foe falls", True, 12.5, 0.9)),
+    ("cleave", (cleave, 3, -15.0, 18, "Blade cleaves through", True, 12.5, 0.75)),
 ])
 
 

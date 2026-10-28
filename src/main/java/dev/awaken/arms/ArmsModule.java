@@ -63,6 +63,7 @@ public final class ArmsModule {
         bus.addListener(ArmsServer::onShieldBlock);
         bus.addListener(EventPriority.HIGHEST, ArmsServer::onAttack);
         bus.addListener(ArmsServer::onSweep);
+        bus.addListener(EventPriority.LOW, ArmsServer::onKnockBack);
         bus.addListener(ArmsServer::onSound);
         bus.addListener(ArmsServer::onDamaged);
         bus.addListener(ArmsServer::onFall);
@@ -86,6 +87,7 @@ public final class ArmsModule {
         registerCommands();
         ArmsTests.register();
         SwingTests.register();
+        FightFeelTests.register();
         AimStrikeTests.register();
         ArmsProgressionTests.register();
     }

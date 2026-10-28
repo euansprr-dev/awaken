@@ -6056,6 +6056,54 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   - Tests: `arms_swing_blend` (no jump, no overshoot, the new pose by the end, the lean carried), `arms_swing_reload`
     (a set read whole, swapped in and out, a newer schema refused), `arms_feel_rules` (every swish starts by its hit,
     every bite slows without stopping, the two-handed weapons and only they hold with both hands).
+- **Fight Feel** (plan docs/fight-feel/plan.html; Euan 2026-10-28: "Go ahead with the fight feel plan", all eight
+  recommendations yes: walls stop blows, wall hits are feel only, sweeps cut wild grass, counters at x1.5 posture,
+  knockback follows the swing, the strike step on by default, overworld fight music after its listening page, built in
+  four stages, each merged after its tests and Euan's play). Every blow gets an answer that matches what the blade did.
+  - *The blow* (`arms.Blow`): one description of each landed hit, built in `ArmsServer.hit` and packed into HIT's aux2
+    (29 bits; arms_result and arms_seen are unchanged): the move, KILL, LAST (no other creature within 16 blocks has
+    the striker as its target), STRONG (a finisher, a perfect heavy, an Execution: weight x1.3), the bodies this move
+    has struck (the cleave), the lift (-1 pins: chop, slam, over; +1 lifts: upper, rise; read from the swing's `form`,
+    now in `Archetype.Swing`), the push's world yaw (a byte) and the cut's sideways share on screen (-7..7).
+  - *Stage 1, the blow lands* (built 2026-10-28):
+    - Knockback follows the swing (`ArmsRules.push`, `LivingKnockBackEvent` while the hit resolves): away from the
+      striker along the line to the body, turned along the cut by 45% of its sideways share (a full side cut 55% away,
+      45% along the blade's travel, never toward you; a left-handed striker's screen is mirrored). A thrust (stab, jab,
+      bash, any thrust swish) pushes straight away x1.15; a pinning blow x0.7 and its rise taken away; a lifting one
+      +0.18 blocks a tick (less by knockback resistance). Vanilla's strength, enchantments and resistance otherwise
+      stand. A Lord's body (150 health and up) keeps vanilla's push, as a player's lift does (vanilla sends and puts
+      back a struck player's motion). A kill is thrown x1.6. Switch: `directionalKnockback` (awaken-arms.toml; off:
+      vanilla's push).
+    - The recoil (`ArmsRecoil`, every client): once the freeze ends the body springs (omega 18, zeta 0.45: out to the
+      shove in 70 ms, back past rest by a fifth, settled by 0.4 s; `ArmsRules.recoil`): shoved along the blow by
+      0.04/0.06/0.09 blocks (snap/blade/heavy, `ArmsRules.heft` as the swings weigh them; x1.3 strong; half under
+      reduced motion), up for a lift and down for a pin by half that, turned 6-12 degrees with the cut and tipped 4-8
+      degrees away (by weight), all scaled by size (1.5 / (width x height + 0.3), from a quarter to double: about 1 for
+      a zombie). The shove and the turn ride the render state; the tip and the fall a pose pushed in
+      `RenderLivingEvent.Pre` at the lowest priority and popped in Post (a body another listener draws itself cancels
+      Pre and is left to its own clip). Skipped for our own creatures (they play their clips from `CombatFeedback.blow`,
+      now fed the server's direction), Lords and the camera's own body. 32 slots, no allocation, nothing at all once
+      the last recoil is over.
+    - A body a blow killed falls the way the blade went: vanilla's flip zeroed and our own fall about the flat axis
+      across the blow, on vanilla's timing (the square root over 20 ticks), so it still sinks and puffs out as before.
+      Switch (both): `recoil` (awaken-arms-client.toml).
+    - The kill moment, for the one who struck (switch `killMoment`): the freeze 40 ms longer to at most 160 and never
+      shorter (`ArmsRules.killHitstop`, added by the viewer so the switch is theirs; a freeze the 4-tick gap skipped
+      stays skipped), the view's kick x1.3, `arms.kill` over the impact (a low body drop under a steel ring, pitched by
+      what falls: stone and slime low, bone, armour and a spirit higher), the ribbon flares toward white for 160 ms,
+      and the last foe lets the view breathe out (field of view +2.5% over 14 ticks). Observers see the same freeze
+      and fall.
+    - The cleave: the one freeze of a sweep grows by 12 ms for each extra body it strikes on that tick (up to 3), the
+      kick by a fifth per extra body (up to x1.6), and each extra body plays `arms.cleave` a semitone higher. Feel only:
+      no extra damage or Resonance.
+    - Sounds: `arms.kill` (3 variants, -13 dBFS) and `arms.cleave` (3, -15) in audio_arms.py, Kenney CC0 layers and
+      the kit.
+    - Tests: `arms_knock_dir` (a right-to-left cut throws a zombie left, 30% sideways at least; a thrust straight back;
+      a chop lifts it under 0.05; the rise lifts it; a Lord is pushed as vanilla pushes it; the blow packs whole),
+      `arms_kill` (a hit that doesn't kill is neither KILL nor LAST; a sweep through three hunting wolves sends KILL
+      and CLEAVE 1, 2, 3 with the freeze growing 12 ms a body, LAST only on the third), `arms_recoil_spring` (peak 1,
+      back-swing under 30%, settled by 0.4 s). The frame cost (budget 0.05 ms with 20 struck bodies) is not measured
+      yet: builders run no tours.
 - **Third person** (Player Animation Library, optional, through `core.api.PlayerClips`; `ArmsClips`, `ArmsBodies`):
   a full-body clip per move from tools/art/specs/arms_moves.py, its keys on the timing table's rows (cocked at the
   wind-up's end, through at the active ticks' end, home by the endTick), each with a bent twin; the guard held while
