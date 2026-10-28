@@ -6056,6 +6056,46 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       together.
     - Strike 5's off-hand slash carries 14 degrees with a 0.1 drop and comes straight home on the screen. It used to
       dive to three screens below the view.
+  - *Round 7, full cuts* (Euan 2026-10-28: "a lot of the hits don't feel like they are going the full way from left to
+    right, up to down, diagonal... they feel like half hits... the hit only happens in the right side when it's
+    supposed to slice"; and "the right hand literally stabs the left one... on the 2nd click"):
+    - The cut's path: the blade's middle runs through the target about the eye, in the plane through the eye, the
+      target and the cut's way on the screen, so the eye sees it cross the screen in a line (a cut's `eye`: 1 for
+      slashes, swings, whirls and lashes, 0.5 for chops, slams and rises, half on the shoulder's own circle, which
+      otherwise brought a rising strike's low set back to the eye). About the shoulder alone (0.3 m in front of the eye,
+      under it) the carry curled toward the eye and dropped under the view 30 degrees past the hit. The way of travel at
+      the target is solved so the screen sees it along the row's direction (`_screen_way`); taken as that direction
+      less its part along the lever, the longsword's opening diagonal, 31 degrees below level, ran 65 below it. The
+      blade's line is half out from the shoulder to its middle, half the lever's own steady turn (out from the shoulder
+      alone it whipped round where the middle passed near it), the hand on that line behind the middle.
+    - The arc is drawn to cross the screen (`_full_arc`): its set has the blade's middle 0.7 of the way to the screen's
+      edge on the side the cut comes from, its carry 0.75 of the way on the far side, each as far as the middle stays
+      inside 0.9 of the frame; the last strike of a chain carries 12 degrees further, out of the frame (not where the
+      other hand waits: the daggers' strike 5). It never draws less than the style does, but a level or slanting cut
+      keeps its set in view (an overhead may rise out of the frame and come down into it). A leading strike's end in
+      view gives up its drop first, then its carry (the other way round, a carry dropping out of the bottom was stopped
+      at 40% of its way); its tip may run off the far edge.
+    - A load that can't fit gives it up to 20% of its drive's time first (never under half a tick: the blow only lands
+      harder), then draws back less, down to 75% of its draw (was 45%, with the drive shortened to match).
+    - The way home dips out of the frame three quarters of the way from the blow's end to rest, 1.25 times as far down
+      (under rest, a cut carried across swept back along the screen's bottom edge, two screens a tick).
+    - A twirl that follows a blow turns about where the blow left the weapon's middle (sideways, never more than 0.05
+      lower), carried to its own place by the hit; when its best start in -130 to 20 degrees is the -130 edge, it looks
+      on round to -200 (the twin blades' fourth: 0.96 of the screen in its first frame -> 0.14).
+    - The daggers: strike 3 is a forehand from the main hand's own side (row `dir` -1, -0.15, as the server's side
+      share already ran: its backhand set sat over the left hand, and the right hand drew to it through the left hand's
+      stab); strike 4's two blades each aim 0.2 m out on their own side (thrust `spread`) and drive in side by side; a
+      strike before a both-hands one is drawn back to that strike's set as it waits; the idle hand gives way on every
+      one-handed strike of an idle-hand style (strike 5 too, with an `idle` track of its own) to 0.14 out, 0.42 down
+      and 0.16 back (was 0.10, 0.30, 0.12). The two blades' closest approach: 0.00 -> 0.11.
+    - Measured against the Fight Feel review's bake (mashing, the blade's middle from 1.25 ticks before the hit to 3
+      after): the share of the screen a chained strike crosses 0.53 -> 0.67 on average (the cuts alone 0.72 to 0.94);
+      strikes under 0.7: 44 -> 16, most of the rest punches, spins, the bash and the scythe's own path. Chain strikes
+      out of view 3 -> 1, their drive out of view 5 -> 1, jumps over 0.3 13 -> 14 (in time 15 -> 18, most 0.30 to
+      0.37), wind-ups turning back 3 -> 5. Moves whose hit is not their fastest moment 9 -> 0; drift on the way home
+      25 -> 43 (the blades come home from further). Left: the scythe's reap and whirl (its own path, a fifth of the
+      screen), the shield-blade bash's wind-up from the slash's far end (0.70 in a frame), the war-staff's twirl carry
+      (0.58).
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
