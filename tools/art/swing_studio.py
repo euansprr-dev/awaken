@@ -1036,6 +1036,62 @@ def off_gap(sid):
     return feel(sid).get("offHand", TWO_HANDED.get(sid))
 
 
+def set_of(st, mv, held):
+    """When a strike's drive begins (ticks): the last moment before the hit the blade's middle is near still, its set
+    (0 for a quick stab that drives from its start). A press still down waits there, never at the hit: a held press
+    that waited at the hit looked like a blow already struck before the charge took it (Euan 2026-10-29: "it attacks on
+    the click when you are still loading")."""
+    m = st["moves"][mv]
+    hit = L.hit_tick(m)
+    ts = np.arange(0.0, hit - 0.1 + 1e-6, 0.05)
+    if len(ts) < 3:
+        return 0.0
+    H0 = np.array([L.HX, L.HY, L.HZ])
+    P = [H0 + d + R @ (held.grip + (held.tip - held.grip) * L.MID) for d, R in (L.rig_pose(st, m, held, float(t)) for t in ts)]
+    v = np.linalg.norm(np.diff(P, axis=0), axis=1) / 0.05
+    still = max(0.12, 1.5 * float(v.min()))
+    lows = [i for i in range(len(v)) if v[i] <= still and (i == 0 or v[i] <= v[i - 1]) and (i == len(v) - 1 or v[i] <= v[i + 1])]
+    return round(float(ts[lows[-1]]), 2) if lows else 0.0
+
+
+# The guard (Euan 2026-10-29: "blocking with most weapons hides the weapon under your view"): vanilla 1.8's block turn
+# on the item's hand transform tipped every forged weapon's tip under the frame (14 of 16 styles' tips below it). Laid
+# across the body instead: the grip low on the right (ndc), the blade rising to the left at `angle` on the screen, its
+# tip leant `lean` away from the eye, its cutting side up and turned `tilt` out toward what comes, the flat still to the
+# eye. The grip sits `depth` ahead of the eye. Per style: GUARD_OF, then feel's "guard".
+GUARD = {"grip": [0.5, -0.76], "depth": 0.62, "angle": 46.0, "lean": 30.0, "tilt": 40.0}
+GUARD_OF = {"gauntlets": {"grip": [0.36, -0.5], "angle": 72.0, "lean": 20.0},
+            # a pair: each blade up on its own side (crossed, the two tips met in the middle of the view)
+            "daggers": {"grip": [0.44, -0.7], "angle": 66.0, "lean": 24.0}}
+
+
+def guard_knobs(sid):
+    kn = dict(GUARD)
+    kn.update(GUARD_OF.get(sid, {}))
+    kn.update(feel(sid).get("guard", {}))
+    return kn
+
+
+def guard_pose(sid, held, F, side):
+    """(d, R): the weapon held up in guard (hand space, as a swing's pose)."""
+    kn = guard_knobs(sid)
+    z = -kn["depth"]
+    G = np.array([kn["grip"][0] * ASP / F_ * -z, kn["grip"][1] / F_ * -z, z])
+    ray = G / np.linalg.norm(G)
+    ang = math.radians(kn["angle"])
+    # along the screen at the angle (at the grip's depth the screen's x runs ASP times its y), leant along the eye's
+    # ray through the grip: a lean along that ray moves nothing on the screen, so the angle stays as written
+    v = np.array([-math.cos(ang) * ASP, math.sin(ang), 0.0])
+    v /= np.linalg.norm(v)
+    a = v + ray * math.tan(math.radians(kn["lean"]))
+    a /= np.linalg.norm(a)
+    up = np.array([math.sin(ang) * ASP, math.cos(ang), 0.0])
+    up /= np.linalg.norm(up)
+    tl = math.radians(kn["tilt"])
+    R = L.frame_to(a, up * math.cos(tl) + ray * math.sin(tl), side, F)
+    return G - np.array([L.HX, L.HY, L.HZ]) - R @ held.grip, R
+
+
 # ---- the report -------------------------------------------------------------------------------------------------------
 
 F_ = 1 / math.tan(math.radians(35))

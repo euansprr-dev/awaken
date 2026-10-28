@@ -221,7 +221,7 @@ final class ArmsServer {
             return;
         }
         begin(p, s, style, Archetype.Move.HEAVY, -1, 0, now, seq);
-        s.perfectHeavy = heavy.charge().isPresent() && heavy.charge().get().perfect(held);
+        s.perfectHeavy = heavy.charge().isPresent() && heavy.charge().get().perfect(held + GLINT_GRACE);
     }
 
     /**
@@ -250,6 +250,12 @@ final class ArmsServer {
      * tap or charge well before: the charge at its heavy's min, ArmsPredict): no word from it never holds a blow back.
      */
     static final int HOLD_WAIT = 4;
+
+    /**
+     * Ticks the server's count of a charge may run behind the fighter's and still be full: its start is the charge's
+     * press heard, a tick or so after the fighter's, so a release on the ting the fighter heard is never short here.
+     */
+    static final int GLINT_GRACE = 1;
 
     static void begin(ServerPlayer p, ArmsState s, Archetypes.Loaded style, Archetype.Move move, int step, int cadence, long now, int seq) {
         Archetype.MoveDef def = style.move(move);
