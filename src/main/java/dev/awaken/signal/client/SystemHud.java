@@ -40,7 +40,9 @@ public final class SystemHud {
     static final int OPEN_TICKS = 4, CLOSE_TICKS = 6, STORY_FADE = 10;
     private static final int MAX_STORIES = 8, MAX_PANELS = 2;
 
-    record ToastItem(String title, String detail, int colour) {}
+    record ToastItem(String title, String detail, int colour, boolean journal) {
+        ToastItem(String title, String detail, int colour) { this(title, detail, colour, false); }
+    }
 
     private static final class Story {
         final SignalWindow w;
@@ -134,6 +136,16 @@ public final class SystemHud {
         }
         else Herald.offer(text, tier, topic, colour);
         if (response) Herald.took();
+    }
+
+    /** Already saved by the server: a small explanation, never an automatic panel or dialogue. */
+    static void event(dev.awaken.core.api.NoticeEvents.Event event) {
+        BURST.offer(ticks, new ToastItem(event.title(), event.summary(), event.colour(), true));
+    }
+
+    static void tickSavedEvents() {
+        ticks++;
+        tickToasts(Minecraft.getInstance());
     }
 
     /** An info panel the director let through. */
@@ -320,7 +332,12 @@ public final class SystemHud {
     private static void addToast(Minecraft mc, ToastBurst.Out<ToastItem> out) {
         String title, detail;
         int colour;
-        if (out.merged()) {
+        ToastItem explanation = out.items().stream().filter(ToastItem::journal).findFirst().orElse(null);
+        if (out.merged() && explanation != null) {
+            title = explanation.title();
+            detail = explanation.detail();
+            colour = explanation.colour();
+        } else if (out.merged()) {
             title = out.items().size() + " new things · " + key(AwakenKeys.STATUS);
             List<String> names = new ArrayList<>();
             for (ToastItem t : out.items()) names.add(t.title());
@@ -335,7 +352,10 @@ public final class SystemHud {
         double mult = mc.options.notificationDisplayTime().get();
         long[] live = {ticks + Math.round(SignalToast.BASE_MS * mult / 50.0) + 40};
         LIVE_TOASTS.add(live);
-        mc.gui.toastManager().addToast(new SignalToast(title, detail, colour, () -> live[0] = 0));
+        boolean saved = explanation != null;
+        String hint = saved ? (AwakenKeys.STATUS.isUnbound() ? "Details in Journal · bind Status in Controls" : "Details in Journal · " + key(AwakenKeys.STATUS)) : "";
+        if (saved && out.merged()) hint = "+" + (out.items().size() - 1) + " more · " + hint;
+        mc.gui.toastManager().addToast(new SignalToast(title, detail, colour, hint, () -> live[0] = 0));
     }
 
     private static void tickPanel() {

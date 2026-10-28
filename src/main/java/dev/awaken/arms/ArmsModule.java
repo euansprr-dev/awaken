@@ -85,6 +85,7 @@ public final class ArmsModule {
         bus.addListener(ArmsServer::onUseStop);
         registerCommands();
         ArmsTests.register();
+        ArmsNoticeTests.register();
         ArmsProgressionTests.register();
     }
 

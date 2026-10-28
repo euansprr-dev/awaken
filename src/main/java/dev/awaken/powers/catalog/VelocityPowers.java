@@ -5,6 +5,7 @@ import dev.awaken.powers.fx.FxKind;
 
 import dev.awaken.core.Forces;
 import dev.awaken.powers.Cast;
+import dev.awaken.powers.PowerNumbers;
 import dev.awaken.powers.Casting;
 import dev.awaken.powers.Combat;
 import dev.awaken.powers.Fx;
@@ -100,16 +101,16 @@ final class VelocityPowers {
     static Vec3 dashMotion(Player p, int variant, int level, float strafe, float forward) {
         if (variant == 1) return null;
         // air has less drag than ground, so an air dash is a little gentler to travel about as far
-        double speed = (variant == 2 ? 1.45 : 1.9) * (1 + 0.04 * (level - 1)) * (p.onGround() ? 1.0 : 0.8);
+        double speed = PowerNumbers.dashSpeed(variant, level, p.onGround());
         Vec3 way = Moves.steer(p.getLookAngle(), strafe, forward);
         Vec3 f = Moves.flat(way);
-        double y = p.onGround() ? 0.12 : Math.max(0.28, way.y * speed * 0.5);
-        return new Vec3(f.x * speed, Math.min(0.9, y), f.z * speed);
+        double y = PowerNumbers.dashLift(variant, level, p.onGround(), way.y);
+        return new Vec3(f.x * speed, y, f.z * speed);
     }
 
     static Result dash(Cast c) {
         if (c.is(1)) {
-            Vec3 to = Moves.blinkTarget(c.player, c.steered(), 6 + c.powerLevel * 0.5);
+            Vec3 to = Moves.blinkTarget(c.player, c.steered(), PowerNumbers.blinkRange(c.powerLevel));
             Vec3 from = c.pos();
             if (to.distanceToSqr(from) < 1) return Result.fail("blocked");
             Moves.teleport(c.player, to);
@@ -168,7 +169,7 @@ final class VelocityPowers {
     }
 
     static Result afterimage(Cast c) {
-        int ticks = c.ticks(80);
+        int ticks = PowerNumbers.effectTicks(c);
         float pop = c.is(2) ? 0 : c.dmg();
         List<Vec3> spots = new ArrayList<>();
         spots.add(c.pos());
@@ -219,7 +220,7 @@ final class VelocityPowers {
             for (LivingEntity o : Combat.foesAround(c.player, origin, 8)) {
                 if (forks >= 3 || o == last) continue;
                 Fx.at(c, FxKind.LIGHTNING, origin).to(o.position().add(0, 1, 0)).ticks(6).noAnim().send();
-                c.hurt(o, dmg * 0.6f, Forces.Force.CHARGE);
+                c.hurt(o, PowerNumbers.secondary(dmg, PowerNumbers.Hit.LIGHTNING_FORK), Forces.Force.CHARGE);
                 forks++;
             }
         }

@@ -9,6 +9,7 @@ import dev.awaken.Awaken;
 import dev.awaken.core.AwakenNet;
 import dev.awaken.core.Forces;
 import dev.awaken.powers.Cast;
+import dev.awaken.powers.PowerNumbers;
 import dev.awaken.powers.Casting;
 import dev.awaken.powers.Combat;
 import dev.awaken.powers.Constructs;
@@ -200,7 +201,7 @@ public final class SpiritPowers {
         Fx.at(c, FxKind.IMPACT, at).dir(c.look()).scale(1.6).noAnim().send();
         c.sound(at, PowerSounds.SPIRIT, 1.2f, 1f);
         c.feel(t, 60, 2.5f);
-        float echo = c.dmg() * (c.is(1) ? 1.0f : 0.5f);
+        float echo = PowerNumbers.hit(c, PowerNumbers.Hit.PALM_ECHO);
         Scheduler.after(20, () -> {
             if (!t.isAlive() || c.player.isRemoved()) return;
             Combat.hurtFrom(c.player, null, t, echo, Forces.Force.SPIRIT, true);
@@ -212,9 +213,7 @@ public final class SpiritPowers {
     }
 
     static Result mend(Cast c) {
-        int spi = Progression.stat(c.player, Stat.SPI);
-        float missing = c.player.getMaxHealth() - c.player.getHealth();
-        float total = (float) ((4 + 0.2 * spi + 0.2 * missing) * c.v.dmg() * (1 + 0.12 * (c.powerLevel - 1)));
+        float total = PowerNumbers.mend(c);
         cleanse(c.player);
         c.sound(PowerSounds.HEAL, 1f, 1.1f);
         List<Player> allies = new ArrayList<>();
@@ -255,7 +254,7 @@ public final class SpiritPowers {
     }
 
     static Result thirdEye(Cast c) {
-        int ticks = c.ticks(160);
+        int ticks = PowerNumbers.effectTicks(c);
         double range = c.is(1) ? 64 : 32;
         Moves.postOn(c.player, Moves.FX_THIRD_EYE);
         c.sound(PowerSounds.EYE, 1f, 1f);
@@ -308,7 +307,7 @@ public final class SpiritPowers {
     static Result bulwark(Cast c) {
         Vec3 centre = c.pos();
         double radius = c.radius(6);
-        int ticks = c.ticks(160);
+        int ticks = PowerNumbers.effectTicks(c);
         c.sound(PowerSounds.WARD, 1.3f, 0.8f);
         // a dome of will rises from a lotus circle
         Fx.at(c, FxKind.DOME, centre).scale(radius).aux(1).ticks(ticks).flag(FxEvent.REACH).send();
@@ -335,7 +334,6 @@ public final class SpiritPowers {
 
     static Result hundredPalms(Cast c) {
         boolean bare = c.player.getMainHandItem().isEmpty();
-        float mul = bare ? 1.3f : 1f;
         LivingEntity focus = c.is(2) ? Combat.aimEntity(c, 5, 0.8) : null;
         if (c.is(2) && focus == null) return Result.fail("no_target");
         double range = c.is(1) ? 6 : 4.5;
@@ -351,7 +349,7 @@ public final class SpiritPowers {
                     : Combat.foesInCone(c.player, c.pos(), c.player.getLookAngle(), range, half);
             int shown = 0;
             for (LivingEntity e : targets) {
-                float dmg = c.dmg() * mul * (last ? 3f : 1f);
+                float dmg = PowerNumbers.palmFlurry(c, bare, last);
                 Combat.hurtFrom(c.player, null, e, dmg, Forces.Force.SPIRIT, true);
                 Vec3 at = e.getBoundingBox().getCenter();
                 if (last) {
@@ -379,7 +377,7 @@ public final class SpiritPowers {
         Vec3 centre = FlightPowers.aimSpot(c, 20);
         double radius = c.radius(7);
         float executeAt = c.is(2) ? 0.25f : 0.15f;
-        int ticks = c.ticks(80);
+        int ticks = PowerNumbers.effectTicks(c);
         boolean dark = c.player.position().distanceToSqr(centre) < 20 * 20;
         if (dark) Moves.postOn(c.player, Moves.FX_VOID);
         c.sound(centre, PowerSounds.VOID, 1.5f, 0.6f);
@@ -474,7 +472,7 @@ public final class SpiritPowers {
             if (n >= max) break;
             int delay = n * 3;
             float mul = c.level.isRainingAt(e.blockPosition()) ? 1.5f : 1f;
-            float dmg = c.dmg() * mul;
+            float dmg = PowerNumbers.stormStrike(c, mul > 1);
             boolean firstStrike = n == 0;
             Scheduler.after(1 + delay, () -> {
                 if (!e.isAlive() || c.player.isRemoved()) return;
@@ -571,7 +569,7 @@ public final class SpiritPowers {
     }
 
     static Result twinStrike(Cast c) {
-        int ticks = c.ticks(160);
+        int ticks = PowerNumbers.effectTicks(c);
         PowerState.of(c.player).buff(PowerState.Buffs.TWIN, c.now() + ticks, 0.6);
         c.sound(PowerSounds.SPIRIT, 1f, 0.6f);
         // the twin soul: blue echoes of you trailing half a step behind

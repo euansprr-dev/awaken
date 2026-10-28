@@ -10,6 +10,7 @@ import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.MobRole;
 import dev.awaken.powers.Allies;
 import dev.awaken.powers.Cast;
+import dev.awaken.powers.PowerNumbers;
 import dev.awaken.powers.Casting;
 import dev.awaken.powers.Combat;
 import dev.awaken.powers.Fx;
@@ -120,8 +121,7 @@ public final class MindPowers {
                 if (e instanceof Mob m && m != target && !Combat.isBoss(m) && !isElite(m)) minds.add(m);
             }
         }
-        int per = Progression.stat(c.player, Stat.PER);
-        int base = c.ticks(160) + per * 2;
+        int base = PowerNumbers.effectTicks(c);
         // rings of will travel from your head into theirs
         Fx.at(c, FxKind.PSI, c.player.getEyePosition()).to(target.getEyePosition()).ticks(12).send();
         long now = c.now();
@@ -185,7 +185,7 @@ public final class MindPowers {
     }
 
     static Result readIntent(Cast c) {
-        int ticks = c.ticks(200);
+        int ticks = PowerNumbers.effectTicks(c);
         double range = c.is(2) ? 48 : 24;
         PowerState.of(c.player).buff(PowerState.Buffs.READ_INTENT, c.now() + ticks, 0.15);
         c.sound(PowerSounds.MIND, 1f, 1.2f);
@@ -214,7 +214,7 @@ public final class MindPowers {
         var pos = net.minecraft.core.BlockPos.containing(at);
         for (int i = 0; i < 6 && c.level.getBlockState(pos.below()).getCollisionShape(c.level, pos.below()).isEmpty(); i++) pos = pos.below();
         Vec3 spot = new Vec3(at.x, pos.getY(), at.z);
-        var body = Moves.decoy(c, spot, c.ticks(120), c.dmg(), c.is(2) ? 4.5 : 3.0, c.is(1) ? 24 : 16, "decoy");
+        var body = Moves.decoy(c, spot, PowerNumbers.effectTicks(c), c.dmg(), c.is(2) ? 4.5 : 3.0, c.is(1) ? 24 : 16, "decoy");
         if (body == null) return Result.fail("blocked");
         // the image is thrown: a ripple leaves the hand and the copy shimmers into being
         Fx.at(c, FxKind.PSI, c.player.getEyePosition()).to(spot.add(0, 1.4, 0)).ticks(8).send();
@@ -224,7 +224,7 @@ public final class MindPowers {
     }
 
     static Result foresight(Cast c) {
-        int ticks = c.ticks(60);
+        int ticks = PowerNumbers.effectTicks(c);
         PowerState st = PowerState.of(c.player);
         st.buff(PowerState.Buffs.FORESIGHT, c.now() + ticks, 1);
         TimeSlow.Zone zone = TimeSlow.add(c.player, 20, 10);

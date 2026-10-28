@@ -13,6 +13,7 @@ public final class RewardHooks {
 
     /** Set by the powers module: learn a power by id. */
     public static BiConsumer<ServerPlayer, String> powerLearner = (p, id) -> {};
+    public static java.util.function.Function<String, String> powerName = id -> id;
 
     public static void learnPower(ServerPlayer player, String power) {
         powerLearner.accept(player, power);
@@ -33,6 +34,12 @@ public final class RewardHooks {
                 player.getInventory().placeItemBackInInventory(stack, net.minecraft.util.Prediction.SERVER_ONLY);
             });
         });
+        var details = RewardWords.grants(r);
+        if (!details.isEmpty()) {
+            long occurrence = p.counters.merge("awaken:notice_rewards", 1L, Long::sum);
+            dev.awaken.core.api.NoticeEvents.remember(player, new dev.awaken.core.api.NoticeEvents.Event("reward/" + occurrence,
+                    "Reward received", "Earned rewards", details.getFirst(), details, dev.awaken.core.api.NoticeEvents.Kind.REWARD, 0xE2B450));
+        }
         Progression.markDirty(player);
     }
 }

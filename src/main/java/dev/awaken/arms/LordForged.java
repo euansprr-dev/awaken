@@ -185,8 +185,15 @@ public final class LordForged {
         Fx.at(level, FxKind.NOVA, look, p.position().add(0, 1.2, 0)).caster(p).scale(2.0).send();
         level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 0.6F, 1.3F);
         level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.8F, 0.7F);
-        Signal.toast(p, Component.literal("LORD-FORGED · ").withStyle(Style.EMPTY.withColor(0xF0B040))
-                .append(stack.getHoverName().copy().withStyle(Style.EMPTY.withColor(forged.art().look().colour))));
+        var art = forged.art();
+        var details = new java.util.ArrayList<String>();
+        details.add("Signature Art: " + art.name() + ". Build Resonance with this weapon, then hold the heavy attack through its charge to release the Art.");
+        details.add("It hits foes within " + art.radius() + " blocks for " + art.power() + " times your attack damage. Against creatures with at least 150 maximum health, each hit is capped at " + Math.round(LORD_CAP * 100) + "% of their maximum health.");
+        if (art.effect() != null) details.add(art.effect().value().getDisplayName().getString() + " level " + (art.amplifier() + 1) + " for " + art.effectTicks() / 20.0 + " seconds.");
+        if (art.ignite()) details.add("Targets burn for 4 seconds.");
+        if (art.pull() != 0) details.add(art.pull() > 0 ? "Pulls ordinary foes toward you; large Lords resist the movement." : "Throws ordinary foes away; large Lords resist the movement.");
+        ArmsNotices.reward(p, "weapon/lord/" + java.util.UUID.randomUUID(), "Lord-forged weapon", stack,
+                "This weapon carries " + art.name() + ", the defeated Lord's signature Art.", details);
         if (p.getMainHandItem().isEmpty()) p.setItemInHand(InteractionHand.MAIN_HAND, stack);
         else if (!p.getInventory().add(stack)) p.drop(stack, false, Prediction.SERVER_ONLY);
         // a new weapon is a new capability: the Director's rhythm hears it (progression plan item 10)

@@ -98,20 +98,20 @@ public final class Powers {
             int slot = autoSlot(l, type);
             Progression.markNewThing(player, "power " + type.name);
             DirectorLog.log(player, "powers", "learned " + id + " variant " + type.variant(v).name() + (slot >= 0 ? " on slot " + slot : ""));
-            if (announce) announce(player, type, v, 1, "New power", slot);
+            if (announce) PowerNotices.learned(player, type, v, slot);
             markDirty(player);
             return LearnResult.LEARNED;
         }
         if (swapVariant && o.variant() != v) {
             l.owned.put(id, new Loadout.Owned(id, v, o.level()));
-            announce(player, type, v, o.level(), "Variant changed", l.slotOf(id));
+            if (announce) PowerNotices.swapped(player, type, v, o.level());
             markDirty(player);
             return LearnResult.SWAPPED_VARIANT;
         }
         if (o.level() >= Loadout.MAX_LEVEL) {
             if (o.variant() != v) {
                 l.owned.put(id, new Loadout.Owned(id, v, o.level()));
-                announce(player, type, v, o.level(), "Variant changed", l.slotOf(id));
+                if (announce) PowerNotices.swapped(player, type, v, o.level());
                 markDirty(player);
                 return LearnResult.SWAPPED_VARIANT;
             }
@@ -119,7 +119,7 @@ public final class Powers {
         }
         l.owned.put(id, new Loadout.Owned(id, o.variant(), o.level() + 1));
         Mastery.coreLevelled(l, id, o.level(), o.level() + 1);
-        announce(player, type, o.variant(), o.level() + 1, "Power levelled up", l.slotOf(id));
+        if (announce) PowerNotices.upgraded(player, type, o.variant(), o.level(), o.level() + 1, false);
         markDirty(player);
         return LearnResult.LEVELLED;
     }
@@ -136,19 +136,6 @@ public final class Powers {
         player.level().sendParticles(Fx.dust(type.family.colour, 1.6f), player.getX(), player.getY() + 1, player.getZ(), 30, 0.5, 0.8, 0.5, 0.1);
         player.level().sendParticles(ParticleTypes.END_ROD, player.getX(), player.getY() + 1, player.getZ(), 16, 0.3, 0.6, 0.3, 0.12);
         return true;
-    }
-
-    private static void announce(ServerPlayer player, PowerType type, int variant, int level, String title, int slot) {
-        PowerType.Variant v = type.variant(variant);
-        var b = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(title))
-                .row(Component.literal("Power"), Component.literal(type.name).withColor(type.family.colour))
-                .row(Component.literal("Family"), Component.literal(type.family.label));
-        if (variant != 0) b.row(Component.literal("Variant"), Component.literal(v.name()));
-        if (level > 1) b.row(Component.literal("Level"), Component.literal(String.valueOf(level)));
-        b.row(Component.literal("Key"), Component.literal(slot >= 0 ? Casting.slotLabel(slot) : type.isPassive() ? "Always on" : "Not equipped"));
-        b.body(Component.literal(type.description));
-        b.footer(Component.literal(slot >= 0 || type.isPassive() ? "Status · K to rearrange" : "Equip it from Status · K").withStyle(ChatFormatting.GRAY));
-        Signal.send(player, b.ttl(20 * 8).build());
     }
 
     /** Puts a new power on the first free key it fits. Returns the slot or -1. */

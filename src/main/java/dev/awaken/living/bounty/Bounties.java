@@ -3,6 +3,7 @@ package dev.awaken.living.bounty;
 import dev.awaken.Awaken;
 import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.CoreApi;
+import dev.awaken.core.api.NoticeEvents;
 import dev.awaken.living.LivingContent;
 import dev.awaken.living.quest.QuestEngine;
 import dev.awaken.progression.Progression;
@@ -143,7 +144,7 @@ public final class Bounties {
         if (accepted) {
             s.taken.add(new BountyState.Taken(id, 0));
             BountyDef d = defs.get(id);
-            if (d != null) Signal.toast(p, Component.literal("Bounty taken · " + d.title()));
+            if (d != null) notice(p, "taken/" + id + "/" + s.done, d, "Bounty taken", task(d) + ". " + reward(d), NoticeEvents.Kind.TASK);
         } else {
             s.offered.add(id);
         }
@@ -173,7 +174,18 @@ public final class Bounties {
         s.done++;
         Progression.count(p, "awaken:bounties_done");
         QuestEngine.sayLine(p, "Hale: " + (s.done == 1 ? "First one. Not bad. The board likes you now." : "Good. Here."));
-        Signal.toast(p, Component.literal("Bounty done · " + d.title()));
+        notice(p, "paid/" + t.id() + "/" + s.done, d, "Bounty completed", "Hale paid your reward. " + reward(d), NoticeEvents.Kind.REWARD);
+    }
+
+    private static void notice(ServerPlayer p, String id, BountyDef d, String category, String summary, NoticeEvents.Kind kind) {
+        List<String> details = new ArrayList<>();
+        if (!d.text().isBlank()) details.add(d.text());
+        details.add(task(d) + ". " + reward(d));
+        if (d.objective().type().equals("collect")) details.add(d.keep()
+                ? "Hale checks the required items and lets you keep them."
+                : "Turning this in consumes the required items from your inventory.");
+        details.add("The reward is paid only when you turn the bounty in at Hale. Each completion pays once.");
+        NoticeEvents.tell(p, new NoticeEvents.Event("bounty/" + id, category, d.title(), summary, details, kind, 0x7FC3FF));
     }
 
     // ---- progress -----------------------------------------------------------------------------------------------------
@@ -190,7 +202,7 @@ public final class Bounties {
             if (d == null || !d.objective().type().equals("kill") || !matches(d.objective().target(), type)) continue;
             if (t.progress() >= d.objective().count()) continue;
             s.taken.set(i, new BountyState.Taken(t.id(), t.progress() + 1));
-            if (t.progress() + 1 >= d.objective().count()) Signal.toast(p, Component.literal("Bounty ready · " + d.title() + " · turn in at the High Gate"));
+            if (t.progress() + 1 >= d.objective().count()) notice(p, "ready/" + t.id() + "/" + s.done, d, "Bounty ready", "Return to Hale at the High Gate to collect your reward.", NoticeEvents.Kind.TASK);
             changed = true;
         }
         if (changed) save(p, s);

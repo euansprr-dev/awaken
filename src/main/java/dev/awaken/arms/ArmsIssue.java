@@ -68,8 +68,11 @@ public final class ArmsIssue implements ArmsApi.Hooks {
         remember(p, style);
         giveItem(p, new ItemStack(blueprint));
         Archetypes.Loaded st = Archetypes.get(style);
-        Signal.toast(p, Component.literal("PATTERN · ").withColor(0x6FB3FF).append(Component.literal((st == null ? style : st.def().name()) + " Blueprint").withColor(0xD6ECFF))
-                .append(Component.literal(" · " + source).withColor(0xC8C2B0)));
+        dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("pattern/" + style,
+                "Pattern learned", (st == null ? style : st.def().name()) + " Blueprint", "You can now make weapons in this fighting style.",
+                java.util.List.of("Learned from " + source + ".", "The Blueprint was placed in your inventory. Use it with the weapon recipe at a crafting table; the drawing is returned.",
+                        "Knowing the pattern is permanent. The Forge Armoury also shows your known styles and their material costs."),
+                dev.awaken.core.api.NoticeEvents.Kind.PERMANENT, 0x6FB3FF));
         Progression.markNewThing(p, "pattern:" + style);
         ArmsArmoury.sendView(p);
         return true;
@@ -206,8 +209,10 @@ public final class ArmsIssue implements ArmsApi.Hooks {
             if (bp != null && !ArmsForge.owns(p, style)) giveItem(p, new ItemStack(bp));
         }
         Archetypes.Loaded st = Archetypes.get(style);
-        Signal.toast(p, Component.literal("ISSUED · ").withColor(0xE2B450).append(weapon.getName(new ItemStack(weapon)).copy().withColor(0xFFE3A0))
-                .append(Component.literal(" · " + (st == null ? style : st.def().name())).withColor(0xC8C2B0)));
+        ArmsNotices.reward(p, "weapon/hale/issue", "Weapon issued", new ItemStack(weapon),
+                "Hale gave you this weapon, its crafting pattern, and a spare Fang blade.",
+                java.util.List.of("Use the pattern with its ingredients at a crafting table to make another. The pattern is returned by crafting.",
+                        "Crouch and talk to Hale to browse other styles and patterns."));
         ArmsApi.say(p, "Hale: Good choice. That one's yours. I've put its pattern in your pack too, so you can make more of them later. "
                 + "The spare blade is a Fang, and everything you forge starts from one. When you want a different style, crouch and talk to me, and I'll show you the rack. "
                 + "I sell the patterns for essence, and the more you've done, the more I'll show you.");
@@ -239,10 +244,10 @@ public final class ArmsIssue implements ArmsApi.Hooks {
         if (Progression.profile(p).counter(SHARD_CARD) > 0 || !Progression.profile(p).awakened()) return;
         if (!p.getInventory().contains(s -> s.is(CoreApi.ESSENCE_SHARD.get()))) return;
         Progression.setCounter(p, SHARD_CARD, 1);
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Essence Shard"))
-                .body(Component.literal("What awakened creatures leave behind. Hunters at night drop about one for every two kills. "
-                        + "Armour, weapons and patterns are all made with it."))
-                .ttl(20 * 12).build());
+        dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("item/essence_shard", "Material found", "Essence Shard",
+                "Use these shards to craft weapons and armour or buy patterns.",
+                java.util.List.of("Awakened creatures drop essence. Hunters at night drop roughly one shard per two kills.",
+                        "Crafting recipes and Hale's rack show the amount needed."), dev.awaken.core.api.NoticeEvents.Kind.DISCOVERY, 0xE2B450));
     }
 
     static @Nullable String optionName(String style) {

@@ -2,6 +2,7 @@ package dev.awaken.powers.catalog;
 
 import dev.awaken.core.Forces;
 import dev.awaken.powers.Cast;
+import dev.awaken.powers.PowerNumbers;
 import dev.awaken.powers.Casting;
 import dev.awaken.powers.Combat;
 import dev.awaken.powers.FlyingBlocks;
@@ -110,7 +111,7 @@ final class KineticPowers {
             Fx.at(c, FxKind.TRAIL, c.pos()).aux(2).ticks(70).send();
             r.tick(rr -> {
                 if (rr.age > 1 && (c.player.onGround() || c.player.isInWater())) {
-                    slamImpact(c, Math.min(14, Math.max(0, startY - c.player.getY()) * 0.6));
+                    slamImpact(c, PowerNumbers.fallBonus(startY - c.player.getY()));
                     rr.stop();
                 }
             });
@@ -124,7 +125,7 @@ final class KineticPowers {
     static void slamImpact(Cast c, double bonus) {
         Vec3 at = c.pos();
         double radius = c.radius(4.5);
-        float dmg = c.dmg(c.type.damage + (float) bonus);
+        float dmg = PowerNumbers.fallDamage(c, bonus);
         int hit = 0;
         LivingEntity first = null;
         for (LivingEntity e : Combat.foesAround(c.player, at.add(0, 0.5, 0), radius)) {
@@ -192,7 +193,7 @@ final class KineticPowers {
                 c.sound(PowerSounds.WHOOSH, 0.8f, 1.3f);
                 return;
             }
-            float dmg = c.dmg(c.type.damage + 9f * (float) charge);
+            float dmg = PowerNumbers.chargedDamage(c, charge);
             c.hurt(t, dmg, null);
             Vec3 at = t.position().add(0, t.getBbHeight() * 0.6, 0);
             switch (c.variant) {
@@ -311,7 +312,7 @@ final class KineticPowers {
     static Result brace(Cast c) {
         double reduction = c.is(1) ? 0.75 : c.is(2) ? 0.45 : 0.6;
         double reflect = c.is(1) ? 0 : c.is(2) ? 1.0 : 0.5;
-        int ticks = c.ticks(60);
+        int ticks = PowerNumbers.effectTicks(c);
         PowerState st = PowerState.of(c.player);
         st.buff(PowerState.Buffs.BRACE, c.now() + ticks, reduction);
         if (reflect > 0) st.buff(PowerState.Buffs.BRACE_REFLECT, c.now() + ticks, reflect);
@@ -348,7 +349,7 @@ final class KineticPowers {
             for (LivingEntity o : Combat.foesAround(c.player, t.position(), 7)) {
                 if (o == t || forks >= 3) continue;
                 Fx.at(c, FxKind.LIGHTNING, from.position().add(0, 1, 0)).to(o.position().add(0, 1, 0)).ticks(7).noAnim().send();
-                c.hurt(o, c.dmg() * 0.3f, Forces.Force.CHARGE);
+                c.hurt(o, PowerNumbers.hit(c, PowerNumbers.Hit.THUNDER_FORK), Forces.Force.CHARGE);
                 Combat.stun(o, 15);
                 forks++;
             }

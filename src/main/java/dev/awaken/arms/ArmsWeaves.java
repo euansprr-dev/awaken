@@ -5,6 +5,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.awaken.core.Forces;
 import dev.awaken.core.api.WeaveHooks;
+import dev.awaken.core.api.NoticeEvents;
 import dev.awaken.powers.Fx;
 import dev.awaken.powers.PowerType;
 import dev.awaken.powers.fx.FxKind;
@@ -212,12 +213,46 @@ public final class ArmsWeaves implements WeaveHooks.Weaver {
             p.setData(ArmsContent.MEMORY, m);
             sync(p);
         }
-        Component text = Component.literal("WEAVE · ").withStyle(Style.EMPTY.withColor(0xE2B450))
-                .append(Component.literal(name(opening, fam)).withStyle(Style.EMPTY.withColor(fam.colour)));
-        if (first) {
-            Signal.toast(p, text);
-            dev.awaken.progression.Progression.markNewThing(p, "weave");
-        } else p.sendOverlayMessage(text);
+        // Also records a previously known weave on its first use after this Journal update. Identical events dedupe.
+        NoticeEvents.tell(p, explanation(opening, fam));
+        if (first) dev.awaken.progression.Progression.markNewThing(p, "weave");
+    }
+
+    private static final NoticeEvents.Event[][] EXPLANATIONS = new NoticeEvents.Event[4][PowerType.Family.values().length];
+    static {
+        for (int opening = DEFLECT; opening <= RHYTHM; opening++) for (PowerType.Family family : PowerType.Family.values())
+            EXPLANATIONS[opening - 1][family.ordinal()] = explain(opening, family);
+    }
+
+    /** The same four mechanisms that weave() executes, distinguished from a permanently learned power. */
+    public static NoticeEvents.Event explanation(int opening, PowerType.Family family) {
+        return EXPLANATIONS[opening - 1][family.ordinal()];
+    }
+
+    private static NoticeEvents.Event explain(int opening, PowerType.Family family) {
+        String condition = switch (opening) {
+            case DEFLECT -> "After a successful deflect";
+            case DODGE -> "After a perfect dodge";
+            case BREAK -> "After breaking an enemy's posture";
+            default -> "After a finisher in full rhythm";
+        };
+        String summary = switch (opening) {
+            case DEFLECT -> "Your cast adds a nearby elemental burst.";
+            case DODGE -> "Your dodge echo strikes nearby foes.";
+            case BREAK -> "Extra hit; enemy stays broken 1 s longer.";
+            default -> "Your next 3 weapon hits gain elemental damage.";
+        };
+        String effect = switch (opening) {
+            case DEFLECT -> "The burst reaches 4 blocks and deals 1.2 times your attack damage, scaled by the cast's power level.";
+            case DODGE -> "The echo strikes after 0.3 seconds in a 3-block radius, using your attack damage scaled by the cast's power level.";
+            case BREAK -> "The extra strike requires the broken enemy to remain alive and less than 16 blocks away. It deals 1.6 times your attack damage, scaled by the cast's power level. On enemies with at least 150 health it is capped at 3% of their maximum health. The broken state lasts 1 second longer.";
+            default -> "For up to 5 seconds, the next three weapon hits add 40% of that hit's damage as the power's element, with a minimum of 1 damage.";
+        };
+        return new NoticeEvents.Event("weave/" + id(opening, family), "Combat weave", name(opening, family), summary,
+                List.of(condition + ", cast a " + family.label + " power within " + WINDOW / 20.0 + " seconds.",
+                        effect, "Attack-based weave damage is multiplied by 1 + 0.08 times the triggering power level.", "The triggering power costs " + Math.round((1 - COST) * 100) + "% less energy.",
+                        "This is a temporary weapon-and-power combo. It does not add a new equipped power. You can repeat it by meeting the same condition."),
+                NoticeEvents.Kind.COMBAT, family.colour);
     }
 
     /**

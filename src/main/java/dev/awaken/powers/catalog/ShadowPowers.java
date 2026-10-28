@@ -7,6 +7,7 @@ import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.MobRole;
 import dev.awaken.powers.Allies;
 import dev.awaken.powers.Cast;
+import dev.awaken.powers.PowerNumbers;
 import dev.awaken.powers.Casting;
 import dev.awaken.powers.Combat;
 import dev.awaken.powers.Fx;
@@ -107,7 +108,7 @@ public final class ShadowPowers {
     }
 
     static Result cloak(Cast c) {
-        int ticks = c.ticks(120);
+        int ticks = PowerNumbers.effectTicks(c);
         PowerState st = PowerState.of(c.player);
         st.buff(PowerState.Buffs.CLOAK, c.now() + ticks, c.is(2) ? 2 : 1);
         Moves.effect(c.player, MobEffects.INVISIBILITY, ticks, 0);
@@ -206,7 +207,7 @@ public final class ShadowPowers {
         int count = c.is(1) ? 2 : c.is(2) ? 8 : Math.min(8, 4 + Math.max(0, spi - 5) / 15);
         double hpMul = c.is(1) ? 2.5 : c.is(2) ? 0.45 : 1.0;
         float dmg = c.dmg();
-        int life = c.ticks(400);
+        int life = PowerNumbers.effectTicks(c);
         double hp = 20 * PowerMath.levelScale(Progression.profile(c.player).level()) * 0.8 * hpMul;
         Moves.makeRoom(c.player, count);
         // a circle of shadow opens under you and the soldiers climb out of it

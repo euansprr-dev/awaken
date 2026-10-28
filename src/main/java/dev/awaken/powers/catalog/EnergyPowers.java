@@ -8,6 +8,7 @@ import dev.awaken.powers.fx.FxStyle;
 import dev.awaken.core.Forces;
 import dev.awaken.powers.Bolts;
 import dev.awaken.powers.Cast;
+import dev.awaken.powers.PowerNumbers;
 import dev.awaken.powers.Casting;
 import dev.awaken.powers.Combat;
 import dev.awaken.powers.ForceInteractions;
@@ -130,7 +131,7 @@ final class EnergyPowers {
             if (c.is(1)) {
                 for (int s = -1; s <= 1; s += 2) {
                     Vec3 side = look.yRot((float) Math.toRadians(12 * s));
-                    beamRay(c, rr, eye, side, range * 0.8, c.dmg() * 0.55f, pulse, false, 0.08f);
+                    beamRay(c, rr, eye, side, range * 0.8, PowerNumbers.hit(c, PowerNumbers.Hit.BEAM_SIDE), pulse, false, 0.08f);
                 }
             }
             // the hum starts when the arm is up (tick 5) and is re-laid every half second over a 0.62 s file
@@ -199,9 +200,8 @@ final class EnergyPowers {
     }
 
     static Result barrier(Cast c) {
-        int intStat = Progression.stat(c.player, Stat.INT);
-        float amount = (float) ((6 + 0.25 * intStat) * c.v.dmg() * (1 + 0.15 * (c.powerLevel - 1)));
-        int ticks = c.ticks(200);
+        float amount = PowerNumbers.shield(c);
+        int ticks = PowerNumbers.effectTicks(c);
         Moves.addMod(c.player, Attributes.MAX_ABSORPTION, "barrier", amount, AttributeModifier.Operation.ADD_VALUE);
         c.player.setAbsorptionAmount(Math.max(c.player.getAbsorptionAmount(), amount));
         if (c.is(1)) PowerState.of(c.player).buff(PowerState.Buffs.BRACE_REFLECT, c.now() + ticks, 0.33);
@@ -247,7 +247,7 @@ final class EnergyPowers {
             Fx.at(c, FxKind.CHARGE_END, hand(c.player)).flag(FxEvent.FULL, charge > 0.95).noAnim().send();
             if (why == Running.Why.CANCELLED) return;
             Fx.at(c, FxKind.CAST, hand(c.player)).anim(CastAnim.AIM).send();
-            float dmg = c.dmg(c.type.damage + 14f * (float) charge);
+            float dmg = PowerNumbers.chargedDamage(c, charge);
             var b = Bolts.fire(c.level, c.player, c.player, hand(c.player), c.player.getLookAngle(), 2.6f, dmg, Forces.Force.CHARGE,
                     0xFF9AD8FF, 40, charge > 0.95 ? 2.5f : 0f);
             b.stun = 10 + (int) (20 * charge);
@@ -274,7 +274,7 @@ final class EnergyPowers {
     static Result overload(Cast c) {
         PowerState st = PowerState.of(c.player);
         if (c.is(2)) {
-            int ticks = c.ticks(300);
+            int ticks = PowerNumbers.effectTicks(c);
             st.buff(PowerState.Buffs.CONDUIT, c.now() + ticks, 1);
             st.buff(PowerState.Buffs.OVERLOAD_COST, c.now() + ticks, 1);
             c.sound(PowerSounds.OVERLOAD, 1f, 1.5f);
@@ -318,7 +318,7 @@ final class EnergyPowers {
             Fx.quake(c.level, at, 32, 6f);
             c.feel(first, first != null ? 80 : 0, 6f);
             if (c.is(0)) {
-                int ticks = c.ticks(160);
+                int ticks = PowerNumbers.effectTicks(c);
                 st.buff(PowerState.Buffs.OVERLOAD, c.now() + ticks, 0.25);
                 st.buff(PowerState.Buffs.OVERLOAD_COST, c.now() + ticks, 1);
                 Moves.postOn(c.player, Moves.FX_OVERLOAD);
@@ -364,7 +364,7 @@ final class EnergyPowers {
             for (LivingEntity o : Combat.foesAround(c.player, hit.end(), 9)) {
                 if (o == hit.target() || n >= splits) continue;
                 n++;
-                c.hurt(o, c.dmg(3), Forces.Force.HEAT);
+                c.hurt(o, PowerNumbers.hit(c, PowerNumbers.Hit.PRISM_FORK), Forces.Force.HEAT);
                 Fx.beam(c.player, hit.target(), o.getBoundingBox().getCenter(), rainbow(n), 6, 0.08f, 9, false);
             }
             if (rr.age % 12 == 0) c.sound(hit.end(), PowerSounds.BEAM, 0.6f, 1.6f);

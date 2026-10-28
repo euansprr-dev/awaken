@@ -128,6 +128,9 @@ final class RoadTests {
             Lessons.evaluate(sp);
             h.assertTrue(Lessons.currentStep(sp, "meditation").isEmpty() && Lessons.progress(sp, "meditation") == 1, "meditated: lesson done");
             h.assertTrue(Lessons.toastsSent > toasts, "with a toast");
+            h.assertTrue(sp.getData(dev.awaken.signal.NoticeHistory.HISTORY).entries().stream().anyMatch(e ->
+                    e.event().id().startsWith("lesson/") && e.event().details().stream().anyMatch(line -> line.contains("task card"))),
+                    "completed teaching step remains readable in Journal");
             // dreams (level 12): a reality check, tonight's intention (a choice), a dream, a lucid dream
             h.assertTrue(Lessons.currentStep(sp, "dreams").equals("reality_check"), "dreams start with a reality check");
             Progression.count(sp, Counters.REALITY_CHECKS);

@@ -43,10 +43,12 @@ public final class PowersClient {
         bus.addListener(PlayerTickEvent.Pre.class, ClientCasting::onPlayerTick);
         bus.addListener(ViewportEvent.ComputeCameraAngles.class, CombatFeel::onCameraAngles);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
+            CorePreview.clear();
             ClientPowers.reset();
             ClientCasting.reset();
         });
 
+        dev.awaken.powers.PowerPreviews.client = CorePreview::lines;
         Powers.clientLoadout = () -> {
             var p = Minecraft.getInstance().player;
             return p == null ? null : p.getData(PowerContent.LOADOUT.get());
@@ -57,6 +59,7 @@ public final class PowersClient {
     }
 
     private static void payloads(RegisterClientPayloadHandlersEvent e) {
+        e.register(dev.awaken.powers.PowerPreviews.Reply.TYPE, (msg, ctx) -> CorePreview.accept(msg));
         e.register(PowerPayloads.Feedback.TYPE, (msg, ctx) -> ClientPowers.onFeedback(msg));
         e.register(PowerPayloads.Feel.TYPE, (msg, ctx) -> ClientPowers.onFeel(msg));
         e.register(PowerPayloads.Marks.TYPE, (msg, ctx) -> ClientPowers.onMarks(msg));

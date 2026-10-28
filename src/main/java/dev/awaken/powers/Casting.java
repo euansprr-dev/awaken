@@ -99,7 +99,7 @@ public final class Casting {
         if (l.cooldownLeft(id, now) > 0) return PowerType.Result.fail("cooldown");
         ensureEnergy(player, l);
         // a power cast in a Weave's beat (Arms, SPEC §25) fuses with the weapon and costs less
-        float cost = costOf(player, type, owned.variant()) * dev.awaken.core.api.WeaveHooks.costScale(player);
+        float cost = effectiveCost(player, type, owned.variant());
         if (l.energy < cost) return PowerType.Result.fail("energy");
         Cast c = new Cast(player, type, owned.variant(), owned.level(), slot, predicted, yRot, xRot, strafe, forward);
         PowerType.Result r;
@@ -174,6 +174,22 @@ public final class Casting {
         return type.slot == PowerType.Slot.MOVEMENT || type.dashLike || type.id.getPath().equals("hover");
     }
 
+    static float effectiveCost(ServerPlayer player, PowerType type, int variant) {
+        return costOf(player, type, variant) * dev.awaken.core.api.WeaveHooks.costScale(player);
+    }
+
+    static float drainPerTick(ServerPlayer player, PowerType type, int variant) {
+        float drain = type.drain / 20f * type.variant(variant).cost();
+        if (type.family == PowerType.Family.ENERGY && PowerState.of(player).has(PowerState.Buffs.OVERLOAD_COST, now(player))) drain *= 0.5f;
+        return drain;
+    }
+
+    static int cooldownTicks(ServerPlayer player, PowerType type, int variant, int level) {
+        PowerState st = PowerState.of(player);
+        st.refreshPerks(player, now(player));
+        return PowerMath.cooldown(type.cooldown, type.variant(variant).cooldown(), level, st.cdrPerk);
+    }
+
     static float costOf(ServerPlayer player, PowerType type, int variant) {
         float cost = PowerMath.cost(type.cost, type.variant(variant).cost());
         PowerState st = PowerState.of(player);
@@ -183,8 +199,7 @@ public final class Casting {
     }
 
     static void startCooldown(ServerPlayer player, Loadout l, PowerType type, Loadout.Owned owned, PowerState st) {
-        st.refreshPerks(player, now(player));
-        int cd = PowerMath.cooldown(type.cooldown, type.variant(owned.variant()).cooldown(), owned.level(), st.cdrPerk);
+        int cd = cooldownTicks(player, type, owned.variant(), owned.level());
         l.cooldowns.put(type.id.toString(), new Loadout.Cooldown(now(player) + cd, cd));
     }
 
@@ -371,8 +386,7 @@ public final class Casting {
         for (Running r : snapshot) {
             if (r.ended) continue;
             if (r.channel && !r.stopping()) {
-                float drain = r.c.type.drain / 20f * r.c.v.cost();
-                if (r.c.type.family == PowerType.Family.ENERGY && st.has(PowerState.Buffs.OVERLOAD_COST, now)) drain *= 0.5f;
+                float drain = drainPerTick(player, r.c.type, r.c.variant);
                 if (drain > 0) {
                     if (l.energy < drain) {
                         r.stop(Running.Why.NO_ENERGY);

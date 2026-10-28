@@ -7,6 +7,7 @@ import dev.awaken.powers.fx.FxStyle;
 
 import dev.awaken.core.Forces;
 import dev.awaken.powers.Cast;
+import dev.awaken.powers.PowerNumbers;
 import dev.awaken.powers.Casting;
 import dev.awaken.powers.Combat;
 import dev.awaken.powers.Constructs;
@@ -90,7 +91,7 @@ final class FlightPowers {
     static Result hover(Cast c) {
         Moves.startFlight(c.player, "hover", 0.02f);
         c.sound(PowerSounds.HOVER, 1f, 1.2f);
-        int hoverTicks = c.ticks(100);
+        int hoverTicks = PowerNumbers.effectTicks(c);
         // a gust ring under the feet, then wind rings and curls while you hang there
         Fx.at(c, FxKind.RING, c.pos()).scale(2.2).ticks(10).send();
         Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.HOVER.ordinal()).ticks(hoverTicks).noAnim().send();
@@ -107,13 +108,13 @@ final class FlightPowers {
     }
 
     static Result flight(Cast c) {
-        float speed = (float) (0.05 * (c.is(1) ? 1.4 : c.is(2) ? 0.85 : 1.0) * (1 + 0.04 * (c.powerLevel - 1)));
+        float speed = PowerNumbers.flightSpeed(c);
         Moves.startFlight(c.player, "flight", speed);
         c.sound(PowerSounds.WHOOSH, 1f, 0.6f);
         Fx.at(c, FxKind.RING, c.pos()).scale(3).ticks(12).send();
         Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.FLIGHT.ordinal()).ticks(120).noAnim().send();
         Running r = Casting.channel(c, -1);
-        double extra = pressure(c) - 1.0;
+        double extra = PowerNumbers.flightPressure(c) - 1.0;
         r.tick(rr -> {
             c.player.resetFallDistance();
             if (extra > 0 && !Casting.drainExtra(c.player, (float) (c.type.drain * c.v.cost() * extra / 20.0))) rr.stop(Running.Why.NO_ENERGY);
@@ -127,15 +128,6 @@ final class FlightPowers {
             Moves.effect(c.player, MobEffects.SLOW_FALLING, 60, 0);
         });
         return Result.OK;
-    }
-
-    /** The Deep's pressure and gate ceilings make flying cost more there. */
-    static double pressure(Cast c) {
-        var dim = c.level.dimension().identifier();
-        if (!dim.getNamespace().equals("awaken")) return 1.0;
-        if (dim.getPath().startsWith("stratum") || dim.getPath().equals("endless")) return 2.0;
-        if (dim.getPath().equals("gates")) return 1.5;
-        return 1.0;
     }
 
     static Vec3 aimSpot(Cast c, double range) {
@@ -152,7 +144,7 @@ final class FlightPowers {
         double pull = c.is(1) ? 0.16 : 0.09;
         float dmg = c.dmg();
         c.sound(centre, PowerSounds.GRAVITY, 1.2f, 0.7f);
-        int wellTicks = c.ticks(80);
+        int wellTicks = PowerNumbers.effectTicks(c);
         // a void core with a violet rim, rings contracting into it, sparks and debris drawn in
         Fx.at(c, FxKind.VORTEX, centre).scale(radius).ticks(wellTicks).flag(FxEvent.REPULSE, repulse).flag(FxEvent.REACH).send();
         Running r = Casting.start(c, wellTicks).at(centre);
@@ -180,7 +172,7 @@ final class FlightPowers {
             if (rr.age % 20 == 0) c.sound(centre, PowerSounds.GRAVITY, 0.7f, 0.5f);
         }).end((rr, why) -> {
             if (c.is(1) && why == Running.Why.EXPIRED) {
-                Moves.blast(c, centre, radius + 1, c.dmg(8), Forces.Force.GRAVITY, 1.2, 0.5);
+                Moves.blast(c, centre, radius + 1, PowerNumbers.hit(c, PowerNumbers.Hit.WELL_END), Forces.Force.GRAVITY, 1.2, 0.5);
                 Fx.at(c, FxKind.NOVA, centre).scale(radius + 1).flag(FxEvent.REPULSE).noAnim().send();
                 c.sound(centre, PowerSounds.BLAST, 1.2f, 0.6f);
                 Fx.quake(c.level, centre, 16, 3f);
@@ -198,8 +190,8 @@ final class FlightPowers {
         for (int i = 0; i < vol.size(); i++) {
             for (int j = i + 1; j < vol.size(); j++) {
                 if (vol.get(i).distanceToSqr(vol.get(j)) < 2.5 * 2.5) {
-                    ForceInteractions.detonate(c.level, vol.get(i), c.dmg(10), c.player);
-                    ForceInteractions.detonate(c.level, vol.get(j), c.dmg(10), c.player);
+                    ForceInteractions.detonate(c.level, vol.get(i), PowerNumbers.hit(c, PowerNumbers.Hit.VOLATILE), c.player);
+                    ForceInteractions.detonate(c.level, vol.get(j), PowerNumbers.hit(c, PowerNumbers.Hit.VOLATILE), c.player);
                     ForceInteractions.count(c.player, ForceInteractions.Reaction.VOLATILE_DETONATION);
                     return;
                 }
@@ -217,7 +209,7 @@ final class FlightPowers {
             BlockState s = Constructs.lift(c.level, p);
             Vec3 from = Vec3.atCenterOf(p);
             Vec3 v = centre.subtract(from).normalize().scale(0.9).add(0, 0.2, 0);
-            var f = FlyingBlocks.launch(c.level, c.player, s, from, v, c.dmg(4), Forces.Force.GRAVITY, 1.5f, 0.9f);
+            var f = FlyingBlocks.launch(c.level, c.player, s, from, v, PowerNumbers.hit(c, PowerNumbers.Hit.WALL_FRAGMENT), Forces.Force.GRAVITY, 1.5f, 0.9f);
             if (f != null) f.gravity(0.01);
             if (n <= 6) Fx.trailOn(c, f, 30);
         }
@@ -245,7 +237,7 @@ final class FlightPowers {
             Vec3 hold = c.player.getEyePosition().add(c.player.getLookAngle().scale(4.0)).subtract(0, t.getBbHeight() * 0.5, 0);
             Combat.push(t, hold.subtract(t.position()).scale(0.35));
             t.fallDistance = 0;
-            if (c.is(1) && rr.age % 10 == 0) c.hurt(t, c.dmg(1.5f), Forces.Force.GRAVITY);
+            if (c.is(1) && rr.age % 10 == 0) c.hurt(t, PowerNumbers.hit(c, PowerNumbers.Hit.CRUSH_PULSE), Forces.Force.GRAVITY);
         }).end((rr, why) -> {
             Fx.end(c, c.player, 0);
             if (why == Running.Why.CANCELLED || !t.isAlive()) return;
@@ -281,7 +273,7 @@ final class FlightPowers {
                 c.hurt(t, dmg, Forces.Force.GRAVITY);
                 for (LivingEntity o : Combat.foesAround(c.player, at, 2.5)) {
                     if (o != t) {
-                        c.hurt(o, dmg * 0.5f, Forces.Force.GRAVITY);
+                        c.hurt(o, PowerNumbers.secondary(dmg, PowerNumbers.Hit.THROW_SPLASH), Forces.Force.GRAVITY);
                         Combat.knockFrom(o, at, 0.8, 0.3);
                     }
                 }
@@ -299,7 +291,7 @@ final class FlightPowers {
         List<BlockPos> wall = Constructs.connected(c.level, start, 40);
         if (wall.isEmpty()) return Result.fail("no_target");
         Vec3 dir = c.look();
-        float dmg = c.dmg() * 0.6f;
+        float dmg = PowerNumbers.hit(c, PowerNumbers.Hit.WALL_RAM);
         for (BlockPos p : wall) {
             BlockState s = Constructs.lift(c.level, p);
             var f = FlyingBlocks.launch(c.level, c.player, s, Vec3.atCenterOf(p), dir.scale(1.8).add(0, 0.12, 0), dmg, Forces.Force.GRAVITY, 1.2f, 1.0f);
@@ -359,7 +351,7 @@ final class FlightPowers {
     static void impact(Cast c, double fallen) {
         Vec3 at = c.pos();
         double radius = c.radius(5);
-        float dmg = c.dmg(c.type.damage + (float) Math.min(14, fallen * 0.6));
+        float dmg = PowerNumbers.fallDamage(c, PowerNumbers.fallBonus(fallen));
         Forces.Force force = c.is(1) ? Forces.Force.HEAT : Forces.Force.GRAVITY;
         LivingEntity first = null;
         for (LivingEntity e : Combat.foesAround(c.player, at.add(0, 0.5, 0), radius)) {

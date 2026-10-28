@@ -39,6 +39,9 @@ public final class BountyTests {
                 Bounties.answer(p, Bounties.ACTION + ":" + id, true);
                 s = Bounties.state(p);
                 h.assertTrue(s.taken.size() == 1 && s.offered.size() == 2, "one taken, two left");
+                h.assertTrue(p.getData(dev.awaken.signal.NoticeHistory.HISTORY).entries().stream().anyMatch(e ->
+                        e.event().id().startsWith("bounty/taken/" + id) && e.event().details().stream().anyMatch(line -> line.contains("Each completion pays once"))),
+                        "accepted bounty has durable authored instructions and payment conditions");
                 Bounties.board(p);
                 h.assertTrue(Bounties.state(p).offered.size() == 2, "no new notice the same play-day");
                 Bounties.state(p).refilled = PlayDays.current(p.level().getServer()) - 1;
@@ -56,6 +59,8 @@ public final class BountyTests {
                 h.assertTrue(essence(p) == essence + 3, "paid its essence");
                 Bounties.board(p);
                 h.assertTrue(essence(p) == essence + 3, "and only once");
+                h.assertTrue(p.getData(dev.awaken.signal.NoticeHistory.HISTORY).entries().stream().filter(e ->
+                        e.event().id().startsWith("bounty/paid/" + id)).count() == 1, "reopening Hale does not replay reward history");
             } finally {
                 Bounties.replace(before);
             }

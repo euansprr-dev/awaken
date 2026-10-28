@@ -6,6 +6,7 @@ import dev.awaken.powers.fx.FxKind;
 
 import dev.awaken.core.Forces;
 import dev.awaken.powers.Cast;
+import dev.awaken.powers.PowerNumbers;
 import dev.awaken.powers.Casting;
 import dev.awaken.powers.Combat;
 import dev.awaken.powers.Fx;
@@ -197,7 +198,7 @@ final class TechPowers {
         int max = 2 + (c.is(2) ? 2 : 0);
         while (have.size() + count > max && !have.isEmpty()) have.remove(0).discard();
         int interval = c.is(1) ? 24 : 16;
-        int life = c.ticks(400);
+        int life = PowerNumbers.effectTicks(c);
         Moves.makeRoom(c.player, count);
         Fx.at(c, FxKind.CAST, c.pos()).anim(CastAnim.RAISE).send();
         for (int i = 0; i < count; i++) {
@@ -214,7 +215,7 @@ final class TechPowers {
         int range = 20;
         int interval = c.is(1) ? 30 : c.is(2) ? 5 : 10;
         Moves.makeRoom(c.player, 1);
-        PowerDrone t = spawnDrone(c, at, c.dmg(), c.ticks(600));
+        PowerDrone t = spawnDrone(c, at, c.dmg(), PowerNumbers.effectTicks(c));
         if (t == null) return Result.fail("blocked");
         t.makeTurret(range, interval);
         Fx.at(c, FxKind.HOLO, at).aux(1).send();
@@ -244,7 +245,7 @@ final class TechPowers {
             Vec3 to = eye.add(dir.scale(48));
             BlockHitResult wall = Combat.clip(c.player, eye, to);
             Vec3 end = wall.getType() == HitResult.Type.MISS ? to : wall.getLocation();
-            float dmg = c.dmg(c.type.damage + 10f * (float) charge);
+            float dmg = PowerNumbers.chargedDamage(c, charge);
             LivingEntity first = null;
             for (LivingEntity e : Combat.alongLine(c.player, eye, end, RAIL_WIDTH)) {
                 c.hurt(e, dmg, Forces.Force.CHARGE);
@@ -262,7 +263,7 @@ final class TechPowers {
     }
 
     static Result nanite(Cast c) {
-        int ticks = c.ticks(200);
+        int ticks = PowerNumbers.effectTicks(c);
         double armour = 8 * c.v.dmg();
         Moves.addMod(c.player, Attributes.ARMOR, "nanite_armor", armour, AttributeModifier.Operation.ADD_VALUE);
         Moves.addMod(c.player, Attributes.ARMOR_TOUGHNESS, "nanite_toughness", 4 * c.v.dmg(), AttributeModifier.Operation.ADD_VALUE);
@@ -286,7 +287,7 @@ final class TechPowers {
     static Result swarm(Cast c) {
         int count = c.is(1) ? 10 : c.is(2) ? 3 : 6;
         int interval = c.is(2) ? 10 : 18;
-        int life = c.ticks(400);
+        int life = PowerNumbers.effectTicks(c);
         LivingEntity focus = Combat.aimEntity(c, 32, 1.0);
         Moves.makeRoom(c.player, count);
         // an ultimate: the hive opens over your head (screen beat), a reticle locks on the target

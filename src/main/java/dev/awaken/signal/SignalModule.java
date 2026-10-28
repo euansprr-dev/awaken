@@ -15,6 +15,8 @@ public final class SignalModule {
 
     public static void init(IEventBus modBus) {
         PendingChoices.ATTACHMENTS.register(modBus);
+        NoticeHistory.ATTACHMENTS.register(modBus);
+        dev.awaken.core.api.NoticeEvents.install(NoticeHistory::tell);
         Destination.ATTACHMENTS.register(modBus);
         Destination.init();
         modBus.addListener(SignalModule::registerPayloads);
@@ -23,7 +25,7 @@ public final class SignalModule {
         bus.addListener(SignalModule::onLogout);
         bus.addListener(SignalModule::onChangedDimension);
         bus.addListener((PlayerEvent.PlayerRespawnEvent e) -> {
-            if (e.getEntity() instanceof ServerPlayer p) Destination.sync(p);
+            if (e.getEntity() instanceof ServerPlayer p) { Destination.sync(p); NoticeHistory.sync(p); }
         });
         bus.addListener(SignalModule::onServerTick);
         bus.addListener((ServerStoppingEvent e) -> {
@@ -33,6 +35,7 @@ public final class SignalModule {
         });
         SignalCommands.register();
         SignalTests.register();
+        NoticeHistoryTests.register();
         // tips (SPEC §27.7): the server's side only says a context came up or the move was done; the client decides
         dev.awaken.core.api.TipHooks.install(new dev.awaken.core.api.TipHooks.Server() {
             @Override public void offer(net.minecraft.server.level.ServerPlayer p, net.minecraft.resources.Identifier tip) {
@@ -46,6 +49,10 @@ public final class SignalModule {
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
         var r = event.registrar("1");
+        r.playToClient(NoticeHistory.Update.TYPE, NoticeHistory.Update.STREAM_CODEC);
+        r.playToServer(NoticeHistory.Read.TYPE, NoticeHistory.Read.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer p) NoticeHistory.read(p, msg.sequence());
+        });
         r.playToClient(SignalPayloads.Show.TYPE, SignalPayloads.Show.STREAM_CODEC);
         r.playToClient(SignalPayloads.Toast.TYPE, SignalPayloads.Toast.STREAM_CODEC);
         r.playToClient(SignalPayloads.Pending.TYPE, SignalPayloads.Pending.STREAM_CODEC);
@@ -66,6 +73,7 @@ public final class SignalModule {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         NowSync.forget(p.getUUID());
         HorizonSync.forget(p.getUUID());
+        NoticeHistory.sync(p);
         PendingChoices.sync(p); // folded: they show in the tracker and the Status screen, not as cards
         NowSync.update(p);
         HorizonSync.update(p);
