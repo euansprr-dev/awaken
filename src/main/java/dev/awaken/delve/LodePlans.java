@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Where the lodes are, from the world seed alone (PLAN 7.3; SPEC §28.3 "Lodes"): the world is cut into 256 x 256
@@ -57,6 +58,7 @@ public final class LodePlans {
     // ---- the plan -----------------------------------------------------------------------------------------------------
 
     private static List<Lode> plan(long seed, int rx, int rz) {
+        if (Thread.currentThread() == serverThread) SERVER_PLANS.incrementAndGet();
         List<Lode> out = new ArrayList<>();
         Columns cols = columnsSeed == seed ? columns : null;
         if (cols != null) out.addAll(walls(seed, rx, rz, cols));
@@ -139,11 +141,20 @@ public final class LodePlans {
 
     private static volatile Columns columns;
     private static volatile long columnsSeed;
+    /** The thread that installed the columns (the server's), and the region plans made on it: each one a long tick. */
+    private static volatile Thread serverThread;
+    private static final AtomicInteger SERVER_PLANS = new AtomicInteger();
+
+    /** Region plans made on the server thread so far (each samples up to a hundred noise columns: SPEC §28.9). */
+    public static int serverPlans() {
+        return SERVER_PLANS.get();
+    }
 
     /** The overworld's columns (set when it loads; null when the server stops): plans made after include the wall lodes. */
     public static void columns(long seed, Columns c) {
         columns = c;
         columnsSeed = seed;
+        serverThread = c == null ? null : Thread.currentThread();
         CACHE.clear();
     }
 

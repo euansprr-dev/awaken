@@ -8259,6 +8259,15 @@ first tour on 4d099bde (run 40686122729, six and a half minutes) was the same (i
 though the watch was then blind to set-aside chunks. Smaller server-thread waits on chunks still generating under a
 flying player, a second each: `Scenes.dryLand` and `SkyRig.groundUnder` (`Level.getHeight`), `Reveal.motes`,
 `LandmarkMarkers.compute`. All outside the roads: routed.
+**Fixed (delve, 2026-10-28):** the Horizon's sinkhole search (`CaveHorizon`) runs on a worker of its own (one daemon
+thread, low priority): the server thread reads only the answers (per candidate start chunk, cached for the session),
+asks at most two new candidates a look with at most 8 waiting, and a candidate not answered yet shows no sinkhole. The
+search is the same call as before (`CaveHorizon.search`, which plans the lode regions it needs on the worker), so the
+answers are identical. `LodePlans.serverPlans()` counts region plans made on the server thread. Test
+`delve_horizon_flyover`: 40 looks 96 blocks apart over new land plan no region on the server thread, each look under
+250 ms, and once the worker has answered the sinkholes equal a search on the spot. `Veins` (breaking, the hum) still
+plans on the server thread, but only for regions round generated chunks, which worldgen has already planned unless the
+cache was cleared (a restart or 4,096 regions).
 **Away from the overworld** (Euan 2026-10-28: "Nothing should plan or load overworld content for a player who isn't
 in the overworld"): every system that reads a player's position for planning, generation or chunk tickets, checked for
 the levels a player can stand in away from the overworld (awaken:gates, trials, stillpoint, endless, halo, lucidium,
