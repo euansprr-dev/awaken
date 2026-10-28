@@ -48,7 +48,7 @@ public final class RunRegressionTests {
                 Rooms.enter(level, p, g, f, arena, 0, 0);
                 FloorState fs = g.floor(0, 1);
                 h.assertFalse(fs.locked.contains(arena.id), "no monster could come, so the arena stays open");
-                h.assertTrue(fs.clearedRooms.contains(arena.id), "and counts as beaten");
+                h.assertTrue(!fs.clearedRooms.contains(arena.id) && fs.pendingCompanies.containsKey(arena.id), "budget pressure defers the company; it does not beat the arena for free");
             } finally {
                 GateLiveTests.teardown(level, p, g);
             }

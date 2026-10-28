@@ -89,6 +89,53 @@ public final class EncounterTests {
             h.succeed();
         });
 
+        AwakenTests.registerIsolated("gates_encounter_budget_resume", 100, h -> {
+            var level = h.getLevel();
+            GateService.useTestLevel(level);
+            GateRecord g = null;
+            ServerPlayer p = null;
+            try {
+                var plan = GateLiveTests.plan(7171, Theme.HIVE, Layout.LABYRINTH, Twist.NONE, 0);
+                g = GateLiveTests.standUp(h, plan, 0, 1);
+                var markers = new ArrayList<Entity>();
+                for (int i = 0; i < Rooms.GATE_CAP; i++) {
+                    Entity marker = net.minecraft.world.entity.EntityTypes.MARKER.create(level, EntitySpawnReason.COMMAND);
+                    GateMobs.register(marker, new GateMobs.Key(g.id, 0, 1, -1));
+                    markers.add(marker);
+                }
+                p = GateLiveTests.player(h);
+                Runs.enter(p, g);
+                var f = GateLayout.of(plan).floor(0, 1);
+                Room room = f.rooms.stream().filter(r -> r.type == Room.Type.NORMAL && r.normals + r.elites > 1).findFirst().orElseThrow();
+                var key = new GateMobs.Key(g.id, 0, 1, room.id);
+                Rooms.prepare(level, g, f, room);
+                var fs = g.floor(0, 1);
+                var job = fs.pendingCompanies.get(room.id);
+                h.assertTrue(job != null && !fs.prepared.contains(room.id) && GateMobs.alive(key) == 0, "full budget defers an empty preview");
+                int planned = job.normals + job.elites;
+                GateMobs.remove(markers.get(0));
+                Rooms.prepare(level, g, f, room);
+                h.assertTrue(GateMobs.alive(key) == 1 && job.next == 1 && !fs.prepared.contains(room.id), "one free slot prepares exactly one member");
+                level.getEntity(GateMobs.aliveIds(key).iterator().next()).discard();
+                h.assertFalse(fs.clearedRooms.contains(room.id), "killing a partial company does not clear the members still owed");
+                var saved = FloorState.CODEC.encodeStart(JsonOps.INSTANCE, fs).getOrThrow();
+                g.floors.put("0:1", FloorState.CODEC.parse(JsonOps.INSTANCE, saved).getOrThrow());
+                for (Entity marker : markers) GateMobs.remove(marker);
+                Rooms.prepare(level, g, f, room);
+                fs = g.floor(0, 1);
+                h.assertTrue(fs.prepared.contains(room.id) && !fs.pendingCompanies.containsKey(room.id) && GateMobs.alive(key) == planned - 1,
+                        "saved preparation resumes only unspawned members, never the killed member");
+                var ids = GateMobs.aliveIds(key);
+                Rooms.prepareAround(level, g, f, room);
+                Rooms.enter(level, p, g, f, room, room.centerX(), room.centerZ());
+                h.assertTrue(GateMobs.aliveIds(key).equals(ids), "repeated preview and entry keep the original company");
+                for (var id : ids) level.getEntity(id).discard();
+                Rooms.prepare(level, g, f, room);
+                h.assertTrue(fs.clearedRooms.contains(room.id) && GateMobs.alive(key) == 0, "completed deferred encounter stays cleared");
+            } finally { GateLiveTests.teardown(level, p, g); }
+            h.succeed();
+        });
+
         AwakenTests.registerIsolated("gates_encounter_preview_activation", 100, h -> {
             var level = h.getLevel();
             GateService.useTestLevel(level);
@@ -146,12 +193,19 @@ public final class EncounterTests {
             try {
                 var plan = GateLiveTests.plan(7171, Theme.HIVE, Layout.OPEN_CAVERN, Twist.NONE, 0);
                 g = GateLiveTests.standUp(h, plan, 0, 1);
+                var markers = new ArrayList<Entity>();
+                for (int i = 0; i < Rooms.GATE_CAP - 1; i++) {
+                    Entity marker = net.minecraft.world.entity.EntityTypes.MARKER.create(level, EntitySpawnReason.COMMAND);
+                    GateMobs.register(marker, new GateMobs.Key(g.id, 0, 1, -1));
+                    markers.add(marker);
+                }
                 p = GateLiveTests.player(h);
                 Runs.enter(p, g);
                 var f = GateLayout.of(plan).floor(0, 1);
                 Room cavern = f.rooms.stream().filter(r -> r.type == Room.Type.CAVERN).findFirst().orElseThrow();
                 Rooms.prepare(level, g, f, cavern);
                 var fs = g.floor(0, 1);
+                h.assertTrue(!fs.prepared.contains(cavern.id) && !fs.pendingCompanies.isEmpty(), "cap-limited cavern keeps its unspawned zones pending");
                 int zoneKey = fs.living.values().stream().filter(k -> k >= 256).findFirst().orElseThrow();
                 var key = new GateMobs.Key(g.id, 0, 1, zoneKey);
                 Mob member = (Mob) level.getEntity(GateMobs.aliveIds(key).iterator().next());
@@ -159,11 +213,21 @@ public final class EncounterTests {
                 var at = Where.at(level.getServer(), p.blockPosition());
                 Rooms.enter(level, p, g, f, cavern, at.x(), at.z());
                 h.assertTrue(fs.triggered.contains(zoneKey) && !member.isNoAi(), "cavern members stand in and wake with their own zone");
-                for (var id : GateMobs.aliveIds(key)) level.getEntity(id).discard();
+                // This zone itself may be partial (normal + elite); finish each owed member before calling it cleared.
+                for (int pass = 0; pass < 4; pass++) {
+                    for (var id : GateMobs.aliveIds(key)) level.getEntity(id).discard();
+                    if (fs.clearedRooms.contains(zoneKey)) break;
+                    Rooms.prepare(level, g, f, cavern);
+                }
                 Rooms.prepare(level, g, f, cavern);
                 Rooms.enter(level, p, g, f, cavern, at.x(), at.z());
                 h.assertTrue(fs.clearedRooms.contains(zoneKey) && GateMobs.alive(key) == 0, "cleared cavern zone never repopulates");
                 h.assertFalse(Pressure.eligible(fs, cavern), "untouched neighbouring zones do not admit pressure into a cleared zone");
+                var pending = java.util.Set.copyOf(fs.pendingCompanies.keySet());
+                for (Entity marker : markers) GateMobs.remove(marker);
+                Rooms.prepare(level, g, f, cavern);
+                h.assertTrue(pending.stream().anyMatch(fs.prepared::contains), "free capacity completes previously pending cavern zones");
+                h.assertTrue(GateMobs.alive(key) == 0, "finishing other zones cannot repopulate the cleared one");
             } finally { GateLiveTests.teardown(level, p, g); }
             h.succeed();
         });

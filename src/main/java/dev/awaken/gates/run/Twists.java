@@ -451,6 +451,8 @@ public final class Twists {
             e.setCanceled(true);
             return;
         }
+        // Only an eligible encounter target can raise a Stealth Halls alarm.
+        if (!Encounters.mayTarget(e.getEntity(), p)) return;
         // Stealth Halls: being spotted raises the alarm once per floor
         if (g.plan.layout() == dev.awaken.gates.content.Layout.STEALTH_HALLS) {
             RunState run = Runs.run(p);

@@ -20,6 +20,25 @@ public final class FloorState {
     public final Set<Integer> prepared = new LinkedHashSet<>();
     /** Live encounter members, including entities in unloaded chunks. UUID string -> room/zone key. */
     public final Map<String, Integer> living = new HashMap<>();
+    /** Members not yet attempted because the gate's live-entity budget was full. */
+    public final Map<Integer, Company> pendingCompanies = new HashMap<>();
+
+    public static final class Company {
+        public final int normals, elites, offset;
+        public int next;
+        public Company(int normals, int elites, int offset, int next) {
+            this.normals = normals;
+            this.elites = elites;
+            this.offset = offset;
+            this.next = next;
+        }
+        public static final Codec<Company> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.fieldOf("normals").forGetter(c -> c.normals),
+                Codec.INT.fieldOf("elites").forGetter(c -> c.elites),
+                Codec.INT.fieldOf("offset").forGetter(c -> c.offset),
+                Codec.INT.fieldOf("next").forGetter(c -> c.next)
+        ).apply(i, Company::new));
+    }
     public final Set<Integer> clearedRooms = new LinkedHashSet<>();
     /** Arena wave reached per room (1 or 2). */
     public final Map<Integer, Integer> waves = new HashMap<>();
@@ -85,13 +104,19 @@ public final class FloorState {
             Flags.CODEC.fieldOf("flags").forGetter(f -> new Flags(f.enteredAt, f.pressureWaves, f.warden, f.alarm, f.shrineOpen, f.spiritDone, f.collapsed)),
             RigState.CODEC.optionalFieldOf("rig").forGetter(f -> f.rig.empty() ? java.util.Optional.empty() : java.util.Optional.of(f.rig)),
             Codec.INT.listOf().optionalFieldOf("prepared").forGetter(f -> java.util.Optional.of(List.copyOf(f.prepared))),
-            Maps.M.optionalFieldOf("living", Map.of()).forGetter(f -> Map.copyOf(f.living))
-    ).apply(i, (s, m, fl, rig, prepared, living) -> {
+            Maps.M.optionalFieldOf("living", Map.of()).forGetter(f -> Map.copyOf(f.living)),
+            Codec.unboundedMap(Codec.STRING, Company.CODEC).optionalFieldOf("pending_companies", Map.of()).forGetter(f -> {
+                Map<String, Company> out = new HashMap<>();
+                f.pendingCompanies.forEach((k, v) -> out.put(Integer.toString(k), v));
+                return out;
+            })
+    ).apply(i, (s, m, fl, rig, prepared, living, pending) -> {
         FloorState f = new FloorState();
         f.triggered.addAll(s.triggered);
         // Old saves already populated every triggered encounter; never spawn those a second time.
         f.prepared.addAll(prepared.orElse(s.triggered));
         f.living.putAll(living);
+        pending.forEach((k, v) -> f.pendingCompanies.put(Integer.parseInt(k), v));
         f.clearedRooms.addAll(s.cleared);
         f.puzzlesSolved.addAll(s.solved);
         f.lanternsTaken.addAll(s.lanterns);

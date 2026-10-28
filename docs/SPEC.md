@@ -229,13 +229,16 @@ Rooms: start, normal, elite, cache, puzzle (some layouts), shrine (floor end), b
 Everything picked up inside a gate goes to the **Satchel** (27 slots + Satchel XP). Shrine: Extract (bank + return to
 gate mouth) or continue via the Seal to the next floor. Boss kill: claim + exit portal.
 Gate encounters (2026-10-28 playtest): the current room and its connected neighbours are populated before doorway
-entry, within the existing 40-monster gate / 60-monster arena caps. Prepared enemies wait visibly; entering their room
+entry, within the existing 40-monster gate / 60-monster arena caps. If the budget is full, the unspawned part of a
+company waits in saved state, with its original party scaling and spawn index. It resumes when space becomes available,
+without replacing any members already killed. A capped empty arena stays open and unfinished; cavern zones wait separately.
+Prepared enemies wait visibly; entering their room
 (or damaging one from the same gate/floor) wakes that encounter, not its neighbours. Caverns prepare their 16-block
 zones and wake only the entered zone; cleared zones also reject reinforcements. A room/zone may target within its
 own bounds plus 8 blocks beyond its doorway;
 floor-wide pressure enemies target within 32 blocks on their actual gate/floor. Arena bars still close on entry; only
 the first wave is prepared, and the second follows its defeat. Stealth Hall sentries retain their existing patrols.
-Prepared and triggered encounters are saved separately. Gate registry schema 3 saves the living UUID roster, including
+Prepared and triggered encounters are saved separately. Gate registry schema 3 saves pending companies and the living UUID roster, including
 unloaded entities. Death removes membership before the corpse animation ends; restart/load order never means an
 arena is empty and never recreates a saved Lord. Schema 2 rooms already triggered count as prepared on load. Cleared encounters remain cleared across leave/re-entry and relog.
 Gate pressure: after 4 min on a floor, a wave every 45 s, scaling; at 8 min the gate's Warden (elite) can arrive.

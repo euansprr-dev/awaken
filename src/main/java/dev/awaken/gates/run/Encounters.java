@@ -21,12 +21,12 @@ public final class Encounters {
     /** Allows a fight across its doorway without recruiting the rest of the floor. */
     static final int DOOR_REACH = 8;
 
-    static void hold(Entity entity, GateMobs.Key key) {
+    static void hold(Entity entity, GateMobs.Key key, boolean lord) {
         if (!(entity instanceof Mob mob) || !(entity.level() instanceof ServerLevel level) || mob.isNoAi()) return;
         GateRecord g = GateRegistry.get(level.getServer()).gate(key.gate());
         if (g == null || key.room() < 0) return;
         var fs = g.floor(key.area(), key.floor());
-        if (!fs.prepared.contains(key.room()) || fs.triggered.contains(key.room())) return;
+        if (fs.triggered.contains(key.room()) || !lord && !fs.prepared.contains(key.room()) && !fs.pendingCompanies.containsKey(key.room())) return;
         entity.getPersistentData().putBoolean(WAITING, true);
         mob.setTarget(null);
         mob.getNavigation().stop();
