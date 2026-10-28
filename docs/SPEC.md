@@ -223,6 +223,9 @@ Energy diamond, Shadow crescent cut, Mind eye, Architect notched block, Tech chi
 from the top-left shades every frame and glyph. A Power Core is a crystal with its power's glyph inside (item model
 select `awaken:core_power` on the power's path; an emissive `_glow` layer per power; no power shows a blank crystal).
 Movement powers are client-predicted (velocity applied locally, server validates and corrects).
+Dashes and the movement powers are held at the edge of the land the client has (the edge hold, §28.9), whether their
+velocity is set on the client or comes in a motion packet; Blink and the other steps are teleports, not velocity, so
+the server's packet cap (§28.9) is their backstop.
 Dash direction: a Dash goes the way you are moving, at every power level and in every variant (Blink and Double included; a
 duplicate core or a mastery level only changes the distance, damage and cooldown, never the direction). The held movement keys
 (forward, back, left, right) ride on the cast payload (`PowerPayloads.Cast.keys`, 4 bits) and the predictor gets them as
@@ -1225,6 +1228,8 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
 - `-Ptests=<name prefixes>` (comma-separated) registers only those GameTests; a filter that matches none fails.
 
 Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools/autopilot.sh`):
+- The pilot's `glide` sets the player's velocity every tick, so the edge hold (§28.9) eases it at the edge of the land
+  the client has, and the log says so (`[edgehold] held N ticks ...`).
 - Look tours run on GitHub's macOS runners (`.github/workflows/tours.yml`, dispatched by `tools/tour-ci.sh`, decided
   2026-10-26 when the Mac's one-at-a-time queue ran for hours). Perf and frame-time tours, Far Sight's tours and sound
   listening stay on the Mac under `slot.sh tour`.
@@ -3049,6 +3054,8 @@ Numbers (`AscentRules`, blocks and ticks; gravity 0.08 everywhere):
   way to the look a tick at full authority (25% of that below 0.9 b/t); below 0.42 it stalls and sags. Opening the
   wings keeps 45% of a fall's descent and turns half the rest forward. A 6° glide holds ~1.16 b/t (ratio ~9.5).
 - Sonic boom: crossing 2.2 b/t in a glide or flight; arms again below 1.6.
+- Held at the edge of the land the client has (the edge hold, §28.9): a glide, a soar and its boost never carry the player into chunks the
+  client doesn't have yet; the speed eases down to reach the edge as the land comes in (§28.9).
 - Soar: thrust 0.0098 (cruise ≈ 1.25), boost 0.032 (≈ 2.25), drag 0.0063 × speed², path turn 0.2, top 3.2; hover bleeds
   ×0.88 a tick, climbs at 0.32, sinks at 0.36; a wing beat lifts 0.38.
 
@@ -3472,6 +3479,7 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   broke. Record from standing still; at most five minutes.
 
 ### 17.7 The Tether Vow (the rope, earned at the first vault)
+Held at the edge of the land the client has (the edge hold, §28.9): the rope's launch and zip ease down before land the client doesn't have yet.
 - Who: awake, in the overworld, without the rope, the `ascent` option on, **at the vault's line rank: its own door
   rank, D at the least** (`TetherVow.RANK` = D since Euan approved the progression plan, decision 1, 2026-10-26; it was
   C for a few hours; the door rank is the piece's saved `rank`: D within 1200 of the origin and at the spawn vault),
@@ -3517,6 +3525,7 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   open; then the director runs: call, line, kept.
 
 ### 17.8 Phase 4a: Aether (Skyborn's flight meter)
+Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's flight and its boosts ease down before land the client doesn't have yet.
 - Flight (SOAR) runs on Aether, 0..1: cruising drains a full meter in 60 s, boosting in ~19 s, hovering in ~38 s, each
   wingbeat 1.2%. Out of flight it fills in the sun (sky over the eyes, a bright sky) in 20 s, in shade or at night in
   90 s; inside an updraft's column it fills in 6 s, even while flying. Flight needs 8% to begin (less: a weak beat that
@@ -3653,6 +3662,7 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
 - Not yet: a race line's ghost on spires, and spires on cliffs and ravines.
 
 ### 17.12 The Wilds: windways
+Held at the edge of the land the client has (the edge hold, §28.9): a windway's carry eases down before land the client doesn't have yet.
 - **What**: streams of air between sky platforms (§17.9) that carry a glide from one deck to the next. Each platform
   is linked to its nearest within 1,100 (`Windways.MAX_LINK`); a pair has two lanes, one each way, each 10 to the
   right of the line between the centres (the two ways' tubes stay 20 apart). Never in Carillon's basin (no platform forms there).
@@ -3835,6 +3845,7 @@ Skyborn's earn path (the plan: "the Sky Archipelago Lord, rebuilt as a flight fi
   own enemies, and casting tuned for the air.
 
 ### 17.19 The Sovereign: the god form
+Held at the edge of the land the client has (the edge hold, §28.9): the god form's flight eases down before land the client doesn't have yet.
 The ladder's top (the plan: "the angel overlord"). Euan chose its trigger on 25 Oct: its own Ascend key, default U,
 needing full Aether, with a 10-minute cooldown.
 - **Earned** at the story's end: any ending this player's story has reached (`StoryHooks.endingSeen`: the Break, the
@@ -4200,6 +4211,7 @@ manual; stop the build at the first block; the payoff answers only the line; dan
   Sprint held into a plain glide (a run off a cliff) stays a glide.
 
 ### 17.31 The assisted swing (Euan, 2026-10-28: "it just brings you straight forward... you end up smashing into the thing that you connected to")
+Held at the edge of the land the client has (the edge hold, §28.9): the swing's carry and release ease down before land the client doesn't have yet.
 Plan, proof and runs: `docs/rope-swing/` (approval page https://claude.ai/artifact/Y9bbcaMnqUyBpjnG8HAgXX; all six
 decisions approved as recommended, "Go with the full plan"). The old rope bit the crosshair's block and reeled you to a
 fitted length with a yank (0.22) and threw away the catch's speed, so a swing aimed at a tree went into the tree. The
@@ -8490,8 +8502,33 @@ waiting for its roads, 7 s for the dispatcher), and the worldgen, IO and Awaken 
 hang that follows such a freeze (run 40716396298's watchdog dump) is the same freeze's: the client's
 `IntegratedServer.halt` queues a task for the server thread (`executeBlocking`, after its `isRunning` check) and joins
 it, but the server, held in that tick, handles the host's disconnect first, stops itself ("Stopping singleplayer server
-as player logged out") and never runs the task, so the Render thread waits forever (the world is saved). Not decided
-yet: bound the packet loop per tick (a Turbo mixin), or hold fast movement at the edge of the land the client has.
+as player logged out") and never runs the task, so the Render thread waits forever (the world is saved). Both fixes
+are built (Euan, 2026-10-28: "Do both: hold fast movement at the edge of generated land now, and build the Turbo
+mixin that caps packet handling per tick as a backstop"): the edge hold and the packet cap.
+**The edge hold** (core, `core.EdgeHold` for the math, `core.client.EdgeHoldClient` for the hook, 2026-10-28). Fast
+movement never carries a player into chunks their client doesn't have. Once a client tick, the local player's
+horizontal velocity is capped. The hook is the last listener to `MovementInputUpdateEvent`, which fires in
+`LocalPlayer.aiStep` just before `travel`. It reads the path 25 ticks (1.25 s) ahead, chunk by chunk: one lookup in the
+client's chunk storage per chunk the path crosses (`getChunk(x, z, FULL, false)`), no allocation, out to the render
+distance less one chunk. Where a chunk on the path is missing, the speed is capped at the distance to it over
+25 ticks, so the player arrives as the land comes in. The cap falls at most 12% a tick from the speed the player
+had, which feels like thick air or a headwind, never a wall. It never drops below 0.1 blocks a tick (2 b/s), so
+never a dead stop. It lifts the tick the chunk arrives. Vertical speed is the mover's own. Every fast mover moves the
+player by their velocity, so the one hook holds them all:
+- Skyborn's flight and its boosts (§17.1, §17.8, §17.19);
+- glides and windways (§17.1, §17.12);
+- the Tether's launch, zip and swing (§17.7, §17.31);
+- dashes and the movement powers (§6), whether set on the client or by the server's motion packets;
+- the pilot's `glide` (§13, Tours);
+- vanilla's elytra, firework boosts, riptide and creative or spectator flight.
+A mover that sets velocity later in a tick is held from the next tick, a tick's travel well inside the 1.25 s look.
+Riding is the mount's movement and isn't held. Teleports (Blink, the steps, commands) aren't velocity: the packet cap
+is their backstop. A hold of a second or more logs one line when it ends, at most every 10 s (`[edgehold] held N ticks
+at the edge of the land this client has, slowest S blocks a second`). In multiplayer it keeps a player's own move
+packets inside land the server has already sent them, so the server has made it.
+`core_edge_hold_math` checks the path's edge straight, through a corner, west of the origin and from a chunk that's
+missing. A flight at 40 b/s toward land missing beyond 40 blocks eases by at most 12% a tick and never stops. It never
+crosses before the land comes, and it's back to full speed within two ticks of it.
 Framings lay only the highroads through a place: the lanes round it would plan the regions about (48 s on the runner).
 Euan's 42 s freeze in a D-rank trial (2026-10-28, build 5cd4d985: "the mobs just stopped moving") was a player coming
 back from another level. Vanilla keeps an entity's supporting block (`mainSupportingBlockPos`) through a teleport to
