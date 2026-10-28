@@ -42,6 +42,8 @@ public final class AwakenClient {
         StoryClient.init(modBus);
         WorldClient.init(modBus);
         dev.awaken.gear.client.GearClient.init(modBus);
+        // before the anims client: the binoculars draw in the hand pass ahead of Hands, on a clean stack
+        dev.awaken.binoculars.client.BinocularsClient.init(modBus);
         dev.awaken.anims.client.AnimsClient.init(modBus);
         dev.awaken.body.client.BodyClient.init(modBus);
         dev.awaken.core.audio.client.AudioClient.init(modBus);

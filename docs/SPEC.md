@@ -328,6 +328,8 @@ of `AwakenConfig.Client`.
   `core.api.CameraHooks` (client): `installToggle(BooleanSupplier)`, `toggleView()` (the View key asks it first; with
   Shoulder Surfing it flips first person and the shoulder view, §17.13), `zoom()` / `installZoom(DoubleSupplier)` (the
   binoculars' magnification now, 1 when none, §39: Far Sight's panorama steps aside while it is over 1.05).
+  `core.api.FarGround` (client): `install(Sampler, BooleanSupplier ready)`, `ground(x, z)` (the far land's ground top, NaN when
+  unknown; thread-safe, sampled off the render thread), `ready()` (the far land drew lately). Far Sight installs it (§39.8).
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
@@ -8642,18 +8644,27 @@ way), marking the centre as your destination, and reading a creature's plate at 
 - **Focus pull**: a short softness that clears as the view arrives: `focusRaiseMs` (250) after the raise, `focusStepMs` (120) after a
   step to `focusFromStep` (6×) or more. Drawn as stepped box-blur post chains (`awaken:binoculars_focus_1..3`) swapped in the
   player's active post effects, like the screen moments. Off with reduced motion.
-- **Moving**: a slow walk (`walk` 0.2 of normal, the spyglass's) through `MovementInputUpdateEvent`. Sprinting lowers them.
-  Swimming, riding, gliding and flying are allowed.
+- **Moving**: a slow walk (`walk` 0.2 of normal, the spyglass's) while they're up. 26.3's `ClientInput.moveVector` is protected
+  and the project has no access transformer, so it is a client-side transient `MOVEMENT_SPEED` modifier
+  (`awaken:binoculars_walk`, ADD_MULTIPLIED_TOTAL, re-added if an attribute sync drops it), the way the tactical sprint
+  changes speed; its share is divided back out of the speed FOV effect (`ComputeFovModifierEvent`), so it never narrows
+  the view. Sprinting lowers them (raising stops a sprint). Swimming, riding, gliding and flying are allowed.
+- **Which FOV**: the camera computes its angles, then the world's FOV, then the hand pass's (always 70) through the same
+  `ComputeFov` event. Only the first FOV after the angles (or the frame's start) is zoomed, so the hands and the binoculars in
+  them never zoom.
 
 ### 39.4 The hands and the look (`client.GlassHands`, `client.GlassOverlay`)
-- **Raise**: a Hands view stance (§24) from the raise's progress: what you hold eases away (`View.climb`), both fists come up to
+- **Raise**: a Hands view stance (§24, not fp clips: a clip can't turn back halfway) from the raise's progress: what you hold eases away (`View.climb`), both fists come up to
   the barrels' sides and the binoculars (our model, the display-only item `awaken:binoculars`) rise to the eyes. From `eyecup` to 1
-  the binoculars come toward the eye and the fists leave the frame; the lens edge fades in. With Hands off (broken or the
-  animation setting off), no hands: the lens edge fades in.
+  the binoculars come toward the eye and the fists leave the frame; the lens edge fades in. Past `eyecupEnd` nothing is drawn
+  and the fists wait under the frame (so vanilla's hands stay hidden). Up to 0.6 of the raise they rise from below, tilted
+  objectives-down 38°; 0.6 to 0.85 they come to the eyes. The binoculars are drawn by the binoculars' own `RenderHandEvent`
+  listener at HIGHEST, registered before Hands (`BinocularsClient` initialises before the anims client), on a clean stack,
+  through `ItemDisplayContext.NONE` at scale 0.5.
 - **Lens edge** (our own art, `textures/gui/binoculars/edge_twin.png`, `edge_single.png`): soft dark outside, a thin brass inner ring,
   a faint colour fringe at the rim, a hint of glass. Setting: twin (default), single, off.
-- **HUD** while up: hidden except chat, subtitles and the important notices (`awaken` layers that mark themselves important;
-  `OpeningHud`'s rule). The readout, bottom centre on the glass: `8× · 312 m · NE`. F1 hides the readout and keeps the edge.
+- **HUD** while at the eyes: hidden except chat, subtitles, titles, the action bar line, the tab list and Awaken's notices (the
+  `awaken:signal` layer: toasts, the Now line that points to a marked spot). Our own layer sits above `camera_overlays`. The readout, bottom centre on the glass: `8× · 312 m · NE`. F1 hides the readout and keeps the edge.
 - **Readout**: the distance to what's at the centre: a block ray through loaded chunks (every 4th frame, out to the render
   distance), then Far Sight's ground (39.8), else "far". Bearing in compass letters.
 
@@ -8687,6 +8698,10 @@ readout says "Too far to tell" for a moment and nothing is set. The server check
 - `enabled` (true; off frees the key), `key_mode` (TAP_HOLD, HOLD, TOGGLE), `look_speed` (100, 50..150 %), `sway` (true), `edge`
   (TWIN, SINGLE, OFF), `readout` (true), `last_step` (4).
 - `/awaken binoculars peek` (client): third person from the front for five seconds with them up, to see yourself.
+- **Files**: model, texture and lens edges from `tools/art/specs/binoculars.py` (`items/binoculars.json`,
+  `models/item/binoculars.json`, `textures/item/binoculars.png`, `textures/gui/binoculars/edge_*.png` with blur); sounds from
+  `tools/art/specs/binoculars_sounds.py` (`sounds/ui_binoculars_*.ogg`, ui loudness window); focus chains
+  `post_effect/binoculars_focus_{1,2,3}.json` (box blur, radius 4, 2.5, 1.2).
 - **Tests** (`binoculars_`): `binoculars_state` (the key's three modes, a raise that turns back, every cause of lowering, the
   instant ones in the same frame), `binoculars_zoom` (steps, memory, one step a scroll, FOV 30 to 110 with speed effects, the
   spring's overshoot and settle at 120 and 30 fps, reduced motion), `binoculars_sense` (on-screen look speed within 2% at every
