@@ -64,7 +64,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Hive Regent | Lord | Hive | Flier | kit | A, the Empress | ✓ 3b132661 | ✓ 3b132661 | — |
 | The Drowned Archivist | Lord | Drowned | Caster | kit | A, the Lectern | ✓ faedcbea | ✓ faedcbea | — |
 | The Lantern Broker | Lord | Lantern | Construct | kit | A, the Pedlar | ✓ b01fd174 | ✓ b01fd174 | — |
-| The Abbot of Frost | Lord | Frost | Caster | evoker ×1.7 | B, the Pilgrim | — | — | — |
+| The Abbot of Frost | Lord | Frost | Caster | kit | B, the Pilgrim | ✓ 869d54b2 | ✓ 869d54b2 | — |
 | The Mirror Knight | Lord | Mirror | Duelist | player ×1.4 | C, the Masked Duelist | — | — | — |
 | The Sleeper | Lord | Nightmare | Brute | zombie ×2.2 | B, the Four-Poster | — | — | — |
 | The Sky Leviathan | Lord | Sky | Serpent | cube serpent ×3.2 | B, the Ray | — | — | — |
