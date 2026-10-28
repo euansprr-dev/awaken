@@ -43,7 +43,7 @@ public final class ArmsPayloads {
 
     /**
      * Server → the player: what their press or guard did. MOVE: the move the server runs for seq (aux = move id,
-     * aux2 = cadence); HIT: entity struck (aux = hit-stop ms, aux2 = the move); DEFLECT / BLOCK / GUARD_BREAK /
+     * aux2 = cadence); HIT: entity struck (aux = hit-stop ms, aux2 = the {@link dev.awaken.arms.Blow}, packed); DEFLECT / BLOCK / GUARD_BREAK /
      * PERFECT_DODGE / EVADE: entity = the attacker; BREAK: entity's stance broke; REFUSE: seq refused; RESONANCE:
      * aux = the meter; HURT: a blow landed on you (entity = who struck, aux = the yaw it came from, aux2 = damage in
      * tenths); SHOT: your guard stopped a shot (entity = who loosed it, aux = DEFLECT or BLOCK, aux2 = the world yaw

@@ -293,5 +293,7 @@
   "subtitles.awaken.arms.hurt": "You're hit",
   "subtitles.awaken.arms.heartbeat": "Heartbeat pounds",
   "subtitles.awaken.arms.hit_blunt": "Heavy blow crashes home",
-  "subtitles.awaken.arms.glance": "Shot glances off a blade"
+  "subtitles.awaken.arms.glance": "Shot glances off a blade",
+  "subtitles.awaken.arms.kill": "Foe falls",
+  "subtitles.awaken.arms.cleave": "Blade cleaves through"
 }

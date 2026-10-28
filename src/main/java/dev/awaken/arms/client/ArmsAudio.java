@@ -33,6 +33,16 @@ final class ArmsAudio {
         play(e, ArmsSounds.impact(e, move, def, style == null ? null : style.id()), 1.0F, ArmsSounds.impactPitch(e, def));
     }
 
+    /** A killing blow, over its impact: the body's drop by what it is made of (SPEC §25 "Fight Feel"). */
+    static void kill(Entity e) {
+        play(e, ArmsSounds.KILL.get(), 1.0F, ArmsSounds.killPitch(e));
+    }
+
+    /** One more body in the sweep: the cleave, a semitone up for each. */
+    static void cleave(Entity e, int bodies) {
+        play(e, ArmsSounds.CLEAVE.get(), 1.0F, ArmsSounds.cleavePitch(bodies));
+    }
+
     static void deflect(Player p) {
         play(p, ArmsSounds.DEFLECT.get(), 1.0F, 1.0F);
     }
