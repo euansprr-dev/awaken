@@ -198,7 +198,8 @@ reverse, left/right are 90° to it, two keys are the diagonal, opposite keys can
 fake players) reads `ServerPlayer.getLastClientInput()`. Only a forward-leaning air dash lifts with the look's pitch; sideways
 and back dashes run flat. Blink teleports along the same steered line (`Moves.steer`). Test `powers_dash_goes_where_you_move`.
 A blink aimed into the ground (the crosshair a little low while standing) glides along it at the last free height instead of
-stopping at its first step (`Moves.blinkTarget`: Blink, Lightning Step, Shadow Step). Test `powers_blink_low_aim`.
+stopping at its first step: `Moves.blinkTarget` (Blink, Lightning Step, Shadow Step) and `Moves.phaseTarget` (Ghost Step,
+which still passes walls at that height). Test `powers_blink_low_aim`.
 Feel: hit-stop 40–80 ms on heavy hits (client time scale on the hit entity's render + camera kick), shake toggle in config.
 
 Launch power list (≥45): see `powers/PowerCatalog.java` header for the authoritative list with numbers.

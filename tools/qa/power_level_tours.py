@@ -30,6 +30,9 @@ GROUPS = {
 LEVELS = (1, 3, 5)
 # what a power needs standing before it casts: a construct to throw, a decoy to swap with
 BEFORE = {"collapse": "rampart", "echo_swap": "decoy"}
+# what else its shot needs: a wall in reach for Waking Dream's door; a blow landed for Twin Strike's echo to repeat
+SETUP = {"waking_dream": ["cmd fill -2 200 4 3 203 4 minecraft:deepslate_tiles"]}
+AFTER = {"twin_strike": ["cmd damage @e[type=minecraft:husk,limit=1,sort=nearest] 4 minecraft:player_attack by @s"]}
 HUSK = '{NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}'
 # the first in melee reach at your side (out of the front camera's line), the second where your aim meets the floor
 HUSKS = [(1.2, 1.9), (-0.6, 7.5), (2.5, 11.5)]
@@ -88,6 +91,8 @@ def segment(pid, name, mode, max_ticks, level, release, passive=False):
                         f"shotnow pl_{pid}_{level}_front", "camera back", "wait 8", f"shotnow pl_{pid}_{level}_back", ""]
     if pid in BEFORE:
         lines += [f"cmd awaken admin power showcase {BEFORE[pid]} 1", f"cmd awaken admin power cast {BEFORE[pid]}", "wait 12"]
+    lines += SETUP.get(pid, [])
+    after = AFTER.get(pid, [])
     lines += [
         f"cmd awaken admin power showcase {pid} {level}",
         "camera front",
@@ -96,7 +101,8 @@ def segment(pid, name, mode, max_ticks, level, release, passive=False):
         "cmd tick rate 5",
         "wait 2",
         f"cmd awaken admin power cast {pid}",
-        f"wait {max(0, front - CMD_WAIT)}",
+    ] + after + [
+        f"wait {max(0, front - CMD_WAIT * (1 + len(after)))}",
         f"shotnow pl_{pid}_{level}_front",
         "camera back",
         f"wait {back}",

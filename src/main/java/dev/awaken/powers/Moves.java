@@ -104,17 +104,30 @@ public final class Moves {
         return best;
     }
 
-    /** Like {@link #blinkTarget} but may pass through solid walls up to {@code wallLimit} blocks thick. */
+    /**
+     * Like {@link #blinkTarget} but may pass through solid walls up to {@code wallLimit} blocks thick. Aimed down into the
+     * ground it glides along it like a blink (the ground is not a wall to phase through), and still passes walls at that height.
+     */
     public static Vec3 phaseTarget(ServerPlayer p, Vec3 dir, double max, int wallLimit) {
         Vec3 start = p.position();
         Vec3 best = start;
         Vec3 u = dir.normalize();
         AABB box = p.getBoundingBox();
         double inWall = 0;
+        boolean glide = false;
         for (double d = 0.5; d <= max + wallLimit; d += 0.5) {
             Vec3 at = start.add(u.scale(d));
-            AABB moved = box.move(at.subtract(start));
-            if (p.level().noCollision(p, moved)) {
+            if (glide) at = new Vec3(at.x, best.y, at.z);
+            boolean free = p.level().noCollision(p, box.move(at.subtract(start)));
+            if (!free && !glide && u.y < 0 && inWall == 0) {
+                Vec3 level = new Vec3(at.x, best.y, at.z);
+                if (p.level().noCollision(p, box.move(level.subtract(start)))) {
+                    glide = true;
+                    at = level;
+                    free = true;
+                }
+            }
+            if (free) {
                 best = at;
                 inWall = 0;
                 if (d >= max) break;
