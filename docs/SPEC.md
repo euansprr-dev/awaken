@@ -9968,6 +9968,52 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     is still (4.8 s). Its hands and feet rest 0.3 px above the floor: the ground pass takes anything 0.2 px or less
     above it as in it, and was twisting the arms at rest.
   - **Meter.** Worst kink outside a strike 4.8°; held at most 11% on every move; dips at most 27%.
+- **The Choirmaster, the Cantor** (body and motion, `kit/bosses/guardian_choir.py`). "The singing was coming from her all
+  along." A great octopus 3.7 blocks tall. She stands on six arms that arch out from under her crown and spread along
+  the floor, their tips curling up; her two front arms are raised and curled like a conductor's. Her mantle swells up
+  behind her head and leans back. At her front a horn (her siphon) opens into a bell whose throat glows. Her skin is
+  mottled dusky pink, darker over the tops of her arms and her mantle, with blue rings (cyan round a dark heart), pale
+  sucker discs under her arms, and gold eyes barred with black. 114 cubes (684 faces) on 64 bones. The hitbox is
+  0.8 x 1.9 at the def's scale 2 (1.6 x 3.8 blocks), round her crown and mantle.
+  - **Standing arms.** Each standing arm's first four segments are solved in its own upright plane from the crown to
+    where it meets the floor, from three numbers: the root's pitch and a bend that grows along the arm. The fifth lies
+    along the floor and the last two curl up. The rest is solved exactly. Posed, the solve is a least-squares one: the
+    tip goes onto its point, the arm's angle onto the floor may give, each joint stays over the floor, and the arm stays
+    near its rest shape. Her arms stand near their full reach, and an exact solve there swung them by 60 degrees for a
+    3 px move of the tip. Each clip's solves start from the rest and follow on tick by tick, so a loop meets itself. On
+    top of the solve, the arm writhes along its length in the two ways that leave its tip where it is (`_null`), so no
+    standing arm is ever still and none slides. Through a blow they brace: they grip and curl tighter through the
+    wind-up, hold it into the recovery (a string's next blow links on still braced), and let go before it ends. The
+    pinned arms are keyed every other tick.
+  - **The idle.** She breathes, her mantle swelling (a scale track) and swaying up behind her, and hums, her horn's
+    mouth opening a little with each breath. Her front arms lead a slow measure, rising and falling out of step. Her
+    standing arms writhe, and now and then one lifts its tip off the floor and sets it down again. She walks on her arms
+    one after another round her, each stride centred inside that arm's reach (the front arms step behind their rest,
+    the back ones ahead of it, and the back ones gather under her as they come forward). She runs on two threes by
+    turns, low, her front arms reaching out before her.
+  - **Her blows.** The Lash draws a front arm up and across to her far side, her body winding after it and her other
+    front arm flung up behind her for balance. Then she whips it across low in front of her: it flies out straight in
+    the middle of the swing, the lag down its length is the whip, and it cracks out past her other side. Then the other
+    arm (a string, then the Breaker). The Breaker gathers both front arms low and wide, scoops them out round her
+    sides and up high over her like a wave about to break, holds, and crashes them down on the floor before her.
+    Whoever is behind gets a back arm swept low across the floor behind her. The Jet crouches with her arms drawn in
+    under her and her mantle swelling, her horn turned back under her. She shoots 7 blocks along the floor at you,
+    streamlined, every arm streaming out behind and rippling, and lands spreading every arm wide over you.
+  - **Her songs.** The Hymn of Salt: she rises tall and beats four beats with both front arms, her horn's mouth flaring
+    and her mantle pulsing on each. The Refrain: she wraps her front arms crossed round herself and sways, humming. The
+    Choir: one long note with her mantle swollen, her front arms reaching down to the floor and sweeping up from it
+    twice. Undertow: both front arms reach far out at you, then haul back hand over hand. Rising Tide (the signature):
+    her four front arms rise round her one after another, rippling, her body rising tall on the back four and
+    trembling, and she brings all four down at once. She waits sunk down on her curled arms, her front arms rolled up
+    on the floor before her and her mantle drooping. Her intro rises out of it: she draws herself up, takes a breath,
+    lifts her front arms wide like a conductor before the first note, and sings it.
+  - **The death.** She rears up with her front arms flung up, shudders, and sinks. Every arm slides out flat over the
+    floor in a limp curve, and her mantle slumps forward over her head. She breathes once, two arms curl their tips up,
+    and she is still (4.6 s). The ground pass skips deaths, so she is laid out by hand: each arm slopes down onto the
+    floor against her crown's lean, its tip resting on it.
+  - **Wind-ups.** The kit's readability check averages every posed bone, and 42 of hers are standing arms. Their brace,
+    and her body and other arm wound further, carry every blow's wind-up past it (at least 14 degrees).
+  - **Meter.** Worst kink outside a strike 4.1°; held at most 11% on every move; dips at most 38%.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 

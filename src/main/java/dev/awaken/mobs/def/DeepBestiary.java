@@ -125,7 +125,7 @@ final class DeepBestiary {
                 .phase(1.0F, "The Thornback lowers its horns.", a(CHARGE, "Thornback Charge").heavy(), a(GUST, "Gale of Petals").radius(10).power(0.8F))
                 .phase(0.5F, "The vines tighten.", a(NOVA, "Thorn Spray").n(14).bolt(BoltKind.THORN), a(SUMMON, "Lurkers").summon("vine_lurker").n(2), a(CHARGE, "Thornback Charge"))
                 .parts(P("thornback_horn", "Thornback Horn", "leaf")).build());
-        out.add(m("guardian_choir", "The Choirmaster", Theme.CHOIR, Tier.GUARDIAN, Model.WITCH, "Hymns of salt; when the water rises, the choir sings with her").hp(30).dmg(4.5).spd(0.25).scale(2.0F).tint(0x90C8E0).bar(BossBarColor.BLUE).arena(22)
+        out.add(m("guardian_choir", "The Choirmaster", Theme.CHOIR, Tier.GUARDIAN, Model.WITCH, "Hymns of salt; when the water rises, the choir sings with her").hp(30).dmg(4.5).spd(0.25).scale(2.0F).size(0.8F, 1.9F).tint(0x90C8E0).bar(BossBarColor.BLUE).arena(22)
                 .intro("The singing was coming from her all along.")
                 .phase(1.0F, "The Choirmaster takes a breath.", a(BOLT, "Hymn of Salt").n(4).bolt(BoltKind.WATER), a(HEAL, "Refrain").power(0.1F))
                 .phase(0.5F, "The water rises.", a(AURA, "Rising Tide").radius(9).bolt(BoltKind.WATER).fx(MobEffects.SLOWNESS, 40, 1).heavy(), a(SUMMON, "The Choir").summon("choir_drowned").n(2), a(PULL, "Undertow"))
