@@ -172,15 +172,20 @@ within 8 blocks) windows become a compact toast and queue. Actions answered with
 Visual: deep glass `#0F1724` at 88% alpha, edge `#7FC3FF`, corner brackets, title white, labels pale, "NOT TRUE YET" amber
 `#FFCF7A`, warnings `#FF8A7A`.
 
-NPC dialogue (Euan, 2026-10-28): the use key (right-click by default) advances one visible spoken subtitle chunk per
-physical press. Quest/System speech, Opening cinematic speech and city/village overhead replies share this rule; long
-lines retain every word across chunks. Automatic subtitle timing remains available. The last line consumes its click,
-so it cannot also restart the conversation, use an item or take a handover. Holding use and the offhand event never
-advance again; an opening interaction waits up to one second for its server reply, including fast repeat clicks. Explicit choices retain their answer keys and
-cannot be selected by advancing speech. Opening scene timing, scripted rewards and handover validation remain
-server-owned. A citizen's directed reply is dismissed when looking at that citizen; ambient speech elsewhere does not
-capture world use. Veil spirits also accept use to start/continue; each continuation includes the last heard line index
-and the server rejects duplicate, stale, distant or completed requests. Focus remains an alternate spirit talk key.
+NPC dialogue (Euan, 2026-10-28; Codex, reviewed): NPC speech (`SignalWindow.Builder.dialogue()`: townsfolk, quest
+givers, Wayfarers, Vael, Veil spirits) is shown as speech, the speaker's name before the line ("Hale: Hold on."), paged
+in whole sentences like any story line; a speaker's choice card stays a card with its own keys. The use key
+(right-click by default) goes on one step per physical press: the first press finishes the line being typed, the next
+shows the next page, then the next line (a Veil spirit's next line is asked of the server, which refuses a duplicate,
+stale, distant or finished request). While a press would go on, a small bobbing chevron sits beside the last line.
+Speech only takes the use key inside a conversation the player started (`Dialogue.talking()`): a use on an NPC (or
+Focus on a spirit) opens one for 5 s while the reply comes, and it lasts while speech is up and 2 s after. Speech that
+simply arrives (a quest step finished in the field, Vael's timed lines) never costs a shield block, a meal or a bow
+draw. Inside a conversation the last press is used up, so it can't also restart the talk, use an item or take a
+handover; holding use and the offhand never go on twice, and a fast second click waits for the first reply (1 s).
+Without presses everything still plays on its own timing. The Opening's speech goes on with use while it shows; a
+citizen's reply over their head goes when you look at them (within 6 blocks) and press. Timing, rewards and handovers
+stay server-owned. Test `signal_dialogue_use_once`, `veil_dialogue_continuation`.
 
 The band (key **K**, §30): six pages, Status · Powers · Journal · Truths · Codex · Map. Status shows level, rank, path,
 title and XP, the stats with + buttons when points are unspent, then the Journal; Powers holds the loadout (provided by
@@ -471,6 +476,7 @@ of `AwakenConfig.Client`.
 - `dev.awaken.core.api.Dialogue` (client) — `register(priority, Source)` installs a speech source with `active/advance`;
   `use(mainHand)` consumes/advances once per physical press, `capture/release` guard the opening interaction and release.
   `onFinished/finished(topic)` lets server-paged speech request its next line without reaching into another HUD.
+  `talking()`: the player is in a conversation they started (speech that needs one checks it before taking use).
 - `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
   (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
   The HUD under screens (Euan, 2026-10-27: the gate's run panel drew over the K menu): the game draws the HUD under

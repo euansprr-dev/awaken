@@ -109,7 +109,10 @@ final class VeilInput {
         }
         while (AwakenKeys.FOCUS.consumeClick()) {
             Entity e = pick(mc, 7, en -> en instanceof VeilSpirit);
-            if (e != null) send(new VeilPayloads.Action(VeilPayloads.Action.TALK, e.getId(), BlockPos.ZERO));
+            if (e != null) {
+                send(new VeilPayloads.Action(VeilPayloads.Action.TALK, e.getId(), BlockPos.ZERO));
+                dev.awaken.core.api.Dialogue.capture(); // a conversation: use goes on from here
+            }
         }
         while (AwakenKeys.BIND.consumeClick()) {
             if (possessing) send(new VeilPayloads.Action(VeilPayloads.Action.RELEASE, -1, BlockPos.ZERO));

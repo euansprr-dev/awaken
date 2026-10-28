@@ -17,6 +17,13 @@ public final class Dialogue {
     private static final List<Entry> SOURCES = new ArrayList<>();
     private static final List<Consumer<String>> FINISHED = new ArrayList<>();
     private static final Press PRESS = new Press();
+    /**
+     * A conversation the player started (a use on an NPC, or a press that spoke): only then does speech that needs
+     * one ({@link #talking()}) take the use key. Speech that simply arrives (a quest step done in the field, a timed
+     * scene line) never costs a shield block, a meal or a bow draw. It lasts while speech is up and 2 s after.
+     */
+    private static int talking;
+    static final int REPLY_TICKS = 100, LINGER_TICKS = 40;
 
     /** Install once at client startup. Higher priority wins when two speech layers overlap. */
     public static void register(int priority, Source source) {
@@ -38,13 +45,23 @@ public final class Dialogue {
         }
         Press.Result result = PRESS.use(mainHand, source != null);
         if (result == Press.Result.ADVANCE) source.advance();
+        if (result != Press.Result.PASS && source != null) talking = Math.max(talking, LINGER_TICKS);
         return result != Press.Result.PASS;
     }
     /** The opening NPC interaction went to the server; repeats wait for a fresh physical press. */
-    public static void capture() { PRESS.capture(); }
+    public static void capture() { PRESS.capture(); talking = Math.max(talking, REPLY_TICKS); }
     public static void release() { PRESS.release(); }
-    public static void tick() { PRESS.tick(); }
-    public static void reset() { PRESS.reset(); }
+    /** Whether the player is in a conversation they started (see {@link #talking}). */
+    public static boolean talking() { return talking > 0; }
+    public static void tick() {
+        PRESS.tick();
+        if (talking <= 0) return;
+        for (int i = 0; i < SOURCES.size(); i++) {
+            if (SOURCES.get(i).source.active()) { talking = Math.max(talking, LINGER_TICKS); break; }
+        }
+        talking--;
+    }
+    public static void reset() { PRESS.reset(); talking = 0; }
 
     /** Physical press latch, independent of Minecraft so repeat/dual-hand/race cases are testable. */
     public static final class Press {

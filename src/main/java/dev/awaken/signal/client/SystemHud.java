@@ -367,15 +367,21 @@ public final class SystemHud {
         return story != null || !STORIES.isEmpty();
     }
 
+    /** NPC speech on screen or next to be said, or a speaker's choice card (a press then waits for its keys). */
     static boolean dialogueActive() {
         return story != null && story.w.dialogue()
                 || story == null && !STORIES.isEmpty() && STORIES.peekFirst().dialogue()
                 || DECK.current() != null && DECK.current().window().dialogue();
     }
 
+    /** One press: finish the line being typed, else the next page, else the next line (the server may send it). */
     static void advanceDialogue() {
         if (story == null) { tickStory(Minecraft.getInstance()); return; }
         if (!story.w.dialogue() || story.w.action().isPresent()) return;
+        if (story.closingAt < 0 && story.age < story.typeTicks) { // the first press finishes the line being typed
+            story.age = story.typeTicks;
+            return;
+        }
         if (!story.pager.done()) {
             nextChunk(Minecraft.getInstance());
             story.first = false;
@@ -694,6 +700,15 @@ public final class SystemHud {
             int lx = (w0 - font.width(full)) / 2; // centred on the whole line so it doesn't shift while typing
             if (!part.isEmpty()) HudLook.text(g, font, part, lx, ty, Glass.a(colour, alpha), true);
             ty += SignalLayout.LINE;
+        }
+        // a speaker waits on you: a small bobbing chevron beside the last line, only while a press would go on
+        if (left >= 0 && st.closingAt < 0 && st.w.dialogue() && dev.awaken.core.api.Dialogue.talking()) {
+            double t = (st.age - st.typeTicks + pt) * 0.22;
+            int c = Glass.a(Glass.EDGE, alpha * (0.6f + 0.4f * (float) Math.sin(t)));
+            int cx = bx + widest + 12, cy = ty - SignalLayout.LINE + 2 + (int) Math.round(Math.sin(t));
+            g.fill(cx - 2, cy, cx + 3, cy + 1, c);
+            g.fill(cx - 1, cy + 1, cx + 2, cy + 2, c);
+            g.fill(cx, cy + 2, cx + 1, cy + 3, c);
         }
         g.pose().popMatrix();
     }

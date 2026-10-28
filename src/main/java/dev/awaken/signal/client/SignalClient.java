@@ -37,7 +37,8 @@ public final class SignalClient {
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered.class, e -> Herald.acted());
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ScreenEvent.MouseButtonPressed.Post.class, e -> Herald.acted());
         dev.awaken.core.api.Dialogue.register(50, new dev.awaken.core.api.Dialogue.Source() {
-            public boolean active() { return classic() ? ClassicHud.dialogueActive() : SystemHud.dialogueActive(); }
+            // the System's speech takes the use key only inside a conversation the player started (Dialogue.talking)
+            public boolean active() { return dev.awaken.core.api.Dialogue.talking() && (classic() ? ClassicHud.dialogueActive() : SystemHud.dialogueActive()); }
             public void advance() { if (classic()) ClassicHud.advanceDialogue(); else SystemHud.advanceDialogue(); }
         });
         SignalSections.register();

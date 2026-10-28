@@ -35,8 +35,9 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
 
         /** What AUTO resolves to for a message. */
         public static Presentation resolve(SignalWindow w) {
-            if (w.action().isPresent()) return CHOICE;
             if (w.presentation() != AUTO) return w.presentation();
+            if (w.action().isPresent()) return CHOICE;
+            if (w.dialogue()) return STORY; // spoken: subtitles, with the speaker's name before the line
             return switch (w.kind()) {
                 case REVELATION -> STORY;
                 case GATE -> PANEL;
@@ -143,8 +144,8 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
             this.no = Component.literal(noDoes);
             return this;
         }
-        /** Spoken NPC text; an attached action remains a choice and still requires its own answer. */
-        public Builder dialogue() { this.topic = "npc_dialogue"; this.presentation = Presentation.STORY; return this; }
+        /** Spoken NPC text (shown as speech); an attached action remains a choice and still requires its own answer. */
+        public Builder dialogue() { this.topic = "npc_dialogue"; return this; }
         public Builder presentation(Presentation p) { this.presentation = p; return this; }
         /** Info: how long a card is shown. A decision: how long it stays answerable (keep it within the handler's own offer). */
         public Builder ttl(int ticks) { this.ttl = ticks; return this; }

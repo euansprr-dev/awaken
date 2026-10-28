@@ -419,6 +419,16 @@ final class SignalTests {
             press.release();
             for (int i = 0; i < 20; i++) press.tick();
             h.assertTrue(press.use(true, false) == pass, "a speaker with no reply cannot leave use locked");
+            // the System's speech takes use only inside a conversation the player started (no sources on a server)
+            dev.awaken.core.api.Dialogue.reset();
+            h.assertFalse(dev.awaken.core.api.Dialogue.talking(), "speech that just arrives never takes the use key");
+            dev.awaken.core.api.Dialogue.capture();
+            h.assertTrue(dev.awaken.core.api.Dialogue.talking(), "using on a speaker opens a conversation");
+            for (int i = 0; i < 100; i++) dev.awaken.core.api.Dialogue.tick();
+            h.assertFalse(dev.awaken.core.api.Dialogue.talking(), "a conversation with no speech closes after its reply time");
+            dev.awaken.core.api.Dialogue.reset();
+            h.assertTrue(SignalWindow.Presentation.resolve(SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Hale: Hold on."))
+                    .dialogue().build()) == SignalWindow.Presentation.STORY, "a spoken line is shown as speech");
             var choice = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Hale"))
                     .dialogue().choice("signaltest:weapon", "Take it", "Wait").build();
             var deck = new ChoiceDeck();
