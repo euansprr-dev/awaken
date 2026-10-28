@@ -54,6 +54,7 @@ public final class PowersModule {
         MoveTwistTests.register(); // the Awakened Body's family twists
         MasteryCommands.register();
         MasteryTests.register();
+        PowerLadderTests.register(); // the ladders (SPEC 34.9)
         TogetherPowerTests.register();
         StarterTests.register();
         PowersTests.registerIsolated(modBus);

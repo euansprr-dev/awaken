@@ -81,7 +81,8 @@ final class MasteryTests {
             float dmgCore = Cast.of(byCore, beam).dmg(), dmgUse = Cast.of(byUse, beam).dmg();
             float levelOne = PowerMath.damage(beam.damage, dev.awaken.progression.Progression.profile(byUse).level(),
                     dev.awaken.progression.Progression.stat(byUse, beam.scaling), 1, 1f);
-            h.assertTrue(Math.abs(dmgCore - dmgUse) < 1e-4 && dmgUse > levelOne * 1.1f, "same, stronger damage: " + dmgCore + " vs " + dmgUse
+            // a level is +6% (SPEC 34.2)
+            h.assertTrue(Math.abs(dmgCore - dmgUse) < 1e-4 && dmgUse > levelOne * 1.05f, "same, stronger damage: " + dmgCore + " vs " + dmgUse
                     + " (level 1: " + levelOne + ")");
             h.assertTrue(PowerMath.cooldown(beam.cooldown, 1f, a.get(id).level(), 0) == PowerMath.cooldown(beam.cooldown, 1f, b.get(id).level(), 0)
                     && PowerMath.cooldown(beam.cooldown, 1f, b.get(id).level(), 0) < beam.cooldown, "same, shorter cooldown");
@@ -107,7 +108,7 @@ final class MasteryTests {
             var tag = (CompoundTag) Loadout.CODEC.encodeStart(NbtOps.INSTANCE, l).getOrThrow();
             Loadout q = Loadout.CODEC.parse(NbtOps.INSTANCE, tag).getOrThrow();
             h.assertTrue(Math.abs(q.mastery("awaken:beam") - 1234.5f) < 1e-3 && q.mastery("awaken:ghost") == 0, "bars round trip");
-            h.assertTrue(tag.getInt("schema").orElse(0) == Loadout.SCHEMA && Loadout.SCHEMA == 2, "written as schema 2");
+            h.assertTrue(tag.getInt("schema").orElse(0) == Loadout.SCHEMA && Loadout.SCHEMA >= 2, "written as the current schema");
             tag.remove("mastery");
             tag.putInt("schema", 1);
             Loadout old = Loadout.CODEC.parse(NbtOps.INSTANCE, tag).getOrThrow();

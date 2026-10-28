@@ -43,7 +43,7 @@ public final class Riders {
     public static void onHit(Cast c, LivingEntity target, float amount, Forces.@Nullable Force force) {
         if (depth > 0 || c.kit.onHit.length == 0) return;
         long now = c.now();
-        boolean free = now - c.riderTick >= THROTTLE;
+        boolean free = c.riderTick == Long.MIN_VALUE || now - c.riderTick >= THROTTLE; // MIN_VALUE: none yet (now - MIN overflows)
         boolean used = false;
         depth++;
         try {

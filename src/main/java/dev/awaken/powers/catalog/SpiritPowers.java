@@ -246,7 +246,7 @@ public final class SpiritPowers {
         int spi = Progression.stat(c.player, Stat.SPI);
         float missing = c.player.getMaxHealth() - c.player.getHealth();
         // Lotus Ring (2): heals more
-        float total = (float) ((4 + 0.2 * spi + 0.2 * missing) * c.v.dmg() * (1 + 0.12 * (c.powerLevel - 1)) * (1 + c.num(2, "more", 0f)));
+        float total = (float) ((4 + 0.2 * spi + 0.2 * missing) * c.v.dmg() * dev.awaken.powers.PowerMath.powerLevelScale(c.powerLevel) * (1 + c.num(2, "more", 0f)));
         if (c.step(5)) bloom(c, total);
         cleanse(c.player);
         c.sound(PowerSounds.HEAL, 1f, 1.1f);

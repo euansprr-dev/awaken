@@ -8566,6 +8566,22 @@ later and fainter) and scale. Level 5 draws every effect of the power in its fam
 after the old ones). New sprites: family sigils, lotus petal, flame feather, stone plate. Budgets: levels 2 and 4 add at most one
 mesh and +20% sprites, level 3 at most two meshes, level 5 at most four; a held level-5 beam at most 12 meshes and 80 sprites.
 
+**34.5b Body, sound and Lens.** `tools/art/specs/power_level_gestures.py` writes each profiled power's level-3 and level-5
+clips as edits on its level-1 clips: `p_<power>_l3` (the family's accent: a step, a deeper lean, a hang, the push held, lower, a
+held beat, a firm set, the lock, a lift) and `p_<power>_l5` (the power's own new gesture, its level-5 body line), with
+first-person twins `fp_p_<power>_l3|_l5` (instant casts: the hands hold the release as the body does, and reach 15% further at
+5). A channel's levels lean into its hold (`_hold`) and strike differently on the let-go (`_end`). The release tick never moves,
+so a level never makes a power slower to use. casts.json rows carry `levels: {"3": {...}, "5": {...}}` (clip names, and a Lens
+look at 5); `CastProfiles.at(profile, level)` returns that level's row (the same id, timing and moments), picked from the event's
+level bits on every client and from the local loadout when predicting the press. The five powers still on family poses (Ground
+Slam, Meteor Dive, Hover, Flight, Leap) keep them at every level: a profile would replace their explicit slam, dive and hover
+poses and hold their effects for a release tick (plan 4.5 wanted them a profile at 5; noted as not done). Sound: with a level-3+
+cast's first sound, the family's `power.tier3_<family>` (or `tier5_` at 5) plays under it, about 6 dB down: on each client from
+the level bits for a profiled power (`LadderFx.tierSound`, once per caster per 12 ticks, no packet), from the server for the
+rest (`Cast.sound`, once per cast). The layers carry no subtitle (the power's own sound already says what happened). Lens: Red
+Hour, Black Star, Sunspear, Daystar, Critical Mass and The Risen Guard have their own short look (`awaken:awake_<power>` in
+looks_powers.json), on your own screen through `CastLens`, never over a story's or Arms' moment, only while Lens draws.
+
 **34.6 The moment.** A level-up in a fight plays a short sting (a bloom on you, a rising chime, the key's frame flashes). When
 calm (or once the fight ends) a Signal window names the new step and what it does, with the `EVOLVE` bloom and a chord every
 viewer near sees and hears. Power Cores use the same moment (no vanilla particles). `Loadout` schema 3 keeps `seen` (the level
@@ -8575,11 +8591,39 @@ each power's moment was shown for); loading an older save sets seen = level and 
 text and the mastery bar. The HUD key frame grows with the level (corner ticks at 2, side bars at 3, a double frame at 4, an
 awakened glow at 5). Text is plain speech (34.1's lang file).
 
-**34.8 Earning.** Wall Stride, Water Run and Danger Sense earn mastery from use (34.8 numbers in `Mastery`): time on the wall or
-water, a warning that fired.
+**34.8 Earning.** Wall Stride, Water Run and Danger Sense earn mastery from use (`Mastery.use`): 6 a second on a wall in a run
+(`WALL_SECOND`), 5 a second running on water (`WATER_SECOND`), 15 for a warned foe that leaves your reach without landing its
+blow (`DODGED`); each power at most 90 a minute from use (`USE_CAP`), about what a main power earns in a minute of fighting
+(pacing sim: ~81-94). Heavy use reaches level 5 in about 1,360 minutes against about 1,080 combat minutes for a main power
+(`tools/sim/pacing_sim.py`, `use_minutes_to`).
 
 **34.9 Checks.** GameTests: `power_ladder_complete` (every power has four steps with text, every look rides an event kind the
 power sends, every rider is known), `power_ladder_every_level_casts`, one per rider mechanism, Dash direction and reach at
-every level, `power_ladder_save_migrates`, `power_ladder_moment_once`, `power_ladder_earning`. `/awaken powers showcase <power>
-<level>` casts a power at a level for tours; `/awaken fx stats` and `/awaken fx bench <power> <level> <count>` (client) time
-power FX drawing (`FxRender` timer). Gate: a level-5 bench costs at most +0.5 ms p50 and +1 ms p99 over level 1.
+every level, `power_ladder_save_migrates`, `power_ladder_moment_once`, `power_ladder_earning`, `power_ladder_follow_up`
+(as built: `power_ladder_rider_chain|echo|aftershock|linger|status_push|guard_extend`, `power_ladder_dash_every_level`; the
+level rows of every cast profile are held to the clip rules in `power_cast_profiles`). `/awaken admin power showcase <power>
+<level> [variant]` puts a power at a level on its key with energy full and cooldowns clear, for tours; `/awaken admin power
+evolve <power> <level>` plays a level's moment again. `/awaken fx stats` and `/awaken fx bench <power> <level> <count>` (client,
+`powers.client.fx.FxStats`) time what FxRender spends a frame (geometry and extract): stats prints p50, p99 and max over the
+last 1,200 frames; bench casts the power `count` times a second and a half apart through the showcase and prints the run.
+Gate: a level-5 bench costs at most +0.5 ms p50 and +1 ms p99 over level 1.
+
+**34.10 As built** (the parts the sections above don't name).
+- `powers.ladder.StepHooks`: steps that answer events rather than a cast (a shot striking a Ricochet or Mirror wall, a blast on
+  a Crystal wall, a Shatterproof roof, Spring landings, the turret's shield, Live Wire, Decoy's echo, Twin Strike's second cast,
+  Soul Guard, Frost Shatter and Winter Bloom, Wall Stride's looks). `PowerEvents` calls them.
+- `powers.ladder.BuildZones`: Architect constructs whose steps keep working after the cast remember their blocks, owner, level
+  and cast in memory for their life (after a restart they stand as plain light). `ConstructBlock` lives as long as the step says.
+- `Fx.looks(player, power, kind, at)` sends an event with the player's level looks of that power (hooks outside a cast);
+  `Fx.of` is plain. A step's follow-up effects use `.plain()` (the `RIDER` flag: no pose, no look layers, no tier sound) or
+  `.noAnim()`, so the cast's pose and ULT beat never replay.
+- Second presses: `Cast.followUp(ticks, run)` opens a window (the key shows AGAIN where the cooldown would be); pressing again
+  in it runs the follow-up free, and the cooldown starts then.
+- `PowerLadder.cdScale(power, level)`: the product of the steps' `cd` numbers, applied in `Casting.startCooldown` and in the
+  client's prediction. `Running.drainScale`: a held power's drain scaled by its steps (Hover).
+- Turrets and drones carry their cast (`PowerDrone.cast`) so their bolts carry the ladder (`Bolts.land` draws the impact).
+- Read Intent reads only the foes you can see until Through Walls (4). Mend's heal scales by the flat +6% a level (it had kept
+  +12%).
+- Outside the powers module, the body's wall-run reads Wall Stride's level (`Body.wallStrideLevel`, `RunnerRules.runLength`,
+  `runTarget`, `strideKick`; `RunnerServer` calls `StepHooks.strideTick`): Spark Steps (2), Kick-off (3), Steady (4), Street
+  Runner (5). The only cross-module change; Codex's Power Core hover reads `PowerLadder.text` (their queue).
