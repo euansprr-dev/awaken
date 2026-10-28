@@ -430,6 +430,11 @@ of `AwakenConfig.Client`.
   `Progression.onXpGranted(listener)` (every grant after scaling), `Progression.worldXp(player, source, fraction,
   afterBudget)` (a multiplier applied after the budget), `XpBudget.register(source, perTenMinutes)` (§21.3).
 - `dev.awaken.living.api.Regions` — the region map (§21.2): `levelAt`, `regionAt`, `creatureLevel`, `bandOf`.
+- `dev.awaken.living.api.Wildness` — how wild a place is, separate from danger (§41.1): `land`, `at`, `band`, `bandAt`, `addTamer`, `setCover`, `coverAt`, `setGround`/`ground()` (grazing and trails, §41.2).
+- `dev.awaken.ground.api.WildPlants` — grass that lives (§41.2; server thread): `crop(ServerLevel, BlockPos)` (a herd grazes: long
+  grass or rye down to meadow height, growing back over days), `trample(ServerLevel, BlockPos, int strength)` (pressed flat
+  like a trail, 1 `LIGHT` / 2 `HERD` / 3 `STAMPEDE`, springing back over a day or two), `coverAt(Level, BlockPos)` (0..1, how
+  hidden someone crouching there is; either side). `pos` is the block a body stands in.
 - `dev.awaken.living.api.Quests` — the Wayfarer chains (§21.5): `advance(ServerPlayer, Identifier "awaken:<type>/<target>")`
   (owners report uses and discoveries a step may wait for: `awaken:use/ascent_zip`, `awaken:discover/<key>`; an
   `amount` overload), `talk(ServerPlayer, who)` (another module's person, e.g. "kestrel", "oren": call it first from your
@@ -4774,8 +4779,9 @@ a claw starts at the end of the arm and points along it). Looks are reviewed off
   per new chunk 0.25 signs in D, 0.5 C, 0.9 B, 1.3 A, 1.6 S (none in E), on natural ground only, flat enough, never in water. The region map is warmed at ServerStarted so worldgen threads
   (`RegionService.mapIfReady`) never touch saved data; chunks made before it exists (a new world's first, in the Commons) get none. The rust outcrop is the surface sign of iron (a pull; iron stays by depth). Not consulted
   at generation: a settlement's or a road's reserve (only the natural-ground rule keeps signs off built ground).
-- **A quieter land** (decision 23): `living.combat.QuietLand`: natural animal spawns in land of rank D or up are turned away by rank (kept: D 80%, C 55%, B 35%, A 20%, S 10%; `FinalizeSpawnEvent.setSpawnCancelled` in
-  `Creatures.onFinalizeSpawn`; never a settlement's land, bred or egg animals), wild kin avoid a player who is not sneaking (`AvoidEntityGoal`, 10 blocks in D to 26 in S, below the fight goals), and the wild life
+- **A quieter land** (decision 23): `living.combat.QuietLand`: natural animal spawns are turned away by wildness, not rank (since the Wild Lands, §41.4: kept
+  Tamed 70%, Pasture 90%, Wild and Deep all; `FinalizeSpawnEvent.setSpawnCancelled` in `Creatures.onFinalizeSpawn`; never a settlement's land or a Hearth's
+  calm, bred or egg animals, or the ledger's own bodies), wild kin avoid a player who is not sneaking (`AvoidEntityGoal`, 10 blocks in D to 26 in S, below the fight goals), and the wild life
   layer's dial is multiplied by the rank (`Wildlife.dialNow`: birds and insects 80%, 50%, 30%, 8%, 2%).
 - **Ambient air** (decision 25): `living.client.AmbientFx`: a few specks a second drifting through the land you stand in (D dust, C ash, B embers, A violet motes, S almost none; snow in the cold), off with the `dread` setting.
   Not built: a sound bed per rank (needs `audio_living.py` work) and a colour grade per rank through Lens (the gap's dread look stays).
@@ -9907,3 +9913,314 @@ meant, struck; a hostile beside it, not meant, out of the band), `aim_step_in`, 
 `aim_flier_brought_down`. The clear screen: `hud_states`, `hud_classic_unchanged`, `hud_now_line_returns`,
 `hud_task_card_teaches`, `hud_thin_plates`, `hud_glance_rows`.
 
+
+## 41. The Wild Lands (wildness, the wild's plants, herds and packs, hunts; plan and page docs/wild-lands/page.html, https://claude.ai/artifact/7V6wXujthPYV4V5aYu6Nfw; Euan approved all ten recommendations 2026-10-28: "Go with all recommendations for the plan")
+
+Settled land feels tamed; the further from people, the wilder the land grows: long grass, big bushes, old trees, real herds
+with packs hunting them, and Monster Hunter-style hunts (signs, tracking, part breaks, carving). The ten decisions, all approved:
+1. **Wildness is separate from danger.** The region levels say how dangerous land is; wildness says how untouched it is.
+2. **Life follows wildness, not danger rank.** QuietLand stops thinning herds in harder land; A and S land keep their hush of
+   birds and insects.
+3. **New chunks, including Euan's current world.** Vegetation applies to newly made land in any Awakened Ground world, New
+   World (7) included; explored land keeps its blocks. Herds, packs and hunts work everywhere at once.
+4. **Bigger herds.** Up to 30 in a herd, up to 40 ledger bodies near a player (24 before); lowered first if it costs too much.
+5. **The full hunt loop.** Fresh tracks everyone sees, scout motes after reading signs, parts that visibly break, the quarry
+   limping to its bed, three carves per hunter.
+6. **The first quarries.** Herd and pack alphas on the new form bodies, plus the twelve named beasts; Creature Kit beasts only
+   once one passes Euan's bar.
+7. **Two builders after Stage 0.** A plants session builds stages 1a and 1b; the planning session builds stages 2 to 4. No
+   sub-agents in either.
+8. **The wild's own plants.** About two dozen new 16×16 blocks in Minecraft's own manner; a style sheet goes to Euan before any
+   plant goes into the world.
+9. **Grass that lives.** Herds crop grazing lawns and press trails; long grass springs back over days (slowly, near players only).
+10. **Long grass is cover, both ways.** Crouched in long grass or rye, creatures see you from much closer, and monsters hiding
+    there are as hard to spot (plates and the band still warn).
+
+Stages: 0 the field (41.1); 1a the plants (style sheet first, then the blocks, art, sway, drops, sounds); 1b the land (grass
+heights by wildness, hedgerows, thickets, old giants, snags, deadfall, mowing near people, the palette's ranks slot, grass
+colour; the terrain lean below); 2 herds and packs; 3 signs and tracking; 4 the hunt; 5 Far Sight's far tint, grasshoppers and
+flushing birds, village hunt notices. Each stage's numbers are added here as it is built.
+
+### 41.1 The wildness field (Stage 0)
+- **API** `dev.awaken.living.api.Wildness` (server only; `land` is thread-safe, the rest are for the server thread): `land(level, x, z)` the land's own value worked out afresh
+  (what generation and the record use), `at(level, x, z)` the value now (the chunk's record where loaded, else the land; then
+  Hearths), `band(w)` / `bandAt(level, pos)`, `hearthKeep`, `addTamer(Tamer)`, `setCover(Cover)` / `coverAt(level, pos)` (how hidden
+  a person is there, 0..1; the plants module sets it, decision 10). 0 is tamed, 1 deep wild; overworld only (other
+  dimensions read 1). Bands: **Tamed** under 0.2, **Pasture** under 0.45, **Wild** under 0.7, then **Deep wild**.
+- **Tamers** each give the share of the land they leave untouched, `touch(d, radius, reach, strength) = 1 - strength·exp(-(max(0,
+  d - radius)/reach)^1.6)`; the shares multiply into `keep`. Each is looked for out to its radius plus 2.5 reaches (its touch is
+  about 1% there). Registered by the village module (`village.WildTamers`), read from the seed and the road index only, never
+  from live villages, so a chunk's value doesn't depend on what has loaded:
+  - Carillon: its core radius, reach 520. Towns (the regions whose `RoadNet.townCell` roll holds one, at the region's heart):
+    116, reach 380. Villages and mining villages on the grid: 60, reach 260. Hamlets (the first hamlet included): 38, reach 200.
+    Wayhouses: 14, reach 120.
+  - Laid roads (`RoadNet.distanceWithin`): strength 0.7, reach 70. A chunk worked out before a road near it was planned keeps
+    no ribbon for it (roads are planned ahead of the chunks they cross, so this is rare at the edges of a road's reach).
+  - Places are gathered once per 64-block tile per thread (the tile's centre plus each kind's look and the tile's half diagonal),
+    so a chunk's sixteen cells share one gathering.
+- **Combine**: `w = keep + 0.035·rank·keep + (noise1100 − 0.5)·0.32·√keep + (noise260 − 0.5)·0.14·√keep`, clamped to 0..1.
+  `rank` is the land's rank 0 (E) to 5 (S) from the region map. The noises are smooth value noise on 1,100- and 260-block
+  lattices from the world seed: forest-sized and copse-sized patches. Fully tamed land stays tamed whatever the noise.
+- **Hearths** tame live, on top of the record: fully to 48 blocks, fading over 140, at strength 0.8 (a home keeps at most a
+  fifth of its land's wildness). `at` multiplies the record by `hearthKeep`.
+- **The terrain lean** (Stage 1b, with the vegetation that reads it): `land` adds `WildField.lean(keep, erosion, vegetation,
+  peaksAndValleys)` from the world's own climate at (x, 64, z) (one uncached climate sampler a world, pure, any thread):
+  rugged ground `0.05·clamp((−0.2 − erosion)/0.6)`, deep forest `0.05·clamp((vegetation − 0.1)/0.4)`, valleys
+  `0.04·clamp((−0.4 − pv)/0.5)`, together at most 0.14, times √keep so tamed land stays tamed. Records filled before it
+  keep their old values (records never change).
+- **The record** (`living.wild.WildRecord`, chunk attachment `awaken:wild`, schemaVersion 1): sixteen cells of 4×4 blocks,
+  each the land's value at its centre in 0..255, saved with the chunk and synced to the players who see it (16 bytes). Chunks
+  without one (new, or from before the Wild Lands) queue as they load and are filled up to 8 a tick within 0.4 ms (a chunk
+  costs about 0.2 ms); a read of an unfilled loaded chunk fills it at once. Once written a record never changes, so wildness
+  never shifts under a player.
+- **Command** `/awaken wild here` (admin): the value and band where you stand, the land's own value, the Hearth's share and the
+  cost of working it out; `/awaken wild map [radius]` (default 512): a 33 by 17 map of the bands round you in chat, north up,
+  and the share of each band.
+- **Tests**: `wild_field` (the fade, tamed land stays tamed, smooth patches, most open land wild, the bands), `wild_record`
+  (filled at the cells' centres, read by block, saved and synced intact), `wild_tamers` (over a roads' world for a seed: a
+  settlement's ground and a town region's heart read Tamed, open land far from them Wild or Deep).
+
+### 41.2 The wild's plants (Stage 1a; module `ground`, package `dev.awaken.ground.wild`)
+- **Style sheet first** (decision 8): docs/wild-lands/style-sheet.html, https://claude.ai/artifact/KANBxUJdPhNYFyv3xgEEj1, sent to
+  Euan 2026-10-28 and **approved by him the same day** ("approved"); the sprites come from `tools/art/specs/wild_plants.py` (grey blades the biome tints, an overlay that keeps its
+  own colour laid on the same planes, the way vanilla lays a grass block's side overlay; two to four versions each, picked per block).
+- **API** `dev.awaken.ground.api.WildPlants` (fixed 2026-10-28, sent to the creatures builder): `crop(ServerLevel, BlockPos)`,
+  `trample(ServerLevel, BlockPos, int strength)` (1 `LIGHT`, 2 `HERD`, 3 `STAMPEDE`), `coverAt(Level, BlockPos)` 0..1. `pos` is
+  the block a body stands in (the plant there, or on the ground block passed).
+- **The blocks** (`WildBlocks`; every world has them, the worldgen that grows them is stage 1b):
+  - *Grasses.* `meadow_grass` (the pasture's short grass, four versions, bonemeal makes long grass; its states `regrow` none/long/rye
+    and `growth` 0..3 are a grazed lawn's memory), `frost_grass` (cold lands), `long_grass` (two high; looks green, seeding,
+    tawny by a slow patch noise and the wildness), `wild_rye` (three high: a still stems block under a swaying double plant
+    `wild_rye_top`, so the three never shear apart; gold, or glass in the glass steppe), `trampled_grass` (no item: what a trail
+    leaves; `axis`, `from` short/meadow/long/rye/tall, `stage` flat-fresh, flat-greening, half up), `clover` (a flower bed of
+    one to four patches).
+  - *Flowers and herbs.* `cow_parsley`, `foxglove` (two high; purple, a third white), `thistle`, `heather`, `gorse`,
+    `dry_tussock` (sand, terracotta and soils, as the game's dry grass).
+  - *Shrubs, ferns, water's edge.* `bramble` (the one plant that slows you: 0.7 sideways and 0.75 up, a little more than a berry bush slows
+    you; sprinting through it scratches for 1; foxes and bees pass free; flowers, then green, then ripe
+    blackberries on random ticks (1 in 6, light 9+), picked with a hand for 1-2 `blackberries`, food 2 / 0.2), `bracken`
+    (two high; turned tawny in patches), `reeds` (two high; pale in the mirror marsh), `hawthorn_leaves` (leaves with blossom,
+    for hedgerows).
+  - *Still things and ground.* `bracket_fungus` (on a log's side), `antler_shed` (a flat find), `wallow` (mud, 14 px high,
+    slows to 0.8), `salt_lick` (pickaxe), `trodden_earth` (dirt and path tags), `wild_sward` (a grass block that never spreads
+    itself: its random tick is the grass block's, so it spreads grass; hoes and shovels treat it as grass).
+- **Sway** comes by class from `terrain.PlantSway`: double plants sway as lower and upper halves, bushes rooted, clover as a
+  flower bed (gain 3), hawthorn as leaves; rye's stems and the ground blocks stand still.
+- **Drops** (vanilla's manner, 26.3's loot format): grasses give themselves to shears and otherwise wheat seeds now and then
+  (1 in 8; rye 1 in 4; bracken nothing); two-high plants drop from the lower half; flowers, fungus, antler, wallow and salt
+  lick drop themselves; clover by patches; hawthorn to shears or silk touch, else a stick 1 in 20; bramble to shears, else 0-2
+  sticks; sward and trodden earth give dirt unless silk touch; trampled grass and rye's upper blocks nothing.
+- **Grass that lives** (random ticks only, so only land near players changes; no state per tick): a grazed lawn steps through
+  four growth stages and grows back what it remembers (`LAWN_GROW` 0.076 a random tick: about three days at the default random
+  tick speed); a trail stands back up through its three stages (`TRAIL_RISE` 0.114: about a day and a half). Both grow back as
+  tall as the air above allows. A player sprinting or riding through long grass or rye presses it LIGHT 1 time in 4 a tick
+  (horizontal speed squared over 0.065), so a run leaves a faint trail.
+- **Cover** (`coverAt`): rye 1.0, long grass and bracken 0.85, reeds 0.8, gorse and bramble 0.6, cow parsley and foxglove 0.4,
+  meadow grass 0.3, heather and frost grass 0.25, thistle 0.2, tussock 0.1; vanilla tall grass and large fern 0.7, bush and berry
+  bush 0.5, short grass and fern 0.15. A body's own value is the larger of its feet's block and 0.9 of the block above;
+  the answer is 0.75 of that and 0.25 of the four beside it (a swathe's edge hides less than its middle).
+  Registered as the land's cover at init (`Wildness.setCover`), so the herds' flight distance reads it (§41.4).
+- **Client** (`ground.client.WildPlantsClient`): the grass colour with the lawn's drift on every grassy plant and the sward,
+  the foliage colour on hawthorn; seed fluff (`awaken:wild_seed`) lifts off seeding long grass and rye when a gust passes
+  (0.06 x gust odds per ambient visit, gust over 0.35) and rides the wind; `wild_plants.swish` (four one-shots, -32 dBFS) as
+  you push through tall plants, a stride apart; `wild_plants.hiss` (a 12 s stereo loop, -30 dBFS) eased to the wind's
+  strength times how much long grass and rye the ambient pass finds around you. Sounds from
+  `tools/art/specs/audio_wild_plants.py`; content from `tools/content/wild_plants_content.py`.
+- **Not in stage 1a** (follow-ups): the seamless wrap for the sward's sides; a game rule to turn living grass off; wallows, salt
+  licks and sheds placed in the world (stage 3).
+- **Tests** `wild_plants_blocks`, `_crop`, `_trample`, `_cover`.
+
+### 41.3 The land (Stage 1b; `dev.awaken.ground.wild.gen`, the `awaken:awakened_ground` pack, new chunks only)
+- **Wildness in worldgen** (`WildLattice`): the field worked out at a chunk's 5×5 corners four blocks apart, edges included
+  (neighbours share them), read bilinearly; cached per thread for the last four chunks, so every feature of a chunk shares
+  one working-out (25 `land` calls, about 0.2 ms).
+- **`awaken:wildness`** (placement modifier, first in a list): `weights` [Tamed, Pasture, Wild, Deep] are how many times a
+  feature is tried at each band's middle (0.1, 0.325, 0.575, 0.85), read in straight lines between, flat outside; a fraction is
+  a chance of one more. Smooth, so no band edge shows a line.
+- **The palette's slot** (`tools/terrain/ground_palette.py`, `palette.json` key `wild`, which replaces the unused `ranks`):
+  fallen trees 0.2 / 0.6 / 1.4 / 2.2, moss patches 0 / 0.5 / 1.2 / 1.8, the game's low bush 0.3 / 1 / 1.3 / 1; boulders,
+  pebbles and twigs everywhere alike.
+- **The grass** (`awaken:wild_ground`, once a chunk after the game's own grass, per group of biomes `#awaken:wild/<group>`):
+  each column reads its wildness, then rolls each role (tallest first) at the role's plants a chunk for its band, added to the
+  game's own (about 22 short, 2 tall and 8 flowers a plains chunk, so the totals land on the plan's table); swathe roles roll
+  2.2 × their rate times a swathe mask (value noise on the role's cell, 0 under 0.4, full over 0.75); one plant a column.
+  Tamed land's tall grass and large ferns are mowed to short grass and fern (all of it under wildness 0.12, fading out by 0.25).
+  Deep wild (over 0.7) turns grass blocks to wild sward in patches (9-block noise over 0.6, odds `sward·(w − 0.7)/0.3`).
+  Rates, Tamed / Pasture / Wild / Deep:
+  - *meadow* (plains, sunflower plains, meadow, Glass Steppe): rye 0/0/2/25 (swathes of 11), long grass 0/3/23/30 (14), cow
+    parsley 0/3/1.5/0.5, thistle 0/1.5/1/0.5, foxglove 0/0.3/0.4/0.2, clover 6/4/0.5/0, meadow grass 0/10/18/20; mow; sward 0.5.
+  - *forest* (forest, flower forest, birch forests, dark forest, Elderwood, Lumen Forest): bracken 0/4/18/32 (12), bramble
+    0/0.5/2/4 (8), foxglove 0/0.6/1/0.8, cow parsley 0/0.5/0.3/0, fern 0/3/8/10, meadow grass 0/4/6/6; mow.
+  - *taiga*: bracken 0/3/12/22 (12), heather 0/2/5/8 (10), fern 0/4/8/10; mow.
+  - *savanna*: gold rye 0/0/3/20 (13), long grass 0/4/18/24 (14), thistle 0/1/1/0.5, meadow grass 0/6/10/12; mow; sward 0.3.
+  - *marsh* (swamps, rivers, Mirror Marsh): reeds 3/6/10/14 on shores only, long grass 0/2/8/14 (12), meadow grass 0/6/10/12; mow.
+  - *heath* (windswept hills and forest, Shattered Highlands): bracken 0/2/8/14 (12), gorse 0/2/5/8 (9), heather 2/6/10/12 (10),
+    meadow grass 0/6/10/12.
+  - *cold* (snowy plains and taiga, grove, Frost Spires): frost grass 3/8/12/14 (it may take a one-layer snow's place).
+  - *dry* (desert, badlands): dry tussock 0/1/2/3.
+  Looks come from `WildLooks` as for a placed plant (glass rye in the Glass Steppe, pale reeds in the Mirror Marsh, turned bracken
+  in patches, long grass's three looks).
+- **The woody things** (`WildGrowth`; each through `awaken:wildness`, `in_square`, the no-leaves heightmap and the biome filter;
+  each writes only open blocks, never water, within twelve blocks):
+  - `awaken:wild_bush` leaf mounds 2-5 wide round a stub of wood (persistent leaves): meadow 0/0.5/2/4 a chunk (the plan's
+    table), forest 0/0.4/1.5/3, taiga (spruce) 0/0.3/1/2, savanna (acacia: thorn scrub) 0/0.4/1.2/2, marsh and heath 0/0.3/0.8/1.5.
+  - `awaken:hedgerow` 6-14 blocks of hawthorn one or two high following the ground, a gap 1 in 9, cow parsley at its foot 1 in 5
+    each side: meadow 0.35/0.6/0.05/0 (where tamed meets wild).
+  - `awaken:thicket` bramble over a patch 5-9 across (65% of it) with up to two small oak mounds: meadow 0/0.15/0.4/0.8, forest
+    0/0.2/0.6/1.2.
+  - `awaken:old_giant` a 2×2 trunk 16-24 tall on rooted dirt, root flares one to three high round its foot, four to six branches
+    from its upper half each ending in a leaf crown, a crown of radius 4-5 on top; gives up unless its foot is soil and the
+    trunk's first eight blocks are open: meadow 0/0/0.05/0.17 and forest 0/0/0.06/0.17 (about one in six deep chunks); taiga
+    places the game's mega spruce, savanna the game's acacia (old acacias, 0/0.1/0.3/0.5).
+  - `awaken:snag` a dead trunk 4-9 tall (bark below, stripped above), maybe a broken limb, up to two bracket fungi: forest
+    0/0.1/0.4/0.9, taiga (spruce) the same, meadow 0/0/0.08/0.2, marsh 0/0.1/0.3/0.6, heath 0/0/0.1/0.2, cold 0/0.05/0.2/0.4.
+  - `awaken:deadfall` a stump and a trunk 4-8 long lying on the ground (a step down allowed), moss carpet on its back 2 in 5,
+    bracket fungus 1 in 4: forest 0/0.2/0.6/1.2, taiga 0/0.2/0.6/1.1, meadow 0/0.05/0.2/0.4, marsh 0/0.1/0.3/0.5.
+- **The lawn's colour** (`WildLawn.shift`, client `ground.client.WildTint`): grass colours (every grass-tinted block, with the
+  lawn's drift) shift by the chunk's wildness record: tamed up to 6% greener (red −0.8k, green +0.35k), deep wild up to 11% warmer
+  (red +1.1k and +6, green +0.15k, blue −1.2k), pasture unchanged. The client copies each overworld chunk's record into a
+  128×128 table the meshing threads read (no allocation), reads between cell centres across chunk edges, sweeps one row of
+  loaded chunks a tick for records that came after their chunk and redraws three sections round such a chunk's surface.
+  Behind the drift's own setting (`/awaken ground drift`).
+- **Cost**: a chunk's lattice and grass 0.74 ms on the M4 test server (`wild_plants_cost`, budget 1.5 ms; the lattice 0.2 ms).
+- **Not in stage 1b** (follow-ups): Far Sight reading the same field for far meadows' tint and density; the woodpeckers' holes in
+  snags; a fox or rabbit bolting from deadfall (stage 3); a lone oak at a hedgerow's corner.
+- **Tests** `wild_plants_bands` (the lean, the weights, the lawn's colour), `_ground` (mowing, a role at its rate), `_giant`,
+  `_data` (every wild placed feature loads), `_cost`.
+
+### 41.4 Herds and packs (Stage 2)
+- **Life follows wildness** (decision 2): `QuietLand` thins natural animal spawns by wildness band, not rank (kept: Tamed 70%,
+  Pasture 90%, Wild and Deep all); a settlement's land, a Hearth's calm and the ledger's own bodies are never thinned. The
+  ambient life layer still thins by rank (A and S keep their hush), and wild kin are still shyer by rank.
+- **The ledger, schema 2** (`living.population.Ledger`, `Herds`): a new cell tries four herd sites; each holds a herd with odds
+  by its band (Tamed 0, Pasture 0.4, Wild 0.85, Deep 1), never two of one species in a cell. A herd is our fauna of the land
+  (mossbacks, frost stags, dune rays, crag rams, honey bears) or, half the time where both are possible, one of the biome's own
+  vanilla herd animals by its spawn weights (cow, pig, sheep, horse, donkey, goat; read from the biome's
+  `NATURAL_MOB_SPAWNS`). Sizes by band: Pasture 4-8, Wild 8-16, Deep 16-30. The wildest herd gets a pack within 80 blocks: our
+  hunters of the land, else wolves in Wild or Deep land; sizes Pasture 2-3, Wild 3-5, Deep 5-8. Deep-wild herds and packs
+  have an alpha (the first body: a vanilla animal comes out as `Creatures`' alpha, "Alpha of <region>"). Each population
+  saves `wild` (its home's wildness) and `alpha`; schema 1 populations load with `wild` -1 and keep their old caps (12, 5).
+- **Bodies**: up to 30 a herd and 8 a pack; up to 40 ledger bodies near one player (24 before), the rest of a big herd stays
+  a number. A herd spreads over 4 + 1.6·√n blocks. The ledger's vanilla bodies are wild kin (they fight back from D land,
+  carry forms from C land) and natural spawn rules never turn them away (`Ledger.spawning()`).
+- **Herd brain** (`HerdBrain`, one per herd with bodies, thinks once a second on its own tick slot): moods graze (by day),
+  drift (dawn and dusk, between pastures), bed (night, tight), alert, flee, stampede. Only animals outside their place
+  (4 + 1.6·√n; bed 2 + 0.8·√n; alert 0.7 of it; called back at 1.3 times that) are steered, to a spot of their own on a golden-angle spread; the rest graze on
+  their own goals.
+  - **Flight distance** by band: Tamed 8, Pasture 12, Wild 18, Deep 24 blocks to the nearest animal; ×0.4 crouched, ×1.3
+    sprinting, ×(1 − 0.67·cover) (`Wildness.coverAt`, which the plants fill: decision 10). Within it the herd runs; within
+    1.6× it is alert (heads up, bunching, watching).
+  - **Scent**: a person whose wind (`terrain.Wind`, the trees' wind) blows toward the herd (cosine over 0.6) is smelled
+    within 2.2× the band's flight distance, crouched or not.
+  - **Alarm**: seen, smelled, a body hit (`LivingDamageEvent.Post`), or a pack's attack. The herd runs 32 blocks away (a
+    stampede: 44, faster) along the first heading from straight away, then turns of 30° up to 120° either way, that doesn't
+    end in tamed land (`Wildness.at` under 0.2: a settlement or a Hearth turns it). The alarm reaches each animal in order
+    from the near side over 10 ticks (a wave). A **stampede** is a herd of 12 or more in Wild or Deep land, alarmed by a hit,
+    a pack or a sprinter; it knocks a person it runs into (4 damage, knockback, once each). Flight lasts 5 s (a stampede 7),
+    then 10 s alert; the herd's place moves 0.8 of the run with it and drifts home (×0.99 a second, at most 96 blocks off).
+  - An animal more than 64 blocks from its herd with nobody within 24 rejoins the count without dying.
+- **Pack brain** (`PackBrain`): rest at the den, prowl (wolves by day and dusk, our hunters by night), stalk (when its herd
+  has bodies within 64: wait 18 blocks downwind of the herd), chase (after 30 s stalking or within 22 blocks: the straggler,
+  scored nearest to the pack, young +6, hurt up to +6; every member targets it; the herd is alarmed by the pack), feed (60 s
+  at the kill; a person within 8 of it is attacked), retreat (to the den when the alpha falls under 30% health). One hunt a
+  day; a chase ends at 30 s or 48 blocks. The kill is a real death, so the ledger's herd is one fewer.
+- **Cost**: brains share one path budget, 2 path searches a tick across every herd and pack, each leg at most 10 blocks
+  (a wave held back keeps its order); a search is ~0.2 ms on the M4. Bench (`wild_herd_bench`): three herds of 30 and two
+  packs of 6 near one player, grazing, then a sprinter runs through and leaves: 0.23-0.29 ms a tick average after warm-up,
+  worst tick 3.4 ms (asserted under 0.5 and 10, ×3 on CI; the first stampede knock warms the game's damage code).
+- **Grass that lives** (decision 9, stage 2's second part): `Wildness.Ground` (`setGround`, `ground()`; `crop(level, pos)`,
+  `trample(level, pos, strength)` with `LIGHT` 1, `HERD` 2, `STAMPEDE` 3), registered by the module that grows the grass (the
+  ground module's `WildPlants`, registered in its init beside `setCover`, `wild_plants_cover` and `wild_plants_trample` reach the plants through them); without it nothing changes. A grazing herd's brain takes
+  a mouthful a second (two for eight or more), from a different idle animal each time, half of which crop the grass at its
+  feet, so a pasture becomes a lawn. Drifting or fleeing, up to 8 moving animals a second press their way (HERD), so the routes
+  a herd walks every dawn and dusk become trails; a stampede presses every moving animal every 4 ticks (STAMPEDE); a chasing
+  pack presses lightly (LIGHT). The cover value comes from the plants through `Wildness.setCover` (§41.1).
+- **Tests**: `wild_ledger` (sizes by band, schema 1 loads, a far cell's herds and packs), `wild_herd_senses` (crouched
+  downwind is let near, standing is seen, crouched upwind is smelled), `wild_herd_flee` (twenty stampede from a sprinter, 15+
+  blocks away), `wild_pack_hunt` (the nearest straggler, every wolf on it, the flock runs, the kill costs one), `wild_herd_bench`,
+  `wild_grass` (grazing crops and presses nothing; a stampede presses at STAMPEDE strength).
+- **Commands**: `/awaken living ledger` shows each population's band, alpha and brain mood.
+
+### 41.5 Signs and tracking (Stage 3)
+- **Signs** (`living.population.Spoor`, per world, not saved): **prints** (a patch of many feet, pointing the way the animals
+  went, hooves for cows, pigs, sheep, horses, donkeys, goats, mossbacks, frost stags and crag rams, paws for the rest),
+  **droppings** (on a flattened oval where a herd bedded) and **bones** (on a dark stain where a pack fed). Seen for two in-game
+  hours (prints; six with the Tracks perk) or a day (droppings, bones), fading as they age; at most 1,024 in a world, oldest first.
+  - Laid live: a herd or pack with bodies leaves a patch of prints under the body nearest its middle each time its middle has
+    moved 6 blocks; a bedded herd its droppings once a night (from 16000 to 23000); a pack's kill its bones.
+  - Back-filled: every 2 s, for each population within the ledger's reach of a player, prints along its `Ledger.where` path
+    every 400 ticks over the last 2,400 (keyed, so each is laid once), a herd's droppings at last night's bed (18000) and a
+    pack's bones where its herd was at its hunting hour (wolves 8000, ours 18000), only where a player is within 80 blocks and
+    the ground is loaded and dry. A population with bodies back-fills only from before its bodies came. So the newest prints
+    lie nearest the herd: a trail read in order walks you to it. After a restart the back-filled signs come back from the clock.
+- **Drawn** (`living.client.SpoorFx`): prints pressed dark into the ground under a soft crumbled rim, their alpha the sign's
+  freshness (how long ago is visible); a herd's patch is up to eight lanes of prints, `0.4 + 0.6·√n` wide. With the **Tracks**
+  perk prints glow amber instead (the perk now reads "Tracks on the ground glow amber and last three times as long, and a
+  creature you've read leaves glowing tracks for 30 seconds"). Droppings are small dark lumps on a pale flattened oval; bones a
+  skull and seven bones on a dark stain. The server sends the 64 nearest within 48 blocks each second they change.
+- **Reading** (`living.hunt.Tracking`): crouch on the ground within 2.2 blocks of a sign for one second (half a second once the
+  kind is studied to level 2). The line says what, how many, which way and how long ago, more exactly the better you know the
+  kind: unstudied, "Hoof prints: several went north-east, within the last hour."; studied, "Aurochs tracks: about 12 went
+  north-east, within the last hour." Droppings: "...bedded down here"; bones: "...killed a wild ram here". A soft brushing sound;
+  3 Hunting craft XP; a tip ("Crouch over them...") the first time a sign is near someone who has read none.
+- **The trail**: reading signs of one population builds its trail (a sign of another population starts a new one). Two read:
+  the band's amber **scout motes** (a thread of nine drifting from you, up to 12 blocks) lead to the **next sign** (the first
+  laid after the last one read, else the newest unread, within 64 blocks), which pulses amber with rings and a thin light. Five
+  read (four at research level 1, three from level 2): the motes (fourteen, warmer, up to 16 blocks) lead to the **quarry**
+  itself: its alpha's body, else the body nearest the herd's middle, else where the clock puts it. The Now line follows the
+  stage ("Follow the motes to the next sign of the aurochs." / "The aurochs are about 140 blocks north-east. Come at them from
+  downwind."). The trail fades five in-game hours after the last read, or when the population is gone; it is not saved.
+- **Research** (attachment `awaken:hunt`, `HuntState`, schemaVersion 1, synced to its owner, kept through death): a point per
+  sign read; levels at 5, 15 and 30 points ("you know their signs", "their ways", "them well"); hunts add ten in stage 4, which
+  also shows weak spots and parts by level. **Atlas**: beds (droppings read, or the quarry's bed tonight when the trail finds
+  it), dens (a pack's) and kill sites, the newest 24, the same kind within 16 blocks replacing the older.
+- **Cost**: a crouch check every 5 ticks and a trail update a second per player over the signs within 64 blocks (a list scan);
+  back-filling is a few `where` calls per population every 2 s.
+- **Tests**: `wild_spoor` (a moving herd's prints point its way; an unseen herd's back-filled prints and bed, laid once),
+  `wild_tracking` (crouching reads, two reads send the motes to the next sign, a few more to the herd, its bed on the Atlas),
+  `wild_pack_hunt` (the kill leaves bones naming the prey). **Command**: `/awaken wild signs` lists the signs within 48 blocks
+  and your trail.
+
+### 41.6 The hunt (Stage 4)
+- **Quarries** (`living.hunt.Quarry`): a ledger herd's or pack's alpha (decision 6) and the named beasts (`CreatureTag` BEAST).
+  The Creature Kit's beasts join once one passes Euan's bar.
+- **Parts** by body plan (share = the part of the quarry's health it takes to break):
+  - horned (cow, goat, sheep, mossback, crag ram): horns (head, 15%, a crag horn), hide (body, 30%, the land tier's hide), tail
+    (rear, 10%, two string); frost stag the same with antlers (an antler tine);
+  - tusked (pig): tusks (head, 15%, a briar tusk), bristled back (body, 30%, hide);
+  - maned (horse, donkey): mane (head, 12%, three string), hide, tail;
+  - packs (wolf, gloomstalker, wisp hound, canopy prowler, thornling): fangs (head, 15%, three bones), pelt (body, 30%, hide), tail
+    (rear, 12%);
+  - beasts and the rest: head (15%, the land tier's hunter core), back plates (30%, hide), tail (12%, core), claws (legs, 12%,
+    three bones).
+  An item that doesn't exist falls back to a bone; "hide" and "core" draw from `hunter_hide_<tier>` / `hunter_core_<tier>` by the
+  land's rank, so the land still owns the hunt's parts (§21.10).
+- **Where a blow lands**: an arrow's position, else the striker's look into the body's box; low (under 30% of its height) the
+  legs, the front top the head, the back end the rear, the rest the body (a plan without legs gives them to the body).
+  Damage counts toward that zone's part (`LivingDamageEvent.Pre`). **Break**: the part drops where it was (with a burst of its
+  pieces), a crack and a heavy thud, the quarry stops, reels away from the blow and is slowed for 2 s; "You broke its horns!"
+  to everyone within 32. Each part breaks once.
+- **Weak spot** by plan (horned and antlered: the flank; tusked: the haunch; maned: the neck; packs: the head; beasts: the
+  legs): a hunter who has studied the kind to level 2 hits it 25% harder there, and the trail tells them where when it finds
+  the quarry ("Aim for the flank: that's where they're weakest.").
+- **The limp**: at a third of its health a herd's alpha stops fighting, is slowed and walks to tonight's bed (its herd's
+  brain leaves it be, `Ledger.LIMPING`), once a fight; there it rests and mends a point every 2 s. Hit again, it rises and
+  fights. A pack's alpha retreats to its den with its pack (§41.4). Every quarry under a third of its health **bleeds**: a
+  blood sign every 3 blocks it moves (dark red drops, seen three in-game hours), read like any sign and part of its herd's trail
+  ("Blood: the wounded aurochs went north-east, only minutes ago."). It stops bleeding back over half its health.
+- **The body** (`living.hunt.Carcass`): when a quarry someone hurt dies, its fall plays out, then a still copy (same kind, size,
+  age and colour; no AI, invulnerable, silent; attachment `awaken:carcass` = the game time it goes, synced so the client lays it
+  on its side as at the end of a fall, without the red) lies there for a minute. Every hunter who hurt it carves it three times
+  (use it): an alpha's first carve is always the land's hide, then hide 40%, its first part 25%, meat 25% (beef, pork, mutton;
+  leather for goats and horses; bone for the rest), two string 10%. Someone who didn't fight it can't. Each hunter studies the
+  kind for ten research. When every hunter has carved, or the minute is up, it goes in a puff and its bones stay as a sign
+  ("Bones: a hunter carved an aurochs here..."). The game's own drops still fall. A body loaded after its minute is gone; one
+  loaded within it can be carved by anyone (who fought it isn't saved).
+- **Saved**: `awaken:quarry` on the quarry (schemaVersion 1: damage per part, parts broken, whether it limped, its hunters).
+- **Not yet**: a broken part vanishing from the body (form bodies draw from the hero kit, which has no part names to hide; today
+  a break is the burst, the stagger and the drop), the carve's own first-person hand animation (the arm swings), an alpha heart,
+  hunt trophies for the Trophy Hall (boss-only today), the Journal's hunt line and Trails' hunt steps, research on the band's
+  plate. They come with the next pass.
+- **Tests**: `wild_hunt` (zones on the body; a tenth on the head doesn't break the horns, a sixth does: they drop, it staggers;
+  at a third it limps and bleeds its herd's trail toward its bed; its body lies still, a stranger can't carve, three carves,
+  then it's gone and its bones stay).

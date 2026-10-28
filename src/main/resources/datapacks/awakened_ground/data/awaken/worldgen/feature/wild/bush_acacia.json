@@ -1,0 +1,6 @@
+{
+  "type": "awaken:wild_bush",
+  "leaves": "minecraft:acacia_leaves",
+  "log": "minecraft:acacia_log",
+  "max_radius": 2.0
+}

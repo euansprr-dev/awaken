@@ -32,6 +32,7 @@ final class LivingTests {
         dev.awaken.living.wayfarer.SceneTests.register();
         dev.awaken.living.pulse.PulseTests.register();
         dev.awaken.living.population.LedgerTests.register();
+        dev.awaken.living.population.WildHerdTests.register();
         dev.awaken.living.camp.CampTests.register();
         dev.awaken.living.craft.CraftTests.register();
         // the clear screen (SPEC §40.6): the creature you mean keeps the full plate; the others fighting you get a thin bar;
@@ -778,23 +779,23 @@ final class LivingTests {
         });
 
         AwakenTests.register("living_quiet_land", 100, h -> {
-            // SPEC 21.11 decision 23: animals thin by rank, the ambient life more so, the shyness grows with the rank
-            var Q = dev.awaken.living.combat.QuietLand.class;
-            h.assertTrue(dev.awaken.living.combat.QuietLand.keep(0) == 1F && dev.awaken.living.combat.QuietLand.keep(1) == 0.8F && dev.awaken.living.combat.QuietLand.keep(5) == 0.1F, "E all, D four fifths, S a tenth");
-            for (int r = 1; r <= 5; r++) h.assertTrue(dev.awaken.living.combat.QuietLand.keep(r) < dev.awaken.living.combat.QuietLand.keep(r - 1), "thinner each rank");
+            // SPEC 21.11 decision 23 as changed by SPEC 41 decision 2: animals thin by wildness (people's land), never by rank;
+            // the ambient life still thins by rank, and the shyness grows with it
+            h.assertTrue(dev.awaken.living.combat.QuietLand.keep(dev.awaken.living.api.Wildness.Band.TAMED) < dev.awaken.living.combat.QuietLand.keep(dev.awaken.living.api.Wildness.Band.PASTURE)
+                    && dev.awaken.living.combat.QuietLand.keep(dev.awaken.living.api.Wildness.Band.WILD) == 1F && dev.awaken.living.combat.QuietLand.keep(dev.awaken.living.api.Wildness.Band.DEEP) == 1F,
+                    "fewer wild animals in people's land, all of them in the wild");
             h.assertTrue(dev.awaken.living.combat.QuietLand.wild(-1) == 1F && dev.awaken.living.combat.QuietLand.wild(5) == 1F && dev.awaken.living.combat.QuietLand.wild(130) < 0.05F, "birdsong all through E and nearly gone in S");
-            h.assertTrue(dev.awaken.living.combat.QuietLand.wild(80) < dev.awaken.living.combat.QuietLand.keep(4), "A: more birds go than animals");
             h.assertTrue(dev.awaken.living.combat.QuietLand.shy(1) == 10F && dev.awaken.living.combat.QuietLand.shy(5) == 26F, "10 blocks in D, 26 in S");
-            // a real spawn: none turned away in E land (the test land), a pig in a hearthless D land world is thinned about as often as the table says
+            // a real spawn: thinned about as often as the land's band says
             var level = h.getLevel();
             var rnd = net.minecraft.util.RandomSource.create(5);
             var pig = h.spawn(net.minecraft.world.entity.EntityTypes.PIG, 1, 2, 1);
             int turned = 0;
             for (int i = 0; i < 400; i++) if (dev.awaken.living.combat.QuietLand.thins(level, pig, net.minecraft.world.entity.EntitySpawnReason.NATURAL, rnd)) turned++;
-            int rank = dev.awaken.living.region.RegionMap.rankOf(dev.awaken.living.api.Regions.creatureLevel(level, pig.blockPosition(), dev.awaken.living.api.Regions.Role.NEUTRAL));
-            double expect = rank <= 0 ? 0 : 1 - dev.awaken.living.combat.QuietLand.keep(rank);
+            var band = dev.awaken.living.api.Wildness.band(dev.awaken.living.api.Wildness.land(level, pig.getBlockX(), pig.getBlockZ()));
+            double expect = 1 - dev.awaken.living.combat.QuietLand.keep(band);
             if (dev.awaken.living.api.Regions.landCap(level, pig.blockPosition()) != Integer.MAX_VALUE) expect = 0;
-            h.assertTrue(Math.abs(turned / 400.0 - expect) < 0.12, "here (rank " + rank + ") " + turned + " of 400 turned away, expected about " + Math.round(expect * 400));
+            h.assertTrue(Math.abs(turned / 400.0 - expect) < 0.12, "here (" + band + ") " + turned + " of 400 turned away, expected about " + Math.round(expect * 400));
             h.assertTrue(!dev.awaken.living.combat.QuietLand.thins(level, pig, net.minecraft.world.entity.EntitySpawnReason.BREEDING, rnd), "bred animals are never turned away");
             h.succeed();
         });

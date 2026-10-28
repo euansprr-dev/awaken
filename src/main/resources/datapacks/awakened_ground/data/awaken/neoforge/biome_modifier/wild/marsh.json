@@ -1,0 +1,11 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#awaken:wild/marsh",
+  "features": [
+    "awaken:wild/marsh_ground",
+    "awaken:wild/marsh_bush",
+    "awaken:wild/marsh_snag",
+    "awaken:wild/marsh_deadfall"
+  ],
+  "step": "vegetal_decoration"
+}

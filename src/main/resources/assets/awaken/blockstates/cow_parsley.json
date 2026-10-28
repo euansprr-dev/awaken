@@ -1,0 +1,70 @@
+{
+  "variants": {
+    "half=lower,look=0": [
+      {
+        "model": "awaken:block/wild/cow_parsley_bottom_0"
+      },
+      {
+        "model": "awaken:block/wild/cow_parsley_bottom_1"
+      },
+      {
+        "model": "awaken:block/wild/cow_parsley_bottom_2"
+      }
+    ],
+    "half=lower,look=1": [
+      {
+        "model": "awaken:block/wild/cow_parsley_bottom_0"
+      },
+      {
+        "model": "awaken:block/wild/cow_parsley_bottom_1"
+      },
+      {
+        "model": "awaken:block/wild/cow_parsley_bottom_2"
+      }
+    ],
+    "half=lower,look=2": [
+      {
+        "model": "awaken:block/wild/cow_parsley_bottom_0"
+      },
+      {
+        "model": "awaken:block/wild/cow_parsley_bottom_1"
+      },
+      {
+        "model": "awaken:block/wild/cow_parsley_bottom_2"
+      }
+    ],
+    "half=upper,look=0": [
+      {
+        "model": "awaken:block/wild/cow_parsley_top_0"
+      },
+      {
+        "model": "awaken:block/wild/cow_parsley_top_1"
+      },
+      {
+        "model": "awaken:block/wild/cow_parsley_top_2"
+      }
+    ],
+    "half=upper,look=1": [
+      {
+        "model": "awaken:block/wild/cow_parsley_top_0"
+      },
+      {
+        "model": "awaken:block/wild/cow_parsley_top_1"
+      },
+      {
+        "model": "awaken:block/wild/cow_parsley_top_2"
+      }
+    ],
+    "half=upper,look=2": [
+      {
+        "model": "awaken:block/wild/cow_parsley_top_0"
+      },
+      {
+        "model": "awaken:block/wild/cow_parsley_top_1"
+      },
+      {
+        "model": "awaken:block/wild/cow_parsley_top_2"
+      }
+    ]
+  }
+}

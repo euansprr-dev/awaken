@@ -44,6 +44,8 @@ public final class VillageModule {
         // (SPEC §21.10) settled land and the roads between are calmer: creatures there are held down or a few levels lower
         dev.awaken.living.api.Regions.addLevelExtra(SettledCalm::roadExtra);
         dev.awaken.living.api.Regions.addLevelCap(SettledCalm::cap);
+        // (SPEC §41.1) and tamed: the city, settlements, towns and roads take the wild out of the land round them
+        WildTamers.register();
         dev.awaken.village.road.RoadAtlas.init(modBus);
         // (SPEC §28.9, Turbo) a lattice chunk waiting for its roads frees the overworld's world generation meanwhile
         dev.awaken.turbo.roadstarts.RoadStarts.init(modBus);

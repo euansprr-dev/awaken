@@ -39,9 +39,25 @@ public final class GroundModule {
         GroundCover.init(modBus);
         FEATURES.register(modBus);
         GroundFresh.init(modBus);
+        dev.awaken.ground.wild.WildBlocks.init(modBus);
+        dev.awaken.ground.wild.gen.WildGen.init(modBus);
+        // the herds' and hunters' eyes read the plants' cover (SPEC §41.2)
+        dev.awaken.living.api.Wildness.setCover(dev.awaken.ground.wild.WildLife::coverAt);
+        dev.awaken.living.api.Wildness.setGround(new dev.awaken.living.api.Wildness.Ground() {
+            @Override
+            public boolean crop(net.minecraft.server.level.ServerLevel l, net.minecraft.core.BlockPos p) {
+                return dev.awaken.ground.api.WildPlants.crop(l, p);
+            }
+
+            @Override
+            public boolean trample(net.minecraft.server.level.ServerLevel l, net.minecraft.core.BlockPos p, int s) {
+                return dev.awaken.ground.api.WildPlants.trample(l, p, s);
+            }
+        });
         modBus.addListener(AddPackFindersEvent.class, e -> e.addPackFinders(Awaken.id("datapacks/awakened_ground"), PackType.SERVER_DATA,
                 Component.literal("Awakened Ground"), PackSource.BUILT_IN, false, Pack.Position.TOP));
         GroundTests.register();
+        dev.awaken.ground.wild.WildTests.register();
         dev.awaken.village.road.RoadBandsTests.register();
     }
 }

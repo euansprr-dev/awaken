@@ -1,0 +1,114 @@
+{
+  "meadow": {
+    "biomes": [
+      "minecraft:plains",
+      "minecraft:sunflower_plains",
+      "minecraft:meadow",
+      "awaken:glass_steppe"
+    ],
+    "placed": [
+      "ground",
+      "bush",
+      "hedgerow",
+      "thicket",
+      "giant",
+      "deadfall",
+      "snag"
+    ]
+  },
+  "forest": {
+    "biomes": [
+      "minecraft:forest",
+      "minecraft:flower_forest",
+      "minecraft:birch_forest",
+      "minecraft:old_growth_birch_forest",
+      "minecraft:dark_forest",
+      "awaken:elderwood",
+      "awaken:lumen_forest"
+    ],
+    "placed": [
+      "ground",
+      "bush",
+      "thicket",
+      "giant",
+      "snag",
+      "deadfall"
+    ]
+  },
+  "taiga": {
+    "biomes": [
+      "minecraft:taiga",
+      "minecraft:old_growth_pine_taiga",
+      "minecraft:old_growth_spruce_taiga"
+    ],
+    "placed": [
+      "ground",
+      "bush",
+      "giant",
+      "snag",
+      "deadfall"
+    ]
+  },
+  "savanna": {
+    "biomes": [
+      "minecraft:savanna",
+      "minecraft:savanna_plateau",
+      "minecraft:windswept_savanna"
+    ],
+    "placed": [
+      "ground",
+      "bush",
+      "giant"
+    ]
+  },
+  "marsh": {
+    "biomes": [
+      "minecraft:swamp",
+      "minecraft:mangrove_swamp",
+      "minecraft:river",
+      "awaken:mirror_marsh"
+    ],
+    "placed": [
+      "ground",
+      "bush",
+      "snag",
+      "deadfall"
+    ]
+  },
+  "heath": {
+    "biomes": [
+      "minecraft:windswept_hills",
+      "minecraft:windswept_gravelly_hills",
+      "minecraft:windswept_forest",
+      "awaken:shattered_highlands"
+    ],
+    "placed": [
+      "ground",
+      "bush",
+      "snag"
+    ]
+  },
+  "cold": {
+    "biomes": [
+      "minecraft:snowy_plains",
+      "minecraft:snowy_taiga",
+      "minecraft:grove",
+      "awaken:frost_spires"
+    ],
+    "placed": [
+      "ground",
+      "snag"
+    ]
+  },
+  "dry": {
+    "biomes": [
+      "minecraft:desert",
+      "minecraft:badlands",
+      "minecraft:wooded_badlands",
+      "minecraft:eroded_badlands"
+    ],
+    "placed": [
+      "ground"
+    ]
+  }
+}

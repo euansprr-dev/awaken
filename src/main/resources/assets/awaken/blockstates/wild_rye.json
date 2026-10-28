@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/wild/wild_rye_stems_0"
+      },
+      {
+        "model": "awaken:block/wild/wild_rye_stems_1"
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "awaken:block/wild/flat",
+  "textures": {
+    "flat": "awaken:block/wild/antler_shed_1_overlay"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "variants": {
+    "facing=east": [
+      {
+        "model": "awaken:block/wild/antler_shed_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/wild/antler_shed_1",
+        "y": 90
+      }
+    ],
+    "facing=north": [
+      {
+        "model": "awaken:block/wild/antler_shed_0"
+      },
+      {
+        "model": "awaken:block/wild/antler_shed_1"
+      }
+    ],
+    "facing=south": [
+      {
+        "model": "awaken:block/wild/antler_shed_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/wild/antler_shed_1",
+        "y": 180
+      }
+    ],
+    "facing=west": [
+      {
+        "model": "awaken:block/wild/antler_shed_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/wild/antler_shed_1",
+        "y": 270
+      }
+    ]
+  }
+}

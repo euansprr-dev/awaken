@@ -1,0 +1,28 @@
+{
+  "pools": [
+    {
+      "condition": {
+        "blocks": "awaken:bracken",
+        "state": {
+          "half": "lower"
+        },
+        "type": "minecraft:match_block"
+      },
+      "entries": [
+        {
+          "children": [
+            {
+              "condition": "minecraft:tool/can_shear",
+              "name": "awaken:bracken",
+              "type": "minecraft:item"
+            }
+          ],
+          "type": "minecraft:alternatives"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:blocks/bracken",
+  "type": "minecraft:block"
+}

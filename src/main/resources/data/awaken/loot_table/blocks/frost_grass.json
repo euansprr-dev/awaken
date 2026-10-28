@@ -1,0 +1,37 @@
+{
+  "pools": [
+    {
+      "entries": [
+        {
+          "children": [
+            {
+              "condition": "minecraft:tool/can_shear",
+              "name": "awaken:frost_grass",
+              "type": "minecraft:item"
+            },
+            {
+              "condition": {
+                "terms": [
+                  {
+                    "type": "minecraft:survives_explosion"
+                  },
+                  {
+                    "chance": 0.125,
+                    "type": "minecraft:random_chance"
+                  }
+                ],
+                "type": "minecraft:all_of"
+              },
+              "name": "minecraft:wheat_seeds",
+              "type": "minecraft:item"
+            }
+          ],
+          "type": "minecraft:alternatives"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:blocks/frost_grass",
+  "type": "minecraft:block"
+}

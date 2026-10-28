@@ -1,0 +1,7 @@
+{
+  "parent": "awaken:block/wild/cross_overlay",
+  "textures": {
+    "cross": "awaken:block/wild/long_grass_top_tawny_1",
+    "overlay": "awaken:block/wild/long_grass_top_tawny_1_overlay"
+  }
+}

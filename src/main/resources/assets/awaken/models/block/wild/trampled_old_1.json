@@ -1,0 +1,7 @@
+{
+  "parent": "awaken:block/wild/flat_overlay",
+  "textures": {
+    "flat": "awaken:block/wild/trampled_old_1",
+    "overlay": "awaken:block/wild/trampled_old_1_overlay"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/wild/gorse_0"
+      },
+      {
+        "model": "awaken:block/wild/gorse_1"
+      },
+      {
+        "model": "awaken:block/wild/gorse_2"
+      }
+    ]
+  }
+}
