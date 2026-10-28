@@ -42,7 +42,7 @@ import org.jspecify.annotations.Nullable;
  * Station scenes (Hands P5; SPEC §24). At a crafting table the view leans in over the table top, the 3×3 grid IS the
  * table top (each ingredient lies on its square in the world, the result floats over the far edge), and your hands lay
  * every ingredient on its square and take the result. At a furnace, smoker or blast furnace the view crouches to its
- * front: what cooks sits in the mouth, the fuel in the firebox below, the result floats out beside it, and the cooking
+ * front: input and output sit inside its recessed mouth, with fuel below, and the cooking
  * and the fuel left run along the strip. The screen ({@link StationScreen}) is the station's vanilla menu, so every item
  * moves by the menu's own clicks and the server checks them; only the station's slots are drawn in the world instead of
  * on the screen. A hand moves only after your own click (cooking on its own moves none). Sneak + use opens the plain
@@ -78,17 +78,28 @@ public final class StationClient {
         for (int i = 0; i < ITEMS.length; i++) ITEMS[i] = new ItemStackRenderState();
     }
 
-    public static void init(IEventBus bus) {
+    public static void init(IEventBus bus, IEventBus modBus) {
+        FurnaceWorld.init(modBus);
+        bus.addListener(net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut.class, e -> {
+            StationCamera.end(); open = false; table = null;
+        });
+        bus.addListener(StationClient::onPlayer);
         bus.addListener(PlayerInteractEvent.RightClickBlock.class, StationClient::onUse);
         bus.addListener(EventPriority.LOW, ScreenEvent.Opening.class, StationClient::onOpening);
         bus.addListener(EventPriority.LOW, ViewportEvent.ComputeCameraAngles.class, StationClient::onAngles);
         bus.addListener(ComputeFovModifierEvent.class, StationClient::onFovModifier);
+        bus.addListener(ViewportEvent.ComputeFov.class, StationClient::onFov);
         bus.addListener(SubmitCustomGeometryEvent.class, StationClient::onSubmit);
         FirstPerson.world("anims_station", 200, StationClient::pose);
     }
 
     public static void tick() {
         ticks++;
+        if (StationCamera.lost() || StationCamera.active() && (!on() || Minecraft.getInstance().player == null || !Minecraft.getInstance().player.isAlive())) {
+            StationCamera.end(); open = false; table = null;
+            if (Minecraft.getInstance().gui.screen() instanceof StationScreen<?> && Minecraft.getInstance().player != null) Minecraft.getInstance().player.closeContainer();
+        }
+        if (StationCamera.active() && weight(0) <= 0) StationCamera.end();
         if (!open || !(Minecraft.getInstance().gui.screen() instanceof StationScreen<?> s)) return;
         reframe(s);
         // what changed on the station: a hand lays it there (or takes the result), but only after your own click
@@ -155,12 +166,13 @@ public final class StationClient {
             begin(p, used, Kind.TABLE);
             e.setNewScreen(new StationScreen<>(cs.getMenu(), p.getInventory(), cs.getTitle(), Kind.TABLE));
         } else if (e.getNewScreen() instanceof AbstractFurnaceScreen<?> fs) {
-            begin(p, used, Kind.FURNACE);
+            if (!FurnaceWorld.supported(used, p.level().getBlockState(used)) || !begin(p, used, Kind.FURNACE)) return;
             e.setNewScreen(new StationScreen<>(fs.getMenu(), p.getInventory(), fs.getTitle(), Kind.FURNACE));
         }
     }
 
-    private static void begin(LocalPlayer p, BlockPos pos, Kind k) {
+    private static boolean begin(LocalPlayer p, BlockPos pos, Kind k) {
+        if (k != Kind.FURNACE) StationCamera.end();
         table = pos;
         kind = k;
         double dx = pos.getX() + 0.5 - p.getX(), dz = pos.getZ() + 0.5 - p.getZ();
@@ -181,12 +193,20 @@ public final class StationClient {
         rx = -fz;
         rz = fx;
         station = new Station(pos, k, fx, fz);
+        if (k == Kind.FURNACE && !StationCamera.begin(p, station)) { table = null; station = null; return false; }
         framed = false;
         boolean quick = ticks - closedAt < 240;
         openedAt = ticks - (quick ? 6 : 0);
         open = true;
         java.util.Arrays.fill(SEEN, ItemStack.EMPTY);
         TAP_AT[0] = TAP_AT[1] = -100;
+        return true;
+    }
+
+    public static boolean ownsCamera() { return StationCamera.active(); }
+
+    private static void onPlayer(net.neoforged.neoforge.client.event.RenderPlayerEvent.Pre<?> e) {
+        if (ownsCamera() && Minecraft.getInstance().player != null && e.getRenderState().id == Minecraft.getInstance().player.getId()) e.setCanceled(true);
     }
 
     static void closed() {
@@ -233,7 +253,7 @@ public final class StationClient {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (station == null || p == null || s.layout == null) return;
-        Vec3 eye = p.getEyePosition(1F);
+        Vec3 eye = kind == Kind.FURNACE ? StationCamera.eye(p) : p.getEyePosition(1F);
         float aspect = (float) mc.getWindow().getWidth() / Math.max(1, mc.getWindow().getHeight());
         float most = Math.min(StationView.MAX_FOV, mc.options.fov().get() * 1.5F);
         StationView.frame(station, eye.x, eye.y, eye.z, s.layout, s.width, s.height, aspect, most, FRAME);
@@ -257,16 +277,28 @@ public final class StationClient {
             yaw = (float) (Mth.atan2(-ax, az) * Mth.RAD_TO_DEG);
             pitch = (float) (-Mth.atan2(ay, Math.sqrt(ax * ax + az * az)) * Mth.RAD_TO_DEG);
         }
-        e.setYaw(e.getYaw() + Mth.wrapDegrees(yaw - e.getYaw()) * w);
-        e.setPitch(Mth.lerp(w, e.getPitch(), pitch));
+        LocalPlayer player = Minecraft.getInstance().player;
+        // The camera entity already carries last frame's turn. Always ease from the player's untouched look.
+        float fromYaw = kind == Kind.FURNACE && player != null ? player.getViewYRot(e.getPartialTick()) : e.getYaw();
+        float fromPitch = kind == Kind.FURNACE && player != null ? player.getViewXRot(e.getPartialTick()) : e.getPitch();
+        e.setYaw(fromYaw + Mth.wrapDegrees(yaw - fromYaw) * w);
+        e.setPitch(Mth.lerp(w, fromPitch, pitch));
         // the slightest breath while you work
-        e.setPitch(e.getPitch() + 0.25F * w * Mth.sin((ticks + (float) e.getPartialTick()) * 0.12F));
+        if (kind != Kind.FURNACE) e.setPitch(e.getPitch() + 0.25F * w * Mth.sin((ticks + (float) e.getPartialTick()) * 0.12F));
+        if (kind == Kind.FURNACE) StationCamera.place(w, e.getPartialTick(), e.getYaw(), e.getPitch());
     }
 
     private static void onFovModifier(ComputeFovModifierEvent e) {
         float w = weight(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
         // the field of view the frame asks for, whatever the speed or the setting would make it
-        if (w > 0 && framed) e.setNewFovModifier(Mth.lerp(w, e.getNewFovModifier(), FRAME[2] / Minecraft.getInstance().options.fov().get()));
+        if (kind == Kind.TABLE && table != null && w > 0 && framed) e.setNewFovModifier(Mth.lerp(w, e.getNewFovModifier(), FRAME[2] / Minecraft.getInstance().options.fov().get()));
+    }
+
+    private static void onFov(ViewportEvent.ComputeFov e) {
+        if (kind != Kind.FURNACE || !StationCamera.active() || !framed || table == null) return;
+        // A non-player camera does not run ComputeFovModifierEvent; use the supported final FOV hook.
+        float w = weight(e.getPartialTick());
+        if (w > 0) e.setFOV(Mth.lerp(w, e.getFOV(), FRAME[2]));
     }
 
     // ---- the world: the items on the station, the hovered slot --------------------------------------------------------
@@ -288,7 +320,7 @@ public final class StationClient {
         float t = ticks + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float yaw = (float) (Mth.atan2(-fx, fz) * Mth.RAD_TO_DEG);
         ItemStack carried = s.getMenu().getCarried();
-        for (int i = 0; i < kind.slots; i++) {
+        for (int i = 0; !furnace && i < kind.slots; i++) {
             ItemStack st = s.getMenu().getSlot(i).getItem();
             // a square a drag has passed over shows what it will get
             if (st.isEmpty() && s.dragging(i)) st = carried;
@@ -304,10 +336,6 @@ public final class StationClient {
                 ps.translate(0, 0.03 * Mth.sin(t * 0.1F), 0);
                 ps.rotateDegrees(Axis.YP, t * 2.5F);
                 ps.scale(0.55F, 0.55F, 0.55F);
-            } else if (furnace) {
-                // upright in the mouth (or the firebox), facing out
-                ps.rotateDegrees(Axis.YP, 180F - yaw);
-                ps.scale(0.3F, 0.3F, 0.3F);
             } else {
                 // an ingredient lies flat on its square, square to the table
                 ps.rotateDegrees(Axis.YP, 180F - yaw);
@@ -318,7 +346,7 @@ public final class StationClient {
             ps.popPose();
         }
         for (int i = 0; i < kind.slots; i++) {
-            if (i == kind.result || i != s.hovered && !s.dragging(i)) continue;
+            if (i == kind.result && !furnace || i != s.hovered && !s.dragging(i)) continue;
             spot(i, P, 0);
             ps.pushPose();
             ps.translate(P[0] - cam.x, P[1] - cam.y, P[2] - cam.z);
@@ -345,7 +373,7 @@ public final class StationClient {
             // resting: just off the near corners, below the edge (in frame at its foot, clear of the grid)
             double restX, restY, restZ;
             if (kind == Kind.FURNACE) {
-                // at your sides, under the frame (a furnace is worked from standing): only a working hand comes in
+                // below the lowered view: only a working hand comes into the frame
                 restX = eye.x + fx * 0.3 + rx * side * 0.38;
                 restY = eye.y - 1.05;
                 restZ = eye.z + fz * 0.3 + rz * side * 0.38;
