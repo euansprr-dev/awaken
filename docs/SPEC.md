@@ -10942,7 +10942,9 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
 - **Cost**: brains share one path budget, 2 path searches a tick across every herd and pack, each leg at most 10 blocks
   (a wave held back keeps its order); a search is ~0.2 ms on the M4. Bench (`wild_herd_bench`): three herds of 30 and two
   packs of 6 near one player, grazing, then a sprinter runs through and leaves: 0.23-0.29 ms a tick average after warm-up,
-  worst tick 3.4 ms (asserted under 0.5 and 10, ×3 on CI; the first stampede knock warms the game's damage code).
+  worst tick 3.4 ms. Asserted over 300 warm ticks: average under 0.5 ms, 95% of ticks under 2 ms, at most two ticks over
+  10 ms (each ×3 on CI). No single tick fails it: one stray tick is the machine (a collection, a shared 3-core runner hit 42 ms
+  once), while a real regression moves the average, the 95th or many ticks. The first stampede knock warms the damage code.
 - **Grass that lives** (decision 9, stage 2's second part): `Wildness.Ground` (`setGround`, `ground()`; `crop(level, pos)`,
   `trample(level, pos, strength)` with `LIGHT` 1, `HERD` 2, `STAMPEDE` 3), registered by the module that grows the grass (the
   ground module's `WildPlants`, registered in its init beside `setCover`, `wild_plants_cover` and `wild_plants_trample` reach the plants through them); without it nothing changes. A grazing herd's brain takes
