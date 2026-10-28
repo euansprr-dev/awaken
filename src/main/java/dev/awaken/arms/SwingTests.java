@@ -16,6 +16,7 @@ final class SwingTests {
         AwakenTests.register("arms_swing_blend", 20, SwingTests::blend);
         AwakenTests.register("arms_swing_reload", 20, SwingTests::reload);
         AwakenTests.register("arms_feel_rules", 20, SwingTests::feelRules);
+        AwakenTests.register("arms_chain_flow", 20, SwingTests::chainFlow);
     }
 
     /**
@@ -129,6 +130,36 @@ final class SwingTests {
                 h.assertTrue(gap > 0.08F && gap < 0.6F, a.id() + "'s off hand is a hand's width or more down the handle (" + gap + ")");
             }
         }
+        h.succeed();
+    }
+
+    /**
+     * Round 3's chain (Euan 2026-10-28: "the second slice is not even visible"): each strike of a chain, struck by the
+     * same hand as the one before it, starts where that one holds the blade on the earliest press it chains from, so
+     * the blend has nothing to carry and the next blow is wound up in view, never from below the frame.
+     */
+    static void chainFlow(GameTestHelper h) {
+        Vector3f a = new Vector3f(), b = new Vector3f();
+        Quaternionf qa = new Quaternionf(), qb = new Quaternionf();
+        int links = 0;
+        for (Archetypes.Loaded style : Archetypes.all()) {
+            FpSwings.Style st = FpSwings.style(style.id());
+            if (st == null) continue;
+            java.util.List<Archetype.Move> chain = new java.util.ArrayList<>(style.chain());
+            chain.addAll(style.masteryChain());
+            for (int i = 0; i + 1 < chain.size(); i++) {
+                Archetype.Move prev = chain.get(i), next = chain.get(i + 1);
+                Archetype.MoveDef def = style.move(prev);
+                if (def == null || FpSwings.hand(st, prev) != FpSwings.hand(st, next)) continue;
+                float press = def.hasCadence() ? def.cadence().get(0) : def.windup() + def.active() + ArmsRules.MASTERY_LINK;
+                if (!FpSwings.sample(st, prev, press, true, a, qa) || !FpSwings.sample(st, next, 0, true, b, qb)) continue;
+                float turn = (float) Math.toDegrees(2 * Math.acos(Math.min(1F, Math.abs(qa.dot(qb)))));
+                h.assertTrue(a.distance(b) < 0.02F && turn < 3F,
+                        style.id() + " " + next.key + " starts where " + prev.key + " holds the blade (" + a.distance(b) + ", " + turn + " degrees)");
+                links++;
+            }
+        }
+        h.assertTrue(links > 30, "the chains' links are checked (" + links + ")");
         h.succeed();
     }
 }

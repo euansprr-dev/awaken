@@ -68,3 +68,36 @@ Left for their own rounds:
 - The axe's sweep (strike 4) and art (0.71, 0.76), the daggers' slash (strike 3, 0.80).
 - The maul's uppercut contact (-0.09), the scythe's reap contact (-0.09) and riposte (43% above the eye).
 - The chain-blade's backhand lash (drift 88 ms) and the war-staff's backhand (138 ms).
+
+## Round 3: the chain (2026-10-28)
+
+Note (Euan, same day): "most of them are still decent, but when you're doing combos, a lot of the time the weapon, the
+second slice, is not even visible... Some of them are so fast that when you're clicking fast, it looks like just a
+mess... the trail teleports and follows the teleportation... the hammer, the second swing, you barely even see it."
+He also said the weight improved: the katana feels fast, the hammer slower, the axe good.
+
+What was wrong: the studio judged each move alone. Round 2 carried every follow-through down out of the frame and held it
+there for the next press, so in a chain the next strike wound up from below the view and only appeared on its hit. The
+new `tools/art/swing_chain.py` plays the chains the way the game does and showed it: second and third strikes were on
+screen for 15-45% of their wind-up and blow, the blade dipping 2-12 screen heights below the frame.
+
+The fix (every style, in the studio's cut and the shared wind-up):
+- A strike that leads on ends in view (the carry cut back, at least 40% kept), a low blow is hauled up to a readable
+  height, and it holds there through the chain's window.
+- The next strike of the same hand winds up from that pose, its draw back kept in view.
+- No wind-up flings the tip more than 0.3 of the screen a frame; with no room for a set it goes straight to the drive.
+
+| chain strikes (67), out | round 2, mash | round 3, mash | round 2, mid-window | round 3, mid-window |
+|---|---|---|---|---|
+| out of view (wind-up and blow under 90% seen) | 32 | 6 | 29 | 4 |
+| drive out of view | 30 | 7 | 28 | 5 |
+| a step over 0.3 of the screen outside the blow | 42 | 29 | 49 | 31 |
+| turns back on itself | 6 | 3 | 1 | 2 |
+
+The single-move report: bite, contact and drive hold; drift 2 -> 27 (the settle after a leading blow is now in view),
+seven chained strikes hit at 0.42-0.72 of their peak (shorter draw back).
+
+Left: the scythe's haul, the twin blades' spins (strikes 4-5), the daggers' and twin blades' rhythm (a 1-tick wind-up
+every 4 ticks: the idle hand could draw back while the other strikes), and the steps still over 0.3 (mostly first
+strikes thrown up from rest).
+

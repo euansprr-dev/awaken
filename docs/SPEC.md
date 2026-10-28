@@ -5806,6 +5806,23 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     long tip comes nearer the eye after the hit, so it looks fastest just after it: 0.64-0.79), the axe's sweep and
     art, the daggers' slash, the maul's uppercut contact, the scythe's reap contact and riposte, the chain-blade's
     backhand lash and the war-staff's backhand (drift 88, 138 ms).
+  - *Round 3, the chain* (Euan 2026-10-28: "when you're doing combos... the second slice is not even visible... it looks
+    like a mess of movement and trails"): round 2's follow-through carried the blade out of the frame and waited there
+    for the next press, so a chained strike spent its wind-up below the view and the trail drew it in from nowhere.
+    Now a strike that leads on (it has a cadence, or a mastery link) ends in view: its carry is cut back until the
+    blade's middle ends inside 0.85 of the frame (at least 40% of its travel kept), and a blow that ends low (a slam, a
+    chop) is hauled up over at most 1.5 ticks until its tip is above -0.4 of the screen's height. It holds there
+    through the chain's window (to the cadence's end), then comes home as before. The next strike of the same hand
+    winds up from that pose, not from rest, its draw back cut until the blade's middle at the set is inside 0.9 of
+    the frame. Every wind-up moves the tip at most 0.3 of the screen a frame at 60 fps (a longer draw back takes more
+    of the wind-up), and one with no room for a set (under half a tick) goes straight to where the drive leaves
+    from. `tools/art/swing_chain.py` plays each chain as the runtime does (the earliest press or mid-window, carried by
+    `SwingBlend`, 60 fps). Across the 67 chain strikes, mashing: chained strikes out of view in their wind-up and blow
+    32 -> 6, the drive out of view 30 -> 7; mid-window 29 -> 4. GameTest `arms_chain_flow`: every same-hand link starts
+    where the one before it holds the blade on its earliest press (43 links, within 0.02 blocks and 3 degrees). Cost:
+    the settle after a leading blow is now seen (the report's drift, 2 -> 27 moves, 88-150 ms), and a chained strike's
+    shorter draw back lands at 0.42-0.72 of its peak speed in 7 moves. Left: the scythe's haul (its own shape), the
+    daggers' and twin blades' rhythm (a 1-tick wind-up every 4 ticks).
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
