@@ -33,6 +33,7 @@ final class FightRunner {
 
     /** The move playing (an index into the table, -1 none), its tick, and its stretched timings. */
     private int move = -1, t, windup, hold, active, recover;
+    private KitMoves.@Nullable Played played;
     private float yaw;
     private @Nullable Ability ability;
     private final ArrayDeque<String> string = new ArrayDeque<>(4);
@@ -80,6 +81,13 @@ final class FightRunner {
         string.clear();
         introduced = true;
         return begin(level, id, boss.getTarget());
+    }
+
+    /** Plays a string now: its first move, then the rest as the fight script would (tests). */
+    boolean play(ServerLevel level, String first, java.util.List<String> then) {
+        if (!play(level, first)) return false;
+        string.addAll(then);
+        return true;
     }
 
     /** The move playing now, or null. */
@@ -276,6 +284,7 @@ final class FightRunner {
         // the enrage is speed, never damage: the wind-up and recovery shrink, but never under its class's tell
         int held = m.kind() == Strikes.Kind.HEAVY && m.time().hold() > 0 && boss.getRandom().nextInt(3) == 0 ? m.time().hold() : 0;
         KitMoves.Played p = KitMoves.played(m, boss.kitSpeed(), held);
+        played = p;
         windup = p.windup();
         hold = p.hold();
         active = p.active();
@@ -336,10 +345,10 @@ final class FightRunner {
                         yaw = (float) (Mth.atan2(target.getZ() - boss.getZ(), target.getX() - boss.getX()) * Mth.RAD_TO_DEG) - 90;
                     }
                 }
-                // the strike: a whoosh with the limb, a roar for an intro or transition, a cast for an ability alone
+                // a roar for an intro or transition, a cast for an ability alone (a blow's whoosh plays on its mark)
                 if (m.kind() == Strikes.Kind.NONE) {
                     if (!sound(m, "swing", "roar")) boss.roar();
-                } else sound(m, "swing", m.hits().isEmpty() ? "cast" : m.kind() == Strikes.Kind.LIGHT ? "swing_light" : "swing_heavy");
+                } else if (m.hits().isEmpty()) sound(m, "swing", "cast");
                 if (m.is("area") && firstHit(m) < 0) sound(m, "impact", "impact");
             }
             face();
@@ -349,12 +358,49 @@ final class FightRunner {
                 boss.move(MoverType.SELF, new Vec3(-Mth.sin((float) r) * adv, up, Mth.cos((float) r) * adv));
             }
             if (k < m.hits().size()) strike(level, m, m.hits().get(k));
-            if (k == firstHit(m) && m.is("area")) sound(m, "impact", "impact"); // the blow meets the ground
+            marks(m);
             return;
         }
-        if (t < wind + active + recover) return; // the recovery: no turning, the opening
+        marks(m);
+        if (t < wind + active + recover) {
+            // the recovery: no turning, the opening; in a string the next move links on at the end of the
+            // follow-through instead of the body going back to rest first (SPEC §35.10)
+            if (played != null && played.link() < recover && t == wind + active + played.link()) link(level, target);
+            return;
+        }
         stop();
         gap = !studio.isEmpty() ? 30 : string.isEmpty() ? 6 + boss.getRandom().nextInt(9) : 0;
+    }
+
+    /**
+     * The sounds on the move's marks, each at the tick its base-timed mark plays at: the blow's whoosh, its impact (an
+     * area move meeting the ground) and the steps its feet take where it doesn't travel (travel steps are the walk's).
+     */
+    private void marks(KitMoves.Move m) {
+        if (played == null || m.kind() == Strikes.Kind.NONE) return;
+        KitMoves.Time base = m.time();
+        if (!m.hits().isEmpty()) {
+            int whoosh = Math.max(1, Math.round(played.at(base, m.mark("whoosh", base.windup())))) + 1;
+            if (t == whoosh) sound(m, "swing", m.kind() == Strikes.Kind.LIGHT ? "swing_light" : "swing_heavy");
+            if (m.is("area") && firstHit(m) >= 0 && t == Math.round(played.at(base, m.mark("contact", base.windup() + firstHit(m)))) + 1)
+                sound(m, "impact", "impact"); // the blow meets the ground
+        }
+        if (m.motion().advance() != 0) return;
+        for (int i = 0; i < 8; i++) {
+            int st = m.mark("step" + i, -1);
+            if (st < 0) break;
+            if (t == Math.round(played.at(base, st)) + 1) dev.awaken.mobs.boss.KitSounds.play(boss, moves, "step", 0.8F);
+        }
+    }
+
+    /** A string's next step begins now if it is due and in range; false leaves the recovery to play out. */
+    private boolean link(ServerLevel level, @Nullable LivingEntity target) {
+        if (string.isEmpty() || pendingPhase >= 0 || !studio.isEmpty() || target == null || !target.isAlive()) return false;
+        int i = moves.index(string.peek());
+        if (i < 0 || !inRange(moves.get(i), target)) return false;
+        String next = string.poll();
+        stop();
+        return begin(level, next, target);
     }
 
     /** The move's own set for this moment ("" silences it), else the default; false when the body has neither. */
@@ -372,6 +418,7 @@ final class FightRunner {
     private void stop() {
         if (move >= 0) boss.setTelegraph(0, false);
         move = -1;
+        played = null;
         ability = null;
         boss.syncKit(-1, 0, 0);
     }

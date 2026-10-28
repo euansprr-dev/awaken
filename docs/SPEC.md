@@ -9074,8 +9074,8 @@ should show a boss bar of our own. What he approved (PLAN §7):
   - `enrage`: `below` (0.15) and `speed` (1.2): faster, never more damage;
   - `death`: optional and unused for now (the body plays its rig's `death` clip).
 - **Checks** (load and `kit_*` tests). A missing or broken file means the boss wears its old body and fights as before,
-  logged once. Every move's clips exist (`<move>_windup`, `_active`, `_recover`), and their lengths match the ticks
-  within one tick. Every wind-up is at least its class's minimum: LIGHT 8, HEAVY 12, PERILOUS 14 and GRAB 12. A hold
+  logged once. Every move's one clip exists (`move_<id>`, 35.10), and its length matches the ticks within one tick; a
+  move's `link` is within its recovery. Every wind-up is at least its class's minimum: LIGHT 8, HEAVY 12, PERILOUS 14 and GRAB 12. A hold
   is only on a HEAVY move. Every boss's script covers gap, combo, delay, area, ranged, behind and signature.
 
 ### 35.3 The fight runner (server, `mobs.entity.FightRunner`, beside `AwakenBoss`)
@@ -9134,12 +9134,13 @@ should show a boss bar of our own. What he approved (PLAN §7):
 ### 35.4 The kit runtime (client, `mobs.client.kit`)
 - `KitRenderer` draws an `AwakenBoss` whose rig loaded, through `HeroModel` (extended in place, not forked). The layers:
   1. **Locomotion**: idle, then walk and run blended by speed and locked to distance (as hero rigs are).
-  2. **The action layer**: the synced move's `_windup` (played over the wind-up, then held still on its last key
-     through the hold), `_active` and `_recover`; the previous move fades out over 0.15 s under the new one.
+  2. **The action layer**: the synced move's one clip `move_<id>` (35.10), its wind-up and recovery stretched to the
+     ticks played, staying at the peak (trembling) through a hold; every change of what plays eases out on the body's
+     transition spring (`KitBlend`) instead of a crossfade.
   3. **Turn steps**: while no move plays and the body turns, `turn_l` or `turn_r` (0.4 s) loops, weighted by how fast
      it turns (from 1° a tick, full at 45° in 0.4 s). The rate is eased on the boss (35% a tick), so the step fades in
      and out with the turn and never pops off at a threshold.
-  4. **Ground contact**: within 32 blocks and on the ground, each foot finds the ground's top under it (collision
+  4. **Ground contact** (through moves too, since 35.10): within 32 blocks and on the ground, each foot finds the ground's top under it (collision
      shapes); the body lowers to the lower one (at most 0.6 block) and the higher foot's leg reaches up by two-bone IK
      (`HeroModel.Leg`).
   5. **Reactions**: the blow's direction (`CombatFeedback`) picks `hurt_l`, `hurt_r` or `hurt` (from the front). A
@@ -9257,7 +9258,75 @@ Tyrant first, and nothing rolls out to more creatures until the Tyrant passes Eu
     then dark rock.
   - **Not changed yet.** The hitbox stays 1.8 by 5.85 blocks (the body is wider: the fist reaches past it) and the
     moves are today's, re-sided; both are R2 and R3 work.
-- **R2, motion; R3, the Tyrant's fight; then R4 Unit Zero and R5 Mother.** As the plan; each lands here when built.
+- **R2, motion: built (35.10).** R3, the Tyrant's fight; then R4 Unit Zero and R5 Mother: as the plan; each lands
+  here when built.
+
+### 35.10 The motion kit (R2 of 35.9)
+One continuous clip per move, eased hand-overs, secondary parts that swing, and sounds and feel on the clip's marks.
+For all three kit bodies (the tools write every body the same way).
+- **One clip** (`kit/core.py stage_clips`, `move_<id>`). Its keys, in order:
+  - rest;
+  - a counter-move at 0.3 of the wind-up (the arms 14% the other way from the peak, the hips down 1.2 px), only for
+    a blow whose own wind-up keys start after 0.35;
+  - the wind-up keys, then the peak;
+  - the strike keys, then contact;
+  - the follow-through a quarter into the recovery, carried past contact by a quarter of the swing (at most 25°);
+  - the recovery's own keys;
+  - a settle at 0.82 of the recovery, 7% past rest the other way;
+  - rest.
+  Every key has its planted feet solved. A pose held over two keys swells by 7%, so no body stands frozen.
+  Successive breaking: every joint past the chest trails its parent by 0.018 s (`BREAK`), so the hips lead, then the
+  chest, the shoulder, the elbow, the hand and the weapon. Legs and hips are never lagged, and the strike still lands
+  inside its own ticks (`hold_until`).
+- **Spacing.** A strike key that moves under 8° from the one before (`CARRY`) is dropped, so the blow carries through
+  contact into the follow-through instead of stopping dead. The recovery's own keys sit at least 0.15 of the recovery
+  apart, counting from the follow-through, so no big pose change lands in two ticks.
+- **The curve** (`bake`). The keys are re-keyed at one key a tick on a monotone cubic curve that knows the keys'
+  times (Fritsch-Butland slopes: the harmonic mean of the slopes either side, zero where the curve turns back). The
+  game's Catmull-Rom treats every gap between keys as the same length, so uneven keys would jump in speed where a
+  long wind-up meets a two-tick strike. On even keys it runs the baked curve smoothly, and a strike after a slow drift
+  starts from almost still and speeds up inside its own ticks.
+- **Marks** (`marks()`, in the move table's `marks`, ticks of base timing): `peak`, `contact` (the first tick with a
+  capsule), `whoosh` (where the weapon's tip is fastest, never before the peak) and `step0..` (a foot lifts over 3 px
+  and comes back under 1 px). `KitMoves.Played.at` maps a base tick to the tick it plays at: the wind-up and recovery
+  stretch, the hold sits after the peak, and the strike keeps its ticks. `Played.base` is the inverse, which is what
+  the client plays the clip by.
+- **Links.** `time.link` is a quarter of the recovery: the follow-through. In a string, FightRunner starts the next
+  move at `windup + hold + active + link` (scaled with the recovery) if the target is in that move's range and no
+  phase is waiting. Otherwise the recovery plays out. Outside a string a move always plays to its end.
+- **Link poses.** On a link the hand-over is not the spring: the last blow's pose and speed ease out on a cubic that
+  reaches nothing exactly at the new move's peak (its played wind-up and hold). So the next wind-up starts where the
+  last blow ended and arrives at its own peak.
+- **The transition spring** (`KitBlend`, per body, client). After every layer, the feet and the look, when what plays
+  changes (a move begins or links on, a reaction starts, the kneel or rise, the fall), each part keeps last frame's
+  pose as an offset over the new one: six channels, angles the short way round. The offset carries the part's last
+  speed and eases out on a critically damped spring with a half-life of 0.07 s (a link uses its cubic instead). No
+  crossfade, no snap.
+  Allocation-free per frame.
+- **Secondary parts** (rig `spring <bone> <gain> <hz> <damping>`). A spring part is left behind by `gain` of its
+  parents' pitch and roll change (and half the body's turn), then swings back on its spring. Every spring reads its
+  parents before any spring moves them, so a chain's links never feed each other. Its swing eases into ±0.7 rad
+  (tanh), never stopping dead. Today:
+  - the Forge's fist chain (1.0, 2.2 Hz, 0.18), tassets (0.6, 3.5 Hz, 0.3) and carapace slabs (0.08, 6 Hz, 0.5);
+  - Mother's veils (0.5, 3 Hz, 0.3) and tendril tips (0.8, 2.5 Hz, 0.25).
+- **Feet through moves.** Ground contact (35.4) now runs during moves too; it was off while a move played.
+- **Sound on the marks** (server, `FightRunner.marks`):
+  - the swing at the whoosh mark;
+  - an area blow's impact at its contact mark;
+  - the step set (0.8 volume) on each step mark of a move that doesn't travel;
+  - the tell, roar and cast stay where they were.
+- **Feel** (client, `KitRenderer.feel`, setting `hitFeel`, on by default; plain words in `awaken-mobs-client.toml`):
+  - **Shake.** At a heavy, perilous or area blow's contact mark, within 24 blocks, the view kicks once. The kick fades
+    with distance: area ×1, a heavy ×0.6, perilous ×1.4, alternating sides. Also needs `cameraShake` on.
+  - **Hit pause.** The body's move clock stops for 0.04 s (two frames at 60 fps, a touch more so it reads at 40)
+    when its blow hurts you inside its strike within its reach, or when it is hurt. Wall clock, client only; the
+    server's ticks never stop.
+- **The meter** (`kit/motion.py`, now playing the game's way: one clip, links, the transition spring, the springs).
+  It reports kinks outside the strike (wind-up, hold, follow-through, recovery, every hand-over) and the strike's snap
+  separately: a fast blow has to snap, and that is reported, not a fault. Targets: no kink outside the strike over
+  4°, held under 15% on a blow, and the dip toward rest inside a string under 40%.
+- **Tests.** `kit_string_links`: the Forge's chop string with a target in reach starts its second chop inside the
+  first one's recovery. `kit_tables_load` checks every move's one clip and its link.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 

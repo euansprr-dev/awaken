@@ -89,6 +89,35 @@ public final class KitTests {
             h.succeed();
         });
 
+        // in a string the next blow links on from the last one's follow-through, before its recovery ends (SPEC §35.10)
+        AwakenTests.register("kit_string_links", 120, h -> {
+            ServerLevel level = h.getLevel();
+            AwakenBoss boss = spawn(level, h, "ember_tyrant");
+            Pig pig = EntityTypes.PIG.create(level, EntitySpawnReason.MOB_SUMMONED);
+            pig.setPos(h.absoluteVec(new Vec3(4.5, 1, 7.5)));
+            pig.setNoAi(true);
+            pig.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000);
+            pig.setHealth(1000);
+            level.addFreshEntity(pig);
+            boss.setTarget(pig);
+            h.assertTrue(boss.playKitString("chop_a", java.util.List.of("chop_b")), "the chops play");
+            KitMoves.Move a = boss.kit().moves().get(boss.kit().moves().index("chop_a"));
+            KitMoves.Played p = KitMoves.played(a, boss.kitSpeed(), boss.kitHold());
+            int start = boss.kitStart();
+            int[] linked = {-1};
+            h.onEachTick(() -> {
+                boss.setTarget(pig);
+                if (linked[0] < 0 && "chop_b".equals(boss.kitPlaying())) linked[0] = (int) level.getGameTime() - start;
+            });
+            h.succeedWhen(() -> {
+                h.assertTrue(linked[0] >= 0, "the second chop plays");
+                h.assertTrue(linked[0] > p.windup() + p.hold() + p.active() && linked[0] < p.total(),
+                        "it starts in the first one's recovery (tick " + linked[0] + " of " + p.total() + ", link " + p.link() + ")");
+                boss.discard();
+                pig.discard();
+            });
+        });
+
         // crossing a phase line mid-fight plays that phase's transition before anything from its pool
         AwakenTests.register("kit_phase_order", 260, h -> {
             ServerLevel level = h.getLevel();

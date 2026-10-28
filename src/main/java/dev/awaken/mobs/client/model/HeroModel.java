@@ -261,5 +261,10 @@ public final class HeroModel extends EntityModel<HeroRenderState> {
         // a kit body plants its feet on the ground under them (after every layer, so nothing undoes it)
         if (legs[0] != null) legs[0].reach(s.footL * live);
         if (legs[1] != null) legs[1].reach(s.footR * live);
+        // a kit body eases over every change of what it plays and swings its secondary parts (last, over everything)
+        if (s.kitBlend instanceof dev.awaken.mobs.client.kit.KitBlend b) {
+            b.bind(root(), allParts(), rig);
+            b.apply(s.kitClock, s.kitKey, s.bodyRot);
+        }
     }
 }

@@ -157,6 +157,12 @@ public class AwakenBoss extends AwakenMob {
         return f != null && level() instanceof ServerLevel sl && f.play(sl, id);
     }
 
+    /** Plays a string of kit moves now, the rest linking on as the fight script's would (tests). */
+    public boolean playKitString(String first, java.util.List<String> then) {
+        FightRunner f = fight();
+        return f != null && level() instanceof ServerLevel sl && f.play(sl, first, then);
+    }
+
     /** The kit move playing now (server side), or null. */
     public @Nullable String kitPlaying() {
         FightRunner f = fight;

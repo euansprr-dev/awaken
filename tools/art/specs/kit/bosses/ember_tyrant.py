@@ -150,6 +150,9 @@ def body():
     r.look = [("head", 0.55, 0.5), ("neck", 0.25, 0.2)]
     r.size = P.leg / 36.0
     r.shadow = 2.6
+    # secondary parts that trail the body (SPEC §35.10): the shackle's chain swings, the tassets flap, the shell shifts
+    r.springs = [(f"chain_r{k}", 1.0, 2.2, 0.18) for k in range(4)] + [(f"tasset{k}", 0.6, 3.5, 0.3) for k in range(3)] \
+        + [(f"shell{k}", 0.08, 6.0, 0.5) for k in range(5)]
     return r
 
 

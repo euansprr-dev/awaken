@@ -4,7 +4,8 @@ Written 2026-10-28 after Euan's first look at the three kit bosses. Process: `.c
 The approval page (https://claude.ai/artifact/3MpmzQ6mv8LGNH7TyURkfJ) carries the same plan with pictures. Euan
 approved all eight recommendations on 2026-10-28 ("Go ahead"); SPEC §35.9 records it. R0 is built (the baseline is
 `baseline-2026-10-28.md`). At the silhouette gate he picked C, the Living Forge; the R1 model is built (SPEC §35.9)
-and waits for his look before R2.
+and he passed the body ("The body is good"). R2, the motion kit, is built (SPEC §35.10; measured in
+`r2-motion-2026-10-28.md`) and waits for his look in game before R3.
 
 ## What Euan asked for
 - **Look.** Today the Tyrant is "too derpy", "too blocky and rushed and vanilla-like". He wants premium, the kind that

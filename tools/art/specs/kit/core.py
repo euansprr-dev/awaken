@@ -72,9 +72,11 @@ class Move:
         return {"windup": self.windup, "active": self.active, "recover": self.recover}[stage] * TICK
 
 
-def keyed(rig, name, length, keys, loop=False, lag=None, interp="cat"):
+def keyed(rig, name, length, keys, loop=False, lag=None, interp="cat", hold_until=None):
     """A clip from key poses [(seconds, pose)]. Each bone animates through every key (rest where a key leaves it out).
-    lag: {bone: seconds}: that bone's inner keys come later (follow-through); the first and last keys stay put."""
+    lag: {bone: seconds}: that bone's inner keys come later (follow-through); the first and last keys stay put, and a
+    lagged key never passes the next key (nor, with hold_until, a key before that time past it: the strike lands in
+    its own ticks)."""
     clip = rig.clip(name, length, loop)
     lag = lag or {}
     bones = []
@@ -95,7 +97,10 @@ def keyed(rig, name, length, keys, loop=False, lag=None, interp="cat"):
             q = v.get("pos", (0, 0, 0)) if isinstance(v, dict) else (0, 0, 0)
             tt = t
             if 0 < k < n - 1 and b in lag:
-                tt = min(length - 1e-3, t + lag[b])
+                tt = min(length - 1e-3, t + lag[b], keys[k + 1][0] - 0.02)
+                if hold_until is not None and t <= hold_until:
+                    tt = min(tt, hold_until)
+                tt = max(t, tt)
             rot.append((tt, r[0], r[1], r[2]))
             if any_pos:
                 pos.append((tt, q[0], q[1], q[2]))
@@ -107,10 +112,130 @@ def keyed(rig, name, length, keys, loop=False, lag=None, interp="cat"):
     return clip
 
 
+# The motion kit (SPEC §35.10): one continuous clip per move, so the curve never breaks at the peak or at contact.
+BREAK = 0.018  # seconds each joint past the chest trails the one before it (successive breaking)
+LEGS = ("thigh_", "shin_", "foot_")  # planted by IK on every key, so never lagged
+ARMS = ("arm_", "forearm_", "hand_", "chest", "spine", "head", "neck")  # what anticipates and follows through
+THROUGH = 0.25  # the follow-through key, a quarter into the recovery: a string links on from here
+FOLLOW = 0.25  # how far past contact it carries, as a share of the swing from the peak (at most FOLLOW_MAX degrees)
+FOLLOW_MAX = 25.0
+COUNTER = 0.14  # the anticipation: a small move the other way, as a share of the peak, before the wind-up rises
+SETTLE = 0.07  # the settle: past rest the other way before it comes to rest
+DRIFT = 0.07  # a pose held over two keys swells by this much, so nothing freezes
+CARRY = 8.0  # degrees: a strike key that moves less than this from the one before is dropped (the blow carries on)
+
+
+def _moved(p, q):
+    """The most any bone's rotation differs between two key poses, degrees."""
+    out = 0.0
+    for b in set(p) | set(q):
+        rp, rq = _rot(p.get(b, (0, 0, 0))), _rot(q.get(b, (0, 0, 0)))
+        out = max(out, max(abs(rp[i] - rq[i]) for i in range(3)))
+    return out
+
+
+def clip_name(mv):
+    return "move_" + mv.id
+
+
+def bake(clip, step=TICK):
+    """Re-keys every track at one key a tick on a curve that knows its keys' times, so the game's Catmull-Rom (which
+    treats every gap between keys as the same length) runs it with no jump in speed where a long wind-up meets a
+    two-tick strike. Each key's slope is the harmonic mean of the slopes either side of it (zero where it turns back),
+    so a strike that follows a slow drift leaves from almost still and speeds up inside its own ticks, never
+    overshooting a key; the ends start and stop still."""
+    n = max(1, int(round(clip.length / step)))
+    times = [min(clip.length, k * step) for k in range(n + 1)]
+    for tk, keys in list(clip.tracks.items()):
+        ks = []
+        for k in keys:
+            if ks and abs(k[0] - ks[-1][0]) < 1e-6:
+                ks[-1] = k
+            else:
+                ks.append(k)
+        if len(ks) < 2:
+            continue
+        m = []
+        for i in range(len(ks)):
+            if i == 0 or i == len(ks) - 1:
+                m.append((0.0, 0.0, 0.0))
+            else:
+                h0, h1 = ks[i][0] - ks[i - 1][0], ks[i + 1][0] - ks[i][0]
+                sl = []
+                for c in range(3):
+                    d0, d1 = (ks[i][1][c] - ks[i - 1][1][c]) / h0, (ks[i + 1][1][c] - ks[i][1][c]) / h1
+                    if d0 * d1 <= 0:
+                        sl.append(0.0)
+                    else:  # Fritsch-Butland: weighted harmonic mean for uneven gaps
+                        w0, w1 = 2 * h1 + h0, h1 + 2 * h0
+                        sl.append((w0 + w1) / (w0 / d0 + w1 / d1))
+                m.append(tuple(sl))
+        out, j = [], 0
+        for t in times:
+            while j < len(ks) - 2 and t > ks[j + 1][0]:
+                j += 1
+            t0, t1 = ks[j][0], ks[j + 1][0]
+            h = t1 - t0
+            if t <= t0 or h <= 0:
+                v = ks[j][1] if t <= t0 else ks[j + 1][1]
+            elif t >= t1:
+                v = ks[j + 1][1]
+            else:
+                a = (t - t0) / h
+                h00, h10, h01, h11 = 2 * a ** 3 - 3 * a * a + 1, a ** 3 - 2 * a * a + a, -2 * a ** 3 + 3 * a * a, a ** 3 - a * a
+                v = tuple(h00 * ks[j][1][c] + h10 * h * m[j][c] + h01 * ks[j + 1][1][c] + h11 * h * m[j + 1][c] for c in range(3))
+            out.append((t, tuple(v), "cat"))
+        clip.tracks[tk] = out
+    return clip
+
+
+def _rot(v):
+    return v.get("rot", (0, 0, 0)) if isinstance(v, dict) else v
+
+
+def _pos(v):
+    return v.get("pos", (0, 0, 0)) if isinstance(v, dict) else (0, 0, 0)
+
+
+def _mk(r, q, had_pos):
+    return {"rot": tuple(r), "pos": tuple(q)} if had_pos else tuple(r)
+
+
+def _scaled(pose, k, only=None):
+    out = {}
+    for b, v in pose.items():
+        if only and not b.startswith(only):
+            continue
+        out[b] = _mk([c * k for c in _rot(v)], [c * k for c in _pos(v)], isinstance(v, dict))
+    return out
+
+
+def _through(end, peak):
+    """The follow-through: the contact pose carried on the way the swing was going (peak to contact), a little."""
+    out = dict(end)
+    for b, v in end.items():
+        if not b.startswith(ARMS):
+            continue
+        e, p = _rot(v), _rot(peak.get(b, (0, 0, 0)))
+        r = [e[i] + max(-FOLLOW_MAX, min(FOLLOW_MAX, (e[i] - p[i]) * FOLLOW)) for i in range(3)]
+        out[b] = _mk(r, _pos(v), isinstance(v, dict))
+    return out
+
+
+def _depth(rig, b):
+    n, x = 0, rig.by_name.get(b)
+    while x is not None and x.parent is not None:
+        n += 1
+        x = x.parent
+    return n
+
+
 def stage_clips(rig, mv, rest=None):
-    """The move's three clips. The wind-up starts at rest and ends on its peak; the active starts on that peak; the
-    recovery starts where the active ends and comes back to rest, so the stages chain without a pop. Every key pose
-    gets its planted feet solved (plant), so a body that crouches or twists keeps its feet where they stood."""
+    """The move's one clip, {@code move_<id>}: rest, a small counter-move (anticipation), the wind-up's keys to its
+    peak, the strike through contact, a follow-through past contact, the recovery's keys, a settle past rest, and rest.
+    Every key gets its planted feet solved; joints past the chest trail by BREAK seconds a joint (the hips lead, then the
+    chest, the shoulder, the elbow, the hand, the weapon); a pose held over two keys swells a little. It also sets the
+    move's marks (ticks from its start): peak, contact, whoosh, link and the steps its feet take."""
     rest = rest or {}
     sides = mv.plant if (mv.advance == 0 and mv.rise == 0) else ()
     size = getattr(rig, "size", 1.0)
@@ -121,15 +246,62 @@ def stage_clips(rig, mv, rest=None):
             q = p["pelvis"]
             p["pelvis"] = {"rot": q.get("rot", (0, 0, 0)), "pos": tuple(v * size for v in q.get("pos", (0, 0, 0)))}
         return plant(rig, p, sides)
-    w = [(f, fit(p)) for f, p in mv.stages.get("windup", [])]
-    a = [(f, fit(p)) for f, p in mv.stages.get("active", [])]
-    r = [(f, fit(p)) for f, p in mv.stages.get("recover", [])]
+    W, A, R = mv.seconds("windup"), mv.seconds("active"), mv.seconds("recover")
+    w = [(f, p) for f, p in mv.stages.get("windup", [])]
+    a = [(f, p) for f, p in mv.stages.get("active", [])]
+    r = [(f, p) for f, p in mv.stages.get("recover", []) if 0 < f < 1]
     peak = w[-1][1] if w else rest
     end = a[-1][1] if a else peak
-    wl, al, rl = mv.seconds("windup"), mv.seconds("active"), mv.seconds("recover")
-    keyed(rig, mv.id + "_windup", wl, [(0, rest)] + [(f * wl, p) for f, p in w if f > 0], lag=mv.lag)
-    keyed(rig, mv.id + "_active", al, [(0, peak)] + [(f * al, p) for f, p in a if f > 0], lag={k: v * 0.4 for k, v in mv.lag.items()})
-    keyed(rig, mv.id + "_recover", rl, [(0, end)] + [(f * rl, p) for f, p in r if 0 < f < 1] + [(rl, rest)], lag=mv.lag)
+    keys = [(0.0, rest)]
+    if mv.cls != "NONE" and not any(f < 0.35 for f, _ in w):
+        counter = _scaled({b: v for b, v in peak.items() if b.startswith(ARMS)}, -COUNTER)
+        if "pelvis" in rig.by_name:
+            counter["pelvis"] = {"rot": (0, 0, 0), "pos": (0, -1.2, 0)}
+        keys.append((0.3 * W, counter))
+    keys += [(f * W, p) for f, p in w if f > 0]
+    strike = [(W + f * A, p) for f, p in a if f > 0]
+    if mv.cls != "NONE":
+        # a strike key that barely moves from the one before (the end of the active stage, written as contact again)
+        # would stop the blow dead at contact: the follow-through carries it on instead
+        strike = [k for i, k in enumerate(strike) if i == 0 or _moved(strike[i - 1][1], k[1]) >= CARRY]
+    keys += strike
+    through = _through(end, peak) if mv.cls != "NONE" else end
+    keys.append((W + A + THROUGH * R, through))
+    # the recovery's own keys, none closer than 0.15 of the recovery after the follow-through (a big pose change in
+    # two ticks would jerk); the next one keeps its order
+    last = THROUGH
+    for f, p in r:
+        if THROUGH + 0.08 < f < 0.74:
+            last = min(0.74, max(f, last + 0.15))
+            keys.append((W + A + last * R, p))
+    keys.append((W + A + 0.82 * R, _scaled(end, -SETTLE)))
+    keys.append((W + A + R, rest))
+    keys = [(t, fit(p)) for t, p in keys]
+    # a held pose swells (or, on the next hold, eases back), so the body never stands frozen across two keys
+    for k in range(1, len(keys)):
+        prev, cur = keys[k - 1][1], keys[k][1]
+        sw = {}
+        for b, v in cur.items():
+            pv = prev.get(b)
+            if pv is None or b.startswith(LEGS) or b == "pelvis":
+                continue
+            rv, rp = _rot(v), _rot(pv)
+            if max(abs(c) for c in rv) > 3 and max(abs(rv[i] - rp[i]) for i in range(3)) < 1.0:
+                f = 1 + DRIFT * (1 if k % 2 else -0.6)
+                sw[b] = _mk([c * f for c in rv], _pos(v), isinstance(v, dict))
+        if sw:
+            cur = dict(cur)
+            cur.update(sw)
+            keys[k] = (keys[k][0], cur)
+    lag = {}
+    for b in rig.by_name:
+        if b.startswith(LEGS) or b == "pelvis":
+            continue
+        d = max(0, _depth(rig, b) - 2)
+        lag[b] = max(mv.lag.get(b, 0.0), BREAK * d)
+    bake(keyed(rig, clip_name(mv), W + A + R, keys, lag=lag, hold_until=(W + A)))
+    mv.peak_t, mv.link_t = W, W + A + THROUGH * R
+    mv.link = max(1, int(round(THROUGH * mv.recover)))
 
 
 def planted(rig, keys, sides=("l", "r")):
@@ -231,11 +403,11 @@ def sample(rig, clip, t):
 def capsules(rig, mv):
     """Per active tick, the striking bones as capsules (its pivot to its tip), plus the tip's sweep since the last tick."""
     out = []
-    clip = mv.id + "_active"
-    length = rig.clips[clip].length
+    clip = clip_name(mv)
+    W, A = mv.seconds("windup"), mv.seconds("active")
     prev = None
     for k in range(mv.active):
-        t = (k + 0.5) / mv.active * length
+        t = W + (k + 0.5) / mv.active * A
         fr = frames(rig, sample(rig, clip, t))
         caps, tips = [], []
         for bone, tip, radius in mv.hit:
@@ -256,6 +428,47 @@ def capsules(rig, mv):
                 caps.append([0.0, 0.3, 0.0, round(math.sin(a) * mv.disc, 3), 0.3, round(math.cos(a) * mv.disc, 3), 0.55])
         out.append(caps)
     return out
+
+
+def marks(rig, mv):
+    """The move's marks in ticks from its start (base timing): its peak, its contact (the first tick with a capsule,
+    else the first active tick), the whoosh (the tick the striking tip moves fastest, up to contact), and each step a
+    foot takes (it comes back down to the ground). The server plays its sounds on them; the client shakes the view on
+    contact."""
+    W = mv.windup
+    first = next((k for k, c in enumerate(mv.capsules) if c), 0)
+    m = {"peak": W, "contact": W + first, "whoosh": W}
+    clip = clip_name(mv)
+    if mv.hit:
+        bone, tip, _ = mv.hit[0]
+        best, prevp = -1.0, None
+        for k in range(max(0, W - 1), W + first + 2):
+            fr = frames(rig, sample(rig, clip, k / 20.0))
+            q = point(fr, bone, tip)
+            if prevp is not None:
+                v = math.dist(q, prevp)
+                if v > best:
+                    best, m["whoosh"] = v, max(W, k - 1)  # the sound leads the limb by a tick
+            prevp = q
+    rest = frames(rig, {})
+    steps = []
+    for side in ("l", "r"):
+        b = "foot_" + side
+        if b not in rig.by_name:
+            continue
+        y0 = point(rest, b, (0, 0, 0))[1]
+        up = False
+        for k in range(0, mv.windup + mv.active + mv.recover + 1):
+            y = point(frames(rig, sample(rig, clip, k / 20.0)), b, (0, 0, 0))[1]
+            lift = y0 - y  # pixels above where it stands
+            if lift > 3:
+                up = True
+            elif up and lift < 1:
+                steps.append(k)
+                up = False
+    for i, k in enumerate(sorted(steps)):
+        m[f"step{i}"] = k
+    return m
 
 
 def reach(mv, top=1.9):
@@ -354,16 +567,15 @@ def check(rig, moves):
         if mv.hold and (mv.cls != "HEAVY" or mv.hold > MAX_HOLD):
             problems.append(f"{p}: a hold only on HEAVY moves, at most {MAX_HOLD} ticks")
         if mv.cls not in ("NONE",) and mv.hit:
-            peak = sample(rig, mv.id + "_windup", rig.clips[mv.id + "_windup"].length)
+            peak = sample(rig, clip_name(mv), mv.seconds("windup"))
             dist = pose_distance(rig, peak)
             if dist < 12:
                 problems.append(f"{p}: its wind-up peak is only {dist:.1f} degrees from rest (unreadable)")
         if mv.advance == 0 and mv.rise == 0:
             for side in mv.plant:
-                for stage in ("_windup", "_active", "_recover"):
-                    s = foot_slide(rig, mv.id + stage, side)
-                    if s > 0.1:
-                        problems.append(f"{p}{stage}: the {side} foot slides {s:.2f} blocks while planted")
+                s = foot_slide(rig, clip_name(mv), side, samples=24)
+                if s > 0.1:
+                    problems.append(f"{p}: the {side} foot slides {s:.2f} blocks while planted")
     return problems
 
 
@@ -376,7 +588,8 @@ def rig_text(rig):
 
 def move_row(mv):
     row = {"id": mv.id, "class": mv.cls,
-           "time": {"windup": mv.windup, "active": mv.active, "recover": mv.recover, "track": mv.track, "lock": mv.lock},
+           "time": {"windup": mv.windup, "active": mv.active, "recover": mv.recover, "track": mv.track, "lock": mv.lock,
+                    "link": getattr(mv, "link", 0)},
            "range": [round(v, 2) for v in mv.range], "damage": mv.damage, "knock": mv.knock}
     if mv.title:
         row["title"] = mv.title
@@ -394,6 +607,8 @@ def move_row(mv):
         row["ability"] = mv.ability
     if mv.origin is not None:
         row["origin"] = [round(v, 3) for v in mv.origin]
+    if getattr(mv, "marks", None):
+        row["marks"] = mv.marks
     return row
 
 

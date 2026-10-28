@@ -124,16 +124,10 @@ public final class Kits {
         List<String> out = new ArrayList<>();
         for (KitMoves.Move m : k.moves.moves()) {
             String p = k.id + "/" + m.id();
-            for (String stage : new String[]{"_windup", "_active", "_recover"}) {
-                HeroRig.Clip c = k.rig.clip(m.id() + stage);
-                int ticks = switch (stage) {
-                    case "_windup" -> m.time().windup();
-                    case "_active" -> m.time().active();
-                    default -> m.time().recover();
-                };
-                if (c == null) out.add(p + ": no clip " + m.id() + stage);
-                else if (Math.abs(c.length() * 20 - ticks) > 1.01F) out.add(p + stage + ": clip " + c.length() + " s against " + ticks + " ticks");
-            }
+            HeroRig.Clip c = k.rig.clip(m.clip());
+            if (c == null) out.add(p + ": no clip " + m.clip());
+            else if (Math.abs(c.length() * 20 - m.length()) > 1.01F) out.add(p + ": clip " + c.length() + " s against " + m.length() + " ticks");
+            if (m.time().link() > m.time().recover()) out.add(p + ": links after its recovery ends");
             if (m.kind() != Strikes.Kind.NONE && m.time().windup() < KitMoves.minWindup(m.kind()))
                 out.add(p + ": a " + m.kind() + " wind-up of " + m.time().windup() + " ticks is under " + KitMoves.minWindup(m.kind()));
             if (m.time().hold() > 0 && m.kind() != Strikes.Kind.HEAVY) out.add(p + ": only a HEAVY move may hold");

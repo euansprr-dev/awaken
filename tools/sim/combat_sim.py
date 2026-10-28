@@ -1139,6 +1139,9 @@ class Fight:
         w = min(ti["windup"], max(least, int(math.floor(ti["windup"] / sp + 0.5))))
         self.k_move, self.k_t = m, 0
         self.k_w, self.k_act, self.k_rec = w + hold, max(1, ti["active"]), max(1, int(math.floor(ti["recover"] / sp + 0.5)))
+        # where a string's next blow links on (KitMoves.played, SPEC §35.10): its link, scaled with the recovery
+        ln = ti.get("link", 0)
+        self.k_link = self.k_rec if ln <= 0 else min(self.k_rec, max(1, int(math.floor(ln * self.k_rec / max(1, ti["recover"]) + 0.5))))
         self.st["kit_moves"][mid] = self.st["kit_moves"].get(mid, 0) + 1
         if cls != NONE:
             self.st["cad"]["blows"] += 1
@@ -1186,6 +1189,18 @@ class Fight:
                 if "gap" in m.get("kinds", []):
                     self.forced_in = max(self.forced_in, t + self.k_act + 10)  # it arrives beside you
             return
+        if self.k_string and self.k_link < self.k_rec and self.k_t == self.k_w + self.k_act + self.k_link:
+            # inside a string the next blow starts from this one's follow-through (FightRunner.link), if it reaches
+            nm = self.kit["moves"].get(self.k_string[0])
+            d, _ = self.kit_where(t)
+            if nm is not None and nm["range"][0] <= d <= nm["range"][1] and self.k_pending < 0:
+                self.k_move, self.k_ab, self.k_blows, self.k_ab_blows = None, None, [], []
+                self.k_gap = 0
+                self.k_string.pop(0)
+                if self.kit_begin(nm["id"], t):
+                    self.st["cad"]["phrase"] += 1
+                    self.st["cad"]["links"] = self.st["cad"].get("links", 0) + 1
+                return
         if self.k_t < self.k_w + self.k_act + self.k_rec:
             return
         self.k_move, self.k_ab, self.k_blows, self.k_ab_blows = None, None, [], []

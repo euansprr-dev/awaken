@@ -62,6 +62,9 @@ def body():
         t2.cube("tb2_" + nm, -0.5, 0, -0.5, 1, 7, 1)
     r.look = [("head", 0.6, 0.5), ("body", 0.15, 0.1)]
     r.shadow = 1.6
+    # the veils and the trailing tendrils drift after the body (SPEC §35.10)
+    r.springs = [(v, 0.5, 3.0, 0.3) for v in ("veil_nl", "veil_nr", "veil_s", "veil_w", "veil_e")] \
+        + [(f"tb{k}_{s}", 0.8, 2.5, 0.25) for k in (1, 2) for s in ("bl", "br", "fl", "fr")]
     return r
 
 

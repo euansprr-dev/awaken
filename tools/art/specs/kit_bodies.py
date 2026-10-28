@@ -57,6 +57,7 @@ def build(out=None, only=None):
         for m in mv:
             m.capsules = core.capsules(rig, m) if m.hit else []
             core.fit_range(m, d["half"])
+            m.marks = core.marks(rig, m)
         problems = core.check(rig, mv)
         if problems:
             failed += problems
@@ -110,7 +111,7 @@ def motion(outdir, only=None, gifs=True):
         print(f"{d['rig'].id}: {len(rows)} sequences")
         for r in rows:
             dip = "" if r["dip"] is None else f"  dip {100 * r['dip']:.0f}%"
-            print(f"  {'-'.join(r['seq']):34} {r['seconds']:5.2f} s  still {r['still_s']:4.2f} s  kinks {r['kinks']:3d} (worst {r['worst_kink']:4.1f})"
+            print(f"  {'-'.join(r['seq']):34} {r['seconds']:5.2f} s  still {r['still_s']:4.2f} s  kinks {r['kinks']:3d} (worst {r['worst_kink']:4.1f}, strike {r['strike_snap']:4.1f})"
                   f"  held {100 * r['held']:3.0f}%  peak {r['peak_deg_s']:5d}/s{dip}")
 
 
