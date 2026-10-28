@@ -1256,6 +1256,10 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
 - `-Ptests=<name prefixes>` (comma-separated) registers only those GameTests; a filter that matches none fails.
 
 Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools/autopilot.sh`):
+- A script names the knobs it needs on the runner in a line `# ci knobs: RD=10` (`tools/tour-ci.sh` puts them before
+  the command line's, and the last of a name wins). roads-perf and roads-perf-quit run at render distance 10 on the
+  runner: at 16, minutes of new land streaming in once the flight no longer froze lost its paravirtual GPU (MoltenVK
+  `kIOGPUCommandBufferCallbackErrorHang`, runs 40731247114 and 40733154266).
 - The pilot's `glide` sets the player's velocity every tick, so the edge hold (§28.9) eases it at the edge of the land
   the client has, and the log says so (`[edgehold] held N ticks ...`).
 - Look tours run on GitHub's macOS runners (`.github/workflows/tours.yml`, dispatched by `tools/tour-ci.sh`, decided
@@ -8643,6 +8647,20 @@ Riding is the mount's movement and isn't held. Teleports (Blink, the steps, comm
 is their backstop. A hold of a second or more logs one line when it ends, at most every 10 s (`[edgehold] held N ticks
 at the edge of the land this client has, slowest S blocks a second`). In multiplayer it keeps a player's own move
 packets inside land the server has already sent them, so the server has made it.
+**The cue** (`core.client.EdgeHoldCue`, 2026-10-29; the orchestrator, from the runner's 55 s crawls: "if a held glide
+ever crawls that long it'll feel broken"). While the hold eases a player, the world says it is catching up, not
+lagging. Both parts follow one eased strength (`EdgeHoldClient.shown`): in over about half a second, out over about a
+second once the land comes, holding 10 ticks past the last tick held so a crawl at the floor stays one hold. It runs
+from 0.3 for an edge 48 blocks ahead or more up to 1 at the edge.
+- A headwind: its own loop, `edge.headwind` (`edge_headwind.ogg`, `tools/art/specs/audio_edge_hold.py`, events in
+  `src/main/merge/core_edge`). It's air pushing back in your face, not the Ascent's rush past the ears: a soft wide
+  breath in slow swells, low pressure under it, a thin hiss on the swells, and a faint glassy shimmer at a swell's peak
+  (the land forming ahead). It plays at the listener up to 0.6 volume, a little higher in pitch as it presses.
+- A mist at the edge: in air only, the fog closes in on the eased edge distance. It's whole 4 blocks past the edge and
+  clear for the first quarter of the way. The far plane comes in geometrically from vanilla's 1,024, so it eases
+  instead of appearing at the end. Its colour leans up to 35% toward a pale, faintly cool glow of the sky's own light,
+  so the land ahead fades into haze instead of ending at a cut. It composes with the other fogs (Far Sight before it,
+  Lens reading after it).
 `core_edge_hold_math` checks the path's edge straight, through a corner, west of the origin and from a chunk that's
 missing. A flight at 40 b/s toward land missing beyond 40 blocks eases by at most 12% a tick and never stops. It never
 crosses before the land comes, and it's back to full speed within two ticks of it.
