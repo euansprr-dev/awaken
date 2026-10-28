@@ -224,6 +224,13 @@ final class RoadPaint implements SettlementPaint.Layout {
     }
 
     @Override
+    public boolean clears(int x, int z, SettlementPaint.@Nullable Land land) {
+        int k = cell(x, z);
+        if (land != null && k >= 0 && dist[k] > hw + VERGE && !land.free(x, z)) return false;
+        return clears(x, z) || land != null && RoadBanks.grades(this, land, x, z);
+    }
+
+    @Override
     public void paint(SettlementPaint.Canvas c, boolean before) {
         if (before) {
             c.rock(this::rock);
@@ -247,7 +254,9 @@ final class RoadPaint implements SettlementPaint.Layout {
     private void ground(SettlementPaint.Canvas c, int x, int z) {
         int k = cell(x, z);
         if (k < 0) return;
-        if (bank[k] > 0 && mine[k]) mound(c, x, z, k);
+        if (bank[k] > 0 && mine[k] && (c.land() == null || c.land().free(x, z))) {
+            if (!RoadBanks.grade(this, c, x, z, k)) mound(c, x, z, k);
+        }
         byte kind = kinds[k];
         if (kind == CityPlan.VOID) return;
         int s = seg[k];
