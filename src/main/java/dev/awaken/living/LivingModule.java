@@ -139,6 +139,7 @@ public final class LivingModule {
         bus.addListener(dev.awaken.living.pulse.HappeningBook::addReload);
         bus.addListener(LivingDropsEvent.class, dev.awaken.living.pulse.Pulse::onDrops);
         bus.addListener(LivingDeathEvent.class, e -> dev.awaken.living.population.Ledger.onDeath(e.getEntity()));
+        bus.addListener(LivingDamageEvent.Post.class, e -> dev.awaken.living.population.Ledger.onHurt(e.getEntity(), e.getSource()));
         bus.addListener(LivingDeathEvent.class, e -> dev.awaken.living.camp.Camps.onDeath(e.getEntity()));
         // crafts
         bus.addListener(LivingDeathEvent.class, dev.awaken.living.craft.CraftEvents::onDeath);
@@ -178,6 +179,7 @@ public final class LivingModule {
                 if (!quiet) dev.awaken.living.wayfarer.Scenes.tick(e.getServer());
                 dev.awaken.living.pulse.Pulse.tick(e.getServer());
                 if (!quiet) dev.awaken.living.population.Ledger.tick(e.getServer());
+                if (!quiet) dev.awaken.living.population.Ledger.brainTick(e.getServer());
                 if (!quiet) dev.awaken.living.camp.Camps.tick(e.getServer());
                 dev.awaken.living.wayfarer.Camp.ward(e.getServer());
             }

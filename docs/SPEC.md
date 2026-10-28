@@ -426,7 +426,7 @@ of `AwakenConfig.Client`.
   `Progression.onXpGranted(listener)` (every grant after scaling), `Progression.worldXp(player, source, fraction,
   afterBudget)` (a multiplier applied after the budget), `XpBudget.register(source, perTenMinutes)` (§21.3).
 - `dev.awaken.living.api.Regions` — the region map (§21.2): `levelAt`, `regionAt`, `creatureLevel`, `bandOf`.
-- `dev.awaken.living.api.Wildness` — how wild a place is, separate from danger (§41.1): `land`, `at`, `band`, `bandAt`, `addTamer`.
+- `dev.awaken.living.api.Wildness` — how wild a place is, separate from danger (§41.1): `land`, `at`, `band`, `bandAt`, `addTamer`, `setCover`, `coverAt`.
 - `dev.awaken.living.api.Quests` — the Wayfarer chains (§21.5): `advance(ServerPlayer, Identifier "awaken:<type>/<target>")`
   (owners report uses and discoveries a step may wait for: `awaken:use/ascent_zip`, `awaken:discover/<key>`; an
   `amount` overload), `talk(ServerPlayer, who)` (another module's person, e.g. "kestrel", "oren": call it first from your
@@ -4672,8 +4672,9 @@ a claw starts at the end of the arm and points along it). Looks are reviewed off
   per new chunk 0.25 signs in D, 0.5 C, 0.9 B, 1.3 A, 1.6 S (none in E), on natural ground only, flat enough, never in water. The region map is warmed at ServerStarted so worldgen threads
   (`RegionService.mapIfReady`) never touch saved data; chunks made before it exists (a new world's first, in the Commons) get none. The rust outcrop is the surface sign of iron (a pull; iron stays by depth). Not consulted
   at generation: a settlement's or a road's reserve (only the natural-ground rule keeps signs off built ground).
-- **A quieter land** (decision 23): `living.combat.QuietLand`: natural animal spawns in land of rank D or up are turned away by rank (kept: D 80%, C 55%, B 35%, A 20%, S 10%; `FinalizeSpawnEvent.setSpawnCancelled` in
-  `Creatures.onFinalizeSpawn`; never a settlement's land, bred or egg animals), wild kin avoid a player who is not sneaking (`AvoidEntityGoal`, 10 blocks in D to 26 in S, below the fight goals), and the wild life
+- **A quieter land** (decision 23): `living.combat.QuietLand`: natural animal spawns are turned away by wildness, not rank (since the Wild Lands, §41.2: kept
+  Tamed 70%, Pasture 90%, Wild and Deep all; `FinalizeSpawnEvent.setSpawnCancelled` in `Creatures.onFinalizeSpawn`; never a settlement's land or a Hearth's
+  calm, bred or egg animals, or the ledger's own bodies), wild kin avoid a player who is not sneaking (`AvoidEntityGoal`, 10 blocks in D to 26 in S, below the fight goals), and the wild life
   layer's dial is multiplied by the rank (`Wildlife.dialNow`: birds and insects 80%, 50%, 30%, 8%, 2%).
 - **Ambient air** (decision 25): `living.client.AmbientFx`: a few specks a second drifting through the land you stand in (D dust, C ash, B embers, A violet motes, S almost none; snow in the cold), off with the `dread` setting.
   Not built: a sound bed per rank (needs `audio_living.py` work) and a colour grade per rank through Lens (the gap's dread look stays).
@@ -9499,7 +9500,8 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
 ### 41.1 The wildness field (Stage 0)
 - **API** `dev.awaken.living.api.Wildness` (server only; `land` is thread-safe, the rest are for the server thread): `land(level, x, z)` the land's own value worked out afresh
   (what generation and the record use), `at(level, x, z)` the value now (the chunk's record where loaded, else the land; then
-  Hearths), `band(w)` / `bandAt(level, pos)`, `hearthKeep`, `addTamer(Tamer)`. 0 is tamed, 1 deep wild; overworld only (other
+  Hearths), `band(w)` / `bandAt(level, pos)`, `hearthKeep`, `addTamer(Tamer)`, `setCover(Cover)` / `coverAt(level, pos)` (how hidden
+  a person is there, 0..1; the plants module sets it, decision 10). 0 is tamed, 1 deep wild; overworld only (other
   dimensions read 1). Bands: **Tamed** under 0.2, **Pasture** under 0.45, **Wild** under 0.7, then **Deep wild**.
 - **Tamers** each give the share of the land they leave untouched, `touch(d, radius, reach, strength) = 1 - strength·exp(-(max(0,
   d - radius)/reach)^1.6)`; the shares multiply into `keep`. Each is looked for out to its radius plus 2.5 reaches (its touch is
@@ -9530,3 +9532,49 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
 - **Tests**: `wild_field` (the fade, tamed land stays tamed, smooth patches, most open land wild, the bands), `wild_record`
   (filled at the cells' centres, read by block, saved and synced intact), `wild_tamers` (over a roads' world for a seed: a
   settlement's ground and a town region's heart read Tamed, open land far from them Wild or Deep).
+
+### 41.2 Herds and packs (Stage 2)
+- **Life follows wildness** (decision 2): `QuietLand` thins natural animal spawns by wildness band, not rank (kept: Tamed 70%,
+  Pasture 90%, Wild and Deep all); a settlement's land, a Hearth's calm and the ledger's own bodies are never thinned. The
+  ambient life layer still thins by rank (A and S keep their hush), and wild kin are still shyer by rank.
+- **The ledger, schema 2** (`living.population.Ledger`, `Herds`): a new cell tries four herd sites; each holds a herd with odds
+  by its band (Tamed 0, Pasture 0.4, Wild 0.85, Deep 1), never two of one species in a cell. A herd is our fauna of the land
+  (mossbacks, frost stags, dune rays, crag rams, honey bears) or, half the time where both are possible, one of the biome's own
+  vanilla herd animals by its spawn weights (cow, pig, sheep, horse, donkey, goat; read from the biome's
+  `NATURAL_MOB_SPAWNS`). Sizes by band: Pasture 4-8, Wild 8-16, Deep 16-30. The wildest herd gets a pack within 80 blocks: our
+  hunters of the land, else wolves in Wild or Deep land; sizes Pasture 2-3, Wild 3-5, Deep 5-8. Deep-wild herds and packs
+  have an alpha (the first body: a vanilla animal comes out as `Creatures`' alpha, "Alpha of <region>"). Each population
+  saves `wild` (its home's wildness) and `alpha`; schema 1 populations load with `wild` -1 and keep their old caps (12, 5).
+- **Bodies**: up to 30 a herd and 8 a pack; up to 40 ledger bodies near one player (24 before), the rest of a big herd stays
+  a number. A herd spreads over 4 + 1.6·√n blocks. The ledger's vanilla bodies are wild kin (they fight back from D land,
+  carry forms from C land) and natural spawn rules never turn them away (`Ledger.spawning()`).
+- **Herd brain** (`HerdBrain`, one per herd with bodies, thinks once a second on its own tick slot): moods graze (by day),
+  drift (dawn and dusk, between pastures), bed (night, tight), alert, flee, stampede. Only animals outside their place
+  (4 + 1.6·√n; bed 2 + 0.8·√n; alert 0.7 of it; called back at 1.3 times that) are steered, to a spot of their own on a golden-angle spread; the rest graze on
+  their own goals.
+  - **Flight distance** by band: Tamed 8, Pasture 12, Wild 18, Deep 24 blocks to the nearest animal; ×0.4 crouched, ×1.3
+    sprinting, ×(1 − 0.67·cover) (`Wildness.coverAt`, which the plants fill: decision 10). Within it the herd runs; within
+    1.6× it is alert (heads up, bunching, watching).
+  - **Scent**: a person whose wind (`terrain.Wind`, the trees' wind) blows toward the herd (cosine over 0.6) is smelled
+    within 2.2× the band's flight distance, crouched or not.
+  - **Alarm**: seen, smelled, a body hit (`LivingDamageEvent.Post`), or a pack's attack. The herd runs 32 blocks away (a
+    stampede: 44, faster) along the first heading from straight away, then turns of 30° up to 120° either way, that doesn't
+    end in tamed land (`Wildness.at` under 0.2: a settlement or a Hearth turns it). The alarm reaches each animal in order
+    from the near side over 10 ticks (a wave). A **stampede** is a herd of 12 or more in Wild or Deep land, alarmed by a hit,
+    a pack or a sprinter; it knocks a person it runs into (4 damage, knockback, once each). Flight lasts 5 s (a stampede 7),
+    then 10 s alert; the herd's place moves 0.8 of the run with it and drifts home (×0.99 a second, at most 96 blocks off).
+  - An animal more than 64 blocks from its herd with nobody within 24 rejoins the count without dying.
+- **Pack brain** (`PackBrain`): rest at the den, prowl (wolves by day and dusk, our hunters by night), stalk (when its herd
+  has bodies within 64: wait 18 blocks downwind of the herd), chase (after 30 s stalking or within 22 blocks: the straggler,
+  scored nearest to the pack, young +6, hurt up to +6; every member targets it; the herd is alarmed by the pack), feed (60 s
+  at the kill; a person within 8 of it is attacked), retreat (to the den when the alpha falls under 30% health). One hunt a
+  day; a chase ends at 30 s or 48 blocks. The kill is a real death, so the ledger's herd is one fewer.
+- **Cost**: brains share one path budget, 2 path searches a tick across every herd and pack, each leg at most 10 blocks
+  (a wave held back keeps its order); a search is ~0.2 ms on the M4. Bench (`wild_herd_bench`): three herds of 30 and two
+  packs of 6 near one player, grazing, then a sprinter runs through and leaves: 0.23-0.29 ms a tick average after warm-up,
+  worst tick 3.4 ms (asserted under 0.5 and 10, ×3 on CI; the first stampede knock warms the game's damage code).
+- **Not yet**: grazing lawns, trails and the cover value wait for the plants' API (stage 1a); they land in stage 2's second part.
+- **Tests**: `wild_ledger` (sizes by band, schema 1 loads, a far cell's herds and packs), `wild_herd_senses` (crouched
+  downwind is let near, standing is seen, crouched upwind is smelled), `wild_herd_flee` (twenty stampede from a sprinter, 15+
+  blocks away), `wild_pack_hunt` (the nearest straggler, every wolf on it, the flock runs, the kill costs one), `wild_herd_bench`.
+- **Commands**: `/awaken living ledger` shows each population's band, alpha and brain mood.

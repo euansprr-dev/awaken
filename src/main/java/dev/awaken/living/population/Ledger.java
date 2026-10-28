@@ -5,7 +5,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.awaken.Awaken;
 import dev.awaken.core.PlayDays;
 import dev.awaken.living.api.Regions;
-import dev.awaken.mobs.MobTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
@@ -40,10 +39,15 @@ import java.util.UUID;
  * roosts that leave at dawn and dusk. Where a population is is a pure function of its seed, the play-day and the time,
  * so nothing simulates while nobody watches. Within 96 blocks of a player it takes bodies; past 128 they go back into
  * its count. A cell visited again catches up in one step: herds regrow, each night a pack hunted cost its herd one, a
- * wiped pack lets its herd grow faster. Saved data {@code awaken:living_world}, schema 1, only cells players reached.
+ * wiped pack lets its herd grow faster. Saved data {@code awaken:living_world}, schema 2, only cells players reached.
+ * <p>
+ * The Wild Lands (SPEC §41.2): from schema 2 a cell's herds and packs follow wildness (none of the ledger's in tamed land,
+ * herds of up to 30 and packs with an alpha in the deep wild), the biome's own vanilla animals run in herds beside our fauna,
+ * and every population with bodies has a brain ({@link HerdBrain}, {@link PackBrain}) that thinks once a second. Schema 1
+ * populations load as they were (their old sizes and caps).
  */
 public final class Ledger extends SavedData {
-    static final int SCHEMA = 1, CELL = 512, NEAR = 96, FAR = 128, PER_PLAYER = 24;
+    static final int SCHEMA = 2, CELL = 512, NEAR = 96, FAR = 128, PER_PLAYER = 40;
     public static final String TAG = "awaken_ledger";
 
     /** Herds, their hunters, the flyers' roosts, by fauna land. */
@@ -81,7 +85,9 @@ public final class Ledger extends SavedData {
                 Codec.INT.fieldOf("max").forGetter(p -> p.max),
                 Codec.LONG.optionalFieldOf("day", 0L).forGetter(p -> p.day),
                 Codec.LONG.optionalFieldOf("seed", 0L).forGetter(p -> p.seed),
-                Codec.INT.optionalFieldOf("herd", -1).forGetter(p -> p.herd)
+                Codec.INT.optionalFieldOf("herd", -1).forGetter(p -> p.herd),
+                Codec.FLOAT.optionalFieldOf("wild", -1F).forGetter(p -> p.wild),
+                Codec.BOOL.optionalFieldOf("alpha", false).forGetter(p -> p.alpha)
         ).apply(i, Pop::new));
 
         public final int id;
@@ -95,8 +101,17 @@ public final class Ledger extends SavedData {
         public final long seed;
         /** A pack's herd (its id), or -1. */
         public final int herd;
+        /** How wild its home is (schema 2), or -1 for a population from before the Wild Lands. */
+        public final float wild;
+        /** Whether one of its bodies is an alpha (a deep-wild herd's bull, a deep pack's leader). */
+        public final boolean alpha;
 
         Pop(int id, String kind, String species, int hx, int hz, List<Integer> pastures, int count, int max, long day, long seed, int herd) {
+            this(id, kind, species, hx, hz, pastures, count, max, day, seed, herd, -1F, false);
+        }
+
+        Pop(int id, String kind, String species, int hx, int hz, List<Integer> pastures, int count, int max, long day, long seed, int herd,
+            float wild, boolean alpha) {
             this.id = id;
             this.kind = kind;
             this.species = species;
@@ -108,10 +123,18 @@ public final class Ledger extends SavedData {
             this.day = day;
             this.seed = seed;
             this.herd = herd;
+            this.wild = wild;
+            this.alpha = alpha;
         }
 
         int cap() {
-            return kind.equals("herd") ? 12 : kind.equals("pack") ? 5 : 6;
+            if (wild < 0) return kind.equals("herd") ? 12 : kind.equals("pack") ? 5 : 6;
+            return kind.equals("herd") ? Herds.HERD_CAP : kind.equals("pack") ? Herds.PACK_CAP : 6;
+        }
+
+        /** The band of its home (a population from before the Wild Lands reads as wild). */
+        public dev.awaken.living.api.Wildness.Band band() {
+            return dev.awaken.living.api.Wildness.band(wild < 0 ? 0.6 : wild);
         }
     }
 
@@ -191,7 +214,11 @@ public final class Ledger extends SavedData {
         return "";
     }
 
-    /** A cell's populations, made once from the seed: two herds, a pack, a roost at most, by its land. */
+    /**
+     * A cell's populations, made once from the seed (SPEC §41.2): up to four herds at sites whose wildness lets them stand
+     * there (none in tamed land), each our fauna of the land or one of the biome's own vanilla animals, sized by the site's
+     * band; a pack by the wildest herd (our hunters of the land, else wolves in the wild); a roost at most.
+     */
     Cell generate(ServerLevel level, int cx, int cz) {
         long seed = level.getSeed() ^ (cx * 341873128712L) ^ (cz * 132897987541L) ^ 0x4C69766EL;
         RandomSource r = RandomSource.create(seed);
@@ -204,26 +231,36 @@ public final class Ledger extends SavedData {
             String g = land(level, x, z);
             if (!g.isEmpty()) seen.add(g);
         }
-        int herdId = -1;
-        for (int i = 0; i < seen.size() && cell.pops().size() < 2; i++) {
-            String species = HERDS.get(seen.get(i));
-            if (species == null || cell.pops().stream().anyMatch(p -> p.species.equals(species))) continue;
+        Pop wildest = null;
+        for (int i = 0; i < 4; i++) {
             int hx = baseX + r.nextInt(321) - 160, hz = baseZ + r.nextInt(321) - 160;
+            float w = (float) dev.awaken.living.api.Wildness.land(level, hx, hz);
+            var band = dev.awaken.living.api.Wildness.band(w);
+            double roll = r.nextDouble();
+            String ours = HERDS.get(land(level, hx, hz)), vanilla = Herds.vanillaHerd(level, hx, hz, r);
+            boolean pickOurs = ours != null && (vanilla == null || r.nextBoolean());
+            if (roll >= Herds.odds(band)) continue;
+            String species = pickOurs ? ours : vanilla;
+            if (species == null || cell.pops().stream().anyMatch(p -> p.species.equals(species))) continue;
             List<Integer> pastures = new ArrayList<>();
             for (int k = 0; k < 3; k++) {
                 pastures.add(hx + r.nextInt(241) - 120);
                 pastures.add(hz + r.nextInt(241) - 120);
             }
-            Pop p = new Pop(nextId++, "herd", species, hx, hz, pastures, 6 + r.nextInt(5), 12, day, r.nextLong(), -1);
+            int n = Herds.herdSize(band, r);
+            Pop p = new Pop(nextId++, "herd", species, hx, hz, pastures, n, n, day, r.nextLong(), -1, w,
+                    band == dev.awaken.living.api.Wildness.Band.DEEP);
             cell.pops().add(p);
-            if (herdId < 0) herdId = p.id;
+            if (wildest == null || p.wild > wildest.wild) wildest = p;
         }
-        for (String g : seen) {
-            String species = PACKS.get(g);
-            if (species == null) continue;
-            cell.pops().add(new Pop(nextId++, "pack", species, baseX + r.nextInt(301) - 150, baseZ + r.nextInt(301) - 150, List.of(),
-                    3 + r.nextInt(3), 5, day, r.nextLong(), herdId));
-            break;
+        if (wildest != null) {
+            var band = wildest.band();
+            int dx = wildest.hx + r.nextInt(161) - 80, dz = wildest.hz + r.nextInt(161) - 80;
+            String species = PACKS.get(land(level, dx, dz));
+            if (species == null && band.ordinal() >= dev.awaken.living.api.Wildness.Band.WILD.ordinal()) species = Herds.WOLF;
+            int n = Herds.packSize(band, r);
+            if (species != null && n > 0) cell.pops().add(new Pop(nextId++, "pack", species, dx, dz, List.of(), n, n, day, r.nextLong(),
+                    wildest.id, (float) dev.awaken.living.api.Wildness.land(level, dx, dz), band == dev.awaken.living.api.Wildness.Band.DEEP));
         }
         for (String g : seen) {
             String species = ROOSTS.get(g);
@@ -344,32 +381,155 @@ public final class Ledger extends SavedData {
                 double[] at = l.where(pop, day, tod);
                 double dx = at[0] - p.getX(), dz = at[1] - p.getZ();
                 if (dx * dx + dz * dz > (double) NEAR * NEAR || near >= PER_PLAYER) continue;
-                near += l.materialize(level, pop, at, day);
+                near += l.materialize(level, pop, at, day, PER_PLAYER - near); // a big herd's far part stays a number
             }
         }
-        l.steer(level, day, tod);
         l.release(level);
     }
 
-    /** A population takes bodies at its place (if it's loaded, dry land, and the population has any); how many. */
+    /** Every tick: the brains of the populations with bodies (each thinks once a second; alarms ripple between). */
+    public static void brainTick(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        if (!Regions.on(level)) return;
+        Ledger l = get(server);
+        if (l.brains.isEmpty()) return;
+        l.think(level, PlayDays.current(server), level.getOverworldClockTime(), server.getTickCount());
+    }
+
+    void think(ServerLevel level, long day, long tod, int now) {
+        windField.set(level, 0F);
+        pathsLeft = PATHS_PER_TICK;
+        for (Brain b : brains.values()) b.tick(this, level, day, tod, now);
+    }
+
+    /** Paths the brains may ask for in one tick, all herds and packs together, and the longest leg of one (blocks). */
+    static final int PATHS_PER_TICK = 2;
+    static final double LEG = 10;
+    private transient int pathsLeft = PATHS_PER_TICK;
+
+    /**
+     * Sends a body toward (x, z) on a path of its own, at most {@link #LEG} blocks of it (the brain sends it on again when
+     * it arrives). False when this tick's paths are spent: the brain asks again later. A path search is the one costly thing
+     * a brain does, so this is what keeps a herd of thirty under its budget.
+     */
+    boolean go(ServerLevel level, PathfinderMob m, double x, double z, double speed) {
+        if (pathsLeft <= 0) return false;
+        pathsLeft--;
+        double dx = x - m.getX(), dz = z - m.getZ(), len = Math.hypot(dx, dz);
+        if (len > LEG) {
+            x = m.getX() + dx / len * LEG;
+            z = m.getZ() + dz / len * LEG;
+        }
+        int bx = (int) Math.floor(x), bz = (int) Math.floor(z);
+        double y = level.getChunkSource().getChunkNow(bx >> 4, bz >> 4) == null ? m.getY()
+                : level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz);
+        m.getNavigation().moveTo(x, y, z, speed);
+        return true;
+    }
+
+    /** A population's brain: a herd's or a pack's (roosts fly as they are). */
+    interface Brain {
+        void tick(Ledger l, ServerLevel level, long day, long tod, int now);
+    }
+
+    private final transient Map<Integer, Brain> brains = new HashMap<>();
+    final transient dev.awaken.terrain.Wind.Field windField = new dev.awaken.terrain.Wind.Field();
+
+    @Nullable Brain brain(int popId) {
+        return brains.get(popId);
+    }
+
+    @Nullable HerdBrain herdBrain(int popId) {
+        return brains.get(popId) instanceof HerdBrain h ? h : null;
+    }
+
+    /** Living bodies of a population (loaded, alive). */
+    List<PathfinderMob> living(ServerLevel level, int popId) {
+        List<UUID> ids = bodies.get(popId);
+        if (ids == null) return List.of();
+        List<PathfinderMob> out = new ArrayList<>(ids.size());
+        for (UUID id : ids) if (level.getEntity(id) instanceof PathfinderMob m && m.isAlive()) out.add(m);
+        return out;
+    }
+
+    /** A body was hurt: its population's brain hears it (a herd runs, a pack's alpha may break off). */
+    public static void onHurt(net.minecraft.world.entity.LivingEntity hurt, net.minecraft.world.damagesource.DamageSource source) {
+        if (!hurt.entityTags().contains(TAG) || !(hurt.level() instanceof ServerLevel level)) return;
+        Ledger l = get(level.getServer());
+        int id = popOf(hurt);
+        if (l.brains.get(id) instanceof HerdBrain h) {
+            Entity by = source.getEntity();
+            double fx = by != null ? by.getX() : hurt.getX(), fz = by != null ? by.getZ() : hurt.getZ();
+            boolean pack = by != null && by.entityTags().contains(TAG);
+            h.alarm(l, level, fx, fz, pack ? HerdBrain.Cause.PACK : HerdBrain.Cause.HIT, level.getServer().getTickCount());
+        }
+    }
+
+    /** The population a body belongs to, or -1. */
+    static int popOf(Entity e) {
+        for (String t : e.entityTags()) {
+            if (!t.startsWith(TAG + "_")) continue;
+            try {
+                return Integer.parseInt(t.substring(TAG.length() + 1));
+            } catch (NumberFormatException ignored) {
+                // not ours
+            }
+        }
+        return -1;
+    }
+
+    /** A body's bodies-list loses it without a death (it fell behind out of sight and rejoined the count). */
+    void rejoin(int popId, Entity body) {
+        List<UUID> b = bodies.get(popId);
+        if (b != null) b.remove(body.getUUID());
+        body.discard();
+    }
+
+    private static boolean spawning, alphaNext;
+
+    /** Whether the ledger is making a body now (a natural spawn's rules don't turn it away; a vanilla animal is wild kin). */
+    public static boolean spawning() {
+        return spawning;
+    }
+
+    /** Whether the body being made is its population's alpha. */
+    public static boolean alphaWanted() {
+        return spawning && alphaNext;
+    }
+
     int materialize(ServerLevel level, Pop p, double[] at, long day) {
+        return materialize(level, p, at, day, Integer.MAX_VALUE);
+    }
+
+    /** A population takes up to {@code limit} bodies at its place (if it's loaded, dry land, and it has any); how many. */
+    int materialize(ServerLevel level, Pop p, double[] at, long day, int limit) {
         catchUp(p, day);
         if (p.count <= 0) return 0;
         BlockPos col = new BlockPos((int) at[0], 0, (int) at[1]);
         if (!level.hasChunkAt(col)) return 0;
         BlockPos ground = col.atY(level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, col.getX(), col.getZ()));
         if (!level.getFluidState(ground.below()).isEmpty() || !level.getFluidState(ground).isEmpty()) return 0;
-        EntityType<?> type = MobTypes.type(p.species);
+        EntityType<?> type = Herds.type(p.species);
         if (type == null) return 0;
         RandomSource r = level.getRandom();
-        int n = Math.min(p.count, p.cap()), spread = p.kind.equals("herd") ? 8 : 4;
+        int n = Math.min(Math.min(p.count, p.cap()), limit);
+        if (n <= 0) return 0;
+        int spread = p.kind.equals("herd") ? (int) Math.round(4 + 1.6 * Math.sqrt(n)) : 4;
         List<UUID> made = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             int x = ground.getX() + r.nextInt(spread * 2 + 1) - spread, z = ground.getZ() + r.nextInt(spread * 2 + 1) - spread;
             if (!level.hasChunkAt(new BlockPos(x, 0, z))) continue;
             BlockPos pos = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
             if (p.kind.equals("roost")) pos = pos.above(6);
-            Entity e = type.spawn(level, pos, EntitySpawnReason.EVENT);
+            Entity e;
+            spawning = true;
+            alphaNext = p.alpha && made.isEmpty();
+            try {
+                e = type.spawn(level, pos, EntitySpawnReason.EVENT);
+            } finally {
+                spawning = false;
+                alphaNext = false;
+            }
             if (e == null) continue;
             e.addTag(TAG);
             e.addTag(TAG + "_" + p.id);
@@ -378,24 +538,9 @@ public final class Ledger extends SavedData {
         }
         if (made.isEmpty()) return 0;
         bodies.put(p.id, made);
+        if (p.kind.equals("herd")) brains.put(p.id, new HerdBrain(p));
+        else if (p.kind.equals("pack")) brains.put(p.id, new PackBrain(p));
         return made.size();
-    }
-
-    /** Bodies walk toward where their population is now (a herd crossing to its next pasture, a pack home at dawn). */
-    private void steer(ServerLevel level, long day, long tod) {
-        for (var e : bodies.entrySet()) {
-            Pop p = byId.get(e.getKey());
-            if (p == null || p.kind.equals("roost")) continue;
-            double[] at = where(p, day, tod);
-            int k = 0;
-            for (UUID id : e.getValue()) {
-                if (!(level.getEntity(id) instanceof PathfinderMob m) || !m.isAlive() || m.getTarget() != null) continue;
-                double dx = at[0] - m.getX(), dz = at[1] - m.getZ();
-                if (dx * dx + dz * dz < 12 * 12) continue; // close enough: let it graze
-                k++;
-                m.getNavigation().moveTo(at[0] + (k % 5) * 2 - 4, m.getY(), at[1] + (k / 5) * 2 - 2, p.kind.equals("herd") ? 0.9 : 1.1);
-            }
-        }
     }
 
     /**
@@ -416,6 +561,7 @@ public final class Ledger extends SavedData {
                 Entity b = level.getEntity(id);
                 if (b != null && b.isAlive()) b.discard();
             }
+            brains.remove(e.getKey());
             it.remove();
         }
     }
@@ -441,6 +587,7 @@ public final class Ledger extends SavedData {
             }
         }
         for (List<UUID> b : l.bodies.values()) b.remove(dead.getUUID());
+        for (Brain b : l.brains.values()) if (b instanceof PackBrain pb) pb.died(l, dead);
     }
 
     /** Tests: a hand-made cell. */
@@ -462,6 +609,7 @@ public final class Ledger extends SavedData {
             }
         }
         bodies.clear();
+        brains.clear();
     }
 
     /** A ledger body loaded from disk after a restart is nobody's now: it goes (its population will take a new one). */
@@ -480,7 +628,10 @@ public final class Ledger extends SavedData {
         for (Pop pop : l.popsNear(p.getBlockX(), p.getBlockZ(), 1)) {
             double[] at = l.where(pop, day, tod);
             int d = (int) Math.sqrt((at[0] - p.getX()) * (at[0] - p.getX()) + (at[1] - p.getZ()) * (at[1] - p.getZ()));
-            out.add(pop.kind + " " + pop.species + " ×" + pop.count + " · " + d + " m" + (l.bodies.containsKey(pop.id) ? " · here" : ""));
+            Brain b = l.brains.get(pop.id);
+            String mood = b instanceof HerdBrain h ? " · " + h.mood : b instanceof PackBrain pk ? " · " + pk.mood : "";
+            String band = pop.wild < 0 ? "" : " · " + pop.band().title + (pop.alpha ? ", with an alpha" : "");
+            out.add(pop.kind + " " + pop.species + " ×" + pop.count + band + " · " + d + " m" + (l.bodies.containsKey(pop.id) ? " · here" + mood : ""));
         }
         return out;
     }
