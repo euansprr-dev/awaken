@@ -647,5 +647,5 @@ public final class Autopilot {
     private static final Map<String, KeyMapping> KEYS = Map.of(
             "status", AwakenKeys.STATUS, "accept", AwakenKeys.ACCEPT, "dismiss", AwakenKeys.DISMISS,
             "power1", AwakenKeys.POWER_1, "power2", AwakenKeys.POWER_2, "movement", AwakenKeys.MOVEMENT,
-            "ultimate", AwakenKeys.ULTIMATE, "focus", AwakenKeys.FOCUS, "bind", AwakenKeys.BIND);
+            "ultimate", AwakenKeys.ULTIMATE, "focus", AwakenKeys.FOCUS, "bind", AwakenKeys.BIND, "rope", AwakenKeys.ROPE);
 }
