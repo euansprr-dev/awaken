@@ -113,6 +113,16 @@ public final class RunnerMoves {
         return w != null && !RunnerRules.groundWithin(level, CollisionContext.of(p), M, p.getX(), p.getY(), p.getZ(), RunnerRules.RUN_MIN_HEIGHT);
     }
 
+    /**
+     * For the Ascent: a swing carried into a wall beside it runs along it (SPEC §17.31). The body's motion must already be
+     * the swing's. True when the wall-run began (the Runner holds the body from now).
+     */
+    public static boolean runFromRope(LocalPlayer p, ClientInput in) {
+        if (!dev.awaken.body.BodyConfig.runnersKit() || state != State.NONE) return false;
+        BlockGetter level = WIN.begin(p.level(), p.getX(), p.getY(), p.getZ());
+        return tryRun(p, in, level, CollisionContext.of(p), 0, ClientMoves.ticks);
+    }
+
     static boolean hanging() {
         return state == State.HANG || state == State.PATH && pathToHang;
     }

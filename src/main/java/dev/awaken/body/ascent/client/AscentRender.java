@@ -61,6 +61,13 @@ final class AscentRender {
     private static final int[] RLINE = new int[MAX_ROPES];
     private static final float[] RFLOW = new float[MAX_ROPES];
     private static final boolean[] RREEL = new boolean[MAX_ROPES];
+    /** A taut swing's hum (0..1: the line trembling under the weight) and a let-go line's whip (0..1, fading). */
+    private static final float[] RHUM = new float[MAX_ROPES], RWHIP = new float[MAX_ROPES];
+    private static float nextHum, nextWhip;
+    /** The marker as drawn (eased toward where a press would throw, SPEC §17.31) and how much of it shows. */
+    private static double markX, markY, markZ;
+    private static float markA;
+    private static boolean markZip;
     private static int ropes;
     /** The rope's line for the next rope() call, its flow and its reel. */
     private static int nextLine;
@@ -160,6 +167,7 @@ final class AscentRender {
 
     private static void gatherRopes(Minecraft mc) {
         ropes = 0;
+        marker();
         Entity me = mc.player;
         boolean first = mc.options.getCameraType().isFirstPerson();
         AscentState st = AscentMoves.state();
@@ -176,6 +184,7 @@ final class AscentRender {
             nextLine = AscentMoves.kitLine;
             nextFlow = (float) (AscentMoves.paid * 0.9);
             nextReel = AscentMoves.reeling && AscentMoves.kitReel == dev.awaken.body.ascent.RopeKit.REEL_GOLD;
+            nextHum = AscentMoves.swinging() && AscentMoves.ropeTaut ? (float) Mth.clamp((AscentMoves.tension - 0.2) / 0.6, 0, 1) : 0;
             rope(hx, hy, hz, AscentMoves.ax, AscentMoves.ay, AscentMoves.az, sag, reach, 1F);
             if (st == AscentState.RAPPEL) {
                 if (first) cameraPoint(AscentFp.brakeNow[0], AscentFp.brakeNow[1], AscentFp.brakeNow[2], TMP);
@@ -204,6 +213,7 @@ final class AscentRender {
                 // the free end falls and swings in toward the anchor
                 double fx = Mth.lerp(u * 0.6, s.nx, s.x), fy = s.ny - 4.0 * u * u, fz = Mth.lerp(u * 0.6, s.nz, s.z);
                 nextLine = s.line;
+                nextWhip = 1 - u;
                 rope(fx, fy, fz, s.x, s.y, s.z, 1.2F * u, 1F, (1 - u) * (1 - u));
             } else if (s.kind == AscentFx.MISS) {
                 Entity e = mc.level.getEntity(s.entity);
@@ -243,20 +253,44 @@ final class AscentRender {
         out[2] = cz + rz * x + uz * y + bz * z;
     }
 
+    /** Eases the drawn marker toward the anchor a press would take; fades it in and out (a far jump is a cut). */
+    private static void marker() {
+        boolean on = AscentMoves.markerOn && !AscentMoves.state().rope;
+        var m = AscentMoves.MARKER;
+        if (on) {
+            double d2 = sq(m.x - markX) + sq(m.y - markY) + sq(m.z - markZ);
+            if (markA < 0.05F || d2 > 36) {
+                markX = m.x;
+                markY = m.y;
+                markZ = m.z;
+            } else {
+                markX += (m.x - markX) * 0.35;
+                markY += (m.y - markY) * 0.35;
+                markZ += (m.z - markZ) * 0.35;
+            }
+            markZip = m.zip;
+        }
+        markA += ((on ? 1F : 0F) - markA) * 0.25F;
+    }
+
     private static void rope(double hx, double hy, double hz, double ax, double ay, double az, float sag, float reach, float alpha) {
         if (ropes >= MAX_ROPES) {
             nextLine = 0;
             nextFlow = 0;
             nextReel = false;
+            nextHum = nextWhip = 0;
             return;
         }
         int i = ropes++;
         RLINE[i] = nextLine;
         RFLOW[i] = nextFlow;
         RREEL[i] = nextReel;
+        RHUM[i] = nextHum;
+        RWHIP[i] = nextWhip;
         nextLine = 0;
         nextFlow = 0;
         nextReel = false;
+        nextHum = nextWhip = 0;
         RH[i * 3] = hx;
         RH[i * 3 + 1] = hy;
         RH[i * 3 + 2] = hz;
@@ -326,7 +360,8 @@ final class AscentRender {
             if (!glow && RLINE[i] != look) continue;
             double hx = RH[i * 3], hy = RH[i * 3 + 1], hz = RH[i * 3 + 2];
             double ax = RA[i * 3], ay = RA[i * 3 + 1], az = RA[i * 3 + 2];
-            int n = RSAG[i] > 0.05F || RREACH[i] < 1 ? 16 : 2;
+            float hum = RHUM[i], whip = RWHIP[i];
+            int n = RSAG[i] > 0.05F || RREACH[i] < 1 || hum > 0.01F || whip > 0.01F ? 16 : 2;
             float reach = RREACH[i];
             for (int k = 0; k <= n; k++) {
                 double t = (double) k / n * reach;
@@ -338,6 +373,20 @@ final class AscentRender {
                     x += rx * w;
                     y += ry * w;
                     z += rz * w;
+                }
+                if (hum > 0.01F) {
+                    // taut under the weight: the line trembles (its first two modes), still at both ends
+                    double w = hum * (Math.sin(t * Math.PI) * Math.sin(time * 4.3) * 0.045 + Math.sin(t * Math.PI * 3) * Math.sin(time * 11.7) * 0.02);
+                    x += rx * w;
+                    y += ry * w;
+                    z += rz * w;
+                }
+                if (whip > 0.01F) {
+                    // let go: a wave runs up the line from the free end, dying as it falls
+                    double w = Math.sin(t * 11 - time * 2.4) * 0.4 * whip * whip * (1 - t);
+                    x += rx * w + ux * w * 0.5;
+                    y += ry * w + uy * w * 0.5;
+                    z += rz * w + uz * w * 0.5;
                 }
                 PTS[k * 3] = x;
                 PTS[k * 3 + 1] = y;
@@ -452,7 +501,46 @@ final class AscentRender {
         }
     }
 
+    /**
+     * The marker (SPEC §17.31): where a press would throw, a small bright point with four short ticks turning slowly
+     * round it, sized to stay readable far off; cool white for a swing, warm gold for a zip up to a lip.
+     */
+    private static void drawMarker(VertexConsumer vc, PoseStack.Pose pose) {
+        if (markA < 0.03F) return;
+        float time = AscentMoves.ticks + pt;
+        double d = Math.sqrt(sq(markX - cx) + sq(markY - cy) + sq(markZ - cz));
+        if (d < 1) return;
+        float scale = (float) (0.16 + d * 0.012);
+        // drawn a little toward the eye, so the face it sits on doesn't cut it
+        double pull = Math.min(0.6, scale * 1.8) / d;
+        double markX = AscentRender.markX + (cx - AscentRender.markX) * pull, markY = AscentRender.markY + (cy - AscentRender.markY) * pull,
+                markZ = AscentRender.markZ + (cz - AscentRender.markZ) * pull;
+        int rgb = markZip ? 0xFFD58A : 0xD6F0FF;
+        float pulse = 1F + 0.12F * Mth.sin(time * 0.35F);
+        float c = scale * 0.55F * pulse;
+        int a = (int) (230 * markA);
+        quad2(vc, pose, a, rgb,
+                markX - rx * c - ux * c, markY - ry * c - uy * c, markZ - rz * c - uz * c, 0, 1,
+                markX + rx * c - ux * c, markY + ry * c - uy * c, markZ + rz * c - uz * c, 1, 1,
+                markX + rx * c + ux * c, markY + ry * c + uy * c, markZ + rz * c + uz * c, 1, 0,
+                markX - rx * c + ux * c, markY - ry * c + uy * c, markZ - rz * c + uz * c, 0, 0);
+        // the four ticks: small points on a turning square round it
+        float spin = time * 0.05F;
+        for (int k = 0; k < 4; k++) {
+            float ang = spin + k * Mth.HALF_PI;
+            double ox = Mth.cos(ang) * scale * 1.6, oy = Mth.sin(ang) * scale * 1.6;
+            double px = markX + rx * ox + ux * oy, py = markY + ry * ox + uy * oy, pz = markZ + rz * ox + uz * oy;
+            float t = scale * 0.28F;
+            quad2(vc, pose, (int) (a * 0.8F), rgb,
+                    px - rx * t - ux * t, py - ry * t - uy * t, pz - rz * t - uz * t, 0, 1,
+                    px + rx * t - ux * t, py + ry * t - uy * t, pz + rz * t - uz * t, 1, 1,
+                    px + rx * t + ux * t, py + ry * t + uy * t, pz + rz * t + uz * t, 1, 0,
+                    px - rx * t + ux * t, py - ry * t + uy * t, pz - rz * t + uz * t, 0, 0);
+        }
+    }
+
     private static void drawStars(VertexConsumer vc, PoseStack.Pose pose) {
+        drawMarker(vc, pose);
         for (AscentFx.Shot s : AscentFx.SHOTS) {
             if (s.kind != AscentFx.BITE) continue;
             float u = Mth.clamp((s.age + pt) / s.life, 0, 1);

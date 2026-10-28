@@ -35,6 +35,24 @@
       }
     ]
   },
+  "ascent.rope_swoop": {
+    "subtitle": "subtitles.awaken.ascent.rope_swoop",
+    "sounds": [
+      {
+        "name": "awaken:ascent_rope_swoop",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.rope_snap": {
+    "subtitle": "subtitles.awaken.ascent.rope_snap",
+    "sounds": [
+      {
+        "name": "awaken:ascent_rope_snap",
+        "attenuation_distance": 24
+      }
+    ]
+  },
   "ascent.launch": {
     "subtitle": "subtitles.awaken.ascent.launch",
     "sounds": [

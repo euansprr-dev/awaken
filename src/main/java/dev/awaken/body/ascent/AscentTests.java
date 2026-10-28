@@ -32,6 +32,8 @@ final class AscentTests {
         AwakenTests.register("ascent_sovereign", 40, AscentTests::sovereign);
         // the rappel and the rope's fittings (SPEC §28.5)
         AwakenTests.registerIsolated("ascent_rappel", 60, AscentRappelTests::rappel);
+        // the assisted swing (SPEC §17.31)
+        AscentSwingTests.register();
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */

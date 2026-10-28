@@ -4078,6 +4078,91 @@ manual; stop the build at the first block; the payoff answers only the line; dan
   held through a glide the empty meter forced takes flight again once the meter is back to 25% (about 5 s in the sun).
   Sprint held into a plain glide (a run off a cliff) stays a glide.
 
+### 17.31 The assisted swing (Euan, 2026-10-28: "it just brings you straight forward... you end up smashing into the thing that you connected to")
+Plan, proof and runs: `docs/rope-swing/` (approval page https://claude.ai/artifact/Y9bbcaMnqUyBpjnG8HAgXX; all six
+decisions approved as recommended, "Go with the full plan"). The old rope bit the crosshair's block and reeled you to a
+fitted length with a yank (0.22) and threw away the catch's speed, so a swing aimed at a tree went into the tree. The
+assisted rope picks its own anchor along your heading, fits its length without pulling, swings you in your heading's
+plane and lets go at the top. Code: `body.ascent.AscentSwing` (plain maths over `SwingSpace`; nothing allocated a
+tick), `LevelSpace` (the level's answers: vanilla's block rays, the body's box, the floor under a point, a column's
+top), client wiring in `AscentMoves`. The server is unchanged (it still checks each anchor is real and in reach).
+- **Decisions.** (1) The rope keeps Left Alt; the movement power is on mouse 4 (§17.30). (2) A tap at a ledge zips you
+  up it; a hold swings. (3) A marker shows where a press would throw. (4) One full-assist tune, no slider. (5) A swing
+  into a wall beside you becomes a wall-run. (6) No rope in open sky: with nothing to swing from or zip to, a press is
+  the miss it always was.
+- **The switch.** `ropeAssist` in `awaken-feel-client.toml` (default on). Off: the rope as before §17.31, exactly.
+- **Choosing the anchor** (`AscentSwing.find`). Rays from the hand at 22/32/42/52/62/72° up and 0, ±12, ±24, ±36, ±50,
+  ±66° either side of the heading, within reach. A side face hit within 5 of its column's top bites the top's edge
+  (0.3 under it). Each hit is planned as a swing: at least 4 above the hand and 2 ahead, at most 16 aside, 30-82° up
+  in the heading's plane; its radius keeps the feet 2.5 over the floor under the arc (looked at 0, ±1.5 and 3 along),
+  and the fitted rope is never under 70% of the real one. Score: elevation near 50° (spread 15), radius near 26 (spread
+  9), 7 aside (spread 5). The best four are played 40 ticks forward with the body's box swept (every 0.6, widened 0.12)
+  and the first clear one is taken. Leaves are swung from but never edge-snapped; a line to the anchor must be clear.
+- **A zip instead** (`zipTo`): nothing swings, so the look's own ray is climbed (pitch from the look, at most -5°, up to
+  -72° in 6° steps) to a side face whose column top is 2-6 over the eyes with room on top; the rope bites 0.3 under the
+  lip and the game's zip vaults over it (§17.6). Still the old rule: an aimed ring, branch or keel nearly overhead is
+  zipped to and hung from (the Tether Spire and the sky rig keep working); an aimed point that gives no swing, on a
+  press, is zipped to (a hop off the face), never the old pendulum's reel.
+- **The swing** (`step`). The rope flies 1-2 ticks (1 per 22 blocks) and bites with no yank. A swing starts at least 0.75
+  a tick along the heading. Each tick: sideways speed is turned into speed along the heading (85% of it: a turn of the
+  look turns the swing); gravity; the rope shortens toward its fit at most 0.4 a tick and only while falling (never a
+  pull in); the body circles the anchor's projection on the heading's upright plane at radius sqrt(len² − aside²);
+  through the lower half the swing drives itself on (0.02 a tick, forward adds 0.012 with Flow and mastery as before),
+  tripled below 0.9 a tick so no swing dies in a dead hang; drag 0.2% a tick, top speed 2.6. The catch keeps 65% of the
+  outward speed the rope takes (the old catch kept none).
+- **Looking ahead** (`tick`): 10 ticks of swing played forward; a hit bends the swing ±8, ±16, ±24° (kept for the rest
+  of it). A wall under 4 ticks off that nothing bends round: a wall-run if it is beside you (`RunnerMoves.runFromRope`,
+  the Runner's own rules), else a zip up and over it on a new rope, else a hop up off it (+0.3) and let go.
+- **Letting go.** At the top by itself (past the pivot along the heading and past 95° from the bottom, or forward speed
+  under 0.15, or falling more than 8° past the bottom); or when you let go of the key. The window: rising and moving on,
+  best 62° past the bottom, good within 18°; above 0.6 of it the let-go boosts the speed along by up to 14% and lifts
+  0.08 (the snap). A let-go that would fly you into something within 6 ticks (the carry looked 12 ticks ahead, with the
+  bends it may take) holds the rope up to 10 ticks longer.
+- **Holding the key: the chain.** Held in the air, the rope throws again by itself 2 ticks after a let-go (and from a
+  run off an edge), silently when there is nothing; a tap within 5 ticks of a throw with a ledge in the look zips up it
+  instead. Flying free with the key held, what's within 12 ticks is flown round (a nudge sideways or down, speed kept),
+  else zipped over, else hopped (+0.3 or +0.45). From the ground a press throws as before (a hop into the swing).
+- **The marker.** Every other tick in the air off the rope (or with the key held on the ground) the same search runs and
+  `AscentRender` draws the result: a small point with four ticks turning round it, sized with distance, eased between
+  picks, cool white for a swing, warm gold for a zip; drawn a little toward the eye so its face doesn't cut it. Budget:
+  about 1.2 ms a search warm on the GameTest server (16 ms cold, once); a search running over 1.5 ms (a dense wood) puts
+  the marker on every fourth tick.
+- **The feel.** The bite is no tug now; the catch dips the view (as before), the low point widens it a touch (0.045 at
+  full speed, half with reduced motion, times vanilla's FOV effects) and plays `ascent.rope_swoop` (the rush of air
+  through the bottom, the line humming and creaking under the weight; louder and higher with speed); the view tips up
+  to 4° as you rise out of the arc and down into it (half with reduced motion). A let-go in the window plays
+  `ascent.rope_snap` (the line springing free, a rising fifth of glass). The rope trembles taut under the weight (its
+  first two modes, with the pull) and a let-go line whips (a wave up it from the free end, dying as it falls). First
+  person: the catch jolts the fist down and back; through the low point (within 35° of it) the other hand comes onto
+  the rope under the weight. Third person: the body hangs from the swing's pivot, not toward an anchor off to the side,
+  and tips back against its motion (up to 0.22 of the line) so the legs lead through the arc. Sounds from
+  `tools/art/specs/audio_ascent.py`.
+- **Live tuning** (`RopeTuning`, client): `/awaken rope tune on [folder]` reads `rope_swing.json` (any of the numbers
+  above by their names in `AscentSwing.Tune`, `schemaVersion` 1; a newer one is refused) from the tuning folder (the one
+  given, else AWAKEN_TUNING, else /Volumes/MEDIA/Awaken-tuning, else the game folder's awaken-tuning), once a second,
+  put in use between swings; `/awaken rope tune off` is the jar's; `/awaken rope note <words>` appends to
+  `rope_notes.jsonl` with the numbers in use. Off every new session.
+- **The sandbox** (`/awaken ascent sandbox`): behind the launch tower, the bench's city street (hollow towers 22-39 high
+  either side of a 16-wide street, a skybridge 15 up, a wall at the end).
+- **Tests.** `ascent_swing_bench` plays the bench's six places (`SwingBench`: the sandbox's lane, a city street, a
+  forest, a cliff, plains, a spire; 40 seeded runs each, a bot holding the key) on the old rope and the new and fails on
+  any hard hit (a loss of a block a tick or more) on the rope, any stopped run, any place shorter than the old rope's
+  (2% slack), or more than 6 hard hits flying free in all. `ascent_swing_level` builds a pillar and a wall in the level:
+  the blocks and the same boxes give the same anchor, the server takes it as real, and the wall gives a zip to its top.
+  The bench at the jar's numbers (median distance; hard runs on the rope / flying free; stopped):
+
+  | place  | old rope              | assisted              |
+  |--------|-----------------------|-----------------------|
+  | lane   | 165 blocks; 32/2; 3   | 190 blocks; 0/1; 0    |
+  | city   | 93; 9/2; 31           | 243; 0/0; 0           |
+  | forest | 165; 47/8; 3          | 196; 0/3; 0           |
+  | cliff  | 57; 40/0; 40          | 123; 0/0; 0           |
+  | plains | 103; 0/0; 0           | 103; 0/0; 0           |
+  | spire  | 90; 40/0; 7           | 113; 0/0; 0           |
+
+  The page's lane figure for the old rope (199) came from the proof's JavaScript copy of it; the real rule
+  (`AscentRules`, Mth's trig) goes 165 in the same bench.
+
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
 
 The world is drawn at a lower resolution and rebuilt to the screen's; menus, the HUD and all GUI text stay native.

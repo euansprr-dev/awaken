@@ -158,7 +158,7 @@ public final class AscentAnims {
         if (l != null) l.kickAt = AscentMoves.ticks;
     }
 
-    private static final double[] NRM = new double[2];
+    private static final double[] NRM = new double[2], PV = new double[4];
     private static final net.minecraft.core.BlockPos.MutableBlockPos WALL_AT = new net.minecraft.core.BlockPos.MutableBlockPos();
 
     /**
@@ -272,6 +272,14 @@ public final class AscentAnims {
                     az = r.az;
                 }
                 double px = Mth.lerp(pt, e.xo, e.getX()), py = Mth.lerp(pt, e.yo, e.getY()) + 1.4, pz = Mth.lerp(pt, e.zo, e.getZ());
+                boolean assisted = e == mc.player && AscentMoves.swinging();
+                if (assisted) {
+                    // an assisted swing hangs from its pivot in the heading's plane, not toward the anchor off to the side
+                    dev.awaken.body.ascent.AscentSwing.pivot(px, pz, ax, ay, az, e.getYRot() + AscentMoves.ROPE.bend, PV);
+                    ax = PV[0];
+                    ay = PV[1];
+                    az = PV[2];
+                }
                 double dx = ax - px, dy = ay - py, dz = az - pz, d = Math.sqrt(dx * dx + dy * dy + dz * dz);
                 if (d < 1e-3) break;
                 if (st == AscentState.RAPPEL && rappelWall(e, NRM)) {
@@ -294,6 +302,13 @@ public final class AscentAnims {
                     cx = vx / s;
                     cy = vy / s;
                     cz = vz / s;
+                    if (assisted) {
+                        // the legs lead through the arc: the body tips back against the way it moves, more the faster
+                        double lean = 0.22 * Math.min(1, s / 1.4);
+                        ux -= cx * lean;
+                        uy -= cy * lean;
+                        uz -= cz * lean;
+                    }
                 }
             }
             case GLIDE, SOAR -> {
