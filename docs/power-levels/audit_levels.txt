@@ -1,0 +1,64 @@
+wall            ARCHI ACTI cd-4%                        grows:-                      fx:
+ramp            ARCHI ACTI cd-4%                        grows:-                      fx:
+floor           ARCHI ACTI cd-4%                        grows:-                      fx:
+cone            ARCHI ACTI cd-4%                        grows:-                      fx:
+rampart         ARCHI ACTI cd-4%                        grows:-                      fx:
+spire           ARCHI ACTI dmg+12% cd-4%                grows:IMPACT,RING            fx:CONSTRUCT,IMPACT,PILLAR,RING,TRAIL
+collapse        ARCHI ACTI dmg+12% cd-4%                grows:IMPACT,RING            fx:IMPACT,RING
+citadel         ARCHI ULTI cd-4%                        grows:DOME,GLYPH             fx:CONSTRUCT,DOME,GLYPH,HEAL
+beam            ENERG ACTI dmg+12% cd-4%                grows:-                      fx:CHARGE
+nova            ENERG ACTI dmg+12% cd-4%                grows:NOVA,VORTEX            fx:CHARGE,NOVA,VORTEX
+barrier         ENERG ACTI dmg+12% cd-4% dur+5% own     grows:DOME,NOVA              fx:DOME,NOVA
+charged_shot    ENERG ACTI dmg+12% cd-4%                grows:IMPACT,NOVA            fx:CAST,CHARGE,CHARGE_END,IMPACT,NOVA
+overload        ENERG ULTI dmg+12% cd-4% dur+5%         grows:NOVA,VORTEX            fx:A,AURA,CAST,CHARGE,LIGHTNING,NOVA,VORTEX
+prism_lance     ENERG ULTI dmg+12% cd-4%                grows:-                      fx:CHARGE,ULT
+hover           FLIGH ACTI cd-4% dur+5%                 grows:RING                   fx:A,AURA,RING
+flight          FLIGH MOVE cd-4% own                    grows:RING                   fx:A,AURA,RING
+gravity_well    FLIGH ACTI dmg+12% cd-4% dur+5%         grows:NOVA,VORTEX            fx:NOVA,VORTEX
+telekinesis     FLIGH ACTI dmg+12% cd-4%                grows:IMPACT,RING,SLAM       fx:CAST,IMPACT,LIFT,RING,SLAM,TETHER,TRAIL
+meteor_dive     FLIGH ACTI dmg+12% cd-4%                grows:IMPACT,SLAM            fx:IMPACT,METEOR,SLAM,TRAIL
+gravity_flip    FLIGH ACTI dmg+12% cd-4%                grows:RING,SLAM              fx:LIFT,RING,SLAM
+ground_slam     KINET ACTI dmg+12% cd-4%                grows:IMPACT,SLAM            fx:IMPACT,SLAM,TRAIL
+leap            KINET MOVE dmg+12% cd-4% own            grows:SLAM                   fx:DASH,SLAM
+haymaker        KINET ACTI dmg+12% cd-4%                grows:IMPACT,SLAM            fx:CHARGE,IMPACT,SLAM
+terrain_rip     KINET ACTI dmg+12% cd-4%                grows:SLAM                   fx:SLAM
+shockwave       KINET ACTI dmg+12% cd-4%                grows:CONE,IMPACT            fx:CONE,IMPACT
+brace           KINET ACTI dmg+12% cd-4% dur+5%         grows:RING,SLAM              fx:A,AURA,RING,SLAM
+thunderclap     KINET ACTI dmg+12% cd-4%                grows:RING,STRIKE            fx:CAST,LIGHTNING,RING,STRIKE
+danger_sense    MIND  PASS cd-4%                        grows:-                      fx:PSI
+dominate        MIND  ACTI cd-4% dur+5%                 grows:IMPACT                 fx:A,AURA,IMPACT,PSI
+read_intent     MIND  ACTI cd-4% dur+5%                 grows:-                      fx:A,AURA,PSI
+decoy           MIND  ACTI dmg+12% cd-4% dur+5%         grows:-                      fx:BLINK,PSI
+foresight       MIND  ACTI cd-4% dur+5%                 grows:RING                   fx:A,AURA,RING
+shadow_step     SHADO ACTI cd-4%                        grows:-                      fx:A,AURA,BLINK
+cloak           SHADO ACTI cd-4% dur+5%                 grows:SMOKE                  fx:A,AURA,SMOKE
+echo_swap       SHADO ACTI dmg+12% cd-4%                grows:RING,SMOKE             fx:BLINK,RING,SMOKE
+legion          SHADO ULTI dmg+12% cd-4% dur+5%         grows:GLYPH,SUMMON           fx:GLYPH,SUMMON
+aura            SPIRI PASS dmg+12% cd-4%                grows:IMPACT                 fx:A,AURA,IMPACT
+spirit_palm     SPIRI ACTI dmg+12% cd-4%                grows:CONE,ECHO,IMPACT,PALM  fx:CONE,ECHO,IMPACT,PALM
+mend            SPIRI ACTI dmg+12% cd-4% own            grows:-                      fx:HEAL
+third_eye       SPIRI ACTI cd-4% dur+5%                 grows:-                      fx:A,AURA,PSI
+cord_lash       SPIRI ACTI dmg+12% cd-4%                grows:IMPACT                 fx:IMPACT,TETHER
+bulwark         SPIRI ACTI cd-4% dur+5%                 grows:DOME,IMPACT            fx:DOME,IMPACT
+hundred_palms   SPIRI ULTI dmg+12% cd-4%                grows:ECHO,IMPACT            fx:CAST,ECHO,FLURRY,IMPACT
+void_maw        SPIRI ULTI dmg+12% cd-4% dur+5%         grows:NOVA,VORTEX            fx:NOVA,VORTEX
+waking_dream    SPIRI ACTI cd-4%                        grows:GLYPH,IMPACT           fx:CAST,GLYPH,IMPACT
+storm_call      SPIRI ACTI dmg+12% cd-4%                grows:STRIKE                 fx:CAST,STRIKE
+ember_step      SPIRI MOVE dmg+12% cd-4% own            grows:-                      fx:DASH,FIRE_TRAIL
+frost_nova      SPIRI ACTI dmg+12% cd-4%                grows:FROST                  fx:FROST
+ghost_step      SPIRI MOVE dmg+12% cd-4%                grows:IMPACT                 fx:BLINK,IMPACT
+twin_strike     SPIRI ACTI cd-4% dur+5%                 grows:-                      fx:A,AURA
+grapple         TECH  MOVE dmg+12% cd-4% own            grows:IMPACT                 fx:IMPACT,TETHER
+jet_burst       TECH  MOVE dmg+12% cd-4% own            grows:-                      fx:EXHAUST
+drone           TECH  ACTI dmg+12% cd-4% dur+5%         grows:-                      fx:CAST,HOLO
+turret          TECH  ACTI dmg+12% cd-4% dur+5%         grows:-                      fx:HOLO
+railgun         TECH  ACTI dmg+12% cd-4%                grows:IMPACT                 fx:CHARGE,CHARGE_END,IMPACT,RAIL
+nanite_skin     TECH  ACTI dmg+12% cd-4% dur+5%         grows:-                      fx:A,AURA
+drone_swarm     TECH  ULTI dmg+12% cd-4% dur+5%         grows:-                      fx:HOLO
+dash            VELOC MOVE dmg+12% cd-4% own            grows:IMPACT                 fx:BLINK,DASH,IMPACT
+flow            VELOC ACTI cd-4%                        grows:RING                   fx:A,AURA,RING
+afterimage      VELOC ACTI dmg+12% cd-4% dur+5%         grows:-                      fx:AFTERIMAGE,TRAIL
+wall_run        VELOC PASS cd-4%                        grows:-                      fx:
+water_run       VELOC PASS cd-4%                        grows:-                      fx:TRAIL
+lightning_step  VELOC MOVE dmg+12% cd-4%                grows:IMPACT                 fx:BLINK,IMPACT,LIGHTNING
+63
