@@ -56,7 +56,15 @@ public final class HearthHooks {
         default void systemRespawn(ServerPlayer player, ServerPlayer.@Nullable RespawnConfig to, boolean lent) {
             player.setRespawnPosition(to, false);
         }
+        /** The metal the player's home is short of for its next tier, when only materials stand in the way (SPEC §34.1). */
+        default Optional<MetalNeed> metalNeed(ServerPlayer player) { return Optional.empty(); }
     }
+
+    /**
+     * A home short of a metal: which ({@code iron}, {@code copper}, {@code gold}), how many ingots the next tier takes
+     * (a block counts nine), how many the player carries, what for ("Hearth Tier II"), and the home's Anchor.
+     */
+    public record MetalNeed(String metal, int need, int have, String what, BlockPos home) {}
 
     private static Lookup lookup = new Lookup() {
         @Override public Optional<BlockPos> nearest(ServerLevel level, BlockPos pos, int radius) { return Optional.empty(); }
@@ -134,6 +142,11 @@ public final class HearthHooks {
     /** Gives back the respawn point a lent bed stood in for ({@code null}: none). */
     public static void returnRespawn(ServerPlayer player, ServerPlayer.@Nullable RespawnConfig before) {
         lookup.systemRespawn(player, before, false);
+    }
+
+    /** The metal the player's home is short of for its next tier (only materials stand in the way), if any. */
+    public static Optional<MetalNeed> metalNeed(ServerPlayer player) {
+        return lookup.metalNeed(player);
     }
 
     /** Every Hearth Anchor within {@code radius} blocks of {@code pos}, whoever owns it. */

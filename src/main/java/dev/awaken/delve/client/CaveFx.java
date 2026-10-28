@@ -17,14 +17,25 @@ import java.util.List;
 /**
  * The cave places seen from outside (PLAN 8.2): mist rising out of a sinkhole by day (thickest in the morning, gone
  * by night; soft lobes that swell and thin as they climb past the rim, lit by the sky), a breath of cold air at a
- * chute's mouth (pale streaks drifting out of it), and a grotto's own light (its curtain and its pool). Our own sprites (tools/art/specs/caves.py); a few a tick at most,
- * only near the player.
+ * chute's mouth (pale streaks drifting out of it), a grotto's own light (its curtain and its pool), and a mouth's tells
+ * (SPEC §34.1): its breath (mist exhaled out of the arch at dawn and after rain, seen from 100+ m), its draught (streaks
+ * drifting out) and the cold air heard within 32 m. Our own sprites (tools/art/specs/caves.py); a few a tick at most.
+ * Far mist goes straight to the particle engine: the level's own path drops anything past 32 blocks.
  */
 final class CaveFx {
     private CaveFx() {}
 
     private static List<CaveNet.Site> sites = List.of();
     private static final RandomSource R = RandomSource.create();
+    // a mouth's draught, heard: the loop at the nearest mouth and the one fading after a move
+    private static final SenseLoop[] DRAUGHT = new SenseLoop[2];
+    /** Game time until which the ground counts as just rained on (the mouths breathe after rain). */
+    private static long wetUntil;
+
+    /** The cave places near you the server named (mouths, sinkholes, chutes...), for the shafts and the breath. */
+    static List<CaveNet.Site> sites() {
+        return sites;
+    }
 
     static void near(CaveNet.Near m) {
         sites = List.copyOf(m.sites());
@@ -32,6 +43,11 @@ final class CaveFx {
 
     static void reset() {
         sites = List.of();
+        for (int i = 0; i < 2; i++) {
+            if (DRAUGHT[i] != null) DRAUGHT[i].release();
+            DRAUGHT[i] = null;
+        }
+        wetUntil = 0;
     }
 
     static void register(RegisterParticleProvidersEvent e) {
@@ -44,8 +60,19 @@ final class CaveFx {
     static void tick() {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
-        if (level == null || mc.player == null || sites.isEmpty() || mc.isPaused()) return;
+        if (level == null || mc.player == null || mc.isPaused()) return;
+        if (level.getRainLevel(1F) > 0.2F) wetUntil = level.getGameTime() + 3600;
+        if (sites.isEmpty()) {
+            if (DRAUGHT[0] != null) draught(mc, 0F, 0, 0, 0);
+            return;
+        }
         long time = level.getOverworldClockTime() % 24000L;
+        boolean far = mc.options.particles().get() != net.minecraft.server.level.ParticleStatus.MINIMAL;
+        // a mouth's breath: strongest at dawn and for three minutes after rain, faint by day, a little at dusk
+        float breath = Math.max(time < 1500 ? 1F : time < 4000 ? 1F - (time - 1500) / 2900F : time < 11800 ? 0.14F : time < 13200 ? 0.35F : 0.08F,
+                level.getGameTime() < wetUntil ? 0.9F : 0F);
+        float heard = 0F;
+        double hx = 0, hy = 0, hz = 0;
         // the mist: thick at dawn, thinning through the day, a little at dusk, none at night
         float day = time < 1000 ? 1.0F : time < 6000 ? 1.0F - (time - 1000) / 7000F : time < 11500 ? 0.35F : time < 13000 ? 0.5F : 0F;
         for (CaveNet.Site s : sites) {
@@ -61,7 +88,7 @@ final class CaveFx {
                     // most rise from the top of the shaft so they clear the rim in their life: seen from the rim and afar
                     double u = R.nextDouble();
                     double y = s.at().getY() - 1 - u * u * Math.min(24, s.depth() * 0.4);
-                    level.addParticle(CaveContent.MIST.get(), s.at().getX() + 0.5 + Math.cos(a) * r, y, s.at().getZ() + 0.5 + Math.sin(a) * r,
+                    if (far) mc.particleEngine.createParticle(CaveContent.MIST.get(), s.at().getX() + 0.5 + Math.cos(a) * r, y, s.at().getZ() + 0.5 + Math.sin(a) * r,
                             (R.nextDouble() - 0.5) * 0.01, 0.025 + R.nextDouble() * 0.02, (R.nextDouble() - 0.5) * 0.01);
                 }
             } else if (s.kind() == CaveKind.CHUTE.ordinal()) {
@@ -76,7 +103,94 @@ final class CaveFx {
                 double dy = s.at().getY() - mc.player.getY();
                 if (d2 + dy * dy > 40 * 40) continue;
                 grotto(mc, s);
+            } else if (s.kind() == CaveKind.MOUTH.ordinal()) {
+                mouth(mc, s, d2, breath, far);
+                double dy = s.at().getY() + 1.5 - mc.player.getEyeY();
+                float d = (float) Math.sqrt(d2 + dy * dy);
+                // the cold air coming out: heard within 32 m, louder at the lip, the nearest mouth only
+                float v = d < 32F ? 0.45F * 8F / (8F + d) * (1F - Mth.clamp((d - 24F) / 8F, 0F, 1F)) : 0F;
+                if (v > heard) {
+                    heard = v;
+                    hx = s.at().getX() + 0.5;
+                    hy = s.at().getY() + 1.5;
+                    hz = s.at().getZ() + 0.5;
+                }
             }
+        }
+        draught(mc, heard, hx, hy, hz);
+    }
+
+    /**
+     * A mouth's tells: its breath (pale lobes exhaled out of the arch's upper half, drifting out and climbing past the lip,
+     * from as far as 160 m) and its draught (streaks out of the throat, within 28 m). The site's radius is the arch's
+     * width (a doline's: across); its depth packs the turn (forward = into the hill), the form (two bits) and the arch's
+     * height (a doline's: how deep).
+     */
+    private static void mouth(Minecraft mc, CaveNet.Site s, double d2, float breath, boolean far) {
+        int rot = s.depth() & 3, h = Math.max(4, s.depth() >> 4), w = Math.max(3, s.radius());
+        double fx = rot == 1 ? -1 : rot == 3 ? 1 : 0, fz = rot == 0 ? 1 : rot == 2 ? -1 : 0;
+        double cx = s.at().getX() + 0.5, cy = s.at().getY(), cz = s.at().getZ() + 0.5;
+        if ((s.depth() >> 2 & 3) == 2) {
+            doline(mc, s, d2, breath, far, cx, cy, cz, w, h);
+            return;
+        }
+        if (far && d2 < 160 * 160) {
+            float rate = breath * (0.25F + w / 24F) * (d2 < 64 * 64 ? 1F : 0.6F);
+            if (R.nextFloat() < rate) {
+                // just inside the arch, high up: a breath leaves by the top of a mouth
+                double o = (R.nextDouble() - 0.5) * w * 0.7, in = 1.0 + R.nextDouble() * 2.5;
+                mc.particleEngine.createParticle(CaveContent.MIST.get(), cx + fx * in - fz * o, cy + h * (0.45 + R.nextDouble() * 0.4), cz + fz * in + fx * o,
+                        -fx * (0.03 + R.nextDouble() * 0.02), 0.02 + R.nextDouble() * 0.015, -fz * (0.03 + R.nextDouble() * 0.02));
+            }
+        }
+        if (d2 < 28 * 28 && R.nextFloat() < 0.4F) {
+            double o = (R.nextDouble() - 0.5) * (w - 1), in = 1.5 + R.nextDouble() * 3;
+            mc.level.addParticle(CaveContent.DRAUGHT.get(), cx + fx * in - fz * o, cy + 0.3 + R.nextDouble() * (h - 1.5), cz + fz * in + fx * o,
+                    -fx * (0.05 + R.nextDouble() * 0.03), 0.004, -fz * (0.05 + R.nextDouble() * 0.03));
+        }
+    }
+
+    /**
+     * A doline's tells: its breath rises straight up out of the hole (the hole's {@code w} across, {@code h} deep) and,
+     * within 28 m, the draught's streaks climb its walls.
+     */
+    private static void doline(Minecraft mc, CaveNet.Site s, double d2, float breath, boolean far, double cx, double cy, double cz, int w, int h) {
+        if (far && d2 < 160 * 160) {
+            float rate = breath * (0.25F + w / 24F) * (d2 < 64 * 64 ? 1F : 0.6F);
+            if (R.nextFloat() < rate) {
+                double a = R.nextDouble() * Math.PI * 2, o = R.nextDouble() * w * 0.35;
+                mc.particleEngine.createParticle(CaveContent.MIST.get(), cx + Math.cos(a) * o, cy - 1 - R.nextDouble() * h * 0.4, cz + Math.sin(a) * o,
+                        (R.nextDouble() - 0.5) * 0.01, 0.035 + R.nextDouble() * 0.02, (R.nextDouble() - 0.5) * 0.01);
+            }
+        }
+        if (d2 < 28 * 28 && R.nextFloat() < 0.4F) {
+            double a = R.nextDouble() * Math.PI * 2, o = w * 0.4;
+            mc.level.addParticle(CaveContent.DRAUGHT.get(), cx + Math.cos(a) * o, cy - 0.5 - R.nextDouble() * h * 0.6, cz + Math.sin(a) * o, 0, 0.06 + R.nextDouble() * 0.03, 0);
+        }
+    }
+
+    /** The draught's loop at the nearest mouth (the breath-of-air sound, lower and cold), fading across a move. */
+    private static void draught(Minecraft mc, float goal, double x, double y, double z) {
+        var sm = mc.getSoundManager();
+        for (int i = 0; i < 2; i++) {
+            if (DRAUGHT[i] != null && (DRAUGHT[i].isStopped() || DRAUGHT[i].age > 40 && !sm.isActive(DRAUGHT[i]))) DRAUGHT[i] = null;
+        }
+        SenseLoop cur = DRAUGHT[0];
+        if (cur != null) {
+            double dx = cur.getX() - x, dy = cur.getY() - y, dz = cur.getZ() - z;
+            if (goal > 0.01F && dx * dx + dy * dy + dz * dz > 36 && DRAUGHT[1] == null) {
+                cur.release();
+                DRAUGHT[1] = cur;
+                DRAUGHT[0] = cur = null;
+            } else {
+                cur.goal = goal;
+            }
+        }
+        if (cur == null && goal > 0.015F) {
+            SenseLoop l = new SenseLoop(dev.awaken.delve.sense.SenseModule.BREATH.get(), false, x, y, z, 0.78F, 0.03F);
+            l.goal = goal;
+            DRAUGHT[0] = l;
+            sm.play(l);
         }
     }
 

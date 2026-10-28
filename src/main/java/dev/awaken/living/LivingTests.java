@@ -34,7 +34,7 @@ final class LivingTests {
         dev.awaken.living.population.LedgerTests.register();
         dev.awaken.living.camp.CampTests.register();
         dev.awaken.living.craft.CraftTests.register();
-        // the Boss Plate's payloads carry a bar's binding and its lines intact (SPEC §34.1)
+        // the Boss Plate's payloads carry a bar's binding and its lines intact (SPEC §35.1)
         AwakenTests.register("boss_plate_bind", 20, h -> {
             java.util.UUID bar = java.util.UUID.randomUUID();
             var buf = io.netty.buffer.Unpooled.buffer();

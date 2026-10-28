@@ -94,6 +94,12 @@ public final class CavePlaces {
         KNOWN.put(s.id(), s);
     }
 
+    /** The name of the cave place round {@code pos} ("The Weeping Seep"), or null. */
+    public static @Nullable String placeName(ServerLevel level, BlockPos pos) {
+        Spec s = at(level, pos);
+        return s == null ? null : CaveNames.name(s);
+    }
+
     /** The cave place whose box holds {@code pos}, or null. */
     public static @Nullable Spec at(ServerLevel level, BlockPos pos) {
         if (level.dimension() != Level.OVERWORLD || !level.hasChunkAt(pos)) return null;
@@ -226,17 +232,20 @@ public final class CavePlaces {
         }
     }
 
-    /** The places near a player for their look from outside: sinkholes (mist) and chutes (the draught at the mouth). */
+    /** The places near a player for their look from outside: sinkholes (mist), chutes and mouths (breath and draught). */
     private static void near(ServerLevel level, ServerPlayer p, Tracked t) {
         List<Long> ids = new ArrayList<>();
         List<CaveNet.Site> sites = new ArrayList<>();
         for (Spec s : KNOWN.values()) {
-            if (s.kind() != CaveKind.SINKHOLE && s.kind() != CaveKind.CHUTE && s.kind() != CaveKind.GROTTO) continue;
+            if (s.kind() != CaveKind.SINKHOLE && s.kind() != CaveKind.CHUTE && s.kind() != CaveKind.GROTTO && s.kind() != CaveKind.MOUTH) continue;
             double dx = s.x() - p.getX(), dz = s.z() - p.getZ();
             if (dx * dx + dz * dz > (s.kind() == CaveKind.GROTTO ? GROTTO_NEAR * GROTTO_NEAR : NEAR * NEAR)) continue;
             ids.add(s.id());
             if (s.kind() == CaveKind.SINKHOLE) sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(s.x(), s.p(Sinkhole.RIM), s.z()), s.p(Sinkhole.R), s.p(Sinkhole.RIM) - s.y()));
             else if (s.kind() == CaveKind.CHUTE) sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(s.x(), s.y(), s.z()), 2, s.rot()));
+            // a mouth: its lip, the arch's width; depth packs its turn (2 bits), its form (1) and the arch's height
+            else if (s.kind() == CaveKind.MOUTH) sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(s.x(), s.y(), s.z()), s.p(Mouth.W),
+                    (s.rot() & 3) | (s.p(Mouth.FORM) & 3) << 2 | s.p(Mouth.H) << 4));
             else {
                 // a grotto's own light: its curtain (depth 0) and its pool (depth 1); radius carries its turn
                 int[] c = Grotto.curtain(s), q = Grotto.pool(s);
@@ -261,6 +270,7 @@ public final class CavePlaces {
             Spec here = at(level, p.blockPosition());
             if (here == null || here.id() != s.id()) continue;
             Progression.count(p, "awaken:seeps_quieted");
+            dev.awaken.delve.PickVerses.deed(p, dev.awaken.delve.PickVerses.Verse.HUSH);
             dev.awaken.signal.Signal.toast(p, Component.literal(CaveNames.name(s) + " falls quiet").withColor(0xC8B4FF), Notices.Tier.IMPORTANT, "cave");
         }
         dev.awaken.Awaken.LOG.info("[delve] the seep at {} {} {} fell quiet", s.x(), s.y(), s.z());

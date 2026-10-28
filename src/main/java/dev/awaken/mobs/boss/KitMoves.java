@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * A kit body's move table (SPEC §34.2): {@code data/awaken/kit/moves/<id>.json}, written by tools/art/specs/kit from the
+ * A kit body's move table (SPEC §35.2): {@code data/awaken/kit/moves/<id>.json}, written by tools/art/specs/kit from the
  * same numbers as the clips. The server runs it (timing, tracking, root motion, the hit capsules); the client plays the
  * clips of the same names, stretched to the same ticks.
  */
@@ -18,7 +18,7 @@ public final class KitMoves {
 
     public static final int SCHEMA_VERSION = 1;
 
-    /** The shortest wind-up a class may have, in ticks: a blow you can't read in time is a bug (SPEC §34.2). */
+    /** The shortest wind-up a class may have, in ticks: a blow you can't read in time is a bug (SPEC §35.2). */
     public static int minWindup(Strikes.Kind kind) {
         return switch (kind) {
             case LIGHT -> 8;

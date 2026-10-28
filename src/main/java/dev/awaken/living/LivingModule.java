@@ -66,7 +66,7 @@ public final class LivingModule {
         FirstScenes.init(); // its High Gate shot and Ilse's scene by the fire
         IssueScene.init(); // Hale's issue: the first weapon, free (docs/arms-progression/PLAN.md §3.3)
         modBus.addListener(LivingNet::register);
-        // the Boss Plate's data (SPEC §34.1): binds and lines to the players who see a boss's bar
+        // the Boss Plate's data (SPEC §35.1): binds and lines to the players who see a boss's bar
         dev.awaken.core.api.BossPlates.install(new dev.awaken.core.api.BossPlates.Sink() {
             @Override
             public void bind(ServerPlayer player, java.util.UUID bar, int entity, dev.awaken.core.api.BossPlates.Kind kind, float[] marks, int glow) {

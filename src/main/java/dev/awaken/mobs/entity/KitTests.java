@@ -17,7 +17,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Optional;
 import java.util.Set;
 
-/** The Creature Kit (SPEC §34.2-34.4): its data loads and checks out, moves sync, blows land where they're drawn, phases. */
+/** The Creature Kit (SPEC §35.2-34.4): its data loads and checks out, moves sync, blows land where they're drawn, phases. */
 public final class KitTests {
     private KitTests() {}
 

@@ -35,7 +35,7 @@ public class AwakenBoss extends AwakenMob {
     private static final BossEvent.BossBarColor[] PHASE_COLOURS = {BossEvent.BossBarColor.RED, BossEvent.BossBarColor.PURPLE, BossEvent.BossBarColor.WHITE};
 
     /**
-     * A kit boss's move, synced (SPEC §34.3): bits 0-9 the move index + 1, 10-15 its hold in ticks, 16-19 the pose
+     * A kit boss's move, synced (SPEC §35.3): bits 0-9 the move index + 1, 10-15 its hold in ticks, 16-19 the pose
      * ({@link #KIT_POSE_INTRO}, {@link #KIT_POSE_BROKEN}), 20-27 a serial (the same move twice restarts its clips); and
      * the game time the move began, so a late joiner sees it where it is.
      */
@@ -263,7 +263,7 @@ public class AwakenBoss extends AwakenMob {
     }
 
     /**
-     * The boss speaks to everyone near its arena: under the Boss Plate for those who see its bar (SPEC §34.1), in chat
+     * The boss speaks to everyone near its arena: under the Boss Plate for those who see its bar (SPEC §35.1), in chat
      * ({@code chat}) for the rest.
      */
     void tell(ServerLevel level, String plate, Component chat, BossPlates.Line kind) {

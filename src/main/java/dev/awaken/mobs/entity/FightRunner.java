@@ -19,7 +19,7 @@ import java.util.ArrayDeque;
 import java.util.List;
 
 /**
- * A kit boss's fight (SPEC §34.3): it plays its fight script's moves, each a wind-up (turning toward you until its lock
+ * A kit boss's fight (SPEC §35.3): it plays its fight script's moves, each a wind-up (turning toward you until its lock
  * tick, sometimes held at the peak), active ticks whose capsules hit only where the limb is, and a recovery you can
  * punish. Strings carry on without a gap; phases enter through their transition move; under the enrage line it moves
  * faster, never harder. Every blow goes through {@code Strikes.deliver}, so Arms' deflect, block and posture apply.

@@ -72,7 +72,7 @@ public final class AbilityRunner {
         return (active != null && active.roots()) || chargeTicks > 0 || leapTicks > 0;
     }
 
-    /** A kit boss's runner (SPEC §34.3): it starts nothing itself; its FightRunner fires abilities as moves strike. */
+    /** A kit boss's runner (SPEC §35.3): it starts nothing itself; its FightRunner fires abilities as moves strike. */
     private boolean scripted;
 
     void scripted(boolean on) {
@@ -224,7 +224,7 @@ public final class AbilityRunner {
         return false;
     }
 
-    // ---- kit moves (SPEC §34.3): a move's wind-up aims and marks the ability, its strike fires it ----------------------
+    // ---- kit moves (SPEC §35.3): a move's wind-up aims and marks the ability, its strike fires it ----------------------
 
     /** The named ability of any phase, or null. */
     @Nullable Ability find(String name) {

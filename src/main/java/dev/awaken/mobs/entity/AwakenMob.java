@@ -175,7 +175,7 @@ public class AwakenMob extends Monster {
             goalSelector.addGoal(3, new MobGoals.FlyHunt(this));
             goalSelector.addGoal(7, new MobGoals.FlyWander(this));
         } else {
-            if (scriptedFight()) goalSelector.addGoal(3, new FightRunner.Engaged(this)); // its fight script moves it (SPEC §34.3)
+            if (scriptedFight()) goalSelector.addGoal(3, new FightRunner.Engaged(this)); // its fight script moves it (SPEC §35.3)
             else if (d.has(Trait.RANGED)) goalSelector.addGoal(3, new MobGoals.KeepRange(this, 9.0F));
             else goalSelector.addGoal(3, new MobGoals.ToldMelee(this));
             if (d.has(Trait.LISTENER)) goalSelector.addGoal(4, new MobGoals.SeekSound(this));
@@ -581,7 +581,7 @@ public class AwakenMob extends Monster {
         return abilityRunner().find(name);
     }
 
-    /** Whether a fight script drives this mob instead of the told melee (a kit boss, SPEC §34.3). */
+    /** Whether a fight script drives this mob instead of the told melee (a kit boss, SPEC §35.3). */
     protected boolean scriptedFight() {
         return false;
     }
@@ -817,7 +817,7 @@ public class AwakenMob extends Monster {
         if (bar != null) bindPlate(player);
     }
 
-    /** Ties this mob's bar to it for the player's Boss Plate (SPEC §34.1): its kind, phase marks and glow. */
+    /** Ties this mob's bar to it for the player's Boss Plate (SPEC §35.1): its kind, phase marks and glow. */
     protected void bindPlate(ServerPlayer player) {
         if (bar == null) return;
         MobDef d = def();

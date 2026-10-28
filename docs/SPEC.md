@@ -8611,7 +8611,288 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
   screen (the first tour caught the first-hour card covering it; fixed, and the second tour showed the trail on the card ticking as steps were done; the card's count was off until every done step was sent, fixed and tested, not re-toured; the Now line shows the followed step below the Hale and camp lines, as designed at priority 55); a step's `{key}` caps; a `tip` (none shipped yet); several
   followed trails; the Powers, Story and the remaining World trails; the Armoury's Track as a step type.
 
-## 34. Bosses, levelled up (the Creature Kit and the Boss Plate; plan docs/bosses/PLAN.md, page https://claude.ai/artifact/RG6JGgiSwrTvg53WACTqhY; Euan approved all fourteen recommendations 2026-10-28: "Go with all recommendations")
+## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
+
+Builds on §28.3 (W2) and §28.5 (W5); the plan's audit (`docs/mining/proof/`) is what it was designed against: Tectonic
+seals noise caves within ~12 blocks of the ground, so the sky-open mouths are unmarked slots (median 106 m from any
+spot in Euan's world); 99% of iron was vanilla's scatter; the Hearth never said where; our sparks were round dots over
+vanilla's crack particles.
+
+### 34.0 Decisions (approved)
+1. Caves are where metal lives, and the trip is a story. 2. New land: vanilla's scattered iron, copper, coal and gold at
+35%; early lodes open onto cave walls. 3. Our own frequent mouths (hill mouth, Delver adit, doline, cleft) about every
+200 m with tells (breath, draught, cairn); Tectonic untouched. 4. The Hearth points to the nearest mouth with the metal
+it lacks ("Mark it on my map"), honest when it knows none. 5. The strike rebuilt: chips of the block's texture, spark
+streaks, a breath of dust, new cracks; vanilla's crack particles replaced. 6. True strikes on ores. 7. The Delver's
+Pick and its six verses replace the tool ladder; Hunter mattock recipes retire. 8. The pick is pulled from the stone at
+the first adit (handed over at the Hearth when no adit is near). 9. Cave air (bands, Lens haze, motes, shafts, the Deep
+breathes). 10. Delver lamps. 11. Strike and cave sounds from CC0 recordings (each download listed to Euan first).
+12. The Hollows in every cave by depth, drawn by strikes, wary of light. 13. One session, P1 (the first iron trip)
+first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
+
+### 34.1 Mouths (built, P1d: hill mouth and adit; P4: cleft and doline)
+- **Place** `awaken:delve/mouth` (`delve.cave.Mouth`, `CaveKind.MOUTH`, appended so older kinds keep their ordinals),
+  structure set `delve/mouths`: random spread 12/4, salt 734018553, `#minecraft:is_overworld`, new land only. Spec at
+  the lip's floor, rot forward = into the hill; p: form, throat length, its drop, arch width, height, the lode's heart
+  (x, y, z), its ore + 1, the cairn's side.
+- **Delver adit** (tried first): an iron or copper lode within 72 whose heart is at y 24 or above, a hill over the
+  drift, an open front, dry; drift 14-28 long, falling 0 to a third of its length, timber sets every 3, rails, ends at
+  the heart (left in the end face; the joint tunnel to the cave leaves from the drift's side). Mark "pick" at the drift's
+  end (the Delver's Pick in the stone, P1d's next part), a barrel there.
+- **Hill mouth**: 8+ of rise in 16, open front, arch 5/7/9 wide and 6-11 high (an ellipse, a rough top, roots and vines
+  over the lip), throat 16-40 falling about one in two (a drop of two where the hash says), ground over the end, dry; a
+  joint to natural cave air is required.
+- **Order by the ground** (P4): an adit, else a cleft, else a hill mouth, else a doline.
+- **Cleft** (P4): a cliff, 9+ of rise in 6 and 14+ in 14, open in front; a slot 2-4 wide (p W), 16-28 long, its floor
+  level through the first 4 then falling one in three to the end; open to the sky (p H: the cliff's height over the lip
+  + 2, 8-40) for the first 65% of its length, then the roof steps down to a passage four high; the walls rough and
+  leaning apart a little upward, the slot wandering up to about a block each way once inside; vines down both walls,
+  hanging roots where the rock closes over, a stone or two wedged across the slot 6-8 over the floor (only where rock
+  holds it on both sides within 5), moss carpet on the floor; ground over its end, dry; a joint to cave air is required.
+- **Doline** (P4): flat ground (six points round at r + 3 within 2 of the middle), r 3-5 (p W = 2r + 1, 7-11 across),
+  10 to min(25, 4r + 5) deep (p DROP, and p H the same); spec at the middle, level with the ground, forward = the way out
+  at the bottom. A round hole with a rough edge, the turf's lip overhanging by one with hanging roots under it, vines
+  down the walls; the floor fallen rock, coarse dirt and moss; a ledge of fallen rock (cobble, mossy cobble, coarse
+  dirt) two wide down the wall from the near side, the fewest half-turns-and-more that keep it no steeper than one down
+  in 1.6 along it (so every step is a walk or a jump), reaching out to the lip at the top; a way out of the side at the
+  bottom 3 wide and 3 high, r + 3 long, toward the cave air it joins (required). The tells: the breath rises straight
+  up out of the hole, the draught's streaks climb its walls, its light shaft falls straight down.
+- **Site packing** (P4): the client site's depth is turn | form << 2 (two bits) | height << 4.
+- **Names and words**: dolines "The Fallen Floor", "The Sunken Ring", "The Well of Roots"...; clefts "The Narrow Way",
+  "The Split Rock", "The Slot"...; the Hearth's line "There's a sinkhole in the ground 180 m south of your home. The cave
+  at the bottom of it runs past iron." / "There's a narrow gorge cut into the cliff 180 m south of your home. It leads
+  into a cave that runs past iron."; the map mark "The sinkhole" / "The gorge".
+- **Cairn** on the open ground in front: stacked cobble walls and an iron-bar spike; at an adit a fence post with a
+  lantern.
+- **Tells** (client, `CaveFx`, from the place's site in `CavePlaces.near`: lip, arch width, and turn | form << 2 |
+  height << 3): the **breath**, mist exhaled from the arch's upper half and drifting out, strongest at dawn (to 1500,
+  fading to 4000), for 3 minutes after rain, 0.14 by day, 0.35 at dusk, seen to 160 m; the **draught**, streaks out of
+  the throat within 28 m; the **cold air heard** within 32 m (the breath-of-air loop at the nearest mouth, pitch 0.78;
+  to be re-voiced from a recording). Far mist goes straight to the particle engine (the level's own path drops
+  particles past 32 blocks; the sinkhole's mist had the same fault and now does the same), never at Minimal particles.
+- **The Hearth points** (`delve.cave.MouthPointer`, a task-card source; `HearthHooks.metalNeed`, filled by
+  `hearth.Upgrades.metalNeed`): when the home's next Anchor tier is short only of a metal (the rank is there and
+  `TierRules.met`; a block counts nine ingots) and you stand within 160 of home, the card "Iron for your home" has the
+  gather row (have/need) and, once the search is done, one line: "The old Delvers cut an adit into the hillside 210 m
+  north-east of your home. It should still have iron in it." or "There's a cave mouth in the hillside 180 m south of
+  your home. The cave behind it runs past iron." (distance to 10 m, eight ways, the mouth on the card's compass as a
+  hint). The answer: the nearest mouth within 400 of home whose way in reaches a lode of that metal (an adit driven to
+  one; a hill mouth with a lode of 20+ within 48 of its throat's end or joint), from the seed alone on the background
+  executor, cached per player for that home and metal. Once per answer a window "Old workings" offers **Mark it on my
+  map** (`Destinations.set`, kind `spot`, "The old adit" / "The cave mouth"); nothing is set without that click. None
+  found: "I don't know of any old workings near your home. Iron shows in cave walls: find a cave and follow its walls."
+  Forge and temper shortfalls don't point yet.
+- **Tests**: `delve_cave_routes` walks every kind (the mouth staged as each form in turn by its seed: adit, hill mouth,
+  doline, cleft);
+  `delve_hearth_points` (the four forms' lines, which mouths lead to which metal, the honest line on flat land, the card's
+  3/16 row).
+
+### 34.2 Metal lives in the caves (built, P1c)
+- **Wall lodes** (`LodePlans.walls`, on top of each region's existing lodes, which are unchanged so old worlds agree):
+  per 256 region 3 iron (y -16..60), 2 copper (0..64), 2 coal (8..72). Each tries 16 columns of the base noise
+  (`ChunkGenerator.getBaseColumn`, no carvers; `LodePlans.columns(seed, ...)` installed on overworld load): air you
+  could stand in within the ore's band (nearest the rolled height, up to four spots), then out up to 10 cells to the
+  first rock at head height with rock behind; the seam then follows the wall's face both ways (each step settling on
+  the rock cell with air on its cave side, two in or out, a cell up or down at 12% each), a cell behind or above now and
+  then, at most 56 blocks. Not laid without a wall. On seed 3405691582's vanilla noise, 4 regions: 16 of 28 laid (10
+  iron), 86% of their blocks face air (`delve_lodes_air`). A wall lode planned into chunks generated before this
+  build doesn't exist there.
+- **Thinning** (`awaken:thin_ores`, a biome modifier at AFTER_EVERYTHING on `#minecraft:is_overworld`): in each biome's
+  underground ores, vanilla's ore_iron_upper/middle/small, ore_copper(_large), ore_coal_upper/lower, ore_gold,
+  ore_gold_lower, ore_gold_extra are swapped for `awaken:thinned/<name>`, the same feature at 35% of the count (90→31,
+  10→4, 10→4, 16→6, 16→6, 30→10, 20→7, 4→1, 50→18; ore_gold_lower keeps its count behind a rarity filter of 3).
+  Diamonds, redstone, lapis, emerald untouched; generated chunks keep theirs. Test `delve_thinned_ores`.
+
+### 34.3 The strike (built, P1a/P1b)
+- **Particles** (`delve.client.StrikeFx`, `StrikeChip`): client extensions on every block `delve.StrikeBlocks` names
+  (vanilla's `*_ore`, the rock list, the loose-ground list, our lode hearts and Deepglass), claimed last on our bus and
+  only where `isBlockRegistered` is false. `addHitEffects` returns true (vanilla's per-tick crumbs gone); the bite is
+  drawn from `playHitSound` (the server's progress event 2020, every fourth tick, so onlookers see it too); the sound
+  stays vanilla's until the recordings. A bite: 2-4 chips (1-2 decreased, none minimal); a break: 8-14 chips (4-7) and
+  3-5 dust wisps in the block's map colour (2). Chips: a 3/16 square of the block's particle sprite, tinted as vanilla's,
+  shade 0.72-0.82, size 0.034-0.07, tumbling (the leaf technique), world light read every 4 ticks, one bounce off the
+  floor when falling faster than 0.09, then lying flat 0.6-1.6 s and shrinking out. At most 48 chips from mining.
+- **Streaks** (sparks): fixed arrays, at most 24; additive lines (the lamp's glow pipeline) from the head back 1.5 ticks
+  of flight, white-gold cooling to the ore's tint, life 4-8 ticks, skitter off full blocks (axis bounce 0.4). Only off
+  pickaxe-mineable blocks of hardness ≥ 1 struck with a mining tool: 2-6 a bite, 6-10 on the last blow, +4 and hotter on
+  a true strike (halved when decreased). The heavy strike's sparks are streaks too. The old round spark and grit
+  sprites stay only for vents, cave-ins and blocks we don't draw.
+- **Cracks**: `minecraft:textures/block/destroy_stage_0..9` redrawn (`tools/art/specs/delve_cracks.py`): one crack tree
+  that grows from the strike's point, branches and widens, chips spalling in stages 8-9; dark 58 / 34, lit lip 166 on
+  the upper-left. The ore's warm glow in the cracks is not possible (the crumbling blend multiplies), so it was dropped.
+- **True strikes** (`delve.TrueStrikes`): the seam on (pos, face, n = true strikes so far) is a seeded point 0.22-0.78
+  across the face with an angle; a bite whose hit point lies within 0.22 of it is true. The client predicts, sends
+  `delve_true_strike` (pos, face, n); the server accepts when the block is an ore of `Ore`, within reach + 1, n matches
+  its count, ≥ 3 ticks since the last, and its own `pick` from the eye hits that face within 0.32; otherwise it sends
+  `delve_true_strike_sync` with its count. Speed: × (1 + 0.35 n), at most × 2, on both sides through `BreakSpeed`
+  (LOWEST, after Veins' two blows); the server's progress (speed × ticks) is never below the client's sum, so a
+  predicted break is never refused. A break within 6 ticks of a true strike: 25% one more of the first drop
+  (`BlockDropsEvent`). The seam is drawn while a mining tool looks at an ore (tapered additive line, the ore's tint
+  toward white, breathing); the chime `delve.true_strike` (synth, the magic layer) at the Tuning Fork's ore pitch, a
+  whole tone up for each true strike in a row (up to three).
+- **Dig motion** (`delve.client.DigMotion`, first person): keyed to the client's bites (contact at phase 0): pick recoil
+  to 0.16, wind-up to 0.68 (+17° pitch, back 0.07), strike eased in to the next bite (−15°); a shovel thrusts and lifts,
+  drawn back low. Eases out within 3 ticks of letting go; 0.4 with reduced motion. A view nudge of 0.22° a bite (0.45°
+  true) through `CombatFeedback.kick`. Third person keeps vanilla's swing.
+- **Settings** (`awaken-delve-client.toml`): `strike_particles`, `true_strikes` (both on).
+
+### 34.4 The Delver's Pick (built: asleep P1d, the verses and their gifts P2)
+- **Item** `awaken:waking_pick`, "Delver's Pick" (the cave module's relic keeps `awaken:delvers_pick`, the Delver's Old
+  Pick, carried for the fork's reach). Asleep it is a stone pickaxe (1 damage, -2.8 speed), rare, in
+  `#minecraft:pickaxes` (so the dig motion, the strike and enchanting take it). Kept through death (`WakingPick.onDrops`
+  and `onRespawn`, as Relics do).
+- **The pick in the stone** `awaken:waking_pick_stone` (no item, unbreakable, immovable): a mound of cobbled deepslate
+  with the pick's head driven in and its handle leaning out, at the adit's "pick" mark before the end face. Use it:
+  your own pick if you don't carry one ("You already carry the Delver's Pick. This one stays for whoever comes next."
+  otherwise); the first pull counts `awaken:delve/pick_pulled` and shows a moment: "It's asleep, but it still knows
+  metal. Hold it and it hums when its head points at a lode nearby."
+- **No adit near home**: when the Hearth's search finds no adit (none at all, or a hill mouth), the Hearth hands the
+  pick over once (never pulled, not carried): "There's no old adit near your home, so your Hearth kept this for you".
+- **Hum**: twice a second while it's in your main hand the server finds the nearest lode block within 16 of your eyes
+  (any ore; a lone broken heart doesn't count) and sends `delve_pick_hum` when it changes; the client (`PickSong`) hums
+  at the ore's fork pitch ×2 (to 2.0), from nothing outside 40° off your view to full facing it, louder nearer
+  (0.7 × 6/(6+d)), round the listener. The deep hum's loop for now; to be re-voiced from a recording.
+- **Art** (`tools/art/specs/delve.py`): the icon (worn dark-iron head, ash handle, leather grip, an unlit Deepglass
+  thread on the head's spine) and the stone's parts sheet.
+- **Test** `delve_waking_pick` (one pick per carrier, the stone stays, the pull counted, stone-tier drops, the hum's
+  16-block reach).
+- **Verses** (`PickVerses`, component `awaken:pick_verses` = `{schemaVersion 1, verse}` on the item, synced): each sets
+  the pick's `tool` (what it can't take, its speed), `max_damage`, attack modifiers and `custom_model_data` (floats
+  `[verse]`, read by `items/waking_pick.json`'s `range_dispatch`, seven icons: the spine's Deepglass thread lights
+  ember, then blue; Tempered turns the edge blue-white; Glass violet; Hush darkens the head; Call gilds it):
+
+  | # | Verse | Wakes when (deed counter or rite) | Can't take | Speed | Uses | Blow |
+  |---|---|---|---|---|---|---|
+  | 0 | Asleep | pulled / handed over | `#incorrect_for_stone_tool` | 4 | 131 | 1 |
+  | 1 | I · Kindle | a lode's heart breaks with it on you (`awaken:delve/deed_heart`) | iron's | 6 | 400 | 2 |
+  | 2 | II · Echo | you light a Delver lamp with it on you (`deed_lamp`) | iron's | 6.5 | 500 | 2 |
+  | 3 | III · Tempered | your Forge, 3 diamonds | diamond's | 8 | 1561 | 3 |
+  | 4 | IV · Glass | you cut Deepglass with it on you (`deed_deepglass`) | diamond's | 8.5 | 1800 | 3 |
+  | 5 | V · Hush | a seep falls quiet with you in it, carrying it (`deed_seep`) | netherite's | 9 | 2031 | 4 |
+  | 6 | VI · Call | your Forge, a starmetal ingot | netherite's | 10 | 2600 | 4 |
+
+  A deed is counted once (only while you carry the pick); after any deed or rite, every carried pick wakes verse after
+  verse while the next one's deed is done (a deed done early waits for the verses before it; a rite always stops the
+  run). Each wake: the tier, a low ring, light gathering round the hand (`delve_pick_woke`), a moment window ("The pick
+  wakes: I · Kindle" and the gift in words). `awaken:delve/verses_woken` is the furthest verse woken: a pick given
+  later (pulled, handed over, re-forged) comes at it. The tooltip shows the verse, each gift woken, and "Next: ...".
+- **Gifts** (`PickGifts`; client `PickFx`):
+  - *Kindle*: sneak and start striking bare rock (strike family ROCK): an **ember** sticks in the air cell on that face
+    for 5 minutes, three a player (a fourth puts out your oldest), none within 5 of another of yours. Drawn light, no
+    block: saved in `DelveData` (schema 2: `embers` = light cell, rock face, until, owner), sent to the level's players
+    on change, login and dimension change (`delve_embers`); `TorchGlow` draws each within 48 as a light of its own
+    (level 12, `#FF9A50`, flickering, no floor pool; with held light off in the settings they don't show), with sparks.
+  - *Echo*: sneak and use the pick on bare rock while still (server's known movement < 0.05 a tick): a ring through
+    the rock; for 4 s ores (full blocks, their ore's tint; any `#c:ores` warm gold) and the open air of caves (a 2-block
+    lattice of points, not under open sky) within 12 light as the ring passes (0.8 blocks a tick) and glow through
+    everything (pipeline `delve_through`, depth always-pass), at most 320 ores and 900 points. 20 s rest. The server
+    sends only `delve_pick_sight` (kind 0, the struck block); the client reads its own world.
+  - *Tempered*: true strikes' aim radius 0.22 → 0.32 (`TrueStrikes.radius`, both sides).
+  - *Glass*: a heavy strike released on the glint while looking 30° or more up does not bore: for 5 s the rock in a
+    cone before your eyes (cos ≥ 0.78, 22 blocks) turns to glass to your eyes: hidden cave air (rock between it and
+    your eyes), ores, and living creatures (their boxes, live) show through. 40 s rest. Client-only: the server names
+    no block (`delve_pick_sight` kind 1).
+  - *Hush*: the pick in hand cancels the `minecraft:block_destroy` game event from you (no vibration: sculk, wardens;
+    the deep's noise rule asks `PickGifts.hushed`); sneaking, it mines at full speed off the ground (x5) and with your
+    head in water (÷ the submerged attribute).
+  - *Call*: a heart broken with it: the lode's blocks still standing within 8 of the heart (nearest first, at most 24,
+    each one a heavy strike may take: no ward, civic ground or anyone else's Hearth) crack one after another over
+    3 s, their drops going straight to you (`delve_call_answer` draws the ore flying home).
+- **The Forge** (right-click an `awaken:forge` not inside anyone else's Hearth with the pick in hand; the Forge's own
+  use is skipped): the next rite if you carry it (3 diamonds wake Tempered; a starmetal ingot wakes Call), else an
+  iron ingot mends a quarter of its uses, else it says what's next. With 3 iron ingots in hand, no pick on you and one
+  pulled before, it makes another at your furthest verse ("The Delver's Pick, again").
+- **Not done**: the Hunter mattock recipes still craft (retiring them touches gear's and Arms' rows: the gear
+  module's call); the pick keeps vanilla's sounds.
+- **Tests** `delve_pick_verses` (each wake once and in order, an early deed waits, the rite takes 3 diamonds, tier
+  and uses follow, a mend, a re-forge at your verse), `delve_pick_hush` (no block-destroy event), `delve_pick_call`
+  (the 24 nearest of that lode within 8, nothing further or not of the lode, the ore to the player).
+
+### 34.5 The air below (built: motes P1e; bands, cave air, the breath, shafts, the Hollows by band, strike noise P3)
+- **Motes in your light** (`delve.client.Motes`, particle `awaken:delve_light_mote`: the mote's frames, lit by the world
+  so it shows only where light falls): underground (`under` ≥ 0.3, not in water), carrying a light in either hand
+  (`HeldLight`, the offhand's when it wins) or wearing the miner's lamp (12, flame), dust hangs in the air within 70% of
+  the light's reach of your eyes, three in four in front of you, only in air; spawned at 30/90 a tick × `under` so about
+  30 live (life 70-110 ticks, size 0.018-0.038, alpha 0.6, a slow wander, barely falling), tinted 35% toward the
+  light's colour from dust grey; half at Decreased particles, none at Minimal.
+- **Bands** (`delve.api.Bands`, pure): **the Shallows** (y ≥ 40), **the Middle Dark** (0-39), **the Deep** (< 0), each
+  with an air colour (`#8FA3B8`, `#B08A58`, `#5A3C7A`). The client (`Depths`) knows your band while `under` ≥ 0.5 and
+  shows its caption the first time you enter it each play-day ("THE MIDDLE DARK", "warm, still air"; CaveHud's
+  caption). A plain cave's Lens place look (layer 0) is now its band's: `awaken:shallows` (cool blue-grey),
+  `awaken:middle_dark` (amber, lights glowing gold), `awaken:deep` (ink and violet, deeper corners), in
+  `looks_delve.json`; `awaken:underground` stays for when no band is known. Cave biomes keep their own looks.
+- **Cave air** (`Depths`, client setting `cave_air`, on): under the rock the game's own atmospheric fog is drawn in,
+  by `under`: from about 8 blocks out to about 52 (16 to 60 where you stand in block light), never under water, in
+  lava, snow or a status effect's fog; its colour goes 85% toward the band's air × 0.16 (coloured dark, not black). It
+  works with Lens on or off (Lens grades the frame over it). Lens's own cave-air look fields (`caveAirNear`,
+  `caveAirFar`, `caveAirTint`) are still only names: when Lens reads them they should override these numbers per
+  look (the gate-worlds plan sets them for its worlds, which the overworld's `Depths` doesn't reach). Not built here:
+  it's the Lens module's code.
+- **The Deep breathes** (`Breath`): every 3-6 minutes while `under` ≥ 0.7 (not in water) an exhale runs toward the
+  nearest mouth's lip or sinkhole's rim the server has named (else the way you face): the cave breath's sound, low
+  (pitch 0.55), from 10 behind you and again 14 ahead, and dust (`delve_draught`) streaming along the floor within 8
+  for 4 s, most in its middle; in the Deep the hum swells with it (`delve.deep.hum`, 0.6 pitch).
+- **Light shafts** (`Shafts`): while the sky isn't dark or rainy, up to 3 shafts at the nearest mouths and sinkholes
+  within 64: down a sinkhole's throat (its depth, at least 8; width 0.45 × its radius) and slanting in under a mouth's
+  arch along its way in (9 blocks); each three camera-facing additive ribbons in pale sunlight, bright at the top,
+  gone below.
+- **The Hollows by band**: `delve_hollows_bands` adds drip lurkers (10), chime crickets (12) and hushlings (8) to every
+  overworld biome but the cave biomes (`neoforge:and` with `neoforge:not #c:is_underground`: dripstone caves, lush caves
+  and the deep dark keep fauna's own Hollows, never twice); terrain's `terrain_biome_table_parity` rows carry the three;
+  fauna's own rule (cave ground under a roof, dark, the role caps) still decides, and asks
+  `Bands.allows` (no hushling in the Shallows). Higher levels in the Deep are fauna's levels as they are.
+- **Strikes are noise** (`StrikeNoise`): rock or ore (not loose ground) broken under the rock by a player calls every
+  mob in `#awaken:delve/hears_strikes` (hushling, drip lurker) within 24 that has no target: it paths to the block.
+  A Hushed pick makes none; a player's call rests 40 ticks.
+- **Not done**: band room tones and drips from recordings, the breath re-voiced, "the cave answers" when a heart
+  breaks: waiting on Euan's approval of CC0 recordings. Lights don't lean or dim with the breath.
+- **Tests** `delve_bands` (band by height; hushlings not in the Shallows), `delve_strike_noise` (a hushling 13 off is
+  called and paths; a Hushed pick calls none; a second strike within the rest calls none).
+
+### 34.6 Delver lamps (built, P2)
+- **Block** `awaken:delver_lamp` (`lit` false/true; light 3 dead, 14 lit; iron, immovable, cutout model: a clouded
+  crystal in an iron cage with cap and hook; breaks for 2-4 iron nuggets). Hung from the roof on one or two iron chains:
+  over a seep's hall and a grotto's room (`Carve.lamp`), and in natural caverns by `awaken:delve/lamps`
+  (underground decoration, one chunk in three, three tries a chunk for air with a solid roof over 8+ of air and 6 clear
+  each way at half height, y -48..48).
+- **Strike** a dead lamp with anything in `#minecraft:pickaxes` (left-click; it doesn't start breaking): it lights
+  (bell and chime), counts the Echo deed for whoever struck it, and floods: a breadth-first walk through air from it
+  (euclid ≤ 40, at most 24,000 cells, an unloaded chunk is a wall), sharing 1 ms a tick with every other lamp. Then
+  the lattice: per 6³ cube of reached air, the cell nearest the cube's middle; the 120 nearest the lamp. The wave goes
+  out at 0.8 blocks a tick: each lattice cell becomes `minecraft:light` level 11 as it's reached (only if still air),
+  the lamp saved with its lights as they're set (`DelveData` schema 2, `lamps` = pos, lights, name). Nearby players
+  see each light bloom (`delve_lamp_lit`) and the caption "THE IRON HALL · lamp lit" (the cave place's name, else the
+  nearest lode's ore within 32, else a name by depth). Lit lamps are pins on the Atlas (`delve_lamps_known`).
+  Lattice 6 and level 11 leave every reached cell some block light, so no monster spawns in the hall.
+- **Broken**, the lamp takes back every one of its lights that is still a light block.
+- **Not done**: a flood cut off by a server stop isn't resumed (the lamp stays lit with what it had set); the way home
+  doesn't count lit halls yet.
+- **Test** `delve_lamp_lattice` (lights only in the reached hall, ≤ 120, none in a sealed pocket, every hall cell
+  lit, all gone with the lamp).
+
+### 34.7 Cave styles from the land above (built, P4)
+- **Decoration, no cave biomes**: the feature `awaken:delve/styles` (`delve.CaveStyleFeature`, underground_decoration,
+  every overworld chunk) reads the biome over the chunk's middle (`CaveStyle.of`, OCEAN_FLOOR_WG height) and makes 20
+  tries for a pocket of cave air from y -56 to 10 below the ground, dressing its roof, floor or a wall. Only bare stone,
+  deepslate, tuff, granite, diorite, andesite and calcite are dressed (lodes, ores and places stay). New chunks only.
+- **Styles** (`CaveStyle`; an underground biome, ocean or river gives none):
+  - **Roots** (forests, taiga, jungle, Elderwood, Lumen Forest): rooted dirt in the roof with hanging roots, glow
+    berries on cave vines 2-5 long (berries on every other), moss and moss carpet on the floor.
+  - **Sunshard** (Glass Steppe), **Frostspar** (Frost Spires): a growth on the floor (a crystal base in the rock, one to
+    three crystal blocks standing on it, its cluster on top, a few small ones round it); with no floor, a seam.
+    **Fault seam** (Shattered Highlands): a seam of 4-7 blocks in the nearest wall at chest height. The crystals are the
+    Lands' own blocks by id (none when the Lands pack is off); mined, they're the Forge's catalysts (HEAT, FROST, GRAVITY).
+  - **Sand** (deserts, badlands): smooth sandstone and sandstone patches on the floor, sandstone in the roof, a band of
+    cut sandstone round the pocket's walls.
+  - **Ice** (snowy and icy lands): packed ice patches in the floor (a blue ice heart now and then) and roof, ice hanging
+    one or two from the roof.
+- **Its air** (client, `Depths`): once a second while under, the style of the camera column's land (WORLD_SURFACE);
+  the cave air's colour leans half way from the band's to the style's (roots 0x4E6B3A, sunshard 0xB07A2E, frostspar
+  0x4A7FA8, fault seam 0x6A4C8C, sand 0xA8783A, ice 0x3E78A8), and the motes in your light take the style's dust (amber
+  under sand, pale blue under snow, green-gold under woods).
+- **Test** `delve_cave_styles` (which land gives which style; each style dresses a stone room's roof and floor).
+
+## 35. Bosses, levelled up (the Creature Kit and the Boss Plate; plan docs/bosses/PLAN.md, page https://claude.ai/artifact/RG6JGgiSwrTvg53WACTqhY; Euan approved all fourteen recommendations 2026-10-28: "Go with all recommendations")
 
 Euan: bosses should look, move and fight like Elden Ring's, through a system that every creature can reuse, and they
 should show a boss bar of our own. What he approved (PLAN §7):
@@ -8630,7 +8911,7 @@ should show a boss bar of our own. What he approved (PLAN §7):
 13. This session builds phases 0 and 1. Euan decides on splitting the roll-out after that.
 14. Euan checks in game whether Fresh Animations reaches our vanilla-bodied gate monsters.
 
-### 34.1 The Boss Plate (`living.client.BossPlate`, data through `core.api.BossPlates`)
+### 35.1 The Boss Plate (`living.client.BossPlate`, data through `core.api.BossPlates`)
 - **The server keeps its `ServerBossEvent`.** That keeps the rules for who sees a bar: same storey, and gate rooms
   through `GateHooks.showsBossBar` once Codex's gate-room work lands. When a player starts tracking a bar-carrying mob,
   the mobs module sends a **bind** (`BossPlates.bind`). The bind carries:
@@ -8666,7 +8947,7 @@ should show a boss bar of our own. What he approved (PLAN §7):
   with no level and no stance.
 - **The setting.** `bossPlate` (client, Living) is on by default. Off draws the vanilla bar.
 
-### 34.2 The kit's data (one source, both sides)
+### 35.2 The kit's data (one source, both sides)
 - **Source.**
   - `tools/art/specs/kit/` holds the body plans (`plans.py`), the move library (`moves.py`), the core (`core.py`: key
     poses to clips, forward kinematics matching `ModelPart`, foot planting, capsules, checks, writers), paint helpers
@@ -8718,7 +8999,7 @@ should show a boss bar of our own. What he approved (PLAN §7):
   within one tick. Every wind-up is at least its class's minimum: LIGHT 8, HEAVY 12, PERILOUS 14 and GRAB 12. A hold
   is only on a HEAVY move. Every boss's script covers gap, combo, delay, area, ranged, behind and signature.
 
-### 34.3 The fight runner (server, `mobs.entity.FightRunner`, beside `AwakenBoss`)
+### 35.3 The fight runner (server, `mobs.entity.FightRunner`, beside `AwakenBoss`)
 - **Who gets one.** An `AwakenBoss` whose def id has a kit with a fight script gets a `FightRunner`, and its goal is
   `FightRunner.Engaged` instead of `ToldMelee` or `KeepRange` (it holds the move and look flags while it has a live
   target). Its `AbilityRunner` stays, but is *scripted*: it starts nothing itself, still runs charges and leaps, and
@@ -8765,7 +9046,7 @@ should show a boss bar of our own. What he approved (PLAN §7):
 - **Other bars.** A Hearth trial binds its bar with entity -1 (the plate draws from the bar alone). The Breaks'
   roaming-Lord bar is left to phase 3 (PLAN §6).
 
-### 34.4 The kit runtime (client, `mobs.client.kit`)
+### 35.4 The kit runtime (client, `mobs.client.kit`)
 - `KitRenderer` draws an `AwakenBoss` whose rig loaded, through `HeroModel` (extended in place, not forked). The layers:
   1. **Locomotion**: idle, then walk and run blended by speed and locked to distance (as hero rigs are).
   2. **The action layer**: the synced move's `_windup` (played over the wind-up, then held still on its last key
@@ -8781,7 +9062,7 @@ should show a boss bar of our own. What he approved (PLAN §7):
 - **The setting.** `kitBodies` (client, `awaken-mobs-client.toml`) is on by default. Off draws every creature's old
   body after the next resource reload (renderers are made then); the server's moves still run.
 
-### 34.5 The Creature Lab (`tools/art/specs/kit/lab.py`, offline)
+### 35.5 The Creature Lab (`tools/art/specs/kit/lab.py`, offline)
 `python3 tools/art/specs/kit_bodies.py lab DIR [ids]` makes one sheet per kit body: four views (one by night with only
 its light), the body beside a player at true size with its height in blocks and its face count, and a strip per move
 (rest, gather, peak, contact, follow-through, settle) with contact's capsules drawn over it and the move's numbers.
@@ -8792,13 +9073,13 @@ GIFs are not made yet. The checks (`core.check`) stop the build, and the sheet r
 - a move is shorter than its class's tell;
 - a body is over 1,200 faces.
 
-### 34.6 Admin
+### 35.6 Admin
 - `/awaken bosses studio <id>` (admin) clears a 23 × 23 arena 14 blocks high, 14 blocks ahead of you, over smooth
   stone with light blocks under its ceiling, spawns the boss in its middle and plays every move of its table in turn,
   1.5 s apart (abilities only fire if it has you as a target: in survival). Then it fights.
 - `/awaken bosses moves <id>` (admin) lists the moves with their class, timing, range and ability.
 
-### 34.7 The showcase (phase 1)
+### 35.7 The showcase (phase 1)
 - **The Ember Tyrant** (Brute, 6.5 blocks): a hunched basalt body with a molten core, oversized forearms veined with
   magma under iron bracers, shoulder plates, obsidian horns, a great axe. Moves: `hammer` (Magma Fist, HEAVY, held 1 in
   3), `backhand` (LIGHT, stooped low to reach you), `chop_a` → `chop_b` (LIGHTs with the axe), `charge` (GRAB, 7.5

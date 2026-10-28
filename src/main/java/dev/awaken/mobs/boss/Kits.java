@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Every kit body (SPEC §34.2), read once from the jar on both sides: {@code data/awaken/kit/index.json} names them;
+ * Every kit body (SPEC §35.2), read once from the jar on both sides: {@code data/awaken/kit/index.json} names them;
  * each has a rig ({@code assets/awaken/kit/rigs/<id>.rig}, the hero rig text format), a move table and, for bosses, a
  * fight script. A kit that is missing a file or fails a check is left out (logged once): its creature keeps its old
  * body and fights as it did.
@@ -116,7 +116,7 @@ public final class Kits {
 
     // ---- the checks (load time and the kit_ GameTests) -------------------------------------------------------------
 
-    /** The kinds every boss's script must cover (SPEC §34.2, PLAN §4.3). */
+    /** The kinds every boss's script must cover (SPEC §35.2, PLAN §4.3). */
     public static final List<String> REQUIRED = List.of("gap", "combo", "delay", "area", "ranged", "behind", "signature");
 
     /** Everything wrong with a kit, empty if it may be used. */

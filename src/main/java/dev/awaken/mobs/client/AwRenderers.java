@@ -117,7 +117,7 @@ final class AwRenderers {
         e.registerLayerDefinition(WildModels.MARMOT, WildModels.Marmot::create);
         // hero bodies: the named beasts, the Hollow Owl, the Bogwick
         for (HeroRig r : HeroRig.all().values()) e.registerLayerDefinition(HeroModel.layer(r.id), () -> HeroModel.create(r));
-        // kit bodies (SPEC §34.4: rigs from tools/art/specs/kit, read from the jar)
+        // kit bodies (SPEC §35.4: rigs from tools/art/specs/kit, read from the jar)
         for (var k : dev.awaken.mobs.boss.Kits.all().values()) e.registerLayerDefinition(HeroModel.layer(k.id()), () -> HeroModel.create(k.rig()));
     }
 

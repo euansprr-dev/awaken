@@ -1,0 +1,96 @@
+# Cave-mouth probe on Euan's world (New World (7), read-only copies of region files), 2026-10-28
+# A mouth: underground air (under the column's top terrain block) joined to open-sky air that leads 12+ blocks below the mouth, 200+ roofed cells.
+# Unknown chunks and a 16-block margin are left out. Plants, leaves and logs are passable and never a roof.
+
+region -1,-1: chunks with blocks 0; sky-touching underground pockets 0; walkable mouths (lead >=12 below the mouth, >=200 roofed cells) 0
+region 0,-1: chunks with blocks 769; sky-touching underground pockets 1978; walkable mouths (lead >=12 below the mouth, >=200 roofed cells) 0
+region 0,-2: chunks with blocks 982; sky-touching underground pockets 1149; walkable mouths (lead >=12 below the mouth, >=200 roofed cells) 2
+  mouth at 156 62 -820 [dry, relief 9 in 25x25]: 400001+ cells reached, 113 down from the mouth (lowest 188 -54 -796)
+  mouth at 405 63 -843 [wet, relief 8 in 25x25]: 113828 cells reached, 116 down from the mouth (lowest 479 -54 -679)
+region 0,-3: chunks with blocks 921; sky-touching underground pockets 217; walkable mouths (lead >=12 below the mouth, >=200 roofed cells) 5
+  mouth at 190 65 -1154 [dry, relief 7 in 25x25]: 400001+ cells reached, 58 down from the mouth (lowest 187 -55 -1047)
+  mouth at 471 71 -1375 [dry, relief 17 in 25x25]: 38405 cells reached, 61 down from the mouth (lowest 488 10 -1343)
+  mouth at 307 -12 -1060 [wet, relief 97 in 25x25]: 36691 cells reached, 12 down from the mouth (lowest 310 -26 -1042)
+  mouth at 307 -13 -1070 [dry, relief 101 in 25x25]: 1172 cells reached, 37 down from the mouth (lowest 291 -54 -1065)
+  mouth at 403 86 -1333 [dry, relief 41 in 25x25]: 504 cells reached, 14 down from the mouth (lowest 430 71 -1327)
+region 0,-4: chunks with blocks 1024; sky-touching underground pockets 213; walkable mouths (lead >=12 below the mouth, >=200 roofed cells) 5
+  mouth at 70 96 -1831 [dry, relief 45 in 25x25]: 400001+ cells reached, 57 down from the mouth (lowest 100 6 -1915)
+  mouth at 332 55 -1793 [dry, relief 26 in 25x25]: 400001+ cells reached, 109 down from the mouth (lowest 294 -55 -2018)
+  mouth at 310 64 -1743 [dry, relief 7 in 25x25]: 14006 cells reached, 18 down from the mouth (lowest 354 38 -1748)
+  mouth at 364 66 -1742 [dry, relief 8 in 25x25]: 3812 cells reached, 12 down from the mouth (lowest 371 49 -1747)
+  mouth at 61 135 -2025 [dry, relief 12 in 25x25]: 1361 cells reached, 19 down from the mouth (lowest 79 115 -1987)
+region 0,-5: chunks with blocks 916; sky-touching underground pockets 1437; walkable mouths (lead >=12 below the mouth, >=200 roofed cells) 6
+  mouth at 153 99 -2222 [dry, relief 52 in 25x25]: 400001+ cells reached, 28 down from the mouth (lowest 245 35 -2291)
+  mouth at 314 177 -2388 [dry, relief 27 in 25x25]: 15798 cells reached, 25 down from the mouth (lowest 348 130 -2398)
+  mouth at 330 141 -2296 [dry, relief 11 in 25x25]: 5196 cells reached, 73 down from the mouth (lowest 316 68 -2243)
+  mouth at 75 112 -2086 [dry, relief 25 in 25x25]: 3393 cells reached, 34 down from the mouth (lowest 92 78 -2115)
+  mouth at 450 151 -2325 [dry, relief 45 in 25x25]: 1830 cells reached, 13 down from the mouth (lowest 475 138 -2302)
+  mouth at 315 146 -2336 [dry, relief 28 in 25x25]: 345 cells reached, 13 down from the mouth (lowest 288 132 -2339)
+region 0,0: chunks with blocks 0; sky-touching underground pockets 0; walkable mouths (lead >=12 below the mouth, >=200 roofed cells) 0
+region 1,-1: chunks with blocks 633; sky-touching underground pockets 1965; walkable mouths (lead >=12 below the mouth, >=200 roofed cells) 1
+  mouth at 814 67 -449 [dry, relief 5 in 25x25]: 5094 cells reached, 26 down from the mouth (lowest 822 33 -438)
+region 1,-2: chunks with blocks 704; sky-touching underground pockets 473; walkable mouths (lead >=12 below the mouth, >=200 roofed cells) 5
+  mouth at 600 65 -890 [dry, relief 5 in 25x25]: 400001+ cells reached, 116 down from the mouth (lowest 639 -54 -847)
+  mouth at 744 67 -732 [dry, relief 3 in 25x25]: 89216 cells reached, 82 down from the mouth (lowest 858 -15 -865)
+  mouth at 767 64 -629 [dry, relief 10 in 25x25]: 4622 cells reached, 16 down from the mouth (lowest 771 47 -615)
+  mouth at 832 68 -553 [dry, relief 6 in 25x25]: 2439 cells reached, 16 down from the mouth (lowest 805 49 -551)
+  mouth at 584 63 -883 [dry, relief 6 in 25x25]: 2087 cells reached, 21 down from the mouth (lowest 592 42 -902)
+region 1,-3: chunks with blocks 912; sky-touching underground pockets 300; walkable mouths (lead >=12 below the mouth, >=200 roofed cells) 7
+  mouth at 716 84 -1135 [dry, relief 16 in 25x25]: 400001+ cells reached, 74 down from the mouth (lowest 700 5 -1175)
+  mouth at 776 45 -1423 [dry, relief 27 in 25x25]: 400001+ cells reached, 77 down from the mouth (lowest 703 -46 -1170)
+  mouth at 886 67 -1208 [dry, relief 108 in 25x25]: 400001+ cells reached, 34 down from the mouth (lowest 762 -54 -1248)
+  mouth at 529 67 -1406 [dry, relief 21 in 25x25]: 3157 cells reached, 15 down from the mouth (lowest 534 44 -1409)
+  mouth at 564 65 -1098 [wet, relief 20 in 25x25]: 3037 cells reached, 16 down from the mouth (lowest 546 49 -1088)
+  mouth at 627 70 -1415 [wet, relief 11 in 25x25]: 2557 cells reached, 14 down from the mouth (lowest 625 51 -1418)
+  mouth at 606 77 -1401 [dry, relief 14 in 25x25]: 1240 cells reached, 28 down from the mouth (lowest 633 44 -1380)
+region 1,-4: chunks with blocks 1024; sky-touching underground pockets 240; walkable mouths (lead >=12 below the mouth, >=200 roofed cells) 13
+  mouth at 845 80 -1741 [dry, relief 45 in 25x25]: 400001+ cells reached, 133 down from the mouth (lowest 845 -53 -1759)
+  mouth at 603 85 -1875 [dry, relief 8 in 25x25]: 125744 cells reached, 81 down from the mouth (lowest 529 -28 -1748)
+  mouth at 871 131 -1682 [dry, relief 58 in 25x25]: 42676 cells reached, 69 down from the mouth (lowest 914 59 -1697)
+  mouth at 796 81 -1728 [dry, relief 8 in 25x25]: 15185 cells reached, 34 down from the mouth (lowest 843 42 -1802)
+  mouth at 933 80 -1950 [dry, relief 38 in 25x25]: 13600 cells reached, 57 down from the mouth (lowest 919 22 -1912)
+  mouth at 976 89 -1780 [dry, relief 35 in 25x25]: 3614 cells reached, 24 down from the mouth (lowest 944 63 -1732)
+  mouth at 976 105 -1843 [dry, relief 55 in 25x25]: 2508 cells reached, 43 down from the mouth (lowest 1006 57 -1831)
+  mouth at 784 69 -1637 [dry, relief 29 in 25x25]: 1373 cells reached, 13 down from the mouth (lowest 782 56 -1643)
+  mouth at 796 68 -1596 [dry, relief 7 in 25x25]: 1301 cells reached, 13 down from the mouth (lowest 797 55 -1645)
+  mouth at 864 81 -1963 [dry, relief 16 in 25x25]: 1074 cells reached, 20 down from the mouth (lowest 842 60 -1922)
+  mouth at 907 145 -1831 [dry, relief 73 in 25x25]: 634 cells reached, 12 down from the mouth (lowest 931 133 -1834)
+  mouth at 973 78 -1788 [dry, relief 35 in 25x25]: 632 cells reached, 17 down from the mouth (lowest 977 61 -1777)
+  mouth at 906 178 -1683 [dry, relief 27 in 25x25]: 280 cells reached, 12 down from the mouth (lowest 901 165 -1681)
+region 1,-5: chunks with blocks 816; sky-touching underground pockets 1378; walkable mouths (lead >=12 below the mouth, >=200 roofed cells) 13
+  mouth at 761 166 -2341 [dry, relief 49 in 25x25]: 400001+ cells reached, 105 down from the mouth (lowest 810 61 -2361)
+  mouth at 991 63 -2165 [wet, relief 45 in 25x25]: 193764 cells reached, 41 down from the mouth (lowest 877 22 -2216)
+  mouth at 790 96 -2308 [dry, relief 47 in 25x25]: 27703 cells reached, 31 down from the mouth (lowest 801 63 -2285)
+  mouth at 697 246 -2440 [dry, relief 49 in 25x25]: 16117 cells reached, 18 down from the mouth (lowest 750 186 -2372)
+  mouth at 748 175 -2278 [dry, relief 49 in 25x25]: 14305 cells reached, 50 down from the mouth (lowest 800 103 -2269)
+  mouth at 905 103 -2147 [dry, relief 17 in 25x25]: 10582 cells reached, 29 down from the mouth (lowest 910 63 -2198)
+  mouth at 765 85 -2161 [dry, relief 32 in 25x25]: 5739 cells reached, 39 down from the mouth (lowest 742 45 -2133)
+  mouth at 627 120 -2176 [dry, relief 31 in 25x25]: 2439 cells reached, 17 down from the mouth (lowest 588 103 -2142)
+  mouth at 898 185 -2333 [dry, relief 27 in 25x25]: 1881 cells reached, 24 down from the mouth (lowest 917 160 -2341)
+  mouth at 528 157 -2202 [dry, relief 35 in 25x25]: 1140 cells reached, 21 down from the mouth (lowest 544 136 -2208)
+  mouth at 949 129 -2199 [dry, relief 40 in 25x25]: 895 cells reached, 12 down from the mouth (lowest 974 111 -2204)
+  mouth at 657 111 -2132 [dry, relief 24 in 25x25]: 469 cells reached, 13 down from the mouth (lowest 649 98 -2143)
+  mouth at 839 156 -2248 [dry, relief 35 in 25x25]: 236 cells reached, 15 down from the mouth (lowest 843 131 -2245)
+
+## Coverage (python3 coverage.py)
+mouths 57 chunks sampled 7457 area km2 1.908992
+within 100 m: 47%
+within 150 m: 70%
+within 200 m: 80%
+within 300 m: 89%
+within 400 m: 93%
+median distance to nearest mouth 106.45186705737011 p90 334.9441706521937
+mouths leading 30+ down 25 median 136.48809471891678 within 200m 71.95923293549686
+hearth nearest mouth (332, 55, -1793) 188
+mine nearest mouth (471, 71, -1375) 9
+
+## Where the iron is (region r.0.-4, 1,021 full chunks round Euan's Hearth)
+iron_ore 64.0 a chunk + deepslate_iron_ore 25.2 a chunk = 91,111 blocks of vanilla's scattered iron
+awaken:iron_lode_heart 11 in the region (a lode is ~40-100 blocks) = under 1% of the region's iron
+(coal 168.6 a chunk, copper 99.6, gold 26.0, diamond 25.7 deepslate+plain; lode hearts of every ore 44 in all)
+
+## Euan's first mining trip (players/data + stats, read-only)
+2.08 h played; Hearth (respawn) at 405 128 -1967; inventory: stone pickaxe, 25 torches, 7 iron ingots
+mined: stone 46, iron_ore 10, coal_ore 2; crafted iron_ingot 7 (Hearth Tier II needs 16 iron + 4 lanterns)
+counters: discovered/cave/mine at 472 71 -1384 (a Delvers' mine ~580 m from the Hearth), lode_maps_read 2,
+discovered/ore/iron, discovered/ore/coal, discovered/biome/lush_caves; no sinkhole, seep, chute or grotto found

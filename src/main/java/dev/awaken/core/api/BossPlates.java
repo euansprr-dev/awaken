@@ -6,7 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.UUID;
 
 /**
- * The Boss Plate's data (SPEC §34.1), server side. A module that shows a {@link ServerBossEvent} for one of its creatures
+ * The Boss Plate's data (SPEC §35.1), server side. A module that shows a {@link ServerBossEvent} for one of its creatures
  * binds the bar to the entity for each player who may see it; the client then draws the plate (name, level in heat colour,
  * phase marks, stance) in place of vanilla's bar. Lines (the intro, a phase line, a signature move's name) show under the
  * plate instead of in chat. The living module installs the sink; until then every call is a no-op.

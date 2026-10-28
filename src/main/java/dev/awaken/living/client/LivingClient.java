@@ -110,7 +110,7 @@ public final class LivingClient {
         bus.addListener(SubmitCustomGeometryEvent.class, CraftFx::submit);
         bus.addListener(ClientTickEvent.Post.class, CraftFx::tick);
         bus.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LivingPlates::extract);
-        // the Boss Plate (SPEC §34.1): before anyone else reads a bar, so ours are cancelled and sized first
+        // the Boss Plate (SPEC §35.1): before anyone else reads a bar, so ours are cancelled and sized first
         bus.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent.BossEventProgress.class, BossPlate::onBar);
         bus.addListener(net.neoforged.neoforge.client.event.RenderGuiEvent.Pre.class, e -> BossPlate.frameStart());
         bus.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, BossPlate::extract);

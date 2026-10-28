@@ -248,7 +248,7 @@ final class MobGoals {
         }
 
         /**
-         * A kit flier (SPEC §34.3): its fight script's moves are its attacks, so no dives. It holds still while a move
+         * A kit flier (SPEC §35.3): its fight script's moves are its attacks, so no dives. It holds still while a move
          * plays (the capsules are drawn from where it is) and between moves drifts low round the target, its body floating
          * in its own model, now close enough to lash, now out where its gap-closer and its ranged moves reach.
          */

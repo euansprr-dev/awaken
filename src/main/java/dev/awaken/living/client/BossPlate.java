@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * The Boss Plate (SPEC §34.1): our bosses' and Wardens' bars drawn as Holo glass at the top of the screen in place of
+ * The Boss Plate (SPEC §35.1): our bosses' and Wardens' bars drawn as Holo glass at the top of the screen in place of
  * vanilla's. The name in capitals, the level chip and bar in the heat colour against your level (grey, blue, orange,
  * red), diamonds where the phases begin, Arms' stance strip, the boss's own glow on the rim only, and its lines under the
  * plate instead of chat. It lifts off the boss's head when its bar first shows (fades in with reduced motion) and

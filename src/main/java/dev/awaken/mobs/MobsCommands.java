@@ -33,7 +33,7 @@ import java.util.Set;
 
 /**
  * {@code /awaken admin mob <theme> <role> [level]}, {@code /awaken admin boss <id> [level]},
- * {@code /awaken admin bestiary}, {@code /awaken bosses studio|moves <id>} (the Creature Kit, SPEC §34.6), and the
+ * {@code /awaken admin bestiary}, {@code /awaken bosses studio|moves <id>} (the Creature Kit, SPEC §35.6), and the
  * player-facing {@code /awaken mobs duel} (accept the Lantern Broker's duel).
  */
 final class MobsCommands {
@@ -55,7 +55,7 @@ final class MobsCommands {
                                     .executes(c -> boss(c, IntegerArgumentType.getInteger(c, "level"))))));
             admin.then(Commands.literal("bestiary").executes(MobsCommands::bestiary));
             root.then(admin);
-            // the Creature Kit's bosses (SPEC §34.6)
+            // the Creature Kit's bosses (SPEC §35.6)
             root.then(Commands.literal("bosses").requires(AwakenCommands.admin())
                     .then(Commands.literal("studio").then(Commands.argument("id", StringArgumentType.word())
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(kitBosses(), b)).executes(MobsCommands::studio)))

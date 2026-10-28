@@ -27,6 +27,7 @@ public final class DelveParticles {
         e.registerSpriteSet(DelveContent.DUST.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Bit(l, x, y, z, xa, ya, za, s, Bit.DUST));
         e.registerSpriteSet(DelveContent.GLINT.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Bit(l, x, y, z, xa, ya, za, s, Bit.GLINT));
         e.registerSpriteSet(DelveContent.MOTE.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Bit(l, x, y, z, xa, ya, za, s, Bit.MOTE));
+        e.registerSpriteSet(DelveContent.LIGHT_MOTE.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Bit(l, x, y, z, xa, ya, za, s, Bit.LIGHT_MOTE));
     }
 
     static void spawn(ClientLevel level, SimpleParticleType type, int tint, float size, double x, double y, double z, double xa, double ya, double za) {
@@ -38,7 +39,7 @@ public final class DelveParticles {
     }
 
     static final class Bit extends SingleQuadParticle {
-        static final int SPARK = 0, GRIT = 1, DUST = 2, GLINT = 3, MOTE = 4;
+        static final int SPARK = 0, GRIT = 1, DUST = 2, GLINT = 3, MOTE = 4, LIGHT_MOTE = 5;
         private final SpriteSet sprites;
         private final int kind;
         private final float base, r0, g0, b0;
@@ -90,6 +91,14 @@ public final class DelveParticles {
                     lifetime = 12 + random.nextInt(12);
                     quadSize = (0.07F + random.nextFloat() * 0.05F) * nextSize;
                 }
+                case LIGHT_MOTE -> {
+                    // dust hanging in the still air: barely falling, wandering
+                    gravity = 0.0015F;
+                    friction = 0.97F;
+                    hasPhysics = false;
+                    lifetime = 70 + random.nextInt(40);
+                    quadSize = (0.018F + random.nextFloat() * 0.02F) * nextSize;
+                }
                 default -> {
                     gravity = -0.004F;
                     friction = 0.985F;
@@ -109,7 +118,7 @@ public final class DelveParticles {
 
         @Override
         protected int getLightCoords(float a) {
-            if (kind == GRIT) return super.getLightCoords(a);
+            if (kind == GRIT || kind == LIGHT_MOTE) return super.getLightCoords(a);
             if (kind == DUST) {
                 // dust catches what light there is: never quite black, or a cave-in's cloud would vanish in the dark
                 int c = super.getLightCoords(a);
@@ -138,6 +147,13 @@ public final class DelveParticles {
                 case MOTE -> {
                     alpha = Math.min(1F, Math.min(t * 4F, (1F - t) * 2F)) * 0.85F;
                     quadSize = base * (0.8F + 0.25F * (float) Math.sin(t * Math.PI * 4));
+                }
+                case LIGHT_MOTE -> {
+                    // in slow, a long hang, out slow; a little wander so the air moves
+                    alpha = Math.min(1F, Math.min(t * 5F, (1F - t) * 3F)) * 0.6F;
+                    xd += (random.nextFloat() - 0.5F) * 0.0016F;
+                    yd += (random.nextFloat() - 0.5F) * 0.0012F;
+                    zd += (random.nextFloat() - 0.5F) * 0.0016F;
                 }
                 case DUST -> {
                     // billows as it falls and spreads, then thins away

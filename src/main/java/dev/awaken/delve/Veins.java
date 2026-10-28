@@ -127,6 +127,7 @@ public final class Veins {
         double lump = LUMP * weight(l.ore()) * XpBudget.taper(Progression.profile(p).level(), contentLevel(l.ore(), l.heartPos().getY()));
         if (Progression.profile(p).awakened()) Progression.grantLevels(p, lump, Progression.XpSource.HOME);
         Progression.count(p, "awaken:lodes_opened");
+        PickVerses.deed(p, PickVerses.Verse.KINDLE);
         Progression.markNewThing(p, "lode/" + l.ore().id());
         String line = "LODE · " + l.ore().word() + " · " + count;
         boolean first = Progression.profile(p).counter("awaken:lodes_opened") <= 1;
@@ -139,6 +140,7 @@ public final class Veins {
         BlockPos h = l.heartPos();
         DelveNet.near(level, p, h.getX() + 0.5, h.getY() + 0.5, h.getZ() + 0.5, 40,
                 new DelveNet.VeinOpen(l.id(), l.ore().ordinal(), l.heart(), cells, WINDOW, false));
+        PickGifts.call(level, p, l, left);
         CaveIns.consider(level, l, p);
     }
 

@@ -62,6 +62,15 @@ final class DelveTests {
         AwakenTests.register("delve_tuning_fork", 40, DelveTests::tuningFork);
         AwakenTests.register("delve_held_light", 20, DelveTests::heldLight);
         AwakenTests.register("progression_ore_xp", 60, DelveTests::oreXp);
+        AwakenTests.register("delve_true_strike", 40, DelveTests::trueStrike);
+        AwakenTests.register("delve_strike_rules", 20, DelveTests::strikeRules);
+        AwakenTests.register("delve_lodes_air", 100, DelveTests::lodesAir);
+        AwakenTests.register("delve_thinned_ores", 20, DelveTests::thinnedOres);
+        AwakenTests.register("delve_waking_pick", 20, DelveTests::wakingPick);
+        PickTests.register();
+        LampTests.register();
+        BandTests.register();
+        StyleTests.register();
     }
 
     // ---- a heart opens its vein -------------------------------------------------------------------------------------
@@ -252,6 +261,40 @@ final class DelveTests {
     // ---- the Tuning Fork ----------------------------------------------------------------------------------------------
 
     /**
+     * The Delver's Pick (SPEC §34.4): the pick in the stone gives a player their own pick, once while they carry it (the
+     * stone stays for the next), and counts the pull; asleep it mines as a stone pick; its hum finds the nearest lode
+     * block within 16 of the eye and nothing at 20.
+     */
+    @SuppressWarnings("removal")
+    private static void wakingPick(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos stone = h.absolutePos(new BlockPos(1, 1, 1));
+        level.setBlock(stone, DelveContent.WAKING_PICK_STONE.get().defaultBlockState(), 2);
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        h.assertTrue(WakingPick.pull(p, stone), "the first pull gives the pick");
+        h.assertTrue(WakingPick.carries(p), "the player carries it");
+        h.assertFalse(WakingPick.pull(p, stone), "no second pick while you carry one");
+        h.assertTrue(level.getBlockState(stone).is(DelveContent.WAKING_PICK_STONE.get()), "the pick in the stone stays");
+        h.assertTrue(dev.awaken.progression.Progression.profile(p).counter(WakingPick.PULLED) == 1, "the pull is counted");
+        ItemStack pick = new ItemStack(DelveContent.WAKING_PICK.get());
+        h.assertTrue(pick.isCorrectToolForDrops(Blocks.IRON_ORE.defaultBlockState()), "asleep it takes iron, as stone does");
+        h.assertFalse(pick.isCorrectToolForDrops(Blocks.DIAMOND_ORE.defaultBlockState()), "and not diamond");
+        BlockPos eye = h.absolutePos(BlockPos.ZERO).atY(240);
+        LongArrayList near = new LongArrayList();
+        for (int i = 0; i < 20; i++) near.add(eye.offset(10 + i, 0, 0).asLong());
+        Lode a = LodePlans.handmade(Ore.COPPER, near.toLongArray());
+        LodePlans.EXTRA.add(a);
+        try {
+            var v = WakingPick.nearest(level, eye);
+            h.assertTrue(v.isPresent() && v.get().ore() == Ore.COPPER && v.get().nearest().equals(eye.offset(10, 0, 0)), "it hums toward copper 10 off: " + v);
+            h.assertTrue(WakingPick.nearest(level, eye.offset(-10, 0, 0)).isEmpty(), "nothing when the lode is 20 off");
+        } finally {
+            LodePlans.EXTRA.remove(a);
+        }
+        h.succeed();
+    }
+
+    /**
      * Tuned on an ore, struck on stone: it names a block of the nearest lode of that ore within 48 (from the plan, no
      * scan), and nothing for a lode further off. Struck high in the sky, so the world's own lodes are far below.
      */
@@ -314,6 +357,163 @@ final class DelveTests {
         h.assertTrue(HeldLight.offhandWins(new ItemStack(Items.REDSTONE_TORCH), new ItemStack(Items.LANTERN)), "the brighter hand carries");
         h.assertTrue(!HeldLight.offhandWins(new ItemStack(Items.TORCH), new ItemStack(Items.TORCH)), "the main hand on a tie");
         h.succeed();
+    }
+
+    // ---- the strike (SPEC §34.3) --------------------------------------------------------------------------------------
+
+    /**
+     * True strikes are the server's call: looking at an iron ore's seam from in front, the bite is true (the block's
+     * mining speed steps up by the rule, the seam moves); aimed at the face's far corner it isn't; a claim with the wrong
+     * count or too soon after the last is refused; stone takes none.
+     */
+    private static void trueStrike(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos ore = h.absolutePos(new BlockPos(1, 2, 1));
+        for (int dz = 0; dz <= 4; dz++) for (int dy = -1; dy <= 1; dy++) level.setBlock(ore.offset(0, dy, dz), Blocks.AIR.defaultBlockState(), 2);
+        level.setBlock(ore, Blocks.IRON_ORE.defaultBlockState(), 2);
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.IRON_PICKAXE));
+        p.setPos(ore.getX() + 0.5, ore.getY() - 1.1, ore.getZ() + 3.2);
+        net.minecraft.core.Direction face = net.minecraft.core.Direction.SOUTH;
+        float before = level.getBlockState(ore).getDestroyProgress(p, level, ore);
+        // off the seam: the face's corner farthest from it
+        net.minecraft.world.phys.Vec3 mid = TrueStrikes.middle(ore, face, 0);
+        double cu = mid.x - ore.getX() < 0.5 ? 0.92 : 0.08, cv = mid.y - ore.getY() < 0.5 ? 0.92 : 0.08;
+        p.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, TrueStrikes.onFace(ore, face, cu, cv));
+        h.assertFalse(TrueStrikes.accept(p, ore, face, 0), "a bite at the face's far corner is not true");
+        p.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, mid);
+        h.assertFalse(TrueStrikes.accept(p, ore, face, 1), "a claim with the wrong count is refused");
+        h.assertTrue(TrueStrikes.accept(p, ore, face, 0), "a bite on the seam is true");
+        h.assertTrue(TrueStrikes.trues(p, ore) == 1, "the server counts it");
+        float after = level.getBlockState(ore).getDestroyProgress(p, level, ore);
+        h.assertTrue(Math.abs(after / before - TrueStrikes.speed(1)) < 1e-3, "the block gives faster by the rule: " + before + " -> " + after);
+        h.assertTrue(TrueStrikes.speed(10) == 2F, "never more than twice as fast");
+        p.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, TrueStrikes.middle(ore, face, 1));
+        h.assertFalse(TrueStrikes.accept(p, ore, face, 1), "not again within a bite of the last");
+        h.assertTrue(TrueStrikes.landedTrue(p, ore), "a break now would have landed true");
+        h.assertFalse(TrueStrikes.middle(ore, face, 0).equals(TrueStrikes.middle(ore, face, 1)), "the seam moves after a true strike");
+        level.setBlock(ore, Blocks.STONE.defaultBlockState(), 2);
+        p.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, TrueStrikes.middle(ore, face, 0));
+        h.assertFalse(TrueStrikes.accept(p, ore, face, 0), "stone takes no true strikes");
+        for (int i = 0; i < 200; i++) {
+            double[] sm = TrueStrikes.seam(ore.asLong() + i * 977L, i % 6, i % 5);
+            h.assertTrue(sm[0] >= 0.22 && sm[0] <= 0.78 && sm[1] >= 0.22 && sm[1] <= 0.78, "the seam keeps off the face's edges");
+        }
+        h.succeed();
+    }
+
+    /**
+     * The strike's particles: it draws the rock, ore and loose-ground families (vanilla's ores by name, our hearts and
+     * Deepglass) and nothing else; a bite and a break throw what SPEC §34.3 says at each particle setting, none at
+     * minimal; one break's chips and a last blow's streaks fit under the caps.
+     */
+    private static void strikeRules(GameTestHelper h) {
+        for (var b : new net.minecraft.world.level.block.Block[]{Blocks.STONE, Blocks.DEEPSLATE, Blocks.TUFF, Blocks.ANDESITE, Blocks.COBBLESTONE})
+            h.assertTrue(StrikeBlocks.family(b) == StrikeBlocks.Family.ROCK, "rock: " + b);
+        for (var b : new net.minecraft.world.level.block.Block[]{Blocks.IRON_ORE, Blocks.DEEPSLATE_DIAMOND_ORE, Blocks.NETHER_GOLD_ORE,
+                Ore.IRON.heart(), DelveContent.DEEPGLASS.get()})
+            h.assertTrue(StrikeBlocks.family(b) == StrikeBlocks.Family.ORE, "ore: " + b);
+        for (var b : new net.minecraft.world.level.block.Block[]{Blocks.DIRT, Blocks.GRAVEL, Blocks.SAND, Blocks.GRASS_BLOCK})
+            h.assertTrue(StrikeBlocks.family(b) == StrikeBlocks.Family.LOOSE, "loose: " + b);
+        for (var b : new net.minecraft.world.level.block.Block[]{Blocks.OAK_PLANKS, Blocks.GLASS, Blocks.STONE_BRICKS, Blocks.TORCH, Blocks.AIR,
+                DelveContent.PITON.get()})
+            h.assertFalse(StrikeBlocks.owns(b), "not ours: " + b);
+        RandomSource r = RandomSource.create(5);
+        for (int i = 0; i < 300; i++) {
+            int bite = StrikeBlocks.biteChips(2, r), brk = StrikeBlocks.breakChips(2, r);
+            h.assertTrue(bite >= 2 && bite <= 4 && brk >= 8 && brk <= 14, "chips: a bite 2-4, a break 8-14: " + bite + ", " + brk);
+            int st = StrikeBlocks.streaks(false, false, 2, r), last = StrikeBlocks.streaks(true, false, 2, r);
+            h.assertTrue(st >= 2 && st <= 6 && last >= 6 && last <= 10, "streaks: a bite 2-6, the last 6-10: " + st + ", " + last);
+            h.assertTrue(StrikeBlocks.streaks(true, true, 2, r) <= StrikeBlocks.MAX_STREAKS && brk <= StrikeBlocks.MAX_CHIPS, "under the caps");
+            h.assertTrue(StrikeBlocks.biteChips(1, r) <= bite + 2 && StrikeBlocks.breakChips(1, r) <= 7, "fewer when decreased");
+        }
+        h.assertTrue(StrikeBlocks.biteChips(0, r) == 0 && StrikeBlocks.breakChips(0, r) == 0 && StrikeBlocks.streaks(true, true, 0, r) == 0,
+                "nothing at minimal");
+        h.succeed();
+    }
+
+    // ---- metal lives in the caves (SPEC §34.2) ------------------------------------------------------------------------
+
+    /**
+     * On the vanilla overworld's own noise (a fixed seed, beside the test server's flat world): the wall lodes of a few
+     * regions are laid against cave air (every heart in the rock within three of air you could stand in), a good share of
+     * their blocks face open air, and most of them found a wall; the same seed plans them the same way twice.
+     */
+    private static void lodesAir(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        long seed = 3405691582L;
+        var ra = level.registryAccess();
+        var settings = ra.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD);
+        var preset = ra.lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
+                .getOrThrow(net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists.OVERWORLD);
+        var gen = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(
+                net.minecraft.world.level.biome.MultiNoiseBiomeSource.createFromPreset(preset), settings);
+        var rs = net.minecraft.world.level.levelgen.RandomState.create(ra.lookupOrThrow(Registries.NOISE), seed, settings.value());
+        var height = net.minecraft.world.level.LevelHeightAccessor.create(-64, 384);
+        it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<net.minecraft.world.level.NoiseColumn> cache = new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>();
+        LodePlans.Columns cols = (x, z) -> cache.computeIfAbsent(((long) x << 32) | (z & 0xFFFFFFFFL), k -> gen.getBaseColumn(x, z, height, rs));
+        int lodes = 0, cells = 0, facing = 0, iron = 0;
+        int planned = 0;
+        for (int rx = 0; rx < 2; rx++) for (int rz = 0; rz < 2; rz++) {
+            List<Lode> walls = LodePlans.walls(seed, rx, rz, cols);
+            planned += 7;
+            List<Lode> again = LodePlans.walls(seed, rx, rz, cols);
+            h.assertTrue(walls.size() == again.size() && (walls.isEmpty() || walls.getFirst().heart() == again.getFirst().heart()), "the same plan twice");
+            for (Lode l : walls) {
+                lodes++;
+                if (l.ore() == Ore.IRON) iron++;
+                BlockPos hp = l.heartPos();
+                boolean nearAir = false;
+                for (int dx = -3; dx <= 3 && !nearAir; dx++) for (int dz = -3; dz <= 3 && !nearAir; dz++)
+                    if (cols.at(hp.getX() + dx, hp.getZ() + dz).getBlock(hp.getY()).isAir()) nearAir = true;
+                h.assertTrue(nearAir, "a wall lode's heart is within 3 of cave air: " + hp);
+                for (long c : l.cells()) {
+                    int x = BlockPos.getX(c), y = BlockPos.getY(c), z = BlockPos.getZ(c);
+                    if (cols.at(x, z).getBlock(y).isAir()) continue;   // cut by the cave: never written
+                    cells++;
+                    if (cols.at(x + 1, z).getBlock(y).isAir() || cols.at(x - 1, z).getBlock(y).isAir() || cols.at(x, z + 1).getBlock(y).isAir()
+                            || cols.at(x, z - 1).getBlock(y).isAir() || cols.at(x, z).getBlock(y + 1).isAir() || cols.at(x, z).getBlock(y - 1).isAir()) facing++;
+                }
+            }
+        }
+        double share = cells == 0 ? 0 : facing / (double) cells;
+        dev.awaken.Awaken.LOG.info("[delve] wall lodes: {} of {} laid ({} iron), {} of {} blocks face air ({})", lodes, planned, iron, facing, cells,
+                String.format(java.util.Locale.ROOT, "%.2f", share));
+        h.assertTrue(lodes >= planned / 2, "most wall lodes find a cave: " + lodes + " of " + planned);
+        h.assertTrue(iron >= 6, "at least six iron wall lodes in four regions: " + iron);
+        h.assertTrue(share >= 0.25, "a good share of their blocks face the cave: " + share);
+        h.succeed();
+    }
+
+    /**
+     * Vanilla's scattered iron, copper, coal and gold are thinned in new land: each has a copy at about 35% (a third, by
+     * count or a 1-in-3 chance), the modifier is loaded, and it swaps them in every overworld biome; diamonds stay.
+     */
+    private static void thinnedOres(GameTestHelper h) {
+        var ra = h.getLevel().registryAccess();
+        var placed = ra.lookupOrThrow(Registries.PLACED_FEATURE);
+        for (String n : ThinOres.THINNED) {
+            var copy = placed.get(ThinOres.thinned(n));
+            var orig = placed.get(ThinOres.vanilla(n));
+            h.assertTrue(copy.isPresent() && orig.isPresent(), "a thinned copy of " + n);
+            h.assertTrue(copy.get().value().feature().equals(orig.get().value().feature()), "the same ore: " + n);
+            int a = count(orig.get().value()), b = count(copy.get().value());
+            boolean rarity = copy.get().value().placement().stream().anyMatch(m -> m instanceof net.minecraft.world.level.levelgen.placement.RarityFilter);
+            h.assertTrue(rarity || (b >= 1 && b <= Math.ceil(a * ThinOres.SHARE) && b < a), n + ": " + a + " -> " + b);
+        }
+        var mods = ra.lookupOrThrow(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.BIOME_MODIFIERS);
+        h.assertTrue(mods.get(ResourceKey.create(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.BIOME_MODIFIERS, dev.awaken.Awaken.id("delve_thin_ores"))).isPresent(),
+                "the thinning modifier is loaded");
+        h.assertFalse(ThinOres.THINNED.contains("ore_diamond"), "diamonds are not thinned");
+        h.succeed();
+    }
+
+    /** A placed feature's fixed count (1 if none). */
+    private static int count(net.minecraft.world.level.levelgen.placement.PlacedFeature f) {
+        for (var m : f.placement()) {
+            if (m instanceof net.minecraft.world.level.levelgen.placement.CountPlacement c && c.count() instanceof net.minecraft.util.valueproviders.ConstantInt k) return k.value();
+        }
+        return 1;
     }
 
     // ---- ore XP by rarity and depth ---------------------------------------------------------------------------------

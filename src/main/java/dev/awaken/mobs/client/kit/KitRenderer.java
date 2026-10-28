@@ -32,7 +32,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Draws a kit body (SPEC §34.4) at true size (the entity's scale is undone: its pixels are the world's). On the hero
+ * Draws a kit body (SPEC §35.4) at true size (the entity's scale is undone: its pixels are the world's). On the hero
  * model's graph (idle, distance-locked walk and run, the look, the life layer) it lays the synced move's wind-up, active
  * and recovery clips, stretched to the ticks the server plays (a held wind-up stays at its peak, trembling), fades the
  * move before out, steps round when it turns more than 45°, reels the way a blow came, kneels while its stance is
@@ -111,7 +111,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
     @Override
     public void extractRenderState(AwakenMob mob, HeroRenderState s, float partialTicks) {
         super.extractRenderState(mob, s, partialTicks);
-        s.scale = 1.0F; // modelled at true size (SPEC §34, decision 2): the entity's scale is its box, not its body
+        s.scale = 1.0F; // modelled at true size (SPEC §35, decision 2): the entity's scale is its box, not its body
         AwLook l = mob.look(partialTicks);
         s.setRenderData(AwModels.LOOK, l);
         for (int k = 0; k < s.layerClip.length; k++) {
@@ -310,7 +310,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
 
     private static final AwLook DEFAULT = new AwLook();
 
-    /** The light story (SPEC §34, decision 3): core, eyes and cracks, brighter as it winds up, dimming as it dies. */
+    /** The light story (SPEC §35, decision 3): core, eyes and cracks, brighter as it winds up, dimming as it dies. */
     private static final class Glow extends RenderLayer<HeroRenderState, HeroModel> {
         private final RenderType type;
 

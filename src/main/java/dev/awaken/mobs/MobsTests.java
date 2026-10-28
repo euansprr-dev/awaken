@@ -44,7 +44,7 @@ final class MobsTests {
         dev.awaken.mobs.entity.HeroTests.register(); // hero bodies, their clips and the creatures' voices
         dev.awaken.mobs.entity.LifeTests.register(); // the life layer's data and bindings (SPEC §23)
         dev.awaken.mobs.entity.TellTests.register(); // tells, classes and stances (SPEC §24)
-        dev.awaken.mobs.entity.KitTests.register(); // the Creature Kit: tables, sync, hit volumes, phases (SPEC §34)
+        dev.awaken.mobs.entity.KitTests.register(); // the Creature Kit: tables, sync, hit volumes, phases (SPEC §35)
         dev.awaken.mobs.entity.SeepTests.register(); // the seep heart (W5): placed, asleep, woken, felled
         AwakenTests.register("mobs_scaling_maths", 40, h -> {
             h.assertTrue(Math.abs(MobScaling.healthMultiplier(5) - 1.375) < 1e-9, "health multiplier at lv5");

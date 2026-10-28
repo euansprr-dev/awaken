@@ -84,7 +84,7 @@ public final class HeroModel extends EntityModel<HeroRenderState> {
     }
 
     /**
-     * A kit body's leg (SPEC §34.4: the plans name them thigh_*, shin_*, foot_*), for planting a foot on the ground under
+     * A kit body's leg (SPEC §35.4: the plans name them thigh_*, shin_*, foot_*), for planting a foot on the ground under
      * it with two-bone IK in the leg's own plane; null when the rig has no such leg.
      */
     private record Leg(ModelPart thigh, ModelPart shin, @org.jspecify.annotations.Nullable ModelPart foot, float upper, float lower) {

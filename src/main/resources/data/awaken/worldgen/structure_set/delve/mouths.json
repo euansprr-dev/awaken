@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "awaken:delve/mouth",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 12,
+    "separation": 4,
+    "salt": 734018553
+  }
+}

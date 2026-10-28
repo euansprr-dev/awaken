@@ -257,7 +257,7 @@ public final class LivingNet {
     }
 
     /**
-     * Server → client: a boss bar belongs to {@code entity} (SPEC §34.1, {@code core.api.BossPlates}): the client draws the
+     * Server → client: a boss bar belongs to {@code entity} (SPEC §35.1, {@code core.api.BossPlates}): the client draws the
      * Boss Plate for it instead of vanilla's bar. {@code kind}: BossPlates.Kind ordinal; {@code marks}: the health fractions
      * where phases begin; {@code glow}: the boss's own colour (the plate's rim).
      */

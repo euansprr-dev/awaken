@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * A boss's fight script (SPEC §34.2): {@code data/awaken/kit/fights/<id>.json}. Per phase, a weighted pool of moves
+ * A boss's fight script (SPEC §35.2): {@code data/awaken/kit/fights/<id>.json}. Per phase, a weighted pool of moves
  * with conditions and strings, the transition into it; the intro, the enrage and the death. Read by {@code FightRunner}.
  */
 public final class FightScripts {
