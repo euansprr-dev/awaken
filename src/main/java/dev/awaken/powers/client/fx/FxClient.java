@@ -117,7 +117,8 @@ public final class FxClient {
         e = LadderFx.restyle(e);
         CastAnim anim = e.anim();
         boolean own = mc.player != null && e.caster() == mc.player.getId();
-        CastProfiles.Profile prof = e.caster() >= 0 ? CastProfiles.byId(e.profile()) : null;
+        // the caster's level picks the row: the same timing, that level's gesture (SPEC 34)
+        CastProfiles.Profile prof = e.caster() >= 0 ? CastProfiles.at(CastProfiles.byId(e.profile()), dev.awaken.powers.Fx.levelOf(e)) : null;
         if (prof != null) {
             onProfile(e, prof, own);
         } else if (anim != CastAnim.NONE && e.caster() >= 0) {
@@ -175,9 +176,8 @@ public final class FxClient {
         if (!"hold".equals(event)) return;
         var p = Minecraft.getInstance().player;
         if (p == null) return;
-        for (CastProfiles.Profile prof : CastProfiles.all()) {
-            if (prof.hold1p() != null && prof.begin1p().equals(clip) && CastAnims.holding(p.getId(), prof.id())) FirstPerson.play(prof.hold1p());
-        }
+        CastProfiles.Profile prof = CastAnims.profile(p.getId());
+        if (prof != null && prof.hold1p() != null && prof.begin1p().equals(clip) && CastAnims.holding(p.getId(), prof.id())) FirstPerson.play(prof.hold1p());
     }
 
     // ---- the effect waits for the body's release frame (decision D4) --------------------------------------------------
@@ -232,11 +232,11 @@ public final class FxClient {
     // ---- hooks for the power client (prediction and feel) -----------------------------------------------------------
 
     /** The local player pressed a power key and the cast was sent: pose and wind up at once. */
-    public static void predictCast(LocalPlayer p, PowerType type) {
+    public static void predictCast(LocalPlayer p, PowerType type, int level) {
         PowerFxDefs.Def def = PowerFxDefs.get(type.path);
         if (def == null) return;
         boolean channel = type.mode == PowerType.Mode.CHANNEL;
-        CastProfiles.Profile prof = CastProfiles.byPower(type.path);
+        CastProfiles.Profile prof = CastProfiles.at(CastProfiles.byPower(type.path), level);
         CastAnim anim = channel && def.windAnim() != null ? def.windAnim() : def.anim();
         if (prof != null && animations()) {
             CastAnims.playProfile(p.getId(), prof, type.family);
@@ -380,8 +380,7 @@ public final class FxClient {
     /** The local player let go of a channelled power key. */
     public static void predictRelease(LocalPlayer p) {
         CastAnims.release(p.getId());
-        int id = CastAnims.profileOf(p.getId());
-        CastProfiles.Profile prof = CastProfiles.byId(id);
+        CastProfiles.Profile prof = CastAnims.profile(p.getId());
         if (prof != null) stopFirstPerson(prof);
     }
 

@@ -56,6 +56,26 @@ final class LadderFx {
     /** Per caster and layer: the tick a throttled layer last fired (a held beam re-sends its event five times a second). */
     private static final it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap LAST = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
 
+    /** Per caster: the tick its ladder sound layer last played (one per cast, however many sounds the cast makes). */
+    private static final it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap TIER_LAST = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
+
+    /**
+     * The ladder's sound layer (SPEC 34.5): with the first sound of a level-3+ cast, the family's tier layer plays under it (level 5
+     * its awakened one), on the frame the power's own sound does, from the event's level bits (no packet of its own).
+     */
+    static void tierSound(FxEvent e, net.minecraft.client.multiplayer.ClientLevel level) {
+        int lvl = Fx.levelOf(e);
+        if (lvl < 3 || e.power() <= 0 || e.caster() < 0 || e.has(FxEvent.RIDER)) return;
+        int last = TIER_LAST.getOrDefault(e.caster(), Integer.MIN_VALUE);
+        if (FxWorld.ticks - last < 12 && FxWorld.ticks >= last) return;
+        PowerType type = PowerRegistry.byIndex(e.power() - 1);
+        if (type == null) return;
+        if (TIER_LAST.size() > 256) TIER_LAST.clear();
+        TIER_LAST.put(e.caster(), FxWorld.ticks);
+        level.playLocalSound(e.x(), e.y(), e.z(), dev.awaken.powers.PowerSounds.tier(type.family, lvl).value(), net.minecraft.sounds.SoundSource.PLAYERS,
+                Math.min(1f, e.scale()) * 0.9f, 1f, false);
+    }
+
     private static Layer[][][] table() {
         if (TABLE != null) return TABLE;
         List<PowerType> all = new ArrayList<>(PowerRegistry.all());
@@ -623,5 +643,6 @@ final class LadderFx {
         }
         queued = 0;
         LAST.clear();
+        TIER_LAST.clear();
     }
 }

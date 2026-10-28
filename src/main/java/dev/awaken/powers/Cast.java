@@ -36,6 +36,8 @@ public final class Cast {
     public int chainCount;
     /** A hit refund already paid this cast. */
     public boolean refunded;
+    /** The ladder's sound layer (levels 3 and 5) has gone out with this cast's first sound. */
+    private boolean tierSounded;
     /** A second press this cast opened (SPEC 34.3, "press again"): what it does and for how many ticks. */
     @Nullable Runnable followUp;
     int followUpTicks;
@@ -216,8 +218,16 @@ public final class Cast {
      * on the server, as before.
      */
     public void sound(Vec3 at, Holder<SoundEvent> sound, float volume, float pitch) {
-        if (dev.awaken.powers.fx.CastProfiles.byPower(type.path) != null) Fx.sound(this, at, sound, volume, pitch);
-        else level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, pitch);
+        if (dev.awaken.powers.fx.CastProfiles.byPower(type.path) != null) {
+            Fx.sound(this, at, sound, volume, pitch); // each client adds the level's layer from the event's level bits (LadderFx.tierSound)
+            return;
+        }
+        level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, pitch);
+        if (powerLevel >= 3 && !tierSounded) {
+            // a power without a cast profile plays its sounds here, so its ladder layer (SPEC 34.5) goes with the first of them
+            tierSounded = true;
+            level.playSound(null, at.x, at.y, at.z, PowerSounds.tier(type.family, powerLevel), SoundSource.PLAYERS, Math.min(1f, volume) * 0.9f, 1f);
+        }
     }
 
     public <T extends ParticleOptions> void particles(T p, Vec3 at, int count, double spread, double speed) {

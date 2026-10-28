@@ -102,7 +102,7 @@ final class ClientCasting {
         }
         ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.PRESS, predicted, p.getYRot(), p.getXRot(), keys));
         dev.awaken.core.api.MovementHooks.clientCastStarting(p, t.id.toString(), t.family.name(), predicted); // the body: sprint ends, a slide yields to motion
-        if (!toggleOff) dev.awaken.powers.client.fx.FxClient.predictCast(p, t);
+        if (!toggleOff) dev.awaken.powers.client.fx.FxClient.predictCast(p, t, o.level());
         if (t.mode == PowerType.Mode.CHANNEL) channeling[slot] = true;
         if (!toggleOff && t.mode == PowerType.Mode.INSTANT) {
             int cd = PowerMath.cooldown(t.cooldown, t.variant(o.variant()).cooldown(), o.level(), 0);

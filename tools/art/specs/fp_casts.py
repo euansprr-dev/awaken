@@ -110,11 +110,13 @@ def write(root=None):
 def build(out):
     """build_all.py entry."""
     import fp_gestures  # noqa: F401
+    import power_level_gestures  # noqa: F401  (the ladder's level clips, SPEC 34)
     write(out.root)
 
 
 def main(argv):
     import fp_gestures  # noqa: F401  (registers the per-power clips)
+    import power_level_gestures  # noqa: F401  (and the ladder's level clips)
     cmd = argv[0] if argv else "build"
     if cmd == "build":
         print(f"{len(CLIPS)} clips -> {os.path.relpath(write(), ROOT)}")

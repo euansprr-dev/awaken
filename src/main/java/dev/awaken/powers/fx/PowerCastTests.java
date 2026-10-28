@@ -59,8 +59,12 @@ final class PowerCastTests {
             throw new IllegalStateException(ex);
         }
         Set<Integer> ids = new HashSet<>();
-        for (CastProfiles.Profile p : CastProfiles.all()) {
-            h.assertTrue(ids.add(p.id()) && CastProfiles.byId(p.id()) == p && CastProfiles.byPower("awaken:" + p.power()) == p, p.power() + ": ids and lookups agree");
+        // every row, the ladder's level rows too (SPEC 34: the same id and timing, their own clips, held to the same rules)
+        for (CastProfiles.Profile p : CastProfiles.allLevels()) {
+            CastProfiles.Profile base = CastProfiles.byId(p.id());
+            if (base == p) h.assertTrue(ids.add(p.id()) && CastProfiles.byPower("awaken:" + p.power()) == p, p.power() + ": ids and lookups agree");
+            else h.assertTrue(base != null && base.power().equals(p.power()) && base.release() == p.release() && base.windup() == p.windup()
+                    && CastProfiles.at(base, 1) == base, p.power() + ": a level row keeps the power's id and timing");
             PowerType t = PowerRegistry.get(p.power());
             h.assertTrue(t != null && !t.isPassive(), p.power() + " is a castable power");
             // third person: every clip, with its bent twin; the begin clip has a key on the release tick; only the hold loops

@@ -105,6 +105,7 @@ final class FxRecipes {
     private static void sound(FxEvent e, ClientLevel level) {
         net.minecraft.sounds.SoundEvent ev = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.byId(e.colour());
         if (ev != null) level.playLocalSound(e.x(), e.y(), e.z(), ev, net.minecraft.sounds.SoundSource.PLAYERS, e.scale(), e.aux(), false);
+        LadderFx.tierSound(e, level);
     }
 
     /** Where a caster's beams and orbs start: their palm, or the core for a profile that opens the chest. */

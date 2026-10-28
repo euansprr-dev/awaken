@@ -152,6 +152,12 @@ final class CastAnims {
         return a != null && a.profile != null && a.profile.id() == profileId && FxWorld.ticks - a.start <= withinTicks;
     }
 
+    /** The cast profile row an entity is in (its level's clips), or null. */
+    static CastProfiles.@Nullable Profile profile(int entityId) {
+        Anim a = find(entityId);
+        return a == null ? null : a.profile;
+    }
+
     /** The cast profile an entity is in (CastProfiles ids start at 1), or 0. */
     static int profileOf(int entityId) {
         Anim a = find(entityId);

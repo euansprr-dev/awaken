@@ -477,7 +477,10 @@ def write_table(root=None):
                           end3p=p["end3p"], channel=r["channel"], moment=r["moment"], endMoment=r["endMoment"], lens=r["lens"], origin=r["origin"],
                           beginSound=r["beginSound"])
         import fp_gestures
+        import power_level_gestures
         row.update(fp_gestures.table_fields(power, r, p))
+        # the ladder's levels 3 and 5 (SPEC 34): the same timing, their own clips
+        row["levels"] = {str(lv): f for lv, f in power_level_gestures.LEVELS[power].items()}
         rows.append(row)
     path = os.path.join(root or os.path.join(PC.ROOT, "src/main/resources"), "data/awaken/powers/casts.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
