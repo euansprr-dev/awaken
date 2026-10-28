@@ -34,6 +34,7 @@ public interface WorldEngine {
         return switch (kind) {
             case "hall" -> new HallEngine();
             case "passages" -> new PassageEngine();
+            case "void" -> new VoidEngine();
             default -> null;
         };
     }

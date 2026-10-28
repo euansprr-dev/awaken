@@ -524,29 +524,14 @@ final class PassageEngine implements WorldEngine {
         /** A winding passage through a link's slot from one doorway to the other, bone-lined, candles in its walls. */
         void passage(Room r, ChainLayout.Link l) {
             int ox = r.gx * 16, oz = r.gz * 16;
-            boolean straight = (l.in() + 2) % 4 == l.out();
-            double amp = (Hash.unit(seed, r.id, 89) < 0.5 ? -1 : 1) * (1.5 + Hash.unit(seed, r.id, 97) * 1.5);
-            // the centreline: a gentle S across the slot, or a quarter turn round the corner between the two doorways
-            int ccx = l.in() == 1 || l.out() == 1 ? ox + 16 : ox, ccz = l.in() == 0 || l.out() == 0 ? oz : oz + 16;
-            boolean alongZ = l.in() == 0 || l.in() == 2;
+            ChainLayout.Way way = ChainLayout.Way.of(r, l, seed);
             Wall wa = (x, z) -> {
-                if (x < ox || x > ox + 16 || z < oz || z > oz + 16) return null;
-                if (straight) {
-                    double t = ((alongZ ? z : x) - (alongZ ? oz : ox)) / 16.0;
-                    double centre = (alongZ ? ox : oz) + 8 + amp * Math.sin(Math.PI * t);
-                    double lat = (alongZ ? x : z) - centre;
-                    return new double[]{Math.abs(lat) - HW, alongZ ? Math.signum(lat) : 0, alongZ ? 0 : Math.signum(lat)};
-                }
-                double dx = x - ccx, dz = z - ccz, rr = Math.hypot(dx, dz);
-                double th = Math.atan2(Math.abs(dz), Math.abs(dx));
-                double rad = 8 + amp * 0.6 * Math.sin(2 * th);
-                double lat = rr - rad;
-                return new double[]{Math.abs(lat) - HW, Math.signum(lat) * dx / Math.max(rr, 1e-6), Math.signum(lat) * dz / Math.max(rr, 1e-6)};
+                double[] w = way.at(x, z);
+                return w == null ? null : new double[]{Math.abs(w[0]) - HW, w[2], w[3]};
             };
             s.carve(ox, W, oz, ox + 15, W + 5, oz + 15, (x, y, z) -> {
                 double[] dn = wa.at(x, z);
-                double out = Math.max(Math.max(ox - x, x - ox - 16), Math.max(oz - z, z - oz - 16));
-                if (dn == null) return Math.max(out, 0.5);
+                if (dn == null) return Math.max(Math.max(Math.max(ox - x, x - ox - 16), Math.max(oz - z, z - oz - 16)), 0.5);
                 double h = y - W, lat = dn[0] + HW;
                 double ceil = 3.2 + 1.6 * Math.sqrt(Math.max(0, 1 - (lat / HW) * (lat / HW)));
                 return Math.max(dn[0], Math.max(-h, h - ceil));
@@ -554,12 +539,9 @@ final class PassageEngine implements WorldEngine {
             bones(ox, oz, ox + 15, oz + 15, wa, 1);
             // hidden light every four blocks down its middle
             s.op(ox, W + 1, oz, ox + 15, W + 1, oz + 15, (b, x, y, z) -> {
-                double[] dn = wa.at(x + 0.5, z + 0.5);
-                if (dn == null || dn[0] > -HW + 1.1 || !b.open(x, y, z)) return;
-                // along the way in blocks: down the slot, or round the turn at this block's own radius
-                double ax = x + 0.5 - ccx, az = z + 0.5 - ccz;
-                int along = straight ? (alongZ ? z - oz : x - ox) : (int) Math.round(Math.atan2(Math.abs(az), Math.abs(ax)) * Math.hypot(ax, az));
-                if (Math.floorMod(along, 4) == 2) b.set(x, y, z, light);
+                double[] w = way.at(x + 0.5, z + 0.5);
+                if (w == null || Math.abs(w[0]) > 1.1 || !b.open(x, y, z)) return;
+                if (Math.floorMod((int) Math.round(w[1]), 4) == 2) b.set(x, y, z, light);
             });
             if (Hash.unit(seed, r.id, 101) < 0.5) lights.add(new FloorAir.Light(ox + 8, 2, oz + 8, 0xffa850, 5f, 0.5f));
         }

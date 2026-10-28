@@ -165,9 +165,13 @@ final class WorldCheck {
         }
     }
 
+    /** Walk without swimming (the way you'd go on foot, which is the way that has to be lit). */
+    boolean dry;
+
     private void visit(ArrayDeque<Integer> q, int from, int x, int y, int z) {
         int i = i(x, y, z);
         if (i < 0 || reach[i] != 0) return;
+        if (dry && (kind(at(x, y, z)) & WATER) != 0) return;
         reach[i] = 1;
         parent[i] = from;
         q.add(i);

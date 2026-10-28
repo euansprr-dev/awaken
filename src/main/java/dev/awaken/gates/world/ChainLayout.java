@@ -349,6 +349,33 @@ final class ChainLayout {
         return true;
     }
 
+    /**
+     * A link's way across its slot from one doorway to the other: a gentle S when the doorways face each other, else a
+     * quarter turn round the corner between them, its width wavering by the link's hash.
+     */
+    record Way(int ox, int oz, boolean straight, boolean alongZ, double amp, int ccx, int ccz) {
+        static Way of(Room r, Link l, long seed) {
+            int ox = r.gx * 16, oz = r.gz * 16;
+            double amp = (Hash.unit(seed, r.id, 89) < 0.5 ? -1 : 1) * (1.5 + Hash.unit(seed, r.id, 97) * 1.5);
+            int ccx = l.in() == 1 || l.out() == 1 ? ox + 16 : ox, ccz = l.in() == 0 || l.out() == 0 ? oz : oz + 16;
+            return new Way(ox, oz, (l.in() + 2) % 4 == l.out(), l.in() == 0 || l.in() == 2, amp, ccx, ccz);
+        }
+
+        /** At a plan point: signed offset from the centreline, distance along it, and the way out from it (x, z). */
+        double[] at(double x, double z) {
+            if (x < ox || x > ox + 16 || z < oz || z > oz + 16) return null;
+            if (straight) {
+                double t = ((alongZ ? z : x) - (alongZ ? oz : ox)) / 16.0;
+                double lat = (alongZ ? x : z) - ((alongZ ? ox : oz) + 8 + amp * Math.sin(Math.PI * t));
+                return new double[]{lat, t * 16, alongZ ? Math.signum(lat) : 0, alongZ ? 0 : Math.signum(lat)};
+            }
+            double dx = x - ccx, dz = z - ccz, rr = Math.max(Math.hypot(dx, dz), 1e-6);
+            double th = Math.atan2(Math.abs(dz), Math.abs(dx));
+            double lat = rr - (8 + amp * 0.6 * Math.sin(2 * th));
+            return new double[]{lat, th * rr, Math.signum(lat) * dx / rr, Math.signum(lat) * dz / rr};
+        }
+    }
+
     static double dist(Room a, Room b) {
         return Math.hypot(a.gx + a.gw / 2.0 - b.gx - b.gw / 2.0, a.gz + a.gh / 2.0 - b.gz - b.gh / 2.0);
     }

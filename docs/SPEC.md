@@ -8624,8 +8624,8 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
 - **Stage 0** (built 2026-10-28): plots, the frame, the place map, recipes and their loader, per-world biomes, the engine
   interface, the director, the Atlas and the arrival payload. No recipes ship yet, so every floor is today's rooms in its plot.
 - **Stage 1** (in progress): the world floor contract (38.5), the Bell Crypt's blocks and the Sunken Belfry (38.6); tests
-  `gateworlds_bell_recipes`, `gateworlds_belfry` and `gateworlds_ossuary`. The Bell Crypt's other engines are next; until
-  each exists its world's floors are today's rooms.
+  `gateworlds_bell_recipes`, `gateworlds_belfry`, `gateworlds_ossuary` and `gateworlds_field`. The Bell Shaft is next;
+  until its engine exists its floors are today's rooms.
 
 ### 38.5 The world floor contract (Stage 1)
 
@@ -8697,3 +8697,12 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   have bone heaps, a coffin or bone pillars. Light is the candles plus hidden light (12) four apart and at every doorway
   (`WorldPlan.doorLights`). Moods: Tolling adds a monster to each fight room, Requiem lights every candle, Still leaves
   some out, Storm wets the floors.
+- **The Field of Bells** (`VoidEngine`, floors only): black water seven deep with no shore and no roof (its edges and
+  sky are black), bells of every size hung over it from nothing with a lamp lit in each, a few sunk to their shoulders.
+  Rooms are islands of flagstone level with the water, joined by causeways at the surface (the chain's links) edged with
+  floating lily candles; anyone who falls in swims to an edge and steps out. A stair of floating slabs comes down out of the
+  dark to the arrival island; a bell hangs low over every other island; the Still Bell (the biggest, its clapper still)
+  hangs over the last. A sealed island stands in a fence of bars six high rising out of the water. A Rig room stands in
+  the water as a drowned chamber on a dark plinth, dammed two blocks above the surface so the water stays out of its band.
+  Light: candles round each island's rim, hidden light four apart over islands, along causeways and at every doorway
+  landing. The light check follows the way on foot (`WorldCheck.dry`); swimming counts only where there's no other way.

@@ -54,20 +54,8 @@ public final class GateWorldBellTests {
         Room.Feature e = s.feature(Room.FeatureKind.ENTRANCE);
         if (e == null) return "no arrival";
         int sy = f.baseY + s.dy + e.y();
-        w.walk(e.x(), sy, e.z());
+        walkAll(w, f, e.x(), sy, e.z());
         if (!w.reached(e.x(), sy, e.z())) return "the arrival isn't somewhere you can stand (" + e.x() + " " + sy + " " + e.z() + ")";
-        // a Rig room is crossed by its own mechanism: reach its way in, and you come out at its way on
-        for (boolean grew = true; grew; ) {
-            grew = false;
-            for (Room r : f.rooms) {
-                if (r.rig == null || r.pathIn == null || r.pathOut == null) continue;
-                int[] in = outside(r.pathIn, f.baseY), out = outside(r.pathOut, f.baseY);
-                int[] at = w.near(in[0], in[1], in[2], 2);
-                if (at == null || w.reached(out[0], out[1], out[2])) continue;
-                w.more(out[0], out[1], out[2], w.idx(at[0], at[1], at[2]));
-                grew = w.reached(out[0], out[1], out[2]) || grew;
-            }
-        }
         StringBuilder bad = new StringBuilder();
         for (Room r : f.rooms) {
             int y = f.baseY + r.dy;
@@ -87,13 +75,19 @@ public final class GateWorldBellTests {
         List<int[]> leaks = w.leaks();
         if (!leaks.isEmpty()) bad.append(" water would flow at ").append(leaks.get(0)[0]).append(' ').append(leaks.get(0)[1]).append(' ')
                 .append(leaks.get(0)[2]).append(" (").append(leaks.size()).append(");");
-        // the way to the end, lit to 7 or more outside the built rooms (today's painter lights those)
+        // the way to the end on foot (swimming only where there's no other way), lit to 7 or more outside the built
+        // rooms (today's painter lights those)
         w.light();
         Room end = f.room(f.end);
-        int[] goal = null;
-        Room.Feature shrine = end.feature(Room.FeatureKind.SHRINE);
-        if (shrine != null) goal = w.near(shrine.x(), f.baseY + end.dy + shrine.y(), shrine.z(), 2);
-        if (goal == null && !end.spawnSpots.isEmpty()) goal = w.near(end.spawnSpots.get(0)[0], f.baseY + end.dy, end.spawnSpots.get(0)[1], 1);
+        int[] goal = goal(w, f, end);
+        if (goal != null) {
+            w.dry = true;
+            walkAll(w, f, e.x(), sy, e.z());
+            int[] dryGoal = goal(w, f, end);
+            w.dry = false;
+            if (dryGoal != null) goal = dryGoal;
+            else walkAll(w, f, e.x(), sy, e.z());
+        }
         if (goal == null) bad.append(" the end can't be reached;");
         else {
             int dark = 0;
@@ -128,6 +122,31 @@ public final class GateWorldBellTests {
             }
         }
         return bad.toString();
+    }
+
+    /** Walks from the arrival; a Rig room is crossed by its own mechanism: reach its way in, and you come out at its way on. */
+    static void walkAll(WorldCheck w, FloorLayout f, int x, int y, int z) {
+        w.walk(x, y, z);
+        for (boolean grew = true; grew; ) {
+            grew = false;
+            for (Room r : f.rooms) {
+                if (r.rig == null || r.pathIn == null || r.pathOut == null) continue;
+                int[] in = outside(r.pathIn, f.baseY), out = outside(r.pathOut, f.baseY);
+                int[] at = w.near(in[0], in[1], in[2], 2);
+                if (at == null || w.reached(out[0], out[1], out[2])) continue;
+                w.more(out[0], out[1], out[2], w.idx(at[0], at[1], at[2]));
+                grew = w.reached(out[0], out[1], out[2]) || grew;
+            }
+        }
+    }
+
+    /** Where the floor ends: at its shrine, else its first monster spot. */
+    static int[] goal(WorldCheck w, FloorLayout f, Room end) {
+        Room.Feature shrine = end.feature(Room.FeatureKind.SHRINE);
+        int[] goal = null;
+        if (shrine != null) goal = w.near(shrine.x(), f.baseY + end.dy + shrine.y(), shrine.z(), 2);
+        if (goal == null && !end.spawnSpots.isEmpty()) goal = w.near(end.spawnSpots.get(0)[0], f.baseY + end.dy, end.spawnSpots.get(0)[1], 1);
+        return goal;
     }
 
     /** Just outside a doorway, in the room it leads to: x, feet y, z. */
@@ -191,5 +210,6 @@ public final class GateWorldBellTests {
         });
         world("gateworlds_belfry", "sunken_belfry", 8);
         world("gateworlds_ossuary", "ossuary_ways", 8);
+        world("gateworlds_field", "field_of_bells", 8);
     }
 }
