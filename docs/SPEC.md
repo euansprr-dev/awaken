@@ -8308,7 +8308,22 @@ stands the player on it once it's laid (run 40448865954: at once). Still left, o
 minutes), vanilla's own movement check (`handleMovePlayer`, fall damage, the fluid under the player) blocking on a chunk
 whose lattice chunks' roads world generation is laying itself while the two planners fall behind. On the Mac a cold
 teleport waits ~11 s and the planners keep 1,100 blocks ahead. Road starts (below, Turbo, built 2026-10-28) free world
-generation while a lattice chunk waits; the chunks that need that one still wait for it.
+generation while a lattice chunk waits; the chunks that need that one still wait for it. The minutes-long flight freeze
+is not the roads' (runs 40715105903 with Road starts off and 40716396298 with it on and the deeper watch, both on
+a1d5816c's code, both froze 6-7 minutes the same way): the server's tick never came. 26.3 handles every queued packet
+before each tick (`PacketProcessor.processQueuedPackets`, `while (!queue.isEmpty())`), and a client has no chunk gate
+(`LocalPlayer.tick`), so a player moving faster than the server generates land sends move packets into chunks not
+made yet. Each one waits on the server thread for the chunk under its position (NeoForge's `Entity.setPosRaw`, then
+vanilla's fall-damage fluid check), and the client keeps sending, so the one tick runs the queue for minutes (the
+chunk under the player moved from 50,11 to 201,-117 within it, each one finished in turn) until the client stops (the
+quit). The level's one worldgen executor was busy all along (features, structure starts' site and height reads; the
+terrain noise runs on the background pool), Road starts gave every lattice chunk back (184 of 184, the longest 22 s
+waiting for its roads, 7 s for the dispatcher), and the worldgen, IO and Awaken pools were otherwise idle. The quit
+hang that follows such a freeze (run 40716396298's watchdog dump) is the same freeze's: the client's
+`IntegratedServer.halt` queues a task for the server thread (`executeBlocking`, after its `isRunning` check) and joins
+it, but the server, held in that tick, handles the host's disconnect first, stops itself ("Stopping singleplayer server
+as player logged out") and never runs the task, so the Render thread waits forever (the world is saved). Not decided
+yet: bound the packet loop per tick (a Turbo mixin), or hold fast movement at the edge of the land the client has.
 Framings lay only the highroads through a place: the lanes round it would plan the regions about (48 s on the runner).
 Euan's 42 s freeze in a D-rank trial (2026-10-28, build 5cd4d985: "the mobs just stopped moving") was a player coming
 back from another level. Vanilla keeps an entity's supporting block (`mainSupportingBlockPos`) through a teleport to
