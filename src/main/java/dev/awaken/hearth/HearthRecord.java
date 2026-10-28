@@ -58,6 +58,8 @@ public final class HearthRecord {
     public long itemsHauled, cropsHarvested, oresBrought;
     /** A cell inside the cottage Oren raised here (null = none): the guide says "Oren built this one". */
     public BlockPos cottage;
+    /** Oren's cottage while he builds it over a day (null = not building; SPEC §28.11). */
+    public dev.awaken.hearth.guide.CottageBuild cottageBuild;
     /** Players who share this Hearth with its owner (SPEC "Together"), uuid → last known name, in the order they joined. */
     public final LinkedHashMap<UUID, String> members = new LinkedHashMap<>();
     /** The owner of the Hearth this one was founded from as a sister home (null = founded on its own). */
@@ -187,7 +189,8 @@ public final class HearthRecord {
             Town.CODEC.fieldOf("town").forGetter(HearthRecord::town),
             Household.CODEC.optionalFieldOf("household", Household.NONE).forGetter(HearthRecord::household),
             Home.CODEC.optionalFieldOf("home", Home.NONE).forGetter(HearthRecord::home),
-            dev.awaken.hearth.settle.Folk.CODEC.optionalFieldOf("folk").forGetter(r -> java.util.Optional.of(r.folk))
+            dev.awaken.hearth.settle.Folk.CODEC.optionalFieldOf("folk").forGetter(r -> java.util.Optional.of(r.folk)),
+            dev.awaken.hearth.guide.CottageBuild.CODEC.optionalFieldOf("cottage_build").forGetter(r -> java.util.Optional.ofNullable(r.cottageBuild))
     ).apply(i, HearthRecord::fromSaved));
 
     public HearthRecord(UUID owner, String ownerName, BlockPos pos, String dimension) {
@@ -222,9 +225,11 @@ public final class HearthRecord {
         return new Home(Home.SCHEMA, name, List.copyOf(rooms), comfort, style, land);
     }
 
-    private static HearthRecord fromSaved(Core c, Town t, Household h, Home home, java.util.Optional<dev.awaken.hearth.settle.Folk> folk) {
+    private static HearthRecord fromSaved(Core c, Town t, Household h, Home home, java.util.Optional<dev.awaken.hearth.settle.Folk> folk,
+                                          java.util.Optional<dev.awaken.hearth.guide.CottageBuild> build) {
         HearthRecord r = fromParts(c, t);
         folk.ifPresent(f -> r.folk = f);
+        r.cottageBuild = build.orElse(null);
         r.name = home.name;
         r.comfort = home.comfort;
         r.style = home.style;

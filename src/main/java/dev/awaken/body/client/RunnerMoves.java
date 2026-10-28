@@ -53,6 +53,8 @@ public final class RunnerMoves {
     static int runAge, runLen, runGrip, runStart = -100, runEnd = -100, runLink;
     private static int runMiss;
     private static boolean runStride;
+    /** Wall Stride's level for this run (0 without it; SPEC 36). */
+    private static int runStrideLevel;
     static int runAxis, runSide;
     static double runPlane, runVy, runSpeed, runTx, runTz;
     /** The run is Wall Stride's vertical run up a wall in front (not along one); one an airtime. */
@@ -109,6 +111,16 @@ public final class RunnerMoves {
         BlockGetter level = p.level();
         RunnerRules.Wall w = RunnerRules.findWall(level, CollisionContext.of(p), M, p.getX(), p.getY(), p.getZ(), p.getYRot(), RunnerRules.RUN_REACH);
         return w != null && !RunnerRules.groundWithin(level, CollisionContext.of(p), M, p.getX(), p.getY(), p.getZ(), RunnerRules.RUN_MIN_HEIGHT);
+    }
+
+    /**
+     * For the Ascent: a swing carried into a wall beside it runs along it (SPEC §17.31). The body's motion must already be
+     * the swing's. True when the wall-run began (the Runner holds the body from now).
+     */
+    public static boolean runFromRope(LocalPlayer p, ClientInput in) {
+        if (!dev.awaken.body.BodyConfig.runnersKit() || state != State.NONE) return false;
+        BlockGetter level = WIN.begin(p.level(), p.getX(), p.getY(), p.getZ());
+        return tryRun(p, in, level, CollisionContext.of(p), 0, ClientMoves.ticks);
     }
 
     static boolean hanging() {
@@ -311,9 +323,10 @@ public final class RunnerMoves {
         state = State.RUN;
         runAge = 0;
         runLink = link;
-        runStride = Body.wallStride(p);
+        runStrideLevel = Body.wallStrideLevel(p);
+        runStride = runStrideLevel > 0;
         // Runner mastery: a tick longer a level (SPEC §17.6)
-        runLen = RunnerRules.runLength(link, Body.runnerRank(p), runStride)
+        runLen = RunnerRules.runLength(link, Body.runnerRank(p), runStrideLevel)
                 + dev.awaken.body.ascent.client.AscentMoves.level(dev.awaken.body.ascent.AscentMemory.Track.RUNNER);
         runGrip = RunnerRules.runGrip(link, runStride);
         runStart = now;
@@ -381,7 +394,7 @@ public final class RunnerMoves {
     }
 
     private static void runApply(LocalPlayer p, ClientInput in, double gap) {
-        double tgt = RunnerRules.runTarget(runAge, runLen, runGrip, runStride);
+        double tgt = RunnerRules.runTarget(runAge, runLen, runGrip, runStrideLevel);
         runVy += (tgt - runVy) * RunnerRules.RUN_APPROACH;
         double nx = runAxis == 0 ? -runSide : 0, nz = runAxis == 2 ? -runSide : 0;
         double close = Mth.clamp(gap - RunnerRules.RUN_GAP, -0.1, 0.1);
@@ -392,7 +405,7 @@ public final class RunnerMoves {
 
     private static void wallJump(LocalPlayer p, int now) {
         double nx = runAxis == 0 ? -runSide : 0, nz = runAxis == 2 ? -runSide : 0;
-        double keep = runSpeed * RunnerRules.WALL_JUMP_KEEP;
+        double keep = runSpeed * RunnerRules.WALL_JUMP_KEEP * RunnerRules.strideKick(runStrideLevel);
         send(Move.WALL_JUMP, links, p, 0, runPlane, 0, runAxis, runSide);
         endRun(p, false, "wall jump");
         p.setDeltaMovement(nx * RunnerRules.WALL_JUMP_OUT + runTx * keep, RunnerRules.WALL_JUMP_UP, nz * RunnerRules.WALL_JUMP_OUT + runTz * keep);

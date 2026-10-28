@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "awaken:block/wild/gorse_0",
+    "layer1": "awaken:block/wild/gorse_0_overlay"
+  }
+}

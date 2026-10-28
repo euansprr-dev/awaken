@@ -32,8 +32,40 @@ final class LivingTests {
         dev.awaken.living.wayfarer.SceneTests.register();
         dev.awaken.living.pulse.PulseTests.register();
         dev.awaken.living.population.LedgerTests.register();
+        dev.awaken.living.population.WildHerdTests.register();
         dev.awaken.living.camp.CampTests.register();
         dev.awaken.living.craft.CraftTests.register();
+        // the clear screen (SPEC §40.6): the creature you mean keeps the full plate; the others fighting you get a thin bar;
+        // one under your look or a notable beast keeps its full plate; Classic thins nothing
+        AwakenTests.register("hud_thin_plates", 20, h -> {
+            long now = 1000;
+            var other = new PlateRules.Candidate(7, 5, now - 10, Long.MIN_VALUE, false, false);
+            var meant = new PlateRules.Candidate(8, 5, now - 10, Long.MIN_VALUE, false, false);
+            var looked = new PlateRules.Candidate(9, 5, now - 10, now, false, false);
+            var notable = new PlateRules.Candidate(10, 5, now - 10, Long.MIN_VALUE, true, false);
+            var calm = new PlateRules.Candidate(11, 5, Long.MIN_VALUE, now, false, false);
+            h.assertTrue(PlateRules.thin(true, other, now, 8), "another fighting you: thin");
+            h.assertFalse(PlateRules.thin(true, meant, now, 8), "the one you mean: full");
+            h.assertFalse(PlateRules.thin(true, looked, now, 8), "under your look: full");
+            h.assertFalse(PlateRules.thin(true, notable, now, 8), "a notable beast: full");
+            h.assertFalse(PlateRules.thin(true, calm, now, 8), "not in a fight: as before");
+            h.assertFalse(PlateRules.thin(false, other, now, 8), "Classic: as before");
+            h.succeed();
+        });
+        // the Boss Plate's payloads carry a bar's binding and its lines intact (SPEC §35.1)
+        AwakenTests.register("boss_plate_bind", 20, h -> {
+            java.util.UUID bar = java.util.UUID.randomUUID();
+            var buf = io.netty.buffer.Unpooled.buffer();
+            LivingNet.BossBind bind = new LivingNet.BossBind(bar, 42, dev.awaken.core.api.BossPlates.Kind.WARDEN.ordinal(), List.of(0.66F, 0.33F), 0xFF7A1E);
+            LivingNet.BossBind.STREAM_CODEC.encode(buf, bind);
+            h.assertTrue(LivingNet.BossBind.STREAM_CODEC.decode(buf).equals(bind), "a bind survives the wire");
+            LivingNet.BossLine line = new LivingNet.BossLine(bar, "Countdown: three.", dev.awaken.core.api.BossPlates.Line.PHASE.ordinal(), 0x4AA8FF);
+            LivingNet.BossLine.STREAM_CODEC.encode(buf, line);
+            h.assertTrue(LivingNet.BossLine.STREAM_CODEC.decode(buf).equals(line), "and so does a line");
+            buf.release();
+            h.succeed();
+        });
+
         // SPEC §27.6: registration starts Bram's errand (his letters for Ilse), tracked and on the Now line over bookkeeping; the Registry's
         // Directive is the first floor, already taken on, with its progress on the line; no gate forms before level 3
         // the Now line's order (SPEC §27.6): a tracked chain's step, then a taken Directive, then points, then the road
@@ -91,6 +123,83 @@ final class LivingTests {
             }
             h.succeed();
         });
+        // Euan 2026-10-28: Oren's lines were cut mid-sentence and his card came before he'd said what it was about
+        AwakenTests.register("living_quest_lines_fit_the_box", 20, h -> {
+            int[][] sizes = {{378, 246}, {480, 270}, {640, 360}, {960, 540}};
+            double[] scales = {0.75, 1.0, 1.5};
+            List<String> bad = new ArrayList<>();
+            for (var e : dev.awaken.living.quest.QuestBook.all().entrySet()) {
+                var d = e.getValue();
+                List<String> lines = new ArrayList<>(d.ask());
+                for (var st : d.steps()) {
+                    lines.addAll(st.start());
+                    lines.addAll(st.done());
+                }
+                for (int[] sz : sizes) {
+                    for (double sc : scales) {
+                        int max = dev.awaken.signal.ui.StoryPager.maxLines(sz[0], sz[1], sc);
+                        int width = dev.awaken.signal.ui.SignalLayout.storyTextWidth(dev.awaken.signal.ui.SignalLayout.story(sz[0], sz[1], sc, max, null));
+                        boolean strict = sc == 1.0 && sz[0] <= 480; // the owner's screen and the usual one: whole sentences only
+                        for (String line : lines) {
+                            var pager = new dev.awaken.signal.ui.StoryPager("", line);
+                            List<String> words = new ArrayList<>();
+                            for (int guard = 0; !pager.done() && guard < 40; guard++) {
+                                List<String> page = pager.next(width, max, dev.awaken.signal.ui.SignalText::approxWidth);
+                                String text = String.join(" ", page);
+                                if (page.size() > max) bad.add(e.getKey() + ": a page taller than the box: " + text);
+                                for (String l : page) if (dev.awaken.signal.ui.SignalText.approxWidth(l) > width) bad.add(e.getKey() + ": wider than the box: " + l);
+                                if (!text.matches(strict ? ".*[.!?…][\"'”’)]?$" : ".*[.!?…,:;][\"'”’)]?$"))
+                                    bad.add(e.getKey() + " at " + sz[0] + "x" + sz[1] + "@" + sc + ": a page stops mid-sentence: " + text);
+                                words.addAll(List.of(text.split(" ")));
+                            }
+                            if (!String.join(" ", words).equals(line.trim().replaceAll("\\s+", " "))) bad.add(e.getKey() + ": words lost from: " + line);
+                        }
+                    }
+                }
+                // the card says in plain words what you agree to, whole
+                String body = dev.awaken.signal.ui.SignalText.cardBody(d.summary(), dev.awaken.signal.ui.SignalLayout.CARD_W_BODY - 12, dev.awaken.signal.ui.SignalText::approxWidth);
+                if (d.summary().isBlank() || !body.equals(d.summary().trim())) bad.add(e.getKey() + ": the offer card can't show the whole summary: " + d.summary());
+            }
+            h.assertTrue(bad.isEmpty(), bad.size() + " problems: " + String.join(" | ", bad.subList(0, Math.min(5, bad.size()))));
+            h.succeed();
+        });
+
+        AwakenTests.register("living_quest_offer_after_ask", 20, h -> {
+            // the client as it plays a giver's ask (480x270 at scale 1, the default type speed) with the card sent alongside
+            int max = dev.awaken.signal.ui.StoryPager.maxLines(480, 270, 1.0);
+            int width = dev.awaken.signal.ui.SignalLayout.storyTextWidth(dev.awaken.signal.ui.SignalLayout.story(480, 270, 1.0, max, null));
+            int checked = 0;
+            for (var e : dev.awaken.living.quest.QuestBook.all().entrySet()) {
+                var d = e.getValue();
+                if (d.ask().isEmpty()) continue;
+                int speech = 0;
+                for (String line : d.ask()) {
+                    var pager = new dev.awaken.signal.ui.StoryPager("", line);
+                    while (!pager.done()) {
+                        int chars = 0;
+                        for (String l : pager.next(width, max, dev.awaken.signal.ui.SignalText::approxWidth)) chars += l.length();
+                        speech += dev.awaken.signal.ui.StoryPager.typeTicks(chars, 3.0) + dev.awaken.signal.ui.StoryPager.holdTicks(chars);
+                    }
+                    speech += dev.awaken.signal.ui.StoryPager.FADE_TICKS + 1;
+                }
+                var deck = new dev.awaken.signal.ui.ChoiceDeck();
+                var card = dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE, net.minecraft.network.chat.Component.literal(d.title()))
+                        .body(net.minecraft.network.chat.Component.literal(d.summary())).choice("living_quest:" + e.getKey(), "Help", "Not now").build();
+                deck.offer(card, dev.awaken.living.wayfarer.Wayfarers.offerTtl(d.ask()), true);
+                int shownAt = -1;
+                for (int t = 0; t < speech + 60 && shownAt < 0; t++) {
+                    deck.tick(0, 0, false, t < speech);
+                    if (deck.current() != null) shownAt = t;
+                }
+                h.assertTrue(shownAt >= speech, e.getKey() + ": the card came at " + shownAt + " before the ask ended at " + speech);
+                h.assertTrue(shownAt >= 0 && shownAt <= speech + dev.awaken.signal.ui.ChoiceDeck.GAP_TICKS + 2, e.getKey() + ": the card came late or never: " + shownAt);
+                h.assertTrue(deck.current().ticksLeft() >= dev.awaken.signal.ui.ChoiceDeck.FOLD_TICKS, e.getKey() + ": the card has its full time left once shown");
+                checked++;
+            }
+            h.assertTrue(checked > 5, "the quests with an ask were checked: " + checked);
+            h.succeed();
+        });
+
         AwakenTests.register("progression_first_scenes", 100, h -> {
             var server = h.getLevel().getServer();
             net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
@@ -506,15 +615,11 @@ final class LivingTests {
             h.assertTrue(dev.awaken.living.combat.Forms.family(biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS).value()) == dev.awaken.living.combat.Forms.FROST
                     && dev.awaken.living.combat.Forms.family(biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.DESERT).value()) == dev.awaken.living.combat.Forms.SUN
                     && dev.awaken.living.combat.Forms.family(biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.PLAINS).value()) == dev.awaken.living.combat.Forms.GREEN, "the family follows the climate");
-            // every species the client dresses has its kit data (kit.json is read by the client; here, that the file lists each layout and rung)
-            try (var in = LivingTests.class.getResourceAsStream("/assets/awaken/forms/kit.json")) {
-                var root = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject().getAsJsonObject("layouts");
-                for (var sp : dev.awaken.living.combat.Forms.Species.values()) {
-                    h.assertTrue(root.has(sp.layout), "kit.json has the layout " + sp.layout);
-                    for (int r = 1; r <= 5; r++) h.assertTrue(root.getAsJsonObject(sp.layout).getAsJsonObject("ranks").has(String.valueOf(r)), sp.layout + " has rung " + r);
-                }
-            } catch (java.io.IOException | RuntimeException e) {
-                h.fail("kit.json: " + e);
+            // every species the client dresses has the forms' eyes for its vanilla body (D, and LITE): the sockets and each rung's light
+            for (var sp : dev.awaken.living.combat.Forms.Species.values()) {
+                h.assertTrue(LivingTests.class.getResource("/assets/awaken/textures/entity/forms/" + sp.layout + "/o1.png") != null, sp.layout + " has its sockets");
+                for (int r = 1; r <= 5; r++)
+                    h.assertTrue(LivingTests.class.getResource("/assets/awaken/textures/entity/forms/" + sp.layout + "/g" + r + ".png") != null, sp.layout + " has rung " + r + "'s eyes");
             }
             h.succeed();
         });
@@ -572,6 +677,64 @@ final class LivingTests {
             h.succeed();
         });
 
+        AwakenTests.register("forms_bodies", 20, h -> {
+            // every species has a body at every rung from C to S: a clean rig within the bone budget, the clips the game asks for (its
+            // moves at that rung, the crowned's move below, an alpha's roar, the creeper's cues), and its paint in all three families
+            for (var sp : dev.awaken.living.combat.Forms.Species.values()) {
+                for (int r = dev.awaken.living.forms.FormRigs.FIRST; r <= dev.awaken.living.forms.FormRigs.LAST; r++) {
+                    var rig = dev.awaken.living.forms.FormRigs.get(sp, r);
+                    h.assertTrue(rig != null, sp.id + " has a body at rung " + r);
+                    h.assertTrue(rig.problems().isEmpty(), rig.id + ": " + rig.problems());
+                    h.assertTrue(rig.bones.size() <= 60, rig.id + " keeps to 60 bones: " + rig.bones.size());
+                    for (String need : java.util.List.of("idle", "walk", "run", "angry", "bite", "hurt", "death", "roar"))
+                        h.assertTrue(rig.clips.containsKey(need), rig.id + " has " + need);
+                    for (var d : dev.awaken.living.combat.Moves.of(sp, r, true)) {
+                        String clip = d.kind().name().toLowerCase(java.util.Locale.ROOT);
+                        h.assertTrue(rig.clips.containsKey(clip) || rig.clips.containsKey(clip + "_windup") && rig.clips.containsKey(clip + "_strike"),
+                                rig.id + " acts out " + d.name());
+                    }
+                    if (sp.layout.equals("creeper"))
+                        h.assertTrue(rig.clips.containsKey(new String[]{"sidestep", "seed", "ignite", "pull"}[r - 2]), rig.id + " acts out its cue");
+                    String base = "/assets/awaken/textures/entity/forms/body/" + rig.id + "_" + sp.id;
+                    for (int f = 0; f < 3; f++) {
+                        h.assertTrue(LivingTests.class.getResource(base + "_" + f + ".png") != null, base + " family " + f + " is painted");
+                        if (sp.layout.equals("sheep")) h.assertTrue(LivingTests.class.getResource(base + "_" + f + "_wool.png") != null, base + " has its wool");
+                        if (sp.layout.equals("pig")) h.assertTrue(LivingTests.class.getResource(base + "_" + f + "_saddle.png") != null, base + " has its saddle");
+                    }
+                    h.assertTrue(LivingTests.class.getResource(base + "_glow.png") != null, base + " has its light");
+                }
+            }
+            h.succeed();
+        });
+
+        AwakenTests.register("forms_size", 100, h -> {
+            // animals and spiders truly grow; the walkers stay under two blocks; a creature that loses its form goes back to its size
+            var pig = h.spawn(net.minecraft.world.entity.EntityTypes.PIG, 1, 2, 1);
+            float w0 = pig.getBbWidth();
+            pig.setData(dev.awaken.living.LivingContent.FORM.get(), new dev.awaken.living.combat.Forms.Form(5, 0, 0));
+            dev.awaken.living.combat.FormShape.refresh(pig);
+            h.assertTrue(Math.abs(pig.getBbWidth() - w0 * dev.awaken.living.combat.FormShape.widthFactor("pig", 5)) < 1e-3 && pig.getBbWidth() > w0 * 1.5F, "an S boar is wider: " + pig.getBbWidth());
+            pig.setData(dev.awaken.living.LivingContent.FORM.get(), new dev.awaken.living.combat.Forms.Form(0, 0, 0));
+            dev.awaken.living.combat.FormShape.refresh(pig);
+            h.assertTrue(Math.abs(pig.getBbWidth() - w0) < 1e-3, "and back to a pig's size without its form");
+            for (String walker : new String[]{"zombie", "skeleton"})
+                for (int r = 2; r <= 5; r++)
+                    h.assertTrue(dev.awaken.living.combat.FormShape.height(walker, r) < 2.0F, walker + " stays under two blocks at rung " + r);
+            h.succeed();
+        });
+
+        AwakenTests.register("forms_cue", 20, h -> {
+            // the cue a body acts a move out from round-trips (late joiners place the phase from its start tick)
+            var cue = new LivingNet.FormCue(42, "lunge", 123_456L, 20, 18);
+            var buf = io.netty.buffer.Unpooled.buffer();
+            LivingNet.FormCue.STREAM_CODEC.encode(buf, cue);
+            h.assertTrue(LivingNet.FormCue.STREAM_CODEC.decode(buf).equals(cue), "the cue round-trips");
+            // the two-hit from B: the second blow waits out the hurt cooldown and is never more than a normal blow
+            h.assertTrue(dev.awaken.living.combat.Combos.SECOND_AFTER >= 10, "the second blow comes after the hurt cooldown");
+            for (int r = 3; r <= 5; r++) h.assertTrue(dev.awaken.living.combat.Combos.secondPower(r) <= 0.7F, "the second blow keeps to the cap at " + r);
+            h.succeed();
+        });
+
         AwakenTests.register("living_signs", 100, h -> {
             // SPEC 21.11 decision 24: none in E land, thicker with each rank; each kind builds something real that stands on its ground
             var rnd = net.minecraft.util.RandomSource.create(11);
@@ -616,23 +779,23 @@ final class LivingTests {
         });
 
         AwakenTests.register("living_quiet_land", 100, h -> {
-            // SPEC 21.11 decision 23: animals thin by rank, the ambient life more so, the shyness grows with the rank
-            var Q = dev.awaken.living.combat.QuietLand.class;
-            h.assertTrue(dev.awaken.living.combat.QuietLand.keep(0) == 1F && dev.awaken.living.combat.QuietLand.keep(1) == 0.8F && dev.awaken.living.combat.QuietLand.keep(5) == 0.1F, "E all, D four fifths, S a tenth");
-            for (int r = 1; r <= 5; r++) h.assertTrue(dev.awaken.living.combat.QuietLand.keep(r) < dev.awaken.living.combat.QuietLand.keep(r - 1), "thinner each rank");
+            // SPEC 21.11 decision 23 as changed by SPEC 41 decision 2: animals thin by wildness (people's land), never by rank;
+            // the ambient life still thins by rank, and the shyness grows with it
+            h.assertTrue(dev.awaken.living.combat.QuietLand.keep(dev.awaken.living.api.Wildness.Band.TAMED) < dev.awaken.living.combat.QuietLand.keep(dev.awaken.living.api.Wildness.Band.PASTURE)
+                    && dev.awaken.living.combat.QuietLand.keep(dev.awaken.living.api.Wildness.Band.WILD) == 1F && dev.awaken.living.combat.QuietLand.keep(dev.awaken.living.api.Wildness.Band.DEEP) == 1F,
+                    "fewer wild animals in people's land, all of them in the wild");
             h.assertTrue(dev.awaken.living.combat.QuietLand.wild(-1) == 1F && dev.awaken.living.combat.QuietLand.wild(5) == 1F && dev.awaken.living.combat.QuietLand.wild(130) < 0.05F, "birdsong all through E and nearly gone in S");
-            h.assertTrue(dev.awaken.living.combat.QuietLand.wild(80) < dev.awaken.living.combat.QuietLand.keep(4), "A: more birds go than animals");
             h.assertTrue(dev.awaken.living.combat.QuietLand.shy(1) == 10F && dev.awaken.living.combat.QuietLand.shy(5) == 26F, "10 blocks in D, 26 in S");
-            // a real spawn: none turned away in E land (the test land), a pig in a hearthless D land world is thinned about as often as the table says
+            // a real spawn: thinned about as often as the land's band says
             var level = h.getLevel();
             var rnd = net.minecraft.util.RandomSource.create(5);
             var pig = h.spawn(net.minecraft.world.entity.EntityTypes.PIG, 1, 2, 1);
             int turned = 0;
             for (int i = 0; i < 400; i++) if (dev.awaken.living.combat.QuietLand.thins(level, pig, net.minecraft.world.entity.EntitySpawnReason.NATURAL, rnd)) turned++;
-            int rank = dev.awaken.living.region.RegionMap.rankOf(dev.awaken.living.api.Regions.creatureLevel(level, pig.blockPosition(), dev.awaken.living.api.Regions.Role.NEUTRAL));
-            double expect = rank <= 0 ? 0 : 1 - dev.awaken.living.combat.QuietLand.keep(rank);
+            var band = dev.awaken.living.api.Wildness.band(dev.awaken.living.api.Wildness.land(level, pig.getBlockX(), pig.getBlockZ()));
+            double expect = 1 - dev.awaken.living.combat.QuietLand.keep(band);
             if (dev.awaken.living.api.Regions.landCap(level, pig.blockPosition()) != Integer.MAX_VALUE) expect = 0;
-            h.assertTrue(Math.abs(turned / 400.0 - expect) < 0.12, "here (rank " + rank + ") " + turned + " of 400 turned away, expected about " + Math.round(expect * 400));
+            h.assertTrue(Math.abs(turned / 400.0 - expect) < 0.12, "here (" + band + ") " + turned + " of 400 turned away, expected about " + Math.round(expect * 400));
             h.assertTrue(!dev.awaken.living.combat.QuietLand.thins(level, pig, net.minecraft.world.entity.EntitySpawnReason.BREEDING, rnd), "bred animals are never turned away");
             h.succeed();
         });
@@ -831,6 +994,11 @@ final class LivingTests {
         AwakenTests.register("living_plate_rules", 20, h -> {
             long now = 1000;
             h.assertTrue(PlateRules.lookRange(5) == 24 && PlateRules.lookRange(20) == 32 && PlateRules.lookRange(45) == 40, "PER widens the read");
+            // through the binoculars (SPEC §39.8) the read reaches 160 blocks; down, nothing changes
+            h.assertTrue(PlateRules.lookRange(5, 4.0) == PlateRules.GLASS_REACH && PlateRules.lookRange(5, 1.0) == 24, "binoculars reach 160, not otherwise");
+            PlateRules.Candidate glassFar = new PlateRules.Candidate(30, 150, Long.MIN_VALUE, now, false, false);
+            h.assertTrue(PlateRules.visibility(glassFar, now, PlateRules.lookRange(5, 8.0)) > 0.5F && PlateRules.visibility(glassFar, now, PlateRules.lookRange(5)) <= 0.01F,
+                    "a creature looked at 150 blocks off shows only through the binoculars");
             List<PlateRules.Candidate> in = new ArrayList<>(), out = new ArrayList<>();
             in.add(new PlateRules.Candidate(1, 10, Long.MIN_VALUE, now, false, false));       // looked at
             for (int i = 0; i < 4; i++) in.add(new PlateRules.Candidate(10 + i, 5 + i, now - 20, Long.MIN_VALUE, false, false)); // fighting

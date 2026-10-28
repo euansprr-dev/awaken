@@ -23,7 +23,7 @@ final class AscentSection extends UiSection {
 
     private static final Rung[] LADDER = {
             new Rung(AscentPayloads.Tier.TETHER, "The Tether",
-                    "Hold {key.awaken.movement} while looking at a ring or a ledge above you to throw your rope. Press {key.forward} to swing, and let go to fly off. "
+                    "Hold {key.awaken.rope} while looking at a ring or a ledge above you to throw your rope. Press {key.forward} to swing, and let go to fly off. "
                             + "Over a drop, press {key.sneak} with {key.jump} to lower yourself on it.",
                     "You get it from a Precursor vault once your rank is high enough to open its door (D-rank at least)."),
             new Rung(AscentPayloads.Tier.LEAPER, "The Leaper",

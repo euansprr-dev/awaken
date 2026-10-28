@@ -7,7 +7,7 @@
   ],
   "scene": "cliff",
   "giver": "wren",
-  "summary": "Wren is stranded on a ledge above land where the skeletons wear scorched cloaks. She needs a way down and some bones for the rope.",
+  "summary": "Wren is stuck on a ledge. Kill 4 skeletons below it and bring her 6 bones for a rope.",
   "ask": [
     "Wren: Don't come up! Stay down there! Actually, do come up, but quietly.",
     "Wren: The archers below keep shooting at anyone who moves. I need a way off this ledge and you look like someone who has a plan."

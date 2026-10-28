@@ -1,0 +1,8 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#awaken:wild/dry",
+  "features": [
+    "awaken:wild/dry_ground"
+  ],
+  "step": "vegetal_decoration"
+}

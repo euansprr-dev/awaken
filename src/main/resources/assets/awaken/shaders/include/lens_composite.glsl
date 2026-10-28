@@ -198,7 +198,15 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
         float cover = 0.0;
         if (F(15).x > 0.0) {
             vec3 hp = p + f12.xyz + n * 0.1;
-            cover = heightAt(ivec2(floor(hp.xz)), 0).g - hp.y;
+            ivec2 col = ivec2(floor(hp.xz));
+            cover = heightAt(col, 0).g - hp.y;
+            // under an eave with open sky beside it (a roof's overhang, a gable's rake) it's the open ground's shade, not
+            // a room's: else a sharp step runs along the roof line (Euan 2026-10-28). A room, a wall's thickness in, keeps its own
+            if (cover > 1.0) {
+                float side = min(min(heightAt(col + ivec2(1, 0), 0).g, heightAt(col - ivec2(1, 0), 0).g),
+                        min(heightAt(col + ivec2(0, 1), 0).g, heightAt(col - ivec2(0, 1), 0).g));
+                cover = min(cover, side - hp.y);
+            }
         }
         float open = 1.0 - smoothstep(1.0, 7.0, cover);
         // faces turned from the sun shade only as it lowers: at noon (straight overhead in Minecraft) the walls keep the

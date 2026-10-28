@@ -1,0 +1,11 @@
+{
+  "values": [
+    "minecraft:plains",
+    "minecraft:sunflower_plains",
+    "minecraft:meadow",
+    {
+      "id": "awaken:glass_steppe",
+      "required": false
+    }
+  ]
+}

@@ -41,6 +41,8 @@ public final class CaveModule {
         });
         CaveItems.register();
         CavePlaces.register();
+        MouthPointer.register();
+        PickTrail.register();
         CaveHorizon.register();
         CaveCommands.register();
         CaveTests.register();

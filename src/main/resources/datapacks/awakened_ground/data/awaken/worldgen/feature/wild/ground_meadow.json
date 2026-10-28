@@ -1,0 +1,87 @@
+{
+  "type": "awaken:wild_ground",
+  "biomes": "awaken:wild/meadow",
+  "roles": [
+    {
+      "blocks": [
+        "awaken:wild_rye"
+      ],
+      "rates": [
+        0,
+        0,
+        2,
+        25
+      ],
+      "swathe": 11
+    },
+    {
+      "blocks": [
+        "awaken:long_grass"
+      ],
+      "rates": [
+        0,
+        3,
+        23,
+        30
+      ],
+      "swathe": 14
+    },
+    {
+      "blocks": [
+        "awaken:cow_parsley"
+      ],
+      "rates": [
+        0,
+        3,
+        1.5,
+        0.5
+      ]
+    },
+    {
+      "blocks": [
+        "awaken:thistle"
+      ],
+      "rates": [
+        0,
+        1.5,
+        1,
+        0.5
+      ]
+    },
+    {
+      "blocks": [
+        "awaken:foxglove"
+      ],
+      "rates": [
+        0,
+        0.3,
+        0.4,
+        0.2
+      ]
+    },
+    {
+      "blocks": [
+        "awaken:clover"
+      ],
+      "rates": [
+        6,
+        4,
+        0.5,
+        0
+      ]
+    },
+    {
+      "blocks": [
+        "awaken:meadow_grass"
+      ],
+      "rates": [
+        0,
+        10,
+        18,
+        20
+      ]
+    }
+  ],
+  "mow": true,
+  "sward": 0.5
+}

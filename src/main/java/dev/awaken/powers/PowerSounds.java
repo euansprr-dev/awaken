@@ -14,6 +14,25 @@ public final class PowerSounds {
 
     public static final DeferredHolder<SoundEvent, SoundEvent> FAIL = s("power.fail");
     public static final DeferredHolder<SoundEvent, SoundEvent> LEARN = s("power.learn");
+    // the ladder (SPEC 36): its moment, and the families' level-3 and level-5 layers under a power's own sound
+    public static final DeferredHolder<SoundEvent, SoundEvent> EVOLVE = s("power.evolve");
+    public static final DeferredHolder<SoundEvent, SoundEvent> EVOLVE_STING = s("power.evolve_sting");
+    public static final DeferredHolder<SoundEvent, SoundEvent> EVOLVE_AWAKEN = s("power.evolve_awaken");
+    private static final java.util.List<DeferredHolder<SoundEvent, SoundEvent>> TIER3 = new java.util.ArrayList<>();
+    private static final java.util.List<DeferredHolder<SoundEvent, SoundEvent>> TIER5 = new java.util.ArrayList<>();
+
+    static {
+        for (PowerType.Family f : PowerType.Family.values()) {
+            String fam = f.name().toLowerCase(java.util.Locale.ROOT);
+            TIER3.add(s("power.tier3_" + fam));
+            TIER5.add(s("power.tier5_" + fam));
+        }
+    }
+
+    /** A family's ladder layer for level 3 (or 5): played under a power's own sound on its release. */
+    public static DeferredHolder<SoundEvent, SoundEvent> tier(PowerType.Family family, int level) {
+        return (level >= 5 ? TIER5 : TIER3).get(family.ordinal());
+    }
     public static final DeferredHolder<SoundEvent, SoundEvent> SLAM = s("power.slam");
     public static final DeferredHolder<SoundEvent, SoundEvent> WHOOSH = s("power.whoosh");
     public static final DeferredHolder<SoundEvent, SoundEvent> PUNCH = s("power.punch");

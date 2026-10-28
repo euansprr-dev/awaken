@@ -72,10 +72,13 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         // a blow in the air: the blade's own ribbon, from its middle to its point
         if (state != null && state.wielder() >= 0 && BladeTrail.open(state.wielder())) {
             float[] line = blade(mesh);
-            // first person from mid-blade (the tip's path mostly leaves the view), from 78% along seen from outside
+            // first person from mid-blade (the tip's path mostly leaves the view), from 78% along seen from outside; a
+            // double weapon led by its other end (the Twin Blades' figure-eight) lays it along that end
             float k = state.hand() ? (0.5F - 0.78F) / (1F - 0.78F) : 0F;
-            BladeTrail.sample(state.wielder(), poseStack.last().pose(), line[0] + (line[0] - line[3]) * -k, line[1] + (line[1] - line[4]) * -k,
-                    line[2] + (line[2] - line[5]) * -k, line[3], line[4], line[5], state.hand());
+            int r = state.hand() && ArmsHands.far() ? 6 : 0, e = r + 3;
+            BladeTrail.sample(state.wielder(), poseStack.last().pose(), line[r] + (line[r] - line[e]) * -k,
+                    line[r + 1] + (line[r + 1] - line[e + 1]) * -k, line[r + 2] + (line[r + 2] - line[e + 2]) * -k, line[e],
+                    line[e + 1], line[e + 2], state.hand());
         }
         if (ours && !mesh.anchors().isEmpty()) {
             float energy = state == null ? 0 : state.energy() / 255F, flash = state == null ? 0 : state.flash() / 255F;
@@ -146,11 +149,12 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
     }
 
     private static @Nullable WeaponMesh lineOf;
-    private static final float[] LINE = new float[6];
+    private static final float[] LINE = new float[12];
 
     /**
      * Where the blade runs on a mesh (item space): its outer fifth, the line from the corner nearest the pommel to the
-     * one furthest along (the weapons are straight along it), from 78% of the way to the point. Once per mesh.
+     * one furthest along (the weapons are straight along it), from 78% of the way to the point; then the same from
+     * the other end (a double weapon's other blade). Once per mesh.
      */
     private static float[] blade(WeaponMesh mesh) {
         if (lineOf == mesh) return LINE;
@@ -165,6 +169,8 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         for (int c = 0; c < 3; c++) {
             LINE[c] = p[base * 3 + c] + (p[tip * 3 + c] - p[base * 3 + c]) * 0.78F;
             LINE[3 + c] = p[tip * 3 + c];
+            LINE[6 + c] = p[tip * 3 + c] + (p[base * 3 + c] - p[tip * 3 + c]) * 0.78F;
+            LINE[9 + c] = p[base * 3 + c];
         }
         lineOf = mesh;
         return LINE;

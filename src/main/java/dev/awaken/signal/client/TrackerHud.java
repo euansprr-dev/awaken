@@ -39,9 +39,13 @@ final class TrackerHud {
     /** Where the boss bars drawn this frame end (0 when none); they draw before this layer and the run panel. */
     private static int bossBottom;
 
-    /** Each boss bar as vanilla places it: the bar is 5 tall, its name sits above it. */
+    /**
+     * Each boss bar as vanilla places it: the bar is 5 tall, its name sits above it. A bar drawn another way (the Boss
+     * Plate, SPEC §35.1, cancels vanilla's and sizes its slot) ends its increment after the slot's top, 9 over the bar.
+     */
     static void onBossBar(CustomizeGuiOverlayEvent.BossEventProgress e) {
-        bossBottom = Math.max(bossBottom, e.getY() + 5);
+        if (e.getIncrement() <= 0) return;
+        bossBottom = Math.max(bossBottom, e.getY() + e.getIncrement() - 14);
     }
 
     /** Before any layer of a frame: the bars are counted afresh. */
@@ -52,6 +56,47 @@ final class TrackerHud {
     /** Where this frame's boss bars end so far (all of them, from the boss overlay's layer on). */
     static int bossBottom() {
         return bossBottom;
+    }
+
+    // ---- the clear screen (SPEC §40.6): the line shows when it helps ------------------------------------------------
+
+    private static final dev.awaken.signal.ui.CornerShow.NowLine SHOW = new dev.awaken.signal.ui.CornerShow.NowLine();
+    /** How strongly the line shows (eased a tick at a time: in fast, out slowly), and where the player stood last tick. */
+    private static float shown = 1F, shownO = 1F;
+    private static double lastX = Double.NaN, lastZ;
+
+    /** Once a tick: whether the Now line helps now (Classic: always while there is a place). */
+    static void tick() {
+        Minecraft mc = Minecraft.getInstance();
+        shownO = shown;
+        var p = mc.player;
+        dev.awaken.signal.NowCorner.Place h = NowClient.current();
+        if (p == null || h == null) {
+            SHOW.reset();
+            lastX = Double.NaN;
+            shown = shownO = 0F;
+            return;
+        }
+        boolean want;
+        if (dev.awaken.core.api.HudState.classic()) want = true;
+        else {
+            boolean here = h.dimension().equals(p.level().dimension().identifier());
+            double dx = h.at().getX() + 0.5 - p.getX(), dz = h.at().getZ() + 0.5 - p.getZ();
+            double dist = here ? Math.sqrt(dx * dx + dz * dz) : 1e9;
+            float off = 0F;
+            if (here && dist > 2) off = Math.abs(net.minecraft.util.Mth.wrapDegrees((float) Math.toDegrees(Math.atan2(-dx, dz)) - p.getYRot()));
+            boolean moving = !Double.isNaN(lastX) && (p.getX() - lastX) * (p.getX() - lastX) + (p.getZ() - lastZ) * (p.getZ() - lastZ) > 0.0025;
+            lastX = p.getX();
+            lastZ = p.getZ();
+            want = SHOW.tick(NowClient.sinceHeading(), off, dist, moving, dev.awaken.core.api.HudState.fighting());
+        }
+        shown = want ? Math.min(1F, shown + 0.25F) : Math.max(0F, shown - 1F / 14F);
+    }
+
+    static void clear() {
+        SHOW.reset();
+        shown = shownO = 1F;
+        lastX = Double.NaN;
     }
 
     private record Line(String text, String compass, boolean destination, Rect rect) {}
@@ -112,20 +157,23 @@ final class TrackerHud {
         // a boss fight: step below the bars rather than print over their names (narrow screens, long lines)
         if (bars > 0 && r.right() > sw / 2 - 92 && r.y() < bars + 3) r = new Rect(r.x(), bars + 3, r.w(), r.h());
         float alpha = Math.min(1f, (NowClient.sinceHeading() + dt.getGameTimeDeltaPartialTick(false)) / 8f);
+        float k = net.minecraft.util.Mth.lerp(dt.getGameTimeDeltaPartialTick(false), shownO, shown);
+        if (k <= 0.01f) return null;
+        k = k * k * (3 - 2 * k);
 
         g.pose().pushMatrix();
-        g.pose().translate(r.x(), r.y());
+        g.pose().translate(r.x() - Math.round((1 - k) * 8), r.y()); // slides in from the edge
         g.pose().scale((float) s, (float) s);
         int w0 = (int) Math.round(r.w() / s), h0 = (int) Math.round(r.h() / s);
         if (HudLook.holo()) {
             // always on: a still card (no scan, no glitch), only the line's own fade when it changes
-            HudLook.card(g, 0, 0, w0, h0, Glass.EDGE, 1f, 1f, 0f, HudLook.FRAME); // the calm HUD: no band, no flicker
+            HudLook.card(g, 0, 0, w0, h0, Glass.EDGE, k, 1f, 0f, HudLook.FRAME); // the calm HUD: no band, no flicker
         } else {
-            g.fill(0, 0, w0, h0, Glass.a(Glass.GLASS, 0.55f));
-            g.fill(0, 0, 1, h0, Glass.a(Glass.EDGE, 0.8f));
+            g.fill(0, 0, w0, h0, Glass.a(Glass.GLASS, 0.55f * k));
+            g.fill(0, 0, 1, h0, Glass.a(Glass.EDGE, 0.8f * k));
         }
-        HudLook.text(g, font, c.text, 4, 3, Glass.a(c.destination ? Glass.TITLE : Glass.TEXT, Math.max(0.35f, alpha)), true);
-        if (!c.compass.isEmpty()) HudLook.text(g, font, c.compass, 4 + font.width(c.text), 3, Glass.a(Glass.EDGE, 1f), true);
+        HudLook.text(g, font, c.text, 4, 3, Glass.a(c.destination ? Glass.TITLE : Glass.TEXT, Math.max(0.35f, alpha) * k), true);
+        if (!c.compass.isEmpty()) HudLook.text(g, font, c.compass, 4 + font.width(c.text), 3, Glass.a(Glass.EDGE, k), true);
         g.pose().popMatrix();
         return r;
     }

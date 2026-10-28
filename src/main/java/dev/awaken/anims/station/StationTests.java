@@ -23,6 +23,7 @@ public final class StationTests {
     private StationTests() {}
 
     public static void register() {
+        AwakenTests.register("anims_station_cells", 20, StationTests::cells);
         AwakenTests.register("anims_station_frame", 20, StationTests::frame);
         AwakenTests.register("anims_station_panel_click", 20, StationTests::panelClick);
         AwakenTests.register("anims_station_right_click", 20, StationTests::rightClick);
@@ -41,6 +42,49 @@ public final class StationTests {
         double dx = TABLE.getX() + 0.5 - px, dz = TABLE.getZ() + 0.5 - pz;
         return Math.abs(dx) >= Math.abs(dz) ? new StationView.Station(TABLE, StationView.Kind.TABLE, Math.signum(dx), 0)
                 : new StationView.Station(TABLE, StationView.Kind.TABLE, 0, Math.signum(dz));
+    }
+
+    /**
+     * Each ingredient sits centred on its drawn square of the table top, whichever way you face the table: the squares'
+     * middles are pixels 5, 8 and 11 of the top's 16, row 0 the far one; the result lies on the near border, everything
+     * inside the table's own block (nothing can reach into a wall), and a ray down onto each picks it.
+     */
+    static void cells(GameTestHelper h) {
+        double[] p = new double[3];
+        Quaternionf down = StationView.rotation(0, 90, new Quaternionf());
+        int[][] ways = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        for (int[] way : ways) {
+            StationView.Station s = new StationView.Station(TABLE, StationView.Kind.TABLE, way[0], way[1]);
+            String facing = "facing " + way[0] + "," + way[1];
+            boolean[] seen = new boolean[9];
+            for (int i = 0; i < 10; i++) {
+                StationView.spot(s, i, p, 0);
+                double px = (p[0] - TABLE.getX()) * 16, pz = (p[2] - TABLE.getZ()) * 16;
+                double reach = Math.max(StationView.reach(s, i, 0), StationView.reach(s, i, 2)) * 16;
+                h.assertTrue(px - reach >= 0 && px + reach <= 16 && pz - reach >= 0 && pz + reach <= 16 && p[1] > TABLE.getY() + 1,
+                        "slot " + i + " stays on the table's own top " + facing);
+                if (i == 0) {
+                    // toward you: the way in runs from you to the table
+                    double toward = -((p[0] - TABLE.getX() - 0.5) * s.fx() + (p[2] - TABLE.getZ() - 0.5) * s.fz());
+                    h.assertTrue(toward > StationView.GRID_HALF, "the result lies on the near border, past the grid " + facing);
+                } else {
+                    int cx = (int) Math.round(px), cz = (int) Math.round(pz);
+                    h.assertTrue(Math.abs(px - cx) < 1e-6 && Math.abs(pz - cz) < 1e-6 && (cx == 5 || cx == 8 || cx == 11) && (cz == 5 || cz == 8 || cz == 11),
+                            "slot " + i + " sits on a drawn square's middle " + facing + " (at " + px + "," + pz + ")");
+                    seen[(cx - 5) / 3 * 3 + (cz - 5) / 3] = true;
+                    // row 0 is the far one
+                    double far = (p[0] - TABLE.getX() - 0.5) * s.fx() + (p[2] - TABLE.getZ() - 0.5) * s.fz();
+                    int row = (i - 1) / 3;
+                    h.assertTrue(Math.abs(far - (1 - row) * StationView.CELL) < 1e-6, "slot " + i + " is in row " + row + " " + facing);
+                }
+                // straight down from over it, a click picks it
+                StationView.Layout l = StationView.layout(424, 238, 2, false);
+                int got = StationView.pick(s, l, p[0], p[1] + 0.8, p[2], down, 70, 424 / 238F, l.rx0() + (l.rx1() - l.rx0()) / 2.0, 119, 424, 238);
+                h.assertTrue(got == i, "a click straight down on slot " + i + " picks it " + facing + " (got " + got + ")");
+            }
+            for (boolean b : seen) h.assertTrue(b, "the nine squares each get one slot " + facing);
+        }
+        h.succeed();
     }
 
     /** Every square and the result lie inside the room above the hint and strip, and each picks itself. */
@@ -68,7 +112,7 @@ public final class StationTests {
                             StationView.rotation(view[0], view[1], rot);
                             for (int i = 0; i < 10; i++) {
                                 StationView.spot(s, i, p, 0);
-                                double ma = 0.14, mu = i == 0 ? 0.14 : 0.0, mi = 0.14;
+                                double ma = StationView.reach(s, i, 0) - 0.005, mu = 0, mi = StationView.reach(s, i, 2) - 0.005;
                                 for (int c = 0; c < 8; c++) {
                                     double a = (c & 1) == 0 ? -ma : ma, up = (c & 2) == 0 ? -mu : mu, in = (c & 4) == 0 ? -mi : mi;
                                     boolean seen = StationView.project(p[0] + s.rx() * a + s.fx() * in, p[1] + up, p[2] + s.rz() * a + s.fz() * in,

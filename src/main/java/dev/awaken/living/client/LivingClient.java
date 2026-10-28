@@ -47,6 +47,9 @@ public final class LivingClient {
     static long ticks;
     static boolean shown = true;
     static double lookRange = PlateRules.lookRange(0);
+    /** The creature the binoculars' look rests on past the normal range, and since when (ticks). */
+    private static int glassId = -1;
+    private static long glassSince;
     static final List<PlateRules.Candidate> PICKED = new ArrayList<>();
     private static final List<PlateRules.Candidate> CANDIDATES = new ArrayList<>();
     static final List<ItemEntity> PILLARS = new ArrayList<>();
@@ -65,12 +68,14 @@ public final class LivingClient {
         return DreadFx.land();
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static void init(IEventBus modBus) {
         LivingClientConfig.register();
         PulseSound.init();
         JournalSection.register();
         AlmanacSection.register();
         CraftsSection.register();
+        SpoorFx.init();
         // rumours: a "?" on the map where you heard something is happening
         dev.awaken.core.api.MapMarks.register(dev.awaken.living.wonder.WonderWatch::marks);
         dev.awaken.core.api.MapMarks.register(p -> {
@@ -81,13 +86,24 @@ public final class LivingClient {
             return out;
         });
         modBus.addListener(RegisterGuiLayersEvent.class, LivingHud::register);
+        // a quarry's carcass lies on its side as a creature does at the end of its fall, without the red of the hurt (SPEC §41.4)
+        modBus.addListener(net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent.class, e ->
+                e.registerEntityModifier((Class) net.minecraft.client.renderer.entity.LivingEntityRenderer.class, (entity, state) -> {
+                    if (entity instanceof net.minecraft.world.entity.LivingEntity le && dev.awaken.living.hunt.Carcass.is(le)
+                            && state instanceof net.minecraft.client.renderer.entity.state.LivingEntityRenderState s) {
+                        s.deathTime = 20F;
+                        s.hasRedOverlay = false;
+                    }
+                }));
         FormLayers.init(modBus);
+        dev.awaken.living.client.forms.FormBodies.init(modBus);
         modBus.addListener(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers.class,
                 e -> e.registerEntityRenderer(dev.awaken.living.LivingContent.WAYFARER.get(), WayfarerRenderer::new));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(LivingNet.RegionMsg.TYPE, (m, ctx) -> onRegion(m));
             e.register(LivingNet.LandMsg.TYPE, (m, ctx) -> DreadFx.onLand(m));
             e.register(LivingNet.HitFx.TYPE, (m, ctx) -> onHit(m));
+            e.register(LivingNet.FormCue.TYPE, (m, ctx) -> dev.awaken.living.client.forms.FormBodies.onCue(m));
             e.register(LivingNet.XpFx.TYPE, (m, ctx) -> onXp(m));
             e.register(LivingNet.LevelUp.TYPE, (m, ctx) -> onLevelUp(m));
             e.register(LivingNet.Shown.TYPE, (m, ctx) -> shown = m.shown());
@@ -96,6 +112,10 @@ public final class LivingClient {
             e.register(LivingNet.CampSmoke.TYPE, (m, ctx) -> PulseFx.camp(m.at()));
             e.register(LivingNet.FirstScene.TYPE, (m, ctx) -> FirstFilm.onScene(m));
             e.register(LivingNet.Happenings.TYPE, (m, ctx) -> PulseFx.onTells(m));
+            e.register(LivingNet.BossBind.TYPE, (m, ctx) -> BossPlate.onBind(m));
+            e.register(LivingNet.BossLine.TYPE, (m, ctx) -> BossPlate.onLine(m));
+            e.register(LivingNet.Spoor.TYPE, (m, ctx) -> SpoorFx.onSpoor(m));
+            e.register(LivingNet.Trail.TYPE, (m, ctx) -> SpoorFx.onTrail(m));
         });
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
@@ -104,9 +124,16 @@ public final class LivingClient {
         bus.addListener(SubmitCustomGeometryEvent.class, LivingFx::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, PulseFx::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, CraftFx::submit);
+        bus.addListener(SubmitCustomGeometryEvent.class, SpoorFx::submit);
         bus.addListener(ClientTickEvent.Post.class, CraftFx::tick);
         bus.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LivingPlates::extract);
+        // the Boss Plate (SPEC §35.1): before anyone else reads a bar, so ours are cancelled and sized first
+        bus.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent.BossEventProgress.class, BossPlate::onBar);
+        bus.addListener(net.neoforged.neoforge.client.event.RenderGuiEvent.Pre.class, e -> BossPlate.frameStart());
+        bus.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, BossPlate::extract);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
+        bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> BossPlate.reset());
+        bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> SpoorFx.reset());
     }
 
     private static void reset() {
@@ -267,7 +294,9 @@ public final class LivingClient {
             PICKED.clear();
             return;
         }
-        lookRange = PlateRules.lookRange(Progression.profile(p).stat(Stat.PER));
+        int per = Progression.profile(p).stat(Stat.PER);
+        double near = PlateRules.lookRange(per);
+        lookRange = PlateRules.lookRange(per, dev.awaken.core.api.CameraHooks.zoom());
         // what the band reads: the creature under the crosshair, if no wall stands between
         Vec3 eye = p.getEyePosition(), to = eye.add(p.getViewVector(1).scale(lookRange));
         EntityHitResult hit = ProjectileUtil.getEntityHitResult(p, eye, to, new AABB(eye, to).inflate(1.0),
@@ -275,6 +304,16 @@ public final class LivingClient {
         if (hit != null) {
             var block = mc.level.clip(new ClipContext(eye, hit.getLocation(), ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, p));
             if (block.getType() != HitResult.Type.MISS && block.getLocation().distanceToSqr(eye) < hit.getLocation().distanceToSqr(eye)) hit = null;
+        }
+        // past the normal range (the binoculars): the look has to rest on it a moment first
+        if (hit != null && hit.getLocation().distanceTo(eye) > near) {
+            if (hit.getEntity().getId() != glassId) {
+                glassId = hit.getEntity().getId();
+                glassSince = ticks;
+            }
+            if (ticks - glassSince < PlateRules.GLASS_DWELL) hit = null;
+        } else {
+            glassId = -1;
         }
         if (hit != null) {
             int id = hit.getEntity().getId();
@@ -303,6 +342,11 @@ public final class LivingClient {
             }
             CANDIDATES.add(new PlateRules.Candidate(e.getId(), d, FIGHT.getOrDefault(e.getId(), Long.MIN_VALUE),
                     LOOK.getOrDefault(e.getId(), Long.MIN_VALUE), notable && SEEN.contains(e.getId()), excluded));
+        }
+        // a creature read through the binoculars, farther than the box above reaches
+        if (hit != null && hit.getEntity() instanceof LivingEntity far && far.distanceTo(p) > 40) {
+            CANDIDATES.add(new PlateRules.Candidate(far.getId(), far.distanceTo(p), FIGHT.getOrDefault(far.getId(), Long.MIN_VALUE),
+                    LOOK.getOrDefault(far.getId(), Long.MIN_VALUE), false, far instanceof Player || far instanceof TamableAnimal t && t.isTame()));
         }
         PlateRules.pick(CANDIDATES, PICKED, ticks, lookRange);
         for (PlateRules.Candidate c : PICKED) {

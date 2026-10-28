@@ -1,0 +1,15 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/wild/heather_0"
+      },
+      {
+        "model": "awaken:block/wild/heather_1"
+      },
+      {
+        "model": "awaken:block/wild/heather_2"
+      }
+    ]
+  }
+}

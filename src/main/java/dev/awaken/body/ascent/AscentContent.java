@@ -49,6 +49,9 @@ public final class AscentContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> ROPE_BITE = sound("ascent.rope_bite");
     public static final DeferredHolder<SoundEvent, SoundEvent> ROPE_STRAIN = sound("ascent.rope_strain");
     public static final DeferredHolder<SoundEvent, SoundEvent> ROPE_RELEASE = sound("ascent.rope_release");
+    /** The bottom of an assisted swing, and a let-go in its window (SPEC §17.31). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> ROPE_SWOOP = sound("ascent.rope_swoop");
+    public static final DeferredHolder<SoundEvent, SoundEvent> ROPE_SNAP = sound("ascent.rope_snap");
     public static final DeferredHolder<SoundEvent, SoundEvent> LAUNCH = sound("ascent.launch");
     public static final DeferredHolder<SoundEvent, SoundEvent> WIND = sound("ascent.wind");
     public static final DeferredHolder<SoundEvent, SoundEvent> WINGS_OPEN = sound("ascent.wings_open");

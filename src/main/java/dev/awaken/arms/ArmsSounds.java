@@ -24,6 +24,9 @@ public final class ArmsSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> SWISH_LIGHT = sound("swish_light");
     public static final DeferredHolder<SoundEvent, SoundEvent> SWISH_HEAVY = sound("swish_heavy");
     public static final DeferredHolder<SoundEvent, SoundEvent> SWISH_THRUST = sound("swish_thrust");
+    // Swing Studio's: a blow that lands within a tick of its press, and the katana's own cut (SPEC §25 "Swing Studio")
+    public static final DeferredHolder<SoundEvent, SoundEvent> SWISH_QUICK = sound("swish_quick");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SWISH_KATANA = sound("swish_katana");
     public static final DeferredHolder<SoundEvent, SoundEvent> HIT_FLESH = sound("hit_flesh");
     public static final DeferredHolder<SoundEvent, SoundEvent> HIT_FLESH_HEAVY = sound("hit_flesh_heavy");
     public static final DeferredHolder<SoundEvent, SoundEvent> HIT_ARMOR = sound("hit_armor");
@@ -57,6 +60,13 @@ public final class ArmsSounds {
     /** From this damage multiplier a blow lands as a heavy one (the finishers, a heavy, a riposte). */
     static final float HEAVY_MOTION = 1.4F;
     private static final float SEMITONE = 1.0594631F;
+
+    /** The blade through the air: the studio's sound for the move (FpSwings.swishSound) when it has one, else the row's. */
+    public static SoundEvent swish(Archetype.MoveDef def, @Nullable String studio) {
+        if ("quick".equals(studio)) return SWISH_QUICK.get();
+        if ("katana".equals(studio)) return SWISH_KATANA.get();
+        return swish(def);
+    }
 
     /** The blade through the air. */
     public static SoundEvent swish(Archetype.MoveDef def) {

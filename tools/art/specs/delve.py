@@ -381,6 +381,93 @@ def tuning_fork():
     return outline(c)
 
 
+# Each verse's look (SPEC §34.4): the spine's light (ramp, None: unlit Deepglass), the head's edge (ramp, None: iron),
+# the head's metal (ramp). Asleep, Kindle, Echo, Tempered, Glass, Hush, Call.
+VERSE_LOOKS = [
+    (None, None, "iron"),
+    ("ember", None, "iron"),
+    ("signal", None, "iron"),
+    ("signal", "frost", "iron"),
+    ("deepglass", "frost", "iron"),
+    ("spirit", "frost", "obsidian"),
+    ("amber", "amber", "obsidian"),
+]
+
+
+def delvers_pick(verse=0):
+    """The Delver's Pick (SPEC §34.4): a pick held at a slant, an old ash handle bound in leather at the grip, a worn
+    dark-iron head curving both ways, a thread of Deepglass set along the head's spine. Asleep the thread is dark; each
+    verse lights it its own colour (Kindle ember, Echo blue), Tempered turns the edge blue-white, Hush darkens the head,
+    Call gilds it."""
+    spine, edge, metal = VERSE_LOOKS[verse]
+    fe = [hx(h) for h in P.RAMPS[metal]]
+    if len(fe) < 6:
+        fe = fe + [fe[-1]] * (6 - len(fe))
+    wd = [hx(h) for h in P.RAMPS["wood"]]
+    lt = [hx(h) for h in P.RAMPS["leather"]]
+    dg = [hx(h) for h in P.RAMPS["deepglass"]]
+    rows = [
+        "......HHHh......",
+        "....HHhhhhHH....",
+        "...Hhh.ggg.hHH..",
+        "..Hh....W...hHh.",
+        ".Hh....W.....hH.",
+        ".h....W.......h.",
+        "h....W..........",
+        ".....W..........",
+        "....W...........",
+        "...W............",
+        "...w............",
+        "..L.............",
+        ".Ll.............",
+        "Ll..............",
+        "l...............",
+        "................",
+    ]
+    lit = [hx(h) for h in P.RAMPS[spine]] if spine else None
+    hi = [hx(h) for h in P.RAMPS[edge]] if edge else None
+    if metal == "obsidian":
+        # a dark head still needs to read: lift it two steps
+        fe = fe[2:] + [fe[-1]] * 2
+    pal = {"H": fe[3], "h": fe[2], "W": wd[3], "w": wd[2], "L": lt[3], "l": lt[2], "g": lit[-2] if lit else dg[3]}
+    c = Canvas()
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch in pal:
+                c.set(x, y, pal[ch])
+    # the head's lit upper edge and its worn points (Tempered and on: blue-white; Call: gold)
+    e = hi[-2] if hi else fe[4]
+    for (x, y) in ((6, 0), (7, 0), (8, 0), (4, 1), (5, 1), (10, 1), (11, 1)):
+        c.set(x, y, e)
+    c.set(0, 6, hi[-1] if hi else fe[4])
+    c.set(14, 5, hi[-1] if hi else fe[4])
+    if lit:
+        # the spine's brightest bead, and a glint of it on the head below
+        c.set(8, 2, lit[-1])
+        c.set(8, 1, lit[-3])
+    return outline(c)
+
+
+def pick_stone_tex():
+    """The pick in the stone's parts on one sheet: the handle's wood (x 0-3), the head's iron (x 4-11, its spine's dark
+    Deepglass at y 7-8), the leather grip (x 12-15)."""
+    fe = [hx(h) for h in P.RAMPS["iron"]]
+    wd = [hx(h) for h in P.RAMPS["wood"]]
+    lt = [hx(h) for h in P.RAMPS["leather"]]
+    dg = [hx(h) for h in P.RAMPS["deepglass"]]
+    r = rng_for("pick_stone")
+    c = Canvas()
+    for y in range(16):
+        for x in range(4):
+            c.set(x, y, wd[2 + (1 if (x + y // 3) % 3 == 0 else 0) + (1 if x == 1 else 0) - (1 if x == 3 else 0)])
+        for x in range(4, 12):
+            v = 2 + (1 if r.random() < 0.35 else 0) + (1 if y < 3 else 0) - (1 if y > 12 else 0)
+            c.set(x, y, dg[3] if y in (7, 8) and 5 <= x <= 10 else fe[max(1, min(4, v))])
+        for x in range(12, 16):
+            c.set(x, y, lt[2 + (1 if (y + x) % 4 == 0 else 0)])
+    return c
+
+
 def piton_icon():
     ir = [hx(h) for h in P.RAMPS["iron"]]
     c = Canvas()
@@ -451,6 +538,41 @@ def lamp_layer():
                         (11, 12, br[2]), (12, 12, br[2])):
         c.set(x, y, col)
     return c
+
+
+def lamp_cage():
+    """The Delver lamp's cage (SPEC §34.6): old blackened iron, four bars a face and a band top and bottom, open between
+    (cutout), rust in its joints."""
+    ir = [hx(h) for h in P.RAMPS["iron"]]
+    r = rng_for("lamp_cage")
+    c = Canvas()
+    for y in range(16):
+        for x in range(16):
+            band = y in (0, 1, 14, 15)
+            bar = x in (0, 5, 10, 15)
+            if band or bar:
+                v = 1 + (1 if r.random() < 0.4 else 0) + (1 if y < 2 and not bar else 0)
+                c.set(x, y, ir[v])
+                if (band and bar) and r.random() < 0.5:
+                    c.set(x, y, (112, 62, 38, 255))
+    return c
+
+
+def lamp_crystal(lit):
+    """The clouded crystal in the cage: dead, a milky grey-violet with dark flaws; lit, warm white at the heart going to
+    amber at the edges."""
+    r = rng_for("lamp_crystal", lit)
+    n = value_noise(16, 16, r, scale=4)
+
+    def f(x, y):
+        d = math.hypot(x - 7.5, y - 7.5) / 10.6
+        k = n[y][x]
+        if lit:
+            t = max(0.0, min(1.0, 1.0 - d * 0.9 + (k - 0.5) * 0.25))
+            return (int(250 - 20 * (1 - t)), int(236 - 70 * (1 - t)), int(206 - 120 * (1 - t)), 255)
+        t = max(0.0, min(1.0, 0.55 - d * 0.35 + (k - 0.5) * 0.5))
+        return (int(92 + 70 * t), int(88 + 60 * t), int(104 + 70 * t), 255)
+    return canvas(f)
 
 
 def piton_block():
@@ -553,7 +675,13 @@ def build(out):
     out.item("starmetal_ingot", starmetal_ingot())
     out.item("bell_bronze_ingot", ingot_icon("bronze", accent="deepglass"))
     out.item("tuning_fork", tuning_fork())
+    for v in range(len(VERSE_LOOKS)):
+        out.item("waking_pick" if v == 0 else f"waking_pick_{v}", delvers_pick(v))
+    out.block("waking_pick_stone", pick_stone_tex())
     out.item("piton", piton_icon())
+    out.block("delver_lamp_cage", lamp_cage())
+    out.block("delver_lamp_crystal", lamp_crystal(False))
+    out.block("delver_lamp_crystal_lit", lamp_crystal(True))
     out.item("runner_rope", rope_icon())
     out.item("miners_lamp", lamp_icon())
     out._save("entity/equipment/humanoid/miners_lamp", lamp_layer())
@@ -619,6 +747,60 @@ def piton_models():
     write(os.path.join(ASSETS, "blockstates/piton.json"), {"variants": variants})
 
 
+def pick_stone_model():
+    """The pick in the stone (facing north: the drift's end face to the south): a mound of cobbled deepslate, the head
+    driven into it at a slant with one point showing, the handle leaning out of it toward you."""
+    def box(f, t, tex, uv=None, rot=None):
+        e = {"from": f, "to": t, "faces": {d: ({"texture": tex, "uv": uv} if uv else {"texture": tex}) for d in ("north", "south", "east", "west", "up", "down")}}
+        if rot:
+            e["rotation"] = rot
+        return e
+    lean = {"angle": -22.5, "axis": "x", "origin": [8, 3, 9]}
+    elements = [
+        box([3, 0, 5], [13, 3, 15], "#rock"),
+        box([5, 3, 8], [11, 5, 14], "#rock"),
+        # the head: its point showing out of the mound, the rest in the rock
+        box([4.5, 3.5, 9], [11.5, 5.5, 10.5], "#pick", uv=[4, 2, 11, 4], rot=lean),
+        box([3.5, 2.5, 9], [5, 4.5, 10.5], "#pick", uv=[4, 1, 6, 3], rot=lean),
+        # the handle and its grip
+        box([7.25, 4, 9.25], [8.75, 13, 10.75], "#pick", uv=[0, 0, 2, 9], rot=lean),
+        box([7, 13, 9], [9, 16, 11], "#pick", uv=[12, 0, 14, 3], rot=lean),
+    ]
+    write(os.path.join(ASSETS, "models/block/waking_pick_stone.json"), {
+        "parent": "minecraft:block/block", "ambientocclusion": False,
+        "textures": {"rock": "minecraft:block/cobbled_deepslate", "pick": "awaken:block/waking_pick_stone", "particle": "minecraft:block/cobbled_deepslate"},
+        "elements": elements})
+    variants = {}
+    for facing, y in (("north", 0), ("east", 90), ("south", 180), ("west", 270)):
+        v = {"model": "awaken:block/waking_pick_stone"}
+        if y:
+            v["y"] = y
+        variants[f"facing={facing}"] = v
+    write(os.path.join(ASSETS, "blockstates/waking_pick_stone.json"), {"variants": variants})
+
+
+def lamp_models():
+    """The Delver lamp: a crystal in an iron cage with a cap and a hook, hung from the roof (cutout); dead and lit."""
+    def box(f, t, tex, sides=("north", "south", "east", "west", "up", "down"), uv=None):
+        return {"from": f, "to": t, "faces": {d: ({"texture": tex, "uv": uv} if uv else {"texture": tex}) for d in sides}}
+    hook = [{"from": [6.5, 14, 8], "to": [9.5, 16, 8], "rotation": {"origin": [8, 8, 8], "axis": "y", "angle": a},
+             "faces": {"north": {"texture": "#cage", "uv": [0, 0, 3, 2]}, "south": {"texture": "#cage", "uv": [0, 0, 3, 2]}}} for a in (45, -45)]
+    for lit in (False, True):
+        name = "delver_lamp" + ("_lit" if lit else "")
+        write(os.path.join(ASSETS, "models/block", name + ".json"), {
+            "parent": "minecraft:block/block", "ambientocclusion": False, "render_type": "minecraft:cutout",
+            "textures": {"cage": "awaken:block/delver_lamp_cage", "crystal": "awaken:block/delver_lamp_crystal" + ("_lit" if lit else ""),
+                         "particle": "awaken:block/delver_lamp_cage"},
+            "elements": [
+                box([5.5, 3, 5.5], [10.5, 10.5, 10.5], "#crystal"),
+                box([3, 1, 3], [13, 12, 13], "#cage"),
+                box([5, 12, 5], [11, 14, 11], "#cage", uv=[0, 0, 6, 2]),
+            ] + hook})
+    write(os.path.join(ASSETS, "blockstates/delver_lamp.json"), {"variants": {
+        "lit=false": {"model": "awaken:block/delver_lamp"}, "lit=true": {"model": "awaken:block/delver_lamp_lit"}}})
+    write(os.path.join(ASSETS, "items", "delver_lamp.json"), {"model": {"type": "minecraft:model", "model": "awaken:block/delver_lamp"}})
+
+
 def rope_model():
     faces = {d: {"texture": "#rope", "uv": [6, 0, 9, 16]} for d in ("north", "south", "east", "west")}
     write(os.path.join(ASSETS, "models/block/runner_line.json"), {
@@ -682,7 +864,7 @@ def recipes():
 def tags():
     t = os.path.join(MERGE, "data")
     hearts = ["awaken:" + o + "_lode_heart" for o in ORES]
-    write(os.path.join(t, "minecraft/tags/block/mineable/pickaxe.json"), {"values": ["awaken:deepglass", "awaken:piton"] + hearts})
+    write(os.path.join(t, "minecraft/tags/block/mineable/pickaxe.json"), {"values": ["awaken:deepglass", "awaken:piton", "awaken:delver_lamp"] + hearts})
     write(os.path.join(t, "minecraft/tags/block/needs_diamond_tool.json"), {"values": ["awaken:deepglass", "awaken:deepglass_lode_heart"]})
     write(os.path.join(t, "minecraft/tags/block/needs_iron_tool.json"), {"values": ["awaken:" + o + "_lode_heart" for o in ORES if HEART_TOOL[o] == "iron"]})
     write(os.path.join(t, "minecraft/tags/block/needs_stone_tool.json"), {"values": ["awaken:" + o + "_lode_heart" for o in ORES if HEART_TOOL[o] == "stone"]})
@@ -699,6 +881,8 @@ def tags():
         write(os.path.join(t, f"awaken/tags/item/tier_metal_{k}.json"), {"values": [v]})
     sets = ["wildhide", "beastbound", "gatewrought", "veilwoven", "lordscale", "sovereign"]
     write(os.path.join(t, "awaken/tags/item/mining_tools.json"), {"values": ["#minecraft:pickaxes"] + [{"id": f"awaken:{s}_mattock", "required": False} for s in sets]})
+    # the Delver's Pick is a pickaxe (enchanting, the dig motion, the strike)
+    write(os.path.join(t, "minecraft/tags/item/pickaxes.json"), {"values": ["awaken:waking_pick"]})
 
 
 def worldgen():
@@ -759,6 +943,25 @@ def content():
     for n in ("deepglass_shard", "raw_starmetal", "starmetal_ingot", "bell_bronze_ingot", "runner_rope", "miners_lamp"):
         item_generated(n)
     item_handheld("tuning_fork")
+    item_handheld("waking_pick")
+    # the pick's look by its verse: PickVerses sets custom_model_data's first float to the verse
+    entries = []
+    for v in range(len(VERSE_LOOKS)):
+        name = "waking_pick" if v == 0 else f"waking_pick_{v}"
+        if v:
+            write(os.path.join(ASSETS, "models/item", name + ".json"), {"parent": "minecraft:item/handheld", "textures": {"layer0": "awaken:item/" + name}})
+        entries.append({"threshold": v - 0.5 if v else 0.0, "model": {"type": "minecraft:model", "model": "awaken:item/" + name}})
+    write(os.path.join(ASSETS, "items", "waking_pick.json"), {"model": {"type": "minecraft:range_dispatch", "property": "minecraft:custom_model_data",
+          "index": 0, "fallback": {"type": "minecraft:model", "model": "awaken:item/waking_pick"}, "entries": entries}})
+    pick_stone_model()
+    lang["item.awaken.waking_pick"] = "Delver's Pick"
+    lang["block.awaken.waking_pick_stone"] = "The Delver's Pick, in the Stone"
+    # the Delver lamps (SPEC §34.6): broken, a lamp leaves its iron
+    lamp_models()
+    lang["block.awaken.delver_lamp"] = "Delver Lamp"
+    loot("delver_lamp", [{"rolls": 1, "entries": [{"type": "minecraft:item", "name": "minecraft:iron_nugget",
+                          "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 2, "max": 4}}]}],
+                          "conditions": [{"condition": "minecraft:survives_explosion"}]}])
     lang.update({"item.awaken.deepglass_shard": "Deepglass Shard", "item.awaken.raw_starmetal": "Raw Starmetal",
                  "item.awaken.starmetal_ingot": "Starmetal Ingot", "item.awaken.bell_bronze_ingot": "Bell Bronze Ingot",
                  "item.awaken.tuning_fork": "Tuning Fork", "item.awaken.runner_rope": "Runner's Rope", "item.awaken.miners_lamp": "Miner's Lamp"})
@@ -767,6 +970,8 @@ def content():
     # particles
     for name, fn in PARTICLES.items():
         write(os.path.join(ASSETS, "particles", name + ".json"), {"textures": [f"awaken:{name}_{i}" for i in range(len(fn()))]})
+    # dust in your light: the mote's own frames, lit by the world (SPEC §34.5)
+    write(os.path.join(ASSETS, "particles", "delve_light_mote.json"), {"textures": [f"awaken:delve_mote_{i}" for i in range(len(mote_frames()))]})
     recipes()
     tags()
     worldgen()

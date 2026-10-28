@@ -157,6 +157,64 @@ public final class LivingNet {
         }
     }
 
+    /**
+     * One sign on the ground near the player (SPEC §41.3): its id, kind (0 prints, 1 droppings, 2 bones), where, the way the
+     * prints point, how many left it, its age in ticks when sent, hooves or paws, and whether this player has read it.
+     */
+    public record SpoorMark(int id, int kind, double x, double y, double z, float yaw, int count, int age, boolean hoofed, boolean read)
+            implements CustomPacketPayload {
+        public static final Type<SpoorMark> TYPE = new Type<>(Awaken.id("living_spoor_mark"));
+        public static final StreamCodec<ByteBuf, SpoorMark> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, SpoorMark::id,
+                ByteBufCodecs.VAR_INT, SpoorMark::kind,
+                ByteBufCodecs.DOUBLE, SpoorMark::x,
+                ByteBufCodecs.DOUBLE, SpoorMark::y,
+                ByteBufCodecs.DOUBLE, SpoorMark::z,
+                ByteBufCodecs.FLOAT, SpoorMark::yaw,
+                ByteBufCodecs.VAR_INT, SpoorMark::count,
+                ByteBufCodecs.VAR_INT, SpoorMark::age,
+                ByteBufCodecs.BOOL, SpoorMark::hoofed,
+                ByteBufCodecs.BOOL, SpoorMark::read,
+                SpoorMark::new);
+
+        @Override
+        public Type<SpoorMark> type() {
+            return TYPE;
+        }
+    }
+
+    /** The signs within sight of the player, every second while they change (at most 64, nearest first). */
+    public record Spoor(java.util.List<SpoorMark> marks) implements CustomPacketPayload {
+        public static final Type<Spoor> TYPE = new Type<>(Awaken.id("living_spoor"));
+        public static final StreamCodec<ByteBuf, Spoor> STREAM_CODEC = SpoorMark.STREAM_CODEC.apply(ByteBufCodecs.list(64)).map(Spoor::new, Spoor::marks);
+
+        @Override
+        public Type<Spoor> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * The trail the player is on (SPEC §41.3): stage 0 none, 1 reading, 2 the motes lead to the next sign ({@code sign} its
+     * id), 3 they lead to the quarry; where the motes go, and the quarry's name ("aurochs herd").
+     */
+    public record Trail(int stage, int sign, double x, double y, double z, String quarry) implements CustomPacketPayload {
+        public static final Type<Trail> TYPE = new Type<>(Awaken.id("living_trail"));
+        public static final StreamCodec<ByteBuf, Trail> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, Trail::stage,
+                ByteBufCodecs.VAR_INT, Trail::sign,
+                ByteBufCodecs.DOUBLE, Trail::x,
+                ByteBufCodecs.DOUBLE, Trail::y,
+                ByteBufCodecs.DOUBLE, Trail::z,
+                ByteBufCodecs.stringUtf8(64), Trail::quarry,
+                Trail::new);
+
+        @Override
+        public Type<Trail> type() {
+            return TYPE;
+        }
+    }
+
     /** Where this player's open scenes are (SPEC §21.5): each sends up a distress flare now and then. Every 5 s. */
     public record Tells(java.util.List<net.minecraft.core.BlockPos> at) implements CustomPacketPayload {
         public static final Type<Tells> TYPE = new Type<>(Awaken.id("living_tells"));
@@ -256,6 +314,65 @@ public final class LivingNet {
         }
     }
 
+    /**
+     * Server → client: a boss bar belongs to {@code entity} (SPEC §35.1, {@code core.api.BossPlates}): the client draws the
+     * Boss Plate for it instead of vanilla's bar. {@code kind}: BossPlates.Kind ordinal; {@code marks}: the health fractions
+     * where phases begin; {@code glow}: the boss's own colour (the plate's rim).
+     */
+    public record BossBind(java.util.UUID bar, int entity, int kind, java.util.List<Float> marks, int glow) implements CustomPacketPayload {
+        public static final Type<BossBind> TYPE = new Type<>(Awaken.id("living_boss_bind"));
+        public static final StreamCodec<ByteBuf, BossBind> STREAM_CODEC = StreamCodec.composite(
+                net.minecraft.core.UUIDUtil.STREAM_CODEC, BossBind::bar,
+                ByteBufCodecs.VAR_INT, BossBind::entity,
+                ByteBufCodecs.VAR_INT, BossBind::kind,
+                ByteBufCodecs.FLOAT.apply(ByteBufCodecs.list(8)), BossBind::marks,
+                ByteBufCodecs.INT, BossBind::glow,
+                BossBind::new);
+
+        @Override
+        public Type<BossBind> type() {
+            return TYPE;
+        }
+    }
+
+    /** Server → client: a line under a boss's plate ({@code kind}: BossPlates.Line ordinal; {@code colour} RGB). */
+    public record BossLine(java.util.UUID bar, String text, int kind, int colour) implements CustomPacketPayload {
+        public static final Type<BossLine> TYPE = new Type<>(Awaken.id("living_boss_line"));
+        public static final StreamCodec<ByteBuf, BossLine> STREAM_CODEC = StreamCodec.composite(
+                net.minecraft.core.UUIDUtil.STREAM_CODEC, BossLine::bar,
+                ByteBufCodecs.stringUtf8(256), BossLine::text,
+                ByteBufCodecs.VAR_INT, BossLine::kind,
+                ByteBufCodecs.INT, BossLine::colour,
+                BossLine::new);
+
+        @Override
+        public Type<BossLine> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * A formed creature's move (SPEC §21.13), to everyone tracking it: its body acts out {@code move} (the clip
+     * {@code <move>_windup}, stretched over {@code windupTicks}, then {@code <move>_strike}) from server game time
+     * {@code startTick}; {@code holdTicks} holds the wind-up's peak. An empty move ends whatever was playing (a wind-up
+     * cut short). The boss kit's three fields (move, start, hold) plus the wind-up's length.
+     */
+    public record FormCue(int entity, String move, long startTick, int holdTicks, int windupTicks) implements CustomPacketPayload {
+        public static final Type<FormCue> TYPE = new Type<>(Awaken.id("living_form_cue"));
+        public static final StreamCodec<ByteBuf, FormCue> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, FormCue::entity,
+                ByteBufCodecs.stringUtf8(32), FormCue::move,
+                ByteBufCodecs.VAR_LONG, FormCue::startTick,
+                ByteBufCodecs.VAR_INT, FormCue::holdTicks,
+                ByteBufCodecs.VAR_INT, FormCue::windupTicks,
+                FormCue::new);
+
+        @Override
+        public Type<FormCue> type() {
+            return TYPE;
+        }
+    }
+
     static void register(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
         r.playToClient(FirstScene.TYPE, FirstScene.STREAM_CODEC);
@@ -273,5 +390,10 @@ public final class LivingNet {
         r.playToClient(LevelUp.TYPE, LevelUp.STREAM_CODEC);
         r.playToClient(Shown.TYPE, Shown.STREAM_CODEC);
         r.playToClient(StormStrike.TYPE, StormStrike.STREAM_CODEC);
+        r.playToClient(BossBind.TYPE, BossBind.STREAM_CODEC);
+        r.playToClient(BossLine.TYPE, BossLine.STREAM_CODEC);
+        r.playToClient(FormCue.TYPE, FormCue.STREAM_CODEC);
+        r.playToClient(Spoor.TYPE, Spoor.STREAM_CODEC);
+        r.playToClient(Trail.TYPE, Trail.STREAM_CODEC);
     }
 }

@@ -22,10 +22,26 @@ public final class PowerRegistry {
     private PowerRegistry() {}
 
     private static final Map<Identifier, PowerType> BY_ID = new LinkedHashMap<>();
+    private static final List<PowerType> ORDER = new ArrayList<>();
+    private static final Map<PowerType, Integer> INDEX = new java.util.IdentityHashMap<>();
 
     static void register(PowerType type) {
         if (BY_ID.containsKey(type.id)) throw new IllegalStateException("Duplicate power " + type.id);
         BY_ID.put(type.id, type);
+        INDEX.put(type, ORDER.size());
+        ORDER.add(type);
+    }
+
+    /** A power's place in registration order: both sides build the registry from one jar, so FX events carry it (SPEC 36.4). */
+    public static int index(PowerType type) {
+        PowerCatalog.bootstrap();
+        Integer i = INDEX.get(type);
+        return i == null ? -1 : i;
+    }
+
+    public static @Nullable PowerType byIndex(int index) {
+        PowerCatalog.bootstrap();
+        return index >= 0 && index < ORDER.size() ? ORDER.get(index) : null;
     }
 
     public static @Nullable PowerType get(Identifier id) {

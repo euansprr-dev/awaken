@@ -1,0 +1,12 @@
+{
+  "model": {
+    "model": "awaken:block/wild/hawthorn_leaves_0",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -12012264
+      }
+    ],
+    "type": "minecraft:model"
+  }
+}

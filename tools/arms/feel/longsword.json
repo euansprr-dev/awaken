@@ -1,0 +1,31 @@
+{
+  "style": "longsword",
+  "round": 3,
+  "_notes": "Round 2: the katana's round-1 recipe (chest-height contact, a short set at the frame's edge, an explosive drive, carried out of the frame). The opening diagonal drives harder so its hit is the fastest moment.",
+  "cut": {
+    "power": 3.0
+  },
+  "thrust": {},
+  "forms": {
+    "slash": {
+      "post": 16,
+      "stop": 58,
+      "pre": 48
+    }
+  },
+  "moves": {
+    "strike_1": {
+      "cut": {
+        "power": 3.4
+      }
+    },
+    "strike_2": {
+      "cut": {
+        "drive": 0.75,
+        "carry": 60,
+        "stop": null,
+        "pre": null
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+# A rank trial lost by falling, far from the origin (SPEC §28.9, Cost): Euan's server froze 42 s in a D-rank assessment
+# (2026-10-28) waiting for an overworld chunk at his trial position while a lattice chunk's highroad was being planned.
+# This tour plays it out on new land with the roads busy: home 1,600 blocks out, a practice D trial, a minute of the
+# fight, a death in the arena (the trial ends "fell" and sends you home), home again. The log names any chunk the server
+# thread waited for far from every player, with who asked, and the stack of any tick over a second.
+world trialfall survival 26102610
+waitworld
+window 1440 900
+gui 0
+info
+cmd gamerule send_command_feedback false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+# a home far out, the way Euan's is: new land, so the roads around it are being planned
+cmd tp @s 420 140 -1600
+wait 400
+shot fall_00_home
+cmd awaken admin trial D
+wait 200
+shot fall_01_trial
+wait 1200
+shot fall_02_fight
+cmd kill @s
+wait 400
+shot fall_03_home
+wait 600
+shot fall_04_home_later
+info
+quit

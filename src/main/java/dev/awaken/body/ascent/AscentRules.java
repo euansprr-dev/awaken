@@ -456,6 +456,18 @@ public final class AscentRules {
     public static final double AETHER_CRUISE = 1.0 / 1200, AETHER_BOOST = 3.2 / 1200, AETHER_HOVER = 1.6 / 1200, AETHER_FLAP = 0.012;
     public static final double AETHER_SUN = 1.0 / 400, AETHER_SHADE = 1.0 / 1800, AETHER_UPDRAFT = 1.0 / 120;
     public static final double AETHER_START = 0.08, MASTERY_AETHER = 0.03;
+    /** Sprint still held through a glide the empty meter forced takes flight again once the meter is back to this. */
+    public static final double AETHER_RESUME = 0.25;
+
+    /**
+     * Whether sprint takes a Skyborn glide back into flight (SPEC §17.8): a press, whenever (too little Aether gives
+     * the weak beat, as a jump does); or sprint still held through a glide that the empty meter forced, once the meter
+     * is back to {@link #AETHER_RESUME}. Before, only a jump took a glide into flight, so a boost held or pressed after
+     * the meter refilled did nothing until a tap of jump.
+     */
+    public static boolean sprintTakesFlight(boolean sprintPressed, boolean sprintHeld, boolean fromEmpty, double aether) {
+        return sprintPressed || sprintHeld && fromEmpty && aether >= AETHER_RESUME;
+    }
 
     /**
      * The barrel roll (Skyborn): a second tap of left or right within {@link #ROLL_TAP} ticks in flight throws the body

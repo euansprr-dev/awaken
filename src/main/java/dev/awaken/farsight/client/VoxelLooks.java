@@ -200,6 +200,28 @@ final class VoxelLooks implements VoxelMesher.Looks {
         return null;
     }
 
+    @Override
+    public int colour(int id, int dir, @Nullable Holder<Biome> biome) {
+        int look = face(id, dir);
+        if (look < 0) return 0x808080;
+        int rgb = averageOf(look & 0xFFFF);
+        if ((look >>> 16) == 0) return rgb;
+        int t = tint(id, (look >>> 16) - 1, biome), out = 0;
+        for (int sh = 0; sh <= 16; sh += 8) out |= (rgb >> sh & 255) * (t >> sh & 255) / 255 << sh;
+        return out;
+    }
+
+    @Override
+    public float brightness() {
+        return Minecraft.getInstance().options.gamma().get().floatValue();
+    }
+
+    /** Look i's texture's average colour, 0xRRGGBB. */
+    private synchronized int averageOf(int i) {
+        int at = i * 8;
+        return Math.round(table[at + 5] * 255) << 16 | Math.round(table[at + 6] * 255) << 8 | Math.round(table[at + 7] * 255);
+    }
+
     private synchronized int look(TextureAtlasSprite sprite, int flags, int unused) {
         long key = (long) System.identityHashCode(sprite) << 8 | flags;
         Integer known = bySprite.get(key);

@@ -155,6 +155,7 @@ final class CaveSites {
             case SEEP -> seep(cols, c, rnd, seed);
             case CHUTE -> chute(cols, c, rnd, seed);
             case GROTTO -> grotto(cols, c, rnd, seed);
+            case MOUTH -> mouth(cols, c, rnd, seed);
         };
         lastSampled = cols.sampled;
         return s;
@@ -337,6 +338,145 @@ final class CaveSites {
             int[] j = air(cols, f.x(0, -14), y, f.z(0, -14), 22, 10, 10, rnd);
             if (j == null) continue;
             Spec spec = new Spec(CaveKind.GROTTO, px, y, pz, rot, seed, true, j[0], j[1], j[2], new int[0]);
+            if (fits(spec, c)) return spec;
+        }
+        return null;
+    }
+
+    // ---- mouths (SPEC §34.1) ------------------------------------------------------------------------------------------
+
+    /**
+     * A mouth, by the ground: a Delver adit driven to an iron or copper lode under a hill; else a cleft into a cliff; else
+     * a hill mouth into a slope; else, on flat ground, a doline; or none.
+     */
+    static @Nullable Spec mouth(Columns cols, ChunkPos c, WorldgenRandom rnd, long seed) {
+        Spec s = adit(cols, c, rnd, seed);
+        if (s == null) s = cleft(cols, c, rnd, seed);
+        if (s == null) s = hillMouth(cols, c, rnd, seed);
+        if (s == null) s = doline(cols, c, rnd, seed);
+        return s;
+    }
+
+    /** Whether a mouth's ground is fit: land, the biome allowed, not by the city. */
+    private static boolean mouthGround(Columns cols, int x, int y, int z) {
+        return !cityNear(x, z, 90) && landBiome(cols.biome(x, y, z)) && cols.ctx.validBiome().test(cols.biome(x, y, z));
+    }
+
+    private static @Nullable Spec adit(Columns cols, ChunkPos c, WorldgenRandom rnd, long seed) {
+        int x0 = c.getMiddleBlockX(), z0 = c.getMiddleBlockZ();
+        int sea = cols.ctx.chunkGenerator().getSeaLevel();
+        int tries = 0;
+        for (Lode l : lodesNear(cols.ctx.seed(), x0, z0, 72)) {
+            if (l.ore() != Ore.IRON && l.ore() != Ore.COPPER) continue;
+            var h = l.heartPos();
+            if (h.getY() < 24 || tries++ >= 4) continue;
+            int start = rnd.nextInt(4);
+            for (int r = 0; r < 4; r++) {
+                int rot = (start + r) & 3;
+                int L = 14 + rnd.nextInt(15);
+                // the portal L+1 back from the heart along the drift's axis
+                Frame back = new Frame(h.getX(), h.getY(), h.getZ(), rot);
+                int px = back.x(0, -(L + 1)), pz = back.z(0, -(L + 1));
+                int yp = cols.surface(px, pz);
+                if (yp == Integer.MIN_VALUE || yp <= sea + 1) continue;
+                int drop = yp - (h.getY() - 1);
+                if (drop < 0 || drop > L / 3) continue;
+                Frame f = new Frame(px, yp, pz, rot);
+                // a hill over the drift, open ground in front of the portal
+                int over = cols.surface(f.x(0, L / 2), f.z(0, L / 2)), front = cols.surface(f.x(0, -5), f.z(0, -5));
+                if (over == Integer.MIN_VALUE || front == Integer.MIN_VALUE || over < yp + 6 || front > yp + 2) continue;
+                if (!mouthGround(cols, px, yp, pz) || cols.wet(px, pz, yp - drop - 2, yp + 4) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 2, yp)) continue;
+                int[] j = air(cols, h.getX(), h.getY() - 1, h.getZ(), 20, 10, 10, rnd);
+                Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, j != null, j == null ? 0 : j[0], j == null ? 0 : j[1], j == null ? 0 : j[2],
+                        new int[]{Mouth.ADIT, L, drop, 3, 4, h.getX(), h.getY(), h.getZ(), l.ore().ordinal() + 1, rnd.nextInt(2)});
+                if (fits(spec, c)) return spec;
+            }
+        }
+        return null;
+    }
+
+    private static @Nullable Spec hillMouth(Columns cols, ChunkPos c, WorldgenRandom rnd, long seed) {
+        int sea = cols.ctx.chunkGenerator().getSeaLevel();
+        for (int t = 0; t < 5; t++) {
+            int px = c.getMiddleBlockX() + (t == 0 ? 0 : rnd.nextInt(41) - 20), pz = c.getMiddleBlockZ() + (t == 0 ? 0 : rnd.nextInt(41) - 20);
+            int yp = cols.surface(px, pz);
+            if (yp == Integer.MIN_VALUE || yp <= sea + 1 || !mouthGround(cols, px, yp, pz)) continue;
+            int start = rnd.nextInt(4);
+            for (int r = 0; r < 4; r++) {
+                int rot = (start + r) & 3;
+                Frame f = new Frame(px, yp, pz, rot);
+                // a slope: 8 or more of rise in 16, open in front
+                int into = cols.surface(f.x(0, 16), f.z(0, 16)), front = cols.surface(f.x(0, -6), f.z(0, -6));
+                if (into == Integer.MIN_VALUE || front == Integer.MIN_VALUE || into < yp + 8 || front > yp + 2) continue;
+                int L = 16 + rnd.nextInt(25), w = 5 + 2 * rnd.nextInt(3), h = 6 + rnd.nextInt(6);
+                int drop = (L - Mouth.PORTAL) / 2;
+                int head = cols.surface(f.x(0, L), f.z(0, L));
+                if (head == Integer.MIN_VALUE || head < yp - drop + 10) continue;
+                if (cols.wet(f.x(0, L / 2), f.z(0, L / 2), yp - drop - 2, yp + 2) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 4, yp - drop + 4)) continue;
+                int ex = f.x(0, L), ez = f.z(0, L);
+                int[] j = air(cols, ex, yp - drop, ez, 27, 12, 8, rnd);
+                if (j == null) continue;   // a hill mouth always leads somewhere
+                Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j[0], j[1], j[2],
+                        new int[]{Mouth.HILL, L, drop, w, h, 0, 0, 0, 0, rnd.nextInt(2)});
+                if (fits(spec, c)) return spec;
+            }
+        }
+        return null;
+    }
+
+    /** A cleft: a cliff (9 of rise in 6, 14 in 14), open in front; a slot 2-4 wide, 16-28 long, ground over its end. */
+    private static @Nullable Spec cleft(Columns cols, ChunkPos c, WorldgenRandom rnd, long seed) {
+        int sea = cols.ctx.chunkGenerator().getSeaLevel();
+        for (int t = 0; t < 4; t++) {
+            int px = c.getMiddleBlockX() + (t == 0 ? 0 : rnd.nextInt(41) - 20), pz = c.getMiddleBlockZ() + (t == 0 ? 0 : rnd.nextInt(41) - 20);
+            int yp = cols.surface(px, pz);
+            if (yp == Integer.MIN_VALUE || yp <= sea + 1 || !mouthGround(cols, px, yp, pz)) continue;
+            int start = rnd.nextInt(4);
+            for (int r = 0; r < 4; r++) {
+                int rot = (start + r) & 3;
+                Frame f = new Frame(px, yp, pz, rot);
+                int near = cols.surface(f.x(0, 6), f.z(0, 6)), far = cols.surface(f.x(0, 14), f.z(0, 14)), front = cols.surface(f.x(0, -6), f.z(0, -6));
+                if (near == Integer.MIN_VALUE || far == Integer.MIN_VALUE || front == Integer.MIN_VALUE) continue;
+                if (near < yp + 9 || far < yp + 14 || front > yp + 2) continue;
+                int L = 16 + rnd.nextInt(13), w = 2 + rnd.nextInt(3), drop = (L - Mouth.PORTAL) / 3;
+                int shut = (int) (L * 0.65);
+                int head = cols.surface(f.x(0, L), f.z(0, L)), over = cols.surface(f.x(0, shut - 1), f.z(0, shut - 1));
+                if (head == Integer.MIN_VALUE || over == Integer.MIN_VALUE || head < yp - drop + 10) continue;
+                int h = Mth.clamp(Math.max(near, over) - yp + 2, 8, 40);
+                if (cols.wet(f.x(0, L / 2), f.z(0, L / 2), yp - drop - 2, yp + 2) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 4, yp - drop + 4)) continue;
+                int[] j = air(cols, f.x(0, L), yp - drop, f.z(0, L), 27, 12, 8, rnd);
+                if (j == null) continue;   // a cleft always leads somewhere
+                Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j[0], j[1], j[2],
+                        new int[]{Mouth.CLEFT, L, drop, w, h, 0, 0, 0, 0, rnd.nextInt(2)});
+                if (fits(spec, c)) return spec;
+            }
+        }
+        return null;
+    }
+
+    /** A doline: flat ground (within 2 all round), a hole 7-11 across and 10-25 deep, dry, cave air by its foot. */
+    private static @Nullable Spec doline(Columns cols, ChunkPos c, WorldgenRandom rnd, long seed) {
+        int sea = cols.ctx.chunkGenerator().getSeaLevel(), minY = cols.ctx.heightAccessor().getMinY();
+        for (int t = 0; t < 4; t++) {
+            int px = c.getMiddleBlockX() + (t == 0 ? 0 : rnd.nextInt(41) - 20), pz = c.getMiddleBlockZ() + (t == 0 ? 0 : rnd.nextInt(41) - 20);
+            int yp = cols.surface(px, pz);
+            if (yp == Integer.MIN_VALUE || yp <= sea + 1 || !mouthGround(cols, px, yp, pz)) continue;
+            int r = 3 + rnd.nextInt(3);
+            boolean flat = true;
+            for (int k = 0; k < 6 && flat; k++) {
+                double a = k * Math.PI / 3;
+                int top = cols.surface(Mth.floor(px + Math.cos(a) * (r + 3)), Mth.floor(pz + Math.sin(a) * (r + 3)));
+                if (top == Integer.MIN_VALUE || Math.abs(top - yp) > 2) flat = false;
+            }
+            if (!flat) continue;
+            int drop = 10 + rnd.nextInt(Math.min(25, 4 * r + 5) - 9), rot = rnd.nextInt(4), L = r + 3;
+            if (yp - drop - 6 < minY + 6) continue;
+            Frame f = new Frame(px, yp, pz, rot);
+            if (cols.wet(px, pz, yp - drop - 3, yp + 1) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 3, yp - drop + 4)) continue;
+            int[] j = air(cols, f.x(0, L), yp - drop, f.z(0, L), 27, 10, 8, rnd);
+            if (j == null) continue;
+            Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j[0], j[1], j[2],
+                    new int[]{Mouth.DOLINE, L, drop, 2 * r + 1, drop, 0, 0, 0, 0, rnd.nextInt(2)});
             if (fits(spec, c)) return spec;
         }
         return null;

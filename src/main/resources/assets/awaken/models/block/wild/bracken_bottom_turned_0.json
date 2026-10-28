@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cross",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "cross": "awaken:block/wild/bracken_bottom_turned_0_overlay"
+  }
+}

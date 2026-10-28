@@ -1,0 +1,723 @@
+<title>AWAKEN Binoculars</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column (~70ch) under a wide field-glass mock-up; lens-coating slate neutrals, brass for the binoculars, Holo blue for the readout. */
+:root {
+  --bg: #eef0ee; --panel: #fbfcfb; --ink: #17201d; --muted: #58635f; --rule: #d3d9d5;
+  --brass: #94681c; --brass-soft: #f3e8d2; --holo: #1d6fa8; --holo-soft: #e0edf6;
+  --ember: #b5521f; --ember-soft: #f7e5da; --good: #23784a; --bad: #ad3229;
+  --display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --panel: #19201d; --ink: #e4e9e6; --muted: #9aa6a1; --rule: #2b3531;
+  --brass: #d9a74e; --brass-soft: #33281a; --holo: #69b5ea; --holo-soft: #172a38;
+  --ember: #ec8c55; --ember-soft: #3a2419; --good: #63c992; --bad: #ef7b70; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --panel: #19201d; --ink: #e4e9e6; --muted: #9aa6a1; --rule: #2b3531;
+  --brass: #d9a74e; --brass-soft: #33281a; --holo: #69b5ea; --holo-soft: #172a38;
+  --ember: #ec8c55; --ember-soft: #3a2419; --good: #63c992; --bad: #ef7b70; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 17px/1.6 var(--body); }
+.wrap { max-width: 1000px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 72px; }
+.col { max-width: 70ch; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.1; text-wrap: balance; }
+h1 { font-size: clamp(2.5rem, 6vw, 3.5rem); margin: 6px 0 6px; font-weight: 700; letter-spacing: 0.01em; }
+h2 { font-size: 1.9rem; margin: 56px 0 10px; font-weight: 700; padding-top: 14px; border-top: 2px solid var(--ink); }
+h3 { font-size: 1.28rem; margin: 26px 0 6px; font-weight: 600; }
+p { margin: 8px 0; }
+ul, ol { padding-left: 22px; margin: 8px 0; }
+li { margin: 5px 0; }
+.eyebrow { font: 600 0.76rem/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.18rem; max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font: 0.8rem/1.4 var(--mono); color: var(--muted); margin-top: 10px; }
+.status { display: inline-block; font: 600 0.74rem/1 var(--mono); padding: 5px 8px; border-radius: 3px; background: var(--brass-soft); color: var(--brass); letter-spacing: 0.05em; text-transform: uppercase; }
+.short { background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--brass); padding: 12px 20px; margin: 22px 0; }
+.tbl { overflow-x: auto; margin: 12px 0 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; background: var(--panel); }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+th { font: 600 0.72rem/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); background: var(--bg); }
+td.n { text-align: right; font: 0.84rem var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tag { font: 600 0.68rem/1 var(--mono); padding: 3px 6px; border-radius: 3px; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.04em; }
+.keep { background: var(--holo-soft); color: var(--holo); }
+.ext { background: var(--brass-soft); color: var(--brass); }
+.new { background: var(--ember-soft); color: var(--ember); }
+.love { color: var(--good); font-weight: 600; }
+.hate { color: var(--bad); font-weight: 600; }
+code, .mono { font-family: var(--mono); font-size: 0.85em; }
+.note { font-size: 0.88rem; color: var(--muted); }
+a { color: var(--holo); }
+a:focus-visible, button:focus-visible, canvas:focus-visible { outline: 2px solid var(--holo); outline-offset: 2px; }
+
+/* mock-up */
+.mock { margin: 22px 0 8px; background: #0d1110; border-radius: 6px; overflow: hidden; border: 1px solid var(--rule); }
+.mock canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; max-width: 100%; cursor: grab; touch-action: none; }
+.mock canvas:active { cursor: grabbing; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px; background: var(--panel); border-top: 1px solid var(--rule); align-items: center; }
+.controls .grp { display: inline-flex; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+.controls button { font: 600 0.82rem/1 var(--body); padding: 8px 11px; background: var(--panel); color: var(--ink); border: 0; cursor: pointer; }
+.controls .grp button + button { border-left: 1px solid var(--rule); }
+.controls button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.controls button.primary { background: var(--brass); color: #fff; border-radius: 4px; }
+.controls .hint { font: 0.78rem/1.3 var(--mono); color: var(--muted); margin-left: auto; }
+.cap { font-size: 0.88rem; color: var(--muted); margin: 6px 0 0; max-width: 80ch; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 14px 0; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 14px 16px; min-width: 0; }
+.card h3 { margin-top: 0; }
+.card.pick { border: 2px solid var(--brass); }
+.flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 14px 0; }
+.step { background: var(--panel); border: 1px solid var(--rule); border-top: 3px solid var(--holo); padding: 10px 12px; font-size: 0.9rem; min-width: 0; }
+.step b { display: block; font-family: var(--display); font-size: 1.05rem; }
+.ba { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0 20px; }
+.ba > div { background: var(--panel); border: 1px solid var(--rule); padding: 10px 14px; font-size: 0.92rem; min-width: 0; }
+.ba .was { border-top: 3px solid var(--ember); }
+.ba .will { border-top: 3px solid var(--good); }
+.ba h4 { margin: 0 0 4px; font: 600 0.72rem var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+@media (max-width: 640px) { .ba { grid-template-columns: 1fr; } .controls .hint { margin-left: 0; } }
+.dec { counter-reset: d; list-style: none; padding: 0; }
+.dec li { counter-increment: d; background: var(--panel); border: 1px solid var(--rule); padding: 12px 16px 12px 54px; position: relative; margin: 10px 0; }
+.dec li::before { content: counter(d); position: absolute; left: 14px; top: 11px; font: 700 1.4rem/1 var(--display); color: var(--brass); width: 28px; text-align: center; }
+.rec { font: 600 0.74rem var(--mono); color: var(--good); text-transform: uppercase; letter-spacing: 0.05em; }
+.sources li { font-size: 0.86rem; }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">AWAKEN · first person · plan for Euan's approval</div>
+  <h1>Binoculars</h1>
+  <p class="lede">Always on you, one key away. The hands lift a pair of binoculars to your eyes, the world pulls in with weight, the scroll wheel clicks through the magnification, and the glass tells you how far away the thing you're looking at is.</p>
+  <div class="meta"><span class="status">Plan · waiting for your OK · nothing built</span><span>28 Oct 2026</span><span>branch claude/binoculars-plan-6cb428</span><span>SPEC §24 Hands, §20 Far Sight, §21.1 plates, §16.8 Atlas</span></div>
+</header>
+
+<div class="short col">
+  <p><b>In short</b></p>
+  <ul>
+    <li>The zoom mods players love all agree on a few things: zoom that eases instead of snapping, scroll to set how far, the mouse slowing down in step with the zoom, and the hand and HUD out of the way. What they complain about is OptiFine's "cinematic" wobble, a spyglass you have to carry, and a fixed zoom you can't change.</li>
+    <li>I'll build all of that, then go further than any of them: real first-person hands raising real binoculars, our own lens edge, clicky magnification steps with a little settle, a short focus pull, gentle breathing sway that crouching steadies, and a range and compass readout in the glass.</li>
+    <li>Others see you lift the binoculars in third person, so it works in multiplayer. Nothing is saved on the server. No mixins.</li>
+    <li>Two cheap extras use systems you already have: right-click while looking to make that spot your Atlas destination, and see a creature's plate (name and level) out to about 160 blocks.</li>
+    <li>One honest limit: past your render distance, what you see is Far Sight's far land, and at 8× its shapes look 8× coarser. I've kept "Far focus" (Far Sight sharpening where you look) as a later choice, after you've seen it.</li>
+  </ul>
+</div>
+
+<h2>Try the feel</h2>
+<p class="col">This is a stand-in for the game, drawn in the browser, to show the timing and behaviour. It isn't the final art. Press <b>Raise</b> or the <b>I</b> key, scroll (or use − and +) to step the zoom, drag to look around. Switch to <b>Vanilla spyglass</b> to compare.</p>
+<div class="mock">
+  <canvas id="view" width="1280" height="720" tabindex="0" aria-label="Mock binocular view of a hilly landscape. Press I to raise or lower the binoculars, scroll to zoom, drag to look."></canvas>
+  <div class="controls">
+    <button class="primary" id="raise">Raise (I)</button>
+    <span class="grp"><button id="zout" aria-label="Zoom out one step">−</button><button id="zin" aria-label="Zoom in one step">+</button></span>
+    <span class="grp" role="group" aria-label="Lens edge"><button id="twin" aria-pressed="true">Twin edge</button><button id="single" aria-pressed="false">Single edge</button></span>
+    <button id="crouch" aria-pressed="false">Crouch (steadies)</button>
+    <button id="mark">Mark spot (right-click)</button>
+    <span class="grp" role="group" aria-label="Compare"><button id="after" aria-pressed="true">AWAKEN binoculars</button><button id="before" aria-pressed="false">Vanilla spyglass</button></span>
+    <span class="hint" id="hint">tap I toggles · hold I to peek</span>
+  </div>
+</div>
+<p class="cap">The mock-up shows the raise (hands up, eyecups meet the eye, the lens edge takes over), the focus pull, steps of 2×, 3×, 4×, 6×, 8× and 12× with a small settle on each, breathing sway, the readout (magnification, distance, compass), a creature's plate on the stag at 120 m and the Atlas mark. The near hills are drawn as blocks (real chunks, crisp at any zoom); the far ranges are faceted the way Far Sight's far land will look when magnified.</p>
+
+<h2>1 · What you asked for</h2>
+<div class="col">
+<p><b>Your words:</b> "research all of the best zoom mods and what people really like about them… create a custom zoom mod, but with binoculars… you always have it, and when you click a certain button, it uses the binoculars to zoom in. It should be really one of the best zoom mods in the world."</p>
+<h3>How I read it</h3>
+<ul>
+  <li><b>The job:</b> look far across AWAKEN's big world (ridges, ruins, gate pillars, a herd, the city) and decide where to go next, without opening the map.</li>
+  <li><b>The pain today:</b> there's no zoom at all unless you craft and hold a vanilla spyglass, which gives one fixed 10× view, a hard black ring, a mouse slowed by a fixed 8 times, and no hands.</li>
+  <li><b>The experience you want:</b> it feels like holding real binoculars, it's always there, and it's as good as the best zoom mods or better.</li>
+  <li><b>Your idea, kept as is:</b> no item, one key, a binoculars animation. "Always have it" means it can't be lost, dropped or forgotten.</li>
+  <li><b>Things to check rather than guess:</b> a free key, how far zoom can usefully reach with your render distance and Far Sight, and whether Lens, Camera Overhaul and Shoulder Surfing get along with a narrow view.</li>
+</ul>
+<h3>What good looks like</h3>
+<div class="tbl"><table>
+<tr><th>Result</th><th>What you'd notice</th></tr>
+<tr><td class="love">Strong</td><td>You reach for it without thinking. The raise feels like a body moving, the zoom lands with a click, aiming stays as easy as unzoomed, and you spot a ruin, read its distance and mark it in one go.</td></tr>
+<tr><td>Weak</td><td>A plain FOV zoom with a vignette. It works, but it reads as a mod bolted on, which fails your visual quality bar.</td></tr>
+<tr><td class="hate">Unacceptable</td><td>It wobbles or lags behind the mouse (OptiFine's complaint), it eats the hotbar scroll, it leaves you zoomed in after a screen opens or you die, it catches you defenceless in a fight, or it costs frame rate when it's not in use.</td></tr>
+</table></div>
+<p><b>Not in scope:</b> a binoculars item to craft, scopes on weapons, photo mode, or seeing creatures beyond the range the server sends them (that would need new server traffic; see section 6).</p>
+</div>
+
+<h2>2 · What players love and hate</h2>
+<p class="col">I looked at the zoom mods you named, the vanilla spyglass, and binoculars in open-world games. I read their pages and descriptions only. None of their code or art will be used.</p>
+<div class="tbl"><table>
+<tr><th>Source</th><th>What players praise</th><th>What they complain about</th><th>What we take</th></tr>
+<tr><td><b>OptiFine zoom</b><br><span class="note">the original, C key</span></td><td>One key, instant, always there.</td><td class="hate">Its cinematic camera makes the view drift and wobble behind the mouse. Fixed zoom amount. Newer mods sell themselves as the fix.</td><td>Always available. No cinematic camera.</td></tr>
+<tr><td><b>Zoomify</b></td><td>Scroll to zoom further. 14 easing curves with separate times in and out. Mouse speed drops in step with the zoom. Less view bobbing as you zoom. The hand isn't zoomed. Option to hide the HUD. Warns you about key conflicts on first launch.</td><td>A huge settings page to get right; the cinematic option brings back OptiFine's drift.</td><td>All the good parts, chosen for you, with few settings.</td></tr>
+<tr><td><b>Ok Zoomer</b></td><td>Hold, toggle or "persistent" key modes. A vignette or spyglass-style overlay. Can require or replace the spyglass.</td><td>Players have to pick a mode up front.</td><td>Tap to toggle and hold to peek, both on one key.</td></tr>
+<tr><td><b>WI Zoom</b></td><td>Scroll from 3× up to 50×. The camera stays steady with no wobble. Mouse speed adapts.</td><td>Very high zoom shows how coarse distant terrain is.</td><td>Steady camera. A sensible top step.</td></tr>
+<tr><td><b>Logical Zoom</b></td><td>Small and light, "like OptiFine's".</td><td>Few features.</td><td>Zero cost when not in use.</td></tr>
+<tr><td><b>Spyglass Improvements</b></td><td>Scroll zoom for the spyglass, a quick key to use it.</td><td>You still need the spyglass on you.</td><td>No item.</td></tr>
+<tr><td><b>Vanilla spyglass</b></td><td>A real animation and sound, a reason to look.</td><td>Fixed 10× (FOV × 0.1). Mouse a fixed 8× slower (26.3's <code>MouseHandler</code>), so faster on screen than unzoomed. Zoom eases per tick, so it steps at high frame rates. Must be held.</td><td>An animation and sound of our own, without its limits.</td></tr>
+<tr><td><b>Red Dead Redemption 2</b></td><td>Binoculars are in your kit from the start. Hold the view on an animal and "Study" it to learn what it is and its quality.</td><td>Fixed zoom.</td><td>Hold on a creature to read its plate.</td></tr>
+<tr><td><b>Far Cry 5 / New Dawn</b></td><td>Binoculars on one button; hovering tags enemies; triggers step the zoom.</td><td>Tagging everything can feel like a chore.</td><td>Step zoom. Reading is passive and quiet; no tag list.</td></tr>
+<tr><td><b>Breath of the Wild</b></td><td>The scope places pins that appear on the map, so looking leads straight to going.</td><td>A pin limit.</td><td>Right-click marks your one Atlas destination.</td></tr>
+</table></div>
+<p class="note col">Source pages are listed at the end. Mod pages describe features rather than player reviews. Where I say players complain, it's what the newer mods say they fix, plus each mod's own known limits.</p>
+
+<h2>3 · What AWAKEN already has</h2>
+<p class="col">I read the code and SPEC for everything the binoculars would touch. No zoom key or zoom feature exists yet. Several pieces fit almost exactly.</p>
+<div class="tbl"><table>
+<tr><th>Piece</th><th>What it does today (checked)</th><th>Use</th></tr>
+<tr><td>Hands (<code>anims</code>, <code>core.api.FirstPerson</code>, §24)</td><td>The one owner of first-person hands. Clips from <code>tools/art/specs/fp_moves.py</code>, fists placed anywhere on screen, held items put away while the hands are busy, and the hand pass drawn at a fixed 70° so hands don't zoom with the view. The world layer can draw an item at a fist (<code>WorldBody.heldItem</code>).</td><td><span class="tag ext">extend</span> raise and lower clips, a binoculars model at the fists</td></tr>
+<tr><td>FOV hooks</td><td>Stations, the opening and a lean already narrow the view through <code>ComputeFovModifierEvent</code>, which vanilla smooths per tick. <code>ViewportEvent.ComputeFov</code> is set per frame.</td><td><span class="tag keep">reuse</span> per-frame FOV, so zoom is smooth at any frame rate</td></tr>
+<tr><td>Keys (<code>AwakenKeys</code>)</td><td>Z X C V R, Left Alt, K G H Y N B J O U M are taken. Vanilla 26.3 uses W A S D, Space, Shift, Ctrl, E F Q T L O P, Tab, /, and C X in creative. <b>I is the only free letter.</b></td><td><span class="tag new">new key</span> see decision 2</td></tr>
+<tr><td>Mouse speed</td><td>NeoForge's <code>CalculatePlayerTurnEvent</code> lets us set sensitivity each turn.</td><td><span class="tag keep">reuse</span> zoom-matched look speed</td></tr>
+<tr><td>Third-person pose</td><td>The Holo wrist and carrying poses use extended <code>ArmPose</code> values plus a small relay so others see them (<code>HoloArmPose</code>, <code>HoloNet</code>).</td><td><span class="tag keep">copy pattern</span> binoculars pose for others</td></tr>
+<tr><td>Atlas destination (<code>core.api.Destinations</code>)</td><td>One destination per player, already has the kind <code>spot</code>, checked and saved by the server, shown on the Now line.</td><td><span class="tag keep">reuse</span> mark a spot</td></tr>
+<tr><td>Plates (<code>living.client.LivingPlates</code>, §21.1)</td><td>The creature under the crosshair to 24 blocks (40 with Perception), name and level in rank colour, drawn on Holo glass, readable at any distance.</td><td><span class="tag ext">extend</span> range while the binoculars are up</td></tr>
+<tr><td>Far Sight (§20)</td><td>Draws far land to 16 km. Its cached horizon panorama serves only while you stand still and is sized for your normal view.</td><td><span class="tag ext">one check</span> no panorama while zoomed</td></tr>
+<tr><td>Lens (§22)</td><td>Reads the real projection each frame, so a narrow view is handled. Haze grows with distance, which is right for a zoom.</td><td><span class="tag keep">unchanged</span> watch the temporal blend during the zoom-in</td></tr>
+<tr><td>Swing Studio (weapon-anims plan, not built yet)</td><td>Live tuning of weapon swing keys from <code>/Volumes/MEDIA/Awaken-tuning</code> with an A/B switch. Its code is specific to swing keys.</td><td><span class="tag ext">same pattern</span> the binoculars' feel numbers live in one data file; once Swing Studio lands, the same folder can reload it</td></tr>
+<tr><td>Pack mods</td><td>No zoom mod in the pack. Camera Overhaul (roll and sway), Shoulder Surfing (third person), Jade (what you're looking at), Distant Horizons (instead of Far Sight in the horizon profile).</td><td>checked in the failure list</td></tr>
+</table></div>
+
+<h2>4 · Three ways to build it</h2>
+<div class="cards">
+  <div class="card"><h3>A. A good zoom key</h3><p>FOV zoom on a key, scroll steps, zoom-matched mouse speed, a vignette, HUD hidden. About 2 hours.</p><p class="note">Loses: no binoculars, no hands, no feel. It would be a copy of the mods, and it reads as an add-on.</p></div>
+  <div class="card pick"><h3>B. Binoculars as a body action <span class="rec">· recommended</span></h3><p>Everything in A, done carefully, plus the hands raising real binoculars, our own lens edge and sound, detents with a settle, a focus pull, breathing sway, a readout, others seeing it, and two cheap extras.</p><p class="note">Fits Hands, plates and the Atlas as they are. About 6 to 9 hours across stages 0 to 2.</p></div>
+  <div class="card"><h3>C. A real optical render</h3><p>A second camera pass for a true picture-in-picture lens with depth focus and distortion.</p><p class="note">Loses: draws the world twice, which costs frame rate on your Mac, for something B gets close to with one cheap pass. Not worth it.</p></div>
+</div>
+<p class="col">B wins because the binoculars are what make it AWAKEN's and not another zoom mod, and the pieces it needs already exist. What would change my mind: if the raise feels slow in play, the timing is data and comes down in one edit. If you'd rather have no hands at all, A is a subset of B.</p>
+
+<h2>5 · How it behaves</h2>
+<h3>The flow</h3>
+<div class="flow">
+  <div class="step"><b>Press I</b>Tap to keep them up. Hold to peek; they drop when you let go.</div>
+  <div class="step"><b>Raise</b> ~330 ms<br>What you hold goes away, both hands lift the binoculars to your eyes.</div>
+  <div class="step"><b>Eyecups</b><br>The binoculars fill the frame and the lens edge takes over. A soft leather-and-glass sound.</div>
+  <div class="step"><b>Pull in</b> ~300 ms<br>The view eases to your last magnification and comes into focus.</div>
+  <div class="step"><b>Scroll</b><br>Each notch clicks one step, with a tiny settle and a short refocus at high steps.</div>
+  <div class="step"><b>Lower</b> ~220 ms<br>Tap I again, attack, use, sprint, open a screen or get hit.</div>
+</div>
+
+<h3>The rules</h3>
+<div class="tbl"><table>
+<tr><th>Part</th><th>Behaviour</th><th>Why</th></tr>
+<tr><td>Key</td><td>One key, rebindable in Controls, in Awaken's key group. A press shorter than 250 ms toggles; a longer press holds. Settings can make it hold-only or toggle-only.</td><td>Ends the hold-versus-toggle argument without a setting most people never find.</td></tr>
+<tr><td>Magnification</td><td>Steps of 2×, 3×, 4×, 6×, 8×, 12×. The first raise is 4×, then it remembers your last step (also between launches). Scroll while up changes the step and never the hotbar. A trackpad's many small scrolls add up to one step at a time.</td><td>Steps feel like a real focus wheel and are easy to repeat. Past 12×, far land looks too coarse (section 6).</td></tr>
+<tr><td>Zoom curve</td><td>Eased per frame (not per tick) on a log scale, so 2× to 4× feels like 4× to 8×. A step overshoots by about 2% and settles within 120 ms.</td><td>Smooth at 120 fps, and physical, without wobble.</td></tr>
+<tr><td>Look speed</td><td>The mouse slows by exactly the zoom, so things move across the screen at the same speed as unzoomed. A slider (50 to 150%) adjusts it. No cinematic camera and no smoothing of your mouse.</td><td>The top complaint about OptiFine was drift. Vanilla's fixed 8× is wrong at every other zoom.</td></tr>
+<tr><td>Sway</td><td>A slow breathing drift, about 0.4% of the screen at 4× and a little more at 12×. Crouching steadies it to a third. Off with reduced motion or in settings. The view never drifts away from where you put it.</td><td>Makes it feel held by a person, and gives crouching a reason.</td></tr>
+<tr><td>Focus pull</td><td>A short softness that clears as the view arrives (250 ms on the raise, 120 ms on steps of 6× and up).</td><td>The "focus pull" you asked for, and it covers the frames where the view is changing fastest.</td></tr>
+<tr><td>Moving</td><td>You can walk with them up, at a slow walk like the spyglass, which also keeps the view's bob small. Sprinting lowers them. Swimming, riding and flying are allowed.</td><td>Scouting from a boat or a glide is the fun part.</td></tr>
+<tr><td>What lowers them at once</td><td>Attack, use (except right-click marking), sprint, any screen opening, getting hurt, death, a dimension change, a cast, or the hands gripping the world (hang, climb, rope).</td><td>Never caught defenceless, never left zoomed.</td></tr>
+<tr><td>HUD</td><td>Hidden while up, except chat, subtitles and the notices that matter. The glass shows a small readout: <span class="mono">8× · 312 m · NE</span>. F1 hides the readout but keeps the lens edge (a setting can drop the edge for screenshots).</td><td>Clean view, and the readout makes the binoculars useful, not just a zoom.</td></tr>
+<tr><td>Readout</td><td>The distance to what's at the centre of the view: blocks in loaded chunks, then Far Sight's far land, else "far". Bearing in the compass words the Now line uses.</td><td>Pairs with the Atlas: you know where it is and how far.</td></tr>
+<tr><td>Sound</td><td>Our own sounds, made with the repo's sound tools: a fabric-and-strap rustle on the raise, a soft eyecup touch, a light detent click on each step, a lower. Quiet, near the ear.</td><td>Your quality bar: no vanilla spyglass sounds.</td></tr>
+<tr><td>Look of the binoculars</td><td>Our own model and texture from <code>tools/art/specs</code>: dark leather barrels, brass rings, coated lenses with a faint blue-violet sheen. The lens edge is our own art: soft dark edge, a thin brass inner ring, a faint colour fringe at the rim, a hint of glass. No vanilla texture.</td><td>A look that's ours.</td></tr>
+<tr><td>Third person and others</td><td>If you're in third person (or Shoulder Surfing), raising switches you to first person for the look and back after. Everyone else sees both your arms raised to your eyes holding the binoculars. With the Player Animation Library, a full-body clip with a slight lean; without it, the vanilla arm pose.</td><td>Multiplayer-safe, and people can tell you're scouting.</td></tr>
+<tr><td>When it can't come up</td><td>During a vanilla spyglass, a screen, a cast, or while hanging or climbing. Nothing is shown; the key simply waits.</td><td>Hands are busy.</td></tr>
+</table></div>
+
+<h3>Settings and accessibility</h3>
+<ul class="col">
+  <li>Key mode: tap and hold (default), hold only, toggle only.</li>
+  <li>Look speed while zoomed: 100% means matched to the zoom; 50 to 150%.</li>
+  <li>Sway: on (off with reduced motion). Lens edge: twin, single, or off. Readout: on or off.</li>
+  <li>Reduced motion also halves the raise and lower times, removes the settle and the focus pull, and keeps the binoculars still.</li>
+  <li>The FOV slider and the FOV effects slider still work: zoom divides whatever FOV you'd have, so a speed boost stays a speed boost. Zoom is never scaled down by the FOV effects slider, because it's an action you chose, not an effect.</li>
+</ul>
+
+<h3>With the rest of AWAKEN</h3>
+<div class="tbl"><table>
+<tr><th>Next to</th><th>What happens</th></tr>
+<tr><td>Lens</td><td>Works on every tier. Distance haze stays true, so a ridge 3 km away still looks 3 km away when magnified. Risk: Lens's temporal blend may smear for the 300 ms of the pull. The focus pull covers it; if it still shows, Lens resets its history on a big FOV change (a one-line change in Lens, cleared with its owner).</td></tr>
+<tr><td>Far Sight</td><td>Its cached horizon panorama is sized for your normal view; at 8× it would be blurry or need 64× the memory. While the binoculars are up it isn't started, so Far Sight draws live (measured standing at the Roost: 2.6 ms with the panorama, 3.65 ms live; the narrow view leaves out most far pieces, so it should be lower). The check is one flag: <code>CameraHooks.zoom()</code>.</td></tr>
+<tr><td>Camera Overhaul</td><td>Its roll is a turn about the view's centre, so zoom doesn't magnify it. Its sway is small and is scaled like ours.</td></tr>
+<tr><td>Jade</td><td>Hidden with the HUD while up.</td></tr>
+<tr><td>Distant Horizons</td><td>Zoom works. The distance readout stops at loaded chunks, because Distant Horizons doesn't share its depth.</td></tr>
+<tr><td>Hands' other moves</td><td>Binoculars are a stance at interaction priority. A touch, a cast or a climb takes over and lowers them.</td></tr>
+</table></div>
+
+<h2>6 · How far you can see</h2>
+<p class="col">Two things set the limit: which land is real blocks, and which creatures your game knows about.</p>
+<div class="tbl"><table>
+<tr><th>Step</th><th class="n">View (vertical)</th><th class="n">A block 384 m away</th><th class="n">Far Sight cell at 1 km</th></tr>
+<tr><td>1× (your normal 70°)</td><td class="n">70°</td><td class="n">3 px</td><td class="n">10 px</td></tr>
+<tr><td>2×</td><td class="n">39°</td><td class="n">7 px</td><td class="n">21 px</td></tr>
+<tr><td>4×</td><td class="n">20°</td><td class="n">13 px</td><td class="n">41 px</td></tr>
+<tr><td>8×</td><td class="n">10°</td><td class="n">27 px</td><td class="n">82 px</td></tr>
+<tr><td>12×</td><td class="n">6.7°</td><td class="n">40 px</td><td class="n">123 px</td></tr>
+</table></div>
+<p class="note col">Worked for your MacBook's 1,800-pixel-high picture. 384 m is render distance 24 at its edge. A Far Sight cell is 8 blocks at 1 km.</p>
+<ul class="col">
+  <li><b>Real land</b> (out to your render distance, 384 blocks at 24): crisp at any step. A block at the edge is 27 pixels at 8×. This is most of what you'll look at.</li>
+  <li><b>Far land</b> (Far Sight, out to 16 km): its shapes are built so a cell is about a pixel at your normal view. At 8× each cell covers about 8× more, so ridges show straight-edged facets, softened by the haze. This is why the steps stop at 12×.</li>
+  <li><b>Creatures:</b> the server only sends creatures within its tracking range: about 160 blocks for animals, 128 for monsters, and players to your view distance. At render distance 20 or more, vanilla already draws them all the way to that range, so no change is needed. Beyond it, nothing is there to draw. Showing creatures farther away would mean new server traffic; I don't propose it.</li>
+  <li><b>Far focus</b> (optional, later): while you hold still at 6× or more, Far Sight works out a small extra patch of finer land around where you look, about 1 to 2 seconds of work on two background threads, so the far land sharpens like a focus wheel. It changes Far Sight's code, so I suggest deciding after you've seen 8× in play.</li>
+</ul>
+
+<h2>7 · The extras</h2>
+<div class="cards">
+  <div class="card"><h3>Mark a spot <span class="rec">· recommended</span></h3><p>Right-click while looking makes the point at the centre your Atlas destination, named like the Atlas names spots, with its existing words: "That's your destination now." Uses <code>Destinations</code> with the kind <code>spot</code>, which the server already checks. No new saved data.</p><p class="note">About 45 minutes. Out past loaded land it uses Far Sight's ground height, and in multiplayer (no Far Sight) it marks only within loaded land.</p></div>
+  <div class="card"><h3>Read creatures at range <span class="rec">· recommended</span></h3><p>Hold the centre on a creature for half a second and its plate appears (name, level chip in rank colour, its health bar), out to about 160 blocks. Only the one you hold on, and only while the binoculars are up. Like Red Dead's "Study", with nothing to press.</p><p class="note">About 45 minutes. Uses only what your game already knows about the creature, so nothing new comes from the server.</p></div>
+  <div class="card"><h3>Real focus by depth <span class="rec">· later</span></h3><p>The focus pull becomes real: things nearer or farther than the centre blur a little, reading Lens's depth. About 0.3 to 0.5 ms while up, nothing otherwise.</p><p class="note">2 to 3 hours. Best judged once the core is in your hands.</p></div>
+  <div class="card"><h3>Far focus <span class="rec">· later</span></h3><p>Section 6. Far Sight sharpens the land where you hold your look.</p><p class="note">3 to 5 hours, in Far Sight's module.</p></div>
+</div>
+
+<h2>8 · Under the hood</h2>
+<div class="col">
+<h3>Pieces</h3>
+<ul>
+  <li><b>New module <code>binoculars</code></b> (<code>dev.awaken.binoculars</code>): <code>BinocularsModule</code> (the relay payload), <code>client.Glass</code> (the state: down, raising, up, lowering), <code>client.GlassView</code> (FOV, look speed, sway), <code>client.GlassHands</code> (a Hands stance and the raise and lower clips), <code>client.GlassOverlay</code> (lens edge, readout, focus pull), <code>client.GlassOthers</code> (the pose others see), <code>client.Rangefinder</code>.</li>
+  <li><b>Feel data</b> in <code>assets/awaken/binoculars/feel.json</code> (schemaVersion 1): times, curve, steps, sway, settle. A broken file keeps the built-in numbers.</li>
+  <li><b>Art</b> from <code>tools/art/specs</code> (model texture, lens edge, sounds). Clips in <code>fp_moves.py</code>, previewed with its <code>preview</code> command.</li>
+  <li><b>A display-only item</b> <code>awaken:binoculars</code> so the hands and other players' models can draw it like any held thing. Not in any loot or recipe.</li>
+  <li><b>One public addition</b> to SPEC §12: <code>CameraHooks.zoom()</code> (the current magnification, 1 when none) for Far Sight's panorama and anyone else who needs to know.</li>
+  <li>No mixins. Events used, each checked in the 26.3 sources: <code>ViewportEvent.ComputeFov</code>, <code>CalculatePlayerTurnEvent</code>, <code>InputEvent.MouseScrollingEvent</code> (cancelled while up), <code>RenderGuiLayerEvent.Pre</code>, <code>MovementInputUpdateEvent</code>, <code>RegisterKeyMappingsEvent</code>, and Hands' own <code>FirstPerson</code> API.</li>
+</ul>
+<h3>State and network</h3>
+<ul>
+  <li>The binoculars' state is client-side. Your last step and settings live in a client config. Nothing is saved on the server and nothing changes in any save.</li>
+  <li>For others to see you: your client sends "up" or "down" when it changes (at most 4 a second). The server passes it to players tracking you and clears it on death, logout and dimension change. A server without it just doesn't pass it on; your zoom still works.</li>
+  <li>The server never trusts a client for anything that matters. Marking a spot goes through the destination request the server already checks.</li>
+</ul>
+<h3>Cost</h3>
+<ul>
+  <li><b>Not in use:</b> one key check a tick. No per-frame work.</li>
+  <li><b>In use:</b> a few numbers a frame, the overlay (one textured quad and a line of text), and the focus pass only while it's clearing. Range finding: one ray through loaded blocks every 4 frames. The cost to watch is Far Sight drawing live (above).</li>
+  <li>No per-frame allocation in any of it.</li>
+</ul>
+</div>
+
+<h2>9 · What can go wrong</h2>
+<div class="tbl"><table>
+<tr><th>Case</th><th>What happens</th><th>Test</th></tr>
+<tr><td>A screen opens, you die, change dimension or disconnect while up</td><td>Lowered instantly; FOV, look speed and HUD back to normal the same frame.</td><td><code>binoculars_state</code></td></tr>
+<tr><td>Someone rebinds I to something else</td><td>Controls shows the conflict in red as usual. Our key reads first only while up.</td><td>by hand</td></tr>
+<tr><td>Scroll while up</td><td>Changes the step, never the hotbar. While down, the hotbar works as normal.</td><td><code>binoculars_zoom</code></td></tr>
+<tr><td>Very low or very high FOV setting (30 to 110)</td><td>Each step divides your view by its number; never under 1°.</td><td><code>binoculars_zoom</code></td></tr>
+<tr><td>Look speed with low mouse sensitivity</td><td>Vanilla's sensitivity is cubed; the maths keeps the on-screen speed within 2% at every step and setting.</td><td><code>binoculars_sense</code></td></tr>
+<tr><td>Hands' first-person moves turned off</td><td>No raise animation; the lens edge fades in instead. Zoom works the same.</td><td>by hand</td></tr>
+<tr><td>Broken <code>feel.json</code></td><td>Built-in numbers, one log line.</td><td><code>binoculars_feel</code></td></tr>
+<tr><td>A spammed or forged relay packet</td><td>Rate-limited; only sets your own pose for others; ignored from a dead player.</td><td><code>binoculars_relay</code></td></tr>
+<tr><td>Mark on sky, or past known land in multiplayer</td><td>"Too far to tell" in the readout; no destination set.</td><td><code>binoculars_mark</code></td></tr>
+<tr><td>Lens smears during the pull</td><td>Covered by the focus pull; Lens history reset if needed.</td><td>Euan in game</td></tr>
+<tr><td>Vanilla spyglass at the same time</td><td>The binoculars wait until it's lowered.</td><td><code>binoculars_state</code></td></tr>
+</table></div>
+
+<h2>10 · Before and after</h2>
+<h3>Spotting a ruin from a ridge (the ordinary case)</h3>
+<div class="ba"><div class="was"><h4>Today</h4>No zoom. Open the Atlas, look for unexplored land, guess, close it, walk.</div>
+<div class="will"><h4>With binoculars</h4>Tap I, scroll to 8×, see a broken tower: <span class="mono">8× · 610 m · NE</span>. Right-click. The Now line points the way. One key, one scroll, one click, and the map never opened.</div></div>
+<h3>Something moving in the valley (the case zoom mods do badly)</h3>
+<div class="ba"><div class="was"><h4>With a spyglass</h4>Fixed 10×, the mouse a fixed 8× slower, a hard black ring, and no idea what or how dangerous it is.</div>
+<div class="will"><h4>With binoculars</h4>4× to find it, 8× to hold it, half a second on it and its plate reads "Ashback boar · Lv 23" in the rank's colour. Aim feels the same at every step.</div></div>
+<h3>A mountain range 5 km away (the hard case)</h3>
+<div class="ba"><div class="was"><h4>Today</h4>Far Sight draws it beautifully at your normal view.</div>
+<div class="will"><h4>With binoculars</h4>At 4× it reads well through the haze. At 12× you see Far Sight's facets. The readout says <span class="mono">5.1 km</span>. If that bothers you, Far focus is the fix (decision 7).</div></div>
+<h3>Caught looking (the failure case)</h3>
+<div class="ba"><div class="was"><h4>A plain zoom mod</h4>A wolf bites you while you're at 8× with the HUD hidden.</div>
+<div class="will"><h4>With binoculars</h4>The first hit lowers them in the same frame, the HUD comes back, and your sword is in your hand.</div></div>
+
+<h2>11 · Tests, stages and estimate</h2>
+<div class="col">
+<h3>Tests (GameTests, prefix <code>binoculars_</code>)</h3>
+<ul>
+  <li><code>binoculars_state</code>: tap, hold, toggle, and every cause of lowering.</li>
+  <li><code>binoculars_zoom</code>: steps, memory, trackpad build-up, FOV from 30 to 110 with any speed effect.</li>
+  <li><code>binoculars_sense</code>: the on-screen look speed stays within 2% of unzoomed at every step and mouse setting.</li>
+  <li><code>binoculars_feel</code>: the file reads; a broken one keeps the defaults.</li>
+  <li><code>binoculars_relay</code>: only trackers hear it, rate limit, cleared on death, logout, dimension change.</li>
+  <li><code>binoculars_mark</code>: a spot becomes the destination through the server's own checks; sky and out-of-world refused.</li>
+  <li>The look and feel can't be tested headless. That's your play: the checklist below.</li>
+</ul>
+<h3>Your checklist in game</h3>
+<ol>
+  <li>Raise and lower ten times quickly. It never sticks, and the sword comes back.</li>
+  <li>Step 2× to 12× and back. Each step clicks and settles. Nothing wobbles.</li>
+  <li>Track a running animal at 8×. It feels like aiming unzoomed.</li>
+  <li>Crouch at 12×. The view calms.</li>
+  <li>Look at Carillon from far away, then at a far range on Lens Ultra. Fine, or ask for Far focus.</li>
+  <li>Get hit while looking. They come down at once.</li>
+  <li>Have someone watch you in third person (or <code>/awaken binoculars peek</code> to see yourself).</li>
+</ol>
+<h3>Stages</h3>
+<div class="tbl"><table>
+<tr><th>Stage</th><th>What</th><th class="n">Time</th><th>Gate</th></tr>
+<tr><td>0</td><td>The feel file and the pure maths (state, steps, curve, look speed) with their tests</td><td class="n">~1 h</td><td>tests green</td></tr>
+<tr><td>1</td><td>The binoculars: key, raise and lower clips and model, zoom, look speed, sway, focus pull, lens edge, HUD, readout (distance in loaded land), sounds, others' pose, Far Sight check, settings</td><td class="n">4–6 h</td><td>CI green, then you play</td></tr>
+<tr><td>2</td><td>Mark a spot, read creatures at range, distance past loaded land</td><td class="n">1.5–2 h</td><td>CI green, then you play</td></tr>
+<tr><td>3 (later)</td><td>Real focus by depth; Far focus</td><td class="n">2–3 h; 3–5 h</td><td>your call after stage 2</td></tr>
+</table></div>
+<p>I do all of it myself in this session, with no sub-agents. It isn't large enough to split. Each stage ends on a pushed branch with CI's GameTests green, handed to the orchestrator to merge; no tours from me. Turning it off: every part sits behind the binoculars module; the Far Sight and plates changes check one flag and do nothing when the binoculars are down. If something's wrong in play, the setting "Binoculars: off" frees the key until a fix lands.</p>
+<p class="note">Times are at the pace the rest of AWAKEN was built. What could grow them: the hands' clip timing taking a few rounds with you, or the Lens temporal blend needing more than a reset.</p>
+</div>
+
+<h2>12 · Decisions for you</h2>
+<ol class="dec col">
+  <li><b>Build the binoculars as planned, stages 0 to 2</b> (the core, mark a spot, read creatures at range). <span class="rec">Recommended: yes</span></li>
+  <li><b>Default key.</b> I is the only free letter. B would be easy to remember but it's Bind Echo. A mouse side button is also possible. All are rebindable. <span class="rec">Recommended: I</span></li>
+  <li><b>Tap to toggle, hold to peek, both on one key.</b> <span class="rec">Recommended: yes</span></li>
+  <li><b>Lens edge.</b> Twin (two soft merged circles, reads as binoculars at a glance, the film look) or single (one wide round field, closer to what real binoculars show). Both are in the mock-up. <span class="rec">Recommended: twin</span></li>
+  <li><b>Steps of 2×, 3×, 4×, 6×, 8×, 12×, first raise at 4×, then remembered.</b> <span class="rec">Recommended: yes</span></li>
+  <li><b>Walking with them up at a slow walk</b>, rather than standing still. <span class="rec">Recommended: yes</span></li>
+  <li><b>Later choices, after you've played stage 2:</b> real focus by depth, and Far focus in Far Sight. <span class="rec">Recommended: decide then</span></li>
+</ol>
+
+<h2>Sources</h2>
+<ul class="sources col">
+  <li>Zoomify, features and settings: <a href="https://modrinth.com/mod/zoomify">modrinth.com/mod/zoomify</a></li>
+  <li>Ok Zoomer, key modes, overlays, spyglass options: <a href="https://modrinth.com/mod/ok-zoomer">modrinth.com/mod/ok-zoomer</a></li>
+  <li>WI Zoom, scroll to 50×, no wobble compared with OptiFine: <a href="https://github.com/Wurst-Imperium/WI-Zoom">github.com/Wurst-Imperium/WI-Zoom</a></li>
+  <li>Logical Zoom and Spyglass Improvements, summary of zoom mods: <a href="https://blog.curseforge.com/how-to-zoom-in-minecraft/">CurseForge blog, how to zoom in Minecraft</a>; <a href="https://www.curseforge.com/minecraft/mc-mods/spyglass-improvements/files/7228711">Spyglass Improvements on CurseForge</a></li>
+  <li>OptiFine's cinematic camera and the newer mods' answer to it: <a href="https://www.modpackindex.com/mod/101148/ultra-better-optifine-zoom">Better OptiFine Zoom</a>, <a href="https://www.modpackindex.com/mod/23662/smoothfocus">SmoothFocus</a></li>
+  <li>Vanilla spyglass: read in the 26.3 sources (<code>AbstractClientPlayer</code> FOV × 0.1, <code>MouseHandler</code> turn speed, <code>Camera.tickFov</code> per-tick easing).</li>
+  <li>Red Dead Redemption 2, studying animals through binoculars: <a href="https://shacknews.com/article/108167/complete-hunting-guide-red-dead-redemption-2">Shacknews hunting guide</a></li>
+  <li>Far Cry, binoculars tag enemies, zoom on the triggers: <a href="https://twinfinite.net/guides/far-cry-5-how-to-use-binoculars/">Twinfinite, Far Cry 5 binoculars</a>, <a href="https://twinfinite.net/guides/far-cry-new-dawn-use-binoculars-mark-enemies-how-use/">Far Cry New Dawn</a></li>
+  <li>Breath of the Wild, the scope places pins on the map: <a href="https://zeldawiki.wiki/wiki/Scope">Zelda Wiki, Scope</a></li>
+</ul>
+</div>
+
+<script>
+(() => {
+  const cv = document.getElementById('view'), g = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const STEPS = [2, 3, 4, 6, 8, 12];
+  const BASE_FOV = 70;
+  const S = {
+    mode: 'after', edge: 'twin', crouch: false,
+    yaw: 9, pitch: -0.4, up: false, raise: 0, step: 2, mag: 1, magV: 0, blur: 0,
+    held: false, downAt: 0, toast: '', toastT: 0, plateT: 0, vanillaFov: 1, hotbar: 0,
+  };
+  // world: ridge layers far to near, distance in metres; far ones are Far Sight (faceted), near ones real blocks
+  const LAYERS = [
+    { d: 5200, base: 0.6, amp: 2.3, f: 0.045, col: [150, 164, 186], real: false },
+    { d: 2100, base: 0.2, amp: 2.2, f: 0.07, col: [118, 136, 140], real: false },
+    { d: 610, base: -0.6, amp: 1.9, f: 0.13, col: [86, 112, 82], real: false },
+    { d: 300, base: -2.6, amp: 1.4, f: 0.22, col: [74, 104, 58], real: true },
+    { d: 95, base: -6.5, amp: 2.2, f: 0.5, col: [92, 116, 52], real: true },
+  ];
+  const SKY = [196, 214, 230];
+  const ph = [0.3, 1.9, 4.1, 2.6, 5.2, 0.9, 3.3];
+  function ridge(L, i, az) {
+    let v = Math.sin(az * L.f + ph[i]) * 0.55 + Math.sin(az * L.f * 2.3 + ph[i + 1]) * 0.3 + Math.sin(az * L.f * 5.1 + ph[i] * 2) * 0.15;
+    return L.base + L.amp * v;
+  }
+  // a ruin on the 610 m ridge, a gate pillar far off, a stag at 120 m
+  const RUIN = { az: 14, d: 610 }, PILLAR = { az: -21, d: 2100 }, STAG = { az: 5.2, d: 120 };
+  function surface(i, az) {
+    const L = LAYERS[i];
+    if (L.real) {
+      const blk = 57.2958 / L.d; // one block in degrees
+      const qa = Math.floor(az / blk) * blk;
+      return Math.round(ridge(L, i, qa) / blk) * blk;
+    }
+    const cell = 57.2958 * (L.d > 2000 ? 32 : L.d > 1000 ? 16 : 8) / L.d; // a Far Sight cell in degrees
+    const a0 = Math.floor(az / cell) * cell, t = (az - a0) / cell;
+    return ridge(L, i, a0) * (1 - t) + ridge(L, i, a0 + cell) * t;
+  }
+  const mix = (c, k) => `rgb(${(c[0] + (SKY[0] - c[0]) * k) | 0},${(c[1] + (SKY[1] - c[1]) * k) | 0},${(c[2] + (SKY[2] - c[2]) * k) | 0})`;
+  const haze = d => 1 - Math.exp(-d / 3800);
+
+  let fovV, tanV, tanH, cy, cp;
+  function sx(az) { return W / 2 + (W / 2) * Math.tan((az - cy) * Math.PI / 180) / tanH; }
+  function sy(el) { return H / 2 - (H / 2) * Math.tan((el - cp) * Math.PI / 180) / tanV; }
+  function azAt(x) { return cy + Math.atan(((x - W / 2) / (W / 2)) * tanH) * 180 / Math.PI; }
+
+  function drawWorld(mag, yaw, pitch) {
+    fovV = 2 * Math.atan(Math.tan(BASE_FOV * Math.PI / 360) / mag);
+    tanV = Math.tan(fovV / 2); tanH = tanV * W / H; cy = yaw; cp = pitch;
+    const sky = g.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#7fa6cf'); sky.addColorStop(0.55, 'rgb(196,214,230)'); sky.addColorStop(1, '#e8e2cf');
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    // sun glow
+    const sunX = sx(-38), sunY = sy(9);
+    const sg = g.createRadialGradient(sunX, sunY, 0, sunX, sunY, 260);
+    sg.addColorStop(0, 'rgba(255,246,220,0.9)'); sg.addColorStop(1, 'rgba(255,246,220,0)');
+    g.fillStyle = sg; g.fillRect(0, 0, W, H);
+    const step = 2;
+    LAYERS.forEach((L, i) => {
+      g.fillStyle = mix(L.col, haze(L.d));
+      g.beginPath(); g.moveTo(0, H);
+      for (let x = 0; x <= W; x += step) g.lineTo(x, sy(surface(i, azAt(x))));
+      g.lineTo(W, H); g.closePath(); g.fill();
+      if (i === 1) drawPillar();
+      if (i === 2) drawRuin();
+      if (i === 3) { drawTrees(i); drawStag(); }
+    });
+  }
+  function blockBox(az, el, d, wBlocks, hBlocks, col) {
+    const deg = 57.2958 / d;
+    const x0 = sx(az - wBlocks * deg / 2), x1 = sx(az + wBlocks * deg / 2);
+    const y0 = sy(el + hBlocks * deg), y1 = sy(el);
+    g.fillStyle = col; g.fillRect(x0, y0, Math.max(1, x1 - x0), Math.max(1, y1 - y0));
+  }
+  function drawRuin() {
+    const i = 2, el = surface(i, RUIN.az), c = mix([96, 92, 86], haze(RUIN.d)), c2 = mix([70, 66, 62], haze(RUIN.d));
+    blockBox(RUIN.az, el, RUIN.d, 7, 18, c);
+    blockBox(RUIN.az - 2.2 * 57.3 / RUIN.d, el + 18 * 57.3 / RUIN.d, RUIN.d, 2.6, 4, c);
+    blockBox(RUIN.az + 1.6 * 57.3 / RUIN.d, el + 6 * 57.3 / RUIN.d, RUIN.d, 1.2, 3, c2);
+    blockBox(RUIN.az + 5.5 * 57.3 / RUIN.d, el, RUIN.d, 4, 6, c);
+  }
+  function drawPillar() {
+    const el = surface(1, PILLAR.az), deg = 57.2958 / PILLAR.d;
+    const x = sx(PILLAR.az), w = Math.max(2, sx(PILLAR.az + 3 * deg) - x);
+    const gr = g.createLinearGradient(0, sy(el + 400 * deg), 0, sy(el));
+    gr.addColorStop(0, 'rgba(150,200,255,0)'); gr.addColorStop(1, 'rgba(170,215,255,0.75)');
+    g.fillStyle = gr; g.fillRect(x - w / 2, sy(el + 400 * deg), w, sy(el) - sy(el + 400 * deg));
+  }
+  function drawTrees(i) {
+    const L = LAYERS[i], deg = 57.2958 / L.d;
+    for (let k = -40; k <= 40; k++) {
+      const az = k * 1.37 + Math.sin(k * 7.1) * 0.5;
+      if (Math.sin(k * 3.7) < 0.1) continue;
+      const el = surface(i, az);
+      blockBox(az, el, L.d, 1, 4, mix([84, 62, 40], haze(L.d)));
+      blockBox(az, el + 3 * deg, L.d, 5, 4, mix([46, 84, 40], haze(L.d)));
+    }
+  }
+  function stagEl() { return surface(3, STAG.az) - 0.9; }
+  function drawStag() {
+    const el = stagEl(), d = STAG.d, deg = 57.2958 / d, t = performance.now() / 1000;
+    const a = STAG.az + Math.sin(t * 0.25) * 0.6;
+    const c = mix([120, 74, 44], haze(d));
+    blockBox(a, el + 0.8 * deg, d, 1.4, 0.8, c);
+    blockBox(a + 0.75 * deg, el + 1.4 * deg, d, 0.45, 0.6, c);
+    blockBox(a - 0.5 * deg, el, d, 0.2, 0.8, c);
+    blockBox(a + 0.5 * deg, el, d, 0.2, 0.8, c);
+    blockBox(a + 0.95 * deg, el + 2.0 * deg, d, 0.5, 0.5, mix([210, 196, 170], haze(d)));
+    STAG.now = a;
+  }
+  // what's at the centre: the nearest layer whose ground reaches the line of sight
+  function centreHit(yaw, pitch) {
+    let hit = null;
+    for (let i = LAYERS.length - 1; i >= 0; i--) {
+      if (surface(i, yaw) >= pitch) { hit = LAYERS[i].d; break; }
+    }
+    return hit;
+  }
+  const compass = yaw => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][(((Math.round((yaw + 45) / 45) % 8) + 8) % 8)];
+  const fmtDist = d => d == null ? 'far' : d >= 1000 ? (d / 1000).toFixed(1) + ' km' : Math.round(d) + ' m';
+
+  // ---- overlay: lens edge ----
+  const mask = document.createElement('canvas'); mask.width = W; mask.height = H;
+  let maskFor = '';
+  function buildMask() {
+    const m = mask.getContext('2d');
+    m.clearRect(0, 0, W, H);
+    m.fillStyle = '#0b0d0c'; m.fillRect(0, 0, W, H);
+    m.globalCompositeOperation = 'destination-out';
+    const holes = S.edge === 'twin' ? [[W / 2 - H * 0.27, H / 2, H * 0.5], [W / 2 + H * 0.27, H / 2, H * 0.5]] : [[W / 2, H / 2, H * 0.62]];
+    for (const [x, y, r] of holes) {
+      const gr = m.createRadialGradient(x, y, r * 0.72, x, y, r);
+      gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(0.8, 'rgba(0,0,0,0.85)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      m.fillStyle = gr; m.beginPath(); m.arc(x, y, r, 0, Math.PI * 2); m.fill();
+    }
+    m.globalCompositeOperation = 'source-over';
+    // brass inner ring and a faint colour fringe
+    holes.forEach(([x, y, r], hi) => {
+      m.save();
+      // in the twin edge, keep each rim off the other glass's field
+      if (holes.length > 1) { const [ox, oy, orr] = holes[1 - hi]; m.beginPath(); m.rect(0, 0, W, H); m.arc(ox, oy, orr * 0.95, 0, Math.PI * 2, true); m.clip('evenodd'); }
+      m.lineWidth = 2; m.strokeStyle = 'rgba(190,140,60,0.35)'; m.beginPath(); m.arc(x, y, r * 0.93, 0, Math.PI * 2); m.stroke();
+      m.lineWidth = 3; m.strokeStyle = 'rgba(80,170,255,0.10)'; m.beginPath(); m.arc(x - 1.5, y, r * 0.9, 0, Math.PI * 2); m.stroke();
+      m.strokeStyle = 'rgba(255,120,80,0.08)'; m.beginPath(); m.arc(x + 1.5, y, r * 0.9, 0, Math.PI * 2); m.stroke();
+      m.restore();
+    });
+    maskFor = S.edge;
+  }
+  function vanillaMask() {
+    g.fillStyle = '#000';
+    g.beginPath(); g.rect(0, 0, W, H); g.arc(W / 2, H / 2, H * 0.46, 0, Math.PI * 2, true); g.fill('evenodd');
+  }
+
+  // ---- hands with binoculars (stand-in for the first-person model) ----
+  function drawHands(p) {
+    // p: 0 down, 1 at the eyes; the binoculars rise from under the frame and grow toward the eye
+    const e = 1 - Math.pow(1 - Math.min(1, p / 0.8), 3);
+    const y = H * (1.25 - 0.78 * e), s = 0.55 + 1.9 * Math.pow(Math.max(0, (p - 0.55) / 0.45), 2);
+    g.save(); g.translate(W / 2, y); g.scale(s, s);
+    // forearms
+    g.fillStyle = '#c99a72';
+    g.fillRect(-250, 70, 90, 260); g.fillRect(160, 70, 90, 260);
+    g.fillStyle = '#3d4a63'; g.fillRect(-258, 190, 106, 160); g.fillRect(152, 190, 106, 160);
+    // barrels
+    g.fillStyle = '#2a2420';
+    g.fillRect(-190, -40, 150, 190); g.fillRect(40, -40, 150, 190);
+    g.fillStyle = '#3a312a'; g.fillRect(-40, 0, 80, 70);
+    g.fillStyle = '#9a6b22'; g.fillRect(-190, -40, 150, 14); g.fillRect(40, -40, 150, 14);
+    g.fillRect(-26, 12, 52, 40);
+    g.fillStyle = '#1a1716'; g.fillRect(-182, 132, 134, 22); g.fillRect(48, 132, 134, 22);
+    // fists
+    g.fillStyle = '#d6a77d'; g.fillRect(-228, 20, 70, 90); g.fillRect(158, 20, 70, 90);
+    g.restore();
+  }
+
+  // ---- input ----
+  const btn = id => document.getElementById(id);
+  function setUp(v) {
+    if (S.mode === 'before') { S.up = v; return; }
+    if (v === S.up) return;
+    S.up = v;
+    if (v) S.blur = reduce ? 0 : 7;
+    btn('raise').textContent = v ? 'Lower (I)' : 'Raise (I)';
+  }
+  function stepZoom(dir) {
+    if (S.mode === 'before') { S.hotbar = (S.hotbar + dir + 9) % 9; toast('Scroll changed hotbar slot ' + (S.hotbar + 1) + ' (the spyglass has no zoom steps)'); return; }
+    if (!S.up) return;
+    const n = Math.max(0, Math.min(STEPS.length - 1, S.step + dir));
+    if (n !== S.step) { S.step = n; if (STEPS[n] >= 6 && !reduce) S.blur = Math.max(S.blur, 2.2); click(); }
+  }
+  let audio;
+  function click() {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      const o = audio.createOscillator(), gn = audio.createGain();
+      o.type = 'triangle'; o.frequency.value = 1900;
+      gn.gain.setValueAtTime(0.05, audio.currentTime); gn.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.04);
+      o.connect(gn).connect(audio.destination); o.start(); o.stop(audio.currentTime + 0.05);
+    } catch (e) {}
+  }
+  function toast(t) { S.toast = t; S.toastT = performance.now(); }
+  btn('raise').onclick = () => setUp(!S.up);
+  btn('zin').onclick = () => stepZoom(1);
+  btn('zout').onclick = () => stepZoom(-1);
+  function press(id, on) { btn(id).setAttribute('aria-pressed', on ? 'true' : 'false'); }
+  btn('twin').onclick = () => { S.edge = 'twin'; press('twin', 1); press('single', 0); };
+  btn('single').onclick = () => { S.edge = 'single'; press('twin', 0); press('single', 1); };
+  btn('crouch').onclick = () => { S.crouch = !S.crouch; press('crouch', S.crouch); };
+  btn('after').onclick = () => { S.mode = 'after'; press('after', 1); press('before', 0); S.up = false; S.raise = 0; S.mag = 1; btn('raise').textContent = 'Raise (I)'; btn('hint').textContent = 'tap I toggles · hold I to peek'; };
+  btn('before').onclick = () => { S.mode = 'before'; press('after', 0); press('before', 1); S.up = false; S.vanillaFov = 1; btn('raise').textContent = 'Use spyglass (hold I)'; btn('hint').textContent = 'hold I · fixed 10× · scroll moves the hotbar'; };
+  function mark() {
+    if (!S.up || S.mode === 'before') { toast(S.mode === 'before' ? 'The spyglass can\'t mark anything' : 'Raise the binoculars first'); return; }
+    const d = centreHit(S.yaw, S.pitch);
+    toast(d == null ? 'Too far to tell' : 'That\'s your destination now. ' + fmtDist(d) + ' ' + compass(S.yaw));
+  }
+  btn('mark').onclick = mark;
+  cv.addEventListener('contextmenu', e => { e.preventDefault(); mark(); });
+  window.addEventListener('keydown', e => {
+    if (e.key !== 'i' && e.key !== 'I') return;
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    if (e.repeat) return;
+    e.preventDefault();
+    S.downAt = performance.now(); S.wasUp = S.up;
+    if (S.mode === 'before') { S.up = true; return; }
+    if (!S.up) setUp(true);
+  });
+  window.addEventListener('keyup', e => {
+    if (e.key !== 'i' && e.key !== 'I') return;
+    if (S.mode === 'before') { S.up = false; return; }
+    const held = performance.now() - S.downAt;
+    if (held >= 250) setUp(false);          // a hold: down on release
+    else if (S.wasUp) setUp(false);          // a tap while up: down
+  });
+  let wheelAcc = 0;
+  cv.addEventListener('wheel', e => {
+    if (!S.up && S.mode === 'after') return;
+    e.preventDefault();
+    wheelAcc += e.deltaY;
+    const notch = e.deltaMode === 1 ? 3 : 60; // trackpads send many small deltas: add them up to whole steps
+    while (Math.abs(wheelAcc) >= notch) { stepZoom(wheelAcc < 0 ? 1 : -1); wheelAcc -= Math.sign(wheelAcc) * notch; }
+  }, { passive: false });
+  let drag = null;
+  cv.addEventListener('pointerdown', e => { if (e.button !== 0) return; drag = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); cv.focus(); });
+  cv.addEventListener('pointerup', () => drag = null);
+  cv.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag = { x: e.clientX, y: e.clientY };
+    const scale = cv.clientWidth / W;
+    // degrees per pixel at 1×, then the look speed for the current view
+    const perPx = BASE_FOV / (cv.clientHeight || 1);
+    let k;
+    if (S.mode === 'before') k = S.up ? 1 / 8 : 1;          // vanilla: a fixed 8× slower
+    else k = 1 / S.mag;                                      // matched to the zoom
+    S.yaw = Math.max(-60, Math.min(60, S.yaw - dx * perPx * k));
+    S.pitch = Math.max(-12, Math.min(14, S.pitch + dy * perPx * k));
+    void scale;
+  });
+
+  // ---- frame ----
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    let mag, sway = [0, 0];
+    if (S.mode === 'after') {
+      // raise: 330 ms up, 220 ms down (halved with reduced motion)
+      const upT = reduce ? 0.165 : 0.33, downT = reduce ? 0.11 : 0.22;
+      S.raise = S.up ? Math.min(1, S.raise + dt / upT) : Math.max(0, S.raise - dt / downT);
+      // the view pulls in once the eyecups meet the eye (raise past 0.85): a spring on log(mag), slightly underdamped
+      const target = S.raise > 0.85 && S.up ? STEPS[S.step] : 1;
+      const x = Math.log(S.mag), tx = Math.log(target);
+      const w = reduce ? 30 : 22, z = reduce ? 1 : 0.82;
+      S.magV += (-(w * w) * (x - tx) - 2 * z * w * S.magV) * dt;
+      S.mag = Math.exp(x + S.magV * dt);
+      if (!S.up && S.raise < 0.85) { S.mag = Math.max(1, S.mag); }
+      mag = S.mag;
+      S.blur = Math.max(0, S.blur - dt * (S.blur > 3 ? 26 : 16));
+      if (!reduce && S.raise > 0.9) {
+        const t = now / 1000, a = 0.04 * Math.sqrt(mag) * (S.crouch ? 0.33 : 1);
+        sway = [a * (Math.sin(t * 1.45) + 0.4 * Math.sin(t * 0.61 + 1.3)), a * 0.7 * (Math.sin(t * 1.95 + 0.7) + 0.35 * Math.sin(t * 0.83))];
+      }
+    } else {
+      // vanilla: the FOV modifier moves half way to its target every 50 ms tick
+      S.tickAcc = (S.tickAcc || 0) + dt;
+      while (S.tickAcc >= 0.05) { S.tickAcc -= 0.05; S.vanillaFov += ((S.up ? 0.1 : 1) - S.vanillaFov) * 0.5; }
+      mag = 1 / S.vanillaFov;
+    }
+    const yaw = S.yaw + sway[0], pitch = S.pitch + sway[1];
+    g.save();
+    if (S.blur > 0.15) g.filter = `blur(${S.blur.toFixed(1)}px)`;
+    drawWorld(mag, yaw, pitch);
+    g.restore();
+
+    if (S.mode === 'after') {
+      const lensA = Math.max(0, Math.min(1, (S.raise - 0.82) / 0.18));
+      if (S.raise > 0 && S.raise < 1 && lensA < 1) drawHands(S.raise);
+      if (lensA > 0) {
+        if (maskFor !== S.edge) buildMask();
+        g.globalAlpha = lensA; g.drawImage(mask, 0, 0); g.globalAlpha = 1;
+        // readout
+        if (lensA > 0.95) {
+          const d = centreHit(S.yaw, S.pitch);
+          g.font = '600 22px "IBM Plex Mono", monospace'; g.textAlign = 'center';
+          g.fillStyle = 'rgba(160,215,255,0.85)';
+          g.fillText(`${STEPS[S.step]}×  ·  ${fmtDist(d)}  ·  ${compass(S.yaw)}`, W / 2, H - 42);
+          g.fillStyle = 'rgba(160,215,255,0.5)'; g.fillRect(W / 2 - 1, H / 2 - 1, 2, 2);
+          // plate on the stag once the centre has rested on it for half a second
+          const deg = 57.2958 / STAG.d, el = stagEl();
+          const onStag = Math.abs((STAG.now || STAG.az) - yaw) < 1.2 * deg + 0.15 && Math.abs(el + deg - pitch) < 1.2 * deg + 0.15;
+          S.plateT = onStag ? S.plateT + dt : Math.max(0, S.plateT - dt * 3);
+          if (S.plateT > 0.5) {
+            const px = sx(STAG.now || STAG.az), py = sy(el + 2.8 * deg) - 18;
+            const a = Math.min(1, (S.plateT - 0.5) * 4);
+            g.globalAlpha = a;
+            g.fillStyle = 'rgba(12,30,48,0.62)'; g.fillRect(px - 92, py - 30, 184, 40);
+            g.strokeStyle = 'rgba(120,200,255,0.55)'; g.strokeRect(px - 92, py - 30, 184, 40);
+            g.font = '600 15px "Source Sans 3", sans-serif'; g.textAlign = 'left'; g.fillStyle = '#e6f4ff';
+            g.fillText('Red stag', px - 80, py - 12);
+            g.fillStyle = '#c38a2e'; g.fillRect(px + 38, py - 25, 44, 18);
+            g.fillStyle = '#fff'; g.font = '600 12px "IBM Plex Mono", monospace'; g.fillText('Lv 12', px + 43, py - 12);
+            for (let k = 0; k < 10; k++) { g.fillStyle = 'rgba(140,220,170,0.85)'; g.fillRect(px - 80 + k * 16.2, py - 2, 13, 4); }
+            g.globalAlpha = 1;
+          }
+        }
+      }
+      if (S.raise === 0) {
+        g.font = '600 20px "Source Sans 3", sans-serif'; g.textAlign = 'center'; g.fillStyle = 'rgba(20,28,24,0.7)';
+        g.fillText('Press I or Raise', W / 2, H - 36);
+      }
+    } else {
+      if (S.vanillaFov < 0.6) vanillaMask();
+      if (!S.up && S.vanillaFov > 0.95) {
+        g.font = '600 20px "Source Sans 3", sans-serif'; g.textAlign = 'center'; g.fillStyle = 'rgba(20,28,24,0.7)';
+        g.fillText('Hold I to use the spyglass', W / 2, H - 36);
+      }
+    }
+    if (S.toast && now - S.toastT < 2600) {
+      const a = Math.min(1, (2600 - (now - S.toastT)) / 400);
+      g.globalAlpha = a; g.font = '600 20px "Source Sans 3", sans-serif'; g.textAlign = 'center';
+      const tw = g.measureText(S.toast).width + 36;
+      g.fillStyle = 'rgba(14,22,30,0.82)'; g.fillRect(W / 2 - tw / 2, 28, tw, 42);
+      g.fillStyle = '#f2ead8'; g.fillText(S.toast, W / 2, 56); g.globalAlpha = 1;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>

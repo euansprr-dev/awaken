@@ -21,6 +21,10 @@ final class Shape {
     static final int SHELL = 12;     // sprites on a sphere around the anchor facing outward (hex skin): radius a
     static final int EMITTER = 13;   // draws nothing; only runs its emitter (auras, trails of sparks, fire paths)
     static final int SLASH = 14;     // a blade's arc about anchor + e: axes n (0) and u (90 deg), from angle c through range, radius a, band b, d ticks
+    // the ladder's (SPEC 36.5)
+    static final int ORBIT = 15;     // emitParam sprites circling the anchor in the plane of n: radius a->b, spin c (rad/tick), size d
+    static final int SIGIL = 16;     // a flat rune disc at the anchor facing n (or the follow entity's look, flag LOOK): size a->b, spin c
+    static final int FISSURE = 17;   // glowing ground cracks through the points in hx/hy/hz, emitParam points each, width a; cools c0 -> c1 -> c2
 
     /** Draw flags. */
     static final int HEMI = 1;       // sphere: upper half only
@@ -33,6 +37,7 @@ final class Shape {
     static final int RIM = 128;      // sphere: also draw its silhouette as a bold band facing the camera
     static final int THRUST = 256;   // slash: a straight streak from anchor + e along n, a - b to a + b long, c wide
     static final int OWN = 512;      // slash: the local player's own, drawn softer in first person
+    static final int LOOK = 1024;    // sigil: faces the way its follow entity looks, every frame
 
     int type;
     boolean live;
@@ -74,6 +79,15 @@ final class Shape {
     final double[] hx = new double[20], hy = new double[20], hz = new double[20];
     int hn, hhead;
 
+    /** The effect build that made this shape ({@link FxWorld#serial}): the ladder decorates the shapes its event built. */
+    int serial;
+    /** Ladder strands winding round a beam (SPEC 36.5 helix): how many, turns a block, radius, width, spin (turns a tick), colour. */
+    int helix;
+    float hTurns, hRadius, hWidth, hSpin;
+    int hCol;
+    /** Which ladder layer made this shape (0 none): a held power refreshes its layer instead of stacking another. */
+    int ladTag;
+
     /** Block positions for seams (BlockPos.asLong) and how many. */
     final long[] blocks = new long[96];
     int blockCount;
@@ -105,16 +119,22 @@ final class Shape {
         hn = 0;
         hhead = 0;
         blockCount = 0;
+        serial = 0;
+        helix = 0;
+        hTurns = hRadius = hWidth = hSpin = 0;
+        hCol = 0;
+        ladTag = 0;
     }
 
-    /** 0..1 through the life at a partial tick. */
+    /** 0..1 through the life at a partial tick (a shape that waits, age below 0, is at 0). */
     float t(float pt) {
-        return Math.min(1f, (age + pt) / Math.max(1, life));
+        return Math.max(0f, Math.min(1f, (age + pt) / Math.max(1, life)));
     }
 
-    /** Fade envelope 0..1 at a partial tick. */
+    /** Fade envelope 0..1 at a partial tick; 0 while a delayed shape waits (age below 0). */
     float fade(float pt) {
         float t = age + pt;
+        if (t < 0) return 0f;
         float in = fadeIn <= 0 ? 1f : Math.min(1f, t / fadeIn);
         float out = fadeOut <= 0 ? 1f : Math.min(1f, (life - t) / fadeOut);
         return Math.max(0f, Math.min(in, out));

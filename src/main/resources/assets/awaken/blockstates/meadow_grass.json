@@ -1,0 +1,18 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/wild/meadow_grass_0"
+      },
+      {
+        "model": "awaken:block/wild/meadow_grass_1"
+      },
+      {
+        "model": "awaken:block/wild/meadow_grass_2"
+      },
+      {
+        "model": "awaken:block/wild/meadow_grass_3"
+      }
+    ]
+  }
+}

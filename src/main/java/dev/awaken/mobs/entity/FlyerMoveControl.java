@@ -11,6 +11,11 @@ import net.minecraft.world.phys.Vec3;
  * Cheap enough for a room full of wisps, and fliers in gates fly in open rooms anyway.
  */
 final class FlyerMoveControl extends MoveControl<AwakenMob> {
+    /** Ticks without getting closer before a flight is given up (something solid is in the way). */
+    static final int STALL_TICKS = 40;
+    private double closest = Double.MAX_VALUE;
+    private int stalled;
+
     FlyerMoveControl(AwakenMob mob) {
         super(mob);
     }
@@ -30,11 +35,20 @@ final class FlyerMoveControl extends MoveControl<AwakenMob> {
                 z = hz + dz * scale;
             }
         }
+        if (x != wantedX || y != wantedY || z != wantedZ) {
+            closest = Double.MAX_VALUE;
+            stalled = 0;
+        }
         super.setWantedPosition(x, y, z, speedModifier);
     }
 
     @Override
     public void tick() {
+        if (mob.grounded()) {
+            // brought down (SPEC §40): gravity has it until it rises again
+            operation = Operation.WAIT;
+            return;
+        }
         if (operation != Operation.MOVE_TO) {
             // Hover: bleed off speed and bob a little so fliers don't look frozen.
             Vec3 v = mob.getDeltaMovement();
@@ -45,6 +59,17 @@ final class FlyerMoveControl extends MoveControl<AwakenMob> {
         double len = delta.length();
         if (len < Math.max(0.5, mob.getBoundingBox().getSize() * 0.5)) {
             operation = Operation.WAIT;
+            mob.setDeltaMovement(mob.getDeltaMovement().scale(0.5));
+            return;
+        }
+        // a flight that stops closing in (a branch, a wall) ends, so the flier chooses again instead of pressing on
+        if (len < closest - 0.15) {
+            closest = len;
+            stalled = 0;
+        } else if (++stalled > STALL_TICKS) {
+            operation = Operation.WAIT;
+            closest = Double.MAX_VALUE;
+            stalled = 0;
             mob.setDeltaMovement(mob.getDeltaMovement().scale(0.5));
             return;
         }

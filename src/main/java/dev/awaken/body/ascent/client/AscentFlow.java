@@ -95,14 +95,20 @@ public final class AscentFlow {
         if (mc.player == null || mc.gui.hud.isHidden() || mc.player.isSpectator()) return;
         if (!AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.SKYBORN)) return;
         boolean flying = AscentMoves.state() == AscentState.SOAR;
-        aetherShown += ((flying || AscentMoves.aether < 0.995 ? 1F : 0F) - aetherShown) * 0.08F;
+        // the clear screen (SPEC §40.6): under the health line, also through a fight
+        boolean clear = !dev.awaken.core.api.HudState.classic();
+        boolean wanted = flying || AscentMoves.aether < 0.995 || clear && dev.awaken.core.api.HudState.fighting();
+        aetherShown += ((wanted ? 1F : 0F) - aetherShown) * 0.08F;
         if (aetherShown < 0.02F) return;
-        // in the free gap between the hearts and the XP bar, two pixels tall
-        int cx = g.guiWidth() / 2, half = Math.round(91 * (float) AscentMoves.aether), y = g.guiHeight() - 32;
+        // Classic: in the free gap between the hearts and the XP bar, two pixels tall
+        int full = clear ? dev.awaken.core.api.HudState.VITALS_HALF : 91;
+        int cx = g.guiWidth() / 2, half = Math.round(full * (float) AscentMoves.aether);
+        int y = clear ? dev.awaken.core.api.HudState.vitalsY(g.guiHeight(), 1) : g.guiHeight() - 32;
         float a = aetherShown;
         if (AscentMoves.aether < 0.2 && flying) a *= 0.6F + 0.4F * (float) Math.abs(Math.sin(AscentMoves.ticks * 0.5));
         if (AscentMoves.ticks - AscentMoves.aetherOutAt < 12) a *= 0.5F;
-        g.fill(cx - 91, y, cx + 91, y + 2, Glass.a(0x2A2410, 0.6F * a));
+        if (clear) g.fill(cx - full - 1, y - 1, cx + full + 1, y + 3, Glass.a(0x000000, 0.4F * a));
+        g.fill(cx - full, y, cx + full, y + 2, Glass.a(0x2A2410, 0.6F * a));
         if (half > 0) {
             HudLook.glow(g, cx - half - 3, y - 2, half * 2 + 6, 6, 0xFFD966, 0.65F * a);
             g.fill(cx - half, y, cx + half, y + 2, Glass.a(0xFFE08A, a));

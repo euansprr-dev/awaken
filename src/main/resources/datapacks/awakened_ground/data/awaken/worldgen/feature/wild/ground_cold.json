@@ -1,0 +1,17 @@
+{
+  "type": "awaken:wild_ground",
+  "biomes": "awaken:wild/cold",
+  "roles": [
+    {
+      "blocks": [
+        "awaken:frost_grass"
+      ],
+      "rates": [
+        3,
+        8,
+        12,
+        14
+      ]
+    }
+  ]
+}

@@ -52,6 +52,10 @@ public final class FeelConfig {
             .comment("Station scenes: at a crafting table the view leans in and your hands lay each ingredient on its square of the table",
                     "(sneak + use for the plain screen).")
             .define("stationScenes", true);
+    public static final ModConfigSpec.BooleanValue ROPE_ASSIST = B
+            .comment("The assisted rope swing: the rope picks a good anchor along your heading, fits its length, swings you round what's",
+                    "in the way and lets go at the top (SPEC §17.31). Off: the rope bites where you look and swings as it always did.")
+            .define("ropeAssist", true);
     public static final ModConfigSpec SPEC = B.build();
 
     public static void register() {
@@ -108,6 +112,15 @@ public final class FeelConfig {
     public static boolean freeRun() {
         try {
             return !SPEC.isLoaded() || FREE_RUN.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** The assisted rope swing (SPEC §17.31); off, the old pendulum. */
+    public static boolean ropeAssist() {
+        try {
+            return !SPEC.isLoaded() || ROPE_ASSIST.get();
         } catch (RuntimeException e) {
             return true;
         }

@@ -101,6 +101,7 @@ public final class FarSightClient {
                     FarPalette.clear();
                 }));
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterSky.class, FarSightClient::afterSky);
+        FarGroundSampler.install(); // the binoculars' range past loaded land (SPEC §39.8)
         // perf build C: Sodium draws the near chunks, City Sight the rest (FarNear), set before anything reads the distance
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre.class, FarNear::frame);
         // before Lens (LOWEST), which reads vanilla's render-distance end through FarTerrain

@@ -1,0 +1,7 @@
+{
+  "type": "awaken:old_giant",
+  "log": "minecraft:oak_log",
+  "leaves": "minecraft:oak_leaves",
+  "min_height": 16,
+  "max_height": 24
+}

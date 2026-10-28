@@ -9,6 +9,7 @@ import dev.awaken.mobs.MobSounds;
 import dev.awaken.mobs.MobTypes;
 import dev.awaken.mobs.Mobs;
 import dev.awaken.mobs.def.BoltKind;
+import dev.awaken.mobs.def.Ability;
 import dev.awaken.mobs.def.MobDef;
 import dev.awaken.mobs.def.Model;
 import dev.awaken.mobs.def.Tier;
@@ -22,6 +23,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerBossEvent;
+import dev.awaken.core.api.BossPlates;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -107,7 +109,7 @@ public class AwakenMob extends Monster {
     private ItemStack stolen = ItemStack.EMPTY;
     int fleeTicks;
     @Nullable Player robbed;
-    private int fallenTicks, fuseTicks, decoyTicks, hopCooldown, guardTicks, frenzyTicks, auraTicks, auraPulse, staggerTicks;
+    private int fallenTicks, fuseTicks, decoyTicks, hopCooldown, guardTicks, frenzyTicks, auraTicks, auraPulse, staggerTicks, groundedTicks;
     private float auraRadius, auraDamage;
     private BoltKind auraBolt = BoltKind.PLAIN;
     private @Nullable MobEffectInstance auraEffect;
@@ -173,7 +175,8 @@ public class AwakenMob extends Monster {
             goalSelector.addGoal(3, new MobGoals.FlyHunt(this));
             goalSelector.addGoal(7, new MobGoals.FlyWander(this));
         } else {
-            if (d.has(Trait.RANGED)) goalSelector.addGoal(3, new MobGoals.KeepRange(this, 9.0F));
+            if (scriptedFight()) goalSelector.addGoal(3, new FightRunner.Engaged(this)); // its fight script moves it (SPEC §35.3)
+            else if (d.has(Trait.RANGED)) goalSelector.addGoal(3, new MobGoals.KeepRange(this, 9.0F));
             else goalSelector.addGoal(3, new MobGoals.ToldMelee(this));
             if (d.has(Trait.LISTENER)) goalSelector.addGoal(4, new MobGoals.SeekSound(this));
             if (d.tier.isBoss()) goalSelector.addGoal(5, new MoveTowardsRestrictionGoal(this, 1.0));
@@ -323,6 +326,26 @@ public class AwakenMob extends Monster {
         return staggerTicks > 0;
     }
 
+    /**
+     * Brought down (SPEC §40): a normal or elite flier whose stance broke or whose dive was deflected drops out of the
+     * air and stands open on the ground for {@code ticks}, then rises. A kit flier's fight script decides its own.
+     */
+    public boolean ground(int ticks) {
+        if (!isAlive() || !def().flies() || scriptedFight() || flag(F_DECOY)) return false;
+        if (def().tier != Tier.NORMAL && def().tier != Tier.ELITE) return false;
+        stagger(ticks);
+        groundedTicks = Math.max(groundedTicks, ticks);
+        setNoGravity(false);
+        Vec3 v = getDeltaMovement();
+        setDeltaMovement(v.x * 0.3, Math.min(v.y, -0.35), v.z * 0.3);
+        needsSync = true;
+        return true;
+    }
+
+    public boolean grounded() {
+        return groundedTicks > 0;
+    }
+
     public MobRole.Role syncedRole() {
         int i = entityData.get(DATA_ROLE);
         MobRole.Role[] r = MobRole.Role.values();
@@ -421,6 +444,12 @@ public class AwakenMob extends Monster {
         if (flag(F_HAUNTED)) tickPhasing(level);
         if (guardTicks > 0 && --guardTicks == 0) setFlag(F_GUARDING, false);
         if (staggerTicks > 0) staggerTicks--;
+        if (groundedTicks > 0 && --groundedTicks == 0) {
+            Vec3 v = getDeltaMovement();
+            setDeltaMovement(v.x, 0.32, v.z); // up again
+        }
+        // a flier always flies unless brought down (a save taken while down comes back with gravity on)
+        if (groundedTicks == 0 && d.flies() && !isNoGravity()) setNoGravity(true);
         if (frenzyTicks > 0 && --frenzyTicks == 0) endFrenzy();
         if (auraTicks > 0) tickAura(level);
         if (fleeTicks > 0) fleeTicks--;
@@ -563,8 +592,34 @@ public class AwakenMob extends Monster {
         return flag(F_FALLEN) || flag(F_DORMANT) || flag(F_FUSING) || watched || staggerTicks > 0 || (abilities != null && abilities.holdsStill());
     }
 
+    /** Whether its idle wandering waits (a named beast watching someone who walked into its territory). */
+    protected boolean idleHeld() {
+        return false;
+    }
+
     @Nullable AbilityRunner runner() {
         return abilities;
+    }
+
+    /** The ability runner, made on first use (a kit boss's FightRunner fires abilities through it). */
+    AbilityRunner abilityRunner() {
+        if (abilities == null) abilities = new AbilityRunner(this);
+        return abilities;
+    }
+
+    /** An ability of any phase by name, or null. */
+    @Nullable Ability ability(String name) {
+        return abilityRunner().find(name);
+    }
+
+    /** Whether a fight script drives this mob instead of the told melee (a kit boss, SPEC §35.3). */
+    protected boolean scriptedFight() {
+        return false;
+    }
+
+    /** Whether its fight script is playing a move now (a kit flier holds still for it). */
+    boolean fightBusy() {
+        return false;
     }
 
     // ---- damage ------------------------------------------------------------------------------------------------
@@ -790,6 +845,16 @@ public class AwakenMob extends Monster {
         if (bar == null && (syncedRole() == MobRole.Role.WARDEN || syncedRole() == MobRole.Role.BOSS || syncedRole() == MobRole.Role.NIGHTMARE)) ensureBar();
         watchers.add(player);
         if (bar != null && sameStorey(player)) bar.addPlayer(player);
+        if (bar != null) bindPlate(player);
+    }
+
+    /** Ties this mob's bar to it for the player's Boss Plate (SPEC §35.1): its kind, phase marks and glow. */
+    protected void bindPlate(ServerPlayer player) {
+        if (bar == null) return;
+        MobDef d = def();
+        float[] marks = new float[Math.max(0, d.phases.size() - 1)];
+        for (int i = 1; i < d.phases.size(); i++) marks[i - 1] = d.phases.get(i).below();
+        BossPlates.bind(player, bar.getId(), getId(), syncedRole() == MobRole.Role.WARDEN ? BossPlates.Kind.WARDEN : BossPlates.Kind.LORD, marks, d.glow);
     }
 
     @Override

@@ -225,13 +225,34 @@ final class ArmsFeel implements CombatFeedback.Sink {
         if (p == null || k <= 0 || !mc.options.getCameraType().isFirstPerson() || !ArmsPredict.fights(p)) return;
         Archetypes.Loaded style = ArmsPredict.style;
         Archetype.Move m = ArmsPredict.move;
-        if (style == null || m == null || ArmsPredict.charging) return;
-        if (!FpSwings.camera(FpSwings.style(style.id()), m, ArmsPredict.moveTime(), LEAN)) return;
+        if (style == null || ArmsPredict.charging) m = null;
+        float t = ArmsPredict.viewTime();
+        boolean has = m != null && FpSwings.camera(FpSwings.style(style.id()), m, t, LEAN);
+        if (!has) LEAN[0] = LEAN[1] = LEAN[2] = 0;
+        // a change of move carries the lean across (a chained strike's starts level: the view never snaps; SwingBlend)
+        float now = (System.nanoTime() - paused()) / ArmsPredict.nanosPerTick();
+        if (m != leanMove || ArmsPredict.moveNanos != leanNanos) {
+            leanMove = m;
+            leanNanos = ArmsPredict.moveNanos;
+            LEAN_V.zero();
+            if (has && FpSwings.camera(FpSwings.style(style.id()), m, t + 0.1F, LEAN_AHEAD)) {
+                LEAN_V.set(LEAN_AHEAD[0] - LEAN[0], LEAN_AHEAD[1] - LEAN[1], LEAN_AHEAD[2] - LEAN[2]).div(0.1F);
+            }
+            LEAN_BLEND.begin(now, LEAN_NOW.set(LEAN[0], LEAN[1], LEAN[2]), LEAN_V, 3F);
+        }
+        LEAN_BLEND.apply(now, LEAN_NOW.set(LEAN[0], LEAN[1], LEAN[2]));
+        if (!has && !LEAN_BLEND.active(now)) return;
         float inv = p.getMainArm() == net.minecraft.world.entity.HumanoidArm.RIGHT ? 1F : -1F;
-        e.setYaw(e.getYaw() + LEAN[0] * inv * k);
-        e.setPitch(e.getPitch() + LEAN[1] * k);
-        e.setRoll(e.getRoll() + LEAN[2] * inv * k);
+        e.setYaw(e.getYaw() + LEAN_NOW.x * inv * k);
+        e.setPitch(e.getPitch() + LEAN_NOW.y * k);
+        e.setRoll(e.getRoll() + LEAN_NOW.z * inv * k);
     }
+
+    private static final dev.awaken.arms.SwingBlend.Vec LEAN_BLEND = new dev.awaken.arms.SwingBlend.Vec();
+    private static final org.joml.Vector3f LEAN_NOW = new org.joml.Vector3f(), LEAN_V = new org.joml.Vector3f();
+    private static final float[] LEAN_AHEAD = new float[3];
+    private static Archetype.@org.jspecify.annotations.Nullable Move leanMove;
+    private static long leanNanos;
 
     /** Render-state modifier for every entity: a frozen body holds its pose and trembles. */
     static void modify(Entity entity, EntityRenderState state) {

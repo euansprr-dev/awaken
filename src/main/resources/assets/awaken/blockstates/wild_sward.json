@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "snowy=false": [
+      {
+        "model": "awaken:block/wild/wild_sward_0"
+      },
+      {
+        "model": "awaken:block/wild/wild_sward_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/wild/wild_sward_1"
+      },
+      {
+        "model": "awaken:block/wild/wild_sward_1",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/wild/wild_sward_2"
+      },
+      {
+        "model": "awaken:block/wild/wild_sward_2",
+        "y": 90
+      }
+    ],
+    "snowy=true": {
+      "model": "minecraft:block/grass_block_snow"
+    }
+  }
+}

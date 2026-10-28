@@ -44,7 +44,11 @@ public final class VillageModule {
         // (SPEC §21.10) settled land and the roads between are calmer: creatures there are held down or a few levels lower
         dev.awaken.living.api.Regions.addLevelExtra(SettledCalm::roadExtra);
         dev.awaken.living.api.Regions.addLevelCap(SettledCalm::cap);
+        // (SPEC §41.1) and tamed: the city, settlements, towns and roads take the wild out of the land round them
+        WildTamers.register();
         dev.awaken.village.road.RoadAtlas.init(modBus);
+        // (SPEC §28.9, Turbo) a lattice chunk waiting for its roads frees the overworld's world generation meanwhile
+        dev.awaken.turbo.roadstarts.RoadStarts.init(modBus);
         VillageContent.register(modBus);
         modBus.addListener(VillageModule::onAddPackFinders);
         modBus.addListener(VillageNet::register);
@@ -69,6 +73,12 @@ public final class VillageModule {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> VillageService.tick(e.getServer()));
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.awaken.village.road.RoadAtlas.tick(e.getServer()));
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.awaken.village.road.RoadNet.prefetch(e.getServer()));
+        // (SPEC §28.9, Cost) a chunk the server thread had to wait for far from every player: who asked
+        NeoForge.EVENT_BUS.addListener(dev.awaken.village.road.RoadAccess::chunkLoaded);
+        // a player changing level stands on nothing the old one held: its first tick reads only where it is
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, dev.awaken.village.road.Arrivals::changed);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, (ServerTickEvent.Pre e) -> dev.awaken.village.road.RoadAccess.serverTick(true));
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ServerTickEvent.Post e) -> dev.awaken.village.road.RoadAccess.serverTick(false));
         NeoForge.EVENT_BUS.addListener(Inn::onRespawn);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onBroken);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onExploded);

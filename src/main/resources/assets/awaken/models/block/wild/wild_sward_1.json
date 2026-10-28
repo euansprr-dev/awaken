@@ -1,0 +1,7 @@
+{
+  "parent": "awaken:block/wild/sward",
+  "textures": {
+    "thatch": "awaken:block/wild/wild_sward_top_1_overlay",
+    "top": "awaken:block/wild/wild_sward_top_1"
+  }
+}

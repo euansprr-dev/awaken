@@ -5,11 +5,11 @@
   "requires": ["counter:awaken:carillon_registered"],
   "scene": "resident",
   "giver": "oren",
-  "summary": "Oren will teach you a blade, if you bring him the makings: iron from the hills, copper from the cuts, coal for the fire. Then you temper it yourself.",
+  "summary": "Oren will teach you to make a blade. Bring him 6 raw iron, 6 raw copper and 8 coal.",
   "ask": [
-    "Oren: You're holding that like it owes you money. Who sold you that? Don't tell me. I'll only shout.",
-    "Oren: You want a blade that lasts? Then you make it. I'm not your mother and I'm not your smith. Yet.",
-    "Oren: Bring me the makings and I'll show you once. Once."
+    "Oren: I'm Oren, the smith. Most hunters buy cheap blades off a cart, and they snap the first time they hit bone.",
+    "Oren: If you want a blade that lasts, make it yourself. I'll teach you how, once.",
+    "Oren: Bring me 6 raw iron, 6 raw copper and 8 coal, and we'll light the forge."
   ],
   "steps": [
     {
@@ -23,7 +23,7 @@
       "id": "copper",
       "objective": { "type": "deliver", "target": "oren|minecraft:raw_copper", "count": 6 },
       "text": "Bring Oren 6 Raw Copper from the river cuts",
-      "done": ["Oren: Copper for the guard and the rivets. Green already. You carried it through every puddle in the Commons, didn't you."],
+      "done": ["Oren: Copper, for the guard and the rivets. That'll do."],
       "reward": { "levels": 0.1 }
     },
     {
@@ -32,7 +32,7 @@
       "text": "Bring Oren 8 Coal for the fire",
       "done": [
         "Oren: Now the fire. Watch the colour, not my face. My face is always like this.",
-        "Oren: There. That's a blade. Ugly. Honest. Now it needs a temper, and you're doing it, not me."
+        "Oren: There. That's a blade. Ugly, but honest. Now it needs tempering, and you're doing that yourself, at a Forge or at mine."
       ],
       "reward": { "levels": 0.1 }
     },
@@ -48,7 +48,7 @@
       "text": "Show Oren your work",
       "done": [
         "Oren: Hm. Hm. Give it here. ...Fine. It's fine. It's better than fine and I'm not saying it twice.",
-        "Oren: Take my mark. Anything you temper, it starts a step ahead. Don't make me regret it. You will. Don't."
+        "Oren: Take my mark. Anything you temper from now on starts a step ahead. Don't make me regret it."
       ]
     }
   ],

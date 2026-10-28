@@ -1,0 +1,42 @@
+{
+  "type": "awaken:wild_ground",
+  "biomes": "awaken:wild/taiga",
+  "roles": [
+    {
+      "blocks": [
+        "awaken:bracken"
+      ],
+      "rates": [
+        0,
+        3,
+        12,
+        22
+      ],
+      "swathe": 12
+    },
+    {
+      "blocks": [
+        "awaken:heather"
+      ],
+      "rates": [
+        0,
+        2,
+        5,
+        8
+      ],
+      "swathe": 10
+    },
+    {
+      "blocks": [
+        "minecraft:fern"
+      ],
+      "rates": [
+        0,
+        4,
+        8,
+        10
+      ]
+    }
+  ],
+  "mow": true
+}

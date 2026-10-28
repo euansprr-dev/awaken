@@ -7,7 +7,9 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
@@ -29,20 +31,71 @@ public final class DelveModule {
         // after every protection has had its say (they cancel at HIGH): a heart that really broke opens its lode
         bus.addListener(EventPriority.LOW, false, (BreakBlockEvent e) -> Veins.onBreak(e));
         bus.addListener(Veins::onBreakSpeed);
+        // after every other speed (Veins' two blows included): true strikes multiply what the block would take
+        bus.addListener(EventPriority.LOWEST, false, (PlayerEvent.BreakSpeed e) -> TrueStrikes.onBreakSpeed(e));
+        bus.addListener(EventPriority.LOW, false, (BlockDropsEvent e) -> TrueStrikes.onDrops(e));
         bus.addListener(EventPriority.LOWEST, false, (BlockEvent.EntityPlaceEvent e) -> onPlace(e));
         bus.addListener((PlayerTickEvent.Post e) -> {
             if (e.getEntity() instanceof ServerPlayer p) Veins.tickPlayer(p);
         });
         bus.addListener((ServerTickEvent.Post e) -> CaveIns.tick(e.getServer()));
+        // the Delver's Pick (SPEC §34.4): its hum, kept through death
+        bus.addListener((ServerTickEvent.Post e) -> WakingPick.tick(e.getServer()));
+        bus.addListener(EventPriority.LOW, false, (net.neoforged.neoforge.event.entity.living.LivingDropsEvent e) -> WakingPick.onDrops(e));
+        bus.addListener((PlayerEvent.PlayerRespawnEvent e) -> WakingPick.onRespawn(e));
+        // its verses' deeds and gifts (SPEC §34.4)
+        bus.addListener(EventPriority.LOW, false, (BreakBlockEvent e) -> {
+            if (e.getPlayer() instanceof ServerPlayer p && e.getState().is(DelveContent.DEEPGLASS.get())) PickVerses.deed(p, PickVerses.Verse.GLASS);
+        });
+        bus.addListener(PickGifts::onLeftClick);
+        // strikes are noise to the Hollows (SPEC §34.5)
+        bus.addListener(EventPriority.LOW, false, (BreakBlockEvent e) -> StrikeNoise.onBreak(e));
+        // the Delver lamps (SPEC §34.6)
+        bus.addListener(Lamps::onLeftClick);
+        bus.addListener((ServerTickEvent.Post e) -> Lamps.tick(e.getServer()));
+        bus.addListener(PickGifts::onRightClick);
+        bus.addListener(PickGifts::onGameEvent);
+        bus.addListener(PickGifts::onBreakSpeed);
+        bus.addListener((ServerTickEvent.Post e) -> PickGifts.tick(e.getServer()));
+        bus.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) {
+                PickGifts.onJoin(p);
+                Lamps.onJoin(p);
+            }
+        });
+        bus.addListener((PlayerEvent.PlayerChangedDimensionEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) {
+                PickGifts.onJoin(p);
+                Lamps.onJoin(p);
+            }
+        });
+        // the wall lodes read the overworld's own noise caves (SPEC §34.2)
+        bus.addListener((LevelEvent.Load e) -> {
+            if (e.getLevel() instanceof ServerLevel level && level.dimension() == Level.OVERWORLD) {
+                var gen = level.getChunkSource().getGenerator();
+                var rs = level.getChunkSource().randomState();
+                LodePlans.columns(level.getSeed(), (x, z) -> gen.getBaseColumn(x, z, level, rs));
+            }
+        });
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             Veins.forget(e.getEntity().getUUID());
             HeavyStrikes.forget(e.getEntity().getUUID());
+            TrueStrikes.forget(e.getEntity().getUUID());
+            WakingPick.forget(e.getEntity().getUUID());
+            PickGifts.forget(e.getEntity().getUUID());
+            StrikeNoise.forget(e.getEntity().getUUID());
         });
         bus.addListener((ServerStoppedEvent e) -> {
             Veins.clear();
             CaveIns.clear();
             HeavyStrikes.clear();
+            TrueStrikes.clear();
+            WakingPick.clear();
+            PickGifts.clear();
+            Lamps.clear();
+            StrikeNoise.clear();
             LodePlans.EXTRA.clear();
+            LodePlans.columns(0L, null);
         });
         DelveCommands.register();
         DelveTests.register();

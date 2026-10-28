@@ -40,13 +40,22 @@ final class CalmHud {
     static void tick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
-        if (player == null || !HoloConfig.hudFade) {
+        if (player == null) {
             FADE.reset();
             return;
         }
-        boolean busy = SystemHud.inCombat() | powersBusy(mc) | news(player);
-        FADE.tick(busy);
+        // read every tick (the clear screen's director asks too), so a change is seen once
+        powersBusy = powersBusy(mc);
+        news = news(player);
+        if (!HoloConfig.hudFade) {
+            FADE.reset();
+            return;
+        }
+        FADE.tick(SystemHud.inCombat() | powersBusy | news);
     }
+
+    /** This tick: energy below full, a cooldown running, a power active or a slot changed; level, XP or points moved. */
+    static boolean powersBusy, news;
 
     /** Energy below full, a cooldown running, a power active or a slot changed. */
     private static boolean powersBusy(Minecraft mc) {

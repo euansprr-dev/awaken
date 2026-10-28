@@ -189,6 +189,7 @@ final class MobGoals {
         private final AwakenMob mob;
         private int retarget, attackCooldown, tellLeft = -1, diveTicks;
         private float angle;
+        private boolean far;
 
         FlyHunt(AwakenMob mob) {
             this.mob = mob;
@@ -203,7 +204,19 @@ final class MobGoals {
         public void tick() {
             LivingEntity t = mob.getTarget();
             if (t == null) return;
+            if (mob.scriptedFight()) {
+                scripted(t);
+                return;
+            }
             mob.getLookControl().setLookAt(t, 30.0F, 30.0F);
+            if (mob.grounded()) {
+                // brought down: the dive it was telling is lost, and it waits a moment once up again
+                if (tellLeft >= 0) mob.setTell(0, Strikes.Kind.NONE);
+                tellLeft = -1;
+                attackCooldown = Math.max(attackCooldown, 10);
+                retarget = 0;
+                return;
+            }
             if (attackCooldown > 0) attackCooldown--;
             boolean ranged = mob.def().has(Trait.RANGED);
             double reach = (mob.getBbWidth() + t.getBbWidth()) * 0.5 + 1.3;
@@ -241,34 +254,135 @@ final class MobGoals {
             double y = t.getY() + 2.0 + mob.getRandom().nextFloat() * 2.0 + (mob.getBbHeight() > 2 ? 1.5 : 0);
             mob.getMoveControl().setWantedPosition(t.getX() + Mth.cos(angle) * r, y, t.getZ() + Mth.sin(angle) * r, 1.0);
         }
+
+        /**
+         * A kit flier (SPEC §35.3): its fight script's moves are its attacks, so no dives. It holds still while a move
+         * plays (the capsules are drawn from where it is) and between moves drifts low round the target, its body floating
+         * in its own model, now close enough to lash, now out where its gap-closer and its ranged moves reach.
+         */
+        private void scripted(LivingEntity t) {
+            if (mob.fightBusy()) {
+                mob.getMoveControl().setWantedPosition(mob.getX(), mob.getY(), mob.getZ(), 0.6);
+                return;
+            }
+            mob.getLookControl().setLookAt(t, 30.0F, 30.0F);
+            if (--retarget > 0) return;
+            retarget = 12;
+            if (mob.getRandom().nextInt(4) == 0) far = !far;
+            angle += 0.4F + mob.getRandom().nextFloat() * 0.3F;
+            float r = (mob.getBbWidth() + t.getBbWidth()) * 0.5F + (far ? 6.0F : 1.0F);
+            double y = t.getY() + 0.3 + mob.getRandom().nextFloat() * 0.4;
+            mob.getMoveControl().setWantedPosition(t.getX() + Mth.cos(angle) * r, y, t.getZ() + Mth.sin(angle) * r, far ? 1.0 : 0.8);
+        }
     }
 
-    /** Fliers without a target drift around their spot (or their arena). */
+    /**
+     * Fliers without a target drift around their spot (or their arena), only to spots with room for their body and its
+     * wings that they can reach in a straight line (FlightRoom). A big flier circles its home slowly, holds in open air
+     * (its clearing, or over the canopy) and now and then settles on something solid for a few seconds.
+     */
     static final class FlyWander extends Goal {
+        /** Picks in a row that found nowhere to go before a wedged big flier is lifted clear. */
+        static final int WEDGED_AFTER = 3;
         private final AwakenMob mob;
+        private float orbit;
+        private int misses;
+        private boolean perching;
+        private int restUntil;
 
         FlyWander(AwakenMob mob) {
             this.mob = mob;
+            this.orbit = mob.getRandom().nextFloat() * Mth.TWO_PI;
             setFlags(EnumSet.of(Flag.MOVE));
         }
 
         @Override
         public boolean canUse() {
-            return mob.getTarget() == null && !mob.getMoveControl().hasWanted() && mob.getRandom().nextInt(reducedTickDelay(30)) == 0;
+            if (mob.getTarget() != null || mob.idleHeld() || mob.getMoveControl().hasWanted()) return false;
+            if (perching) {
+                // landed: rest a while, wings folding and opening
+                perching = false;
+                restUntil = mob.tickCount + 100 + mob.getRandom().nextInt(120);
+            }
+            if (mob.tickCount < restUntil) return false;
+            return mob.getRandom().nextInt(reducedTickDelay(FlightRoom.big(mob) ? 20 : 30)) == 0;
         }
 
         @Override public boolean canContinueToUse() { return false; }
 
         @Override
         public void start() {
+            Vec3 to = pick();
+            if (to != null) {
+                misses = 0;
+                mob.getMoveControl().setWantedPosition(to.x, to.y, to.z, FlightRoom.big(mob) ? 0.45 : 0.6);
+            } else if (++misses >= WEDGED_AFTER) {
+                misses = 0;
+                unwedge();
+            }
+        }
+
+        /** The next idle spot, or null if none of a few tries has room and a clear way there. */
+        @Nullable Vec3 pick() {
+            boolean big = FlightRoom.big(mob);
             BlockPos centre = mob.hasHome() ? mob.getHomePosition() : mob.blockPosition();
             int spread = mob.hasHome() ? Math.min(12, mob.getHomeRadius()) : 8;
-            double x = centre.getX() + 0.5 + (mob.getRandom().nextFloat() * 2 - 1) * spread;
-            double z = centre.getZ() + 0.5 + (mob.getRandom().nextFloat() * 2 - 1) * spread;
-            int ground = mob.level().getHeight(Heightmap.Types.MOTION_BLOCKING, Mth.floor(x), Mth.floor(z));
-            double y = Math.min(ground + 2.0 + mob.getRandom().nextFloat() * 4.0, mob.getY() + 4.0);
-            if (ground > mob.getY() + 12) y = mob.getY() + (mob.getRandom().nextFloat() - 0.5) * 2.0;
-            mob.getMoveControl().setWantedPosition(x, y, z, 0.6);
+            for (int tries = 0; tries < 6; tries++) {
+                double x, z;
+                if (big) {
+                    // slow circling round the home, nearer or wider each lap
+                    orbit += 0.5F + mob.getRandom().nextFloat() * 0.5F;
+                    double r = spread * (0.35 + mob.getRandom().nextFloat() * 0.65);
+                    x = centre.getX() + 0.5 + Mth.cos(orbit) * r;
+                    z = centre.getZ() + 0.5 + Mth.sin(orbit) * r;
+                    if (mob.getRandom().nextFloat() < 0.15F) {
+                        Vec3 perch = FlightRoom.perch(mob, x, z);
+                        if (perch != null && FlightRoom.clearLine(mob, perch.x, perch.y, perch.z)) {
+                            perching = true;
+                            return perch;
+                        }
+                    }
+                } else {
+                    x = centre.getX() + 0.5 + (mob.getRandom().nextFloat() * 2 - 1) * spread;
+                    z = centre.getZ() + 0.5 + (mob.getRandom().nextFloat() * 2 - 1) * spread;
+                }
+                int ground = mob.level().getHeight(Heightmap.Types.MOTION_BLOCKING, Mth.floor(x), Mth.floor(z));
+                double y = Math.min(ground + 2.0 + mob.getRandom().nextFloat() * 4.0, mob.getY() + 4.0);
+                if (ground > mob.getY() + 12) y = mob.getY() + (mob.getRandom().nextFloat() - 0.5) * 2.0;
+                if (big) y = Math.max(y, centre.getY() + 1.5 + mob.getRandom().nextFloat() * 3.0);
+                Vec3 at = FlightRoom.spot(mob, x, y, z);
+                if (at == null) continue;
+                if (FlightRoom.clearLine(mob, at.x, at.y, at.z)) return at;
+                // over the canopy but not straight there: rise out of the clearing first, cross next time
+                if (big && at.y > mob.getY() + 1.0 && FlightRoom.fits(mob, mob.getX(), at.y, mob.getZ())
+                        && FlightRoom.clearLine(mob, mob.getX(), at.y, mob.getZ())) {
+                    return new Vec3(mob.getX(), at.y, mob.getZ());
+                }
+            }
+            if (big) {
+                // nowhere around has room: climb straight up out of where it is, if the way up is clear
+                Vec3 up = FlightRoom.roomAbove(mob, mob.getX(), mob.getY(), mob.getZ());
+                if (up != null && up.y > mob.getY() + 0.5 && FlightRoom.clearLine(mob, up.x, up.y, up.z)) return up;
+            }
+            return null;
+        }
+
+        /**
+         * A big flier with no room and no way out (one saved inside a canopy before fliers kept their room) shakes itself
+         * free: a burst of its dust and it is over the treetops.
+         */
+        private void unwedge() {
+            if (!FlightRoom.big(mob) || FlightRoom.free(mob) || !(mob.level() instanceof ServerLevel level)) return;
+            Vec3 up = FlightRoom.roomAbove(mob, mob.getX(), mob.getY(), mob.getZ());
+            if (up == null) return;
+            level.sendParticles(ParticleTypes.POOF, mob.getX(), mob.getY() + mob.getBbHeight() * 0.5, mob.getZ(), 14, 1.2, 0.6, 1.2, 0.02);
+            mob.snapTo(up.x, up.y, up.z);
+            mob.setDeltaMovement(Vec3.ZERO);
+            level.sendParticles(ParticleTypes.POOF, up.x, up.y + mob.getBbHeight() * 0.5, up.z, 10, 1.0, 0.4, 1.0, 0.02);
+            if (mob.hasHome() && !FlightRoom.fits(mob, mob.getHomePosition().getX() + 0.5, mob.getHomePosition().getY() + 1.5, mob.getHomePosition().getZ() + 0.5)
+                    && FlightRoom.roomAbove(mob, mob.getHomePosition().getX() + 0.5, mob.getHomePosition().getY(), mob.getHomePosition().getZ() + 0.5) == null) {
+                mob.setHomeTo(BlockPos.containing(up), mob.getHomeRadius()); // a home with no room anywhere over it: this is the new one
+            }
         }
     }
 

@@ -1,0 +1,31 @@
+{
+  "feature": "minecraft:acacia",
+  "placement": [
+    {
+      "type": "awaken:wildness",
+      "weights": [
+        0,
+        0.1,
+        0.3,
+        0.5
+      ]
+    },
+    {
+      "type": "minecraft:in_square"
+    },
+    {
+      "type": "minecraft:heightmap",
+      "heightmap": "MOTION_BLOCKING_NO_LEAVES"
+    },
+    {
+      "type": "minecraft:biome"
+    },
+    {
+      "type": "minecraft:block_predicate_filter",
+      "predicate": {
+        "type": "minecraft:would_survive",
+        "state": "minecraft:acacia_sapling"
+      }
+    }
+  ]
+}

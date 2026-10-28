@@ -7,6 +7,8 @@ import dev.awaken.body.ascent.AscentRules;
 import dev.awaken.body.ascent.Windways;
 import dev.awaken.body.client.feel.FeelConfig;
 import dev.awaken.body.ascent.AscentState;
+import dev.awaken.body.ascent.AscentSwing;
+import dev.awaken.body.ascent.LevelSpace;
 import dev.awaken.body.client.feel.FeelDirector;
 import dev.awaken.core.client.AwakenKeys;
 import dev.awaken.veil.Veil;
@@ -31,7 +33,7 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
  * add from the keys is taken off first, since each state steers in its own way. A collision shows up next tick as the
  * body ending short of where it was sent, and that part of the velocity is gone (a wall stops you; a floor lands you).
  * <p>
- * Controls (Phase 0): the movement key (Left Alt) fires and holds the rope; letting go flies on with the swing's
+ * Controls (Phase 0): the rope key (Left Alt, its own since §17.30) fires and holds the rope; letting go flies on with the swing's
  * speed; jump on the rope jumps off it. Forward pumps the swing at the bottom of the arc, sideways turns it, sneak
  * reels in. Jump in the air opens the wings; jump while gliding takes flight; sprint boosts, jump climbs and sneak
  * sinks while flying; sneak while gliding folds the wings into a dive.
@@ -48,6 +50,8 @@ public final class AscentMoves {
     /** Skyborn's Aether (0..1, SPEC §17.8), predicted here; the server keeps its own at the cheapest drain. */
     static double aether = 1;
     static int aetherOutAt = -100;
+    /** This glide began because the meter ran dry in flight: sprint still held takes flight again once it refills. */
+    private static boolean glideFromEmpty;
     static final AscentRules.Kin K = new AscentRules.Kin();
     private static final double[] S = new double[3], AIR = new double[3];
     private static final float[] LINE = new float[2], VIEW = new float[2];
@@ -115,6 +119,27 @@ public final class AscentMoves {
     private static int sentAt = -100;
     private static final net.minecraft.core.BlockPos.MutableBlockPos PROBE = new net.minecraft.core.BlockPos.MutableBlockPos();
 
+    // ---- the assisted swing (SPEC §17.31) ----
+    private static final LevelSpace SPACE = new LevelSpace();
+    private static final AscentSwing.Work WORK = new AscentSwing.Work();
+    private static final AscentSwing.Pick PICK = new AscentSwing.Pick();
+    private static final AscentRules.Kin HAND = new AscentRules.Kin();
+    /** The swing's rope (its anchor and lengths mirror ax..lenTarget each tick; it keeps the catch and the bend). */
+    static final AscentSwing.Rope ROPE = new AscentSwing.Rope();
+    /** Where a press now would throw (drawn in the world while {@link #markerOn}). */
+    static final AscentSwing.Pick MARKER = new AscentSwing.Pick();
+    static boolean markerOn;
+    /** This rope is an assisted swing (no yank, no reel to a fit: the swing fits itself). */
+    static boolean swinging;
+    /** Ticks a let-go has waited for a clear flight; ticks before a held rope throws again. */
+    private static int heldOn, fireCool;
+    /** This swing was thrown by a press (a let-go within a tap of it may zip up a ledge), not by the chain. */
+    private static boolean pressThrow;
+    /** The swing's low point passed, and the last let-go in its window (the feel's beats). */
+    static int bottomAt = -100, snapAt = -100, swingCatchAt = -100;
+    /** This tick's input (the Runner's wall-run takes it when a swing hands the body over). */
+    private static @org.jspecify.annotations.Nullable ClientInput input;
+
     private static final boolean TRACE = System.getProperty("awaken.autopilot") != null;
 
     static void trace(String what) {
@@ -152,6 +177,11 @@ public final class AscentMoves {
 
     public static double anchorY() {
         return ay;
+    }
+
+    /** An assisted swing holds the body (SPEC §17.31). */
+    public static boolean swinging() {
+        return swinging && state == AscentState.TETHER;
     }
 
     public static double anchorZ() {
@@ -194,8 +224,9 @@ public final class AscentMoves {
         Minecraft mc = Minecraft.getInstance();
         if (!(e.getEntity() instanceof LocalPlayer p) || p != mc.player) return;
         ClientInput in = e.getInput();
+        input = in;
         Input k = in.keyPresses;
-        boolean tether = AwakenKeys.MOVEMENT.isDown() && mc.gui.screen() == null;
+        boolean tether = AwakenKeys.ROPE.isDown() && mc.gui.screen() == null;
         boolean jump = k.jump(), sneak = k.shift(), sprint = k.sprint();
         boolean tetherPressed = tether && !tetherWas, jumpPressed = jump && !jumpWas, sneakPressed = sneak && !sneakWas;
         boolean sprintPressed = sprint && !sprintWas;
@@ -229,6 +260,11 @@ public final class AscentMoves {
             p.setXRot(VIEW[1]);
         }
         float yaw = p.getYRot(), pitch = p.getXRot();
+        boolean assist = FeelConfig.ropeAssist();
+        if (fireCool > 0) fireCool--;
+        // the rope held between swings throws again by itself (the chain), in the air, once the last let-go is behind
+        boolean chain = assist && tether && !tetherPressed && fireCool == 0 && has(AscentPayloads.Tier.TETHER);
+        marker(p, assist, tether);
         switch (state) {
             case NONE -> {
                 // a Runner move (a wall-run, a hang) holds the body: only the rope cuts in
@@ -236,6 +272,8 @@ public final class AscentMoves {
                 if (p.onGround()) airMovesUsed = 0;
                 if (tetherPressed && has(AscentPayloads.Tier.TETHER)) {
                     fire(p);
+                } else if (chain && !runner && !p.onGround() && fire(p, false)) {
+                    // walked or ran off an edge with the rope held: it swings
                 } else if (runner) {
                     // the Runner's own jumps (a wall jump, a ledge jump)
                 } else if (!p.onGround() && leaperMove(p, jumpPressed, sprintPressed, sneakPressed, true)) {
@@ -249,7 +287,15 @@ public final class AscentMoves {
                 }
             }
             case TETHER -> {
-                if (!tether) {
+                if (!tether && swinging && pressThrow && (ropeTravel > 0 || ticks - fireAt <= AscentSwing.T.tapTicks)) {
+                    // a tap, not a hold: a ledge in the look is zipped up to (a hold swings); else let go as ever
+                    if (!tapZip(p, yaw, pitch)) release(p);
+                } else if (!tether && swinging && heldOn < AscentSwing.T.holdOn
+                        && !AscentSwing.letGoClear(SPACE.at(p.level(), p), K, ROPE, yaw, WORK)) {
+                    // letting go now would throw you into what's just ahead: the rope holds a moment longer
+                    heldOn++;
+                    tetherTick(p, yaw, fwd, right, false);
+                } else if (!tether) {
                     release(p);
                 } else if (jumpPressed && sneak && ropeTravel == 0) {
                     // sneak and jump: the rope is paid out instead of reeled in (the rappel)
@@ -283,6 +329,8 @@ public final class AscentMoves {
             case CARRY -> {
                 if (tetherPressed && has(AscentPayloads.Tier.TETHER) && fire(p)) {
                     // swinging again
+                } else if (chain && pullTicks == 0 && fire(p, false)) {
+                    // the rope held: the next swing as soon as there's one
                 } else if (jumpPressed && dev.awaken.body.client.RunnerMoves.wallBeside(p)) {
                     // flying free into a wall: hand the body to the Runner, which runs along it this same tick
                     p.setDeltaMovement(K.vx, K.vy, K.vz);
@@ -295,14 +343,16 @@ public final class AscentMoves {
                     startGlide(p);
                 } else {
                     if (pullTicks > 0) pullOver();
+                    else if (assist && tether && has(AscentPayloads.Tier.TETHER) && steerHeld(p, yaw, pitch)) break;
                     carry(yaw, fwd, right);
                 }
             }
             case GLIDE -> {
                 if (tetherPressed && has(AscentPayloads.Tier.TETHER) && fire(p)) {
                     fold(p);
-                } else if (jumpPressed && has(AscentPayloads.Tier.SKYBORN)) {
-                    startSoar(p);
+                } else if (has(AscentPayloads.Tier.SKYBORN)
+                        && (jumpPressed || AscentRules.sprintTakesFlight(sprintPressed, sprint, glideFromEmpty, aether)) && startSoar(p)) {
+                    // flight again: a jump, or sprint whenever the meter allows (SPEC §17.8)
                 } else if (sneakPressed) {
                     fold(p);
                     toCarry(p, "wings folded");
@@ -489,16 +539,39 @@ public final class AscentMoves {
 
     /** Fires the rope; true when it found an anchor (the state is then TETHER or ZIP). */
     private static boolean fire(LocalPlayer p) {
+        return fire(p, true);
+    }
+
+    /**
+     * Fires the rope: {@code pressed} by the key, else thrown again because it is held (the chain), which says nothing
+     * when there is nothing to throw at. With the assisted swing (SPEC §17.31) the rope takes the best anchor along your
+     * heading, else zips up to a lip in the look; a ring or branch straight overhead is still zipped to and hung from.
+     */
+    private static boolean fire(LocalPlayer p, boolean pressed) {
         Vec3 eye = p.getEyePosition();
         // where you look: the camera in Shoulder Surfing's decoupled view, else the body's own look
         boolean view = dev.awaken.body.client.feel.ShoulderView.aim(VIEW);
         float aimYaw = view ? VIEW[0] : p.getYRot(), aimPitch = view ? VIEW[1] : p.getXRot();
+        boolean assist = FeelConfig.ropeAssist();
         // a rope just let go of passes through the ring or branch it held: throw past it to the next one up
-        AscentAnchors.Anchor a = AscentAnchors.find(p.level(), p, eye, aimYaw, aimPitch, reach(p), ticks - leftAt <= 20 ? leftAnchor : null);
-        fireAt = ticks;
-        AscentFp.fired();
-        AscentSounds.local(p, AscentContent.ROPE_FIRE.get(), 0.8F, 0.95F + p.getRandom().nextFloat() * 0.1F);
-        event(AscentPayloads.EV_FIRE, 0);
+        AscentAnchors.Anchor a = pressed || !assist
+                ? AscentAnchors.find(p.level(), p, eye, aimYaw, aimPitch, reach(p), ticks - leftAt <= 20 ? leftAnchor : null) : null;
+        double hx0 = p.getX(), hy0 = p.getY() + AscentRules.HAND_HEIGHT, hz0 = p.getZ();
+        boolean overhead = a != null && overhead(a.x() - hx0, a.y() - hy0, a.z() - hz0);
+        if (assist && !overhead) {
+            AscentSwing.Pick pk = pick(p, eye, aimYaw, aimPitch);
+            if (pk != null) {
+                fired(p);
+                pressThrow = pressed;
+                throwTo(p, pk, aimYaw);
+                return true;
+            }
+            if (!pressed) {
+                fireCool = 2;
+                return false;
+            }
+        }
+        fired(p);
         if (a == null) {
             // nothing to bite: the rope flies out and falls back, and you keep falling as you were
             missAt = ticks;
@@ -512,6 +585,7 @@ public final class AscentMoves {
         }
         Vec3 v = state == AscentState.NONE ? new Vec3(p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo) : null;
         double hx = p.getX(), hy = p.getY() + AscentRules.HAND_HEIGHT, hz = p.getZ();
+        swinging = false;
         ax = a.x();
         ay = a.y();
         az = a.z();
@@ -522,9 +596,9 @@ public final class AscentMoves {
         else K.set(hx, hy, hz, K.vx, K.vy, K.vz);
         ropeTravel = Mth.clamp((int) Math.ceil(dist / 16), 1, 3);
         ropeTaut = false;
-        // nearly straight overhead (a ring, a branch, a keel): a zip up to it and a hang under it, not a pendulum
-        boolean overhead = dy > AscentRules.ZIP_UP_MIN_RISE && Math.sqrt(dx * dx + dz * dz) < dy * AscentRules.ZIP_UP_SLOPE;
-        if (dy > AscentRules.TETHER_SWING_MIN_RISE && !overhead) {
+        // nearly straight overhead (a ring, a branch, a keel): a zip up to it and a hang under it, not a pendulum; with
+        // the assist, an aimed point that gives no swing is zipped to (never the old pendulum's reel into it)
+        if (dy > AscentRules.TETHER_SWING_MIN_RISE && !overhead && !assist) {
             len = dist;
             // the arc's bottom keeps clear of the ground: the floor where you stand, or under the arc's lowest point
             // (just off the anchor, toward you, so the anchor's own trunk or branch isn't taken for the floor)
@@ -552,6 +626,133 @@ public final class AscentMoves {
         return true;
     }
 
+    /** Nearly straight overhead (a ring, a branch, a keel): zipped up to and hung under, never swung from. */
+    private static boolean overhead(double dx, double dy, double dz) {
+        return dy > AscentRules.ZIP_UP_MIN_RISE && Math.sqrt(dx * dx + dz * dz) < dy * AscentRules.ZIP_UP_SLOPE;
+    }
+
+    /** The throw's moment: the hand, its sound, the server told. */
+    private static void fired(LocalPlayer p) {
+        fireAt = ticks;
+        AscentFp.fired();
+        AscentSounds.local(p, AscentContent.ROPE_FIRE.get(), 0.8F, 0.95F + p.getRandom().nextFloat() * 0.1F);
+        event(AscentPayloads.EV_FIRE, 0);
+    }
+
+    /** The hand point and the body's velocity now, into {@link #HAND} (from the ground, with the hop a swing starts with). */
+    private static void hand(LocalPlayer p) {
+        double hx = p.getX(), hy = p.getY() + AscentRules.HAND_HEIGHT, hz = p.getZ();
+        if (state == AscentState.NONE) HAND.set(hx, hy, hz, p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
+        else HAND.set(hx, hy, hz, K.vx, K.vy, K.vz);
+        if (p.onGround()) HAND.vy = Math.max(HAND.vy, 0.5);
+    }
+
+    /** What a throw now takes: the best swing along the heading, else the marker's lip, else a lip in the look; or null. */
+    private static AscentSwing.@org.jspecify.annotations.Nullable Pick pick(LocalPlayer p, Vec3 eye, float yaw, float pitch) {
+        SPACE.at(p.level(), p);
+        hand(p);
+        if (AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
+        if (markerOn && MARKER.zip) return PICK.copy(MARKER);
+        return AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, PICK) ? PICK : null;
+    }
+
+    /** The rope thrown to a pick: a swing (fitted, no yank: it flies a tick or two and bites) or a zip up over a lip. */
+    private static void throwTo(LocalPlayer p, AscentSwing.Pick pk, float heading) {
+        hand(p);
+        K.set(HAND.x, HAND.y, HAND.z, HAND.vx, HAND.vy, HAND.vz);
+        heldOn = 0;
+        if (pk.zip) {
+            zipUp(p, pk, true);
+            return;
+        }
+        ax = pk.x;
+        ay = pk.y;
+        az = pk.z;
+        anchorBlock = AscentAnchors.blockOf(p.level(), ax, ay, az);
+        len = pk.len;
+        lenTarget = pk.fitLen;
+        ROPE.set(ax, ay, az, len, lenTarget);
+        swinging = true;
+        ropeTravel = AscentSwing.travel(len);
+        ropeTaut = false;
+        AscentSwing.entry(K, heading);
+        setState(p, AscentState.TETHER);
+        trace(String.format("swing %.1f (fits %.1f, %.0f° up, %.1f aside)", pk.len, pk.fitLen, pk.elev, pk.side));
+        tetherTick(p, heading, 0, 0, false);
+    }
+
+    /** A zip up to a lip and over it (the assisted rope's when nothing swings, or a tap, or a wall ahead). */
+    private static void zipUp(LocalPlayer p, AscentSwing.Pick pk, boolean step) {
+        swinging = false;
+        ax = pk.x;
+        ay = pk.y;
+        az = pk.z;
+        anchorBlock = AscentAnchors.blockOf(p.level(), ax, ay, az);
+        len = lenTarget = pk.len;
+        ropeTravel = 1;
+        ropeTaut = false;
+        setState(p, AscentState.ZIP);
+        zipFromX = K.x;
+        zipFromZ = K.z;
+        if (p.onGround()) K.vy = Math.max(K.vy, 0.3);
+        trace(String.format("zip up to a lip %.1f (top %.1f)", pk.len, pk.top));
+        if (step) zipTick(p, p.getYRot());
+    }
+
+    /** Let go of a swing within a tap of the throw: a lip in the look is zipped up to instead. True when it was. */
+    private static boolean tapZip(LocalPlayer p, float yaw, float pitch) {
+        Vec3 eye = p.getEyePosition();
+        if (!AscentSwing.zipTo(SPACE.at(p.level(), p), eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, PICK)) return false;
+        AscentSounds.local(p, AscentContent.ROPE_RELEASE.get(), 0.4F, 1.3F);
+        AscentFx.loose(p.getId(), ax, ay, az);
+        fired(p);
+        zipUp(p, PICK, true);
+        // the key is up already: the zip goes on by itself
+        heldForYou = true;
+        return true;
+    }
+
+    /**
+     * The rope held between swings, flying free: what's just ahead is flown round (a little sideways or down), else zipped
+     * up and over, else hopped. True when a zip took over (its tick has run).
+     */
+    private static boolean steerHeld(LocalPlayer p, float yaw, float pitch) {
+        SPACE.at(p.level(), p);
+        if (AscentSwing.steerFree(SPACE, K, yaw, false, WORK) || !WORK.blocked) return false;
+        Vec3 eye = p.getEyePosition();
+        if (AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, PICK)) {
+            fired(p);
+            throwTo(p, PICK, yaw);
+            return true;
+        }
+        AscentSwing.steerFree(SPACE, K, yaw, true, WORK);
+        return false;
+    }
+
+    /** The marker: where a press now would throw, every other tick while airborne off the rope (or the key held). */
+    private static void marker(LocalPlayer p, boolean assist, boolean tether) {
+        boolean free = state == AscentState.NONE || state == AscentState.CARRY || state == AscentState.GLIDE || state == AscentState.SOAR;
+        if (!assist || !free || !has(AscentPayloads.Tier.TETHER) || p.onGround() && !tether) {
+            markerOn = false;
+            return;
+        }
+        // every other tick (every fourth while a look costs more than its budget: a dense wood, a slow machine)
+        if (ticks % (markerCost > MARKER_BUDGET ? 4 : 2) != 0 && markerOn) return;
+        long t0 = System.nanoTime();
+        boolean view = dev.awaken.body.client.feel.ShoulderView.aim(VIEW);
+        float yaw = view ? VIEW[0] : p.getYRot(), pitch = view ? VIEW[1] : p.getXRot();
+        SPACE.at(p.level(), p);
+        hand(p);
+        Vec3 eye = p.getEyePosition();
+        markerOn = AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, MARKER)
+                || AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, MARKER);
+        markerCost += (System.nanoTime() - t0 - markerCost) * 0.2;
+    }
+
+    /** The marker's look, its running cost (ns) and the budget over which it looks half as often (SPEC §17.31). */
+    private static double markerCost;
+    private static final double MARKER_BUDGET = 1_500_000;
+
     /**
      * The Tether Vow's line (SPEC §17.7): thrown for you, straight to a point (a zip), the same rope the key throws.
      * False when the body can't take it (no rope yet, riding, swimming...).
@@ -564,6 +765,7 @@ public final class AscentMoves {
         double hx = p.getX(), hy = p.getY() + AscentRules.HAND_HEIGHT, hz = p.getZ();
         if (state == AscentState.NONE) K.set(hx, hy, hz, p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
         else K.set(hx, hy, hz, K.vx, K.vy, K.vz);
+        swinging = false;
         ax = x;
         ay = y;
         az = z;
@@ -589,6 +791,7 @@ public final class AscentMoves {
         if (!has(AscentPayloads.Tier.TETHER) || off(p)) return false;
         double hx = p.getX(), hy = p.getY() + AscentRules.HAND_HEIGHT, hz = p.getZ();
         K.set(hx, hy, hz, 0, 0, 0);
+        swinging = false;
         ax = x;
         ay = y;
         az = z;
@@ -671,6 +874,10 @@ public final class AscentMoves {
             return;
         }
         if (stateAge % 2 == 0 && cut(p, yaw, fwd, right)) return;
+        if (swinging) {
+            swingTick(p, yaw, fwd, sneak);
+            return;
+        }
         // reel: fast up to the length that clears the ground (the yank into the swing), and on while sneaking (the gold
         // reel winds both faster)
         boolean gold = kitReel == dev.awaken.body.ascent.RopeKit.REEL_GOLD;
@@ -697,6 +904,93 @@ public final class AscentMoves {
             AscentSounds.local(p, AscentContent.ROPE_STRAIN.get(), 0.35F + biteStrength * 0.5F, 0.8F + biteStrength * 0.2F);
             event(AscentPayloads.EV_CATCH, (float) t);
         }
+    }
+
+    /**
+     * A tick of the assisted swing (SPEC §17.31): sneak still reels in; the swing steps, looks ahead and bends round what
+     * it can; a wall it can't is run along (beside you), climbed by a zip over its top, or hopped off; the top of the
+     * arc lets go (a moment later if that would throw you into something).
+     */
+    private static void swingTick(LocalPlayer p, float yaw, double fwd, boolean sneak) {
+        boolean gold = kitReel == dev.awaken.body.ascent.RopeKit.REEL_GOLD;
+        if (sneak && len > AscentRules.TETHER_MIN + 1e-3) {
+            len = AscentRules.reel(K, ax, ay, az, len, Math.min(AscentRules.reelRate(gold), len - AscentRules.TETHER_MIN));
+            lenTarget = len;
+            reeling = true;
+            if (gold && stateAge % 5 == 0) AscentSounds.local(p, AscentContent.RAPPEL_REEL.get(), 0.4F, 0.95F + p.getRandom().nextFloat() * 0.1F);
+        }
+        ROPE.ax = ax;
+        ROPE.ay = ay;
+        ROPE.az = az;
+        ROPE.len = len;
+        ROPE.fitLen = Math.min(lenTarget, len);
+        boolean caught = ROPE.caught;
+        double vy0 = K.vy;
+        double pump = AscentFlow.pump() * (1 + AscentRules.MASTERY_PUMP * lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER));
+        int why = AscentSwing.tick(SPACE.at(p.level(), p), K, ROPE, yaw, fwd * pump, WORK);
+        len = ROPE.len;
+        lenTarget = ROPE.fitLen;
+        if (WORK.bent) trace(String.format("swing bends %.0f° round what's ahead", ROPE.bend));
+        double r = Math.sqrt((K.x - ax) * (K.x - ax) + (K.y - ay) * (K.y - ay) + (K.z - az) * (K.z - az));
+        ropeTaut = ROPE.caught && r >= len - 0.05;
+        // the rope's pull: the turn's (v²/r) and the part of gravity along it
+        tension = ropeTaut ? K.speed() * K.speed() / Math.max(1, len) + AscentRules.G * Math.max(0, (ay - K.y) / Math.max(1e-3, r)) : 0;
+        if (ROPE.caught && !caught) {
+            // the catch: the rope coming taut under you, the fall turned into the swing
+            swingCatchAt = ticks;
+            biteStrength = (float) Math.min(1, tension / 0.9);
+            FeelDirector.ropeCatch(biteStrength);
+            AscentSounds.local(p, AscentContent.ROPE_STRAIN.get(), 0.35F + biteStrength * 0.5F, 0.8F + biteStrength * 0.2F);
+            event(AscentPayloads.EV_CATCH, (float) tension);
+        }
+        if (vy0 < 0 && K.vy >= 0 && ropeTaut && ticks - bottomAt > 8) {
+            // the low point: the rush of air through it, the line humming under the whole weight
+            bottomAt = ticks;
+            float s = (float) Mth.clamp((K.speed() - 0.5) / 1.3, 0, 1);
+            AscentSounds.local(p, AscentContent.ROPE_SWOOP.get(), 0.25F + 0.6F * s, 0.9F + 0.2F * s);
+            FeelDirector.swingBottom(s);
+        }
+        if (why == AscentSwing.WALL) {
+            swingIntoWall(p, yaw);
+        } else if (why == AscentSwing.TOP) {
+            if (heldOn >= AscentSwing.T.holdOn || AscentSwing.letGoClear(SPACE, K, ROPE, yaw, WORK)) {
+                trace("the top of the arc lets go");
+                release(p, false);
+            } else {
+                heldOn++;
+            }
+        }
+    }
+
+    /** A swing that meets a wall nothing bends it round: along it (a wall-run), up it and over (a zip), or a hop off. */
+    private static void swingIntoWall(LocalPlayer p, float yaw) {
+        ClientInput in = input;
+        if (in != null) {
+            Vec3 was = p.getDeltaMovement();
+            p.setDeltaMovement(K.vx, K.vy, K.vz);
+            if (dev.awaken.body.client.RunnerMoves.runFromRope(p, in)) {
+                trace("swing hands off to a wall-run");
+                AscentSounds.local(p, AscentContent.ROPE_RELEASE.get(), 0.5F, 1.2F);
+                releaseAt = ticks;
+                releaseQuality = 0;
+                AscentFp.released();
+                fireCool = 2;
+                end(p, "onto a wall", true);
+                return;
+            }
+            p.setDeltaMovement(was);
+        }
+        double ex = K.x, ey = K.y - AscentRules.HAND_HEIGHT + p.getEyeHeight(), ez = K.z;
+        if (AscentSwing.zipTo(SPACE, ex, ey, ez, yaw, p.getXRot(), reach(p), WORK, PICK)) {
+            trace("swing meets a wall: up it on a new rope");
+            AscentFx.loose(p.getId(), ax, ay, az);
+            fired(p);
+            zipUp(p, PICK, false);
+            return;
+        }
+        trace("swing meets a wall: hop off it");
+        AscentSwing.wallHop(K);
+        release(p, false);
     }
 
     /**
@@ -748,6 +1042,8 @@ public final class AscentMoves {
     }
 
     private static void startRappel(LocalPlayer p) {
+        // a rappel's line is the old rope's from here (it pays out; a swing's never does)
+        swinging = false;
         paid = 0;
         lenTarget = len;
         setState(p, AscentState.RAPPEL);
@@ -1038,7 +1334,7 @@ public final class AscentMoves {
 
     private static void bite(LocalPlayer p, float strength) {
         airMovesUsed = 0;
-        if (state == AscentState.TETHER) {
+        if (state == AscentState.TETHER && !swinging) {
             // a tug along the swing, the way you look: chaining ropes keeps you moving
             double lx = -Mth.sin(p.getYRot() * Mth.DEG_TO_RAD), lz = Mth.cos(p.getYRot() * Mth.DEG_TO_RAD);
             double rx = K.x - ax, ry = K.y - ay, rz = K.z - az, r = Math.sqrt(rx * rx + ry * ry + rz * rz);
@@ -1062,9 +1358,14 @@ public final class AscentMoves {
     }
 
     private static void release(LocalPlayer p) {
+        release(p, true);
+    }
+
+    /** Lets go of the rope; {@code step}: the carry's first tick runs now (not when this tick's swing has moved already). */
+    private static void release(LocalPlayer p, boolean step) {
         if (ropeTravel > 0) {
             toCarry(p, "let go before the bite");
-            carry(p.getYRot(), 0, 0);
+            if (step) carry(p.getYRot(), 0, 0);
             return;
         }
         // let go by a passage, on a rappel or hanging still: in onto its floor rather than down past it
@@ -1074,15 +1375,27 @@ public final class AscentMoves {
             AscentSounds.local(p, AscentContent.ROPE_RELEASE.get(), 0.5F, 1.1F);
             AscentFp.released();
             toCarry(p, "dropped in");
-            carry(p.getYRot(), 0, 0);
+            if (step) carry(p.getYRot(), 0, 0);
             return;
         }
-        float q = (float) AscentRules.releaseQuality(K, ax, ay, az);
-        if (q > 0) {
-            double f = 1 + (AscentRules.RELEASE_BOOST - 1) * q;
-            K.vx *= f;
-            K.vy *= f;
-            K.vz *= f;
+        float q;
+        if (swinging) {
+            // the assisted let-go: in the window, speed along and a lift (SPEC §17.31)
+            q = (float) AscentSwing.letGo(K, ROPE, p.getYRot(), WORK);
+            fireCool = 2;
+            if (q > AscentSwing.T.winFrom) {
+                // let go in the window: the line snaps free (the boost's sound and beat)
+                snapAt = ticks;
+                AscentSounds.local(p, AscentContent.ROPE_SNAP.get(), 0.5F + 0.4F * q, 0.95F + 0.1F * q);
+            }
+        } else {
+            q = (float) AscentRules.releaseQuality(K, ax, ay, az);
+            if (q > 0) {
+                double f = 1 + (AscentRules.RELEASE_BOOST - 1) * q;
+                K.vx *= f;
+                K.vy *= f;
+                K.vz *= f;
+            }
         }
         releaseAt = ticks;
         releaseQuality = q;
@@ -1092,7 +1405,7 @@ public final class AscentMoves {
         AscentFp.released();
         trace(String.format("release (window %.2f)", q));
         toCarry(p, "released");
-        carry(p.getYRot(), 0, 0);
+        if (step) carry(p.getYRot(), 0, 0);
     }
 
     /** Jumping off the rope: up and on, faster than you swung. */
@@ -1103,6 +1416,7 @@ public final class AscentMoves {
         K.vy = Math.max(K.vy, 0) + AscentRules.LAUNCH_UP;
         launchAt = ticks;
         releaseQuality = q;
+        fireCool = 2;
         AscentFlow.gain(0.1F + 0.06F * q);
         AscentSounds.local(p, AscentContent.LAUNCH.get(), 0.8F, 1F);
         AscentSounds.local(p, AscentContent.ROPE_RELEASE.get(), 0.5F, 1.2F);
@@ -1206,6 +1520,7 @@ public final class AscentMoves {
         if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
         AscentRules.glideCatch(K, p.getYRot(), p.getXRot());
         deployAt = ticks;
+        glideFromEmpty = false;
         AscentFlow.gain(0.06F);
         boomArmed = K.speed() < AscentRules.BOOM_SPEED;
         setState(p, AscentState.GLIDE);
@@ -1266,15 +1581,18 @@ public final class AscentMoves {
         AscentSounds.local(p, AscentContent.WINGS_FOLD.get(), 0.7F, 0.75F);
         AscentRules.glideCatch(K, p.getYRot(), p.getXRot());
         setState(p, AscentState.GLIDE);
+        glideFromEmpty = true;
     }
 
-    private static void startSoar(LocalPlayer p) {
+    /** Takes flight; false (a weak beat) when the meter can't lift. */
+    private static boolean startSoar(LocalPlayer p) {
         if (aether < AscentRules.AETHER_START) {
             // not enough to lift: a weak beat that catches nothing
             AscentSounds.local(p, AscentContent.FLAP.get(), 0.4F, 0.7F);
             aetherOutAt = ticks;
-            return;
+            return false;
         }
+        glideFromEmpty = false;
         if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
         boolean fromGlide = state == AscentState.GLIDE;
         soarAt = ticks;
@@ -1283,6 +1601,7 @@ public final class AscentMoves {
         flap(p);
         trace("takes flight");
         AscentRules.soarStep(K, p.getYRot(), p.getXRot(), 0, 0, false, false, false, S);
+        return true;
     }
 
     private static void flap(LocalPlayer p) {
@@ -1421,6 +1740,9 @@ public final class AscentMoves {
         wallNX = wallNZ = 0;
         slamming = false;
         heldForYou = false;
+        swinging = markerOn = false;
+        heldOn = fireCool = 0;
+        glideFromEmpty = false;
         airMovesUsed = 0;
         state = AscentState.NONE;
         stateAge = 0;

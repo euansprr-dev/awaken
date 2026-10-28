@@ -30,6 +30,10 @@ final class LivingPlates {
     private static LivingEntity cur;
     private static CreatureTag curTag;
     private static Profile curProf;
+    /** The plate being written is the thin one (SPEC §40.6: fighting you, but not the one you mean). */
+    private static boolean curThin;
+    /** The thin plate's width: the bar alone. */
+    static final int THIN_W = 54;
     private static final HoloWorld.Content WRITE = LivingPlates::write;
 
     static final int PAD = 6, ROW = 5, BAR_H = 4, STANCE_H = 2;
@@ -51,26 +55,34 @@ final class LivingPlates {
         if (mc.level == null || mc.player == null || !LivingClient.platesOn() || !HoloWorld.on() || LivingClient.PICKED.isEmpty()) return;
         float pt = e.getRenderState().worldPartialTicks;
         Profile prof = Progression.profile(mc.player);
+        boolean clear = !dev.awaken.core.api.HudState.classic();
+        int meant = dev.awaken.core.api.Aim.target();
         for (var c : LivingClient.PICKED) {
             if (!(mc.level.getEntity(c.id()) instanceof LivingEntity ent)) continue;
+            if (BossPlate.onScreen(ent.getId())) continue; // its plate flew up to the top of the screen (SPEC §35.1)
             float vis = PlateRules.visibility(c, LivingClient.ticks, LivingClient.lookRange) * LivingClient.fadeIn(c.id());
             if (vis <= 0.02F) continue;
             CreatureTag tag = CreatureTag.of(ent);
             cur = ent;
             curTag = tag;
             curProf = prof;
+            curThin = PlateRules.thin(clear, c, LivingClient.ticks, meant);
             Font font = mc.font;
             String name = LivingFx.name(ent, tag, prof);
             int words = font.width(name) + (shownLevel(tag) ? chipWidth(font, tag.level()) : 0) + 10 + (tag.elite() ? font.width("ELITE") + 5 : 0);
             int titleW = tag.title().isEmpty() ? 0 : (int) (font.width(tag.title()) * 0.78F);
             SPEC.w = Mth.clamp(Math.max(words, titleW) + PAD * 2, 70, 220);
             SPEC.h = (tag.title().isEmpty() ? 27 : 35) + (stanceShown(ent) ? STANCE_H + 1 : 0);
+            if (curThin) {
+                SPEC.w = THIN_W;
+                SPEC.h = PAD * 2 + BAR_H - 1 + (stanceShown(ent) ? STANCE_H + 1 : 0);
+            }
             SPEC.x = Mth.lerp(pt, ent.xo, ent.getX());
             SPEC.y = Mth.lerp(pt, ent.yo, ent.getY()) + ent.getBbHeight() + 0.3;
             SPEC.z = Mth.lerp(pt, ent.zo, ent.getZ());
             SPEC.alpha = vis;
             // the creature the fighter is fighting wears the bright rim (Arms' soft focus)
-            SPEC.accent = Stances.focused(ent) ? FOCUS : accent(tag);
+            SPEC.accent = Stances.focused(ent) || clear && ent.getId() == meant && dev.awaken.core.api.Aim.locked() ? FOCUS : accent(tag);
             float scan = LivingClient.scanAge(ent.getId()) + pt;
             SPEC.scan = scan >= 0 && scan < 7 ? scan / 6F : -1;
             HoloWorld.plate(SPEC, WRITE);
@@ -103,6 +115,10 @@ final class LivingPlates {
         CreatureTag tag = curTag;
         Font font = Minecraft.getInstance().font;
         int w = SPEC.w, h = SPEC.h;
+        if (curThin) {
+            bar(cv, e, w, h);
+            return;
+        }
         int mine = curProf.level();
         // the level: a chip in its rank colour at the right, the number in that colour (a deadly one pulses)
         int lv = tag.level();
@@ -128,7 +144,11 @@ final class LivingPlates {
         if (font.width(name) > room) name = font.plainSubstrByWidth(name, Math.max(10, room - font.width("…"))) + "…";
         cv.textF(name, nx, ROW, 0xFF000000 | Glass.TEXT, false);
         if (!tag.title().isEmpty()) cv.textF(tag.title(), PAD, ROW + 11, 0xFF000000 | LivingFx.AMBER, false, 0.78F);
-        // the bar: ten segments, light for what's left, amber for what was just lost
+        bar(cv, e, w, h);
+    }
+
+    /** The bar: ten segments, light for what's left, amber for what was just lost; the stance strip under it. */
+    private static void bar(HoloCanvas cv, LivingEntity e, int w, int h) {
         float frac = Mth.clamp(e.getHealth() / Math.max(1F, e.getMaxHealth()), 0, 1);
         float drain = Math.max(frac, LivingClient.drained(e.getId(), frac));
         boolean stance = stanceShown(e);

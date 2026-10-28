@@ -25,6 +25,17 @@ public final class RoadAccess implements RoadHooks.Access {
         RoadHooks.installHearths(new HearthRoutes());
     }
 
+    /** (SPEC §28.9, Cost) A chunk loaded: if the server thread had to wait for it far from every player, who asked. */
+    public static void chunkLoaded(net.neoforged.neoforge.event.level.ChunkEvent.Load e) {
+        RoadTimer.loaded(e);
+    }
+
+    /** (SPEC §28.9, Cost) The server's tick begins or ends: the planners' jobs ahead of the players hold back while one runs late. */
+    public static void serverTick(boolean begins) {
+        if (begins) RoadTimer.tickBegins();
+        else RoadTimer.tickEnds();
+    }
+
     @Override
     public Optional<RoadHooks.Route> stretch(ServerLevel level, BlockPos pos, int min, int max, int length, long seed) {
         Random r = new Random(seed);

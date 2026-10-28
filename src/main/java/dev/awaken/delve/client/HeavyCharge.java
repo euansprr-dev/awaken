@@ -4,6 +4,7 @@ import dev.awaken.core.api.CombatFeedback;
 import dev.awaken.delve.DelveContent;
 import dev.awaken.delve.DelveNet;
 import dev.awaken.delve.HeavyStrikes;
+import dev.awaken.delve.StrikeBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -126,14 +127,17 @@ final class HeavyCharge {
         if (level == null) return;
         RandomSource r = level.getRandom();
         int density = StrikeFeel.density(mc);
+        boolean mine = mc.player != null && mc.player.getId() == m.player();
         for (int i = 0; i < m.bored().length; i++) {
             BlockPos b = BlockPos.of(m.bored()[i]);
             BlockState s = Block.stateById(i < m.states().size() ? m.states().get(i) : 0);
             Vec3 c = Vec3.atCenterOf(b);
             if (density > 0) {
-                StrikeFeel.grit(level, c, Direction.UP, 8 * density, s.getMapColor(level, b).col, r);
-                StrikeFeel.sparks(level, c, Direction.getApproximateNearest(mc.gameRenderer.mainCamera().position().subtract(c)), (m.perfect() ? 9 : 6) * density / 2,
-                        0xFFC98A, 1.2F, r);
+                // onlookers get the break's chips from the game's own break event; the striker's client never predicted it
+                if (mine && DelveClientConfig.strikeParticles() && StrikeBlocks.owns(s.getBlock())) StrikeFx.broke(level, b, s);
+                else if (mine) StrikeFeel.grit(level, c, Direction.UP, 8 * density, s.getMapColor(level, b).col, r);
+                StrikeFx.sparks(level, c, Direction.getApproximateNearest(mc.gameRenderer.mainCamera().position().subtract(c)),
+                        (m.perfect() ? 9 : 6) * density / 2, 0xFFC98A, m.perfect(), r);
             }
         }
         if (mc.player != null && mc.player.getId() == m.player()) {

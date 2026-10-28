@@ -31,6 +31,8 @@ public final class Running {
     public int duration;
     /** Channel/toggle: drains energy each tick and starts the cooldown when it ends. */
     public boolean channel;
+    /** A ladder step's cheaper channel (Flight's Contrails and Long Haul): the drain is scaled by this. */
+    public float drainScale = 1f;
     public @Nullable Tick onTick;
     public @Nullable End onEnd;
 

@@ -20,7 +20,8 @@ final class ArmsAudio {
 
     static void swing(Player p, Archetypes.Loaded style, Archetype.Move move, int cadence) {
         Archetype.MoveDef def = style.move(move);
-        if (def != null) play(p, ArmsSounds.swish(def), 1.0F, ArmsSounds.swishPitch(cadence));
+        if (def != null) play(p, ArmsSounds.swish(def, dev.awaken.arms.FpSwings.swishSound(dev.awaken.arms.FpSwings.style(style.id()), move)),
+                1.0F, ArmsSounds.swishPitch(cadence));
     }
 
     static void impact(Player p, int entityId, Archetypes.@Nullable Loaded style, int moveId) {

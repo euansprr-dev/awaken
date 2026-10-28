@@ -28,6 +28,102 @@ final class CaveTests {
     static void register() {
         AwakenTests.register("delve_cave_routes", 200, CaveTests::routes);
         AwakenTests.registerIsolated("delve_seep", 600, CaveTests::seep);
+        AwakenTests.register("delve_hearth_points", 200, CaveTests::hearthPoints);
+        // its own batch: it installs a Hearth lookup, as delve_hearth_points does
+        AwakenTests.registerIsolated("delve_pick_trail", 200, CaveTests::pickTrail);
+    }
+
+    /**
+     * The trail "The Delver's Pick" (SPEC §34.4): one step per verse, in the verses' order, on the furthest-woken counter;
+     * its place "adit" answers once the search is done, and a home with no adit near (the flat test world) is handed the pick.
+     */
+    @SuppressWarnings("removal")
+    private static void pickTrail(GameTestHelper h) {
+        var trail = dev.awaken.trails.Trails.get("awaken:the_delvers_pick");
+        h.assertTrue(trail != null && trail.linear(), "the trail ships, in order");
+        var verses = dev.awaken.delve.PickVerses.VERSES;
+        h.assertValueEqual(trail.steps().size(), verses.length, "a step to find the pick and one per verse");
+        h.assertValueEqual(trail.steps().getFirst().done(), List.of("counter:" + dev.awaken.delve.WakingPick.PULLED), "the first step is the pull");
+        for (int i = 1; i < verses.length; i++) {
+            h.assertValueEqual(trail.steps().get(i).done(), List.of("count:" + dev.awaken.delve.PickVerses.WOKEN + ":" + i), "step " + i + " waits for " + verses[i].title);
+        }
+        h.assertTrue(dev.awaken.core.api.TrailsApi.hasPlace(PickTrail.PLACE), "the place 'adit' is known");
+        ServerLevel level = h.getLevel();
+        BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
+        h.assertTrue(PickTrail.find(level, at).isEmpty(), "no adit on flat land");
+        var p = h.makeMockServerPlayerInLevel();
+        p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        var before = dev.awaken.core.api.HearthHooks.installed();
+        try {
+            dev.awaken.core.api.HearthHooks.install(new dev.awaken.core.api.HearthHooks.Lookup() {
+                @Override public java.util.Optional<BlockPos> nearest(ServerLevel l, BlockPos pos, int radius) { return java.util.Optional.of(at); }
+                @Override public java.util.Optional<BlockPos> hearthOf(ServerLevel l, java.util.UUID player) { return java.util.Optional.of(at); }
+            });
+            long until = System.currentTimeMillis() + 20_000;
+            while (!dev.awaken.delve.WakingPick.carries(p) && System.currentTimeMillis() < until) {
+                h.assertTrue(dev.awaken.core.api.TrailsApi.placeOf(PickTrail.PLACE, p) == null, "no adit to point at");
+                Thread.onSpinWait();
+            }
+            h.assertTrue(dev.awaken.delve.WakingPick.carries(p), "no adit near home: the Hearth hands the pick over");
+            h.assertTrue(dev.awaken.trails.Conditions.met(p, trail.steps().getFirst().done().getFirst()), "and the first step is done");
+        } finally {
+            dev.awaken.core.api.HearthHooks.install(before);
+        }
+        h.succeed();
+    }
+
+    /**
+     * The Hearth points (SPEC §34.1): the card's words for an adit and a hill mouth (distance to 10 m, eight ways from
+     * home), which mouths lead to which metal, the honest line where the flat test world holds no mouth, and the task:
+     * a home short of iron puts the gather row (have/need) on the card, and once the search is done the honest line.
+     */
+    @SuppressWarnings("removal")
+    private static void hearthPoints(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos home = new BlockPos(1000, 64, 1000);
+        Spec adit = new Spec(CaveKind.MOUTH, 1150, 70, 850, 0, 11L, false, 0, 0, 0, new int[]{Mouth.ADIT, 20, 3, 3, 4, 1150, 66, 870, dev.awaken.delve.Ore.IRON.ordinal() + 1, 0});
+        Spec hill = new Spec(CaveKind.MOUTH, 1000, 70, 1180, 0, 12L, false, 0, 0, 0, new int[]{Mouth.HILL, 30, 13, 7, 9, 0, 0, 0, 0, 1});
+        h.assertValueEqual(MouthPointer.line(adit, home, "iron"),
+                "The old Delvers cut an adit into the hillside 210 m north-east of your home. It should still have iron in it.", "the adit's line");
+        h.assertValueEqual(MouthPointer.line(hill, home, "iron"),
+                "There's a cave mouth in the hillside 180 m south of your home. The cave behind it runs past iron.", "the hill mouth's line");
+        Spec doline = new Spec(CaveKind.MOUTH, 1000, 70, 1180, 0, 13L, false, 0, 0, 0, new int[]{Mouth.DOLINE, 7, 16, 9, 16, 0, 0, 0, 0, 1});
+        Spec cleft = new Spec(CaveKind.MOUTH, 1000, 70, 1180, 0, 14L, false, 0, 0, 0, new int[]{Mouth.CLEFT, 24, 6, 3, 14, 0, 0, 0, 0, 0});
+        h.assertValueEqual(MouthPointer.line(doline, home, "iron"),
+                "There's a sinkhole in the ground 180 m south of your home. The cave at the bottom of it runs past iron.", "the doline's line");
+        h.assertValueEqual(MouthPointer.line(cleft, home, "iron"),
+                "There's a narrow gorge cut into the cliff 180 m south of your home. It leads into a cave that runs past iron.", "the cleft's line");
+        h.assertTrue(MouthPointer.leads(level.getSeed(), adit, dev.awaken.delve.Ore.IRON), "an iron adit leads to iron");
+        h.assertFalse(MouthPointer.leads(level.getSeed(), adit, dev.awaken.delve.Ore.COPPER), "an iron adit doesn't lead to copper");
+        BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
+        MouthPointer.Answer none = MouthPointer.find(level, at, "iron");
+        h.assertTrue(none.mouth() == null, "no mouth on flat land");
+        var p = h.makeMockServerPlayerInLevel();
+        p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        var before = dev.awaken.core.api.HearthHooks.installed();
+        try {
+            dev.awaken.core.api.HearthHooks.install(new dev.awaken.core.api.HearthHooks.Lookup() {
+                @Override public java.util.Optional<BlockPos> nearest(ServerLevel l, BlockPos pos, int radius) { return java.util.Optional.of(at); }
+                @Override public java.util.Optional<BlockPos> hearthOf(ServerLevel l, java.util.UUID player) { return java.util.Optional.of(at); }
+                @Override public java.util.Optional<dev.awaken.core.api.HearthHooks.MetalNeed> metalNeed(net.minecraft.server.level.ServerPlayer sp) {
+                    return java.util.Optional.of(new dev.awaken.core.api.HearthHooks.MetalNeed("iron", 16, 3, "Hearth Tier II", at));
+                }
+            });
+            var first = MouthPointer.task(p);
+            h.assertTrue(first != null && first.rows().getFirst().have() == 3 && first.rows().getFirst().need() == 16, "the gather row counts 3/16");
+            h.assertValueEqual(first.title(), "Iron for your home", "the task's title");
+            long until = System.currentTimeMillis() + 20_000;
+            var t = first;
+            while (t != null && t.rows().size() < 2 && System.currentTimeMillis() < until) {
+                Thread.onSpinWait();
+                t = MouthPointer.task(p);
+            }
+            h.assertTrue(t != null && t.rows().size() == 2, "the search finished");
+            h.assertValueEqual(t.rows().get(1).text(), MouthPointer.honest("iron"), "no mouth: the honest line");
+        } finally {
+            dev.awaken.core.api.HearthHooks.install(before);
+        }
+        h.succeed();
     }
 
     /** Where each kind is laid for the test (a sinkhole's rim, every other's floor). */
@@ -38,6 +134,7 @@ final class CaveTests {
             case SEEP -> -30;
             case CHUTE -> 24;
             case GROTTO -> 12;
+            case MOUTH -> 64;
         };
     }
 
@@ -48,6 +145,15 @@ final class CaveTests {
             // open ground at the rim: the sky over it
             for (int x = g.minX(); x <= g.maxX(); x++) for (int z = g.minZ(); z <= g.maxZ(); z++) for (int y = s.p(Sinkhole.RIM); y <= g.maxY(); y++)
                 g.set(x, y, z, Blocks.AIR.defaultBlockState());
+        }
+        if (s.kind() == CaveKind.MOUTH) {
+            // open ground in front of the mouth, the sky over it; the hill rises behind the lip (a doline's ground is flat)
+            Frame f = new Frame(s.x(), s.y(), s.z(), s.rot());
+            int back = s.p(Mouth.FORM) == Mouth.DOLINE ? 24 : 0;
+            for (int lx = -16; lx <= 16; lx++) for (int lz = -12; lz < back; lz++) for (int y = s.y(); y <= g.maxY(); y++) {
+                int x = f.x(lx, lz), z = f.z(lx, lz);
+                if (g.inside(x, y, z)) g.set(x, y, z, Blocks.AIR.defaultBlockState());
+            }
         }
         CaveStaging.cave(s, g);
         return g;

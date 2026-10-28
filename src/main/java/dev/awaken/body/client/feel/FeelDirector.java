@@ -47,6 +47,8 @@ public final class FeelDirector {
     private static float pitchKick, pitchKickV, fovPunch, flash, shake;
     private static int crackIn = -1;
     private static float lastYaw;
+    /** The assisted swing's tilt along its arc (degrees of pitch: up as you rise out of it, down into the dive). */
+    private static float arc;
     private static float yawRate;
 
     public static void init(IEventBus modBus) {
@@ -79,6 +81,11 @@ public final class FeelDirector {
         kick(3.2F * strength);
         fovPunch -= 0.035F * strength;
         shake = Math.max(shake, 0.25F * strength);
+    }
+
+    /** The low point of an assisted swing (SPEC §17.31): the frame widens a touch with the speed through it. */
+    public static void swingBottom(float speed) {
+        fovPunch += (FeelConfig.reduced() ? 0.02F : 0.045F) * speed;
     }
 
     public static void release(float quality) {
@@ -236,7 +243,14 @@ public final class FeelDirector {
         pitchKickV += -pitchKick * 0.28F;
         pitchKickV *= 0.62F;
         pitchKick += pitchKickV;
-        pitch1 = pitchKick;
+        // the swing's arc: the view tips up a little as you rise out of it and down as you drop into it
+        float arcTo = 0;
+        if (AscentMoves.swinging()) {
+            AscentMoves.velocity(VEL);
+            arcTo = Mth.clamp((float) -VEL[1] * 4.5F, -4F, 4F) * (FeelConfig.reduced() ? 0.5F : 1F);
+        }
+        arc += (arcTo - arc) * 0.15F;
+        pitch1 = pitchKick + arc;
         // FOV: wider with speed, plus punches that fade
         fovPunch *= 0.84F;
         float wide = st.airborne() ? 0.17F * smooth * FeelConfig.speedFov() : 0;
@@ -269,7 +283,7 @@ public final class FeelDirector {
     public static void reset() {
         roll0 = roll1 = pitch0 = pitch1 = streak0 = streak1 = tremor0 = tremor1 = 0;
         fov0 = fov1 = 1;
-        pitchKick = pitchKickV = fovPunch = flash = shake = 0;
+        pitchKick = pitchKickV = fovPunch = flash = shake = arc = 0;
         crackIn = -1;
     }
 

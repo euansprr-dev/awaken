@@ -40,12 +40,51 @@ public final class RunHudLayer {
 
     private static @Nullable Layout layout;
 
+    // ---- the clear screen (SPEC §40.6): one line, the full panel when something changes ---------------------------------
+
+    /** How open the full panel is (0 the one line, 1 the full card), eased a tick at a time; what last opened it. */
+    private static float open = 1F, openO = 1F;
+    private static int ticks, openedAt;
+    private static long content = Long.MIN_VALUE;
+    /** How long a change keeps the full panel open (6 s), and the noise that keeps it open under Silence. */
+    private static final int OPEN_TICKS = 120, LOUD = 12;
+
+    /** Everything but the clocks: a change here opens the full panel. */
+    private static long content(GatePayloads.RunHud h) {
+        long k = h.gateId();
+        k = 31 * k + h.rank();
+        k = 31 * k + h.area();
+        k = 31 * k + h.floor();
+        k = 31 * k + h.satchelSlots();
+        k = 31 * k + h.kills();
+        k = 31 * k + h.pressure();
+        k = 31 * k + h.flags();
+        k = 31 * k + h.hint().hashCode();
+        return k;
+    }
+
+    private static void tickOpen(GatePayloads.RunHud h) {
+        ticks++;
+        long c = content(h);
+        if (c != content) {
+            content = c;
+            openedAt = ticks;
+        }
+        boolean full = dev.awaken.core.api.HudState.classic() || dev.awaken.core.api.HudState.glancing()
+                || ticks - openedAt < OPEN_TICKS || h.noise() >= LOUD;
+        openO = open;
+        open = full ? Math.min(1F, open + 0.2F) : Math.max(0F, open - 0.08F);
+    }
+
     static void tick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || !ClientGates.inRun()) {
             y = yO = 0;
+            content = Long.MIN_VALUE;
+            open = openO = 1F;
             return;
         }
+        tickOpen(ClientGates.hud());
         Layout lay = measure(mc.font, ClientGates.hud());
         float want = UiHooks.topRightBelow(1f, lay.w * UiHooks.topRightScale());
         yO = y;
@@ -60,7 +99,12 @@ public final class RunHudLayer {
         Layout lay = measure(font, h);
         float pt = dt.getGameTimeDeltaPartialTick(false);
         float s = UiHooks.topRightScale();
-        int w = lay.w, hgt = lay.h;
+        int w = lay.w;
+        float o = Mth.lerp(pt, openO, open);
+        o = o * o * (3 - 2 * o);
+        // the one line: rank, gate and floor, and the collapse clock under it (it never hides)
+        int compactH = 15 + (lay.collapse.isEmpty() ? 0 : 10);
+        int hgt = Math.round(Mth.lerp(o, compactH, lay.h));
         float top = Math.max(UiHooks.topRightBelow(pt, w * s), Mth.lerp(pt, yO, y));
         int x = Math.round(g.guiWidth() - w * s - UiHooks.TOP_RIGHT_MARGIN);
 
@@ -82,24 +126,30 @@ public final class RunHudLayer {
             HudLook.text(g, font, " ✓", w - 4 - font.width(" ✓"), 3, Glass.a(Glass.GOOD, 1f), true);
         }
         HudLook.text(g, font, lay.floor, fx, 3, Glass.a(Glass.LABEL, 1f), true);
+        if (o < 0.5f && !lay.collapse.isEmpty()) HudLook.text(g, font, lay.collapse, 4, 14, fa(lay.collapseColour, 1f - 2f * o), true);
+        if (o < 0.5f) {
+            g.pose().popMatrix();
+            return;
+        }
+        float b = 2f * o - 1f; // the body's rows come in over the second half of the opening
         int ry = 14;
-        HudLook.text(g, font, lay.satchel, 4, ry, Glass.a(Glass.AMBER, 1f), true);
+        HudLook.text(g, font, lay.satchel, 4, ry, Glass.a(Glass.AMBER, b), true);
         ry += 10;
-        HudLook.text(g, font, lay.kills, 4, ry, Glass.a(Glass.TEXT, 1f), true);
-        if (!lay.pressure.isEmpty()) HudLook.text(g, font, lay.pressure, w - 4 - font.width(lay.pressure), ry, lay.pressureColour, true);
+        HudLook.text(g, font, lay.kills, 4, ry, Glass.a(Glass.TEXT, b), true);
+        if (!lay.pressure.isEmpty()) HudLook.text(g, font, lay.pressure, w - 4 - font.width(lay.pressure), ry, fa(lay.pressureColour, b), true);
         ry += 10;
         if (h.noise() >= 0) {
-            HudLook.text(g, font, "Noise", 4, ry, Glass.a(Glass.LABEL, 1f), true);
+            HudLook.text(g, font, "Noise", 4, ry, Glass.a(Glass.LABEL, b), true);
             int bx = 4 + font.width("Noise") + 5, bw = w - 4 - bx;
-            g.fill(bx, ry + 2, bx + bw, ry + 6, Glass.a(0x000000, 0.5f));
-            g.fill(bx, ry + 2, bx + Math.min(bw, h.noise() * bw / 24), ry + 6, Glass.a(h.noise() >= 18 ? Glass.WARN : Glass.EDGE, 1f));
+            g.fill(bx, ry + 2, bx + bw, ry + 6, Glass.a(0x000000, 0.5f * b));
+            g.fill(bx, ry + 2, bx + Math.min(bw, h.noise() * bw / 24), ry + 6, Glass.a(h.noise() >= 18 ? Glass.WARN : Glass.EDGE, b));
             ry += 10;
         }
         if (!lay.collapse.isEmpty()) {
-            HudLook.text(g, font, lay.collapse, 4, ry, lay.collapseColour, true);
+            HudLook.text(g, font, lay.collapse, 4, ry, fa(lay.collapseColour, b), true);
             ry += 10;
         }
-        if (!lay.hint.isEmpty()) HudLook.text(g, font, lay.hint, 4, ry, lay.hintColour, true);
+        if (!lay.hint.isEmpty()) HudLook.text(g, font, lay.hint, 4, ry, fa(lay.hintColour, b), true);
         g.pose().popMatrix();
     }
 
@@ -141,6 +191,11 @@ public final class RunHudLayer {
                 pressureColour, collapse, collapseColour, hint, hintColour, w, 16 + rows * 10);
         layout = lay;
         return lay;
+    }
+
+    /** An ARGB colour with its alpha scaled. */
+    private static int fa(int argb, float a) {
+        return Math.round((argb >>> 24) * Mth.clamp(a, 0f, 1f)) << 24 | argb & 0xFFFFFF;
     }
 
     /** {@code s} shortened with "…" to fit {@code room} px. */

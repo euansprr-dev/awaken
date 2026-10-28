@@ -1,0 +1,57 @@
+{
+  "variants": {
+    "facing=east": [
+      {
+        "model": "awaken:block/wild/bracket_fungus_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/wild/bracket_fungus_1",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/wild/bracket_fungus_2",
+        "y": 90
+      }
+    ],
+    "facing=north": [
+      {
+        "model": "awaken:block/wild/bracket_fungus_0"
+      },
+      {
+        "model": "awaken:block/wild/bracket_fungus_1"
+      },
+      {
+        "model": "awaken:block/wild/bracket_fungus_2"
+      }
+    ],
+    "facing=south": [
+      {
+        "model": "awaken:block/wild/bracket_fungus_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/wild/bracket_fungus_1",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/wild/bracket_fungus_2",
+        "y": 180
+      }
+    ],
+    "facing=west": [
+      {
+        "model": "awaken:block/wild/bracket_fungus_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/wild/bracket_fungus_1",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/wild/bracket_fungus_2",
+        "y": 270
+      }
+    ]
+  }
+}

@@ -24,6 +24,7 @@ public record Spec(CaveKind kind, int x, int y, int z, int rot, long seed, boole
             case SEEP -> Seep.box(this);
             case CHUTE -> Chute.box(this);
             case GROTTO -> Grotto.box(this);
+            case MOUTH -> Mouth.box(this);
         };
         if (joined) b = b.encapsulate(new BoundingBox(jx - 4, jy - 2, jz - 4, jx + 4, jy + 5, jz + 4));
         return b;
@@ -37,6 +38,7 @@ public record Spec(CaveKind kind, int x, int y, int z, int rot, long seed, boole
             case SEEP -> Seep.build(this, s);
             case CHUTE -> Chute.build(this, s);
             case GROTTO -> Grotto.build(this, s);
+            case MOUTH -> Mouth.build(this, s);
         }
     }
 

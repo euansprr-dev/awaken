@@ -453,8 +453,9 @@ def axis_rot(axis, deg):
 
 def rig_pose(style_row, m, held, t):
     """(d, R) at t ticks of a move: its form, weighted by its style."""
+    import swing_studio as SS  # the feel specs (tools/arms/feel): with none, every move bakes as before
     sid = style_row["id"]
-    wt = WEIGHTS[WEIGHT_OF.get(sid, "blade")]
+    wt = SS.weight(sid)
     form, u, variant = form_of(m)
     F, side = held_frame(held)
     H0 = np.array([HX, HY, HZ])
@@ -466,24 +467,40 @@ def rig_pose(style_row, m, held, t):
 
     def windup_pose(cocked, creep=None):
         reach = max(1e-6, c * wt["draw"])
+        # a chained strike draws back from where the one before it holds the blade, and never flings it there faster
+        # than the studio's LOAD_STEP a frame (Swing Studio round 3)
+        start = SS.chain_start(style_row, SS.move_name(style_row, m), held) if t < c else None
+        if SS.feel(sid) and t < c:
+            far = float(np.linalg.norm(SS._tip_ndc(held, start or rest) - SS._tip_ndc(held, cocked)))
+            reach = min(max(reach, far * math.pi / 2 / (3 * SS.LOAD_STEP)), max(reach, c * 0.9))
         if t < reach or creep is None:
             k = ease_out_cubic(t / reach) if wt["home"] == "fast" else ease_in_out_sine(t / reach)
-            return lerp_pose(rest, cocked, min(1.0, k))
+            return lerp_pose(start or rest, cocked, min(1.0, k))
         return lerp_pose(cocked, creep, ease_out_sine((t - reach) / max(1e-6, c - reach)))
 
+    home_ticks = SS.home_ticks(sid)
+
     def back_home(from_pose, x):
+        if home_ticks:  # Swing Studio: home in a couple of ticks, then still (never a slow slide across the view)
+            y = min(1.0, x * (total - fe) / home_ticks)
+            return lerp_pose(from_pose, rest, ease_in_out_sine(y))
         return lerp_pose(from_pose, rest, home_curve(x, wt))
 
     if form in ("stab", "jab", "bash", "hook", "upper", "over"):
-        return thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, (c, hit, ea, fe, total))
+        tk = SS.thrust_knobs(sid, SS.move_name(style_row, m)) if form == "stab" else None
+        return thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, (c, hit, ea, fe, total), tk,
+                           home_ticks, lambda: SS.chain_start(style_row, SS.move_name(style_row, m), held))
     if form == "spin":
-        return spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, (c, hit, ea, fe, total))
+        return spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, (c, hit, ea, fe, total), home_ticks)
 
     # a cut: the lever about the pivot, in the plane of the blade at the hit and the cut's direction on the screen. A
     # scythe cuts on the inside of its blade, which a sweep only drags along its length: it is swept round with the
     # blade's point leading until the blade is past the target (REACH further out), then hauled back through it (PULL),
     # the inside edge drawn through what it hooked; its blade, at the snath's top, is what crosses the target
     inner = WORK.get(sid) == "inner"
+    kn = None if inner else SS.cut_knobs(sid, SS.move_name(style_row, m), form)
+    if kn is not None:
+        return SS.cut_pose(sid, m, held, form, u, F, side, wt, t, kn)
     mid = 1.0 if inner else MID
     target = target_for(held, -0.08 if form == "slam" else 0.0, mid, PULL if inner else 0.0)
     r_c = target - PIVOT
@@ -520,6 +537,23 @@ def rig_pose(style_row, m, held, t):
         return windup_pose(cocked, creep)
     th0 = -pre - (8 if wt["draw"] < 1 else 0)
     r_start = roll0 if wt["draw"] < 1 else roll0 * 0.85
+    if inner and home_ticks:
+        # Swing Studio: round past the target, then one quick haul back through it, crossing on the hit at the haul's
+        # fastest (halfway), carried on down out of the frame and home from below: never a crawl
+        held_at = post * 0.4
+        haul = 1.0
+        hook = max(c + 0.5, hit - 0.5 * haul)
+        if t < hook:
+            # the sweep slows into the hook (a reversal can't keep its speed), so the haul leaves from a stop, not a jolt
+            x = (t - c) / (hook - c)
+            p = x * x * x * (x * (6 * x - 15) + 10)
+            return at(th0 * (1 - p), lag_max * (1 - x) ** 1.5, x, r_start * (1 - x) ** 1.6, REACH * p)
+        end = hook + haul
+        if t < end:
+            k = ease_in_out_sine((t - hook) / haul)
+            return at(held_at * k, 0.0, 1.0, 0.0, REACH - (REACH + PULL) * k)
+        out = at(held_at, 0.0, 1.0, 0.0, -PULL)
+        return SS.rise_home(out, t, end, total, m, home_ticks)
     if inner:
         # round past the target by the hook, then the haul: the blade crosses the target about the hit
         hook = max(c + (hit - c) * 0.35, (hit - 0.4 * ea) / 0.6)
@@ -556,7 +590,8 @@ THRUST_FROM = {
 }
 
 
-def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, ph):
+def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, ph, tk=None, home_ticks=None,
+                start_of=None):
     c, hit, ea, fe, total = ph
     if form in ("jab", "hook", "upper", "over"):
         return punch_pose(form, m, held, wt, t, g, rest, windup_pose, back_home, ph)
@@ -574,6 +609,12 @@ def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, ba
         if t < hit:
             x, p = drive(t, c, hit, wt)
             return g(back_p + (out_p - back_p) * p, R)
+        if home_ticks:  # Swing Studio: a beat on the foe, then pulled back in as hard as it went (no slow hold and slide)
+            out_at = hit + 0.5
+            if t < out_at:
+                return g(out_p, R)
+            x = min(1.0, (t - out_at) / max(1e-6, min(home_ticks, total - out_at)))
+            return lerp_pose(g(out_p, R), rest, 1 - (1 - x) ** 3)
         if t < fe:
             return g(out_p, R)
         return back_home(g(out_p, R), (t - fe) / max(1e-6, total - fe))
@@ -590,11 +631,23 @@ def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, ba
     def at(d, twist):
         return g(start + r * d, axis_rot(r, twist) @ R0)
 
+    if tk is not None and tk.get("push") and t < hit:
+        # Swing Studio round 6: one push from where the hand is (the last strike's end, the idle hand's draw, or rest)
+        # to full reach, gathering speed into the hit. A dagger's 1-tick stab was a load, a set, a drive and a stop of a
+        # frame each: a stutter (Euan 2026-10-28: "tiny near glitchy movements"). Before 0: the set the idle hand draws
+        # back to for it (swing_studio.set_time)
+        if t < 0:
+            return at(back_d - pull, -12)
+        p = (t / max(1e-6, hit)) ** tk["push"]
+        return lerp_pose((start_of() if start_of else None) or rest, at(out_d, 22), p)
     if t < c:
         return windup_pose(at(back_d, -8), at(back_d - pull, -12))
     if t < hit:  # driven in: nearly even for a snap, the point arriving on the hit
         x, p = drive(t, c, hit, wt)
         return at(back_d - pull + (out_d - back_d + pull) * p, -12 + 34 * p)
+    if tk is not None:  # Swing Studio: a beat at full reach, snapped back to the ready line, home without a crawl
+        import swing_studio as SS
+        return SS.thrust_after(tk, m, t, hit, total, lambda d, tw: at(d, tw), out_d, back_d, rest)
     if t < fe:  # held at full reach a beat, the twist going in
         x = (t - hit) / max(1e-6, fe - hit)
         return at(out_d + 0.02 * math.sin(math.pi * x), 22 + 6 * x)
@@ -638,7 +691,7 @@ def punch_pose(form, m, held, wt, t, g, rest, windup_pose, back_home, ph):
     return back_home(g(base + s1, R1), (t - fe) / max(1e-6, total - fe))
 
 
-def spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, ph):
+def spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, ph, home_ticks=None):
     """A double weapon turned about its middle grip: a full turn and more as the hand crosses the front, both ends
     cutting in a plane tilted toward the eye."""
     c, hit, ea, fe, total = ph
@@ -665,6 +718,22 @@ def spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, ph):
     turn = 400.0
     if t < c:
         return windup_pose(at(-40, 0.0))
+    if home_ticks:
+        # Swing Studio: the turn gathers to its fastest on the hit (60% round), the rest carried off that speed in one
+        # slowing (never a second wind-down), then down out of the view and home
+        import swing_studio as SS
+        pw = max(1.6, wt["power"] * 0.8)
+        dur = max(1e-6, hit - c)
+        if t < hit:
+            x = (t - c) / dur
+            return at(-40 + turn * 0.6 * x ** pw, 0.6 * x)
+        v = turn * 0.6 * pw / dur
+        rem, k = turn * 0.4, 3.0
+        carry = min(k * rem / v, max(0.75, total - hit - home_ticks))
+        if t < hit + carry:
+            y = (t - hit) / carry
+            return at(-40 + turn * 0.6 + rem * (1 - (1 - y) ** k), 0.6 + 0.4 * y)
+        return SS.rise_home(at(-40 + turn, 1.0), t, hit + carry, total, m, home_ticks)
     if t < fe:
         x = (t - c) / max(1e-6, fe - c)
         p = x ** (wt["power"] * 0.6) if x < 0.5 else 1 - (1 - x) ** 1.4 * (0.5 ** (wt["power"] * 0.6 - 1.4))
@@ -685,8 +754,12 @@ CAM = {
 
 def camera(style_row, m, t):
     """The view's lean at t ticks: drawn the other way through the wind-up (heavy), into the blow on the drive, a sharp
-    peak at the hit, then a damped settle."""
-    wt = WEIGHTS[WEIGHT_OF.get(style_row["id"], "blade")]
+    peak at the hit, then a damped settle. A move the studio shapes has its own (swing_studio.camera)."""
+    import swing_studio as SS
+    own = SS.camera(style_row, m, t)
+    if own is not None:
+        return own
+    wt = SS.weight(style_row["id"])
     form, u, _ = form_of(m)
     c, hit, ea, fe, total = phases(m, wt)
     yw, pt, rl = CAM.get(form, (1.0, 0.5, 1.5))
@@ -710,15 +783,25 @@ def lerp_pose(a, b, u):
     return a[0] * (1 - u) + b[0] * u, quat_mat(q)
 
 
-def bake(out=SWINGS):
+def bake(out=SWINGS, solve=False, round_=None):
     """Every style's moves as keys for the game: [t, dx, dy, dz, qx, qy, qz, qw, yaw, pitch, roll] (the hand's move from
     vanilla's rest and its turn about its own place, for the style's own forged weapon; the view's lean, degrees);
-    plus each style's turn for a vanilla item."""
+    plus each style's turn for a vanilla item. Swing Studio's fields (schema 5): per move the tick its swish starts and
+    its bite after a landed hit, per style where a two-handed weapon's off hand closes, and the round. Third person's
+    wrists are kept from the file as it stands (a first-person round never moves them) unless {@code solve}."""
     import arms_holds as AH
     import arms_weapons as AW
     import arms_rig4 as R4
+    import swing_studio as SS
+    before = json.load(open(SWINGS)) if os.path.exists(SWINGS) else {}  # the game's file: its wrists and round
     rig = R4.load()  # third person from first person's blade: its styles' wrists come with their arms
-    wrists = solve_wrists([s for s in table() if s not in rig])  # third person: every other move's wrist, in parallel
+    if solve or not before:
+        wrists = solve_wrists([s for s in table() if s not in rig])  # third person: every other move's wrist, in parallel
+    else:
+        wrists = {sid: {mv: (row["wrist3"], 0.0) for mv, row in st["moves"].items() if "wrist3" in row}
+                  for sid, st in before.get("styles", {}).items() if sid not in rig}
+    if round_ is None:
+        round_ = max([before.get("round", 0)] + [SS.feel(s).get("round", 0) for s in table()])
     flipped3 = sorted(r[0] for r in AW.CATALOG
                       if AH.flipped3(r[8], AH.edge_of(r[8], None if r[0] in AW.LORD_COLOUR else r[2])))
     styles = {}
@@ -738,8 +821,19 @@ def bake(out=SWINGS):
                 cam = camera(st, m, float(tt))
                 keys.append([round(float(tt), 3)] + [round(float(v), 4) for v in d] + [round(float(v), 5) for v in q]
                             + [round(float(v), 3) for v in cam])
-            moves[mv] = {"form": form_of(m)[0], "weight": WEIGHT_OF.get(sid, "blade"), "hand": m["swing"].get("hand", "main"),
-                         "keys": keys}
+            moves[mv] = {"form": form_of(m)[0], "weight": SS.weight_class(sid), "hand": m["swing"].get("hand", "main"),
+                         "keys": keys, "bite": SS.bite_of(sid, mv)}
+            if SS.idle_next(st, mv):  # the hand not striking: drawn back to the next strike's set (Swing Studio round 4)
+                idle = []
+                for tt in np.arange(0, total + 1e-6, KEY_DT):
+                    d, R = SS.idle_pose(st, mv, held, float(tt))
+                    idle.append([round(float(tt), 3)] + [round(float(v), 4) for v in d] + [round(float(v), 5) for v in mat_quat(R)])
+                moves[mv]["idle"] = idle
+            if SS.far_led(st, mv):  # led by a double weapon's other end: its trail follows that end (Swing Studio round 5)
+                moves[mv]["far"] = True
+            moves[mv]["swish"], sound = SS.swish_of(sid, mv, m)
+            if sound:
+                moves[mv]["swishSound"] = sound
             wrist = wrists.get(sid, {}).get(mv, ({}, 0.0))[0]  # third person: the wrist, per arm (ArmsWrist)
             if mv in rig.get(sid, {}):
                 moves[mv].update(rig4_wrists(rig[sid][mv]))
@@ -756,8 +850,13 @@ def bake(out=SWINGS):
                        "vanilla": [round(float(v), 5) for v in mat_quat(C)],
                        "grip": [round(float(v), 4) for v in held.grip], "vanillaGrip": [round(float(v), 4) for v in grip_v],
                        "moves": moves}
-    json.dump({"schemaVersion": 4, "generatedBy": "tools/art/anim_lab.py bake", "dt": KEY_DT, "wristDt": WRIST_DT,
-               "flipped3": flipped3, "grip3": grips3(), "styles": styles},
+        gap = SS.off_gap(sid)
+        if gap:  # a two-handed weapon: the off hand closes down the handle below the main (a vanilla item: down its own)
+            main_at = hand_grip if hand_grip is not None else held.grip
+            styles[sid]["offHand"] = [round(float(v), 4) for v in main_at - held.axis * gap]
+            styles[sid]["vanillaOffHand"] = [round(float(v), 4) for v in grip_v - Fv[:, 0] * gap]
+    json.dump({"schemaVersion": 6, "generatedBy": "tools/art/anim_lab.py bake", "round": round_, "dt": KEY_DT,
+               "wristDt": WRIST_DT, "flipped3": flipped3, "grip3": grips3(), "styles": styles},
               open(out, "w"), separators=(",", ":"))
     return out
 
@@ -2040,8 +2139,10 @@ def main(argv):
         for k, v in rep.items():
             print(f"  {k:9s} edge lead {v:.2f}")
         return 0
-    if argv[0] == "bake":
-        print(bake())
+    if argv[0] == "bake":  # [--solve] third person's wrists solved again; [--round N]; [--out PATH] (a tuning folder)
+        out = argv[argv.index("--out") + 1] if "--out" in argv else SWINGS
+        rnd = int(argv[argv.index("--round") + 1]) if "--round" in argv else None
+        print(bake(out, "--solve" in argv, rnd))
         return 0
     if argv[0] == "body":
         body_compare()

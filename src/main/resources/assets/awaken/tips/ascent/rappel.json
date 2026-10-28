@@ -1,5 +1,5 @@
 {
-  "text": "Over a drop, hold {key.sneak} and {key.jump} on the line: it pays out and lowers you. Let go of {key.jump} to hold where you are; press it again with your feet on the wall to kick off. Let go of {key.awaken.movement} by a passage to step in.",
+  "text": "Over a drop, hold {key.sneak} and {key.jump} on the line: it pays out and lowers you. Let go of {key.jump} to hold where you are; press it again with your feet on the wall to kick off. Let go of {key.awaken.rope} by a passage to step in.",
   "short": "{key.sneak} + {key.jump} lowers you",
   "priority": 60,
   "show_for": 220,

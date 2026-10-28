@@ -1,0 +1,37 @@
+{
+  "variants": {
+    "fruit=0": [
+      {
+        "model": "awaken:block/wild/bramble_none_0"
+      },
+      {
+        "model": "awaken:block/wild/bramble_none_1"
+      },
+      {
+        "model": "awaken:block/wild/bramble_none_2"
+      }
+    ],
+    "fruit=1": [
+      {
+        "model": "awaken:block/wild/bramble_green_0"
+      },
+      {
+        "model": "awaken:block/wild/bramble_green_1"
+      },
+      {
+        "model": "awaken:block/wild/bramble_green_2"
+      }
+    ],
+    "fruit=2": [
+      {
+        "model": "awaken:block/wild/bramble_ripe_0"
+      },
+      {
+        "model": "awaken:block/wild/bramble_ripe_1"
+      },
+      {
+        "model": "awaken:block/wild/bramble_ripe_2"
+      }
+    ]
+  }
+}

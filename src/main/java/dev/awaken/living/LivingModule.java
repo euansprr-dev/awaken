@@ -65,7 +65,22 @@ public final class LivingModule {
         FirstThread.init(); // the first thread out of Carillon, and chains on the Now line (SPEC §27.6)
         FirstScenes.init(); // its High Gate shot and Ilse's scene by the fire
         IssueScene.init(); // Hale's issue: the first weapon, free (docs/arms-progression/PLAN.md §3.3)
+        dev.awaken.living.wild.WildRecord.init(modBus); // the Wild Lands (SPEC §41): each chunk's wildness, kept
         modBus.addListener(LivingNet::register);
+        // the Boss Plate's data (SPEC §35.1): binds and lines to the players who see a boss's bar
+        dev.awaken.core.api.BossPlates.install(new dev.awaken.core.api.BossPlates.Sink() {
+            @Override
+            public void bind(ServerPlayer player, java.util.UUID bar, int entity, dev.awaken.core.api.BossPlates.Kind kind, float[] marks, int glow) {
+                java.util.List<Float> m = new java.util.ArrayList<>(Math.min(8, marks.length));
+                for (int i = 0; i < marks.length && i < 8; i++) m.add(marks[i]);
+                dev.awaken.core.AwakenNet.send(player, new LivingNet.BossBind(bar, entity, kind.ordinal(), m, glow));
+            }
+
+            @Override
+            public void line(ServerPlayer player, java.util.UUID bar, String text, dev.awaken.core.api.BossPlates.Line kind, int colour) {
+                dev.awaken.core.AwakenNet.send(player, new LivingNet.BossLine(bar, text, kind.ordinal(), colour));
+            }
+        });
         XpBudget.register(HUNT, 0.10);
         XpBudget.register("pulse", 0.15);
         XpBudget.register("camp", 0.10);
@@ -98,6 +113,11 @@ public final class LivingModule {
         Progression.onXpGranted(XpStream::granted);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(EventPriority.LOW, FinalizeSpawnEvent.class, Creatures::onFinalizeSpawn);
+        bus.addListener(net.neoforged.neoforge.event.entity.EntityEvent.Size.class, dev.awaken.living.combat.FormShape::onSize);
+        bus.addListener(LivingDamageEvent.Post.class, dev.awaken.living.combat.Combos::onDamage);
+        bus.addListener(net.neoforged.neoforge.event.tick.ServerTickEvent.Post.class, dev.awaken.living.combat.Combos::onTick);
+        bus.addListener(net.neoforged.neoforge.event.tick.EntityTickEvent.Post.class, dev.awaken.living.combat.Combos::onEntityTick);
+        bus.addListener(EntityJoinLevelEvent.class, dev.awaken.living.hunt.Carcass::onJoin);
         bus.addListener(EntityJoinLevelEvent.class, Creatures::onJoin);
         bus.addListener(EventPriority.HIGHEST, net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre.class, dev.awaken.living.combat.MarkEvents::onDamage);
         bus.addListener(net.neoforged.neoforge.event.entity.living.MobSpawnEvent.SpawnPlacementCheck.class, dev.awaken.living.wonder.WonderWatch::onSpawnCheck);
@@ -120,6 +140,11 @@ public final class LivingModule {
         bus.addListener(dev.awaken.living.pulse.HappeningBook::addReload);
         bus.addListener(LivingDropsEvent.class, dev.awaken.living.pulse.Pulse::onDrops);
         bus.addListener(LivingDeathEvent.class, e -> dev.awaken.living.population.Ledger.onDeath(e.getEntity()));
+        bus.addListener(LivingDamageEvent.Post.class, e -> dev.awaken.living.population.Ledger.onHurt(e.getEntity(), e.getSource()));
+        bus.addListener(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre.class, dev.awaken.living.hunt.Quarry::onDamage);
+        bus.addListener(LivingDamageEvent.Post.class, dev.awaken.living.hunt.Quarry::afterDamage);
+        bus.addListener(LivingDeathEvent.class, dev.awaken.living.hunt.Carcass::onDeath);
+        bus.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract.class, dev.awaken.living.hunt.Carcass::onInteract);
         bus.addListener(LivingDeathEvent.class, e -> dev.awaken.living.camp.Camps.onDeath(e.getEntity()));
         // crafts
         bus.addListener(LivingDeathEvent.class, dev.awaken.living.craft.CraftEvents::onDeath);
@@ -159,11 +184,18 @@ public final class LivingModule {
                 if (!quiet) dev.awaken.living.wayfarer.Scenes.tick(e.getServer());
                 dev.awaken.living.pulse.Pulse.tick(e.getServer());
                 if (!quiet) dev.awaken.living.population.Ledger.tick(e.getServer());
+                if (!quiet) dev.awaken.living.population.Ledger.brainTick(e.getServer());
+                dev.awaken.living.hunt.Tracking.tick(e.getServer());
+                dev.awaken.living.hunt.Quarry.tick(e.getServer());
+                dev.awaken.living.hunt.Carcass.tick(e.getServer());
                 if (!quiet) dev.awaken.living.camp.Camps.tick(e.getServer());
                 dev.awaken.living.wayfarer.Camp.ward(e.getServer());
             }
             dev.awaken.living.quest.Relics.wardTick(e.getServer());
             if (shown(e.getServer())) dev.awaken.living.craft.CraftEvents.tick(e.getServer());
+        });
+        bus.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> {
+            if (e.getEntity() instanceof ServerPlayer sp) dev.awaken.living.hunt.Tracking.forget(sp);
         });
         bus.addListener(PlayerEvent.PlayerLoggedInEvent.class, e -> {
             if (e.getEntity() instanceof ServerPlayer sp) {
@@ -193,7 +225,10 @@ public final class LivingModule {
             RegionTracker.clear();
         });
         LivingCommands.register();
+        dev.awaken.living.wild.WildCommands.register();
+        dev.awaken.living.hunt.Tracking.register();
         LivingTests.register();
+        dev.awaken.living.wild.WildTests.register();
     }
 
     /** Whether this world shows the band's layer: plates, numbers, the stream, the moment (pure survival hides them). */

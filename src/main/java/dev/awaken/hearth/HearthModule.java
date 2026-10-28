@@ -130,6 +130,11 @@ public final class HearthModule {
             }
 
             @Override
+            public Optional<HearthHooks.MetalNeed> metalNeed(net.minecraft.server.level.ServerPlayer player) {
+                return Upgrades.metalNeed(player);
+            }
+
+            @Override
             public java.util.List<BlockPos> within(ServerLevel level, BlockPos pos, int radius) {
                 java.util.List<BlockPos> out = new java.util.ArrayList<>(1);
                 String dim = level.dimension().identifier().toString();
@@ -175,6 +180,7 @@ public final class HearthModule {
         dev.awaken.hearth.settle.SettleTests.register();
         TogetherHearthTests.register();
         dev.awaken.hearth.guide.GuideTests.register();
+        dev.awaken.hearth.guide.CottageBuildTests.register();
     }
 
     private static void attributes(EntityAttributeCreationEvent e) {

@@ -17,7 +17,23 @@
    "origin": "palm",
    "beginSound": "awaken:power.stomp_lift",
    "begin1p": "fp_stomp",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_shockwave_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_shockwave_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_shockwave_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_shockwave_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "haymaker",
@@ -34,7 +50,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_haymaker",
-   "hold1p": "fp_p_haymaker_hold"
+   "hold1p": "fp_p_haymaker_hold",
+   "levels": {
+    "3": {
+     "begin3p": "p_haymaker_l3",
+     "hold3p": null,
+     "end3p": "p_haymaker_l3_end",
+     "begin1p": "fp_p_haymaker",
+     "hold1p": "fp_p_haymaker_hold"
+    },
+    "5": {
+     "begin3p": "p_haymaker_l5",
+     "hold3p": null,
+     "end3p": "p_haymaker_l5_end",
+     "begin1p": "fp_p_haymaker",
+     "hold1p": "fp_p_haymaker_hold"
+    }
+   }
   },
   {
    "power": "terrain_rip",
@@ -51,7 +83,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_terrain_rip",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_terrain_rip_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_terrain_rip_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_terrain_rip_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_terrain_rip_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "brace",
@@ -68,7 +116,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_brace",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_brace_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_brace_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_brace_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_brace_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "thunderclap",
@@ -85,7 +149,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_thunderclap",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_thunderclap_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_thunderclap_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_thunderclap_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_thunderclap_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "dash",
@@ -102,7 +182,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_dash",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_dash_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_dash_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_dash_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_dash_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "afterimage",
@@ -119,7 +215,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_afterimage",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_afterimage_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_afterimage_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_afterimage_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_afterimage_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "flow",
@@ -136,7 +248,24 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_flow",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_flow_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_flow_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_flow_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_flow_l5",
+     "hold1p": null,
+     "lens": "awaken:awake_flow"
+    }
+   }
   },
   {
    "power": "lightning_step",
@@ -153,7 +282,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_lightning_step",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_lightning_step_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_lightning_step_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_lightning_step_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_lightning_step_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "gravity_well",
@@ -170,7 +315,24 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_gravity_well",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_gravity_well_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_gravity_well_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_gravity_well_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_gravity_well_l5",
+     "hold1p": null,
+     "lens": "awaken:awake_gravity_well"
+    }
+   }
   },
   {
    "power": "telekinesis",
@@ -187,7 +349,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_telekinesis",
-   "hold1p": "fp_p_telekinesis_hold"
+   "hold1p": "fp_p_telekinesis_hold",
+   "levels": {
+    "3": {
+     "begin3p": "p_telekinesis_l3",
+     "hold3p": "p_telekinesis_l3_hold",
+     "end3p": "p_telekinesis_l3_end",
+     "begin1p": "fp_p_telekinesis",
+     "hold1p": "fp_p_telekinesis_hold"
+    },
+    "5": {
+     "begin3p": "p_telekinesis_l5",
+     "hold3p": "p_telekinesis_l5_hold",
+     "end3p": "p_telekinesis_l5_end",
+     "begin1p": "fp_p_telekinesis",
+     "hold1p": "fp_p_telekinesis_hold"
+    }
+   }
   },
   {
    "power": "gravity_flip",
@@ -204,7 +382,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_gravity_flip",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_gravity_flip_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_gravity_flip_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_gravity_flip_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_gravity_flip_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "nova",
@@ -221,7 +415,24 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_nova",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_nova_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_nova_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_nova_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_nova_l5",
+     "hold1p": null,
+     "lens": "awaken:awake_nova"
+    }
+   }
   },
   {
    "power": "barrier",
@@ -238,7 +449,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_barrier",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_barrier_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_barrier_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_barrier_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_barrier_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "charged_shot",
@@ -255,7 +482,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_charged_shot",
-   "hold1p": "fp_p_charged_shot_hold"
+   "hold1p": "fp_p_charged_shot_hold",
+   "levels": {
+    "3": {
+     "begin3p": "p_charged_shot_l3",
+     "hold3p": "p_charged_shot_l3_hold",
+     "end3p": "p_charged_shot_l3_end",
+     "begin1p": "fp_p_charged_shot",
+     "hold1p": "fp_p_charged_shot_hold"
+    },
+    "5": {
+     "begin3p": "p_charged_shot_l5",
+     "hold3p": "p_charged_shot_l5_hold",
+     "end3p": "p_charged_shot_l5_end",
+     "begin1p": "fp_p_charged_shot",
+     "hold1p": "fp_p_charged_shot_hold"
+    }
+   }
   },
   {
    "power": "overload",
@@ -272,7 +515,24 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_overload",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_overload_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_overload_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_overload_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_overload_l5",
+     "hold1p": null,
+     "lens": "awaken:awake_overload"
+    }
+   }
   },
   {
    "power": "prism_lance",
@@ -289,7 +549,23 @@
    "origin": "core",
    "beginSound": null,
    "begin1p": "fp_p_prism_lance",
-   "hold1p": "fp_p_prism_lance_hold"
+   "hold1p": "fp_p_prism_lance_hold",
+   "levels": {
+    "3": {
+     "begin3p": "p_prism_lance_l3",
+     "hold3p": "p_prism_lance_l3_hold",
+     "end3p": "p_prism_lance_l3_end",
+     "begin1p": "fp_p_prism_lance",
+     "hold1p": "fp_p_prism_lance_hold"
+    },
+    "5": {
+     "begin3p": "p_prism_lance_l5",
+     "hold3p": "p_prism_lance_l5_hold",
+     "end3p": "p_prism_lance_l5_end",
+     "begin1p": "fp_p_prism_lance",
+     "hold1p": "fp_p_prism_lance_hold"
+    }
+   }
   },
   {
    "power": "shadow_step",
@@ -306,7 +582,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_shadow_step",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_shadow_step_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_shadow_step_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_shadow_step_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_shadow_step_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "cloak",
@@ -323,7 +615,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_cloak",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_cloak_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_cloak_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_cloak_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_cloak_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "echo_swap",
@@ -340,7 +648,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_echo_swap",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_echo_swap_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_echo_swap_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_echo_swap_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_echo_swap_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "legion",
@@ -357,7 +681,24 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_legion",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_legion_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_legion_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_legion_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_legion_l5",
+     "hold1p": null,
+     "lens": "awaken:awake_legion"
+    }
+   }
   },
   {
    "power": "dominate",
@@ -374,7 +715,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_dominate",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_dominate_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_dominate_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_dominate_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_dominate_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "read_intent",
@@ -391,7 +748,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_read_intent",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_read_intent_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_read_intent_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_read_intent_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_read_intent_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "decoy",
@@ -408,7 +781,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_decoy",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_decoy_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_decoy_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_decoy_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_decoy_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "foresight",
@@ -425,7 +814,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_foresight",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_foresight_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_foresight_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_foresight_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_foresight_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "wall",
@@ -442,7 +847,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_wall",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_wall_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_wall_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_wall_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_wall_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "ramp",
@@ -459,7 +880,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_ramp",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_ramp_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_ramp_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_ramp_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_ramp_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "floor",
@@ -476,7 +913,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_floor",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_floor_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_floor_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_floor_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_floor_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "cone",
@@ -493,7 +946,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_cone",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_cone_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_cone_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_cone_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_cone_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "rampart",
@@ -510,7 +979,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_rampart",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_rampart_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_rampart_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_rampart_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_rampart_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "spire",
@@ -527,7 +1012,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_spire",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_spire_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_spire_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_spire_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_spire_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "collapse",
@@ -544,7 +1045,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_collapse",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_collapse_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_collapse_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_collapse_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_collapse_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "citadel",
@@ -561,7 +1078,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_citadel",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_citadel_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_citadel_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_citadel_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_citadel_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "grapple",
@@ -578,7 +1111,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_grapple",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_grapple_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_grapple_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_grapple_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_grapple_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "jet_burst",
@@ -595,7 +1144,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_jet_burst",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_jet_burst_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_jet_burst_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_jet_burst_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_jet_burst_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "drone",
@@ -612,7 +1177,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_drone",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_drone_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_drone_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_drone_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_drone_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "turret",
@@ -629,7 +1210,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_turret",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_turret_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_turret_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_turret_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_turret_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "railgun",
@@ -646,7 +1243,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_railgun",
-   "hold1p": "fp_p_railgun_hold"
+   "hold1p": "fp_p_railgun_hold",
+   "levels": {
+    "3": {
+     "begin3p": "p_railgun_l3",
+     "hold3p": "p_railgun_l3_hold",
+     "end3p": "p_railgun_l3_end",
+     "begin1p": "fp_p_railgun",
+     "hold1p": "fp_p_railgun_hold"
+    },
+    "5": {
+     "begin3p": "p_railgun_l5",
+     "hold3p": "p_railgun_l5_hold",
+     "end3p": "p_railgun_l5_end",
+     "begin1p": "fp_p_railgun",
+     "hold1p": "fp_p_railgun_hold"
+    }
+   }
   },
   {
    "power": "nanite_skin",
@@ -663,7 +1276,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_nanite_skin",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_nanite_skin_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_nanite_skin_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_nanite_skin_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_nanite_skin_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "drone_swarm",
@@ -680,7 +1309,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_drone_swarm",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_drone_swarm_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_drone_swarm_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_drone_swarm_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_drone_swarm_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "spirit_palm",
@@ -697,7 +1342,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_spirit_palm",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_spirit_palm_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_spirit_palm_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_spirit_palm_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_spirit_palm_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "mend",
@@ -714,7 +1375,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_mend",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_mend_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_mend_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_mend_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_mend_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "third_eye",
@@ -731,7 +1408,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_third_eye",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_third_eye_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_third_eye_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_third_eye_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_third_eye_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "cord_lash",
@@ -748,7 +1441,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_cord_lash",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_cord_lash_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_cord_lash_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_cord_lash_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_cord_lash_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "bulwark",
@@ -765,7 +1474,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_bulwark",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_bulwark_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_bulwark_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_bulwark_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_bulwark_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "hundred_palms",
@@ -782,7 +1507,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_hundred_palms",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_hundred_palms_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_hundred_palms_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_hundred_palms_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_hundred_palms_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "void_maw",
@@ -799,7 +1540,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_void_maw",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_void_maw_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_void_maw_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_void_maw_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_void_maw_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "waking_dream",
@@ -816,7 +1573,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_waking_dream",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_waking_dream_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_waking_dream_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_waking_dream_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_waking_dream_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "storm_call",
@@ -833,7 +1606,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_storm_call",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_storm_call_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_storm_call_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_storm_call_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_storm_call_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "ember_step",
@@ -850,7 +1639,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_ember_step",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_ember_step_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_ember_step_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_ember_step_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_ember_step_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "frost_nova",
@@ -867,7 +1672,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_frost_nova",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_frost_nova_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_frost_nova_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_frost_nova_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_frost_nova_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "ghost_step",
@@ -884,7 +1705,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_ghost_step",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_ghost_step_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_ghost_step_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_ghost_step_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_ghost_step_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "twin_strike",
@@ -901,7 +1738,23 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_twin_strike",
-   "hold1p": null
+   "hold1p": null,
+   "levels": {
+    "3": {
+     "begin3p": "p_twin_strike_l3",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_twin_strike_l3",
+     "hold1p": null
+    },
+    "5": {
+     "begin3p": "p_twin_strike_l5",
+     "hold3p": null,
+     "end3p": null,
+     "begin1p": "fp_p_twin_strike_l5",
+     "hold1p": null
+    }
+   }
   },
   {
    "power": "beam",
@@ -918,7 +1771,24 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_beam_gather",
-   "hold1p": "fp_beam_hold"
+   "hold1p": "fp_beam_hold",
+   "levels": {
+    "3": {
+     "begin3p": "p_beam_l3",
+     "hold3p": "p_beam_l3_hold",
+     "end3p": "p_beam_l3_end",
+     "begin1p": "fp_beam_gather",
+     "hold1p": "fp_beam_hold"
+    },
+    "5": {
+     "begin3p": "p_beam_l5",
+     "hold3p": "p_beam_l5_hold",
+     "end3p": "p_beam_l5_end",
+     "begin1p": "fp_beam_gather",
+     "hold1p": "fp_beam_hold",
+     "lens": "awaken:awake_beam"
+    }
+   }
   }
  ]
 }

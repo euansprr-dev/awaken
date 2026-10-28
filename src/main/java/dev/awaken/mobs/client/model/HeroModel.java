@@ -48,6 +48,11 @@ public final class HeroModel extends EntityModel<HeroRenderState> {
     private final LifeRig life;
 
     public HeroModel(ModelPart root, HeroRig rig) {
+        this(root, rig, profile(rig.id));
+    }
+
+    /** A body whose temperament is not its rig's bestiary entry (the levelled vanilla creatures' form bodies, SPEC §21.13). */
+    public HeroModel(ModelPart root, HeroRig rig, LifeProfile temperament) {
         super(root, rig.translucent ? RenderTypes::entityTranslucent : RenderTypes::entityCutout);
         this.rig = rig;
         for (HeroRig.Clip c : rig.clips.values()) {
@@ -74,8 +79,53 @@ public final class HeroModel extends EntityModel<HeroRenderState> {
         hurt = clip("hurt");
         bite = clip("bite");
         angry = clip("angry");
-        life = LifeRig.of(root, profile(rig.id), rig, idle >= 0);
+        life = LifeRig.of(root, temperament, rig, idle >= 0);
+        legs = new Leg[]{Leg.of(rig, lookup, "l"), Leg.of(rig, lookup, "r")};
     }
+
+    /**
+     * A kit body's leg (SPEC §35.4: the plans name them thigh_*, shin_*, foot_*), for planting a foot on the ground under
+     * it with two-bone IK in the leg's own plane; null when the rig has no such leg.
+     */
+    private record Leg(ModelPart thigh, ModelPart shin, @org.jspecify.annotations.Nullable ModelPart foot, float upper, float lower) {
+        static @org.jspecify.annotations.Nullable Leg of(HeroRig rig, java.util.function.Function<String, ModelPart> lookup, String side) {
+            int t = rig.bone("thigh_" + side), sh = rig.bone("shin_" + side), f = rig.bone("foot_" + side);
+            if (t < 0 || sh < 0) return null;
+            HeroRig.Bone shin = rig.bones.get(sh);
+            float upper = (float) Math.sqrt(shin.py() * shin.py() + shin.pz() * shin.pz());
+            float lower;
+            if (f >= 0) {
+                HeroRig.Bone foot = rig.bones.get(f);
+                lower = (float) Math.sqrt(foot.py() * foot.py() + foot.pz() * foot.pz());
+            } else {
+                lower = upper;
+            }
+            ModelPart tp = lookup.apply("thigh_" + side), sp = lookup.apply("shin_" + side);
+            if (tp == null || sp == null || upper < 0.5F || lower < 0.5F) return null;
+            return new Leg(tp, sp, f >= 0 ? lookup.apply("foot_" + side) : null, upper, lower);
+        }
+
+        /** Lifts the ankle {@code up} pixels by bending the knee (forward) and the hip; the foot stays level. */
+        void reach(float up) {
+            if (up < 0.25F) return;
+            float a1 = thigh.xRot, a2 = shin.xRot;
+            // the ankle in the hip's frame (y down, z back), from the angles the clips left
+            float ky = upper * Mth.cos(a1), kz = upper * Mth.sin(a1);
+            float fy = ky + lower * Mth.cos(a1 + a2), fz = kz + lower * Mth.sin(a1 + a2);
+            float ty = fy - up, tz = fz;
+            float d = Math.min((float) Math.sqrt(ty * ty + tz * tz), (upper + lower) * 0.999F);
+            if (d < 0.1F) return;
+            float knee = (float) Math.acos(Mth.clamp((upper * upper + lower * lower - d * d) / (2 * upper * lower), -1, 1));
+            float hip = (float) Math.acos(Mth.clamp((upper * upper + d * d - lower * lower) / (2 * upper * d), -1, 1));
+            float phi = (float) Math.atan2(tz, ty);
+            float n1 = phi - hip, n2 = Mth.PI - knee;
+            thigh.xRot = n1;
+            shin.xRot = n2;
+            if (foot != null) foot.xRot -= (n1 + n2) - (a1 + a2);
+        }
+    }
+
+    private final Leg[] legs;
 
     /** The temperament of the creature a rig belongs to (its bestiary role), or "default". */
     public static LifeProfile profile(String id) {
@@ -206,6 +256,10 @@ public final class HeroModel extends EntityModel<HeroRenderState> {
         play(s.cueClip, s.cueTime, s.cueWeight * live);
         once(bite, s.melee, live);
         once(hurt, s.hurt, live);
+        for (int k = 0; k < s.layerClip.length; k++) play(s.layerClip[k], s.layerTime[k], s.layerWeight[k] * live);
         life.apply(l, s);
+        // a kit body plants its feet on the ground under them (after every layer, so nothing undoes it)
+        if (legs[0] != null) legs[0].reach(s.footL * live);
+        if (legs[1] != null) legs[1].reach(s.footR * live);
     }
 }

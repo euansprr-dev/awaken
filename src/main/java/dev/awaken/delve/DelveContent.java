@@ -45,6 +45,11 @@ public final class DelveContent {
     static final DeferredRegister<MapCodec<? extends Feature>> FEATURES = DeferredRegister.create(Registries.FEATURE_TYPE, Awaken.MODID);
     static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);
     static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
+    static final DeferredRegister<MapCodec<? extends net.neoforged.neoforge.common.world.BiomeModifier>> BIOME_MODIFIERS =
+            DeferredRegister.create(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, Awaken.MODID);
+    /** Vanilla's scattered iron, copper, coal and gold at 35% in new land (SPEC §34.2). */
+    public static final DeferredHolder<MapCodec<? extends net.neoforged.neoforge.common.world.BiomeModifier>, MapCodec<ThinOres>> THIN_ORES =
+            BIOME_MODIFIERS.register("thin_ores", () -> ThinOres.CODEC);
 
     // ---- tags -------------------------------------------------------------------------------------------------------
 
@@ -89,8 +94,20 @@ public final class DelveContent {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> TUNED = COMPONENTS.registerComponentType("tuned",
             b -> b.persistent(Codec.STRING).networkSynchronized(ByteBufCodecs.STRING_UTF8));
 
+    /** The Delver's Pick's verses (SPEC §34.4): saved on the item, schema 1. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PickVerses.State>> PICK_VERSES = COMPONENTS.registerComponentType("pick_verses",
+            b -> b.persistent(PickVerses.State.CODEC).networkSynchronized(PickVerses.State.STREAM_CODEC));
+
     public static final DeferredItem<TuningForkItem> TUNING_FORK = ITEMS.registerItem("tuning_fork", TuningForkItem::new,
             p -> p.stacksTo(1).durability(256).rarity(Rarity.UNCOMMON));
+
+    /** The Delver's Pick (SPEC §34.4): asleep, it mines like a stone pick. Kept through death ({@link WakingPick}). */
+    public static final DeferredItem<WakingPick.PickItem> WAKING_PICK = ITEMS.registerItem("waking_pick", WakingPick.PickItem::new,
+            p -> p.pickaxe(net.minecraft.world.item.ToolMaterial.STONE, 1.0F, -2.8F).rarity(Rarity.RARE));
+    /** The pick in the stone at an adit's end: each player pulls their own; unbreakable, no item. */
+    public static final DeferredBlock<PickStoneBlock> WAKING_PICK_STONE = BLOCKS.registerBlock("waking_pick_stone", PickStoneBlock::new,
+            p -> p.mapColor(MapColor.DEEPSLATE).strength(-1F, 3600000F).sound(SoundType.DEEPSLATE).noOcclusion().noLootTable()
+                    .pushReaction(PushReaction.IMMOVEABLE));
 
     public static final DeferredBlock<PitonBlock> PITON = BLOCKS.registerBlock("piton", PitonBlock::new,
             p -> p.mapColor(MapColor.METAL).strength(1.5F, 6F).sound(SoundType.CHAIN).noOcclusion().noCollision()
@@ -113,7 +130,17 @@ public final class DelveContent {
 
     static {
         FEATURES.register("lodes", () -> LodeFeature.CODEC);
+        FEATURES.register("delver_lamps", () -> LampFeature.CODEC);
+        FEATURES.register("cave_styles", () -> CaveStyleFeature.CODEC);
     }
+
+    // ---- the Delver lamps (SPEC §34.6) ----------------------------------------------------------------------------------
+
+    /** An old iron cage round a clouded crystal, hanging in a cavern: dead it barely glows; struck, it lights the hall. */
+    public static final DeferredBlock<DelverLampBlock> DELVER_LAMP = BLOCKS.registerBlock("delver_lamp", DelverLampBlock::new,
+            p -> p.mapColor(MapColor.METAL).strength(3.5F, 6F).sound(SoundType.LANTERN).noOcclusion().pushReaction(PushReaction.IMMOVEABLE)
+                    .lightLevel(s -> s.getValue(DelverLampBlock.LIT) ? 14 : 3));
+    public static final DeferredItem<BlockItem> DELVER_LAMP_ITEM = ITEMS.registerSimpleBlockItem(DELVER_LAMP);
 
     // ---- particles (client providers in delve.client.DelveParticles) -------------------------------------------------
 
@@ -127,6 +154,8 @@ public final class DelveContent {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> GLINT = PARTICLES.register("delve_glint", () -> new SimpleParticleType(false));
     /** A mote of the Deep drifting off Deepglass. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MOTE = PARTICLES.register("delve_mote", () -> new SimpleParticleType(false));
+    /** Dust in the air your light reaches (SPEC §34.5): the mote's sprite, lit by the world, so it shows only in light. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> LIGHT_MOTE = PARTICLES.register("delve_light_mote", () -> new SimpleParticleType(false));
 
     // ---- sounds (tools/art/specs/audio_delve.py) ------------------------------------------------------------------------
 
@@ -138,6 +167,8 @@ public final class DelveContent {
 
     /** The last blow on an ore: the rock lets go of it. */
     public static final DeferredHolder<SoundEvent, SoundEvent> STRIKE_LAST = sound("delve.strike_last");
+    /** A true strike's chime (SPEC §34.3), played at the ore's own note. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> TRUE_STRIKE = sound("delve.true_strike");
     /** A lode's heart breaks: a deep crack and the whole vein ringing. */
     public static final DeferredHolder<SoundEvent, SoundEvent> VEIN_GIVES = sound("delve.vein_gives");
     /** The cracks running along the vein. */
@@ -167,5 +198,6 @@ public final class DelveContent {
         FEATURES.register(modBus);
         PARTICLES.register(modBus);
         SOUNDS.register(modBus);
+        BIOME_MODIFIERS.register(modBus);
     }
 }

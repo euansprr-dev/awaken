@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#awaken:wild/heath",
+  "features": [
+    "awaken:wild/heath_ground",
+    "awaken:wild/heath_bush",
+    "awaken:wild/heath_snag"
+  ],
+  "step": "vegetal_decoration"
+}

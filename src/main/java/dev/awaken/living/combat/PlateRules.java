@@ -47,6 +47,18 @@ public final class PlateRules {
     }
 
     /**
+     * Through the binoculars (SPEC §39.8): a held look reads a creature out to {@link #GLASS_REACH} blocks, once the middle of
+     * the view has rested on it for {@link #GLASS_DWELL} ticks when it's past the normal range. Only what the client already has.
+     */
+    public static final double GLASS_REACH = 160;
+    public static final int GLASS_DWELL = 10;
+
+    /** The look's reach now: the normal range, or the binoculars' while they magnify. */
+    public static double lookRange(int per, double zoom) {
+        return zoom > 1.05 ? Math.max(lookRange(per), GLASS_REACH) : lookRange(per);
+    }
+
+    /**
      * One creature near the player this tick. {@code lastFight} / {@code lastLook}: game ticks (Long.MIN_VALUE never);
      * {@code notable}: an elite or named beast the player has seen; {@code excluded}: a player, Echo, pet, citizen.
      */
@@ -55,6 +67,16 @@ public final class PlateRules {
     /** Whether a creature is in a fight with the player now. */
     public static boolean fighting(Candidate c, long now) {
         return c.lastFight != Long.MIN_VALUE && now - c.lastFight <= FIGHT_TICKS;
+    }
+
+    /**
+     * The clear screen (SPEC §40.6): the creature you mean (locked or marked) keeps the full plate, and so does one under
+     * your look or a notable beast; the others fighting you show only a thin bar.
+     */
+    public static boolean thin(boolean clear, Candidate c, long now, int meant) {
+        if (!clear || c.id == meant || c.notable) return false;
+        boolean looked = c.lastLook != Long.MIN_VALUE && now - c.lastLook <= LOOK_FADE;
+        return fighting(c, now) && !looked;
     }
 
     /** The plate's visibility (0..1) now: full while fighting, looked at or notable and near; then it fades. */

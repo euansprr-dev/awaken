@@ -40,62 +40,62 @@ final class BiomeTableTests {
      * lairs | cottage | lair second looks.
      */
     private static final String BEFORE = """
-            badlands|dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,gloomstalker:20:1-2|dune_wyrm|badlands|glass_hollow
-            bamboo_jungle|canopy_prowler:22:1-2,crested_basilisk:18:1-2,dart_frog:28:2-3,plumed_coil:1:1-1|plumed_coil|jungle|
-            beach|||meadow|
-            birch_forest|empress_moth:1:1-1,frost_stag:8:1-2,frostfinch:8:2-4,glimmerfin:8:3-5,honey_bear:14:1-2,lumen_moth:14:2-3,petalwing:30:2-4|empress_moth|birch|
-            cherry_grove|empress_moth:1:1-1,glimmerfin:8:3-5,honey_bear:14:1-2,lumen_moth:14:2-3,petalwing:30:2-4|empress_moth|cherry|
-            cold_ocean|breathbell:20:2-3,glimmerfin:6:3-5,tidesteed:12:1-2||taiga|
-            dappled_forest|bloom_sprite:20:1-2,briar_sow:1:1-1,frost_stag:8:1-2,frostfinch:8:2-4,gloomstalker:22:1-2,lumen_moth:30:2-4,mossback:14:1-2|briar_sow|meadow|
-            dark_forest|glimmerfin:8:3-5,gloam_snail:26:1-3,hollow_owl:14:1-1,thornling:24:2-3,weaver_queen:1:1-1|weaver_queen|swamp|
-            deep_cold_ocean|breathbell:20:2-3,glimmerfin:6:3-5,lantern_maw:1:1-1,tidesteed:12:1-2|lantern_maw|taiga|
+            badlands|chime_cricket:12:1-2,drip_lurker:10:1-1,dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,gloomstalker:20:1-2,hushling:8:1-1|dune_wyrm|badlands|glass_hollow
+            bamboo_jungle|canopy_prowler:22:1-2,chime_cricket:12:1-2,crested_basilisk:18:1-2,dart_frog:28:2-3,drip_lurker:10:1-1,hushling:8:1-1,plumed_coil:1:1-1|plumed_coil|jungle|
+            beach|chime_cricket:12:1-2,drip_lurker:10:1-1,hushling:8:1-1||meadow|
+            birch_forest|chime_cricket:12:1-2,drip_lurker:10:1-1,empress_moth:1:1-1,frost_stag:8:1-2,frostfinch:8:2-4,glimmerfin:8:3-5,honey_bear:14:1-2,hushling:8:1-1,lumen_moth:14:2-3,petalwing:30:2-4|empress_moth|birch|
+            cherry_grove|chime_cricket:12:1-2,drip_lurker:10:1-1,empress_moth:1:1-1,glimmerfin:8:3-5,honey_bear:14:1-2,hushling:8:1-1,lumen_moth:14:2-3,petalwing:30:2-4|empress_moth|cherry|
+            cold_ocean|breathbell:20:2-3,chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:6:3-5,hushling:8:1-1,tidesteed:12:1-2||taiga|
+            dappled_forest|bloom_sprite:20:1-2,briar_sow:1:1-1,chime_cricket:12:1-2,drip_lurker:10:1-1,frost_stag:8:1-2,frostfinch:8:2-4,gloomstalker:22:1-2,hushling:8:1-1,lumen_moth:30:2-4,mossback:14:1-2|briar_sow|meadow|
+            dark_forest|chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:8:3-5,gloam_snail:26:1-3,hollow_owl:14:1-1,hushling:8:1-1,thornling:24:2-3,weaver_queen:1:1-1|weaver_queen|swamp|
+            deep_cold_ocean|breathbell:20:2-3,chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:6:3-5,hushling:8:1-1,lantern_maw:1:1-1,tidesteed:12:1-2|lantern_maw|taiga|
             deep_dark|chime_cricket:6:1-1,hushling:24:2-3||meadow|
-            deep_frozen_ocean|lantern_maw:1:1-1|lantern_maw|taiga|
-            deep_lukewarm_ocean|breathbell:20:2-3,glimmerfin:6:3-5,lantern_maw:1:1-1,tidesteed:12:1-2|lantern_maw|meadow|sunken_shrine
-            deep_ocean|breathbell:20:2-3,glimmerfin:6:3-5,lantern_maw:1:1-1,tidesteed:12:1-2|lantern_maw|meadow|
-            desert|dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,gloomstalker:20:1-2|dune_wyrm|desert|
+            deep_frozen_ocean|chime_cricket:12:1-2,drip_lurker:10:1-1,hushling:8:1-1,lantern_maw:1:1-1|lantern_maw|taiga|
+            deep_lukewarm_ocean|breathbell:20:2-3,chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:6:3-5,hushling:8:1-1,lantern_maw:1:1-1,tidesteed:12:1-2|lantern_maw|meadow|sunken_shrine
+            deep_ocean|breathbell:20:2-3,chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:6:3-5,hushling:8:1-1,lantern_maw:1:1-1,tidesteed:12:1-2|lantern_maw|meadow|
+            desert|chime_cricket:12:1-2,drip_lurker:10:1-1,dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,gloomstalker:20:1-2,hushling:8:1-1|dune_wyrm|desert|
             dripstone_caves|chime_cricket:26:1-3,drip_lurker:22:1-2,gloomstalker:10:1-2,thousandfoot:1:1-1,wisp_hound:10:2-2|thousandfoot|meadow|
-            eroded_badlands|dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,gloomstalker:20:1-2|dune_wyrm|badlands|glass_hollow
-            flower_forest|empress_moth:1:1-1,glimmerfin:8:3-5,honey_bear:14:1-2,lumen_moth:14:2-3,petalwing:30:2-4|empress_moth|meadow|
-            forest|bloom_sprite:20:1-2,briar_sow:1:1-1,frost_stag:8:1-2,frostfinch:8:2-4,glimmerfin:8:3-5,gloomstalker:22:1-2,lumen_moth:30:2-4,mossback:14:1-2|briar_sow|meadow|
-            frozen_ocean|||taiga|
-            frozen_peaks|crag_ram:18:1-3,peak_kite:16:1-2,scree_marmot:26:2-3,stonehorn:1:1-1|stonehorn|taiga|rams_cairn
-            frozen_river|brook_otter:14:1-2,glimmerfin:30:4-6||taiga|
-            grove|frost_stag:22:1-3,frostfinch:26:3-5,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|antler_grove
-            ice_spikes|frost_stag:22:1-3,frostfinch:26:3-5,old_antler:1:1-1,wisp_hound:22:2-3||taiga|
-            jagged_peaks|crag_ram:18:1-3,peak_kite:16:1-2,scree_marmot:26:2-3,stonehorn:1:1-1|stonehorn|taiga|rams_cairn
-            jungle|canopy_prowler:22:1-2,crested_basilisk:18:1-2,dart_frog:28:2-3,glimmerfin:8:3-5,plumed_coil:1:1-1|plumed_coil|jungle|
-            lukewarm_ocean|breathbell:20:2-3,glimmerfin:6:3-5,tidesteed:12:1-2||meadow|
+            eroded_badlands|chime_cricket:12:1-2,drip_lurker:10:1-1,dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,gloomstalker:20:1-2,hushling:8:1-1|dune_wyrm|badlands|glass_hollow
+            flower_forest|chime_cricket:12:1-2,drip_lurker:10:1-1,empress_moth:1:1-1,glimmerfin:8:3-5,honey_bear:14:1-2,hushling:8:1-1,lumen_moth:14:2-3,petalwing:30:2-4|empress_moth|meadow|
+            forest|bloom_sprite:20:1-2,briar_sow:1:1-1,chime_cricket:12:1-2,drip_lurker:10:1-1,frost_stag:8:1-2,frostfinch:8:2-4,glimmerfin:8:3-5,gloomstalker:22:1-2,hushling:8:1-1,lumen_moth:30:2-4,mossback:14:1-2|briar_sow|meadow|
+            frozen_ocean|chime_cricket:12:1-2,drip_lurker:10:1-1,hushling:8:1-1||taiga|
+            frozen_peaks|chime_cricket:12:1-2,crag_ram:18:1-3,drip_lurker:10:1-1,hushling:8:1-1,peak_kite:16:1-2,scree_marmot:26:2-3,stonehorn:1:1-1|stonehorn|taiga|rams_cairn
+            frozen_river|brook_otter:14:1-2,chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:30:4-6,hushling:8:1-1||taiga|
+            grove|chime_cricket:12:1-2,drip_lurker:10:1-1,frost_stag:22:1-3,frostfinch:26:3-5,hushling:8:1-1,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|antler_grove
+            ice_spikes|chime_cricket:12:1-2,drip_lurker:10:1-1,frost_stag:22:1-3,frostfinch:26:3-5,hushling:8:1-1,old_antler:1:1-1,wisp_hound:22:2-3||taiga|
+            jagged_peaks|chime_cricket:12:1-2,crag_ram:18:1-3,drip_lurker:10:1-1,hushling:8:1-1,peak_kite:16:1-2,scree_marmot:26:2-3,stonehorn:1:1-1|stonehorn|taiga|rams_cairn
+            jungle|canopy_prowler:22:1-2,chime_cricket:12:1-2,crested_basilisk:18:1-2,dart_frog:28:2-3,drip_lurker:10:1-1,glimmerfin:8:3-5,hushling:8:1-1,plumed_coil:1:1-1|plumed_coil|jungle|
+            lukewarm_ocean|breathbell:20:2-3,chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:6:3-5,hushling:8:1-1,tidesteed:12:1-2||meadow|
             lush_caves|chime_cricket:12:1-2,gloomstalker:10:1-2,wickling:26:2-3,wisp_hound:10:2-2|thousandfoot|meadow|crystal_nest
-            mangrove_swamp|bog_toad:18:1-2,bogwick:26:2-4,mire_mother:1:1-1,mudskipper:24:2-3|mire_mother|mangrove|
-            meadow|bloom_sprite:20:1-2,briar_sow:1:1-1,glimmerfin:8:3-5,gloomstalker:22:1-2,lumen_moth:30:2-4,mossback:14:1-2,petalwing:12:1-3|briar_sow|meadow|
-            mushroom_fields|mycelord:1:1-1,shroomlet:30:2-4,sporeback_snail:20:1-2|mycelord|meadow|
-            ocean|breathbell:20:2-3,glimmerfin:6:3-5,tidesteed:12:1-2||meadow|
-            old_growth_birch_forest|empress_moth:1:1-1,frost_stag:8:1-2,frostfinch:8:2-4,honey_bear:14:1-2,lumen_moth:14:2-3,petalwing:30:2-4|empress_moth|birch|
-            old_growth_pine_taiga|frost_stag:22:1-3,frostfinch:26:3-5,glimmerfin:8:3-5,lumen_moth:14:2-3,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|
-            old_growth_spruce_taiga|frost_stag:22:1-3,frostfinch:26:3-5,glimmerfin:8:3-5,lumen_moth:14:2-3,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|
-            pale_garden|gloam_snail:26:1-3,hollow_owl:14:1-1,thornling:24:2-3,weaver_queen:1:1-1|weaver_queen|swamp|silk_hollow
-            plains|bloom_sprite:20:1-2,briar_sow:1:1-1,glimmerfin:8:3-5,gloomstalker:22:1-2,lumen_moth:30:2-4,mossback:14:1-2|briar_sow|meadow|
-            river|brook_otter:14:1-2,glimmerfin:30:4-6||meadow|
-            savanna|dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,glimmerfin:8:3-5,gloomstalker:20:1-2|dune_wyrm|savanna|
-            savanna_plateau|dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,gloomstalker:20:1-2|dune_wyrm|savanna|
-            snowy_beach|||taiga|
-            snowy_plains|frost_stag:22:1-3,frostfinch:26:3-5,glimmerfin:8:3-5,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|antler_grove
-            snowy_slopes|frost_stag:22:1-3,frostfinch:26:3-5,old_antler:1:1-1,wisp_hound:22:2-3||taiga|antler_grove,rams_cairn
-            snowy_taiga|frost_stag:22:1-3,frostfinch:26:3-5,glimmerfin:8:3-5,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|antler_grove
-            sparse_jungle|canopy_prowler:22:1-2,crested_basilisk:18:1-2,dart_frog:28:2-3,plumed_coil:1:1-1|plumed_coil|jungle|
-            stony_peaks|crag_ram:18:1-3,peak_kite:16:1-2,scree_marmot:26:2-3,stonehorn:1:1-1|stonehorn|meadow|
-            stony_shore|crag_ram:18:1-3,peak_kite:16:1-2,scree_marmot:26:2-3,stonehorn:1:1-1||taiga|
+            mangrove_swamp|bog_toad:18:1-2,bogwick:26:2-4,chime_cricket:12:1-2,drip_lurker:10:1-1,hushling:8:1-1,mire_mother:1:1-1,mudskipper:24:2-3|mire_mother|mangrove|
+            meadow|bloom_sprite:20:1-2,briar_sow:1:1-1,chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:8:3-5,gloomstalker:22:1-2,hushling:8:1-1,lumen_moth:30:2-4,mossback:14:1-2,petalwing:12:1-3|briar_sow|meadow|
+            mushroom_fields|chime_cricket:12:1-2,drip_lurker:10:1-1,hushling:8:1-1,mycelord:1:1-1,shroomlet:30:2-4,sporeback_snail:20:1-2|mycelord|meadow|
+            ocean|breathbell:20:2-3,chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:6:3-5,hushling:8:1-1,tidesteed:12:1-2||meadow|
+            old_growth_birch_forest|chime_cricket:12:1-2,drip_lurker:10:1-1,empress_moth:1:1-1,frost_stag:8:1-2,frostfinch:8:2-4,honey_bear:14:1-2,hushling:8:1-1,lumen_moth:14:2-3,petalwing:30:2-4|empress_moth|birch|
+            old_growth_pine_taiga|chime_cricket:12:1-2,drip_lurker:10:1-1,frost_stag:22:1-3,frostfinch:26:3-5,glimmerfin:8:3-5,hushling:8:1-1,lumen_moth:14:2-3,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|
+            old_growth_spruce_taiga|chime_cricket:12:1-2,drip_lurker:10:1-1,frost_stag:22:1-3,frostfinch:26:3-5,glimmerfin:8:3-5,hushling:8:1-1,lumen_moth:14:2-3,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|
+            pale_garden|chime_cricket:12:1-2,drip_lurker:10:1-1,gloam_snail:26:1-3,hollow_owl:14:1-1,hushling:8:1-1,thornling:24:2-3,weaver_queen:1:1-1|weaver_queen|swamp|silk_hollow
+            plains|bloom_sprite:20:1-2,briar_sow:1:1-1,chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:8:3-5,gloomstalker:22:1-2,hushling:8:1-1,lumen_moth:30:2-4,mossback:14:1-2|briar_sow|meadow|
+            river|brook_otter:14:1-2,chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:30:4-6,hushling:8:1-1||meadow|
+            savanna|chime_cricket:12:1-2,drip_lurker:10:1-1,dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,glimmerfin:8:3-5,gloomstalker:20:1-2,hushling:8:1-1|dune_wyrm|savanna|
+            savanna_plateau|chime_cricket:12:1-2,drip_lurker:10:1-1,dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,gloomstalker:20:1-2,hushling:8:1-1|dune_wyrm|savanna|
+            snowy_beach|chime_cricket:12:1-2,drip_lurker:10:1-1,hushling:8:1-1||taiga|
+            snowy_plains|chime_cricket:12:1-2,drip_lurker:10:1-1,frost_stag:22:1-3,frostfinch:26:3-5,glimmerfin:8:3-5,hushling:8:1-1,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|antler_grove
+            snowy_slopes|chime_cricket:12:1-2,drip_lurker:10:1-1,frost_stag:22:1-3,frostfinch:26:3-5,hushling:8:1-1,old_antler:1:1-1,wisp_hound:22:2-3||taiga|antler_grove,rams_cairn
+            snowy_taiga|chime_cricket:12:1-2,drip_lurker:10:1-1,frost_stag:22:1-3,frostfinch:26:3-5,glimmerfin:8:3-5,hushling:8:1-1,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|antler_grove
+            sparse_jungle|canopy_prowler:22:1-2,chime_cricket:12:1-2,crested_basilisk:18:1-2,dart_frog:28:2-3,drip_lurker:10:1-1,hushling:8:1-1,plumed_coil:1:1-1|plumed_coil|jungle|
+            stony_peaks|chime_cricket:12:1-2,crag_ram:18:1-3,drip_lurker:10:1-1,hushling:8:1-1,peak_kite:16:1-2,scree_marmot:26:2-3,stonehorn:1:1-1|stonehorn|meadow|
+            stony_shore|chime_cricket:12:1-2,crag_ram:18:1-3,drip_lurker:10:1-1,hushling:8:1-1,peak_kite:16:1-2,scree_marmot:26:2-3,stonehorn:1:1-1||taiga|
             sulfur_caves|||meadow|
-            sunflower_plains|bloom_sprite:20:1-2,briar_sow:1:1-1,glimmerfin:8:3-5,gloomstalker:22:1-2,lumen_moth:30:2-4,mossback:14:1-2,petalwing:12:1-3|briar_sow|meadow|
-            swamp|bog_toad:18:1-2,bogwick:26:2-4,glimmerfin:8:3-5,mire_mother:1:1-1,mudskipper:24:2-3|mire_mother|swamp|
-            taiga|frost_stag:22:1-3,frostfinch:26:3-5,glimmerfin:8:3-5,lumen_moth:14:2-3,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|
-            warm_ocean|breathbell:20:2-3,glimmerfin:6:3-5,tidesteed:12:1-2||meadow|sunken_shrine
-            windswept_forest|frost_stag:22:1-3,frostfinch:26:3-5,lumen_moth:14:2-3,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|
-            windswept_gravelly_hills|crag_ram:18:1-3,peak_kite:16:1-2,scree_marmot:26:2-3,stonehorn:1:1-1|stonehorn|taiga|
-            windswept_hills|crag_ram:18:1-3,peak_kite:16:1-2,scree_marmot:26:2-3,stonehorn:1:1-1|stonehorn|taiga|
-            windswept_savanna|dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,gloomstalker:20:1-2|dune_wyrm|savanna|
-            wooded_badlands|dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,gloomstalker:20:1-2|dune_wyrm|badlands|glass_hollow
+            sunflower_plains|bloom_sprite:20:1-2,briar_sow:1:1-1,chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:8:3-5,gloomstalker:22:1-2,hushling:8:1-1,lumen_moth:30:2-4,mossback:14:1-2,petalwing:12:1-3|briar_sow|meadow|
+            swamp|bog_toad:18:1-2,bogwick:26:2-4,chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:8:3-5,hushling:8:1-1,mire_mother:1:1-1,mudskipper:24:2-3|mire_mother|swamp|
+            taiga|chime_cricket:12:1-2,drip_lurker:10:1-1,frost_stag:22:1-3,frostfinch:26:3-5,glimmerfin:8:3-5,hushling:8:1-1,lumen_moth:14:2-3,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|
+            warm_ocean|breathbell:20:2-3,chime_cricket:12:1-2,drip_lurker:10:1-1,glimmerfin:6:3-5,hushling:8:1-1,tidesteed:12:1-2||meadow|sunken_shrine
+            windswept_forest|chime_cricket:12:1-2,drip_lurker:10:1-1,frost_stag:22:1-3,frostfinch:26:3-5,hushling:8:1-1,lumen_moth:14:2-3,old_antler:1:1-1,wisp_hound:22:2-3|old_antler|taiga|
+            windswept_gravelly_hills|chime_cricket:12:1-2,crag_ram:18:1-3,drip_lurker:10:1-1,hushling:8:1-1,peak_kite:16:1-2,scree_marmot:26:2-3,stonehorn:1:1-1|stonehorn|taiga|
+            windswept_hills|chime_cricket:12:1-2,crag_ram:18:1-3,drip_lurker:10:1-1,hushling:8:1-1,peak_kite:16:1-2,scree_marmot:26:2-3,stonehorn:1:1-1|stonehorn|taiga|
+            windswept_savanna|chime_cricket:12:1-2,drip_lurker:10:1-1,dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,gloomstalker:20:1-2,hushling:8:1-1|dune_wyrm|savanna|
+            wooded_badlands|chime_cricket:12:1-2,drip_lurker:10:1-1,dune_ray:22:1-2,dune_wyrm:1:1-1,glass_scarab:30:2-3,gloomstalker:20:1-2,hushling:8:1-1|dune_wyrm|badlands|glass_hollow
             """;
 
     static void register() {

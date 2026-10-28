@@ -40,8 +40,11 @@ public final class CottagePlan {
     /** The local column of the chimney. */
     static final int CHIMNEY_X = 9, CHIMNEY_Z = 6;
 
-    /** Build order: the animation goes stage by stage, then layer by layer, row by row. */
-    public static final int FOUNDATION = 0, WALLS = 1, PLATE = 2, ROOF = 3, CHIMNEY = 4, FURNISH = 5;
+    /**
+     * Build order: Oren goes stage by stage, then layer by layer, row by row. The frame is the posts and the wall plate (a
+     * timber skeleton first), the walls fill it in, the roof starts with the ceiling.
+     */
+    public static final int FOUNDATION = 0, FRAME = 1, WALLS = 2, ROOF = 3, CHIMNEY = 4, FURNISH = 5, STAGES = 6;
 
     /** One block of the plan, in local coordinates. */
     public record Put(int x, int y, int z, BlockState state, int stage) {}
@@ -85,6 +88,11 @@ public final class CottagePlan {
 
     public static final List<Palette> PALETTES = List.of(MEADOW, TAIGA, BIRCH, JUNGLE, SAVANNA, DESERT, BADLANDS, SWAMP, MANGROVE, CHERRY);
 
+    public static Palette palette(String id) {
+        for (Palette p : PALETTES) if (p.id.equals(id)) return p;
+        return MEADOW;
+    }
+
     /** Walls stand 1..WALL (the room is 7 × 7 × 4 inside); the plate and the ceiling are one above. */
     static final int WALL = 4, PLATE_Y = WALL + 1;
 
@@ -115,7 +123,7 @@ public final class CottagePlan {
                 for (int x = 0; x <= 8; x++) {
                     if (!(x == 0 || x == 8 || z == 0 || z == 8)) continue;
                     BlockState s = wall(p, x, y, z, salt);
-                    if (s != null) out.add(new Put(x, y, z, s, WALLS));
+                    if (s != null) out.add(new Put(x, y, z, s, post(x, z) ? FRAME : WALLS));
                 }
             }
         }
@@ -132,7 +140,7 @@ public final class CottagePlan {
                 else if (z == 0 || z == 8) s = log(p, Direction.Axis.X);
                 else if (edge) s = log(p, Direction.Axis.Z);
                 else s = p.floor.defaultBlockState();
-                out.add(new Put(x, PLATE_Y, z, s, PLATE));
+                out.add(new Put(x, PLATE_Y, z, s, edge ? FRAME : ROOF));
             }
         }
         // ---- gables, the roof, its thick gable edges and the ridge beam ------------------------------------------------
@@ -226,9 +234,14 @@ public final class CottagePlan {
     /** Windows (x, z), two tall (y 2..3): two at the front, two at the back, two on the left, one on the right (the stove). */
     static final int[][] WINDOWS = {{2, 0}, {6, 0}, {2, 8}, {6, 8}, {0, 2}, {0, 6}, {8, 2}};
 
-    private static @Nullable BlockState wall(Palette p, int x, int y, int z, long salt) {
+    /** The corner and door posts, and one in the middle of each other wall. */
+    static boolean post(int x, int z) {
         boolean corner = (x == 0 || x == 8) && (z == 0 || z == 8);
-        boolean post = corner || (z == 0 && (x == 3 || x == 5)) || (z == 8 && x == 4) || ((x == 0 || x == 8) && z == 4);
+        return corner || (z == 0 && (x == 3 || x == 5)) || (z == 8 && x == 4) || ((x == 0 || x == 8) && z == 4);
+    }
+
+    private static @Nullable BlockState wall(Palette p, int x, int y, int z, long salt) {
+        boolean post = post(x, z);
         if (z == 0 && x == 4) {
             if (y <= 2) return null; // the door
             return y == 3 ? Blocks.GLASS_PANE.defaultBlockState() : log(p, Direction.Axis.X); // a light over the door, the lintel

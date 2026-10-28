@@ -1,0 +1,15 @@
+{
+  "style": "chainblade",
+  "round": 3,
+  "_notes": "Round 2: the studio's shapes; the lash is thrown over the shoulder (judged like an overhead), the backhand lash drives faster.",
+  "cut": {},
+  "thrust": {},
+  "moves": {
+    "strike_2": {
+      "cut": {
+        "drive": 0.75,
+        "power": 3.4
+      }
+    }
+  }
+}

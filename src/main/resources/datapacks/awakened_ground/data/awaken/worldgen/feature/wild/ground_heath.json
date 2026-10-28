@@ -1,0 +1,53 @@
+{
+  "type": "awaken:wild_ground",
+  "biomes": "awaken:wild/heath",
+  "roles": [
+    {
+      "blocks": [
+        "awaken:bracken"
+      ],
+      "rates": [
+        0,
+        2,
+        8,
+        14
+      ],
+      "swathe": 12
+    },
+    {
+      "blocks": [
+        "awaken:gorse"
+      ],
+      "rates": [
+        0,
+        2,
+        5,
+        8
+      ],
+      "swathe": 9
+    },
+    {
+      "blocks": [
+        "awaken:heather"
+      ],
+      "rates": [
+        2,
+        6,
+        10,
+        12
+      ],
+      "swathe": 10
+    },
+    {
+      "blocks": [
+        "awaken:meadow_grass"
+      ],
+      "rates": [
+        0,
+        6,
+        10,
+        12
+      ]
+    }
+  ]
+}

@@ -13,6 +13,7 @@ public final class CoreClient {
         // Awaken's HUD never draws over a screen (chat aside)
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderGuiLayerEvent.Pre.class, HudUnderScreens::pre);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ClientTickEvent.Post.class, e -> {
+            KeySplit.tick();
             while (AwakenKeys.PLAYTEST_FLAG.consumeClick()) {
                 if (dev.awaken.core.Playtest.enabled()) {
                     net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(new dev.awaken.core.CorePayloads.FlagUnfair());

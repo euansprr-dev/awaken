@@ -2,6 +2,7 @@ package dev.awaken.arms;
 
 import dev.awaken.arms.net.ArmsPayloads;
 import dev.awaken.core.AwakenNet;
+import dev.awaken.core.api.Aim;
 import dev.awaken.core.api.CreatureTag;
 import dev.awaken.core.api.MobRole;
 import dev.awaken.core.api.CoreApi;
@@ -128,7 +129,7 @@ final class ArmsServer {
         switch (msg.what()) {
             case ArmsPayloads.PRESS_STRIKE -> {
                 s.seq = msg.seq();
-                s.aimed = msg.target();
+                s.aimed = Aim.meantId(p, msg.target(), msg.yaw(), msg.pitch(), pressReach(style));
                 // the press is down: if it is held into a charge, the strike it begins must never land (Euan
                 // 2026-10-26: "when you're charging up, it attacks once and then charges up")
                 s.holdSeq = msg.seq();
@@ -154,6 +155,7 @@ final class ArmsServer {
             }
             case ArmsPayloads.PRESS_RELEASE -> {
                 if (msg.seq() != s.chargeSeq || s.chargeStart == ArmsState.NO_CHARGE) return;
+                if (msg.target() >= 0) s.aimed = Aim.meantId(p, msg.target(), msg.yaw(), msg.pitch(), pressReach(style));
                 Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
                 if (heavy == null || heavy.charge().isEmpty()) return;
                 int held = heavy.charge().get().min() + (int) (now - s.chargeStart);
@@ -218,6 +220,21 @@ final class ArmsServer {
         s.perfectHeavy = heavy.charge().isPresent() && heavy.charge().get().perfect(held);
     }
 
+    /**
+     * The furthest a press's creature may be and still be the one it meant (SPEC §40): the style's longest reach, the
+     * blade's growth over a full chain, and the step in.
+     */
+    static double pressReach(Archetypes.Loaded style) {
+        float most = 0;
+        for (Archetype.MoveDef d : style.moves().values()) most = Math.max(most, d.art().isPresent() ? Math.max(d.reach(), d.art().get().range()) : d.reach());
+        return most + 0.3 + style.def().traits().reachPerStep() * 5 + Aim.stepIn(style.id());
+    }
+
+    /** A chain's first strike or a heavy steps in toward the meant creature (SPEC §40); the rest strike where they stand. */
+    static boolean stepsIn(ArmsState s) {
+        return s.move == Archetype.Move.HEAVY || (s.move != null && s.move.strike() && s.step == 0);
+    }
+
     /** Whether a style's press can be held into a charge (its heavy charges). */
     static boolean chargeable(Archetypes.Loaded style) {
         Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
@@ -236,6 +253,7 @@ final class ArmsServer {
         // a chain strike begun by a press still down waits at its hit for the press's end: a tap lands it, a hold
         // becomes the charge instead (the swing starts at once either way: a tap is never late)
         s.waitHit = move.strike() && s.holdOpen && seq == s.holdSeq;
+        s.swishAt = 0;
         s.drawn = ArmsRules.drawn(style.def().traits(), move, now - s.moveEnd);
         s.style = style;
         s.move = move;
@@ -264,13 +282,21 @@ final class ArmsServer {
         if (!s.waitHit) shown(p, s);
     }
 
-    /** The running move as everyone near sees and hears it: the vanilla arm (without the clips), the swish, the clip. */
+    /**
+     * The running move as everyone near sees and hears it: the vanilla arm (without the clips), the swish, the clip. The
+     * swish plays where the swing's own clock puts it (FpSwings: its whoosh peaks as the blade crosses), so those near
+     * hear it with the blow, not on the press; a waited strike shown on its tap is already at its hit and plays at once.
+     */
     static void shown(ServerPlayer p, ArmsState s) {
+        boolean waited = s.waitSeen;
         s.waitSeen = false;
         Archetype.MoveDef def = s.style == null || s.move == null ? null : s.style.move(s.move);
         if (def == null) return;
         p.swing(InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true);
-        soundForOthers(p, ArmsSounds.swish(def), 1.0F, ArmsSounds.swishPitch(s.cadence));
+        int at = waited ? 0 : Math.round(FpSwings.swish(FpSwings.style(s.style.id()), s.move));
+        s.swishAt = 0;
+        if (at > 0) s.swishAt = s.moveStart + at;
+        else soundForOthers(p, ArmsSounds.swish(def, FpSwings.swishSound(FpSwings.style(s.style.id()), s.move)), 1.0F, ArmsSounds.swishPitch(s.cadence));
         seen(p, new ArmsPayloads.Seen(p.getId(), ArmsPayloads.MOVE, -1, s.style.index(), s.move.ordinal()));
     }
 
@@ -326,6 +352,10 @@ final class ArmsServer {
             s.waitHit = false;
             if (s.waitSeen) shown(p, s);
         }
+        if (s.swishAt != 0 && now >= s.swishAt) {
+            s.swishAt = 0;
+            soundForOthers(p, ArmsSounds.swish(def, FpSwings.swishSound(FpSwings.style(s.style.id()), s.move)), 1.0F, ArmsSounds.swishPitch(s.cadence));
+        }
         if (rel >= def.windup() && rel < def.activeEnd() && Arms.fights(p)) {
             if (s.move == Archetype.Move.ART && !s.unleashed) {
                 s.unleashed = true;
@@ -344,17 +374,19 @@ final class ArmsServer {
         double reach = def.reachAt(now - s.moveStart) + 0.3 + grow;
         Vec3 eye = p.getEyePosition();
         float yaw = p.getYRot() + focusTurn(p, s);
-        AABB box = p.getBoundingBox().inflate(reach + 1, 1.5, reach + 1);
+        // the meant creature (a press's, checked by Aim.meant) is reached by the step in and above the band: a flier
+        // circling overhead is struck when it is the one you meant (SPEC §40)
+        double meantReach = reach + (s.style != null && stepsIn(s) ? Aim.stepIn(s.style.id()) : 0F);
+        AABB box = p.getBoundingBox().inflate(meantReach + 1, Math.max(1.5, meantReach), meantReach + 1);
         for (LivingEntity t : level.getEntitiesOfClass(LivingEntity.class, box, t -> t != p && t.isAlive() && !s.hasHit(t.getId()))) {
             boolean aimed = t.getId() == s.aimed;
             if (!aimed && !foe(p, t)) continue;
+            boolean meant = aimed && !(t instanceof Player);
             Vec3 c = t.getBoundingBox().getCenter();
-            Vec3 closest = new Vec3(Mth.clamp(eye.x, t.getBoundingBox().minX, t.getBoundingBox().maxX),
-                    Mth.clamp(eye.y, t.getBoundingBox().minY, t.getBoundingBox().maxY), Mth.clamp(eye.z, t.getBoundingBox().minZ, t.getBoundingBox().maxZ));
-            if (closest.distanceTo(eye) > reach) continue;
+            if (Aim.gap(eye, t.getBoundingBox()) > (meant ? meantReach : reach)) continue;
             float toward = (float) (Mth.atan2(c.z - p.getZ(), c.x - p.getX()) * Mth.RAD_TO_DEG) - 90F;
             if (!aimed && !ArmsRules.inArc(toward - yaw, def.arc())) continue;
-            if (t.getBoundingBox().maxY < p.getY() - 1.0 || t.getBoundingBox().minY > p.getEyeY() + 1.5) continue;
+            if (!meant && (t.getBoundingBox().maxY < p.getY() - 1.0 || t.getBoundingBox().minY > p.getEyeY() + 1.5)) continue;
             s.markHit(t.getId());
             hit(p, s, def, t, now);
         }
@@ -654,6 +686,8 @@ final class ArmsServer {
                 resonance(p, s, ArmsRules.RESONANCE_DEFLECT * charged);
                 if (by instanceof LivingEntity attacker && src.getDirectEntity() == by) {
                     addPosture(attacker, (int) ((kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT) * charged), p);
+                    // a flier's dive turned aside brings it down (SPEC §40): the opening a fight in the air needs
+                    Strikes.ground(attacker, Aim.GROUNDED_TICKS);
                 }
                 ArmsWeaves.open(p, s, ArmsWeaves.DEFLECT, now, by == null ? -1 : by.getId());
                 Marks.fire(p, Marks.Trigger.DEFLECT, by instanceof LivingEntity l ? l : null);

@@ -45,6 +45,7 @@ public final class AscentFp {
     }
 
     private static AscentState was = AscentState.NONE;
+    private static final double[] PV = new double[4];
     private static int since;
 
     // ---- the moments ------------------------------------------------------------------------------------------------
@@ -123,9 +124,21 @@ public final class AscentFp {
         if (st == AscentState.TETHER || st == AscentState.ZIP || st == AscentState.RAPPEL) v.climb = true;
         switch (st) {
             case TETHER -> {
-                FirstPerson.View.fist(v.fistMain, 1, m * ROPE_X, ROPE_Y, ROPE_Z);
+                // an assisted swing (SPEC §17.31): the catch jolts the fist down and back, and through the low point the
+                // other hand comes up onto the rope under the weight, letting go again as you rise out of it
+                float jolt = AscentMoves.swinging() ? Ease.at(Ease.SMOOTH, 1F - (t - AscentMoves.swingCatchAt) / 7F) : 0;
+                float weight = 0;
+                if (AscentMoves.swinging() && AscentMoves.ropeTaut) {
+                    var k = AscentMoves.K;
+                    dev.awaken.body.ascent.AscentSwing.pivot(k.x, k.z, AscentMoves.ax, AscentMoves.ay, AscentMoves.az,
+                            p.getYRot() + AscentMoves.ROPE.bend, PV);
+                    weight = Ease.at(Ease.SMOOTH, 1F - (float) dev.awaken.body.ascent.AscentSwing.angleFromBottom(k, PV[0], PV[1], PV[2]) / 35F);
+                }
+                FirstPerson.View.fist(v.fistMain, 1, m * ROPE_X, ROPE_Y - 0.07F * jolt - 0.03F * weight, ROPE_Z + 0.05F * jolt);
                 // the other hand joins to pump (forward) and climbs over to reel in (sneak)
-                if (AscentMoves.keySneak) {
+                if (weight > 0.05F && !AscentMoves.keySneak) {
+                    FirstPerson.View.fist(v.fistOff, weight, m * (ROPE_X - 0.11F), ROPE_Y - 0.11F - 0.03F * weight, ROPE_Z + 0.03F);
+                } else if (AscentMoves.keySneak) {
                     float reel = Mth.sin(t * Mth.PI / 5F);
                     FirstPerson.View.fist(v.fistOff, 1, m * (ROPE_X - 0.12F), ROPE_Y + 0.1F * reel, ROPE_Z + 0.02F);
                 } else if (AscentMoves.keyFwd) {

@@ -58,6 +58,8 @@ public final class CastProfiles {
 
     private static final List<Profile> LIST = new ArrayList<>();
     private static final Map<String, Profile> BY_POWER = new HashMap<>();
+    /** The ladder's level rows (SPEC 36): per profile id, [level 3, level 5] (the same id and timing, their own clips). */
+    private static final Map<Integer, Profile[]> LEVELS = new HashMap<>();
 
     static {
         try (InputStream in = CastProfiles.class.getClassLoader().getResourceAsStream(FILE)) {
@@ -79,10 +81,32 @@ public final class CastProfiles {
                         r.get("origin").getAsString(), str(r, "beginSound"));
                 LIST.add(p);
                 BY_POWER.put(power, p);
+                JsonObject lv = r.has("levels") ? r.getAsJsonObject("levels") : null;
+                if (lv != null) LEVELS.put(p.id(), new Profile[] {level(p, lv, "3"), level(p, lv, "5")});
             }
         } catch (java.io.IOException ex) {
             throw new IllegalStateException(ex);
         }
+    }
+
+    /** A level's row: the profile with that level's clips (a field the level leaves out keeps the level-1 clip). */
+    private static Profile level(Profile p, JsonObject levels, String key) {
+        if (!levels.has(key)) return p;
+        JsonObject r = levels.getAsJsonObject(key);
+        return new Profile(p.id(), p.power(), p.windup(), p.release(), p.fallback(), r.has("begin3p") ? r.get("begin3p").getAsString() : p.begin3p(),
+                r.has("hold3p") ? str(r, "hold3p") : p.hold3p(), p.holdAt(), r.has("end3p") ? str(r, "end3p") : p.end3p(),
+                r.has("begin1p") ? r.get("begin1p").getAsString() : p.begin1p(), r.has("hold1p") ? str(r, "hold1p") : p.hold1p(), p.channel(),
+                p.moment(), p.endMoment(), r.has("lens") ? str(r, "lens") : p.lens(), p.origin(), p.beginSound());
+    }
+
+    /**
+     * The profile at a power level: levels 3-4 and 5 have their own clips (the family's accent, the level-5 gesture; SPEC 36), with
+     * the same id, timing and moments, so a level never changes when the power happens. Null in, null out.
+     */
+    public static @Nullable Profile at(@Nullable Profile p, int level) {
+        if (p == null || level < 3) return p;
+        Profile[] l = LEVELS.get(p.id());
+        return l == null ? p : l[level >= 5 ? 1 : 0];
     }
 
     private static @Nullable String str(JsonObject r, String key) {
@@ -103,10 +127,20 @@ public final class CastProfiles {
         return LIST;
     }
 
-    /** Every third-person clip a profile names. */
+    /** Every profile row, the level rows included. */
+    public static List<Profile> allLevels() {
+        List<Profile> out = new ArrayList<>(LIST);
+        for (Profile p : LIST) {
+            Profile[] l = LEVELS.get(p.id());
+            if (l != null) out.addAll(List.of(l));
+        }
+        return out;
+    }
+
+    /** Every third-person clip a profile names (at every level). */
     public static List<String> clips3p() {
         List<String> out = new ArrayList<>();
-        for (Profile p : LIST) {
+        for (Profile p : allLevels()) {
             out.add(p.begin3p());
             if (p.hold3p() != null) out.add(p.hold3p());
             if (p.end3p() != null) out.add(p.end3p());
@@ -114,10 +148,10 @@ public final class CastProfiles {
         return out;
     }
 
-    /** Every first-person clip a profile names. */
+    /** Every first-person clip a profile names (at every level). */
     public static List<String> clips1p() {
         List<String> out = new ArrayList<>();
-        for (Profile p : LIST) {
+        for (Profile p : allLevels()) {
             out.add(p.begin1p());
             if (p.hold1p() != null) out.add(p.hold1p());
         }

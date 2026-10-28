@@ -7,6 +7,9 @@
     "awaken:gravel_slab",
     "awaken:sand_slab",
     "awaken:red_sand_slab",
-    "awaken:turf_slab"
+    "awaken:turf_slab",
+    "awaken:wallow",
+    "awaken:trodden_earth",
+    "awaken:wild_sward"
   ]
 }

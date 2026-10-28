@@ -1,0 +1,7 @@
+{
+  "parent": "awaken:block/wild/trampled_rising",
+  "textures": {
+    "flat": "awaken:block/wild/trampled_old_1",
+    "rise": "awaken:block/wild/trampled_rise_1"
+  }
+}

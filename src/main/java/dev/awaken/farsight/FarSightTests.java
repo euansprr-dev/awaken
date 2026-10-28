@@ -243,7 +243,8 @@ final class FarSightTests {
             h.succeed();
         });
 
-        // City Sight's water: its colour blends over a biome border, and every level lays the surface where the real one is
+        // City Sight's water: its colour blends over a biome border, shows its floor dimmed by the water over it, and every
+        // level lays the surface where the real one is
         AwakenTests.registerIsolated("farsight_voxels_water", 100, h -> {
             ServerLevel level = h.getLevel();
             BlockPos o = h.absolutePos(BlockPos.ZERO);
@@ -256,6 +257,15 @@ final class FarSightTests {
                         BlockState b = y == top - 4 || rim && y <= top ? Blocks.STONE.defaultBlockState()
                                 : y <= top ? Blocks.WATER.defaultBlockState() : Blocks.AIR.defaultBlockState();
                         level.setBlock(new BlockPos(x, y, z), b, Block.UPDATE_CLIENTS);
+                    }
+                }
+            }
+            // a hole 12 deep in the west half's floor
+            for (int x = bx + 1; x <= bx + 4; x++) {
+                for (int z = bz + 5; z <= bz + 8; z++) {
+                    for (int y = top - 12; y <= top - 4; y++) {
+                        boolean hole = x >= bx + 2 && x <= bx + 3 && z >= bz + 6 && z <= bz + 7 && y > top - 12;
+                        level.setBlock(new BlockPos(x, y, z), hole ? Blocks.WATER.defaultBlockState() : Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
                     }
                 }
             }
@@ -272,7 +282,7 @@ final class FarSightTests {
                 }
             }
             chunk.fillBiomesFromNoise((qx, qy, qz) -> qx - QuartPos.fromBlock(bx) < 2 ? west : east);
-            AwakenTests.awaitLight(h, new BlockPos(bx, top - 4, bz + 3), new BlockPos(bx + 15, top + 4, bz + 12));
+            AwakenTests.awaitLight(h, new BlockPos(bx, top - 12, bz + 3), new BlockPos(bx + 15, top + 4, bz + 12));
             VoxelSnapshot snap = VoxelSnapshot.take(level, chunk);
             chunk.fillBiomesFromNoise((qx, qy, qz) -> was.get(BlockPos.asLong(qx - QuartPos.fromBlock(bx), qy, qz - QuartPos.fromBlock(bz))));
             h.assertTrue(snap != null, "the chunk has blocks");
@@ -300,9 +310,20 @@ final class FarSightTests {
                 h.assertTrue((q[1] & 16383) == surface, "level " + l + "'s surface where the real one is: "
                         + ((q[1] & 16383) - surface) + " sixteenths off");
             }
-            int a = west.value().getWaterColor() & 0xFFFFFF, b = east.value().getWaterColor() & 0xFFFFFF;
-            h.assertTrue((waterTop(mesh, 0, water, 1, 7)[3] & 0xFFFFFF) == a, "the west shore its own biome's water");
-            h.assertTrue((waterTop(mesh, 0, water, 14, 7)[3] & 0xFFFFFF) == b, "the east shore its own biome's water");
+            // the water as the game blends its texture over the floor (the stand-in's floor grey 0x808080, 4 water blocks
+            // over it: sky light 11)
+            float lit = VoxelMesher.dayLight(11, 0.5f) * (1f - VoxelMesher.WATER_ALPHA) / VoxelMesher.WATER_GREY;
+            int a = 0, b = 0, wa = west.value().getWaterColor() & 0xFFFFFF, wb = east.value().getWaterColor() & 0xFFFFFF;
+            for (int sh = 0; sh <= 16; sh += 8) {
+                a |= Math.min(255, Math.round(VoxelMesher.WATER_ALPHA * (wa >> sh & 255) + lit * 128)) << sh;
+                b |= Math.min(255, Math.round(VoxelMesher.WATER_ALPHA * (wb >> sh & 255) + lit * 128)) << sh;
+            }
+            int shore = waterTop(mesh, 0, water, 1, 9)[3] & 0xFFFFFF, deep = waterTop(mesh, 0, water, 2, 6)[3] & 0xFFFFFF;
+            h.assertTrue(shore == a, "the west shore its own biome's water over its floor: " + Integer.toHexString(shore) + " not " + Integer.toHexString(a));
+            h.assertTrue((waterTop(mesh, 0, water, 14, 7)[3] & 0xFFFFFF) == b, "the east shore its own biome's water over its floor");
+            boolean darker = true;
+            for (int sh = 0; sh <= 16; sh += 8) darker &= (deep >> sh & 255) + 10 < (shore >> sh & 255);
+            h.assertTrue(darker, "a floor 12 down shows darker than one 4 down: " + Integer.toHexString(deep) + " against " + Integer.toHexString(shore));
             for (int x = 6; x <= 9; x++) {
                 int t = waterTop(mesh, 0, water, x, 7)[3] & 0xFFFFFF;
                 boolean between = true;
@@ -595,6 +616,35 @@ final class FarSightTests {
                 h.assertTrue(seen != null && FarChunk.top(seen.cell()[cell]) == y0 + 23,
                         "the loaded chunk reached the store: " + (seen == null ? "not yet" : "top " + FarChunk.top(seen.cell()[cell])));
             });
+        });
+
+        AwakenTests.registerIsolated("farsight_trees_crowns", 20, h -> {
+            // far trees take the real trees' proportions from their height: a tall broadleaf forest (the lumen forest's
+            // trees stand 17 tall, a crown 6 deep and 11 wide) grows wide caps, never columns; an oak wood stays oaks
+            int ring = 2, n = Rings.PATCH * Rings.PATCH;
+            for (int tallTrees : new int[] {17, 6}) {
+                int[] height = new int[n], colour = new int[n], info = new int[n], crown = new int[n];
+                for (int k = 0; k < n; k++) {
+                    height[k] = FarColumns.packHeight(80f);
+                    info[k] = FarColumns.abgr(0, tallTrees * 4, 255, 128);
+                    crown[k] = FarColumns.abgr(0x2E5A6E, FarPalette.BROADLEAF);
+                }
+                int[] out = new int[FarTrees.MAX * FarTrees.INTS];
+                int planted = FarTrees.plant(ring, 3, 5, height, colour, info, crown, 63, out);
+                h.assertTrue(planted > 20, "a dense forest plants: " + planted);
+                for (int t = 0; t < planted; t++) {
+                    float tall = (out[t * FarTrees.INTS + 1] >> 16 & 255) / 4f, width = (out[t * FarTrees.INTS + 2] >>> 24) / 8f;
+                    float deep = tall - out[t * FarTrees.INTS + 3] / 4f;
+                    if (tallTrees > 12) {
+                        h.assertTrue(width > deep && width >= 0.45f * tall, "a tall tree's crown is a wide cap: " + width + " wide, "
+                                + deep + " deep on a tree " + tall + " tall");
+                    } else {
+                        h.assertTrue(width >= 3f && width <= 7f && deep >= 2f && deep <= 0.7f * tall, "an oak's crown: " + width
+                                + " wide, " + deep + " deep on a tree " + tall + " tall");
+                    }
+                }
+            }
+            h.succeed();
         });
 
         AwakenTests.registerIsolated("farsight_trees_basin", 20, h -> {

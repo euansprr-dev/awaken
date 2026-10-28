@@ -1,0 +1,13 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#awaken:wild/forest",
+  "features": [
+    "awaken:wild/forest_ground",
+    "awaken:wild/forest_bush",
+    "awaken:wild/forest_thicket",
+    "awaken:wild/forest_giant",
+    "awaken:wild/forest_snag",
+    "awaken:wild/forest_deadfall"
+  ],
+  "step": "vegetal_decoration"
+}

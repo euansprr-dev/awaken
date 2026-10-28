@@ -1,0 +1,7 @@
+{
+  "parent": "awaken:block/wild/cross_overlay",
+  "textures": {
+    "cross": "awaken:block/wild/wild_rye_top_glass_1",
+    "overlay": "awaken:block/wild/wild_rye_top_glass_1_overlay"
+  }
+}

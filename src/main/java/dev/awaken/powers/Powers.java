@@ -3,12 +3,13 @@ package dev.awaken.powers;
 import dev.awaken.core.DirectorLog;
 import dev.awaken.core.Forces;
 import dev.awaken.powers.content.PowerContent;
+import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.FxStyle;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.Stat;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
@@ -119,9 +120,41 @@ public final class Powers {
         }
         l.owned.put(id, new Loadout.Owned(id, o.variant(), o.level() + 1));
         Mastery.coreLevelled(l, id, o.level(), o.level() + 1);
-        announce(player, type, o.variant(), o.level() + 1, "Power levelled up", l.slotOf(id));
+        // the ladder's moment: a sting in a fight, the step's window and bloom when calm (SPEC 36.6)
+        dev.awaken.powers.ladder.Evolution.levelled(player, type, o.level(), o.level() + 1);
         markDirty(player);
         return LearnResult.LEVELLED;
+    }
+
+    /** An older save's one window about ladders is still to show (Loadout schema 3, SPEC 36.6). */
+    public static boolean ladderIntroPending(Loadout l) {
+        return l.migratedFrom > 0;
+    }
+
+    public static void clearLadderIntro(Loadout l) {
+        l.migratedFrom = 0;
+    }
+
+    /**
+     * Sets a power's level outright (admin, showcases, tests): learns it if needed and marks the level's moment seen, so no
+     * window or bloom plays. Returns false for an unknown power.
+     */
+    public static boolean setLevel(ServerPlayer player, PowerType type, int level, int variant) {
+        Loadout l = loadout(player);
+        String id = type.id.toString();
+        int lv = Math.max(1, Math.min(Loadout.MAX_LEVEL, level));
+        int v = Math.max(0, Math.min(type.variants.size() - 1, variant));
+        boolean fresh = !l.owned.containsKey(id);
+        l.owned.put(id, new Loadout.Owned(id, v, lv));
+        if (fresh) autoSlot(l, type);
+        l.seen.put(id, lv);
+        markDirty(player);
+        return true;
+    }
+
+    /** A power's ladder moment was shown for this level. */
+    public static void markSeen(Loadout l, String id, int level) {
+        l.seen.put(id, level);
     }
 
     /** Power Core use. Returns false when nothing happened (core kept). */
@@ -132,9 +165,11 @@ public final class Powers {
             return false;
         }
         if (r == LearnResult.UNKNOWN) return false;
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(), PowerSounds.LEARN.get(), SoundSource.PLAYERS, 1f, 1f);
-        player.level().sendParticles(Fx.dust(type.family.colour, 1.6f), player.getX(), player.getY() + 1, player.getZ(), 30, 0.5, 0.8, 0.5, 0.1);
-        player.level().sendParticles(ParticleTypes.END_ROD, player.getX(), player.getY() + 1, player.getZ(), 16, 0.3, 0.6, 0.3, 0.12);
+        if (r != LearnResult.LEVELLED) {
+            // a new power (or a variant swap): the family's bloom and the learn chord; a level-up has its own moment (Evolution)
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), PowerSounds.LEARN.get(), SoundSource.PLAYERS, 1f, 1f);
+            Fx.at(player.level(), FxKind.EVOLVE, FxStyle.of(type.family), player.position()).caster(player).aux(1).level(1).powerOf(type).send();
+        }
         return true;
     }
 

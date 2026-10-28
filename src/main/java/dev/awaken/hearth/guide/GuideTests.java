@@ -85,7 +85,7 @@ public final class GuideTests {
                             List.of(net.minecraft.resources.Identifier.withDefaultNamespace("amethyst_shard"))), dev.awaken.Awaken.id("meditation_mat"), 1)),
                     List.of(new GuideData.Person("Oren", "Blacksmith", "")), List.of(new GuideData.Person("Mira", "Scout", "D-rank")),
                     new GuideData.Upgrade(false, 3, 64, 22, "C-rank", true, List.of(new GuideData.Part(net.minecraft.resources.Identifier.withDefaultNamespace("diamond"), 6, 2)), 15, false),
-                    GuideData.COTTAGE_OFFER, new GuideData.Home("Ashford", 5, "timber and fieldstone", "a table and seats", List.of("a field"), 13,
+                    GuideData.COTTAGE_OFFER, "Oren is building your cottage.", new GuideData.Home("Ashford", 5, "timber and fieldstone", "a table and seats", List.of("a field"), 13,
                             List.of(new GuideData.RoomView("the snug timber bedroom", 1, List.of(3, 2, 1, 2, 2, 1), "Bedroom", "a lit fire", new BlockPos(1, 2, 3)))));
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             GuideData.STREAM_CODEC.encode(buf, d);

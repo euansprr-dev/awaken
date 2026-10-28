@@ -6,6 +6,7 @@ import dev.awaken.arms.Arms;
 import dev.awaken.arms.ArmsConfig;
 import dev.awaken.arms.ArmsMastery;
 import dev.awaken.arms.ArmsRules;
+import dev.awaken.arms.FpSwings;
 import dev.awaken.arms.net.ArmsPayloads;
 import dev.awaken.body.Body;
 import dev.awaken.core.api.CombatFeedback;
@@ -128,7 +129,7 @@ public final class ArmsPredict {
     static void press(LocalPlayer p, Minecraft mc) {
         Archetypes.Loaded st = Arms.styleOf(p.getMainHandItem());
         if (st == null) return;
-        int target = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : -1;
+        int target = pressTarget(mc);
         int s = nextSeq();
         presses++;
         pressHeld = true;
@@ -175,6 +176,38 @@ public final class ArmsPredict {
         begin(p, st, d.move(), d.step(), d.cadence(), s);
     }
 
+    /** The creature a press means (SPEC §40.1): the lock, else what the crosshair is on, else the mark; the server checks it. */
+    private static int pressTarget(Minecraft mc) {
+        int aim = dev.awaken.core.api.Aim.target();
+        if (dev.awaken.core.api.Aim.locked()) return pressed = aim;
+        return pressed = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : aim;
+    }
+
+    /** The creature the last press meant, for the step in. */
+    private static int pressed = -1;
+
+    /** Blocks a ground push carries the body: vanilla's ground friction keeps 0.546 of it a tick, so it goes about 2.2 times itself. */
+    private static final double STEP_CARRY = 2.2;
+
+    /**
+     * The step in (SPEC §40.1): a chain's first strike or a heavy started just out of reach of the creature you meant carries
+     * you toward it, at most the style's step, on the ground only. The server allows that reach for the meant creature alone.
+     */
+    private static void stepIn(LocalPlayer p, Archetypes.Loaded st, Archetype.Move m, int chainStep, Archetype.MoveDef def) {
+        if (!(m == Archetype.Move.HEAVY || (m.strike() && chainStep == 0)) || pressed < 0 || dodging) return;
+        if (!p.onGround() || p.isPassenger() || p.isInLiquid() || !(p.level().getEntity(pressed) instanceof net.minecraft.world.entity.LivingEntity t)
+                || !t.isAlive() || t instanceof net.minecraft.world.entity.player.Player) return;
+        double reach = def.reach() + 0.3, gap = dev.awaken.core.api.Aim.gap(p.getEyePosition(), t.getBoundingBox());
+        float step = dev.awaken.core.api.Aim.stepIn(st.id());
+        if (gap <= reach - 0.15 || gap > reach + step) return;
+        double need = Math.min(step, gap - reach + 0.35);
+        double dx = t.getX() - p.getX(), dz = t.getZ() - p.getZ(), len = Math.sqrt(dx * dx + dz * dz);
+        if (len < 1.0E-3) return;
+        double v = need / STEP_CARRY;
+        Vec3 dm = p.getDeltaMovement();
+        p.setDeltaMovement(dx / len * v, dm.y, dz / len * v);
+    }
+
     static int mastery(Archetypes.Loaded st) {
         return st.index() < mastery.length ? mastery[st.index()] : 0;
     }
@@ -207,18 +240,83 @@ public final class ArmsPredict {
         buffered = null;
         fadeFrom = -100;
         waitShown = waitHit;
+        swishAt = -1;
+        biteAt = -1;
+        stepIn(p, st, m, st2, def);
         if (!waitHit) {
-            ArmsAudio.swing(p, st, m, cad);
+            swing(p, st, m, cad);
             ArmsFx.move(p, st, m, cad, perfect);
             ArmsBodies.move(p, st, m);
         }
         if (m == Archetype.Move.ART) ArmsFeel.art();
     }
 
+    /**
+     * The swish on the blade's clock (SPEC §25 "Swing Studio"): where the swing's keys say its whoosh peaks as the blade
+     * crosses the target, not on the press (a heavy's swish played a whole wind-up early); at once when they say so.
+     */
+    private static void swing(LocalPlayer p, Archetypes.Loaded st, Archetype.Move m, int cad) {
+        float at = FpSwings.swish(FpSwings.style(st.id()), m);
+        if (at <= 0) ArmsAudio.swing(p, st, m, cad);
+        else swishAt = at;
+    }
+
+    /** When the running move's swish is due (ticks of its clock), -1 when played or none. */
+    private static float swishAt = -1;
+
+    /** Each frame: a swish come due plays now (a tick's wait would put it up to 50 ms late). */
+    static void frame() {
+        if (swishAt < 0) return;
+        LocalPlayer p = Minecraft.getInstance().player;
+        if (p == null || move == null || style == null) {
+            swishAt = -1;
+            return;
+        }
+        if (viewTime() >= swishAt) {
+            swishAt = -1;
+            ArmsAudio.swing(p, style, move, cadence);
+        }
+    }
+
+    /** Wall-clock nanos a tick lasts now (the server's tick rate: a slowed world slows the hands with it). */
+    static float nanosPerTick() {
+        var level = Minecraft.getInstance().level;
+        return level == null ? 50_000_000F : level.tickRateManager().nanosecondsPerTick();
+    }
+
+    // the bite: a landed blow's hit-stop over, the hands run slow through the body for a moment, then make the time up
+    // by the move's end (FpSwings.Clip biteRate, biteTicks)
+    private static float biteAt = -1, biteRate = 1, biteTicks;
+
+    /** A landed blow of the running move: its bite starts where its hit-stop holds the hands. */
+    static void bite() {
+        if (move == null || style == null || biteAt >= 0) return;
+        FpSwings.Style st = FpSwings.style(style.id());
+        FpSwings.Clip c = st == null ? null : st.moves().get(move);
+        if (c == null || c.biteTicks() <= 0 || !ArmsComfort.hitStop()) return;
+        biteAt = moveTime();
+        biteRate = c.biteRate();
+        biteTicks = c.biteTicks();
+    }
+
+    /**
+     * The swing's clock as the hands and the view show it: the move's own, held through hit-stop, slowed through a
+     * landed blow's bite and catching up again before the move ends (the server's clock, {@link #moveTime}, never bites).
+     */
+    static float viewTime() {
+        float t = moveTime();
+        if (biteAt < 0 || t <= biteAt || style == null || move == null) return t;
+        float e = t - biteAt, lag = (1 - biteRate) * biteTicks;
+        if (e < biteTicks) return t - (1 - biteRate) * e;
+        Archetype.MoveDef def = style.move(move);
+        float rest = def == null ? 1 : Math.max(1F, def.windup() + def.active() + def.recovery() - biteAt - biteTicks);
+        return t - lag * Math.max(0F, 1F - (e - biteTicks) / rest);
+    }
+
     /** Ticks into the running move on the hands' clock (hit-stop holds pause it), with the frame's fraction. */
     static float moveTime() {
         long nanos = System.nanoTime() - moveNanos - (ArmsFeel.paused() - movePaused) - waitNanos;
-        float t = nanos / 50_000_000F;
+        float t = nanos / nanosPerTick();
         Archetype.MoveDef def = waitHit && move != null && style != null ? style.move(move) : null;
         return def != null ? Math.min(t, def.windup() - 0.05F) : t; // a strike waiting on its press holds at its hit
     }
@@ -259,7 +357,7 @@ public final class ArmsPredict {
             Archetype.MoveDef def = style.move(move);
             long nanos = System.nanoTime() - moveNanos - (ArmsFeel.paused() - movePaused) - waitNanos;
             // held at the hit: the clock pinned there, never stepped back (a whole tick taken off made the hands twitch)
-            long over = def == null ? 0 : nanos - (long) ((def.windup() - 0.05F) * 50_000_000L);
+            long over = def == null ? 0 : nanos - (long) ((def.windup() - 0.05F) * nanosPerTick());
             if (over > 0) waitNanos += over;
         }
         if (pressHeld) heldOrReleased(p, mc);
@@ -323,7 +421,7 @@ public final class ArmsPredict {
             return;
         }
         charging = false;
-        int target = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : -1;
+        int target = pressTarget(mc);
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_RELEASE, p.getYRot(), p.getXRot(), target));
         int held = c.min() + (ticks - chargeStart);
         if (st.move(Archetype.Move.ART) != null && ArmsRules.artReady(held, c, resonance, ArmsMastery.artAt(mastery(st)))) {
@@ -462,6 +560,7 @@ public final class ArmsPredict {
                     CombatFeedback.hitstop(r.entity(), r.aux());
                     CombatFeedback.hold(r.aux());
                     Archetype.Move m = Archetype.Move.byId(r.aux2());
+                    if (m == move) bite();
                     Archetype.MoveDef def = style == null || m == null ? null : style.move(m);
                     if (m == Archetype.Move.EXECUTION) ArmsFeel.executed();
                     if (def != null) {
@@ -599,6 +698,8 @@ public final class ArmsPredict {
     static void reset() {
         move = null;
         style = null;
+        swishAt = -1;
+        biteAt = -1;
         step = -1;
         buffered = null;
         pressHeld = charging = dodging = plunging = false;

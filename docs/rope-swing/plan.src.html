@@ -1,0 +1,695 @@
+<title>Rope Swing Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column with wide bands for the live swing and the plots; the rope's hemp is the accent,
+   today's rope is brick, the assisted swing is sky. */
+:root {
+  --bg: #f3f5f6; --paper: #ffffff; --ink: #1b2226; --ink-2: #56626a; --rule: #d9e0e4;
+  --rope: #b07a2c; --today: #b44a35; --assist: #1d74a8; --smash: #d23b2a; --good: #2f8a4c;
+  --stone: #8d989e; --log: #8a6a48; --leaf: #6f9a5a; --sky: #e6eef2; --ground: #c9d1c3;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12171a; --paper: #192024; --ink: #e5eaed; --ink-2: #9aa7ae; --rule: #2c363b;
+  --rope: #d9a253; --today: #e2765f; --assist: #5fb0e2; --smash: #ff6a55; --good: #5cc07c;
+  --stone: #5d686e; --log: #7b5e40; --leaf: #4f7741; --sky: #1a2328; --ground: #2b3329; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12171a; --paper: #192024; --ink: #e5eaed; --ink-2: #9aa7ae; --rule: #2c363b;
+  --rope: #d9a253; --today: #e2765f; --assist: #5fb0e2; --smash: #ff6a55; --good: #5cc07c;
+  --stone: #5d686e; --log: #7b5e40; --leaf: #4f7741; --sky: #1a2328; --ground: #2b3329; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font: 18px/1.55 var(--body); }
+.wrap { max-width: 1060px; margin: 0 auto; padding-block: 40px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 700px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.1rem, 5vw, 3.2rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.6rem; font-weight: 700; margin-top: 56px; }
+h3 { font-size: 1.12rem; font-weight: 700; margin-top: 26px; }
+p { margin: 12px 0; }
+a { color: var(--assist); }
+.eyebrow { font: 600 0.72rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--rope); }
+.lede { font-size: 1.2rem; color: var(--ink); }
+.quote { border-left: 3px solid var(--rope); padding: 4px 0 4px 16px; color: var(--ink-2); font-style: italic; margin: 18px 0; }
+.small { font-size: 0.9rem; color: var(--ink-2); }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+ul, ol { padding-left: 1.2em; }
+li { margin: 6px 0; }
+.status { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 6px; }
+.chip { font: 600 0.78rem/1 var(--mono); padding: 7px 10px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper); }
+.chip.ok { border-color: var(--good); color: var(--good); }
+.chip.wait { border-color: var(--rope); color: var(--rope); }
+
+/* the live swing */
+.demo { margin-top: 26px; background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.demo-bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--rule); }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.seg button { font: 600 0.82rem/1 var(--display); padding: 8px 11px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.seg button.m-today[aria-pressed="true"] { background: var(--today); color: #fff; }
+.seg button.m-assist[aria-pressed="true"] { background: var(--assist); color: #fff; }
+.btn { font: 600 0.82rem/1 var(--display); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--rule); background: transparent; color: var(--ink); cursor: pointer; }
+.btn:hover, .seg button:hover { color: var(--ink); }
+button:focus-visible, .stage:focus-visible { outline: 2px solid var(--assist); outline-offset: 2px; }
+label.slide { display: inline-flex; gap: 8px; align-items: center; font: 0.8rem var(--mono); color: var(--ink-2); }
+.stage { position: relative; outline: none; touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; }
+.stage canvas { display: block; width: 100%; }
+.hud { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 10px 14px; border-top: 1px solid var(--rule); font: 0.8rem/1.4 var(--mono); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.hud b { color: var(--ink); font-weight: 600; }
+.hud .log { flex: 1 1 260px; min-width: 0; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.keys { padding: 10px 14px 14px; font-size: 0.92rem; color: var(--ink-2); border-top: 1px solid var(--rule); }
+kbd { font: 600 0.78rem var(--mono); padding: 2px 6px; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; background: var(--bg); color: var(--ink); }
+
+/* plots and tables */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 10px; }
+.pair { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.plot { background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 12px 8px; min-width: 0; }
+.plot h4 { margin: 0 0 4px; font: 700 0.95rem var(--display); display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.plot h4 .tag { font: 600 0.72rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.plot h4 .tag.today { color: var(--today); } .plot h4 .tag.assist { color: var(--assist); }
+.plot .sum { font: 0.78rem var(--mono); color: var(--ink-2); }
+.plot canvas { display: block; width: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font: 0.76rem var(--mono); color: var(--ink-2); margin-top: 8px; }
+.legend i { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 5px; border-radius: 2px; }
+.scroll { overflow-x: auto; margin: 14px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 600 0.74rem var(--mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-2); }
+td.n { font-family: var(--mono); font-size: 0.84rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td .today { color: var(--today); } td .assist { color: var(--assist); }
+.cause { display: grid; grid-template-columns: 2.2em 1fr; gap: 4px 12px; margin: 18px 0; }
+.cause .k { font: 700 1.1rem var(--display); color: var(--today); }
+.cause p { margin: 0 0 4px; }
+.decide { display: grid; gap: 12px; margin-top: 18px; }
+.dec { background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; }
+.dec h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.dec .rec { font: 600 0.78rem var(--mono); color: var(--assist); text-transform: uppercase; letter-spacing: 0.06em; }
+.dec p { margin: 6px 0; }
+.stages { list-style: none; padding: 0; }
+.stages li { position: relative; padding-left: 44px; margin: 16px 0; }
+.stages li::before { position: absolute; left: 0; top: 2px; font: 700 0.85rem var(--mono); color: var(--rope); }
+.stages li:nth-child(1)::before { content: "S0"; } .stages li:nth-child(2)::before { content: "S1"; }
+.stages li:nth-child(3)::before { content: "S2"; } .stages li:nth-child(4)::before { content: "S3"; }
+.stages li:nth-child(5)::before { content: "S4"; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 48px 0 0; }
+@media (min-width: 900px) { .pair { grid-template-columns: 1fr 1fr; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+<div class="col">
+  <div class="eyebrow">AWAKEN · The Ascent · plan for approval · 28 Oct 2026</div>
+  <h1>The rope, made to swing</h1>
+  <p class="lede">You asked for a rope that swings you through the world the way Spider-Man does, instead of dragging you
+  at whatever the crosshair touches. This page shows why the rope does that today, what I want to build instead, and a
+  live model of both that you can play below.</p>
+  <div class="quote">"If it's not assisted, then you just end up smashing into the thing that you connected to instead
+  of actually swinging." Euan, 28 Oct</div>
+  <div class="status">
+    <span class="chip ok">Key clash fixed · 225dbdf2 · CI green</span>
+    <span class="chip ok">Skyborn sprint fixed · same commit</span>
+    <span class="chip wait">Rope swing · waiting for your yes</span>
+  </div>
+</div>
+
+<!-- ============================================ the live swing ============================================ -->
+<section class="demo" id="demo" aria-label="Live swing model">
+  <div class="demo-bar">
+    <div class="seg" role="group" aria-label="Which rope">
+      <button class="m-today" id="m-today" aria-pressed="false">Today's rope</button>
+      <button class="m-assist" id="m-assist" aria-pressed="true">Assisted swing</button>
+    </div>
+    <div class="seg" role="group" aria-label="Where" id="scenes"></div>
+    <button class="btn" id="bot">Let the bot play</button>
+    <button class="btn" id="restart">Start again</button>
+    <label class="slide" for="pitch">look up <input id="pitch" type="range" min="0" max="45" value="18"> <span id="pitchv">18°</span></label>
+  </div>
+  <div class="stage" id="stage" tabindex="0" aria-label="Swing view. Hold Space or press and hold here to use the rope.">
+    <canvas id="cv"></canvas>
+  </div>
+  <div class="hud" id="hud"></div>
+  <div class="keys">Click the view, then hold <kbd>Space</kbd> (or press and hold the view) for the rope.
+  <kbd>A</kbd> <kbd>D</kbd> turn, <kbd>S</kbd> coasts. You run and hop on your own, and you drift back to the middle of the
+  way when you don't turn. With today's rope each press throws once, and the slider sets where you look (it aims today's
+  rope). The assisted swing keeps looking while you hold, so one long hold chains swing after swing. The big view is from
+  the side; the strip under it is the same run from above.</div>
+</section>
+
+<div class="col">
+  <p class="small">This is a model, not the game. It's 3D blocks and ticks (20 a second), today's rope ported line for
+  line from <code>AscentRules</code>, <code>AscentAnchors</code> and <code>AscentMoves</code>, with simplified collision
+  and no network. The same code drew every plot and number on this page
+  (<code>docs/rope-swing/proof/swing.js</code>, run with <code>node docs/rope-swing/proof/run.js</code>).</p>
+
+<!-- ============================================ what you asked ============================================ -->
+  <h2>What you asked for</h2>
+  <p>Three things, the rope by far the biggest:</p>
+  <ol>
+    <li><b>The rope has to swing, not pull.</b> It should pick a good place to hang from on its own, carry you under it
+    in an arc, keep your speed, and throw you on, so chaining swings feels great and you don't smash into what you
+    roped.</li>
+    <li><b>Rope and dash were on the same key</b> (Left Option). Fixed already, see below.</li>
+    <li><b>Skyborn sprint stops working</b> once the bar has run dry, until you tap Space. Fixed already, see below.</li>
+  </ol>
+  <h3>What good looks like</h3>
+  <ul>
+    <li><b>Strong:</b> hold the rope key and keep looking where you want to go, and you swing on and on through a forest
+    or a city without touching a trunk or a wall, faster than running, and timing the let-go gives a felt boost.</li>
+    <li><b>Weak:</b> it swings, but you still clip walls now and then, or chains stall into a dead hang.</li>
+    <li><b>Not acceptable:</b> being pulled into the block you aimed at, stopping dead against a wall, the rope deciding
+    to drag you somewhere you didn't look, or a swing that the server and your screen disagree about.</li>
+  </ul>
+  <p>Kept as it is: the rope stays a power you earn (the Tether), it still bites only real blocks, ziplines, rappel and
+  the Tether Vow keep working, and no setting is needed to make it good.</p>
+
+<!-- ============================================ why it pulls ============================================ -->
+  <h2>Why it pulls you in today</h2>
+  <p>The code already has a pendulum on paper. Five things in how it starts and runs a swing turn it into a pull. Each
+  one was checked in the code and then reproduced in the model.</p>
+  <div class="cause">
+    <div class="k">1</div><div><p><b>It bites where the crosshair is.</b> <code>AscentAnchors.findAimed</code> takes the
+    block under the crosshair first whenever it's 6 or more blocks up. A pendulum's lowest point is right under its
+    anchor, so a rope on a wall in front of you swings you into the foot of that wall. Looking at a spire 46 blocks away
+    ends in a hit at 2.4 blocks a tick in every one of 40 runs.</p></div>
+    <div class="k">2</div><div><p><b>The rope bites long, then reels in hard.</b> It catches at the full distance, then
+    shortens at 1.2 blocks a tick so your feet clear the ground (<code>AscentRules.reel</code>). Each tick of reeling also
+    pushes you toward the anchor. On a cliff the aimed rope is 36 long and fits to 9, so it pulls you 27 blocks straight at
+    the face. That is the "brings you straight forward" you felt.</p></div>
+    <div class="k">3</div><div><p><b>A yank toward the look on the bite</b> (0.22 blocks a tick) adds to the pull.</p></div>
+    <div class="k">4</div><div><p><b>The catch throws speed away.</b> When a slack rope goes taut, all the speed along the
+    rope is lost, so a slow entry hangs dead and a fast one stops short.</p></div>
+    <div class="k">5</div><div><p><b>Nothing looks ahead.</b> No check that the arc is clear, no let-go at the top (you
+    swing back toward the anchor), and the best let-go adds only 6% speed, too little to feel.</p></div>
+  </div>
+  <p>Not the cause: the server. It only checks that the anchor is a real block in reach and caps the speed. Nothing it
+  does pulls you in.</p>
+</div>
+
+<!-- ============================================ the plots ============================================ -->
+<section>
+  <div class="col">
+    <h2>Before and after, same start</h2>
+    <p>Each pair is the same start, played by a bot that holds forward and lets go at the best moment it can see (the best
+    a player could do). Pick a place. These are typical runs, the ones closest to the median of 40.</p>
+  </div>
+  <div class="tabs" id="ptabs"></div>
+  <div class="pair">
+    <div class="plot"><h4><span class="tag today">Today</span><span id="pt-today"></span></h4><canvas id="pc-today"></canvas><div class="sum" id="ps-today"></div></div>
+    <div class="plot"><h4><span class="tag assist">Assisted</span><span id="pt-assist"></span></h4><canvas id="pc-assist"></canvas><div class="sum" id="ps-assist"></div></div>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--today)"></i>today's path</span>
+    <span><i style="background:var(--assist)"></i>assisted path</span>
+    <span><i style="background:var(--rope)"></i>a rope (dashed: a zip)</span>
+    <span><i style="background:var(--smash)"></i>× a hit (lost more than 0.45 blocks a tick at once)</span>
+    <span><i style="background:var(--good)"></i>● let go in the window</span>
+  </div>
+</section>
+
+<div class="col">
+  <h3>All 40 runs per place</h3>
+  <p>Different starts, look angles and speeds for each place. A hard hit loses a block a tick or more at once (as fast as
+  a sprint, gone).</p>
+</div>
+<div class="scroll"><table id="table"></table></div>
+<div class="col">
+  <p><b>Where it falls short.</b> On the sandbox lane, today's rope at its best (a bot letting go at the perfect moment
+  every time) goes a little farther in 15 seconds, 199 blocks against 177, because its pulls are fast when they don't hit
+  anything. It also hits hard in 27 of 40 runs. Matching that distance with the assist is a gate in stage 2. Of the
+  assisted runs' hard hits, 7 happen on the rope and 13 after letting go, while flying free into a trunk. Those 13 are
+  why stage 2 adds the hand-off to a wall-run, as Spider-Man does.</p>
+
+<!-- ============================================ the new swing ============================================ -->
+  <h2>How the assisted swing works</h2>
+  <p>You hold the rope key and look roughly where you want to go. Everything else is the rope's job.</p>
+  <h3>Choosing where to hang from</h3>
+  <p>While you're in the air, the rope looks ahead every other tick with a fan of rays from your hand (66 of them, 22° to
+  72° up, either side of your heading, 44 blocks out). A good anchor is ahead and above, about 56° up, about 18 blocks of
+  rope, and 3 to 12 blocks off to one side, so the arc passes beside it, never into it. A face near its top edge moves
+  the anchor up to the edge, so roof lines and cliff lips work. Before it commits, it plays the first part of that swing
+  forward and drops any anchor whose arc would meet something. A small marker shows where a press would bite now.</p>
+  <h3>The swing itself</h3>
+  <ul>
+    <li><b>An arc, never a pull.</b> The rope's length is fitted on the bite so your feet clear the ground at the bottom,
+    and it never yanks or reels you in. If it has to shorten, it does so slowly on the way down (0.4 a tick) and your speed
+    is kept.</li>
+    <li><b>You keep heading where you look.</b> The body swings in the upright plane of your heading, under the point of
+    the rope's anchor. A tower beside you holds the rope, and you swing past it. Turning your look turns the swing, as
+    Spider-Man straightens his.</li>
+    <li><b>Speed is kept.</b> The catch keeps 65% of the speed a real rope would throw away, the bottom of each swing adds
+    drive, and holding forward pumps a little more. A swing too slow to reach its top gets more drive. It never hangs
+    dead.</li>
+    <li><b>Walls.</b> The rope looks 10 ticks ahead along the arc. If something is in the way it bends the swing 8°, 16° or
+    24° to go round it. If it can't, it lets go early with a hop. Stage 2 also adds the hand-off: a swing into a wall
+    starts a wall-run instead of a hit.</li>
+    <li><b>Letting go.</b> Let go on the way up, best at 62° past the bottom, and you get a boost (up to 14% speed and a
+    lift). The rope also lets go at the top on its own, so you never swing back toward the anchor. Keep holding and the
+    next rope bites as soon as there's a good one: one hold, a chain of swings.</li>
+  </ul>
+  <h3>When there's nothing good to swing from</h3>
+  <ul>
+    <li><b>A cliff or a wall dead ahead:</b> a swing would end in the wall, so the rope zips you up to its lip and over the
+    top instead (today's zip to a top, SPEC §17.6). In the model: 0 hits in 40 runs, 123 blocks covered, against today's
+    hit and full stop every time.</li>
+    <li><b>Open land with nothing above you:</b> the rope doesn't fire, and the marker doesn't show. No rope bites the sky.
+    You keep your speed and carry on (decision 6).</li>
+    <li><b>Low ceilings and caves:</b> the same rule as walls. If no arc is clear, no swing, and the zip takes over when
+    the look is on a ledge.</li>
+  </ul>
+
+  <h3>What it feels and looks like</h3>
+  <ul>
+    <li><b>Camera.</b> Field of view and a little distance grow with speed, a short kick on each bite, and the view
+    tilts gently along the arc and settles at the top. Every amount is a Swing Studio tune and respects the game's FOV
+    effect slider.</li>
+    <li><b>Rope.</b> The rope stays our own woven line with its glow, now taut and humming at the bottom of a swing and
+    slack and whipping as it lets go. The bite flash grows with speed.</li>
+    <li><b>Sound.</b> Wind that rises with speed, a creak of load at the bottom, a sharp snap on a perfect let-go, all made
+    with the project's own sound tools, nothing vanilla.</li>
+    <li><b>Hands and body.</b> First person: the fist is pulled up and back at the bottom and thrown forward on the
+    let-go, reusing the Swing Studio's tuning. Third person: the body leans into the arc and tucks at the top.</li>
+  </ul>
+
+<!-- ============================================ research ============================================ -->
+  <h2>What other games do, and what we take</h2>
+  <div class="scroll"><table>
+    <tr><th>Source</th><th>What they found</th><th>What we take</th></tr>
+    <tr><td>Marvel's Spider-Man (2018), <a href="https://www.gamedeveloper.com/design/marvel-s-spider-man-design-analysis" target="_blank" rel="noopener">Game Developer design analysis</a></td>
+      <td>The swing "cheats physics a lot": it straightens your arc to keep you going straight, shortens the web near the
+      ground, and starts a wall-run when you meet a wall, instead of a crash.</td>
+      <td>Straightening (the heading plane), the fitted length over the floor, the wall-run hand-off.</td></tr>
+    <tr><td>Marvel's Spider-Man 2 (2023), <a href="https://www.destructoid.com/psa-theres-a-swing-steering-assistance-slider-in-spider-man-2/" target="_blank" rel="noopener">Destructoid</a>,
+      <a href="https://mp1st.com/?p=238010" target="_blank" rel="noopener">MP1st</a></td>
+      <td>A ten-step Swing Steering Assistance slider, maxed by default. Insomniac said full assist is how the earlier
+      games played, and that lowering it means hitting the ground and walls more.</td>
+      <td>Ship full assist as the one tune. A slider waits until someone wants less help (decision 4).</td></tr>
+    <tr><td>Insomniac's swing camera, <a href="https://jbsiraudin.github.io/blog/spiderman-dolly/" target="_blank" rel="noopener">J.-B. Siraudin</a></td>
+      <td>Field of view and follow distance rise with speed. Each web shot gives a short FOV bump, which reads as a dolly
+      zoom. The camera's pitch follows the arc.</td>
+      <td>The camera plan above.</td></tr>
+    <tr><td>GDC talks by Doug Sheahan: <a href="https://gdcvault.com/play/1026422/Concrete-Jungle-Gym-Building-Traversal" target="_blank" rel="noopener">Concrete Jungle Gym</a> (2019),
+      <a href="https://schedule.gdconf.com/session/higher-faster-farther-evolving-traversal-in-marvels-spider-man-2/900249" target="_blank" rel="noopener">Higher, Faster, Farther</a> (2024)</td>
+      <td>The talks exist, but their public pages don't give the swing-point maths.</td>
+      <td>Our anchor rules are our own, and the model is what tests them.</td></tr>
+    <tr><td>Bionic Commando (2009), <a href="https://www.destructoid.com/?p=33859" target="_blank" rel="noopener">Destructoid</a>,
+      <a href="https://worthplaying.com/article/2008/12/26/interviews/57634-bionic-commando-psx360pc-developer-interview/" target="_blank" rel="noopener">Worthplaying interview</a></td>
+      <td>A physics swing with an on-screen guide for the best swing, and skill in when you let go. The team reworked it
+      heavily after focus tests.</td>
+      <td>Reward the let-go's timing, never punish missing it. The marker plays the guide's part.</td></tr>
+    <tr><td>Grappling Hook Mod for Minecraft (yyon), <a href="https://www.curseforge.com/minecraft/mc-mods/grappling-hook-mod" target="_blank" rel="noopener">CurseForge</a></td>
+      <td>Real rope physics, you steer with WASD and jump to let go, and a motorised hook that pulls you, based on
+      Titanfall 2's. Hard to master.</td>
+      <td>Shows what an unassisted rope feels like in blocks. We keep its honesty (real blocks only) and add the help.</td></tr>
+    <tr><td>Just Cause</td>
+      <td>The grapple is mainly a pull to a point, saved by a parachute. My search found no design notes to cite.</td>
+      <td>That is today's rope, the thing you don't want. The zip stays only as the fallback for walls.</td></tr>
+  </table></div>
+
+<!-- ============================================ keys + skyborn ============================================ -->
+  <h2>Already fixed: keys and Skyborn sprint</h2>
+  <p>These were small and safe, so they're in commit <code>225dbdf2</code> on my branch, with GameTests green on CI
+  (<a href="https://github.com/euansprr-dev/awaken/actions/runs/40670175169" target="_blank" rel="noopener">run 40670175169</a>).
+  Not merged yet; the orchestrator merges.</p>
+  <h3>The rope has its own key</h3>
+  <p>"Rope (hold)" is a new key under AWAKEN in Controls, on Left Option. Your movement power (dash and friends) moved to
+  mouse button 4. A world you already play gets the change once, with a tip naming both keys. Both can be rebound.</p>
+  <p>Other clashes between AWAKEN's defaults and vanilla's (Controls marks them red): <kbd>G</kbd> Focus and vanilla's
+  quick actions, <kbd>O</kbd> Look and vanilla's friends list, <kbd>X</kbd> <kbd>C</kbd> Powers 2 and 3 and the creative
+  toolbar keys (creative only). Every letter near WASD is taken, and Caps Lock can't be held as a key on a Mac.</p>
+  <h3>Sprint takes a Skyborn glide back into flight</h3>
+  <p>The cause: boosting empties the bar, and an empty bar folds flight into a glide. The bar refills in a glide, but only
+  a jump turned a glide back into flight, so sprint did nothing until you tapped Space. Now a sprint press in a Skyborn
+  glide takes flight whenever the bar allows, and sprint held through the glide takes off again by itself once the bar
+  is a quarter full (about 5 seconds in the sun). A plain glide, from running off a cliff, stays a glide. GameTest
+  <code>ascent_sprint_flies_again</code> checks all of this.</p>
+
+<!-- ============================================ contracts ============================================ -->
+  <h2>Multiplayer and keeping client and server in step</h2>
+  <ul>
+    <li>The swing's maths goes in <code>AscentRules</code> as plain functions, the same on the client and the server,
+    as the rope's maths is today. The client plays it and the server checks it.</li>
+    <li>The anchor is still a real block in reach (the server's check doesn't change). The swing's plane is worked out
+    from the anchor and your heading, both of which the server already has, so no new packet is needed.</li>
+    <li>The anchor search runs only on your own client, at most 66 short rays every other tick while you're in the air
+    with a rope. It allocates nothing per tick. Other players see your rope as they do now.</li>
+    <li>Speed caps stay as they are. A let-go boost is within the cap, so a modified client can't fling itself.</li>
+  </ul>
+
+  <h2>What could go wrong</h2>
+  <div class="scroll"><table>
+    <tr><th>Risk</th><th>How we'd see it</th><th>What happens</th></tr>
+    <tr><td>The anchor search costs frames in dense forest</td><td>A GameTest times 1,000 searches; the frame budget in SPEC</td><td>Fewer rays, refreshed every third tick</td></tr>
+    <tr><td>The assist picks an anchor you didn't want</td><td>The marker shows it before the bite</td><td>Look elsewhere; the search follows your look</td></tr>
+    <tr><td>Client and server disagree about the swing</td><td>The existing rope correction count in the debug overlay</td><td>Same as today: the server's anchor wins, the client snaps back</td></tr>
+    <tr><td>A flight into a trunk after letting go</td><td>The model's hard-hit count after let-go (13 of 20 today)</td><td>Stage 2's wall-run hand-off and a carry that steers round trunks</td></tr>
+    <tr><td>Ziplines, rappel or the Tether Vow change by accident</td><td>Their GameTests</td><td>They keep their own paths; only the swing changes</td></tr>
+  </table></div>
+
+  <h2>How we'll know it's good</h2>
+  <ul>
+    <li>The model's six places become a GameTest harness that drives the real <code>AscentRules</code>, so the numbers
+    above become the baseline and each stage must beat it.</li>
+    <li><b>Gates:</b> no hard hits on the rope in the city, forest, cliff and spire runs; no run stops dead; the lane at
+    least as far as today's best (199 blocks in 15 s); hard hits after letting go halved.</li>
+    <li>Then you, in the game. The model can't tell us if it feels great. Only you playing it can.</li>
+  </ul>
+
+<!-- ============================================ stages ============================================ -->
+  <h2>How it gets built</h2>
+  <p>All by me, in this session, on this branch. Each stage is its own commit with GameTests on CI, and the old rope
+  stays behind a switch until stage 2 passes its gates.</p>
+  <ol class="stages">
+    <li><b>The harness.</b> The six places as GameTests driving the real rules, today's numbers as the baseline.</li>
+    <li><b>Choosing the anchor.</b> The ray fan, the scoring, the fitted length with no yank or reel, the marker, and hold
+    to chain.</li>
+    <li><b>The swing.</b> The heading plane, keeping speed, the momentum floor, letting go at the top, bending round walls,
+    and the wall-run hand-off. Old rope switched off once the gates pass.</li>
+    <li><b>The feel.</b> The let-go window and its boost, camera, sound, the rope's look, first- and third-person
+    animation, and a city lane in the Ascent sandbox to try it.</li>
+    <li><b>Tuning.</b> Every number on a live-reload tune file, so we can adjust it from your play notes without a
+    rebuild.</li>
+  </ol>
+  <p>Stages 0 to 2 are the core. The rest can follow on the same branch. Splitting the feel (stage 3) to another builder
+  wouldn't save much, since it leans on the swing's own numbers, so I'd keep it here.</p>
+
+  <h2>Other ways I considered</h2>
+  <ul>
+    <li><b>A small repair:</b> drop the crosshair bite, the yank and the reel, keep the rest. Cheap, and it stops most of
+    the pulls, but the swing still sways side to side, stalls, and swings back. It wouldn't feel like Spider-Man.</li>
+    <li><b>The recommendation:</b> the assisted swing above. It reuses the rope's code, rules, rendering and server check,
+    and changes how anchors are chosen and how the swing runs.</li>
+    <li><b>Further:</b> invented anchors in the sky, like the web wings of Spider-Man 2, so you can swing anywhere. It
+    breaks the rule that a rope bites a real block, and Skyborn already covers open land.</li>
+  </ul>
+
+<!-- ============================================ decisions ============================================ -->
+  <h2>Your decisions</h2>
+  <p>Say yes to all, or change any by number.</p>
+  <div class="decide">
+    <div class="dec"><h3>1. Which keeps Left Option?</h3><div class="rec">Recommended: the rope</div>
+      <p>The rope is held for seconds at a time, so it gets the thumb key. The movement power goes on mouse button 4, as
+      in 225dbdf2. If you play on a trackpad with no side button, say so and the movement power goes on <kbd>`</kbd>
+      (left of 1) instead.</p></div>
+    <div class="dec"><h3>2. Tap a ledge to zip, hold to swing?</h3><div class="rec">Recommended: yes</div>
+      <p>A quick tap with your look on a lip zips you up and over. A hold swings. Both come from the same key.</p></div>
+    <div class="dec"><h3>3. Show the anchor marker?</h3><div class="rec">Recommended: yes</div>
+      <p>A small mark where a press would bite, only while you're in the air with the rope ready. It's how you trust the
+      assist.</p></div>
+    <div class="dec"><h3>4. One tune, no slider yet?</h3><div class="rec">Recommended: yes</div>
+      <p>Ship full assist as the only way it plays. Add an assist slider later if you want less help.</p></div>
+    <div class="dec"><h3>5. A swing into a wall starts a wall-run?</h3><div class="rec">Recommended: yes</div>
+      <p>Instead of a hit, you land on the wall running (the Runner's wall-run), as in Spider-Man.</p></div>
+    <div class="dec"><h3>6. No rope in open sky?</h3><div class="rec">Recommended: yes</div>
+      <p>With nothing real above you, the rope doesn't fire and nothing is invented. Skyborn is for open land.</p></div>
+  </div>
+  <hr>
+  <p class="small">Branch <code>claude/rope-swing-plan-f2f882</code>. The plan's numbers become SPEC §17.31 when the build
+  starts. Session: rope-swing.</p>
+</div>
+</div>
+
+<script>
+/*@SWING@*/
+</script>
+<script>
+const RUNS = /*@RUNS@*/;
+</script>
+<script>
+(function () {
+  'use strict';
+  const S = window.Swing;
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  let P = {};
+  function palette() {
+    P = {bg: css('--paper'), sky: css('--sky'), ground: css('--ground'), ink: css('--ink'), mute: css('--ink-2'), rule: css('--rule'),
+      stone: css('--stone'), log: css('--log'), leaf: css('--leaf'), rope: css('--rope'), today: css('--today'),
+      assist: css('--assist'), smash: css('--smash'), good: css('--good'), mono: css('--mono')};
+  }
+  palette();
+
+  function fit(cv, h) {
+    const w = cv.parentElement.clientWidth - (cv.parentElement.classList.contains('plot') ? 24 : 0), d = window.devicePixelRatio || 1;
+    cv.width = Math.round(w * d); cv.height = Math.round(h * d); cv.style.height = h + 'px';
+    const c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0);
+    return {c, w, h};
+  }
+
+  // A view maps (z, a) to pixels, a = y (side) or x (from above; +x is left of the heading, drawn up).
+  function View(rx, ry, rw, rh, z0, z1, a0, a1) {
+    this.rx = rx; this.ry = ry; this.rw = rw; this.rh = rh; this.z0 = z0; this.z1 = z1; this.a0 = a0; this.a1 = a1;
+  }
+  View.prototype.X = function (z) { return this.rx + (z - this.z0) / (this.z1 - this.z0) * this.rw; };
+  View.prototype.Y = function (a) { return this.ry + this.rh - (a - this.a0) / (this.a1 - this.a0) * this.rh; };
+
+  function kindFill(k) { return k === 'leaf' ? P.leaf : k === 'log' ? P.log : P.stone; }
+
+  function drawBoxes(c, v, boxes, side, laneX) {
+    c.save();
+    c.beginPath(); c.rect(v.rx, v.ry, v.rw, v.rh); c.clip();
+    c.fillStyle = P.sky; c.fillRect(v.rx, v.ry, v.rw, v.rh);
+    if (side) { c.fillStyle = P.ground; const g = v.Y(0); c.fillRect(v.rx, g, v.rw, v.ry + v.rh - g); }
+    for (const q of boxes) {
+      const a = q[0], b = q[1];
+      if (b[2] < v.z0 || a[2] > v.z1) continue;
+      const lo = side ? a[1] : a[0], hi = side ? b[1] : b[0];
+      let alpha = 0.85;
+      if (side) { const near = a[0] <= laneX && b[0] >= laneX ? 0 : Math.min(Math.abs(a[0] - laneX), Math.abs(b[0] - laneX)); alpha = near < 3 ? 0.9 : near < 9 ? 0.5 : 0.28; }
+      c.globalAlpha = alpha; c.fillStyle = kindFill(q[2]);
+      const x0 = v.X(a[2]), x1 = v.X(b[2]), y0 = v.Y(hi), y1 = v.Y(lo);
+      c.fillRect(x0, y0, Math.max(1, x1 - x0), Math.max(1, y1 - y0));
+    }
+    c.restore();
+  }
+  function drawPath(c, v, path, side, color, from) {
+    c.save(); c.beginPath(); c.rect(v.rx, v.ry, v.rw, v.rh); c.clip();
+    c.lineCap = 'round'; c.lineJoin = 'round';
+    for (let i = Math.max(1, from || 1); i < path.length; i++) {
+      const p = path[i - 1], q = path[i];
+      c.strokeStyle = color; c.lineWidth = q[3] ? 2.6 : 1.4; c.globalAlpha = q[3] ? 1 : 0.75;
+      c.beginPath(); c.moveTo(v.X(p[2]), v.Y(side ? p[1] : p[0])); c.lineTo(v.X(q[2]), v.Y(side ? q[1] : q[0])); c.stroke();
+    }
+    c.restore();
+  }
+  function drawRope(c, v, from, to, side, zip, alpha) {
+    c.save(); c.beginPath(); c.rect(v.rx, v.ry, v.rw, v.rh); c.clip();
+    c.strokeStyle = P.rope; c.lineWidth = 1.6; c.globalAlpha = alpha == null ? 0.8 : alpha;
+    if (zip) c.setLineDash([4, 3]);
+    c.beginPath(); c.moveTo(v.X(from[2]), v.Y(side ? from[1] : from[0])); c.lineTo(v.X(to[2]), v.Y(side ? to[1] : to[0])); c.stroke();
+    c.fillStyle = P.rope; c.globalAlpha = 1; c.beginPath(); c.arc(v.X(to[2]), v.Y(side ? to[1] : to[0]), 2.4, 0, 7); c.fill();
+    c.restore();
+  }
+  function drawEvents(c, v, events, side) {
+    c.save(); c.beginPath(); c.rect(v.rx, v.ry, v.rw, v.rh); c.clip();
+    for (const e of events) {
+      const x = v.X(e.z), y = v.Y(side ? e.y + 0.9 : e.x);
+      if (e.what.startsWith('smash')) {
+        const hard = parseFloat(e.what.slice(6)) >= 1, r = hard ? 5 : 3.5;
+        c.strokeStyle = P.smash; c.lineWidth = hard ? 2.4 : 1.6;
+        c.beginPath(); c.moveTo(x - r, y - r); c.lineTo(x + r, y + r); c.moveTo(x + r, y - r); c.lineTo(x - r, y + r); c.stroke();
+      } else if (e.what.startsWith('let go in the window') || e.what.startsWith('let go (window')) {
+        c.fillStyle = P.good; c.beginPath(); c.arc(x, y, 3, 0, 7); c.fill();
+      } else if (e.what.startsWith('stopped')) {
+        c.strokeStyle = P.smash; c.lineWidth = 2; c.strokeRect(x - 5, y - 5, 10, 10);
+      }
+    }
+    c.restore();
+  }
+  function label(c, x, y, t) { c.fillStyle = P.mute; c.font = '11px ' + P.mono; c.fillText(t, x, y); }
+
+  // ---------------------------------------------------------------- the static plots
+  const SCN = ['lane', 'city', 'forest', 'cliff', 'spire', 'plains'];
+  const NAMES = {lane: 'Sandbox lane', city: 'City avenue', forest: 'Forest', cliff: 'Cliff ahead', spire: 'Spire ahead', plains: 'Open plains'};
+  let plotScene = 'city';
+  // both runs of a pair share one range, so the two plots are drawn to the same scale
+  function extent(runs) {
+    let zmin = Infinity, zmax = -Infinity, ymax = 0;
+    for (const run of runs) {
+      for (const p of run.path) { zmin = Math.min(zmin, p[2]); zmax = Math.max(zmax, p[2]); ymax = Math.max(ymax, p[1]); }
+      for (const r of run.ropes) { zmax = Math.max(zmax, r.a[2]); ymax = Math.max(ymax, r.a[1]); }
+    }
+    return {zmin: zmin - 4, zmax: zmax + 8, ymax};
+  }
+  function drawRun(cv, run, color, ex) {
+    const W = cv.parentElement.clientWidth - 24, zmin = ex.zmin, zmax = ex.zmax, ymax = ex.ymax;
+    const s = W / (zmax - zmin), sideTop = Math.max(ymax + 6, 30), sideH = Math.max(110, Math.min(260, sideTop * s));
+    const R = Math.max(18, Math.min(32, 150 / s / 2)), topH = Math.max(90, Math.min(190, 2 * R * s));
+    const H = sideH + topH + 30;
+    const {c} = fit(cv, H);
+    c.clearRect(0, 0, W, H);
+    const side = new View(0, 14, W, sideH, zmin, zmax, 0, sideH / s);
+    const top = new View(0, sideH + 30, W, topH, zmin, zmax, -topH / s / 2, topH / s / 2);
+    label(c, 2, 10, 'side view'); label(c, 2, sideH + 26, 'from above');
+    for (const [v, sd] of [[side, true], [top, false]]) {
+      drawBoxes(c, v, run.boxes, sd, 0);
+      for (const r of run.ropes) drawRope(c, v, r.from, r.a, sd, r.kind === 'zip', 0.55);
+      drawPath(c, v, run.path, sd, color);
+      drawEvents(c, v, run.events, sd);
+    }
+  }
+  function sum(run) {
+    const hard = run.events.filter(e => e.what.startsWith('smash') && parseFloat(e.what.slice(6)) >= 1).length;
+    const win = run.events.filter(e => e.what.startsWith('let go in the window')).length;
+    const stop = run.events.some(e => e.what.startsWith('stopped'));
+    return run.distance + ' blocks in ' + (run.path.length * 2 / 20).toFixed(0) + ' s · ' + run.ropes.length + ' ropes · ' + run.bonks + ' hits'
+      + (hard ? ' (' + hard + ' hard)' : '') + (win ? ' · ' + win + ' in the window' : '') + (stop ? ' · stopped dead' : '');
+  }
+  function drawPlots() {
+    const ex = extent([RUNS.plots[plotScene + ':today'], RUNS.plots[plotScene + ':assist']]);
+    for (const m of ['today', 'assist']) {
+      const run = RUNS.plots[plotScene + ':' + m];
+      // runs.json keeps every 2nd tick of the path
+      drawRun(document.getElementById('pc-' + m), run, m === 'today' ? P.today : P.assist, ex);
+      document.getElementById('ps-' + m).textContent = sum(run);
+    }
+  }
+  const ptabs = document.getElementById('ptabs');
+  for (const k of SCN) {
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = NAMES[k]; b.setAttribute('aria-pressed', k === plotScene);
+    b.onclick = () => { plotScene = k; for (const x of ptabs.children) x.setAttribute('aria-pressed', x === b); styleTabs(); drawPlots(); };
+    ptabs.appendChild(b);
+  }
+  function styleTabs() { for (const x of ptabs.children) { const on = x.getAttribute('aria-pressed') === 'true'; x.style.background = on ? 'var(--ink)' : ''; x.style.color = on ? 'var(--paper)' : ''; } }
+  styleTabs();
+
+  // ---------------------------------------------------------------- the table
+  (function table() {
+    const t = document.getElementById('table'), rows = {};
+    for (const r of RUNS.table) (rows[r.scene] = rows[r.scene] || {})[r.model] = r;
+    let h = '<tr><th>Place</th><th>Distance in 15 s<br>(median)</th><th>Hits a minute</th><th>Runs with a hard hit</th><th>Runs stopped dead</th><th>Ropes a run</th><th>Let-go in the window</th></tr>';
+    for (const k of SCN) {
+      const a = rows[k].today, b = rows[k].assist;
+      const cell = (x, y, f) => '<td class="n"><span class="today">' + f(x) + '</span> → <span class="assist">' + f(y) + '</span></td>';
+      h += '<tr><td>' + NAMES[k] + '</td>' + cell(a.medDist, b.medDist, v => v.toFixed(0)) + cell(a.smashesPerMin, b.smashesPerMin, v => v.toFixed(1))
+        + cell(a.hardSmashRuns, b.hardSmashRuns, v => v + '/40') + cell(a.stuckRuns, b.stuckRuns, v => v + '/40')
+        + cell(a.ropesPerRun, b.ropesPerRun, v => v.toFixed(1)) + '<td class="n"><span class="assist">' + (b.windowShare ? Math.round(b.windowShare * 100) + '%' : '–') + '</span></td></tr>';
+    }
+    t.innerHTML = h;
+  })();
+
+  // ---------------------------------------------------------------- the live swing
+  const cv = document.getElementById('cv'), stage = document.getElementById('stage'), hud = document.getElementById('hud');
+  const scenesEl = document.getElementById('scenes'), botBtn = document.getElementById('bot');
+  const pitchEl = document.getElementById('pitch'), pitchV = document.getElementById('pitchv');
+  let model = 'assist', scene = 'city', bot = true, sim = null, boxes = [], keys = {}, pointer = false, endAt = -1, acc = 0, last = 0;
+  let flash = null, flashT = 0, yaw = 0;
+  for (const k of ['lane', 'city', 'forest', 'cliff', 'spire', 'plains']) {
+    const b = document.createElement('button'); b.textContent = NAMES[k].split(' ')[0] === 'Sandbox' ? 'Lane' : NAMES[k].replace(' ahead', '').replace('Open ', '').replace(' avenue', '');
+    b.dataset.k = k; b.setAttribute('aria-pressed', k === scene);
+    b.onclick = () => { scene = k; for (const x of scenesEl.children) x.setAttribute('aria-pressed', x === b); reset(); };
+    scenesEl.appendChild(b);
+  }
+  function setModel(m) {
+    model = m;
+    document.getElementById('m-today').setAttribute('aria-pressed', m === 'today');
+    document.getElementById('m-assist').setAttribute('aria-pressed', m === 'assist');
+    reset();
+  }
+  document.getElementById('m-today').onclick = () => setModel('today');
+  document.getElementById('m-assist').onclick = () => setModel('assist');
+  document.getElementById('restart').onclick = () => reset();
+  botBtn.onclick = () => { bot = !bot; botBtn.textContent = bot ? 'Take over' : 'Let the bot play'; reset(); if (!bot) stage.focus(); };
+  pitchEl.oninput = () => { pitchV.textContent = pitchEl.value + '°'; };
+  function reset() {
+    sim = new S.Sim(scene, model, {x0: 0, z0: 2, speed: 1});
+    boxes = sim.w.boxes.map(q => [q.a, q.b, q.kind]);
+    endAt = -1; yaw = 0; flash = null;
+  }
+  function takeOver() { if (bot) { bot = false; botBtn.textContent = 'Let the bot play'; reset(); } }
+
+  window.addEventListener('keydown', (e) => {
+    if (!stage.contains(document.activeElement) && document.activeElement !== stage) return;
+    const k = e.key.toLowerCase();
+    if (k === ' ' || k === 'a' || k === 'd' || k === 's' || k.startsWith('arrow')) { e.preventDefault(); if (!keys[k]) takeOver(); keys[k] = true; }
+  });
+  window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+  window.addEventListener('blur', () => { keys = {}; pointer = false; });
+  stage.addEventListener('pointerdown', (e) => { stage.focus(); takeOver(); pointer = true; try { stage.setPointerCapture(e.pointerId); } catch (_) {} });
+  stage.addEventListener('pointerup', () => { pointer = false; });
+  stage.addEventListener('pointercancel', () => { pointer = false; });
+
+  function input() {
+    const b = sim.b, pitch = -(+pitchEl.value);
+    if (bot) {
+      const inp = S.botInput(sim, pitch);
+      return inp;
+    }
+    const left = keys['a'] || keys['arrowleft'], right = keys['d'] || keys['arrowright'];
+    if (left) yaw = Math.min(60, yaw + 3); else if (right) yaw = Math.max(-60, yaw - 3);
+    else { const want = Math.max(-15, Math.min(15, b.x * 2.5)); yaw += (want - yaw) * 0.2; }
+    const inp = {fwd: keys['s'] || keys['arrowdown'] ? 0 : 1, yaw, pitch, jump: false, rope: !!(keys[' '] || pointer), bot: true};
+    if (b.onGround && sim.state === 'run') { sim._ground = (sim._ground || 0) + 1; inp.jump = sim.t < 2 || sim._ground > 4; if (inp.jump) sim._ground = 0; }
+    return inp;
+  }
+
+  function tick() {
+    if (endAt >= 0) { if (sim.t - endAt > 40) reset(); else sim.t++; return; }
+    const before = sim.events.length;
+    sim.step(input());
+    if (sim.model === 'today' && sim.events.length > before && sim.events[sim.events.length - 1].what === 'miss') sim._missAt = sim.t;
+    if (sim.flash) { flash = sim.flash; flashT = 12; }
+    const far = sim.b.z > 250 || (bot && sim.t >= 300) || sim.stuck > 60 || sim.t > 1200;
+    if (far) { if (sim.stuck > 60) sim.note('stopped dead against it'); endAt = sim.t; }
+  }
+
+  function render() {
+    const W = stage.clientWidth, sideH = W < 560 ? 230 : 300, topH = W < 560 ? 110 : 150, H = sideH + topH + 4;
+    if (cv.width !== Math.round(W * (window.devicePixelRatio || 1)) || cv.height !== Math.round(H * (window.devicePixelRatio || 1))) fit(cv, H);
+    const c = cv.getContext('2d'), d = window.devicePixelRatio || 1; c.setTransform(d, 0, 0, d, 0, 0);
+    c.clearRect(0, 0, W, H);
+    const b = sim.b, s = sideH / 58, span = W / s, z0 = b.z - span * 0.3;
+    const side = new View(0, 0, W, sideH, z0, z0 + span, 0, 58);
+    const R = topH / s / 2, top = new View(0, sideH + 4, W, topH, z0, z0 + span, b.x - R, b.x + R);
+    const recent = Math.max(1, sim.path.length - 260);
+    for (const [v, sd] of [[side, true], [top, false]]) {
+      drawBoxes(c, v, boxes, sd, b.x);
+      drawPath(c, v, sim.path, sd, model === 'today' ? P.today : P.assist, recent);
+      drawEvents(c, v, sim.events.filter(e => e.t > sim.t - 260), sd);
+      if (sim.state === 'rope' && sim.rope) drawRope(c, v, [b.x, b.y + S.HAND, b.z], [sim.rope.ax, sim.rope.ay, sim.rope.az], sd, sim.mode === 'zip', 1);
+      else if (model === 'assist' && sim.marker && !b.onGround) {
+        const m = sim.marker, x = v.X(m.z), y = v.Y(sd ? m.y : m.x);
+        c.save(); c.strokeStyle = P.rope; c.lineWidth = 1.6; c.globalAlpha = 0.9;
+        c.beginPath(); c.arc(x, y, 6, 0, 7); c.stroke(); c.beginPath(); c.arc(x, y, 1.6, 0, 7); c.fillStyle = P.rope; c.fill(); c.restore();
+      }
+      // the body: 0.6 by 1.8
+      c.fillStyle = P.ink;
+      const bx = v.X(b.z - 0.3), bw = Math.max(3, 0.6 * s);
+      if (sd) c.fillRect(bx, v.Y(b.y + 1.8), bw, Math.max(6, 1.8 * s)); else c.fillRect(bx, v.Y(b.x + 0.3), bw, Math.max(3, 0.6 * s));
+    }
+    c.fillStyle = P.rule; c.fillRect(0, sideH, W, 4);
+    if (flash && flashT > 0) {
+      c.save(); c.globalAlpha = flashT / 12 * 0.9;
+      c.font = '700 15px ' + css('--display'); c.fillStyle = flash === 'smash' ? P.smash : P.good;
+      c.fillText(flash === 'smash' ? 'Hit!' : 'Let go in the window', 14, 24);
+      if (flash === 'smash') { c.strokeStyle = P.smash; c.lineWidth = 6; c.globalAlpha = flashT / 12 * 0.5; c.strokeRect(3, 3, W - 6, sideH - 6); }
+      c.restore();
+    }
+    if (endAt >= 0) { c.save(); c.font = '600 14px ' + css('--display'); c.fillStyle = P.ink; c.fillText('End of the run. Starting again…', 14, sideH - 14); c.restore(); }
+    const dist = (b.z - sim.z0).toFixed(0), speed = (Math.hypot(b.vx, b.vy, b.vz) * 20).toFixed(0);
+    const evs = sim.events.filter(e => e.what !== 'jump').slice(-3).map(e => e.what).join(' · ');
+    hud.innerHTML = '<span>' + (bot ? 'bot playing' : 'you') + '</span><span>distance <b>' + dist + '</b></span><span>speed <b>' + speed + '</b> m/s</span>'
+      + '<span>hits <b>' + sim.bonks + '</b></span><span>ropes <b>' + sim.swings + '</b></span>'
+      + (model === 'assist' ? '<span>in the window <b>' + sim.perfect + '</b></span>' : '') + '<span class="log">' + evs + '</span>';
+  }
+
+  function frame(t) {
+    if (!last) last = t;
+    acc += Math.min(250, t - last); last = t;
+    while (acc >= 50) { tick(); if (flashT > 0) flashT--; acc -= 50; }
+    render();
+    requestAnimationFrame(frame);
+  }
+  reset();
+  drawPlots();
+  requestAnimationFrame(frame);
+  let rt = 0;
+  window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(drawPlots, 120); });
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  const repaint = () => { palette(); drawPlots(); };
+  if (mq.addEventListener) mq.addEventListener('change', repaint);
+  new MutationObserver(repaint).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+})();
+</script>
