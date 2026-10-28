@@ -9,6 +9,10 @@
 #   tools/tour-ci.sh tools/autopilot/lens-underground-look.txt 900 PACK=perf,feel LENS=cinematic
 world lensunder creative 20261029
 waitworld
+wait 40
+# the new-world sky shot holds the camera on the sky until it is skipped
+cmd awaken opening skip
+wait 30
 gui 0
 cmd gamerule send_command_feedback false
 cmd gamerule awaken:fauna_spawning false
@@ -26,10 +30,14 @@ info
 opt gamma 100
 lookswitch cinematic
 cmd time set 6000
-# ---- the room: 17^3 of stone, a 7x3x7 room inside it (floor y 10), its features, a pocket behind the west wall
+# ---- the room: 16x17x16 of stone in one chunk column, a 7x3x7 room inside it (floor y 10), its features, a pocket
+# behind the west wall. The shell is filled twice: a fill that lands before the chunk is loaded fails ("not loaded")
 cmd tp @s 600 120 600
 wait 160
-cmd fill 592 3 592 608 19 608 minecraft:stone
+cmd fill 592 3 592 607 19 607 minecraft:stone
+wait 60
+cmd fill 592 3 592 607 19 607 minecraft:stone
+wait 20
 cmd fill 597 11 597 603 13 603 minecraft:air
 cmd setblock 599 11 598 minecraft:stone
 cmd fill 598 11 601 598 12 601 minecraft:stone
