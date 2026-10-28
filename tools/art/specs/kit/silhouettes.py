@@ -1,8 +1,8 @@
-"""The Ember Tyrant's silhouette round (docs/bosses/REWORK.md R1): three shape ideas as quick massing models, drawn as
-black silhouettes (front and side) and in three values (dark mass, iron, heat) at true size beside a player, with
-today's Tyrant for scale. Euan picks one before the real model is built.
+"""Silhouette rounds (docs/bosses/REWORK.md R1, ROLLOUT.md): three shape ideas per boss as quick massing models, drawn
+as black silhouettes (front and side) and in its own values at true size beside a player, with today's body for scale.
+Euan picks one before the real model is built. The Ember Tyrant's options live here; every other boss's in kit/sil/.
 
-    python3 tools/art/specs/kit_bodies.py silhouettes DIR
+    python3 tools/art/specs/kit_bodies.py silhouettes DIR [BOSS]
 
 Massing only: no rig for animation, no texture detail. Units are model pixels (16 a block). Every helper takes
 heights above the ground, up positive; the rig's own space is y down with the ground at 24.
@@ -23,9 +23,9 @@ MATS = {"b": (BASALT, 2.6), "i": (IRON, 2.6), "h": (HEAT, 2.6), "o": (BONE, 2.2)
 class Mass:
     """A massing model: bones placed by height above the ground, cubes tagged with a material."""
 
-    def __init__(self, rid, name, idea):
+    def __init__(self, rid, name, idea, mats=MATS):
         self.r = R.Rig(rid, tex=(1024, 1024))
-        self.name, self.idea = name, idea
+        self.name, self.idea, self.mats = name, idea, mats
         self.root = self.r.bone("root", (0, 24, 0))
         self.mat = {}
         self.n = 0
@@ -52,7 +52,7 @@ class Mass:
         P = R.Painter(self.r, "sil|" + self.r.id)
         black = Ramp("#000000")
         for c in self.r.cubes:
-            ramp, base = (black, 0) if flat else MATS[self.mat[c.name]]
+            ramp, base = (black, 0) if flat else self.mats[self.mat[c.name]]
             P.paint(c.name, ramp, base, rim=0 if flat else 0.6, ao=0 if flat else 0.7, grad=0 if flat else 0.9, light=0 if flat else 1.0)
         return P.skin.image()
 
@@ -272,31 +272,46 @@ def living_forge():
     return m
 
 
-def today():
-    """Today's Tyrant at rest, for scale."""
+def today(boss="ember_tyrant"):
+    """Today's body at rest, for scale."""
     import importlib
-    mod = importlib.import_module("kit.bosses.ember_tyrant")
+    mod = importlib.import_module("kit.bosses." + boss)
     d = mod.design()
     return d["rig"]
 
 
-def sheet(outdir):
+def options(boss):
+    """The round's three options: the Tyrant's here, any other boss's from kit/sil/<boss>.py."""
+    if boss == "ember_tyrant":
+        return [furnace_king(), iron_warlord(), living_forge()]
+    import importlib
+    return importlib.import_module("kit.sil." + boss).options()
+
+
+def framed(tree, tex, yaw, pitch, px):
+    """A render framed down to the ground under the body, so a flier hangs at its true height above the line."""
+    x0, x1, y0, y1 = R.bounds_of([tree], yaw, pitch)
+    ya, pa = math.radians(yaw), math.radians(pitch)
+    g = R._mv(R._mm(R._rot(pa, 0, 0), R._rot(0, ya, 0)), (0, 24, 0))[1]
+    return R.render(tree, tex, yaw=yaw, pitch=pitch, px=px, bounds=(x0, x1, y0, max(y1, g)))
+
+
+def sheet(outdir, boss="ember_tyrant"):
     from PIL import Image, ImageDraw
     os.makedirs(outdir, exist_ok=True)
-    px = 2.4
+    px = 2.4 if boss == "ember_tyrant" else 3.6  # the Tyrant's round was drawn at 2.4; smaller bosses get more pixels
     player = R.player_tree()
     steve_black = Image.new("RGBA", R.steve().size, (0, 0, 0, 255))
     out_paths = []
-    opts = [furnace_king(), iron_warlord(), living_forge()]
-    tr0 = today()
+    opts = options(boss)
+    tr0 = today(boss)
     tr0.pack()
     black0 = Image.new("RGBA", tuple(tr0.tex), (0, 0, 0, 255))
     rows = []
     for m in opts:
         flat, val = m.paint(flat=True), m.paint(flat=False)
         tree = m.r.tree()
-        views = [R.render(tree, flat, yaw=0, pitch=0, px=px), R.render(tree, flat, yaw=90, pitch=0, px=px),
-                 R.render(tree, val, yaw=32, pitch=8, px=px)]
+        views = [framed(tree, flat, 0, 0, px), framed(tree, flat, 90, 0, px), framed(tree, val, 32, 8, px)]
         pl = R.render(player, steve_black, yaw=0, pitch=0, px=px)
         rows.append((m, views, pl))
         # one image per option, for the page
@@ -314,7 +329,7 @@ def sheet(outdir):
         out_paths.append(p)
         print(p, f"{len(m.r.cubes)} cubes, {blocks(tree):.1f} blocks tall")
     t0 = tr0.tree(tr0.sample([("idle", 0.4, 1.0)]))
-    views = [R.render(t0, black0, yaw=0, pitch=0, px=px), R.render(t0, black0, yaw=90, pitch=0, px=px)]
+    views = [framed(t0, black0, 0, 0, px), framed(t0, black0, 90, 0, px)]
     pl = R.render(player, steve_black, yaw=0, pitch=0, px=px)
     W = sum(v.width for v in views) + pl.width + 40 * 3
     H = max(v.height for v in views) + 30
@@ -324,7 +339,7 @@ def sheet(outdir):
         im.alpha_composite(v, (x, ground - v.height))
         x += v.width + 40
     ImageDraw.Draw(im).line((0, ground, W, ground), fill=(120, 124, 132, 255), width=2)
-    p = os.path.join(outdir, "sil_today.png")
+    p = os.path.join(outdir, f"sil_today_{boss}.png")
     im.save(p)
     out_paths.append(p)
     print(p, f"{len(tr0.cubes)} cubes, {blocks(t0):.1f} blocks tall")

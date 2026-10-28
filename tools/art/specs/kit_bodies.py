@@ -4,7 +4,7 @@
     python3 tools/art/specs/kit_bodies.py build [ids]   the same (all ids, or the ones named)
     python3 tools/art/specs/kit_bodies.py lab DIR [ids] the Creature Lab's sheets (kit/lab.py)
     python3 tools/art/specs/kit_bodies.py motion DIR [ids]  every move and string as a GIF, and the motion meter (kit/motion.py)
-    python3 tools/art/specs/kit_bodies.py silhouettes DIR   the Tyrant's silhouette round (kit/silhouettes.py)
+    python3 tools/art/specs/kit_bodies.py silhouettes DIR [BOSS]   a boss's silhouette round (kit/silhouettes.py, kit/sil/)
 
 Each boss is a module in kit/bosses/<id>.py with design() -> {rig, plan, moves, fight, paint, scale, half} (half: its
 hitbox's half width in blocks, which the move ranges are measured from). The build is
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         motion(a[1], [x for x in a[2:] if x != "--no-gif"] or None, "--no-gif" not in a)
     elif a and a[0] == "silhouettes":
         from kit import silhouettes as S
-        S.sheet(a[1])
+        S.sheet(a[1], a[2] if len(a) > 2 else "ember_tyrant")
     elif a and a[0] == "build":
         build(None, a[1:] or None)
     else:
