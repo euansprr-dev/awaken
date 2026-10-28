@@ -31,10 +31,12 @@ cmd time set 6000
 cmd gamerule advance_time false
 cmd gamemode spectator
 hud off
-# up the road north out of the camp, as in roads-perf-quit
+# up the road north out of the camp, as in roads-perf-quit, but under the clouds (they don't take the mist) and looking
+# back down over the land already flown (yaw 0 faces south): near land clear, then the mist; ahead there's only the edge
+# (run 40755782322 flew at 240 looking ahead: the hold was on, but no land was left in view for the mist to close over)
 cmd awaken village road camp
 wait 300
-cmd tp @s ~ 240 ~ 180 25
+cmd tp @s ~ 170 ~ 0 35
 wait 200
 shot 01-before
 # 24 blocks a second over new land: the hold eases in where the land isn't made yet
