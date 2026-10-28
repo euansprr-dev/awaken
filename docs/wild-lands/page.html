@@ -65,11 +65,15 @@ td.n { text-align: right; white-space: nowrap; }
 .decision h3 { margin: 0 0 6px; font-size: 1.08rem; }
 .decision .rec { color: var(--good); font-weight: 700; }
 ol.decisions { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
-.stage { display: grid; grid-template-columns: 76px 1fr auto; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+.stage { display: grid; grid-template-columns: 84px 1fr auto; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
 .stage .k { font: 500 .8rem var(--mono); color: var(--accent); }
 .stage .h { font: 500 .85rem var(--mono); color: var(--muted); white-space: nowrap; }
 @media (max-width: 560px) { .stage { grid-template-columns: 1fr; gap: 4px; } .matrix { grid-template-columns: 1fr; } .matrix .h:first-child { display: none; } }
 a { color: var(--accent); }
+.flora { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 14px 10px; align-items: end; margin: 18px 0 8px; padding: 18px 14px; background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; }
+.flora figure { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+.flora img { width: 64px; height: auto; image-rendering: pixelated; }
+.flora figcaption { text-align: center; font-size: .8rem; margin-top: 6px; }
 a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 </style>
 
@@ -79,7 +83,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   <div class="eyebrow">AWAKEN · plan for approval · 28 October 2026</div>
   <h1>The Wild Lands</h1>
   <p class="lede">Settled land should feel tamed. The further you get from people, the wilder it should grow: long grass, big bushes, old trees, and real herds with packs hunting them. Then you go out and hunt, Monster Hunter style.</p>
-  <p class="muted">This page is the plan. Nothing is built yet. It ends with seven decisions; every one has a recommendation, so "go with the recommendations" is a complete answer.</p>
+  <p class="muted">This page is the plan. Nothing is built yet. It ends with ten decisions; every one has a recommendation, so "go with the recommendations" is a complete answer.</p>
 </header>
 
 <section class="col">
@@ -202,12 +206,12 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 <section>
   <div class="col">
     <h2>What changes on the land</h2>
-    <p>The same patch of land, drawn three ways. <span class="tag mock">mock-up</span> These are drawn with the Soft Land plan's block renderer; the animals are plain box stand-ins, not the game's models.</p>
+    <p>The same patch of land, drawn three ways with the plants proposed below. <span class="tag mock">mock-up</span> These are drawn with the Soft Land plan's block renderer and my draft sprites; the animals are plain box stand-ins, not the game's models.</p>
   </div>
   <div class="grid3">
-    <figure><img class="photo" src="img/scene_tamed.jpg" alt="Tamed: a lane, a fence, a wheat field, short grass and a few sheep"><figcaption><b>Tamed.</b> Mown short grass, a lane and fence, a wheat strip, a few flowers, sheep in twos and threes.</figcaption></figure>
-    <figure><img class="photo" src="img/scene_wild.jpg" alt="Wild: long grass in swathes, a big old oak, a herd of nine grazing"><figcaption><b>Wild.</b> Long grass in swathes, gold-tipped in patches, big bushes, a fallen log, an old oak, a herd of nine.</figcaption></figure>
-    <figure><img class="photo" src="img/scene_deep.jpg" alt="Deep wild: dense long grass, two great oaks, thickets, a herd of eighteen with a dark bull and wolves at the edge"><figcaption><b>Deep wild.</b> Dense long grass, thickets with berries, great oaks, a herd of eighteen around its bull, three wolves watching from the left.</figcaption></figure>
+    <figure><img class="photo" src="img/flora_tamed.jpg" alt="Tamed: a hawthorn hedge in blossom, a wheat field, a clover lawn, a lane with a fence, a few sheep and cows"><figcaption><b>Tamed.</b> A hawthorn hedge in blossom, clover in the lawn, a wheat strip, a lane and fence, sheep in twos and threes.</figcaption></figure>
+    <figure><img class="photo" src="img/flora_wild.jpg" alt="Wild: knee-high meadow grass, long grass in swathes with gold seed heads, a herd grazing a cropped patch, an old oak"><figcaption><b>Wild.</b> Knee-high meadow grass, swathes of long grass going to seed, a herd of nine on the patch it keeps cropped, an old oak.</figcaption></figure>
+    <figure><img class="photo" src="img/flora_deep.jpg" alt="Deep wild: chest-high rye all around, a grazing lawn in the middle with a herd of eighteen and a black bull, a pressed trail leading away, two great oaks"><figcaption><b>Deep wild.</b> Chest-high rye in swathes, a grazing lawn kept short by a herd of eighteen and its bull, the trail they pressed through the rye, two old giants.</figcaption></figure>
   </div>
   <div class="tbl"><table>
     <thead><tr><th>Per chunk, roughly</th><th>Today (everywhere)</th><th>Tamed</th><th>Pasture</th><th>Wild</th><th>Deep wild</th></tr></thead>
@@ -225,6 +229,92 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
     <p>Flowers peak in pasture because grazed meadows bloom; real wild grass crowds them out. Forests get the wildness too: thick undergrowth, ferns, moss, berry thickets and fallen trunks in the deep wild, an open floor near people.</p>
     <p><b>How:</b> new features in the Awakened Ground pack (long-grass swathes, big bushes, thickets, old giants), a tidy-up pass that mows tall grass near people, the palette's empty slot filled by wildness, and the lawn colour reading a small per-chunk wildness record. Far Sight reads the same field, so far meadows have the same tint and tree density as near ones.</p>
     <p><b>Only new chunks change.</b> Land you've already explored keeps its blocks. In your current world, the new features start at the edge of what you've explored (decision 3).</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <h2>The wild's own plants</h2>
+    <p class="lede">The game's own grass only has two heights, and the same few flowers grow everywhere. That is why its fields can't look untouched. So the wild gets its own plants: about two dozen new blocks, made in Minecraft's own manner, which sway in the same wind as the trees.</p>
+    <h3>Four heights of grass</h3>
+    <p>How tall the grass stands is the clearest sign of how wild a place is. You can read it from a hill, and you feel it walking through.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Grass</th><th>Height</th><th>Where</th><th>What it's like</th></tr></thead>
+    <tbody>
+      <tr><td>Lawn (the game's short grass, with clover)</td><td>ankle</td><td>Tamed</td><td>Kept short by people and flocks. Patches of clover with white and pink heads.</td></tr>
+      <tr><td><b>Meadow grass</b> (new)</td><td>knee, one block</td><td>Pasture and wild</td><td>Finer and taller than the game's short grass, with a few straw tips. The base of every wild field.</td></tr>
+      <tr><td><b>Long grass</b> (new)</td><td>waist, two blocks</td><td>Wild</td><td>In swathes, with three looks picked by the land's own patches: green, going to seed (gold heads), and tawny and dry.</td></tr>
+      <tr><td><b>Wild rye</b> (new)</td><td>chest, three blocks</td><td>Deep wild, steppe, savanna</td><td>Long nodding heads. Stand in it and only your head shows; crouch and you're gone. Gold on the savanna.</td></tr>
+    </tbody>
+  </table></div>
+  <figure>
+    <img class="photo" src="img/flora_hunter.jpg" alt="Standing at the edge of the rye looking into a grazing lawn: long grass and seed heads in the foreground, the black bull and its herd a few blocks ahead, an old oak beyond">
+    <figcaption><span class="tag mock">mock-up</span> The hunter's view: at the edge of the rye, looking into the herd's grazing lawn. The bull is a dozen blocks ahead and hasn't smelled you, because you came from downwind.</figcaption>
+  </figure>
+  <div class="col">
+    <h3>The plants, first drafts</h3>
+    <p><span class="tag mock">draft art</span> My own 16×16 drafts for this page, shown in plains colour. The real sprites go through the mod's art pipeline, starting with a style sheet you see first (decision 8).</p>
+  </div>
+  <div class="flora">
+    <figure><img src="img/flora/flora_meadow_grass.png" alt=""><figcaption>Meadow grass</figcaption></figure>
+    <figure><img src="img/flora/flora_long_grass.png" alt=""><figcaption>Long grass</figcaption></figure>
+    <figure><img src="img/flora/flora_long_grass_seeding.png" alt=""><figcaption>Long grass, seeding</figcaption></figure>
+    <figure><img src="img/flora/flora_wild_rye.png" alt=""><figcaption>Wild rye (3 high)</figcaption></figure>
+    <figure><img src="img/flora/flora_trampled_grass.png" alt=""><figcaption>Trampled grass</figcaption></figure>
+    <figure><img src="img/flora/flora_clover.png" alt=""><figcaption>Clover</figcaption></figure>
+    <figure><img src="img/flora/flora_cow_parsley.png" alt=""><figcaption>Cow parsley</figcaption></figure>
+    <figure><img src="img/flora/flora_foxglove.png" alt=""><figcaption>Foxglove</figcaption></figure>
+    <figure><img src="img/flora/flora_thistle.png" alt=""><figcaption>Thistle</figcaption></figure>
+    <figure><img src="img/flora/flora_heather.png" alt=""><figcaption>Heather</figcaption></figure>
+    <figure><img src="img/flora/flora_gorse.png" alt=""><figcaption>Gorse</figcaption></figure>
+    <figure><img src="img/flora/flora_bramble.png" alt=""><figcaption>Bramble</figcaption></figure>
+    <figure><img src="img/flora/flora_bracken.png" alt=""><figcaption>Bracken</figcaption></figure>
+    <figure><img src="img/flora/flora_bracken_autumn.png" alt=""><figcaption>Bracken, turned</figcaption></figure>
+    <figure><img src="img/flora/flora_reeds.png" alt=""><figcaption>Reeds and bulrush</figcaption></figure>
+    <figure><img src="img/flora/flora_hawthorn_leaves.png" alt=""><figcaption>Hawthorn hedge</figcaption></figure>
+    <figure><img src="img/flora/flora_bracket_fungus.png" alt=""><figcaption>Bracket fungus</figcaption></figure>
+    <figure><img src="img/flora/flora_antler_shed.png" alt=""><figcaption>Antler shed</figcaption></figure>
+  </div>
+  <div class="col">
+    <h3>Grass that lives</h3>
+    <ul>
+      <li><b>Herds graze lawns.</b> Where a herd feeds day after day, the long grass is cropped down to meadow height, and it grows back over a few days once the herd moves on. So the deep wild has clearings where the herds are, ringed by rye: you spot them from a hill and stalk them from the rye's edge.</li>
+      <li><b>Herds leave trails.</b> A moving herd presses the grass flat along its path, and it springs back over a day or two. The trail tells you which way they went and how long ago: fresh is flat and pale, older is half standing. Packs leave thinner lines, and so do you if you sprint or ride through.</li>
+      <li><b>Long grass is cover, both ways.</b> Crouch in long grass or rye and creatures that hunt by sight see you from much closer; herds let you nearer. A gloomstalker in the rye is just as hard to see, though plates and the band still warn you.</li>
+      <li><b>It moves and sounds.</b> Every new plant sways with the trees' wind, so a gust rolls across a field as a sheen, and grass parts round your feet (both already built). Seed fluff drifts downwind when a gust hits a seeding swathe or you push through one. You get a soft swish underfoot, a meadow hiss that rises with the wind, and crickets at dusk.</li>
+      <li><b>It's full of small life.</b> Grasshoppers spring ahead of your feet (a new insect for Wild life). Butterflies and bees crowd pasture flowers, small birds flush up from the long grass, and fireflies rise over the rye at dusk. Wild life's numbers follow wildness too.</li>
+      <li><b>No chore to walk through.</b> No grass slows you; only bramble does. Roads stay clear, and rye grows thick only in deep-wild swathes.</li>
+    </ul>
+    <h3>Where tamed meets wild</h3>
+    <p><b>Hedgerows</b> mark the pasture band: hawthorn hedges along old field edges, with white blossom and red haws, cow parsley at their foot and a lone oak in the corner. Beyond the last hedge the grass hasn't been cut.</p>
+    <h3>Old growth and deadwood</h3>
+    <p><b>Old giants</b> have two-by-two trunks, root flares and wide crowns, about one in six deep-wild chunks. <b>Snags</b> are standing dead trees with holes the woodpeckers (already in Wild life) use. <b>Deadfall</b> carries bracket fungus and moss, and from a <b>hollow log</b> a fox or rabbit sometimes bolts. <b>Bracken</b> under the trees turns tawny in patches. <b>Bramble thickets</b> slow you and snag you if you sprint, but they bear blackberries, and boar root around them.</p>
+    <h3>Signs in the ground</h3>
+    <p><b>Antler sheds</b> lie in the grass (a find for the Hunting craft). There are <b>bones</b> where packs fed and <b>droppings</b> where herds bed. <b>Wallows</b> are mud by water, full of hoofprints, where aurochs and boar roll. <b>Salt licks</b> are pale crusted stone where herds gather, so a hunter knows where to wait. <b>Dens</b> are dug into banks. Two new ground tops: <b>trodden earth</b> for herd paths and <b>wild sward</b>, grass with dry thatch showing, for the deep wild.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Land</th><th>What the wild grows there</th></tr></thead>
+    <tbody>
+      <tr><td>Plains and meadow</td><td>The four heights of grass, cow parsley, foxglove at wood edges, thistle; hedgerows near people</td></tr>
+      <tr><td>Forest and birch</td><td>Bracken, bramble thickets, deadfall, snags, old giants, foxglove in clearings, moss</td></tr>
+      <tr><td>Taiga</td><td>Heather, bracken, ferns, fallen spruce, lichen on old trunks</td></tr>
+      <tr><td>Savanna</td><td>Gold rye three blocks high, thorn scrub, old acacias</td></tr>
+      <tr><td>Swamp and river banks</td><td>Reeds and bulrush, rushes, wallows</td></tr>
+      <tr><td>Hills and heath</td><td>Heather, gorse, bracken among the boulders</td></tr>
+      <tr><td>Snowy land</td><td>Low long grass with frost on the tips</td></tr>
+      <tr><td>Desert and badlands</td><td>Dry tussocks, sparse: here the wild shows in its herds, not its plants</td></tr>
+      <tr><td>Awakened biomes</td><td>Their own variants: Glass Steppe's rye with glassy heads that catch the light, heather and gorse among the Shattered Highlands' shards, Elderwood's giants and bracken, frost grass on the Frost Spires, pale-headed reeds in Mirror Marsh; Lumen Forest keeps its glow and gets a thicker floor</td></tr>
+    </tbody>
+  </table></div>
+  <div class="col">
+    <h3>The look rules</h3>
+    <ul>
+      <li>16×16 textures in Minecraft's own manner (the Soft Land's line: nothing bigger).</li>
+      <li>Blades are grey and take the biome's colour the way the game's grass does, so every biome and the lawn drift colour them. Flowers, seed heads and berries keep their own colours.</li>
+      <li>Three or four versions of each plant, picked per block, so a field never repeats.</li>
+      <li>Everything sways in the one wind and parts round your feet. Plants that hold still in the real world (fungus, sheds, bones) stay still.</li>
+    </ul>
   </div>
 </section>
 
@@ -323,6 +413,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   </ul>
   <h3>Cost</h3>
   <p>The field: about 1.5 µs a lookup for the region level (measured) plus a few for settlements and roads, 16 lookups a chunk, so well under a millisecond per new chunk on worldgen threads. Herds: at most 40 ledger animals near a player (24 today), one brain per herd, a second's thought, steering only animals that stray from their place. Target: all herds and packs near one player under 0.5 ms a tick, checked by a GameTest bench before anything ships.</p>
+  <p>The plants: a deep-wild chunk carries about fifty two- and three-block plants. Plants with crossed faces are among the cheapest things the game draws, but there are many of them, and swaying cost about 0.3 ms a frame in a flower forest when it was measured. Target: a deep-wild meadow costs at most 0.5 ms a frame more than today's plains at render distance 16. That is measured on your Mac with a perf tour (perf tours stay on the Mac). If it's over, the deep-wild counts come down in one table. Grass that lives changes blocks while you play, so it is held to about 20 block changes a second per herd, and regrowth uses random ticks, the way crops grow. Far Sight draws far long grass as colour, gold where it's seeding.</p>
   <h3>What could go wrong</h3>
   <div class="tbl"><table>
     <thead><tr><th>Risk</th><th>What we do</th></tr></thead>
@@ -332,6 +423,9 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
       <tr><td>Too many animals, lag</td><td>Hard caps per herd and per player; the far part of a big herd stays a number.</td></tr>
       <tr><td>A world without roads or Carillon</td><td>The field uses what exists; without roads it reads settlements and remoteness.</td></tr>
       <tr><td>Long grass hides creatures and items</td><td>Plates and the band still show threats; tall grass only grows thick in wild and deep land.</td></tr>
+      <tr><td>Fields of rye feel like a chore</td><td>No grass slows you; rye grows only in deep-wild swathes; roads and herd trails are open ways through.</td></tr>
+      <tr><td>Grazing and trails touch too many blocks</td><td>A cap per herd per second; changes happen only near players; regrowth by random ticks; a game rule turns it off.</td></tr>
+      <tr><td>The drafts don't reach your bar</td><td>The style sheet comes first, before any plant is placed in the world.</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -341,6 +435,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   <ul>
     <li><b>The land follows wildness:</b> on a test world, tall grass per chunk goes from about 0 near people to 50+ in the deep wild (correlation with wildness 0.6 or more; today −0.12). Deep wild holds at least four times the animals of tamed land (today it holds fewer).</li>
     <li><b>No lines:</b> the field never jumps more than one band in 100 blocks away from a road, and a chunk is the same whatever order it's made in.</li>
+    <li><b>The plants:</b> every new block loads, drops right and carries a sway marker (a test per kind); a trail pressed by a test herd stands back up within its regrowth time; a grazing lawn grows back once the herd leaves; a crouched player in rye is seen from at most a third of the usual range.</li>
     <li><b>Herds act like herds:</b> a GameTest herd of 20 stays together grazing for ten minutes, flees more than 30 blocks within five seconds of a sprinting player, approaches closer to a crouched one from downwind, and regroups.</li>
     <li><b>Packs hunt:</b> a test pack picks the rearmost animal, and the ledger count drops by one when it kills.</li>
     <li><b>Hunts:</b> reading signs raises the trail; a part breaks at its threshold and drops once; each hunter gets their own three carves and no more.</li>
@@ -356,18 +451,19 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
     <p>Each stage is useful on its own, is tested, and goes to CI before the next.</p>
   </div>
   <div class="stage"><span class="k">Stage 0</span><span>The field: <span class="mono">Wildness</span>, the per-chunk record, <span class="mono">/awaken wild here | map</span>, tests.</span><span class="h">3–4 h</span></div>
-  <div class="stage"><span class="k">Stage 1</span><span>The land: long-grass swathes, big bushes, thickets, old giants, mowing, the palette slot, grass colour.</span><span class="h">5–7 h</span></div>
-  <div class="stage"><span class="k">Stage 2</span><span>Herds and packs: ledger v2, vanilla herds, herd and pack brains, stampedes, QuietLand's change.</span><span class="h">7–9 h</span></div>
-  <div class="stage"><span class="k">Stage 3</span><span>Signs and tracking: prints, droppings, kill sites, reading signs, scout motes, research, Atlas marks.</span><span class="h">5–6 h</span></div>
+  <div class="stage"><span class="k">Stage 1a</span><span>The plants: the style sheet (to you first), then about two dozen blocks with their art, variants, sway rules, drops and sounds.</span><span class="h">6–8 h</span></div>
+  <div class="stage"><span class="k">Stage 1b</span><span>The land: the grass heights by wildness, hedgerows, thickets, old giants, snags, deadfall, mowing near people, the palette slot, grass colour.</span><span class="h">5–6 h</span></div>
+  <div class="stage"><span class="k">Stage 2</span><span>Herds and packs: ledger v2, vanilla herds, herd and pack brains, stampedes, QuietLand's change, grazing lawns, trails, cover.</span><span class="h">9–11 h</span></div>
+  <div class="stage"><span class="k">Stage 3</span><span>Signs and tracking: prints, droppings, kill sites, sheds, wallows, salt licks, dens, reading signs, scout motes, research, Atlas marks.</span><span class="h">6–7 h</span></div>
   <div class="stage"><span class="k">Stage 4</span><span>The hunt: quarries, parts and breaks, limping, carving, parts into Arms and gear, trophies, Journal and Trails.</span><span class="h">7–9 h</span></div>
-  <div class="stage"><span class="k">Stage 5</span><span>Far Sight's far tint and tree density, village hunt notices, worn herd paths.</span><span class="h">3–4 h</span></div>
-  <p class="col muted small">About 30–39 builder hours in all. Stage 2 is the biggest unknown (herd movement on real terrain); stage 4 needs a few new part items in Arms' sources list, which I'll add through Arms' own generator and note in SPEC. Coordination notes are in the shared folder for mob-forms (hiding a broken horn's bone), the Creature Kit and lock-on.</p>
+  <div class="stage"><span class="k">Stage 5</span><span>Far Sight's far tint, sheen and tree density, grasshoppers and flushing birds (with Wild life), village hunt notices.</span><span class="h">4–5 h</span></div>
+  <p class="col muted small">About 40–50 builder hours in all. Stage 2 is the biggest unknown (herd movement on real terrain); stage 4 needs a few new part items in Arms' sources list, which I'll add through Arms' own generator and note in SPEC. Coordination notes are in the shared folder for mob-forms (hiding a broken horn's bone), the Creature Kit and lock-on.</p>
 </section>
 
 <section>
   <div class="col">
     <h2>Decisions for you</h2>
-    <p>Seven, each with a recommendation.</p>
+    <p>Ten, each with a recommendation.</p>
   </div>
   <ol class="decisions">
     <li class="decision"><h3>1. Wildness and danger are separate</h3><p>A calm far valley can be full of wild life; a town in hard land is still tamed. <span class="rec">Recommend: yes.</span></p></li>
@@ -376,7 +472,10 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
     <li class="decision"><h3>4. Bigger herds</h3><p>Herds up to 30, and up to 40 ledger animals near a player (24 today); the rest of a big herd stays a number in the ledger. <span class="rec">Recommend: yes,</span> lowered first if it costs too much.</p></li>
     <li class="decision"><h3>5. The Monster Hunter loop</h3><p>Fresh tracks everyone can see, the band's scout motes after reading signs, parts that visibly break, the quarry limping to its bed, three carves per hunter. <span class="rec">Recommend: all of it.</span></p></li>
     <li class="decision"><h3>6. The first quarries</h3><p>Herd and pack alphas on the new form bodies, plus the twelve named beasts. Creature Kit beasts only once one passes your bar. <span class="rec">Recommend: yes.</span></p></li>
-    <li class="decision"><h3>7. One builder, in order</h3><p>I build stages 0 to 5 myself, in order, with no sub-agents. Splitting would pay a little: after stage 0, the land (stage 1) and the creatures (stages 2–4) touch different files, and a second builder could save about a day of waiting. <span class="rec">Recommend: one builder</span> unless you want it sooner.</p></li>
+    <li class="decision"><h3>7. Two builders after stage 0</h3><p>With the plants added, this is 40 to 50 hours. After stage 0, the plants and land (stages 1a and 1b) and the creatures and hunts (stages 2 to 4) touch different files. A second builder session on the plants saves about two days. Neither uses sub-agents. <span class="rec">Recommend: split after stage 0,</span> with me on the creatures and hunts. The alternative is one builder, in order.</p></li>
+    <li class="decision"><h3>8. The wild's own plants</h3><p>About two dozen new blocks: meadow grass, long grass, wild rye, trampled grass, clover, cow parsley, foxglove, thistle, heather, gorse, bramble, bracken, reeds, hawthorn, bracket fungus, antler sheds, wallows, salt licks, trodden earth, wild sward, plus the Awakened biomes' variants. All 16×16 in Minecraft's own manner. <span class="rec">Recommend: yes, with the style sheet sent to you</span> before any plant goes into the world.</p></li>
+    <li class="decision"><h3>9. Grass that lives</h3><p>Herds crop grazing lawns and press trails; long grass springs back over days. That means blocks change while you play, slowly and only near players. <span class="rec">Recommend: yes.</span> The alternative is lawns and trails drawn once when the land is made, and never changing after.</p></li>
+    <li class="decision"><h3>10. Long grass is cover, both ways</h3><p>Crouched in long grass or rye, creatures see you from much closer, and monsters hiding there are just as hard to spot (plates and the band still warn). <span class="rec">Recommend: yes.</span></p></li>
   </ol>
 </section>
 
