@@ -57,6 +57,7 @@ public final class DelveModule {
         bus.addListener(PickGifts::onGameEvent);
         bus.addListener(PickGifts::onBreakSpeed);
         bus.addListener((ServerTickEvent.Post e) -> PickGifts.tick(e.getServer()));
+        bus.addListener((ServerTickEvent.Post e) -> CaveAnswers.tick(e.getServer()));
         bus.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
                 PickGifts.onJoin(p);
@@ -94,6 +95,7 @@ public final class DelveModule {
             PickGifts.clear();
             Lamps.clear();
             StrikeNoise.clear();
+            CaveAnswers.clear();
             LodePlans.EXTRA.clear();
             LodePlans.columns(0L, null);
         });

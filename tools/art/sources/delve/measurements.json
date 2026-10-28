@@ -1,0 +1,58 @@
+{
+  "band_room": {
+    "seconds": 12.0,
+    "channels": 1,
+    "kb": 134,
+    "gated_rms_dbfs": -35.73,
+    "true_peak_dbtp": -5.06,
+    "sha256": "e5ab1cbbb976f8425e7a485cb68284d685d0903dc2ab9578026adcebc0c02d97"
+  },
+  "cave_breath": {
+    "seconds": 10.0,
+    "channels": 1,
+    "kb": 102,
+    "gated_rms_dbfs": -32.14,
+    "true_peak_dbtp": -4.2,
+    "sha256": "5efe127aee7555b3a1871c8a062a0feab23b24398d03faa9fa17b70a6bfe0885"
+  },
+  "cave_answers": {
+    "seconds": 6.583,
+    "channels": 1,
+    "kb": 38,
+    "gated_rms_dbfs": -23.69,
+    "true_peak_dbtp": -5.63,
+    "sha256": "7f20a86b5e3ddcf47c220a4754e95858493f5061e399e8cea19e8f4eec19b11f"
+  },
+  "settle_1": {
+    "seconds": 0.557,
+    "channels": 1,
+    "kb": 8,
+    "gated_rms_dbfs": -28.52,
+    "true_peak_dbtp": -6.77,
+    "sha256": "34c8a89eaa92c762b4bebc36a9d549e94c1341d4254c1277f28684d8756a3853"
+  },
+  "settle_2": {
+    "seconds": 0.507,
+    "channels": 1,
+    "kb": 7,
+    "gated_rms_dbfs": -30.21,
+    "true_peak_dbtp": -6.02,
+    "sha256": "a62d90094bcb402ea4b30008fac15b25d631e40f992e878438e9285749dc46c9"
+  },
+  "settle_3": {
+    "seconds": 0.48,
+    "channels": 1,
+    "kb": 7,
+    "gated_rms_dbfs": -26.48,
+    "true_peak_dbtp": -6.07,
+    "sha256": "c2595620b3374aea435e60f610e71398c60b7da0a6f1f15a08ac758377294943"
+  },
+  "settle_4": {
+    "seconds": 1.45,
+    "channels": 1,
+    "kb": 16,
+    "gated_rms_dbfs": -31.2,
+    "true_peak_dbtp": -5.9,
+    "sha256": "49e50ab9b1896a2765bf2fdbd8580eaaf6678a5334ce50c38e2422ed935cb458"
+  }
+}

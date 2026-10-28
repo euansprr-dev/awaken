@@ -25,6 +25,7 @@ final class BandTests {
     static void register() {
         AwakenTests.register("delve_bands", 20, BandTests::bands);
         AwakenTests.registerIsolated("delve_strike_noise", 60, BandTests::noise);
+        AwakenTests.register("delve_band_sounds", 80, BandTests::sounds);
     }
 
     private static void bands(GameTestHelper h) {
@@ -65,5 +66,42 @@ final class BandTests {
         ItemStack pick = new ItemStack(DelveContent.WAKING_PICK.get());
         PickVerses.set(pick, PickVerses.Verse.HUSH.ordinal(), level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.BLOCK));
         return pick;
+    }
+
+    /**
+     * The recorded cave sounds (SPEC §34.5) register: each event exists, its sounds.json entry names files that ship and
+     * are small; a broken heart's answer waits its moment, then plays.
+     */
+    private static void sounds(GameTestHelper h) {
+        com.google.gson.JsonObject json;
+        try (var in = BandTests.class.getResourceAsStream("/assets/awaken/sounds.json")) {
+            h.assertTrue(in != null, "the merged sounds.json ships");
+            json = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException(ex);
+        }
+        for (String event : new String[]{"delve.band.room", "delve.cave.answers", "delve.cave.settle", "delve.cave.breath"}) {
+            h.assertTrue(BuiltInRegistries.SOUND_EVENT.containsKey(Awaken.id(event)), event + " is registered");
+            h.assertTrue(json.has(event), event + " is in sounds.json");
+            for (var e : json.getAsJsonObject(event).getAsJsonArray("sounds")) {
+                String name = e.getAsJsonObject().get("name").getAsString();
+                h.assertTrue(name.startsWith("awaken:delve/"), event + " plays a recording: " + name);
+                try (var in = BandTests.class.getResourceAsStream("/assets/awaken/sounds/" + name.substring("awaken:".length()) + ".ogg")) {
+                    h.assertTrue(in != null, name + " ships");
+                    h.assertTrue(in.readAllBytes().length < 400_000, name + " is small");
+                } catch (java.io.IOException ex) {
+                    throw new IllegalStateException(ex);
+                }
+            }
+        }
+        h.assertTrue(CaveAnswers.pitch(Ore.IRON) == 0.89F && CaveAnswers.pitch(Ore.DIAMOND) > CaveAnswers.pitch(Ore.IRON), "tuned to the ore");
+        Lode l = LodePlans.handmade(Ore.IRON, new long[]{h.absolutePos(new BlockPos(1, 1, 1)).asLong()});
+        int before = CaveAnswers.pending();
+        CaveAnswers.heartBroke(h.getLevel(), l);
+        h.assertTrue(CaveAnswers.pending() == before + 1, "the answer waits");
+        h.runAfterDelay(CaveAnswers.DELAY + 3, () -> {
+            h.assertTrue(CaveAnswers.pending() == 0, "then comes back from the rock");
+            h.succeed();
+        });
     }
 }
