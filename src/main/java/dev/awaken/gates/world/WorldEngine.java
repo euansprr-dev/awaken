@@ -11,8 +11,8 @@ import dev.awaken.gates.worlds.GateWorld;
  */
 public interface WorldEngine {
     /** What an engine plans from: the gate, the floor, its plot, the recipe and mood, and which variation (0..2) to try. */
-    record Ctx(GatePlan plan, Theme theme, int area, int floor, boolean bossFloor, Plots.Plot plot, GateWorld world, String mood,
-               long seed, int variation) {}
+    record Ctx(GatePlan plan, Theme theme, int area, int floor, boolean bossFloor, Plots.Plot plot, String worldId, GateWorld world,
+               String mood, long seed, int variation) {}
 
     /**
      * Plans the floor, or null when this variation can't make a floor that's complete on foot (every place, key, cache
@@ -20,9 +20,19 @@ public interface WorldEngine {
      */
     FloorLayout plan(Ctx ctx);
 
+    /** Why the last plan on this thread gave no floor (for the log and the tests). */
+    ThreadLocal<String> WHY = ThreadLocal.withInitial(() -> "");
+
+    /** Notes why a plan gives up and returns null. */
+    static <T> T fail(String why) {
+        WHY.set(why);
+        return null;
+    }
+
     /** The engine for a recipe kind, or null for "rooms" and kinds this build doesn't have (both build today's rooms). */
     static WorldEngine of(String kind) {
         return switch (kind) {
+            case "hall" -> new HallEngine();
             default -> null;
         };
     }

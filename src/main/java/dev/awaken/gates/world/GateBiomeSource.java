@@ -70,6 +70,12 @@ public final class GateBiomeSource extends BiomeSource implements BiomeResolver 
         if (p.contentVersion() < Plots.FIRST_VERSION) return theme(lx >= Cells.ANNEX_SLOT_X * 16 ? p.annexTheme() : p.theme());
         FloorLayout f = GateLayout.of(p).floorAt(lx, lz, QuartPos.toBlock(quartY));
         if (f == null) return theme(p.theme());
+        if (!f.placeBiomes.isEmpty()) {
+            // a secret world inside this one shows its own air
+            Room r = f.roomAt(lx, QuartPos.toBlock(quartY), lz);
+            Holder<Biome> h = r == null ? null : byId.get(f.placeBiomes.getOrDefault(r.id, ""));
+            if (h != null) return h;
+        }
         if (!f.biome.isEmpty()) {
             Holder<Biome> h = byId.get(f.biome);
             if (h != null) return h;

@@ -50,7 +50,7 @@ public final class GatePainter {
     /** A world floor carves its own plot (SPEC §38); a rooms floor paints its grid plus a slot of rock around it. */
     private static void paintAny(GatePlan plan, FloorLayout f, int slotX, int slotZ, Sink out) {
         if (f.model != null) {
-            if (f.coversSlot(slotX, slotZ, 0)) f.model.carve(f, slotX, slotZ, out);
+            if (f.coversSlot(slotX, slotZ, 0)) f.model.carve(plan, f, slotX, slotZ, out);
         } else if (f.coversSlot(slotX, slotZ, 1)) paintFloor(plan, f, slotX, slotZ, out);
     }
 
@@ -67,6 +67,23 @@ public final class GatePainter {
         for (int bx = 0; bx < 16; bx++) for (int bz = 0; bz < 16; bz++) c.column(bx, bz);
         c.features();
         if (r.rig != null) RigRooms.stamp(c);
+    }
+
+    /**
+     * A world floor's built room (the Lord's arena, a Rig room: SPEC §38.5) painted as today's rooms are, inside its own
+     * band of heights; the world carves everything round it.
+     */
+    static void paintBuilt(GatePlan plan, FloorLayout f, Room r, int gx, int gz, Sink out) {
+        int floorY = f.baseY + r.dy;
+        Ctx c = new Ctx(plan, f, r, f.theme.palette(), out, gx, gz, floorY - Cells.BAND_BELOW, floorY + Cells.BAND_ABOVE - 1);
+        for (int bx = 0; bx < 16; bx++) for (int bz = 0; bz < 16; bz++) c.column(bx, bz);
+        c.features();
+        if (r.rig != null) RigRooms.stamp(c);
+    }
+
+    /** A world place's features (shrine, seal, caches, runes, the entrance sigil) in one of its chunks. */
+    static void paintFeatures(GatePlan plan, FloorLayout f, Room r, int gx, int gz, Sink out) {
+        new Ctx(plan, f, r, f.theme.palette(), out, gx, gz, f.yLo, f.yHi).features();
     }
 
     /** Per-room painting state (one per chunk and floor; never shared between threads). */

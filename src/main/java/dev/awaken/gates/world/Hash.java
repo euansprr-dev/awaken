@@ -43,6 +43,24 @@ public final class Hash {
         return (a + (b - a) * tx) + ((c + (d - c) * tx) - (a + (b - a) * tx)) * tz;
     }
 
+    /** Smooth 3D value noise in [0,1] with the given cell size in blocks (world caves, worn stone). */
+    public static double noise3(long seed, double x, double y, double z, double cell) {
+        double fx = x / cell, fy = y / cell, fz = z / cell;
+        int ix = (int) Math.floor(fx), iy = (int) Math.floor(fy), iz = (int) Math.floor(fz);
+        double tx = fx - ix, ty = fy - iy, tz = fz - iz;
+        tx = tx * tx * (3 - 2 * tx);
+        ty = ty * ty * (3 - 2 * ty);
+        tz = tz * tz * (3 - 2 * tz);
+        double c000 = unit(of(seed, ix, iy, iz)), c100 = unit(of(seed, ix + 1, iy, iz));
+        double c010 = unit(of(seed, ix, iy + 1, iz)), c110 = unit(of(seed, ix + 1, iy + 1, iz));
+        double c001 = unit(of(seed, ix, iy, iz + 1)), c101 = unit(of(seed, ix + 1, iy, iz + 1));
+        double c011 = unit(of(seed, ix, iy + 1, iz + 1)), c111 = unit(of(seed, ix + 1, iy + 1, iz + 1));
+        double x00 = c000 + (c100 - c000) * tx, x10 = c010 + (c110 - c010) * tx;
+        double x01 = c001 + (c101 - c001) * tx, x11 = c011 + (c111 - c011) * tx;
+        double y0 = x00 + (x10 - x00) * ty, y1 = x01 + (x11 - x01) * ty;
+        return y0 + (y1 - y0) * tz;
+    }
+
     public static double fbm(long seed, double x, double z, double cell) {
         return noise(seed, x, z, cell) * 0.6 + noise(seed ^ 0x5DEECE66DL, x, z, cell / 2) * 0.3
                 + noise(seed ^ 0xB5297A4DL, x, z, cell / 4) * 0.1;

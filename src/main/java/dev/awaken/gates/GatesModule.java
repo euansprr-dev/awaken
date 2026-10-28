@@ -35,6 +35,7 @@ public final class GatesModule {
         TogetherGateTests.register();
         RigTests.register();
         dev.awaken.gates.world.GateWorldTests.register();
+        dev.awaken.gates.world.GateWorldBellTests.register();
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent e) {

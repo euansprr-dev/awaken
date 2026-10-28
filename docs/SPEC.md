@@ -8623,3 +8623,61 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   gate, Lords' floors, secrets, mastery opening the deep world and the wonder, worlds switched off, saving plans and the Atlas).
 - **Stage 0** (built 2026-10-28): plots, the frame, the place map, recipes and their loader, per-world biomes, the engine
   interface, the director, the Atlas and the arrival payload. No recipes ship yet, so every floor is today's rooms in its plot.
+- **Stage 1** (in progress): the world floor contract (38.5), the Bell Crypt's blocks and the Sunken Belfry (38.6); tests
+  `gateworlds_bell_recipes` and `gateworlds_belfry`. The Bell Crypt's other engines are next; until each exists its world's
+  floors are today's rooms.
+
+### 38.5 The world floor contract (Stage 1)
+
+- **The programme** (`FloorBuilder.programme`): a world floor first lays out today's rooms for that floor exactly as a rooms
+  floor would (same seed, layout, room types, monsters, keys, puzzles, caches, Rig, the Lord's arena), then an engine hosts
+  each programme room on a place of the world (`WorldPlan`). Same fights and rewards, a different world. `WorldPlan.host`
+  gives a room its own place, `merge` puts several plain rooms (normal, elite, hall, shaft) in one long place, `extra` adds a
+  place the programme doesn't have (a stair, the Rope Shaft, a secret world), `join` connects two places and `anchor` says
+  where a room's features go. `finish(Walk, Look)` carries everything over: types, monster counts and spots (only where the
+  engine's `Walk` says you can stand), features snapped to the nearest free spot you can stand on within 10 blocks (the
+  Lord's spot and inner gates are placed by the engine), and returns null, with a reason (`WorldEngine.WHY`, logged), when a
+  room has no place, the Lord's arena changed size, or the end can't be walked to from the start.
+- **Built rooms**: the Lord's arena and every Rig room keep their programme size and are painted as today (in the band
+  4 below their floor to 28 above), with the world carved round them. A world floor's rooms sit on the plot's 16 x 16 slot
+  grid in slots 1..14 (the edge slots are the world's margin).
+- **Sculpt** (`Sculpt`): an engine's carve is an ordered list of operations, each in its own box and bucketed by chunk:
+  `carve` (open space by a signed distance field, with a 3-block solid shell behind it so nothing past it is ever seen),
+  `mass` (solid), `fill` and `fillOpen` (a block inside a shape, anywhere or only where open), `box`, `openBox`, `put`,
+  `putOpen`, `stamp` and `op` (any per-block work). Shell blocks are skinned last by what they face (floor, ceiling, wall).
+  Built once at plan time and frozen (`seal`); each worldgen thread then paints through its own buffer. **Thresholds**: every
+  doorway between two places is carved through with its own shell, and a door into a built room gets a frame of the world's
+  trim. **Screens**: where a world's open space (air or water) meets the edge of the band, a wall closes it.
+- **Blocks by role** (`WorldMats`): a recipe's `blocks` map names a block per role (`wall`, `floor`, `trim`, `bronze`...);
+  an engine asks for a role with a fallback, so one engine builds many worlds.
+- **Budgets**: a world floor plans in under 50 ms and carves a chunk in under 4 ms on average, 40 ms at worst (measured by
+  every world's test).
+- **World tests** (`WorldCheck`, `GateWorldBellTests`): each world is planned over many gates (every layout, rank, twist and
+  mood), every chunk carved, and walked on foot from the arrival (stairs, ropes and shallow water included; a Rig room is
+  crossed by its mechanism, from its way in to its way on): every monster spot, key, cache and feature reachable, every room
+  enterable, no water that would flow, and every step on the way to the end lit to 7 or more outside built rooms. Set
+  `AWAKEN_WORLD_DUMP=<dir>` to write plan, section and view pictures of the first floors and any failing floor.
+
+### 38.6 The Bell Crypt (Stage 1)
+
+- **Its 14 blocks** (`GatesRegistry.WORLD_BLOCKS`, textures `tools/art/specs/gate_worlds_bell.py`, all mined with a pickaxe
+  outside gates): crypt limestone, worn and crumbling; carved tracery; flagstone and wet flagstone; patina bronze (the
+  bells; strike it and the world's rule answers); crypt candles (1 to 5, lit or out, 3 light each lit); moon glass (light 10,
+  the lancets); rose glass (five hues, light 6); a bone niche (light 5, faces a wall); a drowned vestment (hangs on a wall,
+  no collision); bell rope (climbable); a lily candle (floats on water, light 6).
+- **The worlds** (`data/awaken/gate_worlds/bell_crypt/`): the Sunken Belfry (everyday, `hall`), the Ossuary Ways
+  (everyday, `passages`), the Bell Shaft (deep, `drop`, tall), the Field of Bells (wonder, `void`, floors only), and
+  Bellmaker's Rest (secret, `rest`, reached only through the Belfry's odd rope). Each has the moods Still, Tolling, Requiem
+  and Storm with their own biome (`awaken:gate_world/<world>[_<mood>]`, written by `tools/art/specs/gate_worlds_biomes.py`
+  and listed in the gates dimension); sound events are `awaken:gate.world.<name>`.
+- **The Sunken Belfry** (`HallEngine`): a drowned church along the plot's middle. The arrival is a narthex with two stair
+  turrets; a candlelit causeway (5 wide) runs down a flooded nave (the water one step below the causeway, so a fall is never a
+  trap) between pointed arcades, with a gallery above and dark aisles behind the piers. The programme's spine becomes nave
+  bays (plain rooms merged, three at most, in runs of rows); the hub or the arena takes the Great Bell (you walk under it,
+  its lip just over your head), a calm bay later takes the drowned choir (stone singers waist-deep, facing the causeway);
+  branches become side chapels and crypts off the aisles; a puzzle or cache wing can take the Rope Shaft (a tall shaft hung
+  with bell ropes, climbed to Bellmaker's Rest on the odd rope); the end is the chancel under the rose window. Built rooms
+  sit centred on the causeway so their doors open onto it. Light: candle clusters every 4 blocks along the causeway, a
+  hidden light every slot, lancets of moon glass whose light lands on the water, small bells hung with lamps inside. Moods:
+  Tolling adds a monster to each fight room, Storm breaks some lancets open to the dark, Requiem and Still are the quiet
+  ones.

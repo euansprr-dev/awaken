@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * One floor: a grid of slots, the rooms on it, and where it starts and ends. Immutable once built. A world floor (SPEC
@@ -42,12 +43,23 @@ public final class FloorLayout {
     public final FloorAir air;
     /** Carves a world floor's chunks; null on rooms floors ({@link GatePainter} paints them). */
     public final WorldModel model;
+    /** Which way you face on arriving (a world's best view), or NaN: toward the start room's first door. */
+    public final float arrivalYaw;
+    /** Places that are a world of their own inside this one (a secret world behind an odd rope): room id → world id. */
+    public final Map<Integer, String> placeWorlds;
+    /** The biome each of those places shows (its own world's). */
+    public final Map<Integer, String> placeBiomes;
 
     /** What a floor is framed by beyond its rooms: where it stands, how it's found, what it is. */
     record Frame(Plots.Plot plot, int yLo, int yHi, PlaceMap places, String world, String mood, String biome, FloorAir air,
-                 WorldModel model) {
+                 WorldModel model, float arrivalYaw, Map<Integer, String> placeWorlds, Map<Integer, String> placeBiomes) {
+        Frame {
+            placeWorlds = Map.copyOf(placeWorlds);
+            placeBiomes = Map.copyOf(placeBiomes);
+        }
+
         static Frame band(Plots.Plot plot, int baseY) {
-            return new Frame(plot, baseY - Cells.BAND_BELOW, baseY + Cells.BAND_ABOVE - 1, null, "", "", "", FloorAir.NONE, null);
+            return new Frame(plot, baseY - Cells.BAND_BELOW, baseY + Cells.BAND_ABOVE - 1, null, "", "", "", FloorAir.NONE, null, Float.NaN, Map.of(), Map.of());
         }
     }
 
@@ -87,6 +99,14 @@ public final class FloorLayout {
         this.biome = frame.biome();
         this.air = frame.air();
         this.model = frame.model();
+        this.arrivalYaw = frame.arrivalYaw();
+        this.placeWorlds = frame.placeWorlds();
+        this.placeBiomes = frame.placeBiomes();
+    }
+
+    /** The world a place belongs to: its own (a secret world inside this floor's) or the floor's. */
+    public String worldOf(Room r) {
+        return r == null ? world : placeWorlds.getOrDefault(r.id, world);
     }
 
     /** Whether this floor paints height y (tests and tools filter a chunk's blocks by floor with it). */

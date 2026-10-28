@@ -67,8 +67,9 @@ final class FloorBuilder {
                 a1.labyrinth(4, 4);
                 annex.add(a1.finish());
             }
+            // the annex's second floor is always a Lord's: the inner gate's keeper (a small arena) or the echo's
             boolean innerBoss = plan.twist() == Twist.GATE_WITHIN;
-            FloorLayout w2 = worldFloor(plan, at, 1, 2, innerBoss);
+            FloorLayout w2 = worldFloor(plan, at, 1, 2, true);
             if (w2 != null) annex.add(w2);
             else {
                 Builder a2 = new Builder(plan, at, 1, 2, Hash.of(plan.seed(), 1, 2));
@@ -77,6 +78,21 @@ final class FloorBuilder {
             }
         }
         return new GateLayout(plan, main, annex);
+    }
+
+    /**
+     * A floor's rooms exactly as today's builder makes them, logic only (types, monsters, keys, features, the Rig, the
+     * path): a world floor's programme, which its engine re-hosts on the world's own places (SPEC §38.5).
+     */
+    static Builder programme(GatePlan plan, Theme theme, int area, int floor) {
+        Builder b = new Builder(plan, theme, area, floor, Hash.of(plan.seed(), area, floor));
+        if (area == 0) {
+            if (floor == plan.floors()) b.bossFloor(false);
+            else b.layout(plan.layout());
+        } else if (floor == 1) b.labyrinth(4, 4);
+        else b.bossFloor(plan.twist() == Twist.GATE_WITHIN);
+        b.finishRooms();
+        return b;
     }
 
     /** Every floor of a plan in plot order: [area, floor] (main floors, then the annex's two). */
@@ -123,14 +139,14 @@ final class FloorBuilder {
         if (e == null) return null;
         for (int v = 0; v < 3; v++) {
             try {
-                FloorLayout f = e.plan(new WorldEngine.Ctx(plan, theme, area, floor, bossFloor, plot, w, fw.mood(),
+                FloorLayout f = e.plan(new WorldEngine.Ctx(plan, theme, area, floor, bossFloor, plot, fw.world(), w, fw.mood(),
                         Hash.of(plan.seed(), 400 + area, floor * 8 + v), v));
                 if (f != null) return f;
             } catch (RuntimeException ex) {
                 Awaken.LOG.error("[gates] world {} failed to plan floor {} (variation {})", fw.world(), floor, v, ex);
             }
         }
-        Awaken.LOG.warn("[gates] world {} gave no complete floor {}: today's rooms instead", fw.world(), floor);
+        Awaken.LOG.warn("[gates] world {} gave no complete floor {} ({}): today's rooms instead", fw.world(), floor, WorldEngine.WHY.get());
         return null;
     }
 
@@ -616,6 +632,20 @@ final class FloorBuilder {
         // ---- finishing --------------------------------------------------------------------------------------------
 
         FloorLayout finish() {
+            finishRooms();
+            if (plot != null) {
+                // version 6: today's rooms inside the floor's own plot, the same rooms as version 5 built
+                int baseY = plot.minY() + Plots.ROOMS_BASE;
+                return new FloorLayout(area, floor, baseY, plot.slotX() + Cells.GRID_ORIGIN, plot.slotZ() + Cells.GRID_ORIGIN, w, h,
+                        theme, bossFloor, rooms, start, end, FloorLayout.Frame.band(plot, baseY));
+            }
+            int baseY = Cells.floorY(floor);
+            int ox = area == 0 ? Cells.GRID_ORIGIN : Cells.ANNEX_SLOT_X + Cells.GRID_ORIGIN;
+            return new FloorLayout(area, floor, baseY, ox, Cells.GRID_ORIGIN, w, h, theme, bossFloor, rooms, start, end);
+        }
+
+        /** Everything a floor's rooms are (types, monsters, features, the Rig, the path), before the floor is placed. */
+        void finishRooms() {
             if (start < 0 || end < 0 || rooms.isEmpty()) labyrinth(4, 4);
             ensureConnected();
             boolean friendly = plan.friendly();
@@ -658,15 +688,6 @@ final class FloorBuilder {
                 }
             }
             markPath();
-            if (plot != null) {
-                // version 6: today's rooms inside the floor's own plot, the same rooms as version 5 built
-                int baseY = plot.minY() + Plots.ROOMS_BASE;
-                return new FloorLayout(area, floor, baseY, plot.slotX() + Cells.GRID_ORIGIN, plot.slotZ() + Cells.GRID_ORIGIN, w, h,
-                        theme, bossFloor, rooms, start, end, FloorLayout.Frame.band(plot, baseY));
-            }
-            int baseY = Cells.floorY(floor);
-            int ox = area == 0 ? Cells.GRID_ORIGIN : Cells.ANNEX_SLOT_X + Cells.GRID_ORIGIN;
-            return new FloorLayout(area, floor, baseY, ox, Cells.GRID_ORIGIN, w, h, theme, bossFloor, rooms, start, end);
         }
 
         /**

@@ -272,13 +272,16 @@ public final class GateService {
         FloorLayout f = GateLayout.of(g.plan).floor(area, floor);
         if (f == null) return new BlockPos(Cells.originX(g.cell) + 40, Cells.FLOOR1_Y, Cells.originZ(g.cell) + 40);
         Room s = f.room(f.start);
-        return roomFloor(g, f, s, s.centerX(), s.centerZ());
+        // a world floor puts its sigil where its view is best; today's rooms have it at the room's centre
+        Room.Feature e = s.feature(Room.FeatureKind.ENTRANCE);
+        return e == null ? roomFloor(g, f, s, s.centerX(), s.centerZ()) : world(g, f, e.x(), s.dy + e.y(), e.z());
     }
 
     /** Facing (degrees) toward the start room's first doorway. */
     public static float entranceYaw(GateRecord g, int area, int floor) {
         FloorLayout f = GateLayout.of(g.plan).floor(area, floor);
         if (f == null) return 0;
+        if (!Float.isNaN(f.arrivalYaw)) return f.arrivalYaw;
         Room s = f.room(f.start);
         if (s.doors.isEmpty()) return 0;
         return switch (s.doors.get(0).side) {

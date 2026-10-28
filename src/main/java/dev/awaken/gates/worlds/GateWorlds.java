@@ -6,7 +6,6 @@ import dev.awaken.gates.GatesRegistry;
 import dev.awaken.gates.content.FloorWorld;
 import dev.awaken.gates.content.GatePlan;
 import dev.awaken.gates.content.Theme;
-import dev.awaken.gates.content.Twist;
 import dev.awaken.gates.world.Hash;
 import dev.awaken.gates.world.Plots;
 import net.minecraft.resources.FileToIdConverter;
@@ -111,7 +110,8 @@ public final class GateWorlds {
         for (int f = 1; f <= plan.floors(); f++) floors.add(new int[]{0, f, f == plan.floors() ? 1 : 0});
         if (plan.hasAnnex()) {
             floors.add(new int[]{1, 1, 0});
-            floors.add(new int[]{1, 2, plan.twist() == Twist.GATE_WITHIN ? 1 : 0});
+            // the annex's second floor is always a Lord's (the inner gate's keeper, or the Double Gate's echo)
+            floors.add(new int[]{1, 2, 1});
         }
         for (int[] af : floors) {
             Theme theme = af[0] == 0 ? plan.theme() : plan.annexTheme();

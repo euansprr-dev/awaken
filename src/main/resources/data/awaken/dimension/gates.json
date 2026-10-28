@@ -19,7 +19,24 @@
         "awaken:gate_precursor_lab",
         "awaken:gate_nightmare",
         "awaken:gate_sky_archipelago",
-        "awaken:gate_abyssal_shrine"
+        "awaken:gate_abyssal_shrine",
+        "awaken:gate_world/bell_shaft",
+        "awaken:gate_world/bell_shaft_requiem",
+        "awaken:gate_world/bell_shaft_storm",
+        "awaken:gate_world/bell_shaft_tolling",
+        "awaken:gate_world/bellmakers_rest",
+        "awaken:gate_world/field_of_bells",
+        "awaken:gate_world/field_of_bells_requiem",
+        "awaken:gate_world/field_of_bells_storm",
+        "awaken:gate_world/field_of_bells_tolling",
+        "awaken:gate_world/ossuary_ways",
+        "awaken:gate_world/ossuary_ways_requiem",
+        "awaken:gate_world/ossuary_ways_storm",
+        "awaken:gate_world/ossuary_ways_tolling",
+        "awaken:gate_world/sunken_belfry",
+        "awaken:gate_world/sunken_belfry_requiem",
+        "awaken:gate_world/sunken_belfry_storm",
+        "awaken:gate_world/sunken_belfry_tolling"
       ],
       "fallback": "awaken:gate_void"
     }

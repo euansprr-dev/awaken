@@ -7,5 +7,5 @@ package dev.awaken.gates.world;
  */
 public interface WorldModel {
     /** Paints the chunk at cell slot (slotX, slotZ); sink x/z are 0..15 inside it, y is absolute. */
-    void carve(FloorLayout f, int slotX, int slotZ, GatePainter.Sink out);
+    void carve(dev.awaken.gates.content.GatePlan plan, FloorLayout f, int slotX, int slotZ, GatePainter.Sink out);
 }
