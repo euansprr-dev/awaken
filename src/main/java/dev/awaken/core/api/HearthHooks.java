@@ -9,6 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Hearth lookups for other modules (break warnings, respawn, colour restoration, who shares a home). Installed by the
  * hearth module. A Hearth has an owner and members (SPEC "Together"); "belongs" means either.
@@ -47,6 +49,13 @@ public final class HearthHooks {
         default boolean greenhouse(net.minecraft.world.level.Level level, BlockPos pos) { return false; }
         /** Whether the player stands at a Hearth they belong to that has a Study: Blueprints take half the paper (SPEC §28.8). */
         default boolean study(ServerPlayer player) { return false; }
+        /**
+         * Moves the player's respawn point for one of our own systems; {@code lent}: a bed for the next fall only (an inn
+         * room), else the point given back. The Hearth never reads either as the player choosing another bed (SPEC §28.10).
+         */
+        default void systemRespawn(ServerPlayer player, ServerPlayer.@Nullable RespawnConfig to, boolean lent) {
+            player.setRespawnPosition(to, false);
+        }
     }
 
     private static Lookup lookup = new Lookup() {
@@ -115,6 +124,16 @@ public final class HearthHooks {
     /** Whether the player stands at home with a Study: the Blueprints' paper is halved. */
     public static boolean study(ServerPlayer player) {
         return lookup.study(player);
+    }
+
+    /** An inn room: the player wakes at {@code bed} if they fall before it's given back, and at their Hearth after. */
+    public static void lendRespawn(ServerPlayer player, ServerPlayer.RespawnConfig bed) {
+        lookup.systemRespawn(player, bed, true);
+    }
+
+    /** Gives back the respawn point a lent bed stood in for ({@code null}: none). */
+    public static void returnRespawn(ServerPlayer player, ServerPlayer.@Nullable RespawnConfig before) {
+        lookup.systemRespawn(player, before, false);
     }
 
     /** Every Hearth Anchor within {@code radius} blocks of {@code pos}, whoever owns it. */

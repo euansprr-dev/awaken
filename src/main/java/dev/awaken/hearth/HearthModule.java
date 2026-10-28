@@ -119,6 +119,12 @@ public final class HearthModule {
             }
 
             @Override
+            public void systemRespawn(net.minecraft.server.level.ServerPlayer player,
+                                      net.minecraft.server.level.ServerPlayer.@org.jspecify.annotations.Nullable RespawnConfig to, boolean lent) {
+                HearthService.systemRespawn(player, to, lent);
+            }
+
+            @Override
             public java.util.List<BlockPos> within(ServerLevel level, BlockPos pos, int radius) {
                 java.util.List<BlockPos> out = new java.util.ArrayList<>(1);
                 String dim = level.dimension().identifier().toString();
@@ -159,6 +165,7 @@ public final class HearthModule {
         HearthCommands.register();
         HearthTests.register();
         HomeTests.register();
+        RespawnTests.register();
         HearthTrailTests.register();
         dev.awaken.hearth.settle.SettleTests.register();
         TogetherHearthTests.register();

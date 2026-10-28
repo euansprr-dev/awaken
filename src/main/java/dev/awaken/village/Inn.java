@@ -47,7 +47,7 @@ final class Inn {
         Optional<ServerPlayer.RespawnConfig> before = had != null ? had.before() : Optional.ofNullable(p.getRespawnConfig());
         st.inn.put(p.getUUID(), new VillageState.Stay(l.key(), bed.asLong(), before, VillageService.today(server)));
         st.setDirty();
-        p.setRespawnPosition(new ServerPlayer.RespawnConfig(new LevelData.RespawnData(GlobalPos.of(level.dimension(), bed), p.getYRot(), 0f), false), false);
+        dev.awaken.core.api.HearthHooks.lendRespawn(p, new ServerPlayer.RespawnConfig(new LevelData.RespawnData(GlobalPos.of(level.dimension(), bed), p.getYRot(), 0f), false));
         int tod = (int) Math.floorMod(level.getOverworldClockTime(), 24000L);
         long seed = p.level().getGameTime() + rec;
         VillageService.say(p, l, rec, Lines.get().pick(seed, tod, "village.inn.room"), 100);
@@ -111,7 +111,7 @@ final class Inn {
         ServerPlayer.RespawnConfig now = p.getRespawnConfig();
         // only if it still points at the inn's bed (sleeping in another bed since chose that one)
         if (now != null && now.respawnData().globalPos().pos().asLong() != stay.bed()) return;
-        p.setRespawnPosition(stay.before().orElse(null), false);
+        dev.awaken.core.api.HearthHooks.returnRespawn(p, stay.before().orElse(null));
     }
 
     static boolean has(Player p, MinecraftServer server) {

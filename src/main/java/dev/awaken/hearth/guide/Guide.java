@@ -179,13 +179,13 @@ public final class Guide {
     // ---- the data ---------------------------------------------------------------------------------------------------
 
     public static GuideData build(ServerPlayer sp, HearthRecord h) {
-        HearthPlayer hp = HearthService.player(sp);
         int rest = HearthService.restSeconds(h.tier);
         List<GuideData.RoomCard> cards = new ArrayList<>();
         for (RoomType t : RoomType.values()) cards.add(card(t, h));
         List<GuideData.RecipeView> recipes = new ArrayList<>();
         for (Furniture f : Furniture.values()) recipe(sp, f).ifPresent(recipes::add);
-        return new GuideData(h.tier, h.radius(), rest, Math.max(1, rest / 2), hp.respawnAtHearth, h.pos, cards, recipes,
+        boolean wakeHere = HearthService.wakesAt(sp).map(w -> w == h).orElse(false);
+        return new GuideData(h.tier, h.radius(), rest, Math.max(1, rest / 2), wakeHere, h.pos, cards, recipes,
                 town(h), coming(sp, h), upgrade(sp, h), Cottage.state(sp, h), home(h));
     }
 
