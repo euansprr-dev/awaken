@@ -5860,7 +5860,7 @@
      "riders": [],
      "looks": [],
      "num": {
-      "secrets": 1
+      "shared": 48
      },
      "code": true
     },
@@ -6282,7 +6282,7 @@
       }
      ],
      "num": {
-      "fast": 0.15
+      "cd": 0.85
      },
      "code": true
     },
@@ -6597,8 +6597,8 @@
       {
        "k": "status",
        "effect": "slow",
-       "ticks": 40,
-       "amp": 1
+       "ticks": 60,
+       "amp": 2
       }
      ],
      "looks": [

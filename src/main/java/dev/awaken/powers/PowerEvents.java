@@ -111,6 +111,8 @@ final class PowerEvents {
                 return;
             }
         }
+        // Turret's Shield (4)
+        if (victim instanceof dev.awaken.powers.content.PowerDrone d && d.shield > 0) event.setAmount(StepHooks.turretShield(d, event.getAmount()));
         // Afterimage's Snare: what strikes your copy is slowed; Dominate's Marked Prey: what your puppet strikes is marked
         if (attacker instanceof LivingEntity striker && !(attacker instanceof Player)) {
             StepHooks.copyStruck(victim, striker);
@@ -187,8 +189,15 @@ final class PowerEvents {
                 Combat.hurtFrom(sp, null, melee, (float) (event.getOriginalAmount() * reflect), null, true);
                 Combat.knockFrom(melee, sp.position(), 0.8, 0.2);
             }
+            // Soul Guard (Aura 5): the wisps strike back
+            double soul = st.buff(PowerState.Buffs.AURA_GUARD, now);
+            if (soul > 0) StepHooks.soulGuard(sp, melee, (float) (event.getOriginalAmount() * soul));
             if (nanite > 0) {
-                Combat.hurtFrom(sp, null, melee, (float) Math.max(1, event.getOriginalAmount() * nanite), Forces.Force.CHARGE, true);
+                float shock = (float) Math.max(1, event.getOriginalAmount() * nanite);
+                Combat.hurtFrom(sp, null, melee, shock, Forces.Force.CHARGE, true);
+                // Arc Shock (Nanite Skin 3): the shock jumps on to a second foe
+                double arc = st.buff(PowerState.Buffs.NANITE_ARC, now);
+                if (arc > 0) StepHooks.chainBlow(sp, melee, shock * (float) arc, "nanite_skin");
             }
         }
     }
@@ -232,6 +241,7 @@ final class PowerEvents {
             st.clearBuff(PowerState.Buffs.MOMENTUM);
         }
         event.setAmount(amount);
+        StepHooks.frostHit(sp, victim);
         StepHooks.dealt(sp, victim, amount);
         if (SpiritPowers.isMelee(src, sp)) StepHooks.mimic(sp, victim, amount);
         double chain = st.buff(PowerState.Buffs.CHAIN_BLOWS, now);

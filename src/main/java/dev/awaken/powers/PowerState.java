@@ -202,6 +202,11 @@ public final class PowerState {
         public static final String BRACE = "brace";
         public static final String BRACE_REFLECT = "brace_reflect";
         public static final String NANITE = "nanite";
+        public static final String NANITE_ARC = "ladder_nanite_arc";
+        public static final String AURA_GUARD = "ladder_aura_guard";
+        public static final String FROST_SHATTER = "ladder_frost_shatter";
+        public static final String FROST_BLOOM = "ladder_frost_bloom";
+        public static final String TWIN_CASTS = "ladder_twin_casts";
         public static final String CLOAK = "cloak";
         public static final String READ_INTENT = "read_intent";
         public static final String FORESIGHT = "foresight";

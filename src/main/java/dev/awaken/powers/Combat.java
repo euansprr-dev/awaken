@@ -129,6 +129,7 @@ public final class Combat {
             dev.awaken.powers.ladder.Riders.onHit(c, target, amount, force);
             dev.awaken.powers.ladder.StepHooks.liveWire(c, target, amount);
             dev.awaken.powers.ladder.StepHooks.decoyEcho(c, target, amount);
+            dev.awaken.powers.ladder.StepHooks.twinCast(c, target, amount);
         }
         return landed;
     }

@@ -458,7 +458,7 @@ S("mend", 5, [],
 S("third_eye", 2, [extend(duration=0.1)],
   [sigil("AURA", at="head", size=0.3, spin=0.0, face="aim", col="core")])
 S("third_eye", 3, [], [], exposed=0.1)
-S("third_eye", 4, [], [], secrets=1)
+S("third_eye", 4, [], [], shared=48)
 S("third_eye", 5, [],
   [column("AURA", height=10, width=0.25, life=20, col="edge")], range=64)
 
@@ -485,7 +485,7 @@ S("void_maw", 3, [], [bloom("VORTEX", size=0.7, col="edge")], hunger=0.05)
 S("void_maw", 4, [], [burst("NOVA", "shard", n=12, speed=0.4, life=14, size=0.22, grav=0.04)], debris=0.3)
 S("void_maw", 5, [], [rings("NOVA", n=1, r0=3.0, r1=0.3, width=0.5, life=8, col="core")], bite=1.0)
 
-S("waking_dream", 2, [], [burst("CONSTRUCT", "mote", n=10, speed=0.05, life=30, size=0.14)], fast=0.15)
+S("waking_dream", 2, [], [burst("CONSTRUCT", "mote", n=10, speed=0.05, life=30, size=0.14)], cd=0.85)
 S("waking_dream", 3, [], [], bigger=1)
 S("waking_dream", 4, [], [], lasting=2.0)
 S("waking_dream", 5, [], [sigil("CAST", at="hand", size=0.7, spin=0.05, face="aim")], lucid=1)
@@ -506,7 +506,7 @@ S("frost_nova", 4, [linger("frost", 60, 3.0)], [])
 S("frost_nova", 5, [], [sigil("FROST", at="ground", size=4.0, spin=0.02, face="up", life=40)], bloom=0.5)
 
 S("ghost_step", 2, [], [trail("BLINK", width=0.3, life=30, at="body", col="edge")], range=2)
-S("ghost_step", 3, [status("slow", 40, 1)], [burst("IMPACT", "mote", n=6, speed=0.1, life=16, size=0.12)])
+S("ghost_step", 3, [status("slow", 60, 2)], [burst("IMPACT", "mote", n=6, speed=0.1, life=16, size=0.12)])
 S("ghost_step", 4, [], [grow("BLINK", 1.15)], range=2)
 S("ghost_step", 5, [], [sigil("BLINK", at="origin", size=1.6, spin=0.05, face="aim", life=60, col="accent")], door=60)
 

@@ -167,6 +167,11 @@ final class ArchitectPowers {
 
     /** The blocks of a construct assemble with glowing seams, sweeping out from the caster over a blueprint circle. */
     static void assemble(Cast c, List<BlockPos> shape) {
+        assemble(c, shape, false);
+    }
+
+    /** {@code later}: a piece added after the cast (a bridge row, a tower): its seams without the cast's pose or look layers. */
+    static void assemble(Cast c, List<BlockPos> shape, boolean later) {
         if (shape.isEmpty()) return;
         int x0 = Integer.MAX_VALUE, y0 = Integer.MAX_VALUE, z0 = Integer.MAX_VALUE, x1 = Integer.MIN_VALUE, y1 = Integer.MIN_VALUE, z1 = Integer.MIN_VALUE;
         for (BlockPos p : shape) {
@@ -177,7 +182,9 @@ final class ArchitectPowers {
             y1 = Math.max(y1, p.getY());
             z1 = Math.max(z1, p.getZ());
         }
-        Fx.at(c, FxKind.CONSTRUCT, new Vec3(x0, y0, z0)).dir(new Vec3(x1 - x0 + 0.99, y1 - y0 + 0.99, z1 - z0 + 0.99)).send();
+        var e = Fx.at(c, FxKind.CONSTRUCT, new Vec3(x0, y0, z0)).dir(new Vec3(x1 - x0 + 0.99, y1 - y0 + 0.99, z1 - z0 + 0.99));
+        if (later) e.plain();
+        e.send();
     }
 
     // ---- the ladder's constructs (SPEC 34): what each one does after it stands ----------------------------------------
@@ -277,7 +284,7 @@ final class ArchitectPowers {
             if (Constructs.place(c.player, row, Set.of(), false, Math.max(20, life - rr.age)) == 0) return;
             for (BlockPos pos : row) if (Constructs.isConstruct(c.level, pos)) zone.blocks.add(pos.immutable());
             if (rr.age % 6 == 0) {
-                assemble(c, row);
+                assemble(c, row, true);
                 c.sound(p.position(), PowerSounds.BUILD, 0.5f, 1.3f + c.player.getRandom().nextFloat() * 0.3f);
             }
         });
@@ -328,7 +335,7 @@ final class ArchitectPowers {
             List<BlockPos> tower = new ArrayList<>();
             for (int h = height; h < height + 3; h++) tower.add(corner.above(h));
             Constructs.place(c.player, tower, life);
-            assemble(c, tower);
+            assemble(c, tower, true);
         }
         Vec3 inside = Vec3.atBottomCenterOf(centre);
         Running r = Casting.start(c, c.type.id + ":keep", life);
@@ -554,7 +561,7 @@ final class ArchitectPowers {
                 for (int h = 0; h < 4; h++) towers.add(foot.above(h));
                 spires.add(Vec3.atCenterOf(foot.above(4)));
             }
-            if (Constructs.place(c.player, towers, life) > 0) assemble(c, towers);
+            if (Constructs.place(c.player, towers, life) > 0) assemble(c, towers, true);
         }
         int every = Math.max(10, (int) c.num(3, "spires", 40));
         float boltDmg = c.dmg(c.num(3, "bolt", 3f));

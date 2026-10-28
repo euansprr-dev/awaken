@@ -62,6 +62,11 @@ public final class StepHooks {
 
     /** Heaven's Clap: a blow arcs to the closest other foe for {@code dmg}. */
     public static void chainBlow(ServerPlayer sp, LivingEntity victim, float dmg) {
+        chainBlow(sp, victim, dmg, "thunderclap");
+    }
+
+    /** A hit's shock arcs on to the closest other foe for {@code dmg}, in {@code power}'s light (Heaven's Clap, Arc Shock). */
+    public static void chainBlow(ServerPlayer sp, LivingEntity victim, float dmg, String power) {
         Vec3 from = victim.getBoundingBox().getCenter();
         LivingEntity next = nearestFoe(sp, from, 6, victim);
         if (next == null) return;
@@ -70,7 +75,7 @@ public final class StepHooks {
         Scheduler.after(1, () -> {
             if (!to.isAlive() || sp.isRemoved()) return;
             Combat.hurtFrom(sp, null, to, dmg, Forces.Force.CHARGE, true);
-            Fx.of(sp, "thunderclap", FxKind.LIGHTNING, from).to(to.getBoundingBox().getCenter()).ticks(6).send();
+            Fx.of(sp, power, FxKind.LIGHTNING, from).to(to.getBoundingBox().getCenter()).ticks(6).send();
         });
     }
 
@@ -128,6 +133,63 @@ public final class StepHooks {
     private static final String STRIDE = "awaken:wall_run";
 
     // ---- Architect: constructs that keep working after the cast (BuildZones) -----------------------------------------
+
+    // ---- Spirit -------------------------------------------------------------------------------------------------------
+
+    /** Soul Guard (Aura 5): your wisps strike back at whoever hits you up close. */
+    public static void soulGuard(ServerPlayer sp, LivingEntity attacker, float dmg) {
+        if (dmg <= 0 || !attacker.isAlive()) return;
+        Combat.hurtFrom(sp, null, attacker, dmg, Forces.Force.SPIRIT, true);
+        Fx.of(sp, "aura", FxKind.IMPACT, attacker.getBoundingBox().getCenter()).scale(0.8).send();
+    }
+
+    /** Shatter (Frost Nova 3): a hit on a foe your nova froze bursts the frost round it; Winter Bloom (5) bursts it again. */
+    public static void frostHit(ServerPlayer sp, LivingEntity victim) {
+        PowerState st = PowerState.peek(sp);
+        if (st == null || !Forces.has(victim, Forces.Tag.FROSTED)) return;
+        long now = sp.level().getServer().overworld().getGameTime();
+        float dmg = (float) st.buff(PowerState.Buffs.FROST_SHATTER, now);
+        if (dmg <= 0) return;
+        Forces.untag(victim, Forces.Tag.FROSTED);
+        Vec3 at = victim.getBoundingBox().getCenter();
+        float bloom = (float) st.buff(PowerState.Buffs.FROST_BLOOM, now);
+        // after this hit lands, so the burst's own damage never folds into it
+        Scheduler.after(1, () -> {
+            frostBurst(sp, at, dmg, 2.5f);
+            if (bloom > 0) Scheduler.after(8, () -> frostBurst(sp, at, dmg * bloom, 3.5f));
+        });
+    }
+
+    private static void frostBurst(ServerPlayer sp, Vec3 at, float dmg, float radius) {
+        if (sp.isRemoved()) return;
+        for (LivingEntity e : Combat.foesAround(sp, at, radius)) {
+            Combat.hurtFrom(sp, null, e, dmg, Forces.Force.FROST, true);
+            Moves.effect(e, MobEffects.SLOWNESS, 40, 1);
+        }
+        Fx.looks(sp, "frost_nova", FxKind.FROST, at.subtract(0, 0.8, 0)).scale(radius).send();
+        sp.level().playSound(null, at.x, at.y, at.z, PowerSounds.SHATTER.get(), SoundSource.PLAYERS, 0.9f, 1.2f);
+    }
+
+    /** Twin Souls (Twin Strike 5): while the twin walks with you, it repeats your power hits at a share, up to six foes a cast. */
+    public static void twinCast(dev.awaken.powers.Cast c, LivingEntity target, float amount) {
+        if (c.type.path.equals("twin_strike")) return;
+        PowerState st = PowerState.peek(c.player);
+        double share = st == null ? 0 : st.buff(PowerState.Buffs.TWIN_CASTS, c.now());
+        if (share <= 0) return;
+        java.util.Set<Integer> done = TWINNED.computeIfAbsent(c, k -> new java.util.HashSet<>());
+        if (done.size() >= 6 || !done.add(target.getId())) return;
+        dev.awaken.powers.catalog.SpiritPowers.twinEcho(c.player, target, amount, share);
+    }
+
+    private static final Map<dev.awaken.powers.Cast, java.util.Set<Integer>> TWINNED = new java.util.WeakHashMap<>();
+
+    /** Turret's Shield (4): it shrugs off a share of every hit, in a flash of hex light. */
+    public static float turretShield(dev.awaken.powers.content.PowerDrone d, float amount) {
+        if (d.shield <= 0) return amount;
+        ServerPlayer o = d.ownerPlayer();
+        if (o != null) Fx.of(o, "turret", FxKind.IMPACT, d.getBoundingBox().getCenter()).scale(0.9).send();
+        return amount * (1 - d.shield);
+    }
 
     /** Hard light's own gold, for the shots a construct sends back. */
     private static final int LIGHT = 0xFFFFD28A;
@@ -255,7 +317,7 @@ public final class StepHooks {
         Fx.of(owner, "afterimage", FxKind.LIGHTNING, victim.getBoundingBox().getCenter()).to(striker.getBoundingBox().getCenter()).ticks(6).send();
     }
 
-    private static @org.jspecify.annotations.Nullable LivingEntity nearestFoe(ServerPlayer sp, Vec3 at, double radius,
+    public static @org.jspecify.annotations.Nullable LivingEntity nearestFoe(ServerPlayer sp, Vec3 at, double radius,
                                                                              @org.jspecify.annotations.Nullable LivingEntity skip) {
         LivingEntity best = null;
         double d = radius * radius;

@@ -33,6 +33,13 @@ public final class PowerDrone extends PowerSummon {
     private int fireInterval = 16;
     private double range = 16;
     private @Nullable LivingEntity focus;
+    /** The cast that sent it: its shots carry the ladder's riders, pierce and looks (SPEC 34). */
+    public dev.awaken.powers.@Nullable Cast cast;
+    /** Burst Fire (Drone 4): shots per burst, three ticks apart, with a longer pause between bursts. */
+    public int burst = 1;
+    private int burstLeft;
+    /** Shield (Turret 4): the share of every hit it shrugs off. */
+    public float shield;
 
     public PowerDrone(EntityType<? extends PowerDrone> type, Level level) {
         super(type, level);
@@ -55,6 +62,10 @@ public final class PowerDrone extends PowerSummon {
 
     public boolean isTurret() {
         return entityData.get(DATA_TURRET);
+    }
+
+    public double range() {
+        return range;
     }
 
     public void makeTurret(double range, int interval) {
@@ -105,12 +116,23 @@ public final class PowerDrone extends PowerSummon {
         LivingEntity target = pickTarget(sl, owner);
         if (target != null) getLookControl().setLookAt(target, 30f, 30f);
         if (--fireDelay > 0 || target == null) return;
-        fireDelay = fireInterval;
+        if (burst > 1) {
+            if (burstLeft <= 0) burstLeft = burst;
+            fireDelay = --burstLeft > 0 ? 3 : fireInterval * 2;
+        } else fireDelay = fireInterval;
         Vec3 from = position().add(0, getBbHeight() * 0.5, 0);
         Vec3 to = target.position().add(0, target.getBbHeight() * 0.55, 0);
         Vec3 dir = to.subtract(from).normalize();
-        Bolts.fire(sl, owner, this, from, dir, isTurret() ? 2.6f : 2.0f, power(), Forces.Force.CHARGE,
+        var b = Bolts.fire(sl, owner, this, from, dir, isTurret() ? 2.6f : 2.0f, power(), Forces.Force.CHARGE,
                 isTurret() ? 0xFFFFB347 : 0xFF7FE8FF, 30, isTurret() ? 0.8f : 0f);
+        if (cast != null && cast.powerLevel > 1) {
+            b.cast = cast;
+            b.land = true;
+            if (cast.kit.pierce != null) {
+                b.pierce = cast.kit.pierce.n();
+                b.pierceShare = cast.kit.pierce.share();
+            }
+        }
         sl.playSound(null, getX(), getY(), getZ(), PowerSounds.DRONE_SHOT.get(), SoundSource.PLAYERS, 0.5f, isTurret() ? 0.8f : 1.4f);
         sl.sendParticles(ParticleTypes.ELECTRIC_SPARK, from.x, from.y, from.z, 3, 0.05, 0.05, 0.05, 0.05);
     }

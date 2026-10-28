@@ -340,7 +340,7 @@ P("mend", "Mend", "Spirit", "active",
 P("third_eye", "Third Eye", "Spirit", "active",
   ("Eye Mark", "A glowing eye opens on your brow (others see it).", "A second longer."),
   ("Exposed", "Seen foes glow brighter.", "Seen foes take 10% more from you."),
-  ("Secrets", "Hidden things glow too.", "Shows hidden doors, chests and traps."),
+  ("Shared Sight", "Your friends' eyes open with yours.", "Friends near you see the foes you see."),
   ("All-Seeing", "An eye opens in the sky above you.", "Sees 64 blocks.", "Fingers to the brow, head tipped back."))
 P("cord_lash", "Cord Lash", "Spirit", "active",
   ("Braided", "The cord braids with soul light.", "2 blocks further."),
@@ -363,7 +363,7 @@ P("void_maw", "Void Maw", "Spirit", "ultimate",
   ("Chew", "The maw spits debris.", "The debris hits foes round it."),
   ("The Hollow Mouth", "The maw closes with a visible bite.", "The bite heals you for what it swallows.", "An arm thrust out, the hand clenching shut."), hidden=True)
 P("waking_dream", "Waking Dream", "Spirit", "active",
-  ("Shimmer", "What you shape shimmers like a dream.", "Shapes 15% faster."),
+  ("Shimmer", "What you shape shimmers like a dream.", "Ready again 15% sooner."),
   ("Bigger", "Doors and bridges come wider.", "Shapes bigger."),
   ("Lasting", "The shimmer fades slower.", "Lasts twice as long."),
   ("Lucid Architecture", "Stairs spiral, bridges arch, with rails of light.", "Shapes follow the land's lines.", "Hands shaping a curve in the air."), hidden=True)
@@ -384,7 +384,7 @@ P("frost_nova", "Frost Nova", "Spirit", "active",
   ("Winter Bloom", "A huge ice flower blooms round you and shatters.", "The shatter hits again.", "A stamp, then the hands opening upward."), hidden=True)
 P("ghost_step", "Ghost Step", "Spirit", "movement",
   ("Soul Trail", "A pale trail hangs along the step.", "2 blocks further."),
-  ("Phase Chill", "Foes you pass through frost over.", "They're slowed."),
+  ("Phase Chill", "Foes you pass through frost over.", "They're slowed harder, for 3 s."),
   ("Further", "The trail stretches.", "2 more blocks."),
   ("Through the Veil", "A glowing doorway stays where you went in.", "Allies can follow through it for 3 s.", "A step through, the hand trailing."), hidden=True)
 P("twin_strike", "Twin Strike", "Spirit", "active",

@@ -51,6 +51,8 @@ public final class Bolts {
         /** Foes it still goes through (a ladder's pierce), each further one taking {@link #pierceShare} of the last. */
         public int pierce;
         public float pierceShare = 1f;
+        /** A cast's bolt whose power sends no landing of its own (a drone's shot): the bolt draws it. */
+        public boolean land;
         float scaleNext = 1f;
         int hits;
         final Set<Integer> hit = new HashSet<>();
@@ -169,7 +171,7 @@ public final class Bolts {
         }
         if (b.cast != null) {
             // a cast's bolt: the power sends its own landing; the foes a pierce goes on through get theirs here
-            if (b.hits > 1) Fx.at(b.cast, FxKind.IMPACT, at).dir(b.vel).scale(0.9).plain().send();
+            if (b.hits > 1 || b.land) Fx.at(b.cast, FxKind.IMPACT, at).dir(b.vel).scale(b.land && b.hits <= 1 ? 0.6 : 0.9).plain().send();
             return;
         }
         b.level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, 6, 0.15, 0.15, 0.15, 0.25);
