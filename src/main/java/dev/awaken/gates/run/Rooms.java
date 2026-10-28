@@ -130,6 +130,7 @@ public final class Rooms {
         if (g.scripted) firstGate(e, role);
         else if (role == MobRole.Role.BOSS) partyLord(e, partyOnFloor(level, g, f));
         GateMobs.register(e, new GateMobs.Key(g.id, f.area, f.floor, roomKey));
+        dev.awaken.gates.worlds.WorldsLive.dress(e, f, home);
         Modifiers.onSpawn(g, e);
         if (role == MobRole.Role.BOSS && f.area == 0) dev.awaken.core.api.ArmsApi.lordWields(e);
         if (role != MobRole.Role.BOSS && !g.scripted) dev.awaken.core.api.ArmsApi.gateSpawn(e, g.key(), f.area, f.floor, role == MobRole.Role.ELITE); // the bearer of the gate's pattern (docs/arms-progression/PLAN.md §3.4)
@@ -452,6 +453,7 @@ public final class Rooms {
         BlockPos c = GateService.roomFloor(g, f, end, end.centerX(), end.centerZ());
         level.playSound(null, c, GatesRegistry.SND_SOLVED.get(), SoundSource.BLOCKS, 1.5F, 1.0F);
         GateRegistry.get(level.getServer()).setDirty();
+        dev.awaken.gates.worlds.WorldLive.progress(level, g, f);
     }
 
     // ---- puzzles ----------------------------------------------------------------------------------------------------
@@ -474,6 +476,7 @@ public final class Rooms {
         if (dev.awaken.gates.world.Puzzles.solved(mask, n)) {
             fs.puzzlesSolved.add(r.id);
             fs.clearedRooms.add(r.id);
+            dev.awaken.gates.worlds.WorldLive.progress(level, g, f);
             Room.Feature vault = r.feature(Room.FeatureKind.VAULT_CACHE);
             if (vault != null) {
                 for (int[] b : FeatureBlocks.vaultBars(vault)) {

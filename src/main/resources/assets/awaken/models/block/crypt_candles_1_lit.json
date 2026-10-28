@@ -1,0 +1,189 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/crypt_wax",
+    "wax": "awaken:block/crypt_wax",
+    "flame": "awaken:block/crypt_flame"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        0,
+        7
+      ],
+      "to": [
+        9,
+        9,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            7,
+            2,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            7,
+            2,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            7,
+            2,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            7,
+            2,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            7,
+            2,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            7,
+            2,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        9,
+        5,
+        7
+      ],
+      "to": [
+        9.5,
+        8,
+        8
+      ],
+      "faces": {
+        "down": {
+          "texture": "#wax",
+          "uv": [
+            4,
+            0,
+            5,
+            3
+          ]
+        },
+        "up": {
+          "texture": "#wax",
+          "uv": [
+            4,
+            0,
+            5,
+            3
+          ]
+        },
+        "north": {
+          "texture": "#wax",
+          "uv": [
+            4,
+            0,
+            5,
+            3
+          ]
+        },
+        "south": {
+          "texture": "#wax",
+          "uv": [
+            4,
+            0,
+            5,
+            3
+          ]
+        },
+        "west": {
+          "texture": "#wax",
+          "uv": [
+            4,
+            0,
+            5,
+            3
+          ]
+        },
+        "east": {
+          "texture": "#wax",
+          "uv": [
+            4,
+            0,
+            5,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        8,
+        9,
+        7
+      ],
+      "to": [
+        8,
+        12,
+        9
+      ],
+      "faces": {
+        "west": {
+          "texture": "#flame"
+        },
+        "east": {
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        7,
+        9,
+        8
+      ],
+      "to": [
+        9,
+        12,
+        8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#flame"
+        },
+        "south": {
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}

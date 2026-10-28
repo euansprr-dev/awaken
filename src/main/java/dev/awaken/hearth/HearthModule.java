@@ -74,6 +74,11 @@ public final class HearthModule {
 
         HearthHooks.install(new HearthHooks.Lookup() {
             @Override
+            public net.minecraft.world.item.ItemStack keepsake(String id, String name, long day) {
+                return dev.awaken.hearth.trophy.Trophies.make("awaken:keepsake/" + id, name, day);
+            }
+
+            @Override
             public Optional<BlockPos> nearest(ServerLevel level, BlockPos pos, int radius) {
                 return HearthData.get(level.getServer()).nearest(pos, level.dimension().identifier().toString(), radius).map(h -> h.pos);
             }

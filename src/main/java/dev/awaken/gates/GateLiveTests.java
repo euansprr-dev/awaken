@@ -410,6 +410,11 @@ public final class GateLiveTests {
         return new GatePlan(seed, GatePlan.CONTENT_VERSION, Rank.E, theme, layout, List.of(mods), twist, 3, theme.bossId(), annex, annexRule);
     }
 
+    /** Gates resolve to the test level until {@link #teardown} (for tests outside this package). */
+    public static void testLevel(ServerLevel level) {
+        GateService.testLevel = level;
+    }
+
     /** A READY gate in a fresh cell of the test level with the given (area, floor) pairs painted. */
     public static GateRecord standUp(GameTestHelper h, GatePlan plan, int... areaFloors) {
         ServerLevel level = h.getLevel();
@@ -431,7 +436,7 @@ public final class GateLiveTests {
                 int cx = (Cells.originX(g.cell) >> 4) + f.originSlotX + gx, cz = (Cells.originZ(g.cell) >> 4) + f.originSlotZ + gz;
                 level.getChunk(cx, cz);
                 GatePainter.paint(l, g.cell, cx, cz, (x, y, z, s) -> {
-                    if (Cells.floorAtY(y) == f.floor) level.setBlock(new BlockPos(cx * 16 + x, y, cz * 16 + z), s, 818);
+                    if (f.paints(y)) level.setBlock(new BlockPos(cx * 16 + x, y, cz * 16 + z), s, 818);
                 });
             }
         }

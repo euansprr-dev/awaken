@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/crypt_niche"
+    },
+    "facing=east": {
+      "model": "awaken:block/crypt_niche",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/crypt_niche",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/crypt_niche",
+      "y": 270
+    }
+  }
+}

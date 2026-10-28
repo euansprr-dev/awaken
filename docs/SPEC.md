@@ -2187,9 +2187,9 @@ Gates in a party:
   for whoever is near, as before); a gate rolled for someone never forms within 256 blocks of a Hearth they don't own
   or share, and a gate whose break comes due within 256 blocks of a Hearth its owner doesn't share (one placed after
   the gate formed) folds away instead of breaking. A veteran's A-rank gates and breaks never land on a newcomer's home.
-- Cells: a released gate cell is erased and reused while the server runs (`RegionRecycler`); the registry (schema 2)
-  keeps each cell's generation, entities stamp theirs (`awaken_cell_gen`), and one saved with an older generation of
-  its cell leaves when loaded. The stop-time cleanup still deletes whatever was left.
+- Cells: a released gate cell is erased and reused while the server runs (`RegionRecycler`), the lowest free one first
+  (§38.1); the registry (schema 2) keeps each cell's generation, entities stamp theirs (`awaken_cell_gen`), and one saved
+  with an older generation of its cell leaves when loaded. The stop-time cleanup still deletes whatever was left.
 
 Shared rewards (credit the party in range; separate rolls per player; `core.api.Parties.sharing` is the one rule for
 who: party members online, alive, not spectating, in the same level within 32 blocks of the kill):
@@ -9072,6 +9072,356 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
   steps and hints), and the rail's unread count rising as trails open. **Not built / unverified**: the task card and Now line with a followed trail on a real
   screen (the first tour caught the first-hour card covering it; fixed, and the second tour showed the trail on the card ticking as steps were done; the card's count was off until every done step was sent, fixed and tested, not re-toured; the Now line shows the followed step below the Hale and camp lines, as designed at priority 55); a step's `{key}` caps; a `tip` (none shipped yet); several
   followed trails; the Powers, Story and the remaining World trails; the Armoury's Track as a step type.
+
+## 38. Gate Worlds (every gate floor a world of its own; page https://claude.ai/artifact/T6AdCwtMo7vvpDiNA2wJRf; Euan approved all seven recommendations 2026-10-28: "Go with all recomentations, this is great")
+
+Euan: gates feel like block rooms; make each floor feel like entering a new world, "holy shit, jaw dropped", every kid's dream
+RPG. The plan: 90 worlds (per theme two everyday, a deep one, a wonder and a secret one, plus 15 rare), four moods each,
+about 230 new blocks, the seven-layer atmosphere checklist, a different world on every floor, darker shaped light, Gate Air in
+Lens (built by the Lens owner from this section), an open-sky gate dimension (Stage 3), per-world looks for each theme's
+monsters plus 15 signature creatures (through the mob forms work), and the RPG layer (the Atlas of Gates in the Codex,
+keepsakes, title cards, the journey down, a rule per world, secrets, rarity, theme mastery). Built in stages, each merged and
+switchable on its own: 0 foundation, 1 the Bell Crypt complete (Euan's go or stop), 2 the other E themes, 3 D themes and the
+open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `gates` (`dev.awaken.gates.worlds` and
+`dev.awaken.gates.world`). The fights, keys, shrines, Lords, twists and modifiers inside stay what they are.
+
+### 38.1 Room for height: plots (content version 6)
+
+- `GatePlan.CONTENT_VERSION` is **6**. A version 6 gate gives every floor its own **plot** (`Plots`): the cell's four
+  256 x 256 quadrants, each an upper tier (y 128..255) and a lower tier (y 0..127), eight plots for the six main and two annex
+  floors a gate can have. The dimension stays 256 tall. Version 5 and older gates keep the stacked 32-block bands
+  (`Cells.floorY`, `Cells.floorAtY`) exactly; nothing they built moves.
+- **Assignment** is a function of the saved plan only (`FloorBuilder.plotFor`): floors in order (main 1..n, then annex 1 and 2;
+  the ritual and the trials have one), tall worlds first get a whole quadrant column (y 0..255) while every floor still fits
+  (n floors with k tall use n + k tiers of 8, at most 4 tall), earliest first; the rest take upper tiers, then lower ones.
+  Whether a floor is tall is saved with its pick (`FloorWorld.tall`), so plots never move even if a recipe goes away.
+- **Today's rooms in a plot**: a floor with no world builds exactly the rooms version 5 built (same seed, same rooms, same
+  blocks), standing at its plot's bottom + 48 (`Plots.ROOMS_BASE`) with its grid at the quadrant's slot + 1. Unentered version 5
+  gates are rebuilt as version 6 on the next start, as every gate update has; a gate someone entered keeps its version.
+- **Finding things**: `GateLayout.floorAt(x, z, y)` (cell-local x and z, absolute y) checks the plots on version 6 and the bands
+  before. `FloorLayout` carries its `plot` (null before 6), the y range it paints (`yLo`, `yHi`, `paints(y)`; tests and tools
+  filter a chunk's blocks by floor with it), and on a world floor its `places`, `world`, `mood`, `biome`, `air` and `model`.
+  `Where` asks `roomAt(x, y, z)`. The fall check is unchanged (below y 0 puts you back at the floor's entrance).
+- **An instance keeps to itself** (checked 2026-10-28 after a 42 s freeze on Euan's server, likely overworld planning around
+  a gate's coordinates; the roads work audits that side): a world floor is built and lit only from its saved plan, inside its
+  cell, in the gate dimension. Worlds call no other module with a position, add no chunk tickets of their own (a gate's
+  build still loads 7 x 7 chunks at its entrance and 5 x 5 at the next floor's, as before), and never read or load a
+  chunk that isn't loaded (the Flood fills a chunk when it loads). World biomes have no features, carvers, spawns or tags,
+  and the gate generator places no structures, so nothing else plans in them. A floor plans in under 50 ms and carves a
+  chunk in under 4 ms on average (tests). A new gate takes the **lowest free cell**, not the first freed, so live gates
+  stay close to the dimension's origin (cells are 1,024 apart, 64 to a row).
+- **The place map** (`PlaceMap`): which place (room) holds a floor-local spot, in 4-block cells, each with a ground place and
+  optionally an upper place from a split height (a gallery over an aisle). World floors answer "which room is this?" with it;
+  rooms floors keep the 16-block slot grid (`PlaceMap.ofSlots` gives the same answer, cell for cell). Places are `Room`s, so
+  `Where`, `Rooms`, `Pressure` and the Rig keep their answer type; a place's `gx..gh` are its bounding slots.
+
+### 38.2 Worlds, recipes and engines
+
+- **A recipe** is `data/<ns>/gate_worlds/<theme>/<world>.json` (`GateWorld`, `schema` 1), id `<ns>:<theme>/<world>`:
+  `theme`, `name`, `line` (the Atlas line, plain speech), `tier` (everyday, deep, wonder, secret, rare), `rarity` (common 10,
+  uncommon 4, rare 1, mythic 0.2 as weights), `kind` (the engine), `tall`, `roles` (`floor`, `boss`), `mastery` (floors of the
+  theme cleared that open it early; default deep 4, wonder 10, others 0), `weight`, `enabled`, `biome`, `moods` (`id`, `name`,
+  `weight`, `biome`), `params` (numbers for the engine) and the dressing (`blocks` by role, `hero`, `life`, `residents`, `sound`,
+  `events`, `rule`, `secrets` with `leads_to`, `keepsake`, `signature`). The loader (`GateWorlds`, a server reload listener)
+  skips a recipe with a problem and logs why; `gateworlds_recipes` fails when any file doesn't load or names a biome that
+  doesn't exist or the gates dimension doesn't list.
+- **Shape is stable**: a released world's `kind`, `params` and `hero` never change. A new shape is a new world (or a content
+  version), because a floor someone stands on is rebuilt from its recipe after a restart.
+- **Engines** (`WorldEngine`, by kind; `WorldEngine.of`): a pure, deterministic sculptor. `plan(Ctx)` turns the plan, floor,
+  plot, recipe, mood, seed and variation (0..2) into a `FloorLayout` with its places, place map, light, Gate Air data and a
+  `WorldModel` that carves any chunk of the plot on worldgen threads. A plan that can't make a floor complete on foot (every
+  place, key, cache and the end reachable from the arrival) returns null: the next variation is tried, and after three, or on
+  an exception, or for a kind this build has no engine for, or a role the recipe doesn't hold (a Lord's floor needs `boss`),
+  the floor is today's rooms in its plot. Stage 0 ships no engines (every floor is rooms); Stage 1 adds the Bell Crypt's.
+- **Biomes per world** (`GateBiomeSource`): on version 6 a floor's plot shows its `biome` (the mood's, else the world's, else
+  the theme's), sampled by height, so fog, sky, particles and sound follow the world with nothing synced. Every world biome is
+  listed in `data/awaken/dimension/gates.json` and gets a Lens look (`looks_gates.json`, by the Lens owner).
+
+### 38.3 The world director and the Atlas
+
+- **When**: `GateService.create` dresses every new plan (`GateWorlds.dress`) before the gate is recorded, and the start-up
+  rebuild of unentered older gates dresses the rebuilt plan; picks are saved in the plan (`worlds`: `area`, `floor`, `world`,
+  `mood`, `tall`). Never dressed: plans before version 6, the story's ritual, the Ascension trials, plans already dressed.
+  Server switches: `gateWorlds` (default on; off, new gates build rooms) and `gateWorldsOff` (world ids never picked).
+- **Picking** (pure: same plan, Atlas and catalogue give the same picks; its own random stream, so the Director's rolls are
+  unchanged): per floor, the open worlds of the floor's theme (the annex's floors use the annex theme): enabled, not switched
+  off, not secret, holding the floor's role, and open to the gate's rank (the theme's rank + 1 for deep, + 2 for wonder) or by
+  mastery (the owner has cleared that many of the theme's floors). From B rank a rare world replaces the pool on about one floor
+  in 25. Never the same world twice in a gate while another fits, never the world you were last in; weight = recipe weight x
+  rarity x 1 / (1 + times you've been there)^2; the mood the same way by mood weight and times in that mood. A floor nothing
+  fits stays rooms. Secret worlds are reached by finding their secret, never rolled.
+- **The Atlas** (`GateAtlas`, attachment `awaken:gate_atlas`, schema 1, kept through death, per player): per world the first
+  play-day, arrivals, arrivals per mood, secrets found and the keepsake; floors cleared per theme (mastery); the last 12
+  arrivals (world#mood); creatures met. Filled on arrival (`WorldsLive.arrive`) and on an ordinary floor cleared
+  (`WorldsLive.cleared`). The director reads the gate owner's (online) Atlas; friends each fill their own.
+- **Arrival** (`WorldPayloads.Arrival`): on arriving on a floor the client is told its world, name, mood, rarity, tier, line,
+  whether it's a first find, and its Gate Air data with the world position of its floor-local origin (an empty world clears).
+  `GateWorldClient` holds it: `current()`, `air()`, `origin()` (null and empty off a world floor or outside the gates).
+- **Gate Air data** (`FloorAir`, floor-local, sent with the arrival): lights (position, colour, reach, strength; at most 96),
+  shafts (from, to, radius, colour, strength; 24), mist layers (height, thickness, colour, density; 6) and still water planes
+  (height and rectangle; 12). Lens's Gate Air reads it each frame: mist takes the colour of the nearest 32 lights, 12 shafts
+  are marched, still water reflects; at most 1.5 ms a frame on Cinematic at 1440p on the M4, off on Swift and with Lens off.
+  Every world must pass the atmosphere checklist without it.
+
+### 38.4 Tests and where things stand
+
+- **Tests** (`gateworlds_`): `gateworlds_plots` (every floor of 400 varied plans inside its own plot and found again at its
+  arrival; no shared plots; version 5 bands unchanged; tall plots granted only while every floor fits; a Double Gate's annex
+  floors show the annex theme), `gateworlds_same_rooms` (version 6 builds version 5's rooms on every floor and paints the same
+  blocks, moved; a few room pieces pick a block's variant by its height, such as bookshelf or sodden shelf, ore, obsidian and honey, so
+  only those pairs may swap on a moved floor of a new gate, and gates already open never move), `gateworlds_place_map`, `gateworlds_recipes`, `gateworlds_director` (determinism, back to back, twice in a
+  gate, Lords' floors, secrets, mastery opening the deep world and the wonder, worlds switched off, saving plans and the Atlas).
+- **Stage 0** (built 2026-10-28): plots, the frame, the place map, recipes and their loader, per-world biomes, the engine
+  interface, the director, the Atlas and the arrival payload. No recipes ship yet, so every floor is today's rooms in its plot.
+- **Stage 1** (in progress): the world floor contract (38.5), the Bell Crypt's blocks and its four floor worlds (38.6); tests
+  `gateworlds_bell_recipes`, `gateworlds_belfry`, `gateworlds_ossuary`, `gateworlds_field` and `gateworlds_shaft`; the
+  arrival, the journey down and the Atlas page (38.7), test `gateworlds_atlas_view`; the live layer (38.8): events, the
+  bell rule, the Ringer, residents' looks, secrets, keepsakes and the catch, tests `gateworlds_live` and
+  `gateworlds_catch`, and every world's test also checks its marks (each handbell stands where it's marked, each secret
+  has something to find, the Flood's basins are dry and walled in) and that each of its recipe's secrets is placed on
+  some floor.
+
+### 38.5 The world floor contract (Stage 1)
+
+- **The programme** (`FloorBuilder.programme`): a world floor first lays out today's rooms for that floor exactly as a rooms
+  floor would (same seed, layout, room types, monsters, keys, puzzles, caches, Rig, the Lord's arena), then an engine hosts
+  each programme room on a place of the world (`WorldPlan`). Same fights and rewards, a different world. `WorldPlan.host`
+  gives a room its own place, `merge` puts several plain rooms (normal, elite, hall, shaft) in one long place, `extra` adds a
+  place the programme doesn't have (a stair, the Rope Shaft, a secret world), `join` connects two places and `anchor` says
+  where a room's features go. `finish(Walk, Look)` carries everything over: types, monster counts and spots (only where the
+  engine's `Walk` says you can stand), features snapped to the nearest free spot you can stand on within 10 blocks (the
+  Lord's spot and inner gates are placed by the engine), and returns null, with a reason (`WorldEngine.WHY`, logged), when a
+  room has no place, the Lord's arena changed size, or the end can't be walked to from the start.
+- **Built rooms**: the Lord's arena and every Rig room keep their programme size and are painted as today (in the band
+  4 below their floor to 28 above), with the world carved round them. A world floor's rooms sit on the plot's 16 x 16 slot
+  grid in slots 1..14 (the edge slots are the world's margin).
+- **Sculpt** (`Sculpt`): an engine's carve is an ordered list of operations, each in its own box and bucketed by chunk:
+  `carve` (open space by a signed distance field, with a 3-block solid shell behind it so nothing past it is ever seen),
+  `mass` (solid), `fill` and `fillOpen` (a block inside a shape, anywhere or only where open), `box`, `openBox`, `put`,
+  `putOpen`, `stamp` and `op` (any per-block work). Shell blocks are skinned last by what they face (floor, ceiling, wall).
+  Built once at plan time and frozen (`seal`); each worldgen thread then paints through its own buffer. **Thresholds**: every
+  doorway between two places is carved through with its own shell, and a door into a built room gets a frame of the world's
+  trim. **Screens**: where a world's open space (air or water) meets the edge of the band, a wall closes it.
+- **Blocks by role** (`WorldMats`): a recipe's `blocks` map names a block per role (`wall`, `floor`, `trim`, `bronze`...);
+  an engine asks for a role with a fallback, so one engine builds many worlds.
+- **Budgets**: a world floor plans in under 50 ms and carves a chunk in under 4 ms on average, 40 ms at worst (measured by
+  every world's test from its second plan on: the first warms up class loading and the JIT, which alone can pass 40 ms).
+- **World tests** (`WorldCheck`, `GateWorldBellTests`): each world is planned over many gates (every layout, rank, twist and
+  mood), every chunk carved, and walked on foot from the arrival (stairs, ropes and shallow water included; a Rig room is
+  crossed by its mechanism, from its way in to its way on): every monster spot, key, cache and feature reachable, every room
+  enterable, no water that would flow, and every step on the way to the end lit to 7 or more outside built rooms. Set
+  `AWAKEN_WORLD_DUMP=<dir>` to write plan, section and view pictures of the first floors and any failing floor.
+
+### 38.6 The Bell Crypt (Stage 1)
+
+- **Its 15 blocks** (`GatesRegistry.WORLD_BLOCKS`, textures `tools/art/specs/gate_worlds_bell.py`, all mined with a pickaxe
+  outside gates): crypt limestone, worn and crumbling; carved tracery; flagstone and wet flagstone; patina bronze (the
+  bells; strike it and the world's rule answers); crypt candles (1 to 5, lit or out, 3 light each lit); moon glass (light 10,
+  the lancets); rose glass (five hues, light 6); a bone niche (light 5, faces a wall); a drowned vestment (hangs on a wall,
+  no collision); bell rope (climbable); a lily candle (floats on water, light 6); a handbell (bronze in a stone yoke,
+  standing on the floor where anyone can strike it, faces one way, no collision; 38.8).
+- **The worlds** (`data/awaken/gate_worlds/bell_crypt/`): the Sunken Belfry (everyday, `hall`), the Ossuary Ways
+  (everyday, `passages`), the Bell Shaft (deep, `drop`, tall), the Field of Bells (wonder, `void`, floors only), and
+  Bellmaker's Rest (secret, `rest`, reached only through the Belfry's odd rope). Each has the moods Still, Tolling, Requiem
+  and Storm with their own biome (`awaken:gate_world/<world>[_<mood>]`, written by `tools/art/specs/gate_worlds_biomes.py`
+  and listed in the gates dimension); sound events are `awaken:gate.world.<name>` (38.9).
+- **The Sunken Belfry** (`HallEngine`): a drowned church along the plot's middle. The arrival is a narthex with two stair
+  turrets; a candlelit causeway (5 wide) runs down a flooded nave (the water one step below the causeway, so a fall is never a
+  trap; on a world with the Flood the tide is out when you arrive, see 38.8) between pointed arcades, with a gallery above and dark aisles behind the piers. The programme's spine becomes nave
+  bays (plain rooms merged, three at most, in runs of rows); the hub or the arena takes the Great Bell (you walk under it,
+  its lip just over your head), a calm bay later takes the drowned choir (stone singers waist-deep, facing the causeway);
+  branches become side chapels and crypts off the aisles; a puzzle or cache wing can take the Rope Shaft (a tall shaft hung
+  with bell ropes, climbed to Bellmaker's Rest on the odd rope); the end is the chancel under the rose window. Built rooms
+  sit centred on the causeway so their doors open onto it. Light: candle clusters every 4 blocks along the causeway, a
+  hidden light every slot, lancets of moon glass whose light lands on the water, small bells hung with lamps inside. Moods:
+  Tolling adds a monster to each fight room, Storm breaks some lancets open to the dark, Requiem and Still are the quiet
+  ones.
+- **Chains** (`ChainLayout`, shared by the passages and void worlds): the spine winds across the plot as places joined by
+  one-slot links (a seeded, bounded search; first with rock round every place, then allowing places to touch; a spine too
+  long folds plain neighbours into one place). A built room is crossed straight through, in line with its way in, so the
+  Rig can rebuild it; branches hang off their parent through a link of their own, or open straight off it, or off the
+  nearest place with room. A floor whose Rig room doesn't rebuild tries its next variation.
+- **The Ossuary Ways** (`PassageEngine`): the crypt under the Belfry where the bell-ringers were laid. Rooms are rounded
+  chambers under low domes, joined by winding passages three wide (a gentle S, or a quarter turn round a corner). Every
+  wall is banded like a real ossuary: a worn plinth, bone ends, a row of skulls and candles set into the wall above head
+  height, bones laid lengthwise, bone ends again. The arrival is a chamber at the foot of a stair that climbs away into the
+  dark you came down; the hub is the Bone Rotunda (a round domed hall, a pillar of skulls with candles at its foot, two
+  skull bands and a ring of lit niches); a quiet chamber halfway holds the charnel well (a round shaft to black water, a
+  lamp on a chain inside it, a bell rope down for anyone who falls in); long rooms are the Lantern Row (burial shelves,
+  lamps hung down the middle); the end is the ringers' tomb (a raised sarcophagus, candles all round); other chambers
+  have bone heaps, a coffin or bone pillars. Light is the candles plus hidden light (12) four apart and at every doorway
+  (`WorldPlan.doorLights`). Moods: Tolling adds a monster to each fight room, Requiem lights every candle, Still leaves
+  some out, Storm wets the floors.
+- **The Field of Bells** (`VoidEngine`, floors only): black water seven deep with no shore and no roof (its edges and
+  sky are black), bells of every size hung over it from nothing with a lamp lit in each, a few sunk to their shoulders.
+  Rooms are islands of flagstone level with the water, joined by causeways at the surface (the chain's links) edged with
+  floating lily candles; anyone who falls in swims to an edge and steps out. A stair of floating slabs comes down out of the
+  dark to the arrival island; a bell hangs low over every other island; the Still Bell (the biggest, its clapper still)
+  hangs over the last. A sealed island stands in a fence of bars six high rising out of the water. A Rig room stands in
+  the water as a drowned chamber on a dark plinth, dammed two blocks above the surface so the water stays out of its band.
+  Light: candles round each island's rim, hidden light four apart over islands, along causeways and at every doorway
+  landing. The light check follows the way on foot (`WorldCheck.dry`); swimming counts only where there's no other way.
+- **The Bell Shaft** (`ShaftEngine`, tall): a hollow tower of bells. The shaft (a rounded square 56 across) fills the plot's
+  middle four slots from its foot (24 above the plot's bottom) to a roof 22 over the top landing; tracery string courses
+  ring it a landing's height apart. The programme's spine is a ring of landings in the slots round it, going round one way,
+  each a step (8, or as little as 4 on a plot too short for 8) lower than the one before; a stair inside the lower landing,
+  the doorway's width, climbs to the door. A landing is a ringers' room vaulted towards the shaft, with bell ropes down its
+  back wall; on a straight side it opens onto a balcony out to the shaft's edge with a railing of tracery and bars two high
+  (nobody steps onto it and off) and candles a step back from it; round the shaft's corners two balconies split the rock on
+  the diagonal. The Rig room stands in the ring as built on a straight side, reaching out into the rock, crossed in line
+  (landings of the world's own fill in until it fits) and level with the landing before it; a spine too long for the ring
+  or the plot shares landings (three plain rooms at most). The arrival is the top landing, facing the shaft; the clapper
+  bridge runs from its balcony straight out to the shaft's middle line and along it to a round stand in the top bell's
+  mouth (its clapper hanging over you). The bell column hangs down the middle, each bell from the one above's mouth (those
+  under the bridge from the stand's underside), the lowest at least 8 over the floor. The last landing's stair goes down
+  the shaft wall to the foot: wet flagstones, a ring of candles round the middle, the end's shrine under the lowest bell.
+  When the end is sealed, or on the Lord's floor, the foot is a calm place and the end (a domed chamber) or the Lord's arena
+  is cut into the rock beside it, reached by a passage at the foot. Side rooms are domed chambers back in the rock at their
+  landing's height (or off the foot), never off a built room or one the bars close. Light: hidden light four apart over
+  landings, balconies, chambers and the foot, on every third step, along the foot of the shaft wall, at every doorway and
+  along the bridge. Moods: Tolling adds a monster to each fight room, Requiem lights every candle, Still leaves half out,
+  Storm thins the mist and brightens the light down the shaft.
+
+### 38.7 Arrivals, the journey down and the Atlas page (Stage 1)
+
+- **The journey down**: breaking the Seal to a world floor sends `WorldPayloads.Journey` (the world, its sound bed, and
+  its glow: the mean colour of its first 16 lights) just before the teleport, which stays immediate and lands you at the
+  floor's arrival yaw (its best view). The client's screen goes dark at once (everything but chat), motes stream up past
+  you, the next world's light rises from below and its sound bed starts. The dark lifts over 1.4 s once the floor is
+  ready (its arrival told, the chunk under you loaded, the section queue empty or 3 s gone), never before 1.5 s nor
+  after 6 s. Paced messages are held while it's dark. A rooms floor keeps the plain teleport.
+- **The title card** (`WorldCard`): every arrival on a world floor (floor 1 too), once the dark has lifted, asks the
+  notification director for the moment (IMPORTANT, topic `gate_world`, every 5 ticks) and holds every other paced message
+  while it's up; with no moment in 12 s (30 s for a first find) it's filed in the Journal as "Arrived · name" with the
+  world's line. On a world floor it replaces the "Floor N" toast: its floor line carries the floor, the second or inner
+  gate and "the Lord waits". It shows the name (scale width/190, 2 to 3.2) surfacing letter by letter from the middle,
+  a rule in the tier's colour drawn out under it with a diamond at its heart (everyday B4BCC6, deep 8FA8E8, wonder
+  E8C46A, secret 9EE0B8, rare E88AA8), then tier · mood · floor in spaced capitals (an everyday world names no tier),
+  then the world's line, over a soft band of dark. A first find adds "A NEW WORLD · RARITY" above in the rarity's colour
+  (common C9CED4, uncommon 7FD39A, rare 6FA8FF, mythic E0A0FF), a glint running along the rule and a longer hold:
+  9.5 s against 6.5, then 1.2 s out. Leaving the floor ends it.
+- **The sound bed** (`WorldBed`): the world's `sound` loops all round you (not positional) at 0.55, in over 3 s from the
+  journey's start, out over 2 s when you leave or the world changes; nothing when the pack lacks the sound.
+- **The Atlas page** (`AtlasSection`, the band's Codex page, order 300): `WorldPayloads.AtlasView` is sent on login and
+  on every arrival (and on a secret or keepsake found). The section shows once you've found a world: "ATLAS OF GATES"
+  with "WORLDS FOUND · n OF total" (every enabled world, secret ones included), a theme once you've found one of its
+  worlds ("BELL CRYPT", "2 of 4"), and a card per world in tier then name order. A found world's card: its painting
+  (128 x 72, `textures/gui/gate_atlas/<theme>/<world>.png`, drawn pixel for pixel; painted by
+  `tools/art/specs/gate_worlds_paintings.py`), name, tier · rarity, its line, "Moods n/m · Secrets n/m", a star once
+  its keepsake is yours; hovering tells the visits, the moods seen and how many more it has, the secrets found or
+  kept, the signature creature if you've met it. An unfound world is a dark outline in its rarity's colour with "?",
+  "Not found yet" and its tier · rarity. A secret world has no card until found.
+
+### 38.8 The live layer: events, rules, secrets, keepsakes and the catch (Stage 1)
+
+- **Marks** (`FloorLayout.marks`, planned with the floor, never saved): spots the live layer finds again, floor-local x/z and
+  y above the base like Gate Air. `bell` (a hung bell's box; id "" or a name an event looks for: "great", "still",
+  "lowest"; "handbell" for a handbell), `secret` (where a recipe secret is found, id the secret's), `basin` (what the
+  Flood fills). Engines mark every bell they hang (`WorldPlan.bell`), every handbell (`WorldPlan.handbell`) and secret.
+- **Handbells** (the 15th block, `crypt_handbell`): the great bells hang far overhead, so every world sets handbells where
+  you walk. The Belfry: one at the causeway's edge in every bay row, west and east by turns, and the choir's own among its
+  singers. The Ossuary: one by every crypt's back wall and one beyond the candles at the Rotunda's pillar. The Field: one
+  near the rim of every island but the arrival. The Shaft: one between the ropes on every landing and one on the foot.
+  They're set last of a floor's carve (`WorldPlan.handbells`, just before it's sealed, so nothing after cuts one away):
+  where the engine wants it, else the nearest spot within two blocks on its level that the finished carve leaves open with
+  head room over solid floor (`Sculpt.probe` works one block out at plan time), and never inside a doorway's box. One with
+  nowhere to stand isn't set or marked. Features (caches, shrines, a vault's bars) keep a block clear of every handbell.
+- **The rule, "bells"** (`WorldRules.strike`, from hitting or using any bell bronze: the patina bells and handbells, on a
+  world whose recipe has `rule: bells`): the bell rings (a handbell high, a great bell lower the bigger it is); a run of
+  glints goes from it through the next five doorways toward the floor's end, 120 at most, over about 2 s, seen by everyone
+  within 40 blocks; any secret within 24 blocks the striker hasn't found glints where it's hidden; every gate monster
+  within 10 (not a Lord) gets Slowness IV and Weakness II for 2.5 s. One strike per player every 15 ticks.
+- **The Ringer**: the 8th bell struck on one floor (anyone's) tolls three times and brings the Ringer, once a floor
+  (`FloorState.world` "ringer"): an elite of the floor's theme named "The Ringer", double health, about 8 blocks from the
+  bell in its room. "You've rung too many bells. The Ringer is coming." to everyone within 48. Everyone within 48 when it
+  comes has met the world's signature creature (`the_ringer`, on the Atlas). Its own body comes with the mob forms work.
+- **Events** (a recipe's `events`, each once a floor and saved as "ev:<id>"; a room on the way from the arrival to the end
+  runs it when anyone first reaches it or a room past it): **the Tolling** (halfway): the 12 nearest bells within 64 ring
+  one after another, 6 ticks apart, and dust comes down round everyone within 48 (a world with no bells of its own hears
+  three far tolls above it); in the Tolling mood they ring again every 90 s while anyone is on the floor. **The Bone Fall**
+  (a third of the way, the Ossuary): the passage rattles, bones come down, and 1.5 s later two of the floor's normal
+  monsters climb out of them at spots about 6 away (floor-wide, not a room's count). **The Silence** (the hub on the way,
+  else two thirds, the Field): the sound bed drains away for 8 s (`WorldPayloads.Hush`) and after 6 s the Still Bell tolls
+  once. **The Swing** (two thirds, the Shaft): the column groans and a peal runs down its 16 highest bells from the top,
+  8 ticks apart, each a little higher than the last, dust falling.
+- **The Flood** (the Belfry): the tide is out when you arrive. Each bay's water is a pit three deep (stone at -4, a hand of
+  water at -3, the brim at 0); mid-bay (three blocks of the row) a stair of three steps goes down from the causeway and
+  another up to the arcade, so the aisles are walked to as the water used to be swum; the choir's singers stand on plinths so
+  they stand waist-deep once it's in, the lilies two below the brim, Gate Air's water at -3. The first key taken on the floor
+  (a cache opened, a puzzle solved, the shrine opened), or anyone three quarters of the way down, starts it (saved, "flood"):
+  "The water is rising." It fills the basins (each stretch of bays either side of the causeway, -2 and -1) a layer at a
+  time with a second's breath between, at most 300 blocks a tick, without neighbour updates so the water stands still; the
+  lilies ride up to the brim; then everyone on the floor is told the floor again without a card so Gate Air's water stands
+  at -1 (`WorldLive.air`). Blocks in unloaded chunks are filled when they load; a restart part way picks it up again
+  ("flood_done" when every block is in).
+- **Places that are worlds** (the Bellmaker's Rest): stepping into it is an arrival there (the Atlas, its own card and
+  sound bed); stepping out tells the floor's world again without a card. Coming finds the floor world's secret that leads
+  there (the odd rope).
+- **Secrets** (struck handbells inside a `secret` mark; everyone within 24 finds it): **the choir's last note** (the
+  choir's handbell: three bells in a chord); **the sealed niche** (the Ossuary: a niche in one crypt's back wall behind its
+  handbell breaks open, once a floor, "open:sealed_niche"); **the lowest bell** (the Shaft's foot: the lowest bell
+  answers); **the silent bell** (the Field's last island: it makes no sound and the Still Bell answers it 2 s later). A
+  find says "You found one of this place's secrets: <name>." and goes on the Atlas.
+- **Keepsakes** (a recipe's `keepsake`, `keepsake_name` and `keepsake_from`: one of its secrets, its signature creature, or
+  "arrival"): once per player per world, a trophy (`HearthHooks.keepsake`, made by the Hearth's trophies as
+  "awaken:keepsake/<id>") into your pack to hang in the Trophy Hall, and a star on the Atlas card. The Belfry's (the Ringer's
+  Clapper) drops when the Ringer dies on a Belfry floor to everyone on a run within 48; the Ossuary's Bone Handbell comes
+  with the sealed niche, the Shaft's Little Tower Bell with the lowest bell, the Field's Field Bell with the silent bell, the
+  Rest's Bellmaker's Clapper with arriving. Keepsakes hang like any trophy, so each counts once toward the Trophy Hall's
+  bonus. The five together as a working bell tower at home is not built yet.
+- **The catch** (drop worlds, the Shaft): while you're on such a floor the server notes every 4 ticks where you stand on
+  the ground in a room, out of water; a fall of more than 9 blocks that has taken you 4 below that ledge puts you back on
+  it, facing the way you stood, for 3 damage, with "You fell, and the shaft gave you back to the last ledge you stood on."
+  Flying and gliding are never caught.
+- **Residents' looks** (the hook for the creature work): every monster `Rooms.spawn` makes on a world floor carries the
+  attachment `awaken:gate_world_look` (`WorldLook(world, look)`, saved with schema 1, synced to everyone who sees it): the
+  world it was met in (a place's own world inside a place) and the recipe's `residents` as an id (a bare id is ours:
+  "drowned_vestments" → "awaken:drowned_vestments"; empty when the world names none). The Ringer wears its signature
+  (`awaken:the_ringer`). An entity tag never reaches a client, so the look rides the attachment; the Ringer's server-side
+  marker stays in persistent data. Nothing paints a look yet: a look is a paint variant of the mobs module's hero rigs
+  (next to the Creature Kit), and the 15 signatures are new creatures with a plan of their own (mob forms covers only
+  the twelve vanilla species, §21.13). Until then a world's monsters look as they do anywhere.
+- **Saved**: `FloorState.world` (a set of strings, optional in the save, so floors saved before it load with none).
+  Everything else (strike counts, the Flood's progress, timed cues, ledges) lives in `WorldLive` while the server runs.
+- **Not in Stage 1**: the bells don't swing (no moving bell bodies; a proposal: display-entity bell props, 32 a floor at
+  most), the Ringer has no body of its own, and the five keepsakes don't yet make a bell tower at home.
+
+### 38.9 Sound and small life (Stage 1)
+
+- **Recorded first** (`tools/art/specs/audio_gate_worlds.py`, 3.3 MB of Ogg in `sounds/gate_world/`): every bell is one
+  of the three CC0 recordings in `tools/art/sources/city` (the church bell 3446, the small bell 0292), only resampled
+  (pitch), trimmed, faded and set in a stone room by convolution; nothing under a bell is an oscillator. Each bell's level
+  keeps its strike under the ceiling without the limiter. Bones, creaks and the catch are Kenney's CC0 impacts and creaks;
+  water and moving air are the caves' loops already in the mod; drips are the caves' drips by reference; the Storm's far
+  thunder is vanilla's thunder by reference. Loudness by `audio_mix.py`: beds -28 dBFS gated RMS, events -20 to -24.
+- **Beds** (48 s loops, stereo, streamed; `gate.world.<belfry|ossuary|shaft|field|rest>`): the Belfry slow water, the
+  bells' low hum (the church bell's tail an octave down) and drips; the Ossuary still air, a lower hum, bones settling;
+  the Shaft air moving up it, a deep hum, creaks far above; the Field open water, a hum a fifth wide, bells ringing very
+  far off three times a loop; the Rest a small warm room and a bell at rest.
+- **Events**: `strike` (a hung bell struck, 2 takes), `handbell` (2), `toll` (far, lowpassed, 2), `great_bell` (an octave
+  down: the Great Bell, the Still Bell and any bell 6 or more across), `ringer` (two tolls beating), `hum`, `swing`,
+  `flood`, `bone_fall` (2), `catch`, `found` (three handbells in a chord), `arrive` (the card's sting), `drip`, `storm`.
+  A bell's voice comes from its mark: a handbell its own, a great bell the great one (pitch 1 down to 0.8 the wider), any
+  other the strike (pitch 1.25 - 0.08 × its radius, 0.7 to 1.3).
+- **Subtitles**, every event and bed (`audio_events_resolve`), in plain words: "Bell rings", "Handbell rings", "A far bell
+  tolls", "The Great Bell tolls", "The Ringer's bell", "A bell hums", "The bells groan", "Water rises", "Bones fall",
+  "Caught on the ledge", "A secret found", "A far bell tolls and a handbell answers" (arriving), "Water drips", "Thunder
+  far above"; the beds "Water laps under the bells", "Bones settle in the passages", "Ropes creak far above", "Bells
+  ring far across the water" and "Old wood creaks in a quiet room".
+- **A bell hums** as you pass under it (within its rim plus 1.5, up to 32 below its lip; heard 32 blocks off): each bell
+  at most once in 20 s, checked each half second with the room checks (`WorldLive.hum`, no cost off a world floor).
+- **Small life** (`gates.client.WorldLife`, client only, never saved or sent; the recipe's `life` rides on the arrival):
+  moths round the floor's lights (10 near you), bats looping under the vault 6-18 above you (6; they turn off the stone
+  and away from you within 4), pale fish gliding just under the floor's water (8; a dart now and then; flat on the
+  water), rats along the floors by the walls (4; dashes and stops, bolting from you within 5); at most 40 in all, two of a
+  kind made a half second, out of view or 16+ off, faded in over a second and out at the end of their life, gone past 36
+  blocks. They move themselves without collision physics and keep to the air, water or floor they were made in. `dust`:
+  motes drifting round you (one every other tick); `drips`: a drip heard where it lands under a ceiling near you every 2
+  to 7 s; the Storm mood: far thunder every 25 to 70 s. Sprites (16 px, their own colours, 2-3 frames) from
+  `tools/art/specs/gate_worlds_bell.py`. The Belfry has bats, pale fish, moths and drips; the Ossuary moths, rats and
+  drips; the Shaft bats, dust and drips; the Field moths and pale fish; the Rest moths.
+- **Test** `gateworlds_sounds`: every `gate.world.*` event has its sounds.json entry and files, every world's bed is
+  registered, every `life` entry is a known kind; `gateworlds_live` also checks that a bell hums over you.
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 

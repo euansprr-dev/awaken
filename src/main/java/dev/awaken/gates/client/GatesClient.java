@@ -31,6 +31,7 @@ public final class GatesClient {
         modBus.addListener(GatesClient::payloads);
         modBus.addListener(GatesClient::renderers);
         modBus.addListener(GatesClient::layers);
+        modBus.addListener(WorldLife::register);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(Pillars::onExtract);
         bus.addListener(Pillars::onAfterLevel);
@@ -39,8 +40,13 @@ public final class GatesClient {
         bus.addListener(Blight::onFog);
         bus.addListener(GateHum::onTick);
         bus.addListener(GatesClient::tick);
-        bus.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> ClientGates.clear());
+        bus.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> {
+            ClientGates.clear();
+            GateWorldClient.clear();
+            WorldBed.stop();
+        });
         StatusSections.add(StatusSections.Tab.STATUS, new RunSection()); // a run's summary on the band's Status page
+        StatusSections.add(StatusSections.Tab.CODEX, new AtlasSection()); // the Atlas of Gates (SPEC §38.7)
         dev.awaken.core.api.MapMarks.registerGates(RunSection::marks); // the gates on the Atlas (the Gate Map is gone, SPEC §30)
         RigClient.init(modBus);
     }
@@ -58,6 +64,10 @@ public final class GatesClient {
             RigGhost.run(msg);
         });
         e.register(dev.awaken.gates.net.RigPayloads.Ghost.TYPE, (msg, ctx) -> RigGhost.ghost(msg));
+        e.register(dev.awaken.gates.net.WorldPayloads.Arrival.TYPE, (msg, ctx) -> GateWorldClient.arrive(msg));
+        e.register(dev.awaken.gates.net.WorldPayloads.Journey.TYPE, (msg, ctx) -> WorldJourney.start(msg));
+        e.register(dev.awaken.gates.net.WorldPayloads.AtlasView.TYPE, (msg, ctx) -> GateWorldClient.atlas(msg));
+        e.register(dev.awaken.gates.net.WorldPayloads.Hush.TYPE, (msg, ctx) -> WorldBed.hush(msg.ticks()));
         e.register(GatePayloads.SatchelView.TYPE, (msg, ctx) -> {
             ClientGates.satchel = List.copyOf(msg.items());
             ClientGates.satchelXp = msg.xp();
@@ -83,9 +93,16 @@ public final class GatesClient {
         // after the boss bars, so the top-right stack knows where they end this frame
         e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, HUD, RunHudLayer::render);
         e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Awaken.id("gate_rig_clock"), RigRunHud::render);
+        // the journey down's dark covers the whole HUD but chat; the world's title card draws over it as it lifts
+        e.registerBelow(VanillaGuiLayers.CHAT, Awaken.id("gate_world_journey"), WorldJourney::render);
+        e.registerBelow(VanillaGuiLayers.CHAT, Awaken.id("gate_world_card"), WorldCard::render);
     }
 
     static void tick(ClientTickEvent.Post e) {
         RunHudLayer.tick();
+        WorldJourney.tick();
+        WorldCard.tick();
+        WorldBed.tick();
+        WorldLife.tick();
     }
 }

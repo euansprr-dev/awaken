@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "theme": "bell_crypt",
+  "name": "The Bell Shaft",
+  "line": "A hollow tower of bells, hung one under another all the way down. You go down with them.",
+  "tier": "deep",
+  "rarity": "uncommon",
+  "kind": "drop",
+  "tall": true,
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "biome": "awaken:gate_world/bell_shaft",
+  "moods": [
+    {
+      "id": "still",
+      "name": "Still",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "tolling",
+      "name": "Tolling",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/bell_shaft_tolling"
+    },
+    {
+      "id": "requiem",
+      "name": "Requiem",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/bell_shaft_requiem"
+    },
+    {
+      "id": "storm",
+      "name": "Storm",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/bell_shaft_storm"
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:crypt_limestone",
+    "wall_worn": "awaken:crypt_limestone_worn",
+    "wall_crumbling": "awaken:crypt_limestone_crumbling",
+    "floor": "awaken:crypt_flagstone",
+    "floor_wet": "awaken:crypt_flagstone_wet",
+    "trim": "awaken:crypt_tracery",
+    "bronze": "awaken:crypt_patina",
+    "candles": "awaken:crypt_candles",
+    "glass": "awaken:crypt_moon_glass",
+    "rose": "awaken:crypt_rose_glass",
+    "niche": "awaken:crypt_niche",
+    "vestment": "awaken:crypt_vestment",
+    "rope": "awaken:crypt_bell_rope",
+    "lily": "awaken:crypt_lily_candle"
+  },
+  "hero": [
+    "bell_column",
+    "landings",
+    "the_clapper_bridge"
+  ],
+  "life": [
+    "bats",
+    "dust",
+    "drips"
+  ],
+  "residents": "drowned_vestments",
+  "sound": "awaken:gate.world.shaft",
+  "events": [
+    "tolling",
+    "the_swing"
+  ],
+  "rule": "bells",
+  "secrets": [
+    {
+      "id": "lowest_bell",
+      "name": "The bell at the bottom"
+    }
+  ],
+  "keepsake": "tower_bell",
+  "keepsake_name": "Little Tower Bell",
+  "keepsake_from": "lowest_bell",
+  "signature": "the_ringer"
+}

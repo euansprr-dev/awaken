@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "theme": "bell_crypt",
+  "name": "The Ossuary Ways",
+  "line": "Passages lined with the bones of the people who rang the bells, and the rooms where they were laid.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "passages",
+  "tall": false,
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "biome": "awaken:gate_world/ossuary_ways",
+  "moods": [
+    {
+      "id": "still",
+      "name": "Still",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "tolling",
+      "name": "Tolling",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/ossuary_ways_tolling"
+    },
+    {
+      "id": "requiem",
+      "name": "Requiem",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/ossuary_ways_requiem"
+    },
+    {
+      "id": "storm",
+      "name": "Storm",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/ossuary_ways_storm"
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:crypt_limestone",
+    "wall_worn": "awaken:crypt_limestone_worn",
+    "wall_crumbling": "awaken:crypt_limestone_crumbling",
+    "floor": "awaken:crypt_flagstone",
+    "floor_wet": "awaken:crypt_flagstone_wet",
+    "trim": "awaken:crypt_tracery",
+    "bronze": "awaken:crypt_patina",
+    "candles": "awaken:crypt_candles",
+    "glass": "awaken:crypt_moon_glass",
+    "rose": "awaken:crypt_rose_glass",
+    "niche": "awaken:crypt_niche",
+    "vestment": "awaken:crypt_vestment",
+    "rope": "awaken:crypt_bell_rope",
+    "lily": "awaken:crypt_lily_candle"
+  },
+  "hero": [
+    "bone_gallery",
+    "charnel_well",
+    "the_lantern_row"
+  ],
+  "life": [
+    "moths",
+    "rats",
+    "drips"
+  ],
+  "residents": "niche_watchers",
+  "sound": "awaken:gate.world.ossuary",
+  "events": [
+    "tolling",
+    "bone_fall"
+  ],
+  "rule": "bells",
+  "secrets": [
+    {
+      "id": "sealed_niche",
+      "name": "The niche that was sealed from inside"
+    }
+  ],
+  "keepsake": "bone_handbell",
+  "keepsake_name": "Bone Handbell",
+  "keepsake_from": "sealed_niche",
+  "signature": "the_ringer"
+}

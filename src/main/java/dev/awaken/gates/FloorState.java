@@ -42,6 +42,8 @@ public final class FloorState {
     public final Set<Integer> locked = new LinkedHashSet<>();
     /** The Gate Rig's rooms on this floor: tracks, swapped groups, latches (SPEC §17). */
     public RigState rig = new RigState();
+    /** A world floor's live layer (SPEC §38.8): events that ran, the Flood, the Ringer, secrets opened. Saved since v6 plots. */
+    public final Set<String> world = new LinkedHashSet<>();
 
     private record Sets(List<Integer> triggered, List<Integer> cleared, List<Integer> solved, List<Integer> lanterns, List<Integer> locked) {
         static final Codec<Sets> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -79,8 +81,9 @@ public final class FloorState {
                     List.copyOf(f.puzzlesSolved), List.copyOf(f.lanternsTaken), List.copyOf(f.locked))),
             Maps.CODEC.fieldOf("maps").forGetter(f -> new Maps(str(f.waves), str(f.runes), str(f.water))),
             Flags.CODEC.fieldOf("flags").forGetter(f -> new Flags(f.enteredAt, f.pressureWaves, f.warden, f.alarm, f.shrineOpen, f.spiritDone, f.collapsed)),
-            RigState.CODEC.optionalFieldOf("rig").forGetter(f -> f.rig.empty() ? java.util.Optional.empty() : java.util.Optional.of(f.rig))
-    ).apply(i, (s, m, fl, rig) -> {
+            RigState.CODEC.optionalFieldOf("rig").forGetter(f -> f.rig.empty() ? java.util.Optional.empty() : java.util.Optional.of(f.rig)),
+            Codec.STRING.listOf().optionalFieldOf("world", List.of()).forGetter(f -> List.copyOf(f.world))
+    ).apply(i, (s, m, fl, rig, world) -> {
         FloorState f = new FloorState();
         f.triggered.addAll(s.triggered);
         f.clearedRooms.addAll(s.cleared);
@@ -98,6 +101,7 @@ public final class FloorState {
         f.spiritDone = fl.spiritDone;
         f.collapsed = fl.collapsed;
         rig.ifPresent(r -> f.rig = r);
+        f.world.addAll(world);
         return f;
     }));
 

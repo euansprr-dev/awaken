@@ -156,6 +156,7 @@ public final class Interactions {
             }
         }
         level.setBlock(pos, state.setValue(GateBlocks.Cache.OPEN, true), Block.UPDATE_ALL);
+        if (w != null && w.floor() != null) dev.awaken.gates.worlds.WorldLive.progress(level, w.gate(), w.floor());
         var rank = g != null ? g.plan.rank() : dev.awaken.progression.Rank.E;
         var theme = w != null && w.floor() != null ? w.floor().theme : g != null ? g.plan.theme() : dev.awaken.gates.content.Theme.BELL_CRYPT;
         boolean fortune = g != null && g.plan.has(Modifier.FORTUNE);

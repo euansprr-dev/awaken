@@ -183,7 +183,8 @@ public final class Runs {
         if (area == 0 && floor < g.plan.floors()) GateService.pregenFloor(server, g, 0, floor + 1);
         if (area == 1 && floor == 1) GateService.pregenFloor(server, g, 1, 2);
         RigDirector.sendScene(p);
-        if (floor > 1 || area == 1) {
+        dev.awaken.gates.worlds.WorldsLive.arrive(p, g, f);
+        if ((floor > 1 || area == 1) && (f == null || f.world.isEmpty())) { // a world floor's title card says it instead
             Signal.toast(p, Component.literal((area == 1 ? (g.plan.is(Twist.GATE_WITHIN) ? "Inner gate · " : "Second gate · ") : "")
                     + "Floor " + floor + (f != null && f.bossFloor ? " · the Lord waits" : "")));
         }
@@ -230,6 +231,7 @@ public final class Runs {
         Room r = w.room();
         if (r != null) {
             Rooms.enter(gl, p, g, f, r, w.x(), w.z());
+            dev.awaken.gates.worlds.WorldLive.enter(gl, p, g, f, r);
             if (r.id == f.end && !f.bossFloor) floorCleared(p, g, run, f);
         }
         Modifiers.tickPlayer(p, g, run, f, r);
@@ -266,6 +268,7 @@ public final class Runs {
         }
         GateRegistry.get(server).setDirty();
         run.floorsCleared++;
+        dev.awaken.gates.worlds.WorldsLive.cleared(p, f);
         double reward = floorReward(p, g, f.area, f.floor);
         double bonus = reward * (1 - Curve.KILL_SHARE);
         run.satchelXp += bonus;
@@ -312,6 +315,7 @@ public final class Runs {
         ServerLevel gl = (ServerLevel) p.level();
         BlockPos e = GateService.entrance(g, run.area, next);
         gl.playSound(null, p.blockPosition(), GatesRegistry.SND_SEAL.get(), SoundSource.PLAYERS, 1F, 1F);
+        dev.awaken.gates.worlds.WorldsLive.journey(p, f);
         p.teleportTo(gl, e.getX() + 0.5, e.getY(), e.getZ() + 0.5, Set.of(), GateService.entranceYaw(g, run.area, next), 0F, true);
         if (run.area == 0 && next > p.getData(GatesRegistry.MEMORY.get()).comfortFloor()) {
             DirectorLog.log(p, "gate", "deeper than your usual (" + p.getData(GatesRegistry.MEMORY.get()).comfortFloor() + ")");

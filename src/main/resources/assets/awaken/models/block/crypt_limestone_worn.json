@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "awaken:block/crypt_limestone_worn",
+    "end": "awaken:block/crypt_limestone_worn_top"
+  }
+}

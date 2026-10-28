@@ -139,9 +139,10 @@ public final class GateRegistry extends SavedData {
         return !freeCells.isEmpty() || nextCell < Cells.MAX_CELLS;
     }
 
+    /** The lowest free cell, so live gates stay near the dimension's origin (SPEC §38.1, "An instance keeps to itself"). */
     public int allocateCell() {
         setDirty();
-        if (!freeCells.isEmpty()) return freeCells.remove(0);
+        if (!freeCells.isEmpty()) return freeCells.remove(freeCells.indexOf(java.util.Collections.min(freeCells)));
         if (nextCell >= Cells.MAX_CELLS) throw new IllegalStateException("no free gate cells");
         return nextCell++;
     }

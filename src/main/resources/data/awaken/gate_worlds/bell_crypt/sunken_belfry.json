@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "theme": "bell_crypt",
+  "name": "The Sunken Belfry",
+  "line": "The sea took this church a long time ago. Someone still rings the bells.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "hall",
+  "tall": false,
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "biome": "awaken:gate_world/sunken_belfry",
+  "moods": [
+    {
+      "id": "still",
+      "name": "Still",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "tolling",
+      "name": "Tolling",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/sunken_belfry_tolling"
+    },
+    {
+      "id": "requiem",
+      "name": "Requiem",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/sunken_belfry_requiem"
+    },
+    {
+      "id": "storm",
+      "name": "Storm",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/sunken_belfry_storm"
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:crypt_limestone",
+    "wall_worn": "awaken:crypt_limestone_worn",
+    "wall_crumbling": "awaken:crypt_limestone_crumbling",
+    "floor": "awaken:crypt_flagstone",
+    "floor_wet": "awaken:crypt_flagstone_wet",
+    "trim": "awaken:crypt_tracery",
+    "bronze": "awaken:crypt_patina",
+    "candles": "awaken:crypt_candles",
+    "glass": "awaken:crypt_moon_glass",
+    "rose": "awaken:crypt_rose_glass",
+    "niche": "awaken:crypt_niche",
+    "vestment": "awaken:crypt_vestment",
+    "rope": "awaken:crypt_bell_rope",
+    "lily": "awaken:crypt_lily_candle"
+  },
+  "hero": [
+    "great_bell",
+    "rose_window",
+    "drowned_choir",
+    "rope_shaft"
+  ],
+  "life": [
+    "bats",
+    "pale_fish",
+    "moths",
+    "drips"
+  ],
+  "residents": "drowned_vestments",
+  "sound": "awaken:gate.world.belfry",
+  "events": [
+    "tolling",
+    "flood"
+  ],
+  "rule": "bells",
+  "secrets": [
+    {
+      "id": "odd_rope",
+      "name": "The odd rope",
+      "leads_to": "awaken:bell_crypt/bellmakers_rest"
+    },
+    {
+      "id": "choir_hymn",
+      "name": "The choir's last note"
+    }
+  ],
+  "keepsake": "bell_clapper",
+  "keepsake_name": "The Ringer's Clapper",
+  "keepsake_from": "the_ringer",
+  "signature": "the_ringer"
+}
