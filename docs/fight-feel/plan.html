@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fight Feel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600&family=JetBrains+Mono:wght@400;600&family=Saira+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one reading column (~72ch) with wide figures and tables; a forge-steel neutral, Holo blue for the proposal, ember for today. */
+:root {
+  --bg: #f3f4f6; --panel: #ffffff; --ink: #161a21; --muted: #5b6372; --rule: #d9dde4;
+  --accent: #1f6fb8; --accent-soft: #e2eef9; --ember: #c2571b; --ember-soft: #fbeadf;
+  --gold: #a87b12; --good: #217a4b; --bad: #b3322b;
+  --display: "Saira Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12151b; --panel: #1a1f27; --ink: #e6e9ee; --muted: #9aa3b2; --rule: #2c333f;
+  --accent: #6cb4f5; --accent-soft: #1b2d42; --ember: #f0904f; --ember-soft: #3a2518;
+  --gold: #e0b443; --good: #5cc98d; --bad: #f07a70; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #12151b; --panel: #1a1f27; --ink: #e6e9ee; --muted: #9aa3b2; --rule: #2c333f;
+  --accent: #6cb4f5; --accent-soft: #1b2d42; --ember: #f0904f; --ember-soft: #3a2518;
+  --gold: #e0b443; --good: #5cc98d; --bad: #f07a70; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+.col { max-width: 72ch; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.1; text-wrap: balance; letter-spacing: 0.01em; }
+h1 { font-size: clamp(2.6rem, 6vw, 3.6rem); margin: 6px 0 8px; font-weight: 700; }
+h2 { font-size: 1.95rem; margin: 52px 0 10px; font-weight: 700; padding-top: 14px; border-top: 2px solid var(--ink); }
+h3 { font-size: 1.3rem; margin: 26px 0 6px; font-weight: 600; }
+p { margin: 8px 0; }
+.eyebrow { font: 600 0.78rem/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.15rem; color: var(--ink); max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font: 0.82rem/1.4 var(--mono); color: var(--muted); margin-top: 10px; }
+.status { display: inline-block; font: 600 0.75rem/1 var(--mono); padding: 5px 8px; border-radius: 3px; background: var(--ember-soft); color: var(--ember); letter-spacing: 0.05em; text-transform: uppercase; }
+.short { background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--accent); padding: 14px 20px; margin: 22px 0; }
+.short ul { margin: 6px 0; padding-left: 20px; }
+.short li { margin: 6px 0; }
+.tbl { overflow-x: auto; margin: 12px 0 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; background: var(--panel); }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+th { font: 600 0.74rem/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); background: var(--bg); }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 0.84rem; white-space: nowrap; }
+.tag { font: 600 0.7rem/1 var(--mono); padding: 3px 6px; border-radius: 3px; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.04em; }
+.keep { background: var(--accent-soft); color: var(--accent); }
+.ext { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent); }
+.rep { background: var(--ember-soft); color: var(--ember); }
+.bad { color: var(--bad); font-weight: 600; }
+.good { color: var(--good); font-weight: 600; }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+.fig { background: var(--panel); border: 1px solid var(--rule); padding: 14px 14px 10px; margin: 16px 0; }
+.fig svg { width: 100%; height: auto; display: block; }
+.fig .cap { font-size: 0.86rem; color: var(--muted); margin-top: 6px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font: 0.8rem/1.4 var(--mono); color: var(--muted); margin-bottom: 8px; }
+.sw { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; }
+.sw.today { background: var(--ember); } .sw.proto { background: var(--accent); }
+svg .frame { fill: var(--bg); stroke: var(--rule); stroke-width: 1.5; }
+svg .grid { stroke: var(--rule); stroke-width: 1; }
+svg .eye { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 5 5; }
+svg .cross { stroke: var(--ink); stroke-width: 1.6; fill: none; }
+svg .lab { fill: var(--muted); font: 12px var(--mono); }
+svg .p { fill: none; stroke-width: 2.4; stroke-linejoin: round; }
+svg .p.today { stroke: var(--ember); } svg .p.proto { stroke: var(--accent); }
+svg .dot.today { fill: var(--ember); } svg .dot.proto { fill: var(--accent); }
+svg .hit { fill: none; stroke-width: 2.2; } svg .hit.today { stroke: var(--ember); } svg .hit.proto { stroke: var(--accent); }
+svg .hitline { stroke: var(--gold); stroke-width: 1.5; stroke-dasharray: 4 3; }
+svg .band { fill: var(--accent-soft); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 14px 0; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 12px 16px; min-width: 0; }
+.card h4 { margin: 2px 0 6px; font: 600 0.8rem/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.card.s h4 { color: var(--good); } .card.w h4 { color: var(--gold); } .card.u h4 { color: var(--bad); }
+.loop { counter-reset: s; list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 8px; }
+.loop li { counter-increment: s; background: var(--panel); border: 1px solid var(--rule); padding: 10px 14px 10px 52px; position: relative; min-width: 0; }
+.loop li::before { content: counter(s); position: absolute; left: 14px; top: 9px; font: 700 1.3rem/1 var(--display); color: var(--accent); width: 26px; text-align: center; }
+.cmd { background: var(--panel); border: 1px solid var(--rule); padding: 12px 16px; margin: 12px 0; }
+.cmd dl { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 6px 16px; margin: 0; }
+.cmd dt { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); overflow-wrap: anywhere; }
+.cmd dd { margin: 0; }
+@media (max-width: 560px) { .cmd dl { grid-template-columns: 1fr; } .cmd dd { margin-bottom: 8px; } }
+pre { background: var(--panel); border: 1px solid var(--rule); padding: 12px 14px; overflow-x: auto; font: 0.8rem/1.5 var(--mono); }
+.dec { background: var(--panel); border: 1px solid var(--rule); padding: 12px 16px; margin: 10px 0; }
+.dec .q { font-weight: 600; }
+.dec .rec { color: var(--good); font-weight: 600; }
+.note { font-size: 0.88rem; color: var(--muted); }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="col">
+<div class="eyebrow">AWAKEN · Arms · plan for approval · 28 Oct 2026</div>
+<h1>Fight Feel</h1>
+<p class="lede">The swings are fixed. What's left is the moment of impact and what happens around it: how a struck creature moves, how a kill lands, whether fighting back mid-wind-up pays off, whether you step into a blow, whether the blade meets the world, and whether the fight has music and presence. Eight changes in four stages, each one switchable.</p>
+<div class="meta"><span class="status">Plan only, no game code changed</span><span>Branch claude/weapon-anims-plan-1678a2</span><span>SPEC §25 (Arms), §11 audio, §21.13 forms</span></div>
+</div>
+
+<div class="short col">
+<strong>In short</strong>
+<ul>
+<li><b>The blow lands:</b> creatures move the way the blade went. A side cut throws them sideways, an overhead pins them, an uppercut lifts them. Every struck body recoils and springs back. Today vanilla pushes everything straight away from where you look.</li>
+<li><b>The kill counts:</b> a longer freeze, its own sound, the body thrown and falling the way the blade went. The last foe of a fight gets a breath. Today a kill is the same as any hit.</li>
+<li><b>Fight back:</b> hitting a creature while it winds up a told blow is a <i>counter</i>. It does 1.5× posture, and ordinary creatures' blows are cut off. The simulator says this adds 13–29% more breaks and keeps fight length the same.</li>
+<li><b>Step into it:</b> each strike carries you 0.15–0.45 blocks forward. It stops short of the target and never steps you off a ledge.</li>
+<li><b>The world:</b> blows stop at walls. Today a sweep hits through them because nothing checks line of sight. A blade that meets stone clanks off with sparks, and sweeps cut wild grass.</li>
+<li><b>Crowds:</b> each extra body in a sweep adds a layer of sound and a bigger kick.</li>
+<li><b>Presence:</b> drawing a weapon sounds and moves like drawing one, and the katana's sheath draw becomes visible. Fights outside gates get the layered fight music that gates already have.</li>
+</ul>
+<p>Eight decisions at the end, each with my recommendation.</p>
+</div>
+
+<h2>1 · What you asked for</h2>
+<div class="col">
+<p>Your words: "using everything you learned, all the entire fighting system... is there anything else that would make this more satisfying and more immersive to use... not just animations, but everything else? I really want it to be extremely satisfying." Then: "plan all of them properly".</p>
+<h3>The job, the pain, the goal</h3>
+<p><b>The job:</b> fighting in AWAKEN, mostly in the overworld against ordinary mobs, and in gates against our creatures and the Lords. You play first person on a Mac with keyboard and mouse.</p>
+<p><b>The pain:</b> the swing now looks right, but what happens after it does not answer it. A creature hit from the side slides straight back. A kill is the same as any hit. A strike into a wall goes through it. Swinging at a winding-up creature earns nothing extra. The weapon is silent until it swings, and most fights have no music.</p>
+<p><b>The goal:</b> every blow gets a physical answer that matches what the blade did. Killing feels final. Reading a tell and striking first pays off. The weapon has weight in the world.</p>
+<h3>What strong, weak and unacceptable look like</h3>
+</div>
+<div class="two">
+<div class="card s"><h4>Strong</h4>You can tell from the struck body alone which way you cut. The kill stands out from the hits without anything on screen telling you. A counter feels like a reward you earned. The step makes the chain feel committed. Swinging in a cave clanks and sparks off the walls.</div>
+<div class="card w"><h4>Weak</h4>Things move more but read the same: a random wobble on every hit, a kill flash that looks like a hit flash, a step so small you can't feel it.</div>
+<div class="card u"><h4>Unacceptable</h4>Fights get harder or clumsier: steps that carry you off ledges or into lava, walls that eat blows aimed past a door frame, grass cutting that wrecks your garden, knockback that pulls creatures toward you, any frame-rate cost you can feel, or anything that breaks multiplayer.</div>
+</div>
+<div class="col">
+<h3>Constraints kept</h3>
+<ul>
+<li>The server decides what happens; the client predicts what it can. Everything here must stay safe for multiplayer (your guild server idea).</li>
+<li>No mixins. Everything here is done with NeoForge events and render-state hooks we already use.</li>
+<li>Every new feel effect gets a comfort switch, and reduced motion halves it, as the kicks and moments do today.</li>
+<li>The combat numbers stay in SPEC, and anything that changes balance is run through the combat simulator first.</li>
+<li>Our own creatures and the levelled forms (C and up) already flinch and fall with their own clips. This plan gives them the blow's direction; it does not replace their animation.</li>
+</ul>
+<h3>Not in this plan</h3>
+<p>Third-person swings (already planned after you sign off first person), new weapons, balance work on the Lords (the simulator says the dodger and parrier profiles already miss their targets; that belongs with the bosses work), controller support, gore.</p>
+</div>
+
+<h2>2 · What I found</h2>
+<div class="col"><p>Read from the code on this branch (base merged at e9cec279) and the 26.3 sources. Each row says what the system does today, how I know, and what to do with it.</p></div>
+<div class="tbl"><table>
+<thead><tr><th>Part</th><th>What it does today</th><th>Evidence</th><th>So</th><th></th></tr></thead>
+<tbody>
+<tr><td>Knockback on an Arms hit</td><td>Vanilla's: the base push of 0.4 goes away from where you stand, and any extra push goes along your look. The swing's direction is never used.</td><td><code>ArmsServer.hit</code> calls <code>p.attack(t)</code>; <code>Player.causeExtraKnockback</code> uses <code>getYRot()</code>; <code>LivingEntity</code> line 1372 pushes 0.4 away from the attacker</td><td>A side cut and a thrust push the same way. <code>LivingKnockBackEvent</code> can set the direction and strength while an Arms hit resolves.</td><td><span class="tag ext">extend</span></td></tr>
+<tr><td>The struck body on screen</td><td>The body freezes and trembles for the hit-stop (35–220 ms), then plays on. Vanilla adds its red flash and its death flip to one side.</td><td><code>ArmsFeel.modify</code> (render-state modifier); <code>LivingEntityRenderer.setupRotations</code></td><td>Vanilla bodies have no recoil and no direction. This applies to D-rank mobs, babies, LITE forms, other mods' mobs and vanilla's own.</td><td><span class="tag ext">extend</span></td></tr>
+<tr><td>Our creatures, levelled forms</td><td>Hero clips: "a blow knocks the body away from the camera", then it sways back on a spring. Forms from C have hurt and death clips.</td><td>SPEC §25 creature life; §21.13 clips; <code>AwLook</code> flinch; <code>FormBodies</code> cancels <code>RenderLivingEvent.Pre</code></td><td>The animation is good, but it has no direction: "away from the camera", not the way the blade went. They need the blow's direction from a shared API.</td><td><span class="tag ext">extend</span></td></tr>
+<tr><td>A kill</td><td>Plays like any hit. Nothing in Arms asks whether the blow killed.</td><td>No kill branch in <code>ArmsServer.hit</code>, <code>ArmsFeel</code>, <code>ArmsFx</code> or <code>ArmsAudio</code>; the death listeners are only for drops and mastery</td><td>The biggest missing moment.</td><td><span class="tag rep">new</span></td></tr>
+<tr><td>Several bodies in one sweep</td><td>Each body plays its impact (stacked at the same pitch), but only the first gets a freeze (one per 4 ticks).</td><td><code>ArmsRules.HITSTOP_GAP = 4</code>; the impact sound plays in <code>hit()</code></td><td>Cutting through three feels the same as cutting one, only louder.</td><td><span class="tag ext">extend</span></td></tr>
+<tr><td>Striking during a wind-up</td><td>Nothing extra. Only a posture break staggers a creature and cuts off its blow.</td><td><code>ArmsServer.posture</code>: <code>Strikes.stagger</code> only on break; <code>Strikes.tell(e)</code> already knows the wind-up</td><td>Defence pays (deflect, riposte); aggression doesn't. The data to judge a counter is already on the server.</td><td><span class="tag rep">new</span></td></tr>
+<tr><td>The body during a strike</td><td>The lunge exists only in the first-person hands. The body stands still. Only the dodge moves you, as velocity predicted on the client.</td><td><code>archetypes.json</code> swing <code>lunge</code>; <code>ArmsPredict.dodgeTick</code></td><td>The dodge's way of moving the body can be reused for a step.</td><td><span class="tag ext">reuse</span></td></tr>
+<tr><td>Walls</td><td>The sweep takes every creature in reach and arc. <b>There is no line-of-sight check</b>, so a blow lands through a wall or round a corner.</td><td><code>ArmsServer.sweep</code>: box, distance, arc and height only</td><td>Breaks immersion and is a small exploit. There is no clank either: a whiff into stone is silent.</td><td><span class="tag rep">fix</span></td></tr>
+<tr><td>Grass</td><td>Only a block under the crosshair outside a fight is cut, if the weapon cuts it faster than a hand (leaves, webs, bamboo).</td><td><code>ArmsPredict</code> line 104–126</td><td>A sweep through tall grass leaves it standing.</td><td><span class="tag rep">new</span></td></tr>
+<tr><td>Drawing a weapon</td><td>Vanilla's sink and rise when you change item, with no sound. The katana's "drawn from the sheath" bonus (×1.7) has no sound or look.</td><td><code>ArmsHands.equip</code>; <code>ArmsServer</code> line 240 <code>s.drawn</code></td><td>A real mechanic you can't see.</td><td><span class="tag rep">new</span></td></tr>
+<tr><td>Fight music</td><td>Layered music (bed, tension, combat, lord) plays only in gate runs. Overworld fights get vanilla's calm songs or silence.</td><td><code>GateMusic.context</code> returns null outside a gate; <code>Intensity</code> is generic; providers register by priority</td><td>The engine and the fight detection exist. Outside gates it needs a provider and a theme.</td><td><span class="tag ext">extend</span></td></tr>
+<tr><td>Sounds</td><td>31 Arms events: impacts by material, deflects, breaks, tells, swishes.</td><td><code>ArmsSounds</code>; <code>audio_arms.py</code> (Kenney CC0 plus the kit)</td><td>A strong base. The new events (kill, counter, cleave, clank, cut grass, draws) are made the same way.</td><td><span class="tag keep">keep</span></td></tr>
+</tbody></table></div>
+<div class="col">
+<h3>Why it feels flat (root causes)</h3>
+<div class="tbl"><table>
+<thead><tr><th>Symptom</th><th>Cause</th><th>Evidence</th><th>Could be wrong if</th><th>Test</th></tr></thead>
+<tbody>
+<tr><td>A hit "doesn't land"</td><td>Knockback ignores the swing; vanilla bodies have no recoil</td><td>Code above</td><td>The freeze alone sells the hit. Your own note says it doesn't.</td><td><code>arms_knock_dir</code>, plus your eye</td></tr>
+<tr><td>Kills are forgettable</td><td>No kill branch at all</td><td>Code above</td><td></td><td><code>arms_kill</code></td></tr>
+<tr><td>Fights feel passive</td><td>Only defence pays; your body stays put</td><td>Resonance table; no counter; the lunge only in the hands</td><td>You prefer the parry game as it is. Hence decision 4.</td><td>The simulator, plus your play</td></tr>
+<tr><td>The world feels fake</td><td>No line of sight; no block contact; no plant cutting</td><td><code>sweep()</code></td><td></td><td><code>arms_walls</code>, <code>arms_cut_grass</code></td></tr>
+<tr><td>Quiet fights</td><td>Layers only in gates</td><td><code>GateMusic</code></td><td>You like silent wilds. Hence decision 7.</td><td>The listening page</td></tr>
+</tbody></table></div>
+</div>
+
+<h2>3 · Options, and what I recommend</h2>
+<div class="two">
+<div class="card"><h4>A · Targeted</h4>Only the server rules: knockback direction, kill hit-stop, line of sight, counter posture. Small and safe. But the vanilla bodies still don't move, the kill isn't seen, and nothing gets the music or the draw. It covers maybe a third of the feel.</div>
+<div class="card"><h4>B · Recommended: one blow, answered everywhere</h4>Give each blow one description (its direction in the world, its weight, whether it killed, whether it was a counter, how many bodies it hit). The server applies the rules from it and sends it once. Every client, every renderer and the music read it. One rule, one payload, many answers. It reuses <code>CombatFeedback</code>, <code>SwingBlend</code>, the dodge's movement, <code>MusicLayers</code> and the audio kit.</div>
+<div class="card"><h4>C · Ambitious</h4>Real ragdolls and physics for every body, procedural hit-reaction animation per bone. Much more work, needs a physics layer we don't have, and would fight the forms' and our creatures' own clips. Not worth it while B covers what you'll notice.</div>
+</div>
+<div class="col"><p><b>Why B:</b> the hard part is consistency. The knockback, the recoil, the death fall, the forms' hurt clips and the sound all have to agree on one direction and one weight, or the blow reads as noise. A single "blow" record gives all of them the same answer. A could be done first and B built on it later, but B costs only a little more and needs no rework.</p>
+<p><b>What would change my mind:</b> if a render-state recoil looked cheap next to the forms' own hurt clips, I'd keep it for vanilla bodies only and let forms use their clips with the direction.</p></div>
+
+<h2>4 · How it works</h2>
+<div class="col"><p>One server record per landed blow, built where <code>ArmsServer.hit</code> already sends <code>HIT</code>:</p></div>
+<pre>Blow (server, per landed hit; sent in the existing arms_result / arms_seen, a new kind or flag set)
+  target       entity id
+  dir          the blade's travel at the hit, in the world, flat (yaw, from the move's screen direction u and the look)
+  lift         -1 pinned (a chop or slam) .. 0 level .. +1 lifted (an uppercut or rise)
+  weight       snap 0.6 | blade 1.0 | heavy 1.5, x1.3 for a finisher, a perfect heavy, an execution
+  flags        KILL, LAST (no other hostile hunts you within 16), COUNTER, CLEAVE n (bodies this move)
+  hitstop ms   as today, plus kill and cleave extra (capped)</pre>
+<div class="fig">
+<svg viewBox="0 0 900 330" role="img" aria-label="Flow of one blow from the press to its answers">
+<rect class="frame" x="1" y="1" width="898" height="328" rx="2"/>
+<g font-family="JetBrains Mono, monospace" font-size="12" fill="currentColor">
+<rect x="20" y="30" width="150" height="56" rx="3" fill="var(--panel)" stroke="var(--rule)"/><text x="32" y="52">Press</text><text x="32" y="70" fill="var(--muted)">client predicts swing</text>
+<rect x="200" y="30" width="170" height="56" rx="3" fill="var(--panel)" stroke="var(--accent)"/><text x="212" y="52">Step (new)</text><text x="212" y="70" fill="var(--muted)">velocity, like the dodge</text>
+<rect x="400" y="30" width="190" height="56" rx="3" fill="var(--panel)" stroke="var(--rule)"/><text x="412" y="52">Server sweep</text><text x="412" y="70" fill="var(--muted)">+ line of sight (new)</text>
+<rect x="620" y="30" width="260" height="56" rx="3" fill="var(--panel)" stroke="var(--accent)"/><text x="632" y="52">Whiff into a block (new)</text><text x="632" y="70" fill="var(--muted)">clank, sparks, recoil · cut grass</text>
+<rect x="400" y="130" width="190" height="74" rx="3" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="412" y="152">hit() builds the Blow</text><text x="412" y="170" fill="var(--muted)">dir · lift · weight</text><text x="412" y="188" fill="var(--muted)">KILL · COUNTER · CLEAVE</text>
+<rect x="20" y="130" width="340" height="74" rx="3" fill="var(--panel)" stroke="var(--rule)"/><text x="32" y="152">Server rules</text><text x="32" y="170" fill="var(--muted)">knockback along dir (LivingKnockBackEvent)</text><text x="32" y="188" fill="var(--muted)">counter: posture x1.5, stagger small ones</text>
+<rect x="620" y="130" width="260" height="74" rx="3" fill="var(--panel)" stroke="var(--rule)"/><text x="632" y="152">Music (Intensity)</text><text x="632" y="170" fill="var(--muted)">fight layers outside gates</text><text x="632" y="188" fill="var(--muted)">LAST resolves them</text>
+<rect x="20" y="248" width="200" height="60" rx="3" fill="var(--panel)" stroke="var(--rule)"/><text x="32" y="270">Fighter's client</text><text x="32" y="288" fill="var(--muted)">kill freeze, kick, sound</text>
+<rect x="240" y="248" width="200" height="60" rx="3" fill="var(--panel)" stroke="var(--rule)"/><text x="252" y="270">Every client near</text><text x="252" y="288" fill="var(--muted)">recoil spring, death fall</text>
+<rect x="460" y="248" width="200" height="60" rx="3" fill="var(--panel)" stroke="var(--rule)"/><text x="472" y="270">Forms, our creatures</text><text x="472" y="288" fill="var(--muted)">own clips, given dir</text>
+<rect x="680" y="248" width="200" height="60" rx="3" fill="var(--panel)" stroke="var(--rule)"/><text x="692" y="270">Sounds</text><text x="692" y="288" fill="var(--muted)">kill, counter, cleave</text>
+</g>
+<g stroke="var(--muted)" stroke-width="1.4" fill="none">
+<path d="M170 58 H200"/><path d="M370 58 H400"/><path d="M590 58 H620"/><path d="M495 86 V130"/><path d="M400 167 H360"/><path d="M590 167 H620"/>
+<path d="M495 204 V228 H120 V248"/><path d="M495 228 H340 V248"/><path d="M495 228 V248 H560"/><path d="M495 228 H780 V248"/>
+</g>
+</svg>
+<div class="cap">One blow, described once on the server, answered by every rule, renderer and sound. Blue edges are new.</div>
+</div>
+
+<h3>The eight changes</h3>
+<div class="col"><p>Each change uses the same rows: the problem, the change, what it preserves, the cost, and the test. Numbers are first values to start from; the Swing Studio's note command collects your notes on them as you play.</p></div>
+
+<h3>1 · The blow moves the body</h3>
+<div class="tbl"><table><tbody>
+<tr><th>Problem</th><td>Knockback ignores the swing. Vanilla bodies only freeze and flash.</td></tr>
+<tr><th>Change</th><td><b>Server:</b> while an Arms hit resolves (<code>pendingTarget</code>), <code>LivingKnockBackEvent</code> sets the direction. A side cut pushes 55% away and 45% along the blade's travel (never toward you). A thrust pushes straight away at ×1.15. A chop or slam pushes away at ×0.7 with no lift, so the body is pinned. An uppercut or rise lifts by +0.18. Strength otherwise stays vanilla's, and knockback resistance still applies. A Lord (150 health and up) keeps today's push.<br><b>Every client:</b> the struck body recoils on a damped spring once the freeze ends: shoved along the blow by 0.04/0.06/0.09 blocks (snap/blade/heavy), turned 6–12° with the cut, tipped 4–8° away. The spring is ω 18, ζ 0.45, so it settles in about 0.35 s. It is scaled down by body size (a ravager barely rocks, a silverfish flips). The shove and turn use the render state (every renderer); the tip uses a pushed pose in <code>RenderLivingEvent.Pre</code>/<code>Post</code> at the lowest priority, skipped if anyone cancelled the render.<br><b>Our creatures and forms:</b> their own hurt clips stay; they read the blow's direction from <code>core.api.CombatFeedback.blow(entityId)</code> instead of "away from the camera".</td></tr>
+<tr><th>Preserves</th><td>Vanilla's knockback strength, enchantments, resistance; the freeze; every clip.</td></tr>
+<tr><th>Cost</th><td>Sideways knockback can push a creature off a ledge it would not fall from today. That's the point, but it's a change. The forms and mobs modules each adopt the direction in their own package (a small cross-module step, SPEC'd).</td></tr>
+<tr><th>Test</th><td><code>arms_knock_dir</code>: a right-to-left cut moves a zombie at least 30% sideways; a thrust moves it straight back; a chop lifts it less than 0.05. A pure test of the spring (no overshoot past 30%, settled by 0.4 s).</td></tr>
+</tbody></table></div>
+
+<h3>2 · The killing blow</h3>
+<div class="tbl"><table><tbody>
+<tr><th>Problem</th><td>A kill is the same as any hit.</td></tr>
+<tr><th>Change</th><td><b>Server:</b> after the hit, if the target is dead or dying, flag KILL, and LAST if no other hostile hunts you within 16. The body's death push is ×1.6 along the blow.<br><b>Fighter:</b> the freeze grows by 40 ms (capped at 160 ms total), the view's kick ×1.3, and <code>arms.kill</code> plays over the impact: a low body drop with a steel ring tail, by material. The ribbon flares once.<br><b>Everyone near:</b> a vanilla body falls the way the blade went. The render-state hook zeroes vanilla's death flip, and our own fall turns about the axis across the blow, with vanilla's timing (√ over 20 ticks), so it still sinks and puffs out as before. Forms and our creatures play their own death clip, turned to fall with the blow.<br><b>The last foe:</b> a short breath in the view (field of view out 2.5% over 14 ticks), and the fight music resolves (change 8).</td></tr>
+<tr><th>Preserves</th><td>Vanilla's death timing, drops, XP, the poof; every death listener.</td></tr>
+<tr><th>Cost</th><td>The kill flag reaches the fighter about one round trip after the hit. At 50 ms ping it still lands inside the freeze (35–220 ms). At higher ping, the extra freeze is skipped and the sound and fall still play.</td></tr>
+<tr><th>Test</th><td><code>arms_kill</code>: a kill sends KILL; the last of three sends LAST; a hit that doesn't kill sends neither.</td></tr>
+</tbody></table></div>
+
+<h3>3 · Counter-hits</h3>
+<div class="tbl"><table><tbody>
+<tr><th>Problem</th><td>Striking a creature that is winding up earns nothing.</td></tr>
+<tr><th>Change</th><td><b>Server:</b> a blow that lands while <code>Strikes.tell(target)</code> is set (a told blow winding up) is a counter. It does posture ×1.5. An ordinary creature (posture 20) has the wind-up cut off (<code>Strikes.stagger</code>, 10 ticks). An elite or beast (posture 40) has it cut off only by a heavy or finisher counter. A Lord never; for Lords it's only posture.<br><b>Feel:</b> <code>arms.counter</code> (a dry crack over the impact), the tell's mark shatters in white and gold, a small field-of-view snap (2%). Untold blows (zombies and the like) have no wind-up, so they can't be countered, which keeps "nothing foretells an untold blow" true.</td></tr>
+<tr><th>Preserves</th><td>Deflect and riposte as the defensive skill; the break; every told blow's window.</td></tr>
+<tr><th>Cost</th><td>Fights against our creatures get a little easier for aggressive players. That is the intent, and the simulator below says by how much.</td></tr>
+<tr><th>Test</th><td><code>arms_counter</code>: a strike in a told wind-up does ×1.5 posture and staggers a normal creature; the same on a Lord does ×1.5 and no stagger; a strike outside a wind-up is unchanged.</td></tr>
+</tbody></table></div>
+
+<h3>4 · Step into the strike</h3>
+<div class="tbl"><table><tbody>
+<tr><th>Problem</th><td>The body stands still through every strike, so a chain feels like waving.</td></tr>
+<tr><th>Change</th><td><b>Client, predicted like the dodge:</b> over the last 2 wind-up ticks and the first active tick, the body gets a forward push of 0.15/0.3/0.45 blocks (snap/blade/heavy). A thrust, heavy or finisher gets ×1.3. Moves with their own motion (plunge, undercut, slipcut) get none. It stops 1.1 blocks from the focused or aimed creature's body. There is no step while holding back, in the air, guarding, in water, climbing, sliding or mantling. It never carries you over a drop deeper than one block, into lava or into a solid block (checked at the step's end). The server accepts it as normal movement; 0.45 blocks over 3 ticks is slower than a sprint.</td></tr>
+<tr><th>Preserves</th><td>The dodge and its invincibility; soft focus; movement checks.</td></tr>
+<tr><th>Cost</th><td>Fighting at a cliff edge feels different. The drop check is what stops this from becoming a hazard. Comfort switch <code>strikeStep</code>.</td></tr>
+<tr><th>Test</th><td>A pure rule (<code>ArmsRules.step</code>) tested for distance, the stop at the target, the drop, the lava and the back key.</td></tr>
+</tbody></table></div>
+
+<h3>5 · Blows stop at walls; the blade meets the world</h3>
+<div class="tbl"><table><tbody>
+<tr><th>Problem</th><td>Blows land through walls. Swinging into stone is silent.</td></tr>
+<tr><th>Change</th><td><b>Line of sight:</b> a creature counts only if a ray from the eye reaches one of three points on it (nearest point, centre, top) without hitting a solid block first. That's lenient, so a creature half behind a door frame is still hit.<br><b>The glance:</b> a strike whose active ticks hit nothing, with a solid block face inside its reach along the swing (a fan of 3 rays at the cut's middle), glances off it. The sound and sparks go by the block's sound type: stone and metal a bright clank and sparks, wood a thock and splinters, earth a thud and dust, leaves a rustle with no recoil. In first person the blade bounces back for 2 ticks (an extra offset, like the guard's jolt) and the view kicks 1°. The chain goes on and the block isn't damaged (decision 2). The client predicts it from its own copy of the world; others hear it from the server.<br><b>Grass:</b> in the active ticks, wild plants in the arc and reach are cut (short and tall grass, ferns, dead and plain bushes, dry grass; at most 12 a blow): never flowers, crops, saplings or firefly bushes, never inside a Hearth's radius or a village, never in adventure mode. It goes through <code>destroyBlock</code> as a player break, so claims can refuse it, and drops as vanilla's (seeds).</td></tr>
+<tr><th>Preserves</th><td>Aimed hits on things that aren't alive (the rift core); cutting webs and leaves under the crosshair.</td></tr>
+<tr><th>Cost</th><td>Some blows you land today round corners will miss. A few rays a blow (under 20 per active tick in a crowd).</td></tr>
+<tr><th>Test</th><td><code>arms_walls</code> (a zombie behind a wall isn't hit; one half behind a door frame is), <code>arms_cut_grass</code> (grass cut, a poppy and wheat left, nothing cut inside a Hearth's radius).</td></tr>
+</tbody></table></div>
+
+<h3>6 · Cleaving a crowd</h3>
+<div class="tbl"><table><tbody>
+<tr><th>Problem</th><td>Three bodies in one sweep feel like one, only louder.</td></tr>
+<tr><th>Change</th><td>The move counts its bodies. The first plays the normal impact. Each extra body adds <code>arms.cleave</code> one semitone higher (up to 3). The one freeze grows by 12 ms per extra body (up to +36), the kick by ×0.2 per extra body (up to ×1.6). Feel only: no extra damage or Resonance.</td></tr>
+<tr><th>Preserves</th><td>One freeze per 4 ticks; each body's own impact material.</td></tr>
+<tr><th>Test</th><td>Folded into <code>arms_kill</code>: a sweep through three sends CLEAVE 3.</td></tr>
+</tbody></table></div>
+
+<h3>7 · The weapon's presence</h3>
+<div class="tbl"><table><tbody>
+<tr><th>Problem</th><td>Weapons are silent until they swing; the katana's sheath bonus can't be seen.</td></tr>
+<tr><th>Change</th><td>Changing to a styled weapon plays a draw by its family: blades a steel ring, hafted weapons a wooden thock, the chain-blade a rattle, the Precursor Arm a hum, gauntlets a leather creak. Everyone near hears it (server, on the equipment change). First person gets a 6-tick flourish on top of vanilla's rise (a small wrist roll and settle; halved with reduced motion). <b>The katana:</b> after its 2 s rest the hands lower to a sheathed hold with a soft click, and the drawn strike plays <code>arms.draw_katana</code> (a rasp and ring) with a brighter ribbon. The ×1.7 becomes something you see and hear.</td></tr>
+<tr><th>Test</th><td>The katana's existing <code>drawn</code> rule is already tested; the sounds go through the listening page.</td></tr>
+</tbody></table></div>
+
+<h3>8 · Fight music outside gates</h3>
+<div class="tbl"><table><tbody>
+<tr><th>Problem</th><td>Overworld fights have no music. The layered engine plays only in gates.</td></tr>
+<tr><th>Change</th><td>A new music provider <code>fight</code> (priority 80: under gates 100 and the opening 160) names <code>awaken:fight/wilds</code> outside gates, Carillon and villages, but only once <code>Intensity</code> reaches combat. It holds through tension and lets go at calm, so a walk stays quiet. It uses the four stems the gates use, with no calm bed: percussion and a low ostinato for combat, horns for the lord level (named beasts, elites hunting you, boss-role mobs). They are made with <code>audio_layers.py</code> like the gate themes, around 8 MB of Ogg (within the 60 MB budget). A LAST kill lets the combat layer go in 3 s with a resolving hit. A vanilla song fades out first, as in gates.</td></tr>
+<tr><th>Preserves</th><td>Gate music, city and village soundscapes, the Music slider, cues.</td></tr>
+<tr><th>Test</th><td>The context resolves only in combat outside gates (a unit test on the provider); then your ears, through the listening page.</td></tr>
+</tbody></table></div>
+
+<h3>State, multiplayer, failure</h3>
+<div class="col">
+<p><b>Saved data:</b> none. Everything here is per blow or per fight, not saved, so there is no migration. The payload kinds are added to the existing <code>arms_result</code>/<code>arms_seen</code>; an old client on a new server ignores the new kinds.</p>
+<p><b>Multiplayer:</b> the server sets the direction, kill and counter. Observers get the same record in <code>arms_seen</code>, so they see the same recoil and the same fall. When two players hit the same creature, the last blow's direction wins.</p>
+</div>
+<div class="tbl"><table>
+<thead><tr><th>What goes wrong</th><th>What happens</th><th>Kept safe by</th></tr></thead>
+<tbody>
+<tr><td>Another mod cancels the render after our tip pushed the pose</td><td>The pose stack would be left pushed</td><td>The tip runs at the lowest priority and only if nobody cancelled. If any of our own listeners cancel, the tip isn't used. A one-frame guard logs and turns the tip off if a pop is missed.</td></tr>
+<tr><td>A body drawn by its own rig (forms, our creatures, other mods' custom renderers)</td><td>No tip; the shove and turn may still apply</td><td>Forms and our creatures read the direction in their clips; other mods' bodies get the shove and turn only.</td></tr>
+<tr><td>High ping</td><td>The kill flag arrives after the freeze</td><td>The extra freeze is dropped, not replayed; sound and fall still play.</td></tr>
+<tr><td>Death by fire or fall after a hit</td><td>No blow, no direction</td><td>Vanilla's flip, as today.</td></tr>
+<tr><td>A step at a cliff, in lava, on ice</td><td>A fall or a burn</td><td>The end-of-step checks for drop, lava and solid; on ice the push is the same (the velocity is set, not added).</td></tr>
+<tr><td>Grass cut by a garden</td><td>A wrecked garden</td><td>Wild plants only, never in a Hearth's radius or a village, claims can refuse it, off in adventure, and a server switch.</td></tr>
+<tr><td>Line of sight too strict</td><td>Missed blows you'd expect to land</td><td>Three points, collision shape only (glass, fences and leaves block; tall grass doesn't); a server switch.</td></tr>
+</tbody></table></div>
+<div class="col">
+<p><b>Performance:</b> the recoil is a fixed pool of springs (32), stepped per frame with no allocation, and ends when settled. The server adds at most 3 rays per candidate per active tick, a 3-ray fan per whiff, and a plant scan of about 32 blocks per active tick. All of it is far under a millisecond. The budget is the client main thread at ≤ 0.05 ms per frame with 20 struck bodies, measured before merge.</p>
+<p><b>Switches:</b> server (<code>awaken-arms.toml</code>): <code>wallsStopBlows</code>, <code>cutGrass</code>, <code>counterHits</code>, <code>directionalKnockback</code>. Client comfort: <code>recoil</code>, <code>killMoment</code>, <code>strikeStep</code>; the fight music follows the Music slider and its own switch.</p>
+</div>
+
+<h2>5 · Before and after</h2>
+<div class="col"><p>The same four fights, today and with the plan. Illustrations of the designed behaviour, not recordings.</p></div>
+<div class="tbl"><table>
+<thead><tr><th>Case</th><th>Today</th><th>With the plan</th></tr></thead>
+<tbody>
+<tr><td><b>Ordinary:</b> a zombie on a plain, longsword chain</td><td>Each hit freezes it, it slides straight back, flashes red. The third hit kills it: the same freeze, it flips to its side and puffs.</td><td>Strike 1 (right to left) steps you in 0.3 blocks and throws it to your left; it twists and springs back. Strike 2 throws it right. The overhead third pins it, a longer freeze, the kill sound, and it falls flat away from you along the cut. It was the only one, so the view breathes out and the music lets go.</td></tr>
+<tr><td><b>Your note:</b> "it doesn't feel satisfying"</td><td>The swing reads well; the answer doesn't.</td><td>Every blow has a direction you can see in the body, and the kill has a moment of its own.</td></tr>
+<tr><td><b>Hard:</b> three husks in a narrow cave, a greatblade</td><td>The cleave hits all three, one freeze, three stacked thuds. A swing into the wall is silent. A husk behind the corner gets hit through the stone.</td><td>The cleave hits the two in sight with a rising double layer and a bigger kick. The third, behind the corner, isn't hit. The follow-through clanks off the stone with sparks and the blade bounces. Music comes in at the first blow.</td></tr>
+<tr><td><b>Skill:</b> a C-rank form winds up an amber heavy</td><td>You can deflect it (the skill) or keep cutting and eat the blow.</td><td>You can still deflect. Or you can hit first: a counter crack, the tell shatters, ×1.5 posture. A heavy counter cuts off a normal creature's blow, so an aggressive player has a real answer too.</td></tr>
+<tr><td><b>Missing data:</b> a mob from another mod, high ping</td><td>As the zombie.</td><td>It's pushed along the cut and shoved and turned (no tip if its renderer is its own). At 200 ms ping the kill's extra freeze is skipped, but the sound and the directional fall still play.</td></tr>
+</tbody></table></div>
+
+<h3>The counter in the simulator</h3>
+<div class="col"><p>A disposable patch over <code>tools/sim/combat_sim.py</code> (not committed): a player blow that lands during a Lord's told wind-up adds posture × K. 15 Lords, 60 seeds a cell, forged weapons at rank. Lords are never staggered by a counter, so this is the posture effect alone.</p></div>
+<div class="tbl"><table>
+<thead><tr><th>Profile</th><th class="n">K</th><th class="n">Win</th><th class="n">Median time to kill</th><th class="n">Breaks a minute</th><th class="n">Health left</th></tr></thead>
+<tbody>
+<tr><td>Dodger</td><td class="n">1 (today)</td><td class="n">18%</td><td class="n">48 s</td><td class="n">2.42</td><td class="n">20%</td></tr>
+<tr><td></td><td class="n">1.5</td><td class="n">22%</td><td class="n">45 s</td><td class="n">3.13</td><td class="n">20%</td></tr>
+<tr><td></td><td class="n">2</td><td class="n">24%</td><td class="n">46 s</td><td class="n">3.83</td><td class="n">15%</td></tr>
+<tr><td>Parrier</td><td class="n">1 (today)</td><td class="n">18%</td><td class="n">46 s</td><td class="n">5.07</td><td class="n">20%</td></tr>
+<tr><td></td><td class="n">1.5</td><td class="n">19%</td><td class="n">46 s</td><td class="n">5.62</td><td class="n">18%</td></tr>
+<tr><td></td><td class="n">2</td><td class="n">20%</td><td class="n">45 s</td><td class="n">6.09</td><td class="n">17%</td></tr>
+<tr><td>Expert</td><td class="n">1 (today)</td><td class="n">67%</td><td class="n">46 s</td><td class="n">6.27</td><td class="n">48%</td></tr>
+<tr><td></td><td class="n">1.5</td><td class="n">70%</td><td class="n">46 s</td><td class="n">6.80</td><td class="n">48%</td></tr>
+<tr><td></td><td class="n">2</td><td class="n">71%</td><td class="n">45 s</td><td class="n">7.18</td><td class="n">46%</td></tr>
+</tbody></table></div>
+<div class="col"><p class="note">At 1.5 there are clearly more breaks (+9% to +29%), win rates rise 1–4 points, fight length is unchanged, and no profile's health left drops by more than 2 points. At 2 the dodger's health left falls 5 points, because it trades blows more. So the recommendation is 1.5. The low baseline win rates for the dodger and parrier are the simulator's existing finding about the Lords (their targets are missed today too) and belong with the bosses work. The simulator doesn't model ordinary creatures being cut off; the GameTest covers that rule.</p></div>
+
+<h2>6 · Testing and stages</h2>
+<div class="col">
+<p><b>Tests:</b> one GameTest per mechanism (<code>arms_knock_dir</code>, <code>arms_kill</code>, <code>arms_counter</code>, <code>arms_walls</code>, <code>arms_cut_grass</code>), pure tests for the spring and the step rule, a unit test on the music provider, the full suite on CI. No tours from the builder. The listening page for every new sound and the music before you hear them in game. Then you play, with the note command from the Swing Studio for anything that feels off.</p>
+<p><b>Gates before merge:</b> all tests green on CI. Counter at 1.5 lowers no profile's win rate and keeps time to kill within ±5% of today. The recoil costs under 0.05 ms a frame with 20 struck bodies. Every switch off gives exactly today's behaviour. The last gate is your verdict in play, stage by stage.</p>
+<p><b>Rollback:</b> every change has a switch; a stage is one revertable merge.</p>
+</div>
+<ol class="loop">
+<li><b>Stage 1, the blow lands:</b> the Blow record, directional knockback, recoil for every body, the kill moment, cleave. The direction API for forms and our creatures (each module adopts it in its own package). About 3–4 hours at our pace.</li>
+<li><b>Stage 2, fight back:</b> counter-hits and the strike step. About 2–3 hours.</li>
+<li><b>Stage 3, the world:</b> line of sight, the glance, grass. About 2–3 hours.</li>
+<li><b>Stage 4, presence:</b> draws, the katana's sheath, overworld fight music with its listening page. About 3–4 hours, most of it the music.</li>
+</ol>
+<div class="col"><p class="note">Estimates are from this branch's pace (the Swing Studio took about a day). The music could take longer if the first theme doesn't pass your ears. The forms session is actively changing <code>FormBodies</code>, so its adoption of the direction is timed with that session.</p></div>
+
+<h2>7 · Decisions for you</h2>
+<div class="dec"><div class="q">1. Should blows stop at walls?</div>A creature counts only when a ray from your eye reaches it (three points, so a body half behind a door frame still counts). Some hits round corners you land today will miss. <div class="rec">Recommend: yes.</div></div>
+<div class="dec"><div class="q">2. Should a blade that hits stone be penalised?</div>Kingdom Come and Mordhau stop your combo when you hit a wall. In Minecraft's caves that would be constant. <div class="rec">Recommend: feel only (clank, sparks, bounce); the chain goes on.</div></div>
+<div class="dec"><div class="q">3. Should sweeps cut grass?</div>Wild grass, ferns, bushes and dry grass only, at most 12 a blow. Never flowers, crops, saplings or firefly bushes, never in a Hearth's radius or a village, and claims can refuse it. <div class="rec">Recommend: yes, as described.</div></div>
+<div class="dec"><div class="q">4. Should striking during a wind-up be a counter?</div>Posture ×1.5. It cuts off an ordinary creature's blow, an elite's only with a heavy, never a Lord's. Untold blows (zombies) stay uncounterable. <div class="rec">Recommend: yes, at 1.5.</div></div>
+<div class="dec"><div class="q">5. Should knockback follow the swing?</div>Side cuts throw sideways (never toward you), thrusts straight back, overheads pin, uppercuts lift. Same strength as vanilla, Lords unchanged. <div class="rec">Recommend: yes.</div></div>
+<div class="dec"><div class="q">6. Should your body step into each strike?</div>0.15 / 0.3 / 0.45 blocks by weight. It stops short of the target, never over a drop, into lava or while backing off. A comfort switch turns it off. <div class="rec">Recommend: yes, on by default.</div></div>
+<div class="dec"><div class="q">7. Should fights outside gates get music?</div>One overworld theme, heard only once a fight starts and gone when it ends. Walks stay quiet. <div class="rec">Recommend: yes, after you've heard it on the listening page.</div></div>
+<div class="dec"><div class="q">8. In what order?</div>Stage 1 (the blow lands) first, since it changes every hit; then fight back, the world, presence. <div class="rec">Recommend: in that order, each stage merged after its tests and your play.</div></div>
+<div class="col"><p class="note">Reply with "all yes" or change any number. Nothing is built until you approve.</p></div>
+</div>
+</body>
+</html>
