@@ -50,15 +50,15 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 |---|---|---|---|---|---|---|---|---|
 | The Ember Tyrant (the Living Forge) | Lord | Ember | Brute | kit | C | ✓ 3488e8d5 | ✓ c1e3c8ed | — |
 | Unit Zero | Lord | Precursor | Duelist | kit (phase 1) | A, the Sentinel | ✓ b94e7457 | ✓ b94e7457 | — |
-| Mother of Spores | Lord | Fungal | Flier | kit (phase 1) | C, the Crowned Host | ✓ (this commit) | ✓ (this commit) | — |
+| Mother of Spores | Lord | Fungal | Flier | kit (phase 1) | C, the Crowned Host | ✓ 64932c3a | ✓ 64932c3a | — |
 | The Gearwright Colossus | Lord | Clockwork | Brute | iron golem ×1.8 | C, the Clock Tower | — | — | — |
 | The Root Saint | Lord | Temple | Caster | creaking ×1.8 | A, the Rooted Saint | — | — | — |
 | The Bell Warden | Lord | Bell | Construct | cube bell | A, the Bell That Walks | — | — | — |
 | The Glass Serpent | Lord | Glass | Serpent | cube serpent ×2.2 | B, the Hourglass | — | — | — |
-| The Hive Regent | Lord | Hive | Flier | bee ×4 | — | — | — | — |
-| The Drowned Archivist | Lord | Drowned | Caster | drowned ×1.9 | — | — | — | — |
-| The Lantern Broker | Lord | Lantern | Construct | cube lantern | — | — | — | — |
-| The Abbot of Frost | Lord | Frost | Caster | evoker ×1.7 | — | — | — | — |
+| The Hive Regent | Lord | Hive | Flier | bee ×4 | drawn | — | — | — |
+| The Drowned Archivist | Lord | Drowned | Caster | drowned ×1.9 | drawn | — | — | — |
+| The Lantern Broker | Lord | Lantern | Construct | cube lantern | drawn | — | — | — |
+| The Abbot of Frost | Lord | Frost | Caster | evoker ×1.7 | drawn | — | — | — |
 | The Mirror Knight | Lord | Mirror | Duelist | player ×1.4 | — | — | — | — |
 | The Sleeper | Lord | Nightmare | Brute | zombie ×2.2 | — | — | — | — |
 | The Sky Leviathan | Lord | Sky | Serpent | cube serpent ×3.2 | — | — | — | — |
@@ -106,3 +106,15 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   (a knight cast in one piece with a bell, gliding on its rim). **Picked A**, 2026-10-28.
 - **The Glass Serpent:** A the Shard Wyrm (rearing, a fin of shards), B the Hourglass (hollow glass frames with sand
   running through, coiled), C the Mirror Eel (a flat ribbon of mirror, a mirror for a face). **Picked B**, 2026-10-28.
+- **The Hive Regent:** A the Empress (an upright queen, her banded abdomen a train behind her, four tall glass wings,
+  two amber stinger daggers), B the Living Hive (a flying stepped hive held up by rows of wings, the queen rising out of
+  its top, a cloud of drones), C the Hornet (long and low, wings swept back, the stinger curled forward under it).
+- **The Drowned Archivist:** A the Lectern (grown into his reading stand, the sea pouring off the open book, a quill
+  like a spear), B the Diver (an old diving suit, his face against a window full of water, a case of chained books on
+  his back), C the Tide of Pages (held up inside a column of sea water, rings of books circling it).
+- **The Lantern Broker:** A the Pedlar (a pack frame taller than him hung with his whole shop of lanterns), B the
+  Lantern Head (a gentleman whose head is a lantern in a top hat, a cape of moth wings), C the Walking Stall (a curtained
+  booth on four heron legs, four long arms reaching out of it).
+- **The Abbot of Frost:** A the Frozen Saint (tall and thin, robes frozen in layers, a mitre of ice, a censer), B the
+  Pilgrim (hunched under a glacier with the monastery's heart frozen in it), C the Snow Owl (a cloak of frost feathers,
+  an owl's hood with ear tufts and pale eyes).
