@@ -55,7 +55,7 @@ public final class StationView {
 
     /**
      * Where a slot lies on the station. A table: 0 the result, on the near border; 1..9 the grid, row 0 the far
-     * one. A furnace: what cooks in the mouth, the fuel in the firebox below it, the result floating out at the right.
+     * one. A furnace: what cooks on the left of its mouth, the finished result on the right, the fuel on the coals below.
      */
     public static void spot(Station s, int slot, double[] out, int at) {
         BlockPos b = s.pos();
@@ -63,10 +63,10 @@ public final class StationView {
         if (s.kind() == Kind.FURNACE) {
             // out of the front face (n = -f), along it (r)
             double fx0 = b.getX() + 0.5 - fx * 0.5, fz0 = b.getZ() + 0.5 - fz * 0.5;
-            double away = slot == AbstractFurnaceMenu.RESULT_SLOT ? 0.34 : 0.06, side = slot == AbstractFurnaceMenu.RESULT_SLOT ? 0.36 : 0;
-            out[at] = fx0 - fx * away + rx * side;
-            out[at + 1] = b.getY() + (slot == AbstractFurnaceMenu.FUEL_SLOT ? 0.24 : slot == AbstractFurnaceMenu.RESULT_SLOT ? 0.62 : 0.68);
-            out[at + 2] = fz0 - fz * away + rz * side;
+            double depth = FURNACE_DEPTH, side = slot == AbstractFurnaceMenu.RESULT_SLOT ? 0.15 : slot == AbstractFurnaceMenu.INGREDIENT_SLOT ? -0.15 : 0;
+            out[at] = fx0 + fx * depth + rx * side;
+            out[at + 1] = b.getY() + (slot == AbstractFurnaceMenu.FUEL_SLOT ? 0.26 : 0.57);
+            out[at + 2] = fz0 + fz * depth + rz * side;
             return;
         }
         double cx = b.getX() + 0.5, cy = b.getY() + 1.0, cz = b.getZ() + 0.5;
@@ -88,6 +88,33 @@ public final class StationView {
         if (s.kind() == Kind.FURNACE) return axis == 2 ? 0.05 : 0.15;
         if (axis == 1) return 0.03;
         return slot == 0 ? RESULT_HALF : CELL / 2;
+    }
+
+    public static final double FURNACE_DEPTH = 3.0 / 16;
+
+    /** A furnace lowers only the view, keeping the player's horizontal position. Side/rear access uses the ordinary menu. */
+    public static boolean furnaceEye(Station s, double x, double y, double z, double[] out) {
+        double dx = x - s.pos().getX() - .5, dz = z - s.pos().getZ() - .5;
+        double front = -dx * s.fx() - dz * s.fz(), side = dx * s.rx() + dz * s.rz();
+        if (front < .85 || front > 4.5) return false;
+        // The far item's outer edge must still be visible through the opening from an oblique approach.
+        double outside = front - .5;
+        double edgeAtMouth = (.27 * outside + Math.abs(side) * FURNACE_DEPTH) / (outside + FURNACE_DEPTH);
+        if (edgeAtMouth > .30) return false;
+        out[0] = x; out[1] = s.pos().getY() + .57; out[2] = z;
+        return true;
+    }
+
+    /** The near plane follows a clear vertical sweep; it cannot cross a floor, wall or low ceiling. */
+    public static boolean clearEyePath(net.minecraft.world.level.BlockGetter level, net.minecraft.world.entity.Entity player,
+                                       net.minecraft.world.phys.Vec3 from, net.minecraft.world.phys.Vec3 to) {
+        for (int i = 0; i < 8; i++) {
+            double x = (i & 1) == 0 ? -.12 : .12, y = (i & 2) == 0 ? -.12 : .12, z = (i & 4) == 0 ? -.12 : .12;
+            var hit = level.clip(new net.minecraft.world.level.ClipContext(from.add(x, y, z), to.add(x, y, z),
+                    net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+            if (hit.getType() != net.minecraft.world.phys.HitResult.Type.MISS) return false;
+        }
+        return true;
     }
 
     // ---- the screen -------------------------------------------------------------------------------------------------

@@ -5605,17 +5605,45 @@ of the plan). No mixins.
     the strip drops what you carry, as off any container screen. Your hands (world source `anims_station`, 200) rest off the table's near corners and one goes out to every
   square whose contents change (and to the result as it is taken), over 9 ticks; moving, jumping, E or Esc leave.
   A hand moves only within 6 ticks of your own click on a slot, so a furnace cooking on its own moves none; taking a
-  result moves the hand to the result only. Furnaces (kind `FURNACE`: furnace, smoker, blast furnace, any
-  `AbstractFurnaceScreen`): worked from the front (the way in against `FACING`), the view turned to the front's middle
-  (a little below its middle) and framed like the table; what cooks sits upright in the mouth (0.68 up, 0.06 out), the fuel in the firebox (0.24 up), the
-  result floats out at the right (0.34 out, 0.36 across, 0.62 up) turning; a slot is picked by the nearest one the ray
-  passes within 0.16 of, outlined flat to the front; the cooking (Holo blue) and the fuel left (fire) run as two thin
-  lines over the strip; the hands wait at your sides under the frame (the fuel is the off hand's, the rest the main's). The
-  recipe book is not in the scenes (sneak + use for it).
-  Setting `stationScenes` (feel), on. Drawn for you only (others see you at the station as before).
+  result moves the hand to the result only.
+  - **Furnaces** (kind `FURNACE`: vanilla furnace, smoker and blast furnace; Codex's furnace-interior, reviewed
+    2026-10-28): the view drops to the mouth's height (block y + 0.57) where you stand; your body and your look are not
+    moved. A client-only camera entity (StationCamera, unregistered, like the opening's OpeningCamera) carries the
+    lowered view, eased in and out like the table (12/6 ticks in, 10 out); the field of view is set through the
+    final-FOV hook, since a camera that is not the player gets no FOV-modifier event. The scene opens only from the
+    front, 0.85 to 4.5 blocks from the block's middle, and only while the far item's edge still shows through the mouth
+    (0.30 either side of it); from the side, the back, too close, or with something in the way you get the plain furnace
+    screen. Eight rays 0.12 out from the eye's corners keep the drop from passing through a floor, wall or low ceiling;
+    they are cast when the scene opens and again every tick (never every frame), so a block placed into the path while
+    you work gives the view back and shuts the screen. Moving, jumping, E or Esc, another camera, death, a new level and
+    logging out also give it back. Your own body is hidden from the lowered view; the hands rest beside it, by the
+    shoulder (0.35 under the eye, clear of the floor), and only a working hand reaches into the frame.
+  - **A real mouth:** every furnace, smoker and blast furnace in the world gets a block model with a recessed mouth
+    (all four facings, lit and unlit): the five outer faces and a stone frame stay, the cavity is x 3–13, y 2–13, z 0–9
+    model pixels with stone walls, a closed back and a coal bed, and a lit one glows at the back of the coals. Items sit
+    3/16 inside the mouth at scale 0.24: what cooks on the left, the finished result on the right (±0.15, y + 0.57),
+    the fuel on the coals (y + 0.26). They stay still while vanilla's flame, smoke and cooking go on. Each slot is
+    picked within 0.16 of its middle and gets the front-facing outline; the cooking (Holo blue) and the fuel left (fire)
+    still run as two thin lines over the strip; fuel is the off hand's, the rest the main hand's. The hint reads "Cook on
+    the left, add fuel below, and take finished items on the right. Sneak as you open it for the usual screen."
+  - **What's inside, screen shut:** the server sends each player read-only copies of the three slots of nearby
+    furnaces (FurnaceContents, payload `furnace_contents`): the nearest 64 within 16 blocks, found every 40 ticks in the
+    nine loaded chunks around them (`getChunkNow`, never a load), compared every 5 ticks, and only changes and
+    removals sent. Using a furnace sends its contents at once, before the menu opens. Leaving range, an unloaded chunk,
+    a replaced block, a new dimension and logging out drop a view; coming back reads it fresh. Nothing is saved and
+    nothing in the furnace is changed. The items are drawn only within 16 blocks and from in front of the mouth, depth
+    tested behind the opaque cavity walls (never through a wall); everyone nearby sees them whatever their
+    `stationScenes` setting, which only turns the scene on or off. Recipes, fuel, taking items, XP and saves stay
+    vanilla's. (A hacked client could read the contents of a furnace behind a wall within 16 blocks; a furnace shows
+    its contents openly anyway, so this is accepted.)
+  - **Other mods and packs:** no mixins. Only a plain single-variant cube furnace model is replaced; a resource pack's
+    or mod's non-cube or wrapped model is left alone, and then the furnace has no scene and no items in its mouth (the
+    plain screen opens). A mod that gives furnaces their own block-entity renderer keeps its look the same way. The
+    models use vanilla's own textures by name; no Mojang file is copied. Setting `stationScenes` (feel), on.
 - **The lens** (P5): the hand pass draws at a fixed 70°; anything the world anchors (arms on a pipe, at a table; near
   legs) has its view x and y scaled by tan(35°) / tan(world FOV / 2), so it lands where the world shows it on screen even
-  with the view narrowed or widened (a station's zoom, the speed FOV).
+  with the view narrowed or widened (a station's zoom, the speed FOV). The lowered furnace camera uses the actual HUD
+  FOV from the render state for that ratio, because its final-FOV hook affects both projections.
 - Test: `anims_fp_clips` (the file reads, every clip the body and the touches play is in it, every one-shot gives the
   hands back). The table scene: `anims_station_frame` (seven GUI sizes from 320×240 to 1280×720, with and without JEI,
   standing 1 to 4 blocks off each side: every slot lies inside the room and a click on its middle picks it),
@@ -5623,7 +5651,12 @@ of the plan). No mixins.
   border, all inside the table's block, a click straight down picks each),
   `anims_station_panel_click` (a square under the strip while leaning in: a click there picks nothing), and the clicks
   vanilla's screen sends on a real crafting menu: `anims_station_right_click`, `_right_drag`, `_left_drag`,
-  `_shift_result`. Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),
+  `_shift_result`. Furnace regressions: `anims_furnace_camera_pick` covers all four facings, high/low player eyes,
+  approach distances/offsets, small and large GUI layouts, all slot picks, and wall/near-plane collision rejection;
+  `anims_furnace_contents` uses real vanilla smelting and save/reload, two viewers, inventory mutation, range/rejoin
+  and removal; `anims_furnace_recess_geometry` checks the six packaged models have an open mouth and opaque backing.
+  These are headless checks; rendered appearance, camera feel and third-party renderer combinations need in-game
+  verification. Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),
   `anims-touch.txt` (P4: filmed with the pilot's clip recorder, since a command reaches the client a few ticks late),
   `anims-station.txt` (P5), PACK=feel, HUD on. Pilot lines `use`, `attack`, `usehold <ticks>` press the real keys;
   `station <slot> [button]` clicks a slot of the open station scene.
