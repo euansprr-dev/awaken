@@ -5,6 +5,8 @@
 # The knobs are tools/autopilot.sh's: PACK BACKEND LENS RD XMX ZGC CITY TECTONIC DH ROADSTARTS. The runner starts from a fresh game
 # folder, so an unset knob means the default (Lens Swift, Vulkan, render distance 16), not what this worktree's
 # run-autopilot last had; Far Sight is always off there. It tours the branch as pushed: commit and push first.
+# A script may name the knobs it needs on the runner in a line "# ci knobs: RD=10": they come first and the command
+# line's after, so a knob given here wins.
 # Shots, logs and summary.txt land in run-autopilot/screenshots-ci/<script>-<run id>/; exits non-zero if the tour
 # failed. Several can run at once, from any worktrees (no shared state). Look tours only: perf and frame-time tours
 # stay on the Mac (slot.sh tour tools/autopilot.sh ...).
@@ -16,11 +18,13 @@ SCRIPT=$1
 shift
 T=1500
 if [[ $# -gt 0 && $1 == <-> ]]; then T=$1; shift; fi
+[[ $SCRIPT =~ '^tools/autopilot/[A-Za-z0-9._-]+\.txt$' && -f $SCRIPT ]] || { echo "no tour $SCRIPT"; echo "$USAGE"; exit 2; }
+# the script's own knobs first (the workflow exports them in order: the last of a name wins)
+set -- ${=$(sed -n 's/^# ci knobs: *//p' $SCRIPT | head -1)} "$@"
 for kv in "$@"; do
   [[ $kv =~ '^(PACK|BACKEND|LENS|RD|XMX|ZGC|CITY|TECTONIC|DH|ROADSTARTS)=[A-Za-z0-9,._-]+$' ]] \
     || { echo "not a knob: $kv (PACK BACKEND LENS RD XMX ZGC CITY TECTONIC DH ROADSTARTS)"; exit 2; }
 done
-[[ $SCRIPT =~ '^tools/autopilot/[A-Za-z0-9._-]+\.txt$' && -f $SCRIPT ]] || { echo "no tour $SCRIPT"; echo "$USAGE"; exit 2; }
 (( T <= 3600 )) || { echo "timeout at most 3600 s"; exit 2; }
 # the runner's GPU scrambles Far Sight's far mesh, so CI tours run without it and Far Sight's own tours stay on the Mac
 grep -q '^farsight on' $SCRIPT && { echo "$SCRIPT turns Far Sight on: run it on the Mac (slot.sh tour tools/autopilot.sh ...)"; exit 2; }

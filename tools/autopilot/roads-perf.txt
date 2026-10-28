@@ -4,6 +4,9 @@
 # ahead) and "[road] the server thread waited ..." for any wait there over 50 ms; the server logs "Can't keep up!" when
 # its ticks fall two seconds behind. A spectator, HUD off; a shot at each stop to see the roads came.
 # Run on GitHub (the terrain Euan plays): tools/tour-ci.sh tools/autopilot/roads-perf.txt 3600 PACK=perf,world TECTONIC=awakened
+# On the runner at render distance 10: at 16, minutes of new land streaming in lost its paravirtual GPU (runs
+# 40731247114 and 40733154266, once the flight no longer froze).
+# ci knobs: RD=10
 world autopilot_roads_perf creative 26102610
 waitworld
 camera first
