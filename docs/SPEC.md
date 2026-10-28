@@ -1284,8 +1284,9 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   (run 40370286479). roads-perf-quit (the first flight and a quit 30 s in) finishes (run 40735814003).
 - The pilot's `glide` sets the player's velocity every tick, so the edge hold (§28.9) eases it at the edge of the land
   the client has, and the log says so (`[edgehold] held N ticks ...`). `shotnow` logs the hold's cue with its shot
-  (`edge hold cue 0.97, edge 1 ahead`); roads-edge-cue takes them mid-glide (run 40759045249: under the hold everything
-  below the horizon goes to the pale mist instead of the grey void of land not drawn).
+  (`edge hold cue 0.95, edge 2 ahead`); roads-edge-cue takes them mid-glide, under the clouds (they don't take the
+  mist) and looking back over the land flown (run 40761444941, shot 05: the land the client has washes into a pale,
+  cool mist toward its far edge; 01, before the glide, is clear to the horizon).
 - A travel command's move may wait for its land in a passage (§28.9, "Arrivals"). `shot` waits a passage out first (at
   most 65 s, logged `waited N s for a passage`), so it shows where the command went, and `waitpassage` does the same
   before a line that must come after the move (a `/tp ~ ...` after `village road camp`: a command's teleport drops a
