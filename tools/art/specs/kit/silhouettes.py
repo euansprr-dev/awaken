@@ -61,8 +61,8 @@ class Mass:
 def furnace_king():
     m = Mass("sil_a", "A · The Furnace King",
              "Hunched like a gorilla, the head sunk low and forward between two mountains of shoulder. Forearms like "
-             "anvils hang to its knees. Its chest is a furnace behind iron ribs. The great axe rests on its shoulder, "
-             "the blade rearing up behind its head.")
+             "anvils hang to its knees. Its chest is a furnace behind iron ribs. The great axe is held high in one "
+             "fist, the blade rearing up in front of it.")
     # legs: short, wide, planted
     for s in (1, -1):
         leg = m.bone(None, s * 14, 46, 2, (8, 0, s * -4))
@@ -136,7 +136,7 @@ def iron_warlord():
     m = Mass("sil_b", "B · The Iron Warlord",
              "Upright and tall, plated like a siege tower. A visored helm with a crown of iron teeth, two horns raked "
              "back. Its pauldrons step up into spikes, an X from shoulder to boot. A long tattered plate cape. It "
-             "leans on its great axe, planted head-down in front of it.")
+             "leans on its great axe like a staff, planted head-down at its side.")
     for s in (1, -1):
         m.box(None, "i", s * 11, 0, -4, 16, 6, 24)  # sabaton
         m.box(None, "b", s * 11, 6, 0, 14, 28, 15)  # shin
