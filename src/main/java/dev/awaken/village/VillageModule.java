@@ -69,6 +69,8 @@ public final class VillageModule {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> VillageService.tick(e.getServer()));
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.awaken.village.road.RoadAtlas.tick(e.getServer()));
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.awaken.village.road.RoadNet.prefetch(e.getServer()));
+        // (SPEC §28.9, Cost) a chunk the server thread had to wait for far from every player: who asked
+        NeoForge.EVENT_BUS.addListener(dev.awaken.village.road.RoadAccess::chunkLoaded);
         NeoForge.EVENT_BUS.addListener(Inn::onRespawn);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onBroken);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onExploded);
