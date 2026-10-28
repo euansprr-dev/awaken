@@ -28,6 +28,13 @@ final class RitualAudioTests {
             h.assertTrue(Math.abs(dev.awaken.mobs.Ritual.walkSeconds(statue, 1) - 0.22F) < 0.0001F, "audio and renderer use vanilla distance phase at unchanged 0.55 scale");
             statue.setStage(dev.awaken.mobs.entity.RitualStatue.STAND);
             h.assertFalse(dev.awaken.mobs.Ritual.walking(statue), "standing statue never steps despite animation inertia");
+            var planted = dev.awaken.mobs.Ritual.plantedFoot(statue, 0).subtract(statue.position());
+            h.assertTrue(Math.abs(planted.x - 0.225) < 0.0001 && Math.abs(planted.z + 0.36) < 0.0001,
+                    "yaw-zero contact follows vanilla model flip and 180-degree rotation");
+            statue.setYBodyRot(90);
+            planted = dev.awaken.mobs.Ritual.plantedFoot(statue, 0).subtract(statue.position());
+            h.assertTrue(Math.abs(planted.x - 0.36) < 0.0001 && Math.abs(planted.z - 0.225) < 0.0001,
+                    "contact follows rendered body yaw rather than head/entity facing");
             statue.discard();
             h.succeed();
         });

@@ -1060,7 +1060,7 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
   remain exactly as above, with no persistent state or packet changes.
 - Every moving statue gets planted-foot audio from the renderer's unchanged `walkAnimation.position * 0.55`
   phase: a 1.6 s clip, left contact at phase 0, right at 0.8. Three real stone-contact variants mix friction and low
-  pressure. Tick sampling includes statues behind the camera; initial/late tracking, stopping, phase resets and jumps
+  pressure. Contact positions follow vanilla model-axis flips and body yaw. Tick sampling includes statues behind the camera; initial/late tracking, stopping, phase resets and jumps
   never replay missed contacts. Contacts have 36 block sound range and a restrained 12 block camera impulse.
   Wind-up whooshes begin at tick 17 of the existing 25 tick wind-up and are dropped if the statue stopped winding
   up. The door recording meets at the director's 28 ticks (1.4 s), the eyes bloom at 58 ticks (2.9 s), and the beam
