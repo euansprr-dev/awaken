@@ -326,7 +326,8 @@ of `AwakenConfig.Client`.
   slide down stairs (§17.22; `sliding` is true too). `core.api.AirHooks`
   (`register(Source)`, `Source.airAt(Level, x, y, z, double[] out)`): moving air the free states feel (§17.6).
   `core.api.CameraHooks` (client): `installToggle(BooleanSupplier)`, `toggleView()` (the View key asks it first; with
-  Shoulder Surfing it flips first person and the shoulder view, §17.13).
+  Shoulder Surfing it flips first person and the shoulder view, §17.13), `zoom()` / `installZoom(DoubleSupplier)` (the
+  binoculars' magnification now, 1 when none, §39: Far Sight's panorama steps aside while it is over 1.05).
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
@@ -8599,3 +8600,98 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
   steps and hints), and the rail's unread count rising as trails open. **Not built / unverified**: the task card and Now line with a followed trail on a real
   screen (the first tour caught the first-hour card covering it; fixed, and the second tour showed the trail on the card ticking as steps were done; the card's count was off until every done step was sent, fixed and tested, not re-toured; the Now line shows the followed step below the Hale and camp lines, as designed at priority 55); a step's `{key}` caps; a `tip` (none shipped yet); several
   followed trails; the Powers, Story and the remaining World trails; the Armoury's Track as a step type.
+
+## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
+
+Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our
+own lens edge. Approved: stages 0 to 2, key I, tap and hold, the twin edge, steps 2× to 12×, a slow walk. Decided later, after
+Euan has played stage 2: real focus by depth, and Far focus in Far Sight.
+
+### 39.1 What it is for
+Spotting: a ruin from a ridge, a creature in a valley, a far range. Three things beyond a plain zoom: the readout (how far, which
+way), marking the centre as your destination, and reading a creature's plate at range.
+
+### 39.2 The key and the state
+- **Key** `key.awaken.binoculars`, default **I**, in Awaken's key group, conflict context in-game. **Tap and hold** (default): a
+  press shorter than `tapMs` (250) keeps them up, a longer press is a peek and they drop on release. Settings: hold only, toggle
+  only (`GlassKey`).
+- **State** (`GlassState`): down, raising (`raiseMs` 330), up, lowering (`lowerMs` 220); both halved with reduced motion. A raise can
+  turn back halfway: the hands follow the raise's progress, never a fixed clip.
+- **What lowers them**: the key; sprinting (eased); and at once, in the same frame (zoom, look speed and HUD back): attack, use
+  (except right-click marking, 39.7), any screen opening, getting hurt, death, a dimension change, a cast, the hands gripping the
+  world (a hang, wall-run or the world layer's arms), switching to a vanilla spyglass, the setting turned off.
+- **When they can't come up**: a screen is open, you're using a spyglass, a cast is on, the hands grip the world, or you're a
+  spectator. The press is simply ignored.
+- **Third person**: raising in third person (or Shoulder Surfing's view) switches to first person and back when they come down.
+
+### 39.3 The zoom (`GlassRules`, `GlassSpring`, feel `assets/awaken/binoculars/feel.json`, schemaVersion 1)
+- **Steps** 2, 3, 4, 6, 8, 12. The first raise ever goes to 4×; afterwards the last step is remembered in the client settings.
+  Scroll while up changes the step, never the hotbar; vanilla's wheel handler adds up a trackpad's small scrolls, and each event
+  moves at most one step. While down the wheel is the hotbar's as always.
+- **FOV**: `fov = 2·atan(tan(base/2)/mag)`, never under 1°, set per frame in `ViewportEvent.ComputeFov`, on top of whatever FOV
+  you'd have (the FOV slider and FOV effects still work). Zoom is not scaled by the FOV effects slider: it's an action, not an effect.
+- **Curve**: a spring on log(mag), slightly underdamped: a step overshoots by `overshoot` (2%) of itself and settles in `settleMs`
+  (120). The first pull after the raise settles in `pullMs` (300). Reduced motion: no overshoot. Stepped in 2 ms slices, so 30
+  and 240 fps behave the same.
+- **Zoom starts** when the raise reaches `eyecup` (0.82) and the lens edge is in by `eyecupEnd` (0.85). Any lowering takes the zoom
+  off at once (the eyecups have left the eyes); the hands then finish the lower.
+- **Look speed**: matched to the zoom (`k = slider/mag`; the mouse sensitivity becomes `((s·0.6+0.2)·∛k − 0.2)/0.6`, which keeps
+  vanilla's cubed curve exact) through `CalculatePlayerTurnEvent`; a slider 50 to 150%. No cinematic camera, no smoothing.
+- **Sway**: `sway`·√mag degrees (0.04° at 1×: about 0.4% of the screen at 4×), two slow sines on the camera's yaw and pitch only,
+  so aim never drifts; crouching a third (`swayCrouch`); off with reduced motion or the setting.
+- **Focus pull**: a short softness that clears as the view arrives: `focusRaiseMs` (250) after the raise, `focusStepMs` (120) after a
+  step to `focusFromStep` (6×) or more. Drawn as stepped box-blur post chains (`awaken:binoculars_focus_1..3`) swapped in the
+  player's active post effects, like the screen moments. Off with reduced motion.
+- **Moving**: a slow walk (`walk` 0.2 of normal, the spyglass's) through `MovementInputUpdateEvent`. Sprinting lowers them.
+  Swimming, riding, gliding and flying are allowed.
+
+### 39.4 The hands and the look (`client.GlassHands`, `client.GlassOverlay`)
+- **Raise**: a Hands view stance (§24) from the raise's progress: what you hold eases away (`View.climb`), both fists come up to
+  the barrels' sides and the binoculars (our model, the display-only item `awaken:binoculars`) rise to the eyes. From `eyecup` to 1
+  the binoculars come toward the eye and the fists leave the frame; the lens edge fades in. With Hands off (broken or the
+  animation setting off), no hands: the lens edge fades in.
+- **Lens edge** (our own art, `textures/gui/binoculars/edge_twin.png`, `edge_single.png`): soft dark outside, a thin brass inner ring,
+  a faint colour fringe at the rim, a hint of glass. Setting: twin (default), single, off.
+- **HUD** while up: hidden except chat, subtitles and the important notices (`awaken` layers that mark themselves important;
+  `OpeningHud`'s rule). The readout, bottom centre on the glass: `8× · 312 m · NE`. F1 hides the readout and keeps the edge.
+- **Readout**: the distance to what's at the centre: a block ray through loaded chunks (every 4th frame, out to the render
+  distance), then Far Sight's ground (39.8), else "far". Bearing in compass letters.
+
+### 39.5 Sounds (our own, `tools/art/specs/binoculars_sounds.py`, events and subtitles in `src/main/merge/binoculars`)
+`binoculars.raise` (fabric and strap), `binoculars.eyecup` (soft rubber, a breath of glass), `binoculars.step` (one detent of the
+focus wheel), `binoculars.lower`. Only your own client plays them, quiet and near the ear. No vanilla spyglass sounds.
+
+### 39.6 Others see it (`BinocularsNet`, `BinocularsRelay`, `client.GlassOthers`)
+- `awaken:binoculars` C2S (up or down, sent when it changes); the server relays `awaken:binoculars_relay` (entity id, up) to the
+  players tracking you, at most 4 changes per 20 ticks (the last one waits and always arrives). A dead player's word is ignored;
+  death, respawn and a dimension change put them down for everyone; logout forgets. Starting to track someone whose binoculars are
+  up tells you at once. Nothing is saved; a server without the payload simply never passes it on.
+- **Pose**: both arms raised to the eyes (`AWAKEN_BINOCULARS` arm pose, an enum extension of `HumanoidModel.ArmPose`, set on both
+  arms by a render-state modifier), and the binoculars drawn at the head by a render layer.
+
+### 39.7 Mark a spot (stage 2)
+Right-click while up makes the centre point your destination: `Destinations.request` with kind `spot`, named "A spot you saw
+through binoculars", and the Atlas's words "That's your destination now...". Only when the centre is markable
+(`GlassRules.markable`: something was hit, inside the world's height and border, within what the readout could tell); else the
+readout says "Too far to tell" for a moment and nothing is set. The server checks it as every destination request (§16.8).
+
+### 39.8 Reaching far (stage 2)
+- **Far Sight**: while `CameraHooks.zoom()` > 1.05 its horizon panorama isn't drawn (at 8× it would be blurry); the far land draws
+  live. Far Sight installs a ground sampler (`core.api.FarGround`) so the readout and marking reach past loaded land in
+  single player (while its far land drew in the last fifth of a second).
+- **Plates at range**: while the binoculars are up, holding the centre on a creature for `plateDwellMs` (500) shows its plate out to
+  `plateReach` (160) blocks: only the one you hold on. Uses only what your game already has about it; nothing new from the server.
+- **Creatures** beyond the server's tracking range (animals 160, monsters 128) aren't there to draw; not changed.
+
+### 39.9 Settings (`config/awaken-binoculars-client.toml`) and commands
+- `enabled` (true; off frees the key), `key_mode` (TAP_HOLD, HOLD, TOGGLE), `look_speed` (100, 50..150 %), `sway` (true), `edge`
+  (TWIN, SINGLE, OFF), `readout` (true), `last_step` (4).
+- `/awaken binoculars peek` (client): third person from the front for five seconds with them up, to see yourself.
+- **Tests** (`binoculars_`): `binoculars_state` (the key's three modes, a raise that turns back, every cause of lowering, the
+  instant ones in the same frame), `binoculars_zoom` (steps, memory, one step a scroll, FOV 30 to 110 with speed effects, the
+  spring's overshoot and settle at 120 and 30 fps, reduced motion), `binoculars_sense` (on-screen look speed within 2% at every
+  step and sensitivity; the slider), `binoculars_feel` (the file reads and matches the built-in numbers; broken files keep them),
+  `binoculars_relay` (only trackers hear it, the rate limit, the last word arrives, death lowers, the dead are ignored, logout
+  forgets), `binoculars_mark` (sky, unknown, above the world, past the border and too far refused; a spot becomes the destination;
+  the readout's words).
+
