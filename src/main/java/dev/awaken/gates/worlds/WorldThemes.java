@@ -210,7 +210,7 @@ public final class WorldThemes {
                  "shooting_star", "the_ink_runs", "the_giant_looks", "the_ice_sings", "the_aurora", "the_doors_open", "the_echoes" -> n / 2;
             case "tremor", "the_rains", "the_tide", "the_power_cut", "sandstorm", "lantern_release",
                  "blizzard", "shatter", "lockdown", "the_alarm", "gale", "hunger", "the_downpour" -> Math.max(1, n / 3);
-            case "the_wakening", "the_bloom", "slag_wyrm", "root_saint", "bookworm", "clock_keeper", "sand_walker", "the_festival",
+            case "the_wakening", "the_bloom", "slag_wyrm", "grove_walker", "bookworm", "clock_keeper", "sand_walker", "the_festival",
                  "the_still", "the_whale", "the_crash", "the_sleeper_stirs", "the_great_wind", "the_knock", "the_heartbeat"
                     -> Math.min(n - 1, (2 * n) / 3);
             default -> -1;
@@ -547,7 +547,7 @@ public final class WorldThemes {
             case "the_sleeper_stirs" -> stirs(level, on, g, f, w, r, pos);
             case "the_festival" -> festival(level, on, g, f, w, r, pos);
             case "the_bloom" -> bloom(level, on, g, f, w, r, pos);
-            case "slag_wyrm", "queens_choir", "root_saint", "bookworm", "clock_keeper", "sand_walker" -> signature(level, on, g, f, w, r, pos, ev);
+            case "slag_wyrm", "queens_choir", "grove_walker", "bookworm", "clock_keeper", "sand_walker" -> signature(level, on, g, f, w, r, pos, ev);
             default -> {}
         }
     }
@@ -761,9 +761,128 @@ public final class WorldThemes {
         }
     }
 
+    /**
+     * Where a signature creature comes in (SPEC §38.13): the roomiest floor spot of the room it was brought in or a room
+     * next to it, 6 to 28 from where it was brought (loaded chunks only); the spot about nine away when none has more room.
+     * A cave world's way is mostly tunnels five across, so this is what puts the fight in a cavern.
+     */
+    public static BlockPos roomy(ServerLevel level, GateRecord g, FloorLayout f, Room in, BlockPos pos) {
+        BlockPos fallback = spot(level, g, f, in, pos, 9);
+        if (in == null) return fallback;
+        List<Room> rooms = new java.util.ArrayList<>();
+        rooms.add(in);
+        for (Room.Door d : in.doors) {
+            Room o = d.toRoom < 0 ? null : f.room(d.toRoom);
+            if (o != null && o.type != Room.Type.BOSS && o.type != Room.Type.START) rooms.add(o);
+        }
+        BlockPos best = fallback;
+        int most = roomAt(level, fallback);
+        for (Room r : rooms) {
+            for (int[] s : r.spawnSpots) {
+                BlockPos p = GateService.roomFloor(g, f, r, s[0], s[1]);
+                double d = p.distSqr(pos);
+                if (d < 36 || d > 28 * 28 || !level.isLoaded(p)) continue;
+                int room = roomAt(level, p);
+                if (room > most) {
+                    most = room;
+                    best = p;
+                }
+            }
+        }
+        return best;
+    }
+
+    /** How much room a creature has at a floor spot: clear columns two high within 5, twice over, and headroom up to 12. */
+    static int roomAt(ServerLevel level, BlockPos at) {
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        int clear = 0;
+        for (int dx = -5; dx <= 5; dx++) {
+            for (int dz = -5; dz <= 5; dz++) {
+                if (dx * dx + dz * dz > 25) continue;
+                m.set(at.getX() + dx, at.getY(), at.getZ() + dz);
+                if (level.isLoaded(m) && clearAt(level, m) && clearAt(level, m.move(0, 1, 0))) clear++;
+            }
+        }
+        int head = 0;
+        m.set(at);
+        while (head < 12 && clearAt(level, m.move(0, 1, 0))) head++;
+        return clear * 2 + head;
+    }
+
+    private static boolean clearAt(ServerLevel level, BlockPos p) {
+        return level.getBlockState(p).getCollisionShape(level, p).isEmpty();
+    }
+
+    /** The top of a sea (a fluid block with air over it, loaded) nearest {@code dist} from a point, within 20; or null. */
+    static BlockPos surface(ServerLevel level, BlockPos pos, net.minecraft.world.level.block.Block fluid, double dist) {
+        BlockPos best = null;
+        double bestOff = Double.MAX_VALUE;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int dx = -20; dx <= 20; dx++) {
+            for (int dz = -20; dz <= 20; dz++) {
+                for (int dy = -6; dy <= 2; dy++) {
+                    m.set(pos.getX() + dx, pos.getY() + dy, pos.getZ() + dz);
+                    if (!level.isLoaded(m) || !level.getBlockState(m).is(fluid)) continue;
+                    m.move(0, 1, 0);
+                    boolean open = level.getBlockState(m).isAir();
+                    m.move(0, -1, 0);
+                    double off = Math.abs(m.distSqr(pos) - dist * dist);
+                    if (open && off < bestOff) {
+                        bestOff = off;
+                        best = m.immutable();
+                    }
+                }
+            }
+        }
+        return best;
+    }
+
+    /** The persistent data a spectacle creature follows (SPEC §38.13): its path, whether it loops, and how near it lets anyone come. */
+    public static final String PATH = "awaken_path", PATH_LOOP = "awaken_path_loop", KEEP_OFF = "awaken_keep_off";
+
+    /**
+     * A peaceful creature of a world that keeps to a path (SPEC §38.13): its own body from the mobs module, or null until
+     * there is one. It stands at the path's first point; a one-way path ends with it gone, a loop goes round and round.
+     */
+    static LivingEntity spectacle(ServerLevel level, GateRecord g, String id, List<BlockPos> path, boolean loop, int keepOff) {
+        LivingEntity e = dev.awaken.core.api.MobHooks.spawnCreature(level, WorldLook.id(id), path.getFirst(), 0, g.key());
+        if (e == null) return null;
+        long[] points = new long[path.size()];
+        for (int i = 0; i < points.length; i++) points[i] = path.get(i).asLong();
+        e.getPersistentData().putLongArray(PATH, points);
+        e.getPersistentData().putBoolean(PATH_LOOP, loop);
+        e.getPersistentData().putInt(KEEP_OFF, keepOff);
+        return e;
+    }
+
+    /**
+     * Above the Clouds' cloud whales: a pod of three going round the floor high over the islands, too far off and too high
+     * to reach. True once at least one is there; false while the mobs module has no body for them (asked again later).
+     */
+    static boolean pod(ServerLevel level, GateRecord g, FloorLayout f, ServerPlayer p) {
+        int n = 16;
+        List<BlockPos> ring = new java.util.ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            double a = i * Math.PI * 2 / n;
+            ring.add(GateService.world(g, f, 128 + (int) Math.round(Math.cos(a) * 84), 36, 128 + (int) Math.round(Math.sin(a) * 84)));
+        }
+        // they set off from the point nearest whoever came (so where they stand is loaded), two points apart
+        int near = 0;
+        for (int i = 1; i < n; i++) if (ring.get(i).distSqr(p.blockPosition()) < ring.get(near).distSqr(p.blockPosition())) near = i;
+        boolean any = false;
+        for (int k = 0; k < 3; k++) {
+            List<BlockPos> path = new java.util.ArrayList<>();
+            for (int i = 0; i < n; i++) path.add(ring.get((near + k * 2 + i) % n).above(k * 6));
+            if (!level.isLoaded(path.getFirst())) continue;
+            if (spectacle(level, g, "cloud_whale", path, true, 32) == null) return false;
+            any = true;
+        }
+        return any;
+    }
+
     /** The names a wonder's signature creature has until the Creature Kit gives it a body of its own. */
     static final Map<String, String> NAMES = Map.ofEntries(Map.entry("slag_wyrm", "The Slag Wyrm"), Map.entry("queens_choir", "The Queen's Choir"),
-            Map.entry("root_saint", "The Root Saint"), Map.entry("bookworm", "The Bookworm"), Map.entry("clock_keeper", "The Clock-Keeper"),
+            Map.entry("grove_walker", "The Grove Walker"), Map.entry("bookworm", "The Bookworm"), Map.entry("clock_keeper", "The Clock-Keeper"),
             Map.entry("sand_walker", "The Sand Walker"), Map.entry("lantern_spirits", "The Lantern Spirits"), Map.entry("snow_monk", "The Snow Monk"),
             Map.entry("the_reflection", "Your Reflection"), Map.entry("the_glitch", "The Glitch"), Map.entry("sleepwalker", "The Sleepwalker"),
             Map.entry("storm_roc", "The Storm Roc"), Map.entry("the_watcher", "The Watcher"));
@@ -800,11 +919,12 @@ public final class WorldThemes {
             default -> "saint";
         };
         play(level, pos, snd, 4F, 1F);
-        // on the Lord's floor of a world whose signature is the theme's own Lord (the Great Tree's Root Saint), the Lord
-        // is the one that comes: no second one
-        if (f.bossFloor && id.equals(w.theme().bossKey)) return;
         WorldLive.later(60, () -> {
-            BlockPos at = spot(level, g, f, r, pos, 9);
+            // a creature of the sea comes up out of it (the wyrm from the lava, the bookworm from the ink); the rest come
+            // where there's room for a fight, here or next door
+            BlockPos sea = id.equals("slag_wyrm") ? surface(level, pos, net.minecraft.world.level.block.Blocks.LAVA, 9)
+                    : id.equals("bookworm") ? surface(level, pos, net.minecraft.world.level.block.Blocks.WATER, 9) : null;
+            BlockPos at = sea != null ? sea : roomy(level, g, f, r, pos);
             LivingEntity e = Rooms.signature(level, g, f, -1, WorldLook.id(id), at);
             if (e == null) {
                 e = Rooms.spawn(level, g, f, -1, MobRole.Role.ELITE, at);

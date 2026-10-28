@@ -80,7 +80,7 @@
   "sound": "awaken:gate.world.temple_courts",
   "events": [
     "the_wakening",
-    "root_saint"
+    "grove_walker"
   ],
   "rule": "offerings",
   "secrets": [
@@ -93,8 +93,8 @@
       "name": "The heartwood"
     }
   ],
-  "keepsake": "saints_branch",
-  "keepsake_name": "The Root Saint's Branch",
-  "keepsake_from": "root_saint",
-  "signature": "root_saint"
+  "keepsake": "walkers_branch",
+  "keepsake_name": "The Grove Walker's Branch",
+  "keepsake_from": "grove_walker",
+  "signature": "grove_walker"
 }

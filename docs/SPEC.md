@@ -10116,10 +10116,10 @@ theme.
   everyone slowed 2 s), `the_hum` (half way: two drones come), `the_rains` (a third: six waves of rain mist), `the_wakening`
   (two thirds: the braziers within 48 light themselves one after another). The wonders' moments, two thirds along: `the_bloom`
   (Inside the Bloom: the gills open, moths rise in a spiral 40 high and you've met the Spore Mother) and the signatures
-  `slag_wyrm` (the Cooling Sea), `queens_choir` (the Swarm) and `root_saint` (the Great Tree): its own body when the mobs
+  `slag_wyrm` (the Cooling Sea), `queens_choir` (the Swarm) and `grove_walker` (the Great Tree: a walking tree of its own, not the temple's Lord, the
+  Root Saint; renamed from `root_saint` 2026-10-29 at the boss plan's ask): its own body when the mobs
   module has one (`Rooms.signature`), else a named elite with twice the health (the wyrm fire-proof), carrying the world for
-  its keepsake (`keepsake_from` the signature's id). On the Lord's floor of a world whose signature is the theme's Lord (the
-  Great Tree's Root Saint) the Lord is the one that comes: no second.
+  its keepsake (`keepsake_from` the signature's id).
 - **Nooks**: a secret found by standing in it (`NOOK` marks; the room checks find it after the place check, so a nook in a
   secret place counts for that world). Dug into a cavern's wall where it bulges out most (a crawl two high, three deep), or
   at the middle of the sea's great island and the Honey Lake's.
@@ -10141,7 +10141,7 @@ theme.
     wing from the Queen's Choir), the Queen's Garden (secret; the_queens_seat, queen's crown).
   - Overgrown Temple (still, monsoon, fireflies, overgrowth): the Jungle Courts (square; overgrown_shrine, jade offering), the
     Root Halls (root_cellar, cellar seed), the Waterfall Temple (deep; behind_the_water, falls pearl), the Great Tree (wonder;
-    heartwood; the saint's branch from the Root Saint), the Sleeping Idol (secret; the_idols_mouth, idol's eye).
+    heartwood; the Grove Walker's branch from the Grove Walker), the Sleeping Idol (secret; the_idols_mouth, idol's eye).
   - Every everyday world but the secret ones also keeps the theme's touch secret, and the two everyday ones the secret that
     leads to the theme's secret world (the_threads, the_warm_wall, the_sweet_air, the_green_door).
 - **Sets** (38.8): the Spore Jar (a jar of the Hollow's spores that lights a room; tap it and they swirl up), the
@@ -10464,6 +10464,27 @@ Built 2026-10-29. Two themes (ten worlds) and fifteen rare worlds, all on the ca
   by its signature: `the_great_wind` (Above the Clouds: lifted and set down gently; the Storm Roc) and `the_knock` (the
   Last Room: three knocks, a pause, one more; the door opens on its own and the Watcher stands in it). A signature is a
   named elite with twice the health (`Rooms.signature`) until the mobs module gives them bodies.
+- **Signature bodies** (2026-10-29, agreed with the boss plan's session, which makes them with its Creature Kit as
+  ELITE-role creatures through `MobsSpawner`'s `spawnCreature`, null for an id it doesn't know): the thirteen fights are
+  `the_ringer`, `slag_wyrm`, `queens_choir`, `grove_walker`, `bookworm`, `clock_keeper`, `sand_walker`, `snow_monk`,
+  `the_reflection`, `the_glitch`, `sleepwalker`, `storm_roc` and `the_watcher`. Each is given the spot it stands on
+  after its entrance (its own animation plays it in): the roomiest floor spot of the room it was brought in or a room
+  next door, 6 to 28 away (`WorldThemes.roomy`: clear columns two high within 5 count twice, headroom counts up to 12;
+  loaded chunks only), else the spot about nine away. A cave world's way is mostly tunnels five across with a ceiling of
+  9 to 10, so this is what puts its fight in a cavern. The Ringer comes the same way. The Slag Wyrm and the Bookworm
+  come up out of the sea instead (`WorldThemes.surface`: the top of the lava, or the ink's water, nearest nine away within
+  20; the roomy spot when there's none). An open land's invisible lid stands 16 to 20 over its floor (its `lid`), so the
+  Storm Roc's sky is that high. The Spore Mother, the Lantern Spirits, the
+  White's whale and the Eye stay particles and blocks.
+- **Spectacles** (peaceful creatures that keep to a path, `WorldThemes.spectacle`): spawned through `spawnCreature` with
+  content level 0 at the path's first point, never a gate monster (not in `GateMobs`, no room key: a cell's chunks are
+  erased when it's released, so nothing is left behind). The path rides the entity's persistent data:
+  `awaken_path` (block positions as `BlockPos.asLong`, a long array), `awaken_path_loop` (true: go round for ever; false:
+  gone at the last point) and `awaken_keep_off` (blocks it keeps from any player). One today: Above the Clouds' cloud
+  whales (`cloud_whale`), three going round the floor on a 16-point ring 84 from its middle, 36 over the floor (over
+  the land's invisible lid at 20, so out of reach) and 6
+  apart in height, two points apart, setting off from the point nearest whoever came, keep-off 32. They come once a
+  floor (`FloorState.world` remembers `pod`); while the mobs module has no body the floor asks again every 10 s.
 - **Rare worlds** (tier `rare`, folder `gate_worlds/rare/`, 38.2): in no theme's set (`GateWorlds.ofTheme` leaves them
   out, a rare keepsake never completes a set), shown in their own Atlas group `rare_worlds`, never a Lord's floor. From
   rank B the director rolls one on about one floor in 25 of any theme's gate (`GateWorlds.pickWorld`: roll under 0.04 and

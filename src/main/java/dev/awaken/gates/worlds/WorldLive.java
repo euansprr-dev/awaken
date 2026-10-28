@@ -73,7 +73,7 @@ public final class WorldLive {
     static final int QUIET = Block.UPDATE_CLIENTS | Block.UPDATE_SKIP_ALL_SIDEEFFECTS;
 
     // what FloorState.world remembers
-    static final String FLOOD = "flood", FLOOD_DONE = "flood_done", RINGER = "ringer";
+    static final String FLOOD = "flood", FLOOD_DONE = "flood_done", RINGER = "ringer", POD = "pod";
 
     record Key(int gate, int area, int floor) {
         static Key of(GateRecord g, FloorLayout f) {
@@ -235,6 +235,11 @@ public final class WorldLive {
         if (f.world.endsWith("/simulation")) draw(level, p);
         if (f.world.endsWith("/the_library_of_doors")) doors(level, p, g, f);
         if (f.world.endsWith("/the_glass_sea") && (now + p.getId()) % 200 < 10) fish(level, p);
+        // the cloud whales come once a floor, when the mobs module has a body for them (asked every ten seconds till then)
+        if (f.world.endsWith("/above_the_clouds") && !fs.world.contains(POD) && (now + p.getId()) % 200 < 10 && WorldThemes.pod(level, g, f, p)) {
+            fs.world.add(POD);
+            GateRegistry.get(level.getServer()).setDirty();
+        }
     }
 
     // ---- the rare worlds (38.13) ----------------------------------------------------------------------------------------
@@ -697,10 +702,8 @@ public final class WorldLive {
         for (int i = 0; i < 3; i++) later(i * 25, () -> level.playSound(null, pos, GatesRegistry.SND_WORLD_RINGER.get(), SoundSource.HOSTILE, 3F, 0.7F));
         Room in = r;
         later(75, () -> {
-            List<BlockPos> spots = in == null ? List.of() : Rooms.spots(level, g, f, in);
-            BlockPos far = null;
-            for (BlockPos s : spots) if (far == null || Math.abs(s.distSqr(pos) - 64) < Math.abs(far.distSqr(pos) - 64)) far = s;
-            if (far == null) far = p.blockPosition();
+            // where there's room for it, in the bell's room or next door (SPEC §38.13)
+            BlockPos far = in == null ? p.blockPosition() : WorldThemes.roomy(level, g, f, in, pos);
             // its own body when the mobs module has one (the Creature Kit), else an elite of the theme in its name
             LivingEntity e = Rooms.signature(level, g, f, -1, WorldLook.id(w.dressing().signature()), far);
             if (e == null) {

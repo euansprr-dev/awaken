@@ -85,6 +85,15 @@ public final class WorldLiveTests {
                     WorldRules.strike(p, bell);
                 }
                 h.assertTrue(fs.world.contains(WorldLive.RINGER), "the Ringer comes at the " + WorldLive.RINGER_AT + "th bell");
+                // a signature comes where there's room for a fight, here or next door, and where it can stand (38.13)
+                for (Room r : f.rooms) {
+                    if (r.spawnSpots.size() < 2 || r.type == Room.Type.START || r.type == Room.Type.BOSS) continue;
+                    BlockPos from = Rooms.spots(level, g, f, r).get(0), at = WorldThemes.roomy(level, g, f, r, from);
+                    h.assertTrue(WorldThemes.roomAt(level, at) >= WorldThemes.roomAt(level, WorldThemes.spot(level, g, f, r, from, 9)), "the roomiest spot near " + from + " (" + at + ")");
+                    h.assertTrue(level.getBlockState(at).getCollisionShape(level, at).isEmpty() && level.getBlockState(at.above()).getCollisionShape(level, at.above()).isEmpty(),
+                            "a signature stands at " + at);
+                    break;
+                }
 
                 // a hung bell hums as you pass under it
                 FloorLayout.Mark hung = null;

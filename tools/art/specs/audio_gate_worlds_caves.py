@@ -195,7 +195,7 @@ def choir(v):
 
 
 def saint(v):
-    """The Root Saint stirs: the whole tree groaning, roots cracking, the old wood settling around it."""
+    """The Grove Walker stirs: the whole tree groaning, roots cracking, the old wood settling around it."""
     n = K.ns(6.5)
     x = at(n, 0, K.lowpass(rate(ours("amb_world_elder_groan"), 0.8)[:n], 1600, 2) * K.swell(n, 0.45, 1.5), 1.0)
     for i, (t, name, r) in enumerate(((0.6, "impactWood_heavy_001", 0.5), (1.7, "impactWood_medium_002", 0.45),
