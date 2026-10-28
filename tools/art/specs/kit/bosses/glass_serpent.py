@@ -618,9 +618,10 @@ def burrow(r):
 
 
 def erupt(r):
-    """Erupting Glass: it rears and drives its jaw down into the sand before it, the coil clenching; the floor erupts
-    in glass where you stand; it wrenches its head back out."""
-    rear = pose(r, coil_pts=coil(r_in=9, pitch=13), neck=neck((0, 10, 4), (0, 21, 9), (0, 31, 10), (0, 38, 6), (0, 43, -1)), head=(0, 10), jaw=30)
+    """Erupting Glass: it rears up tall and looks straight down at where you stand, the coil clenching, then drives its
+    jaw down into the sand before it; the floor erupts in glass where you stand; it wrenches its head back out."""
+    rear = pose(r, coil_pts=coil(r_in=8, pitch=12, turns=1.35), neck=neck((0, 11, 3), (0, 22, 5), (0, 33, 4), (0, 43, 0), (0, 51, -5)),
+                head=(0, 52), jaw=34, horns=10)
     gather = pose(r, neck=neck((0, 9, 2), (0, 20, 4), (0, 29, 2), (0, 35, -3), (0, 38, -11)), head=(0, 16), jaw=16)
     drive = pose(r, coil_pts=coil(r_in=8.5, pitch=12.5, wave=(1.0, 4.0, 0)), neck=neck((0, 9, -5), (0, 15, -13), (0, 15, -22), (0, 10, -29), (0, 3, -33)),
                  head=(0, 70), jaw=36)

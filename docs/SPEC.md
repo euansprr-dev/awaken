@@ -9574,8 +9574,9 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     the coil into a tall spring with the skull thrown back at the top, holds, and slams it flat on the floor, wider than
     it was, the glass ringing. Burrow Strike rears, dives head first into the sand with the coil pouring down after it
     until it's gone, comes round under the floor (the blink) and bursts up out of the sand at you skull first with its
-    jaw wide, arcing down on you as the coil comes up after it. Erupting Glass rears and drives its jaw down into the
-    sand before it, the coil clenching, while the floor erupts where you stand, and wrenches its head back out. Whoever
+    jaw wide, arcing down on you as the coil comes up after it. Erupting Glass rears up tall and looks straight down
+    at where you stand, the coil clenching, then drives its jaw down into the sand before it while the floor erupts
+    there, and wrenches its head back out. Whoever
     is behind it gets the tail's end raised high off the floor and whipped across, the skull turned to look back over
     the coil. The Glass Storm (the signature) rises on its coil and turns on itself faster and faster, the coil a spout
     of glass with the skull at its top, bursts at its fastest, and drops back, turning slower until it stops: three
