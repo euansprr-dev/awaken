@@ -68,6 +68,7 @@ final class GateEvents {
         RunEvents.tick(server);
         Breaks.tick(server);
         GateCard.tick(server);
+        dev.awaken.gates.worlds.WorldLive.tick(server);
         int t = server.getTickCount();
         if (t % 100 == 50) {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
@@ -96,6 +97,7 @@ final class GateEvents {
         dev.awaken.gates.run.Modifiers.resetAll();
         dev.awaken.gates.run.Twists.resetAll();
         dev.awaken.gates.run.RigDirector.resetAll();
+        dev.awaken.gates.worlds.WorldLive.clear();
     }
 
     private static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
@@ -132,6 +134,7 @@ final class GateEvents {
                 : dead.getKillCredit() instanceof ServerPlayer sp ? sp : null; // finished by fire, a fall or an Echo after your hit
         MobRole role = dead.getData(CoreApi.MOB_ROLE.get());
         RunEvents.onMobDeath(level, dead, killer, role);
+        if (dev.awaken.gates.worlds.WorldLive.ringer(dead)) dev.awaken.gates.worlds.WorldLive.died(level, dead);
         if (role.gateId().isEmpty()) return;
         GateRecord g;
         try {

@@ -24,10 +24,10 @@ import java.util.List;
 public final class GateWorldBellTests {
     private GateWorldBellTests() {}
 
-    static final String BELL = "awaken:bell_crypt/";
+    public static final String BELL = "awaken:bell_crypt/";
     static final List<String> MOODS = List.of("still", "tolling", "requiem", "storm");
 
-    static GatePlan plan(long seed, int i) {
+    public static GatePlan plan(long seed, int i) {
         Layout lay = Layout.values()[i % Layout.values().length];
         Twist tw = i % 4 == 3 ? Twist.GATE_WITHIN : Twist.NONE;
         return new GatePlan(seed, GatePlan.CONTENT_VERSION, Rank.of(i % 5), Theme.BELL_CRYPT, lay, List.of(), tw, 3 + i % 4,
@@ -35,7 +35,7 @@ public final class GateWorldBellTests {
     }
 
     /** Every floor of the main gate in one world and mood (where its roles allow). */
-    static GatePlan dressed(GatePlan p, String world, String mood) {
+    public static GatePlan dressed(GatePlan p, String world, String mood) {
         GateWorld w = GateWorlds.get(world);
         List<FloorWorld> fw = new ArrayList<>();
         for (int f = 1; f <= p.floors(); f++) {
@@ -73,6 +73,7 @@ public final class GateWorldBellTests {
             if (r.spawnSpots.isEmpty() && r.features.isEmpty() && w.near(r.centerX(), y, r.centerZ(), 7) == null)
                 bad.append(" room ").append(r.id).append(" (").append(r.type).append(") can't be walked into;");
         }
+        bad.append(marks(w, f));
         List<int[]> leaks = w.leaks();
         if (!leaks.isEmpty()) bad.append(" water would flow at ").append(leaks.get(0)[0]).append(' ').append(leaks.get(0)[1]).append(' ')
                 .append(leaks.get(0)[2]).append(" (").append(leaks.size()).append(");");
@@ -130,6 +131,64 @@ public final class GateWorldBellTests {
         return bad.toString();
     }
 
+    /**
+     * The live layer's marks hold (SPEC §38.8): every handbell stands where it's marked, every secret has its handbell (or
+     * its rope), and a basin the Flood fills is dry and walled in, so the risen water can't run out of it.
+     */
+    static String marks(WorldCheck w, FloorLayout f) {
+        StringBuilder bad = new StringBuilder();
+        int missing = 0, hands = 0;
+        String first = "";
+        for (FloorLayout.Mark m : f.marks) {
+            if (!m.kind().equals(FloorLayout.Mark.BELL) || !m.id().equals(FloorLayout.Mark.HANDBELL)) continue;
+            hands++;
+            net.minecraft.world.level.block.state.BlockState there = w.at(m.x0(), f.baseY + m.y0(), m.z0());
+            if (there.is(GatesRegistry.CRYPT_HANDBELL.get())) continue;
+            if (missing++ == 0) first = " (" + there.getBlock().getDescriptionId() + " at " + m.x0() + " " + m.y0() + " " + m.z0()
+                    + ", under it " + w.at(m.x0(), f.baseY + m.y0() - 1, m.z0()).getBlock().getDescriptionId() + ")";
+        }
+        if (missing > 0) bad.append(' ').append(missing).append(" of ").append(hands).append(" handbells aren't there").append(first).append(';');
+        for (FloorLayout.Mark m : f.marks(FloorLayout.Mark.SECRET)) {
+            boolean has = false;
+            for (int x = m.x0(); x <= m.x1() && !has; x++)
+                for (int y = m.y0(); y <= m.y1() && !has; y++)
+                    for (int z = m.z0(); z <= m.z1() && !has; z++) {
+                        var st = w.at(x, f.baseY + y, z);
+                        has = st.is(GatesRegistry.CRYPT_HANDBELL.get()) || (m.id().equals("odd_rope") && st.is(GatesRegistry.CRYPT_BELL_ROPE.get()));
+                    }
+            if (!has) bad.append(" the secret ").append(m.id()).append(" has nothing to find at ").append(m.x0()).append(' ').append(m.z0()).append(';');
+        }
+        int wet = 0, open = 0;
+        int[] leak = null;
+        for (FloorLayout.Mark m : f.marks(FloorLayout.Mark.BASIN)) {
+            for (int x = m.x0(); x <= m.x1(); x++) {
+                for (int y = m.y0(); y <= m.y1(); y++) {
+                    for (int z = m.z0(); z <= m.z1(); z++) {
+                        var st = w.at(x, f.baseY + y, z);
+                        if (st.getBlock() == net.minecraft.world.level.block.Blocks.WATER) wet++;
+                        if (!st.isAir() && !st.is(GatesRegistry.CRYPT_LILY_CANDLE.get())) continue;
+                        open++;
+                        for (int[] d : new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 0, -1}, {0, -1, 0}}) {
+                            int nx = x + d[0], ny = y + d[1], nz = z + d[2];
+                            if (inBasin(f, nx, ny, nz)) continue;
+                            var n = w.at(nx, f.baseY + ny, nz);
+                            if ((n.isAir() || n.is(GatesRegistry.CRYPT_LILY_CANDLE.get())) && leak == null) leak = new int[]{nx, f.baseY + ny, nz};
+                        }
+                    }
+                }
+            }
+        }
+        if (wet > 0) bad.append(" the Flood's basins already hold ").append(wet).append(" water;");
+        if (!f.marks(FloorLayout.Mark.BASIN).isEmpty() && open == 0) bad.append(" the Flood's basins have no room for water;");
+        if (leak != null) bad.append(" the Flood would run out at ").append(leak[0]).append(' ').append(leak[1]).append(' ').append(leak[2]).append(';');
+        return bad.toString();
+    }
+
+    static boolean inBasin(FloorLayout f, int x, int y, int z) {
+        for (FloorLayout.Mark m : f.marks(FloorLayout.Mark.BASIN)) if (m.contains(x, y, z)) return true;
+        return false;
+    }
+
     /** Walks from the arrival; a Rig room is crossed by its own mechanism: reach its way in, and you come out at its way on. */
     static void walkAll(WorldCheck w, FloorLayout f, int x, int y, int z) {
         w.walk(x, y, z);
@@ -174,6 +233,7 @@ public final class GateWorldBellTests {
             double[] ms = new double[2];
             double planWorst = 0;
             int floors = 0;
+            java.util.Set<String> secrets = new java.util.HashSet<>();
             for (int i = 0; i < plans; i++) {
                 GatePlan p = dressed(plan(0x5E11L + i * 104729L, i), BELL + world, MOODS.get(i % MOODS.size()));
                 long t = System.nanoTime();
@@ -187,11 +247,13 @@ public final class GateWorldBellTests {
                         continue;
                     }
                     floors++;
+                    for (FloorLayout.Mark m : f.marks(FloorLayout.Mark.SECRET)) secrets.add(m.id());
                     String why = check(p, f, i > 0 ? ms : new double[2], i < 2 ? world + "-" + i + "-f" + f.floor : null);
                     h.assertTrue(why.isEmpty(), world + " floor " + f.floor + " (" + f.mood + ") of " + p + ":" + why);
                 }
             }
             h.assertTrue(floors > 0, "some floors were " + world);
+            for (GateWorld.Secret sc : w.dressing().secrets()) h.assertTrue(secrets.contains(sc.id()), world + "'s secret " + sc.id() + " is never placed");
             h.assertTrue(ms[0] < 4 && ms[1] < 40, String.format("chunks carve inside the budget: average %.2f ms, worst %.2f ms", ms[0], ms[1]));
             h.assertTrue(planWorst < 50, String.format("floors plan inside the budget: worst %.1f ms", planWorst));
             dev.awaken.Awaken.LOG.info("[gates] {}: {} floors, chunks {} ms average, {} ms worst, plans {} ms worst", world, floors,

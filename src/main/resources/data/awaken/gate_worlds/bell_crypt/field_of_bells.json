@@ -76,5 +76,7 @@
     }
   ],
   "keepsake": "field_bell",
+  "keepsake_name": "Field Bell",
+  "keepsake_from": "silent_bell",
   "signature": "the_ringer"
 }

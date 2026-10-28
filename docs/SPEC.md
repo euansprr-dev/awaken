@@ -8625,7 +8625,10 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   interface, the director, the Atlas and the arrival payload. No recipes ship yet, so every floor is today's rooms in its plot.
 - **Stage 1** (in progress): the world floor contract (38.5), the Bell Crypt's blocks and its four floor worlds (38.6); tests
   `gateworlds_bell_recipes`, `gateworlds_belfry`, `gateworlds_ossuary`, `gateworlds_field` and `gateworlds_shaft`; the
-  arrival, the journey down and the Atlas page (38.7), test `gateworlds_atlas_view`.
+  arrival, the journey down and the Atlas page (38.7), test `gateworlds_atlas_view`; the live layer (38.8): events, the
+  bell rule, the Ringer, secrets, keepsakes and the catch, tests `gateworlds_live` and `gateworlds_catch`, and every world's
+  test also checks its marks (each handbell stands where it's marked, each secret has something to find, the Flood's
+  basins are dry and walled in) and that each of its recipe's secrets is placed on some floor.
 
 ### 38.5 The world floor contract (Stage 1)
 
@@ -8660,11 +8663,12 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
 
 ### 38.6 The Bell Crypt (Stage 1)
 
-- **Its 14 blocks** (`GatesRegistry.WORLD_BLOCKS`, textures `tools/art/specs/gate_worlds_bell.py`, all mined with a pickaxe
+- **Its 15 blocks** (`GatesRegistry.WORLD_BLOCKS`, textures `tools/art/specs/gate_worlds_bell.py`, all mined with a pickaxe
   outside gates): crypt limestone, worn and crumbling; carved tracery; flagstone and wet flagstone; patina bronze (the
   bells; strike it and the world's rule answers); crypt candles (1 to 5, lit or out, 3 light each lit); moon glass (light 10,
   the lancets); rose glass (five hues, light 6); a bone niche (light 5, faces a wall); a drowned vestment (hangs on a wall,
-  no collision); bell rope (climbable); a lily candle (floats on water, light 6).
+  no collision); bell rope (climbable); a lily candle (floats on water, light 6); a handbell (bronze in a stone yoke,
+  standing on the floor where anyone can strike it, faces one way, no collision; 38.8).
 - **The worlds** (`data/awaken/gate_worlds/bell_crypt/`): the Sunken Belfry (everyday, `hall`), the Ossuary Ways
   (everyday, `passages`), the Bell Shaft (deep, `drop`, tall), the Field of Bells (wonder, `void`, floors only), and
   Bellmaker's Rest (secret, `rest`, reached only through the Belfry's odd rope). Each has the moods Still, Tolling, Requiem
@@ -8672,7 +8676,7 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   and listed in the gates dimension); sound events are `awaken:gate.world.<name>`.
 - **The Sunken Belfry** (`HallEngine`): a drowned church along the plot's middle. The arrival is a narthex with two stair
   turrets; a candlelit causeway (5 wide) runs down a flooded nave (the water one step below the causeway, so a fall is never a
-  trap) between pointed arcades, with a gallery above and dark aisles behind the piers. The programme's spine becomes nave
+  trap; on a world with the Flood the tide is out when you arrive, see 38.8) between pointed arcades, with a gallery above and dark aisles behind the piers. The programme's spine becomes nave
   bays (plain rooms merged, three at most, in runs of rows); the hub or the arena takes the Great Bell (you walk under it,
   its lip just over your head), a calm bay later takes the drowned choir (stone singers waist-deep, facing the causeway);
   branches become side chapels and crypts off the aisles; a puzzle or cache wing can take the Rope Shaft (a tall shaft hung
@@ -8756,4 +8760,70 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   its keepsake is yours; hovering tells the visits, the moods seen and how many more it has, the secrets found or
   kept, the signature creature if you've met it. An unfound world is a dark outline in its rarity's colour with "?",
   "Not found yet" and its tier · rarity. A secret world has no card until found.
+
+### 38.8 The live layer: events, rules, secrets, keepsakes and the catch (Stage 1)
+
+- **Marks** (`FloorLayout.marks`, planned with the floor, never saved): spots the live layer finds again, floor-local x/z and
+  y above the base like Gate Air. `bell` (a hung bell's box; id "" or a name an event looks for: "great", "still",
+  "lowest"; "handbell" for a handbell), `secret` (where a recipe secret is found, id the secret's), `basin` (what the
+  Flood fills). Engines mark every bell they hang (`WorldPlan.bell`), every handbell (`WorldPlan.handbell`) and secret.
+- **Handbells** (the 15th block, `crypt_handbell`): the great bells hang far overhead, so every world sets handbells where
+  you walk. The Belfry: one at the causeway's edge in every bay row, west and east by turns, and the choir's own among its
+  singers. The Ossuary: one by every crypt's back wall and one beyond the candles at the Rotunda's pillar. The Field: one
+  near the rim of every island but the arrival. The Shaft: one between the ropes on every landing and one on the foot.
+  They're set last of a floor's carve (`WorldPlan.handbells`, just before it's sealed, so nothing after cuts one away):
+  where the engine wants it, else the nearest spot within two blocks on its level that the finished carve leaves open with
+  head room over solid floor (`Sculpt.probe` works one block out at plan time), and never inside a doorway's box. One with
+  nowhere to stand isn't set or marked. Features (caches, shrines, a vault's bars) keep a block clear of every handbell.
+- **The rule, "bells"** (`WorldRules.strike`, from hitting or using any bell bronze: the patina bells and handbells, on a
+  world whose recipe has `rule: bells`): the bell rings (a handbell high, a great bell lower the bigger it is); a run of
+  glints goes from it through the next five doorways toward the floor's end, 120 at most, over about 2 s, seen by everyone
+  within 40 blocks; any secret within 24 blocks the striker hasn't found glints where it's hidden; every gate monster
+  within 10 (not a Lord) gets Slowness IV and Weakness II for 2.5 s. One strike per player every 15 ticks.
+- **The Ringer**: the 8th bell struck on one floor (anyone's) tolls three times and brings the Ringer, once a floor
+  (`FloorState.world` "ringer"): an elite of the floor's theme named "The Ringer", double health, about 8 blocks from the
+  bell in its room. "You've rung too many bells. The Ringer is coming." to everyone within 48. Everyone within 48 when it
+  comes has met the world's signature creature (`the_ringer`, on the Atlas). Its own body comes with the mob forms work.
+- **Events** (a recipe's `events`, each once a floor and saved as "ev:<id>"; a room on the way from the arrival to the end
+  runs it when anyone first reaches it or a room past it): **the Tolling** (halfway): the 12 nearest bells within 64 ring
+  one after another, 6 ticks apart, and dust comes down round everyone within 48 (a world with no bells of its own hears
+  three far tolls above it); in the Tolling mood they ring again every 90 s while anyone is on the floor. **The Bone Fall**
+  (a third of the way, the Ossuary): the passage rattles, bones come down, and 1.5 s later two of the floor's normal
+  monsters climb out of them at spots about 6 away (floor-wide, not a room's count). **The Silence** (the hub on the way,
+  else two thirds, the Field): the sound bed drains away for 8 s (`WorldPayloads.Hush`) and after 6 s the Still Bell tolls
+  once. **The Swing** (two thirds, the Shaft): the column groans and a peal runs down its 16 highest bells from the top,
+  8 ticks apart, each a little higher than the last, dust falling.
+- **The Flood** (the Belfry): the tide is out when you arrive. Each bay's water is a pit three deep (stone at -4, a hand of
+  water at -3, the brim at 0); mid-bay (three blocks of the row) a stair of three steps goes down from the causeway and
+  another up to the arcade, so the aisles are walked to as the water used to be swum; the choir's singers stand on plinths so
+  they stand waist-deep once it's in, the lilies two below the brim, Gate Air's water at -3. The first key taken on the floor
+  (a cache opened, a puzzle solved, the shrine opened), or anyone three quarters of the way down, starts it (saved, "flood"):
+  "The water is rising." It fills the basins (each stretch of bays either side of the causeway, -2 and -1) a layer at a
+  time with a second's breath between, at most 300 blocks a tick, without neighbour updates so the water stands still; the
+  lilies ride up to the brim; then everyone on the floor is told the floor again without a card so Gate Air's water stands
+  at -1 (`WorldLive.air`). Blocks in unloaded chunks are filled when they load; a restart part way picks it up again
+  ("flood_done" when every block is in).
+- **Places that are worlds** (the Bellmaker's Rest): stepping into it is an arrival there (the Atlas, its own card and
+  sound bed); stepping out tells the floor's world again without a card. Coming finds the floor world's secret that leads
+  there (the odd rope).
+- **Secrets** (struck handbells inside a `secret` mark; everyone within 24 finds it): **the choir's last note** (the
+  choir's handbell: three bells in a chord); **the sealed niche** (the Ossuary: a niche in one crypt's back wall behind its
+  handbell breaks open, once a floor, "open:sealed_niche"); **the lowest bell** (the Shaft's foot: the lowest bell
+  answers); **the silent bell** (the Field's last island: it makes no sound and the Still Bell answers it 2 s later). A
+  find says "You found one of this place's secrets: <name>." and goes on the Atlas.
+- **Keepsakes** (a recipe's `keepsake`, `keepsake_name` and `keepsake_from`: one of its secrets, its signature creature, or
+  "arrival"): once per player per world, a trophy (`HearthHooks.keepsake`, made by the Hearth's trophies as
+  "awaken:keepsake/<id>") into your pack to hang in the Trophy Hall, and a star on the Atlas card. The Belfry's (the Ringer's
+  Clapper) drops when the Ringer dies on a Belfry floor to everyone on a run within 48; the Ossuary's Bone Handbell comes
+  with the sealed niche, the Shaft's Little Tower Bell with the lowest bell, the Field's Field Bell with the silent bell, the
+  Rest's Bellmaker's Clapper with arriving. Keepsakes hang like any trophy, so each counts once toward the Trophy Hall's
+  bonus. The five together as a working bell tower at home is not built yet.
+- **The catch** (drop worlds, the Shaft): while you're on such a floor the server notes every 4 ticks where you stand on
+  the ground in a room, out of water; a fall of more than 9 blocks that has taken you 4 below that ledge puts you back on
+  it, facing the way you stood, for 3 damage, with "You fell, and the shaft gave you back to the last ledge you stood on."
+  Flying and gliding are never caught.
+- **Saved**: `FloorState.world` (a set of strings, optional in the save, so floors saved before it load with none).
+  Everything else (strike counts, the Flood's progress, timed cues, ledges) lives in `WorldLive` while the server runs.
+- **Not in Stage 1**: the bells don't swing (no moving bell bodies; a proposal: display-entity bell props, 32 a floor at
+  most), the Ringer has no body of its own, and the five keepsakes don't yet make a bell tower at home.
 

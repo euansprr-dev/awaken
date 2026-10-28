@@ -1,6 +1,7 @@
 package dev.awaken.gates.world;
 
 import dev.awaken.gates.worlds.GateWorld;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ final class VoidEngine implements WorldEngine {
         final String mood;
         final Map<Integer, Kind> kinds = new HashMap<>();
         final Map<Integer, PassageEngine.Shape> shapes = new HashMap<>();
-        final BlockState wall, worn, floor, wet, trim, bronze, candle, lily, water, chain0, lamp, light, dark;
+        final BlockState wall, worn, floor, wet, trim, bronze, candle, lily, water, chain0, lamp, light, dark, handbell;
         final List<FloorAir.Light> lights = new ArrayList<>();
         Sculpt s;
 
@@ -62,6 +63,7 @@ final class VoidEngine implements WorldEngine {
             chain0 = m.get("chain", "minecraft:iron_chain");
             lamp = m.get("lamp", "minecraft:soul_lantern[hanging=true]");
             dark = m.get("void", "minecraft:black_concrete");
+            handbell = m.get("handbell", "awaken:crypt_handbell");
             light = WorldMats.light(12);
         }
 
@@ -144,6 +146,7 @@ final class VoidEngine implements WorldEngine {
                 if (rise < 1 || rise == 6 || lat % 5 == 0) return trim;
                 return GatePainter.state(side == 0 || side == 2 ? "minecraft:iron_bars[east=true,west=true]" : "minecraft:iron_bars[north=true,south=true]");
             });
+            p.handbells(s);
             s.seal();
         }
 
@@ -182,6 +185,8 @@ final class VoidEngine implements WorldEngine {
                 if (Math.floorMod(x - mx, 4) != 0 || Math.floorMod(z - mz, 4) != 0) return;
                 if (sh.d(x + 0.5, z + 0.5) < 0) b.set(x, y, z, light);
             });
+            // the island's handbell first, so the rim's candles step round it
+            if (k != Kind.ARRIVAL) rimBell(r, sh, k == Kind.END);
             int n = 6 + r.gw * 4;
             for (int i = 0; i < n; i++) {
                 double a = (i + Hash.unit(seed, r.id, i)) * 2 * Math.PI / n;
@@ -198,7 +203,25 @@ final class VoidEngine implements WorldEngine {
                 double bx = sh.cx() + (Hash.unit(seed, r.id, 3) - 0.5) * 4, bz = sh.cz() + (Hash.unit(seed, r.id, 5) - 0.5) * 4;
                 double R = 1.8 + r.gw * 0.9;
                 BellPieces.bell(s, Math.floor(bx) + 0.5, W + 6 + r.gw * 2, Math.floor(bz) + 0.5, R, (int) (R * 2.2), 0, bronze, lamp, chain0, false);
+                p.bell(Math.floor(bx) + 0.5, 6 + r.gw * 2, Math.floor(bz) + 0.5, R, (int) (R * 2.2));
                 lights.add(new FloorAir.Light((int) bx, 6 + r.gw * 2, (int) bz, 0x8fd0ff, 8f, 0.7f));
+            }
+        }
+
+        /**
+         * A handbell standing near an island's rim, clear of its doorways. The last island's is the silent one: struck,
+         * it makes no sound, and the Still Bell answers it (SPEC §38.8).
+         */
+        void rimBell(Room r, PassageEngine.Shape sh, boolean last) {
+            double rr = Math.min(sh.a(), sh.b()) - 2.4, a0 = Hash.unit(seed, r.id, 17) * 2 * Math.PI;
+            for (int i = 0; i < 12; i++) {
+                double a = a0 + i * Math.PI / 6;
+                int x = (int) Math.floor(sh.cx() + Math.cos(a) * rr * sh.a() / Math.min(sh.a(), sh.b()));
+                int z = (int) Math.floor(sh.cz() + Math.sin(a) * rr * sh.b() / Math.min(sh.a(), sh.b()));
+                if (nearDoor(r, x, z)) continue;
+                p.handbell(handbell, W, x, 0, z, Math.abs(Math.cos(a)) > Math.abs(Math.sin(a)) ? Direction.EAST : Direction.NORTH,
+                        last ? "silent_bell" : "", null);
+                return;
             }
         }
 
@@ -268,6 +291,7 @@ final class VoidEngine implements WorldEngine {
                     double bz = gz * 16 + (sunk ? 8 : 4 + Math.floor(Hash.unit(seed, gz, gx) * 8) + 0.5);
                     int lip = W - 1 + (sunk ? -H / 2 : 3 + Hash.range(seed, gx, gz * 7, 26));
                     BellPieces.bell(s, bx, lip, bz, R, H, 0, bronze, lamp, chain0, false);
+                    p.bell(bx, lip - W, bz, R, H);
                     if (lights.size() < 90 && lip > W) lights.add(new FloorAir.Light((int) bx, lip - W + H - 2, (int) bz, 0x8fd0ff, 6f + (float) R, 0.6f));
                 }
             }
@@ -279,6 +303,7 @@ final class VoidEngine implements WorldEngine {
             PassageEngine.Shape sh = shapes.get(w);
             if (sh == null) return;
             BellPieces.bell(s, sh.cx(), W + 7, sh.cz(), 8.5, 18, 0, bronze, lamp, chain0, true);
+            p.bell("still", sh.cx(), 7, sh.cz(), 8.5, 18);
             lights.add(new FloorAir.Light((int) sh.cx(), 20, (int) sh.cz(), 0xffd890, 18f, 0.9f));
         }
 

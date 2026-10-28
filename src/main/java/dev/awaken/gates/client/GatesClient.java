@@ -66,6 +66,7 @@ public final class GatesClient {
         e.register(dev.awaken.gates.net.WorldPayloads.Arrival.TYPE, (msg, ctx) -> GateWorldClient.arrive(msg));
         e.register(dev.awaken.gates.net.WorldPayloads.Journey.TYPE, (msg, ctx) -> WorldJourney.start(msg));
         e.register(dev.awaken.gates.net.WorldPayloads.AtlasView.TYPE, (msg, ctx) -> GateWorldClient.atlas(msg));
+        e.register(dev.awaken.gates.net.WorldPayloads.Hush.TYPE, (msg, ctx) -> WorldBed.hush(msg.ticks()));
         e.register(GatePayloads.SatchelView.TYPE, (msg, ctx) -> {
             ClientGates.satchel = List.copyOf(msg.items());
             ClientGates.satchelXp = msg.xp();

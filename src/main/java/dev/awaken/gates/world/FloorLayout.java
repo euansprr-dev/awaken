@@ -50,17 +50,47 @@ public final class FloorLayout {
     /** The biome each of those places shows (its own world's). */
     public final Map<Integer, String> placeBiomes;
 
+    /** Spots a world's live layer finds again (SPEC §38.8), floor-local x/z and y above the base like Gate Air. */
+    public final List<Mark> marks;
+
+    /**
+     * One spot or box: a bell (its lip's centre ± its radius, lip to crown), a secret (where it's found; {@code id} the
+     * recipe's secret), a basin the Flood fills, an event's trigger ({@code id} the event).
+     */
+    public record Mark(String kind, String id, int x0, int y0, int z0, int x1, int y1, int z1) {
+        public static final String BELL = "bell", SECRET = "secret", BASIN = "basin", TRIGGER = "trigger";
+        /** A bell mark's id for a handbell on the floor (the rest are hung bells; "still" and "lowest" are named ones). */
+        public static final String HANDBELL = "handbell";
+
+        public double cx() { return (x0 + x1 + 1) / 2.0; }
+        public double cz() { return (z0 + z1 + 1) / 2.0; }
+        /** Half its width: a hung bell's radius. */
+        public double r() { return (x1 - x0 + 1) / 2.0; }
+        public boolean contains(int x, int y, int z) {
+            return x >= x0 && x <= x1 && y >= y0 && y <= y1 && z >= z0 && z <= z1;
+        }
+    }
+
     /** What a floor is framed by beyond its rooms: where it stands, how it's found, what it is. */
     record Frame(Plots.Plot plot, int yLo, int yHi, PlaceMap places, String world, String mood, String biome, FloorAir air,
-                 WorldModel model, float arrivalYaw, Map<Integer, String> placeWorlds, Map<Integer, String> placeBiomes) {
+                 WorldModel model, float arrivalYaw, Map<Integer, String> placeWorlds, Map<Integer, String> placeBiomes, List<Mark> marks) {
         Frame {
             placeWorlds = Map.copyOf(placeWorlds);
             placeBiomes = Map.copyOf(placeBiomes);
+            marks = List.copyOf(marks);
         }
 
         static Frame band(Plots.Plot plot, int baseY) {
-            return new Frame(plot, baseY - Cells.BAND_BELOW, baseY + Cells.BAND_ABOVE - 1, null, "", "", "", FloorAir.NONE, null, Float.NaN, Map.of(), Map.of());
+            return new Frame(plot, baseY - Cells.BAND_BELOW, baseY + Cells.BAND_ABOVE - 1, null, "", "", "", FloorAir.NONE, null, Float.NaN, Map.of(), Map.of(),
+                    List.of());
         }
+    }
+
+    /** The marks of a kind. */
+    public List<Mark> marks(String kind) {
+        List<Mark> out = new java.util.ArrayList<>();
+        for (Mark m : marks) if (m.kind().equals(kind)) out.add(m);
+        return out;
     }
 
     FloorLayout(int area, int floor, int baseY, int originSlotX, int originSlotZ, int w, int h, Theme theme,
@@ -102,6 +132,7 @@ public final class FloorLayout {
         this.arrivalYaw = frame.arrivalYaw();
         this.placeWorlds = frame.placeWorlds();
         this.placeBiomes = frame.placeBiomes();
+        this.marks = frame.marks();
     }
 
     /** The world a place belongs to: its own (a secret world inside this floor's) or the floor's. */

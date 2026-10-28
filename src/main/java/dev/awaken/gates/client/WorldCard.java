@@ -68,6 +68,9 @@ final class WorldCard {
             from = Util.getMillis();
             lines = List.of();
             n.hold(HOLD, true);
+            // a low bell under the name; a first find rings higher and brighter
+            Minecraft.getInstance().getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                    dev.awaken.gates.GatesRegistry.SND_WORLD_ARRIVE.get(), showing.first() ? 1.12F : 0.94F, showing.first() ? 0.9F : 0.6F));
         } else if (ticks - since > (pending.first() ? FIRST_WAIT : WAIT)) {
             n.file(Notices.Tier.AMBIENT, Component.literal("Arrived · " + pending.name()), Component.literal(pending.line()));
             pending = null;

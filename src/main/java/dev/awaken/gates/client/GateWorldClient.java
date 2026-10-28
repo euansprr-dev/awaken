@@ -22,7 +22,7 @@ public final class GateWorldClient {
     static void arrive(WorldPayloads.Arrival a) {
         current = a.world().isEmpty() ? null : a;
         arrivedAt = System.currentTimeMillis();
-        if (current != null) WorldCard.arrive(a);
+        if (current != null && a.card()) WorldCard.arrive(a);
     }
 
     static void atlas(WorldPayloads.AtlasView v) {

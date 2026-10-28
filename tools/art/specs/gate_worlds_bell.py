@@ -346,6 +346,7 @@ BLOCKS = {
     "crypt_vestment": ("Drowned Vestment", None),
     "crypt_bell_rope": ("Bell Rope", None),
     "crypt_lily_candle": ("Lily Candle", None),
+    "crypt_handbell": ("Handbell", "pickaxe"),
 }
 SIDES = ("down", "up", "north", "south", "west", "east")
 # where up to five candles stand in a cluster (x, z, height) and where each one's wax runs
@@ -472,6 +473,18 @@ def models():
                                             "faces": {"up": {"texture": "#pad"}, "down": {"texture": "#pad"}}},
                                            _box([7, 0.25, 7], [9, 5, 9], "#wax", uv=[0, 11, 2, 16]),
                                            _plane([8, 5, 7], [8, 8, 9], "#flame", 15), _plane([7, 5, 8], [9, 8, 8], "#flame", 15)]}
+    # a handbell hung in a stone yoke (posts and a beam across x when it faces north), standing on the floor
+    m["crypt_handbell"] = {"parent": "minecraft:block/block", "ambientocclusion": False,
+                           "textures": {"particle": b + "crypt_patina", "bronze": b + "crypt_patina", "yoke": b + "crypt_tracery"},
+                           "elements": [_box([0, 0, 5.5], [3.5, 1.5, 10.5], "#yoke"), _box([12.5, 0, 5.5], [16, 1.5, 10.5], "#yoke"),
+                                        _box([1, 1.5, 6.5], [2.5, 14, 9.5], "#yoke"), _box([13.5, 1.5, 6.5], [15, 14, 9.5], "#yoke"),
+                                        _box([0.5, 14, 6], [15.5, 16, 10], "#yoke"),
+                                        _box([7.5, 11.5, 7.5], [8.5, 14, 8.5], "#bronze"),
+                                        _box([6.5, 10.5, 6.5], [9.5, 11.5, 9.5], "#bronze"),
+                                        _box([5.5, 8, 5.5], [10.5, 10.5, 10.5], "#bronze"),
+                                        _box([4.75, 5, 4.75], [11.25, 8, 11.25], "#bronze"),
+                                        _box([4, 3.75, 4], [12, 5, 12], "#bronze"),
+                                        _box([7.4, 2.25, 7.4], [8.6, 3.75, 8.6], "#bronze")]}
     return m
 
 
@@ -484,7 +497,7 @@ def blockstates():
     s["crypt_candles"] = {"variants": {f"candles={n},lit={'true' if lit else 'false'}": {"model": b + f"crypt_candles_{n}" + ("_lit" if lit else "")}
                                        for n in range(1, 6) for lit in (False, True)}}
     s["crypt_rose_glass"] = {"variants": {f"hue={k}": {"model": b + f"crypt_rose_glass_{k}"} for k in range(5)}}
-    for name in ("crypt_niche", "crypt_vestment"):
+    for name in ("crypt_niche", "crypt_vestment", "crypt_handbell"):
         s[name] = {"variants": {f"facing={f}": dict({"model": b + name}, **({"y": r} if r else {}))
                                 for f, r in (("north", 0), ("east", 90), ("south", 180), ("west", 270))}}
     return s

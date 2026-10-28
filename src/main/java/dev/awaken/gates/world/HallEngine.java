@@ -15,7 +15,9 @@ import java.util.Map;
  * nave: the porch you arrive in, flooded bays with a causeway of candles, the crossing under the Great Bell, the chancel
  * and its rose window at the far end; side rooms are chapels off the aisles, and deeper ones are crypts. Aisles carry
  * galleries, lancets let the moon in, a bell with a lamp inside hangs in every bay, and an odd rope in the Rope Shaft
- * climbs to a secret world. The Lord's arena and Rig rooms stand in the nave's line as built rooms.
+ * climbs to a secret world. The Lord's arena and Rig rooms stand in the nave's line as built rooms. Where the world has
+ * the Flood (SPEC §38.8) the tide is out when you arrive: the bays are pits three deep with shallow water at their foot and
+ * a stair out mid-bay, and the Flood fills them back to the causeway's brim.
  */
 final class HallEngine implements WorldEngine {
     /** The nave's axis: the middle of slot column 7 (floor-local x 120); the nave and aisles fill columns 6..8. */
@@ -26,6 +28,8 @@ final class HallEngine implements WorldEngine {
     static final int ROPES_H = 56, REST_UP = 50, REST_H = 8;
     /** Rose window centre height and radius. */
     static final double ROSE_Y = 29.5, ROSE_R = 11.5;
+    /** The water's height at low tide (the Flood raises it to -1, the causeway's brim). */
+    static final int LOW = -3;
 
     enum Kind { NARTHEX, BAY, CHANCEL, CHAPEL, CRYPT, ROPES, REST, BUILT }
 
@@ -55,7 +59,9 @@ final class HallEngine implements WorldEngine {
         final List<int[]> runs = new ArrayList<>();
         int ropes = -1, rest = -1, greatBell = -1, choir = -1;
         final BlockState wall, worn, crumbling, floor, wet, trim, bronze, candle, glass, rose, niche, vestment, rope, lily, water, chain, lamp,
-                light, grille, grilleZ, leaves;
+                light, grille, grilleZ, leaves, handbell;
+        /** The world has the Flood: the bays start as low-tide pits (lilies and water two below the brim). */
+        final boolean flood;
         final List<FloorAir.Light> lights = new ArrayList<>(), minor = new ArrayList<>();
         final List<FloorAir.Shaft> shafts = new ArrayList<>();
         Sculpt s;
@@ -86,6 +92,8 @@ final class HallEngine implements WorldEngine {
             chain = m.get("chain", "minecraft:iron_chain");
             lamp = m.get("lamp", "minecraft:soul_lantern[hanging=true]");
             leaves = m.get("door", "minecraft:dark_oak_planks");
+            handbell = m.get("handbell", "awaken:crypt_handbell");
+            flood = world != null && world.dressing().events().contains("flood");
             light = WorldMats.light(10);
             grille = GatePainter.state("minecraft:iron_bars[east=true,west=true]");
             grilleZ = GatePainter.state("minecraft:iron_bars[north=true,south=true]");
@@ -111,6 +119,7 @@ final class HallEngine implements WorldEngine {
             if (!branches()) return WorldEngine.fail("no room beside a place for its side rooms");
             ropes();
             sculpt();
+            if (flood) basins();
             FloorLayout f = p.finish(this::walk, new WorldPlan.Look(W, biome(), air(), new WorldPlan.SculptModel(s), 0f));
             if (f == null) return WorldEngine.fail("the programme didn't carry over: " + WorldEngine.WHY.get());
             innerGates(f);
@@ -374,6 +383,7 @@ final class HallEngine implements WorldEngine {
             p.thresholds(s, W, floor, trim);
             causeway();
             bells();
+            handbells();
             if (choir >= 0) choir();
             for (int i = 0; i < runs.size(); i++) ends(i);
             moonlight();
@@ -381,6 +391,7 @@ final class HallEngine implements WorldEngine {
                 if (rise < 2 || lat % 4 == 0 || rise % 9 == 8) return trim;
                 return side == 0 || side == 2 ? grille : grilleZ;
             });
+            p.handbells(s);
             s.seal();
         }
 
@@ -449,8 +460,16 @@ final class HallEngine implements WorldEngine {
             boolean pier = zl == 15 || zl <= 1;
             int u = zl - 8;
             if (h < 0) {
-                // a flooded bay's water laps at the causeway's brim: one step up out of it anywhere
-                if (k == Kind.BAY && aa > CAUSE && aa <= NAVE) return h == -1 ? WTR : S;
+                if (k == Kind.BAY && aa > CAUSE && aa <= NAVE) {
+                    // a flooded bay's water laps at the causeway's brim: one step up out of it anywhere
+                    if (!flood) return h == -1 ? WTR : S;
+                    // at low tide it's a pit three deep, a hand of water at its foot, and mid-bay a stair down from the
+                    // causeway and another up to the arcade, so it's crossed on foot as the water used to be swum
+                    if (h <= LOW - 1) return S;
+                    int step = stair(aa, zl);
+                    if (step > 0) return h <= -step ? S : O;
+                    return h == LOW ? WTR : O;
+                }
                 return S;
             }
             if (aa <= NAVE) {
@@ -490,6 +509,13 @@ final class HallEngine implements WorldEngine {
                 }
             }
             return S;
+        }
+
+        /** On a pit's stairs (mid-bay, three steps each side): how many steps down this block is, else 0. */
+        static int stair(double aa, int zl) {
+            if (zl < 7 || zl > 9) return 0;
+            int step = (int) Math.round(Math.min(aa - CAUSE, NAVE + 1 - aa));
+            return step >= 1 && step <= -LOW ? step : 0;
         }
 
         /** The nave's vault: open under the curve, ribs on it (transverse at the piers, diagonal across each bay, the ridge). */
@@ -593,9 +619,15 @@ final class HallEngine implements WorldEngine {
 
         void lilies(int z) {
             for (int x = 109; x <= 130; x++) {
-                if (Math.abs(x + 0.5 - AXIS) <= CAUSE + 1) continue;
-                if (Hash.unit(seed, x * 7 + 3, z) < 0.06) s.putOpen(x, W, z, lily);
+                double aa = Math.abs(x + 0.5 - AXIS);
+                if (aa <= CAUSE + 1 || (flood && stair(aa, z & 15) > 0)) continue;
+                if (Hash.unit(seed, x * 7 + 3, z) < 0.06) s.putOpen(x, lilyY(), z, lily);
             }
+        }
+
+        /** Lilies float on the water: at the brim, or two below it at low tide. */
+        int lilyY() {
+            return flood ? W + LOW + 1 : W;
         }
 
         /** A bell with a lamp inside over the water of every bay (three when they toll), the Great Bell in its place. */
@@ -607,6 +639,7 @@ final class HallEngine implements WorldEngine {
                 if (w == greatBell) {
                     int zc = r.gh == 1 ? r.gz * 16 + 8 : (r.gz + r.gh / 2) * 16 + (r.gh % 2 == 1 ? 8 : 0);
                     BellPieces.bell(s, AXIS, W + 3, zc, 7.5, 15, W + (int) vault(0.5) - 1, bronze, lamp, chain, true);
+                    p.bell("great", AXIS, 3, zc, 7.5, 15);
                     s.putOpen(119, W + 1, zc - 1, light);
                     lights.add(0, new FloorAir.Light(120, 14, zc, 0x7fc8ff, 22f, 1f));
                     continue;
@@ -621,7 +654,40 @@ final class HallEngine implements WorldEngine {
                         int lip = W + 19 + Hash.range(seed, gz, 60 + i, 6);
                         double vt = vault(Math.abs(bx - AXIS));
                         BellPieces.bell(s, bx, lip, zc + (i == 2 ? 0 : 0.5), R, R > 2.7 ? 6 : 5, W + (int) Math.ceil(vt) - 1, bronze, lamp, chain, false);
+                        p.bell(bx, lip - W, zc + (i == 2 ? 0 : 0.5), R, R > 2.7 ? 6 : 5);
                         lights.add(new FloorAir.Light((int) Math.floor(bx), lip - W + 2, zc, 0x7fc8ff, 9f, 0.7f));
+                    }
+                }
+            }
+        }
+
+        /**
+         * A handbell at the causeway's edge in every bay, west and east by turns, between its candles: the bell anyone can
+         * reach (the great ones hang far overhead). The choir's bay has its own.
+         */
+        void handbells() {
+            for (int w : nave) {
+                Room r = p.world(w);
+                if (kinds.get(w) != Kind.BAY) continue;
+                for (int gz = r.gz; gz < r.gz + r.gh; gz++) {
+                    if (w == choir && gz == r.gz) continue;
+                    boolean west = (gz & 1) == 0;
+                    p.handbell(handbell, W, west ? 117 : 122, 0, gz * 16 + (west ? 6 : 9), west ? Direction.EAST : Direction.WEST);
+                }
+            }
+        }
+
+        /** The pits the Flood fills: each stretch of bays either side of the causeway, from the low water up to the brim. */
+        void basins() {
+            for (int[] run : runs) {
+                int from = -1;
+                for (int z = run[0]; z <= run[1] + 1; z++) {
+                    boolean wetRow = z <= run[1] && kindAtRow(z) == Kind.BAY;
+                    if (wetRow && from < 0) from = z;
+                    if (!wetRow && from >= 0) {
+                        p.mark(FloorLayout.Mark.BASIN, "", 109, LOW + 1, from, 116, -1, z - 1);
+                        p.mark(FloorLayout.Mark.BASIN, "", 123, LOW + 1, from, 130, -1, z - 1);
+                        from = -1;
                     }
                 }
             }
@@ -633,13 +699,19 @@ final class HallEngine implements WorldEngine {
             int gz = r.gz;
             for (int zl : new int[]{3, 7, 11}) {
                 int z = gz * 16 + zl;
-                for (int x : new int[]{111, 114}) BellPieces.singer(s, x, W - 1, z, Direction.EAST, worn, wall, vestment);
-                for (int x : new int[]{125, 128}) BellPieces.singer(s, x, W - 1, z, Direction.WEST, worn, wall, vestment);
+                for (int x : new int[]{111, 114, 125, 128}) {
+                    // at low tide they stand on plinths in the pit, so the Flood leaves them waist-deep again
+                    if (flood) s.box(x, W + LOW, z, x, W - 2, z, worn);
+                    BellPieces.singer(s, x, W - 1, z, x < AXIS ? Direction.EAST : Direction.WEST, worn, wall, vestment);
+                }
             }
             for (int z = gz * 16 + 2; z <= gz * 16 + 13; z += 3) {
-                s.putOpen(116, W, z, lily);
-                s.putOpen(123, W, z + 1, lily);
+                s.putOpen(116, lilyY(), z, lily);
+                s.putOpen(123, lilyY(), z + 1, lily);
             }
+            // the handbell the choir waits on, at the causeway's edge among them: strike it and they sing their last note
+            int hz = gz * 16 + 7;
+            p.handbell(handbell, W, 122, 0, hz, Direction.WEST, "choir_hymn", null);
             minor.add(0, new FloorAir.Light(116, 0, gz * 16 + 8, 0xffc070, 7f, 0.6f));
         }
 
@@ -715,6 +787,7 @@ final class HallEngine implements WorldEngine {
             int ox = up == null ? x0 + 1 : up.side == 3 ? x0 + 1 : x1 - 1;
             int oz = r.gz * 16 + 7;
             s.box(ox, W, oz, ox, W + ROPES_H - 1, oz, rope);
+            p.secret("odd_rope", ox, 0, oz, ox, ROPES_H - 1, oz);
             s.putOpen(ox + (up != null && up.side == 3 ? 1 : -1), W, oz + 1, BellPieces.candles(candle, 1, true));
             for (int i = 0; i < 4; i++) {
                 for (int j = 0; j < 4; j++) {
@@ -728,6 +801,7 @@ final class HallEngine implements WorldEngine {
             for (int k = 0; k < 3; k++) {
                 double bx = x0 + 3.5 + 2.5 * k, bz = z0 + 3.5 + (k == 1 ? 5 : 0);
                 BellPieces.bell(s, bx, W + 40 + 3 * k, bz, 1.8, 4, W + ROPES_H - 1, bronze, lamp, chain, false);
+                p.bell(bx, 40 + 3 * k, bz, 1.8, 4);
                 lights.add(new FloorAir.Light((int) bx, 42 + 3 * k, (int) bz, 0x7fc8ff, 7f, 0.6f));
             }
             s.putOpen(x0 + 6, W + 1, z0 + 6, WorldMats.light(7));
@@ -740,6 +814,7 @@ final class HallEngine implements WorldEngine {
             s.carve(x0, y0, z0, x1, y0 + REST_H, z1, (x, y, z) -> x >= x0 && x <= x1 + 1 && z >= z0 && z <= z1 + 1 && y >= y0 && y < y0 + REST_H ? -1 : 1);
             double cx = (x0 + x1 + 1) / 2.0, cz = (z0 + z1 + 1) / 2.0;
             BellPieces.bell(s, cx + 2, y0, cz + 2, 2.2, 4, y0 + 4, bronze, lamp, chain, false);
+            p.bell(cx + 2, REST_UP, cz + 2, 2.2, 4);
             s.put(x0 + 1, y0, z1 - 1, GatePainter.state("minecraft:smithing_table"));
             s.put(x0 + 2, y0, z1 - 1, GatePainter.state("minecraft:anvil"));
             for (int x = x0 + 1; x <= x0 + 4; x++) s.put(x, y0, z0, GatePainter.state("minecraft:bookshelf"));
@@ -805,7 +880,7 @@ final class HallEngine implements WorldEngine {
                     boolean wetRow = z <= run[1] && kindAtRow(z) == Kind.BAY;
                     if (wetRow && from < 0) from = z;
                     if (!wetRow && from >= 0) {
-                        waters.add(new FloorAir.Water(-1, 109, from, 130, z - 1));
+                        waters.add(new FloorAir.Water(flood ? LOW : -1, 109, from, 130, z - 1));
                         from = -1;
                     }
                 }

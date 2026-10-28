@@ -258,6 +258,98 @@ final class WorldPlan {
 
     /** Places that are a world of their own (a secret world reached from this one): world room id → world id. */
     final Map<Integer, String> placeWorlds = new HashMap<>(), placeBiomes = new HashMap<>();
+    /** What the live layer needs to find again (SPEC §38.8): bells, secrets, a basin the Flood fills. */
+    final List<FloorLayout.Mark> marks = new ArrayList<>();
+
+    /** A mark over a box, floor-local x/z and y above the base, like Gate Air. */
+    void mark(String kind, String id, int x0, int y0, int z0, int x1, int y1, int z1) {
+        marks.add(new FloorLayout.Mark(kind, id, x0, y0, z0, x1, y1, z1));
+    }
+
+    /** A bell's mark: its lip's centre, its radius and height (so the Tolling rings it and a strike knows it). */
+    void bell(double cx, int lip, double cz, double r, int h) {
+        bell("", cx, lip, cz, r, h);
+    }
+
+    /** A bell an event looks for by name ("still", "lowest"). */
+    void bell(String id, double cx, int lip, double cz, double r, int h) {
+        mark(FloorLayout.Mark.BELL, id, (int) Math.floor(cx - r), lip, (int) Math.floor(cz - r), (int) Math.ceil(cx + r) - 1, lip + h - 1,
+                (int) Math.ceil(cz + r) - 1);
+    }
+
+    /** A handbell waiting for {@link #handbells}: where it's wanted, its turned state, the secret it keeps and that box. */
+    private record Hand(int base, int x, int h, int z, BlockState state, String secret, int[] with) {}
+
+    private final List<Hand> hands = new ArrayList<>();
+
+    /** A handbell in its yoke on the floor at (x, h above the base, z), set by {@link #handbells}; {@code face} turns it. */
+    void handbell(BlockState hb, int base, int x, int h, int z, net.minecraft.core.Direction face) {
+        handbell(hb, base, x, h, z, face, "", null);
+    }
+
+    /**
+     * One that keeps a secret: the secret's mark spans where the bell ends up and the box {@code with} (x0 y0 z0 x1 y1 z1,
+     * y above the base: a niche it opens), or the bell alone when that's null.
+     */
+    void handbell(BlockState hb, int base, int x, int h, int z, net.minecraft.core.Direction face, String secret, int[] with) {
+        hands.add(new Hand(base, x, h, z, WorldMats.facing(hb, face), secret, with));
+    }
+
+    /**
+     * Sets the floor's handbells, last of its carve (call it just before sealing) so nothing after cuts one away: each where
+     * it was wanted, else the nearest spot within two blocks on its level, that's open with head room over solid floor
+     * and clear of every doorway (the thresholds open those boxes, bars close them). One with nowhere to stand isn't set
+     * or marked. Features keep a block clear of them ({@link #finish}).
+     */
+    void handbells(Sculpt s) {
+        for (Hand hd : hands) {
+            int[] at = handSpot(s, hd);
+            if (at == null) continue;
+            s.putOpen(at[0], hd.base() + hd.h(), at[1], hd.state());
+            mark(FloorLayout.Mark.BELL, FloorLayout.Mark.HANDBELL, at[0], hd.h(), at[1], at[0], hd.h(), at[1]);
+            if (hd.secret().isEmpty()) continue;
+            int[] w = hd.with() != null ? hd.with() : new int[]{at[0], hd.h(), at[1], at[0], hd.h(), at[1]};
+            mark(FloorLayout.Mark.SECRET, hd.secret(), Math.min(at[0], Math.min(w[0], w[3])), Math.min(hd.h(), Math.min(w[1], w[4])),
+                    Math.min(at[1], Math.min(w[2], w[5])), Math.max(at[0], Math.max(w[0], w[3])), Math.max(hd.h(), Math.max(w[1], w[4])),
+                    Math.max(at[1], Math.max(w[2], w[5])));
+        }
+        hands.clear();
+    }
+
+    private int[] handSpot(Sculpt s, Hand hd) {
+        int y = hd.base() + hd.h();
+        for (int r = 0; r <= 2; r++) {
+            for (int dx = -r; dx <= r; dx++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+                    int x = hd.x() + dx, z = hd.z() + dz;
+                    if (inDoorway(x, hd.h(), z)) continue;
+                    if (s.probe(x, y, z).get(x, y, z) != Sculpt.OPEN || s.probe(x, y + 1, z).get(x, y + 1, z) != Sculpt.OPEN) continue;
+                    Sculpt.Buf under = s.probe(x, y - 1, z);
+                    BlockState st = under.state(x, y - 1, z);
+                    if (under.get(x, y - 1, z) == Sculpt.SOLID || (st != null && st.isSolid() && !under.water(x, y - 1, z))) return new int[]{x, z};
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Inside a doorway's box (as {@link #thresholds} opens it), at its height (h above the base). */
+    private boolean inDoorway(int x, int h, int z) {
+        for (Room w : b.rooms) {
+            for (Room.Door d : w.doors) {
+                if (h < d.y - 1 || h > d.y + RoomGeometry.DOOR_HEIGHT) continue;
+                int[] box = doorBox(d, Sculpt.SHELL);
+                if (x >= box[0] && x <= box[1] && z >= box[2] && z <= box[3]) return true;
+            }
+        }
+        return false;
+    }
+
+    /** A secret's mark: the box where it's found (a handbell to strike, a rope to climb), {@code id} the recipe's secret. */
+    void secret(String id, int x0, int y0, int z0, int x1, int y1, int z1) {
+        mark(FloorLayout.Mark.SECRET, id, Math.min(x0, x1), Math.min(y0, y1), Math.min(z0, z1), Math.max(x0, x1), Math.max(y0, y1), Math.max(z0, z1));
+    }
 
     /**
      * Carries the programme over to the world's rooms and makes the floor: types, monsters, the path, features (the
@@ -314,6 +406,11 @@ final class WorldPlan {
             }
             int[] a = anchorOf(w);
             java.util.Set<Long> taken = new java.util.HashSet<>();
+            // a feature stands a block clear of every handbell (a vault's bars would close round one)
+            for (FloorLayout.Mark m : marks) {
+                if (!m.id().equals(FloorLayout.Mark.HANDBELL)) continue;
+                for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) taken.add(((long) (m.x0() + dx) << 32) ^ ((m.z0() + dz) & 0xFFFFFFFFL));
+            }
             for (Room L : ls) {
                 for (Room.Feature ft : L.features) {
                     int x = clamp(a[0] + ft.x() - L.centerX(), w.x0(), w.x1()), z = clamp(a[1] + ft.z() - L.centerZ(), w.z0(), w.z1());
@@ -346,7 +443,7 @@ final class WorldPlan {
         }
         Plots.Plot plot = ctx.plot();
         return new FloorLayout(ctx.area(), ctx.floor(), look.baseY(), plot.slotX(), plot.slotZ(), b.w, b.h, ctx.theme(), logic.bossFloor,
-                b.rooms, b.start, b.end, new FloorLayout.Frame(plot, plot.minY(), plot.maxY(), null, ctx.worldId(), ctx.mood(), look.biome(), look.air(), look.model(), look.yaw(), placeWorlds, placeBiomes));
+                b.rooms, b.start, b.end, new FloorLayout.Frame(plot, plot.minY(), plot.maxY(), null, ctx.worldId(), ctx.mood(), look.biome(), look.air(), look.model(), look.yaw(), placeWorlds, placeBiomes, marks));
     }
 
     private void spots(Room r, Walk walk) {

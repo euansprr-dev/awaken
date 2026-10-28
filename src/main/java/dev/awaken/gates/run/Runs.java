@@ -231,6 +231,7 @@ public final class Runs {
         Room r = w.room();
         if (r != null) {
             Rooms.enter(gl, p, g, f, r, w.x(), w.z());
+            dev.awaken.gates.worlds.WorldLive.enter(gl, p, g, f, r);
             if (r.id == f.end && !f.bossFloor) floorCleared(p, g, run, f);
         }
         Modifiers.tickPlayer(p, g, run, f, r);

@@ -139,7 +139,7 @@ public final class WorldBlocks {
     }
 
     /** Bell bronze: strike it (hit or use) and a world's rule may answer (SPEC §38.6, "The Belfry's rule"). */
-    public static final class Bronze extends Block {
+    public static class Bronze extends Block {
         public Bronze(BlockBehaviour.Properties p) {
             super(p);
         }
@@ -153,6 +153,45 @@ public final class WorldBlocks {
         protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
             if (player instanceof ServerPlayer sp) return WorldRules.strike(sp, pos) ? InteractionResult.SUCCESS : InteractionResult.PASS;
             return InteractionResult.SUCCESS;
+        }
+    }
+
+    /**
+     * A handbell in a stone yoke, standing on the floor where anyone can reach it (SPEC §38.8): bronze like the great
+     * bells, so striking it answers the world's rule. Its yoke runs across {@link #FACING}; you walk through it.
+     */
+    public static final class Handbell extends Bronze {
+        public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
+        private static final VoxelShape ACROSS_X = Block.box(0, 0, 4, 16, 16, 12), ACROSS_Z = Block.box(4, 0, 0, 12, 16, 16);
+
+        public Handbell(BlockBehaviour.Properties p) {
+            super(p);
+            registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(FACING);
+        }
+
+        @Override
+        public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+            return defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
+        }
+
+        @Override
+        protected VoxelShape getShape(BlockState s, BlockGetter l, BlockPos p, CollisionContext c) {
+            return s.getValue(FACING).getAxis() == Direction.Axis.Z ? ACROSS_X : ACROSS_Z;
+        }
+
+        @Override
+        protected VoxelShape getCollisionShape(BlockState s, BlockGetter l, BlockPos p, CollisionContext c) {
+            return Shapes.empty();
+        }
+
+        @Override
+        protected boolean isPathfindable(BlockState s, PathComputationType t) {
+            return true;
         }
     }
 }

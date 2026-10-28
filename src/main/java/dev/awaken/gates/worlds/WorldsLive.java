@@ -22,21 +22,46 @@ public final class WorldsLive {
 
     /** On arriving on a floor (after the teleport). */
     public static void arrive(ServerPlayer p, GateRecord g, FloorLayout f) {
+        WorldLive.left(p);
         if (f == null || f.world.isEmpty()) {
             AwakenNet.send(p, WorldPayloads.Arrival.none(g.id, f == null ? 0 : f.area, f == null ? 0 : f.floor));
             return;
         }
-        GateWorld w = GateWorlds.get(f.world);
         GateAtlas atlas = p.getData(GatesRegistry.ATLAS.get());
         boolean first = atlas.arrive(f.world, f.mood, PlayDays.current(p.level().getServer()));
         p.setData(GatesRegistry.ATLAS.get(), atlas);
-        GateWorld.Mood m = w == null ? null : w.mood(f.mood);
-        AwakenNet.send(p, new WorldPayloads.Arrival(g.id, f.area, f.floor, f.world, w == null ? "" : w.name(), f.mood,
+        send(p, g, f, f.world, f.mood, first, true);
+        sync(p);
+        WorldLive.arrived(p, g, f, f.world);
+    }
+
+    /**
+     * Stepping into a place that's a world of its own (the Bellmaker's Rest off the Belfry's Rope Shaft): it's found like
+     * any world, with its own card and sound, while the floor stays the floor (SPEC §38.8).
+     */
+    public static void arrivePlace(ServerPlayer p, GateRecord g, FloorLayout f, String world) {
+        GateAtlas atlas = p.getData(GatesRegistry.ATLAS.get());
+        boolean first = atlas.arrive(world, "", PlayDays.current(p.level().getServer()));
+        p.setData(GatesRegistry.ATLAS.get(), atlas);
+        send(p, g, f, world, "", first, true);
+        sync(p);
+        WorldLive.arrived(p, g, f, world);
+    }
+
+    /** Tells your client which world this is again, with no card and no visit counted (out of a place, after the Flood). */
+    public static void resend(ServerPlayer p, GateRecord g, FloorLayout f) {
+        if (f.world.isEmpty()) return;
+        send(p, g, f, f.world, f.mood, false, false);
+    }
+
+    private static void send(ServerPlayer p, GateRecord g, FloorLayout f, String world, String mood, boolean first, boolean card) {
+        GateWorld w = GateWorlds.get(world);
+        GateWorld.Mood m = w == null || mood.isEmpty() ? null : w.mood(mood);
+        AwakenNet.send(p, new WorldPayloads.Arrival(g.id, f.area, f.floor, world, w == null ? "" : w.name(), mood,
                 m == null || m.name().isEmpty() ? "" : m.name(), w == null ? "" : w.rarity().label(),
                 w == null ? "" : w.tier().name().toLowerCase(Locale.ROOT), w == null ? "" : w.line(), where(g, f),
-                w == null ? "" : w.dressing().sound(), first,
-                GateService.world(g, f, 0, 0, 0), f.air));
-        sync(p);
+                w == null ? "" : w.dressing().sound(), first, card,
+                GateService.world(g, f, 0, 0, 0), WorldLive.air(g, f)));
     }
 
     /** The title card's floor line: the toast it replaces on a world floor. */

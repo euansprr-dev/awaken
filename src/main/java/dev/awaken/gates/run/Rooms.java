@@ -452,6 +452,7 @@ public final class Rooms {
         BlockPos c = GateService.roomFloor(g, f, end, end.centerX(), end.centerZ());
         level.playSound(null, c, GatesRegistry.SND_SOLVED.get(), SoundSource.BLOCKS, 1.5F, 1.0F);
         GateRegistry.get(level.getServer()).setDirty();
+        dev.awaken.gates.worlds.WorldLive.progress(level, g, f);
     }
 
     // ---- puzzles ----------------------------------------------------------------------------------------------------
@@ -474,6 +475,7 @@ public final class Rooms {
         if (dev.awaken.gates.world.Puzzles.solved(mask, n)) {
             fs.puzzlesSolved.add(r.id);
             fs.clearedRooms.add(r.id);
+            dev.awaken.gates.worlds.WorldLive.progress(level, g, f);
             Room.Feature vault = r.feature(Room.FeatureKind.VAULT_CACHE);
             if (vault != null) {
                 for (int[] b : FeatureBlocks.vaultBars(vault)) {

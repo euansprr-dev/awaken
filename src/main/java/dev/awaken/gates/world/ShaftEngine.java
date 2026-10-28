@@ -1,6 +1,7 @@
 package dev.awaken.gates.world;
 
 import dev.awaken.gates.worlds.GateWorld;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayDeque;
@@ -116,9 +117,11 @@ final class ShaftEngine implements WorldEngine {
         final List<Integer> landings = new ArrayList<>();
         final List<Stair> stairs = new ArrayList<>();
         int floorRoom = -1, top, roof, step = STEP;
+        /** The lowest bell of the column's mark (an event rings it by name), or -1. */
+        int lowest = -1;
         int[] reserved;
         boolean bridged;
-        final BlockState wall, worn, crumbling, floor, wet, trim, bronze, candle, rope, chain0, lamp, light, grille, grilleZ, post;
+        final BlockState wall, worn, crumbling, floor, wet, trim, bronze, candle, rope, chain0, lamp, light, grille, grilleZ, post, handbell;
         final List<FloorAir.Light> lights = new ArrayList<>();
         Sculpt s;
 
@@ -145,6 +148,7 @@ final class ShaftEngine implements WorldEngine {
             grille = GatePainter.state("minecraft:iron_bars[east=true,west=true]");
             grilleZ = GatePainter.state("minecraft:iron_bars[north=true,south=true]");
             post = GatePainter.state("minecraft:iron_bars");
+            handbell = m.get("handbell", "awaken:crypt_handbell");
         }
 
         boolean hero(String id) {
@@ -436,6 +440,7 @@ final class ShaftEngine implements WorldEngine {
             if (hero("bell_column")) bellColumn();
             if (bridged) bridge();
             p.screens(s, W, (lat, rise, side) -> rise < 1 || rise % 4 == 3 || lat % 4 == 0 ? trim : side == 0 || side == 2 ? grille : grilleZ);
+            p.handbells(s);
             s.seal();
         }
 
@@ -565,6 +570,9 @@ final class ShaftEngine implements WorldEngine {
                     if (b.open(x, y, z)) b.set(x, y, z, rope);
                 });
             }
+            // a handbell between the ropes, its yoke along the back wall
+            int hx = back == 1 ? x1 - 2 : back == 3 ? x0 + 2 : (int) cxm, hz = back == 2 ? z1 - 2 : back == 0 ? z0 + 2 : (int) czm;
+            if (!anyStair(hx, hz)) p.handbell(handbell, W, hx, r.dy, hz, back == 1 || back == 3 ? Direction.EAST : Direction.NORTH);
             lights.add(new FloorAir.Light(r.centerX(), r.dy + 3, r.centerZ(), 0xffb060, 9f, 0.6f));
         }
 
@@ -653,6 +661,9 @@ final class ShaftEngine implements WorldEngine {
                 s.putOpen(x, W, z, BellPieces.candles(candle, 2 + Hash.range(seed, x, z, 3), lit(x, z)));
             }
             lights.add(new FloorAir.Light((int) CX, 2, (int) CZ, 0xffb060, 16f, 0.7f));
+            // the foot's handbell, under the lowest bell: strike it and the lowest bell answers (SPEC §38.8)
+            int hx = (int) CX + 5, hz = (int) CZ;
+            p.handbell(handbell, W, hx, 0, hz, Direction.NORTH, "lowest_bell", null);
         }
 
         /**
@@ -667,6 +678,8 @@ final class ShaftEngine implements WorldEngine {
                 int lip = k == 0 && bridged ? stand + 7 : y - H;
                 if (lip < W + 8) break;
                 BellPieces.bell(s, CX, lip, CZ, R, H, chainTo, bronze, lamp, chain0, true);
+                lowest = p.marks.size();
+                p.bell(CX, lip - W, CZ, R, H);
                 if (lights.size() < 90) lights.add(new FloorAir.Light((int) CX, lip - W + H - 3, (int) CZ, 0x8fd0ff, 10f + (float) R, 0.7f));
                 chainTo = lip + 2;
                 y = lip - 5 - Hash.range(seed, k, 239, 6);
@@ -674,6 +687,10 @@ final class ShaftEngine implements WorldEngine {
                     y = Math.min(y, stand - 4);
                     chainTo = stand - 2;
                 }
+            }
+            if (lowest >= 0) {
+                FloorLayout.Mark m = p.marks.get(lowest);
+                p.marks.set(lowest, new FloorLayout.Mark(m.kind(), "lowest", m.x0(), m.y0(), m.z0(), m.x1(), m.y1(), m.z1()));
             }
         }
 

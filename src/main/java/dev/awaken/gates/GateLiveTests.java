@@ -410,6 +410,11 @@ public final class GateLiveTests {
         return new GatePlan(seed, GatePlan.CONTENT_VERSION, Rank.E, theme, layout, List.of(mods), twist, 3, theme.bossId(), annex, annexRule);
     }
 
+    /** Gates resolve to the test level until {@link #teardown} (for tests outside this package). */
+    public static void testLevel(ServerLevel level) {
+        GateService.testLevel = level;
+    }
+
     /** A READY gate in a fresh cell of the test level with the given (area, floor) pairs painted. */
     public static GateRecord standUp(GameTestHelper h, GatePlan plan, int... areaFloors) {
         ServerLevel level = h.getLevel();

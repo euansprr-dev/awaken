@@ -35,5 +35,7 @@
   ],
   "sound": "awaken:gate.world.rest",
   "rule": "bells",
-  "keepsake": "bellmakers_clapper"
+  "keepsake": "bellmakers_clapper",
+  "keepsake_name": "The Bellmaker's Clapper",
+  "keepsake_from": "arrival"
 }

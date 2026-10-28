@@ -222,9 +222,12 @@ public final class GatesRegistry {
     public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Thin> CRYPT_LILY_CANDLE = BLOCKS.registerBlock("crypt_lily_candle",
             p -> new dev.awaken.gates.block.WorldBlocks.Thin(p, Block.box(1, 0, 1, 15, 1.5, 15)),
             p -> soft(MapColor.PLANT, SoundType.LILY_PAD, 0.1F, 6).apply(p).noOcclusion());
+    /** A handbell in a stone yoke on the floor: the bell anyone can reach and strike (SPEC §38.8). */
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Handbell> CRYPT_HANDBELL = BLOCKS.registerBlock("crypt_handbell",
+            dev.awaken.gates.block.WorldBlocks.Handbell::new, p -> stoneLike(MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0).apply(p).noOcclusion());
     public static final List<DeferredBlock<? extends Block>> WORLD_BLOCKS = List.of(CRYPT_LIMESTONE, CRYPT_LIMESTONE_WORN, CRYPT_LIMESTONE_CRUMBLING,
             CRYPT_TRACERY, CRYPT_FLAGSTONE, CRYPT_FLAGSTONE_WET, CRYPT_PATINA, CRYPT_CANDLES, CRYPT_MOON_GLASS, CRYPT_ROSE_GLASS, CRYPT_NICHE,
-            CRYPT_VESTMENT, CRYPT_BELL_ROPE, CRYPT_LILY_CANDLE);
+            CRYPT_VESTMENT, CRYPT_BELL_ROPE, CRYPT_LILY_CANDLE, CRYPT_HANDBELL);
     public static final List<DeferredItem<BlockItem>> WORLD_ITEMS = WORLD_BLOCKS.stream().map(ITEMS::registerSimpleBlockItem).toList();
 
     // ---- the Gate Rig's Mirror Hall (SPEC §17): the turning mirror, the lens, the seal --------------------------------
@@ -295,6 +298,18 @@ public final class GatesRegistry {
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_BARS = sound("gate.bars");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RUNE = sound("gate.rune");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_SOLVED = sound("gate.solved");
+    // gate worlds' live layer (SPEC §38.8): bells struck and tolling, the Ringer, the Flood, the bone fall, the swing,
+    // the fall caught, a secret found, a world's title card
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_STRIKE = sound("gate.world.strike");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_HANDBELL = sound("gate.world.handbell");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_TOLL = sound("gate.world.toll");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_RINGER = sound("gate.world.ringer");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_FLOOD = sound("gate.world.flood");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_BONES = sound("gate.world.bone_fall");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_SWING = sound("gate.world.swing");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_CATCH = sound("gate.world.catch");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_FOUND = sound("gate.world.found");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_ARRIVE = sound("gate.world.arrive");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_ALARM = sound("gate.alarm");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_COLLAPSE = sound("gate.collapse");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_CLEARED = sound("gate.cleared");
@@ -310,8 +325,8 @@ public final class GatesRegistry {
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_GLASS = sound("gate.ambient.glass");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_WIND = sound("gate.ambient.wind");
     // gate worlds (SPEC §38.6): each world's sound bed, its additions, and the bells
-    public static final List<String> WORLD_SOUNDS = List.of("belfry", "ossuary", "shaft", "field", "rest", "drip", "toll", "storm",
-            "hum", "strike", "great_bell", "ringer");
+    public static final List<String> WORLD_SOUNDS = List.of("belfry", "ossuary", "shaft", "field", "rest", "drip", "storm",
+            "hum", "great_bell");
     static {
         for (String w : WORLD_SOUNDS) sound("gate.world." + w);
     }

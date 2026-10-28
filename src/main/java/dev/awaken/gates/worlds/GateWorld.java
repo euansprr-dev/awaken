@@ -79,10 +79,12 @@ public record GateWorld(int schema, Theme theme, String name, String line, Tier 
     /**
      * Everything that dresses a world without changing its shape: block set by role, hero pieces, ambient life, how the
      * theme's monsters look here, the sound bed, events on the Gate Rig, its rule, secrets, keepsake and signature creature.
+     * The keepsake has a name and comes {@code keepsake_from} one of its secrets, its signature creature or "arrival".
      */
     public record Dressing(Map<String, String> blocks, List<String> hero, List<String> life, String residents, String sound,
-                           List<String> events, String rule, List<Secret> secrets, String keepsake, String signature) {
-        public static final Dressing NONE = new Dressing(Map.of(), List.of(), List.of(), "", "", List.of(), "", List.of(), "", "");
+                           List<String> events, String rule, List<Secret> secrets, String keepsake, String signature, String keepsakeName,
+                           String keepsakeFrom) {
+        public static final Dressing NONE = new Dressing(Map.of(), List.of(), List.of(), "", "", List.of(), "", List.of(), "", "", "", "");
         static final MapCodec<Dressing> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("blocks", Map.of()).forGetter(Dressing::blocks),
                 Codec.STRING.listOf().optionalFieldOf("hero", List.of()).forGetter(Dressing::hero),
@@ -93,7 +95,9 @@ public record GateWorld(int schema, Theme theme, String name, String line, Tier 
                 Codec.STRING.optionalFieldOf("rule", "").forGetter(Dressing::rule),
                 Secret.CODEC.listOf().optionalFieldOf("secrets", List.of()).forGetter(Dressing::secrets),
                 Codec.STRING.optionalFieldOf("keepsake", "").forGetter(Dressing::keepsake),
-                Codec.STRING.optionalFieldOf("signature", "").forGetter(Dressing::signature)
+                Codec.STRING.optionalFieldOf("signature", "").forGetter(Dressing::signature),
+                Codec.STRING.optionalFieldOf("keepsake_name", "").forGetter(Dressing::keepsakeName),
+                Codec.STRING.optionalFieldOf("keepsake_from", "").forGetter(Dressing::keepsakeFrom)
         ).apply(i, Dressing::new));
     }
 

@@ -21,6 +21,12 @@ final class WorldBed {
 
     private static Bed playing;
     private static String cued = "", missing = "";
+    private static int hushed;
+
+    /** The bed drains away for a while (the Silence) and comes back. */
+    static void hush(int ticks) {
+        hushed = ticks;
+    }
 
     /** The journey down starts the next world's bed early, so it's there as the dark lifts. */
     static void cue(String sound) {
@@ -35,7 +41,8 @@ final class WorldBed {
             return;
         }
         WorldPayloads.Arrival a = GateWorldClient.current();
-        String want = WorldJourney.dark() ? cued : a != null ? a.sound() : "";
+        if (hushed > 0) hushed--;
+        String want = hushed > 0 ? "" : WorldJourney.dark() ? cued : a != null ? a.sound() : "";
         if (playing != null && playing.age > 5 && (playing.isStopped() || !mc.getSoundManager().isActive(playing))) playing = null;
         if (!want.equals(playing == null ? "" : playing.id)) swap(want);
     }
@@ -58,6 +65,7 @@ final class WorldBed {
     static void stop() {
         if (playing != null) playing.end();
         playing = null;
+        hushed = 0;
     }
 
     /** The loop: eased in, eased out, never positional. */

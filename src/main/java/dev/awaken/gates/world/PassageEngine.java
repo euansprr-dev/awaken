@@ -20,6 +20,8 @@ final class PassageEngine implements WorldEngine {
     static final int BASE = 40;
     /** Passage half-width (3 blocks walk), plan inset of a chamber from its slots. */
     static final double HW = 1.6, INSET = 2.5;
+    /** A wall side (0 north, 1 east, 2 south, 3 west) as a direction. */
+    static final Direction[] SIDES = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
 
     enum Kind { ARRIVAL, CRYPT, ROTUNDA, WELL, ROW, TOMB, LINK, BUILT }
 
@@ -72,10 +74,12 @@ final class PassageEngine implements WorldEngine {
         final String mood;
         final Map<Integer, Kind> kinds = new HashMap<>();
         final BlockState wall, worn, crumbling, floor, wet, trim, candle, niche, vestment, rope, water, chain0, lamp, soulLamp, light,
-                boneX, boneY, boneZ;
+                boneX, boneY, boneZ, handbell;
         final BlockState[] skulls = new BlockState[16];
         final List<FloorAir.Light> lights = new ArrayList<>();
         int well = -1;
+        /** The crypt whose back wall keeps the sealed niche (SPEC §38.8), or -1. */
+        int niched = -1;
         Sculpt s;
 
         Plan(Ctx c) {
@@ -108,6 +112,7 @@ final class PassageEngine implements WorldEngine {
             BlockState skull = m.get("skull", "minecraft:skeleton_skull");
             for (int i = 0; i < 16; i++) skulls[i] = WorldMats.with(skull, "rotation", i);
             light = WorldMats.light(12);
+            handbell = m.get("handbell", "awaken:crypt_handbell");
         }
 
         boolean hero(String id) {
@@ -208,6 +213,10 @@ final class PassageEngine implements WorldEngine {
 
         void sculpt() {
             s = new Sculpt(this::skin, c.plot().minY(), c.plot().maxY());
+            List<Integer> crypts = new ArrayList<>();
+            for (var e : kinds.entrySet()) if (e.getValue() == Kind.CRYPT) crypts.add(e.getKey());
+            crypts.sort(null);
+            if (!crypts.isEmpty()) niched = crypts.get((int) Math.floorMod(Hash.of(seed, 5, 271), crypts.size()));
             for (var e : kinds.entrySet()) {
                 Room r = p.world(e.getKey());
                 switch (e.getValue()) {
@@ -221,6 +230,7 @@ final class PassageEngine implements WorldEngine {
             p.thresholds(s, W, floor, trim);
             p.doorLights(s, W, light);
             p.screens(s, W, (lat, rise, side) -> rise % 3 == 1 ? boneY : worn);
+            p.handbells(s);
             s.seal();
         }
 
@@ -330,11 +340,31 @@ final class PassageEngine implements WorldEngine {
                     } else if ((Hash.of(seed, r.id, 83) & 1) == 0) {
                         for (int[] q : new int[][]{{-4, -4}, {4, -4}, {-4, 4}, {4, 4}}) heap((int) (cx + q[0]), (int) (cz + q[1]));
                     } else sarcophagus((int) cx, (int) cz, (r.id & 1) == 0);
+                    backBell(r, sh, back);
                 }
             }
             // the hidden light last, so it finds the top of whatever stands in its way
             glow(x0, z0, x1, z1, wa);
             lights.add(new FloorAir.Light((int) cx, 2, (int) cz, 0xffb060, 7f + r.gw * 2, 0.6f));
+        }
+
+        /**
+         * A handbell by a crypt's back wall, its yoke along the wall. In one crypt a niche is set in the wall behind it:
+         * strike the bell and the niche opens (the sealed niche, SPEC §38.8).
+         */
+        void backBell(Room r, Shape sh, int back) {
+            int dx = GatePainter.DX[back], dz = GatePainter.DZ[back];
+            double reach = (dx != 0 ? sh.a() : sh.b());
+            int x = (int) Math.floor(sh.cx() + dx * (reach - 1.4)), z = (int) Math.floor(sh.cz() + dz * (reach - 1.4));
+            Direction along = dx != 0 ? Direction.EAST : Direction.NORTH;
+            if (r.id != niched) {
+                p.handbell(handbell, W, x, 0, z, along);
+                return;
+            }
+            int nx = (int) Math.floor(sh.cx() + dx * (reach + 0.5)), nz = (int) Math.floor(sh.cz() + dz * (reach + 0.5));
+            Direction in = SIDES[(back + 2) % 4];
+            s.put(nx, W + 1, nz, WorldMats.facing(niche, in));
+            p.handbell(handbell, W, x, 0, z, along, "sealed_niche", new int[]{nx, 1, nz, nx, 1, nz});
         }
 
         /** A short way in from each doorway, so a round room meets a door wherever it is on the slot's edge. */
@@ -487,6 +517,8 @@ final class PassageEngine implements WorldEngine {
                 s.put(x, W + 9, z, WorldMats.facing(niche, in));
             }
             s.box((int) cx, top + 1, (int) cz, (int) cx, W + 18, (int) cz, boneY);
+            // a handbell on the floor beyond the candles at the pillar's foot
+            p.handbell(handbell, W, (int) Math.floor(cx + 4.6), 0, (int) Math.floor(cz), Direction.EAST);
             lights.add(new FloorAir.Light((int) cx, 3, (int) cz, 0xffb060, 14f, 0.8f));
             lights.add(new FloorAir.Light((int) cx, 9, (int) cz, 0x9fd6ff, 12f, 0.4f));
         }

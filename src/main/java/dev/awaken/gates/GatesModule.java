@@ -36,6 +36,7 @@ public final class GatesModule {
         RigTests.register();
         dev.awaken.gates.world.GateWorldTests.register();
         dev.awaken.gates.world.GateWorldBellTests.register();
+        dev.awaken.gates.worlds.WorldLiveTests.register();
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent e) {
@@ -46,6 +47,7 @@ public final class GatesModule {
         r.playToClient(dev.awaken.gates.net.WorldPayloads.Arrival.TYPE, dev.awaken.gates.net.WorldPayloads.Arrival.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.WorldPayloads.Journey.TYPE, dev.awaken.gates.net.WorldPayloads.Journey.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.WorldPayloads.AtlasView.TYPE, dev.awaken.gates.net.WorldPayloads.AtlasView.STREAM_CODEC);
+        r.playToClient(dev.awaken.gates.net.WorldPayloads.Hush.TYPE, dev.awaken.gates.net.WorldPayloads.Hush.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.RigPayloads.Scene.TYPE, dev.awaken.gates.net.RigPayloads.Scene.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.RigPayloads.Cue.TYPE, dev.awaken.gates.net.RigPayloads.Cue.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.RigPayloads.Run.TYPE, dev.awaken.gates.net.RigPayloads.Run.STREAM_CODEC);

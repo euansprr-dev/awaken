@@ -269,7 +269,14 @@ final class GateTests {
                 h.assertTrue(stem.generator() instanceof dev.awaken.gates.world.GateChunkGenerator, "generator is the gate cell generator");
                 var source = stem.generator().getBiomeSource();
                 h.assertTrue(source instanceof dev.awaken.gates.world.GateBiomeSource, "biome source is cell-aware");
-                h.assertTrue(source.possibleBiomes().size() == Theme.values().length + 1, "one biome per theme plus the void, was " + source.possibleBiomes().size());
+                // one biome per theme, the void, and every world's own and its moods' (SPEC §38.6)
+                java.util.Set<String> worlds = new java.util.HashSet<>();
+                for (var w : dev.awaken.gates.worlds.GateWorlds.all().values()) {
+                    if (!w.biome().isEmpty()) worlds.add(w.biome());
+                    for (var m : w.moods()) if (!m.biome().isEmpty()) worlds.add(m.biome());
+                }
+                h.assertTrue(source.possibleBiomes().size() == Theme.values().length + 1 + worlds.size(),
+                        "one biome per theme, the void and each world's, was " + source.possibleBiomes().size());
                 h.assertTrue(stem.type().value().minY() == 0 && stem.type().value().height() == 256, "dimension height");
             } catch (java.io.IOException e) {
                 h.fail("could not read the dimension: " + e);

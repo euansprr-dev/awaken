@@ -115,6 +115,21 @@ final class Sculpt {
         });
     }
 
+    private static final ThreadLocal<Buf> PROBE = ThreadLocal.withInitial(Buf::new);
+
+    /**
+     * One block as the operations so far leave it, worked out alone at plan time (an operation that reads a neighbour sees
+     * it unset). Read the answer from the returned buffer at the same block before the next probe on this thread.
+     */
+    Buf probe(int x, int y, int z) {
+        Buf b = PROBE.get();
+        b.reset(Math.floorDiv(x, 16) * 16, Math.floorDiv(z, 16) * 16, yLo, yHi);
+        for (Op o : ops) {
+            if (x >= o.x0 && x <= o.x1 && y >= o.y0 && y <= o.y1 && z >= o.z0 && z <= o.z1) o.v.at(b, x, y, z);
+        }
+        return b;
+    }
+
     /** Seals the list: buckets every operation by the chunk slots its box touches. */
     Sculpt seal() {
         Map<Long, List<Integer>> tmp = new java.util.HashMap<>();
