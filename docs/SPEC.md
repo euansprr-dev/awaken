@@ -4916,6 +4916,11 @@ Replaces §21.11 decision 18's kit. Built 2026-10-28 by one builder, no sub-agen
     green, a C zombie still wears the cyan shirt, a C sheep a pale face, a C chicken is white. Rot, cracks, bristle and curls grow with it,
     a spider's chevron fades in, a cock's hackles and sickles colour a rank at a time and its wing bows two ranks later; a mooshroom keeps its
     pale patches. The shapes are unchanged.
+16. **Falls along the blow** (with Fight Feel, §25). A form body that a blow killed turns as it starts to fall, over 0.2 s, so its
+    own death clip falls the way the blow went (`FormShape.fallTurn`, from `CombatFeedback.blowOn`): at most 100° (a blow from the front
+    tips a forward-faller onto its side, never into the striker). The walkers fall forward; the creeper, the chicken and the beasts onto
+    their left; a spider rolls over in place and does not turn. A vanilla body at D keeps its glow's fade though Fight Feel's own fall
+    clears the state's `deathTime` (the layer reads the fall from its own render data).
 14. **Perf.** Per entity one `FormBody`, created on first sight, reused; no allocation per frame; halos past 48 blocks skipped; the life layer's
     springs past 32 as elsewhere. Rigs: at most 60 bones (tested). Server: one cue per move, one dimension refresh per form change.
 - Not yet (F3 follow-ups): presence motes at A and S and heavy footfalls, distance LOD for sub-pixel growth, a voice layer per family
