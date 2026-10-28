@@ -42,6 +42,9 @@ final class ArmsState {
     final int[] hit = new int[16];
     int hitCount;
     long lastHitstopAt = Long.MIN_VALUE / 2;
+    // the bodies this move has struck (the cleave), and its one freeze: the move it froze, the body it began on, its
+    // own length before a cleave grows it
+    int bodiesSeq = -1, bodies, freezeSeq = -1, freezeFrom, freezeBase;
     // the aimed creature and soft focus
     int aimed = -1, focus = -1;
     long focusSeenAt;

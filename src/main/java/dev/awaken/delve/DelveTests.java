@@ -67,10 +67,56 @@ final class DelveTests {
         AwakenTests.register("delve_lodes_air", 100, DelveTests::lodesAir);
         AwakenTests.register("delve_thinned_ores", 20, DelveTests::thinnedOres);
         AwakenTests.register("delve_waking_pick", 20, DelveTests::wakingPick);
+        // its own batch: it reads a count of the server thread's lode plans, which other tests make on purpose
+        AwakenTests.registerIsolated("delve_veins_flyover", 200, DelveTests::veinsFlyOver);
         PickTests.register();
         LampTests.register();
         BandTests.register();
         StyleTests.register();
+    }
+
+    // ---- the server thread never plans a region (SPEC §28.9) ----------------------------------------------------------
+
+    /**
+     * A fast flight over new land: the veins near the player, the hum's search and the block under them every 96 blocks
+     * plan no lode region on the server thread. A heart broken where its region isn't planned yet waits, and opens its
+     * lode (the same one the plan holds) once the worker has planned it.
+     */
+    private static void veinsFlyOver(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        int before = LodePlans.serverPlans();
+        for (int i = 0; i < 40; i++) {
+            BlockPos at = new BlockPos(-3_000_000 - i * 96, 20, 3_000_000);
+            p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+            p.tickCount = Math.floorMod(-p.getId(), 40);
+            Veins.tickPlayer(p);
+            Veins.nearest(level, at, Ore.IRON, WakingPick.HUM_REACH);
+            Veins.lodeAt(level, at);
+        }
+        h.assertValueEqual(LodePlans.serverPlans() - before, 0, "lode regions planned on the server thread during the flight");
+
+        int rx = -11_000, rz = 11_000;
+        Lode l = LodePlans.planNow(level.getSeed(), rx, rz).getFirst();
+        int planned = LodePlans.serverPlans();
+        h.assertTrue(!DelveData.get(level).heartBroken(l.id()), "the far heart is whole");
+        Veins.broke(level, java.util.UUID.randomUUID(), null, l.heartPos());
+        h.assertValueEqual(Veins.waiting(), 1, "a heart broken before its plan waits");
+        h.assertTrue(!DelveData.get(level).heartBroken(l.id()), "and isn't settled yet");
+        long until = System.currentTimeMillis() + 60_000;
+        while (Veins.waiting() > 0 && System.currentTimeMillis() < until) {
+            Veins.tick(level.getServer());
+            try {
+                Thread.sleep(5);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        h.assertValueEqual(Veins.waiting(), 0, "hearts still waiting");
+        h.assertTrue(DelveData.get(level).heartBroken(l.id()), "once planned, the heart opened its own lode");
+        h.assertValueEqual(LodePlans.serverPlans() - planned, 0, "and the plan was the worker's");
+        h.succeed();
     }
 
     // ---- a heart opens its vein -------------------------------------------------------------------------------------

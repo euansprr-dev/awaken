@@ -232,6 +232,129 @@ public final class ArmsRules {
         return Math.abs(d) <= FOCUS_TURN * 2 ? Mth.clamp(d, -FOCUS_TURN, FOCUS_TURN) : 0;
     }
 
+    // ---- the blow (SPEC §25 "Fight Feel") -------------------------------------------------------------------------
+
+    /** A style's weight: the blow's weight on the struck body and its recoil's shove (blocks). */
+    public enum Heft {
+        SNAP(0.6F, 0.04F), BLADE(1F, 0.06F), HEAVY(1.5F, 0.09F);
+
+        public final float weight, shove;
+
+        Heft(float weight, float shove) {
+            this.weight = weight;
+            this.shove = shove;
+        }
+    }
+
+    /** As the swings are weighed (anim_lab WEIGHT_OF): Daggers, Rapier, Gauntlets snap; the big weapons heavy. */
+    public static Heft heft(@Nullable String style) {
+        if (style == null) return Heft.BLADE;
+        return switch (style) {
+            case "daggers", "rapier", "gauntlets" -> Heft.SNAP;
+            case "axe", "maul", "greatblade", "glaive", "scythe", "warstaff" -> Heft.HEAVY;
+            default -> Heft.BLADE;
+        };
+    }
+
+    /** A finisher, a perfect heavy or an Execution weighs this much more. */
+    public static final float STRONG_WEIGHT = 1.3F;
+    /** A thrust pushes straight away this much harder; a pinning blow this much softer, with no lift. */
+    public static final float THRUST_PUSH = 1.15F, PIN_PUSH = 0.7F;
+    /** An uppercut or a rise lifts the body this much more (blocks a tick). */
+    public static final float LIFT = 0.18F;
+    /** A side cut's push: this share along the blade's travel, the rest away from the striker (never toward). */
+    public static final float CUT_ALONG = 0.45F;
+    /** A killing blow throws the body this much further along the blow. */
+    public static final float KILL_PUSH = 1.6F;
+    /** A kill's freeze grows by this much, to at most the cap; each extra body in one sweep by this, up to 3 of them. */
+    public static final int KILL_HITSTOP = 40, HITSTOP_CAP = 160, CLEAVE_HITSTOP = 12, CLEAVE_EXTRA_MAX = 3;
+    /** The last foe: no other hostile hunting the striker within this many blocks. */
+    public static final double LAST_RANGE = 16;
+
+    /** A body this big (max health) keeps vanilla's push: a Lord is neither reeled, thrown nor turned. */
+    public static boolean lordBody(float maxHealth) {
+        return maxHealth >= 150;
+    }
+
+    /** A blow straight in (a stab, a jab, a bash, any thrust): it pushes straight away, with no side. */
+    public static boolean thrusts(Archetype.MoveDef def) {
+        String f = def.swing().form();
+        return def.swish() == Archetype.Swish.THRUST || f.equals("stab") || f.equals("jab") || f.equals("bash");
+    }
+
+    /** -1: the blow pins (a chop, a slam, an overhead); +1 it lifts (an uppercut, a rise); 0 level. */
+    public static int lift(Archetype.MoveDef def) {
+        return switch (def.swing().form()) {
+            case "chop", "slam", "over" -> -1;
+            case "upper", "rise" -> 1;
+            default -> 0;
+        };
+    }
+
+    /**
+     * The cut's sideways share on the screen: -1 a level cut right to left, +1 left to right, 0 straight down or a
+     * thrust. A left-handed striker's screen is mirrored.
+     */
+    public static float side(Archetype.MoveDef def, boolean leftHanded) {
+        if (thrusts(def)) return 0;
+        java.util.List<Float> from = def.swing().from(), to = def.swing().to();
+        float dx = to.get(0) - from.get(0), dy = to.get(1) - from.get(1);
+        float s = Mth.clamp(dx / Math.max(0.05F, Math.abs(dx) + Math.abs(dy)), -1, 1);
+        return leftHanded ? -s : s;
+    }
+
+    /**
+     * The push's flat direction, into {@code out} (x, z): away from the striker along (ax, az) (a unit vector, striker
+     * to struck), turned along the cut by {@link #CUT_ALONG} of its side share. At a sweep's middle the blade travels
+     * across that line, so a full side cut pushes 55% away and 45% along it; never back toward the striker.
+     */
+    public static void push(double ax, double az, float side, float[] out) {
+        // the striker's right, seen along (ax, az): (-az, ax)
+        double x = ax * (1 - CUT_ALONG * Math.abs(side)) - az * CUT_ALONG * side;
+        double z = az * (1 - CUT_ALONG * Math.abs(side)) + ax * CUT_ALONG * side;
+        double n = Math.sqrt(x * x + z * z);
+        out[0] = n < 1e-6 ? (float) ax : (float) (x / n);
+        out[1] = n < 1e-6 ? (float) az : (float) (z / n);
+    }
+
+    /** How hard a move pushes against vanilla's strength. */
+    public static float pushScale(Archetype.MoveDef def) {
+        if (thrusts(def)) return THRUST_PUSH;
+        return lift(def) < 0 ? PIN_PUSH : 1F;
+    }
+
+    /**
+     * A blow's freeze on the server: the move's, and 12 ms for each extra body one sweep strikes in the same freeze (up
+     * to 3). {@code bodies}: the freeze's bodies so far, this one included.
+     */
+    public static int hitstop(int base, int bodies) {
+        return base + CLEAVE_HITSTOP * Mth.clamp(bodies - 1, 0, CLEAVE_EXTRA_MAX);
+    }
+
+    /** A kill's freeze, on the client that sees it (its switch is the viewer's): 40 ms more, to at most 160; never shorter. */
+    public static int killHitstop(int ms) {
+        return ms <= 0 ? 0 : Math.max(ms, Math.min(HITSTOP_CAP, ms + KILL_HITSTOP));
+    }
+
+    /** The struck body's recoil spring: ω 18 rad/s, ζ 0.45 (its back-swing a fifth of the shove; settled in ~0.35 s). */
+    public static final float RECOIL_OMEGA = 18F, RECOIL_ZETA = 0.45F;
+    private static final double RECOIL_DECAY = RECOIL_ZETA * RECOIL_OMEGA, RECOIL_WD = RECOIL_OMEGA * Math.sqrt(1 - RECOIL_ZETA * RECOIL_ZETA);
+    private static final double RECOIL_PEAK;
+
+    static {
+        double tp = Math.atan2(RECOIL_WD, RECOIL_DECAY) / RECOIL_WD;
+        RECOIL_PEAK = Math.exp(-RECOIL_DECAY * tp) * Math.sin(RECOIL_WD * tp);
+    }
+
+    /**
+     * The recoil's travel {@code t} seconds after the freeze lets it go, as a share of its peak: 0 before, out to 1 at
+     * about 70 ms, back past rest by a fifth, and settled.
+     */
+    public static float recoil(float t) {
+        if (t <= 0) return 0;
+        return (float) (Math.exp(-RECOIL_DECAY * t) * Math.sin(RECOIL_WD * t) / RECOIL_PEAK);
+    }
+
     /** Whether a point at this horizontal angle off the look is inside a move's arc. */
     public static boolean inArc(float degreesOff, float arc) {
         return Math.abs(Mth.wrapDegrees(degreesOff)) <= arc / 2;

@@ -108,11 +108,13 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
      * plane (degrees, + toward the off hand) and optionally the tip's tilt forward (degrees: a chop, a thrust). The
      * hand travels between poses on an arc about the shoulder.
      */
-    public record Swing(List<Float> from, List<Float> to, float lunge) {
+    public record Swing(List<Float> from, List<Float> to, float lunge, String form) {
         static final Codec<Swing> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.FLOAT.listOf(3, 4).fieldOf("from").forGetter(Swing::from),
                 Codec.FLOAT.listOf(3, 4).fieldOf("to").forGetter(Swing::to),
-                Codec.FLOAT.optionalFieldOf("lunge", 0F).forGetter(Swing::lunge)
+                Codec.FLOAT.optionalFieldOf("lunge", 0F).forGetter(Swing::lunge),
+                // the move's shape (slash, chop, stab, rise...): the blow pins or lifts by it (SPEC §25 "Fight Feel")
+                Codec.STRING.optionalFieldOf("form", "").forGetter(Swing::form)
         ).apply(i, Swing::new));
     }
 

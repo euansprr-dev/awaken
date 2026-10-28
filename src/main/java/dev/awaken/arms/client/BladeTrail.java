@@ -30,6 +30,9 @@ final class BladeTrail {
     private static final int[] ENTITY = new int[RINGS], HEAD = new int[RINGS], COUNT = new int[RINGS], ARGB = new int[RINGS];
     /** The blow each ring traces: it samples until this (ns); 0 for none. */
     private static final long[] UNTIL = new long[RINGS];
+    /** A kill's flare on the ring (SPEC §25 "Fight Feel"): when it flared (ns); it burns toward white and fades. */
+    private static final long[] FLARE = new long[RINGS];
+    private static final long FLARE_LIFE = 160_000_000L;
     private static final double[] ROOT = new double[RINGS * N * 3], TIP = new double[RINGS * N * 3];
     private static final long[] AT = new long[RINGS * N];
 
@@ -43,6 +46,12 @@ final class BladeTrail {
         if (r < 0) return;
         UNTIL[r] = System.nanoTime() + ms * 1_000_000L;
         ARGB[r] = argb;
+    }
+
+    /** A killing blow: {@code entity}'s ribbon flares once. */
+    static void flare(int entity) {
+        int r = ring(entity, false);
+        if (r >= 0) FLARE[r] = System.nanoTime();
     }
 
     /** Whether {@code entity}'s blade is tracing now (the renderers sample only then). */
@@ -235,6 +244,14 @@ final class BladeTrail {
         int cr = argb >> 16 & 255, cg = argb >> 8 & 255, cb = argb & 255;
         // strong enough to read on a noon sky: the colour's own alpha (the rhythm's brightness) lifted, never faint
         float alpha = Math.min(0.95F, 0.55F + 0.5F * ((argb >>> 24) / 255F));
+        long since = System.nanoTime() - FLARE[r];
+        if (FLARE[r] != 0 && since >= 0 && since < FLARE_LIFE) {
+            float f = 1F - since / (float) FLARE_LIFE;
+            cr += Math.round((255 - cr) * 0.6F * f);
+            cg += Math.round((255 - cg) * 0.6F * f);
+            cb += Math.round((255 - cb) * 0.6F * f);
+            alpha = Math.min(1F, alpha + 0.25F * f);
+        }
         for (int a = 0; a + 1 < m; a++) band(buffer, a, a + 1, cr, cg, cb, alpha);
     }
 
