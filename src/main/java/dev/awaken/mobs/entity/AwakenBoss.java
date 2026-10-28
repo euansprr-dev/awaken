@@ -99,21 +99,23 @@ public class AwakenBoss extends AwakenMob {
         }
     }
 
-    private void arena(ServerLevel level) {
+    void arena(ServerLevel level) {
         MobDef d = def();
         if (!hasHome()) setHomeTo(blockPosition(), d.arena);
         Vec3 home = Vec3.atBottomCenterOf(getHomePosition());
-        double limit = d.arena + 10;
+        int radius = getHomeRadius(); // Break Lords have a caller-supplied home, larger than their indoor arena.
+        double limit = radius + 10;
         if (position().distanceToSqr(home) > limit * limit) {
             // Kited out of its arena: step back in.
             level.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1, getZ(), 20, 0.5, 1, 0.5, 0.2);
             teleportTo(home.x, home.y, home.z);
             getNavigation().stop();
+            getMoveControl().setWait();
+            setDeltaMovement(Vec3.ZERO);
         }
-        LivingEntity t = getTarget();
-        double reach = d.arena + 14;
-        if (t != null && t.position().distanceToSqr(home) > reach * reach) setTarget(null);
-        Player near = level.getNearestPlayer(home.x, home.y, home.z, d.arena + 16, p -> !p.isSpectator() && !((Player) p).isCreative());
+        LivingEntity t = getTargetUnchecked();
+        if (t != null && !insideHome(t)) setTarget(null);
+        Player near = level.getNearestPlayer(home.x, home.y, home.z, radius + 16, p -> !p.isSpectator() && !((Player) p).isCreative());
         if (near == null) {
             lonelyTicks += 20;
             if (lonelyTicks >= 600 && (getHealth() < getMaxHealth() || phase > 0)) reset(level);
@@ -125,6 +127,19 @@ public class AwakenBoss extends AwakenMob {
                 playLevelSound(MobSounds.BOSS_INTRO.get(), 2.0F, 0.9F);
             }
         }
+    }
+
+    /** Acquisition and continued pursuit use the same saved home as the flight controller and the return check. */
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        return super.canAttack(target) && insideHome(target);
+    }
+
+    private boolean insideHome(LivingEntity target) {
+        if (!hasHome()) return true;
+        var home = getHomePosition();
+        double radius = getHomeRadius();
+        return target.distanceToSqr(home.getX() + 0.5, home.getY(), home.getZ() + 0.5) <= radius * radius;
     }
 
     /** Everyone left the arena: heal up and start over (no drops, nothing is remembered). */

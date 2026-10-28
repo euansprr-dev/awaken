@@ -16,6 +16,24 @@ final class FlyerMoveControl extends MoveControl<AwakenMob> {
     }
 
     @Override
+    public void setWantedPosition(double x, double y, double z, double speedModifier) {
+        // A dive or orbit can point beyond a legal target, especially uphill. Never steer a Lord out of its own home.
+        if (mob instanceof AwakenBoss && mob.hasHome()) {
+            var home = mob.getHomePosition();
+            double hx = home.getX() + 0.5, hy = home.getY(), hz = home.getZ() + 0.5;
+            double dx = x - hx, dy = y - hy, dz = z - hz;
+            double distance = dx * dx + dy * dy + dz * dz, radius = mob.getHomeRadius();
+            if (distance > radius * radius && distance > 0) {
+                double scale = radius / Math.sqrt(distance);
+                x = hx + dx * scale;
+                y = hy + dy * scale;
+                z = hz + dz * scale;
+            }
+        }
+        super.setWantedPosition(x, y, z, speedModifier);
+    }
+
+    @Override
     public void tick() {
         if (operation != Operation.MOVE_TO) {
             // Hover: bleed off speed and bob a little so fliers don't look frozen.
