@@ -152,7 +152,7 @@ final class GateBestiary {
                 .ab(a(BLINK, "Refract"), a(BEAM, "Prism Lance").bolt(BoltKind.GLASS)).build());
         out.add(m("the_mirage", "The Mirage", Theme.GLASS, Tier.WARDEN, Model.ILLUSIONER, "Splits into mirages; only one of them casts a shadow").hp(32).dmg(5.5).spd(0.28).traits(HUNTER, RANGED)
                 .ab(a(DECOY, "Mirages").n(3), a(BOLT, "Sunshards").n(5).bolt(BoltKind.GLASS), a(BLINK, "Heat Mirage")).build());
-        out.add(m("glass_serpent", "The Glass Serpent", Theme.GLASS, Tier.LORD, Model.SERPENT, "Lunges, dives into the sand and erupts beneath you, then the Glass Storm").hp(32).dmg(5).spd(0.3).scale(2.2F).bar(BossBarColor.WHITE).arena(26)
+        out.add(m("glass_serpent", "The Glass Serpent", Theme.GLASS, Tier.LORD, Model.SERPENT, "Lunges, dives into the sand and erupts beneath you, then the Glass Storm").hp(32).dmg(5).spd(0.3).scale(2.2F).size(1.4F, 1.8F).grounded().bar(BossBarColor.WHITE).arena(26)
                 .intro("Your reflection blinks first.")
                 .phase(1.0F, "The Glass Serpent uncoils.", a(CHARGE, "Glass Lunge").heavy(), a(NOVA, "Shard Spray").n(10).bolt(BoltKind.GLASS))
                 .phase(0.66F, "It dives into the sand.", a(BLINK, "Burrow Strike").power(1.6F).heavy(), a(RAIN, "Erupting Glass").n(5).bolt(BoltKind.GLASS), a(CHARGE, "Glass Lunge"))

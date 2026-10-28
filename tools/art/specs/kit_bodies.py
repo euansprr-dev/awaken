@@ -28,7 +28,7 @@ sys.path.insert(0, ART)
 import fauna_rig as R  # noqa: E402
 from kit import core  # noqa: E402
 
-BOSSES = ["ember_tyrant", "unit_zero", "mother_of_spores", "gearwright_colossus", "root_saint", "bell_warden"]
+BOSSES = ["ember_tyrant", "unit_zero", "mother_of_spores", "gearwright_colossus", "root_saint", "bell_warden", "glass_serpent"]
 
 
 def designs(only=None):

@@ -858,8 +858,9 @@ def check(rig, moves):
     problems += [f"{rig.id}: {s}" for s in floating(rig)]
     guard = list(getattr(rig, "guard", ()))  # parts that never go into the ground, in any clip
     if guard:
+        under = set(getattr(rig, "under", ()))  # clips that go into the floor on purpose (a burrow)
         for name in rig.clips:
-            if name == "death":  # it falls with them
+            if name == "death" or name in under:  # it falls with them
                 continue
             deep = sinks(rig, name, guard)
             if deep > SINK:

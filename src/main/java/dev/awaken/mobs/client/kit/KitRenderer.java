@@ -28,6 +28,7 @@ import net.minecraft.util.ARGB;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 
@@ -55,6 +56,8 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
     /** Where the feet stand at rest, in blocks of body space (x left, z forward), for the ground under them. */
     private final float footLX, footLZ, footRX, footRZ;
     private final boolean hasFeet;
+    /** How far (blocks) the body can reach out of its box: the culling box grows by it (a serpent's lunge, SPEC §35.11). */
+    private final float reach;
 
     public KitRenderer(EntityRendererProvider.Context ctx, MobDef def, Kits.Kit kit) {
         super(ctx, new HeroModel(ctx.bakeLayer(HeroModel.layer(kit.id())), kit.rig()), kit.rig().shadow);
@@ -83,6 +86,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         footLZ = l == null ? 0 : l[1];
         footRX = r == null ? 0 : r[0];
         footRZ = r == null ? 0 : r[1];
+        reach = reach(rig);
         addLayer(new Glow(this, Awaken.id("textures/entity/kit/" + def.id + "_glow.png")));
     }
 
@@ -98,6 +102,25 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
             i = b.parent();
         }
         return new float[]{x / 16F, -z / 16F};
+    }
+
+    /** The longest chain of pivots laid end to end, in blocks, and a block for what hangs off its end. */
+    private static float reach(HeroRig rig) {
+        float most = 0;
+        for (int i = 0; i < rig.bones.size(); i++) {
+            float len = 0;
+            for (int j = i; j >= 0; j = rig.bones.get(j).parent()) {
+                HeroRig.Bone b = rig.bones.get(j);
+                len += Mth.sqrt(b.px() * b.px() + b.py() * b.py() + b.pz() * b.pz());
+            }
+            most = Math.max(most, len);
+        }
+        return most / 16F + 1.0F;
+    }
+
+    @Override
+    protected AABB getBoundingBoxForCulling(AwakenMob mob, float partialTicks) {
+        return super.getBoundingBoxForCulling(mob, partialTicks).inflate(reach);
     }
 
     @Override

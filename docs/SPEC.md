@@ -9379,7 +9379,8 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   pick page (https://claude.ai/artifact/MUoruSXr8xmWNVk4JyAAbc, one document per boss in its `picks` store).
 - **Picks so far** (2026-10-28). Unit Zero: A, the Sentinel. Mother of Spores: C, the Crowned Host. The Gearwright
   Colossus: C, the Clock Tower. The Root Saint: A, the Rooted Saint. The Bell Warden: A, the Bell That Walks. The Glass
-  Serpent: B, the Hourglass.
+  Serpent: B, the Hourglass. The Hive Regent: A, the Empress. The Drowned Archivist: A, the Lectern. The Lantern Broker:
+  A, the Pedlar. The Abbot of Frost: B, the Pilgrim.
 - **Unit Zero, the Sentinel** (body and motion, `kit/bosses/unit_zero.py`). A cathedral statue that moves, 3.6 blocks to
   the helm and 4.3 with its halo, 107 cubes on the Duelist plan (leg 30 px): ceramic plates over black joints, a slate
   tabard between the legs (so a stride never meets it) and split coat-tails behind, each a short cloth chain on springs;
@@ -9550,6 +9551,54 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     slide in a follow-through or a settle.
   - `Move(through=...)`: a move can give its follow-through key whole. The library carries only arm bones on past
     contact, so a body without them held its contact pose still for the first quarter of every recovery.
+- **The Glass Serpent, the Hourglass** (body and motion, `kit/bosses/glass_serpent.py`). "Your reflection blinks
+  first." A serpent you can see through: its body is a chain of fourteen hollow glass frames, each one an hourglass with
+  sand pouring through its waist, strung on a spine of black glass. It lies coiled on the floor like a spring, 3 blocks
+  across, and raises its neck out of the middle, five empty frames (the sand has run down out of them into the coil), to
+  a horned skull of black glass with two mirror eyes, 4.5 blocks to the horns. 178 cubes (1068 faces), no plan. Values:
+  the mirror eyes and the pouring sand brightest, then the pale glass frames lit along the back with a glint across
+  every plate, the warm sand heaps, the black spine and skull with a bright rim and a few cracks; a sand-coloured glow
+  deep in the mouth. It walks: the old cube serpent flew, so `MobDef.grounded()` keeps it to the floor (a model that
+  flies, a body that doesn't). The hitbox grows to 3.1 x 4.0 (size 1.4 x 1.8 at scale 2.2).
+  - **Every pose is a line**: where the coil lies (a spiral from the root out, drawn tighter, wider, risen into a
+    spring or rippled) and where the neck rises, and which way the skull looks. The frames are laid along the line one
+    after another, each exactly its own length on from the last, upright where they lie on the floor and carried on
+    where the body rises, so a frame never turns over on itself.
+  - **It moves like a coiled spring**: it slides along coiled, a ripple running round the coil from the neck to the
+    tail, the coil drawn out a little behind it and the neck leaning into the way it goes (2 blocks a cycle walking, 3
+    running). Idle, the neck sways in a slow S like a cobra's while the skull keeps still on the end of it.
+  - **Its blows.** The bite draws the head back into a tall S, the jaw opening, and strikes down at you, snapping shut;
+    the second bite comes from the side. Glass Lunge winds the coil tight and rears the head back high, holds, and then
+    the spring lets go: the head shoots out low along the floor and the whole body pours out straight behind it, a
+    spear of glass, sliding on; it gathers itself in again through an S and a hook round its left. Shard Spray rises
+    the coil into a tall spring with the skull thrown back at the top, holds, and slams it flat on the floor, wider than
+    it was, the glass ringing. Burrow Strike rears, dives head first into the sand with the coil pouring down after it
+    until it's gone, comes round under the floor (the blink) and bursts up out of the sand at you skull first with its
+    jaw wide, arcing down on you as the coil comes up after it. Erupting Glass rears and drives its jaw down into the
+    sand before it, the coil clenching, while the floor erupts where you stand, and wrenches its head back out. Whoever
+    is behind it gets the tail's end raised high off the floor and whipped across, the skull turned to look back over
+    the coil. The Glass Storm (the signature) rises on its coil and turns on itself faster and faster, the coil a spout
+    of glass with the skull at its top, bursts at its fastest, and drops back, turning slower until it stops: three
+    whole turns written on the root after staging (`_whirl`), so it hands back exactly as it was. Its intro lifts its
+    head off the coil, rears over you, opens its jaw and hisses.
+  - **Waiting and the death.** It waits coiled tight with its neck laid down across its own coil and the skull resting
+    on it (the intro's "kneel"). It dies rearing up as high as it can with the skull thrown back, shudders, and crashes
+    down across its coil and out onto the sand, the skull bouncing once with the jaw falling open; the coil slackens out
+    flat.
+  - **Ground.** The frames lie on the floor in every clip and the skull and jaw stay out of it, except Burrow Strike
+    (the whole of it goes under) and Erupting Glass (the jaw driven into the sand). The lunge's in-betweens sagged up to
+    11 px into the floor; they are laid back on it (below).
+  - **Meter.** Worst kink outside a strike 5.6° (the lash); held 7-16% on its blows; dips 8-16%, and 42% from the bites
+    into Shard Spray, whose slam swings through its rise. The intro holds its rear on purpose (28%).
+- **Kit changes with the Hourglass:**
+  - `rig.under`: clips that go into the floor on purpose skip the guard check (a dive, a jaw driven into the sand).
+  - **Laying a chain back on the floor** (`_floored`, the Hourglass's own): between a coil and a straight line the
+    frames' turns blend through shapes that sag into the floor. A clip that goes in more than 1 px is rewritten tick by
+    tick: each joint of the body is eased up onto the floor where it would go in (a curve that meets the floor with the
+    same slope, so a joint slows onto it) and the frames are laid along the joints again; the root and the neck stay.
+  - `MobDef.grounded()` (above), and `KitRenderer` grows the culling box by the body's reach (its longest chain of
+    pivots laid end to end, plus a block), so a body that stretches out of its box (the lunge, 8 blocks behind it) never
+    vanishes while its box is off screen.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
