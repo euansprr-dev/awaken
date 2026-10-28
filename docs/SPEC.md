@@ -8626,9 +8626,10 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
 - **Stage 1** (in progress): the world floor contract (38.5), the Bell Crypt's blocks and its four floor worlds (38.6); tests
   `gateworlds_bell_recipes`, `gateworlds_belfry`, `gateworlds_ossuary`, `gateworlds_field` and `gateworlds_shaft`; the
   arrival, the journey down and the Atlas page (38.7), test `gateworlds_atlas_view`; the live layer (38.8): events, the
-  bell rule, the Ringer, secrets, keepsakes and the catch, tests `gateworlds_live` and `gateworlds_catch`, and every world's
-  test also checks its marks (each handbell stands where it's marked, each secret has something to find, the Flood's
-  basins are dry and walled in) and that each of its recipe's secrets is placed on some floor.
+  bell rule, the Ringer, residents' looks, secrets, keepsakes and the catch, tests `gateworlds_live` and
+  `gateworlds_catch`, and every world's test also checks its marks (each handbell stands where it's marked, each secret
+  has something to find, the Flood's basins are dry and walled in) and that each of its recipe's secrets is placed on
+  some floor.
 
 ### 38.5 The world floor contract (Stage 1)
 
@@ -8822,6 +8823,14 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   the ground in a room, out of water; a fall of more than 9 blocks that has taken you 4 below that ledge puts you back on
   it, facing the way you stood, for 3 damage, with "You fell, and the shaft gave you back to the last ledge you stood on."
   Flying and gliding are never caught.
+- **Residents' looks** (the hook for the creature work): every monster `Rooms.spawn` makes on a world floor carries the
+  attachment `awaken:gate_world_look` (`WorldLook(world, look)`, saved with schema 1, synced to everyone who sees it): the
+  world it was met in (a place's own world inside a place) and the recipe's `residents` as an id (a bare id is ours:
+  "drowned_vestments" → "awaken:drowned_vestments"; empty when the world names none). The Ringer wears its signature
+  (`awaken:the_ringer`). An entity tag never reaches a client, so the look rides the attachment; the Ringer's server-side
+  marker stays in persistent data. Nothing paints a look yet: a look is a paint variant of the mobs module's hero rigs
+  (next to the Creature Kit), and the 15 signatures are new creatures with a plan of their own (mob forms covers only
+  the twelve vanilla species, §21.13). Until then a world's monsters look as they do anywhere.
 - **Saved**: `FloorState.world` (a set of strings, optional in the save, so floors saved before it load with none).
   Everything else (strike counts, the Flood's progress, timed cues, ledges) lives in `WorldLive` while the server runs.
 - **Not in Stage 1**: the bells don't swing (no moving bell bodies; a proposal: display-entity bell props, 32 a floor at

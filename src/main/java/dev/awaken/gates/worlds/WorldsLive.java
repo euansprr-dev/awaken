@@ -9,7 +9,9 @@ import dev.awaken.gates.content.Twist;
 import dev.awaken.gates.net.WorldPayloads;
 import dev.awaken.gates.world.FloorAir;
 import dev.awaken.gates.world.FloorLayout;
+import dev.awaken.gates.world.Room;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -96,6 +98,22 @@ public final class WorldsLive {
         GateAtlas atlas = p.getData(GatesRegistry.ATLAS.get());
         atlas.floorCleared(f.theme.id);
         p.setData(GatesRegistry.ATLAS.get(), atlas);
+    }
+
+    /**
+     * A monster spawned on a world floor wears that world's residents' look (in a place, the place's world): synced, so
+     * a renderer can paint it. Fights don't change.
+     */
+    public static void dress(LivingEntity e, FloorLayout f, Room home) {
+        String world = f.worldOf(home);
+        GateWorld w = world.isEmpty() ? null : GateWorlds.get(world);
+        if (w == null) return;
+        e.setData(GatesRegistry.WORLD_LOOK.get(), new WorldLook(world, WorldLook.id(w.dressing().residents())));
+    }
+
+    /** A signature creature wears its own look (the Ringer: {@code awaken:the_ringer}). */
+    public static void dressSignature(LivingEntity e, String world, String signature) {
+        e.setData(GatesRegistry.WORLD_LOOK.get(), new WorldLook(world, WorldLook.id(signature)));
     }
 
     /** Sends your Atlas to your client (on login and whenever it changes). */

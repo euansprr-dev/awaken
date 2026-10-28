@@ -599,6 +599,7 @@ public final class WorldLive {
                 e.setHealth(e.getMaxHealth());
             }
             e.getPersistentData().putString(RINGER_TAG, f.world);
+            WorldsLive.dressSignature(e, f.world, w.dressing().signature());
             level.sendParticles(GatesRegistry.P_GRIT.get(), e.getX(), e.getY() + 1, e.getZ(), 40, 0.6, 1, 0.6, 0.03);
             for (ServerPlayer q : near(level, g, f, far, 48)) {
                 GateAtlas atlas = q.getData(GatesRegistry.ATLAS.get());

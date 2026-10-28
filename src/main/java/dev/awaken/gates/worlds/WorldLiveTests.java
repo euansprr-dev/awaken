@@ -73,6 +73,12 @@ public final class WorldLiveTests {
                 LivingEntity dead = Rooms.spawn(level, g, f, -1, MobRole.Role.NORMAL, bell.east(3));
                 h.assertTrue(WorldRules.strike(p, bell), "striking it answers the Belfry's rule");
                 if (dead != null) h.assertTrue(dead.hasEffect(MobEffects.SLOWNESS), "the dead near it reel");
+                // a world's monsters wear its residents' look, in a synced attachment a renderer can read
+                if (dead != null) {
+                    WorldLook look = dead.getData(GatesRegistry.WORLD_LOOK.get());
+                    h.assertTrue(look.world().equals(BELFRY) && look.look().equals("awaken:drowned_vestments"),
+                            "a Belfry monster wears the drowned vestments (got " + look + ")");
+                }
                 // ring too many and the Ringer comes (once a floor)
                 for (int i = 1; i < WorldLive.RINGER_AT; i++) {
                     WorldRules.clear();

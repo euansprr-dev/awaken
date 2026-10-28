@@ -410,6 +410,11 @@ public final class GatesRegistry {
     public static final Supplier<AttachmentType<dev.awaken.gates.worlds.GateAtlas>> ATLAS = ATTACHMENTS.register("gate_atlas",
             () -> AttachmentType.builder(dev.awaken.gates.worlds.GateAtlas::new)
                     .serialize(dev.awaken.gates.worlds.GateAtlas.MAP_CODEC, a -> !a.isEmpty()).copyOnDeath().build());
+    /** A gate monster's world and look, synced to whoever sees it (SPEC §38.8). */
+    public static final Supplier<AttachmentType<dev.awaken.gates.worlds.WorldLook>> WORLD_LOOK = ATTACHMENTS.register("gate_world_look",
+            () -> AttachmentType.builder(() -> dev.awaken.gates.worlds.WorldLook.NONE)
+                    .serialize(dev.awaken.gates.worlds.WorldLook.MAP_CODEC, dev.awaken.gates.worlds.WorldLook::isSet)
+                    .sync(dev.awaken.gates.worlds.WorldLook.STREAM_CODEC).build());
     public static final Supplier<AttachmentType<GearStash>> STASH = ATTACHMENTS.register("gate_stash",
             () -> AttachmentType.builder(() -> GearStash.EMPTY).serialize(GearStash.MAP_CODEC, s -> !s.isEmpty()).copyOnDeath().build());
 
