@@ -522,6 +522,8 @@ of `AwakenConfig.Client`.
   centre and radius this frame: Arms draws its Resonance arc under it).
 - `dev.awaken.core.api.HudState` (client, §40.6) — the clear screen: `screen()` (`CLEAR`, `CLEAR_CROSSHAIR`, `CLASSIC`),
   `classic()`, `crosshair()`, `fighting()`, `glancing()`, `alpha(layerId)` (how strongly a HUD layer shows now; 1 in Classic).
+  `vitalsY(guiHeight, row)` and `VITALS_HALF` (where the health, Aether and food lines sit; Ascent draws its Aether line
+  there), `aether()` / `installAether` (the player's Aether 0..1, -1 before Skyborn; for the glance).
   The holo module installs the director; until then everything shows as it always has.
 - `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
   mobs module grounds normal and elite fliers, never a kit flier).
