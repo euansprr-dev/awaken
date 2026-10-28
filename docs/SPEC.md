@@ -8861,6 +8861,11 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   `flood`, `bone_fall` (2), `catch`, `found` (three handbells in a chord), `arrive` (the card's sting), `drip`, `storm`.
   A bell's voice comes from its mark: a handbell its own, a great bell the great one (pitch 1 down to 0.8 the wider), any
   other the strike (pitch 1.25 - 0.08 × its radius, 0.7 to 1.3).
+- **Subtitles**, every event and bed (`audio_events_resolve`), in plain words: "Bell rings", "Handbell rings", "A far bell
+  tolls", "The Great Bell tolls", "The Ringer's bell", "A bell hums", "The bells groan", "Water rises", "Bones fall",
+  "Caught on the ledge", "A secret found", "A far bell tolls and a handbell answers" (arriving), "Water drips", "Thunder
+  far above"; the beds "Water laps under the bells", "Bones settle in the passages", "Ropes creak far above", "Bells
+  ring far across the water" and "Old wood creaks in a quiet room".
 - **A bell hums** as you pass under it (within its rim plus 1.5, up to 32 below its lip; heard 32 blocks off): each bell
   at most once in 20 s, checked each half second with the room checks (`WorldLive.hum`, no cost off a world floor).
 - **Small life** (`gates.client.WorldLife`, client only, never saved or sent; the recipe's `life` rides on the arrival):

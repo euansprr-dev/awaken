@@ -361,12 +361,12 @@ SPEC = [
     ("bone_fall", bone_fall, 2, -22.0, "gate.world.bone_fall", "Bones fall", 24),
     ("catch", catch, 1, -21.0, "gate.world.catch", "Caught on the ledge", 16),
     ("found", found, 1, -23.0, "gate.world.found", "A secret found", 16),
-    ("arrive", arrive, 1, -22.0, "gate.world.arrive", "", 16),
-    ("amb_belfry", bed_belfry, 1, -28.0, "gate.world.belfry", "", 0),
-    ("amb_ossuary", bed_ossuary, 1, -29.0, "gate.world.ossuary", "", 0),
-    ("amb_shaft", bed_shaft, 1, -28.0, "gate.world.shaft", "", 0),
-    ("amb_field", bed_field, 1, -28.5, "gate.world.field", "", 0),
-    ("amb_rest", bed_rest, 1, -29.0, "gate.world.rest", "", 0),
+    ("arrive", arrive, 1, -22.0, "gate.world.arrive", "A far bell tolls and a handbell answers", 16),
+    ("amb_belfry", bed_belfry, 1, -28.0, "gate.world.belfry", "Water laps under the bells", 0),
+    ("amb_ossuary", bed_ossuary, 1, -29.0, "gate.world.ossuary", "Bones settle in the passages", 0),
+    ("amb_shaft", bed_shaft, 1, -28.0, "gate.world.shaft", "Ropes creak far above", 0),
+    ("amb_field", bed_field, 1, -28.5, "gate.world.field", "Bells ring far across the water", 0),
+    ("amb_rest", bed_rest, 1, -29.0, "gate.world.rest", "Old wood creaks in a quiet room", 0),
 ]
 
 # events made of sounds already in the pack (ours, or vanilla's own by reference)
@@ -415,10 +415,9 @@ def main(argv):
             else:
                 e["stream"] = True
             entries.append(e)
-        sounds[event] = OrderedDict(sounds=entries)
-        if subtitle:
-            sounds[event] = OrderedDict(subtitle="subtitles.awaken." + event, sounds=entries)
-            lang["subtitles.awaken." + event] = subtitle
+        assert subtitle, event + " needs a subtitle (audio_events_resolve)"
+        sounds[event] = OrderedDict(subtitle="subtitles.awaken." + event, sounds=entries)
+        lang["subtitles.awaken." + event] = subtitle
     for event, (subtitle, entries) in REFS.items():
         sounds[event] = OrderedDict(subtitle="subtitles.awaken." + event, sounds=entries)
         lang["subtitles.awaken." + event] = subtitle

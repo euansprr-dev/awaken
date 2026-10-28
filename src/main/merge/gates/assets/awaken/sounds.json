@@ -604,6 +604,7 @@
     ]
   },
   "gate.world.arrive": {
+    "subtitle": "subtitles.awaken.gate.world.arrive",
     "sounds": [
       {
         "name": "awaken:gate_world/arrive",
@@ -612,6 +613,7 @@
     ]
   },
   "gate.world.belfry": {
+    "subtitle": "subtitles.awaken.gate.world.belfry",
     "sounds": [
       {
         "name": "awaken:gate_world/amb_belfry",
@@ -620,6 +622,7 @@
     ]
   },
   "gate.world.ossuary": {
+    "subtitle": "subtitles.awaken.gate.world.ossuary",
     "sounds": [
       {
         "name": "awaken:gate_world/amb_ossuary",
@@ -628,6 +631,7 @@
     ]
   },
   "gate.world.shaft": {
+    "subtitle": "subtitles.awaken.gate.world.shaft",
     "sounds": [
       {
         "name": "awaken:gate_world/amb_shaft",
@@ -636,6 +640,7 @@
     ]
   },
   "gate.world.field": {
+    "subtitle": "subtitles.awaken.gate.world.field",
     "sounds": [
       {
         "name": "awaken:gate_world/amb_field",
@@ -644,6 +649,7 @@
     ]
   },
   "gate.world.rest": {
+    "subtitle": "subtitles.awaken.gate.world.rest",
     "sounds": [
       {
         "name": "awaken:gate_world/amb_rest",
