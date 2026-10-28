@@ -607,6 +607,12 @@ Plan v2 · onboarding and progression (details in docs/modules/onboarding.md):
 - The first power is a choice of three E-tier actives from different families (`powers/Starter.POOL`), saved in
   `awaken:first_power`; Dash comes at level 3.
 - Mod recipes unlock in the recipe book when an ingredient is first held.
+- Meditation Mat crafting guidance (2026-10-28 playtest): the existing `WAW` recipe uses two wool (any colours) and one
+  amethyst shard across a crafting-table row; it cannot fit the inventory's 2×2 grid. Either ingredient teaches it
+  before a Hearth is owned; level 11 and a rooted Anchor also teach it. The recipe result's hover and the Meditation
+  lesson name the crafting table and point to Journal › Hearth. That existing Journal page is available from awakening,
+  including before a home exists, with the recipe and its purpose: beside a bed for better dreams; no mat required to
+  meditate. Recipe cost, shape, unlock conditions and crafting rules are unchanged.
 - Pacing (sim, balanced player): first power ~8 min, level 5 ~47 min, 10 ~3.6 h, 25 ~17 h, 50 ~56 h, 70 ~73 h, 135 ~101 h.
 
 Plan v2 · System and Hearth:

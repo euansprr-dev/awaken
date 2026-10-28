@@ -90,6 +90,10 @@ public final class HearthClient {
     }
 
     private static void tooltip(ItemTooltipEvent e) {
+        if (e.getItemStack().is(HearthContent.MEDITATION_MAT.get().asItem())) {
+            e.getToolTip().add(Component.literal("Crafting table: wool · amethyst shard · wool").withStyle(ChatFormatting.GRAY));
+            e.getToolTip().add(Component.literal("Any wool colours · Details in Journal › Hearth").withStyle(ChatFormatting.DARK_GRAY));
+        }
         int t = e.getItemStack().getOrDefault(HearthContent.TEMPER.get(), 0);
         if (t > 0) e.getToolTip().add(1, Component.literal("Tempered " + "✦".repeat(t)).withStyle(ChatFormatting.GOLD));
         if (Boolean.TRUE.equals(e.getItemStack().get(HearthContent.HOME_COOKED.get()))) {
