@@ -116,7 +116,7 @@ public final class SkyRig {
         }
     }
 
-    /** A few a tick: rig the queued platforms whose core and chain columns are loaded (once: the core's there after). */
+    /** A few a tick: rig the queued platforms whose chunks are all finished (once: the core's there after). */
     static void tick(MinecraftServer server) {
         if (PENDING.isEmpty()) return;
         ServerLevel level = server.overworld();
@@ -124,18 +124,30 @@ public final class SkyRig {
             BoundingBox box = PENDING.poll();
             if (box == null) return;
             int cx = box.minX() + C, cz = box.minZ() + C, deckY = box.minY() + DECK;
-            BlockPos core = new BlockPos(cx, deckY + 1, cz), chain = new BlockPos(cx + PIER, deckY, cz + PIER);
-            if (!level.isLoaded(core) || !level.isLoaded(chain)) {
+            if (!finished(level, cx, cz)) {
                 PENDING.add(box); // later
                 return;
             }
-            if (!level.getBlockState(core).is(AscentContent.WING_CORE.get())) rig(level, cx, deckY, cz);
+            if (!level.getBlockState(new BlockPos(cx, deckY + 1, cz)).is(AscentContent.WING_CORE.get())) rig(level, cx, deckY, cz);
         }
     }
 
     /**
+     * Whether every chunk the rig reads or builds in (the core out to the buoy and groundUnder's columns, 17 out along
+     * x and z) is loaded and finished: a loaded one may still be generating (under a player flying over new land), and
+     * reading it would wait for it on the server thread.
+     */
+    static boolean finished(ServerLevel level, int cx, int cz) {
+        for (int x = cx >> 4; x <= cx + PIER + 5 >> 4; x++) for (int z = cz >> 4; z <= cz + PIER + 5 >> 4; z++) {
+            if (level.getChunkSource().getChunkNow(x, z) == null) return false;
+        }
+        return true;
+    }
+
+    /**
      * The ground under the chain: the lowest of four columns diagonally round it (the chain's own column holds the pier
-     * and the chain once rigged, and the deck or an island may hang over one of them).
+     * and the chain once rigged, and the deck or an island may hang over one of them). Its chunks must be finished
+     * ({@link #finished}): it reads them as they are.
      */
     public static int groundUnder(ServerLevel level, int cx, int cz) {
         int g = Integer.MAX_VALUE;
