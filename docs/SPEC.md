@@ -9671,6 +9671,37 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   - **Meter.** Worst kink outside a strike 5.3°; held under 15% on every move; dips 13-22%. Every recovery eases back
     in two steps from where its move ends (`_back`), and every blow carries on a little past contact (`_on`).
 
+- **The Lantern Broker, the Pedlar** (body and motion, `kit/bosses/lantern_broker.py`). "A duel, then. Lanterns down." A
+  tall, thin travelling merchant in a long lacquered coat to the floor, carrying his whole shop on his back: a pack frame
+  that towers over him like a little roofed stall, a chest of drawers at its foot, rolled carpet and scrolls, a
+  merchant's scale, two moth cages and eleven lanterns of paper and glass, every one swinging on its own. A wide stepped
+  hat with four tiny lanterns hung from its brim; under it his face is shadow, two old brass cash coins with square holes
+  for eyes, lit from behind, and a dark silk veil over his mouth. A tall bamboo crook staff in his right hand with a glass
+  lantern on its hook, a sickle in his left with a chain looped from its pommel to a brass weight. Dark lacquer, red
+  silk, brass, paper, a moth's grey and one warm lantern light. 4.5 blocks to his hat, 6.1 to the pack's spire; 170
+  cubes (1,020 faces) on the biped plan. The hitbox is 1.2 x 4.4 (size 0.6 x 2.2 at scale 2.0). He is upright and quick,
+  a showman who carries his load with pride (the Abbot's Pilgrim is the crushed, trudging back-load).
+  - **The staff is a walking stick** (`_staff`): the fist turns along the shaft and the shaft slides through it so its
+    foot stays on the ground, every key and every tick of the hurts and turns. Walking, it plants with his left foot
+    and travels a stride a cycle; running, he carries it. Where a turning staff would dip into the ground between keys,
+    it slides up through the fist by just that much (`_staff_floor`). His hands go where they're sent (`ik.limb` on
+    every key; a hand can go to a point on a bone: the hat's brim, a cage door, his heart, the lantern).
+  - **The idle.** He tilts his head at you, eases his weight, nods, lifts the staff a little and taps it down, while the
+    pack's lanterns, the hat's lanterns, the scale, the cage doors and the chain sway on their own springs.
+  - **His blows.** The Chain Lash flings the weighted chain out straight at you and yanks it back; the Crook Sweep
+    swings the staff's hook across after it. Whoever is behind him gets the pack: he twists from the hips, the frame
+    clubbing round. Lantern Bolts lifts the staff off the ground and pumps its lantern at you three times, a bolt off
+    each pump. The Market Step takes his hat by the brim and lifts it in a bow with his right foot drawn back, then spins
+    once on his heel and is somewhere else, flourishing the chain. Release the Moths reaches back over his shoulder,
+    swings a cage door open and shrugs the pack. Paper Lanterns throws his arms wide and turns right round on his heel,
+    every lantern swinging out. Lights Out (the signature) lifts the staff and plants it a stride ahead, leaning back to
+    him with its hook turned to his face so the lantern swings back to his mouth; he cups it in his left hand, draws
+    breath and blows it out, and it lights again only when the staff is back at his side. His intro: he sets the staff
+    down hard, bows with his left hand on his heart, and straightening lets the chain fall from its loop, ready.
+  - **The death.** He staggers, his knees buckle and he sits down hard against his pack, which tips back onto the
+    ground; the hat slides over his face, he slumps, and last of all the staff tips and falls (3.4 s).
+  - **Meter.** Worst kink outside a strike 5.4° (the lash's chain arm); held at most 5% on every move; dips 1-25%.
+
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

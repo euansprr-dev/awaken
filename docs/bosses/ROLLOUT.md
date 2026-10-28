@@ -63,7 +63,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Glass Serpent | Lord | Glass | Serpent | kit | B, the Hourglass | ✓ ec80f180 | ✓ ec80f180 | — |
 | The Hive Regent | Lord | Hive | Flier | kit | A, the Empress | ✓ 3b132661 | ✓ 3b132661 | — |
 | The Drowned Archivist | Lord | Drowned | Caster | kit | A, the Lectern | ✓ faedcbea | ✓ faedcbea | — |
-| The Lantern Broker | Lord | Lantern | Construct | cube lantern | A, the Pedlar | — | — | — |
+| The Lantern Broker | Lord | Lantern | Construct | kit | A, the Pedlar | ✓ PEDLAR | ✓ PEDLAR | — |
 | The Abbot of Frost | Lord | Frost | Caster | evoker ×1.7 | B, the Pilgrim | — | — | — |
 | The Mirror Knight | Lord | Mirror | Duelist | player ×1.4 | C, the Masked Duelist | — | — | — |
 | The Sleeper | Lord | Nightmare | Brute | zombie ×2.2 | B, the Four-Poster | — | — | — |

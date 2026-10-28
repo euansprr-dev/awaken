@@ -1,0 +1,137 @@
+{
+ "schemaVersion": 1,
+ "id": "lantern_broker",
+ "moves": "lantern_broker",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "crook"
+      ]
+     ]
+    },
+    {
+     "move": "bolts",
+     "weight": 3
+    },
+    {
+     "move": "step",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "lash",
+       "crook"
+      ]
+     ]
+    },
+    {
+     "move": "pack",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "moths",
+   "pool": [
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "crook"
+      ]
+     ]
+    },
+    {
+     "move": "bolts",
+     "weight": 2
+    },
+    {
+     "move": "paper",
+     "weight": 2
+    },
+    {
+     "move": "moths",
+     "weight": 1
+    },
+    {
+     "move": "step",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "lash",
+       "crook"
+      ]
+     ]
+    },
+    {
+     "move": "pack",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "lights_out",
+   "pool": [
+    {
+     "move": "lights_out",
+     "weight": 1
+    },
+    {
+     "move": "step",
+     "weight": 3,
+     "then": [
+      [
+       "lash",
+       "crook"
+      ],
+      [
+       "bolts"
+      ]
+     ]
+    },
+    {
+     "move": "bolts",
+     "weight": 3
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "crook"
+      ]
+     ]
+    },
+    {
+     "move": "paper",
+     "weight": 2
+    },
+    {
+     "move": "pack",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}
