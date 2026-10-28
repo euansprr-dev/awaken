@@ -94,6 +94,12 @@ public final class CavePlaces {
         KNOWN.put(s.id(), s);
     }
 
+    /** The name of the cave place round {@code pos} ("The Weeping Seep"), or null. */
+    public static @Nullable String placeName(ServerLevel level, BlockPos pos) {
+        Spec s = at(level, pos);
+        return s == null ? null : CaveNames.name(s);
+    }
+
     /** The cave place whose box holds {@code pos}, or null. */
     public static @Nullable Spec at(ServerLevel level, BlockPos pos) {
         if (level.dimension() != Level.OVERWORLD || !level.hasChunkAt(pos)) return null;
@@ -264,6 +270,7 @@ public final class CavePlaces {
             Spec here = at(level, p.blockPosition());
             if (here == null || here.id() != s.id()) continue;
             Progression.count(p, "awaken:seeps_quieted");
+            dev.awaken.delve.PickVerses.deed(p, dev.awaken.delve.PickVerses.Verse.HUSH);
             dev.awaken.signal.Signal.toast(p, Component.literal(CaveNames.name(s) + " falls quiet").withColor(0xC8B4FF), Notices.Tier.IMPORTANT, "cave");
         }
         dev.awaken.Awaken.LOG.info("[delve] the seep at {} {} {} fell quiet", s.x(), s.y(), s.z());

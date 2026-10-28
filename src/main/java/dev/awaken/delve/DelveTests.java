@@ -67,6 +67,8 @@ final class DelveTests {
         AwakenTests.register("delve_lodes_air", 100, DelveTests::lodesAir);
         AwakenTests.register("delve_thinned_ores", 20, DelveTests::thinnedOres);
         AwakenTests.register("delve_waking_pick", 20, DelveTests::wakingPick);
+        PickTests.register();
+        LampTests.register();
     }
 
     // ---- a heart opens its vein -------------------------------------------------------------------------------------

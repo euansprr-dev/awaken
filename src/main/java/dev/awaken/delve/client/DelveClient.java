@@ -44,6 +44,12 @@ public final class DelveClient {
             e.register(DelveNet.HeavyFx.TYPE, (m, ctx) -> HeavyCharge.landed(m));
             e.register(DelveNet.ForkRing.TYPE, (m, ctx) -> ForkSong.ring(m));
             e.register(DelveNet.PickHum.TYPE, (m, ctx) -> PickSong.told(m));
+            e.register(DelveNet.PickWoke.TYPE, (m, ctx) -> PickFx.woke(m));
+            e.register(DelveNet.PickSight.TYPE, (m, ctx) -> PickFx.sight(m));
+            e.register(DelveNet.Embers.TYPE, (m, ctx) -> PickFx.embers(m));
+            e.register(DelveNet.CallAnswer.TYPE, (m, ctx) -> PickFx.call(m));
+            e.register(DelveNet.LampLit.TYPE, (m, ctx) -> LampFx.lit(m));
+            e.register(DelveNet.LampsKnown.TYPE, (m, ctx) -> LampFx.known(m));
             e.register(DelveNet.Demo.TYPE, (m, ctx) -> StrikeFeel.demo(m));
             e.register(DelveNet.TrueStrikeSync.TYPE, (m, ctx) -> {
                 var p = net.minecraft.client.Minecraft.getInstance().player;
@@ -52,6 +58,7 @@ public final class DelveClient {
         });
         // the dig in your hands (SPEC §34.3), keyed to the strike's bites
         dev.awaken.core.api.FirstPerson.view(DigMotion::pose);
+        LampFx.register();
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(PlayerInteractEvent.LeftClickBlock.class, StrikeFeel::onLeftClick);
         bus.addListener(InputEvent.InteractionKeyMappingTriggered.class, HeavyCharge::onKey);
@@ -65,17 +72,22 @@ public final class DelveClient {
             ForkSong.tick();
             PickSong.tick();
             Motes.tick();
+            PickFx.tick();
+            LampFx.tick();
         });
         bus.addListener(SubmitCustomGeometryEvent.class, LampGlow::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, TorchGlow::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, VeinFx::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, StrikeFx::submit);
+        bus.addListener(SubmitCustomGeometryEvent.class, PickFx::submit);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             VeinFx.reset();
             CaveInFx.reset();
             ForkSong.reset();
             PickSong.reset();
             Motes.reset();
+            PickFx.reset();
+            LampFx.reset();
             HeavyCharge.reset();
             TorchGlow.reset();
             StrikeFx.reset();

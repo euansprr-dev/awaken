@@ -1,6 +1,62 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "awaken:item/waking_pick"
+    "type": "minecraft:range_dispatch",
+    "property": "minecraft:custom_model_data",
+    "index": 0,
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "awaken:item/waking_pick"
+    },
+    "entries": [
+      {
+        "threshold": 0.0,
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/waking_pick"
+        }
+      },
+      {
+        "threshold": 0.5,
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/waking_pick_1"
+        }
+      },
+      {
+        "threshold": 1.5,
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/waking_pick_2"
+        }
+      },
+      {
+        "threshold": 2.5,
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/waking_pick_3"
+        }
+      },
+      {
+        "threshold": 3.5,
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/waking_pick_4"
+        }
+      },
+      {
+        "threshold": 4.5,
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/waking_pick_5"
+        }
+      },
+      {
+        "threshold": 5.5,
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/waking_pick_6"
+        }
+      }
+    ]
   }
 }

@@ -8635,7 +8635,7 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   true) through `CombatFeedback.kick`. Third person keeps vanilla's swing.
 - **Settings** (`awaken-delve-client.toml`): `strike_particles`, `true_strikes` (both on).
 
-### 34.4 The Delver's Pick (built, P1d: asleep; the verses come with P2)
+### 34.4 The Delver's Pick (built: asleep P1d, the verses and their gifts P2)
 - **Item** `awaken:waking_pick`, "Delver's Pick" (the cave module's relic keeps `awaken:delvers_pick`, the Delver's Old
   Pick, carried for the fork's reach). Asleep it is a stone pickaxe (1 damage, -2.8 speed), rare, in
   `#minecraft:pickaxes` (so the dig motion, the strike and enchanting take it). Kept through death (`WakingPick.onDrops`
@@ -8655,6 +8655,57 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   thread on the head's spine) and the stone's parts sheet.
 - **Test** `delve_waking_pick` (one pick per carrier, the stone stays, the pull counted, stone-tier drops, the hum's
   16-block reach).
+- **Verses** (`PickVerses`, component `awaken:pick_verses` = `{schemaVersion 1, verse}` on the item, synced): each sets
+  the pick's `tool` (what it can't take, its speed), `max_damage`, attack modifiers and `custom_model_data` (floats
+  `[verse]`, read by `items/waking_pick.json`'s `range_dispatch`, seven icons: the spine's Deepglass thread lights
+  ember, then blue; Tempered turns the edge blue-white; Glass violet; Hush darkens the head; Call gilds it):
+
+  | # | Verse | Wakes when (deed counter or rite) | Can't take | Speed | Uses | Blow |
+  |---|---|---|---|---|---|---|
+  | 0 | Asleep | pulled / handed over | `#incorrect_for_stone_tool` | 4 | 131 | 1 |
+  | 1 | I · Kindle | a lode's heart breaks with it on you (`awaken:delve/deed_heart`) | iron's | 6 | 400 | 2 |
+  | 2 | II · Echo | you light a Delver lamp with it on you (`deed_lamp`) | iron's | 6.5 | 500 | 2 |
+  | 3 | III · Tempered | your Forge, 3 diamonds | diamond's | 8 | 1561 | 3 |
+  | 4 | IV · Glass | you cut Deepglass with it on you (`deed_deepglass`) | diamond's | 8.5 | 1800 | 3 |
+  | 5 | V · Hush | a seep falls quiet with you in it, carrying it (`deed_seep`) | netherite's | 9 | 2031 | 4 |
+  | 6 | VI · Call | your Forge, a starmetal ingot | netherite's | 10 | 2600 | 4 |
+
+  A deed is counted once (only while you carry the pick); after any deed or rite, every carried pick wakes verse after
+  verse while the next one's deed is done (a deed done early waits for the verses before it; a rite always stops the
+  run). Each wake: the tier, a low ring, light gathering round the hand (`delve_pick_woke`), a moment window ("The pick
+  wakes: I · Kindle" and the gift in words). `awaken:delve/verses_woken` is the furthest verse woken: a pick given
+  later (pulled, handed over, re-forged) comes at it. The tooltip shows the verse, each gift woken, and "Next: ...".
+- **Gifts** (`PickGifts`; client `PickFx`):
+  - *Kindle*: sneak and start striking bare rock (strike family ROCK): an **ember** sticks in the air cell on that face
+    for 5 minutes, three a player (a fourth puts out your oldest), none within 5 of another of yours. Drawn light, no
+    block: saved in `DelveData` (schema 2: `embers` = light cell, rock face, until, owner), sent to the level's players
+    on change, login and dimension change (`delve_embers`); `TorchGlow` draws each within 48 as a light of its own
+    (level 12, `#FF9A50`, flickering, no floor pool; with held light off in the settings they don't show), with sparks.
+  - *Echo*: sneak and use the pick on bare rock while still (server's known movement < 0.05 a tick): a ring through
+    the rock; for 4 s ores (full blocks, their ore's tint; any `#c:ores` warm gold) and the open air of caves (a 2-block
+    lattice of points, not under open sky) within 12 light as the ring passes (0.8 blocks a tick) and glow through
+    everything (pipeline `delve_through`, depth always-pass), at most 320 ores and 900 points. 20 s rest. The server
+    sends only `delve_pick_sight` (kind 0, the struck block); the client reads its own world.
+  - *Tempered*: true strikes' aim radius 0.22 → 0.32 (`TrueStrikes.radius`, both sides).
+  - *Glass*: a heavy strike released on the glint while looking 30° or more up does not bore: for 5 s the rock in a
+    cone before your eyes (cos ≥ 0.78, 22 blocks) turns to glass to your eyes: hidden cave air (rock between it and
+    your eyes), ores, and living creatures (their boxes, live) show through. 40 s rest. Client-only: the server names
+    no block (`delve_pick_sight` kind 1).
+  - *Hush*: the pick in hand cancels the `minecraft:block_destroy` game event from you (no vibration: sculk, wardens;
+    the deep's noise rule asks `PickGifts.hushed`); sneaking, it mines at full speed off the ground (x5) and with your
+    head in water (÷ the submerged attribute).
+  - *Call*: a heart broken with it: the lode's blocks still standing within 8 of the heart (nearest first, at most 24,
+    each one a heavy strike may take: no ward, civic ground or anyone else's Hearth) crack one after another over
+    3 s, their drops going straight to you (`delve_call_answer` draws the ore flying home).
+- **The Forge** (right-click an `awaken:forge` not inside anyone else's Hearth with the pick in hand; the Forge's own
+  use is skipped): the next rite if you carry it (3 diamonds wake Tempered; a starmetal ingot wakes Call), else an
+  iron ingot mends a quarter of its uses, else it says what's next. With 3 iron ingots in hand, no pick on you and one
+  pulled before, it makes another at your furthest verse ("The Delver's Pick, again").
+- **Not done**: the Hunter mattock recipes still craft (retiring them touches gear's and Arms' rows: the gear
+  module's call); the pick keeps vanilla's sounds.
+- **Tests** `delve_pick_verses` (each wake once and in order, an early deed waits, the rite takes 3 diamonds, tier
+  and uses follow, a mend, a re-forge at your verse), `delve_pick_hush` (no block-destroy event), `delve_pick_call`
+  (the 24 nearest of that lode within 8, nothing further or not of the lode, the ore to the player).
 
 ### 34.5 The air below (P1e: motes built; cave air waits for P3)
 - **Motes in your light** (`delve.client.Motes`, particle `awaken:delve_light_mote`: the mote's frames, lit by the world
@@ -8667,3 +8718,24 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   files). It comes with P3's band looks, coordinated with the Lens session. Its look fields are fixed now because
   the gate-worlds plan sets them in its own looks: `caveAirNear` and `caveAirFar` (blocks where the haze starts and
   closes, about 8 and 40-60) and `caveAirTint` (its colour), per look.
+
+### 34.6 Delver lamps (built, P2)
+- **Block** `awaken:delver_lamp` (`lit` false/true; light 3 dead, 14 lit; iron, immovable, cutout model: a clouded
+  crystal in an iron cage with cap and hook; breaks for 2-4 iron nuggets). Hung from the roof on one or two iron chains:
+  over a seep's hall and a grotto's room (`Carve.lamp`), and in natural caverns by `awaken:delve/lamps`
+  (underground decoration, one chunk in three, three tries a chunk for air with a solid roof over 8+ of air and 6 clear
+  each way at half height, y -48..48).
+- **Strike** a dead lamp with anything in `#minecraft:pickaxes` (left-click; it doesn't start breaking): it lights
+  (bell and chime), counts the Echo deed for whoever struck it, and floods: a breadth-first walk through air from it
+  (euclid ≤ 40, at most 24,000 cells, an unloaded chunk is a wall), sharing 1 ms a tick with every other lamp. Then
+  the lattice: per 6³ cube of reached air, the cell nearest the cube's middle; the 120 nearest the lamp. The wave goes
+  out at 0.8 blocks a tick: each lattice cell becomes `minecraft:light` level 11 as it's reached (only if still air),
+  the lamp saved with its lights as they're set (`DelveData` schema 2, `lamps` = pos, lights, name). Nearby players
+  see each light bloom (`delve_lamp_lit`) and the caption "THE IRON HALL · lamp lit" (the cave place's name, else the
+  nearest lode's ore within 32, else a name by depth). Lit lamps are pins on the Atlas (`delve_lamps_known`).
+  Lattice 6 and level 11 leave every reached cell some block light, so no monster spawns in the hall.
+- **Broken**, the lamp takes back every one of its lights that is still a light block.
+- **Not done**: a flood cut off by a server stop isn't resumed (the lamp stays lit with what it had set); the way home
+  doesn't count lit halls yet.
+- **Test** `delve_lamp_lattice` (lights only in the reached hall, ≤ 120, none in a sealed pocket, every hall cell
+  lit, all gone with the lamp).

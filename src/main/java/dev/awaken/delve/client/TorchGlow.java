@@ -40,7 +40,7 @@ public final class TorchGlow {
 
     /** Others' held lights are drawn within this of you; at most SLOTS lights at once (yours first). */
     static final double OTHERS = 48;
-    static final int SLOTS = 8;
+    static final int SLOTS = 12;
     /** The surfaces one light may draw (yours, another's), nearest first, and the quads all of them may draw a frame. */
     static final int MAX_OWN = 640, MAX_OTHER = 240, MAX_QUADS = 2600;
     /** Flood cells walked a frame (all lights, one at a time), and a still light's refresh (blocks change). */
@@ -69,7 +69,7 @@ public final class TorchGlow {
     /** One carried light: whose, its kind, its flame this frame and the surfaces its last flood reached. */
     private static final class Light {
         int id = -1;
-        boolean seen, own;
+        boolean seen, own, fixed;
         HeldLight.Kind kind = HeldLight.NONE;
         double x, y, z, feet;
         float flicker, dark;
@@ -82,6 +82,15 @@ public final class TorchGlow {
     }
 
     private static final Light[] LIGHTS = new Light[SLOTS];
+
+    /**
+     * The Kindle embers burning in this level (SPEC §34.4, set by {@link PickFx}): each one's air cell and the face of
+     * the rock it's stuck on. Each within {@link #OTHERS} is a light of its own, a slot after the players'.
+     */
+    static long[] emberAt = new long[0];
+    static byte[] emberFace = new byte[0];
+    private static final HeldLight.Kind EMBER = new HeldLight.Kind(12, 0xFF9A50, true);
+    private static final int EMBER_ID = 1_900_000_000;
 
     static {
         for (int i = 0; i < SLOTS; i++) LIGHTS[i] = new Light();
@@ -158,6 +167,7 @@ public final class TorchGlow {
                 if (l == null) continue;
                 l.seen = true;
                 l.own = own;
+                l.fixed = false;
                 l.kind = k;
                 flame(mc, l, p, off);
                 l.flicker = k.flame() ? 0.93F + 0.045F * Mth.sin(t * 9.1F + p.getId() * 0.37F) + 0.025F * Mth.sin(t * 23.7F + p.getId() * 0.85F) : 1F;
@@ -167,6 +177,29 @@ public final class TorchGlow {
                 l.dim = here >= k.emission();
                 any = true;
             }
+        }
+        long[] at = emberAt;
+        byte[] face = emberFace;
+        for (int i = 0; i < at.length && i < face.length; i++) {
+            Direction d = Direction.from3DDataValue(face[i]);
+            double x = BlockPos.getX(at[i]) + 0.5 + d.getStepX() * 0.38, y = BlockPos.getY(at[i]) + 0.5 + d.getStepY() * 0.38, z = BlockPos.getZ(at[i]) + 0.5 + d.getStepZ() * 0.38;
+            if (mc.player.distanceToSqr(x, y, z) > OTHERS * OTHERS) continue;
+            Light l = slot(EMBER_ID + i);
+            if (l == null) continue;
+            l.seen = true;
+            l.own = false;
+            l.fixed = true;
+            l.kind = EMBER;
+            l.x = x;
+            l.y = y;
+            l.z = z;
+            l.feet = BlockPos.getY(at[i]);
+            l.flicker = 0.9F + 0.06F * Mth.sin(t * 7.3F + i * 1.7F) + 0.04F * Mth.sin(t * 19.1F + i * 0.6F);
+            M.set(Mth.floor(x), Mth.floor(y), Mth.floor(z));
+            int here = existing(level.getBrightness(LightLayer.BLOCK, M), level.getBrightness(LightLayer.SKY, M));
+            l.dark = 1F - curve(here);
+            l.dim = here >= EMBER.emission();
+            any = true;
         }
         for (Light l : LIGHTS) {
             if (l.seen || l.id < 0) continue;
@@ -433,7 +466,7 @@ public final class TorchGlow {
                 if (l.id < 0 || !l.seen) continue;
                 float lvl = l.kind.emission() / 15F;
                 // the pool on the ground under the flame: only where it is dark enough to see it
-                float pool = POOL_A * lvl * l.dark * l.flicker;
+                float pool = l.fixed ? 0F : POOL_A * lvl * l.dark * l.flicker;
                 DelveRender.softPool(vc, (float) (l.x - cx), (float) (l.feet + 0.03 - cy), (float) (l.z - cz), l.kind.reach() * POOL_R, l.kind.rgb(), pool);
                 if (l.own && firstPerson) continue;
                 float x = (float) (l.x - cx), y = (float) (l.y - cy), z = (float) (l.z - cz);

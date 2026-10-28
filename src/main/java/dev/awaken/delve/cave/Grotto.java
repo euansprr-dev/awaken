@@ -131,6 +131,8 @@ final class Grotto {
             if (Carve.open(k, x, fy, z) && Carve.solidAt(k, x, fy - 1, z) && !k.get(x, fy - 1, z).is(Blocks.SUSPICIOUS_GRAVEL)
                     && Carve.noise(seed + 7, x, 0, z, 3) > 0.55) Carve.put(k, x, fy - 1, z, Blocks.MOSS_BLOCK.defaultBlockState());
         }
+        // a dead Delver lamp over the room (SPEC §34.6)
+        Carve.lamp(k, s.x(), s.y(), s.z(), 10);
     }
 
     private static void geode(Spec s, Sink k, Frame f) {

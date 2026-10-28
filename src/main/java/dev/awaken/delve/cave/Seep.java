@@ -98,6 +98,8 @@ final class Seep {
         }
         Carve.put(k, bx, floor, bz, Blocks.STRIPPED_SPRUCE_LOG.defaultBlockState().setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS,
                 across.getAxis()));
+        // a dead Delver lamp over the hall (SPEC §34.6)
+        Carve.lamp(k, s.x(), floor, s.z(), 16);
     }
 
     private static BlockState glass() {

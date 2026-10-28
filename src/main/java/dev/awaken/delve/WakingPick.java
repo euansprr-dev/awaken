@@ -33,7 +33,7 @@ import java.util.function.Consumer;
  * the Delver's Old Pick). Found stuck in the stone at the end of an adit (each player pulls their own; a home with no
  * adit near hands it over instead), it starts asleep: it mines like a stone pick and <b>hums</b> when its head points
  * at a lode within {@value #HUM_REACH} (the server names the nearest lode while you hold it; the client sings it at
- * that ore's note as you face it). Kept through death. The verses that wake it come with P2.
+ * that ore's note as you face it). Kept through death; its verses ({@link PickVerses}) and their gifts ({@link PickGifts}).
  */
 public final class WakingPick {
     private WakingPick() {}
@@ -49,8 +49,10 @@ public final class WakingPick {
 
         @Override
         public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, TooltipDisplay display, Consumer<Component> out, TooltipFlag flag) {
-            out.accept(Component.literal("Asleep").withStyle(ChatFormatting.DARK_PURPLE));
-            out.accept(Component.literal("It hums when its head points at metal in the rock within " + HUM_REACH + " blocks").withStyle(ChatFormatting.GRAY));
+            int v = Math.max(0, PickVerses.verse(stack));
+            out.accept(Component.literal(PickVerses.VERSES[v].title).withStyle(ChatFormatting.DARK_PURPLE));
+            for (int i = 0; i <= v; i++) out.accept(Component.literal(PickVerses.VERSES[i].gift).withStyle(i == v ? ChatFormatting.GRAY : ChatFormatting.DARK_GRAY));
+            if (v + 1 < PickVerses.VERSES.length) out.accept(Component.literal("Next: " + PickVerses.wakesWhen(PickVerses.VERSES[v + 1])).withStyle(ChatFormatting.DARK_AQUA));
         }
     }
 
@@ -87,10 +89,21 @@ public final class WakingPick {
                 .moment().ttl(20 * 12).build());
     }
 
+    /** The Forge makes a lost pick again, at the furthest verse you'd woken (SPEC §34.4). */
+    static void reforge(ServerPlayer p) {
+        give(p);
+        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The Delver's Pick, again"))
+                .body(Component.literal("The Forge remembers the pick you lost. This one wakes where yours had got to: " + PickVerses.VERSES[PickVerses.best(p)].title + "."))
+                .moment().ttl(20 * 10).build());
+    }
+
+    /** A pick into the player's hands, at the furthest verse they'd woken (a pick lost keeps its verses on the player). */
     private static void give(ServerPlayer p) {
         Progression.count(p, PULLED);
         ItemStack pick = new ItemStack(DelveContent.WAKING_PICK.get());
+        PickVerses.set(pick, PickVerses.best(p), p.level().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.BLOCK));
         if (!p.getInventory().add(pick)) p.drop(pick, false, net.minecraft.util.Prediction.SERVER_ONLY);
+        PickVerses.check(p);
     }
 
     // ---- kept through death -------------------------------------------------------------------------------------------

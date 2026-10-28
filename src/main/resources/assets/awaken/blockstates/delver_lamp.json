@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/delver_lamp"
+    },
+    "lit=true": {
+      "model": "awaken:block/delver_lamp_lit"
+    }
+  }
+}

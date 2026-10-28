@@ -43,6 +43,30 @@ public final class DelveModule {
         bus.addListener((ServerTickEvent.Post e) -> WakingPick.tick(e.getServer()));
         bus.addListener(EventPriority.LOW, false, (net.neoforged.neoforge.event.entity.living.LivingDropsEvent e) -> WakingPick.onDrops(e));
         bus.addListener((PlayerEvent.PlayerRespawnEvent e) -> WakingPick.onRespawn(e));
+        // its verses' deeds and gifts (SPEC §34.4)
+        bus.addListener(EventPriority.LOW, false, (BreakBlockEvent e) -> {
+            if (e.getPlayer() instanceof ServerPlayer p && e.getState().is(DelveContent.DEEPGLASS.get())) PickVerses.deed(p, PickVerses.Verse.GLASS);
+        });
+        bus.addListener(PickGifts::onLeftClick);
+        // the Delver lamps (SPEC §34.6)
+        bus.addListener(Lamps::onLeftClick);
+        bus.addListener((ServerTickEvent.Post e) -> Lamps.tick(e.getServer()));
+        bus.addListener(PickGifts::onRightClick);
+        bus.addListener(PickGifts::onGameEvent);
+        bus.addListener(PickGifts::onBreakSpeed);
+        bus.addListener((ServerTickEvent.Post e) -> PickGifts.tick(e.getServer()));
+        bus.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) {
+                PickGifts.onJoin(p);
+                Lamps.onJoin(p);
+            }
+        });
+        bus.addListener((PlayerEvent.PlayerChangedDimensionEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) {
+                PickGifts.onJoin(p);
+                Lamps.onJoin(p);
+            }
+        });
         // the wall lodes read the overworld's own noise caves (SPEC §34.2)
         bus.addListener((LevelEvent.Load e) -> {
             if (e.getLevel() instanceof ServerLevel level && level.dimension() == Level.OVERWORLD) {
@@ -56,6 +80,7 @@ public final class DelveModule {
             HeavyStrikes.forget(e.getEntity().getUUID());
             TrueStrikes.forget(e.getEntity().getUUID());
             WakingPick.forget(e.getEntity().getUUID());
+            PickGifts.forget(e.getEntity().getUUID());
         });
         bus.addListener((ServerStoppedEvent e) -> {
             Veins.clear();
@@ -63,6 +88,8 @@ public final class DelveModule {
             HeavyStrikes.clear();
             TrueStrikes.clear();
             WakingPick.clear();
+            PickGifts.clear();
+            Lamps.clear();
             LodePlans.EXTRA.clear();
             LodePlans.columns(0L, null);
         });

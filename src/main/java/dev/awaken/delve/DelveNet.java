@@ -107,6 +107,81 @@ public final class DelveNet {
         }
     }
 
+    /** The pick woke a verse (its number): the client's flourish. */
+    /** The Kindle embers burning in this level (SPEC §34.4): each one's air cell and the face of the rock it's on. */
+    public record Embers(long[] at, byte[] face) implements CustomPacketPayload {
+        public static final Type<Embers> TYPE = new Type<>(Awaken.id("delve_embers"));
+        public static final StreamCodec<ByteBuf, Embers> STREAM_CODEC = StreamCodec.composite(
+                LONGS, Embers::at, ByteBufCodecs.byteArray(512), Embers::face, Embers::new);
+
+        @Override
+        public Type<Embers> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * The pick's sight (SPEC §34.4): kind 0 Echo (a ring out from the struck block), 1 Glass (the rock before you turns to
+     * glass). The client looks through its own world: the server names no block.
+     */
+    public record PickSight(int kind, long origin, int ticks) implements CustomPacketPayload {
+        public static final Type<PickSight> TYPE = new Type<>(Awaken.id("delve_pick_sight"));
+        public static final StreamCodec<ByteBuf, PickSight> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, PickSight::kind, ByteBufCodecs.LONG, PickSight::origin, ByteBufCodecs.VAR_INT, PickSight::ticks, PickSight::new);
+
+        @Override
+        public Type<PickSight> type() {
+            return TYPE;
+        }
+    }
+
+    /** The Call (SPEC §34.4): a lode's open blocks answer, cracking one after another over {@code ticks}, their ore flying to the player. */
+    public record CallAnswer(int player, int ore, long[] cells, int ticks) implements CustomPacketPayload {
+        public static final Type<CallAnswer> TYPE = new Type<>(Awaken.id("delve_call_answer"));
+        public static final StreamCodec<ByteBuf, CallAnswer> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, CallAnswer::player, ByteBufCodecs.VAR_INT, CallAnswer::ore, LONGS, CallAnswer::cells,
+                ByteBufCodecs.VAR_INT, CallAnswer::ticks, CallAnswer::new);
+
+        @Override
+        public Type<CallAnswer> type() {
+            return TYPE;
+        }
+    }
+
+    /** A Delver lamp was struck and lit (SPEC §34.6): the wave goes out from it through these air cells; the hall's name. */
+    public record LampLit(long lamp, long[] reached, String name) implements CustomPacketPayload {
+        public static final Type<LampLit> TYPE = new Type<>(Awaken.id("delve_lamp_lit"));
+        public static final StreamCodec<ByteBuf, LampLit> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.LONG, LampLit::lamp, LONGS, LampLit::reached, ByteBufCodecs.stringUtf8(64), LampLit::name, LampLit::new);
+
+        @Override
+        public Type<LampLit> type() {
+            return TYPE;
+        }
+    }
+
+    /** The lit lamps in this level, for the Atlas: each one's place and its hall's name. */
+    public record LampsKnown(long[] at, List<String> names) implements CustomPacketPayload {
+        public static final Type<LampsKnown> TYPE = new Type<>(Awaken.id("delve_lamps_known"));
+        public static final StreamCodec<ByteBuf, LampsKnown> STREAM_CODEC = StreamCodec.composite(
+                LONGS, LampsKnown::at, ByteBufCodecs.stringUtf8(64).apply(ByteBufCodecs.list(512)), LampsKnown::names, LampsKnown::new);
+
+        @Override
+        public Type<LampsKnown> type() {
+            return TYPE;
+        }
+    }
+
+    public record PickWoke(int verse) implements CustomPacketPayload {
+        public static final Type<PickWoke> TYPE = new Type<>(Awaken.id("delve_pick_woke"));
+        public static final StreamCodec<ByteBuf, PickWoke> STREAM_CODEC = ByteBufCodecs.VAR_INT.map(PickWoke::new, PickWoke::verse);
+
+        @Override
+        public Type<PickWoke> type() {
+            return TYPE;
+        }
+    }
+
     public record ForkRing(int ore, boolean found, long target) implements CustomPacketPayload {
         public static final Type<ForkRing> TYPE = new Type<>(Awaken.id("delve_fork_ring"));
         public static final StreamCodec<ByteBuf, ForkRing> STREAM_CODEC = StreamCodec.composite(
@@ -187,6 +262,12 @@ public final class DelveNet {
         r.playToClient(HeavyFx.TYPE, HeavyFx.STREAM_CODEC);
         r.playToClient(ForkRing.TYPE, ForkRing.STREAM_CODEC);
         r.playToClient(PickHum.TYPE, PickHum.STREAM_CODEC);
+        r.playToClient(PickWoke.TYPE, PickWoke.STREAM_CODEC);
+        r.playToClient(Embers.TYPE, Embers.STREAM_CODEC);
+        r.playToClient(PickSight.TYPE, PickSight.STREAM_CODEC);
+        r.playToClient(CallAnswer.TYPE, CallAnswer.STREAM_CODEC);
+        r.playToClient(LampLit.TYPE, LampLit.STREAM_CODEC);
+        r.playToClient(LampsKnown.TYPE, LampsKnown.STREAM_CODEC);
         r.playToClient(Demo.TYPE, Demo.STREAM_CODEC);
         r.playToClient(TrueStrikeSync.TYPE, TrueStrikeSync.STREAM_CODEC);
         r.playToServer(HeavyStrike.TYPE, HeavyStrike.STREAM_CODEC, (m, ctx) -> {

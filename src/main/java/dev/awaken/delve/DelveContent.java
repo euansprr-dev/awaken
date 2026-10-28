@@ -94,6 +94,10 @@ public final class DelveContent {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> TUNED = COMPONENTS.registerComponentType("tuned",
             b -> b.persistent(Codec.STRING).networkSynchronized(ByteBufCodecs.STRING_UTF8));
 
+    /** The Delver's Pick's verses (SPEC §34.4): saved on the item, schema 1. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PickVerses.State>> PICK_VERSES = COMPONENTS.registerComponentType("pick_verses",
+            b -> b.persistent(PickVerses.State.CODEC).networkSynchronized(PickVerses.State.STREAM_CODEC));
+
     public static final DeferredItem<TuningForkItem> TUNING_FORK = ITEMS.registerItem("tuning_fork", TuningForkItem::new,
             p -> p.stacksTo(1).durability(256).rarity(Rarity.UNCOMMON));
 
@@ -126,7 +130,16 @@ public final class DelveContent {
 
     static {
         FEATURES.register("lodes", () -> LodeFeature.CODEC);
+        FEATURES.register("delver_lamps", () -> LampFeature.CODEC);
     }
+
+    // ---- the Delver lamps (SPEC §34.6) ----------------------------------------------------------------------------------
+
+    /** An old iron cage round a clouded crystal, hanging in a cavern: dead it barely glows; struck, it lights the hall. */
+    public static final DeferredBlock<DelverLampBlock> DELVER_LAMP = BLOCKS.registerBlock("delver_lamp", DelverLampBlock::new,
+            p -> p.mapColor(MapColor.METAL).strength(3.5F, 6F).sound(SoundType.LANTERN).noOcclusion().pushReaction(PushReaction.IMMOVEABLE)
+                    .lightLevel(s -> s.getValue(DelverLampBlock.LIT) ? 14 : 3));
+    public static final DeferredItem<BlockItem> DELVER_LAMP_ITEM = ITEMS.registerSimpleBlockItem(DELVER_LAMP);
 
     // ---- particles (client providers in delve.client.DelveParticles) -------------------------------------------------
 

@@ -29,7 +29,7 @@ public final class TrueStrikes {
     private TrueStrikes() {}
 
     /** How near the seam's middle a bite must land (blocks on the face). */
-    public static final double RADIUS = 0.22;
+    public static final double RADIUS = 0.22, TEMPERED_RADIUS = 0.32;
     /** The server's extra allowance (its copy of the look is a tick behind). */
     static final double SLACK = 0.1;
     /** Half the seam's drawn length, along its angle. */
@@ -104,7 +104,7 @@ public final class TrueStrikes {
 
     /** How near a bite must land for this tool (the Delver's Pick's Tempered verse widens it, SPEC §34.4). */
     public static double radius(ItemStack tool) {
-        return RADIUS;
+        return PickVerses.has(tool, PickVerses.Verse.TEMPERED) ? TEMPERED_RADIUS : RADIUS;
     }
 
     // ---- state ------------------------------------------------------------------------------------------------------
