@@ -899,6 +899,11 @@ final class LivingTests {
         AwakenTests.register("living_plate_rules", 20, h -> {
             long now = 1000;
             h.assertTrue(PlateRules.lookRange(5) == 24 && PlateRules.lookRange(20) == 32 && PlateRules.lookRange(45) == 40, "PER widens the read");
+            // through the binoculars (SPEC §39.8) the read reaches 160 blocks; down, nothing changes
+            h.assertTrue(PlateRules.lookRange(5, 4.0) == PlateRules.GLASS_REACH && PlateRules.lookRange(5, 1.0) == 24, "binoculars reach 160, not otherwise");
+            PlateRules.Candidate glassFar = new PlateRules.Candidate(30, 150, Long.MIN_VALUE, now, false, false);
+            h.assertTrue(PlateRules.visibility(glassFar, now, PlateRules.lookRange(5, 8.0)) > 0.5F && PlateRules.visibility(glassFar, now, PlateRules.lookRange(5)) <= 0.01F,
+                    "a creature looked at 150 blocks off shows only through the binoculars");
             List<PlateRules.Candidate> in = new ArrayList<>(), out = new ArrayList<>();
             in.add(new PlateRules.Candidate(1, 10, Long.MIN_VALUE, now, false, false));       // looked at
             for (int i = 0; i < 4; i++) in.add(new PlateRules.Candidate(10 + i, 5 + i, now - 20, Long.MIN_VALUE, false, false)); // fighting

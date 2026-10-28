@@ -163,7 +163,8 @@ final class FarHorizon implements AutoCloseable {
         frame++;
         served = 0;
         renderCount = 0;
-        boolean on = enabled() && !broken && FarPipelines.horizonOk();
+        // through the binoculars (SPEC §39.8) the panorama, sized for the normal view, would be soft or huge: the far land draws live
+        boolean on = enabled() && !broken && FarPipelines.horizonOk() && dev.awaken.core.api.CameraHooks.zoom() <= 1.05;
         // (a thousandth of a block: a still eye's float noise, never parallax)
         boolean moved = Double.isNaN(lastX) || Math.abs(camX - lastX) > 1e-3 || Math.abs(camY - lastY) > 1e-3 || Math.abs(camZ - lastZ) > 1e-3;
         lastX = camX;

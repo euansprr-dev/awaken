@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "_about": "The binoculars' feel (SPEC 39.3). Times in milliseconds of real time; the sway in degrees at 1x.",
+  "raiseMs": 330,
+  "lowerMs": 220,
+  "eyecup": 0.82,
+  "eyecupEnd": 0.85,
+  "pullMs": 300,
+  "settleMs": 120,
+  "overshoot": 0.02,
+  "focusRaiseMs": 250,
+  "focusStepMs": 120,
+  "focusFromStep": 6,
+  "sway": 0.04,
+  "swayCrouch": 0.333,
+  "tapMs": 250,
+  "firstStep": 4,
+  "steps": [2, 3, 4, 6, 8, 12],
+  "walk": 0.2
+}

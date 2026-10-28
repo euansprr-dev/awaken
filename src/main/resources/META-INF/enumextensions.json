@@ -23,6 +23,12 @@
       "name": "AWAKEN_CARRY",
       "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
       "parameters": {"class": "dev/awaken/village/client/CarryArmPose", "field": "CARRY_POSE"}
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "AWAKEN_BINOCULARS",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {"class": "dev/awaken/binoculars/client/GlassOthers", "field": "POSE"}
     }
   ]
 }
