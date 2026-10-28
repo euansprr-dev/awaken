@@ -38,6 +38,7 @@ final class CaveTests {
             case SEEP -> -30;
             case CHUTE -> 24;
             case GROTTO -> 12;
+            case MOUTH -> 64;
         };
     }
 
@@ -48,6 +49,14 @@ final class CaveTests {
             // open ground at the rim: the sky over it
             for (int x = g.minX(); x <= g.maxX(); x++) for (int z = g.minZ(); z <= g.maxZ(); z++) for (int y = s.p(Sinkhole.RIM); y <= g.maxY(); y++)
                 g.set(x, y, z, Blocks.AIR.defaultBlockState());
+        }
+        if (s.kind() == CaveKind.MOUTH) {
+            // open ground in front of the mouth, the sky over it; the hill rises behind the lip
+            Frame f = new Frame(s.x(), s.y(), s.z(), s.rot());
+            for (int lx = -16; lx <= 16; lx++) for (int lz = -12; lz < 0; lz++) for (int y = s.y(); y <= g.maxY(); y++) {
+                int x = f.x(lx, lz), z = f.z(lx, lz);
+                if (g.inside(x, y, z)) g.set(x, y, z, Blocks.AIR.defaultBlockState());
+            }
         }
         CaveStaging.cave(s, g);
         return g;

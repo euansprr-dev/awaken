@@ -226,17 +226,20 @@ public final class CavePlaces {
         }
     }
 
-    /** The places near a player for their look from outside: sinkholes (mist) and chutes (the draught at the mouth). */
+    /** The places near a player for their look from outside: sinkholes (mist), chutes and mouths (breath and draught). */
     private static void near(ServerLevel level, ServerPlayer p, Tracked t) {
         List<Long> ids = new ArrayList<>();
         List<CaveNet.Site> sites = new ArrayList<>();
         for (Spec s : KNOWN.values()) {
-            if (s.kind() != CaveKind.SINKHOLE && s.kind() != CaveKind.CHUTE && s.kind() != CaveKind.GROTTO) continue;
+            if (s.kind() != CaveKind.SINKHOLE && s.kind() != CaveKind.CHUTE && s.kind() != CaveKind.GROTTO && s.kind() != CaveKind.MOUTH) continue;
             double dx = s.x() - p.getX(), dz = s.z() - p.getZ();
             if (dx * dx + dz * dz > (s.kind() == CaveKind.GROTTO ? GROTTO_NEAR * GROTTO_NEAR : NEAR * NEAR)) continue;
             ids.add(s.id());
             if (s.kind() == CaveKind.SINKHOLE) sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(s.x(), s.p(Sinkhole.RIM), s.z()), s.p(Sinkhole.R), s.p(Sinkhole.RIM) - s.y()));
             else if (s.kind() == CaveKind.CHUTE) sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(s.x(), s.y(), s.z()), 2, s.rot()));
+            // a mouth: its lip, the arch's width; depth packs its turn (2 bits), its form (1) and the arch's height
+            else if (s.kind() == CaveKind.MOUTH) sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(s.x(), s.y(), s.z()), s.p(Mouth.W),
+                    (s.rot() & 3) | (s.p(Mouth.FORM) & 1) << 2 | s.p(Mouth.H) << 3));
             else {
                 // a grotto's own light: its curtain (depth 0) and its pool (depth 1); radius carries its turn
                 int[] c = Grotto.curtain(s), q = Grotto.pool(s);

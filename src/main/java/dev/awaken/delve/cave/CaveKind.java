@@ -22,7 +22,9 @@ public enum CaveKind implements StringRepresentable {
     /** A Delver ore chute: 48 blocks of cut steps to slide, out over an underground lake. */
     CHUTE("chute", "old chute", false),
     /** Behind a waterfall: a glowing pool, a geode you climb into, a buried cache. */
-    GROTTO("grotto", "a grotto", false);
+    GROTTO("grotto", "a grotto", false),
+    /** A way in you can see from far (SPEC §34.1): a hill mouth's arch or a Delver adit, breathing, with a cairn. */
+    MOUTH("mouth", "a way in", false);
 
     public static final Codec<CaveKind> CODEC = StringRepresentable.fromEnum(CaveKind::values);
     private static final CaveKind[] VALUES = values();
