@@ -49,6 +49,8 @@ import java.util.UUID;
 public final class Ledger extends SavedData {
     static final int SCHEMA = 2, CELL = 512, NEAR = 96, FAR = 128, PER_PLAYER = 40;
     public static final String TAG = "awaken_ledger";
+    /** A wounded quarry walking to its bed (SPEC §41.4): its herd's brain leaves it be. */
+    public static final String LIMPING = "awaken_limping";
 
     /** Herds, their hunters, the flyers' roosts, by fauna land. */
     static final Map<String, String> HERDS = Map.of("greenwild", "mossback", "frostwild", "frost_stag", "sunscorch", "dune_ray",
@@ -376,15 +378,19 @@ public final class Ledger extends SavedData {
             }
             int near = 0;
             for (List<UUID> b : l.bodies.values()) near += b.size();
+            if (herds) Spoor.of(level).backfill(level, l, day, tod, level.getGameTime());
             for (Pop pop : l.popsNear(p.getBlockX(), p.getBlockZ(), 1)) {
                 if (l.bodies.containsKey(pop.id) || !herds && pop.kind.equals("herd")) continue;
                 double[] at = l.where(pop, day, tod);
                 double dx = at[0] - p.getX(), dz = at[1] - p.getZ();
                 if (dx * dx + dz * dz > (double) NEAR * NEAR || near >= PER_PLAYER) continue;
-                near += l.materialize(level, pop, at, day, PER_PLAYER - near); // a big herd's far part stays a number
+                int made = l.materialize(level, pop, at, day, PER_PLAYER - near); // a big herd's far part stays a number
+                if (made > 0) l.since.put(pop.id, day * 24000L + Math.floorMod(tod, 24000L));
+                near += made;
             }
         }
         l.release(level);
+        Spoor.of(level).expire(level.getGameTime());
     }
 
     /** Every tick: the brains of the populations with bodies (each thinks once a second; alarms ripple between). */
@@ -433,6 +439,46 @@ public final class Ledger extends SavedData {
     }
 
     private final transient Map<Integer, Brain> brains = new HashMap<>();
+    /** When each population's bodies came (play-day ticks, Ledger.where's clock): its back-filled signs stop there. */
+    private final transient Map<Integer, Long> since = new HashMap<>();
+
+    @Nullable Long since(int popId) {
+        return since.get(popId);
+    }
+
+    /**
+     * Where a population is for a hunter's motes (SPEC §41.3): its alpha if it has one with a body, else the body nearest the
+     * herd's middle, else where the clock puts it (y the ground there, or NaN unloaded). Null when it's gone.
+     */
+    public double @Nullable [] quarry(ServerLevel level, int popId) {
+        Ledger l = this;
+        Pop pop = l.byId.get(popId);
+        if (pop == null || pop.count <= 0) return null;
+        List<PathfinderMob> live = l.living(level, popId);
+        if (!live.isEmpty()) {
+            PathfinderMob best = live.getFirst();
+            if (!pop.alpha) {
+                double mx = 0, mz = 0;
+                for (PathfinderMob m : live) {
+                    mx += m.getX();
+                    mz += m.getZ();
+                }
+                mx /= live.size();
+                mz /= live.size();
+                double bd = Double.MAX_VALUE;
+                for (PathfinderMob m : live) {
+                    double d = Math.hypot(m.getX() - mx, m.getZ() - mz);
+                    if (d < bd) {
+                        bd = d;
+                        best = m;
+                    }
+                }
+            }
+            return new double[]{best.getX(), best.getY() + best.getBbHeight() * 0.6, best.getZ()};
+        }
+        double[] at = l.where(pop, PlayDays.current(level.getServer()), level.getOverworldClockTime());
+        return new double[]{at[0], Spoor.ground(level, at[0], at[1]) + 1, at[1]};
+    }
     final transient dev.awaken.terrain.Wind.Field windField = new dev.awaken.terrain.Wind.Field();
 
     @Nullable Brain brain(int popId) {
@@ -463,6 +509,12 @@ public final class Ledger extends SavedData {
             boolean pack = by != null && by.entityTags().contains(TAG);
             h.alarm(l, level, fx, fz, pack ? HerdBrain.Cause.PACK : HerdBrain.Cause.HIT, level.getServer().getTickCount());
         }
+    }
+
+    /** The population a ledger body belongs to, or null. */
+    public @Nullable Pop popOfBody(Entity e) {
+        int id = popOf(e);
+        return id < 0 ? null : byId.get(id);
     }
 
     /** The population a body belongs to, or -1. */
@@ -562,6 +614,7 @@ public final class Ledger extends SavedData {
                 if (b != null && b.isAlive()) b.discard();
             }
             brains.remove(e.getKey());
+            since.remove(e.getKey());
             it.remove();
         }
     }
@@ -610,6 +663,7 @@ public final class Ledger extends SavedData {
         }
         bodies.clear();
         brains.clear();
+        since.clear();
     }
 
     /** A ledger body loaded from disk after a restart is nobody's now: it goes (its population will take a new one). */

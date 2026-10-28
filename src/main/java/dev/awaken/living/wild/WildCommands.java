@@ -27,6 +27,7 @@ public final class WildCommands {
             l.then(Commands.literal("map").executes(c -> map(c.getSource(), 512))
                     .then(Commands.argument("radius", IntegerArgumentType.integer(64, 4096))
                             .executes(c -> map(c.getSource(), IntegerArgumentType.getInteger(c, "radius")))));
+            l.then(Commands.literal("signs").executes(c -> signs(c.getSource())));
             root.then(l);
         });
     }
@@ -67,5 +68,22 @@ public final class WildCommands {
         src.sendSuccess(() -> Component.literal(String.format("%d blocks across: tamed %d%%, pasture %d%%, wild %d%%, deep %d%%",
                 radius * 2, counts[0] * 100 / n, counts[1] * 100 / n, counts[2] * 100 / n, counts[3] * 100 / n)), false);
         return counts[3];
+    }
+
+    /** The signs within 48 blocks (kind, what, how many, age, distance) and your trail. */
+    private static int signs(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        net.minecraft.server.level.ServerPlayer p = src.getPlayerOrException();
+        var level = p.level();
+        long now = level.getGameTime();
+        var near = dev.awaken.living.population.Spoor.of(level).near(p.getX(), p.getZ(), 48);
+        src.sendSuccess(() -> Component.literal(near.size() + " signs within 48 blocks; " + dev.awaken.living.hunt.Tracking.describe(p)), false);
+        int shown = 0;
+        for (var m : near) {
+            if (shown++ >= 12) break;
+            int d = (int) Math.hypot(m.x() - p.getX(), m.z() - p.getZ());
+            src.sendSuccess(() -> Component.literal("  " + m.kind().name().toLowerCase(java.util.Locale.ROOT) + " " + m.species() + " ×" + m.count()
+                    + " · " + m.age(now) / 20 + " s old · " + d + " m"), false);
+        }
+        return near.size();
     }
 }

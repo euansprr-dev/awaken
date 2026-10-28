@@ -57,7 +57,7 @@ public final class Creatures {
     /** Creatures from before the Living Wilds (or that skipped finalizeSpawn) get a level when they join. */
     public static void onJoin(EntityJoinLevelEvent e) {
         if (!(e.getLevel() instanceof ServerLevel level) || !Regions.on(level)) return;
-        if (!(e.getEntity() instanceof LivingEntity living) || living instanceof Player) return;
+        if (!(e.getEntity() instanceof LivingEntity living) || living instanceof Player || dev.awaken.living.hunt.Carcass.is(living)) return;
         CreatureTag tag = CreatureTag.of(living);
         if (ours(living)) {
             // a named beast is the terror of the region its lair is in

@@ -117,6 +117,7 @@ public final class LivingModule {
         bus.addListener(LivingDamageEvent.Post.class, dev.awaken.living.combat.Combos::onDamage);
         bus.addListener(net.neoforged.neoforge.event.tick.ServerTickEvent.Post.class, dev.awaken.living.combat.Combos::onTick);
         bus.addListener(net.neoforged.neoforge.event.tick.EntityTickEvent.Post.class, dev.awaken.living.combat.Combos::onEntityTick);
+        bus.addListener(EntityJoinLevelEvent.class, dev.awaken.living.hunt.Carcass::onJoin);
         bus.addListener(EntityJoinLevelEvent.class, Creatures::onJoin);
         bus.addListener(EventPriority.HIGHEST, net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre.class, dev.awaken.living.combat.MarkEvents::onDamage);
         bus.addListener(net.neoforged.neoforge.event.entity.living.MobSpawnEvent.SpawnPlacementCheck.class, dev.awaken.living.wonder.WonderWatch::onSpawnCheck);
@@ -140,6 +141,10 @@ public final class LivingModule {
         bus.addListener(LivingDropsEvent.class, dev.awaken.living.pulse.Pulse::onDrops);
         bus.addListener(LivingDeathEvent.class, e -> dev.awaken.living.population.Ledger.onDeath(e.getEntity()));
         bus.addListener(LivingDamageEvent.Post.class, e -> dev.awaken.living.population.Ledger.onHurt(e.getEntity(), e.getSource()));
+        bus.addListener(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre.class, dev.awaken.living.hunt.Quarry::onDamage);
+        bus.addListener(LivingDamageEvent.Post.class, dev.awaken.living.hunt.Quarry::afterDamage);
+        bus.addListener(LivingDeathEvent.class, dev.awaken.living.hunt.Carcass::onDeath);
+        bus.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract.class, dev.awaken.living.hunt.Carcass::onInteract);
         bus.addListener(LivingDeathEvent.class, e -> dev.awaken.living.camp.Camps.onDeath(e.getEntity()));
         // crafts
         bus.addListener(LivingDeathEvent.class, dev.awaken.living.craft.CraftEvents::onDeath);
@@ -180,11 +185,17 @@ public final class LivingModule {
                 dev.awaken.living.pulse.Pulse.tick(e.getServer());
                 if (!quiet) dev.awaken.living.population.Ledger.tick(e.getServer());
                 if (!quiet) dev.awaken.living.population.Ledger.brainTick(e.getServer());
+                dev.awaken.living.hunt.Tracking.tick(e.getServer());
+                dev.awaken.living.hunt.Quarry.tick(e.getServer());
+                dev.awaken.living.hunt.Carcass.tick(e.getServer());
                 if (!quiet) dev.awaken.living.camp.Camps.tick(e.getServer());
                 dev.awaken.living.wayfarer.Camp.ward(e.getServer());
             }
             dev.awaken.living.quest.Relics.wardTick(e.getServer());
             if (shown(e.getServer())) dev.awaken.living.craft.CraftEvents.tick(e.getServer());
+        });
+        bus.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> {
+            if (e.getEntity() instanceof ServerPlayer sp) dev.awaken.living.hunt.Tracking.forget(sp);
         });
         bus.addListener(PlayerEvent.PlayerLoggedInEvent.class, e -> {
             if (e.getEntity() instanceof ServerPlayer sp) {
@@ -215,6 +226,7 @@ public final class LivingModule {
         });
         LivingCommands.register();
         dev.awaken.living.wild.WildCommands.register();
+        dev.awaken.living.hunt.Tracking.register();
         LivingTests.register();
         dev.awaken.living.wild.WildTests.register();
     }

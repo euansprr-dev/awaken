@@ -49,6 +49,10 @@ final class HerdBrain implements Ledger.Brain {
     /** Where each animal is running to, while the herd runs (it gets there in legs). */
     private final java.util.Map<UUID, double[]> runTo = new java.util.HashMap<>();
 
+    /** Where the herd last left prints (NaN: not yet), and the play-day it last left its droppings at its bed. */
+    final double[] printed = {Double.NaN, Double.NaN};
+    long dunged = -1;
+
     private record Ripple(UUID id, int at, double x, double z, double speed) {}
 
     HerdBrain(Ledger.Pop pop) {
@@ -82,6 +86,12 @@ final class HerdBrain implements Ledger.Brain {
         }
         offX *= 0.99;
         offZ *= 0.99;
+        Spoor.step(level, pop, herd, mx, mz, printed);
+        long t = Math.floorMod(tod, 24000L);
+        if (mood == Mood.BED && dunged != day && t >= 16000 && t < 23000) {
+            dunged = day;
+            Spoor.bed(level, pop, herd, mx, mz);
+        }
         sense(l, level, herd, mx, mz, now);
         if (running() && now >= until) {
             mood = Mood.ALERT;
@@ -93,6 +103,36 @@ final class HerdBrain implements Ledger.Brain {
         if (!running() && !(mood == Mood.ALERT && now < until)) mood = base(tod);
         double[] at = l.where(pop, day, tod);
         steer(l, level, herd, at[0] + offX, at[1] + offZ);
+        wear(level, herd);
+    }
+
+    /** Mouthfuls a grazing herd takes a second (half of them land), and how many moving animals press the grass a second. */
+    static final int TREAD_MAX = 8;
+    private int bite;
+
+    /**
+     * Grass that lives (SPEC §41.2): grazing, an animal or two a second crops the grass at its feet, so a herd's pasture
+     * becomes a lawn; drifting, fleeing or stampeding, the animals on the move press their way flat, so the routes it walks
+     * every day become trails. The grass itself is the plants' ({@link Wildness#ground}).
+     */
+    void wear(ServerLevel level, List<PathfinderMob> herd) {
+        Wildness.Ground g = Wildness.ground();
+        int strength = mood == Mood.STAMPEDE ? Wildness.STAMPEDE : running() || mood == Mood.DRIFT ? Wildness.HERD : 0;
+        if (mood == Mood.GRAZE) {
+            int bites = herd.size() >= 8 ? 2 : 1;
+            for (int k = 0; k < bites; k++) {
+                PathfinderMob m = herd.get(Math.floorMod(bite++, herd.size()));
+                if (m.getNavigation().isDone() && m.onGround() && level.getRandom().nextBoolean()) g.crop(level, m.blockPosition());
+            }
+        } else if (strength > 0) {
+            int pressed = 0;
+            for (int i = 0; i < herd.size() && pressed < TREAD_MAX; i++) {
+                PathfinderMob m = herd.get(Math.floorMod(bite++, herd.size()));
+                if (m.getNavigation().isDone() || !m.onGround()) continue;
+                g.trample(level, m.blockPosition(), strength);
+                pressed++;
+            }
+        }
     }
 
     /** Graze by day, drift between pastures at dawn and dusk, bed down at night (Ledger.where's own day). */
@@ -221,7 +261,7 @@ final class HerdBrain implements Ledger.Brain {
         while (it.hasNext()) {
             Ripple r = it.next();
             if (r.at > now) continue;
-            if (!(level.getEntity(r.id) instanceof PathfinderMob m) || !m.isAlive() || m.getTarget() != null) {
+            if (!(level.getEntity(r.id) instanceof PathfinderMob m) || !m.isAlive() || m.getTarget() != null || m.entityTags().contains(Ledger.LIMPING)) {
                 it.remove();
                 continue;
             }
@@ -235,7 +275,7 @@ final class HerdBrain implements Ledger.Brain {
     private void runOn(Ledger l, ServerLevel level, List<PathfinderMob> herd) {
         for (PathfinderMob m : herd) {
             double[] t = runTo.get(m.getUUID());
-            if (t == null || !m.getNavigation().isDone() || m.getTarget() != null) continue;
+            if (t == null || !m.getNavigation().isDone() || m.getTarget() != null || m.entityTags().contains(Ledger.LIMPING)) continue;
             if (Math.hypot(t[0] - m.getX(), t[1] - m.getZ()) < 3) {
                 runTo.remove(m.getUUID());
                 continue;
@@ -248,6 +288,7 @@ final class HerdBrain implements Ledger.Brain {
     private void trample(Ledger l, ServerLevel level) {
         for (PathfinderMob m : l.living(level, pop.id)) {
             if (m.getNavigation().isDone()) continue;
+            if (m.onGround()) Wildness.ground().trample(level, m.blockPosition(), Wildness.STAMPEDE);
             for (ServerPlayer p : level.players()) {
                 if (p.isSpectator() || p.isCreative() || trampled.contains(p.getUUID())) continue;
                 if (Math.hypot(p.getX() - m.getX(), p.getZ() - m.getZ()) > 1.3 || Math.abs(p.getY() - m.getY()) > 1.5) continue;
@@ -277,7 +318,7 @@ final class HerdBrain implements Ledger.Brain {
         };
         for (int i = 0; i < n; i++) {
             PathfinderMob m = herd.get(i);
-            if (m.getTarget() != null) continue;
+            if (m.getTarget() != null || m.entityTags().contains(Ledger.LIMPING)) continue;
             if (mood == Mood.ALERT) m.getLookControl().setLookAt(threatX, m.getEyeY(), threatZ);
             if (Math.hypot(m.getX() - cx, m.getZ() - cz) <= reach * STRAY || !m.getNavigation().isDone()) continue;
             double rr = reach * 0.6 * Math.sqrt((i + 0.5) / n), a = i * 2.39996;

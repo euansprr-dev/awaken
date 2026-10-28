@@ -239,7 +239,8 @@ public final class WildTests {
         BlockPos rye = h.absolutePos(new BlockPos(2, 1, 2)), meadow = h.absolutePos(new BlockPos(5, 1, 5));
         WildLife.restore(level, rye, TrampledGrassBlock.RYE);
         level.setBlock(meadow, WildBlocks.MEADOW_GRASS.get().defaultBlockState(), Block.UPDATE_ALL);
-        h.assertTrue(WildPlants.trample(level, rye.above(), WildPlants.HERD), "a herd presses the rye");
+        h.assertTrue(dev.awaken.living.api.Wildness.ground().trample(level, rye.above(), WildPlants.HERD),
+                "a herd presses the rye, through the herds' hook (Wildness.ground)");
         BlockState flat = level.getBlockState(rye);
         h.assertTrue(flat.is(WildBlocks.TRAMPLED_GRASS.get()) && flat.getValue(TrampledGrassBlock.STAGE) == 0
                 && flat.getValue(TrampledGrassBlock.FROM) == TrampledGrassBlock.RYE, "flat and fresh, remembering rye: " + flat);
