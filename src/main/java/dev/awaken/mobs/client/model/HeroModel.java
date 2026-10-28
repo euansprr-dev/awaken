@@ -48,6 +48,11 @@ public final class HeroModel extends EntityModel<HeroRenderState> {
     private final LifeRig life;
 
     public HeroModel(ModelPart root, HeroRig rig) {
+        this(root, rig, profile(rig.id));
+    }
+
+    /** A body whose temperament is not its rig's bestiary entry (the levelled vanilla creatures' form bodies, SPEC §21.13). */
+    public HeroModel(ModelPart root, HeroRig rig, LifeProfile temperament) {
         super(root, rig.translucent ? RenderTypes::entityTranslucent : RenderTypes::entityCutout);
         this.rig = rig;
         for (HeroRig.Clip c : rig.clips.values()) {
@@ -74,7 +79,7 @@ public final class HeroModel extends EntityModel<HeroRenderState> {
         hurt = clip("hurt");
         bite = clip("bite");
         angry = clip("angry");
-        life = LifeRig.of(root, profile(rig.id), rig, idle >= 0);
+        life = LifeRig.of(root, temperament, rig, idle >= 0);
     }
 
     /** The temperament of the creature a rig belongs to (its bestiary role), or "default". */

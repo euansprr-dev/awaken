@@ -132,7 +132,7 @@ public final class Moves {
         if (!f.worn() || sp == null || mob.isBaby()) return;
         for (var w : mob.goalSelector.getAvailableGoals()) if (w.getGoal() instanceof MarkGoal) return;
         List<Def> moves = of(sp, f.rung(), f.crowned());
-        if (!moves.isEmpty()) mob.goalSelector.addGoal(-1, new MarkGoal(mob, moves, f.rung()));
+        if (!moves.isEmpty() || (f.crowned() && f.rung() >= 2)) mob.goalSelector.addGoal(-1, new MarkGoal(mob, moves, f.rung(), f.crowned()));
         if (sp.layout.equals("skeleton") && f.rung() == 1 && mob instanceof net.minecraft.world.entity.PathfinderMob pm)
             mob.goalSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.AvoidEntityGoal<>(pm, Player.class, 6.0F, 1.0, 1.3));
     }
@@ -150,9 +150,23 @@ public final class Moves {
         level.playSound(null, mob.getX(), mob.getY(), mob.getZ(), s, SoundSource.HOSTILE, 1.0F, d.kind() == Kind.ROAR || d.kind() == Kind.RALLY ? 1.5F : 1.25F);
     }
 
-    /** Dust in the rank's colour: a ring on the ground where a stomp will land, a line where a lunge or a shot will go, a glint on the head. */
+    /**
+     * The colour of a tell says what to do, not the rank (SPEC §21.13): Arms' classes, white for a light blow (deflect, block or dodge),
+     * amber for a heavy one (it breaks a guard), red for a perilous one (dodge), violet for a grab; a move that is no blow keeps the rank's.
+     */
+    static int tellColour(Def d, int rung) {
+        return switch (d.strike()) {
+            case LIGHT -> 0xF4F1E8;
+            case HEAVY -> 0xF2A33A;
+            case PERILOUS -> 0xE8423A;
+            case GRAB -> 0xA070FF;
+            default -> COLOUR[Math.max(0, Math.min(5, rung))];
+        };
+    }
+
+    /** Dust in the tell's colour: a ring on the ground where a stomp will land, a line where a lunge or a shot will go, a glint on the head. */
     static void tellFx(ServerLevel level, Mob mob, Def d, int rung, Vec3 aim, float progress) {
-        DustParticleOptions dust = new DustParticleOptions(COLOUR[Math.max(0, Math.min(5, rung))], 1.4F);
+        DustParticleOptions dust = new DustParticleOptions(tellColour(d, rung), 1.4F);
         switch (d.kind()) {
             case STOMP, ROAR, SUMMON, BASH, RALLY, BLINK -> {
                 double r = d.radius() > 0 ? d.radius() : 2.5;
@@ -173,7 +187,8 @@ public final class Moves {
             }
             default -> level.sendParticles(dust, mob.getX(), mob.getEyeY() + 0.3, mob.getZ(), 4, 0.25, 0.2, 0.25, 0);
         }
-        if (d.kind() != Kind.ROAR) level.sendParticles(ParticleTypes.CRIT, mob.getX(), mob.getEyeY(), mob.getZ(), 1, 0.2, 0.2, 0.2, 0.0);
+        // a form body acts its wind-up out; only the vanilla body (D) still needs the glint on its head
+        if (d.kind() != Kind.ROAR && rung < 2) level.sendParticles(ParticleTypes.CRIT, mob.getX(), mob.getEyeY(), mob.getZ(), 1, 0.2, 0.2, 0.2, 0.0);
     }
 
     // ---- the move itself ---------------------------------------------------------------------------------------
@@ -230,7 +245,7 @@ public final class Moves {
                 level.sendParticles(ParticleTypes.CRIT, target.getX(), target.getEyeY(), target.getZ(), 6, 0.3, 0.3, 0.3, 0.2);
             }
             case RALLY -> {
-                for (Mob m : level.getEntitiesOfClass(Mob.class, mob.getBoundingBox().inflate(24), m -> m != mob && m.isAlive() && m.getType() == mob.getType() && m.getTarget() == null)) m.setTarget(target);
+                rallyKin(level, mob, target, 24);
                 level.playSound(null, mob.getX(), mob.getY(), mob.getZ(), SoundEvents.RAVAGER_ROAR, SoundSource.HOSTILE, 1.0F, 1.7F);
             }
             case ROAR -> {
@@ -277,9 +292,15 @@ public final class Moves {
         }
     }
 
+    /** Its own kind nearby, with nothing to fight, turn on its target. */
+    static void rallyKin(ServerLevel level, Mob mob, LivingEntity target, double radius) {
+        for (Mob m : level.getEntitiesOfClass(Mob.class, mob.getBoundingBox().inflate(radius), m -> m != mob && m.isAlive() && m.getType() == mob.getType() && m.getTarget() == null))
+            m.setTarget(target);
+    }
+
     /** The expanding ring a stomp or a roar leaves. */
     static void ring(ServerLevel level, Mob mob, Def d, int rung) {
-        DustParticleOptions dust = new DustParticleOptions(COLOUR[Math.max(0, Math.min(5, rung))], 1.8F);
+        DustParticleOptions dust = new DustParticleOptions(tellColour(d, rung), 1.8F);
         for (double r = 0.8; r <= d.radius(); r += 0.8) {
             int pts = (int) Math.max(8, r * 6);
             for (int i = 0; i < pts; i++) {

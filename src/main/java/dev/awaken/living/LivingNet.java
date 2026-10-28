@@ -256,6 +256,28 @@ public final class LivingNet {
         }
     }
 
+    /**
+     * A formed creature's move (SPEC §21.13), to everyone tracking it: its body acts out {@code move} (the clip
+     * {@code <move>_windup}, stretched over {@code windupTicks}, then {@code <move>_strike}) from server game time
+     * {@code startTick}; {@code holdTicks} holds the wind-up's peak. An empty move ends whatever was playing (a wind-up
+     * cut short). The boss kit's three fields (move, start, hold) plus the wind-up's length.
+     */
+    public record FormCue(int entity, String move, long startTick, int holdTicks, int windupTicks) implements CustomPacketPayload {
+        public static final Type<FormCue> TYPE = new Type<>(Awaken.id("living_form_cue"));
+        public static final StreamCodec<ByteBuf, FormCue> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, FormCue::entity,
+                ByteBufCodecs.stringUtf8(32), FormCue::move,
+                ByteBufCodecs.VAR_LONG, FormCue::startTick,
+                ByteBufCodecs.VAR_INT, FormCue::holdTicks,
+                ByteBufCodecs.VAR_INT, FormCue::windupTicks,
+                FormCue::new);
+
+        @Override
+        public Type<FormCue> type() {
+            return TYPE;
+        }
+    }
+
     static void register(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
         r.playToClient(FirstScene.TYPE, FirstScene.STREAM_CODEC);
@@ -273,5 +295,6 @@ public final class LivingNet {
         r.playToClient(LevelUp.TYPE, LevelUp.STREAM_CODEC);
         r.playToClient(Shown.TYPE, Shown.STREAM_CODEC);
         r.playToClient(StormStrike.TYPE, StormStrike.STREAM_CODEC);
+        r.playToClient(FormCue.TYPE, FormCue.STREAM_CODEC);
     }
 }
