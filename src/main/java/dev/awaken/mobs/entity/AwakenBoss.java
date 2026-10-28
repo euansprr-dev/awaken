@@ -52,6 +52,8 @@ public class AwakenBoss extends AwakenMob {
     private int kitSerial;
     /** Client: blocks walked (for gaits locked to distance), this tick and the last. */
     private float kitGait, kitGaitO;
+    /** Client: how fast the body turns, degrees a tick, eased (this tick and the last). */
+    private float kitTurn, kitTurnO;
     /** Client: the sync as last seen, the move before the current one (to fade it out) and when the pose last changed. */
     private int kitSeen, kitSeenAt, kitPrevMove = -1, kitPrevStart, kitPrevHold, kitPrevEnd, kitPoseFrom, kitPoseAt = Integer.MIN_VALUE / 2;
     /** Bitmask of phases whose part already broke off (kept through resets, so a part can't be farmed). */
@@ -109,7 +111,12 @@ public class AwakenBoss extends AwakenMob {
         }
         float want = getYRot();
         if (!level().isClientSide()) yBodyRot = want;
-        else yBodyRot += Mth.clamp(Mth.wrapDegrees(want - yBodyRot) * 0.3F, -18, 18);
+        else {
+            float d = Mth.clamp(Mth.wrapDegrees(want - yBodyRot) * 0.3F, -18, 18);
+            yBodyRot += d;
+            kitTurnO = kitTurn;
+            kitTurn += (d - kitTurn) * 0.35F; // the turn steps fade in and out with it, never popping off at a threshold
+        }
         yHeadRot = Mth.rotateIfNecessary(yHeadRot, yBodyRot, getMaxHeadYRot());
     }
 
@@ -229,6 +236,11 @@ public class AwakenBoss extends AwakenMob {
     /** Client: blocks walked, smoothed. */
     public float kitGait(float partialTicks) {
         return kitGaitO + (kitGait - kitGaitO) * partialTicks;
+    }
+
+    /** Client: how fast the body turns (degrees a tick, + to its left), eased. */
+    public float kitTurn(float partialTicks) {
+        return kitTurnO + (kitTurn - kitTurnO) * partialTicks;
     }
 
     /** How fast its moves play: its fight's enrage speed under the enrage line, else 1 (both sides; health is synced). */

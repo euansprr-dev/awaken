@@ -9057,8 +9057,9 @@ should show a boss bar of our own. What he approved (PLAN §7):
   1. **Locomotion**: idle, then walk and run blended by speed and locked to distance (as hero rigs are).
   2. **The action layer**: the synced move's `_windup` (played over the wind-up, then held still on its last key
      through the hold), `_active` and `_recover`; the previous move fades out over 0.15 s under the new one.
-  3. **Turn steps**: while no move plays and the body turns faster than 3° a tick, `turn_l` or `turn_r` (0.4 s) loops,
-     weighted by how fast it turns (full at 45° in 0.4 s).
+  3. **Turn steps**: while no move plays and the body turns, `turn_l` or `turn_r` (0.4 s) loops, weighted by how fast
+     it turns (from 1° a tick, full at 45° in 0.4 s). The rate is eased on the boss (35% a tick), so the step fades in
+     and out with the turn and never pops off at a threshold.
   4. **Ground contact**: within 32 blocks and on the ground, each foot finds the ground's top under it (collision
      shapes); the body lowers to the lower one (at most 0.6 block) and the higher foot's leg reaches up by two-bone IK
      (`HeroModel.Leg`).

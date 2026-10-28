@@ -189,11 +189,12 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         }
 
         // a turn step: when the body has to come round more than 45° it steps with its feet
-        float turn = Mth.wrapDegrees(mob.yBodyRot - mob.yBodyRotO);
-        if (Math.abs(turn) > 3 && mv < 0 && (turnL >= 0 || turnR >= 0) && !s.airborne) {
+        // (the turn rate is eased on the boss, so the step fades in from 1° a tick and out again, never popping off)
+        float turn = boss.kitTurn(partialTicks);
+        if (Math.abs(turn) > 1 && mv < 0 && (turnL >= 0 || turnR >= 0) && !s.airborne) {
             float t = (mob.tickCount % (int) (TURN_TIME * 20)) / 20F + partialTicks / 20F;
             int clip = turn > 0 ? turnL : turnR;
-            if (clip >= 0) layer(s, 2, clip, t * m.length(clip) / TURN_TIME, Mth.clamp(Math.abs(turn) / (TURN_STEP / (TURN_TIME * 20)), 0, 1));
+            if (clip >= 0) layer(s, 2, clip, t * m.length(clip) / TURN_TIME, Mth.clamp((Math.abs(turn) - 1) / (TURN_STEP / (TURN_TIME * 20) - 1), 0, 1));
         }
 
         s.melee = -1;
