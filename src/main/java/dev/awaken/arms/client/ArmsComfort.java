@@ -33,6 +33,13 @@ final class ArmsComfort {
     static final ModConfigSpec.BooleanValue LOW_HEALTH = B
             .comment("Under 30% health: a slow heartbeat, and the frame's edges cool and fade (with Lens on).")
             .define("lowHealth", true);
+    // Swing Studio (SPEC §25 "Swing Studio"): the swings read from a tuning folder while tuning is on (/awaken swing tune)
+    static final ModConfigSpec.BooleanValue SWING_TUNING = B
+            .comment("Swing Studio: read the first-person swings from the tuning folder as the lab writes them (/awaken swing tune on|off).")
+            .define("swingTuning", false);
+    static final ModConfigSpec.ConfigValue<String> SWING_TUNING_PATH = B
+            .comment("Swing Studio's tuning folder (empty: AWAKEN_TUNING, else /Volumes/MEDIA/Awaken-tuning if it exists, else awaken-tuning in the game folder).")
+            .define("swingTuningPath", "");
     static final ModConfigSpec SPEC = B.build();
 
     static void register() {
@@ -74,6 +81,34 @@ final class ArmsComfort {
 
     static boolean lowHealth() {
         return on(LOW_HEALTH);
+    }
+
+    static boolean swingTuning() {
+        try {
+            return SPEC.isLoaded() && SWING_TUNING.get();
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
+    static String swingTuningPath() {
+        try {
+            return SPEC.isLoaded() ? SWING_TUNING_PATH.get() : "";
+        } catch (RuntimeException e) {
+            return "";
+        }
+    }
+
+    /** Saves Swing Studio's state (the config file keeps it across launches). */
+    static void swingTuning(boolean on, String path) {
+        try {
+            if (!SPEC.isLoaded()) return;
+            SWING_TUNING.set(on);
+            SWING_TUNING_PATH.set(path);
+            SPEC.save();
+        } catch (RuntimeException e) {
+            Awaken.LOG.warn("Swing Studio's state could not be saved", e);
+        }
     }
 
     static boolean reduced() {
