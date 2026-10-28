@@ -798,6 +798,7 @@
     ]
   },
   "power.tier3_kinetic": {
+    "subtitle": "subtitles.awaken.power.tier3_kinetic",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier3_kinetic_0",
@@ -810,6 +811,7 @@
     ]
   },
   "power.tier5_kinetic": {
+    "subtitle": "subtitles.awaken.power.tier5_kinetic",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier5_kinetic_0",
@@ -822,6 +824,7 @@
     ]
   },
   "power.tier3_velocity": {
+    "subtitle": "subtitles.awaken.power.tier3_velocity",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier3_velocity_0",
@@ -834,6 +837,7 @@
     ]
   },
   "power.tier5_velocity": {
+    "subtitle": "subtitles.awaken.power.tier5_velocity",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier5_velocity_0",
@@ -846,6 +850,7 @@
     ]
   },
   "power.tier3_flight": {
+    "subtitle": "subtitles.awaken.power.tier3_flight",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier3_flight_0",
@@ -858,6 +863,7 @@
     ]
   },
   "power.tier5_flight": {
+    "subtitle": "subtitles.awaken.power.tier5_flight",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier5_flight_0",
@@ -870,6 +876,7 @@
     ]
   },
   "power.tier3_energy": {
+    "subtitle": "subtitles.awaken.power.tier3_energy",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier3_energy_0",
@@ -882,6 +889,7 @@
     ]
   },
   "power.tier5_energy": {
+    "subtitle": "subtitles.awaken.power.tier5_energy",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier5_energy_0",
@@ -894,6 +902,7 @@
     ]
   },
   "power.tier3_shadow": {
+    "subtitle": "subtitles.awaken.power.tier3_shadow",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier3_shadow_0",
@@ -906,6 +915,7 @@
     ]
   },
   "power.tier5_shadow": {
+    "subtitle": "subtitles.awaken.power.tier5_shadow",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier5_shadow_0",
@@ -918,6 +928,7 @@
     ]
   },
   "power.tier3_mind": {
+    "subtitle": "subtitles.awaken.power.tier3_mind",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier3_mind_0",
@@ -930,6 +941,7 @@
     ]
   },
   "power.tier5_mind": {
+    "subtitle": "subtitles.awaken.power.tier5_mind",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier5_mind_0",
@@ -942,6 +954,7 @@
     ]
   },
   "power.tier3_architect": {
+    "subtitle": "subtitles.awaken.power.tier3_architect",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier3_architect_0",
@@ -954,6 +967,7 @@
     ]
   },
   "power.tier5_architect": {
+    "subtitle": "subtitles.awaken.power.tier5_architect",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier5_architect_0",
@@ -966,6 +980,7 @@
     ]
   },
   "power.tier3_tech": {
+    "subtitle": "subtitles.awaken.power.tier3_tech",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier3_tech_0",
@@ -978,6 +993,7 @@
     ]
   },
   "power.tier5_tech": {
+    "subtitle": "subtitles.awaken.power.tier5_tech",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier5_tech_0",
@@ -990,6 +1006,7 @@
     ]
   },
   "power.tier3_spirit": {
+    "subtitle": "subtitles.awaken.power.tier3_spirit",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier3_spirit_0",
@@ -1002,6 +1019,7 @@
     ]
   },
   "power.tier5_spirit": {
+    "subtitle": "subtitles.awaken.power.tier5_spirit",
     "sounds": [
       {
         "name": "awaken:powers/power_lad_tier5_spirit_0",

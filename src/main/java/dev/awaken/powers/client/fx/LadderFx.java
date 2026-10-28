@@ -67,7 +67,8 @@ final class LadderFx {
         int lvl = Fx.levelOf(e);
         if (lvl < 3 || e.power() <= 0 || e.caster() < 0 || e.has(FxEvent.RIDER)) return;
         int last = TIER_LAST.getOrDefault(e.caster(), Integer.MIN_VALUE);
-        if (FxWorld.ticks - last < 12 && FxWorld.ticks >= last) return;
+        // MIN_VALUE: none yet (ticks - MIN_VALUE overflows and would read as "just now")
+        if (last != Integer.MIN_VALUE && FxWorld.ticks - last < 12 && FxWorld.ticks >= last) return;
         PowerType type = PowerRegistry.byIndex(e.power() - 1);
         if (type == null) return;
         if (TIER_LAST.size() > 256) TIER_LAST.clear();
@@ -229,7 +230,7 @@ final class LadderFx {
                 if (l.every > 0 && caster != null) {
                     long key = ((long) caster.getId() << 20) ^ l.tag;
                     int last = LAST.getOrDefault(key, Integer.MIN_VALUE);
-                    if (FxWorld.ticks - last < l.every) continue;
+                    if (last != Integer.MIN_VALUE && FxWorld.ticks - last < l.every && FxWorld.ticks >= last) continue;
                     LAST.put(key, FxWorld.ticks);
                 }
                 R.seed(e.seed() * 31 + l.tag);

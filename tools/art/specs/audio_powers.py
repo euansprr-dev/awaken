@@ -179,10 +179,6 @@ def write_json():
             entries.append(OrderedDict(name=f"awaken:powers/power_{event}_{k}", attenuation_distance=att))
         sid = event[4:] if event.startswith(("kit_", "lad_")) else event
         old = cur.get("power." + sid, {})
-        if event.startswith("lad_") and not LADDER.SUBTITLES.get(sid):
-            # a ladder layer plays under the power's own sound, which already says what happened
-            cur["power." + sid] = OrderedDict(sounds=entries)
-            continue
         cur["power." + sid] = OrderedDict(subtitle=old.get("subtitle", "subtitles.awaken.power." + sid), sounds=entries)
     os.makedirs(MERGE, exist_ok=True)
     with open(path, "w") as f:

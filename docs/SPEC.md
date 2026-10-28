@@ -8578,7 +8578,7 @@ Slam, Meteor Dive, Hover, Flight, Leap) keep them at every level: a profile woul
 poses and hold their effects for a release tick (plan 4.5 wanted them a profile at 5; noted as not done). Sound: with a level-3+
 cast's first sound, the family's `power.tier3_<family>` (or `tier5_` at 5) plays under it, about 6 dB down: on each client from
 the level bits for a profiled power (`LadderFx.tierSound`, once per caster per 12 ticks, no packet), from the server for the
-rest (`Cast.sound`, once per cast). The layers carry no subtitle (the power's own sound already says what happened). Lens: Red
+rest (`Cast.sound`, once per cast). Their subtitles say only that the power is stronger ("Power swells", "Awakened power roars"): every sound has one. Lens: Red
 Hour, Black Star, Sunspear, Daystar, Critical Mass and The Risen Guard have their own short look (`awaken:awake_<power>` in
 looks_powers.json), on your own screen through `CastLens`, never over a story's or Arms' moment, only while Lens draws.
 

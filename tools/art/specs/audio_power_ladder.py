@@ -117,6 +117,6 @@ for _f in FAMILIES:
     EVENTS["tier5_" + _f] = ((lambda f: lambda s: _t5(f, s))(_f), 2, -18.0, 28, 12.0)
 
 SUBTITLES = {"evolve": "A power grows", "evolve_sting": "A power grows", "evolve_awaken": "A power awakens"}
-for _f in FAMILIES:
-    SUBTITLES["tier3_" + _f] = None
-    SUBTITLES["tier5_" + _f] = None
+for _f in FAMILIES:  # every sound has a subtitle (AudioTests): the layer's says the power is stronger, not what it did
+    SUBTITLES["tier3_" + _f] = "Power swells"
+    SUBTITLES["tier5_" + _f] = "Awakened power roars"
