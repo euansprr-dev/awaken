@@ -9144,3 +9144,26 @@ and Unit Zero's warning was a cheap beep. A kit body now sounds its own moves:
 - **Test.** `kit_sounds_resolve`: every layer is a real sound, every set a move names is in its palette, and every
   kit has an `impact` and a `roar`.
 
+
+### 35.9 The premium rework (plan `docs/bosses/REWORK.md`, page https://claude.ai/artifact/3MpmzQ6mv8LGNH7TyURkfJ; Euan approved all eight recommendations 2026-10-28: "Go ahead")
+Phase 1's look was a no-go (35.7). The kit's systems stay; the art, motion and choreography are rebuilt, the Ember
+Tyrant first, and nothing rolls out to more creatures until the Tyrant passes Euan's play.
+- **Decisions.** The structural rework on the kit, the Tyrant first. A silhouette gate before modelling (Euan picks
+  one of three). No summons in the three showcase fights (Stoke, Deploy and Birth become boss moves). A delayed strike
+  only with a visible held tell. Camera shake and a 2-frame hit pause, client only, behind a setting. Today's sound
+  palettes (35.8) are judged in game first; custom-made sounds are their own plan if they still sound cheap. No
+  Blockbench export now. The Lord damage and health curve stays tied to this gate.
+- **R0, tools (built).**
+  - `kit_bodies.py motion DIR [ids] [--no-gif]` (`kit/motion.py`): every move and every string of the fight script,
+    played the way KitRenderer layers them (idle under, stage clips stretched to their ticks, 0.15 s fades, the
+    recovery letting go), as a GIF and measured into `<id>_motion.json`: still seconds (no bone of the move layer over
+    15°/s for 0.15 s or more), kinks (a bone's speed changing over 3° a frame between frames), held share (70% of
+    posed bones still), the dip to rest between blows of a string, and the peak bone speed.
+  - `combat_sim.py --cadence`: the share of fight time the boss threatens, recovers, idles, shows off and stands
+    opened; blows a minute; the longest still spell; and phrase lengths.
+  - The baseline: `docs/bosses/baseline-2026-10-28.md`.
+- **R1, the Tyrant's look.** `kit_bodies.py silhouettes DIR` (`kit/silhouettes.py`) draws three directions in plain
+  blocks at true size beside a player (front, side, a value-blocked 3/4): A the Furnace King, B the Iron Warlord, C the
+  Living Forge, and today's body for scale. After Euan's pick: the model with a parts library, about 120-200 cubes,
+  material ramps and a value hierarchy.
+- **R2, motion; R3, the Tyrant's fight; then R4 Unit Zero and R5 Mother.** As the plan; each lands here when built.

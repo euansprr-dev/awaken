@@ -3,6 +3,8 @@
     python3 tools/art/build_all.py kit_bodies          everything, through build_all
     python3 tools/art/specs/kit_bodies.py build [ids]   the same (all ids, or the ones named)
     python3 tools/art/specs/kit_bodies.py lab DIR [ids] the Creature Lab's sheets (kit/lab.py)
+    python3 tools/art/specs/kit_bodies.py motion DIR [ids]  every move and string as a GIF, and the motion meter (kit/motion.py)
+    python3 tools/art/specs/kit_bodies.py silhouettes DIR   the Tyrant's silhouette round (kit/silhouettes.py)
 
 Each boss is a module in kit/bosses/<id>.py with design() -> {rig, plan, moves, fight, paint, scale, half} (half: its
 hitbox's half width in blocks, which the move ranges are measured from). The build is
@@ -100,10 +102,27 @@ def lab(outdir, only=None):
         print(L.sheet(outdir, d, skin, glow))
 
 
+def motion(outdir, only=None, gifs=True):
+    from kit import motion as M
+    for d in designs(only):
+        skin, glow, _ = paint(d)
+        rows = M.run(outdir, d, skin, glow, gifs)
+        print(f"{d['rig'].id}: {len(rows)} sequences")
+        for r in rows:
+            dip = "" if r["dip"] is None else f"  dip {100 * r['dip']:.0f}%"
+            print(f"  {'-'.join(r['seq']):34} {r['seconds']:5.2f} s  still {r['still_s']:4.2f} s  kinks {r['kinks']:3d} (worst {r['worst_kink']:4.1f})"
+                  f"  held {100 * r['held']:3.0f}%  peak {r['peak_deg_s']:5d}/s{dip}")
+
+
 if __name__ == "__main__":
     a = sys.argv[1:]
     if a and a[0] == "lab":
         lab(a[1], a[2:] or None)
+    elif a and a[0] == "motion":
+        motion(a[1], [x for x in a[2:] if x != "--no-gif"] or None, "--no-gif" not in a)
+    elif a and a[0] == "silhouettes":
+        from kit import silhouettes as S
+        S.sheet(a[1])
     elif a and a[0] == "build":
         build(None, a[1:] or None)
     else:

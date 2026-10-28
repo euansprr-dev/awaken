@@ -1,8 +1,9 @@
-# Bosses, premium rework (plan, awaiting Euan's approval)
+# Bosses, premium rework (approved 2026-10-28)
 
 Written 2026-10-28 after Euan's first look at the three kit bosses. Process: `.claude/PLANNING-PROCESS.md`.
-The approval page (https://claude.ai/artifact/3MpmzQ6mv8LGNH7TyURkfJ) carries the same plan with pictures. Nothing here is built yet, apart from the quick fixes listed
-under "Already fixed" (commit 8a95cecc and the turn-step fix after it).
+The approval page (https://claude.ai/artifact/3MpmzQ6mv8LGNH7TyURkfJ) carries the same plan with pictures. Euan
+approved all eight recommendations on 2026-10-28 ("Go ahead"); SPEC §35.9 records it. R0 is built (the baseline is
+`baseline-2026-10-28.md`) and R1 waits at the silhouette gate for his pick.
 
 ## What Euan asked for
 - **Look.** Today the Tyrant is "too derpy", "too blocky and rushed and vanilla-like". He wants premium, the kind that
@@ -35,8 +36,10 @@ under "Already fixed" (commit 8a95cecc and the turn-step fix after it).
   - 100% of recovery tracks end at the rest pose, and every wind-up starts there.
   - In a string, the body snaps back to the same stance between blows.
   - It crossfades in 0.15 s, and the next blow starts from rest again.
-- **Whole-body freezes.** The Tyrant has 300 holds of a bone at one value for over 0.15 s; Mother has 395. At contact
-  the hammer freezes about 0.5 s with nothing moving.
+- **Holds and kinks.** The Tyrant has 300 holds of a bone at one value for over 0.15 s; Mother has 395. The R0 meter
+  later showed the blows themselves don't freeze (most bones still for 0-11% of a blow). The holds are in roars, casts
+  and transitions (26-40% of their time). The blows' fault is kinks: speed jumps where one stage clip hands to the
+  next.
 - **Three clips per move.** The wind-up, the strike and the recovery are separate splines, so the curve breaks at the
   peak and at contact.
 - **Ground IK switches off for the whole move.** On uneven ground the hips jump when a move starts and drop when it
