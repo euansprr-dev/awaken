@@ -577,6 +577,12 @@ Gates:
   else is replaced once by the gate; `Forces.markRisen` records that it already rose (shared with the Descent).
   Player-owned Echoes are `MobRole.Role.ECHO`, never this tag.
 - A broken gate's Lord is the theme's Lord body with role BREAK (×8 health, ×1.3 damage), shown with the gates' boss bar.
+  **Home bounds** (Euan 2026-10-28, Mother of Spores repeatedly snapped back while flying uphill): a Lord's saved home
+  controls pursuit, flight and return (`AwakenBoss`, `FlyerMoveControl`); a break's 40-block home is respected instead
+  of its smaller indoor arena. Targets must remain inside that home, and dive/orbit destinations are clamped to it.
+  The existing emergency return margin is ten blocks beyond the home; returning stops navigation, the flight command
+  and momentum. Indoor Lords keep their own smaller homes. Existing saved Lords work without migration. Test:
+  `mobs_boss_home_bounds` (saved break home, uphill fight, real hunt destinations, target escape, return, indoor bounds).
 - The prologue's Bell Crypt is a scripted E-rank gate of three floors placed where the story asks (`GateHooks.openScripted`);
   scripted gates never break.
 

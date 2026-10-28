@@ -42,6 +42,7 @@ public final class MobsModule {
         Signal.onAction("mobs", Mobs::onSignalAction);
         MobsCommands.register();
         MobsTests.register();
+        dev.awaken.mobs.entity.BossHomeTests.register();
     }
 
     /** Ours stagger through their own stance (the wind-up ends, they stand still); any other mob is slowed to a stop. */
