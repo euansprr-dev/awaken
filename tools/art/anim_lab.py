@@ -476,7 +476,8 @@ def rig_pose(style_row, m, held, t):
             # of the wind-up to take if it needs it; its turn kept to a fast blow's own (LOAD_TURN a tick)
             far = SS.far_led(style_row, SS.move_name(style_row, m))
             track = SS._load_track(held, far, lambda p: p, start or rest, cocked, SS.LOAD_TURN / 3)
-            reach = min(max(reach, track[-1] * math.pi / 2 / 3), c if creep is None else max(reach, c * 0.9))
+            need = track[-1] * math.pi / 2 / 3
+            reach = min(max(reach, need), c if creep is None else max(reach, c * 0.9))
         if t < reach or creep is None:
             k = min(1.0, ease_out_cubic(t / reach) if wt["home"] == "fast" else ease_in_out_sine(t / reach))
             if track is not None:
@@ -497,7 +498,9 @@ def rig_pose(style_row, m, held, t):
         return thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, (c, hit, ea, fe, total), tk,
                            home_ticks, lambda: SS.chain_start(style_row, SS.move_name(style_row, m), held))
     if form == "spin":
-        return spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, (c, hit, ea, fe, total), home_ticks)
+        return spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, (c, hit, ea, fe, total), home_ticks,
+                         (sid, SS.move_name(style_row, m), lambda: SS.chain_start(style_row, SS.move_name(style_row, m), held),
+                          SS.chain_links(style_row, SS.move_name(style_row, m))[1]))
 
     # a cut: the lever about the pivot, in the plane of the blade at the hit and the cut's direction on the screen. A
     # scythe cuts on the inside of its blade, which a sweep only drags along its length: it is swept round with the
@@ -537,6 +540,29 @@ def rig_pose(style_row, m, held, t):
             R = axis_rot(rb, roll) @ R
         return g(PIVOT + step_dir * step + r * (arm + out), R)
 
+    if inner and home_ticks:
+        # a chained haul's draw back cut until its load fits before the set (swing_studio._fit_load, for the scythe's
+        # own shape; the haul back through is its blow, so the sweep round is what gives)
+        key = (sid, SS.move_name(style_row, m), held.wid)
+        if key not in _REAP_FIT and key not in SS._BUSY:
+            start = SS.chain_start(style_row, SS.move_name(style_row, m), held)
+            best = (math.inf, 1.0)
+            if start is not None:
+                for k in np.linspace(1.0, 0.5, 11):
+                    ck = at(-pre * k, lag_max * 0.6, 0.0, roll0 * 0.85)
+                    need = SS._load_track(held, False, lambda q: q, start, ck, SS.LOAD_TURN / 3)[-1] * math.pi / 2 / 3
+                    # and its set in view, as a chained cut's is (swing_studio._on_screen_set)
+                    d_, R_ = at(-pre * k - (8 if wt["draw"] < 1 else 0), lag_max, 0.0, roll0)
+                    mid_ = H0_ + d_ + R_ @ (held.grip + (held.tip - held.grip) * MID)
+                    n_ = SS.ndc(mid_)
+                    seen = mid_[2] < 0 and abs(n_[0]) <= SS.CHAIN_SET and abs(n_[1]) <= SS.CHAIN_SET
+                    score = need / (c * 0.9) + (0.0 if seen else 1.0)
+                    if score < best[0]:
+                        best = (score, float(k))
+                    if need <= c * 0.9 and seen:
+                        break
+            _REAP_FIT[key] = best[1]
+        pre *= _REAP_FIT.get(key, 1.0)
     cocked = at(-pre, lag_max * 0.6, 0.0, roll0 * 0.85)
     creep = at(-pre - (8 if wt["draw"] < 1 else 0), lag_max, 0.0, roll0)
     if t < c:
@@ -559,7 +585,7 @@ def rig_pose(style_row, m, held, t):
             k = ease_in_out_sine((t - hook) / haul)
             return at(held_at * k, 0.0, 1.0, 0.0, REACH - (REACH + PULL) * k)
         out = at(held_at, 0.0, 1.0, 0.0, -PULL)
-        return SS.rise_home(out, t, end, total, m, home_ticks)
+        return SS.rise_home(out, t, end, total, m, home_ticks, held=held)
     if inner:
         # round past the target by the hook, then the haul: the blade crosses the target about the hit
         hook = max(c + (hit - c) * 0.35, (hit - 0.4 * ea) / 0.6)
@@ -603,6 +629,10 @@ def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, ba
         return punch_pose(form, m, held, wt, t, g, rest, windup_pose, back_home, ph)
     start = THRUST_FROM.get(variant, THRUST_FROM["line"])
     target = target_for(held, 0.02 if variant not in ("over", "reverse") else -0.06)
+    if tk is not None and tk.get("spread"):
+        # both hands at once: each aimed out on its own side (the off's mirrored), so the two blades drive in side by
+        # side; aimed at the one crosshair they met in the middle (Euan 2026-10-28, the daggers)
+        target = target + np.array([tk["spread"], 0.0, 0.0])
     r = target - start
     r /= np.linalg.norm(r)
     level = np.cross(r, np.array([0.0, 1.0, 0.0]))
@@ -645,7 +675,10 @@ def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, ba
         if t < 0:
             return at(back_d - pull, -12)
         p = (t / max(1e-6, hit)) ** tk["push"]
-        return lerp_pose((start_of() if start_of else None) or rest, at(out_d, 22), p)
+        src = (start_of() if start_of else None) or rest
+        if m["swing"].get("hand") == "both":  # both hands from their set, side by side (the last cut is drawn there)
+            src = at(back_d - pull, -12)
+        return lerp_pose(src, at(out_d, 22), p)
     if t < c:
         return windup_pose(at(back_d, -8), at(back_d - pull, -12))
     if t < hit:  # driven in: nearly even for a snap, the point arriving on the hit
@@ -697,9 +730,14 @@ def punch_pose(form, m, held, wt, t, g, rest, windup_pose, back_home, ph):
     return back_home(g(base + s1, R1), (t - fe) / max(1e-6, total - fe))
 
 
-def spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, ph, home_ticks=None):
+_SPIN_FROM = {}
+_REAP_FIT = {}
+
+
+def spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, ph, home_ticks=None, chain=None):
     """A double weapon turned about its middle grip: a full turn and more as the hand crosses the front, both ends
-    cutting in a plane tilted toward the eye."""
+    cutting in a plane tilted toward the eye. {@code chain}: (style, move, the hand's pose on the press or None, the
+    next press's window or None)."""
     c, hit, ea, fe, total = ph
     n = np.array([0.0, 1.0, 0.35])
     n /= np.linalg.norm(n)
@@ -712,6 +750,15 @@ def spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, ph, h
     c0 = np.array([0.30, -0.30, -1.05])
     c1 = np.array([-0.10, -0.22, -1.15])
     mid = held.grip + held.axis * ((held.P @ held.axis).max() + (held.P @ held.axis).min() - 2 * (held.grip @ held.axis)) / 2
+    if home_ticks and chain is not None:
+        # a twirl that follows a blow turns about where that blow left the weapon's middle, carried to its own place by
+        # the hit: about a fixed place on the right, its gather of a third of a tick carried the whole weapon across
+        # the screen in a frame (the twin blades' strike 4, after a cut carried to the far left)
+        was = chain[2]()
+        if was is not None:
+            w = H0_ + was[0] + was[1] @ mid
+            # (never lower than its own place: after a chop it turned about the bottom of the screen, an end under it)
+            c0 = np.array([min(0.6, max(-0.6, w[0])), min(0.1, max(c0[1] - 0.05, w[1])), min(-0.85, max(-1.3, w[2]))])
 
     def at(phi, s):
         ph_ = math.radians(phi) * sgn
@@ -722,8 +769,53 @@ def spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, ph, h
         return centre - H0_ - R @ mid, R
 
     turn = 400.0
+    phi0 = -40.0
+    if home_ticks and chain is not None:
+        # a twirl that follows a blow sets off from the angle of its turn nearest where that blow left the weapon,
+        # so its wind-up is a short gather (the Fight Feel review: from its fixed start the war-staff's swung one end
+        # past the eye, a whole screen in a frame); it turns at least half a round to the hit, at most a round and a
+        # third, and lands where it always did
+        import swing_studio as SS
+        key = (chain[0], chain[1], held.wid)
+        if key not in _SPIN_FROM:
+            _SPIN_FROM[key] = -40.0
+            start = chain[2]()
+            if start is not None:
+                best = None
+                pw = max(1.6, wt["power"] * 0.8)
+                frames = np.arange(0.0, hit * 0.5 + 1e-6, 1 / 3)
+
+                def early(p, ft):  # the pose at ft: the gather from where the hand is (roughly), then the turn
+                    if ft < c:
+                        return lerp_pose(start, at(p, 0.0), ease_in_out_sine(ft / max(1e-6, c)))
+                    x = (ft - c) / max(1e-6, hit - c)
+                    return at(p + (-40 + turn * 0.6 - p) * x ** pw, 0.6 * x)
+
+                def cost_of(p):
+                    cost = max(SS._load_track(held, f, lambda q: q, start, at(p, 0.0), SS.LOAD_TURN / 3)[-1]
+                               for f in (False, True)) + abs(p + 40) * 0.01
+                    # and the first frames, the gather and the turn up to the blow's fast half, kept to LOAD_STEP (an
+                    # end pointed at the eye sweeps the screen at the smallest turn)
+                    ends = [SS.lead_points(held, f, *early(p, ft))[0] for ft in frames for f in (False, True)]
+                    for f in (0, 1):
+                        pts = ends[f::2]
+                        for a_, b_ in zip(pts, pts[1:]):
+                            if a_[2] < 0 and b_[2] < 0:
+                                step = float(np.linalg.norm(SS.ndc(b_) - SS.ndc(a_))) / SS.LOAD_STEP
+                                cost += max(0.0, step - 1.0) * 10
+                    return cost
+
+                best = min((cost_of(p), float(p)) for p in range(-130, 21, 5))
+                if best[1] <= -130:
+                    # best at the edge: the weapon lies further round (a blow carried across leaves it near -190, the
+                    # twin blades), so look on round to -200 (searched there always, the war-staff found a start a
+                    # hair cheaper that turned an end under the screen)
+                    best = min([best] + [(cost_of(p), float(p)) for p in range(-200, -130, 5)])
+                _SPIN_FROM[key] = best[1]
+        phi0 = _SPIN_FROM[key]
+    span = -40 + turn * 0.6 - phi0  # the turn to the hit
     if t < c:
-        return windup_pose(at(-40, 0.0))
+        return windup_pose(at(phi0, 0.0))
     if home_ticks:
         # Swing Studio: the turn gathers to its fastest on the hit (60% round), the rest carried off that speed in one
         # slowing (never a second wind-down), then down out of the view and home
@@ -732,14 +824,21 @@ def spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, ph, h
         dur = max(1e-6, hit - c)
         if t < hit:
             x = (t - c) / dur
-            return at(-40 + turn * 0.6 * x ** pw, 0.6 * x)
-        v = turn * 0.6 * pw / dur
+            return at(phi0 + span * x ** pw, 0.6 * x)
+        v = span * pw / dur
         rem, k = turn * 0.4, 3.0
         carry = min(k * rem / v, max(0.75, total - hit - home_ticks))
         if t < hit + carry:
             y = (t - hit) / carry
             return at(-40 + turn * 0.6 + rem * (1 - (1 - y) ** k), 0.6 + 0.4 * y)
-        return SS.rise_home(at(-40 + turn, 1.0), t, hit + carry, total, m, home_ticks)
+        up = hit + carry
+        if chain is not None and chain[3] is not None:
+            # a twirl that leads on holds its end in view through the next press's window, as a cut does (it dropped
+            # out of the frame and the next strike came up from below)
+            up = min(max(up, chain[3][1]), total - home_ticks)
+            if t < up:
+                return at(-40 + turn, 1.0)
+        return SS.rise_home(at(-40 + turn, 1.0), t, up, total, m, home_ticks, held=held)
     if t < fe:
         x = (t - c) / max(1e-6, fe - c)
         p = x ** (wt["power"] * 0.6) if x < 0.5 else 1 - (1 - x) ** 1.4 * (0.5 ** (wt["power"] * 0.6 - 1.4))
@@ -829,7 +928,9 @@ def bake(out=SWINGS, solve=False, round_=None):
                             + [round(float(v), 3) for v in cam])
             moves[mv] = {"form": form_of(m)[0], "weight": SS.weight_class(sid), "hand": m["swing"].get("hand", "main"),
                          "keys": keys, "bite": SS.bite_of(sid, mv)}
-            if SS.idle_next(st, mv):  # the hand not striking: drawn back to the next strike's set (Swing Studio round 4)
+            if SS.idle_next(st, mv) or SS.gives_way(st, mv, held):
+                # the hand not striking: drawn back to the next strike's set (Swing Studio round 4), out of the
+                # striking blade's way (round 7)
                 idle = []
                 for tt in np.arange(0, total + 1e-6, KEY_DT):
                     d, R = SS.idle_pose(st, mv, held, float(tt))

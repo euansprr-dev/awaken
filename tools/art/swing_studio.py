@@ -37,11 +37,12 @@ _FEEL = {}
 CUT = dict(pivot=[0.62, -0.52, -0.30], target=[0.0, -0.24, -1.15], mid=0.78,
            pre=None, post=None, stop=None, pre_k=1.0, post_k=1.0, carry=34.0,
            drive=1.0, power=2.6, reach=1.25, load="inout", creep=4.0, lag=None, roll0=None,
-           bite=0.5, exit=1.5, exit_drop=0.35, rise=2.5, lowered=0.75, step=0.07)
+           bite=0.5, exit=1.5, exit_drop=0.35, rise=2.5, lowered=0.75, step=0.07, eye=1.0)
 CUT_FORM = {
-    "slam": dict(target=[0.0, -0.32, -1.15], exit_drop=0.2, carry=10.0),
-    "chop": dict(exit_drop=0.2, carry=18.0),
-    "rise": dict(target=[0.0, -0.18, -1.15], exit_drop=-0.1, lowered=0.0, carry=10.0, rise=1.75),
+    # an up-and-down cut half about the eye: wholly about it, a rising strike's low set came back to the eye itself
+    "slam": dict(target=[0.0, -0.32, -1.15], exit_drop=0.2, carry=10.0, eye=0.5),
+    "chop": dict(exit_drop=0.2, carry=18.0, eye=0.5),
+    "rise": dict(target=[0.0, -0.18, -1.15], exit_drop=-0.1, lowered=0.0, carry=10.0, rise=1.75, eye=0.5),
     "whirl": dict(carry=40.0),
     "swing": dict(carry=36.0),
     "lash": dict(carry=14.0),
@@ -104,15 +105,27 @@ WEIGHT_THRUST = {"snap": dict(hold=0.25, snap=0.6, rise=1.25), "blade": dict(), 
 HOME = {"snap": 1.5, "blade": 2.0, "heavy": 2.5}  # a studio style's first-generation shapes come home in this many ticks
 
 
-def rise_home(low, t, start, total, m, ticks, lowered=0.75):
+def rise_home(low, t, start, total, m, ticks, lowered=0.75, held=None, far=False):
     """From a pose at the end of a blow: down out of the frame, then up into rest, fast then settling, over {@code ticks}
-    (the chain's press, if it comes first, leaves from wherever this is: SwingBlend)."""
+    (the chain's press, if it comes first, leaves from wherever this is: SwingBlend). With the weapon held, each leg
+    is timed along its path as seen (seen_k)."""
     rest = (np.zeros(3), np.eye(3))
-    x = min(1.0, max(0.0, t - start) / max(1e-6, min(ticks, total - start)))
+    span = max(1e-6, min(ticks, total - start))
     dip = (np.array([0.0, -lowered, 0.0]), np.eye(3))
-    if x < 0.35:
-        return L.lerp_pose(low, dip, L.ease_in_out_sine(x / 0.35))
-    return L.lerp_pose(dip, rest, 1 - (1 - (x - 0.35) / 0.65) ** 4)
+    same = lambda q: q
+    share = 0.35
+    if held is not None:
+        span, share = home_plan(held, far, same, low, dip, span, total - start)
+    x = min(1.0, max(0.0, t - start) / span)
+    if x < share:
+        k = L.ease_in_out_sine(x / share)
+        return L.lerp_pose(low, dip, seen_k(held, far, same, low, dip, k) if held is not None else k)
+    u = (x - share) / (1 - share)
+    if held is None:
+        return L.lerp_pose(dip, rest, 1 - (1 - u) ** 4)
+    # up from below, fast then settling: along the path as seen the rise eases out of its own speed (a quartic's
+    # four times its mean, spent on the view, popped the blade up into rest)
+    return L.lerp_pose(dip, rest, seen_k(held, far, same, dip, rest, L.ease_out_sine(u)))
 
 
 def home_ticks(sid):
@@ -201,11 +214,17 @@ CHAIN_MARGIN = 0.85  # a leading strike's blade middle stays this far inside the
 CHAIN_TIP_Y = 0.4  # and its tip (a maul's head) this near the middle of the screen's height: read, not a sliver
 CHAIN_SET = 0.9  # and a chained strike's set
 CARRY_KEEP = 0.4  # a leading strike's follow-through keeps at least this much of its travel
+FULL_SET = 0.7  # a cut's set has its blade's middle this far out on the side it comes from (of the way to the screen's edge)
+FULL_END = 0.75  # and its carry takes it this far out on the far side: edge to edge, never a half cut
+FULL_OUT = 12.0  # a cut that leads on to nothing carries on this much further (degrees), out of the frame
+FULL_MAX = 120.0  # the most either side of the target an arc is drawn to reach those (degrees)
 TWIRL_MID_Y = -0.7  # a weapon turning end for end keeps its middle (the hands) at least this high on the screen (ndc)
 LOAD_STEP = 0.3  # the most the tip moves (ndc) in a 60 fps frame while it draws back
 LOAD_OFF = 0.15  # a point of the blade out of the frame counts this share of its travel against LOAD_STEP
-LOAD_KEEP = 0.45  # a draw back cut to fit its time keeps at least this much of itself
+LOAD_KEEP = 0.75  # a draw back cut to fit its time keeps at least this much of itself
+DRIVE_KEEP = 0.8  # and before it is cut, its drive gives up to this much of its time to it
 LOAD_SPIN = 0.75  # and turns the blade at most this share of its blow's speed at the hit
+HOME_STRETCH = 1.25  # a way home takes at most this many times its ticks to keep to LOAD_STEP (longer is a slide)
 LOAD_TURN = 120.0  # a thrust's or a spin's draw back turns the blade at most this (degrees a tick)
 _START = {}
 _FIT = {}
@@ -380,8 +399,95 @@ def idle_target(st, mv, held, cur):
     return src
 
 
+IDLE_CLEAR = 0.25  # the idle hand's blade keeps this far (ndc) from the striking blade and its forearm
+IDLE_YIELD = (np.array([0.14, -0.42, 0.16]), np.eye(3))  # where it gives way to: low, back, on its own side
+IDLE_LEAD = 1.0  # it starts to give way this long (ticks) before the striking blade comes near, and comes back as slowly
+_YIELD = {}
+
+
+def _hand_points(held, pose, hand, arm):
+    """A hand's blade on the screen (grip to tip, its own hand's mirror taken), and with arm its forearm too (from the
+    grip toward its own bottom corner): [(ndc, in front)]."""
+    d, R = pose
+    H0 = np.array([L.HX, L.HY, L.HZ])
+    tip, grip = R @ held.tip + H0 + d, R @ held.grip + H0 + d
+    mir = -1.0 if side(hand) == "off" else 1.0
+    out = []
+    for a in np.linspace(0.0, 1.0, 6):
+        p = grip + (tip - grip) * a
+        n = ndc(p) if p[2] < 0 else np.array([9.0, 9.0])
+        out.append(np.array([n[0] * mir, n[1]]))
+    if arm and grip[2] < 0:
+        g = out[0]
+        corner = np.array([0.75 * mir, -1.15])
+        out += [g + (corner - g) * a for a in (0.33, 0.66, 1.0)]
+    return out
+
+
+def _gap(a, b):
+    return min(float(np.linalg.norm(p - q)) for p in a for q in b)
+
+
 def idle_pose(st, mv, held, t):
-    """The idle hand at t ticks into this move ((d, R), authored for its own hand like any move), or None: it rests.
+    """The idle hand at t ticks into this move (_idle_way), given way to the striking hand: wherever the striking blade
+    or its forearm would come within IDLE_CLEAR of the idle blade, the idle hand is drawn low and back to its own side
+    (IDLE_YIELD), starting IDLE_LEAD before and returning as smoothly (Euan 2026-10-28, the daggers: "the right hand
+    literally stabs the left one... on the 2nd click": the right hand drew across to strike 3's backhand set through
+    the left hand's stab; IDLE_GAP only kept the two tips apart, at one moment)."""
+    rest = (np.zeros(3), np.eye(3))
+    way = lambda tt: _idle_way(st, mv, held, tt) or (rest if _gives_room(st, mv) else None)
+    raw = way(t)
+    if raw is None:
+        return None
+    key = (st["id"], mv, held.wid)
+    if key not in _YIELD:
+        _YIELD[key] = None  # asked again while working it out: as it was
+        m = st["moves"][mv]
+        total = m["windup"] + m["active"] + m["recovery"]
+        hand = hand_of(st, mv)
+        idle = "off" if side(hand) == "main" else "main"
+        ts = np.arange(0.0, total + 1e-6, 0.25)
+        need = []
+        for tt in ts:
+            w0 = way(float(tt))
+            strike = _hand_points(held, L.rig_pose(st, m, held, float(tt)), hand, True)
+            a = 1.0
+            for k in np.linspace(0.0, 1.0, 11):
+                if _gap(_hand_points(held, L.lerp_pose(w0, IDLE_YIELD, float(k)), idle, False), strike) >= IDLE_CLEAR:
+                    a = float(k)
+                    break
+            need.append(a)
+        _YIELD[key] = (ts, np.array(need))
+    plan = _YIELD[key]
+    if plan is None:
+        return raw
+    ts, need = plan
+    # each moment's need, spread IDLE_LEAD either side on a sine (it moves away before the blade comes, never a jolt)
+    w = np.clip(1.0 - np.abs(ts - t) / IDLE_LEAD, 0.0, 1.0)
+    a = float(np.max(need * (0.5 - 0.5 * np.cos(np.pi * w))))
+    if a <= 1e-4:
+        return raw
+    return L.lerp_pose(raw, IDLE_YIELD, a)
+
+
+def _gives_room(st, mv):
+    """A one-handed strike of a style whose idle hand moves (a feel spec's idleHand): the other hand gives way to it
+    even where it waits at rest (the daggers' strike 5, the off hand's slash, carried across through the resting
+    main)."""
+    return bool(feel(st["id"]).get("idleHand")) and hand_of(st, mv) != "both"
+
+
+def gives_way(st, mv, held):
+    """The idle hand moves out of this strike's way at some moment (its yield plan is not all zero)."""
+    if not _gives_room(st, mv):
+        return False
+    idle_pose(st, mv, held, 0.0)
+    plan = _YIELD.get((st["id"], mv, held.wid))
+    return plan is not None and float(np.max(plan[1])) > 1e-3
+
+
+def _idle_way(st, mv, held, t):
+    """The idle hand's way through this move ((d, R), authored for its own hand like any move), or None: it rests.
     Where it was (idle_source) until the striking hand's hit, so nothing pulls the eye off the blow; then drawn to the
     next strike's set over IDLE_DRAW (done by the earliest press), held there through the chain's window, home by the
     move's end."""
@@ -444,8 +550,7 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
     r_c = target - pivot
     reach_len = float(np.linalg.norm(r_c))
     r_c /= reach_len
-    tan_c = u - r_c * (u @ r_c)
-    tan_c /= np.linalg.norm(tan_c)
+    tan_c = _screen_way(target, r_c, u)
     arm = max(0.15, reach_len - kn["mid"] * held.length)
     pre0, post0, stop0 = L.sweep(form, m, wt, u)
     pre = kn["pre"] if kn["pre"] is not None else pre0 * kn["pre_k"]
@@ -455,16 +560,42 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
     roll0 = kn["roll0"] if kn["roll0"] is not None else {"slam": 75.0, "swing": 85.0, "rise": 170.0, "chop": 40.0,
                                                          "slash": 35.0, "reap": 30.0, "whirl": 60.0, "lash": 50.0}.get(form, 30.0)
     step_len = kn["step"] * (1.4 if form in ("slam", "whirl", "swing") else 1.0)
+    # the blade's middle runs about the eye (EYE of the way from the shoulder's circle), in the plane through the eye,
+    # the target and the cut's way on the screen, so the eye sees it cross the screen in a line, edge to edge. About
+    # the shoulder alone (0.3 m in front of the eye, under it) the carry curled toward the eye and dropped under the
+    # view 30 degrees past the hit, and a level cut sagged at both ends: a cut was seen only on the side it came from
+    # (Euan 2026-10-28: "a lot of the hits... feel like half hits... the hit only happens in the right side when it's
+    # supposed to slice"). The body turns and the arm reaches: the blade still points out from the shoulder, the hands
+    # carried along that line.
+    eye = kn["eye"]
+    r_e = float(np.linalg.norm(target))
+    p_e = target / r_e
+    tan_e = _screen_way(target, p_e, u)
+
+    def path(theta):  # the blade's middle and its way of travel
+        a = math.radians(theta)
+        q_s = pivot + reach_len * (math.cos(a) * r_c + math.sin(a) * tan_c)
+        q_e = r_e * (math.cos(a) * p_e + math.sin(a) * tan_e)
+        v_s = reach_len * (-math.sin(a) * r_c + math.cos(a) * tan_c)
+        v_e = r_e * (-math.sin(a) * p_e + math.cos(a) * tan_e)
+        return q_s + (q_e - q_s) * eye, v_s + (v_e - v_s) * eye
+
+    def aim(theta):  # the blade's middle, its way, and the blade's line: half out from the shoulder to the middle, half
+        # the lever's own steady turn (out from the shoulder alone, it whipped round where the middle passed near it,
+        # quicker than the blow: the maul's rising strike)
+        a = math.radians(theta)
+        q, v = path(theta)
+        w = (q - pivot) / np.linalg.norm(q - pivot)
+        r = w + math.cos(a) * r_c + math.sin(a) * tan_c
+        return q, v, r / np.linalg.norm(r)
 
     def at(theta, lg=0.0, roll=0.0, step=0.0, drop=0.0):
-        th, tb = math.radians(theta), math.radians(theta - lg)
-        r = math.cos(th) * r_c + math.sin(th) * tan_c
-        rb = math.cos(tb) * r_c + math.sin(tb) * tan_c
-        tan = -math.sin(tb) * r_c + math.cos(tb) * tan_c
+        q, _, r = aim(theta)
+        _, tan, rb = aim(theta - lg)
         R = L.frame_to(rb, tan, side, F)
         if roll:
             R = L.axis_rot(rb, roll) @ R
-        p = pivot + r_c * step_len * step + r * arm + np.array([0.0, -drop, 0.0])
+        p = q - r * kn["mid"] * held.length + r_c * step_len * step + np.array([0.0, -drop, 0.0])
         return p - H0 - R @ held.grip, R
 
     rest = (np.zeros(3), np.eye(3))
@@ -473,6 +604,9 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
     mv = move_name(st, m)
     prev, nxt = chain_links(st, mv)
     drop = kn["exit_drop"]
+    # the last of a chain carries on out of the frame, unless the other hand waits over there (the daggers' strike 5)
+    pre, stop = _full_arc(held, at, u, pre, stop, lag, roll0, drop, nxt is None and not _gives_room(st, mv),
+                          form in ("chop", "slam", "rise"))
     if chained(st, mv):
         # a chained strike's set stays in view too: a shorter draw back from where the last one ended, never a dip
         # out of the frame and a blade that reappears only on the hit
@@ -571,8 +705,15 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
         up = min(max(exit_t, nxt[1]), total - min(kn["rise"], 1.5))
         # a blow that lands low (a maul's slam) is hauled back up to a height the eye reads before the next press
         ready = _lifted(held, low)
+        nmv = chain_next(st, mv)
+        if nmv is not None and hand_of(st, nmv) == "both" and hand_of(st, mv) != "both":
+            # both hands strike next, each from its own side: the blade is drawn back to that strike's set as it waits
+            # (held where its carry left it, far across, the other hand's blade was mirrored onto the far side and the
+            # two crossed as they left: the daggers' strike 4)
+            ready = L.rig_pose(st, st["moves"][nmv], held, -0.01)
         if ready is not low:
-            haul = max(0.5, min(1.5, nxt[0] - exit_t))
+            # back across the screen to a set takes all the time there is before the press
+            haul = max(0.5, nxt[0] - exit_t if nmv is not None and hand_of(st, nmv) == "both" else min(1.5, nxt[0] - exit_t))
             if t < up:
                 return out(L.lerp_pose(low, ready, L.ease_in_out_sine(min(1.0, (t - exit_t) / haul))), spun)
             low = ready
@@ -580,18 +721,31 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
         gone = _off_screen(held, low)
         up = exit_t if not cad or not gone else min(max(exit_t, cad[0] + 0.25), total - min(kn["rise"], 1.5))
     rise = min(kn["rise"], total - up)
+    far = far_led(st, mv)
+    seen_out = lambda q: out(q, spun)
+    # dropped out of the frame most of the way from where the blow left it to rest: under rest, a cut carried across
+    # the screen swept back along its bottom edge on the way (the katana's opener, two screens a tick); halfway, it
+    # turned in view
+    half = L.lerp_pose(low, rest, 0.75)
+    lowered = (half[0] + np.array([0.0, -kn["lowered"] * 1.25, 0.0]), half[1])
+    share = 0.35
+    if kn["lowered"] > 0:  # the time each leg needs as seen (home_plan)
+        rise, share = home_plan(held, far, seen_out, low, lowered, rise, total - up)
     x = min(1.0, max(0.0, t - up) / max(1e-6, rise))
     # left end for end: it turns on round the same way as it goes home (rest holds it the right way round)
     if twirl:
         lk = 1.0 - L.ease_in_out_sine(x)
     if math.remainder(turn + spun, 360.0):
         spun += 180.0 * L.ease_in_out_sine(x)
+    # each leg timed along its path as seen (seen_k)
     if kn["lowered"] <= 0:
-        return out(L.lerp_pose(low, rest, L.ease_in_out_sine(x)), spun)
-    lowered = (np.array([0.0, -kn["lowered"], 0.0]), np.eye(3))
-    if x < 0.35:  # down and out of the frame, then up into the rest pose, fast then settling
-        return out(L.lerp_pose(low, lowered, L.ease_in_out_sine(x / 0.35)), spun)
-    return out(L.lerp_pose(lowered, rest, 1 - (1 - (x - 0.35) / 0.65) ** 4), spun)
+        return out(L.lerp_pose(low, rest, seen_k(held, far, seen_out, low, rest, L.ease_in_out_sine(x))), spun)
+    if x < share:  # down and out of the frame, then up into the rest pose, fast then settling
+        k = seen_k(held, far, seen_out, low, lowered, L.ease_in_out_sine(x / share))
+        return out(L.lerp_pose(low, lowered, k), spun)
+    # up from below, easing out of its speed along the path as seen (rise_home)
+    k = seen_k(held, far, seen_out, lowered, rest, L.ease_out_sine((x - share) / (1 - share)))
+    return out(L.lerp_pose(lowered, rest, k), spun)
 
 
 def _lifted(held, pose):
@@ -606,22 +760,89 @@ def _lifted(held, pose):
     return rest
 
 
-def _readable(held, pose, tip_y=True):
-    """The blade's middle well inside the frame (CHAIN_MARGIN), its tip on the screen and (tip_y) in its middle band."""
+def _screen_way(P, r, u):
+    """The way of travel at P, square to the lever r, that the screen sees along u. Taken as u less its part along r,
+    the travel leant toward the eye, and the eye saw it steeper than written: the longsword's opening diagonal, 31
+    degrees below level, ran 65 below it past the hit, so a slash read as a drop (the half cuts)."""
+    a = u - r * (u @ r)
+    a /= np.linalg.norm(a)
+    b = np.cross(r, a)
+    X, Y, Z = P
+    J = np.array([[F_ / ASP / -Z, 0.0, F_ / ASP * X / Z ** 2], [0.0, F_ / -Z, F_ * Y / Z ** 2]])
+    ja, jb = J @ a, J @ b
+    cross = lambda v: v[0] * u[1] - v[1] * u[0]
+    t = cross(jb) * a - cross(ja) * b
+    if (J @ t) @ u[:2] < 0:
+        t = -t
+    return t / np.linalg.norm(t)
+
+
+def _readable(held, pose, tip_y=True, tip_x=True):
+    """The blade's middle well inside the frame (CHAIN_MARGIN), (tip_x) its tip on the screen and (tip_y) in its
+    middle band."""
     d, R = pose
     mid = np.array([L.HX, L.HY, L.HZ]) + d + R @ (held.grip + (held.tip - held.grip) * L.MID)
     n, tn = ndc(mid), _tip_ndc(held, pose)
-    return (mid[2] < 0 and abs(n[0]) <= CHAIN_MARGIN and abs(n[1]) <= CHAIN_MARGIN and abs(tn[0]) <= 0.95
+    return (mid[2] < 0 and abs(n[0]) <= CHAIN_MARGIN and abs(n[1]) <= CHAIN_MARGIN and (not tip_x or abs(tn[0]) <= 0.95)
             and (not tip_y or tn[1] >= -CHAIN_TIP_Y))
 
 
 def _on_screen_end(held, at, stop, drop, lag):
-    """The carry's stop angle and drop cut back until the blade ends inside the frame, keeping at least CARRY_KEEP of
-    its travel (a blow that stops dead on the hit hits a wall; one that ends low is hauled up after: _lifted)."""
+    """The carry's drop, then its stop angle, cut back until the blade's middle ends inside the frame (its tip may run
+    off the far edge: the cut went all the way), keeping at least CARRY_KEEP of its travel (a blow that stops dead on
+    the hit hits a wall; one that ends low is hauled up after: _lifted). The drop goes first: cut the other way round,
+    a carry dropping out of the bottom of the frame was stopped at 40% of its way across (the half cuts)."""
+    for k in np.linspace(1.0, 0.0, 11):
+        if _readable(held, at(stop, -lag * 0.3, 0.0, 1.0, drop * k), tip_y=False, tip_x=False):
+            return stop, drop * k
     for k in np.linspace(1.0, CARRY_KEEP, 13):
-        if _readable(held, at(stop * k, -lag * 0.3, 0.0, 1.0, drop * k), tip_y=False):
-            return stop * k, drop * k
-    return stop * CARRY_KEEP, drop * CARRY_KEEP
+        if _readable(held, at(stop * k, -lag * 0.3, 0.0, 1.0, 0.0), tip_y=False, tip_x=False):
+            return stop * k, 0.0
+    return stop * CARRY_KEEP, 0.0
+
+
+def _full_arc(held, at, u, pre, stop, lag, roll0, drop, last, over):
+    """(pre, stop) drawn out until the cut crosses the whole screen (Euan 2026-10-28: "a lot of the hits don't feel like
+    they are going the full way from left to right, up to down... they feel like half hits"; the arcs were fixed
+    degrees, a draw back of about 50 and a carry of about 35, so a blade set near the middle stopped just past it).
+    Its set has the blade's middle FULL_SET of the way to the screen's edge on the side the cut comes from, and its
+    carry FULL_END on the far side (one that leads on to nothing carries FULL_OUT further, out of the frame), each
+    as far as the middle stays in view; the arc never shortens what a style already draws, but a level or slanting
+    one keeps its set in view (an overhead may rise out of the frame and come down into it)."""
+    u2 = np.array(u[:2], dtype=float)
+    u2 /= np.linalg.norm(u2)
+    edge = 1.0 / max(abs(u2[0]), abs(u2[1]))  # the centre to the screen's edge along the cut's line
+    H0 = np.array([L.HX, L.HY, L.HZ])
+
+    def along(pose):
+        d, R = pose
+        mid = H0 + d + R @ (held.grip + (held.tip - held.grip) * L.MID)
+        if mid[2] >= 0:
+            return None
+        n = ndc(mid)
+        return None if max(abs(n[0]), abs(n[1])) > CHAIN_SET else float(n @ u2) / edge
+
+    def reach(pose_at, goal, sign):
+        """(the angle that reaches goal, or the last in view; the last in view)"""
+        best, got = 0.0, None
+        for th in np.arange(2.0, FULL_MAX + 1e-6, 2.0):
+            a = along(pose_at(th))
+            if a is None:
+                return (got or best), best
+            best = th
+            if got is None and a * sign >= goal:
+                got = th
+        return (got or best), best
+
+    pre_full, pre_seen = reach(lambda th: at(-th, lag, roll0), FULL_SET, -1.0)
+    # one that leads on holds its end in view, so it carries level (_on_screen_end lets the drop go first)
+    stop_full, _ = reach(lambda th: at(th, -lag * 0.3, 0.0, 1.0, drop if last else 0.0), FULL_END, 1.0)
+    if last:
+        stop_full += FULL_OUT
+    pre = max(pre, pre_full)
+    if not over:  # a level or slanting cut is set in view, at the frame's edge (an overhead rises out of it)
+        pre = min(pre, max(pre_full, pre_seen))
+    return pre, max(stop, stop_full)
 
 
 def lead_points(held, far, d, R):
@@ -678,33 +899,69 @@ def _load_track(held, far, out, start, cocked, spin, n=32):
 
 def _fit_load(held, far, at, out, start, pre, kn, lag, roll0, reach, c, hit):
     """(pre, reach, cocked, track, drive start): the draw back and how long it takes, so it keeps to its budget
-    (_load_track) on the load's sine (its peak pi/2 times its mean). One that can't fit before the drive is cut back
-    toward the hit (a quick chained cut leaves from nearer it), down to LOAD_KEEP of itself, and its drive shortened to
-    match (never under half a tick), so the blow lands as fast as it would have and the load has that much longer."""
+    (_load_track) on the load's sine (its peak pi/2 times its mean). One that can't fit before the drive takes the
+    time from the drive first, down to DRIVE_KEEP of it (never under half a tick: the blow only lands harder), then is
+    cut back toward the hit, down to LOAD_KEEP of itself, its drive shortened to match. Cut first, the arc lost half
+    its draw (the axe's opening chop 64 to 32 degrees) and the cut left from the middle of the screen."""
     best = None
     drive0 = hit - c
-    for k in np.linspace(1.0, LOAD_KEEP, 12):
+    for k in np.linspace(1.0, LOAD_KEEP, 6):
         p = pre * float(k)
-        drive = drive0 * (p + kn["creep"]) / (pre + kn["creep"])
-        if drive < min(drive0, 0.5) - 1e-9:
-            break  # no drive quicker than half a tick: cut back further, the blow would land slower
-        cc = hit - drive
-        r = reach * cc / max(1e-6, c)  # the load's share of the wind-up kept
-        spin = LOAD_SPIN * kn["power"] * (p + kn["creep"]) / max(1e-6, drive) / 3
-        cocked = at(-p, lag * 0.6, roll0 * 0.85)
-        track = _load_track(held, far, out, start, cocked, spin)
-        need = track[-1] * math.pi / 2 / 3
-        r = max(r, need)
-        if cc - r < 0.5:  # no room to hold a set: the draw back goes straight to where the drive leaves from
-            r = cc
-            cocked = at(-p - kn["creep"], lag, roll0)
+        for sk in np.linspace(1.0, DRIVE_KEEP, 5):
+            drive = drive0 * float(sk) * (p + kn["creep"]) / (pre + kn["creep"])
+            if drive < min(drive0, 0.5) - 1e-9:
+                break  # no drive quicker than half a tick
+            cc = hit - drive
+            r = reach * cc / max(1e-6, c)  # the load's share of the wind-up kept
+            spin = LOAD_SPIN * kn["power"] * (p + kn["creep"]) / max(1e-6, drive) / 3
+            cocked = at(-p, lag * 0.6, roll0 * 0.85)
             track = _load_track(held, far, out, start, cocked, spin)
             need = track[-1] * math.pi / 2 / 3
-        if best is None or need / r < best[0]:
-            best = (need / r, p, r, cocked, track, cc)
-        if need <= r + 1e-6:
-            return p, r, cocked, track, cc
+            r = max(r, need)
+            if cc - r < 0.5:  # no room to hold a set: the draw back goes straight to where the drive leaves from
+                r = cc
+                cocked = at(-p - kn["creep"], lag, roll0)
+                track = _load_track(held, far, out, start, cocked, spin)
+                need = track[-1] * math.pi / 2 / 3
+            if best is None or need / r < best[0]:
+                best = (need / r, p, r, cocked, track, cc)
+            if need <= r + 1e-6:
+                return p, r, cocked, track, cc
     return best[1:]
+
+
+_TRACKS = {}
+
+
+def seen_k(held, far, out, a, b, k):
+    """lerp_pose(a, b, k)'s k laid along the path as seen (_load_track): the eased progress spent on what the eye
+    sees, what is out of the frame passed quickly. For the ways home (the Fight Feel review: a blade dropped out of
+    the view, or popped up into rest, a whole screen in a frame)."""
+    oa, ob = out(a), out(b)
+    key = (held.wid, bool(far), np.round(np.concatenate([oa[0], oa[1].ravel(), ob[0], ob[1].ravel()]), 4).tobytes())
+    track = _TRACKS.get(key)
+    if track is None:
+        track = _TRACKS[key] = _load_track(held, far, out, a, b, LOAD_TURN / 3)
+    if track[-1] <= 1e-3:
+        return k
+    return float(np.interp(k * track[-1], track, np.linspace(0.0, 1.0, len(track))))
+
+
+def home_plan(held, far, out, low, lowered, ticks, room, share=0.35):
+    """(ticks, drop share): how long the way home takes and how much of it the drop out of the frame has, so each leg
+    keeps to LOAD_STEP as seen (the drop on its sine, the rise easing out: both peak pi/2 times their mean). At least
+    {@code ticks}, longer when it needs it (never past {@code room}): a blade kept to that speed is still quick, and
+    never a slow slide across the view."""
+    rest = (np.zeros(3), np.eye(3))
+    oa, ob = out(low), out(lowered)
+    key = ("plan", held.wid, bool(far), round(ticks, 3), round(room, 3),
+           np.round(np.concatenate([oa[0], oa[1].ravel(), ob[0], ob[1].ravel()]), 4).tobytes())
+    if key not in _TRACKS:
+        drop = _load_track(held, far, out, low, lowered, LOAD_TURN / 3)[-1] * math.pi / 2 / 3
+        rise = _load_track(held, far, out, lowered, rest, LOAD_TURN / 3)[-1] * math.pi / 2 / 3
+        span = min(max(ticks, drop + rise), max(ticks, min(room, ticks * HOME_STRETCH)))
+        _TRACKS[key] = (span, min(0.7, max(share, drop / max(1e-6, drop + rise))))
+    return _TRACKS[key]
 
 
 def _off_screen(held, pose):
@@ -922,6 +1179,10 @@ def live(sid, moves=None, spec=None):
         _FEEL[sid] = spec
     _START.clear()
     _FIT.clear()
+    _TRACKS.clear()
+    _YIELD.clear()
+    L._SPIN_FROM.clear()
+    L._REAP_FIT.clear()
     _READY.clear()
     st = L.table()[sid]
     held = L.Held("gatewrought_" + sid)
