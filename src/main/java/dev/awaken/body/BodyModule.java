@@ -45,6 +45,16 @@ public final class BodyModule {
         BodyCommands.register();
         BodyTests.register();
         dev.awaken.body.ascent.AscentModule.init(modBus);
+        // After both movement systems have validated this tick, publish only their current appearance.
+        bus.addListener(EventPriority.LOWEST, net.neoforged.neoforge.event.tick.PlayerTickEvent.Post.class, e -> {
+            if (e.getEntity() instanceof ServerPlayer p) BodyStow.sync(p);
+        });
+        bus.addListener(EventPriority.LOWEST, PlayerEvent.PlayerChangedDimensionEvent.class, e -> {
+            if (e.getEntity() instanceof ServerPlayer p) BodyStow.reset(p);
+        });
+        bus.addListener(PlayerEvent.PlayerRespawnEvent.class, e -> {
+            if (e.getEntity() instanceof ServerPlayer p) BodyStow.reset(p);
+        });
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {

@@ -193,8 +193,9 @@ def spread_rise(a, rel):
 @g1
 def aim_lock(a, rel):
     """Railgun and Grapple: the wrist device tapped (the off fist comes to the main wrist), the main fist locked on the aim."""
-    if a.get("hold") is False:
-        pass
+    if not a["hold"]:
+        return fist_clip(rel, [(rel * 0.5, fist(0.14, -0.40, -0.70)), (rel, AIM)],
+                         [(rel * 0.5, fist(0.02, -0.46, -0.72)), (rel, AIM_OFF)])
     return channel(rel, fist(0.14, -0.40, -0.70), fist(0.02, -0.46, -0.72), AIM, AIM_OFF, events=[(rel, "hold")])
 
 
@@ -231,6 +232,9 @@ def dream_shape(a, rel):
 @g1
 def reach_claw(a, rel):
     """Telekinesis and Void Maw: the main fist reached out on the aim and held; the off hand stays low."""
+    if not a["hold"]:
+        return fist_clip(rel, [(rel * 0.5, fist(0.18, -0.34, -0.8)), (rel, AIM)],
+                         [(rel * 0.5, fist(-0.2, -0.60, -0.7)), (rel, fist(-0.30, -0.55, -0.8))])
     return channel(rel, fist(0.18, -0.34, -0.8), fist(-0.2, -0.60, -0.7), AIM, fist(-0.30, -0.55, -0.8), events=[(rel, "hold")])
 
 
@@ -352,7 +356,8 @@ def register_all():
             s = off_clip(rel, [(2, hand(0.0, 0.02, 0.0, 6), EOC), (3, hand(0.04, 0.02, 0.0, 4), EOS), (4, hand(0.04, 0.02, 0.0, 4), L),
                                (5, hand(-0.02, -0.22, 0.05, -20), EIC), (7, hand(0.0, -0.08, 0.0, -6), EOS)], tail=5)
         else:
-            s = G1[r["g1"]](r["a1"], rel)
+            s = G1[r["g1"]]({**r["a1"], "hold": r["channel"]}, rel)
+        assert r["channel"] or not s["hold"], f"{power}: an instant cast cannot hand over to a held loop"
         name = f"fp_p_{power}"
         events = list(s["events"])
         if not any(e == "release" for _, e in events):

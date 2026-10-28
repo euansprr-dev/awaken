@@ -21,10 +21,14 @@ final class BodyMotion {
     long mantleUntil;
     /** A crossing (SPEC §17.27): until when the server holds the crawl box (the path's length plus its grace). */
     long vaultUntil;
+    int vaultKind;
+    /** The ledge climb-out has left its hang but still uses both hands. */
+    long climbOutUntil;
     // ---- spike S3: the Runner's Kit ----
     // wall-run
     long runUntil, runEndedAt = Long.MIN_VALUE / 2, lastWallJumpAt = Long.MIN_VALUE / 2;
     int runAxis, runSide, runMiss, links;
+    boolean runClimb;
     double runPlane;
     long lastWall;
     /** Walls run since the last landing (fresh starts never reuse one). */
@@ -87,7 +91,7 @@ final class BodyMotion {
     long assistUntil;
 
     boolean active() {
-        return tacUntil != 0 || slideUntil != 0 || mantleUntil != 0 || vaultUntil != 0 || runUntil != 0 || hanging;
+        return tacUntil != 0 || slideUntil != 0 || mantleUntil != 0 || vaultUntil != 0 || runUntil != 0 || hanging || gripping;
     }
 
     boolean assisted(Move m, long now) {

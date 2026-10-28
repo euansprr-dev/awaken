@@ -506,12 +506,14 @@ public final class ClientMoves {
     private static void mantleTick(LocalPlayer p) {
         BodyRules.Ledge l = ledge;
         if (l == null) {
+            sendEnd(Move.MANTLE);
             mantling = false;
             return;
         }
         mantleAge++;
         if (mantleAge > BodyRules.MANTLE_TICKS) {
             // over the lip: carry on walking
+            sendEnd(Move.MANTLE);
             mantling = false;
             mantleEnd = ticks;
             trace("mantle done");
@@ -525,6 +527,7 @@ public final class ClientMoves {
             double ex = PATH[0] - p.getX(), ey = PATH[1] - p.getY(), ez = PATH[2] - p.getZ();
             if (ex * ex + ey * ey + ez * ez > 0.5) {
                 trace("mantle blocked");
+                sendEnd(Move.MANTLE);
                 mantling = false;
                 mantleEnd = ticks;
                 return;
@@ -775,6 +778,7 @@ public final class ClientMoves {
         endTac(p, true);
         endSlide(p, true, "stop");
         endVault(p, true, "stop");
+        if (mantling) sendEnd(Move.MANTLE);
         mantling = false;
         perchHold = false;
     }

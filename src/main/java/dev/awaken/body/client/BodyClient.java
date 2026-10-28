@@ -40,6 +40,9 @@ public final class BodyClient {
         modBus.addListener((RegisterParticleProvidersEvent e) -> e.registerSpriteSet(BodyContent.DUST.get(), BodyDustParticle.Provider::new));
         modBus.addListener((RegisterRenderStateModifiersEvent e) ->
                 e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, BodyAnims::modify));
+        // Same renderer base as Arms, registered last: paired weapons and wrist poses have already populated both hands.
+        modBus.addListener(EventPriority.LOWEST, RegisterRenderStateModifiersEvent.class, e ->
+                e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, BodyHeldItems::modify));
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(MovementInputUpdateEvent.class, ClientMoves::onInput);
         bus.addListener(ClientTickEvent.Post.class, e -> tick());

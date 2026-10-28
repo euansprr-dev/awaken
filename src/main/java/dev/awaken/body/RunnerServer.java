@@ -95,6 +95,7 @@ final class RunnerServer {
             // a link follows an accepted wall jump, onto a wall other than the one just left
             if (link != m.links || m.links > RunnerRules.links(Body.runnerRank(p)) || w.id() == m.lastWall || now - m.lastWallJumpAt > 40) return false;
         }
+        m.runClimb = false;
         m.runUntil = now + RunnerRules.runLength(link, Body.runnerRank(p), Body.wallStride(p)) + RunnerRules.RUN_GRACE
                 + p.getData(dev.awaken.body.ascent.AscentContent.MEMORY).level(dev.awaken.body.ascent.AscentMemory.Track.RUNNER);
         m.runAxis = w.axis();
@@ -121,6 +122,7 @@ final class RunnerServer {
         RunnerRules.Wall w = RunnerRules.wallOn(p.level(), CollisionContext.of(p), M, s[0], s[1], s[2], msg.axis(), msg.sign(),
                 RunnerRules.CLIMB_REACH + RunnerRules.SERVER_TOL, 0, 0);
         if (w == null || Math.abs(w.plane() - msg.ty()) > 0.1 || m.ranWall(w.id())) return false;
+        m.runClimb = true;
         m.runUntil = now + RunnerRules.CLIMB_TICKS + RunnerRules.RUN_GRACE;
         m.runAxis = w.axis();
         m.runSide = w.side();
@@ -245,6 +247,7 @@ final class RunnerServer {
             double dx = stand[0] - msg.tx(), dz = stand[2] - msg.tz();
             if (dx * dx + dz * dz > 1.0 || Math.abs(stand[1] - msg.ty()) > 0.25) return false;
             endHang(m, now);
+            m.climbOutUntil = now + RunnerRules.CLIMB_OUT_TICKS + RunnerRules.RUN_GRACE;
             BodyServer.didClip(p, m, Move.LEDGE_JUMP, msg.yaw(), BodyContent.CLIMB, 0.8F, now, BodyClips.MANTLE);
             // climbing out onto a ledge is how a hunter climbs one before the Mantle (C): the first moves' ledge row and the
             // Moving Like a Hunter trail count it (Euan 2026-10-27: climbed a ledge, the row never ticked)
@@ -376,6 +379,7 @@ final class RunnerServer {
                 endHang(m, now);
                 BodyServer.showRunnerEnd(p);
             }
+            case LEDGE_JUMP -> m.climbOutUntil = 0;
             case SHIMMY -> {
                 m.shimmying = false;
                 if (m.hanging) BodyServer.showClip(p, BodyClips.HANG, p.getYRot());

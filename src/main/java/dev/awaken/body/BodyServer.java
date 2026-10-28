@@ -101,6 +101,7 @@ final class BodyServer {
         long now = now(p);
         if (move == Move.TACTICAL_SPRINT) endTactical(p, m, now, false);
         else if (move == Move.SLIDE) endSlide(p, m, now, false);
+        else if (move == Move.MANTLE) m.mantleUntil = 0;
         else if (move == Move.VAULT) endVault(p, m, now);
         else if (move.runner()) RunnerServer.onEnd(p, move);
     }
@@ -308,6 +309,7 @@ final class BodyServer {
     static void vaultFrom(ServerPlayer p, BodyMotion m, VaultRules.Vault v, float yaw, long now) {
         if (RunnerServer.bench != null) m.tVaults++; // an accident lane's count
         m.vaultUntil = now + v.ticks() + VaultRules.GRACE;
+        m.vaultKind = v.kind();
         p.setForcedPose(Pose.SWIMMING);
         p.setPose(Pose.SWIMMING);
         p.causeFoodExhaustion(VaultRules.EXHAUSTION);
@@ -414,7 +416,7 @@ final class BodyServer {
         }
         if (m.mantleUntil != 0) {
             p.resetFallDistance();
-            if (now >= m.mantleUntil) m.mantleUntil = 0;
+            if (now >= m.mantleUntil || off(p)) m.mantleUntil = 0;
             else m.lastMove = now;
         }
         if (m.vaultUntil != 0) {

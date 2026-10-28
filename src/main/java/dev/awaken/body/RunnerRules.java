@@ -65,6 +65,8 @@ public final class RunnerRules {
     public static final double LEDGE_UP = 2.5, LEDGE_SIDE = 3.0, LEDGE_BACK_OUT = 0.5, LEDGE_BACK_UP = 0.42;
     /** A climb out may land this much over the lip (vanilla's step: a stair eave's back half, a roof's next slab). */
     public static final double CLIMB_STEP = 0.6;
+    /** The climb-out's two-tick load and eight-tick push, shared with its server appearance window. */
+    public static final int CLIMB_OUT_TICKS = 10;
     // ---- jump help --------------------------------------------------------------------------------------------------
     public static final int COYOTE = 3, BUFFER = 4;
     public static final double SNAP = 0.3;
