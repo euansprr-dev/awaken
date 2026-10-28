@@ -166,7 +166,7 @@ final class CastAnims {
     /** Whether the entity is in this cast profile and has not let go of it (a channel's hold). */
     static boolean holding(int entityId, int profileId) {
         Anim a = find(entityId);
-        return a != null && a.profile != null && a.profile.id() == profileId && a.releasedAt < 0;
+        return a != null && a.held && a.profile != null && a.profile.channel() && a.profile.id() == profileId && a.releasedAt < 0;
     }
 
     /** Ticks since the entity's cast profile began (with the frame's partial tick), or -1 when it is not in that profile. */

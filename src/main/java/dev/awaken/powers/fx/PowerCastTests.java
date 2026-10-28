@@ -94,7 +94,12 @@ final class PowerCastTests {
             boolean says = false;
             for (int i = 0; i < c.events.length; i++) says |= Math.abs(c.eventAt[i] - p.release()) < 1e-3 && (c.events[i].equals("plant") || c.events[i].equals("hold") || c.events[i].equals("release"));
             h.assertTrue(says, p.power() + ": " + p.begin1p() + " has its release event on tick " + p.release());
-            h.assertTrue(p.hold1p() == null || fp.get(p.hold1p()).loop, p.power() + ": the first-person hold loops");
+            h.assertTrue(p.channel() == (t.mode == PowerType.Mode.CHANNEL), p.power() + ": the profile matches the power's lifetime");
+            h.assertTrue(p.hold1p() == null || p.channel() && fp.get(p.hold1p()).loop, p.power() + ": only a channel has a first-person hold");
+            if (!p.channel()) {
+                h.assertTrue(!c.loop, p.power() + ": an instant first-person cast ends by itself");
+                for (String event : c.events) h.assertTrue(!event.equals("hold"), p.power() + ": an instant cast never starts a held loop");
+            }
             // the beat rides the wire flags and is not read as a pose
             FxEvent e = FxEvent.of(FxKind.POSE, FxStyle.KINETIC, Vec3.ZERO).profile(p.id(), CastProfiles.END).build();
             h.assertTrue(e.profile() == p.id() && e.beat() == CastProfiles.END && e.anim() == CastAnim.NONE, p.power() + ": a profile beat is not a pose");

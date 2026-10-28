@@ -578,7 +578,7 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_grapple",
-   "hold1p": "fp_p_grapple_hold"
+   "hold1p": null
   },
   {
    "power": "jet_burst",
@@ -799,7 +799,7 @@
    "origin": "palm",
    "beginSound": null,
    "begin1p": "fp_p_void_maw",
-   "hold1p": "fp_p_void_maw_hold"
+   "hold1p": null
   },
   {
    "power": "waking_dream",

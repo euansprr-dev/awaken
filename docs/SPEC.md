@@ -8336,6 +8336,12 @@ setting (D13).
   = the posed model's palm sampled by `MuzzleLayer` (like Arms' `BladeTraceLayer`: `translateToHand`, the torso and the main-side leg's
   sole for CORE and FOOT); an undrawn body = the stance's baked numbers (`proof/numbers.json`). Anything else keeps the old constant offsets.
   Every HAND-anchored effect of every power now starts at the drawn palm while a cast pose shows it.
+- **Instant casts let go** (Euan, 2026-10-28: Snap Cable left both hands raised): a first-person hold loop belongs only
+  to a channelled power. Snap Cable and Void Maw use the aim/reach gesture's finite version: after release the hands
+  settle to rest over 6 ticks, and the clip ends one tick later. Landing, a missed target or a refused prediction needs
+  no channel-end message to free the hands. Railgun and Telekinesis keep their held gestures until their channel ends.
+  The runtime permits a hold hand-over only while a channel's held cast is live. `power_cast_profiles` checks the power
+  mode, profile and first-person clip lifetime together.
 - **Hands additions**: `FpClipSet.FILES` also reads `fp_casts.json`; a clip may be `stow` (its fists are drawn even when a hand holds
   something, so a held weapon is out of view while you cast); `FirstPerson.View.stow`, `FirstPerson.LAST_FIST_MAIN/OFF`, `lastFistNanos`.
 - **Sound**: `tools/art/specs/audio_powers.py` renders `sounds/powers/power_{stomp_lift,stomp_plant,beam_gather,beam_loop,beam_end}_*.ogg`
