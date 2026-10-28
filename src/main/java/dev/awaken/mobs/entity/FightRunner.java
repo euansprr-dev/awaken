@@ -177,12 +177,15 @@ final class FightRunner {
         if (boss.def().flies()) return;
         if (navTicks-- > 0) return;
         navTicks = 10;
+        // it stops where its close moves reach (at most 3.5 blocks out): Unit Zero's cuts reach 1.6, not 3.5
         double reach = 0;
         for (FightScripts.Entry e : fight.phase(boss.phase()).pool()) {
             int i = moves.index(e.move());
-            if (i >= 0) reach = Math.max(reach, moves.get(i).maxRange());
+            if (i < 0 || moves.get(i).minRange() > 0 || e.when() == FightScripts.When.FAR || e.when() == FightScripts.When.BEHIND) continue;
+            reach = Math.max(reach, moves.get(i).maxRange());
         }
-        if (edgeDistance(target) > Math.min(reach, 3.5)) boss.getNavigation().moveTo(target, 1.0);
+        double stop = reach > 0 ? Math.min(3.5, Math.max(0.5, reach - 0.3)) : 3.5;
+        if (edgeDistance(target) > stop) boss.getNavigation().moveTo(target, 1.0);
         else boss.getNavigation().stop();
     }
 
@@ -205,6 +208,11 @@ final class FightRunner {
         if (i < 0) return false;
         KitMoves.Move m = moves.get(i);
         if (!inRange(m, target)) return false;
+        // a summon with its colony already out is no move at all: it walks in instead
+        if (m.ability().isPresent()) {
+            Ability a = boss.ability(m.ability().get());
+            if (a != null && boss.level() instanceof ServerLevel sl && !boss.abilityRunner().room(sl, a)) return false;
+        }
         return switch (e.when()) {
             case ANY -> true;
             case NEAR -> edgeDistance(target) <= 4;

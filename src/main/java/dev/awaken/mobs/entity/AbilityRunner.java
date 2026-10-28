@@ -232,6 +232,16 @@ public final class AbilityRunner {
         return null;
     }
 
+    /** Whether a kit move's ability has room now: a summon its budget, a decoy its cap, a heal someone hurt (the rest: always). */
+    boolean room(ServerLevel level, Ability a) {
+        return switch (a.kind()) {
+            case SUMMON -> Mobs.minionRoom(level, mob, a.count());
+            case DECOY -> level.getEntitiesOfClass(AwakenMob.class, mob.getBoundingBox().inflate(24), AwakenMob::isDecoy).size() < 3;
+            case HEAL -> Abilities.alliesHurt(level, mob, a.radius());
+            default -> true;
+        };
+    }
+
     /** A move's wind-up begins: aim at the target and place the ability's marks, as an ability's own wind-up does. */
     void prepare(ServerLevel level, Ability a, LivingEntity t, int windup) {
         aimTarget = t;

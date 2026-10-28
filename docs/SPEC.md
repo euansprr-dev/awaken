@@ -8659,9 +8659,13 @@ should show a boss bar of our own. What he approved (PLAN §7):
     Root motion moves the body by `advance`.
   - **Recover.** It doesn't turn. This is the opening you can punish.
 - **Picking moves.** Between moves the runner waits 6-14 ticks, then picks by weight from the phase's pool among the
-  entries whose `when` and `range` hold. A string carries on without a gap. A posture break (`Stances.broken`), a
+  entries whose `when` and `range` hold, and whose ability has room (`AbilityRunner.room`: a summon its budget,
+  `Mobs.minionRoom`; a decoy its cap; a heal someone hurt). Without that, Unit Zero, at 3-8 blocks where only Deploy
+  Coils reached, replayed it forever. A string carries on without a gap. A posture break (`Stances.broken`), a
   stagger, dormant or fallen pauses it. A stagger (`AwakenMob.stagger`, which a posture break calls) also ends the move
-  in progress and its string, as it ends an ability's wind-up. Out of range of every entry it walks (navigation) toward the target.
+  in progress and its string, as it ends an ability's wind-up. Out of range of every entry it walks (navigation) toward the target. It stops where its close moves reach: the
+  longest range among the pool's entries with no minimum and no `far` or `behind`, less 0.3, at least 0.5 and at most
+  3.5 blocks from your edge.
 - **Phases.** A phase threshold crossed between moves plays the phase's `transition` move: it is invulnerable for that
   move (`shieldTicks`), its part breaks off, and the phase line goes to the plate (players on the bar; chat for the
   rest). Phases enter in order, one
