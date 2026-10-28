@@ -40,6 +40,31 @@ public final class Ritual {
         });
     }
 
+    /** The exact distance-driven time used by the statue renderer's 1.6 second walk clip. */
+    public static float walkSeconds(net.minecraft.world.entity.Entity e, float partial) {
+        return e instanceof RitualStatue s ? s.walkAnimation.position(partial) * 0.55F : 0;
+    }
+
+    /** Client presentation: only actual moving WALK stages can make planted-foot sounds. */
+    public static boolean walking(net.minecraft.world.entity.Entity e) {
+        return e instanceof RitualStatue s && s.stage() == RitualStatue.WALK && s.walkAnimation.speed() > 0.005F
+                && s.distanceToSqr(s.xo, s.getY(), s.zo) > 0.00001;
+    }
+
+    /** Whether a delayed weapon whoosh still belongs to the current wind-up. */
+    public static boolean windingUp(net.minecraft.world.entity.Entity e) {
+        return e instanceof RitualStatue s && s.stage() == RitualStatue.WINDUP;
+    }
+
+    /** The walk clip's planted foot at phase 0 (left) or 0.8 (right), in world coordinates. */
+    public static Vec3 plantedFoot(net.minecraft.world.entity.Entity e, int foot) {
+        // LivingEntityRenderer rotates by 180-bodyYaw, then flips model X/Y. Model +Z is behind the body.
+        double yaw = Math.toRadians(e instanceof RitualStatue s ? s.yBodyRot : e.getYRot());
+        double side = (foot & 1) == 0 ? 0.225 : -0.225;
+        return e.position().add(Math.cos(yaw) * side + Math.sin(yaw) * 0.36, 0,
+                Math.sin(yaw) * side - Math.cos(yaw) * 0.36);
+    }
+
     public static @Nullable SeatedOne spawnSeated(ServerLevel level, Vec3 at, float yaw) {
         SeatedOne e = SEATED_ONE.get().create(level, EntitySpawnReason.TRIGGERED);
         if (e == null) return null;

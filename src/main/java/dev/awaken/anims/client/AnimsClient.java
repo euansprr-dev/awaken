@@ -40,7 +40,7 @@ public final class AnimsClient {
             if (lean > 0 && !FirstPerson.reducedMotion.getAsBoolean()) e.setNewFovModifier(e.getNewFovModifier() * (1 - 0.05F * lean));
         });
         // station scenes (P5): the crafting table worked by hand
-        dev.awaken.anims.client.station.StationClient.init(bus);
+        dev.awaken.anims.client.station.StationClient.init(bus, modBus);
         bus.addListener(ClientTickEvent.Post.class, e -> dev.awaken.anims.client.station.StationClient.tick());
         bus.addListener(RenderFrameEvent.Pre.class, e -> WorldBody.frame());
         bus.addListener(ExtractLevelRenderStateEvent.class, WorldBody::onExtract);

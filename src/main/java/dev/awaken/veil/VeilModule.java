@@ -49,6 +49,9 @@ public final class VeilModule {
         r.playToServer(VeilPayloads.PossessInput.TYPE, VeilPayloads.PossessInput.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) Possession.input(sp, msg);
         });
+        r.playToServer(VeilPayloads.NextLine.TYPE, VeilPayloads.NextLine.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) Spirits.next(sp, msg.entityId(), msg.heard());
+        });
         r.playToServer(VeilPayloads.Action.TYPE, VeilPayloads.Action.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) action(sp, msg);
         });

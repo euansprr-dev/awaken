@@ -57,7 +57,7 @@ public final class ClassicHud {
             if (current != null && current.closingAt < 0 && current.w.action().map(a::equals).orElse(false)) return;
             QUEUE.removeIf(q -> q.action().map(a::equals).orElse(false)); // the newest copy replaces older ones
         }
-        boolean urgent = w.kind() == SignalWindow.Kind.WARNING || w.priority() >= 9;
+        boolean urgent = w.dialogue() || w.kind() == SignalWindow.Kind.WARNING || w.priority() >= 9;
         if (inCombat() && !urgent) {
             toast(w.title(), edgeFor(w.kind()));
             if (w.action().isEmpty() && w.priority() < 5) return; // toast was enough
@@ -79,6 +79,18 @@ public final class ClassicHud {
         QUEUE.clear();
         TOASTS.clear();
         current = null;
+    }
+
+    static boolean dialogueActive() {
+        return current != null && current.w.dialogue() || current == null && !QUEUE.isEmpty() && QUEUE.peek().dialogue();
+    }
+
+    static void advanceDialogue() {
+        if (current == null || !current.w.dialogue() || current.w.action().isPresent()) return;
+        String topic = current.w.topic();
+        current = null;
+        dev.awaken.core.api.Dialogue.finished(topic);
+        tick();
     }
 
     static void tick() {
@@ -114,7 +126,7 @@ public final class ClassicHud {
 
         if (current == null && !QUEUE.isEmpty()) {
             SignalWindow next = QUEUE.peek();
-            boolean urgent = next.kind() == SignalWindow.Kind.WARNING || next.priority() >= 9;
+            boolean urgent = next.dialogue() || next.kind() == SignalWindow.Kind.WARNING || next.priority() >= 9;
             if (!inCombat() || urgent) {
                 current = new Live(QUEUE.poll());
                 var sound = next.kind() == SignalWindow.Kind.WARNING ? CoreModule.SIGNAL_WARNING.get() : CoreModule.SIGNAL_OPEN.get();

@@ -172,6 +172,21 @@ within 8 blocks) windows become a compact toast and queue. Actions answered with
 Visual: deep glass `#0F1724` at 88% alpha, edge `#7FC3FF`, corner brackets, title white, labels pale, "NOT TRUE YET" amber
 `#FFCF7A`, warnings `#FF8A7A`.
 
+NPC dialogue (Euan, 2026-10-28; Codex, reviewed): NPC speech (`SignalWindow.Builder.dialogue()`: townsfolk, quest
+givers, Wayfarers, Vael, Veil spirits) is shown as speech, the speaker's name before the line ("Hale: Hold on."), paged
+in whole sentences like any story line; a speaker's choice card stays a card with its own keys. The use key
+(right-click by default) goes on one step per physical press: the first press finishes the line being typed, the next
+shows the next page, then the next line (a Veil spirit's next line is asked of the server, which refuses a duplicate,
+stale, distant or finished request). While a press would go on, a small bobbing chevron sits beside the last line.
+Speech only takes the use key inside a conversation the player started (`Dialogue.talking()`): a use on an NPC (or
+Focus on a spirit) opens one for 5 s while the reply comes, and it lasts while speech is up and 2 s after. Speech that
+simply arrives (a quest step finished in the field, Vael's timed lines) never costs a shield block, a meal or a bow
+draw. Inside a conversation the last press is used up, so it can't also restart the talk, use an item or take a
+handover; holding use and the offhand never go on twice, and a fast second click waits for the first reply (1 s).
+Without presses everything still plays on its own timing. The Opening's speech goes on with use while it shows; a
+citizen's reply over their head goes when you look at them (within 6 blocks) and press. Timing, rewards and handovers
+stay server-owned. Test `signal_dialogue_use_once`, `veil_dialogue_continuation`.
+
 The band (key **K**, §30): six pages, Status · Powers · Journal · Truths · Codex · Map. Status shows level, rank, path,
 title and XP, the stats with + buttons when points are unspent, then the Journal; Powers holds the loadout (provided by
 `powers` via `StatusSections`); the Map page is the Atlas.
@@ -330,6 +345,7 @@ of `AwakenConfig.Client`.
 
 - `dev.awaken.signal.Signal` — `send(ServerPlayer, SignalWindow)`, `toast(ServerPlayer, Component)`,
   `toast(ServerPlayer, Component, Notices.Tier, String topic)`; `SignalWindow.Builder.tier/topic/moment` (§26).
+  `SignalWindow.Builder.dialogue()` marks NPC speech (choices keep their action); `SignalWindow.dialogue()` reads it.
   `dev.awaken.signal.Finds` — `tell(ServerPlayer, Find)`: how a new find is told (lesson, moment, first of kind, filed).
 - `dev.awaken.core.api.Notices` (§26) — `enum Tier {CRITICAL, IMPORTANT, AMBIENT}`; client: `claim(tier, topic)` before
   a module's own HUD line takes the screen, `file(tier, title, line)` into the Journal, `quiet()`, `hold(owner, bool)`.
@@ -341,6 +357,8 @@ of `AwakenConfig.Client`.
 - `dev.awaken.core.PlayDays` — current play-day counter.
 - `dev.awaken.mobs.Mobs` — `spawnScaled(ServerLevel, EntityType, pos, level, modifiers)`, rosters by theme.
 - `dev.awaken.mobs.Ritual` — the Ritual of the Bell's cast: `spawnSeated`, `spawnStatue` (stages set on the entities).
+  Presentation reads `walkSeconds(Entity, partial)` (the same distance phase used by the renderer), `walking`,
+  `windingUp` and `plantedFoot`; story audio never reaches into the mob renderer or changes its gait.
 - `dev.awaken.gates.Gates` (ritual) — `ritualPlan(seed)`, `ritualHall(server, gateId)` (`RitualHall`: every position in
   the hall), `isRitual(server, gateId)`.
 - `dev.awaken.gates.Gates` (trials) — `leaperTrialPlan(seed)`: the Leaper's Gauntlet's plan, opened with
@@ -483,6 +501,10 @@ of `AwakenConfig.Client`.
   once a slot has drawn, a line's record rebuilt only when its position, colour or scale changes. Test `holo_plate_scale`.
 - `dev.awaken.signal.client.UiCanvas.texture(Identifier, x, y, w, h, u0, v0, u1, v1, argb)` (client) — part of a whole
   texture (a DynamicTexture or a registered render target) on a panel or a flat screen, one tinted quad.
+- `dev.awaken.core.api.Dialogue` (client) — `register(priority, Source)` installs a speech source with `active/advance`;
+  `use(mainHand)` consumes/advances once per physical press, `capture/release` guard the opening interaction and release.
+  `onFinished/finished(topic)` lets server-paged speech request its next line without reaching into another HUD.
+  `talking()`: the player is in a conversation they started (speech that needs one checks it before taking use).
 - `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
   (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
   The HUD under screens (Euan, 2026-10-27: the gate's run panel drew over the K menu): the game draws the HUD under
@@ -1137,6 +1159,51 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
   without its question, drawn large and typed by the scene) and the question's card (a TRUTH card: the question and
   its keys, no caption) show; the tear frame is the tear and the world only. The gate card says nothing for a spent
   ritual hall and shows no "Breaks in" row for scripted gates.
+- The ritual's sound (2026-10-28, Codex's opening-audio, reviewed): 18 of its clips are built offline from CC0
+  BigSoundBank recordings (`tools/art/sources/ritual/`, `ritual_recordings.py`; stone, bell, arc, wind, pressure),
+  keeping their transients (`audio_mix.py` checks only their -6 dBTP ceiling). One client mixer (`story.client.
+  RitualAudio`) plays every cue: at most 6 voices counting the room bed (a stereo hall bed from WAITING through
+  JUDGEMENT, the void's own bed in the black; the hall's fades under it), at most 2 heavy transients at once, a guidance
+  cue replaces a footstep or detail when the room is full, and spatial voices duck to 45% while a rule's words are read.
+  The gaze is three layers (release at the eyes, a rush that travels the beam in 12 ticks, the strike where it lands);
+  a statue's whoosh plays 17 ticks into its 25-tick wind-up and never if the wind-up ends first. A walking statue's
+  footfalls come from the same distance clock its walk clip uses (a step each 0.8 s of clip, never a catch-up burst),
+  placed under the planted foot on the rendered body yaw, with a small nearby shake. Impacts shake the camera at most
+  1.25 degrees for at most 12 ticks, a second impact can strengthen but never extend it, and 4 quiet ticks part two;
+  kicks are capped at 3 / 2 degrees. `cameraShake` off or reduced motion turns all of it off. Chat, the inventory or
+  the K menu never silence the scene; a pause freezes its clock (nothing replays after). Client settings
+  (`awaken-ritual-audio-client.toml`): `effects` 1.0, `ambience` 1.0, `impactMotion` 0.7.
+
+- Ritual audio revision (2026-10-28): physical stone, pressure, arc, wind and bell layers use archived CC0 recordings
+  with hashes, source pages and repeatable processing in `tools/art/sources/ritual/` and `ritual_recordings.py`.
+  The old physical oscillator recipes are removed. The System glass/candle/drain/heartbeat/tear/void retain their
+  established tonal identity at quieter gains. Recorded transients retain their natural attack and decay; decoded
+  true peak is below −6 dBTP, individual targets −7.5..−29 dBTP. `audio_mix.py --fix` must not RMS-normalize assets
+  listed in a city/ritual recording manifest. World events are mono with explicit 24..96 block attenuation; the hall
+  and Void beds and System words/drain/tear are stereo and listener-relative. The hall bed stays dry in SPR and
+  reports one voice to the world Conductor. These are presentation changes; director timing, hit tests and damage
+  remain exactly as above, with no persistent state or packet changes.
+- Every moving statue gets planted-foot audio from the renderer's unchanged `walkAnimation.position * 0.55`
+  phase: a 1.6 s clip, left contact at phase 0, right at 0.8. Three real stone-contact variants mix friction and low
+  pressure. Contact positions follow vanilla model-axis flips and body yaw. Tick sampling includes statues behind the camera; initial/late tracking, stopping, phase resets and jumps
+  never replay missed contacts. Contacts have 36 block sound range and a restrained 12 block camera impulse.
+  Wind-up whooshes begin at tick 17 of the existing 25 tick wind-up and are dropped if the statue stopped winding
+  up. The door recording meets at the director's 28 ticks (1.4 s), the eyes bloom at 58 ticks (2.9 s), and the beam
+  charge ends at 45 ticks (2.25 s). Beam release, its moving 12 tick air/arc trail, target impact and room decay are
+  different recordings/layers; the existing immediate impact and damage time remain unchanged. SHAKE cues no longer
+  duplicate each beam/weapon impact's rumble, and HIT no longer duplicates the world impact through the UI.
+- The ritual owns at most six voices including its room bed, at most two heavy transients, and one group footfall
+  per four ticks. Guidance and heavy cues can replace a small detail at capacity. Identical great bell cues are
+  spaced by at least 100 ticks, candles six ticks, heavy repeat impacts four ticks; missed sounds are discarded.
+  Hall ambience fades in over ticks, ducks from gain 0.5 to 0.16 while guidance is visible (world one-shots duck to
+  45%), then fades out at END. The hand closing stops the drain and all room tails before its short impact; the
+  Void is quieter than the hall. Pause/menus, scene handoff, logout and client-level changes stop all voices and
+  delayed cues; resuming establishes fresh foot baselines and does not replay missed attacks or the Void toll.
+- `awaken-ritual-audio-client.toml` adds `effects` and `ambience` (0..1, default 1) and `impactMotion` (0..1,
+  default 0.7), alongside normal sound-category sliders. Impact shake is capped at 1.25 degrees and twelve ticks;
+  simultaneous impacts strengthen it without extending or summing it, with four quiet ticks before a new impulse.
+  Kick yaw/pitch are bounded at ±3/±2 degrees; shake falls linearly to zero at its event radius. `cameraShake` off or
+  the shared reduced-motion setting disables impact shake, kicks and FOV punches. Authored scene framing is unchanged.
 
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.
@@ -5564,17 +5631,45 @@ of the plan). No mixins.
     the strip drops what you carry, as off any container screen. Your hands (world source `anims_station`, 200) rest off the table's near corners and one goes out to every
   square whose contents change (and to the result as it is taken), over 9 ticks; moving, jumping, E or Esc leave.
   A hand moves only within 6 ticks of your own click on a slot, so a furnace cooking on its own moves none; taking a
-  result moves the hand to the result only. Furnaces (kind `FURNACE`: furnace, smoker, blast furnace, any
-  `AbstractFurnaceScreen`): worked from the front (the way in against `FACING`), the view turned to the front's middle
-  (a little below its middle) and framed like the table; what cooks sits upright in the mouth (0.68 up, 0.06 out), the fuel in the firebox (0.24 up), the
-  result floats out at the right (0.34 out, 0.36 across, 0.62 up) turning; a slot is picked by the nearest one the ray
-  passes within 0.16 of, outlined flat to the front; the cooking (Holo blue) and the fuel left (fire) run as two thin
-  lines over the strip; the hands wait at your sides under the frame (the fuel is the off hand's, the rest the main's). The
-  recipe book is not in the scenes (sneak + use for it).
-  Setting `stationScenes` (feel), on. Drawn for you only (others see you at the station as before).
+  result moves the hand to the result only.
+  - **Furnaces** (kind `FURNACE`: vanilla furnace, smoker and blast furnace; Codex's furnace-interior, reviewed
+    2026-10-28): the view drops to the mouth's height (block y + 0.57) where you stand; your body and your look are not
+    moved. A client-only camera entity (StationCamera, unregistered, like the opening's OpeningCamera) carries the
+    lowered view, eased in and out like the table (12/6 ticks in, 10 out); the field of view is set through the
+    final-FOV hook, since a camera that is not the player gets no FOV-modifier event. The scene opens only from the
+    front, 0.85 to 4.5 blocks from the block's middle, and only while the far item's edge still shows through the mouth
+    (0.30 either side of it); from the side, the back, too close, or with something in the way you get the plain furnace
+    screen. Eight rays 0.12 out from the eye's corners keep the drop from passing through a floor, wall or low ceiling;
+    they are cast when the scene opens and again every tick (never every frame), so a block placed into the path while
+    you work gives the view back and shuts the screen. Moving, jumping, E or Esc, another camera, death, a new level and
+    logging out also give it back. Your own body is hidden from the lowered view; the hands rest beside it, by the
+    shoulder (0.35 under the eye, clear of the floor), and only a working hand reaches into the frame.
+  - **A real mouth:** every furnace, smoker and blast furnace in the world gets a block model with a recessed mouth
+    (all four facings, lit and unlit): the five outer faces and a stone frame stay, the cavity is x 3–13, y 2–13, z 0–9
+    model pixels with stone walls, a closed back and a coal bed, and a lit one glows at the back of the coals. Items sit
+    3/16 inside the mouth at scale 0.24: what cooks on the left, the finished result on the right (±0.15, y + 0.57),
+    the fuel on the coals (y + 0.26). They stay still while vanilla's flame, smoke and cooking go on. Each slot is
+    picked within 0.16 of its middle and gets the front-facing outline; the cooking (Holo blue) and the fuel left (fire)
+    still run as two thin lines over the strip; fuel is the off hand's, the rest the main hand's. The hint reads "Cook on
+    the left, add fuel below, and take finished items on the right. Sneak as you open it for the usual screen."
+  - **What's inside, screen shut:** the server sends each player read-only copies of the three slots of nearby
+    furnaces (FurnaceContents, payload `furnace_contents`): the nearest 64 within 16 blocks, found every 40 ticks in the
+    nine loaded chunks around them (`getChunkNow`, never a load), compared every 5 ticks, and only changes and
+    removals sent. Using a furnace sends its contents at once, before the menu opens. Leaving range, an unloaded chunk,
+    a replaced block, a new dimension and logging out drop a view; coming back reads it fresh. Nothing is saved and
+    nothing in the furnace is changed. The items are drawn only within 16 blocks and from in front of the mouth, depth
+    tested behind the opaque cavity walls (never through a wall); everyone nearby sees them whatever their
+    `stationScenes` setting, which only turns the scene on or off. Recipes, fuel, taking items, XP and saves stay
+    vanilla's. (A hacked client could read the contents of a furnace behind a wall within 16 blocks; a furnace shows
+    its contents openly anyway, so this is accepted.)
+  - **Other mods and packs:** no mixins. Only a plain single-variant cube furnace model is replaced; a resource pack's
+    or mod's non-cube or wrapped model is left alone, and then the furnace has no scene and no items in its mouth (the
+    plain screen opens). A mod that gives furnaces their own block-entity renderer keeps its look the same way. The
+    models use vanilla's own textures by name; no Mojang file is copied. Setting `stationScenes` (feel), on.
 - **The lens** (P5): the hand pass draws at a fixed 70°; anything the world anchors (arms on a pipe, at a table; near
   legs) has its view x and y scaled by tan(35°) / tan(world FOV / 2), so it lands where the world shows it on screen even
-  with the view narrowed or widened (a station's zoom, the speed FOV).
+  with the view narrowed or widened (a station's zoom, the speed FOV). The lowered furnace camera uses the actual HUD
+  FOV from the render state for that ratio, because its final-FOV hook affects both projections.
 - Test: `anims_fp_clips` (the file reads, every clip the body and the touches play is in it, every one-shot gives the
   hands back). The table scene: `anims_station_frame` (seven GUI sizes from 320×240 to 1280×720, with and without JEI,
   standing 1 to 4 blocks off each side: every slot lies inside the room and a click on its middle picks it),
@@ -5582,7 +5677,12 @@ of the plan). No mixins.
   border, all inside the table's block, a click straight down picks each),
   `anims_station_panel_click` (a square under the strip while leaning in: a click there picks nothing), and the clicks
   vanilla's screen sends on a real crafting menu: `anims_station_right_click`, `_right_drag`, `_left_drag`,
-  `_shift_result`. Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),
+  `_shift_result`. Furnace regressions: `anims_furnace_camera_pick` covers all four facings, high/low player eyes,
+  approach distances/offsets, small and large GUI layouts, all slot picks, and wall/near-plane collision rejection;
+  `anims_furnace_contents` uses real vanilla smelting and save/reload, two viewers, inventory mutation, range/rejoin
+  and removal; `anims_furnace_recess_geometry` checks the six packaged models have an open mouth and opaque backing.
+  These are headless checks; rendered appearance, camera feel and third-party renderer combinations need in-game
+  verification. Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),
   `anims-touch.txt` (P4: filmed with the pilot's clip recorder, since a command reaches the client a few ticks late),
   `anims-station.txt` (P5), PACK=feel, HUD on. Pilot lines `use`, `attack`, `usehold <ticks>` press the real keys;
   `station <slot> [button]` clicks a slot of the open station scene.
