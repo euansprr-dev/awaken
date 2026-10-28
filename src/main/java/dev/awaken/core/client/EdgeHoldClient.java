@@ -12,6 +12,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import java.util.function.LongPredicate;
 
@@ -23,6 +24,9 @@ import java.util.function.LongPredicate;
  * powers (set on the client, or by the server's motion packets), the autopilot's glide, and vanilla's elytra, firework
  * boosts, riptide and creative or spectator flight. A mover that sets its velocity after this point in a tick is held
  * from the next one (a tick's travel, well inside the 1.25 s it looks ahead). Riding is the mount's movement, not held.
+ * Travel adds the mover's own acceleration after the cap, so a guard at the end of the player's tick (before the
+ * position is sent) puts back any step that brought the player nearer than {@link EdgeHold#BODY} to a chunk this
+ * client doesn't have, on the axis that crossed: at the edge the player stops, never enters.
  * No allocation a tick; one chunk lookup a chunk the path crosses. Client only. While it holds, {@link EdgeHoldCue}
  * plays a headwind and closes a pale mist in toward the edge, from {@link #shown()} and {@link #edgeShown()}.
  */
@@ -55,15 +59,20 @@ public final class EdgeHoldClient {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, MovementInputUpdateEvent.class, e -> {
             if (e.getEntity() instanceof LocalPlayer p) hold(p);
         });
+        NeoForge.EVENT_BUS.addListener(PlayerTickEvent.Post.class, e -> {
+            if (e.getEntity() instanceof LocalPlayer p) guard(p);
+        });
     }
 
     private static void hold(LocalPlayer p) {
         Vec3 v = p.getDeltaMovement();
         double speed = Math.sqrt(v.x * v.x + v.z * v.z);
         double cap = Double.POSITIVE_INFINITY, edge = Double.POSITIVE_INFINITY;
-        if (!p.isPassenger() && speed > EdgeHold.FLOOR) {
-            // the client holds chunks out to its render distance only (the server's, if smaller): past that nothing's missing
-            double reach = Math.min(speed * EdgeHold.LOOK_TICKS, (Minecraft.getInstance().options.getEffectiveRenderDistance() - 1) * 16.0);
+        if (!p.isPassenger() && speed > 1.0E-4) {
+            // the client holds chunks out to its render distance only (the server's, if smaller): past that nothing's missing;
+            // a slow mover still reads the last block ahead, where it eases to a stop
+            double reach = Math.min(Math.max(speed * EdgeHold.LOOK_TICKS, EdgeHold.BODY + EdgeHold.LAST),
+                    (Minecraft.getInstance().options.getEffectiveRenderDistance() - 1) * 16.0);
             edge = EdgeHold.edge(p.getX(), p.getZ(), v.x, v.z, reach, HAS);
             cap = EdgeHold.cap(speed, edge, last);
         }
@@ -83,6 +92,39 @@ public final class EdgeHoldClient {
             }
             heldTicks = 0;
         }
+    }
+
+    /**
+     * After the move, before it's sent: a step that took the player from {@link EdgeHold#BODY} clear of every missing
+     * chunk to nearer is put back on the axis that crossed, and that axis's speed zeroed. A player already nearer (just
+     * arrived, the land still coming) isn't held there.
+     */
+    private static void guard(LocalPlayer p) {
+        double x = p.getX(), z = p.getZ(), xo = p.xo, zo = p.zo;
+        if (p.isPassenger() || (x == xo && z == zo) || clear(x, z) || !clear(xo, zo)) return;
+        Vec3 v = p.getDeltaMovement();
+        if (clear(x, zo)) {
+            p.setPos(x, p.getY(), zo);
+            p.setDeltaMovement(v.x, v.y, 0);
+        } else if (clear(xo, z)) {
+            p.setPos(xo, p.getY(), z);
+            p.setDeltaMovement(0, v.y, v.z);
+        } else {
+            p.setPos(xo, p.getY(), zo);
+            p.setDeltaMovement(0, v.y, 0);
+        }
+    }
+
+    /** Whether every chunk within {@link EdgeHold#BODY} of (x, z) across is here. */
+    private static boolean clear(double x, double z) {
+        int x0 = Mth.floor(x - EdgeHold.BODY) >> 4, x1 = Mth.floor(x + EdgeHold.BODY) >> 4;
+        int z0 = Mth.floor(z - EdgeHold.BODY) >> 4, z1 = Mth.floor(z + EdgeHold.BODY) >> 4;
+        for (int cx = x0; cx <= x1; cx++) {
+            for (int cz = z0; cz <= z1; cz++) {
+                if (!HAS.test(ChunkPos.pack(cx, cz))) return false;
+            }
+        }
+        return true;
     }
 
     /** Eases the cue toward this tick's hold: in over about half a second, out over about a second. */

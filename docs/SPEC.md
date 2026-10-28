@@ -8664,8 +8664,17 @@ horizontal velocity is capped. The hook is the last listener to `MovementInputUp
 client's chunk storage per chunk the path crosses (`getChunk(x, z, FULL, false)`), no allocation, out to the render
 distance less one chunk. Where a chunk on the path is missing, the speed is capped at the distance to it over
 25 ticks, so the player arrives as the land comes in. The cap falls at most 12% a tick from the speed the player
-had, which feels like thick air or a headwind, never a wall. It never drops below 0.1 blocks a tick (2 b/s), so
-never a dead stop. It lifts the tick the chunk arrives. Vertical speed is the mover's own. Every fast mover moves the
+had, which feels like thick air or a headwind, never a wall. It never drops below 0.1 blocks a tick (2 b/s) until
+the last block before the edge; over that block it eases to nothing and the player stops short of the missing chunk
+(the orchestrator, 2026-10-29: "drop it at the edge"; in run 40741943440 a crawl at the floor walked into unmade land
+and one move packet waited 44 s). The player's middle stays `EdgeHold.BODY` (1.35 blocks) from it: the box's
+half-width and the block past it that vanilla's fluid check reads (`EntityFluidInteraction` reads one block beyond
+the box, and a FULL `getChunk` that doesn't load still waits on a chunk under way). Each tick the cap is also at most
+half the room left, so the player nears that line and never crosses it. `travel` adds the mover's own acceleration
+after the cap, so a guard at the end of the player's tick (`PlayerTickEvent.Post`, before `sendChanges` sends the
+position) puts back any step that came nearer than `BODY` to a missing chunk, on the axis that crossed, and zeroes
+that axis's speed. A player already nearer (just arrived, the land still coming) isn't held there. The headwind and
+the mist carry the meaning (the cue, below). It lifts the tick the chunk arrives. Vertical speed is the mover's own. Every fast mover moves the
 player by their velocity, so the one hook holds them all:
 - Skyborn's flight and its boosts (§17.1, §17.8, §17.19);
 - glides and windways (§17.1, §17.12);
@@ -8674,8 +8683,8 @@ player by their velocity, so the one hook holds them all:
 - the pilot's `glide` (§13, Tours);
 - vanilla's elytra, firework boosts, riptide and creative or spectator flight.
 A mover that sets velocity later in a tick is held from the next tick, a tick's travel well inside the 1.25 s look.
-Riding is the mount's movement and isn't held. Teleports (Blink, the steps, commands) aren't velocity: the packet cap
-is their backstop. A hold of a second or more logs one line when it ends, at most every 10 s (`[edgehold] held N ticks
+Riding is the mount's movement and isn't held. Teleports (Blink, the steps, commands) aren't velocity: Awaken's own
+travel waits for its land (Arrivals, below), and the packet cap is the backstop for the rest. A hold of a second or more logs one line when it ends, at most every 10 s (`[edgehold] held N ticks
 at the edge of the land this client has, slowest S blocks a second`). In multiplayer it keeps a player's own move
 packets inside land the server has already sent them, so the server has made it.
 **The cue** (`core.client.EdgeHoldCue`, 2026-10-29; the orchestrator, from the runner's 55 s crawls: "if a held glide
@@ -8693,8 +8702,9 @@ from 0.3 for an edge 48 blocks ahead or more up to 1 at the edge.
   so the land ahead fades into haze instead of ending at a cut. It composes with the other fogs (Far Sight before it,
   Lens reading after it).
 `core_edge_hold_math` checks the path's edge straight, through a corner, west of the origin and from a chunk that's
-missing. A flight at 40 b/s toward land missing beyond 40 blocks eases by at most 12% a tick and never stops. It never
-crosses before the land comes, and it's back to full speed within two ticks of it.
+missing. A flight at 40 b/s toward land missing beyond 40 blocks eases by at most 12% a tick and never holds below
+the floor short of the last block. It never crosses before the land comes, and it's back to full speed within two ticks
+of it. When the land never comes, it eases to a stop within the last block and never comes nearer than `BODY`.
 **Packet cap** (Turbo, `dev.awaken.turbo.packetcap`, 2026-10-28). The server's queued packets are handled in order for
 at most 50 ms a tick (`PacketCap.BUDGET_NS`, a tick's time, the first packet always), and the rest wait for the next
 tick. The hook is a HEAD inject in `PacketProcessor.processQueuedPackets`, for the server's processor only

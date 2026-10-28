@@ -11,17 +11,28 @@ import java.util.function.LongPredicate;
  * packets into land not made, and each one waits on the server thread for its chunk (the flight freeze of runs
  * 40715105903 and 40716396298). The client looks ahead along its horizontal velocity, about 1.25 s of travel; when a
  * chunk on that path is missing it eases the horizontal speed down so the player nears that edge as the land comes in:
- * a headwind, never a wall (the cap falls at most {@link #EASE} a tick) and never a dead stop (never below
- * {@link #FLOOR}). It only ever slows: when the land comes, the movers' own acceleration brings the speed back. Pure
- * math here (the GameTest drives it); the client's hook is {@code core.client.EdgeHoldClient}.
+ * a headwind, never a wall (the cap falls at most {@link #EASE} a tick), and it never holds below {@link #FLOOR} until
+ * the last block before the edge. Over that last block it eases to nothing and never enters: the player stays
+ * {@link #BODY} short of the land not made, where nothing the server reads around them can wait on it (a crawl into
+ * it still would). It only ever slows: when the land comes, the movers' own acceleration brings the speed back. Pure
+ * math here (the GameTest drives it); the client's hook, and the guard after the move, are in
+ * {@code core.client.EdgeHoldClient}.
  */
 public final class EdgeHold {
     private EdgeHold() {}
 
     /** How far ahead the path is read: this many ticks of travel at the speed now (1.25 s). */
     public static final double LOOK_TICKS = 25;
-    /** The speed it never holds below, blocks a tick (2 blocks a second, a slow walk): thick air, never a stop. */
+    /** The speed it never holds below short of the last block, blocks a tick (2 blocks a second, a slow walk). */
     public static final double FLOOR = 0.1;
+    /**
+     * How near the player's middle comes to a missing chunk, blocks: the box's half-width (0.3) and the block past it
+     * that the server's fluid check reads ({@code EntityFluidInteraction} reads one block beyond the box, and a chunk
+     * still being made is waited on even when it asks not to load), and a little.
+     */
+    public static final double BODY = 1.35;
+    /** The last stretch before the edge, blocks: over it the floor fades to nothing and the player eases to a stop. */
+    public static final double LAST = 1.0;
     /** The most the cap falls in one tick (land missing close ahead after a turn is a quick ease, never a wall). */
     public static final double EASE = 0.12;
     /** Chunks a path reads at most (1.25 s at 100 blocks a second crosses fewer). */
@@ -63,11 +74,16 @@ public final class EdgeHold {
     /**
      * The horizontal speed allowed this tick, blocks a tick, from the speed now, the path's edge ({@link #edge}) and the
      * cap last tick ({@link Double#POSITIVE_INFINITY} when nothing held): infinite when the edge is beyond 1.25 s of
-     * travel (or the speed already a crawl), else the speed that would take the rest of that time to reach it, eased in.
+     * travel and the box is clear of it, else the speed that would take the rest of that time to reach it, eased in,
+     * and never more than half the room the box has left (so it nears the edge and never crosses it).
      */
     public static double cap(double speed, double edge, double last) {
-        if (speed <= FLOOR || edge >= speed * LOOK_TICKS) return Double.POSITIVE_INFINITY;
-        double target = Math.max(FLOOR, edge / LOOK_TICKS);
-        return Math.max(target, Math.min(last, speed) * (1 - EASE));
+        double room = Math.max(0, edge - BODY), near = room * 0.5;
+        double cap = near;
+        if (edge < speed * LOOK_TICKS) {
+            double target = Math.max(FLOOR * Math.min(1, room / LAST), room / LOOK_TICKS);
+            cap = Math.min(near, Math.max(target, Math.min(last, speed) * (1 - EASE)));
+        }
+        return cap < speed ? cap : Double.POSITIVE_INFINITY;
     }
 }
