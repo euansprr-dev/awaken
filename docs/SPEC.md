@@ -8549,3 +8549,74 @@ the first adit (handed over at the Hearth when no adit is near). 9. Cave air (ba
 breathes). 10. Delver lamps. 11. Strike and cave sounds from CC0 recordings (each download listed to Euan first).
 12. The Hollows in every cave by depth, drawn by strikes, wary of light. 13. One session, P1 (the first iron trip)
 first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
+
+### 34.1 Mouths (built, P1d: hill mouth and adit; doline and cleft come with P4)
+- **Place** `awaken:delve/mouth` (`delve.cave.Mouth`, `CaveKind.MOUTH`, appended so older kinds keep their ordinals),
+  structure set `delve/mouths`: random spread 12/4, salt 734018553, `#minecraft:is_overworld`, new land only. Spec at
+  the lip's floor, rot forward = into the hill; p: form, throat length, its drop, arch width, height, the lode's heart
+  (x, y, z), its ore + 1, the cairn's side.
+- **Delver adit** (tried first): an iron or copper lode within 72 whose heart is at y 24 or above, a hill over the
+  drift, an open front, dry; drift 14-28 long, falling 0 to a third of its length, timber sets every 3, rails, ends at
+  the heart (left in the end face; the joint tunnel to the cave leaves from the drift's side). Mark "pick" at the drift's
+  end (the Delver's Pick in the stone, P1d's next part), a barrel there.
+- **Hill mouth**: 8+ of rise in 16, open front, arch 5/7/9 wide and 6-11 high (an ellipse, a rough top, roots and vines
+  over the lip), throat 16-40 falling about one in two (a drop of two where the hash says), ground over the end, dry; a
+  joint to natural cave air is required.
+- **Cairn** on the open ground in front: stacked cobble walls and an iron-bar spike; at an adit a fence post with a
+  lantern.
+- **Tells** (client, `CaveFx`, from the place's site in `CavePlaces.near`: lip, arch width, and turn | form << 2 |
+  height << 3): the **breath**, mist exhaled from the arch's upper half and drifting out, strongest at dawn (to 1500,
+  fading to 4000), for 3 minutes after rain, 0.14 by day, 0.35 at dusk, seen to 160 m; the **draught**, streaks out of
+  the throat within 28 m; the **cold air heard** within 32 m (the breath-of-air loop at the nearest mouth, pitch 0.78;
+  to be re-voiced from a recording). Far mist goes straight to the particle engine (the level's own path drops
+  particles past 32 blocks; the sinkhole's mist had the same fault and now does the same), never at Minimal particles.
+- **Tests**: `delve_cave_routes` walks every kind (the mouth staged as an adit on even seeds, a hill mouth on odd).
+
+### 34.2 Metal lives in the caves (built, P1c)
+- **Wall lodes** (`LodePlans.walls`, on top of each region's existing lodes, which are unchanged so old worlds agree):
+  per 256 region 3 iron (y -16..60), 2 copper (0..64), 2 coal (8..72). Each tries 16 columns of the base noise
+  (`ChunkGenerator.getBaseColumn`, no carvers; `LodePlans.columns(seed, ...)` installed on overworld load): air you
+  could stand in within the ore's band (nearest the rolled height, up to four spots), then out up to 10 cells to the
+  first rock at head height with rock behind; the seam then follows the wall's face both ways (each step settling on
+  the rock cell with air on its cave side, two in or out, a cell up or down at 12% each), a cell behind or above now and
+  then, at most 56 blocks. Not laid without a wall. On seed 3405691582's vanilla noise, 4 regions: 16 of 28 laid (10
+  iron), 86% of their blocks face air (`delve_lodes_air`). A wall lode planned into chunks generated before this
+  build doesn't exist there.
+- **Thinning** (`awaken:thin_ores`, a biome modifier at AFTER_EVERYTHING on `#minecraft:is_overworld`): in each biome's
+  underground ores, vanilla's ore_iron_upper/middle/small, ore_copper(_large), ore_coal_upper/lower, ore_gold,
+  ore_gold_lower, ore_gold_extra are swapped for `awaken:thinned/<name>`, the same feature at 35% of the count (90→31,
+  10→4, 10→4, 16→6, 16→6, 30→10, 20→7, 4→1, 50→18; ore_gold_lower keeps its count behind a rarity filter of 3).
+  Diamonds, redstone, lapis, emerald untouched; generated chunks keep theirs. Test `delve_thinned_ores`.
+
+### 34.3 The strike (built, P1a/P1b)
+- **Particles** (`delve.client.StrikeFx`, `StrikeChip`): client extensions on every block `delve.StrikeBlocks` names
+  (vanilla's `*_ore`, the rock list, the loose-ground list, our lode hearts and Deepglass), claimed last on our bus and
+  only where `isBlockRegistered` is false. `addHitEffects` returns true (vanilla's per-tick crumbs gone); the bite is
+  drawn from `playHitSound` (the server's progress event 2020, every fourth tick, so onlookers see it too); the sound
+  stays vanilla's until the recordings. A bite: 2-4 chips (1-2 decreased, none minimal); a break: 8-14 chips (4-7) and
+  3-5 dust wisps in the block's map colour (2). Chips: a 3/16 square of the block's particle sprite, tinted as vanilla's,
+  shade 0.72-0.82, size 0.034-0.07, tumbling (the leaf technique), world light read every 4 ticks, one bounce off the
+  floor when falling faster than 0.09, then lying flat 0.6-1.6 s and shrinking out. At most 48 chips from mining.
+- **Streaks** (sparks): fixed arrays, at most 24; additive lines (the lamp's glow pipeline) from the head back 1.5 ticks
+  of flight, white-gold cooling to the ore's tint, life 4-8 ticks, skitter off full blocks (axis bounce 0.4). Only off
+  pickaxe-mineable blocks of hardness ≥ 1 struck with a mining tool: 2-6 a bite, 6-10 on the last blow, +4 and hotter on
+  a true strike (halved when decreased). The heavy strike's sparks are streaks too. The old round spark and grit
+  sprites stay only for vents, cave-ins and blocks we don't draw.
+- **Cracks**: `minecraft:textures/block/destroy_stage_0..9` redrawn (`tools/art/specs/delve_cracks.py`): one crack tree
+  that grows from the strike's point, branches and widens, chips spalling in stages 8-9; dark 58 / 34, lit lip 166 on
+  the upper-left. The ore's warm glow in the cracks is not possible (the crumbling blend multiplies), so it was dropped.
+- **True strikes** (`delve.TrueStrikes`): the seam on (pos, face, n = true strikes so far) is a seeded point 0.22-0.78
+  across the face with an angle; a bite whose hit point lies within 0.22 of it is true. The client predicts, sends
+  `delve_true_strike` (pos, face, n); the server accepts when the block is an ore of `Ore`, within reach + 1, n matches
+  its count, ≥ 3 ticks since the last, and its own `pick` from the eye hits that face within 0.32; otherwise it sends
+  `delve_true_strike_sync` with its count. Speed: × (1 + 0.35 n), at most × 2, on both sides through `BreakSpeed`
+  (LOWEST, after Veins' two blows); the server's progress (speed × ticks) is never below the client's sum, so a
+  predicted break is never refused. A break within 6 ticks of a true strike: 25% one more of the first drop
+  (`BlockDropsEvent`). The seam is drawn while a mining tool looks at an ore (tapered additive line, the ore's tint
+  toward white, breathing); the chime `delve.true_strike` (synth, the magic layer) at the Tuning Fork's ore pitch, a
+  whole tone up for each true strike in a row (up to three).
+- **Dig motion** (`delve.client.DigMotion`, first person): keyed to the client's bites (contact at phase 0): pick recoil
+  to 0.16, wind-up to 0.68 (+17° pitch, back 0.07), strike eased in to the next bite (−15°); a shovel thrusts and lifts,
+  drawn back low. Eases out within 3 ticks of letting go; 0.4 with reduced motion. A view nudge of 0.22° a bite (0.45°
+  true) through `CombatFeedback.kick`. Third person keeps vanilla's swing.
+- **Settings** (`awaken-delve-client.toml`): `strike_particles`, `true_strikes` (both on).

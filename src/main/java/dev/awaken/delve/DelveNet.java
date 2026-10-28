@@ -131,6 +131,30 @@ public final class DelveNet {
         }
     }
 
+    /** A bite the client found true (SPEC §34.3): the block, the face, and which true strike on it this would be. */
+    public record TrueStrike(long pos, int face, int n) implements CustomPacketPayload {
+        public static final Type<TrueStrike> TYPE = new Type<>(Awaken.id("delve_true_strike"));
+        public static final StreamCodec<ByteBuf, TrueStrike> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.LONG, TrueStrike::pos, ByteBufCodecs.VAR_INT, TrueStrike::face, ByteBufCodecs.VAR_INT, TrueStrike::n, TrueStrike::new);
+
+        @Override
+        public Type<TrueStrike> type() {
+            return TYPE;
+        }
+    }
+
+    /** The server refused a true strike: its own count for that block, which the client takes. */
+    public record TrueStrikeSync(long pos, int trues) implements CustomPacketPayload {
+        public static final Type<TrueStrikeSync> TYPE = new Type<>(Awaken.id("delve_true_strike_sync"));
+        public static final StreamCodec<ByteBuf, TrueStrikeSync> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.LONG, TrueStrikeSync::pos, ByteBufCodecs.VAR_INT, TrueStrikeSync::trues, TrueStrikeSync::new);
+
+        @Override
+        public Type<TrueStrikeSync> type() {
+            return TYPE;
+        }
+    }
+
     /** To one player, if their connection speaks our channel (fake players in tests don't). */
     static void send(ServerPlayer p, CustomPacketPayload m) {
         dev.awaken.core.AwakenNet.send(p, m);
@@ -151,8 +175,12 @@ public final class DelveNet {
         r.playToClient(HeavyFx.TYPE, HeavyFx.STREAM_CODEC);
         r.playToClient(ForkRing.TYPE, ForkRing.STREAM_CODEC);
         r.playToClient(Demo.TYPE, Demo.STREAM_CODEC);
+        r.playToClient(TrueStrikeSync.TYPE, TrueStrikeSync.STREAM_CODEC);
         r.playToServer(HeavyStrike.TYPE, HeavyStrike.STREAM_CODEC, (m, ctx) -> {
             if (ctx.player() instanceof ServerPlayer p) HeavyStrikes.release(p, m.charge(), m.perfect());
+        });
+        r.playToServer(TrueStrike.TYPE, TrueStrike.STREAM_CODEC, (m, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer p) TrueStrikes.onClaim(p, m);
         });
     }
 }

@@ -170,6 +170,15 @@
       }
     ]
   },
+  "delve.true_strike": {
+    "subtitle": "subtitles.awaken.delve.true_strike",
+    "sounds": [
+      {
+        "name": "awaken:delve_true_strike",
+        "attenuation_distance": 12
+      }
+    ]
+  },
   "delve.fork_ring": {
     "subtitle": "subtitles.awaken.delve.fork_ring",
     "sounds": [

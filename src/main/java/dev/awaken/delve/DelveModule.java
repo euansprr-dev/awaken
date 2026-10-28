@@ -7,7 +7,9 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
@@ -29,20 +31,34 @@ public final class DelveModule {
         // after every protection has had its say (they cancel at HIGH): a heart that really broke opens its lode
         bus.addListener(EventPriority.LOW, false, (BreakBlockEvent e) -> Veins.onBreak(e));
         bus.addListener(Veins::onBreakSpeed);
+        // after every other speed (Veins' two blows included): true strikes multiply what the block would take
+        bus.addListener(EventPriority.LOWEST, false, (PlayerEvent.BreakSpeed e) -> TrueStrikes.onBreakSpeed(e));
+        bus.addListener(EventPriority.LOW, false, (BlockDropsEvent e) -> TrueStrikes.onDrops(e));
         bus.addListener(EventPriority.LOWEST, false, (BlockEvent.EntityPlaceEvent e) -> onPlace(e));
         bus.addListener((PlayerTickEvent.Post e) -> {
             if (e.getEntity() instanceof ServerPlayer p) Veins.tickPlayer(p);
         });
         bus.addListener((ServerTickEvent.Post e) -> CaveIns.tick(e.getServer()));
+        // the wall lodes read the overworld's own noise caves (SPEC §34.2)
+        bus.addListener((LevelEvent.Load e) -> {
+            if (e.getLevel() instanceof ServerLevel level && level.dimension() == Level.OVERWORLD) {
+                var gen = level.getChunkSource().getGenerator();
+                var rs = level.getChunkSource().randomState();
+                LodePlans.columns(level.getSeed(), (x, z) -> gen.getBaseColumn(x, z, level, rs));
+            }
+        });
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             Veins.forget(e.getEntity().getUUID());
             HeavyStrikes.forget(e.getEntity().getUUID());
+            TrueStrikes.forget(e.getEntity().getUUID());
         });
         bus.addListener((ServerStoppedEvent e) -> {
             Veins.clear();
             CaveIns.clear();
             HeavyStrikes.clear();
+            TrueStrikes.clear();
             LodePlans.EXTRA.clear();
+            LodePlans.columns(0L, null);
         });
         DelveCommands.register();
         DelveTests.register();

@@ -45,6 +45,11 @@ public final class DelveContent {
     static final DeferredRegister<MapCodec<? extends Feature>> FEATURES = DeferredRegister.create(Registries.FEATURE_TYPE, Awaken.MODID);
     static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);
     static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
+    static final DeferredRegister<MapCodec<? extends net.neoforged.neoforge.common.world.BiomeModifier>> BIOME_MODIFIERS =
+            DeferredRegister.create(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, Awaken.MODID);
+    /** Vanilla's scattered iron, copper, coal and gold at 35% in new land (SPEC §34.2). */
+    public static final DeferredHolder<MapCodec<? extends net.neoforged.neoforge.common.world.BiomeModifier>, MapCodec<ThinOres>> THIN_ORES =
+            BIOME_MODIFIERS.register("thin_ores", () -> ThinOres.CODEC);
 
     // ---- tags -------------------------------------------------------------------------------------------------------
 
@@ -138,6 +143,8 @@ public final class DelveContent {
 
     /** The last blow on an ore: the rock lets go of it. */
     public static final DeferredHolder<SoundEvent, SoundEvent> STRIKE_LAST = sound("delve.strike_last");
+    /** A true strike's chime (SPEC §34.3), played at the ore's own note. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> TRUE_STRIKE = sound("delve.true_strike");
     /** A lode's heart breaks: a deep crack and the whole vein ringing. */
     public static final DeferredHolder<SoundEvent, SoundEvent> VEIN_GIVES = sound("delve.vein_gives");
     /** The cracks running along the vein. */
@@ -167,5 +174,6 @@ public final class DelveContent {
         FEATURES.register(modBus);
         PARTICLES.register(modBus);
         SOUNDS.register(modBus);
+        BIOME_MODIFIERS.register(modBus);
     }
 }
