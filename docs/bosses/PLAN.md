@@ -2,7 +2,8 @@
 
 Euan, 28 Oct: "The next big thing I want to work on here is basically like leveling up the whole combat with bosses
 and stuff." This plan follows his planning process (`.claude/PLANNING-PROCESS.md`). Nothing here is built yet. It
-stops for his approval. The approval page carries the same decisions in short.
+stops for his approval. The approval page carries the same decisions in short:
+https://claude.ai/artifact/RG6JGgiSwrTvg53WACTqhY
 
 Reference images (his): `/Volumes/MEDIA/boss-ref/euan-ref-common-boss.png` (the horned crystal-core brute: "the kind
 of common bosses I want"), `euan-ref-colossus-secret-boss.webp` (the stone colossus: a secret boss "at some point"),
