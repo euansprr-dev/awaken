@@ -77,6 +77,8 @@ public final class HoloClient {
         dev.awaken.core.api.HudState.install(HudDirector.INSTANCE);
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, HudDirector.VITALS, Vitals::render));
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
+                net.neoforged.neoforge.client.gui.VanillaGuiLayers.TAB_LIST, Glance.LAYER, Glance::render));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, HoloClient::onPayloads);
         modBus.addListener(RegisterRenderStateModifiersEvent.class,
                 e -> e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, HoloOthers::modify));
@@ -253,6 +255,7 @@ public final class HoloClient {
         HoloConfig.refresh();
         STATUS.sizeStep = HoloConfig.bandSize.step; // the Band size setting (SPEC §30.6)
         CalmHud.tick();
+        Glance.tick();
         HudDirector.INSTANCE.tick();
         HoloBoot.tick();
         Minecraft m0 = Minecraft.getInstance();
@@ -284,6 +287,7 @@ public final class HoloClient {
         HudMotion.update(cam.yRot, cam.xRot, dt);
         CalmHud.frame(dt * 1000f);
         HudDirector.INSTANCE.frame(dt * 1000f);
+        Glance.frame(dt * 1000f);
         HoloOthers.advance(dt * 1000f);
         easeReadFocus(dt);
         UiHooks.setFocus(FOCUS_OWNER, (float) focus());
@@ -481,6 +485,7 @@ public final class HoloClient {
         CalmHud.reset();
         HudDirector.INSTANCE.reset();
         Vitals.reset();
+        Glance.reset();
         HoloBoot.reset();
     }
 }

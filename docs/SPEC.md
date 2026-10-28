@@ -9459,6 +9459,21 @@ in reach 23% of a fight today, 49% with these rules).
     locked), and so do one under your look and a notable beast; the others fighting you show a thin plate, the bar alone.
 - Autopilot: `holo screen clear|clear_crosshair|classic|auto`, `holo fight on|off`.
 
+### 40.7 The Tab glance (`holo.client.Glance`, rules `holo.ui.GlanceRules`)
+- The key is vanilla's player list (Tab), so in multiplayer its list shows with the panel. Off in Classic, while a screen is
+  open, with the HUD hidden and in spectator.
+- Held: the off-hand forearm comes up with the band (`Wrist`, eased in 260 ms, down in 200 ms; the main hand sinks out of
+  view; vanilla's hands come back from below as it lowers), only in first person, with the band on, no holo menu on the
+  wrist and the holo pipelines working. A press under 250 ms (5 ticks) is a tap: the panel alone for 4 s (80 ticks).
+- The panel: flat and readable in the band's glass, 184 GUI px wide, just above the wrist's place on screen (kept inside
+  the screen), unfolding from its corner nearest the wrist (wide first, then tall, 220 ms) along a beam of light from the
+  band, which flares as it leaves. Rows (`GlanceRules.rows`): level and rank (the rank's colour) with the XP line under them;
+  health, Aether (once Skyborn; `HudState.aether()`, installed by Ascent), food and armour as labelled segmented bars with
+  their values; the task's title and count, its current step (keys named as bound) and the next one (`signal.client.SignalGlance`);
+  where you're heading with its distance and a needle (up is ahead). The hotbar, power bar and level chip show while
+  glancing (§40.6), and so do the task card and the full gate panel. Texts are built once a tick while it shows.
+- Sounds: the band's open and close (`HoloAudio`).
+
 ### 40.8 Settings (`config/awaken-aim-client.toml`)
 `enabled` (true), `camera` (FOLLOW / SNAP / OFF), `flick_switch` (true), `show_mark` (true), `threat_arcs` (true), `sounds` (true).
 
@@ -9466,5 +9481,5 @@ in reach 23% of a fight today, 49% with these rules).
 `aim_soft_pick`, `aim_caps`, `aim_power_bend_cap` (the pure rules), `aim_flier_locked_hits` (a creature 3.2 blocks over the feet:
 meant, struck; a hostile beside it, not meant, out of the band), `aim_step_in`, `aim_no_wall`, `aim_no_player`,
 `aim_flier_brought_down`. The clear screen: `hud_states`, `hud_classic_unchanged`, `hud_now_line_returns`,
-`hud_task_card_teaches`, `hud_thin_plates`.
+`hud_task_card_teaches`, `hud_thin_plates`, `hud_glance_rows`.
 

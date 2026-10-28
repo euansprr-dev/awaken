@@ -81,4 +81,16 @@ public final class HudState {
     public static int vitalsY(int guiHeight, int row) {
         return director.vitalsY(guiHeight, row);
     }
+
+    private static java.util.function.DoubleSupplier aether = () -> -1;
+
+    /** Ascent's client installs the Aether reading (0..1, -1 before Skyborn) for the glance. */
+    public static void installAether(java.util.function.DoubleSupplier s) {
+        aether = s;
+    }
+
+    /** The player's Aether, 0..1, or -1 when they have none yet (client). */
+    public static double aether() {
+        return aether.getAsDouble();
+    }
 }

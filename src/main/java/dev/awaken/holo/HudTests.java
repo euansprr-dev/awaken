@@ -60,6 +60,31 @@ final class HudTests {
             h.succeed();
         });
 
+        // the Tab glance (SPEC §40.7): the rows in order, only those with something to say; hold raises the arm, a tap
+        // leaves the panel up 4 s without it
+        AwakenTests.register("hud_glance_rows", 20, h -> {
+            var out = new dev.awaken.holo.ui.GlanceRules.Row[dev.awaken.holo.ui.GlanceRules.Row.values().length];
+            int n = dev.awaken.holo.ui.GlanceRules.rows(true, true, true, true, true, out);
+            h.assertTrue(n == 9 && java.util.Arrays.equals(java.util.Arrays.copyOf(out, n), dev.awaken.holo.ui.GlanceRules.Row.values()),
+                    "everything, in order");
+            n = dev.awaken.holo.ui.GlanceRules.rows(false, false, true, true, false, out);
+            h.assertTrue(n == 4 && out[0] == dev.awaken.holo.ui.GlanceRules.Row.LEVEL && out[3] == dev.awaken.holo.ui.GlanceRules.Row.ARMOUR,
+                    "no Aether yet, no task, nowhere to go: the vitals alone");
+            var key = new dev.awaken.holo.ui.GlanceRules.Key();
+            key.tick(true);
+            h.assertTrue(key.arm() && key.panel(), "held: arm and panel");
+            key.tick(false);
+            h.assertTrue(!key.arm() && key.panel(), "a tap: the panel without the arm");
+            for (int i = 0; i < dev.awaken.holo.ui.GlanceRules.TAP_SHOW - 1; i++) key.tick(false);
+            h.assertTrue(key.panel(), "for 4 s");
+            key.tick(false);
+            h.assertFalse(key.panel(), "then gone");
+            for (int i = 0; i < 40; i++) key.tick(true);
+            key.tick(false);
+            h.assertFalse(key.panel(), "a long hold lowers with the key");
+            h.succeed();
+        });
+
         AwakenTests.register("hud_classic_unchanged", 20, h -> {
             ClearRules.State s = new ClearRules.State();
             s.screen = HudState.Screen.CLASSIC;

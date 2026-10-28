@@ -157,8 +157,10 @@ final class Vitals {
     /** The band's diamond, 5 px tall, centred on (x, y). */
     private static void diamond(GuiGraphicsExtractor g, int x, int y, int argb) {
         g.fill(x, y - 2, x + 1, y + 3, argb);
-        g.fill(x - 1, y - 1, x + 2, y + 2, argb);
-        g.fill(x - 2, y, x + 3, y + 1, argb);
+        g.fill(x - 1, y - 1, x, y + 2, argb);
+        g.fill(x + 1, y - 1, x + 2, y + 2, argb);
+        g.fill(x - 2, y, x - 1, y + 1, argb);
+        g.fill(x + 2, y, x + 3, y + 1, argb);
     }
 
     private static int mix(int a, int b, float t) {
