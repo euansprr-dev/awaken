@@ -13,14 +13,25 @@ final class ArmsNotices {
         var instance = Marks.of(stack);
         for (String id : instance.marks()) {
             var mark = Marks.get(id);
-            if (mark != null) lines.add(mark.name() + ": " + Marks.describe(mark, instance.attunement()));
+            if (mark != null) lines.add(mark.name() + ": " + Marks.say(mark, instance.attunement()));
         }
         return lines;
     }
+    /** "3 seconds", "0.15 seconds", "1 second". */
+    static String seconds(double s) {
+        return number(s) + (s == 1 ? " second" : " seconds");
+    }
+
+    /** "4", "4.5", "0.15": no trailing zeros, no float noise. */
+    static String number(double n) {
+        return n == Math.rint(n) ? Long.toString((long) n) : Float.toString((float) n);
+    }
+
     static void reward(ServerPlayer p, String id, String category, ItemStack stack, String summary, List<String> more) {
         List<String> lines = new ArrayList<>(more);
-        lines.addAll(marks(stack));
-        lines.add("These effects belong to this weapon. Wield it to use them; receiving it does not change every weapon you own.");
+        List<String> marks = marks(stack);
+        lines.addAll(marks);
+        if (!marks.isEmpty()) lines.add("Its Marks only work on this weapon, while you're holding it.");
         NoticeEvents.tell(p, new NoticeEvents.Event(id, category, stack.getHoverName().getString(), summary, lines, NoticeEvents.Kind.REWARD, 0xE2B450));
     }
 }

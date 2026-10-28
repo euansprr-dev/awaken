@@ -187,13 +187,15 @@ public final class LordForged {
         level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.8F, 0.7F);
         var art = forged.art();
         var details = new java.util.ArrayList<String>();
-        details.add("Signature Art: " + art.name() + ". Build Resonance with this weapon, then hold the heavy attack through its charge to release the Art.");
-        details.add("It hits foes within " + art.radius() + " blocks for " + art.power() + " times your attack damage. Against creatures with at least 150 maximum health, each hit is capped at " + Math.round(LORD_CAP * 100) + "% of their maximum health.");
-        if (art.effect() != null) details.add(art.effect().value().getDisplayName().getString() + " level " + (art.amplifier() + 1) + " for " + art.effectTicks() / 20.0 + " seconds.");
-        if (art.ignite()) details.add("Targets burn for 4 seconds.");
-        if (art.pull() != 0) details.add(art.pull() > 0 ? "Pulls ordinary foes toward you; large Lords resist the movement." : "Throws ordinary foes away; large Lords resist the movement.");
+        details.add("Its Art is " + art.name() + ". Build Resonance with this weapon, then hold a heavy attack through its charge to let it out.");
+        details.add("It hits everything within " + ArmsNotices.number(art.radius()) + " blocks for " + ArmsNotices.number(art.power())
+                + " times your attack damage. Against anything with 150 health or more, each hit does at most " + Math.round(LORD_CAP * 100) + "% of its maximum health.");
+        if (art.effect() != null) details.add("It also puts " + art.effect().value().getDisplayName().getString() + " " + (art.amplifier() + 1)
+                + " on them for " + ArmsNotices.seconds(art.effectTicks() / 20.0) + ".");
+        if (art.ignite()) details.add("It sets them on fire for 4 seconds.");
+        if (art.pull() != 0) details.add(art.pull() > 0 ? "It pulls ordinary foes toward you; big Lords hold their ground." : "It throws ordinary foes away from you; big Lords hold their ground.");
         ArmsNotices.reward(p, "weapon/lord/" + java.util.UUID.randomUUID(), "Lord-forged weapon", stack,
-                "This weapon carries " + art.name() + ", the defeated Lord's signature Art.", details);
+                "It carries " + art.name() + ", the Art of the Lord you beat.", details);
         if (p.getMainHandItem().isEmpty()) p.setItemInHand(InteractionHand.MAIN_HAND, stack);
         else if (!p.getInventory().add(stack)) p.drop(stack, false, Prediction.SERVER_ONLY);
         // a new weapon is a new capability: the Director's rhythm hears it (progression plan item 10)

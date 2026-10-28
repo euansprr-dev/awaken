@@ -89,16 +89,16 @@ public final class ArmsMastery {
         int was = step(before), now = step(after);
         if (now > was) {
             String effect = switch (now) {
-                case 1 -> "Your light-attack chain gains its mastery finishing strike.";
-                case 2 -> "The Slipcut follow-up window lasts " + SLIPCUT_BONUS / 20.0 + " seconds longer.";
-                case 3 -> "Deflects deal 50% more posture and generate 50% more Resonance.";
-                case 4 -> "All Resonance gains increase by 20%.";
-                default -> "Your weapon Art becomes available at " + ART_AT + "% Resonance.";
+                case 1 -> "Your light attacks now end with a finishing strike.";
+                case 2 -> "You get " + ArmsNotices.seconds(SLIPCUT_BONUS / 20.0) + " longer to follow up a Slipcut.";
+                case 3 -> "Your deflects do 50% more posture damage and build 50% more Resonance.";
+                case 4 -> "You build all Resonance 20% faster.";
+                default -> "You can use your weapon Art from " + ART_AT + "% Resonance.";
             };
             dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event(
                     "weapon_mastery/" + style.id() + "/" + now, "Weapon mastery", style.def().name() + " " + NUMERAL[now], effect,
-                    List.of("Earned by defeating enemies with this fighting style. It applies whenever you wield that style.", effect,
-                            "Earlier mastery steps remain active. Use the same weapon controls; no new key is required."),
+                    List.of("You earned it by beating enemies with this style, and it works whenever you fight with it.",
+                            "You keep every earlier step, and there's no new key to learn."),
                     dev.awaken.core.api.NoticeEvents.Kind.PERMANENT, 0xE2B450));
             sync(p);
         }

@@ -6688,8 +6688,9 @@ own words) stay. Test `notice_city_discovers_nothing`.
 Euan asked what combat notices such as "Severance" mean, for a brief explanation immediately, and for a way to
 read the detail later in the existing Journal rather than adding an important keybind.
 
-- A meaningful event shows its plain name/category and one short functional summary, followed by **Details in
-  Journal** and the player's bound Status key (or directions to bind Status in Controls). It uses the current
+- A meaningful event shows its plain name/category and one short functional summary, followed by **Press K to read
+  more in your Journal** (the player's bound Status key; "this and 2 more" when a burst merged several; unbound, it
+  says to set a Status key in Controls). It uses the current
   compact toast style, two-toast budget and burst coalescing. No new key, automatic combat modal or damage-tick
   feed. Both System and Classic mode tick these saved-event toasts. Remapped-key hints wrap rather than hiding
   the binding. The owning module supplies the semantics; Signal never guesses a mechanic from a rendered string.
@@ -6722,6 +6723,18 @@ read the detail later in the existing Journal rather than adding an important ke
   with at least 150 max health, and extends an existing break **20 ticks / 1 s**. It does not add an equipped
   power. Repeating a known weave does not spam identical records. An old save that already knew it receives the
   explanation on its next use. The other openings explain their actual burst, delayed echo or three-hit window.
+- **Wording, read aloud (Euan's rule, 2026-10-28).** Every adapter's summary and details are plain speech, short, the
+  way a person would say them, with each entry's facts kept and no lists of numbers. A detail never repeats the
+  summary (the Journal shows both). Rewards are said through `progression.RewardWords`, shared with the Status
+  screen's reward cards: a share of a level in words ("a tenth of a level's worth of XP"), a stat by its name
+  ("+1 Strength"), perks as phrases with their caps said briefly ("power cooldowns 10% shorter (up to half off in
+  all)"), joined with "and"; a reward with nothing to count is "just the recognition". Marks are said whole in the
+  Journal (`Marks.say`: "When you land a hit, the target takes an extra 20% of your attack as Heat damage."); the
+  item tooltip keeps the short form (`Marks.describe`). A power's levelled entry says its numbers in one sentence
+  (`PowerPreviews.numberSentence`); the Power Core hover keeps its before → after lines. A directive says how many
+  days are left, not a day number. The last drill of the day is filed quietly, since the day's reward toast tells
+  it. The Journal's kind labels read Lasting change, Short combat effect, Discovery, Reward, Task. Test
+  `progression_reward_words`.
 - Validation: saved history/codec/sync/read-bound/per-player/bounded-retention lifecycle; actual Severance damage,
   break extension, opening expiry and repeated-proc dedup; real core consumption/owned-variant handling and
   barrier strength/lifetime/cooldown parity; healing/passive/cooldown/boss caps and bounded round-trip previews

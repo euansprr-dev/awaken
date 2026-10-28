@@ -27,7 +27,7 @@ final class ArmsNoticeTests {
             var entry = history.entries().stream().filter(e -> e.event().id().equals("weave/severance")).findFirst().orElseThrow().event();
             String detail = String.join(" ", entry.details());
             h.assertTrue(entry.kind() == NoticeEvents.Kind.COMBAT && entry.name().equals("Severance")
-                    && entry.summary().contains("1 s") && detail.contains("0.6 seconds") && detail.contains("3%") && detail.contains("does not add"),
+                    && entry.summary().contains("1 s") && detail.contains("0.6 seconds") && detail.contains("3%") && detail.contains("not a new power"),
                     "the actual proc leaves an accurate, retrievable temporary-combat explanation");
             target.damageCooldownTime = 0;
             ArmsWeaves.open(p, state, ArmsWeaves.BREAK, now, target.getId());

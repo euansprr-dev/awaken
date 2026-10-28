@@ -54,15 +54,11 @@ final class MarkedDrops {
         ItemEntity drop = new ItemEntity(level, at.x, at.y + 0.5, at.z, stack);
         drop.setGlowingTag(true);
         level.addFreshEntity(drop);
-        List<String> marks = Marks.of(stack).marks();
         List<String> details = new java.util.ArrayList<>();
-        details.add("This weapon dropped beside the defeated enemy. Pick it up and wield it to use its Marks; the effect belongs to the weapon.");
-        for (String id : marks) {
-            Marks.Mark mark = Marks.get(id);
-            if (mark != null) details.add(mark.name() + ": " + Marks.describe(mark, Marks.of(stack).attunement()));
-        }
+        details.add("It's on the ground where the enemy fell. Pick it up and hold it to use its Marks.");
+        details.addAll(ArmsNotices.marks(stack));
         dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("marked_drop/" + drop.getUUID(),
-                "Marked weapon", stack.getHoverName().getString(), "A dropped weapon has extra effects when its Marks trigger.", details,
+                "Marked weapon", stack.getHoverName().getString(), "The enemy dropped a weapon with Marks on it.", details,
                 dev.awaken.core.api.NoticeEvents.Kind.REWARD, 0x6FB3FF));
     }
 

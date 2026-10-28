@@ -26,12 +26,13 @@ final class PowerNotices {
     static void levelled(ServerPlayer p, PowerType t, int variant, int before, int after, boolean throughUse) {
         String step = PowerLadder.step(t.path, after) == null ? "" : PowerLadder.text(t.path, after).getString();
         List<String> details = new ArrayList<>();
-        details.add((throughUse ? "It grew through use." : "A Power Core raised it.") + " Level " + before + " to " + after + ".");
+        details.add((throughUse ? "It grew through use" : "A Power Core raised it") + ", from level " + before + " to " + after + ".");
         if (!step.isEmpty()) {
             String look = PowerLadder.look(t.path, after).getString();
             details.add(look.isEmpty() ? step : step + " " + look);
         }
-        details.addAll(PowerPreviews.numberLines(p, t, variant, before, after));
+        String numbers = PowerPreviews.numberSentence(p, t, variant, before, after);
+        if (!numbers.isEmpty()) details.add(numbers);
         NoticeEvents.remember(p, new NoticeEvents.Event("power/" + t.path + "/level/" + after + "/" + variant,
                 throughUse ? "Power grew" : "Power upgraded", t.name,
                 "Level " + after + (step.isEmpty() ? "." : ". " + step), details, NoticeEvents.Kind.PERMANENT, t.family.colour));
