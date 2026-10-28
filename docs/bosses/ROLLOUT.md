@@ -52,7 +52,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | Unit Zero | Lord | Precursor | Duelist | kit (phase 1) | A, the Sentinel | ✓ b94e7457 | ✓ b94e7457 | — |
 | Mother of Spores | Lord | Fungal | Flier | kit (phase 1) | C, the Crowned Host | ✓ 64932c3a | ✓ 64932c3a | — |
 | The Gearwright Colossus | Lord | Clockwork | Brute | kit | C, the Clock Tower | ✓ 41eee64c | ✓ 41eee64c | — |
-| The Root Saint | Lord | Temple | Caster | kit | A, the Rooted Saint | ✓ (this commit) | ✓ (this commit) | — |
+| The Root Saint | Lord | Temple | Caster | kit | A, the Rooted Saint | ✓ 6c3f815b | ✓ 6c3f815b | — |
 | The Bell Warden | Lord | Bell | Construct | cube bell | A, the Bell That Walks | — | — | — |
 | The Glass Serpent | Lord | Glass | Serpent | cube serpent ×2.2 | B, the Hourglass | — | — | — |
 | The Hive Regent | Lord | Hive | Flier | bee ×4 | drawn | — | — | — |
