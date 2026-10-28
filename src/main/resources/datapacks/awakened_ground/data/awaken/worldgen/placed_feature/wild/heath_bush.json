@@ -1,0 +1,24 @@
+{
+  "feature": "awaken:wild/bush_oak",
+  "placement": [
+    {
+      "type": "awaken:wildness",
+      "weights": [
+        0,
+        0.3,
+        0.8,
+        1.5
+      ]
+    },
+    {
+      "type": "minecraft:in_square"
+    },
+    {
+      "type": "minecraft:heightmap",
+      "heightmap": "MOTION_BLOCKING_NO_LEAVES"
+    },
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

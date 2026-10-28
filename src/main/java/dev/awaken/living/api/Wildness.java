@@ -5,8 +5,13 @@ import dev.awaken.living.region.RegionService;
 import dev.awaken.living.wild.WildField;
 import dev.awaken.living.wild.WildRecord;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.QuartPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.levelgen.NoiseRouterData;
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 import net.minecraft.world.level.chunk.LevelChunk;
 
 import java.util.List;
@@ -69,7 +74,24 @@ public final class Wildness {
             if (keep <= 0) break;
         }
         int lv = RegionService.map(level.getServer()).levelAt(x, z);
-        return WildField.combine(keep, Regions.bandOf(lv), level.getSeed(), x, z);
+        double w = WildField.combine(keep, Regions.bandOf(lv), level.getSeed(), x, z);
+        if (keep <= 0 || w >= 1.0) return w;
+        Climate.TargetPoint c = climate(level).sample(QuartPos.fromBlock(x), QuartPos.fromBlock(64), QuartPos.fromBlock(z));
+        float weird = Climate.unquantizeCoord(c.weirdness());
+        return Math.min(1.0, w + WildField.lean(keep, Climate.unquantizeCoord(c.erosion()), Climate.unquantizeCoord(c.humidity()),
+                NoiseRouterData.peaksAndValleys(weird)));
+    }
+
+    /** The overworld's climate, sampled without a chunk's caches (pure; one sampler a world, shared by every thread). */
+    private record Sampled(RandomState state, Climate.Sampler sampler) {}
+
+    private static volatile Sampled sampled;
+
+    private static Climate.Sampler climate(ServerLevel level) {
+        RandomState rs = level.getChunkSource().randomState();
+        Sampled s = sampled;
+        if (s == null || s.state != rs) sampled = s = new Sampled(rs, rs.createClimateSampler(SamplerContext.EMPTY_UNCACHED));
+        return s.sampler;
     }
 
     /**

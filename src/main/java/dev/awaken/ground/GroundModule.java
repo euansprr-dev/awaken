@@ -40,6 +40,7 @@ public final class GroundModule {
         FEATURES.register(modBus);
         GroundFresh.init(modBus);
         dev.awaken.ground.wild.WildBlocks.init(modBus);
+        dev.awaken.ground.wild.gen.WildGen.init(modBus);
         modBus.addListener(AddPackFindersEvent.class, e -> e.addPackFinders(Awaken.id("datapacks/awakened_ground"), PackType.SERVER_DATA,
                 Component.literal("Awakened Ground"), PackSource.BUILT_IN, false, Pack.Position.TOP));
         GroundTests.register();

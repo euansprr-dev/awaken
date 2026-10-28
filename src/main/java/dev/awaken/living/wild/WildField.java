@@ -47,6 +47,21 @@ public final class WildField {
         return Math.clamp(w, 0.0, 1.0);
     }
 
+    /** The terrain lean's most for each kind of land (SPEC §41.1): rugged ground, deep forest, valleys. */
+    public static final double LEAN_RUGGED = 0.05, LEAN_FOREST = 0.05, LEAN_VALLEY = 0.04;
+
+    /**
+     * The terrain lean (Stage 1b): rugged ground (low erosion), deep forest (high vegetation) and valleys (low peaks-and-valleys)
+     * are a little wilder, at most 0.14 together, scaled like the noise by the root of {@code keep} so tamed land stays tamed.
+     * Pure: the inputs are the world's climate at (x, z), unquantized.
+     */
+    public static double lean(double keep, float erosion, float vegetation, float peaksAndValleys) {
+        double rugged = Math.clamp((-0.2 - erosion) / 0.6, 0.0, 1.0);
+        double forest = Math.clamp((vegetation - 0.1) / 0.4, 0.0, 1.0);
+        double valley = Math.clamp((-0.4 - peaksAndValleys) / 0.5, 0.0, 1.0);
+        return (LEAN_RUGGED * rugged + LEAN_FOREST * forest + LEAN_VALLEY * valley) * Math.sqrt(Math.max(0, keep));
+    }
+
     /** Smooth value noise in 0..1 on a lattice of {@code cell} blocks. */
     public static double noise(long seed, int x, int z, int cell) {
         int gx = Math.floorDiv(x, cell), gz = Math.floorDiv(z, cell);

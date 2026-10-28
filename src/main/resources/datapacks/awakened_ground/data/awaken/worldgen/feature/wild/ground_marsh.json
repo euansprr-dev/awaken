@@ -1,0 +1,42 @@
+{
+  "type": "awaken:wild_ground",
+  "biomes": "awaken:wild/marsh",
+  "roles": [
+    {
+      "blocks": [
+        "awaken:reeds"
+      ],
+      "rates": [
+        3,
+        6,
+        10,
+        14
+      ],
+      "water": true
+    },
+    {
+      "blocks": [
+        "awaken:long_grass"
+      ],
+      "rates": [
+        0,
+        2,
+        8,
+        14
+      ],
+      "swathe": 12
+    },
+    {
+      "blocks": [
+        "awaken:meadow_grass"
+      ],
+      "rates": [
+        0,
+        6,
+        10,
+        12
+      ]
+    }
+  ],
+  "mow": true
+}

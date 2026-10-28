@@ -1,0 +1,54 @@
+{
+  "type": "awaken:wild_ground",
+  "biomes": "awaken:wild/savanna",
+  "roles": [
+    {
+      "blocks": [
+        "awaken:wild_rye"
+      ],
+      "rates": [
+        0,
+        0,
+        3,
+        20
+      ],
+      "swathe": 13
+    },
+    {
+      "blocks": [
+        "awaken:long_grass"
+      ],
+      "rates": [
+        0,
+        4,
+        18,
+        24
+      ],
+      "swathe": 14
+    },
+    {
+      "blocks": [
+        "awaken:thistle"
+      ],
+      "rates": [
+        0,
+        1,
+        1,
+        0.5
+      ]
+    },
+    {
+      "blocks": [
+        "awaken:meadow_grass"
+      ],
+      "rates": [
+        0,
+        6,
+        10,
+        12
+      ]
+    }
+  ],
+  "mow": true,
+  "sward": 0.3
+}

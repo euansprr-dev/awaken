@@ -2,6 +2,15 @@
   "feature": "minecraft:fallen_birch_tree",
   "placement": [
     {
+      "type": "awaken:wildness",
+      "weights": [
+        0.2,
+        0.6,
+        1.4,
+        2.2
+      ]
+    },
+    {
       "type": "minecraft:rarity_filter",
       "chance": 6
     },

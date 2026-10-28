@@ -1,0 +1,6 @@
+{
+  "type": "awaken:wild_bush",
+  "leaves": "minecraft:spruce_leaves",
+  "log": "minecraft:spruce_log",
+  "max_radius": 2.0
+}

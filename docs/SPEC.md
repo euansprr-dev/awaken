@@ -9521,8 +9521,11 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
   lattices from the world seed: forest-sized and copse-sized patches. Fully tamed land stays tamed whatever the noise.
 - **Hearths** tame live, on top of the record: fully to 48 blocks, fading over 140, at strength 0.8 (a home keeps at most a
   fifth of its land's wildness). `at` multiplies the record by `hearthKeep`.
-- **The terrain lean** (rugged ground, deep forest and valleys a little wilder) comes in Stage 1b with the vegetation that
-  reads it, so the field and the plants change together.
+- **The terrain lean** (Stage 1b, with the vegetation that reads it): `land` adds `WildField.lean(keep, erosion, vegetation,
+  peaksAndValleys)` from the world's own climate at (x, 64, z) (one uncached climate sampler a world, pure, any thread):
+  rugged ground `0.05·clamp((−0.2 − erosion)/0.6)`, deep forest `0.05·clamp((vegetation − 0.1)/0.4)`, valleys
+  `0.04·clamp((−0.4 − pv)/0.5)`, together at most 0.14, times √keep so tamed land stays tamed. Records filled before it
+  keep their old values (records never change).
 - **The record** (`living.wild.WildRecord`, chunk attachment `awaken:wild`, schemaVersion 1): sixteen cells of 4×4 blocks,
   each the land's value at its centre in 0..255, saved with the chunk and synced to the players who see it (16 bytes). Chunks
   without one (new, or from before the Wild Lands) queue as they load and are filled up to 8 a tick within 0.4 ms (a chunk
@@ -9583,3 +9586,61 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
 - **Not in stage 1a** (follow-ups): the seamless wrap for the sward's sides; a game rule to turn living grass off; wallows, salt
   licks and sheds placed in the world (stage 3).
 - **Tests** `wild_plants_blocks`, `_crop`, `_trample`, `_cover`.
+
+### 41.3 The land (Stage 1b; `dev.awaken.ground.wild.gen`, the `awaken:awakened_ground` pack, new chunks only)
+- **Wildness in worldgen** (`WildLattice`): the field worked out at a chunk's 5×5 corners four blocks apart, edges included
+  (neighbours share them), read bilinearly; cached per thread for the last four chunks, so every feature of a chunk shares
+  one working-out (25 `land` calls, about 0.2 ms).
+- **`awaken:wildness`** (placement modifier, first in a list): `weights` [Tamed, Pasture, Wild, Deep] are how many times a
+  feature is tried at each band's middle (0.1, 0.325, 0.575, 0.85), read in straight lines between, flat outside; a fraction is
+  a chance of one more. Smooth, so no band edge shows a line.
+- **The palette's slot** (`tools/terrain/ground_palette.py`, `palette.json` key `wild`, which replaces the unused `ranks`):
+  fallen trees 0.2 / 0.6 / 1.4 / 2.2, moss patches 0 / 0.5 / 1.2 / 1.8, the game's low bush 0.3 / 1 / 1.3 / 1; boulders,
+  pebbles and twigs everywhere alike.
+- **The grass** (`awaken:wild_ground`, once a chunk after the game's own grass, per group of biomes `#awaken:wild/<group>`):
+  each column reads its wildness, then rolls each role (tallest first) at the role's plants a chunk for its band, added to the
+  game's own (about 22 short, 2 tall and 8 flowers a plains chunk, so the totals land on the plan's table); swathe roles roll
+  2.2 × their rate times a swathe mask (value noise on the role's cell, 0 under 0.4, full over 0.75); one plant a column.
+  Tamed land's tall grass and large ferns are mowed to short grass and fern (all of it under wildness 0.12, fading out by 0.25).
+  Deep wild (over 0.7) turns grass blocks to wild sward in patches (9-block noise over 0.6, odds `sward·(w − 0.7)/0.3`).
+  Rates, Tamed / Pasture / Wild / Deep:
+  - *meadow* (plains, sunflower plains, meadow, Glass Steppe): rye 0/0/2/25 (swathes of 11), long grass 0/3/23/30 (14), cow
+    parsley 0/3/1.5/0.5, thistle 0/1.5/1/0.5, foxglove 0/0.3/0.4/0.2, clover 6/4/0.5/0, meadow grass 0/10/18/20; mow; sward 0.5.
+  - *forest* (forest, flower forest, birch forests, dark forest, Elderwood, Lumen Forest): bracken 0/4/18/32 (12), bramble
+    0/0.5/2/4 (8), foxglove 0/0.6/1/0.8, cow parsley 0/0.5/0.3/0, fern 0/3/8/10, meadow grass 0/4/6/6; mow.
+  - *taiga*: bracken 0/3/12/22 (12), heather 0/2/5/8 (10), fern 0/4/8/10; mow.
+  - *savanna*: gold rye 0/0/3/20 (13), long grass 0/4/18/24 (14), thistle 0/1/1/0.5, meadow grass 0/6/10/12; mow; sward 0.3.
+  - *marsh* (swamps, rivers, Mirror Marsh): reeds 3/6/10/14 on shores only, long grass 0/2/8/14 (12), meadow grass 0/6/10/12; mow.
+  - *heath* (windswept hills and forest, Shattered Highlands): bracken 0/2/8/14 (12), gorse 0/2/5/8 (9), heather 2/6/10/12 (10),
+    meadow grass 0/6/10/12.
+  - *cold* (snowy plains and taiga, grove, Frost Spires): frost grass 3/8/12/14 (it may take a one-layer snow's place).
+  - *dry* (desert, badlands): dry tussock 0/1/2/3.
+  Looks come from `WildLooks` as for a placed plant (glass rye in the Glass Steppe, pale reeds in the Mirror Marsh, turned bracken
+  in patches, long grass's three looks).
+- **The woody things** (`WildGrowth`; each through `awaken:wildness`, `in_square`, the no-leaves heightmap and the biome filter;
+  each writes only open blocks, never water, within twelve blocks):
+  - `awaken:wild_bush` leaf mounds 2-5 wide round a stub of wood (persistent leaves): meadow 0/0.5/2/4 a chunk (the plan's
+    table), forest 0/0.4/1.5/3, taiga (spruce) 0/0.3/1/2, savanna (acacia: thorn scrub) 0/0.4/1.2/2, marsh and heath 0/0.3/0.8/1.5.
+  - `awaken:hedgerow` 6-14 blocks of hawthorn one or two high following the ground, a gap 1 in 9, cow parsley at its foot 1 in 5
+    each side: meadow 0.35/0.6/0.05/0 (where tamed meets wild).
+  - `awaken:thicket` bramble over a patch 5-9 across (65% of it) with up to two small oak mounds: meadow 0/0.15/0.4/0.8, forest
+    0/0.2/0.6/1.2.
+  - `awaken:old_giant` a 2×2 trunk 16-24 tall on rooted dirt, root flares one to three high round its foot, four to six branches
+    from its upper half each ending in a leaf crown, a crown of radius 4-5 on top; gives up unless its foot is soil and the
+    trunk's first eight blocks are open: meadow 0/0/0.05/0.17 and forest 0/0/0.06/0.17 (about one in six deep chunks); taiga
+    places the game's mega spruce, savanna the game's acacia (old acacias, 0/0.1/0.3/0.5).
+  - `awaken:snag` a dead trunk 4-9 tall (bark below, stripped above), maybe a broken limb, up to two bracket fungi: forest
+    0/0.1/0.4/0.9, taiga (spruce) the same, meadow 0/0/0.08/0.2, marsh 0/0.1/0.3/0.6, heath 0/0/0.1/0.2, cold 0/0.05/0.2/0.4.
+  - `awaken:deadfall` a stump and a trunk 4-8 long lying on the ground (a step down allowed), moss carpet on its back 2 in 5,
+    bracket fungus 1 in 4: forest 0/0.2/0.6/1.2, taiga 0/0.2/0.6/1.1, meadow 0/0.05/0.2/0.4, marsh 0/0.1/0.3/0.5.
+- **The lawn's colour** (`WildLawn.shift`, client `ground.client.WildTint`): grass colours (every grass-tinted block, with the
+  lawn's drift) shift by the chunk's wildness record: tamed up to 6% greener (red −0.8k, green +0.35k), deep wild up to 11% warmer
+  (red +1.1k and +6, green +0.15k, blue −1.2k), pasture unchanged. The client copies each overworld chunk's record into a
+  128×128 table the meshing threads read (no allocation), reads between cell centres across chunk edges, sweeps one row of
+  loaded chunks a tick for records that came after their chunk and redraws three sections round such a chunk's surface.
+  Behind the drift's own setting (`/awaken ground drift`).
+- **Cost**: a chunk's lattice and grass 0.74 ms on the M4 test server (`wild_plants_cost`, budget 1.5 ms; the lattice 0.2 ms).
+- **Not in stage 1b** (follow-ups): Far Sight reading the same field for far meadows' tint and density; the woodpeckers' holes in
+  snags; a fox or rabbit bolting from deadfall (stage 3); a lone oak at a hedgerow's corner.
+- **Tests** `wild_plants_bands` (the lean, the weights, the lawn's colour), `_ground` (mowing, a role at its rate), `_giant`,
+  `_data` (every wild placed feature loads), `_cost`.

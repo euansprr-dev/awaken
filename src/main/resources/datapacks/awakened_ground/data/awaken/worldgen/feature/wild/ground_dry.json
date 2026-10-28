@@ -1,0 +1,17 @@
+{
+  "type": "awaken:wild_ground",
+  "biomes": "awaken:wild/dry",
+  "roles": [
+    {
+      "blocks": [
+        "awaken:dry_tussock"
+      ],
+      "rates": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  ]
+}

@@ -8,23 +8,48 @@
     "entries": [
       {
         "name": "fallen_oak",
-        "ranks": "EDCBAS"
+        "wild": [
+          0.2,
+          0.6,
+          1.4,
+          2.2
+        ]
       },
       {
         "name": "boulder_forest",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "pebbles",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "twigs_oak",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "moss_patch",
-        "ranks": "EDC"
+        "wild": [
+          0.0,
+          0.5,
+          1.2,
+          1.8
+        ]
       }
     ]
   },
@@ -37,19 +62,39 @@
     "entries": [
       {
         "name": "fallen_birch",
-        "ranks": "EDCBAS"
+        "wild": [
+          0.2,
+          0.6,
+          1.4,
+          2.2
+        ]
       },
       {
         "name": "boulder_forest",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "pebbles",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "twigs_birch",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       }
     ]
   },
@@ -60,11 +105,21 @@
     "entries": [
       {
         "name": "boulder_forest",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "pebbles",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       }
     ]
   },
@@ -78,23 +133,48 @@
     "entries": [
       {
         "name": "fallen_spruce",
-        "ranks": "EDCBAS"
+        "wild": [
+          0.2,
+          0.6,
+          1.4,
+          2.2
+        ]
       },
       {
         "name": "boulder_forest",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "pebbles",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "twigs_spruce",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "moss_patch",
-        "ranks": "EDC"
+        "wild": [
+          0.0,
+          0.5,
+          1.2,
+          1.8
+        ]
       }
     ]
   },
@@ -106,11 +186,21 @@
     "entries": [
       {
         "name": "boulder_highland",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "pebbles",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       }
     ]
   },
@@ -124,15 +214,30 @@
     "entries": [
       {
         "name": "boulder_plains",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "pebbles",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "bush",
-        "ranks": "EDC"
+        "wild": [
+          0.3,
+          1.0,
+          1.3,
+          1.0
+        ]
       }
     ]
   },
@@ -143,11 +248,21 @@
     "entries": [
       {
         "name": "boulder_plains",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "pebbles",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       }
     ]
   },
@@ -158,11 +273,21 @@
     "entries": [
       {
         "name": "boulder_desert",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "pebbles",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       }
     ]
   },
@@ -173,11 +298,21 @@
     "entries": [
       {
         "name": "boulder_badlands",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "pebbles",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       }
     ]
   },
@@ -189,11 +324,21 @@
     "entries": [
       {
         "name": "twigs_oak",
-        "ranks": "EDCBAS"
+        "wild": [
+          1,
+          1,
+          1,
+          1
+        ]
       },
       {
         "name": "moss_patch",
-        "ranks": "EDC"
+        "wild": [
+          0.0,
+          0.5,
+          1.2,
+          1.8
+        ]
       }
     ]
   }
