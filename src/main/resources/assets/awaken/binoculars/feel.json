@@ -16,7 +16,5 @@
   "tapMs": 250,
   "firstStep": 4,
   "steps": [2, 3, 4, 6, 8, 12],
-  "walk": 0.2,
-  "plateReach": 160,
-  "plateDwellMs": 500
+  "walk": 0.2
 }

@@ -47,6 +47,18 @@ public final class PlateRules {
     }
 
     /**
+     * Through the binoculars (SPEC §39.8): a held look reads a creature out to {@link #GLASS_REACH} blocks, once the middle of
+     * the view has rested on it for {@link #GLASS_DWELL} ticks when it's past the normal range. Only what the client already has.
+     */
+    public static final double GLASS_REACH = 160;
+    public static final int GLASS_DWELL = 10;
+
+    /** The look's reach now: the normal range, or the binoculars' while they magnify. */
+    public static double lookRange(int per, double zoom) {
+        return zoom > 1.05 ? Math.max(lookRange(per), GLASS_REACH) : lookRange(per);
+    }
+
+    /**
      * One creature near the player this tick. {@code lastFight} / {@code lastLook}: game ticks (Long.MIN_VALUE never);
      * {@code notable}: an elite or named beast the player has seen; {@code excluded}: a player, Echo, pet, citizen.
      */

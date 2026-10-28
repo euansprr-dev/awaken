@@ -25,16 +25,15 @@ import java.nio.charset.StandardCharsets;
  * @param tapMs        a key press shorter than this is a tap (toggle), longer a hold (peek)
  * @param firstStep    the step the first raise ever goes to (later raises remember the last)
  * @param walk         how fast you walk with them up (share of normal; the spyglass's is 0.2)
- * @param plateReach   how far a held look reads a creature's plate, in blocks; after {@code plateDwellMs} on it
  */
 public record GlassFeel(float raiseMs, float lowerMs, float eyecup, float eyecupEnd, float pullMs, float settleMs, float overshoot,
                         float focusRaiseMs, float focusStepMs, float focusFromStep, float sway, float swayCrouch, long tapMs,
-                        float firstStep, float[] steps, float walk, float plateReach, long plateDwellMs) {
+                        float firstStep, float[] steps, float walk) {
     public static final String FILE = "assets/awaken/binoculars/feel.json";
     public static final int SCHEMA = 1;
 
     public static final GlassFeel DEFAULTS = new GlassFeel(330F, 220F, 0.82F, 0.85F, 300F, 120F, 0.02F, 250F, 120F, 6F, 0.04F,
-            1F / 3F, 250L, 4F, new float[]{2F, 3F, 4F, 6F, 8F, 12F}, 0.2F, 160F, 500L);
+            1F / 3F, 250L, 4F, new float[]{2F, 3F, 4F, 6F, 8F, 12F}, 0.2F);
 
     private static volatile GlassFeel current;
 
@@ -83,7 +82,7 @@ public record GlassFeel(float raiseMs, float lowerMs, float eyecup, float eyecup
                     num(o, "focusRaiseMs", d.focusRaiseMs(), 0, 2000), num(o, "focusStepMs", d.focusStepMs(), 0, 2000),
                     num(o, "focusFromStep", d.focusFromStep(), 1, 16), num(o, "sway", d.sway(), 0F, 0.5F), num(o, "swayCrouch", d.swayCrouch(), 0F, 1F),
                     (long) num(o, "tapMs", d.tapMs(), 80, 1000), num(o, "firstStep", d.firstStep(), 1, 16), steps,
-                    num(o, "walk", d.walk(), 0.05F, 1F), num(o, "plateReach", d.plateReach(), 16, 256), (long) num(o, "plateDwellMs", d.plateDwellMs(), 0, 3000));
+                    num(o, "walk", d.walk(), 0.05F, 1F));
             if (f.eyecupEnd() < f.eyecup()) return new Parsed(DEFAULTS, false, "eyecupEnd comes before eyecup");
             return new Parsed(f, true, "");
         } catch (RuntimeException e) {

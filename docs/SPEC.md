@@ -8690,8 +8690,10 @@ readout says "Too far to tell" for a moment and nothing is set. The server check
 - **Far Sight**: while `CameraHooks.zoom()` > 1.05 its horizon panorama isn't drawn (at 8× it would be blurry); the far land draws
   live. Far Sight installs a ground sampler (`core.api.FarGround`) so the readout and marking reach past loaded land in
   single player (while its far land drew in the last fifth of a second).
-- **Plates at range**: while the binoculars are up, holding the centre on a creature for `plateDwellMs` (500) shows its plate out to
-  `plateReach` (160) blocks: only the one you hold on. Uses only what your game already has about it; nothing new from the server.
+- **Plates at range**: while the view is magnified (`CameraHooks.zoom()` > 1.05), holding the centre on a creature past the normal
+  read range for `PlateRules.GLASS_DWELL` (10 ticks) shows its plate out to `PlateRules.GLASS_REACH` (160) blocks: only the one you
+  hold on (`PlateRules.lookRange(per, zoom)`, used by `LivingClient.plates`; a far creature joins the candidates by itself, the
+  40-block box stays). Uses only what your game already has about it; nothing new from the server. Tested in `living_plate_rules`.
 - **Creatures** beyond the server's tracking range (animals 160, monsters 128) aren't there to draw; not changed.
 
 ### 39.9 Settings (`config/awaken-binoculars-client.toml`) and commands
