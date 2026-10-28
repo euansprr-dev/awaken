@@ -667,6 +667,17 @@ Plan v2 · overworld creatures (details in docs/modules/fauna.md):
 - Every named beast has a lair placed by world generation (one structure set each; spacing 112 chunks for P1's three,
   96 for P2's, 40 for the Mycelord). The lair's beast appears when an awakened level-3+ player is within 96 blocks and
   returns an hour of play after it falls. Roaming beasts spawn at weight 1.
+- **Fliers hold in open air** (Euan, 2026-10-28: the Empress Moth sat still inside a birch canopy; `mobs.entity.FlightRoom`,
+  test `mobs_flier_room`): a flier's idle spot needs room for its drawn body, not only its hitbox (reach from the body's
+  centre: Empress Moth 2.2 blocks, Plumed Coil and Dune Wyrm 2.6, times its scale; others half their width + 0.25; 0.75
+  headroom), and a straight way there clear of blocks (fliers steer straight, no pathfinding). A big flier (reach 1.5+)
+  circles its home slowly, holds in its clearing or over the canopy (rising straight out of the clearing first), and
+  one pick in seven or so settles on a solid top for 5–11 s. A flight that stops closing in for 40 ticks ends, so the
+  flier chooses again (before, a flight into leaves never arrived and it never chose again). A big flier with no room and
+  no way out for three picks (one saved inside a canopy) is lifted over the treetops in a puff of dust; a roaming big
+  flier that spawned under a canopy rises over it before it takes its home there. A flying named beast that notices you
+  stops circling and hangs in the air, turning to face you while you stay in sight; its warning, then a roar when it
+  turns on you, then a told dive.
 - Meeting a family's creature at level 3+ tells of its nearest lair (within 3,000 blocks); finding a lair pays 0.15 of
   a level once per beast kind. Block-changing talents (lichen, flowers, mushrooms) never act inside a Hearth radius.
 - Twelve family materials (`<family>_<thing>`) and the beasts' parts join the Hunter gear tags (E hides, cores and
