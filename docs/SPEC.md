@@ -9376,11 +9376,16 @@ the fight (R3). This session builds every one itself, in batches of four (Lords,
 Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
 - **Rounds.** `kit_bodies.py silhouettes DIR BOSS`; each boss's options live in `kit/sil/<boss>.py` with its own
   materials (`Mass(..., mats)`), fliers framed down to the ground so they hang at their true height. Euan picks on the
-  pick page (https://claude.ai/artifact/MUoruSXr8xmWNVk4JyAAbc, one document per boss in its `picks` store).
+  pick page (https://claude.ai/artifact/MUoruSXr8xmWNVk4JyAAbc, one document per boss in its `picks` store) for batches
+  1-3. From batch 4 on (Euan, 2026-10-29: "pick the most unique and interesting forms of each that avoid too much
+  repetition and are CLEAR high quality ones ... keep going until fully finished") this session picks: the shape that
+  reads clearest and looks least like the bosses already built, and the tracker says why. The ask is a full body and
+  motion on a par with Fresh Animations for every boss; the fight (R3) comes after.
 - **Picks so far** (2026-10-28). Unit Zero: A, the Sentinel. Mother of Spores: C, the Crowned Host. The Gearwright
   Colossus: C, the Clock Tower. The Root Saint: A, the Rooted Saint. The Bell Warden: A, the Bell That Walks. The Glass
   Serpent: B, the Hourglass. The Hive Regent: A, the Empress. The Drowned Archivist: A, the Lectern. The Lantern Broker:
-  A, the Pedlar. The Abbot of Frost: B, the Pilgrim.
+  A, the Pedlar. The Abbot of Frost: B, the Pilgrim. Picked here (2026-10-29): the Mirror Knight: C, the Masked
+  Duelist. The Sleeper: B, the Four-Poster. The Sky Leviathan: B, the Ray. The Hollow Herald: C, the Ring-Head.
 - **Unit Zero, the Sentinel** (body and motion, `kit/bosses/unit_zero.py`). A cathedral statue that moves, 3.6 blocks to
   the helm and 4.3 with its halo, 107 cubes on the Duelist plan (leg 30 px): ceramic plates over black joints, a slate
   tabard between the legs (so a stride never meets it) and split coat-tails behind, each a short cloth chain on springs;

@@ -7,6 +7,12 @@ keeps this page current. SPEC §35.11 holds the decisions; this page is the trac
 
 Pick page (one tap per boss, saved to the page's store): https://claude.ai/artifact/MUoruSXr8xmWNVk4JyAAbc
 
+Euan, 2026-10-29: "pick the most unique and interesting forms of each that avoid too much repetition and are CLEAR high
+quality ones. I trust you to keep going until fully finished and all bosses have: 1. Full bodies at the quality bar we
+set 2. Animations on par with Fresh Animations". So from batch 4 on this session picks each form itself (the clearest
+shape, the least like the bosses already built) and keeps building to the end without waiting between batches. The
+picks page holds batches 1-3.
+
 ## The bar (what "up to the Forge" means)
 
 1. **Silhouette round.** Three shapes that don't look alike, massing blocks at true size beside a player, front and
@@ -59,10 +65,10 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Drowned Archivist | Lord | Drowned | Caster | drowned ×1.9 | A, the Lectern | — | — | — |
 | The Lantern Broker | Lord | Lantern | Construct | cube lantern | A, the Pedlar | — | — | — |
 | The Abbot of Frost | Lord | Frost | Caster | evoker ×1.7 | B, the Pilgrim | — | — | — |
-| The Mirror Knight | Lord | Mirror | Duelist | player ×1.4 | — | — | — | — |
-| The Sleeper | Lord | Nightmare | Brute | zombie ×2.2 | — | — | — | — |
-| The Sky Leviathan | Lord | Sky | Serpent | cube serpent ×3.2 | — | — | — | — |
-| The Hollow Herald | Lord | Abyss | Caster | cube shade ×1.4 | — | — | — | — |
+| The Mirror Knight | Lord | Mirror | Duelist | player ×1.4 | C, the Masked Duelist | — | — | — |
+| The Sleeper | Lord | Nightmare | Brute | zombie ×2.2 | B, the Four-Poster | — | — | — |
+| The Sky Leviathan | Lord | Sky | Serpent | cube serpent ×3.2 | B, the Ray | — | — | — |
+| The Hollow Herald | Lord | Abyss | Caster | cube shade ×1.4 | C, the Ring-Head | — | — | — |
 | The Rootmother | Guardian | Rim | Crawler | spider ×2.4 | — | — | — | — |
 | The Thornback | Guardian | Gardens | Beast | ravager | — | — | — | — |
 | The Choirmaster | Guardian | Choir | Caster | witch ×2 | — | — | — | — |
@@ -120,3 +126,28 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 - **The Abbot of Frost:** A the Frozen Saint (tall and thin, robes frozen in layers, a mitre of ice, a censer), B the
   Pilgrim (hunched under a glacier with the monastery's heart frozen in it), C the Snow Owl (a cloak of frost feathers,
   an owl's hood with ear tufts and pale eyes). **Picked B**, 2026-10-28.
+- **The Mirror Knight:** A the Silvered Knight (mirror plate, a mirror for a face, a cape of cracked mirror panels, a kite
+  shield), B the Reflection (dark silvered glass, stepping out of a gilded frame with its back foot still in the glass),
+  C the Masked Duelist (a blue coat over a skirt of mirror panels, a wide plumed hat, an oval mirror mask, a rapier en
+  garde and a parrying dagger). **Picked C**, 2026-10-29: the only fencer in the roster (Unit Zero cuts with its hands,
+  the Shadow Regent and the Sovereign of Mirrors are still to come and can't both be knights), a silhouette nobody else
+  has (the hat brim, the long blade), and fencing moves that read at a glance. A is a knight anyone has seen; B's frame
+  pins it to one spot, which a duelist can't be.
+- **The Sleeper:** A the Sleepwalker (a giant in a nightgown, arms out, a candle swinging from one hand), B the
+  Four-Poster (the bed walks on its posts, the Sleeper asleep under the quilt, one arm dragging its fist on the floor,
+  torn curtains, a dreamcatcher), C the Bear (a giant patchwork teddy, a button eye and a stitched X, stuffing glowing out
+  of a split seam). **Picked B**, 2026-10-29: nothing else in the game is shaped like it, it says "asleep" from across
+  the room, and each move has its own body part (the fist, the curtains closing for Heavy Eyelids, the bed rearing to
+  wake). A reads as another robed giant; C is a toy, cuter than the gate.
+- **The Sky Leviathan:** A the Cloud Dragon (a wingless sky dragon a dozen blocks long, a cloud mane, antlers, a pearl
+  in one claw), B the Ray (a ray ten blocks across, storm slate veined with lightning on top and pale beneath, horns
+  curling either side of its mouth, a whip tail ending in forked lightning), C the Sky Ruin (a serpent carrying a ruined
+  temple on two humps, a bell tower, chains). **Picked B**, 2026-10-29: the Glass Serpent is already a long coiled body,
+  and A and C would be two more; the Ray is the clearest flying shape there is, its Wingbeat and Dive are the body's own
+  moves, and it isn't a whale (the Gate Worlds have those).
+- **The Hollow Herald:** A the Empty Robe (a floating robe with nothing in the hood but black ringed in light, a black
+  glass halo, a herald's trumpet and an empty banner), B the Black Sun (a gaunt figure holding a black sphere overhead in
+  a tilted ring of light, its robes streaming up into it), C the Ring-Head (very tall and thin in a long blue-black coat,
+  a ring of violet-black glass where its head should be with nothing inside it, arms to the floor, a blank scroll).
+  **Picked C**, 2026-10-29: the clearest of the three from far off (you see straight through its head), not another robe
+  (the Root Saint, the Pilgrim and the Archivist all wear one), and its long limbs give it a walk and reach of its own.
