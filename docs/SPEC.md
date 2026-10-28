@@ -264,7 +264,33 @@ Generation is deterministic from `GatePlan{seed, theme, layout, modifiers, twist
 Rooms: start, normal, elite, cache, puzzle (some layouts), shrine (floor end), boss arena (last floor).
 Everything picked up inside a gate goes to the **Satchel** (27 slots + Satchel XP). Shrine: Extract (bank + return to
 gate mouth) or continue via the Seal to the next floor. Boss kill: claim + exit portal.
-Gate pressure: after 4 min on a floor, a wave every 45 s, scaling; at 8 min the gate's Warden (elite) arrives.
+Gate encounters (2026-10-28 playtest; Codex, reviewed): the current room and its connected neighbours are populated before doorway
+entry, within the existing 40-monster gate / 60-monster arena caps. A neighbour is prepared only once its chunks are
+loaded (a preview never reads or loads a chunk, §38.1); stepping in prepares a room regardless. A company's size (party
+scaling) is fixed when it is prepared. If the budget is full, the unspawned part of a
+company waits in saved state, with its original party scaling and spawn index. It resumes when space becomes available,
+without replacing any members already killed. A capped empty arena stays open and unfinished; cavern zones wait separately.
+Prepared enemies wait visibly and alive, never frozen (orchestrator, 2026-10-28: Euan reported mobs that "just stopped
+moving" as a bug, so no NoAI): their AI stays on, they take no target, and `gates.run.Dormant` (a top-priority move and
+look goal) keeps them idling near their spot: breathing and swaying through their own idle clips, looking about, now
+and then a shuffle or a stroll of up to 2.5 blocks, and walking back if they drift more than 4. Entering their room
+(or damaging one from the same gate/floor) wakes that encounter, not its neighbours. A woken enemy first has a 14-tick
+wake beat (`Encounters.WAKE_BEAT`): it stops, turns toward whoever woke it (what hit it, else the nearest player) and
+cannot target yet; then it takes that player as its target and fights. The goal is not saved; loading a waiting enemy
+attaches it again (and clears a NoAI an earlier build saved). Caverns prepare their 16-block
+zones and wake only the entered zone; cleared zones also reject reinforcements. A room/zone may target within its
+own bounds plus 8 blocks beyond its doorway;
+floor-wide pressure enemies target within 32 blocks on their actual gate/floor. Arena bars still close on entry; only
+the first wave is prepared, and the second follows its defeat. Stealth Hall sentries retain their existing patrols.
+Prepared and triggered encounters are saved separately. Gate registry schema 3 saves pending companies and the living UUID roster, including
+unloaded entities. Death removes membership before the corpse animation ends; restart/load order never means an
+arena is empty and never recreates a saved Lord. Schema 2 rooms already triggered count as prepared on load. Cleared encounters remain cleared across leave/re-entry and relog.
+Gate pressure: after 4 min on a floor, a wave every 45 s, scaling; at 8 min the gate's Warden (elite) can arrive.
+Reinforcements and the Warden spawn only in engaged, unfinished rooms, never safe, cleared or merely previewed rooms.
+A Warden is announced only after successful spawning. Its bar includes “Warden” (the Hive's Swarm Mind is a Warden,
+not the final Lord). Gate bars require an engaged encounter on the player's actual gate/floor, within 32 blocks and
+visible or actively targeting that player; a previewed or remote-floor Lord has no bar. Echoing's one rise and a
+living boss's summons remain parts of their original fights.
 States: BUILDING → READY → ACTIVE ⇄ OPEN → CLEARED | BROKEN → RELEASED (cell region files deleted on server stop).
 Break: spill wave + roaming Gate Lord with boss bar at the gate; blight (desaturation + grey fog) within 96 blocks until
 cleared; better loot. Warning one play-day ahead when within 256 blocks of a Hearth. The Gate Stabiliser pushes a break
@@ -1171,7 +1197,9 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
   1.25 degrees for at most 12 ticks, a second impact can strengthen but never extend it, and 4 quiet ticks part two;
   kicks are capped at 3 / 2 degrees. `cameraShake` off or reduced motion turns all of it off. Chat, the inventory or
   the K menu never silence the scene; a pause freezes its clock (nothing replays after). Client settings
-  (`awaken-ritual-audio-client.toml`): `effects` 1.0, `ambience` 1.0, `impactMotion` 0.7.
+  (`awaken-ritual-audio-client.toml`): `effects` 1.0, `ambience` 1.0, `impactMotion` 0.7. Follow-up: `3446.flac`
+  (Bell 1 o'clock) is the same take the city's bells are built from; swap it for another bell recording so the ritual
+  and the city don't share a voice.
 
 - Ritual audio revision (2026-10-28): physical stone, pressure, arc, wind and bell layers use archived CC0 recordings
   with hashes, source pages and repeatable processing in `tools/art/sources/ritual/` and `ritual_recordings.py`.
@@ -5645,7 +5673,10 @@ of the plan). No mixins.
     shoulder (0.35 under the eye, clear of the floor), and only a working hand reaches into the frame.
   - **A real mouth:** every furnace, smoker and blast furnace in the world gets a block model with a recessed mouth
     (all four facings, lit and unlit): the five outer faces and a stone frame stay, the cavity is x 3–13, y 2–13, z 0–9
-    model pixels with stone walls, a closed back and a coal bed, and a lit one glows at the back of the coals. Items sit
+    model pixels with soot-dark walls and back (vanilla's cobbled deepslate, by name) and a coal bed, and a lit one glows at
+    the back of the coals. The cavity's faces are lit from the air in front of the mouth (cullface north, so vanilla's
+    block renderer reads the light there instead of inside the solid furnace, which is always 0; Sodium unchecked): an unlit furnace
+    reads as a deep sooty hollow, not a black hole, and the cavity is culled when a solid block covers the front. Items sit
     3/16 inside the mouth at scale 0.24: what cooks on the left, the finished result on the right (±0.15, y + 0.57),
     the fuel on the coals (y + 0.26). They stay still while vanilla's flame, smoke and cooking go on. Each slot is
     picked within 0.16 of its middle and gets the front-facing outline; the cooking (Holo blue) and the fuel left (fire)

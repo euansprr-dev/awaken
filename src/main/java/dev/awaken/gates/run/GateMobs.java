@@ -1,5 +1,10 @@
 package dev.awaken.gates.run;
 
+import dev.awaken.gates.GateRegistry;
+import dev.awaken.gates.GateService;
+import dev.awaken.gates.GateState;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 
@@ -10,8 +15,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Which gate monsters are alive in which room. Runtime index (rebuilt from each entity's persistent data when it loads),
- * used for room-cleared checks, arena waves, the entity budget and kill XP.
+ * Which gate monsters are alive in which room. The saved floor roster restores counts before entities load; each
+ * entity's persistent tag supplies its ownership. Used for room clears, arena waves, the entity budget and kill XP.
  */
 public final class GateMobs {
     private GateMobs() {}
@@ -32,6 +37,7 @@ public final class GateMobs {
         t.putInt("room", key.room());
         e.getPersistentData().put(TAG, t);
         index(e.getUUID(), key);
+        remember(e, key);
     }
 
     private static void index(UUID id, Key key) {
@@ -42,9 +48,35 @@ public final class GateMobs {
 
     /** Re-index an entity loaded from disk. */
     public static void onLoad(Entity e) {
+        if (e instanceof net.minecraft.world.entity.LivingEntity living && !living.isAlive()) return;
         CompoundTag t = e.getPersistentData().getCompoundOrEmpty(TAG);
         if (t.isEmpty()) return;
-        index(e.getUUID(), new Key(t.getIntOr("gate", -1), t.getIntOr("area", 0), t.getIntOr("floor", 1), t.getIntOr("room", -1)));
+        Key key = new Key(t.getIntOr("gate", -1), t.getIntOr("area", 0), t.getIntOr("floor", 1), t.getIntOr("room", -1));
+        index(e.getUUID(), key);
+        remember(e, key);
+        Encounters.onLoad(e, key);
+    }
+
+    private static void remember(Entity e, Key key) {
+        if (!(e.level() instanceof ServerLevel level)) return;
+        var reg = GateRegistry.get(level.getServer());
+        var gate = reg.gate(key.gate());
+        if (gate != null && gate.floor(key.area(), key.floor()).living.put(e.getUUID().toString(), key.room()) == null) reg.setDirty();
+    }
+
+    /** Restore counts before any players arrive, without loading a chunk or depending on entity load order. */
+    public static void restore(MinecraftServer server) {
+        for (var g : GateRegistry.get(server).all()) {
+            if (g.state == GateState.RELEASED) continue;
+            for (var entry : g.floors.entrySet()) {
+                String[] af = entry.getKey().split(":");
+                int area = Integer.parseInt(af[0]), floor = Integer.parseInt(af[1]);
+                entry.getValue().living.forEach((id, room) -> index(UUID.fromString(id), new Key(g.id, area, floor, room)));
+            }
+        }
+        // Older saves have no roster. Adopt entities already loaded before ServerStarted as well as later onLoad calls.
+        ServerLevel level = GateService.gateLevel(server);
+        if (level != null) for (Entity e : level.getAllEntities()) onLoad(e);
     }
 
     public static Key keyOf(Entity e) {
@@ -57,14 +89,25 @@ public final class GateMobs {
 
     /** Forgets a dead or discarded mob. Returns its key, or null if it wasn't tracked. */
     public static Key remove(Entity e) {
-        Key k = INDEX.remove(e.getUUID());
+        Key k = keyOf(e);
         if (k == null) return null;
+        boolean indexed = INDEX.remove(e.getUUID()) != null;
+        boolean recorded = false;
+        if (e.level() instanceof ServerLevel level) {
+            var reg = GateRegistry.get(level.getServer());
+            var gate = reg.gate(k.gate());
+            if (gate != null && gate.floor(k.area(), k.floor()).living.remove(e.getUUID().toString()) != null) {
+                recorded = true;
+                reg.setDirty();
+            }
+        }
+        if (!indexed && !recorded) return null;
         Set<UUID> s = ALIVE.get(k);
         if (s != null) {
             s.remove(e.getUUID());
             if (s.isEmpty()) ALIVE.remove(k);
         }
-        PER_GATE.merge(k.gate(), -1, Integer::sum);
+        if (indexed) PER_GATE.merge(k.gate(), -1, Integer::sum);
         return k;
     }
 

@@ -37,6 +37,10 @@ public final class GateHooks {
         default Optional<String> openWandering(ServerPlayer player, BlockPos near, int floors, int lifetimeTicks) { return Optional.empty(); }
         /** Release a gate now (refused while someone stands inside). */
         default void release(ServerLevel level, String id) {}
+        /** Gate-owned encounter boundaries; non-gate entities remain unrestricted. */
+        default boolean mayTarget(net.minecraft.world.entity.LivingEntity mob, net.minecraft.world.entity.LivingEntity target) { return true; }
+        /** Whether a tracked boss belongs to this player's currently encountered gate fight. */
+        default boolean showsBossBar(net.minecraft.world.entity.Entity mob, ServerPlayer player) { return true; }
     }
 
     private static Access access = new Access() {
@@ -58,4 +62,6 @@ public final class GateHooks {
     public static Optional<String> openScripted(ServerPlayer p, String theme, int rank, BlockPos near, int floors) { return access.openScripted(p, theme, rank, near, floors); }
     public static Optional<String> openWandering(ServerPlayer p, BlockPos near, int floors, int lifetimeTicks) { return access.openWandering(p, near, floors, lifetimeTicks); }
     public static void release(ServerLevel level, String id) { access.release(level, id); }
+    public static boolean mayTarget(net.minecraft.world.entity.LivingEntity mob, net.minecraft.world.entity.LivingEntity target) { return access.mayTarget(mob, target); }
+    public static boolean showsBossBar(net.minecraft.world.entity.Entity mob, ServerPlayer player) { return access.showsBossBar(mob, player); }
 }
