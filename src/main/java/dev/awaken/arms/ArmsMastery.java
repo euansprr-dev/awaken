@@ -88,9 +88,18 @@ public final class ArmsMastery {
         p.setData(ArmsContent.MEMORY, m);
         int was = step(before), now = step(after);
         if (now > was) {
-            Signal.toast(p, Component.literal("MASTERY · ").withStyle(Style.EMPTY.withColor(0xE2B450))
-                    .append(Component.literal(style.def().name() + " " + NUMERAL[now]).withStyle(Style.EMPTY.withColor(0xFFE3A0)))
-                    .append(Component.literal(" · " + GIVES[now]).withStyle(Style.EMPTY.withColor(0xC8C2B0))));
+            String effect = switch (now) {
+                case 1 -> "Your light-attack chain gains its mastery finishing strike.";
+                case 2 -> "The Slipcut follow-up window lasts " + SLIPCUT_BONUS / 20.0 + " seconds longer.";
+                case 3 -> "Deflects deal 50% more posture and generate 50% more Resonance.";
+                case 4 -> "All Resonance gains increase by 20%.";
+                default -> "Your weapon Art becomes available at " + ART_AT + "% Resonance.";
+            };
+            dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event(
+                    "weapon_mastery/" + style.id() + "/" + now, "Weapon mastery", style.def().name() + " " + NUMERAL[now], effect,
+                    List.of("Earned by defeating enemies with this fighting style. It applies whenever you wield that style.", effect,
+                            "Earlier mastery steps remain active. Use the same weapon controls; no new key is required."),
+                    dev.awaken.core.api.NoticeEvents.Kind.PERMANENT, 0xE2B450));
             sync(p);
         }
         return now;

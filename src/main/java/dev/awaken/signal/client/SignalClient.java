@@ -62,6 +62,7 @@ public final class SignalClient {
     }
 
     private static void onPayloads(RegisterClientPayloadHandlersEvent event) {
+        event.register(dev.awaken.signal.NoticeHistory.Update.TYPE, (msg, ctx) -> Journal.accept(msg));
         event.register(SignalPayloads.Show.TYPE, (msg, ctx) -> {
             if (classic()) {
                 RecentLog.add(msg.window());
@@ -113,7 +114,11 @@ public final class SignalClient {
             else ClassicHud.clear();
             wasClassic = c;
         }
-        if (c) ClassicHud.tick();
+        if (c) {
+            ClassicHud.tick();
+            SystemHud.tickSavedEvents();
+            Journal.tick(net.minecraft.client.Minecraft.getInstance().gui.screen() != null);
+        }
         else SystemHud.tick();
     }
 

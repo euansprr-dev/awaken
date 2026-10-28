@@ -111,7 +111,13 @@ public final class LevelRoad {
             if (!s.def().quiet()) visible++;
             dev.awaken.core.Playtest.log(player, "unlock", "id", key);
             DirectorLog.log(player, "level-road", "level " + s.def().level() + ": " + key + (backfill ? " (caught up)" : ""));
-            if (!backfill && !announced && !s.def().quiet()) announce(player, s.def());
+            if (!s.def().quiet()) {
+                var notice = new dev.awaken.core.api.NoticeEvents.Event("level_road/" + key, "Unlocked at level " + s.def().level(),
+                        s.def().title(), s.def().text(), List.of(s.def().text(), s.def().goal().map(Goal -> Goal.now()).orElse("This unlock is already available.")),
+                        dev.awaken.core.api.NoticeEvents.Kind.PERMANENT, 0x86C9F0);
+                if (backfill || announced) dev.awaken.core.api.NoticeEvents.remember(player, notice);
+                else dev.awaken.core.api.NoticeEvents.tell(player, notice);
+            }
         }
         if (granted > 0) {
             if (backfill && visible > 0) {
@@ -122,13 +128,6 @@ public final class LevelRoad {
             Progression.markDirty(player);
         }
         return granted;
-    }
-
-    private static void announce(ServerPlayer player, LevelRoadDef d) {
-        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.title()))
-                .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6);
-        if (!d.text().isEmpty()) w.body(Component.literal(d.text()));
-        Signal.send(player, w.build());
     }
 
     /** Applies one step's grants. Returns true when something else already announced it (a newly learned power). */

@@ -257,7 +257,7 @@ public final class Mastery {
         if (gained == 0) return 0;
         l.owned.put(id, o);
         if (o.level() >= Loadout.MAX_LEVEL) l.mastery.remove(id);
-        announce(player, type, o.level());
+        announce(player, type, o.variant(), o.level() - gained, o.level());
         DirectorLog.log(player, "powers", "mastery: " + id + " reached level " + o.level() + " through use");
         dev.awaken.core.Playtest.log(player, "power_mastery", "power", id + "@" + o.level());
         Powers.markDirty(player);
@@ -276,8 +276,9 @@ public final class Mastery {
         bar.points = Math.min(after - 1, bar.points / before * after);
     }
 
-    private static void announce(ServerPlayer player, PowerType type, int level) {
-        // the ladder's moment names the new step and what it does (SPEC 36.6)
-        dev.awaken.powers.ladder.Evolution.levelled(player, type, level - 1, level);
+    private static void announce(ServerPlayer player, PowerType type, int variant, int before, int level) {
+        // the ladder's moment names the new step and what it does (SPEC 36.6); the Journal keeps it
+        dev.awaken.powers.ladder.Evolution.levelled(player, type, before, level);
+        PowerNotices.levelled(player, type, variant, before, level, true);
     }
 }

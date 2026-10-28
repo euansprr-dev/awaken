@@ -100,12 +100,14 @@ public final class Powers {
             Progression.markNewThing(player, "power " + type.name);
             DirectorLog.log(player, "powers", "learned " + id + " variant " + type.variant(v).name() + (slot >= 0 ? " on slot " + slot : ""));
             if (announce) announce(player, type, v, 1, "New power", slot);
+            PowerNotices.learned(player, type, v, slot);
             markDirty(player);
             return LearnResult.LEARNED;
         }
         if (swapVariant && o.variant() != v) {
             l.owned.put(id, new Loadout.Owned(id, v, o.level()));
             announce(player, type, v, o.level(), "Variant changed", l.slotOf(id));
+            PowerNotices.swapped(player, type, v, o.level());
             markDirty(player);
             return LearnResult.SWAPPED_VARIANT;
         }
@@ -113,6 +115,7 @@ public final class Powers {
             if (o.variant() != v) {
                 l.owned.put(id, new Loadout.Owned(id, v, o.level()));
                 announce(player, type, v, o.level(), "Variant changed", l.slotOf(id));
+            PowerNotices.swapped(player, type, v, o.level());
                 markDirty(player);
                 return LearnResult.SWAPPED_VARIANT;
             }
@@ -120,8 +123,9 @@ public final class Powers {
         }
         l.owned.put(id, new Loadout.Owned(id, o.variant(), o.level() + 1));
         Mastery.coreLevelled(l, id, o.level(), o.level() + 1);
-        // the ladder's moment: a sting in a fight, the step's window and bloom when calm (SPEC 36.6)
+        // the ladder's moment: a sting in a fight, the step's window and bloom when calm (SPEC 36.6); the Journal keeps it
         dev.awaken.powers.ladder.Evolution.levelled(player, type, o.level(), o.level() + 1);
+        PowerNotices.levelled(player, type, o.variant(), o.level(), o.level() + 1, false);
         markDirty(player);
         return LearnResult.LEVELLED;
     }

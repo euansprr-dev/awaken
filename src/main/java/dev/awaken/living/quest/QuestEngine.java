@@ -88,7 +88,9 @@ public final class QuestEngine {
         s.active.add(new QuestState.Active(chain, 0, 0, java.util.Optional.of(id), p.level().getGameTime()));
         if (s.tracked.isEmpty()) s.tracked = chain;
         save(p, s);
-        Signal.toast(p, Component.literal("Journal · " + d.title()));
+        dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("quest/" + chain + "/start", "Quest started",
+                d.title(), d.steps().getFirst().text(), java.util.List.of(d.summary(), "Track this quest in Journal to see its current step and destination."),
+                dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x7FC3FF));
         begin(p, id, d.steps().getFirst());
         return true;
     }
@@ -211,7 +213,9 @@ public final class QuestEngine {
             s.active.set(i, a.withStep(next));
             QuestDef.Step n = d.steps().get(next);
             begin(p, a.scene().orElse(0L), n);
-            Signal.toast(p, Component.literal(d.title() + " · " + n.text()));
+            dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("quest/" + a.chain() + "/step/" + next,
+                    "Quest advanced", d.title(), n.text(), java.util.List.of("Completed: " + step.text(), "Next: " + n.text(),
+                    "The Journal task entry tracks the current objective."), dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x7FC3FF));
         }
     }
 
@@ -229,9 +233,10 @@ public final class QuestEngine {
             dev.awaken.core.api.ArmsApi.questDone(p, chain); // whoever teaches a style at the end of a chain pays it (docs/arms-progression/PLAN.md §3.4)
         }
         Progression.count(p, "awaken:quests_done");
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Chain complete · " + d.title()))
-                .body(Component.literal(d.summary().isEmpty() ? "Written in your journal." : d.summary()))
-                .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6).build());
+        dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("quest/" + chain + "/complete", "Quest complete",
+                d.title(), "The quest is complete; its earned rewards have been granted.",
+                java.util.List.of(d.summary(), "This completion is saved and its rewards cannot be claimed again."),
+                dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x7FC3FF));
     }
 
     private static void giveRelic(ServerPlayer p, QuestState s, String chain, String relic) {

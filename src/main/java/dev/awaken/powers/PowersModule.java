@@ -30,6 +30,7 @@ public final class PowersModule {
         PowerEvents.register(NeoForge.EVENT_BUS);
         // the Horizon line: Flight takes you to the sky sites
         dev.awaken.core.api.HorizonHooks.addReach((p, need) -> need.equals(dev.awaken.core.api.HorizonHooks.WINGS) && Powers.owns(p, "awaken:flight"));
+        RewardHooks.powerName = id -> { PowerType t = PowerRegistry.get(id); return t == null ? id : t.name; };
         RewardHooks.powerLearner = (player, id) -> {
             Identifier parsed = Identifier.tryParse(id);
             if (parsed != null) Powers.learn(player, parsed, 0);
@@ -50,6 +51,7 @@ public final class PowersModule {
         Starter.init(modBus); // the first-power choice on awakening (plan v2 §4.1)
         PowersCommands.register();
         PowersTests.register();
+        PowerPreviewTests.register();
         PowerHitTests.register();
         MoveTwistTests.register(); // the Awakened Body's family twists
         MasteryCommands.register();
@@ -62,6 +64,10 @@ public final class PowersModule {
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
         var r = event.registrar("1");
+        r.playToServer(PowerPreviews.Request.TYPE, PowerPreviews.Request.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer p) PowerPreviews.request(p, msg);
+        });
+        r.playToClient(PowerPreviews.Reply.TYPE, PowerPreviews.Reply.STREAM_CODEC);
         r.playToServer(PowerPayloads.Cast.TYPE, PowerPayloads.Cast.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) Casting.onPayload(sp, msg);
         });

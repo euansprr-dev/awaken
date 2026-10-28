@@ -353,6 +353,11 @@ final class PowersTests {
                 h.assertTrue(hit && z.getHealth() < hp, "the charge landed (hit=" + hit + ", hp " + hp + " -> " + z.getHealth()
                         + ", alive=" + z.isAlive() + ", invul=" + z.isInvulnerable() + ", cd=" + z.damageCooldownTime + ")");
                 h.assertTrue(Progression.profile(sp).counter(Counters.FORCE_INTERACTIONS) > before, "reaction counted (wet=" + z.isInWater() + ")");
+                var reaction = ForceInteractions.explanation(ForceInteractions.Reaction.STUN_SPREAD);
+                h.assertTrue(sp.getData(dev.awaken.signal.NoticeHistory.HISTORY).entries().stream().anyMatch(e ->
+                        e.event().equals(reaction) && e.event().kind() == dev.awaken.core.api.NoticeEvents.Kind.COMBAT
+                        && e.event().details().getFirst().contains("you are also stunned for 1 second")),
+                        "the actual wet-charge reaction leaves its risk and duration readable in Journal");
                 h.assertTrue(z.hasEffect(PowerContent.STUNNED), "a zombie standing in water is stunned by charge (effects="
                         + z.getActiveEffects() + ", wet=" + z.isInWater() + ", tagged=" + Forces.has(z, Forces.Tag.WATER)
                         + ", pos=" + z.blockPosition() + ", alive=" + z.isAlive() + ")");
