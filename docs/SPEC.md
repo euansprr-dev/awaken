@@ -9369,6 +9369,16 @@ For all three kit bodies (the tools write every body the same way).
 - **Tests.** `kit_string_links`: the Forge's chop string with a target in reach starts its second chop inside the
   first one's recovery. `kit_tables_load` checks every move's one clip and its link.
 
+### 35.11 Every boss to the Forge's bar (tracker `docs/bosses/ROLLOUT.md`; Euan 2026-10-28: "every boss needs to be revamped to this level of standard ... all unique")
+All 41 boss-tier creatures go through the Forge's steps: a silhouette round of three (Euan picks), a body from
+`kit/parts.py` on its family's plan, the motion kit (35.10) with the ground and edge rules and the meter's targets, then
+the fight (R3). This session builds every one itself, in batches of four (Lords, then guardians, Sovereigns and the
+Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
+- **Rounds.** `kit_bodies.py silhouettes DIR BOSS`; each boss's options live in `kit/sil/<boss>.py` with its own
+  materials (`Mass(..., mats)`), fliers framed down to the ground so they hang at their true height. Euan picks on the
+  pick page (https://claude.ai/artifact/MUoruSXr8xmWNVk4JyAAbc, one document per boss in its `picks` store).
+- **Picks so far.** Unit Zero: A, the Sentinel. Mother of Spores: C, the Crowned Host (2026-10-28).
+
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

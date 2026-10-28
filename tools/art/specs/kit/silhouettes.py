@@ -42,6 +42,18 @@ class Mass:
         self.mat[nm] = mat
         return nm
 
+    def rod(self, parent, mat, a, b, w=1):
+        """A bar from point a to point b (x, up, z in the parent's space): a bone at a turned to face b."""
+        dx, dy, dz = b[0] - a[0], b[1] - a[1], b[2] - a[2]
+        ln = math.sqrt(dx * dx + dy * dy + dz * dz)
+        # the bar hangs down its bone (model +y); X then Z turn that onto the direction, in model space (x, -up, z)
+        Dx, Dy, Dz = dx / ln, -dy / ln, dz / ln
+        rx = math.degrees(math.asin(max(-1.0, min(1.0, Dz))))
+        rz = math.degrees(math.atan2(-Dx, Dy))
+        bn = self.bone(parent, a[0], a[1], a[2], (rx, 0, rz))
+        self.box(bn, mat, 0, -max(1, round(ln)), 0, w, max(1, round(ln)), w)
+        return bn
+
     def pair(self, bone_fn, *a, **k):
         """The same part on both sides: bone_fn(side) -> bone (side 1 is the body's left, +x)."""
         for side in (1, -1):
@@ -304,9 +316,10 @@ def sheet(outdir, boss="ember_tyrant"):
     steve_black = Image.new("RGBA", R.steve().size, (0, 0, 0, 255))
     out_paths = []
     opts = options(boss)
-    tr0 = today(boss)
-    tr0.pack()
-    black0 = Image.new("RGBA", tuple(tr0.tex), (0, 0, 0, 255))
+    try:
+        tr0 = today(boss)
+    except ModuleNotFoundError:
+        tr0 = None  # no kit body yet: today it wears a vanilla or old cube body, which the page names instead
     rows = []
     for m in opts:
         flat, val = m.paint(flat=True), m.paint(flat=False)
@@ -328,6 +341,10 @@ def sheet(outdir, boss="ember_tyrant"):
         im.save(p)
         out_paths.append(p)
         print(p, f"{len(m.r.cubes)} cubes, {blocks(tree):.1f} blocks tall")
+    if tr0 is None:
+        return out_paths, opts
+    tr0.pack()
+    black0 = Image.new("RGBA", tuple(tr0.tex), (0, 0, 0, 255))
     t0 = tr0.tree(tr0.sample([("idle", 0.4, 1.0)]))
     views = [framed(t0, black0, 0, 0, px), framed(t0, black0, 90, 0, px)]
     pl = R.render(player, steve_black, yaw=0, pitch=0, px=px)

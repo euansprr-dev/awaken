@@ -1,0 +1,108 @@
+# Every boss to the Living Forge's bar
+
+Euan, 2026-10-28: "every boss needs to be revamped to this level of standard ... all unique ... Truly let's push this
+to the max." And: "Don't use multiple agents, do this all yourself." So this one session (boss-plan, branch
+`claude/boss-plan-f38a45`) takes all 41 boss-tier creatures through the same steps as the Forge, one at a time, and
+keeps this page current. SPEC §35.11 holds the decisions; this page is the tracker.
+
+Pick page (one tap per boss, saved to the page's store): https://claude.ai/artifact/MUoruSXr8xmWNVk4JyAAbc
+
+## The bar (what "up to the Forge" means)
+
+1. **Silhouette round.** Three shapes that don't look alike, massing blocks at true size beside a player, front and
+   side in black plus a value pass (`kit_bodies.py silhouettes DIR BOSS`, options in `kit/sil/<boss>.py`). No round
+   shapes. Euan picks one.
+2. **Body.** The pick built from `kit/parts.py` at true size, on its family's plan so the shared moves, foot planting
+   and look bind. Its own palette and one light story, a clear value order, roughly 80-160 cubes.
+3. **Motion (R2, SPEC §35.10).** One clip a move with link poses, the transition spring, secondary springs. The
+   ground rule (nothing through the floor; the build fails past 2 px) and, for blades, the edge rule. The meter's
+   targets: body kinks outside the strike about 5.5° a frame or less, held under 15%, dips under 40%. Sound and feel
+   sit on the clip's marks.
+4. **Fight (R3).** Phrases, not summons. A readable tell for every blow, and the hit volume travels with the limb that
+   strikes. Its `kit_` GameTests (the hit lands where the limb is, strings link).
+
+## Order
+
+Batches of four, so a silhouette round is always waiting for Euan while I build the last pick. Lords first (every gate
+ends on one), then the Descent's guardians, the Sovereigns and the Shadow, then the Nightmares. New families (Caster,
+Serpent, Construct, Beast, Crawler) get their plan the first time one of their bosses is built.
+
+| Batch | Bosses |
+|---|---|
+| 1 | Unit Zero, Mother of Spores |
+| 2 | Gearwright Colossus, Root Saint, Bell Warden, Glass Serpent |
+| 3 | Hive Regent, Drowned Archivist, Lantern Broker, Abbot of Frost |
+| 4 | Mirror Knight, the Sleeper, Sky Leviathan, Hollow Herald |
+| 5 | Rootmother, Thornback, Choirmaster, Ossuary King, Great Listener |
+| 6 | Furnace Engine, Drowned Moon, Architect of Rooms, Shadow Regent, Seed Warden |
+| 7 | Sovereigns of Hunger, Silence, Sleep and Machines |
+| 8 | Sovereigns of Mirrors, Storms, Roots and Ash; the Signal's Shadow |
+| 9 | The Long Drop, the Pyre, the Undertow, the Hollow Crowd |
+| 10 | The Thousand Legs, the Fuse, the Faceless |
+
+Out of this list until Euan says: the 15 gate Wardens and the 12 named beasts (the beasts already have hero rigs).
+
+## Tracker
+
+Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit).
+
+| Boss | Tier | Gate | Family | Today | Round | Body | Motion | Fight |
+|---|---|---|---|---|---|---|---|---|
+| The Ember Tyrant (the Living Forge) | Lord | Ember | Brute | kit | C | ✓ 3488e8d5 | ✓ c1e3c8ed | — |
+| Unit Zero | Lord | Precursor | Duelist | kit (phase 1) | A, the Sentinel | — | — | — |
+| Mother of Spores | Lord | Fungal | Flier | kit (phase 1) | C, the Crowned Host | — | — | — |
+| The Gearwright Colossus | Lord | Clockwork | Brute | iron golem ×1.8 | drawn | — | — | — |
+| The Root Saint | Lord | Temple | Caster | creaking ×1.8 | drawn | — | — | — |
+| The Bell Warden | Lord | Bell | Construct | cube bell | drawn | — | — | — |
+| The Glass Serpent | Lord | Glass | Serpent | cube serpent ×2.2 | drawn | — | — | — |
+| The Hive Regent | Lord | Hive | Flier | bee ×4 | — | — | — | — |
+| The Drowned Archivist | Lord | Drowned | Caster | drowned ×1.9 | — | — | — | — |
+| The Lantern Broker | Lord | Lantern | Construct | cube lantern | — | — | — | — |
+| The Abbot of Frost | Lord | Frost | Caster | evoker ×1.7 | — | — | — | — |
+| The Mirror Knight | Lord | Mirror | Duelist | player ×1.4 | — | — | — | — |
+| The Sleeper | Lord | Nightmare | Brute | zombie ×2.2 | — | — | — | — |
+| The Sky Leviathan | Lord | Sky | Serpent | cube serpent ×3.2 | — | — | — | — |
+| The Hollow Herald | Lord | Abyss | Caster | cube shade ×1.4 | — | — | — | — |
+| The Rootmother | Guardian | Rim | Crawler | spider ×2.4 | — | — | — | — |
+| The Thornback | Guardian | Gardens | Beast | ravager | — | — | — | — |
+| The Choirmaster | Guardian | Choir | Caster | witch ×2 | — | — | — | — |
+| The Ossuary King | Guardian | Orchard | Brute | wither skeleton ×2 | — | — | — | — |
+| The Great Listener | Guardian | Silent | Brute | cube listener ×1.8 | — | — | — | — |
+| The Furnace Engine | Guardian | Foundry | Brute | iron golem ×1.8 | — | — | — | — |
+| The Drowned Moon | Guardian | Inverted | Flier | elder guardian ×1.6 | — | — | — | — |
+| The Architect of Rooms | Guardian | Dreaming | Caster | evoker ×1.8 | — | — | — | — |
+| The Shadow Regent | Guardian | Court | Duelist | player ×1.6 | — | — | — | — |
+| The Seed Warden | Guardian | Seed | Caster | cube shade ×1.6 | — | — | — | — |
+| Sovereign of Hunger | Sovereign | Court | Beast | ravager ×1.8 | — | — | — | — |
+| Sovereign of Silence | Sovereign | Court | Brute | cube listener ×1.9 | — | — | — | — |
+| Sovereign of Sleep | Sovereign | Court | Flier | phantom ×3.2 | — | — | — | — |
+| Sovereign of Machines | Sovereign | Court | Brute | iron golem ×1.9 | — | — | — | — |
+| Sovereign of Mirrors | Sovereign | Court | Duelist | player ×1.8 | — | — | — | — |
+| Sovereign of Storms | Sovereign | Court | Flier | breeze ×2.4 | — | — | — | — |
+| Sovereign of Roots | Sovereign | Court | Caster | creaking ×1.9 | — | — | — | — |
+| Sovereign of Ash | Sovereign | Court | Flier | blaze ×2.4 | — | — | — | — |
+| The Signal's Shadow | Final | Seed | Duelist | cube shade ×2 | — | — | — | — |
+| The Long Drop | Nightmare | Fear | Flier | phantom ×2.4 | — | — | — | — |
+| The Pyre | Nightmare | Fear | Flier | blaze ×2 | — | — | — | — |
+| The Undertow | Nightmare | Fear | Caster | drowned ×2 | — | — | — | — |
+| The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | zombie ×1.7 | — | — | — | — |
+| The Thousand Legs | Nightmare | Fear | Crawler | spider ×2.6 | — | — | — | — |
+| The Fuse | Nightmare | Fear | Construct | creeper ×2 | — | — | — | — |
+| The Faceless | Nightmare | Fear | Duelist | player | — | — | — | — |
+
+## The rounds so far
+
+- **Unit Zero:** A the Sentinel (a cathedral statue that moves, a great square halo on its point), B the Unbound (a
+  wire frame with its plates floating off it), C the Hunter (bent-back legs, mantis blades, a tail blade). **Picked
+  A**, 2026-10-28.
+- **Mother of Spores:** A the Veiled Lady (a thimble cap over a lattice veil to the floor), B the Shelf Mother (a
+  floating dead tree of shelf fungus), C the Crowned Host (a woman held up by a fanned crown of glowing fungus
+  stalks, her legs one root tail). **Picked C**, 2026-10-28.
+- **The Gearwright Colossus:** A the Piston Titan, B the Unfinished (half scaffolding, a crane for an arm), C the Clock
+  Tower (its arms the clock's hands, the pendulum its weapon).
+- **The Root Saint:** A the Rooted Saint (a robed statue on roots, a stone sunburst), B the Reliquary Tree (a walking
+  tree with the saint's bones in a lit hollow), C the Kneeling Giant (a shrine built on his back).
+- **The Bell Warden:** A the Bell That Walks (four crab legs from under the rim), B the Bellringer, C the Hollow Bell
+  (a knight cast in one piece with a bell, gliding on its rim).
+- **The Glass Serpent:** A the Shard Wyrm (rearing, a fin of shards), B the Hourglass (hollow glass frames with sand
+  running through, coiled), C the Mirror Eel (a flat ribbon of mirror, a mirror for a face).
