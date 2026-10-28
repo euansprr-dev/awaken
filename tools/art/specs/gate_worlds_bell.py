@@ -1,4 +1,5 @@
-"""Gate Worlds, Bell Crypt (SPEC §38.6): the theme's 14 world blocks, their textures and their content.
+"""Gate Worlds, Bell Crypt (SPEC §38.6): the theme's 15 world blocks, their textures and their content, and the sprites
+of its worlds' small life (moths, bats, pale fish, rats; SPEC §38.9).
 
     python3 tools/art/build_all.py gate_worlds_bell        textures
     python3 tools/art/specs/gate_worlds_bell.py content    blockstates, models, item definitions, loot, lang, tags
@@ -32,7 +33,7 @@ def _px():
         "limestone_dark": ["#1d1c1b", "#292725", "#36332f", "#44403b", "#524e47"],
         "flag": ["#1f1f22", "#2a2a2e", "#35353a", "#424146", "#504f53"],
         "algae": ["#16241c", "#1f3428", "#2a4634", "#365a40"],
-        "bronze_p": ["#2e1d0e", "#4a3017", "#6b4a22", "#8e6430", "#a8783c"],
+        "bronze_p": ["#231a12", "#352819", "#4a3922", "#5f4b2d", "#76603a"],
         "verd": ["#1e3c33", "#2b5649", "#3b7462", "#4f927c", "#6cb09a"],
         "wax": ["#6e6656", "#8f8670", "#b0a68c", "#cdc3a6", "#e6dcc0", "#f6efdb"],
         "flame": ["#ff8a2a", "#ffb44a", "#ffd88a", "#fff2cc"],
@@ -115,8 +116,8 @@ def tex_limestone_top(P, wear=0):
 
 
 def tex_tracery(P):
-    """A carved trefoil arch in the face: dark recess, lit upper lip."""
-    g = _lime(P, "tracery")
+    """A carved trefoil arch in the face: dark recess, lit upper lip. Paler than the walls, so ribs and lintels read."""
+    g = _lime(P, "tracery", lo=2, span=3)
     dark = P.ramp("limestone_dark")
     c = P.Canvas(16, 16)
     for y in range(16):
@@ -135,7 +136,7 @@ def tex_tracery(P):
     for y in range(1, 16):
         for x in range(16):
             if c.get(x, y) == tuple(dark[2]) and c.get(x, y - 1) != tuple(dark[2]):
-                c.set(x, y - 1, tuple(min(255, v + 28) for v in g[y - 1][x][:3]))
+                c.set(x, y - 1, tuple(min(255, v + 44) for v in g[y - 1][x][:3]))
     return c
 
 
@@ -163,16 +164,19 @@ def tex_flag(P, wet=False):
 
 
 def tex_patina(P):
+    """Old bronze: brown under the green, verdigris run down from the top in drips, the lip worn bright."""
     br, vg = P.ramp("bronze_p"), P.ramp("verd")
     n = P.value_noise(16, 16, P.rng_for("crypt", "patina"), scale=3, octaves=3)
-    m = P.value_noise(16, 16, P.rng_for("crypt", "streak"), scale=2, octaves=1)
+    rnd = P.rng_for("crypt", "drips")
+    drip = [rnd.randrange(4, 14) if rnd.random() < 0.45 else 0 for _ in range(16)]
 
     def f(x, y):
-        streak = m[0][x] * 0.6 + n[y][x] * 0.4
-        if streak > 0.62 and y < 13:
-            return vg[min(4, int((streak - 0.62) * 14))]
         if y > 13:
             return br[4] if (x + y) % 3 else br[3]
+        if y < drip[x]:
+            return vg[min(4, 1 + int(n[y][x] * 2 + (1 - y / drip[x]) * 1.6))]
+        if n[y][x] > 0.74:
+            return vg[1]
         return br[1 + int(n[y][x] * 3)]
     return _canvas(P, f)
 
@@ -299,6 +303,65 @@ def tex_lily(P):
     return c
 
 
+# ---- the worlds' small life (SPEC §38.9): drawn in their own colours, a few frames each -----------------------------
+
+def _sprite(P, rows, pal):
+    """A 16x16 sprite from rows of characters, each a palette key ('.' clear)."""
+    c = P.Canvas(16, 16)
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch != "." and ch in pal:
+                c.set(x, y, pal[ch])
+    return c
+
+
+MOTH = {"b": (92, 78, 62, 255), "w": (214, 204, 178, 255), "v": (176, 164, 138, 255), "e": (140, 126, 104, 255)}
+MOTH_FRAMES = [
+    ["................", "................", "................", "................",
+     "...ww......ww...", "..wwvw....wvww..", "..wvwwe..ewwvw..", "...wwwwbbwwww...",
+     "....vwwbbwwv....", ".....wwbbww.....", "......vbbv......", ".......bb.......",
+     "................", "................", "................", "................"],
+    ["................", "................", "................", "................",
+     "................", "................", ".....w....w.....", ".....wwbbww.....",
+     "......wbbw......", "......vbbv......", ".......bb.......", ".......bb.......",
+     "................", "................", "................", "................"],
+]
+BAT = {"k": (28, 22, 24, 255), "m": (54, 42, 44, 255), "f": (74, 60, 58, 255), "e": (150, 40, 34, 255)}
+BAT_FRAMES = [
+    ["................", "................", "m.............m.", "mm...........mm.", "fmm..........mmf",
+     ".fmm..k.k..mmf..", "..fmm.kkk.mmf...", "...fmmkekmmf....", "....fmkkkmf.....", ".....mkkkm......",
+     "......kkk.......", ".......k........", "................", "................", "................", "................"],
+    ["................", "................", "................", "................", "................",
+     "......k.k.......", "mmm...kkk...mmm.", "fmmmmmkekmmmmmf.", ".ffmmmkkkmmmff..", "...ff.kkk.ff....",
+     "......kkk.......", ".......k........", "................", "................", "................", "................"],
+    ["................", "................", "................", "................", "................",
+     "......k.k.......", "......kkk.......", ".....mkekm......", "....mmkkkmm.....", "...mmf.kk.fmm...",
+     "..mmf..kk..fmm..", ".mmf...k....fmm.", "mmf..........fmm", "mf............fm", "................", "................"],
+]
+FISH = {"p": (206, 222, 228, 255), "s": (160, 182, 194, 255), "d": (118, 138, 152, 255), "e": (40, 46, 56, 255),
+        "f": (186, 206, 216, 170)}
+FISH_FRAMES = [
+    ["................", "................", "................", "................", "................",
+     "f...............", "ff....sssss.....", ".fspppppppppss..", ".fdddddddddppep.", ".fspppppppppss..",
+     "ff....sssss.....", "f...............", "................", "................", "................", "................"],
+    ["................", "................", "................", "................", ".f..............",
+     ".ff.............", "..f...sssss.....", "..fsppppppppss..", "..fddddddddppep.", "..fsppppppppss..",
+     "......sssss.....", "................", "................", "................", "................", "................"],
+]
+RAT = {"g": (92, 84, 78, 255), "h": (122, 112, 102, 255), "d": (62, 56, 52, 255), "t": (176, 132, 124, 255),
+       "e": (20, 16, 16, 255), "n": (196, 150, 142, 255)}
+RAT_FRAMES = [
+    ["................", "................", "................", "................", "................",
+     "................", "................", "...........hh...", "....hhhhhhhhgeh.", "...hgggggggggggn",
+     "ttdgggggggggggd.", "t..dgggggggggd..", "....d.d...d.d...", "................", "................", "................"],
+    ["................", "................", "................", "................", "................",
+     "................", "................", "...........hh...", "....hhhhhhhhgeh.", "...hgggggggggggn",
+     ".tdgggggggggggd.", "tt.dgggggggggd..", "...d...d.d...d..", "................", "................", "................"],
+]
+LIFE = {"gate_world_moth": (MOTH_FRAMES, MOTH), "gate_world_bat": (BAT_FRAMES, BAT), "gate_world_fish": (FISH_FRAMES, FISH),
+        "gate_world_rat": (RAT_FRAMES, RAT)}
+
+
 def textures():
     """Texture name -> Canvas (a list of Canvases for an animation)."""
     P = _px()
@@ -325,6 +388,10 @@ def textures():
 def build(out):
     for name, c in textures().items():
         out.block(name, c, frametime=5 if isinstance(c, list) else None)
+    P = _px()
+    for name, (frames, pal) in LIFE.items():
+        for i, rows in enumerate(frames):
+            out.particle(f"{name}_{i}", _sprite(P, rows, pal))
 
 
 # =====================================================================================================================
@@ -522,6 +589,8 @@ def content():
     _merge(os.path.join(MERGE, "gates/data/minecraft/tags/block/mineable/pickaxe.json"),
            {"values": [f"awaken:{k}" for k, v in BLOCKS.items() if v[1] == "pickaxe"]})
     _merge(os.path.join(MERGE, "gates/data/minecraft/tags/block/climbable.json"), {"values": ["awaken:crypt_bell_rope"]})
+    for name, (frames, _) in LIFE.items():
+        _write(os.path.join(ASSETS, f"particles/{name}.json"), {"textures": [f"awaken:{name}_{i}" for i in range(len(frames))]})
     print("gate_worlds_bell: content written for", len(BLOCKS), "blocks")
 
 

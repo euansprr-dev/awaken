@@ -68,8 +68,8 @@ public final class WorldRules {
         boolean silent = secret != null && secret.id().equals("silent_bell");
         if (!silent) {
             boolean hand = bell != null && bell.id().equals(FloorLayout.Mark.HANDBELL);
-            level.playSound(null, pos, hand ? GatesRegistry.SND_WORLD_HANDBELL.get() : GatesRegistry.SND_WORLD_STRIKE.get(), SoundSource.BLOCKS,
-                    hand ? 1.4F : 2.5F, bell == null ? 1F : WorldLive.pitch(bell) * (0.95F + p.getRandom().nextFloat() * 0.1F));
+            level.playSound(null, pos, bell == null ? GatesRegistry.SND_WORLD_STRIKE.get() : WorldLive.voice(bell), SoundSource.BLOCKS,
+                    hand ? 1.4F : 2.5F, bell == null ? 1F : WorldLive.pitch(bell) * (0.96F + p.getRandom().nextFloat() * 0.08F));
         }
         List<ServerPlayer> near = WorldLive.near(level, g, f, pos, SHOW_R);
         if (!near.contains(p)) near.add(p);
@@ -189,7 +189,7 @@ public final class WorldRules {
                 // it makes no sound; the Still Bell answers it
                 FloorLayout.Mark still = WorldLive.named(f, FloorLayout.Mark.BELL, "still");
                 if (still != null) WorldLive.later(40, () -> level.playSound(null, WorldLive.at(g, f, still).above(6),
-                        GatesRegistry.SND_WORLD_TOLL.get(), SoundSource.BLOCKS, 8F, 0.5F));
+                        GatesRegistry.SND_WORLD_GREAT.get(), SoundSource.BLOCKS, 8F, WorldLive.pitch(still) * 0.9F));
             }
             default -> {}
         }

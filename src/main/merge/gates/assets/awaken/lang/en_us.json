@@ -138,5 +138,18 @@
   "block.awaken.crypt_vestment": "Drowned Vestment",
   "block.awaken.crypt_bell_rope": "Bell Rope",
   "block.awaken.crypt_lily_candle": "Lily Candle",
-  "block.awaken.crypt_handbell": "Handbell"
+  "block.awaken.crypt_handbell": "Handbell",
+  "subtitles.awaken.gate.world.strike": "Bell rings",
+  "subtitles.awaken.gate.world.handbell": "Handbell rings",
+  "subtitles.awaken.gate.world.toll": "A far bell tolls",
+  "subtitles.awaken.gate.world.great_bell": "The Great Bell tolls",
+  "subtitles.awaken.gate.world.ringer": "The Ringer's bell",
+  "subtitles.awaken.gate.world.hum": "A bell hums",
+  "subtitles.awaken.gate.world.swing": "The bells groan",
+  "subtitles.awaken.gate.world.flood": "Water rises",
+  "subtitles.awaken.gate.world.bone_fall": "Bones fall",
+  "subtitles.awaken.gate.world.catch": "Caught on the ledge",
+  "subtitles.awaken.gate.world.found": "A secret found",
+  "subtitles.awaken.gate.world.drip": "Water drips",
+  "subtitles.awaken.gate.world.storm": "Thunder far above"
 }

@@ -1,5 +1,7 @@
 package dev.awaken.gates.worlds;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import dev.awaken.core.api.MobRole;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.gates.FloorState;
@@ -16,6 +18,7 @@ import dev.awaken.gates.world.GateLayout;
 import dev.awaken.gates.world.GateWorldBellTests;
 import dev.awaken.gates.world.Room;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
@@ -24,6 +27,12 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -71,6 +80,16 @@ public final class WorldLiveTests {
                 }
                 h.assertTrue(fs.world.contains(WorldLive.RINGER), "the Ringer comes at the " + WorldLive.RINGER_AT + "th bell");
 
+                // a hung bell hums as you pass under it
+                FloorLayout.Mark hung = null;
+                for (FloorLayout.Mark m : f.marks) if (m.kind().equals(FloorLayout.Mark.BELL) && !m.id().equals(FloorLayout.Mark.HANDBELL)) hung = m;
+                h.assertTrue(hung != null, "the floor has hung bells");
+                BlockPos o = GateService.world(g, f, 0, 0, 0);
+                p.teleportTo(level, o.getX() + hung.cx(), o.getY() + hung.y0() - 6, o.getZ() + hung.cz(), Set.of(), 0, 0, true);
+                WorldLive.Live hl = WorldLive.live(g, f);
+                WorldLive.hum(level, p, g, f, hl);
+                h.assertTrue(!hl.hummed.isEmpty(), "a bell hums over you");
+
                 // the odd rope: coming into the Bellmaker's Rest finds the secret and its keepsake
                 int restId = f.placeWorlds.keySet().iterator().next();
                 Room rest = f.room(restId);
@@ -111,6 +130,41 @@ public final class WorldLiveTests {
                 WorldLive.clear();
                 GateLiveTests.teardown(level, p, g);
             }
+            h.succeed();
+        });
+
+        AwakenTests.register("gateworlds_sounds", 20, h -> {
+            // every gate.world sound is in sounds.json with its files there, every world's bed is one, its life is known
+            List<String> problems = new ArrayList<>();
+            JsonObject sounds = null;
+            try (InputStream in = WorldLiveTests.class.getResourceAsStream("/assets/awaken/sounds.json")) {
+                sounds = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
+            } catch (IOException | RuntimeException e) {
+                problems.add("sounds.json unreadable: " + e);
+            }
+            int count = 0;
+            for (var id : BuiltInRegistries.SOUND_EVENT.keySet()) {
+                if (!id.getNamespace().equals("awaken") || !id.getPath().startsWith("gate.world.") || sounds == null) continue;
+                count++;
+                if (!sounds.has(id.getPath())) {
+                    problems.add(id.getPath() + " has no sounds.json entry");
+                    continue;
+                }
+                for (var e : sounds.getAsJsonObject(id.getPath()).getAsJsonArray("sounds")) {
+                    String file = e.isJsonObject() ? e.getAsJsonObject().get("name").getAsString() : e.getAsString();
+                    if (file.startsWith("awaken:") && WorldLiveTests.class.getResource("/assets/awaken/sounds/" + file.substring(7) + ".ogg") == null)
+                        problems.add(id.getPath() + ": missing " + file);
+                }
+            }
+            Set<String> life = Set.of("moths", "bats", "pale_fish", "rats", "dust", "drips");
+            for (var e : GateWorlds.all().entrySet()) {
+                GateWorld.Dressing d = e.getValue().dressing();
+                if (!d.sound().isEmpty() && !BuiltInRegistries.SOUND_EVENT.containsKey(net.minecraft.resources.Identifier.parse(d.sound())))
+                    problems.add(e.getKey() + "'s bed " + d.sound() + " isn't registered");
+                for (String k : d.life()) if (!life.contains(k)) problems.add(e.getKey() + ": unknown life " + k);
+            }
+            h.assertTrue(count >= 19, "the Bell Crypt's sounds are registered (" + count + ")");
+            h.assertTrue(problems.isEmpty(), problems.size() + " problems: " + String.join("; ", problems.subList(0, Math.min(8, problems.size()))));
             h.succeed();
         });
 

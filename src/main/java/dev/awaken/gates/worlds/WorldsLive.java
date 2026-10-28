@@ -60,7 +60,7 @@ public final class WorldsLive {
         AwakenNet.send(p, new WorldPayloads.Arrival(g.id, f.area, f.floor, world, w == null ? "" : w.name(), mood,
                 m == null || m.name().isEmpty() ? "" : m.name(), w == null ? "" : w.rarity().label(),
                 w == null ? "" : w.tier().name().toLowerCase(Locale.ROOT), w == null ? "" : w.line(), where(g, f),
-                w == null ? "" : w.dressing().sound(), first, card,
+                w == null ? "" : w.dressing().sound(), w == null ? List.of() : w.dressing().life(), first, card,
                 GateService.world(g, f, 0, 0, 0), WorldLive.air(g, f)));
     }
 

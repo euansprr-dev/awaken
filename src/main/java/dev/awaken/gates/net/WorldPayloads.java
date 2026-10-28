@@ -22,14 +22,18 @@ public final class WorldPayloads {
      * say after the Flood or on leaving a place that's a world of its own).
      */
     public record Arrival(int gateId, int area, int floor, String world, String name, String mood, String moodName, String rarity,
-                          String tier, String line, String where, String sound, boolean first, boolean card, BlockPos origin, FloorAir air)
+                          String tier, String line, String where, String sound, List<String> life, boolean first, boolean card,
+                          BlockPos origin, FloorAir air)
             implements CustomPacketPayload {
         public static final Type<Arrival> TYPE = new Type<>(Awaken.id("gate_world_arrival"));
+        /** The world's small life (moths, bats...), made on the client (SPEC §38.9). */
+        static final StreamCodec<ByteBuf, List<String>> LIFE = ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(16));
         public static final StreamCodec<ByteBuf, Arrival> STREAM_CODEC = StreamCodec.of((buf, a) -> {
             ByteBufCodecs.VAR_INT.encode(buf, a.gateId);
             ByteBufCodecs.VAR_INT.encode(buf, a.area);
             ByteBufCodecs.VAR_INT.encode(buf, a.floor);
             for (String s : new String[]{a.world, a.name, a.mood, a.moodName, a.rarity, a.tier, a.line, a.where, a.sound}) ByteBufCodecs.STRING_UTF8.encode(buf, s);
+            LIFE.encode(buf, a.life);
             ByteBufCodecs.BOOL.encode(buf, a.first);
             ByteBufCodecs.BOOL.encode(buf, a.card);
             BlockPos.STREAM_CODEC.encode(buf, a.origin);
@@ -38,10 +42,11 @@ public final class WorldPayloads {
                 ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf),
                 ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf),
                 ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf),
-                ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf), BlockPos.STREAM_CODEC.decode(buf), FloorAir.STREAM_CODEC.decode(buf)));
+                LIFE.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf), BlockPos.STREAM_CODEC.decode(buf),
+                FloorAir.STREAM_CODEC.decode(buf)));
 
         public static Arrival none(int gateId, int area, int floor) {
-            return new Arrival(gateId, area, floor, "", "", "", "", "", "", "", "", "", false, false, BlockPos.ZERO, FloorAir.NONE);
+            return new Arrival(gateId, area, floor, "", "", "", "", "", "", "", "", "", List.of(), false, false, BlockPos.ZERO, FloorAir.NONE);
         }
 
         @Override

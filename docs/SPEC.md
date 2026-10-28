@@ -8673,7 +8673,7 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   (everyday, `passages`), the Bell Shaft (deep, `drop`, tall), the Field of Bells (wonder, `void`, floors only), and
   Bellmaker's Rest (secret, `rest`, reached only through the Belfry's odd rope). Each has the moods Still, Tolling, Requiem
   and Storm with their own biome (`awaken:gate_world/<world>[_<mood>]`, written by `tools/art/specs/gate_worlds_biomes.py`
-  and listed in the gates dimension); sound events are `awaken:gate.world.<name>`.
+  and listed in the gates dimension); sound events are `awaken:gate.world.<name>` (38.9).
 - **The Sunken Belfry** (`HallEngine`): a drowned church along the plot's middle. The arrival is a narthex with two stair
   turrets; a candlelit causeway (5 wide) runs down a flooded nave (the water one step below the causeway, so a fall is never a
   trap; on a world with the Flood the tide is out when you arrive, see 38.8) between pointed arcades, with a gallery above and dark aisles behind the piers. The programme's spine becomes nave
@@ -8826,4 +8826,36 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   Everything else (strike counts, the Flood's progress, timed cues, ledges) lives in `WorldLive` while the server runs.
 - **Not in Stage 1**: the bells don't swing (no moving bell bodies; a proposal: display-entity bell props, 32 a floor at
   most), the Ringer has no body of its own, and the five keepsakes don't yet make a bell tower at home.
+
+### 38.9 Sound and small life (Stage 1)
+
+- **Recorded first** (`tools/art/specs/audio_gate_worlds.py`, 3.3 MB of Ogg in `sounds/gate_world/`): every bell is one
+  of the three CC0 recordings in `tools/art/sources/city` (the church bell 3446, the small bell 0292), only resampled
+  (pitch), trimmed, faded and set in a stone room by convolution; nothing under a bell is an oscillator. Each bell's level
+  keeps its strike under the ceiling without the limiter. Bones, creaks and the catch are Kenney's CC0 impacts and creaks;
+  water and moving air are the caves' loops already in the mod; drips are the caves' drips by reference; the Storm's far
+  thunder is vanilla's thunder by reference. Loudness by `audio_mix.py`: beds -28 dBFS gated RMS, events -20 to -24.
+- **Beds** (48 s loops, stereo, streamed; `gate.world.<belfry|ossuary|shaft|field|rest>`): the Belfry slow water, the
+  bells' low hum (the church bell's tail an octave down) and drips; the Ossuary still air, a lower hum, bones settling;
+  the Shaft air moving up it, a deep hum, creaks far above; the Field open water, a hum a fifth wide, bells ringing very
+  far off three times a loop; the Rest a small warm room and a bell at rest.
+- **Events**: `strike` (a hung bell struck, 2 takes), `handbell` (2), `toll` (far, lowpassed, 2), `great_bell` (an octave
+  down: the Great Bell, the Still Bell and any bell 6 or more across), `ringer` (two tolls beating), `hum`, `swing`,
+  `flood`, `bone_fall` (2), `catch`, `found` (three handbells in a chord), `arrive` (the card's sting), `drip`, `storm`.
+  A bell's voice comes from its mark: a handbell its own, a great bell the great one (pitch 1 down to 0.8 the wider), any
+  other the strike (pitch 1.25 - 0.08 × its radius, 0.7 to 1.3).
+- **A bell hums** as you pass under it (within its rim plus 1.5, up to 32 below its lip; heard 32 blocks off): each bell
+  at most once in 20 s, checked each half second with the room checks (`WorldLive.hum`, no cost off a world floor).
+- **Small life** (`gates.client.WorldLife`, client only, never saved or sent; the recipe's `life` rides on the arrival):
+  moths round the floor's lights (10 near you), bats looping under the vault 6-18 above you (6; they turn off the stone
+  and away from you within 4), pale fish gliding just under the floor's water (8; a dart now and then; flat on the
+  water), rats along the floors by the walls (4; dashes and stops, bolting from you within 5); at most 40 in all, two of a
+  kind made a half second, out of view or 16+ off, faded in over a second and out at the end of their life, gone past 36
+  blocks. They move themselves without collision physics and keep to the air, water or floor they were made in. `dust`:
+  motes drifting round you (one every other tick); `drips`: a drip heard where it lands under a ceiling near you every 2
+  to 7 s; the Storm mood: far thunder every 25 to 70 s. Sprites (16 px, their own colours, 2-3 frames) from
+  `tools/art/specs/gate_worlds_bell.py`. The Belfry has bats, pale fish, moths and drips; the Ossuary moths, rats and
+  drips; the Shaft bats, dust and drips; the Field moths and pale fish; the Rest moths.
+- **Test** `gateworlds_sounds`: every `gate.world.*` event has its sounds.json entry and files, every world's bed is
+  registered, every `life` entry is a known kind; `gateworlds_live` also checks that a bell hums over you.
 

@@ -61,7 +61,8 @@
   ],
   "life": [
     "moths",
-    "rats"
+    "rats",
+    "drips"
   ],
   "residents": "niche_watchers",
   "sound": "awaken:gate.world.ossuary",

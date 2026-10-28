@@ -63,7 +63,8 @@
   "life": [
     "bats",
     "pale_fish",
-    "moths"
+    "moths",
+    "drips"
   ],
   "residents": "drowned_vestments",
   "sound": "awaken:gate.world.belfry",

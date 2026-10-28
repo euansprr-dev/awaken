@@ -310,6 +310,10 @@ public final class GatesRegistry {
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_CATCH = sound("gate.world.catch");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_FOUND = sound("gate.world.found");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_ARRIVE = sound("gate.world.arrive");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_GREAT = sound("gate.world.great_bell");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_HUM = sound("gate.world.hum");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_DRIP = sound("gate.world.drip");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_STORM = sound("gate.world.storm");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_ALARM = sound("gate.alarm");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_COLLAPSE = sound("gate.collapse");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_CLEARED = sound("gate.cleared");
@@ -324,9 +328,8 @@ public final class GatesRegistry {
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_LAB = sound("gate.ambient.lab");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_GLASS = sound("gate.ambient.glass");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_WIND = sound("gate.ambient.wind");
-    // gate worlds (SPEC §38.6): each world's sound bed, its additions, and the bells
-    public static final List<String> WORLD_SOUNDS = List.of("belfry", "ossuary", "shaft", "field", "rest", "drip", "storm",
-            "hum", "great_bell");
+    // gate worlds (SPEC §38.6, §38.9): each world's sound bed (the bells and the rest are above)
+    public static final List<String> WORLD_SOUNDS = List.of("belfry", "ossuary", "shaft", "field", "rest");
     static {
         for (String w : WORLD_SOUNDS) sound("gate.world." + w);
     }
@@ -370,6 +373,15 @@ public final class GatesRegistry {
     /** A well's mote: it drifts toward the well's "down". */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_MOTE =
             PARTICLES.register("gate_rig_mote", () -> new SimpleParticleType(false));
+    // a world floor's small life (SPEC §38.9; sprites from tools/art/specs/gate_worlds_bell.py), made only on the client
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_MOTH =
+            PARTICLES.register("gate_world_moth", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_BAT =
+            PARTICLES.register("gate_world_bat", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_FISH =
+            PARTICLES.register("gate_world_fish", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_RAT =
+            PARTICLES.register("gate_world_rat", () -> new SimpleParticleType(false));
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Awaken.id(name)));

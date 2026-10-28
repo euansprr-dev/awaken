@@ -31,6 +31,7 @@ public final class GatesClient {
         modBus.addListener(GatesClient::payloads);
         modBus.addListener(GatesClient::renderers);
         modBus.addListener(GatesClient::layers);
+        modBus.addListener(WorldLife::register);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(Pillars::onExtract);
         bus.addListener(Pillars::onAfterLevel);
@@ -102,5 +103,6 @@ public final class GatesClient {
         WorldJourney.tick();
         WorldCard.tick();
         WorldBed.tick();
+        WorldLife.tick();
     }
 }

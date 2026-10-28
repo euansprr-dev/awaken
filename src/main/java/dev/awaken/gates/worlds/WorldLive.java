@@ -61,6 +61,8 @@ public final class WorldLive {
     static final float CATCH_DAMAGE = 3;
     /** In the Tolling mood the bells ring again this often, in ticks. */
     static final int TOLL_AGAIN = 90 * 20;
+    /** A hung bell hums as you pass under it, each bell at most once in this many ticks (SPEC §38.9). */
+    static final int HUM_AGAIN = 400;
     /** The Flood's blocks per tick at most (each of its two rises takes about two seconds). */
     static final int FLOOD_RATE = 300;
     static final String RINGER_TAG = "awaken_the_ringer";
@@ -83,6 +85,8 @@ public final class WorldLive {
         /** The rooms from the arrival to the end, in order (world rooms). */
         List<Integer> path;
         Flood flood;
+        /** When each bell (by its mark's index) last hummed. */
+        final Map<Integer, Long> hummed = new HashMap<>();
     }
 
     /** Where a player last stood safely on a drop world's floor. */
@@ -185,6 +189,25 @@ public final class WorldLive {
         }
         // a Flood the server stopped halfway rises the rest of the way; water it couldn't reach (an unloaded chunk) when it can
         if (fs.world.contains(FLOOD) && !fs.world.contains(FLOOD_DONE) && live.flood == null) live.flood = Flood.of(g, f, false);
+        hum(level, p, g, f, live);
+    }
+
+    /** A hung bell over you hums softly as you pass under it (within its rim, 32 below it at most). */
+    static void hum(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f, Live live) {
+        BlockPos o = GateService.world(g, f, 0, 0, 0);
+        double x = p.getX() - o.getX(), y = p.getY() - o.getY(), z = p.getZ() - o.getZ();
+        for (int i = 0; i < f.marks.size(); i++) {
+            FloorLayout.Mark m = f.marks.get(i);
+            if (!m.kind().equals(FloorLayout.Mark.BELL) || m.id().equals(FloorLayout.Mark.HANDBELL) || y > m.y0() || m.y0() - y > 32) continue;
+            double dx = x - m.cx(), dz = z - m.cz(), r = m.r() + 1.5;
+            if (dx * dx + dz * dz > r * r) continue;
+            Long last = live.hummed.get(i);
+            if (last != null && now - last < HUM_AGAIN) continue;
+            live.hummed.put(i, now);
+            level.playSound(null, at(g, f, m).above((m.y1() - m.y0()) / 2), GatesRegistry.SND_WORLD_HUM.get(), SoundSource.BLOCKS,
+                    (float) (0.8 + m.r() * 0.1), pitch(m));
+            return;
+        }
     }
 
     /** The room on the way (its index in the path) whose arrival runs an event, or -1 for one that waits on something else. */
@@ -276,15 +299,25 @@ public final class WorldLive {
         return null;
     }
 
-    /** A bell's voice: big bells low and loud, handbells high and near. */
+    /** Bells this wide across (a radius) or more are great bells, with the Great Bell's own voice. */
+    static final double GREAT = 6;
+
+    /** A bell's sound: a handbell's, a great bell's (the church bell an octave down), or a hung bell's strike. */
+    static SoundEvent voice(FloorLayout.Mark m) {
+        if (m.id().equals(FloorLayout.Mark.HANDBELL)) return GatesRegistry.SND_WORLD_HANDBELL.get();
+        return m.r() >= GREAT ? GatesRegistry.SND_WORLD_GREAT.get() : GatesRegistry.SND_WORLD_STRIKE.get();
+    }
+
+    /** Its pitch over its sound: the bigger, the lower. */
     static float pitch(FloorLayout.Mark m) {
-        if (m.id().equals(FloorLayout.Mark.HANDBELL)) return 1.5F;
-        return (float) Math.max(0.5, Math.min(1.3, 1.25 - m.r() * 0.08));
+        if (m.id().equals(FloorLayout.Mark.HANDBELL)) return 1F;
+        if (m.r() >= GREAT) return (float) Math.max(0.8, 1 - (m.r() - GREAT) * 0.06);
+        return (float) Math.max(0.7, Math.min(1.3, 1.25 - m.r() * 0.08));
     }
 
     static void ring(ServerLevel level, GateRecord g, FloorLayout f, FloorLayout.Mark m, float pitchBy) {
         boolean hand = m.id().equals(FloorLayout.Mark.HANDBELL);
-        SoundEvent s = hand ? GatesRegistry.SND_WORLD_HANDBELL.get() : GatesRegistry.SND_WORLD_TOLL.get();
+        SoundEvent s = voice(m);
         BlockPos pos = hand ? at(g, f, m) : at(g, f, m).above((m.y1() - m.y0()) / 2);
         level.playSound(null, pos, s, SoundSource.BLOCKS, hand ? 1.2F : (float) (2.5 + m.r() * 0.3), pitch(m) * pitchBy);
     }
@@ -341,7 +374,7 @@ public final class WorldLive {
         if (still == null) still = biggest(f);
         FloorLayout.Mark bell = still;
         if (bell == null) return;
-        later(120, () -> level.playSound(null, at(g, f, bell).above(6), GatesRegistry.SND_WORLD_TOLL.get(), SoundSource.BLOCKS, 8F, 0.5F));
+        later(120, () -> level.playSound(null, at(g, f, bell).above(6), GatesRegistry.SND_WORLD_GREAT.get(), SoundSource.BLOCKS, 8F, pitch(bell) * 0.9F));
     }
 
     static FloorLayout.Mark biggest(FloorLayout f) {
