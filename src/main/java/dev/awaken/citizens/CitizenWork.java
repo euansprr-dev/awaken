@@ -55,6 +55,7 @@ final class CitizenWork implements Ledger.Work {
     private long lastClock = Long.MIN_VALUE, lastGame;
     /** Strokes waiting to sound: bell index, game time, strokes left, interval, alarm (1/0). */
     private final List<long[]> peals = new ArrayList<>();
+    private final CityBellSchedule cityBells = new CityBellSchedule();
     /** Chunks (packed) within reach of a lamp that is dark at night: where the city lets monsters spawn. */
     final LongOpenHashSet darkChunks = new LongOpenHashSet();
     private boolean darkDirty = true;
@@ -104,6 +105,7 @@ final class CitizenWork implements Ledger.Work {
     }
 
     void stop() {
+        cityBells.clear();
         peals.clear();
     }
 
@@ -193,6 +195,7 @@ final class CitizenWork implements Ledger.Work {
         }
         lastClock = clk;
         lastGame = now;
+        if (jumped) { peals.clear(); cityBells.clear(); }
         // hour bells as each hour comes round (06:00..22:00); never twice for one hour, never for a clock jump
         int hour = tod / 1000;
         if (hour != lastHour && lastHour >= 0 && tod % 1000 < 200 && tod <= 16200 && !jumped) ringHour(now, hour * 1000);
@@ -535,22 +538,25 @@ final class CitizenWork implements Ledger.Work {
         d.setDirty();
     }
 
-    /**
-     * Ticks the hour waits at dawn, noon and dusk while the Choir's carillon plays its tune (citizens.client.CitySound,
-     * 10.6-13.6 s): the tune first, then the hour struck, as a clock tower does (M4 B3b).
-     */
-    static final int AFTER_TUNE = 300;
-
-    /** On the hour: every tower whose ringer is at the bell rings the hour, the Choir first, the districts after it. */
+    /** City: one restrained dawn/noon/dusk peal. Villages keep their existing hourly calls. */
     private void ringHour(long now, int tod) {
+        if (c.site.carillon()) {
+            int tower = -1;
+            for (int b = 0; b < r.bells.size(); b++) {
+                if (!ringerAt(b) || d.bellPos[b] <= 0) continue;
+                tower = b;
+                if ("choir".equals(r.bells.get(b).landmark())) break;
+            }
+            cityBells.routine(now, tod, tower);
+            return;
+        }
         int hour = (6 + tod / 1000) % 24;
         int strokes = hour % 12 == 0 ? 12 : hour % 12;
-        // (Carillon waits for the carillon's tune at dawn, noon and dusk; a village bell has none)
-        long wait = c.site.carillon() && (hour == 6 || hour == 12 || hour == 18) ? AFTER_TUNE : 0;
+        // Villages retain their existing hour calls.
         for (int b = 0; b < r.bells.size(); b++) {
             if (!ringerAt(b)) continue;
             boolean choir = "choir".equals(r.bells.get(b).landmark());
-            long start = now + wait + (choir ? 0 : 50 + 23L * b);
+            long start = now + (choir ? 0 : 50 + 23L * b);
             peals.add(new long[]{b, start, strokes, choir ? 46 : 34, 0});
         }
     }
@@ -568,7 +574,8 @@ final class CitizenWork implements Ledger.Work {
                 best = b;
             }
         }
-        if (best >= 0) peals.add(new long[]{best, level.getGameTime() + 10, strokesCount, 11, 1});
+        if (c.site.carillon()) cityBells.alarm(level.getGameTime(), best, strokesCount);
+        else if (best >= 0) peals.add(new long[]{best, level.getGameTime() + 10, strokesCount, 11, 1});
     }
 
     boolean ringerAt(int b) {
@@ -579,11 +586,14 @@ final class CitizenWork implements Ledger.Work {
 
     /** Whether bell b is mid-peal now (its ringer pulls the rope). */
     boolean pealing(int b, long now) {
+        if (c.site.carillon()) return cityBells.pealing(b, now);
         for (long[] p : peals) if (p[0] == b && p[1] <= now + 40) return true;
         return false;
     }
 
     private void peal(long now) {
+        long[] stroke = cityBells.next(now);
+        if (stroke != null) peals.add(stroke);
         for (int k = peals.size() - 1; k >= 0; k--) {
             long[] p = peals.get(k);
             if (now < p[1]) continue;
@@ -604,7 +614,7 @@ final class CitizenWork implements Ledger.Work {
                         level.playSound(null, pos, CitizensContent.VILLAGE_ALARM.get(), SoundSource.AMBIENT, 16f, 1.05f + 0.04f * (p[2] & 1));
                     } else {
                         level.playSound(null, pos, alarm ? CitizensContent.BELL_ALARM.get() : choir ? CitizensContent.BELL_HOUR.get()
-                                : CitizensContent.BELL_DISTRICT.get(), SoundSource.AMBIENT, choir ? 6f : 4f, pitch);
+                                : CitizensContent.BELL_DISTRICT.get(), SoundSource.AMBIENT, alarm ? 0.8f : choir ? 0.7f : 0.55f, 1f);
                     }
                     strokes++;
                 }

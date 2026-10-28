@@ -38,6 +38,7 @@ final class CityLifeTests {
     private CityLifeTests() {}
 
     static void register() {
+        CitySoundTests.register();
         AwakenTests.registerIsolated("citizens_lanterns_drawn", 200, CityLifeTests::lanterns);
         // decoding ten 48 s stems runs on its own thread; the test server ticks as fast as it can, so a generous ceiling
         AwakenTests.register("citizens_soundscape_beds", 20 * 60 * 60 * 12, CityLifeTests::beds);
@@ -149,10 +150,10 @@ final class CityLifeTests {
     /** The stems that carry people: their gains never fall as the crowd grows. */
     private static final List<String> CROWD = List.of("murmur_far", "murmur_near", "bustle", "works", "tavern_far");
     /**
-     * The beds' loudness (SPEC §16.0 decision 30): each level's mix -37 to -26 dBFS gated RMS, under -6 dBTP. They sit
+     * The beds' loudness (SPEC §16.0 decision 30): each level's mix -41 to -29 dBFS gated RMS, under -6 dBTP. They sit
      * under the places that sound, quieter than the ambience rule's -28 ± 3 for a single bed.
      */
-    static final double BED_MIN = -37, BED_MAX = -26, BED_TP = -6;
+    static final double BED_MIN = -41, BED_MAX = -29, BED_TP = -6;
 
     /**
      * Every district's key matches the plan, every bed (seven districts and the night) is an ambient context whose stems

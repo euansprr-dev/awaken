@@ -100,14 +100,14 @@ public final class Soundscape {
         int tod = (int) Math.floorMod(p.level().getOverworldClockTime(), 24000L);
         boolean nature = NATURE.contains(p.getUUID());
         if (night(tod)) {
-            s.forced = nightLevel(tod);
+            s.forced = p.level().canSeeSky(p.blockPosition().above()) ? nightLevel(tod) : Intensity.CALM;
             return bed(nature, 0, true);
         }
         int d = CityPlan.get().district(p.getBlockX() - c.work.cx, p.getBlockZ() - c.work.cz);
         if (d < 0 || d >= KEYS.length) d = 0;
         int lv = level(d, OUTDOORS[d]);
         if (p.level().isRainingAt(p.blockPosition().above())) lv = Math.max(Intensity.CALM, lv - 1);
-        s.forced = lv;
+        s.forced = p.level().canSeeSky(p.blockPosition().above()) ? lv : Intensity.CALM;
         return bed(nature, d, false);
     }
 }

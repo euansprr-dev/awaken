@@ -1,0 +1,65 @@
+{
+  "bell_hour": {
+    "seconds": 7.373,
+    "channels": 1,
+    "gated_rms_dbfs": -27.17,
+    "true_peak_dbtp": -7.7,
+    "sha256": "48bd11580653ae5f4d83d15b6deedbb1c89db96c5a3eaf15e271076c3519a54d"
+  },
+  "bell_district": {
+    "seconds": 6.955,
+    "channels": 1,
+    "gated_rms_dbfs": -28.66,
+    "true_peak_dbtp": -8.88,
+    "sha256": "e9cf111a3917a3cb3db8c3fb66f3da52dfce3a90e342b3986e759e5369356230"
+  },
+  "bell_alarm": {
+    "seconds": 7.373,
+    "channels": 1,
+    "gated_rms_dbfs": -27.17,
+    "true_peak_dbtp": -7.7,
+    "sha256": "48bd11580653ae5f4d83d15b6deedbb1c89db96c5a3eaf15e271076c3519a54d"
+  },
+  "handbell": {
+    "seconds": 4.8,
+    "channels": 1,
+    "gated_rms_dbfs": -32.64,
+    "true_peak_dbtp": -11.04,
+    "sha256": "a10439f2a3f50e18293dfc794d6ee50ee75693a1e4475a2cba9d5b67d9539092"
+  },
+  "cart_bells1": {
+    "seconds": 4.5,
+    "channels": 1,
+    "gated_rms_dbfs": -33.56,
+    "true_peak_dbtp": -15.19,
+    "sha256": "b5b2ae428ddc547a1b70c07432af62966c4e5fae5dd803a473df54ebad6f8801"
+  },
+  "cart_bells2": {
+    "seconds": 4.39,
+    "channels": 1,
+    "gated_rms_dbfs": -33.55,
+    "true_peak_dbtp": -15.01,
+    "sha256": "077fa79db0e2a2b937ddf6022c50d9dc4ed44a50c059d63f81c97eaa34aa3f96"
+  },
+  "carillon_dawn": {
+    "seconds": 7.373,
+    "channels": 1,
+    "gated_rms_dbfs": -27.17,
+    "true_peak_dbtp": -7.7,
+    "sha256": "48bd11580653ae5f4d83d15b6deedbb1c89db96c5a3eaf15e271076c3519a54d"
+  },
+  "carillon_noon": {
+    "seconds": 15.373,
+    "channels": 1,
+    "gated_rms_dbfs": -27.17,
+    "true_peak_dbtp": -7.37,
+    "sha256": "f9da77aec76c43ce4a9bc7f1eeb79855c5bd84cc705f4190f0dd863218625534"
+  },
+  "carillon_dusk": {
+    "seconds": 23.373,
+    "channels": 1,
+    "gated_rms_dbfs": -27.17,
+    "true_peak_dbtp": -7.37,
+    "sha256": "6b38fb5cad64e9e335895573c556021dcfab8f08e6f1a0640a10e0b8ea928a94"
+  }
+}

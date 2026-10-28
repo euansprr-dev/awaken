@@ -2278,6 +2278,40 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
       Bellwatch, the Terrace, the Garden Ward and the Wallring by day, owls within 48 of the wall or a bell tower at
       night. Its files are stereo, so these play unplaced, at a volume falling with distance. Nothing of it is copied.
 
+31. **City audio revision (Euan, 28 Oct 2026: fewer, convincing bells and a calmer city).** Supersedes the bell
+    synthesis, hourly tower chorus and mix numbers in decisions 28/30. The requested replacement authorizes the
+    three CC0 recorded bell sources listed with creators, URLs, licences and source hashes in
+    `tools/art/sources/city/README.md`; no subscription or paid service. `audio_city.py` reproducibly trims, removes
+    rumble below 45 Hz and peak-normalizes these recordings; shipping files are 44.1 kHz mono with decoded true
+    peaks below -6 dBTP. Preserve the real attack/decay; no synthesized tone or synthetic reverb layer. Existing
+    non-bell ambience remains synthesized; vanilla/AmbientSounds resources remain references, never copied.
+    - The server alone rings the city's staffed bell blocks: prefer the Choir, otherwise one staffed district tower.
+      Dawn/noon/dusk (world ticks 0/6000/12000) get 1/2/3 strokes, 160 ticks apart. No other routine hours, missed-hour
+      catch-up or additional client carillon tune. Removed/stolen bells stay silent. A city alarm replaces pending
+      routine strokes, waits for the current tail, caps at three strokes and cannot restart/extend for 1200 ticks.
+      These schedules are transient and clear on clock jumps/unload; village bell scheduling is unchanged.
+    - Fixed sound ranges separate delivery distance from gain: Choir 192 blocks at 0.7, district 112 at 0.55, alarm
+      112 at 0.8; pitch 1 preserves recordings. The Watch and crier share a 1800-tick handbell cooldown per listener;
+      the Watch attempts every 2400–4800 ticks. Crier gain is 0.35. Cart harness is recorded, quieter and capped by
+      its 600-tick shared cooldown. No inventory, progression, damage or saved schema changes.
+    - One-shot city voices share a per-listener cap of three, minimum 30 ticks between details, and group cooldowns
+      (tower 156, handbell 1800, birds 160, work/market 40, cart roll 100, harness 600 ticks). Tower strokes take
+      priority over active details and leave their 156-tick tail clear. AmbientSounds' city additions use the same
+      bird admission budget; synthetic songbird emitters stand down when AmbientSounds is installed.
+    - Forge patterns every 180–360 ticks, stalls 240–600, boat creaks 400–900, birds 200–420 at dawn or 400–900 by day,
+      gulls 600–1400. First entries wait a randomized interval; there is no startup burst. Four positional loop
+      slots total, one each for fountain/quay/mill/tavern, gains 0.4/0.35/0.4/0.38. Loop distance includes height.
+      District bed gains are 65% of the prior mix (decoded levels -41 to -29 dBFS gated RMS, below -6 dBTP).
+      Under a roof, outdoor city emitters fall to 30%, nearby sources under the same cover to 80%; beds use calm
+      intensity. This inexpensive roof approximation complements Sound Physics; it is not full acoustic ray tracing.
+      Existing Ambient/Neutral sound sliders still control playback. City voices report to the world Conductor.
+    - City ambience runs only in its overworld, never at matching coordinates in another dimension. Level changes,
+      logout and clock rollback clear voices/deadlines; no stale reconnect timers. No client game or audible Mac
+      playback is part of validation. `citizens_bell_budget` covers a day and alarm spam; `citizens_sound_budget`
+      covers shared admission, priority, isolation and resets; `citizens_soundscape_beds` decodes the shipped mixes.
+      `tools/art/audio_listen_city.py` makes a local preview with explicit play controls and no autoplay. Technical
+      waveform/peak checks cannot establish the final subjective in-game mix; player listening remains the gate.
+
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
 |---|---|

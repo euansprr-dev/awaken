@@ -4,7 +4,7 @@
     "sounds": [
       {
         "name": "awaken:city/bell_hour",
-        "attenuation_distance": 176
+        "attenuation_distance": 192
       }
     ]
   },
@@ -13,7 +13,7 @@
     "sounds": [
       {
         "name": "awaken:city/bell_district",
-        "attenuation_distance": 120
+        "attenuation_distance": 112
       }
     ]
   },
@@ -40,7 +40,7 @@
     "sounds": [
       {
         "name": "awaken:city/handbell",
-        "attenuation_distance": 40
+        "attenuation_distance": 24
       }
     ]
   },
@@ -275,7 +275,7 @@
     "sounds": [
       {
         "name": "awaken:city/carillon_dawn",
-        "attenuation_distance": 320,
+        "attenuation_distance": 192,
         "stream": true
       }
     ]
@@ -285,7 +285,7 @@
     "sounds": [
       {
         "name": "awaken:city/carillon_noon",
-        "attenuation_distance": 320,
+        "attenuation_distance": 192,
         "stream": true
       }
     ]
@@ -295,7 +295,7 @@
     "sounds": [
       {
         "name": "awaken:city/carillon_dusk",
-        "attenuation_distance": 320,
+        "attenuation_distance": 192,
         "stream": true
       }
     ]

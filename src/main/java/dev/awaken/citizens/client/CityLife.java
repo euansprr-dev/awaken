@@ -49,7 +49,8 @@ public final class CityLife {
     }
 
     static boolean known() {
-        return known && Minecraft.getInstance().level != null;
+        return known && Minecraft.getInstance().level != null
+                && Minecraft.getInstance().level.dimension() == net.minecraft.world.level.Level.OVERWORLD;
     }
 
     static void clear() {
@@ -61,7 +62,7 @@ public final class CityLife {
      * world. Wild life (SPEC "Wild life") keeps out: the city's animals are B3b's own.
      */
     public static boolean inside(double x, double z, double margin) {
-        if (!known) return false;
+        if (!known()) return false;
         CityPlan plan = plan();
         return plan != null && Math.hypot(x - cx, z - cz) < plan.wallRadius + margin;
     }
