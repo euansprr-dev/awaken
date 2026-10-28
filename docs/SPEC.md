@@ -5180,6 +5180,18 @@ magic.
   mid-grey with the look's slope there, then a black point of 0.45 × (contrast − 1), as deep as the plain contrast's,
   so night and shade keep their depth. Not on the open sky, where the sun's glow keeps its soft blow-out (a shoulder
   there showed the sun's square disc).
+- **Under cover, never darker than the game** (Euan, 2026-10-29, mining: "Shaders whole mining are completely broken,
+  my tool is black, shadows are broken"): every tier, after the grade and before the story's crush, the focus dim, frost
+  and the vignette. Under solid cover a pixel keeps at least 85% of what the game drew there, per channel, fully for
+  the game's darks (luma up to 0.05) and easing out by 0.22, so the mids and lights keep the look's contrast. Without
+  it the grade's black point (0.45 × (contrast − 1); the cave looks run 1.08-1.16) and the cool shadow tint took a
+  cave at light 0 (the lightmap's ambient on Bright, about 6% grey on stone) and a hand or tool held there to pure
+  black, so every face the light didn't reach read as a hard black shape. A cave stays as dark and moody as the game
+  made it, never a black void; a Lightless gate is still as dark as the game draws it. Cover: Cinematic and Ultra per
+  pixel, 0.5 to 1.5 blocks of solid heightfield (`g`) over the surface's own column (so a dark doorway seen from the
+  street too; not the open sky, far terrain or Holo plates; not past the heightfield's trusted reach); Swift by the
+  camera (texel 21 r: the client's MOTION_BLOCKING_NO_LEAVES top above the eye + 0.5, eased over about a sixth of a
+  second). The open land, by day and by night, is untouched.
 - **Look fields** (looks*.json, inherited from `default`; texels 17-19): `light` 1.0, `shade` 0.32, `shadeTint`
   [0.86, 0.93, 1.14], `keyWarmth` 0.8, `ao` 0.65, `filmic` 1.0; L2: `mist` 0.5, `mistHeight` 48 (blocks), `fogGlow`
   0.15, `skyGlow` 0.3. Texel 19: r mist, g mistHeight/256, b fogGlow/2, a skyGlow.
@@ -7538,14 +7550,28 @@ torch in the hand are two lights and add. Players holding one within 48 (at most
 read from their synced hands, so it is the same for everyone in multiplayer. The flame sits in the hand at the side
 (0.98 up, 0.3 ahead, 0.38 out; 0.78 crouching), or in your own first person 0.32 under the eye, 0.4 ahead and 0.3 to
 the holding side, following your look.
-- *Finding the surfaces* (`delve.client.TorchGlow`): a flood from the flame's cell through every cell that isn't a full
-  opaque block (as the game's light spreads: round corners, never through rock), within a sphere of the reach, each
-  step costing 1 plus the cell's light dampening (leaves and water dim it). A full block it meets gives its face toward
-  the flood; a plant, slab, lantern or glass in a reached cell is taken whole. Nearest first, at most 640 surfaces for
-  your light and 240 for another's. 900 cells a frame across all lights, one light at a time into a back buffer that
-  swaps in when done (nothing copied or allocated), redone when the flame enters another block, its item changes, or
-  every 10 ticks (blocks broken and placed). A light standing where the light is already as bright as its own (noon)
-  floods and draws no surfaces.
+- *Finding the surfaces* (`delve.HeldLightFlood`, common and pure, walked by `delve.client.TorchGlow`): a flood from the
+  flame's cell through every cell that isn't a full opaque block (as the game's light spreads: round corners, never
+  through rock), within a sphere of the reach, each step costing 1 plus the cell's light dampening (leaves and water dim
+  it). Every face of a full block that a reached cell touches is a surface, found once from the one cell it faces: a
+  block standing on the floor gives its top and its sides, a step its tread and its riser (2026-10-29: the flood once
+  kept one face a block, so a ledge's other faces stayed at the game's light 0 and Lens's grade took them to hard black
+  wedges, Euan's mining report). A plant, slab, lantern or glass in a reached cell is taken whole. Nearest first, at
+  most 1,024 surfaces for your light (640 before every face counted) and 240 for another's; where a cap stops a flood
+  (a big cave) the light eases out over its last 3 flood steps instead of ending on a line. 900 cells a frame across
+  all lights, one light at a time into a back buffer that swaps in when done (nothing copied or allocated), redone when
+  the flame enters another block, its item changes, the frame after one of its lit blocks is found broken or built over
+  (so a face a break opens lights a frame or two later, not up to half a second), or every 10 ticks (changes out of
+  sight). A light standing where the light is already as bright as its own (noon) floods and draws no surfaces.
+  GameTest `delve_held_light_faces` holds every face of a room with a standing block and a step, once each, and the
+  cap's edge.
+- *What stands in the light* (`TorchGlow.lightEntity`, a NeoForge render-state modifier on every entity renderer, no
+  mixin): a dropped item, a mob, a player, and through your own render state your first-person hands, what they hold
+  and your body's limbs, take the block light a held light gives where they stand: the flame's level less the straight
+  distance to the entity's middle, eased out over the reach's last 30% as the faces are, when that beats the light
+  already there (a torch's bearer and the pick in their other hand at 13). Last frame's flames (entities are gathered
+  before the world is drawn); a straight line, so through a thin wall too (out of sight). Before, the hand, the tool and
+  a dropped block drew at the game's light 0 beside lit rock and read black under Lens.
 - *Drawing them*: each surface is drawn again over itself with its own model quads (as the miner's lamp does, and
   tinted as the world tints it, so grass and leaves come up green), additively in the light's colour, by how much the
   game's light curve (`v / (4 - 3v)`) at the flame's level less the distance would brighten it over the light already
@@ -7559,9 +7585,10 @@ the holding side, following your look.
 - *Mods that already light held items* (LambDynamicLights, Sodium Dynamic Lights, Ryoamic Lights, Dynamic Lights): only
   the pool and the halo are drawn. If the lit pipeline doesn't compile, the surfaces are skipped as the lamp's are.
 - *Cost* (reasoned, not measured): the flood is at most 900 cells × 6 block lookups a frame while it runs (a few frames
-  each time the flame enters a new block; none while standing still between refreshes); drawing is at most 640 + 7 × 240
-  surfaces' quads, 2,600 quads at most, with one model lookup each; no allocation per frame. One GameTest,
-  `delve_held_light`, holds the rules (which items, their level, reach and colour, the brighter hand).
+  each time the flame enters a new block or a lit block changes; none while standing still between refreshes); drawing
+  is at most 1,024 + 7 × 240 surfaces' quads, 3,400 quads at most, with one model lookup each; the entity light is a
+  distance to each live light per entity gathered; no allocation per frame. GameTests: `delve_held_light` holds the
+  rules (which items, their level, reach and colour, the brighter hand), `delve_held_light_faces` the flood.
 
 **Sounds and art.** 25 events `delve.*` synthesised by `tools/art/specs/audio_delve.py`; textures, models, loot,
 recipes, tags, worldgen and the star's loot by `tools/art/specs/delve.py` (`build_all.py delve`, `delve.py content`,

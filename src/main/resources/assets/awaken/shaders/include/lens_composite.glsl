@@ -40,7 +40,8 @@ layout(location = 0) out vec4 fragColor;
 #endif
 
 // The parameter texture (LensParams, 32x1): 0 flags and debug, 1-2 far plane and sun, 3-8 the look, 9 sunset, 10-11 fog,
-// 12 sun glow, 13 the story's moments, 14 holo focus, 15 far terrain's planes, 16 motion; 17-31 free.
+// 12 sun glow, 13 the story's moments, 14 holo focus, 15 far terrain's planes, 16 motion, 17-20 Lens 2's light, mist
+// and magic, 21 the camera under cover (LensParams); 22-31 free.
 #include <awaken:lens_block.glsl>
 
 vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
@@ -323,6 +324,8 @@ void main() {
     } else {
         c = texture(InSampler, uvc).rgb;
     }
+    // the frame as the game drew it: under cover, the floor Lens's darks never fall below
+    vec3 game = c;
     vec4 p0 = P(0), p1 = P(1), g = P(3), shadowT = P(4), highT = P(5), b = P(6), h = P(7), hz = P(8), sunset = P(9);
     vec4 fogColor = P(10), fogDist = P(11), p12 = P(12), sunPos = P(2);
     // 13: the story's moments: r the tear from black (0 off), g crushed blacks, b extra bloom (LensParams)
@@ -498,6 +501,21 @@ void main() {
     c = clamp((c - 0.5) * (g.g * 2.0) + 0.5, 0.0, 1.0);
 #endif
     c = mix(vec3(luma(c)), c, g.b * 2.0);
+    // Under solid cover (a cave, a room) Lens never takes the dark below the game's own: the grade's black point and
+    // shadow tint would crush a cave at light 0 (on Bright, about 6% grey) and a hand or tool held there to pure black.
+    // The darks keep at least 85% of what the game drew, so a cave stays as dark and moody as the game made it and
+    // never reads as a black void; the mids and lights keep the look's contrast (Euan 2026-10-29, SPEC §22). Cinematic
+    // and Ultra read cover per pixel from the heightfield (a dark doorway seen from the street too); Swift by the camera.
+#ifdef LENS_LIGHT
+    float under = 0.0;
+    if (!open && !plate && F(15).x > 0.0 && max(abs(pRel.x), abs(pRel.z)) < F(15).z) {
+        vec3 hw = pRel + F(12).xyz;
+        under = smoothstep(0.5, 1.5, heightAt(ivec2(floor(hw.xz)), 0).g - hw.y);
+    }
+#else
+    float under = sky ? 0.0 : P(21).r;
+#endif
+    if (under > 0.0) c = mix(c, max(c, game * 0.85), under * (1.0 - smoothstep(0.05, 0.22, luma(game))));
     // crushed blacks: the darks fall to black and the light that's left looks brighter against them
     float crush = rit.g * 0.2;
     c = max(c - crush, 0.0) / (1.0 - crush);

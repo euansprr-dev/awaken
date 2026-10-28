@@ -14,6 +14,7 @@ import dev.awaken.progression.Progression;
 import dev.awaken.progression.ProgressionModule;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -33,6 +34,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.NeoForge;
@@ -61,6 +63,7 @@ final class DelveTests {
         AwakenTests.register("delve_tier_metals", 40, DelveTests::tierMetals);
         AwakenTests.register("delve_tuning_fork", 40, DelveTests::tuningFork);
         AwakenTests.register("delve_held_light", 20, DelveTests::heldLight);
+        AwakenTests.register("delve_held_light_faces", 20, DelveTests::heldLightFaces);
         AwakenTests.register("progression_ore_xp", 60, DelveTests::oreXp);
         AwakenTests.register("delve_true_strike", 40, DelveTests::trueStrike);
         AwakenTests.register("delve_strike_rules", 20, DelveTests::strikeRules);
@@ -402,6 +405,52 @@ final class DelveTests {
         h.assertTrue(HeldLight.of(ItemStack.EMPTY) == HeldLight.NONE, "nothing in hand, no light");
         h.assertTrue(HeldLight.offhandWins(new ItemStack(Items.REDSTONE_TORCH), new ItemStack(Items.LANTERN)), "the brighter hand carries");
         h.assertTrue(!HeldLight.offhandWins(new ItemStack(Items.TORCH), new ItemStack(Items.TORCH)), "the main hand on a tie");
+        h.succeed();
+    }
+
+    /**
+     * Held light finds every face it touches (SPEC §28.3): in a stone room with a block standing on its floor and a step
+     * against a wall, the flood gives each face that a room cell touches exactly once, the standing block's top and its
+     * four sides alike (it once kept one face a block and left the rest black), and nothing behind the walls; a cap
+     * stops it with an edge for the light to fade out over.
+     */
+    private static void heldLightFaces(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(new BlockPos(0, 2, 0));
+        for (int dx = 0; dx < 9; dx++) for (int dy = 0; dy < 7; dy++) for (int dz = 0; dz < 9; dz++) {
+            boolean room = dx >= 2 && dx <= 6 && dy >= 2 && dy <= 4 && dz >= 2 && dz <= 6;
+            level.setBlock(o.offset(dx, dy, dz), room ? Blocks.AIR.defaultBlockState() : Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+        }
+        BlockPos standing = o.offset(3, 2, 3), step = o.offset(6, 2, 5);
+        level.setBlock(standing, Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+        level.setBlock(step, Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+        // every face a room cell touches, as "x,y,z face"
+        Set<String> want = new java.util.HashSet<>();
+        for (int dx = 2; dx <= 6; dx++) for (int dy = 2; dy <= 4; dy++) for (int dz = 2; dz <= 6; dz++) {
+            BlockPos c = o.offset(dx, dy, dz);
+            if (level.getBlockState(c).isSolidRender()) continue;
+            for (Direction d : Direction.values()) {
+                BlockPos nb = c.relative(d);
+                if (level.getBlockState(nb).isSolidRender()) want.add(nb.toShortString() + " " + d.getOpposite());
+            }
+        }
+        HeldLightFlood f = new HeldLightFlood(8192, 1024);
+        f.start(level, o.offset(4, 3, 4).asLong(), HeldLight.of(new ItemStack(Items.TORCH)).reach(), 1024);
+        while (!f.done()) f.step(900);
+        Set<String> got = new java.util.HashSet<>();
+        for (int i = 0; i < f.n; i++) {
+            String face = f.face[i] < HeldLightFlood.WHOLE ? Direction.values()[f.face[i]].toString() : "whole";
+            h.assertTrue(got.add(BlockPos.of(f.pos[i]).toShortString() + " " + face), "a face found twice: " + BlockPos.of(f.pos[i]).toShortString() + " " + face);
+        }
+        for (Direction d : new Direction[]{Direction.UP, Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST}) {
+            h.assertTrue(got.contains(standing.toShortString() + " " + d), "the standing block's " + d + " face is lit");
+        }
+        h.assertTrue(got.contains(step.toShortString() + " up") && got.contains(step.toShortString() + " west"), "the step's tread and riser are lit");
+        h.assertValueEqual(got, want, "the faces the room touches");
+        h.assertTrue(f.edge == HeldLightFlood.NO_EDGE, "nothing capped a small room: " + f.edge);
+        f.start(level, o.offset(4, 3, 4).asLong(), 10.5F, 10);
+        while (!f.done()) f.step(900);
+        h.assertTrue(f.n == 10 && f.edge == f.steps[9], "a cap keeps 10 and marks its edge: " + f.n + ", " + f.edge);
         h.succeed();
     }
 
