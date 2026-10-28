@@ -32,6 +32,11 @@ final class CaveFx {
     /** Game time until which the ground counts as just rained on (the mouths breathe after rain). */
     private static long wetUntil;
 
+    /** The cave places near you the server named (mouths, sinkholes, chutes...), for the shafts and the breath. */
+    static List<CaveNet.Site> sites() {
+        return sites;
+    }
+
     static void near(CaveNet.Near m) {
         sites = List.copyOf(m.sites());
     }

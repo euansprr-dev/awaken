@@ -48,6 +48,8 @@ public final class DelveModule {
             if (e.getPlayer() instanceof ServerPlayer p && e.getState().is(DelveContent.DEEPGLASS.get())) PickVerses.deed(p, PickVerses.Verse.GLASS);
         });
         bus.addListener(PickGifts::onLeftClick);
+        // strikes are noise to the Hollows (SPEC §34.5)
+        bus.addListener(EventPriority.LOW, false, (BreakBlockEvent e) -> StrikeNoise.onBreak(e));
         // the Delver lamps (SPEC §34.6)
         bus.addListener(Lamps::onLeftClick);
         bus.addListener((ServerTickEvent.Post e) -> Lamps.tick(e.getServer()));
@@ -81,6 +83,7 @@ public final class DelveModule {
             TrueStrikes.forget(e.getEntity().getUUID());
             WakingPick.forget(e.getEntity().getUUID());
             PickGifts.forget(e.getEntity().getUUID());
+            StrikeNoise.forget(e.getEntity().getUUID());
         });
         bus.addListener((ServerStoppedEvent e) -> {
             Veins.clear();
@@ -90,6 +93,7 @@ public final class DelveModule {
             WakingPick.clear();
             PickGifts.clear();
             Lamps.clear();
+            StrikeNoise.clear();
             LodePlans.EXTRA.clear();
             LodePlans.columns(0L, null);
         });

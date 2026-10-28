@@ -74,7 +74,13 @@ public final class DelveClient {
             Motes.tick();
             PickFx.tick();
             LampFx.tick();
+            Depths.tick();
+            Breath.tick();
         });
+        // the air below (SPEC §34.5): the band's cave air, light shafts at the openings
+        bus.addListener(net.neoforged.neoforge.client.event.ViewportEvent.RenderFog.class, Depths::fog);
+        bus.addListener(net.neoforged.neoforge.client.event.ViewportEvent.ComputeFogColor.class, Depths::fogColour);
+        bus.addListener(SubmitCustomGeometryEvent.class, Shafts::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, LampGlow::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, TorchGlow::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, VeinFx::submit);
@@ -88,6 +94,9 @@ public final class DelveClient {
             Motes.reset();
             PickFx.reset();
             LampFx.reset();
+            Depths.reset();
+            Breath.reset();
+            Shafts.reset();
             HeavyCharge.reset();
             TorchGlow.reset();
             StrikeFx.reset();

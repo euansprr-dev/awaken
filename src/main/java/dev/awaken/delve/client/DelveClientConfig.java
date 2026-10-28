@@ -23,10 +23,14 @@ public final class DelveClientConfig {
             .comment("True strikes: a seam shows on an ore's face; a bite that lands on it counts extra (SPEC 34.3).",
                     "Off, no seam is drawn and every bite counts the same.")
             .define("true_strikes", true);
+    public static final ModConfigSpec.BooleanValue CAVE_AIR = B
+            .comment("Cave air: under the rock the air closes in (from about 8 blocks out to about 52), tinted by the band you are in,",
+                    "so far tunnels fade into coloured dark (SPEC 34.5). Off, the caves keep the game's own fog.")
+            .define("cave_air", true);
     public static final ModConfigSpec SPEC = B.build();
 
     // read every frame: cached, updated when the file loads or changes
-    private static volatile boolean heldLight = true, strikeParticles = true, trueStrikes = true;
+    private static volatile boolean heldLight = true, strikeParticles = true, trueStrikes = true, caveAir = true;
 
     static void register(net.neoforged.bus.api.IEventBus modBus) {
         try {
@@ -44,8 +48,9 @@ public final class DelveClientConfig {
             heldLight = HELD_LIGHT.get();
             strikeParticles = STRIKE_PARTICLES.get();
             trueStrikes = TRUE_STRIKES.get();
+            caveAir = CAVE_AIR.get();
         } catch (RuntimeException e) {
-            heldLight = strikeParticles = trueStrikes = true;
+            heldLight = strikeParticles = trueStrikes = caveAir = true;
         }
     }
 
@@ -55,6 +60,10 @@ public final class DelveClientConfig {
 
     public static boolean strikeParticles() {
         return strikeParticles;
+    }
+
+    public static boolean caveAir() {
+        return caveAir;
     }
 
     public static boolean trueStrikes() {

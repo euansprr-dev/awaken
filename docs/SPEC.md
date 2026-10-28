@@ -8707,17 +8707,44 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   and uses follow, a mend, a re-forge at your verse), `delve_pick_hush` (no block-destroy event), `delve_pick_call`
   (the 24 nearest of that lode within 8, nothing further or not of the lode, the ore to the player).
 
-### 34.5 The air below (P1e: motes built; cave air waits for P3)
+### 34.5 The air below (built: motes P1e; bands, cave air, the breath, shafts, the Hollows by band, strike noise P3)
 - **Motes in your light** (`delve.client.Motes`, particle `awaken:delve_light_mote`: the mote's frames, lit by the world
   so it shows only where light falls): underground (`under` ≥ 0.3, not in water), carrying a light in either hand
   (`HeldLight`, the offhand's when it wins) or wearing the miner's lamp (12, flame), dust hangs in the air within 70% of
   the light's reach of your eyes, three in four in front of you, only in air; spawned at 30/90 a tick × `under` so about
   30 live (life 70-110 ticks, size 0.018-0.038, alpha 0.6, a slow wander, barely falling), tinted 35% toward the
   light's colour from dust grey; half at Decreased particles, none at Minimal.
-- **Cave air in Lens** is not built here: it needs new fields and operations in Lens's composites (the Lens module's
-  files). It comes with P3's band looks, coordinated with the Lens session. Its look fields are fixed now because
-  the gate-worlds plan sets them in its own looks: `caveAirNear` and `caveAirFar` (blocks where the haze starts and
-  closes, about 8 and 40-60) and `caveAirTint` (its colour), per look.
+- **Bands** (`delve.api.Bands`, pure): **the Shallows** (y ≥ 40), **the Middle Dark** (0-39), **the Deep** (< 0), each
+  with an air colour (`#8FA3B8`, `#B08A58`, `#5A3C7A`). The client (`Depths`) knows your band while `under` ≥ 0.5 and
+  shows its caption the first time you enter it each play-day ("THE MIDDLE DARK", "warm, still air"; CaveHud's
+  caption). A plain cave's Lens place look (layer 0) is now its band's: `awaken:shallows` (cool blue-grey),
+  `awaken:middle_dark` (amber, lights glowing gold), `awaken:deep` (ink and violet, deeper corners), in
+  `looks_delve.json`; `awaken:underground` stays for when no band is known. Cave biomes keep their own looks.
+- **Cave air** (`Depths`, client setting `cave_air`, on): under the rock the game's own atmospheric fog is drawn in,
+  by `under`: from about 8 blocks out to about 52 (16 to 60 where you stand in block light), never under water, in
+  lava, snow or a status effect's fog; its colour goes 85% toward the band's air × 0.16 (coloured dark, not black). It
+  works with Lens on or off (Lens grades the frame over it). Lens's own cave-air look fields (`caveAirNear`,
+  `caveAirFar`, `caveAirTint`) are still only names: when Lens reads them they should override these numbers per
+  look (the gate-worlds plan sets them for its worlds, which the overworld's `Depths` doesn't reach). Not built here:
+  it's the Lens module's code.
+- **The Deep breathes** (`Breath`): every 3-6 minutes while `under` ≥ 0.7 (not in water) an exhale runs toward the
+  nearest mouth's lip or sinkhole's rim the server has named (else the way you face): the cave breath's sound, low
+  (pitch 0.55), from 10 behind you and again 14 ahead, and dust (`delve_draught`) streaming along the floor within 8
+  for 4 s, most in its middle; in the Deep the hum swells with it (`delve.deep.hum`, 0.6 pitch).
+- **Light shafts** (`Shafts`): while the sky isn't dark or rainy, up to 3 shafts at the nearest mouths and sinkholes
+  within 64: down a sinkhole's throat (its depth, at least 8; width 0.45 × its radius) and slanting in under a mouth's
+  arch along its way in (9 blocks); each three camera-facing additive ribbons in pale sunlight, bright at the top,
+  gone below.
+- **The Hollows by band**: `delve_hollows_bands` adds drip lurkers (10), chime crickets (12) and hushlings (8) to every
+  overworld biome; fauna's own rule (cave ground under a roof, dark, the role caps) still decides, and asks
+  `Bands.allows` (no hushling in the Shallows). Higher levels in the Deep are fauna's levels as they are.
+- **Strikes are noise** (`StrikeNoise`): rock or ore (not loose ground) broken under the rock by a player calls every
+  mob in `#awaken:delve/hears_strikes` (hushling, drip lurker) within 24 that has no target: it paths to the block.
+  A Hushed pick makes none; a player's call rests 40 ticks.
+- **Not done**: band room tones and drips from recordings, the breath re-voiced, "the cave answers" when a heart
+  breaks: waiting on Euan's approval of CC0 recordings. Lights don't lean or dim with the breath.
+- **Tests** `delve_bands` (band by height; hushlings not in the Shallows), `delve_strike_noise` (a hushling 13 off is
+  called and paths; a Hushed pick calls none; a second strike within the rest calls none).
 
 ### 34.6 Delver lamps (built, P2)
 - **Block** `awaken:delver_lamp` (`lit` false/true; light 3 dead, 14 lit; iron, immovable, cutout model: a clouded

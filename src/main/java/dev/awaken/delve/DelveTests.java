@@ -69,6 +69,7 @@ final class DelveTests {
         AwakenTests.register("delve_waking_pick", 20, DelveTests::wakingPick);
         PickTests.register();
         LampTests.register();
+        BandTests.register();
     }
 
     // ---- a heart opens its vein -------------------------------------------------------------------------------------
