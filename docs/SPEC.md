@@ -8146,10 +8146,20 @@ same roads and plans for a seed, the bench's fingerprint unchanged):
 - one shared reading of the land (`SharedLand`, behind `RoadWorld.terrain()`: 64 stripes of 4,096 recent columns and
   4,096 older ones), so a site search, the plan on its site, a village's fallback hamlet, a town's wider wall and the
   roads over it read each column once;
-- planners (`RoadPlanners`: half the cores, two to six, minimum priority) sharing a lattice chunk's work as jobs ranked
-  urgent (world generation waits for it), soon (a site search the server thread asked for) and ahead (nearest first):
-  its settlements' plans, its highroads' hubs, then their pieces and Carillon's roads, then the lanes; each piece is
-  still made once by whoever asks first, and no thread waits for a job still queued;
+- planners (`RoadPlanners`: half the cores, one to six, always two cores left for the game, `-Dawaken.roadPlanners=N`;
+  minimum priority, which macOS ignores, so the cap is what leaves the server its cores) sharing a lattice chunk's work
+  as jobs ranked urgent (world generation waits for it), soon (a site search the server thread asked for) and ahead
+  (nearest first): its settlements' plans, its highroads' hubs, then their pieces and Carillon's roads, then the lanes;
+  each piece is still made once by whoever asks first, and no thread waits for a job still queued. A job ahead of the
+  players starts between the server's ticks or within a tick's first 40 ms (`RoadTimer.serverLate`, from the server
+  tick's start and end; held a second at most, so the queue keeps moving). The pass ahead (`RoadNet.ahead`, on the
+  server thread twice a second) only queues: a lattice chunk's fan-out (the region map and the grid, a few ms) runs
+  on a planner. The laid roads' index by chunk is read without a lock (copy-on-write lists, a batch's points filed in
+  one copy): a creature's road distance on the server thread had waited 31 ms for a planner filing a batch.
+  `village_tick_holds` holds it: a wave of ~360 lattice chunks queued 2,400 out and world generation waiting on a cold
+  lattice chunk beside it, then 15 s of the server thread's road calls for a player flying 40 blocks a second over new
+  land. On the Mac (five planners, another build sharing the cores): no wait, the most work in a call 0.45 ms of CPU
+  (19 ms by the clock: the cores were shared), the longest tick 196 ms, the planners busy every tick;
 - a lattice chunk lays a lane only if it can reach it, judged from the roads the lane may join that are laid already:
   a lane runs from a street end to the point of those roads nearest the settlement's middle and keeps inside its
   search's ellipse (every point within 1.225 (δ + E + 24) + 44 of that street end, δ the nearest laid point or 650, E
@@ -8196,8 +8206,8 @@ stands the player on it once it's laid (run 40448865954: at once). Still left, o
 24-40 blocks a second over new land freezes the server for minutes (that run: a 10.4 s tick, then two ticks in four
 minutes), vanilla's own movement check (`handleMovePlayer`, fall damage, the fluid under the player) blocking on a chunk
 whose lattice chunks' roads world generation is laying itself while the two planners fall behind. On the Mac a cold
-teleport waits ~11 s and the planners keep 1,100 blocks ahead. Structure starts that wait off the executor (a Turbo
-mixin, approved, not built) would free world generation meanwhile but not that chunk, so it waits for a need on the Mac.
+teleport waits ~11 s and the planners keep 1,100 blocks ahead. Road starts (below, Turbo, built 2026-10-28) free world
+generation while a lattice chunk waits; the chunks that need that one still wait for it.
 Framings lay only the highroads through a place: the lanes round it would plan the regions about (48 s on the runner).
 Euan's 42 s freeze in a D-rank trial (2026-10-28, build 5cd4d985: "the mobs just stopped moving") was a player coming
 back from another level. Vanilla keeps an entity's supporting block (`mainSupportingBlockPos`) through a teleport to
@@ -8210,6 +8220,71 @@ trial-fall tour (`tools/autopilot/trial-fall.txt`, run 40679962684) caught it: o
 the block when a player changes level (`PlayerChangedDimensionEvent`, highest priority), so that tick reads only the
 chunk the player is in; `village_far_arrival` (the Nether standing in for a gate or trial level: the GameTest server
 has neither) fails without it.
+**Road starts** (Turbo, `dev.awaken.turbo.roadstarts`, 2026-10-28, Euan's approval: "build the server-side async road
+mixin as a backstop, with a server config switch, off on first failure"). 26.3 runs a chunk's structure starts inline
+on its level's one worldgen executor (`ChunkStatusTasks.generateStructureStarts`), so an overworld lattice chunk whose
+legs weren't known held all of the level's chunk generation while it waited for its roads. The hook, a HEAD inject
+there (own common config `awaken.roadstarts.mixins.json`, not required, `defaultRequire` 0, listed in
+`neoforge.mods.toml`), hands such a chunk back as a future (`RoadStarts.later`): a thread of the roads' own ("Awaken
+road starts", one, as the executor is one) lays its legs exactly as the executor did inline, fanning its pieces out to
+the planners first (`RoadNet.legsLater`; a chunk already being made is waited on and its pieces asked for urgently), so
+the roads come as fast as without it; then the step runs again on the level's worldgen dispatcher (opened by the access
+transformer `META-INF/accesstransformer.cfg`: `ChunkMap.worldgenTaskDispatcher`, at the chunk's own queue level), the
+legs known, so it answers at once; the pipeline resumes the chunk when the future completes, as it does after
+vanilla's own asynchronous noise step. Only for the overworld, with structures on, a generator that places the roads
+and a lattice chunk whose legs aren't known; every other chunk's structure starts run as vanilla's. Version lock
+Minecraft 26.3, NeoForge 26.3.0.95 (`RoadStarts.MINECRAFT/NEOFORGE`); probe: the hook marks itself applied the first
+time it runs (`village_road_starts_applied` on the GameTest server's own chunks); setting `roadStarts` in
+`config/awaken-roadstarts-server.toml` (a local config: the machine's, read at mod load, before any world generates;
+default on); off for the session on the first failure (a planner's failure, a submit or a step that throws), and a
+chunk whose planning failed lays its roads inline in the step, as before. Off, the hook returns at once and the step is
+vanilla's (the access transformer only widens a field). The roads are the same either way (each piece made once by
+whoever asks first; bench fingerprint 590ebda7cf744cf3, 92,028 columns, the same as without it).
+`village_road_starts_wait` (a cold lattice chunk 3,600 out over vanilla's real noise, handed off on a stand-in for the
+executor): back in 9 ms (the first hand-off loads its classes), the executor's next task ran 0.5 ms later while the
+roads were planned (4.5 s; inline it would have waited those 4.5 s), the server ticked on (the longest tick 99 ms),
+the step ran on the executor in 0.01 ms; with the road starts thread, the chunk's roads in 3.2 s (an urgent planner
+job alone, before it: 4.5-5.8 s). The roads-perf tour on CI (run 40689237794, on 88efb16b): the spawn 268 s (the
+runner's spread: 184-320 s), and the flight over new land still froze the server for seven minutes, but at every long
+tick the watch counted no road being laid for another thread and no lattice chunk set aside: the caves held it.
+`CaveHorizon.near` asks `CaveSites.find`, which plans a whole lode region on the server thread (`LodePlans.walls`:
+full noise columns through `getBaseColumn`, ~2.7 ms each on the runner), region after region as a player flies. The
+first tour on 4d099bde (run 40686122729, six and a half minutes) was the same (its long tick in `getBaseColumn`),
+though the watch was then blind to set-aside chunks. Smaller server-thread waits on chunks still generating under a
+flying player, a second each: `Scenes.dryLand` and `SkyRig.groundUnder` (`Level.getHeight`), `Reveal.motes`,
+`LandmarkMarkers.compute`. All outside the roads: routed.
+**Away from the overworld** (Euan 2026-10-28: "Nothing should plan or load overworld content for a player who isn't
+in the overworld"): every system that reads a player's position for planning, generation or chunk tickets, checked for
+the levels a player can stand in away from the overworld (awaken:gates, trials, stillpoint, endless, halo, lucidium,
+stratum_1 to stratum_10, the Nether, the End):
+
+| System | What it reads | Away from the overworld |
+|---|---|---|
+| Roads ahead (`RoadNet.prefetch`, `ahead`) | the overworld's own players | safe |
+| Road Atlas (`RoadAtlas.tick`) | a player only while in the overworld | safe |
+| Settlements, citizens (`Settlement`, `Citizens`) | their own level's players coming near | safe |
+| Ledger, camps, lairs | the overworld's players | safe |
+| Hearth (`HearthService`) | checks the player's level | safe |
+| Scenes, Pulse | skip a player in another level | safe |
+| Anomalies (`AnomalyDirector`) | eligibility "not in the overworld" | safe |
+| Landmarks, audio (`LandmarkWatch`, `AudioWatch`) | check the player's level | safe |
+| Gates director | checks the player's level | safe |
+| Lucidium visions (`Visions.prepare`) | checks the player's level; a PORTAL ticket at the target | safe |
+| Far Sight ahead (`VoxelAhead`, the collector) | each level's own players, a ticket in that level | safe |
+| City pregen (`CityPregen`) | world creation only | safe |
+| Gate build and break tickets (`GateService`, `Breaks`) | the gate's own overworld spot, never a player's | safe |
+| Teleports (`DescentTravel`, `Well`, `HomeCommands`) | the destination, loaded async with a PORTAL ticket | safe |
+| Vanilla's supporting block across a level change | the old level's block, read in the new one | **fixed** (`Arrivals`) |
+| NeoForge's `Entity.setPosRaw` patch | loads a same-level teleport's target chunk inline | the chunk the player goes to: by design |
+| Wilds' arrival (`Arrival.step`, every tick) | a player on the death screen too: removed from its level, its chunk unloads and is read back from disk each tick (the trial-fall tour: overworld 26,-100, home) | not a level mix-up; outside roads and villages: routed |
+| Trials' return point | keeps Y mid-air, so a fall in the arena ends in a death at home | outside roads and villages: routed |
+
+Where the instances stand: every instance level's generator is ours and builds only its own cells; outside them it
+writes void (gates, trials, halo, lucidium), the cloud sea (stillpoint: a pure function of the seed, any thread) or
+solid abyss stone in one pass (the strata and the Endless). None has a structure set (`createForFlat` with none) or
+spawns mobs, so a cell far out (a gate cell at (i mod 64) 1,024, (i / 64) 1,024; a trial cell at (i mod 32) 512,
+(i / 32) 512) costs only its own chunks. The roads exist in the overworld's generator alone, and the planners and Road
+starts act only there. The Nether and the End hold no instances.
 
 **Decisions taken here** (none of the plan's 13): the hub rule and its numbers above (towns one region in five, the
 first town placed on purpose, a wayhouse at a region's heart for "a day's walk"); roads on a lattice of leg starts
