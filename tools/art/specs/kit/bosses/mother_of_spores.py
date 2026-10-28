@@ -264,6 +264,20 @@ def unfurl():
                 lag={"tl2_l": 0.05, "tl2_r": 0.05, "tl3_l": 0.08, "tl3_r": 0.08})
 
 
+
+# Her sounds (SPEC §35.8): sculk, wings and breath; she flies, so no steps. Chosen by ear on paper, not yet heard.
+SOUNDS = {
+    "tell_light": [("entity.sniffer.scenting", 1.4, 0.6)],
+    "tell_heavy": [("block.sculk.charge", 1.8, 0.6), ("entity.phantom.flap", 1.4, 0.5)],
+    "tell_perilous": [("block.sculk_shrieker.shriek", 2.0, 0.7)],
+    "swing_light": [("entity.player.attack.sweep", 1.2, 0.8), ("entity.creaking.sway", 1.2, 0.7)],
+    "swing_heavy": [("entity.ender_dragon.flap", 2.0, 0.8), ("entity.player.attack.sweep", 1.6, 0.6)],
+    "cast": [("block.sculk_catalyst.bloom", 1.8, 0.7)],
+    "impact": [("item.mace.smash_ground_heavy", 2.2, 0.6), ("block.sculk.break", 2.0, 0.5)],
+    "roar": [("block.sculk_shrieker.shriek", 2.5, 0.6), ("entity.warden.agitated", 2.0, 0.6)],
+}
+MOVE_SOUNDS = {"birth": {"swing": "cast"}, "rain": {"impact": ""}, "halo": {"impact": ""}}
+
 FIGHT = {
     "intro": {"pose": "idle", "move": "unfurl"},
     "phases": [
@@ -392,4 +406,4 @@ def design():
     r = body()
     r.pack()
     mv = clips(r)
-    return {"rig": r, "plan": None, "moves": mv, "fight": FIGHT, "paint": paint, "scale": SCALE, "half": 1.5}
+    return {"rig": r, "plan": None, "moves": mv, "fight": FIGHT, "paint": paint, "scale": SCALE, "half": 1.5, "sounds": SOUNDS, "move_sounds": MOVE_SOUNDS}

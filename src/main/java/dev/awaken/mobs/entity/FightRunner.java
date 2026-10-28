@@ -178,15 +178,21 @@ final class FightRunner {
         if (navTicks-- > 0) return;
         navTicks = 10;
         // it stops where its close moves reach (at most 3.5 blocks out): Unit Zero's cuts reach 1.6, not 3.5
+        double reach = closeReach();
+        double stop = reach > 0 ? Math.min(3.5, Math.max(0.5, reach - 0.3)) : 3.5;
+        if (edgeDistance(target) > stop) boss.getNavigation().moveTo(target, 1.0);
+        else boss.getNavigation().stop();
+    }
+
+    /** How far its close moves reach in this phase (those usable from 0, not kept for far or behind), or 0. */
+    private double closeReach() {
         double reach = 0;
         for (FightScripts.Entry e : fight.phase(boss.phase()).pool()) {
             int i = moves.index(e.move());
             if (i < 0 || moves.get(i).minRange() > 0 || e.when() == FightScripts.When.FAR || e.when() == FightScripts.When.BEHIND) continue;
             reach = Math.max(reach, moves.get(i).maxRange());
         }
-        double stop = reach > 0 ? Math.min(3.5, Math.max(0.5, reach - 0.3)) : 3.5;
-        if (edgeDistance(target) > stop) boss.getNavigation().moveTo(target, 1.0);
-        else boss.getNavigation().stop();
+        return reach;
     }
 
     private FightScripts.@Nullable Entry pick(LivingEntity target) {
@@ -285,7 +291,9 @@ final class FightRunner {
         boss.syncKit(i, hold, 0);
         if (m.kind() != Strikes.Kind.NONE) {
             boss.setTell(windup + hold, m.kind(), m.kind() == Strikes.Kind.HEAVY);
-            boss.playTell(m.kind(), m.kind() == Strikes.Kind.HEAVY, 1.0F);
+            // the body's own voice for the class when it has one (the glow still tells the class), else Arms' one
+            if (!sound(m, "tell", "tell_" + m.kind().name().toLowerCase(java.util.Locale.ROOT)))
+                boss.playTell(m.kind(), m.kind() == Strikes.Kind.HEAVY, 1.0F);
         }
         if (m.signature() && !m.title().isEmpty() && boss.bar() != null) BossPlates.line(boss.bar(), m.title(), BossPlates.Line.SIGNATURE, boss.def().glow);
         return true;
@@ -313,7 +321,26 @@ final class FightRunner {
         if (k < active) {
             if (k == 0) {
                 boss.setTelegraph(0, false);
-                if (ability != null) boss.abilityRunner().fire(level, ability, world(m.origin()), m.kind() != Strikes.Kind.NONE ? m.kind() : ability.strike());
+                if (ability != null) {
+                    boss.abilityRunner().fire(level, ability, world(m.origin()), m.kind() != Strikes.Kind.NONE ? m.kind() : ability.strike());
+                    // a step that didn't close the gap (a wall where it would land) doesn't cut the air far from you:
+                    // it ends there, string and all
+                    if (ability.kind() == Ability.Kind.BLINK && !m.hits().isEmpty()) {
+                        if (target == null || !target.isAlive() || edgeDistance(target) > closeReach() + 1) {
+                            stop();
+                            string.clear();
+                            gap = 10;
+                            return;
+                        }
+                        // it lands behind you facing you, so the cut meets you and not the air where it came from
+                        yaw = (float) (Mth.atan2(target.getZ() - boss.getZ(), target.getX() - boss.getX()) * Mth.RAD_TO_DEG) - 90;
+                    }
+                }
+                // the strike: a whoosh with the limb, a roar for an intro or transition, a cast for an ability alone
+                if (m.kind() == Strikes.Kind.NONE) {
+                    if (!sound(m, "swing", "roar")) boss.roar();
+                } else sound(m, "swing", m.hits().isEmpty() ? "cast" : m.kind() == Strikes.Kind.LIGHT ? "swing_light" : "swing_heavy");
+                if (m.is("area") && firstHit(m) < 0) sound(m, "impact", "impact");
             }
             face();
             float adv = m.motion().advance() / active, up = m.motion().rise() / active;
@@ -322,11 +349,24 @@ final class FightRunner {
                 boss.move(MoverType.SELF, new Vec3(-Mth.sin((float) r) * adv, up, Mth.cos((float) r) * adv));
             }
             if (k < m.hits().size()) strike(level, m, m.hits().get(k));
+            if (k == firstHit(m) && m.is("area")) sound(m, "impact", "impact"); // the blow meets the ground
             return;
         }
         if (t < wind + active + recover) return; // the recovery: no turning, the opening
         stop();
         gap = !studio.isEmpty() ? 30 : string.isEmpty() ? 6 + boss.getRandom().nextInt(9) : 0;
+    }
+
+    /** The move's own set for this moment ("" silences it), else the default; false when the body has neither. */
+    private boolean sound(KitMoves.Move m, String moment, String fallback) {
+        String set = m.sounds().getOrDefault(moment, fallback);
+        return set.isEmpty() || dev.awaken.mobs.boss.KitSounds.play(boss, moves, set, 1F);
+    }
+
+    /** The first active tick with a capsule, or -1. */
+    private static int firstHit(KitMoves.Move m) {
+        for (int i = 0; i < m.hits().size(); i++) if (!m.hits().get(i).isEmpty()) return i;
+        return -1;
     }
 
     private void stop() {

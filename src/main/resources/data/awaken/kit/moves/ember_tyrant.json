@@ -1639,5 +1639,132 @@
    ],
    "ability": "Meltdown"
   }
- ]
+ ],
+ "sounds": {
+  "tell_light": [
+   {
+    "sound": "entity.piglin_brute.angry",
+    "volume": 1.6,
+    "pitch": 0.7
+   }
+  ],
+  "tell_heavy": [
+   {
+    "sound": "entity.hoglin.angry",
+    "volume": 2.0,
+    "pitch": 0.6
+   },
+   {
+    "sound": "block.lava.pop",
+    "volume": 1.5,
+    "pitch": 0.6
+   }
+  ],
+  "tell_perilous": [
+   {
+    "sound": "entity.ravager.roar",
+    "volume": 2.5,
+    "pitch": 0.6
+   },
+   {
+    "sound": "item.firecharge.use",
+    "volume": 1.5,
+    "pitch": 0.5
+   }
+  ],
+  "tell_grab": [
+   {
+    "sound": "entity.piglin_brute.angry",
+    "volume": 2.0,
+    "pitch": 0.55
+   },
+   {
+    "sound": "entity.ravager.step",
+    "volume": 1.5,
+    "pitch": 0.6
+   }
+  ],
+  "swing_light": [
+   {
+    "sound": "entity.player.attack.sweep",
+    "volume": 1.6,
+    "pitch": 0.6
+   },
+   {
+    "sound": "item.mace.smash_air",
+    "volume": 1.2,
+    "pitch": 0.6
+   }
+  ],
+  "swing_heavy": [
+   {
+    "sound": "entity.player.attack.sweep",
+    "volume": 2.0,
+    "pitch": 0.45
+   },
+   {
+    "sound": "entity.wind_charge.throw",
+    "volume": 1.5,
+    "pitch": 0.5
+   },
+   {
+    "sound": "item.mace.smash_air",
+    "volume": 1.5,
+    "pitch": 0.5
+   }
+  ],
+  "cast": [
+   {
+    "sound": "item.firecharge.use",
+    "volume": 2.0,
+    "pitch": 0.6
+   },
+   {
+    "sound": "block.lava.pop",
+    "volume": 1.5,
+    "pitch": 0.5
+   }
+  ],
+  "impact": [
+   {
+    "sound": "item.mace.smash_ground_heavy",
+    "volume": 2.5,
+    "pitch": 0.6
+   },
+   {
+    "sound": "entity.generic.explode",
+    "volume": 2.0,
+    "pitch": 0.6
+   },
+   {
+    "sound": "entity.warden.attack_impact",
+    "volume": 2.0,
+    "pitch": 0.5
+   }
+  ],
+  "roar": [
+   {
+    "sound": "entity.ravager.roar",
+    "volume": 3.0,
+    "pitch": 0.55
+   },
+   {
+    "sound": "entity.piglin_brute.angry",
+    "volume": 2.5,
+    "pitch": 0.5
+   }
+  ],
+  "step": [
+   {
+    "sound": "entity.warden.step",
+    "volume": 1.4,
+    "pitch": 0.6
+   },
+   {
+    "sound": "entity.ravager.step",
+    "volume": 1.0,
+    "pitch": 0.5
+   }
+  ]
+ }
 }

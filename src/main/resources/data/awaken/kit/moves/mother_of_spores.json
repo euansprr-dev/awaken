@@ -1428,7 +1428,10 @@
     "area",
     "ranged"
    ],
-   "ability": "Spore Rain"
+   "ability": "Spore Rain",
+   "sounds": {
+    "impact": ""
+   }
   },
   {
    "id": "birth",
@@ -1450,7 +1453,10 @@
    "kinds": [
     "summon"
    ],
-   "ability": "Birth"
+   "ability": "Birth",
+   "sounds": {
+    "swing": "cast"
+   }
   },
   {
    "id": "halo",
@@ -1472,7 +1478,10 @@
    "kinds": [
     "area"
    ],
-   "ability": "Spore Halo"
+   "ability": "Spore Halo",
+   "sounds": {
+    "impact": ""
+   }
   },
   {
    "id": "bloom",
@@ -1516,5 +1525,88 @@
     "intro"
    ]
   }
- ]
+ ],
+ "sounds": {
+  "tell_light": [
+   {
+    "sound": "entity.sniffer.scenting",
+    "volume": 1.4,
+    "pitch": 0.6
+   }
+  ],
+  "tell_heavy": [
+   {
+    "sound": "block.sculk.charge",
+    "volume": 1.8,
+    "pitch": 0.6
+   },
+   {
+    "sound": "entity.phantom.flap",
+    "volume": 1.4,
+    "pitch": 0.5
+   }
+  ],
+  "tell_perilous": [
+   {
+    "sound": "block.sculk_shrieker.shriek",
+    "volume": 2.0,
+    "pitch": 0.7
+   }
+  ],
+  "swing_light": [
+   {
+    "sound": "entity.player.attack.sweep",
+    "volume": 1.2,
+    "pitch": 0.8
+   },
+   {
+    "sound": "entity.creaking.sway",
+    "volume": 1.2,
+    "pitch": 0.7
+   }
+  ],
+  "swing_heavy": [
+   {
+    "sound": "entity.ender_dragon.flap",
+    "volume": 2.0,
+    "pitch": 0.8
+   },
+   {
+    "sound": "entity.player.attack.sweep",
+    "volume": 1.6,
+    "pitch": 0.6
+   }
+  ],
+  "cast": [
+   {
+    "sound": "block.sculk_catalyst.bloom",
+    "volume": 1.8,
+    "pitch": 0.7
+   }
+  ],
+  "impact": [
+   {
+    "sound": "item.mace.smash_ground_heavy",
+    "volume": 2.2,
+    "pitch": 0.6
+   },
+   {
+    "sound": "block.sculk.break",
+    "volume": 2.0,
+    "pitch": 0.5
+   }
+  ],
+  "roar": [
+   {
+    "sound": "block.sculk_shrieker.shriek",
+    "volume": 2.5,
+    "pitch": 0.6
+   },
+   {
+    "sound": "entity.warden.agitated",
+    "volume": 2.0,
+    "pitch": 0.6
+   }
+  ]
+ }
 }

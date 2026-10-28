@@ -48,6 +48,21 @@ public final class KitTests {
             h.succeed();
         });
 
+        // every sound a kit's palette names is a real sound, and every set a move names is in its palette (SPEC §35.8)
+        AwakenTests.register("kit_sounds_resolve", 20, h -> {
+            for (Kits.Kit k : Kits.all().values()) {
+                var sets = k.moves().sounds();
+                for (var e : sets.entrySet())
+                    for (KitMoves.Layer l : e.getValue())
+                        h.assertTrue(dev.awaken.mobs.boss.KitSounds.resolve(l.sound()) != null, k.id() + " " + e.getKey() + ": no sound " + l.sound());
+                for (KitMoves.Move m : k.moves().moves())
+                    for (String set : m.sounds().values())
+                        h.assertTrue(set.isEmpty() || sets.containsKey(set), k.id() + "/" + m.id() + " names a set it has none of: " + set);
+                h.assertTrue(sets.containsKey("impact") && sets.containsKey("roar"), k.id() + " has an impact and a roar");
+            }
+            h.succeed();
+        });
+
         // a move plays on the server and syncs (move, start) for the client to play the same clip at the same tick
         AwakenTests.register("kit_move_sync", 160, h -> {
             ServerLevel level = h.getLevel();

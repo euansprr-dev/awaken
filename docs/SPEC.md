@@ -9019,6 +9019,12 @@ should show a boss bar of our own. What he approved (PLAN §7):
     that the boss can see. Each is hit once a move, through `Strikes.deliver` (Arms' deflect, block and posture apply).
     Root motion moves the body by `advance`.
   - **Recover.** It doesn't turn. This is the opening you can punish.
+  - **A step (a BLINK move with capsules, Unit Zero's Phase Step).** The landing spot is picked when it strikes (behind
+    where you stand then, not where you stood when the tell began), it lands facing you, and the blink itself deals
+    nothing: the move's cut is the one blow. If it couldn't land within its close moves' reach + 1 of you (a wall at
+    the spot), the move ends there with its string, so it never cuts the air across the room.
+  - **A beam's aim** follows you until the lock tick; from then its line shows bright (Unit Zero's lance: the last
+    half second of its tell), and it fires down that line.
 - **Picking moves.** Between moves the runner waits 6-14 ticks, then picks by weight from the phase's pool among the
   entries whose `when` and `range` hold, and whose ability has room (`AbilityRunner.room`: a summon its budget,
   `Mobs.minionRoom`; a decoy its cap; a heal someone hurt). Without that, Unit Zero, at 3-8 blocks where only Deploy
@@ -9059,6 +9065,10 @@ should show a boss bar of our own. What he approved (PLAN §7):
   5. **Reactions**: the blow's direction (`CombatFeedback`) picks `hurt_l`, `hurt_r` or `hurt` (from the front). A
      broken stance holds `kneel`, then plays `rise`.
   6. **The life layer** on top, unchanged.
+- **Turning.** A kit body with a fight script turns as one heavy thing: vanilla's `BodyRotationControl` (the body
+  waits until the head is 75° off, then lurches) is replaced. On the server the body is the facing the script sets; on
+  the client it eases after the synced facing (30% of the gap a tick, at most 18°), and the head turns within its
+  range of the body.
 - **The setting.** `kitBodies` (client, `awaken-mobs-client.toml`) is on by default. Off draws every creature's old
   body after the next resource reload (renderers are made then); the server's moves still run.
 
@@ -9101,9 +9111,35 @@ GIFs are not made yet. The checks (`core.check`) stop the build, and the sheet r
     0.7 (its Magma Fist ring is 1.5), the eruption 0.8, Phase Step 0.85.
   - **Summons come with the second phase**, as in GateBestiary: Deploy Coils and Birth are not in either first pool.
   - **Middle range has its own moves**, so a signature or a summon doesn't fill the gap: Unit Zero's lance fires from
-    4 blocks in its first two phases, and Mother's lob (from 4) and swoop (from 5) need no `far`. Spore Rain is
+    6 blocks in its first two phases (it was 4, where a beam from the palm read as a cut you couldn't dodge; 3-6
+    blocks out it walks in), its aim locked for the last 10 ticks, and Mother's lob (from 4) and swoop (from 5) need no `far`. Spore Rain is
     weight 1 in every phase.
   - **Unit Zero's cuts:** sever_a and sever_b 1.75, sever_c 2.5, spin 1.5. Its told melee had dealt half again as much
     as its first cuts.
+  - **One imp.** Stoke the Imps (phase 2's transition) calls one Ember Imp, not two: Euan, 2026-10-28, parried the
+    Tyrant well and was "ripped apart" by its imps. The fight's weight is the boss, not minions.
   - **Health under the sim's recommended curve:** the Tyrant 30.5, Unit Zero 30 and Mother 22.5. These go in with
     that curve, after Euan's look. Until then GateBestiary keeps 30, 28 and 28.
+
+### 35.8 Sound (the move table's palette, `mobs.boss.KitSounds`)
+Euan's first look (2026-10-28): stomps and floor hits had no sound, the whooshes were weak, a roar could play silent
+and Unit Zero's warning was a cheap beep. A kit body now sounds its own moves:
+- **The palette.** The move table's optional `sounds`: named sets, each a few layers (`sound` id, `volume`, `pitch`)
+  played together at the body on the server, the whole set drifting ±5% in pitch. Sets: `tell_light`, `tell_heavy`,
+  `tell_perilous`, `tell_grab`, `swing_light`, `swing_heavy`, `cast`, `impact`, `roar`, `step`. The showcase palettes
+  are vanilla sounds layered low (the Tyrant: metal, fire and beasts; Unit Zero: shutters, machinery and air; Mother:
+  sculk, wings and breath), written in the bosses' specs (`SOUNDS`), chosen on paper and not yet heard in game.
+- **The moments.**
+  - **Wind-up start:** `tell_<class>`. When the body has it, it replaces Arms' class voice (the glow still tells the
+    class); else Arms' voice plays as before.
+  - **First active tick:** `swing_light` (LIGHT) or `swing_heavy` (HEAVY, PERILOUS, GRAB). A move with no capsules
+    plays `cast` (its ability sounds too), and a NONE move (intro, transition, summon) `roar`, else the boss's own
+    voice, loud and low.
+  - **Impact:** an `area` move plays `impact` on its first tick with a capsule (the blow meets the ground), or on its
+    first active tick if it has none.
+  - **Steps:** `step` under the block's own step sound, a footfall about every width walked (not every block).
+- **Overrides.** A move's own `sounds` maps a moment (`tell`, `swing`, `impact`) to another set, or to `""` for
+  silence (Spore Rain and Orbital Mark fall from the sky: no impact at the body).
+- **Test.** `kit_sounds_resolve`: every layer is a real sound, every set a move names is in its palette, and every
+  kit has an `impact` and a `roar`.
+

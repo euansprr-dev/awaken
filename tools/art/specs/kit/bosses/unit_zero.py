@@ -81,8 +81,10 @@ def clips(r):
     keyed(r, "death", 2.2, [(0, {}), (0.25, {"chest": (-14, 0, 0), "head": (-26, 0, 0), "arm_l": (-20, 0, -40), "arm_r": (-20, 0, 40)}),
                             (0.9, kneel), (1.5, slump), (2.2, slump)])
     mv = [
+        # the lance never fires up close (a beam from a palm at 4 blocks read as a cut you couldn't dodge), and its aim
+        # holds still for the last half second of the tell: the line goes bright, then it fires down that line
         M.palm_cast(P, "lance", side="r", title="Zero Lance", windup=22, active=10, recover=14, ability="Zero Lance", kinds=("ranged",),
-                    rng=(4, 24), track=9.0),
+                    rng=(6, 24), track=9.0, lock=12),
         M.lunge_cut(P, "step", side="r", title="Phase Step", windup=10, active=5, recover=12, advance=1.0, ability="Phase Step",
                     kinds=("gap",), rng=(5, 16), damage=0.85),
         M.chop(P, "sever_a", side="r", windup=9, active=3, recover=6, diagonal=1.0, kinds=("combo",), rng=(0, 2.8), damage=1.75, advance=0.4),
@@ -140,6 +142,21 @@ def wake():
                 stages={"windup": [(1.0, {"head": (10, 0, 0), "chest": (6, 0, 0)})], "active": [(0.4, open_), (1.0, open_)], "recover": []},
                 lag={"arm_l": 0.05, "arm_r": 0.05})
 
+
+
+# Its sounds (SPEC §35.8): machinery, shutters and air, low rather than beeps. Chosen by ear on paper, not yet heard.
+SOUNDS = {
+    "tell_light": [("block.vault.close_shutter", 1.4, 0.8)],
+    "tell_heavy": [("block.vault.activate", 1.6, 0.7), ("entity.breeze.inhale", 1.4, 0.6)],
+    "tell_perilous": [("block.beacon.activate", 2.0, 0.6), ("entity.warden.sonic_charge", 1.6, 0.8)],
+    "swing_light": [("entity.player.attack.sweep", 1.4, 0.9), ("entity.breeze.slide", 1.2, 0.8)],
+    "swing_heavy": [("entity.player.attack.sweep", 1.8, 0.7), ("entity.wind_charge.wind_burst", 1.4, 0.7)],
+    "cast": [("entity.breeze.shoot", 1.6, 0.6)],
+    "impact": [("block.heavy_core.fall", 2.0, 0.7), ("entity.wind_charge.wind_burst", 1.8, 0.6)],
+    "roar": [("block.beacon.activate", 2.5, 0.5), ("block.trial_spawner.ominous_activate", 2.0, 0.7)],
+    "step": [("block.vault.step", 1.2, 0.7), ("entity.iron_golem.step", 0.8, 0.9)],
+}
+MOVE_SOUNDS = {"deploy": {"swing": "cast"}, "orbital": {"impact": ""}}
 
 FIGHT = {
     "intro": {"pose": "kneel", "move": "wake"},
@@ -225,4 +242,4 @@ def design():
     r = body()
     r.pack()
     mv = clips(r)
-    return {"rig": r, "plan": P, "moves": mv, "fight": FIGHT, "paint": paint, "scale": SCALE, "half": 0.5}
+    return {"rig": r, "plan": P, "moves": mv, "fight": FIGHT, "paint": paint, "scale": SCALE, "half": 0.5, "sounds": SOUNDS, "move_sounds": MOVE_SOUNDS}

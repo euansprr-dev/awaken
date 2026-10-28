@@ -96,7 +96,7 @@ final class GateBestiary {
         out.add(m("ember_tyrant", "The Ember Tyrant", Theme.EMBER, Tier.LORD, Model.PIGLIN_BRUTE, "Magma Fist and Eruption, then a Meltdown you have to step out of").hp(30).dmg(5).spd(0.25).scale(3.0F).hold(Items.NETHERITE_AXE).wear(EquipmentSlot.HEAD, Items.GOLDEN_HELMET).traits(FIRE_IMMUNE, IGNITE).bar(BossBarColor.RED).arena(22)
                 .intro("The mine was dug to keep something in.")
                 .phase(1.0F, "The Ember Tyrant draws itself up.", a(SLAM, "Magma Fist").radius(4).bolt(BoltKind.FIRE).heavy(), a(CHARGE, "Tyrant's Advance"))
-                .phase(0.66F, "The mountain answers.", a(RAIN, "Eruption").n(5).bolt(BoltKind.FIRE), a(SUMMON, "Stoke the Imps").summon("ember_imp").n(2), a(SLAM, "Magma Fist").radius(4).bolt(BoltKind.FIRE))
+                .phase(0.66F, "The mountain answers.", a(RAIN, "Eruption").n(5).bolt(BoltKind.FIRE), a(SUMMON, "Stoke the Imps").summon("ember_imp").n(1), a(SLAM, "Magma Fist").radius(4).bolt(BoltKind.FIRE))
                 .phase(0.33F, "Meltdown.", a(AURA, "Meltdown").radius(7).bolt(BoltKind.FIRE).heavy(), a(RAIN, "Eruption").n(7).bolt(BoltKind.FIRE), a(CHARGE, "Tyrant's Advance"))
                 .parts(P("tyrant_crown", "Tyrant's Crown", "brass"), P("molten_core", "Molten Core", "ember")).build());
     }

@@ -69,8 +69,13 @@ def build(out=None, only=None):
         os.makedirs(os.path.dirname(rp), exist_ok=True)
         with open(rp, "w") as f:
             f.write(core.rig_text(rig))
-        core.write_json(os.path.join(RES, "data/awaken/kit/moves", rig.id + ".json"),
-                        {"schemaVersion": 1, "id": rig.id, "moves": [core.move_row(m) for m in mv]})
+        table = {"schemaVersion": 1, "id": rig.id, "moves": [core.move_row(m) for m in mv]}
+        for m, row in zip(mv, table["moves"]):  # a move's own sets for its moments (SPEC §35.8)
+            if m.id in d.get("move_sounds", {}):
+                row["sounds"] = d["move_sounds"][m.id]
+        if d.get("sounds"):
+            table["sounds"] = {k: [{"sound": s, "volume": v, "pitch": p} for s, v, p in layers] for k, layers in d["sounds"].items()}
+        core.write_json(os.path.join(RES, "data/awaken/kit/moves", rig.id + ".json"), table)
         if d.get("fight"):
             fight = {"schemaVersion": 1, "id": rig.id, "moves": rig.id}
             fight.update(d["fight"])

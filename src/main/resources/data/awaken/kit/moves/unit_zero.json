@@ -10,10 +10,10 @@
     "active": 10,
     "recover": 14,
     "track": 9.0,
-    "lock": 15
+    "lock": 12
    },
    "range": [
-    4,
+    6,
     24
    ],
    "damage": 0,
@@ -653,7 +653,10 @@
     "area",
     "ranged"
    ],
-   "ability": "Orbital Mark"
+   "ability": "Orbital Mark",
+   "sounds": {
+    "impact": ""
+   }
   },
   {
    "id": "deploy",
@@ -675,7 +678,10 @@
    "kinds": [
     "summon"
    ],
-   "ability": "Deploy Coils"
+   "ability": "Deploy Coils",
+   "sounds": {
+    "swing": "cast"
+   }
   },
   {
    "id": "zero_point",
@@ -720,5 +726,105 @@
     "intro"
    ]
   }
- ]
+ ],
+ "sounds": {
+  "tell_light": [
+   {
+    "sound": "block.vault.close_shutter",
+    "volume": 1.4,
+    "pitch": 0.8
+   }
+  ],
+  "tell_heavy": [
+   {
+    "sound": "block.vault.activate",
+    "volume": 1.6,
+    "pitch": 0.7
+   },
+   {
+    "sound": "entity.breeze.inhale",
+    "volume": 1.4,
+    "pitch": 0.6
+   }
+  ],
+  "tell_perilous": [
+   {
+    "sound": "block.beacon.activate",
+    "volume": 2.0,
+    "pitch": 0.6
+   },
+   {
+    "sound": "entity.warden.sonic_charge",
+    "volume": 1.6,
+    "pitch": 0.8
+   }
+  ],
+  "swing_light": [
+   {
+    "sound": "entity.player.attack.sweep",
+    "volume": 1.4,
+    "pitch": 0.9
+   },
+   {
+    "sound": "entity.breeze.slide",
+    "volume": 1.2,
+    "pitch": 0.8
+   }
+  ],
+  "swing_heavy": [
+   {
+    "sound": "entity.player.attack.sweep",
+    "volume": 1.8,
+    "pitch": 0.7
+   },
+   {
+    "sound": "entity.wind_charge.wind_burst",
+    "volume": 1.4,
+    "pitch": 0.7
+   }
+  ],
+  "cast": [
+   {
+    "sound": "entity.breeze.shoot",
+    "volume": 1.6,
+    "pitch": 0.6
+   }
+  ],
+  "impact": [
+   {
+    "sound": "block.heavy_core.fall",
+    "volume": 2.0,
+    "pitch": 0.7
+   },
+   {
+    "sound": "entity.wind_charge.wind_burst",
+    "volume": 1.8,
+    "pitch": 0.6
+   }
+  ],
+  "roar": [
+   {
+    "sound": "block.beacon.activate",
+    "volume": 2.5,
+    "pitch": 0.5
+   },
+   {
+    "sound": "block.trial_spawner.ominous_activate",
+    "volume": 2.0,
+    "pitch": 0.7
+   }
+  ],
+  "step": [
+   {
+    "sound": "block.vault.step",
+    "volume": 1.2,
+    "pitch": 0.7
+   },
+   {
+    "sound": "entity.iron_golem.step",
+    "volume": 0.8,
+    "pitch": 0.9
+   }
+  ]
+ }
 }

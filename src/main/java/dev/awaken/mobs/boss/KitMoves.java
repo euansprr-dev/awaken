@@ -6,6 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.awaken.core.api.Strikes;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -77,7 +78,8 @@ public final class KitMoves {
     }
 
     public record Move(String id, String title, Strikes.Kind kind, boolean signature, List<String> kinds, List<Float> range, Time time,
-                       Motion motion, List<List<Capsule>> hits, float damage, float knock, Optional<String> ability, List<Float> origin) {
+                       Motion motion, List<List<Capsule>> hits, float damage, float knock, Optional<String> ability, List<Float> origin,
+                       Map<String, String> sounds) {
         static final Codec<Move> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("id").forGetter(Move::id),
                 Codec.STRING.optionalFieldOf("title", "").forGetter(Move::title),
@@ -91,7 +93,8 @@ public final class KitMoves {
                 Codec.FLOAT.optionalFieldOf("damage", 1F).forGetter(Move::damage),
                 Codec.FLOAT.optionalFieldOf("knock", 0.5F).forGetter(Move::knock),
                 Codec.STRING.optionalFieldOf("ability").forGetter(Move::ability),
-                Codec.FLOAT.listOf().optionalFieldOf("origin", List.of(0F, 1F, 1F)).forGetter(Move::origin)
+                Codec.FLOAT.listOf().optionalFieldOf("origin", List.of(0F, 1F, 1F)).forGetter(Move::origin),
+                Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("sounds", Map.of()).forGetter(Move::sounds)
         ).apply(i, Move::new));
 
         /** Every tick the move takes with no hold. */
@@ -112,11 +115,25 @@ public final class KitMoves {
         }
     }
 
-    public record Table(int schemaVersion, String id, List<Move> moves) {
+    /** One layer of a body's sound (SPEC §35.8): a sound id (vanilla or ours), its volume and pitch. */
+    public record Layer(String sound, float volume, float pitch) {
+        static final Codec<Layer> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.fieldOf("sound").forGetter(Layer::sound),
+                Codec.FLOAT.optionalFieldOf("volume", 1F).forGetter(Layer::volume),
+                Codec.FLOAT.optionalFieldOf("pitch", 1F).forGetter(Layer::pitch)
+        ).apply(i, Layer::new));
+    }
+
+    /**
+     * sounds: the body's palette, a named set of layers played together (tell_light, tell_heavy, tell_perilous,
+     * tell_grab, swing_light, swing_heavy, cast, impact, roar, step). A move may name other sets for its moments.
+     */
+    public record Table(int schemaVersion, String id, List<Move> moves, Map<String, List<Layer>> sounds) {
         public static final Codec<Table> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.fieldOf("schemaVersion").forGetter(Table::schemaVersion),
                 Codec.STRING.fieldOf("id").forGetter(Table::id),
-                Move.CODEC.listOf().fieldOf("moves").forGetter(Table::moves)
+                Move.CODEC.listOf().fieldOf("moves").forGetter(Table::moves),
+                Codec.unboundedMap(Codec.STRING, Layer.CODEC.listOf()).optionalFieldOf("sounds", Map.of()).forGetter(Table::sounds)
         ).apply(i, Table::new));
 
         /** The move's index (the synced id), or -1. */

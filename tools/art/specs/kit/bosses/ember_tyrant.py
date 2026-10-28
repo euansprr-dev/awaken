@@ -94,6 +94,23 @@ def clips(r):
     return mv
 
 
+
+# Its sounds (SPEC §35.8), each set a few vanilla layers played as one: low and heavy, metal and fire. Chosen by ear on
+# paper, not yet heard in game.
+SOUNDS = {
+    "tell_light": [("entity.piglin_brute.angry", 1.6, 0.7)],
+    "tell_heavy": [("entity.hoglin.angry", 2.0, 0.6), ("block.lava.pop", 1.5, 0.6)],
+    "tell_perilous": [("entity.ravager.roar", 2.5, 0.6), ("item.firecharge.use", 1.5, 0.5)],
+    "tell_grab": [("entity.piglin_brute.angry", 2.0, 0.55), ("entity.ravager.step", 1.5, 0.6)],
+    "swing_light": [("entity.player.attack.sweep", 1.6, 0.6), ("item.mace.smash_air", 1.2, 0.6)],
+    "swing_heavy": [("entity.player.attack.sweep", 2.0, 0.45), ("entity.wind_charge.throw", 1.5, 0.5), ("item.mace.smash_air", 1.5, 0.5)],
+    "cast": [("item.firecharge.use", 2.0, 0.6), ("block.lava.pop", 1.5, 0.5)],
+    "impact": [("item.mace.smash_ground_heavy", 2.5, 0.6), ("entity.generic.explode", 2.0, 0.6), ("entity.warden.attack_impact", 2.0, 0.5)],
+    "roar": [("entity.ravager.roar", 3.0, 0.55), ("entity.piglin_brute.angry", 2.5, 0.5)],
+    "step": [("entity.warden.step", 1.4, 0.6), ("entity.ravager.step", 1.0, 0.5)],
+}
+MOVE_SOUNDS = {}
+
 FIGHT = {
     "intro": {"pose": "idle", "move": "roar"},
     "phases": [
@@ -218,4 +235,4 @@ def design():
     r = body()
     r.pack()
     mv = clips(r)
-    return {"rig": r, "plan": P, "moves": mv, "fight": FIGHT, "paint": paint, "scale": SCALE, "half": 0.9}
+    return {"rig": r, "plan": P, "moves": mv, "fight": FIGHT, "paint": paint, "scale": SCALE, "half": 0.9, "sounds": SOUNDS, "move_sounds": MOVE_SOUNDS}
