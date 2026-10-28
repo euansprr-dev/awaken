@@ -1454,7 +1454,7 @@
   },
   {
    "id": "halo",
-   "class": "PERILOUS",
+   "class": "LIGHT",
    "time": {
     "windup": 16,
     "active": 10,

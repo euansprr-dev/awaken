@@ -8734,4 +8734,15 @@ GIFs are not made yet. The checks (`core.check`) stop the build, and the sheet r
   front round a pale face, two long lash tendrils and four short trailing ones, spore sacs. Moves: `lash` → `lash_b`
   (Tendril Lash, LIGHTs), `swoop` (the gap closer), `lob` (Spore Lob), `drop` (the Drop: HEAVY, held, she falls to the
   floor with a 3-block shockwave), `rain` (Spore Rain, PERILOUS, the signature), `birth` (Birth), `halo` (Spore Halo,
-  phase 2's transition), `bloom` (Bloom, phase 3's transition), `unfurl` (intro).
+  LIGHT like its bolts; phase 2's transition), `bloom` (Bloom, phase 3's transition), `unfurl` (intro).
+- **Tuning** (the combat sim with the move tables, `docs/bosses/sim-2026-10-28.md`):
+  - **A move whose ability deals damage keeps its own capsules light**, because the ability is the blow: the hammer
+    0.7 (its Magma Fist ring is 1.5), the eruption 0.8, Phase Step 0.85.
+  - **Summons come with the second phase**, as in GateBestiary: Deploy Coils and Birth are not in either first pool.
+  - **Middle range has its own moves**, so a signature or a summon doesn't fill the gap: Unit Zero's lance fires from
+    4 blocks in its first two phases, and Mother's lob (from 4) and swoop (from 5) need no `far`. Spore Rain is
+    weight 1 in every phase.
+  - **Unit Zero's cuts:** sever_a and sever_b 1.75, sever_c 2.5, spin 1.5. Its told melee had dealt half again as much
+    as its first cuts.
+  - **Health under the sim's recommended curve:** the Tyrant 30.5, Unit Zero 30 and Mother 22.5. These go in with
+    that curve, after Euan's look. Until then GateBestiary keeps 30, 28 and 28.

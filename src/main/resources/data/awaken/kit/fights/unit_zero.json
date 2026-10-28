@@ -11,8 +11,7 @@
    "pool": [
     {
      "move": "lance",
-     "weight": 2,
-     "when": "FAR"
+     "weight": 2
     },
     {
      "move": "step",
@@ -42,10 +41,6 @@
      "move": "spin",
      "weight": 3,
      "when": "BEHIND"
-    },
-    {
-     "move": "deploy",
-     "weight": 1
     }
    ]
   },
@@ -54,8 +49,7 @@
    "pool": [
     {
      "move": "lance",
-     "weight": 3,
-     "when": "FAR"
+     "weight": 3
     },
     {
      "move": "step",

@@ -43,7 +43,7 @@
     5,
     16
    ],
-   "damage": 0.9,
+   "damage": 0.85,
    "knock": 0.6,
    "title": "Phase Step",
    "kinds": [
@@ -162,7 +162,7 @@
     0,
     1.6
    ],
-   "damage": 0.7,
+   "damage": 1.75,
    "knock": 0.5,
    "kinds": [
     "combo"
@@ -239,7 +239,7 @@
     0,
     1.6
    ],
-   "damage": 0.7,
+   "damage": 1.75,
    "knock": 0.5,
    "kinds": [
     "combo"
@@ -317,7 +317,7 @@
     0,
     1.72
    ],
-   "damage": 1.1,
+   "damage": 2.5,
    "knock": 0.5,
    "kinds": [
     "combo"
@@ -414,7 +414,7 @@
     0,
     1.46
    ],
-   "damage": 0.9,
+   "damage": 1.5,
    "knock": 0.8,
    "kinds": [
     "behind"

@@ -21,13 +21,11 @@
     },
     {
      "move": "lob",
-     "weight": 3,
-     "when": "FAR"
+     "weight": 3
     },
     {
      "move": "swoop",
      "weight": 2,
-     "when": "FAR",
      "then": [
       [
        "lash_b"
@@ -45,10 +43,6 @@
     },
     {
      "move": "rain",
-     "weight": 1
-    },
-    {
-     "move": "birth",
      "weight": 1
     }
    ]
@@ -73,7 +67,6 @@
     {
      "move": "lob",
      "weight": 3,
-     "when": "FAR",
      "then": [
       [
        "lob"
@@ -83,7 +76,6 @@
     {
      "move": "swoop",
      "weight": 2,
-     "when": "FAR",
      "then": [
       [
        "lash_b"
@@ -97,7 +89,7 @@
     },
     {
      "move": "rain",
-     "weight": 2
+     "weight": 1
     },
     {
      "move": "birth",
@@ -126,7 +118,6 @@
     {
      "move": "lob",
      "weight": 2,
-     "when": "FAR",
      "then": [
       [
        "lob",
@@ -137,7 +128,6 @@
     {
      "move": "swoop",
      "weight": 2,
-     "when": "FAR",
      "then": [
       [
        "lash_b"
@@ -155,7 +145,7 @@
     },
     {
      "move": "rain",
-     "weight": 2
+     "weight": 1
     },
     {
      "move": "halo",

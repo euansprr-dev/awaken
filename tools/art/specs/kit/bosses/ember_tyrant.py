@@ -74,7 +74,7 @@ def clips(r):
     # in its idle the right arm carries the axe's weight: hold the blade off the ground
     mv = [
         M.overhead_slam(P, "hammer", title="Magma Fist", weight=1.4, windup=22, hold=10, active=5, recover=20, ability="Magma Fist",
-                        kinds=("area", "near"), rng=(0, 4.6), damage=1.4, knock=1.0),
+                        kinds=("area", "near"), rng=(0, 4.6), damage=0.7, knock=1.0),
         M.backhand(P, "backhand", side="l", weight=1.4, windup=10, active=4, recover=12, rng=(0, 4.0), damage=0.8, low=24, arm=(-30, 0, -40)),
         M.chop(P, "chop_a", side="r", weight=1.4, windup=12, active=4, recover=10, weapon=AXE_TIP, weapon_r=8, weapon_bone="axe", diagonal=1.0,
                kinds=("combo",), rng=(0, 5.2), damage=1.0, advance=0.8),
@@ -83,7 +83,7 @@ def clips(r):
         M.shoulder_charge(P, "charge", side="l", weight=1.4, windup=16, active=12, recover=20, advance=7.5, rng=(5, 14), damage=1.2),
         M.stomp(P, "stomp", side="l", weight=1.4, windup=14, active=4, recover=16, kinds=("area", "behind"), rng=(0, 4.2), damage=1.1),
         M.overhead_slam(P, "eruption", title="Eruption", weight=1.6, cls="PERILOUS", windup=26, active=6, recover=26, ability="Eruption",
-                        kinds=("area", "ranged"), rng=(0, 16), damage=1.8, knock=1.4, signature=True, rear=1.7),
+                        kinds=("area", "ranged"), rng=(0, 16), damage=0.8, knock=1.4, signature=True, rear=1.7),
         M.roar(P, "roar", weight=1.4, windup=12, active=28, recover=14),
         M.roar(P, "stoke", title="Stoke the Imps", weight=1.4, windup=12, active=24, recover=12, ability="Stoke the Imps", kinds=("summon",)),
         M.roar(P, "meltdown", title="Meltdown", weight=1.4, cls="PERILOUS", windup=18, active=30, recover=16, ability="Meltdown",

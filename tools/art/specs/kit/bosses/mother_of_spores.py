@@ -236,7 +236,7 @@ def halo():
     out1 = _veil(_tendrils({"core": {"rot": (-4, 180, 0), "pos": (0, 2, 0)}, "head": (-10, 0, 0)}, front=(30, 0, 70), back=(40, 0, 0)), 70)
     out2 = dict(out1)
     out2["core"] = {"rot": (-4, 360, 0), "pos": (0, 2, 0)}
-    return Move("halo", "PERILOUS", 16, 10, 16, title="Spore Halo", track=0.0, ability="Spore Halo", rng=(0, 8), kinds=("area",), damage=0,
+    return Move("halo", "LIGHT", 16, 10, 16, title="Spore Halo", track=0.0, ability="Spore Halo", rng=(0, 8), kinds=("area",), damage=0,
                 knock=0, plant=(), stages={"windup": [(1.0, fold)], "active": [(0.5, out1), (1.0, out2)],
                                            "recover": [(0.5, _veil({"core": {"rot": (0, 360, 0), "pos": (0, 1, 0)}}, 10))]},
                 lag={"tl2_l": 0.03, "tl2_r": 0.03})
@@ -269,29 +269,29 @@ FIGHT = {
     "phases": [
         {"pool": [
             {"move": "lash", "weight": 3, "when": "near", "then": [["lash_b"]]},
-            {"move": "lob", "weight": 3, "when": "far"},
-            {"move": "swoop", "weight": 2, "when": "far", "then": [["lash_b"]]},
+            {"move": "lob", "weight": 3},
+            {"move": "swoop", "weight": 2, "then": [["lash_b"]]},
             {"move": "drop", "weight": 1},
             {"move": "drop", "weight": 3, "when": "behind"},
             {"move": "rain", "weight": 1},
-            {"move": "birth", "weight": 1},
         ]},
+        # the colony comes with the second phase, as in GateBestiary
         {"transition": "halo", "pool": [
             {"move": "lash", "weight": 3, "when": "near", "then": [["lash_b"], ["lash_b", "drop"]]},
-            {"move": "lob", "weight": 3, "when": "far", "then": [["lob"]]},
-            {"move": "swoop", "weight": 2, "when": "far", "then": [["lash_b"]]},
+            {"move": "lob", "weight": 3, "then": [["lob"]]},
+            {"move": "swoop", "weight": 2, "then": [["lash_b"]]},
             {"move": "drop", "weight": 3, "when": "behind"},
-            {"move": "rain", "weight": 2},
+            {"move": "rain", "weight": 1},
             {"move": "birth", "weight": 1},
             {"move": "halo", "weight": 1},
         ]},
         {"transition": "bloom", "pool": [
             {"move": "lash", "weight": 3, "when": "near", "then": [["lash_b", "drop"]]},
-            {"move": "lob", "weight": 2, "when": "far", "then": [["lob", "lob"]]},
-            {"move": "swoop", "weight": 2, "when": "far", "then": [["lash_b"]]},
+            {"move": "lob", "weight": 2, "then": [["lob", "lob"]]},
+            {"move": "swoop", "weight": 2, "then": [["lash_b"]]},
             {"move": "drop", "weight": 2},
             {"move": "drop", "weight": 3, "when": "behind"},
-            {"move": "rain", "weight": 2},
+            {"move": "rain", "weight": 1},
             {"move": "halo", "weight": 1},
         ]},
     ],

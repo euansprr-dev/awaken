@@ -84,12 +84,12 @@ def clips(r):
         M.palm_cast(P, "lance", side="r", title="Zero Lance", windup=22, active=10, recover=14, ability="Zero Lance", kinds=("ranged",),
                     rng=(4, 24), track=9.0),
         M.lunge_cut(P, "step", side="r", title="Phase Step", windup=10, active=5, recover=12, advance=1.0, ability="Phase Step",
-                    kinds=("gap",), rng=(5, 16), damage=0.9),
-        M.chop(P, "sever_a", side="r", windup=9, active=3, recover=6, diagonal=1.0, kinds=("combo",), rng=(0, 2.8), damage=0.7, advance=0.4),
-        M.chop(P, "sever_b", side="l", windup=8, active=3, recover=6, diagonal=1.0, kinds=("combo",), rng=(0, 2.8), damage=0.7, advance=0.4),
+                    kinds=("gap",), rng=(5, 16), damage=0.85),
+        M.chop(P, "sever_a", side="r", windup=9, active=3, recover=6, diagonal=1.0, kinds=("combo",), rng=(0, 2.8), damage=1.75, advance=0.4),
+        M.chop(P, "sever_b", side="l", windup=8, active=3, recover=6, diagonal=1.0, kinds=("combo",), rng=(0, 2.8), damage=1.75, advance=0.4),
         M.chop(P, "sever_c", side="r", cls="HEAVY", windup=12, hold=10, active=4, recover=14, diagonal=-1.0, kinds=("combo",),
-               rng=(0, 3.0), damage=1.1, advance=0.6),
-        M.spin_cut(P, "spin", side="l", windup=10, active=6, recover=12, rng=(0, 3.0)),
+               rng=(0, 3.0), damage=2.5, advance=0.6),
+        M.spin_cut(P, "spin", side="l", windup=10, active=6, recover=12, rng=(0, 3.0), damage=1.5),
         M.sky_call(P, "orbital", title="Orbital Mark", windup=20, active=10, recover=16, ability="Orbital Mark", kinds=("area", "ranged")),
         deploy(),
         zero_point(),
@@ -145,14 +145,15 @@ FIGHT = {
     "intro": {"pose": "kneel", "move": "wake"},
     "phases": [
         {"pool": [
-            {"move": "lance", "weight": 2, "when": "far"},
+            {"move": "lance", "weight": 2},
             {"move": "step", "weight": 2, "when": "far", "then": [["sever_b", "sever_c"]]},
             {"move": "sever_a", "weight": 3, "then": [["sever_b"], ["sever_b", "sever_c"]]},
             {"move": "spin", "weight": 3, "when": "behind"},
-            {"move": "deploy", "weight": 1},
         ]},
+        # the coils come with the second phase, as in GateBestiary (a summon in the first left it nothing but summons
+        # at middle range)
         {"transition": "orbital", "pool": [
-            {"move": "lance", "weight": 3, "when": "far"},
+            {"move": "lance", "weight": 3},
             {"move": "step", "weight": 2, "when": "far", "then": [["sever_b", "sever_c"]]},
             {"move": "sever_a", "weight": 3, "then": [["sever_b", "sever_c"]]},
             {"move": "spin", "weight": 3, "when": "behind"},
