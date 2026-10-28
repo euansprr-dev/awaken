@@ -186,13 +186,18 @@ public class RoadPiece extends StructurePiece implements net.neoforged.neoforge.
         return key;
     }
 
+    int legIndex() {
+        return legIndex;
+    }
+
     @Override
     public void postProcess(WorldGenLevel level, StructureManager structureManager, ChunkGenerator generator, RandomSource random,
                             BoundingBox chunkBB, ChunkPos chunkPos, BlockPos referencePos) {
         long t0 = System.nanoTime();
         RoadPaint p = paint();
         var chunk = level.getChunk(chunkPos.x(), chunkPos.z());
-        int n = SettlementPaint.paintChunk(p, chunkPos.x(), chunkPos.z(), level.getSeed(), chunk);
+        SettlementPaint.Land land = RoadBanks.enabled(level.enabledFeatures()) ? RoadBanks.land(this, chunk, structureManager) : null;
+        int n = SettlementPaint.paintChunk(p, chunkPos.x(), chunkPos.z(), level.getSeed(), chunk, land);
         n += SettlementPaint.sweep(level, p, chunkPos.x(), chunkPos.z());
         for (Road.Marker m : markers) RoadMarks.words(chunk, level.registryAccess(), p, m);
         paintNanos += System.nanoTime() - t0;

@@ -45,6 +45,11 @@ public final class SettlementPaint {
         default boolean clears(int x, int z) {
             return false;
         }
+
+        /** Optional natural-ground context for painters that grade beyond their usual clearing. */
+        default boolean clears(int x, int z, @Nullable Land land) {
+            return clears(x, z);
+        }
     }
 
     /**
@@ -71,14 +76,27 @@ public final class SettlementPaint {
         BlockState at(int x, int y, int z);
     }
 
+    /** Immutable natural heights and planned clearance for one chunk, in layout coordinates. */
+    public interface Land {
+        int natural(int x, int z);
+        boolean dry(int x, int z);
+        boolean free(int x, int z);
+    }
+
     /** What the settlement paints on: the chunk's buffer in plan coordinates, and the world seed's detail draw. */
     public static final class Canvas {
         final CityBuffer buf;
         final CityPainter.Ctx ctx;
+        private final @Nullable Land land;
 
-        Canvas(CityBuffer buf, CityPainter.Ctx ctx) {
+        Canvas(CityBuffer buf, CityPainter.Ctx ctx, @Nullable Land land) {
             this.buf = buf;
             this.ctx = ctx;
+            this.land = land;
+        }
+
+        public @Nullable Land land() {
+            return land;
         }
 
         public static final int YMIN = CityBuffer.YMIN, YMAX = CityBuffer.YMAX;
@@ -148,9 +166,13 @@ public final class SettlementPaint {
      * rooms), then its own pieces, then its props. For the writer, tests and commands.
      */
     static CityBuffer paint(Layout l, int chunkX, int chunkZ, long worldSeed, CityBuffer buf) {
+        return paint(l, chunkX, chunkZ, worldSeed, buf, null);
+    }
+
+    private static CityBuffer paint(Layout l, int chunkX, int chunkZ, long worldSeed, CityBuffer buf, @Nullable Land land) {
         buf.reset((chunkX << 4) - l.originX(), (chunkZ << 4) - l.originZ());
         CityPainter.Ctx ctx = new CityPainter.Ctx(l, worldSeed);
-        Canvas canvas = new Canvas(buf, ctx);
+        Canvas canvas = new Canvas(buf, ctx, land);
         l.paint(canvas, true);
         for (int id : l.plots(chunkX, chunkZ)) {
             CityPlan.Plot p = l.plot(id);
@@ -165,8 +187,13 @@ public final class SettlementPaint {
 
     /** World generation: paints the settlement's share of a proto chunk and writes it. Returns blocks written. */
     public static int paintChunk(Layout l, int chunkX, int chunkZ, long worldSeed, ChunkAccess chunk) {
-        int felled = fell(l, chunk);
-        CityBuffer buf = paint(l, chunkX, chunkZ, worldSeed, LOCAL.get());
+        return paintChunk(l, chunkX, chunkZ, worldSeed, chunk, null);
+    }
+
+    /** As above, with a caller's immutable natural heights and planned clearance (never a live surface reading). */
+    public static int paintChunk(Layout l, int chunkX, int chunkZ, long worldSeed, ChunkAccess chunk, @Nullable Land land) {
+        int felled = fell(l, chunk, land);
+        CityBuffer buf = paint(l, chunkX, chunkZ, worldSeed, LOCAL.get(), land);
         return felled + CityWriter.toProto(chunk, buf, l.baseY());
     }
 
@@ -179,6 +206,10 @@ public final class SettlementPaint {
      * hanging past the clearing goes in {@link #sweep}. Returns blocks removed.
      */
     static int fell(Layout l, ChunkAccess chunk) {
+        return fell(l, chunk, null);
+    }
+
+    private static int fell(Layout l, ChunkAccess chunk, @Nullable Land land) {
         int bx = chunk.getPos().getMinBlockX(), bz = chunk.getPos().getMinBlockZ();
         int minY = chunk.getMinY(), maxY = chunk.getMaxY();
         BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
@@ -189,7 +220,7 @@ public final class SettlementPaint {
             for (int lz = 0; lz < 16; lz++) {
                 for (int lx = 0; lx < 16; lx++) {
                     int px = bx + lx - l.originX(), pz = bz + lz - l.originZ();
-                    if (!l.clears(px, pz)) continue;
+                    if (!l.clears(px, pz, land)) continue;
                     int g = l.baseY() + l.lift(px, pz);
                     for (int y = Math.max(minY, g - FELL_BELOW); y <= Math.min(maxY, g + FELL_ABOVE); y++) {
                         int si = chunk.getSectionIndex(y);

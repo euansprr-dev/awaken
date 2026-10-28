@@ -8339,26 +8339,42 @@ or smoothed terrain faces, no texture above 16×16.
   `terrain_alpine_snow_and_rock` updated for the new slopes.
 - **Not in P3**: gully planting (the Soft Land's P2 pebbles and boulders, vanilla spruce and the treeline filter cover it).
 
-### 31.5 P4 Roads that sit in the land (partly built) and P5 (blocked)
+### 31.5 P4 Roads that sit in the land and P5 (blocked)
 - **Built: bands** (`village.road.RoadPaint.paving`, held by `ground_road_bands`): the carriageway's ground was drawn block by block
   from a coin toss (`pct(wx, wz, 50)`); it now draws once per four-by-four patch (`pct(wx >> 2, wz >> 2, 50)`) with a ragged edge
   (one block in seven draws for itself), so the crown's grass and the wheel ruts' path read as bands along the road, and a town's
   setts stay a mix. The paving tables, the planner and the half step where a road climbs are unchanged (the road bench's
   fingerprint is a plan and does not move). The grass creeping over the road's edges is P0's.
-- **Not built: banks** (the ground eased from the road's level to the land's in half steps, instead of a wall). I built and backed
-  it out: a leg's painter writes only its own raster, and a bank band 4-5 blocks wide (past the 1.6 verge) can lie over another
-  road's carriageway at a junction or over a settlement's yard; whichever structure paints last wins, so a bank would damage a road
-  or a house it meets. The safe design needs the planner to say which sides of a leg are free (no other road or settlement within
-  the bank's reach) and the painter to read the generator's heightmap (`Canvas.natural`: the chunk's `OCEAN_FLOOR_WG`, pure across
-  chunk borders, no noise column) to grade only those sides, with the ground softened by the Soft Land's slabs
-  (`SoftSlabs`). That is the next step for roads, before which roads still cut into a slope with a wall past the verge.
+- **Built: shallow cut and fill banks** (`village.road.RoadBanks`, new worlds with `awaken:awakened_ground`): past the
+  1.6-block verge, grade toward the original land over seven blocks, rounded to half-block surfaces. Turf, podzol, sand,
+  gravel (frost/highland) and mud (mire/jungle) take their Soft Land slabs. Only dry columns with at most seven blocks
+  between the land and road are graded; steeper land retains the rocky embankments of §28.9. Streets, verges, town
+  approaches, water crossings and viaducts keep their existing surfaces. The existing fringe and verge flowers remain.
+- **Planned clearance, independent of paint order**: each chunk's complete structure references supply persisted road
+  geometry and the other structures' bounding boxes before painting. No bank or its tree-clearing extension may enter
+  another road's carriageway/verge, a waymark's two-block margin, or any other structure's box (conservatively including
+  a settlement's whole raster, yards and fields). Where banks overlap, the nearest carriageway edge owns the column;
+  ties use road key then leg index. The same mask guards the older rocky embankments. This replaces the proposed
+  per-leg free-side flags: it uses the generation planner's saved footprints without laying extra neighbouring roads,
+  rebuilding settlement plans, changing saved road data or depending on which planning cache is warm. Road lines,
+  profiles, flags and their plan fingerprint are unchanged.
+- **Natural height contract**: the canvas's optional `Land` is an immutable snapshot of this chunk's `OCEAN_FLOOR_WG`
+  and `WORLD_SURFACE_WG` maps, which 26.3 stops updating at `TERRAIN`; the settlement writer refreshes only the final
+  heightmaps. No noise columns or adjacent chunk height reads. Missing WG maps leave the old grading in place, without
+  lazily priming from already-painted blocks. Flag off uses the unchanged old painter entry point.
+- **Tests**: `ground_road_bank_ownership` covers a saved crossing road and a settlement yard across chunk boundaries,
+  both structure orders, bank ownership ties and no added noise columns. `ground_road_bank_profile` holds cut/fill
+  half-step profiles (at most one block per column on the tested four-block rises/falls), chunk order, frozen heightmaps,
+  no bank slabs in a level carriageway/verge, flag-off equivalence and missing-height fallback. Existing road bands,
+  rocky embankment and viaduct tests stay in force. No client or look tour was run; irregular steep land and kerb/pebble
+  dressing remain a visual follow-up, not a claim of in-game approval.
 - **P5**: the habitats (boulders are rock perches) and the footstep tags are built (§31.3); the rank palettes wait for the regions
   plan's level field (SPEC §21.10, on `pack/regions-plan`): `datapacks/awakened_ground/palette.json` already carries each
   entry's `ranks` slot, so the table is ready for it.
 
 ### 31.6 Where things stand
-P0 (client, every world), P1 soft steps, P2 the floor and P3 mountains are built and tested; P4 has its bands; P5's rank palettes and
-P4's banks are open. New worlds only for P1-P5 (flag `awaken:awakened_ground`; P3 rides Awakened Alpine's).
+P0 (client, every world), P1 soft steps, P2 the floor and P3 mountains are built and tested. P4 has bands and protected
+shallow banks; its kerb/pebble dressing and visual acceptance remain open. P5's rank palettes are open. New worlds only for P1-P5 (flag `awaken:awakened_ground`; P3 rides Awakened Alpine's).
 
 ---------------------------------------------------------------------------------------------------------------------
 
