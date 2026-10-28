@@ -33,7 +33,7 @@ import java.util.UUID;
 
 /**
  * /awaken hearth info|echoes|guide and the admin tools /awaken admin trial &lt;rank&gt;|penalty, /awaken admin town arrive
- * &lt;npc&gt;, /awaken admin hearth scan, /awaken admin hearth cottage [reset|offer|view outside|inside|side].
+ * &lt;npc&gt;, /awaken admin hearth scan, /awaken admin hearth cottage [reset|offer|hurry|view outside|inside|side].
  */
 final class HearthCommands {
     private HearthCommands() {}
@@ -155,6 +155,15 @@ final class HearthCommands {
                 return rooms.size();
             })).then(Commands.literal("cottage").executes(HearthCommands::cottage)
                     .then(Commands.literal("reset").executes(HearthCommands::cottageReset))
+                    .then(Commands.literal("hurry").executes(c -> {
+                        // as if the rest of the day had passed: the build catches up over the next few ticks
+                        ServerPlayer sp = c.getSource().getPlayerOrException();
+                        boolean ok = HearthService.hearthOf(sp).map(h -> dev.awaken.hearth.guide.Cottage.hurry(h,
+                                dev.awaken.hearth.guide.Cottage.DURATION)).orElse(false);
+                        if (ok) c.getSource().sendSuccess(() -> Component.literal("Oren finishes the cottage"), false);
+                        else c.getSource().sendFailure(Component.literal("Oren isn't building a cottage here."));
+                        return ok ? 1 : 0;
+                    }))
                     .then(Commands.literal("offer").executes(c -> {
                         ServerPlayer sp = c.getSource().getPlayerOrException();
                         boolean sent = dev.awaken.hearth.guide.Cottage.offer(sp);
@@ -325,7 +334,10 @@ final class HearthCommands {
     private static int cottageReset(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
         ServerPlayer sp = c.getSource().getPlayerOrException();
         HearthService.player(sp).tips.removeIf(t -> t.startsWith("cottage_"));
-        HearthService.hearthOf(sp).ifPresent(h -> h.cottage = null);
+        HearthService.hearthOf(sp).ifPresent(h -> {
+            h.cottage = null;
+            h.cottageBuild = null;
+        });
         c.getSource().sendSuccess(() -> Component.literal("Oren's cottage can be offered and raised again"), false);
         return 1;
     }

@@ -190,7 +190,8 @@ public final class Guide {
         for (Furniture f : Furniture.values()) recipe(sp, f).ifPresent(recipes::add);
         boolean wakeHere = HearthService.wakesAt(sp).map(w -> w == h).orElse(false);
         return new GuideData(h.tier, h.radius(), rest, Math.max(1, rest / 2), wakeHere, h.pos, cards, recipes,
-                town(h), coming(sp, h), upgrade(sp, h), Cottage.state(sp, h), home(h));
+                town(h), coming(sp, h), upgrade(sp, h), Cottage.state(sp, h),
+                Cottage.status(sp.level().getServer(), h), home(h));
     }
 
     /** The home as read: its name, Comfort and what adds a point, Style, the land, and each room's reading (best first). */

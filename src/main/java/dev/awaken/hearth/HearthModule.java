@@ -175,6 +175,7 @@ public final class HearthModule {
         dev.awaken.hearth.settle.SettleTests.register();
         TogetherHearthTests.register();
         dev.awaken.hearth.guide.GuideTests.register();
+        dev.awaken.hearth.guide.CottageBuildTests.register();
     }
 
     private static void attributes(EntityAttributeCreationEvent e) {
