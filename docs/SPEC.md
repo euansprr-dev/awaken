@@ -5905,6 +5905,21 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     blade two comes over to cut back; it whirls on and blade one stands up for strike 3; the spins take either end.
     The bake marks a far move `far: true` (schema 6, optional); `FpSwings.far` reads it and the first-person trail runs
     along that end (from its middle to its point). `arms_chain_flow` checks the ends take turns.
+  - *Round 6, the daggers smoothed* (Euan 2026-10-28: "glitchy and not smooth... it doesn't smoothly switch hands...
+    sometimes it strikes in unnatural ways, and sometimes it does tiny near glitchy movements"):
+    - A feel spec's thrust `push` (the daggers: 1.6) makes a stab one push from where the hand is (the last strike's
+      end, the idle hand's draw, or rest) to full reach, gathering speed into the hit (x^push). A 1-tick stab used to be
+      a load, a set, a drive and a stop of a frame each. Its set (`set_time` -1) is the one the idle hand draws back to.
+    - The idle hand sets off from where it already is: holding the end of its own last strike, or the draw it made
+      while the other struck. It used to start from rest, so the hand that had just struck sank back and rose again at
+      every change of hands.
+    - It draws all the way to the next strike's set, unless that would bring its tip within 0.35 (ndc) of the striking
+      blade's (replaces round 4's own-half rule, which left strike 3's backhand to fling the rest of its draw in one
+      frame).
+    - Before a strike of both hands, it waits where the main hand is on the press (mirrored), so the two leave
+      together.
+    - Strike 5's off-hand slash carries 14 degrees with a 0.1 drop and comes straight home on the screen. It used to
+      dive to three screens below the view.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past

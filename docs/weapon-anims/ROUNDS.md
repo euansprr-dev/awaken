@@ -135,3 +135,28 @@ turn is the blow carrying on.
 Numbers: twin blades strikes 2 and 3 stay fully in view (mash jump 0.28 and 0.21, steady 0.11 and 0.21). Every other
 style's chain is unchanged (totals as round 4). Strike 1's own blade is in view less (0.88 -> 0.75), because it whirls
 off the bottom as the far blade comes up.
+
+## Round 6: the daggers smoothed (2026-10-28)
+
+Note (Euan, same day, playing round 5): "Daggers still feel very glitchy and not smooth imo, it doesn't smoothly switch
+hands, sometimes it strikes in unnatural ways, and sometimes it does tiny near glitchy movements."
+
+Traced both hands frame by frame through the chain at 60 fps. Four causes:
+
+- **The switch.** The hand not striking started its track from rest. So the hand that had just stabbed sank back to
+  rest, turned round and rose again to its next set, at every change of hands. It now starts where it already is and
+  draws straight on.
+- **The stutter.** A 1-tick stab was four phases, each a frame long: load, set, push, stop. The tip went 0.37, 0.07,
+  0.23, 0.03 a frame. Now each stab is one push from where the hand is, speeding up into the hit (0.11, 0.16, 0.15). The
+  hit's speed as a share of the stab's peak: 0.08 -> 0.72, 0.28 -> 0.65, 0.04 -> 0.45 for strikes 1, 2 and 4, and
+  0.10 -> 0.95 for the heavy.
+- **The fling.** The waiting hand stopped halfway across, so strike 3's backhand flung the rest of its draw in one
+  frame (0.69). It now goes all the way unless the two blades would come within 0.35 of each other. Strike 3's hit is
+  now its fastest moment (0.52 -> 1.00). Before strike 4 (both hands), the waiting hand mirrors the main one, so the
+  two leave together; before, it swung out and back.
+- **The odd one.** Strike 5, the off hand's slash, crossed the body and dived three screens below the view before
+  coming home. It now carries less and comes straight home, on the screen.
+
+Chain flags for the daggers: 3 -> 1 when mashing, 2 -> 1 at a steady pace. The one left is strike 5's draw out of
+rest: 0.33 in a frame against the 0.3 limit. No other style changed.
+
