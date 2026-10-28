@@ -85,6 +85,23 @@ public final class PowerPreviews {
         return lines;
     }
 
+    /** The same numbers said as one sentence, for the Journal: "Its energy cost goes from 12 to 11 and cooldown from 8 to 7.6 seconds." */
+    public static String numberSentence(ServerPlayer p, PowerType t, int variant, int from, int to) {
+        if (t.isPassive()) return "";
+        Cast before = new Cast(p, t, variant, from, -1, false, p.getYRot(), p.getXRot());
+        Cast after = new Cast(p, t, variant, to, -1, false, p.getYRot(), p.getXRot());
+        List<String> parts = new ArrayList<>();
+        for (Change c : changes(before, after)) {
+            if (!c.changed()) continue;
+            String name = c.name().equals("Energy") ? "energy cost" : Character.toLowerCase(c.name().charAt(0)) + c.name().substring(1);
+            String unit = c.unit().equals(" s") ? " seconds" : c.unit();
+            parts.add(name + (parts.isEmpty() ? " goes" : "") + " from " + number(c.before()) + " to " + number(c.after()) + unit);
+        }
+        if (parts.isEmpty()) return "";
+        String last = parts.removeLast();
+        return "Its " + (parts.isEmpty() ? last : String.join(", ", parts) + " and " + last) + ".";
+    }
+
     public static Reply preview(ServerPlayer p, PowerType t, int coreVariant) {
         Loadout.Owned owned = Powers.loadout(p).get(t.id.toString());
         if (owned == null) throw new IllegalArgumentException("Only owned powers need upgrade previews");

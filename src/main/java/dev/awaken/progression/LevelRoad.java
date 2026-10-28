@@ -113,7 +113,7 @@ public final class LevelRoad {
             DirectorLog.log(player, "level-road", "level " + s.def().level() + ": " + key + (backfill ? " (caught up)" : ""));
             if (!s.def().quiet()) {
                 var notice = new dev.awaken.core.api.NoticeEvents.Event("level_road/" + key, "Unlocked at level " + s.def().level(),
-                        s.def().title(), s.def().text(), List.of(s.def().text(), s.def().goal().map(Goal -> Goal.now()).orElse("This unlock is already available.")),
+                        s.def().title(), s.def().text(), List.of(s.def().goal().map(g -> g.now()).orElse("You can use it right away.")),
                         dev.awaken.core.api.NoticeEvents.Kind.PERMANENT, 0x86C9F0);
                 if (backfill || announced) dev.awaken.core.api.NoticeEvents.remember(player, notice);
                 else dev.awaken.core.api.NoticeEvents.tell(player, notice);

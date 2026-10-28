@@ -124,8 +124,8 @@ final class ArmsSpoils {
         if (stack.isEmpty()) return;
         ArmsIssue.giveItem(p, stack);
         ArmsNotices.reward(p, "weapon/spoils/" + java.util.UUID.randomUUID(), "Gate spoils", stack,
-                "You received a weapon with two Marks. Each Mark adds a conditional combat effect.",
-                List.of("The weapon was added to your inventory, or dropped beside you if it was full."));
+                "You found a weapon with two Marks. Each one adds something extra at a certain moment in a fight.",
+                List.of("It's in your inventory, or at your feet if your inventory was full."));
         p.level().playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.2F, 0.9F);
         dev.awaken.progression.Progression.markNewThing(p, "spoils");
     }

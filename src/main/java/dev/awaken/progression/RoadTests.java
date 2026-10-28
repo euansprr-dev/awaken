@@ -22,6 +22,19 @@ final class RoadTests {
     private RoadTests() {}
 
     static void register() {
+        // Rewards are said the way a person would say them (SPEC 26.3c): a share of a level in words, the stat's own
+        // name, perks as phrases, joined with "and"; a reward with nothing to count is just the recognition.
+        AwakenTests.register("progression_reward_words", 20, h -> {
+            var r = new Reward(0.1, 1, java.util.Optional.of(Stat.STR), 1, java.util.Optional.empty(), java.util.Optional.empty(), 0,
+                    List.of(new Perk(Perks.MOVE_SPEED, 0.05)));
+            String said = RewardWords.describe(r);
+            h.assertTrue(said.equals("a tenth of a level's worth of XP, a stat point, +1 Strength and you move 5% faster"), "said plainly: " + said);
+            h.assertTrue(RewardWords.levelsWorth(0.25).equals("a quarter of a level's worth of XP") && RewardWords.levelsWorth(2).equals("2 levels' worth of XP")
+                    && RewardWords.levelsWorth(0.3).equals("30% of a level's worth of XP"), "shares of a level in words");
+            h.assertTrue(RewardWords.perk(new Perk(Perks.CRIT_CHANCE, 0.08)).startsWith("an 8-point better chance"), "an 8, not a 8");
+            h.assertTrue(RewardWords.describe(Reward.NONE).equals("just the recognition"), "nothing to count");
+            h.succeed();
+        });
         // Every level 1-50 has a step; every grant resolves (recipes, items, powers, flags); every goal is well formed
         // and every P3 text fits its System v2 surface.
         AwakenTests.register("progression_level_road_every_level", 40, h -> {

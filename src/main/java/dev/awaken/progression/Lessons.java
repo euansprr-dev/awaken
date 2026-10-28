@@ -138,7 +138,7 @@ public final class Lessons {
             if (g.done().test(p, null)) {
                 Progression.setCounter(player, key, 1);
                 DirectorLog.log(player, "level-road", "goal met: " + s.id());
-                if (seen.remove(key)) toast(player, key, s.def().title(), g.toast().isEmpty() ? "This goal is complete." : g.toast());
+                if (seen.remove(key)) toast(player, key, s.def().title(), g.toast().isEmpty() ? "That's this goal done." : g.toast());
             } else {
                 seen.add(key);
             }
@@ -180,10 +180,9 @@ public final class Lessons {
 
     private static void toast(ServerPlayer player, String key, String title, String text) {
         toastsSent++;
-        String meaning = text.isEmpty() ? "This lesson step is complete." : text;
+        String meaning = text.isEmpty() ? "That's this step done." : text;
         dev.awaken.core.api.NoticeEvents.tell(player, new dev.awaken.core.api.NoticeEvents.Event(
-                "lesson/" + key, "Lesson completed", title, meaning, List.of(meaning,
-                "Follow your task card for the next unfinished step, if there is one."),
+                "lesson/" + key, "Lesson completed", title, meaning, List.of("If there's more to learn, your task card shows the next step."),
                 dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x7FC3FF));
     }
 

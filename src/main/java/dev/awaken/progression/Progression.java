@@ -180,6 +180,9 @@ public final class Progression {
     }
 
     /** Grants a fraction of the player's current level (used by rewards: "0.25 levels"). */
+    private static final String LEVEL_HOW = "Spend them on Status, where each stat says what it does.";
+    private static final String LEVEL_NEW = "Anything this level unlocks has its own entry in your Journal.";
+
     public static int grantLevels(ServerPlayer player, double fraction, XpSource source) {
         return grantXp(player, fraction * Curve.xpToNext(profile(player).level) / xpScale(player), source);
     }
@@ -252,9 +255,8 @@ public final class Progression {
         boolean moment = dev.awaken.core.api.LivingHooks.levelMoment(player, p.level, gained);
         if (!moment) player.level().playSound(null, player.blockPosition(), CoreModule.LEVEL_UP.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
         var levelEvent = new dev.awaken.core.api.NoticeEvents.Event("level/" + p.level, "Level gained", "Level " + p.level,
-                "+" + gained * Curve.POINTS_PER_LEVEL + " stat points to spend on Status.",
-                List.of("Your level rose from " + (p.level - gained) + " to " + p.level + ".",
-                        "Assign the new points on Status. Each stat explains its effects there; new level-road unlocks have their own Journal entries."),
+                "You have " + gained * Curve.POINTS_PER_LEVEL + " new stat points to spend on Status.",
+                gained > 1 ? List.of("You went from level " + (p.level - gained) + " to " + p.level + " in one go.", LEVEL_HOW, LEVEL_NEW) : List.of(LEVEL_HOW, LEVEL_NEW),
                 Kind.PERMANENT, 0x86C9F0);
         if (moment) dev.awaken.core.api.NoticeEvents.remember(player, levelEvent);
         else dev.awaken.core.api.NoticeEvents.tell(player, levelEvent);
@@ -412,8 +414,8 @@ public final class Progression {
                             && !p.truthsDeclared.contains(key) && truth.emergent().get().test(p, null)) {
                         p.truthsOffered.add(key);
                         ProgressionNotices.tell(player, "truth/offered/" + key, "Truth available", truth.text(),
-                                "A new Truth can be declared on the Truths page. Its reward is not active yet.", Kind.DISCOVERY,
-                                truth.hint().orElse("Open its Truth entry for the condition."), "Potential reward: " + RewardWords.describe(truth.reward()));
+                                "You can declare this Truth on the Truths page. Its reward comes once you make it true.", Kind.DISCOVERY,
+                                truth.hint().orElse("Its entry on the Truths page says what it takes."), "Reward if you do: " + RewardWords.describe(truth.reward()) + ".");
                     }
                 }
                 Defs.TitleDef title = Content.TITLES.get(id);
@@ -421,15 +423,16 @@ public final class Progression {
                     p.titles.add(key);
                     markNewThing(player, "title");
                     ProgressionNotices.tell(player, "title/" + key, "Title earned", title.name(), title.description(), Kind.PERMANENT,
-                            "Equip this title on the Truths page to activate its perks. Owning it alone does not activate them.",
-                            title.perks().isEmpty() ? "This title has no numeric perks." : RewardWords.perks(title.perks()));
+                            title.perks().isEmpty() ? new String[]{"It has no perks. Equip it on the Truths page if you'd like to wear it."}
+                                    : new String[]{"Equip it on the Truths page for its perks: " + RewardWords.perks(title.perks()) + ".",
+                                            "Its perks only work while it's equipped."});
                 }
                 Defs.LatentDef latent = Content.LATENTS.get(id);
                 if (latent != null && !p.latents.contains(key) && latent.condition().test(p, null)) {
                     p.latents.add(key);
                     markNewThing(player, "latent");
                     ProgressionNotices.tell(player, "latent/" + key, "Ability awakened", latent.name(), latent.description(), Kind.PERMANENT,
-                            "This latent is permanently unlocked. Its perks are active without equipping a title.", RewardWords.describe(latent.reward()));
+                            "It's yours for good and works on its own, with no title to equip.", "Reward: " + RewardWords.describe(latent.reward()) + ".");
                     RewardHooks.apply(player, latent.reward(), XpSource.TRUTH);
                     applyAttributes(player);
                 }
@@ -446,8 +449,8 @@ public final class Progression {
         markNewThing(player, "truth");
         player.level().playSound(null, player.blockPosition(), CoreModule.RANK_UP.get(), SoundSource.PLAYERS, 0.6f, 1.4f);
         ProgressionNotices.tell(player, "truth/true/" + key, "Truth fulfilled", truth.text(),
-                "You fulfilled this Truth. Its reward and permanent perks are now active.", Kind.PERMANENT,
-                RewardWords.describe(truth.reward()), "Fulfilled Truth perks stay active without using a title slot.");
+                "You made it true. Its reward and perks are yours for good.", Kind.PERMANENT,
+                "Reward: " + RewardWords.describe(truth.reward()) + ".", "Its perks work on their own; they don't take a title slot.");
         RewardHooks.apply(player, truth.reward(), XpSource.TRUTH);
         applyAttributes(player);
         markDirty(player);
@@ -654,8 +657,8 @@ public final class Progression {
                 .row(Component.literal("New gates"), Component.literal(next.label + "-rank pillars will appear"))
                 .priority(9).ttl(20 * 10).build());
         ProgressionNotices.remember(player, "rank/" + next.name(), "Rank advanced", next.label + "-rank",
-                "You passed reassessment and can progress into " + next.label + "-rank gates.",
-                "Your rank cap has increased. Three new Truths are offered on the Truths page.");
+                "You passed reassessment, so " + next.label + "-rank gates will start to appear for you.",
+                "Three new Truths are waiting on the Truths page.");
         markNewThing(player, "rank");
         offerTruths(player, 3);
         evaluate(player, Counters.RANK);
@@ -712,8 +715,8 @@ public final class Progression {
         p.pathsOffered.clear();
         d.signaturePower().ifPresent(pw -> RewardHooks.learnPower(player, pw));
         ProgressionNotices.remember(player, "path/" + path, "Path chosen", d.name(), d.description(),
-                d.perks().isEmpty() ? "This path has no numeric perks." : RewardWords.perks(d.perks()),
-                "Any signature power has its own learned-power entry and can be equipped from Powers.");
+                d.perks().isEmpty() ? "It has no perks of its own." : "Its perks: " + RewardWords.perks(d.perks()) + ".",
+                "If it comes with a power, that power has its own entry, and you can put it on a key on the Powers page.");
         markNewThing(player, "path");
         Signal.send(player, SignalWindow.builder(SignalWindow.Kind.REVELATION, Component.literal(d.name()))
                 .body(Component.literal(d.description())).priority(9).ttl(20 * 12).build());

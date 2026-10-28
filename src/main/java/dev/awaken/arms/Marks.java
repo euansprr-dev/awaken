@@ -184,6 +184,40 @@ public final class Marks {
         return when + ": " + what;
     }
 
+    /** The same as a sentence you'd say out loud, for the Journal: "When you land a hit, the target takes an extra 20% ...". */
+    public static String say(Mark m, Optional<Forces.Force> attunement) {
+        String when = switch (m.trigger()) {
+            case HIT -> "When you land a hit";
+            case FINISHER -> "When you land a finisher in full rhythm";
+            case DEFLECT -> "When you deflect a blow";
+            case PERFECT_DODGE -> "When you dodge perfectly";
+            case BREAK -> "When you Break an enemy";
+            case KILL -> "When you kill an enemy";
+            case GUARD -> "When you guard a blow";
+            case PERFECT_HEAVY -> "When you land a perfect heavy";
+        };
+        String who = switch (m.trigger()) {
+            case DEFLECT, GUARD -> "the attacker takes";
+            case KILL -> "the enemies around it take";
+            case PERFECT_DODGE -> "the one you slipped past takes";
+            default -> "the target takes";
+        };
+        String what = switch (m.effect()) {
+            case RIDER -> who + " an extra " + Math.round(m.amount() * 100) + "% of your attack" + attunement.or(m::force)
+                    .map(f -> " as " + f.name().charAt(0) + f.name().substring(1).toLowerCase(Locale.ROOT) + " damage").orElse(" as a second blow");
+            case POSTURE -> m.trigger() == Trigger.BREAK ? "the Break lasts " + seconds(m.amount() / 20F) + " longer" : who + " " + Math.round(m.amount()) + " posture damage";
+            case HEAL -> "you heal " + trim(m.amount() * 100) + "% of your health";
+            case ENERGY -> "you get " + Math.round(m.amount()) + " power energy back";
+            case SWIFT -> "you get Speed for " + seconds(m.amount() / 20F);
+            case WARD -> "you get Resistance for " + seconds(m.amount() / 20F);
+        };
+        return when + ", " + what + ".";
+    }
+
+    private static String seconds(float v) {
+        return trim(v) + (v == 1 ? " second" : " seconds");
+    }
+
     private static String trim(float v) {
         return v == Math.rint(v) ? String.valueOf((int) v) : String.format(java.util.Locale.ROOT, "%.1f", v);
     }

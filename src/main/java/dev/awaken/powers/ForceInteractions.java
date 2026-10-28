@@ -182,18 +182,33 @@ public final class ForceInteractions {
     }
 
     static dev.awaken.core.api.NoticeEvents.Event explanation(Reaction r) {
+        String summary = switch (r) {
+            case SPORE_CHAIN -> "Your heat set off a chain of spore bursts.";
+            case STUN_SPREAD -> "Your charge ran through the water and stunned everything in it.";
+            case VOLATILE_DETONATION -> "Your gravity pulled two volatile creatures together, and they blew each other up.";
+            case MIRROR_SHATTER -> "Your spirit shattered a mirror creature.";
+            case STEAM -> "Heat met frost and burst into steam.";
+            case OVERCHARGE -> "Your charge overcharged your own Echo.";
+            case WALL_THROW -> "You threw your own wall like a battering ram.";
+            default -> "Nothing happened.";
+        };
         String detail = switch (r) {
-            case SPORE_CHAIN -> "Heat damage on a spore-tagged creature starts linked bursts. Each burst hits within 3.5 blocks and burns targets for 3 seconds; successive bursts lose 10% damage.";
-            case STUN_SPREAD -> "Charge on a wet target spreads through wet creatures within 8 blocks. Others are stunned for 2.5 seconds; you are also stunned for 1 second if caught in the water.";
-            case VOLATILE_DETONATION -> "Gravity brings nearby volatile creatures together. Both explode, each blasting a 4.5-block radius without breaking terrain. Your allies are protected from these blasts.";
-            case MIRROR_SHATTER -> "Spirit damage shatters a mirror-tagged target for extra damage and sends a half-strength shock to nearby mirror-tagged creatures.";
-            case STEAM -> "Heat meeting frost removes the target's frost and fire and creates a 4-block steam cloud for 8 seconds. The steam blinds creatures and hides sneaking players.";
-            case OVERCHARGE -> "Hit your own Echo or summon with Charge: its attack damage doubles for up to 10 seconds, then it disappears. This spends the summoned ally; it is not a permanent upgrade.";
-            case WALL_THROW -> "Use Telekinesis or Gravity Well on blocks made by Architect powers to throw them as damaging projectiles.";
-            default -> "No elemental reaction occurred.";
+            case SPORE_CHAIN -> "Heat on a creature carrying spores makes it burst, and each burst sets off the next spore carrier nearby. "
+                    + "A burst hits everything within 3.5 blocks and sets it on fire for 3 seconds, and each one in the chain is 10% weaker than the last.";
+            case STUN_SPREAD -> "Charge on something wet runs through everything wet within 8 blocks and stuns it for 2.5 seconds. "
+                    + "If you're standing in the water too, you are also stunned for 1 second.";
+            case VOLATILE_DETONATION -> "Gravity pulls volatile creatures together, and both explode. Each blast hits everything within 4.5 blocks "
+                    + "but never breaks the ground, and it spares your allies.";
+            case MIRROR_SHATTER -> "Spirit on a mirror creature shatters it for extra damage, and a shock half as strong jumps to the mirror creatures nearby.";
+            case STEAM -> "Heat on something frozen puts out both the frost and the fire and leaves a steam cloud 4 blocks wide for 8 seconds. "
+                    + "Creatures inside can't see, and players sneaking inside are hidden.";
+            case OVERCHARGE -> "Hit your own Echo or summon with Charge and it hits twice as hard for up to 10 seconds, then it's gone. "
+                    + "It uses up the ally; it isn't a lasting upgrade.";
+            case WALL_THROW -> "Use Telekinesis or Gravity Well on blocks your Architect powers made, and you can throw them as weapons.";
+            default -> "No elemental reaction happened.";
         };
         return new dev.awaken.core.api.NoticeEvents.Event("force/" + r.name(), "Elemental reaction", r.title,
-                r.effect + ".", java.util.List.of(detail, "Repeat it by combining the same force and target condition. This is a temporary interaction, not a learned power."),
+                summary, java.util.List.of(detail, "It isn't a new power. Bring the same element to the same kind of target and it happens again."),
                 dev.awaken.core.api.NoticeEvents.Kind.COMBAT, 0x7FC3FF);
     }
 

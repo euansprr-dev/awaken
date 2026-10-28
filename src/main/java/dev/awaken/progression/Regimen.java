@@ -59,9 +59,11 @@ public final class Regimen {
         if (drills.isEmpty()) return;
         var lines = new ArrayList<String>();
         for (String id : drills) lines.add(Content.DRILLS.get(id).text());
-        lines.add("Optional: complete every drill for one stat point and XP worth a tenth of a current level. See the Journal task list for progress.");
+        lines.add("Finish them all for a stat point and " + RewardWords.levelsWorth(REWARD_LEVELS) + ".");
+        lines.add(AwakenConfig.DIFFICULTY.get() == AwakenConfig.Difficulty.HARDLINE
+                ? "On Hardline, leaving any undone by tomorrow morning sends you to the Penalty Zone." : "They're optional; nothing happens if you skip them.");
         dev.awaken.core.api.NoticeEvents.tell(player, new dev.awaken.core.api.NoticeEvents.Event("regimen/" + today,
-                "Daily tasks", "Daily Regimen", "Today's optional drills are ready in Journal.", lines, dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x86C9F0));
+                "Daily tasks", "Daily Regimen", "Today's drills are in your Journal.", lines, dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x86C9F0));
         Progression.markDirty(player);
     }
 
@@ -76,9 +78,13 @@ public final class Regimen {
             if (def != null && def.condition().test(p, r.baseline())) {
                 done.add(id);
                 changed = true;
-                ProgressionNotices.tell(player, "regimen/" + r.day() + "/" + id, "Drill complete", def.text(),
-                        "This drill is complete. Finish today's remaining drills for the regimen reward.", dev.awaken.core.api.NoticeEvents.Kind.TASK,
-                        "The current checklist is in Journal.");
+                int left = r.drills().size() - done.size();
+                // the last one is told by the day's own reward toast, so it is only filed
+                var drill = new dev.awaken.core.api.NoticeEvents.Event("regimen/" + r.day() + "/" + id, "Drill complete", def.text(),
+                        left == 0 ? "That was the last of today's drills." : "One down, " + left + " more today for the reward.",
+                        List.of("Your Journal has today's list."), dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x86C9F0);
+                if (left > 0) dev.awaken.core.api.NoticeEvents.tell(player, drill);
+                else dev.awaken.core.api.NoticeEvents.remember(player, drill);
             }
         }
         if (!changed) return;
@@ -90,8 +96,8 @@ public final class Regimen {
             p.counters.merge("awaken:regimens_done", 1L, Long::sum);
             dev.awaken.core.audio.AudioCues.ui(player, dev.awaken.core.audio.UiSound.QUEST_DONE);
             ProgressionNotices.tell(player, "regimen/" + r.day() + "/complete", "Daily tasks complete", "Daily Regimen",
-                    "+1 stat point and XP worth a tenth of a current level.", dev.awaken.core.api.NoticeEvents.Kind.REWARD,
-                    "Assign the point on Status. Normal progression XP modifiers apply to the XP reward.");
+                    "All of today's drills are done: a stat point and " + RewardWords.levelsWorth(REWARD_LEVELS) + ".", dev.awaken.core.api.NoticeEvents.Kind.REWARD,
+                    "Spend the point on Status. Your XP bonuses count toward the XP.");
         }
         Progression.markDirty(player);
     }

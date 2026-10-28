@@ -12,7 +12,7 @@ import java.util.Objects;
 public final class NoticeEvents {
     private NoticeEvents() {}
     public enum Kind {
-        PERMANENT("Permanent change"), COMBAT("Temporary combat effect"), DISCOVERY("Discovery"), REWARD("Reward"), TASK("Task");
+        PERMANENT("Lasting change"), COMBAT("Short combat effect"), DISCOVERY("Discovery"), REWARD("Reward"), TASK("Task");
         public final String label;
         Kind(String label) { this.label = label; }
     }

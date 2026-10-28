@@ -102,7 +102,7 @@ public final class Directives {
         p.counters.merge("awaken:directive_offers", 1L, Long::sum);
         ProgressionNotices.tell(player, "directive/" + OPENING + "/accepted/" + today, "Directive accepted", def.text(),
                 "Your first gate will open somewhere outside the city walls.", dev.awaken.core.api.NoticeEvents.Kind.TASK,
-                "Clear the first floor of a gate, then follow your task card.", "Reward: " + RewardWords.describe(def.reward()));
+                "Clear the first floor of a gate, then follow your task card.", "Reward: " + RewardWords.describe(def.reward()) + ".");
         DirectorLog.log(player, "directive", "the Registry's own: " + OPENING + ", accepted");
         Progression.markDirty(player);
         return true;
@@ -116,10 +116,15 @@ public final class Directives {
         List<String> parts = new ArrayList<>();
         if (r.levels() > 0) parts.add(String.format("%.0f%% of a level", r.levels() * 100));
         if (r.statPoints() > 0) parts.add("+" + r.statPoints() + " point" + (r.statPoints() > 1 ? "s" : ""));
-        r.stat().ifPresent(s -> parts.add("+" + Math.max(1, r.statAmount()) + " " + s.name()));
+        r.stat().ifPresent(s -> parts.add("+" + Math.max(1, r.statAmount()) + " " + s.displayName));
         r.power().ifPresent(pw -> parts.add("a power"));
         r.item().ifPresent(i -> parts.add("an item"));
         return parts.isEmpty() ? "Recognition" : String.join(", ", parts);
+    }
+
+    /** How long is left, said plainly (the last day still counts: a directive expires the day after it). */
+    static String timeLeft(long days) {
+        return days <= 0 ? "Finish it today." : days == 1 ? "You have until tomorrow to finish it." : "You have " + days + " days to finish it.";
     }
 
     /** Signal answer: Y accepts (baseline starts now), N dismisses. */
@@ -140,8 +145,8 @@ public final class Directives {
                 def.condition().counters(cs);
                 p.directives.set(i, new Profile.DirectiveState(key, true, d.offeredDay(), d.expiresDay(), Progression.snapshot(p, cs)));
                 ProgressionNotices.tell(player, "directive/" + key + "/accepted/" + d.offeredDay(), "Directive accepted", def.text(),
-                        "This task is now active. Complete it before day " + d.expiresDay() + ".", dev.awaken.core.api.NoticeEvents.Kind.TASK,
-                        "Progress starts when you accept. See Journal for the current objective.", "Reward: " + RewardWords.describe(def.reward()));
+                        "It's on your task list. " + timeLeft(d.expiresDay() - PlayDays.current(player.level().getServer())), dev.awaken.core.api.NoticeEvents.Kind.TASK,
+                        "Only what you do from now on counts. Your Journal shows how far along you are.", "Reward: " + RewardWords.describe(def.reward()) + ".");
             }
             Progression.markDirty(player);
             return;
@@ -160,8 +165,8 @@ public final class Directives {
                 p.counters.merge(Counters.DIRECTIVES_KEPT_STREAK, 1L, Long::sum);
                 dev.awaken.core.audio.AudioCues.ui(player, dev.awaken.core.audio.UiSound.QUEST_DONE);
                 ProgressionNotices.tell(player, "directive/" + d.id() + "/" + p.counter("awaken:directive_done/" + d.id()),
-                        "Directive complete", def.text(), "You completed the directive and earned its reward.", dev.awaken.core.api.NoticeEvents.Kind.TASK,
-                        RewardWords.describe(def.reward()), "The directive has left your active task list.");
+                        "Directive complete", def.text(), "Done, and the reward is yours.", dev.awaken.core.api.NoticeEvents.Kind.TASK,
+                        "Reward: " + RewardWords.describe(def.reward()) + ".", "It's off your task list now.");
                 RewardHooks.apply(player, def.reward(), Progression.XpSource.DIRECTIVE);
                 Progression.evaluate(player, Counters.DIRECTIVES_KEPT_STREAK);
                 Progression.markDirty(player);

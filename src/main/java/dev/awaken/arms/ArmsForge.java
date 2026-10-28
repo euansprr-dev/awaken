@@ -214,9 +214,11 @@ public final class ArmsForge {
         level.playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 0.8F);
         Fx.at(level, FxKind.RING, Marks.look(f), p.position().add(0, 0.1, 0)).caster(p).scale(2.5).ticks(12).send();
         ArmsNotices.reward(p, "weapon/attuned/" + java.util.UUID.randomUUID(), "Weapon attuned", weapon,
-                "Its Marks now use " + forceName(f) + ". Weapon hits and matching powers can strengthen each other.",
-                List.of("A landed weapon hit makes your next power cost " + Math.round((1 - POWER_PRIME) * 100) + "% less energy for " + PRIME_TICKS / 20.0 + " seconds.",
-                        "Casting a " + forceName(f) + " power primes the next weapon blow for " + BLADE_PRIME + " times damage and that Force's touch, for " + PRIME_TICKS / 20.0 + " seconds."));
+                "Its Marks now carry " + forceName(f) + ", and it works together with your " + forceName(f) + " powers.",
+                List.of("Land a hit with it, and your next power within " + ArmsNotices.seconds(PRIME_TICKS / 20.0) + " costs "
+                                + Math.round((1 - POWER_PRIME) * 100) + "% less energy.",
+                        "Cast a " + forceName(f) + " power, and your next blow within " + ArmsNotices.seconds(PRIME_TICKS / 20.0) + " hits "
+                                + BLADE_PRIME + " times as hard, with " + forceName(f) + " on it."));
         return true;
     }
 

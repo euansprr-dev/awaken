@@ -40,7 +40,7 @@ public final class BountyTests {
                 s = Bounties.state(p);
                 h.assertTrue(s.taken.size() == 1 && s.offered.size() == 2, "one taken, two left");
                 h.assertTrue(p.getData(dev.awaken.signal.NoticeHistory.HISTORY).entries().stream().anyMatch(e ->
-                        e.event().id().startsWith("bounty/taken/" + id) && e.event().details().stream().anyMatch(line -> line.contains("Each completion pays once"))),
+                        e.event().id().startsWith("bounty/taken/" + id) && e.event().details().stream().anyMatch(line -> line.contains("only once each time"))),
                         "accepted bounty has durable authored instructions and payment conditions");
                 Bounties.board(p);
                 h.assertTrue(Bounties.state(p).offered.size() == 2, "no new notice the same play-day");

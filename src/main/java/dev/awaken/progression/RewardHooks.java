@@ -37,8 +37,13 @@ public final class RewardHooks {
         var details = RewardWords.grants(r);
         if (!details.isEmpty()) {
             long occurrence = p.counters.merge("awaken:notice_rewards", 1L, Long::sum);
+            String all = "You got " + RewardWords.and(details) + ".";
+            java.util.List<String> lines = new java.util.ArrayList<>();
+            for (String d : details) lines.add(RewardWords.sentence(d));
+            if (r.item().isPresent()) lines.add("If your inventory was full, it dropped at your feet.");
             dev.awaken.core.api.NoticeEvents.remember(player, new dev.awaken.core.api.NoticeEvents.Event("reward/" + occurrence,
-                    "Reward received", "Earned rewards", details.getFirst(), details, dev.awaken.core.api.NoticeEvents.Kind.REWARD, 0xE2B450));
+                    "Reward received", "Earned rewards", all.length() <= 320 ? all : RewardWords.sentence(details.getFirst()), lines,
+                    dev.awaken.core.api.NoticeEvents.Kind.REWARD, 0xE2B450));
         }
         Progression.markDirty(player);
     }

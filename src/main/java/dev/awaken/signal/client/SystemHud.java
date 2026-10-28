@@ -341,7 +341,7 @@ public final class SystemHud {
             detail = explanation.detail();
             colour = explanation.colour();
         } else if (out.merged()) {
-            title = out.items().size() + " new things · " + key(AwakenKeys.STATUS);
+            title = out.items().size() + " new things (press " + key(AwakenKeys.STATUS) + ")";
             List<String> names = new ArrayList<>();
             for (ToastItem t : out.items()) names.add(t.title());
             detail = String.join(" · ", names);
@@ -356,8 +356,9 @@ public final class SystemHud {
         long[] live = {ticks + Math.round(SignalToast.BASE_MS * mult / 50.0) + 40};
         LIVE_TOASTS.add(live);
         boolean saved = explanation != null;
-        String hint = saved ? (AwakenKeys.STATUS.isUnbound() ? "Details in Journal · bind Status in Controls" : "Details in Journal · " + key(AwakenKeys.STATUS)) : "";
-        if (saved && out.merged()) hint = "+" + (out.items().size() - 1) + " more · " + hint;
+        String more = saved && out.merged() ? "this and " + (out.items().size() - 1) + " more" : "more";
+        String hint = !saved ? "" : AwakenKeys.STATUS.isUnbound() ? "Set a Status key in Controls to read " + more + " in your Journal"
+                : "Press " + key(AwakenKeys.STATUS) + " to read " + more + " in your Journal";
         mc.gui.toastManager().addToast(new SignalToast(title, detail, colour, hint, () -> live[0] = 0));
     }
 
@@ -663,7 +664,7 @@ public final class SystemHud {
             ty += SignalLayout.LINE;
         }
         if (cut) {
-            String more = "+" + (lines.size() - show) + " more · " + key(AwakenKeys.STATUS);
+            String more = "Press " + key(AwakenKeys.STATUS) + " to see " + (lines.size() - show) + " more";
             HudLook.text(g, font, SignalText.ellipsize(more, tw, font::width), tx, ty, Glass.a(Glass.LABEL, alpha), false);
             ty += SignalLayout.LINE;
         }

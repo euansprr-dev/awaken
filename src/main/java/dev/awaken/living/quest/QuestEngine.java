@@ -89,7 +89,7 @@ public final class QuestEngine {
         if (s.tracked.isEmpty()) s.tracked = chain;
         save(p, s);
         dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("quest/" + chain + "/start", "Quest started",
-                d.title(), d.steps().getFirst().text(), java.util.List.of(d.summary(), "Track this quest in Journal to see its current step and destination."),
+                d.title(), d.steps().getFirst().text(), java.util.List.of(d.summary(), "Track it in your Journal to see the step you're on and where to go."),
                 dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x7FC3FF));
         begin(p, id, d.steps().getFirst());
         return true;
@@ -214,8 +214,8 @@ public final class QuestEngine {
             QuestDef.Step n = d.steps().get(next);
             begin(p, a.scene().orElse(0L), n);
             dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("quest/" + a.chain() + "/step/" + next,
-                    "Quest advanced", d.title(), n.text(), java.util.List.of("Completed: " + step.text(), "Next: " + n.text(),
-                    "The Journal task entry tracks the current objective."), dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x7FC3FF));
+                    "Quest advanced", d.title(), n.text(), java.util.List.of("Done: " + step.text(), "Your Journal shows the step you're on."),
+                    dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x7FC3FF));
         }
     }
 
@@ -226,7 +226,8 @@ public final class QuestEngine {
         s.done.add(chain);
         if (s.tracked.equals(chain)) s.tracked = s.active.isEmpty() ? "" : s.active.getFirst().chain();
         String claim = "awaken:claim/quest/" + chain + "/finish";
-        if (Progression.profile(p).counter(claim) == 0) {
+        boolean paid = Progression.profile(p).counter(claim) == 0;
+        if (paid) {
             Progression.setCounter(p, claim, 1);
             RewardHooks.apply(p, d.finish(), Progression.XpSource.WORLD);
             d.relic().ifPresent(relic -> giveRelic(p, s, chain, relic));
@@ -234,8 +235,9 @@ public final class QuestEngine {
         }
         Progression.count(p, "awaken:quests_done");
         dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("quest/" + chain + "/complete", "Quest complete",
-                d.title(), "The quest is complete; its earned rewards have been granted.",
-                java.util.List.of(d.summary(), "This completion is saved and its rewards cannot be claimed again."),
+                d.title(), paid ? "You finished it, and its reward is yours." : "You finished it again. It only pays the first time.",
+                paid && d.finish() != null ? java.util.List.of(d.summary(), "Reward: " + dev.awaken.progression.RewardWords.describe(d.finish()) + ".",
+                        "It's saved as done, so it only pays once.") : java.util.List.of(d.summary()),
                 dev.awaken.core.api.NoticeEvents.Kind.TASK, 0x7FC3FF));
     }
 

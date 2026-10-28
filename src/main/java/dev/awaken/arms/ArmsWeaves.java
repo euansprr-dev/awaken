@@ -231,27 +231,30 @@ public final class ArmsWeaves implements WeaveHooks.Weaver {
 
     private static NoticeEvents.Event explain(int opening, PowerType.Family family) {
         String condition = switch (opening) {
-            case DEFLECT -> "After a successful deflect";
-            case DODGE -> "After a perfect dodge";
-            case BREAK -> "After breaking an enemy's posture";
-            default -> "After a finisher in full rhythm";
+            case DEFLECT -> "Deflect a blow";
+            case DODGE -> "Dodge perfectly";
+            case BREAK -> "Break an enemy's posture";
+            default -> "Land a finisher in full rhythm";
         };
         String summary = switch (opening) {
-            case DEFLECT -> "Your cast adds a nearby elemental burst.";
-            case DODGE -> "Your dodge echo strikes nearby foes.";
-            case BREAK -> "Extra hit; enemy stays broken 1 s longer.";
-            default -> "Your next 3 weapon hits gain elemental damage.";
+            case DEFLECT -> "Your cast bursts out around you.";
+            case DODGE -> "An echo of you strikes the enemies nearby.";
+            case BREAK -> "An extra strike, and the enemy stays broken 1 second longer.";
+            default -> "Your next 3 weapon hits carry the power's element.";
         };
         String effect = switch (opening) {
-            case DEFLECT -> "The burst reaches 4 blocks and deals 1.2 times your attack damage, scaled by the cast's power level.";
-            case DODGE -> "The echo strikes after 0.3 seconds in a 3-block radius, using your attack damage scaled by the cast's power level.";
-            case BREAK -> "The extra strike requires the broken enemy to remain alive and less than 16 blocks away. It deals 1.6 times your attack damage, scaled by the cast's power level. On enemies with at least 150 health it is capped at 3% of their maximum health. The broken state lasts 1 second longer.";
-            default -> "For up to 5 seconds, the next three weapon hits add 40% of that hit's damage as the power's element, with a minimum of 1 damage.";
+            case DEFLECT -> "The burst hits everything within 4 blocks for 1.2 times your attack damage.";
+            case DODGE -> "The echo strikes 0.3 seconds later, hitting everything within 3 blocks for your attack damage.";
+            case BREAK -> "The strike hits for 1.6 times your attack damage, as long as the enemy is still alive and within 16 blocks. "
+                    + "Against anything with 150 health or more, it does at most 3% of its maximum health.";
+            default -> "For the next 5 seconds, each of those three hits adds 40% of its damage as the power's element, at least 1.";
         };
-        return new NoticeEvents.Event("weave/" + id(opening, family), "Combat weave", name(opening, family), summary,
-                List.of(condition + ", cast a " + family.label + " power within " + WINDOW / 20.0 + " seconds.",
-                        effect, "Attack-based weave damage is multiplied by 1 + 0.08 times the triggering power level.", "The triggering power costs " + Math.round((1 - COST) * 100) + "% less energy.",
-                        "This is a temporary weapon-and-power combo. It does not add a new equipped power. You can repeat it by meeting the same condition."),
+        List<String> details = new java.util.ArrayList<>(List.of(condition + ", then cast a " + family.label + " power within "
+                + WINDOW / 20.0 + " seconds.", effect));
+        if (opening != RHYTHM) details.add("It hits 8% harder for each level of the power you cast."); // weave(): 1 + 0.08 per level
+        details.add("The power you cast costs " + Math.round((1 - COST) * 100) + "% less energy.");
+        details.add("It's a combo, not a new power: do the same again to repeat it.");
+        return new NoticeEvents.Event("weave/" + id(opening, family), "Combat weave", name(opening, family), summary, details,
                 NoticeEvents.Kind.COMBAT, family.colour);
     }
 
