@@ -1,0 +1,43 @@
+{
+  "pools": [
+    {
+      "entries": [
+        {
+          "children": [
+            {
+              "condition": {
+                "terms": [
+                  "minecraft:tool/can_shear",
+                  "minecraft:tool/can_silk_touch"
+                ],
+                "type": "minecraft:any_of"
+              },
+              "name": "awaken:hawthorn_leaves",
+              "type": "minecraft:item"
+            },
+            {
+              "condition": {
+                "terms": [
+                  {
+                    "type": "minecraft:survives_explosion"
+                  },
+                  {
+                    "chance": 0.05,
+                    "type": "minecraft:random_chance"
+                  }
+                ],
+                "type": "minecraft:all_of"
+              },
+              "name": "minecraft:stick",
+              "type": "minecraft:item"
+            }
+          ],
+          "type": "minecraft:alternatives"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:blocks/hawthorn_leaves",
+  "type": "minecraft:block"
+}

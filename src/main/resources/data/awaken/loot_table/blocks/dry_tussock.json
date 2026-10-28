@@ -1,0 +1,29 @@
+{
+  "pools": [
+    {
+      "entries": [
+        {
+          "children": [
+            {
+              "condition": "minecraft:tool/can_shear",
+              "name": "awaken:dry_tussock",
+              "type": "minecraft:item"
+            },
+            {
+              "condition": {
+                "chance": 0.3,
+                "type": "minecraft:random_chance"
+              },
+              "name": "minecraft:stick",
+              "type": "minecraft:item"
+            }
+          ],
+          "type": "minecraft:alternatives"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:blocks/dry_tussock",
+  "type": "minecraft:block"
+}

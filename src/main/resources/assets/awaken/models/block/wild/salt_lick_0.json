@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "minecraft:block/calcite",
+    "side": "awaken:block/wild/salt_lick_side_0",
+    "top": "awaken:block/wild/salt_lick_top_0"
+  }
+}

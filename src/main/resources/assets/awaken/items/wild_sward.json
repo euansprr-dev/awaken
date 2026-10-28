@@ -1,0 +1,13 @@
+{
+  "model": {
+    "model": "awaken:block/wild/wild_sward_0",
+    "tints": [
+      {
+        "downfall": 1.0,
+        "temperature": 0.5,
+        "type": "minecraft:grass"
+      }
+    ],
+    "type": "minecraft:model"
+  }
+}

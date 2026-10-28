@@ -1,0 +1,6 @@
+{
+  "parent": "awaken:block/wild/bracket",
+  "textures": {
+    "f": "awaken:block/wild/bracket_fungus_1_overlay"
+  }
+}

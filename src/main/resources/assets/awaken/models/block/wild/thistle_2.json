@@ -1,0 +1,7 @@
+{
+  "parent": "awaken:block/wild/cross_overlay",
+  "textures": {
+    "cross": "awaken:block/wild/thistle_2",
+    "overlay": "awaken:block/wild/thistle_2_overlay"
+  }
+}

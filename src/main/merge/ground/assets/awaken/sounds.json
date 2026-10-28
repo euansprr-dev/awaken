@@ -1,0 +1,32 @@
+{
+  "wild_plants.swish": {
+    "subtitle": "subtitles.awaken.wild_plants.swish",
+    "sounds": [
+      {
+        "name": "awaken:wild_plants/swish1",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "awaken:wild_plants/swish2",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "awaken:wild_plants/swish3",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "awaken:wild_plants/swish4",
+        "attenuation_distance": 10
+      }
+    ]
+  },
+  "wild_plants.hiss": {
+    "subtitle": "subtitles.awaken.wild_plants.hiss",
+    "sounds": [
+      {
+        "name": "awaken:wild_plants/hiss",
+        "stream": true
+      }
+    ]
+  }
+}

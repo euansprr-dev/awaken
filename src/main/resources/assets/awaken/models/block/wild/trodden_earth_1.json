@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "minecraft:block/dirt",
+    "side": "awaken:block/wild/trodden_earth_side_1",
+    "top": "awaken:block/wild/trodden_earth_top_1"
+  }
+}

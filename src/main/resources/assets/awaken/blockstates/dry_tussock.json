@@ -1,0 +1,15 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/wild/dry_tussock_0"
+      },
+      {
+        "model": "awaken:block/wild/dry_tussock_1"
+      },
+      {
+        "model": "awaken:block/wild/dry_tussock_2"
+      }
+    ]
+  }
+}

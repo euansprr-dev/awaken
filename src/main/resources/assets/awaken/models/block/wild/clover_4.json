@@ -1,0 +1,77 @@
+{
+  "ambientocclusion": false,
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#leaves",
+          "tintindex": 0,
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ]
+        },
+        "up": {
+          "texture": "#leaves",
+          "tintindex": 0,
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ]
+        }
+      },
+      "from": [
+        8,
+        1,
+        0
+      ],
+      "to": [
+        16,
+        1,
+        8
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#heads",
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ]
+        },
+        "up": {
+          "texture": "#heads",
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ]
+        }
+      },
+      "from": [
+        8,
+        1.05,
+        0
+      ],
+      "to": [
+        16,
+        1.05,
+        8
+      ]
+    }
+  ],
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "heads": "awaken:block/wild/clover_0_overlay",
+    "leaves": "awaken:block/wild/clover_0",
+    "particle": "#leaves"
+  }
+}

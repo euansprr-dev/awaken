@@ -1,0 +1,30 @@
+{
+  "pools": [
+    {
+      "condition": {
+        "terms": [
+          {
+            "type": "minecraft:survives_explosion"
+          },
+          {
+            "blocks": "awaken:reeds",
+            "state": {
+              "half": "lower"
+            },
+            "type": "minecraft:match_block"
+          }
+        ],
+        "type": "minecraft:all_of"
+      },
+      "entries": [
+        {
+          "name": "awaken:reeds",
+          "type": "minecraft:item"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:blocks/reeds",
+  "type": "minecraft:block"
+}

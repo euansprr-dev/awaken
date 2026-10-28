@@ -427,6 +427,10 @@ of `AwakenConfig.Client`.
   afterBudget)` (a multiplier applied after the budget), `XpBudget.register(source, perTenMinutes)` (§21.3).
 - `dev.awaken.living.api.Regions` — the region map (§21.2): `levelAt`, `regionAt`, `creatureLevel`, `bandOf`.
 - `dev.awaken.living.api.Wildness` — how wild a place is, separate from danger (§41.1): `land`, `at`, `band`, `bandAt`, `addTamer`.
+- `dev.awaken.ground.api.WildPlants` — grass that lives (§41.2; server thread): `crop(ServerLevel, BlockPos)` (a herd grazes: long
+  grass or rye down to meadow height, growing back over days), `trample(ServerLevel, BlockPos, int strength)` (pressed flat
+  like a trail, 1 `LIGHT` / 2 `HERD` / 3 `STAMPEDE`, springing back over a day or two), `coverAt(Level, BlockPos)` (0..1, how
+  hidden someone crouching there is; either side). `pos` is the block a body stands in.
 - `dev.awaken.living.api.Quests` — the Wayfarer chains (§21.5): `advance(ServerPlayer, Identifier "awaken:<type>/<target>")`
   (owners report uses and discoveries a step may wait for: `awaken:use/ascent_zip`, `awaken:discover/<key>`; an
   `amount` overload), `talk(ServerPlayer, who)` (another module's person, e.g. "kestrel", "oren": call it first from your
@@ -9530,3 +9534,52 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
 - **Tests**: `wild_field` (the fade, tamed land stays tamed, smooth patches, most open land wild, the bands), `wild_record`
   (filled at the cells' centres, read by block, saved and synced intact), `wild_tamers` (over a roads' world for a seed: a
   settlement's ground and a town region's heart read Tamed, open land far from them Wild or Deep).
+
+### 41.2 The wild's plants (Stage 1a; module `ground`, package `dev.awaken.ground.wild`)
+- **Style sheet first** (decision 8): docs/wild-lands/style-sheet.html, https://claude.ai/artifact/KANBxUJdPhNYFyv3xgEEj1, sent to
+  Euan 2026-10-28 and **approved by him the same day** ("approved"); the sprites come from `tools/art/specs/wild_plants.py` (grey blades the biome tints, an overlay that keeps its
+  own colour laid on the same planes, the way vanilla lays a grass block's side overlay; two to four versions each, picked per block).
+- **API** `dev.awaken.ground.api.WildPlants` (fixed 2026-10-28, sent to the creatures builder): `crop(ServerLevel, BlockPos)`,
+  `trample(ServerLevel, BlockPos, int strength)` (1 `LIGHT`, 2 `HERD`, 3 `STAMPEDE`), `coverAt(Level, BlockPos)` 0..1. `pos` is
+  the block a body stands in (the plant there, or on the ground block passed).
+- **The blocks** (`WildBlocks`; every world has them, the worldgen that grows them is stage 1b):
+  - *Grasses.* `meadow_grass` (the pasture's short grass, four versions, bonemeal makes long grass; its states `regrow` none/long/rye
+    and `growth` 0..3 are a grazed lawn's memory), `frost_grass` (cold lands), `long_grass` (two high; looks green, seeding,
+    tawny by a slow patch noise and the wildness), `wild_rye` (three high: a still stems block under a swaying double plant
+    `wild_rye_top`, so the three never shear apart; gold, or glass in the glass steppe), `trampled_grass` (no item: what a trail
+    leaves; `axis`, `from` short/meadow/long/rye/tall, `stage` flat-fresh, flat-greening, half up), `clover` (a flower bed of
+    one to four patches).
+  - *Flowers and herbs.* `cow_parsley`, `foxglove` (two high; purple, a third white), `thistle`, `heather`, `gorse`,
+    `dry_tussock` (sand, terracotta and soils, as the game's dry grass).
+  - *Shrubs, ferns, water's edge.* `bramble` (the one plant that slows you: 0.7 sideways and 0.75 up, a little more than a berry bush slows
+    you; sprinting through it scratches for 1; foxes and bees pass free; flowers, then green, then ripe
+    blackberries on random ticks (1 in 6, light 9+), picked with a hand for 1-2 `blackberries`, food 2 / 0.2), `bracken`
+    (two high; turned tawny in patches), `reeds` (two high; pale in the mirror marsh), `hawthorn_leaves` (leaves with blossom,
+    for hedgerows).
+  - *Still things and ground.* `bracket_fungus` (on a log's side), `antler_shed` (a flat find), `wallow` (mud, 14 px high,
+    slows to 0.8), `salt_lick` (pickaxe), `trodden_earth` (dirt and path tags), `wild_sward` (a grass block that never spreads
+    itself: its random tick is the grass block's, so it spreads grass; hoes and shovels treat it as grass).
+- **Sway** comes by class from `terrain.PlantSway`: double plants sway as lower and upper halves, bushes rooted, clover as a
+  flower bed (gain 3), hawthorn as leaves; rye's stems and the ground blocks stand still.
+- **Drops** (vanilla's manner, 26.3's loot format): grasses give themselves to shears and otherwise wheat seeds now and then
+  (1 in 8; rye 1 in 4; bracken nothing); two-high plants drop from the lower half; flowers, fungus, antler, wallow and salt
+  lick drop themselves; clover by patches; hawthorn to shears or silk touch, else a stick 1 in 20; bramble to shears, else 0-2
+  sticks; sward and trodden earth give dirt unless silk touch; trampled grass and rye's upper blocks nothing.
+- **Grass that lives** (random ticks only, so only land near players changes; no state per tick): a grazed lawn steps through
+  four growth stages and grows back what it remembers (`LAWN_GROW` 0.076 a random tick: about three days at the default random
+  tick speed); a trail stands back up through its three stages (`TRAIL_RISE` 0.114: about a day and a half). Both grow back as
+  tall as the air above allows. A player sprinting or riding through long grass or rye presses it LIGHT 1 time in 4 a tick
+  (horizontal speed squared over 0.065), so a run leaves a faint trail.
+- **Cover** (`coverAt`): rye 1.0, long grass and bracken 0.85, reeds 0.8, gorse and bramble 0.6, cow parsley and foxglove 0.4,
+  meadow grass 0.3, heather and frost grass 0.25, thistle 0.2, tussock 0.1; vanilla tall grass and large fern 0.7, bush and berry
+  bush 0.5, short grass and fern 0.15. A body's own value is the larger of its feet's block and 0.9 of the block above;
+  the answer is 0.75 of that and 0.25 of the four beside it (a swathe's edge hides less than its middle).
+- **Client** (`ground.client.WildPlantsClient`): the grass colour with the lawn's drift on every grassy plant and the sward,
+  the foliage colour on hawthorn; seed fluff (`awaken:wild_seed`) lifts off seeding long grass and rye when a gust passes
+  (0.06 x gust odds per ambient visit, gust over 0.35) and rides the wind; `wild_plants.swish` (four one-shots, -32 dBFS) as
+  you push through tall plants, a stride apart; `wild_plants.hiss` (a 12 s stereo loop, -30 dBFS) eased to the wind's
+  strength times how much long grass and rye the ambient pass finds around you. Sounds from
+  `tools/art/specs/audio_wild_plants.py`; content from `tools/content/wild_plants_content.py`.
+- **Not in stage 1a** (follow-ups): the seamless wrap for the sward's sides; a game rule to turn living grass off; wallows, salt
+  licks and sheds placed in the world (stage 3).
+- **Tests** `wild_plants_blocks`, `_crop`, `_trample`, `_cover`.
