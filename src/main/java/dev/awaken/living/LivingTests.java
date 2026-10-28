@@ -34,6 +34,20 @@ final class LivingTests {
         dev.awaken.living.population.LedgerTests.register();
         dev.awaken.living.camp.CampTests.register();
         dev.awaken.living.craft.CraftTests.register();
+        // the Boss Plate's payloads carry a bar's binding and its lines intact (SPEC §35.1)
+        AwakenTests.register("boss_plate_bind", 20, h -> {
+            java.util.UUID bar = java.util.UUID.randomUUID();
+            var buf = io.netty.buffer.Unpooled.buffer();
+            LivingNet.BossBind bind = new LivingNet.BossBind(bar, 42, dev.awaken.core.api.BossPlates.Kind.WARDEN.ordinal(), List.of(0.66F, 0.33F), 0xFF7A1E);
+            LivingNet.BossBind.STREAM_CODEC.encode(buf, bind);
+            h.assertTrue(LivingNet.BossBind.STREAM_CODEC.decode(buf).equals(bind), "a bind survives the wire");
+            LivingNet.BossLine line = new LivingNet.BossLine(bar, "Countdown: three.", dev.awaken.core.api.BossPlates.Line.PHASE.ordinal(), 0x4AA8FF);
+            LivingNet.BossLine.STREAM_CODEC.encode(buf, line);
+            h.assertTrue(LivingNet.BossLine.STREAM_CODEC.decode(buf).equals(line), "and so does a line");
+            buf.release();
+            h.succeed();
+        });
+
         // SPEC §27.6: registration starts Bram's errand (his letters for Ilse), tracked and on the Now line over bookkeeping; the Registry's
         // Directive is the first floor, already taken on, with its progress on the line; no gate forms before level 3
         // the Now line's order (SPEC §27.6): a tracked chain's step, then a taken Directive, then points, then the road
@@ -506,15 +520,11 @@ final class LivingTests {
             h.assertTrue(dev.awaken.living.combat.Forms.family(biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS).value()) == dev.awaken.living.combat.Forms.FROST
                     && dev.awaken.living.combat.Forms.family(biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.DESERT).value()) == dev.awaken.living.combat.Forms.SUN
                     && dev.awaken.living.combat.Forms.family(biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.PLAINS).value()) == dev.awaken.living.combat.Forms.GREEN, "the family follows the climate");
-            // every species the client dresses has its kit data (kit.json is read by the client; here, that the file lists each layout and rung)
-            try (var in = LivingTests.class.getResourceAsStream("/assets/awaken/forms/kit.json")) {
-                var root = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject().getAsJsonObject("layouts");
-                for (var sp : dev.awaken.living.combat.Forms.Species.values()) {
-                    h.assertTrue(root.has(sp.layout), "kit.json has the layout " + sp.layout);
-                    for (int r = 1; r <= 5; r++) h.assertTrue(root.getAsJsonObject(sp.layout).getAsJsonObject("ranks").has(String.valueOf(r)), sp.layout + " has rung " + r);
-                }
-            } catch (java.io.IOException | RuntimeException e) {
-                h.fail("kit.json: " + e);
+            // every species the client dresses has the forms' eyes for its vanilla body (D, and LITE): the sockets and each rung's light
+            for (var sp : dev.awaken.living.combat.Forms.Species.values()) {
+                h.assertTrue(LivingTests.class.getResource("/assets/awaken/textures/entity/forms/" + sp.layout + "/o1.png") != null, sp.layout + " has its sockets");
+                for (int r = 1; r <= 5; r++)
+                    h.assertTrue(LivingTests.class.getResource("/assets/awaken/textures/entity/forms/" + sp.layout + "/g" + r + ".png") != null, sp.layout + " has rung " + r + "'s eyes");
             }
             h.succeed();
         });
@@ -569,6 +579,64 @@ final class LivingTests {
             h.assertTrue(!dev.awaken.living.combat.MarkEvents.shouldRise(rev, 1000F) && dev.awaken.living.combat.MarkEvents.finishing(rev) <= 900F, "a thousand finishes a revenant, however tough");
             // voices drop with the rung
             h.assertTrue(dev.awaken.living.combat.MarkEvents.pitch(0) == 1F && Math.abs(dev.awaken.living.combat.MarkEvents.pitch(5) - 0.6F) < 1e-6, "S speaks two fifths lower");
+            h.succeed();
+        });
+
+        AwakenTests.register("forms_bodies", 20, h -> {
+            // every species has a body at every rung from C to S: a clean rig within the bone budget, the clips the game asks for (its
+            // moves at that rung, the crowned's move below, an alpha's roar, the creeper's cues), and its paint in all three families
+            for (var sp : dev.awaken.living.combat.Forms.Species.values()) {
+                for (int r = dev.awaken.living.forms.FormRigs.FIRST; r <= dev.awaken.living.forms.FormRigs.LAST; r++) {
+                    var rig = dev.awaken.living.forms.FormRigs.get(sp, r);
+                    h.assertTrue(rig != null, sp.id + " has a body at rung " + r);
+                    h.assertTrue(rig.problems().isEmpty(), rig.id + ": " + rig.problems());
+                    h.assertTrue(rig.bones.size() <= 60, rig.id + " keeps to 60 bones: " + rig.bones.size());
+                    for (String need : java.util.List.of("idle", "walk", "run", "angry", "bite", "hurt", "death", "roar"))
+                        h.assertTrue(rig.clips.containsKey(need), rig.id + " has " + need);
+                    for (var d : dev.awaken.living.combat.Moves.of(sp, r, true)) {
+                        String clip = d.kind().name().toLowerCase(java.util.Locale.ROOT);
+                        h.assertTrue(rig.clips.containsKey(clip) || rig.clips.containsKey(clip + "_windup") && rig.clips.containsKey(clip + "_strike"),
+                                rig.id + " acts out " + d.name());
+                    }
+                    if (sp.layout.equals("creeper"))
+                        h.assertTrue(rig.clips.containsKey(new String[]{"sidestep", "seed", "ignite", "pull"}[r - 2]), rig.id + " acts out its cue");
+                    String base = "/assets/awaken/textures/entity/forms/body/" + rig.id + "_" + sp.id;
+                    for (int f = 0; f < 3; f++) {
+                        h.assertTrue(LivingTests.class.getResource(base + "_" + f + ".png") != null, base + " family " + f + " is painted");
+                        if (sp.layout.equals("sheep")) h.assertTrue(LivingTests.class.getResource(base + "_" + f + "_wool.png") != null, base + " has its wool");
+                        if (sp.layout.equals("pig")) h.assertTrue(LivingTests.class.getResource(base + "_" + f + "_saddle.png") != null, base + " has its saddle");
+                    }
+                    h.assertTrue(LivingTests.class.getResource(base + "_glow.png") != null, base + " has its light");
+                }
+            }
+            h.succeed();
+        });
+
+        AwakenTests.register("forms_size", 100, h -> {
+            // animals and spiders truly grow; the walkers stay under two blocks; a creature that loses its form goes back to its size
+            var pig = h.spawn(net.minecraft.world.entity.EntityTypes.PIG, 1, 2, 1);
+            float w0 = pig.getBbWidth();
+            pig.setData(dev.awaken.living.LivingContent.FORM.get(), new dev.awaken.living.combat.Forms.Form(5, 0, 0));
+            dev.awaken.living.combat.FormShape.refresh(pig);
+            h.assertTrue(Math.abs(pig.getBbWidth() - w0 * dev.awaken.living.combat.FormShape.widthFactor("pig", 5)) < 1e-3 && pig.getBbWidth() > w0 * 1.5F, "an S boar is wider: " + pig.getBbWidth());
+            pig.setData(dev.awaken.living.LivingContent.FORM.get(), new dev.awaken.living.combat.Forms.Form(0, 0, 0));
+            dev.awaken.living.combat.FormShape.refresh(pig);
+            h.assertTrue(Math.abs(pig.getBbWidth() - w0) < 1e-3, "and back to a pig's size without its form");
+            for (String walker : new String[]{"zombie", "skeleton"})
+                for (int r = 2; r <= 5; r++)
+                    h.assertTrue(dev.awaken.living.combat.FormShape.height(walker, r) < 2.0F, walker + " stays under two blocks at rung " + r);
+            h.succeed();
+        });
+
+        AwakenTests.register("forms_cue", 20, h -> {
+            // the cue a body acts a move out from round-trips (late joiners place the phase from its start tick)
+            var cue = new LivingNet.FormCue(42, "lunge", 123_456L, 20, 18);
+            var buf = io.netty.buffer.Unpooled.buffer();
+            LivingNet.FormCue.STREAM_CODEC.encode(buf, cue);
+            h.assertTrue(LivingNet.FormCue.STREAM_CODEC.decode(buf).equals(cue), "the cue round-trips");
+            // the two-hit from B: the second blow waits out the hurt cooldown and is never more than a normal blow
+            h.assertTrue(dev.awaken.living.combat.Combos.SECOND_AFTER >= 10, "the second blow comes after the hurt cooldown");
+            for (int r = 3; r <= 5; r++) h.assertTrue(dev.awaken.living.combat.Combos.secondPower(r) <= 0.7F, "the second blow keeps to the cap at " + r);
             h.succeed();
         });
 

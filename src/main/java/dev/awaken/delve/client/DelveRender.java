@@ -76,7 +76,15 @@ final class DelveRender {
             .withLocation(Awaken.id("pipeline/delve_lamp_lit"))
             .build();
 
-    private static RenderType glowType, litType;
+    /** The glow drawn through everything (the pick's Echo and Glass sights: ore and caves seen through the rock). */
+    static final RenderPipeline THROUGH = RenderPipeline.builder(GLOW_SNIPPET)
+            .withLocation(Awaken.id("pipeline/delve_through"))
+            .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
+            .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
+            .build();
+
+    private static RenderType glowType, litType, throughType;
+    private static int throughOk = -1;
     private static int glowOk = -1;
     static int litOk = -1;
 
@@ -84,6 +92,7 @@ final class DelveRender {
         e.registerOptionalPipeline(GLOW);
         e.registerOitPipelineSet(GLOW_OIT);
         e.registerOptionalPipeline(LIT);
+        e.registerOptionalPipeline(THROUGH);
     }
 
     private static boolean compiled(RenderPipeline p) {
@@ -99,6 +108,14 @@ final class DelveRender {
         if (glowOk == 0) return RenderTypes.lightning();
         if (glowType == null) glowType = RenderType.create("awaken_delve_lamp", RenderSetup.builder(GLOW).setOitPipelines(GLOW_OIT).createRenderSetup());
         return glowType;
+    }
+
+    /** The through-the-rock glow, or null when its pipeline didn't compile (then nothing shows through). */
+    static RenderType through() {
+        if (throughOk < 0) throughOk = compiled(THROUGH) ? 1 : 0;
+        if (throughOk == 0) return null;
+        if (throughType == null) throughType = RenderType.create("awaken_delve_through", RenderSetup.builder(THROUGH).createRenderSetup());
+        return throughType;
     }
 
     /** The lit-rock pass, or null when its pipeline didn't compile. */
@@ -302,6 +319,16 @@ final class DelveRender {
             vc.addVertex(x + bx, y + by, z + bz).setColor(outer);
             vc.addVertex(x, y, z).setColor(inner);
         }
+    }
+
+    /** A box's six faces in one colour (camera-relative corners). */
+    static void box(VertexConsumer vc, float x0, float y0, float z0, float x1, float y1, float z1, int c) {
+        vc.addVertex(x0, y0, z0).setColor(c); vc.addVertex(x1, y0, z0).setColor(c); vc.addVertex(x1, y0, z1).setColor(c); vc.addVertex(x0, y0, z1).setColor(c);
+        vc.addVertex(x0, y1, z0).setColor(c); vc.addVertex(x0, y1, z1).setColor(c); vc.addVertex(x1, y1, z1).setColor(c); vc.addVertex(x1, y1, z0).setColor(c);
+        vc.addVertex(x0, y0, z0).setColor(c); vc.addVertex(x0, y1, z0).setColor(c); vc.addVertex(x1, y1, z0).setColor(c); vc.addVertex(x1, y0, z0).setColor(c);
+        vc.addVertex(x0, y0, z1).setColor(c); vc.addVertex(x1, y0, z1).setColor(c); vc.addVertex(x1, y1, z1).setColor(c); vc.addVertex(x0, y1, z1).setColor(c);
+        vc.addVertex(x0, y0, z0).setColor(c); vc.addVertex(x0, y0, z1).setColor(c); vc.addVertex(x0, y1, z1).setColor(c); vc.addVertex(x0, y1, z0).setColor(c);
+        vc.addVertex(x1, y0, z0).setColor(c); vc.addVertex(x1, y1, z0).setColor(c); vc.addVertex(x1, y1, z1).setColor(c); vc.addVertex(x1, y0, z1).setColor(c);
     }
 
     /** Additive colour: rgb (0xRRGGBB) at strength {@code a} (the lightning blend weighs the colour by alpha). */

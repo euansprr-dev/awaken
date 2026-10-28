@@ -17,6 +17,15 @@ final class CaveNames {
     private static final String[] GROTTOS = {"The Hidden Pool", "Behind the Fall", "Lantern Grotto", "The Quiet Water", "Glasswater",
             "The Hush Pool"};
 
+    private static final String[] MOUTHS = {"The Cold Mouth", "The Breathing Hill", "The Dark Arch", "The Root Door", "The Hollow Lip",
+            "The Low Gate"};
+    private static final String[] ADITS = {"The Old Adit", "The Delvers' Drift", "The Timbered Way", "The Ore Door", "The Seam Road",
+            "The Iron Cut"};
+    private static final String[] DOLINES = {"The Fallen Floor", "The Round Hole", "The Sunken Ring", "The Well of Roots", "The Open Throat",
+            "The Drop"};
+    private static final String[] CLEFTS = {"The Narrow Way", "The Split Rock", "The Slot", "The Crack in the Hill", "The Tight Gorge",
+            "The Cut"};
+
     static String name(Spec s) {
         if (s.kind() == CaveKind.SINKHOLE && s.p(Sinkhole.FIRST) != 0) return "The Opening";
         String[] pool = switch (s.kind()) {
@@ -25,6 +34,12 @@ final class CaveNames {
             case SEEP -> SEEPS;
             case CHUTE -> CHUTES;
             case GROTTO -> GROTTOS;
+            case MOUTH -> switch (s.p(Mouth.FORM)) {
+                case Mouth.ADIT -> ADITS;
+                case Mouth.DOLINE -> DOLINES;
+                case Mouth.CLEFT -> CLEFTS;
+                default -> MOUTHS;
+            };
         };
         return pool[(int) Math.floorMod(Carve.hash(s.seed(), 7, 7, 7), (long) pool.length)];
     }

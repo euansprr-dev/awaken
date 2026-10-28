@@ -1,8 +1,8 @@
-# The forms (SPEC 21.11): a species at every rung in a row, rung 0 (vanilla) to 5, 7 blocks ahead on a flat floor, from the front and from
+# The forms (SPEC 21.11, 21.13: from C each rung is a body of its own): a species at every rung in a row, rung 0 (vanilla) to 5, 7 blocks ahead on a flat floor, from the front and from
 # three quarters; the top rung close from the front and three quarters (pig, cow, zombie, skeleton); then the same pig and zombie in the three
 # families (green, sun, frost) and at night for the glow. `cmd awaken living formrow <species> [family]` stands them still, facing you; undead
 # are shot in a thunderstorm (the sky is dark enough that they do not burn). Look for: each rung visibly more dangerous than the last; every piece attached to the body where it
-# belongs and none over a face (tools/art/forms_geom.py checks this when the art is built); the glow at the eyes and in the veins.
+# belongs and none over a face (check_rig in tools/art/specs/forms_bodies.py checks this when the art is built); the glow at the eyes and in the veins.
 # Run on CI: tools/tour-ci.sh tools/autopilot/forms-parade.txt 1700
 world autopilot_forms creative 20261027
 waitworld

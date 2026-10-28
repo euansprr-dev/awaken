@@ -100,6 +100,8 @@ public final class FaunaRules {
             if (h.ground() == Habitat.Ground.CAVE) {
                 // P3: the Hollows live under a roof, never on the surface
                 if (surface || la.canSeeSky(pos)) return "not in a cave";
+                // the deep's bands (SPEC §34.5): each Hollows kind keeps to its depths
+                if (!dev.awaken.delve.api.Bands.allows(d.id, pos.getY())) return "not at its depth";
             } else if (!surface && !h.caves()) {
                 return "under a roof (surface creature)";
             }

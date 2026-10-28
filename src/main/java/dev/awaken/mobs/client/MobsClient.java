@@ -7,6 +7,7 @@ public final class MobsClient {
     private MobsClient() {}
 
     public static void init(IEventBus modBus) {
+        dev.awaken.mobs.client.kit.KitConfig.register();
         modBus.addListener(AwRenderers::layers);
         modBus.addListener(AwRenderers::renderers);
         modBus.addListener(RitualRenderers::renderers);

@@ -152,6 +152,7 @@ public final class Forms {
             marks |= CROWN;
         }
         mob.setData(LivingContent.FORM.get(), new Form(rung, family(level.getBiome(mob.blockPosition()).value()), marks));
+        if (rung >= 2) FormShape.refresh(mob);
     }
 
     /** The names of the five forms of each layout (SPEC §21.11), D to S (what a first sight is called). */
@@ -183,6 +184,7 @@ public final class Forms {
         mob.setPersistenceRequired();
         level.addFreshEntity(mob);
         mob.setData(LivingContent.FORM.get(), new Form(rung, family, 0));
+        FormShape.refresh(mob);
         return mob;
     }
 

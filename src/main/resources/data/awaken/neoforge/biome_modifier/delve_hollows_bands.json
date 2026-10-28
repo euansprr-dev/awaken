@@ -1,0 +1,27 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": {
+    "type": "neoforge:and",
+    "values": [
+      "#minecraft:is_overworld",
+      { "type": "neoforge:not", "value": "#c:is_underground" }
+    ]
+  },
+  "spawners": [
+    {
+      "type": "awaken:drip_lurker",
+      "weight": 10,
+      "count": { "type": "minecraft:uniform", "min_inclusive": 1, "max_inclusive": 1 }
+    },
+    {
+      "type": "awaken:chime_cricket",
+      "weight": 12,
+      "count": { "type": "minecraft:uniform", "min_inclusive": 1, "max_inclusive": 2 }
+    },
+    {
+      "type": "awaken:hushling",
+      "weight": 8,
+      "count": { "type": "minecraft:uniform", "min_inclusive": 1, "max_inclusive": 1 }
+    }
+  ]
+}

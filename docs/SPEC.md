@@ -1993,6 +1993,12 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   its planting height, and none is planted inside `CityBasin.reserved` (2026-10-26, Euan's play: trees hung over the
   basin's edge). Test `farsight_trees_basin`. A tree patch's view-culling box reaches the tallest far tree (72 over its highest ground;
   at 40, a patch whose ground sat just below the frame dropped its treetops: far trees flickered with the camera's pitch).
+  A crown's width and base grow from the tree's height by shape, as the real trees do (`FarTrees.crownWidth`,
+  `crownBase`; the base rides in the tree's fourth int): broadleaf 1.2 + 0.55 × height wide, a cap min(0.62 × height,
+  2.5 + 0.22 × height) deep on top, on a trunk 2 wide past 12 tall; conifer 2.5 + 0.25 × height; jungle 3 + 0.3 ×
+  height; acacia 7 (2026-10-28, Euan: "some trees look very long", build ea94466a: one width a shape, 5 for every
+  broadleaf with its crown from 38% of its height, drew the lumen forest's trees, 16 tall with a crown 6 deep and 11
+  wide on a 2-block trunk in his save, as columns 5 wide and 10 deep; the elderwood's alike). Test `farsight_trees_crowns`.
 - **Air** (`farsight_air.glsl`): aerial perspective from an exponential atmosphere at real scale (1e-4 per block at sea
   level, ×4 in rain; scale height 1500), toward the sun tinted by the sunlight; valley cloud, a patchy slab 40-86 above
   sea level lying among the mountains (a sea of it at dawn, dusk and in rain), sunlit on top, over far ground only; the
@@ -4562,6 +4568,7 @@ Continues §21.10's numbering (16-31). The long form is PLAN-2.md; this is what 
 18. **One kit on the vanilla bodies, no mixin.** `living.client.FormLayers` adds a layer to each species' renderer: a skin overlay (the parent model drawn again with `textures/entity/forms/<layout>/o<rung>_<family>.png`), the kit (a second model of the vanilla class whose own cubes were cleared and replaced by the
     kit's pieces, `assets/awaken/forms/kit.json`, drawn with `k<rung>_<family>.png`), and an emissive glow (`g<rung>.png`, a white mask tinted by the rank's colour: D gold, C orange, B red, A violet, S indigo, the Atlas's). The biome family (green, sun, frost; from the biome's base temperature) sets the material.
     Client setting `forms` (awaken-living-client.toml): FULL, LITE (no kit) or OFF. The plate chip stays relative to the viewer; the glow is absolute rank.
+    **Superseded 2026-10-28 by §21.13** (form bodies from C; the kit, `kit.json`, the overlays and `forms_geom.py` are retired; D keeps the vanilla body with the forms' eyes).
 19. **Moves (Build 2):** one telegraphed move per rung (a second on alphas from C), tells 1.2 s (D) down to 0.7 s (S), damage at most 1.3 times a normal blow, delivered with `Strikes.deliver` naming its class.
 20. **Voices (Build 2):** `PlayLevelSoundEvent.AtEntity` lowers the pitch and layers a growl by rung; each move has a tell sound.
 21. **First sight** of a form is a discovery (a tenth of a level, `form/<species>/<rung>`), an Almanac line, no toast stack.
@@ -4677,6 +4684,74 @@ Numbers below were measured on a script copy of the field (two seeds, 32 km acro
    150 to 0.42 × pitch from the heart; was three); one wonder per region as before.
 - `RegionMap.levelAt` in the wide world costs about the same as before (25 hearts' cached levels, nine province hearts, a few noise samples). Test
   `living_region_wide`; `living_region_map` pins rules 2.
+
+### 21.13 Forms, rebuilt (plan docs/forms/PLAN.md; Euan 2026-10-28: the levelled forms "look rushed"; approved all five decisions: real form bodies, animals and spiders grow while walkers stay under two blocks and gain bulk, the land's crystal in the rank's colour at A and S, two-hit attacks from B with the alpha's roar and the creeper's moves, F0-F3 straight through; "animations on par with Fresh Animations' zombie")
+Replaces §21.11 decision 18's kit. Built 2026-10-28 by one builder, no sub-agents.
+1. **A body of its own from C.** A formed creature at rung 2-5 (C-S) is drawn as a hero rig of ours instead of the vanilla body:
+   `RenderLivingEvent.Pre` is cancelled and `living.client.forms.FormRenderer` (a `MobRenderer` over `HeroRenderState`, one per rig, built in
+   `EntityRenderersEvent.AddLayers`) submits the body at the same place. A render state modifier on `MobRenderer` fills a per-entity `FormBody`
+   (weak map, reused, no per-frame allocation) after vanilla's extract, so name tag, fire, outline, shadow and the vanilla state the layers need
+   stay vanilla's. No mixin. D (rung 1), a baby, setting LITE, and a rig that failed to build keep the vanilla body with the forms' eyes
+   (`FormLayers`, `textures/entity/forms/<layout>/o1, g<rung>`); OFF is vanilla. A failure to pose is logged once and that creature falls back.
+2. **Rigs.** `living.forms.FormRigs`: `form_<body>_<rung>` for the eight bodies (zombie, skeleton, spider, creeper, pig, cow, sheep, chicken) at
+   rungs 2-5, 32 rigs, generated data (`FormData`, from `tools/art/specs/forms_bodies.py` with `_forms_hostiles.py` and `_forms_animals.py`;
+   build `python3 tools/art/build_all.py forms_bodies`). Husk, stray, cave spider and mooshroom wear their family's rig with their own paint (a
+   cave spider at 0.7); the biome family (green, sun, frost) is a paint per species. Textures: `textures/entity/forms/body/<rig>_<species>_<family>`
+   (+ `_shut` for the blink, `_glow` emissive) and the coats; about 1.7 MB in all. Every rig passes `check_rig` at build time (every cube attached
+   to its bone's chain, nothing floating, nothing over the face's eye band, whole pixels, in reach). `HeroModel` gained an overload
+   `HeroModel(ModelPart, HeroRig, LifeProfile)`; its graph is unchanged (the boss plan's).
+3. **Ladders.** Zombie → ghoul (hunch, open jaw, long clawed forearms, ribs; A knuckle-walk, S crystal crown and grave cape). Skeleton → bone knight
+   (ribcage of bars, a heart light from B, jaw, horns, pauldrons, greaves, tasset; S bone cloak). Spider → brood stalker (coxa-leg-shin legs
+   solved to the ground, fangs, lit sac, plates, bladed legs, an eye crown at S). Creeper → bloom (a sepal ring and petals round the head, the
+   front left clear; veins glow from B; the petals flare to 78° as it swells; S crown petals). Pig → boar (hump, spines, plates, tusks).
+   Cow → aurochs (hump, lyre horns as their own bones, boss plate; mooshroom's mushrooms painted only for it). Sheep → ram (curling horns, wool
+   on gear bones). Chicken → fighting cock (upright, spurs, crest, sickle tail). Posture and mass tell rank before colour.
+4. **The gear-bone rule.** Core bones (`head`, `torso`, `arm_r/l`, `leg_r/l`) hold only their core cubes; growth hangs on child bones named
+   `gear*` at the parent's pivot. `FormGear` sizes vanilla's armour meshes to the union of each core bone's cubes (only the torso stretches
+   tall; a skeleton's limbs measure against 2-pixel bones) and poses them from the body's composed bones; held items stand at `hand_r/l`.
+   Life roles come from bone names (head, jaw, torso, arm, leg; skirt, cape, chain dangle), so gear names avoid those tokens.
+5. **Clips** (per rig, additive, the life layer on top): idle, walk, run, angry, bite (the melee swing), hurt, death (each body's own fall:
+   a skeleton crumples and its skull rolls, a spider rolls onto its back, animals fall on their side), roar, and per move `<kind>_windup` and
+   `<kind>_strike` (or one `once` clip). A blade skeleton stands in `angry_melee`; a bow skeleton aims with `angry`. Chicken has `air`.
+   The walk is driven by ground distance so a cycle covers its stride; the zombie keeps Fresh Animations' rhythm (arm sway, head bob) with
+   our own variation, and every other body follows the same weight.
+6. **Cue.** `LivingNet.FormCue(entity, move, startTick, holdTicks, windupTicks)` to trackers when a move winds up (`MarkGoal`), an empty move
+   when it is cut short, and for the creeper's moves (`Combos`). The client stretches the wind-up to the move's real length, then plays the strike;
+   a late joiner computes the phase from `startTick`. A lost cue loses only the acting: the ground tell and sound still warn. D sends none.
+7. **Eyes.** Lit in the rank's colour (D gold, C orange, B red, A violet, S indigo), set in modelled sockets; they close with the blink, flare in
+   a wind-up and go out over the fall. A soft additive halo round each (`textures/entity/forms/halo.png`, `RenderTypes.eyes`): faint by day,
+   strong at night, swelling in a wind-up, within 48 blocks.
+8. **True size** (`living.combat.FormShape`, `EntityEvent.Size`, both sides from the synced form, `refreshDimensions` when set or loaded): width,
+   height in blocks for C, B, A, S: pig 1.0/1.0, 1.2/1.15, 1.4/1.35, 1.6/1.5; cow 1.1/1.55, 1.3/1.75, 1.5/1.95, 1.7/2.15; sheep 1.0/1.4,
+   1.15/1.55, 1.3/1.7, 1.45/1.85; chicken 0.5/0.85, 0.6/1.0, 0.75/1.25, 0.9/1.5; spider 1.6/1.0, 1.9/1.1, 2.2/1.25, 2.5/1.4; creeper 0.65/1.8,
+   0.7/1.95, 0.8/2.1, 0.9/2.3; zombie 0.7/1.95, 0.8/1.9, 0.9/1.85, 0.9/1.98; skeleton 0.65, 0.7, 0.8, 0.85 wide at 1.99. Applied as factors over
+   vanilla, so the elite scale attribute and eye height carry over. Walkers stay under two blocks (doors).
+9. **Two blows from B** (`Combos`): a formed creature's melee hit (B, A, S; never a creeper) is followed `SECOND_AFTER` = 10 ticks later (the
+   target's hurt cooldown) by a second blow of 0.5/0.6/0.7 times its attack (never more than a normal blow), a LIGHT strike through
+   `Strikes.deliver`, only if the target is still in reach and sight: stepping back is the answer. One follow-up at a time per creature.
+10. **The alpha's roar.** A crowned creature (mark bit 1) from C roars once, the first time it turns on someone in sight within 16 blocks
+    (`MarkGoal.ALPHA`: a 16-tick wind-up, no blow), and its kin nearby take up the hunt.
+11. **The creeper's moves** (§21.11's "not built" closed): at the start of a swell, at most once each 8 s: C a sidestep hop (so a lined-up shot
+    misses), B a seed left where it stood that bursts 1.5 s later (power 1.6, no block damage), A lights the fuses of up to two creepers within
+    6 blocks of you (each takes its own full swell), S drags you toward it while it swells (within 7 blocks). The explosion stays vanilla's.
+12. **Tells by class, not rank.** A tell's dust says what to do: LIGHT white, HEAVY amber, PERILOUS red, GRAB violet; a move that is no blow
+    keeps the rank's colour (`Moves.tellColour`).
+13. **Coats.** A sheep's wool (dyed colour, gone when sheared) and a pig's saddle are drawn as a coat layer over the body
+    (`forms/body/<rig>_<species>_<family>_wool|saddle`, tinted by the wool colour); the base skin leaves those cubes clear.
+15. **A gradual change** (Euan 2026-10-28, after the first renders: "from one level to the next it looks like a completely different
+    animal"; keep the bodies, slow the texture change). Each paint runs from the vanilla creature's own colours (our palettes, read off the
+    vanilla look) to the form's by `DRIFT` = C 0.18, B 0.42, A 0.7, S 1.0 (`forms_bodies.toward`): a C pig is still pink, a C creeper bright
+    green, a C zombie still wears the cyan shirt, a C sheep a pale face, a C chicken is white. Rot, cracks, bristle and curls grow with it,
+    a spider's chevron fades in, a cock's hackles and sickles colour a rank at a time and its wing bows two ranks later; a mooshroom keeps its
+    pale patches. The shapes are unchanged.
+14. **Perf.** Per entity one `FormBody`, created on first sight, reused; no allocation per frame; halos past 48 blocks skipped; the life layer's
+    springs past 32 as elsewhere. Rigs: at most 60 bones (tested). Server: one cue per move, one dimension refresh per form change.
+- Not yet (F3 follow-ups): presence motes at A and S and heavy footfalls, distance LOD for sub-pixel growth, a voice layer per family
+  (`audio_living.py`), the wind-up light trail at S, a gallery command. The vanilla cow and pig variants (warm, cold) are not read: the form's
+  own family paints them.
+- Dev: `/awaken living form <species> <rung> [family]`, `/awaken living formrow <species> [family]`; tour `tools/autopilot/forms-parade.txt`.
+- Tests: `forms_bodies` (every species and rung has a rig that passes its checks, its clips, its paints and coats), `forms_size` (the hitbox follows the form on the server),
+  `forms_cue` (the cue codec round-trips; the second blow's caps), plus `living_form_mix`, `living_form_state`, `living_form_moves`.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 
@@ -5251,9 +5326,12 @@ of the plan). No mixins.
 - **Station scenes** (P5, `anims.client.station`): at a crafting table (used within 10 ticks of its screen opening, not
   sneaking: sneak + use is the plain screen) the screen is replaced by `StationScreen` (kind `TABLE`), the vanilla
   crafting menu with its grid and result drawn on the table in the world instead of on the screen. Each
-  ingredient lies on its square (the grid square to the block, row 0 the far one; the way in snapped to an axis), the
-  result floats over the top's far edge (0.5 out from the middle, 0.25 up; over the middle it hid the far middle square)
-  turning, the square under the cursor (and every square a drag has passed over,
+  ingredient lies flat, centred on its drawn square (the texture's: 2-pixel squares a square every 3 pixels, middles on
+  pixels 5, 8 and 11 of 16, so `CELL` = 3/16 and the grid 9/16 across; row 0 the far one; the way in snapped to an
+  axis; a flat item 0.16 across, a block half that), the result lies flat on the top's near border (0.41 in from the
+  middle toward you, 0.17 across, turning slowly where it lies), inside the table's own block so it never reaches into a
+  wall, and flat it never hides a square (it once floated over the far edge and went into the wall behind; over the
+  middle it hid the far middle square), the square under the cursor (and every square a drag has passed over,
   showing what it will get) is outlined (Holo blue).
   - **Layout** (`anims.station.StationView`, common so the tests run it headless): your inventory is a glass strip at
     the foot of the screen (vanilla's image, `top` = screen height - 165, the strip over its rows), the hint over it
@@ -5263,7 +5341,7 @@ of the plan). No mixins.
     so JEI's list and bookmarks keep to the sides. Hints: "Works just like a crafting grid. Sneak as you open it for the
     usual screen." and the furnace's.
   - **The view** frames the station: from your eye, the yaw, pitch and vertical field of view that fit every slot (a
-    grid square ±0.15, the result ±0.15, a furnace's opening) inside the room, 6 % to spare, turned so they sit in its
+    grid square ±3/32, the result ±0.085, a furnace's opening) inside the room, 6 % to spare, turned so they sit in its
     middle (`StationView.frame`, recomputed each tick; at most 100° or 1.5× your FOV setting). It eases in over 12 ticks
     (6 coming back within 12 s), out over 10; the player's own look never moves. Standing 1 to 4 blocks from a table at
     any GUI scale the framing stays under 100°; pressed right against it (under 1 block) the near edge can reach the hint.
@@ -5292,6 +5370,8 @@ of the plan). No mixins.
 - Test: `anims_fp_clips` (the file reads, every clip the body and the touches play is in it, every one-shot gives the
   hands back). The table scene: `anims_station_frame` (seven GUI sizes from 320×240 to 1280×720, with and without JEI,
   standing 1 to 4 blocks off each side: every slot lies inside the room and a click on its middle picks it),
+  `anims_station_cells` (each way in: every ingredient on a drawn square's middle, row 0 far, the result on the near
+  border, all inside the table's block, a click straight down picks each),
   `anims_station_panel_click` (a square under the strip while leaning in: a click there picks nothing), and the clicks
   vanilla's screen sends on a real crafting menu: `anims_station_right_click`, `_right_drag`, `_left_drag`,
   `_shift_result`. Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),
@@ -8598,3 +8678,500 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
   steps and hints), and the rail's unread count rising as trails open. **Not built / unverified**: the task card and Now line with a followed trail on a real
   screen (the first tour caught the first-hour card covering it; fixed, and the second tour showed the trail on the card ticking as steps were done; the card's count was off until every done step was sent, fixed and tested, not re-toured; the Now line shows the followed step below the Hale and camp lines, as designed at priority 55); a step's `{key}` caps; a `tip` (none shipped yet); several
   followed trails; the Powers, Story and the remaining World trails; the Armoury's Track as a step type.
+
+## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
+
+Builds on §28.3 (W2) and §28.5 (W5); the plan's audit (`docs/mining/proof/`) is what it was designed against: Tectonic
+seals noise caves within ~12 blocks of the ground, so the sky-open mouths are unmarked slots (median 106 m from any
+spot in Euan's world); 99% of iron was vanilla's scatter; the Hearth never said where; our sparks were round dots over
+vanilla's crack particles.
+
+### 34.0 Decisions (approved)
+1. Caves are where metal lives, and the trip is a story. 2. New land: vanilla's scattered iron, copper, coal and gold at
+35%; early lodes open onto cave walls. 3. Our own frequent mouths (hill mouth, Delver adit, doline, cleft) about every
+200 m with tells (breath, draught, cairn); Tectonic untouched. 4. The Hearth points to the nearest mouth with the metal
+it lacks ("Mark it on my map"), honest when it knows none. 5. The strike rebuilt: chips of the block's texture, spark
+streaks, a breath of dust, new cracks; vanilla's crack particles replaced. 6. True strikes on ores. 7. The Delver's
+Pick and its six verses replace the tool ladder; Hunter mattock recipes retire. 8. The pick is pulled from the stone at
+the first adit (handed over at the Hearth when no adit is near). 9. Cave air (bands, Lens haze, motes, shafts, the Deep
+breathes). 10. Delver lamps. 11. Strike and cave sounds from CC0 recordings (each download listed to Euan first).
+12. The Hollows in every cave by depth, drawn by strikes, wary of light. 13. One session, P1 (the first iron trip)
+first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
+
+### 34.1 Mouths (built, P1d: hill mouth and adit; P4: cleft and doline)
+- **Place** `awaken:delve/mouth` (`delve.cave.Mouth`, `CaveKind.MOUTH`, appended so older kinds keep their ordinals),
+  structure set `delve/mouths`: random spread 12/4, salt 734018553, `#minecraft:is_overworld`, new land only. Spec at
+  the lip's floor, rot forward = into the hill; p: form, throat length, its drop, arch width, height, the lode's heart
+  (x, y, z), its ore + 1, the cairn's side.
+- **Delver adit** (tried first): an iron or copper lode within 72 whose heart is at y 24 or above, a hill over the
+  drift, an open front, dry; drift 14-28 long, falling 0 to a third of its length, timber sets every 3, rails, ends at
+  the heart (left in the end face; the joint tunnel to the cave leaves from the drift's side). Mark "pick" at the drift's
+  end (the Delver's Pick in the stone, P1d's next part), a barrel there.
+- **Hill mouth**: 8+ of rise in 16, open front, arch 5/7/9 wide and 6-11 high (an ellipse, a rough top, roots and vines
+  over the lip), throat 16-40 falling about one in two (a drop of two where the hash says), ground over the end, dry; a
+  joint to natural cave air is required.
+- **Order by the ground** (P4): an adit, else a cleft, else a hill mouth, else a doline.
+- **Cleft** (P4): a cliff, 9+ of rise in 6 and 14+ in 14, open in front; a slot 2-4 wide (p W), 16-28 long, its floor
+  level through the first 4 then falling one in three to the end; open to the sky (p H: the cliff's height over the lip
+  + 2, 8-40) for the first 65% of its length, then the roof steps down to a passage four high; the walls rough and
+  leaning apart a little upward, the slot wandering up to about a block each way once inside; vines down both walls,
+  hanging roots where the rock closes over, a stone or two wedged across the slot 6-8 over the floor (only where rock
+  holds it on both sides within 5), moss carpet on the floor; ground over its end, dry; a joint to cave air is required.
+- **Doline** (P4): flat ground (six points round at r + 3 within 2 of the middle), r 3-5 (p W = 2r + 1, 7-11 across),
+  10 to min(25, 4r + 5) deep (p DROP, and p H the same); spec at the middle, level with the ground, forward = the way out
+  at the bottom. A round hole with a rough edge, the turf's lip overhanging by one with hanging roots under it, vines
+  down the walls; the floor fallen rock, coarse dirt and moss; a ledge of fallen rock (cobble, mossy cobble, coarse
+  dirt) two wide down the wall from the near side, the fewest half-turns-and-more that keep it no steeper than one down
+  in 1.6 along it (so every step is a walk or a jump), reaching out to the lip at the top; a way out of the side at the
+  bottom 3 wide and 3 high, r + 3 long, toward the cave air it joins (required). The tells: the breath rises straight
+  up out of the hole, the draught's streaks climb its walls, its light shaft falls straight down.
+- **Site packing** (P4): the client site's depth is turn | form << 2 (two bits) | height << 4.
+- **Names and words**: dolines "The Fallen Floor", "The Sunken Ring", "The Well of Roots"...; clefts "The Narrow Way",
+  "The Split Rock", "The Slot"...; the Hearth's line "There's a sinkhole in the ground 180 m south of your home. The cave
+  at the bottom of it runs past iron." / "There's a narrow gorge cut into the cliff 180 m south of your home. It leads
+  into a cave that runs past iron."; the map mark "The sinkhole" / "The gorge".
+- **Cairn** on the open ground in front: stacked cobble walls and an iron-bar spike; at an adit a fence post with a
+  lantern.
+- **Tells** (client, `CaveFx`, from the place's site in `CavePlaces.near`: lip, arch width, and turn | form << 2 |
+  height << 3): the **breath**, mist exhaled from the arch's upper half and drifting out, strongest at dawn (to 1500,
+  fading to 4000), for 3 minutes after rain, 0.14 by day, 0.35 at dusk, seen to 160 m; the **draught**, streaks out of
+  the throat within 28 m; the **cold air heard** within 32 m (the breath-of-air loop at the nearest mouth, pitch 0.78;
+  to be re-voiced from a recording). Far mist goes straight to the particle engine (the level's own path drops
+  particles past 32 blocks; the sinkhole's mist had the same fault and now does the same), never at Minimal particles.
+- **The Hearth points** (`delve.cave.MouthPointer`, a task-card source; `HearthHooks.metalNeed`, filled by
+  `hearth.Upgrades.metalNeed`): when the home's next Anchor tier is short only of a metal (the rank is there and
+  `TierRules.met`; a block counts nine ingots) and you stand within 160 of home, the card "Iron for your home" has the
+  gather row (have/need) and, once the search is done, one line: "The old Delvers cut an adit into the hillside 210 m
+  north-east of your home. It should still have iron in it." or "There's a cave mouth in the hillside 180 m south of
+  your home. The cave behind it runs past iron." (distance to 10 m, eight ways, the mouth on the card's compass as a
+  hint). The answer: the nearest mouth within 400 of home whose way in reaches a lode of that metal (an adit driven to
+  one; a hill mouth with a lode of 20+ within 48 of its throat's end or joint), from the seed alone on the background
+  executor, cached per player for that home and metal. Once per answer a window "Old workings" offers **Mark it on my
+  map** (`Destinations.set`, kind `spot`, "The old adit" / "The cave mouth"); nothing is set without that click. None
+  found: "I don't know of any old workings near your home. Iron shows in cave walls: find a cave and follow its walls."
+  Forge and temper shortfalls don't point yet.
+- **Tests**: `delve_cave_routes` walks every kind (the mouth staged as each form in turn by its seed: adit, hill mouth,
+  doline, cleft);
+  `delve_hearth_points` (the four forms' lines, which mouths lead to which metal, the honest line on flat land, the card's
+  3/16 row).
+
+### 34.2 Metal lives in the caves (built, P1c)
+- **Wall lodes** (`LodePlans.walls`, on top of each region's existing lodes, which are unchanged so old worlds agree):
+  per 256 region 3 iron (y -16..60), 2 copper (0..64), 2 coal (8..72). Each tries 16 columns of the base noise
+  (`ChunkGenerator.getBaseColumn`, no carvers; `LodePlans.columns(seed, ...)` installed on overworld load): air you
+  could stand in within the ore's band (nearest the rolled height, up to four spots), then out up to 10 cells to the
+  first rock at head height with rock behind; the seam then follows the wall's face both ways (each step settling on
+  the rock cell with air on its cave side, two in or out, a cell up or down at 12% each), a cell behind or above now and
+  then, at most 56 blocks. Not laid without a wall. On seed 3405691582's vanilla noise, 4 regions: 16 of 28 laid (10
+  iron), 86% of their blocks face air (`delve_lodes_air`). A wall lode planned into chunks generated before this
+  build doesn't exist there.
+- **Thinning** (`awaken:thin_ores`, a biome modifier at AFTER_EVERYTHING on `#minecraft:is_overworld`): in each biome's
+  underground ores, vanilla's ore_iron_upper/middle/small, ore_copper(_large), ore_coal_upper/lower, ore_gold,
+  ore_gold_lower, ore_gold_extra are swapped for `awaken:thinned/<name>`, the same feature at 35% of the count (90→31,
+  10→4, 10→4, 16→6, 16→6, 30→10, 20→7, 4→1, 50→18; ore_gold_lower keeps its count behind a rarity filter of 3).
+  Diamonds, redstone, lapis, emerald untouched; generated chunks keep theirs. Test `delve_thinned_ores`.
+
+### 34.3 The strike (built, P1a/P1b)
+- **Particles** (`delve.client.StrikeFx`, `StrikeChip`): client extensions on every block `delve.StrikeBlocks` names
+  (vanilla's `*_ore`, the rock list, the loose-ground list, our lode hearts and Deepglass), claimed last on our bus and
+  only where `isBlockRegistered` is false. `addHitEffects` returns true (vanilla's per-tick crumbs gone); the bite is
+  drawn from `playHitSound` (the server's progress event 2020, every fourth tick, so onlookers see it too); the sound
+  stays vanilla's until the recordings. A bite: 2-4 chips (1-2 decreased, none minimal); a break: 8-14 chips (4-7) and
+  3-5 dust wisps in the block's map colour (2). Chips: a 3/16 square of the block's particle sprite, tinted as vanilla's,
+  shade 0.72-0.82, size 0.034-0.07, tumbling (the leaf technique), world light read every 4 ticks, one bounce off the
+  floor when falling faster than 0.09, then lying flat 0.6-1.6 s and shrinking out. At most 48 chips from mining.
+- **Streaks** (sparks): fixed arrays, at most 24; additive lines (the lamp's glow pipeline) from the head back 1.5 ticks
+  of flight, white-gold cooling to the ore's tint, life 4-8 ticks, skitter off full blocks (axis bounce 0.4). Only off
+  pickaxe-mineable blocks of hardness ≥ 1 struck with a mining tool: 2-6 a bite, 6-10 on the last blow, +4 and hotter on
+  a true strike (halved when decreased). The heavy strike's sparks are streaks too. The old round spark and grit
+  sprites stay only for vents, cave-ins and blocks we don't draw.
+- **Cracks**: `minecraft:textures/block/destroy_stage_0..9` redrawn (`tools/art/specs/delve_cracks.py`): one crack tree
+  that grows from the strike's point, branches and widens, chips spalling in stages 8-9; dark 58 / 34, lit lip 166 on
+  the upper-left. The ore's warm glow in the cracks is not possible (the crumbling blend multiplies), so it was dropped.
+- **True strikes** (`delve.TrueStrikes`): the seam on (pos, face, n = true strikes so far) is a seeded point 0.22-0.78
+  across the face with an angle; a bite whose hit point lies within 0.22 of it is true. The client predicts, sends
+  `delve_true_strike` (pos, face, n); the server accepts when the block is an ore of `Ore`, within reach + 1, n matches
+  its count, ≥ 3 ticks since the last, and its own `pick` from the eye hits that face within 0.32; otherwise it sends
+  `delve_true_strike_sync` with its count. Speed: × (1 + 0.35 n), at most × 2, on both sides through `BreakSpeed`
+  (LOWEST, after Veins' two blows); the server's progress (speed × ticks) is never below the client's sum, so a
+  predicted break is never refused. A break within 6 ticks of a true strike: 25% one more of the first drop
+  (`BlockDropsEvent`). The seam is drawn while a mining tool looks at an ore (tapered additive line, the ore's tint
+  toward white, breathing); the chime `delve.true_strike` (synth, the magic layer) at the Tuning Fork's ore pitch, a
+  whole tone up for each true strike in a row (up to three).
+- **Dig motion** (`delve.client.DigMotion`, first person): keyed to the client's bites (contact at phase 0): pick recoil
+  to 0.16, wind-up to 0.68 (+17° pitch, back 0.07), strike eased in to the next bite (−15°); a shovel thrusts and lifts,
+  drawn back low. Eases out within 3 ticks of letting go; 0.4 with reduced motion. A view nudge of 0.22° a bite (0.45°
+  true) through `CombatFeedback.kick`. Third person keeps vanilla's swing.
+- **Settings** (`awaken-delve-client.toml`): `strike_particles`, `true_strikes` (both on).
+
+### 34.4 The Delver's Pick (built: asleep P1d, the verses and their gifts P2)
+- **Item** `awaken:waking_pick`, "Delver's Pick" (the cave module's relic keeps `awaken:delvers_pick`, the Delver's Old
+  Pick, carried for the fork's reach). Asleep it is a stone pickaxe (1 damage, -2.8 speed), rare, in
+  `#minecraft:pickaxes` (so the dig motion, the strike and enchanting take it). Kept through death (`WakingPick.onDrops`
+  and `onRespawn`, as Relics do).
+- **The pick in the stone** `awaken:waking_pick_stone` (no item, unbreakable, immovable): a mound of cobbled deepslate
+  with the pick's head driven in and its handle leaning out, at the adit's "pick" mark before the end face. Use it:
+  your own pick if you don't carry one ("You already carry the Delver's Pick. This one stays for whoever comes next."
+  otherwise); the first pull counts `awaken:delve/pick_pulled` and shows a moment: "It's asleep, but it still knows
+  metal. Hold it and it hums when its head points at a lode nearby."
+- **No adit near home**: when the Hearth's search finds no adit (none at all, or a hill mouth), the Hearth hands the
+  pick over once (never pulled, not carried): "There's no old adit near your home, so your Hearth kept this for you".
+- **Hum**: twice a second while it's in your main hand the server finds the nearest lode block within 16 of your eyes
+  (any ore; a lone broken heart doesn't count) and sends `delve_pick_hum` when it changes; the client (`PickSong`) hums
+  at the ore's fork pitch ×2 (to 2.0), from nothing outside 40° off your view to full facing it, louder nearer
+  (0.7 × 6/(6+d)), round the listener. The deep hum's loop for now; to be re-voiced from a recording.
+- **Art** (`tools/art/specs/delve.py`): the icon (worn dark-iron head, ash handle, leather grip, an unlit Deepglass
+  thread on the head's spine) and the stone's parts sheet.
+- **Test** `delve_waking_pick` (one pick per carrier, the stone stays, the pull counted, stone-tier drops, the hum's
+  16-block reach).
+- **Verses** (`PickVerses`, component `awaken:pick_verses` = `{schemaVersion 1, verse}` on the item, synced): each sets
+  the pick's `tool` (what it can't take, its speed), `max_damage`, attack modifiers and `custom_model_data` (floats
+  `[verse]`, read by `items/waking_pick.json`'s `range_dispatch`, seven icons: the spine's Deepglass thread lights
+  ember, then blue; Tempered turns the edge blue-white; Glass violet; Hush darkens the head; Call gilds it):
+
+  | # | Verse | Wakes when (deed counter or rite) | Can't take | Speed | Uses | Blow |
+  |---|---|---|---|---|---|---|
+  | 0 | Asleep | pulled / handed over | `#incorrect_for_stone_tool` | 4 | 131 | 1 |
+  | 1 | I · Kindle | a lode's heart breaks with it on you (`awaken:delve/deed_heart`) | iron's | 6 | 400 | 2 |
+  | 2 | II · Echo | you light a Delver lamp with it on you (`deed_lamp`) | iron's | 6.5 | 500 | 2 |
+  | 3 | III · Tempered | your Forge, 3 diamonds | diamond's | 8 | 1561 | 3 |
+  | 4 | IV · Glass | you cut Deepglass with it on you (`deed_deepglass`) | diamond's | 8.5 | 1800 | 3 |
+  | 5 | V · Hush | a seep falls quiet with you in it, carrying it (`deed_seep`) | netherite's | 9 | 2031 | 4 |
+  | 6 | VI · Call | your Forge, a starmetal ingot | netherite's | 10 | 2600 | 4 |
+
+  A deed is counted once (only while you carry the pick); after any deed or rite, every carried pick wakes verse after
+  verse while the next one's deed is done (a deed done early waits for the verses before it; a rite always stops the
+  run). Each wake: the tier, a low ring, light gathering round the hand (`delve_pick_woke`), a moment window ("The pick
+  wakes: I · Kindle" and the gift in words). `awaken:delve/verses_woken` is the furthest verse woken: a pick given
+  later (pulled, handed over, re-forged) comes at it. The tooltip shows the verse, each gift woken, and "Next: ...".
+- **Gifts** (`PickGifts`; client `PickFx`):
+  - *Kindle*: sneak and start striking bare rock (strike family ROCK): an **ember** sticks in the air cell on that face
+    for 5 minutes, three a player (a fourth puts out your oldest), none within 5 of another of yours. Drawn light, no
+    block: saved in `DelveData` (schema 2: `embers` = light cell, rock face, until, owner), sent to the level's players
+    on change, login and dimension change (`delve_embers`); `TorchGlow` draws each within 48 as a light of its own
+    (level 12, `#FF9A50`, flickering, no floor pool; with held light off in the settings they don't show), with sparks.
+  - *Echo*: sneak and use the pick on bare rock while still (server's known movement < 0.05 a tick): a ring through
+    the rock; for 4 s ores (full blocks, their ore's tint; any `#c:ores` warm gold) and the open air of caves (a 2-block
+    lattice of points, not under open sky) within 12 light as the ring passes (0.8 blocks a tick) and glow through
+    everything (pipeline `delve_through`, depth always-pass), at most 320 ores and 900 points. 20 s rest. The server
+    sends only `delve_pick_sight` (kind 0, the struck block); the client reads its own world.
+  - *Tempered*: true strikes' aim radius 0.22 → 0.32 (`TrueStrikes.radius`, both sides).
+  - *Glass*: a heavy strike released on the glint while looking 30° or more up does not bore: for 5 s the rock in a
+    cone before your eyes (cos ≥ 0.78, 22 blocks) turns to glass to your eyes: hidden cave air (rock between it and
+    your eyes), ores, and living creatures (their boxes, live) show through. 40 s rest. Client-only: the server names
+    no block (`delve_pick_sight` kind 1).
+  - *Hush*: the pick in hand cancels the `minecraft:block_destroy` game event from you (no vibration: sculk, wardens;
+    the deep's noise rule asks `PickGifts.hushed`); sneaking, it mines at full speed off the ground (x5) and with your
+    head in water (÷ the submerged attribute).
+  - *Call*: a heart broken with it: the lode's blocks still standing within 8 of the heart (nearest first, at most 24,
+    each one a heavy strike may take: no ward, civic ground or anyone else's Hearth) crack one after another over
+    3 s, their drops going straight to you (`delve_call_answer` draws the ore flying home).
+- **The Forge** (right-click an `awaken:forge` not inside anyone else's Hearth with the pick in hand; the Forge's own
+  use is skipped): the next rite if you carry it (3 diamonds wake Tempered; a starmetal ingot wakes Call), else an
+  iron ingot mends a quarter of its uses, else it says what's next. With 3 iron ingots in hand, no pick on you and one
+  pulled before, it makes another at your furthest verse ("The Delver's Pick, again").
+- **Not done**: the Hunter mattock recipes still craft (retiring them touches gear's and Arms' rows: the gear
+  module's call); the pick keeps vanilla's sounds.
+- **Tests** `delve_pick_verses` (each wake once and in order, an early deed waits, the rite takes 3 diamonds, tier
+  and uses follow, a mend, a re-forge at your verse), `delve_pick_hush` (no block-destroy event), `delve_pick_call`
+  (the 24 nearest of that lode within 8, nothing further or not of the lode, the ore to the player).
+
+### 34.5 The air below (built: motes P1e; bands, cave air, the breath, shafts, the Hollows by band, strike noise P3)
+- **Motes in your light** (`delve.client.Motes`, particle `awaken:delve_light_mote`: the mote's frames, lit by the world
+  so it shows only where light falls): underground (`under` ≥ 0.3, not in water), carrying a light in either hand
+  (`HeldLight`, the offhand's when it wins) or wearing the miner's lamp (12, flame), dust hangs in the air within 70% of
+  the light's reach of your eyes, three in four in front of you, only in air; spawned at 30/90 a tick × `under` so about
+  30 live (life 70-110 ticks, size 0.018-0.038, alpha 0.6, a slow wander, barely falling), tinted 35% toward the
+  light's colour from dust grey; half at Decreased particles, none at Minimal.
+- **Bands** (`delve.api.Bands`, pure): **the Shallows** (y ≥ 40), **the Middle Dark** (0-39), **the Deep** (< 0), each
+  with an air colour (`#8FA3B8`, `#B08A58`, `#5A3C7A`). The client (`Depths`) knows your band while `under` ≥ 0.5 and
+  shows its caption the first time you enter it each play-day ("THE MIDDLE DARK", "warm, still air"; CaveHud's
+  caption). A plain cave's Lens place look (layer 0) is now its band's: `awaken:shallows` (cool blue-grey),
+  `awaken:middle_dark` (amber, lights glowing gold), `awaken:deep` (ink and violet, deeper corners), in
+  `looks_delve.json`; `awaken:underground` stays for when no band is known. Cave biomes keep their own looks.
+- **Cave air** (`Depths`, client setting `cave_air`, on): under the rock the game's own atmospheric fog is drawn in,
+  by `under`: from about 8 blocks out to about 52 (16 to 60 where you stand in block light), never under water, in
+  lava, snow or a status effect's fog; its colour goes 85% toward the band's air × 0.16 (coloured dark, not black). It
+  works with Lens on or off (Lens grades the frame over it). Lens's own cave-air look fields (`caveAirNear`,
+  `caveAirFar`, `caveAirTint`) are still only names: when Lens reads them they should override these numbers per
+  look (the gate-worlds plan sets them for its worlds, which the overworld's `Depths` doesn't reach). Not built here:
+  it's the Lens module's code.
+- **The Deep breathes** (`Breath`): every 3-6 minutes while `under` ≥ 0.7 (not in water) an exhale runs toward the
+  nearest mouth's lip or sinkhole's rim the server has named (else the way you face): the cave breath's sound, low
+  (pitch 0.55), from 10 behind you and again 14 ahead, and dust (`delve_draught`) streaming along the floor within 8
+  for 4 s, most in its middle; in the Deep the hum swells with it (`delve.deep.hum`, 0.6 pitch).
+- **Light shafts** (`Shafts`): while the sky isn't dark or rainy, up to 3 shafts at the nearest mouths and sinkholes
+  within 64: down a sinkhole's throat (its depth, at least 8; width 0.45 × its radius) and slanting in under a mouth's
+  arch along its way in (9 blocks); each three camera-facing additive ribbons in pale sunlight, bright at the top,
+  gone below.
+- **The Hollows by band**: `delve_hollows_bands` adds drip lurkers (10), chime crickets (12) and hushlings (8) to every
+  overworld biome but the cave biomes (`neoforge:and` with `neoforge:not #c:is_underground`: dripstone caves, lush caves
+  and the deep dark keep fauna's own Hollows, never twice); terrain's `terrain_biome_table_parity` rows carry the three;
+  fauna's own rule (cave ground under a roof, dark, the role caps) still decides, and asks
+  `Bands.allows` (no hushling in the Shallows). Higher levels in the Deep are fauna's levels as they are.
+- **Strikes are noise** (`StrikeNoise`): rock or ore (not loose ground) broken under the rock by a player calls every
+  mob in `#awaken:delve/hears_strikes` (hushling, drip lurker) within 24 that has no target: it paths to the block.
+  A Hushed pick makes none; a player's call rests 40 ticks.
+- **Not done**: band room tones and drips from recordings, the breath re-voiced, "the cave answers" when a heart
+  breaks: waiting on Euan's approval of CC0 recordings. Lights don't lean or dim with the breath.
+- **Tests** `delve_bands` (band by height; hushlings not in the Shallows), `delve_strike_noise` (a hushling 13 off is
+  called and paths; a Hushed pick calls none; a second strike within the rest calls none).
+
+### 34.6 Delver lamps (built, P2)
+- **Block** `awaken:delver_lamp` (`lit` false/true; light 3 dead, 14 lit; iron, immovable, cutout model: a clouded
+  crystal in an iron cage with cap and hook; breaks for 2-4 iron nuggets). Hung from the roof on one or two iron chains:
+  over a seep's hall and a grotto's room (`Carve.lamp`), and in natural caverns by `awaken:delve/lamps`
+  (underground decoration, one chunk in three, three tries a chunk for air with a solid roof over 8+ of air and 6 clear
+  each way at half height, y -48..48).
+- **Strike** a dead lamp with anything in `#minecraft:pickaxes` (left-click; it doesn't start breaking): it lights
+  (bell and chime), counts the Echo deed for whoever struck it, and floods: a breadth-first walk through air from it
+  (euclid ≤ 40, at most 24,000 cells, an unloaded chunk is a wall), sharing 1 ms a tick with every other lamp. Then
+  the lattice: per 6³ cube of reached air, the cell nearest the cube's middle; the 120 nearest the lamp. The wave goes
+  out at 0.8 blocks a tick: each lattice cell becomes `minecraft:light` level 11 as it's reached (only if still air),
+  the lamp saved with its lights as they're set (`DelveData` schema 2, `lamps` = pos, lights, name). Nearby players
+  see each light bloom (`delve_lamp_lit`) and the caption "THE IRON HALL · lamp lit" (the cave place's name, else the
+  nearest lode's ore within 32, else a name by depth). Lit lamps are pins on the Atlas (`delve_lamps_known`).
+  Lattice 6 and level 11 leave every reached cell some block light, so no monster spawns in the hall.
+- **Broken**, the lamp takes back every one of its lights that is still a light block.
+- **Not done**: a flood cut off by a server stop isn't resumed (the lamp stays lit with what it had set); the way home
+  doesn't count lit halls yet.
+- **Test** `delve_lamp_lattice` (lights only in the reached hall, ≤ 120, none in a sealed pocket, every hall cell
+  lit, all gone with the lamp).
+
+### 34.7 Cave styles from the land above (built, P4)
+- **Decoration, no cave biomes**: the feature `awaken:delve/styles` (`delve.CaveStyleFeature`, underground_decoration,
+  every overworld chunk) reads the biome over the chunk's middle (`CaveStyle.of`, OCEAN_FLOOR_WG height) and makes 20
+  tries for a pocket of cave air from y -56 to 10 below the ground, dressing its roof, floor or a wall. Only bare stone,
+  deepslate, tuff, granite, diorite, andesite and calcite are dressed (lodes, ores and places stay). New chunks only.
+- **Styles** (`CaveStyle`; an underground biome, ocean or river gives none):
+  - **Roots** (forests, taiga, jungle, Elderwood, Lumen Forest): rooted dirt in the roof with hanging roots, glow
+    berries on cave vines 2-5 long (berries on every other), moss and moss carpet on the floor.
+  - **Sunshard** (Glass Steppe), **Frostspar** (Frost Spires): a growth on the floor (a crystal base in the rock, one to
+    three crystal blocks standing on it, its cluster on top, a few small ones round it); with no floor, a seam.
+    **Fault seam** (Shattered Highlands): a seam of 4-7 blocks in the nearest wall at chest height. The crystals are the
+    Lands' own blocks by id (none when the Lands pack is off); mined, they're the Forge's catalysts (HEAT, FROST, GRAVITY).
+  - **Sand** (deserts, badlands): smooth sandstone and sandstone patches on the floor, sandstone in the roof, a band of
+    cut sandstone round the pocket's walls.
+  - **Ice** (snowy and icy lands): packed ice patches in the floor (a blue ice heart now and then) and roof, ice hanging
+    one or two from the roof.
+- **Its air** (client, `Depths`): once a second while under, the style of the camera column's land (WORLD_SURFACE);
+  the cave air's colour leans half way from the band's to the style's (roots 0x4E6B3A, sunshard 0xB07A2E, frostspar
+  0x4A7FA8, fault seam 0x6A4C8C, sand 0xA8783A, ice 0x3E78A8), and the motes in your light take the style's dust (amber
+  under sand, pale blue under snow, green-gold under woods).
+- **Test** `delve_cave_styles` (which land gives which style; each style dresses a stone room's roof and floor).
+
+## 35. Bosses, levelled up (the Creature Kit and the Boss Plate; plan docs/bosses/PLAN.md, page https://claude.ai/artifact/RG6JGgiSwrTvg53WACTqhY; Euan approved all fourteen recommendations 2026-10-28: "Go with all recommendations")
+
+Euan: bosses should look, move and fight like Elden Ring's, through a system that every creature can reuse, and they
+should show a boss bar of our own. What he approved (PLAN §7):
+1. **The Creature Kit**: body plans, a move library, a signature move for each boss, and moves the server sees.
+2. Every boss gets **its own body at true size**, never a scaled vanilla one.
+3. The look: **chunky blocks, one oversized feature, and one light story** (core, eyes and cracks that change with the fight).
+4. **A showcase first**: the Ember Tyrant, Unit Zero and Mother of Spores. Euan looks at them in game before the roll-out.
+5. **The Boss Plate** replaces the vanilla bar for all our bosses and Wardens. It lifts off the boss's head when the fight starts.
+6. **Colour means one thing**: the bar and level chip show heat against the viewer's level, and the boss's own colour is on the rim only.
+7. **Phase lines leave the chat** and appear under the plate. Signature moves show their name for a moment.
+8. **The Lord retune** from the combat sim, re-run with the move tables.
+9. **Delayed blows only on HEAVY moves**, at most 0.6 s, and only where the held pose is unmistakable.
+10. **Every creature moves onto the kit**, in waves after the bosses.
+11. **The colossus** waits behind a probe. Then one prototype, in a test arena reached by an admin command only.
+12. Climbing the colossus comes later, with its own OK.
+13. This session builds phases 0 and 1. Euan decides on splitting the roll-out after that.
+14. Euan checks in game whether Fresh Animations reaches our vanilla-bodied gate monsters.
+
+### 35.1 The Boss Plate (`living.client.BossPlate`, data through `core.api.BossPlates`)
+- **The server keeps its `ServerBossEvent`.** That keeps the rules for who sees a bar: same storey, and gate rooms
+  through `GateHooks.showsBossBar` once Codex's gate-room work lands. When a player starts tracking a bar-carrying mob,
+  the mobs module sends a **bind** (`BossPlates.bind`). The bind carries:
+  - the bar's UUID and the entity id;
+  - the plate kind (`LORD` for bosses and nightmares, `WARDEN`);
+  - the phase marks (the health fractions where phases begin, from `MobDef.phases`);
+  - the boss's glow.
+- **Lines replace chat.** The intro, the phase lines and signature names arrive as **lines** (`BossPlates.line`): the bar,
+  the text and a kind (`INTRO`, `PHASE`, `SIGNATURE`). A client with the plate off prints `INTRO` and `PHASE` lines to
+  chat, as before. The living module registers the two payloads, `living_boss_bind` and `living_boss_line`.
+- **The client.** `CustomizeGuiOverlayEvent.BossEventProgress` (highest priority) cancels vanilla's drawing for bound
+  bars only, and sets the increment to the plate's height so other bars stack under it. The Wither, the Ender Dragon and
+  other mods' bars stay vanilla. Signal's `TrackerHud` listens to cancelled events too: it now places a bar's bottom at
+  `y + increment - 14`, which is the same as before for vanilla's 19.
+- **The plate.** It is a Holo glass sheet, 182 px wide for a Lord and 140 px for a Warden, centred at the top:
+  - the name in capitals, with a level chip on the right;
+  - the title under it, from `CreatureTag.title`, or "Warden" for a Warden;
+  - the health bar in ten segments, coloured by heat from `PlateRules.heat` against your level (grey, blue, orange or
+    red). A HARD chip pulses. What was just lost drains in amber;
+  - a diamond tick for each phase mark, which flashes for a second when crossed;
+  - the stance strip under the bar (Arms, gold **BROKEN** while broken).
+
+  The rim and brackets are the boss's glow, and nothing else carries its colour.
+- **Line timing.** A line holds 3 s under the plate. A signature name holds 1.2 s, small and in caps.
+- **The lift-off.** In the first 0.45 s after a bind (or after the entity first comes within 48 blocks) the plate flies
+  from the boss's head on screen to its slot: eased out, then the sheet opens downward over 0.2 s. With reduced motion
+  (`FirstPerson.reducedMotion`) it fades in place.
+- **The end.** On a kill (the bar removed while the entity is dead or dying) the segments shatter: eight shards fall over
+  0.6 s, and the name holds for 1 s.
+- **Several bars.** Two plates stack. A third and later bound bars are hidden while two show; that count is shown as
+  "+N" on the second plate.
+- **The fallback.** If the entity isn't loaded on the client, the plate draws from the bar alone (its name and progress),
+  with no level and no stance.
+- **The setting.** `bossPlate` (client, Living) is on by default. Off draws the vanilla bar.
+
+### 35.2 The kit's data (one source, both sides)
+- **Source.**
+  - `tools/art/specs/kit/` holds the body plans (`plans.py`), the move library (`moves.py`), the core (`core.py`: key
+    poses to clips, forward kinematics matching `ModelPart`, foot planting, capsules, checks, writers), paint helpers
+    and the Creature Lab (`lab.py`).
+  - `tools/art/specs/kit/bosses/<id>.py` holds each body's proportions, parts, paint, move picks, its own moves and its
+    fight script.
+  - `python3 tools/art/specs/kit_bodies.py build` (or `build_all.py kit_bodies`) writes everything below,
+    deterministically, and stops on any check.
+- **Rig.** `assets/awaken/kit/rigs/<id>.rig` uses the hero rig text format (`HeroRig.parse`: `rig`, `bone`, `cube`,
+  `look`, `clip`, `track` records). `mobs.boss.Kits` reads it from the jar on both sides (`HeroRig` is plain data with
+  no Minecraft classes, so a dedicated server can load it). The server never poses it; it only checks it.
+- **Textures.** `textures/entity/kit/<id>.png`, `_glow` (drawn emissive) and `_blink`/`_glow_blink` (the life layer's
+  blink). They are separate from `textures/entity/mobs/<id>.png`, so the old body keeps its own texture as the fallback.
+- **Size.** Bodies are modelled at true size (the renderer draws them at scale 1). The def's scale still sets the
+  hitbox, so it is chosen to fit the body: the Ember Tyrant 3.0 (1.8 × 5.85 blocks), Unit Zero 1.65 (1 × 3), Mother of
+  Spores 0.75 (3 × 3).
+- **Feet.** Every key pose of a planted move has its feet solved by two-bone IK in the hip's frame (`core.plant`):
+  the thighs, knees and ankles are recomputed so a body that crouches, twists or leans keeps both feet exactly where it
+  stood. The library's crouch depths scale with the leg (`rig.size` = leg / 36 px).
+- **Moves.** `data/awaken/kit/moves/<id>.json` (`KitMoves`, schemaVersion 1). Per move:
+  - `id`, `title` and `class` (LIGHT, HEAVY, PERILOUS or GRAB);
+  - the ticks: `windup`, `hold` (HEAVY only, ≤ 12), `active` and `recover`;
+  - `track` (degrees a tick while it winds up) and `lock` (the wind-up tick where tracking stops);
+  - `advance` (blocks of root motion over the active ticks, forward) and `rise`;
+  - `hits`: for each active tick, capsules in body space (blocks, +z forward, +y up, from the feet), each `[ax, ay, az,
+    bx, by, bz, r]`, swept along the striking bone's path;
+  - `damage` (× the mob's attack) and `knock`;
+  - `ability`: an ability of the def that fires at the first active tick, from `origin` (a point in body space).
+    Its ring, beam or marks then start where the move says;
+  - `range` ([min, max] blocks to the target's edge), `kinds` (gap, combo, delay, area, ranged, behind, signature,
+    summon, intro) and `signature`. For a blow with no ability that isn't a gap closer, the build lowers `max` to what
+    its capsules reach at a standing player's height (under 1.9 blocks), less the hitbox's half width: it is only
+    picked from where it can land;
+  - a shockwave (`disc` in the source) adds twelve ground spokes of that radius from the contact tick on, so a stomp
+    or a drop also reaches whoever is behind;
+  - `rise` below zero is a real descent (Mother of Spores' Drop falls 3 blocks onto the floor; fliers have no gravity).
+- **Fights.** `data/awaken/kit/fights/<id>.json` (`FightScripts`, schemaVersion 1):
+  - `moves`: the move table it uses;
+  - `intro`: a `pose` (`kneel`, `idle` or `hover`) and the `move` it plays when the fight starts;
+  - `phases`: one per `MobDef` phase, in order. Each phase has a `pool` and an optional `transition` (a move) for
+    entering it. A pool entry has a `move`, a `weight`, `when` (`ANY`, `NEAR` ≤ 4 blocks, `FAR` ≥ 8, `BEHIND` more than
+    110° off its facing, or `AIR`; upper case, the build writes them so) and `then`
+    (alternative strings: lists of move ids played in order, each step only if the target is still in that move's
+    range);
+  - `enrage`: `below` (0.15) and `speed` (1.2): faster, never more damage;
+  - `death`: optional and unused for now (the body plays its rig's `death` clip).
+- **Checks** (load and `kit_*` tests). A missing or broken file means the boss wears its old body and fights as before,
+  logged once. Every move's clips exist (`<move>_windup`, `_active`, `_recover`), and their lengths match the ticks
+  within one tick. Every wind-up is at least its class's minimum: LIGHT 8, HEAVY 12, PERILOUS 14 and GRAB 12. A hold
+  is only on a HEAVY move. Every boss's script covers gap, combo, delay, area, ranged, behind and signature.
+
+### 35.3 The fight runner (server, `mobs.entity.FightRunner`, beside `AwakenBoss`)
+- **Who gets one.** An `AwakenBoss` whose def id has a kit with a fight script gets a `FightRunner`, and its goal is
+  `FightRunner.Engaged` instead of `ToldMelee` or `KeepRange` (it holds the move and look flags while it has a live
+  target). Its `AbilityRunner` stays, but is *scripted*: it starts nothing itself, still runs charges and leaps, and
+  fires a move's ability on request (`AbilityRunner.fire`). The ability strikes under the move's own class (its own
+  class only for a NONE move such as a summon), so it lands as it was told: the hammer's Magma Fist is a HEAVY you can
+  guard, as its tell says, not the PERILOUS a heavy ability is on its own. An ability needs a target: a move played
+  with nobody there (the studio) moves the body only.
+- **A kit flier** (Mother of Spores) keeps `FlyHunt`, but it never dives: the script's moves are its attacks. While a
+  move plays it holds still, because the capsules are drawn from where it is. Between moves it drifts low round the
+  target, its feet 0.3-0.7 above the target's, since its body floats in its own model. It sits 1 block from the target's
+  edge, and each retarget (12 ticks) has a 1 in 4 chance to swap that for 6 blocks out, where the swoop and the lob reach.
+- **A move.** It runs wind-up (+ hold) → active → recover:
+  - **Wind-up.** The tell is `setTell` with the move's class, and a heavy shows its name only if it is a signature.
+    The body turns toward the target at `track` degrees a tick until `lock`, then commits. A hold is chosen for a
+    HEAVY move, 1 in 3, at its full `hold`, and synced.
+  - **Active.** Each tick, the tick's capsules (rotated by the body's yaw at lock) are tested against enemies' boxes
+    that the boss can see. Each is hit once a move, through `Strikes.deliver` (Arms' deflect, block and posture apply).
+    Root motion moves the body by `advance`.
+  - **Recover.** It doesn't turn. This is the opening you can punish.
+- **Picking moves.** Between moves the runner waits 6-14 ticks, then picks by weight from the phase's pool among the
+  entries whose `when` and `range` hold, and whose ability has room (`AbilityRunner.room`: a summon its budget,
+  `Mobs.minionRoom`; a decoy its cap; a heal someone hurt). Without that, Unit Zero, at 3-8 blocks where only Deploy
+  Coils reached, replayed it forever. A string carries on without a gap. A posture break (`Stances.broken`), a
+  stagger, dormant or fallen pauses it. A stagger (`AwakenMob.stagger`, which a posture break calls) also ends the move
+  in progress and its string, as it ends an ability's wind-up. Out of range of every entry it walks (navigation) toward the target. It stops where its close moves reach: the
+  longest range among the pool's entries with no minimum and no `far` or `behind`, less 0.3, at least 0.5 and at most
+  3.5 blocks from your edge.
+- **Phases.** A phase threshold crossed between moves plays the phase's `transition` move: it is invulnerable for that
+  move (`shieldTicks`), its part breaks off, and the phase line goes to the plate (players on the bar; chat for the
+  rest). Phases enter in order, one
+  transition each, even under burst damage.
+- **Enrage and death.** Enrage multiplies the wind-up and recovery ticks by 1/`speed` (rounded, the wind-up never
+  under its class's minimum; the strike keeps its ticks). Both sides compute it alike (`KitMoves.played`, health is
+  synced). Death plays the rig's `death` clip: the body stays (vanilla's death time holds at 19 for the clip's length
+  plus 6 ticks, at most 80) before the drops.
+- **The intro.** Until it has a target it holds its intro pose. On the first target it plays the intro move, and the
+  intro line goes to the plate.
+- **Sync.** `DATA_KIT` (int) holds the move index + 1 in bits 0-9, the hold ticks in bits 10-15, the pose in bits 16-19
+  (0 normal, 1 intro pose, 2 broken kneel) and a serial in bits 20-27. `DATA_KIT_AT` (int) holds the game time the move
+  started. A late joiner reads where the move is from the game time.
+- **Saves.** Nothing is saved mid-move. A reload starts at idle; the intro pose holds if it never had a target.
+- **Reset.** When everyone has left (the boss's existing reset), the script goes back to its intro pose with nothing
+  playing.
+- **Other bars.** A Hearth trial binds its bar with entity -1 (the plate draws from the bar alone). The Breaks'
+  roaming-Lord bar is left to phase 3 (PLAN §6).
+
+### 35.4 The kit runtime (client, `mobs.client.kit`)
+- `KitRenderer` draws an `AwakenBoss` whose rig loaded, through `HeroModel` (extended in place, not forked). The layers:
+  1. **Locomotion**: idle, then walk and run blended by speed and locked to distance (as hero rigs are).
+  2. **The action layer**: the synced move's `_windup` (played over the wind-up, then held still on its last key
+     through the hold), `_active` and `_recover`; the previous move fades out over 0.15 s under the new one.
+  3. **Turn steps**: while no move plays and the body turns faster than 3° a tick, `turn_l` or `turn_r` (0.4 s) loops,
+     weighted by how fast it turns (full at 45° in 0.4 s).
+  4. **Ground contact**: within 32 blocks and on the ground, each foot finds the ground's top under it (collision
+     shapes); the body lowers to the lower one (at most 0.6 block) and the higher foot's leg reaches up by two-bone IK
+     (`HeroModel.Leg`).
+  5. **Reactions**: the blow's direction (`CombatFeedback`) picks `hurt_l`, `hurt_r` or `hurt` (from the front). A
+     broken stance holds `kneel`, then plays `rise`.
+  6. **The life layer** on top, unchanged.
+- **The setting.** `kitBodies` (client, `awaken-mobs-client.toml`) is on by default. Off draws every creature's old
+  body after the next resource reload (renderers are made then); the server's moves still run.
+
+### 35.5 The Creature Lab (`tools/art/specs/kit/lab.py`, offline)
+`python3 tools/art/specs/kit_bodies.py lab DIR [ids]` makes one sheet per kit body: four views (one by night with only
+its light), the body beside a player at true size with its height in blocks and its face count, and a strip per move
+(rest, gather, peak, contact, follow-through, settle) with contact's capsules drawn over it and the move's numbers.
+GIFs are not made yet. The checks (`core.check`) stop the build, and the sheet repeats any in red, when:
+- a planted foot slides more than 0.1 block;
+- a wind-up's peak pose is too close to idle (mean bone angle < 12°);
+- a part floats, i.e. a bone's cubes are more than 1 px from its parent's;
+- a move is shorter than its class's tell;
+- a body is over 1,200 faces.
+
+### 35.6 Admin
+- `/awaken bosses studio <id>` (admin) clears a 23 × 23 arena 14 blocks high, 14 blocks ahead of you, over smooth
+  stone with light blocks under its ceiling, spawns the boss in its middle and plays every move of its table in turn,
+  1.5 s apart (abilities only fire if it has you as a target: in survival). Then it fights.
+- `/awaken bosses moves <id>` (admin) lists the moves with their class, timing, range and ability.
+
+### 35.7 The showcase (phase 1)
+- **The Ember Tyrant** (Brute, 6.5 blocks): a hunched basalt body with a molten core, oversized forearms veined with
+  magma under iron bracers, shoulder plates, obsidian horns, a great axe. Moves: `hammer` (Magma Fist, HEAVY, held 1 in
+  3), `backhand` (LIGHT, stooped low to reach you), `chop_a` → `chop_b` (LIGHTs with the axe), `charge` (GRAB, 7.5
+  blocks), `stomp` (HEAVY, a 2.4-block shockwave, for whoever is behind), `eruption` (PERILOUS, the signature),
+  `roar` (intro), `stoke` (Stoke the Imps, phase 2's transition), `meltdown` (PERILOUS, phase 3's transition).
+- **Unit Zero** (Duelist, 3.5 blocks with its halo): pale ceramic plates over dark joints, a square halo on a stalk
+  that spins in its idle, a visor, one cold blue down its seams. It waits kneeling. Moves: `lance` (Zero Lance,
+  PERILOUS, the halo spinning up and tilting), `step` (Phase Step, a LIGHT after the blink), `sever_a` → `sever_b` →
+  `sever_c` (Severing; the third HEAVY and held), `spin` (behind), `deploy` (Deploy Coils), `orbital` (Orbital Mark, the
+  halo rises; phase 2's transition), `zero_point` (PERILOUS, the signature; phase 3's transition), `wake` (intro). Its
+  death folds back to the kneel.
+- **Mother of Spores** (Flier, 4 blocks): a stepped dome cap with glowing spots, a ragged veil of gills open at the
+  front round a pale face, two long lash tendrils and four short trailing ones, spore sacs. Moves: `lash` → `lash_b`
+  (Tendril Lash, LIGHTs), `swoop` (the gap closer), `lob` (Spore Lob), `drop` (the Drop: HEAVY, held, she falls to the
+  floor with a 3-block shockwave), `rain` (Spore Rain, PERILOUS, the signature), `birth` (Birth), `halo` (Spore Halo,
+  LIGHT like its bolts; phase 2's transition), `bloom` (Bloom, phase 3's transition), `unfurl` (intro).
+- **Tuning** (the combat sim with the move tables, `docs/bosses/sim-2026-10-28.md`):
+  - **A move whose ability deals damage keeps its own capsules light**, because the ability is the blow: the hammer
+    0.7 (its Magma Fist ring is 1.5), the eruption 0.8, Phase Step 0.85.
+  - **Summons come with the second phase**, as in GateBestiary: Deploy Coils and Birth are not in either first pool.
+  - **Middle range has its own moves**, so a signature or a summon doesn't fill the gap: Unit Zero's lance fires from
+    4 blocks in its first two phases, and Mother's lob (from 4) and swoop (from 5) need no `far`. Spore Rain is
+    weight 1 in every phase.
+  - **Unit Zero's cuts:** sever_a and sever_b 1.75, sever_c 2.5, spin 1.5. Its told melee had dealt half again as much
+    as its first cuts.
+  - **Health under the sim's recommended curve:** the Tyrant 30.5, Unit Zero 30 and Mother 22.5. These go in with
+    that curve, after Euan's look. Until then GateBestiary keeps 30, 28 and 28.

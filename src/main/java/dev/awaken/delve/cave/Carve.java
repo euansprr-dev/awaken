@@ -116,6 +116,21 @@ final class Carve {
         }
     }
 
+    /**
+     * A dead Delver lamp (SPEC §34.6) hung from the roof over (x, floor, z): up the column to the first solid block
+     * within {@code reach}, then a chain (two in a tall hall) and the lamp. Nothing when the column is not this sink's.
+     */
+    static void lamp(Sink s, int x, int floor, int z, int reach) {
+        for (int y = floor + 3; y <= floor + reach; y++) {
+            if (!s.inside(x, y, z)) return;
+            if (!s.get(x, y, z).isSolidRender()) continue;
+            int chain = y - floor > 9 ? 2 : 1;
+            for (int c = 1; c <= chain; c++) s.set(x, y - c, z, Blocks.IRON_CHAIN.defaultBlockState());
+            s.set(x, y - chain - 1, z, dev.awaken.delve.DelveContent.DELVER_LAMP.get().defaultBlockState());
+            return;
+        }
+    }
+
     /** Solid rock back where carving would have opened it (a lode's heart stays in the wall). */
     static void solid(Sink s, int x, int y, int z) {
         if (s.inside(x, y, z) && !s.get(x, y, z).isSolidRender()) s.set(x, y, z, rock(y));

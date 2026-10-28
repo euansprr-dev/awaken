@@ -66,6 +66,20 @@ public final class LivingModule {
         FirstScenes.init(); // its High Gate shot and Ilse's scene by the fire
         IssueScene.init(); // Hale's issue: the first weapon, free (docs/arms-progression/PLAN.md §3.3)
         modBus.addListener(LivingNet::register);
+        // the Boss Plate's data (SPEC §35.1): binds and lines to the players who see a boss's bar
+        dev.awaken.core.api.BossPlates.install(new dev.awaken.core.api.BossPlates.Sink() {
+            @Override
+            public void bind(ServerPlayer player, java.util.UUID bar, int entity, dev.awaken.core.api.BossPlates.Kind kind, float[] marks, int glow) {
+                java.util.List<Float> m = new java.util.ArrayList<>(Math.min(8, marks.length));
+                for (int i = 0; i < marks.length && i < 8; i++) m.add(marks[i]);
+                dev.awaken.core.AwakenNet.send(player, new LivingNet.BossBind(bar, entity, kind.ordinal(), m, glow));
+            }
+
+            @Override
+            public void line(ServerPlayer player, java.util.UUID bar, String text, dev.awaken.core.api.BossPlates.Line kind, int colour) {
+                dev.awaken.core.AwakenNet.send(player, new LivingNet.BossLine(bar, text, kind.ordinal(), colour));
+            }
+        });
         XpBudget.register(HUNT, 0.10);
         XpBudget.register("pulse", 0.15);
         XpBudget.register("camp", 0.10);
@@ -98,6 +112,10 @@ public final class LivingModule {
         Progression.onXpGranted(XpStream::granted);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(EventPriority.LOW, FinalizeSpawnEvent.class, Creatures::onFinalizeSpawn);
+        bus.addListener(net.neoforged.neoforge.event.entity.EntityEvent.Size.class, dev.awaken.living.combat.FormShape::onSize);
+        bus.addListener(LivingDamageEvent.Post.class, dev.awaken.living.combat.Combos::onDamage);
+        bus.addListener(net.neoforged.neoforge.event.tick.ServerTickEvent.Post.class, dev.awaken.living.combat.Combos::onTick);
+        bus.addListener(net.neoforged.neoforge.event.tick.EntityTickEvent.Post.class, dev.awaken.living.combat.Combos::onEntityTick);
         bus.addListener(EntityJoinLevelEvent.class, Creatures::onJoin);
         bus.addListener(EventPriority.HIGHEST, net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre.class, dev.awaken.living.combat.MarkEvents::onDamage);
         bus.addListener(net.neoforged.neoforge.event.entity.living.MobSpawnEvent.SpawnPlacementCheck.class, dev.awaken.living.wonder.WonderWatch::onSpawnCheck);

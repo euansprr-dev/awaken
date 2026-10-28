@@ -1,8 +1,15 @@
 {
+  "awaken.configuration.held_light": "Held light",
+  "awaken.configuration.held_light.tooltip": "A torch, lantern or any light-giving block in either hand lights the ground, walls and ceiling round whoever holds it. It's drawn, never placed, so nothing is relit. Off, a held light gives no light, as in vanilla.",
+  "awaken.configuration.strike_particles": "Strike particles",
+  "awaken.configuration.strike_particles.tooltip": "Rock, ore and loose ground throw chips of their own texture when you strike and break them, with a breath of dust on the break. Off, vanilla's crumbs come back.",
+  "awaken.configuration.true_strikes": "True strikes",
+  "awaken.configuration.true_strikes.tooltip": "A bright seam shows on an ore's face. Hit it and that blow counts extra, so good aim breaks ore faster. Off, no seam shows and every blow counts the same.",
   "block.awaken.coal_lode_heart": "Coal Lode Heart",
   "block.awaken.copper_lode_heart": "Copper Lode Heart",
   "block.awaken.deepglass": "Deepglass",
   "block.awaken.deepglass_lode_heart": "Deepglass Lode Heart",
+  "block.awaken.delver_lamp": "Delver Lamp",
   "block.awaken.diamond_lode_heart": "Diamond Lode Heart",
   "block.awaken.emerald_lode_heart": "Emerald Lode Heart",
   "block.awaken.gold_lode_heart": "Gold Lode Heart",
@@ -11,6 +18,7 @@
   "block.awaken.piton": "Runner's Piton",
   "block.awaken.redstone_lode_heart": "Redstone Lode Heart",
   "block.awaken.runner_line": "Runner's Rope",
+  "block.awaken.waking_pick_stone": "The Delver's Pick, in the Stone",
   "item.awaken.bell_bronze_ingot": "Bell Bronze Ingot",
   "item.awaken.deepglass_shard": "Deepglass Shard",
   "item.awaken.miners_lamp": "Miner's Lamp",
@@ -18,6 +26,7 @@
   "item.awaken.runner_rope": "Runner's Rope",
   "item.awaken.starmetal_ingot": "Starmetal Ingot",
   "item.awaken.tuning_fork": "Tuning Fork",
+  "item.awaken.waking_pick": "Delver's Pick",
   "subtitles.awaken.delve.cave_creak": "The roof creaks",
   "subtitles.awaken.delve.cave_fall": "The roof comes down",
   "subtitles.awaken.delve.deep_ear_cave": "A cave breathes behind the rock",
@@ -41,8 +50,7 @@
   "subtitles.awaken.delve.strike.lapis": "Lapis chimes",
   "subtitles.awaken.delve.strike.redstone": "Redstone fizzes",
   "subtitles.awaken.delve.strike_last": "Rock gives way",
+  "subtitles.awaken.delve.true_strike": "A true strike rings",
   "subtitles.awaken.delve.vein_crack": "Cracks run through the rock",
-  "subtitles.awaken.delve.vein_gives": "The vein gives",
-  "awaken.configuration.held_light": "Held light",
-  "awaken.configuration.held_light.tooltip": "A torch, lantern or any light-giving block in either hand lights the ground, walls and ceiling round whoever holds it. It's drawn, never placed, so nothing is relit. Off, a held light gives no light, as in vanilla."
+  "subtitles.awaken.delve.vein_gives": "The vein gives"
 }

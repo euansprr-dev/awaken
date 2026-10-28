@@ -1,0 +1,161 @@
+{
+ "schemaVersion": 1,
+ "id": "mother_of_spores",
+ "moves": "mother_of_spores",
+ "intro": {
+  "pose": "idle",
+  "move": "unfurl"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "lash_b"
+      ]
+     ]
+    },
+    {
+     "move": "lob",
+     "weight": 3
+    },
+    {
+     "move": "swoop",
+     "weight": 2,
+     "then": [
+      [
+       "lash_b"
+      ]
+     ]
+    },
+    {
+     "move": "drop",
+     "weight": 1
+    },
+    {
+     "move": "drop",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "rain",
+     "weight": 1
+    }
+   ]
+  },
+  {
+   "transition": "halo",
+   "pool": [
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "lash_b"
+      ],
+      [
+       "lash_b",
+       "drop"
+      ]
+     ]
+    },
+    {
+     "move": "lob",
+     "weight": 3,
+     "then": [
+      [
+       "lob"
+      ]
+     ]
+    },
+    {
+     "move": "swoop",
+     "weight": 2,
+     "then": [
+      [
+       "lash_b"
+      ]
+     ]
+    },
+    {
+     "move": "drop",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "rain",
+     "weight": 1
+    },
+    {
+     "move": "birth",
+     "weight": 1
+    },
+    {
+     "move": "halo",
+     "weight": 1
+    }
+   ]
+  },
+  {
+   "transition": "bloom",
+   "pool": [
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "lash_b",
+       "drop"
+      ]
+     ]
+    },
+    {
+     "move": "lob",
+     "weight": 2,
+     "then": [
+      [
+       "lob",
+       "lob"
+      ]
+     ]
+    },
+    {
+     "move": "swoop",
+     "weight": 2,
+     "then": [
+      [
+       "lash_b"
+      ]
+     ]
+    },
+    {
+     "move": "drop",
+     "weight": 2
+    },
+    {
+     "move": "drop",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "rain",
+     "weight": 1
+    },
+    {
+     "move": "halo",
+     "weight": 1
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

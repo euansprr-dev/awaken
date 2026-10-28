@@ -138,16 +138,18 @@ void main() {
     float sun = shade.a;
     vValley = smoothstep(0.96, 0.78, shade.b);
 
-    // the tree's parts: trunk to crown, by shape (heights from the ground, half widths)
-    float trunkTop, crownBase, crownTop, halfW = width * 0.5, tip = halfW, trunkHalf = 0.5;
+    // the tree's parts: trunk to crown, by shape (heights from the ground, half widths; the crown's base and width as
+    // FarTrees grows them from the tree's height)
+    float crownBase = float(d.w & 255u) / 4.0, crownTop = tall, trunkTop = crownBase + 1.0;
+    float halfW = width * 0.5, tip = halfW, trunkHalf = 0.5;
     if (shape == 1) {        // conifer
-        crownBase = tall * 0.18; crownTop = tall; trunkTop = crownBase + 1.0; tip = 0.5; trunkHalf = 0.4;
+        tip = 0.5; trunkHalf = 0.4;
     } else if (shape == 2) { // jungle
-        crownBase = tall * 0.62; crownTop = tall; trunkTop = crownBase + 1.0; trunkHalf = 0.9;
+        trunkHalf = 0.9;
     } else if (shape == 3) { // acacia
-        crownBase = tall * 0.68; crownTop = tall * 0.68 + 2.0; trunkTop = crownBase + 0.5;
-    } else {                 // broadleaf
-        crownBase = tall * 0.38; crownTop = tall; trunkTop = crownBase + 1.0;
+        crownTop = crownBase + 2.0; trunkTop = crownBase + 0.5;
+    } else if (tall > 12.0) { // a tall broadleaf stands on a trunk two blocks wide, as the lumen and elderwood trees do
+        trunkHalf = 1.0;
     }
     // the sides that face the camera
     float sx = p.x > 0.0 ? -1.0 : 1.0, sz = p.y > 0.0 ? -1.0 : 1.0;

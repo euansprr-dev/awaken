@@ -82,12 +82,14 @@ public final class LivingClient {
         });
         modBus.addListener(RegisterGuiLayersEvent.class, LivingHud::register);
         FormLayers.init(modBus);
+        dev.awaken.living.client.forms.FormBodies.init(modBus);
         modBus.addListener(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers.class,
                 e -> e.registerEntityRenderer(dev.awaken.living.LivingContent.WAYFARER.get(), WayfarerRenderer::new));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(LivingNet.RegionMsg.TYPE, (m, ctx) -> onRegion(m));
             e.register(LivingNet.LandMsg.TYPE, (m, ctx) -> DreadFx.onLand(m));
             e.register(LivingNet.HitFx.TYPE, (m, ctx) -> onHit(m));
+            e.register(LivingNet.FormCue.TYPE, (m, ctx) -> dev.awaken.living.client.forms.FormBodies.onCue(m));
             e.register(LivingNet.XpFx.TYPE, (m, ctx) -> onXp(m));
             e.register(LivingNet.LevelUp.TYPE, (m, ctx) -> onLevelUp(m));
             e.register(LivingNet.Shown.TYPE, (m, ctx) -> shown = m.shown());
@@ -96,6 +98,8 @@ public final class LivingClient {
             e.register(LivingNet.CampSmoke.TYPE, (m, ctx) -> PulseFx.camp(m.at()));
             e.register(LivingNet.FirstScene.TYPE, (m, ctx) -> FirstFilm.onScene(m));
             e.register(LivingNet.Happenings.TYPE, (m, ctx) -> PulseFx.onTells(m));
+            e.register(LivingNet.BossBind.TYPE, (m, ctx) -> BossPlate.onBind(m));
+            e.register(LivingNet.BossLine.TYPE, (m, ctx) -> BossPlate.onLine(m));
         });
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
@@ -106,7 +110,12 @@ public final class LivingClient {
         bus.addListener(SubmitCustomGeometryEvent.class, CraftFx::submit);
         bus.addListener(ClientTickEvent.Post.class, CraftFx::tick);
         bus.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LivingPlates::extract);
+        // the Boss Plate (SPEC §35.1): before anyone else reads a bar, so ours are cancelled and sized first
+        bus.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent.BossEventProgress.class, BossPlate::onBar);
+        bus.addListener(net.neoforged.neoforge.client.event.RenderGuiEvent.Pre.class, e -> BossPlate.frameStart());
+        bus.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, BossPlate::extract);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
+        bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> BossPlate.reset());
     }
 
     private static void reset() {

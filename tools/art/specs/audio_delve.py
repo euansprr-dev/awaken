@@ -257,6 +257,14 @@ def fork_ring(seed):
     return x * 0.5
 
 
+def true_strike(seed):
+    """A true strike (SPEC §34.3): a soft bell-glass chime over the bite, at A5; the game bends it to the ore's note."""
+    n = K.ns(0.8)
+    x = at(n, 0, K.glass(880, K.ns(0.75), bright=0.22, t60=0.55, seed=seed, hit=0.15)) * 0.45
+    x += at(n, 0.004, K.modal(880, [1, 2.0, 3.01], [1, 0.3, 0.12], [0.6, 0.35, 0.2], K.ns(0.7), seed=seed + 1)) * 0.4
+    return finish(x, 0.3, 11000)
+
+
 # ---- pitons, rope, Deepglass, Deep Ear -------------------------------------------------------------------------------
 
 def piton_set(seed):
@@ -316,6 +324,7 @@ SOUNDS_SPEC = [
     ("delve_heavy_strike", heavy_strike, -18.0, "delve.heavy_strike", "A heavy strike bores the rock", 1.0, 32),
     ("delve_fork_tune", fork_tune, -21.0, "delve.fork_tune", "The fork takes a note", 1.0, 12),
     ("delve_fork_strike", fork_strike, -20.0, "delve.fork_strike", "Tuning fork struck", 1.0, 16),
+    ("delve_true_strike", true_strike, -22.0, "delve.true_strike", "A true strike rings", 1.0, 12),
     ("delve_fork_ring", fork_ring, -22.0, "delve.fork_ring", "Tuning fork rings", 1.0, 12),
     ("delve_piton_set", piton_set, -20.0, "delve.piton_set", "Piton hammered in", 1.0, 16),
     ("delve_rope_pay", rope_pay, -21.0, "delve.rope_pay", "Rope pays out", 1.0, 16),

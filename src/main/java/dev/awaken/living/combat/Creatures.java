@@ -77,7 +77,10 @@ public final class Creatures {
                 Forms.rollIfOn(level, mob, Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL), now.elite());
         }
         // a formed creature's moves are goals, and goals are not saved
-        if (living instanceof Mob mob) Moves.arm(mob);
+        if (living instanceof Mob mob) {
+            Moves.arm(mob);
+            if (Forms.of(mob).rung() >= 2) FormShape.refresh(mob); // the saved form's true size
+        }
     }
 
     /** Projectiles and blasts from a levelled vanilla monster hit as hard as its melee would (melee scales by attribute). */

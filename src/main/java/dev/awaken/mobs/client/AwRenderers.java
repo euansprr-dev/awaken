@@ -117,6 +117,8 @@ final class AwRenderers {
         e.registerLayerDefinition(WildModels.MARMOT, WildModels.Marmot::create);
         // hero bodies: the named beasts, the Hollow Owl, the Bogwick
         for (HeroRig r : HeroRig.all().values()) e.registerLayerDefinition(HeroModel.layer(r.id), () -> HeroModel.create(r));
+        // kit bodies (SPEC §35.4: rigs from tools/art/specs/kit, read from the jar)
+        for (var k : dev.awaken.mobs.boss.Kits.all().values()) e.registerLayerDefinition(HeroModel.layer(k.id()), () -> HeroModel.create(k.rig()));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -131,6 +133,9 @@ final class AwRenderers {
     }
 
     private static EntityRenderer<AwakenMob, ?> create(EntityRendererProvider.Context ctx, MobDef d) {
+        // a creature whose kit loaded wears its kit body (the setting puts the old ones back)
+        var kit = dev.awaken.mobs.boss.Kits.get(d.id);
+        if (kit != null && dev.awaken.mobs.client.kit.KitConfig.kitBodies()) return new dev.awaken.mobs.client.kit.KitRenderer(ctx, d, kit);
         return switch (d.model) {
             case ZOMBIE -> zombie(ctx, d, ModelLayers.ZOMBIE, ModelLayers.ZOMBIE_ARMOR);
             case HUSK -> zombie(ctx, d, ModelLayers.HUSK, ModelLayers.HUSK_ARMOR);

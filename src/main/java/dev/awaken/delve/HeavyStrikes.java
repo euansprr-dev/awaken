@@ -67,6 +67,7 @@ public final class HeavyStrikes {
         if (GateHooks.inGate(p)) return List.of();
         LAST.put(p.getUUID(), now);
         boolean glint = perfect && Math.abs(charge - GLINT) <= 2;
+        if (PickGifts.glass(p, glint)) return List.of();   // the Delver's Pick's Glass verse takes an upward glint
         BlockHitResult hit = aim(p);
         if (hit == null) return List.of();
         Direction into = hit.getDirection().getOpposite();

@@ -42,13 +42,19 @@ public final class StationView {
     }
 
     /**
-     * Where the table's result floats: over the top's far edge (out from the middle, up), so from where you stand it
-     * never hides a square (over the middle it hid the far middle one).
+     * The crafting table top's 3×3 squares, as its texture draws them: 2-pixel squares between 1-pixel lines, a square
+     * every 3 pixels of 16, centred on pixels 5, 8 and 11 (the grid is 9 of the face's 16 pixels, framed inside its
+     * border; a third of the face each put the corner items out at the table's edges).
      */
-    public static final double RESULT_OUT = 0.5, RESULT_UP = 0.25;
+    public static final double CELL = 3 / 16.0, GRID_HALF = 1.5 * CELL;
+    /**
+     * Where the table's result lies: flat on the top's near border, in from the middle toward you, inside the table's
+     * own block so it can never go into a wall; flat, it never hides a square (floating, it hid the far ones).
+     */
+    public static final double RESULT_IN = 0.41, RESULT_HALF = 0.085;
 
     /**
-     * Where a slot lies on the station. A table: 0 the result, floating over the far edge; 1..9 the grid, row 0 the far
+     * Where a slot lies on the station. A table: 0 the result, on the near border; 1..9 the grid, row 0 the far
      * one. A furnace: what cooks in the mouth, the fuel in the firebox below it, the result floating out at the right.
      */
     public static void spot(Station s, int slot, double[] out, int at) {
@@ -65,22 +71,23 @@ public final class StationView {
         }
         double cx = b.getX() + 0.5, cy = b.getY() + 1.0, cz = b.getZ() + 0.5;
         if (slot == 0) {
-            out[at] = cx + fx * RESULT_OUT;
-            out[at + 1] = cy + RESULT_UP;
-            out[at + 2] = cz + fz * RESULT_OUT;
+            out[at] = cx - fx * RESULT_IN;
+            out[at + 1] = cy + 0.012;
+            out[at + 2] = cz - fz * RESULT_IN;
             return;
         }
         int row = (slot - 1) / 3, col = (slot - 1) % 3;
-        double u = (col - 1) * 0.3, v = (1 - row) * 0.3;
+        double u = (col - 1) * CELL, v = (1 - row) * CELL;
         out[at] = cx + rx * u + fx * v;
         out[at + 1] = cy + 0.01;
         out[at + 2] = cz + rz * u + fz * v;
     }
 
-    /** How far a slot reaches from its spot (across, up, in): a grid square, a floating result, a furnace's opening. */
-    private static double reach(Station s, int slot, int axis) {
+    /** How far a slot reaches from its spot (across, up, in): a grid square, the result, a furnace's opening. */
+    public static double reach(Station s, int slot, int axis) {
         if (s.kind() == Kind.FURNACE) return axis == 2 ? 0.05 : 0.15;
-        return slot != 0 && axis == 1 ? 0.03 : 0.15;
+        if (axis == 1) return 0.03;
+        return slot == 0 ? RESULT_HALF : CELL / 2;
     }
 
     // ---- the screen -------------------------------------------------------------------------------------------------
@@ -137,11 +144,11 @@ public final class StationView {
         double x0 = 1e9, y0 = 1e9, z0 = 1e9, x1 = -1e9, y1 = -1e9, z1 = -1e9;
         for (int i = 0; i < s.kind().slots; i++) {
             spot(s, i, p, 0);
-            double m = 0.15;
+            double m = Math.max(reach(s, i, 0), reach(s, i, 2)), mu = reach(s, i, 1);
             x0 = Math.min(x0, p[0] - m);
             x1 = Math.max(x1, p[0] + m);
-            y0 = Math.min(y0, p[1] - m);
-            y1 = Math.max(y1, p[1] + m);
+            y0 = Math.min(y0, p[1] - mu);
+            y1 = Math.max(y1, p[1] + mu);
             z0 = Math.min(z0, p[2] - m);
             z1 = Math.max(z1, p[2] + m);
         }
@@ -204,8 +211,8 @@ public final class StationView {
     }
 
     /**
-     * The slot under a point of the screen (gui pixels), from a ray through the view: a grid square on the top or the
-     * floating result (a table), the nearest spot the ray passes close to (a furnace); -1 for none, and always -1
+     * The slot under a point of the screen (gui pixels), from a ray through the view: a grid square or the result on
+     * the top (a table), the nearest spot the ray passes close to (a furnace); -1 for none, and always -1
      * outside the layout's room (the strip, the hint, a side panel: a click there never reaches the station).
      */
     public static int pick(Station s, Layout l, double ex, double ey, double ez, Quaternionfc rot, float fov, float aspect,
@@ -229,11 +236,6 @@ public final class StationView {
             }
             return best;
         }
-        // the result: near the ray, over the far edge
-        spot(s, 0, p, 0);
-        double wx = p[0] - ex, wy = p[1] - ey, wz = p[2] - ez, along = wx * d.x + wy * d.y + wz * d.z;
-        double qx = wx - d.x * along, qy = wy - d.y * along, qz = wz - d.z * along;
-        if (along > 0 && qx * qx + qy * qy + qz * qz < 0.15 * 0.15) return 0;
         // the top's plane
         BlockPos b = s.pos();
         if (Math.abs(d.y) < 1e-4) return -1;
@@ -241,8 +243,10 @@ public final class StationView {
         if (t <= 0) return -1;
         double hx = ex + d.x * t - (b.getX() + 0.5), hz = ez + d.z * t - (b.getZ() + 0.5);
         double u = hx * s.rx() + hz * s.rz(), v = hx * s.fx() + hz * s.fz();
-        if (Math.abs(u) > 0.45 || Math.abs(v) > 0.45) return -1;
-        int col = Mth.clamp((int) Math.floor((u + 0.45) / 0.3), 0, 2), row = Mth.clamp((int) Math.floor((0.45 - v) / 0.3), 0, 2);
+        // the result on the near border
+        if (Math.abs(u) <= RESULT_HALF + 0.02 && Math.abs(v + RESULT_IN) <= RESULT_HALF + 0.02) return 0;
+        if (Math.abs(u) > GRID_HALF || Math.abs(v) > GRID_HALF) return -1;
+        int col = Mth.clamp((int) Math.floor((u + GRID_HALF) / CELL), 0, 2), row = Mth.clamp((int) Math.floor((GRID_HALF - v) / CELL), 0, 2);
         return 1 + row * 3 + col;
     }
 }

@@ -30,4 +30,14 @@ public final class HeroRenderState extends LivingEntityRenderState {
     public float dying = -1;
     /** The overworld creature's pose bits (FaunaMob.P_*). */
     public int pose;
+    /**
+     * Kit bodies (SPEC §35.4): extra one-shot layers after the cue (a turn step, a reaction, the kneel and the rise),
+     * each a clip slot, a time and a weight.
+     */
+    public final int[] layerClip = {-1, -1, -1};
+    public final float[] layerTime = new float[3], layerWeight = new float[3];
+    /** Kit bodies: how far (model pixels, up) each foot must reach for the ground under it, left and right; 0 none. */
+    public float footL, footR;
+    /** Kit bodies: blocks the whole body lowers to the lower foot's ground (negative), 0 none. */
+    public float kitDrop;
 }

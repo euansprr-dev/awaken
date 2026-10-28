@@ -21,6 +21,7 @@ final class LivingHud {
 
     static void register(RegisterGuiLayersEvent e) {
         e.registerAbove(VanillaGuiLayers.HOTBAR, Awaken.id("living"), LivingHud::render);
+        e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Awaken.id("living_boss_plate_ends"), BossPlate::renderEnds);
     }
 
     // ---- the region caption -----------------------------------------------------------------------------------------
