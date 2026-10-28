@@ -28,7 +28,10 @@ public final class BodyStow {
     static void reset(ServerPlayer p) {
         BodyMotion m = p.getExistingDataOrNull(BodyContent.MOTION);
         if (m != null) {
-            BodyServer.endVault(p, m, BodyServer.now(p));
+            long now = BodyServer.now(p);
+            BodyServer.endTactical(p, m, now, false);
+            BodyServer.endSlide(p, m, now, false);
+            BodyServer.endVault(p, m, now);
             p.removeData(BodyContent.MOTION);
         }
         if (p.hasData(BodyContent.STOWED)) p.removeData(BodyContent.STOWED);

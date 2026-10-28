@@ -5117,7 +5117,9 @@ of the plan). No mixins.
   holds, pipe/ladder grip, vertical wall climb, mantle/climb out, climbs over or onto rails (`HIGH`, `ONTO`, `OVER`),
   and the Ascent's rope, zip and rappel. `body.client.BodyHeldItems` clears only the extracted hand meshes and stacks,
   after Arms has populated them; the player's equipment never changes. The next extraction restores current equipment
-  as soon as climbing ends, including after an interrupted mantle or climb-out. The local player uses movement
+  as soon as climbing ends, including after an interrupted mantle or climb-out.
+  Dimension/respawn reset first ends tactical sprint, slide and vault through their normal cleanup paths, so removing
+  transient movement state cannot strand a sprint speed modifier or forced crawl pose. The local player uses movement
   prediction; observers use the server's current transient `body_stowed` Boolean attachment (updated only on change,
   after movement validation, and sent on initial tracking too). It works without the animation library. A climb-out's
   server window is the same 10 ticks as its path plus the existing 6-tick Runner grace, ended sooner by the client's

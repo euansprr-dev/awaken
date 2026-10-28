@@ -89,6 +89,21 @@ final class BodyStowTests {
         BodyStow.sync(p);
         h.assertTrue(!p.hasData(BodyContent.MOTION) && !Boolean.TRUE.equals(p.getExistingDataOrNull(BodyContent.STOWED)),
                 "a replacement or dimension change clears the source as well as the appearance");
+        var speed = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+        m = BodyServer.motion(p);
+        m.tacUntil = now + 40;
+        speed.addOrUpdateTransientModifier(BodyRules.TAC_MODIFIER);
+        h.assertTrue(speed.hasModifier(BodyRules.TAC_ID), "active tactical sprint owns its speed modifier");
+        BodyStow.reset(p);
+        h.assertTrue(!speed.hasModifier(BodyRules.TAC_ID) && !p.hasData(BodyContent.MOTION),
+                "dimension/reset ends tactical sprint before forgetting its cleanup state");
+        m = BodyServer.motion(p);
+        m.slideUntil = now + 30;
+        m.stairSliding = true;
+        p.setForcedPose(net.minecraft.world.entity.Pose.SWIMMING);
+        BodyStow.reset(p);
+        h.assertTrue(p.getForcedPose() == null && !m.stairSliding && !p.hasData(BodyContent.MOTION),
+                "dimension/reset ends a slide and releases its forced crawl pose");
         h.succeed();
     }
 }
