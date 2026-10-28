@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "theme": "overgrown_temple",
+  "name": "The Lantern Orchard",
+  "line": "Rows of dark trees, and lanterns growing on them like fruit, all lit.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "open",
+  "tall": true,
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "lid": 16,
+    "slope": 0.15,
+    "night": 1,
+    "tunnel": 2.8
+  },
+  "biome": "awaken:gate_world/the_lantern_orchard",
+  "moods": [
+    {
+      "id": "harvest",
+      "name": "Harvest night",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "fireflies"
+      ]
+    },
+    {
+      "id": "windfall",
+      "name": "Windfall",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_lantern_orchard_windfall",
+      "life": [
+        "fireflies",
+        "wind"
+      ]
+    }
+  ],
+  "blocks": {
+    "floor": "minecraft:grass_block",
+    "wall": "minecraft:stone"
+  },
+  "hero": [],
+  "life": [
+    "fireflies",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.rare_quiet",
+  "events": [
+    "lantern_release"
+  ],
+  "rule": "",
+  "secrets": [
+    {
+      "id": "the_unlit_lantern",
+      "name": "The lantern that went out"
+    }
+  ],
+  "keepsake": "orchard_lantern",
+  "keepsake_name": "A Lantern from the Orchard",
+  "keepsake_from": "the_unlit_lantern"
+}

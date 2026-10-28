@@ -137,7 +137,9 @@ public final class WorldsLive {
     public static WorldPayloads.AtlasView view(GateAtlas atlas) {
         List<java.util.Map.Entry<String, GateWorld>> all = new ArrayList<>();
         for (var e : GateWorlds.all().entrySet()) if (e.getValue().enabled() || atlas.entry(e.getKey()) != null) all.add(e);
-        all.sort(Comparator.<java.util.Map.Entry<String, GateWorld>>comparingInt(e -> e.getValue().theme().ordinal())
+        // the rare worlds last, a group of their own
+        all.sort(Comparator.<java.util.Map.Entry<String, GateWorld>>comparingInt(
+                        e -> e.getValue().tier() == GateWorld.Tier.RARE ? Integer.MAX_VALUE : e.getValue().theme().ordinal())
                 .thenComparingInt(e -> e.getValue().tier().ordinal()).thenComparing(e -> e.getValue().name()));
         List<WorldPayloads.Card> cards = new ArrayList<>();
         int found = 0;
@@ -147,7 +149,7 @@ public final class WorldsLive {
             String tier = w.tier().name().toLowerCase(Locale.ROOT);
             if (a == null) {
                 if (w.tier() != GateWorld.Tier.SECRET) {
-                    cards.add(new WorldPayloads.Card(e.getKey(), w.theme().id, tier, w.rarity().label(), false, "", "", List.of(),
+                    cards.add(new WorldPayloads.Card(e.getKey(), w.group(), tier, w.rarity().label(), false, "", "", List.of(),
                             w.moods().size(), List.of(), w.dressing().secrets().size(), "", 0, false));
                 }
                 continue;
@@ -159,7 +161,7 @@ public final class WorldsLive {
             for (GateWorld.Secret s : w.dressing().secrets()) if (a.secrets.contains(s.id())) secrets.add(s.name());
             String sig = w.dressing().signature();
             String met = !sig.isEmpty() && atlas.creatures.contains(sig) ? pretty(sig) : "";
-            cards.add(new WorldPayloads.Card(e.getKey(), w.theme().id, tier, w.rarity().label(), true, w.name(), w.line(), moods,
+            cards.add(new WorldPayloads.Card(e.getKey(), w.group(), tier, w.rarity().label(), true, w.name(), w.line(), moods,
                     w.moods().size(), secrets, w.dressing().secrets().size(), met, a.visits, a.keepsake));
         }
         return new WorldPayloads.AtlasView(found, all.size(), cards);

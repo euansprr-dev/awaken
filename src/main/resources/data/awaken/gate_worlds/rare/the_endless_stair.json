@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "theme": "abyssal_shrine",
+  "name": "The Endless Stair",
+  "line": "The same landing over and over, stairs going up from it and down from it, and none of them arrive anywhere.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "isles",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "under": 16,
+    "tunnel": 1.6,
+    "roof": 14
+  },
+  "biome": "awaken:gate_world/the_endless_stair",
+  "moods": [
+    {
+      "id": "going_down",
+      "name": "Going down",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "going_up",
+      "name": "Going up",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_endless_stair_going_up",
+      "life": [
+        "dust",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {},
+  "hero": [],
+  "life": [
+    "dust"
+  ],
+  "sound": "awaken:gate.world.abyss_steps",
+  "events": [
+    "the_hush"
+  ],
+  "rule": "vigil",
+  "secrets": [
+    {
+      "id": "the_landing_that_differs",
+      "name": "The landing that's different"
+    }
+  ],
+  "keepsake": "brass_banister",
+  "keepsake_name": "A Piece of Brass Banister",
+  "keepsake_from": "the_landing_that_differs"
+}

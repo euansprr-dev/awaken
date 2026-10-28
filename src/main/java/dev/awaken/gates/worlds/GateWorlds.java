@@ -47,10 +47,10 @@ public final class GateWorlds {
         return defs.get(id);
     }
 
-    /** A theme's worlds in id order. */
+    /** A theme's worlds in id order (a rare world belongs to no theme's set, whatever its recipe names: SPEC §38.13). */
     public static List<String> ofTheme(Theme t) {
         List<String> out = new ArrayList<>();
-        for (var e : defs.entrySet()) if (e.getValue().theme() == t) out.add(e.getKey());
+        for (var e : defs.entrySet()) if (e.getValue().theme() == t && e.getValue().tier() != GateWorld.Tier.RARE) out.add(e.getKey());
         return out;
     }
 

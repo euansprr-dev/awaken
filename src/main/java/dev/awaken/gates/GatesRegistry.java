@@ -363,7 +363,8 @@ public final class GatesRegistry {
     /**
      * Every theme after the Bell Crypt's sounds (SPEC §38.10 on), registered as gate.world.&lt;name&gt;: three beds a theme, its
      * touchstone, its events and moments, and its arrival sting (arrive_&lt;theme&gt;). From tools/art/specs/
-     * audio_gate_worlds_caves.py (38.10) and audio_gate_worlds_d.py (38.11).
+     * audio_gate_worlds_caves.py (38.10), audio_gate_worlds_d.py (38.11), audio_gate_worlds_c.py (38.12) and
+     * audio_gate_worlds_b.py (38.13).
      */
     public static final List<String> THEME_SOUNDS = List.of(
             "hollow_glow", "hollow_roots", "hollow_bloom", "mine_works", "mine_chasm", "mine_sea",
@@ -381,7 +382,12 @@ public final class GatesRegistry {
             "lab_hum", "lab_servers", "lab_sim", "dream_house", "dream_hall", "dream_deep",
             "wheel", "bells", "blizzard", "icecrack", "still", "monk", "mirror", "shatter", "doubled", "whale", "reflection",
             "console", "lockdown", "breach", "glitch", "draw", "musicbox", "lullaby", "alarm", "stirs", "sleepwalker", "fold",
-            "arrive_frost_monastery", "arrive_mirror_palace", "arrive_precursor_lab", "arrive_nightmare");
+            "arrive_frost_monastery", "arrive_mirror_palace", "arrive_precursor_lab", "arrive_nightmare",
+            // the B themes and the rare worlds (38.13)
+            "sky_wind", "sky_ruins", "sky_high", "abyss_steps", "abyss_lake", "abyss_void",
+            "rare_quiet", "rare_rain", "rare_aurora", "rare_campfire", "rare_heart",
+            "skychime", "gale", "sunburst", "great_wind", "roc", "offering", "hush", "hunger", "starfall", "knock", "watcher",
+            "arrive_rare", "echoes", "heartbeat", "doorway", "arrive_sky_archipelago", "arrive_abyssal_shrine");
     private static final java.util.Map<String, DeferredHolder<SoundEvent, SoundEvent>> THEME_SOUND = new java.util.HashMap<>();
     static {
         for (String n : THEME_SOUNDS) THEME_SOUND.put(n, sound("gate.world." + n));

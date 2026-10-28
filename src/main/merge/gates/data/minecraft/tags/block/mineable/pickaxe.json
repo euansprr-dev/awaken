@@ -97,6 +97,26 @@
     "awaken:lab_sketch",
     "awaken:lab_console",
     "awaken:humming_cube",
-    "awaken:dream_dark"
+    "awaken:dream_dark",
+    "awaken:sky_rock",
+    "awaken:sky_marble",
+    "awaken:sky_marble_carved",
+    "awaken:sky_gold",
+    "awaken:sky_hide",
+    "awaken:sky_barnacle",
+    "awaken:sky_chime",
+    "awaken:shrine_stone",
+    "awaken:abyss_tiles",
+    "awaken:abyss_pale",
+    "awaken:abyss_rune",
+    "awaken:abyss_iris",
+    "awaken:abyss_pupil",
+    "awaken:abyss_sclera",
+    "awaken:abyss_offering",
+    "awaken:rare_red_light",
+    "awaken:rare_giant_stone",
+    "awaken:rare_aurora_stone",
+    "awaken:rare_heart",
+    "awaken:rare_heart_vein"
   ]
 }

@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "theme": "nightmare",
+  "name": "The Dollhouse",
+  "line": "You're the size of a doll, in a doll's house. Somebody very big is looking in through the window.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {},
+  "biome": "awaken:gate_world/the_dollhouse",
+  "moods": [
+    {
+      "id": "playtime",
+      "name": "Playtime",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "bedtime",
+      "name": "Bedtime",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_dollhouse_bedtime",
+      "life": [
+        "dust",
+        "moths"
+      ]
+    }
+  ],
+  "blocks": {},
+  "hero": [],
+  "life": [
+    "dust"
+  ],
+  "sound": "awaken:gate.world.dream_house",
+  "events": [
+    "the_giant_looks"
+  ],
+  "rule": "lullaby",
+  "secrets": [
+    {
+      "id": "the_giant",
+      "name": "The giant"
+    },
+    {
+      "id": "the_tiny_door",
+      "name": "The tiny door"
+    }
+  ],
+  "keepsake": "doll_teacup",
+  "keepsake_name": "A Doll's Teacup",
+  "keepsake_from": "the_tiny_door"
+}

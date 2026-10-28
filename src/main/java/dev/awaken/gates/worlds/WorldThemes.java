@@ -103,7 +103,18 @@ public final class WorldThemes {
             Map.entry("lullaby", new Rule("lullaby", 0xc8a0ff, "musicbox", m -> {
                 m.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 80, 4));
                 m.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 80, 1));
-            }, "The music box has played too often. Something that hates that tune is coming to stop it.", "The Sandman")));
+            }, "The music box has played too often. Something that hates that tune is coming to stop it.", "The Sandman")),
+            // the B themes (38.13)
+            Map.entry("winds", new Rule("winds", 0xc8f0ff, "skychime", m -> {
+                m.push(0, 0.7, 0);
+                m.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 80, 0));
+                m.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 0));
+            }, "The chimes have rung too often. The Wind Warden is coming to see who's calling the wind.", "The Wind Warden")),
+            Map.entry("vigil", new Rule("vigil", 0xb888f4, "offering", m -> {
+                m.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 60, 2));
+                m.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 1));
+                m.addEffect(new MobEffectInstance(MobEffects.GLOWING, 100, 0));
+            }, "Too many offerings left in the dark. The Keeper of the Dark is coming up to see who's been giving them.", "The Keeper of the Dark")));
 
     private static final Map<UUID, Long> LAST = new HashMap<>();
 
@@ -188,21 +199,27 @@ public final class WorldThemes {
 
     // ---- events and moments ----------------------------------------------------------------------------------------
 
+    /** The secrets an event gives everyone there that aren't named after it (38.13): the giant, the swimmer, the wish. */
+    public static final Map<String, String> GIVES = Map.of("the_giant_looks", "the_giant", "the_ice_sings", "the_swimmer", "shooting_star", "the_wish");
+
     /** The room on the way (index in the path) whose arrival runs a theme event, or -1 for one this class doesn't run. */
     static int trigger(String ev, int n) {
         return switch (ev) {
             case "spore_burst", "the_hum", "queens_choir", "page_storm", "overdrive", "the_mirage", "fireworks",
-                 "the_bells", "doubled", "breach", "lullaby" -> n / 2;
+                 "the_bells", "doubled", "breach", "lullaby", "sunburst", "the_hush", "starfall",
+                 "shooting_star", "the_ink_runs", "the_giant_looks", "the_ice_sings", "the_aurora", "the_doors_open", "the_echoes" -> n / 2;
             case "tremor", "the_rains", "the_tide", "the_power_cut", "sandstorm", "lantern_release",
-                 "blizzard", "shatter", "lockdown", "the_alarm" -> Math.max(1, n / 3);
+                 "blizzard", "shatter", "lockdown", "the_alarm", "gale", "hunger", "the_downpour" -> Math.max(1, n / 3);
             case "the_wakening", "the_bloom", "slag_wyrm", "root_saint", "bookworm", "clock_keeper", "sand_walker", "the_festival",
-                 "the_still", "the_whale", "the_crash", "the_sleeper_stirs" -> Math.min(n - 1, (2 * n) / 3);
+                 "the_still", "the_whale", "the_crash", "the_sleeper_stirs", "the_great_wind", "the_knock", "the_heartbeat"
+                    -> Math.min(n - 1, (2 * n) / 3);
             default -> -1;
         };
     }
 
     /** What a world says as it wakes and its lights come on, in its own theme's words. */
     static String wakening(GateWorld w) {
+        if (w != null && w.tier() == GateWorld.Tier.RARE) return "This place wakes. Its lights come on, one after another, in colours you don't remember.";
         return switch (w == null ? "" : w.theme().id) {
             case "fungal_hollow" -> "The hollow wakes. Its glowcaps light up, one after another.";
             case "ember_mines" -> "The mine wakes. Its old furnaces catch, one after another.";
@@ -215,6 +232,8 @@ public final class WorldThemes {
             case "mirror_palace" -> "The palace wakes. Its candles light themselves, and every mirror lights with them.";
             case "precursor_lab" -> "The lab wakes. Its panels light up, one after another, and something starts counting.";
             case "nightmare" -> "The house wakes. Its lamps come on, one after another, in rooms nobody's in.";
+            case "sky_archipelago" -> "The islands wake. Their wind lanterns light themselves, one after another.";
+            case "abyssal_shrine" -> "The shrine wakes. Its candles light themselves, one after another, all the way down.";
             default -> "Something down here wakes. The lights come on, one after another.";
         };
     }
@@ -396,6 +415,132 @@ public final class WorldThemes {
                 for (Mob m : level.getEntitiesOfClass(Mob.class, new AABB(pos).inflate(40), e -> e.isAlive() && GateMobs.keyOf(e) != null))
                     m.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 200, 0));
             }
+            case "gale" -> {
+                // the wind comes across the islands from one side: it lifts you gently, and it shoves the monsters
+                say(on, "A gale blows across the islands. Hold on to something.");
+                play(level, pos, "gale", 3F, 1F);
+                double a = level.getRandom().nextDouble() * Math.PI * 2, dx = Math.cos(a), dz = Math.sin(a);
+                for (int i = 0; i < 8; i++) WorldLive.later(i * 12, () -> cloud(level, on, 0xf4f8ff, 50, 8));
+                for (ServerPlayer q : on) q.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 240, 0));
+                for (Mob m : level.getEntitiesOfClass(Mob.class, new AABB(pos).inflate(40), e -> e.isAlive() && GateMobs.keyOf(e) != null))
+                    m.push(dx * 1.1, 0.35, dz * 1.1);
+            }
+            case "sunburst" -> {
+                say(on, "The clouds part, and the sun breaks through. Everything shines, and you can see the way on.");
+                play(level, pos, "sunburst", 3F, 1F);
+                cloud(level, on, 0xfff0b0, 40, 8);
+                for (ServerPlayer q : on) q.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 120, 0));
+                WorldRules.show(level, g, f, r, pos, on, GatesRegistry.trail(0xfff0b0));
+            }
+            case "the_great_wind" -> greatWind(level, on, g, f, w, r, pos);
+            case "the_hush" -> {
+                // the dark swallows every sound: the monsters lose track of you a while
+                say(on, "Everything goes quiet. Even your own footsteps. Nothing down here can hear you now.");
+                play(level, pos, "hush", 3F, 1F);
+                for (ServerPlayer q : on) q.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 100, 0));
+                for (Mob m : level.getEntitiesOfClass(Mob.class, new AABB(pos).inflate(40), e -> e.isAlive() && GateMobs.keyOf(e) != null)) {
+                    m.setTarget(null);
+                    m.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 200, 1));
+                }
+            }
+            case "hunger" -> {
+                say(on, "Something far below the shrine is hungry. You can feel it pulling at you.");
+                play(level, pos, "hunger", 3F, 1F);
+                for (ServerPlayer q : on) q.addEffect(new MobEffectInstance(MobEffects.HUNGER, 300, 1));
+                cloud(level, on, 0x6a3eaa, 30, 6);
+                for (int i = 0; i < 2; i++) {
+                    int k = i;
+                    WorldLive.later(50 + i * 20, () -> Rooms.spawn(level, g, f, -1, MobRole.Role.NORMAL, spot(level, g, f, r, pos, 9 + k * 4)));
+                }
+            }
+            case "starfall" -> {
+                // stars come down out of the dark round you, and where they land the secrets near you glint
+                say(on, "Stars are falling out of the dark. Where they land, things that were hidden shine.");
+                play(level, pos, "starfall", 3F, 1F);
+                for (int i = 0; i < 16; i++) {
+                    int k = i;
+                    WorldLive.later(i * 6, () -> {
+                        for (ServerPlayer q : on) {
+                            double a = k * 2.4, rad = 6 + (k % 5) * 3;
+                            level.sendParticles(q, GatesRegistry.trail(0xe0e8ff), true, false, q.getX() + Math.cos(a) * rad, q.getY() + 14 - (k % 4) * 3,
+                                    q.getZ() + Math.sin(a) * rad, 12, 0.1, 2.5, 0.1, 0.05);
+                        }
+                    });
+                }
+                for (ServerPlayer q : on) WorldRules.glintSecrets(level, g, f, world.isEmpty() ? f.world : world, q.blockPosition(), q);
+                for (Mob m : level.getEntitiesOfClass(Mob.class, new AABB(pos).inflate(40), e -> e.isAlive() && GateMobs.keyOf(e) != null))
+                    m.addEffect(new MobEffectInstance(MobEffects.GLOWING, 300, 0));
+            }
+            case "the_knock" -> knock(level, on, g, f, w, r, pos);
+            // the rare worlds' own (38.13)
+            case "shooting_star" -> {
+                say(on, "A shooting star goes over, slow and bright. Make a wish.");
+                play(level, pos, "starfall", 1.5F, 1.2F);
+                for (int i = 0; i < 20; i++) {
+                    int k = i;
+                    WorldLive.later(i * 2, () -> {
+                        for (ServerPlayer q : on)
+                            level.sendParticles(q, GatesRegistry.trail(0xfff8e0), true, false, q.getX() - 30 + k * 3, q.getY() + 30 - k * 0.6, q.getZ() + 20,
+                                    6, 0.2, 0.2, 0.2, 0.0);
+                    });
+                }
+                for (ServerPlayer q : on) {
+                    q.addEffect(new MobEffectInstance(MobEffects.LUCK, 20 * 600, 0));
+                    WorldLive.found(q, world.isEmpty() ? f.world : world, GIVES.get(ev));
+                }
+            }
+            case "the_ink_runs" -> {
+                say(on, "The ink on the map runs, and the way on draws itself in front of you.");
+                play(level, pos, "draw", 2F, 0.8F);
+                WorldRules.show(level, g, f, r, pos, on, GatesRegistry.trail(0x2a3a6a));
+                for (ServerPlayer q : on) WorldRules.glintSecrets(level, g, f, world.isEmpty() ? f.world : world, q.blockPosition(), q);
+            }
+            case "the_downpour" -> {
+                say(on, "The rain gets heavier, and all of it is falling up. It's lifting the monsters off their feet.");
+                play(level, pos, "gale", 2F, 1.3F);
+                rise(level, on, 80, 0xa8d0f0);
+                for (ServerPlayer q : on) q.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 300, 0));
+                for (Mob m : level.getEntitiesOfClass(Mob.class, new AABB(pos).inflate(40), e -> e.isAlive() && GateMobs.keyOf(e) != null))
+                    m.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 50, 0));
+            }
+            case "the_giant_looks" -> {
+                say(on, "Something enormous leans down and looks in through the front of the house. Then it goes away again.");
+                play(level, pos, "watcher", 3F, 1.2F);
+                for (ServerPlayer q : on) q.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 80, 0));
+                for (Mob m : level.getEntitiesOfClass(Mob.class, new AABB(pos).inflate(40), e -> e.isAlive() && GateMobs.keyOf(e) != null))
+                    m.addEffect(new MobEffectInstance(MobEffects.GLOWING, 300, 0));
+                for (ServerPlayer q : on) WorldLive.found(q, world.isEmpty() ? f.world : world, GIVES.get(ev));
+            }
+            case "the_ice_sings" -> {
+                say(on, "The ice sings under your feet. Something very big is swimming slowly underneath it.");
+                play(level, pos, "icecrack", 2.5F, 0.8F);
+                WorldLive.later(40, () -> play(level, pos, "whale", 3F, 1.1F));
+                for (ServerPlayer q : on) WorldLive.found(q, world.isEmpty() ? f.world : world, GIVES.get(ev));
+            }
+            case "the_aurora" -> {
+                say(on, "The aurora comes down so low you could almost touch it. Standing under it, you feel better.");
+                play(level, pos, "sunburst", 2F, 0.7F);
+                for (int i = 0; i < 24; i++) {
+                    int k = i;
+                    WorldLive.later(i * 4, () -> {
+                        for (ServerPlayer q : on)
+                            level.sendParticles(q, GatesRegistry.drift(k % 3 == 0 ? 0xa080ff : 0x80ffc0), true, false, q.getX() + Math.sin(k * 0.5) * 14,
+                                    q.getY() + 12, q.getZ() - 14 + k * 1.2, 20, 1.5, 0.6, 1.5, 0.0);
+                    });
+                }
+                for (ServerPlayer q : on) q.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 0));
+            }
+            case "the_doors_open" -> {
+                say(on, "Every door in the library swings open at once, and a draught blows through all of them toward the way on.");
+                play(level, pos, "doorway", 3F, 0.9F);
+                WorldRules.show(level, g, f, r, pos, on, GatesRegistry.trail(0xfff0c8));
+            }
+            case "the_echoes" -> {
+                say(on, "The figures round the fire all start talking at once, as if they've been waiting for you to sit down.");
+                play(level, pos, "echoes", 3F, 1F);
+                for (ServerPlayer q : on) q.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 0));
+            }
+            case "the_heartbeat" -> heartbeat(level, on, g, f, w, r, pos);
             case "the_still" -> still(level, on, g, f, w, r, pos);
             case "the_whale" -> whale(level, on, g, f, w, r, pos);
             case "the_crash" -> crash(level, on, g, f, w, r, pos);
@@ -539,6 +684,48 @@ public final class WorldThemes {
         WorldLive.later(80, () -> signature(level, on, g, f, w, r, pos, "sleepwalker"));
     }
 
+    /**
+     * Above the Clouds' moment (SPEC §38.13): a great wind rises from under the islands and lifts you on it, then sets you
+     * down gently; and out of the storm it brings, the Storm Roc.
+     */
+    static void greatWind(ServerLevel level, List<ServerPlayer> on, GateRecord g, FloorLayout f, GateWorld w, Room r, BlockPos pos) {
+        say(on, "A great wind rises from below the islands. It lifts you right off your feet, and sets you down gently.");
+        play(level, pos, "great_wind", 4F, 1F);
+        for (ServerPlayer q : on) {
+            q.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 40, 1));
+            q.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 400, 0));
+        }
+        rise(level, on, 60, 0xf4f8ff);
+        for (ServerPlayer q : on) WorldLive.found(q, f.world, "the_great_wind");
+        WorldLive.later(120, () -> signature(level, on, g, f, w, r, pos, "storm_roc"));
+    }
+
+    /** The Last Room's moment: someone knocks on the door of the room, three times and once more, and then it opens. */
+    static void knock(ServerLevel level, List<ServerPlayer> on, GateRecord g, FloorLayout f, GateWorld w, Room r, BlockPos pos) {
+        say(on, "Someone knocks on the door of the room. Three times. Then nothing. Then once more.");
+        play(level, pos, "knock", 3F, 1F);
+        for (ServerPlayer q : on) WorldLive.found(q, f.world, "the_knock");
+        WorldLive.later(130, () -> signature(level, on, g, f, w, r, pos, "the_watcher"));
+    }
+
+    /**
+     * The Gates' Heart's moment: the heart at the middle of everything beats once, and you feel every gate you've opened
+     * beat with it.
+     */
+    static void heartbeat(ServerLevel level, List<ServerPlayer> on, GateRecord g, FloorLayout f, GateWorld w, Room r, BlockPos pos) {
+        say(on, "The heart of the gates beats once. You feel every gate you've ever opened beat with it.");
+        play(level, pos, "heartbeat", 4F, 1F);
+        for (int i = 0; i < 3; i++) WorldLive.later(i * 24, () -> {
+            play(level, pos, "heartbeat", 3F, 1F);
+            cloud(level, on, 0xff5060, 40, 8);
+        });
+        for (ServerPlayer q : on) {
+            q.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 300, 1));
+            q.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 20 * 120, 1));
+            WorldLive.found(q, f.world, "the_heartbeat");
+        }
+    }
+
     /** Every mirror within reach of a position cracks (the Shattered event; loaded chunks only). */
     static void crack(ServerLevel level, BlockPos pos) {
         BlockState cracked = GatesRegistry.theme("palace_mirror_cracked").defaultBlockState();
@@ -556,12 +743,18 @@ public final class WorldThemes {
 
     /** Paper lanterns going up into the night round everyone on the floor for {@code ticks}. */
     static void rise(ServerLevel level, List<ServerPlayer> on, int ticks) {
+        rise(level, on, ticks, 0);
+    }
+
+    /** Lights going up round everyone on the floor for {@code ticks}: lanterns (colour 0), or rain, or wind, in a colour. */
+    static void rise(ServerLevel level, List<ServerPlayer> on, int ticks, int colour) {
         for (int i = 0; i < ticks; i += 5) {
             int k = i;
             WorldLive.later(i, () -> {
                 for (ServerPlayer q : on) {
                     Vec3 v = q.position();
-                    level.sendParticles(q, GatesRegistry.drift(k % 10 == 0 ? 0xffb060 : 0xff8040), true, false, v.x, v.y + 2 + k * 0.15, v.z,
+                    int c = colour != 0 ? colour : k % 10 == 0 ? 0xffb060 : 0xff8040;
+                    level.sendParticles(q, GatesRegistry.drift(c), true, false, v.x, v.y + 2 + k * 0.15, v.z,
                             14, 10, 2, 10, 0.02);
                 }
             });
@@ -572,7 +765,8 @@ public final class WorldThemes {
     static final Map<String, String> NAMES = Map.ofEntries(Map.entry("slag_wyrm", "The Slag Wyrm"), Map.entry("queens_choir", "The Queen's Choir"),
             Map.entry("root_saint", "The Root Saint"), Map.entry("bookworm", "The Bookworm"), Map.entry("clock_keeper", "The Clock-Keeper"),
             Map.entry("sand_walker", "The Sand Walker"), Map.entry("lantern_spirits", "The Lantern Spirits"), Map.entry("snow_monk", "The Snow Monk"),
-            Map.entry("the_reflection", "Your Reflection"), Map.entry("the_glitch", "The Glitch"), Map.entry("sleepwalker", "The Sleepwalker"));
+            Map.entry("the_reflection", "Your Reflection"), Map.entry("the_glitch", "The Glitch"), Map.entry("sleepwalker", "The Sleepwalker"),
+            Map.entry("storm_roc", "The Storm Roc"), Map.entry("the_watcher", "The Watcher"));
 
     /** A wonder world's signature creature comes (SPEC §38.10): its own body when the mobs module has one, else a named elite. */
     static void signature(ServerLevel level, List<ServerPlayer> on, GateRecord g, FloorLayout f, GateWorld w, Room r, BlockPos pos, String id) {
@@ -586,6 +780,8 @@ public final class WorldThemes {
             case "the_reflection" -> "Someone walks out of the white towards you. It's you, and it's smiling.";
             case "the_glitch" -> "Something the simulation can't draw is coming. It flickers every time you look at it.";
             case "sleepwalker" -> "Something is walking towards you in its sleep, and it's much bigger than you.";
+            case "storm_roc" -> "Something huge is circling in the storm the wind brought. The Storm Roc is coming down for you.";
+            case "the_watcher" -> "The door opens on its own. Something is standing in the doorway, and it's been watching you all along.";
             default -> "The great tree groans. Its roots are pulling free of the floor.";
         };
         say(on, line);
@@ -599,6 +795,8 @@ public final class WorldThemes {
             case "the_reflection" -> "reflection";
             case "the_glitch" -> "glitch";
             case "sleepwalker" -> "sleepwalker";
+            case "storm_roc" -> "roc";
+            case "the_watcher" -> "watcher";
             default -> "saint";
         };
         play(level, pos, snd, 4F, 1F);

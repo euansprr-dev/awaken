@@ -50,7 +50,7 @@ import java.util.function.Function;
 public final class ThemeBlocks {
     private ThemeBlocks() {}
 
-    public enum Shape { CUBE, COLUMN, GLASS, PLANT, HANG, CARPET, FALL, TOUCH, PROP, FOLD, SKETCH, CLOUD }
+    public enum Shape { CUBE, COLUMN, GLASS, PLANT, HANG, CARPET, FALL, TOUCH, PROP, FOLD, SKETCH, CLOUD, FIGURE }
 
     /** One block: its id, shape, map colour, sound, light and (props, touchstones) its outline in pixels. */
     public record Def(String name, Shape shape, MapColor color, SoundType sound, int light, double[] box, boolean soft) {
@@ -68,7 +68,7 @@ public final class ThemeBlocks {
     }
 
     private static final Shape C = Shape.CUBE, COL = Shape.COLUMN, G = Shape.GLASS, PL = Shape.PLANT, H = Shape.HANG, CA = Shape.CARPET,
-            F = Shape.FALL, T = Shape.TOUCH, PR = Shape.PROP, FO = Shape.FOLD, SK = Shape.SKETCH, CL = Shape.CLOUD;
+            F = Shape.FALL, T = Shape.TOUCH, PR = Shape.PROP, FO = Shape.FOLD, SK = Shape.SKETCH, CL = Shape.CLOUD, FI = Shape.FIGURE;
 
     /** Every theme's blocks, in the order of the creative tab. */
     public static final List<Def> DEFS = List.of(
@@ -235,7 +235,50 @@ public final class ThemeBlocks {
             Def.soft("dream_motes", H, MapColor.COLOR_PURPLE, SoundType.EMPTY, 8),
             Def.soft("dream_toy", C, MapColor.COLOR_RED, SoundType.WOOD, 0),
             Def.soft("dream_window", G, MapColor.COLOR_LIGHT_BLUE, SoundType.GLASS, 9),
-            Def.box("dream_music_box", T, MapColor.COLOR_PINK, SoundType.WOOD, 6, 3, 0, 4, 13, 10, 12)
+            Def.box("dream_music_box", T, MapColor.COLOR_PINK, SoundType.WOOD, 6, 3, 0, 4, 13, 10, 12),
+            // Sky Archipelago (38.13)
+            Def.of("sky_rock", C, MapColor.STONE, SoundType.STONE, 0),
+            Def.soft("sky_turf", C, MapColor.GRASS, SoundType.GRASS, 0),
+            Def.of("sky_marble", C, MapColor.QUARTZ, SoundType.CALCITE, 0),
+            Def.of("sky_marble_carved", C, MapColor.QUARTZ, SoundType.CALCITE, 4),
+            Def.of("sky_gold", COL, MapColor.GOLD, SoundType.METAL, 0),
+            Def.soft("sky_planks", C, MapColor.WOOD, SoundType.WOOD, 0),
+            Def.soft("sky_rope", COL, MapColor.COLOR_BROWN, SoundType.WOOL, 0),
+            Def.soft("sky_fall", F, MapColor.WATER, SoundType.EMPTY, 4),
+            Def.soft("sky_vines", H, MapColor.PLANT, SoundType.CAVE_VINES, 0),
+            Def.soft("sky_crystal", PL, MapColor.COLOR_LIGHT_BLUE, SoundType.AMETHYST_CLUSTER, 9),
+            Def.soft("sky_banner", H, MapColor.COLOR_RED, SoundType.WOOL, 0),
+            Def.box("sky_lantern", PR, MapColor.GOLD, SoundType.LANTERN, 14, 5, 0, 5, 11, 12, 11),
+            Def.of("sky_hide", C, MapColor.COLOR_GRAY, SoundType.MUD, 0),
+            Def.of("sky_barnacle", C, MapColor.COLOR_GRAY, SoundType.TUFF, 0),
+            Def.box("sky_chime", T, MapColor.GOLD, SoundType.METAL, 6, 2, 0, 6, 14, 15, 10),
+            // Abyssal Shrine
+            Def.of("shrine_stone", C, MapColor.COLOR_BLACK, SoundType.DEEPSLATE, 0),
+            Def.of("abyss_tiles", C, MapColor.COLOR_BLACK, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("abyss_pale", C, MapColor.TERRACOTTA_WHITE, SoundType.BONE_BLOCK, 0),
+            Def.of("abyss_rune", C, MapColor.COLOR_PURPLE, SoundType.DEEPSLATE, 5),
+            Def.soft("abyss_glass", G, MapColor.COLOR_BLACK, SoundType.GLASS, 0),
+            Def.soft("abyss_candles", PL, MapColor.SAND, SoundType.CANDLE, 12),
+            Def.soft("abyss_star", H, MapColor.SNOW, SoundType.AMETHYST_CLUSTER, 10),
+            Def.soft("abyss_veil", H, MapColor.COLOR_BLACK, SoundType.WOOL, 0),
+            Def.of("abyss_iris", C, MapColor.COLOR_ORANGE, SoundType.SLIME_BLOCK, 12),
+            Def.of("abyss_pupil", C, MapColor.COLOR_BLACK, SoundType.SLIME_BLOCK, 0),
+            Def.of("abyss_sclera", C, MapColor.TERRACOTTA_WHITE, SoundType.SLIME_BLOCK, 3),
+            Def.box("abyss_offering", T, MapColor.COLOR_BROWN, SoundType.METAL, 9, 3, 0, 3, 13, 8, 13),
+            // the rare worlds (38.13)
+            Def.soft("rare_moonflower", PL, MapColor.SNOW, SoundType.GRASS, 7),
+            Def.of("rare_red_light", C, MapColor.COLOR_RED, SoundType.FROGLIGHT, 10),
+            Def.of("rare_giant_stone", C, MapColor.STONE, SoundType.STONE, 0),
+            Def.soft("rare_map", C, MapColor.SAND, SoundType.WOOD, 0),
+            Def.soft("rare_map_ink", C, MapColor.COLOR_BLUE, SoundType.WOOD, 0),
+            Def.soft("rare_rain_up", F, MapColor.WATER, SoundType.EMPTY, 2),
+            Def.of("rare_aurora_stone", C, MapColor.COLOR_CYAN, SoundType.STONE, 6),
+            Def.soft("rare_lantern_fruit", H, MapColor.COLOR_ORANGE, SoundType.LANTERN, 13),
+            Def.soft("rare_lantern_dark", H, MapColor.COLOR_BROWN, SoundType.LANTERN, 0),
+            Def.of("rare_heart", C, MapColor.COLOR_RED, SoundType.SCULK, 15),
+            Def.of("rare_heart_vein", C, MapColor.CRIMSON_HYPHAE, SoundType.SCULK, 8),
+            Def.soft("rare_doorway", F, MapColor.COLOR_PURPLE, SoundType.EMPTY, 6),
+            Def.box("rare_figure", FI, MapColor.SNOW, SoundType.WOOL, 3, 3, 0, 4, 13, 15, 12)
     );
 
     /** The touchstones that stay lit once touched (a brazier fed); the rest fade back after a few seconds. */
@@ -262,6 +305,7 @@ public final class ThemeBlocks {
             case FOLD -> p -> new Folding(p, boxOf(d));
             case SKETCH -> p -> new Folding(p, Shapes.block());
             case CLOUD -> p -> new Shaped(p, Shapes.block(), false);
+            case FIGURE -> p -> new Figure(p, boxOf(d));
         };
     }
 
@@ -285,7 +329,7 @@ public final class ThemeBlocks {
                     .isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false);
             // a cloud is a whole block you fall through (it hides its neighbours' faces, so a sea of it is cheap to draw)
             case CLOUD -> p = p.noCollision().isValidSpawn((s, l, pos, t) -> false).isSuffocating((s, l, pos) -> false);
-            case CARPET, PROP, TOUCH, FOLD -> p = p.noOcclusion().isValidSpawn((s, l, pos, t) -> false);
+            case CARPET, PROP, TOUCH, FOLD, FIGURE -> p = p.noOcclusion().isValidSpawn((s, l, pos, t) -> false);
             default -> {}
         }
         return p;
@@ -764,6 +808,75 @@ public final class ThemeBlocks {
         }
     }
 
+    /** The Sky Archipelago's set piece, the Wind Bell: ring it and everyone near drifts down like a feather a while. */
+    public static final class WindBell extends Shaped {
+        public WindBell(BlockBehaviour.Properties p) {
+            super(p, Block.box(4, 0, 4, 12, 13, 12), true);
+        }
+
+        @Override
+        protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+            if (!(level instanceof ServerLevel sl)) return InteractionResult.SUCCESS;
+            int n = 0;
+            for (Player q : sl.getEntitiesOfClass(Player.class, new net.minecraft.world.phys.AABB(pos).inflate(12))) {
+                q.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.SLOW_FALLING, 20 * 30, 0));
+                n++;
+            }
+            player.sendOverlayMessage(net.minecraft.network.chat.Component.literal(n > 1
+                    ? "The wind picks up all of you. Nobody near here will fall hard for half a minute."
+                    : "The wind picks you up. You won't fall hard for half a minute."));
+            sl.sendParticles(ParticleTypes.CLOUD, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, 12, 0.6, 0.3, 0.6, 0.02);
+            sl.playSound(null, pos, SoundEvents.BELL_BLOCK, SoundSource.BLOCKS, 0.6F, 1.8F);
+            return InteractionResult.SUCCESS_SERVER;
+        }
+    }
+
+    /** The Abyssal Shrine's set piece, the Dark Lantern: open it and everyone near sees in the dark a few minutes. */
+    public static final class DarkLantern extends Shaped {
+        public DarkLantern(BlockBehaviour.Properties p) {
+            super(p, Block.box(5, 0, 5, 11, 13, 11), true);
+        }
+
+        @Override
+        protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+            if (!(level instanceof ServerLevel sl)) return InteractionResult.SUCCESS;
+            for (Player q : sl.getEntitiesOfClass(Player.class, new net.minecraft.world.phys.AABB(pos).inflate(12)))
+                q.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.NIGHT_VISION, 20 * 180, 0));
+            player.sendOverlayMessage(net.minecraft.network.chat.Component.literal("The lantern's dark light gets into your eyes. You can see in the dark for a few minutes."));
+            sl.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 0.7F, 0.5F);
+            return InteractionResult.SUCCESS_SERVER;
+        }
+    }
+
+    /**
+     * One of the pale figures sitting round the Last Campfire (38.13): talk to it and it says one thing, the same thing
+     * every time, picked by where it sits. They're the people who came through the gates before you.
+     */
+    public static final class Figure extends Shaped {
+        static final String[] LINES = {
+                "Sit down, there's room. We've all been walking a long time.",
+                "I came through a gate like yours once. I never found the way back, and after a while I stopped looking.",
+                "Keep the fire going for whoever comes after you. Somebody kept it going for us.",
+                "You look tired. Rest a minute. Nothing comes here, it never has.",
+                "Somebody always leaves one seat empty. I think it's for whoever turns up next.",
+                "I don't remember my name any more. I remember the bells, though.",
+                "The gates aren't cruel. They just don't know when to stop.",
+                "When you go back, tell them we're fine. We are, mostly."};
+
+        public Figure(BlockBehaviour.Properties p, VoxelShape shape) {
+            super(p, shape, true);
+        }
+
+        @Override
+        protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+            if (!(level instanceof ServerLevel sl)) return InteractionResult.SUCCESS;
+            int i = Math.floorMod((int) (pos.asLong() * 0x9E3779B97F4A7C15L >>> 33), LINES.length);
+            player.sendOverlayMessage(net.minecraft.network.chat.Component.literal(LINES[i]));
+            sl.playSound(null, pos, SoundEvents.SOUL_ESCAPE.value(), SoundSource.BLOCKS, 0.6F, 0.9F);
+            return InteractionResult.SUCCESS_SERVER;
+        }
+    }
+
     /** The set pieces' ids and makers, registered with their items in the creative tab's set row. */
     public static Map<String, DeferredBlock<? extends Block>> registerSets(DeferredRegister.Blocks blocks) {
         Map<String, DeferredBlock<? extends Block>> out = new LinkedHashMap<>();
@@ -796,6 +909,10 @@ public final class ThemeBlocks {
                         .lightLevel(s -> s.getValue(HummingCube.POWERED) ? 12 : 5)));
         out.put("night_light", blocks.registerBlock("night_light", NightLight::new,
                 p -> p.mapColor(MapColor.COLOR_LIGHT_BLUE).sound(SoundType.GLASS).strength(0.6F).noOcclusion().lightLevel(s -> 11)));
+        out.put("wind_bell", blocks.registerBlock("wind_bell", WindBell::new,
+                p -> p.mapColor(MapColor.GOLD).sound(SoundType.METAL).strength(0.6F).noOcclusion().lightLevel(s -> 6)));
+        out.put("dark_lantern", blocks.registerBlock("dark_lantern", DarkLantern::new,
+                p -> p.mapColor(MapColor.COLOR_PURPLE).sound(SoundType.LANTERN).strength(0.6F).noOcclusion().lightLevel(s -> 9)));
         return out;
     }
 }

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/abyss_offering"
+    },
+    "lit=true": {
+      "model": "awaken:block/abyss_offering_lit"
+    }
+  }
+}

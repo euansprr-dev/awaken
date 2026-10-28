@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "theme": "abyssal_shrine",
+  "name": "The Gates' Heart",
+  "line": "The middle of every gate there is. Something huge is beating here, and a ring of gold stands round it.",
+  "tier": "rare",
+  "rarity": "mythic",
+  "kind": "isles",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "under": 16,
+    "tunnel": 1.6,
+    "roof": 16
+  },
+  "biome": "awaken:gate_world/the_gates_heart",
+  "moods": [
+    {
+      "id": "beating",
+      "name": "Beating",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "stars",
+        "dust"
+      ]
+    },
+    {
+      "id": "quickening",
+      "name": "Quickening",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_gates_heart_quickening",
+      "life": [
+        "stars",
+        "embers"
+      ]
+    }
+  ],
+  "blocks": {},
+  "hero": [],
+  "life": [
+    "stars",
+    "dust"
+  ],
+  "sound": "awaken:gate.world.rare_heart",
+  "events": [
+    "the_heartbeat"
+  ],
+  "rule": "vigil",
+  "secrets": [
+    {
+      "id": "the_heartbeat",
+      "name": "The heartbeat"
+    },
+    {
+      "id": "the_first_gate",
+      "name": "The first gate"
+    }
+  ],
+  "keepsake": "heart_ember",
+  "keepsake_name": "An Ember from the Gates' Heart",
+  "keepsake_from": "the_heartbeat"
+}

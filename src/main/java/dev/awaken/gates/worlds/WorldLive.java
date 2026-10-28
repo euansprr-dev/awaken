@@ -126,6 +126,8 @@ public final class WorldLive {
     static final Map<UUID, Repeat> REPEATS = new HashMap<>();
     /** The room of the place world each player stands in, if any. */
     static final Map<UUID, Integer> PLACE = new HashMap<>();
+    /** The doorway each player last stepped out of (38.13): it doesn't take them back until they've left it. */
+    static final Map<UUID, Integer> DOORS = new HashMap<>();
     static final PriorityQueue<Timed> LATER = new PriorityQueue<>(Comparator.comparingLong(Timed::at).thenComparingLong(Timed::seq));
     private static long now, seq;
 
@@ -135,6 +137,7 @@ public final class WorldLive {
         LEDGES.clear();
         REPEATS.clear();
         PLACE.clear();
+        DOORS.clear();
         LATER.clear();
         WorldRules.clear();
         WorldProps.clear();
@@ -168,6 +171,7 @@ public final class WorldLive {
     /** A player stepped onto a floor (WorldsLive.arrive): nothing carries over from the last one. */
     static void left(ServerPlayer p) {
         PLACE.remove(p.getUUID());
+        DOORS.remove(p.getUUID());
         REPEATS.remove(p.getUUID());
         Ledge l = LEDGES.get(p.getUUID());
         if (l != null) l.pos = null;
@@ -229,6 +233,61 @@ public final class WorldLive {
         WorldProps.near(level, p, g, f);
         if (f.world.endsWith("/inkwell") && (level.getGameTime() + p.getId()) % 4 == 0) unfold(level, p);
         if (f.world.endsWith("/simulation")) draw(level, p);
+        if (f.world.endsWith("/the_library_of_doors")) doors(level, p, g, f);
+        if (f.world.endsWith("/the_glass_sea") && (now + p.getId()) % 200 < 10) fish(level, p);
+    }
+
+    // ---- the rare worlds (38.13) ----------------------------------------------------------------------------------------
+
+    /**
+     * The Library of Doors: stand in a doorway's shimmer and you step out of the next doorway on the floor, facing out of
+     * it. The one you came out of doesn't take you back until you've stepped clear of it.
+     */
+    static void doors(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f) {
+        List<FloorLayout.Mark> doors = f.marks(FloorLayout.Mark.DOOR);
+        if (doors.size() < 2) return;
+        BlockPos o = GateService.world(g, f, 0, 0, 0);
+        int x = p.getBlockX() - o.getX(), y = p.getBlockY() - o.getY(), z = p.getBlockZ() - o.getZ();
+        int in = -1;
+        for (int i = 0; i < doors.size(); i++) if (doors.get(i).contains(x, y, z)) in = i;
+        Integer came = DOORS.get(p.getUUID());
+        if (in < 0) {
+            DOORS.remove(p.getUUID());
+            return;
+        }
+        if (came != null && came == in) return;
+        int to = (in + 1) % doors.size();
+        FloorLayout.Mark d = doors.get(to);
+        String[] way = d.id().split(",");
+        int dx = Integer.parseInt(way[0]), dz = Integer.parseInt(way[1]);
+        double tx = o.getX() + d.cx() + dx * 1.5, tz = o.getZ() + d.cz() + dz * 1.5;
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        WorldThemes.play(level, p.blockPosition(), "doorway", 0.8F, 1F);
+        p.teleportTo(level, tx, o.getY() + d.y0() + 0.05, tz, java.util.Set.of(), yaw, 0F, false);
+        DOORS.put(p.getUUID(), to);
+        WorldThemes.play(level, p.blockPosition(), "doorway", 0.8F, 1.2F);
+    }
+
+    /** The Glass Sea: fish swimming under the ice near you, a few at a time (vanilla cod and tropical fish). */
+    static void fish(ServerLevel level, ServerPlayer p) {
+        if (level.getEntitiesOfClass(net.minecraft.world.entity.animal.fish.AbstractFish.class, p.getBoundingBox().inflate(24)).size() >= 8) return;
+        var r = p.getRandom();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int t = 0; t < 4; t++) {
+            int x = p.getBlockX() + r.nextInt(25) - 12, z = p.getBlockZ() + r.nextInt(25) - 12;
+            for (int y = p.getBlockY() + 2; y > p.getBlockY() - 10; y--) {
+                m.set(x, y, z);
+                if (!level.getBlockState(m).is(GatesRegistry.theme("frost_ice"))) continue;
+                m.set(x, y - 2, z);
+                if (!level.getFluidState(m).is(net.minecraft.tags.FluidTags.WATER)) break;
+                var e = (r.nextInt(3) == 0 ? net.minecraft.world.entity.EntityTypes.TROPICAL_FISH : net.minecraft.world.entity.EntityTypes.COD)
+                        .create(level, net.minecraft.world.entity.EntitySpawnReason.NATURAL);
+                if (e == null) return;
+                e.snapTo(x + 0.5, y - 1.5, z + 0.5, r.nextFloat() * 360, 0);
+                level.addFreshEntity(e);
+                return;
+            }
+        }
     }
 
     /** A hung bell over you hums softly as you pass under it (within its rim, 32 below it at most). */

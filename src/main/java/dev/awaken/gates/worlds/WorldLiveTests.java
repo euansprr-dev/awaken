@@ -278,12 +278,9 @@ public final class WorldLiveTests {
             boolean tower = false;
             for (int i = 0; i < p.getInventory().getContainerSize(); i++) tower |= p.getInventory().getItem(i).is(GatesRegistry.BELL_TOWER.get().asItem());
             h.assertTrue(tower, "the fifth keepsake brings the bell tower");
-            for (var t : List.of(dev.awaken.gates.content.Theme.FUNGAL_HOLLOW, dev.awaken.gates.content.Theme.EMBER_MINES,
-                    dev.awaken.gates.content.Theme.HIVE, dev.awaken.gates.content.Theme.OVERGROWN_TEMPLE,
-                    dev.awaken.gates.content.Theme.DROWNED_ARCHIVE, dev.awaken.gates.content.Theme.CLOCKWORK_FOUNDRY,
-                    dev.awaken.gates.content.Theme.GLASS_DESERT, dev.awaken.gates.content.Theme.LANTERN_NIGHT_MARKET,
-                    dev.awaken.gates.content.Theme.FROST_MONASTERY, dev.awaken.gates.content.Theme.MIRROR_PALACE,
-                    dev.awaken.gates.content.Theme.PRECURSOR_LAB, dev.awaken.gates.content.Theme.NIGHTMARE)) {
+            // every other theme has its piece and five keepsakes (a rare world's keepsake belongs to no theme's set)
+            for (var t : dev.awaken.gates.content.Theme.values()) {
+                if (t == dev.awaken.gates.content.Theme.BELL_CRYPT) continue;
                 h.assertTrue(WorldSets.of(t) != null && WorldSets.of(t).item().get() != null, t.id + " has its set piece");
                 long keeps = GateWorlds.ofTheme(t).stream().filter(w -> !GateWorlds.get(w).dressing().keepsake().isEmpty()).count();
                 h.assertTrue(keeps == 5, t.id + " has a keepsake in each of its five worlds (" + keeps + ")");

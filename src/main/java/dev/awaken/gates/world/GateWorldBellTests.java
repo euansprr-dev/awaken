@@ -44,6 +44,13 @@ public final class GateWorldBellTests {
             "mirror_palace/gallery", "mirror_palace/mirror_maze", "mirror_palace/inverted_palace", "mirror_palace/the_white",
             "precursor_lab/facility", "precursor_lab/server_abyss", "precursor_lab/containment", "precursor_lab/simulation",
             "nightmare/the_house", "nightmare/endless_hall", "nightmare/upside_down", "nightmare/sleepers_dream");
+    /** Stage 5's floor worlds (SPEC §38.13): the sky's open lands, the abyss's silent ones, and the rare worlds. */
+    public static final List<String> E_WORLDS = List.of(
+            "sky_archipelago/the_isles", "sky_archipelago/sky_ruins", "sky_archipelago/wind_stair", "sky_archipelago/above_the_clouds",
+            "abyssal_shrine/black_mirror", "abyssal_shrine/dark_steps", "abyssal_shrine/starfall", "abyssal_shrine/the_last_room",
+            "rare/the_quiet", "rare/upward_rain", "rare/the_aurora_steppe", "rare/the_lantern_orchard", "rare/the_last_campfire",
+            "rare/the_cartographers_table", "rare/the_reflection", "rare/the_other_gate", "rare/the_hollow_sky", "rare/the_endless_stair",
+            "rare/the_gates_heart", "rare/the_tide_room", "rare/the_library_of_doors", "rare/the_dollhouse", "rare/the_glass_sea");
 
     public static GatePlan plan(long seed, int i) {
         return plan(seed, i, Theme.BELL_CRYPT);
@@ -314,7 +321,9 @@ public final class GateWorldBellTests {
             int floors = 0;
             java.util.Set<String> secrets = new java.util.HashSet<>(), places = new java.util.HashSet<>();
             for (int i = 0; i < plans; i++) {
-                GatePlan p = dressed(plan(0x5E11L + i * 104729L, i, w.theme()), id, moods.get(i % moods.size()));
+                // a rare world turns up in any theme's gate, and the Reflection wears the gate it's in: try several
+                Theme gate = w.tier() == GateWorld.Tier.RARE ? Theme.values()[(w.theme().ordinal() + i * 5) % Theme.values().length] : w.theme();
+                GatePlan p = dressed(plan(0x5E11L + i * 104729L, i, gate), id, moods.get(i % moods.size()));
                 long t = System.nanoTime();
                 GateLayout l = FloorBuilder.build(p);
                 double planMs = (System.nanoTime() - t) / 1e6 / Math.max(1, p.worlds().size());
@@ -336,6 +345,7 @@ public final class GateWorldBellTests {
             h.assertTrue(floors > 0, "some floors were " + world);
             for (GateWorld.Secret sc : w.dressing().secrets()) {
                 boolean placed = secrets.contains(sc.id()) || w.dressing().events().contains(sc.id())
+                        || w.dressing().events().stream().anyMatch(ev -> sc.id().equals(dev.awaken.gates.worlds.WorldThemes.GIVES.get(ev)))
                         || (!sc.leadsTo().isEmpty() && places.contains(sc.leadsTo()));
                 h.assertTrue(placed, world + "'s secret " + sc.id() + " is never placed");
                 GateWorld inner = sc.leadsTo().isEmpty() ? null : GateWorlds.get(sc.leadsTo());
@@ -403,6 +413,8 @@ public final class GateWorldBellTests {
         for (String id : D_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
         // the C themes (38.12)
         for (String id : C_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
+        // the sky, the abyss and the rare worlds (38.13)
+        for (String id : E_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
         AwakenTests.register("gateworlds_repeats", 1200, h -> {
             // a world that moves you has to look the same where it puts you (38.12): the fold's three slots are one slot
             // again and again, each the same turned about its middle; the endless plain's outer band repeats every 32

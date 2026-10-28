@@ -71,7 +71,7 @@ public final class Pressure {
             for (ServerPlayer p : players) since = Math.min(since, Runs.run(p).floorStartedAt);
             long onFloor = now - since;
             FloorLayout f = GateLayout.of(g.plan).floor(first.area, first.floor);
-            if (f == null) continue;
+            if (f == null || Rooms.calm(f, null)) continue;
             FloorState fs = g.floor(first.area, first.floor);
             if (onFloor >= start(g) - 600 && onFloor < start(g) - 580) {
                 for (ServerPlayer p : players) Signal.toast(p, Component.literal("The gate stirs."));

@@ -57,7 +57,7 @@ final class AtlasSection extends UiSection {
             int found = 0;
             for (var c : cards) if (c.found()) found++;
             if (found == 0) continue; // a theme shows once you've found one of its worlds
-            Theme t = Theme.byId(e.getKey());
+            Theme t = Theme.parse(e.getKey());
             ui.pair((t == null ? Ui.pretty(e.getKey()) : t.displayName).toUpperCase(java.util.Locale.ROOT), found + " of " + cards.size(),
                     Glass.a(Glass.LANTERN, 1f), Glass.a(Glass.LABEL, 1f));
             ui.gap(3);

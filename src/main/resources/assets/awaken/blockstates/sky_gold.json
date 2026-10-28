@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/sky_gold"
+    },
+    "axis=z": {
+      "model": "awaken:block/sky_gold",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "awaken:block/sky_gold",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

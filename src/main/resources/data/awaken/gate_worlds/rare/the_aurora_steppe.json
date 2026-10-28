@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "theme": "frost_monastery",
+  "name": "The Aurora Steppe",
+  "line": "Cold dry grass under the aurora, and old standing stones all over it that light up when the sky does.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "open",
+  "tall": true,
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "lid": 16,
+    "slope": 0.35,
+    "night": 1,
+    "tunnel": 3.0
+  },
+  "biome": "awaken:gate_world/the_aurora_steppe",
+  "moods": [
+    {
+      "id": "aurora",
+      "name": "The aurora",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "stars",
+        "wind"
+      ]
+    },
+    {
+      "id": "clear_cold",
+      "name": "Clear and cold",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_aurora_steppe_clear_cold",
+      "life": [
+        "stars",
+        "snow"
+      ]
+    }
+  ],
+  "blocks": {
+    "floor": "minecraft:grass_block",
+    "wall": "minecraft:stone"
+  },
+  "hero": [],
+  "life": [
+    "stars",
+    "wind"
+  ],
+  "sound": "awaken:gate.world.rare_aurora",
+  "events": [
+    "the_aurora"
+  ],
+  "rule": "",
+  "secrets": [
+    {
+      "id": "the_stone_circle",
+      "name": "The stone circle"
+    }
+  ],
+  "keepsake": "aurora_shard",
+  "keepsake_name": "A Shard of the Aurora",
+  "keepsake_from": "the_stone_circle"
+}

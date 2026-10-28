@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "theme": "drowned_archive",
+  "name": "The Tide Room",
+  "line": "Rooms the sea comes into twice a day. It's out now, and it's left its shells all over the floor.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "lake": 1,
+    "roof": 10,
+    "wobble": 1.8
+  },
+  "biome": "awaken:gate_world/the_tide_room",
+  "moods": [
+    {
+      "id": "low_tide",
+      "name": "Low tide",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "drips"
+      ]
+    },
+    {
+      "id": "turning",
+      "name": "The tide turning",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_tide_room_turning",
+      "life": [
+        "drips",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {},
+  "hero": [],
+  "life": [
+    "drips",
+    "pale_fish"
+  ],
+  "sound": "awaken:gate.world.archive_atrium",
+  "events": [
+    "the_tide"
+  ],
+  "rule": "reading",
+  "secrets": [
+    {
+      "id": "the_pearl_pool",
+      "name": "The pearl pool"
+    }
+  ],
+  "keepsake": "tide_shell",
+  "keepsake_name": "A Shell from the Tide Room",
+  "keepsake_from": "the_pearl_pool"
+}

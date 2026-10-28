@@ -246,6 +246,41 @@ DREAM_MOODS = {
     "wake": ("#4a4a5a", 1.2, [("minecraft:falling_water", 0.004)], ("awaken:gate.world.alarm", 0.001)),
 }
 
+SKYW = {
+    "the_isles": ("#c8dcf0", "#8ab8e8", "#3a8ad0", "#0a3060", 30.0, 220.0, "awaken:gate.world.sky_wind",
+                  [("minecraft:white_ash", 0.0006)], ("awaken:gate.world.skychime", 0.003)),
+    "sky_ruins": ("#d8e0ec", "#9cc0e8", "#3a8ad0", "#0a3060", 30.0, 220.0, "awaken:gate.world.sky_ruins",
+                  [("minecraft:white_ash", 0.0006)], ("awaken:gate.world.skychime", 0.002)),
+    "wind_stair": ("#8a98a8", "#6a7a90", "#3a6a90", "#0a2040", 18.0, 150.0, "awaken:gate.world.sky_high",
+                   [("minecraft:white_ash", 0.004)], ("awaken:gate.world.gale", 0.002)),
+    "above_the_clouds": ("#e0ecf8", "#7ab0f0", "#3a8ad0", "#0a3060", 40.0, 240.0, "awaken:gate.world.sky_high",
+                         [("minecraft:white_ash", 0.0004)], ("awaken:gate.world.skychime", 0.002)),
+    "whale_road": ("#c0d4ec", "#80b0e8", "#3a8ad0", "#0a3060", 30.0, 220.0, "awaken:gate.world.sky_wind",
+                   [("minecraft:white_ash", 0.0006)], ("awaken:gate.world.roc", 0.0004)),
+}
+SKYW_MOODS = {
+    "gale": ("#8a98a8", 0.7, [("minecraft:white_ash", 0.006)], ("awaken:gate.world.gale", 0.005)),
+    "sunset": ("#e8a070", 1.0, [], None),
+    "starlight": ("#101830", 0.9, [("minecraft:end_rod", 0.0004)], None),
+}
+ABYSS = {
+    "dark_steps": ("#100c18", "#06040c", "#1a1430", "#04020a", 6.0, 90.0, "awaken:gate.world.abyss_steps",
+                   [("minecraft:white_ash", 0.001)], ("awaken:gate.world.hush", 0.0008)),
+    "black_mirror": ("#0c0a14", "#04030a", "#050408", "#020104", 8.0, 120.0, "awaken:gate.world.abyss_lake",
+                     [("minecraft:end_rod", 0.0002)], ("awaken:gate.world.hush", 0.0008)),
+    "starfall": ("#0a0a1a", "#04040e", "#1a1430", "#04020a", 10.0, 140.0, "awaken:gate.world.abyss_void",
+                 [("minecraft:end_rod", 0.0008)], ("awaken:gate.world.starfall", 0.0015)),
+    "the_last_room": ("#141018", "#08060c", "#1a1430", "#04020a", 4.0, 48.0, "awaken:gate.world.abyss_void",
+                      [], ("awaken:gate.world.knock", 0.0005)),
+    "the_eye": ("#140a10", "#08040a", "#1a1430", "#04020a", 6.0, 64.0, "awaken:gate.world.abyss_void",
+                [], ("awaken:gate.world.watcher", 0.0008)),
+}
+ABYSS_MOODS = {
+    "silence": ("#05050a", 0.7, [], None),
+    "starfall": ("#14143a", 1.1, [("minecraft:end_rod", 0.001)], ("awaken:gate.world.starfall", 0.003)),
+    "hunger": ("#2a0a10", 0.8, [("minecraft:crimson_spore", 0.002)], ("awaken:gate.world.hunger", 0.002)),
+}
+
 # The real sky over the open lands (gates_sky, 38.11): sun_angle 0 is noon, 90 sunset, 180 midnight. Every sky attribute is
 # spatially interpolated, so a biome carries it; the Market's lands are always night (its recipes say night 1).
 NIGHT = {"sun_angle": 180.0, "moon_angle": 0.0, "star_brightness": 0.6, "sky_light_factor": 0.24, "sky_light_color": "#7a7aff"}
@@ -260,6 +295,11 @@ SKY = {
     "cloisters": {"sun_angle": 30.0, "sky_light_color": "#e8f0ff"},
     "cliff_stair": {"sun_angle": 20.0, "sky_light_color": "#f0f4ff"},
     "still_snow": {"sun_angle": 62.0, "sky_light_color": "#d8e0ff", "star_brightness": 0.3},
+    "the_isles": {"sun_angle": 20.0, "sky_light_color": "#fff8e8"},
+    "sky_ruins": {"sun_angle": 35.0, "sky_light_color": "#fff4e0"},
+    "wind_stair": {"sun_angle": 50.0, "sky_light_color": "#c8d4e8", "sky_light_factor": 0.7},
+    "above_the_clouds": {"sun_angle": 10.0, "sky_light_color": "#ffffff"},
+    "whale_road": {"sun_angle": 30.0, "sky_light_color": "#f0f4ff"},
 }
 # a mood's sky over an open world: its own fog and sky colours (not a tint) and its light
 MOOD_SKY = {
@@ -270,6 +310,19 @@ MOOD_SKY = {
     "blizzard": {"fog": "#e0e8f0", "sky": "#c0c8d0", "sky_light_factor": 0.6},
     "aurora": dict(NIGHT, fog="#102030", sky="#081830", sky_light_color="#80ffd0", star_brightness=0.9),
     "thaw": {"fog": "#a8b8c8", "sky": "#8898b0", "sky_light_factor": 0.8},
+    "gale": {"fog": "#8a98a8", "sky": "#6a7a90", "sky_light_factor": 0.6},
+    "sunset": {"fog": "#e8a070", "sky": "#d88860", "sun_angle": 80.0, "sunrise_sunset_color": "#c0ff8040",
+               "sky_light_color": "#ffb880", "sky_light_factor": 0.8},
+    "evening": {"fog": "#d89070", "sky": "#c07860", "sun_angle": 84.0, "sunrise_sunset_color": "#c0ff8040",
+                "sky_light_color": "#ffb080", "sky_light_factor": 0.75},
+    "starlight": dict(NIGHT, fog="#101830", sky="#060c20", star_brightness=1.0),
+    "first_light": {"fog": "#5a6a90", "sky": "#4a5a88", "sun_angle": 95.0, "sunrise_sunset_color": "#c0a0b0ff",
+                    "sky_light_color": "#b0b8ff", "sky_light_factor": 0.5},
+    "downpour": {"fog": "#5a7088", "sky": "#4a6078", "sky_light_factor": 0.55},
+    "snowfall": {"fog": "#e0e8f0", "sky": "#c0c8d8", "sky_light_factor": 0.65},
+    "clear_cold": dict(NIGHT, fog="#0a1428", sky="#04081a", star_brightness=1.0),
+    "windfall": dict(NIGHT, fog="#2a1e18", sky="#140c18", sky_light_color="#ffa060"),
+    "late": dict(NIGHT, fog="#0a0c14", sky="#04060c", star_brightness=1.0),
 }
 
 # theme: its worlds, its moods (every world but the secret one has them), its secret world, its water colour if not the table's
@@ -287,7 +340,69 @@ THEMES = {
     "mirror_palace": (PALACE, PALACE_MOODS, "room_behind_glass"),
     "precursor_lab": (LAB, LAB_MOODS, "garden_dome"),
     "nightmare": (DREAM, DREAM_MOODS, "nursery"),
+    "sky_archipelago": (SKYW, SKYW_MOODS, "whale_road"),
+    "abyssal_shrine": (ABYSS, ABYSS_MOODS, "the_eye"),
 }
+# the themes with no music of their own (the Abyssal Shrine keeps silence)
+SILENT = {"abyssal_shrine"}
+
+# The rare worlds (38.13): one biome each and one for each mood after the first; music from their theme (none for the
+# Abyssal Shrine's, which keeps silence); an open one's sky as well.
+RARE = {
+    "the_quiet": (("#141c30", "#0a1028", "#2a4a80", "#081428", 20.0, 200.0, "awaken:gate.world.rare_quiet",
+                   [("minecraft:firefly", 0.002)], ("awaken:gate.world.echoes", 0.0004)), "overgrown_temple",
+                  dict(NIGHT, star_brightness=1.0, sky_light_color="#8a9aff"),
+                  {"first_light": ("#4a5a80", 1.2, [], None)}),
+    "the_reflection": (("#2a2a2a", "#141414", "#3a3a3a", "#101010", 6.0, 90.0, "awaken:gate.world.palace_under",
+                        [("minecraft:white_ash", 0.002)], ("awaken:gate.world.doubled", 0.0006)), "mirror_palace", None,
+                       {"red_light": ("#4a0a0a", 0.8, [], None)}),
+    "the_hollow_sky": (("#b8cce4", "#7aa8e0", "#3a8ad0", "#0a3060", 30.0, 220.0, "awaken:gate.world.sky_high",
+                        [("minecraft:white_ash", 0.0006)], ("awaken:gate.world.great_wind", 0.0004)), "sky_archipelago",
+                       {"sun_angle": 35.0, "sky_light_color": "#fff4e8"},
+                       {"evening": ("#e8a070", 0.9, [], None)}),
+    "the_endless_stair": (("#0e0c16", "#06040c", "#1a1430", "#04020a", 6.0, 90.0, "awaken:gate.world.abyss_steps",
+                           [("minecraft:white_ash", 0.001)], ("awaken:gate.world.hush", 0.0008)), None, None,
+                          {"going_up": ("#20203a", 1.1, [], None)}),
+    "the_other_gate": (("#2a1a3a", "#140a24", "#6a2a8a", "#140a24", 8.0, 110.0, "awaken:gate.world.dream_deep",
+                        [("minecraft:end_rod", 0.0004)], ("awaken:gate.world.doorway", 0.0004)), "nightmare", None,
+                       {"wronger": ("#3a4a1a", 0.8, [], None)}),
+    "the_tide_room": (("#1e3438", "#0e1a1e", "#3a9aa0", "#0a2a30", 10.0, 130.0, "awaken:gate.world.archive_atrium",
+                       [("minecraft:dripping_water", 0.003)], ("awaken:gate.world.tide", 0.0008)), "drowned_archive", None,
+                      {"turning": ("#1a3a44", 0.85, [("minecraft:falling_water", 0.004)], None)}),
+    "the_cartographers_table": (("#d8ccac", "#b8a888", "#3a5a9a", "#0a1a40", 20.0, 180.0, "awaken:gate.world.archive_stacks",
+                                 [("minecraft:white_ash", 0.001)], ("awaken:gate.world.pages", 0.0008)), "drowned_archive", None,
+                                {"fresh_ink": ("#3a4a7a", 0.9, [], None)}),
+    "upward_rain": (("#8aa0b0", "#6a8aa8", "#3a7aa0", "#0a2a40", 14.0, 140.0, "awaken:gate.world.rare_rain",
+                     [("minecraft:dripping_water", 0.004)], ("awaken:gate.world.rains", 0.0006)), "overgrown_temple",
+                    {"sun_angle": 50.0, "sky_light_color": "#c8d8e8", "sky_light_factor": 0.7},
+                    {"downpour": ("#5a7088", 0.7, [("minecraft:falling_water", 0.006)], None)}),
+    "the_dollhouse": (("#2a2034", "#120c1a", "#3a3060", "#0a0818", 8.0, 96.0, "awaken:gate.world.dream_house",
+                       [("minecraft:white_ash", 0.001)], ("awaken:gate.world.watcher", 0.0004)), "nightmare", None,
+                      {"bedtime": ("#14102a", 0.8, [], None)}),
+    "the_glass_sea": (("#c8dcec", "#8ab0d8", "#2a6aa0", "#0a2a50", 30.0, 220.0, "awaken:gate.world.rare_aurora",
+                       [("minecraft:white_ash", 0.002)], ("awaken:gate.world.whale", 0.0004)), "frost_monastery",
+                      {"sun_angle": 70.0, "sky_light_color": "#d8e8ff", "star_brightness": 0.4},
+                      {"snowfall": ("#e0e8f0", 0.6, [("minecraft:white_ash", 0.008)], None)}),
+    "the_aurora_steppe": (("#102030", "#081830", "#2a4a70", "#081428", 24.0, 200.0, "awaken:gate.world.rare_aurora",
+                           [("minecraft:end_rod", 0.0003)], ("awaken:gate.world.gale", 0.0004)), "frost_monastery",
+                          dict(NIGHT, sky_light_color="#80ffd0", star_brightness=0.9),
+                          {"clear_cold": ("#0a1428", 1.1, [], None)}),
+    "the_library_of_doors": (("#1a2a2e", "#0c1618", "#2a6a70", "#06181c", 8.0, 110.0, "awaken:gate.world.dream_hall",
+                              [("minecraft:white_ash", 0.001)], ("awaken:gate.world.doorway", 0.0006)), "drowned_archive", None,
+                             {"closing_time": ("#2a1e10", 0.8, [], None)}),
+    "the_lantern_orchard": (("#2a1e18", "#140c18", "#2a4a60", "#081420", 16.0, 160.0, "awaken:gate.world.rare_quiet",
+                             [("minecraft:firefly", 0.003)], ("awaken:gate.world.release", 0.0003)), "overgrown_temple",
+                            dict(NIGHT, sky_light_color="#ffb070", star_brightness=0.7),
+                            {"windfall": ("#3a2410", 0.9, [("minecraft:firefly", 0.002)], None)}),
+    "the_last_campfire": (("#1a1c24", "#0c0e18", "#2a3a50", "#081420", 14.0, 150.0, "awaken:gate.world.rare_campfire",
+                           [("minecraft:firefly", 0.001)], ("awaken:gate.world.echoes", 0.0006)), "lantern_night_market",
+                          dict(NIGHT, sky_light_color="#ffb080", star_brightness=0.9),
+                          {"late": ("#0a0c14", 0.9, [], None)}),
+    "the_gates_heart": (("#1a080c", "#0c0408", "#2a0a14", "#0a0206", 10.0, 140.0, "awaken:gate.world.rare_heart",
+                         [("minecraft:crimson_spore", 0.001), ("minecraft:end_rod", 0.0004)], ("awaken:gate.world.heartbeat", 0.0008)),
+                        None, None, {"quickening": ("#3a0a10", 0.85, [("minecraft:crimson_spore", 0.003)], None)}),
+}
+
 
 
 def mix(a, b, t):
@@ -319,8 +434,8 @@ def biome(fog, sky, water, wfog, start, end, loop, particles, additions, theme="
                 "mood": {"sound": "minecraft:ambient.cave", "tick_delay": 6000, "block_search_extent": 8, "offset": 2.0},
                 "additions": {"sound": additions[0], "tick_chance": additions[1]},
             },
-            "minecraft:audio/background_music": {
-                "default": {"sound": "awaken:music.gate." + theme, "min_delay": 3600, "max_delay": 12000}},
+            **({} if theme is None else {"minecraft:audio/background_music": {
+                "default": {"sound": "awaken:music.gate." + theme, "min_delay": 3600, "max_delay": 12000}}}),
         },
         "carvers": [],
         "features": [],
@@ -341,18 +456,32 @@ def main():
     for theme, (worlds, moods, secret) in THEMES.items():
         for w, (fog, sky, water, wfog, start, end, loop, parts, adds) in worlds.items():
             heavens = SKY.get(w)
-            out = {w: biome(fog, sky, water, wfog, start, end, loop, parts, adds, theme, heavens)}
+            music = None if theme in SILENT else theme
+            out = {w: biome(fog, sky, water, wfog, start, end, loop, parts, adds, music, heavens)}
             if w != secret:
                 for m, (tint, scale, extra, madds) in moods.items():
                     ms = MOOD_SKY.get(m) if heavens is not None else None
                     mfog, msky = (ms["fog"], ms["sky"]) if ms else (mix(fog, tint, 0.55), mix(sky, tint, 0.4))
                     out[w + "_" + m] = biome(mfog, msky, water, wfog, start, round(end * scale, 1), loop, parts + extra,
-                                             madds or adds, theme, dict(heavens, **ms) if ms else heavens)
+                                             madds or adds, music, dict(heavens, **ms) if ms else heavens)
             for name, b in out.items():
                 with open(os.path.join(BIOMES, name + ".json"), "w") as f:
                     json.dump(b, f, indent=2)
                     f.write("\n")
                 ids.append("awaken:gate_world/" + name)
+    for w, (base, music, heavens, moods) in RARE.items():
+        fog, sky, water, wfog, start, end, loop, parts, adds = base
+        out = {w: biome(fog, sky, water, wfog, start, end, loop, parts, adds, music, heavens)}
+        for m, (tint, scale, extra, madds) in moods.items():
+            ms = MOOD_SKY.get(m) if heavens is not None else None
+            mfog, msky = (ms["fog"], ms["sky"]) if ms else (mix(fog, tint, 0.55), mix(sky, tint, 0.4))
+            out[w + "_" + m] = biome(mfog, msky, water, wfog, start, round(end * scale, 1), loop, parts + extra,
+                                     madds or adds, music, dict(heavens, **ms) if ms else heavens)
+        for name, b in out.items():
+            with open(os.path.join(BIOMES, name + ".json"), "w") as f:
+                json.dump(b, f, indent=2)
+                f.write("\n")
+            ids.append("awaken:gate_world/" + name)
     for path in DIMENSIONS:
         with open(path) as f:
             dim = json.load(f)

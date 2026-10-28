@@ -72,6 +72,11 @@ public final class FloorLayout {
          * turn round after going through twice and the hall turns round with you, so you come out at its far end.
          */
         public static final String FOLD = "fold";
+        /**
+         * A doorway of the Library of Doors (SPEC §38.13): its shimmer's blocks, {@code id} the way out of it ("dx,dz").
+         * Step into one and you step out of the next on the floor.
+         */
+        public static final String DOOR = "door";
         /** A bell mark's id for a handbell on the floor (the rest are hung bells; "still" and "lowest" are named ones). */
         public static final String HANDBELL = "handbell";
 

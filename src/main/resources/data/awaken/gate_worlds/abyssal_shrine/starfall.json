@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "theme": "abyssal_shrine",
+  "name": "Starfall",
+  "line": "Islands of black stone in the void, and stars hanging all round them close enough to touch.",
+  "tier": "deep",
+  "rarity": "uncommon",
+  "kind": "isles",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "roof": 16,
+    "under": 18,
+    "tunnel": 1.6
+  },
+  "biome": "awaken:gate_world/starfall",
+  "moods": [
+    {
+      "id": "vigil",
+      "name": "The vigil",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "silence",
+      "name": "Silence",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/starfall_silence",
+      "life": [
+        "mist"
+      ]
+    },
+    {
+      "id": "starfall",
+      "name": "Falling stars",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/starfall_starfall",
+      "life": [
+        "stars"
+      ]
+    },
+    {
+      "id": "hunger",
+      "name": "Hunger",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/starfall_hunger",
+      "life": [
+        "mist",
+        "drips"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:shrine_stone",
+    "floor": "awaken:abyss_tiles",
+    "trim": "awaken:abyss_pale",
+    "wall_glow": "awaken:abyss_rune",
+    "glass": "awaken:abyss_glass",
+    "candles": "awaken:abyss_candles",
+    "star": "awaken:abyss_star",
+    "veil": "awaken:abyss_veil",
+    "iris": "awaken:abyss_iris",
+    "pupil": "awaken:abyss_pupil",
+    "sclera": "awaken:abyss_sclera",
+    "touch": "awaken:abyss_offering",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "hanging_stars"
+  ],
+  "life": [
+    "dust",
+    "drips"
+  ],
+  "sound": "awaken:gate.world.abyss_void",
+  "events": [
+    "starfall",
+    "the_wakening"
+  ],
+  "rule": "vigil",
+  "secrets": [
+    {
+      "id": "the_first_offering",
+      "name": "The first offering"
+    },
+    {
+      "id": "the_fallen_star",
+      "name": "The fallen star"
+    }
+  ],
+  "keepsake": "star_shard",
+  "keepsake_name": "A Shard of a Fallen Star",
+  "keepsake_from": "the_fallen_star"
+}

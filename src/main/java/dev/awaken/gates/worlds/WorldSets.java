@@ -52,6 +52,11 @@ public final class WorldSets {
                 "A cube from the lab that hums when someone stands near it, and powers redstone while it does."));
         PIECES.put(Theme.NIGHTMARE, new Piece(() -> GatesRegistry.theme("night_light"), "The Night Light",
                 "A child's night light from the house. Use it and every monster nearby glows, so nothing creeps up on you in the dark."));
+        PIECES.put(Theme.SKY_ARCHIPELAGO, new Piece(() -> GatesRegistry.theme("wind_bell"), "The Wind Bell",
+                "A little bell the islanders hung where the wind is strongest. Ring it and everyone near you floats down gently for"
+                        + " half a minute."));
+        PIECES.put(Theme.ABYSSAL_SHRINE, new Piece(() -> GatesRegistry.theme("dark_lantern"), "The Dark Lantern",
+                "A lantern that burns with a dark light. Open it and everyone near you can see in the dark for a few minutes."));
     }
 
     public static Piece of(Theme t) {
@@ -73,6 +78,7 @@ public final class WorldSets {
 
     /** A keepsake was just given: if it was a theme's last, its set piece too. */
     static void after(ServerPlayer p, GateWorld w) {
+        if (w.tier() == GateWorld.Tier.RARE) return;
         Piece piece = PIECES.get(w.theme());
         if (piece == null || !complete(p.getData(GatesRegistry.ATLAS.get()), w.theme())) return;
         ItemStack s = new ItemStack(piece.item().get());

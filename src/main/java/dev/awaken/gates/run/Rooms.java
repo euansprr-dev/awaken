@@ -199,6 +199,16 @@ public final class Rooms {
         return n;
     }
 
+    /**
+     * A calm world (a rare world whose recipe says {@code calm}, SPEC §38.13): nothing in it to fight. Its rooms wake empty
+     * and stand open, and the gate's clock doesn't press you there.
+     */
+    public static boolean calm(FloorLayout f, Room r) {
+        String id = f.worldOf(r);
+        dev.awaken.gates.worlds.GateWorld w = id == null || id.isEmpty() ? null : dev.awaken.gates.worlds.GateWorlds.get(id);
+        return w != null && w.param("calm", 0) > 0;
+    }
+
     // ---- triggers ---------------------------------------------------------------------------------------------------
 
     /** A player stepped into room r (zone = slot index inside caverns). */
@@ -210,7 +220,7 @@ public final class Rooms {
             key = cavernKey(r, zone);
             if (fs.triggered.add(key)) {
                 int count = Hash.unit(r.seed, zone, 3) < 0.6 ? Math.max(1, Math.round(r.normals * 1.6F / r.area())) : 0;
-                if (count > 0) spawnGroup(level, g, f, r, key, count, zone % 7 == 3 ? 1 : 0, zone * 3);
+                if (count > 0 && !calm(f, r)) spawnGroup(level, g, f, r, key, count, zone % 7 == 3 ? 1 : 0, zone * 3);
                 GateRegistry.get(level.getServer()).setDirty();
             }
             return;
@@ -220,7 +230,8 @@ public final class Rooms {
             return;
         }
         GateRegistry.get(level.getServer()).setDirty();
-        switch (r.type) {
+        Room.Type type = r.type == Room.Type.ARENA && calm(f, r) ? Room.Type.NORMAL : r.type;
+        switch (type) {
             case ARENA -> {
                 gatherParty(level, p, g, f, r);
                 lock(level, g, f, r, true);
@@ -235,7 +246,7 @@ public final class Rooms {
                 Twists.bossArena(level, p, g, f, r);
             }
             default -> {
-                if (r.type.combat() && r.normals + r.elites > 0) spawnGroup(level, g, f, r, r.id, r.normals, r.elites, 0);
+                if (r.type.combat() && r.normals + r.elites > 0 && !calm(f, r)) spawnGroup(level, g, f, r, r.id, r.normals, r.elites, 0);
                 else fs.clearedRooms.add(r.id);
             }
         }

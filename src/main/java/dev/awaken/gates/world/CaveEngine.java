@@ -46,6 +46,13 @@ final class CaveEngine implements WorldEngine {
         final int W;
         final long seed;
         final String mood;
+        /**
+         * The world whose recipe dresses the floor (its blocks, hero pieces and look): its own, or for a rare world that
+         * borrows another theme's look (38.13) an everyday world of that theme, its shape too unless the rare world says.
+         */
+        final GateWorld look;
+        final String lookId;
+        final dev.awaken.gates.content.Theme borrowed;
         final WorldMats m;
         final Map<Integer, Kind> kinds = new HashMap<>();
         final Map<Integer, PassageEngine.Shape> shapes = new HashMap<>();
@@ -80,7 +87,12 @@ final class CaveEngine implements WorldEngine {
             this.seed = c.seed();
             this.mood = c.mood() == null ? "" : c.mood();
             this.chain = new ChainLayout(p, seed, c.variation());
-            this.m = new WorldMats(world);
+            String src = Dress.look(c.worldId(), world, c.theme(), seed);
+            GateWorld worn = src == null ? null : dev.awaken.gates.worlds.GateWorlds.get(src);
+            this.borrowed = worn == null ? null : worn.theme();
+            this.lookId = worn == null ? c.worldId() : src;
+            this.look = worn == null ? world : worn;
+            this.m = new WorldMats(look);
             hw = param("tunnel", 2.1);
             wobble = param("wobble", 2.0);
             roof = (int) param("roof", 11);
@@ -117,11 +129,12 @@ final class CaveEngine implements WorldEngine {
         }
 
         double param(String k, double dflt) {
-            return world == null ? dflt : world.param(k, dflt);
+            GateWorld w = world != null && world.params().containsKey(k) ? world : look;
+            return w == null ? dflt : w.param(k, dflt);
         }
 
         boolean hero(String id) {
-            List<String> h = world == null ? List.of() : world.dressing().hero();
+            List<String> h = look == null ? List.of() : look.dressing().hero();
             return h.isEmpty() || h.contains(id);
         }
 
@@ -136,7 +149,7 @@ final class CaveEngine implements WorldEngine {
             secretPlace();
             sculpt();
             String biome = world == null ? "" : world.biomeFor(mood);
-            FloorLayout f = p.finish(this::walk, new WorldPlan.Look(W, biome, air(), new WorldPlan.SculptModel(s), Float.NaN, open));
+            FloorLayout f = p.finish(this::walk, new WorldPlan.Look(W, biome, air(), new WorldPlan.SculptModel(s, dress.tint()), Float.NaN, open));
             if (f == null) return WorldEngine.fail("the programme didn't carry over: " + WorldEngine.WHY.get());
             for (var e : kinds.entrySet()) {
                 if (e.getValue() == Kind.BUILT && !WorldPlan.built(f.room(e.getKey()))) return WorldEngine.fail("a Rig room didn't rebuild");
@@ -498,11 +511,15 @@ final class CaveEngine implements WorldEngine {
             return dress.skin(x, y, z, fl, ceil);
         }
 
-        /** A cavern (or the sea's island): its plan made ragged, its roof a dome, a mouth from each doorway to its middle. */
+        /**
+         * A cavern (or the sea's island): its plan made ragged, its roof a dome, a mouth from each doorway to its middle. In
+         * an island world every place is an island, its secret place too (38.13): beside its host, their landings meeting
+         * at the doorway they share.
+         */
         void cavern(Room r, Kind k) {
             int id = r.id;
             int x0 = r.gx * 16, z0 = r.gz * 16, x1 = x0 + r.gw * 16 - 1, z1 = z0 + r.gh * 16 - 1;
-            if (sea || (isles && k != Kind.SECRET)) {
+            if (sea || isles) {
                 island(r);
                 return;
             }

@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "theme": "mirror_palace",
+  "name": "The Other Gate",
+  "line": "A gate you know, but every colour in it is wrong, as if someone remembered it from a long way off.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {},
+  "biome": "awaken:gate_world/the_other_gate",
+  "moods": [
+    {
+      "id": "wrong",
+      "name": "All wrong",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "wronger",
+      "name": "Even wronger",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_other_gate_wronger",
+      "life": [
+        "mist",
+        "dust"
+      ]
+    }
+  ],
+  "blocks": {},
+  "hero": [],
+  "life": [
+    "dust"
+  ],
+  "sound": "awaken:gate.world.dream_deep",
+  "events": [
+    "the_wakening"
+  ],
+  "rule": "",
+  "secrets": [
+    {
+      "id": "the_right_colour",
+      "name": "The right colour"
+    }
+  ],
+  "keepsake": "odd_paintbrush",
+  "keepsake_name": "An Odd Paintbrush",
+  "keepsake_from": "the_right_colour"
+}

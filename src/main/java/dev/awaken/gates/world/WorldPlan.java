@@ -121,6 +121,13 @@ final class WorldPlan {
     }
 
     /** Within {@code r} of any place's anchor (where its features stand: nothing grows over them). */
+    /** Where the handbells and touchstones asked for so far want to stand (x, z), a copy: they're set last of the carve. */
+    List<int[]> handSpots() {
+        List<int[]> l = new ArrayList<>();
+        for (Hand hd : hands) l.add(new int[]{hd.x(), hd.z()});
+        return l;
+    }
+
     boolean nearAnchor(double x, double z, double r) {
         for (int[] a : anchors.values()) if (Math.hypot(x - a[0] - 0.5, z - a[1] - 0.5) < r) return true;
         return false;
@@ -546,18 +553,24 @@ final class WorldPlan {
     // ---- the model -----------------------------------------------------------------------------------------------------
 
     /** A world floor carved from one {@link Sculpt}, its built rooms painted as today and its places' features stamped. */
-    record SculptModel(Sculpt sculpt) implements WorldModel {
+    /** A sculpted floor, its carve passed through a rare world's {@link Tint} when it has one (38.13). */
+    record SculptModel(Sculpt sculpt, Tint tint) implements WorldModel {
+        SculptModel(Sculpt sculpt) {
+            this(sculpt, null);
+        }
+
         @Override
         public void carve(GatePlan plan, FloorLayout f, int slotX, int slotZ, GatePainter.Sink out) {
             int gx = slotX - f.originSlotX, gz = slotZ - f.originSlotZ;
             Room r = f.roomAtSlot(gx, gz);
+            GatePainter.Sink to = tint == null ? out : (x, y, z, s) -> out.set(x, y, z, tint.at(gx * 16 + x, y, gz * 16 + z, s));
             if (r != null && built(r)) {
                 int floorY = f.baseY + r.dy;
-                sculpt.carve(gx, gz, out, floorY - Cells.BAND_BELOW, floorY + Cells.BAND_ABOVE - 1);
+                sculpt.carve(gx, gz, to, floorY - Cells.BAND_BELOW, floorY + Cells.BAND_ABOVE - 1);
                 GatePainter.paintBuilt(plan, f, r, gx, gz, out);
                 return;
             }
-            sculpt.carve(gx, gz, out, 1, 0);
+            sculpt.carve(gx, gz, to, 1, 0);
             if (r != null) GatePainter.paintFeatures(plan, f, r, gx, gz, out);
         }
     }

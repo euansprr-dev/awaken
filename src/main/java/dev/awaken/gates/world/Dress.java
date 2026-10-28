@@ -30,7 +30,16 @@ abstract class Dress {
     }
 
     static Dress of(CaveEngine.Cave c) {
-        Theme t = c.c.theme();
+        if (c.borrowed != null) {
+            Dress in = of(c, c.borrowed);
+            String n = rareName(c.c.worldId());
+            return n.equals("the_reflection") || n.equals("the_other_gate") ? new BorrowedDress(c, in, true) : new TwistDress(c, in);
+        }
+        if (c.world != null && c.world.tier() == GateWorld.Tier.RARE) return new RareDress(c);
+        return of(c, c.c.theme());
+    }
+
+    static Dress of(CaveEngine.Cave c, Theme t) {
         return switch (t) {
             case EMBER_MINES -> new EmberDress(c);
             case HIVE -> new HiveDress(c);
@@ -43,8 +52,57 @@ abstract class Dress {
             case MIRROR_PALACE -> new PalaceDress(c);
             case PRECURSOR_LAB -> new LabDress(c);
             case NIGHTMARE -> new DreamDress(c);
+            case SKY_ARCHIPELAGO -> new SkyDress(c);
+            case ABYSSAL_SHRINE -> new AbyssDress(c);
             default -> new FungalDress(c);
         };
+    }
+
+    /** The cave themes a rare world can borrow a look from (38.13): every theme whose everyday worlds are caves. */
+    static final List<Theme> BORROWS = List.of(Theme.FUNGAL_HOLLOW, Theme.EMBER_MINES, Theme.HIVE, Theme.OVERGROWN_TEMPLE,
+            Theme.DROWNED_ARCHIVE, Theme.CLOCKWORK_FOUNDRY, Theme.MIRROR_PALACE, Theme.PRECURSOR_LAB, Theme.NIGHTMARE);
+
+    /** The rare worlds that are a theme's world with something wrong in it (38.13), and the world each one wears. */
+    static final java.util.Map<String, String> TWISTS = java.util.Map.of(
+            "the_hollow_sky", "awaken:sky_archipelago/the_isles",
+            "the_endless_stair", "awaken:abyssal_shrine/dark_steps",
+            "the_gates_heart", "awaken:abyssal_shrine/starfall",
+            "the_tide_room", "awaken:drowned_archive/atrium",
+            "the_library_of_doors", "awaken:drowned_archive/stacks",
+            "the_dollhouse", "awaken:nightmare/the_house",
+            "the_glass_sea", "awaken:frost_monastery/still_snow");
+
+    /** A world's name after its folder ("the_reflection"). */
+    static String rareName(String worldId) {
+        return worldId == null ? "" : worldId.substring(worldId.indexOf('/') + 1);
+    }
+
+    /**
+     * The world whose look a rare world wears (38.13), or null when it has its own: the Reflection is the gate you came in
+     * by, greyed (the Mirror Palace's when that gate isn't a cave theme); the Other Gate is another cave theme, its colours
+     * turned, picked by the floor's seed; the twisted ones wear one world each.
+     */
+    static String look(String worldId, GateWorld w, Theme gate, long seed) {
+        if (w == null || w.tier() != GateWorld.Tier.RARE || worldId == null) return null;
+        String n = rareName(worldId);
+        if (n.equals("the_reflection")) return source(BORROWS.contains(gate) ? gate : Theme.MIRROR_PALACE);
+        if (n.equals("the_other_gate")) {
+            List<Theme> l = new ArrayList<>(BORROWS);
+            l.remove(gate);
+            return source(l.get((int) (Hash.unit(seed, 13, 77) * l.size())));
+        }
+        return TWISTS.get(n);
+    }
+
+    /** The world a borrowed look reads its recipe from: the theme's first everyday cave world, or null. */
+    static String source(Theme t) {
+        List<String> ids = new ArrayList<>(dev.awaken.gates.worlds.GateWorlds.ofTheme(t));
+        java.util.Collections.sort(ids);
+        for (String id : ids) {
+            GateWorld w = dev.awaken.gates.worlds.GateWorlds.get(id);
+            if (w != null && w.tier() == GateWorld.Tier.EVERYDAY && w.kind().equals("caves")) return id;
+        }
+        return null;
     }
 
     // ---- hooks --------------------------------------------------------------------------------------------------------
@@ -66,6 +124,11 @@ abstract class Dress {
     /** The rail along a bridge or a roof's edge over a street (38.11). */
     BlockState rail() {
         return GatePainter.state("minecraft:dark_oak_fence");
+    }
+
+    /** What every carved block passes through on its way out (38.13, a rare world's colours), or null. */
+    Tint tint() {
+        return null;
     }
 
     /** The glass floor over a mirrored underfloor (38.12), or null for none. */
@@ -98,8 +161,9 @@ abstract class Dress {
         return c.hero(id);
     }
 
+    /** The world the dress reads its look from: the floor's own, or the one a borrowed look comes from (38.13). */
     String worldId() {
-        return c.c.worldId() == null ? "" : c.c.worldId();
+        return c.lookId == null ? "" : c.lookId;
     }
 
     /** The world's name after its theme ("glowing_deep"), for a dress with a look per world. */

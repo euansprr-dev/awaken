@@ -31,6 +31,10 @@
     "awaken:dream_boards",
     "awaken:dream_wood",
     "awaken:dream_toy",
-    "awaken:dream_music_box"
+    "awaken:dream_music_box",
+    "awaken:sky_planks",
+    "awaken:sky_rope",
+    "awaken:rare_map",
+    "awaken:rare_map_ink"
   ]
 }

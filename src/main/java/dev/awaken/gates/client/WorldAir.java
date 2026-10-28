@@ -105,6 +105,9 @@ final class WorldAir {
                 case "embers" -> drift(level, pl, r, ORB, 0xff8a3a, 0.25F, -0.03, 1);
                 case "fireflies" -> drift(level, pl, r, ORB, 0xd8f080, 0.3F, 0.0, 1);
                 case "steam" -> steam(level, pl, air, o, r);
+                case "wind" -> wind(level, pl, r);
+                case "stars" -> stars(level, pl, r);
+                case "rain_up" -> rainUp(level, pl, r);
                 default -> {}
             }
         }
@@ -345,6 +348,48 @@ final class WorldAir {
                 a.peak = 0.8F;
                 a.blink = rise == 0;
                 a.setLifetime(140 + r.nextInt(160));
+            }
+        }
+    }
+
+    /** Wind across an open sky (38.13): streaks blowing past, the way it blows turning slowly. */
+    private static void wind(ClientLevel level, Player pl, RandomSource r) {
+        if (ticks % 2 != 0) return;
+        double a = ticks * 0.0015 + Math.sin(ticks * 0.0007) * 1.2, vx = Math.cos(a) * 0.55, vz = Math.sin(a) * 0.55;
+        for (int t = 0; t < 2; t++) {
+            Vec3 p = new Vec3(pl.getX() - vx * 30 + (r.nextFloat() - 0.5) * 30, pl.getY() - 2 + r.nextFloat() * 10, pl.getZ() - vz * 30 + (r.nextFloat() - 0.5) * 30);
+            if (!WorldLife.open(level, p)) continue;
+            Air s = make(level, GatesRegistry.P_STREAK.get(), p.x, p.y, p.z, vx, (r.nextFloat() - 0.5) * 0.04, vz, 0xe8f4ff, 0.7F);
+            if (s != null) {
+                s.peak = 0.3F;
+                s.setLifetime(90);
+            }
+        }
+    }
+
+    /** Stars close overhead (38.13): small blinking lights high in the open air, still. */
+    private static void stars(ClientLevel level, Player pl, RandomSource r) {
+        if (ticks % 3 != 0) return;
+        Vec3 p = new Vec3(pl.getX() + (r.nextFloat() - 0.5) * 60, pl.getY() + 12 + r.nextFloat() * 22, pl.getZ() + (r.nextFloat() - 0.5) * 60);
+        if (!WorldLife.open(level, p)) return;
+        Air a = make(level, GatesRegistry.P_ORB.get(), p.x, p.y, p.z, 0, 0, 0, 0xe8eeff, 0.18F);
+        if (a != null) {
+            a.glow = true;
+            a.peak = 0.9F;
+            a.blink = true;
+            a.setLifetime(260 + r.nextInt(200));
+        }
+    }
+
+    /** Rain falling upward (38.13): streaks rising off the ground round you into the sky. */
+    private static void rainUp(ClientLevel level, Player pl, RandomSource r) {
+        for (int t = 0; t < 5; t++) {
+            Vec3 p = new Vec3(pl.getX() + (r.nextFloat() - 0.5) * 34, pl.getY() - 1 + r.nextFloat() * 6, pl.getZ() + (r.nextFloat() - 0.5) * 34);
+            if (!WorldLife.open(level, p)) continue;
+            Air a = make(level, GatesRegistry.P_STREAK.get(), p.x, p.y, p.z, 0.02, 0.8, 0.03, 0xb8d0e8, 0.9F);
+            if (a != null) {
+                a.peak = 0.45F;
+                a.setLifetime(60);
             }
         }
     }

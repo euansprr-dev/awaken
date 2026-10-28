@@ -9822,6 +9822,109 @@ Built 2026-10-29. Four themes, twenty worlds, on the cave engine with four new s
   turned about the fold's middle, block for block through the hall and its skin; over three White gates the plain's outer
   band is the same 32 blocks over, both ways and at both edges); `gateworlds_sets` covers the four new pieces and keepsakes.
 
+### 38.13 The sky, the abyss and the rare worlds: Sky Archipelago, Abyssal Shrine and fifteen rare worlds (Stage 5)
+
+Built 2026-10-29. Two themes (ten worlds) and fifteen rare worlds, all on the cave engine.
+
+- **Sky Archipelago** (`SkyDress`; open isles under the sky over a sea of cloud): islands of pale layered rock, turf and
+  small flowers on top, roots hanging under, rope bridges between. The Isles (everyday; water running off their edges,
+  little flowering trees, wind lanterns; the_hidden_spring), the Sky Ruins (everyday; the white marble and gilt of a city
+  that fell from higher still, broken columns, a roofless temple; the_fallen_crown), the Wind Stair (deep; small islands
+  in a storm, stones floating loose round the bridges; the_eye_of_the_storm), Above the Clouds (wonder; the highest, far
+  islands drifting round it, a ring of pennants round the Wind Well; the_highest_isle and the_great_wind) and the Whale
+  Road (secret, off the Isles and the Ruins by the_falling_feather: the island is the back of a sky whale, a blowhole
+  spouting at its head, fins out over the drop, its eye low on the head's flank; the_whales_eye). Lead
+  the_falling_feather, touch the_first_chime (a wind chime).
+- **Abyssal Shrine** (`AbyssDress`): a shrine at the bottom of everything, near-black stone with runes glowing in it,
+  pale steps you can see in the dark, clusters of vigil candles, offering bowls. The Dark Steps (everyday, isles; black
+  tile landings in the dark joined by pale bridges, stairs off every landing going down into nothing; the_bottom_step),
+  the Black Mirror (everyday, caves over a still black lake, shrines on its islands, stars hanging from its roof;
+  the_still_reflection), Starfall (deep, isles in a void full of hanging stars; the_fallen_star), the Last Room (wonder;
+  the same small room again and again: a chair, a table with a candle on it, a door that doesn't open, a black window;
+  the_key_under_the_mat and the_knock) and the Eye (secret, off the Steps and the Mirror by the_open_eye: a floor of black
+  glass over an eye as big as the room, looking up, the glass reaching the eye's rim so no water gets in over it;
+  the_eye_blinks). Lead the_open_eye, touch the_first_offering (an
+  offering bowl). The shrine is silent: no music, its biomes have no background music, `GateMusic` gives it no context.
+- **The secret place of an island world** is an island too (`CaveEngine.cavern`): beside its host, their landings
+  meeting at the doorway they share. No earlier island world hosts one, so nothing already carved changes.
+- **Blocks** (`ThemeBlocks`; art `tools/art/specs/gate_worlds_{sky,abyss,rare}.py`): the sky's island rock and turf,
+  fallen marble (plain and carved), sky gilt, bridge planks, rope posts, falling water, hanging roots, wind crystals,
+  pennants, wind lanterns, sky whale hide (plain and barnacled) and the wind chime (touchstone); the shrine's stone
+  (`shrine_stone`: the Descent owns `abyss_stone`), black tiles, pale steps, rune stone, black glass, vigil candles,
+  hanging stars, dark veils, the eye's iris, pupil and white, and the offering bowl (touchstone, lit a while after an
+  offering); the rare worlds' moonflower, red light, giant's stone, map paper and inked map, upward rain, aurora stone,
+  lantern fruit (lit and unlit), the Gates' Heart and its veins, the doorway shimmer and the **pale figure** (`Figure`, a
+  seated shape: use it and it says one of eight plain lines, picked by where it sits, with a soul sound).
+- **Rules** (as 38.10, the eighth touch brings a named elite and two more): **winds** (wind chime): monsters near lifted,
+  slow falling 4 s, weakness 3 s; "The chimes have rung too often. The Wind Warden is coming to see who's calling the
+  wind." The Wind Warden. **vigil** (offering bowl): slowness III and weakness II 3 s, glowing 5 s; "Too many offerings
+  left in the dark. The Keeper of the Dark is coming up to see who's been giving them." The Keeper of the Dark.
+- **Events**: `gale` (a third: slow falling 12 s, monsters shoved along the wind), `sunburst` (half way: regeneration, the
+  way on shown), `the_hush` (half way: darkness 5 s, monsters within 40 slowed 10 s), `hunger` (a third: hunger II 15 s),
+  `starfall` (half way: hidden things shine). The wonders' moments, two thirds along, each found on the Atlas and followed
+  by its signature: `the_great_wind` (Above the Clouds: lifted and set down gently; the Storm Roc) and `the_knock` (the
+  Last Room: three knocks, a pause, one more; the door opens on its own and the Watcher stands in it). A signature is a
+  named elite with twice the health (`Rooms.signature`) until the mobs module gives them bodies.
+- **Rare worlds** (tier `rare`, folder `gate_worlds/rare/`, 38.2): in no theme's set (`GateWorlds.ofTheme` leaves them
+  out, a rare keepsake never completes a set), shown in their own Atlas group `rare_worlds`, never a Lord's floor. From
+  rank B the director rolls one on about one floor in 25 of any theme's gate (`GateWorlds.pickWorld`: roll under 0.04 and
+  the rare pool isn't empty). Each has two moods, its own biome and a keepsake. Three kinds:
+  - **Their own look** (`RareDress`): the Quiet (calm; a starry meadow at night, short grass and moonflowers, a lone tree
+    in the great place; the_lone_tree, and the_wish from the shooting star), Upward Rain (rain falling up out of the
+    puddles, a dry patch under a shelter; the_dry_patch; `the_downpour` lifts the monsters), the Aurora Steppe (dry grass
+    and snow under an aurora, menhirs and a stone circle; the_stone_circle; `the_aurora` brings regeneration), the Lantern
+    Orchard (dark oaks hung with lantern fruit, one of them unlit; the_unlit_lantern), the Last Campfire (calm; a campfire
+    ringed by six log seats, pale figures on five of them; the_empty_seat; `the_echoes`) and the Cartographer's Table (an
+    endless plain, band 4, as 38.12: a map you walk on, contour lines inked across it, paper hills and blue rivers out past
+    the places, a giant inkwell and quill among the places, a compass rose; the_compass_rose and the_ink_runs). The map's
+    land is a sum of seven waves that each turn a whole number of times across 32 blocks, so its band repeats as the
+    White's does, and its lamplight is hidden at head height on a staggered grid every four.
+  - **A world with something wrong in it** (`TwistDress` over the theme world it wears, `Dress.TWISTS`): the Hollow Sky
+    (the Isles; a giant stone hand rising out of the great island, the palm cupped at the top; the_palm), the Endless
+    Stair (the Dark Steps; stairs with banisters up from one side of every landing and down from the other, one landing's
+    banister brass, each flight stopping short of another place's or a bridge's slots, hidden light over every second
+    step; the_landing_that_differs), the Gates' Heart (Starfall; a great red heart held up by its veins in a
+    still gilt ring, a pale first gate; the_heartbeat brings regeneration II and absorption II; the_first_gate), the Tide
+    Room (the Atrium; shells and dead coral, never within three of a touchstone, a pearl pool sunk in a nook's floor;
+    the_pearl_pool; `the_tide`), the
+    Library of Doors (the Stacks; a doorway stands in every room facing its middle: walk into one and you come out of
+    the next, `WorldLive.doors`, the `door` mark; one with nothing in it is the_door_to_nowhere; `the_doors_open`), the
+    Dollhouse (the House; windows in its outer walls and a giant's eye looking in; the_tiny_door; `the_giant_looks` gives
+    the_giant) and the Glass Sea (the Still Snow; its water frozen to frost ice, fish swimming under it, kept to eight
+    within 24 blocks, a bottle frozen in; the_frozen_bottle; `the_ice_sings` gives the_swimmer). They keep their
+    theme's rule.
+  - **Another theme in the wrong colours** (`BorrowedDress` with a `Tint`): the Reflection wears the gate it's in (a cave
+    theme's first everyday cave world, else the Mirror Palace's) in grey, its lights red, its floor glass with the same
+    rooms upside down under it; the Other Gate wears another cave theme (picked by the floor's seed) with every colour
+    turned 150 degrees round the wheel. A `Tint` turns every full block you can't walk through as it's carved (glass,
+    plants, light, fluids, shapes and veils stay): grey by brightness into the four concrete greys, or into the nearest
+    concrete or terracotta, a light into the nearest light block. One patch on a calm cavern's floor keeps its true
+    colours: the_true_colour or the_right_colour. Built rooms keep theirs.
+  - A worn theme meets rooms it never meets at home (the gate's own Rig rooms), so `BorrowedDress` keeps the middle of
+    every doorway open at foot and head height, four blocks in, after the theme's dress (a Pipe Maze pipe can otherwise
+    cross a Rig room's way out). The theme's own worlds are untouched.
+  - The secrets an event gives that aren't named after it are listed in `WorldThemes.GIVES`.
+- **Calm** (a recipe's `calm` param, `Rooms.calm`; the Quiet and the Last Campfire): its rooms wake empty, an arena is an
+  ordinary room, and the gate's clock doesn't press you there.
+- **Small life**: `wind` (streaks along the wind), `stars` (slow twinkles overhead) and `rain_up` (drops rising), with
+  38.9's.
+- **Sets** (38.8): the Wind Bell (ring it and everyone near you floats down gently for half a minute) and the Dark
+  Lantern (open it and everyone near you can see in the dark for a few minutes).
+- **Biomes** (`gate_worlds_biomes.py`, 285 in all, 64 new): the sky's open worlds high under a clear sky, golden at
+  sunset, starlit at night, white in a gale; the abyss under no sky at all; each rare world its own (the Quiet and the
+  Campfire at night under bright stars, the Aurora Steppe's green sky light).
+- **Sound** (`tools/art/specs/audio_gate_worlds_b.py`, about 7.5 MB; gate_world sound 32 MB in all, under the 40 MB
+  budget): three beds a theme, the rare worlds' own beds, the touchstones, the events, the moments and the signatures
+  (the Roc, the Watcher), an arrival sting a theme. Every one has a plain subtitle.
+- **Atlas paintings**: `tools/art/specs/gate_worlds_paintings_e.py`, one a world (25).
+- **Lens**: as 38.11, the Lens owner's to add.
+- **Tests**: `gateworlds_<world>` for the eight theme worlds and the fifteen rare worlds (a rare world in gates of
+  several themes, so the Reflection wears several); `gateworlds_rare` (fifteen load in their group and no theme's set,
+  open at B, never below B or on a Lord's floor, about one floor in 25 over 600 gates of every theme, the Reflection's
+  and the Other Gate's looks for every gate theme, the twisted worlds' looks, and calm floors and rooms);
+  `gateworlds_tint` (grey and turned colours, lights, the kept patch, what passes untouched); `gateworlds_sets` covers
+  every theme's piece and keepsakes.
+
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 
 Builds on §28.3 (W2) and §28.5 (W5); the plan's audit (`docs/mining/proof/`) is what it was designed against: Tectonic

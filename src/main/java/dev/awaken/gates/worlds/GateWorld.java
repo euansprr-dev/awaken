@@ -25,7 +25,7 @@ public record GateWorld(int schema, Theme theme, String name, String line, Tier 
      */
     public static final Set<String> LIFE = Set.of("moths", "bats", "pale_fish", "rats", "dust", "drips",
             "shaft_dust", "mist", "smoke", "rain", "lightning", "procession", "far_toll",
-            "ash", "snow", "petals", "paper", "sand", "spores", "embers", "fireflies", "steam");
+            "ash", "snow", "petals", "paper", "sand", "spores", "embers", "fireflies", "steam", "wind", "stars", "rain_up");
 
     /** Where a world sits in its theme: two everyday worlds, a deep one, a wonder, a secret one; rare ones in any gate. */
     public enum Tier {
@@ -169,9 +169,14 @@ public record GateWorld(int schema, Theme theme, String name, String line, Tier 
         return mastery >= 0 ? mastery : tier.masteryFloors();
     }
 
-    /** The lowest gate rank it turns up in without mastery. */
+    /** The lowest gate rank it turns up in without mastery (a rare world: rank B in a gate of any theme, SPEC §38.13). */
     public int rankFrom() {
-        return theme.minRank + tier.rankStep();
+        return tier == Tier.RARE ? tier.rankStep() : theme.minRank + tier.rankStep();
+    }
+
+    /** The Atlas group it's shown in: its theme's id, or the rare worlds' own. */
+    public String group() {
+        return tier == Tier.RARE ? "rare_worlds" : theme.id;
     }
 
     public double param(String key, double fallback) {
