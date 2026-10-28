@@ -31,6 +31,48 @@ final class CaveTests {
         AwakenTests.register("delve_hearth_points", 200, CaveTests::hearthPoints);
         // its own batch: it installs a Hearth lookup, as delve_hearth_points does
         AwakenTests.registerIsolated("delve_pick_trail", 200, CaveTests::pickTrail);
+        // its own batch: it reads a count of the server thread's lode plans, which other tests make on purpose
+        AwakenTests.registerIsolated("delve_horizon_flyover", 200, CaveTests::horizonFlyOver);
+    }
+
+    /**
+     * A fast flight over new land (SPEC §28.9): the Horizon's look every 96 blocks plans no lode region on the server
+     * thread and each look is quick; once the worker has answered, the sinkholes are the ones a search on the spot finds.
+     */
+    private static void horizonFlyOver(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        CaveHorizon.clear();
+        int before = dev.awaken.delve.LodePlans.serverPlans();
+        long worst = 0;
+        BlockPos at = null;
+        for (int i = 0; i < 40; i++) {
+            at = new BlockPos(3_000_000 + i * 96, 90, -3_000_000);
+            long t0 = System.nanoTime();
+            CaveHorizon.near(level, at, new int[]{CaveHorizon.NEW_PER_CALL});
+            worst = Math.max(worst, System.nanoTime() - t0);
+        }
+        h.assertValueEqual(dev.awaken.delve.LodePlans.serverPlans() - before, 0, "lode regions planned on the server thread during the flight");
+        h.assertTrue(worst < 250_000_000L, "the slowest look took " + worst / 1_000_000 + " ms");
+        long until = System.currentTimeMillis() + 60_000;
+        while (CaveHorizon.unknown(level, at) > 0 && System.currentTimeMillis() < until) {
+            CaveHorizon.near(level, at, new int[]{CaveHorizon.NEW_PER_CALL});
+            try {
+                Thread.sleep(5);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        h.assertValueEqual(CaveHorizon.unknown(level, at), 0, "candidates the worker hasn't answered");
+        List<Long> got = CaveHorizon.near(level, at, new int[]{0}).stream().map(Spec::id).toList();
+        List<Long> want = CaveHorizon.near(level, at, (set, c, first) -> CaveHorizon.search(level, set, c, first)).stream().map(Spec::id).toList();
+        h.assertValueEqual(got, want, "the worker's sinkholes are the search's");
+        // and the count sees a plan made here (so the flight's zero means something)
+        int counted = dev.awaken.delve.LodePlans.serverPlans();
+        dev.awaken.delve.LodePlans.region(level.getSeed(), 12_000, -12_000);
+        h.assertTrue(dev.awaken.delve.LodePlans.serverPlans() == counted + 1, "a plan on the server thread is counted");
+        CaveHorizon.clear();
+        h.succeed();
     }
 
     /**
