@@ -31,8 +31,9 @@ import java.util.Map;
 /**
  * Swinging bells (SPEC §38.6): a floor's {@code prop} marks shown as block displays hung at their canon while anyone is
  * near, and swung when they ring. The display turns about its own position (the hinge) by its pitch, which the game
- * eases between updates, so a swing costs one rotation a bell every few ticks. Never saved: a prop loaded from disk
- * leaves at once and is made again when someone comes near.
+ * eases between updates, so a swing costs one rotation a bell every few ticks. The same displays slide the Swarm's comb
+ * (38.10), turn the Foundry's gears and carry the Orrery's planets round their sun (38.11). Never saved: a prop loaded
+ * from disk leaves at once and is made again when someone comes near.
  */
 public final class WorldProps {
     private WorldProps() {}
@@ -52,6 +53,8 @@ public final class WorldProps {
         final float yaw;
         /** A wall of comb that slides back and forth (the Swarm, SPEC §38.10), not a bell. */
         final boolean comb;
+        /** A gear lying flat that turns (the Works Floor), a planet going round (the Orrery: 38.11). */
+        final boolean gear, orb;
         Display.BlockDisplay display;
         float amp;
         long since;
@@ -60,6 +63,8 @@ public final class WorldProps {
         Prop(FloorLayout.Mark mark) {
             this.mark = mark;
             this.comb = mark.id().startsWith("comb:");
+            this.gear = mark.id().startsWith("gear:");
+            this.orb = mark.id().startsWith("orb:");
             this.r = Integer.parseInt(mark.id().substring(mark.id().indexOf(':') + 1)) / 10.0;
             this.h = mark.y1() - mark.y0() + 1;
             this.yaw = (Hash.of(mark.x0(), mark.z0(), 41) & 1) == 0 ? 0f : 90f;
@@ -72,11 +77,14 @@ public final class WorldProps {
     }
 
     static final Map<WorldLive.Key, List<Prop>> FLOORS = new HashMap<>();
+    /** Floors whose machines run fast until a tick (the Foundry's overdrive). */
+    static final Map<WorldLive.Key, Long> FAST = new HashMap<>();
     private static long now;
 
     static void clear() {
         for (List<Prop> l : FLOORS.values()) for (Prop p : l) if (p.display != null) p.display.discard();
         FLOORS.clear();
+        FAST.clear();
     }
 
     static List<Prop> of(GateRecord g, FloorLayout f) {
@@ -95,6 +103,7 @@ public final class WorldProps {
         for (Prop pr : props) {
             if (pr.display != null && !pr.display.isRemoved()) continue;
             double x = o.getX() + pr.mark.cx(), y = o.getY() + pr.mark.y1() + 1, z = o.getZ() + pr.mark.cz();
+            if (pr.gear || pr.orb) y = o.getY() + pr.mark.y0() + 0.5;
             if (p.distanceToSqr(x, y, z) > NEAR * NEAR || !level.hasChunkAt(BlockPos.containing(x, y, z))) continue;
             pr.display = spawn(level, x, y, z, pr, o);
         }
@@ -102,11 +111,18 @@ public final class WorldProps {
 
     static Display.BlockDisplay spawn(ServerLevel level, double x, double y, double z, Prop pr, BlockPos o) {
         CompoundTag tag = new CompoundTag();
-        BlockState bell = pr.comb ? GatesRegistry.theme("hive_comb_capped").defaultBlockState() : GatesRegistry.BELL_PROP.get().defaultBlockState();
+        BlockState bell = pr.comb ? GatesRegistry.theme("hive_comb_capped").defaultBlockState()
+                : pr.gear ? GatesRegistry.theme("foundry_gear").defaultBlockState()
+                : pr.orb ? GatesRegistry.theme("foundry_brass").defaultBlockState()
+                : GatesRegistry.BELL_PROP.get().defaultBlockState();
         tag.put("block_state", BlockState.CODEC.encodeStart(NbtOps.INSTANCE, bell).getOrThrow());
         float w = (float) (pr.r * 2);
+        // a planet is a ball of brass a block or so across, bigger the further out it goes round
+        float ball = (float) (0.6 + Math.min(1.2, pr.r / 10));
         Transformation t = pr.comb
                 ? new Transformation(new Vector3f(-w / 2, -pr.h, -0.5f), new Quaternionf(), new Vector3f(w, pr.h, 1), new Quaternionf())
+                : pr.gear ? new Transformation(new Vector3f(-w / 2, -0.125f, -w / 2), new Quaternionf(), new Vector3f(w, 0.25f, w), new Quaternionf())
+                : pr.orb ? new Transformation(new Vector3f(-ball / 2, -ball / 2, -ball / 2), new Quaternionf(), new Vector3f(ball, ball, ball), new Quaternionf())
                 : new Transformation(new Vector3f(-w / 2, -pr.h, -w / 2), new Quaternionf(), new Vector3f(w, pr.h, w), new Quaternionf());
         pr.bx = x;
         pr.by = y;
@@ -115,11 +131,13 @@ public final class WorldProps {
         tag.putInt("teleport_duration", STEP);
         tag.putFloat("view_range", 2.5f);
         // lit by the lamp inside it, not by the dark at its canon
-        BlockPos lamp = BlockPos.containing(x, y - pr.h / 2.0, z);
-        int light = Math.max(6, level.getBrightness(LightLayer.BLOCK, lamp));
+        BlockPos lamp = pr.gear || pr.orb ? BlockPos.containing(x, y, z) : BlockPos.containing(x, y - pr.h / 2.0, z);
+        int light = Math.max(pr.orb ? 11 : 6, level.getBrightness(LightLayer.BLOCK, lamp));
         tag.put("brightness", Brightness.CODEC.encodeStart(NbtOps.INSTANCE, new Brightness(light, 0)).getOrThrow());
+        double sx = pr.orb ? x + pr.r : x;
+        float yaw = pr.gear || pr.orb ? 0f : pr.yaw;
         Entity e = EntityType.loadEntityRecursive(EntityTypes.BLOCK_DISPLAY, tag, level, EntitySpawnReason.TRIGGERED, ent -> {
-            ent.snapTo(x, y, z, pr.yaw, 0f);
+            ent.snapTo(sx, y, z, yaw, 0f);
             return ent;
         });
         if (!(e instanceof Display.BlockDisplay d)) return null;
@@ -139,19 +157,27 @@ public final class WorldProps {
         }
     }
 
+    /** A floor's machines run three times as fast for a while (the Foundry's overdrive). */
+    static void overdrive(GateRecord g, FloorLayout f, int ticks) {
+        FAST.put(WorldLive.Key.of(g, f), now + ticks);
+    }
+
     /** Every tick: swings eased along; every two seconds, props nobody is near go. */
     static void tick(ServerLevel level, long tick) {
         now = tick;
         if (FLOORS.isEmpty()) return;
         boolean sweep = tick % 40 == 0;
         if (tick % STEP != 0 && !sweep) return;
-        for (Iterator<List<Prop>> it = FLOORS.values().iterator(); it.hasNext(); ) {
-            List<Prop> props = it.next();
+        for (Iterator<Map.Entry<WorldLive.Key, List<Prop>>> it = FLOORS.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<WorldLive.Key, List<Prop>> en = it.next();
+            List<Prop> props = en.getValue();
+            Long fastUntil = FAST.get(en.getKey());
+            double pace = fastUntil != null && fastUntil > tick ? 3 : 1;
             boolean any = false;
             for (Prop pr : props) {
                 Display.BlockDisplay d = pr.display;
                 if (d == null || d.isRemoved()) continue;
-                if (sweep && level.getNearestPlayer(d.getX(), d.getY(), d.getZ(), FAR, false) == null) {
+                if (sweep && d.level().getNearestPlayer(d.getX(), d.getY(), d.getZ(), FAR, false) == null) {
                     d.discard();
                     pr.display = null;
                     continue;
@@ -163,6 +189,20 @@ public final class WorldProps {
                     double off = 2.2 * Math.sin(2 * Math.PI * tick / 220.0 + (pr.mark.x0() * 0.37 + pr.mark.z0() * 0.61));
                     double ya = Math.toRadians(pr.yaw);
                     d.setPos(pr.bx + Math.cos(ya) * off, pr.by, pr.bz + Math.sin(ya) * off);
+                    continue;
+                }
+                if (pr.gear) {
+                    // a gear turns about its middle, a small one quicker, every other one the other way
+                    if (tick % STEP != 0) continue;
+                    double dir = (Hash.of(pr.mark.x0(), pr.mark.z0(), 43) & 1) == 0 ? 1 : -1;
+                    d.setYRot(net.minecraft.util.Mth.wrapDegrees((float) (dir * pace * tick * 6.0 / pr.r)));
+                    continue;
+                }
+                if (pr.orb) {
+                    // a planet goes round its sun, the inner ones faster
+                    if (tick % STEP != 0) continue;
+                    double a = tick * pace * 0.03 / Math.sqrt(pr.r / 4) + (Hash.of(pr.mark.x0(), pr.mark.y0(), 47) & 255) / 40.0;
+                    d.setPos(pr.bx + Math.cos(a) * pr.r, pr.by, pr.bz + Math.sin(a) * pr.r);
                     continue;
                 }
                 if (pr.amp <= 0 || tick % STEP != 0) continue;

@@ -348,7 +348,9 @@ public final class Modifiers {
 
     // ---- Flooding ---------------------------------------------------------------------------------------------------
 
-    private static final ArrayDeque<BlockPos> WATER = new ArrayDeque<>();
+    /** Water to pour, each in the level its floor lives in. */
+    private record Pour(ServerLevel level, BlockPos at) {}
+    private static final ArrayDeque<Pour> WATER = new ArrayDeque<>();
 
     /** Server start/stop: pending bursts and queued water hold the old world's levels; gate ids restart per world. */
     public static void resetAll() {
@@ -382,7 +384,7 @@ public final class Modifiers {
             for (int x = r.x0(); x <= r.x1(); x++) {
                 for (int z = r.z0(); z <= r.z1(); z++) {
                     if (!RoomGeometry.inside(r, x, z) || RoomGeometry.solid(r, x, z)) continue;
-                    WATER.add(GateService.world(g, f, x, r.dy + y + RoomGeometry.floorOffset(r, x, z), z));
+                    WATER.add(new Pour(level, GateService.world(g, f, x, r.dy + y + RoomGeometry.floorOffset(r, x, z), z)));
                 }
             }
             Signal.toast(p, Component.literal(next == 1 ? "Water seeps in." : next == 2 ? "The water is rising." : "Swim."));
@@ -391,14 +393,11 @@ public final class Modifiers {
 
     private static void tickWater(MinecraftServer server) {
         if (WATER.isEmpty()) return;
-        ServerLevel gl = GateService.gateLevel(server);
-        if (gl == null) {
-            WATER.clear();
-            return;
-        }
         for (int i = 0; i < WATER_PER_TICK && !WATER.isEmpty(); i++) {
-            BlockPos p = WATER.poll();
-            if (gl.isLoaded(p) && gl.getBlockState(p).isAir()) gl.setBlock(p, Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
+            Pour w = WATER.poll();
+            ServerLevel lv = w.level();
+            BlockPos p = w.at();
+            if (lv.isLoaded(p) && lv.getBlockState(p).isAir()) lv.setBlock(p, Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
     }
 

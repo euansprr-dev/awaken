@@ -437,7 +437,7 @@ public final class GateLiveTests {
                 level.getChunk(cx, cz);
                 GatePainter.paint(l, g.cell, cx, cz, (x, y, z, s) -> {
                     if (f.paints(y)) level.setBlock(new BlockPos(cx * 16 + x, y, cz * 16 + z), s, 818);
-                });
+                }, f.sky);
             }
         }
     }

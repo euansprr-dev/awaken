@@ -343,9 +343,11 @@ public final class Rooms {
             String[] af = e.getKey().split(":");
             FloorLayout f = l.floor(Integer.parseInt(af[0]), Integer.parseInt(af[1]));
             if (f == null) continue;
+            // each floor in its own level (an open land's bars stand under the sky)
+            ServerLevel at = GateService.levelOf(level.getServer(), f);
             for (int id : List.copyOf(fs.locked)) {
                 Room r = f.room(id);
-                if (r != null) lock(level, g, f, r, false);
+                if (r != null) lock(at != null ? at : level, g, f, r, false);
                 else fs.locked.remove(id);
             }
         }

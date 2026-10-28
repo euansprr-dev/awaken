@@ -10,6 +10,8 @@ import os
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..", "..", "src", "main", "resources", "data", "awaken")
 BIOMES = os.path.join(ROOT, "worldgen", "biome", "gate_world")
 DIMENSION = os.path.join(ROOT, "dimension", "gates.json")
+# the open-sky gate dimension (38.11) lists the same biomes, so a world's air is the same in either
+DIMENSIONS = [DIMENSION, os.path.join(ROOT, "dimension", "gates_sky.json")]
 
 # world: fog, sky, water, water fog, fog start, fog end, loop, base particles, additions
 WORLDS = {
@@ -102,6 +104,97 @@ TEMPLE_MOODS = {
     "overgrowth": ("#2a4a1e", 0.85, [("minecraft:spore_blossom_air", 0.008), ("minecraft:falling_spore_blossom", 0.003)], None),
 }
 
+# Stage 3 (38.11): the D themes. The Glass Desert's and the Market's open lands sit under a real sky (SKY below).
+ARCHIVE = {
+    "stacks": ("#1a2a2e", "#0c1618", "#2a6a70", "#06181c", 8.0, 120.0, "awaken:gate.world.archive_stacks",
+               [("minecraft:white_ash", 0.003)], ("awaken:gate.world.page", 0.003)),
+    "atrium": ("#1e3438", "#0e1a1e", "#3a9aa0", "#0a2a30", 12.0, 150.0, "awaken:gate.world.archive_atrium",
+               [("minecraft:glow", 0.001), ("minecraft:white_ash", 0.002)], ("awaken:gate.world.drip", 0.005)),
+    "sunken_shelves": ("#142a34", "#081620", "#2a7a90", "#082430", 10.0, 140.0, "awaken:gate.world.archive_atrium",
+                       [("minecraft:underwater", 0.004), ("minecraft:glow", 0.001)], ("awaken:gate.world.tide", 0.002)),
+    "inkwell": ("#0e1018", "#06070c", "#0a0d16", "#04050a", 8.0, 120.0, "awaken:gate.world.archive_ink",
+                [("minecraft:white_ash", 0.002), ("minecraft:glow", 0.0008)], ("awaken:gate.world.pages", 0.002)),
+    "last_readers_room": ("#2a2418", "#141008", "#2a6a70", "#06181c", 4.0, 48.0, "awaken:gate.world.archive_ink",
+                          [("minecraft:white_ash", 0.002)], ("awaken:gate.world.page", 0.002)),
+}
+ARCHIVE_MOODS = {
+    "high_tide": ("#1a3a44", 0.85, [("minecraft:falling_water", 0.006)], ("awaken:gate.world.tide", 0.006)),
+    "lamplit": ("#4a3a20", 1.15, [("minecraft:glow", 0.001)], None),
+    "paper_storm": ("#3a3830", 0.7, [("minecraft:white_ash", 0.01)], ("awaken:gate.world.pages", 0.01)),
+}
+FOUNDRY = {
+    "works_floor": ("#2a2218", "#140e08", "#3a3a30", "#14120a", 8.0, 120.0, "awaken:gate.world.foundry_works",
+                    [("minecraft:ash", 0.003), ("minecraft:electric_spark", 0.0006)], ("awaken:gate.world.valve", 0.002)),
+    "pipe_maze": ("#24201a", "#100c08", "#3a3a30", "#14120a", 4.0, 64.0, "awaken:gate.world.foundry_pipes",
+                  [("minecraft:white_smoke", 0.003)], ("awaken:gate.world.valve", 0.004)),
+    "great_engine": ("#2e2414", "#160e06", "#3a3a30", "#14120a", 12.0, 150.0, "awaken:gate.world.foundry_engine",
+                     [("minecraft:ash", 0.002), ("minecraft:small_flame", 0.0006)], ("awaken:gate.world.clockwork", 0.002)),
+    "stopped_hour": ("#262a30", "#10141a", "#3a3a30", "#14120a", 12.0, 150.0, "awaken:gate.world.foundry_engine",
+                     [("minecraft:white_ash", 0.002), ("minecraft:electric_spark", 0.0006)], ("awaken:gate.world.chime", 0.002)),
+    "orrery": ("#14121c", "#08060e", "#3a3a30", "#14120a", 6.0, 72.0, "awaken:gate.world.foundry_engine",
+               [("minecraft:glow", 0.0012)], ("awaken:gate.world.chime", 0.001)),
+}
+FOUNDRY_MOODS = {
+    "overdrive": ("#5a3010", 0.9, [("minecraft:small_flame", 0.002), ("minecraft:electric_spark", 0.001)],
+                  ("awaken:gate.world.overdrive", 0.006)),
+    "steam": ("#5a5a58", 0.55, [("minecraft:white_smoke", 0.01)], ("awaken:gate.world.valve", 0.01)),
+    "power_cut": ("#050505", 0.6, [], ("awaken:gate.world.powercut", 0.004)),
+}
+DESERT = {
+    "buried_colossus": ("#e0c898", "#8ac0e8", "#3aa0b0", "#0a3a44", 24.0, 150.0, "awaken:gate.world.desert_wind",
+                        [("minecraft:white_ash", 0.0006)], ("awaken:gate.world.shimmer", 0.001)),
+    "glass_caves": ("#2a3a3e", "#101a1e", "#3aa0b0", "#0a3a44", 8.0, 120.0, "awaken:gate.world.desert_glass",
+                    [("minecraft:glow", 0.001), ("minecraft:white_ash", 0.002)], ("awaken:gate.world.chime", 0.002)),
+    "sunken_city": ("#d8c090", "#90b8d8", "#3aa0b0", "#0a3a44", 24.0, 150.0, "awaken:gate.world.desert_city",
+                    [("minecraft:white_ash", 0.001)], ("awaken:gate.world.shimmer", 0.001)),
+    "mirage": ("#f0d8a8", "#a8c8e0", "#3aa0b0", "#0a3a44", 30.0, 158.0, "awaken:gate.world.desert_wind",
+               [("minecraft:white_ash", 0.0006), ("minecraft:end_rod", 0.0002)], ("awaken:gate.world.shimmer", 0.004)),
+    "hourglass": ("#4a3a20", "#201808", "#3aa0b0", "#0a3a44", 6.0, 72.0, "awaken:gate.world.desert_city",
+                  [("minecraft:white_ash", 0.004)], ("awaken:gate.world.shimmer", 0.002)),
+}
+DESERT_MOODS = {
+    "golden_hour": ("#6a4018", 1.0, [], None),
+    "sandstorm": ("#8a7048", 0.35, [("minecraft:white_ash", 0.02)], ("awaken:gate.world.sandstorm", 0.004)),
+    "night": ("#101830", 0.9, [], None),
+}
+MARKET = {
+    "lantern_street": ("#1a1a30", "#0c1430", "#1a3050", "#060c18", 16.0, 140.0, "awaken:gate.world.market_street",
+                       [("minecraft:glow", 0.0006)], ("awaken:gate.world.chime", 0.002)),
+    "rooftops": ("#1c1a34", "#0c1430", "#1a3050", "#060c18", 20.0, 150.0, "awaken:gate.world.market_street",
+                 [("minecraft:glow", 0.0006)], ("awaken:gate.world.chime", 0.003)),
+    "floating_market": ("#141a30", "#0a1230", "#1a3050", "#060c18", 20.0, 150.0, "awaken:gate.world.market_water",
+                        [("minecraft:glow", 0.0008)], ("awaken:gate.world.wish", 0.001)),
+    "festival": ("#2a1a30", "#120c28", "#1a3050", "#060c18", 20.0, 150.0, "awaken:gate.world.market_festival",
+                 [("minecraft:glow", 0.001)], ("awaken:gate.world.fireworks", 0.003)),
+    "brokers_vault": ("#2a1a10", "#140c06", "#1a3050", "#060c18", 6.0, 64.0, "awaken:gate.world.market_festival",
+                      [("minecraft:glow", 0.001)], ("awaken:gate.world.wish", 0.002)),
+}
+MARKET_MOODS = {
+    "fireworks": ("#3a1a3a", 1.0, [], ("awaken:gate.world.fireworks", 0.012)),
+    "rain": ("#1a2030", 0.65, [("minecraft:falling_water", 0.01)], ("awaken:gate.world.rains", 0.006)),
+    "ghost_market": ("#1a3a3a", 0.8, [("minecraft:soul", 0.0008)], ("awaken:gate.world.spirits", 0.003)),
+}
+
+# The real sky over the open lands (gates_sky, 38.11): sun_angle 0 is noon, 90 sunset, 180 midnight. Every sky attribute is
+# spatially interpolated, so a biome carries it; the Market's lands are always night (its recipes say night 1).
+NIGHT = {"sun_angle": 180.0, "moon_angle": 0.0, "star_brightness": 0.6, "sky_light_factor": 0.24, "sky_light_color": "#7a7aff"}
+SKY = {
+    "buried_colossus": {"sun_angle": 25.0, "sky_light_color": "#fff4e0"},
+    "sunken_city": {"sun_angle": 40.0, "sky_light_color": "#fff0d8"},
+    "mirage": {"sun_angle": 15.0, "sky_light_color": "#fff8e8"},
+    "lantern_street": dict(NIGHT, sky_light_color="#8a80ff"),
+    "rooftops": dict(NIGHT, sky_light_color="#8a80ff", star_brightness=0.8),
+    "floating_market": dict(NIGHT, sky_light_color="#8090ff"),
+    "festival": dict(NIGHT, sky_light_color="#b080ff", star_brightness=0.4),
+}
+# a mood's sky over an open world: its own fog and sky colours (not a tint) and its light
+MOOD_SKY = {
+    "golden_hour": {"fog": "#e8a868", "sky": "#d89868", "sun_angle": 72.0, "sunrise_sunset_color": "#c0ff9040",
+                    "sky_light_color": "#ffc890", "sky_light_factor": 0.85},
+    "sandstorm": {"fog": "#b89868", "sky": "#a89070", "sky_light_factor": 0.55},
+    "night": dict(NIGHT, fog="#141830", sky="#0a1028"),
+}
+
 # theme: its worlds, its moods (every world but the secret one has them), its secret world, its water colour if not the table's
 THEMES = {
     "bell_crypt": (WORLDS, MOODS, "bellmakers_rest"),
@@ -109,6 +202,10 @@ THEMES = {
     "ember_mines": (EMBER, EMBER_MOODS, "heart_seam"),
     "hive": (HIVE, HIVE_MOODS, "queens_garden"),
     "overgrown_temple": (TEMPLE, TEMPLE_MOODS, "sleeping_idol"),
+    "drowned_archive": (ARCHIVE, ARCHIVE_MOODS, "last_readers_room"),
+    "clockwork_foundry": (FOUNDRY, FOUNDRY_MOODS, "orrery"),
+    "glass_desert": (DESERT, DESERT_MOODS, "hourglass"),
+    "lantern_night_market": (MARKET, MARKET_MOODS, "brokers_vault"),
 }
 
 
@@ -118,7 +215,7 @@ def mix(a, b, t):
     return "#" + "".join("%02x" % round(x + (y - x) * t) for x, y in zip(pa, pb))
 
 
-def biome(fog, sky, water, wfog, start, end, loop, particles, additions, theme="bell_crypt"):
+def biome(fog, sky, water, wfog, start, end, loop, particles, additions, theme="bell_crypt", heavens=None):
     no_spawns = {k: [] for k in ("ambient", "axolotls", "creature", "misc", "monster", "underground_water_creature",
                                  "water_ambient", "water_creature")}
     return {
@@ -146,7 +243,15 @@ def biome(fog, sky, water, wfog, start, end, loop, particles, additions, theme="
         },
         "carvers": [],
         "features": [],
-    }
+    } if heavens is None else with_sky(biome(fog, sky, water, wfog, start, end, loop, particles, additions, theme), heavens)
+
+
+def with_sky(b, heavens):
+    """An open world's sun, moon, stars and light. The sky's own colour is the table's."""
+    for k, v in heavens.items():
+        if k not in ("fog", "sky"):
+            b["attributes"]["minecraft:visual/" + k] = v
+    return b
 
 
 def main():
@@ -154,23 +259,27 @@ def main():
     ids = []
     for theme, (worlds, moods, secret) in THEMES.items():
         for w, (fog, sky, water, wfog, start, end, loop, parts, adds) in worlds.items():
-            out = {w: biome(fog, sky, water, wfog, start, end, loop, parts, adds, theme)}
+            heavens = SKY.get(w)
+            out = {w: biome(fog, sky, water, wfog, start, end, loop, parts, adds, theme, heavens)}
             if w != secret:
                 for m, (tint, scale, extra, madds) in moods.items():
-                    out[w + "_" + m] = biome(mix(fog, tint, 0.55), mix(sky, tint, 0.4), water, wfog, start, round(end * scale, 1),
-                                             loop, parts + extra, madds or adds, theme)
+                    ms = MOOD_SKY.get(m) if heavens is not None else None
+                    mfog, msky = (ms["fog"], ms["sky"]) if ms else (mix(fog, tint, 0.55), mix(sky, tint, 0.4))
+                    out[w + "_" + m] = biome(mfog, msky, water, wfog, start, round(end * scale, 1), loop, parts + extra,
+                                             madds or adds, theme, dict(heavens, **ms) if ms else heavens)
             for name, b in out.items():
                 with open(os.path.join(BIOMES, name + ".json"), "w") as f:
                     json.dump(b, f, indent=2)
                     f.write("\n")
                 ids.append("awaken:gate_world/" + name)
-    with open(DIMENSION) as f:
-        dim = json.load(f)
-    src = dim["generator"]["biome_source"]
-    src["biomes"] = [b for b in src["biomes"] if not b.startswith("awaken:gate_world/")] + sorted(ids)
-    with open(DIMENSION, "w") as f:
-        json.dump(dim, f, indent=2)
-        f.write("\n")
+    for path in DIMENSIONS:
+        with open(path) as f:
+            dim = json.load(f)
+        src = dim["generator"]["biome_source"]
+        src["biomes"] = [b for b in src["biomes"] if not b.startswith("awaken:gate_world/")] + sorted(ids)
+        with open(path, "w") as f:
+            json.dump(dim, f, indent=2)
+            f.write("\n")
     print(len(ids), "biomes")
 
 

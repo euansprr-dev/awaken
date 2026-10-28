@@ -31,6 +31,13 @@ public final class GateWorldBellTests {
             "ember_mines/working_mine", "ember_mines/open_chasm", "ember_mines/forge_below", "ember_mines/cooling_sea",
             "hive/the_comb", "hive/brood_hall", "hive/honey_lake", "hive/the_swarm",
             "overgrown_temple/jungle_courts", "overgrown_temple/root_halls", "overgrown_temple/waterfall_temple", "overgrown_temple/great_tree");
+    /** Stage 3's floor worlds (SPEC §38.11): the D themes, open lands among them. */
+    public static final List<String> D_WORLDS = List.of(
+            "drowned_archive/stacks", "drowned_archive/atrium", "drowned_archive/sunken_shelves", "drowned_archive/inkwell",
+            "clockwork_foundry/works_floor", "clockwork_foundry/pipe_maze", "clockwork_foundry/great_engine", "clockwork_foundry/stopped_hour",
+            "glass_desert/buried_colossus", "glass_desert/glass_caves", "glass_desert/sunken_city", "glass_desert/mirage",
+            "lantern_night_market/lantern_street", "lantern_night_market/rooftops", "lantern_night_market/floating_market",
+            "lantern_night_market/festival");
 
     public static GatePlan plan(long seed, int i) {
         return plan(seed, i, Theme.BELL_CRYPT);
@@ -381,5 +388,39 @@ public final class GateWorldBellTests {
         world("gateworlds_shaft", BELL + "bell_shaft", 8);
         // the cave themes (38.10): every world a floor can be (a secret world is a place on its host's floors)
         for (String id : CAVE_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
+        // the D themes (38.11)
+        for (String id : D_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
+        AwakenTests.register("gateworlds_sky", 400, h -> {
+            // an open land stands under the open sky (its floor is built in that dimension) and only while the gate has a
+            // whole column to spare for it; without the open sky's dimension no gate picks one (the GameTest server
+            // has no datapack dimensions: gates_dimension_json reads the sky's file instead)
+            java.util.Set<String> open = new java.util.HashSet<>();
+            for (var e : GateWorlds.all().entrySet()) if (e.getValue().open()) open.add(e.getKey());
+            h.assertTrue(open.size() >= 7, "the Glass Desert's and the Market's open lands load (" + open.size() + ")");
+            int seen = 0;
+            for (int i = 0; i < 48; i++) {
+                Theme t = i % 2 == 0 ? Theme.GLASS_DESERT : Theme.LANTERN_NIGHT_MARKET;
+                GatePlan p = GateWorlds.dress(plan(0x5C1L + i * 7919L, i, t), new GateAtlas(), java.util.Set.of());
+                GateLayout l = FloorBuilder.build(p);
+                List<FloorLayout> all = new ArrayList<>(l.main);
+                all.addAll(l.annex);
+                int columns = Math.min(4, 8 - all.size()), talls = 0;
+                for (FloorLayout f : all) {
+                    FloorWorld fw = p.worldFor(f.area, f.floor);
+                    boolean isOpen = fw != null && open.contains(fw.world());
+                    h.assertTrue(f.sky == isOpen, "floor " + f.area + "/" + f.floor + " of " + p + " is under the sky only when it's an open land");
+                    if (isOpen) {
+                        seen++;
+                        talls++;
+                        h.assertTrue(fw.tall() && f.plot.tall(), "an open land gets a whole column: " + fw.world());
+                    }
+                }
+                h.assertTrue(talls <= columns, talls + " open lands in a gate with " + columns + " columns to spare: " + p);
+                GatePlan none = GateWorlds.dress(plan(0x5C1L + i * 7919L, i, t), new GateAtlas(), open);
+                for (FloorWorld fw : none.worlds()) h.assertTrue(!open.contains(fw.world()), "with no open sky, no open land: " + fw.world());
+            }
+            h.assertTrue(seen > 0, "open lands turn up in their themes' gates");
+            h.succeed();
+        });
     }
 }

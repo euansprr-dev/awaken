@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "awaken:block/foundry_pipe",
+    "end": "awaken:block/foundry_pipe_end"
+  }
+}

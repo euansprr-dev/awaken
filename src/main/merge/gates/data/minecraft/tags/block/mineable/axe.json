@@ -14,6 +14,15 @@
     "awaken:hive_drum",
     "awaken:hive_royal",
     "awaken:queens_comb",
-    "awaken:temple_root"
+    "awaken:temple_root",
+    "awaken:archive_shelf",
+    "awaken:archive_shelf_lit",
+    "awaken:archive_planks",
+    "awaken:archive_lectern",
+    "awaken:market_boards",
+    "awaken:market_timber",
+    "awaken:market_paper_wall",
+    "awaken:market_goods",
+    "awaken:market_wish_lantern"
   ]
 }

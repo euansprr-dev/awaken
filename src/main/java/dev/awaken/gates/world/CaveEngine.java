@@ -15,9 +15,15 @@ import java.util.Map;
  * recipe's {@code params} set the shape (how high the roofs, how wide the tunnels, lakes in the big caverns, a sea with
  * islands, hexagonal comb) and its theme's {@link Dress} grows the world in it (mushrooms, timber, comb, roots) and its
  * hero pieces. The Lord's arena and Rig rooms stand on the chain as built rooms.
+ * <p>
+ * An open land (kind {@code open}, SPEC §38.11) is the same chain under the sky: the land stands solid up to its
+ * skyline (dunes, roofs, buried towns), its places and ways are cut open to the sky, and an invisible lid over the whole
+ * floor keeps everyone below the skyline, so nobody flies over a wall the bars close or walks the roofs past a door.
  */
 final class CaveEngine implements WorldEngine {
     static final int BASE = 40, DEEP = 6;
+    /** An open land's skyline at most this far over its floor (the hero pieces rise higher). */
+    static final int SKY_MAX = 40;
 
     enum Kind { ARRIVAL, CAVERN, GREAT, END, LINK, BUILT, SECRET }
 
@@ -49,6 +55,10 @@ final class CaveEngine implements WorldEngine {
         final double hw, wobble;
         final int roof, tower, sky;
         final boolean lakes, sea, hex, square;
+        /** An open land under the sky (38.11): its lid over the floor, how its walls lean back, whether it's night there. */
+        final boolean open, dark;
+        final int lid, deep;
+        final double slope;
         final BlockState floor, wall, trim, fluid, light;
         final Dress dress;
         int secret = -1, great = -1;
@@ -72,6 +82,11 @@ final class CaveEngine implements WorldEngine {
             sea = param("sea", 0) > 0;
             hex = param("hex", 0) > 0;
             square = param("square", 0) > 0;
+            open = world != null && world.open();
+            lid = (int) param("lid", 16);
+            slope = param("slope", 0);
+            deep = open ? (int) param("deep", 0) : 0;
+            dark = param("night", 0) > 0 || this.mood.equals("night") || this.mood.equals("power_cut");
             wall = m.get("wall", "minecraft:deepslate");
             floor = m.get("floor", "minecraft:mud");
             trim = m.get("trim", "minecraft:polished_deepslate");
@@ -100,7 +115,7 @@ final class CaveEngine implements WorldEngine {
             secretPlace();
             sculpt();
             String biome = world == null ? "" : world.biomeFor(mood);
-            FloorLayout f = p.finish(this::walk, new WorldPlan.Look(W, biome, air(), new WorldPlan.SculptModel(s), Float.NaN));
+            FloorLayout f = p.finish(this::walk, new WorldPlan.Look(W, biome, air(), new WorldPlan.SculptModel(s), Float.NaN, open));
             if (f == null) return WorldEngine.fail("the programme didn't carry over: " + WorldEngine.WHY.get());
             for (var e : kinds.entrySet()) {
                 if (e.getValue() == Kind.BUILT && !WorldPlan.built(f.room(e.getKey()))) return WorldEngine.fail("a Rig room didn't rebuild");
@@ -114,7 +129,8 @@ final class CaveEngine implements WorldEngine {
             if (id == p.logic.start) return sea ? new int[]{2, 2} : new int[]{1, 1};
             if (id == p.logic.end) return new int[]{2, 2};
             return switch (L.type) {
-                case HUB, ARENA, CAVERN -> new int[]{2, 2};
+                // a friendly floor has no hubs or arenas (FloorBuilder.friendlyRooms): the spirit's square is its great place
+                case HUB, ARENA, CAVERN, SPIRIT -> new int[]{2, 2};
                 case HALL -> Hash.unit(seed, id, 13) < 0.5 ? new int[]{1, 2} : new int[]{2, 1};
                 default -> new int[]{1, 1};
             };
@@ -148,6 +164,7 @@ final class CaveEngine implements WorldEngine {
                 if (k == Kind.GREAT) h = Math.max(h + 8, tower);
                 if (k == Kind.ARRIVAL) h = Math.max(7, roof - 2);
                 if (sea) h = sky;
+                if (open) h = lid;
                 roofs.put(w, h);
                 r.height = Math.min(h + 4, 120);
                 if (k == Kind.ARRIVAL) {
@@ -190,8 +207,10 @@ final class CaveEngine implements WorldEngine {
                         kinds.put(sid, Kind.SECRET);
                         Room sr = p.world(sid);
                         shapes.put(sid, PassageEngine.Shape.of(sr, true));
-                        roofs.put(sid, roof + sz * 4);
-                        sr.height = Math.min(roof + sz * 4 + 4, 120);
+                        // under open land the secret room is dug into the ground, its dome kept under the land's top
+                        int h = open ? Math.min(roof + sz * 4, lid - 4) : roof + sz * 4;
+                        roofs.put(sid, h);
+                        sr.height = Math.min(h + 4, 120);
                         p.placeWorlds.put(sid, to);
                         GateWorld inner = dev.awaken.gates.worlds.GateWorlds.get(to);
                         if (inner != null && !inner.biome().isEmpty()) p.placeBiomes.put(sid, inner.biome());
@@ -240,6 +259,7 @@ final class CaveEngine implements WorldEngine {
 
         /** A cavern's roof over a point: low at its walls, its full height in the middle, a little uneven. */
         double ceil(int id, double x, double z) {
+            if (open && kinds.get(id) != Kind.SECRET) return lid;
             int h = roofs.getOrDefault(id, roof);
             double q = Math.min(1, q(id, x, z));
             return 3.5 + (h - 3.5) * Math.sqrt(Math.max(0, 1 - q * q)) + (Hash.noise(seed + id * 7L, x, z, 4.5) - 0.5) * 3;
@@ -258,7 +278,14 @@ final class CaveEngine implements WorldEngine {
 
         void sculpt() {
             s = new Sculpt(this::skin, c.plot().minY(), c.plot().maxY());
-            if (sea) {
+            if (open) land();
+            if (sea && open) {
+                // an open lagoon: water from its bed to under the floor across the plot but its margin, the sky over it
+                int x0 = 8, x1 = 247;
+                s.op(x0, W - DEEP + 1, x0, x1, W + SKY_MAX + 2, x1, (b, x, y, z) -> b.mark(x, y, z, Sculpt.OPEN));
+                s.fillOpen(x0, W - DEEP + 1, x0, x1, W - 1, x1, (x, y, z) -> -1, fluid);
+                waters.add(new FloorAir.Water(-1, x0, x0, x1, x1));
+            } else if (sea) {
                 // the sea: open from its bed to the roof over the whole plot but its margin, filled to just under the floor
                 int x0 = 8, x1 = 247;
                 s.carve(x0, W - DEEP + 1, x0, x1, W + sky + 4, x1, (x, y, z) -> {
@@ -279,6 +306,7 @@ final class CaveEngine implements WorldEngine {
                     default -> cavern(r, e.getValue());
                 }
             }
+            if (open && deep > 0 && !sea) streets();
             p.thresholds(s, W, floor, trim);
             dress.world();
             for (var e : kinds.entrySet()) {
@@ -292,9 +320,95 @@ final class CaveEngine implements WorldEngine {
             }
             glow();
             p.doorLights(s, W, light);
-            p.screens(s, W, dress::screen);
+            p.screens(s, W, dress::screen, open ? W + lid - 1 : s.yHi);
             p.handbells(s);
+            if (open) lid();
             s.seal();
+        }
+
+        /**
+         * An open land's ground (38.11): solid from under the floor up to the dress's skyline over the whole plot, never
+         * lower than one under the lid, so nobody stands on a roof under it. A little open air over the top, so the skin
+         * knows the top for a floor (sand, tiles, roofs).
+         */
+        void land() {
+            // down past a lagoon's bed, so its margin and bed hold the water
+            int bottom = W - Math.max(4 + deep, sea ? DEEP + 2 : 0);
+            s.op(0, bottom, 0, Plots.SIDE - 1, W + SKY_MAX + 2, Plots.SIDE - 1, (b, x, y, z) -> {
+                int top = W + Math.min(SKY_MAX, Math.max(lid - 1, dress.skyline(x, z)));
+                if (y <= top) b.mark(x, y, z, Sculpt.SOLID);
+                else if (y <= top + 2) b.mark(x, y, z, Sculpt.OPEN);
+            });
+        }
+
+        /**
+         * Rooftops (38.11): streets five wide every 22 blocks cut {@code deep} down through the land between the places
+         * and open to the sky. Places and links keep their ground (the links become bridges), and where a street passes
+         * the edge of one a rail stands along it.
+         */
+        void streets() {
+            byte[] keep = new byte[Plots.SIDE * Plots.SIDE];
+            for (var e : kinds.entrySet()) {
+                Room r = p.world(e.getKey());
+                Kind k = e.getValue();
+                int x0 = r.gx * 16, z0 = r.gz * 16, x1 = x0 + r.gw * 16 - 1, z1 = z0 + r.gh * 16 - 1;
+                ChainLayout.Way way = k == Kind.LINK ? ChainLayout.Way.of(r, chain.links.get(r.id), seed) : null;
+                PassageEngine.Shape sh = shapes.get(r.id);
+                for (int z = Math.max(0, z0 - 1); z <= Math.min(Plots.SIDE - 1, z1 + 1); z++) {
+                    for (int x = Math.max(0, x0 - 1); x <= Math.min(Plots.SIDE - 1, x1 + 1); x++) {
+                        double q;
+                        // a Rig room and the secret room (dug into the ground) keep their whole box
+                        if (k == Kind.BUILT || k == Kind.SECRET) q = x < x0 || x > x1 || z < z0 || z > z1 ? 0.5 : -9;
+                        else if (way != null) {
+                            if (x < x0 || x > x1 || z < z0 || z > z1) continue;
+                            double[] w = way.at(x + 0.5, z + 0.5);
+                            q = w == null ? 99 : Math.abs(w[0]) - hw;
+                        } else {
+                            // a place keeps its ground and the mouth from each doorway in (cavern's), so no street
+                            // cuts the way between a door and the place
+                            q = d(r.id, x + 0.5, z + 0.5);
+                            if (sh != null) for (Room.Door dr : r.doors) {
+                                double ax = dr.centerX() + 0.5, az = dr.centerZ() + 0.5;
+                                double bx = ax + (sh.cx() - ax) * 0.55, bz = az + (sh.cz() - az) * 0.55;
+                                q = Math.min(q, Sculpt.capsule(x + 0.5, 0, z + 0.5, ax, 0, az, bx, 0, bz, 2.4));
+                            }
+                        }
+                        int i = z * Plots.SIDE + x;
+                        byte v = q < 0 ? (byte) 2 : q < 1.5 ? (byte) 1 : 0;
+                        if (v > keep[i]) keep[i] = v;
+                    }
+                }
+            }
+            int ox = (int) Math.floorMod(seed, 22L), oz = (int) Math.floorMod(seed >> 8, 22L);
+            BlockState rail = dress.rail();
+            s.op(4, W - deep, 4, Plots.SIDE - 5, W + SKY_MAX + 2, Plots.SIDE - 5, (b, x, y, z) -> {
+                if (Math.floorMod(x + ox, 22) >= 5 && Math.floorMod(z + oz, 22) >= 5) return;
+                byte kp = keep[z * Plots.SIDE + x];
+                if (y < W) {
+                    if (kp == 0) b.mark(x, y, z, Sculpt.OPEN);
+                    return;
+                }
+                if (kp == 2) return;
+                if (kp == 1 && y == W) b.set(x, y, z, rail);
+                else b.mark(x, y, z, Sculpt.OPEN);
+            });
+        }
+
+        /** Opens a plan shape from the floor up through the land, its walls leaning back by the slope as they rise. */
+        void openUp(int x0, int z0, int x1, int z1, java.util.function.DoubleBinaryOperator d2) {
+            int lean = (int) Math.ceil(slope * (SKY_MAX + 2)) + 1;
+            s.op(x0 - lean, W, z0 - lean, x1 + lean, W + SKY_MAX + 2, z1 + lean, (b, x, y, z) -> {
+                if (d2.applyAsDouble(x + 0.5, z + 0.5) < (y - W) * slope) b.mark(x, y, z, Sculpt.OPEN);
+            });
+        }
+
+        /** The lid: an invisible ceiling over the whole floor (light and the sky pass through it). */
+        void lid() {
+            BlockState barrier = Blocks.BARRIER.defaultBlockState();
+            s.op(0, W + lid, 0, Plots.SIDE - 1, W + lid, Plots.SIDE - 1, (b, x, y, z) -> {
+                if (b.get(x, y, z) == Sculpt.SOLID || b.state(x, y, z) != null) return;
+                b.set(x, y, z, barrier);
+            });
         }
 
         BlockState skin(int x, int y, int z, boolean fl, boolean ceil) {
@@ -307,6 +421,19 @@ final class CaveEngine implements WorldEngine {
             int x0 = r.gx * 16, z0 = r.gz * 16, x1 = x0 + r.gw * 16 - 1, z1 = z0 + r.gh * 16 - 1;
             if (sea) {
                 island(r);
+                return;
+            }
+            if (open && k != Kind.SECRET) {
+                // a place under the sky: open from its floor up, a mouth from each doorway to its middle
+                openUp(x0, z0, x1, z1, (x, z) -> d(id, x, z));
+                PassageEngine.Shape sh = shapes.get(id);
+                for (Room.Door dr : r.doors) {
+                    double ax = dr.centerX() + 0.5, az = dr.centerZ() + 0.5;
+                    double bx = ax + (sh.cx() - ax) * 0.55, bz = az + (sh.cz() - az) * 0.55;
+                    openUp((int) Math.min(ax, bx) - 3, (int) Math.min(az, bz) - 3, (int) Math.max(ax, bx) + 3, (int) Math.max(az, bz) + 3,
+                            (x, z) -> Sculpt.capsule(x, 0, z, ax, 0, az, bx, 0, bz, 2.4));
+                }
+                if (inLakeAny(id)) lake(r);
                 return;
             }
             int top = W + roofs.get(id) + 3;
@@ -381,6 +508,14 @@ final class CaveEngine implements WorldEngine {
                 });
                 return;
             }
+            if (open) {
+                // a street or a cut between dunes, open to the sky
+                openUp(ox, oz, ox + 15, oz + 15, (x, z) -> {
+                    double[] w = way.at(x, z);
+                    return w == null ? 99 : Math.abs(w[0]) - hw - (Hash.noise(seed, x, z, 4) - 0.5) * 0.8;
+                });
+                return;
+            }
             int top = W + 9;
             s.carve(ox, W, oz, ox + 15, top, oz + 15, (x, y, z) -> {
                 double[] w = way.at(x, z);
@@ -402,6 +537,8 @@ final class CaveEngine implements WorldEngine {
                 Room r = p.world(e.getKey());
                 Kind k = e.getValue();
                 if (k == Kind.BUILT) continue;
+                // under a day sky the sun lights the way; at night (and in a covered secret place) the hidden light does
+                if (open && !dark && k != Kind.SECRET) continue;
                 int x0 = r.gx * 16, z0 = r.gz * 16, x1 = x0 + r.gw * 16 - 1, z1 = z0 + r.gh * 16 - 1;
                 if (k == Kind.LINK) {
                     ChainLayout.Way way = ChainLayout.Way.of(r, chain.links.get(r.id), seed);

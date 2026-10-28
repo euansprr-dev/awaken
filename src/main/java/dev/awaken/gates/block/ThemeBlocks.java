@@ -50,7 +50,7 @@ import java.util.function.Function;
 public final class ThemeBlocks {
     private ThemeBlocks() {}
 
-    public enum Shape { CUBE, COLUMN, GLASS, PLANT, HANG, CARPET, FALL, TOUCH, PROP }
+    public enum Shape { CUBE, COLUMN, GLASS, PLANT, HANG, CARPET, FALL, TOUCH, PROP, FOLD }
 
     /** One block: its id, shape, map colour, sound, light and (props, touchstones) its outline in pixels. */
     public record Def(String name, Shape shape, MapColor color, SoundType sound, int light, double[] box, boolean soft) {
@@ -68,7 +68,7 @@ public final class ThemeBlocks {
     }
 
     private static final Shape C = Shape.CUBE, COL = Shape.COLUMN, G = Shape.GLASS, PL = Shape.PLANT, H = Shape.HANG, CA = Shape.CARPET,
-            F = Shape.FALL, T = Shape.TOUCH, PR = Shape.PROP;
+            F = Shape.FALL, T = Shape.TOUCH, PR = Shape.PROP, FO = Shape.FOLD;
 
     /** Every theme's blocks, in the order of the creative tab. */
     public static final List<Def> DEFS = List.of(
@@ -123,7 +123,61 @@ public final class ThemeBlocks {
             Def.soft("temple_fern", PL, MapColor.PLANT, SoundType.GRASS, 0),
             Def.soft("temple_lantern_bulb", H, MapColor.COLOR_YELLOW, SoundType.SPORE_BLOSSOM, 12),
             Def.soft("temple_canopy", C, MapColor.PLANT, SoundType.AZALEA_LEAVES, 0),
-            Def.soft("temple_waterfall", F, MapColor.WATER, SoundType.EMPTY, 3)
+            Def.soft("temple_waterfall", F, MapColor.WATER, SoundType.EMPTY, 3),
+            // Drowned Archive (38.11)
+            Def.of("archive_stone", C, MapColor.TERRACOTTA_CYAN, SoundType.STONE, 0),
+            Def.of("archive_stone_carved", C, MapColor.TERRACOTTA_CYAN, SoundType.STONE, 5),
+            Def.soft("archive_shelf", COL, MapColor.WOOD, SoundType.CHISELED_BOOKSHELF, 0),
+            Def.soft("archive_shelf_lit", COL, MapColor.WOOD, SoundType.CHISELED_BOOKSHELF, 7),
+            Def.of("archive_tiles", C, MapColor.TERRACOTTA_WHITE, SoundType.DEEPSLATE_TILES, 0),
+            Def.soft("archive_planks", C, MapColor.COLOR_BROWN, SoundType.WOOD, 0),
+            Def.box("archive_lamp", PR, MapColor.COLOR_GREEN, SoundType.LANTERN, 14, 4, 0, 4, 12, 13, 12),
+            Def.soft("archive_paper", CA, MapColor.TERRACOTTA_WHITE, SoundType.WOOL, 0),
+            Def.soft("archive_kelp", H, MapColor.COLOR_GREEN, SoundType.WET_GRASS, 6),
+            Def.soft("archive_sea_glass", G, MapColor.WATER, SoundType.GLASS, 4),
+            Def.soft("archive_inkfall", F, MapColor.COLOR_BLACK, SoundType.EMPTY, 4),
+            Def.box("archive_lectern", T, MapColor.WOOD, SoundType.WOOD, 10, 2, 0, 2, 14, 14, 14),
+            Def.box("archive_paper_bridge", FO, MapColor.TERRACOTTA_WHITE, SoundType.WOOL, 3, 0, 13, 0, 16, 16, 16),
+            // Clockwork Foundry
+            Def.of("foundry_iron", C, MapColor.METAL, SoundType.METAL, 0),
+            Def.of("foundry_brick", C, MapColor.TERRACOTTA_RED, SoundType.NETHER_BRICKS, 0),
+            Def.of("foundry_brass", C, MapColor.GOLD, SoundType.METAL, 0),
+            Def.of("foundry_gear", C, MapColor.GOLD, SoundType.METAL, 0),
+            Def.of("foundry_grille", G, MapColor.METAL, SoundType.CHAIN, 0),
+            Def.of("foundry_pipe", COL, MapColor.COLOR_ORANGE, SoundType.COPPER, 0),
+            Def.of("foundry_furnace", C, MapColor.TERRACOTTA_RED, SoundType.NETHER_BRICKS, 13),
+            Def.box("foundry_bulb", PR, MapColor.COLOR_YELLOW, SoundType.LANTERN, 14, 5, 0, 5, 11, 12, 11),
+            Def.soft("foundry_steam", F, MapColor.SNOW, SoundType.EMPTY, 0),
+            Def.soft("foundry_sparks", PL, MapColor.COLOR_ORANGE, SoundType.CHAIN, 10),
+            Def.soft("foundry_cables", H, MapColor.COLOR_BLACK, SoundType.CHAIN, 3),
+            Def.box("foundry_valve", T, MapColor.GOLD, SoundType.METAL, 6, 2, 0, 2, 14, 14, 14),
+            // Glass Desert
+            Def.soft("desert_sand", C, MapColor.SAND, SoundType.SAND, 0),
+            Def.soft("desert_sand_rippled", C, MapColor.SAND, SoundType.SAND, 0),
+            Def.of("desert_sandstone", C, MapColor.SAND, SoundType.STONE, 0),
+            Def.of("desert_sandstone_carved", C, MapColor.SAND, SoundType.STONE, 6),
+            Def.of("desert_brick", C, MapColor.TERRACOTTA_ORANGE, SoundType.MUD_BRICKS, 0),
+            Def.of("desert_tile", C, MapColor.COLOR_LIGHT_BLUE, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("desert_column", COL, MapColor.SAND, SoundType.STONE, 0),
+            Def.soft("desert_glass", G, MapColor.COLOR_ORANGE, SoundType.GLASS, 0),
+            Def.soft("desert_glass_glowing", G, MapColor.COLOR_YELLOW, SoundType.GLASS, 12),
+            Def.soft("desert_crystal", PL, MapColor.COLOR_YELLOW, SoundType.AMETHYST_CLUSTER, 9),
+            Def.soft("desert_grass", PL, MapColor.SAND, SoundType.GRASS, 0),
+            Def.soft("desert_sandfall", F, MapColor.SAND, SoundType.EMPTY, 0),
+            Def.box("desert_mirror", T, MapColor.GOLD, SoundType.METAL, 8, 2, 0, 2, 14, 15, 14),
+            // Lantern Night Market
+            Def.soft("market_boards", C, MapColor.WOOD, SoundType.WOOD, 0),
+            Def.of("market_cobbles", C, MapColor.STONE, SoundType.STONE, 0),
+            Def.of("market_plaster", C, MapColor.TERRACOTTA_WHITE, SoundType.PACKED_MUD, 0),
+            Def.soft("market_timber", COL, MapColor.COLOR_RED, SoundType.WOOD, 0),
+            Def.of("market_roof", C, MapColor.TERRACOTTA_GRAY, SoundType.DEEPSLATE_TILES, 0),
+            Def.soft("market_paper_wall", G, MapColor.TERRACOTTA_WHITE, SoundType.BAMBOO_WOOD, 10),
+            Def.soft("market_lantern", H, MapColor.COLOR_RED, SoundType.LANTERN, 15),
+            Def.soft("market_lights", H, MapColor.COLOR_YELLOW, SoundType.CHAIN, 11),
+            Def.soft("market_cloth", C, MapColor.COLOR_RED, SoundType.WOOL, 0),
+            Def.box("market_goods", PR, MapColor.COLOR_ORANGE, SoundType.WOOD, 4, 1, 0, 1, 15, 12, 15),
+            Def.soft("market_boat_lamp", CA, MapColor.COLOR_YELLOW, SoundType.WOOL, 10),
+            Def.box("market_wish_lantern", T, MapColor.COLOR_RED, SoundType.BAMBOO_WOOD, 12, 4, 0, 4, 12, 15, 12)
     );
 
     /** The touchstones that stay lit once touched (a brazier fed); the rest fade back after a few seconds. */
@@ -147,6 +201,7 @@ public final class ThemeBlocks {
             case FALL -> p -> new Shaped(p, Shapes.block(), false);
             case TOUCH -> p -> new Touchstone(p, boxOf(d), STAYS_LIT.contains(d.name()));
             case PROP -> p -> new Shaped(p, boxOf(d), true);
+            case FOLD -> p -> new Folding(p, boxOf(d));
         };
     }
 
@@ -166,7 +221,7 @@ public final class ThemeBlocks {
                     .isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false).strength(0.4F);
             case PLANT, HANG, FALL -> p = p.noOcclusion().noCollision().instabreak().isValidSpawn((s, l, pos, t) -> false)
                     .isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false);
-            case CARPET, PROP, TOUCH -> p = p.noOcclusion().isValidSpawn((s, l, pos, t) -> false);
+            case CARPET, PROP, TOUCH, FOLD -> p = p.noOcclusion().isValidSpawn((s, l, pos, t) -> false);
             default -> {}
         }
         return p;
@@ -239,6 +294,39 @@ public final class ThemeBlocks {
         @Override
         protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
             if (state.getValue(LIT)) level.setBlock(pos, state.setValue(LIT, false), Block.UPDATE_CLIENTS);
+        }
+    }
+
+    /**
+     * The Inkwell's paper bridge (SPEC §38.11): a sheet you can always stand on, shown folded flat and faint until someone
+     * comes near, when it opens out into a bridge (the live layer opens it and it folds itself again a while later).
+     */
+    public static final class Folding extends Shaped {
+        public static final BooleanProperty OPEN = net.minecraft.world.level.block.state.properties.BlockStateProperties.OPEN;
+
+        public Folding(BlockBehaviour.Properties p, VoxelShape shape) {
+            super(p, shape, true);
+            registerDefaultState(stateDefinition.any().setValue(OPEN, false));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(OPEN);
+        }
+
+        @Override
+        protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+            if (!state.getValue(OPEN)) return;
+            // fold again once nobody is near
+            if (level.getNearestPlayer(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 6, false) != null) level.scheduleTick(pos, this, 60);
+            else level.setBlock(pos, state.setValue(OPEN, false), Block.UPDATE_CLIENTS);
+        }
+
+        /** Opens the sheet if it's folded, and folds it again some seconds after nobody is near. */
+        public static void open(ServerLevel level, BlockPos pos, BlockState state) {
+            if (!(state.getBlock() instanceof Folding f) || state.getValue(OPEN)) return;
+            level.setBlock(pos, state.setValue(OPEN, true), Block.UPDATE_CLIENTS);
+            level.scheduleTick(pos, f, 80);
         }
     }
 
@@ -359,6 +447,125 @@ public final class ThemeBlocks {
         }
     }
 
+    /** The Drowned Archive's set piece, the Diving Lamp: use it and you can breathe underwater for a minute. */
+    public static final class DivingLamp extends Shaped {
+        public DivingLamp(BlockBehaviour.Properties p) {
+            super(p, Block.box(3, 0, 3, 13, 15, 13), true);
+        }
+
+        @Override
+        protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+            if (level instanceof ServerLevel sl) {
+                player.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WATER_BREATHING, 20 * 60, 0));
+                sl.sendParticles(ParticleTypes.BUBBLE_POP, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 16, 0.3, 0.3, 0.3, 0.02);
+                sl.playSound(null, pos, SoundEvents.BUBBLE_COLUMN_UPWARDS_INSIDE, SoundSource.BLOCKS, 0.8F, 1.1F);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        @Override
+        public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource r) {
+            if (r.nextInt(4) == 0) level.addParticle(ParticleTypes.BUBBLE_POP, pos.getX() + 0.3 + r.nextDouble() * 0.4, pos.getY() + 0.9,
+                    pos.getZ() + 0.3 + r.nextDouble() * 0.4, 0, 0.02, 0);
+        }
+    }
+
+    /** The Clockwork Foundry's set piece, the Pocket Engine: use it to start it, and while it runs it gives a redstone signal. */
+    public static final class PocketEngine extends Shaped {
+        public static final BooleanProperty POWERED = net.minecraft.world.level.block.state.properties.BlockStateProperties.POWERED;
+
+        public PocketEngine(BlockBehaviour.Properties p) {
+            super(p, Block.box(2, 0, 2, 14, 12, 14), true);
+            registerDefaultState(stateDefinition.any().setValue(POWERED, false));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(POWERED);
+        }
+
+        @Override
+        protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+            if (level.isClientSide()) return InteractionResult.SUCCESS;
+            BlockState next = state.cycle(POWERED);
+            level.setBlock(pos, next, Block.UPDATE_ALL);
+            level.updateNeighborsAt(pos, this);
+            level.playSound(null, pos, next.getValue(POWERED) ? SoundEvents.PISTON_EXTEND : SoundEvents.PISTON_CONTRACT, SoundSource.BLOCKS, 0.5F, 1.6F);
+            return InteractionResult.SUCCESS_SERVER;
+        }
+
+        @Override
+        protected boolean isSignalSource(BlockState state) {
+            return true;
+        }
+
+        @Override
+        protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, net.minecraft.core.Direction dir) {
+            return state.getValue(POWERED) ? 15 : 0;
+        }
+
+        @Override
+        public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource r) {
+            if (state.getValue(POWERED) && r.nextInt(3) == 0)
+                level.addParticle(ParticleTypes.CLOUD, pos.getX() + 0.5, pos.getY() + 0.85, pos.getZ() + 0.5, 0, 0.03, 0);
+        }
+    }
+
+    /** The Glass Desert's set piece, the Hourglass: turn it and it tells you how long it is until the sun sets or rises. */
+    public static final class Hourglass extends Shaped {
+        public Hourglass(BlockBehaviour.Properties p) {
+            super(p, Block.box(4, 0, 4, 12, 15, 12), true);
+        }
+
+        @Override
+        protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+            if (!(level instanceof ServerLevel sl)) return InteractionResult.SUCCESS;
+            long t = Math.floorMod(sl.getOverworldClockTime(), 24000L);
+            boolean day = t < 12000;
+            long left = (day ? 12000 - t : 24000 - t) / 20;
+            String when = left < 60 ? "less than a minute" : left < 120 ? "about a minute" : "about " + (left / 60) + " minutes";
+            player.sendOverlayMessage(net.minecraft.network.chat.Component.literal("The sand says " + when + " until " + (day ? "sunset." : "sunrise.")));
+            sl.playSound(null, pos, SoundEvents.SAND_FALL, SoundSource.BLOCKS, 0.8F, 1.3F);
+            return InteractionResult.SUCCESS_SERVER;
+        }
+    }
+
+    /** The Lantern Night Market's set piece, the Lucky Cat: once a day it has a small gift for you (an emerald). */
+    public static final class LuckyCat extends Shaped {
+        public static final BooleanProperty FULL = BooleanProperty.create("full");
+
+        public LuckyCat(BlockBehaviour.Properties p) {
+            super(p, Block.box(4, 0, 4, 12, 13, 12), true);
+            registerDefaultState(stateDefinition.any().setValue(FULL, true));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(FULL);
+        }
+
+        @Override
+        protected boolean isRandomlyTicking(BlockState state) {
+            return !state.getValue(FULL);
+        }
+
+        @Override
+        protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource r) {
+            if (r.nextInt(6) == 0) level.setBlock(pos, state.setValue(FULL, true), Block.UPDATE_ALL);
+        }
+
+        @Override
+        protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+            if (!state.getValue(FULL)) return InteractionResult.PASS;
+            if (level.isClientSide()) return InteractionResult.SUCCESS;
+            ItemStack gift = new ItemStack(Items.EMERALD);
+            if (!player.getInventory().add(gift)) player.drop(gift, false, net.minecraft.util.Prediction.SERVER_ONLY);
+            level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 1F, 1.4F);
+            level.setBlock(pos, state.setValue(FULL, false), Block.UPDATE_ALL);
+            return InteractionResult.SUCCESS_SERVER;
+        }
+    }
+
     /** The set pieces' ids and makers, registered with their items in the creative tab's set row. */
     public static Map<String, DeferredBlock<? extends Block>> registerSets(DeferredRegister.Blocks blocks) {
         Map<String, DeferredBlock<? extends Block>> out = new LinkedHashMap<>();
@@ -371,6 +578,16 @@ public final class ThemeBlocks {
                         .lightLevel(s -> s.getValue(QueensComb.FULL) ? 10 : 4)));
         out.put("little_idol", blocks.registerBlock("little_idol", LittleIdol::new,
                 p -> p.mapColor(MapColor.TERRACOTTA_GREEN).sound(SoundType.STONE).strength(1.5F, 6.0F).noOcclusion().randomTicks().lightLevel(s -> 4)));
+        out.put("diving_lamp", blocks.registerBlock("diving_lamp", DivingLamp::new,
+                p -> p.mapColor(MapColor.COLOR_GREEN).sound(SoundType.LANTERN).strength(0.6F).noOcclusion().lightLevel(s -> 13)));
+        out.put("pocket_engine", blocks.registerBlock("pocket_engine", PocketEngine::new,
+                p -> p.mapColor(MapColor.GOLD).sound(SoundType.METAL).strength(1.5F, 6.0F).noOcclusion()
+                        .lightLevel(s -> s.getValue(PocketEngine.POWERED) ? 9 : 2)));
+        out.put("sun_hourglass", blocks.registerBlock("sun_hourglass", Hourglass::new,
+                p -> p.mapColor(MapColor.SAND).sound(SoundType.GLASS).strength(0.6F).noOcclusion().lightLevel(s -> 5)));
+        out.put("lucky_cat", blocks.registerBlock("lucky_cat", LuckyCat::new,
+                p -> p.mapColor(MapColor.GOLD).sound(SoundType.DECORATED_POT).strength(0.6F).noOcclusion().randomTicks()
+                        .lightLevel(s -> s.getValue(LuckyCat.FULL) ? 8 : 3)));
         return out;
     }
 }

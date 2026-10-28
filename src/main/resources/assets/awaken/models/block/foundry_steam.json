@@ -1,0 +1,45 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/foundry_steam",
+    "fall": {
+      "sprite": "awaken:block/foundry_steam",
+      "force_translucent": true
+    }
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#fall"
+        },
+        "up": {
+          "texture": "#fall"
+        },
+        "north": {
+          "texture": "#fall"
+        },
+        "south": {
+          "texture": "#fall"
+        },
+        "west": {
+          "texture": "#fall"
+        },
+        "east": {
+          "texture": "#fall"
+        }
+      }
+    }
+  ]
+}

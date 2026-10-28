@@ -35,6 +35,10 @@ abstract class Dress {
             case EMBER_MINES -> new EmberDress(c);
             case HIVE -> new HiveDress(c);
             case OVERGROWN_TEMPLE -> new TempleDress(c);
+            case DROWNED_ARCHIVE -> new ArchiveDress(c);
+            case CLOCKWORK_FOUNDRY -> new FoundryDress(c);
+            case GLASS_DESERT -> new DesertDress(c);
+            case LANTERN_NIGHT_MARKET -> new MarketDress(c);
             default -> new FungalDress(c);
         };
     }
@@ -46,6 +50,19 @@ abstract class Dress {
 
     /** A shell block: floor (open above), ceiling (open below) or wall. */
     abstract BlockState skin(int x, int y, int z, boolean floor, boolean ceiling);
+
+    /**
+     * An open land's skyline over a point (38.11): the height of the land's top block above the floor (dunes, roofs, a
+     * buried town's towers). The engine keeps it at least one under the lid.
+     */
+    int skyline(int x, int z) {
+        return c.lid + 2 + (int) (Hash.noise(seed + 77, x, z, 18) * 8);
+    }
+
+    /** The rail along a bridge or a roof's edge over a street (38.11). */
+    BlockState rail() {
+        return GatePainter.state("minecraft:dark_oak_fence");
+    }
 
     /** After every place is carved, before each is dressed. */
     void world() {}
@@ -243,6 +260,8 @@ abstract class Dress {
      * keeps {@code secret} for the floor (one per floor). A small cavern whose mouths cross it gets its stone nearer them.
      */
     void touchstones(Room r, BlockState st, int n, String secret, int salt) {
+        // the gate within stands four from its room's middle, set after the carve: a touchstone there would be lost
+        if (r.type == Room.Type.INNER_GATE) return;
         for (int i = 0; i < n; i++) {
             double[] at = spot(r, salt + i * 7, 0.35, 0.75, 2.5, 5.5);
             if (at == null) at = spot(r, salt + i * 7 + 3, 0.2, 0.8, 1.5, 2.5);

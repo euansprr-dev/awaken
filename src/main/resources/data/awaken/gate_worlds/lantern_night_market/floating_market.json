@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "theme": "lantern_night_market",
+  "name": "The Floating Market",
+  "line": "Boats tied up together on a lagoon, every one of them a stall with a lamp in it.",
+  "tier": "deep",
+  "rarity": "uncommon",
+  "kind": "open",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "night": 1,
+    "lid": 16,
+    "sea": 1
+  },
+  "biome": "awaken:gate_world/floating_market",
+  "moods": [
+    {
+      "id": "market_night",
+      "name": "Market night",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "fireworks",
+      "name": "Fireworks",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/floating_market_fireworks",
+      "life": [
+        "fireflies"
+      ]
+    },
+    {
+      "id": "rain",
+      "name": "Rain",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/floating_market_rain",
+      "life": [
+        "rain"
+      ]
+    },
+    {
+      "id": "ghost_market",
+      "name": "Ghost market",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/floating_market_ghost_market",
+      "life": [
+        "procession",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "floor": "awaken:market_cobbles",
+    "boards": "awaken:market_boards",
+    "wall": "awaken:market_plaster",
+    "trim": "awaken:market_timber",
+    "timber": "awaken:market_timber",
+    "roof": "awaken:market_roof",
+    "wall_glow": "awaken:market_paper_wall",
+    "lantern": "awaken:market_lantern",
+    "lights": "awaken:market_lights",
+    "cloth": "awaken:market_cloth",
+    "goods": "awaken:market_goods",
+    "boat_lamp": "awaken:market_boat_lamp",
+    "touch": "awaken:market_wish_lantern",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "boats"
+  ],
+  "life": [
+    "fireflies",
+    "moths",
+    "smoke"
+  ],
+  "sound": "awaken:gate.world.market_water",
+  "events": [
+    "lantern_release",
+    "fireworks"
+  ],
+  "rule": "wishes",
+  "secrets": [
+    {
+      "id": "the_first_wish",
+      "name": "The first wish"
+    },
+    {
+      "id": "the_lost_boat",
+      "name": "The lost boat"
+    }
+  ],
+  "keepsake": "paper_boat",
+  "keepsake_name": "A Paper Boat",
+  "keepsake_from": "the_lost_boat",
+  "tall": true
+}

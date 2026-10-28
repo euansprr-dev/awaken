@@ -104,10 +104,12 @@ public final class WorldLiveTests {
                 WorldProps.near(level, p, g, f);
                 WorldProps.Prop prop = WorldProps.of(g, f).get(0);
                 h.assertTrue(prop.display != null && WorldProps.prop(prop.display), "a bell near you hangs as a prop");
-                WorldProps.swing(g, f, pm, 1F);
-                long t0 = level.getGameTime() - level.getGameTime() % WorldProps.STEP + WorldProps.STEP;
+                // the props run on the server's tick count (WorldLive.tick), not the level's clock: set it, then ring
+                long t0 = level.getServer().getTickCount() / WorldProps.STEP * WorldProps.STEP + WorldProps.STEP;
                 WorldProps.tick(level, t0);
+                WorldProps.swing(g, f, pm, 1F);
                 WorldProps.tick(level, t0 + WorldProps.STEP);
+                WorldProps.tick(level, t0 + 2 * WorldProps.STEP);
                 h.assertTrue(Math.abs(prop.display.getXRot()) > 1, "a rung bell swings (pitch " + prop.display.getXRot() + ")");
 
                 // the odd rope: coming into the Bellmaker's Rest finds the secret and its keepsake
@@ -277,7 +279,9 @@ public final class WorldLiveTests {
             for (int i = 0; i < p.getInventory().getContainerSize(); i++) tower |= p.getInventory().getItem(i).is(GatesRegistry.BELL_TOWER.get().asItem());
             h.assertTrue(tower, "the fifth keepsake brings the bell tower");
             for (var t : List.of(dev.awaken.gates.content.Theme.FUNGAL_HOLLOW, dev.awaken.gates.content.Theme.EMBER_MINES,
-                    dev.awaken.gates.content.Theme.HIVE, dev.awaken.gates.content.Theme.OVERGROWN_TEMPLE)) {
+                    dev.awaken.gates.content.Theme.HIVE, dev.awaken.gates.content.Theme.OVERGROWN_TEMPLE,
+                    dev.awaken.gates.content.Theme.DROWNED_ARCHIVE, dev.awaken.gates.content.Theme.CLOCKWORK_FOUNDRY,
+                    dev.awaken.gates.content.Theme.GLASS_DESERT, dev.awaken.gates.content.Theme.LANTERN_NIGHT_MARKET)) {
                 h.assertTrue(WorldSets.of(t) != null && WorldSets.of(t).item().get() != null, t.id + " has its set piece");
                 long keeps = GateWorlds.ofTheme(t).stream().filter(w -> !GateWorlds.get(w).dressing().keepsake().isEmpty()).count();
                 h.assertTrue(keeps == 5, t.id + " has a keepsake in each of its five worlds (" + keeps + ")");

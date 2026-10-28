@@ -981,5 +981,322 @@
         "stream": true
       }
     ]
+  },
+  "gate.world.page": {
+    "subtitle": "subtitles.awaken.gate.world.page",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/page_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:gate_world/page_2",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.pages": {
+    "subtitle": "subtitles.awaken.gate.world.pages",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/pages",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "gate.world.tide": {
+    "subtitle": "subtitles.awaken.gate.world.tide",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/tide",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "gate.world.bookworm": {
+    "subtitle": "subtitles.awaken.gate.world.bookworm",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/bookworm",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "gate.world.valve": {
+    "subtitle": "subtitles.awaken.gate.world.valve",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/valve_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:gate_world/valve_2",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.overdrive": {
+    "subtitle": "subtitles.awaken.gate.world.overdrive",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/overdrive",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "gate.world.powercut": {
+    "subtitle": "subtitles.awaken.gate.world.powercut",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/powercut",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "gate.world.clockwork": {
+    "subtitle": "subtitles.awaken.gate.world.clockwork",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/clockwork",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "gate.world.chime": {
+    "subtitle": "subtitles.awaken.gate.world.chime",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/chime_1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:gate_world/chime_2",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "gate.world.sandstorm": {
+    "subtitle": "subtitles.awaken.gate.world.sandstorm",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/sandstorm",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "gate.world.shimmer": {
+    "subtitle": "subtitles.awaken.gate.world.shimmer",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/shimmer",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "gate.world.walker": {
+    "subtitle": "subtitles.awaken.gate.world.walker",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/walker",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "gate.world.wish": {
+    "subtitle": "subtitles.awaken.gate.world.wish",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/wish_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:gate_world/wish_2",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.fireworks": {
+    "subtitle": "subtitles.awaken.gate.world.fireworks",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/fireworks_1",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "awaken:gate_world/fireworks_2",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "gate.world.release": {
+    "subtitle": "subtitles.awaken.gate.world.release",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/release",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "gate.world.festival": {
+    "subtitle": "subtitles.awaken.gate.world.festival",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/festival",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "gate.world.spirits": {
+    "subtitle": "subtitles.awaken.gate.world.spirits",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/spirits",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "gate.world.arrive_drowned_archive": {
+    "subtitle": "subtitles.awaken.gate.world.arrive_drowned_archive",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/arrive_drowned_archive",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.arrive_clockwork_foundry": {
+    "subtitle": "subtitles.awaken.gate.world.arrive_clockwork_foundry",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/arrive_clockwork_foundry",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.arrive_glass_desert": {
+    "subtitle": "subtitles.awaken.gate.world.arrive_glass_desert",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/arrive_glass_desert",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.arrive_lantern_night_market": {
+    "subtitle": "subtitles.awaken.gate.world.arrive_lantern_night_market",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/arrive_lantern_night_market",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.world.archive_stacks": {
+    "subtitle": "subtitles.awaken.gate.world.archive_stacks",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_archive_stacks",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.archive_atrium": {
+    "subtitle": "subtitles.awaken.gate.world.archive_atrium",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_archive_atrium",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.archive_ink": {
+    "subtitle": "subtitles.awaken.gate.world.archive_ink",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_archive_ink",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.foundry_works": {
+    "subtitle": "subtitles.awaken.gate.world.foundry_works",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_foundry_works",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.foundry_pipes": {
+    "subtitle": "subtitles.awaken.gate.world.foundry_pipes",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_foundry_pipes",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.foundry_engine": {
+    "subtitle": "subtitles.awaken.gate.world.foundry_engine",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_foundry_engine",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.desert_wind": {
+    "subtitle": "subtitles.awaken.gate.world.desert_wind",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_desert_wind",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.desert_city": {
+    "subtitle": "subtitles.awaken.gate.world.desert_city",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_desert_city",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.desert_glass": {
+    "subtitle": "subtitles.awaken.gate.world.desert_glass",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_desert_glass",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.market_street": {
+    "subtitle": "subtitles.awaken.gate.world.market_street",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_market_street",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.market_water": {
+    "subtitle": "subtitles.awaken.gate.world.market_water",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_market_water",
+        "stream": true
+      }
+    ]
+  },
+  "gate.world.market_festival": {
+    "subtitle": "subtitles.awaken.gate.world.market_festival",
+    "sounds": [
+      {
+        "name": "awaken:gate_world/amb_market_festival",
+        "stream": true
+      }
+    ]
   }
 }

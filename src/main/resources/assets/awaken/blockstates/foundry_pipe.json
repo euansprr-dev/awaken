@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/foundry_pipe"
+    },
+    "axis=z": {
+      "model": "awaken:block/foundry_pipe",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "awaken:block/foundry_pipe",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

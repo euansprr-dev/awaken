@@ -10,6 +10,7 @@ import dev.awaken.gates.GateRecord;
 import dev.awaken.gates.GateRegistry;
 import dev.awaken.gates.GateService;
 import dev.awaken.gates.GatesRegistry;
+import dev.awaken.gates.block.ThemeBlocks;
 import dev.awaken.gates.net.WorldPayloads;
 import dev.awaken.gates.run.RunState;
 import dev.awaken.gates.run.Rooms;
@@ -92,7 +93,8 @@ public final class WorldLive {
     /** Where a player last stood safely on a drop world's floor. */
     static final class Ledge {
         Key floor;
-        boolean drop, lava;
+        /** A drop world's shaft, or the Rooftops' streets (38.11): the same catch, its own words. */
+        boolean drop, lava, streets;
         Vec3 pos;
         float yaw;
     }
@@ -134,8 +136,9 @@ public final class WorldLive {
         while (!LATER.isEmpty() && LATER.peek().at() <= now) LATER.poll().run().run();
         ServerLevel gl = GateService.gateLevel(server);
         if (gl == null) return;
+        // the Flood is the Belfry's (never under the open sky); ledges and props are wherever their floor is
         for (Live l : LIVE.values()) if (l.flood != null && l.flood.step(gl)) l.flood = null;
-        if (!LEDGES.isEmpty()) for (ServerPlayer p : gl.players()) ledge(gl, p);
+        if (!LEDGES.isEmpty()) for (ServerLevel lv : GateService.levels(server)) for (ServerPlayer p : lv.players()) ledge(lv, p);
         WorldProps.tick(gl, now);
     }
 
@@ -168,7 +171,8 @@ public final class WorldLive {
             ledge.floor = key;
             ledge.pos = null;
         }
-        ledge.drop = w.kind().equals("drop");
+        ledge.streets = w.param("deep", 0) > 0;
+        ledge.drop = w.kind().equals("drop") || ledge.streets;
         ledge.lava = w.dressing().blocks().getOrDefault("fluid", "").equals("minecraft:lava");
         places(p, g, f, r);
         nooks(p, g, f, r);
@@ -195,6 +199,7 @@ public final class WorldLive {
         if (fs.world.contains(FLOOD) && !fs.world.contains(FLOOD_DONE) && live.flood == null) live.flood = Flood.of(g, f, false);
         hum(level, p, g, f, live);
         WorldProps.near(level, p, g, f);
+        if (f.world.endsWith("/inkwell") && (level.getGameTime() + p.getId()) % 4 == 0) unfold(level, p);
     }
 
     /** A hung bell over you hums softly as you pass under it (within its rim, 32 below it at most). */
@@ -685,7 +690,27 @@ public final class WorldLive {
         p.hurtServer(level, level.damageSources().fall(), CATCH_DAMAGE);
         level.playSound(null, BlockPos.containing(l.pos), GatesRegistry.SND_WORLD_CATCH.get(), SoundSource.PLAYERS, 1F, 1F);
         level.sendParticles(GatesRegistry.P_GLINT.get(), l.pos.x, l.pos.y + 1, l.pos.z, 16, 0.4, 0.6, 0.4, 0.02);
-        p.sendOverlayMessage(Component.literal("You fell, and the shaft gave you back to the last ledge you stood on."));
+        p.sendOverlayMessage(Component.literal(l.streets ? "You fell into the streets, and the market lifted you back up onto the roofs."
+                : "You fell, and the shaft gave you back to the last ledge you stood on."));
+    }
+
+    /** The Inkwell's paper bridges open out under anyone who comes near (SPEC §38.11), and fold again once nobody is. */
+    static void unfold(ServerLevel level, ServerPlayer p) {
+        BlockPos at = p.blockPosition();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        boolean any = false;
+        for (int dx = -4; dx <= 4; dx++) {
+            for (int dz = -4; dz <= 4; dz++) {
+                for (int dy = -2; dy <= 0; dy++) {
+                    m.set(at.getX() + dx, at.getY() + dy, at.getZ() + dz);
+                    BlockState s = level.getBlockState(m);
+                    if (!(s.getBlock() instanceof ThemeBlocks.Folding) || s.getValue(ThemeBlocks.Folding.OPEN)) continue;
+                    ThemeBlocks.Folding.open(level, m.immutable(), s);
+                    any = true;
+                }
+            }
+        }
+        if (any) WorldThemes.play(level, at, "page", 0.6F, 1.3F);
     }
 
     /** The floor a world position's in, for code that has only a position. */

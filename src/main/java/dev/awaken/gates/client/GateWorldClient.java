@@ -46,7 +46,7 @@ public final class GateWorldClient {
         WorldPayloads.Arrival a = current;
         if (a == null) return null;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.level.dimension() != GatesRegistry.GATES) {
+        if (mc.level == null || !GatesRegistry.isGateDim(mc.level.dimension())) {
             current = null;
             return null;
         }

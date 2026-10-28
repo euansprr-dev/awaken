@@ -9163,6 +9163,9 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
 - **Stage 2** (built 2026-10-28): the cave engine, the four cave themes' blocks, dress, rules, events, nooks, secret places,
   twenty worlds, sets, biomes, sound and paintings (38.10); tests `gateworlds_<world>` for each of the sixteen, and
   `gateworlds_touch`.
+- **Stage 3** (built 2026-10-28): the open sky's dimension, open land and streets, the four D themes' blocks, dress, props,
+  rules, events, the Festival, twenty worlds, sets, biomes with their skies, sound and paintings (38.11); tests
+  `gateworlds_<world>` for each of the sixteen and `gateworlds_sky`.
 
 ### 38.5 The world floor contract (Stage 1)
 
@@ -9555,6 +9558,128 @@ theme.
   place's world's secrets marked, carve and plan inside budget); `gateworlds_touch` (a puffball struck lights and chokes the
   monster beside it, the eighth touch brings the Spore Warden, a nook is found by standing in it, the Mind answers a word);
   `gateworlds_sets` also checks each cave theme's piece and its five keepsake worlds.
+
+### 38.11 The D themes and the open sky: Drowned Archive, Clockwork Foundry, Glass Desert, Lantern Night Market (Stage 3)
+
+Built 2026-10-28. Four themes, twenty worlds, on the cave engine (38.10) with a second mode for open land under a real sky.
+
+- **The open sky** (`awaken:gates_sky`): a second gate dimension with the same generator, cells and plots as `awaken:gates`
+  and the same biomes, but sky light 15, the overworld's skybox and fixed time (no clock: each biome sets its own sun).
+  Clouds are hidden (cloud colour alpha 0). A floor whose world is open (`kind: "open"`, `GateWorld.open()`) is built and
+  played in it (`FloorLayout.sky`; `GateService.levelOf`, `levels`, `hasSky`; every gate-level check now asks
+  `GatesRegistry.isGateDim`), at the same coordinates its plot has; every other floor stays in `awaken:gates`. The
+  catch-ups, pre-generation and build tickets follow the floor's own level.
+- **Open land** (`CaveEngine` for the recipe kind `open`): the land is solid from 4 under the floor (more on the Rooftops,
+  8 under a lagoon so its margin and bed hold the water) up to the dress's
+  skyline (at least `lid - 1`, at most 40 over the floor); each place and link is cut up through it to the sky, its walls
+  leaning back by `slope` as they rise; a barrier lid stands `lid` (16) over the floor where nothing else does. An open
+  `sea` is a lagoon: the whole plot but its margin water to just under the floor, the sky over it. The secret place is a
+  covered cave dug into the land, its roof at most `lid - 4`. Light: the sky lights it (the hidden glow stays only when
+  `night` is set or the mood is `night` or `power_cut`). `WorldCheck` lights an open floor from the sky down each column
+  and sideways under overhangs before its own light spreads, so the walk check holds open floors to the same 7.
+- **The director keeps to spare columns**: an open world is always `tall`, and the director picks one only while the gate
+  has a whole quadrant column to spare (`talls < min(4, 8 - floors)`), so nothing stands over its sky; a server without
+  the open sky's dimension never picks one.
+- **Streets** (param `deep`, the Rooftops): streets five wide every 22 blocks (offset by the seed) are cut `deep` blocks
+  down between the places and open to the sky; places with the mouth from each doorway in, links, built rooms and the
+  secret place (its whole box) keep their ground (links become bridges), and a rail (the dress's, the Market's mangrove fence) stands along every edge a street passes. A fall into the streets
+  is caught like a drop world's (38.8): "You fell into the streets, and the market lifted you back up onto the roofs."
+- **A friendly floor's great place**: the Market's floors have no hubs or arenas (their rooms are made ordinary), so the
+  cave engine gives the spirit's room two slots square; it's the floor's great place, where the hero pieces and the
+  secrets stand. A secret nook that finds no wall to dig into (a square filling its slots) is under the place's middle.
+- **The gate within**: no touchstone stands in its room (the gate is set four from the room's middle after the carve).
+- **Blocks** (`ThemeBlocks`, 50 and four sets; art `tools/art/specs/gate_worlds_{archive,foundry,desert,market}.py`):
+  - **Drowned Archive**: archive stone and its carved glowing face, shelves (an axis; one in ten lit), archive tiles and
+    planks, reading lamps, loose paper (carpet), kelp ribbons (climbable), sea glass (animated), inkfalls, the lectern
+    (touchstone) and the **paper bridge**: a sheet that lies folded and opens out (`open`) when someone comes within four,
+    folding again once nobody is within six (its collision is always there, so a folded sheet is still a floor).
+  - **Clockwork Foundry**: foundry iron, brick, brass, gear blocks, grilles (`foundry_grille`), pipes (an axis), furnaces
+    (glowing), work bulbs (`foundry_bulb`), steam curtains, sparks, cables (climbable), the valve (touchstone).
+    (`foundry_grate` and `foundry_lamp` are the Descent's, §21: a theme block never takes another module's id.)
+  - **Glass Desert**: sand and rippled sand, sandstone and its carved face, brick, tile, columns, desert glass and its
+    glowing kind, crystal clusters, dune grass, sandfalls, the first mirror (touchstone).
+  - **Lantern Night Market**: market boards, cobbles, plaster, timber (an axis), roof tiles, paper walls (glowing), hanging
+    lanterns, strings of lights, cloth awnings, goods, boat lamps, the wish lantern (touchstone).
+- **The dress** (`ArchiveDress`, `FoundryDress`, `DesertDress`, `MarketDress`; a Buf is one chunk, so anything standing is
+  placed only where its whole shape is in the chunk being carved):
+  - **Archive**: walls are shelves in storeys of six with a stone band (carved every fourth), ceilings sea glass in the
+    Atrium; the Stacks' freestanding rows of shelves and galleries; reading lamps by the walls; the Atrium's shaft of light
+    down from its dome; the Sunken Shelves' bookcases standing on the sea bed with lamps at their feet; the Inkwell's
+    inkfalls and its causeways laid as paper bridges over the ink; paper on floors and kelp in the water worlds.
+  - **Foundry**: brick-gridded iron floors, brass-banded walls with pipes and furnaces; the Works Floor's machine pits
+    (four deep under a grate, furnaces at the bottom, gears turning in them); the Great Engine's gear (radius up to 10,
+    its axle on two iron pillars, high enough to walk under); the Stopped Hour's 70 pieces hanging in the air round a clock
+    face on the back wall; pipe runs along every tunnel and steam curtains across the Pipe Maze's.
+  - **Desert**: dunes; the Buried Colossus's head (radius 15, rising 6 to 36 out of the sand, its eyes glowing glass)
+    placed in the first free corner, and a colonnade along its tunnels; glass only on faces you can see (the Glass Caves;
+    elsewhere carved sandstone, so no glass ever shows the void through the shell); the Sunken City's lots (12 square, a
+    dome on three in ten) and fallen columns; the Mirage's palace on the far edge from the arrival; oases (dune grass and
+    palms of vanilla stripped jungle logs and leaves) round lakes in open land; sandfalls in the Glass Caves.
+  - **Market**: lots nine wide with alleys, plaster fronts with timber posts and beams, paper windows and cloth awnings on
+    the faces you can see; stalls; the Lantern Street's canals (two deep down the middle of its streets) with boat lamps,
+    lanterns and strings of lights; the Rooftops' pavilion; the Floating Market's boats on the lagoon; the Festival's great
+    lantern.
+- **Props**: `gear:R` and `orb:R` marks become display entities: a gear turns about its axis (faster for a small one), an
+  orb circles at radius R (the Orrery's planets). `WorldProps.overdrive` runs a floor's at three times the pace.
+- **Rules** (`WorldThemes`; as 38.10, the eighth touch brings one named elite and two more):
+  - **reading** (lectern): slowness II 3 s and glowing 5 s; "Somebody's been reading a lot of books. The archive's Clerk is
+    coming to see who." The Clerk.
+  - **steam** (valve): thrown up, slowness II and weakness 2 s; "There's too much pressure in the pipes. The Pressure Warden
+    is coming to see who's been at the valves." The Pressure Warden.
+  - **sun** (mirror): blindness 3 s and slowness 2 s; "You've been flashing the sun about too much. The Sun Warden is coming
+    to see who's playing with mirrors." The Sun Warden.
+  - **wishes** (wish lantern): slowness IV 3 s; the Market is friendly, so the eighth touch only says "That's a lot of
+    wishes. The Collector is on his way round to see who's paying for them all." and nobody comes.
+- **Events**: `page_storm` (half way: pages fly in four waves, monsters within 30 slowed 5 s), `the_tide` (a third:
+  dolphin's grace and water breathing 30 s), `overdrive` (half way: the floor's gears and orbs run three times as fast for
+  30 s, everyone quicker 20 s), `the_power_cut` (a third: darkness 9 s, then "The lamps flicker, and come back on."),
+  `sandstorm` (a third: sand clouds, everyone slowed), `the_mirage` (half way: a palace shimmers on the horizon and is gone),
+  `fireworks` (half way: eight bursts over the market), `lantern_release` (a third: lanterns drift up from round you).
+  `the_wakening` now says its own theme's words ("The archive wakes. Its reading lamps come on, one after another.", and
+  so on for every theme; it said the temple's everywhere). The wonders' moments, two thirds along: the signatures
+  `bookworm` (the Inkwell), `clock_keeper` (the Stopped Hour) and `sand_walker` (the Mirage) come as 38.10's do: a named
+  elite with twice the health until the mobs module gives them bodies; and `the_festival` (the Festival): lanterns go up
+  from every square, then the Lantern Spirits come down and circle you (you've met them, and found `the_festival`, the
+  world's keepsake). No fight: the Market is friendly.
+- **The worlds** (`gate_worlds_recipes.py`):
+  - Drowned Archive (quiet, high_tide, lamplit, paper_storm; lead the_loose_shelf, touch the_open_book): the Stacks (square;
+    the_overdue_shelf, a very overdue book), the Atrium (lake; the_pool_coin), the Sunken Shelves (deep, sea; the_lit_shelf,
+    a lamp that burns under water), the Inkwell (wonder, a sea of ink; the_ink_well; the Bookworm's tooth), the Last
+    Reader's Room (secret; the_last_page).
+  - Clockwork Foundry (idle, overdrive, steam, power_cut; lead the_warm_pipe, touch the_old_valve): the Works Floor (square;
+    the_spare_cog), the Pipe Maze (narrow; the_duct_map), the Great Engine (deep; the_governor), the Stopped Hour (wonder;
+    the_stopped_clock; the Clock-Keeper's key), the Orrery (secret; the_little_planet).
+  - Glass Desert (high_sun, golden_hour, sandstorm, night; lead the_singing_sand, touch the_first_mirror): the Buried
+    Colossus (open; the_colossus_eye), the Glass Caves (caves; the_sunstone), the Sunken City (deep, open; the_buried_door),
+    the Mirage (wonder, open; the_mirror_pool; the Sand Walker's glass heart), the Hourglass (secret; the_neck).
+  - Lantern Night Market (market_night, fireworks, rain, ghost_market; lead the_red_door, touch the_first_wish; always
+    night): the Lantern Street (open, canals; the_canal_shrine), the Rooftops (open, streets 14 deep; the_highest_roof, at
+    its pavilion), the Floating Market (deep, an open lagoon; the_lost_boat), the Festival (wonder, open; the_wish_tree and
+    the_festival; a lantern spirit's lantern), the Broker's Vault (secret; the_wish_ledger).
+  - The Market's open worlds set `night`; the Glass Desert's open ones take the sky from their mood.
+- **Sets** (38.8): the Diving Lamp (use it to breathe under water for a minute), the Pocket Engine (always powered: a
+  redstone signal of 15), the Sun Hourglass (use it to hear how long it is till sunset or sunrise) and the Lucky Cat (use it
+  for an emerald; it fills again now and then on its own).
+- **Biomes** (`gate_worlds_biomes.py`, 153 in all): as 38.10, and an open world's biome carries its sky: the desert's sun at
+  15 to 40 degrees past noon with warm sky light; the Market's midnight (sun 180, moon 0, stars 0.4 to 0.8, sky light factor
+  0.24, a violet sky light). Over open land a mood brings its own sky: golden hour (sun 72, a warm sunset glow, light 0.85),
+  sandstorm (a dusty sky, light 0.55) and night (as the Market's). The Inkwell's water is ink (#0a0d16).
+- **Sound** (`tools/art/specs/audio_gate_worlds_d.py`, 7.3 MB; gate_world sound about 17 MB in all, under the 40 MB budget):
+  beds archive_stacks, archive_atrium, archive_ink, foundry_works, foundry_pipes, foundry_engine, desert_wind, desert_city,
+  desert_glass, market_street, market_water, market_festival; events page, pages, tide, bookworm, valve, overdrive,
+  powercut, clockwork, chime, sandstorm, shimmer, walker, wish, fireworks, release, festival, spirits; an arrival sting a
+  theme. Recorded where we have it (the city's crowd, stalls, canals and bells; the Halo station's hum, clunks and hiss;
+  the steppe's and the lands' wind), made where nothing records it (paper, ticking, fireworks). Every one has a plain
+  subtitle.
+- **Small life**: `paper`, `sand`, `steam`, `rats`, `pale_fish`, `procession` (the ghost market) and the rest from 38.9.
+- **Atlas paintings**: `tools/art/specs/gate_worlds_paintings_d.py`, one a world.
+- **Lens**: Lens's own looks for these biomes (its grade and haze per world) are the Lens owner's to add; without them a D
+  world shows its biome's fog, sky and light as written here.
+- **Tests**: `gateworlds_<world>` for the sixteen (as 38.10; open floors lit by the sky as above); `gateworlds_sky` (over 48
+  Glass Desert and Market gates every open land is built under the sky, and only those, each in a
+  whole column and never more than the gate has to spare; with the open lands switched off none are picked);
+  `gates_dimension_json` checks both dimensions (only the open sky's has sky light); `gateworlds_sets` covers the four new
+  pieces and keepsakes.
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 

@@ -2,7 +2,8 @@
 their moods, blocks, rule and secrets the same way. The Bell Crypt's own recipes are kept by hand.
 
 Run: python3 tools/art/specs/gate_worlds_recipes.py
-Each world: kind and shape params (CaveEngine reads tunnel, wobble, roof, tower, sky, lake, sea, hex, square), its mood
+Each world: kind and shape params (CaveEngine reads tunnel, wobble, roof, tower, sky, lake, sea, hex, square; open lands
+also lid, slope, deep and night), its mood
 biomes (gate_worlds_biomes.py writes them), hero pieces, life, its sound bed, events, rule, secrets (one leads to the theme's
 secret world), its keepsake and, for a wonder, its signature creature. All the words are plain speech.
 """
@@ -183,6 +184,177 @@ THEMES["overgrown_temple"] = dict(
     })
 
 
+# ---- Drowned Archive (38.11) --------------------------------------------------------------------------------------------
+THEMES["drowned_archive"] = dict(
+    rule="reading",
+    blocks={"wall": "awaken:archive_stone", "wall_glow": "awaken:archive_stone_carved", "floor": "awaken:archive_tiles",
+            "trim": "awaken:archive_stone_carved", "shelf": "awaken:archive_shelf", "shelf_lit": "awaken:archive_shelf_lit",
+            "planks": "awaken:archive_planks", "lamp": "awaken:archive_lamp", "paper": "awaken:archive_paper",
+            "kelp": "awaken:archive_kelp", "glass": "awaken:archive_sea_glass", "fall": "awaken:archive_inkfall",
+            "touch": "awaken:archive_lectern", "bridge": "awaken:archive_paper_bridge", "fluid": "minecraft:water"},
+    moods=[("quiet", "Quiet", 3.0, []), ("high_tide", "High tide", 1.5, ["drips", "mist"]), ("lamplit", "Lamplit", 2.0, ["dust"]),
+           ("paper_storm", "Paper storm", 1.5, ["paper"])],
+    life=["paper", "drips", "pale_fish", "dust"],
+    secret_world="last_readers_room",
+    lead=("the_loose_shelf", "The loose shelf"),
+    touch=("the_open_book", "The open book"),
+    worlds={
+        "stacks": dict(name="The Stacks", tier="everyday", rarity="common",
+                       line="Shelves three storeys high, with galleries running round them. Somebody kept reading after the sea came in.",
+                       params={"square": 1, "roof": 17, "wobble": 0.6}, hero=["shelf_rows", "galleries"], sound="archive_stacks",
+                       events=["page_storm"], secrets=[("the_overdue_shelf", "The overdue shelf")], lead=True,
+                       keepsake=("overdue_book", "A Very Overdue Book", "the_overdue_shelf")),
+        "atrium": dict(name="The Atrium", tier="everyday", rarity="common",
+                       line="A great hall under a dome of sea glass, with clear water on the floor and light coming down through it.",
+                       params={"lake": 1, "roof": 16, "wobble": 0.8}, hero=["sea_glass_dome"], sound="archive_atrium",
+                       events=["the_tide"], secrets=[("the_pool_coin", "The coin in the pool")], lead=True,
+                       keepsake=("pool_coin", "A Coin from the Atrium Pool", "the_pool_coin")),
+        "sunken_shelves": dict(name="The Sunken Shelves", tier="deep", rarity="uncommon",
+                               line="The bookshelves stand on the sea floor here, and their reading lamps are still burning under the water.",
+                               params={"sea": 1, "sky": 30}, hero=["standing_shelves"], sound="archive_atrium",
+                               events=["the_tide", "the_wakening"], secrets=[("the_lit_shelf", "The shelf that's still lit")],
+                               keepsake=("drowned_lamp", "A Lamp That Burns Under Water", "the_lit_shelf")),
+        "inkwell": dict(name="The Inkwell", tier="wonder", rarity="rare",
+                        line="A sea of ink, and bridges made of paper that fold out under your feet as you walk.",
+                        params={"sea": 1, "sky": 34}, hero=["inkfalls", "paper_bridges"], sound="archive_ink",
+                        events=["page_storm", "bookworm"], secrets=[("the_ink_well", "The bottom of the well")],
+                        keepsake=("bookworm_tooth", "The Bookworm's Tooth", "bookworm"), signature="bookworm"),
+        "last_readers_room": dict(name="The Last Reader's Room", tier="secret", rarity="rare",
+                                  line="A dry room in a bubble under the sea. The last reader left a book open on the desk.",
+                                  params={"roof": 9}, hero=["sea_glass_skylight"], sound="archive_ink", events=[],
+                                  secrets=[("the_last_page", "The last page")],
+                                  keepsake=("last_page", "The Last Page", "the_last_page"), life=["paper", "dust"]),
+    })
+
+# ---- Clockwork Foundry --------------------------------------------------------------------------------------------------
+THEMES["clockwork_foundry"] = dict(
+    rule="steam",
+    blocks={"wall": "awaken:foundry_iron", "floor": "awaken:foundry_brick", "brick": "awaken:foundry_brick",
+            "trim": "awaken:foundry_brass", "gear": "awaken:foundry_gear", "grate": "awaken:foundry_grille",
+            "pipe": "awaken:foundry_pipe", "wall_glow": "awaken:foundry_furnace", "lamp": "awaken:foundry_bulb",
+            "fall": "awaken:foundry_steam", "sparks": "awaken:foundry_sparks", "cables": "awaken:foundry_cables",
+            "touch": "awaken:foundry_valve", "fluid": "minecraft:water"},
+    moods=[("idle", "Idle", 3.0, []), ("overdrive", "Overdrive", 1.5, ["embers", "steam"]), ("steam", "Steam", 1.5, ["steam", "mist"]),
+           ("power_cut", "Power cut", 1.0, ["dust"])],
+    life=["steam", "dust", "embers", "rats"],
+    secret_world="orrery",
+    lead=("the_warm_pipe", "The warm pipe"),
+    touch=("the_old_valve", "The old valve"),
+    worlds={
+        "works_floor": dict(name="The Works Floor", tier="everyday", rarity="common",
+                            line="Catwalks over pits full of turning gears. The machines are still running, and nobody's minding them.",
+                            params={"square": 1, "roof": 12, "wobble": 0.5}, hero=["machine_pits"], sound="foundry_works",
+                            events=["overdrive"], secrets=[("the_spare_cog", "The spare cog")], lead=True,
+                            keepsake=("spare_cog", "A Spare Cog", "the_spare_cog")),
+        "pipe_maze": dict(name="The Pipe Maze", tier="everyday", rarity="common",
+                          line="Ducts and pipes all the way up, and steam coming out of every joint. Follow the warm ones.",
+                          params={"tunnel": 1.8, "roof": 8, "wobble": 1.2}, hero=["pipe_runs", "steam_curtains"],
+                          sound="foundry_pipes", events=["the_power_cut"], secrets=[("the_duct_map", "The duct map")],
+                          lead=True, keepsake=("duct_map", "A Map of the Ducts", "the_duct_map")),
+        "great_engine": dict(name="The Great Engine", tier="deep", rarity="uncommon",
+                             line="A gear twenty blocks across turns over your head. The whole room shakes with it.",
+                             params={"tower": 40, "roof": 14}, hero=["the_great_gear"], sound="foundry_engine",
+                             events=["overdrive", "the_wakening"], secrets=[("the_governor", "The governor")],
+                             keepsake=("brass_governor", "The Engine's Brass Governor", "the_governor")),
+        "stopped_hour": dict(name="The Stopped Hour", tier="wonder", rarity="rare",
+                             line="Something exploded in here, and then time stopped. The pieces are still hanging in the air.",
+                             params={"tower": 34, "roof": 14}, hero=["frozen_debris"], sound="foundry_engine",
+                             events=["the_power_cut", "clock_keeper"], secrets=[("the_stopped_clock", "The stopped clock")],
+                             keepsake=("keepers_key", "The Clock-Keeper's Key", "clock_keeper"), signature="clock_keeper"),
+        "orrery": dict(name="The Orrery", tier="secret", rarity="rare",
+                       line="Brass planets turning round a little sun in the dark. One of them is small enough to hold.",
+                       params={"roof": 10}, hero=["brass_planets"], sound="foundry_engine", events=[],
+                       secrets=[("the_little_planet", "The little planet")],
+                       keepsake=("little_planet", "The Little Brass Planet", "the_little_planet"), life=["dust", "fireflies"]),
+    })
+
+# ---- Glass Desert -------------------------------------------------------------------------------------------------------
+THEMES["glass_desert"] = dict(
+    rule="sun",
+    blocks={"floor": "awaken:desert_sand", "floor_rippled": "awaken:desert_sand_rippled", "wall": "awaken:desert_sandstone",
+            "wall_glow": "awaken:desert_sandstone_carved", "trim": "awaken:desert_sandstone_carved", "brick": "awaken:desert_brick",
+            "tile": "awaken:desert_tile", "column": "awaken:desert_column", "glass": "awaken:desert_glass",
+            "glass_glow": "awaken:desert_glass_glowing", "crystal": "awaken:desert_crystal", "grass": "awaken:desert_grass",
+            "fall": "awaken:desert_sandfall", "touch": "awaken:desert_mirror", "fluid": "minecraft:water"},
+    moods=[("high_sun", "High sun", 3.0, []), ("golden_hour", "Golden hour", 2.0, ["sand"]),
+           ("sandstorm", "Sandstorm", 1.5, ["sand", "dust"]), ("night", "Night", 1.5, ["fireflies"])],
+    life=["sand", "dust", "moths"],
+    secret_world="hourglass",
+    lead=("the_singing_sand", "The singing sand"),
+    touch=("the_first_mirror", "The first mirror"),
+    worlds={
+        "buried_colossus": dict(name="The Buried Colossus", tier="everyday", rarity="common", kind="open", tall=True,
+                                line="Dunes under a real sun, a line of old columns, and a stone head as big as a hill looking out of the sand.",
+                                params={"lid": 16, "slope": 0.7, "lake": 1, "tunnel": 2.6}, hero=["the_head", "colonnade"],
+                                sound="desert_wind", events=["sandstorm"], secrets=[("the_colossus_eye", "The colossus's eye")],
+                                lead=True, keepsake=("colossus_eye", "A Shard of the Colossus's Eye", "the_colossus_eye")),
+        "glass_caves": dict(name="The Glass Caves", tier="everyday", rarity="common",
+                            line="Caves under the desert where the sand turned to glass, and the light comes through the walls.",
+                            params={"roof": 12, "wobble": 1.4}, hero=["glass_walls", "sandfalls"], sound="desert_glass",
+                            events=["the_mirage"], secrets=[("the_sunstone", "The sunstone")], lead=True,
+                            keepsake=("sunstone", "A Sunstone", "the_sunstone"), life=["dust", "drips", "shaft_dust"]),
+        "sunken_city": dict(name="The Sunken City", tier="deep", rarity="uncommon", kind="open", tall=True,
+                            line="The rooftops of a whole city poke out of a basin of sand. Most of it is still down there.",
+                            params={"lid": 18, "slope": 0.2, "square": 1}, hero=["rooftops", "fallen_columns"],
+                            sound="desert_city", events=["sandstorm", "the_wakening"],
+                            secrets=[("the_buried_door", "The buried door")],
+                            keepsake=("door_key", "The Key to the Buried Door", "the_buried_door")),
+        "mirage": dict(name="The Mirage", tier="wonder", rarity="rare", kind="open", tall=True,
+                       line="There's a palace on the far side of the sand. However long you walk, it never gets any closer.",
+                       params={"lid": 18, "slope": 0.5, "lake": 1}, hero=["the_palace"], sound="desert_wind",
+                       events=["the_mirage", "sand_walker"], secrets=[("the_mirror_pool", "The mirror pool")],
+                       keepsake=("walkers_glass", "The Sand Walker's Glass Heart", "sand_walker"), signature="sand_walker"),
+        "hourglass": dict(name="The Hourglass", tier="secret", rarity="rare",
+                          line="A little city at the bottom of an hourglass, with sand falling on it from the neck above.",
+                          params={"roof": 16}, hero=["the_neck"], sound="desert_city", events=[],
+                          secrets=[("the_neck", "Under the neck")],
+                          keepsake=("hourglass_sand", "A Pinch of the Hourglass's Sand", "the_neck"), life=["sand", "dust"]),
+    })
+
+# ---- Lantern Night Market (friendly: no fights) -------------------------------------------------------------------------
+THEMES["lantern_night_market"] = dict(
+    rule="wishes",
+    blocks={"floor": "awaken:market_cobbles", "boards": "awaken:market_boards", "wall": "awaken:market_plaster",
+            "trim": "awaken:market_timber", "timber": "awaken:market_timber", "roof": "awaken:market_roof",
+            "wall_glow": "awaken:market_paper_wall", "lantern": "awaken:market_lantern", "lights": "awaken:market_lights",
+            "cloth": "awaken:market_cloth", "goods": "awaken:market_goods", "boat_lamp": "awaken:market_boat_lamp",
+            "touch": "awaken:market_wish_lantern", "fluid": "minecraft:water"},
+    moods=[("market_night", "Market night", 3.0, []), ("fireworks", "Fireworks", 1.5, ["fireflies"]),
+           ("rain", "Rain", 1.5, ["rain"]), ("ghost_market", "Ghost market", 1.0, ["procession", "mist"])],
+    life=["fireflies", "moths", "smoke"],
+    secret_world="brokers_vault",
+    lead=("the_red_door", "The red door"),
+    touch=("the_first_wish", "The first wish"),
+    worlds={
+        "lantern_street": dict(name="The Lantern Street", tier="everyday", rarity="common", kind="open", tall=True,
+                               line="Stalls and canals under strings of lanterns, and somebody haggling on every corner.",
+                               params={"night": 1, "lid": 16, "tunnel": 3.2, "slope": 0.1}, hero=["canals", "facades"],
+                               sound="market_street", events=["lantern_release"],
+                               secrets=[("the_canal_shrine", "The canal shrine")], lead=True,
+                               keepsake=("shrine_bell", "A Bell from the Canal Shrine", "the_canal_shrine")),
+        "rooftops": dict(name="The Rooftops", tier="everyday", rarity="common", kind="open", tall=True,
+                         line="The market's moved up onto the roofs. Bridges join them, and the streets are a long way down.",
+                         params={"night": 1, "lid": 18, "deep": 14}, hero=["streets", "the_pavilion"], sound="market_street",
+                         events=["fireworks"], secrets=[("the_highest_roof", "The highest roof")], lead=True,
+                         keepsake=("weathervane", "The Market's Weathervane", "the_highest_roof")),
+        "floating_market": dict(name="The Floating Market", tier="deep", rarity="uncommon", kind="open", tall=True,
+                                line="Boats tied up together on a lagoon, every one of them a stall with a lamp in it.",
+                                params={"night": 1, "lid": 16, "sea": 1}, hero=["boats"], sound="market_water",
+                                events=["lantern_release", "fireworks"], secrets=[("the_lost_boat", "The lost boat")],
+                                keepsake=("paper_boat", "A Paper Boat", "the_lost_boat")),
+        "festival": dict(name="The Festival", tier="wonder", rarity="rare", kind="open", tall=True,
+                         line="Tonight's the festival. When the big lantern goes up, a thousand more go up with it.",
+                         params={"night": 1, "lid": 20, "square": 1}, hero=["the_great_lantern"], sound="market_festival",
+                         events=["fireworks", "the_festival"],
+                         secrets=[("the_wish_tree", "The wish tree"), ("the_festival", "The lanterns going up")],
+                         keepsake=("spirit_lantern", "A Lantern Spirit's Lantern", "the_festival"), signature="lantern_spirits"),
+        "brokers_vault": dict(name="The Broker's Vault", tier="secret", rarity="rare",
+                              line="Where the Broker keeps every wish anyone ever paid for, each one in its own lantern.",
+                              params={"roof": 10}, hero=["wish_lanterns"], sound="market_festival", events=[],
+                              secrets=[("the_wish_ledger", "The wish ledger")],
+                              keepsake=("wish_ledger", "A Page from the Wish Ledger", "the_wish_ledger"), life=["fireflies", "dust"]),
+    })
+
 def recipe(theme, t, wid, w):
     secret = w["tier"] == "secret"
     secrets = []
@@ -202,7 +374,7 @@ def recipe(theme, t, wid, w):
         "line": w["line"],
         "tier": w["tier"],
         "rarity": w["rarity"],
-        "kind": "caves",
+        "kind": w.get("kind", "caves"),
         "roles": ["floor"] if secret else ["floor", "boss"],
         "params": w["params"],
         "biome": f"awaken:gate_world/{wid}",
@@ -221,6 +393,8 @@ def recipe(theme, t, wid, w):
         "keepsake_name": w["keepsake"][1],
         "keepsake_from": w["keepsake"][2],
     }
+    if w.get("tall"):
+        out["tall"] = True
     if w.get("signature"):
         out["signature"] = w["signature"]
     return out

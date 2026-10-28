@@ -1,0 +1,210 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/diving_lamp",
+    "brass": "awaken:block/diving_lamp",
+    "port": "awaken:block/diving_lamp_port"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        0,
+        3
+      ],
+      "to": [
+        13,
+        2,
+        13
+      ],
+      "faces": {
+        "down": {
+          "texture": "#brass"
+        },
+        "up": {
+          "texture": "#brass"
+        },
+        "north": {
+          "texture": "#brass"
+        },
+        "south": {
+          "texture": "#brass"
+        },
+        "west": {
+          "texture": "#brass"
+        },
+        "east": {
+          "texture": "#brass"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        2,
+        4
+      ],
+      "to": [
+        12,
+        12,
+        12
+      ],
+      "faces": {
+        "down": {
+          "texture": "#brass"
+        },
+        "up": {
+          "texture": "#brass"
+        },
+        "north": {
+          "texture": "#brass"
+        },
+        "south": {
+          "texture": "#brass"
+        },
+        "west": {
+          "texture": "#brass"
+        },
+        "east": {
+          "texture": "#brass"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        12,
+        5
+      ],
+      "to": [
+        11,
+        14,
+        11
+      ],
+      "faces": {
+        "down": {
+          "texture": "#brass"
+        },
+        "up": {
+          "texture": "#brass"
+        },
+        "north": {
+          "texture": "#brass"
+        },
+        "south": {
+          "texture": "#brass"
+        },
+        "west": {
+          "texture": "#brass"
+        },
+        "east": {
+          "texture": "#brass"
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        14,
+        7
+      ],
+      "to": [
+        9,
+        15,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#brass"
+        },
+        "up": {
+          "texture": "#brass"
+        },
+        "north": {
+          "texture": "#brass"
+        },
+        "south": {
+          "texture": "#brass"
+        },
+        "west": {
+          "texture": "#brass"
+        },
+        "east": {
+          "texture": "#brass"
+        }
+      }
+    },
+    {
+      "from": [
+        5.5,
+        4,
+        3.9
+      ],
+      "to": [
+        10.5,
+        9,
+        3.9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#port"
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        5.5,
+        4,
+        12.1
+      ],
+      "to": [
+        10.5,
+        9,
+        12.1
+      ],
+      "faces": {
+        "south": {
+          "texture": "#port"
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        3.9,
+        4,
+        5.5
+      ],
+      "to": [
+        3.9,
+        9,
+        10.5
+      ],
+      "faces": {
+        "west": {
+          "texture": "#port"
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        12.1,
+        4,
+        5.5
+      ],
+      "to": [
+        12.1,
+        9,
+        10.5
+      ],
+      "faces": {
+        "east": {
+          "texture": "#port"
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}

@@ -195,6 +195,11 @@ final class WorldPlan {
      * floor to the top of the world, becomes {@code screen} (stone with grilles, a rood screen), except its doorways.
      */
     void screens(Sculpt s, int baseY, ScreenLook look) {
+        screens(s, baseY, look, s.yHi);
+    }
+
+    /** As {@link #screens(Sculpt, int, ScreenLook)}, up to {@code topY} (an open land's: under its lid). */
+    void screens(Sculpt s, int baseY, ScreenLook look, int topY) {
         for (Room w : b.rooms) {
             if (!sealable(w) || built(w)) continue;
             for (int gx = w.gx; gx < w.gx + w.gw; gx++) {
@@ -204,7 +209,7 @@ final class WorldPlan {
                         if (b.at(nx, nz) == w.id) continue;
                         Room.Door door = null;
                         for (Room.Door d : w.doors) if (d.gx == gx && d.gz == gz && d.side == side) door = d;
-                        screen(s, baseY, w, gx, gz, side, door, look);
+                        screen(s, baseY, w, gx, gz, side, door, look, topY);
                     }
                 }
             }
@@ -216,7 +221,7 @@ final class WorldPlan {
         BlockState at(int lat, int rise, int side);
     }
 
-    private void screen(Sculpt s, int baseY, Room w, int gx, int gz, int side, Room.Door door, ScreenLook look) {
+    private void screen(Sculpt s, int baseY, Room w, int gx, int gz, int side, Room.Door door, ScreenLook look, int topY) {
         int floorY = baseY + w.dy;
         int x0, z0, x1, z1;
         switch (side) {
@@ -226,7 +231,7 @@ final class WorldPlan {
             default -> { z0 = gz * 16; z1 = z0 + 15; x0 = x1 = gx * 16; }
         }
         int dy0 = door == null ? 0 : door.y - w.dy;
-        s.op(x0, floorY - 4, z0, x1, s.yHi, z1, (bb, x, y, z) -> {
+        s.op(x0, floorY - 4, z0, x1, topY, z1, (bb, x, y, z) -> {
             // water is open too: nothing swims under a screen
             if (bb.get(x, y, z) != Sculpt.OPEN && !bb.water(x, y, z)) return;
             int lat = side == 0 || side == 2 ? x - gx * 16 : z - gz * 16;
@@ -260,7 +265,11 @@ final class WorldPlan {
     // ---- finishing ---------------------------------------------------------------------------------------------------
 
     /** What the world adds to the floor beyond its rooms. */
-    record Look(int baseY, String biome, FloorAir air, WorldModel model, float yaw) {}
+    record Look(int baseY, String biome, FloorAir air, WorldModel model, float yaw, boolean sky) {
+        Look(int baseY, String biome, FloorAir air, WorldModel model, float yaw) {
+            this(baseY, biome, air, model, yaw, false);
+        }
+    }
 
     /** Places that are a world of their own (a secret world reached from this one): world room id → world id. */
     final Map<Integer, String> placeWorlds = new HashMap<>(), placeBiomes = new HashMap<>();
@@ -304,6 +313,17 @@ final class WorldPlan {
         mark(FloorLayout.Mark.PROP, "bell:" + Math.round(R * 10), (int) Math.floor(cx - R), lipY - base, (int) Math.floor(cz - R),
                 (int) Math.ceil(cx + R) - 1, lipY - base + H - 1, (int) Math.ceil(cz + R) - 1);
         BellPieces.hanger(s, cx, lipY, cz, H, chainTo, bronze, WorldMats.light(10), chain);
+    }
+
+    /**
+     * A prop the live layer moves (a gear turning, a planet on its orbit: SPEC §38.11), sharing the floor's budget with the
+     * swinging bells; false when the floor has no room left for one.
+     */
+    boolean prop(String id, int x0, int y0, int z0, int x1, int y1, int z1) {
+        if (props >= PROPS) return false;
+        props++;
+        mark(FloorLayout.Mark.PROP, id, x0, y0, z0, x1, y1, z1);
+        return true;
     }
 
     /** A handbell waiting for {@link #handbells}: where it's wanted, its turned state, the secret it keeps and that box. */
@@ -482,7 +502,7 @@ final class WorldPlan {
         }
         Plots.Plot plot = ctx.plot();
         return new FloorLayout(ctx.area(), ctx.floor(), look.baseY(), plot.slotX(), plot.slotZ(), b.w, b.h, ctx.theme(), logic.bossFloor,
-                b.rooms, b.start, b.end, new FloorLayout.Frame(plot, plot.minY(), plot.maxY(), null, ctx.worldId(), ctx.mood(), look.biome(), look.air(), look.model(), look.yaw(), placeWorlds, placeBiomes, marks));
+                b.rooms, b.start, b.end, new FloorLayout.Frame(plot, plot.minY(), plot.maxY(), null, ctx.worldId(), ctx.mood(), look.biome(), look.air(), look.model(), look.yaw(), placeWorlds, placeBiomes, marks, look.sky()));
     }
 
     private void spots(Room r, Walk walk) {

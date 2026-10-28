@@ -50,6 +50,13 @@ public final class GatesRegistry {
     private GatesRegistry() {}
 
     public static final ResourceKey<Level> GATES = ResourceKey.create(Registries.DIMENSION, Awaken.id("gates"));
+    /** The gates under an open sky (SPEC §38.11): the same cells and plots, only the open lands' floors built in it. */
+    public static final ResourceKey<Level> GATES_SKY = ResourceKey.create(Registries.DIMENSION, Awaken.id("gates_sky"));
+
+    /** Whether a dimension is one gates are built in. */
+    public static boolean isGateDim(ResourceKey<Level> dim) {
+        return dim == GATES || dim == GATES_SKY;
+    }
 
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(Awaken.MODID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
@@ -355,13 +362,20 @@ public final class GatesRegistry {
     }
     /**
      * Every theme after the Bell Crypt's sounds (SPEC §38.10 on), registered as gate.world.&lt;name&gt;: three beds a theme, its
-     * touchstone, its events and moments, and its arrival sting (arrive_&lt;theme&gt;). From tools/art/specs/audio_gate_worlds_e.py.
+     * touchstone, its events and moments, and its arrival sting (arrive_&lt;theme&gt;). From tools/art/specs/
+     * audio_gate_worlds_caves.py (38.10) and audio_gate_worlds_d.py (38.11).
      */
     public static final List<String> THEME_SOUNDS = List.of(
             "hollow_glow", "hollow_roots", "hollow_bloom", "mine_works", "mine_chasm", "mine_sea",
             "hive_comb", "hive_brood", "hive_lake", "temple_courts", "temple_halls", "temple_falls",
             "puff", "bellows", "drum", "brazier", "tremor", "swarm", "rains", "wakening", "bloom", "surface", "choir", "saint",
-            "arrive_fungal_hollow", "arrive_ember_mines", "arrive_hive", "arrive_overgrown_temple");
+            "arrive_fungal_hollow", "arrive_ember_mines", "arrive_hive", "arrive_overgrown_temple",
+            // the D themes (38.11)
+            "archive_stacks", "archive_atrium", "archive_ink", "foundry_works", "foundry_pipes", "foundry_engine",
+            "desert_wind", "desert_city", "desert_glass", "market_street", "market_water", "market_festival",
+            "page", "pages", "tide", "bookworm", "valve", "overdrive", "powercut", "clockwork", "chime", "sandstorm", "shimmer",
+            "walker", "wish", "fireworks", "release", "festival", "spirits",
+            "arrive_drowned_archive", "arrive_clockwork_foundry", "arrive_glass_desert", "arrive_lantern_night_market");
     private static final java.util.Map<String, DeferredHolder<SoundEvent, SoundEvent>> THEME_SOUND = new java.util.HashMap<>();
     static {
         for (String n : THEME_SOUNDS) THEME_SOUND.put(n, sound("gate.world." + n));

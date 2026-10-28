@@ -221,7 +221,7 @@ public final class RigClient {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         LocalPlayer p = mc.player;
-        if (level == null || p == null || level.dimension() != GatesRegistry.GATES) {
+        if (level == null || p == null || !GatesRegistry.isGateDim(level.dimension())) {
             if (!rooms.isEmpty() || RigGhost.current() != null) clear();
             return;
         }
@@ -391,7 +391,7 @@ public final class RigClient {
 
     /** Someone falling up in a well is drawn feet to the ceiling, the way the game draws its upside-down names. */
     private static void flip(Entity e, LivingEntityRenderState s) {
-        if (s.isUpsideDown || !(e instanceof LivingEntity le) || e.level().dimension() != GatesRegistry.GATES || !RigWellsLive.upsideDown(le)) return;
+        if (s.isUpsideDown || !(e instanceof LivingEntity le) || !GatesRegistry.isGateDim(e.level().dimension()) || !RigWellsLive.upsideDown(le)) return;
         s.isUpsideDown = true;
         s.xRot = -s.xRot;
         s.yRot = -s.yRot;

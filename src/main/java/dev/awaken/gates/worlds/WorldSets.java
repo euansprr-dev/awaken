@@ -35,6 +35,14 @@ public final class WorldSets {
                 "A comb from the queen's own garden. Fill a glass bottle from it, and it slowly fills itself up again."));
         PIECES.put(Theme.OVERGROWN_TEMPLE, new Piece(() -> GatesRegistry.theme("little_idol"), "The Little Idol",
                 "A little idol from the temple. Set it near your crops and they grow faster around it."));
+        PIECES.put(Theme.DROWNED_ARCHIVE, new Piece(() -> GatesRegistry.theme("diving_lamp"), "The Diving Lamp",
+                "An old diver's lamp from the drowned stacks. Use it and you can breathe underwater for a minute."));
+        PIECES.put(Theme.CLOCKWORK_FOUNDRY, new Piece(() -> GatesRegistry.theme("pocket_engine"), "The Pocket Engine",
+                "A little engine that ticks along on its own. Use it to start or stop it; while it runs, it powers redstone."));
+        PIECES.put(Theme.GLASS_DESERT, new Piece(() -> GatesRegistry.theme("sun_hourglass"), "The Sun Hourglass",
+                "An hourglass that keeps the desert's time. Turn it and it tells you how long it is until sunset or sunrise."));
+        PIECES.put(Theme.LANTERN_NIGHT_MARKET, new Piece(() -> GatesRegistry.theme("lucky_cat"), "The Lucky Cat",
+                "A lucky cat from the market's busiest stall. Once a day it has a small gift for you."));
     }
 
     public static Piece of(Theme t) {

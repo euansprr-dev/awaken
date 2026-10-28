@@ -271,12 +271,12 @@ public final class Twists {
     /** Every tick: puppets follow their player closely (Inverted). */
     static void tickPuppets(MinecraftServer server) {
         if (PUPPETS.isEmpty()) return;
-        ServerLevel gl = GateService.gateLevel(server);
-        if (gl == null) return;
         PUPPETS.entrySet().removeIf(e -> {
             ServerPlayer p = server.getPlayerList().getPlayer(e.getKey());
-            Entity puppet = gl.getEntity(e.getValue());
-            if (p == null || puppet == null || !puppet.isAlive() || p.level() != gl) {
+            // a puppet stays in the level it was made in (the gates' or the open sky's) and goes when its player leaves it
+            Entity puppet = null;
+            for (ServerLevel gl : GateService.levels(server)) if (puppet == null) puppet = gl.getEntity(e.getValue());
+            if (p == null || puppet == null || !puppet.isAlive() || p.level() != puppet.level()) {
                 if (puppet != null) puppet.discard();
                 return true;
             }
@@ -597,8 +597,10 @@ public final class Twists {
             return;
         }
         BlockPos e = GateService.entrance(g, 1, 1);
-        p.teleportTo((ServerLevel) p.level(), e.getX() + 0.5, e.getY(), e.getZ() + 0.5, Set.of(), GateService.entranceYaw(g, 1, 1), 0, true);
-        p.level().playSound(null, e, GatesRegistry.SND_ENTER.get(), SoundSource.PLAYERS, 1F, 0.7F);
+        ServerLevel lv = GateService.levelOf(p.level().getServer(), g, 1, 1);
+        if (lv == null) lv = (ServerLevel) p.level();
+        p.teleportTo(lv, e.getX() + 0.5, e.getY(), e.getZ() + 0.5, Set.of(), GateService.entranceYaw(g, 1, 1), 0, true);
+        lv.playSound(null, e, GatesRegistry.SND_ENTER.get(), SoundSource.PLAYERS, 1F, 0.7F);
         Runs.arrive(p, g, 1, 1);
     }
 
@@ -618,7 +620,8 @@ public final class Twists {
                 }
             }
         }
-        p.teleportTo((ServerLevel) p.level(), to.getX() + 0.5, to.getY(), to.getZ() + 0.5, Set.of(), p.getYRot(), 0, true);
+        ServerLevel lv = GateService.levelOf(p.level().getServer(), f);
+        p.teleportTo(lv != null ? lv : (ServerLevel) p.level(), to.getX() + 0.5, to.getY(), to.getZ() + 0.5, Set.of(), p.getYRot(), 0, true);
         Runs.arrive(p, g, 0, floor);
     }
 

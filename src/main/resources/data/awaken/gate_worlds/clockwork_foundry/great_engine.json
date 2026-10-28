@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "theme": "clockwork_foundry",
+  "name": "The Great Engine",
+  "line": "A gear twenty blocks across turns over your head. The whole room shakes with it.",
+  "tier": "deep",
+  "rarity": "uncommon",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "tower": 40,
+    "roof": 14
+  },
+  "biome": "awaken:gate_world/great_engine",
+  "moods": [
+    {
+      "id": "idle",
+      "name": "Idle",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "overdrive",
+      "name": "Overdrive",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/great_engine_overdrive",
+      "life": [
+        "embers",
+        "steam"
+      ]
+    },
+    {
+      "id": "steam",
+      "name": "Steam",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/great_engine_steam",
+      "life": [
+        "steam",
+        "mist"
+      ]
+    },
+    {
+      "id": "power_cut",
+      "name": "Power cut",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/great_engine_power_cut",
+      "life": [
+        "dust"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:foundry_iron",
+    "floor": "awaken:foundry_brick",
+    "brick": "awaken:foundry_brick",
+    "trim": "awaken:foundry_brass",
+    "gear": "awaken:foundry_gear",
+    "grate": "awaken:foundry_grille",
+    "pipe": "awaken:foundry_pipe",
+    "wall_glow": "awaken:foundry_furnace",
+    "lamp": "awaken:foundry_bulb",
+    "fall": "awaken:foundry_steam",
+    "sparks": "awaken:foundry_sparks",
+    "cables": "awaken:foundry_cables",
+    "touch": "awaken:foundry_valve",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_great_gear"
+  ],
+  "life": [
+    "steam",
+    "dust",
+    "embers",
+    "rats"
+  ],
+  "sound": "awaken:gate.world.foundry_engine",
+  "events": [
+    "overdrive",
+    "the_wakening"
+  ],
+  "rule": "steam",
+  "secrets": [
+    {
+      "id": "the_old_valve",
+      "name": "The old valve"
+    },
+    {
+      "id": "the_governor",
+      "name": "The governor"
+    }
+  ],
+  "keepsake": "brass_governor",
+  "keepsake_name": "The Engine's Brass Governor",
+  "keepsake_from": "the_governor"
+}

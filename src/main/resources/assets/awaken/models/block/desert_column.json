@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "awaken:block/desert_column",
+    "end": "awaken:block/desert_column_end"
+  }
+}

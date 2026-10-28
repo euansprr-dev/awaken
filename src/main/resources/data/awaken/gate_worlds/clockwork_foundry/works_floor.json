@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "theme": "clockwork_foundry",
+  "name": "The Works Floor",
+  "line": "Catwalks over pits full of turning gears. The machines are still running, and nobody's minding them.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "square": 1,
+    "roof": 12,
+    "wobble": 0.5
+  },
+  "biome": "awaken:gate_world/works_floor",
+  "moods": [
+    {
+      "id": "idle",
+      "name": "Idle",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "overdrive",
+      "name": "Overdrive",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/works_floor_overdrive",
+      "life": [
+        "embers",
+        "steam"
+      ]
+    },
+    {
+      "id": "steam",
+      "name": "Steam",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/works_floor_steam",
+      "life": [
+        "steam",
+        "mist"
+      ]
+    },
+    {
+      "id": "power_cut",
+      "name": "Power cut",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/works_floor_power_cut",
+      "life": [
+        "dust"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:foundry_iron",
+    "floor": "awaken:foundry_brick",
+    "brick": "awaken:foundry_brick",
+    "trim": "awaken:foundry_brass",
+    "gear": "awaken:foundry_gear",
+    "grate": "awaken:foundry_grille",
+    "pipe": "awaken:foundry_pipe",
+    "wall_glow": "awaken:foundry_furnace",
+    "lamp": "awaken:foundry_bulb",
+    "fall": "awaken:foundry_steam",
+    "sparks": "awaken:foundry_sparks",
+    "cables": "awaken:foundry_cables",
+    "touch": "awaken:foundry_valve",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "machine_pits"
+  ],
+  "life": [
+    "steam",
+    "dust",
+    "embers",
+    "rats"
+  ],
+  "sound": "awaken:gate.world.foundry_works",
+  "events": [
+    "overdrive"
+  ],
+  "rule": "steam",
+  "secrets": [
+    {
+      "id": "the_old_valve",
+      "name": "The old valve"
+    },
+    {
+      "id": "the_spare_cog",
+      "name": "The spare cog"
+    },
+    {
+      "id": "the_warm_pipe",
+      "name": "The warm pipe",
+      "leads_to": "awaken:clockwork_foundry/orrery"
+    }
+  ],
+  "keepsake": "spare_cog",
+  "keepsake_name": "A Spare Cog",
+  "keepsake_from": "the_spare_cog"
+}

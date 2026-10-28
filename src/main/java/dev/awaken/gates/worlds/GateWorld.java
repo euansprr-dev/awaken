@@ -159,6 +159,11 @@ public record GateWorld(int schema, Theme theme, String name, String line, Tier 
         return roles.contains("boss");
     }
 
+    /** An open land under the sky: built in the open-sky gate dimension (SPEC 38.11). */
+    public boolean open() {
+        return kind.equals("open");
+    }
+
     /** Floors of the theme you need to have cleared before the director picks it below its rank (mastery). */
     public int masteryFloors() {
         return mastery >= 0 ? mastery : tier.masteryFloors();

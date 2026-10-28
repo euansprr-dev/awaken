@@ -401,10 +401,12 @@ def build(out):  # build_all.py makes textures; audio is rendered on demand (mai
     pass
 
 
-def main(argv):
+def main(argv, spec=None, label="the cave themes"):
+    """Renders a table of sounds (this file's, or another theme stage's) and writes their JSON."""
+    spec = SPEC if spec is None else spec
     total = 0
     if "--json" not in argv:
-        for name, fn, variants, rms, event, _, att in SPEC:
+        for name, fn, variants, rms, event, _, att in spec:
             cat = "amb" if name.startswith("amb_") else "sfx"
             tgt, tol, ceil, q = TARGETS[cat]
             assert abs(rms - tgt) <= tol, name
@@ -421,11 +423,11 @@ def main(argv):
                 total += os.path.getsize(path)
                 print(f"  {file:26s} {len(y) / K.SR:5.1f} s  {1 if y.ndim == 1 else y.shape[1]} ch  RMS {K.gated_rms(y):6.1f}"
                       f"  TP {K.true_peak(y):5.1f}  {os.path.getsize(path) // 1024} KB")
-        print(f"  {total / 1e6:.2f} MB for the cave themes")
+        print(f"  {total / 1e6:.2f} MB for {label}")
     sounds_path, lang_path = os.path.join(MERGE, "sounds.json"), os.path.join(MERGE, "lang/en_us.json")
     sounds = json.load(open(sounds_path), object_pairs_hook=OrderedDict)
     lang = json.load(open(lang_path), object_pairs_hook=OrderedDict)
-    for name, _, variants, _, event, subtitle, att in SPEC:
+    for name, _, variants, _, event, subtitle, att in spec:
         entries = []
         for v in range(variants):
             e = OrderedDict(name="awaken:gate_world/" + name + ("" if variants == 1 else "_" + str(v + 1)))
@@ -443,7 +445,7 @@ def main(argv):
     with open(lang_path, "w") as f:
         json.dump(lang, f, indent=2, ensure_ascii=False)
         f.write("\n")
-    print(f"events: {len(SPEC)} gate.world.* for the cave themes in merge/gates")
+    print(f"events: {len(spec)} gate.world.* for {label} in merge/gates")
     return 0
 
 

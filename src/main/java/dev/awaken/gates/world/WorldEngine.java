@@ -36,7 +36,8 @@ public interface WorldEngine {
             case "passages" -> new PassageEngine();
             case "void" -> new VoidEngine();
             case "drop" -> new ShaftEngine();
-            case "caves" -> new CaveEngine();
+            // open land (38.11) is the cave engine under the sky
+            case "caves", "open" -> new CaveEngine();
             default -> null;
         };
     }
