@@ -1,0 +1,31 @@
+{
+  "style": "shieldblade",
+  "round": 2,
+  "_notes": "Round 2: the katana's recipe; the bash is held on the foe a beat and pulled straight back in.",
+  "cut": {
+    "power": 3.0
+  },
+  "thrust": {},
+  "forms": {
+    "slash": {
+      "post": 16,
+      "stop": 58,
+      "pre": 48
+    }
+  },
+  "moves": {
+    "strike_1": {
+      "cut": {
+        "power": 3.4
+      }
+    },
+    "strike_2": {
+      "cut": {
+        "drive": 0.75,
+        "carry": 60,
+        "stop": null,
+        "pre": null
+      }
+    }
+  }
+}

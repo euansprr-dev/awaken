@@ -1,0 +1,26 @@
+{
+  "style": "precursor",
+  "round": 2,
+  "_notes": "Round 2: the katana's recipe, as for the longsword.",
+  "cut": {
+    "power": 3.0
+  },
+  "thrust": {},
+  "forms": {
+    "slash": {
+      "post": 16,
+      "stop": 58,
+      "pre": 48
+    }
+  },
+  "moves": {
+    "strike_2": {
+      "cut": {
+        "drive": 0.75,
+        "carry": 60,
+        "stop": null,
+        "pre": null
+      }
+    }
+  }
+}
