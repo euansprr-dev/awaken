@@ -1136,6 +1136,9 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
 - Look tours run on GitHub's macOS runners (`.github/workflows/tours.yml`, dispatched by `tools/tour-ci.sh`, decided
   2026-10-26 when the Mac's one-at-a-time queue ran for hours). Perf and frame-time tours, Far Sight's tours and sound
   listening stay on the Mac under `slot.sh tour`.
+- The watchdog (`tools/gradle.sh`, the timeout) first has every JVM of the checkout but Gradle's own dump its threads
+  into the log (`jstack -l`: the client, its server and their workers), so a hung tour or test run names what it waits
+  for; on CI they land at the end of `tour.log` and the summary says so.
 - The runner is macos-15 on arm64 (3 cores of a virtual M1, 7 GB): Vulkan through MoltenVK 1.4.2 on Apple's
   paravirtual GPU, client heap 4 GB. macOS 14's paravirtual GPU aborts MoltenVK (`newArgumentEncoderWithLayout:`) or
   runs out of device memory; macOS 26 renders at half the frame rate and scrambles more. OpenGL there is Apple's
@@ -8210,7 +8213,10 @@ laid already, then a near-freeze; then 2 s at the start and 33 s at the first te
 finder reading a chunk still generating, then one tick of 4.5 minutes in it; the ledge finder now reads only chunks
 already whole). A watch on the server thread (`RoadTimer.watch`) logs any tick (or task between ticks) over two seconds
 with its stack, always (a player's log says what held the server; on a tour over one second, sampled 20 times a
-second), and any chunk the server thread had to wait for further than view distance from every player in its level,
+second), again every 10 s while the same tick runs, each time with the first frames of every busy world generation
+(`Worker-Main-*`), IO (`IO-Worker-*`) and Awaken thread (a chunk the server thread waits for waits on them; the idle ones
+counted); a tick counts from the players' packets on (26.3 handles them before `tickServer`, and a move into land not
+generated yet waits there in NeoForge's `Entity.setPosRaw`). It logs any chunk the server thread had to wait for further than view distance from every player in its level,
 with the chunk's own tickets and who asked (once a minute a caller; a chunk without a getChunk's own "unknown" ticket
 rode in another chunk's wait, so the stack names that wait, not who asked for it). The camp command (`/awaken village road camp`) never lays a road on the server thread: a
 thread of its own lays what it needs (not the planners: their queue can be minutes deep after a pregen) and the server
@@ -8270,6 +8276,7 @@ loaded, and a loaded one may still be generating, so reading it waits for it. Ea
 `Scenes.dryLand` and its `drop`, `Reveal.motes` and its `burst` (the same pulse), `LandmarkMarkers.compute` (the next
 pass marks it); the sky rig waits until every chunk it reads or builds in is finished (`SkyRig.finished`).
 `living_dry_land_never_waits`: a chunk loaded and still generating is passed by and still isn't made after.
+`Scenes.campFire` (the roads-perf tour on bc83bd8f, 1.2 s) scans for its fire only once all its chunks are finished.
 **Fixed (delve, 2026-10-28):** the Horizon's sinkhole search (`CaveHorizon`) runs on a worker of its own (one daemon
 thread, low priority): the server thread reads only the answers (per candidate start chunk, cached for the session),
 asks at most two new candidates a look with at most 8 waiting, and a candidate not answered yet shows no sinkhole. The

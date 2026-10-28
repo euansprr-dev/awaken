@@ -127,11 +127,15 @@ final class RoadTimer {
     static final long LONG_TICK_NS = 1_000_000_000L;
     /** In play the watch only looks every half second and takes a stack once a tick has run this long. */
     static final long LONG_TICK_PLAY_NS = 2_000_000_000L;
+    /** A tick still running is told again this often: one line named only a 6.5-minute freeze's first 26 s. */
+    static final long RETELL_NS = 10_000_000_000L;
 
     /**
      * From the server's start until it stops: on a tour the server thread sampled 20 times a second (how much of its
      * ticking went on planning, and the stack of any tick over a second); in play only the tick counter, read twice a
-     * second, and one stack when a tick has run two seconds, so a player's log says what held the server.
+     * second, and a stack when a tick has run two seconds, so a player's log says what held the server. A tick still
+     * running is told again every {@link #RETELL_NS}, each time with what the world generation and our own threads are
+     * doing (a chunk the server thread waits for waits on them).
      */
     static void watch(net.minecraft.server.MinecraftServer s) {
         boolean tour = System.getProperty("awaken.autopilot") != null;
@@ -139,8 +143,7 @@ final class RoadTimer {
         long every = tour ? 50_000_000L : 500_000_000L, after = tour ? LONG_TICK_NS : LONG_TICK_PLAY_NS;
         Thread t = new Thread(() -> {
             int seen = -1;
-            long since = System.nanoTime();
-            boolean told = false;
+            long since = System.nanoTime(), tellAt = after;
             while (s.isRunning()) {
                 java.util.concurrent.locks.LockSupport.parkNanos(every);
                 StackTraceElement[] stack = null;
@@ -157,18 +160,30 @@ final class RoadTimer {
                 if (tick != seen) {
                     seen = tick;
                     since = now;
-                    told = false;
-                } else if (!told && now - since >= after && !s.isPaused() && s.getPlayerCount() > 0) {
+                    tellAt = after;
+                } else if (now - since >= tellAt && !s.isPaused() && s.getPlayerCount() > 0) {
                     if (stack == null) stack = st.getStackTrace();
-                    boolean ticking = calls(stack, "net.minecraft.server.MinecraftServer", "tickServer");
+                    // 26.3 handles the players' packets before tickServer (processPacketsAndTick): a move into land not
+                    // generated yet waits there, in NeoForge's setPosRaw
+                    boolean ticking = calls(stack, "net.minecraft.server.MinecraftServer", "processPacketsAndTick");
                     if (!ticking && !calls(stack, "net.minecraft.util.thread.BlockableEventLoop", "doRunTask")) continue;
-                    told = true;
+                    tellAt = now - since + RETELL_NS;
                     int gen = 0;
-                    for (var e : Thread.getAllStackTraces().entrySet())
-                        if (e.getKey() != st && calls(e.getValue(), RoadNet.class.getName(), "startsIn")) gen++;
-                    RoadNet.log("tick {} has run {} ms{}: {} (roads being laid for {} other threads, {} lattice chunks set aside){}", tick,
-                            ms(now - since), ticking ? "" : " (a task between ticks)", top(stack), gen, RoadNet.setAside(),
-                            planning(stack) ? " (road or settlement planning)" : "");
+                    StringBuilder others = new StringBuilder();
+                    int idle = 0;
+                    for (var e : Thread.getAllStackTraces().entrySet()) {
+                        Thread o = e.getKey();
+                        if (o == st || o == Thread.currentThread()) continue;
+                        if (calls(e.getValue(), RoadNet.class.getName(), "startsIn")) gen++;
+                        String name = o.getName();
+                        if (!name.startsWith("Worker-Main") && !name.startsWith("IO-Worker") && !name.startsWith("Awaken ")) continue;
+                        if (idle(e.getValue())) idle++;
+                        else others.append("\n  ").append(name).append(": ").append(top(e.getValue(), 14));
+                    }
+                    RoadNet.log("tick {} has run {} ms{}: {} (roads being laid for {} other threads, {} lattice chunks set aside){}{}{}", tick,
+                            ms(now - since), ticking ? "" : " (a task between ticks)", top(stack, 24), gen, RoadNet.setAside(),
+                            planning(stack) ? " (road or settlement planning)" : "", others,
+                            idle > 0 ? "\n  (" + idle + " worldgen, IO and Awaken threads idle)" : "");
                 }
             }
         }, "Awaken stall watch");
@@ -251,13 +266,19 @@ final class RoadTimer {
         return false;
     }
 
-    /** The stack's first frames, our own and the game's, down to the tick. */
-    private static String top(StackTraceElement[] stack) {
+    /** A pool's thread waiting for work. */
+    private static boolean idle(StackTraceElement[] stack) {
+        return stack.length == 0 || calls(stack, "java.util.concurrent.ForkJoinPool", "awaitWork")
+                || calls(stack, "java.util.concurrent.ThreadPoolExecutor", "getTask");
+    }
+
+    /** The stack's first {@code most} frames, our own and the game's, down to the tick. */
+    private static String top(StackTraceElement[] stack, int most) {
         StringBuilder b = new StringBuilder();
         int n = 0;
         for (StackTraceElement f : stack) {
             if (f.getMethodName().equals("tickServer")) break;
-            if (n++ == 24) {
+            if (n++ == most) {
                 b.append(" < ...");
                 break;
             }
