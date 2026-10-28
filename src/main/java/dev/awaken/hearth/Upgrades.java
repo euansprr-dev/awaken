@@ -2,6 +2,7 @@ package dev.awaken.hearth;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.api.CoreApi;
+import dev.awaken.core.api.HearthHooks;
 import dev.awaken.hearth.room.Room;
 import dev.awaken.hearth.room.RoomType;
 import dev.awaken.progression.Progression;
@@ -81,6 +82,38 @@ public final class Upgrades {
             case 1 -> "I"; case 2 -> "II"; case 3 -> "III"; case 4 -> "IV"; case 5 -> "V"; case 6 -> "VI";
             default -> String.valueOf(n);
         };
+    }
+
+    /**
+     * The metal the player's home is short of for its next Anchor tier, only when nothing else stands in the way (the
+     * rank is there and the home has grown what the tier asks): the moment the Delvers' workings are worth pointing at
+     * (SPEC §34.1, delve's task card). The first metal in the price the player lacks; a block counts nine ingots.
+     */
+    public static Optional<HearthHooks.MetalNeed> metalNeed(ServerPlayer sp) {
+        var home = HearthService.homeOf(sp);
+        if (home.isEmpty()) return Optional.empty();
+        HearthRecord h = home.get();
+        if (h.hearthfire() || h.tier >= HearthRecord.MAX_TIER) return Optional.empty();
+        Def next = anchorTier(h.tier + 1);
+        Rank rank = Progression.rank(sp);
+        if (rank.ordinal() < next.tier().ordinal() || !TierRules.met(h, h.tier + 1)) return Optional.empty();
+        for (Costs.Part p : Costs.price(next.base(), rank, next.tier())) {
+            String metal = metalOf(p.item());
+            if (metal == null) continue;
+            int per = p.item() == Items.IRON_BLOCK || p.item() == Items.GOLD_BLOCK || p.item() == Items.COPPER_BLOCK.weathering().unaffected() ? 9 : 1;
+            Item ingot = metal.equals("iron") ? Items.IRON_INGOT : metal.equals("gold") ? Items.GOLD_INGOT : Items.COPPER_INGOT;
+            Item block = metal.equals("iron") ? Items.IRON_BLOCK : metal.equals("gold") ? Items.GOLD_BLOCK : Items.COPPER_BLOCK.weathering().unaffected();
+            int need = p.count() * per, have = Costs.countOf(sp, ingot) + 9 * Costs.countOf(sp, block);
+            if (have < need) return Optional.of(new HearthHooks.MetalNeed(metal, need, have, next.name(), h.pos));
+        }
+        return Optional.empty();
+    }
+
+    private static @org.jspecify.annotations.Nullable String metalOf(Item item) {
+        if (item == Items.IRON_INGOT || item == Items.IRON_BLOCK) return "iron";
+        if (item == Items.GOLD_INGOT || item == Items.GOLD_BLOCK) return "gold";
+        if (item == Items.COPPER_INGOT || item == Items.COPPER_BLOCK.weathering().unaffected()) return "copper";
+        return null;
     }
 
     // ---- the Anchor -------------------------------------------------------------------------------------------------

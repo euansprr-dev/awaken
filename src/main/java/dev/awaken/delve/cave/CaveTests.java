@@ -28,6 +28,55 @@ final class CaveTests {
     static void register() {
         AwakenTests.register("delve_cave_routes", 200, CaveTests::routes);
         AwakenTests.registerIsolated("delve_seep", 600, CaveTests::seep);
+        AwakenTests.register("delve_hearth_points", 200, CaveTests::hearthPoints);
+    }
+
+    /**
+     * The Hearth points (SPEC §34.1): the card's words for an adit and a hill mouth (distance to 10 m, eight ways from
+     * home), which mouths lead to which metal, the honest line where the flat test world holds no mouth, and the task:
+     * a home short of iron puts the gather row (have/need) on the card, and once the search is done the honest line.
+     */
+    @SuppressWarnings("removal")
+    private static void hearthPoints(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos home = new BlockPos(1000, 64, 1000);
+        Spec adit = new Spec(CaveKind.MOUTH, 1150, 70, 850, 0, 11L, false, 0, 0, 0, new int[]{Mouth.ADIT, 20, 3, 3, 4, 1150, 66, 870, dev.awaken.delve.Ore.IRON.ordinal() + 1, 0});
+        Spec hill = new Spec(CaveKind.MOUTH, 1000, 70, 1180, 0, 12L, false, 0, 0, 0, new int[]{Mouth.HILL, 30, 13, 7, 9, 0, 0, 0, 0, 1});
+        h.assertValueEqual(MouthPointer.line(adit, home, "iron"),
+                "The old Delvers cut an adit into the hillside 210 m north-east of your home. It should still have iron in it.", "the adit's line");
+        h.assertValueEqual(MouthPointer.line(hill, home, "iron"),
+                "There's a cave mouth in the hillside 180 m south of your home. The cave behind it runs past iron.", "the hill mouth's line");
+        h.assertTrue(MouthPointer.leads(level.getSeed(), adit, dev.awaken.delve.Ore.IRON), "an iron adit leads to iron");
+        h.assertFalse(MouthPointer.leads(level.getSeed(), adit, dev.awaken.delve.Ore.COPPER), "an iron adit doesn't lead to copper");
+        BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
+        MouthPointer.Answer none = MouthPointer.find(level, at, "iron");
+        h.assertTrue(none.mouth() == null, "no mouth on flat land");
+        var p = h.makeMockServerPlayerInLevel();
+        p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        var before = dev.awaken.core.api.HearthHooks.installed();
+        try {
+            dev.awaken.core.api.HearthHooks.install(new dev.awaken.core.api.HearthHooks.Lookup() {
+                @Override public java.util.Optional<BlockPos> nearest(ServerLevel l, BlockPos pos, int radius) { return java.util.Optional.of(at); }
+                @Override public java.util.Optional<BlockPos> hearthOf(ServerLevel l, java.util.UUID player) { return java.util.Optional.of(at); }
+                @Override public java.util.Optional<dev.awaken.core.api.HearthHooks.MetalNeed> metalNeed(net.minecraft.server.level.ServerPlayer sp) {
+                    return java.util.Optional.of(new dev.awaken.core.api.HearthHooks.MetalNeed("iron", 16, 3, "Hearth Tier II", at));
+                }
+            });
+            var first = MouthPointer.task(p);
+            h.assertTrue(first != null && first.rows().getFirst().have() == 3 && first.rows().getFirst().need() == 16, "the gather row counts 3/16");
+            h.assertValueEqual(first.title(), "Iron for your home", "the task's title");
+            long until = System.currentTimeMillis() + 20_000;
+            var t = first;
+            while (t != null && t.rows().size() < 2 && System.currentTimeMillis() < until) {
+                Thread.onSpinWait();
+                t = MouthPointer.task(p);
+            }
+            h.assertTrue(t != null && t.rows().size() == 2, "the search finished");
+            h.assertValueEqual(t.rows().get(1).text(), MouthPointer.honest("iron"), "no mouth: the honest line");
+        } finally {
+            dev.awaken.core.api.HearthHooks.install(before);
+        }
+        h.succeed();
     }
 
     /** Where each kind is laid for the test (a sinkhole's rim, every other's floor). */

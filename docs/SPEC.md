@@ -8570,7 +8570,21 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   the throat within 28 m; the **cold air heard** within 32 m (the breath-of-air loop at the nearest mouth, pitch 0.78;
   to be re-voiced from a recording). Far mist goes straight to the particle engine (the level's own path drops
   particles past 32 blocks; the sinkhole's mist had the same fault and now does the same), never at Minimal particles.
-- **Tests**: `delve_cave_routes` walks every kind (the mouth staged as an adit on even seeds, a hill mouth on odd).
+- **The Hearth points** (`delve.cave.MouthPointer`, a task-card source; `HearthHooks.metalNeed`, filled by
+  `hearth.Upgrades.metalNeed`): when the home's next Anchor tier is short only of a metal (the rank is there and
+  `TierRules.met`; a block counts nine ingots) and you stand within 160 of home, the card "Iron for your home" has the
+  gather row (have/need) and, once the search is done, one line: "The old Delvers cut an adit into the hillside 210 m
+  north-east of your home. It should still have iron in it." or "There's a cave mouth in the hillside 180 m south of
+  your home. The cave behind it runs past iron." (distance to 10 m, eight ways, the mouth on the card's compass as a
+  hint). The answer: the nearest mouth within 400 of home whose way in reaches a lode of that metal (an adit driven to
+  one; a hill mouth with a lode of 20+ within 48 of its throat's end or joint), from the seed alone on the background
+  executor, cached per player for that home and metal. Once per answer a window "Old workings" offers **Mark it on my
+  map** (`Destinations.set`, kind `spot`, "The old adit" / "The cave mouth"); nothing is set without that click. None
+  found: "I don't know of any old workings near your home. Iron shows in cave walls: find a cave and follow its walls."
+  Forge and temper shortfalls don't point yet.
+- **Tests**: `delve_cave_routes` walks every kind (the mouth staged as an adit on even seeds, a hill mouth on odd);
+  `delve_hearth_points` (the two lines, which mouths lead to which metal, the honest line on flat land, the card's
+  3/16 row).
 
 ### 34.2 Metal lives in the caves (built, P1c)
 - **Wall lodes** (`LodePlans.walls`, on top of each region's existing lodes, which are unchanged so old worlds agree):
