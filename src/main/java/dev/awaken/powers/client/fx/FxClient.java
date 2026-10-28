@@ -81,6 +81,7 @@ public final class FxClient {
         if (mc.level == null || mc.isPaused()) return;
         try {
             FxWorld.tick();
+            LadderFx.tick();
             CastAnims.tick();
             FxScreen.tick();
             CastLens.tick();
@@ -103,6 +104,7 @@ public final class FxClient {
         java.util.Arrays.fill(DEFERRED, null);
         head = count = 0;
         FxWorld.reset();
+        LadderFx.reset();
         CastAnims.reset();
         FxScreen.reset();
         CastLens.reset();
@@ -112,6 +114,7 @@ public final class FxClient {
     static void onEvent(FxEvent e) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
+        e = LadderFx.restyle(e);
         CastAnim anim = e.anim();
         boolean own = mc.player != null && e.caster() == mc.player.getId();
         CastProfiles.Profile prof = e.caster() >= 0 ? CastProfiles.byId(e.profile()) : null;
@@ -127,7 +130,10 @@ public final class FxClient {
 
     private static void build(FxEvent e) {
         try {
+            // the power's own recipe, then the look layers of its ladder steps on what it drew (SPEC 34.5)
+            LadderFx.begin();
             FxRecipes.build(e);
+            LadderFx.decorate(e);
         } catch (RuntimeException ex) {
             // an effect must never take the game down; log once per kind
             logOnce(e.kind(), ex);

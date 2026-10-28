@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.awaken.powers.Loadout;
 import dev.awaken.powers.PowerRegistry;
 import dev.awaken.powers.PowerType;
+import dev.awaken.powers.ladder.PowerLadder;
 import dev.awaken.powers.net.PowerPayloads;
 import dev.awaken.progression.client.StatusSections;
 import dev.awaken.signal.client.Glass;
@@ -102,9 +103,12 @@ final class PowersSection implements StatusSections.Section {
     private static int cardH(Loadout l, Font font, int width) {
         int n = l.owned().size();
         if (cardFor != width || cardOwned != n) {
-            int lines = 2;
-            for (PowerType t : owned(l)) lines = Math.max(lines, font.split(Component.literal(t.description), width - 14).size());
-            cardH = 40 + lines * 10 + 12;
+            int lines = 2, ladder = 0;
+            for (PowerType t : owned(l)) {
+                lines = Math.max(lines, font.split(Component.literal(t.description), width - 14).size());
+                ladder = Math.max(ladder, ladder(null, font, t, 1, 0, 0, width - 16) + 4);
+            }
+            cardH = 40 + lines * 10 + 12 + ladder;
             cardFor = width;
             cardOwned = n;
         }
@@ -212,7 +216,34 @@ final class PowersSection implements StatusSections.Section {
         text(g, font, masteryLine(level, l.masteryProgress(show.id.toString()), show), tx + segs * 4 + 4, y + 24, StatusSections.small(), 0x9AD4FF, w - 44 - segs * 4 - 4);
         int dy = text(g, font, show.description, x + 8, y + 36, 1f, Glass.TEXT, w - 14);
         String hint = hint(show, pick);
-        if (!hint.isEmpty()) text(g, font, hint, x + 8, dy + 3, StatusSections.small(), Glass.AMBER, w - 14);
+        if (!hint.isEmpty()) dy = text(g, font, hint, x + 8, dy + 3, StatusSections.small(), Glass.AMBER, w - 14);
+        ladder(g, font, show, level, x + 8, dy + 6, w - 16);
+    }
+
+    /**
+     * The power's ladder under its card (SPEC 34.7): the four steps past level 1 with what each changes, the ones you have lit in
+     * the family's colour and the next one marked. With no {@code g} it only measures; returns its height.
+     */
+    private static int ladder(@Nullable GuiGraphicsExtractor g, Font font, PowerType t, int level, int x, int y, int w) {
+        if (PowerLadder.entry(t.path) == null) return 0;
+        float sc = StatusSections.small();
+        int dy = y;
+        if (g != null) label(g, font, "LADDER · LEVEL " + level + " OF " + PowerLadder.TOP, x, dy, w);
+        dy += 12;
+        for (int lv = 2; lv <= PowerLadder.TOP; lv++) {
+            boolean reached = level >= lv, next = lv == level + 1;
+            String line = "Lv " + lv + "  " + PowerLadder.name(t.path, lv).getString() + (lv == PowerLadder.TOP ? " · Awakened" : "") + ": "
+                    + PowerLadder.does(t.path, lv).getString();
+            if (g == null) {
+                dy += Math.round(font.split(Component.literal(line), Math.max(10, Math.round((w - 10) / sc))).size() * 10 * sc) + 2;
+                continue;
+            }
+            int pip = reached ? 0xFF000000 | t.family.colour : next ? 0xFF9AD4FF : Glass.a(Glass.EDGE, 0.45f);
+            if (reached) g.fill(x + 1, dy + 1, x + 6, dy + 6, pip);
+            else g.outline(x + 1, dy + 1, 5, 5, pip);
+            dy = text(g, font, line, x + 10, dy, sc, reached ? Glass.TEXT : next ? 0x9AD4FF : Glass.LABEL, w - 10) + 2;
+        }
+        return dy - y;
     }
 
     /** What to press now, in plain words. */
@@ -227,10 +258,11 @@ final class PowersSection implements StatusSections.Section {
         };
     }
 
-    /** "Mastery 34% to level 4", or "Mastered". */
+    /** "Mastery 34% to level 4: Corona", or "Mastered". */
     private static String masteryLine(int level, float progress, PowerType t) {
         if (level >= Loadout.MAX_LEVEL) return "Mastered";
-        return "Mastery " + (int) Math.floor(100 * progress) + "% to level " + (level + 1);
+        String next = PowerLadder.entry(t.path) == null ? "" : ": " + PowerLadder.name(t.path, level + 1).getString();
+        return "Mastery " + (int) Math.floor(100 * progress) + "% to level " + (level + 1) + next;
     }
 
     // ---- drawing helpers ------------------------------------------------------------------------------------------

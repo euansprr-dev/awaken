@@ -69,6 +69,13 @@ final class ClientCasting {
         Loadout.Owned o = l.get(id);
         if (o == null) return;
         long now = ClientPowers.now();
+        if (l.again(id, now)) {
+            // a ladder step's second press (SPEC 34.3): free and unpredicted; the server runs the step's follow-up
+            var keyed = p.input.keyPresses;
+            int keys = PowerPayloads.keysOf(keyed.forward(), keyed.backward(), keyed.left(), keyed.right());
+            ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.PRESS, false, p.getYRot(), p.getXRot(), keys));
+            return;
+        }
         boolean running = l.isActive(id);
         float cost = PowerMath.cost(t.cost, t.variant(o.variant()).cost());
         boolean cooling = l.cooldownLeft(id, now) > 0 || ClientPowers.predictedCooling(slot, now);
