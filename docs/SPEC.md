@@ -8690,10 +8690,10 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
   every step done plus up to four to do, a linear trail two; the card counts the done ones; a step longer than the card wraps over up to three lines, `signal.ui.TaskWrap`, with key caps kept in the line, seen on the third tour) and its current step on the **Now line** (priority 55). Only Follow changes the HUD;
   one trail is followed at a time, and the Armoury's Track gives the card up (`TrailsApi.unfollow`). "Anything for me?"
   (`Advice`) names the best next step.
-- **Catalogue shipped** (24 trails): Home (7): Set Your Fire, Your Hearth, A Room for Everything, Your Village, The Forge, Trophies and
+- **Catalogue shipped** (25 trails): Home (7): Set Your Fire, Your Hearth, A Room for Everything, Your Village, The Forge, Trophies and
   Echoes, The Training Grounds. Weapons (4): Your First Weapon, Finding Patterns, Making Your Next Weapon, Boss Weapons. Body (3):
-  Moving Like a Hunter, The Line, Wings. Gates (1): Your First Gate. World (2): Out in the Commons, Wayfarers and Camps. Deep (4):
-  The Veil, Dreams, The Precursors, The Well. Not yet written: Powers, Story, Villages, Beasts and Lairs, Digging Down, Rumours.
+  Moving Like a Hunter, The Line, Wings. Gates (1): Your First Gate. World (2): Out in the Commons, Wayfarers and Camps. Deep (5):
+  The Veil, Dreams, The Precursors, The Well, The Delver's Pick (§34.4). Not yet written: Powers, Story, Villages, Beasts and Lairs, Digging Down, Rumours.
 - **Counters added** for steps (docs/COUNTERS.md): `rested`, `armoury_forge`, `armoury_opened`, `blueprint_copies`, `weapons_attuned`,
   `weapons_raised`, `patterns_bought`, `patterns_from_gates`, `patterns_from_people`, `patterns_from_stands`, `patterns_from_villages`.
 - **Admin**: `/awaken admin trails list | open <id> | follow <id> | done <id> | reset`. Autopilot: `trails now|browse [area]|open`,
@@ -8870,6 +8870,13 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   run). Each wake: the tier, a low ring, light gathering round the hand (`delve_pick_woke`), a moment window ("The pick
   wakes: I · Kindle" and the gift in words). `awaken:delve/verses_woken` is the furthest verse woken: a pick given
   later (pulled, handed over, re-forged) comes at it. The tooltip shows the verse, each gift woken, and "Next: ...".
+- **Trail** "The Delver's Pick" (`trail/the_delvers_pick.json`, area deep, linear; Euan 2026-10-28: "add the Delver's Pick
+  to the Journal and Trails, so it's findable before you have it and shows the next step after"): opens with a home or a
+  pulled pick; step one is the pull (`counter:awaken:delve/pick_pulled`) with the place `adit`, then one step per verse on
+  `count:awaken:delve/verses_woken:<n>`, the Forge rites pointing at `hearth`. `cave.PickTrail` registers `adit`: the nearest
+  adit (any ore) within 400 of your home (of you, with no home, asked again once you're 96 away), searched off the server
+  thread as the Hearth's metal search is; a home with no adit in reach is handed the pick, as the metal card does, so the
+  first step can always be done. Test `delve_pick_trail` (one step per verse in order, the place, the hand-over on flat land).
 - **Gifts** (`PickGifts`; client `PickFx`):
   - *Kindle*: sneak and start striking bare rock (strike family ROCK): an **ember** sticks in the air cell on that face
     for 5 minutes, three a player (a fourth puts out your oldest), none within 5 of another of yours. Drawn light, no

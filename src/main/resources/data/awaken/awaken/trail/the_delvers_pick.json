@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "title": "The Delver's Pick",
+  "area": "deep",
+  "blurb": "An old miner's pick waits in the stone of an adit. It hums at metal and wakes a little more each time you use it well.",
+  "weight": 118,
+  "opens": [
+    "hearth|counter:awaken:delve/pick_pulled"
+  ],
+  "order": "linear",
+  "steps": [
+    {
+      "id": "find",
+      "text": "Pull the Delver's Pick from the stone at the end of an old adit.",
+      "done": [
+        "counter:awaken:delve/pick_pulled"
+      ],
+      "where": "adit",
+      "hint": "An adit is a timbered tunnel into a hillside. With no adit near your home, your Hearth keeps a pick for you."
+    },
+    {
+      "id": "kindle",
+      "text": "Break a lode's heart with the pick on you.",
+      "done": [
+        "count:awaken:delve/verses_woken:1"
+      ],
+      "hint": "Hold the pick and it hums when its head points at metal. Follow the hum to a lode and mine into its middle."
+    },
+    {
+      "id": "echo",
+      "text": "Light a dead Delver lamp with the pick on you.",
+      "done": [
+        "count:awaken:delve/verses_woken:2"
+      ],
+      "hint": "Delver lamps hang on chains from cave roofs. Hit one with any pickaxe and it lights the hall round it."
+    },
+    {
+      "id": "tempered",
+      "text": "Bring the pick and 3 diamonds to your Forge.",
+      "done": [
+        "count:awaken:delve/verses_woken:3"
+      ],
+      "where": "hearth",
+      "hint": "Use the Forge with the pick in your hand. Tempered, it can cut Deepglass."
+    },
+    {
+      "id": "glass",
+      "text": "Cut Deepglass with the pick on you.",
+      "done": [
+        "count:awaken:delve/verses_woken:4"
+      ],
+      "hint": "Deepglass grows in seeps, violet halls below y 0. A Tuning Fork tuned to Deepglass points the way."
+    },
+    {
+      "id": "hush",
+      "text": "Quiet a seep by killing its heart, with the pick on you.",
+      "done": [
+        "count:awaken:delve/verses_woken:5"
+      ],
+      "hint": "The seep heart is rooted near the Deepglass. While a seep lives, the creatures in it are five levels stronger."
+    },
+    {
+      "id": "call",
+      "text": "Bring the pick and a starmetal ingot to your Forge.",
+      "done": [
+        "count:awaken:delve/verses_woken:6"
+      ],
+      "where": "hearth",
+      "hint": "Starmetal comes from fallen stars. Smelt the raw starmetal into an ingot."
+    }
+  ],
+  "finish": {
+    "line": "The Delver's Pick is fully awake.",
+    "levels": 0.05
+  }
+}
