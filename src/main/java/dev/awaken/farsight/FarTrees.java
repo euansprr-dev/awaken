@@ -26,6 +26,30 @@ public final class FarTrees {
      * canopy shading carries the forest there). */
     private static final int[] SPOTS = {0, 1, 2, 3, 1};
 
+    /**
+     * A crown's width (blocks) on a tree this tall, by shape, as the real ones grow: a tall tree's crown spreads wide.
+     * One width a shape drew every tall broadleaf as a column: a lumen tree (16 tall, a crown 6 deep and 11 wide on a
+     * 2-block trunk) stood 5 wide with a crown 10 deep (Euan, 2026-10-28: "some trees look very long").
+     */
+    public static float crownWidth(int shape, float tall) {
+        return switch (shape) {
+            case FarPalette.CONIFER -> 2.5f + 0.25f * tall;   // a spruce 8 tall: 4.5; a giant one 25 tall: 9
+            case FarPalette.JUNGLE -> 3f + 0.3f * tall;       // a big jungle tree 25 tall: 10.5
+            case FarPalette.ACACIA -> 7f;
+            default -> 1.2f + 0.55f * tall;                   // an oak 6 tall: 4.5; a lumen tree 17 tall: 10.5
+        };
+    }
+
+    /** A crown's base above the ground (blocks) on a tree this tall: a broadleaf's crown is a cap a few blocks deep on top. */
+    public static float crownBase(int shape, float tall) {
+        return switch (shape) {
+            case FarPalette.CONIFER -> tall * 0.18f;
+            case FarPalette.JUNGLE -> tall * 0.62f;
+            case FarPalette.ACACIA -> tall * 0.68f;
+            default -> tall - Math.min(0.62f * tall, 2.5f + 0.22f * tall); // an oak 6 tall: 3.7 deep; a lumen tree 17: 6.2
+        };
+    }
+
     public static boolean plants(int ring) {
         return ring >= FIRST_RING && ring <= LAST_RING;
     }
@@ -37,7 +61,7 @@ public final class FarTrees {
      *   <li>the ground under it at planting (a height texel; the shader stands the tree on the mesh as drawn), the
      *       canopy's height × 4 (8 bits), the shape (2 bits), a seed (6 bits);</li>
      *   <li>the crown's colour (RGB) and its width × 8 (8 bits);</li>
-     *   <li>unused.</li>
+     *   <li>the crown's base above the ground × 4 (8 bits).</li>
      * </ol>
      * The crown texel's alpha is the shape (the generated layer's is filled in from the biome before this runs).
      */
@@ -92,12 +116,11 @@ public final class FarTrees {
                     float tall = 0.75f + 0.5f * Erosion.unit(hash >>> 3);
                     int canopyQuarter = Math.clamp(Math.round(Math.max(canopy, 16) * tall), 8, 255);
                     int shape = c >>> 24 & 3;
-                    int width = shape == FarPalette.CONIFER ? 4 : shape == FarPalette.BROADLEAF ? 5 : 7;
-                    float wide = 0.8f + 0.4f * Erosion.unit(hash >>> 7);
+                    float blocks = canopyQuarter / 4f, wide = 0.8f + 0.4f * Erosion.unit(hash >>> 7);
                     out[at] = lx & 0xFFFF | (lz & 0xFFFF) << 16;
                     out[at + 1] = FarColumns.packHeight(ground) | canopyQuarter << 16 | shape << 24 | (hash >>> 26) << 26;
-                    out[at + 2] = (c & 0xFFFFFF) | Math.clamp(Math.round(width * wide * 8), 8, 255) << 24;
-                    out[at + 3] = 0;
+                    out[at + 2] = (c & 0xFFFFFF) | Math.clamp(Math.round(crownWidth(shape, blocks) * wide * 8), 8, 255) << 24;
+                    out[at + 3] = Math.clamp(Math.round(crownBase(shape, blocks) * 4), 0, 255);
                     n++;
                 }
             }

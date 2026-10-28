@@ -1993,6 +1993,12 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   its planting height, and none is planted inside `CityBasin.reserved` (2026-10-26, Euan's play: trees hung over the
   basin's edge). Test `farsight_trees_basin`. A tree patch's view-culling box reaches the tallest far tree (72 over its highest ground;
   at 40, a patch whose ground sat just below the frame dropped its treetops: far trees flickered with the camera's pitch).
+  A crown's width and base grow from the tree's height by shape, as the real trees do (`FarTrees.crownWidth`,
+  `crownBase`; the base rides in the tree's fourth int): broadleaf 1.2 + 0.55 × height wide, a cap min(0.62 × height,
+  2.5 + 0.22 × height) deep on top, on a trunk 2 wide past 12 tall; conifer 2.5 + 0.25 × height; jungle 3 + 0.3 ×
+  height; acacia 7 (2026-10-28, Euan: "some trees look very long", build ea94466a: one width a shape, 5 for every
+  broadleaf with its crown from 38% of its height, drew the lumen forest's trees, 16 tall with a crown 6 deep and 11
+  wide on a 2-block trunk in his save, as columns 5 wide and 10 deep; the elderwood's alike). Test `farsight_trees_crowns`.
 - **Air** (`farsight_air.glsl`): aerial perspective from an exponential atmosphere at real scale (1e-4 per block at sea
   level, ×4 in rain; scale height 1500), toward the sun tinted by the sunlight; valley cloud, a patchy slab 40-86 above
   sea level lying among the mountains (a sea of it at dawn, dusk and in rain), sunlit on top, over far ground only; the
