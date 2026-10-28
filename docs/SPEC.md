@@ -9634,6 +9634,43 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     joints keep the body's time, `lag` 0), and a floor pass keeps the stinger and the hem out of the floor.
   - **Meter.** Worst kink outside a strike 3.7°; held under 12% on every move, 10% on the intro; dips 14-22%.
 
+- **The Drowned Archivist, the Lectern** (body and motion, `kit/bosses/drowned_archivist.py`). "Every book here was written
+  by someone who drowned." A tall drowned scholar grown into his own reading stand: from the waist down he is a lectern
+  of black, waterlogged oak on a barnacled plinth, his sodden robe hanging over its carved column in a ragged hem. A great
+  book lies open on the desk before him, chained to it the way books were chained in the old libraries, a ship's anchor
+  hanging off the chain for a weight, and the sea pours off its pages over the desk's edge in three falls and spreads
+  across the floor. He stoops over it in a peaked hood with weed in its brim and over his shoulders, worn brass thread
+  round his hems, a bloated blue-grey face with no eyes, only a drowned green prick of light deep in each pit; his left
+  hand flat on the page, his right holding a quill as long as a spear (a gull's flight feather, a brass nib). 5.0 blocks
+  to the hood's tip; 94 cubes (564 faces), no plan, translucent (the falls and the pool). His light story is the sea-green of that
+  water: the falls, the pool, the words that swim on the pages, the pricks in his eyes. The hitbox is 1.7 x 4.6 (size
+  0.9 x 2.4 at scale 1.9).
+  - **His hands go where they're sent** (`ik.limb` on every key): the left stays on the book through nearly everything,
+    the quill is laid along a direction (`ik.orient`). He has no feet: the lectern drifts on the water it pours, leaning
+    into the way it goes and rocking like a moored boat.
+  - **Reading.** Idle, he reads: his face follows the lines from his left across to his right and flicks back, two lines
+    every four seconds, a finger tracing down the page with it, while the lectern rocks on the swell, the leaves stir,
+    the falls ripple and the anchor swings.
+  - **His blows.** Quill Thrust draws the quill back over his right shoulder, nib on you, and leans in to drive it down
+    over the desk like a spear; the rake sweeps on across to his left from there and back across you. The Shutting takes
+    the book's left board and lifts it up past upright, rearing, holds, and slams the book shut with all his weight, the
+    sea flung out at you; he opens it again. Tidal Page lifts a leaf high and turns it over with all his strength, the
+    other leaves flying after it, the quill pointed at you as the sea surges off the desk. Ink Volley dips the nib in the
+    book and flicks it at you three times. Loose Pages lifts both hands off the book and rears back with his face to the
+    roof while it riffles faster and faster. Ink Cloud bows right down over the book, hands spread on it, and heaves ink
+    out of his jaw. Undertow is the one time his left hand leaves the book: it reaches out at you, open, and draws back
+    to his chest, closing. The Flood (the signature) sinks over the book, then straightens him to his full height for the
+    first time, arms flung wide, quill raised, face to the roof and jaw hanging, every leaf flying up as the sea pours;
+    he shudders there and folds back down. Whoever is behind him sees his top half turn right round on the lectern, face
+    first, and the quill driven down at them; he turns back. His intro: reading, he turns the last leaf over slowly and
+    lifts his face to you, the jaw falling open, the quill raised.
+  - **Broken and the death.** Broken, he slumps over the book, the left hand slid off it and hanging, leaning on the
+    quill's nib. He dies with the sea going out of him, head thrown back and every limb flung out; slumps on the book,
+    which shuts under him; and the lectern goes down into the water he made, tilting, the hood the last of him under the
+    floor (3.2 s).
+  - **Meter.** Worst kink outside a strike 5.3°; held under 15% on every move; dips 13-22%. Every recovery eases back
+    in two steps from where its move ends (`_back`), and every blow carries on a little past contact (`_on`).
+
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

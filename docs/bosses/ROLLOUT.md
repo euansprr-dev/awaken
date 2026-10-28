@@ -62,7 +62,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Bell Warden | Lord | Bell | Construct | kit | A, the Bell That Walks | ✓ 72f262a4 | ✓ 72f262a4 | — |
 | The Glass Serpent | Lord | Glass | Serpent | kit | B, the Hourglass | ✓ ec80f180 | ✓ ec80f180 | — |
 | The Hive Regent | Lord | Hive | Flier | kit | A, the Empress | ✓ 3b132661 | ✓ 3b132661 | — |
-| The Drowned Archivist | Lord | Drowned | Caster | drowned ×1.9 | A, the Lectern | — | — | — |
+| The Drowned Archivist | Lord | Drowned | Caster | kit | A, the Lectern | ✓ LECTERN | ✓ LECTERN | — |
 | The Lantern Broker | Lord | Lantern | Construct | cube lantern | A, the Pedlar | — | — | — |
 | The Abbot of Frost | Lord | Frost | Caster | evoker ×1.7 | B, the Pilgrim | — | — | — |
 | The Mirror Knight | Lord | Mirror | Duelist | player ×1.4 | C, the Masked Duelist | — | — | — |
