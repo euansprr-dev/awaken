@@ -49,12 +49,12 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | Boss | Tier | Gate | Family | Today | Round | Body | Motion | Fight |
 |---|---|---|---|---|---|---|---|---|
 | The Ember Tyrant (the Living Forge) | Lord | Ember | Brute | kit | C | ✓ 3488e8d5 | ✓ c1e3c8ed | — |
-| Unit Zero | Lord | Precursor | Duelist | kit (phase 1) | A, the Sentinel | — | — | — |
+| Unit Zero | Lord | Precursor | Duelist | kit (phase 1) | A, the Sentinel | ✓ (this commit) | ✓ (this commit) | — |
 | Mother of Spores | Lord | Fungal | Flier | kit (phase 1) | C, the Crowned Host | — | — | — |
-| The Gearwright Colossus | Lord | Clockwork | Brute | iron golem ×1.8 | drawn | — | — | — |
-| The Root Saint | Lord | Temple | Caster | creaking ×1.8 | drawn | — | — | — |
-| The Bell Warden | Lord | Bell | Construct | cube bell | drawn | — | — | — |
-| The Glass Serpent | Lord | Glass | Serpent | cube serpent ×2.2 | drawn | — | — | — |
+| The Gearwright Colossus | Lord | Clockwork | Brute | iron golem ×1.8 | C, the Clock Tower | — | — | — |
+| The Root Saint | Lord | Temple | Caster | creaking ×1.8 | A, the Rooted Saint | — | — | — |
+| The Bell Warden | Lord | Bell | Construct | cube bell | A, the Bell That Walks | — | — | — |
+| The Glass Serpent | Lord | Glass | Serpent | cube serpent ×2.2 | B, the Hourglass | — | — | — |
 | The Hive Regent | Lord | Hive | Flier | bee ×4 | — | — | — | — |
 | The Drowned Archivist | Lord | Drowned | Caster | drowned ×1.9 | — | — | — | — |
 | The Lantern Broker | Lord | Lantern | Construct | cube lantern | — | — | — | — |
@@ -99,10 +99,10 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   floating dead tree of shelf fungus), C the Crowned Host (a woman held up by a fanned crown of glowing fungus
   stalks, her legs one root tail). **Picked C**, 2026-10-28.
 - **The Gearwright Colossus:** A the Piston Titan, B the Unfinished (half scaffolding, a crane for an arm), C the Clock
-  Tower (its arms the clock's hands, the pendulum its weapon).
+  Tower (its arms the clock's hands, the pendulum its weapon). **Picked C**, 2026-10-28.
 - **The Root Saint:** A the Rooted Saint (a robed statue on roots, a stone sunburst), B the Reliquary Tree (a walking
-  tree with the saint's bones in a lit hollow), C the Kneeling Giant (a shrine built on his back).
+  tree with the saint's bones in a lit hollow), C the Kneeling Giant (a shrine built on his back). **Picked A**, 2026-10-28.
 - **The Bell Warden:** A the Bell That Walks (four crab legs from under the rim), B the Bellringer, C the Hollow Bell
-  (a knight cast in one piece with a bell, gliding on its rim).
+  (a knight cast in one piece with a bell, gliding on its rim). **Picked A**, 2026-10-28.
 - **The Glass Serpent:** A the Shard Wyrm (rearing, a fin of shards), B the Hourglass (hollow glass frames with sand
-  running through, coiled), C the Mirror Eel (a flat ribbon of mirror, a mirror for a face).
+  running through, coiled), C the Mirror Eel (a flat ribbon of mirror, a mirror for a face). **Picked B**, 2026-10-28.

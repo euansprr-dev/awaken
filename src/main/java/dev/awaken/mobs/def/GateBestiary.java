@@ -267,7 +267,7 @@ final class GateBestiary {
                 .ab(a(LEAP, "Containment Breach").radius(3).heavy()).build());
         out.add(m("the_sweeper", "The Sweeper", Theme.PRECURSOR, Tier.WARDEN, Model.RAVAGER, "Purge Protocol: a charge, a sweep, a decontamination blast").hp(38).dmg(7).spd(0.3).tint(0x9CC0F0).traits(HUNTER)
                 .ab(a(CHARGE, "Purge Protocol").heavy(), a(NOVA, "Sweep").n(12).bolt(BoltKind.CHARGE), a(GUST, "Decon Blast").radius(6)).build());
-        out.add(m("unit_zero", "Unit Zero", Theme.PRECURSOR, Tier.LORD, Model.HUMAN, "Counts down in no language: lances, orbital marks, Zero Point").hp(28).dmg(4.5).spd(0.3).scale(1.65F).bar(BossBarColor.BLUE).arena(22)
+        out.add(m("unit_zero", "Unit Zero", Theme.PRECURSOR, Tier.LORD, Model.HUMAN, "Counts down in no language: lances, orbital marks, Zero Point").hp(28).dmg(4.5).spd(0.3).scale(1.85F).bar(BossBarColor.BLUE).arena(22)
                 .intro("A voice counting down in no language.")
                 .phase(1.0F, "Unit Zero activates.", a(BEAM, "Zero Lance").bolt(BoltKind.CHARGE), a(BLINK, "Phase Step"))
                 .phase(0.66F, "Countdown: three.", a(SUMMON, "Deploy Coils").summon("coil_unit").n(2), a(RAIN, "Orbital Mark").n(4).bolt(BoltKind.CHARGE), a(BEAM, "Zero Lance").bolt(BoltKind.CHARGE))

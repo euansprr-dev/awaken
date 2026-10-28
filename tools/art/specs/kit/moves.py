@@ -69,8 +69,9 @@ def backhand(P, mid="backhand", side="r", title="", weight=1.0, windup=10, activ
 
 
 def chop(P, mid="chop", side="r", title="", weight=1.0, cls="LIGHT", windup=12, hold=0, active=4, recover=12, weapon=None,
-         kinds=("combo",), rng=(0, 3.4), damage=1.0, advance=0.6, diagonal=1.0, weapon_r=6.0, weapon_bone=None):
-    """A one-arm chop with a weapon (or the edge of the hand): raised high behind the head, brought down across the body."""
+         kinds=("combo",), rng=(0, 3.4), damage=1.0, advance=0.6, diagonal=1.0, weapon_r=6.0, weapon_bone=None, edge=None):
+    """A one-arm chop with a weapon (or the edge of the hand): raised high behind the head, brought down across the body.
+    edge: (the blade's middle, its edge) in the weapon bone's space, so the blade turns to lead with it (Move.edge)."""
     sg = _sgn(side)
     a, f, h = "arm_" + side, "forearm_" + side, "hand_" + side
     raise_ = {a: (-160, 10 * sg * diagonal, 30 * sg * diagonal), f: (-50, 0, 0), h: (-30, 0, 0), "chest": (-8, -24 * sg * diagonal, 0),
@@ -84,7 +85,7 @@ def chop(P, mid="chop", side="r", title="", weight=1.0, cls="LIGHT", windup=12, 
                 advance=advance, hit=[(weapon_bone or h, tip, weapon_r if weapon else P.hand[0] / 2 + 1)],
                 stages={"windup": [(0.25, {"pelvis": {"rot": (0, 0, 0), "pos": (0, -1.5, 0)}, a: (-40, 0, 10 * sg)}), (1.0, raise_)],
                         "active": [(0.5, cut), (1.0, cut)], "recover": [(0.5, {"chest": (6, 6 * sg, 0), a: (-30, 0, 0)})]},
-                lag={a: 0.02, f: 0.05, h: 0.07, "head": 0.04})
+                lag={a: 0.02, f: 0.05, h: 0.07, "head": 0.04}, edge=(weapon_bone or h,) + tuple(edge) if edge else None)
 
 
 def shoulder_charge(P, mid="charge", side="r", title="", weight=1.0, windup=16, active=12, recover=18, advance=6.0, cls="GRAB",
@@ -194,15 +195,19 @@ def sky_call(P, mid="call", title="", windup=18, active=10, recover=16, cls="PER
                 lag={"arm_l": 0.04, "arm_r": 0.04, "head": 0.06})
 
 
-def spin_cut(P, mid="spin", side="r", title="", windup=12, active=6, recover=12, kinds=("behind",), rng=(0, 3.2), damage=0.9, cls="LIGHT"):
-    """For the one behind it: it turns on its front foot and cuts round, the arm out flat (the cut sweeps a half-circle)."""
+def spin_cut(P, mid="spin", side="r", title="", windup=12, active=6, recover=12, kinds=("behind",), rng=(0, 3.2), damage=0.9, cls="LIGHT",
+             weapon=None, weapon_bone=None, weapon_r=3.0, edge=None):
+    """For the one behind it: it turns on its front foot and cuts round, the arm out flat (the cut sweeps a half-circle).
+    weapon, weapon_bone: a blade's point in its bone's space (the hand's tip without one); edge as chop's."""
     sg = _sgn(side)
     a, f = "arm_" + side, "forearm_" + side
     coil = {"pelvis": {"rot": (4, 30 * sg, 0), "pos": (0, -3, 0)}, "chest": (6, 40 * sg, 0), a: (-80, 60 * sg, 0), f: (-40, 0, 0), "head": (0, -50 * sg, 0)}
     sweep1 = {"pelvis": {"rot": (6, -40 * sg, 0), "pos": (0, -3, 0)}, "chest": (6, -50 * sg, 0), a: (-88, -10 * sg, -10 * sg), f: (-4, 0, 0), "head": (0, -20 * sg, 0)}
     sweep2 = {"pelvis": {"rot": (6, -120 * sg, 0), "pos": (0, -3, 0)}, "chest": (6, -70 * sg, 0), a: (-88, -30 * sg, -10 * sg), f: (-4, 0, 0), "head": (0, 0, 0)}
     return Move(mid, cls, windup, active, recover, title=title, track=0.0, rng=rng, kinds=kinds, damage=damage, knock=0.8, plant=(),
-                hit=[("hand_" + side, hand_tip(P), P.hand[0] / 2 + 2), (f, (0, P.forearm[1], 0), P.forearm[0] / 2 + 1)],
+                hit=[(weapon_bone, weapon, weapon_r) if weapon_bone else ("hand_" + side, hand_tip(P), P.hand[0] / 2 + 2),
+                     (f, (0, P.forearm[1], 0), P.forearm[0] / 2 + 1)],
+                edge=(weapon_bone,) + tuple(edge) if edge and weapon_bone else None,
                 stages={"windup": [(1.0, coil)], "active": [(0.5, sweep1), (1.0, sweep2)],
                         "recover": [(0.5, {"pelvis": {"rot": (2, -60 * sg, 0), "pos": (0, -1, 0)}, "chest": (0, -20 * sg, 0)})]},
                 lag={a: 0.02, f: 0.03})

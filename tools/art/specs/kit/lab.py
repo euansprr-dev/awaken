@@ -85,9 +85,9 @@ def move_strip(rig, m, lit):
     from PIL import Image, ImageDraw
     from kit.core import clip_name
     c = clip_name(m)
-    W, A, R = m.seconds("windup"), m.seconds("active"), m.seconds("recover")
+    W, A, Rc = m.seconds("windup"), m.seconds("active"), m.seconds("recover")
     frames = [("rest", [(c, 0, 1.0)]), ("gather", [(c, W * 0.35, 1.0)]), ("peak", [(c, W, 1.0)]),
-              ("contact", [(c, W + A * 0.5, 1.0)]), ("through", [(c, W + A + R * 0.25, 1.0)]), ("settle", [(c, W + A + R * 0.82, 1.0)])]
+              ("contact", [(c, W + A * 0.5, 1.0)]), ("through", [(c, W + A + Rc * 0.25, 1.0)]), ("settle", [(c, W + A + Rc * 0.82, 1.0)])]
     trees = [rig.tree(rig.sample(l)) for _, l in frames]
     yaw, pitch = 28, 10
     b = R.bounds_of(trees, yaw, pitch)

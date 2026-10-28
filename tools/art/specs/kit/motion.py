@@ -23,7 +23,8 @@ samples the whole pose 60 times a second and reports:
   tick), where a fast blow has to snap: reported, not a fault;
 - **held**: the share of the move's time when at least 70% of the bones it poses are still (under 15°/s): a pose
   held while one or two parts drift;
-- **dip** (strings only): how far the move layer falls back toward rest between two blows, 100% meaning all the way;
+- **dip** (strings only): how far the move layer falls back toward rest between two blows, 100% meaning all the way
+  (angles taken the short way round, so a part that spins whole turns doesn't count them);
 - **peak**: the fastest bone, °/s.
 """
 import json
@@ -185,7 +186,7 @@ def measure(rig, moves_by_id, seq):
     for t, _, pose, mid, since in play(rig, segs, total, FPS):
         seg = next((x for x in segs if x[0] == mid and x[1] <= t < x[5]), None) if mid else None
         strike = seg is not None and seg[2] - 0.1 <= since <= seg[2] + seg[3] + 0.15
-        mag.append(sum(abs(c) for v in pose.values() for c in v))
+        mag.append(sum(abs((c + 180) % 360 - 180) for v in pose.values() for c in v))  # a whole turn (a spinning halo) is no turn
         fastest = 0.0
         slow = posed = 0
         for b, v in pose.items():

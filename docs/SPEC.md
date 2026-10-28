@@ -9377,7 +9377,33 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
 - **Rounds.** `kit_bodies.py silhouettes DIR BOSS`; each boss's options live in `kit/sil/<boss>.py` with its own
   materials (`Mass(..., mats)`), fliers framed down to the ground so they hang at their true height. Euan picks on the
   pick page (https://claude.ai/artifact/MUoruSXr8xmWNVk4JyAAbc, one document per boss in its `picks` store).
-- **Picks so far.** Unit Zero: A, the Sentinel. Mother of Spores: C, the Crowned Host (2026-10-28).
+- **Picks so far** (2026-10-28). Unit Zero: A, the Sentinel. Mother of Spores: C, the Crowned Host. The Gearwright
+  Colossus: C, the Clock Tower. The Root Saint: A, the Rooted Saint. The Bell Warden: A, the Bell That Walks. The Glass
+  Serpent: B, the Hourglass.
+- **Unit Zero, the Sentinel** (body and motion, `kit/bosses/unit_zero.py`). A cathedral statue that moves, 3.6 blocks to
+  the helm and 4.3 with its halo, 107 cubes on the Duelist plan (leg 30 px): ceramic plates over black joints, a slate
+  tabard between the legs (so a stride never meets it) and split coat-tails behind, each a short cloth chain on springs;
+  flat pauldrons stepping up into a pinnacle that ride a third of the arm's turn (`_follow`); hands fused into flat
+  blades (`blade_l|r`, under the hand, so the edge rule turns the blade on its own length like a wrist); a helm with one
+  blue line under a heavy brow and a crest swept back; and a square halo stood on its point on a stalk from its back:
+  outer frame, an inner frame of light, twelve dial marks between them, nodes on the points, a hub and a stem. Values:
+  the blue brightest, the ceramic lightest high on the body and weathering toward the floor, slate cloth, black joints
+  and blades; the glaze crazed with a few cracks holding the blue. Its hitbox grows to 1.1 x 3.3 (scale 1.85).
+  - **The blades' edges** run down the little finger's side, as a hand-edge cut leads, so the cuts turn the blade little
+    (Severing 30°, -30°, -5°; the spin 50°). `moves.chop` and `moves.spin_cut` take `edge` (and the spin a weapon bone).
+  - **Ground.** The blades never go into the ground in any clip but the fall (the wrist, then the elbow and the
+    shoulder turn); the coat-tails and the tabard lift back off the floor where they would meet it, the fall included.
+    Deploy Coils sets both points to the floor (0.3 px above it).
+  - **Moves.** The lance draws the blade back along the arm and drives it out level, the beam down its line. Phase Step
+    sinks most of the way in its first third with the blade already pointed at you (from a lance it goes straight on).
+    Severing: whichever blade isn't cutting is held out forward in guard, and after a cut the blade stays out low a
+    moment (recoveries 10, 10, 14 ticks). The spin cuts at a standing player's waist (out flat at its shoulder the blade
+    passed over their head and the move's reach came out at half a block). The halo's spin is its own track written
+    after the body's (`_halo`): it ends on the nearest whole turn, so it never spins back. The idle keeps the halo on
+    its point, rocking 3°. The intro ends in the salute from its round, right blade before its face.
+  - **Meter.** Worst kink outside a strike 4.1°; held 0-11% on its blows; dips 26% in Severing and 2% from the lance
+    into the step. Deploy Coils (30%) and the intro (50%) hold their poses on purpose. The meter now counts angles the
+    short way round, so a spinning halo's whole turns don't read as pose.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
