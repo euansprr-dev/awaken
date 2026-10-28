@@ -76,6 +76,7 @@ public final class RoadNet {
         PIECES.clear();
         SITES.clear();
         LEGS.clear();
+        LATER.clear();
         BY_CHUNK.clear();
         planNanos = planned = reads = 0;
         SITE_NS.reset();
@@ -451,6 +452,44 @@ public final class RoadNet {
         });
         RoadTimer.startsIn(chunkX, chunkZ, System.nanoTime() - t0, known == null);
         return legs;
+    }
+
+    /** Lattice chunks whose structure starts world generation set aside until an urgent planner has made their legs. */
+    private static final ConcurrentHashMap<Long, CompletableFuture<Void>> LATER = new ConcurrentHashMap<>();
+
+    /**
+     * For world generation about to wait for a lattice chunk's legs (the Turbo backstop {@code RoadStarts}, SPEC §28.9):
+     * null when it needn't (off the lattice, no roads, the legs known), else a future done once they are, made by an
+     * urgent planner job that first fans the chunk's pieces out to the other planners (or by whoever is making them
+     * already, its pieces then asked for urgently too). The step that waited runs once it's done and answers at once.
+     */
+    public static @Nullable CompletableFuture<?> legsLater(int chunkX, int chunkZ) {
+        if (Math.floorMod(chunkX, Road.LATTICE) != 0 || Math.floorMod(chunkZ, Road.LATTICE) != 0) return null;
+        RoadWorld w = RoadWorld.get();
+        if (w == null) return null;
+        long key = ((long) chunkX << 32) ^ (chunkZ & 0xffffffffL);
+        var known = LEGS.get(key);
+        if (known != null) {
+            if (known.isDone()) return null;
+            RoadPlanners.job("F" + key, RoadPlanners.URGENT, 0, () -> fanOut(w, chunkX, chunkZ, RoadPlanners.URGENT, 0));
+            return known;
+        }
+        return LATER.computeIfAbsent(key, k -> {
+            CompletableFuture<Void> f = new CompletableFuture<>();
+            RoadPlanners.job("U" + k, RoadPlanners.URGENT, 0, () -> {
+                try {
+                    fanOut(w, chunkX, chunkZ, RoadPlanners.URGENT, 0);
+                    startsIn(chunkX, chunkZ);
+                    f.complete(null);
+                } catch (RuntimeException e) {
+                    f.completeExceptionally(e);
+                    throw e;
+                } finally {
+                    LATER.remove(k, f);
+                }
+            });
+            return f;
+        });
     }
 
     /** Whether a lattice chunk's legs are known yet (the planner ahead of the players asks this). */

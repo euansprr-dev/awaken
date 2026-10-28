@@ -45,6 +45,8 @@ public final class VillageModule {
         dev.awaken.living.api.Regions.addLevelExtra(SettledCalm::roadExtra);
         dev.awaken.living.api.Regions.addLevelCap(SettledCalm::cap);
         dev.awaken.village.road.RoadAtlas.init(modBus);
+        // (SPEC §28.9, Turbo) a lattice chunk waiting for its roads frees the overworld's world generation meanwhile
+        dev.awaken.turbo.roadstarts.RoadStarts.init(modBus);
         VillageContent.register(modBus);
         modBus.addListener(VillageModule::onAddPackFinders);
         modBus.addListener(VillageNet::register);
