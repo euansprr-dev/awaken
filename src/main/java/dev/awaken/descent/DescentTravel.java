@@ -16,11 +16,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.TicketType;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
 
@@ -63,8 +61,8 @@ public final class DescentTravel {
     }
 
     /**
-     * Sends a player to a depth (0 = the Well). The destination chunk is loaded first, off the tick, then the player is
-     * moved. {@code strain}: climbing upward on foot costs Strain.
+     * Sends a player to a depth (0 = the Well). The destination's land is loaded first, off the tick ({@code Passage}),
+     * then the player is moved. {@code strain}: climbing upward on foot costs Strain.
      */
     public static void send(ServerPlayer player, int depth, Arrival arrival, boolean strain) {
         MinecraftServer server = player.level().getServer();
@@ -95,8 +93,9 @@ public final class DescentTravel {
         player.level().playSound(null, player.blockPosition(), DescentContent.SND_DROP.get(), SoundSource.PLAYERS, 1.0F, depth > from ? 0.8F : 1.2F);
         final ServerLevel target = dest;
         final BlockPos at = pos;
-        target.getChunkSource().addTicketAndLoadWithRadius(TicketType.PORTAL, ChunkPos.containing(at), 1)
-                .thenRunAsync(() -> arrive(player, target, at, yaw, depth, arrival, from, strain), server);
+        // the shared passage (SPEC §28.9, "Arrivals"): at once if the land is there, else once it's made, off the tick
+        dev.awaken.core.api.Passage.go(player, target, at.getX() + 0.5, at.getZ() + 0.5,
+                () -> arrive(player, target, at, yaw, depth, arrival, from, strain), () -> IN_TRANSIT.remove(player.getUUID()));
     }
 
     private static void arrive(ServerPlayer player, ServerLevel target, BlockPos at, float yaw, int depth, Arrival arrival,

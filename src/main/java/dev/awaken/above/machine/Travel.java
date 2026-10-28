@@ -59,14 +59,17 @@ public final class Travel {
         return new BlockPos(target.getX(), Math.max(y, level.getMinY() + 1), target.getZ());
     }
 
+    /** Moves the player to {@code feet} once the land there is made (SPEC §28.9, "Arrivals"): at once if it is. */
     public static void teleport(ServerPlayer player, ServerLevel level, BlockPos feet) {
-        ServerLevel from = player.level();
-        from.sendParticles(ParticleTypes.REVERSE_PORTAL, player.getX(), player.getY() + 1, player.getZ(), 30, 0.4, 0.8, 0.4, 0.05);
-        from.playSound(null, player.blockPosition(), AboveSounds.TELEPORT.get(), SoundSource.PLAYERS, 0.8f, 1.2f);
-        player.teleport(new TeleportTransition(level, Vec3.atBottomCenterOf(feet), Vec3.ZERO, player.getYRot(), player.getXRot(),
-                TeleportTransition.DO_NOTHING));
-        player.resetFallDistance();
-        level.sendParticles(ParticleTypes.END_ROD, feet.getX() + 0.5, feet.getY() + 1, feet.getZ() + 0.5, 30, 0.4, 0.8, 0.4, 0.05);
-        level.playSound(null, feet, AboveSounds.TELEPORT.get(), SoundSource.PLAYERS, 0.8f, 1.5f);
+        dev.awaken.core.api.Passage.go(player, level, feet.getX() + 0.5, feet.getZ() + 0.5, () -> {
+            ServerLevel from = player.level();
+            from.sendParticles(ParticleTypes.REVERSE_PORTAL, player.getX(), player.getY() + 1, player.getZ(), 30, 0.4, 0.8, 0.4, 0.05);
+            from.playSound(null, player.blockPosition(), AboveSounds.TELEPORT.get(), SoundSource.PLAYERS, 0.8f, 1.2f);
+            player.teleport(new TeleportTransition(level, Vec3.atBottomCenterOf(feet), Vec3.ZERO, player.getYRot(), player.getXRot(),
+                    TeleportTransition.DO_NOTHING));
+            player.resetFallDistance();
+            level.sendParticles(ParticleTypes.END_ROD, feet.getX() + 0.5, feet.getY() + 1, feet.getZ() + 0.5, 30, 0.4, 0.8, 0.4, 0.05);
+            level.playSound(null, feet, AboveSounds.TELEPORT.get(), SoundSource.PLAYERS, 0.8f, 1.5f);
+        });
     }
 }

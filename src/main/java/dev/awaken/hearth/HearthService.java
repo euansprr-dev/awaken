@@ -90,6 +90,7 @@ public final class HearthService {
         bus.addListener(HearthService::onBreak);
         bus.addListener(HearthService::onPlace);
         bus.addListener(HearthService::onRespawnPosition);
+        bus.addListener(net.neoforged.bus.api.EventPriority.LOWEST, net.neoforged.neoforge.event.entity.living.LivingDeathEvent.class, HearthService::onFall);
         bus.addListener(HearthService::onSetSpawn);
         bus.addListener(HearthService::onLogin);
         bus.addListener(HearthService::onRespawn);
@@ -572,6 +573,12 @@ public final class HearthService {
             if (h.isPresent()) return h;
         }
         return homeOf(sp);
+    }
+
+    /** A player who falls may wake at their Hearth: its land is made while they're down (SPEC §28.9, "Arrivals"). */
+    private static void onFall(net.neoforged.neoforge.event.entity.living.LivingDeathEvent e) {
+        if (!(e.getEntity() instanceof ServerPlayer sp) || !enabled()) return;
+        wakeHearth(sp).ifPresent(h -> dev.awaken.core.api.Passage.warm(levelOf(sp.level().getServer(), h), h.pos.getX() + 0.5, h.pos.getZ() + 0.5));
     }
 
     private static void onRespawnPosition(PlayerRespawnPositionEvent e) {

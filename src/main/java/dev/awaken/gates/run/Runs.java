@@ -393,12 +393,23 @@ public final class Runs {
         RigDirector.leave(p);
         if (teleport && p.isAlive()) {
             ServerLevel over = server.overworld();
-            BlockPos to = g != null && g.structurePlaced ? g.mouth() : over.getRespawnData().pos();
-            if (g == null || !g.structurePlaced) to = over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, to);
+            BlockPos out = g != null && g.structurePlaced ? g.mouth() : over.getRespawnData().pos();
             float yaw = g == null ? 0 : (g.axis == 0 ? 0F : -90F);
-            p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, yaw, 0F, TeleportTransition.PLAY_PORTAL_SOUND));
-            over.playSound(null, to, GatesRegistry.SND_EXIT.get(), SoundSource.PLAYERS, 1F, 1F);
+            // out once the land at the mouth is made (SPEC §28.9, "Arrivals"); the gate lets go of you either way
+            dev.awaken.core.api.Passage.go(p, over, out.getX() + 0.5, out.getZ() + 0.5, () -> {
+                BlockPos to = g != null && g.structurePlaced ? out
+                        : over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, out);
+                p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, yaw, 0F, TeleportTransition.PLAY_PORTAL_SOUND));
+                over.playSound(null, to, GatesRegistry.SND_EXIT.get(), SoundSource.PLAYERS, 1F, 1F);
+                leftGate(server, p, g);
+            }, () -> leftGate(server, p, g));
+        } else {
+            leftGate(server, p, g);
         }
+    }
+
+    /** The gate lets go of a player whose run ended, once they're out of it. */
+    private static void leftGate(MinecraftServer server, ServerPlayer p, GateRecord g) {
         // only after you are out: a cleared gate can't be released while you still stand in its cell
         if (g != null) {
             g.inside.remove(p.getUUID());
@@ -434,8 +445,12 @@ public final class Runs {
             Hud.clear(p);
             if (inGate) {
                 ServerLevel over = server.overworld();
-                BlockPos to = over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, over.getRespawnData().pos());
-                p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, 0F, 0F, TeleportTransition.PLAY_PORTAL_SOUND));
+                BlockPos home = over.getRespawnData().pos();
+                // home once its land is made (SPEC §28.9, "Arrivals")
+                dev.awaken.core.api.Passage.go(p, over, home.getX() + 0.5, home.getZ() + 0.5, () -> {
+                    BlockPos to = over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, home);
+                    p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, 0F, 0F, TeleportTransition.PLAY_PORTAL_SOUND));
+                });
             }
         }
         Claims.deliver(p);
@@ -647,9 +662,13 @@ public final class Runs {
         } else if (GateService.inGate(p) && !p.isCreative() && !p.isSpectator()) {
             // standing in a gate with no run (a cell that was cleaned up): bring them home
             ServerLevel over = server.overworld();
-            BlockPos to = over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, over.getRespawnData().pos());
-            p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, 0F, 0F, TeleportTransition.DO_NOTHING));
-            Signal.toast(p, Component.literal("The gate you were in is gone."));
+            BlockPos home = over.getRespawnData().pos();
+            // home once its land is made (SPEC §28.9, "Arrivals")
+            dev.awaken.core.api.Passage.go(p, over, home.getX() + 0.5, home.getZ() + 0.5, () -> {
+                BlockPos to = over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, home);
+                p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, 0F, 0F, TeleportTransition.DO_NOTHING));
+                Signal.toast(p, Component.literal("The gate you were in is gone."));
+            });
         }
         if (p.isAlive()) restoreGear(p);
         Claims.deliver(p);

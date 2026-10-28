@@ -113,7 +113,6 @@ public final class Halo {
             player.sendOverlayMessage(Component.literal("The Halo is out of reach (dimension missing)."));
             return false;
         }
-        halo.getChunk(HaloLayout.ARRIVAL.getX() >> 4, HaloLayout.ARRIVAL.getZ() >> 4);
         Travel.teleport(player, halo, HaloLayout.ARRIVAL);
         return true;
     }
@@ -122,16 +121,13 @@ public final class Halo {
     public static void returnHome(ServerPlayer player) {
         var server = player.level().getServer();
         Optional<GlobalPos> origin = Above.data(player).launchOrigin();
-        ServerLevel level = origin.map(o -> server.getLevel(o.dimension())).orElse(null);
-        BlockPos target;
-        if (level != null) {
-            target = Travel.safeSpot(level, origin.get().pos().offset(0, 0, 3));
-        } else {
-            level = server.overworld();
-            BlockPos spawn = level.getRespawnData().pos();
-            target = Travel.safeSpot(level, level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn).below());
-        }
-        Travel.teleport(player, level, target);
+        ServerLevel ring = origin.map(o -> server.getLevel(o.dimension())).orElse(null);
+        ServerLevel level = ring != null ? ring : server.overworld();
+        BlockPos near = ring != null ? origin.get().pos().offset(0, 0, 3) : level.getRespawnData().pos();
+        // the spot is read once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(player, level, near.getX() + 0.5, near.getZ() + 0.5, () -> Travel.teleport(player, level, ring != null
+                ? Travel.safeSpot(level, near)
+                : Travel.safeSpot(level, level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, near).below())));
     }
 
     private static void arrived(ServerPlayer player) {

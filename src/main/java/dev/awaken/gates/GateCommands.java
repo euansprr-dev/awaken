@@ -127,14 +127,15 @@ final class GateCommands {
     private static int frame(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = c.getSource().getPlayerOrException();
         MinecraftServer server = c.getSource().getServer();
-        GateRecord g = null;
+        GateRecord near = null;
         for (GateRecord r : GateRegistry.get(server).near(p.blockPosition(), 1500, false)) {
-            if (r.state.standing() && (g == null || r.pos.distSqr(p.blockPosition()) < g.pos.distSqr(p.blockPosition()))) g = r;
+            if (r.state.standing() && (near == null || r.pos.distSqr(p.blockPosition()) < near.pos.distSqr(p.blockPosition()))) near = r;
         }
-        if (g == null) {
+        if (near == null) {
             c.getSource().sendFailure(Component.literal("No standing gate within 1500 blocks."));
             return 0;
         }
+        GateRecord g = near;
         int dist = IntegerArgumentType.getInteger(c, "dist"), lift = IntegerArgumentType.getInteger(c, "lift");
         var city = dev.awaken.terrain.api.CityBasin.site(server);
         double tx = city.isPresent() ? city.get().x() : p.getX(), tz = city.isPresent() ? city.get().z() : p.getZ();
@@ -145,15 +146,17 @@ final class GateCommands {
         }
         int x = (int) Math.round(g.pos.getX() + dx / len * dist), z = (int) Math.round(g.pos.getZ() + dz / len * dist);
         ServerLevel level = server.overworld();
-        level.getChunk(x >> 4, z >> 4);
-        double y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) + 1.62 + lift;
-        var size = GateVortex.size(g.plan.rank().ordinal());
-        double foot = g.pos.getY() + size.centreY() + size.ry() * 1.08;
-        // the pillar's foot in the lower part of the frame
-        double ax = g.pos.getX() + 0.5 - (x + 0.5), az = g.pos.getZ() + 0.5 - (z + 0.5), ay = foot + Math.max(8, dist * 0.3) - y;
-        float yaw = (float) Math.toDegrees(Math.atan2(-ax, az)), pitch = (float) -Math.toDegrees(Math.atan2(ay, Math.sqrt(ax * ax + az * az)));
-        p.teleportTo(level, x + 0.5, y, z + 0.5, Set.<net.minecraft.world.entity.Relative>of(), yaw, pitch, true);
-        dev.awaken.Awaken.LOG.info("[gates] frame gate {} ({}) from {} {} {} at {} m, lift {}", g.id, g.pos.toShortString(), x, (int) y, z, dist, lift);
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(p, level, x + 0.5, z + 0.5, () -> {
+            double y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) + 1.62 + lift;
+            var size = GateVortex.size(g.plan.rank().ordinal());
+            double foot = g.pos.getY() + size.centreY() + size.ry() * 1.08;
+            // the pillar's foot in the lower part of the frame
+            double ax = g.pos.getX() + 0.5 - (x + 0.5), az = g.pos.getZ() + 0.5 - (z + 0.5), ay = foot + Math.max(8, dist * 0.3) - y;
+            float yaw = (float) Math.toDegrees(Math.atan2(-ax, az)), pitch = (float) -Math.toDegrees(Math.atan2(ay, Math.sqrt(ax * ax + az * az)));
+            p.teleportTo(level, x + 0.5, y, z + 0.5, Set.<net.minecraft.world.entity.Relative>of(), yaw, pitch, true);
+            dev.awaken.Awaken.LOG.info("[gates] frame gate {} ({}) from {} {} {} at {} m, lift {}", g.id, g.pos.toShortString(), x, (int) y, z, dist, lift);
+        });
         return 1;
     }
 
@@ -206,11 +209,13 @@ final class GateCommands {
                     room = Director.surfaceEstimate(over, x + (int) Math.round(Math.cos(b) * 26), z + (int) Math.round(Math.sin(b) * 26)) != null;
                 }
                 if (!room) continue;
-                over.getChunk(x >> 4, z >> 4);
-                int y = over.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
-                p.teleportTo(over, x + 0.5, y, z + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);
                 int dist = r;
-                c.getSource().sendSuccess(() -> Component.literal("Hopped " + dist + " blocks to dry land at " + x + " " + y + " " + z), false);
+                // there once its land is made (SPEC §28.9, "Arrivals")
+                dev.awaken.core.api.Passage.go(p, over, x + 0.5, z + 0.5, () -> {
+                    int y = over.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+                    p.teleportTo(over, x + 0.5, y, z + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);
+                    c.getSource().sendSuccess(() -> Component.literal("Hopped " + dist + " blocks to dry land at " + x + " " + y + " " + z), false);
+                });
                 return 1;
             }
         }

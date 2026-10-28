@@ -301,6 +301,10 @@ back by play-days. After the "Break the Signal" ending no gate breaks; after "Wa
 
 Themes (15), layouts (8), modifiers (14), twists (8), bosses: exactly as in `docs/plan.html` gate generator.
 
+Arrivals (§28.9, 2026-10-29): leaving a gate (cleared, failed, lost, or its gate gone at login) and `/awaken gates
+frame|hop` wait for the overworld land off the server thread through `Passage.go`; the gate's own bookkeeping (released,
+unsealed, beacons) runs whether the move does or is dropped. Going in doesn't wait: the interior is made first.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 8. The Descent
@@ -308,6 +312,8 @@ Themes (15), layouts (8), modifiers (14), twists (8), bosses: exactly as in `doc
 The Well: landmark structure within 400–700 blocks of world spawn (a Precursor ring around a deep shaft). Jumping in (or the
 Well's lift) enters stratum 1. Strata = dimensions `awaken:stratum_1` … `awaken:stratum_10`, each its own generator +
 biome + one rule; drops (portal pits) lead to the next. Endless = `awaken:endless` (cells, stacking rules).
+Arrivals (§28.9, 2026-10-29): Descent travel (waystones, the climb, the camps) waits for its land through `Passage.go`
+in place of its own portal ticket, and a death in the Descent warms the checkpoint camp's land for the wake there.
 Rules: 1 none · 2 wind gusts · 3 rising water every 5 min · 4 the dead rise once · 5 sound draws Listeners ·
 6 machines wake (power puzzles) · 7 gravity flips with the tides · 8 rooms change when unobserved · 9 your shadow fights you ·
 10 the Seed (finale). Waystone per stratum: checkpoint + fast travel. Strain when climbing up without the Deep Lift:
@@ -323,6 +329,8 @@ min. Lucidity 0–100: reality check (H) +12 in dreams, dream sign spotted +15, 
 (alarm block wakes you, sleep again within 1 in-game hour) +25 start, Recall stat (journal entries) +0.5/entry.
 ≥50 lucid: flight, intent-manifest (hold H on a wall: door/stair/bridge from snapshot palette). ≥80 summon from memory.
 Dying in a dream: wake "Shaken" (no penalty). Not ready → normal sleep. Hold sneak while sleeping: dreamless.
+Arrivals (§28.9, 2026-10-29): waking from a dream and the dream rescue wait for the bed's land through `Passage.go`;
+going into a dream doesn't (the cell is built first).
 
 Veil: sneak + G held 10 s, still, not in combat → Body (mannequin-like entity with skin + gear, chunk ticket) +
 player switched to spectator-backed spirit mode with cord radius (SPI). Awareness fog radius = PER/SPI derived. Ores and
@@ -349,6 +357,11 @@ Echoes: bind fallen elites/bosses (B key within 10 s, chance by SPI and rank), c
 Story: prologue (scripted Bell Crypt → death → Stillpoint "Will you accept?" → Accept/Accept), Acts I–III gated by rank,
 Revelations via Signal, Codex rumour board, the Rival's beats at D/C/B/A/S, endings at the Seed (Become / Break / Wake),
 then New Game+ "Ascension" tiers.
+
+Arrivals (§28.9, 2026-10-29): pylon jumps, the Halo and its return pad, and the Clone Vat's wake wait for their land
+through `Passage.go` (`Travel.teleport`); a pylon whose land isn't loaded is checked on arrival, and its essence given
+back if it's gone. A Hearth trial's way home waits the same way, and a fall warms the Hearth's land for the respawn
+(§28.10).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -498,6 +511,12 @@ of `AwakenConfig.Client`.
   dimension, at, kind)`; server `get(ServerPlayer)`, `set(ServerPlayer, Target | null)`, `clear`; client `mine()` (the
   server's last word), `request(Optional<Target>)` (the Atlas asks; empty clears). `ARRIVED` 16, `ARRIVED_UP` 48. The
   signal module installs both sides (`signal.Destination`, payloads `signal_destination`, `signal_set_destination`).
+- `dev.awaken.core.api.Passage` (§28.9, "Arrivals"; 2026-10-29) — Awaken's own teleports wait for their land off the
+  server thread: `go(player, level, x, z, move)` runs `move` at once when every chunk within `EdgeHold.BODY` of (x, z)
+  is loaded at FULL, else puts the `awaken:arrival` ticket on the 3×3 round it and runs `move` once those are made (no
+  join on the server thread), the player in a passage meanwhile; `go(player, TeleportTransition)` (the player's
+  `teleport(t)`); `warm(level, x, z)` (makes the land without moving anyone, for a respawn); `ready(level, x, z)`;
+  `waiting(player)`. `MOST_MS` 60 s. Payload `passage_wait` (server → client: on, off).
 - `dev.awaken.progression.Progression.xpLedger(player)` — XP by `XpSource` and by world-XP source key (§17 telemetry).
   `Progression.onXpGranted(listener)` (every grant after scaling), `Progression.worldXp(player, source, fraction,
   afterBudget)` (a multiplier applied after the budget), `XpBudget.register(source, perTenMinutes)` (§21.3).
@@ -1264,7 +1283,14 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   render distance isn't the cause. Lens Swift's chain was on in all three. world-depth-w7 lost it once the same way
   (run 40370286479). roads-perf-quit (the first flight and a quit 30 s in) finishes (run 40735814003).
 - The pilot's `glide` sets the player's velocity every tick, so the edge hold (§28.9) eases it at the edge of the land
-  the client has, and the log says so (`[edgehold] held N ticks ...`).
+  the client has, and the log says so (`[edgehold] held N ticks ...`). `shotnow` logs the hold's cue with its shot
+  (`edge hold cue 0.95, edge 2 ahead`); roads-edge-cue takes them mid-glide, under the clouds (they don't take the
+  mist) and looking back over the land flown (run 40761444941, shot 05: the land the client has washes into a pale,
+  cool mist toward its far edge; 01, before the glide, is clear to the horizon).
+- A travel command's move may wait for its land in a passage (§28.9, "Arrivals"). `shot` waits a passage out first (at
+  most 65 s, logged `waited N s for a passage`), so it shows where the command went, and `waitpassage` does the same
+  before a line that must come after the move (a `/tp ~ ...` after `village road camp`: a command's teleport drops a
+  move still waiting).
 - Look tours run on GitHub's macOS runners (`.github/workflows/tours.yml`, dispatched by `tools/tour-ci.sh`, decided
   2026-10-26 when the Mac's one-at-a-time queue ran for hours). Perf and frame-time tours, Far Sight's tours and sound
   listening stay on the Mac under `slot.sh tour`.
@@ -8664,8 +8690,17 @@ horizontal velocity is capped. The hook is the last listener to `MovementInputUp
 client's chunk storage per chunk the path crosses (`getChunk(x, z, FULL, false)`), no allocation, out to the render
 distance less one chunk. Where a chunk on the path is missing, the speed is capped at the distance to it over
 25 ticks, so the player arrives as the land comes in. The cap falls at most 12% a tick from the speed the player
-had, which feels like thick air or a headwind, never a wall. It never drops below 0.1 blocks a tick (2 b/s), so
-never a dead stop. It lifts the tick the chunk arrives. Vertical speed is the mover's own. Every fast mover moves the
+had, which feels like thick air or a headwind, never a wall. It never drops below 0.1 blocks a tick (2 b/s) until
+the last block before the edge; over that block it eases to nothing and the player stops short of the missing chunk
+(the orchestrator, 2026-10-29: "drop it at the edge"; in run 40741943440 a crawl at the floor walked into unmade land
+and one move packet waited 44 s). The player's middle stays `EdgeHold.BODY` (1.35 blocks) from it: the box's
+half-width and the block past it that vanilla's fluid check reads (`EntityFluidInteraction` reads one block beyond
+the box, and a FULL `getChunk` that doesn't load still waits on a chunk under way). Each tick the cap is also at most
+half the room left, so the player nears that line and never crosses it. `travel` adds the mover's own acceleration
+after the cap, so a guard at the end of the player's tick (`PlayerTickEvent.Post`, before `sendChanges` sends the
+position) puts back any step that came nearer than `BODY` to a missing chunk, on the axis that crossed, and zeroes
+that axis's speed. A player already nearer (just arrived, the land still coming) isn't held there. The headwind and
+the mist carry the meaning (the cue, below). It lifts the tick the chunk arrives. Vertical speed is the mover's own. Every fast mover moves the
 player by their velocity, so the one hook holds them all:
 - Skyborn's flight and its boosts (§17.1, §17.8, §17.19);
 - glides and windways (§17.1, §17.12);
@@ -8674,8 +8709,8 @@ player by their velocity, so the one hook holds them all:
 - the pilot's `glide` (§13, Tours);
 - vanilla's elytra, firework boosts, riptide and creative or spectator flight.
 A mover that sets velocity later in a tick is held from the next tick, a tick's travel well inside the 1.25 s look.
-Riding is the mount's movement and isn't held. Teleports (Blink, the steps, commands) aren't velocity: the packet cap
-is their backstop. A hold of a second or more logs one line when it ends, at most every 10 s (`[edgehold] held N ticks
+Riding is the mount's movement and isn't held. Teleports (Blink, the steps, commands) aren't velocity: Awaken's own
+travel waits for its land (Arrivals, below), and the packet cap is the backstop for the rest. A hold of a second or more logs one line when it ends, at most every 10 s (`[edgehold] held N ticks
 at the edge of the land this client has, slowest S blocks a second`). In multiplayer it keeps a player's own move
 packets inside land the server has already sent them, so the server has made it.
 **The cue** (`core.client.EdgeHoldCue`, 2026-10-29; the orchestrator, from the runner's 55 s crawls: "if a held glide
@@ -8693,8 +8728,9 @@ from 0.3 for an edge 48 blocks ahead or more up to 1 at the edge.
   so the land ahead fades into haze instead of ending at a cut. It composes with the other fogs (Far Sight before it,
   Lens reading after it).
 `core_edge_hold_math` checks the path's edge straight, through a corner, west of the origin and from a chunk that's
-missing. A flight at 40 b/s toward land missing beyond 40 blocks eases by at most 12% a tick and never stops. It never
-crosses before the land comes, and it's back to full speed within two ticks of it.
+missing. A flight at 40 b/s toward land missing beyond 40 blocks eases by at most 12% a tick and never holds below
+the floor short of the last block. It never crosses before the land comes, and it's back to full speed within two ticks
+of it. When the land never comes, it eases to a stop within the last block and never comes nearer than `BODY`.
 **Packet cap** (Turbo, `dev.awaken.turbo.packetcap`, 2026-10-28). The server's queued packets are handled in order for
 at most 50 ms a tick (`PacketCap.BUDGET_NS`, a tick's time, the first packet always), and the rest wait for the next
 tick. The hook is a HEAD inject in `PacketProcessor.processQueuedPackets`, for the server's processor only
@@ -8715,6 +8751,52 @@ for the session on the first failure. Off, both hooks return at once and the gam
 `turbo_packet_cap_floods` floods the GameTest server's own queue with 400 tasks of 1 ms each. They run in order over
 at least 8 ticks, and no tick handles them for longer than the budget plus 3 ms. The drain alone, on a queue of its
 own, keeps to its budget and leaves the rest.
+**Arrivals** (core, `core.api.Passage` and `core.client.PassageClient`, 2026-10-29; the orchestrator: "make Awaken's
+own teleports wait for their land off the server thread"). In run 40741943440 two cold teleports held the server 24 s
+and 51 s in `Entity.teleportSetPosition`, waiting for chunks not made yet: a teleport is a task between ticks, so
+neither the edge hold nor the packet cap covers it. Awaken's own travel goes through one helper, `Passage.go(player,
+level, x, z, move)`:
+- When every chunk within `EdgeHold.BODY` of the arrival is loaded at FULL (the chunks the arrival and the reads
+  round the player's box touch; `getChunkNow`), `move` runs at once and nothing shows.
+- Otherwise it puts the `awaken:arrival` ticket on the 3×3 chunks round the arrival
+  (`addTicketAndLoadWithRadius`; loading, keeps the dimension awake, lets go 15 s after the land is made, as vanilla's
+  portal ticket does) and waits for them with `thenRunAsync` on the server's executor: nothing joins on the server
+  thread, which keeps ticking.
+- The player waits in a passage: the client goes to a deep dusk where a pale line of land draws itself out from the
+  middle, nearly across after a few seconds and breathing, motes settling into it from above and below (brighter where
+  the line has reached), with "The land where you're going is still forming." after 1.6 s. Input is held
+  (`InputLock`, owner `passage`) and paced notices wait. It closes in 0.35 s and lifts over 0.9 s once moved. The world
+  runs on behind it, so it never reads as a frozen frame; nothing hurts the player meanwhile (a kill still does).
+- Once the land is made, `move` runs (the code's own teleport and whatever followed it), and the dusk lifts. Each
+  wait logs `[passage] NAME waited N ms for the land at X Z in DIMENSION`.
+- A newer move replaces an older one. Logging out, dying or respawning (a new player object) drops it, and so does a
+  command's teleport (`/tp`, `/spreadplayers`; `EntityTeleportEvent`, lowest priority, not cancelled), which wins:
+  else the move, once its land came, would undo it (CI tour 40759045249: the road camp's move landed 16 s late and put
+  the tour back on the road after its `/tp`). Past 60 s of
+  wall clock (`MOST_MS`; the GameTest server ticks back to back) the move runs anyway, as it would have without the
+  helper, logged `(not made yet: moved anyway)`.
+- `Passage.warm(level, x, z)` makes the land without moving anyone, for a move the game makes itself later.
+- `go(..., move, dropped)`: `dropped` runs instead of `move` when the move is dropped, for a caller whose bookkeeping
+  must happen either way (a gate's exit releases the gate). A move that starts a second leg (a lair's own land, then
+  the spot beside its den) keeps the dusk up between them.
+- On the GameTest server moves run at once, as before (the tests read where a teleport left the player in the same
+  tick); `core_passage_far` turns the wait on for itself, in a batch of its own.
+Routed through it (one call each, the destination's reads inside the move): gate exits, the lost-gate and gone-gate
+returns and `gates frame|hop` (§7); a Hearth trial's way home; Above's `Travel.teleport` (pylon jumps, the Halo, its
+return pad, the Clone Vat's wake; §10); Descent travel and the Delve's grotto command (§8); waking from a dream and the
+dream rescue (§9); and the `/awaken` travel commands: `living view|goto|face|wonder|way`, `terrain city|visit|lookout|
+herovisit|landmarkvisit`, `fauna goto`, `fauna lair goto`, `landmark goto`, `anomaly goto`, `city view|floater`,
+`village view`, `road caravan|walk|marker`. Warmed: a Hearth's land when a player falls and will wake there (§28.10),
+and the Descent's checkpoint camp on a death down there. Left as they were, each already made or near: going into a
+gate (its interior is made first) and down a gate's floors; starting a trial (its cell is built on the spot); going into
+a dream; the Veil's projection and the Stillpoint (their own transit guard, their places made); story scenes (the
+opening, the prologue, rituals) in built places; powers (short range); the dream visions and the Well (already wait
+with their own tickets off the thread); and staging commands that build or read beside you. The Atlas has no fast
+travel of its own (its waystones are the Descent's).
+Vanilla's `/tp` and other mods' teleports stay as they are: the packet cap and the watch cover them.
+`core_passage_far` sends a mock player 1,200,000 blocks out: the call comes straight back (under 250 ms) with the
+player where they were and in a passage; the move runs only once its land is made (`ready` true inside it, the
+teleport itself under 250 ms), and the passage is over.
 Framings lay only the highroads through a place: the lanes round it would plan the regions about (48 s on the runner).
 Euan's 42 s freeze in a D-rank trial (2026-10-28, build 5cd4d985: "the mobs just stopped moving") was a player coming
 back from another level. Vanilla keeps an entity's supporting block (`mainSupportingBlockPos`) through a teleport to
@@ -8805,7 +8887,7 @@ stratum_1 to stratum_10, the Nether, the End):
 | Far Sight ahead (`VoxelAhead`, the collector) | each level's own players, a ticket in that level | safe |
 | City pregen (`CityPregen`) | world creation only | safe |
 | Gate build and break tickets (`GateService`, `Breaks`) | the gate's own overworld spot, never a player's | safe |
-| Teleports (`DescentTravel`, `Well`, `HomeCommands`) | the destination, loaded async with a PORTAL ticket | safe |
+| Teleports (`Passage`: `DescentTravel`, `HomeCommands` and Awaken's other travel; `Well`) | the destination, loaded async (the `awaken:arrival` ticket; the Well's PORTAL ticket) | safe |
 | Vanilla's supporting block across a level change | the old level's block, read in the new one | **fixed** (`Arrivals`) |
 | NeoForge's `Entity.setPosRaw` patch | loads a same-level teleport's target chunk inline | the chunk the player goes to: by design |
 | Wilds' arrival (`Arrival.step`, every tick) | a player on the death screen too: removed from its level, its chunk unloads and is read back from disk each tick (the trial-fall tour: overworld 26,-100, home) | not a level mix-up; **fixed**: a dead or removed player is skipped |
@@ -8857,6 +8939,9 @@ really want to update it and it's a choice").
   director-log line. Without a Hearth (or with waking there off) a bed is your spawn as in vanilla.
 - A bed on the land of a Hearth they belong to chooses that Hearth (`respawn_hearth` = its owner) and turns waking there
   back on.
+- **The land is ready** (§28.9, "Arrivals", 2026-10-29): a fall warms the Hearth's land (`Passage.warm` from a
+  lowest-priority `LivingDeathEvent` listener, when the player will wake there), so it's made or read in by the time
+  they press Respawn; vanilla's respawn itself stays vanilla's.
 - **Never a choice**: the old body's point copied in a respawn (any spawn set in the server tick a respawn ran is
   ignored), a reset to nothing, a forced point (`/spawnpoint`), and our own systems, which move a respawn point through
   `HearthHooks.lendRespawn` / `returnRespawn` (`HearthHooks.Lookup.systemRespawn`).

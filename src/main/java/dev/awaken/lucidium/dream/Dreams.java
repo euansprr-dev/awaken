@@ -306,29 +306,34 @@ public final class Dreams {
         MinecraftServer server = sp.level().getServer();
         ResourceKey<Level> key = ResourceKey.create(Registries.DIMENSION, Identifier.tryParse(st.returnDim) != null
                 ? Identifier.parse(st.returnDim) : Identifier.withDefaultNamespace("overworld"));
-        ServerLevel back = server.getLevel(key);
-        if (back == null || back.dimension() == LucidiumContent.LUCIDIUM) back = server.overworld();
-        Vec3 pos = new Vec3(st.rx, st.ry, st.rz);
-        float yaw = st.ryaw;
-        if (st.bed != null) {
-            back.getChunk(st.bed.getX() >> 4, st.bed.getZ() >> 4);
-            BlockState bed = back.getBlockState(st.bed);
-            if (bed.getBlock() instanceof AbstractBedBlock && bed.hasProperty(BedBlock.FACING)) {
-                Direction facing = bed.getValue(BedBlock.FACING);
-                Optional<Vec3> up = AbstractBedBlock.findStandUpPosition(EntityTypes.PLAYER, back, st.bed, facing, yaw);
-                if (up.isPresent()) pos = up.get();
+        ServerLevel found = server.getLevel(key);
+        ServerLevel back = found == null || found.dimension() == LucidiumContent.LUCIDIUM ? server.overworld() : found;
+        Vec3 lay = new Vec3(st.rx, st.ry, st.rz);
+        float yaw = st.ryaw, pitch = st.rpitch;
+        BlockPos bedAt = st.bed;
+        // back once the land there is made (SPEC §28.9, "Arrivals"); the dream's state is read now, as it's reset after
+        dev.awaken.core.api.Passage.go(sp, back, lay.x, lay.z, () -> {
+            Vec3 pos = lay;
+            if (bedAt != null) {
+                back.getChunk(bedAt.getX() >> 4, bedAt.getZ() >> 4);
+                BlockState bed = back.getBlockState(bedAt);
+                if (bed.getBlock() instanceof AbstractBedBlock && bed.hasProperty(BedBlock.FACING)) {
+                    Direction facing = bed.getValue(BedBlock.FACING);
+                    Optional<Vec3> up = AbstractBedBlock.findStandUpPosition(EntityTypes.PLAYER, back, bedAt, facing, yaw);
+                    if (up.isPresent()) pos = up.get();
+                }
             }
-        }
-        back.getChunk(Mth_floor(pos.x) >> 4, Mth_floor(pos.z) >> 4);
-        pos = safeSpot(back, sp, pos);
-        teleporting = true;
-        try {
-            sp.teleport(new TeleportTransition(back, pos, Vec3.ZERO, yaw, st.rpitch, TeleportTransition.DO_NOTHING));
-        } finally {
-            teleporting = false;
-        }
-        sp.resetFallDistance();
-        sp.setDeltaMovement(Vec3.ZERO);
+            back.getChunk(Mth_floor(pos.x) >> 4, Mth_floor(pos.z) >> 4);
+            pos = safeSpot(back, sp, pos);
+            teleporting = true;
+            try {
+                sp.teleport(new TeleportTransition(back, pos, Vec3.ZERO, yaw, pitch, TeleportTransition.DO_NOTHING));
+            } finally {
+                teleporting = false;
+            }
+            sp.resetFallDistance();
+            sp.setDeltaMovement(Vec3.ZERO);
+        });
     }
 
     private static int Mth_floor(double v) {
@@ -348,33 +353,25 @@ public final class Dreams {
     /** Someone in the Lucidium with no dream (a crash, an old save): send them to their spawn point. */
     static void rescue(ServerPlayer sp) {
         MinecraftServer server = sp.level().getServer();
-        ServerLevel target = server.overworld();
-        Vec3 pos = null;
         var cfg = sp.getRespawnConfig();
-        if (cfg != null) {
-            ServerLevel l = server.getLevel(cfg.respawnData().dimension());
-            if (l != null && l.dimension() != LucidiumContent.LUCIDIUM) {
-                target = l;
-                BlockPos bp = cfg.respawnData().pos();
-                target.getChunk(bp.getX() >> 4, bp.getZ() >> 4);
-                pos = Vec3.atBottomCenterOf(bp.above());
+        ServerLevel l = cfg == null ? null : server.getLevel(cfg.respawnData().dimension());
+        boolean own = l != null && l.dimension() != LucidiumContent.LUCIDIUM;
+        ServerLevel target = own ? l : server.overworld();
+        BlockPos at = own ? cfg.respawnData().pos() : target.getRespawnData().pos();
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(sp, target, at.getX() + 0.5, at.getZ() + 0.5, () -> {
+            Vec3 pos = own ? Vec3.atBottomCenterOf(at.above()) : new Vec3(at.getX() + 0.5,
+                    target.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ()), at.getZ() + 0.5);
+            pos = safeSpot(target, sp, pos);
+            teleporting = true;
+            try {
+                sp.teleport(new TeleportTransition(target, pos, Vec3.ZERO, sp.getYRot(), 0, TeleportTransition.DO_NOTHING));
+            } finally {
+                teleporting = false;
             }
-        }
-        if (pos == null) {
-            BlockPos s = target.getRespawnData().pos();
-            target.getChunk(s.getX() >> 4, s.getZ() >> 4);
-            int y = target.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, s.getX(), s.getZ());
-            pos = new Vec3(s.getX() + 0.5, y, s.getZ() + 0.5);
-        }
-        pos = safeSpot(target, sp, pos);
-        teleporting = true;
-        try {
-            sp.teleport(new TeleportTransition(target, pos, Vec3.ZERO, sp.getYRot(), 0, TeleportTransition.DO_NOTHING));
-        } finally {
-            teleporting = false;
-        }
-        if (sp.gameMode() == GameType.ADVENTURE) sp.setGameMode(GameType.SURVIVAL);
-        sp.resetFallDistance();
+            if (sp.gameMode() == GameType.ADVENTURE) sp.setGameMode(GameType.SURVIVAL);
+            sp.resetFallDistance();
+        });
     }
 
     private static void restorePlayer(ServerPlayer sp, DreamState st) {

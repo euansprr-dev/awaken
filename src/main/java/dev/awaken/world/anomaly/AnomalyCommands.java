@@ -187,9 +187,12 @@ final class AnomalyCommands {
         }
         net.minecraft.core.BlockPos f = a.focus();
         double x = f.getX() + 0.5, z = f.getZ() + 2.5;
-        double y = Spots.surface(p.level(), net.minecraft.util.Mth.floor(x), net.minecraft.util.Mth.floor(z)).getY() + 1;
-        p.teleportTo(p.level(), x, y, z, java.util.Set.of(), 180.0F, 20.0F, true);
-        c.getSource().sendSuccess(() -> Component.literal("At " + a.kind.display.toLowerCase() + " #" + a.id + "."), false);
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(p, p.level(), x, z, () -> {
+            double y = Spots.surface(p.level(), net.minecraft.util.Mth.floor(x), net.minecraft.util.Mth.floor(z)).getY() + 1;
+            p.teleportTo(p.level(), x, y, z, java.util.Set.of(), 180.0F, 20.0F, true);
+            c.getSource().sendSuccess(() -> Component.literal("At " + a.kind.display.toLowerCase() + " #" + a.id + "."), false);
+        });
         return 1;
     }
 
