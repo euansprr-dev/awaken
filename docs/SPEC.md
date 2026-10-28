@@ -171,6 +171,16 @@ within 8 blocks) windows become a compact toast and queue. Actions answered with
 Visual: deep glass `#0F1724` at 88% alpha, edge `#7FC3FF`, corner brackets, title white, labels pale, "NOT TRUE YET" amber
 `#FFCF7A`, warnings `#FF8A7A`.
 
+NPC dialogue (Euan, 2026-10-28): the use key (right-click by default) advances one visible spoken subtitle chunk per
+physical press. Quest/System speech, Opening cinematic speech and city/village overhead replies share this rule; long
+lines retain every word across chunks. Automatic subtitle timing remains available. The last line consumes its click,
+so it cannot also restart the conversation, use an item or take a handover. Holding use and the offhand event never
+advance again; an opening interaction waits up to one second for its server reply, including fast repeat clicks. Explicit choices retain their answer keys and
+cannot be selected by advancing speech. Opening scene timing, scripted rewards and handover validation remain
+server-owned. A citizen's directed reply is dismissed when looking at that citizen; ambient speech elsewhere does not
+capture world use. Veil spirits also accept use to start/continue; each continuation includes the last heard line index
+and the server rejects duplicate, stale, distant or completed requests. Focus remains an alternate spirit talk key.
+
 The band (key **K**, §30): six pages, Status · Powers · Journal · Truths · Codex · Map. Status shows level, rank, path,
 title and XP, the stats with + buttons when points are unspent, then the Journal; Powers holds the loadout (provided by
 `powers` via `StatusSections`); the Map page is the Atlas.
@@ -300,6 +310,7 @@ of `AwakenConfig.Client`.
 
 - `dev.awaken.signal.Signal` — `send(ServerPlayer, SignalWindow)`, `toast(ServerPlayer, Component)`,
   `toast(ServerPlayer, Component, Notices.Tier, String topic)`; `SignalWindow.Builder.tier/topic/moment` (§26).
+  `SignalWindow.Builder.dialogue()` marks NPC speech (choices keep their action); `SignalWindow.dialogue()` reads it.
   `dev.awaken.signal.Finds` — `tell(ServerPlayer, Find)`: how a new find is told (lesson, moment, first of kind, filed).
 - `dev.awaken.core.api.Notices` (§26) — `enum Tier {CRITICAL, IMPORTANT, AMBIENT}`; client: `claim(tier, topic)` before
   a module's own HUD line takes the screen, `file(tier, title, line)` into the Journal, `quiet()`, `hold(owner, bool)`.
@@ -445,6 +456,9 @@ of `AwakenConfig.Client`.
   once a slot has drawn, a line's record rebuilt only when its position, colour or scale changes. Test `holo_plate_scale`.
 - `dev.awaken.signal.client.UiCanvas.texture(Identifier, x, y, w, h, u0, v0, u1, v1, argb)` (client) — part of a whole
   texture (a DynamicTexture or a registered render target) on a panel or a flat screen, one tinted quad.
+- `dev.awaken.core.api.Dialogue` (client) — `register(priority, Source)` installs a speech source with `active/advance`;
+  `use(mainHand)` consumes/advances once per physical press, `capture/release` guard the opening interaction and release.
+  `onFinished/finished(topic)` lets server-paged speech request its next line without reaching into another HUD.
 - `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
   (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
   The HUD under screens (Euan, 2026-10-27: the gate's run panel drew over the K menu): the game draws the HUD under

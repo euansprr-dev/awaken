@@ -99,7 +99,7 @@ public final class Wayfarers {
     /** A chain offered on a choice card: Y takes it into the Journal, N leaves it (it can be asked for again). */
     static void offer(ServerPlayer p, String chain, QuestDef d, long scene) {
         if (!d.ask().isEmpty()) QuestEngine.sayLines(p, d.ask());
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.title()))
+        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.title())).dialogue()
                 .body(Component.literal(d.summary().isEmpty() ? "Help?" : d.summary()))
                 .choice(ACTION + ":" + chain + "#" + scene, "Help", "Not now").ttl(20 * 30).build());
     }
