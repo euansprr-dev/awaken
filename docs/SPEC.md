@@ -1730,9 +1730,17 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   hidden-surface removal works. Measured at the Roost: about 1.1 M quads, 1.6 to 4.7 ms on a loaded M4.
   Water (2026-10-27, Euan: a lake in the lumen forest drew in hard bands from afar, worked out offline from his save:
   Sodium's real water to 240 m, City Sight's to the edge of the chunks it held, about 340 m, the far terrain's past it):
-  City Sight's water surface is lit and reflects the sky by the horizon as the far terrain's water does (lit 0.4 toward
-  white, the fog's colour by (1 - facing)^5 × 0.55), where it drew its plain tinted texture, darker and bluer than both
-  beside it. Its colour blends over the biomes within 4 blocks in the chunk (`VoxelMesher.BLEND`; the game blends 2),
+  City Sight's water surface reflects the sky by the horizon as the far terrain's water does (the fog's colour by
+  (1 - facing)^5 × 0.55). All far water is drawn as the game draws it (2026-10-28, Euan: a lighter turquoise band with a
+  stepped near edge 40-60 blocks out, then paler flat water: both far layers were lit brighter than the real water, and
+  Sodium culls sections by 3D distance, so from a height the real floor's sections drop out chunk by chunk before the
+  surface's and the far water kept under the real surface showed through, with its own lit surface, in chunk steps):
+  the water texture's grey 0.694 at alpha 0.706 over the floor, the floor lit by the sky light the water leaves it
+  (15 - depth, the water dampening 1 a block) through the game's lightmap curve and gamma. City Sight bakes that into
+  its water tint, block by block (`VoxelMesher.overFloor`: the floor block's average colour, `Looks.colour`); the far
+  terrain draws it in `seaFloor`, and where it lies under a real water surface (the outer band) it draws only the lit
+  floor, which the real surface then covers as the missing floor section would. Water tints now differ by depth, so
+  City Sight's greedy merge joins fewer water quads (not measured). Its colour blends over the biomes within 4 blocks in the chunk (`VoxelMesher.BLEND`; the game blends 2),
   each 4-block biome cell weighed by its blocks: unblended, the lumen forest's teal water (#2a93a6) against the river's
   blue drew hard-edged stepped patches. Coarse levels lay a lake's surface at its highest water block in the cell, 14/16
   up, as level 0 does (a cell's top put it a block high or low by how the surface met the cells: Lens's ripples missed it

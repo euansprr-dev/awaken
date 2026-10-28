@@ -85,12 +85,13 @@ float snowOn(vec2 world, float y, vec2 g, float slope, float alpine) {
     return snow * (1.0 - smoothstep(SNOW_SLOPE - 0.1, SNOW_SLOPE + 0.25, slope));
 }
 
-// The sea floor under far water, seen through it (Euan: the real water shows its floor, the far water showed none, so
-// the floor ended where the chunks did). The floor lies `depth` blocks down along the view ray, so it shifts as the
+// Far water as the game draws its water: the water's texture (grey 0.694, 0.706 opaque) tinted by the biome over the
+// floor, which the water above dims a sky light level a block, by the game's own lightmap (Euan, 2026-10-28: the far
+// water stood light and flat past the real water's dark teal, the floor's sand showing undimmed through it). `water` is
+// the stored colour, the biome's × 0.62. The floor lies `depth` blocks down along the view ray, so it shifts as the
 // camera moves as the real one does: blocks of sand, gravel in the deep, seagrass in patches, anchored to the world.
-// How much shows: the water's own absorption over the path through it (shallows and steep views see it, deep water and
-// grazing views don't), and less and less past the render distance's edge, until the open sea is only water.
-vec3 seaFloor(vec3 water, vec2 world, vec3 d, float depth, float horizontal) {
+// Under the real water's surface (its floor's section out of Sodium's reach) the floor alone: the real surface lies over it.
+vec3 seaFloor(vec3 water, vec2 world, vec3 d, float depth, bool underRealSurface) {
     float facing = max(-d.y, 0.03);
     vec2 floorXZ = world + d.xz / facing * depth;
     ivec2 fb = ivec2(floor(floorXZ));
@@ -99,10 +100,11 @@ vec3 seaFloor(vec3 water, vec2 world, vec3 d, float depth, float horizontal) {
     vec3 bed = mix(sand, gravel, smoothstep(9.0, 18.0, depth + 6.0 * (patches - 0.5)));
     bed = mix(bed, grass, step(0.62, patches) * smoothstep(2.0, 5.0, depth) * (1.0 - smoothstep(14.0, 22.0, depth)));
     bed *= 0.85 + 0.3 * pebble;
-    // seen through the water: tinted by it
-    vec3 seen = bed * (water * 1.6 + 0.2);
-    float clear = exp(-0.09 * depth / facing) * (1.0 - smoothstep(FarDepth.z + 32.0, FarDepth.z + 700.0, horizontal));
-    return mix(water, seen, clear);
+    // lit by the sky light under that much water, as a share of the open sky's (the light comes at the end)
+    vec3 open = texture(LightSampler, vec2(0.5, 15.5) / 16.0).rgb;
+    bed *= texture(LightSampler, vec2(0.5, max(15.0 - depth, 0.0) + 0.5) / 16.0).rgb / max(open, vec3(1e-3));
+    if (underRealSurface) return bed;
+    return water * (0.706 * 0.694 / 0.62) + bed * 0.294;
 }
 
 struct Hit {
@@ -210,13 +212,20 @@ void main() {
     // distance's outer band, where a real floor can be missing: nearer, the real floor is always drawn, and far water
     // there would show as boxes on the city's canals
     bool surface = abs(facet.y) > 0.97 * length(facet) && horizontal > FarDepth.z - 80.0;
-    bool underReal = !(water && surface && FarFog.z >= FarFog.w);
+    bool underReal = !(water && surface && FarFog.z >= FarFog.w), keptUnder = false;
     if (farRealSection(reach)) {
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
-        if (underReal && texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) {
-            // debug view 2: where the mask hides far terrain, red instead (red that shows is a hole the chunks leave)
-            if (FarCam.w > 1.5 && FarCam.w < 2.5) { fragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
-            discard;
+        if (texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) {
+            if (underReal) {
+                // debug view 2: where the mask hides far terrain, red instead (red that shows is a hole the chunks leave)
+                if (FarCam.w > 1.5 && FarCam.w < 2.5) { fragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
+                discard;
+            }
+            // far water kept under the real water: it shows only where the real floor isn't drawn, through the real
+            // surface (seen from a height, Sodium draws the surface's section past the floor's): it stands for the floor.
+            // As water there it showed a second, lighter water through the real one, a stepped pale band with the real
+            // seagrass in front of it (Euan, 2026-10-28)
+            keptUnder = true;
         }
     }
     vec3 n = normalize(vNormal);
@@ -263,7 +272,7 @@ void main() {
     if (frozen) {
         top = ICE * (0.92 + 0.16 * grain);
     } else if (water) {
-        if ((int(FarCam.y) & 128) == 0) top = seaFloor(top, world, normalize(vRel), depth, horizontal);
+        if ((int(FarCam.y) & 128) == 0) top = seaFloor(top, world, normalize(vRel), depth, keptUnder);
     } else {
         float jag = 0.25 * (grain - 0.5);
         // the rock of the biome this block stands in: where biomes meet, block by block, each biome's share its odds
@@ -309,9 +318,8 @@ void main() {
     // light: the game's face shading, a warm key where the sun reaches past the ridges, a cool shade where it doesn't
     vec3 light = farLight(face, vCrown.a);
     light *= mix(1.0, vInfo.a, 0.8);
-    if (water && !frozen) {
+    if (water && !frozen && !keptUnder) {
         float facing = abs(normalize(vRel).y);
-        light = mix(light, vec3(1.0), 0.4);
         // grazing far water reflects the sky by the horizon, as Lens's real water beside it does at every distance (the
         // dusk slabs were holes to the clear colour, not this; limiting it to the far distance left the far sea darker
         // than the real water at the edge)
