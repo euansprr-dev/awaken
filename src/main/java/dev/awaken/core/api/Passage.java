@@ -15,6 +15,7 @@ import net.minecraft.util.Util;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import java.util.ArrayList;
@@ -30,8 +31,8 @@ import java.util.UUID;
  * world stops. {@link #go} moves the player at once when the land is there; when it isn't, it puts a ticket on the 3×3
  * chunks round the arrival, waits for them asynchronously (no join on the server thread), holds the player in a short
  * transition of their own on the client (a dusk with the land drawing itself, input held, never a frozen frame; nothing
- * hurts them meanwhile) and moves them once the land is made. A newer move replaces an older one; logging out, dying or
- * respawning drops it; past
+ * hurts them meanwhile) and moves them once the land is made. A newer move replaces an older one; logging out, dying,
+ * respawning or a command's teleport drops it; past
  * {@link #MOST_MS} the move runs anyway, as it would have without this (logged). Vanilla's /tp and other mods' teleports
  * aren't routed here: the packet cap and the watchdog cover them. Server side; the client half is
  * {@code core.client.PassageClient}.
@@ -198,6 +199,18 @@ public final class Passage {
             }
         }
         if (late != null) for (Wait w : late) arrive(w, true);
+    }
+
+    /**
+     * A command's teleport ({@code /tp}, {@code /spreadplayers}) wins over a move still waiting, which is dropped: else the
+     * move, once its land came, would undo it (CI tour 40759045249: a camp's move 16 s late put a tour back on the road).
+     */
+    public static void commanded(EntityTeleportEvent e) {
+        if (WAITS.isEmpty() || e.isCanceled() || !(e.getEntity() instanceof ServerPlayer p)) return;
+        Wait w = WAITS.remove(p.getUUID());
+        if (w == null) return;
+        w.drop();
+        send(p, false);
     }
 
     /** A player in a passage can't act, so nothing hurts them while they wait (a kill command still does). */

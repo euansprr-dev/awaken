@@ -62,6 +62,11 @@ public final class PassageClient {
         }
     }
 
+    /** Whether a passage is up and not yet lifting: the player is still waiting for their land (tours wait on it). */
+    public static boolean waiting() {
+        return from >= 0 && lift < 0;
+    }
+
     private static void reset() {
         if (from >= 0) Notices.client().hold(HOLD, false);
         from = lift = -1;

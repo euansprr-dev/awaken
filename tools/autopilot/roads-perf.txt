@@ -36,6 +36,8 @@ hud off
 # then up over it: the server's "Teleported" line shows where it stood us, near 813 302 in this world)
 cmd awaken village road camp
 wait 300
+# the camp's move waits for its land (SPEC §28.9, "Arrivals"); a /tp before it lands would be dropped by it
+waitpassage
 cmd tp @s ~ 240 ~ 180 25
 wait 200
 info

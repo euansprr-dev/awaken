@@ -37,6 +37,7 @@ import java.util.Map;
  * world &lt;name&gt; [creative|survival] [seed]   open the world, creating it if needed
  * waitworld                                      until the player stands in a loaded world
  * wait &lt;ticks&gt;
+ * waitpassage                                    until Awaken's passage (a teleport waiting for its land) has moved you
  * cmd &lt;command without slash&gt;
  * look &lt;yaw&gt; &lt;pitch&gt;
  * turn &lt;degrees per tick&gt; &lt;ticks&gt;             a steady turn that keeps going while later lines run (a sharp turn)
@@ -75,7 +76,7 @@ import java.util.Map;
  *                                                default): off, GitHub's macOS runners (a paravirtual GPU) misplace sections
  * fardepth share|auto                           Distant Horizons shares its depth with Lens on every graphics API (to
  *                                                check it on Vulkan), or again only on the one it was checked on
- * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder; with
+ * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder, after any passage; with
  *                                                -Dawaken.autopilot.settle=&lt;s&gt; (CI tours) it first waits, at most that
  *                                                long, until the terrain around is loaded and built
  * shotnow &lt;name&gt;                                  the same this tick (no settle; for short moments); logs the
@@ -88,7 +89,7 @@ public final class Autopilot {
     private Autopilot() {}
 
     private static final List<String> LINES = new ArrayList<>();
-    private static int index, waitTicks, waitWorldTicks, stuckTicks;
+    private static int index, waitTicks, waitWorldTicks, stuckTicks, passageTicks;
     private static boolean started;
     private static String createName;
     private static WorldCreationUiState.SelectedGameMode createMode;
@@ -332,6 +333,17 @@ public final class Autopilot {
         }
     }
 
+    /**
+     * While a passage is up (one of Awaken's teleports waiting for its land, SPEC §28.9), at most 65 s: a shot and a
+     * "waitpassage" line wait it out, so a travel command's shot is taken where it went, not of the dusk on the way.
+     */
+    private static boolean inPassage() {
+        if (dev.awaken.core.client.PassageClient.waiting() && ++passageTicks < 20 * 65) return true;
+        if (passageTicks > 20) Awaken.LOG.info("[autopilot] waited {} s for a passage", passageTicks / 20);
+        passageTicks = 0;
+        return false;
+    }
+
     /** Runs one line; false means "not ready, retry next tick". */
     private static boolean run(Minecraft mc, String line) {
         String[] a = line.split("\\s+", 2);
@@ -361,6 +373,9 @@ public final class Autopilot {
             }
             case "waitworld" -> waitWorldTicks = 20 * 600;
             case "wait" -> waitTicks = Integer.parseInt(arg.trim());
+            case "waitpassage" -> { // until a passage (Awaken's teleport waiting for its land) has moved you
+                if (inPassage()) return false;
+            }
             case "cmd" -> {
                 if (mc.player == null) return false;
                 mc.player.connection.sendCommand(arg.startsWith("/") ? arg.substring(1) : arg);
@@ -495,7 +510,7 @@ public final class Autopilot {
                 if (mc.gui.hud.isHidden() != arg.trim().equals("off")) mc.gui.hud.toggle();
             }
             case "shot" -> {
-                if (shotPending == null && !settled(mc, arg.trim())) return false;
+                if (shotPending == null && (inPassage() || !settled(mc, arg.trim()))) return false;
                 // command feedback is not part of the picture: clear the chat, let a few frames render without it
                 if (shotPending == null) {
                     mc.gui.hud.getChat().clearMessages(false);

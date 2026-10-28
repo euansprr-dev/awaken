@@ -1283,7 +1283,13 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   render distance isn't the cause. Lens Swift's chain was on in all three. world-depth-w7 lost it once the same way
   (run 40370286479). roads-perf-quit (the first flight and a quit 30 s in) finishes (run 40735814003).
 - The pilot's `glide` sets the player's velocity every tick, so the edge hold (§28.9) eases it at the edge of the land
-  the client has, and the log says so (`[edgehold] held N ticks ...`).
+  the client has, and the log says so (`[edgehold] held N ticks ...`). `shotnow` logs the hold's cue with its shot
+  (`edge hold cue 0.97, edge 1 ahead`); roads-edge-cue takes them mid-glide (run 40759045249: under the hold everything
+  below the horizon goes to the pale mist instead of the grey void of land not drawn).
+- A travel command's move may wait for its land in a passage (§28.9, "Arrivals"). `shot` waits a passage out first (at
+  most 65 s, logged `waited N s for a passage`), so it shows where the command went, and `waitpassage` does the same
+  before a line that must come after the move (a `/tp ~ ...` after `village road camp`: a command's teleport drops a
+  move still waiting).
 - Look tours run on GitHub's macOS runners (`.github/workflows/tours.yml`, dispatched by `tools/tour-ci.sh`, decided
   2026-10-26 when the Mac's one-at-a-time queue ran for hours). Perf and frame-time tours, Far Sight's tours and sound
   listening stay on the Mac under `slot.sh tour`.
@@ -8762,7 +8768,10 @@ level, x, z, move)`:
   runs on behind it, so it never reads as a frozen frame; nothing hurts the player meanwhile (a kill still does).
 - Once the land is made, `move` runs (the code's own teleport and whatever followed it), and the dusk lifts. Each
   wait logs `[passage] NAME waited N ms for the land at X Z in DIMENSION`.
-- A newer move replaces an older one. Logging out, dying or respawning (a new player object) drops it. Past 60 s of
+- A newer move replaces an older one. Logging out, dying or respawning (a new player object) drops it, and so does a
+  command's teleport (`/tp`, `/spreadplayers`; `EntityTeleportEvent`, lowest priority, not cancelled), which wins:
+  else the move, once its land came, would undo it (CI tour 40759045249: the road camp's move landed 16 s late and put
+  the tour back on the road after its `/tp`). Past 60 s of
   wall clock (`MOST_MS`; the GameTest server ticks back to back) the move runs anyway, as it would have without the
   helper, logged `(not made yet: moved anyway)`.
 - `Passage.warm(level, x, z)` makes the land without moving anyone, for a move the game makes itself later.

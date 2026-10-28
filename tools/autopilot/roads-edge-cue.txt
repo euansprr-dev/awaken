@@ -36,6 +36,8 @@ hud off
 # (run 40755782322 flew at 240 looking ahead: the hold was on, but no land was left in view for the mist to close over)
 cmd awaken village road camp
 wait 300
+# the camp's move waits for its land (SPEC §28.9, "Arrivals"); a /tp before it lands would be dropped by it
+waitpassage
 cmd tp @s ~ 170 ~ 0 35
 wait 200
 shot 01-before
