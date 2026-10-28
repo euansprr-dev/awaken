@@ -1,0 +1,11 @@
+{
+  "edge.headwind": {
+    "subtitle": "subtitles.awaken.edge.headwind",
+    "sounds": [
+      {
+        "name": "awaken:edge_headwind",
+        "stream": false
+      }
+    ]
+  }
+}
