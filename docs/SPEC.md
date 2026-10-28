@@ -8057,8 +8057,11 @@ loads meanwhile (on the runner: progression's ledge finder, Lithium's collision 
 land, a vault): the tour's "Can't keep up" (W7: 2, 4.5 and 38 s, the last at the first teleport, the camp's road north
 laid already, then a near-freeze; then 2 s at the start and 33 s at the first teleport, the watch's stack in the ledge
 finder reading a chunk still generating, then one tick of 4.5 minutes in it; the ledge finder now reads only chunks
-already whole). On a tour a watch on the server thread (`RoadTimer.watch`) logs any tick (or task between ticks) over
-a second with its stack. The camp command (`/awaken village road camp`) never lays a road on the server thread: a
+already whole). A watch on the server thread (`RoadTimer.watch`) logs any tick (or task between ticks) over two seconds
+with its stack, always (a player's log says what held the server; on a tour over one second, sampled 20 times a
+second), and any chunk the server thread had to wait for further than view distance from every player in its level,
+with the chunk's own tickets and who asked (once a minute a caller; a chunk without a getChunk's own "unknown" ticket
+rode in another chunk's wait, so the stack names that wait, not who asked for it). The camp command (`/awaken village road camp`) never lays a road on the server thread: a
 thread of its own lays what it needs (not the planners: their queue can be minutes deep after a pregen) and the server
 stands the player on it once it's laid (run 40448865954: at once). Still left, on the runner only: a spectator flying
 24-40 blocks a second over new land freezes the server for minutes (that run: a 10.4 s tick, then two ticks in four
@@ -8067,6 +8070,17 @@ whose lattice chunks' roads world generation is laying itself while the two plan
 teleport waits ~11 s and the planners keep 1,100 blocks ahead. Structure starts that wait off the executor (a Turbo
 mixin, approved, not built) would free world generation meanwhile but not that chunk, so it waits for a need on the Mac.
 Framings lay only the highroads through a place: the lanes round it would plan the regions about (48 s on the runner).
+Euan's 42 s freeze in a D-rank trial (2026-10-28, build 5cd4d985: "the mobs just stopped moving") was a player coming
+back from another level. Vanilla keeps an entity's supporting block (`mainSupportingBlockPos`) through a teleport to
+another dimension, and the player's first movement tick there reads it in the new level (`Entity.getOnPos` from
+`travel`): sent home from trial cell 0 at 40 24, the overworld was asked on the server thread for chunk 2,1, whose
+generation waited on the level's one worldgen executor while lattice chunk -8,0's structure start waited 34 s for
+highroad T-2,0,0#0 (the save shows the pyramid of that one chunk: a 3x3 lit, structure starts out to 12 chunks). The
+trial-fall tour (`tools/autopilot/trial-fall.txt`, run 40679962684) caught it: overworld chunk 2,2 from `getOnPos`,
+13.7 s. Going in, a gate's or trial's level is read at the player's overworld spot the same way. `Arrivals` forgets
+the block when a player changes level (`PlayerChangedDimensionEvent`, highest priority), so that tick reads only the
+chunk the player is in; `village_far_arrival` (the Nether standing in for a gate or trial level: the GameTest server
+has neither) fails without it.
 
 **Decisions taken here** (none of the plan's 13): the hub rule and its numbers above (towns one region in five, the
 first town placed on purpose, a wayhouse at a region's heart for "a day's walk"); roads on a lattice of leg starts

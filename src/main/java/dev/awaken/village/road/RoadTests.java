@@ -81,6 +81,7 @@ public final class RoadTests {
 
     public static void register() {
         RoadBanksTests.register();
+        ArrivalTests.register();
         AwakenTests.registerIsolated("village_roads", 600, RoadTests::roads);
         AwakenTests.registerIsolated("village_road_banks", 200, RoadTests::banks);
         AwakenTests.registerIsolated("village_road_viaduct", 200, RoadTests::viaduct);

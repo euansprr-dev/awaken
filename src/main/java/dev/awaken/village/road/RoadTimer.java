@@ -149,12 +149,17 @@ final class RoadTimer {
 
     /** When each caller of a far chunk was last told (server thread only). */
     private static final java.util.Map<String, Long> FAR_TOLD = new java.util.HashMap<>();
+    /** Far chunks the server thread waited for, and the last of them (the tests). */
+    static int farLoads;
+    static long lastFar = Long.MIN_VALUE;
 
     /**
      * A chunk the server thread waited for (a {@code getChunk} that had to load it) further than view distance from every
      * player in its level: who asked, once a minute a caller. Such a read waits for whatever that level's world generation
      * is doing, and a lattice chunk still being given its roads holds all of it (SPEC §28.9, Cost), so this is how a
-     * freeze names its cause in a player's log. Chunks loaded for a ticket, or near a player, cost nothing to check.
+     * freeze names its cause in a player's log. Chunks loaded for a ticket, or near a player, cost nothing to check. While
+     * it waits the server thread runs other chunks' last steps too, so a chunk without a getChunk's own ticket ("unknown")
+     * is named with the tickets it has: the stack then shows whose wait it rode in, not who asked for it.
      */
     static void loaded(net.neoforged.neoforge.event.level.ChunkEvent.Load e) {
         if (!(e.getLevel() instanceof net.minecraft.server.level.ServerLevel level) || !level.getServer().isSameThread()) return;
@@ -168,6 +173,8 @@ final class RoadTimer {
         int k = -1;
         for (int i = 0; i < frames.size(); i++) if (frames.get(i).getClassName().equals(cache) && frames.get(i).getMethodName().equals("getChunk")) k = i;
         if (k < 0) return;
+        farLoads++;
+        lastFar = c.pack();
         StringBuilder b = new StringBuilder();
         String who = null;
         int n = 0;
@@ -185,8 +192,17 @@ final class RoadTimer {
         Long last = FAR_TOLD.get(key);
         if (last != null && now - last < 1200) return;
         FAR_TOLD.put(key, now);
-        RoadNet.log("the server thread waited for {} chunk {},{} ({}, {}): {}", level.dimension().identifier(), c.x(), c.z(), e.isNewChunk() ? "new" : "from disk",
-                near == Integer.MAX_VALUE ? "no player in that world" : near + " chunks from the nearest player", b);
+        RoadNet.log("the server thread waited for {} chunk {},{} ({}, {}; {}): {}", level.dimension().identifier(), c.x(), c.z(), e.isNewChunk() ? "new" : "from disk",
+                near == Integer.MAX_VALUE ? "no player in that world" : near + " chunks from the nearest player", tickets(level, c), b);
+    }
+
+    /** A chunk's own tickets by type ("unknown" is a getChunk's), or that it is held by a neighbour's. */
+    private static String tickets(net.minecraft.server.level.ServerLevel level, net.minecraft.world.level.ChunkPos c) {
+        var all = level.getChunkSource().getDataStorage().computeIfAbsent(net.minecraft.world.level.TicketStorage.TYPE).getTickets(c.pack());
+        if (all.isEmpty()) return "held by a neighbour's ticket";
+        StringBuilder t = new StringBuilder("tickets");
+        for (var ticket : all) t.append(' ').append(net.minecraft.core.registries.BuiltInRegistries.TICKET_TYPE.getKey(ticket.getType()));
+        return t.toString();
     }
 
     private static boolean calls(StackTraceElement[] stack, String cls, String method) {
