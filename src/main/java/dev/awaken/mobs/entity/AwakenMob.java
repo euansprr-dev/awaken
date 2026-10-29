@@ -975,6 +975,11 @@ public class AwakenMob extends Monster {
 
     // ---- client look ---------------------------------------------------------------------------------------------
 
+    /** The look {@link #look} filled last, without filling it again (null before it is first drawn). */
+    public @Nullable AwLook lastLook() {
+        return look;
+    }
+
     /** Fills and returns this entity's reusable look (client render thread). */
     public AwLook look(float partialTicks) {
         AwLook l = look;

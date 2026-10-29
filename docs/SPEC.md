@@ -5567,6 +5567,12 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
   inside `with P.eyes():` (`fauna_rig.EyeRec`) and writes `<id>_blink.png` (the skin under the eye with a lash line)
   and `<id>_glow_blink.png` (the eyes' light out); the renderer draws them while the eyes are shut. 14 creatures have
   them; existing textures are byte-identical.
+- **The look reaches the model** (fixed 2026-10-29): NeoForge clears a render state's data right after
+  `extractRenderState` (`RenderStateExtensions.onUpdateEntityRenderState`), so the `AwLook` our renderers set there was
+  gone by `setupAnim`: `Life.from` was null and the layer's pose (legs, flight, springs, blinks), tint, glow and flash
+  never drew on the Hero, Wild and hand-built (`AwMobRenderer`) bodies; only form bodies (extracted from a modifier)
+  had it. `MobsClient` registers a render state modifier that puts the entity's same look back after the clear. Bosses
+  (the kit's renderer, and `AwMobRenderer`'s boss tiers) are left out until the boss work takes it.
 - **Cost and limits**: client only; nothing allocated per frame (render states carry a reference); springs and fidgets
   off past 32 blocks (springs settle), blinks off past 32; breath and the slow head everywhere (cheap). Reduced motion
   (`awaken-client` `reducedMotion`, the body module's) turns idle fidgets off and halves springs, tremble and stagger;
