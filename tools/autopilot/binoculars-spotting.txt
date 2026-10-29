@@ -20,11 +20,12 @@ screen close
 cmd difficulty peaceful
 cmd gamerule send_command_feedback false
 camera first
-# away from Carillon (nothing inside its walls is a find), then onto dry land the gate hop finds
-cmd tp @s 6000 200 6000
-wait 400
-cmd awaken gate hop
-wait 300
+# away from Carillon (nothing inside its walls is a find), over the dry forest near 5760 6100 on this seed (6000 6000 is
+# sea, and a hop before the land has loaded leaves you there); wait for the land to load on CI
+cmd tp @s 5760 110 6100
+wait 900
+cmd tp @s 5760 110 6100
+wait 100
 
 # ---- a gate ------------------------------------------------------------------------------------------------------------
 cmd awaken gate open C
