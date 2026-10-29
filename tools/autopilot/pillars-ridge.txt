@@ -1,0 +1,50 @@
+# A gate pillar behind a ridge (Euan, 29 Oct: "One of the gate beams is showing on top of the cliff here even tho the
+# gate is behind it"). Render distance 6 (96 blocks): a pillar past 67 blocks used to be pulled in to 67, so land
+# between 67 blocks and the end of the chunks didn't hide it. Here a stone block stands 72-88 blocks ahead, 8 blocks over
+# the eye line, between the camera and a C-rank gate 200 and then 400 blocks off. The beam must show only above the
+# block, never across its face. (Far Sight's land, the other half of the fix, stays on the Mac: Far Sight is off here.)
+# Run on GitHub's Mac runners:
+#   tools/tour-ci.sh tools/autopilot/pillars-ridge.txt 1500 TECTONIC=awakened PACK=perf,world,horizon
+# ci knobs: RD=6
+world carillonM4b3a creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd gamemode spectator
+cmd time set 6000
+cmd tp @s 1110 140 -1090
+wait 100
+# the first that finds ground stands; the others fall within 96 blocks of it and are refused
+cmd awaken gate open C
+wait 20
+cmd awaken gate open C
+wait 20
+cmd awaken gate open C
+wait 200
+cmd awaken gate list
+# ---- 200 blocks: the open view, then a block in front at 72-88 blocks
+cmd awaken gate frame 200 4
+wait 200
+shot ridge_200_open
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^80 run fill ~-8 ~-60 ~-8 ~8 ~8 ~8 stone
+wait 120
+shot ridge_200_behind
+# ---- 400 blocks: pulled in along the sight line, still behind the block
+cmd awaken gate frame 400 4
+wait 240
+shot ridge_400_open
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^80 run fill ~-8 ~-60 ~-8 ~8 ~8 ~8 stone
+wait 120
+shot ridge_400_behind
+quit
