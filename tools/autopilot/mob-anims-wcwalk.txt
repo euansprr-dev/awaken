@@ -143,18 +143,24 @@ wait 25
 cmd kill @e[type=minecraft:item]
 cmd kill @e[type=minecraft:experience_orb]
 wait 5
+# ours: the lane runs 3 blocks before where the line-up was called, from x 2.5 to -2.5; the camera then rides
+# beside it at the lane's own pace, a walk out (after its 30-tick stand), the turn, and the way back
 # fox
 cmd tp @s 0.0 199.9 0.0 0 2
 look 0 2
 wait 10
 cmd awaken wildlife lineup pace_fox
-cmd tp @s 0.0 199.9 -1.2 0 2
-look 0 2
-wait 5
-cmd awaken ascent pilot rec wc_fox 300 2
-wait 120
-shot wc_fox_mid
-wait 190
+cmd tp @s 2.5 199.9 1.4 0 6
+look 0 6
+cmd awaken ascent pilot rec wc_fox 259 2
+wait 28
+glide -0.05 0 0 100
+wait 100
+shot wc_fox_end
+wait 30
+glide 0.085 0 0 59
+wait 59
+wait 40
 cmd awaken wildlife lineup off
 wait 10
 # crow
@@ -162,13 +168,17 @@ cmd tp @s 0.0 199.6 0.0 0 2
 look 0 2
 wait 10
 cmd awaken wildlife lineup pace_crow
-cmd tp @s 0.0 199.6 0.4 0 2
-look 0 2
-wait 5
+cmd tp @s 2.5 199.6 1.8 0 6
+look 0 6
 cmd awaken ascent pilot rec wc_crow 300 2
-wait 120
-shot wc_crow_mid
-wait 190
+wait 28
+glide -0.05 0 0 100
+wait 100
+shot wc_crow_end
+wait 30
+glide 0.05 0 0 100
+wait 100
+wait 40
 cmd awaken wildlife lineup off
 wait 10
 # pigeon
@@ -176,13 +186,17 @@ cmd tp @s 0.0 199.5 0.0 0 2
 look 0 2
 wait 10
 cmd awaken critters lineup pace_pigeon
-cmd tp @s 0.0 199.5 0.6 0 2
-look 0 2
-wait 5
-cmd awaken ascent pilot rec wc_pigeon 300 2
-wait 120
-shot wc_pigeon_mid
-wait 190
+cmd tp @s 2.5 199.5 1.9 0 6
+look 0 6
+cmd awaken ascent pilot rec wc_pigeon 322 2
+wait 28
+glide -0.045 0 0 111
+wait 111
+shot wc_pigeon_end
+wait 30
+glide 0.045 0 0 111
+wait 111
+wait 40
 cmd awaken critters lineup off
 wait 10
 # gull
@@ -190,13 +204,17 @@ cmd tp @s 0.0 199.6 0.0 0 2
 look 0 2
 wait 10
 cmd awaken critters lineup pace_gull
-cmd tp @s 0.0 199.6 0.4 0 2
-look 0 2
-wait 5
-cmd awaken ascent pilot rec wc_gull 300 2
-wait 120
-shot wc_gull_mid
-wait 190
+cmd tp @s 2.5 199.6 1.7 0 6
+look 0 6
+cmd awaken ascent pilot rec wc_gull 266 2
+wait 28
+glide -0.06 0 0 83
+wait 83
+shot wc_gull_end
+wait 30
+glide 0.06 0 0 83
+wait 83
+wait 40
 cmd awaken critters lineup off
 wait 10
 # cat
@@ -204,13 +222,17 @@ cmd tp @s 0.0 199.8 0.0 0 2
 look 0 2
 wait 10
 cmd awaken critters lineup pace_cat
-cmd tp @s 0.0 199.8 -1.0 0 2
-look 0 2
-wait 5
-cmd awaken ascent pilot rec wc_cat 300 2
-wait 120
-shot wc_cat_mid
-wait 190
+cmd tp @s 2.5 199.8 1.5 0 6
+look 0 6
+cmd awaken ascent pilot rec wc_cat 256 2
+wait 28
+glide -0.045 0 0 111
+wait 111
+shot wc_cat_end
+wait 30
+glide 0.11 0 0 45
+wait 45
+wait 40
 cmd awaken critters lineup off
 wait 10
 # dog
@@ -218,13 +240,17 @@ cmd tp @s 0.0 199.9 0.0 0 2
 look 0 2
 wait 10
 cmd awaken critters lineup pace_dog
-cmd tp @s 0.0 199.9 -1.2 0 2
-look 0 2
-wait 5
-cmd awaken ascent pilot rec wc_dog 300 2
-wait 120
-shot wc_dog_mid
-wait 190
+cmd tp @s 2.5 199.9 1.2 0 6
+look 0 6
+cmd awaken ascent pilot rec wc_dog 219 2
+wait 28
+glide -0.06 0 0 83
+wait 83
+shot wc_dog_end
+wait 30
+glide 0.14 0 0 36
+wait 36
+wait 40
 cmd awaken critters lineup off
 wait 10
 cmd gamemode creative
