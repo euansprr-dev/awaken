@@ -60,6 +60,7 @@ public final class ArmourClient {
                 (msg, ctx) -> Minecraft.getInstance().execute(() -> ArmourGlow.on(msg))));
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> ArmourGlow.clear());
         ForgeClient.init(modBus);
+        ArmourClientConfig.register(modBus);
     }
 
     /** Our pieces each slot wears, by {@link ArmorType} ordinal (null where none), for {@link ArmourLayer}. */
@@ -79,10 +80,11 @@ public final class ArmourClient {
      * Each piece of ours whose meshes are loaded is drawn by {@link ArmourLayer} in place of vanilla's flat shell (and the
      * Hunter sets' old silhouettes), so it is taken out of the render state's equipment and the skin's outer layer under
      * it is hidden (a hat or jacket would poke through the plate). A helm of ours is not drawn again as a hat item, and a
-     * set's own cape hangs where vanilla's would. A piece whose set has no meshes is left to vanilla.
+     * set's own cape hangs where vanilla's would. A piece whose set has no meshes is left to vanilla, and so is every piece
+     * the Sculpted armour setting leaves flat (off, or near only and this figure far off).
      */
     private static void readWorn(LivingEntity entity, LivingEntityRenderState state) {
-        if (!(state instanceof HumanoidRenderState h) || !LAYERED.contains(entity.getType())) return;
+        if (!(state instanceof HumanoidRenderState h) || !LAYERED.contains(entity.getType()) || !ArmourClientConfig.sculpts(entity)) return;
         ItemStack[] worn = null;
         for (ArmorType slot : SLOTS) {
             ItemStack stack = entity.getItemBySlot(slot.getSlot());
@@ -173,6 +175,7 @@ public final class ArmourClient {
      * Returns whether anything was drawn, so a caller can skip a sleeve of its own.
      */
     public static boolean dressArm(Player player, HumanoidArm side, PoseStack ps, SubmitNodeCollector out, int light) {
+        if (ArmourClientConfig.sculpted() == ArmourClientConfig.Sculpted.OFF) return false;
         ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
         ArmourLooks.Look look = ArmourLooks.drawn(chest);
         if (look == null || look.piece() != ArmorType.CHESTPLATE) return false;

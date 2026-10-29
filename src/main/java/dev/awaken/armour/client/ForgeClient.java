@@ -59,6 +59,25 @@ final class ForgeClient {
                                 com.mojang.brigadier.arguments.BoolArgumentType.bool()).executes(c -> {
                                     autoplay = com.mojang.brigadier.arguments.BoolArgumentType.getBool(c, "on");
                                     return 1;
+                                })))
+                        // the settings file's two choices, from chat (SPEC §44.9)
+                        .then(net.minecraft.commands.Commands.literal("sculpted").then(net.minecraft.commands.Commands.argument("how",
+                                com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                                    String how = com.mojang.brigadier.arguments.StringArgumentType.getString(c, "how").toUpperCase(java.util.Locale.ROOT);
+                                    for (ArmourClientConfig.Sculpted s : ArmourClientConfig.Sculpted.values())
+                                        if (s.name().equals(how)) {
+                                            ArmourClientConfig.set(s, ArmourClientConfig.firstPerson() ? ArmourClientConfig.ForgeView.FIRST_PERSON
+                                                    : ArmourClientConfig.ForgeView.CINEMATIC);
+                                            return 1;
+                                        }
+                                    return 0;
+                                })))
+                        .then(net.minecraft.commands.Commands.literal("camera").then(net.minecraft.commands.Commands.argument("view",
+                                com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                                    boolean first = com.mojang.brigadier.arguments.StringArgumentType.getString(c, "view").startsWith("first");
+                                    ArmourClientConfig.set(ArmourClientConfig.sculpted(), first ? ArmourClientConfig.ForgeView.FIRST_PERSON
+                                            : ArmourClientConfig.ForgeView.CINEMATIC);
+                                    return 1;
                                 }))))));
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             ForgeSongScreen.last = null;

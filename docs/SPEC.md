@@ -13601,3 +13601,17 @@ server checks the set). `ArmourLooks.drawn` is what every renderer draws, worn, 
 if it is made, else the piece's own; its numbers, ability and mastery stay the piece's. An **accent** colours what glows:
 an inlay gives its Force's colour; one dye you carry colours the whole worn suit (ACCENT: the dye's id + 1, the dye used
 up); the first swatch gives each piece its own back (its inlay's colour, if it has one).
+
+**44.9 Settings and pacing (P5).** Client settings (`ArmourClientConfig`, `config/awaken-armour-client.toml`, in the mod's
+settings screen; also `/awaken armour sculpted on|near|off` and `/awaken armour camera cinematic|first`):
+- **Sculpted armour** ON (default) / NEAR / OFF. NEAR draws the sculpted look within 24 blocks of the camera and the flat
+  painted look beyond (the rank's Hunter look stands in for a set without its own; lighter with many armoured figures in
+  view); OFF always draws flat, and the first-person gauntlet with it. The Fitting Stand always shows the sculpted suit
+  and the work. (The plan's far meshes are not built: every set is 600-1,000 triangles, well under its 2,500 budget, so
+  NEAR is the fallback until the Mac's perf pass says more is needed.)
+- **Forge camera** CINEMATIC (default) / FIRST_PERSON: first person keeps the eye at yours, at your own field of view,
+  and turns it to each shot's subject (the stand, the Forge's mouth, the metal, the stand for the fit); the marks project
+  the same way.
+- **Mastery pacing** (`tools/sim/armour_mastery.py`, from the Java's numbers): about 23 XP a minute of fighting in a whole
+  set (blows dealt and taken, the odd elite), 26 running gates (a Lord every 20 minutes): mastery II in a quarter hour,
+  III within the hour, IV in about two hours and V in about four.
