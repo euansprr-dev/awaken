@@ -10227,6 +10227,61 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   - **Meter.** Worst kink outside a strike 4.5°; held at most 14% on every move; dips at most 27%. Shut in its house on
     the Door Step it never stops: the house rocks, the crab turns inside it and its eyes look about the room.
 
+- **The Shadow Regent, the Long Shadow** (body and motion, `kit/bosses/guardian_court.py`). "It sits the way you sit."
+  Your shadow, stood up off the floor and stretched the way a shadow stretches at dusk: half again as tall as a man and
+  thin, its arms hanging to its knees, its body as flat as a shadow is. It has a court's shape: a spiked crown, a tall
+  fan collar standing up behind its head, puffed shoulders over a narrow waist, a long cape falling in tatters nearly
+  to the floor. It is black-violet all through, rimmed in cold violet light along its edges like a shadow with a lamp
+  behind it, with two pale points for eyes. In its right hand a long black sword edged with violet; its left hand is
+  empty, the long fingers spread. Its feet stand in a pool of shadow that goes everywhere with it, and its own flat
+  cast shadow lies on the floor behind it; only the outline of the two glows. Out of the pool rises the throne it sits
+  on. 87 cubes (522 faces) on 38 bones; 46 px to its crown's points at true size (2.9 blocks). The hitbox is 0.8 x 2.9
+  at the def's scale 1.6 (1.3 x 4.6 blocks). Each arm hangs from a shoulder bone and each hand from a wrist bone that
+  hold its rest turns and are never keyed, so the arms and hands rest at nothing and their turns stay clear of the
+  Euler triple's fold at 90 degrees.
+  - **The idle.** It stands tall with its point low before it: its fingers flex one after another and spread, its head
+    tilts to look you over, its sword's point traces slow circles near the floor, its cape stirs, and once a loop it
+    rolls its shoulders and straightens, taller, like a shadow when the candle flares. Its whole shape wavers, a slow
+    stretch and narrowing written into the idle, the walk, the run and the turns after they are made. It walks slow
+    and long, its head level as if it glided, the point trailing low; it runs bent forward with its left hand reaching
+    ahead and the cape streaming. Struck, its whole shape ripples (it narrows and stretches and snaps back).
+  - **Its moves.** The Cut and the Backcut (LIGHT, a string, then the Long Reach): up past its right shoulder and down
+    across to its left hip with a long step, then back up across to its right shoulder. The Long Reach (HEAVY, a hold)
+    draws the sword back beside its head with the point at you, its arm drawn in short; then it thrusts and its arm
+    stretches out nearly twice as long (a scale track on the arm and forearm) and snaps back. The Rake (LIGHT) draws its
+    left hand up high with the fingers flung open and rakes down across in front of it, the forearm stretching after
+    you and the fingers closing like a claw. Your Parry holds the blade across before its face with its long fingers
+    spread on the flat, jolting up as each blow lands, then the Riposte drives the point in under your guard from low
+    at its hip. Your Charge (HEAVY, a gap closer, 8 blocks) flings its arms up over its head and falls flat along the
+    floor as a cast shadow falls, stretched long, and slides at you; it stands up out of the floor all at once,
+    pivoting on its feet like a hinge, and brings the sword down. Whoever is behind it gets the Turnabout: its head
+    turns right round on its shoulders to look at you, its sword arm swings out long to its side and round behind it,
+    and it stabs straight back. The Shadowstep folds it down into its pool until nothing of it stands over the floor,
+    and it rises up out of the pool somewhere else, taller than it is for a moment (a linear scale track: a curve
+    through its flattest would overshoot past nothing and turn it inside out). Your Reflections (into the second phase)
+    flings its arms wide and throws its head back while its whole shape shudders, stretching, narrowing and widening.
+    The Hollow Halo (the signature) lifts its fingers to its crown and its sword high; the crown rises off its head and
+    widens into a ring over it, level and turning, growing and trembling; then its arms come down, the ring comes down
+    round its chest on a whole turn and breaks outward, and is gone (it winds back while it is gone); its crown comes
+    back on its head after. Its intro sits on its throne the way you sit, its chin on its long fingers, its right foot
+    tapping and the pommel turning in its hand; its head turns to you; it stands, the throne sinks back into the pool,
+    and it lifts its sword before its face in a salute, bows over it and lowers the point. Broken, it sits on its
+    throne, which rises out of the pool behind it, and stands up out of it as the throne sinks. Its death reels back
+    with its arms flung out; its sword falls from its hand and lies on the floor before it; it sinks to its knees
+    reaching up with its long fingers; its crown slips off and rolls away; it lies back down into its own shadow and
+    flattens into it, the last of it its hand (5 s).
+  - **How its keys are written.** Its sword moves are poses given as specs, and between two specs each hand swings
+    round its shoulder (its reach and its bearing turning between the two) with the blade's line turning between its
+    two, the point kept over the floor; the wrist bends by the least turn from where the forearm carries the hand, with
+    no twist. Every clip's turns are then written by a shortest-path pass (each key's turn in whichever of its two Euler
+    triples, give or take whole turns, makes the way from the clip's start to its end shortest, both ends on rest's own
+    numbers): IK solves each key alone, and a clip is read angle by angle. Poses that loosen a part (the crown, the
+    fallen sword) put it at a place in the room wherever its parent lies.
+  - **On the floor.** Its hands, its sword, its long fingers and its cape are kept out of the floor by the ground pass;
+    the in-between keys of its death and of the charge's rise are lifted as a whole just enough to keep its legs clear;
+    seated, its thighs lie on the seat's top. The pool and the cast shadow lie flush on the floor.
+  - **Meter.** Worst kink outside a strike 5.9° (the Cut into the Rake), most moves under 5°; held at most 13% on every
+    move; dips at most 26%.
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

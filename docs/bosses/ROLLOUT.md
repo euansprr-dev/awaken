@@ -77,7 +77,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Furnace Engine | Guardian | Foundry | Brute | kit | A, the Iron Horse | ✓ 4193ade1 | ✓ 4193ade1 | — |
 | The Drowned Moon | Guardian | Inverted | Flier | kit | A, the Moon Angler | ✓ 1643236a | ✓ 1643236a | — |
 | The Architect of Rooms | Guardian | Dreaming | Caster | kit | A, the Hermit House | ✓ cadf2a15 | ✓ cadf2a15 | — |
-| The Shadow Regent | Guardian | Court | Duelist | player ×1.6 | — | — | — | — |
+| The Shadow Regent | Guardian | Court | Duelist | kit | A, the Long Shadow | — | — | — |
 | The Seed Warden | Guardian | Seed | Caster | cube shade ×1.6 | — | — | — | — |
 | Sovereign of Hunger | Sovereign | Court | Beast | ravager ×1.8 | — | — | — | — |
 | Sovereign of Silence | Sovereign | Court | Brute | cube listener ×1.9 | — | — | — | — |
@@ -195,3 +195,10 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   rooms literal (the Door Step is the crab shutting itself in, Other Rooms its house shaking), and nothing on the roster
   is a crab or carries its home. B is one more tall thin figure beside the Hollow Herald; C's compass legs walk like the
   Long-Legs'.
+- **The Shadow Regent** (`guardian_court`): A the Long Shadow (your shadow stood up off the floor and stretched as at
+  dusk, crowned, a fan collar and a cape, a long violet-edged sword, standing in its pool with its own cast shadow on
+  the floor behind it, a throne rising out of the pool), B the Shadow-Puppet King (a jointed flat puppet king on rods,
+  lit from behind), C the Ermine Knight (a courtly knight in an ermine mantle). **Picked A**, 2026-10-29: it is
+  literally your shadow, so "It sits the way you sit" and Your Charge (falling flat and sliding over the floor as a
+  cast shadow) say what it is, and nothing else on the roster is a shadow figure. B is flat and reads only from the
+  front; C is one more knight beside the Mirror Knight, and the Sovereign of Mirrors is still to come.

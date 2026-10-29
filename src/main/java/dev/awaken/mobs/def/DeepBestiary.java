@@ -155,7 +155,7 @@ final class DeepBestiary {
                 .phase(1.0F, "The Architect redraws the room.", a(FANGS, "Shifting Floor").n(14), a(BLINK, "Door Step"))
                 .phase(0.5F, "The room changes.", a(DECOY, "Other Rooms").n(2), a(RAIN, "Falling Ceiling").n(5).bolt(BoltKind.DREAM), a(FANGS, "Shifting Floor").n(16))
                 .parts(P("architect_key", "Architect's Key", "dream")).build());
-        out.add(m("guardian_court", "The Shadow Regent", Theme.COURT, Tier.GUARDIAN, Model.MIMIC, "Your shadow on a throne: your parry, your charge, your moves").hp(32).dmg(5.5).spd(0.3).scale(1.6F).hold(Items.NETHERITE_SWORD).traits(MIMIC).bar(BossBarColor.PURPLE).arena(22)
+        out.add(m("guardian_court", "The Shadow Regent", Theme.COURT, Tier.GUARDIAN, Model.MIMIC, "Your shadow on a throne: your parry, your charge, your moves").hp(32).dmg(5.5).spd(0.3).scale(1.6F).size(0.8F, 2.9F).hold(Items.NETHERITE_SWORD).traits(MIMIC).bar(BossBarColor.PURPLE).arena(22)
                 .intro("It sits the way you sit.")
                 .phase(1.0F, "Your shadow rises from the throne.", a(GUARD, "Your Parry"), a(CHARGE, "Your Charge"))
                 .phase(0.5F, "It learns your moves.", a(DECOY, "Your Reflections").n(2), a(BLINK, "Shadowstep"), a(NOVA, "Hollow Halo").n(12).bolt(BoltKind.VOID))
