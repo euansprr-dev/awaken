@@ -73,6 +73,9 @@ final class KinTests {
         ServerLevel level = h.getLevel();
         if (KinWatch.night(level)) level.getServer().getCommands().performPrefixedCommand(level.getServer().createCommandSourceStack().withLevel(level).withSuppressedOutput(), "time set 1000");
         BlockPos soil = new BlockPos(2, 1, 2), crop = soil.above(), chestAt = new BlockPos(4, 2, 2);
+        // the test space has no floor of its own: a beast that falls through it is hurt and hides for the rest of the test
+        for (int x = 0; x <= 5; x++)
+            for (int z = 0; z <= 4; z++) h.setBlock(new BlockPos(x, 1, z), Blocks.DIRT);
         h.setBlock(soil, Blocks.FARMLAND);
         h.setBlock(crop, ((CropBlock) Blocks.WHEAT).getStateForAge(7));
         h.setBlock(chestAt, Blocks.CHEST);
