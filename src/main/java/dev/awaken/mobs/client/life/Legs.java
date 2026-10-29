@@ -33,6 +33,8 @@ public final class Legs {
     float weight, rear, rear2;
     /** The body over its feet: px it sinks (the ground under them, a step's share), pitch and roll (radians, model). */
     float groundY, groundPitch, groundRoll, gaitY, gaitRoll;
+    /** How far the front pair's feet are through their steps (0 planted, 1 a whole step up): the head nods with them. */
+    float foreLift;
     private boolean init, fast;
     private double ex, ez, hx, hz;
     private float lastYaw, clock, rate, still, nextRegrip, vx, vz, yawRate, t;
@@ -245,13 +247,14 @@ public final class Legs {
      * feet), sinking a touch while feet are up and leaning off a lifted one (the step's weight shift).
      */
     private void carriage(double y, float sc, float dt, MotionProfile.Gait g) {
-        float sum = 0, front = 0, back = 0, left = 0, right = 0, up = 0, lean = 0;
+        float sum = 0, front = 0, back = 0, left = 0, right = 0, up = 0, lean = 0, fore = 0;
         int nf = 0, nb = 0, nl = 0, nr = 0, np = 0;
         for (int i = 0; i < rig.n; i++) {
             if (swinging[i]) {
                 float arc = Mth.sin(Mth.PI * u[i]);
                 up += arc;
                 lean -= rig.side[i] * arc;
+                if (rig.rank[i] == 0) fore += arc;
                 continue;
             }
             float h = (float) (fy[i] - y) / sc;
@@ -285,6 +288,7 @@ public final class Legs {
         float b = Math.min(1.0F, dt / 0.05F);
         gaitY += (g.bob() * up / Math.max(1.0F, rig.n * 0.5F) - gaitY) * b;
         gaitRoll += (g.roll() * lean - gaitRoll) * b;
+        foreLift += (fore - foreLift) * b;
     }
 
     /** The top of the ground under (x, z), from a block above the body's feet down to three below; y if none. */

@@ -29,6 +29,9 @@ public record MotionProfile(String id, @Nullable Gait gait, Body body) {
     /** The leg patterns: one foot at a time from the back forward, opposite sets, or the first slow and the second fast. */
     public enum Pattern { RIPPLE, ALTERNATE, RIPPLE_ALTERNATE }
 
+    /** Which way a leg straight at rest bends: a quadruped's forelegs forward and hocks back, all forward, or all back. */
+    public enum Knees { AUTO, FORWARD, BACK }
+
     /**
      * The feet. {@code duty} is the share of a cycle a foot stands (walking, running), {@code lift} how high a step
      * rises (px, walking and running), {@code reach} how far (blocks) a planted foot may trail before it steps at once,
@@ -40,26 +43,28 @@ public record MotionProfile(String id, @Nullable Gait gait, Body body) {
      * is up (shared by the feet), {@code roll} how far (radians) it leans off a lifted foot, {@code rear} (0..1) how far
      * the front pairs let go to the clips during a wind-up (a spider rearing its forelegs before it strikes),
      * {@code rearPairs} how many pairs that is (a roar lets one more go), {@code lag} the share of a cycle each pair's
-     * ripple step follows the pair behind it (0: one wave over the side; a centipede's legs run in several).
+     * ripple step follows the pair behind it (0: one wave over the side; a centipede's legs run in several),
+     * {@code knees} which way a leg straight at rest bends (one bent at rest keeps its own way).
      */
     public record Gait(Pattern pattern, float dutyWalk, float dutyRun, float liftWalk, float liftRun, float reach, float settle,
                        float crouch, float radius, float fan, float regripMin, float regripMax, float swing, float strideWalk,
-                       float strideRun, float bob, float roll, float rear, int rearPairs, float lag) {}
+                       float strideRun, float bob, float roll, float rear, int rearPairs, float lag, Knees knees) {}
 
     /**
      * The body. {@code headLevel} (0..1) how much the head holds level against the gait's pitch and roll,
      * {@code twist} (0..1) the share of its look the body turns, {@code slope} (0..1) how much it pitches and rolls with
      * the ground under its feet, {@code land} how hard a landing squashes it, {@code still}: a hunter that freezes
      * while it stalks (no fidgets, no re-grips, a held breath), {@code creep} how far (px) it sinks on its legs then,
-     * {@code shift} how far (px) its weight drifts over its planted feet while it stands.
+     * {@code shift} how far (px) its weight drifts over its planted feet while it stands, {@code nod} how far (radians)
+     * the neck dips while a forefoot is up (a grazer's walk).
      */
-    public record Body(float headLevel, float twist, float slope, float land, boolean still, float creep, float shift) {
-        static final Body NONE = new Body(0, 0, 0, 0, false, 0, 0);
+    public record Body(float headLevel, float twist, float slope, float land, boolean still, float creep, float shift, float nod) {
+        static final Body NONE = new Body(0, 0, 0, 0, false, 0, 0, 0);
     }
 
     private static final Set<String> GAIT = Set.of("pattern", "duty", "lift", "reach", "settle", "crouch", "radius", "fan", "regrip", "swing",
-            "stride", "bob", "roll", "rear", "rearPairs", "lag");
-    private static final Set<String> BODY = Set.of("headLevel", "twist", "slope", "land", "still", "creep", "shift");
+            "stride", "bob", "roll", "rear", "rearPairs", "lag", "knees");
+    private static final Set<String> BODY = Set.of("headLevel", "twist", "slope", "land", "still", "creep", "shift", "nod");
 
     private static @Nullable Map<String, MotionProfile> all;
 
@@ -101,13 +106,13 @@ public record MotionProfile(String id, @Nullable Gait gait, Body body) {
         return new Gait(p, duty[0], duty[1], lift[0], lift[1], num(o, "reach", 0.6F), num(o, "settle", 0.1F), num(o, "crouch", 0),
                 num(o, "radius", 0), num(o, "fan", 0), regrip[0], regrip[1], num(o, "swing", 0.35F), stride[0], stride[1],
                 num(o, "bob", 0.3F), num(o, "roll", 0.02F), Math.clamp(num(o, "rear", 0), 0.0F, 1.0F), (int) num(o, "rearPairs", 1),
-                Math.clamp(num(o, "lag", 0), 0.0F, 0.5F));
+                Math.clamp(num(o, "lag", 0), 0.0F, 0.5F), Knees.valueOf(str(o, "knees", "auto").toUpperCase(Locale.ROOT)));
     }
 
     private static Body body(String id, JsonObject o) {
         for (String k : o.keySet()) if (!BODY.contains(k)) throw new IllegalStateException(PATH + ": " + id + ": unknown body field " + k);
         return new Body(num(o, "headLevel", 0), num(o, "twist", 0), num(o, "slope", 0), num(o, "land", 0),
-                o.has("still") && o.get("still").getAsBoolean(), num(o, "creep", 0), num(o, "shift", 0));
+                o.has("still") && o.get("still").getAsBoolean(), num(o, "creep", 0), num(o, "shift", 0), num(o, "nod", 0));
     }
 
     private static float num(JsonObject o, String k, float d) {

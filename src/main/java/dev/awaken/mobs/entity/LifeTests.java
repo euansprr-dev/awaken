@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * The life layer's data (SPEC §23), checked on plain data like the hero rigs: every creature on one of our own bodies
@@ -30,6 +31,9 @@ import java.util.Map;
  */
 public final class LifeTests {
     private LifeTests() {}
+
+    /** The forms' grazers: four straight legs whose knees the motion layer breaks by the leg (SPEC §23.1). */
+    private static final Pattern GRAZER = Pattern.compile("form_(pig|cow|sheep)_\\d");
 
     /** Our hand-built bodies' part names (mobs.client.model: AwModels, FaunaModels, WildModels), "name:parent". */
     static final Map<Model, String> HAND_BUILT = Map.ofEntries(
@@ -171,9 +175,10 @@ public final class LifeTests {
                     m.invertAffine(toParent);
                     float[] hp = pose[legs.hipBone(i)];
                     float hx = legs.homeX[i], hz = legs.homeZ[i];
-                    // home, a step's reach ahead and behind, the top of a step's arc, home with the body crouched
-                    float c = mp.gait().crouch() + mp.body().creep();
-                    float[][] targets = {{hx, 24, hz}, {hx, 24, hz - 5}, {hx, 24, hz + 5}, {hx, 24 - lift, hz - 2}, {hx, 24 - c, hz}};
+                    // home on its crouch (a straight-legged body always stands a touch sunk), a step's reach ahead and
+                    // behind, the top of a step's arc, home with the body sunk low to stalk
+                    float s = mp.gait().crouch(), c = s + mp.body().creep();
+                    float[][] targets = {{hx, 24 - s, hz}, {hx, 24, hz - 5}, {hx, 24, hz + 5}, {hx, 24 - lift, hz - 2}, {hx, 24 - c, hz}};
                     for (int k = 0; k < targets.length; k++) {
                         float[] tg = targets[k];
                         toParent.transformPosition(tg[0], tg[1], tg[2], want);
@@ -191,6 +196,16 @@ public final class LifeTests {
                         if (dist > legs.fold(i) + 0.2F && dist < legs.reach(i) - 0.2F && foot.distance(want) > 0.05F) {
                             problems.add(mp.id() + " leg " + i + ": the foot lands " + foot.distance(want) + " px off its target");
                         }
+                        // a grazer's straight legs on their crouch: the forelegs' knees break forward, the hocks back
+                        if (k == 0 && GRAZER.matcher(mp.id()).matches()) {
+                            Vector3f kneeM = m.transformPosition(new Vector3f(knee)), hipM = m.transformPosition(new Vector3f(hp[0], hp[1], hp[2]));
+                            Vector3f footM = m.transformPosition(new Vector3f(foot));
+                            float t = (kneeM.y - hipM.y) / Math.max(0.01F, footM.y - hipM.y);
+                            float bulge = kneeM.z - (hipM.z + (footM.z - hipM.z) * t);
+                            if (hipM.z < 0 ? bulge > -0.1F : bulge < 0.1F) {
+                                problems.add(mp.id() + " leg " + i + ": its knee breaks " + (bulge < 0 ? "forward" : "back") + " (" + bulge + " px)");
+                            }
+                        }
                         // the rotations survive the trip through the part's Euler angles (ZYX, as ModelPart draws them)
                         hr.getEulerAnglesZYX(e);
                         back.rotationZYX(e.z, e.y, e.x);
@@ -199,7 +214,7 @@ public final class LifeTests {
                     checked++;
                 }
             }
-            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 2 + 8, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's two, the weaver queen's eight (and every other gait's) are checked (" + checked + ")");
+            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 2 + 8 + 12 * 4 + 4 * 2, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's two, the weaver queen's eight, the form grazers' four and chickens' two (and every other gait's) are checked (" + checked + ")");
             h.assertTrue(problems.isEmpty(), String.join("; ", problems));
             h.succeed();
         });

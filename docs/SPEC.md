@@ -5592,13 +5592,17 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   from its hip, the front ones fanned forward and the back ones back by `fan` degrees), `regrip` (seconds between a calm
   creature's idle re-grips of one foot), `swing` (the longest a step takes), `bob` (px the body sinks while feet are up),
   `roll` (radians it leans off a lifted foot), `rear` (how far the front `rearPairs` pairs, 1 unless set, let go to the
-  clips while the body rears: a wind-up, a strike or a cue, a roar, or a still threat; a roar lets one pair more go).
+  clips while the body rears: a wind-up, a strike or a cue, a roar, or a still threat; a roar lets one pair more go),
+  `knees` (`auto`, `forward`, `back`: which way a leg that stands straight at rest bends; `auto` breaks the forelegs of a
+  body with legs one behind another forward and every other leg back, a bird's and a biped's back; a leg bent at rest
+  keeps its own bulge).
   `body`: `headLevel` (the head holds level against the gait's and the ground's pitch and roll), `twist` (the body turns
   this share of its look, at most 0.35 rad), `slope` (it pitches and rolls with the ground under its planted feet),
   `land` (a landing squashes it by how far it fell: a spring at 3 Hz kicked by the fall speed), `still` (a stalking
   hunter holds its breath to a quarter, plays no fidgets and no re-grips), `creep` (px it sinks while stalking), `shift`
   (px its weight drifts over its planted feet while it stands, on two slow unrelated beats in its own phase, leaning a
-  little over the side it moves to; the legs give and take under it; gone in 0.6 s once it walks, stalks or lets go).
+  little over the side it moves to; the legs give and take under it; gone in 0.6 s once it walks, stalks or lets go),
+  `nod` (radians the neck, or the head without one, dips while a forefoot is up: a grazer's head bobbing with its steps).
 - **Legs** (`LegRig`, plain data, checked on the server): a leg is a LEG-role bone that hangs from a non-leg with exactly
   one LEG-role child (hip and knee), which has at most one LEG-role child of its own (a foot, the tarsus of a long
   spider leg: it rides the shin as it stands at rest, the IK reaching with its tip) and nothing below that. Each is posed
@@ -5667,10 +5671,24 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   lets its front three pairs go (`rearPairs` 3: the Coil Strike's S rears them), a roar four. Head level 0.3, twist 0.3,
   slope 0.7, land 0.8. Its rest pose sits a pixel lower with the legs out flatter (thigh -10°, shin 84°) so every foot
   reaches the ground (they hung 3 px above it).
+- **Form grazers** (`form_pig_2`..`_5`, `form_cow_2`..`_5`, `form_sheep_2`..`_5`, SPEC 21.13; four straight two-bone
+  legs, thigh and shin): a lateral walk (`ripple-alternate`: right hind, right fore, left hind, left fore, a quarter of a
+  cycle apart) into a trot of diagonal pairs; they stand sunk 2.2-2.5% of a leg on their crouch so the forelegs'
+  knees break forward and the hocks back (about 25° at rest, deep while a foot is up), and the neck nods with the
+  forefeet (`nod`). Pig: duty 0.68/0.42, steps a fifth of a leg high (a third running), quick 0.22 s swings, bob 0.35,
+  roll 0.035, nod 0.07, shift 0.35-0.5. Cow: duty 0.72/0.45, steps 17%/28% of a leg, 0.3 s swings, bob 0.5, nod 0.09,
+  shift 0.6-0.9 (a heavy body settling). Sheep between them, nod 0.08. All `rear` 1: angry and still, its front pair
+  goes to the clip so it paws; a charge's wind-up rocks back on planted hind feet. Head level 0.3-0.35, twist 0.2-0.25,
+  slope 0.8-0.85.
+- **Form chickens** (`form_chicken_2`..`_5`; two straight legs from the base, the foot drawn on the shank): a bird's
+  alternating strut, duty 0.62/0.4, steps 28%/40% of a leg high, quick 0.16 s swings, sunk 5% of a leg so the ankles
+  break back; the head holds still in space against the body (head level 0.7) while the clip thrusts the neck; bob
+  0.4, roll 0.05, land 1.2, shift 0.2.
 - Test: `creature_motion_feet` (every motion.json entry names a rig; every gait finds two-bone legs on a body bone that
-  carries the head; every foot can reach its stance standing and crouched; the IK lands each foot within 0.05 px of its
+  carries the head; every foot can reach its stance on its crouch and sunk to stalk; the IK lands each foot within 0.05 px of its
   home, a step ahead and behind, the top of a step's arc and the crouch, checked by forward kinematics; the hip's turn
-  survives its ZYX Euler angles; the forms' rigs are looked up too). Tours walk still (NoAI) creatures with
+  survives its ZYX Euler angles; a form grazer's forelegs' knees break forward and its hind legs' back; the forms' rigs
+  are looked up too). Tours walk still (NoAI) creatures with
   `/awaken admin stroll <targets> <blocks per tick> <ticks> [degrees per tick]` (each call queues a leg; the server moves
   them every tick, so a busy runner can't turn a scripted walk into a crawl the way a tp a command did), load the studio's
   chunks first (`forceload`) and fill its floor twice. Tours on CI (PACK=perf,feel; a vanilla spider under

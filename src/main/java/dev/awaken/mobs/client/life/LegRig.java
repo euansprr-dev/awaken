@@ -96,14 +96,18 @@ public final class LegRig {
             Vector3f d = new Vector3f(ft).sub(hp).normalize();
             Vector3f bulge = new Vector3f(kn).sub(hp);
             bulge.sub(new Vector3f(d).mul(bulge.dot(d)));
-            pole[i] = bulge.lengthSquared() > 0.01F ? bulge.normalize() : new Vector3f(0, -1, 0);
+            rest(up[i], pose, m);
+            if (bulge.lengthSquared() > 0.01F) {
+                pole[i] = bulge.normalize();
+            } else { // a straight leg at rest: its knee bends the way the profile says (a foreleg's forward, a hock's back)
+                pole[i] = new Matrix3f().set(m).transpose().transform(new Vector3f(0, 0, kneesForward(gait, i, legs, chains, pose) ? -1 : 1));
+            }
             Vector3f hinge = new Vector3f(u).cross(w);
             if (hinge.lengthSquared() < 1e-4F) hinge.set(u).cross(pole[i]);
             hinge.normalize();
             Vector3f third = new Vector3f(u).cross(hinge);
             a0t[i] = new Matrix3f().set(u, hinge, third).transpose();
             // the foot and the hip at rest in model space
-            rest(up[i], pose, m);
             Vector3f footM = m.transformPosition(new Vector3f(ft));
             Vector3f hipM = m.transformPosition(new Vector3f(hp));
             hipX[i] = hipM.x;
@@ -173,6 +177,27 @@ public final class LegRig {
             }
             near[i] = by.stream().mapToInt(Integer::intValue).toArray();
         }
+    }
+
+    /**
+     * Whether a straight leg's knee bends forward: as the profile says, else a quadruped's foreleg (a front leg of a body
+     * with legs one behind another) forward and every other back. Ranks aren't known yet, so the front is found here.
+     */
+    private static boolean kneesForward(MotionProfile.Gait gait, int i, List<int[]> legs, List<int[]> chains, float[][] pose) {
+        if (gait.knees() != MotionProfile.Knees.AUTO) return gait.knees() == MotionProfile.Knees.FORWARD;
+        Matrix4f m = new Matrix4f();
+        float[] z = new float[legs.size()];
+        for (int j = 0; j < z.length; j++) {
+            rest(chains.get(j), pose, m);
+            float[] h = pose[legs.get(j)[0]];
+            z[j] = m.transformPosition(new Vector3f(h[0], h[1], h[2])).z;
+        }
+        float min = Float.MAX_VALUE, max = -Float.MAX_VALUE;
+        for (float v : z) {
+            min = Math.min(min, v);
+            max = Math.max(max, v);
+        }
+        return max - min > 1.0F && z[i] < (min + max) / 2;
     }
 
     /** The bones' rest product (root first): the frame they hand their child, into {@code m}. */

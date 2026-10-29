@@ -424,6 +424,11 @@ public final class LifeRig {
                 head.xRot -= levelPitch * mb.headLevel();
                 head.zRot -= levelRoll * mb.headLevel();
             }
+            // a grazer's head bobs down as a forefoot lifts and comes up as it plants (the neck carries it when it has one)
+            if (lg != null && mb.nod() != 0) {
+                ModelPart n = neck != null ? neck : head;
+                if (n != null) n.xRot += mb.nod() * lg.foreLift * lg.weight;
+            }
         }
         for (ModelPart c : chests) {
             c.xScale += 0.04F * b;
