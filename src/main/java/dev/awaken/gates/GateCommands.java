@@ -220,7 +220,11 @@ final class GateCommands {
                     t == Theme.HIVE ? Theme.FUNGAL_HOLLOW : Theme.HIVE, 0, fw);
         };
         try {
-            return open(c, StringArgumentType.getString(c, "theme"), false);
+            int gid = open(c, StringArgumentType.getString(c, "theme"), false);
+            // a tour's gate stands where it's opened, even over a village's edge (the tour can't pick another spot)
+            GateRecord g = gid > 0 ? GateRegistry.get(c.getSource().getServer()).gate(gid) : null;
+            if (g != null) g.anyGround = true;
+            return gid;
         } finally {
             Director.tourPlan = null;
         }

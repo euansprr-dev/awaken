@@ -22,13 +22,16 @@ screen close
 cmd difficulty peaceful
 cmd gamerule send_command_feedback false
 hud off
-# away from Carillon first: gates never form in its reserve, and the first hop (no gates yet) stays close
+# away from Carillon first: gates never form in its reserve, and the first hop (no gates yet) stays close; on CI the
+# land out there takes a while to make, so wait for it before the first gate looks for dry ground
 cmd tp @s 6000 200 6000
-wait 200
+wait 600
+cmd awaken gate hop
+wait 300
 
 # ---- The Comb ----------------------------------------------------------------------------------------------------------
 cmd awaken gate hop
-wait 60
+wait 160
 cmd awaken gate open E hive world 6 awaken:hive/the_comb
 wait 400
 cmd awaken gate interior enter
@@ -42,7 +45,7 @@ shot depth_comb_v6_b
 cmd awaken gate leave
 wait 100
 cmd awaken gate hop
-wait 60
+wait 160
 cmd awaken gate open E hive world 7 awaken:hive/the_comb
 wait 400
 cmd awaken gate interior enter
@@ -58,7 +61,7 @@ wait 100
 
 # ---- The Brood Hall ----------------------------------------------------------------------------------------------------
 cmd awaken gate hop
-wait 60
+wait 160
 cmd awaken gate open E hive world 6 awaken:hive/brood_hall
 wait 400
 cmd awaken gate interior enter
@@ -72,7 +75,7 @@ shot depth_brood_v6_b
 cmd awaken gate leave
 wait 100
 cmd awaken gate hop
-wait 60
+wait 160
 cmd awaken gate open E hive world 7 awaken:hive/brood_hall
 wait 400
 cmd awaken gate interior enter
@@ -88,7 +91,7 @@ wait 100
 
 # ---- The Swarm ---------------------------------------------------------------------------------------------------------
 cmd awaken gate hop
-wait 60
+wait 160
 cmd awaken gate open E hive world 6 awaken:hive/the_swarm
 wait 400
 cmd awaken gate interior enter
@@ -102,7 +105,7 @@ shot depth_swarm_v6_b
 cmd awaken gate leave
 wait 100
 cmd awaken gate hop
-wait 60
+wait 160
 cmd awaken gate open E hive world 7 awaken:hive/the_swarm
 wait 400
 cmd awaken gate interior enter

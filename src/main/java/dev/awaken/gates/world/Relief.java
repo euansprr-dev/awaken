@@ -30,6 +30,15 @@ final class Relief {
     final long seed;
     /** The ground over every column of the plot, half blocks above the floor line. */
     final byte[] g = new byte[Plots.SIDE * Plots.SIDE];
+    /**
+     * How wild each column is, in hundredths: 0 on the way you walk, 100 six blocks off it (a fought middle stays tame).
+     * Bits, banked drifts, the theme's creep and what grows on the floor thicken with it.
+     */
+    final byte[] wild = new byte[Plots.SIDE * Plots.SIDE];
+    /** How far in from its place's wall each column is, in quarter blocks up to 8 blocks (0 off the places). */
+    final byte[] in = new byte[Plots.SIDE * Plots.SIDE];
+    /** Columns that stay as the dress left them: doorways, pads, lakes (nothing banks or creeps there). */
+    final java.util.BitSet pinned = new java.util.BitSet(Plots.SIDE * Plots.SIDE);
 
     Relief(CaveEngine.Cave c) {
         this.c = c;
@@ -46,6 +55,18 @@ final class Relief {
     /** Where you stand at (x, z), whole blocks above the floor line: the block your feet are in (over a slab, the next). */
     int stand(int x, int z) {
         return (half(x, z) + 1) >> 1;
+    }
+
+    /** How wild (x, z) is, 0 to 1. */
+    double wild(int x, int z) {
+        if (x < 0 || z < 0 || x >= Plots.SIDE || z >= Plots.SIDE) return 0;
+        return wild[x + z * Plots.SIDE] / 100.0;
+    }
+
+    /** How far in from the wall (x, z) is, blocks (0 off a place, at most 8). */
+    double inside(int x, int z) {
+        if (x < 0 || z < 0 || x >= Plots.SIDE || z >= Plots.SIDE) return 0;
+        return (in[x + z * Plots.SIDE] & 0xff) / 4.0;
     }
 
     /** Whether a place is shaped in full (the caverns, the arrival, the end and the secret place; not a tunnel or a built room). */
@@ -70,9 +91,16 @@ final class Relief {
                 double[] at = way.at(px, pz);
                 if (at == null || Math.abs(at[0]) > c.hw + 0.5) continue;
                 in[i] = true;
+                int k = x + z * Plots.SIDE;
+                double lat = Math.abs(at[0]);
+                wild[k] = (byte) Math.round(60 * clamp((lat - c.hw + 1.2) / 1.2, 0, 1));
+                this.in[k] = (byte) Math.round(4 * clamp(c.hw + 0.5 - lat, 0, 8));
                 boolean door = false;
                 for (Room.Door dr : r.doors) door |= Math.hypot(px - dr.centerX() - 0.5, pz - dr.centerZ() - 0.5) < 2.5;
-                if (door) continue;
+                if (door) {
+                    pinned.set(k);
+                    continue;
+                }
                 double swell = (Hash.noise(seed + 31, px, pz, 13) - 0.26) * 7 + (Hash.noise(seed + 25, px, pz, 8) - 0.5) * 1.5;
                 v[i] = (int) Math.round(clamp(swell, 0, 2));
             }
@@ -153,6 +181,9 @@ final class Relief {
                 double wd = 99;
                 for (double[] sg : way) wd = Math.min(wd, seg(px, pz, sg));
                 double wild = clamp((wd - 1.8) / 4, 0, 1);
+                int k = x + z * Plots.SIDE;
+                this.wild[k] = (byte) Math.round(100 * (fight && q < 0.5 ? wild * 0.3 : wild));
+                this.in[k] = (byte) Math.round(4 * clamp(-c.d(id, px, pz) + 0.5, 0, 8));
                 // the ground rolls everywhere a little, half a step at a time
                 double roll = (Hash.noise(seed + 25, px, pz, 8) - 0.5) * 3.6;
                 // away from the way: terraces climbing toward the walls (their edges ragged), a mound here and there,
@@ -175,6 +206,7 @@ final class Relief {
                 v[i] = gi;
                 s[i] = (byte) (fight && q < 0.5 || wd < 3.5 ? 1 : 2);
                 pin[i] = pinned(r, sh, px, pz, q, lake, hands, pad);
+                if (pin[i]) pinned.set(k);
             }
         }
         // no specks: a rise or a hollow needs most of its neighbours with it (a wall counts), or it reads as a tile dropped
@@ -279,10 +311,15 @@ final class Relief {
     /** One column's ground: raised over the floor line, or a hollow sunk under it. */
     void column(Sculpt.Buf b, int x, int z) {
         int v = half(x, z);
-        if (v == 0) return;
         // only over open floor (never a doorway's threshold, a pool or a wall)
         if (!clear(b, x, W, z) || !Dress.solid(b, x, W - 1, z) || b.water(x, W - 1, z)) return;
         Dress d = c.dress;
+        if (v == 0) {
+            if (pinned.get(x + z * Plots.SIDE)) return;
+            creep(b, x, W, z);
+            if (b.open(x, W, z)) over(b, x, W, z, 0);
+            return;
+        }
         // what grew on the floor line (a candle, petals, a two-high plant) moves to the new ground
         BlockState grown = b.open(x, W, z) ? null : b.state(x, W, z);
         BlockState grown2 = grown != null && !b.open(x, W + 1, z) && clear(b, x, W + 1, z) ? b.state(x, W + 1, z) : null;
@@ -304,6 +341,7 @@ final class Relief {
                 if (step != null) b.set(x, top, z, step);
                 top++;
             }
+            creep(b, x, top, z);
             if (!regrow(b, x, top, z, grown, grown2)) over(b, x, top, z, v);
             return;
         }
@@ -316,7 +354,32 @@ final class Relief {
             if (slab != null) b.set(x, top, z, slab);
             top++;
         }
+        creep(b, x, top, z);
         if (!regrow(b, x, top, z, grown, grown2)) over(b, x, top, z, v);
+    }
+
+    /**
+     * The theme's growth creeping in where it's wildest (38.14, the way and the wild): over the floor under (x, y, z) and up
+     * the foot of the walls beside it, thicker the wilder.
+     */
+    void creep(Sculpt.Buf b, int x, int y, int z) {
+        double w = wild(x, z);
+        if (w < 0.55) return;
+        long hs = Hash.of(seed + 43, x, z);
+        double t = (w - 0.55) / 0.45 * (0.5 + Hash.noise(seed + 45, x, z, 4));
+        if (Hash.unit(hs) >= t) return;
+        BlockState floor = c.dress.creep(x, y - 1, z);
+        if (floor != null && b.get(x, y - 1, z) == Sculpt.SOLID) b.set(x, y - 1, z, floor);
+        if (inside(x, z) > 1.5) return;
+        int high = 1 + (int) (Hash.unit(Hash.mix(hs)) * 4 * w);
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            int nx = x + dir.getStepX(), nz = z + dir.getStepZ();
+            for (int yy = y; yy < y + high; yy++) {
+                if (b.get(nx, yy, nz) != Sculpt.SOLID) break;
+                BlockState wall = c.dress.creep(nx, yy, nz);
+                if (wall != null) b.set(nx, yy, nz, wall);
+            }
+        }
     }
 
     /** Sets what grew on the floor line on the new ground (on a half step it's lost: it would float). */
@@ -343,11 +406,28 @@ final class Relief {
         return d.ground(SLAB, x, y, z);
     }
 
-    /** What lies on the ground: a drift at the foot of a rise, bits scattered on it. */
+    /**
+     * What lies on the ground: a drift banked against the wall in the wild (deepest at its foot, gone three blocks out), a
+     * drift at the foot of a rise or in a dip, bits scattered by how wild it is (none on the way).
+     */
     void over(Sculpt.Buf b, int x, int y, int z, int v) {
         if (!b.open(x, y, z)) return;
         Dress d = c.dress;
         long hs = Hash.of(seed + 41, x, z);
+        double w = wild(x, z), into = inside(x, z);
+        BlockState bank = d.ground(DRIFT, x, y, z);
+        if (bank != null && w > 0.45 && into < 3) {
+            int layers = (int) Math.round((w - 0.45) / 0.55 * (3 - into) / 3 * 7 + (Hash.unit(Hash.mix(hs + 3)) - 0.5) * 1.5);
+            if (layers >= 1) {
+                b.set(x, y, z, bank.trySetValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LAYERS, Math.min(7, layers)));
+                return;
+            }
+        }
+        if (v == 0) {
+            BlockState bits = d.ground(BITS, x, y, z);
+            if (bits != null && Hash.unit(Hash.mix(hs + 7)) < d.bits() * w) b.set(x, y, z, bits);
+            return;
+        }
         boolean foot = half(x + 1, z) >= v + 2 || half(x - 1, z) >= v + 2 || half(x, z + 1) >= v + 2 || half(x, z - 1) >= v + 2;
         BlockState drift = d.ground(DRIFT, x, y, z);
         if (drift != null && (foot || v < 0) && Hash.unit(hs) < 0.55) {
@@ -356,7 +436,7 @@ final class Relief {
             return;
         }
         BlockState bits = d.ground(BITS, x, y, z);
-        if (bits != null && Hash.unit(Hash.mix(hs + 7)) < d.bits()) b.set(x, y, z, bits);
+        if (bits != null && Hash.unit(Hash.mix(hs + 7)) < d.bits() * w) b.set(x, y, z, bits);
     }
 
     /** Open air or something thin standing there (a plant, a candle, crumbs). */

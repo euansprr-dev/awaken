@@ -10728,7 +10728,7 @@ now, fought-on second storeys in a later plan.
   Hive's wax with every third layer dark), its top skinned as floor; a half step is a stair facing up a straight ramp,
   else a slab (on the Hive's pollen a pollen drift four layers deep); a hollow is opened with a shell under it. What grew
   on the floor line is moved up onto the new ground; elsewhere a drift at a rise's foot or in a dip (55%, one or two
-  layers) or bits (`Dress.bits`, the Hive's wax crumbs at 14%).
+  layers) or bits (by how wild it is: below).
 - **Walls and roof over shaped ground.** A groove 1 high is cut into the wall's foot at the local ground (0.9 to 1.7
   deep, the wall's first 2 blocks), so walls aren't plumb from feet to head. The roof rises with the terraces (the
   terrace's height is added to it: no trench at a wall's foot), swells and dips away from the walls (+-7.5) and opens
@@ -10749,15 +10749,38 @@ now, fought-on second storeys in a later plan.
   cells a block thick and 5 to 9 long, deepest in its middle (up to 7), its lower edge dark wax; never within 4 blocks
   over where you stand, never within 1.5 of a wall (4 round the Brood Hall's ledges), never in a boss's room. The Brood
   Hall's great place keeps 6 of head room under its lowest ledge (`Dress.headroom`).
-- **Measured** (`gateworlds_depth`, the Hive held to the targets): the Comb flat 47%, 11 heights, 18% partial, 20%
-  plumb, roof spread 6.1, detail 43; the Brood Hall 41%, 11, 20%, 21%, 7.1, 46; the Swarm 52%, 10, 13%, 17%, 6.3, 47
-  (today's rooms: flat about 98%, plumb 97%). Honey Lake is a sea world (stage 2). A place plans in about 5 ms.
+- **The way and the wild.** Each shaped column keeps how wild it is (0 on the way's core, rising to 1 away from it; a
+  fought middle a third as wild; a tunnel wild only at its sides) and how far in from the wall it is. Where it's
+  wildest (over 0.55) the theme's growth creeps (`Dress.creep`, the Hive's capped comb) over the floor and up the foot
+  of the walls beside it (up to 4 high, thicker the wilder; never on a pad); drifts bank against the wall (wild over
+  0.45, within 3 of it, deepest at its foot, up to 7 layers); bits lie by how wild it is (`Dress.bits` x wild: the
+  Hive's crumbs at most about one in 12 floor blocks, none on the way); the dress's growth thickens with it (0.2 to 2
+  times). A wall nook's crawl mouth is kept clear (1.5 round it), so a banked drift never seals it.
+- **Things standing in the space** (`Formations`, once the ground is solved, before the lights). In each shaped place's
+  wild (never a boss's room) a chunk's cavern gets one or two pieces and a bigger place up to three clusters of two to
+  four (one more cluster per 150 wild spots): a **pillar** from the ground to the roof (only a cluster's first, 2.5 or
+  more from the wall where the roof is 7 or more over the ground; slimmest a little under halfway, flaring into the
+  ground and wider into the roof), an **outcrop** half sunk and lumpy with slabs where its top steps up, a **fallen
+  piece** 4 to 7 long lying along the ground half sunk (each end on the ground under it), a **heap** with a drift
+  slumped round it. A piece's footprint is wild ground (0.35 or more) or the wall (an outcrop may lean on it), never a
+  pad or the way; each is blocked, so nothing spawns or stands in it. The theme cuts them (`Dress.formation`; null is
+  the shell's own skin): the Hive's wax pillars banded dark with a honey cell here and there, wax mounds crusted with
+  capped comb, fallen comb with its cells broken open, heaps of dark wax. About half the Hive's small caverns get
+  something, and every bigger place.
+- **No jump on the way.** `gateworlds_depth` also walks each built world from the arrival to the end without a jump (no
+  rise over 0.6 of a block by what you stand on: a slab or a stair is a step, a full block a jump) and fails a world
+  that needs one (`jumps`, 0 in all three).
+- **Measured** (`gateworlds_depth`, the Hive held to the targets): the Comb flat 47%, 13 heights, 19% partial, 37%
+  plumb, roof spread 6.1, detail 40; the Brood Hall 41%, 14, 21%, 39%, 7.1, 43; the Swarm 52%, 12, 16%, 34%, 6.3, 45
+  (today's rooms: flat about 98%, plumb 97%). Honey Lake is a sea world (stage 2). A world's floor plans in 6 to 10 ms.
 - **Tour `gate-depth-hive`** (CI): the Comb, the Brood Hall and the Swarm at version 6 and at version 7 on the same
   floors, each floor 1's biggest place and its second. Its tools (game master, tours): `/awaken gate open <rank>
   <theme> world <version> <world id>` makes a gate whose floors are all that world, on the depth test's plan (seed,
   layout, four floors), so a world's two versions are the same floors; `/awaken gate interior goto place|place2` stands
   just inside a world floor's biggest (or second) place where you walk in (else a doorway), a block over the ground,
-  facing its middle. The tour starts 6,000 blocks out (no gate forms in Carillon's reserve) with the HUD off.
+  facing its middle. The tour starts 6,000 blocks out (no gate forms in Carillon's reserve) with the HUD off,
+  and waits for the land there before its first gate; a gate made by `gate open ... world` stands where it's opened,
+  even over a village's edge (a tour can't pick another spot).
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 

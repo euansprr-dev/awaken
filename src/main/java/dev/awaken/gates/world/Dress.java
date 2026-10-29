@@ -163,9 +163,22 @@ abstract class Dress {
         return 0;
     }
 
-    /** How thickly the bits lie on shaped ground. */
+    /** How thickly the bits lie on shaped ground where it's wildest (none on the way; about one in 12 at most). */
     double bits() {
         return 0;
+    }
+
+    /** The theme's growth creeping over floor and wall where a place is wildest (38.14), or null. */
+    BlockState creep(int x, int y, int z) {
+        return null;
+    }
+
+    /**
+     * A block of what stands in a shaped place's wild ({@link Formations}: a {@link Formations#PILLAR}, a
+     * {@link Formations#ROCK}, a {@link Formations#FALLEN} piece, a {@link Formations#HEAP}), or null: the shell's own skin.
+     */
+    BlockState formation(int part, int x, int y, int z) {
+        return null;
     }
 
     /** The most room over a column of a place, blocks over the floor line, where the dress hangs something low (a ledge). */
@@ -328,7 +341,9 @@ abstract class Dress {
         c.s.op(b[0], W, b[1], b[2], W, b[3], (buf, x, y, z) -> {
             if (!buf.open(x, y, z) || !solid(buf, x, y - 1, z) || !buf.open(x, y + 1, z)) return;
             long h = Hash.of(seed + salt, x, z);
-            if (Hash.unit(h) >= density || nearDoor(r, x + 0.5, z + 0.5, 2.5) || p.nearAnchor(x + 0.5, z + 0.5, 3)) return;
+            // on shaped ground it thickens with the wild: a fifth as thick on the way, near twice in the wildest corners
+            double here = c.relief == null ? density : density * (0.2 + 1.8 * c.relief.wild(x, z));
+            if (Hash.unit(h) >= here || nearDoor(r, x + 0.5, z + 0.5, 2.5) || p.nearAnchor(x + 0.5, z + 0.5, 3)) return;
             BlockState s = pick.at(x, y, z, 1, (int) (Hash.mix(h) & 7));
             if (s != null) buf.set(x, y, z, s);
         });
@@ -428,6 +443,8 @@ abstract class Dress {
                     (px, py, pz) -> Math.max(Sculpt.capsule(px, W + 1.0, pz, ax, W + 1.0, az, ex + 0.5, W + 1.0, ez + 0.5, 0.75), W - py));
             open(ex - 1, W, ez - 1, ex + 1, W + 2, ez + 1);
             p.mark(FloorLayout.Mark.NOOK, secret, ex - 1, 0, ez - 1, ex + 1, 2, ez + 1);
+            // on shaped ground the crawl's mouth stays at the floor line (two high, it's only entered from there)
+            if (c.relief != null) block(ax, az, 1.5);
             return new int[]{ex, ez, ix, iz};
         }
         return null;

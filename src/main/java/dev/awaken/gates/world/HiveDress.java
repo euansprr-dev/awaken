@@ -100,7 +100,32 @@ final class HiveDress extends Dress {
 
     @Override
     double bits() {
-        return 0.14;
+        return 0.083;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        // capped comb creeping over floor and wall
+        return capped;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        return switch (part) {
+            // wax pillars, banded dark, a cell of honey glowing here and there
+            case Formations.PILLAR -> Hash.noise3(seed + 61, x, y, z, 2.2) > 0.72 ? comb : Math.floorMod(y - W, 4) == 0 ? waxDark : wax;
+            // mounds of wax crusted with capped comb
+            case Formations.ROCK -> Hash.noise3(seed + 63, x, y, z, 1.6) > 0.6 ? capped : Math.floorMod(y - W, 3) == 2 ? waxDark : wax;
+            // a piece of comb fallen from the roof, its cells broken open
+            case Formations.FALLEN -> switch (cell(x, y, z)) {
+                case 0 -> waxDark;
+                case 2 -> comb;
+                default -> capped;
+            };
+            // a heap of old dark wax
+            case Formations.HEAP -> Hash.unit(seed + 65, x + y * 31, z) < 0.3 ? wax : waxDark;
+            default -> null;
+        };
     }
 
     @Override

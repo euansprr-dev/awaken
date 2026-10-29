@@ -160,8 +160,8 @@ final class WorldCheck {
                     int ly = land(nx, y, nz);
                     if (ly >= 0) visit(q, c, nx, ly, nz);
                 }
-                // a jump up one block onto the next
-                if (pass(x, y + 2, z) && node(nx, y + 1, nz)) visit(q, c, nx, y + 1, nz);
+                // a jump up one block onto the next (no jump: only a step of 0.6 or less, as onto a slab or a stair)
+                if (pass(x, y + 2, z) && node(nx, y + 1, nz) && (!noJump || top(nx, y + 1, nz) - top(x, y, z) <= 0.6)) visit(q, c, nx, y + 1, nz);
             }
             // up and down a rope, up out of water
             if (holds && node(x, y + 1, z)) visit(q, c, x, y + 1, z);
@@ -174,6 +174,23 @@ final class WorldCheck {
 
     /** Walk without swimming (the way you'd go on foot, which is the way that has to be lit). */
     boolean dry;
+
+    /** Walk without jumping: up only by steps of 0.6 or less (shaped ground's slabs and stairs, 38.14). */
+    boolean noJump;
+
+    private final Map<BlockState, Double> tops = new IdentityHashMap<>();
+
+    /** How high you stand with your feet in (x, y, z): the top of what's under them (a stair as its lower half). */
+    double top(int x, int y, int z) {
+        BlockState s = at(x, y - 1, z);
+        Double t = tops.get(s);
+        if (t == null) {
+            var shape = s.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
+            t = s.getBlock() instanceof net.minecraft.world.level.block.StairBlock ? 0.5 : shape.isEmpty() ? 0 : shape.max(net.minecraft.core.Direction.Axis.Y);
+            tops.put(s, t);
+        }
+        return y - 1 + t;
+    }
 
     private void visit(ArrayDeque<Integer> q, int from, int x, int y, int z) {
         int i = i(x, y, z);

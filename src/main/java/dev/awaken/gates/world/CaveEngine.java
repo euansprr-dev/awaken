@@ -395,7 +395,10 @@ final class CaveEngine implements WorldEngine {
                     default -> dress.cavern(r, e.getValue());
                 }
             }
-            if (relief != null) relief.apply();
+            if (relief != null) {
+                relief.apply();
+                new Formations(this).place();
+            }
             glow();
             p.doorLights(s, W, light);
             if (chain.fold != null) {
