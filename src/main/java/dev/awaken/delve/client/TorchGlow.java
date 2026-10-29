@@ -257,7 +257,15 @@ public final class TorchGlow {
             l.y = y + (p.isCrouching() ? 0.78 : 0.98);
             l.z = z + fz * 0.3 + lz * side * 0.38;
         }
+        // at a wall the hand's point is inside the block: the flame shines from its open side
+        if (HeldLightFlood.clear(level, x, l.y, z, l.x, l.y, l.z, OUT, M)) {
+            l.x = OUT[0];
+            l.y = OUT[1];
+            l.z = OUT[2];
+        }
     }
+
+    private static final double[] OUT = new double[3];
 
     // ---- the flood -----------------------------------------------------------------------------------------------------
 
@@ -292,7 +300,7 @@ public final class TorchGlow {
         int ox = Mth.floor(l.x), oy = Mth.floor(l.y), oz = Mth.floor(l.z);
         M.set(ox, oy, oz);
         if (level.getBlockState(M).isSolidRender()) {
-            // the hand is in a wall: start from the cell above the feet
+            // the holder is in rock too (flame() found no open side): start from the cell above the feet
             oy = Mth.floor(l.feet + 0.5);
             M.set(ox, oy, oz);
             if (level.getBlockState(M).isSolidRender()) return;
@@ -334,9 +342,9 @@ public final class TorchGlow {
     /**
      * Held light reaches what stands in it (SPEC §28.3): an entity's render state (a dropped item, a mob, a player, and
      * through yours your hands and what they hold in first person) takes the block light a held light gives where it
-     * stands, the flame's level less its distance, eased out over the reach as the lit faces are, when that is brighter
-     * than the light already there. A straight line, so through a thin wall too (rare, and out of sight); the flames are
-     * last frame's (entities are gathered before the world is drawn).
+     * stands, the flame's level less its distance (its bearer, holding it, the whole level), eased out over the reach as
+     * the lit faces are, when that is brighter than the light already there. A straight line, so through a thin wall too
+     * (rare, and out of sight); the flames are last frame's (entities are gathered before the world is drawn).
      */
     static void lightEntity(Entity e, EntityRenderState s) {
         if (!live) return;
@@ -345,7 +353,8 @@ public final class TorchGlow {
         for (Light l : LIGHTS) {
             if (l.id < 0 || !l.seen) continue;
             double dx = l.x - x, dy = l.y - y, dz = l.z - z;
-            float d = (float) Math.sqrt(dx * dx + dy * dy + dz * dz), r = l.kind.reach();
+            // its bearer holds the flame: their hands and what they hold take its whole level, not their middle's
+            float d = l.id == e.getId() ? 0F : (float) Math.sqrt(dx * dx + dy * dy + dz * dz), r = l.kind.reach();
             if (d >= r) continue;
             float fade = Mth.clamp((r - d) / (r * FADE), 0F, 1F);
             best = Math.max(best, (l.kind.emission() - d) * fade * fade * (3 - 2 * fade));
@@ -358,7 +367,7 @@ public final class TorchGlow {
 
     // the light and surface being drawn
     private static double lx, ly, lz;
-    private static float emission, reach, flick, floorDist, hereCurve, edgeFade;
+    private static float emission, reach, flick, floorDist, hereCurve, edgeFade, midTurn;
     private static int rgb;
 
     /** The game's light curve (a level's brightness on the lightmap, before gamma). */
@@ -386,7 +395,10 @@ public final class TorchGlow {
         float fade = Mth.clamp((reach - (float) d) / (reach * FADE), 0F, 1F);
         fade = fade * fade * (3 - 2 * fade);
         float turn = 0.8F;
-        if (n != null && d > 1e-3) turn = 0.4F + 0.6F * Math.max(0F, (float) ((dx * n.getStepX() + dy * n.getStepY() + dz * n.getStepZ()) / d));
+        if (n != null && d > 1e-3) {
+            float k = (float) ((dx * n.getStepX() + dy * n.getStepY() + dz * n.getStepZ()) / d);
+            turn = 0.4F + 0.6F * Math.max(0F, Math.max(midTurn, k));
+        }
         return DelveRender.col(rgb, add * BRIGHT * turn * fade * flick * edgeFade);
     };
 
@@ -441,12 +453,19 @@ public final class TorchGlow {
                 continue;
             }
             int f = l.face[i];
+            midTurn = -1F;
             if (f < HeldLightFlood.WHOLE) {
                 N.setWithOffset(M, DIRS[f]);
                 if (level.getBlockState(N).isSolidRender()) {   // built over since the flood: the new block's faces want light
                     if (building != l) l.stale = true;
                     continue;
                 }
+                // a face turns to the flame by its middle's angle too: a flame held right in front of a face lights all of
+                // it, where its corners alone see it at a grazing angle and the face pressed to your torch read dim
+                Direction dir = DIRS[f];
+                double mx = lx - (x + 0.5 + dir.getStepX() * 0.5), my = ly - (y + 0.5 + dir.getStepY() * 0.5);
+                double mz = lz - (z + 0.5 + dir.getStepZ() * 0.5), md = Math.sqrt(mx * mx + my * my + mz * mz);
+                if (md > 1e-3) midTurn = (float) ((mx * dir.getStepX() + my * dir.getStepY() + mz * dir.getStepZ()) / md);
             }
             drawn += DelveRender.litBlock(vc, level, s, M, f, SURFACE, cx, cy, cz);
         }

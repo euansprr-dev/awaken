@@ -255,7 +255,17 @@ the rank's glow added as light, a wide haze in the rank's colour alpha-blended (
 thinning to nothing with height; no world fog (it counts height as distance and cut the column off flat), the top kept
 inside the far plane. Drawn after the level in a pass of its own (depth-tested, no depth written), never through the
 level's translucent passes (with improved transparency their composite writes a translucent's depth wherever it shows,
-so Lens took each ribbon's whole quad for solid and left its clouds out there: a hard-edged slab). Admin `/awaken gate frame <dist> <lift>` puts the camera on the line from the nearest gate toward
+so Lens took each ribbon's whole quad for solid and left its clouds out there: a hard-edged slab). Hidden by any land
+in front of where the gate really stands, near or far (Euan, 29 Oct: "One of the gate beams is showing on top of the
+cliff here even tho the gate is behind it"): a pillar drawn pulled in along its sight line was tested at the depth it was
+drawn at, so chunks between there and the gate never hid it, and Far Sight's land isn't in the game's depth at all. The
+pillars' own pipelines (`RigPipelines.PILLAR_HAZE`/`PILLAR_LIGHT`, shader `gate_pillar`) carry each pillar's stretch (how
+many times further off it really stands), write its real depth (at the far plane past it) for the game's depth test, and
+discard where far land is nearer (`compat.client.FarTerrain`'s depth and planes, while it draws and shares one; never
+under Distant Horizons). A driver that can't build them draws the pillars as before. Tour `pillars-ridge` (render
+distance 6; the camera due south of gate 1 at fixed spots 120 and 300 blocks off, lifted over the roofs; a stone wall 31
+wide 84-87 blocks ahead to 2 under its eyes). CI runs 40815747360 (before) and 40814281481 (after) at 300 blocks: before,
+the beam crosses the wall's face down to the gate; after, it shows only above the wall's top. Admin `/awaken gate frame <dist> <lift>` puts the camera on the line from the nearest gate toward
 Carillon's centre, facing the pillar (tours).
 Gate card shows rank, breaks-in, omen; PER ≥20 adds layout, ≥40 modifiers, ≥60 floor count; Veil scouting shows all.
 A gate of another rank than the hunter's says so in a "For you" row: "above your rank", or "below your rank · pays less"
@@ -298,6 +308,36 @@ States: BUILDING → READY → ACTIVE ⇄ OPEN → CLEARED | BROKEN → RELEASED
 Break: spill wave + roaming Gate Lord with boss bar at the gate; blight (desaturation + grey fog) within 96 blocks until
 cleared; better loot. Warning one play-day ahead when within 256 blocks of a Hearth. The Gate Stabiliser pushes a break
 back by play-days. After the "Break the Signal" ending no gate breaks; after "Wake up" there is no blight.
+**Seen first** (Euan, 29 Oct 2026: "way too many gates breaking that I haven't even seen yet... a gate should only start
+the timer if you've been close to it"): a gate's break clock starts the first time any player comes within 64 blocks
+(`Breaks.SEEN_RADIUS`, about where the vortex reads clearly over the land; 3D distance from its ground block, checked once
+a second). Any player's approach starts it, owner or not (the gate stands in everyone's world and whoever is near can
+clear it); a spectator's never does, and Spirit Sight or a Gate Scanner reading from afar doesn't count. The clock then
+runs the play-days it was rolled with (1-4 by rank, plus any Stabiliser days): `breaksOnPlayDay = seen day + (rolled break
+day − created day)`. Until then the gate waits: it never warns or breaks, `GateRecord.waiting`/`counting` say so, and
+every reader shows no clock (`GateView.breaksOnPlayDay` is `Long.MAX_VALUE`, `GateHooks.waiting(level, id)` tells a
+waiting gate from a calm one; the Hearth's and a village's bells, the Grey Fields, Spirit Sight's card ("Not until
+someone goes near it"), the Gate Scanner and its Atlas marks, the gate card, the Atlas's gate marks (beacon flag
+`WAITING`), Jade and `/awaken gate info`'s timer line ("waits to be seen"). The Director's cap (4 standing gates per owner
+within 1,500 blocks) counts waiting gates, so a waiting gate nobody visits folds away quietly after 7 play-days unseen
+(`Breaks.UNSEEN_DAYS`, `GateRecord.foldsOnPlayDay`): no break, no Lord, no message. Saved as `seen_day` and `folds_on`
+(gate registry schema 4); loading an older save sends every standing gate that can break back to unseen, folding 7
+play-days from that load, and leaves broken ones as they are.
+**Where a gate stands** (29 Oct 2026, Euan's save: gates 41-46 failed in a row, gate 40 showed a beam over nothing):
+a gate replaces natural ground only, and that now includes the Awakened Lands' own (fused and scorched glass, sunshard,
+riven shale, faultstone, fault seam, hoarfrost, frostspar, mirepeat, the Wild Lands' trodden earth, salt licks and
+wallows) and the Soft Land's step slabs (`#awaken:gates_ground`). A bottom slab of a ground material lying on a natural
+block is a soft step, never a build, so it no longer refuses the spot (every Soft Land footprint has some); a top slab,
+or any other slab, still is someone's build. A step is good ground to stand on. The vortex's own column (the anchor
+and its cores) always forms over whatever grew there unless it is a block entity or unbreakable. A gate stands when its
+anchor core holds the vortex (`Overworld.stands`); a build whose vortex can't stand fails and comes down, with the real
+reason in the trace ("a Hearth within 64 blocks", "someone's build in the footprint", "wet or open ground", "its vortex
+had no room"). A loaded gate whose vortex is missing (an old doorway, or the anchor that Lands ground blocked before
+this) is rebuilt once per server run, checked every 10 s; if it still can't stand it folds away quietly (a broken one,
+or one with someone inside, is hidden instead). Every surface that shows a gate shows only one that stands (built, not
+released, not fallen: `GateExterior.shown`): the pillar and the Atlas marks (beacons), Far Sight's pillars, the Now line,
+the Horizon's first gate, `GateHooks.near` (Spirit Sight, the Gate Scanner, the bells, the villages) and `Gates.near`.
+The first gate's "A gate has opened N m" waits until it stands, so a failed build never announced anything.
 
 Themes (15), layouts (8), modifiers (14), twists (8), bosses: exactly as in `docs/plan.html` gate generator.
 
@@ -2180,7 +2220,18 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   whole blocks, and shows the face it meets: the top, or a side facing x or z, shaded as the game shades faces (1, 0.8,
   0.6; a side by the way the slope faces, between 0.6 and 0.8, not by the axis its column shows: a steep slope's
   staircase shows x and z sides by turns, and read per triangle that flip drew dark spikes down far mountains and
-  grooves down their walls, 2026-10-26) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
+  grooves down their walls, 2026-10-26). Where a step's top or its riser is under a few pixels on screen (1 to 3,
+  smoothly), the pixel takes the staircase's average instead: top and riser, colour and light, by the share of the
+  screen each covers (the top by how steeply the ray drops, the riser by how squarely the ray meets it; the grass and
+  snow fringes by their share of the riser), as a filtered texture would (2026-10-29, Euan: "light shimmering on far
+  sight mountain sides while I breathe": seen from near level, a steep far face's tops are a few tenths of a pixel
+  tall, so under Camera Overhaul's idle sway each pixel met a lit top and a shaded riser by turns, and the steady pass's
+  neighbourhood clamp let them through as a twinkle and cut the lit tops away, drawing the face darker). Measured
+  offline (`tools/farsight/breath.py`: the column walk, the light at noon and the steady pass replayed under a sway of a
+  few tenths of a degree at Camera Overhaul's 0.16 Hz, shimmer.py's score over the face, on Euan's 3024×1898 screen at FOV 70):
+  steep faces 900 to 3,000 m out, hard-flicker pixels before steady 1.7-11.9% → 0%, and after it the fine flicker
+  0.29-1.12 → 0.24-0.36 (the pass's own floor, what a face steep enough to show no tops scores, 0.22), with the
+  face's brightness that of the raw frames, not the clamp's 3-5% darker. Faces are lit by a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
   behind ridges, faces turned from the sun shaded only as it lowers). Grass tops stand over dirt risers (the dirt
   texture's average, a grass fringe along the top), cliffs show stone or an Awakened biome's own block (hoarfrost, riven
   shale, fused glass, mirepeat: palette rock kinds in colour flags bits 4-6), badlands their strata, every block its own
@@ -2223,6 +2274,17 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   height; acacia 7 (2026-10-28, Euan: "some trees look very long", build ea94466a: one width a shape, 5 for every
   broadleaf with its crown from 38% of its height, drew the lumen forest's trees, 16 tall with a crown 6 deep and 11
   wide on a 2-block trunk in his save, as columns 5 wide and 10 deep; the elderwood's alike). Test `farsight_trees_crowns`.
+  Where the real trees are drawn (City Sight's coverage, Sodium's loaded chunks and drawn sections) a far tree steps
+  aside whole, in the vertex shader, by the chunk its trunk stands in (City Sight's dissolve by the tree's own hash,
+  not a screen dither): face by face, as the far land does, a crown reaching over a chunk's edge lost its trunk and its
+  near faces where the real trees were drawn and the rest floated over the next chunk as an open sheet, longest along
+  the chunk line (2026-10-29, Euan through the binoculars at 12×, 538 m out at night: green sheets in an L over the sea
+  where the chunks City Sight held ended on a diagonal stair; planted trees run to 1.25× the cell's canopy and their
+  crowns to ~18 wide, so near that edge they reached past the real ones). Re-drawn offline from his save
+  (`tools/farsight/sheets.py`: City Sight's stored chunks as blocks, the sea past them, far trees planted as FarTrees
+  plants them on ring 1's cells; `docs/perf/far-sight/fs-sheets.jpg`, before above, after below): at four points along
+  that edge 101-2,107 pixels of sheet before, none after. A tree planted just past the edge may now stand whole over
+  the first real trees beside it, as a real tree there would.
 - **Air** (`farsight_air.glsl`): aerial perspective from an exponential atmosphere at real scale (1e-4 per block at sea
   level, ×4 in rain; scale height 1500), toward the sun tinted by the sunlight; valley cloud, a patchy slab 40-86 above
   sea level lying among the mountains (a sea of it at dawn, dusk and in rain), sunlit on top, over far ground only; the
@@ -4690,7 +4752,8 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     distance either: the cell stands where it is, as the game's clouds do.
   - **Its local weather** (`living.client.StormSky`): this client's rain and thunder levels rise to
     `weatherAt(d)` (full within 45 blocks of the rain core's centre, none past 110, smooth between) × its strength,
-    never below the server's own weather (followed if the server changes it while overriding) and handed back as you
+    held in sixths (`StormCell.weatherStep`: it moves to a new sixth only once the wanted weather is more than 0.65 of a
+    sixth past the held one, then eases there over 0.75 s), never below the server's own weather (followed if the server changes it while overriding) and handed back as you
     leave. So under and near it the game's own rain falls on you and sounds, the sky, fog, clouds and light darken as in
     a vanilla thunderstorm, terrain's wind steadies higher (rain and thunder lift it), the world sound hears rain, and
     Lens dims its sun. Lens's cloud layer doesn't thicken for this rain (`StormSky.localRain`): the cell is the cloud
@@ -4702,10 +4765,33 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     blocks over the base), and its own thunder and impact (played at once, everywhere, at full volume) are silenced and
     played again late by the distance at 130 blocks a second (the world's scale: a strike on the horizon rolls in a few
     seconds later). Within 70 blocks: the crack (the impact, pitch 0.55-0.7) and the thunder; farther: the thunder lower
-    and softer (volume 1.15 - d/520, pitch 0.95 - d/1400) and a long low roll after it (`living.storm.roll`, three
-    synthesised takes). Every 2.5-7 s lightning flickers inside the cloud (50-210 over the base, a quarter to two fifths
-    of a strike's brightness) and rumbles far off. Each flash is a burst and its restrikes, each fading over 0.11 s.
-    The storm's rain roars from its core for 340 blocks (`living.tell.storm`, a loop; PulseSound).
+    and softer (volume 1.15 - d/520, pitch 0.95 - d/1400) and a long low roll after it (`ambient.storm.roll`, three
+    synthesised takes). The thunder and crack are the game's own under the storm's names (`ambient.storm.thunder`,
+    `ambient.storm.crack`, event references). Every 8-16 s lightning flickers inside the cloud (50-210 over the base, a
+    quarter to two fifths of a strike's brightness) and rumbles far off. Each flash is a burst and its restrikes, each
+    fading over 0.11 s, and nothing once under 0.02. The storm's rain roars from its core for 340 blocks
+    (`living.tell.storm`, a loop; PulseSound).
+  - **Its cost** (Euan, 2026-10-29: "loses a good 10 fps when it's happening and stutters"; pack/storm-perf). What it
+    cost and what changed, counted from the code (scratch `perfmodel.py`: the cloud pass's rays, bands, steps, early exit
+    and temporal one-in-four at Cinematic 560×315; the storm's strike and flicker timing; Far Sight's look tolerances):
+    - Far Sight's cached horizon serves only while its look (rain, haze to 1e-6, sky light, fog) holds within a hair.
+      The local weather drifted every tick as the cell moved, and each bolt's sky flash set the sky light to full, so
+      near a storm the far land was drawn live nearly all the time. Now the weather holds in sixths (472 breaks over a
+      storm passing 75 blocks off became 90 ticks of easing) and Far Sight holds its sky light while a storm's lightning
+      flashes (`StormSky.flashing`, two seconds after a strike).
+    - Sound Physics (the pack, 32 rays × 4 bounces, cloning the level round you when its cache is over 20 ticks old)
+      processed the storm's roll and crack, about 130 sounds a storm, one every one or two seconds. As `ambient.*`
+      events it leaves them alone (`evaluate_ambient_sounds=false`); the rain roar's loop is the one processed, once.
+    - Lens marched every cloud pixel every frame while any flash's value was above zero, 1.2 s after each strike and
+      flicker: 61% of a storm's frames at four times the pass. Now only rays passing within 180 blocks of a flash march
+      every frame, only while it is bright (over 0.08), and flickers come half as often: 21% of frames; the storm's
+      average reads in the pass fell from 4.75 to 2.74 million a frame watching it from 180 blocks, from 8.10 to 4.67 at
+      its edge. The lightning's faint wash over the whole cell (0.1 × exp(-d/180)) is gone; its glow ends by 180 blocks.
+    - The light pass's storm shadow read the full density three times a pixel (about 1.07 million texture reads a frame
+      while a storm was up); it reads the cell's outline (`stormOutline`), with no texture.
+    - The client's storm tick allocates nothing (the cells follow the tells when they arrive, every 2 s).
+    - Under its core the game's own rain costs what any rain does (its particles grow with the rain level squared).
+    - Measured on the Mac with `tools/autopilot/perf-storm.txt` (storm on, then off, one spot and view).
 
 ### 21.7 Creatures live somewhere: the ledger (Phase D, as built 2026-10-25)
 - `living.population.Ledger` (saved data `awaken:living_world`, schema 1, only cells players reached): per 512×512 cell,
@@ -5255,6 +5341,17 @@ magic.
   street does count; not the open sky, far terrain or Holo plates; not past the heightfield's trusted reach); Swift by the
   camera (texel 21 r: the client's MOTION_BLOCKING_NO_LEAVES top above the eye + 0.5, eased over about a sixth of a
   second). The open land, by day and by night, is untouched.
+- **Within arm's reach, never darker than the game at all** (Euan, 2026-10-29, "some more shadow issues with
+  underground torches held here": the torch in his hand was dark): every tier, right after the cover floor, a pixel
+  within 1.25 blocks of the eye (your hand and what it holds, a wall at your nose) keeps at least what the game drew
+  there, whatever its brightness, easing out by 1.45 blocks as Lens's light eases in (Lens 2's light already leaves that
+  reach alone). The cover floor's 85% eases out by luma 0.22, so a handle lit by its own flame (about 0.15) still took
+  the cave look's grade, about 35% darker than the game drew it. Lens may still lift it (the grade's highlights), never
+  lower it. Not the sky or far terrain. With it the held light gives its bearer its whole level (§28.3), so the torch,
+  the hand and the tool in the other hand read as lit by the flame they hold. The black faces in the same report were
+  the held light's, not Lens's (a torch pressed to a block flooded from inside it, so the face looking at you kept the
+  game's light 0; §28.3); Lens's shade and ambient occlusion take a face to about 45% at most, never to black. Tour
+  `tools/autopilot/held-light-faces-look.txt` (a block row at arm's length, a cave mouth at sunset and a sealed room).
 - **Look fields** (looks*.json, inherited from `default`; texels 17-19): `light` 1.0, `shade` 0.32, `shadeTint`
   [0.86, 0.93, 1.14], `keyWarmth` 0.8, `ao` 0.65, `filmic` 1.0; L2: `mist` 0.5, `mistHeight` 48 (blocks), `fogGlow`
   0.15, `skyGlow` 0.3. Texel 19: r mist, g mistHeight/256, b fogGlow/2, a skyGlow.
@@ -5406,9 +5503,11 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
   light as a cool grey-blue of the layer's ambient brightness (its sunset hue turned the shadowed side brown), by height
   from 0.16 at the base (cold and bruised, bluer) to 1 on the tops; rain σ 0.016, its colour that sky light × 0.4 (a
   grey veil, darker than the sky), fading in from 16 to 40 blocks from the camera (nearer, the game's rain falls).
-  Lightning lights the cell from within: 3 × exp(-d/55) × exp(-τ) + 0.1 × exp(-d/180) of a cool white from the flash,
-  where τ is the cloud between the flash and the point (its density at their midpoint × d × σ × 0.35, one sample, only
-  while a flash shows), in the cloud and (half) in its rain; the core round the bolt glows and the cell's shape still
+  Lightning lights the cell from within: 3 × exp(-d/55) × exp(-τ) of a cool white from the flash, fading to nothing
+  from 130 to 180 blocks (`FLASH_REACH`), where τ is the cloud between the flash and the point (its density at their
+  midpoint × d × σ × 0.35, one sample, only while a flash shows), in the cloud and (half) in its rain; with temporal
+  Lens a ray that passes within 180 blocks of a flash marches every frame while the flash is over 0.08 (every ray did
+  while any flash was above zero: §21.6 "Its cost"), the rest one frame in four; the core round the bolt glows and the cell's shape still
   reads (an even glow over the whole cell blew a night strike out to a white disc); while a flash shows, the pixel takes up to 85% of this
   frame instead of 12-15%, so it lights at once and fades as an afterglow. The layer's clouds thin to nothing within
   330-450 blocks of a cell (it clears the sky round it), so the layer's march can skip the cell's bounds without a cut.
@@ -5421,7 +5520,8 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
 - The composite lays the cloud buffer over anything farther than where the ray enters a cell's bounds (320 radius
   round 60 downwind of its centre, ground to 48 over the top; the anvil band 245 round 150 downwind, from 72 under
   the top), never nearer than 16 blocks; the light pass darkens the
-  sun on the land under a cell, sampled where the light ray crosses three heights of its body (long shadows at dusk).
+  sun on the land under a cell, sampled where the light ray crosses three heights of its outline (`stormOutline`: body,
+  shelf, flanking towers and anvil with soft edges, no noise and no texture; long shadows at dusk).
   Its bright, flashing edges bloom and cut the screen-space shafts like the layer's clouds.
 - It builds from its base up (the density cut at a height rising with its strength, softened over 40 blocks) and rains
   out from the top down, as the fallback's cells do; its rain starts once the base has formed (strength 0.1-0.4).
@@ -6387,6 +6487,99 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       largest step: strike 2 0.48 -> 0.11, strike 3 0.40 -> 0 (it waits), strike 4's off hand 0.18 (its own push),
       strike 5 0.29 -> 0.18, the Art, the slipcut and the undercut 0.41 -> 0.18. Left: the haul (0.26), and all of it
       unseen in game.
+  - *Round 10, the way home and fast clicks* (Euan 2026-10-29: "the travel back from the right hand swipe... comes back
+    to an unnatural position and then glitches back into the usual holding stance"; "when you click fast, it starts
+    losing its form"; "the right hand still kind of goes very close to the left hand and kind of stabs it"):
+    - A strike before a both-hands one is hauled back into the rest pose, the usual holding stance (it was hauled to
+      that strike's set, end on in the middle of the view, and the blend pulled it home from there). It sets off 1 tick
+      before its carry ends (was 0.5: home is further across than the set was).
+    - A chained both-hands push (the daggers' strike 4) drives from where the hands are (the main from rest, the off
+      hand from where it waited) and, after its beat at full reach, turns straight back into the rest pose on an
+      in-out ease, there by the mastery strike's press (`swing_studio.home_by`: wind-up + active + 2, within its end).
+      It used to snap back end on to the ready line in the middle of the view and turn home from there, 100 degrees in
+      three frames; now at most 8 degrees a frame. A quicker draw out of the middle (1.5 snaps) was tried and dropped:
+      it stepped 0.36 of the screen in a frame and gained nothing at a steady pace.
+    - The idle hand keeps 0.35 (ndc) from the striking blade and its forearm (was 0.25: strike 3's hilt passed over the
+      left blade's tip). The nearest strike 3 comes to it: 0.26 -> 0.39.
+    - A chain's first strike begins on its press a tick into the chain's count (`ArmsPredict` on the key and
+      `ArmsServer` on the packet both take the tick before for its start), so a buffered press takes over a tick of its
+      clip early. The bake hands over there (`chain_links`), never inside its blow (the twin blades' window opens as
+      their first cut ends; the blend covers that tick). The second stab used to leave from the first one's half-drawn
+      hand.
+    - Hit-stop's clock (`ArmsFeel.paused`) counts an ended hold in full until the tick banks it. Between a hold's end
+      and the next tick it counted none, so the hands' clock ran on by the whole hold and then back (up to a whole
+      tick of the clip in one frame, then back again). A second hold before that tick banks the first (its pause was
+      lost).
+    - Fast clicks are judged by `tools/art/swing_clicks.py`: ArmsPredict's clock (press, buffer, the wait at the set and
+      the rush, the server's chain shift, hit-stop, bite) and ArmsHands' sources and `SwingBlend`, frame by frame at
+      60 fps. Over clicks every 2-5 ticks, each held 0.6-2.5, with and without landed blows: steps over 0.3 of the
+      screen a frame 72 -> 10, the worst 1.02 -> 0.54 (the left hand as strike 3 takes over from a strike 2 held by
+      its hit-stop), the nearest the blades come off the both-hands push 0.26 -> 0.31. Steps of 0.2-0.3 rise 364 ->
+      425 (strike 2's left hand draws further back to clear strike 3). Left: strike 5's own jump (0.34, as in round
+      9), and all of it unseen in game.
+  - *Round 11, the daggers' chain set by hand* (Euan 2026-10-29, after round 10: "it still feels like it's going to
+    unnecessary distances sometimes... the right arm goes way to the left for some reason, or sometimes it's just not
+    aligned... maybe the entire approach is wrong?"; "Do it"). The rounds before worked every pose out from rules (a
+    cut edge to edge, the idle hand giving way until clear, hauled back to the next set), each fixing one complaint and
+    moving something else, and the hand not striking had no place of its own: in round 10 strike 3's right dagger swept
+    from the right edge to 18% from the left, and the left one dropped out of the view under it.
+    - The daggers' five chain strikes are set by hand in `tools/art/swing_choreo.py`: per strike, each hand's track as
+      a few key poses on a timeline (the grip's place on the screen, how far ahead of the eye, the blade's angle on the
+      screen, its lean along the eye's ray, the way its edge faces), the grip run through them on a centripetal
+      Catmull-Rom curve, each stretch on its own ease (in and out, into the drive, out of the carry). `anim_lab.rig_pose`
+      and the bake take a set move from there before any rule; every other move and style bakes as before.
+    - Every strike starts in the holding stance and both hands are back in it before the chain's next strike can start
+      (strikes 1-3 by 2.6-2.7 ticks, the twin push by 4.6, its next press at 6), so the next strike always takes over
+      from the pose it was set from. A blow's freeze or a held click that leaves the hands behind is carried the rest of
+      the way home by the blend, along the way they were going.
+    - The stabs: a slight draw, straight in under the crosshair, a beat at full reach, home. The cut (strike 3; the
+      finisher mirrors it, raised a little higher): the blade turned upright on its own side, then down across the
+      middle on a diagonal, square to the eye so its length reads, its carry ending low in the middle, 0.38 of the
+      screen from the other blade at the nearest. The twin push: both drawn in, then together under the crosshair, each
+      tip on its own side (it used to cross the other). The hand not striking gives a little as the other drives, and
+      leans out a little from a cut coming its way: never a dodge worked out from the other blade.
+    - A set move has no bite (its hands never slow after the hit: the freeze is the hit-stop's alone). A held press
+      still waits at the strike's set (round 8: so a held click never strikes before the charge takes it), now a set
+      pose: the stab drawn, the cut raised.
+    - Tried and dropped: a longer blend for the hand not striking (2-3 ticks): it carried a stab's way home a little
+      smoother (0.24 -> 0.16 of the screen a frame) but brought the blades nearer (0.26 -> 0.18). Nothing in the game's
+      code changed this round.
+    - `swing_clicks` reads a release from the key every frame, as `ArmsPredict.frame` does (it took the release as an
+      event, so a click begun and let go between two ticks was never let go). `swing_clicks film` renders a video of
+      slow, then fast clicking, files one above the other; `swing_choreo describe` lists every pose on the screen and
+      when each strike is home.
+    - Measured at 60 fps, clicks every 2-12 ticks held 0.3-2.5, with and without landed blows, mastery on: steps over
+      0.3 of the screen a frame 125 -> 0, over 0.2 1055 -> 359 (the stabs' own way home), the worst 0.55 -> 0.29, the
+      nearest the blades come 0.15 -> 0.26. The chain judge passes every strike (strike 5's jump 0.34 -> 0.25). Left:
+      the daggers' other moves (heavy, riposte, Art, slipcut, undercut, plunge, execution) still come from the rules;
+      unseen in game.
+  - *Round 12, no spinning* (Euan 2026-10-29, after round 11: "they still don't feel smooth"; "it feels more like they
+    are spinning and making circles than stabbing and slashing"). The cause, measured (`swing_chain.py twist`, new: the
+    blade's turn about its own length over a move, its change of direction taken out): round 11 turned the daggers'
+    blades 80-127 degrees a strike (84 a stab: every key pose set its own edge), round 10's rules 114-252, and every
+    other style's rules still do 150-400 (no judge measured it, so no round fixed it). On top, the Catmull-Rom curve
+    through every pose rounded each turn back into a loop, and the stabs' way home was squeezed into four frames.
+    - A pose's turn is the least turn from the stance, plus its own roll only where a cut needs its edge turned toward
+      the cut: 36 degrees for strike 3 and the Slipcut, 42 the Undercut, 30 the finisher, 70 the Art, turned in the
+      wind-up and back through the way home, never in the blow. A stab, the twin push, the heavy, the riposte, the
+      Plunge and the Execution turn none (in the stance the edge faces down and away, so a chop down and forward leads
+      with it unturned).
+    - A thrust is solved from where its point lands (just under the crosshair): the wind-up lays the blade on the line
+      from the stance to it, the drive pushes straight along the blade (point lead 0.99), and the way home keeps the
+      line and turns into the stance last. A cut is one stroke, a short lift (the blow lands a tick in) then one sweep
+      with the hit at its middle. Between two poses the grip goes straight, or on an arc that is set.
+    - Every chain strike is still home by the chain's next press for the hand that strikes next (`arms_chain_flow`):
+      the stabs by 3.5 ticks, the cut by 4, the twin push by 6, the finisher by 6.6. The heavy waits coiled while it
+      charges (the game shows its first pose) and drives both points deep; the riposte is a deeper stab; the Slipcut a
+      flatter cut, the Undercut a low one, the Art the widest; the Plunge waits high while it falls and chops down
+      through the target as it lands, the Execution raises over the target and chops. All twelve daggers' moves are
+      set by hand now (`swing_choreo.py`); no hand crosses further than 0.06 past the middle.
+    - Twist a move, round 11 -> 12: stabs 84 -> 0, the twin push 93 -> 0, the cut 127 -> 73, the finisher 120 -> 65;
+      heavy 122 -> 0, riposte 131 -> 1, Plunge 91 -> 2, Execution 155 -> 0, Slipcut 178 -> 75, Undercut 179 -> 79, Art
+      268 -> 143. Fast clicks (as round 11's): steps over 0.2 of the screen a frame 405 -> 4, with mastery 359 -> 36,
+      the worst 0.29 -> 0.26, the nearest the blades come 0.26 -> 0.27; held mashing with every blow landing, the worst
+      0.24 -> 0.14. The chain judge passes every strike; every dagger move leads with its point (0.99-1.00) or edge
+      (0.70-0.99). Left: every other style's twist (the shared rules, `anim_lab.rig_pose`); unseen in game.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
@@ -7463,7 +7656,8 @@ checklist titled "Your home", not Now lines (which leave the HUD, §27.11):
   hint; from afar: home on the Now line; an Anchor's guide; then the next room at home only).
 
 **Setting it down** (use on the top of a block). Refused, each with its reason: soft ground or no room, the city reserve
-(`CityBasin.reserved`), a Precursor ward (`WardHooks.at`), any gate not released within 64 (`GateHooks.near`), another
+(`CityBasin.reserved`), a Precursor ward (`WardHooks.at`), any gate that stands within 64 (`GateHooks.near`; one still
+forming fails its build on the Hearth instead, §7), another
 Hearth's radius, a household rule (`Household.refusesOwnAnchor`). Founds a **Tier 0 Hearthfire** (`awaken:hearthfire`,
 `HearthfireBlock` + an empty block entity that lists loaded fires for the client's glow; light 14; strength 2 / 1200,
 immovable, owner-only to break; loot table empty: the code returns the coal). `HearthRecord.tier` 0, radius 24
@@ -7694,7 +7888,13 @@ steady. The Ember and the miner's lamp aren't block items, so they never get a s
 torch in the hand are two lights and add. Players holding one within 48 (at most 8 lights, yours first) carry theirs,
 read from their synced hands, so it is the same for everyone in multiplayer. The flame sits in the hand at the side
 (0.98 up, 0.3 ahead, 0.38 out; 0.78 crouching), or in your own first person 0.32 under the eye, 0.4 ahead and 0.3 to
-the holding side, following your look.
+the holding side, following your look. Held against a wall (that point inside a block: you stand within 0.4 of it)
+the flame shines from the block's open side: the point on the line from the holder's middle at the flame's height to
+the flame just before it enters rock (16 steps of about 3 cm), then 0.2 blocks further back along it, since a flame has
+a size (`HeldLightFlood.clear`; Euan 2026-10-29, "some more shadow issues with underground torches held here": the
+flood started inside the block, so the face looking straight at you stayed black while its neighbours lit; from right
+on the face it lit the face only at a grazing angle). Only a holder whose own cell is rock falls back to the cell above
+the feet.
 - *Finding the surfaces* (`delve.HeldLightFlood`, common and pure, walked by `delve.client.TorchGlow`): a flood from the
   flame's cell through every cell that isn't a full opaque block (as the game's light spreads: round corners, never
   through rock), within a sphere of the reach, each step costing 1 plus the cell's light dampening (leaves and water dim
@@ -7709,20 +7909,23 @@ the holding side, following your look.
   (so a face a break opens lights a frame or two later, not up to half a second), or every 10 ticks (changes out of
   sight). A light standing where the light is already as bright as its own (noon) floods and draws no surfaces.
   GameTest `delve_held_light_faces` holds every face of a room with a standing block and a step, once each, and the
-  cap's edge.
+  cap's edge; `delve_held_light_wall` a torch pressed to a block at chest height (its front face lit, the flame at
+  least 0.15 off it, an open flame left where it is, a holder in rock with no open side).
 - *What stands in the light* (`TorchGlow.lightEntity`, a NeoForge render-state modifier on every entity renderer, no
   mixin): a dropped item, a mob, a player, and through your own render state your first-person hands, what they hold
   and your body's limbs, take the block light a held light gives where they stand: the flame's level less the straight
   distance to the entity's middle, eased out over the reach's last 30% as the faces are, when that beats the light
-  already there (a torch's bearer and the pick in their other hand at 13). Last frame's flames (entities are gathered
-  before the world is drawn); a straight line, so through a thin wall too (out of sight). Before, the hand, the tool and
-  a dropped block drew at the game's light 0 beside lit rock and read black under Lens.
+  already there. Its bearer holds the flame, so they take its whole level (a torch's 14 for the torch, the hand and the
+  pick in the other hand; 13 by the middle's distance before, which read dark, Euan 2026-10-29). Last frame's flames
+  (entities are gathered before the world is drawn); a straight line, so through a thin wall too (out of sight).
+  Before, the hand, the tool and a dropped block drew at the game's light 0 beside lit rock and read black under Lens.
 - *Drawing them*: each surface is drawn again over itself with its own model quads (as the miner's lamp does, and
   tinted as the world tints it, so grass and leaves come up green), additively in the light's colour, by how much the
   game's light curve (`v / (4 - 3v)`) at the flame's level less the distance would brighten it over the light already
   there (block light, or sky light less the sky's darkening): nothing in daylight, the most in a pitch-black cave, a
-  torch's floor at your feet about 0.58 of full. Gain ×1.15; turned to the flame (0.4 + 0.6 of the face's cosine; 0.8
-  for a plant's crossed quads); eased to nothing over the last 30% of the reach; light that went round a wall is at
+  torch's floor at your feet about 0.58 of full. Gain ×1.15; turned to the flame (0.4 + 0.6 of the face's cosine, the
+  better of its corner's and its middle's, so a flame held right in front of a face lights all of it rather than its
+  corners' grazing angle; 0.8 for a plant's crossed quads); eased to nothing over the last 30% of the reach; light that went round a wall is at
   least 0.55 a flood step away (less 1.2), so it is dim beyond a corner. At most 2,600 quads a frame for all lights.
 - *In the open* it reads like the Ember: a soft pool at the feet under the flame (the city lanterns' profile, radius
   0.55 of the reach, 0.15 strength at level 15 in the dark, scaled by how dark it is there) and a halo at the hand
@@ -10352,7 +10555,12 @@ Built 2026-10-28. Four themes, twenty worlds, on the cave engine (38.10) with a 
   - **Foundry**: brick-gridded iron floors, brass-banded walls with pipes and furnaces; the Works Floor's machine pits
     (four deep under a grate, furnaces at the bottom, gears turning in them); the Great Engine's gear (radius up to 10,
     its axle on two iron pillars, high enough to walk under); the Stopped Hour's 70 pieces hanging in the air round a clock
-    face on the back wall; pipe runs along every tunnel and steam curtains across the Pipe Maze's.
+    face on the back wall; pipe runs along every tunnel and steam curtains across the Pipe Maze's. A tunnel's wall pipes
+    stop short of a doorway's middle (its two inner blocks, four blocks in: `Dress.inDoorway`), so where the way bends
+    hard by a door and its wall swings across the doorway no pipe closes it (29 Oct, Euan: "fix the Pipe Maze doorway
+    block"; GameTest `gateworlds_pipe_maze_doorways`). This changes the carve by a few blocks of pipe at such doorways, so a
+    Foundry gate already open shows a seam there where old chunks meet new ones (Euan: "a seam in Foundry gates already
+    open is fine").
   - **Desert**: dunes; the Buried Colossus's head (radius 15, rising 6 to 36 out of the sand, its eyes glowing glass)
     placed in the first free corner, and a colonnade along its tunnels; glass only on faces you can see (the Glass Caves;
     elsewhere carved sandstone, so no glass ever shows the void through the shell); the Sunken City's lots (12 square, a
@@ -10660,8 +10868,8 @@ Built 2026-10-29. Two themes (ten worlds) and fifteen rare worlds, all on the ca
     concrete or terracotta, a light into the nearest light block. One patch on a calm cavern's floor keeps its true
     colours: the_true_colour or the_right_colour. Built rooms keep theirs.
   - A worn theme meets rooms it never meets at home (the gate's own Rig rooms), so `BorrowedDress` keeps the middle of
-    every doorway open at foot and head height, four blocks in, after the theme's dress (a Pipe Maze pipe can otherwise
-    cross a Rig room's way out). The theme's own worlds are untouched.
+    every doorway open at foot and head height, four blocks in, after the theme's dress (a piece of it can otherwise
+    cross a Rig room's way out). The Foundry's own tunnels keep their pipes out of doorways themselves (38.11).
   - The secrets an event gives that aren't named after it are listed in `WorldThemes.GIVES`.
 - **Calm** (a recipe's `calm` param, `Rooms.calm`; the Quiet and the Last Campfire): its rooms wake empty, an arena is an
   ordinary room, and the gate's clock doesn't press you there.
@@ -10683,6 +10891,36 @@ Built 2026-10-29. Two themes (ten worlds) and fifteen rare worlds, all on the ca
   and the Other Gate's looks for every gate theme, the twisted worlds' looks, and calm floors and rooms);
   `gateworlds_tint` (grey and turned colours, lights, the kept patch, what passes untouched); `gateworlds_sets` covers
   every theme's piece and keepsakes.
+
+### 38.14 Depth inside the places (content version 7; page https://claude.ai/artifact/MZoFfNZsNBLpFqJhEj8dE4, plan docs/gate-depth/page.html; Euan approved it as written 2026-10-29: "Go ahead with the full plan after fixing this current issue")
+Euan, after playing a Hive gate: the rooms still read as walls, a floor and a roof. Every place gets ground that rises
+and falls in half steps, walls that change as they go up, a roof at more than one height, things standing in the space,
+and growth that thickens the further a spot is from the way you walk. The five decisions as recommended: new and
+unentered gates only; gentle on the way and on fight floors, bold at the edges (up to four blocks); about 120 new
+blocks with no style-sheet stop; the Hive first with CI shots, then every theme unless he says stop; climbable ledges
+now, fought-on second storeys in a later plan.
+- **Content version 7** (`GatePlan.CONTENT_VERSION`). A version 6 floor carves exactly the blocks it always did:
+  `gateworlds_depth_v6_golden` hashes the first world floor of a version 6 plan in each of the 75 worlds (secret
+  worlds are places on other floors), block for block, against the hashes taken from the build before version 7 (the
+  Frost Cloisters also has CI's hash: Linux on x86 rounds FrostDress's sines a digit apart from the Mac, enough to move
+  a block, in version 6 as before). A gate someone entered keeps its version; READY gates nobody entered are rebuilt at 7 on the next start, as with every
+  version. **`gateWorldsDepth`** (server config, on): off, new gates are made at 6 (`GatePlan.current()`) and no gate
+  is rebuilt for 7, so the server can roll back without touching a save.
+- **The ground grid.** An engine that gives its places ground sets `WorldPlan.ground` before `finish`: where you stand
+  over each of the plot's 256 x 256 columns, in whole blocks above the floor line (a half slab's column counts the
+  block over it). The floor keeps it (`FloorLayout.ground(x, z)`, 64 KB a floor, rebuilt from the saved plan like the
+  rest of the layout; nothing new is saved). Null on a flat floor, so every version 6 floor and every room floor reads
+  0.
+- **Spawns and features stand on the ground.** `GateService.roomFloor` adds the ground, so every monster, spot, Lord,
+  NPC, flood and fallback that asks for a room's floor stands on it; the entrance and the vault bars read their
+  feature's column; the painter sets shrines, seals, caches, runes, lanterns, sigils and updrafts on it. Features keep
+  their own heights over it.
+- **Tests.** `gateworlds_depth` measures every world's places as the plan page measured them (columns you can stand
+  in, the share at the floor line, half-step heights per place as the median of places a chunk or more big, surfaces
+  that aren't full blocks, walls plumb from feet to head, the roof's spread, what stands per 100 floor blocks, and the
+  plan's cost) and logs them; worlds whose ground is built (`GateDepthTests.DEEP`) are held to the dry caves' targets
+  (flat 55% or less, 8 heights or more, 12% partial, 65% plumb or less, roof spread 6, detail 35). The world tests'
+  reach checks read the ground.
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 

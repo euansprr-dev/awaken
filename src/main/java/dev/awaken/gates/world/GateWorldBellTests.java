@@ -83,7 +83,7 @@ public final class GateWorldBellTests {
         Room s = f.room(f.start);
         Room.Feature e = s.feature(Room.FeatureKind.ENTRANCE);
         if (e == null) return "no arrival";
-        int sy = f.baseY + s.dy + e.y();
+        int sy = f.baseY + s.dy + f.ground(e.x(), e.z()) + e.y();
         walkAll(w, f, e.x(), sy, e.z());
         if (!w.reached(e.x(), sy, e.z())) {
             String why = "the arrival isn't somewhere you can stand (" + e.x() + " " + sy + " " + e.z() + ": " + w.at(e.x(), sy, e.z()).getBlock().getDescriptionId()
@@ -101,17 +101,17 @@ public final class GateWorldBellTests {
             int y = f.baseY + r.dy;
             int missed = 0;
             // a Rig room's floor is its mechanism's (wells, presses, collapsing tiles): only its doors are checked
-            if (r.rig == null) for (int[] sp : r.spawnSpots) if (w.near(sp[0], y, sp[1], 1) == null) missed++;
+            if (r.rig == null) for (int[] sp : r.spawnSpots) if (w.near(sp[0], y + f.ground(sp[0], sp[1]), sp[1], 1) == null) missed++;
             if (missed > 0) bad.append(" room ").append(r.id).append(' ').append(r.type).append(": ").append(missed).append(" of ")
                     .append(r.spawnSpots.size()).append(" spawn spots out of reach;");
             for (Room.Feature ft : r.features) {
                 if (ft.kind() == Room.FeatureKind.UPDRAFT || ft.kind() == Room.FeatureKind.RIFT_WALL) continue;
                 // the Mirror Hall's cache is in its pavilion, which only a spirit walks into (SPEC §17)
                 if (ft.kind() == Room.FeatureKind.CACHE && r.rig != null && r.rig.kind == RigRoom.Kind.MIRROR_HALL) continue;
-                if (w.near(ft.x(), y + ft.y(), ft.z(), 2) == null)
+                if (w.near(ft.x(), y + f.ground(ft.x(), ft.z()) + ft.y(), ft.z(), 2) == null)
                     bad.append(" room ").append(r.id).append(' ').append(ft.kind()).append(" at ").append(ft.x()).append(' ').append(ft.z()).append(" out of reach;");
             }
-            if (r.spawnSpots.isEmpty() && r.features.isEmpty() && w.near(r.centerX(), y, r.centerZ(), 7) == null)
+            if (r.spawnSpots.isEmpty() && r.features.isEmpty() && w.near(r.centerX(), y + f.ground(r.centerX(), r.centerZ()), r.centerZ(), 7) == null)
                 bad.append(" room ").append(r.id).append(" (").append(r.type).append(") can't be walked into;");
         }
         bad.append(marks(w, f));
@@ -289,8 +289,11 @@ public final class GateWorldBellTests {
     static int[] goal(WorldCheck w, FloorLayout f, Room end) {
         Room.Feature shrine = end.feature(Room.FeatureKind.SHRINE);
         int[] goal = null;
-        if (shrine != null) goal = w.near(shrine.x(), f.baseY + end.dy + shrine.y(), shrine.z(), 2);
-        if (goal == null && !end.spawnSpots.isEmpty()) goal = w.near(end.spawnSpots.get(0)[0], f.baseY + end.dy, end.spawnSpots.get(0)[1], 1);
+        if (shrine != null) goal = w.near(shrine.x(), f.baseY + end.dy + f.ground(shrine.x(), shrine.z()) + shrine.y(), shrine.z(), 2);
+        if (goal == null && !end.spawnSpots.isEmpty()) {
+            int[] sp = end.spawnSpots.get(0);
+            goal = w.near(sp[0], f.baseY + end.dy + f.ground(sp[0], sp[1]), sp[1], 1);
+        }
         return goal;
     }
 
@@ -411,6 +414,63 @@ public final class GateWorldBellTests {
         for (String id : CAVE_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
         // the D themes (38.11)
         for (String id : D_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
+        AwakenTests.register("gateworlds_pipe_maze_doorways", 1200, h -> {
+            // a Foundry tunnel's wall pipes stop short of a doorway's middle (38.11), even where the way bends hard by the
+            // door and its wall swings across the doorway
+            String id = "awaken:clockwork_foundry/pipe_maze";
+            GateWorld w = GateWorlds.get(id);
+            h.assertTrue(w != null, "the Pipe Maze loads");
+            List<String> moods = w.moods().stream().map(GateWorld.Mood::id).toList();
+            int bends = 0, across = 0;
+            for (int i = 0; i < 10 && across == 0; i++) {
+                GatePlan p = dressed(plan(0x919EL + i * 7919L, i, Theme.CLOCKWORK_FOUNDRY), id, moods.get(i % moods.size()));
+                for (int fl = 1; fl <= p.floors(); fl++) {
+                    FloorWorld fw = p.worldFor(0, fl);
+                    Plots.Plot plot = FloorBuilder.plotFor(p, 0, fl);
+                    if (fw == null || plot == null) continue;
+                    CaveEngine.Cave cave = null;
+                    FloorLayout f = null;
+                    for (int v = 0; v < 3 && f == null; v++) {
+                        cave = new CaveEngine.Cave(new WorldEngine.Ctx(p, p.theme(), 0, fl, fl == p.floors(), plot, fw.world(), w, fw.mood(),
+                                Hash.of(p.seed(), 400, fl * 8 + v), v));
+                        f = cave.run();
+                    }
+                    if (f == null) continue;
+                    WorldCheck wc = new WorldCheck(p, f);
+                    FoundryDress dress = (FoundryDress) cave.dress;
+                    double half = cave.hw + 0.4;
+                    for (ChainLayout.Link l : cave.chain.links.values()) {
+                        Room r = f.room(l.w());
+                        ChainLayout.Way way = ChainLayout.Way.of(r, l, cave.seed);
+                        if (way.straight()) continue;
+                        bends++;
+                        int[] b = Dress.box(r);
+                        for (int x = b[0]; x <= b[2]; x++) for (int z = b[1]; z <= b[3]; z++) {
+                            if (!Dress.inDoorway(r, x, z, 4)) continue;
+                            double[] at = way.at(x + 0.5, z + 0.5);
+                            boolean wall = at != null && Math.abs(at[0]) > half - 1.1 && Math.abs(at[0]) <= half;
+                            String where = " at " + x + " " + z + " (floor " + fl + " of " + p + ")";
+                            // where the way bends hard the carve itself cuts the doorway's corner (wall left standing, its
+                            // skin a pipe up the wall here and there); wherever it opened the doorway no tunnel pipe lies
+                            // across it and there's room to stand, the floor stepping a block here and there
+                            if (!wc.pass(x, cave.W, z) && !wc.pass(x, cave.W + 1, z) && !wc.pass(x, cave.W + 2, z)) continue;
+                            for (int y = cave.W; y <= cave.W + 3; y++) {
+                                var st = wc.at(x, y, z);
+                                h.assertTrue(st != dress.pipeX && st != dress.pipeZ, "a pipe lies across room " + r.id + "'s doorway at height " + (y - cave.W) + where);
+                            }
+                            int feet = Integer.MIN_VALUE;
+                            for (int y = cave.W - 1; y <= cave.W + 2 && feet == Integer.MIN_VALUE; y++) if (wc.node(x, y, z)) feet = y;
+                            h.assertTrue(feet != Integer.MIN_VALUE, "room " + r.id + "'s doorway is half closed (" + wc.at(x, cave.W, z).getBlock().getDescriptionId() + ", "
+                                    + wc.at(x, cave.W + 1, z).getBlock().getDescriptionId() + ")" + where);
+                            // where the wall's head-height pipe ran before it stopped short of the doorway
+                            if (wall && (feet == cave.W || feet == cave.W + 1)) across++;
+                        }
+                    }
+                }
+            }
+            h.assertTrue(across > 0, "a way bent hard enough by a door to swing its wall pipes across the doorway was carved (" + bends + " bends)");
+            h.succeed();
+        });
         // the C themes (38.12)
         for (String id : C_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
         // the sky, the abyss and the rare worlds (38.13)

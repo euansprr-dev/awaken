@@ -1,0 +1,411 @@
+<title>Gate World Depth</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column of plain sections, figures and tables allowed to run a little wider; a survey-sheet feel. */
+:root {
+  --bg: #eef0ec;
+  --panel: #f8f9f6;
+  --ink: #1d2726;
+  --muted: #56605d;
+  --rule: #c9cfc8;
+  --accent: #a8650f;
+  --accent-soft: #f1dfc2;
+  --moss: #4d6b3c;
+  --rock: #7d6a58;
+  --rock-dark: #5b4b3d;
+  --air: #e3e7e1;
+  --honey: #d99a22;
+  --drift: #c9b48a;
+  --good: #3f6f45;
+  --warn: #9a5a12;
+  --display: "Bitter", Georgia, "Times New Roman", serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131817; --panel: #1b2120; --ink: #e4e8e2; --muted: #a2aba6; --rule: #34403d;
+    --accent: #e3a548; --accent-soft: #3a2c16; --moss: #8fb37a; --rock: #6a5a4b; --rock-dark: #4a3e33;
+    --air: #222a28; --honey: #e0a634; --drift: #8c7b5a; --good: #85c08b; --warn: #e3a548; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131817; --panel: #1b2120; --ink: #e4e8e2; --muted: #a2aba6; --rule: #34403d;
+  --accent: #e3a548; --accent-soft: #3a2c16; --moss: #8fb37a; --rock: #6a5a4b; --rock-dark: #4a3e33;
+  --air: #222a28; --honey: #e0a634; --drift: #8c7b5a; --good: #85c08b; --warn: #e3a548; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 44px; }
+header { display: flex; flex-direction: column; gap: 14px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(32px, 5vw, 46px); line-height: 1.1; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1.2; margin: 0 0 6px; text-wrap: balance; }
+h3 { font-family: var(--display); font-weight: 500; font-size: 19px; margin: 18px 0 4px; }
+p { margin: 0 0 12px; max-width: 68ch; }
+.lede { font-size: 18px; max-width: 64ch; }
+section { display: flex; flex-direction: column; gap: 4px; }
+ul, ol { margin: 4px 0 12px; padding-left: 22px; max-width: 70ch; }
+li { margin: 3px 0; }
+strong { font-weight: 600; }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+.note { color: var(--muted); font-size: 14px; }
+.quote { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; font-style: italic; max-width: 66ch; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
+nav.toc a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+nav.toc a:hover, nav.toc a:focus-visible { border-color: var(--accent); outline: none; }
+.fig { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px; overflow-x: auto; }
+.fig svg { display: block; width: 100%; height: auto; min-width: 560px; }
+.cap { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); background: var(--bg); }
+tr:last-child td { border-bottom: none; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wide table { min-width: 760px; }
+.twocol { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.box { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; min-width: 0; }
+.box h3 { margin-top: 0; }
+.tag { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; background: var(--accent-soft); color: var(--accent); }
+.tag.good { background: transparent; border: 1px solid var(--good); color: var(--good); }
+.layers { counter-reset: layer; display: grid; gap: 10px; padding: 0; list-style: none; max-width: none; }
+.layers li { counter-increment: layer; display: grid; grid-template-columns: 34px 1fr; gap: 10px; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; margin: 0; }
+.layers li::before { content: counter(layer); font-family: var(--display); font-weight: 700; font-size: 22px; color: var(--accent); line-height: 1.2; }
+.layers li > div { min-width: 0; }
+.decision { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.decision h3 { margin: 0; }
+.opt { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 8px 10px; border-radius: 5px; border: 1px solid var(--rule); }
+.opt.rec { border-color: var(--accent); background: var(--accent-soft); }
+.opt .mark { font-family: var(--mono); font-weight: 500; color: var(--accent); }
+.opt > div { min-width: 0; }
+.decisions { display: flex; flex-direction: column; gap: 14px; }
+.walk { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.walk .box p { font-size: 15px; }
+.k { font-family: var(--mono); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 2px; }
+svg text { font-family: var(--body); }
+a { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Gate Worlds · plan for approval · 29 Oct 2026</div>
+  <h1>Gate World Depth</h1>
+  <p class="lede">The gate rooms still read as a floor, four walls and a lid. This plan gives the places in every gate world ground that rises and falls in soft half steps. Walls change as they go up, roofs sit at more than one height, and heaps and formations fill the space between. The further a spot is from the way you walk, the more it has grown over, the way the overworld gets wilder away from people. Nothing gets built until you say yes.</p>
+  <nav class="toc" aria-label="Sections">
+    <a href="#asked">What you asked for</a><a href="#today">What the rooms do today</a><a href="#why">Why</a><a href="#ways">Ways to do it</a><a href="#plan">The plan</a><a href="#themes">Each theme's ground</a><a href="#built">How it's built</a><a href="#before">Before and after</a><a href="#know">How we'll know</a><a href="#order">Order of work</a><a href="#decide">Decisions for you</a><a href="#sources">Sources</a>
+  </nav>
+</header>
+
+<section id="asked">
+  <h2>What you asked for</h2>
+  <p class="quote">"It still feels like walls and floors and a roof… look at the terrain generation for the overall. A lot of half slabs and shapes… the more wild it is, the more overgrown it is… I want you to create a whole new plan that's going to basically add to every single one of the rooms… so that it truly feels like a place that you're in instead of just a fabricated room."</p>
+  <p><strong>The job.</strong> Walking a gate floor should feel like exploring a place that formed over time, the way walking the overworld does. Looking around should be a pleasure in itself.</p>
+  <p><strong>What fails today.</strong> You said the newest gate is much better, but inside a place the floor is flat, the walls go straight up, and there's one roof. What detail there is is thin and spread evenly.</p>
+  <p><strong>What you pointed to.</strong> The overworld's ground: half slabs and shapes, wild patterns, more overgrowth where the land is wilder, and variety that looks natural.</p>
+  <p><strong>What has to keep working.</strong> Every fight, key, cache, touchstone, Lord's arena and Rig room works as it does now. Every floor can be walked from the arrival to the end. Gates already open in your saves keep working, and floors stay inside the performance budgets.</p>
+  <div class="twocol">
+    <div class="box"><span class="tag good">Strong result</span><p style="margin-top:8px">In any place, the ground steps up in half slabs to a shelf, dips where something has pooled, and banks up into the corners. A wall leans out over you. The roof is at three heights. It's all in the theme's own materials, no two places look alike, and the way through is still an easy walk.</p></div>
+    <div class="box"><span class="tag">Weak or unacceptable</span><p style="margin-top:8px"><strong>Weak:</strong> the same flat rooms with more props scattered on them, floors bumped by random noise, or shapes that repeat in every room. <strong>Unacceptable:</strong> a place you can't walk into, a monster spawning inside the ground, a buried key, a blocked doorway, dropped frames, or a gate you're standing in changing shape.</p></div>
+  </div>
+</section>
+
+<section id="today">
+  <h2>What the rooms do today</h2>
+  <p>I read the code and measured every world. Here is what I found.</p>
+  <h3>In the code</h3>
+  <ul>
+    <li><strong>85 of the 90 worlds are carved by one engine</strong>, the cave engine. Open lands, isles, the fold and the endless plain are its variants. Only the Bell Crypt's five worlds have engines of their own: hall, passages, shaft, void and the secret rest.</li>
+    <li><strong>The floor is one height.</strong> Every place is cut as open space between one floor line and its roof, so every column of floor in it is the same height.</li>
+    <li><strong>The walls go straight up.</strong> A place's outline is drawn once from above and pushed straight up. Height plays no part in it, so nothing leans, overhangs or makes a ledge.</li>
+    <li><strong>The roof is one dome</strong> over the middle of each place, roughened by about a block and a half up or down.</li>
+    <li><strong>Every surface is a full block.</strong> None of the roughly 190 theme blocks has a slab, stair or layer shape.</li>
+    <li><strong>Detail is an even scatter.</strong> The Hive, for example, hangs a drip on about 7% of its roof spots and stands a candle on 2% of its floor, the same everywhere in a place apart from near the doors.</li>
+  </ul>
+  <h3>Measured (29 Oct, every world, two floors each)</h3>
+  <p>A test I wrote for this plan carves real floors and checks every column where you can stand. It isn't part of the game; it lives in the plan's proof folder. Lower is better for the first and fourth columns, higher for the others.</p>
+  <div class="tablewrap wide">
+    <table>
+      <thead><tr><th>Worlds</th><th>Floor at one height</th><th>Floor heights in a place</th><th>Surfaces that aren't full blocks</th><th>Walls plumb from feet to head</th><th>Roof spread (blocks)</th><th>Things standing per 100 floor blocks</th></tr></thead>
+      <tbody>
+        <tr><td>Dry caves (38)</td><td class="num">96%</td><td class="num">4</td><td class="num">1.1%</td><td class="num">97%</td><td class="num">4.8</td><td class="num">20</td></tr>
+        <tr><td>Open lands (19)</td><td class="num">88%</td><td class="num">4</td><td class="num">1.2%</td><td class="num">76%</td><td class="num">1.3</td><td class="num">6</td></tr>
+        <tr><td>Isles (5)</td><td class="num">89%</td><td class="num">6</td><td class="num">20%</td><td class="num">8%</td><td class="num">0.4</td><td class="num">15</td></tr>
+        <tr><td>Bell Crypt's own (4)</td><td class="num">79%</td><td class="num">4</td><td class="num">2.7%</td><td class="num">92%</td><td class="num">8.1</td><td class="num">10</td></tr>
+        <tr><td>The Comb (Hive)</td><td class="num">88%</td><td class="num">4</td><td class="num">5.6%</td><td class="num">99%</td><td class="num">4.2</td><td class="num">25</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="cap">Medians per group. "Floor heights" counts the heights a column's standing spot takes within three blocks of the place's floor line; the extra ones are props you stand on, not ground. Sea and lake worlds are left out of the dry caves because swimming spots count at other heights. Full table: <code>docs/gate-depth/proof/baseline-2026-10-29.tsv</code>.</p>
+  <h3>What the overworld does that the gates don't</h3>
+  <ul>
+    <li><strong>Soft steps</strong> (the Soft Land, SPEC 31.2). A column one block lower than its neighbour gets a half slab of its own ground, which cut one-block risers by 97% on rolling land.</li>
+    <li><strong>Boulders</strong> are half sunk and crowned with slabs. <strong>Pebbles, twigs and fallen logs</strong> lie in drifts, as clusters around a spot rather than an even scatter (SPEC 31.3).</li>
+    <li><strong>Wildness</strong> (SPEC 41.1): the land is tamed near people and grows wilder with distance, and the plants thicken with it.</li>
+  </ul>
+  <p>The gates have none of these layers.</p>
+</section>
+
+<section id="why">
+  <h2>Why it's like that</h2>
+  <div class="tablewrap wide">
+    <table>
+      <thead><tr><th>What you see</th><th>Cause</th><th>Evidence</th><th>What fixes it</th></tr></thead>
+      <tbody>
+        <tr><td>Flat floor</td><td>The carve cuts every place down to one floor line</td><td>Cave engine carve; 96% of standing floor at one height</td><td>A ground height for every column of floor</td></tr>
+        <tr><td>Walls straight up</td><td>A place's outline has no height in it</td><td>The outline is drawn from above only; 97% of walls are plumb</td><td>Walls that change as they go up</td></tr>
+        <tr><td>One roof</td><td>One dome per place</td><td>The roof is one curve with ±1.5 blocks of noise</td><td>Roof levels, vaults, chimneys and hanging masses</td></tr>
+        <tr><td>Blocky, nothing soft</td><td>Surfaces can only be full blocks; the theme stones have no slab or stair</td><td>About 1% of surfaces are partial shapes</td><td>Slabs and stairs for each theme's stones, and the soft-step rule</td></tr>
+        <tr><td>Thin, even detail</td><td>Each block rolls on its own at one density</td><td>Hive: 7% drips and 2% candles, alike everywhere</td><td>Clusters, heaps and drifts placed by how wild a spot is</td></tr>
+        <tr><td>Nothing between floor and roof</td><td>Only hero pieces stand in the space</td><td>Most places have no pillar, outcrop or fallen thing</td><td>Formations, standing and fallen</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>What it isn't.</strong> The textures are rich and the light is good, so neither of those is the gap; the shape of the space is. If the Hive still reads as a room once its ground and walls change, then the cause is the plan outline (places too round and even). Then we'd add lobes and side chambers to the outlines next.</p>
+</section>
+
+<section id="ways">
+  <h2>Ways to do it</h2>
+  <div class="twocol">
+    <div class="box"><h3>A. Dress the rooms more</h3><p>More props, plants and heaps on today's flat floors.</p><p>Cheap and safe, but the floor stays flat, the walls stay straight and the roof stays one dome, which is exactly what you called out.</p></div>
+    <div class="box" style="border-color: var(--accent)"><h3>B. Give the engine real ground <span class="tag">recommended</span></h3><p>Ground heights, walls that change with height, roof levels and formations. Add soft steps, a way-and-wild field, and each theme's own ground.</p><p>One engine change reaches 85 worlds, and it keeps the programme, the dress and every test that guards them. Heaps and drifts from A are folded in.</p></div>
+    <div class="box"><h3>C. Rebuild as full 3D noise caves</h3><p>Caves made from 3D noise the way the overworld's own caves are: the most natural shapes possible.</p><p>It loses the control that keeps fights, keys and doorways working, and the walk guarantee with it. It would carve slower, and it's a rewrite. Keep it in reserve in case B falls short.</p></div>
+  </div>
+</section>
+
+<section id="plan">
+  <h2>The plan</h2>
+  <p>Seven layers, built into the cave engine and the dress every theme shares, then given each theme's own materials and habits.</p>
+  <ol class="layers">
+    <li><div><strong>Ground that rises and falls.</strong> Each place gets its own ground: gentle rolls, terraces stepping up toward a wall, dips and basins with something pooled in them (honey, water, ink, a crust of lava), mounds and humps. Some spots stay flat because they have to: every doorway's mouth, the arrival, every key, cache and touchstone, lake shores, and the ground round hero pieces and built rooms.</div></li>
+    <li><div><strong>Soft steps.</strong> Where the ground steps up a block, a half slab of that ground's own stone sits on the lower side, as on the overworld. On the way you walk you never have to jump. Stairs sit at the feet of walls, and turned upside down where the roof steps, so floors and roofs meet walls in a slope, not a corner.</div></li>
+    <li><div><strong>Walls that change as they go up.</strong> Bands of ledges and overhangs, alcoves and bulges, and walls that lean in toward the roof or out over you. Each theme adds its own ribs: comb, roots, girders, shelving.</div></li>
+    <li><div><strong>A roof at more than one height.</strong> Vaults rise into chimneys and openings. Low masses hang down (drip clusters, rock teeth, caps, icicles), and ribs and arches span the space.</div></li>
+    <li><div><strong>Things standing in the space.</strong> Outcrops half sunk with slab crowns, pillars from floor to roof that flare at both ends, fallen pieces (columns, gears, comb, shelves) and heaps of rubble. They come in clusters, never as an even scatter.</div></li>
+    <li><div><strong>The way and the wild.</strong> This is the gate's version of the overworld's wildness. The line you walk from door to door is trodden: clean, worn ground. The further a spot is from it, the wilder it gets: heaps, drifts banked against the walls, growth thickening, broken floor. Corners and dead ends are the wildest. Where a place hosts a fight, its middle stays open ground.</div></li>
+    <li><div><strong>Drifts and bits.</strong> Each theme gets a drift block that piles up in layers, one to eight deep like snow: pollen, ash, spores, leaf litter, paper, sand, snow, soot. It banks into corners and against walls, so floors meet walls in a slope. Small bits lie underfoot too: wax crumbs, slag, shards, bolts, pages.</div></li>
+  </ol>
+  <p><strong>High ground</strong> (decision 5): ledges and shelves off the way that you reach with a jump or a mantle, for a view or a quiet corner. No fights are placed up there.</p>
+  <p><strong>New blocks, about 120.</strong> About 90 slabs and stairs cut from each theme's main ground and wall stones. They keep the stones' own textures, so they need no new art. Each theme also gets a drift layer and a block of small bits, about 30 in all, with new art in the theme's style made by the existing art scripts. Outside gates they drop themselves like the theme's other blocks; inside a gate they can't be broken, the same as now.</p>
+</section>
+
+<section id="themes">
+  <h2>Each theme's ground</h2>
+  <p>The kit is shared; what fills it is each theme's own. Rare worlds take the ground of the look they wear, with their own twist.</p>
+  <div class="tablewrap wide">
+    <table>
+      <thead><tr><th>Theme</th><th>Ground</th><th>Walls and roof</th><th>Heaps and formations</th><th>Drift · bits</th><th>Grows with the wild</th></tr></thead>
+      <tbody>
+        <tr><td>Bell Crypt</td><td>Sunken, cracked flagstones; wet hollows</td><td>Crumbling ledges, fallen tracery, ribbed vaults</td><td>Rubble from the vault, a toppled bell</td><td>Limestone dust · bone shards, wax drips</td><td>Damp moss, old wax</td></tr>
+        <tr><td>Fungal Hollow</td><td>Loam mounds, root humps, mycelium mats</td><td>Shelf-fungus ledges, veined overhangs; clumps of lumen roots</td><td>Puffball clusters, fallen caps, root arches</td><td>Spore dust · tiny caps</td><td>Glow moss, threads</td></tr>
+        <tr><td>Ember Mines</td><td>Slag heaps, cave-in rubble, sunken rails</td><td>Basalt bands with glowing cracks, shoring; rock teeth</td><td>Collapsed frames, ore boulders, cooled lava humps</td><td>Ash · coals, slag</td><td>Soot and cooled crust</td></tr>
+        <tr><td>Hive</td><td>Wax mounds, comb ridges, honey seeping into dips</td><td>Comb bulging out at different heights; drip clusters</td><td>Fallen comb, wax pillars</td><td>Pollen · wax crumbs</td><td>Capped comb creeping over floor and wall</td></tr>
+        <tr><td>Overgrown Temple</td><td>Tiles heaved up by roots, sunken courts</td><td>Broken carving, root curtains; holes in the roof with vines</td><td>Toppled columns, fallen idols, root arches</td><td>Leaf litter · leaves, twigs</td><td>Vines, ferns and moss taking over</td></tr>
+        <tr><td>Drowned Archive</td><td>Paper drifts, sodden heaps, puddles</td><td>Leaning shelves, alcoves, tide lines; a dripping roof</td><td>Toppled bookcases, book piles</td><td>Pulp · loose pages</td><td>Kelp and damp bloom</td></tr>
+        <tr><td>Clockwork Foundry</td><td>Raised plates, grated pits, oil puddles</td><td>Girders, pipe bundles; hanging chains and gantries</td><td>Fallen gears half sunk, scrap heaps, burst boilers</td><td>Soot · bolts, cogs</td><td>Rust and patina</td></tr>
+        <tr><td>Glass Desert</td><td>Sand ripples and drifts over the dunes</td><td>Wind-cut ledges</td><td>Glass outcrops, half-buried statues</td><td>Sand · glass shards</td><td>Sand burying everything</td></tr>
+        <tr><td>Lantern Night Market</td><td>Uneven cobbles, puddles</td><td>Sagging awnings and signs</td><td>Crates, sacks, a fallen stall</td><td>Petals and paper · scraps</td><td>Vines on the walls, litter</td></tr>
+        <tr><td>Frost Monastery</td><td>Snow drifts, ice humps</td><td>Icefalls, frozen overhangs; icicle clusters</td><td>Ice boulders, snowed-under statues</td><td>Snow · ice chips</td><td>Frost and rime</td></tr>
+        <tr><td>Mirror Palace</td><td>Cracked floors that tilt</td><td>Frames askew, alcoves</td><td>Toppled frames, shattered heaps</td><td>Glass dust · shards</td><td>The crazing spreads</td></tr>
+        <tr><td>Precursor Lab</td><td>Lifted floor panels, coolant puddles</td><td>Exposed conduits, missing panels; hanging cables</td><td>Debris, toppled consoles</td><td>Dust · wires, screws</td><td>Moss creeping in from the garden</td></tr>
+        <tr><td>Nightmare</td><td>Floors that tilt and warp</td><td>Peeling walls, doors in odd places</td><td>Heaps of furniture</td><td>Dust · small lost things</td><td>The dream creeping in</td></tr>
+        <tr><td>Sky Archipelago</td><td>Grass hummocks, rocks, wind-bent ground</td><td>Cliff ledges under the isles</td><td>Rock outcrops, fallen ruin stones</td><td>None · pebbles, feathers</td><td>Wild grass and flowers</td></tr>
+        <tr><td>Abyssal Shrine</td><td>Black sand drifts, coral humps</td><td>Sunken pillars, carved ledges</td><td>Coral heaps, sunken statues</td><td>Black sand · shells</td><td>Coral and kelp</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="built">
+  <h2>How it's built</h2>
+  <div class="fig" role="img" aria-label="Today a floor is planned, carved flat and dressed with an even scatter of full blocks. Proposed: a relief step after the places are laid makes ground, roof and wild grids, checks the floor can be walked and eases it if not; the carve follows the ground, the dress stands on it, and a final surface pass adds soft steps, stairs, drifts and bits.">
+    <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg">
+      <text x="10" y="22" font-size="13" font-weight="600" fill="var(--muted)">TODAY</text>
+      <g font-size="12" fill="var(--ink)">
+        <rect x="10" y="34" width="120" height="44" rx="5" fill="var(--panel)" stroke="var(--rule)"/><text x="70" y="61" text-anchor="middle">Programme</text>
+        <rect x="160" y="34" width="120" height="44" rx="5" fill="var(--panel)" stroke="var(--rule)"/><text x="220" y="61" text-anchor="middle">Chain and places</text>
+        <rect x="310" y="34" width="140" height="44" rx="5" fill="var(--panel)" stroke="var(--rule)"/><text x="380" y="54" text-anchor="middle">Carve: one floor line,</text><text x="380" y="69" text-anchor="middle">walls up, one dome</text>
+        <rect x="480" y="34" width="130" height="44" rx="5" fill="var(--panel)" stroke="var(--rule)"/><text x="545" y="54" text-anchor="middle">Dress: even scatter</text><text x="545" y="69" text-anchor="middle">at the floor line</text>
+        <rect x="640" y="34" width="110" height="44" rx="5" fill="var(--panel)" stroke="var(--rule)"/><text x="695" y="54" text-anchor="middle">Skin: full</text><text x="695" y="69" text-anchor="middle">blocks only</text>
+      </g>
+      <g stroke="var(--muted)" stroke-width="1.5" fill="none"><path d="M130 56h28M280 56h28M450 56h28M610 56h28"/></g>
+      <text x="10" y="122" font-size="13" font-weight="600" fill="var(--accent)">PROPOSED</text>
+      <g font-size="12" fill="var(--ink)">
+        <rect x="10" y="134" width="100" height="56" rx="5" fill="var(--panel)" stroke="var(--rule)"/><text x="60" y="160" text-anchor="middle">Programme</text><text x="60" y="175" text-anchor="middle">(same)</text>
+        <rect x="128" y="134" width="100" height="56" rx="5" fill="var(--panel)" stroke="var(--rule)"/><text x="178" y="160" text-anchor="middle">Chain and</text><text x="178" y="175" text-anchor="middle">places (same)</text>
+        <rect x="246" y="128" width="130" height="68" rx="5" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="311" y="148" text-anchor="middle" font-weight="600">Relief (new)</text><text x="311" y="164" text-anchor="middle">ground, roof, wild grids</text><text x="311" y="180" text-anchor="middle">walk check · ease if not</text>
+        <rect x="394" y="134" width="110" height="56" rx="5" fill="var(--panel)" stroke="var(--accent)"/><text x="449" y="155" text-anchor="middle">Carve follows</text><text x="449" y="170" text-anchor="middle">the ground; walls</text><text x="449" y="185" text-anchor="middle">by height</text>
+        <rect x="522" y="134" width="100" height="56" rx="5" fill="var(--panel)" stroke="var(--accent)"/><text x="572" y="155" text-anchor="middle">Dress on the</text><text x="572" y="170" text-anchor="middle">ground, in</text><text x="572" y="185" text-anchor="middle">clusters</text>
+        <rect x="640" y="128" width="110" height="68" rx="5" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="695" y="148" text-anchor="middle" font-weight="600">Surface (new)</text><text x="695" y="164" text-anchor="middle">soft steps, stairs</text><text x="695" y="180" text-anchor="middle">drifts, bits</text>
+      </g>
+      <g stroke="var(--muted)" stroke-width="1.5" fill="none"><path d="M110 162h16M228 162h16M376 162h16M504 162h16M622 162h16"/></g>
+      <g font-size="12" fill="var(--muted)"><path d="M311 196v26h-200" stroke="var(--muted)" stroke-width="1.2" fill="none" stroke-dasharray="4 3"/><text x="110" y="240">Spawns, keys, caches and hidden lights read the ground too</text></g>
+    </svg>
+  </div>
+  <h3>The contract</h3>
+  <ul>
+    <li><strong>When.</strong> At plan time, once the chain and places are laid and before anything is carved, the engine builds the floor's relief. That's three small grids over the plot: ground height in half blocks, roof height, and how wild each spot is. They're about 200 KB a floor, kept with the floor's cached layout and rebuilt from the saved plan like everything else. <strong>Nothing new is saved.</strong></li>
+    <li><strong>The carve</strong> follows the ground grid. Walls take a height term (bands, lean, alcoves), the roof reads its grid, and formations are cut from the grids too.</li>
+    <li><strong>The dress</strong> stands on the ground. Every place in the 17 dresses that uses the old floor line (about 400 in the code) asks for the ground at that spot instead.</li>
+    <li><strong>The surface pass</strong> runs last on each chunk. It adds soft steps from the ground grid; the whole floor's grid is known, so nothing breaks at chunk edges. It also adds stairs at wall feet and roof steps, drifts by wildness, and bits.</li>
+    <li><strong>Spawns and features.</strong> On a world floor, the spot a monster spawns on is read from the ground. Spawn spots are only on whole-block ground with a level patch round them, and keys, caches and touchstones sit on their flat pads. The hidden lights hang at head height over the ground.</li>
+    <li><strong>Old gates.</strong> The gate content version goes to 7. A version 6 floor carves exactly the blocks it carves today, which a test checks block for block over 40 plans. As with every gate update, gates nobody has entered are rebuilt as version 7 on the next start, and a gate someone entered keeps its version to the end.</li>
+    <li><strong>The guarantee.</strong> Once the ground is built, the plan walks it: a quick walk over the grid from every doorway to every other doorway, the arrival, every spawn spot and every feature. Steps are at most one block, and on the way at most a half step. If a place fails, its relief is halved and checked again, then made flat, so the floor always builds. The log names the place that was eased and why.</li>
+    <li><strong>Recipes.</strong> Each world can tune its ground with new optional numbers (how much relief, how wild, how many ledges). Only version 7 floors read them, so a released world's shape never changes.</li>
+    <li><strong>Multiplayer.</strong> Everything comes from the saved plan, so every player sees the same ground.</li>
+  </ul>
+  <h3>When something goes wrong</h3>
+  <div class="tablewrap wide">
+    <table>
+      <thead><tr><th>Risk</th><th>How it's caught</th><th>What happens</th><th>Test</th></tr></thead>
+      <tbody>
+        <tr><td>Ground cuts a place off, or blocks a doorway</td><td>The plan-time walk over the grid</td><td>That place's relief is halved, then made flat; logged</td><td>Every world's walk test; the Pipe Maze doorway test</td></tr>
+        <tr><td>A monster spawns inside raised ground</td><td>Spawn height read from the ground; spots only on level whole blocks</td><td>Spawns stand on the ground</td><td>A spawn test on a hilly floor</td></tr>
+        <tr><td>A key, cache or touchstone half buried</td><td>Flat pads under every feature</td><td>Features sit on level ground</td><td>The world tests' feature reach check</td></tr>
+        <tr><td>A lake leaks over a raised shore</td><td>Shores are pads at lake level</td><td>Water stays put</td><td>The world tests' water check</td></tr>
+        <tr><td>Dark corners on the way</td><td>Hidden lights follow the ground</td><td>The way lit to 7 or more</td><td>The world tests' light check</td></tr>
+        <tr><td>Slow chunks</td><td>Grids are made once at plan time; the carve only reads them</td><td>Budgets unchanged</td><td>Every world's carve and plan budget</td></tr>
+        <tr><td>Your current gates change shape</td><td>Content version 7 only</td><td>Entered gates keep today's rooms</td><td>The golden test for version 6</td></tr>
+        <tr><td>Frame drops from many small blocks</td><td>Bits capped at about one per 12 floor blocks in the wild, none on the way</td><td>Slabs and stairs cost little, as on the overworld</td><td>One frame-time check of the busiest world on the Mac</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>Performance</h3>
+  <p>The budgets stay as they are: a floor plans in under 50 ms, and a chunk carves in under 4 ms on average and 40 ms at worst. Every world's test measures both. The grids should add a few milliseconds to a plan; I'll measure that in stage 0, not promise it. On the client, slabs and stairs are as cheap as they are on the Soft Land. The bits are what would cost frames, so they're capped. Frame-time checks stay on the Mac, so the busiest world gets one Mac check before roll-out, run by the orchestrator or you.</p>
+</section>
+
+<section id="before">
+  <h2>Before and after</h2>
+  <div class="fig" role="img" aria-label="Cross-section of a cavern. Before: a flat floor, walls straight up, one dome. After: the floor dips into a honey seep, rises over a mound and steps up to a shelf in half slabs; a drift banks against the left wall; the right wall overhangs and has a ledge; the roof has a vault rising into a chimney, a lower part and hanging drips; a pillar stands floor to roof.">
+    <svg viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg">
+      <text x="14" y="22" font-size="13" font-weight="600" fill="var(--muted)">BEFORE · a cavern cut sideways</text>
+      <rect x="14" y="32" width="732" height="190" fill="var(--rock)"/>
+      <path d="M60 196 L700 196 L700 120 Q380 -6 60 120 Z" fill="var(--air)"/>
+      <g fill="var(--ink)" font-size="12">
+        <text x="300" y="214">one floor line</text>
+        <text x="690" y="176" text-anchor="end">walls straight up</text>
+        <text x="380" y="72" text-anchor="middle">one dome</text>
+      </g>
+      <g fill="var(--honey)"><rect x="250" y="186" width="5" height="10"/><rect x="430" y="186" width="5" height="10"/></g>
+
+      <text x="14" y="258" font-size="13" font-weight="600" fill="var(--accent)">AFTER · the same place (illustration)</text>
+      <rect x="14" y="268" width="732" height="190" fill="var(--rock)"/>
+      <path d="M60 436 L60 360 L74 352 L70 330 Q120 290 210 296 L232 298 L236 278 L254 278 L258 299 Q330 300 380 300 L392 300 Q470 296 520 318 L560 318 L560 330 L640 330 L652 318 L662 344 L640 352 L660 380 L690 380 L700 436 Z" fill="var(--air)"/>
+      <!-- floor: dips, mound, half steps up to a shelf -->
+      <path d="M60 436 L60 420 L100 420 L100 424 L140 424 Q170 436 200 436 L230 436 L230 428 L250 428 L250 420 L290 420 Q320 410 350 418 L380 424 L430 424 L430 420 L470 420 L470 414 L500 414 L500 408 L560 408 L560 400 L640 400 L640 380 L700 380 L700 436 Z" fill="var(--rock-dark)"/>
+      <path d="M142 426 Q172 437 200 434 L228 434 L228 430 Q190 430 142 426 Z" fill="var(--honey)"/>
+      <!-- drift banked against the left wall -->
+      <path d="M60 420 L60 392 Q80 404 100 420 Z" fill="var(--drift)"/>
+      <!-- pillar floor to roof -->
+      <path d="M402 424 L398 300 L420 300 L416 424 Z" fill="var(--rock-dark)"/>
+      <!-- hanging drips -->
+      <g fill="var(--rock-dark)"><path d="M300 296 L306 318 L312 297 Z"/><path d="M318 298 L322 312 L328 299 Z"/><path d="M520 318 L526 340 L532 318 Z"/></g>
+      <!-- the way -->
+      <path d="M110 414 Q200 426 260 414 T380 416 T500 402" stroke="var(--accent)" stroke-width="2" fill="none" stroke-dasharray="6 4"/>
+      <g fill="var(--ink)" font-size="12">
+        <text x="66" y="386">drift</text>
+        <text x="150" y="452">honey in a dip</text>
+        <text x="245" y="318" text-anchor="middle">chimney</text>
+        <text x="424" y="350">pillar</text>
+        <text x="300" y="338">hanging drips</text>
+        <text x="470" y="394">half steps up to a shelf</text>
+        <text x="664" y="364" text-anchor="end">overhang</text>
+        <text x="120" y="404" fill="var(--accent)">the way: trodden, gentle</text>
+      </g>
+    </svg>
+  </div>
+  <p class="cap">The after picture is a sketch of the intent, not a render of built code. Stage 1 ends with real CI shots of the same spots, before and after.</p>
+  <div class="walk">
+    <div class="box"><span class="k">An ordinary place</span><p><strong>Before:</strong> you step into a Comb cavern. The wax floor is flat, the hex walls go straight up, there's a dome overhead, and candles and drips are scattered evenly.</p><p><strong>After:</strong> the way in is packed, clean wax. To one side the floor dips to a seep of glowing honey, and on the other it steps up in wax half slabs to a comb shelf along the wall. Pollen banks into the corners. Comb bulges out of the walls at three heights, and a cluster of drips hangs over the seep.</p></div>
+    <div class="box"><span class="k">Your screenshot</span><p><strong>Before:</strong> on the Hive's floor 1 the honey patches lie flat on a flat floor, the comb walls are sheer, and the roof is one height.</p><p><strong>After:</strong> those patches are pools in low ground with wax rims. The walls step and lean, and the roof breaks into a vault and a lower shelf with drips. What's in front of you, the space behind it and the far wall now sit at different depths.</p></div>
+    <div class="box"><span class="k">A fight</span><p>An elite room hosted in a cavern keeps a fighting floor in its middle: gentle ground with soft steps. The heaps, shelves and drifts stay at the edges. Monsters spawn on level whole blocks. A Lord's arena and the Rig rooms aren't touched.</p></div>
+    <div class="box"><span class="k">Something goes wrong</span><p>Say one place's ground would leave a cache out of reach. The plan's walk finds it, halves that place's relief and checks again; if it still fails, that place goes flat. The floor builds either way, and the log says which place on which floor was eased. You never get today's plain rooms just because the ground misbehaved.</p></div>
+  </div>
+</section>
+
+<section id="know">
+  <h2>How we'll know it works</h2>
+  <p>The test that measured today becomes a real test, <code>gateworlds_depth</code>, and runs on every world. These targets aim for the overworld's feel while keeping the way easy. They check that the change took hold; your eyes judge whether it's good.</p>
+  <div class="tablewrap wide">
+    <table>
+      <thead><tr><th>Measure (dry caves, median)</th><th>Today</th><th>Target</th></tr></thead>
+      <tbody>
+        <tr><td>Floor at one height</td><td class="num">96%</td><td class="num">55% or less</td></tr>
+        <tr><td>Floor heights in a place (half steps)</td><td class="num">4</td><td class="num">8 or more</td></tr>
+        <tr><td>Surfaces that aren't full blocks</td><td class="num">1.1%</td><td class="num">12% or more</td></tr>
+        <tr><td>Walls plumb from feet to head</td><td class="num">97%</td><td class="num">65% or less</td></tr>
+        <tr><td>Roof spread</td><td class="num">4.8</td><td class="num">6 or more</td></tr>
+        <tr><td>Things standing per 100 floor blocks</td><td class="num">20</td><td class="num">35 or more</td></tr>
+        <tr><td>Open lands and isles</td><td class="num">as measured</td><td class="num">twice today's partial surfaces and detail</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul>
+    <li><strong>The way stays easy.</strong> A new check in every world test walks from the arrival to the end without a single jump. Every doorway stays clear and lit to 7 or more.</li>
+    <li><strong>Nothing breaks.</strong> Every world test keeps passing: walking, light, water, every spawn spot and feature in reach, budgets. So do the doorway test and the version 6 golden test.</li>
+    <li><strong>You see it.</strong> CI shots of the same spots before and after, for the Hive first, then one per theme at each merge. Then you play it. Shots are for checking, not a stand-in for your judgement.</li>
+  </ul>
+</section>
+
+<section id="order">
+  <h2>Order of work</h2>
+  <ol>
+    <li><strong>Stage 0, the safety net</strong> (no visible change). Add the golden test for version 6 floors, the depth test, the content version 7 switch, ground-aware spawns and features, and a server switch, <code>gateWorldsDepth</code>: off means new gates are made at version 6. Measure the plan cost.</li>
+    <li><strong>Stage 1, the kit and the Hive.</strong> All seven layers in the cave engine, dressed for the Hive's three cave worlds. CI shots before and after go to you.</li>
+    <li><strong>Stage 2, every other theme.</strong> Each theme's ground, the new blocks and their art, open lands and isles, and the rare worlds through the looks they wear.</li>
+    <li><strong>Stage 3, the Bell Crypt's own engines.</strong> Worn and sunken flagstones, fallen tracery, rubble, the crypt's drifts.</li>
+    <li><strong>Stage 4, high ground</strong>, if decision 5 says so.</li>
+  </ol>
+  <p><strong>Rolling back.</strong> Each stage merges and works on its own. If something's wrong, the server switch makes new gates at version 6 again, and gates already made keep the shape they were made with. Nothing saved has to change.</p>
+  <p><strong>Effort.</strong> About a day to a day and a half of building, judged by how the Gate Worlds went: stages 2 to 6 (over 60 worlds and about 150 blocks) took about a day. Two things could change that. If the art for drifts and bits needs more than one pass, slabs, stairs and the ground ship first. If fights read badly on uneven ground, the fight floors get flatter.</p>
+  <p><strong>Who builds it.</strong> This session, after your yes, with no sub-agents. I run no tours on the Mac; CI runs the tests and the shots.</p>
+</section>
+
+<section id="decide">
+  <h2>Decisions for you</h2>
+  <div class="decisions">
+    <div class="decision">
+      <h3>1. Which gates change</h3>
+      <div class="opt rec"><span class="mark">→</span><div><strong>New gates, and gates nobody has entered yet</strong> (rebuilt on the next start, as every gate update does). Gates you've been into keep today's rooms until they close.</div></div>
+      <div class="opt"><span class="mark">·</span><div>Also reshape the parts of entered gates nobody has loaded yet. You'd see seams where old ground meets new.</div></div>
+    </div>
+    <div class="decision">
+      <h3>2. How bold the ground is</h3>
+      <div class="opt rec"><span class="mark">→</span><div><strong>Gentle on the way and on fight floors, bold at the edges.</strong> On the way, half steps only and never a jump. Away from it, heaps, shelves and ledges up to four blocks high.</div></div>
+      <div class="opt"><span class="mark">·</span><div>Gentle everywhere (two blocks at most).</div></div>
+      <div class="opt"><span class="mark">·</span><div>Wild everywhere: big rises even on the way, some needing a jump or a mantle.</div></div>
+    </div>
+    <div class="decision">
+      <h3>3. New blocks</h3>
+      <div class="opt rec"><span class="mark">→</span><div><strong>Yes to about 120.</strong> Slabs and stairs from each theme's stones keep their textures; drifts and bits get new art in each theme's style. No style-sheet stop: you see them in the Hive's shots.</div></div>
+      <div class="opt"><span class="mark">·</span><div>Send a style sheet for the drifts and bits first, and wait for your OK before they go into the worlds.</div></div>
+    </div>
+    <div class="decision">
+      <h3>4. When you look</h3>
+      <div class="opt rec"><span class="mark">→</span><div><strong>Build the Hive first and send you the shots, then keep going</strong> through every theme unless you say stop.</div></div>
+      <div class="opt"><span class="mark">·</span><div>Stop after the Hive and wait for your go.</div></div>
+    </div>
+    <div class="decision">
+      <h3>5. High ground</h3>
+      <div class="opt rec"><span class="mark">→</span><div><strong>Include ledges and shelves you can climb to in the big caverns</strong>, with no fights up there. Leave full second storeys, with galleries and bridges you fight on, for a later plan once you've walked the new ground.</div></div>
+      <div class="opt"><span class="mark">·</span><div>Do second storeys now as well.</div></div>
+      <div class="opt"><span class="mark">·</span><div>No high ground for now.</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="sources">
+  <h2>Sources and evidence</h2>
+  <ul>
+    <li>Your screenshot, 29 Oct: Hive, floor 1 of 3, rank E.</li>
+    <li>The carve: <code>gates/world/CaveEngine.java</code> (place carve, tunnels, roof); the surface skin: <code>gates/world/Sculpt.java</code>; the dresses: <code>gates/world/*Dress.java</code>; block shapes: <code>gates/block/ThemeBlocks.java</code>.</li>
+    <li>The baseline: <code>docs/gate-depth/proof/DepthBaseline.java</code> (the harness, not in the game), <code>baseline-2026-10-29.tsv</code> and <code>baseline-heights-2026-10-29.txt</code> (75 worlds, two floors each; secret worlds are places on other floors).</li>
+    <li>The overworld: SPEC 31.2 (soft steps, risers cut by 97% on rolling land), 31.3 (drifts, boulders), 41.1 (wildness).</li>
+    <li>Gate Worlds: SPEC 38.1 to 38.13 (plots, engines, budgets, world tests, content versions).</li>
+  </ul>
+  <p class="note">What's measured: the baseline table. What's a target: the "How we'll know" numbers. What's an illustration: the cross-section. What's untested: everything in "The plan" until stage 1.</p>
+</section>
+</div>

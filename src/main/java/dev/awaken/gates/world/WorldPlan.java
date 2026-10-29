@@ -278,6 +278,12 @@ final class WorldPlan {
         }
     }
 
+    /**
+     * Where you stand over each column, blocks above the base (SPEC §38.14), set by an engine that gives its places
+     * ground before {@link #finish}; null for a flat floor. Spawns and features read it through the floor.
+     */
+    byte[] ground;
+
     /** Places that are a world of their own (a secret world reached from this one): world room id → world id. */
     final Map<Integer, String> placeWorlds = new HashMap<>(), placeBiomes = new HashMap<>();
     /** What the live layer needs to find again (SPEC §38.8): bells, secrets, a basin the Flood fills. */
@@ -511,8 +517,10 @@ final class WorldPlan {
             }
         }
         Plots.Plot plot = ctx.plot();
-        return new FloorLayout(ctx.area(), ctx.floor(), look.baseY(), plot.slotX(), plot.slotZ(), b.w, b.h, ctx.theme(), logic.bossFloor,
+        FloorLayout f = new FloorLayout(ctx.area(), ctx.floor(), look.baseY(), plot.slotX(), plot.slotZ(), b.w, b.h, ctx.theme(), logic.bossFloor,
                 b.rooms, b.start, b.end, new FloorLayout.Frame(plot, plot.minY(), plot.maxY(), null, ctx.worldId(), ctx.mood(), look.biome(), look.air(), look.model(), look.yaw(), placeWorlds, placeBiomes, marks, look.sky()));
+        f.ground = ground;
+        return f;
     }
 
     private void spots(Room r, Walk walk) {

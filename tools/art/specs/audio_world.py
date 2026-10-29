@@ -451,7 +451,8 @@ ONE_SHOTS = (
     ("world.elder_glint", "Gold light glints", "amb_world_elder_glint", 4, "audio"),
     ("world.lumen_chime", "Lumen specks chime", "amb_world_lumen_chime", 6, "audio"),
     ("living.tell.horn", "A hunting horn, far off", "amb_tell_horn", 2, "living"),
-    ("living.storm.roll", "Thunder rolls in the distance", "amb_storm_roll", 3, "living"),
+    # ambient.*: Sound Physics leaves them alone (it ray-traced every strike's roll and crack, a hitch each, 29 Oct)
+    ("ambient.storm.roll", "Thunder rolls in the distance", "amb_storm_roll", 3, "living"),
 )
 LOOPS = (
     ("living.tell.stampede", "A stampede rumbles", "amb_tell_stampede"),
@@ -468,4 +469,7 @@ def events(Evt):
         out.append(Evt(ev, sub, files=[f"{stem}_{k + 1}" for k in range(count)], folder=folder))
     for ev, sub, stem in LOOPS:
         out.append(Evt(ev, sub, files=[stem], folder="living"))
+    # the Rolling Storm's thunder and crack, played late by distance: the game's own, under ambient.* names
+    out.append(Evt("ambient.storm.thunder", "Thunder roars", refs=[("minecraft:entity.lightning_bolt.thunder", 1, 1.0)], folder="living"))
+    out.append(Evt("ambient.storm.crack", "Lightning strikes", refs=[("minecraft:entity.lightning_bolt.impact", 1, 1.0)], folder="living"))
     return out

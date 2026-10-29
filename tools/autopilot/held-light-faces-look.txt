@@ -1,0 +1,168 @@
+# Held light on faces (Euan 2026-10-29, "Also some more shadow issues with underground torches held here"): a row of
+# blocks at chest height (dirt, a gap, stone, moss, a gap) on a stone ledge, a torch in the main hand, Bright gamma as
+# Euan plays, Lens Cinematic. Faces looking straight at the torch and faces beside it at arm's length went pure black,
+# and the torch in hand was dark. Two places:
+#   A. a shallow cave mouth at sunset (its mouth to the west, on your right as you face the row), a two-block roof
+#   B. a sealed room deep in stone
+# Each from straight on, at an angle, pressed against the stone (the flame inside it) and beside the moss looking at
+# its open side; the game's own frame (lensdebug 1) and the light buffer (lensdebug 5) beside the Lens frame.
+#   tools/tour-ci.sh tools/autopilot/held-light-faces-look.txt 900 PACK=perf,feel LENS=cinematic
+world heldfaces creative 20261029
+waitworld
+wait 40
+# the new-world sky shot holds the camera on the sky until it is skipped
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule awaken:living_herds false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+cmd time set 12000
+# ---- A. the cave mouth, in the sky over one chunk column: a stone hill (floor top y 191, a two-block roof y 195-196),
+# the cave x 592-603 open to the west at x 592, z 594-605. Filled twice: a fill before the chunk loads fails
+cmd tp @s 600 230 600
+wait 160
+cmd fill 592 190 592 607 196 607 minecraft:stone
+wait 60
+cmd fill 592 190 592 607 196 607 minecraft:stone
+cmd fill 592 191 594 603 194 605 minecraft:air
+# the row on its ledge (z 602): x 598 dirt, 597 gap, 596 stone, 595 moss, 594 gap; facing south, west is on the right
+cmd fill 594 191 602 598 191 602 minecraft:stone
+cmd setblock 598 192 602 minecraft:dirt
+cmd setblock 596 192 602 minecraft:stone
+cmd setblock 595 192 602 minecraft:moss_block
+cmd kill @e[type=minecraft:item]
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd item replace entity @s weapon.offhand with minecraft:air
+cmd tp @s 596.5 191 600.7 0 12
+wait 60
+camera first
+wait 60
+look 0 12
+wait 40
+# the game's own light, no torch
+lensdebug 1
+shot a_front_bare_game
+lensdebug 0
+wait 10
+cmd item replace entity @s weapon.mainhand with minecraft:torch
+wait 60
+shot a_front
+lensdebug 1
+shot a_front_game
+lensdebug 5
+wait 10
+shot a_front_light
+lensdebug 0
+wait 20
+# at an angle, from the dirt's side
+cmd tp @s 598.8 191 600.4 35 14
+wait 60
+look 35 14
+wait 40
+shot a_angle
+lensdebug 1
+shot a_angle_game
+lensdebug 5
+wait 10
+shot a_angle_light
+lensdebug 0
+wait 20
+# pressed against the stone: the flame is inside it
+cmd tp @s 596.5 191 601.69 0 20
+wait 60
+look 0 20
+wait 40
+shot a_close
+lensdebug 1
+shot a_close_game
+lensdebug 0
+wait 20
+# beside the moss, its open (west) side at arm's length
+cmd tp @s 593.6 191 601.6 -70 14
+wait 60
+look -70 14
+wait 40
+shot a_side
+lensdebug 1
+shot a_side_game
+lensdebug 5
+wait 10
+shot a_side_light
+lensdebug 0
+wait 20
+# ---- B. deep in stone, another chunk column: a sealed room (floor top y 11), the same row on its ledge at z 634
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd tp @s 632 120 632
+wait 160
+cmd fill 624 3 624 639 19 639 minecraft:stone
+wait 60
+cmd fill 624 3 624 639 19 639 minecraft:stone
+cmd fill 625 11 626 636 14 637 minecraft:air
+cmd fill 626 11 634 630 11 634 minecraft:stone
+cmd setblock 630 12 634 minecraft:dirt
+cmd setblock 628 12 634 minecraft:stone
+cmd setblock 627 12 634 minecraft:moss_block
+cmd kill @e[type=minecraft:item]
+cmd tp @s 628.5 11 632.7 0 12
+wait 60
+look 0 12
+wait 40
+lensdebug 1
+shot b_front_bare_game
+lensdebug 0
+wait 10
+cmd item replace entity @s weapon.mainhand with minecraft:torch
+wait 60
+shot b_front
+lensdebug 1
+shot b_front_game
+lensdebug 5
+wait 10
+shot b_front_light
+lensdebug 0
+wait 20
+cmd tp @s 630.8 11 632.4 35 14
+wait 60
+look 35 14
+wait 40
+shot b_angle
+lensdebug 1
+shot b_angle_game
+lensdebug 0
+wait 20
+cmd tp @s 628.5 11 633.69 0 20
+wait 60
+look 0 20
+wait 40
+shot b_close
+lensdebug 1
+shot b_close_game
+lensdebug 0
+wait 20
+cmd tp @s 625.6 11 633.6 -70 14
+wait 60
+look -70 14
+wait 40
+shot b_side
+lensdebug 1
+shot b_side_game
+lensdebug 0
+wait 20
+# the torch in hand, close: looking down at the floor
+look 0 60
+wait 30
+shot b_hand
+quit

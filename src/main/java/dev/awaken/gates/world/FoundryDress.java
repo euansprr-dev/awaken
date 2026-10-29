@@ -183,15 +183,17 @@ final class FoundryDress extends Dress {
     void tunnel(Room r, ChainLayout.Link l) {
         int[] b = box(r);
         ChainLayout.Way way = ChainLayout.Way.of(r, l, seed);
-        // pipes along both walls at knee and head height; in the maze a curtain of steam across the way here and there
+        // pipes along both walls at knee and head height; in the maze a curtain of steam across the way here and there.
+        // Where the way bends hard by a door the wall swings across the doorway, so a pipe stops short of its middle.
         c.s.op(b[0], W, b[1], b[2], W + 5, b[3], (buf, x, y, z) -> {
             if (!buf.open(x, y, z)) return;
             double[] w = way.at(x + 0.5, z + 0.5);
             if (w == null) return;
             double lat = Math.abs(w[0]), half = c.hw + 0.4;
             int along = (int) Math.round(w[1]);
-            if ((y == W + 1 || (maze && y == W + 3)) && lat > half - 1.1 && lat <= half) buf.set(x, y, z, way.alongZ() ? pipeZ : pipeX);
-            else if (maze && Math.floorMod(along, 9) == 4 && lat < half - 1.1 && !nearDoor(r, x + 0.5, z + 0.5, 3)) buf.set(x, y, z, steam);
+            if ((y == W + 1 || (maze && y == W + 3)) && lat > half - 1.1 && lat <= half) {
+                if (!inDoorway(r, x, z, 4)) buf.set(x, y, z, way.alongZ() ? pipeZ : pipeX);
+            } else if (maze && Math.floorMod(along, 9) == 4 && lat < half - 1.1 && !nearDoor(r, x + 0.5, z + 0.5, 3)) buf.set(x, y, z, steam);
         });
         grow(r, 0.02, 17, (x, y, z, len, i) -> sparks);
     }

@@ -92,6 +92,7 @@ final class GateEvents {
     private static void resetStatics() {
         GateMobs.clear();
         Breaks.clear();
+        GateExterior.forget();
         GateCard.resetAll();
         dev.awaken.gates.run.Hud.resetAll();
         dev.awaken.gates.run.Interactions.resetAll();

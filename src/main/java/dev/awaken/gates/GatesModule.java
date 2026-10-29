@@ -38,6 +38,7 @@ public final class GatesModule {
         RigTests.register();
         dev.awaken.gates.world.GateWorldTests.register();
         dev.awaken.gates.world.GateWorldBellTests.register();
+        dev.awaken.gates.world.GateDepthTests.register();
         dev.awaken.gates.worlds.WorldLiveTests.register();
     }
 

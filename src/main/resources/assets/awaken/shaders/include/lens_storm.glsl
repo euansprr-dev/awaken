@@ -109,8 +109,30 @@ float stormRain(vec3 q, vec2 w, float groundH) {
     return core * shafts * grain * smoothstep(0.0, 10.0, below) * (1.0 - smoothstep(-6.0, 4.0, groundH - q.y));
 }
 
+// the cell's outline at q (relative to its centre on the base), for its shadow on the land: the body's narrowing,
+// leaning column, the shelf under it, the flanking towers and the anvil, each with a soft edge; no noise and no texture
+// read (it was three full density look-ups, nine texture reads, for every pixel of the light buffer while a storm was up)
+float stormOutline(vec3 q, vec2 w) {
+    float h = q.y;
+    vec2 aw = vec2(dot(q.xz, w), dot(q.xz, vec2(-w.y, w.x)));
+    float hn = clamp(h / STORM_H, 0.0, 1.0);
+    float r = STORM_R * (1.0 - 0.32 * pow(hn, 1.4));
+    float d = smoothstep(r + 14.0, r - 14.0, length(vec2(aw.x - hn * hn * 35.0, aw.y))) * step(h, STORM_H - 20.0);
+    if (h < 60.0) d = max(d, smoothstep(STORM_SHELF + 12.0, STORM_SHELF - 12.0, length(vec2(aw.x - 8.0, aw.y))));
+    if (h < STORM_FLANK0.w) {
+        d = max(d, smoothstep(STORM_FLANK0.z + 10.0, STORM_FLANK0.z - 10.0, length(vec3(aw - STORM_FLANK0.xy, max(h - STORM_FLANK0.w + STORM_FLANK0.z, 0.0)))));
+        d = max(d, smoothstep(STORM_FLANK1.z + 10.0, STORM_FLANK1.z - 10.0, length(vec3(aw - STORM_FLANK1.xy, max(h - STORM_FLANK1.w + STORM_FLANK1.z, 0.0)))));
+        d = max(d, smoothstep(STORM_FLANK2.z + 10.0, STORM_FLANK2.z - 10.0, length(vec3(aw - STORM_FLANK2.xy, max(h - STORM_FLANK2.w + STORM_FLANK2.z, 0.0)))));
+    }
+    if (h > STORM_H - 72.0) {
+        float ra = length(vec2(aw.x / (aw.x > 0.0 ? STORM_DOWN : STORM_UP), aw.y / STORM_SIDE));
+        d = max(d, smoothstep(1.0, 0.85, ra) * step(STORM_H - 70.0 + 58.0 * pow(clamp(ra, 0.0, 1.0), 0.55), h));
+    }
+    return d;
+}
+
 // how much sunlight storm cells let down to a camera-relative point p, toward the light l: the light ray sampled where
-// it crosses three heights of the body (a long shadow when the sun is low)
+// it crosses three heights of the cell's outline (a long shadow when the sun is low)
 float stormShadow(vec3 p, vec3 l, float camY) {
     int n = stormCount();
     if (n == 0 || l.y < 0.03) return 1.0;
@@ -127,7 +149,7 @@ float stormShadow(vec3 p, vec3 l, float camY) {
             if (t <= 0.0) continue;
             vec3 q = vec3(rel.x + l.x * t, hh, rel.y + l.z * t);
             if (dot(q.xz, q.xz) > 330.0 * 330.0) continue;
-            od += stormCell(q, b.xy, b.w, a.w, 0) * 105.0;
+            od += stormOutline(q, b.xy) * a.w * 105.0;
         }
     }
     return exp(-od * STORM_SIGMA * 0.35);

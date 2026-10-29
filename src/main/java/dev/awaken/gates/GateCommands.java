@@ -223,6 +223,14 @@ final class GateCommands {
         return 0;
     }
 
+    /** The /awaken gate info timer line: a waiting gate's clock hasn't started (SPEC §7, "Seen first"). */
+    static String timer(MinecraftServer s, GateRecord g) {
+        if (g.neverBreaks(s)) return "never breaks";
+        if (g.waiting(s)) return "waits to be seen (nobody has come within " + Breaks.SEEN_RADIUS + " blocks)"
+                + (g.foldsOnPlayDay >= 0 ? " · folds unseen on play-day " + g.foldsOnPlayDay : "");
+        return (g.seenDay >= 0 ? "seen on play-day " + g.seenDay + " · " : "") + "breaks on " + g.breaksOnPlayDay;
+    }
+
     private static int list(CommandContext<CommandSourceStack> c) {
         MinecraftServer s = c.getSource().getServer();
         ServerPlayer p = c.getSource().getPlayer();
@@ -243,7 +251,10 @@ final class GateCommands {
             if (p != null && p.level().dimension() == net.minecraft.world.level.Level.OVERWORLD) {
                 sb.append(' ').append((int) Math.sqrt(p.blockPosition().distSqr(g.pos))).append(" m ").append(Breaks.direction(p.blockPosition(), g.pos));
             }
-            if (g.state.standing() && !g.scripted) sb.append(" · breaks in ").append(g.breaksIn(today)).append(" play-days");
+            if (g.state.standing() && !g.scripted) {
+                if (g.waiting(s)) sb.append(" · waits to be seen");
+                else sb.append(" · breaks in ").append(g.breaksIn(today)).append(" play-days");
+            }
             if (!g.inside.isEmpty()) sb.append(" · ").append(g.inside.size()).append(" inside");
             Component line = Component.literal(sb.toString()).withColor(g.plan.rank().colour)
                     .withStyle(st -> st.withClickEvent(new ClickEvent.RunCommand("/awaken gate trace " + g.id))
@@ -274,7 +285,7 @@ final class GateCommands {
         lines.add("mods      " + (plan.modifiers().isEmpty() ? "none" : String.join(", ", plan.modifiers().stream().map((Modifier m) -> m.displayName).toList())));
         lines.add("lord      " + plan.boss() + (plan.hasAnnex() ? " · annex " + plan.annexTheme().displayName : ""));
         lines.add("where     " + g.pos.getX() + " " + g.pos.getY() + " " + g.pos.getZ() + " · cell " + g.cell + " (" + Cells.regionFile(g.cell) + ")");
-        lines.add("timer     created play-day " + g.createdDay + " · breaks on " + (g.scripted ? "never" : g.breaksOnPlayDay));
+        lines.add("timer     created play-day " + g.createdDay + " · " + timer(c.getSource().getServer(), g));
         lines.addAll(g.trace);
         lines.add("invariants: no theme from the last 3 · no layout from the last 2 · modifiers within budget · twist at least every 12");
         for (String l : lines) c.getSource().sendSuccess(() -> Component.literal(l).withStyle(ChatFormatting.GRAY), false);

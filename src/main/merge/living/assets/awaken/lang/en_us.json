@@ -54,10 +54,12 @@
   "subtitles.awaken.living.tell.wings": "A great flock turns",
   "subtitles.awaken.living.tell.tide": "The Deep Tide rolls in",
   "subtitles.awaken.living.tell.bells": "Caravan bells",
-  "subtitles.awaken.living.storm.roll": "Thunder rolls in the distance",
   "subtitles.awaken.living.tell.storm": "A storm's rain roars",
   "block.awaken.wayfarer_bedroll": "Wayfarer's Bedroll",
   "block.awaken.camp_pot": "Camp Pot",
   "item.awaken.ilse_letters": "Letters for Ilse",
-  "subtitles.awaken.living.dread": "A heavy land"
+  "subtitles.awaken.living.dread": "A heavy land",
+  "subtitles.awaken.ambient.storm.roll": "Thunder rolls in the distance",
+  "subtitles.awaken.ambient.storm.thunder": "Thunder roars",
+  "subtitles.awaken.ambient.storm.crack": "Lightning strikes"
 }

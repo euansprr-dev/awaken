@@ -517,6 +517,10 @@ void main() {
     float under = sky ? 0.0 : P(21).r;
 #endif
     if (under > 0.0) c = mix(c, max(c, game * 0.85), under * (1.0 - smoothstep(0.05, 0.22, luma(game))));
+    // Within arm's reach (your hand and what it holds, a wall at your nose) never darker than the game at all: a held
+    // torch's handle, lit by its own flame, read dark under a cave look (Euan 2026-10-29). Eased out as Lens's light
+    // eases in, 1.25 to 1.45 blocks
+    if (!open) c = mix(c, max(c, game), 1.0 - smoothstep(1.25, 1.45, d));
     // crushed blacks: the darks fall to black and the light that's left looks brighter against them
     float crush = rit.g * 0.2;
     c = max(c - crush, 0.0) / (1.0 - crush);

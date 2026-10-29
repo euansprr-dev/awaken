@@ -51,7 +51,7 @@ final class GatesNow {
         double bestD = Double.MAX_VALUE;
         for (GateRecord g : GateRegistry.get(p.level().getServer()).near(p.blockPosition(), 400, false)) {
             // the story's own gate is suggested by the story; released and building gates aren't news
-            if (g.scripted || g.state == GateState.RELEASED || g.state == GateState.BUILDING) continue;
+            if (g.scripted || g.state == GateState.RELEASED || g.state == GateState.BUILDING || !GateExterior.shown(g)) continue;
             double d = g.pos.distSqr(p.blockPosition());
             if (g.state == GateState.BROKEN) {
                 if (d < 300 * 300) out.add(NowHooks.Suggestion.at("gate:broken:" + g.id, 72,
@@ -71,8 +71,9 @@ final class GatesNow {
             }
         }
         if (best != null) {
-            long in = best.breaksIn(today);
-            String when = best.neverBreaks(p.level().getServer()) ? "" : in <= 1 ? " · breaks " + (in == 0 ? "today" : "tomorrow") : "";
+            boolean counting = best.counting(p.level().getServer());
+            long in = counting ? best.breaksIn(today) : Long.MAX_VALUE;
+            String when = in <= 1 ? " · breaks " + (in == 0 ? "today" : "tomorrow") : "";
             out.add(NowHooks.Suggestion.at("gate:near:" + best.id, in <= 1 ? 65 : 45,
                     best.plan.rank().label + "-rank gate · " + (int) Math.sqrt(bestD) + " m" + when, best.mouth()));
         }

@@ -41,6 +41,9 @@ vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, iv
 
 float hg(float mu, float g) { return (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * mu, 1.5)); }
 
+// how far a storm's lightning lights its cloud (blocks from the flash)
+const float FLASH_REACH = 180.0;
+
 // this frame's light, shared by every piece of the march
 vec3 v, l, sunCol, ambient, stormSky;
 float camY, phase, jitter;
@@ -132,12 +135,13 @@ void stormPiece(vec2 span, int steps, int k) {
         if (d + rn <= 0.002) continue;
         // lightning lights the cell from within: its light reaches a point through the cloud between them (one sample
         // at the midpoint stands for it), so the core round the bolt glows, the glow falls off through the volume, and
-        // the cell's outer shape stays dark and readable; a faint wash beyond
+        // the cell's outer shape stays dark and readable; nothing past FLASH_REACH (only rays near a flash march every
+        // frame while it shows: see main)
         float fd = length(w - c.xyz);
         vec3 E = vec3(0.0);
-        if (c.w > 0.0 && fd < 260.0) {
+        if (c.w > 0.0 && fd < FLASH_REACH) {
             float through = stormCell((w + c.xyz) * 0.5 - centre, b.xy, b.w, a.w, 0);
-            E = flashCol * (3.0 * exp(-fd / 55.0) * exp(-through * fd * STORM_SIGMA * 0.35) + 0.1 * exp(-fd / 180.0));
+            E = flashCol * (3.0 * exp(-fd / 55.0) * exp(-through * fd * STORM_SIGMA * 0.35) * (1.0 - smoothstep(FLASH_REACH - 50.0, FLASH_REACH, fd)));
         }
         float ac = 1.0 - exp(-d * STORM_SIGMA * dt), ar = 1.0 - exp(-rn * STORM_RAIN_SIGMA * dt);
         float hn = clamp(q.y / STORM_H, 0.0, 1.0);
@@ -252,8 +256,17 @@ void main() {
     if (interleave) {
         ivec2 tile = ivec2(gl_FragCoord.xy) >> 3;
         int phase = int(mod(f12.w, 4.0)), mine = (tile.x & 1) + 2 * (tile.y & 1);
+        // a ray that passes within reach of a flash marches every frame while the flash is bright (it lights at once,
+        // with no tiles catching up); its faint tail fades as an afterglow through the history, and every other ray keeps
+        // to its one frame in four (every ray marching for 1.2 s after each strike and flicker cost the whole pass four
+        // times over, 61% of a storm's frames: Euan's lost frames and stutter, 29 Oct)
         bool flash = false;
-        for (int s = 0; s < 2; s++) if (s < nStorm && stormC(s).w > 0.0) flash = true;
+        for (int s = 0; s < 2; s++) {
+            if (s >= nStorm) break;
+            vec4 fc = stormC(s);
+            float tc = dot(fc.xyz, v);
+            if (fc.w > 0.08 && tc > -FLASH_REACH && tc < scene + FLASH_REACH && length(fc.xyz - v * max(tc, 0.0)) < FLASH_REACH) flash = true;
+        }
         if (mine != phase && !flash) {
             // this pixel's off frame: last frame's clouds along this ray, found where cloud would be on it
             vec3 q = project(frameMat(8), v * historyDepth(t0, scene) + f13.xyz, z01);

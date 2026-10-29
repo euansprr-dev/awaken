@@ -383,7 +383,8 @@ public final class FarSightClient {
         float camFov = Math.max(10f, camera.getFov());
         float pixelsAt1 = (float) (main.height / (2.0 * Math.tan(Math.toRadians(camFov) / 2.0)));
         // the cached horizon: what it serves this frame and which slices it draws (before City Sight's plan leaves those out)
-        skyLight = cameraNow.attributeProbe().getValue(EnvironmentAttributes.SKY_LIGHT_FACTOR, partialTick);
+        // (held through a Rolling Storm's lightning: its sky flash would stale every slice, a redraw every strike)
+        if (!dev.awaken.living.client.StormSky.flashing()) skyLight = cameraNow.attributeProbe().getValue(EnvironmentAttributes.SKY_LIGHT_FACTOR, partialTick);
         lookNow(mc, strength, golden, haze, rain, mistCover);
         boolean zeroToOne = RenderSystem.getDevice().getDeviceInfo().isZZeroToOne();
         horizon.prepare(renderer, field, cam.x, cam.y, cam.z, e.getModelViewMatrix(), pixelsAt1, camFov, aspect, rd * 16, main.width, main.height, look);

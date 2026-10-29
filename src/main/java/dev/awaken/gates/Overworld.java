@@ -4,12 +4,16 @@ import dev.awaken.gates.block.GateBlocks;
 import dev.awaken.gates.block.GateFissureBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.ArrayList;
@@ -32,6 +36,12 @@ public final class Overworld {
     public static final int REACH = 26;
 
     public record Placed(BlockPos pos, BlockState state) {}
+
+    /**
+     * Ground the vanilla tags don't know: the Awakened Lands' own (fused glass, riven shale, hoarfrost...) and the Soft
+     * Land's step slabs (SPEC §31.2). A gate stands on it and replaces it like any terrain (SPEC §7, "Where a gate stands").
+     */
+    public static final TagKey<Block> GROUND = TagKey.create(Registries.BLOCK, dev.awaken.Awaken.id("gates_ground"));
 
     /** The anchor core (bottom centre of the opening): its block entity draws the vortex. */
     public static BlockPos anchor(BlockPos pos) {
@@ -181,9 +191,10 @@ public final class Overworld {
     /**
      * Builds the gate (the chunks must be loaded): clears the opening, lays the scorched pad and the crater ring with
      * their fissures, raises the spurs and places the cores. Used again when the gate breaks ({@code broken}): the cores
-     * turn, the spurs crack and the fissures run red. Only natural blocks are replaced.
+     * turn, the spurs crack and the fissures run red. Only natural blocks are replaced, except in the vortex's own column.
+     * Returns whether the gate stands ({@link #stands}).
      */
-    public static void place(ServerLevel level, GateRecord g, boolean broken) {
+    public static boolean place(ServerLevel level, GateRecord g, boolean broken) {
         int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
         int rank = g.plan.rank().ordinal();
         long seed = seed(g.pos, g.axis);
@@ -207,10 +218,27 @@ public final class Overworld {
         }
         for (Placed p : blocks(g.pos, g.axis, rank, broken)) {
             BlockState here = level.getBlockState(p.pos());
-            if (!here.isAir() && !natural(here) && !ours(here)) continue;
+            // the vortex's own column always forms (the spot was checked for builds): anything else that grew there
+            // (a boulder, a glass spire) would leave a beam over nothing
+            boolean core = p.state().is(GatesRegistry.CORE.get());
+            if (!here.isAir() && !natural(here) && !ours(here) && !(core && yields(level, p.pos(), here))) continue;
             level.setBlock(p.pos(), p.state(), flags);
         }
-        if (level.getBlockEntity(anchor(g.pos)) instanceof GateVortexBlockEntity be) be.configure(g, level.getGameTime());
+        if (!(level.getBlockEntity(anchor(g.pos)) instanceof GateVortexBlockEntity be)) return false;
+        be.configure(g, level.getGameTime());
+        return true;
+    }
+
+    /** Whether the gate stands: its anchor core holds the vortex (chunks loaded). A gate that doesn't is never shown. */
+    public static boolean stands(ServerLevel level, GateRecord g) {
+        BlockState anchor = level.getBlockState(anchor(g.pos));
+        return anchor.is(GatesRegistry.CORE.get()) && anchor.getValue(GateBlocks.Core.ANCHOR)
+                && level.getBlockEntity(anchor(g.pos)) instanceof GateVortexBlockEntity;
+    }
+
+    /** A block the vortex's column may take: not a block entity, not unbreakable. */
+    private static boolean yields(ServerLevel level, BlockPos p, BlockState here) {
+        return level.getBlockEntity(p) == null && here.getDestroySpeed(level, p) >= 0;
     }
 
     /** The scorched pad (flat, at the gate's ground level) and the crater ring (on the terrain), with fissures. */
@@ -356,6 +384,8 @@ public final class Overworld {
         if (s.is(BlockTags.DIRT) || s.is(BlockTags.SAND) || s.is(BlockTags.BASE_STONE_OVERWORLD) || s.is(BlockTags.TERRACOTTA)
                 || s.is(BlockTags.LOGS) || s.is(BlockTags.LEAVES) || s.is(BlockTags.SNOW) || s.is(BlockTags.FLOWERS)
                 || s.is(BlockTags.SUBSTRATE_OVERWORLD)) return true;
+        // ground slabs only as the soft pass lays them (a bottom half); a top or double one is someone's
+        if (s.is(GROUND)) return !(s.getBlock() instanceof SlabBlock) || s.getValue(SlabBlock.TYPE) == SlabType.BOTTOM;
         return s.is(Blocks.GRAVEL) || s.is(Blocks.CLAY) || s.is(Blocks.ICE) || s.is(Blocks.PACKED_ICE) || s.is(Blocks.WATER)
                 || s.is(Blocks.SUGAR_CANE) || s.is(Blocks.CACTUS) || s.is(Blocks.PUMPKIN) || s.is(Blocks.MELON) || s.is(Blocks.BAMBOO)
                 || s.is(Blocks.SWEET_BERRY_BUSH) || s.is(Blocks.MOSS_BLOCK) || s.is(Blocks.MUD) || s.is(Blocks.COARSE_DIRT)
@@ -479,6 +509,7 @@ public final class Overworld {
         // game-master blocks (structure and test blocks) are nobody's base
         if (s.getBlock() instanceof net.minecraft.world.level.block.GameMasterBlock) return false;
         if (level.getBlockEntity(p) != null) return !(level.getBlockEntity(p) instanceof GateVortexBlockEntity);
+        if (groundStep(level, p, s)) return false;
         return s.is(BlockTags.PLANKS) || s.is(BlockTags.WOOL) || s.is(BlockTags.BEDS) || s.is(BlockTags.DOORS)
                 || s.is(BlockTags.TRAPDOORS) || s.is(BlockTags.FENCES) || s.is(BlockTags.FENCE_GATES)
                 || s.is(BlockTags.WALLS) || s.is(BlockTags.STAIRS) || s.is(BlockTags.SLABS) || s.is(BlockTags.WOOL_CARPETS)
@@ -501,11 +532,21 @@ public final class Overworld {
         return Optional.empty();
     }
 
-    /** A good spot: dry, solid, not a tree top. */
+    /** A good spot: dry, solid, not a tree top. A soft step's half slab counts as the ground it lies on. */
     public static boolean goodGround(ServerLevel level, BlockPos ground) {
         BlockState s = level.getBlockState(ground);
         if (!s.getFluidState().isEmpty() || s.isAir()) return false;
         if (!level.getBlockState(ground.above()).getFluidState().isEmpty()) return false;
+        if (groundStep(level, ground, s)) return level.getBlockState(ground.below()).isFaceSturdy(level, ground.below(), Direction.UP);
         return s.isFaceSturdy(level, ground, Direction.UP);
+    }
+
+    /**
+     * A half slab of ground lying on ground: the Soft Land's step (SPEC §31.2), terrain and never a build. A bottom slab of
+     * a ground material over a natural block reads as one, whoever placed it.
+     */
+    static boolean groundStep(ServerLevel level, BlockPos p, BlockState s) {
+        return s.getBlock() instanceof SlabBlock && s.is(GROUND) && s.getValue(SlabBlock.TYPE) == SlabType.BOTTOM
+                && natural(level.getBlockState(p.below()));
     }
 }

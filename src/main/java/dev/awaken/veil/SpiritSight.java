@@ -336,7 +336,10 @@ public final class SpiritSight {
     static SignalWindow gateCard(ServerLevel level, GateHooks.GateView g) {
         Rank rank = Rank.of(g.rank());
         long days = g.breaksOnPlayDay() - PlayDays.current(level.getServer());
-        String breaks = "BROKEN".equals(g.state()) ? "Broken" : days <= 0 ? "Today" : days == 1 ? "1 play-day" : days + " play-days";
+        // no clock: it never breaks, or it waits for someone to come close before it starts (SPEC §7)
+        String breaks = "BROKEN".equals(g.state()) ? "Broken"
+                : g.breaksOnPlayDay() == Long.MAX_VALUE ? (GateHooks.waiting(level, g.id()) ? "Not until someone goes near it" : "Never")
+                : days <= 0 ? "Today" : days == 1 ? "1 play-day" : days + " play-days";
         var b = SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal(g.themeName().isEmpty() ? "Gate" : g.themeName()))
                 .row("Rank", rank.label)
                 .row("Breaks in", breaks)

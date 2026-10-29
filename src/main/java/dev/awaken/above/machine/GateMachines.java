@@ -34,8 +34,10 @@ final class GateMachines {
     static final int HOLD_DAYS = 3;
     private static final Set<String> GONE = Set.of("CLEARED", "BROKEN", "RELEASED");
 
-    static String breaks(GateHooks.GateView g, long today) {
+    static String breaks(ServerLevel level, GateHooks.GateView g, long today) {
         if (GONE.contains(g.state())) return g.state().toLowerCase();
+        // no clock: it never breaks, or it waits for someone to come close before it starts (SPEC §7)
+        if (g.breaksOnPlayDay() == Long.MAX_VALUE) return GateHooks.waiting(level, g.id()) ? "won't break until someone goes near it" : "never breaks";
         long in = g.breaksOnPlayDay() - today;
         if (in <= 0) return "breaks today";
         return "breaks in " + in + " play-day" + (in == 1 ? "" : "s");
@@ -64,11 +66,12 @@ final class GateMachines {
         } else {
             b.header(gates.size() + " gate" + (gates.size() == 1 ? "" : "s") + " in range");
             for (GateHooks.GateView g : gates.subList(0, Math.min(16, gates.size()))) {
-                String detail = Travel.bearing(pos, g.pos()) + " · " + breaks(g, today) + (g.omen().isEmpty() ? "" : " · “" + g.omen() + "”");
+                String detail = Travel.bearing(pos, g.pos()) + " · " + breaks(level, g, today) + (g.omen().isEmpty() ? "" : " · “" + g.omen() + "”");
                 b.text(name(g), detail, Rank.of(g.rank()).colour);
                 d.addScannedGate(g.id());
                 marks.add(new AboveNet.GateMark(g.id(), g.pos().getX(), g.pos().getZ(), g.rank(), g.themeName(), g.omen(),
-                        (int) Math.max(0, g.breaksOnPlayDay() - today)));
+                        g.breaksOnPlayDay() == Long.MAX_VALUE ? (GateHooks.waiting(level, g.id()) ? AboveNet.GateMark.WAITING : AboveNet.GateMark.NEVER)
+                                : (int) Math.max(0, g.breaksOnPlayDay() - today)));
             }
         }
         AwakenNet.send(player, new AboveNet.GateMarks(marks));
@@ -79,7 +82,7 @@ final class GateMachines {
             SignalWindow.Builder w = SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal("Gate Scanner"))
                     .footer(Component.literal("Marked on your Gate Map · K"));
             for (GateHooks.GateView g : gates.subList(0, Math.min(3, gates.size()))) {
-                w.row(Component.literal(name(g)), Component.literal(Travel.bearing(pos, g.pos()) + " · " + breaks(g, today)));
+                w.row(Component.literal(name(g)), Component.literal(Travel.bearing(pos, g.pos()) + " · " + breaks(level, g, today)));
             }
             Signal.send(player, w.ttl(20 * 8).build());
         }
@@ -122,7 +125,7 @@ final class GateMachines {
         for (int i = 0; i < gates.size(); i++) {
             GateHooks.GateView g = gates.get(i);
             boolean usedToday = d.stabilisedDay(g.id()) == today;
-            String detail = Travel.bearing(be.getBlockPos(), g.pos()) + " · " + breaks(g, today)
+            String detail = Travel.bearing(be.getBlockPos(), g.pos()) + " · " + breaks(level, g, today)
                     + (usedToday ? " · held today already" : "");
             b.button(name(g), detail, Rank.of(g.rank()).colour, "hold", i, "Hold (" + cost + ")", !usedToday && stored >= cost);
         }

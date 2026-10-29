@@ -236,6 +236,17 @@ abstract class Dress {
         return false;
     }
 
+    /** In the middle of a doorway (the two blocks the way runs through), within {@code depth} blocks of its slot edge. */
+    static boolean inDoorway(Room r, int x, int z, int depth) {
+        for (Room.Door d : r.doors) {
+            int[] b = WorldPlan.doorBox(d, depth);
+            if (x < b[0] || x > b[1] || z < b[2] || z > b[3]) continue;
+            int lat = d.side == 0 || d.side == 2 ? x - d.gx * 16 : z - d.gz * 16;
+            if (lat > RoomGeometry.DOOR_LO && lat < RoomGeometry.DOOR_HI) return true;
+        }
+        return false;
+    }
+
     boolean nearBlocked(double x, double z, double dist) {
         for (double[] b : c.blocked) if (Math.hypot(x - b[0], z - b[1]) < b[2] + dist) return true;
         return false;

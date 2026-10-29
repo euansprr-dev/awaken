@@ -19,8 +19,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.storage.TagValueInput;
 
 import java.io.IOException;
@@ -33,7 +35,8 @@ import java.util.Optional;
 /**
  * The surface gate's tests: every rank's footprint placed and removed (the opening, the mouth, spurs, fissures, a
  * scar left behind), builds respected by the bigger footprint, walking into the top of a towering gate still enters,
- * the anchor's render data saved, synced and refreshed from the gate, old doorways rebuilt, and the vortex's frames
+ * the anchor's render data saved, synced and refreshed from the gate, Awakened ground and steps stood on, old doorways
+ * and missing vortices rebuilt once, and the vortex's frames
  * exported for the offline preview ({@code tools/art/specs/structures.py}).
  */
 final class GateExteriorTests {
@@ -232,7 +235,8 @@ final class GateExteriorTests {
                 h.assertTrue(copy.gateId() == g.id && copy.rank() == 3 && copy.axis() == 1 && copy.red() && copy.mode() == GateVortex.OPEN
                         && copy.seed() == be.seed() && copy.formedAt() == be.formedAt(), "the update tag round-trips");
                 h.assertTrue(be.getUpdatePacket() != null, "it sends a block entity packet");
-                // the break comes near: about to break
+                // the break comes near: about to break (someone has seen it, so its clock runs)
+                g.seenDay = dev.awaken.core.PlayDays.current(level.getServer());
                 g.breaksOnPlayDay = dev.awaken.core.PlayDays.current(level.getServer()) + 1;
                 h.assertTrue(be.look(level.getServer(), g) && be.mode() == GateVortex.WARNING && be.warn() > 0.5F, "about to break, warn " + be.warn());
                 g.breaksOnPlayDay = dev.awaken.core.PlayDays.current(level.getServer());
@@ -250,6 +254,85 @@ final class GateExteriorTests {
                 Overworld.remove(level, g);
             } finally {
                 g.state = GateState.RELEASED;
+                wipe(level, ground);
+            }
+            h.succeed();
+        });
+
+        // SPEC §7 "Where a gate stands": the Soft Land's step slabs are ground, not a build, and the Lands' own rock in the
+        // opening gives way, so the vortex stands (six builds in a row failed on steps, a beam stood over riven shale)
+        AwakenTests.registerIsolated("gates_stand_on_awakened_ground", 100, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos ground = h.absolutePos(new BlockPos(0, UP, 0));
+            GatePlan plan = new GatePlan(92, GatePlan.CONTENT_VERSION, Rank.C, Theme.HIVE, Layout.LABYRINTH, List.of(), Twist.NONE, 3,
+                    Theme.HIVE.bossId(), Theme.BELL_CRYPT, 0);
+            GateRecord g = new GateRecord(GateRegistry.get(level.getServer()).nextId(), plan, ground, 0, -1, 0, 99, GateState.READY, Optional.empty());
+            try {
+                meadow(level, ground);
+                BlockState shale = BuiltInRegistries.BLOCK.getValue(Awaken.id("riven_shale")).defaultBlockState();
+                BlockState glass = BuiltInRegistries.BLOCK.getValue(Awaken.id("fused_glass")).defaultBlockState();
+                BlockState turf = BuiltInRegistries.BLOCK.getValue(Awaken.id("turf_slab")).defaultBlockState();
+                h.assertTrue(shale.is(Overworld.GROUND) && glass.is(Overworld.GROUND) && turf.is(Overworld.GROUND), "the Lands' rock and the steps are gate ground");
+                BlockPos step = ground.offset(5, 1, 3), stone = ground.offset(-6, 1, -2);
+                level.setBlock(step, turf, Block.UPDATE_CLIENTS);
+                level.setBlock(stone, Blocks.STONE_SLAB.defaultBlockState(), Block.UPDATE_CLIENTS);
+                h.assertTrue(Overworld.untouched(level, ground, 0, 2), "soft steps in the footprint are ground, not a build");
+                h.assertTrue(Overworld.goodGround(level, step), "and a step is good ground to stand on");
+                level.setBlock(stone, Blocks.STONE_SLAB.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.TOP), Block.UPDATE_CLIENTS);
+                h.assertFalse(Overworld.untouched(level, ground, 0, 2), "a top slab is still someone's build");
+                level.setBlock(stone, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                // a shale boulder and a glass spire where the anchor goes
+                for (int y = 1; y <= 4; y++) level.setBlock(ground.above(y), y <= 2 ? shale : glass, Block.UPDATE_CLIENTS);
+                h.assertTrue(Overworld.place(level, g, false) && Overworld.stands(level, g), "the vortex stands");
+                for (int y = 1; y <= 4; y++) {
+                    BlockState here = level.getBlockState(ground.above(y));
+                    h.assertFalse(here.is(shale.getBlock()) || here.is(glass.getBlock()), "the rock gave way at +" + y + ": " + here);
+                }
+                Overworld.remove(level, g);
+            } finally {
+                g.state = GateState.RELEASED;
+                wipe(level, ground);
+            }
+            h.succeed();
+        });
+
+        // a loaded gate whose vortex is missing is rebuilt once a run (never a loop: gate 29 rebuilt every 10 s); one that
+        // can't stand at all folds away and nothing shows it
+        AwakenTests.registerIsolated("gates_missing_vortex_rebuilt_once", 100, h -> {
+            ServerLevel level = h.getLevel();
+            var server = level.getServer();
+            BlockPos ground = h.absolutePos(new BlockPos(0, UP, 0));
+            GateRegistry reg = GateRegistry.get(server);
+            GatePlan plan = new GatePlan(93, GatePlan.CONTENT_VERSION, Rank.E, Theme.HIVE, Layout.LABYRINTH, List.of(), Twist.NONE, 3,
+                    Theme.HIVE.bossId(), Theme.BELL_CRYPT, 0);
+            GateRecord g = new GateRecord(reg.nextId(), plan, ground, 0, -1, 0, 99, GateState.READY, Optional.empty());
+            GateRecord lost = null;
+            g.structurePlaced = true;
+            reg.put(g);
+            try {
+                meadow(level, ground);
+                BlockState shale = BuiltInRegistries.BLOCK.getValue(Awaken.id("riven_shale")).defaultBlockState();
+                h.assertTrue(Overworld.place(level, g, false), "it stands");
+                level.setBlock(Overworld.anchor(ground), shale, Block.UPDATE_CLIENTS);
+                h.assertFalse(Overworld.stands(level, g), "rock where its anchor was: no vortex");
+                h.assertTrue(GateExterior.repair(server, g) && Overworld.stands(level, g), "rebuilt: " + g.trace.getLast());
+                level.setBlock(Overworld.anchor(ground), shale, Block.UPDATE_CLIENTS);
+                h.assertFalse(GateExterior.repair(server, g), "once a run: it never loops");
+                Overworld.remove(level, g);
+                g.structurePlaced = false;
+                g.state = GateState.RELEASED;
+
+                lost = new GateRecord(reg.nextId(), plan, ground, 0, reg.allocateCell(), 0, 99, GateState.READY, Optional.empty());
+                lost.structurePlaced = true;
+                reg.put(lost);
+                level.setBlock(Overworld.anchor(ground), Blocks.CHEST.defaultBlockState(), Block.UPDATE_CLIENTS);
+                h.assertTrue(GateExterior.shown(lost), "a built gate is shown");
+                h.assertFalse(GateExterior.repair(server, lost), "a chest where the anchor goes: it can't stand");
+                h.assertTrue(lost.state == GateState.RELEASED && !GateExterior.shown(lost), "so it folds away and nothing shows it, " + lost.state);
+            } finally {
+                g.structurePlaced = false;
+                g.state = GateState.RELEASED;
+                if (lost != null) lost.structurePlaced = false;
                 wipe(level, ground);
             }
             h.succeed();
@@ -278,7 +361,7 @@ final class GateExteriorTests {
                 for (int a = -2; a <= 2; a++) level.setBlock(ground.offset(a, 6, 0), frame, 3);
                 level.setBlock(ground.offset(0, 7, 0), frame, 3);
                 h.assertTrue(Overworld.legacy(level, g), "an old doorway is recognised");
-                h.assertTrue(GateExterior.upgradeLoaded(level.getServer()) >= 1, "it is rebuilt");
+                h.assertTrue(GateExterior.repair(level.getServer(), g), "it is rebuilt");
                 h.assertTrue(level.getBlockEntity(Overworld.anchor(ground)) instanceof GateVortexBlockEntity, "with a vortex anchor");
                 h.assertFalse(level.getBlockState(ground.offset(0, 7, 0)).is(GatesRegistry.FRAME.get()), "the old lintel's cap is gone");
                 h.assertFalse(Overworld.legacy(level, g), "and it is not rebuilt twice");

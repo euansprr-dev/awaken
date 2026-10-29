@@ -36,7 +36,9 @@ public final class ClientAbove {
         List<dev.awaken.core.api.MapMarks.Gate> out = new ArrayList<>();
         for (AboveNet.GateMark m : gateMarks) {
             var rank = dev.awaken.progression.Rank.of(m.rank());
-            String when = "your scanner read it · breaks in " + m.breaksIn() + (m.breaksIn() == 1 ? " day" : " days");
+            String when = "your scanner read it · " + (m.breaksIn() == AboveNet.GateMark.WAITING ? "it won't break until someone goes near it"
+                    : m.breaksIn() == AboveNet.GateMark.NEVER ? "it never breaks"
+                    : "breaks in " + m.breaksIn() + (m.breaksIn() == 1 ? " day" : " days"));
             out.add(new dev.awaken.core.api.MapMarks.Gate(new net.minecraft.core.BlockPos(m.x(), 64, m.z()), rank.label, rank.colour,
                     m.name().isEmpty() ? rank.label + "-rank gate" : m.name(), when, false, true));
         }

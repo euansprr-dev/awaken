@@ -79,7 +79,9 @@ final class RunSection implements StatusSections.Section {
         List<MapMarks.Gate> out = new ArrayList<>();
         for (GatePayloads.Beacon b : ClientGates.beacons()) {
             boolean calm = (b.flags() & GatePayloads.Beacon.CALM) != 0, scripted = (b.flags() & GatePayloads.Beacon.SCRIPTED) != 0;
+            boolean waiting = (b.flags() & GatePayloads.Beacon.WAITING) != 0;
             String when = b.broken() ? "broken: its monsters are out" : scripted ? "" : calm ? "calm"
+                    : waiting ? "won't start to break until someone comes close"
                     : b.breaksIn() == 0 ? "breaks today" : "breaks in " + b.breaksIn() + (b.breaksIn() == 1 ? " day" : " days");
             String rank = ClientGates.rankLabel(b.rank());
             out.add(new MapMarks.Gate(b.pos().immutable(), rank, b.broken() ? 0xFF8A7A : ClientGates.rankColour(b.rank()) & 0xFFFFFF,

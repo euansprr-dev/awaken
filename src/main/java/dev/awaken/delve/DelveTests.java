@@ -64,6 +64,7 @@ final class DelveTests {
         AwakenTests.register("delve_tuning_fork", 40, DelveTests::tuningFork);
         AwakenTests.register("delve_held_light", 20, DelveTests::heldLight);
         AwakenTests.register("delve_held_light_faces", 20, DelveTests::heldLightFaces);
+        AwakenTests.register("delve_held_light_wall", 20, DelveTests::heldLightWall);
         AwakenTests.register("progression_ore_xp", 60, DelveTests::oreXp);
         AwakenTests.register("delve_true_strike", 40, DelveTests::trueStrike);
         AwakenTests.register("delve_strike_rules", 20, DelveTests::strikeRules);
@@ -451,6 +452,40 @@ final class DelveTests {
         f.start(level, o.offset(4, 3, 4).asLong(), 10.5F, 10);
         while (!f.done()) f.step(900);
         h.assertTrue(f.n == 10 && f.edge == f.steps[9], "a cap keeps 10 and marks its edge: " + f.n + ", " + f.edge);
+        h.succeed();
+    }
+
+    /**
+     * A torch held against a wall (SPEC §28.3): pressed to a block at chest height, the hand's point is inside it; the
+     * flame shines from a little off the block's open side, so the flood finds the face looking at you (it started inside
+     * the rock and left that face black). A flame in the open stays put; a holder inside rock has no open side.
+     */
+    private static void heldLightWall(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(new BlockPos(0, 2, 0));
+        for (int dx = 0; dx < 5; dx++) for (int dy = 0; dy < 4; dy++) for (int dz = 0; dz < 5; dz++) {
+            level.setBlock(o.offset(dx, dy, dz), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+        }
+        // a stone on a ledge, its north face toward the holder standing against it
+        BlockPos stone = o.offset(2, 1, 3);
+        level.setBlock(o.offset(2, 0, 3), Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+        level.setBlock(stone, Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+        double ax = o.getX() + 2.5, ay = o.getY() + 1.3, az = o.getZ() + 2.69;
+        double[] out = new double[3];
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        h.assertTrue(HeldLightFlood.clear(level, ax, ay, az, ax - 0.3, ay, az + 0.4, out, m), "a flame against the wall has an open side");
+        BlockPos at = BlockPos.containing(out[0], out[1], out[2]);
+        h.assertValueEqual(at, o.offset(2, 1, 2), "the flame shines from the cell in front of the stone");
+        h.assertTrue(out[2] <= o.getZ() + 3 - 0.15, "and a little off its face, not on it: " + (o.getZ() + 3 - out[2]));
+        HeldLightFlood f = new HeldLightFlood(8192, 1024);
+        f.start(level, at.asLong(), HeldLight.of(new ItemStack(Items.TORCH)).reach(), 1024);
+        while (!f.done()) f.step(900);
+        boolean front = false;
+        for (int i = 0; i < f.n; i++) front |= f.pos[i] == stone.asLong() && f.face[i] == Direction.NORTH.ordinal();
+        h.assertTrue(front, "the stone's face looking at the holder is lit");
+        h.assertTrue(HeldLightFlood.clear(level, ax, ay, az - 1, ax - 0.3, ay, az - 0.6, out, m) && out[2] == az - 0.6, "a flame in the open stays put");
+        h.assertFalse(HeldLightFlood.clear(level, o.getX() + 2.5, o.getY() + 0.5, o.getZ() + 3.5, o.getX() + 2.5, o.getY() + 1.5, o.getZ() + 3.9, out, m),
+                "a holder inside rock has no open side");
         h.succeed();
     }
 
