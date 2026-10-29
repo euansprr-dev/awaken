@@ -12074,6 +12074,11 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   four under a roof, at full light so they shine in the dark; a curtain of beaded silk from the sheet, swaying slowly);
   the Ochre Deep's beetles are **rust beetles** and its crickets sing the chime crickets' song. `/awaken underlife lineup`
   shows a rust beetle and a glow-worm cluster with the rest.
+- **Finding one** (admin, `caves.RegionCommands`): `/awaken caves goto <region> [pick]` finds the nearest cell of the
+  region's biome as `/locate biome` does (within **3,200** blocks), generates the 7 × 7 chunks round it, and takes you to
+  the dry floor there with the most room (eight rays of up to 16 blocks at head height), facing the longest. `pick` 1 to 9
+  is the next-best floor, each at least **14** blocks from the better ones. For tours (`tools/autopilot/caves-regions.txt`)
+  and for finding a region to play in.
 - **Test** `caves_region_rock`: eight filled chunks of seed 777 (the census's), four told they are all Rootways and four all
   Ochre Deep, with coal, copper, iron and gold ore planted in host rock: under the land's last 10 blocks no host rock is
   left but the untwinned ores' shells, each twin is placed and each untwinned ore keeps its shell as it was; above, the

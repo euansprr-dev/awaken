@@ -60,6 +60,7 @@ public final class CavesModule {
         Drips.init(modBus);
         modBus.addListener(AddPackFindersEvent.class, e -> e.addPackFinders(Awaken.id("datapacks/awakened_caves"), PackType.SERVER_DATA,
                 Component.literal("Awakened Caves"), PackSource.BUILT_IN, false, Pack.Position.TOP));
+        RegionCommands.register();
         CavesTests.register();
     }
 }
