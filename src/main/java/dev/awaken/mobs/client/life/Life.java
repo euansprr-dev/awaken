@@ -331,6 +331,7 @@ public final class Life {
             legs.rear += (rear - legs.rear) * k;
             // a roar lifts one pair more
             legs.rear2 += ((roar && !dead ? g.rear() : 0.0F) - legs.rear2) * k;
+            legs.face = rig.body != null ? twist * Mth.RAD_TO_DEG : 0.0F; // the body bone turns with its look, the hips with it
             legs.update(s, dt, bodyScale, grounded && !legsFree && !dead && !swimming, st, gaitRun, calmFeet);
         }
         // a boss on a body with no fall clip topples its whole weight (root level)

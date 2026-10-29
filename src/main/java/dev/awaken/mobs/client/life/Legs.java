@@ -22,6 +22,10 @@ public final class Legs {
     final LegRig rig;
     // the feet in the world (blocks): where each stands or is this frame, and where a swing lifted off
     private final double[] fx, fy, fz, sx, sy, sz;
+    /** Seconds ahead a planted foot's home is read to see which way it is going. */
+    private static final float PEEK = 0.1F;
+    /** tan 40°: the furthest a rigid leg leans from its shoulder before its planted foot slides. */
+    public static final float SLIP = 0.8391F;
     private final boolean[] swinging;
     private final float[] u, dur, rise, prevQ;
     /** This frame's spot for each foot, model px (the leg reaches for it). */
@@ -34,6 +38,11 @@ public final class Legs {
     float foreLift;
     /** Px the body drops so a long step's planted feet stay in reach (its hips vault over them). */
     float vault;
+    /**
+     * Degrees the body bone turns on the root toward its look (Life's twist): its hips go round with it, so the feet
+     * stand and step under the turned body, though the model space they're given in stays the root's.
+     */
+    public float face;
     private boolean init, fast;
     private double ex, ez, hx, hz;
     private float lastYaw, clock, rate, still, going, nextRegrip, vx, vz, yawRate, t;
@@ -87,6 +96,8 @@ public final class Legs {
     /** The same for a body at (x, y, z) turned to yaw (degrees) and drawn at scale. */
     public void update(double x, double y, double z, float yaw, float scale, float dt, boolean on, float stride, float run, boolean calm) {
         t += dt;
+        float rootYaw = yaw;
+        yaw += face;
         MotionProfile.Gait g = rig.gait;
         float want = on ? 1.0F : 0.0F;
         weight += (want - weight) * Math.min(1.0F, dt / (want > weight ? 0.15F : 0.12F));
@@ -94,7 +105,7 @@ public final class Legs {
         if (!on) {
             // the clips take the legs back; the feet stay planted while they do, then stand at home on landing
             if (weight < 0.01F) init = false;
-            else if (init) out(x, y, z, yaw, sc);
+            else if (init) out(x, y, z, rootYaw, sc);
             gaitY *= 0.8F;
             gaitRoll *= 0.8F;
             gaitPitch *= 0.8F;
@@ -153,7 +164,12 @@ public final class Legs {
         // further than its place in a steady stride nor than it can reach; a foot is lifted off that far behind
         float fwd = duty * strideB * (0.5F + g.lead()), back = duty * strideB * (0.5F - g.lead());
         float ahead = moving ? Math.min(3.0F, duty * cycle * (0.5F + g.lead())) : 0.0F;
-        float speed = Mth.sqrt(vx * vx + vz * vz);
+        // the feet's own pace: the body's way plus its turn (a cow swinging round on the spot carries its feet round too)
+        float way = Mth.sqrt(vx * vx + vz * vz), round = Math.abs(yawRate) * Mth.DEG_TO_RAD * rig.turnRadius * sc;
+        float speed = way + round;
+        // swinging round on the spot: no stride to lag by, so a foot steps as soon as it is a few settles off its spot
+        // (front and back feet trail opposite ways, and a long lag crosses the legs)
+        boolean pivot = round > 0.05F * sc && way < round;
         float furthest = Math.min(g.reach() * 0.8F * sc, fwd + 0.05F * strideB);
         if (speed * ahead > furthest) ahead = furthest / speed;
         int lifted = 0;
@@ -166,15 +182,19 @@ public final class Legs {
                 swing(i, x, y, z, yaw, sc, moving ? (1.0F - u[i]) * dur[i] + ahead : 0.0F);
             } else {
                 boolean due = adv > 0 && q < prevQ[i] && q < sw;
+                // how far behind its home along the way that home goes, the body's turn included: turning on the spot
+                // leaves the feet behind as surely as walking does
+                home(i, x + vx * PEEK, z + vz * PEEK, yaw + yawRate * PEEK, sc);
+                double nx = hx, nz = hz;
                 home(i, x, z, yaw, sc);
+                float hvx = (float) (nx - hx), hvz = (float) (nz - hz), hs = Mth.sqrt(hvx * hvx + hvz * hvz);
                 float ddx = (float) (fx[i] - hx), ddz = (float) (fz[i] - hz);
                 float far = Mth.sqrt(ddx * ddx + ddz * ddz);
-                // how far behind its home along the way the body goes
-                float trail = speed > 0.05F ? -(ddx * vx + ddz * vz) / speed : 0.0F;
+                float trail = hs > 0.05F * PEEK ? -(ddx * hvx + ddz * hvz) / hs : 0.0F;
                 if (due && far > 0.03F * sc) {
                     lift(i, Mth.clamp(sw * cycle, 0.08F, g.swing()), lift);
                     lifted++;
-                } else if ((far > g.reach() * sc || moving && trail > back + 0.3F * strideB)
+                } else if ((far > g.reach() * sc || moving && trail > back + 0.3F * strideB || pivot && far > 3.0F * g.settle() * sc)
                         && (!nearSwinging(i) || moving && trail > back + 0.38F * strideB)) { // dragging is worse than two up
                     lift(i, Mth.clamp(0.75F * sw * cycle, 0.12F, g.swing()), lift); // left behind: catch up now
                     lifted++;
@@ -182,30 +202,54 @@ public final class Legs {
             }
             prevQ[i] = q;
         }
-        // standing still: feet out of place step back under the body, one at a time; a calm one re-grips now and then
+        // standing still: feet out of place step back under the body, the furthest first, up to half of them at once but
+        // never two neighbours (after a turn, one at a time left the last leg leaning for a second and a half); a calm one
+        // re-grips now and then
         still = rate < 0.03F ? still + dt : 0.0F;
-        if (still > 0.3F && lifted == 0) {
-            int worst = -1;
-            float most = g.settle() * sc;
-            for (int i = 0; i < rig.n; i++) {
-                home(i, x, z, yaw, sc);
-                float ddx = (float) (fx[i] - hx), ddz = (float) (fz[i] - hz);
-                float far = Mth.sqrt(ddx * ddx + ddz * ddz);
-                if (far > most) {
-                    most = far;
-                    worst = i;
+        if (still > 0.2F) {
+            int stepped = 0;
+            while (lifted < Math.max(1, rig.n / 2)) {
+                int worst = -1;
+                float most = g.settle() * sc;
+                for (int i = 0; i < rig.n; i++) {
+                    if (swinging[i] || nearSwinging(i)) continue;
+                    home(i, x, z, yaw, sc);
+                    float ddx = (float) (fx[i] - hx), ddz = (float) (fz[i] - hz);
+                    float far = Mth.sqrt(ddx * ddx + ddz * ddz);
+                    if (far > most) {
+                        most = far;
+                        worst = i;
+                    }
                 }
-            }
-            if (worst >= 0) {
+                if (worst < 0) break;
                 lift(worst, 0.24F, Math.max(lift, 1.5F / 16.0F * sc));
-            } else if (calm && g.regripMax() > 0 && still > 1.5F && t >= nextRegrip) {
+                lifted++;
+                stepped++;
+            }
+            if (stepped == 0 && lifted == 0 && calm && g.regripMax() > 0 && still > 1.5F && t >= nextRegrip) {
                 int i = Math.min(rig.n - 1, (int) (rand() * rig.n));
                 if (!nearSwinging(i)) lift(i, 0.3F, (1.2F + 1.5F * rand()) / 16.0F * sc);
                 nextRegrip = t + g.regripMin() + (g.regripMax() - g.regripMin()) * rand();
             }
         }
         if (!calm) nextRegrip = Math.max(nextRegrip, t + g.regripMin());
-        out(x, y, z, yaw, sc);
+        // a planted foot left too far slides after the body, as FA's feet slide: a rigid leg never leans past SLIP from
+        // its shoulder, and no foot trails more than four settles while the body swings round on the spot (its steps
+        // can't keep up with a quick turn); a blocky leg thrown out sideways or legs crossed under the body read as broken
+        if (rig.rigid || pivot) {
+            for (int i = 0; i < rig.n; i++) {
+                if (swinging[i]) continue;
+                home(i, x, z, yaw, sc);
+                double ddx = fx[i] - hx, ddz = fz[i] - hz, far = Math.sqrt(ddx * ddx + ddz * ddz);
+                double most = rig.rigid ? (rig.len[i] + rig.lift[i]) * SLIP / 16.0F * sc : Double.MAX_VALUE;
+                if (pivot) most = Math.min(most, 4.0F * g.settle() * sc);
+                if (far > most) {
+                    fx[i] = hx + ddx * most / far;
+                    fz[i] = hz + ddz * most / far;
+                }
+            }
+        }
+        out(x, y, z, rootYaw, sc);
         carriage(y, sc, dt, g);
     }
 

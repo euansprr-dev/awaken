@@ -246,7 +246,7 @@ public final class LifeTests {
                     checked++;
                     if (legs.rigid()) rigid++;
                 }
-                String splits = walkTrial(mp.gait(), legs, r);
+                String splits = walkTrial(mp.gait(), mp.body() != null ? mp.body().twist() : 0.0F, legs, r);
                 if (splits != null) problems.add(mp.id() + ": " + splits);
             }
             h.assertTrue(rigid >= 12 * 4 + 4 * 2 + 3 * 4, "the grazers', chickens' and hoofed beasts' legs are rigid (" + rigid + ")");
@@ -311,32 +311,49 @@ public final class LifeTests {
      * a step's catch-up allows, and a one-piece leg never swings past 35 degrees walking or 45 running (FA's walk is
      * well inside both). Null when it holds, else the worst.
      */
-    static String walkTrial(MotionProfile.Gait g, LegRig rig, HeroRig r) {
+    static String walkTrial(MotionProfile.Gait g, float twistShare, LegRig rig, HeroRig r) {
         Legs feet = new Legs(rig, 7, (x, y, z) -> 0.0);
         float sw = g.strideWalk() > 0 ? g.strideWalk() : r.walkStride;
         float sr = g.strideRun() > 0 ? g.strideRun() : g.strideWalk() > 0 ? g.strideWalk() : r.runStride;
         float dt = 1.0F / 60.0F;
         double z = 0;
+        // the turn as a client sees a standing mob's (vanilla's tickHeadTurn): the body holds until its facing is 50
+        // degrees ahead, then is dragged along 50 behind and stays there; the body bone twists its share of the head's turn
+        float facing = 0, body = 0;
         String worst = null;
         float most = 0;
-        // seconds, cycles a second (0 stands), how much it runs
-        float[][] legs = {{1.0F, 0, 0}, {3.0F, 1, 0}, {2.0F, 1, 1}, {1.5F, 0, 1}};
-        for (float[] leg : legs) {
+        // seconds, cycles a second (0 stands), how much it runs, degrees a second it turns on the spot
+        float[][] legs = {{1.0F, 0, 0, 0}, {3.0F, 1, 0, 0}, {2.0F, 1, 1, 0}, {1.5F, 0, 1, 0}, {1.5F, 0, 0, 120}, {2.0F, 0, 0, 0}};
+        for (int p = 0; p < legs.length; p++) {
+            float[] leg = legs[p];
             float run = leg[2], st = Mth.lerp(run, sw, sr), duty = Mth.lerp(run, g.dutyWalk(), g.dutyRun());
+            boolean turning = leg[3] != 0, after = p == legs.length - 1;
             for (int k = 0, n = Math.round(leg[0] / dt); k < n; k++) {
                 z += st * leg[1] * dt;
-                feet.update(0, 0, z, 0, 1, dt, true, st, run, true);
-                if (leg[1] == 0) continue;
+                facing += leg[3] * dt;
+                body = Math.max(body, facing - 50.0F);
+                float tw = Mth.clamp((facing - body) * Mth.DEG_TO_RAD * twistShare, -0.35F, 0.35F);
+                feet.face = tw * Mth.RAD_TO_DEG;
+                feet.update(0, 0, z, body, 1, dt, true, st, run, true);
+                boolean settled = after && k >= n - Math.round(0.5F / dt);
+                if (leg[1] == 0 && !turning && !settled) continue;
                 float ahead = (duty * st * (0.5F + g.lead()) + 0.1F * st) * 16.0F;
-                float behind = (duty * st * (0.5F - g.lead()) + 0.4F * st) * 16.0F;
+                float behind = settled ? g.settle() * 16.0F + 0.75F : turning ? 4.0F * g.settle() * 16.0F + 1.0F
+                        : (duty * st * (0.5F - g.lead()) + 0.4F * st) * 16.0F;
+                float c = Mth.cos(tw), sn = Mth.sin(tw);
                 for (int i = 0; i < rig.n; i++) {
                     if (feet.stepping(i)) continue;
-                    float off = rig.homeZ[i] - feet.tz[i]; // px ahead of its home (model -z is forward)
+                    // its home under the twisted body (the body bone's yRot in model space)
+                    float hx = rig.homeX[i] * c + rig.homeZ[i] * sn, hz = -rig.homeX[i] * sn + rig.homeZ[i] * c;
+                    float ox = hx - feet.tx[i], oz = hz - feet.tz[i];
+                    // walking: px ahead of its home (model -z is forward); turning or stood after it: px from it any way
+                    float off = turning || settled ? -Mth.sqrt(ox * ox + oz * oz) : oz;
                     float over = Math.max(off / ahead, -off / behind);
-                    String what = off > 0 ? "lands " + off + " px ahead (most " + ahead + ")" : "trails " + -off + " px (most " + behind + ")";
+                    String what = off > 0 ? "lands " + off + " px ahead (most " + ahead + ")"
+                            : (turning ? "turning, trails " : settled ? "stood after a turn, " : "trails ") + -off + " px (most " + behind + ")";
                     if (rig.rigid()) {
                         float deg = (float) Math.toDegrees(Math.atan2(Math.abs(off), rig.length(i) * (1.0F + g.shoulder())));
-                        float limit = run > 0 ? 45.0F : 35.0F;
+                        float limit = turning ? 25.0F : run > 0 ? 45.0F : 35.0F;
                         if (deg / limit > over) {
                             over = deg / limit;
                             what = "swings " + deg + " degrees (most " + limit + ")";
@@ -344,7 +361,7 @@ public final class LifeTests {
                     }
                     if (over > 1.0F && over > most) {
                         most = over;
-                        worst = "leg " + i + (run > 0 ? " running " : " walking ") + what;
+                        worst = "leg " + i + (turning || settled ? " " : run > 0 ? " running " : " walking ") + what;
                     }
                 }
             }

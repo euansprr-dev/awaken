@@ -5646,6 +5646,16 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   its home than its place in a steady stride (duty × stride × (0.5 + lead), plus 5% of a stride), and a planted foot
   trailing more than its steady lift point (duty × stride × (0.5 - lead)) plus 30% of a stride steps at once (a
   catch-up, 0.75 of a swing, 0.12 s to `swing`; past 38% it steps even while a neighbour is up).
+- **Turns** (2026-10-29, the orchestrator's read of the close tour: a cow and a pig turned on the spot crossed their
+  legs in an X and were still leaning a second and a half later): a planted foot's trail is read along its own home's
+  path, the body's turn included (its home 0.1 s on, from the body's way and turn), and the landing's cap counts the
+  turn's speed at the feet too. Swinging round on the spot (the turn's speed at the feet over the body's way), a foot
+  steps as soon as it is three `settle`s off its spot and slides after the body past four (FA's feet slide through a
+  turn; a quick one outruns any steps). A rigid leg's planted foot slides rather than lean more than 40° from its
+  shoulder (`Legs.SLIP`). Standing, feet off their spots step back the furthest first, up to half of them at once but
+  never two neighbours (one at a time left the last leg leaning for 1.5 s). The feet stand and step under the body
+  bone's twist toward its look (`Legs.face`; vanilla keeps a standing mob's body 50° behind its facing after a turn,
+  so the head stays round and the twist stays), though they are handed to the legs in the root's model space.
 - **Feet** (`Legs`, per creature, from the render extraction once a frame; nothing allocated): a planted foot keeps its
   world position while the body moves over it. A gait clock runs with the ground covered plus the arc the feet sweep
   when it turns on the spot (yaw × the feet's mean distance from the middle), so a turn steps too. A foot lifts when the
@@ -5767,7 +5777,11 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   sweeps its planted feet no further than the hips can vault to; every gait's feet, on flat ground through a stand, a
   sudden walk (a cycle a second), a sudden run and a stop, never plant further ahead of home than a steady stride's
   landing plus 10% of a stride or trail further than its lift point plus 40%, and a rigid leg never swings past 35°
-  walking or 45° running (about its pivot `shoulder` above the hip); the forms' rigs
+  walking or 45° running (about its pivot `shoulder` above the hip); then turned on the spot at 120° a second as a
+  client sees it (the body held until its facing is 50° ahead, then dragged along 50° behind, the body bone twisted its
+  share of that look), no planted foot is more than four `settle`s (+1 px) off its spot under the twisted body nor a
+  rigid leg past 25°, and stood 1.5 s after it every foot is back within a `settle` (+0.75 px) (the old feet failed 22
+  gaits); the forms' rigs
   are looked up too); `creature_motion_flight` (every flight names a creature and, on a rig, bones it has, wings with a
   side; the beat sweeps down in under half a cycle and never jumps; a right turn banks right and curves the spine right;
   a climb noses up and keeps every beat, a dive noses down and glides, a hover beats, a cruise glides between beats; a
