@@ -50,7 +50,10 @@ public final class BinocularsClient {
         GlassConfig.register(modBus);
         modBus.addListener(RegisterKeyMappingsEvent.class, e -> e.register(Glass.KEY));
         modBus.addListener(RegisterGuiLayersEvent.class, e -> e.registerAbove(VanillaGuiLayers.CAMERA_OVERLAYS, GlassOverlay.LAYER, GlassOverlay::render));
-        modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> e.register(BinocularsNet.Relay.TYPE, (msg, ctx) -> GlassOthers.onRelay(msg)));
+        modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
+            e.register(BinocularsNet.Relay.TYPE, (msg, ctx) -> GlassOthers.onRelay(msg));
+            e.register(BinocularsNet.Spot.TYPE, (msg, ctx) -> GlassSpot.onSpot(msg));
+        });
         modBus.addListener(RegisterRenderStateModifiersEvent.class,
                 e -> e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, GlassOthers::modify));
         modBus.addListener(EntityRenderersEvent.AddLayers.class, BinocularsClient::onLayers);
@@ -97,6 +100,7 @@ public final class BinocularsClient {
         Rangefinder.reset();
         GlassOverlay.reset();
         GlassOthers.clear();
+        GlassSpot.reset();
         peekRestore = null;
     }
 

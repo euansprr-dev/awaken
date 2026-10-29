@@ -137,6 +137,7 @@ public final class LivingModule {
         bus.addListener(EventPriority.HIGHEST, net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre.class, dev.awaken.living.combat.MarkEvents::onDamage);
         bus.addListener(net.neoforged.neoforge.event.entity.living.MobSpawnEvent.SpawnPlacementCheck.class, dev.awaken.living.wonder.WonderWatch::onSpawnCheck);
         bus.addListener(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post.class, dev.awaken.living.wonder.WonderWatch::onPlayerTick);
+        dev.awaken.living.wonder.WonderSpotting.register(); // seen through the binoculars (SPEC §39.10)
         bus.addListener(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post.class, dev.awaken.living.combat.MarkEvents::onPlayerTick);
         bus.addListener(net.neoforged.neoforge.event.tick.ServerTickEvent.Post.class, dev.awaken.living.combat.MarkEvents::onTick);
         bus.addListener(net.neoforged.neoforge.event.PlayLevelSoundEvent.AtPosition.class, dev.awaken.living.combat.MarkEvents::onSound);

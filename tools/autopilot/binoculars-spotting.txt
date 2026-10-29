@@ -1,0 +1,76 @@
+# Binoculars spotting (SPEC 39.10): the glass held on something unfound fills its ring over 2 s and the find lands.
+# A gate seen from 50 blocks off and 40 up, then, from the same glass perch, a creature 60 blocks off (past the 24/48-block
+# study range). The perch is the one place sure to be airborne over loaded land on CI.
+#
+# Commands it relies on (game master):
+#   /awaken spotting aim [creature|place]   faces the nearest thing you could spot
+#   key binoculars                          the binoculars key (a tap: up, a second tap: down)
+world autopilot_spotting creative 20261029
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd gamerule awaken:fauna_spawning false
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+camera first
+# away from Carillon (nothing inside its walls is a find), over the dry forest near 5760 6100 on this seed (6000 6000 is
+# sea, and a hop before the land has loaded leaves you there); wait for the land to load on CI
+cmd tp @s 5760 110 6100
+wait 900
+cmd tp @s 5760 110 6100
+wait 100
+
+# ---- a gate ------------------------------------------------------------------------------------------------------------
+cmd awaken gate open C
+wait 500
+# up and back from it: a glass perch 40 over the ground and 50 blocks off
+cmd tp @s ~ ~40 ~
+cmd awaken spotting aim place
+cmd tp @s ^ ^ ^-50
+cmd fill ~-1 ~-1 ~-1 ~1 ~-1 ~1 minecraft:glass
+wait 20
+cmd awaken spotting aim place
+wait 10
+shot spot_01_gate_bare
+key binoculars
+wait 25
+shotnow spot_02_gate_filling
+wait 12
+shotnow spot_03_gate_nearly
+wait 8
+shotnow spot_04_gate_found
+wait 4
+shotnow spot_05_gate_landing
+wait 40
+shot spot_06_gate_after
+key binoculars
+wait 20
+
+# ---- a creature across the air, from the same perch -------------------------------------------------------------------
+cmd tp @s ~ ~ ~ 0 0
+cmd fill ~-2 ~-1 ~58 ~2 ~-1 ~62 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 10
+cmd summon awaken:mossback ~ ~ ~60 {NoAI:1b,Rotation:[180f,0f]}
+wait 40
+look 0 1
+shot spot_07_creature_bare
+key binoculars
+wait 25
+shotnow spot_08_creature_filling
+wait 12
+shotnow spot_09_creature_nearly
+wait 8
+shotnow spot_10_creature_found
+wait 4
+shotnow spot_11_creature_landing
+wait 40
+shot spot_12_creature_after
+quit

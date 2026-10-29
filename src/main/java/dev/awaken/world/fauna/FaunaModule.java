@@ -75,6 +75,7 @@ public final class FaunaModule {
         RULES.register(modBus);
         FaunaItems.init(modBus);
         Mounts.init(modBus); // P3: taming, the bridle, the whistle
+        FaunaSpotting.register(); // seen through the binoculars (SPEC §39.10)
         dev.awaken.world.fauna.lair.LairWorldgen.init(modBus);
         modBus.addListener(FaunaModule::placements);
         modBus.addListener(FaunaModule::caveAttributes);

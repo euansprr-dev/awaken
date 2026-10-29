@@ -68,17 +68,27 @@ public final class WonderWatch {
         findSecrets(p, level);
         for (Wonders.Site s : near(level, p.getBlockX(), p.getBlockZ(), FIND)) {
             if (Math.abs(p.getY() - s.y()) > 60) continue;
-            List<String> have = found(p);
-            if (have.contains(s.key())) continue;
-            List<String> next = new ArrayList<>(have);
-            next.add(s.key());
-            p.setData(LivingContent.WONDERS.get(), List.copyOf(next));
-            int rank = RegionMap.rankOf(Regions.levelAt(level, s.x(), s.z()));
-            boolean fresh = Progression.discover(p, "wonder/" + s.kind().id, 0.15 + 0.07 * rank);
-            Progression.count(p, "awaken:wonders_found");
-            if (fresh) Progression.markNewThing(p, s.kind().display);
-            Finds.tell(p, Finds.Find.of("wonder", "New wonder · " + s.kind().display, s.kind().display, s.kind().line + " " + s.regionName() + ".", s.kind().colour, true));
+            find(p, level, s);
         }
+    }
+
+    /**
+     * The player found this wonder: by standing at it, or by holding the binoculars on it (SPEC §39.10; a wonder is a
+     * thing to be looked at, so seeing it is finding it). Remembered, drawn on the Atlas, the discovery paid once per
+     * kind. Returns false if this one was already found.
+     */
+    static boolean find(ServerPlayer p, ServerLevel level, Wonders.Site s) {
+        List<String> have = found(p);
+        if (have.contains(s.key())) return false;
+        List<String> next = new ArrayList<>(have);
+        next.add(s.key());
+        p.setData(LivingContent.WONDERS.get(), List.copyOf(next));
+        int rank = RegionMap.rankOf(Regions.levelAt(level, s.x(), s.z()));
+        boolean fresh = Progression.discover(p, "wonder/" + s.kind().id, 0.15 + 0.07 * rank);
+        Progression.count(p, "awaken:wonders_found");
+        if (fresh) Progression.markNewThing(p, s.kind().display);
+        Finds.tell(p, Finds.Find.of("wonder", "New wonder · " + s.kind().display, s.kind().display, s.kind().line + " " + s.regionName() + ".", s.kind().colour, true));
+        return true;
     }
 
     /** Standing at a secret for the first time finds it: a count on "Secrets found", a line once, and the first of each kind is a small discovery. */
