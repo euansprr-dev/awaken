@@ -67,5 +67,6 @@ public final class AwakenClient {
         dev.awaken.delve.client.DelveClient.init(modBus);
         dev.awaken.ground.client.GroundClient.init(modBus);
         dev.awaken.aim.client.AimClient.init(modBus);
+        dev.awaken.armour.client.ArmourClient.init(modBus);
     }
 }
