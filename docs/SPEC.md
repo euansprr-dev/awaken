@@ -9324,6 +9324,17 @@ For all three kit bodies (the tools write every body the same way).
   clip for `rig.guard` (the Forge: the axe) and of each move for its own guards.
   - Each move names its guards and their adjusters, `[(guard bones, [(bone, axis, most degrees)])]`, the wrist first,
     then the elbow and the shoulder.
+  - **Guards are bones.** `core.lowest` walks a bone's cubes, and a name that is not a bone (a cube's name) is skipped
+    without a word, so both its check and its pass do nothing. The sweep of 2026-10-29 found cube names in the
+    Rootmother's, the Bell Warden's, the Sleeper's, the Thornback's and the Root Saint's lists (the Bell's shins went
+    33 px into the floor when it sat, the Rootmother's brood 8 px); they name bones now. An adjuster that turns a
+    guard on its own pivot can't lift the guard's lowest corner (the Thornback's head): turn the bone above it first.
+  - **Out of reach the knee turns down.** A two-bone leg whose target is nearer its hip than the shin's length less
+    the thigh's has no bend left, and its knee points straight away from the foot: with the body on the floor and the
+    foot above the hip that is down through the floor. Poses on the floor keep their feet far enough out (the
+    Rootmother's death, the Bell Warden's sitting pose).
+  - Down on a knee, back up and dead, the Lantern Broker's, the Abbot's and the Hollow Herald's feet tip at the ankle to
+    lie on the floor, then the knee (a pass over kneel, rise and death; their toes went 5-8 px in).
   - **The pass.** At every tick where a guard would sink, the adjusters turn by the least that clears it, starting
     from the last tick's turn, so the correction moves on smoothly and never flips side. The correction then grows and
     fades by at most 14° a tick (`EASE`), with a soft average for the corners, and never drops below a tick's need.
@@ -9548,7 +9559,10 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     its points. The Grand Peal (the signature) rises on its points and swings itself ringing, wider each time, the rope
     and chain flying, then slams its rim down. Its intro, once it has risen, is a single swing that rings it once.
   - **Waiting and rising.** It waits sitting on its rim like any bell, its legs folded up its sides like a shut umbrella
-    (the intro's "kneel"); it rises by throwing them out, setting the points down far out round it and pushing itself up.
+    (the intro's "kneel"), the knees low at its sides and the points up by its crown (its hips sit only a few pixels up
+    on its rim, so knees sent down from them went into the floor); its face drawn right up into its mouth once it is
+    down, or its jaw meets the floor. It rises by throwing its legs out, setting the points down far out round it and
+    pushing itself up.
   - **The death**: a shudder, the front left leg gives and it lurches down that way, the others give, and it drops onto
     its rim with a last dull ring. It rattles round on its rim the way a dropped bell does, lower and lower, and comes to
     rest with its legs flat out round it like a dead crab's. The face is shut inside.
@@ -9928,10 +9942,17 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     and lowers it to the floor. Her intro rises tall, lifts her front legs to feel the air, her body swaying out of
     step with them, then lets herself down toward you.
   - **The death.** She shudders up on her legs; her front legs give, then the rest, and her body drops to the floor
-    and bounces; her legs draw in and up over her the way a dead harvestman's do, one twitches, and she is still
-    (4.6 s). The curled legs turn nearly about-face from rest, so the death's keys are unwrapped (each turn within
-    half a turn of the key before), and the streamers swing forward under her as she falls (swung back they run out
-    of room once she is down).
+    and bounces; her claws draw in along the floor so her knees rise and lean in over her until all eight meet high
+    over her back, a closed tent of root like a dead stump; one claw twitches up off the floor, and she is still
+    (4.6 s). A claw drawn in nearer than about 54 px from her middle is closer to the hip than the 70 px shin can fold,
+    and the knee turns down through the floor instead. The death's keys are unwrapped (each turn within half a turn
+    of the key before), and the streamers swing forward under her as she falls (swung back they run out of room once
+    she is down).
+  - **On the floor.** Her guards and ground lists name bones (`foot`, `shin`, `brood`, `fang`, `palpb`, the streamer
+    links): `core.lowest` walks a bone's cubes, and cube names in them were skipped without a word, which had let the
+    brood sink 8 px whenever she sat. Down on the floor the brood swings back (the way her floor poses swing it, so the
+    correction never flips through plumb as she comes down), her fangs fold forward against the floor and her feelers
+    lift. Every clip stays within 1.2 px of the floor.
   - **Meter.** Worst kink outside a strike 3.5°; held at most 12% on every move; dips at most 39%.
 - **The Thornback, the Thorn Pangolin** (body and motion, `kit/bosses/guardian_gardens.py`). "Something heavy moves in
   the hanging gardens." A pangolin the length of a cart, 7 blocks from snout to tail tip, the arch of its back 2.3

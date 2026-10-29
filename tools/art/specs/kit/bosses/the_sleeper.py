@@ -230,7 +230,7 @@ def body():
                  + [("skirt_" + s, 0.6, 1.4, 0.1) for s in SKIRTS]
                  + [("dream", 0.5, 1.5, 0.22), ("hoop", 0.5, 1.8, 0.16), ("plumes", 0.5, 2.2, 0.25), ("tatter", 0.5, 2.0, 0.2),
                     ("cap1", 0.6, 1.6, 0.12), ("cap2", 0.55, 2.0, 0.16), ("cap3", 0.5, 2.3, 0.2), ("pom", 0.5, 2.5, 0.22)])
-    r.guard = ["fist", "thumb"] + [f"ball{k}" for k in range(4)] + [f"claw{k}" for k in range(4)]
+    r.guard = ["hand_r"] + [f"foot{k}" for k in range(4)]  # bones, not cubes: core.lowest walks a bone's cubes
     return r
 
 
@@ -783,7 +783,7 @@ def _leg_hit(k):
     return [(f"foot{k}", (0, 3, 0), 3.0), (f"shin{k}", (0, 4, 0), 2.5)]
 
 
-FIST_GROUND = [(["fist", "thumb"], [("hand_r", 0, 40), ("forearm_r", 0, 30), ("arm_r", 0, 25)])]
+FIST_GROUND = [(["hand_r"], [("hand_r", 0, 40), ("forearm_r", 0, 30), ("arm_r", 0, 25)])]
 
 
 def stomp(r, k=0, mid="stomp"):
@@ -988,7 +988,7 @@ def moves(r):
 
 
 # the ground (SPEC §35.10): the claws and the fist stay out of the floor
-LEG_GROUND = [([f"ball{k}", f"claw{k}"], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 40)]) for k in range(4)]
+LEG_GROUND = [([f"foot{k}", f"shin{k}"], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 40)]) for k in range(4)]
 # the feet that stand through each move, and whether the fist lies still on the floor through it
 STANDS = {"stomp": ((1, 2, 3), True), "stomp_b": ((0, 2, 3), True), "fist": ((0, 1, 2, 3), False), "kick": ((0, 1), True),
           "charge": ((), False), "eyelids": ((0, 1, 2, 3), False), "terrors": ((), False), "dreamstep": ((0, 1, 2, 3), True),

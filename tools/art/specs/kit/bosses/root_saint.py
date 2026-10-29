@@ -871,7 +871,7 @@ def wake(r):
 # the ground (SPEC §35.10): the roots' tips, the censers and the scapular stay out of the floor; the hands where they reach
 ROOT_GROUND = [([f"root{k}c"], [(f"root{k}b", 0, 40), (f"root{k}a", 0, 30)]) for k in range(len(ROOTS))]
 HANG_GROUND = [(["censer_" + s], [("chain_" + s + "0", 0, 80, -1)]) for s in "lr"] + [(["scap2"], [("scap1", 0, 60, -1), ("scap2", 0, 60, -1)])]
-HAND_GROUND = [(["hand_" + s, "fingers_" + s, "cuff_" + s], [("hand_" + s, 0, 40), ("forearm_" + s, 0, 40), ("arm_" + s, 0, 40)]) for s in "lr"]
+HAND_GROUND = [(["hand_" + s, "fingers_" + s, "forearm_" + s], [("hand_" + s, 0, 40), ("forearm_" + s, 0, 40), ("arm_" + s, 0, 40)]) for s in "lr"]
 
 
 def clips(r):

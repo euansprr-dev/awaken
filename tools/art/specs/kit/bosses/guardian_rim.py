@@ -123,7 +123,7 @@ def body():
     # secondary parts (SPEC §35.10): the brood swings under her, the streamers sway, the feelers tremble
     r.springs = [("brood", 0.5, 1.4, 0.15)] + [(f"{nm}{j}", 0.5, 1.5 + 0.4 * j, 0.22) for nm in ("sa", "sb", "sc") for j in range(3)] + \
                 [("palpb_l", 0.6, 2.2, 0.1), ("palpb_r", 0.6, 2.2, 0.1)]
-    r.guard = [f"claw{k}" for k in range(8)] + [f"egg{k}" for k in range(6)]
+    r.guard = [f"foot{k}" for k in range(8)] + ["brood", "fang_l", "fang_r", "palpb_l", "palpb_r"]  # bones, not cubes
     return r
 
 
@@ -372,7 +372,7 @@ def _floor_lift(extra=0.0):
 
 def _sat(r, k_out=12.0):
     """Down on the floor between her legs, the knees standing high round her like a tent, the brood drawn up under her."""
-    return _pose(r, lift=_floor_lift(), feet=_all(lambda k: _foot(k, out=k_out)), palps=(-10, -10), spread=2, tuck=4, brood=(-30, 0))
+    return _pose(r, lift=_floor_lift(), feet=_all(lambda k: _foot(k, out=k_out)), palps=(16, 16), spread=2, tuck=4, brood=(-30, 0))
 
 
 def _reactions(r):
@@ -385,18 +385,21 @@ def _reactions(r):
         h = _pose(r, lift=1.5, roll=-9 * sgn, yaw=-7 * sgn, shift=(-sgn * 3, 0), palps=(-10, -10), spread=12, fangs=8, brood=(0, 14 * sgn))
         b = _pose(r, lift=-0.5, roll=3 * sgn, yaw=2 * sgn, shift=(sgn * 0.8, 0), palps=(24, 24), brood=(0, -6 * sgn))
         keyed(r, nm, 0.6, [(0, _pose(r)), (0.08, h), (0.32, b), (0.6, _pose(r))])
-    half = _pose(r, lift=-16, feet=_all(lambda k: _foot(k, out=6)), palps=(0, 0), spread=6, tuck=2, brood=(-10, 0))
+    half = _pose(r, lift=-16, feet=_all(lambda k: _foot(k, out=6)), palps=(0, 0), spread=6, tuck=3, brood=(-24, 0))
     keyed(r, "kneel", 0.9, [(0, _pose(r)), (0.3, half), (0.62, _sat(r, 14)), (0.9, _sat(r))])
     push = _pose(r, lift=-20, feet=_all(lambda k: _foot(k, out=4)), palps=(10, 10), tuck=2, brood=(-12, 0))
     keyed(r, "rise", 1.1, [(0, _sat(r)), (0.4, push), (0.8, _pose(r, lift=2, palps=(20, 20))), (1.1, _pose(r))])
     _death(r)
 
 
-def _curl(k, f):
-    """A dead harvestman's leg: drawn in toward her body and up, f of the way."""
-    x, h, z = REST_FOOT[k]
-    tx, th, tz = x * 0.3, 16.0, z * 0.3
-    return (x + (tx - x) * f, h + (th - h) * f, z + (tz - z) * f)
+def _curl(k, f, up=0.0):
+    """A dead harvestman's leg: its claw drawn in along the floor from where it fell, f of the way, so the knee rises and
+    leans in over her; at f = 1 the eight knees meet high over her back like the ribs of a closed tent (a claw drawn in
+    much further is nearer the hip than the long shin can fold, and the knee would turn down through the floor). up
+    lifts the claw off the floor."""
+    dx, dz = _dir(k)
+    rad = REACH + 18.0 - 13.0 * f
+    return (dx * rad, REST_FOOT[k][1] + up, dz * rad)
 
 
 def _death(r):
@@ -405,13 +408,13 @@ def _death(r):
     one twitches, and she is still."""
     shake = _pose(r, lift=3, pitch=-6, roll=3, palps=(-30, -30), spread=18, fangs=12, brood=(10, -6))
     give0 = _pose(r, lift=-8, pitch=12, roll=6, feet={0: _foot(0, out=12, up=0), 4: _foot(4, out=8)}, palps=(-10, 0), spread=10, fangs=10, brood=(20, 6))
-    give1 = _pose(r, lift=-22, pitch=8, roll=-4, feet=_all(lambda k: _foot(k, out=10 if IDX[k] < 2 else 5)), palps=(0, 10), spread=8, fangs=6, tuck=1,
-                  brood=(12, 0))
+    give1 = _pose(r, lift=-22, pitch=8, roll=-4, feet=_all(lambda k: _foot(k, out=10 if IDX[k] < 2 else 5)), palps=(0, 10), spread=8, fangs=6, tuck=3,
+                  brood=(-12, 0))
     floor = _pose(r, lift=_floor_lift(0.5), pitch=3, roll=2, feet=_all(lambda k: _foot(k, out=16)), palps=(-6, -6), spread=4, fangs=4, tuck=4, brood=(-30, 4))
     bounce = _pose(r, lift=_floor_lift(2.0), pitch=1, roll=-1, feet=_all(lambda k: _foot(k, out=17)), palps=(4, 0), spread=6, tuck=4, brood=(-30, 0))
     hi = {k: (_dir(k)[0] * 0.2, -1.0, _dir(k)[1] * 0.2) for k in range(8)}
     fold = lambda f, tw=None: _pose(r, lift=_floor_lift(0.3), pitch=2, roll=1.5, feet={k: (_foot(k, out=18 * (1 - f)) if f < 0.01 else
-                                                                                           _curl(k, f * (1.15 if tw == k else 1.0))) for k in range(8)},
+                                                                                           _curl(k, f, 9.0 if tw == k else 0.0)) for k in range(8)},
                                     poles=hi, palps=(-30 * f, -30 * f), spread=0, fangs=0, tuck=4, brood=(-30, 0))
     keys = [(0, _pose(r)), (0.3, shake), (0.75, give0), (1.15, give1), (1.45, floor), (1.65, bounce), (1.9, floor), (2.6, fold(0.55)),
             (3.2, fold(0.85)), (3.55, fold(0.88, 2)), (3.8, fold(0.86)), (4.6, fold(0.9))]
@@ -532,8 +535,8 @@ def rootfall(r):
     hi = {k: (_dir(k)[0] * 0.3, -1.0, _dir(k)[1] * 0.3) for k in range(8)}
     leap = _pose(r, lift=18, pitch=-6, feet=tucked(18, 0), poles=hi, palps=(40, 40), spread=20, fangs=16, tuck=3, brood=(-24, 0))
     top = _pose(r, lift=22, pitch=4, feet=tucked(22, -4), poles=hi, palps=(50, 50), spread=24, fangs=18, tuck=3, brood=(-10, 0))
-    land = _pose(r, lift=_floor_lift(1.0), pitch=2, feet=_all(lambda k: _foot(k, out=14)), palps=(-20, -20), spread=10, fangs=10, tuck=4, brood=(-30, 0))
-    settle = _pose(r, lift=_floor_lift(2.5), pitch=0, feet=_all(lambda k: _foot(k, out=15)), palps=(-6, -6), spread=6, fangs=6, tuck=4, brood=(-28, 0))
+    land = _pose(r, lift=_floor_lift(1.0), pitch=2, feet=_all(lambda k: _foot(k, out=14)), palps=(12, 12), spread=10, fangs=10, tuck=4, brood=(-30, 0))
+    settle = _pose(r, lift=_floor_lift(2.5), pitch=0, feet=_all(lambda k: _foot(k, out=15)), palps=(14, 14), spread=6, fangs=6, tuck=4, brood=(-28, 0))
     push = _pose(r, lift=-18, feet=_all(lambda k: _foot(k, out=6)), palps=(10, 10), tuck=2, brood=(-10, 0))
     return Move("rootfall", "HEAVY", 18, 10, 22, through=settle, title="Rootfall", hold=8, track=6.0, lock=12, advance=7.0, ability="Rootfall", rng=(5, 14),
                 kinds=("gap", "area"), damage=1.3, knock=1.2, plant=(), hit=[("body", (0, 4, 0), 7.0)],
@@ -594,14 +597,19 @@ def wake(r):
                         "recover": _back(r, end)}, lag=_lag())
 
 
-# the ground (SPEC §35.10): the claws, the eggs and the streamers' ends stay out of the floor
-LEG_GROUND = [([f"claw{k}", f"shinc{k}"], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 40)]) for k in range(8)]
-HANG_GROUND = [([f"{nm}2"], [(f"{nm}0", 0, 80, -1), (f"{nm}1", 0, 80, -1)]) for nm in ("sa", "sb", "sc")] + \
-              [([f"egg{k}" for k in range(6)], [("brood", 0, 80, -1)])]
+# the ground (SPEC §35.10): the claws, the brood, the feelers and the streamers' ends stay out of the floor (guards and
+# adjusters are bones: core.lowest walks a bone's cubes)
+# on the floor her fangs fold forward against it and her feelers lift off it; the brood swings back (+x), the way her
+# poses on the floor swing it, so the correction never flips through plumb as she comes down
+PALP_GROUND = [([f"fang_{nm}"], [(f"fang_{nm}", 0, 70, -1)]) for nm in ("l", "r")] + \
+              [([f"palpb_{nm}"], [(f"palp_{nm}", 0, 40, -1)]) for nm in ("l", "r")]
+LEG_GROUND = [([f"foot{k}", f"shin{k}"], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 40)]) for k in range(8)]
+HANG_GROUND = [([f"{nm}{j}" for j in range(3)], [(f"{nm}0", 0, 80, -1), (f"{nm}1", 0, 80, -1)]) for nm in ("sa", "sb", "sc")] + \
+              [(["brood"], [("brood", 0, 80, 1)])] + PALP_GROUND
 # as she falls her body pitches forward onto the floor, so the streamers swing forward under her from the start (swung
 # back they run out of room once she is down and would flip over to the front in a tick)
 HANG_DEATH = [([f"{nm}2"], [(f"{nm}0", 0, 88, 1), (f"{nm}1", 0, 80, 1)]) for nm in ("sa", "sb", "sc")] + \
-             [([f"egg{k}" for k in range(6)], [("brood", 0, 80, -1)])]
+             [(["brood"], [("brood", 0, 80, 1)])] + PALP_GROUND
 STANDS = {"stab": (1, 2, 3, 5, 6, 7), "stab_b": (0, 1, 2, 3, 5, 6, 7), "scythe": (0, 2, 3, 4, 5, 6, 7), "kick": (0, 1, 2, 4, 5, 6, 7),
           "web": (1, 2, 3, 5, 6, 7), "rootfall": (), "lances": (), "brood": (), "wake": ()}
 
@@ -618,7 +626,7 @@ def clips(r):
     everyday = [n for n in r.clips if n != "death"]
     core.ground_pass(r, LEG_GROUND, clips=everyday)
     core.ground_pass(r, HANG_GROUND, clips=everyday)
-    core.ground_pass(r, HANG_DEATH, clips=["death"], skip=())
+    core.ground_pass(r, LEG_GROUND + HANG_DEATH, clips=["death"], skip=())
     return mv
 
 

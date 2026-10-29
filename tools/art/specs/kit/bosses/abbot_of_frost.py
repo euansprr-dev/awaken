@@ -736,6 +736,10 @@ def clips(r):
     # off the floor where it would meet it, the death included
     core.ground_pass(r, [(["hand_l"], [("hand_l", 0, 50), ("forearm_l", 0, 30)]), (["hand_r"], [("hand_r", 0, 50), ("forearm_r", 0, 30)])],
                      clips=[n for n in r.clips if n != "death"])
+    # broken and down on a knee (and back up, and dead), each foot tips at the ankle to lie on the floor, then the knee
+    feet = [(["foot_" + s], [("foot_" + s, 0, 50), ("shin_" + s, 0, 30)]) for s in "lr"]
+    core.ground_pass(r, feet, clips=["kneel", "rise"])
+    core.ground_pass(r, feet, clips=["death"], skip=())
     for n in r.clips:
         _pool(r, n)
     return mv

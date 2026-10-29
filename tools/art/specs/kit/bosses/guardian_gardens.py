@@ -149,7 +149,7 @@ def body():
     r.size = 1.0
     # secondary parts (SPEC §35.10): the tail's tip swings, the roses nod
     r.springs = [("t3", 0.5, 1.2, 0.08), ("t4", 0.5, 1.6, 0.12)]
-    r.guard = [f"hand{k}" for k in FRONT] + [f"foot{k}" for k in BACK] + ["tail4", "tailtip", "snout", "nose"]
+    r.guard = [f"hand{k}" for k in FRONT] + [f"claws{k}" for k in FRONT] + [f"foot{k}" for k in BACK] + ["t4", "head"]  # bones, not cubes
     return r
 
 
@@ -778,9 +778,9 @@ def wake(r):
 
 
 # the ground (SPEC §35.10): the hands and claws, the feet, the tail's tip and the snout stay out of the floor
-LEG_GROUND = [([f"hand{k}"] + [f"claw{k}_{j}" for j in range(3)], [(f"arm{k}", 0, 30), (f"fore{k}", 0, 40)]) for k in FRONT] + \
-             [([f"foot{k}"] + [f"toe{k}_{j}" for j in range(3)], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 40)]) for k in BACK]
-TAIL_GROUND = [(["tail4", "tailtip", "tipscale"], [("t3", 0, 40, 1), ("t2", 0, 30, 1)]), (["snout", "nose"], [("head", 0, 30, -1), ("neck", 0, 20, -1)])]
+LEG_GROUND = [([f"hand{k}", f"claws{k}"], [(f"arm{k}", 0, 30), (f"fore{k}", 0, 40)]) for k in FRONT] + \
+             [([f"foot{k}"], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 40)]) for k in BACK]
+TAIL_GROUND = [(["t4"], [("t3", 0, 40, 1), ("t2", 0, 30, 1)]), (["head"], [("neck", 0, 30, -1), ("head", 0, 30, -1)])]  # the neck first: the head turned on its own pivot can't lift its lowest corner
 STANDS = {"claw": (0, 2, 3), "claw_b": (1, 2, 3), "maul": (2, 3), "tail": (0, 1, 2, 3), "charge": (), "gale": (2, 3), "spray": (0, 1, 2, 3),
           "lurkers": (2, 3), "wake": (2, 3)}
 

@@ -133,7 +133,7 @@ def body():
     # secondary parts (SPEC §35.10): the clapper swings in its mouth, the chain and the rope trail off the yoke
     r.springs = [("clapper", 0.55, 1.3, 0.12), ("clapper_b", 0.45, 1.7, 0.16), ("chain0", 0.6, 1.6, 0.18), ("chain1", 0.5, 2.0, 0.2),
                  ("chain2", 0.5, 2.2, 0.2), ("rope0", 0.5, 1.5, 0.25), ("rope1", 0.5, 1.9, 0.25), ("rope2", 0.5, 2.2, 0.25)]
-    r.guard = [f"toe{k}" for k in range(4)] + ["ball", "flight"]
+    r.guard = [f"foot{k}" for k in range(4)] + ["clapper_b"]  # bones, not cubes: core.lowest walks a bone's cubes
     return r
 
 
@@ -295,7 +295,8 @@ def _pose(r, lift=0.0, pitch=0.0, yaw=0.0, roll=0.0, shift=(0.0, 0.0), feet=None
     p["clapper_b"] = (-whip[0], 0, whip[1])
     p["rope0"] = ik.orient(r, fr, "rope0", _swing_dir(*rope), (1, 0, 0))
     p["chain0"] = ik.orient(r, fr, "chain0", _swing_dir(rope[0], -rope[1]), (1, 0, 0))
-    p["face"] = {"rot": tuple(face), "pos": (0, retract * 0.45, 0)}
+    # drawn right up into its mouth once it is down on its rim, or the jaw under it goes into the floor
+    p["face"] = {"rot": tuple(face), "pos": (0, retract * 0.45 + max(0.0, retract - 6.0) * 1.1, 0)}
     p["jaw"] = (jaw, 0, 0)
     if extra:
         p.update(extra)
@@ -404,7 +405,9 @@ def _locomotion(r):
 def _sat(r, fold=1.0):
     """Sitting on its rim like any bell: its legs folded up its sides like a shut umbrella, the knees down by the floor and
     the points tucked in under its shoulder, the clapper and the face drawn up into its mouth."""
-    feet = {k: (LEGS[k][0] * 18.5, 40.0 - 4 * (1 - fold), LEGS[k][1] * 18.5) for k in range(4)}
+    # its hips sit only a few pixels up once it is down on its rim, so a knee sent down from them goes into the floor:
+    # the points go up by its crown (fold) instead, and the knees stand out low at its sides, on the floor's height
+    feet = {k: (LEGS[k][0] * 20.0, 74.0 - 10 * (1 - fold), LEGS[k][1] * 20.0) for k in range(4)}
     poles = {k: (LEGS[k][0] * 0.7, 1.0, LEGS[k][1] * 0.7) for k in range(4)}
     return _pose(r, lift=-(LIP - 0.5), pitch=-BOW, feet=feet, poles=poles, retract=12, tongue=(0, 0), jaw=0)
 
@@ -521,7 +524,7 @@ def clapper(r):
                 kinds=("area", "near"), damage=1.3, knock=1.0, disc=2.0, disc_at="hit", plant=(),
                 hit=[("clapper_b", (0, 21, 0), 5.0), ("clapper_b", (0, 10, 0), 2.5)],
                 stages={"windup": [(0.3, dip), (1.0, rear)], "active": [(0.45, hit), (1.0, held)], "recover": [(0.45, lift)]},
-                lag=_lag(clapper=0, clapper_b=0.03), ground=[(["ball", "flight"], [("clapper", 0, 60), ("clapper_b", 0, 60)])], bite=0.45)
+                lag=_lag(clapper=0, clapper_b=0.03), ground=[(["clapper_b"], [("clapper", 0, 60), ("clapper_b", 0, 60)])], bite=0.45)
 
 
 def toll(r):
@@ -663,8 +666,8 @@ def wake(r):
 
 
 # the ground (SPEC §35.10): the points, the clapper's ball and the rope's end stay out of the floor
-LEG_GROUND = [([f"toe{k}", f"shinc{k}"], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 40)]) for k in range(4)]
-CLAP_GROUND = [(["ball", "flight"], [("clapper", 0, 80, -1), ("clapper_b", 0, 80, -1)])]
+LEG_GROUND = [([f"foot{k}", f"shin{k}"], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 40)]) for k in range(4)]
+CLAP_GROUND = [(["clapper_b"], [("clapper", 0, 80, -1), ("clapper_b", 0, 80, -1)])]
 HANG_GROUND = [(["rope2"], [("rope0", 0, 80, -1), ("rope1", 0, 80, -1)]), (["chain2"], [("chain0", 0, 80, -1), ("chain1", 0, 80, -1)])]
 STANDS = {"stab": (1, 2, 3), "stab_b": (0, 2, 3), "clapper": (2, 3), "toll": (), "echo": (2, 3), "rake": (0, 1, 3), "summon": (),
           "rush": (), "shatter": (), "peal": (), "wake": (2, 3)}
