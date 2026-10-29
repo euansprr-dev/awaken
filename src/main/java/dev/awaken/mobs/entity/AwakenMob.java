@@ -686,6 +686,9 @@ public class AwakenMob extends Monster {
 
     // ---- death, rising, volatility -------------------------------------------------------------------------------
 
+    /** Ticks an echoing creature lies fallen before it gets up (a kit body times its reassembly to end on it). */
+    public static final int FALL_TICKS = 50;
+
     private boolean canRise() {
         return flag(F_ECHO) && !flag(F_RISEN) && !flag(F_DECOY) && !Forces.hasRisen(this);
     }
@@ -696,7 +699,7 @@ public class AwakenMob extends Monster {
             // Echoing: fall, then get up once at half health. No death event, no loot until the real death.
             setHealth(1.0F);
             setFlag(F_FALLEN, true);
-            fallenTicks = 50;
+            fallenTicks = FALL_TICKS;
             setTarget(null);
             getNavigation().stop();
             sl.sendParticles(ParticleTypes.SOUL, getX(), getY() + 0.5, getZ(), 12, 0.4, 0.3, 0.4, 0.02);

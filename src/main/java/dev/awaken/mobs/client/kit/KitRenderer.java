@@ -36,10 +36,10 @@ import org.jspecify.annotations.Nullable;
  * Draws a kit body (SPEC §35.4, §35.10) at true size (the entity's scale is undone: its pixels are the world's). On the
  * hero model's graph (idle, distance-locked walk and run, the look, the life layer) it lays the synced move's one clip,
  * its wind-up and recovery stretched to the ticks the server plays (a held wind-up stays at its peak, trembling), steps
- * round when it turns more than 45°, reels the way a blow came, kneels while its stance is broken and rises after, and
- * plants its feet on the ground under them, through its moves too. Every change of what it plays is eased by its
- * {@link KitBlend} (a string's next blow starts where the last one ended); its blows shake the view near them and
- * pause for a moment where they land.
+ * round when it turns more than 45°, reels the way a blow came, kneels while its stance is broken and rises after,
+ * falls and gets up when it gets up once, and plants its feet on the ground under them, through its moves too. Every
+ * change of what it plays is eased by its {@link KitBlend} (a string's next blow starts where the last one ended); its
+ * blows shake the view near them and pause for a moment where they land.
  */
 public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, HeroModel> {
     private static final float FADE = 0.15F, TURN_STEP = 45F, TURN_TIME = 0.4F;
@@ -51,7 +51,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
     private final int[] clip;
     /** Each body's motion state between frames (weak: it goes with the entity). */
     private final java.util.Map<AwakenMob, KitBlend> blends = new java.util.WeakHashMap<>();
-    private final int roar, kneel, rise, hurtL, hurtR, hurtF, turnL, turnR, death;
+    private final int roar, kneel, rise, collapse, reassemble, hurtL, hurtR, hurtF, turnL, turnR, death;
     private final boolean introKneels;
     /** Where the feet stand at rest, in blocks of body space (x left, z forward), for the ground under them. */
     private final float footLX, footLZ, footRX, footRZ;
@@ -72,6 +72,8 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         roar = m.clip("move_roar") >= 0 ? m.clip("move_roar") : m.clip("roar");
         kneel = m.clip("kneel");
         rise = m.clip("rise");
+        collapse = m.clip("collapse");
+        reassemble = m.clip("reassemble");
         hurtL = m.clip("hurt_l");
         hurtR = m.clip("hurt_r");
         hurtF = m.clip("hurt");
@@ -140,6 +142,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         }
         s.footL = s.footR = 0;
         s.kitDrop = 0;
+        s.kitStill = 0;
         if (!(mob instanceof AwakenBoss boss)) return;
         HeroRig rig = kit.rig();
         HeroModel m = getModel();
@@ -179,7 +182,10 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         int pose = boss.kitPose();
         float poseFor = (now - boss.kitPoseAt()) / 20F;
         boolean kneeling = pose == AwakenBoss.KIT_POSE_BROKEN || (pose == AwakenBoss.KIT_POSE_INTRO && introKneels);
-        if (kneeling && kneel >= 0) {
+        boolean apart = fallen(s, l, blend, now);
+        if (apart) {
+            // the fall and the getting up hold layer 0
+        } else if (kneeling && kneel >= 0) {
             layer(s, 0, kneel, pose == AwakenBoss.KIT_POSE_INTRO && poseFor > 1 ? m.length(kneel) : Math.min(poseFor, m.length(kneel)), 1);
         } else if (rise >= 0 && (boss.kitPoseFrom() == AwakenBoss.KIT_POSE_BROKEN || (boss.kitPoseFrom() == AwakenBoss.KIT_POSE_INTRO && introKneels))
                 && poseFor < m.length(rise) + 0.2F) {
@@ -207,7 +213,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         // a turn step: when the body has to come round more than 45° it steps with its feet
         // (the turn rate is eased on the boss, so the step fades in from 1° a tick and out again, never popping off)
         float turn = boss.kitTurn(partialTicks);
-        if (Math.abs(turn) > 1 && mv < 0 && (turnL >= 0 || turnR >= 0) && !s.airborne) {
+        if (Math.abs(turn) > 1 && mv < 0 && !apart && (turnL >= 0 || turnR >= 0) && !s.airborne) {
             float t = (mob.tickCount % (int) (TURN_TIME * 20)) / 20F + partialTicks / 20F;
             int clip = turn > 0 ? turnL : turnR;
             if (clip >= 0) layer(s, 2, clip, t * m.length(clip) / TURN_TIME, Mth.clamp((Math.abs(turn) - 1) / (TURN_STEP / (TURN_TIME * 20) - 1), 0, 1));
@@ -216,7 +222,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         s.melee = -1;
         s.dying = mob.isDeadOrDying() ? (mob.deathTime + partialTicks) / 20.0F : -1;
         if (s.dying >= 0) s.hasRedOverlay = mob.deathTime < 8 || mob.hurtTime > 0;
-        if (hasFeet && !s.airborne && s.dying < 0) ground(mob, s, partialTicks);
+        if (hasFeet && !s.airborne && s.dying < 0 && !apart) ground(mob, s, partialTicks);
         live(mob, s, l, winding);
         // what it plays, as one number: a new move (or the same one again), the kneel or rise, a reaction, the fall
         int key = mv >= 0 ? (mv + 1) * 7919 + start : -1;
@@ -291,6 +297,47 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         s.cueTime = Math.min(m.length(), base) / 20F;
         if (tick > p.total()) s.cueWeight = Math.max(0, 1 - (tick - p.total()) / 20F / FADE);
         return base < m.time().windup() ? base / Math.max(1, m.time().windup()) : -1;
+    }
+
+    /**
+     * Getting up once (SPEC §35.11): it falls by its {@code collapse} (else the kneel) and lies still, the live graph let
+     * go of; its {@code reassemble} (else the rise) is timed to end as it stands ({@link AwakenMob#FALL_TICKS}), the
+     * graph coming back over its last 40%; it holds its end while the body still lies, and plays on to its end after
+     * it stands unless a move starts. True while either holds layer 0.
+     */
+    private boolean fallen(HeroRenderState s, AwLook l, KitBlend blend, float now) {
+        HeroModel m = getModel();
+        int down = collapse >= 0 ? collapse : kneel, up = reassemble >= 0 ? reassemble : rise;
+        if (l.fallen && !blend.wasFallen) {
+            blend.wasFallen = true;
+            blend.fellAt = now;
+            blend.roseAt = Float.NaN;
+        } else if (!l.fallen && blend.wasFallen) {
+            blend.wasFallen = false;
+            if (Float.isNaN(blend.roseAt)) blend.roseAt = now;
+        }
+        float t = (now - blend.fellAt) / 20F;
+        float upLen = up >= 0 ? m.length(up) : 0;
+        if (l.fallen && up >= 0 && Float.isNaN(blend.roseAt) && t >= AwakenMob.FALL_TICKS / 20F - upLen) blend.roseAt = now;
+        if (l.fallen && Float.isNaN(blend.roseAt)) {
+            if (down < 0) return false;
+            layer(s, 0, down, Math.min(t, m.length(down)), 1);
+            s.cueClip = -1;
+            s.cueWeight = 0;
+            if (collapse >= 0) s.kitStill = Math.min(1, t / 0.3F);
+            return true;
+        }
+        if (Float.isNaN(blend.roseAt) || up < 0) return false;
+        float u = (now - blend.roseAt) / 20F;
+        if (!l.fallen && (u >= upLen + 0.2F || s.cueWeight > 0)) {
+            blend.roseAt = Float.NaN;
+            return false;
+        }
+        layer(s, 0, up, Math.min(u, upLen), l.fallen || u <= upLen ? 1 : 1 - (u - upLen) / 0.2F);
+        s.cueClip = -1;
+        s.cueWeight = 0;
+        if (reassemble >= 0) s.kitStill = 1 - Mth.smoothstep(Mth.clamp((u / Math.max(0.05F, upLen) - 0.6F) / 0.4F, 0, 1));
+        return true;
     }
 
     private static void layer(HeroRenderState s, int k, int clip, float time, float weight) {

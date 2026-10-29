@@ -51,6 +51,9 @@ public final class KitBlend {
     /** Set by the renderer each frame: seconds to the peak if what plays now is a string's next blow, else 0. */
     float nextLink;
     int lastMove = -1, lastStart = Integer.MIN_VALUE;
+    // getting up once: whether it lay fallen last frame, and the body clock (ticks) it fell and got up at
+    boolean wasFallen;
+    float fellAt, roseAt = Float.NaN;
 
     /** Binds the model's parts (once; a body's model never changes). */
     public void bind(ModelPart root, List<ModelPart> all, HeroRig rig) {

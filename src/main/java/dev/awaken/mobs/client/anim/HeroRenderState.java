@@ -40,6 +40,8 @@ public final class HeroRenderState extends LivingEntityRenderState {
     public float footL, footR;
     /** Kit bodies: blocks the whole body lowers to the lower foot's ground (negative), 0 none. */
     public float kitDrop;
+    /** Kit bodies: how much of the live graph (idle, walk, the look) lets go, 0..1: a body lying in pieces is still. */
+    public float kitStill;
     /**
      * Kit bodies (SPEC §35.10): the entity's motion state between frames (a {@code KitBlend}, or null), its clock in
      * seconds, and a number naming what it plays (a change is a transition the blend eases over).

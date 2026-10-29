@@ -9144,7 +9144,11 @@ should show a boss bar of our own. What he approved (PLAN §7):
      shapes); the body lowers to the lower one (at most 0.6 block) and the higher foot's leg reaches up by two-bone IK
      (`HeroModel.Leg`).
   5. **Reactions**: the blow's direction (`CombatFeedback`) picks `hurt_l`, `hurt_r` or `hurt` (from the front). A
-     broken stance holds `kneel`, then plays `rise`.
+     broken stance holds `kneel`, then plays `rise`. A body that gets up once (`RISES`, Echoing; it lies fallen for
+     `AwakenMob.FALL_TICKS`, 2.5 s) falls by its `collapse` if its rig has one (else the kneel) and lies still: the live
+     graph (idle, walk, the look; `HeroRenderState.kitStill`) lets go over 0.3 s. Its `reassemble` (else `rise`) is
+     timed to end as it stands, the graph coming back over its last 40%; it holds its end while the body still lies,
+     and after it stands plays on to its end unless a move starts. Turn steps and the feet's ground reach wait for it.
   6. **The life layer** on top, unchanged.
 - **Turning.** A kit body with a fight script turns as one heavy thing: vanilla's `BodyRotationControl` (the body
   waits until the head is 75° off, then lurches) is replaced. On the server the body is the facing the script sets; on

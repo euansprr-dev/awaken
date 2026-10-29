@@ -233,18 +233,20 @@ public final class HeroModel extends EntityModel<HeroRenderState> {
         float moving = grounded ? s.walk : 0.0F;
         float angryW = l != null ? l.ease(0, s.angry, 0.3F) : s.angry;
         float airW = air < 0 ? 0.0F : l != null ? l.ease(1, s.airborne ? 1.0F : 0.0F, 0.2F) : s.airborne ? 1.0F : 0.0F;
-        play(idle, t, (1.0F - 0.55F * moving) * live);
-        if (angry >= 0) play(angry, t, angryW * (1.0F - moving) * live);
+        // a kit body lying in pieces lets go of the live graph, so its parts lie still (its layers still play)
+        float graph = live * (1.0F - Mth.clamp(s.kitStill, 0.0F, 1.0F));
+        play(idle, t, (1.0F - 0.55F * moving) * graph);
+        if (angry >= 0) play(angry, t, angryW * (1.0F - moving) * graph);
         float flyRate = 1.0F + Math.min(2.0F, s.speed * 4.0F);
-        if (fly >= 0) play(fly, l != null ? l.clock(0, flyRate) : t * flyRate, live);
-        if (air >= 0) play(air, t, airW * live);
+        if (fly >= 0) play(fly, l != null ? l.clock(0, flyRate) : t * flyRate, graph);
+        if (air >= 0) play(air, t, airW * graph);
         if (moving > 0.01F) {
-            if (walk >= 0) play(walk, s.gait / rig.walkStride * length(walk), moving * (1.0F - s.run) * live);
-            if (run >= 0) play(run, s.gait / rig.runStride * length(run), moving * s.run * live);
-            else if (walk >= 0 && s.run > 0) play(walk, s.gait / rig.walkStride * length(walk), moving * s.run * live);
+            if (walk >= 0) play(walk, s.gait / rig.walkStride * length(walk), moving * (1.0F - s.run) * graph);
+            if (run >= 0) play(run, s.gait / rig.runStride * length(run), moving * s.run * graph);
+            else if (walk >= 0 && s.run > 0) play(walk, s.gait / rig.walkStride * length(walk), moving * s.run * graph);
         }
         // Look where the head is turned (the cue clips own the head while they play).
-        float lookW = 1.0F - Mth.clamp(s.cueWeight, 0.0F, 1.0F) * 0.7F;
+        float lookW = (1.0F - Mth.clamp(s.cueWeight, 0.0F, 1.0F) * 0.7F) * (1.0F - Mth.clamp(s.kitStill, 0.0F, 1.0F));
         float yaw = Mth.clamp(s.yRot, -170.0F, 170.0F) * Mth.DEG_TO_RAD * lookW;
         float pitch = Mth.clamp(s.xRot, -60.0F, 60.0F) * Mth.DEG_TO_RAD * lookW;
         for (int i = 0; i < lookParts.length; i++) {
