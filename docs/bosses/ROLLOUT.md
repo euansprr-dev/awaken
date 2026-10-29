@@ -5,7 +5,7 @@ to the max." And: "Don't use multiple agents, do this all yourself." So this one
 `claude/boss-plan-f38a45`) takes all 41 boss-tier creatures through the same steps as the Forge, one at a time, and
 keeps this page current. SPEC §35.11 holds the decisions; this page is the tracker.
 
-**Paused 2026-10-29 with 33 of 41 done.** The Signal's Shadow is half done and the seven Nightmares are left. Whoever finishes reads [HANDOVER.md](HANDOVER.md) first: it has the exact next steps, the workflow, the meter targets and the forms not to repeat.
+**All 41 done 2026-10-30.** Every boss has its kit body and its motion at the Forge's bar; each row below has its commit. None of them since the first three has been seen in game, and their sounds were chosen on paper. [HANDOVER.md](HANDOVER.md) keeps the workflow, the known gaps and what is queued next (the Gate Worlds' creatures).
 
 Pick page (one tap per boss, saved to the page's store): https://claude.ai/artifact/MUoruSXr8xmWNVk4JyAAbc
 
@@ -96,7 +96,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | kit | A, the Throng | ✓ 43eb6a0c | ✓ 43eb6a0c | — |
 | The Thousand Legs | Nightmare | Fear | Crawler | kit | A, the House Centipede | ✓ 5eb9480a | ✓ 5eb9480a | — |
 | The Fuse | Nightmare | Fear | Construct | kit | A, the Jack | ✓ ae6ea04f | ✓ ae6ea04f | — |
-| The Faceless | Nightmare | Fear | Duelist | kit | A, the Mannequin | — | — | — |
+| The Faceless | Nightmare | Fear | Duelist | kit | A, the Mannequin | ✓ d3748588 | ✓ d3748588 | — |
 
 ## The rounds so far
 
