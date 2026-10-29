@@ -371,7 +371,8 @@ final class GearTests {
         SetBonus.refresh(sp);
         h.assertTrue(mod(sp, Attributes.MAX_HEALTH, SetBonus.HEALTH_ID) == 0 && sp.getMaxHealth() == base, "all off: health back to " + base);
         // the numbers behind the twists
-        h.assertTrue(SetBonus.senseRadius(5) == 14 && SetBonus.senseRadius(100) == 32, "sense radius 12 + PER/2, at most 32");
+        h.assertTrue(SetBonus.pounceVelocity(0).z > 0.9 && Math.abs(SetBonus.pounceVelocity(90).x + SetBonus.POUNCE_FORWARD) < 1e-9,
+                "the leap follows your heading");
         h.assertTrue(SetBonus.corneredBonus(5) == 0.15 && SetBonus.corneredBonus(100) == 0.30, "Cornered 15% to 30%");
         h.assertTrue(SetBonus.flickerChance(5) == 0.10 && SetBonus.flickerChance(100) == 0.35, "Flicker 10% to 35%");
         h.assertTrue(SetBonus.forceWard(1) == 0 && SetBonus.forceWard(2) == SetBonus.WARD_HALF && SetBonus.forceWard(4) == SetBonus.WARD_FULL, "ward steps");
@@ -411,6 +412,17 @@ final class GearTests {
         h.assertTrue(Math.abs(strike - 4 * (1 + SetBonus.PRIME_BONUS)) < 1e-4, "the primed strike hits +35%, got " + strike);
         h.assertTrue(b.hasEffect(MobEffects.SLOWNESS), "and Frost slows");
         h.assertTrue(!GearCombat.primed(sp) && hit(b, sources.playerAttack(sp), 4, null) == 4, "spent: the next hit is plain");
+        // Wildhide: a crouched jump is a Pounce; its first melee hit lands half again harder, then a cooldown
+        wear(sp, HunterTier.E, 4);
+        GearState.of(sp).crouched = SetBonus.POUNCE_CROUCH;
+        Pounce.onJump(new net.neoforged.neoforge.event.entity.living.LivingEvent.LivingJumpEvent(sp));
+        h.assertTrue(Pounce.leaping(sp), "a crouched jump in full Wildhide is a Pounce");
+        float leap = hit(b, sources.playerAttack(sp), 4, null);
+        h.assertTrue(Math.abs(leap - 4 * (1 + SetBonus.POUNCE_BONUS)) < 1e-4, "the leap's first hit +50%, got " + leap);
+        h.assertTrue(!Pounce.leaping(sp) && hit(b, sources.playerAttack(sp), 4, null) == 4, "spent: the next hit is plain");
+        GearState.of(sp).crouched = SetBonus.POUNCE_CROUCH;
+        Pounce.onJump(new net.neoforged.neoforge.event.entity.living.LivingEvent.LivingJumpEvent(sp));
+        h.assertTrue(!Pounce.leaping(sp), "a second Pounce waits out its cooldown");
         // Veilwoven: Spirit ward and the Veil Flicker
         wear(sp, HunterTier.B, 2);
         h.assertTrue(Math.abs(hit(sp, sources.source(Forces.SPIRIT), 10, null) - 7f) < 1e-4, "two Veilwoven: Spirit damage -30%");

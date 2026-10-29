@@ -6,18 +6,23 @@ import dev.awaken.Awaken;
 import dev.awaken.armour.ArmourLooks;
 import dev.awaken.armour.client.ArmourMeshes.Bone;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.entity.ArmorStandRenderer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.util.context.ContextKey;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityTypes;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.ArmorType;
@@ -30,7 +35,11 @@ import net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEve
 import net.neoforged.neoforge.common.NeoForge;
 import org.jspecify.annotations.Nullable;
 
-/** Client entry of the armour (docs/armour/PLAN.md): its meshes, its shader, its layer, the gauntlet in first person. */
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
+
+/** Client entry of the armour (SPEC §44.1): its meshes, its shader, its layer, the forearm in first person. */
 public final class ArmourClient {
     private ArmourClient() {}
 
@@ -49,69 +58,111 @@ public final class ArmourClient {
 
     private static final ArmorType[] SLOTS = {ArmorType.HELMET, ArmorType.CHESTPLATE, ArmorType.LEGGINGS, ArmorType.BOOTS};
 
+    /** The entity types whose renderers carry our layer: only these have vanilla's armour taken off. */
+    private static final Set<EntityType<?>> LAYERED = Collections.newSetFromMap(new IdentityHashMap<>());
+
     /**
-     * Vanilla hands its layers only armour with an equipment asset of its own (HumanoidMobRenderer's
-     * getEquipmentIfRenderable), and ours has none so that vanilla's shell stays off: our pieces are read from the entity
-     * here instead. A helm of ours is not drawn again as a hat item on the head, and a set's own cape hangs where
-     * vanilla's would, so vanilla's is not drawn over it.
+     * Each piece of ours whose meshes are loaded is drawn by {@link ArmourLayer} in place of vanilla's flat shell (and the
+     * Hunter sets' old silhouettes), so it is taken out of the render state's equipment and the skin's outer layer under
+     * it is hidden (a hat or jacket would poke through the plate). A helm of ours is not drawn again as a hat item, and a
+     * set's own cape hangs where vanilla's would. A piece whose set has no meshes is left to vanilla.
      */
     private static void readWorn(LivingEntity entity, LivingEntityRenderState state) {
+        if (!(state instanceof HumanoidRenderState h) || !LAYERED.contains(entity.getType())) return;
         ItemStack[] worn = null;
         for (ArmorType slot : SLOTS) {
             ItemStack stack = entity.getItemBySlot(slot.getSlot());
             ArmourLooks.Look look = ArmourLooks.of(stack);
-            if (look == null || look.piece() != slot) continue;
+            if (look == null || look.piece() != slot || ArmourMeshes.piece(look.set(), slot) == null) continue;
             if (worn == null) worn = new ItemStack[ArmorType.values().length];
             worn[slot.ordinal()] = stack;
         }
         if (worn == null) return;
         state.setRenderData(WORN, worn);
-        if (worn[ArmorType.HELMET.ordinal()] != null) state.headItem.clear();
-        if (state instanceof AvatarRenderState a && hasCape(worn[ArmorType.CHESTPLATE.ordinal()])) a.showCape = false;
+        AvatarRenderState a = state instanceof AvatarRenderState av ? av : null;
+        if (worn[ArmorType.HELMET.ordinal()] != null) {
+            h.headEquipment = ItemStack.EMPTY;
+            state.headItem.clear();
+            if (a != null) a.showHat = false;
+        }
+        if (worn[ArmorType.CHESTPLATE.ordinal()] != null) {
+            h.chestEquipment = ItemStack.EMPTY;
+            if (a != null) {
+                a.showJacket = a.showLeftSleeve = a.showRightSleeve = false;
+                if (hasCape(worn[ArmorType.CHESTPLATE.ordinal()])) a.showCape = false;
+            }
+        }
+        if (worn[ArmorType.LEGGINGS.ordinal()] != null) {
+            h.legsEquipment = ItemStack.EMPTY;
+            if (a != null) a.showLeftPants = a.showRightPants = false;
+        }
+        if (worn[ArmorType.BOOTS.ordinal()] != null) h.feetEquipment = ItemStack.EMPTY;
     }
 
+    /**
+     * Our layer on every renderer that draws vanilla armour: players and mannequins (both arm widths), armour stands and
+     * every living renderer posing a {@link HumanoidModel} (zombies, skeletons, piglins, ours), whose state is then a
+     * {@link HumanoidRenderState} by HumanoidModel's bound.
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static void onAddLayers(EntityRenderersEvent.AddLayers e) {
+        LAYERED.clear();
         for (PlayerModelType type : e.getSkins()) {
             AvatarRenderer<?> player = e.getPlayerRenderer(type);
             if (player != null) ((AvatarRenderer) player).addLayer(new ArmourLayer<>(player));
             AvatarRenderer<?> mannequin = e.getMannequinRenderer(type);
             if (mannequin != null) ((AvatarRenderer) mannequin).addLayer(new ArmourLayer<>(mannequin));
         }
-        ArmorStandRenderer stand = e.getRenderer(EntityTypes.ARMOR_STAND);
-        if (stand != null) stand.addLayer(new ArmourLayer<>(stand));
+        LAYERED.add(EntityTypes.PLAYER);
+        LAYERED.add(EntityTypes.MANNEQUIN);
+        for (EntityType<?> type : e.getEntityTypes()) {
+            EntityRenderer<?, ?> renderer = e.getRenderer(type);
+            if (renderer instanceof LivingEntityRenderer living && living.getModel() instanceof HumanoidModel) {
+                living.addLayer(new ArmourLayer(living));
+                LAYERED.add(type);
+            }
+        }
     }
 
     private static boolean hasCape(@Nullable ItemStack chest) {
         if (chest == null) return false;
         ArmourLooks.Look look = ArmourLooks.of(chest);
-        if (look == null || look.piece() != ArmorType.CHESTPLATE) return false;
-        ArmourMesh[][] set = ArmourMeshes.of(look.set());
-        return set != null && set[ArmorType.CHESTPLATE.ordinal()][Bone.CAPE0.ordinal()] != null;
+        if (look == null) return false;
+        ArmourMesh[] bones = ArmourMeshes.piece(look.set(), ArmorType.CHESTPLATE);
+        return bones != null && bones[Bone.CAPE0.ordinal()] != null;
     }
 
     /**
-     * Vanilla's empty hand in first person: the chestplate's arm mesh on the arm as vanilla poses it there (its rest
-     * pose, turned a tenth of a radian out), drawn before vanilla's own arm, which it covers.
+     * Vanilla's empty hand in first person: the arm as vanilla poses it there (its rest pose, turned a tenth of a radian
+     * out), dressed, before vanilla's own arm, which the mesh covers.
      */
     private static void onArm(RenderArmEvent e) {
         var player = Minecraft.getInstance().player;
         if (player == null) return;
-        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
-        ArmourLooks.Look look = ArmourLooks.of(chest);
-        if (look == null || look.piece() != ArmorType.CHESTPLATE) return;
-        ArmourMesh[][] set = ArmourMeshes.of(look.set());
-        if (set == null) return;
-        boolean right = e.getArm() == HumanoidArm.RIGHT;
-        ArmourMesh mesh = set[ArmorType.CHESTPLATE.ordinal()][(right ? Bone.RIGHT_ARM : Bone.LEFT_ARM).ordinal()];
-        if (mesh == null) return;
         PoseStack ps = e.getPoseStack();
         ModelPart arm = e.getArmPart();
+        boolean right = e.getArm() == HumanoidArm.RIGHT;
         ps.pushPose();
         arm.resetPose();
         arm.zRot = right ? 0.1F : -0.1F;
         arm.translateAndRotate(ps);
-        ArmourLayer.draw(e.getSubmitNodeCollector(), ps, mesh, look.set(), e.getLightCoords(), chest.hasFoil());
+        dressArm(player, e.getArm(), ps, e.getSubmitNodeCollector(), e.getLightCoords());
         ps.popPose();
+    }
+
+    /**
+     * Public for every drawer of a first-person arm (the move animations): draws the worn chestplate's forearm and
+     * pauldron on {@code side}'s arm, with the pose already on that arm's bone (after its {@code translateAndRotate}).
+     * Returns whether anything was drawn, so a caller can skip a sleeve of its own.
+     */
+    public static boolean dressArm(Player player, HumanoidArm side, PoseStack ps, SubmitNodeCollector out, int light) {
+        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+        ArmourLooks.Look look = ArmourLooks.of(chest);
+        if (look == null || look.piece() != ArmorType.CHESTPLATE) return false;
+        ArmourMesh[] bones = ArmourMeshes.piece(look.set(), ArmorType.CHESTPLATE);
+        ArmourMesh mesh = bones == null ? null : bones[(side == HumanoidArm.RIGHT ? Bone.RIGHT_ARM : Bone.LEFT_ARM).ordinal()];
+        if (mesh == null) return false;
+        ArmourLayer.draw(out, ps, mesh, look.set(), light, chest.hasFoil());
+        return true;
     }
 }

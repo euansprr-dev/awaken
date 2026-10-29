@@ -22,8 +22,9 @@ import java.util.List;
  * Set bonuses: every tier's twist. Two pieces of one tier give the half bonus, four the full one; tiers mix freely with
  * each other and with vanilla armour (two Wildhide + two Beastbound gives both half bonuses).
  * <ul>
- *   <li>E Wildhide (Perception): sneak faster; full set: Hunter's Sense, sneak to see creatures within 12 + PER/2 blocks
- *       through walls (drawn by the client, {@code gear.client.HunterSense}).</li>
+ *   <li>E Wildhide (Perception, the hunt): sneak faster; full set: Pounce, crouch half a second and jump to leap far the
+ *       way you look; the first melee hit soon after lands hard (SPEC §44.6; Hunter's Sense, which showed creatures through
+ *       walls, is gone: abilities never show hidden things).</li>
  *   <li>D Beastbound (Strength, Vitality): more health; full set: Cornered, below half health +15% melee damage
  *       (+1% per 2 STR above 5, up to +30%) and knockback resistance.</li>
  *   <li>C Gatewrought (the Five Forces): force damage taken -15% / -25%; full set: a power hit primes your next melee
@@ -47,6 +48,12 @@ public final class SetBonus {
 
     // ---- numbers (SPEC-worthy; docs/modules/gear.md) ------------------------------------------------------------------
     public static final double SNEAK_HALF = 0.15, SNEAK_FULL = 0.30;
+    /** Pounce (Wildhide, four pieces): crouched this long before the jump; the leap's speed along your look and up. */
+    public static final int POUNCE_CROUCH = 10;
+    public static final double POUNCE_FORWARD = 0.95, POUNCE_UP = 0.62;
+    /** Ticks before the next Pounce; ticks after the leap its first melee hit lands hard; that hit's bonus and shove. */
+    public static final int POUNCE_COOLDOWN = 60, POUNCE_WINDOW = 50;
+    public static final double POUNCE_BONUS = 0.5, POUNCE_SHOVE = 0.7;
     public static final double HEALTH_HALF = 2.0, HEALTH_FULL = 4.0;
     public static final double CORNERED_BELOW = 0.5, CORNERED_KNOCKBACK = 0.3;
     public static final double WARD_HALF = 0.15, WARD_FULL = 0.25;
@@ -75,7 +82,7 @@ public final class SetBonus {
     public static List<Line> lines(HunterTier tier) {
         return switch (tier) {
             case E -> List.of(new Line(HALF, "sneak 15% faster"),
-                    new Line(FULL, "Hunter's Sense: sneak to see creatures through walls (12 + PER/2 blocks)"));
+                    new Line(FULL, "Pounce: crouch, then jump to leap far; your first hit after it lands hard"));
             case D -> List.of(new Line(HALF, "+1 heart"),
                     new Line(FULL, "+2 hearts; Cornered: below half health, +15% melee damage (more with STR) and you hold your ground"));
             case C -> List.of(new Line(HALF, "Force damage taken -15%"),
@@ -107,8 +114,15 @@ public final class SetBonus {
         return count(e, tier) >= pieces;
     }
 
-    public static int senseRadius(int perception) {
-        return Math.min(32, 12 + Math.max(0, perception) / 2);
+    /** Whether a jump now is a Pounce: four Wildhide pieces, crouched long enough, and not on cooldown. */
+    public static boolean pounces(Player p, int crouchedTicks, long now, long readyAt) {
+        return crouchedTicks >= POUNCE_CROUCH && now >= readyAt && has(p, HunterTier.E, FULL);
+    }
+
+    /** The leap's speed: along the look's heading, and up. */
+    public static net.minecraft.world.phys.Vec3 pounceVelocity(float yRot) {
+        double a = Math.toRadians(yRot);
+        return new net.minecraft.world.phys.Vec3(-Math.sin(a) * POUNCE_FORWARD, POUNCE_UP, Math.cos(a) * POUNCE_FORWARD);
     }
 
     public static double corneredBonus(int strength) {
@@ -162,8 +176,8 @@ public final class SetBonus {
     }
 
     /**
-     * A stat as gear sees it: the player's own, plus Sovereign's Measure on the highest one. Hunter's Sense, Cornered and
-     * Veil Flicker read this, so the Measure lifts them too.
+     * A stat as gear sees it: the player's own, plus Sovereign's Measure on the highest one. Cornered and Veil Flicker read
+     * this, so the Measure lifts them too.
      */
     public static int stat(Player p, Stat s) {
         int raw = Progression.stat(p, s);

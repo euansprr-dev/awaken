@@ -928,7 +928,7 @@ Plan v2 · the road to 50 (details in docs/modules/road.md):
 Plan v2 · Hunter gear (details in docs/modules/gear.md):
 - Module `gear`: tiers E Wildhide, D Beastbound, C Gatewrought, B Veilwoven; 4 armour pieces, a blade, a power focus
   and a mattock each, at vanilla stone/copper, iron, diamond and netherite strength. A and S are designed only.
-- Set bonuses at 2 and 4 pieces per tier (E Perception: quiet sneaking, Hunter's Sense; D Strength/Vitality: hearts,
+- Set bonuses at 2 and 4 pieces per tier (E Perception: quiet sneaking, Pounce (§44.6); D Strength/Vitality: hearts,
   Cornered; C Five Forces: Force ward, primed strikes; B Veil/Spirit: Spirit ward, meditation heal, Veil Flicker).
   Numbers live in `gear/SetBonus`.
 - A focus adds +6/9/12/15% power damage in either hand (+2% per temper level), under the boss cap.
@@ -12438,3 +12438,57 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
 - **Measured 2026-10-29**: 91,828 cells of region rock on 8 chunks, 46 glowcaps (2.0% of 2,273 open floors), 83 root
   curtain blocks, 137 rust crust, 37 rust flowstone, 32 ember lichen; 2.2 ms a chunk against 34.2 ms to fill it (6%; the
   skin alone 0.5 ms).
+
+## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
+
+Module `armour` (`dev.awaken.armour`, client `armour.client`). Built in phases P0-P5 (plan §6.2); this section grows
+with each phase. Abilities follow one rule: they change your body, your blows, your movement and what everyone in front
+of you sees, and never show you anything you could not see without them (no outlines, no glowing creatures, no ores or
+blocks through stone, no marks, no danger sense).
+
+**44.1 The look (P0).** Every set is drawn as sculpted meshes on the body's bones, never as vanilla's flat shell.
+- A piece is one mesh per bone it rides (`assets/awaken/armour/<set>/<piece>_<bone>.mesh`, bones `head body right_arm
+  left_arm right_leg left_leg cape0 cape1 cape2 front_cloth back_cloth`) and one texture a set
+  (`textures/entity/armour/<set>.png`, albedo left, material map right: metal, gloss, emissive, flow). `ArmourMeshes`
+  reads them on each resource reload; a set with no meshes is skipped (a Hunter set without them logs an error).
+- `ArmourLayer` draws each mesh where its bone is posed this frame (`ModelPart.translateAndRotate`), so armour follows
+  every animation. The cape hangs in three links from a yoke, swung by the avatar's cape lean and flap, each link
+  curling further; the leg cloth is pushed by the stride. It is on players and mannequins (both arm widths), armour
+  stands (legs a texel lower) and every living renderer whose model is a `HumanoidModel` (zombies, skeletons, piglins,
+  ours).
+- `ArmourClient.readWorn` (a render state modifier on every living renderer, only for entity types that got the layer):
+  each worn piece whose set has meshes for it is put in the state's render data (`awaken:armour_worn`), taken out of
+  `HumanoidRenderState.head/chest/legs/feetEquipment` (so vanilla's armour layer and the Hunter silhouettes draw nothing
+  for it), and the skin's outer layer under it is hidden (hat, jacket and sleeves, trousers); a helm is not drawn again
+  as a hat item; a set's cape hides the player's own. A piece without meshes is left to vanilla: the Hunter sets keep
+  their equipment assets and silhouettes as the fallback.
+- The shader `awaken:core/armour` (the weapons' kind, its own copy): metal catches a studio reflection, a sheen climbs
+  from feet to crown, emissive seams glow in the dark and pulse, enchanted pieces shimmer (the foil bit in the overlay
+  channel). If the pipeline doesn't build, the same mesh draws through vanilla's entity cutout.
+- First person: the empty hand wears the cuirass's arm mesh (`RenderArmEvent`). `ArmourClient.dressArm(player, side,
+  poseStack, collector, light)` is public for every other first-person arm drawer: the pose on the arm's bone, it draws
+  the worn cuirass's arm and returns whether it drew.
+- Nothing new is sent: equipment already syncs to everyone who sees you.
+- **Art kit** `tools/art/specs/armour_sets.py` (`build [set]`, `check`, `preview DIR [set]`): a set is a design in
+  texels (x your left, y up, z forward) of boxes, chains and mirrored parts with painters (hems, rims, scales, lames,
+  seams, sigils, gems, edge columns, side seams); 9,000 corners a set at most; `check` refuses unknown bones and two faces
+  in one plane on different grids. Proportion rules: the helm within a texel or two of the skull, its height from horns
+  or a crest; shoulders rise; cloth stops at the knee; gold hems only on the top plate of a stack; glow is few and
+  placed. Every set has its own silhouette a stranger would name and its own palette.
+
+**44.2 The roster.** `ArmourSet` (29) and `Archetype` (Bulwark, Strider, Channeler, Duelist, Lord-forged): four sets at
+E, five at each rank D-S (one of each archetype, plus a Lord-forged set). The six Hunter sets keep their item ids and
+are one set each (`ArmourSet.hunter`): Wildhide (E, Strider), Beastbound (D, Bulwark), Gatewrought (C, Duelist),
+Veilwoven (B, Channeler), Lordscale (A, Lord-forged), Sovereign Weave (S, Lord-forged). `ArmourLooks.of(stack)` names
+the set and piece a worn item is drawn as. The other 23 (plan §4.2) get items, recipes and art from P2 on.
+
+**44.3 Numbers.** A set sits on its rank's Hunter numbers (`HunterTier.Armour`). Bulwark +1 point on the cuirass and
+greaves, +0.5 toughness, +0.05 knockback; Strider -1 on the cuirass, +5% speed a piece; Channeler -1 on the cuirass, +3%
+power damage a piece; Duelist the rank's numbers; Lord-forged +1 on the cuirass. (P2: in a spec table with a stats test.)
+
+**44.6 Set twists.** Each set's own full-set twist on top of its archetype's ability (§44.4, P2).
+- **Wildhide: Pounce** (P0, replaces Hunter's Sense, which outlined creatures through walls). Crouch at least 10 ticks,
+  then jump: you leap along your look's heading (0.95 forward, 0.62 up; the jumping client applies it, movement being the
+  client's). The server sees the same jump (vanilla replays it) and holds the leap for 50 ticks: the first melee hit in
+  that time deals +50% and shoves the target 0.7 along your heading, with crit sparks; then the leap is spent. 60 ticks
+  cooldown. Numbers in `gear/SetBonus` (`POUNCE_*`), logic in `gear/Pounce`.

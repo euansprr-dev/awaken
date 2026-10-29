@@ -25,7 +25,7 @@ cmd fill -8 199 -6 9 199 11 minecraft:smooth_stone
 cmd fill -8 200 11 9 207 11 minecraft:smooth_sandstone
 wait 20
 cmd kill @e[type=minecraft:armor_stand]
-cmd summon minecraft:armor_stand 0.5 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:probe_lordscale_helmet"},chest:{id:"awaken:probe_lordscale_chestplate"},legs:{id:"awaken:probe_lordscale_leggings"},feet:{id:"awaken:probe_lordscale_boots"}}}
+cmd summon minecraft:armor_stand 0.5 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:lordscale_helmet"},chest:{id:"awaken:lordscale_chestplate"},legs:{id:"awaken:lordscale_leggings"},feet:{id:"awaken:lordscale_boots"}}}
 cmd summon minecraft:armor_stand -1.7 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"minecraft:netherite_helmet"},chest:{id:"minecraft:netherite_chestplate"},legs:{id:"minecraft:netherite_leggings"},feet:{id:"minecraft:netherite_boots"}}}
 wait 20
 hud off
@@ -48,10 +48,10 @@ wait 30
 shot armour_stand_night
 cmd time set 6000
 # worn: the player beside the stands, the wall behind
-cmd item replace entity @s armor.head with awaken:probe_lordscale_helmet
-cmd item replace entity @s armor.chest with awaken:probe_lordscale_chestplate
-cmd item replace entity @s armor.legs with awaken:probe_lordscale_leggings
-cmd item replace entity @s armor.feet with awaken:probe_lordscale_boots
+cmd item replace entity @s armor.head with awaken:lordscale_helmet
+cmd item replace entity @s armor.chest with awaken:lordscale_chestplate
+cmd item replace entity @s armor.legs with awaken:lordscale_leggings
+cmd item replace entity @s armor.feet with awaken:lordscale_boots
 cmd item replace entity @s weapon.mainhand with minecraft:air
 cmd tp @s 5.5 200 7.5 180 0
 wait 30

@@ -1,8 +1,9 @@
 # The Forged Armour (armour progression plan)
 
 Plan for Euan's 2026-10-29 request, written by the armour-forge-plan session on branch
-`claude/armour-forge-plan-c98ed9`. Status: **waiting for approval**. Nothing here is built for merge yet; the look probe
-(§5) is on the branch to show the look, not to ship. Follows `.claude/PLANNING-PROCESS.md`. Started fresh: no earlier
+`claude/armour-forge-plan-c98ed9`. Status: **APPROVED in full** (Euan in chat, 2026-10-29: "go ahead with the entire
+plan at the quality bar of this first set you did [...] Get creative too so each stands out from the other while
+staying at this quality bar"). Built phase by phase on the same branch; the rules live in SPEC §44. Follows `.claude/PLANNING-PROCESS.md`. Started fresh: no earlier
 armour plan, page, branch or session's work was read.
 
 ## 1. Understanding and success contract
@@ -133,14 +134,15 @@ The six Hunter sets keep their ids and become one set in each rank, each re-made
   the legs. `ArmourLayer` (a `RenderLayer`) draws each mesh where its bone is posed this frame
   (`ModelPart.translateAndRotate` after `setupAnim`), so armour follows every animation the body does, including the
   power and weapon poses.
-- **Where it is drawn.** Players (both arm widths), mannequins and armour stands get the layer
-  (`EntityRenderersEvent.AddLayers`). Zombies and other humanoid mobs come in P0 (§6).
-- **Vanilla's shell is off.** Our pieces carry an `Equippable` with no equipment asset, so vanilla's armour layer draws
-  nothing for them (`HumanoidArmorLayer.shouldRender`). That also means vanilla never hands them to a render state
-  (`HumanoidMobRenderer.getEquipmentIfRenderable` empties the slot, and a helm with no asset is drawn as a hat item), so
-  a render state modifier (`RegisterRenderStateModifiersEvent`, on every living entity's renderer) reads our pieces from
-  the entity into the state's render data, clears the hat item, and hides the player's own cape while a set's cape is
-  worn. The probe's first CI tour caught this: only a flat helm floated over the head.
+- **Where it is drawn.** Players (both arm widths), mannequins, armour stands and every living renderer posing a
+  `HumanoidModel` (zombies, skeletons, piglins, ours) get the layer (`EntityRenderersEvent.AddLayers`).
+- **Vanilla's shell is off.** A render state modifier (`RegisterRenderStateModifiersEvent`, on every living entity's
+  renderer) reads our pieces from the entity into the state's render data (vanilla only hands a render state armour
+  that has an equipment asset; the probe's first CI tour caught this, a flat helm floating over the head). For each piece
+  whose set has meshes, it empties the state's equipment slot, so vanilla's armour layer and the old Hunter silhouettes
+  draw nothing, hides the skin's outer layer under it, clears the hat item, and hides the player's own cape while a
+  set's cape is worn. A piece whose set has no meshes keeps vanilla's look (the Hunter sets keep their equipment assets
+  as that fallback).
 - **The cape and cloth move.** The cape hangs in three links from a yoke behind the shoulders, swung by the same lean
   and flap vanilla's cape uses, each link curling a little further. Cloth panels over the legs are pushed by the stride
   (the front by the leg swung forward, the back by the leg swung back).

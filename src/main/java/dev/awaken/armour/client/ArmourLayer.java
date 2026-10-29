@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import dev.awaken.armour.ArmourLooks;
+import dev.awaken.armour.ArmourSet;
 import dev.awaken.armour.client.ArmourMeshes.Bone;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -18,8 +19,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.ArmorType;
 
 /**
- * Worn armour drawn as sculpted meshes (docs/armour/PLAN.md): each piece's mesh on each bone it rides, moved with the
- * bone as the model is posed, through the armour shader. On players (both arm widths), mannequins and armour stands.
+ * Worn armour drawn as sculpted meshes (SPEC §44.1): each piece's mesh on each bone it rides, moved with the bone as the
+ * model is posed, through the armour shader. On players (both arm widths), mannequins, armour stands and humanoid mobs.
  * The cape hangs from its yoke in three links that swing with the player's cape motion (vanilla's lean and flap, each
  * link a little further); the cloth over the legs is pushed by the stride (the front by the leg swung forward, the back
  * by the leg swung back). Nothing per frame but the vertices.
@@ -40,9 +41,8 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
             if (stack == null) continue;
             ArmourLooks.Look look = ArmourLooks.of(stack);
             if (look == null || look.piece() != slot) continue;
-            ArmourMesh[][] set = ArmourMeshes.of(look.set());
-            if (set == null) continue;
-            ArmourMesh[] bones = set[slot.ordinal()];
+            ArmourMesh[] bones = ArmourMeshes.piece(look.set(), slot);
+            if (bones == null) continue;
             boolean foil = stack.hasFoil();
             for (Bone b : ArmourMeshes.BONES) {
                 ArmourMesh mesh = bones[b.ordinal()];
@@ -123,7 +123,7 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
     }
 
     /** One mesh where the pose stands: the armour shader, or vanilla's entity cutout if that didn't build. */
-    static void draw(SubmitNodeCollector out, PoseStack ps, ArmourMesh mesh, String set, int light, boolean foil) {
+    static void draw(SubmitNodeCollector out, PoseStack ps, ArmourMesh mesh, ArmourSet set, int light, boolean foil) {
         boolean ours = ArmourPipelines.ok();
         var texture = ArmourMeshes.texture(set);
         int packed = ours ? (foil ? 256 : 0) << 16 : OverlayTexture.NO_OVERLAY;
