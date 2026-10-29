@@ -238,6 +238,27 @@ def seam(ramp_name="ember", column=None, row=None, emit=0.9):
     return d
 
 
+def edge_columns(ramp_name="gold", step=5):
+    """A plate's upright edges in another metal: gold down each corner (a vambrace's, seen in first person)."""
+    def d(t):
+        if not t.side:
+            return
+        ax = 2 if abs(t.n[0]) > 0.7 else 0  # across the face: z on a face turned to x, x on one turned to z
+        on = np.abs(t.L[:, ax]) > t.box.h[ax] - 1 + 1e-6
+        t.put(on, ramp_name=ramp_name, tone=np.clip(step + np.clip(t.band, -1, 1), 0, top(ramp_name)), metal=0.8, gloss=0.85)
+    return d
+
+
+def side_seam(ramp_name="ember", emit=0.9):
+    """A molten line down the middle of the faces turned to x (an arm's outer side), flush with the plate."""
+    def d(t):
+        if not t.side or abs(t.n[0]) < 0.7:
+            return
+        on = (t.L[:, 2] > 0) & (t.L[:, 2] < 1)
+        t.put(on, ramp_name=ramp_name, tone=top(ramp_name) - 2, metal=0.0, gloss=0.4, emit=emit)
+    return d
+
+
 def folds(every=3, step=-1):
     """Cloth: a fold every few columns a step darker, its other side a step lighter (heavy cloth hanging)."""
     def d(t):
@@ -391,6 +412,7 @@ def lordscale():
         "tabard_wide": AW.Mat("wine", 4, 0.0, 0.2, details=(folds(3), gold_hem_cloth(width=3.0))),
         "lining": AW.Mat("wine", 2, 0.0, 0.15),
         "plate_seam": AW.Mat("lord", 3, 0.55, 0.85, details=(hem("gold", 5), seam("ember", row=None, column=None))),
+        "vambrace": AW.Mat("lord", 3, 0.55, 0.85, details=(lames(2, -1), edge_columns("gold", 5), side_seam())),
     }
 
     # ---- helmet: a closed helm the size of the head, its brow and prow a texel proud, a burning slit between; a gold
@@ -429,16 +451,15 @@ def lordscale():
     body.append(VX.rbox((0, -3, 4.5), (2, 2, 2), 45, "ember_gem", "heart"))
 
     # ---- arms: a great pauldron over the shoulder, its outer edge rising, two lames under it stepping in, one swept
-    # spike; a scaled upper arm; an elbow cop behind; a vambrace in lames with a molten seam down its outer side
+    # spike; a scaled upper arm; an elbow cop behind; a vambrace in lames, gold at its corners, a molten line down it
     right_arm = [
         VX.Box((-2.0, 3.5, 0.0), (3.5, 1.5, 4.0), "plate_hem", "pauldron1", rot(0, 0, -14)),
         VX.Box((-1.5, 1.0, 0.0), (3.0, 1.0, 3.5), "plate", "pauldron2", rot(0, 0, -6)),
         B(-4, 1, -2, 0, -3, 3, "plate", "pauldron3"),
         B(-4, 2, -6, -2, -3, 3, "scale_plain", "rerebrace"),
         B(-4, 2, -6, -4, -4, -3, "plate", "couter"),                    # the elbow cop, behind
-        B(-4, 2, -10, -6, -3, 3, "plate_lames", "vambrace"),
+        B(-4, 2, -10, -6, -3, 3, "vambrace", "vambrace"),
         B(-4, 2, -11, -10, -3, 3, "plate", "gauntlet"),                  # the knuckles, a texel under the hand
-        B(-5, -4, -10, -7, -1, 1, "ember", "arm_seam"),                  # the vambrace's molten seam, outer side
     ]
     right_arm += chain((-4.0, 5.0, -1.0), [((-0.35, 1.0, -0.35), 4, 2, 2, "horn"), ((-0.2, 1.0, -0.6), 3, 1, 1, "horn_tip")],
                        "pspike")
