@@ -203,13 +203,7 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
         life.stalking = (l.fauna & FaunaMob.P_STALK) != 0;
         life.gaitRun = s.run;
         life.tick(s, true);
-        if (m.rig().id.equals("hollow_owl") && System.nanoTime() - probeT > 1_000_000_000L) { // PROBE
-            probeT = System.nanoTime();
-            Awaken.LOG.info("[probe] live life@{} rig@{} frame={} air={} lookL@{}", System.identityHashCode(life), System.identityHashCode(m.life()), life.probeFrame(), s.airborne, System.identityHashCode(l));
-        }
     }
-
-    private static long probeT; // PROBE
 
     @Override
     public Identifier getTextureLocation(HeroRenderState s) {

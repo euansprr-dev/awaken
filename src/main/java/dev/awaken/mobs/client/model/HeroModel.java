@@ -214,16 +214,10 @@ public final class HeroModel extends EntityModel<HeroRenderState> {
         if (over < LET_GO) play(clip, Math.min(time, length(clip)), over <= 0 ? weight : weight * (1.0F - over / LET_GO));
     }
 
-    private static long probeT; // PROBE
-
     @Override
     public void setupAnim(HeroRenderState s) {
         super.setupAnim(s);
         Life l = Life.from(s);
-        if (rig.id.equals("hollow_owl") && System.nanoTime() - probeT > 1_000_000_000L) { // PROBE
-            probeT = System.nanoTime();
-            Awaken.LOG.info("[probe] setup l@{} rig@{} lrig@{} frame={} air={}", l == null ? 0 : System.identityHashCode(l), System.identityHashCode(life), l == null ? 0 : System.identityHashCode(l.probeRig()), l == null ? -1 : l.probeFrame(), s.airborne);
-        }
         // the fall: the live pose lets go over a quarter second instead of snapping to the clip's first frame
         float live = 1.0F;
         if (s.dying >= 0 && death >= 0) {

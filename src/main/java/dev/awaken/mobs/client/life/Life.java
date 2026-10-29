@@ -200,10 +200,6 @@ public final class Life {
      * Steps the creature's life to this frame and writes its head's look into the state (s.yRot, s.xRot), so the
      * model's own look code turns the head the slow way. Call from extractRenderState, after the state is filled.
      */
-    public int probeFrame() { return frame; } // PROBE
-
-    public LifeRig probeRig() { return rig; } // PROBE
-
     public void tick(LivingEntityRenderState s, boolean steerHead) {
         float age = s.ageInTicks;
         if (Float.isNaN(lastAge)) {
