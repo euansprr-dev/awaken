@@ -302,7 +302,8 @@ def moth(kind, spread=1.0):
 
 ROCK_BLOCK = {"stone": ("minecraft:block/stone", None), "deepslate": ("minecraft:block/deepslate", "minecraft:block/deepslate_top"),
               "tuff": ("minecraft:block/tuff", None), "rootstone": ("awaken:block/caves/rootstone", None),
-              "ochre": ("awaken:block/caves/ochre_stone", None)}
+              "ochre": ("awaken:block/caves/ochre_stone", None),
+              **{rock: (f"awaken:block/caves/{b}", None) for rock, b in SKIN.REGION_BLOCK.items() if rock not in ("rootstone", "ochre")}}
 
 
 def corner(rock, lichen, water, extras=None):
@@ -387,12 +388,84 @@ def ochre(s):
     s.sprite(beetle.rotate(70), 3.0, 1.12, 5.6, 0.3)
 
 
+# P3 (SPEC §42.8): the other six regions' own pieces in their corners
+
+def pale_halls(s):
+    for x, z, v in ((2, 4, 0), (3, 4, 1), (2, 5, 2), (3, 5, 0), (4, 5, 1), (3, 6, 2), (4, 6, 0)):
+        s.model(f"rimstone_{v}", x, 1, z, rot=90 * ((x + z) % 4))
+    for x, z, v in ((4, 2, 0), (3, 2, 2)):
+        s.model(f"cave_pearls_{v}", x, 1, z)
+    s.sprite(underlife_cell(0, 1), 4.4, 3.55, 1.5, 0.8, glow=0.9)
+    s.sprite(underlife_cell(0, 1), 2.4, 3.55, 1.4, 0.7, glow=0.9)
+    particles(s, "mist", 6, 4, box=(1.5, 1.1, 1.5, 6.0, 1.6, 6.0), size=0.5)
+
+
+def windcleft(s):
+    for x, z in ((4, 0), (6, 0), (0, 2), (1, 5), (3, 1)):
+        s.model(f"slate_rubble_{(x + z) % 3}", x, 1, z, rot=0 if z == 0 else 90)
+    for y in (2, 3):
+        s.overlay("awaken:block/caves/rime", 0, y, 5, "west")
+        s.overlay("awaken:block/caves/rime", 5, y, 0, "north")
+    for y, t in ((3, "old_rope"), (2, "old_rope"), (1, "old_rope_tip")):
+        s.model(t, 2, y, 1)
+    particles(s, "mica", 10, 5, glow=0.4)
+    s.sprite(underlife_cell(1, 1), 5.2, 3.0, 4.6, 0.45)
+
+
+def drowned(s):
+    for x, z, v in ((3, 4, 0), (4, 5, 1), (2, 5, 2), (5, 4, 0)):
+        s.model(f"silt_{v}", x, 1, z, rot=90 * ((x + 2 * z) % 4))
+    s.model("driftwood", 5, 1, 6)
+    for x, z in ((6, 3), (6, 4), (5, 2)):
+        s.model("cave_weed", x, 1, z)
+    for y in (1, 2):
+        s.overlay("awaken:block/caves/glow_algae", 0, y, 6, "west")
+        s.overlay("awaken:block/caves/glow_algae_glow", 0, y, 6, "west", glow=0.7)
+        s.overlay("awaken:block/caves/glow_algae", 6, y, 0, "north")
+        s.overlay("awaken:block/caves/glow_algae_glow", 6, y, 0, "north", glow=0.7)
+    particles(s, "mist", 8, 6, box=(1.0, 1.1, 1.0, 6.5, 1.8, 6.5), size=0.6)
+    s.sprite(underlife_cell(1, 2), 3.2, 1.15, 3.8, 0.4)
+    s.sprite(underlife_cell(2, 2), 5.5, 1.3, 5.0, 0.4)
+
+
+def glimmer(s, kind="amber"):
+    for x, z in ((2, 3), (5, 5), (6, 2), (1, 6), (4, 6), (3, 0)):
+        s.model(f"{kind}_crystal", x, 1, z)
+    s.model(f"{kind}_crystal", 1, 2, 1)
+    particles(s, "glitter", 16, 7, glow=0.6)
+    s.sprite(moth(1), 4.5, 2.6, 4.0, 0.4)
+
+
+def vaults(s):
+    # a drift lies in one patch, as the game lays it (a field), not scattered tiles
+    for x, z, v in ((2, 3, 0), (3, 3, 1), (2, 4, 2), (3, 4, 0), (4, 4, 1), (2, 5, 1), (3, 5, 2), (4, 5, 0), (5, 5, 2), (4, 6, 1)):
+        s.model(f"ash_{v}", x, 1, z, rot=90 * ((x + z) % 4))
+    particles(s, "ash", 18, 8)
+    s.sprite(moth(2), 5.0, 2.5, 4.5, 0.4)
+
+
+def violet(s):
+    for x, z, v in ((2, 4, 0), (5, 5, 1), (6, 3, 2), (1, 6, 1)):
+        s.model(f"violet_growth_{v}", x, 1, z)
+    for x, z, v in ((3, 5, 0), (4, 3, 1), (2, 6, 2)):
+        s.model(f"shed_chitin_{v}", x, 1, z, rot=90 * ((x + z) % 4))
+    particles(s, "seep", 10, 9, glow=0.5)
+    s.sprite(underlife_cell(3, 3), 3.5, 1.2, 4.2, 0.4)
+
+
 SCENES = {
     "stone": lambda: corner("stone", "shallows", (63, 118, 228)),
     "deepslate": lambda: corner("deepslate", "deep", (63, 118, 228)),
     "tuff": lambda: corner("tuff", "middle", (63, 118, 228)),
     "rootways": lambda: corner("rootstone", "shallows", (0x3b, 0x6f, 0x62), rootways),
     "ochre_deep": lambda: corner("ochre", "middle", (0xa8, 0x62, 0x2c), ochre),
+    "pale_halls": lambda: corner("limestone", "shallows", (0x6c, 0x9c, 0xb4), pale_halls),
+    "windcleft": lambda: corner("slate", "middle", (0x4a, 0x64, 0x80), windcleft),
+    "drowned_galleries": lambda: corner("siltstone", "middle", (0x3a, 0x7c, 0x70), drowned),
+    "glimmer_hollows": lambda: corner("glimmer", "middle", (0x8a, 0x7a, 0x52), glimmer),
+    "glimmer_frost": lambda: corner("glimmer", "middle", (0x6a, 0x8a, 0xa8), lambda s: glimmer(s, "glacial")),
+    "black_vaults": lambda: corner("basalt", "deep", (0x30, 0x2e, 0x30), vaults),
+    "violet_deep": lambda: corner("seepstone", "deep", (0x4a, 0x3a, 0x6c), violet),
 }
 
 
@@ -447,8 +520,8 @@ def sheet(out):
         save(crop(render(make(), flat=True)), f"scene_{name}_flat")
     save(crop(render(formations_plate(), yaw=28, pitch=10, S=44, W=1300, H=420, flat=True, centre=(8.5, 2.5, 0.5))), "formations")
     for rock in SKIN.ROCKS:
-        ident = {"stone": "minecraft:block/stone", "deepslate": "minecraft:block/deepslate", "tuff": "minecraft:block/tuff",
-                 "ochre": "awaken:block/caves/ochre_stone"}.get(rock, f"awaken:block/caves/{rock}")
+        ident = {"stone": "minecraft:block/stone", "deepslate": "minecraft:block/deepslate", "tuff": "minecraft:block/tuff"}.get(
+            rock, f"awaken:block/caves/{SKIN.REGION_BLOCK.get(rock, rock)}")
         save(tile(ident), f"rock_{rock}")
     for rock in ("stone", "deepslate", "tuff", "rootstone", "ochre"):
         for piece in ("rubble", "formation", "formation_tip"):
@@ -464,6 +537,16 @@ def sheet(out):
             b = Image.new("RGBA", (16, 16), (40, 36, 32, 255))
         b.alpha_composite(t)
         save(b.resize((160, 160), Image.NEAREST), f"p2_{name}")
+    # P3: the six regions' ores and pieces, each on its rock or a dark ground
+    for name in ("limestone_iron_ore", "banded_slate_gold_ore", "siltstone_lapis_ore", "siltstone_copper_ore", "glimmerstone_redstone_ore",
+                 "column_basalt_diamond_ore", "rimstone", "silt", "ash", "driftwood", "driftwood_end", "cave_pearls", "shed_chitin"):
+        save(tile(f"awaken:block/caves/{name}", 2, 5), f"p3_{name}")
+    for name, rock in (("rime", "banded_slate"), ("glow_algae", "siltstone"), ("old_rope", None), ("old_rope_tip", None), ("cave_weed", None),
+                       ("amber_crystal", None), ("glacial_crystal", None), ("violet_growth_0", None), ("violet_growth_1", None)):
+        t = Image.fromarray(texture(f"awaken:block/caves/{name}").astype(np.uint8), "RGBA")
+        b = Image.fromarray(texture(f"awaken:block/caves/{rock}").astype(np.uint8), "RGBA") if rock else Image.new("RGBA", (16, 16), (40, 36, 32, 255))
+        b.alpha_composite(t)
+        save(b.resize((160, 160), Image.NEAREST), f"p3_{name}")
     for name in ("lichen_shallows", "lichen_middle", "lichen_deep", "mineral_crust", "wet_streaks", "dusty_web", "puddle"):
         t = Image.fromarray(texture(f"awaken:block/caves/{name}").astype(np.uint8), "RGBA")
         bg = Image.fromarray(texture("minecraft:block/stone").astype(np.uint8), "RGBA")

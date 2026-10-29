@@ -27,7 +27,7 @@ public record LifeProfile(String name, float breath, float breathDepth, float bl
                           float fidgetMin, float fidgetMax, float[] idles, float arms, float stagger, float mass) {
 
     /** The idle fidgets a body can play, each needing some of its bones ({@link Life}). */
-    public enum Idle { LOOK, SNIFF, FLICK, SHAKE, STRETCH, YAWN, SCRATCH, PERK, SETTLE }
+    public enum Idle { LOOK, SNIFF, FLICK, SHAKE, STRETCH, YAWN, SCRATCH, PERK, SETTLE, GRAZE }
 
     public static final String PATH = "/assets/awaken/life/creatures.json";
     private static final Set<String> FIELDS = Set.of("temperament", "breath", "breathDepth", "blink", "headSpeed", "headDamping", "eyeLead",

@@ -2301,7 +2301,8 @@ public final class HeroData {
                 bone body - 0 21 0 0 0 0
                 cube 0 0 -3.5 -9 -3 7 9 6 0 0
                 cube 0 22 -3 -8 -3.6 6 6 1 0 0
-                bone head body 0 -9 0 0 0 0
+                bone yoke body 0 -8.5 0 0 0 0
+                bone head yoke 0 -0.5 0 0 0 0
                 cube 26 0 -4 -7 -3.5 8 7 7 0 0
                 bone disc head 0 -3.5 -3.5 0 0 0
                 cube 0 15 -4 -3 -0.5 8 6 1 0 0
@@ -2309,7 +2310,7 @@ public final class HeroData {
                 cube 60 0 -0.5 0 -1 1 2 1 0 0
                 bone tuft_l head 2.5 -7 -1 -0.2618 0 0.3491
                 cube 60 3 -1 -3 0 2 3 0 0 0
-                bone wing_l body 3.5 -8.5 0 0 0 -0.0698
+                bone wing_l yoke 3.5 0 0 0 0 -0.0698
                 cube 26 14 0 0 -3 1 7 7 0 0
                 bone wingtip_l wing_l 0.5 6.5 1 0.5236 0 -0.1047
                 cube 42 14 0 0 -3 0 6 7 0 0
@@ -2319,7 +2320,7 @@ public final class HeroData {
                 cube 14 22 -1.5 0 -1.5 3 0 3 0 0
                 bone tuft_r head -2.5 -7 -1 -0.2618 0 -0.3491
                 cube 60 3 -1 -3 0 2 3 0 1 0
-                bone wing_r body -3.5 -8.5 0 0 0 0.0698
+                bone wing_r yoke -3.5 0 0 0 0 0.0698
                 cube 26 14 -1 0 -3 1 7 7 1 0
                 bone wingtip_r wing_r -0.5 6.5 1 0.5236 0 0.1047
                 cube 42 14 0 0 -3 0 6 7 1 0
@@ -2348,12 +2349,12 @@ public final class HeroData {
                 track wingtip_l rot 2 0 -8 0 6 1 3 -8 0 6 1
                 track wing_r rot 9 0 0 0 96 1 0.375 0 0 94.8284 1 0.75 0 0 92 1 1.125 0 0 89.1716 1 1.5 0 0 88 1 1.875 0 0 89.1716 1 2.25 0 0 92 1 2.625 0 0 94.8284 1 3 0 0 96 1
                 track wingtip_r rot 2 0 -8 0 -6 1 3 -8 0 -6 1
-                track body rot 9 0 12 0 2.9389 1 0.375 14.1213 0 4.9384 1 0.75 15 0 4.0451 1 1.125 14.1213 0 0.7822 1 1.5 12 0 -2.9389 1 1.875 9.8787 0 -4.9384 1 2.25 9 0 -4.0451 1 2.625 9.8787 0 -0.7822 1 3 12 0 2.9389 1
-                track oleg_l rot 2 0 60 0 0 1 3 60 0 0 1
-                track oleg_r rot 2 0 60 0 0 1 3 60 0 0 1
-                track tail rot 2 0 -20 0 0 1 3 -20 0 0 1
+                track body rot 9 0 75 0 0 1 0.375 76.4142 0 0 1 0.75 77 0 0 1 1.125 76.4142 0 0 1 1.5 75 0 0 1 1.875 73.5858 0 0 1 2.25 73 0 0 1 2.625 73.5858 0 0 1 3 75 0 0 1
+                track yoke rot 9 0 -75 0 0 1 0.375 -76.4142 0 0 1 0.75 -77 0 0 1 1.125 -76.4142 0 0 1 1.5 -75 0 0 1 1.875 -73.5858 0 0 1 2.25 -73 0 0 1 2.625 -73.5858 0 0 1 3 -75 0 0 1
+                track oleg_l rot 2 0 -10 0 0 1 3 -10 0 0 1
+                track oleg_r rot 2 0 -10 0 0 1 3 -10 0 0 1
+                track tail rot 2 0 -100 0 0 1 3 -100 0 0 1
                 track tail scale 2 0 1.5 1 1.2 1 3 1.5 1 1.2 1
-                track head rot 2 0 -12 0 0 1 3 -12 0 0 1
                 clip dive_windup 0.8 0
                 track body rot 2 0 0 0 0 1 0.8 24 0 0 1
                 track body pos 2 0 0 0 0 1 0.8 0 -1.5 0 1

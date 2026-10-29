@@ -35,6 +35,8 @@ public final class RoadWorld {
     public final boolean city;
     /** The region cell of the first town a player meets ({@link FirstTown}), or null. */
     volatile int @Nullable [] firstTown;
+    /** The region cell of the first holdfast ({@link Holdfasts}), or null. */
+    volatile int @Nullable [] firstHoldfast;
     /** The generator's estimate of the land, each column worked out once for every thread (one {@link GenTerrain} per thread). */
     private final SharedLand land;
 
@@ -103,13 +105,15 @@ public final class RoadWorld {
         current = w;
     }
 
-    /** What's found once for the session: the first town. */
+    /** What's found once for the session: the first town, then the first holdfast (SPEC §43.2). */
     void prepare() {
         long t0 = System.currentTimeMillis();
         firstTown = FirstTown.find(this);
-        int[] f = firstTown;
-        Awaken.LOG.info("[road] the roads' world: seed {}, centre {} {}{}; the first town's region {} ({} ms)", seed, cx, cz, city ? " (Carillon)" : "",
-                f == null ? "none" : f[0] + "," + f[1], System.currentTimeMillis() - t0);
+        Holdfasts.clear();
+        firstHoldfast = Holdfasts.findFirst(this);
+        int[] f = firstTown, h = firstHoldfast;
+        Awaken.LOG.info("[road] the roads' world: seed {}, centre {} {}{}; the first town's region {}, the first holdfast's {} ({} ms)", seed, cx, cz,
+                city ? " (Carillon)" : "", f == null ? "none" : f[0] + "," + f[1], h == null ? "none" : h[0] + "," + h[1], System.currentTimeMillis() - t0);
     }
 
     /** Tests and the studio: a world over a generator made for a seed (no server levels). */

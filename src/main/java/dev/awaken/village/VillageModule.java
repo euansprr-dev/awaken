@@ -70,8 +70,13 @@ public final class VillageModule {
             dev.awaken.village.road.RoadNet.clear();
             dev.awaken.village.road.RoadWorld.close();
             VillageService.serverStopped();
+            Holdfast.serverStopped();
         });
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> VillageService.tick(e.getServer()));
+        // (SPEC §43.2) the holdfasts' bells, and the Ember refused where one is heard
+        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> Holdfast.tick(e.getServer()));
+        dev.awaken.core.api.TheLull.installHoldfasts((level, at) -> level.dimension() == Level.OVERWORLD
+                && !dev.awaken.village.road.Holdfasts.near(at.getX(), at.getZ(), dev.awaken.core.api.TheLull.HOLDFAST_BELL, true).isEmpty());
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.awaken.village.road.RoadAtlas.tick(e.getServer()));
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.awaken.village.road.RoadNet.prefetch(e.getServer()));
         // (SPEC §28.9, Cost) a chunk the server thread had to wait for far from every player: who asked
@@ -118,16 +123,30 @@ public final class VillageModule {
         }
     }
 
-    /** The notice board: its notices. */
+    /**
+     * The notice board: its notices. (SPEC §43.1) An empty settlement's are years old; a holdfast's are its own people's,
+     * never tasks (every goal comes from the System).
+     */
     private static void onRightClickBlock(PlayerInteractEvent.RightClickBlock e) {
         if (!(e.getEntity() instanceof ServerPlayer p) || !(e.getLevel() instanceof ServerLevel level)) return;
         var state = level.getBlockState(e.getPos());
         if (!state.is(dev.awaken.city.kit.StreetKit.NOTICE_BOARD.get())) return;
         VillageService.Live l = VillageService.at(level, e.getPos());
+        String line = l == null ? (Villages.reserved(level, e.getPos(), 0) ? EMPTY_BOARD : null)
+                : dev.awaken.village.road.Holdfasts.isKey(l.key()) ? HOLDFAST_BOARD : null;
+        if (line != null) {
+            dev.awaken.signal.Signal.send(p, dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE, Component.literal(line))
+                    .ttl(20 * 8).build());
+            e.setCanceled(true);
+            return;
+        }
         if (l == null) return;
         VillageNet.openBoard(p, l);
         e.setCanceled(true);
     }
+
+    static final String EMPTY_BOARD = "[The notices are years old. The last one says the chime has stopped and they're all going to the city.]";
+    static final String HOLDFAST_BOARD = "[The board has the bell's shift list and a few notes they've left each other. Nothing on it is for you.]";
 
     /**
      * The ambience slot in a village (below Carillon's): the day's bed (birds over a murmur that grows with the people

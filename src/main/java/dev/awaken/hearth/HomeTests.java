@@ -4,6 +4,7 @@ import com.mojang.serialization.JsonOps;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.api.HearthHooks;
+import dev.awaken.core.api.TheLull;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.hearth.room.Reading;
 import dev.awaken.hearth.room.Room;
@@ -69,6 +70,10 @@ final class HomeTests {
                 h.assertFalse(Embers.give(sp), "only one Ember a player");
                 // refused on thin air, with a plain reason
                 h.assertTrue(Embers.refusal(sp, level, ground.above(3), ground.above(4)).orElse("").contains("solid"), "not on air");
+                // the bells' edge (SPEC §43.1): inside the ridge the coal won't take; out past it, it does
+                TheLull.testCentre = ground.offset(0, 0, TheLull.RIDGE_CLASSIC - 10);
+                h.assertTrue(Embers.refusal(sp, level, ground, at).orElse("").contains("bells"), "inside the ridge the bells still carry");
+                TheLull.testCentre = ground.offset(0, 0, TheLull.RIDGE_CITY + 10);
                 // set down: a Tier 0 Hearthfire, radius 24, named from the land's words
                 clearEmbers(sp);
                 sp.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HearthContent.EMBER_ITEM.get()));
@@ -99,6 +104,7 @@ final class HomeTests {
                 h.assertTrue(data.of(sp.getUUID()).orElse(null) == again, "the same Hearth, raised in place");
                 h.succeed();
             } finally {
+                TheLull.testCentre = null;
                 data.of(sp.getUUID()).ifPresent(r -> dev.awaken.hearth.town.Town.dissolve(level, r));
                 data.remove(sp.getUUID());
                 level.removeBlock(at, false);

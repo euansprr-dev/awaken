@@ -37,6 +37,14 @@ public final class QuestEngine {
         journal(p);
     }
 
+    /** At login: a chain that no longer exists (SPEC §43.1 retired the found ones) leaves the Journal quietly. */
+    public static void prune(ServerPlayer p) {
+        QuestState s = state(p);
+        if (!s.active.removeIf(a -> QuestBook.get(a.chain()) == null)) return;
+        if (!s.has(s.tracked)) s.tracked = s.active.isEmpty() ? "" : s.active.getFirst().chain();
+        p.setData(LivingContent.QUESTS.get(), s);
+    }
+
     /** Sends the player's Journal: the chains they took (tracked first) and the bounties on their slate. */
     public static void journal(ServerPlayer p) {
         QuestState s = state(p);

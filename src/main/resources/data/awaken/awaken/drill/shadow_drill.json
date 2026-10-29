@@ -1,0 +1,12 @@
+{
+  "text": "Use shadow powers ten times",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:power_uses/shadow",
+    "value": 10
+  },
+  "paths": [
+    "awaken:shadowbinder"
+  ],
+  "min_rank": "E"
+}

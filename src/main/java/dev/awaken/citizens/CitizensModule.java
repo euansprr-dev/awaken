@@ -144,6 +144,13 @@ public final class CitizensModule {
             e.setCanceled(true);
             return;
         }
+        // (SPEC §43.3) something shown to them answers first (a keepsake with their family's name)
+        var held = p.getMainHandItem();
+        if (!held.isEmpty() && c.roster.isCitizen(b.rec)) {
+            for (Settlements.Shown s : Settlements.shown()) {
+                if (s.shown(p, c, b.rec, held)) return;
+            }
+        }
         // (SPEC §28.6) in a village, its people answer first: a trader's goods, the inn's rooms, the notice's news
         // (SPEC §28.7) someone a village's trouble stands in the square (staged) answers too: the parent, the elder
         if (!c.site.carillon() && c.roster.isCitizen(b.rec) && (c.data.role[b.rec] == 0 || c.data.role[b.rec] == Roles.STAGED)) {

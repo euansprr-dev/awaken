@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "awaken:block/fungal_loam",
+    "top": "awaken:block/fungal_loam",
+    "side": "awaken:block/fungal_loam"
+  }
+}

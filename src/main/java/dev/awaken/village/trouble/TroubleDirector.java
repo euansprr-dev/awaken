@@ -184,24 +184,11 @@ public final class TroubleDirector {
 
     /** Each awake village: its festival's day, then (unless calm) whether something in the world troubles it now. */
     static void consider(ServerLevel level, TroubleState st, long day) {
-        boolean calm = TroubleContent.calm(level);
-        boolean young = PlayDays.playTicks(level.getServer()) < firstHours;
+        // (SPEC §43.1) only the holdfasts keep people, and they never send for help: a village trouble never starts by
+        // itself any more (commands and tests still start one). Festivals go on.
         for (VillageService.Live l : VillageService.all()) {
             if (!l.settlement().awake()) continue;
-            Plot.Ctx c = ctx(level, l.key());
-            Festival.consider(c, l);
-            if (calm || young || st.of(l.key()) != null) continue;
-            TroubleState.Memory mem = st.memory(l.key());
-            if (day - mem.lastEnd < REST_DAYS) continue;
-            BlockPos origin = new BlockPos(l.plan().ox, l.plan().baseY, l.plan().oz);
-            if (HearthHooks.inside(level, origin) || crowded(level, st, origin)) continue;
-            // what the world holds: a gate due to break near it, its bell gone, a lair or a den near, a storm, its damage
-            for (TroubleKind k : new TroubleKind[]{TroubleKind.GREY_FIELDS, TroubleKind.BELL, TroubleKind.DEEP_MINE, TroubleKind.TAKEN, TroubleKind.MISSING,
-                    TroubleKind.REBUILD}) {
-                String cause = cause(c, l, k);
-                if (cause == null) continue;
-                if (start(level, l, k, cause) != null) break;
-            }
+            Festival.consider(ctx(level, l.key()), l);
         }
     }
 
@@ -626,7 +613,9 @@ public final class TroubleDirector {
 
         @Override
         public boolean raidComing(ServerLevel level, String village, int camp, String campName, int tier, long raidDay) {
-            return Burning.coming(level, village, camp, campName, tier, raidDay);
+            // (SPEC §43.1) no village takes a camp's raid as its Burning any more: empty ones have nobody to warn, and a
+            // holdfast's walls hold; the camp raids a Hearth instead
+            return false;
         }
 
         @Override

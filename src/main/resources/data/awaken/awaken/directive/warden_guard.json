@@ -1,5 +1,5 @@
 {
-  "text": "Take 200 damage protecting your Echoes.",
+  "text": "Take 200 damage holding the line.",
   "condition": {
     "type": "counter",
     "counter": "awaken:damage_taken",
@@ -14,8 +14,5 @@
   "max_rank": "SOVEREIGN",
   "quick": false,
   "weight": 10,
-  "path": "awaken:warden",
-  "requires": [
-    "unlock:awaken:echoes"
-  ]
+  "path": "awaken:warden"
 }

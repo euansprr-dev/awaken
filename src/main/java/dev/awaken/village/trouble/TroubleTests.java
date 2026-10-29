@@ -373,13 +373,14 @@ final class TroubleTests {
             Trouble fest = st.festival(ls.getFirst().key());
             h.assertTrue(fest != null, "the festival still comes with calm villages on");
             TroubleDirector.end(TroubleDirector.ctx(level, fest.village), fest);
-            // calm off: one a village, two near a player
+            // calm off: still none by itself (SPEC §43.1: the people left; the holdfasts never send for help)
             level.getGameRules().set(TroubleContent.CALM_VILLAGES.get(), false, server);
             TroubleDirector.consider(level, st, day);
-            h.assertTrue(count(st, ls) == 2, "two troubles near a player, no more: " + count(st, ls));
-            VillageService.Live busy = null;
-            for (VillageService.Live l : ls) if (st.of(l.key()) != null) busy = l;
-            h.assertTrue(busy != null && TroubleDirector.start(level, busy, TroubleKind.REBUILD, "damage") == null, "one trouble a village");
+            h.assertTrue(count(st, ls) == 0, "no village trouble starts by itself: " + count(st, ls));
+            // started by hand (a command): one a village
+            VillageService.Live busy = ls.getFirst();
+            h.assertTrue(TroubleDirector.start(level, busy, TroubleKind.REBUILD, "damage") != null, "a command still starts one");
+            h.assertTrue(TroubleDirector.start(level, busy, TroubleKind.REBUILD, "damage") == null, "one trouble a village");
             // found, never listed: in the Journal only after Help
             Trouble t = st.of(busy.key());
             TroubleKind k = TroubleKind.of(t.kind);

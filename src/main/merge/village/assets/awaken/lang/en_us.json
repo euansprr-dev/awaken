@@ -30,5 +30,6 @@
   "item.awaken.village_bell.desc": "Heavy. Haul it up its village's tower and hang it.",
   "item.awaken.grey_remedy": "Herb Remedy",
   "gamerule.awaken.calm_villages": "Calm villages (no troubles; festivals and growth go on)",
-  "gamerule.awaken.calm_villages.description": "Villages are never troubled by raids, the taken, the missing or the grey. Festivals, trade and growth go on."
+  "gamerule.awaken.calm_villages.description": "Villages are never troubled by raids, the taken, the missing or the grey. Festivals, trade and growth go on.",
+  "subtitles.awaken.holdfast.bell": "A holdfast's bell rings"
 }

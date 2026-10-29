@@ -139,7 +139,7 @@ public final class Bolts {
         double bestD = Double.MAX_VALUE;
         boolean overcharges = b.force == Forces.Force.CHARGE && b.shooter == b.owner;
         for (LivingEntity e : b.level.getEntitiesOfClass(LivingEntity.class, box, x -> x != b.shooter && x != b.owner
-                && !b.hit.contains(x.getId()) && (Combat.isFoeOrTarget(b.owner, x) || (overcharges && ForceInteractions.isOwnEcho(b.owner, x))))) {
+                && !b.hit.contains(x.getId()) && (Combat.isFoeOrTarget(b.owner, x) || (overcharges && ForceInteractions.isOwnSummon(b.owner, x))))) {
             AABB eb = e.getBoundingBox().inflate(0.3);
             Optional<Vec3> hit = eb.contains(from) ? Optional.of(from) : eb.clip(from, to);
             if (hit.isPresent() && from.distanceToSqr(hit.get()) < bestD) {

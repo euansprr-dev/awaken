@@ -8,13 +8,9 @@ import dev.awaken.core.api.HearthHooks;
 import dev.awaken.core.api.HorizonHooks;
 import dev.awaken.living.LivingContent;
 import dev.awaken.living.api.Regions;
-import dev.awaken.living.quest.QuestBook;
 import dev.awaken.living.quest.QuestDef;
-import dev.awaken.living.quest.QuestEngine;
-import dev.awaken.living.quest.QuestState;
 import dev.awaken.living.region.RegionService;
 import dev.awaken.progression.Progression;
-import dev.awaken.progression.Requirements;
 import dev.awaken.terrain.api.CityBasin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -41,23 +37,21 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Where the Wayfarers are (SPEC §21, Phase C; saved data {@code awaken:living_scenes}, schema 1). Two kinds:
+ * Where the Wayfarers are (SPEC §21, §43.1; saved data {@code awaken:living_scenes}, schema 2).
  * <ul>
- * <li><b>Residents</b> live in fixed places: Ilse and Hettie at the Wayfarer camp up the High Gate road (in classic worlds
- * north of spawn), Hale at the High Gate's yard (until Carillon's spot exists, at the camp). Placed once, when a player
- * first comes near.</li>
- * <li><b>Scenes</b> are found: for one player, now and then (every ~25 minutes outside, never in a Hearth or a gate), a
- * Wayfarer in trouble appears 64-160 blocks away, in land that suits the chain (a cliff ledge, a road, high crags).
- * The Horizon line names it; a scene nobody takes fades after two play-days.</li>
+ * <li><b>Residents</b> live in fixed places: Ilse alone at the Wayfarer camp, the Last Fire, up the High Gate road (in
+ * classic worlds north of spawn); Hettie in Carillon's market square; Hale at the High Gate's yard (in a classic world, by
+ * the camp). Placed once, when a player first comes near.</li>
+ * <li><b>Scenes</b> are a chain's places (a den, a site) for a chain taken at a resident. Nobody is found in trouble out in
+ * the wild any more (SPEC §43.1): the found scenes are gone.</li>
  * </ul>
- * Only loaded chunks are ever searched: finding a scene never generates terrain.
+ * Only loaded chunks are ever searched: placing someone never generates terrain. Schema 2 (§43.1): old found scenes are
+ * dropped on load and Hettie is placed again in the city (her camp body leaves when it next loads: {@link Wayfarer}).
  */
 public final class Scenes extends SavedData {
-    static final int SCHEMA = 1;
+    static final int SCHEMA = 2;
     static final long NONE = Long.MIN_VALUE;
-    static final long SCENE_EVERY = 20L * 60 * 25;
     static final int MIN_DIST = 64, MAX_DIST = 160;
-    static final int CAMP_DIST_CITY = 450, CAMP_DIST_CLASSIC = 300;
 
     public record Scene(long id, String chain, String kind, long pos, Optional<UUID> owner, long day, Map<String, Long> markers) {
         public static final Codec<Scene> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -81,6 +75,12 @@ public final class Scenes extends SavedData {
     ).apply(i, (schema, scenes, residents, next, camp, built) -> {
         Scenes s = new Scenes(scenes, residents, next, camp.orElse(NONE));
         s.campBuilt = built;
+        if (schema < 2) {
+            // §43.1: the found scenes are gone and Hettie lives in the city now
+            s.scenes.removeIf(sc -> !sc.kind.equals("resident"));
+            s.residents.remove("hettie");
+            s.setDirty();
+        }
         return s;
     }));
 
@@ -93,7 +93,6 @@ public final class Scenes extends SavedData {
     long camp;
     /** Whether the camp round the fire has been laid (bedrolls, logs, packs, the pot: {@link Camp#build}). */
     boolean campBuilt;
-    private final transient Map<UUID, Long> lastScene = new HashMap<>();
 
     public Scenes() {
         this(List.of(), List.of(), 1L, NONE);
@@ -133,110 +132,20 @@ public final class Scenes extends SavedData {
 
     // ---- the tick ---------------------------------------------------------------------------------------------------
 
-    /** Every 100 ticks: residents near players, new scenes, old scenes faded. */
+    /** Every 100 ticks: residents near players, the camp's smoke for those within sight of it. */
     public static void tick(MinecraftServer server) {
         if (server.getTickCount() % 100 != 0) return;
         ServerLevel level = server.overworld();
         Scenes s = get(server);
         s.residents(level);
-        Camp.rest(server);
-        long day = PlayDays.current(server);
-        boolean changed = s.scenes.removeIf(sc -> sc.owner.isPresent() && day - sc.day >= 2 && !taken(server, sc) && fade(level, sc));
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             if (p.level() != level || p.isSpectator() || !Progression.profile(p).awakened()) continue;
-            changed |= s.maybeScene(level, p, day);
-            dev.awaken.core.AwakenNet.send(p, new dev.awaken.living.LivingNet.Tells(s.tells(p)));
             // the camp's smoke, seen from afar (vanilla campfire smoke only rises within ~32 blocks of you)
             BlockPos smoke = s.camp == NONE ? null : Camp.fire(server);
             if (smoke != null && smoke.distSqr(p.blockPosition().atY(smoke.getY())) < 1000 * 1000) {
                 dev.awaken.core.AwakenNet.send(p, new dev.awaken.living.LivingNet.CampSmoke(smoke));
             }
         }
-        if (changed) s.setDirty();
-    }
-
-    /** The player's untaken scenes within 400 blocks: they send up flares (the Hilltop Test). */
-    private List<BlockPos> tells(ServerPlayer p) {
-        List<BlockPos> out = new ArrayList<>(2);
-        QuestState qs = QuestEngine.state(p);
-        for (Scene sc : scenes) {
-            if (sc.owner.isEmpty() || !sc.owner.get().equals(p.getUUID()) || sc.kind.equals("resident") || qs.has(sc.chain)) continue;
-            BlockPos at = BlockPos.of(sc.pos);
-            if (at.distSqr(p.blockPosition()) < 400 * 400 && out.size() < 8) out.add(at);
-        }
-        return out;
-    }
-
-    private static boolean taken(MinecraftServer server, Scene sc) {
-        ServerPlayer owner = sc.owner.map(u -> server.getPlayerList().getPlayer(u)).orElse(null);
-        return owner != null && QuestEngine.state(owner).has(sc.chain);
-    }
-
-    private static boolean fade(ServerLevel level, Scene sc) {
-        BlockPos at = BlockPos.of(sc.pos);
-        if (level.hasChunkAt(at)) {
-            for (Wayfarer w : level.getEntitiesOfClass(Wayfarer.class, new net.minecraft.world.phys.AABB(at).inflate(16), w -> w.scene() == sc.id)) w.discard();
-        }
-        return true;
-    }
-
-    /** For one player: a new scene when it's been long enough, a chain they can take exists, and the land offers a spot. */
-    private boolean maybeScene(ServerLevel level, ServerPlayer p, long day) {
-        long now = level.getGameTime();
-        Long last = lastScene.get(p.getUUID());
-        if (last == null) {
-            lastScene.put(p.getUUID(), now - SCENE_EVERY / 2); // the first one comes sooner
-            return false;
-        }
-        if (now - last < SCENE_EVERY) return false;
-        if (HearthHooks.inside(level, p.blockPosition()) || CityBasin.reserved(p.getBlockX(), p.getBlockZ())) return false;
-        for (Scene sc : scenes) if (sc.owner.isPresent() && sc.owner.get().equals(p.getUUID())) return false;
-        QuestState qs = QuestEngine.state(p);
-        String chain = null;
-        QuestDef def = null;
-        for (var e : QuestBook.all().entrySet()) {
-            QuestDef d = e.getValue();
-            if (d.scene().equals("resident") || qs.has(e.getKey()) || qs.done().contains(e.getKey()) || !Requirements.met(p, d.requires())) continue;
-            if (def == null || d.band() < def.band()) {
-                chain = e.getKey();
-                def = d;
-            }
-        }
-        if (def == null) return false;
-        BlockPos spot = findSpot(level, p.blockPosition(), def.scene(), p.getRandom());
-        lastScene.put(p.getUUID(), now - (spot == null ? SCENE_EVERY - 20L * 60 : 0)); // nothing suitable: try again in a minute
-        if (spot == null) return false;
-        open(level, p, chain, def, spot, day);
-        return true;
-    }
-
-    private Scene open(ServerLevel level, ServerPlayer p, String chain, QuestDef def, BlockPos spot, long day) {
-        Map<String, Long> markers = new HashMap<>();
-        markers.put("site", site(level, spot, p.getRandom()).asLong());
-        if (def.scene().equals("cliff")) markers.put("foot", foot(level, spot).asLong());
-        Scene sc = new Scene(nextId++, chain, def.scene(), spot.asLong(), Optional.of(p.getUUID()), day, markers);
-        scenes.add(sc);
-        setDirty();
-        spawn(level, def.giver(), spot, def.scene().equals("cliff") ? 1 : 4, sc.id);
-        Awaken.LOG.info("[living] scene {} for {}: {} at {}", sc.id, p.getName().getString(), chain, spot.toShortString());
-        return sc;
-    }
-
-    /** Dev and tours: a chain's scene now, close by (10-28 blocks; straight ahead if the land offers no fitting spot). */
-    public static @Nullable BlockPos force(ServerPlayer p, String chain) {
-        QuestDef def = QuestBook.get(chain);
-        ServerLevel level = p.level().getServer().overworld();
-        if (def == null || p.level() != level) return null;
-        BlockPos spot = findSpot(level, p.blockPosition(), def.scene(), p.getRandom(), 10, 28);
-        if (spot == null) spot = dryLand(level, p.blockPosition().offset(0, 0, -16), 64);
-        if (spot == null) {
-            var ahead = p.getLookAngle().multiply(1, 0, 1).normalize().scale(12);
-            int x = p.getBlockX() + (int) ahead.x, z = p.getBlockZ() + (int) ahead.z;
-            spot = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
-        }
-        Scenes s = get(level.getServer());
-        Scene sc = s.open(level, p, QuestBook.all().containsKey(chain) ? chain : Awaken.MODID + ":" + chain, def, spot, PlayDays.current(level.getServer()));
-        return BlockPos.of(sc.pos);
     }
 
     /** A chain taken at a resident has no scene yet: one is made for its places (a den, a site) around the player. */
@@ -372,13 +281,13 @@ public final class Scenes extends SavedData {
     static BlockPos campColumn(MinecraftServer server) {
         var map = RegionService.map(server);
         boolean city = CityBasin.site(server).isPresent();
-        return new BlockPos(map.centreX() + 6, 0, map.centreZ() - (city ? CAMP_DIST_CITY : CAMP_DIST_CLASSIC));
+        return new BlockPos(map.centreX() + 6, 0, map.centreZ() - (city ? dev.awaken.core.api.TheLull.CAMP_CITY : dev.awaken.core.api.TheLull.CAMP_CLASSIC));
     }
 
-    /** A resident Wayfarer ({@code ilse}, {@code hettie}) in the loaded world near the camp, or null. */
+    /** A resident Wayfarer ({@code ilse} at the camp, {@code hettie} in the city) in the loaded world near their home, or null. */
     public static @Nullable Wayfarer resident(MinecraftServer server, String who) {
         ServerLevel level = server.overworld();
-        BlockPos at = marker(server, 0, "camp");
+        BlockPos at = who.equals("hettie") ? dev.awaken.core.api.CityHooks.spot(level, "hettie") : marker(server, 0, "camp");
         if (at == null || !level.hasChunkAt(at)) return null;
         var near = level.getEntitiesOfClass(Wayfarer.class, new net.minecraft.world.phys.AABB(at).inflate(48, 24, 48), w -> w.who().equals(who) && w.isAlive());
         return near.isEmpty() ? null : near.getFirst();
@@ -395,15 +304,6 @@ public final class Scenes extends SavedData {
     public static @Nullable BlockPos residentAt(MinecraftServer server, String who) {
         Wayfarer w = resident(server, who);
         return w == null ? null : w.blockPosition();
-    }
-
-    /** Dev and tours: the player's newest open scene, or null. */
-    public static @Nullable BlockPos newest(ServerPlayer p) {
-        Scene best = null;
-        for (Scene sc : get(p.level().getServer()).scenes) {
-            if (sc.owner.isPresent() && sc.owner.get().equals(p.getUUID()) && !sc.kind.equals("resident") && (best == null || sc.id > best.id)) best = sc;
-        }
-        return best == null ? null : BlockPos.of(best.pos);
     }
 
     /** Dev and tours: where to stand to see the camp (12 blocks south of it, on the ground; loads the chunk). */
@@ -453,7 +353,7 @@ public final class Scenes extends SavedData {
 
     private void residents(ServerLevel level) {
         MinecraftServer server = level.getServer();
-        if (!residents.contains("ilse") || !residents.contains("hettie")) {
+        if (!residents.contains("ilse")) {
             BlockPos nominal = campColumn(server);
             // founded while still a column of smoke in the distance (render distance 16), not when you're at its edge
             if (camp == NONE && near(level, nominal, 256)) {
@@ -467,7 +367,6 @@ public final class Scenes extends SavedData {
             if (camp != NONE) {
                 BlockPos c = BlockPos.of(camp);
                 place(level, "ilse", c, 0, false);
-                place(level, "hettie", c.offset(9, 0, -4), 12, false);
             }
         }
         if (camp != NONE) {
@@ -479,6 +378,9 @@ public final class Scenes extends SavedData {
                 setDirty();
             }
         }
+        // Hettie lives in the market square (SPEC §43.1; a classic world has no city, and no Hettie)
+        BlockPos square = dev.awaken.core.api.CityHooks.spot(level, "hettie");
+        if (square != null) placeAt(level, "hettie", square);
         // Hale stands on Carillon's quartermaster spot (kept clear by the city); in a classic world, by the camp
         BlockPos post = dev.awaken.core.api.CityHooks.spot(level, "quartermaster");
         if (post != null) placeAt(level, "hale", post);
@@ -552,7 +454,7 @@ public final class Scenes extends SavedData {
 
     // ---- the Horizon line ---------------------------------------------------------------------------------------------
 
-    /** The open scene meant for this player, while it waits (the Horizon line names it: "Wren, stranded"). */
+    /** The Last Fire on the Horizon line until you've stood at it. */
     static List<HorizonHooks.Site> sites(ServerPlayer p) {
         if (!Regions.on(p.level())) return List.of();
         List<HorizonHooks.Site> out = new ArrayList<>();
@@ -562,37 +464,22 @@ public final class Scenes extends SavedData {
             BlockPos camp = marker(p.level().getServer(), 0, "camp");
             if (camp != null) {
                 if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 24 * 24) dev.awaken.progression.Progression.setCounter(p, CAMP_REACHED, 1);
-                else if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 1200 * 1200) out.add(new HorizonHooks.Site("living:camp", "Wayfarer camp", camp, "", false));
+                else if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 1200 * 1200) out.add(new HorizonHooks.Site("living:camp", "The Last Fire", camp, "", false));
             }
-        }
-        QuestState qs = QuestEngine.state(p);
-        for (Scene sc : get(p.level().getServer()).scenes) {
-            if (sc.owner.isEmpty() || !sc.owner.get().equals(p.getUUID()) || sc.kind.equals("resident")) continue;
-            QuestDef d = QuestBook.get(sc.chain);
-            if (d == null || qs.has(sc.chain)) continue;
-            BlockPos at = BlockPos.of(sc.pos);
-            if (at.distSqr(p.blockPosition()) > 300 * 300) continue;
-            Wayfarers.Person who = Wayfarers.get(d.giver());
-            String need = sc.kind.equals("cliff") ? HorizonHooks.TETHER : "";
-            out.add(new HorizonHooks.Site("scene/" + sc.id, (who == null ? d.giver() : who.name()) + ", " + hook(sc.kind), at, need, true));
         }
         return out;
     }
 
-    private static String hook(String kind) {
-        return switch (kind) {
-            case "cliff" -> "stranded";
-            case "road" -> "on the road";
-            case "crag" -> "up the crags";
-            default -> "waiting";
-        };
-    }
-
     public static void init() {
         HorizonHooks.register(Scenes::sites);
+        // the Lull's ridge is measured from the region map's centre: the city's, or spawn's (SPEC §43.1)
+        dev.awaken.core.api.TheLull.install(s -> {
+            var map = RegionService.map(s);
+            return new BlockPos(map.centreX(), 0, map.centreZ());
+        }, s -> CityBasin.site(s).isPresent());
     }
 
-    /** A chain was dropped: a scene made for a resident's chain goes; a found scene stays to be taken again. */
+    /** A chain was dropped: the scene made for its places goes. */
     public static void dropped(MinecraftServer server, long id) {
         Scene sc = scene(server, id);
         if (sc != null && sc.kind.equals("resident")) done(server, id);

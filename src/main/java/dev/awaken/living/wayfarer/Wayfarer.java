@@ -27,7 +27,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
 /**
- * A person out in the wilds (SPEC §21, Phase C): Wren on her ledge, Hettie at her farmstead, Hale at the High Gate. Drawn
+ * A Wayfarer (SPEC §21, §43.1): Ilse at the Last Fire, Hettie in Carillon's market square, Hale at the High Gate. Drawn
  * with a named skin ({@code living.client.WayfarerRenderer}); talked to with use; hurt, never killed (Carillon's citizen
  * rule); stays near where it stands. Its name shows when looked at; it never wears a combat plate.
  */
@@ -78,7 +78,7 @@ public class Wayfarer extends PathfinderMob implements Npc {
         setCustomNameVisible(false);
     }
 
-    /** Asleep on a bedroll (Hettie, at night by the camp's fire): lies still until morning or until spoken to. */
+    /** Asleep (an old save's sleeper): lies still until morning or until spoken to. */
     @Override
     protected boolean isImmobile() {
         return super.isImmobile() || isSleeping();
@@ -96,11 +96,16 @@ public class Wayfarer extends PathfinderMob implements Npc {
         return InteractionResult.SUCCESS;
     }
 
-    /** A scene's Wayfarer moves on once its scene is over and nobody stands close (residents never do). */
+    /**
+     * A scene's Wayfarer moves on once its scene is over and nobody stands close (residents never do); so does an old
+     * world's Hettie out at the camp, since she lives in the city now (SPEC §43.1).
+     */
     @Override
     protected void customServerAiStep(ServerLevel level) {
         super.customServerAiStep(level);
-        if (scene != 0 && tickCount % 200 == 0 && Scenes.scene(level.getServer(), scene) == null && level.getNearestPlayer(this, 16) == null) discard();
+        if (tickCount % 200 != 0 || level.getNearestPlayer(this, 16) != null) return;
+        if (scene != 0 && Scenes.scene(level.getServer(), scene) == null) discard();
+        else if (scene == 0 && who().equals("hettie") && !dev.awaken.core.api.CityHooks.inCity(level, blockPosition())) discard();
     }
 
     @Override

@@ -42,6 +42,7 @@ public final class MobsModule {
         BodyMaterial.install(e -> e instanceof AwakenMob m ? m.def().material() : null);
         Signal.onAction("mobs", Mobs::onSignalAction);
         MobsCommands.register();
+        Stroll.init(); // tours: still creatures walked on the server (SPEC §23.1)
         MobsTests.register();
         dev.awaken.mobs.entity.BossHomeTests.register();
         dev.awaken.mobs.entity.FlightTests.register();

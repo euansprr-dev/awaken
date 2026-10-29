@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "title": "Finding Patterns",
   "area": "weapons",
-  "blurb": "Every style has a place that teaches it: gates, villages, stands, people and Hale's rack.",
+  "blurb": "Every style has a place that teaches it: gates, holdfasts, stands, chests someone left behind and Hale's rack.",
   "weight": 92,
   "opens": [
     "arms:issued"
@@ -27,12 +27,12 @@
       "hint": "It glints. Defeat it and the pattern goes straight into your pack."
     },
     {
-      "id": "person",
-      "text": "Learn a style from a person who teaches it.",
+      "id": "left",
+      "text": "Find a pattern in a chest someone left behind.",
       "done": [
-        "counter:awaken:patterns_from_people"
+        "counter:awaken:patterns_from_left_chests"
       ],
-      "hint": "Hettie, Pell, Marta, Gus, Wren and Oren each teach one at the end of a job."
+      "hint": "The stone people out on the land sometimes still hold a key. Its tag says where the chest is."
     },
     {
       "id": "stand",
@@ -44,11 +44,11 @@
     },
     {
       "id": "village",
-      "text": "Buy a pattern from a village smith.",
+      "text": "Buy a pattern from a holdfast's smith.",
       "done": [
         "counter:awaken:patterns_from_villages"
       ],
-      "hint": "A village sells patterns of its land's level for emeralds."
+      "hint": "A holdfast's smith sells patterns of its land's level for emeralds."
     },
     {
       "id": "five",

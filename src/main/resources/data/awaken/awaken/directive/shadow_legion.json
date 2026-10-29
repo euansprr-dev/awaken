@@ -1,9 +1,9 @@
 {
-  "text": "Fight beside five Echoes at once.",
+  "text": "Use shadow powers twenty times.",
   "condition": {
     "type": "counter",
-    "counter": "awaken:echo_army_peak",
-    "value": 5
+    "counter": "awaken:power_uses/shadow",
+    "value": 20
   },
   "reward": {
     "stat": "SPI",
@@ -14,8 +14,5 @@
   "max_rank": "SOVEREIGN",
   "quick": false,
   "weight": 10,
-  "path": "awaken:shadowbinder",
-  "requires": [
-    "unlock:awaken:echoes"
-  ]
+  "path": "awaken:shadowbinder"
 }

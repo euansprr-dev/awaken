@@ -61,15 +61,20 @@ final class UnderlifeRender {
                 float yaw = yawDeg * Mth.DEG_TO_RAD, ph = Underlife.phase[i], rt = Underlife.rate[i];
                 int light = Underlife.light[i];
                 int col = (int) (a * 255) << 24 | 0xFFFFFF;
-                int st = Underlife.state[i];
+                int st = Underlife.state[i], look = Underlife.variant[i];
                 switch (k) {
                     case Underlife.MOTH -> {
+                        // the dusk, glass and ash moths' wings side by side in row 0, their bodies 5 apart in the cell after
                         float flap = 20F + 45F * Mth.sin(age * 3.1F * rt + ph);
-                        wings(dx, dy, dz, yaw, flap, 0.2F, 0.2F, 0, 0, 16, 16, col, light);
-                        body(dx, dy, dz, yaw, 0.17F, 0.045F, 48, 0, 53, 14, col, light);
+                        wings(dx, dy, dz, yaw, flap, 0.2F, 0.2F, 16 * look, 0, 16 * look + 16, 16, col, light);
+                        body(dx, dy, dz, yaw, 0.17F, 0.045F, 48 + 5 * look, 0, 53 + 5 * look, 14, col, light);
                     }
                     case Underlife.BAT -> {
-                        if (st == Underlife.REST) {
+                        if (look == Underlife.SWIFT) {
+                            // a swift from above, its sickle wings beating in quick bursts between long glides
+                            float beat = Mth.sin(age * 0.9F * rt + ph) > 0.2F ? Mth.sin(age * 4.2F * rt + ph) : 0.6F;
+                            flat(dx, dy, dz, yaw, 0.3F, 0.3F * (0.75F + 0.25F * beat), 16, 16, 32, 32, col, light);
+                        } else if (st == Underlife.REST) {
                             hang(dx, dy, dz, yaw, ph, col, light);
                         } else {
                             // a bat's beat is deep and quick; dropping off the roof the wings are already opening
@@ -82,14 +87,22 @@ final class UnderlifeRender {
                         boolean beetle = k == Underlife.BEETLE;
                         // a little sway as the legs go; the Ochre Deep's rust beetle is the cell left of the plain one
                         float walk = st == Underlife.MOVE ? Mth.sin(age * (beetle ? 1.4F : 0.6F) + ph) * (beetle ? 5F : 9F) : 0F;
-                        int u0 = !beetle ? 0 : Underlife.variant[i] == Underlife.RUST ? 32 : 48;
-                        onFace(dx, dy, dz, Underlife.held[i] ? Direction.UP : DIRS[Underlife.face[i]], yawDeg + walk, beetle ? 0.2F : 0.34F,
-                                u0, beetle ? 16 : 32, u0 + 16, beetle ? 32 : 48, col, light);
+                        // the Violet Deep's chitin crawler is bigger, from row 3
+                        boolean crawler = beetle && look == Underlife.CRAWLER;
+                        int u0 = !beetle ? 0 : look == Underlife.RUST ? 32 : 48, v0 = crawler ? 48 : beetle ? 16 : 32;
+                        onFace(dx, dy, dz, Underlife.held[i] ? Direction.UP : DIRS[Underlife.face[i]], yawDeg + walk,
+                                crawler ? 0.3F : beetle ? 0.2F : 0.34F, u0, v0, u0 + 16, v0 + 16, col, light);
                     }
                     case Underlife.GLOWWORM -> threads(dx, dy, dz, yaw, ph, col, light);
                     case Underlife.FISH -> {
-                        float wag = Mth.sin(age * (st == Underlife.HOP ? 1.6F : 0.45F) + ph) * (st == Underlife.HOP ? 14F : 8F);
-                        flat(dx, dy, dz, yaw + wag * Mth.DEG_TO_RAD, 0.36F, 0.36F, 32, 32, 48, 48, col, light);
+                        if (look == Underlife.CRAYFISH) {
+                            // a crayfish faces what it backs away from: turned round while it darts
+                            float turn = st == Underlife.HOP ? Mth.PI : Mth.sin(age * 0.2F + ph) * 0.05F;
+                            flat(dx, dy, dz, yaw + turn, 0.3F, 0.3F, 16, 32, 32, 48, col, light);
+                        } else {
+                            float wag = Mth.sin(age * (st == Underlife.HOP ? 1.6F : 0.45F) + ph) * (st == Underlife.HOP ? 14F : 8F);
+                            flat(dx, dy, dz, yaw + wag * Mth.DEG_TO_RAD, 0.36F, 0.36F, 32, 32, 48, 48, col, light);
+                        }
                     }
                     case Underlife.CRICKET -> side(dx, dy, dz, yaw, 0.26F, 0.26F, 48, 32, 64, 48, col, light);
                     default -> { }

@@ -41,10 +41,12 @@ import java.util.UUID;
  * <ul>
  * <li><b>The High Gate.</b> The first time a player goes out through it with Bram's letters, a short shot from the gate to
  * the Wayfarers' smoke rising over the trees, with Hale's line said over it. Once.</li>
- * <li><b>Ilse's fire.</b> Coming up to Ilse with the letters (or talking to her) starts a scene by her fire instead of a
- * bare click: she takes the letters, sits you down, says what a fire of your own is for, and holds a coal from hers out
- * in her hand. The step ends as your hand closes on it (the Ember, W1's: one a player, kept through death), and the
- * first thread lets go: the Hearth's line takes over.</li>
+ * <li><b>Ilse's fire, the Last Fire</b> (SPEC §43.1). Coming up to Ilse with the letters (or talking to her) starts her
+ * scene by the fire instead of a bare click: she takes the letters and says her ten lines (JOURNEY part 1, verbatim, each
+ * held for its reading time): the Lull, the stone people, Aldo, the holdfasts, what the licence means; at the eighth she
+ * holds a coal from her fire out in her hand. The step ends as your hand closes on it (the Ember, W1's: one a player,
+ * kept through death), and the first thread lets go: the Hearth's line takes over. A player who already has a home fire
+ * or an Ember hears the other nine.</li>
  * </ul>
  * Nothing hunts or hurts a player while either plays.
  */
@@ -53,10 +55,24 @@ public final class FirstScenes {
 
     /** The gate's shot was sent (once a player). */
     static final String GATE_SEEN = "awaken:first/gate_shot";
-    /** Ilse's beats (ticks into the scene): her lines, the letters, the coal held out; then she waits for your hand. */
-    static final int L1 = 16, DELIVER = 90, L3 = 180, L4 = 270, L5 = 360, OFFER = 450, WAIT = 20 * 30;
-    /** After the coal is taken: her last line, then the scene ends. */
-    static final int LAST = 30, END = LAST + 150;
+    /** Ilse's ten lines at the Last Fire (JOURNEY part 1, verbatim). The eighth holds the coal out. */
+    static final String[] ILSE = {
+            "You're the one from the square. Sit down, the kettle's nearly on.",
+            "This is the last fire. Past that ridge the bells don't carry, and that's where the Lull starts.",
+            "Ordinary people who stay out there get tired. Then they sit down somewhere, and they don't get up again. That's why we all live in the city now.",
+            "Some went back out anyway. For a dog, or a ring, or their mam's grave. You'll pass them on the road. They sat down, and they've gone to stone. Leave them be.",
+            "The first one's on the milestone just past the ridge. That's Aldo. He went back for his dog. Say hello to him for me.",
+            "They say a few walled towns far out kept their bells going and never left. I've never seen one.",
+            "Not you, though. You died once and came back. Whatever the Lull does, it can't do it to you. That's what the licence really means.",
+            "Here. It's a coal from this fire. Put it down wherever you want to live, and that's your home. Nobody will come and bother you out there. Nobody can.",
+            "And don't believe everything the Association says. It isn't all monsters out there. Most of what lives out there just wants to be left alone. Watch before you draw.",
+            "Go on, then. Good luck. Come back now and then and tell me what it looks like. I haven't seen past that ridge in eleven years."};
+    /** The line that holds the coal out. */
+    static final int COAL = 7;
+    /** Her first line (ticks into the scene), the letters a moment after it, the pause between lines, and how long her hand stays out. */
+    static final int L1 = 16, DELIVER = 70, GAP = 12, WAIT = 20 * 30;
+    /** After the coal is taken, before her next line. */
+    static final int AFTER_COAL = 30;
     /** How long a gate shot shields (it lasts about ten seconds). */
     static final int GATE_SHIELD = 20 * 14;
     static final Identifier EMBER = Identifier.fromNamespaceAndPath("awaken", "hearth_ember"),
@@ -66,7 +82,9 @@ public final class FirstScenes {
         final Wayfarer ilse;
         final BlockPos fire;
         final boolean coal;
-        int age, tookAt = -1;
+        int age, tookAt = -1, offeredAt = -1;
+        /** The next of her lines to say, and when (the scene's age). */
+        int next, nextAt = L1;
         boolean delivered, offered, completing;
 
         Run(Wayfarer ilse, BlockPos fire, boolean coal) {
@@ -209,9 +227,11 @@ public final class FirstScenes {
         Run r = RUNS.get(p.getUUID());
         if (r == null) return;
         if (what == LivingNet.FirstSceneReady.TOOK && r.offered && r.tookAt < 0) took(p, r);
-        else if (what == LivingNet.FirstSceneReady.SKIP && r.age < (r.coal ? OFFER - 1 : L4 - 1)) {
+        else if (what == LivingNet.FirstSceneReady.SKIP && r.next < COAL) {
+            // a held skip: on to the coal (with a fire already, to her last two lines)
             if (!r.delivered) delivered(p, r);
-            r.age = r.coal ? OFFER - 1 : L4 - 1;
+            r.next = COAL;
+            r.nextAt = r.age + 1;
         }
     }
 
@@ -250,38 +270,43 @@ public final class FirstScenes {
     private static boolean step(ServerPlayer p, Run r) {
         Wayfarer ilse = r.ilse;
         if (p.isRemoved() || !p.isAlive() || ilse.isRemoved() || p.level() != ilse.level() || p.distanceToSqr(ilse) > 18 * 18) return false;
-        // she stays where she stands while she talks; with the coal held out she brings it over to you
+        // she stays where she sits while she talks; with the coal held out she brings it over to you
         double d2 = p.distanceToSqr(ilse);
         if (r.offered && r.tookAt < 0 && d2 > 2.2 * 2.2) {
             if (r.age % 10 == 0) ilse.getNavigation().moveTo(p, 0.75);
         } else ilse.getNavigation().stop();
         ilse.getLookControl().setLookAt(p, 30, 30);
         int a = ++r.age;
-        if (a == L1) line(p, "Ilse", "You must be one of Bram's new hunters. He said he'd send someone. Have you got our letters?", 70);
-        if (a == DELIVER) delivered(p, r);
-        if (a == DELIVER + 6) line(p, "Ilse", "Thank you! We've been waiting a whole week for these.", 85);
-        if (a == L3) line(p, "Ilse", "Sit down for a minute and catch your breath. You've come a long way.", 60);
-        if (!r.coal) {
-            if (a == L4) line(p, "Ilse", "Looks like you already have a home fire. Good, then you're all set.", 70);
-            if (a == L4 + 90) complete(p, r);
-            return a < L4 + 100;
-        }
-        if (a == L4) line(p, "Ilse", p.level().isDarkOutside() ? "It's getting dark, and nights out here are dangerous."
-                : "It'll be dark sooner than you think, and nights out here are dangerous.", 70);
-        if (a == L5) line(p, "Ilse", "You'll want a place of your own out here. Somewhere safe to sleep and come back to.", 70);
-        if (a == OFFER) offer(p, r);
-        if (r.tookAt < 0) {
+        if (a == DELIVER && !r.delivered) delivered(p, r);
+        if (r.offered && r.tookAt < 0) {
             // her hand stays out; after half a minute she presses the coal into yours
-            if (a > OFFER + WAIT) took(p, r);
+            if (a > r.offeredAt + WAIT) took(p, r);
             return true;
         }
-        int b = a - r.tookAt;
-        if (b == LAST) line(p, "Ilse", "Once it's placed, you can rest there, and if anything happens to you out here, that's where you'll wake up. Good luck!", 80);
-        return b < END;
+        if (a < r.nextAt) return true;
+        if (r.next >= ILSE.length) return false;
+        int i = r.next++;
+        if (i == COAL) {
+            if (r.coal) {
+                offer(p, r);
+                return true;
+            }
+            // a fire of their own already: the step ends where the coal would be, and she goes on
+            complete(p, r);
+            i = r.next++;
+        }
+        line(p, "Ilse", ILSE[i], hold(ILSE[i]));
+        r.nextAt = a + hold(ILSE[i]) + GAP;
+        return true;
+    }
+
+    /** How long a line stays up: a moment to see it, then its words at an easy reading pace. */
+    static int hold(String text) {
+        return 30 + text.length() * 4 / 3;
     }
 
     private static void line(ServerPlayer p, String who, String text, int ticks) {
-        AwakenNet.send(p, new LivingNet.FirstScene(LivingNet.FirstScene.LINE, 0, BlockPos.ZERO, ticks + text.length(), who + "|" + text));
+        AwakenNet.send(p, new LivingNet.FirstScene(LivingNet.FirstScene.LINE, 0, BlockPos.ZERO, ticks, who + "|" + text));
     }
 
     private static void delivered(ServerPlayer p, Run r) {
@@ -301,14 +326,16 @@ public final class FirstScenes {
     /** The coal in her hand, held out to you. */
     private static void offer(ServerPlayer p, Run r) {
         r.offered = true;
+        r.offeredAt = r.age;
         Item ember = BuiltInRegistries.ITEM.getValue(EMBER);
         if (ember != Items.AIR) r.ilse.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(ember));
-        line(p, "Ilse", "Here, take an ember from our fire. Carry it with you, and when you find a spot you'd like to live, place it there. That'll be your home.", 20 * 8);
+        line(p, "Ilse", ILSE[COAL], hold(ILSE[COAL]));
         AwakenNet.send(p, new LivingNet.FirstScene(LivingNet.FirstScene.OFFER, r.ilse.getId(), r.fire, 0, ""));
     }
 
     private static void took(ServerPlayer p, Run r) {
         r.tookAt = r.age;
+        r.nextAt = r.age + AFTER_COAL;
         emptyHand(r);
         complete(p, r);
     }

@@ -41,6 +41,8 @@ final class VoidEngine implements WorldEngine {
         final BlockState wall, worn, floor, wet, trim, bronze, candle, lily, water, chain0, lamp, light, dark, handbell;
         final List<FloorAir.Light> lights = new ArrayList<>();
         Sculpt s;
+        /** The Bell Crypt's wear (content 7), null before. */
+        CryptWear wear;
 
         Plan(Ctx c) {
             this.c = c;
@@ -146,6 +148,21 @@ final class VoidEngine implements WorldEngine {
                 if (rise < 1 || rise == 6 || lat % 5 == 0) return trim;
                 return GatePainter.state(side == 0 || side == 2 ? "minecraft:iron_bars[east=true,west=true]" : "minecraft:iron_bars[north=true,south=true]");
             });
+            // the years on its floors (38.14, stage 3), new gates only
+            if (c.plan().contentVersion() >= 7) {
+                wear = new CryptWear(p, W, seed, floor, wet, trim, (r, x, z) -> {
+                    // an island's shore stands level with the black water, and so do the causeways and the landings
+                    Kind k = kinds.get(r.id);
+                    PassageEngine.Shape sh = shapes.get(r.id);
+                    if (k == null || k == Kind.LINK || sh == null || sh.d(x + 0.5, z + 0.5) > -3) return true;
+                    for (Room.Door d : r.doors) {
+                        int[] bx = WorldPlan.doorBox(d, 9);
+                        if (x >= bx[0] - 1 && x <= bx[1] + 1 && z >= bx[2] - 1 && z <= bx[3] + 1) return true;
+                    }
+                    return false;
+                });
+                wear.apply(s);
+            }
             p.handbells(s);
             s.seal();
         }
@@ -309,6 +326,7 @@ final class VoidEngine implements WorldEngine {
         // ---- what the floor walks on and how its air glows ----------------------------------------------------------
 
         boolean walk(Room r, int x, int z) {
+            if (wear != null && !wear.level(x, z)) return false;
             Kind k = kinds.get(r.id);
             if (k == null || k == Kind.LINK || k == Kind.BUILT) return false;
             PassageEngine.Shape sh = shapes.get(r.id);

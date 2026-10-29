@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "awaken:block/frost_tiles_slab"
+    },
+    "type=top": {
+      "model": "awaken:block/frost_tiles_slab_top"
+    },
+    "type=double": {
+      "model": "awaken:block/frost_tiles"
+    }
+  }
+}

@@ -1,22 +1,4 @@
 {
-  "hearth.bind": {
-    "subtitle": "subtitles.awaken.hearth.bind",
-    "sounds": [
-      { "name": "minecraft:block.respawn_anchor.charge", "type": "event", "pitch": 0.6, "volume": 0.9 }
-    ]
-  },
-  "hearth.bind_fail": {
-    "subtitle": "subtitles.awaken.hearth.bind_fail",
-    "sounds": [
-      { "name": "minecraft:block.respawn_anchor.deplete", "type": "event", "pitch": 1.3, "volume": 0.7 }
-    ]
-  },
-  "hearth.summon": {
-    "subtitle": "subtitles.awaken.hearth.summon",
-    "sounds": [
-      { "name": "minecraft:entity.evoker.prepare_summon", "type": "event", "pitch": 1.4, "volume": 0.5 }
-    ]
-  },
   "hearth.anchor": {
     "subtitle": "subtitles.awaken.hearth.anchor",
     "sounds": [

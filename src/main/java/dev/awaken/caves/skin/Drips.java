@@ -26,6 +26,12 @@ public final class Drips {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SPORE = PARTICLES.register("cave_spore", () -> new SimpleParticleType(false)),
             POLLEN = PARTICLES.register("cave_pollen", () -> new SimpleParticleType(false)),
             WARM_DUST = PARTICLES.register("cave_warm_dust", () -> new SimpleParticleType(false));
+    /** The other six's (SPEC §42.8): mist low over water, the Windcleft's mica glints, glittering dust, ash, rising seep. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MIST = PARTICLES.register("cave_mist", () -> new SimpleParticleType(false)),
+            MICA = PARTICLES.register("cave_mica", () -> new SimpleParticleType(false)),
+            GLITTER = PARTICLES.register("cave_glitter", () -> new SimpleParticleType(false)),
+            ASH = PARTICLES.register("cave_ash", () -> new SimpleParticleType(false)),
+            SEEP = PARTICLES.register("cave_seep", () -> new SimpleParticleType(false));
 
     /** The client's {@code cave_particles} setting (caves.client.CavesClientConfig sets it; a plain flag here). */
     public static volatile boolean enabled = true;

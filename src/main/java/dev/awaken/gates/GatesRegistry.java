@@ -235,6 +235,10 @@ public final class GatesRegistry {
     /** A swinging bell's body: never placed, only shown by a block display (SPEC §38.6). */
     public static final DeferredBlock<Block> BELL_PROP = BLOCKS.registerBlock("bell_prop", Block::new,
             p -> stoneLike(MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0).apply(p).noOcclusion().noLootTable());
+    /** A bay bell fallen from the vault (SPEC §38.14, stage 3): the swinging bell's look on its side, its mouth to its facing. */
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Facing> CRYPT_BELL_TOPPLED = BLOCKS.registerBlock("crypt_bell_toppled",
+            p -> new dev.awaken.gates.block.WorldBlocks.Facing(p, false),
+            p -> stoneLike(MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0).apply(p).noOcclusion().noLootTable());
     public static final List<DeferredBlock<? extends Block>> WORLD_BLOCKS = List.of(CRYPT_LIMESTONE, CRYPT_LIMESTONE_WORN, CRYPT_LIMESTONE_CRUMBLING,
             CRYPT_TRACERY, CRYPT_FLAGSTONE, CRYPT_FLAGSTONE_WET, CRYPT_PATINA, CRYPT_CANDLES, CRYPT_MOON_GLASS, CRYPT_ROSE_GLASS, CRYPT_NICHE,
             CRYPT_VESTMENT, CRYPT_BELL_ROPE, CRYPT_LILY_CANDLE, CRYPT_HANDBELL);
@@ -249,11 +253,16 @@ public final class GatesRegistry {
     public static final java.util.Map<String, DeferredBlock<? extends Block>> SETS = dev.awaken.gates.block.ThemeBlocks.registerSets(BLOCKS);
     public static final List<DeferredItem<BlockItem>> SET_ITEMS = java.util.stream.Stream.<DeferredBlock<? extends Block>>concat(java.util.stream.Stream.of(BELL_TOWER),
             SETS.values().stream()).map(ITEMS::registerSimpleBlockItem).toList();
+    /** Slabs, stairs, drifts and bits cut from the themes' blocks for the places' ground (SPEC §38.14), after them. */
+    public static final java.util.Map<String, DeferredBlock<? extends Block>> DEPTH_BLOCKS = dev.awaken.gates.block.DepthBlocks.register(BLOCKS,
+            id -> THEME_BLOCKS.containsKey(id) ? THEME_BLOCKS.get(id) : WORLD_BLOCKS.stream().filter(b -> b.getId().getPath().equals(id)).findFirst().orElse(null));
+    public static final List<DeferredItem<BlockItem>> DEPTH_ITEMS = DEPTH_BLOCKS.values().stream().map(ITEMS::registerSimpleBlockItem).toList();
 
     /** A theme block by id (SPEC §38.10), for code that names one. */
     public static Block theme(String id) {
         DeferredBlock<? extends Block> b = THEME_BLOCKS.get(id);
         if (b == null) b = SETS.get(id);
+        if (b == null) b = DEPTH_BLOCKS.get(id);
         return b.get();
     }
 
@@ -556,6 +565,7 @@ public final class GatesRegistry {
         for (var item : WORLD_ITEMS) e.accept(item.get());
         for (var item : THEME_ITEMS) e.accept(item.get());
         for (var item : SET_ITEMS) e.accept(item.get());
+        for (var item : DEPTH_ITEMS) e.accept(item.get());
         for (var item : RIG_ITEMS) e.accept(item.get());
     }
 }

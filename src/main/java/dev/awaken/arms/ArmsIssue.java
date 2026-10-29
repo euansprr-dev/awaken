@@ -141,6 +141,11 @@ public final class ArmsIssue implements ArmsApi.Hooks {
     }
 
     @Override
+    public boolean leftChestPattern(ServerPlayer p) {
+        return ArmsPatterns.leftChest(p);
+    }
+
+    @Override
     public boolean placeStand(net.minecraft.world.level.LevelAccessor level, net.minecraft.core.BlockPos pos, net.minecraft.core.Direction facing, String kind, String rankLabel, long seed) {
         return ArmsStands.place(level, pos, facing, kind, rankLabel, seed);
     }

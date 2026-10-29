@@ -11,6 +11,7 @@
     "boss"
   ],
   "params": {
+    "depth_roof": 1.9,
     "tunnel": 1.6,
     "roof": 7,
     "wobble": 2.4

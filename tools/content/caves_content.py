@@ -39,17 +39,46 @@ def box(humidity=None, temperature=None, continentalness=None, erosion=None):
 ROOTED = box(humidity=(-0.1, None), temperature=(-0.45, 0.55), continentalness=(-0.11, None))
 TEMPERATE = box(temperature=(-0.45, 0.2), continentalness=(-0.19, None))
 WARM_WET = box(humidity=(-0.1, None), temperature=(0.2, 0.55), continentalness=(-0.19, None))
+HIGHLAND = box(continentalness=(-0.11, None), erosion=(None, -0.375))
+DRY = box(humidity=(None, -0.1), temperature=(-0.45, 0.55), continentalness=(-0.11, None))
+SHORE = box(temperature=(-0.45, 0.55), continentalness=(-0.19, -0.11))
+MARSH = box(temperature=(-0.45, 0.55), continentalness=(-0.11, None), erosion=(0.55, None))
+FROZEN = box(temperature=(None, -0.45), continentalness=(-0.19, None))
+HOT = box(temperature=(0.55, None), continentalness=(-0.19, None))
+WARM_DRY = box(humidity=(None, -0.1), temperature=(0.2, 0.55), continentalness=(-0.19, None))
+LAND = box(continentalness=(-0.19, None))
 
 # id: band, priority, slot (quantiles of the cover), land (any of these boxes), archetype, water colour, music, the cave air
 # (the biome's fog colour: delve's Depths draws the air in close underground and leans it this way, SPEC §42.7)
 REGIONS = {
-    'rootways': dict(band='shallows', priority=-10, slot=(0, 1), boxes=[ROOTED],
+    'rootways': dict(name='The Rootways', band='shallows', priority=-10, slot=(0, 1), boxes=[ROOTED],
                      archetype='lush_caves', water='#3b6f62', music='minecraft:music.overworld.lush_caves', air='#6f9a84',
                      words='where the forest\'s roots come down'),
-    'ochre_deep': dict(band='middle', priority=-10, slot=(0, 1), boxes=[TEMPERATE, WARM_WET],
+    'ochre_deep': dict(name='The Ochre Deep', band='middle', priority=-10, slot=(0, 1), boxes=[TEMPERATE, WARM_WET],
                        archetype='dripstone_caves', water='#a8622c', music='minecraft:music.overworld.dripstone_caves', air='#c08050',
                        words='iron country'),
+    # P3 (SPEC §42.8): each joins the pack (injected) once its shape and kit are in
+    'pale_halls': dict(name='The Pale Halls', band='shallows', priority=-9, slot=(0, 1), boxes=[DRY, SHORE],
+                       archetype='dripstone_caves', water='#6f9fae', music='minecraft:music.overworld.dripstone_caves', air='#b9b4a0',
+                       words='limestone halls under the open country'),
+    'windcleft': dict(name='The Windcleft', band='middle', priority=-13, slot=(0, 1), boxes=[HIGHLAND],
+                      archetype='dripstone_caves', water='#4a6072', music='minecraft:music.overworld.dripstone_caves', air='#7c8896',
+                      words='where the mountains split open'),
+    'drowned_galleries': dict(name='The Drowned Galleries', band='middle', priority=-12, slot=(0, 1), boxes=[SHORE, MARSH],
+                              archetype='lush_caves', water='#2f6a66', music='minecraft:music.overworld.lush_caves', air='#4f807a',
+                              words='flooded caves under the wetlands and the shore'),
+    'glimmer_hollows': dict(name='The Glimmer Hollows', band='middle', priority=-11, slot=(0, 1), boxes=[FROZEN, HOT, WARM_DRY],
+                            archetype='dripstone_caves', water='#6a8aa8', music='minecraft:music.overworld.dripstone_caves', air='#a99a72',
+                            words='crystal caves under the hard lands'),
+    'black_vaults': dict(name='The Black Vaults', band='deep', priority=-10, slot=(0, 0.55), boxes=[LAND],
+                         archetype='dripstone_caves', water='#3a3232', music='minecraft:music.overworld.deep_dark', air='#3d3636',
+                         words='the great halls at the bottom of the world'),
+    'violet_deep': dict(name='The Violet Deep', band='deep', priority=-10, slot=(0.55, 1), boxes=[LAND],
+                        archetype='dripstone_caves', water='#4a3a6a', music='minecraft:music.overworld.deep_dark', air='#5b4b7c',
+                        words='where the Hollows nest'),
 }
+# the regions in the pack now
+INJECTED = {rid: r for rid, r in REGIONS.items() if r.get('injected', True)}
 # vanilla tags that list its cave biomes, so a structure starting underground (mineshafts, trial chambers, ruined
 # portals) or a stronghold ring still finds a region biome good
 STRUCTURE_TAGS = ['has_structure/mineshaft', 'has_structure/trial_chambers', 'has_structure/ruined_portal_standard',
@@ -99,15 +128,29 @@ def biome(rid, r):
 # ---- the skin (SPEC §42.4): its blocks' assets, loot, tags and lang, and the feature that lays it -------------------------
 RES = os.path.join(ROOT, 'src/main/resources')
 MERGE = os.path.join(ROOT, 'src/main/merge/caves')
-SKIN_ROCKS = ('stone', 'deepslate', 'tuff', 'rootstone', 'ochre')
-# the regions' own rock (P2), and their ore twins: (block, the vanilla ore it stands in for, its tags)
-REGION_ROCKS = {'rootstone': 'Rootstone', 'ochre_stone': 'Ochre Stone'}
-TWINS = {'rootstone_coal_ore': ('coal_ore', 'Rootstone Coal Ore', 'coal'), 'rootstone_copper_ore': ('copper_ore', 'Rootstone Copper Ore', 'copper'),
-         'ochre_iron_ore': ('iron_ore', 'Ochre Iron Ore', 'iron')}
+SKIN_ROCKS = ('stone', 'deepslate', 'tuff', 'rootstone', 'ochre', 'limestone', 'slate', 'siltstone', 'glimmer', 'basalt', 'seepstone')
+NICE = {'glimmer': 'Glimmerstone'}
+# the regions' own rock (P2 two, P3 six), and their ore twins: (block, the vanilla ore it stands in for, its tags, the tool it needs)
+REGION_ROCKS = {'rootstone': 'Rootstone', 'ochre_stone': 'Ochre Stone', 'limestone': 'Limestone', 'banded_slate': 'Banded Slate',
+                'siltstone': 'Siltstone', 'glimmerstone': 'Glimmerstone', 'column_basalt': 'Column Basalt', 'seepstone': 'Seepstone'}
+TWINS = {'rootstone_coal_ore': ('coal_ore', 'Rootstone Coal Ore', 'coal', None),
+         'rootstone_copper_ore': ('copper_ore', 'Rootstone Copper Ore', 'copper', 'stone'),
+         'ochre_iron_ore': ('iron_ore', 'Ochre Iron Ore', 'iron', 'stone'),
+         'limestone_iron_ore': ('iron_ore', 'Limestone Iron Ore', 'iron', 'stone'),
+         'banded_slate_gold_ore': ('gold_ore', 'Banded Slate Gold Ore', 'gold', 'iron'),
+         'siltstone_lapis_ore': ('lapis_ore', 'Siltstone Lapis Ore', 'lapis', 'stone'),
+         'siltstone_copper_ore': ('copper_ore', 'Siltstone Copper Ore', 'copper', 'stone'),
+         'glimmerstone_redstone_ore': ('redstone_ore', 'Glimmerstone Redstone Ore', 'redstone', 'iron'),
+         'column_basalt_diamond_ore': ('deepslate_diamond_ore', 'Column Basalt Diamond Ore', 'diamond', 'iron')}
 OVERLAYS = {'cave_lichen_shallows': ('lichen_shallows', 'Grey-Green Cave Lichen'), 'cave_lichen_middle': ('lichen_middle', 'Gold Cave Lichen'),
             'cave_lichen_deep': ('lichen_deep', 'Blue Cave Lichen'), 'mineral_crust': ('mineral_crust', 'Mineral Crust'),
             'wet_streaks': ('wet_streaks', 'Wet Streaks'), 'rust_crust': ('rust_crust', 'Rust Crust'),
-            'rust_flowstone': ('rust_flowstone', 'Rust Flowstone'), 'ember_lichen': ('ember_lichen', 'Ember Lichen')}
+            'rust_flowstone': ('rust_flowstone', 'Rust Flowstone'), 'ember_lichen': ('ember_lichen', 'Ember Lichen'),
+            'rime': ('rime', 'Rime'), 'glow_algae': ('glow_algae', 'Glow Algae')}
+# the six P3 regions' dressing (SPEC §42.8): name, and how it's mined
+DRIFTS = {'rimstone': ('Rimstone', 'pickaxe'), 'silt': ('Silt', 'shovel'), 'ash': ('Ash', 'shovel')}
+BITS = {'cave_pearls': 'Cave Pearls', 'shed_chitin': 'Shed Chitin'}
+CRYSTALS = {'amber_crystal': 'Amber Crystal', 'glacial_crystal': 'Glacial Crystal'}
 
 
 def put(root, rel, data):
@@ -144,7 +187,7 @@ def skin():
     lang, pickaxe = {}, []
     facing = {'north': 0, 'east': 90, 'south': 180, 'west': 270}
     for rock in SKIN_ROCKS:
-        nice = rock.capitalize()
+        nice = NICE.get(rock, rock.capitalize())
         bid = f'{rock}_rubble'
         put(RES, f'{A}/blockstates/{bid}.json', {'variants': {
             f'facing={f},variant={v}': {'model': f'awaken:block/caves/{rock}_rubble_{v}', **({'y': y} if y else {})}
@@ -196,8 +239,10 @@ def skin():
         put(RES, f'data/awaken/loot_table/blocks/{bid}.json', self_loot(bid))
         lang[f'block.awaken.{bid}'] = nice
         pickaxe.append(f'awaken:{bid}')
-    for bid, (ore, nice, kind) in TWINS.items():
-        put(RES, f'{A}/blockstates/{bid}.json', {'variants': {'': {'model': f'awaken:block/caves/{bid}'}}})
+    for bid, (ore, nice, kind, tool) in TWINS.items():
+        # the redstone twin glows when touched, as its ore does (the same model lit or not)
+        states = {f'lit={v}': {'model': f'awaken:block/caves/{bid}'} for v in ('false', 'true')} if kind == 'redstone' else {'': {'model': f'awaken:block/caves/{bid}'}}
+        put(RES, f'{A}/blockstates/{bid}.json', {'variants': states})
         put(RES, f'{A}/items/{bid}.json', {'model': {'type': 'minecraft:model', 'model': f'awaken:block/caves/{bid}'}})
         loot = json.load(open(os.path.join(REF, f'loot_table/blocks/{ore}.json')))
         loot['random_sequence'] = f'awaken:blocks/{bid}'
@@ -209,11 +254,13 @@ def skin():
         pickaxe.append(f'awaken:{bid}')
         for kind_tag in ('block', 'item'):
             put(MERGE, f'data/minecraft/tags/{kind_tag}/{kind}_ores.json', {'replace': False, 'values': [f'awaken:{b}' for b, t in TWINS.items() if t[2] == kind]})
-    put(MERGE, 'data/minecraft/tags/block/needs_stone_tool.json', {'replace': False, 'values': ['awaken:rootstone_copper_ore', 'awaken:ochre_iron_ore']})
+    for tool in ('stone', 'iron'):
+        put(MERGE, f'data/minecraft/tags/block/needs_{tool}_tool.json', {'replace': False, 'values': [f'awaken:{b}' for b, t in TWINS.items() if t[3] == tool]})
     put(MERGE, 'data/minecraft/tags/block/base_stone_overworld.json', {'replace': False, 'values': [f'awaken:{b}' for b in REGION_ROCKS]})
     # 26.3 reads motion (heightmaps, suffocation, rain) from tags: the caves' rock and the pieces you can stand on
     put(MERGE, 'data/minecraft/tags/block/blocks_motion_no_leaves.json', {'replace': False, 'values':
-        [f'awaken:{b}' for b in REGION_ROCKS] + [f'awaken:{r}_rubble' for r in SKIN_ROCKS] + [f'awaken:pointed_{r}' for r in SKIN_ROCKS]})
+        [f'awaken:{b}' for b in REGION_ROCKS] + [f'awaken:{r}_rubble' for r in SKIN_ROCKS] + [f'awaken:pointed_{r}' for r in SKIN_ROCKS]
+        + [f'awaken:{b}' for b in DRIFTS] + ['awaken:driftwood']})
     for t in ('stone_tool_materials', 'stone_crafting_materials'):
         put(MERGE, f'data/minecraft/tags/item/{t}.json', {'replace': False, 'values': [f'awaken:{b}' for b in REGION_ROCKS]})
     # the Rootways' growth: glowcaps on the floor, root curtains from the roof
@@ -228,12 +275,60 @@ def skin():
     put(RES, f'{A}/items/root_curtain.json', {'model': {'type': 'minecraft:model', 'model': 'awaken:item/caves/root_curtain'}})
     put(RES, 'data/awaken/loot_table/blocks/root_curtain.json', self_loot('root_curtain', {'condition': 'minecraft:match_tool', 'predicate': {'items': 'minecraft:shears'}}))
     lang['block.awaken.root_curtain'] = 'Root Curtain'
+    # the six P3 regions' dressing (SPEC §42.8)
+    shovel, axe = [], []
+    for bid, (nice, tool) in DRIFTS.items():
+        put(RES, f'{A}/blockstates/{bid}.json', {'variants': {f'variant={v}': turns(f'awaken:block/caves/{bid}_{v}') for v in range(3)}})
+        put(RES, f'{A}/items/{bid}.json', {'model': {'type': 'minecraft:model', 'model': f'awaken:block/caves/{bid}_0'}})
+        put(RES, f'data/awaken/loot_table/blocks/{bid}.json', self_loot(bid))
+        lang[f'block.awaken.{bid}'] = nice
+        (pickaxe if tool == 'pickaxe' else shovel).append(f'awaken:{bid}')
+    for bid, nice in BITS.items():
+        put(RES, f'{A}/blockstates/{bid}.json', {'variants': {f'variant={v}': turns(f'awaken:block/caves/{bid}_{v}') for v in range(3)}})
+        put(RES, f'{A}/items/{bid}.json', {'model': {'type': 'minecraft:model', 'model': f'awaken:block/caves/{bid}_2'}})
+        put(RES, f'data/awaken/loot_table/blocks/{bid}.json', self_loot(bid))
+        lang[f'block.awaken.{bid}'] = nice
+    cluster = {'up': {}, 'down': {'x': 180}, 'north': {'x': 90}, 'south': {'x': 90, 'y': 180}, 'east': {'x': 90, 'y': 90}, 'west': {'x': 90, 'y': 270}}
+    for bid, nice in CRYSTALS.items():
+        put(RES, f'{A}/blockstates/{bid}.json', {'variants': {f'facing={f},waterlogged={w}': {'model': f'awaken:block/caves/{bid}', **rot}
+                                                              for f, rot in cluster.items() for w in ('false', 'true')}})
+        put(RES, f'{A}/models/item/caves/{bid}.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': f'awaken:block/caves/{bid}'}})
+        put(RES, f'{A}/items/{bid}.json', {'model': {'type': 'minecraft:model', 'model': f'awaken:item/caves/{bid}'}})
+        put(RES, f'data/awaken/loot_table/blocks/{bid}.json', self_loot(bid))
+        lang[f'block.awaken.{bid}'] = nice
+        pickaxe.append(f'awaken:{bid}')
+    put(RES, f'{A}/blockstates/old_rope.json', {'variants': {'tip=false': turns('awaken:block/caves/old_rope'), 'tip=true': turns('awaken:block/caves/old_rope_tip')}})
+    put(RES, f'{A}/models/item/caves/old_rope.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': 'awaken:block/caves/old_rope_tip'}})
+    put(RES, f'{A}/items/old_rope.json', {'model': {'type': 'minecraft:model', 'model': 'awaken:item/caves/old_rope'}})
+    put(RES, 'data/awaken/loot_table/blocks/old_rope.json', self_loot('old_rope'))
+    lang['block.awaken.old_rope'] = 'Old Rope'
+    put(RES, f'{A}/blockstates/driftwood.json', {'variants': {'axis=x': {'model': 'awaken:block/caves/driftwood', 'y': 90},
+                                                               'axis=z': {'model': 'awaken:block/caves/driftwood'}}})
+    put(RES, f'{A}/items/driftwood.json', {'model': {'type': 'minecraft:model', 'model': 'awaken:block/caves/driftwood'}})
+    put(RES, 'data/awaken/loot_table/blocks/driftwood.json', self_loot('driftwood'))
+    lang['block.awaken.driftwood'] = 'Driftwood'
+    axe.append('awaken:driftwood')
+    put(RES, f'{A}/blockstates/cave_weed.json', {'variants': {'': {'model': 'awaken:block/caves/cave_weed'}}})
+    put(RES, f'{A}/models/item/caves/cave_weed.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': 'awaken:block/caves/cave_weed'}})
+    put(RES, f'{A}/items/cave_weed.json', {'model': {'type': 'minecraft:model', 'model': 'awaken:item/caves/cave_weed'}})
+    put(RES, 'data/awaken/loot_table/blocks/cave_weed.json', self_loot('cave_weed', {'condition': 'minecraft:match_tool', 'predicate': {'items': 'minecraft:shears'}}))
+    lang['block.awaken.cave_weed'] = 'Cave Weed'
+    put(RES, f'{A}/blockstates/violet_growth.json', {'variants': {f'variant={v}': {'model': f'awaken:block/caves/violet_growth_{v}'} for v in range(3)}})
+    put(RES, f'{A}/models/item/caves/violet_growth.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': 'awaken:block/caves/violet_growth_1'}})
+    put(RES, f'{A}/items/violet_growth.json', {'model': {'type': 'minecraft:model', 'model': 'awaken:item/caves/violet_growth'}})
+    put(RES, 'data/awaken/loot_table/blocks/violet_growth.json', self_loot('violet_growth'))
+    lang['block.awaken.violet_growth'] = 'Violet Growth'
+    put(MERGE, 'data/minecraft/tags/block/mineable/shovel.json', {'replace': False, 'values': shovel})
+    put(MERGE, 'data/minecraft/tags/block/mineable/axe.json', {'replace': False, 'values': axe})
+    put(MERGE, 'data/minecraft/tags/block/climbable.json', {'replace': False, 'values': ['awaken:old_rope']})
     for p, n in (('cave_drip', 4), ('cave_splash', 4), ('cave_spore', 3), ('cave_pollen', 3), ('cave_warm_dust', 2)):
         put(RES, f'{A}/particles/{p}.json', {'textures': [f'awaken:caves/{p[5:]}_{i}' for i in range(n)]})
     put(MERGE, 'data/minecraft/tags/block/mineable/pickaxe.json', {'replace': False, 'values': pickaxe})
     put(MERGE, 'data/minecraft/tags/block/mineable/hoe.json', {'replace': False, 'values': [f'awaken:{b}' for b in OVERLAYS]})
-    put(MERGE, 'data/minecraft/tags/block/sword_efficient.json', {'replace': False, 'values': ['awaken:dusty_web', 'awaken:glowcap', 'awaken:root_curtain']})
+    put(MERGE, 'data/minecraft/tags/block/sword_efficient.json', {'replace': False, 'values': ['awaken:dusty_web', 'awaken:glowcap', 'awaken:root_curtain',
+                                                                                             'awaken:violet_growth', 'awaken:old_rope']})
     for rid, r in REGIONS.items():
+        lang[f'biome.awaken.{rid}'] = r['name']
         lang[f'caves.region.awaken.{rid}'] = r['words']
     lang_path = os.path.join(MERGE, f'{A}/lang/en_us.json')
     have = json.load(open(lang_path)) if os.path.exists(lang_path) else {}
@@ -268,15 +363,15 @@ def main():
     # the hosts: every vanilla overworld biome but the vanilla cave biomes (the deep dark keeps its ancient cities)
     hosts = sorted(set(expand('is_overworld')) - CAVE_BIOMES)
     write('data/awaken/tags/worldgen/biome/caves/hosts.json', {'replace': False, 'values': hosts})
-    write('data/awaken/tags/worldgen/biome/caves/regions.json', {'replace': False, 'values': [f'awaken:{r}' for r in REGIONS]})
+    write('data/awaken/tags/worldgen/biome/caves/regions.json', {'replace': False, 'values': [f'awaken:{r}' for r in INJECTED]})
     # in the overworld (lodes, Deepglass, lamps, ore thinning and the Hollows reach them), not #c:is_underground
-    write('data/minecraft/tags/worldgen/biome/is_overworld.json', {'replace': False, 'values': [f'awaken:{r}' for r in REGIONS]})
+    write('data/minecraft/tags/worldgen/biome/is_overworld.json', {'replace': False, 'values': [f'awaken:{r}' for r in INJECTED]})
     # the cave sound family, with the vanilla cave biomes (every overworld biome is in exactly one)
-    write('data/awaken/tags/worldgen/biome/soundscape/hollows.json', {'replace': False, 'values': [f'awaken:{r}' for r in REGIONS]})
+    write('data/awaken/tags/worldgen/biome/soundscape/hollows.json', {'replace': False, 'values': [f'awaken:{r}' for r in INJECTED]})
     for tag in STRUCTURE_TAGS:
-        write(f'data/minecraft/tags/worldgen/biome/{tag}.json', {'replace': False, 'values': [f'awaken:{r}' for r in REGIONS]})
+        write(f'data/minecraft/tags/worldgen/biome/{tag}.json', {'replace': False, 'values': [f'awaken:{r}' for r in INJECTED]})
     by_arch = {}
-    for rid, r in REGIONS.items():
+    for rid, r in INJECTED.items():
         by_arch.setdefault(r['archetype'], []).append(f'awaken:{rid}')
     for arch, ids in by_arch.items():
         write(f'data/awaken/tags/worldgen/biome/archetype/{arch}.json', {'replace': False, 'values': ids})
@@ -284,7 +379,7 @@ def main():
     old = os.path.join(PACK, 'data/awaken/lithostitched/biome_injector/caves')
     for f in os.listdir(old) if os.path.isdir(old) else []:
         os.remove(os.path.join(old, f))
-    for rid, r in REGIONS.items():
+    for rid, r in INJECTED.items():
         band = r['band']
         params = {}
         if band == 'deep':

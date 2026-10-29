@@ -1,21 +1,14 @@
 package dev.awaken.hearth.client;
 
-import com.google.common.reflect.TypeToken;
 import dev.awaken.hearth.HearthContent;
-import dev.awaken.hearth.echo.Echoes;
 import dev.awaken.progression.client.CodexEntries;
 import dev.awaken.progression.client.StatusSections;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.LightCoordsUtil;
-import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
-import net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
@@ -26,18 +19,13 @@ import java.util.List;
 public final class HearthClient {
     private HearthClient() {}
 
-    /** Echoes render as dark shapes with a violet edge. */
-    public static final int ECHO_OUTLINE = 0xFF6A3FD0;
-
     public static void init(IEventBus modBus) {
         modBus.addListener(HearthClient::renderers);
         modBus.addListener(HearthClient::particles);
-        modBus.addListener(HearthClient::renderStates);
         modBus.addListener(GuideClient::payloads);
         modBus.addListener(HomeClient::payloads);
         modBus.addListener(HomeHud::register);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> {
-            EchoKeys.tick();
             AuraFx.tick();
             GuideClient.tick();
             HomeClient.tick();
@@ -79,14 +67,6 @@ public final class HearthClient {
         e.registerSpriteSet(HearthContent.HEARTH_WARMTH.get(), HearthParticles.Warmth.Provider::new);
         e.registerSpriteSet(HearthContent.HEARTH_FLAME.get(), HearthParticles.Flame.Provider::new);
         e.registerSpriteSet(HearthContent.HEARTH_FIREFLY.get(), HearthParticles.Firefly.Provider::new);
-    }
-
-    private static void renderStates(RegisterRenderStateModifiersEvent e) {
-        e.registerEntityModifier(new TypeToken<LivingEntityRenderer<LivingEntity, LivingEntityRenderState, ?>>() {}, (entity, state) -> {
-            if (!Echoes.isEcho(entity)) return;
-            state.lightCoords = LightCoordsUtil.pack(1, 2);
-            state.outlineColor = ECHO_OUTLINE;
-        });
     }
 
     private static void tooltip(ItemTooltipEvent e) {

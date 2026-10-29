@@ -47,6 +47,9 @@ public final class ArmsApi {
         /** A chain of the living module ended: the person who teaches a style at its end pays it. */
         void questDone(ServerPlayer player, String chain);
 
+        /** A left chest opened: teaches the first early-found style the fighter doesn't know. False when they know them all. */
+        boolean leftChestPattern(ServerPlayer player);
+
         /** A fighter in a main gate's Lord room: their roll for Spoils, a Marked weapon of the Lord's style (docs/arms-progression/PLAN.md §3.7). */
         void lordSpoils(ServerPlayer player, String rankLabel, String themeId);
 
@@ -121,6 +124,10 @@ public final class ArmsApi {
 
     public static void questDone(ServerPlayer player, String chain) {
         if (hooks != null) hooks.questDone(player, chain);
+    }
+
+    public static boolean leftChestPattern(ServerPlayer player) {
+        return hooks != null && hooks.leftChestPattern(player);
     }
 
     public static void lordSpoils(ServerPlayer player, String rankLabel, String themeId) {

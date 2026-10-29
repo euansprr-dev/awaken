@@ -148,7 +148,6 @@ final class CoreSections {
                 new Row("Lucid dreams", "awaken:lucid_dreams"),
                 new Row("Nightmares beaten", "awaken:nightmares_beaten"),
                 new Row("Spirits spoken to", "awaken:spirits_spoken"),
-                new Row("Echoes bound", "awaken:echoes_bound"),
                 new Row("Machines built", "awaken:machines_built"),
                 new Row("Secrets found", "awaken:secrets_found"),
                 new Row("Deaths", "awaken:deaths"));

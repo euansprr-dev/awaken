@@ -23,6 +23,8 @@ import dev.awaken.powers.ladder.PowerLadder;
 import dev.awaken.powers.ladder.StepHooks;
 import dev.awaken.powers.content.PowerContent;
 import dev.awaken.powers.content.PowerDrone;
+import dev.awaken.progression.Perks;
+import dev.awaken.progression.Progression;
 import dev.awaken.progression.Rank;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.effect.MobEffects;
@@ -253,7 +255,8 @@ final class TechPowers {
         PowerDrone d = PowerContent.DRONE.get().create(c.level, EntitySpawnReason.MOB_SUMMONED);
         if (d == null) return null;
         d.snapTo(at.x, at.y, at.z, c.yRot(), 0);
-        d.setup(c.player, life, dmg);
+        double boost = 1 + Progression.perk(c.player, Perks.SUMMON_STRENGTH);
+        d.setup(c.player, (int) (life * boost), (float) (dmg * boost));
         d.cast = c;
         c.level.addFreshEntity(d);
         Fx.at(c, FxKind.HOLO, at).dir(new Vec3(0, 1, 0)).aux(0).noAnim().send();

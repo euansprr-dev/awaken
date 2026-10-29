@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/outer_stairs",
+  "textures": {
+    "bottom": "awaken:block/ember_slag",
+    "top": "awaken:block/ember_slag",
+    "side": "awaken:block/ember_slag"
+  }
+}

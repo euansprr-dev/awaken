@@ -84,7 +84,7 @@ public final class Cottage {
 
     // ---- the offer --------------------------------------------------------------------------------------------------
 
-    /** The Anchor took root: a few seconds later (after the welcome), offer the cottage if this player never had it. */
+    /** (Before SPEC §43.6) The Anchor took root: a few seconds later, offer the cottage if this player never had it. Not called now. */
     public static void afterAnchorPlaced(ServerPlayer sp) {
         HearthPlayer hp = HearthService.player(sp);
         if (hp.tips.contains(TIP_OFFERED) || hp.tips.contains(TIP_BUILT)) return;
@@ -119,14 +119,11 @@ public final class Cottage {
     }
 
     /** What the guide shows for the cottage (see {@link GuideData#cottage}). */
-    static int state(ServerPlayer sp, HearthRecord h) {
-        HearthPlayer hp = HearthService.player(sp);
-        if (h.hearthfire()) return GuideData.COTTAGE_NONE; // Oren comes with the Anchor
+    public static int state(ServerPlayer sp, HearthRecord h) {
         if (JOBS.containsKey(sp.getUUID()) || h.cottageBuild != null) return GuideData.COTTAGE_BUILDING;
         if (h.cottage != null) return GuideData.COTTAGE_BUILT;
-        if (hp.tips.contains(TIP_BUILT)) return GuideData.COTTAGE_NONE; // free once: it stands at an old home
-        if (hp.tips.contains(TIP_NO_ROOM)) return GuideData.COTTAGE_NO_ROOM;
-        return hp.tips.contains(TIP_DECLINED) ? GuideData.COTTAGE_DECLINED : GuideData.COTTAGE_OFFER;
+        // (SPEC §43.6) Oren lives in the city now: nobody offers one (a build already under way still finishes)
+        return GuideData.COTTAGE_NONE;
     }
 
     /** Yes: find a spot and raise it. False when it can't start (built before, already building, no Hearth). */

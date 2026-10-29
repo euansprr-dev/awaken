@@ -45,6 +45,12 @@ public final class Arrival {
         return w == null ? Long.MIN_VALUE / 2 : w.started;
     }
 
+    /** (SPEC §43.6) A walk in that will never finish: its body goes with it. */
+    static void cancel(ServerLevel level, String id) {
+        Walk w = WALKS.remove(id);
+        if (w != null && level.getEntity(w.entity) instanceof TownNpc npc) npc.discard();
+    }
+
     public static void clear() {
         WALKS.clear();
     }

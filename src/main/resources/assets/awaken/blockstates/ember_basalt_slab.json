@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "awaken:block/ember_basalt_slab"
+    },
+    "type=top": {
+      "model": "awaken:block/ember_basalt_slab_top"
+    },
+    "type=double": {
+      "model": "awaken:block/ember_basalt"
+    }
+  }
+}

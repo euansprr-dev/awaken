@@ -46,7 +46,7 @@ public abstract class PowerSummon extends PathfinderMob implements OwnableEntity
         return life;
     }
 
-    /** Charge + Echoes: hits twice as hard, then expires sooner. */
+    /** Charge meets your summons: hits twice as hard, then expires sooner. */
     public void overcharge(int ticks) {
         overcharged = true;
         life = Math.min(life, ticks);

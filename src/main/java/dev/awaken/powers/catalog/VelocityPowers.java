@@ -331,7 +331,7 @@ public final class VelocityPowers {
         // the body becomes a bolt: a streak and a crackling arc along the path, a burst where you land
         Fx.at(c, FxKind.BLINK, from).to(to).aux(STEP_WIDTH).send();
         Fx.at(c, FxKind.LIGHTNING, from.add(0, 1, 0)).to(to.add(0, 1, 0)).ticks(8).scale(1.4).noAnim().send();
-        dev.awaken.powers.ForceInteractions.chargeEchoes(c.player, to, 3);
+        dev.awaken.powers.ForceInteractions.chargeSummons(c.player, to, 3);
         Fx.at(c, FxKind.IMPACT, to.add(0, 1, 0)).dir(to.subtract(from)).scale(1.4).noAnim().send();
         c.sound(from, PowerSounds.ZAP, 1.1f, 1.5f);
         c.sound(to, PowerSounds.THUNDER, 0.8f, 1.6f);

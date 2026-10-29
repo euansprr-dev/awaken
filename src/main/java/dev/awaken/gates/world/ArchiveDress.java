@@ -13,6 +13,8 @@ import java.util.List;
  */
 final class ArchiveDress extends Dress {
     final BlockState stone, carved, shelf, shelfLit, tiles, planks, lamp, paper, kelp, glass, ink, lectern, bridge, water;
+    /** Shaped ground (SPEC §38.14): tile slabs and stairs on the floor, the archive's stone at the walls, paper drifted, scraps */
+    final BlockState gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits;
     final boolean stacks, atrium, sunken, inkwell, sea;
 
     ArchiveDress(CaveEngine.Cave c) {
@@ -30,6 +32,12 @@ final class ArchiveDress extends Dress {
         ink = mat("fall", "awaken:archive_inkfall");
         lectern = mat("touch", "awaken:archive_lectern");
         bridge = mat("bridge", "awaken:archive_paper_bridge");
+        gFloorSlab = mat("ground_slab", "awaken:archive_tiles_slab");
+        gFloorStairs = mat("ground_stairs", "awaken:archive_tiles_stairs");
+        gWallSlab = mat("wall_slab", "awaken:archive_stone_slab");
+        gWallStairs = mat("wall_stairs", "awaken:archive_stone_stairs");
+        gDrift = mat("ground_drift", "awaken:archive_paper_drift");
+        gBits = mat("ground_bits", "awaken:archive_scraps");
         water = c.fluid;
         String n = name();
         stacks = n.equals("stacks");
@@ -54,6 +62,33 @@ final class ArchiveDress extends Dress {
         if (rise >= 0 && Math.floorMod(rise, 6) == 5) return Math.floorMod(x + z, 4) == 0 ? carved : stone;
         if (rise < 0 || (!stacks && rise > 10)) return stone;
         return Hash.unit(seed + 11, x * 31 + y, z) < 0.1 ? shelfLit : shelf;
+    }
+
+    @Override
+    boolean depth() {
+        return true;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return kit(part, false, gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits);
+    }
+
+    @Override
+    double bits() {
+        // loose pages lie thick: the archive grows little else
+        return 0.5;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return null;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // shelves standing floor to roof banded with written stone, stone crusted with writing, a toppled bookcase, book piles
+        return pieces(part, x, y, z, shelf, carved, stone, carved, shelf, shelf);
     }
 
     @Override

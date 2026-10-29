@@ -128,7 +128,7 @@ public final class FirstThread {
                     yield at != null ? BlockPos.containing(at) : OpeningHooks.place("roost");
                 }
                 case "hale" -> Scenes.marker(server, scene, "spot:quartermaster");
-                case "ilse", "hettie" -> {
+                case "ilse" -> {
                     BlockPos at = Scenes.residentAt(server, o.target());
                     yield at != null ? at : Scenes.marker(server, scene, "camp");
                 }

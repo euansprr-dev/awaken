@@ -39,6 +39,8 @@ cmd item replace entity @s weapon.offhand with minecraft:torch
 # ---- 1. the Rootways, its roomiest floor near spawn: the caption first (HUD on), then the cave ----
 hud on
 cmd execute positioned -150 40 -280 run awaken caves goto rootways 0
+wait 20
+waitpassage
 wait 60
 shotnow rw01_caption_a
 wait 80
@@ -67,6 +69,8 @@ cmd effect clear @s minecraft:night_vision
 
 # ---- 2. the Rootways, the next two floors ----
 cmd execute positioned -150 40 -280 run awaken caves goto rootways 1
+wait 20
+waitpassage
 wait 300
 shot rw02_torch
 cmd effect give @s minecraft:night_vision 100000 0 true
@@ -77,6 +81,8 @@ wait 30
 shot rw02_roof_nv
 cmd effect clear @s minecraft:night_vision
 cmd execute positioned -150 40 -280 run awaken caves goto rootways 2
+wait 20
+waitpassage
 wait 300
 shot rw03_torch
 cmd effect give @s minecraft:night_vision 100000 0 true
@@ -87,6 +93,8 @@ cmd effect clear @s minecraft:night_vision
 # ---- 3. the Ochre Deep, its roomiest floor near spawn: the caption, then the cave ----
 hud on
 cmd execute positioned -150 20 -280 run awaken caves goto ochre_deep 0
+wait 20
+waitpassage
 wait 60
 shotnow od01_caption_a
 wait 80
@@ -115,6 +123,8 @@ cmd effect clear @s minecraft:night_vision
 
 # ---- 4. the Ochre Deep, the next two floors ----
 cmd execute positioned -150 20 -280 run awaken caves goto ochre_deep 1
+wait 20
+waitpassage
 wait 300
 shot od02_torch
 cmd effect give @s minecraft:night_vision 100000 0 true
@@ -125,6 +135,8 @@ wait 30
 shot od02_roof_nv
 cmd effect clear @s minecraft:night_vision
 cmd execute positioned -150 20 -280 run awaken caves goto ochre_deep 2
+wait 20
+waitpassage
 wait 300
 shot od03_torch
 cmd effect give @s minecraft:night_vision 100000 0 true

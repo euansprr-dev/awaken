@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "awaken:block/desert_tile",
+    "top": "awaken:block/desert_tile",
+    "side": "awaken:block/desert_tile"
+  }
+}

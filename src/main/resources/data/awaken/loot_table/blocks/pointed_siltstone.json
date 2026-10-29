@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "awaken:blocks/pointed_siltstone",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:pointed_siltstone"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

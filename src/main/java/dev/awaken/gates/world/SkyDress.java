@@ -15,6 +15,8 @@ import java.util.List;
 final class SkyDress extends Dress {
     final BlockState rock, turf, marble, carved, gold, planks, rope, fall, vines, crystal, banner, lantern, hide, barnacle, chime,
             fence, log, leaves, grass, daisy, dandelion, dark;
+    /** Shaped ground (SPEC §38.14): marble slabs and stairs on the ruins, rock at the cliffs, turf drifted, pebbles */
+    final BlockState gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits;
     final boolean isles, ruins, stair, high;
     private int[] secretBox;
 
@@ -35,6 +37,12 @@ final class SkyDress extends Dress {
         hide = mat("hide", "awaken:sky_hide");
         barnacle = mat("barnacle", "awaken:sky_barnacle");
         chime = mat("touch", "awaken:sky_chime");
+        gFloorSlab = mat("ground_slab", "awaken:sky_marble_slab");
+        gFloorStairs = mat("ground_stairs", "awaken:sky_marble_stairs");
+        gWallSlab = mat("wall_slab", "awaken:sky_rock_slab");
+        gWallStairs = mat("wall_stairs", "awaken:sky_rock_stairs");
+        gDrift = mat("ground_drift", "awaken:sky_turf_drift");
+        gBits = mat("ground_bits", "awaken:sky_pebbles");
         fence = GatePainter.state("minecraft:birch_fence");
         log = GatePainter.state("minecraft:birch_log[axis=y]");
         leaves = WorldMats.with(GatePainter.state("minecraft:flowering_azalea_leaves"), "persistent", "true");
@@ -84,6 +92,32 @@ final class SkyDress extends Dress {
         // the fallen city's foundations show in the island's side under the turf
         if (ruins && rise >= -4 && rise < 0) return rise == -2 && Math.floorMod(x + z, 6) == 0 ? carved : marble;
         return rock;
+    }
+
+    @Override
+    boolean depth() {
+        return true;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return kit(part, ruins ? Hash.noise(seed + 3, x, z, 6) > 0.58 : true, gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits);
+    }
+
+    @Override
+    double bits() {
+        return 0.083;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return turf;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // rock outcrops under turf, fallen ruin stones, a heap of rock
+        return pieces(part, x, y, z, rock, null, rock, turf, marble, rock);
     }
 
     @Override

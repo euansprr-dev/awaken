@@ -2,7 +2,6 @@ package dev.awaken.hearth;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.awaken.hearth.echo.EchoRole;
 import dev.awaken.hearth.room.Furniture;
 import dev.awaken.hearth.room.Miss;
 import dev.awaken.hearth.room.Room;
@@ -44,16 +43,10 @@ public final class HearthRecord {
     public final Set<String> arrived = new LinkedHashSet<>();
     public final Map<String, UUID> npcs = new HashMap<>();
     public BlockPos spire;
-    /** Role pads inside the radius, in placement order (assignment order). */
-    public final LinkedHashMap<BlockPos, EchoRole> pads = new LinkedHashMap<>();
-    /** Echo entity currently working each pad (runtime + saved so we don't double-spawn after a restart). */
-    public final Map<BlockPos, UUID> padEchoes = new HashMap<>();
     /** Gate breaks seen near this Hearth, by gate id. */
     public final Map<String, BreakState> breaks = new HashMap<>();
     /** Rank ordinal of a rank-up still waiting to be celebrated at home (-1 = none). */
     public int pendingCelebration = -1;
-    /** Ticks of Mine duty accumulated since the last ore delivery, per pad. */
-    public final Map<BlockPos, Integer> mineProgress = new HashMap<>();
     public long createdDay;
     public long itemsHauled, cropsHarvested, oresBrought;
     /** A cell inside the cottage Oren raised here (null = none): the guide says "Oren built this one". */
@@ -102,15 +95,6 @@ public final class HearthRecord {
         ).apply(i, BreakState::new));
     }
 
-    private record Pad(BlockPos pos, EchoRole role, Optional<UUID> echo, int mine) {
-        static final Codec<Pad> CODEC = RecordCodecBuilder.create(i -> i.group(
-                BlockPos.CODEC.fieldOf("pos").forGetter(Pad::pos),
-                EchoRole.CODEC.fieldOf("role").forGetter(Pad::role),
-                UUIDUtil.CODEC.optionalFieldOf("echo").forGetter(Pad::echo),
-                Codec.INT.optionalFieldOf("mine", 0).forGetter(Pad::mine)
-        ).apply(i, Pad::new));
-    }
-
     private record Npc(String id, Optional<UUID> entity) {
         static final Codec<Npc> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("id").forGetter(Npc::id),
@@ -134,10 +118,10 @@ public final class HearthRecord {
         ).apply(i, Core::new));
     }
 
-    private record Town(List<Npc> npcs, List<Pad> pads, List<BreakState> breaks, List<Long> tallies) {
+    /** (SPEC §43.4) an older save's role pads ("pads") are no longer read: the pads are plain blocks now. */
+    private record Town(List<Npc> npcs, List<BreakState> breaks, List<Long> tallies) {
         static final Codec<Town> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Npc.CODEC.listOf().optionalFieldOf("npcs", List.of()).forGetter(Town::npcs),
-                Pad.CODEC.listOf().optionalFieldOf("pads", List.of()).forGetter(Town::pads),
                 BreakState.CODEC.listOf().optionalFieldOf("breaks", List.of()).forGetter(Town::breaks),
                 Codec.LONG.listOf().optionalFieldOf("tallies", List.of()).forGetter(Town::tallies)
         ).apply(i, Town::new));
@@ -208,9 +192,7 @@ public final class HearthRecord {
     private Town town() {
         List<Npc> n = new ArrayList<>();
         for (String id : arrived) n.add(new Npc(id, Optional.ofNullable(npcs.get(id))));
-        List<Pad> p = new ArrayList<>();
-        pads.forEach((pos, role) -> p.add(new Pad(pos, role, Optional.ofNullable(padEchoes.get(pos)), mineProgress.getOrDefault(pos, 0))));
-        return new Town(n, p, List.copyOf(breaks.values()), List.of(itemsHauled, cropsHarvested, oresBrought));
+        return new Town(n, List.copyOf(breaks.values()), List.of(itemsHauled, cropsHarvested, oresBrought));
     }
 
     private Household household() {
@@ -258,11 +240,6 @@ public final class HearthRecord {
         for (Npc n : t.npcs) {
             r.arrived.add(n.id);
             n.entity.ifPresent(u -> r.npcs.put(n.id, u));
-        }
-        for (Pad p : t.pads) {
-            r.pads.put(p.pos, p.role);
-            p.echo.ifPresent(u -> r.padEchoes.put(p.pos, u));
-            if (p.mine > 0) r.mineProgress.put(p.pos, p.mine);
         }
         for (BreakState b : t.breaks) r.breaks.put(b.gateId(), b);
         if (t.tallies.size() >= 3) {

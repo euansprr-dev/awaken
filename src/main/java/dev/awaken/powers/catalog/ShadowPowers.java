@@ -24,6 +24,7 @@ import dev.awaken.powers.Running;
 import dev.awaken.powers.content.PowerContent;
 import dev.awaken.powers.content.PowerSummon;
 import dev.awaken.powers.content.ShadowSoldier;
+import dev.awaken.progression.Perks;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.Rank;
 import dev.awaken.progression.Stat;
@@ -63,7 +64,7 @@ public final class ShadowPowers {
 
         PowerType.builder("echo_swap", "Echo Swap", Family.SHADOW, Slot.ACTIVE)
                 .forces(Forces.Force.SPIRIT).cost(18).cooldown(160).damage(5).unlock(Rank.C).icon("swap")
-                .desc("Trade places with one of your summons, decoys or Echoes. Enemies around where you appear are struck and blinded.")
+                .desc("Trade places with one of your summons or decoys. Enemies around where you appear are struck and blinded.")
                 .variant(Variant.of("Shroud", "Both places fill with blinding smoke"))
                 .variant(Variant.of("Relay", "No strike, but back twice as fast").cd(0.5f))
                 .cast(ShadowPowers::echoSwap).register();
@@ -231,9 +232,7 @@ public final class ShadowPowers {
         if (!e.isAlive()) return false;
         if (e instanceof PowerSummon s) return s.getOwner() == c.player;
         var ally = Allies.get(e);
-        if (ally != null && ally.owner().equals(c.player.getUUID()) && ally.kind() == Allies.Kind.DECOY) return true;
-        var role = e.getExistingData(CoreApi.MOB_ROLE.get());
-        return role.isPresent() && role.get().role() == MobRole.Role.ECHO && e.distanceToSqr(c.player) < 32 * 32;
+        return ally != null && ally.owner().equals(c.player.getUUID()) && ally.kind() == Allies.Kind.DECOY;
     }
 
     static Result echoSwap(Cast c) {
@@ -290,8 +289,10 @@ public final class ShadowPowers {
         int count = (c.is(1) ? 2 : c.is(2) ? 8 : Math.min(8, 4 + Math.max(0, spi - 5) / 15)) + (int) c.num(2, "extra", 0);
         boolean captain = c.step(5);
         double hpMul = c.is(1) ? 2.5 : c.is(2) ? 0.45 : 1.0;
-        float dmg = c.dmg();
-        int life = c.ticks(400);
+        // Shadowbinder and its truth and title: the soldiers you raise hit harder and stay longer
+        double boost = 1 + Progression.perk(c.player, Perks.SUMMON_STRENGTH);
+        float dmg = (float) (c.dmg() * boost);
+        int life = (int) (c.ticks(400) * boost);
         double hp = 20 * PowerMath.levelScale(Progression.profile(c.player).level()) * 0.8 * hpMul;
         Moves.makeRoom(c.player, count + (captain ? 1 : 0));
         List<ShadowSoldier> risen = new java.util.ArrayList<>();
