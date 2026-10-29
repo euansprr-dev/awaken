@@ -1,11 +1,13 @@
 """The Living Deep's underlife voices (SPEC §42.5): the cave cricket you hear long before you see it, and a roost of bats
-bursting off the roof as you pass under. Synthesised from scratch with tools/art/audiokit.py and the wild voices' helpers
+bursting off the roof as you pass under; and the regions' own (SPEC §42.7): old roots creaking in the Rootways' roof, and
+in the Ochre Deep the rock ticking as it settles, the chime crickets' chorus and a warm hum under it all. Synthesised from scratch with tools/art/audiokit.py and the wild voices' helpers
 (tools/art/specs/audio_wild.py); nothing is recorded or copied.
 
     python3 tools/art/specs/audio_underlife.py         render every one-shot, write the events and subtitles
     python3 tools/art/specs/audio_underlife.py json    only the events and subtitles
 
-One-shots (sounds/caves/<name><n>.ogg, mono), played where the creature is. Unlike the wild's, which are dry because the
+One-shots (sounds/caves/<name><n>.ogg, mono), played where the creature is; one loop (sounds/caves/warm_hum.ogg), the
+Ochre Deep's bed, played round the listener and seamless end to start. Unlike the wild's, which are dry because the
 open air gives back nothing, each carries a little of the rock round it: a few hard early reflections and a short dark
 tail, so a chirp reads as in a passage, not in a meadow. Mastered as the wild's (-28 dBFS gated RMS, <= -6 dBTP).
 Event ids never start with `ambient.` (Sound Physics skips those).
@@ -106,11 +108,86 @@ def bats(v, seed):
     return rock(b.out(), seed + 11, wet=0.3)
 
 
+def root_creak(v, seed):
+    """Old roots shifting in the rock overhead: a slow stick-slip creak (a train of tiny slips, forty to a hundred a
+    second, speeding and slowing as the root bends) ringing the wood's few resonances, once or twice with a pause between,
+    dulled by the earth it comes through."""
+    r = K.rng(seed)
+    b = W.Buf()
+    t = 0.01
+    for k in range(1 + v % 2 + int(r.random() < 0.3)):
+        dur = r.uniform(0.6, 1.3)
+        L = K.ns(dur)
+        f0 = r.uniform(38, 66)
+        f = W.curve(L, [(0, f0), (0.3, f0 * r.uniform(1.3, 1.8)), (0.7, f0 * r.uniform(0.9, 1.4)), (1, f0 * 0.8)], ms=20)
+        slips = np.diff(np.floor(np.cumsum(f) / SR), prepend=0) > 0
+        x = slips * (0.55 + 0.45 * r.random(L)) + 0.08 * r.standard_normal(L)
+        body = (K.bandpass(x, r.uniform(260, 340), 4) + 0.6 * K.bandpass(x, r.uniform(640, 760), 5)
+                + 0.3 * K.bandpass(x, r.uniform(1300, 1600), 6))
+        u = np.arange(L) / (L - 1)
+        env = np.sin(np.pi * u) ** 0.6 * (1 + 0.3 * K.smooth_noise(L, 6, seed + k))
+        b.add(K.lowpass(body * env, 2400, 2), t)
+        t += dur + r.uniform(0.25, 0.7)
+    return rock(b.out(), seed + 3, wet=0.3)
+
+
+def rock_tick(v, seed):
+    """The Ochre Deep's rock settling, the way warm stone ticks as it cools: one to three small dry clicks, each ringing a
+    few milliseconds in the rock, spaced unevenly."""
+    r = K.rng(seed)
+    b = W.Buf()
+    t = 0.005
+    for k in range(1 + v % 3):
+        base = r.uniform(1800, 3200)
+        y = W.knock(r, base, [(1, 1, 0.025), (1.71, 0.5, 0.018), (2.63, 0.3, 0.012)], hard=r.uniform(0.5, 1.0), click=0.8,
+                    click_fc=7000)
+        b.add(y, t, r.uniform(0.5, 1.0))
+        t += r.uniform(0.08, 0.6)
+    return rock(b.out(), seed + 5, wet=0.35)
+
+
+def chime_cricket(v, seed):
+    """The Ochre Deep's chime crickets: three or four in a chorus, each chirp a tiny bell-like ping rather than a buzz
+    (pure partials, not harmonic: 1, 2.32, 4.1, dying in a few hundredths of a second), in trills of three to five, the
+    voices a little apart in pitch so the chorus shimmers."""
+    r = K.rng(seed)
+    b = W.Buf()
+    voices = 3 + v % 2
+    for i in range(voices):
+        f0 = r.uniform(2400, 3100)
+        t = r.uniform(0.0, 0.6)
+        rate = r.uniform(0.7, 1.2)
+        while t < 3.0:
+            for p in range(int(r.integers(3, 6))):
+                y = K.modal(f0 * (1 + 0.003 * r.standard_normal()), (1, 2.32, 4.1), (1, 0.35, 0.12), (0.06, 0.03, 0.015), K.ns(0.09),
+                            attack=0.002, seed=W._sd(r))
+                b.add(y, t + p * r.uniform(0.045, 0.06), r.uniform(0.5, 1.0) / voices ** 0.5)
+            t += 1 / rate * r.uniform(0.8, 1.3)
+    return rock(b.out(), seed + 9, wet=0.32)
+
+
+def warm_hum(seed):
+    """The Ochre Deep's bed: a low warm hum of pure partials on 52 Hz beating slowly, over a brown rumble; eight seconds
+    that loop without a seam (the last half second crossfaded into the first)."""
+    n, fade = K.ns(8.0), K.ns(0.5)
+    x = K.drone(52.0, n + fade, partials=(1, 2, 3, 5), amps=(1, 0.45, 0.2, 0.06), beat=0.12, seed=seed)
+    x = x / (np.max(np.abs(x)) + 1e-9) + 0.5 * W._unit(K.lowpass(K.noise(n + fade, "brown", seed + 1), 180, 2))
+    w = np.sin(0.5 * np.pi * np.arange(fade) / fade) ** 2
+    y = x[:n].copy()
+    y[:fade] = x[:fade] * w + x[n:n + fade] * (1 - w)
+    return y
+
+
 # event: (file stem, voice, variants, reach in blocks, gated RMS dBFS, subtitle)
 SHOTS = {
     "caves.cricket": ("cricket", cricket, 4, 24, -28.0, "Cave cricket chirps"),
     "caves.bats": ("bats", bats, 3, 24, -27.0, "Bats scatter"),
+    "caves.root_creak": ("root_creak", root_creak, 3, 20, -30.0, "Roots creak overhead"),
+    "caves.rock_tick": ("rock_tick", rock_tick, 4, 16, -30.0, "Rock ticks"),
+    "caves.chime_cricket": ("chime_cricket", chime_cricket, 4, 24, -29.0, "Chime crickets ring"),
 }
+# loops: (file stem, maker, gated RMS dBFS)
+LOOPS = {"caves.warm_hum": ("warm_hum", warm_hum, -30.0)}
 
 
 def path(name, k):
@@ -128,6 +205,8 @@ def write_events():
         ev[eid] = {"subtitle": "subtitles.awaken." + eid,
                    "sounds": [{"name": f"awaken:caves/{name}{k + 1}", "attenuation_distance": att} for k in range(n)]}
         lang["subtitles.awaken." + eid] = sub
+    for eid, (name, _, _) in LOOPS.items():
+        ev[eid] = {"sounds": [{"name": f"awaken:caves/{name}"}]}
     with open(spath, "w") as f:
         json.dump(dict(sorted(ev.items())), f, indent=2)
         f.write("\n")
@@ -154,9 +233,23 @@ def render_shots():
                   f"{os.path.getsize(p) / 1024:4.0f} kB  (target {rms:.0f})")
 
 
+def render_loops():
+    q = TARGETS["sfx"][3]
+    for eid, (name, fn, rms) in LOOPS.items():
+        y = K.highpass(fn(sum(map(ord, name)) * 17), 40, 2)
+        y = y * K.dbamp(rms - K.gated_rms(y))      # no fades: the ends must meet
+        if K.true_peak(y) > W.CEIL:
+            y = y * K.dbamp(W.CEIL - K.true_peak(y) - 0.15)
+        p = os.path.join(SOUNDS, f"caves/{name}.ogg")
+        K.write_ogg(p, y, q, None)
+        d = K.read_audio(p)
+        print(f"  caves/{name:<5s} {len(d) / SR:5.2f}s  RMS {K.gated_rms(d):6.1f}  TP {K.true_peak(d):5.1f}  loop")
+
+
 def main(argv):
     if not argv or argv[0] != "json":
         render_shots()
+        render_loops()
     write_events()
     return 0
 

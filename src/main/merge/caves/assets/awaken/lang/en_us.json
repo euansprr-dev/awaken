@@ -36,5 +36,8 @@
   "caves.region.awaken.ochre_deep": "iron country",
   "caves.region.awaken.rootways": "where the forest's roots come down",
   "subtitles.awaken.caves.bats": "Bats scatter",
-  "subtitles.awaken.caves.cricket": "Cave cricket chirps"
+  "subtitles.awaken.caves.chime_cricket": "Chime crickets ring",
+  "subtitles.awaken.caves.cricket": "Cave cricket chirps",
+  "subtitles.awaken.caves.rock_tick": "Rock ticks",
+  "subtitles.awaken.caves.root_creak": "Roots creak overhead"
 }

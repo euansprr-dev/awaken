@@ -1,5 +1,6 @@
 package dev.awaken.caves.client;
 
+import dev.awaken.caves.CaveRegion;
 import dev.awaken.caves.CavesModule;
 import dev.awaken.caves.life.UnderSites;
 import dev.awaken.core.audio.client.Soundscape;
@@ -35,15 +36,21 @@ import java.util.Arrays;
  * hop away if you come closer. Every half second the director looks at a few cells round you for a floor, a wall, a high
  * roof, a pool or a light ({@link UnderSites}) and lets something live there; whatever you leave behind fades away.
  * Overworld caves only (the gates' worlds have their own life); quieter in the Middle Dark, nearly empty in the Deep.
+ * The regions (SPEC §42.7) have their own: glow-worm threads hanging in clusters from the Rootways' roofs, glowing in the
+ * dark; rust beetles on the Ochre Deep's walls, and its crickets the chime crickets.
  */
 final class Underlife {
     private Underlife() {}
 
     static final int CAP = 40;
-    static final int MOTH = 0, BEETLE = 1, MILLIPEDE = 2, BAT = 3, FISH = 4, CRICKET = 5, KINDS = 6;
-    /** At most this many of each kind at once (39 in all). */
-    static final int[] MAX = {6, 5, 3, 14, 6, 5};
-    static final String[] NAMES = {"moths", "beetles", "millipedes", "bats", "fish", "crickets"};
+    static final int MOTH = 0, BEETLE = 1, MILLIPEDE = 2, BAT = 3, FISH = 4, CRICKET = 5, GLOWWORM = 6, KINDS = 7;
+    /** At most this many of each kind at once (the pool holds 40; glow-worms only where bats and the rest are few). */
+    static final int[] MAX = {6, 5, 3, 14, 6, 5, 10};
+    static final String[] NAMES = {"moths", "beetles", "millipedes", "bats", "fish", "crickets", "glow-worm threads"};
+    /** A region's own look or voice for a kind: 0 the plain one; 1 the Ochre Deep's rust beetle or chime cricket. */
+    static final int RUST = 1, CHIME = 1;
+    /** Glow-worm threads give their own light: full block light, so they shine in the dark. */
+    static final int GLOW = LightCoordsUtil.pack(15, 0);
     static final int MOVE = 0, REST = 1, FLY = 2, HOP = 3;
     /** A moth's anchor that follows the hand instead of staying put. */
     static final int HAND = -2;
@@ -51,7 +58,7 @@ final class Underlife {
 
     // the pool: kind < 0 is a free slot
     static final int[] kind = new int[CAP], state = new int[CAP], timer = new int[CAP], light = new int[CAP], face = new int[CAP],
-            group = new int[CAP], blockLight = new int[CAP], chirp = new int[CAP], age = new int[CAP];
+            group = new int[CAP], blockLight = new int[CAP], chirp = new int[CAP], age = new int[CAP], variant = new int[CAP];
     static final double[] x = new double[CAP], y = new double[CAP], z = new double[CAP], xo = new double[CAP], yo = new double[CAP],
             zo = new double[CAP], vx = new double[CAP], vy = new double[CAP], vz = new double[CAP], ax = new double[CAP],
             ay = new double[CAP], az = new double[CAP], tx = new double[CAP], ty = new double[CAP], tz = new double[CAP],
@@ -69,6 +76,7 @@ final class Underlife {
     static long now;
     static boolean enabled = true, under;
     private static Bands.Band band = Bands.Band.SHALLOWS;
+    private static CaveRegion region;
     private static long nextVoice;
 
     private static final RandomSource R = RandomSource.create();
@@ -117,6 +125,7 @@ final class Underlife {
         if (now % 10 == 0) {
             under = underground(level, p);
             band = Bands.of(Mth.floor(py));
+            region = RegionClient.here;
         }
         boolean on = enabled && CavesClientConfig.underlife() && under && level.dimension() == Level.OVERWORLD;
         if (live > 0) step(level, on);
@@ -149,7 +158,7 @@ final class Underlife {
                 continue;
             }
             if ((now + i) % 10 == 0) blockLight[i] = level.getBrightness(LightLayer.BLOCK, M.set(Mth.floor(x[i]), Mth.floor(y[i]), Mth.floor(z[i])));
-            light[i] = LightCoordsUtil.pack(Math.max(blockLight[i], heldAt(x[i], y[i], z[i])), 0);
+            light[i] = k == GLOWWORM ? GLOW : LightCoordsUtil.pack(Math.max(blockLight[i], heldAt(x[i], y[i], z[i])), 0);
             if (held[i]) {
                 if (k == MOTH || k == BAT && state[i] == FLY) yaw[i] += 2F;
                 continue;
@@ -160,6 +169,7 @@ final class Underlife {
                 case BAT -> bat(i, level);
                 case FISH -> fish(i, level);
                 case CRICKET -> cricket(i, level);
+                case GLOWWORM -> { }   // they hang where they are
                 default -> free(i);
             }
         }
@@ -179,6 +189,7 @@ final class Underlife {
 
     /** How many of a kind this band holds: the Shallows all, the Middle Dark fewer bats and moths, the Deep a few beetles and fish. */
     private static int want(int k) {
+        if (k == GLOWWORM) return region == CaveRegion.ROOTWAYS ? MAX[k] : 0;
         return switch (band) {
             case SHALLOWS -> MAX[k];
             case MIDDLE -> k == BAT ? 7 : k == MOTH ? 4 : MAX[k];
@@ -209,6 +220,8 @@ final class Underlife {
             if (seen) continue;
             if ((bits & UnderSites.POOL) != 0) {
                 if (count[FISH] < want(FISH) && fishAt(level, cx, cy, cz)) made++;
+            } else if ((bits & UnderSites.ROOF) != 0 && count[GLOWWORM] + 2 <= want(GLOWWORM) && R.nextFloat() < 0.5F) {
+                if (glowworms(level, cx, cy, cz)) made++;
             } else if ((bits & UnderSites.ROOST) != 0 && count[BAT] + 4 <= want(BAT) && d2 > 10 * 10) {
                 if (roost(level, cx, cy, cz)) made++;
             } else if ((bits & UnderSites.WALL) != 0 && count[BEETLE] < want(BEETLE) && R.nextFloat() < 0.6F) {
@@ -268,6 +281,7 @@ final class Underlife {
                 blockLight[i] = 0;
                 light[i] = 0;
                 age[i] = 0;
+                variant[i] = region == CaveRegion.OCHRE_DEEP && (k == BEETLE || k == CRICKET) ? RUST : 0;
                 return i;
             }
         }
@@ -608,7 +622,8 @@ final class Underlife {
         // its song: quiet while you're close, on and off from further away
         if (--chirp[i] <= 0) {
             chirp[i] = 100 + R.nextInt(220);
-            if (d2 > 5 * 5 && d2 < REACH * REACH) voice(x[i], y[i] + 0.1, z[i], CavesModule.CRICKET.get(), 0.7F, 0.92F + R.nextFloat() * 0.16F, 40);
+            if (d2 > 5 * 5 && d2 < REACH * REACH) voice(x[i], y[i] + 0.1, z[i], variant[i] == CHIME ? CavesModule.CHIME_CRICKET.get()
+                    : CavesModule.CRICKET.get(), 0.7F, 0.92F + R.nextFloat() * 0.16F, 40);
         }
     }
 
@@ -634,6 +649,23 @@ final class Underlife {
             a += 0.9;
         }
         timer[i] = 100 + R.nextInt(200);
+    }
+
+    // ---- glow-worm threads: a cluster of two to four hanging from a roof ----------------------------------------------------
+
+    private static boolean glowworms(ClientLevel level, int cx, int cy, int cz) {
+        int n = 2 + R.nextInt(3), made = 0;
+        for (int t = 0; t < 8 && made < n; t++) {
+            int nx = cx + R.nextInt(3) - 1, nz = cz + R.nextInt(3) - 1;
+            if (!UnderSites.open(level.getBlockState(M.set(nx, cy, nz))) || !UnderSites.rock(level.getBlockState(M.set(nx, cy + 1, nz)))) continue;
+            int i = slot(GLOWWORM);
+            if (i < 0) break;
+            place(i, nx + 0.2 + R.nextDouble() * 0.6, cy + 0.995, nz + 0.2 + R.nextDouble() * 0.6);
+            state[i] = REST;
+            light[i] = GLOW;
+            made++;
+        }
+        return made > 0;
     }
 
     // ---- voices -------------------------------------------------------------------------------------------------------
@@ -671,14 +703,16 @@ final class Underlife {
         double fx = -Mth.sin(yawOf()), fz = Mth.cos(yawOf()), rx = -fz, rz = fx;
         int gx = Mth.floor(px), gz = Mth.floor(pz), n = 0;
         double ground = py;
-        int[] kinds = {MOTH, MOTH, BAT, BAT, BEETLE, MILLIPEDE, FISH, CRICKET};
+        int[] kinds = {MOTH, MOTH, BAT, BAT, BEETLE, BEETLE, MILLIPEDE, FISH, CRICKET, GLOWWORM};
         for (int j = 0; j < kinds.length; j++) {
             int k = kinds[j], i = slot(k);
             if (i < 0) continue;
             double off = (j - kinds.length / 2.0) * 0.55, d = 2.6;
             double bx = px + fx * d + rx * off, bz = pz + fz * d + rz * off;
+            variant[i] = j == 5 ? RUST : 0;   // the second beetle is the Ochre Deep's
             double by = switch (k) {
                 case MOTH -> ground + 1.4;
+                case GLOWWORM -> ground + 2.2;
                 case BAT -> ground + (j == 2 ? 1.9 : 1.2);
                 case FISH -> ground + 0.05;
                 default -> ground + 0.02;

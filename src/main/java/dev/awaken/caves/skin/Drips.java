@@ -22,6 +22,10 @@ public final class Drips {
     static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> DRIP = PARTICLES.register("cave_drip", () -> new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SPLASH = PARTICLES.register("cave_splash", () -> new SimpleParticleType(false));
+    /** The regions' air (SPEC §42.7): the Rootways' spores and pollen, the Ochre Deep's warm dust (the client spawns them). */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SPORE = PARTICLES.register("cave_spore", () -> new SimpleParticleType(false)),
+            POLLEN = PARTICLES.register("cave_pollen", () -> new SimpleParticleType(false)),
+            WARM_DUST = PARTICLES.register("cave_warm_dust", () -> new SimpleParticleType(false));
 
     /** The client's {@code cave_particles} setting (caves.client.CavesClientConfig sets it; a plain flag here). */
     public static volatile boolean enabled = true;

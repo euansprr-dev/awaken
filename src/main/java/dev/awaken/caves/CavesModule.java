@@ -39,6 +39,9 @@ public final class CavesModule {
     private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
     /** The underlife's voices (SPEC §42.5; tools/art/specs/audio_underlife.py): a cave cricket's chirps, a roost bursting off the roof. */
     public static final DeferredHolder<SoundEvent, SoundEvent> CRICKET = sound("caves.cricket"), BATS = sound("caves.bats");
+    /** The regions' sounds (SPEC §42.7): the Rootways' roots; the Ochre Deep's rock, chime crickets and hum. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> ROOT_CREAK = sound("caves.root_creak"), ROCK_TICK = sound("caves.rock_tick"),
+            CHIME_CRICKET = sound("caves.chime_cricket"), WARM_HUM = sound("caves.warm_hum");
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Awaken.id(name)));

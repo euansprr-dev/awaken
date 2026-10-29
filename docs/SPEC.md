@@ -12055,6 +12055,23 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   region's own Lens look plays.
 - **Mining**: the strike draws its chips and sparks on the region rock (rock) and the twins (ore) as on stone and ores
   (`StrikeBlocks`, by name).
+- **The Lens looks** (`assets/awaken/lens/looks_caves.json`, `biome:awaken:rootways`, `biome:awaken:ochre_deep`): the Rootways
+  earthy and damp (moss-green shadows, the glowcaps' teal blooming into wet air: haze tint 0.3/0.62/0.52, fog glow 0.95);
+  the Ochre Deep iron country (rust-brown shadows, warm dust hanging: warmth 0.16, haze tint 0.86/0.48/0.24, fog glow 1.1).
+  Exposure 1.0: the dark stays dark.
+- **The air** (client, `caves.client.RegionClient`; the region read from the camera's biome once a second): **2** motes tried
+  a tick in a 20 × 10 × 20 box round the camera, each in an air cell: the Rootways' `awaken:cave_spore` (sinking slowly) and,
+  one in four, `cave_pollen`; the Ochre Deep's `cave_warm_dust` (hanging). Each drifts with a little sway for 100 to 180
+  ticks, fading in and out, its light never under 2 or 3 so a torch shows the air full of it. Off with `cave_particles`.
+- **Sound** (synthesised, `tools/art/specs/audio_underlife.py`; under the Soundscape's nature level and hush): the
+  Rootways' `caves.root_creak` (old roots' stick-slip creak through the wood's resonances, from the roof up to 10 blocks
+  round, every 25 to 50 seconds); the Ochre Deep's `caves.rock_tick` (dry ticks of settling rock 3 to 12 blocks off, every 7
+  to 14 seconds), `caves.chime_cricket` (a chorus of bell-like pings, 10 to 20 blocks off, every 26 to 52 seconds) and
+  `caves.warm_hum` (an 8-second seamless loop on 52 Hz round the listener, eased in at **0.45**, out as you leave).
+- **The underlife's own** (SPEC §42.5's director): **glow-worm threads** in the Rootways (up to **10**, clusters of two to
+  four under a roof, at full light so they shine in the dark; a curtain of beaded silk from the sheet, swaying slowly);
+  the Ochre Deep's beetles are **rust beetles** and its crickets sing the chime crickets' song. `/awaken underlife lineup`
+  shows a rust beetle and a glow-worm cluster with the rest.
 - **Test** `caves_region_rock`: eight filled chunks of seed 777 (the census's), four told they are all Rootways and four all
   Ochre Deep, with coal, copper, iron and gold ore planted in host rock: under the land's last 10 blocks no host rock is
   left but the untwinned ores' shells, each twin is placed and each untwinned ore keeps its shell as it was; above, the

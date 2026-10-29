@@ -19,8 +19,9 @@ import net.neoforged.neoforge.common.NeoForge;
 import java.util.List;
 
 /**
- * The Living Deep on the client (SPEC §42): the puddle takes the cave's water colour; the drips' particles; the underlife
- * and {@code /awaken underlife [on|off|count|lineup|clear]} (client: what lives round you; a line-up for tours).
+ * The Living Deep on the client (SPEC §42): the puddle takes the cave's water colour; the drips' particles; the regions'
+ * air and sound ({@link RegionClient}); the underlife and {@code /awaken underlife [on|off|count|lineup|clear]} (client:
+ * what lives round you; a line-up for tours).
  */
 public final class CavesClient {
     private CavesClient() {}
@@ -30,9 +31,13 @@ public final class CavesClient {
         modBus.addListener(RegisterColorHandlersEvent.BlockTintSources.class,
                 e -> e.register(List.of(BlockTintSources.water()), CaveSkin.PUDDLE.get()));
         modBus.addListener(RegisterParticleProvidersEvent.class, CaveParticles::register);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, RegionClient::tick);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, Underlife::tick);
         NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, UnderlifeRender::submit);
-        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> Underlife.clear());
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
+            Underlife.clear();
+            RegionClient.clear();
+        });
         NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
                 Commands.literal(Awaken.MODID).then(Commands.literal("underlife")
                         .executes(c -> say(status()))

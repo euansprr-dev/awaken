@@ -16,6 +16,27 @@
       }
     ]
   },
+  "caves.chime_cricket": {
+    "subtitle": "subtitles.awaken.caves.chime_cricket",
+    "sounds": [
+      {
+        "name": "awaken:caves/chime_cricket1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:caves/chime_cricket2",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:caves/chime_cricket3",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:caves/chime_cricket4",
+        "attenuation_distance": 24
+      }
+    ]
+  },
   "caves.cricket": {
     "subtitle": "subtitles.awaken.caves.cricket",
     "sounds": [
@@ -34,6 +55,51 @@
       {
         "name": "awaken:caves/cricket4",
         "attenuation_distance": 24
+      }
+    ]
+  },
+  "caves.rock_tick": {
+    "subtitle": "subtitles.awaken.caves.rock_tick",
+    "sounds": [
+      {
+        "name": "awaken:caves/rock_tick1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:caves/rock_tick2",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:caves/rock_tick3",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:caves/rock_tick4",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "caves.root_creak": {
+    "subtitle": "subtitles.awaken.caves.root_creak",
+    "sounds": [
+      {
+        "name": "awaken:caves/root_creak1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:caves/root_creak2",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:caves/root_creak3",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "caves.warm_hum": {
+    "sounds": [
+      {
+        "name": "awaken:caves/warm_hum"
       }
     ]
   }

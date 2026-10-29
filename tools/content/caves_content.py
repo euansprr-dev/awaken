@@ -225,7 +225,7 @@ def skin():
     put(RES, f'{A}/items/root_curtain.json', {'model': {'type': 'minecraft:model', 'model': 'awaken:item/caves/root_curtain'}})
     put(RES, 'data/awaken/loot_table/blocks/root_curtain.json', self_loot('root_curtain', {'condition': 'minecraft:match_tool', 'predicate': {'items': 'minecraft:shears'}}))
     lang['block.awaken.root_curtain'] = 'Root Curtain'
-    for p, n in (('cave_drip', 4), ('cave_splash', 4)):
+    for p, n in (('cave_drip', 4), ('cave_splash', 4), ('cave_spore', 3), ('cave_pollen', 3), ('cave_warm_dust', 2)):
         put(RES, f'{A}/particles/{p}.json', {'textures': [f'awaken:caves/{p[5:]}_{i}' for i in range(n)]})
     put(MERGE, 'data/minecraft/tags/block/mineable/pickaxe.json', {'replace': False, 'values': pickaxe})
     put(MERGE, 'data/minecraft/tags/block/mineable/hoe.json', {'replace': False, 'values': [f'awaken:{b}' for b in OVERLAYS]})

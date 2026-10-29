@@ -80,13 +80,13 @@ final class UnderlifeRender {
                     }
                     case Underlife.BEETLE, Underlife.MILLIPEDE -> {
                         boolean beetle = k == Underlife.BEETLE;
-                        // a little sway as the legs go
+                        // a little sway as the legs go; the Ochre Deep's rust beetle is the cell left of the plain one
                         float walk = st == Underlife.MOVE ? Mth.sin(age * (beetle ? 1.4F : 0.6F) + ph) * (beetle ? 5F : 9F) : 0F;
-                        if (Underlife.held[i]) onFace(dx, dy, dz, Direction.UP, yawDeg + walk, beetle ? 0.2F : 0.34F,
-                                beetle ? 48 : 0, beetle ? 16 : 32, beetle ? 64 : 16, beetle ? 32 : 48, col, light);
-                        else onFace(dx, dy, dz, DIRS[Underlife.face[i]], yawDeg + walk, beetle ? 0.2F : 0.34F,
-                                beetle ? 48 : 0, beetle ? 16 : 32, beetle ? 64 : 16, beetle ? 32 : 48, col, light);
+                        int u0 = !beetle ? 0 : Underlife.variant[i] == Underlife.RUST ? 32 : 48;
+                        onFace(dx, dy, dz, Underlife.held[i] ? Direction.UP : DIRS[Underlife.face[i]], yawDeg + walk, beetle ? 0.2F : 0.34F,
+                                u0, beetle ? 16 : 32, u0 + 16, beetle ? 32 : 48, col, light);
                     }
+                    case Underlife.GLOWWORM -> threads(dx, dy, dz, yaw, ph, col, light);
                     case Underlife.FISH -> {
                         float wag = Mth.sin(age * (st == Underlife.HOP ? 1.6F : 0.45F) + ph) * (st == Underlife.HOP ? 14F : 8F);
                         flat(dx, dy, dz, yaw + wag * Mth.DEG_TO_RAD, 0.36F, 0.36F, 32, 32, 48, 48, col, light);
@@ -163,15 +163,25 @@ final class UnderlifeRender {
 
     /** A bat hanging from the roof, wrapped in its wings: two crossed quads from its feet down, swaying a little. */
     private static void hang(double dx, double dy, double dz, float yaw, float ph, int col, int light) {
-        float x = (float) dx, y = (float) dy, z = (float) dz, h = 0.38F, w = 0.19F;
-        float sway = Mth.sin(age * 0.05F + ph) * 0.03F;
+        hanging(dx, dy, dz, yaw, Mth.sin(age * 0.05F + ph) * 0.03F, 0.38F, 0.19F, 0, 48, 16, 64, col, light);
+    }
+
+    /** Glow-worm threads: a curtain of silk beaded with glowing glue, hanging from the roof, stirring slowly. */
+    private static void threads(double dx, double dy, double dz, float yaw, float ph, int col, int light) {
+        hanging(dx, dy, dz, yaw, Mth.sin(age * 0.021F + ph) * 0.05F, 0.85F, 0.42F, 0, 16, 16, 32, col, light);
+    }
+
+    /** Two crossed quads hung from a point, {@code h} down and {@code w} either side, their lower edge swayed. */
+    private static void hanging(double dx, double dy, double dz, float yaw, float sway, float h, float w, int u0, int v0, int u1, int v1,
+                                int col, int light) {
+        float x = (float) dx, y = (float) dy, z = (float) dz;
         for (int q = 0; q < 2; q++) {
             float a = yaw + q * Mth.HALF_PI, rx = Mth.cos(a) * w, rz = Mth.sin(a) * w;
             float bx = -Mth.sin(a) * sway, bz = Mth.cos(a) * sway;
-            v(x - rx, y, z - rz, col, 0, 48, light);
-            v(x - rx + bx, y - h, z - rz + bz, col, 0, 64, light);
-            v(x + rx + bx, y - h, z + rz + bz, col, 16, 64, light);
-            v(x + rx, y, z + rz, col, 16, 48, light);
+            v(x - rx, y, z - rz, col, u0, v0, light);
+            v(x - rx + bx, y - h, z - rz + bz, col, u0, v1, light);
+            v(x + rx + bx, y - h, z + rz + bz, col, u1, v1, light);
+            v(x + rx, y, z + rz, col, u1, v0, light);
         }
     }
 
