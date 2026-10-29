@@ -211,6 +211,9 @@ def skin():
             put(MERGE, f'data/minecraft/tags/{kind_tag}/{kind}_ores.json', {'replace': False, 'values': [f'awaken:{b}' for b, t in TWINS.items() if t[2] == kind]})
     put(MERGE, 'data/minecraft/tags/block/needs_stone_tool.json', {'replace': False, 'values': ['awaken:rootstone_copper_ore', 'awaken:ochre_iron_ore']})
     put(MERGE, 'data/minecraft/tags/block/base_stone_overworld.json', {'replace': False, 'values': [f'awaken:{b}' for b in REGION_ROCKS]})
+    # 26.3 reads motion (heightmaps, suffocation, rain) from tags: the caves' rock and the pieces you can stand on
+    put(MERGE, 'data/minecraft/tags/block/blocks_motion_no_leaves.json', {'replace': False, 'values':
+        [f'awaken:{b}' for b in REGION_ROCKS] + [f'awaken:{r}_rubble' for r in SKIN_ROCKS] + [f'awaken:pointed_{r}' for r in SKIN_ROCKS]})
     for t in ('stone_tool_materials', 'stone_crafting_materials'):
         put(MERGE, f'data/minecraft/tags/item/{t}.json', {'replace': False, 'values': [f'awaken:{b}' for b in REGION_ROCKS]})
     # the Rootways' growth: glowcaps on the floor, root curtains from the roof

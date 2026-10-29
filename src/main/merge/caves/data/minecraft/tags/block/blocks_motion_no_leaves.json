@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    "awaken:rootstone",
+    "awaken:ochre_stone",
+    "awaken:stone_rubble",
+    "awaken:deepslate_rubble",
+    "awaken:tuff_rubble",
+    "awaken:rootstone_rubble",
+    "awaken:ochre_rubble",
+    "awaken:pointed_stone",
+    "awaken:pointed_deepslate",
+    "awaken:pointed_tuff",
+    "awaken:pointed_rootstone",
+    "awaken:pointed_ochre"
+  ]
+}
