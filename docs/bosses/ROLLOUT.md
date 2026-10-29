@@ -85,7 +85,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | Sovereign of Machines | Sovereign | Court | Brute | kit | A, the Armillary | ✓ e30286bc | ✓ e30286bc | — |
 | Sovereign of Mirrors | Sovereign | Court | Duelist | kit | A, the Vanity | ✓ 8f309193 | ✓ 8f309193 | — |
 | Sovereign of Storms | Sovereign | Court | Flier | kit | A, the Gale Hound | ✓ c7a4c0fd | ✓ c7a4c0fd | — |
-| Sovereign of Roots | Sovereign | Court | Caster | creaking ×1.9 | — | — | — | — |
+| Sovereign of Roots | Sovereign | Court | Caster | kit | A, the Hearthstone Toad | — | — | — |
 | Sovereign of Ash | Sovereign | Court | Flier | blaze ×2.4 | — | — | — | — |
 | The Signal's Shadow | Final | Seed | Duelist | cube shade ×2 | — | — | — | — |
 | The Long Drop | Nightmare | Fear | Flier | phantom ×2.4 | — | — | — | — |
@@ -251,3 +251,10 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   left itself behind" is an animal that is all speed, its tail is the wind it left behind, the Bolt is a hound's leap,
   Overdrive is a wet dog's shake that throws the storm off, and no other boss is a hound or a wolf. B is a third great
   flat sky animal after the Moon Angler and the Sky Leviathan; C is the vanilla Breeze grown big.
+- **The Sovereign of Roots** (`sovereign_roots`): A the Hearthstone Toad (a toad as big as a cottage with an old split
+  hearthstone grown into its back, roots hanging off it to the floor and firelight in its mouth), B the Sett Badger (a
+  great badger with its sett's roots and stones grown over its back), C the Star-Nosed Mole (a huge blind digger with
+  a ring of root-like feelers round its nose). **Picked A**, 2026-10-29: "It made a home and closed every door" is a
+  toad that has sat under a hearth so long the hearth has grown into it, Hold Fast is a toad's tongue, the Thorn Halo
+  is a toad blowing itself up, and no other boss is a frog or a toad. B is a second big four-legged mammal straight
+  after the Gale Hound; C is one more digger after the Thorn Pangolin.

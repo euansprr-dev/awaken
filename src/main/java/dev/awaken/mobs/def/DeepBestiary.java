@@ -204,7 +204,7 @@ final class DeepBestiary {
                 .phase(0.66F, "The storm thickens.", a(BOLT, "Storm Spears").n(5).bolt(BoltKind.CHARGE), a(LIFT, "Updraft").radius(4), a(RAIN, "Lightning").n(5).bolt(BoltKind.CHARGE))
                 .phase(0.33F, "Eye of the storm.", a(RAIN, "Lightning").n(8).bolt(BoltKind.CHARGE).heavy(), a(FRENZY, "Overdrive"), a(GUST, "Thunderclap").radius(12).power(0.9F))
                 .parts(P("storm_core", "Storm Core", "signal")).build());
-        out.add(m("sovereign_roots", "Sovereign of Roots", Theme.COURT, Tier.SOVEREIGN, Model.CREAKING, "Home gone wrong: it holds you fast and never lets you leave").hp(36).dmg(5.5).spd(0.26).scale(1.9F).tint(0x806848).glow(0xD4AF37).bar(BossBarColor.GREEN).arena(24)
+        out.add(m("sovereign_roots", "Sovereign of Roots", Theme.COURT, Tier.SOVEREIGN, Model.CREAKING, "Home gone wrong: it holds you fast and never lets you leave").hp(36).dmg(5.5).spd(0.26).scale(1.9F).size(1.9F, 1.95F).tint(0x806848).glow(0xD4AF37).bar(BossBarColor.GREEN).arena(24)
                 .intro("It made a home and closed every door.")
                 .phase(1.0F, "The Sovereign of Roots takes hold.", a(FANGS, "Root Lance").n(16), a(ROOT, "Hold Fast").radius(3))
                 .phase(0.66F, "Stay.", a(SUMMON, "Rooted Ones").summon("vine_creaker").n(2), a(FANGS_RING, "Hearth Ring").n(12), a(FANGS, "Root Lance").n(16))

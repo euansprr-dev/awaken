@@ -1,0 +1,145 @@
+{
+ "schemaVersion": 1,
+ "id": "sovereign_roots",
+ "moves": "sovereign_roots",
+ "intro": {
+  "pose": "idle",
+  "move": "arrive"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "tongue",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "gulp"
+      ]
+     ]
+    },
+    {
+     "move": "leap",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "lance",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "holdfast",
+     "weight": 2
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "croak",
+   "pool": [
+    {
+     "move": "tongue",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "gulp"
+      ]
+     ]
+    },
+    {
+     "move": "ring",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "lance",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "leap",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "tongue"
+      ]
+     ]
+    },
+    {
+     "move": "croak",
+     "weight": 1
+    },
+    {
+     "move": "holdfast",
+     "weight": 2
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "halo",
+   "pool": [
+    {
+     "move": "holdfast",
+     "weight": 3
+    },
+    {
+     "move": "ring",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "tongue",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "gulp"
+      ]
+     ]
+    },
+    {
+     "move": "lance",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "leap",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "tongue",
+       "gulp"
+      ]
+     ]
+    },
+    {
+     "move": "halo",
+     "weight": 1
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

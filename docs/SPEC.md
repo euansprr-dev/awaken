@@ -10646,6 +10646,59 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     too. Nothing goes into it by more than 1.5 px.
   - **Meter.** Worst kink outside a strike 5.5° (the Rake's paw starting up), 6.6° in the Bolt into the Snap and the
     Rake; held at most 21%; the cut strings dip 3 to 33%.
+- **The Sovereign of Roots, the Hearthstone Toad** (body and motion, `kit/bosses/sovereign_roots.py`). "It made a
+  home and closed every door." A toad as big as a cottage that has sat under a hearth so long the hearth has grown
+  into it. Its back is the old hearthstone, split in two across the middle, pale grey and black with soot at its edges,
+  cracked, with moss in the cracks and a fern growing out of the split; roots have come down through the crack and
+  hang off its flanks to the floor. It sits as a toad sits, low and broad, up on splayed forelegs with its great hind
+  legs folded at its sides. Its skin is warty olive-brown with dark bands across its legs, pale and mottled underneath,
+  with a great swollen gland behind each eye. Its eyes are gold with a black bar of a pupil across each, and they
+  glow. When it opens its wide mouth there is firelight inside, the hearth it swallowed, and the same fire shows
+  through its throat sac in ember veins that stretch and brighten as the sac swells. Its tongue is dark red. 80 cubes
+  (480 faces) on 47 bones; its fern stands 4 blocks up. The hitbox is 1.9 x 1.95 at its scale of 1.9 (3.6 x 3.7
+  blocks), round its trunk.
+  - **Its idle.** It sits like a stone and breathes (8 s), its throat fluttering all the while. It blinks, drawing its
+    eyes down into its head, and turns its head slowly one way and then the other. Its tongue flicks out at a fly, and
+    it swallows with its eyes sinking. It wipes one eye with a hand and shifts its weight on its forelegs. It walks
+    hand by hand and foot by foot (1.6 s). It runs in hops (0.75 s): it crouches, its hind legs fling it up and
+    forward, it flies with its hands reaching and its feet trailing, lands on its hands and swings its feet in under it.
+  - **Its moves.** The Tongue (LIGHT): it rises on its arms as it draws its head back with its eyes on you and its mouth
+    opening on the fire, then drops low as its tongue flicks out at you (5.5 times its length), slaps and goes back in.
+    The Gulp (LIGHT, after the Tongue): it sits back on its haunches with its mouth opening, lunges with its whole front,
+    its mouth gaping, snaps it shut and swallows, its eyes sinking into its head. The Leap (HEAVY, its gap closer, held
+    6 ticks): it sinks back with its hind legs bunched at its sides, jumps 7 blocks at you with its hands reaching and its
+    long feet trailing, and comes down on its belly with its legs splayed. Hearth Ring (HEAVY, held 8 ticks): it rises
+    as high as its legs will lift it with its throat swelling, and drops flat on its belly with all its weight. Root
+    Lance: it leans over its hands and presses them flat on the floor ahead of it, its head low, and its body heaves
+    twice. Hold Fast: its tongue shoots out the whole way to you (9.5 times its length) and holds; each tug pulls the
+    toad back on its haunches with its head coming up; it reels the tongue in, shuts its mouth on it, swallows hard with
+    its eyes sunk in, then lifts its head and opens its eyes on you. Rooted Ones (into the second phase): it sits up on
+    its forelegs and croaks three times, its throat swelling huge each time and its whole body shaking. Whoever is
+    behind it gets the Kick (LIGHT): it drops onto its hands, draws its feet up under it and kicks both hind legs out
+    straight behind. Thorn Halo (the signature, into the third phase): it blows itself up as a toad does when something
+    means to eat it, swelling (scale 1 to 1.27) and rising high on stiff legs, its head lowered and tipping toward you,
+    trembling; at its fullest the air goes out of it. Its intro: it sits as still as a stone with its eyes shut, opens
+    them on you, blinks slowly, croaks once long and lowers itself, watching you. Broken, it sinks flat on its belly with
+    its legs splayed and its throat heaving; it pushes itself up on its hands and draws its feet in under it. Struck, it
+    flinches flat with its eyes pulled down; from the side it twists away from the blow. Its death (5 s): it blows itself
+    up one last time and lets the air out, sinks flat, draws its hands and feet in under it, lays its chin on the floor
+    and shuts its eyes, as still as the stone on its back; its throat flutters twice more and stops.
+  - **How its keys are written.** Every length is written in half pixels and built at twice that (K = 2), so the toad
+    is posed and painted as finely as a small mob at four times the size. One pose function over the body (its roll,
+    hips, chest, head and jaw, eyes, tongue), each leg by two-bone IK to a hand or foot, the hands and feet turned flat
+    on the floor with their toes splayed. The hands and feet it stands on through a move are held where they stand,
+    every tick. Its swelling is a scale on two leafless "puff" bones that carry its rump, chest, belly and the stone,
+    never on a bone above a leg: the legs' IK takes each parent as a pure rotation and would miss the floor under a
+    scaled one. Its throat sac and its tongue are scale tracks too (the tongue scales its length and its tip the inverse,
+    so the pad at the end keeps its size). In its pose function a turn is + to its right and a pitch or bend + dips its
+    front.
+  - **On the floor.** Between keys any hand or foot that would sag into the floor has its leg solved again that tick to
+    stand on it; the ground pass then keeps every hand and foot out, in the death and the kneel its head, jaw and throat
+    too. Nothing goes into it by more than 1.5 px, the long tongue included.
+  - **Meter.** Worst kink outside a strike 6.1° (the Kick's feet drawing up), 5.7° in the Tongue into the Gulp; held at
+    most 30% outside the croak (43%: three croaks on held haunches) and the intro (50%, its stone stillness); the Leap into
+    the Tongue dips 21%. The Tongue into the Gulp dips 77% for one frame: the planted arms swing through rest at full
+    speed as the body rocks over its hands in the flick. That is a crossing, not a stall.
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our
