@@ -991,9 +991,11 @@ public final class ArmourAbilities {
             dz = f.z;
             d = Math.max(1e-4, Math.sqrt(dx * dx + dz * dz));
         }
-        double k = strength * (1 - t.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE));
-        if (k <= 0) return;
-        t.setDeltaMovement(t.getDeltaMovement().add(dx / d * k, lift * k, dz / d * k));
+        // a negative strength pulls in (Abyss Pull); only full knockback resistance stops either
+        double hold = 1 - t.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE);
+        if (hold <= 0) return;
+        double k = strength * hold;
+        t.setDeltaMovement(t.getDeltaMovement().add(dx / d * k, lift * Math.abs(k), dz / d * k));
         t.needsSync = true;
     }
 
