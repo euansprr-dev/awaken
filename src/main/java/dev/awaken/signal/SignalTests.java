@@ -349,6 +349,44 @@ final class SignalTests {
             h.succeed();
         });
 
+        // SPEC §26.3 (Euan, 2026-10-29): a find made on purpose shows the moment it's made, not a calm gap later; it
+        // waits only while nothing can show, and a world's settling minutes don't hold it
+        AwakenTests.register("notice_find_shows_at_once", 20, h -> {
+            Pace.Rules r = Pace.Rules.of(Pace.Density.STANDARD);
+            Pace<String> pace = new Pace<>(r);
+            pace.offer(0, "level", Notices.Tier.IMPORTANT, "", false);
+            pace.poll(0, false, false, true); // something just took the screen
+            pace.offer(1, "slow", Notices.Tier.IMPORTANT, "creature", false);
+            pace.offer(2, "glimmerfish", Notices.Tier.IMPORTANT, "creature", false, true);
+            List<Pace.Out<String>> out = pace.poll(2, false, false, true);
+            h.assertTrue(out.size() == 1 && out.get(0).act() == Pace.Act.SHOW && out.get(0).first().equals("glimmerfish")
+                    && out.get(0).items().size() == 1, "the find shows at once, ahead of an older paced one: " + out);
+            for (long t = 3; t < r.calmGap(); t++) h.assertTrue(pace.poll(t, false, false, true).isEmpty(), "the paced one keeps its gap at " + t);
+            h.assertTrue(pace.poll(2 + r.calmGap(), false, false, true).stream().anyMatch(o -> o.first().equals("slow")), "then the paced one");
+            // settling: only the immediate shows; blocked (a screen, a fight): it waits, then goes first
+            Pace<String> settling = new Pace<>(r);
+            settling.offer(0, "paced", Notices.Tier.IMPORTANT, "", false);
+            settling.offer(0, "lesson", Notices.Tier.IMPORTANT, "creature", true, true);
+            h.assertTrue(settling.poll(0, true, true, true).isEmpty(), "blocked: nothing shows");
+            out = settling.poll(1, false, true, true);
+            h.assertTrue(out.size() == 1 && out.get(0).moment() && out.get(0).first().equals("lesson"), "settling: the lesson shows: " + out);
+            for (long t = 2; t < 200; t++) h.assertTrue(settling.poll(t, false, true, true).isEmpty(), "settling holds the paced one at " + t);
+            // the burst limit doesn't hold it either
+            Pace<String> burst = new Pace<>(r);
+            for (int i = 0; i < r.burst(); i++) burst.mark(i);
+            burst.offer(5, "find", Notices.Tier.IMPORTANT, "creature", false, true);
+            h.assertTrue(burst.poll(5, false, false, false).size() == 1, "a full burst doesn't hold it");
+            // only a find made on purpose is immediate, and the flag survives the wire
+            var looked = Finds.now(SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Glimmerfish")).tier(Notices.Tier.IMPORTANT).moment(),
+                    Finds.Find.of("creature", "New creature · Glimmerfish", "Glimmerfish", "", 0xFFFFFF, true));
+            var passed = Finds.now(SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Commons")).tier(Notices.Tier.IMPORTANT),
+                    Finds.Find.of("biome", "New biome · Commons", "Commons", "", 0xFFFFFF, false));
+            h.assertTrue(looked.immediate() && !passed.immediate(), "intent finds are immediate, the rest paced");
+            var decoded = SignalWindow.CODEC.parse(NbtOps.INSTANCE, SignalWindow.CODEC.encodeStart(NbtOps.INSTANCE, looked).getOrThrow()).getOrThrow();
+            h.assertTrue(decoded.immediate() && decoded.moment() && !decoded.fleeting(), "the flags survive the codec");
+            h.succeed();
+        });
+
         AwakenTests.register("notice_critical_bypasses_queue", 20, h -> {
             Pace<String> pace = new Pace<>(Pace.Rules.of(Pace.Density.MINIMAL));
             for (int i = 0; i < 4; i++) pace.offer(0, "info" + i, Notices.Tier.IMPORTANT, "", true);

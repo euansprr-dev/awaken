@@ -6821,6 +6821,15 @@ The rules below replace that.
   3. the **first of each kind** (`awaken:finds/<kind>`: creature, biome, happening, lair, landmark, gate) is an
      IMPORTANT toast ending "kept in your Journal (K)";
   4. **every later one** is AMBIENT: filed with the cue.
+- **A find made on purpose shows the moment it's made** (Euan, 2026-10-29: a glimmerfish's card came 5-10 s after
+  he studied it). An `intent` find (looked at, touched, gone to) answers what the player just did, so `Finds` marks its
+  window `immediate` (`SignalWindow.Builder.immediate()`, codec key `immediate`, default false): the lesson, a big
+  moment and the first-of-kind toast skip `Pace`'s gap and burst limit and go first in line. They still wait while
+  nothing can show (`Herald.blocked`: a screen, a fight, a scene's hold, a card or moment already up, not awakened),
+  and still expire after `maxWait`/`momentWait`. A new world's `SETTLE` (its first 5 minutes) does not hold them: a
+  creature studied in those minutes shows; ordinary messages stay held. The density still decides whether a find shows
+  at all (MINIMAL files the first-of-kind toast as before). Finds without intent (a biome stood in, a happening
+  witnessed) stay paced; later finds are filed with the cue at once, as before. Test `notice_find_shows_at_once`.
 - **The find cue** (`signal.client.FindCue`): a small diamond blooms 13 px right of the crosshair with the name in a
   whisper beside it (5 + 34 + 16 ticks), and `awaken:ui.find` at 0.32 (at most every 60 ticks); several at once read
   "N finds · Journal".
