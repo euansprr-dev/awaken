@@ -135,8 +135,9 @@ final class BellBookSection extends UiSection {
         // two lines under the board, always reserved, so hovering never moves the page
         String one, two;
         if (over == null) {
-            one = "Hover a bell to see it.";
-            two = "Lit: yours. Dim: someone you live with has it. Ringed: you have a lead on it.";
+            // two short lines: the board is narrow on a small window, and a cut-off line hides the key
+            one = "Hover a bell to see it. Lit bells are yours.";
+            two = "Dim: a housemate has it. Ringed: you have a lead.";
         } else {
             String rank = Rank.valueOf(over.get(2)).label + "-rank";
             one = over.get(0) + " · " + (over.get(1).isEmpty() ? "unknown" : over.get(1)) + " · " + rank;
