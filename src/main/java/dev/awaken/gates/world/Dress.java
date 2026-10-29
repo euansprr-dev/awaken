@@ -152,8 +152,9 @@ abstract class Dress {
     /**
      * A piece of shaped ground at a block ({@link Relief#BANK} under a raised floor, {@link Relief#SLAB} or
      * {@link Relief#STAIRS} on a half step or at a wall's foot, a {@link Relief#DRIFT} at the foot of a rise,
-     * {@link Relief#BITS} lying on it, a {@link Relief#ROOF} stair hung where the roof steps), or null: the bank skinned like
-     * the shell, no half step, nothing lying there.
+     * {@link Relief#BITS} lying on it, a {@link Relief#ROOF} stair hung where the roof steps, a {@link Relief#FOOT} stair
+     * at a wall's foot, a {@link Relief#CAP} slab on an outcrop), or null: the bank skinned like the shell, no half step,
+     * nothing lying there (a foot or a cap falls back to the floor's stairs or slab).
      */
     BlockState ground(int part, int x, int y, int z) {
         return null;
@@ -190,6 +191,41 @@ abstract class Dress {
      */
     BlockState formation(int part, int x, int y, int z) {
         return null;
+    }
+
+    /**
+     * Shaped ground the usual way: a half step is the floor's slab (on a soft floor its drift four layers deep) or its
+     * stairs up a ramp (none on a soft floor); the wall's stairs stand at a wall's foot and hang where the roof steps, its
+     * slab crowns an outcrop; then the drift and the bits. A raised floor's bank is the shell's own (null).
+     */
+    static BlockState kit(int part, boolean soft, BlockState floorSlab, BlockState floorStairs, BlockState wallSlab,
+                          BlockState wallStairs, BlockState drift, BlockState bits) {
+        boolean heaped = soft && drift != null;
+        return switch (part) {
+            case Relief.SLAB -> heaped ? drift.trySetValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LAYERS, 4) : floorSlab;
+            case Relief.STAIRS -> heaped ? null : floorStairs;
+            case Relief.FOOT, Relief.ROOF -> wallStairs;
+            case Relief.CAP -> wallSlab;
+            case Relief.DRIFT -> drift;
+            case Relief.BITS -> bits;
+            default -> null;
+        };
+    }
+
+    /**
+     * What stands in the wild the usual way: a pillar of {@code pillar} banded with {@code band} every fourth layer, an
+     * outcrop of {@code rock} crusted with {@code crust} here and there, a fallen piece of {@code fallen}, a heap of
+     * {@code heap}. A null anywhere is the shell's own skin.
+     */
+    BlockState pieces(int part, int x, int y, int z, BlockState pillar, BlockState band, BlockState rock, BlockState crust,
+                      BlockState fallen, BlockState heap) {
+        return switch (part) {
+            case Formations.PILLAR -> band != null && Math.floorMod(y - W, 4) == 0 ? band : pillar;
+            case Formations.ROCK -> crust != null && Hash.noise3(seed + 63, x, y, z, 1.6) > 0.62 ? crust : rock;
+            case Formations.FALLEN -> fallen;
+            case Formations.HEAP -> heap;
+            default -> null;
+        };
     }
 
     /** The most room over a column of a place, blocks over the floor line, where the dress hangs something low (a ledge). */
@@ -339,7 +375,9 @@ abstract class Dress {
             long h = Hash.of(seed + salt, x, z);
             if (Hash.unit(h) >= density) return;
             int len = 1 + (int) ((Hash.unit(Hash.mix(h)) * most));
-            for (int i = 0; i < len && y - i >= W + low; i++) {
+            // over shaped ground it stops as far over the highest ground near (38.14: a root you can reach is a ladder)
+            int bottom = W + low + (c.relief == null ? 0 : c.relief.near(x, z));
+            for (int i = 0; i < len && y - i >= bottom; i++) {
                 if (!buf.open(x, y - i, z)) break;
                 buf.set(x, y - i, z, pick.at(x, y - i, z, len, i));
             }

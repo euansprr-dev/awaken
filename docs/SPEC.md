@@ -10712,11 +10712,12 @@ now, fought-on second storeys in a later plan.
   from each doorway to the middle and on to the anchor, faded in over 1.8 to 5.8 blocks) terraces climbing toward the
   walls (up to 4 blocks, their edges ragged), mounds, hollows, and the ground standing a slab higher on the whole, so
   the way reads as a path worn into it. On the way's core half a step up at most, within 3.5 of it a block either way;
-  in a fought place's middle (`q` < 0.5) half a block down to a block up. No specks: a rise or a hollow needs four of
+  in a fought place's middle (`q` < 0.5) half a block down to a block up, rolling half again as much off the way (half
+  steps you run over without a thought). No specks: a rise or a hollow needs four of
   its eight neighbours rising or sinking with it (a wall counts with it; two passes), or it's flattened, so no lone slab
   lies on the floor like a dropped tile and no small pit reads as a hole. Never closer than 3.5 under the roof (or
   under what the dress hangs low: `Dress.headroom`). **Flat pads** stay at the floor line and are never shaped:
-  2.5 round each doorway, 3 round the anchors, a lake's water, 1 past each blocked spot, 2 round each hand spot, the
+  each doorway (4 deep either side of its wall, across the opening), 3 round the anchors, a lake's water, 1 past each blocked spot, 2 round each hand spot, the
   dress's centre pad (`Dress.pad`: the Comb's honey pools 3.4), and every small mark (49 blocks or less, 1.5 round it:
   nooks, bells, props, touchstones; an event's or a basin's wide box isn't one). **Steps**: no step over a block, half
   a block where it's gentle (the way's margin and a fought middle); the rises and the hollows are each only lowered
@@ -10726,7 +10727,12 @@ now, fought-on second storeys in a later plan.
   a released world's version 6 floors are untouched): `depth_ground` (how bold the ground is away from the way: the
   terraces, mounds and hollows), `depth_things` (how many things stand in its places: clusters times it, 0 none),
   `depth_lumps` (its walls' lumps, times the theme's `Dress.lumps`), `depth_ledges` (how often a tall wall steps back,
-  times `Dress.ledges`). No Hive world sets them yet.
+  times `Dress.ledges`), `depth_roof` (how far the roof swells and dips), `depth_shelves` (the high ledges, stage 4). The
+  Root Warrens and the Last Room set `depth_roof` 1.9 and 2.2, the Root Halls 1.5 and the Pipe Maze 1.3 (their low
+  roofs spread too little otherwise). Whatever the dress hangs from the roof (`Dress.hang`: roots, icicles, chains) and
+  the Fungal tunnels' roots stop as far over the highest ground within 3 as over the floor line before, so raised ground
+  never makes one a ladder. In Upward Rain mud (it stands 7/8 of a block) gives way to moss beside a half step up: from
+  mud onto a slab is a jump.
 - **The walk guarantee** (plan time, `Relief.ease`): every doorway and the anchor must be joined over the place's
   ground (round what the dress blocked) with no step over half a block. Where they aren't, the place's ground is
   halved, and if that's still not enough, flat; either is logged (`[gates] <world> place <id>: no way through without a
@@ -10801,6 +10807,57 @@ now, fought-on second storeys in a later plan.
   end without a jump (no rise over 0.6 of a block by what you stand on: a slab or a stair is a step, a full block a
   jump) and fails a world that needs one (`jumps`, 0 in all three); and counts the columns where the walk (jumps
   allowed) got more than 4 over the ground (`climbs`): a built cave world must have none (0 in all three).
+- **Every theme's caves (stage 2).** Every enclosed cave world of every theme shapes its places by the Hive's rules,
+  in its own pieces (`Dress.kit`, `Dress.pieces`): a half step is a slab of the floor (on a soft floor its drift four
+  layers deep: Ember's ash, the Temple's moss, the Glass Caves' sand everywhere, Frost's snow, the Lab garden's moss,
+  the Fungal moss and all of the Bloom), a ramp the floor's stairs; the wall's stairs stand at a wall's foot and hang
+  where the roof steps, the wall's slab crowns an outcrop (`Relief.FOOT`, `Relief.CAP`: null falls back to the floor's
+  stairs and slab, so the Hive is as it was). Growth creeps where it's wildest in Ember (magma crust), the Temple
+  (mossy stone), the Glass Caves (sand), Frost (snow), Dream (plush), the Lab (moss in from the garden) and the Fungal Hollow (glowing
+  moss); the Archive, Foundry, Market, Palace and Abyss stay bare. What stands in the wild: Ember basalt pillars banded with glowing
+  cracks, cooled lava humps, a collapsed frame in the mine, slag heaps; the Temple columns banded with carving (roots in the Great Tree and
+  the Root Halls), mossy outcrops, a fallen column; the Archive shelves floor to roof banded with written stone, a
+  toppled bookcase, book piles; the Foundry pipe bundles banded with brass, scrap iron with gears in it, a fallen gear
+  half sunk, scrap heaps; the Glass Caves sandstone pillars, glass outcrops glowing here and there, a half-buried column; the Broker's Vault timber
+  posts and heaps of cobbles; Frost ice pillars banded with glowing ice, ice boulders under snow, a fallen icefall; the
+  Palace marble columns banded with gilt, a toppled gilt frame, a heap of broken mirror; the Lab frames banded with light, racks, a
+  heap of panels; Dream bedposts, heaps of sheets and plush; the Abyss pillars banded with runes, a fallen pale column;
+  the Fungal Hollow mushroom stems floor to roof, rock crusted with moss, a fallen cap, heaps of loam (the
+  plan page's table, as near as each theme's blocks allow). Not shaped: a world under a
+  glass floor (`mirror`: the Inverted Palace, the Reflection: the world below copies it), the Simulation (its lines are
+  everything), the White, the Sleeper's Dream (its void blocks would skin a raised island's sides) and the Endless
+  Hall (a fold that reads the same both ways).
+- **Open lands, islands and seas** shape their places too (the Market's Rooftops keeps its line: you stand on roofs
+  there). Under the sky nothing hangs where a roof would step and no pillar stands (nothing to hold up; not over an
+  island either). An island's (the isles, a sea's islands) ground is half as bold and makes **hummocks** instead of
+  terraces: rising between its middle and its edge, back to the floor line at the drop, so no rim stands at it;
+  nothing stands out over its edge; its bridges and causeways stay flat. The Sky's pieces: marble slabs on its ruins,
+  turf drifted four layers deep elsewhere, rock stairs at its cliffs, rock outcrops under turf, fallen ruin stones,
+  pebbles; turf creeping.
+- **The rare worlds** take the ground of the look they wear (`BorrowedDress` passes every depth hook on), but the
+  Other Gate keeps its line (its colours turn only on full blocks, so slabs would show true colours) and so does the
+  Endless Stair (its landings are the same landing again). The rare lands in their own clothes (the Quiet, Upward Rain,
+  the Aurora Steppe, the Lantern Orchard, the Last Campfire) step in the Soft Land's slabs of the soil underfoot (turf,
+  mud, coarse dirt, podzol: SPEC 31.2), mossy cobblestone stairs at the hillsides, snow drifted on the Steppe, pebbles
+  and twigs, moss (snow on the Steppe) creeping, mossy boulders, fallen trees and heaps of earth. A fallen piece's log,
+  stem or column lies along it (its axis).
+- **Doorways stay at the floor line**, 4 deep either side of the wall across the opening (`Relief.doorway`, what the
+  doorway test checks; a door's lintel is set for the floor line: a Rig room's way out, a tunnel's mouth), and the groove
+  at a wall's foot isn't cut there (it would open only the wall's bottom block). Over shaped ground a light may sit up to
+  5 over its column, on top of whatever stands there, or in the column beside it where a wall's bulge fills its own; an
+  isle's rim keeps its lights in the air just off it. **Bits lie in patches** (`Relief.litter`: a quarter as thick between
+  them, up to 2.75 times in them, about as many on the whole), as the plan asked (clusters, not an even scatter), and a
+  third as thick on the way as off it (0.35 + 0.65 of how wild); the themes that grow little else lie thicker: the
+  Archive's pages 0.5, the Palace's glass 0.45, the Foundry's shavings, Dream's lost things and the Abyss's wax 0.42,
+  Ember's cinders 0.34, the Glass Caves and the Lab 0.3, the Market's confetti 0.25, the Quiet lands 0.15, Frost 0.12,
+  the Temple and the Fungal Hollow 0.1 (the Hive and the Sky 0.083). The roof's swell over shaped places is +-9 (was
+  7.5), up to 1.6 times that under a low roof (11 over its roof height: a low roof can't dip, it stops 3.5 over the
+  floor); a tunnel's vaults over shaped ground rise up to 13 over the floor line (9 before), +-4.5 along the way. The
+  Fungal Hollow's walls bulge 1.15 times (shelf fungus), the Bloom's 1.5 (its gills fold).
+- **Shores, cloisters and vaults.** An island's shore never sinks (no hollow within 3 of its edge: the sea or the drop
+  stands level with it). Under the Cloisters' roofed walks the ground stays at the line (`FrostDress.headroom` 3.5).
+  On content 7 a feature that finds no level spot near takes the nearest free one, so a vault's bars never close round
+  a touchstone or a handbell. The tests' light check lets light into layers (snow, a drift) as the game does.
 - **The Bell Crypt's own engines (stage 3)** keep their architecture, and the years show on their flagstones
   (`CryptWear`, content 7, made after each engine's carve and before its handbells): the stones sink half a block in
   patches (a flagstone slab where the noise is under 0.38) and where a patch sinks deepest (under 0.24, every stone round
@@ -10817,9 +10874,38 @@ now, fought-on second storeys in a later plan.
   causeways and its landings. A spawn or a feature stands only where no stone in its three by three has sunk and 3 or
   more from the bell. The crypt's depth blocks: limestone and flagstone slabs and stairs, Limestone Dust (a drift of
   worn limestone) and Bone Shards (bits).
-- **Measured** (`gateworlds_depth`, the Hive held to the targets): the Comb flat 47%, 13 heights, 21% partial, 36%
-  plumb, roof spread 6.1, detail 40; the Brood Hall 41%, 14, 23%, 38%, 7.1, 43; the Swarm 52%, 12, 18%, 34%, 6.3, 45
-  (today's rooms: flat about 98%, plumb 97%). Honey Lake is a sea world (stage 2). A world's floor plans in 6 to 10 ms.
+- **High ledges (stage 4)** in the big caverns of the cave worlds (a great cavern two, a cavern of four chunks or more
+  one, times the recipe's optional `depth_shelves`; never an open land, an isle or a sea): a shelf against the wall, 3
+  or 4 blocks up (even odds), 3.5 to 5 either side of where it's set and about 4 deep (its edge ragged), with a stair of
+  one-block steps, 2 along the wall and 3 deep, down from one end, so it's reached a jump at a time. A shelf is tried
+  every 15 degrees round the place's middle, 2.5 in from the wall where the way is 6 or more off, farthest from the way
+  first, then its stair the other way round; it stands only where every column of it and its stair is in the place,
+  unpinned, 3.5 or more off the way, 3 or more from anything the dress set down and under the dress's head room with
+  3.5 to spare, a doorway at least its half length and twice its height and 4 away, another ledge 20, with 12 columns on
+  top and 2 on the bottom step. The ledges stand as set (the specks, the steps' rule and the walk guarantee pass them by;
+  the ground beside them never sinks), the roof lifts by the highest ledge within 2, and nothing is placed on one or
+  beside it: no spawn or feature on a ledge or its stair (the nearest free spot for a feature skips them too), no
+  formation within 2. A quiet place to stand and look out, not a place to fight. The floor keeps their columns
+  (`FloorLayout.high`, not saved) for the test (`gateworlds_ledges`: the Brood Hall, the Glowing Deep, the Working Mine
+  and the Atrium have them, 85% of their columns or more reached on foot, nothing on them).
+- **Held to the targets** (`gateworlds_depth`): 32 dry caves of every theme (`DEEP`) as above, and none with a way up a
+  wall it didn't have at version 6 (`climbs` no more than version 6's on the same floors); 28 open lands, isles and seas
+  (`LANDS`, each measured at version 6 too on the same floors) to twice their partial surfaces, as the plan set, and
+  more detail than before; and every world with no jump on its way (the test logs where a way needs one). Held to what
+  they measure instead (`FLAT_MOST`, `DETAIL_LEAST`, `PARTIAL_TIMES`): the Swarm and the Forge Below 59% flat (many small
+  fought places, 58.6% and 58.5%), the Forge Below's and the Stacks' detail 34.5 (both 35.0, a hair under), Upward
+  Rain's partial 1.4 times (its mud counted as partial at version 6), the Gates' Heart's 1.95 (1.97). Not held: the
+  Bloom (61% flat, 69% plumb: its folds are its walls) and the worlds that keep their line.
+- **Measured** (`gateworlds_depth`, 2026-10-29 with every stage in). The 32 dry caves: flat 43 to 59% (mean 50), 11 to
+  15 heights, partial 14 to 22% (18), plumb 20 to 47% (40), roof spread 6.1 to 9.8 (7.1), detail 35 to 51 (41); the Comb
+  54%, 13, 19%, 38%, 6.4, 38; the Brood Hall 46%, 14, 22%, 40%, 7.3, 42; the Swarm 59%, 13, 16%, 36%, 6.6, 43 (today's
+  rooms: flat about 98%, plumb 97%). The lands, isles and seas: partial 2 to 50 times version 6's (the Sky's isles about
+  3.3, the Abyss's steps 2.2, the seas 2.3 to 35), detail 1.5 to 7.5 times, flat down from 88 to 99% to 41 to 61% on the
+  lands, 27 to 30% to 11 to 17% on the seas. The Bell Crypt (its own engines, not held to the caves' numbers): the Sunken
+  Belfry flat 68 to 51%, partial 2.1 to 12.8%, detail 10.3 to 16.4; the Ossuary Ways 92 to 79%, 9.8 to 15.3%, 10.2 to 14;
+  the Bell Shaft 91 to 66%, 0.8 to 19.1%, 11.5 to 21.4; the Field of Bells (black water between its islands) 14 to 13%,
+  1.4 to 2.7%, 2.5 to 3. A gate's four floors plan in 8 ms (median, warm) to 50 ms (the Fungal Hollow's, with other
+  builders on the machine), the ledge search under 2 ms of it, so a floor stays well inside its 50 ms.
 - **Tour `gate-depth-hive`** (CI): the Comb, the Brood Hall and the Swarm at version 6 and at version 7 on the same
   floors, each floor 1's biggest place and its second. Its tools (game master, tours): `/awaken gate open <rank>
   <theme> world <version> <world id>` makes a gate whose floors are all that world, on the depth test's plan (seed,

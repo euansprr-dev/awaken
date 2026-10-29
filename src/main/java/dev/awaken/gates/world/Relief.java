@@ -22,15 +22,18 @@ import java.util.List;
 final class Relief {
     /** Most a place's ground rises and sinks, in half blocks. */
     static final int RISE = 8, SINK = 4;
-    /** The theme's ground pieces ({@link #ROOF}: a stair hung upside down where the roof steps). */
-    static final int BANK = 0, SLAB = 1, STAIRS = 2, DRIFT = 3, BITS = 4, ROOF = 5;
+    /**
+     * The theme's ground pieces ({@link #ROOF}: a stair hung upside down where the roof steps; {@link #FOOT}: the stair at a
+     * wall's foot, {@link #STAIRS} when null; {@link #CAP}: the slab crowning an outcrop's step, {@link #SLAB} when null).
+     */
+    static final int BANK = 0, SLAB = 1, STAIRS = 2, DRIFT = 3, BITS = 4, ROOF = 5, FOOT = 6, CAP = 7;
 
     /**
      * A world's own depth numbers (its recipe's {@code params}, all optional, 1 the usual; SPEC 38.14): how bold its
      * ground is away from the way, how many things stand in it, how big its walls' lumps are, how often a wall steps back
-     * at a ledge.
+     * at a ledge, how far its roof swells and dips.
      */
-    final double groundK, thingsK, lumpsK, ledgesK;
+    final double groundK, thingsK, lumpsK, ledgesK, roofK;
 
     final CaveEngine.Cave c;
     final int W;
@@ -46,15 +49,24 @@ final class Relief {
     final byte[] in = new byte[Plots.SIDE * Plots.SIDE];
     /** Columns that stay as the dress left them: doorways, pads, lakes (nothing banks or creeps there). */
     final java.util.BitSet pinned = new java.util.BitSet(Plots.SIDE * Plots.SIDE);
+    /** Places are islands (in the air, the dark or a sea): their edge is a drop, not a wall; the bridges stay flat. */
+    final boolean island;
     /** The highest ground or piece standing within 3 of each column, whole blocks (what a wall rises from: {@link CaveEngine.Cave#wall}). */
     final byte[] near = new byte[Plots.SIDE * Plots.SIDE];
+    /** A high ledge's height over each of its columns and its stair's, whole blocks (0 elsewhere): nothing is placed there. */
+    final byte[] high = new byte[Plots.SIDE * Plots.SIDE];
+    /** The highest ledge within 2 of each column: the roof lifts over it, and nothing stands that close to it. */
+    final byte[] ledge = new byte[Plots.SIDE * Plots.SIDE];
 
     Relief(CaveEngine.Cave c) {
         this.c = c;
-        this.groundK = c.param("depth_ground", 1);
+        this.island = c.isles || c.sea;
+        // an island's ground is half as bold: hummocks, not terraces
+        this.groundK = c.param("depth_ground", 1) * (island ? 0.5 : 1);
         this.thingsK = c.param("depth_things", 1);
         this.lumpsK = c.param("depth_lumps", 1) * c.dress.lumps();
         this.ledgesK = c.param("depth_ledges", 1) * c.dress.ledges();
+        this.roofK = c.param("depth_roof", 1);
         this.W = c.W;
         this.seed = c.seed ^ 0x5E11EFL;
     }
@@ -68,6 +80,18 @@ final class Relief {
     /** Where you stand at (x, z), whole blocks above the floor line: the block your feet are in (over a slab, the next). */
     int stand(int x, int z) {
         return (half(x, z) + 1) >> 1;
+    }
+
+    /** A high ledge's height at (x, z), whole blocks (0 off one). */
+    int high(int x, int z) {
+        if (x < 0 || z < 0 || x >= Plots.SIDE || z >= Plots.SIDE) return 0;
+        return high[x + z * Plots.SIDE];
+    }
+
+    /** The highest ledge within 2 of (x, z), whole blocks (0 if none). */
+    int ledge(int x, int z) {
+        if (x < 0 || z < 0 || x >= Plots.SIDE || z >= Plots.SIDE) return 0;
+        return ledge[x + z * Plots.SIDE];
     }
 
     /** How wild (x, z) is, 0 to 1. */
@@ -108,7 +132,7 @@ final class Relief {
                 double lat = Math.abs(at[0]);
                 wild[k] = (byte) Math.round(60 * clamp((lat - c.hw + 1.2) / 1.2, 0, 1));
                 this.in[k] = (byte) Math.round(4 * clamp(c.hw + 0.5 - lat, 0, 8));
-                boolean door = false;
+                boolean door = doorway(r, x, z);
                 for (Room.Door dr : r.doors) door |= Math.hypot(px - dr.centerX() - 0.5, pz - dr.centerZ() - 0.5) < 2.5;
                 if (door) {
                     pinned.set(k);
@@ -157,6 +181,7 @@ final class Relief {
         byte[] stand = new byte[Plots.SIDE * Plots.SIDE];
         for (var e : c.kinds.entrySet()) {
             Room r = c.p.world(e.getKey());
+            if (e.getValue() == CaveEngine.Kind.LINK && island) continue;
             if (e.getValue() == CaveEngine.Kind.LINK) solveLink(r);
             else if (!shaped(e.getValue()) || c.shapes.get(r.id) == null) continue;
             else solve(r, e.getValue());
@@ -166,6 +191,9 @@ final class Relief {
             if (e.getValue() != CaveEngine.Kind.LINK) c.s.op(b[0], W - 5, b[1], b[2], W - 5, b[3], (buf, x, y, z) -> soften(buf, x, z));
         }
         c.p.ground = stand;
+        java.util.BitSet hs = new java.util.BitSet(high.length);
+        for (int k = 0; k < high.length; k++) if (high[k] > 0) hs.set(k);
+        c.p.high = hs.isEmpty() ? null : hs;
         // the highest ground within 3, rows then columns
         byte[] rows = new byte[stand.length];
         for (int z = 0; z < Plots.SIDE; z++)
@@ -205,6 +233,7 @@ final class Relief {
         boolean[] in = new boolean[w * h], pin = new boolean[w * h];
         byte[] s = new byte[w * h];
         int[] v = new int[w * h];
+        double[] wds = new double[w * h];
         boolean fight = fight(r);
         boolean lake = c.inLakeAny(id);
         double pad = c.dress.pad(r, kind);
@@ -223,6 +252,7 @@ final class Relief {
                 double q = c.q(id, px, pz);
                 double wd = 99;
                 for (double[] sg : way) wd = Math.min(wd, seg(px, pz, sg));
+                wds[i] = wd;
                 double wild = clamp((wd - 1.8) / 4, 0, 1);
                 int k = x + z * Plots.SIDE;
                 this.wild[k] = (byte) Math.round(100 * (fight && q < 0.5 ? wild * 0.3 : wild));
@@ -231,7 +261,7 @@ final class Relief {
                 double roll = (Hash.noise(seed + 25, px, pz, 8) - 0.5) * 3.6;
                 // away from the way: terraces climbing toward the walls (their edges ragged), a mound here and there,
                 // hollows between
-                double terrace = terrace(seed, q, px, pz);
+                double terrace = island ? hummock(seed, q, px, pz) : terrace(seed, q, px, pz);
                 double mn = Hash.noise(seed + 27, px, pz, 5);
                 double mound = mn > 0.66 ? smooth(0.66, 0.86, mn) * 2.5 : 0;
                 double dn = Hash.noise(seed + 29, px, pz, 6);
@@ -241,17 +271,26 @@ final class Relief {
                 // on the way half a step up at most; gentle where you fight, bold only at its edges
                 if (wd < 1.8) hh = clamp(hh, 0, 0.5);
                 else if (wd < 3.5) hh = clamp(hh, -1, 1);
-                if (fight && q < 0.5) hh = clamp(hh, -0.5, 1);
+                // (a fought floor rolls a little more instead: half steps you run over without a thought)
+                if (fight && q < 0.5 && wd >= 1.8) hh = clamp(hh + roll * 0.5, -0.5, 1);
+                else if (fight && q < 0.5) hh = clamp(hh, -0.5, 1);
                 int gi = (int) Math.round(hh * 2);
                 // head room under the roof (and under anything the dress hangs low)
                 double room = Math.min(c.ceil(id, px, pz), c.dress.headroom(r, kind, x, z));
                 gi = Math.max(-SINK, Math.min(Math.min(RISE, (int) Math.floor(2 * (room - 3.5))), gi));
+                // an island's shore stands over the sea (or the drop): a hollow there would let the water in
+                if (island && gi < 0 && c.d(id, px, pz) > -3) gi = 0;
                 v[i] = gi;
                 s[i] = (byte) (fight && q < 0.5 || wd < 3.5 ? 1 : 2);
                 pin[i] = pinned(r, sh, px, pz, q, lake, hands, pad);
                 if (pin[i]) pinned.set(k);
             }
         }
+        // the big caverns' high ledges stand as they're set: the specks, the steps' rule and the walk guarantee leave them
+        int[] hv = new int[w * h];
+        boolean[] fixed = new boolean[w * h];
+        ledges(r, kind, sh, b, w, h, in, pin, wds, way, hv, fixed);
+        for (int i = 0; i < w * h; i++) if (fixed[i]) v[i] = hv[i];
         // no specks: a rise or a hollow needs most of its neighbours with it (a wall counts), or it reads as a tile dropped
         // on the floor or a hole in it
         for (int pass = 0; pass < 2; pass++) {
@@ -259,7 +298,7 @@ final class Relief {
             for (int lz = 0; lz < h; lz++) {
                 for (int lx = 0; lx < w; lx++) {
                     int i = lx + lz * w;
-                    if (!in[i] || pin[i] || o[i] == 0) continue;
+                    if (!in[i] || pin[i] || fixed[i] || o[i] == 0) continue;
                     int with = 0;
                     for (int dz = -1; dz <= 1; dz++) {
                         for (int dx = -1; dx <= 1; dx++) {
@@ -293,7 +332,7 @@ final class Relief {
             for (int lz = 0; lz < h; lz++) {
                 for (int lx = 0; lx < w; lx++) {
                     int i = lx + lz * w;
-                    if (up[i] == 0 && dn[i] == 0) continue;
+                    if (fixed[i] || up[i] == 0 && dn[i] == 0) continue;
                     int u = up[i], d = dn[i];
                     for (int dz = -1; dz <= 1; dz++) {
                         for (int dx = -1; dx <= 1; dx++) {
@@ -317,16 +356,155 @@ final class Relief {
         }
         for (int i = 0; i < w * h; i++) v[i] = pin[i] ? 0 : up[i] - dn[i];
         // the walk guarantee: every doorway and the anchor joined by ground with no step over half a block; where they
-        // aren't, the place's ground is halved, then flat
+        // aren't, the place's ground is halved, then flat (the ledges aren't a way through, and stay)
         int[] goals = goals(r, sh, anchor, b, w, h, in);
-        int eased = ease(v, in, goals, w, h, i -> obstacle(b[0] + i % w + 0.5, b[1] + i / w + 0.5));
+        int eased = ease(v, in, goals, w, h, i -> fixed[i] || obstacle(b[0] + i % w + 0.5, b[1] + i / w + 0.5));
         if (eased > 0) dev.awaken.Awaken.LOG.info("[gates] {} place {}: no way through without a jump, its ground {}", c.lookId, id, eased == 1 ? "halved" : "flat");
+        for (int i = 0; i < w * h; i++) if (fixed[i]) v[i] = hv[i];
+        // nothing sinks beside a ledge or its stair (its foot would be a jump too high)
         for (int lz = 0; lz < h; lz++) {
             for (int lx = 0; lx < w; lx++) {
                 int i = lx + lz * w;
-                if (in[i]) g[b[0] + lx + (b[1] + lz) * Plots.SIDE] = (byte) v[i];
+                if (!in[i] || fixed[i] || v[i] >= 0) continue;
+                for (int dz = -1; dz <= 1 && v[i] < 0; dz++)
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int nx = lx + dx, nz = lz + dz;
+                        if (nx >= 0 && nz >= 0 && nx < w && nz < h && fixed[nx + nz * w]) {
+                            v[i] = 0;
+                            break;
+                        }
+                    }
             }
         }
+        boolean any = false;
+        for (int lz = 0; lz < h; lz++) {
+            for (int lx = 0; lx < w; lx++) {
+                int i = lx + lz * w;
+                if (!in[i]) continue;
+                int k = b[0] + lx + (b[1] + lz) * Plots.SIDE;
+                g[k] = (byte) v[i];
+                if (fixed[i]) {
+                    high[k] = (byte) (hv[i] / 2);
+                    any = true;
+                }
+            }
+        }
+        if (any) {
+            for (int z = Math.max(0, b[1] - 2); z <= Math.min(Plots.SIDE - 1, b[3] + 2); z++)
+                for (int x = Math.max(0, b[0] - 2); x <= Math.min(Plots.SIDE - 1, b[2] + 2); x++) {
+                    int m = 0;
+                    for (int dz = -2; dz <= 2; dz++) for (int dx = -2; dx <= 2; dx++) m = Math.max(m, high(x + dx, z + dz));
+                    ledge[x + z * Plots.SIDE] = (byte) Math.max(ledge[x + z * Plots.SIDE], m);
+                }
+        }
+    }
+
+    /**
+     * A big cavern's high ledges (38.14, stage 4): shelves against its wall away from the way, three or four blocks up, each
+     * with a stair of one-block steps down along the wall from one end, for a view or a quiet corner. A great cavern gets
+     * two, a cavern of four chunks or more one (times the world's {@code depth_shelves}); caves only (not an open land, an
+     * isle or a sea). A shelf is tried every 15 degrees round the middle, 2.5 in from the wall, farthest from the way first,
+     * and stands only where every column of it and its stair is in the place, unpinned, 3.5 or more off the way, 3 or more
+     * from anything the dress set down, with room for its height under the dress's head room, and well clear of the
+     * doorways and the other ledges. Sets {@code hv} (half blocks) and {@code fixed} over its columns.
+     */
+    private void ledges(Room r, CaveEngine.Kind kind, PassageEngine.Shape sh, int[] b, int w, int h, boolean[] in, boolean[] pin,
+                        double[] wds, List<double[]> way, int[] hv, boolean[] fixed) {
+        if (island || c.open) return;
+        boolean great = kind == CaveEngine.Kind.GREAT;
+        if (!great && (kind == CaveEngine.Kind.SECRET || r.gw * r.gh < 2)) return;
+        int want = (int) Math.round(c.param("depth_shelves", 1) * (great ? 2 : 1));
+        if (want <= 0) return;
+        int id = r.id;
+        List<double[]> cand = new ArrayList<>();
+        for (int a = 0; a < 24; a++) {
+            double ang = (a + Hash.unit(seed, id, a) * 0.5) * Math.PI / 12, ux = Math.cos(ang), uz = Math.sin(ang);
+            // out from the middle to 2.5 short of the wall
+            double sx = sh.cx(), sz = sh.cz();
+            int t = 0;
+            while (t < 200 && c.d(id, sx, sz) < -2.5) {
+                sx += ux * 0.5;
+                sz += uz * 0.5;
+                t++;
+            }
+            if (t >= 200 || t < 6) continue;
+            // the wall's way out there (the distance's slope), and along it
+            double gx = c.d(id, sx + 0.5, sz) - c.d(id, sx - 0.5, sz), gz = c.d(id, sx, sz + 0.5) - c.d(id, sx, sz - 0.5);
+            double gl = Math.hypot(gx, gz);
+            if (gl < 1e-6) continue;
+            gx /= gl;
+            gz /= gl;
+            double wd = 99;
+            for (double[] sg : way) wd = Math.min(wd, seg(sx, sz, sg));
+            if (wd < 6) continue;
+            int H = Hash.unit(seed + 3, id, a) < 0.5 ? 3 : 4;
+            double L = 3.5 + 1.5 * Hash.unit(seed + 5, id, a);
+            cand.add(new double[]{sx, sz, gx, gz, wd, H, L, Hash.unit(seed + 7, id, a) < 0.5 ? 1 : -1});
+        }
+        cand.sort((p0, p1) -> Double.compare(p1[4], p0[4]));
+        List<double[]> took = new ArrayList<>();
+        List<Integer> cells = new ArrayList<>();
+        // each column's verdict, worked out once (0 not yet, 1 free, 2 not): pinned, near the way or the dress's things
+        byte[] free = new byte[w * h];
+        for (double[] cd : cand) {
+            if (took.size() >= want) break;
+            boolean clear = true;
+            for (double[] o : took) if (Math.hypot(cd[0] - o[0], cd[1] - o[1]) < 20) clear = false;
+            for (Room.Door dr : r.doors) if (Math.hypot(cd[0] - dr.centerX() - 0.5, cd[1] - dr.centerZ() - 0.5) < cd[6] + 2 * cd[5] + 4) clear = false;
+            if (!clear) continue;
+            for (int tries = 0; tries < 2 && clear; tries++) {
+                double[] s = cd.clone();
+                if (tries == 1) s[7] = -s[7];
+                cells.clear();
+                int top = 0, foot = 0;
+                boolean ok = true;
+                int reach = (int) Math.ceil(s[6] + 2 * s[5] + 2);
+                for (int z = (int) Math.floor(s[1]) - reach; z <= (int) Math.floor(s[1]) + reach && ok; z++)
+                    for (int x = (int) Math.floor(s[0]) - reach; x <= (int) Math.floor(s[0]) + reach; x++) {
+                        int hh = ledgeAt(id, s, x + 0.5, z + 0.5);
+                        if (hh == 0) continue;
+                        int lx = x - b[0], lz = z - b[1], i = lx + lz * w;
+                        if (lx < 0 || lz < 0 || lx >= w || lz >= h || !in[i]) continue;
+                        if (free[i] == 0) free[i] = (byte) (pin[i] || wds[i] < 3.5 || near(x + 0.5, z + 0.5, 2) ? 2 : 1);
+                        if (free[i] == 2 || fixed[i] || c.dress.headroom(r, kind, x, z) < hh + 3.5) {
+                            ok = false;
+                            break;
+                        }
+                        if (hh == (int) s[5]) top++;
+                        if (hh == 1) foot++;
+                        cells.add(i);
+                        cells.add(hh);
+                    }
+                if (!ok || top < 12 || foot < 2) continue;
+                for (int k = 0; k < cells.size(); k += 2) {
+                    hv[cells.get(k)] = 2 * cells.get(k + 1);
+                    fixed[cells.get(k)] = true;
+                }
+                took.add(s);
+                break;
+            }
+        }
+    }
+
+    /**
+     * A ledge's height over (px, pz), whole blocks (0 off it): its top against the wall within {@code L} either side of
+     * where it was set (4 deep, its edge ragged), then a step down every 2 blocks along the wall from one end, 3 deep.
+     */
+    private int ledgeAt(int id, double[] s, double px, double pz) {
+        double ox = px - s[0], oz = pz - s[1];
+        double along = (ox * -s[3] + oz * s[2]) * s[7], out = ox * s[2] + oz * s[3];
+        int H = (int) s[5];
+        double L = s[6];
+        if (out < -6 || out > 4 || along < -L || along > L + 2 * (H - 1)) return 0;
+        double dd = c.d(id, px, pz), rag = (Hash.noise(seed + 61, px, pz, 3) - 0.5) * 1.6;
+        if (along <= L) return dd > -4 + rag ? H : 0;
+        return dd > -3 + rag * 0.5 ? H - (int) Math.ceil((along - L) / 2) : 0;
+    }
+
+    /** Whether anything the dress set down stands within {@code dist} of (x, z). */
+    private boolean near(double x, double z, double dist) {
+        for (double[] bl : c.blocked) if (Math.hypot(x - bl[0], z - bl[1]) < bl[2] + dist) return true;
+        return false;
     }
 
     /** The cells a place's way must join (box-local): just inside each doorway, and the anchor. */
@@ -379,6 +557,18 @@ final class Relief {
         return true;
     }
 
+    /**
+     * Whether a column is in one of a room's doorways, 4 deep either side of the wall: the doorway's lintel is set for the
+     * floor line, so the ground there stays at it (a Rig room's way out, a tunnel's mouth).
+     */
+    static boolean doorway(Room r, int x, int z) {
+        for (Room.Door d : r.doors) {
+            int[] b = WorldPlan.doorBox(d, 4);
+            if (x >= b[0] && x <= b[1] && z >= b[2] && z <= b[3]) return true;
+        }
+        return false;
+    }
+
     private boolean obstacle(double x, double z) {
         for (double[] bl : c.blocked) if (Math.hypot(x - bl[0], z - bl[1]) < bl[2]) return true;
         return false;
@@ -386,7 +576,7 @@ final class Relief {
 
     /** Ground that stays at the floor line: doorways, the middle, the anchor, lakes, and whatever the dress set down. */
     boolean pinned(Room r, PassageEngine.Shape sh, double px, double pz, double q, boolean lake, List<int[]> hands, double pad) {
-        for (Room.Door dr : r.doors) if (Math.hypot(px - dr.centerX() - 0.5, pz - dr.centerZ() - 0.5) < 2.5) return true;
+        if (doorway(r, (int) Math.floor(px), (int) Math.floor(pz))) return true;
         if (Math.hypot(px - sh.cx(), pz - sh.cz()) < pad || c.p.nearAnchor(px, pz, 3)) return true;
         if (lake && q < 0.65) return true;
         for (double[] bl : c.blocked) if (Math.hypot(px - bl[0], pz - bl[1]) < bl[2] + 1) return true;
@@ -501,7 +691,7 @@ final class Relief {
         int top = f + 2;
         while (top < f + 48 && b.open(x, top, z)) top++;
         int roof = top;
-        if (roof - f >= 4 && full(b, x, roof, z)) {
+        if (!c.open && roof - f >= 4 && full(b, x, roof, z)) {
             BlockState hang = d.ground(ROOF, x, roof - 1, z);
             Direction to = only(b, x, z, (nx, nz) -> full(b, nx, roof - 1, nz) && b.open(nx, roof - 2, nz),
                     (nx, nz) -> b.open(nx, roof - 1, nz));
@@ -510,7 +700,8 @@ final class Relief {
         }
         // a wall's foot: off the way, every other one by the noise
         if (wild(x, z) < 0.3 || !b.open(x, f + 2, z) || Hash.noise(seed + 47, x, z, 3) < 0.5) return;
-        BlockState step = d.ground(STAIRS, x, f, z);
+        BlockState step = d.ground(FOOT, x, f, z);
+        if (step == null) step = d.ground(STAIRS, x, f, z);
         Direction wall = only(b, x, z, (nx, nz) -> full(b, nx, f, nz) && full(b, nx, f + 1, nz), (nx, nz) -> b.open(nx, f, nz));
         if (step != null && wall != null && step.hasProperty(StairBlock.FACING)) b.set(x, f, z, step.setValue(StairBlock.FACING, wall));
     }
@@ -577,7 +768,7 @@ final class Relief {
         }
         if (v == 0) {
             BlockState bits = d.ground(BITS, x, y, z);
-            if (bits != null && Hash.unit(Hash.mix(hs + 7)) < d.bits() * w) b.set(x, y, z, bits);
+            if (bits != null && Hash.unit(Hash.mix(hs + 7)) < d.bits() * (0.35 + 0.65 * w) * litter(x, z)) b.set(x, y, z, bits);
             return;
         }
         boolean foot = half(x + 1, z) >= v + 2 || half(x - 1, z) >= v + 2 || half(x, z + 1) >= v + 2 || half(x, z - 1) >= v + 2;
@@ -588,7 +779,15 @@ final class Relief {
             return;
         }
         BlockState bits = d.ground(BITS, x, y, z);
-        if (bits != null && Hash.unit(Hash.mix(hs + 7)) < d.bits() * w) b.set(x, y, z, bits);
+        if (bits != null && Hash.unit(Hash.mix(hs + 7)) < d.bits() * (0.35 + 0.65 * w) * litter(x, z)) b.set(x, y, z, bits);
+    }
+
+    /**
+     * Bits lie in patches, not an even scatter: 0.25 between them, up to 2.75 in them (about 1 on the whole); a third as
+     * many on the way as off it (they're kicked aside, not swept away).
+     */
+    double litter(int x, int z) {
+        return 0.25 + 2.5 * smooth(0.42, 0.72, Hash.noise(seed + 49, x + 0.5, z + 0.5, 4));
     }
 
     /** Open air or something thin standing there (a plant, a candle, crumbs). */
@@ -605,6 +804,15 @@ final class Relief {
      * ragged. The roof rises over them by as much ({@link CaveEngine.Cave#ceil}), so the ground meets the wall, not a
      * trench at its foot.
      */
+    /**
+     * An island's ground away from the way (38.14): hummocks rising between the middle and the edge, up to two and a half
+     * blocks, back down to the floor line at the edge, so nothing stands up at the drop like a rim.
+     */
+    static double hummock(long seed, double q, double px, double pz) {
+        return smooth(0.1, 0.45, q) * smooth(0.95, 0.7, q) * smooth(0.35, 0.7, Hash.noise(seed + 33, px, pz, 6)) * 2.5
+                + (Hash.noise(seed + 23, px, pz, 3) - 0.5) * 0.8;
+    }
+
     static double terrace(long seed, double q, double px, double pz) {
         return smooth(0.45, 0.9, q + (Hash.noise(seed + 21, px, pz, 7) - 0.5) * 0.16) * 4
                 + (Hash.noise(seed + 23, px, pz, 3) - 0.5) * 0.8;

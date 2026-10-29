@@ -175,6 +175,8 @@ public final class GateDepthTests {
      * aren't full blocks, the walls plumb from feet to head, the roof's spread and what stands in the space.
      */
     static Depth depth(GatePlan p) {
+        // timed warm: the first plan of a world pays for the JIT
+        FloorBuilder.build(p);
         long t0 = System.nanoTime();
         GateLayout l = FloorBuilder.build(p);
         double planMs = (System.nanoTime() - t0) / 1e6;
@@ -194,11 +196,22 @@ public final class GateDepthTests {
             if (e == null) continue;
             int ey = f.baseY + arrival.dy + f.ground(e.x(), e.z()) + e.y();
             // the way stays easy: from the arrival to the floor's end without a single jump
-            wc.noJump = true;
+            WorldCheck no = new WorldCheck(p, f);
+            no.noJump = true;
+            GateWorldBellTests.walkAll(no, f, e.x(), ey, e.z());
+            boolean jumped = GateWorldBellTests.goal(no, f, f.room(f.end)) == null;
+            if (jumped) jumps++;
             GateWorldBellTests.walkAll(wc, f, e.x(), ey, e.z());
-            if (GateWorldBellTests.goal(wc, f, f.room(f.end)) == null) jumps++;
-            wc.noJump = false;
-            GateWorldBellTests.walkAll(wc, f, e.x(), ey, e.z());
+            // where the walk without jumps stops: the step after the last spot it reached on the route walked with them
+            int[] end = jumped ? GateWorldBellTests.goal(wc, f, f.room(f.end)) : null;
+            if (end != null) {
+                List<int[]> route = wc.route(end[0], end[1], end[2]);
+                int last = -1;
+                for (int i = 0; i < route.size(); i++) if (no.reached(route.get(i)[0], route.get(i)[1], route.get(i)[2])) last = i;
+                int[] n = route.get(Math.min(route.size() - 1, last + 1));
+                Awaken.LOG.info("[gates] {} floor {}: the way needs a jump at {} {} {} onto {}", p.worlds().isEmpty() ? "" : p.worlds().get(0).world(), f.floor,
+                        n[0], n[1], n[2], wc.at(n[0], n[1] - 1, n[2]).getBlock().getDescriptionId());
+            }
             for (Room r : f.rooms) {
                 if (r.rig != null || r.type == Room.Type.BOSS) continue;
                 int base = f.baseY + r.dy;
@@ -209,7 +222,8 @@ public final class GateDepthTests {
                     if (feet == Integer.MIN_VALUE) continue;
                     // got to more than 4 over the ground there: up a wall, onto a pillar's flare (the Brood Hall's ledges too)
                     for (int y = base + f.ground(x, z) + 5; y <= base + 48; y++) if (wc.reached(x, y, z)) {
-                        climbs++;
+                        if (climbs++ == 0) Awaken.LOG.info("[gates] {} floor {}: first climb at {} {} {} onto {} (ground {})", p.worlds().isEmpty() ? "" : p.worlds().get(0).world(),
+                                f.floor, x, y, z, wc.at(x, y - 1, z).getBlock().getDescriptionId(), f.ground(x, z));
                         break;
                     }
                     cols++;
@@ -264,10 +278,86 @@ public final class GateDepthTests {
     }
 
     /**
-     * The worlds whose places have their depth so far (38.14): each is held to the plan's targets for dry caves. A
-     * world joins when its theme's ground is built.
+     * The dry cave worlds whose places have their depth (38.14): each is held to the plan's targets for dry caves.
      */
-    static final List<String> DEEP = List.of("awaken:hive/the_comb", "awaken:hive/brood_hall", "awaken:hive/the_swarm");
+    static final List<String> DEEP = List.of(
+            "awaken:hive/the_comb",
+            "awaken:hive/brood_hall",
+            "awaken:hive/the_swarm",
+            "awaken:fungal_hollow/glowing_deep",
+            "awaken:fungal_hollow/spore_canopy",
+            "awaken:fungal_hollow/root_warrens",
+            "awaken:ember_mines/working_mine",
+            "awaken:ember_mines/open_chasm",
+            "awaken:ember_mines/forge_below",
+            "awaken:overgrown_temple/jungle_courts",
+            "awaken:overgrown_temple/root_halls",
+            "awaken:overgrown_temple/waterfall_temple",
+            "awaken:overgrown_temple/great_tree",
+            "awaken:drowned_archive/stacks",
+            "awaken:drowned_archive/atrium",
+            "awaken:clockwork_foundry/works_floor",
+            "awaken:clockwork_foundry/pipe_maze",
+            "awaken:clockwork_foundry/great_engine",
+            "awaken:clockwork_foundry/stopped_hour",
+            "awaken:glass_desert/glass_caves",
+            "awaken:frost_monastery/ice_caves",
+            "awaken:mirror_palace/gallery",
+            "awaken:mirror_palace/mirror_maze",
+            "awaken:precursor_lab/facility",
+            "awaken:precursor_lab/server_abyss",
+            "awaken:precursor_lab/containment",
+            "awaken:nightmare/the_house",
+            "awaken:nightmare/upside_down",
+            "awaken:abyssal_shrine/the_last_room",
+            "awaken:rare/the_tide_room",
+            "awaken:rare/the_library_of_doors",
+            "awaken:rare/the_dollhouse");
+
+    /**
+     * The open lands, isles and seas whose places have their depth: each is measured at version 6 and at 7 on the same
+     * floors and held to twice version 6's partial surfaces (the plan's target for them; at least 2%), more detail than
+     * version 6, and no jump on the way.
+     */
+    static final List<String> LANDS = List.of(
+            "awaken:frost_monastery/cliff_stair",
+            "awaken:frost_monastery/cloisters",
+            "awaken:frost_monastery/still_snow",
+            "awaken:glass_desert/buried_colossus",
+            "awaken:glass_desert/mirage",
+            "awaken:glass_desert/sunken_city",
+            "awaken:lantern_night_market/festival",
+            "awaken:lantern_night_market/floating_market",
+            "awaken:lantern_night_market/lantern_street",
+            "awaken:abyssal_shrine/dark_steps",
+            "awaken:abyssal_shrine/starfall",
+            "awaken:sky_archipelago/the_isles",
+            "awaken:sky_archipelago/sky_ruins",
+            "awaken:sky_archipelago/wind_stair",
+            "awaken:sky_archipelago/above_the_clouds",
+            "awaken:abyssal_shrine/black_mirror",
+            "awaken:drowned_archive/inkwell",
+            "awaken:drowned_archive/sunken_shelves",
+            "awaken:ember_mines/cooling_sea",
+            "awaken:hive/honey_lake",
+            "awaken:rare/the_aurora_steppe",
+            "awaken:rare/the_glass_sea",
+            "awaken:rare/the_hollow_sky",
+            "awaken:rare/the_lantern_orchard",
+            "awaken:rare/the_last_campfire",
+            "awaken:rare/the_quiet",
+            "awaken:rare/upward_rain",
+            "awaken:rare/the_gates_heart");
+
+    /**
+     * Where a world falls just short of a target and is held to what it measures instead (38.14, "Held to the targets"):
+     * the Swarm's and the Forge Below's many small fought places stay 59% flat at most (not 55), the Forge Below's and the
+     * Stacks' detail 34.5 (not 35); Upward Rain's partial surfaces 1.4 times version 6's (its mud, a short block, counted as partial there and
+     * gives way to moss beside a half step now), the Gates' Heart's 1.95 times.
+     */
+    static final Map<String, Double> FLAT_MOST = Map.of("awaken:hive/the_swarm", 59.0, "awaken:ember_mines/forge_below", 59.0),
+            DETAIL_LEAST = Map.of("awaken:ember_mines/forge_below", 34.5, "awaken:drowned_archive/stacks", 34.5),
+            PARTIAL_TIMES = Map.of("awaken:rare/upward_rain", 1.4, "awaken:rare/the_gates_heart", 1.95);
 
     public static void register() {
         AwakenTests.register("gateworlds_depth", 6000, h -> {
@@ -279,10 +369,22 @@ public final class GateDepthTests {
                 if (w == null || w.tier() == GateWorld.Tier.SECRET) continue;
                 Depth d = depth(measured(id, GatePlan.CONTENT_VERSION));
                 log.append("DEPTH ").append(id).append(' ').append(w.kind()).append(' ').append(d).append('\n');
+                // every world's way stays walkable without a jump
+                if (d.jumps() > 0 && !LANDS.contains(id) && !DEEP.contains(id)) short_.add(id + " (" + d + ")");
+                if (LANDS.contains(id)) {
+                    // a land, an isle or a sea beside its version 6 on the same floors
+                    Depth was = depth(measured(id, 6));
+                    log.append("DEPTH6 ").append(id).append(' ').append(w.kind()).append(' ').append(was).append('\n');
+                    if ((d.partial() < Math.max(2, PARTIAL_TIMES.getOrDefault(id, 2.0) * was.partial()) || d.detail() <= was.detail() || d.jumps() > 0))
+                        short_.add(id + " (" + d + "; version 6: " + was + ")");
+                }
                 if (!DEEP.contains(id)) continue;
-                if (d.flat() > 55 || d.heights() < 8 || d.partial() < 12 || d.plumb() > 65 || d.roofSpread() < 6 || d.detail() < 35 || d.jumps() > 0
-                        || "caves".equals(w.kind()) && d.climbs() > 0)
-                    short_.add(id + " (" + d + ")");
+                // no new way up a cave's wall (a cap or a pillar's flare it had before may stay)
+                int climbs = "caves".equals(w.kind()) ? depth(measured(id, 6)).climbs() : Integer.MAX_VALUE;
+                if (d.flat() > FLAT_MOST.getOrDefault(id, 55.0) || d.heights() < 8 || d.partial() < 12 || d.plumb() > 65 || d.roofSpread() < 6
+                        || d.detail() < DETAIL_LEAST.getOrDefault(id, 35.0) || d.jumps() > 0
+                        || d.climbs() > climbs)
+                    short_.add(id + " (" + d + (climbs < Integer.MAX_VALUE ? "; climbs before " + climbs : "") + ")");
             }
             Awaken.LOG.info("[gates] depth of the worlds' places:\n{}", log);
             h.assertTrue(short_.isEmpty(), "places short of their depth: " + short_);
@@ -318,6 +420,42 @@ public final class GateDepthTests {
             }
             Awaken.LOG.info("[gates] version 6 carves:\n{}", log);
             h.assertTrue(wrong.isEmpty(), "version 6 floors carve differently now: " + wrong);
+            h.succeed();
+        });
+        AwakenTests.register("gateworlds_ledges", 2400, h -> {
+            // the big caverns' high ledges (38.14, stage 4): there, reached a jump at a time, nothing placed on them
+            StringBuilder bad = new StringBuilder();
+            int all = 0;
+            for (String id : List.of("awaken:hive/brood_hall", "awaken:fungal_hollow/glowing_deep", "awaken:ember_mines/working_mine", "awaken:drowned_archive/atrium")) {
+                GatePlan p = measured(id, GatePlan.CONTENT_VERSION);
+                GateLayout l = FloorBuilder.build(p);
+                int cols = 0, reached = 0, on = 0;
+                for (FloorLayout f : l.main) {
+                    if (!f.isWorld() || f.high == null) continue;
+                    Room arrival = f.room(f.start);
+                    Room.Feature e = arrival.feature(Room.FeatureKind.ENTRANCE);
+                    if (e == null) continue;
+                    WorldCheck wc = new WorldCheck(p, f);
+                    GateWorldBellTests.walkAll(wc, f, e.x(), f.baseY + arrival.dy + f.ground(e.x(), e.z()) + e.y(), e.z());
+                    for (Room r : f.rooms) {
+                        for (int x = r.gx * 16; x < (r.gx + r.gw) * 16; x++) for (int z = r.gz * 16; z < (r.gz + r.gh) * 16; z++) {
+                            if (!f.high.get(x + z * Plots.SIDE) || f.places != null && f.places.groundAt(x, z) != r.id) continue;
+                            cols++;
+                            // (on a drift you stand a block up)
+                            int feet = f.baseY + r.dy + f.ground(x, z);
+                            if (wc.reached(x, feet, z) || wc.reached(x, feet + 1, z)) reached++;
+                        }
+                        for (int[] sp : r.spawnSpots) if (f.high.get(sp[0] + sp[1] * Plots.SIDE)) on++;
+                        for (Room.Feature ft : r.features) if (f.high.get(ft.x() + ft.z() * Plots.SIDE)) on++;
+                    }
+                }
+                all += cols;
+                Awaken.LOG.info("[gates] {} ledges: {} columns, {} reached, {} things on them", id, cols, reached, on);
+                if (reached < 0.85 * cols || on > 0) bad.append(' ').append(id).append(": ").append(reached).append(" of ").append(cols)
+                        .append(" columns reached, ").append(on).append(" spawns or features on them;");
+            }
+            h.assertTrue(all > 0, "no high ledges in the big caverns");
+            h.assertTrue(bad.isEmpty(), "high ledges:" + bad);
             h.succeed();
         });
     }

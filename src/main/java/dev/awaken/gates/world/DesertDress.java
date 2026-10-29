@@ -14,6 +14,8 @@ import java.util.List;
  */
 final class DesertDress extends Dress {
     final BlockState sand, rippled, sandstone, carved, brick, tile, column, glass, glassGlow, crystal, grass, sandfall, mirror, palm, fronds;
+    /** Shaped ground (SPEC §38.14): tile slabs and stairs, sandstone at the walls, sand drifted (all its cave floor is sand), glass shards */
+    final BlockState gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits;
     final boolean colossus, glassCaves, city, mirage, open;
     /** The Colossus's head (x, z, or NaN when no corner is free) and the Mirage's far edge (0 north, 1 east, 2 south, 3 west). */
     private double hx = Double.NaN, hz = Double.NaN;
@@ -37,6 +39,12 @@ final class DesertDress extends Dress {
         grass = mat("grass", "awaken:desert_grass");
         sandfall = mat("fall", "awaken:desert_sandfall");
         mirror = mat("touch", "awaken:desert_mirror");
+        gFloorSlab = mat("ground_slab", "awaken:desert_tile_slab");
+        gFloorStairs = mat("ground_stairs", "awaken:desert_tile_stairs");
+        gWallSlab = mat("wall_slab", "awaken:desert_sandstone_slab");
+        gWallStairs = mat("wall_stairs", "awaken:desert_sandstone_stairs");
+        gDrift = mat("ground_drift", "awaken:desert_sand_drift");
+        gBits = mat("ground_bits", "awaken:desert_shards");
         palm = GatePainter.state("minecraft:stripped_jungle_log[axis=y]");
         fronds = GatePainter.state("minecraft:jungle_leaves[persistent=true]");
         String n = name();
@@ -179,6 +187,33 @@ final class DesertDress extends Dress {
         if (fl) return Hash.noise(seed + 3, x, z, 6) > 0.5 ? rippled : sand;
         if (ceiling || rise < 2) return sandstone;
         return Hash.noise3(seed + 9, x, y, z, 6) > 0.75 ? sandstone : sand;
+    }
+
+    @Override
+    boolean depth() {
+        return true;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return kit(part, true, gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits);
+    }
+
+    @Override
+    double bits() {
+        // glass shards lie thick where the sand drifts
+        return 0.3;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return sand;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // sandstone pillars banded with carving, glass outcrops glowing here and there, a half-buried column, a heap of sandstone
+        return pieces(part, x, y, z, sandstone, carved, glass, glassGlow, column, sandstone);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package dev.awaken.gates.world;
 
 import dev.awaken.gates.worlds.GateWorld;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -303,10 +304,13 @@ final class CaveEngine implements WorldEngine {
             double dome = 3.5 + (h - 3.5) * Math.sqrt(Math.max(0, 1 - q * q)) + (Hash.noise(seed + id * 7L, x, z, 4.5) - 0.5) * 3;
             if (relief == null) return dome;
             // shaped places (38.14): the roof swells and dips away from the walls, a chimney rising here and there
-            double swell = (Hash.noise(seed + id * 11L, x, z, 9) - 0.5) * 15 * Math.min(1, (1 - q) * 3);
+            // a low roof can't dip far (it stops 3.5 over the floor), so it swells higher instead
+            double swell = (Hash.noise(seed + id * 11L, x, z, 9) - 0.5) * 18 * relief.roofK * Math.max(1, Math.min(1.6, 11.0 / h)) * Math.min(1, (1 - q) * 3);
             double ch = Hash.noise(seed + id * 13L, x, z, 5);
             double chimney = ch > 0.67 && q < 0.8 ? Relief.smooth(0.67, 0.8, ch) * CHIMNEY : 0;
-            return Math.max(3.5, dome + swell + chimney) + Math.max(0, Relief.terrace(relief.seed, q, x, z));
+            // and over a high ledge it lifts by the ledge's height (stage 4)
+            return Math.max(3.5, dome + swell + chimney) + Math.max(0, Relief.terrace(relief.seed, q, x, z))
+                    + relief.ledge((int) Math.floor(x), (int) Math.floor(z));
         }
 
         /**
@@ -361,8 +365,8 @@ final class CaveEngine implements WorldEngine {
             s = new Sculpt(this::skin, c.plot().minY(), c.plot().maxY());
             boolean v7 = c.plan().contentVersion() >= 7;
             s.thinOpen = v7;
-            // the open lands, islands, seas, plains and halls keep their own ground (Stage 2 shapes those)
-            if (v7 && dress.depth() && !open && !isles && !sea && !plain && !line) relief = new Relief(this);
+            // a plain, a hall's fold and a world mirrored under glass keep their own ground
+            if (v7 && dress.depth() && !plain && !line && !mirror) relief = new Relief(this);
             if (open && !isles) land();
             if (plain) plain();
             if (cloud != null) {
@@ -593,7 +597,11 @@ final class CaveEngine implements WorldEngine {
             }
             int top = W + roofs.get(id) + 3 + (relief == null ? 0 : CHIMNEY + 4);
             s.carve(x0, W, z0, x1, top, z1, (x, y, z) -> {
-                double h = y - W, dd = d(id, x, z), wall = dd - foot(x, z, h, dd), roof = h - ceil(id, x, z);
+                double h = y - W, dd = d(id, x, z), roof = h - ceil(id, x, z);
+                double groove = foot(x, z, h, dd);
+                // no groove at the wall's foot in a doorway: it would open the wall's bottom block only
+                if (groove > 0 && Relief.doorway(r, (int) Math.floor(x), (int) Math.floor(z))) groove = 0;
+                double wall = dd - groove;
                 double f = Math.max(wall, Math.max(-h, roof));
                 return relief == null || f < -3 || f > 3 ? f : f - wall(x, y, z, h, dd, roof > wall, x0, z0, x1, z1);
             });
@@ -740,7 +748,8 @@ final class CaveEngine implements WorldEngine {
                 });
                 return;
             }
-            int top = W + 9;
+            // over shaped ground a tunnel's vaults rise higher (its roof varies as a place's does)
+            int top = W + (relief == null ? 9 : 13);
             s.carve(ox, W, oz, ox + 15, top, oz + 15, (x, y, z) -> {
                 double[] w = way.at(x, z);
                 if (w == null) return 99;
@@ -749,8 +758,11 @@ final class CaveEngine implements WorldEngine {
                 double h = y - W, arch = 4.2 + Math.max(0, half * half - lat * lat) * 0.35;
                 // over shaped ground the arch rises with the floor, and vaults and dips along the way
                 if (relief != null) arch += Math.max(0, relief.stand((int) Math.floor(x), (int) Math.floor(z)))
-                        + Math.max(-0.7, (Hash.noise(seed + 33, x, z, 7) - 0.5) * 6);
-                return Math.max(lat - half - foot(x, z, h, lat - half), Math.max(-h, h - arch));
+                        + Math.max(-0.7, (Hash.noise(seed + 33, x, z, 7) - 0.5) * 9);
+                // no groove at the wall's foot in a doorway: it would open the wall's bottom block only
+                double groove = foot(x, z, h, lat - half);
+                if (groove > 0 && Relief.doorway(r, (int) Math.floor(x), (int) Math.floor(z))) groove = 0;
+                return Math.max(lat - half - groove, Math.max(-h, h - arch));
             });
         }
 
@@ -803,7 +815,7 @@ final class CaveEngine implements WorldEngine {
                     if (Math.floorMod(x - mx, 3) != 0 || Math.floorMod(z - mz, 3) != 0) return;
                     double dd = d(id, x + 0.5, z + 0.5);
                     // over shaped ground at head height over where you stand, and out into the foot of a leaning wall
-                    if (dd < (relief == null ? 0 : 2)) lightOver(b, x, relief == null ? y : y + Math.max(0, relief.stand(x, z)), z);
+                    if (dd < (relief == null || isles ? 0 : 2)) lightOver(b, x, relief == null ? y : y + Math.max(0, relief.stand(x, z)), z);
                     // an island's ragged rim: the light hangs in the air just off it, so the way round its edge isn't dark
                     else if (isles && dd < 2 && b.get(x, y, z) == Sculpt.UNSET) b.set(x, y, z, light);
                 });
@@ -822,12 +834,20 @@ final class CaveEngine implements WorldEngine {
         }
 
         void lightOver(Sculpt.Buf b, int x, int y, int z) {
-            for (int yy = y; yy <= y + 2; yy++) {
+            if (lightIn(b, x, y, z) || relief == null) return;
+            // shaped ground: a wall's bulge can fill the column, so the light goes beside it
+            for (Direction dir : Direction.Plane.HORIZONTAL) if (lightIn(b, x + dir.getStepX(), y, z + dir.getStepZ())) return;
+        }
+
+        private boolean lightIn(Sculpt.Buf b, int x, int y, int z) {
+            // over shaped ground a piece may stand in the column: the light goes on top of it
+            for (int yy = y; yy <= y + (relief == null ? 2 : 5); yy++) {
                 if (b.open(x, yy, z)) {
                     b.set(x, yy, z, light);
-                    return;
+                    return true;
                 }
             }
+            return false;
         }
 
         // ---- what the floor walks on and how its air glows ----------------------------------------------------------
@@ -840,6 +860,8 @@ final class CaveEngine implements WorldEngine {
             for (double[] bl : blocked) if (Math.hypot(px - bl[0], pz - bl[1]) < bl[2] + 1.2) return false;
             // on shaped ground a spot (a spawn, a feature) is level across the three by three round it, on a whole block
             if (relief != null) {
+                // and never up on a high ledge or its stair
+                if (relief.high(x, z) > 0) return false;
                 int g0 = relief.half(x, z);
                 if ((g0 & 1) != 0) return false;
                 for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) if (relief.half(x + dx, z + dz) != g0) return false;

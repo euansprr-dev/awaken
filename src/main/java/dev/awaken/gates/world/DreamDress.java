@@ -15,6 +15,8 @@ import java.util.List;
 final class DreamDress extends Dress {
     final BlockState wallpaper, torn, boards, wood, plush, sheet, dark, lamp, candle, motes, toy, window, musicBox, fence,
             grass, poppy, stairs;
+    /** Shaped ground (SPEC §38.14): board slabs and stairs on the floor, wood at the walls, plush drifted, feathers */
+    final BlockState gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits;
     final boolean house, hall, upside, dream;
     private int[] secretBox;
 
@@ -33,6 +35,12 @@ final class DreamDress extends Dress {
         toy = mat("toy", "awaken:dream_toy");
         window = mat("wall_glow", "awaken:dream_window");
         musicBox = mat("touch", "awaken:dream_music_box");
+        gFloorSlab = mat("ground_slab", "awaken:dream_boards_slab");
+        gFloorStairs = mat("ground_stairs", "awaken:dream_boards_stairs");
+        gWallSlab = mat("wall_slab", "awaken:dream_wood_slab");
+        gWallStairs = mat("wall_stairs", "awaken:dream_wood_stairs");
+        gDrift = mat("ground_drift", "awaken:dream_plush_drift");
+        gBits = mat("ground_bits", "awaken:dream_feathers");
         fence = GatePainter.state("minecraft:dark_oak_fence");
         grass = GatePainter.state("minecraft:grass_block");
         poppy = GatePainter.state("minecraft:poppy");
@@ -108,6 +116,33 @@ final class DreamDress extends Dress {
         if (rise == 0 || rise == 6) return wood;
         if (rise >= 2 && rise <= 4 && Math.floorMod(lat, 10) == 5) return window;
         return Hash.noise3(seed + 5, hx, y, hz, 4) > 0.62 ? torn : wallpaper;
+    }
+
+    @Override
+    boolean depth() {
+        return !dream && !hall;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return kit(part, false, gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits);
+    }
+
+    @Override
+    double bits() {
+        // small lost things lie thick
+        return 0.42;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return plush;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // bedposts floor to roof, heaps of sheets crusted with plush, a fallen post, a heap of plush
+        return pieces(part, x, y, z, wood, null, sheet, plush, wood, plush);
     }
 
     @Override

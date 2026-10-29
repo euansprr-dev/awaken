@@ -286,7 +286,9 @@ final class WorldCheck {
                 int n = i(x + dx[k], y + dy[k], z + dz[k]);
                 if (n < 0 || light[n] >= l - 1) continue;
                 BlockState s = palette.get(cells[n]);
-                if (cells[n] != 0 && s.canOcclude() && s.getLightEmission() == 0) continue;
+                // layers (snow, a drift) let light in as the game does (a level a block, as through air)
+                boolean layers = cells[n] != 0 && s.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.LAYERS);
+                if (cells[n] != 0 && s.canOcclude() && s.getLightEmission() == 0 && !layers) continue;
                 light[n] = (byte) (l - 1);
                 q.add(n);
             }

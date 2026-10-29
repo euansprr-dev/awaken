@@ -13,6 +13,8 @@ import java.util.List;
  */
 final class FrostDress extends Dress {
     final BlockState stone, carved, tiles, snow, plaster, timber, ice, iceGlow, icicles, flags, lamp, crystal, wheel, fence, chain;
+    /** Shaped ground (SPEC §38.14): stone (tile in the cloisters) slabs and stairs, stone at the walls, snow drifted, ice chips */
+    final BlockState gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits;
     final boolean cloisters, caves, stair, still, open;
 
     FrostDress(CaveEngine.Cave c) {
@@ -30,6 +32,10 @@ final class FrostDress extends Dress {
         lamp = mat("lamp", "awaken:frost_butter_lamp");
         crystal = mat("crystal", "awaken:frost_crystal");
         wheel = mat("touch", "awaken:frost_prayer_wheel");
+        gWallSlab = mat("wall_slab", "awaken:frost_stone_slab");
+        gWallStairs = mat("wall_stairs", "awaken:frost_stone_stairs");
+        gDrift = mat("ground_drift", "awaken:frost_snow_drift");
+        gBits = mat("ground_bits", "awaken:frost_chips");
         fence = GatePainter.state("minecraft:spruce_fence");
         chain = GatePainter.state("minecraft:iron_chain[axis=y]");
         String n = name();
@@ -38,6 +44,8 @@ final class FrostDress extends Dress {
         stair = n.equals("cliff_stair");
         still = n.equals("still_snow");
         open = c.open;
+        gFloorSlab = mat("ground_slab", caves ? "awaken:frost_stone_slab" : "awaken:frost_tiles_slab");
+        gFloorStairs = mat("ground_stairs", caves ? "awaken:frost_stone_stairs" : "awaken:frost_tiles_stairs");
     }
 
     @Override
@@ -104,6 +112,32 @@ final class FrostDress extends Dress {
         if (lat == 0) return timber;
         if (lat == 2 && (rise == 2 || rise == 3)) return carved;
         return plaster;
+    }
+
+    @Override
+    boolean depth() {
+        return true;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return kit(part, caves ? Hash.noise(seed + 3, x, z, 5) <= 0.6 : stair || still || Hash.noise(seed + 3, x, z, 5) > 0.62, gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits);
+    }
+
+    @Override
+    double bits() {
+        return 0.12;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return snow;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // ice pillars banded with glowing ice, ice boulders under snow, a fallen icefall, a heap of snow
+        return pieces(part, x, y, z, ice, iceGlow, ice, snow, ice, snow);
     }
 
     @Override
@@ -200,6 +234,14 @@ final class FrostDress extends Dress {
     void monk(int x, int z) {
         c.s.putOpen(x, W, z, ice);
         c.s.putOpen(x, W + 1, z, iceGlow);
+    }
+
+    @Override
+    double headroom(Room r, CaveEngine.Kind k, int x, int z) {
+        // under a cloister walk's roof (four over the floor line) the ground stays at the line
+        if (!hero("cloister_walks") || k == CaveEngine.Kind.ARRIVAL || r.gw * r.gh < 2) return 999;
+        double px = x + 0.5, pz = z + 0.5;
+        return c.d(r.id, px, pz) >= -4.2 && !nearDoor(r, px, pz, 3) ? 3.5 : 999;
     }
 
     /**

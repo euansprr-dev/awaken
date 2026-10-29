@@ -17,6 +17,8 @@ import java.util.Map;
 final class PalaceDress extends Dress {
     final BlockState marble, veined, checker, gilt, mirror, cracked, glass, white, shadow, curtain, chandelier, candelabra,
             crystal, stand, chain, whaleSkin, whaleBelly;
+    /** Shaped ground (SPEC §38.14): checker slabs and stairs on the floor, marble at the walls, mirror shards */
+    final BlockState gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits;
     final boolean gallery, maze, inverted, theWhite, shattered;
     /** Each maze room's maze, by room. */
     private final Map<Integer, Maze> mazes = new HashMap<>();
@@ -82,6 +84,12 @@ final class PalaceDress extends Dress {
         candelabra = mat("candelabra", "awaken:palace_candelabra");
         crystal = mat("crystal", "awaken:palace_crystal");
         stand = mat("touch", "awaken:mirror_stand");
+        gFloorSlab = mat("ground_slab", "awaken:palace_checker_slab");
+        gFloorStairs = mat("ground_stairs", "awaken:palace_checker_stairs");
+        gWallSlab = mat("wall_slab", "awaken:palace_marble_slab");
+        gWallStairs = mat("wall_stairs", "awaken:palace_marble_stairs");
+        gDrift = null;
+        gBits = mat("ground_bits", "awaken:palace_shards");
         chain = GatePainter.state("minecraft:iron_chain[axis=y]");
         // the whale is grey, so it shows against the white as a shape in the haze
         whaleSkin = GatePainter.state("minecraft:gray_concrete");
@@ -143,6 +151,33 @@ final class PalaceDress extends Dress {
         if (ceiling) return Math.floorMod(x, 5) == 0 || Math.floorMod(z, 5) == 0 ? gilt : veined;
         if (rise == 0 || rise == 4) return gilt;
         return rise > 4 ? veined : marble;
+    }
+
+    @Override
+    boolean depth() {
+        return !inverted && !theWhite;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return kit(part, false, gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits);
+    }
+
+    @Override
+    double bits() {
+        // glass lies thick where the mirrors broke: the palace grows nothing
+        return 0.45;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return null;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // marble columns banded with gilt, marble veined, a toppled gilt frame, a heap of broken mirror
+        return pieces(part, x, y, z, marble, gilt, marble, veined, gilt, cracked);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package dev.awaken.gates.world;
 
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
@@ -40,7 +41,8 @@ final class Formations {
 
     /** Spots wild enough to stand something on: off the way and the pads, inside the place (an outcrop may lean on its wall). */
     private boolean spot(int x, int z) {
-        return rf.wild(x, z) >= 0.5 && !rf.pinned.get(x + z * Plots.SIDE) && rf.inside(x, z) >= 0.75 && !near(x + 0.5, z + 0.5, 1.5);
+        return rf.wild(x, z) >= 0.5 && !rf.pinned.get(x + z * Plots.SIDE) && rf.inside(x, z) >= 0.75 && !near(x + 0.5, z + 0.5, 1.5)
+                && rf.ledge(x, z) == 0;
     }
 
     /**
@@ -52,8 +54,11 @@ final class Formations {
         for (int z = z0; z <= z1; z++)
             for (int x = x0; x <= x1; x++) {
                 if (Math.hypot(x + 0.5 - cx, z + 0.5 - cz) > r) continue;
-                if (x < 0 || z < 0 || x >= Plots.SIDE || z >= Plots.SIDE || rf.pinned.get(x + z * Plots.SIDE)) return false;
+                // nothing on a high ledge or beside it (it would be a step on up the wall)
+                if (x < 0 || z < 0 || x >= Plots.SIDE || z >= Plots.SIDE || rf.pinned.get(x + z * Plots.SIDE) || rf.ledge(x, z) > 0) return false;
                 if (rf.wild(x, z) < 0.35 && rf.inside(x, z) > 0) return false;
+                // an island's edge is a drop: nothing hangs out over it
+                if (rf.island && rf.inside(x, z) <= 0) return false;
             }
         return true;
     }
@@ -97,7 +102,8 @@ final class Formations {
     private boolean item(int id, int x, int z, long h, boolean first) {
         double roll = Hash.unit(Hash.mix(h + 3));
         double room = c.ceil(id, x + 0.5, z + 0.5) - Math.max(0, rf.stand(x, z));
-        if (first && room >= 7 && rf.inside(x, z) >= 2.5 && roll < 0.45) return pillar(id, x, z, h);
+        // no pillar under the sky or the dark over an island: nothing for it to hold up
+        if (first && !c.open && !c.isles && room >= 7 && rf.inside(x, z) >= 2.5 && roll < 0.45) return pillar(id, x, z, h);
         if (roll < 0.55) return rock(x, z, h);
         if (roll < 0.8) return fallen(x, z, h);
         return heap(x, z, h);
@@ -150,7 +156,8 @@ final class Formations {
         int rr = (int) Math.ceil(len / 2 + rad) + 1;
         c.blocked.add(new double[]{cx, cz, len / 2});
         rf.lift(cx, cz, len / 2 + rad, Math.max(ya, yb) + rad - W);
-        mass(x - rr, (int) Math.floor(Math.min(ya, yb) - rad) - 1, z - rr, x + rr, (int) Math.ceil(Math.max(ya, yb) + rad) + 1, z + rr, FALLEN,
+        Direction.Axis axis = Math.abs(dx) > Math.abs(dz) ? Direction.Axis.X : Direction.Axis.Z;
+        mass(x - rr, (int) Math.floor(Math.min(ya, yb) - rad) - 1, z - rr, x + rr, (int) Math.ceil(Math.max(ya, yb) + rad) + 1, z + rr, FALLEN, axis,
                 (px, py, pz) -> Sculpt.capsule(px, py, pz, cx - dx, ya, cz - dz, cx + dx, yb, cz + dz, rad));
         return true;
     }
@@ -179,11 +186,16 @@ final class Formations {
 
     /** Fills a field's inside with the theme's part (or the shell's own skin), in a box. */
     private void mass(int x0, int y0, int z0, int x1, int y1, int z1, int part, Sculpt.Field f) {
+        mass(x0, y0, z0, x1, y1, z1, part, null, f);
+    }
+
+    /** As above; a block with an axis (a log, a stem, a column) lies along {@code axis} when it's given. */
+    private void mass(int x0, int y0, int z0, int x1, int y1, int z1, int part, Direction.Axis axis, Sculpt.Field f) {
         c.s.op(x0, y0, z0, x1, y1, z1, (buf, x, y, z) -> {
             if (f.d(x + 0.5, y + 0.5, z + 0.5) >= 0) return;
             BlockState s = c.dress.formation(part, x, y, z);
             if (s == null) buf.mark(x, y, z, Sculpt.SOLID);
-            else buf.set(x, y, z, s);
+            else buf.set(x, y, z, axis != null && s.hasProperty(BlockStateProperties.AXIS) ? s.setValue(BlockStateProperties.AXIS, axis) : s);
         });
     }
 
@@ -196,7 +208,8 @@ final class Formations {
             boolean step = false;
             for (int[] d : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) step |= !buf.open(x + d[0], top + 1, z + d[1]);
             if (!step) return;
-            BlockState slab = c.dress.ground(Relief.SLAB, x, top + 1, z);
+            BlockState slab = c.dress.ground(Relief.CAP, x, top + 1, z);
+            if (slab == null) slab = c.dress.ground(Relief.SLAB, x, top + 1, z);
             if (slab != null) buf.set(x, top + 1, z, slab);
         });
     }
