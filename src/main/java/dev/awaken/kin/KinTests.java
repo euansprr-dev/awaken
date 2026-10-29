@@ -35,8 +35,10 @@ final class KinTests {
         for (int i = 0; i < 10; i++) Kinship.add(p, KinKind.PEBBLEPUP, Kinship.HELP);
         h.assertTrue(Kinship.of(p).step(KinKind.PEBBLEPUP) == Kinship.Step.KIN, "eleven helps make it Kin");
         h.assertTrue(Kinship.of(p).step(KinKind.LAMPWING) == Kinship.Step.WARY, "Kinship is kept kind by kind");
+        // help is warmed by Spirit, a killing never is
+        int before = Kinship.of(p).kind(KinKind.PEBBLEPUP).points;
         Kinship.add(p, KinKind.PEBBLEPUP, -Kinship.KILL);
-        h.assertTrue(Kinship.of(p).kind(KinKind.PEBBLEPUP).points == 110 - Kinship.KILL, "a killing takes " + Kinship.KILL + " away");
+        h.assertTrue(Kinship.of(p).kind(KinKind.PEBBLEPUP).points == before - Kinship.KILL, "a killing takes " + Kinship.KILL + " away");
         h.succeed();
     }
 
@@ -76,10 +78,16 @@ final class KinTests {
         h.setBlock(chestAt, Blocks.CHEST);
         KinBeast b = KinHome.spawn(level, KinKind.BURROWBUN, h.absolutePos(new BlockPos(3, 2, 2)), EntitySpawnReason.COMMAND);
         h.assertTrue(b != null, "a Burrowbun spawns");
-        b.settle(h.absolutePos(new BlockPos(0, 2, 0)), h.absolutePos(new BlockPos(3, 2, 3)), java.util.UUID.randomUUID());
+        // a beast whose Hearth is gone goes back to the wild, so this home needs a real one
+        java.util.UUID owner = java.util.UUID.randomUUID();
+        BlockPos anchor = h.absolutePos(new BlockPos(0, 2, 0));
+        dev.awaken.hearth.HearthData homes = dev.awaken.hearth.HearthService.data(level.getServer());
+        homes.put(new dev.awaken.hearth.HearthRecord(owner, "test", anchor, dev.awaken.hearth.HearthService.OVERWORLD));
+        b.settle(anchor, h.absolutePos(new BlockPos(3, 2, 3)), owner);
         h.succeedWhen(() -> {
             h.assertTrue(level.getBlockEntity(h.absolutePos(chestAt)) instanceof Container c && has(c, Items.WHEAT), "the wheat reaches the chest");
             h.assertTrue(h.getBlockState(crop).is(Blocks.WHEAT), "the wheat is planted again");
+            homes.remove(owner);
         });
     }
 
