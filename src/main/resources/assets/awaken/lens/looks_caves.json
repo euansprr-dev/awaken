@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "_about": "The Living Deep's cave regions (SPEC \u00a742.7), merged with looks.json by Lens: the camera's biome picks one. delve's CaveLook keeps the plain cave's look off in a region (SenseState.REGION), so these play alone. Dark places stay dark: exposure at most 1.0, the shadows tinted, never lifted; a region's colour shows in its lights and its air (fogGlow, haze toward hazeTint) and the grade.",
+  "looks": {
+    "biome:awaken:rootways": {
+      "_name": "The Rootways: earthy and damp: brown rock, moss-green shadows, the glowcaps' teal blooming softly into wet air, torchlight warm against it",
+      "exposure": 1.0,
+      "contrast": 1.08,
+      "saturation": 1.12,
+      "warmth": 0.04,
+      "shadowTint": [
+        0.34,
+        0.5,
+        0.44
+      ],
+      "highlightTint": [
+        1.0,
+        0.88,
+        0.66
+      ],
+      "splitTone": 0.22,
+      "vignette": 0.22,
+      "bloom": 1.0,
+      "bloomThreshold": 0.5,
+      "haze": 0.36,
+      "hazeStart": 0.05,
+      "hazeTint": [
+        0.3,
+        0.62,
+        0.52
+      ],
+      "hazeTintMix": 0.65,
+      "hazeDesaturate": 0.08,
+      "sunsetWarmth": 0.0,
+      "ao": 0.85,
+      "fogGlow": 0.95,
+      "water": 0.55,
+      "glow": 0.9
+    },
+    "biome:awaken:ochre_deep": {
+      "_name": "The Ochre Deep: iron country: red-orange rock, rust-brown shadows, warm dust hanging in still air, the embers and every torch glowing far into it",
+      "exposure": 1.0,
+      "contrast": 1.12,
+      "saturation": 1.16,
+      "warmth": 0.16,
+      "shadowTint": [
+        0.56,
+        0.36,
+        0.26
+      ],
+      "highlightTint": [
+        1.0,
+        0.78,
+        0.48
+      ],
+      "splitTone": 0.26,
+      "vignette": 0.22,
+      "bloom": 1.05,
+      "bloomThreshold": 0.48,
+      "haze": 0.44,
+      "hazeStart": 0.04,
+      "hazeTint": [
+        0.86,
+        0.48,
+        0.24
+      ],
+      "hazeTintMix": 0.75,
+      "hazeDesaturate": 0.05,
+      "sunsetWarmth": 0.0,
+      "ao": 0.8,
+      "fogGlow": 1.1,
+      "water": 0.45,
+      "glow": 0.9
+    }
+  }
+}

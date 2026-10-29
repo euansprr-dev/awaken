@@ -6,6 +6,8 @@ the time the weapon, the second slice, is not even visible... it looks like a me
     python3 tools/art/swing_chain.py report [style ...] [--rhythm mash|steady] [--json OUT]
     python3 tools/art/swing_chain.py strip OUT.png STYLE [--rhythm mash|steady]
     python3 tools/art/swing_chain.py twist [style ...]      every move's turn of the blade about its own length
+    python3 tools/art/swing_chain.py like [style ...]       every set move beside the rapier's stab or the longsword's cut
+    python3 tools/art/swing_chain.py calm [style ...]       every set move of a calm style held to round 14's rules
     (any with --swings PATH: a trial bake in place of the jar's file)
 
 Per chained strike (the second on): how much of its wind-up and blow the blade is on screen, where its set sits, the
@@ -338,6 +340,151 @@ def twist(styles=None, swings=None):
     return out
 
 
+# Round 13 (Euan 2026-10-29: "it's less about turning the wrist, and more about the weapon not doing clean stabs and
+# swipes like other weapons do"): each form held to the move that reads clean in game. A stab is the rapier's opening:
+# drawn back toward the eye (the blade grows), out along its own line with its point held on its mark (it shrinks), and
+# back in at once. A slash is the longsword's opening, a chop its overhead: set high in view, then one sweep across the
+# screen through the target, fastest at the hit.
+LIKE = {"stab": ("rapier", "strike_1"), "slash": ("longsword", "strike_1"), "rise": ("longsword", "strike_2"),
+        "chop": ("longsword", "strike_3")}
+# a stab's bars: drawn back at least this big (of the stance's size on the screen), out at most this big, back in (as
+# big as the stance) within this many ticks of the hit, its point off the blade's own line on the screen through the
+# drive (sliding along it is the stab) and off the crosshair at the hit at most this far
+LIKE_STAB = dict(pull=1.3, out=0.8, back=1.0, aim=0.08, mark=0.15)
+# a cut's: its sweep across the screen and its fastest frame within these shares of the reference's, fastest within
+# this of the hit, set no lower (a rising cut no higher) than the reference's by more than this, its middle this near
+# the crosshair at the hit
+LIKE_CUT = dict(span=(0.75, 1.35), peak=(0.7, 1.35), when=0.34, set=0.25, mark=0.25)
+
+
+def shape(sid, mv, swings):
+    """A move's look, as the forms above measure it (ndc and ticks, the striking hand as baked)."""
+    held = L.Held(L.REVIEW.get(sid, "gatewrought_" + sid))
+    m = L.table()[sid]["moves"][mv]
+    form = L.form_of(m)[0]
+    hit = L.hit_tick(m)
+    H0 = np.array([L.HX, L.HY, L.HZ])
+    ts = np.arange(0, m["windup"] + m["active"] + m["recovery"] + 1e-6, DT)
+
+    def seen(d, R):
+        g, tip = H0 + d + R @ held.grip, H0 + d + R @ held.tip
+        return S.ndc(g), S.ndc(tip), S.ndc(g + (tip - g) * L.MID)
+    fr = [seen(*L.new_pose(sid, mv, float(t), swings)) for t in ts]
+    rest = seen(np.zeros(3), np.eye(3))
+    size = np.array([np.linalg.norm(f[1] - f[0]) for f in fr]) / np.linalg.norm(rest[1] - rest[0])
+    k = int(round(hit / DT))
+    mark = S.ndc(L.TARGET)
+    if form == "stab":
+        j0 = int(np.argmax(size[:k])) if k else 0
+        back = next(((j - k) * DT for j in range(k + 1, len(fr)) if size[j] >= 0.95), math.inf)
+        way = (fr[k][1] - fr[k][0]) / np.linalg.norm(fr[k][1] - fr[k][0])
+        side = lambda p: abs(float((p - fr[k][1]) @ np.array([-way[1], way[0]])))
+        return form, dict(pull=float(size[:k].max()) if k else 1.0, out=float(size[k]), back=back,
+                          aim=max(side(fr[j][1]) for j in range(j0, k + 1)), mark=float(np.linalg.norm(fr[k][1] - mark)))
+    ax = 1 if form == "chop" else 0
+    lo, hi = max(0, k - int(round(1 / DT))), min(len(fr) - 1, k + int(round(1 / DT)))
+    tips = [fr[j][1] for j in range(lo, hi + 1)]
+    steps = [float(np.linalg.norm(fr[j + 1][1] - fr[j][1])) for j in range(lo, hi)]
+    top = int(np.argmax(steps))
+    if form == "slash" and fr[hi][1][1] > fr[lo][1][1] + 0.3:
+        form = "rise"
+    # the set: the wind-up's highest point (a rising cut's lowest) in the tick before the hit
+    ys = [float(fr[j][1][1]) for j in range(lo, k)] or [float(fr[k][1][1])]
+    return form, dict(span=max(t_[ax] for t_ in tips) - min(t_[ax] for t_ in tips), peak=steps[top],
+                      when=(lo + top + 0.5) * DT - hit, set=min(ys) if form == "rise" else max(ys),
+                      mark=float(np.linalg.norm(fr[k][2] - mark)))
+
+
+def like(styles=None, swings=None):
+    """Every set move (swing_choreo) beside the move that reads clean for its form; returns the misses."""
+    import swing_choreo as SC
+    swings = swings or L.load_swings()
+    bad, refs = [], {}
+    for form, (rs, rm) in LIKE.items():
+        refs[form] = shape(rs, rm, swings)[1]
+        print(f"{form:5s} like {rs} {rm}: " + "  ".join(f"{k} {v:.2f}" for k, v in refs[form].items()))
+    for sid, c in SC.CHORE.items():
+        if styles and sid not in styles or sid in CALM:
+            continue
+        for mv in c["moves"]:
+            form, got = shape(sid, mv, swings)
+            ref = refs.get(form)
+            if ref is None:
+                continue
+            if form == "stab":
+                miss = [k for k, v in got.items() if (v < LIKE_STAB[k] if k == "pull" else v > LIKE_STAB[k])]
+            else:
+                miss = [k for k in ("span", "peak") if not LIKE_CUT[k][0] * ref[k] <= got[k] <= LIKE_CUT[k][1] * ref[k]]
+                miss += [k for k in ("when", "mark") if abs(got[k]) > LIKE_CUT[k]]
+                low = got["set"] > ref["set"] + LIKE_CUT["set"] if form == "rise" else got["set"] < ref["set"] - LIKE_CUT["set"]
+                miss += ["set"] if low else []
+            print(f"  {sid} {mv:10s} {form:5s} " + "  ".join(f"{k} {v:.2f}{' !' if k in miss else ''}" for k, v in got.items()))
+            if miss:
+                bad.append((sid, mv, miss))
+    return bad
+
+
+# Round 14 (Euan 2026-10-29, after seeing round 13 in game: "when you slash, your left hand goes up. It's like there's
+# too much going on at once... it's as if you're slashing and it arrives, like, under your left arm"; the stabs pulled
+# the arm in at the camera; one ribbon for both daggers drew bands between them and loops on the way home). A calm
+# style's set moves (in place of `like` for it): the hand not striking holds still (its point moves no more than
+# `still` on the screen, a both-hands move aside); the striking grip never nearer the eye than the stance's by more than
+# `near` (an arm drawn in at the camera); a stab never grows past `pull` of the stance's size before the hit (no
+# pull-back) and lands within `mark` of the crosshair; a slash ends its stroke (the ribbon's last tick) no further past
+# the middle than `past`, at least `gap` from the other blade's point; the ribbon covers the hit and stops within
+# `after` ticks of it (never the way home).
+CALM = {"daggers": dict(still=0.03, near=0.04, pull=1.05, mark=0.15, past=0.25, gap=0.2, after=0.45)}
+
+
+def calm(styles=None, swings=None):
+    """Every set move of a calm style held to CALM's rules; returns the misses."""
+    import swing_choreo as SC
+    swings = swings or L.load_swings()
+    bad = []
+    for sid, bars in CALM.items():
+        if styles and sid not in styles:
+            continue
+        held = L.Held(L.REVIEW.get(sid, "gatewrought_" + sid))
+        H0 = np.array([L.HX, L.HY, L.HZ])
+        flip = np.array([-1.0, 1.0])
+
+        def seen(d, R):
+            g, tip = H0 + d + R @ held.grip, H0 + d + R @ held.tip
+            return S.ndc(g), S.ndc(tip), float(-g[2])
+        rest = seen(np.zeros(3), np.eye(3))
+        print(f"{sid}: stance grip depth {rest[2]:.2f}, point {rest[1].round(2)}")
+        for mv in SC.CHORE[sid]["moves"]:
+            m, clip = L.table()[sid]["moves"][mv], swings[sid]["moves"][mv]
+            form, hit = L.form_of(m)[0], L.hit_tick(m)
+            ts = np.arange(0, m["windup"] + m["active"] + m["recovery"] + 1e-6, DT)
+            # a right hand's tracks: the striking blade as authored, the other mirrored (an off-hand move mirrors both)
+            fr = [seen(*L.new_pose(sid, mv, float(t), swings)) for t in ts]
+            oth = [seen(*(idle_of(sid, mv, float(t), swings) or (np.zeros(3), np.eye(3)))) for t in ts]
+            both = clip.get("hand") == "both"
+            got, miss = {}, []
+            got["still"] = 0.0 if both else max(float(np.linalg.norm(o[1] - rest[1])) for o in oth)
+            got["near"] = rest[2] - min(f[2] for f in fr)
+            tr = clip.get("trail")
+            got["after"] = (tr[1] - hit) if tr and tr[0] <= hit else math.inf
+            k = int(round(hit / DT))
+            if form == "stab":
+                size = [float(np.linalg.norm(f[1] - f[0])) / float(np.linalg.norm(rest[1] - rest[0])) for f in fr[:k]]
+                got["pull"] = max(size) if size else 1.0
+                got["mark"] = float(np.linalg.norm(fr[k][1] - S.ndc(L.TARGET)))
+            else:
+                e = min(len(fr) - 1, int(round((tr[1] if tr else hit) / DT)))
+                got["past"] = -float(fr[e][1][0])
+                got["gap"] = math.inf if both else float(np.linalg.norm(fr[e][1] - oth[e][1] * flip))
+            for key, v in got.items():
+                if (v < bars[key]) if key == "gap" else (v > bars[key]):
+                    miss.append(key)
+            print(f"  {mv:10s} {form:5s} " + "  ".join(f"{key} {v:.2f}{' !' if key in miss else ''}" for key, v in got.items()))
+            if miss:
+                bad.append((sid, mv, miss))
+    print(f"{len(bad)} set moves out of round 14's rules")
+    return bad
+
+
 def main(argv):
     if not argv:
         raise SystemExit(__doc__)
@@ -365,6 +512,10 @@ def main(argv):
     if argv[0] == "twist":
         twist(argv[1:] or None, swings)
         return 0
+    if argv[0] == "like":
+        return 1 if like(argv[1:] or None, swings) else 0
+    if argv[0] == "calm":
+        return 1 if calm(argv[1:] or None, swings) else 0
     raise SystemExit(__doc__)
 
 

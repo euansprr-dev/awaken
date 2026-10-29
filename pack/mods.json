@@ -104,6 +104,13 @@
       "why": "Camera roll and sway that give movement weight."
     },
     {
+      "slug": "countereds-smooth-steps",
+      "profiles": [
+        "feel"
+      ],
+      "why": "Smooths the camera when stepping up stairs, slabs and blocks (Euan 2026-10-29)."
+    },
+    {
       "slug": "shoulder-surfing-reloaded",
       "profiles": [
         "feel"
