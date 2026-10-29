@@ -47,6 +47,7 @@ final class LedgerSources {
                 "veil_cache", "veil_glyph", "veil_stone", "veil_mark", "stillpoint_cloud", "stillpoint_door_in", "stillpoint_door_out", "street_lamp",
                 "carved_token", "torn_cloth", "drag_marks", "twigs", "coal_lode_heart", "copper_lode_heart", "deepglass_lode_heart", "diamond_lode_heart",
                 "emerald_lode_heart", "gold_lode_heart", "iron_lode_heart", "lapis_lode_heart", "redstone_lode_heart");
+        Sources.neverHeld("a skin of water the cave skin lays (SPEC §42): it drops nothing, the item is creative's only", "cave_puddle");
         Sources.neverHeld("the old Hearth role pads: the Journey's beasts do the work (SPEC §43.6)",
                 "role_pad_farm", "role_pad_guard", "role_pad_haul", "role_pad_mine", "role_pad_train");
         Sources.neverHeld("Pell's errand is gone; nothing gives it any more", "pells_letter");
