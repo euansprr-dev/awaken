@@ -42,7 +42,7 @@ public final class Interiors {
                 .then(Commands.literal("enter").executes(Interiors::enter))
                 .then(Commands.literal("goto").then(Commands.argument("spot", StringArgumentType.word())
                         .suggests((c, b) -> {
-                            for (String s : List.of("start", "piece", "small", "shrine", "ante", "lord", "rig")) b.suggest(s);
+                            for (String s : List.of("start", "piece", "small", "shrine", "ante", "lord", "rig", "place", "place2")) b.suggest(s);
                             return b.buildFuture();
                         })
                         .executes(c -> go(c, StringArgumentType.getString(c, "spot"))))))));
@@ -260,6 +260,22 @@ public final class Interiors {
                 // in its doorway, looking down the room toward the way on
                 Room.Door out = r.pathOut != null ? r.pathOut : r.pathIn;
                 return lookFrom(f, r, r.pathIn, 0, 0, out.centerX(), f.baseY + r.dy + 1.5, out.centerZ());
+            }
+            case "place", "place2" -> {
+                // a world floor's biggest place (place2: its second), from just inside where you walk in, over its ground
+                if (!f.isWorld()) return null;
+                List<Room> big = new java.util.ArrayList<>();
+                for (Room o : f.rooms) if (o.type != Room.Type.BOSS && o.rig == null && o.pathIn != null && o.area() > 1) big.add(o);
+                big.sort((a, b) -> b.area() - a.area());
+                int k = spot.equals("place") ? 0 : 1;
+                if (big.size() <= k) return null;
+                r = big.get(k);
+                double[] v = lookFrom(f, r, r.pathIn, 3, 0, r.centerX(), 0, r.centerZ());
+                // a block over where you stand there, looking at the middle a block and a half over its ground
+                double y = f.baseY + r.dy + f.ground((int) Math.floor(v[0]), (int) Math.floor(v[2])) + 1;
+                double ddx = r.centerX() + 0.5 - v[0], ddz = r.centerZ() + 0.5 - v[2];
+                double ddy = f.baseY + r.dy + f.ground(r.centerX(), r.centerZ()) + 1.5 - (y + 1.62);
+                return new double[]{v[0], y, v[2], v[3], -Math.toDegrees(Math.atan2(ddy, Math.hypot(ddx, ddz)))};
             }
             case "lord" -> {
                 r = f.room(f.end);

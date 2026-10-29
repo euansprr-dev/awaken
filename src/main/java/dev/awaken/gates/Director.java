@@ -349,12 +349,15 @@ public final class Director {
         trace.add(0, "seed      " + Long.toHexString(roll.plan().seed()) + " · rolled for " + p.getGameProfile().name());
         trace.add("place     " + dist + " m " + dir + " at " + spot.getX() + " " + spot.getY() + " " + spot.getZ()
                 + (HearthHooks.nearest(over, spot, 256).isPresent() ? " (within 256 of a Hearth)" : ""));
-        GateRecord g = GateService.create(server, id, roll.plan(), spot, p.getRandom().nextInt(2), Optional.of(p.getUUID()),
+        GateRecord g = GateService.create(server, id, tourPlan == null ? roll.plan() : tourPlan.apply(roll.plan()), spot, p.getRandom().nextInt(2), Optional.of(p.getUUID()),
                 roll.breaksInDays(), trace, false);
         g.nearHearth = HearthHooks.nearest(over, spot, 256).isPresent();
         for (String line : roll.trace()) DirectorLog.log(p, "gate", "#" + id + " " + line.replaceAll("\\s+", " "));
         return g;
     }
+
+    /** Tours (`gate open ... world`): set around one spawn to remake the rolled plan before the gate is made. */
+    static java.util.function.UnaryOperator<dev.awaken.gates.content.GatePlan> tourPlan;
 
     /** Gates made before owners were counted (none on record) count for whoever is near, as they always did. */
     static boolean ownedBy(GateRecord g, ServerPlayer p) {

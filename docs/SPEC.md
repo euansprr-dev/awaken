@@ -10750,6 +10750,11 @@ now, fought-on second storeys in a later plan.
 - **Measured** (`gateworlds_depth`, the Hive held to the targets): the Comb flat 48%, 11 heights, 19% partial, 21%
   plumb, roof spread 6.1, detail 43; the Brood Hall 42%, 11, 20%, 21%, 7.1, 46; the Swarm 54%, 10, 13%, 17%, 6.3, 47
   (today's rooms: flat about 98%, plumb 97%). Honey Lake is a sea world (stage 2). A place plans in about 5 ms.
+- **Tour `gate-depth-hive`** (CI): the Comb, the Brood Hall and the Swarm at version 6 and at version 7 on the same
+  floors, each floor 1's biggest place and its second. Its tools (game master, tours): `/awaken gate open <rank>
+  <theme> world <version> <world id>` makes a gate whose floors are all that world, on the depth test's plan (seed,
+  layout, four floors), so a world's two versions are the same floors; `/awaken gate interior goto place|place2` stands
+  just inside a world floor's biggest (or second) place where you walk in, a block over the ground, facing its middle.
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 
