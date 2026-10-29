@@ -529,3 +529,21 @@ off); off draws the flat painted look. Item ids never change, so rolling a phase
   - The armour list is the stand's own screen for now; the weapons' Armoury gaining an armour list is still to agree
     with the weapons session.
   - The first-person option (decision 13) comes with the settings in P5; the camera is on for everyone until then.
+- **P2 (2026-10-29):** the seven E and D sets (Bellguard, Rootwarden, Amberwing, Cleftrunner, Lanternlight, Bladeward,
+  Hornlord), their patterns and numbers, the set abilities and mastery I-III (SPEC §44.2-44.6). Decisions made while
+  building:
+  - Fights reach armour through a small core API, `FightMoments` (SPEC §12), fed by two one-line hooks in arms
+    (`Marks.fire`) and powers (`Casting`); armour never reaches into those modules.
+  - A Channeler set's charge goes to the client through `AwakenNet`, so a fake player (no channel) wears it safely.
+  - Test smiths are real survival players: a mock player is always creative, and creative makes anything free.
+- **P3 (2026-10-29):** the eight C and B sets, the rank verbs, mastery IV-V and Looks (SPEC §44.2-44.8). Decisions:
+  - **Inlay (C):** the catalyst is picked at the stand before the work starts (the weapons' five, one used), and seated
+    after the quench by turning a ring to its mark; it gives the piece its Force's accent and a small stat.
+  - **Tune (B):** after the quench the cold piece is tapped up to five times to find where it rings true; the hint
+    says only whether each tap was clearer. Ringing true is kept on the piece (`trueRing`).
+  - **Mastery IV** grows one bold change to the silhouette per set, from its own shapes (a gate over Gatewrought, a
+    halo on Veilwoven, a second ring of rays on Sunward); **V** adds the set's aura, motes worked out from the time
+    alone, drawn only when all four pieces are at V and of one set.
+  - **Looks and accents** are chosen at the stand: any made set's look for the same piece (it never changes what the
+    piece does), and one dye for the whole suit's accent (taken from the pack; none restores the inlay's colour).
+  - The Now hint names the highest rank's cuirass first, from that rank's Hunter set.
