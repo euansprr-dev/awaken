@@ -257,8 +257,10 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         dev.awaken.mobs.client.life.CreatureLife.tick(life, s, true);
         s.life = life;
         s.lifeSlim = sl;
-        if (rec >= 0 && rec < blinks.length && blinks[rec] != null && dev.awaken.mobs.client.life.CreatureLife.eyesClosed(life) > 0.5f) {
-            s.skin = blinks[rec];
+        // the closed eyes of the skin they wear (outside Carillon the look isn't the record; a face of their own has none)
+        int worn = body.skin().isEmpty() ? body.look() : -1;
+        if (worn >= 0 && worn < blinks.length && blinks[worn] != null && dev.awaken.mobs.client.life.CreatureLife.eyesClosed(life) > 0.5f) {
+            s.skin = blinks[worn];
         }
     }
 
