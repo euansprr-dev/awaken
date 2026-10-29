@@ -5,6 +5,7 @@ import dev.awaken.living.forms.FormRigs;
 import dev.awaken.mobs.client.anim.HeroRig;
 import dev.awaken.mobs.client.life.Flight;
 import dev.awaken.mobs.client.life.LegRig;
+import dev.awaken.mobs.client.life.Legs;
 import dev.awaken.mobs.client.life.LifeBones;
 import dev.awaken.mobs.client.life.LifeBones.Role;
 import dev.awaken.mobs.client.life.LifeProfile;
@@ -245,6 +246,8 @@ public final class LifeTests {
                     checked++;
                     if (legs.rigid()) rigid++;
                 }
+                String splits = walkTrial(mp.gait(), legs, r);
+                if (splits != null) problems.add(mp.id() + ": " + splits);
             }
             h.assertTrue(rigid >= 12 * 4 + 4 * 2 + 3 * 4, "the grazers', chickens' and hoofed beasts' legs are rigid (" + rigid + ")");
             h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 2 + 8 + 12 * 4 + 4 * 2 + 3 * 4, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's two, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four (and every other gait's) are checked (" + checked + ")");
@@ -300,6 +303,53 @@ public final class LifeTests {
             h.assertTrue(problems.isEmpty(), String.join("; ", problems));
             h.succeed();
         });
+    }
+
+    /**
+     * The feet on flat ground through a stand, a sudden walk, a sudden run and a stop (SPEC §23.1, "Starts"): while it
+     * moves no planted foot stands further ahead of its home than its place in a steady stride, nor further behind than
+     * a step's catch-up allows, and a one-piece leg never swings past 35 degrees walking or 45 running (FA's walk is
+     * well inside both). Null when it holds, else the worst.
+     */
+    static String walkTrial(MotionProfile.Gait g, LegRig rig, HeroRig r) {
+        Legs feet = new Legs(rig, 7, (x, y, z) -> 0.0);
+        float sw = g.strideWalk() > 0 ? g.strideWalk() : r.walkStride;
+        float sr = g.strideRun() > 0 ? g.strideRun() : g.strideWalk() > 0 ? g.strideWalk() : r.runStride;
+        float dt = 1.0F / 60.0F;
+        double z = 0;
+        String worst = null;
+        float most = 0;
+        // seconds, cycles a second (0 stands), how much it runs
+        float[][] legs = {{1.0F, 0, 0}, {3.0F, 1, 0}, {2.0F, 1, 1}, {1.5F, 0, 1}};
+        for (float[] leg : legs) {
+            float run = leg[2], st = Mth.lerp(run, sw, sr), duty = Mth.lerp(run, g.dutyWalk(), g.dutyRun());
+            for (int k = 0, n = Math.round(leg[0] / dt); k < n; k++) {
+                z += st * leg[1] * dt;
+                feet.update(0, 0, z, 0, 1, dt, true, st, run, true);
+                if (leg[1] == 0) continue;
+                float ahead = (duty * st * (0.5F + g.lead()) + 0.1F * st) * 16.0F;
+                float behind = (duty * st * (0.5F - g.lead()) + 0.4F * st) * 16.0F;
+                for (int i = 0; i < rig.n; i++) {
+                    if (feet.stepping(i)) continue;
+                    float off = rig.homeZ[i] - feet.tz[i]; // px ahead of its home (model -z is forward)
+                    float over = Math.max(off / ahead, -off / behind);
+                    String what = off > 0 ? "lands " + off + " px ahead (most " + ahead + ")" : "trails " + -off + " px (most " + behind + ")";
+                    if (rig.rigid()) {
+                        float deg = (float) Math.toDegrees(Math.atan2(Math.abs(off), rig.length(i) * (1.0F + g.shoulder())));
+                        float limit = run > 0 ? 45.0F : 35.0F;
+                        if (deg / limit > over) {
+                            over = deg / limit;
+                            what = "swings " + deg + " degrees (most " + limit + ")";
+                        }
+                    }
+                    if (over > 1.0F && over > most) {
+                        most = over;
+                        worst = "leg " + i + (run > 0 ? " running " : " walking ") + what;
+                    }
+                }
+            }
+        }
+        return worst;
     }
 
     /** A bone's own cubes' box (min xyz, max xyz), or null. */

@@ -5546,7 +5546,9 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
   feet only: 5-9 s; the forequarters dip 0.07 rad and sink 0.8 px, the neck bends 0.65 rad and sinks 3 px in front of the
   chest (the head 0.55 rad without a neck), the head looks 0.55 rad down and drifts side to side, a tug and a jaw snap
   at each bite (1.4 a second for a cow's 14 px legs, quicker for shorter legs, up to 3.2: a chicken pecks), then 1.6 s
-  head up chewing; the grazer temperament weighs it 6, the beast 3; Euan 2026-10-29). Herds never move in step:
+  head up chewing; the grazer temperament weighs it 6, the beast 3; Euan 2026-10-29). A fidget it walks out of is
+  over once it has faded (a pause later in the walk dropped the second close tour's sheep back into the middle of a
+  graze). Herds never move in step:
   each creature's timers, breath phase and rate (±10%) and idle clock start from its own seed.
 - **Graph blending, no pops**: the angry stance, held poses, swimming and the glide ease in and out (0.05-0.3 s); swim
   and wing loops run on integrated clocks (age × speed jumped their phase when the speed changed); one-shot clips (bite,
@@ -5637,6 +5639,13 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   walkers (the form grazers, the sow, the stag, the ram) ripple from the front (`lag` -0.25), land 0.2 of a stand
   further ahead (`lead`), roll 0.045 off a lifted foot (a trot's diagonal pair too), rock 0.035 fore and aft, hold the
   head 0.7 level, and the forms' cows and sheep walk 0.8 of their old stride.
+- **Starts** (2026-10-29, the second close tour: our cow, pig and spider did the splits setting off and breaking into
+  a trot, and FA's never do, its swing growing with the pace): from a stand, or into a new gait, the stride starts at
+  0.4 of its length and grows to the whole of it over 0.9 s (a change of gait starts at 0.7), so the first steps are
+  short and quick and the feet still waiting their turn are never left far behind. A landing is never further ahead of
+  its home than its place in a steady stride (duty × stride × (0.5 + lead), plus 5% of a stride), and a planted foot
+  trailing more than its steady lift point (duty × stride × (0.5 - lead)) plus 30% of a stride steps at once (a
+  catch-up, 0.75 of a swing, 0.12 s to `swing`; past 38% it steps even while a neighbour is up).
 - **Feet** (`Legs`, per creature, from the render extraction once a frame; nothing allocated): a planted foot keeps its
   world position while the body moves over it. A gait clock runs with the ground covered plus the arc the feet sweep
   when it turns on the spot (yaw × the feet's mean distance from the middle), so a turn steps too. A foot lifts when the
@@ -5752,7 +5761,10 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   are, so no knee of theirs breaks either way), and a rigid leg's foot lands within 0.05 px of each spot within 97% of
   its length with its top kept inside the body (no further fore, aft or down than its room, no more than 70% of its
   length up); at least 68 rigid legs; every gait's stride, walking and running,
-  sweeps its planted feet no further than the hips can vault to; the forms' rigs
+  sweeps its planted feet no further than the hips can vault to; every gait's feet, on flat ground through a stand, a
+  sudden walk (a cycle a second), a sudden run and a stop, never plant further ahead of home than a steady stride's
+  landing plus 10% of a stride or trail further than its lift point plus 40%, and a rigid leg never swings past 35°
+  walking or 45° running (about its pivot `shoulder` above the hip); the forms' rigs
   are looked up too); `creature_motion_flight` (every flight names a creature and, on a rig, bones it has, wings with a
   side; the beat sweeps down in under half a cycle and never jumps; a right turn banks right and curves the spine right;
   a climb noses up and keeps every beat, a dive noses down and glides, a hover beats, a cruise glides between beats; a
@@ -5769,8 +5781,9 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   `tools/autopilot/mob-anims-close.txt` (close_*: each grazer and the spider side on at leg height, a spectator camera
   gliding beside it, first vanilla's under Fresh Animations then ours at rung 3 on the same walk, trot, stop and half
   turn; then the two at rest side by side for half a minute); `tools/autopilot/mob-anims-flyclose.txt` (fly_*, swim_*
-  close and at half speed (`/tick rate 10`): each flier hovers, then circles a spectator camera twice that turns with it
-  from the circle's middle, beside a parrot, a bee or a cod on a wider circle). A NoAI fauna creature refreshes its pose
+  close and at half speed (`/tick rate 10`): each flier hovers, then circles a spectator camera at its own distance, a
+  cruise lap and half a slower one, the camera's eye at the body's middle turning with it from the circle's middle,
+  a parrot, a bee or a cod a little further round the same circle). A NoAI fauna creature refreshes its pose
   bits every tick (`FaunaMob.tick`), so a tour's still flier shows itself aloft (the first fliers tour's owls hung
   upright in the air, perched).
 

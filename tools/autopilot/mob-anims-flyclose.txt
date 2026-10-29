@@ -1,7 +1,8 @@
-# Creatures to the Fresh Animations bar (SPEC 23.1, Flight), close up and in half-speed time: each flier hovers side
-# on to a camera, then circles it twice (a cruise, then a slower lap), the camera turning with it from the middle of
-# the circle, so the bank, the beat, the glides and the head held level stay big in frame; vanilla's beside under
-# Fresh Animations on the same circle (a parrot, a bee, a cod). Clips: fly_<name>.
+# Creatures to the Fresh Animations bar (SPEC 23.1, Flight), close up and in half-speed time: each flier circles a
+# camera at its own distance, a cruise lap then half a slower one, the camera at its middle height turning with it
+# from the middle of the circle, so the bank, the beat, the glides and the head held level stay big and whole in
+# frame; vanilla's beside it under Fresh Animations, a little further round the same circle (a parrot, a bee, a cod).
+# Clips: fly_<name>.
 # Clips: run-autopilot/clips/<name> (python3 -I tools/ascent/clip.py <dir> makes an mp4 and a contact sheet).
 # ci knobs: PACK=perf,feel
 world flyclosefa creative 779
@@ -46,29 +47,27 @@ cmd kill @e[type=minecraft:experience_orb]
 wait 5
 cmd gamemode spectator
 wait 5
-# the Hollow Owl (the layer's own wingbeat, the body riding the downstroke), a parrot behind it on a wider circle
-cmd summon awaken:hollow_owl 0.5 204.0 2.22 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90f,0f]}
-cmd summon minecraft:parrot 0.5 204.0 3.25 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90f,0f]}
-cmd tp @s 0.5 202.50 0.5 0 0
+# the Hollow Owl (the layer's own wingbeat, the body riding the downstroke), a parrot beside it
+cmd summon awaken:hollow_owl 1.37 204.0 3.99 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[76.0f,0f]}
+cmd summon minecraft:parrot -0.49 204.0 3.96 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[106.0f,0f]}
+cmd tp @s 0.5 202.98 0.5 0 0
 look 0 0
 wait 30
 cmd tick rate 10
 wait 5
-cmd awaken ascent pilot rec fly_owl 167 2
+cmd awaken ascent pilot rec fly_owl 435 2
 cmd awaken admin stroll @e[tag=flier] 0 40
 wait 40
-cmd awaken admin stroll @e[type=awaken:hollow_owl,tag=flier] 0.120 90 4
-cmd awaken admin stroll @e[type=minecraft:parrot,tag=flier] 0.192 90 4
-turn 4 90
-wait 45
-shot fly_owl_lap1
-wait 45
-cmd awaken admin stroll @e[type=awaken:hollow_owl,tag=flier] 0.072 150 2.4
-cmd awaken admin stroll @e[type=minecraft:parrot,tag=flier] 0.115 150 2.4
-turn 2.4 150
-wait 75
-shot fly_owl_lap2
-wait 75
+cmd awaken admin stroll @e[tag=flier] 0.120 188 1.910
+turn 1.910 188
+wait 94
+shot fly_owl_cruise
+wait 94
+cmd awaken admin stroll @e[tag=flier] 0.072 157 1.146
+turn 1.146 157
+wait 78
+shot fly_owl_slow
+wait 79
 cmd awaken admin stroll @e[tag=flier] 0 40
 wait 45
 cmd tick rate 20
@@ -78,26 +77,26 @@ wait 25
 cmd kill @e[type=minecraft:item]
 cmd kill @e[type=minecraft:experience_orb]
 wait 5
-# the Empress Moth
-cmd summon awaken:empress_moth 0.5 205.0 2.79 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90f,0f]}
-cmd tp @s 0.5 203.90 0.5 0 0
+# the Empress Moth, a wide flier, further out
+cmd summon awaken:empress_moth 0.50 205.0 6.00 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90.0f,0f]}
+cmd tp @s 0.5 203.98 0.5 0 0
 look 0 0
 wait 30
 cmd tick rate 10
 wait 5
-cmd awaken ascent pilot rec fly_empress 207 2
+cmd awaken ascent pilot rec fly_empress 618 2
 cmd awaken admin stroll @e[tag=flier] 0 40
 wait 40
-cmd awaken admin stroll @e[type=awaken:empress_moth,tag=flier] 0.120 120 3
-turn 3 120
-wait 60
-shot fly_empress_lap1
-wait 60
-cmd awaken admin stroll @e[type=awaken:empress_moth,tag=flier] 0.072 200 1.7999999999999998
-turn 1.7999999999999998 200
-wait 100
-shot fly_empress_lap2
-wait 100
+cmd awaken admin stroll @e[tag=flier] 0.120 288 1.250
+turn 1.250 288
+wait 144
+shot fly_empress_cruise
+wait 144
+cmd awaken admin stroll @e[tag=flier] 0.072 240 0.750
+turn 0.750 240
+wait 120
+shot fly_empress_slow
+wait 120
 cmd awaken admin stroll @e[tag=flier] 0 40
 wait 45
 cmd tick rate 20
@@ -108,31 +107,27 @@ cmd kill @e[type=minecraft:item]
 cmd kill @e[type=minecraft:experience_orb]
 wait 5
 # the Lumen Moth and the Bogwick, and a bee
-cmd summon awaken:lumen_moth 0.5 203.0 1.30 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90f,0f]}
-cmd summon awaken:bogwick 0.5 203.0 1.58 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90f,0f]}
-cmd summon minecraft:bee 0.5 203.0 1.86 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90f,0f]}
-cmd tp @s 0.5 201.50 0.5 0 0
+cmd summon awaken:lumen_moth 1.55 203.0 3.10 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[68.0f,0f]}
+cmd summon awaken:bogwick 0.50 203.0 3.30 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90.0f,0f]}
+cmd summon minecraft:bee -0.55 203.0 3.10 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[112.0f,0f]}
+cmd tp @s 0.5 201.73 0.5 0 0
 look 0 0
 wait 30
 cmd tick rate 10
 wait 5
-cmd awaken ascent pilot rec fly_small 143 2
+cmd awaken ascent pilot rec fly_small 550 2
 cmd awaken admin stroll @e[tag=flier] 0 40
 wait 40
-cmd awaken admin stroll @e[type=awaken:lumen_moth,tag=flier] 0.070 72 5
-cmd awaken admin stroll @e[type=awaken:bogwick,tag=flier] 0.095 72 5
-cmd awaken admin stroll @e[type=minecraft:bee,tag=flier] 0.119 72 5
-turn 5 72
-wait 36
-shot fly_small_lap1
-wait 36
-cmd awaken admin stroll @e[type=awaken:lumen_moth,tag=flier] 0.042 120 3.0
-cmd awaken admin stroll @e[type=awaken:bogwick,tag=flier] 0.057 120 3.0
-cmd awaken admin stroll @e[type=minecraft:bee,tag=flier] 0.071 120 3.0
-turn 3.0 120
-wait 60
-shot fly_small_lap2
-wait 60
+cmd awaken admin stroll @e[tag=flier] 0.070 251 1.432
+turn 1.432 251
+wait 125
+shot fly_small_cruise
+wait 126
+cmd awaken admin stroll @e[tag=flier] 0.042 209 0.859
+turn 0.859 209
+wait 104
+shot fly_small_slow
+wait 105
 cmd awaken admin stroll @e[tag=flier] 0 40
 wait 45
 cmd tick rate 20
@@ -143,25 +138,25 @@ cmd kill @e[type=minecraft:item]
 cmd kill @e[type=minecraft:experience_orb]
 wait 5
 # the Plumed Coil (wings and a ten-link spine curving into the turn)
-cmd summon awaken:plumed_coil 0.5 205.0 3.17 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90f,0f]}
-cmd tp @s 0.5 203.80 0.5 0 0
+cmd summon awaken:plumed_coil 0.50 205.0 4.10 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90.0f,0f]}
+cmd tp @s 0.5 203.78 0.5 0 0
 look 0 0
 wait 30
 cmd tick rate 10
 wait 5
-cmd awaken ascent pilot rec fly_coil 207 2
+cmd awaken ascent pilot rec fly_coil 387 2
 cmd awaken admin stroll @e[tag=flier] 0 40
 wait 40
-cmd awaken admin stroll @e[type=awaken:plumed_coil,tag=flier] 0.140 120 3
-turn 3 120
-wait 60
-shot fly_coil_lap1
-wait 60
-cmd awaken admin stroll @e[type=awaken:plumed_coil,tag=flier] 0.084 200 1.7999999999999998
-turn 1.7999999999999998 200
-wait 100
-shot fly_coil_lap2
-wait 100
+cmd awaken admin stroll @e[tag=flier] 0.140 162 2.228
+turn 2.228 162
+wait 81
+shot fly_coil_cruise
+wait 81
+cmd awaken admin stroll @e[tag=flier] 0.084 135 1.337
+turn 1.337 135
+wait 67
+shot fly_coil_slow
+wait 68
 cmd awaken admin stroll @e[tag=flier] 0 40
 wait 45
 cmd tick rate 20
@@ -174,28 +169,26 @@ wait 5
 # the swimmers in a tank: the Glimmerfin and a cod, then the Tidesteed
 cmd fill -8 201 -8 9 207 9 minecraft:water
 wait 20
-cmd summon awaken:glimmerfin 0.5 203.5 1.50 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90f,0f]}
-cmd summon minecraft:cod 0.5 203.5 2.00 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90f,0f]}
-cmd tp @s 0.5 202.00 0.5 0 0
+cmd summon awaken:glimmerfin 1.04 203.5 3.04 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[78.0f,0f]}
+cmd summon minecraft:cod -0.04 203.5 3.04 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[102.0f,0f]}
+cmd tp @s 0.5 202.13 0.5 0 0
 look 0 0
 wait 30
 cmd tick rate 10
 wait 5
-cmd awaken ascent pilot rec swim_fish 167 2
+cmd awaken ascent pilot rec swim_fish 517 2
 cmd awaken admin stroll @e[tag=flier] 0 40
 wait 40
-cmd awaken admin stroll @e[type=awaken:glimmerfin,tag=flier] 0.070 90 4
-cmd awaken admin stroll @e[type=minecraft:cod,tag=flier] 0.105 90 4
-turn 4 90
-wait 45
-shot swim_fish_lap1
-wait 45
-cmd awaken admin stroll @e[type=awaken:glimmerfin,tag=flier] 0.042 150 2.4
-cmd awaken admin stroll @e[type=minecraft:cod,tag=flier] 0.063 150 2.4
-turn 2.4 150
-wait 75
-shot swim_fish_lap2
-wait 75
+cmd awaken admin stroll @e[tag=flier] 0.070 233 1.543
+turn 1.543 233
+wait 116
+shot swim_fish_cruise
+wait 117
+cmd awaken admin stroll @e[tag=flier] 0.042 194 0.926
+turn 0.926 194
+wait 97
+shot swim_fish_slow
+wait 97
 cmd awaken admin stroll @e[tag=flier] 0 40
 wait 45
 cmd tick rate 20
@@ -205,25 +198,25 @@ wait 25
 cmd kill @e[type=minecraft:item]
 cmd kill @e[type=minecraft:experience_orb]
 wait 5
-cmd summon awaken:tidesteed 0.5 203.5 2.41 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90f,0f]}
-cmd tp @s 0.5 202.20 0.5 0 0
+cmd summon awaken:tidesteed 0.50 203.5 4.70 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90.0f,0f]}
+cmd tp @s 0.5 202.38 0.5 0 0
 look 0 0
 wait 30
 cmd tick rate 10
 wait 5
-cmd awaken ascent pilot rec swim_steed 207 2
+cmd awaken ascent pilot rec swim_steed 574 2
 cmd awaken admin stroll @e[tag=flier] 0 40
 wait 40
-cmd awaken admin stroll @e[type=awaken:tidesteed,tag=flier] 0.100 120 3
-turn 3 120
-wait 60
-shot swim_steed_lap1
-wait 60
-cmd awaken admin stroll @e[type=awaken:tidesteed,tag=flier] 0.060 200 1.7999999999999998
-turn 1.7999999999999998 200
-wait 100
-shot swim_steed_lap2
-wait 100
+cmd awaken admin stroll @e[tag=flier] 0.100 264 1.364
+turn 1.364 264
+wait 132
+shot swim_steed_cruise
+wait 132
+cmd awaken admin stroll @e[tag=flier] 0.060 220 0.819
+turn 0.819 220
+wait 110
+shot swim_steed_slow
+wait 110
 cmd awaken admin stroll @e[tag=flier] 0 40
 wait 45
 cmd tick rate 20

@@ -521,6 +521,10 @@ public final class Life {
         if (idle < 0) {
             if (calm && !reduce && t >= nextIdle) start(pick());
             else if (!calm) nextIdle = Math.max(nextIdle, t + 1.5F + rand()); // settle a moment before fidgeting again
+        } else if (!calm && idleEnv < 0.02F) {
+            // a fidget it walked out of is over: a pause later in the walk mustn't drop it back into the middle of a graze
+            idle = -1;
+            nextIdle = Math.max(nextIdle, t + 1.5F + rand());
         }
         float target = 0;
         if (idle >= 0) {

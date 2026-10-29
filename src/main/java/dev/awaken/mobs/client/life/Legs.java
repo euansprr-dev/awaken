@@ -1,12 +1,7 @@
 package dev.awaken.mobs.client.life;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
-import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  * One creature's feet (SPEC §23, "Motion"): where each stands in the world, which are stepping and how far along, and
@@ -17,8 +12,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * runs with the ground the body covers (and the arc its feet sweep when it turns on the spot); each foot lifts when the
  * clock reaches its place in the pattern (one at a time from the back when slow, alternating sets when fast) and swings
  * on an arc to where its home will be halfway through its next stand (or further, by the gait's lead), on the ground
- * under that spot. A foot left too
- * far behind (a shove, a slide) steps at once; when the body stops, the feet left out of place step back under it one
+ * under that spot, never further than its place in a steady stride. Setting off or changing gait, the first steps are
+ * short and grow to the full stride. A foot left too far behind (a shove, a slide, a sudden start) steps at once; when
+ * the body stops, the feet left out of place step back under it one
  * at a time; a calm creature now and then lifts a foot and sets it down again. Off the ground, hanging, swimming or
  * dying, the clips own the legs (the weight eases to 0) and the feet stand at home again when it lands.
  */
@@ -29,7 +25,7 @@ public final class Legs {
     private final boolean[] swinging;
     private final float[] u, dur, rise, prevQ;
     /** This frame's spot for each foot, model px (the leg reaches for it). */
-    final float[] tx, ty, tz;
+    public final float[] tx, ty, tz;
     /** 0..1: how much the feet own the legs over the clips; how much the front pairs, and one more in a roar, have let go to them (a rear). */
     float weight, rear, rear2;
     /** The body over its feet: px it sinks (the ground under them, a step's share), pitch and roll (radians, model). */
@@ -40,9 +36,15 @@ public final class Legs {
     float vault;
     private boolean init, fast;
     private double ex, ez, hx, hz;
-    private float lastYaw, clock, rate, still, nextRegrip, vx, vz, yawRate, t;
+    private float lastYaw, clock, rate, still, going, nextRegrip, vx, vz, yawRate, t;
     private long seed;
-    private final BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
+    private Ground floor;
+
+    /** {@code floor}: where the feet find the ground, or null for the client's world. */
+    public Legs(LegRig rig, int seed, Ground floor) {
+        this(rig, seed);
+        this.floor = floor;
+    }
 
     Legs(LegRig rig, int seed) {
         this.rig = rig;
@@ -79,13 +81,16 @@ public final class Legs {
      * {@code stride}: blocks a gait cycle covers; {@code run} 0..1 how much it runs; {@code calm}: it may re-grip.
      */
     void update(LivingEntityRenderState s, float dt, float bodyScale, boolean on, float stride, float run, boolean calm) {
+        update(s.x, s.y, s.z, s.bodyRot, s.scale * bodyScale, dt, on, stride, run, calm);
+    }
+
+    /** The same for a body at (x, y, z) turned to yaw (degrees) and drawn at scale. */
+    public void update(double x, double y, double z, float yaw, float scale, float dt, boolean on, float stride, float run, boolean calm) {
         t += dt;
         MotionProfile.Gait g = rig.gait;
         float want = on ? 1.0F : 0.0F;
         weight += (want - weight) * Math.min(1.0F, dt / (want > weight ? 0.15F : 0.12F));
-        float sc = Math.max(0.05F, s.scale * bodyScale);
-        double x = s.x, y = s.y, z = s.z;
-        float yaw = s.bodyRot;
+        float sc = Math.max(0.05F, scale);
         if (!on) {
             // the clips take the legs back; the feet stay planted while they do, then stand at home on landing
             if (weight < 0.01F) init = false;
@@ -122,7 +127,18 @@ public final class Legs {
         yawRate += (dyaw / dt - yawRate) * a;
         float move = (float) Math.sqrt(mx * mx + mz * mz);
         float turn = Math.abs(dyaw) * Mth.DEG_TO_RAD * rig.turnRadius * sc;
-        float adv = (move + turn) / Math.max(0.2F, stride * sc);
+        boolean wasFast = fast;
+        fast = switch (g.pattern()) {
+            case ALTERNATE -> true;
+            case RIPPLE -> false;
+            case RIPPLE_ALTERNATE -> fast ? run > 0.25F : run > 0.45F;
+        };
+        // from a stand, or into a new gait, the first steps are short and quick and grow to the full stride over most of
+        // a second (FA's swing grows with the pace the same way): the feet still waiting their turn are never left far behind
+        if (fast != wasFast) going = Math.min(going, 0.45F);
+        going = rate < 0.03F ? 0.0F : going + dt;
+        float strideB = Math.max(0.2F, stride * sc) * Mth.lerp(Math.min(1.0F, going / 0.9F), 0.4F, 1.0F);
+        float adv = (move + turn) / strideB;
         clock += adv;
         if (clock > 4096) clock -= 4096;
         rate += (adv / dt - rate) * a;
@@ -130,19 +146,16 @@ public final class Legs {
         float sw = 1.0F - duty;
         float lift = Mth.lerp(run, g.liftWalk(), g.liftRun()) / 16.0F * sc;
         float cycle = rate > 0.05F ? 1.0F / rate : 20.0F;
-        boolean wasFast = fast;
-        fast = switch (g.pattern()) {
-            case ALTERNATE -> true;
-            case RIPPLE -> false;
-            case RIPPLE_ALTERNATE -> fast ? run > 0.25F : run > 0.45F;
-        };
         float[] off = fast ? rig.offAlternate : rig.offRipple;
         if (fast != wasFast) for (int i = 0; i < rig.n; i++) prevQ[i] = frac(clock - adv + off[i]);
         boolean moving = rate > 0.15F;
-        // a landing a foot aims for: its home halfway through the stand after this swing, never further than it can reach
+        // a landing a foot aims for: its home halfway through the stand after this swing (or further, by the lead), never
+        // further than its place in a steady stride nor than it can reach; a foot is lifted off that far behind
+        float fwd = duty * strideB * (0.5F + g.lead()), back = duty * strideB * (0.5F - g.lead());
         float ahead = moving ? Math.min(3.0F, duty * cycle * (0.5F + g.lead())) : 0.0F;
         float speed = Mth.sqrt(vx * vx + vz * vz);
-        if (speed * ahead > g.reach() * 0.8F * sc) ahead = g.reach() * 0.8F * sc / speed;
+        float furthest = Math.min(g.reach() * 0.8F * sc, fwd + 0.05F * strideB);
+        if (speed * ahead > furthest) ahead = furthest / speed;
         int lifted = 0;
         for (int i = 0; i < rig.n; i++) if (swinging[i]) lifted++;
         for (int i = 0; i < rig.n; i++) {
@@ -156,11 +169,14 @@ public final class Legs {
                 home(i, x, z, yaw, sc);
                 float ddx = (float) (fx[i] - hx), ddz = (float) (fz[i] - hz);
                 float far = Mth.sqrt(ddx * ddx + ddz * ddz);
+                // how far behind its home along the way the body goes
+                float trail = speed > 0.05F ? -(ddx * vx + ddz * vz) / speed : 0.0F;
                 if (due && far > 0.03F * sc) {
                     lift(i, Mth.clamp(sw * cycle, 0.08F, g.swing()), lift);
                     lifted++;
-                } else if (far > g.reach() * sc && !nearSwinging(i)) {
-                    lift(i, 0.16F, lift); // left behind: catch up at once
+                } else if ((far > g.reach() * sc || moving && trail > back + 0.3F * strideB)
+                        && (!nearSwinging(i) || moving && trail > back + 0.38F * strideB)) { // dragging is worse than two up
+                    lift(i, Mth.clamp(0.75F * sw * cycle, 0.12F, g.swing()), lift); // left behind: catch up now
                     lifted++;
                 }
             }
@@ -191,6 +207,11 @@ public final class Legs {
         if (!calm) nextRegrip = Math.max(nextRegrip, t + g.regripMin());
         out(x, y, z, yaw, sc);
         carriage(y, sc, dt, g);
+    }
+
+    /** Whether foot i is in the air this frame. */
+    public boolean stepping(int i) {
+        return swinging[i];
     }
 
     private boolean nearSwinging(int i) {
@@ -305,20 +326,14 @@ public final class Legs {
         vault += (Mth.clamp(need - g.crouch() - groundY, 0.0F, rig.vaultMax) - vault) * b;
     }
 
-    /** The top of the ground under (x, z), from a block above the body's feet down to three below; y if none. */
     private double ground(double x, double y, double z) {
-        ClientLevel level = Minecraft.getInstance().level;
-        if (level == null) return y;
-        probe.set(Mth.floor(x), Mth.floor(y + 0.99), Mth.floor(z));
-        for (int k = 0; k < 4; k++) {
-            VoxelShape shape = level.getBlockState(probe).getCollisionShape(level, probe);
-            if (!shape.isEmpty()) {
-                double top = probe.getY() + shape.max(Direction.Axis.Y);
-                if (top <= y + 1.0) return Math.max(top, y - 1.0);
-            }
-            probe.move(0, -1, 0);
-        }
-        return y;
+        if (floor == null) floor = new LegGround();
+        return floor.top(x, y, z);
+    }
+
+    /** Where a foot finds the ground under (x, z) for a body standing at y. */
+    public interface Ground {
+        double top(double x, double y, double z);
     }
 
     private static float frac(float v) {
