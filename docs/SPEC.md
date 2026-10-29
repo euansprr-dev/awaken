@@ -14170,6 +14170,15 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
     itself: its random tick is the grass block's, so it spreads grass; hoes and shovels treat it as grass).
 - **Sway** comes by class from `terrain.PlantSway`: double plants sway as lower and upper halves, bushes rooted, clover as a
   flower bed (gain 3), hawthorn as leaves; rye's stems and the ground blocks stand still.
+- **Halves that meet** (Euan's play 2026-10-29: bracken and long grass floated off their stems): a two-block plant never
+  leaves its drawing to the model's random pick, which chose each half on its own. `WildDoubleBlock.SHAPE` (0..2) names one
+  drawing for each half; both halves carry the same shape and look, set together wherever a plant is placed or grows
+  (`WildDoubleBlock.grown`: worldgen, regrowth, bone meal, rye on its stems, and by hand), and the shape is the column's
+  (`WildLooks.shape(x, z)`), so a plant grows back as it was. Plants in older worlds load at shape 0 on both halves, so they
+  match too. In the art every upper drawing grows out of its own lower one: each pixel on the lower's top row carries on in
+  the upper's bottom row in the same layer and shade, and nothing else is on that row (tawny long grass is green at its
+  foot and dries from a few pixels up; the rye's foot keeps its stems in fixed columns, so either foot meets any middle).
+  `python3 tools/art/specs/wild_plants.py check` (and every texture build) fails when any of the 39 seams do not meet.
 - **Drops** (vanilla's manner, 26.3's loot format): grasses give themselves to shears and otherwise wheat seeds now and then
   (1 in 8; rye 1 in 4; bracken nothing); two-high plants drop from the lower half; flowers, fungus, antler, wallow and salt
   lick drop themselves; clover by patches; hawthorn to shears or silk touch, else a stick 1 in 20; bramble to shears, else 0-2
@@ -14192,7 +14201,8 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
   `tools/art/specs/audio_wild_plants.py`; content from `tools/content/wild_plants_content.py`.
 - **Not in stage 1a** (follow-ups): the seamless wrap for the sward's sides; a game rule to turn living grass off; wallows, salt
   licks and sheds placed in the world (stage 3).
-- **Tests** `wild_plants_blocks`, `_crop`, `_trample`, `_cover`.
+- **Tests** `wild_plants_blocks`, `_crop`, `_trample`, `_cover`, `_pairs` (both halves the same shape, grown by worldgen, by hand
+  and back from a trail).
 
 ### 41.3 The land (Stage 1b; `dev.awaken.ground.wild.gen`, the `awaken:awakened_ground` pack, new chunks only)
 - **Wildness in worldgen** (`WildLattice`): the field worked out at a chunk's 5×5 corners four blocks apart, edges included

@@ -1,70 +1,58 @@
 {
   "variants": {
-    "half=lower,look=0": [
-      {
-        "model": "awaken:block/wild/reeds_bottom_0"
-      },
-      {
-        "model": "awaken:block/wild/reeds_bottom_1"
-      },
-      {
-        "model": "awaken:block/wild/reeds_bottom_2"
-      }
-    ],
-    "half=lower,look=1": [
-      {
-        "model": "awaken:block/wild/reeds_bottom_pale_0"
-      },
-      {
-        "model": "awaken:block/wild/reeds_bottom_pale_1"
-      },
-      {
-        "model": "awaken:block/wild/reeds_bottom_pale_2"
-      }
-    ],
-    "half=lower,look=2": [
-      {
-        "model": "awaken:block/wild/reeds_bottom_0"
-      },
-      {
-        "model": "awaken:block/wild/reeds_bottom_1"
-      },
-      {
-        "model": "awaken:block/wild/reeds_bottom_2"
-      }
-    ],
-    "half=upper,look=0": [
-      {
-        "model": "awaken:block/wild/reeds_top_0"
-      },
-      {
-        "model": "awaken:block/wild/reeds_top_1"
-      },
-      {
-        "model": "awaken:block/wild/reeds_top_2"
-      }
-    ],
-    "half=upper,look=1": [
-      {
-        "model": "awaken:block/wild/reeds_top_pale_0"
-      },
-      {
-        "model": "awaken:block/wild/reeds_top_pale_1"
-      },
-      {
-        "model": "awaken:block/wild/reeds_top_pale_2"
-      }
-    ],
-    "half=upper,look=2": [
-      {
-        "model": "awaken:block/wild/reeds_top_0"
-      },
-      {
-        "model": "awaken:block/wild/reeds_top_1"
-      },
-      {
-        "model": "awaken:block/wild/reeds_top_2"
-      }
-    ]
+    "half=lower,look=0,shape=0": {
+      "model": "awaken:block/wild/reeds_bottom_0"
+    },
+    "half=lower,look=0,shape=1": {
+      "model": "awaken:block/wild/reeds_bottom_1"
+    },
+    "half=lower,look=0,shape=2": {
+      "model": "awaken:block/wild/reeds_bottom_2"
+    },
+    "half=lower,look=1,shape=0": {
+      "model": "awaken:block/wild/reeds_bottom_pale_0"
+    },
+    "half=lower,look=1,shape=1": {
+      "model": "awaken:block/wild/reeds_bottom_pale_1"
+    },
+    "half=lower,look=1,shape=2": {
+      "model": "awaken:block/wild/reeds_bottom_pale_2"
+    },
+    "half=lower,look=2,shape=0": {
+      "model": "awaken:block/wild/reeds_bottom_0"
+    },
+    "half=lower,look=2,shape=1": {
+      "model": "awaken:block/wild/reeds_bottom_1"
+    },
+    "half=lower,look=2,shape=2": {
+      "model": "awaken:block/wild/reeds_bottom_2"
+    },
+    "half=upper,look=0,shape=0": {
+      "model": "awaken:block/wild/reeds_top_0"
+    },
+    "half=upper,look=0,shape=1": {
+      "model": "awaken:block/wild/reeds_top_1"
+    },
+    "half=upper,look=0,shape=2": {
+      "model": "awaken:block/wild/reeds_top_2"
+    },
+    "half=upper,look=1,shape=0": {
+      "model": "awaken:block/wild/reeds_top_pale_0"
+    },
+    "half=upper,look=1,shape=1": {
+      "model": "awaken:block/wild/reeds_top_pale_1"
+    },
+    "half=upper,look=1,shape=2": {
+      "model": "awaken:block/wild/reeds_top_pale_2"
+    },
+    "half=upper,look=2,shape=0": {
+      "model": "awaken:block/wild/reeds_top_0"
+    },
+    "half=upper,look=2,shape=1": {
+      "model": "awaken:block/wild/reeds_top_1"
+    },
+    "half=upper,look=2,shape=2": {
+      "model": "awaken:block/wild/reeds_top_2"
+    }
   }
 }

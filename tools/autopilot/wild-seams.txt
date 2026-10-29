@@ -1,0 +1,155 @@
+# The wild's two-block plants meet at their seams (SPEC 41.2, 'Halves that meet'): every tall plant in every look and
+# shape, set down on a platform in the sky with both halves' states written out, side on at the seam's height. Each
+# group of six: a wide shot, then each three close. Run: tools/tour-ci.sh tools/autopilot/wild-seams.txt 900
+world wildseams781 creative 781
+waitworld
+gui 0
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+camera first
+hud off
+cmd gamemode spectator
+cmd tp @s 50.5 205 5.5 180 0
+wait 100
+cmd fill -4 199 -4 132 199 4 minecraft:grass_block
+cmd fill -4 200 -4 132 206 12 minecraft:air
+wait 20
+# ---- group 1: long0 shape 0, long0 shape 1, long0 shape 2, long1 shape 0, long1 shape 1, long1 shape 2
+cmd setblock 0 201 0 awaken:long_grass[half=upper,look=0,shape=0]
+cmd setblock 0 200 0 awaken:long_grass[half=lower,look=0,shape=0]
+cmd setblock 2 201 0 awaken:long_grass[half=upper,look=0,shape=1]
+cmd setblock 2 200 0 awaken:long_grass[half=lower,look=0,shape=1]
+cmd setblock 4 201 0 awaken:long_grass[half=upper,look=0,shape=2]
+cmd setblock 4 200 0 awaken:long_grass[half=lower,look=0,shape=2]
+cmd setblock 6 201 0 awaken:long_grass[half=upper,look=1,shape=0]
+cmd setblock 6 200 0 awaken:long_grass[half=lower,look=1,shape=0]
+cmd setblock 8 201 0 awaken:long_grass[half=upper,look=1,shape=1]
+cmd setblock 8 200 0 awaken:long_grass[half=lower,look=1,shape=1]
+cmd setblock 10 201 0 awaken:long_grass[half=upper,look=1,shape=2]
+cmd setblock 10 200 0 awaken:long_grass[half=lower,look=1,shape=2]
+cmd tp @s 5.5 199.4 6.0 180 0
+wait 40
+shot seams_g1_wide
+cmd tp @s 2.5 199.4 3.4 180 0
+wait 30
+shot seams_g1_a
+cmd tp @s 8.5 199.4 3.4 180 0
+wait 30
+shot seams_g1_b
+# ---- group 2: long2 shape 0, long2 shape 1, long2 shape 2, bracken0 shape 0, bracken0 shape 1, bracken0 shape 2
+cmd setblock 24 201 0 awaken:long_grass[half=upper,look=2,shape=0]
+cmd setblock 24 200 0 awaken:long_grass[half=lower,look=2,shape=0]
+cmd setblock 26 201 0 awaken:long_grass[half=upper,look=2,shape=1]
+cmd setblock 26 200 0 awaken:long_grass[half=lower,look=2,shape=1]
+cmd setblock 28 201 0 awaken:long_grass[half=upper,look=2,shape=2]
+cmd setblock 28 200 0 awaken:long_grass[half=lower,look=2,shape=2]
+cmd setblock 30 201 0 awaken:bracken[half=upper,look=0,shape=0]
+cmd setblock 30 200 0 awaken:bracken[half=lower,look=0,shape=0]
+cmd setblock 32 201 0 awaken:bracken[half=upper,look=0,shape=1]
+cmd setblock 32 200 0 awaken:bracken[half=lower,look=0,shape=1]
+cmd setblock 34 201 0 awaken:bracken[half=upper,look=0,shape=2]
+cmd setblock 34 200 0 awaken:bracken[half=lower,look=0,shape=2]
+cmd tp @s 29.5 199.4 6.0 180 0
+wait 40
+shot seams_g2_wide
+cmd tp @s 26.5 199.4 3.4 180 0
+wait 30
+shot seams_g2_a
+cmd tp @s 32.5 199.4 3.4 180 0
+wait 30
+shot seams_g2_b
+# ---- group 3: bracken1 shape 0, bracken1 shape 1, bracken1 shape 2, reeds0 shape 0, reeds0 shape 1, reeds0 shape 2
+cmd setblock 48 201 0 awaken:bracken[half=upper,look=1,shape=0]
+cmd setblock 48 200 0 awaken:bracken[half=lower,look=1,shape=0]
+cmd setblock 50 201 0 awaken:bracken[half=upper,look=1,shape=1]
+cmd setblock 50 200 0 awaken:bracken[half=lower,look=1,shape=1]
+cmd setblock 52 201 0 awaken:bracken[half=upper,look=1,shape=2]
+cmd setblock 52 200 0 awaken:bracken[half=lower,look=1,shape=2]
+cmd setblock 54 201 0 awaken:reeds[half=upper,look=0,shape=0]
+cmd setblock 54 200 0 awaken:reeds[half=lower,look=0,shape=0]
+cmd setblock 56 201 0 awaken:reeds[half=upper,look=0,shape=1]
+cmd setblock 56 200 0 awaken:reeds[half=lower,look=0,shape=1]
+cmd setblock 58 201 0 awaken:reeds[half=upper,look=0,shape=2]
+cmd setblock 58 200 0 awaken:reeds[half=lower,look=0,shape=2]
+cmd tp @s 53.5 199.4 6.0 180 0
+wait 40
+shot seams_g3_wide
+cmd tp @s 50.5 199.4 3.4 180 0
+wait 30
+shot seams_g3_a
+cmd tp @s 56.5 199.4 3.4 180 0
+wait 30
+shot seams_g3_b
+# ---- group 4: reeds1 shape 0, reeds1 shape 1, reeds1 shape 2, parsley shape 0, parsley shape 1, parsley shape 2
+cmd setblock 72 201 0 awaken:reeds[half=upper,look=1,shape=0]
+cmd setblock 72 200 0 awaken:reeds[half=lower,look=1,shape=0]
+cmd setblock 74 201 0 awaken:reeds[half=upper,look=1,shape=1]
+cmd setblock 74 200 0 awaken:reeds[half=lower,look=1,shape=1]
+cmd setblock 76 201 0 awaken:reeds[half=upper,look=1,shape=2]
+cmd setblock 76 200 0 awaken:reeds[half=lower,look=1,shape=2]
+cmd setblock 78 201 0 awaken:cow_parsley[half=upper,look=0,shape=0]
+cmd setblock 78 200 0 awaken:cow_parsley[half=lower,look=0,shape=0]
+cmd setblock 80 201 0 awaken:cow_parsley[half=upper,look=0,shape=1]
+cmd setblock 80 200 0 awaken:cow_parsley[half=lower,look=0,shape=1]
+cmd setblock 82 201 0 awaken:cow_parsley[half=upper,look=0,shape=2]
+cmd setblock 82 200 0 awaken:cow_parsley[half=lower,look=0,shape=2]
+cmd tp @s 77.5 199.4 6.0 180 0
+wait 40
+shot seams_g4_wide
+cmd tp @s 74.5 199.4 3.4 180 0
+wait 30
+shot seams_g4_a
+cmd tp @s 80.5 199.4 3.4 180 0
+wait 30
+shot seams_g4_b
+# ---- group 5: foxglove shape 0, foxglove shape 1, foxglove shape 2, rye0 shape 0, rye0 shape 1, rye0 shape 2
+cmd setblock 96 201 0 awaken:foxglove[half=upper,look=0,shape=0]
+cmd setblock 96 200 0 awaken:foxglove[half=lower,look=0,shape=0]
+cmd setblock 98 201 0 awaken:foxglove[half=upper,look=0,shape=1]
+cmd setblock 98 200 0 awaken:foxglove[half=lower,look=0,shape=1]
+cmd setblock 100 201 0 awaken:foxglove[half=upper,look=0,shape=2]
+cmd setblock 100 200 0 awaken:foxglove[half=lower,look=0,shape=2]
+cmd setblock 102 200 0 awaken:wild_rye
+cmd setblock 102 202 0 awaken:wild_rye_top[half=upper,look=0,shape=0]
+cmd setblock 102 201 0 awaken:wild_rye_top[half=lower,look=0,shape=0]
+cmd setblock 104 200 0 awaken:wild_rye
+cmd setblock 104 202 0 awaken:wild_rye_top[half=upper,look=0,shape=1]
+cmd setblock 104 201 0 awaken:wild_rye_top[half=lower,look=0,shape=1]
+cmd setblock 106 200 0 awaken:wild_rye
+cmd setblock 106 202 0 awaken:wild_rye_top[half=upper,look=0,shape=2]
+cmd setblock 106 201 0 awaken:wild_rye_top[half=lower,look=0,shape=2]
+cmd tp @s 101.5 199.9 6.0 180 0
+wait 40
+shot seams_g5_wide
+cmd tp @s 98.5 199.9 3.4 180 0
+wait 30
+shot seams_g5_a
+cmd tp @s 104.5 199.9 3.4 180 0
+wait 30
+shot seams_g5_b
+# ---- group 6: rye1 shape 0, rye1 shape 1, rye1 shape 2
+cmd setblock 120 200 0 awaken:wild_rye
+cmd setblock 120 202 0 awaken:wild_rye_top[half=upper,look=1,shape=0]
+cmd setblock 120 201 0 awaken:wild_rye_top[half=lower,look=1,shape=0]
+cmd setblock 122 200 0 awaken:wild_rye
+cmd setblock 122 202 0 awaken:wild_rye_top[half=upper,look=1,shape=1]
+cmd setblock 122 201 0 awaken:wild_rye_top[half=lower,look=1,shape=1]
+cmd setblock 124 200 0 awaken:wild_rye
+cmd setblock 124 202 0 awaken:wild_rye_top[half=upper,look=1,shape=2]
+cmd setblock 124 201 0 awaken:wild_rye_top[half=lower,look=1,shape=2]
+cmd tp @s 125.5 199.9 6.0 180 0
+wait 40
+shot seams_g6_wide
+cmd tp @s 122.5 199.9 3.4 180 0
+wait 30
+shot seams_g6_a

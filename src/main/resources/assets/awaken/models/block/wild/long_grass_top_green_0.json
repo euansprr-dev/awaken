@@ -1,7 +1,7 @@
 {
-  "parent": "minecraft:block/tinted_cross",
-  "render_type": "minecraft:cutout",
+  "parent": "awaken:block/wild/cross_overlay",
   "textures": {
-    "cross": "awaken:block/wild/long_grass_top_green_0"
+    "cross": "awaken:block/wild/long_grass_top_green_0",
+    "overlay": "awaken:block/wild/long_grass_top_green_0_overlay"
   }
 }

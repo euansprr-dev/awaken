@@ -33,6 +33,7 @@ public final class WildTests {
         AwakenTests.register("wild_plants_crop", 40, WildTests::crop);
         AwakenTests.register("wild_plants_trample", 40, WildTests::trample);
         AwakenTests.register("wild_plants_cover", 40, WildTests::cover);
+        AwakenTests.register("wild_plants_pairs", 40, WildTests::pairs);
         AwakenTests.register("wild_plants_bands", 20, WildTests::bands);
         AwakenTests.register("wild_plants_ground", 40, WildTests::ground);
         AwakenTests.register("wild_plants_giant", 40, WildTests::giant);
@@ -252,6 +253,49 @@ public final class WildTests {
         tickUntil(level, rye, s -> s.is(WildBlocks.RYE_STEMS.get()), h, "the trail springs back as rye");
         tickUntil(level, meadow, s -> s.is(WildBlocks.MEADOW_GRASS.get()), h, "and as meadow grass");
         h.succeed();
+    }
+
+    /**
+     * A two-block plant's halves carry the same shape (and look) however it got there: grown by worldgen in every column of a
+     * lawn (every shape turns up), set down by hand, grown back from a trail as rye. The shape is the column's, so a plant
+     * that grows back looks as it did.
+     */
+    private static void pairs(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        lawn(h);
+        RandomSource r = RandomSource.create(7);
+        List<Block> tall = List.of(WildBlocks.LONG_GRASS.get(), WildBlocks.COW_PARSLEY.get(), WildBlocks.FOXGLOVE.get(), WildBlocks.BRACKEN.get());
+        int[] seen = new int[3];
+        for (int x = 0; x < 7; x++) for (int z = 0; z < 7; z++) {
+            BlockPos at = h.absolutePos(new BlockPos(x, 1, z));
+            Block b = tall.get((x + z) % tall.size());
+            h.assertTrue(WildGroundFeature.plant(level, at, b, r), "worldgen plants " + b + " at " + at);
+            seen[paired(h, level, at)]++;
+        }
+        h.assertTrue(seen[0] > 0 && seen[1] > 0 && seen[2] > 0, "a lawn's plants take every shape: " + java.util.Arrays.toString(seen));
+        lawn(h);
+        BlockPos hand = h.absolutePos(new BlockPos(2, 1, 2));
+        Block bracken = WildBlocks.BRACKEN.get();
+        level.setBlock(hand, bracken.defaultBlockState(), Block.UPDATE_ALL);
+        bracken.setPlacedBy(level, hand, bracken.defaultBlockState(), null, ItemStack.EMPTY);
+        paired(h, level, hand);
+        BlockPos rye = h.absolutePos(new BlockPos(4, 1, 4));
+        WildLife.restore(level, rye, TrampledGrassBlock.RYE);
+        h.assertTrue(level.getBlockState(rye).is(WildBlocks.RYE_STEMS.get()), "rye grows back on its stems");
+        paired(h, level, rye.above());
+        h.succeed();
+    }
+
+    /** The plant whose lower half is at {@code lower}: both halves the column's shape and one look. Returns the shape. */
+    private static int paired(GameTestHelper h, ServerLevel level, BlockPos lower) {
+        BlockState lo = level.getBlockState(lower), up = level.getBlockState(lower.above());
+        h.assertTrue(lo.getBlock() instanceof WildDoubleBlock && lo.getValue(DoublePlantBlock.HALF) == DoubleBlockHalf.LOWER
+                && up.is(lo.getBlock()) && up.getValue(DoublePlantBlock.HALF) == DoubleBlockHalf.UPPER, "a whole plant at " + lower + ": " + lo + " / " + up);
+        int shape = lo.getValue(WildDoubleBlock.SHAPE);
+        h.assertTrue(up.getValue(WildDoubleBlock.SHAPE) == shape && up.getValue(WildDoubleBlock.LOOK).equals(lo.getValue(WildDoubleBlock.LOOK)),
+                "both halves the same shape and look: " + lo + " / " + up);
+        h.assertTrue(shape == WildLooks.shape(lower.getX(), lower.getZ()), "the column's shape: " + shape);
+        return shape;
     }
 
     /** Rye hides a crouched body completely in the middle of a patch; the open lawn hides nothing. */

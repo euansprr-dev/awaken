@@ -7,7 +7,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.awaken.ground.wild.RyeStemsBlock;
 import dev.awaken.ground.wild.WildBlocks;
 import dev.awaken.ground.wild.WildDoubleBlock;
-import dev.awaken.ground.wild.WildLooks;
 import dev.awaken.living.wild.WildField;
 import dev.awaken.terrain.landmark.LandsClock;
 import net.minecraft.core.BlockPos;
@@ -168,18 +167,18 @@ public record WildGroundFeature(TagKey<Biome> biomes, boolean mow, float sward, 
     }
 
     /** Places {@code b} at {@code at} (its foot) when it can stand there and has room; true when placed. */
-    static boolean plant(WorldGenLevel level, BlockPos at, Block b, RandomSource random) {
+    public static boolean plant(WorldGenLevel level, BlockPos at, Block b, RandomSource random) {
         BlockState s = b.defaultBlockState();
         if (b instanceof RyeStemsBlock) {
             if (!free(level, at.above()) || !free(level, at.above(2)) || !s.canSurvive(level, at)) return false;
-            BlockState rye = WildBlocks.WILD_RYE.get().defaultBlockState().setValue(WildDoubleBlock.LOOK, WildLooks.look(level, WildBlocks.WILD_RYE.get(), at));
+            BlockState rye = WildDoubleBlock.grown(WildBlocks.WILD_RYE.get(), level, at);
             level.setBlock(at, s, Block.UPDATE_CLIENTS);
             DoublePlantBlock.placeAt(level, rye, at.above(), Block.UPDATE_CLIENTS);
             return true;
         }
         if (b instanceof DoublePlantBlock) {
             if (!free(level, at.above()) || !s.canSurvive(level, at)) return false;
-            if (b instanceof WildDoubleBlock) s = s.setValue(WildDoubleBlock.LOOK, WildLooks.look(level, b, at));
+            if (b instanceof WildDoubleBlock) s = WildDoubleBlock.grown(b, level, at);
             DoublePlantBlock.placeAt(level, s, at, Block.UPDATE_CLIENTS);
             return true;
         }
