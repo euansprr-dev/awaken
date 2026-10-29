@@ -3,7 +3,7 @@
  "minecraft": "26.3",
  "loader": "neoforge",
  "neoforge": "26.3.0.95",
- "generated": "2026-10-25 12:46",
+ "generated": "2026-10-29 14:44",
  "files": [
   {
    "slug": "3dskinlayers",
@@ -67,6 +67,29 @@
    ],
    "dependencyOf": [],
    "why": "Food values."
+  },
+  {
+   "slug": "architectury-api",
+   "title": "Architectury API",
+   "projectId": "lhGA9TYQ",
+   "versionId": "dZ7iNvS4",
+   "version": "22.0.5+neoforge",
+   "channel": "release",
+   "published": "2026-10-09",
+   "file": "architectury-neoforge-22.0.5.jar",
+   "url": "https://cdn.modrinth.com/data/lhGA9TYQ/versions/dZ7iNvS4/architectury-neoforge-22.0.5.jar",
+   "size": 622642,
+   "sha1": "3d97172dfd753f70a1ece295af19bc1a8bcd32f6",
+   "sha512": "04e6fb056ada0f0148c002527cdac09a651f275c5fa6b6dbcbcd7d4fd62a4eb6f583d7711030e1c82b00339ba808d8070a588a5432f334903d8b430a0da47ae5",
+   "client": "required",
+   "server": "required",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [
+    "countereds-smooth-steps"
+   ],
+   "why": "dependency"
   },
   {
    "slug": "bendable-cuboids",
@@ -155,6 +178,27 @@
    ],
    "dependencyOf": [],
    "why": "Searchable key binds."
+  },
+  {
+   "slug": "countereds-smooth-steps",
+   "title": "Countered's Smooth Steps",
+   "projectId": "5VSZqDK0",
+   "versionId": "zDWUyQza",
+   "version": "1.2.1",
+   "channel": "release",
+   "published": "2026-09-29",
+   "file": "smooth_steps-neoforge-1.2.1.jar",
+   "url": "https://cdn.modrinth.com/data/5VSZqDK0/versions/zDWUyQza/smooth_steps-neoforge-1.2.1.jar",
+   "size": 29512,
+   "sha1": "3e97f7a4ecc40d63b87cee99a051ea4bd51be90d",
+   "sha512": "053a6d455ec8f563ebe1c6cda86bed07c3213dd515a346c5d0bd45c9cdd5315ba806909372c97328e8fe1212eadbc63ea126cd128dc7c69b856e767a0b4a314e",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [],
+   "why": "Smooths the camera when stepping up stairs, slabs and blocks (Euan 2026-10-29)."
   },
   {
    "slug": "creativecore",
@@ -519,6 +563,29 @@
    ],
    "dependencyOf": [
     "jei"
+   ],
+   "why": "dependency"
+  },
+  {
+   "slug": "midnightlib",
+   "title": "MidnightLib",
+   "projectId": "codAaoxh",
+   "versionId": "gu26dV5w",
+   "version": "1.10.0+26.3-neoforge",
+   "channel": "release",
+   "published": "2026-10-14",
+   "file": "midnightlib-neoforge-1.10.0+26.3.jar",
+   "url": "https://cdn.modrinth.com/data/codAaoxh/versions/gu26dV5w/midnightlib-neoforge-1.10.0%2B26.3.jar",
+   "size": 66551,
+   "sha1": "0b6422cde982368367e52ce137ef25948bf5d1f8",
+   "sha512": "3d0ce9302b377e538526e4d27c0cd82f0581a7835a343ad9495eb933a944dae1b8212e3cb3a54af8bad6b50a8bf0bb6ac1f5cecdcfa91c985a65cd2b6abe6127",
+   "client": "optional",
+   "server": "optional",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [
+    "countereds-smooth-steps"
    ],
    "why": "dependency"
   },
