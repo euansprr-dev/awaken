@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "awaken:block/abyss_tiles",
+    "top": "awaken:block/abyss_tiles",
+    "side": "awaken:block/abyss_tiles"
+  }
+}

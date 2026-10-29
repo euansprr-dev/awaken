@@ -35,6 +35,9 @@ import java.util.concurrent.CompletableFuture;
  * floor), state changes, release and cleanup of cells. All on the server thread.
  */
 public final class GateService {
+    /** The gate the game master opened last (`/awaken gate open`): `gate interior enter` takes it first. Not saved. */
+    public static volatile int lastOpened;
+
     private GateService() {}
 
     /** Radius (chunks) of the first floor around the entrance generated before the gate is READY. */

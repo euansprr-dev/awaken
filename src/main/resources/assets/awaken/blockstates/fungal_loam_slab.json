@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "awaken:block/fungal_loam_slab"
+    },
+    "type=top": {
+      "model": "awaken:block/fungal_loam_slab_top"
+    },
+    "type=double": {
+      "model": "awaken:block/fungal_loam"
+    }
+  }
+}

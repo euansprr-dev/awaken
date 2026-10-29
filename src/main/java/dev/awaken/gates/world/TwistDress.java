@@ -42,6 +42,12 @@ final class TwistDress extends BorrowedDress {
     }
 
     @Override
+    boolean depth() {
+        // the Endless Stair's landings are the same landing again: shaped ground would tell them apart
+        return !n.equals("the_endless_stair") && super.depth();
+    }
+
+    @Override
     BlockState skin(int x, int y, int z, boolean floor, boolean ceiling) {
         BlockState s = in.skin(x, y, z, floor, ceiling);
         // the Heart's veins run through every island's ground, thin and branching

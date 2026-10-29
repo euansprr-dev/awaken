@@ -15,6 +15,8 @@ import java.util.List;
 final class AbyssDress extends Dress {
     final BlockState stone, tiles, pale, rune, glass, candles, star, veil, iris, pupil, sclera, offering, planks, stairs, chair,
             fence, plate, door, doorTop;
+    /** Shaped ground (SPEC §38.14): tile slabs and stairs on the floor, the shrine's stone at the walls, wax stubs */
+    final BlockState gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits;
     final boolean steps, lake, starfall, room;
     private int[] secretBox;
 
@@ -32,6 +34,12 @@ final class AbyssDress extends Dress {
         pupil = mat("pupil", "awaken:abyss_pupil");
         sclera = mat("sclera", "awaken:abyss_sclera");
         offering = mat("touch", "awaken:abyss_offering");
+        gFloorSlab = mat("ground_slab", "awaken:abyss_tiles_slab");
+        gFloorStairs = mat("ground_stairs", "awaken:abyss_tiles_stairs");
+        gWallSlab = mat("wall_slab", "awaken:shrine_stone_slab");
+        gWallStairs = mat("wall_stairs", "awaken:shrine_stone_stairs");
+        gDrift = null;
+        gBits = mat("ground_bits", "awaken:abyss_wax_stubs");
         planks = GatePainter.state("minecraft:dark_oak_planks");
         stairs = GatePainter.state("minecraft:smooth_quartz_stairs");
         chair = GatePainter.state("minecraft:dark_oak_stairs");
@@ -91,6 +99,33 @@ final class AbyssDress extends Dress {
         }
         if (ceiling) return stone;
         return Math.floorMod(rise, 6) == 3 && Hash.noise3(seed + 5, x, y, z, 4) > 0.55 ? rune : stone;
+    }
+
+    @Override
+    boolean depth() {
+        return true;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return kit(part, false, gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits);
+    }
+
+    @Override
+    double bits() {
+        // old wax lies thick: the shrine grows nothing
+        return 0.42;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return null;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // stone pillars banded with runes, stone crusted pale, a fallen pale column, a heap of stone
+        return pieces(part, x, y, z, stone, rune, stone, pale, pale, stone);
     }
 
     @Override

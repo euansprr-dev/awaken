@@ -1,0 +1,158 @@
+# Gate depth stage 3 (SPEC 38.14): the Bell Crypt's own worlds (the hall, the passages, the shaft, the field) worn at content version 7
+# beside version 6, on the depth test's plan: on floor 1 of each, the biggest place and the second, from just inside where
+# you walk in, a block over the ground.
+#
+# Commands it relies on (game master):
+#   /awaken gate open <rank> <theme> world <version> <world id>   every floor in that world, on the depth test's plan
+#   /awaken gate interior enter                                    into the gate opened last (else the newest)
+#   /awaken gate interior goto <place|place2>                      a world floor's biggest place, or its second
+#   /awaken gate leave, /awaken gate hop
+world autopilot_gate_depth creative 20261029
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd gamerule awaken:fauna_spawning false
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+hud off
+# away from Carillon first: gates never form in its reserve, and the first hop (no gates yet) stays close; on CI the
+# land out there takes a while to make, so wait for it before the first gate looks for dry ground (and the
+# first gate there takes longer to form: 666 ticks once)
+cmd tp @s 6000 200 6000
+wait 600
+
+# ---- sunken belfry v6 ---------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E bell_crypt world 6 awaken:bell_crypt/sunken_belfry
+wait 1000
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_sunken_belfry_v6_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_sunken_belfry_v6_b
+cmd awaken gate leave
+wait 100
+
+# ---- sunken belfry v7 ---------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E bell_crypt world 7 awaken:bell_crypt/sunken_belfry
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_sunken_belfry_v7_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_sunken_belfry_v7_b
+cmd awaken gate leave
+wait 100
+
+# ---- ossuary ways v6 ----------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E bell_crypt world 6 awaken:bell_crypt/ossuary_ways
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_ossuary_ways_v6_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_ossuary_ways_v6_b
+cmd awaken gate leave
+wait 100
+
+# ---- ossuary ways v7 ----------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E bell_crypt world 7 awaken:bell_crypt/ossuary_ways
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_ossuary_ways_v7_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_ossuary_ways_v7_b
+cmd awaken gate leave
+wait 100
+
+# ---- bell shaft v6 ------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E bell_crypt world 6 awaken:bell_crypt/bell_shaft
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_bell_shaft_v6_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_bell_shaft_v6_b
+cmd awaken gate leave
+wait 100
+
+# ---- bell shaft v7 ------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E bell_crypt world 7 awaken:bell_crypt/bell_shaft
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_bell_shaft_v7_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_bell_shaft_v7_b
+cmd awaken gate leave
+wait 100
+
+# ---- field of bells v6 --------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E bell_crypt world 6 awaken:bell_crypt/field_of_bells
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_field_of_bells_v6_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_field_of_bells_v6_b
+cmd awaken gate leave
+wait 100
+
+# ---- field of bells v7 --------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E bell_crypt world 7 awaken:bell_crypt/field_of_bells
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_field_of_bells_v7_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_field_of_bells_v7_b
+cmd awaken gate leave
+wait 100
+quit

@@ -20,6 +20,8 @@ final class RareDress extends Dress {
             shortGrass, fern, flower, petals, dryGrass, tallDry, litter, bush, fireflyBush,
             oakLog, oakLeaves, darkLog, darkLeaves, fruit, unlit, menhir, rainUp, water, figure, campfire, seat, seatZ, lantern,
             paper, ink, plank, gold, quill, inkwell, inkTop, fence, slab;
+    /** Shaped ground (SPEC §38.14): the Soft Land's slabs of each soil, stone at the hillsides, snow drifted, pebbles and twigs. */
+    private final BlockState turfSlab, mudSlab, coarseSlab, podzolSlab, stoneSlab, stoneStairs, snowDrift, pebbles, twigs;
     /** The map's waves: whole turns across 32 blocks, so the endless table's band repeats (38.12) under its hills. */
     private static final int[][] WAVES = {{1, 0}, {0, 1}, {1, 1}, {1, -1}, {2, 1}, {-1, 2}, {3, -2}};
     private final double[] phase = new double[WAVES.length * 2];
@@ -77,6 +79,54 @@ final class RareDress extends Dress {
         inkTop = GatePainter.state("minecraft:blue_concrete");
         fence = GatePainter.state("minecraft:spruce_fence");
         slab = GatePainter.state("minecraft:spruce_slab[type=bottom]");
+        turfSlab = GatePainter.state("awaken:turf_slab[type=bottom]");
+        mudSlab = GatePainter.state("awaken:mud_slab[type=bottom]");
+        coarseSlab = GatePainter.state("awaken:coarse_dirt_slab[type=bottom]");
+        podzolSlab = GatePainter.state("awaken:podzol_slab[type=bottom]");
+        stoneSlab = GatePainter.state("minecraft:cobblestone_slab[type=bottom]");
+        stoneStairs = GatePainter.state("minecraft:mossy_cobblestone_stairs");
+        snowDrift = GatePainter.state("minecraft:snow");
+        pebbles = GatePainter.state("awaken:pebbles");
+        twigs = GatePainter.state("awaken:twigs");
+    }
+
+    @Override
+    boolean depth() {
+        // the map is a plain (it keeps its line)
+        return !map;
+    }
+
+    /** Whether shaped ground (38.14) steps up from (x, z) to a side. */
+    private boolean stepUp(int x, int z) {
+        if (c.relief == null) return false;
+        int h = c.relief.half(x, z);
+        return c.relief.half(x + 1, z) > h || c.relief.half(x - 1, z) > h || c.relief.half(x, z + 1) > h || c.relief.half(x, z - 1) > h;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        double nz = Hash.noise(seed + 3, x, z, 6);
+        // the half step is a slab of the soil it stands in
+        BlockState soil = rain ? (nz > 0.68 ? mudSlab : turfSlab) : steppe ? (nz > 0.56 ? coarseSlab : turfSlab)
+                : camp && nz > 0.62 ? podzolSlab : turfSlab;
+        return kit(part, steppe && nz > 0.7, soil, null, stoneSlab, stoneStairs, steppe ? snowDrift : null,
+                orchard || camp || Hash.unit(seed + 17, x, z) < 0.4 ? twigs : pebbles);
+    }
+
+    @Override
+    double bits() {
+        return 0.15;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return rain || orchard ? moss : steppe ? snow : null;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // mossy boulders, a fallen tree, a heap of earth
+        return pieces(part, x, y, z, stone, null, stone, mossy, oakLog, coarse);
     }
 
     @Override
@@ -102,7 +152,8 @@ final class RareDress extends Dress {
         }
         double nz = Hash.noise(seed + 3, x, z, 6);
         if (fl) {
-            if (rain) return nz > 0.68 ? mud : nz > 0.55 ? moss : grass;
+            // mud stands 7/8 of a block: beside a half step up it'd be a jump (moss there instead)
+            if (rain) return nz > 0.68 && !stepUp(x, z) ? mud : nz > 0.55 ? moss : grass;
             if (steppe) return nz > 0.7 ? snow : nz > 0.56 ? coarse : grass;
             if (camp) return nz > 0.62 ? podzol : grass;
             if (orchard) return nz > 0.66 ? moss : grass;

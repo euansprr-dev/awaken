@@ -12,6 +12,8 @@ import java.util.List;
  */
 final class FungalDress extends Dress {
     final BlockState rock, veined, loam, moss, stem, cap, gills, roots, sprouts, threads, fall, puff;
+    /** Shaped ground (SPEC §38.14): loam slabs and stairs on the floor, rock at the walls, glowing moss drifted, spores */
+    final BlockState gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits;
     final boolean deep, warrens, canopy, bloom;
 
     FungalDress(CaveEngine.Cave c) {
@@ -28,6 +30,12 @@ final class FungalDress extends Dress {
         threads = mat("threads", "awaken:mycelium_threads");
         fall = mat("fall", "awaken:fungal_glowfall");
         puff = mat("touch", "awaken:spore_puffball");
+        gFloorSlab = mat("ground_slab", "awaken:fungal_loam_slab");
+        gFloorStairs = mat("ground_stairs", "awaken:fungal_loam_stairs");
+        gWallSlab = mat("wall_slab", "awaken:fungal_rock_slab");
+        gWallStairs = mat("wall_stairs", "awaken:fungal_rock_stairs");
+        gDrift = mat("ground_drift", "awaken:fungal_moss_drift");
+        gBits = mat("ground_bits", "awaken:fungal_spores");
         String n = name();
         deep = n.equals("glowing_deep");
         warrens = n.equals("root_warrens");
@@ -50,6 +58,38 @@ final class FungalDress extends Dress {
         if (bloom && !ceiling) return n > 0.5 ? gills : cap;
         if (bloom) return cap;
         return n > (ceiling ? 0.6 : 0.66) ? veined : rock;
+    }
+
+    @Override
+    boolean depth() {
+        return true;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return kit(part, bloom || Hash.noise(seed + 3, x, z, 5) > 0.56, gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits);
+    }
+
+    @Override
+    double lumps() {
+        // shelf fungus and caps bulge out of the walls (inside the Bloom, its gills fold)
+        return bloom ? 1.5 : 1.15;
+    }
+
+    @Override
+    double bits() {
+        return 0.1;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return moss;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // mushroom stems floor to roof, rock crusted with moss, a fallen cap, a heap of loam
+        return pieces(part, x, y, z, stem, null, rock, moss, cap, loam);
     }
 
     @Override
@@ -156,7 +196,8 @@ final class FungalDress extends Dress {
             long h = Hash.of(seed + 17, x, z);
             if (Hash.unit(h) >= (warrens ? 0.3 : 0.12)) return;
             int len = 1 + (int) (Hash.unit(Hash.mix(h)) * (warrens ? 4 : 2));
-            for (int i = 0; i < len && buf.open(x, y - i, z) && y - i > W + 1; i++) buf.set(x, y - i, z, roots);
+            int bottom = W + 1 + (c.relief == null ? 0 : c.relief.near(x, z));
+            for (int i = 0; i < len && buf.open(x, y - i, z) && y - i > bottom; i++) buf.set(x, y - i, z, roots);
         });
         c.s.op(ox, W, oz, ox + 15, W, oz + 15, (buf, x, y, z) -> {
             if (!buf.open(x, y, z) || !solid(buf, x, y - 1, z)) return;

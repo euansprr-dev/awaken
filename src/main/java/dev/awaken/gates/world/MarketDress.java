@@ -13,6 +13,8 @@ import java.util.List;
  */
 final class MarketDress extends Dress {
     final BlockState boards, cobbles, plaster, timber, timberX, timberZ, roof, paper, lantern, lights, cloth, goods, boatLamp, wish, rail, gold, water;
+    /** Shaped ground (SPEC §38.14): cobble slabs and stairs on the floor, boards at the walls and the roof, confetti */
+    final BlockState gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits;
     final boolean street, rooftops, floating, festival, sea;
 
     MarketDress(CaveEngine.Cave c) {
@@ -31,6 +33,12 @@ final class MarketDress extends Dress {
         goods = mat("goods", "awaken:market_goods");
         boatLamp = mat("boat_lamp", "awaken:market_boat_lamp");
         wish = mat("touch", "awaken:market_wish_lantern");
+        gFloorSlab = mat("ground_slab", "awaken:market_cobbles_slab");
+        gFloorStairs = mat("ground_stairs", "awaken:market_cobbles_stairs");
+        gWallSlab = mat("wall_slab", "awaken:market_boards_slab");
+        gWallStairs = mat("wall_stairs", "awaken:market_boards_stairs");
+        gDrift = null;
+        gBits = mat("ground_bits", "awaken:market_confetti");
         rail = GatePainter.state("minecraft:mangrove_fence");
         gold = GatePainter.state("minecraft:gold_block");
         water = c.fluid;
@@ -76,6 +84,34 @@ final class MarketDress extends Dress {
         }
         if (ceiling) return boards;
         return plaster;
+    }
+
+    @Override
+    boolean depth() {
+        // on the rooftops you stand on roofs: they keep their line
+        return !rooftops;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return kit(part, false, gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits);
+    }
+
+    @Override
+    double bits() {
+        // confetti and paper lie thick
+        return 0.25;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return null;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // timber posts floor to roof, heaps of cobbles, a fallen beam
+        return pieces(part, x, y, z, timber, null, cobbles, null, timber, cobbles);
     }
 
     @Override
