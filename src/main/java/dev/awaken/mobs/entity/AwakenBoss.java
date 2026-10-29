@@ -9,6 +9,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.BossEvent;
@@ -51,6 +52,8 @@ public class AwakenBoss extends AwakenMob {
     private int kitSerial;
     /** Client: blocks walked (for gaits locked to distance), this tick and the last. */
     private float kitGait, kitGaitO;
+    /** Client: how fast the body turns, degrees a tick, eased (this tick and the last). */
+    private float kitTurn, kitTurnO;
     /** Client: the sync as last seen, the move before the current one (to fade it out) and when the pose last changed. */
     private int kitSeen, kitSeenAt, kitPrevMove = -1, kitPrevStart, kitPrevHold, kitPrevEnd, kitPoseFrom, kitPoseAt = Integer.MIN_VALUE / 2;
     /** Bitmask of phases whose part already broke off (kept through resets, so a part can't be farmed). */
@@ -71,6 +74,50 @@ public class AwakenBoss extends AwakenMob {
         super.defineSynchedData(b);
         b.define(DATA_KIT, 0);
         b.define(DATA_KIT_AT, 0);
+    }
+
+    /** An intro or transition with no roar of its own: the boss's voice, loud and low. */
+    void roar() {
+        var v = def().voice().ambient;
+        if (v != null) playSound(v, 3.0F, 0.75F);
+    }
+
+    /** A kit body's footfall (SPEC §35.8): its palette's step under the block's own, so a giant shakes the floor. */
+    @Override
+    protected void playStepSound(net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+        super.playStepSound(pos, state);
+        var k = kit();
+        if (k != null && !level().isClientSide()) dev.awaken.mobs.boss.KitSounds.play(this, k.moves(), "step", 1F);
+    }
+
+    /** A big body's stride: a footfall about every width it walks (moveDist runs at 0.6 a block), not every block. */
+    @Override
+    protected float nextStep() {
+        return kit() != null ? moveDist + Math.max(1F, getBbWidth() * 0.6F) : super.nextStep();
+    }
+
+    /**
+     * A kit body turns as one heavy thing (SPEC §35.4). Vanilla's BodyRotationControl lets the body wait until the head is
+     * 75° off and then lurch after it, ignoring the facing the fight script sets. Instead: on the server the body is the
+     * facing (the capsules and the behind check use it); on the client it eases after the synced facing every tick, so it
+     * never steps or snaps. The head turns within its range of the body.
+     */
+    @Override
+    protected void tickHeadTurn(float yBodyRotT) {
+        var k = kit();
+        if (k == null || k.fight() == null) {
+            super.tickHeadTurn(yBodyRotT);
+            return;
+        }
+        float want = getYRot();
+        if (!level().isClientSide()) yBodyRot = want;
+        else {
+            float d = Mth.clamp(Mth.wrapDegrees(want - yBodyRot) * 0.3F, -18, 18);
+            yBodyRot += d;
+            kitTurnO = kitTurn;
+            kitTurn += (d - kitTurn) * 0.35F; // the turn steps fade in and out with it, never popping off at a threshold
+        }
+        yHeadRot = Mth.rotateIfNecessary(yHeadRot, yBodyRot, getMaxHeadYRot());
     }
 
     /** The kit body this boss wears, if its kit loaded (both sides). */
@@ -108,6 +155,12 @@ public class AwakenBoss extends AwakenMob {
     public boolean playKitMove(String id) {
         FightRunner f = fight();
         return f != null && level() instanceof ServerLevel sl && f.play(sl, id);
+    }
+
+    /** Plays a string of kit moves now, the rest linking on as the fight script's would (tests). */
+    public boolean playKitString(String first, java.util.List<String> then) {
+        FightRunner f = fight();
+        return f != null && level() instanceof ServerLevel sl && f.play(sl, first, then);
     }
 
     /** The kit move playing now (server side), or null. */
@@ -189,6 +242,11 @@ public class AwakenBoss extends AwakenMob {
     /** Client: blocks walked, smoothed. */
     public float kitGait(float partialTicks) {
         return kitGaitO + (kitGait - kitGaitO) * partialTicks;
+    }
+
+    /** Client: how fast the body turns (degrees a tick, + to its left), eased. */
+    public float kitTurn(float partialTicks) {
+        return kitTurnO + (kitTurn - kitTurnO) * partialTicks;
     }
 
     /** How fast its moves play: its fight's enrage speed under the enrage line, else 1 (both sides; health is synced). */

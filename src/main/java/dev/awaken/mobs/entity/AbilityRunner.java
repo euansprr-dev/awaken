@@ -31,6 +31,8 @@ public final class AbilityRunner {
     private int activeIndex, left, total;
     private Vec3 aim = Vec3.ZERO;
     private @Nullable LivingEntity aimTarget;
+    /** A kit move's aim stopped following (its lock tick passed): the beam's line shows bright from then on. */
+    private boolean locked;
     private final List<Vec3> marks = new ArrayList<>();
 
     private int chargeTicks;
@@ -245,6 +247,7 @@ public final class AbilityRunner {
     /** A move's wind-up begins: aim at the target and place the ability's marks, as an ability's own wind-up does. */
     void prepare(ServerLevel level, Ability a, LivingEntity t, int windup) {
         aimTarget = t;
+        locked = false;
         aim = a.kind() == Ability.Kind.BEAM || a.kind() == Ability.Kind.BOLT || a.kind() == Ability.Kind.CHARGE ? Abilities.chest(t) : t.position();
         total = left = Math.max(1, windup);
         marks.clear();
@@ -268,6 +271,7 @@ public final class AbilityRunner {
                 default -> { }
             }
         }
+        locked = !tracking;
         left = Math.max(1, remaining);
         if (!mob.abilityTell(level, a, left, total, aim, marks) && left % 3 == 0) show(level, a);
     }
@@ -279,6 +283,11 @@ public final class AbilityRunner {
     void fire(ServerLevel level, Ability a, @Nullable Vec3 origin, Strikes.Kind kind) {
         LivingEntity t = aimTarget;
         this.origin = origin;
+        // a step lands behind where you stand now, not where you stood when it began to tell it
+        if (a.kind() == Ability.Kind.BLINK && t != null && t.isAlive()) {
+            marks.clear();
+            marks.add(Abilities.blinkSpot(mob, t));
+        }
         try {
             Strikes.deliver(mob, kind, () -> {
                 if (!mob.abilityStrike(level, a, t, aim, marks)) execute(level, a, t);
@@ -321,7 +330,7 @@ public final class AbilityRunner {
                 }
             }
             case CHARGE, FANGS -> Telegraph.line(level, feet.add(0, 0.2, 0), new Vec3(aim.x, feet.y + 0.2, aim.z), colour, heavy);
-            case BEAM -> Telegraph.line(level, mob.getEyePosition(), aim, colour, left <= 6);
+            case BEAM -> Telegraph.line(level, mob.getEyePosition(), aim, colour, left <= 6 || locked);
             case CONE -> Telegraph.cone(level, feet, aim.subtract(feet), a.radius(), colour);
             case BOLT, ARROWS -> Telegraph.gather(level, mob.getEyePosition(), colour);
         }
@@ -361,7 +370,8 @@ public final class AbilityRunner {
             case NOVA -> Abilities.nova(level, mob, a.count(), Abilities.bolt(mob, a), a.power());
             case RAIN -> { for (Vec3 m : marks) Abilities.rainStrike(level, mob, a, m); }
             case BEAM -> Abilities.beam(level, mob, a, aim);
-            case BLINK -> { if (!marks.isEmpty()) Abilities.blink(level, mob, a, t, marks.get(0)); }
+            // a kit body's step only moves it: the move's own cut is the blow (else it hit twice, the first untold)
+            case BLINK -> { if (!marks.isEmpty()) Abilities.blink(level, mob, a, t, marks.get(0), !mob.scriptedFight()); }
             case SUMMON -> Abilities.summon(level, mob, a, marks);
             case CLOUD -> Hazards.cloud(level, mob, aim, a.radius(), 100, Abilities.damage(mob, a) * 0.2F, Abilities.bolt(mob, a), Abilities.effect(a));
             case CONE -> Abilities.cone(level, mob, a, aim);

@@ -1,0 +1,123 @@
+{
+ "schemaVersion": 1,
+ "id": "guardian_choir",
+ "moves": "guardian_choir",
+ "intro": {
+  "pose": "kneel",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "lash_b"
+      ],
+      [
+       "lash_b",
+       "breaker"
+      ]
+     ]
+    },
+    {
+     "move": "breaker",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "hymn",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "jet",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "lash"
+      ]
+     ]
+    },
+    {
+     "move": "refrain",
+     "weight": 1
+    },
+    {
+     "move": "sweep",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "choir",
+   "pool": [
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "lash_b"
+      ],
+      [
+       "lash_b",
+       "breaker"
+      ]
+     ]
+    },
+    {
+     "move": "breaker",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "hymn",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "undertow",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "lash"
+      ]
+     ]
+    },
+    {
+     "move": "jet",
+     "weight": 1,
+     "when": "FAR"
+    },
+    {
+     "move": "tide",
+     "weight": 2
+    },
+    {
+     "move": "choir",
+     "weight": 1
+    },
+    {
+     "move": "refrain",
+     "weight": 1
+    },
+    {
+     "move": "sweep",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

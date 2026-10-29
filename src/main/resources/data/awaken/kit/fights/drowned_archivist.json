@@ -1,0 +1,157 @@
+{
+ "schemaVersion": 1,
+ "id": "drowned_archivist",
+ "moves": "drowned_archivist",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "thrust",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "rake"
+      ]
+     ]
+    },
+    {
+     "move": "shutting",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "tidal",
+     "weight": 2
+    },
+    {
+     "move": "volley",
+     "weight": 3,
+     "then": [
+      [
+       "volley"
+      ]
+     ]
+    },
+    {
+     "move": "turn",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "pages",
+   "pool": [
+    {
+     "move": "thrust",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "rake"
+      ],
+      [
+       "rake",
+       "shutting"
+      ]
+     ]
+    },
+    {
+     "move": "shutting",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "tidal",
+     "weight": 2
+    },
+    {
+     "move": "volley",
+     "weight": 2,
+     "then": [
+      [
+       "volley"
+      ]
+     ]
+    },
+    {
+     "move": "cloud",
+     "weight": 2
+    },
+    {
+     "move": "pages",
+     "weight": 1
+    },
+    {
+     "move": "turn",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "flood",
+   "pool": [
+    {
+     "move": "undertow",
+     "weight": 3,
+     "then": [
+      [
+       "shutting"
+      ],
+      [
+       "thrust",
+       "rake"
+      ]
+     ]
+    },
+    {
+     "move": "thrust",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "rake",
+       "shutting"
+      ]
+     ]
+    },
+    {
+     "move": "tidal",
+     "weight": 3
+    },
+    {
+     "move": "volley",
+     "weight": 2,
+     "then": [
+      [
+       "volley"
+      ]
+     ]
+    },
+    {
+     "move": "cloud",
+     "weight": 1
+    },
+    {
+     "move": "flood",
+     "weight": 1
+    },
+    {
+     "move": "turn",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

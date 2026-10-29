@@ -1,0 +1,111 @@
+{
+ "schemaVersion": 1,
+ "id": "guardian_gardens",
+ "moves": "guardian_gardens",
+ "intro": {
+  "pose": "kneel",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "claw",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "claw_b"
+      ],
+      [
+       "claw_b",
+       "maul"
+      ]
+     ]
+    },
+    {
+     "move": "maul",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "charge",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "claw"
+      ]
+     ]
+    },
+    {
+     "move": "gale",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "tail",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "lurkers",
+   "pool": [
+    {
+     "move": "claw",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "claw_b"
+      ],
+      [
+       "claw_b",
+       "maul"
+      ]
+     ]
+    },
+    {
+     "move": "maul",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "charge",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "claw",
+       "claw_b"
+      ]
+     ]
+    },
+    {
+     "move": "gale",
+     "weight": 1,
+     "when": "FAR"
+    },
+    {
+     "move": "spray",
+     "weight": 2
+    },
+    {
+     "move": "lurkers",
+     "weight": 1
+    },
+    {
+     "move": "tail",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

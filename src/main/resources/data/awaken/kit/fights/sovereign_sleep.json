@@ -1,0 +1,143 @@
+{
+ "schemaVersion": 1,
+ "id": "sovereign_sleep",
+ "moves": "sovereign_sleep",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "talon",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "talon_b"
+      ],
+      [
+       "talon_b",
+       "buffet"
+      ]
+     ]
+    },
+    {
+     "move": "buffet",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "dive",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "talon"
+      ]
+     ]
+    },
+    {
+     "move": "lullaby",
+     "weight": 1
+    },
+    {
+     "move": "swivel",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "lullabies",
+   "pool": [
+    {
+     "move": "talon",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "talon_b"
+      ],
+      [
+       "talon_b",
+       "buffet"
+      ]
+     ]
+    },
+    {
+     "move": "dive",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "talon",
+       "talon_b"
+      ]
+     ]
+    },
+    {
+     "move": "dreamfall",
+     "weight": 2
+    },
+    {
+     "move": "lullabies",
+     "weight": 1
+    },
+    {
+     "move": "swivel",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "neverwake",
+   "pool": [
+    {
+     "move": "neverwake",
+     "weight": 2
+    },
+    {
+     "move": "dive",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "buffet"
+      ]
+     ]
+    },
+    {
+     "move": "talon",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "talon_b",
+       "buffet"
+      ]
+     ]
+    },
+    {
+     "move": "lullaby",
+     "weight": 2
+    },
+    {
+     "move": "dreamfall",
+     "weight": 1
+    },
+    {
+     "move": "swivel",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

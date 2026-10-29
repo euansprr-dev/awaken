@@ -56,6 +56,8 @@ public final class MobDef {
      * creature, but outside the biome families' lists ({@link Bestiary#fauna()}), their caps, codex and lairs.
      */
     public final boolean placed;
+    /** Keeps to the ground although its model flies (a kit serpent that lies coiled on the floor, SPEC §35.11). */
+    public final boolean grounded;
 
     /** A boss phase: entered when health falls below {@code below} (phase 0 uses 1.0). */
     public record Phase(float below, String line, List<Ability> abilities, float speedBonus) {}
@@ -101,6 +103,7 @@ public final class MobDef {
         this.voice = b.voice;
         this.talent = b.talent;
         this.placed = b.placed;
+        this.grounded = b.grounded;
     }
 
     public boolean isFauna() {
@@ -131,7 +134,7 @@ public final class MobDef {
     }
 
     public boolean flies() {
-        return model.move == Model.Move.FLY;
+        return model.move == Model.Move.FLY && !grounded;
     }
 
     public String bossId() {
@@ -164,7 +167,7 @@ public final class MobDef {
         FaunaRole fauna;
         Model.Voice voice;
         FaunaTalent talent = FaunaTalent.NONE;
-        boolean placed;
+        boolean placed, grounded;
 
         B(String id, String name, Theme theme, Tier tier, Model model, String signature) {
             this.id = id;
@@ -202,6 +205,8 @@ public final class MobDef {
         public B talent(FaunaTalent t) { talent = t; return this; }
         /** Spawned only from code at its own place (see {@link MobDef#placed}). */
         public B placed() { placed = true; return this; }
+        /** Walks although its model flies (see {@link MobDef#grounded}). */
+        public B grounded() { grounded = true; return this; }
 
         /** Abilities for a non-boss (or a boss's opening phase). */
         public B ab(Ability.Builder... abilities) {

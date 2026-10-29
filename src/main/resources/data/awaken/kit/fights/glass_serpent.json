@@ -1,0 +1,141 @@
+{
+ "schemaVersion": 1,
+ "id": "glass_serpent",
+ "moves": "glass_serpent",
+ "intro": {
+  "pose": "kneel",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "bite",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "bite_b"
+      ]
+     ]
+    },
+    {
+     "move": "lunge",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "spray",
+     "weight": 3
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "burrow",
+   "pool": [
+    {
+     "move": "bite",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "bite_b"
+      ],
+      [
+       "bite_b",
+       "spray"
+      ]
+     ]
+    },
+    {
+     "move": "burrow",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "bite"
+      ]
+     ]
+    },
+    {
+     "move": "erupt",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "lunge",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "spray",
+     "weight": 2
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "storm",
+   "pool": [
+    {
+     "move": "bite",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "bite_b",
+       "spray"
+      ]
+     ]
+    },
+    {
+     "move": "storm",
+     "weight": 2
+    },
+    {
+     "move": "lunge",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "bite"
+      ]
+     ]
+    },
+    {
+     "move": "erupt",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "burrow",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "bite"
+      ]
+     ]
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

@@ -681,7 +681,12 @@ class Fight:
         self.st = {"in_reach": 0, "ticks": 0, "deflects": 0, "blocks": 0, "breaks_guard": 0, "evades": 0, "perfect": 0,
                    "breaks": 0, "executions": 0, "arts": 0, "ripostes": 0, "slipcuts": 0, "strikes": 0, "whiffs": 0,
                    "dmg_by_move": {}, "taken_by": {}, "death_by": None, "phase_ticks": [0, 0, 0], "broken_ticks": 0,
-                   "minions_spawned": 0, "heals": 0, "kit_moves": {}}
+                   "minions_spawned": 0, "heals": 0, "kit_moves": {},
+                   # the kit's cadence (docs/bosses/REWORK.md R0): ticks told or striking, recovering, between moves,
+                   # in a NONE move (intro, transition, summon), opened (broken or staggered); the longest spell between
+                   # moves; the blows thrown; each phrase's length (a pool pick and the string it carried)
+                   "cad": {"threat": 0, "recover": 0, "idle": 0, "show": 0, "opened": 0, "run": 0, "run_max": 0,
+                           "blows": 0, "phrases": {}, "phrase": 0}}
 
     # ---- helpers --------------------------------------------------------------------------------------------------------
 
@@ -1024,7 +1029,33 @@ class Fight:
                     return a
         return None
 
+    def kit_cadence(self, t):
+        c = self.st["cad"]
+        m = self.k_move
+        if m is not None:
+            c["run"] = 0
+            if m["class"] == NONE:
+                c["show"] += 1
+            elif self.k_t < self.k_w + self.k_act:
+                c["threat"] += 1
+            else:
+                c["recover"] += 1
+        elif self.stagger > 0 or t < self.broken_until:
+            c["opened"] += 1
+            c["run"] = 0
+        else:
+            c["idle"] += 1
+            c["run"] += 1
+            c["run_max"] = max(c["run_max"], c["run"])
+
+    def kit_phrase_end(self):
+        c = self.st["cad"]
+        if c["phrase"] > 0:
+            c["phrases"][c["phrase"]] = c["phrases"].get(c["phrase"], 0) + 1
+        c["phrase"] = 0
+
     def kit_tick(self, t):
+        self.kit_cadence(t)
         if self.k_move is not None:
             self.kit_step(t)
             return
@@ -1050,6 +1081,7 @@ class Fight:
             nxt = self.k_string.pop(0)
             m = self.kit["moves"].get(nxt)
             if m is not None and m["range"][0] <= d <= m["range"][1] and self.kit_begin(nxt, t):
+                self.st["cad"]["phrase"] += 1
                 return
             self.k_string = []
         if self.k_gap > 0:
@@ -1067,7 +1099,9 @@ class Fight:
             r -= max(1, e.get("weight", 1))
             if r < 0:
                 break
-        self.kit_begin(e["move"], t)
+        self.kit_phrase_end()
+        if self.kit_begin(e["move"], t) and self.kit["moves"][e["move"]]["class"] != NONE:
+            self.st["cad"]["phrase"] = 1
         if e.get("then"):
             self.k_string = list(self.rng.choice(e["then"]))
 
@@ -1105,7 +1139,12 @@ class Fight:
         w = min(ti["windup"], max(least, int(math.floor(ti["windup"] / sp + 0.5))))
         self.k_move, self.k_t = m, 0
         self.k_w, self.k_act, self.k_rec = w + hold, max(1, ti["active"]), max(1, int(math.floor(ti["recover"] / sp + 0.5)))
+        # where a string's next blow links on (KitMoves.played, SPEC §35.10): its link, scaled with the recovery
+        ln = ti.get("link", 0)
+        self.k_link = self.k_rec if ln <= 0 else min(self.k_rec, max(1, int(math.floor(ln * self.k_rec / max(1, ti["recover"]) + 0.5))))
         self.st["kit_moves"][mid] = self.st["kit_moves"].get(mid, 0) + 1
+        if cls != NONE:
+            self.st["cad"]["blows"] += 1
         land0 = t + self.k_w + 1  # the first active tick
         K = self.cfg["kit"]
         self.k_blows = []
@@ -1150,6 +1189,18 @@ class Fight:
                 if "gap" in m.get("kinds", []):
                     self.forced_in = max(self.forced_in, t + self.k_act + 10)  # it arrives beside you
             return
+        if self.k_string and self.k_link < self.k_rec and self.k_t == self.k_w + self.k_act + self.k_link:
+            # inside a string the next blow starts from this one's follow-through (FightRunner.link), if it reaches
+            nm = self.kit["moves"].get(self.k_string[0])
+            d, _ = self.kit_where(t)
+            if nm is not None and nm["range"][0] <= d <= nm["range"][1] and self.k_pending < 0:
+                self.k_move, self.k_ab, self.k_blows, self.k_ab_blows = None, None, [], []
+                self.k_gap = 0
+                self.k_string.pop(0)
+                if self.kit_begin(nm["id"], t):
+                    self.st["cad"]["phrase"] += 1
+                    self.st["cad"]["links"] = self.st["cad"].get("links", 0) + 1
+                return
         if self.k_t < self.k_w + self.k_act + self.k_rec:
             return
         self.k_move, self.k_ab, self.k_blows, self.k_ab_blows = None, None, [], []
@@ -1856,6 +1907,19 @@ def summarise(res, P):
     tt = sum(tb.values()) or 1.0
     out["taken_share"] = {k: v / tt for k, v in sorted(tb.items(), key=lambda kv: -kv[1])[:6]}
     out["taken_per_min"] = tt / (tick / 1200.0)
+    cads = [r["st"]["cad"] for r in res if r["st"]["cad"]["threat"] + r["st"]["cad"]["idle"] > 0]
+    if cads:
+        busy = sum(c["threat"] + c["recover"] + c["idle"] + c["show"] + c["opened"] for c in cads) or 1
+        ph = {}
+        for c in cads:
+            for k, v in c["phrases"].items():
+                ph[k] = ph.get(k, 0) + v
+        out["cadence"] = {k + "_share": sum(c[k] for c in cads) / busy for k in ("threat", "recover", "idle", "show", "opened")}
+        out["cadence"]["blows_per_min"] = sum(c["blows"] for c in cads) / (busy / 1200.0)
+        out["cadence"]["longest_idle_s"] = float(np.median([c["run_max"] for c in cads])) / 20
+        out["cadence"]["longest_idle_p90_s"] = float(np.percentile([c["run_max"] for c in cads], 90)) / 20
+        n = sum(ph.values()) or 1
+        out["cadence"]["phrases"] = {k: v / n for k, v in sorted(ph.items())}
     out["deaths"] = dict(sorted(deaths.items(), key=lambda kv: -kv[1])[:4])
     return out
 
@@ -2014,6 +2078,7 @@ def main(argv=None):
     ap.add_argument("--jobs", type=int, default=min(4, os.cpu_count() or 1), help="worker processes (results don't depend on it)")
     ap.add_argument("--no-diamond", action="store_true")
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--cadence", action="store_true", help="the kit Lords' fight rhythm: how much of the fight it threatens, waits, recovers (REWORK R0)")
     ap.add_argument("--untold", action="store_true", help="the untold-mob guard table instead of the Lords (tools/sim/untold.py)")
     args = ap.parse_args(argv)
 
@@ -2126,6 +2191,20 @@ def main(argv=None):
         lines.append(f"  {p:8} {TARGETS[p]:46} {passes[p]:>2}/{len(lords)}")
     if n_diamond:
         lines.append(f"  {'diamond':8} {TARGETS['diamond']:46} {passes['diamond']:>2}/{n_diamond}")
+    if args.cadence:
+        lines.append("")
+        lines.append("Cadence of the kit Lords (share of the fight: told or striking / recovering / between moves / NONE moves / opened;")
+        lines.append("blows a minute; the longest spell between moves, median and 90th percentile; phrase lengths):")
+        for d in lords:
+            for p in profiles:
+                s = cells.get((d["id"], p, "forged"))
+                if not s or "cadence" not in s:
+                    continue
+                c = s["cadence"]
+                ph = " ".join(f"{k}:{100 * v:.0f}%" for k, v in c["phrases"].items())
+                lines.append(f"  {d['name'][:22]:22} {p:8} threat {100 * c['threat_share']:3.0f}%  recover {100 * c['recover_share']:3.0f}%  "
+                             f"idle {100 * c['idle_share']:3.0f}%  show {100 * c['show_share']:3.0f}%  opened {100 * c['opened_share']:3.0f}%  "
+                             f"{c['blows_per_min']:4.1f} blows/min  still {c['longest_idle_s']:.1f}/{c['longest_idle_p90_s']:.1f} s  phrases {ph}")
     lines.append("")
     lines.append(f"({len(jobs)} cells, {sum(j['seeds'] for j in jobs)} fights, {elapsed:.1f} s)")
     if not args.quiet:
