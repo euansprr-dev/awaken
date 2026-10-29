@@ -81,7 +81,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Seed Warden | Guardian | Seed | Caster | kit | A, the Husk That Opens | ✓ a6726d89 | ✓ a6726d89 | — |
 | Sovereign of Hunger | Sovereign | Court | Beast | kit | A, the Gorged King | ✓ 7a319255 | ✓ 7a319255 | — |
 | Sovereign of Silence | Sovereign | Court | Brute | kit | A, the Stone Ear | ✓ 8559df31 | ✓ 8559df31 | — |
-| Sovereign of Sleep | Sovereign | Court | Flier | phantom ×3.2 | — | — | — | — |
+| Sovereign of Sleep | Sovereign | Court | Flier | kit | A, the Night Owl | — | — | — |
 | Sovereign of Machines | Sovereign | Court | Brute | iron golem ×1.9 | — | — | — | — |
 | Sovereign of Mirrors | Sovereign | Court | Duelist | player ×1.8 | — | — | — | — |
 | Sovereign of Storms | Sovereign | Court | Flier | breeze ×2.4 | — | — | — | — |
@@ -223,3 +223,10 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   ear turning square to you, and no other boss has a head that is an organ of sense and nothing else. B is brass again
   after the Bell Warden; C is one more robed figure after the Abbot and the Herald, and it is the Hush Bat's silence
   again.
+- **The Sovereign of Sleep** (`sovereign_sleep`): A the Night Owl (a great owl nine blocks across the wings that hangs in
+  the air asleep, its eyes shut under heavy lids, the night and its stars on its back), B the Moth (a vast pale moth
+  with eyes on its wings that sheds sleep like dust), C the Sleepwalker (a tall figure in a nightgown, arms out, its eyes
+  shut, walking on air). **Picked A**, 2026-10-29: "It never let anyone wake up" is a creature of the night that is
+  itself asleep, the Lullaby is an owl hooting with its wings wrapped round it, Never Wake is the one time it opens its
+  eyes, and no other boss is a bird. B has the Hive Regent's four wings and banded fur again; C is one more robed
+  figure, and one more piece of the bedroom after the Sleeper.

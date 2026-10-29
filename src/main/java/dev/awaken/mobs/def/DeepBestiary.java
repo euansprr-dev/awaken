@@ -180,7 +180,7 @@ final class DeepBestiary {
                 .phase(0.66F, "It hears your heartbeat.", a(BEAM, "Inverted Scream").bolt(BoltKind.VOID).power(2.0F).heavy(), a(SUMMON, "Ears").summon("listener").n(2))
                 .phase(0.33F, "Silence.", a(BURST, "Deafening Silence").radius(15).inner(4).bolt(BoltKind.VOID).heavy(), a(PULL, "Hush").radius(14), a(SLAM, "Found You").radius(4))
                 .parts(P("silence_ear", "Ear of Silence", "stone")).build());
-        out.add(m("sovereign_sleep", "Sovereign of Sleep", Theme.COURT, Tier.SOVEREIGN, Model.PHANTOM, "The Lucidium gone wrong: lullabies that make you heavy, dives from the dark").hp(32).dmg(5.5).spd(0.38).scale(3.2F).tint(0xC898D0).glow(0xF6C6E6).bar(BossBarColor.PINK).arena(28)
+        out.add(m("sovereign_sleep", "Sovereign of Sleep", Theme.COURT, Tier.SOVEREIGN, Model.PHANTOM, "The Lucidium gone wrong: lullabies that make you heavy, dives from the dark").hp(32).dmg(5.5).spd(0.38).scale(3.2F).size(0.88F, 1.72F).tint(0xC898D0).glow(0xF6C6E6).bar(BossBarColor.PINK).arena(28)
                 .intro("It never let anyone wake up.")
                 .phase(1.0F, "The Sovereign of Sleep spreads its wings.", a(CHARGE, "Night Dive").heavy(), a(DARKNESS, "Lullaby").radius(16).fx(MobEffects.SLOWNESS, 80, 1))
                 .phase(0.66F, "You feel heavy.", a(SUMMON, "Lullabies").summon("lullaby_phantom").n(3), a(RAIN, "Dream Fall").n(5).bolt(BoltKind.DREAM), a(CHARGE, "Night Dive"))

@@ -31,7 +31,7 @@ from kit import core  # noqa: E402
 BOSSES = ["ember_tyrant", "unit_zero", "mother_of_spores", "gearwright_colossus", "root_saint", "bell_warden", "glass_serpent", "hive_regent", "drowned_archivist", "lantern_broker", "abbot_of_frost", "mirror_knight", "the_sleeper",
           "sky_leviathan", "hollow_herald", "guardian_rim", "guardian_gardens", "guardian_choir", "guardian_orchard", "guardian_silent",
           "guardian_foundry", "guardian_inverted", "guardian_dreaming", "guardian_court", "guardian_seed",
-          "sovereign_hunger", "sovereign_silence"]
+          "sovereign_hunger", "sovereign_silence", "sovereign_sleep"]
 
 
 def designs(only=None):

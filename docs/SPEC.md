@@ -10450,6 +10450,53 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     in the kneel, the rise, the run and the death; nothing goes into it by more than 1.5 px in any clip.
   - **Meter.** Worst kink outside a strike 4.5° (the back-kick's kicking foot as it comes down), every other move under 4°; held at most
     35% (the intro, which holds still on purpose); the rakes dip 14 to 17%, the Hush into Found You 41%.
+- **The Sovereign of Sleep, the Night Owl** (body and motion, `kit/bosses/sovereign_sleep.py`). "It never let anyone
+  wake up." A great owl that hangs in the air asleep, 148 px from wingtip to wingtip at true size (9 blocks). Its eyes
+  are shut under heavy pale lids with a dark lash line, and it dozes as it hovers. Its back and the tops of its wings
+  are the night: dark plum speckled with small pale stars that glow, barred darker toward the tips. Beneath, it is pale
+  dusk lilac barred with plum, the breast flecked with chevrons. Its face is a pale heart-shaped disc rimmed in dark
+  plum, with a small hooked beak and two long ear tufts that sweep back like a crown, a pale crescent moon glowing on
+  its brow between them. Its legs are feathered to the toes and the talons are dark. Each wing is three bones (arm,
+  forearm, hand) with its coverts and secondaries, and every primary at the tip is a bone of its own, so they spread
+  like fingers. The body is built level, as it flies, and at rest it hangs pitched 50 degrees nose up with its head and
+  legs turned back level, as a hovering bird does. Under each lid is the eye: a great black pupil in a thin ring of
+  glowing pink, one white catchlight; the lid is scaled to nothing to open it. 74 cubes (444 faces) on 36 bones; the
+  top of its tufts 93 px up (5.8 blocks), its toes 20 px off the ground. The hitbox is 0.88 x 1.72 at its scale of 3.2
+  (2.8 x 5.5 blocks), round its body and not its wings.
+  - **Its idle.** It hangs in the air asleep (8 s): slow deep beats, its body rising on each downstroke; its head nods
+    slowly forward as it drops off and jerks up again, and it shakes its head; later it turns its head slowly right
+    round to one side and back. Its legs dangle and its toes flex, its tail fans, and its throat swells with a soft
+    hoot. Flying, it levels out nose down and its beats go long and low, the legs tucked back under it; it banks into
+    its turns with its head held level. It has no walk or run: like the Sky Leviathan it has fly and its two turns.
+  - **Its moves.** The Talon and its mirror (LIGHT, a string): it rears back in the air, its wings lifting, and draws
+    one foot up with its talons open, then lunges and rakes it down and across in front of it, the talons closing. The
+    Buffet (LIGHT): it turns in the air and draws its right wing far back, then sweeps it round in front of it in one
+    heavy beat, the primaries spread like a hand. Night Dive (HEAVY, its gap closer, 8 blocks, held 6 ticks at the
+    top): two strong beats carry it up, its head tipping to keep you in sight; it folds its wings and drops on you head
+    first, and at the last throws its talons forward with its wings flaring wide to brake. Lullaby: it wraps itself in
+    its wings like a blanket, its head bowed into them, and rocks slowly from side to side, hooting softly (the throat
+    swells with each hoot, a scale track) while the dark comes down. Lullabies (into the second phase): it fluffs itself
+    up until it is round (the body scales to 1.16) and shakes like a wet bird, then throws its wings open and three small
+    owls fly out of its feathers. Dream Fall (ranged and area): it rises with its wings high over its back and beats
+    down hard three times, each beat throwing it up, and the dreams fall round you. Whoever is behind it gets Over Its
+    Back: its head turns slowly right round until its face looks back over its back (its own track, 170 degrees and held
+    through the blow, then back the long way slowly), and it rolls and swings a wing back at them. Never Wake (the
+    signature, into the third phase): it hides its face in its wings, folding them round its head and bowing into them,
+    and trembles; then it throws them wide, lifts its head, opens its eyes for the first time and screams. Its intro: it
+    hangs wrapped in its wings with its head tucked down into them; its tufts lift, it raises its head (the eyes still
+    shut) and turns it toward you, shakes its feathers out and unfolds its wings with one great beat. Broken, it nods off
+    and sinks in the air, its head hanging and its wings drooping; it rises out of it with one great beat. Its death: it
+    opens its eyes and looks at you, they close slowly, its head falls, and it drops out of the air onto its back with
+    its wings spread on the floor (4.6 s).
+  - **How its keys are written.** One pose function over its parts (the body's pitch, yaw, roll and height, each wing's
+    lift, curl, sweep, fold, fan and twist with a travelling wave for the beats, the head, beak, throat, legs, tail and
+    tufts), and a wingbeat function by phase. Every move's keys start and end on its hovering rest, not the bind pose,
+    with a wind-up key early enough that no counter key is added. The lids are scaled on straight lines: a curve would
+    overshoot past open and fold them down over the eyes.
+  - **On the floor.** Its wings, primaries, tail, head and tufts are kept out of the floor by the ground pass in every
+    clip (it lies there only in its death); nothing goes into it by more than 1.5 px.
+  - **Meter.** Worst kink outside a strike 4.8° (Lullabies, as it shakes), every other move under 3.7°; held at most 25%
+    (the Lullaby, which rocks slowly on purpose); the talon strings dip 36 to 40%.
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our
