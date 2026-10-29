@@ -35,7 +35,8 @@ final class GlassSpot {
 
     static void onSpot(BinocularsNet.Spot msg) {
         long now = System.nanoTime();
-        if (!Glass.seeing()) {
+        // a hold can start while they're still coming up: keep it, it draws once they're at the eyes
+        if (!Glass.active()) {
             phase = Phase.NONE;
             return;
         }
@@ -77,10 +78,11 @@ final class GlassSpot {
     /** Over the lens edge, at the centre; {@code a} is the edge's opacity. */
     static void render(GuiGraphicsExtractor g, float a, float cx, float cy) {
         if (phase == Phase.NONE) return;
-        if (!Glass.seeing()) {
+        if (!Glass.active()) {
             phase = Phase.NONE;
             return;
         }
+        if (!Glass.seeing()) return;
         long now = System.nanoTime();
         float ms = (now - since) / 1_000_000F;
         float fill, alpha, spread = 0, turn = 0, flash = 0;
