@@ -9,6 +9,7 @@ import dev.awaken.armour.net.ArmourPayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -241,7 +242,7 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
     }
 
     private void footer(GuiGraphicsExtractor g) {
-        String esc = "Esc: close";
+        String esc = "Space: forge   Tab: piece   Esc: close";
         g.text(font, esc, px + pw - 8 - font.width(esc), py + ph - 12, DIM, false);
         int n = suitOnStand();
         if (n > 0) g.text(font, n == 4 ? "A whole suit stands on it." : n + " of 4 pieces stand on it.", px + 8, py + ph - 12, DIM, false);
@@ -304,6 +305,21 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
             return true;
         }
         return super.mouseClicked(event, doubleClick);
+    }
+
+    /** Space or Enter forges the chosen piece; Tab picks the next piece (Shift back); Q and E the set. */
+    @Override
+    public boolean keyPressed(KeyEvent event) {
+        int key = event.key();
+        ArmourPayloads.Offer o = offer(piece);
+        boolean can = o != null && (o.flags() & ArmourPayloads.CAN) != 0 && busy == null;
+        if ((key == InputConstants.KEY_SPACE || key == InputConstants.KEY_RETURN) && can) return forge(o, ArmourPayloads.START);
+        if (key == InputConstants.KEY_TAB) {
+            piece = Math.floorMod(piece + (event.hasShiftDown() ? -1 : 1), 4);
+            return true;
+        }
+        if ((key == InputConstants.KEY_Q || key == InputConstants.KEY_E) && sets.size() > 1) return pick(key == InputConstants.KEY_Q ? -1 : 1);
+        return super.keyPressed(event);
     }
 
     private boolean pick(int d) {

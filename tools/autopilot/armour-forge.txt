@@ -1,0 +1,133 @@
+# The Forge Song (SPEC §44.4, phase 1). A smithy at y 200 (a Fitting Stand, an anvil, the Hearth's Forge, a works table,
+# lanterns), D-rank, creative (no materials), the song played on the beat by autoplay. The room; the stand's list (the
+# wide shot); Beastbound's cuirass: the bar in the fire, the gold, the count-in, the strikes on the anvil, the quench, the
+# result card and the turn round the stand; the other three pieces until the set wakes; the suit on its stand by night;
+# Wildhide's helm by hand: the cut, the rivets, its card.
+# ci knobs: LENS=cinematic
+world armourforge creative 4343
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+cmd gamemode creative
+cmd awaken admin rankup
+cmd tp @s 0.5 201 0.5 0 0
+wait 100
+# the smithy: a deepslate floor, timber walls and roof, three lanterns; open to the north
+cmd fill -6 200 -3 6 200 9 minecraft:polished_deepslate
+cmd fill -6 201 9 6 205 9 minecraft:spruce_planks
+cmd fill -6 201 -3 -6 205 9 minecraft:spruce_planks
+cmd fill 6 201 -3 6 205 9 minecraft:spruce_planks
+cmd fill -6 206 -3 6 206 9 minecraft:dark_oak_planks
+cmd setblock -3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 0 205 1 minecraft:lantern[hanging=true]
+# the stand faces the open side; the anvil to its east, the Forge to its west, a works table behind the anvil
+cmd setblock 0 201 4 awaken:fitting_stand[facing=north]
+cmd setblock 2 201 3 minecraft:anvil[facing=east]
+cmd setblock -2 201 4 awaken:forge[facing=north]
+cmd setblock 2 201 6 minecraft:crafting_table
+wait 20
+cmd awaken armour autoplay true
+hud off
+camera first
+cmd tp @s 0.5 201 1.5 0 15
+wait 20
+shot forge_room
+# the stand's list: Beastbound's cuirass
+use
+wait 30
+shot forge_list
+screenkey tab
+wait 6
+shot forge_list_cuirass
+screenkey space
+wait 30
+shot forge_heat
+wait 36
+shotnow forge_heat_gold
+wait 34
+shotnow forge_countin
+wait 66
+shotnow forge_strikes
+wait 60
+shotnow forge_strikes_mid
+wait 58
+shotnow forge_strikes_last
+wait 24
+shotnow forge_quench
+wait 40
+shot forge_done
+wait 70
+shot forge_fit
+# the helm, the greaves, the boots: the set wakes on the last
+screen close
+wait 10
+cmd tp @s 0.5 201 1.5 0 15
+use
+wait 20
+screenkey space
+wait 420
+screen close
+wait 10
+cmd tp @s 0.5 201 1.5 0 15
+use
+wait 20
+screenkey tab
+screenkey tab
+wait 4
+screenkey space
+wait 460
+screen close
+wait 10
+cmd tp @s 0.5 201 1.5 0 15
+use
+wait 20
+screenkey tab
+screenkey tab
+screenkey tab
+wait 4
+screenkey space
+wait 380
+shot forge_wake
+wait 50
+shot forge_wake_orbit
+screen close
+# the suit on its stand, by day and by night
+cmd tp @s 0.5 201 2.0 0 18
+wait 20
+shot forge_suit_day
+cmd time set 18000
+wait 30
+shot forge_suit_night
+cmd time set 6000
+wait 20
+# Wildhide's helm by hand at the works table
+cmd tp @s 0.5 201 1.5 0 15
+use
+wait 20
+screenkey q
+wait 4
+shot forge_list_wildhide
+screenkey space
+wait 16
+shotnow forge_cut
+wait 14
+shotnow forge_cut_drawn
+wait 40
+shotnow forge_rivets
+wait 50
+shot forge_hand_done
+screen close
+wait 10
+quit

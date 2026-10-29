@@ -129,6 +129,7 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
             case ForgeSong.CUT -> cut(g, w, f);
             default -> {}
         }
+        if (ForgeClient.autoplay && !helper) autoplay(w, f, t, now);
         sparks(g, now);
         ring(g, now);
         callout(g, now);
@@ -531,6 +532,38 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         float score = Mth.clamp(keep * 1.15F, 0F, 1F) * Math.min(1F, cutNext / (float) CUT_POINTS);
         ForgeClient.send(pos, ArmourPayloads.CUT, 0, 0F, score);
         say(score >= 0.85F ? "A clean cut" : score >= 0.6F ? "A fair cut" : "A ragged cut", score >= 0.6F ? LANTERN : BAD, now);
+    }
+
+    /** The song played for you, on the beat and on the mark (tours and demos). */
+    private void autoplay(ForgeWork w, ForgeFrame f, float t, float now) {
+        switch (w.stage) {
+            case ForgeSong.HEAT -> {
+                if (!pulled && ForgeSong.heat(t) >= 0.65F) pull(w, t, now);
+            }
+            case ForgeSong.SHAPE, ForgeSong.RIVET -> {
+                next = Math.max(next, w.scores.size());
+                if (next >= w.strikesNeeded() || t < ForgeSong.song(w.set).rhythm().due(next - w.strikeBase)) return;
+                float[] m = marks[next % marks.length];
+                Vec3 at = f.mark(m[0], m[1]);
+                if (ForgeCamera.project(at.x, at.y, at.z, width, height, p)) {
+                    mx = Math.round(p[0]);
+                    my = Math.round(p[1]);
+                }
+                strike(w, f, t, now);
+            }
+            case ForgeSong.QUENCH -> {
+                if (!quenched && t >= ForgeSong.quenchCue(w.stageStart) + 1) plunge(w, f, t, now);
+            }
+            case ForgeSong.CUT -> {
+                if (cutSent || t < 20) return;
+                int at = Math.min(cutNext, CUT_POINTS - 1);
+                mx = Math.round(cutPath[at][0]);
+                my = Math.round(cutPath[at][1]);
+                if (cutNext == 0) act(true);
+                else cutMove(w, now);
+            }
+            default -> {}
+        }
     }
 
     // ---- the finished piece ------------------------------------------------------------------------------------------

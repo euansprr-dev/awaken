@@ -50,11 +50,21 @@ final class ForgeClient {
         bus.addListener(RenderGuiLayerEvent.Pre.class, ForgeClient::hideHud);
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
         bus.addListener(ItemTooltipEvent.class, ForgeClient::onTooltip);
+        bus.addListener(net.neoforged.neoforge.client.event.RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
+                net.minecraft.commands.Commands.literal("awaken").then(net.minecraft.commands.Commands.literal("armour")
+                        .then(net.minecraft.commands.Commands.literal("autoplay").then(net.minecraft.commands.Commands.argument("on",
+                                com.mojang.brigadier.arguments.BoolArgumentType.bool()).executes(c -> {
+                                    autoplay = com.mojang.brigadier.arguments.BoolArgumentType.getBool(c, "on");
+                                    return 1;
+                                }))))));
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             ForgeSongScreen.last = null;
             ForgeCamera.end();
         });
     }
+
+    /** The song plays itself on the beat (tours and demos: {@code /awaken armour autoplay true}); the server judges it as any. */
+    static boolean autoplay;
 
     // ---- messages ------------------------------------------------------------------------------------------------------
 

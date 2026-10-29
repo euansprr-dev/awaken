@@ -72,7 +72,7 @@ public final class ArmourForge {
                 boolean afford = true;
                 for (ForgeSong.Need n : cost) {
                     int have = count(p.getInventory(), matcher(n));
-                    afford &= have >= n.count();
+                    afford &= have >= n.count() || p.isCreative();
                     needs.add(new ArmourPayloads.Need(label(n, set), icon(n), have, n.count()));
                 }
                 boolean placed = ForgeSong.byHand(set) ? hand : metal;
