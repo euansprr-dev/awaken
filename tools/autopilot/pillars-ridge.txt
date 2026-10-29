@@ -1,9 +1,10 @@
 # A gate pillar behind a ridge (Euan, 29 Oct: "One of the gate beams is showing on top of the cliff here even tho the
 # gate is behind it"). Render distance 6 (96 blocks): a pillar past 67 blocks used to be drawn pulled in to 67, so land
-# between 67 blocks and the end of the chunks never hid it. This seed's first C gate forms at 1104 82 -1113 (gate 1 in
-# the log); the camera stands east of it over open land, 200 and then 400 blocks off, looking west, and a stone wall
-# rises 80 blocks in front of it to 8 blocks over the eye. The beam must show only above the wall, never across its
-# face. (Far Sight's land, the other half of the fix, stays on the Mac: Far Sight is off here.)
+# between 67 blocks and the end of the chunks never hid it. The camera is framed on gate 1 from 120 and then 300 blocks
+# off (wherever the gate formed), lifted over the roofs, and a stone wall rises 84 blocks in front of it to 2 blocks
+# under its feet, square to the view. The beam must show only above the wall's top, never across its face. The land
+# is made before anything is placed: a gate needs ground, and a wall needs its chunks. (Far Sight's land, the other
+# half of the fix, stays on the Mac: Far Sight is off here.)
 # Run on GitHub's Mac runners:
 #   tools/tour-ci.sh tools/autopilot/pillars-ridge.txt 1500 TECTONIC=awakened PACK=perf,world,horizon
 # ci knobs: RD=6
@@ -25,27 +26,27 @@ hud off
 cmd gamemode spectator
 cmd time set 6000
 cmd tp @s 1110 140 -1090
-wait 100
+wait 400
 # the first that finds ground stands; the others fall within 96 blocks of it and are refused
 cmd awaken gate open C
-wait 20
+wait 100
 cmd awaken gate open C
-wait 20
+wait 100
 cmd awaken gate open C
 wait 200
 cmd awaken gate list
-# ---- 200 blocks east, looking west: the open view, then a wall 80 blocks ahead
-cmd tp @s 1304 110 -1113 90 -12
-wait 240
-shot ridge_200_open
-cmd fill 1222 60 -1125 1226 118 -1101 stone
+# ---- 120 blocks off: drawn pulled in to 67 before the fix, so in front of the wall
+cmd awaken gate frame 120 30
+wait 300
+shot ridge_120_open
+cmd execute at @s rotated ~ 0 run fill ^-14 ^-60 ^84 ^14 ^-2 ^87 stone
 wait 120
-shot ridge_200_behind
-# ---- 400 blocks east: drawn pulled in along the sight line, still behind its wall
-cmd tp @s 1504 110 -1113 90 -12
-wait 240
-shot ridge_400_open
-cmd fill 1422 60 -1125 1426 118 -1101 stone
+shot ridge_120_behind
+# ---- 300 blocks off, higher
+cmd awaken gate frame 300 60
+wait 300
+shot ridge_300_open
+cmd execute at @s rotated ~ 0 run fill ^-14 ^-60 ^84 ^14 ^-2 ^87 stone
 wait 120
-shot ridge_400_behind
+shot ridge_300_behind
 quit
