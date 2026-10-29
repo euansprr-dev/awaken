@@ -2180,7 +2180,18 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   whole blocks, and shows the face it meets: the top, or a side facing x or z, shaded as the game shades faces (1, 0.8,
   0.6; a side by the way the slope faces, between 0.6 and 0.8, not by the axis its column shows: a steep slope's
   staircase shows x and z sides by turns, and read per triangle that flip drew dark spikes down far mountains and
-  grooves down their walls, 2026-10-26) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
+  grooves down their walls, 2026-10-26). Where a step's top or its riser is under a few pixels on screen (1 to 3,
+  smoothly), the pixel takes the staircase's average instead: top and riser, colour and light, by the share of the
+  screen each covers (the top by how steeply the ray drops, the riser by how squarely the ray meets it; the grass and
+  snow fringes by their share of the riser), as a filtered texture would (2026-10-29, Euan: "light shimmering on far
+  sight mountain sides while I breathe": seen from near level, a steep far face's tops are a few tenths of a pixel
+  tall, so under Camera Overhaul's idle sway each pixel met a lit top and a shaded riser by turns, and the steady pass's
+  neighbourhood clamp let them through as a twinkle and cut the lit tops away, drawing the face darker). Measured
+  offline (`tools/farsight/breath.py`: the column walk, the light at noon and the steady pass replayed under a sway of a
+  few tenths of a degree at Camera Overhaul's 0.16 Hz, shimmer.py's score over the face, on Euan's 3024×1898 screen at FOV 70):
+  steep faces 900 to 3,000 m out, hard-flicker pixels before steady 1.7-11.9% → 0%, and after it the fine flicker
+  0.29-1.12 → 0.24-0.36 (the pass's own floor, what a face steep enough to show no tops scores, 0.22), with the
+  face's brightness that of the raw frames, not the clamp's 3-5% darker. Faces are lit by a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
   behind ridges, faces turned from the sun shaded only as it lowers). Grass tops stand over dirt risers (the dirt
   texture's average, a grass fringe along the top), cliffs show stone or an Awakened biome's own block (hoarfrost, riven
   shale, fused glass, mirepeat: palette rock kinds in colour flags bits 4-6), badlands their strata, every block its own
@@ -2223,6 +2234,17 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   height; acacia 7 (2026-10-28, Euan: "some trees look very long", build ea94466a: one width a shape, 5 for every
   broadleaf with its crown from 38% of its height, drew the lumen forest's trees, 16 tall with a crown 6 deep and 11
   wide on a 2-block trunk in his save, as columns 5 wide and 10 deep; the elderwood's alike). Test `farsight_trees_crowns`.
+  Where the real trees are drawn (City Sight's coverage, Sodium's loaded chunks and drawn sections) a far tree steps
+  aside whole, in the vertex shader, by the chunk its trunk stands in (City Sight's dissolve by the tree's own hash,
+  not a screen dither): face by face, as the far land does, a crown reaching over a chunk's edge lost its trunk and its
+  near faces where the real trees were drawn and the rest floated over the next chunk as an open sheet, longest along
+  the chunk line (2026-10-29, Euan through the binoculars at 12×, 538 m out at night: green sheets in an L over the sea
+  where the chunks City Sight held ended on a diagonal stair; planted trees run to 1.25× the cell's canopy and their
+  crowns to ~18 wide, so near that edge they reached past the real ones). Re-drawn offline from his save
+  (`tools/farsight/sheets.py`: City Sight's stored chunks as blocks, the sea past them, far trees planted as FarTrees
+  plants them on ring 1's cells; `docs/perf/far-sight/fs-sheets.jpg`, before above, after below): at four points along
+  that edge 101-2,107 pixels of sheet before, none after. A tree planted just past the edge may now stand whole over
+  the first real trees beside it, as a real tree there would.
 - **Air** (`farsight_air.glsl`): aerial perspective from an exponential atmosphere at real scale (1e-4 per block at sea
   level, ×4 in rain; scale height 1500), toward the sun tinted by the sunlight; valley cloud, a patchy slab 40-86 above
   sea level lying among the mountains (a sea of it at dawn, dusk and in rain), sunlit on top, over far ground only; the

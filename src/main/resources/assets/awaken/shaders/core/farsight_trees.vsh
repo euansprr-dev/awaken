@@ -18,6 +18,8 @@ uniform isamplerBuffer TreeSlots;  // per patch slot: origin x, z (world blocks)
 uniform sampler2D ShadeSampler;
 uniform sampler2D GenHeightSampler;
 uniform sampler2D HeightSampler;
+uniform sampler2D ChunkSampler;     // which real chunks the client has (64x64, chunk coordinate masked to 63)
+uniform sampler2D VoxelSampler;     // where City Sight draws the real blocks (256x256 world chunks, toroidal)
 
 layout(location = 0) out vec3 vRel;
 layout(location = 1) out vec3 vColor;
@@ -134,6 +136,16 @@ void main() {
         vec2 a = inner.xy, b = inner.xy + 256.0 * inner.z;
         if (inner.w > 0.5 && p.x > a.x && p.y > a.y && p.x < b.x && p.y < b.y) { hideTree(); return; }
     }
+    // a tree stands or steps aside whole, by the chunk its trunk stands in, where the real trees are drawn. Face by face
+    // (as the far land steps aside), a crown reaching over a chunk's edge lost its trunk and its near faces where the
+    // real trees were drawn, and the rest floated over the next chunk as an open sheet (Euan, 2026-10-29: through the
+    // binoculars, sheets in an L over the sea where the generated chunks ended)
+    ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor((p + FarCam.xz) / 16.0));
+    // City Sight draws the real blocks there (a chunk dissolving in takes its share of the trees, tree by tree)
+    if ((int(FarCam.y + 0.5) & 256) == 0 && length(p) < 2000.0
+            && texelFetch(VoxelSampler, chunk & 255, 0).r > farHash(ivec2(int(d.x & 0xFFFFu), int(d.x >> 16u)) + slot.xy)) { hideTree(); return; }
+    // Sodium draws them there: loaded, and the section at the trunk's foot drawn
+    if (farRealSection(vec3(p.x, ground + 1.0 - FarFog.z, p.y)) && texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) { hideTree(); return; }
     vec4 shade = texelFetch(ShadeSampler, texel, 0);
     float sun = shade.a;
     vValley = smoothstep(0.96, 0.78, shade.b);
