@@ -246,20 +246,31 @@ final class CaveShapes {
         return Math.min(tunnel, dome);
     }
 
-    /** Shafts joining the bands inside regions: one in about half the cells of a {@link #SHAFT}-block grid, 7 wide. */
+    /**
+     * Shafts and chasms joining the bands inside regions: a shaft (7 wide) in {@link #SHAFTS} of the cells of a
+     * {@link #SHAFT}-block grid, a chasm (a slot as wide, {@link #CHASM_MIN} to twice that long, any heading) in
+     * {@link #CHASMS} more.
+     */
     static final int SHAFT = 160;
-    static final float SHAFTS = 0.4f, SHAFT_R = 3.5f;
+    static final float SHAFTS = 0.4f, SHAFT_R = 3.5f, CHASMS = 0.3f, CHASM_MIN = 24f;
     /** A shaft's foot: under the Middle Dark, into the top of the Deep (the Black Vaults' high roofs reach it). */
     static final int SHAFT_FLOOR = -14;
 
-    /** How far a corner is outside the nearest shaft, as a density (negative inside it); the column's, worked out once. */
+    /** How far a corner is outside the cell's shaft or chasm, as a density (negative inside it); the column's, worked out once. */
     static float shaft(Column c, int x, int z) {
         if (!c.shaft) {
             int gx = Math.floorDiv(x, SHAFT), gz = Math.floorDiv(z, SHAFT);
             long h = hash(gx, 0, gz, 0x5AF7L);
-            float d = Float.MAX_VALUE;
-            if (unit(h, 0) < SHAFTS) {
+            float d = Float.MAX_VALUE, roll = unit(h, 0);
+            if (roll < SHAFTS + CHASMS) {
                 float cx = (gx + 0.2f + 0.6f * unit(h, 1)) * SHAFT, cz = (gz + 0.2f + 0.6f * unit(h, 2)) * SHAFT;
+                if (roll >= SHAFTS) {
+                    // a chasm: the distance to a segment through the cell's point
+                    float a = unit(h, 3) * Mth.PI, half = CHASM_MIN * (0.5f + 0.5f * unit(h, 4));
+                    float ux = Mth.cos(a), uz = Mth.sin(a), t = Mth.clamp((x - cx) * ux + (z - cz) * uz, -half, half);
+                    cx += ux * t;
+                    cz += uz * t;
+                }
                 d = (float) Math.sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz));
             }
             c.shaftDist = (d - SHAFT_R) * 0.25f;

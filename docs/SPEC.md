@@ -12135,6 +12135,8 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   - **Shafts** join the bands: one in **40%** of the cells of a **160**-block grid, 7 across, from the seal (held off the
     ground like every shape) down to y **-14**, only in a column whose Middle Dark is a region and whose Shallows or Deep is
     one too; never above y 59.
+  - **Chasms**, by the same rule and to the same depth: in another **30%** of those cells, a slot as wide as a shaft, 24 to
+    48 long at any heading, through the cell's point (over the Black Vaults they open into the halls' roofs).
 - **Rock and ores** (as §42.7: the rock rule, a twin's vanilla drops and XP, an ore without a twin in its own pocket):
   **`limestone`** (pale, wandering bedding planes, solution pits; the Pale Halls), **`banded_slate`** (blue-grey bands with
   mica; the Windcleft), **`siltstone`** (green-grey damp laminae; the Drowned Galleries), **`glimmerstone`** (sandy, amber
