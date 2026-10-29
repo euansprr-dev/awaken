@@ -78,7 +78,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Drowned Moon | Guardian | Inverted | Flier | kit | A, the Moon Angler | ✓ 1643236a | ✓ 1643236a | — |
 | The Architect of Rooms | Guardian | Dreaming | Caster | kit | A, the Hermit House | ✓ cadf2a15 | ✓ cadf2a15 | — |
 | The Shadow Regent | Guardian | Court | Duelist | kit | A, the Long Shadow | ✓ 3feaab86 | ✓ 3feaab86 | — |
-| The Seed Warden | Guardian | Seed | Caster | kit | A, the Husk That Opens | — | — | — |
+| The Seed Warden | Guardian | Seed | Caster | kit | A, the Husk That Opens | ✓ a6726d89 | ✓ a6726d89 | — |
 | Sovereign of Hunger | Sovereign | Court | Beast | ravager ×1.8 | — | — | — | — |
 | Sovereign of Silence | Sovereign | Court | Brute | cube listener ×1.9 | — | — | — | — |
 | Sovereign of Sleep | Sovereign | Court | Flier | phantom ×3.2 | — | — | — | — |
