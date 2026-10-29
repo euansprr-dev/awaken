@@ -22,10 +22,13 @@ public final class ArmsClips {
     public static final String GUARD_JOLT = "arms_guard_jolt";
     /** The jolt's length in ticks (its last key: the guard pose again). */
     public static final int GUARD_JOLT_TICKS = 6;
+    /** The weapon's own cutting motion while vanilla mines with it (loops, each with an {@code _end}; SPEC §40 "The chop"). */
+    public static final String CHOP = "arms_chop", HACK = "arms_hack";
     public static final String DODGE_BACK = "arms_dodge_back", DODGE_LEFT = "arms_dodge_left", DODGE_RIGHT = "arms_dodge_right";
 
     public static final List<String> ALL = List.of("arms_strike_1", "arms_strike_2", "arms_strike_3", "arms_strike_4", "arms_heavy",
-            "arms_riposte", "arms_slipcut", "arms_execution", "arms_art", "arms_undercut", "arms_plunge", GUARD, GUARD + "_end", GUARD_JOLT, CHARGE, CHARGE + "_end", DODGE_BACK, DODGE_LEFT, DODGE_RIGHT);
+            "arms_riposte", "arms_slipcut", "arms_execution", "arms_art", "arms_undercut", "arms_plunge", GUARD, GUARD + "_end", GUARD_JOLT, CHARGE, CHARGE + "_end", DODGE_BACK, DODGE_LEFT, DODGE_RIGHT, CHOP, CHOP + "_end",
+            HACK, HACK + "_end");
 
     /**
      * Styles with their own slide, fall and dodge moves (arms_<style>_<move>): the Gauntlets punch them (before, every
@@ -67,7 +70,12 @@ public final class ArmsClips {
     }
 
     public static boolean loops(String clip) {
-        return clip.equals(GUARD) || clip.endsWith("heavy_charge");
+        return clip.equals(GUARD) || clip.endsWith("heavy_charge") || cuts(clip);
+    }
+
+    /** The chop's or the hack's loop. */
+    public static boolean cuts(String clip) {
+        return clip.equals(CHOP) || clip.equals(HACK);
     }
 
     /** The dodge's clip for a way relative to where the body faces (degrees, 0 ahead, + toward the main hand). */

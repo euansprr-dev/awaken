@@ -21,6 +21,7 @@ import java.util.Map;
  * arms trace &lt;ticks&gt;                  logs the move, its clock and the hand's pose every tick for that long
  * arms trailfreeze on|off             blade ribbons stop ageing once laid (a still frame shows the whole ribbon)
  * arms heavy &lt;ticks&gt;                  the attack key held that long, then let go
+ * arms chop &lt;ticks&gt;                   a click held that long, as vanilla mines (a log with an axe, a web with a blade)
  * arms guard on|off                   the use key held (the guard up) or let go
  * arms dodge left|right|back|none     the sprint key pressed with that direction for a tick
  * arms pose &lt;move&gt; &lt;0..1&gt; | off       the hands held at that point of the move (strike_1, heavy, riposte...)
@@ -44,6 +45,13 @@ public final class ArmsAutopilot {
                 KeyMapping.click(mc.options.keyAttack.getKey());
                 hold(mc.options.keyAttack, 2);
                 return "strike clicked";
+            }
+            case "chop" -> {
+                if (!ArmsPredict.fights(p)) return "not fighting (no style in hand, or Arms off)";
+                int ticks = a.length > 1 ? Integer.parseInt(a[1]) : 20;
+                KeyMapping.click(mc.options.keyAttack.getKey());
+                hold(mc.options.keyAttack, ticks);
+                return "attack key held for " + ticks;
             }
             case "press" -> {
                 if (!ArmsPredict.fights(p)) return "not fighting (no style in hand, or Arms off)";
@@ -128,12 +136,12 @@ public final class ArmsAutopilot {
         if (ArmsPredict.ticks < traceUntil) {
             Minecraft mc = Minecraft.getInstance();
             ArmsHands.pose(POSE);
-            dev.awaken.Awaken.LOG.info("[arms trace] t={} move={} clock={} pose=[{} {} {} {} {}] press={} held={} charging={} key={} presses={} hit={}",
+            dev.awaken.Awaken.LOG.info("[arms trace] t={} move={} clock={} pose=[{} {} {} {} {}] press={} held={} charging={} key={} presses={} hit={} chop={}",
                     ArmsPredict.ticks, ArmsPredict.move, String.format(Locale.ROOT, "%.2f", ArmsPredict.moveTime()),
                     String.format(Locale.ROOT, "%.2f", POSE[0]), String.format(Locale.ROOT, "%.2f", POSE[1]),
                     String.format(Locale.ROOT, "%.0f", POSE[2]), String.format(Locale.ROOT, "%.2f", POSE[3]),
                     String.format(Locale.ROOT, "%.0f", POSE[4]), ArmsPredict.pressHeld, ArmsPredict.heldTicks, ArmsPredict.charging,
-                    mc.options.keyAttack.isDown(), ArmsPredict.presses, mc.hitResult == null ? "-" : mc.hitResult.getType());
+                    mc.options.keyAttack.isDown(), ArmsPredict.presses, mc.hitResult == null ? "-" : mc.hitResult.getType(), ArmsChop.state());
         }
         if (HELD.isEmpty()) return;
         HELD.entrySet().removeIf(e -> {

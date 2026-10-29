@@ -187,6 +187,46 @@ public final class ArmsRules {
         return postureMax >= POSTURE_LORD;
     }
 
+    /** What a call of the attack key does with a fighting weapon in hand (SPEC §40 "One press is one press"). */
+    public enum Attack {
+        /** A new press: the chain's strike, wherever it points. */
+        STRIKE,
+        /** Left to vanilla: it mines the block. */
+        MINE,
+        /** The key still down from a strike's press: swallowed (the strike's hold, a heavy's charge). */
+        HELD
+    }
+
+    /** Ticks after the last thing that meant a fight that the attack key never mines a block. */
+    public static final int FIGHT_TICKS = 100;
+
+    /**
+     * What the attack key does: a hold goes on as its press began (a strike's hold stays the strike's, a mining hold
+     * keeps mining whatever the crosshair slides onto); a new press on a block the weapon cuts faster than a hand mines
+     * it once nothing has meant a fight for {@link #FIGHT_TICKS}, and strikes otherwise.
+     */
+    public static Attack attack(boolean strikeHeld, boolean mineHeld, long sinceFight, boolean cuts) {
+        if (strikeHeld) return Attack.HELD;
+        if (mineHeld || (cuts && sinceFight > FIGHT_TICKS)) return Attack.MINE;
+        return Attack.STRIKE;
+    }
+
+    /**
+     * Whether a press means a fight, opening the window that keeps the key from mining: a lock, a creature under the
+     * crosshair, or the mark within {@code reach} ({@link #markReach}). A press at the air, leaves or a log does not
+     * (Euan 2026-10-29: "I can't use a normal axe to break trees because it charges the hit like an attack").
+     */
+    public static boolean meansFight(boolean locked, boolean underCrosshair, double markGap, double reach) {
+        return locked || underCrosshair || markGap <= reach;
+    }
+
+    /** How near the mark must be for a press at it to mean a fight: the style's longest blow (not an Art's wave) and its step in. */
+    public static double markReach(Archetypes.Loaded style) {
+        float most = 0;
+        for (Archetype.MoveDef d : style.moves().values()) most = Math.max(most, d.reach());
+        return most + 0.3 + dev.awaken.core.api.Aim.stepIn(style.id());
+    }
+
     /** A fall this long (blocks) when the strike key is pressed arms a Plunge. */
     public static final float PLUNGE_FALL = 2F;
 

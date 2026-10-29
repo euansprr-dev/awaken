@@ -6323,8 +6323,45 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   stays down over a block (its mining, `Minecraft.continueAttack` through `onClickInput`), and each of those was taken
   as a new press, restarting the swing every tick; now only a press the key was not already down for counts, and the
   repeats are swallowed. Every new press strikes wherever it points; outside a fight (100 ticks) a block the weapon
-  cuts faster than a bare hand (a web, bamboo, leaves; never in creative) is still cut. The old rule (any block under the
-  crosshair outside a fight is mined) meant a click at the ground mined with no swing at all. Held = a heavy (charges from 6 ticks, full at the glint, 16;
+  cuts faster than a bare hand (a log or planks with an axe, a web, bamboo or leaves with a sword; never in creative)
+  is still mined. The old rule (any block under the crosshair outside a fight is mined) meant a click at the ground
+  mined with no swing at all. **Only a fight opens the window** (Euan 2026-10-29: "I can't use a normal axe to break
+  trees because it charges the hit like an attack"): every strike opened it, so one swing that missed a log, or hit
+  leaves (an axe cuts them no faster than a hand), made every press for the next 5 s a strike, and each one kept it
+  open. The window now opens only on something that means a fight (`ArmsRules.meansFight`):
+  - a press at a creature: locked, under the crosshair, or the mark within the style's longest blow plus its step in
+    (`ArmsRules.markReach`; a cow marked across a field is no fight);
+  - a blow either way, a guard's answer, a dodge, or a blow landing on you.
+  A strike at the air or a block still swings but leaves the window shut, so the next press on a log chops it. The
+  HUD's busy look, the combat camera and the dodge still count any swing (`ArmsPredict.busyAt`). A hold goes on as its
+  press began (`ArmsRules.attack`): a strike's hold stays the strike over a log, and a mining hold keeps mining whatever
+  the crosshair slides onto, as vanilla does. `arms_attack_key` holds the rule, and checks that every fighting axe and
+  sword (vanilla's and ours) cuts logs and planks, or webs and bamboo. **The chop** (Euan 2026-10-29: "Even without the
+  timer, when it does cut, there is no animation"; the hands were posed only from Arms' own moves, so vanilla's mining
+  wave never showed): while vanilla mines with a fighting weapon, the hands cut in a loop of their own, baked per style
+  by `tools/art/swing_choreo.py`'s lever (`tools/art/swing_chop.py` into `fp_swings.json`'s `chop` and `hack`,
+  `FpSwings.Loop`):
+  - the chop (any axe, `minecraft:axes`, 8 ticks): set high on the hand's side, driven down through a mark just under
+    the crosshair, stopped in the wood with a small kick back; the hack (a blade, 6 ticks): a quicker diagonal from low
+    on the hand's side that carries on through. Each loop starts and ends on its blow and is entered on the way up
+    (3 ticks in, 2.5 for the hack); it eases out to rest over 4 ticks when the mining stops (`ArmsChop`).
+  - Each blow lands on the frame the block breaks (the last frame before the tick vanilla breaks it): every tick the loop's rate is solved from the block's own break
+    time (the progress vanilla's `MultiPlayerGameMode` adds a tick, read through `BlockState.getDestroyProgress`,
+    counted only on ticks it adds some: its 5-tick wait after a break is kept until the next mining spends it) so
+    the next blow, or the one a loop later, lands then, held to 0.6-1.7 of its pace; between blocks (vanilla's 5-tick
+    wait) and in third person it runs at its own pace. An iron axe's log and wait (16 ticks) are two blows.
+  - A blow plays the block's own hit sound, louder and lower than vanilla's tap, an axe on wood adds `hit_wood`,
+    chips fly off where the blade struck, and the first-person view kicks a little; the drive's whoosh as it leaves
+    the set. Vanilla's own hit sound (every 4 ticks, out of step with the blows) is hushed on a block a chop is
+    showing (NeoForge's `PlaySoundEvent`).
+  - Third person: the body plays `arms_chop` / `arms_hack` (loops with `_end` settles, `ArmsClips`; posed for
+    vanilla's hold, the item square to the forearm: the axe cocked high beside the head and driven down until its
+    head points into the wood, the blade set out at the side clear of the head and cut down across the front), each
+    clip's tick 0 where the hands enter the loop, so the body's blow lands with the sound; it starts again on the hands' next
+    entry after the view turns to third person. Everyone else's chop is read from what every client already sees: a
+    miner's arm swing (sent every few ticks while it mines; one swing alone, a block placed or a log stripped, is no
+    chop), a fighting weapon in hand, no move of theirs in the last second, their look on a block it cuts; their
+    blows play at the block on the clip's clock. No packet, no server change. Held = a heavy (charges from 6 ticks, full at the glint, 16;
   a release on the glint or any time after is the full blow: motion 2.4, posture 20, 110 ms hit-stop; held on to 24
   with Resonance full it is the Art). **The glint is the full charge** (Euan 2026-10-29: "the yellow ting happens before
   the full charge, and then nothing different happens for that attack sometimes"): it was a window of 2 ticks either

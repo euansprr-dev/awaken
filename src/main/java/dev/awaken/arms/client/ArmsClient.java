@@ -93,6 +93,7 @@ public final class ArmsClient {
         bus.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, true, net.neoforged.neoforge.client.event.RenderHandEvent.class, ArmsOffHand::onMainHand);
         dev.awaken.core.api.FirstPerson.offHandShows = ArmsOffHand::shows; // a stance's fist never replaces the twin
         bus.addListener(EventPriority.HIGH, InputEvent.InteractionKeyMappingTriggered.class, ArmsPredict::onKey);
+        bus.addListener(net.neoforged.neoforge.client.event.sound.PlaySoundEvent.class, ArmsChop::onSound);
         bus.addListener(ClientTickEvent.Post.class, e -> {
             ArmsPredict.tick();
             ArmsAutopilot.tick();

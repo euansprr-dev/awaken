@@ -31,6 +31,7 @@ final class ArmsBodies {
         String clip = ArmsClips.of(style.def().id(), move);
         if (clip == null) return;
         HELD.remove(e.getId());
+        ArmsChop.moved(e.getId());
         if (PlayerClips.play(e.getId(), clip, 1)) ArmsWrist.start(e, style, move);
         else ArmsWrist.stop(e);
     }
@@ -50,6 +51,26 @@ final class ArmsBodies {
         HELD.remove(e.getId());
         ArmsWrist.stop(e);
         PlayerClips.play(e.getId(), ArmsClips.dodge(rel), 1);
+    }
+
+    /**
+     * The chop's or the hack's loop on a body while it cuts (ArmsChop; true while it plays); a held guard or draw keeps
+     * the body. Its clip begins where the hands enter the loop, so the blows land on it.
+     */
+    static boolean chop(Entity e, boolean axe) {
+        String held = HELD.get(e.getId());
+        if (held != null && !ArmsClips.cuts(held)) return false;
+        String clip = axe ? ArmsClips.CHOP : ArmsClips.HACK;
+        ArmsWrist.stop(e);
+        if (!PlayerClips.play(e.getId(), clip, 2)) return false;
+        HELD.put(e.getId(), clip);
+        return true;
+    }
+
+    /** The cutting stopped: its loop settles. */
+    static void unchop(Entity e) {
+        String held = HELD.get(e.getId());
+        if (held != null && ArmsClips.cuts(held)) settle(e);
     }
 
     /** Players whose guard a shot jolted: entity id → the tick its jolt is over and the guard is held again. */
