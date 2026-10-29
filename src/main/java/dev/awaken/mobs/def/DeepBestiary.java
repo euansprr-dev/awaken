@@ -135,7 +135,7 @@ final class DeepBestiary {
                 .phase(1.0F, "The Ossuary King stands.", a(SLAM, "Bone Crush").radius(4).heavy(), a(NOVA, "Rib Spikes").n(12).bolt(BoltKind.SPIRIT))
                 .phase(0.5F, "The dead get up.", a(SUMMON, "Rise").summon("orchard_dead").n(3), a(CHARGE, "Royal March"), a(SLAM, "Bone Crush").radius(4))
                 .parts(P("ossuary_crown", "Ossuary Crown", "bone")).build());
-        out.add(m("guardian_silent", "The Great Listener", Theme.SILENT, Tier.GUARDIAN, Model.LISTENER, "It hears your heartbeat; scream, and it screams back").hp(30).dmg(5.5).spd(0.3).scale(1.8F).traits(LISTENER).bar(BossBarColor.WHITE).arena(24)
+        out.add(m("guardian_silent", "The Great Listener", Theme.SILENT, Tier.GUARDIAN, Model.LISTENER, "It hears your heartbeat; scream, and it screams back").hp(30).dmg(5.5).spd(0.3).scale(1.8F).size(1.6F, 2.2F).traits(LISTENER).bar(BossBarColor.WHITE).arena(24)
                 .intro("Every Listener in the halls is one of its ears.")
                 .phase(1.0F, "The Great Listener turns its head.", a(SLAM, "Found You").radius(3.5F).power(1.6F).heavy(), a(BEAM, "Echo Scream").bolt(BoltKind.VOID))
                 .phase(0.5F, "It stops breathing.", a(DARKNESS, "Absolute Silence").radius(20), a(SUMMON, "Ears").summon("listener").n(2), a(SLAM, "Found You").radius(3.5F).power(1.6F))

@@ -10062,6 +10062,43 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     his shoulder, he drops to his knees and looks up into his tree; his ribs fall open, he comes down into the heap, and
     the tree bows over his bones (4.6 s).
   - **Meter.** Worst kink outside a strike 5.1°; held at most 12% on every move; dips at most 33%.
+- **The Great Listener, the Hush Bat** (body and motion, `kit/bosses/guardian_silent.py`). "Every Listener in the halls is
+  one of its ears." A blind bat as big as a barn that walks on its folded wings, as a vampire bat does: its wrists and
+  hooked thumbs on the floor before it, its elbows standing up in two sharp peaks over its back with the folded wings
+  hanging inside them like a hood, its short hind legs splayed out behind with their knees up. Its ears are enormous,
+  taller than its head, ribbed inside, pink and faintly lit; its eyes are stitched shut with pale thread; a spear of a
+  nose-leaf stands on its wrinkled snout over long fangs. A ruff of pale ash fur round its neck, soot fur elsewhere,
+  dark leather wings veined paler; its throat glows violet when it screams. 103 cubes (618 faces) on 37 bones. The
+  hitbox is 1.6 x 2.2 at the def's scale 1.8 (2.9 x 4.0 blocks), round its body to its ears.
+  - **The idle.** It crouches on its wrists breathing, its head low, its ears turning on their own and its nose-leaf
+    twitching; then it stops and listens: its head cocks, its ears turn hard toward the sound and then the other way,
+    and it lets the breath go; now and then one wrist lifts and sets down, its elbow's peak rising. It creeps a wrist
+    and then the opposite foot at a time; it runs in a bound, both wrists vaulting it forward and its feet landing after.
+  - **Its blows.** The rake rocks back onto its other wrist, lifts this wrist high and out with the elbow thrown up and
+    the thumb's hooked claw cocked, and rakes it down across in front of it, its weight thrown forward into it; then
+    the other wing (a string, then Found You). Found You listens with its head cocked, crouches, rears up on its hind
+    legs and throws its wings wide over you, the whole span of them, and crashes down on its wrists, the wings sweeping
+    down after them and flexing on the floor. Whoever is behind gets its right wing flung open and swept round behind it
+    as it looks back over its shoulder. The Bound vaults at you on its wrists twice, flying low with its wings flashing
+    half open, and bites as it lands (7 blocks). Echo Scream (the signature) folds its ears forward, draws its head back
+    and swells, then screams with its mouth wide and its throat lit, its wings half raised out to its sides like a
+    mantle and shaking. Absolute Silence sits it back wrapped in its wings like a cloak, its ears flat down its back and
+    its head bowed into them; it holds its breath, shivering, the wings drawing tighter, and at the end its ears rise,
+    one and then the other. Ears lifts its head and clicks, its jaw chattering and its ears turning, and the Listeners
+    come. It waits wrapped in its wings; its intro unfurls its ears and hunts, finds you, gives one shriek in the mantle
+    and drops onto its wrists. Its death rears up with its mouth wide and no sound coming, its wings thrown open and
+    shaking, and falls onto its side; one wing lies spread along the floor, the other lifts once and folds slowly over
+    it, and its ears droop (4.6 s).
+  - **On the floor.** Its arms fold no shorter than the forearm less the humerus (38 px), so its wrists stand far
+    enough out (21 px out, 42 forward) for it to fold them still when its chest dips. Between keys a wrist or a foot can
+    sag a hair into the floor: wherever one would, that tick its limb turns by only the difference between two solves
+    (where it reaches and where it must), so it keeps the twist it was posed with; an arm folded as far as it goes slides
+    its wrist out along the floor instead. Each thumb turns only about its wrist's own sideways axis (any other way sits
+    near a gimbal lock and spins between keys), its claw cut on the side that faces the floor. A wing brought down onto
+    the floor flexes on it: the ground pass bends each finger out of the wing's plane, tip first. The death has a ground
+    pass of its own for the arms, ears and fingers, so what lands on the floor rests on it.
+  - **Meter.** Worst kink outside a strike 5.1°; held at most 11% on every move; dips at most 46% (Found You opens by
+    going still to listen).
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
