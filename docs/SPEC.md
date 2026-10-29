@@ -263,7 +263,9 @@ pillars' own pipelines (`RigPipelines.PILLAR_HAZE`/`PILLAR_LIGHT`, shader `gate_
 many times further off it really stands), write its real depth (at the far plane past it) for the game's depth test, and
 discard where far land is nearer (`compat.client.FarTerrain`'s depth and planes, while it draws and shares one; never
 under Distant Horizons). A driver that can't build them draws the pillars as before. Tour `pillars-ridge` (render
-distance 6, a stone block 72-88 blocks ahead of a gate 200 and 400 blocks off). Admin `/awaken gate frame <dist> <lift>` puts the camera on the line from the nearest gate toward
+distance 6; the camera due south of gate 1 at fixed spots 120 and 300 blocks off, lifted over the roofs; a stone wall 31
+wide 84-87 blocks ahead to 2 under its eyes). CI runs 40815747360 (before) and 40814281481 (after) at 300 blocks: before,
+the beam crosses the wall's face down to the gate; after, it shows only above the wall's top. Admin `/awaken gate frame <dist> <lift>` puts the camera on the line from the nearest gate toward
 Carillon's centre, facing the pillar (tours).
 Gate card shows rank, breaks-in, omen; PER ≥20 adds layout, ≥40 modifiers, ≥60 floor count; Veil scouting shows all.
 A gate of another rank than the hunter's says so in a "For you" row: "above your rank", or "below your rank · pays less"
