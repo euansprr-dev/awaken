@@ -1,10 +1,11 @@
 # A gate pillar behind a ridge (Euan, 29 Oct: "One of the gate beams is showing on top of the cliff here even tho the
 # gate is behind it"). Render distance 6 (96 blocks): a pillar past 67 blocks used to be drawn pulled in to 67, so land
-# between 67 blocks and the end of the chunks never hid it. The camera is framed on gate 1 from 120 and then 300 blocks
-# off (wherever the gate formed), lifted over the roofs, and a stone wall rises 84 blocks in front of it to 2 blocks
-# under its feet, square to the view. The beam must show only above the wall's top, never across its face. The land
-# is made before anything is placed: a gate needs ground, and a wall needs its chunks. (Far Sight's land, the other
-# half of the fix, stays on the Mac: Far Sight is off here.)
+# between 67 blocks and the end of the chunks never hid it. Gate 1 forms at about 1105 82 -1070 on this world (seed
+# 20261024). The camera stands due south of it, 120 and then 300 blocks off, lifted over the roofs and looking at it, and
+# a stone wall 31 wide rises 84-87 blocks ahead of the camera to 2 blocks under its eyes. The beam must show only above
+# the wall's top, never across its face. Fixed coordinates, so the before and after runs frame the same view; the land is
+# made before anything is placed (a gate needs ground, a wall its chunks). Far Sight's land, the other half of the fix,
+# stays on the Mac: Far Sight is off here.
 # Run on GitHub's Mac runners:
 #   tools/tour-ci.sh tools/autopilot/pillars-ridge.txt 1500 TECTONIC=awakened PACK=perf,world,horizon
 # ci knobs: RD=6
@@ -36,17 +37,17 @@ cmd awaken gate open C
 wait 200
 cmd awaken gate list
 # ---- 120 blocks off: drawn pulled in to 67 before the fix, so in front of the wall
-cmd awaken gate frame 120 30
-wait 300
+cmd tp @s 1105 112 -950 facing 1105 112 -1070
+wait 500
 shot ridge_120_open
-cmd execute at @s rotated ~ 0 run fill ^-14 ^-60 ^84 ^14 ^-2 ^87 stone
-wait 120
+cmd fill 1090 40 -1037 1120 110 -1034 stone
+wait 160
 shot ridge_120_behind
 # ---- 300 blocks off, higher
-cmd awaken gate frame 300 60
-wait 300
+cmd tp @s 1105 142 -770 facing 1105 142 -1070
+wait 500
 shot ridge_300_open
-cmd execute at @s rotated ~ 0 run fill ^-14 ^-60 ^84 ^14 ^-2 ^87 stone
-wait 120
+cmd fill 1090 70 -857 1120 140 -854 stone
+wait 160
 shot ridge_300_behind
 quit
