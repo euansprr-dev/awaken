@@ -2562,6 +2562,8 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
       residents, children, the Watch, porters, washers, shopkeepers and millers. Boats: one moored every 24 blocks along
       each quay inside the wall (a quarter left empty, none within 6 of a bridge); two rowed up and down the river, one
       round the canal; rowing from 23000 to 18000, bow lanterns lit after dusk (a third of the moored ones too).
+      Tours only: client command `/awaken critters lineup pace|pace_<pigeon|gull|cat|dog>|off` sets the walkers
+      pacing 5-block lanes before the camera (a walk out, a stand turning round, a trot back) for §23.1's feet.
     - Hand lanterns and lit street lamps are drawn light (`citizens.client.CityGlow`: an additive core, halo and pool on
       the ground), never light blocks; `/awaken citizens lanterns blocks|glow` keeps the old path for measuring only.
       Choir Square's festoons: paper lanterns strung between the bowl's eight lamp posts, lit 12200-19500.
@@ -9905,7 +9907,8 @@ hundred glow quads, culled by distance and view.
 **API additions** (§12): `core.audio.client.Soundscape.hushAt(x, y, z)` (what is left of birds and insects at a point);
 `citizens.client.CityLife.inside(x, z, margin)` (within Carillon's wall plus a margin). Client command
 `/awaken wildlife [on|off|count|dial <x>|lineup [clip|insects|off] [variant]]` (`count`: what's near, what the camera
-can see, and where the songbirds are; `lineup`: every body, or every insect, posed before the camera on a stage); tours
+can see, and where the songbirds are; `lineup`: every body, or every insect, posed before the camera on a stage;
+`lineup pace` or `pace_fox`/`pace_crow`: the walkers pace 5-block lanes, a walk out and a trot back, for §23.1's feet); tours
 log the census every 30 s as `[wildlife] in view N of M near: ...`. Tours: `tools/autopilot/wild-life.txt` (the stage by
 day and night, then forest, rain, flowers, river, Mirror Marsh, Lumen Forest), `wild-forest.txt` (the quick loop).
 
