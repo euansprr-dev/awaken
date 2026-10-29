@@ -480,8 +480,10 @@ public final class BigDays {
         return y <= level.getMinY() ? null : new BlockPos(near.getX(), y, near.getZ());
     }
 
+    /** The raid's creatures: the ones it set down, and whatever they called up (summons carry their caller's role). */
     private static List<Mob> mobs(ServerLevel level, BlockPos anchor) {
-        return level.getEntitiesOfClass(Mob.class, new AABB(anchor).inflate(REACH), m -> m.isAlive() && m.entityTags().contains(TAG));
+        return level.getEntitiesOfClass(Mob.class, new AABB(anchor).inflate(REACH), m -> m.isAlive()
+                && (m.entityTags().contains(TAG) || m.getData(dev.awaken.core.api.CoreApi.MOB_ROLE.get()).gateId().startsWith("raid:")));
     }
 
     /** The household (owner and members) online, in the overworld, within {@code reach} of the Hearth. */

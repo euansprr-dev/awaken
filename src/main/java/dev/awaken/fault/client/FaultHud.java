@@ -58,6 +58,7 @@ final class FaultHud {
         endCut();
         fault = null;
         edge = mendPending = false;
+        dev.awaken.core.api.HudState.toastsWait = false;
         afterFrom = mendFrom = -1000;
         lens(false);
     }
@@ -114,12 +115,17 @@ final class FaultHud {
         Fault f = fault;
         if (f == null) return;
         long t = ticks - start;
+        dev.awaken.core.api.HudState.toastsWait = mode != FaultConfig.Mode.STILL && f.size() != Fault.Size.FLICKER && t >= tearEnd - 1 && t < cutEnd;
         if (mode != FaultConfig.Mode.STILL) {
             if (t == tellEnd && f.size() != Fault.Size.FLICKER) {
                 if (mode == FaultConfig.Mode.FULL) sound(FaultModule.TEAR.get(), 1F, 1F);
                 lens(true);
             }
-            if (t == tearEnd && f.size() != Fault.Size.FLICKER) sound(FaultModule.DROP.get(), 1F, 1F);
+            if (t == tearEnd && f.size() != Fault.Size.FLICKER) {
+                sound(FaultModule.DROP.get(), 1F, 1F);
+                // toasts draw over every layer: the ones up go, and new ones wait for the screen back
+                Minecraft.getInstance().gui.toastManager().clear();
+            }
             for (int i = 0; i < lineStart.length; i++)
                 if (t == lineStart[i]) sound(FaultModule.VOICE.get(), i == f.words().size() ? 0.7F : 1F + 0.06F * i, i == f.words().size() ? 0.6F : 1F);
             if (t == blackEnd && f.cutTicks() > 0) startCut(f);
@@ -128,6 +134,7 @@ final class FaultHud {
             endCut();
             lens(false);
             fault = null;
+            dev.awaken.core.api.HudState.toastsWait = false;
             if (!after.isEmpty()) afterFrom = ticks;
             if (f.holds() && mode != FaultConfig.Mode.STILL && !mendPending) {
                 edge = true;
