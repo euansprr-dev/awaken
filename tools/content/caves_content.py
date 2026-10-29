@@ -40,12 +40,15 @@ ROOTED = box(humidity=(-0.1, None), temperature=(-0.45, 0.55), continentalness=(
 TEMPERATE = box(temperature=(-0.45, 0.2), continentalness=(-0.19, None))
 WARM_WET = box(humidity=(-0.1, None), temperature=(0.2, 0.55), continentalness=(-0.19, None))
 
-# id: band, priority, slot (quantiles of the cover), land (any of these boxes), archetype, water colour, music
+# id: band, priority, slot (quantiles of the cover), land (any of these boxes), archetype, water colour, music, the cave air
+# (the biome's fog colour: delve's Depths draws the air in close underground and leans it this way, SPEC §42.7)
 REGIONS = {
     'rootways': dict(band='shallows', priority=-10, slot=(0, 1), boxes=[ROOTED],
-                     archetype='lush_caves', water='#3b6f62', music='minecraft:music.overworld.lush_caves'),
+                     archetype='lush_caves', water='#3b6f62', music='minecraft:music.overworld.lush_caves', air='#6f9a84',
+                     words='where the forest\'s roots come down'),
     'ochre_deep': dict(band='middle', priority=-10, slot=(0, 1), boxes=[TEMPERATE, WARM_WET],
-                       archetype='dripstone_caves', water='#a8622c', music='minecraft:music.overworld.dripstone_caves'),
+                       archetype='dripstone_caves', water='#a8622c', music='minecraft:music.overworld.dripstone_caves', air='#c08050',
+                       words='iron country'),
 }
 # vanilla tags that list its cave biomes, so a structure starting underground (mineshafts, trial chambers, ruined
 # portals) or a stronghold ring still finds a region biome good
@@ -89,16 +92,22 @@ def biome(rid, r):
     d['features'] = [[f for f in step if f not in drop] for step in d['features']]
     d['effects'] = {'water_color': r['water']}
     d['attributes']['minecraft:audio/background_music'] = {'default': {'max_delay': 24000, 'min_delay': 12000, 'sound': r['music']}}
+    d['attributes']['minecraft:visual/fog_color'] = r['air']
     return d
 
 
 # ---- the skin (SPEC §42.4): its blocks' assets, loot, tags and lang, and the feature that lays it -------------------------
 RES = os.path.join(ROOT, 'src/main/resources')
 MERGE = os.path.join(ROOT, 'src/main/merge/caves')
-SKIN_ROCKS = ('stone', 'deepslate', 'tuff')
+SKIN_ROCKS = ('stone', 'deepslate', 'tuff', 'rootstone', 'ochre')
+# the regions' own rock (P2), and their ore twins: (block, the vanilla ore it stands in for, its tags)
+REGION_ROCKS = {'rootstone': 'Rootstone', 'ochre_stone': 'Ochre Stone'}
+TWINS = {'rootstone_coal_ore': ('coal_ore', 'Rootstone Coal Ore', 'coal'), 'rootstone_copper_ore': ('copper_ore', 'Rootstone Copper Ore', 'copper'),
+         'ochre_iron_ore': ('iron_ore', 'Ochre Iron Ore', 'iron')}
 OVERLAYS = {'cave_lichen_shallows': ('lichen_shallows', 'Grey-Green Cave Lichen'), 'cave_lichen_middle': ('lichen_middle', 'Gold Cave Lichen'),
             'cave_lichen_deep': ('lichen_deep', 'Blue Cave Lichen'), 'mineral_crust': ('mineral_crust', 'Mineral Crust'),
-            'wet_streaks': ('wet_streaks', 'Wet Streaks')}
+            'wet_streaks': ('wet_streaks', 'Wet Streaks'), 'rust_crust': ('rust_crust', 'Rust Crust'),
+            'rust_flowstone': ('rust_flowstone', 'Rust Flowstone'), 'ember_lichen': ('ember_lichen', 'Ember Lichen')}
 
 
 def put(root, rel, data):
@@ -180,11 +189,49 @@ def skin():
             {'type': 'minecraft:item', 'name': 'awaken:dusty_web', 'condition': {'type': 'minecraft:any_of', 'terms': ['minecraft:tool/can_shear', 'minecraft:tool/can_silk_touch']}},
             {'type': 'minecraft:item', 'name': 'minecraft:string', 'condition': {'type': 'minecraft:survives_explosion'}}]}]}]})
     lang['block.awaken.dusty_web'] = 'Dusty Web'
+    # the regions' rock and ores (P2): plain cubes that drop themselves; the twins drop what their vanilla ore drops
+    for bid, nice in REGION_ROCKS.items():
+        put(RES, f'{A}/blockstates/{bid}.json', {'variants': {'': {'model': f'awaken:block/caves/{bid}'}}})
+        put(RES, f'{A}/items/{bid}.json', {'model': {'type': 'minecraft:model', 'model': f'awaken:block/caves/{bid}'}})
+        put(RES, f'data/awaken/loot_table/blocks/{bid}.json', self_loot(bid))
+        lang[f'block.awaken.{bid}'] = nice
+        pickaxe.append(f'awaken:{bid}')
+    for bid, (ore, nice, kind) in TWINS.items():
+        put(RES, f'{A}/blockstates/{bid}.json', {'variants': {'': {'model': f'awaken:block/caves/{bid}'}}})
+        put(RES, f'{A}/items/{bid}.json', {'model': {'type': 'minecraft:model', 'model': f'awaken:block/caves/{bid}'}})
+        loot = json.load(open(os.path.join(REF, f'loot_table/blocks/{ore}.json')))
+        loot['random_sequence'] = f'awaken:blocks/{bid}'
+        silk = loot['pools'][0]['entries'][0]['children'][0]
+        assert silk['name'] == f'minecraft:{ore}'
+        silk['name'] = f'awaken:{bid}'
+        put(RES, f'data/awaken/loot_table/blocks/{bid}.json', loot)
+        lang[f'block.awaken.{bid}'] = nice
+        pickaxe.append(f'awaken:{bid}')
+        for kind_tag in ('block', 'item'):
+            put(MERGE, f'data/minecraft/tags/{kind_tag}/{kind}_ores.json', {'replace': False, 'values': [f'awaken:{b}' for b, t in TWINS.items() if t[2] == kind]})
+    put(MERGE, 'data/minecraft/tags/block/needs_stone_tool.json', {'replace': False, 'values': ['awaken:rootstone_copper_ore', 'awaken:ochre_iron_ore']})
+    put(MERGE, 'data/minecraft/tags/block/base_stone_overworld.json', {'replace': False, 'values': [f'awaken:{b}' for b in REGION_ROCKS]})
+    for t in ('stone_tool_materials', 'stone_crafting_materials'):
+        put(MERGE, f'data/minecraft/tags/item/{t}.json', {'replace': False, 'values': [f'awaken:{b}' for b in REGION_ROCKS]})
+    # the Rootways' growth: glowcaps on the floor, root curtains from the roof
+    put(RES, f'{A}/blockstates/glowcap.json', {'variants': {f'variant={v}': {'model': f'awaken:block/caves/glowcap_{v}'} for v in range(3)}})
+    put(RES, f'{A}/models/item/caves/glowcap.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': 'awaken:block/caves/glowcap_1'}})
+    put(RES, f'{A}/items/glowcap.json', {'model': {'type': 'minecraft:model', 'model': 'awaken:item/caves/glowcap'}})
+    put(RES, 'data/awaken/loot_table/blocks/glowcap.json', self_loot('glowcap'))
+    lang['block.awaken.glowcap'] = 'Glowcap'
+    put(RES, f'{A}/blockstates/root_curtain.json', {'variants': {'tip=false': turns('awaken:block/caves/root_curtain'),
+                                                                  'tip=true': turns('awaken:block/caves/root_curtain_tip')}})
+    put(RES, f'{A}/models/item/caves/root_curtain.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': 'awaken:block/caves/root_curtain_tip'}})
+    put(RES, f'{A}/items/root_curtain.json', {'model': {'type': 'minecraft:model', 'model': 'awaken:item/caves/root_curtain'}})
+    put(RES, 'data/awaken/loot_table/blocks/root_curtain.json', self_loot('root_curtain', {'condition': 'minecraft:match_tool', 'predicate': {'items': 'minecraft:shears'}}))
+    lang['block.awaken.root_curtain'] = 'Root Curtain'
     for p, n in (('cave_drip', 4), ('cave_splash', 4)):
         put(RES, f'{A}/particles/{p}.json', {'textures': [f'awaken:caves/{p[5:]}_{i}' for i in range(n)]})
     put(MERGE, 'data/minecraft/tags/block/mineable/pickaxe.json', {'replace': False, 'values': pickaxe})
     put(MERGE, 'data/minecraft/tags/block/mineable/hoe.json', {'replace': False, 'values': [f'awaken:{b}' for b in OVERLAYS]})
-    put(MERGE, 'data/minecraft/tags/block/sword_efficient.json', {'replace': False, 'values': ['awaken:dusty_web']})
+    put(MERGE, 'data/minecraft/tags/block/sword_efficient.json', {'replace': False, 'values': ['awaken:dusty_web', 'awaken:glowcap', 'awaken:root_curtain']})
+    for rid, r in REGIONS.items():
+        lang[f'caves.region.awaken.{rid}'] = r['words']
     lang_path = os.path.join(MERGE, f'{A}/lang/en_us.json')
     have = json.load(open(lang_path)) if os.path.exists(lang_path) else {}
     have.update(lang)

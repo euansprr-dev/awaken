@@ -12019,3 +12019,48 @@ overworld caves only (the gates' worlds keep their own life).
   14.5% (Ochre Deep); the regions take 66% (Rootways) and 64% (Ochre Deep) of their land in their band, 24% of all the
   Shallows and 46% of all the Middle Dark; the injectors and `CaveRegion` agree at all but 34 of 155,148 points (the climate's
   quantisation at the edges).
+
+### 42.7 The Rootways and the Ochre Deep (P2)
+The first two regions get their own rock, ores, growth, light, air, look, life and sound; P3 brings the other six the same
+way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan's style-sheet OK.
+- **Rock** (`caves.skin`, mined like stone: pickaxe, 1.5 hardness, drops itself; `#minecraft:base_stone_overworld`, and the
+  stone tool and crafting materials): **`rootstone`** (brown and earthy, threaded with old roots; packed-mud sound) and
+  **`ochre_stone`** (warm red-orange in bands). Each gets the skin's kit (`SkinRock` ROOTSTONE, OCHRE): `rootstone_rubble`,
+  `_pebbles`, `pointed_rootstone`, `ochre_rubble`, `_pebbles`, `pointed_ochre`.
+- **The rock rule**: the skin feature, before it dresses, reads the chunk's biomes once a quart (4 × 4 × 4); in every quart a
+  region with a kit holds, deeper than **10** blocks under the ground, the host rock (stone, andesite, diorite, granite,
+  tuff; deepslate stays, the Deep's floor under the Middle Dark) becomes the region's rock, so a wall mined into is the
+  region's all the way. Written straight to the sections, rock for rock: nothing the heightmaps or the light see changes.
+- **Ore twins** (the ores that live there, drawn with the region's rock behind them; the same drops through vanilla's own
+  loot table, the same XP, tags and tools): **`rootstone_coal_ore`**, **`rootstone_copper_ore`** (the Rootways),
+  **`ochre_iron_ore`** (the Ochre Deep: dark hematite with iron's peach rim). An ore without a twin there keeps the 26 cells
+  round it as they were (within its section): it sits in a pocket of the stone it grew in, never on a background that isn't
+  its own. Lodes, Deepglass and the Hollows' veins are placed earlier and keep their own blocks the same way.
+- **The Rootways' growth**: **`glowcap`** (a cluster of teal mushrooms, light **5**, on a floor, open or by a wall, at
+  **0.12** where a 3D field at 5 blocks passes **0.2**: in patches, about 2% of open floor, a teal point down the gallery;
+  instant break, drops itself) and **`root_curtain`** (old roots hanging through a roof at **0.14** where a 2D field at 7
+  blocks passes **0.1**: one to three blocks, at most half the room under them, the last block its frayed tip; no
+  collision, held by the rock or root above, drops itself to shears).
+- **The Ochre Deep's walls**: the overlays of the two cells over a floor by a wall are the region's own: a lichen patch is
+  **`ember_lichen`** (light **3**, embers that glow in the dark) where a 3D field at 4 blocks passes **0.1**; where the
+  plain caves would have no lichen, **`rust_crust`** where a field at 5 passes **0.2**, dry or wet; plain caves' wet streaks
+  are **`rust_flowstone`**, down both cells. Mineral crust and wet streaks never come in the Ochre Deep.
+- **The air**: each region's biome has its fog colour (Rootways `#6f9a84`, Ochre Deep `#c08050`); delve's `Depths` reads it
+  at the camera once a second and leans the cave air **75%** of the way from the band's colour to it (in place of a land's
+  style).
+- **Caption and discovery**: the first time in a play-day you enter a region, `CaveHud` shows its name and words (`biome.<id>`,
+  `caves.region.<id>`: "THE ROOTWAYS · where the forest's roots come down", "THE OCHRE DEEP · iron country"), over the band's.
+  The first time ever is the Wilds' biome discovery (`biome/awaken/<id>`, SPEC §17); the Journal line and Codex page are P4's.
+- **The plain cave's look** stays off in a region (delve's `SenseState.REGION`, from `#awaken:caves/regions`), so the
+  region's own Lens look plays.
+- **Mining**: the strike draws its chips and sparks on the region rock (rock) and the twins (ore) as on stone and ores
+  (`StrikeBlocks`, by name).
+- **Test** `caves_region_rock`: eight filled chunks of seed 777 (the census's), four told they are all Rootways and four all
+  Ochre Deep, with coal, copper, iron and gold ore planted in host rock: under the land's last 10 blocks no host rock is
+  left but the untwinned ores' shells, each twin is placed and each untwinned ore keeps its shell as it was; above, the
+  rock is untouched; glowcaps stand on rock and only in the Rootways, root curtains hang from rock or root with the tip
+  last, rust, flowstone and ember only in the Ochre Deep (and no mineral crust or wet streaks there); every piece is laid;
+  glowcaps on at most **6%** of open floors; the skin with the regions at most **25%** of the fill.
+- **Measured 2026-10-29**: 91,828 cells of region rock on 8 chunks, 46 glowcaps (2.0% of 2,273 open floors), 83 root
+  curtain blocks, 137 rust crust, 37 rust flowstone, 32 ember lichen; 2.2 ms a chunk against 34.2 ms to fill it (6%; the
+  skin alone 0.5 ms).

@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.VegetationBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.pathfinder.PathComputationType;
@@ -176,6 +177,74 @@ public final class SkinBlocks {
             if (state.getValue(DIRECTION) == Direction.DOWN && state.getValue(Thickness.PROPERTY) == Thickness.TIP && random.nextInt(9) == 0) {
                 Drips.drip(level, pos, random);
             }
+        }
+    }
+
+    /** The Rootways' glowcaps (SPEC §42.7): a little cluster of teal-capped mushrooms on the floor, giving a faint light. */
+    public static final class Glowcap extends VegetationBlock {
+        private static final VoxelShape SHAPE = Block.box(3, 0, 3, 13, 7, 13);
+
+        public Glowcap(Properties p) {
+            super(p);
+            registerDefaultState(defaultBlockState().setValue(VARIANT, 0));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(VARIANT);
+        }
+
+        @Override
+        protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
+            return state.isFaceSturdy(level, pos, Direction.UP);
+        }
+
+        @Override
+        protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+            return SHAPE;
+        }
+    }
+
+    /**
+     * The Rootways' root curtains (SPEC §42.7): old roots hanging through the roof from the land above, a strand or a
+     * few blocks long, its last block the frayed tip. Held by the rock over it (or the root above); with nothing to hold
+     * it, it drops away.
+     */
+    public static final class RootCurtain extends Block {
+        public static final BooleanProperty TIP = BooleanProperty.create("tip");
+        private static final VoxelShape SHAPE = Block.box(2, 0, 2, 14, 16, 14);
+
+        public RootCurtain(Properties p) {
+            super(p);
+            registerDefaultState(defaultBlockState().setValue(TIP, true));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(TIP);
+        }
+
+        @Override
+        protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+            return SHAPE;
+        }
+
+        @Override
+        protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+            return Shapes.empty();
+        }
+
+        @Override
+        protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+            BlockState above = level.getBlockState(pos.above());
+            return above.is(this) || above.isFaceSturdy(level, pos.above(), Direction.DOWN);
+        }
+
+        @Override
+        protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess ticks, BlockPos pos, Direction dir,
+                                         BlockPos neighbourPos, BlockState neighbour, RandomSource random) {
+            if (dir == Direction.UP && !canSurvive(state, level, pos)) return Blocks.AIR.defaultBlockState();
+            return dir == Direction.DOWN ? state.setValue(TIP, !neighbour.is(this)) : state;
         }
     }
 

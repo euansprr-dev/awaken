@@ -59,6 +59,8 @@ ROCKS = {
     "seepstone": ["#130e1c", "#201830", "#2c2240", "#3a2e52", "#4b3e66", "#5e5080", "#7a6c9e"],
 }
 SKIN_ROCKS = ("stone", "deepslate", "tuff")
+# the ores that live in the P2 regions, with the region's rock behind them: (rock, ore, block id)
+TWINS = [("rootstone", "coal", "rootstone_coal_ore"), ("rootstone", "copper", "rootstone_copper_ore"), ("ochre", "iron", "ochre_iron_ore")]
 
 
 def ramp(rock):
@@ -320,6 +322,186 @@ def wet_streaks(seed=0):
     return c
 
 
+# ---- the regions' own (P2): ore twins, the Rootways' growth, the Ochre Deep's walls ---------------------------------------
+# an ore's mineral in five steps, rim to glint, and how its lumps sit in the rock. The Ochre Deep's iron is hematite: dark
+# steel-red lumps with the peach rim iron ore always has, so it reads as iron and still stands out on the orange rock.
+ORE = {
+    "coal": ["#3a3434", "#151314", "#221f20", "#353132", "#9a9496"],
+    "copper": ["#7fc0a4", "#8c4a24", "#b8642e", "#e08a50", "#ffd0a0"],     # the rim a verdigris bloom
+    "iron": ["#e8bc94", "#3a2622", "#563830", "#7a5a52", "#e6e2dc"],
+}
+
+
+def ore_twin(rock, ore, seed=0):
+    """An ore that lives in a region, with that region's rock behind it: four or five lumps of the mineral grown into the
+    rock (not dots stamped on), each with a rim where it meets the rock (coal's a smear of soot, copper's green bloom,
+    iron's peach), lit along its upper left, a glint on the best."""
+    r = rng("ore", rock, ore, seed)
+    c = region_rock(rock, seed)
+    M = [H(x) for x in ORE[ore]]
+    placed = []
+    for lump in range(r.randint(4, 5)):
+        for _ in range(30):
+            cx, cy = r.uniform(1, 15), r.uniform(1, 15)
+            if all(abs(tor(cx - px)) + abs(tor(cy - py)) > 5 for px, py in placed):
+                break
+        placed.append((cx, cy))
+        rx, ry = r.uniform(1.4, 2.3), r.uniform(1.2, 1.9)
+        cells = []
+        for y in range(16):
+            for x in range(16):
+                dx, dy = tor(x + 0.5 - cx) / rx, tor(y + 0.5 - cy) / ry
+                d = dx * dx + dy * dy + (r.random() - 0.5) * 0.4
+                if d < 1.35:
+                    cells.append((x, y, d, dx + dy))
+        for x, y, d, lit in cells:
+            if d >= 1.0:
+                if r.random() < 0.55:
+                    c.set(x, y, mix(c.get(x, y), M[0], 0.55))   # the rim, half into the rock
+            else:
+                c.set(x, y, M[3] if lit < -0.6 else M[2] if lit < 0.4 else M[1])
+        if cells:
+            x, y = min(cells, key=lambda t: t[3])[:2]
+            c.set(x, y, M[4])
+    return c
+
+
+def glowcap(variant, glow=False):
+    """The Rootways' glowcaps, a little cluster seen side-on (a cross): thin pale stems, round domed caps dark at the crown
+    and pale teal at the rim, the gills under the rim lit and a few spots on top; the glow layer is only the lit parts,
+    so they shine in the dark while the rest takes the cave's light."""
+    r = rng("glowcap", variant)
+    c = Canvas(16, 16)
+    stems = ([(5, 10, 4), (11, 7, 3)], [(4, 8, 3), (9, 11, 4), (13, 6, 2)], [(6, 12, 4), (11, 9, 3), (3, 5, 2)])[variant]
+    for sx, h, cap in stems:
+        top = 16 - h
+        lean = r.choice((-1, 1)) if h > 6 else 0
+        if not glow:
+            for y in range(top + 1, 16):
+                x = sx + (lean if y < top + h // 2 else 0)
+                c.set(x, y, H("#cfd6c4") if y < 15 else H("#8c9484"))
+        sx += lean
+        ch = cap // 2 + 1
+        shade = r.uniform(-0.1, 0.1)
+        for k in range(ch):                                    # the dome, top row first
+            t = (ch - 1 - k + 0.5) / ch
+            w = max(1, round(cap * math.sqrt(max(0.0, 1 - t * t))))
+            y = top - ch + 1 + k
+            for dx in range(-w, w + 1):
+                rim = k == ch - 1
+                edge = abs(dx) == w
+                if glow:
+                    if rim or (k > 0 and not edge and r.random() < 0.18):
+                        c.set(sx + dx, y, H("#a6fff0") if rim else H("#5fe6d2"))
+                else:
+                    base = H("#47c4b2") if rim else H("#1b5550") if k == 0 else H("#25786e") if edge else H("#2e8c80")
+                    c.set(sx + dx, y, mix(base, (0, 0, 0) if shade < 0 else (255, 255, 255), abs(shade)))
+        # the gills: a lit line under the rim, a pixel narrower each side
+        for dx in range(-cap + 1, cap):
+            if dx != 0:
+                c.set(sx + dx, top + 1, H("#7ef2de") if glow else H("#5fd0be"))
+    return c
+
+
+def root_curtain(tip=False, seed=0):
+    """Old roots hanging through the roof: three or four strands wandering down with clear gaps between, dark on one
+    side and lit on the other, fine pale rootlets off them; the tip's strands end at different heights in fraying hairs."""
+    r = rng("roots", tip, seed)
+    c = Canvas(16, 16)
+    D, M, L, P = H("#2e1c10"), H("#5a3a22"), H("#86603e"), H("#b8a080")
+    xs = [2, 6, 10, 13]
+    r.shuffle(xs)
+    for x in xs[: r.randint(3, 4)]:
+        x += r.choice((-1, 0, 1))
+        end = r.randint(5, 13) if tip else 16
+        for y in range(0, end):
+            c.set(x, y, M)
+            c.set(x - 1, y, D)
+            if y % 5 != 2:
+                c.set(x + 1, y, L) if r.random() < 0.5 else None
+            if r.random() < 0.1 and y < end - 2:
+                dx = r.choice((-1, 1))
+                for k in range(1, r.randint(2, 4)):
+                    c.set(x + dx * (k + 1), y + k, (*P[:3], 190))
+            if r.random() < 0.14:
+                x = max(1, min(14, x + r.choice((-1, 1))))
+        if tip:
+            for k in range(1, r.randint(2, 4)):
+                c.set(x + r.choice((-1, 0, 1)), end + k - 1, (*P[:3], 170))
+    return c
+
+
+def rust_crust(seed=0):
+    """Rust crust: iron-stained crust crept over the rock in blistered patches, dark at its heart, bright orange at its
+    fresh edge, a few black specks of manganese; about two fifths of the face, so the rock still shows."""
+    r = rng("rust", seed)
+    W = [H("#3e170a"), H("#6e2a10"), H("#9a4218"), H("#c4622a"), H("#e8944e")]
+    c = Canvas(16, 16)
+    blobs = [(r.uniform(0, 16), r.uniform(0, 16), r.uniform(2.2, 3.8)) for _ in range(r.randint(3, 4))]
+    for y in range(16):
+        for x in range(16):
+            best = 9.0
+            for bx, by, br in blobs:
+                d = math.hypot(tor(x + 0.5 - bx), tor(y + 0.5 - by)) / br
+                best = min(best, d + (r.random() - 0.5) * 0.3)
+            if best < 1.0:
+                k = 4 if best > 0.82 else 3 if best > 0.6 else 2 if best > 0.3 else 1
+                if k < 4 and r.random() < 0.12:
+                    k = 0                                          # a blister's pit
+                c.set(x, y, W[k])
+    for _ in range(4):
+        x, y = r.randrange(16), r.randrange(16)
+        if c.get(x, y)[3]:
+            c.set(x, y, H("#140a06"))
+    return c
+
+
+def rust_flowstone(seed=0):
+    """Rust flowstone: iron-rich water has run down the wall for ages and left orange drapery, curtains of it in rounded
+    ridges (dark, mid, lit across each), banded where it grew in seasons, ending in points at different heights."""
+    r = rng("flow", seed)
+    F = [H("#5a220c"), H("#8a3c16"), H("#b65e28"), H("#da8644"), H("#f6c48c")]
+    c = Canvas(16, 16)
+    x = r.randint(0, 1)
+    while x < 16:
+        w = r.randint(2, 4)
+        length = r.randint(8, 16)
+        for y in range(length):
+            taper = max(0, y - (length - 3))                       # the last rows narrow to a point
+            band = 1 if y % 4 == 3 else 0
+            for k in range(taper // 2, w - (taper + 1) // 2):
+                across = 0 if k == 0 else 3 if k == w - 1 else 2
+                col = F[max(0, across - band)]
+                c.set(x + k, y, (*col[:3], 240))
+            if r.random() < 0.08:
+                c.set(x + w - 1, y, F[4])
+        x += w + r.choice((0, 1, 1, 2))
+    return c
+
+
+def ember_lichen(glow=False, seed=0):
+    """Ember lichen: a dark rusty crust lichen whose fruiting dots glow like embers in a dying fire, a dozen or more, some
+    in pairs; the glow layer is only the embers and their red halo, so they light up in the dark while the crust takes
+    the cave's light."""
+    r = rng("ember", seed)
+    base = lichen("middle", seed + 7)
+    c = Canvas(16, 16)
+    if not glow:
+        for y in range(16):
+            for x in range(16):
+                px = base.get(x, y)
+                if px[3]:
+                    c.set(x, y, mix(px, H("#3a1a0c"), 0.6))
+    spots = [(x, y) for y in range(16) for x in range(16) if base.get(x, y)[3]]
+    r.shuffle(spots)
+    for x, y in spots[: r.randint(13, 17)]:
+        for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, -1)):
+            if base.get(x + dx, y + dy)[3] and r.random() < 0.5:
+                c.set(x + dx, y + dy, H("#8a2008"))           # the halo, a dull red
+        c.set(x, y, H("#ffd27a") if r.random() < 0.3 else H("#ff7a24"))
+    return c
+
+
 # ---- puddles and webs ---------------------------------------------------------------------------------------------------
 
 def puddle_frames(n=16, seed=0):
@@ -556,6 +738,17 @@ def build(out):
         out.block(f"caves/{rock}_formation_tip", formation(rock, tip=True))
     for rock in ("rootstone", "ochre"):
         out.block(f"caves/{rock}" if rock == "rootstone" else "caves/ochre_stone", region_rock(rock))
+    for rock, ore, name in TWINS:
+        out.block(f"caves/{name}", ore_twin(rock, ore))
+    for v in range(3):
+        out.block(f"caves/glowcap_{v}", glowcap(v))
+        out.block(f"caves/glowcap_{v}_glow", glowcap(v, glow=True))
+    out.block("caves/root_curtain", root_curtain())
+    out.block("caves/root_curtain_tip", root_curtain(tip=True))
+    out.block("caves/rust_crust", rust_crust())
+    out.block("caves/rust_flowstone", rust_flowstone())
+    out.block("caves/ember_lichen", ember_lichen())
+    out.block("caves/ember_lichen_glow", ember_lichen(glow=True))
     for band in LICHEN:
         out.block(f"caves/lichen_{band}", lichen(band))
     out.block("caves/mineral_crust", mineral_crust())
@@ -663,10 +856,32 @@ def pebbles_model(rock, variant):
     return {"parent": "minecraft:block/block", "textures": {"particle": ROCK_TEXTURE[rock], "t": ROCK_TEXTURE[rock]}, "elements": els}
 
 
-def overlay_model(name):
-    return {"ambientocclusion": False, "render_type": "minecraft:cutout", "textures": {"particle": f"awaken:block/caves/{name}", "t": f"awaken:block/caves/{name}"},
-            "elements": [{"from": [0, 0, 0.1], "to": [16, 16, 0.1],
-                          "faces": {"north": {"uv": [16, 0, 0, 16], "texture": "#t"}, "south": {"uv": [0, 0, 16, 16], "texture": "#t"}}}]}
+def overlay_model(name, glow=0):
+    """A thin overlay on a wall (multiface); with {@code glow}, a second layer of its glowing parts at that light."""
+    m = {"ambientocclusion": False, "render_type": "minecraft:cutout", "textures": {"particle": f"awaken:block/caves/{name}", "t": f"awaken:block/caves/{name}"},
+         "elements": [{"from": [0, 0, 0.1], "to": [16, 16, 0.1],
+                       "faces": {"north": {"uv": [16, 0, 0, 16], "texture": "#t"}, "south": {"uv": [0, 0, 16, 16], "texture": "#t"}}}]}
+    if glow:
+        m["textures"]["g"] = f"awaken:block/caves/{name}_glow"
+        m["elements"].append({"from": [0, 0, 0.1], "to": [16, 16, 0.1], "light_emission": glow,
+                              "faces": {"north": {"uv": [16, 0, 0, 16], "texture": "#g"}, "south": {"uv": [0, 0, 16, 16], "texture": "#g"}}})
+    return m
+
+
+def cross_model(tex, glow_tex=None, glow=0):
+    """Two crossed planes (as minecraft:block/cross), and the same again in the glowing parts' texture at that light."""
+    def planes(t, extra):
+        rot = {"origin": [8, 8, 8], "axis": "y", "angle": 45, "rescale": True}
+        face = {"uv": [0, 0, 16, 16], "texture": t}
+        return [{"from": [0.8, 0, 8], "to": [15.2, 16, 8], "rotation": rot, "shade_direction_override": "up", **extra,
+                 "faces": {"north": face, "south": face}},
+                {"from": [8, 0, 0.8], "to": [8, 16, 15.2], "rotation": rot, "shade_direction_override": "up", **extra,
+                 "faces": {"west": face, "east": face}}]
+    m = {"ambientocclusion": False, "render_type": "minecraft:cutout", "textures": {"particle": tex, "t": tex}, "elements": planes("#t", {})}
+    if glow_tex:
+        m["textures"]["g"] = glow_tex
+        m["elements"] += planes("#g", {"light_emission": glow})
+    return m
 
 
 def model_dict():
@@ -678,8 +893,15 @@ def model_dict():
         for v in range(3):
             out[f"{rock}_rubble_{v}"] = rubble_model(rock, v)
             out[f"{rock}_pebbles_{v}"] = pebbles_model(rock, v)
-    for name in ["lichen_" + b for b in LICHEN] + ["mineral_crust", "wet_streaks"]:
+    for name in ["lichen_" + b for b in LICHEN] + ["mineral_crust", "wet_streaks", "rust_crust", "rust_flowstone"]:
         out[name] = overlay_model(name)
+    out["ember_lichen"] = overlay_model("ember_lichen", glow=9)
+    for v in range(3):
+        out[f"glowcap_{v}"] = cross_model(f"awaken:block/caves/glowcap_{v}", f"awaken:block/caves/glowcap_{v}_glow", glow=12)
+    for t in ("root_curtain", "root_curtain_tip"):
+        out[t] = cross_model(f"awaken:block/caves/{t}")
+    for rock in ("rootstone", "ochre_stone") + tuple(t[2] for t in TWINS):
+        out[rock] = {"parent": "minecraft:block/cube_all", "textures": {"all": f"awaken:block/caves/{rock}"}}
     out["puddle"] = {"ambientocclusion": False, "render_type": "minecraft:translucent", "textures": {"particle": "awaken:block/caves/puddle", "t": "awaken:block/caves/puddle"},
                      "elements": [box((0, 0.2, 0), (16, 0.2, 16), "#t", faces=("up",), tint=0)]}
     out["dusty_web"] = {"parent": "minecraft:block/cross", "render_type": "minecraft:cutout", "textures": {"cross": "awaken:block/caves/dusty_web"}}

@@ -96,6 +96,7 @@ final class CavesTests {
         AwakenTests.register("caves_gen_cost", 2400, CavesTests::cost);
         AwakenTests.register("caves_skin_census", 2400, CavesTests::skin);
         AwakenTests.register("caves_underlife_sites", 200, CavesTests::underlife);
+        AwakenTests.register("caves_region_rock", 2400, CavesTests::regionRock);
     }
 
     // ---------------------------------------------------------------- the regions
@@ -556,6 +557,173 @@ final class CavesTests {
         h.assertTrue(formations > 0 && puddles > 0 && rubble > 0 && overlays > 0, "every kind of piece is laid");
         h.assertTrue(ms <= fill * SKIN_SHARE, "the skin costs " + String.format(Locale.ROOT, "%.2f", ms) + " ms a chunk, "
                 + Math.round(ms / fill * 100) + "% of the fill (budget " + Math.round(SKIN_SHARE * 100) + "%)");
+        h.succeed();
+    }
+
+    /** The host rock a region turns to its own (as {@code CaveSkinFeature.host}). */
+    private static final java.util.Set<Block> HOSTS = java.util.Set.of(Blocks.STONE, Blocks.ANDESITE, Blocks.DIORITE, Blocks.GRANITE, Blocks.TUFF);
+    /** The regions' gates (SPEC §42.7): glowcaps on at most this share of open floor cells, and the regions' cost per chunk. */
+    static final double GLOW_MAX = 0.06, REGION_SHARE = 0.25;
+
+    /**
+     * The regions' own (SPEC §42.7), on real filled chunks (the census's) told they are all one region: four Rootways, four
+     * Ochre Deep. Ores are planted first (the fill lays none): coal, copper, iron and gold, each in solid stone. Under the
+     * land's last {@link CaveSkinFeature#REGION_UNDER} blocks the host rock becomes the region's, an ore with a twin there
+     * becomes the twin, an ore without one keeps its stone shell; above, nothing changes. The growth is laid (glowcaps,
+     * root curtains; rust, flowstone, ember lichen), each piece where it may stand, the glow sparse, the cost in budget.
+     */
+    private static void regionRock(GameTestHelper h) {
+        Pair p = pair(h);
+        var level = h.getLevel();
+        LevelHeightAccessor heights = LevelHeightAccessor.create(-64, 384);
+        long seed = STUDIO_SEEDS[0];
+        RandomState rs = p.random(h, seed, true);
+        BlockState stone = Blocks.STONE.defaultBlockState();
+        Block[] planted = {Blocks.COAL_ORE, Blocks.COPPER_ORE, Blocks.IRON_ORE, Blocks.GOLD_ORE};
+        long nanos = 0, fillNanos = 0;
+        int n = 0, floors = 0, glowcaps = 0, roots = 0, rust = 0, flow = 0, ember = 0, swapped = 0;
+        for (CaveRegion region : new CaveRegion[] {CaveRegion.ROOTWAYS, CaveRegion.OCHRE_DEEP}) {
+            CaveSkin.RegionKit kit = CaveSkin.kit(region);
+            Block rock = kit.rock().get();
+            for (int i = 0; i < 4; i++) {
+                ChunkPos pos = new ChunkPos(-40 + i * 21, region == CaveRegion.ROOTWAYS ? -30 : -11);
+                long f0 = System.nanoTime();
+                ProtoChunk chunk = build(level, p.shaped(), rs, pos, heights);
+                if (i > 0) fillNanos += System.nanoTime() - f0;
+                int cx = pos.getMinBlockX(), cz = pos.getMinBlockZ();
+                BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+                CaveSkinFeature.Cells cells = new CaveSkinFeature.Cells() {
+                    @Override
+                    public BlockState get(int x, int y, int z) {
+                        if ((x & ~15) != cx || (z & ~15) != cz || y < -64 || y >= 320) return stone;
+                        return chunk.getSection(chunk.getSectionIndex(y)).getBlockState(x & 15, y & 15, z & 15);
+                    }
+
+                    @Override
+                    public void set(int x, int y, int z, BlockState state) {
+                        chunk.setBlockState(m.set(x, y, z), state, 0);
+                    }
+
+                    @Override
+                    public int top(int x, int z) {
+                        return chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x & 15, z & 15);
+                    }
+
+                    @Override
+                    public int minY() {
+                        return -64;
+                    }
+                };
+                int under = CaveSkinFeature.UNDER_GROUND, limit = CaveSkinFeature.REGION_UNDER;
+                // plant the ores in solid host rock (all 26 round it host), under the region's limit, three apart in y
+                List<BlockPos> ores = new ArrayList<>();
+                List<Block[]> shells = new ArrayList<>();
+                for (int y = 1; y < 100 && ores.size() < planted.length; y += 3) {
+                    search:
+                    for (int dx = 2; dx < 14; dx += 2) for (int dz = 2; dz < 14; dz += 2) {
+                        int x = cx + dx, z = cz + dz;
+                        if (y >= cells.top(x, z) - limit - 2) continue;
+                        Block[] shell = new Block[27];
+                        for (int a = -1; a <= 1; a++) for (int b = -1; b <= 1; b++) for (int c = -1; c <= 1; c++) {
+                            Block was = cells.get(x + a, y + b, z + c).getBlock();
+                            if (!HOSTS.contains(was)) continue search;
+                            shell[(b + 1) * 9 + (c + 1) * 3 + a + 1] = was;
+                        }
+                        cells.set(x, y, z, planted[ores.size()].defaultBlockState());
+                        ores.add(new BlockPos(x, y, z));
+                        shells.add(shell);
+                        break search;
+                    }
+                }
+                h.assertTrue(ores.size() == planted.length, "found host rock for the ores in " + pos + ": " + ores.size());
+                // the stone above the limit, counted before
+                int stoneAbove = 0, openFloor = 0;
+                for (int dx = 0; dx < 16; dx++) for (int dz = 0; dz < 16; dz++) {
+                    int top = cells.top(cx + dx, cz + dz);
+                    for (int y = top - limit; y < top; y++) if (cells.get(cx + dx, y, cz + dz).getBlock() == Blocks.STONE) stoneAbove++;
+                    for (int y = -60; y < top - limit; y++) {
+                        if (cells.get(cx + dx, y, cz + dz).isAir() && cells.get(cx + dx, y - 1, cz + dz).isSolidRender()) openFloor++;
+                    }
+                }
+                CaveSkinFeature.Regions regions = (x, y, z) -> region;
+                long t = System.nanoTime();
+                CaveSkinFeature.dress(cells, cx, cz, seed, chunk, regions);
+                if (i > 0) {
+                    nanos += System.nanoTime() - t;
+                    n++;
+                }
+                floors += openFloor;
+                // the ores: a twin where the region has one, else the ore kept in a shell of the stone it grew in
+                for (int k = 0; k < planted.length; k++) {
+                    BlockPos o = ores.get(k);
+                    Block now = cells.get(o.getX(), o.getY(), o.getZ()).getBlock();
+                    var twin = kit.twins().get(planted[k]);
+                    if (twin != null) {
+                        h.assertTrue(now == twin.get(), planted[k] + " becomes its " + region + " twin, not " + now);
+                    } else {
+                        h.assertTrue(now == planted[k], planted[k] + " stays itself in the " + region + ", not " + now);
+                        for (int a = -1; a <= 1; a++) for (int b = -1; b <= 1; b++) for (int c = -1; c <= 1; c++) {
+                            if ((a | b | c) == 0) continue;
+                            Block shell = cells.get(o.getX() + a, o.getY() + b, o.getZ() + c).getBlock();
+                            Block was = shells.get(k)[(b + 1) * 9 + (c + 1) * 3 + a + 1];
+                            // the shell stays within the ore's section; past it the region's rock may come
+                            h.assertTrue(shell == was || (o.getY() + b) >> 4 != o.getY() >> 4 && shell == rock,
+                                    "the " + planted[k] + " keeps its shell of " + was + " in the " + region + ": " + shell);
+                        }
+                    }
+                }
+                // the rock: no host stone left under the limit but shells; untouched above it
+                int left = 0, mine = 0, above = 0;
+                for (int dx = 0; dx < 16; dx++) for (int dz = 0; dz < 16; dz++) {
+                    int top = cells.top(cx + dx, cz + dz);
+                    for (int y = -60; y < top; y++) {
+                        Block b = cells.get(cx + dx, y, cz + dz).getBlock();
+                        if (y >= top - limit) {
+                            if (b == Blocks.STONE) above++;
+                            continue;
+                        }
+                        if (b == rock) mine++;
+                        else if (HOSTS.contains(b)) left++;
+                    }
+                }
+                swapped += mine;
+                h.assertTrue(mine > 2000, "the " + region + " has its own rock in " + pos + ": " + mine);
+                h.assertTrue(left <= 26 * planted.length, "only the shells keep host rock under the limit in " + pos + ": " + left);
+                h.assertTrue(above == stoneAbove, "the rock near the land is the land's in " + pos + ": " + above + " of " + stoneAbove);
+                // the growth, each where it may stand
+                for (int dx = 0; dx < 16; dx++) for (int dz = 0; dz < 16; dz++) for (int y = -62; y < 300; y++) {
+                    int x = cx + dx, z = cz + dz;
+                    BlockState s = cells.get(x, y, z);
+                    Block b = s.getBlock();
+                    if (b instanceof SkinBlocks.Glowcap) {
+                        glowcaps++;
+                        h.assertTrue(region == CaveRegion.ROOTWAYS && cells.get(x, y - 1, z).isSolidRender(), "a glowcap stands on rock in the Rootways");
+                    } else if (b instanceof SkinBlocks.RootCurtain) {
+                        roots++;
+                        BlockState over = cells.get(x, y + 1, z), next = cells.get(x, y - 1, z);
+                        h.assertTrue(region == CaveRegion.ROOTWAYS && (over.getBlock() instanceof SkinBlocks.RootCurtain || over.isSolidRender()),
+                                "a root curtain hangs from rock in the Rootways at " + x + " " + y + " " + z);
+                        h.assertTrue(s.getValue(SkinBlocks.RootCurtain.TIP) == !(next.getBlock() instanceof SkinBlocks.RootCurtain),
+                                "a root curtain's last block is its tip");
+                    } else if (b == CaveSkin.RUST_CRUST.get() || b == CaveSkin.RUST_FLOWSTONE.get() || b == CaveSkin.EMBER_LICHEN.get()) {
+                        h.assertTrue(region == CaveRegion.OCHRE_DEEP, b + " only in the Ochre Deep");
+                        if (b == CaveSkin.RUST_CRUST.get()) rust++;
+                        else if (b == CaveSkin.RUST_FLOWSTONE.get()) flow++;
+                        else ember++;
+                    } else if (region == CaveRegion.OCHRE_DEEP && (b == CaveSkin.MINERAL_CRUST.get() || b == CaveSkin.WET_STREAKS.get())) {
+                        h.fail("the Ochre Deep's walls are rust, not " + b);
+                    }
+                }
+            }
+        }
+        double ms = nanos / 1e6 / n, fill = fillNanos / 1e6 / n, glow = glowcaps / (double) Math.max(1, floors);
+        Awaken.LOG.info("[caves] regions on {} timed chunks of 8: {} cells of region rock, {} glowcaps ({} of {} open floors), {} root curtain blocks, {} rust crust, {} rust flowstone, {} ember lichen; {} ms a chunk against {} ms to fill it",
+                n, swapped, glowcaps, String.format(Locale.ROOT, "%.3f", glow), floors, roots, rust, flow, ember, String.format(Locale.ROOT, "%.3f", ms),
+                String.format(Locale.ROOT, "%.2f", fill));
+        h.assertTrue(glowcaps > 0 && roots > 0 && rust > 0 && flow > 0 && ember > 0, "every region piece is laid");
+        h.assertTrue(glow <= GLOW_MAX, "glowcaps stay sparse: " + Math.round(glow * 1000) / 10.0 + "% of open floors (gate " + Math.round(GLOW_MAX * 100) + "%)");
+        h.assertTrue(ms <= fill * REGION_SHARE, "the skin with the regions costs " + String.format(Locale.ROOT, "%.2f", ms) + " ms a chunk, "
+                + Math.round(ms / fill * 100) + "% of the fill (budget " + Math.round(REGION_SHARE * 100) + "%)");
         h.succeed();
     }
 

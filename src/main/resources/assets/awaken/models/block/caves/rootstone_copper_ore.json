@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "awaken:block/caves/rootstone_copper_ore"
+  }
+}

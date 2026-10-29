@@ -30,8 +30,10 @@ import net.minecraft.world.phys.Vec3;
 final class SenseState {
     private SenseState() {}
 
-    static final int PLAIN = 0, LUSH = 1, DRIPSTONE = 2, DEEP_DARK = 3, SULFUR = 4;
-    static final String[] BIOME_NAMES = {"a plain cave", "lush caves", "dripstone caves", "the deep dark", "sulfur caves"};
+    static final int PLAIN = 0, LUSH = 1, DRIPSTONE = 2, DEEP_DARK = 3, SULFUR = 4, REGION = 5;
+    static final String[] BIOME_NAMES = {"a plain cave", "lush caves", "dripstone caves", "the deep dark", "sulfur caves", "a cave region"};
+    /** The Living Deep's cave regions (SPEC §42.7): cave biomes with their own looks, so the plain cave's look stays off. */
+    static final TagKey<Biome> REGIONS = TagKey.create(Registries.BIOME, Identifier.fromNamespaceAndPath("awaken", "caves/regions"));
 
     /** A player in the overworld (the senses are the overworld's caves; the Descent has its own). */
     static boolean active;
@@ -44,8 +46,9 @@ final class SenseState {
     static float below;
     /** Sky light at the camera (0..15), daylight's reach whatever the hour. */
     static int sky;
-    /** The camera's cave biome ({@link #PLAIN} when it is none), sampled every second. */
+    /** The camera's cave biome ({@link #PLAIN} when it is none), sampled every second, and the biome itself. */
     static int biome = PLAIN;
+    static Holder<Biome> here;
     static boolean underwater;
     static long tick;
     private static boolean fresh = true, groundRound;
@@ -83,7 +86,7 @@ final class SenseState {
         depth = Mth.clamp((48F - (float) y) / 112F, 0F, 1F);
         below = Mth.clamp((float) -y / 60F, 0F, 1F);
         underwater = cam.getFluidInCamera() == FogType.WATER;
-        if (fresh || tick % 20 == 0) biome = kind(level.getBiome(POS.set(bx, by, bz)));
+        if (fresh || tick % 20 == 0) biome = kind(here = level.getBiome(POS.set(bx, by, bz)));
         fresh = false;
     }
 
@@ -108,6 +111,7 @@ final class SenseState {
         if (b.is(Biomes.DRIPSTONE_CAVES)) return DRIPSTONE;
         if (b.is(Biomes.DEEP_DARK)) return DEEP_DARK;
         if (b.is(Biomes.SULFUR_CAVES)) return SULFUR;
+        if (b.is(REGIONS)) return REGION;
         return PLAIN;
     }
 
@@ -117,6 +121,7 @@ final class SenseState {
         under = depth = below = 0F;
         sky = 15;
         biome = PLAIN;
+        here = null;
         underwater = false;
     }
 }
