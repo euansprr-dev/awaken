@@ -115,7 +115,7 @@ class Scene:
                 while t.startswith("#"):
                     t = tex[t[1:]]
                 self.add([(x + p[0] / 16, y + p[1] / 16, z + p[2] / 16) for p in pts], f.get("uv", [0, 0, 16, 16]), t, SHADE[d], n,
-                         tint if "tintindex" in f else None, 0, both=len(e["faces"]) == 1)
+                         tint if "tintindex" in f else None, e.get("light_emission", 0) / 15, both=len(e["faces"]) == 1)
 
     def overlay(self, tex, x, y, z, wall, glow=0.0):
         """A wall overlay in the air block (x, y, z), flat on its wall side ('north' = the wall at z - 1 ...)."""
@@ -332,14 +332,21 @@ def corner(rock, lichen, water, extras=None):
         s.model(f"{rock}_pebbles_{v}", x, 1, z, rot=90 * ((x + 2 * z) % 4))
     for x, z in ((3, 2), (4, 2), (4, 1)):
         s.model("puddle", x, 1, z, tint=water)
-    # the walls' overlays
+    # the walls' overlays (the Ochre Deep's are its own: rust for crust, rust flowstone for streaks, ember in the lichen)
+    ochre = rock == "ochre"
     for y in (1, 2, 3):
         s.overlay(f"awaken:block/caves/lichen_{lichen}", 0, y, 4 + (y % 2), "west")
-    s.overlay(f"awaken:block/caves/lichen_{lichen}", 0, 3, 3, "west")
-    s.overlay("awaken:block/caves/mineral_crust", 0, 2, 6, "west")
+    if ochre:
+        s.overlay("awaken:block/caves/ember_lichen", 0, 3, 3, "west")
+        s.overlay("awaken:block/caves/ember_lichen_glow", 0, 3, 3, "west", glow=0.6)
+        s.overlay("awaken:block/caves/ember_lichen", 0, 2, 3, "west")
+        s.overlay("awaken:block/caves/ember_lichen_glow", 0, 2, 3, "west", glow=0.6)
+    else:
+        s.overlay(f"awaken:block/caves/lichen_{lichen}", 0, 3, 3, "west")
+    s.overlay("awaken:block/caves/rust_crust" if ochre else "awaken:block/caves/mineral_crust", 0, 2, 6, "west")
     for x in (2, 4):
-        s.overlay("awaken:block/caves/wet_streaks", x, 2, 0, "north")
-        s.overlay("awaken:block/caves/wet_streaks", x, 3, 0, "north")
+        s.overlay("awaken:block/caves/rust_flowstone" if ochre else "awaken:block/caves/wet_streaks", x, 2, 0, "north")
+        s.overlay("awaken:block/caves/rust_flowstone" if ochre else "awaken:block/caves/wet_streaks", x, 3, 0, "north")
     s.model("dusty_web", 0, 3, 2)
     s.light(4.5, 1.5, 4.5)                         # your torch
     if extras:
@@ -359,6 +366,13 @@ def particles(s, name, count, seed, box=(0.5, 1.2, 0.5, 6.5, 3.8, 6.5), size=0.1
 
 
 def rootways(s):
+    # P2: root curtains through the shelf's underside, glowcaps on the floor, glow-worm threads under the shelf
+    s.model("root_curtain", 1, 3, 1)
+    s.model("root_curtain_tip", 1, 2, 1)
+    s.model("root_curtain_tip", 2, 3, 1)
+    for x, z, v in ((5, 6, 0), (6, 5, 1), (1, 6, 2), (6, 6, 2)):
+        s.model(f"glowcap_{v}", x, 1, z)
+    s.sprite(underlife_cell(0, 1), 4.4, 3.55, 1.5, 0.8, glow=0.9)
     particles(s, "spore", 14, 1, glow=0.35)
     particles(s, "pollen", 8, 2)
     for i, (x, y, z) in enumerate(((5.2, 2.6, 5.0), (6.1, 2.2, 5.9), (4.9, 3.0, 6.2))):
@@ -366,6 +380,7 @@ def rootways(s):
 
 
 def ochre(s):
+    s.overlay("awaken:block/caves/rust_crust", 1, 2, 0, "north")
     particles(s, "warm_dust", 22, 3, glow=0.25)
     beetle = underlife_cell(2, 1)
     s.sprite(beetle, 0.15, 1.6, 4.6, 0.32)
@@ -438,6 +453,17 @@ def sheet(out):
     for rock in ("stone", "deepslate", "tuff", "rootstone", "ochre"):
         for piece in ("rubble", "formation", "formation_tip"):
             save(tile(f"awaken:block/caves/{rock}_{piece}", 2, 5), f"skin_{rock}_{piece}")
+    # P2: the regions' own pieces, each on its rock
+    for name in ("rootstone_coal_ore", "rootstone_copper_ore", "ochre_iron_ore"):
+        save(tile(f"awaken:block/caves/{name}", 2, 5), f"p2_{name}")
+    for name, rock in (("glowcap_0", "rootstone"), ("glowcap_1", "rootstone"), ("root_curtain", "rootstone"), ("root_curtain_tip", "rootstone"),
+                       ("rust_crust", "ochre_stone"), ("rust_flowstone", "ochre_stone"), ("ember_lichen", "ochre_stone")):
+        t = Image.fromarray(texture(f"awaken:block/caves/{name}").astype(np.uint8), "RGBA")
+        b = Image.fromarray(texture(f"awaken:block/caves/{rock}").astype(np.uint8), "RGBA")
+        if name.startswith(("glowcap", "root")):
+            b = Image.new("RGBA", (16, 16), (40, 36, 32, 255))
+        b.alpha_composite(t)
+        save(b.resize((160, 160), Image.NEAREST), f"p2_{name}")
     for name in ("lichen_shallows", "lichen_middle", "lichen_deep", "mineral_crust", "wet_streaks", "dusty_web", "puddle"):
         t = Image.fromarray(texture(f"awaken:block/caves/{name}").astype(np.uint8), "RGBA")
         bg = Image.fromarray(texture("minecraft:block/stone").astype(np.uint8), "RGBA")
