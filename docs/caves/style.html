@@ -96,13 +96,13 @@ figure { margin: 0; position: relative; min-width: 0; }
 </style>
 
 <div class="wrap">
-  <div class="eyebrow">The Living Deep · P3 · style sheet for Euan</div>
+  <div class="eyebrow">The Living Deep · P4 · style sheet for Euan</div>
   <h1>What the caves will look like</h1>
   <p class="lede">Before any of this goes into the game, here is the look: the skin every cave gets, the two regions
   coming first, and all eight regions' rock, colours, a particle and a creature each. Say OK, or tell me what to change.</p>
-  <p><b>New on 29 October: <a href="#p3">section 5</a>, the other six regions as built for P3.</b> You OK'd sections 1 to 4
-  and they're in the game now. Section 5 is what's waiting for your OK: each region's rock, ores and the pieces only it
-  has, shown the same way as the first two.</p>
+  <p><b>New on 29 October: <a href="#p4">section 6</a>, root amber, the Rootways' find.</b> You OK'd sections 1 to 5
+  and they're in the game now. Section 6 is the one new piece P4 needs: a find the plan's page promised for the Rootways.
+  The other regions' keepsakes are pieces you've already OK'd.</p>
   <div class="meta"><span>Branch <b>claude/caves-plan-2815c0</b></span><span>Plan <b>docs/caves/PLAN.md</b> §4.3–4.6</span>
     <span>Art <b>tools/art/specs/deep_skin.py, deep_life.py</b></span><span>Pictures <b>tools/art/cave_diorama.py</b></span></div>
 
@@ -342,16 +342,35 @@ figure { margin: 0; position: relative; min-width: 0; }
   </div>
 </div>
 
+<div class="wrap" id="p4">
+  <h2>6 · Root amber, the Rootways' find (P4)</h2>
+  <p>Each region now has something of its own you can take home and set down, and a trail in the Journal that lists
+  them: cave pearls from the Pale Halls, the Delvers' old rope from the Windcleft, driftwood from the Drowned Galleries, an
+  amber or glacial crystal from the Glimmer Hollows, ember lichen from the Ochre Deep, a Hollow's shed shell from the
+  Violet Deep. All of those are pieces you've already seen. The Rootways' find on the plan's page is <b>root amber</b>,
+  and that one is new.</p>
+  <div class="pair">
+    <figure><img class="px" src="style/p4_root_amber_rootstone.png" alt="A few small honey-orange amber nuggets lying on brown rootstone, one catching the light"><span class="tagline">Root amber on rootstone</span></figure>
+    <figure><img class="px" src="style/p4_root_amber.png" alt="The root amber texture, tiled: honey-orange with darker flow lines, pale glints and a few dark specks"><span class="tagline">Its texture, tiled</span></figure>
+  </div>
+  <p><b>Root amber</b>: resin an old root bled into a crack long ago, hardened in the dark into small honey-coloured
+  nuggets. Light comes through it, so it's warm orange in the body with darker lines where the resin ran, a pale glint
+  where a facet catches your lamp, and now and then a gnat or a seed caught inside. It lies in a few beads on the
+  Rootways' floor, under the root curtains, rarely (about one curtain in twenty), the way cave pearls lie under drips. It
+  drops itself and can be set down at home. The colours are kept away from gold's yellow so it never reads as a gold
+  nugget.</p>
+  <p class="small muted">This picture is drawn from the texture and the bead model's layout, not rendered in the game.</p>
+</div>
+
 <div class="wrap">
   <div class="ask">
     <h3>What I need from you</h3>
     <ol>
-      <li><b>The six regions' rocks and ores</b> (section 5): OK to put in?</li>
-      <li><b>Their own pieces</b>: rimstone and pearls, rime and the old ropes, silt, driftwood, weed and algae, the amber
-      and glacial crystals, ash, the violet growths and shed chitin. OK, or anything to change?</li>
+      <li><b>Root amber</b> (section 6): OK to put in, or anything to change?</li>
     </ol>
-    <p class="small muted">While you look I'm building the rest of P3 that doesn't depend on the textures: the regions
-    joining the world, their look, air, sounds and creatures. Nothing of section 5 goes into the game until you OK it.</p>
+    <p class="small muted">Everything else in P4 is built and doesn't wait on this: lodes gathering in their regions, the
+    Hearth naming the region a cave leads down into, each region's Journal page, the Codex and the two trails. Root amber
+    goes into the game only after you OK it.</p>
   </div>
   <p class="note">Made with tools/art/specs/deep_skin.py (rocks, skin, particles, models), tools/art/specs/deep_life.py
   (the underlife's sprite sheet) and tools/art/cave_diorama.py (these pictures). Regions, bands and land come from

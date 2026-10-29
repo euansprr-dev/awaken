@@ -867,6 +867,39 @@ def cave_pearls(seed=0):
     return c
 
 
+def root_amber(seed=0):
+    """Root amber (P4, the Rootways' find; waits on the style sheet's section 6 OK before it's built): resin an old root bled
+    into a crack, hardened in the dark into honey-coloured nuggets (the model's beads cut their faces from this, as cave
+    pearls do). Light comes through it, so it's gold in the body with darker flow lines where the resin ran, warm and deep
+    rather than flat; pale glints where a facet catches your lamp, and now and then a gnat or a seed caught inside, a dark
+    speck in the gold."""
+    r = rng("amber", seed)
+    A = [H("#4a1606"), H("#7a2c0a"), H("#a44a10"), H("#c86a1a"), H("#e08a2c"), H("#f4b45e"), H("#fff0cc")]
+    c = Canvas(16, 16)
+    # the resin's flow: two soft wavy lines running down and across it
+    flows = [(r.uniform(0, 16), r.uniform(0.35, 0.6), r.uniform(0, 6.3)) for _ in range(2)]
+    for y in range(16):
+        for x in range(16):
+            k = 3.6 + r.uniform(-0.45, 0.45)
+            for ox, slope, ph in flows:
+                d = abs(((x - ox - y * slope + 1.6 * math.sin(y * 0.7 + ph)) % 16) - 8) - 6.5
+                if d > 0:
+                    k -= d * 0.9                                   # darker where it ran
+            k += 0.5 * math.sin(x * 0.9 + y * 0.4)                 # the depth of it: warmer and paler by turns
+            c.set(x, y, A[max(0, min(5, round(k)))])
+    for _ in range(7):
+        x, y = r.randrange(16), r.randrange(16)
+        c.set(x, y, A[6])                                          # a facet catching the light
+        if r.random() < 0.5:
+            c.set((x + 1) % 16, y, A[5])
+    for _ in range(3):
+        x, y = r.randrange(16), r.randrange(16)
+        c.set(x, y, H("#2a1006"))                                  # caught inside
+        if r.random() < 0.5:
+            c.set(x, (y + 1) % 16, (*H("#5a2a0e")[:3], 255))       # a wing, or the seed's tail
+    return c
+
+
 def shed_chitin(seed=0):
     """Shed chitin: the thin husks the Hollows leave, translucent violet-grey plates curved like a beetle's back (lit along
     the ridge, dark at the rims), crossed by a few arched segment seams, with a dull sheen."""
