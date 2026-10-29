@@ -565,6 +565,10 @@ final class CavesTests {
     private static final java.util.Set<Block> HOSTS = java.util.Set.of(Blocks.STONE, Blocks.ANDESITE, Blocks.DIORITE, Blocks.GRANITE, Blocks.TUFF);
     /** The regions' gates (SPEC §42.7): glowcaps on at most this share of open floor cells, and the regions' cost per chunk. */
     static final double GLOW_MAX = 0.06, REGION_SHARE = 0.25;
+    /** Chunks filled for each region, and how many of them first only warm the code (the timing is the rest's). */
+    static final int REGION_CHUNKS = 5, REGION_WARM = 2;
+    /** Each timed chunk is filled and dressed this many times (fresh copies): the fastest of each is the work's cost. */
+    static final int REGION_REPEATS = 3;
 
     /**
      * The regions' own (SPEC §42.7), on real filled chunks (the census's) told they are all one region: four Rootways, four
@@ -588,36 +592,13 @@ final class CavesTests {
         for (CaveRegion region : new CaveRegion[] {CaveRegion.ROOTWAYS, CaveRegion.OCHRE_DEEP}) {
             CaveSkin.RegionKit kit = CaveSkin.kit(region);
             Block rock = kit.rock().get();
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < REGION_CHUNKS; i++) {
                 ChunkPos pos = new ChunkPos(-40 + i * 21, region == CaveRegion.ROOTWAYS ? -30 : -11);
                 long f0 = System.nanoTime();
                 ProtoChunk chunk = build(level, p.shaped(), rs, pos, heights);
                 long fillOne = System.nanoTime() - f0;
-                if (i > 0) fillNanos += fillOne;
                 int cx = pos.getMinBlockX(), cz = pos.getMinBlockZ();
-                BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
-                CaveSkinFeature.Cells cells = new CaveSkinFeature.Cells() {
-                    @Override
-                    public BlockState get(int x, int y, int z) {
-                        if ((x & ~15) != cx || (z & ~15) != cz || y < -64 || y >= 320) return stone;
-                        return chunk.getSection(chunk.getSectionIndex(y)).getBlockState(x & 15, y & 15, z & 15);
-                    }
-
-                    @Override
-                    public void set(int x, int y, int z, BlockState state) {
-                        chunk.setBlockState(m.set(x, y, z), state, 0);
-                    }
-
-                    @Override
-                    public int top(int x, int z) {
-                        return chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x & 15, z & 15);
-                    }
-
-                    @Override
-                    public int minY() {
-                        return -64;
-                    }
-                };
+                CaveSkinFeature.Cells cells = benchCells(chunk, cx, cz);
                 int under = CaveSkinFeature.UNDER_GROUND, limit = CaveSkinFeature.REGION_UNDER;
                 // plant the ores in solid host rock (all 26 round it host), under the region's limit, three apart in y
                 List<BlockPos> ores = new ArrayList<>();
@@ -652,8 +633,19 @@ final class CavesTests {
                 CaveSkinFeature.Regions regions = (x, y, z) -> region;
                 long t = System.nanoTime();
                 CaveSkinFeature.dress(cells, cx, cz, seed, chunk, regions);
-                if (i > 0) {
+                if (i >= REGION_WARM) {
                     long one = System.nanoTime() - t;
+                    // again on fresh copies: the fastest fill and dressing measure the work (a pause or a busy machine only adds)
+                    for (int rep = 1; rep < REGION_REPEATS; rep++) {
+                        long f1 = System.nanoTime();
+                        ProtoChunk copy = build(level, p.shaped(), rs, pos, heights);
+                        fillOne = Math.min(fillOne, System.nanoTime() - f1);
+                        CaveSkinFeature.Cells again = benchCells(copy, cx, cz);
+                        long t1 = System.nanoTime();
+                        CaveSkinFeature.dress(again, cx, cz, seed, copy, regions);
+                        one = Math.min(one, System.nanoTime() - t1);
+                    }
+                    fillNanos += fillOne;
                     nanos += one;
                     ratios.add(one / (double) fillOne);
                     n++;
@@ -723,7 +715,7 @@ final class CavesTests {
             }
         }
         double ms = nanos / 1e6 / n, fill = fillNanos / 1e6 / n, glow = glowcaps / (double) Math.max(1, floors);
-        Awaken.LOG.info("[caves] regions on {} timed chunks of 8: {} cells of region rock, {} glowcaps ({} of {} open floors), {} root curtain blocks, {} rust crust, {} rust flowstone, {} ember lichen; {} ms a chunk against {} ms to fill it",
+        Awaken.LOG.info("[caves] regions on {} timed chunks of " + 2 * REGION_CHUNKS + ": {} cells of region rock, {} glowcaps ({} of {} open floors), {} root curtain blocks, {} rust crust, {} rust flowstone, {} ember lichen; {} ms a chunk against {} ms to fill it",
                 n, swapped, glowcaps, String.format(Locale.ROOT, "%.3f", glow), floors, roots, rust, flow, ember, String.format(Locale.ROOT, "%.3f", ms),
                 String.format(Locale.ROOT, "%.2f", fill));
         h.assertTrue(glowcaps > 0 && roots > 0 && rust > 0 && flow > 0 && ember > 0, "every region piece is laid");
@@ -804,6 +796,34 @@ final class CavesTests {
      * thread this test holds: no structure starts (the beardifier is empty for both fills alike) and the surface laid as
      * plains everywhere (an uncached biome lookup per column would cost more than the fill and hide its cost).
      */
+    /** One filled chunk's cells for the skin (stone all round it), as the bench reads and writes them. */
+    private static CaveSkinFeature.Cells benchCells(ProtoChunk chunk, int cx, int cz) {
+        BlockState stone = Blocks.STONE.defaultBlockState();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        return new CaveSkinFeature.Cells() {
+            @Override
+            public BlockState get(int x, int y, int z) {
+                if ((x & ~15) != cx || (z & ~15) != cz || y < -64 || y >= 320) return stone;
+                return chunk.getSection(chunk.getSectionIndex(y)).getBlockState(x & 15, y & 15, z & 15);
+            }
+
+            @Override
+            public void set(int x, int y, int z, BlockState state) {
+                chunk.setBlockState(m.set(x, y, z), state, 0);
+            }
+
+            @Override
+            public int top(int x, int z) {
+                return chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x & 15, z & 15);
+            }
+
+            @Override
+            public int minY() {
+                return -64;
+            }
+        };
+    }
+
     private static ProtoChunk build(ServerLevel level, NoiseBasedChunkGenerator gen, RandomState rs, ChunkPos pos, LevelHeightAccessor heights) {
         ProtoChunk chunk = new ProtoChunk(pos, UpgradeData.EMPTY, heights, level.palettedContainerFactory(), null);
         Holder<Biome> plains = level.registryAccess().lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS);

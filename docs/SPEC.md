@@ -12082,13 +12082,16 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   the dry floor there with the most room (eight rays of up to 16 blocks at head height), facing the longest. `pick` 1 to 9
   is the next-best floor, each at least **14** blocks from the better ones. For tours (`tools/autopilot/caves-regions.txt`)
   and for finding a region to play in.
-- **Test** `caves_region_rock`: eight filled chunks of seed 777 (the census's), four told they are all Rootways and four all
-  Ochre Deep, with coal, copper, iron and gold ore planted in host rock: under the land's last 10 blocks no host rock is
+- **Test** `caves_region_rock`: ten filled chunks of seed 777 (the census's), five told they are all Rootways and five all
+  Ochre Deep (the first two of each only warm the code: cold, the rock rule took 2.4 to 5.7 ms a chunk, warm 0.5 to 1.3),
+  with coal, copper, iron and gold ore planted in host rock: under the land's last 10 blocks no host rock is
   left but the untwinned ores' shells, each twin is placed and each untwinned ore keeps its shell as it was; above, the
   rock is untouched; glowcaps stand on rock and only in the Rootways, root curtains hang from rock or root with the tip
   last, rust, flowstone and ember only in the Ochre Deep (and no mineral crust or wet streaks there); every piece is laid;
   glowcaps on at most **6%** of open floors; the skin with the regions at most **25%** of the fill (each chunk against its own
-  fill, the middle of the six; the rock rule reads each section once).
+  fill, the middle of the six, each the fastest of three fills and three dressings of fresh copies, as a pause or a busy
+  machine only adds; the rock rule reads each section once).
 - **Measured 2026-10-29**: 91,828 cells of region rock on 8 chunks, 46 glowcaps (2.0% of 2,273 open floors), 83 root
   curtain blocks, 137 rust crust, 37 rust flowstone, 32 ember lichen; 2.2 ms a chunk against 34.2 ms to fill it (6%; the
-  skin alone 0.5 ms).
+  skin alone 0.5 ms). Re-measured as the fastest of three: 1.2 to 1.9 ms a chunk against 11 to 19 ms (10 to 13%); one
+  timing each had swung from 6% to 28% between runs (on CI 27%).
