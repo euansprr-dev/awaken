@@ -1,0 +1,62 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "awaken:block/caves/lichen_shallows"
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "awaken:block/caves/lichen_shallows",
+        "y": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "awaken:block/caves/lichen_shallows",
+        "y": 180,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "awaken:block/caves/lichen_shallows",
+        "y": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "up": "true"
+      },
+      "apply": {
+        "model": "awaken:block/caves/lichen_shallows",
+        "x": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "down": "true"
+      },
+      "apply": {
+        "model": "awaken:block/caves/lichen_shallows",
+        "x": 90,
+        "uvlock": true
+      }
+    }
+  ]
+}

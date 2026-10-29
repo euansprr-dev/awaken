@@ -1,0 +1,12 @@
+{
+  "features": {
+    "enabled": [
+      "awaken:awakened_caves"
+    ]
+  },
+  "pack": {
+    "description": "Awakened Caves: the Living Deep, cave regions with their own shapes, rock and life (new worlds only)",
+    "max_format": 121,
+    "min_format": 121
+  }
+}
