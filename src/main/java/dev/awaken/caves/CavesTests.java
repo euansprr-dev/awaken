@@ -60,6 +60,7 @@ import net.neoforged.neoforge.common.Tags;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -581,6 +582,8 @@ final class CavesTests {
         BlockState stone = Blocks.STONE.defaultBlockState();
         Block[] planted = {Blocks.COAL_ORE, Blocks.COPPER_ORE, Blocks.IRON_ORE, Blocks.GOLD_ORE};
         long nanos = 0, fillNanos = 0;
+        // each chunk's dressing against its own fill; the gate takes the middle one, so one slow fill or pause can't swing it
+        List<Double> ratios = new ArrayList<>();
         int n = 0, floors = 0, glowcaps = 0, roots = 0, rust = 0, flow = 0, ember = 0, swapped = 0;
         for (CaveRegion region : new CaveRegion[] {CaveRegion.ROOTWAYS, CaveRegion.OCHRE_DEEP}) {
             CaveSkin.RegionKit kit = CaveSkin.kit(region);
@@ -589,7 +592,8 @@ final class CavesTests {
                 ChunkPos pos = new ChunkPos(-40 + i * 21, region == CaveRegion.ROOTWAYS ? -30 : -11);
                 long f0 = System.nanoTime();
                 ProtoChunk chunk = build(level, p.shaped(), rs, pos, heights);
-                if (i > 0) fillNanos += System.nanoTime() - f0;
+                long fillOne = System.nanoTime() - f0;
+                if (i > 0) fillNanos += fillOne;
                 int cx = pos.getMinBlockX(), cz = pos.getMinBlockZ();
                 BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
                 CaveSkinFeature.Cells cells = new CaveSkinFeature.Cells() {
@@ -649,7 +653,9 @@ final class CavesTests {
                 long t = System.nanoTime();
                 CaveSkinFeature.dress(cells, cx, cz, seed, chunk, regions);
                 if (i > 0) {
-                    nanos += System.nanoTime() - t;
+                    long one = System.nanoTime() - t;
+                    nanos += one;
+                    ratios.add(one / (double) fillOne);
                     n++;
                 }
                 floors += openFloor;
@@ -722,8 +728,10 @@ final class CavesTests {
                 String.format(Locale.ROOT, "%.2f", fill));
         h.assertTrue(glowcaps > 0 && roots > 0 && rust > 0 && flow > 0 && ember > 0, "every region piece is laid");
         h.assertTrue(glow <= GLOW_MAX, "glowcaps stay sparse: " + Math.round(glow * 1000) / 10.0 + "% of open floors (gate " + Math.round(GLOW_MAX * 100) + "%)");
-        h.assertTrue(ms <= fill * REGION_SHARE, "the skin with the regions costs " + String.format(Locale.ROOT, "%.2f", ms) + " ms a chunk, "
-                + Math.round(ms / fill * 100) + "% of the fill (budget " + Math.round(REGION_SHARE * 100) + "%)");
+        Collections.sort(ratios);
+        double mid = ratios.isEmpty() ? 0 : (ratios.get((ratios.size() - 1) / 2) + ratios.get(ratios.size() / 2)) / 2;
+        h.assertTrue(mid <= REGION_SHARE, "the skin with the regions costs " + String.format(Locale.ROOT, "%.2f", ms) + " ms a chunk, "
+                + Math.round(mid * 100) + "% of the fill on the middle chunk (budget " + Math.round(REGION_SHARE * 100) + "%)");
         h.succeed();
     }
 

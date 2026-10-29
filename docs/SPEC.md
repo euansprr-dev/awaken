@@ -8198,8 +8198,9 @@ for watchers); the line drawn steel-grey or with a violet glint, the reel at the
 
 **The senses** (`delve.client`): **sound** (`CaveSound`, `DeepHum`, a Conductor `Source` in its voice budget, honouring
 its hushes, ducking and `natureLevel()`; played beside AmbientSounds, whose cave ambience it doesn't double; and
-`soundscape/family/hollows.json` for players without it). Underground ("under": no sky, real ground 3-12 over you; full
-at sky light ≤ 4, none at 10; eases over ~2.5 s): drips at real dripstone tips and wet roofs (4 + 2.5 a tip found, capped
+`soundscape/family/hollows.json` for players without it). Underground ("under": no sky, real ground 3-12 over you,
+the land's own block (under a house or a town the first one down through what's built over the column, so a cave under
+Carillon's roofs and streets is under); full at sky light ≤ 4, none at 10; eases over ~2.5 s): drips at real dripstone tips and wet roofs (4 + 2.5 a tip found, capped
 at 4; dripstone x1.3, lush x1.1, deep dark x0.35; 40% fall again from the same tip 1.2-3.5 s later), stone settling (0.45
 a minute, 6-26 off, lower with depth), far water toward real water 8-32 off (a loop), a breath of air from the brightest
 sky-lit air 3-32 off at least 4 brighter than you (a loop, lower with depth); sulfur caves add a vent's hiss and acid's
@@ -12236,7 +12237,9 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
   columns of stacked boxes; held by the rock or the next piece behind it, else it breaks; decoration only, it doesn't grow
   or fall). For every cave: **`cave_lichen_shallows`**, **`_middle`**, **`_deep`** (the band's colour), **`mineral_crust`**,
   **`wet_streaks`** (multiface, like glow lichen), **`cave_puddle`** (a skin of water, no collision, tinted by the biome's
-  water colour, drops nothing), **`dusty_web`** (a cobweb that drops string or itself).
+  water colour, drops nothing), **`dusty_web`** (a cobweb that drops string or itself). Rubble, the formations and the
+  regions' rocks are in **`#minecraft:blocks_motion_no_leaves`**: 26.3 reads heightmaps, suffocation, rain and fire
+  spread from that tag, not from a block's shape.
 - **The feature** `awaken:cave_skin` (`CaveSkinFeature`, placed `awaken:caves/skin`, every `#minecraft:is_overworld` biome
   at `top_layer_modification`, so it comes after every structure and feature): per chunk, every column bottom to top below
   the ground less **6**, section by section from the palettes; only cells where air meets natural rock are looked at.
@@ -12380,7 +12383,8 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   left but the untwinned ores' shells, each twin is placed and each untwinned ore keeps its shell as it was; above, the
   rock is untouched; glowcaps stand on rock and only in the Rootways, root curtains hang from rock or root with the tip
   last, rust, flowstone and ember only in the Ochre Deep (and no mineral crust or wet streaks there); every piece is laid;
-  glowcaps on at most **6%** of open floors; the skin with the regions at most **25%** of the fill.
+  glowcaps on at most **6%** of open floors; the skin with the regions at most **25%** of the fill (each chunk against its own
+  fill, the middle of the six; the rock rule reads each section once).
 - **Measured 2026-10-29**: 91,828 cells of region rock on 8 chunks, 46 glowcaps (2.0% of 2,273 open floors), 83 root
   curtain blocks, 137 rust crust, 37 rust flowstone, 32 ember lichen; 2.2 ms a chunk against 34.2 ms to fill it (6%; the
   skin alone 0.5 ms).
