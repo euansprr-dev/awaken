@@ -420,7 +420,13 @@ public final class LifeRig {
      * Adds a creature's life to the pose its model just set (call at the end of setupAnim; it may run several times a
      * frame, once per layer, and adds the same offsets each time). Nothing here allocates.
      */
+    private static long probeT; // PROBE
+
     public void apply(@Nullable Life life, net.minecraft.client.renderer.entity.state.LivingEntityRenderState s) {
+        if (fly != null && fly.flapAmp() > 0 && System.nanoTime() - probeT > 1_000_000_000L) { // PROBE
+            probeT = System.nanoTime();
+            dev.awaken.Awaken.LOG.info("[probe] apply bones={} life@{} same={} frame={} flyW={} wings={}", bones, life == null ? 0 : System.identityHashCode(life), life != null && life.rig == this, life == null ? -1 : life.frame, life == null ? -1 : life.flyW, flyWings.length);
+        }
         if (!bones || life == null || life.rig != this) return;
         if (life.springFrame != life.frame) {
             life.integrate(this);
