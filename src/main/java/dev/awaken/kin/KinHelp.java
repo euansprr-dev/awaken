@@ -2,20 +2,30 @@ package dev.awaken.kin;
 
 import dev.awaken.progression.Progression;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -31,7 +41,9 @@ import java.util.Set;
  * where a Lampwing can see it; soft ground tilled near a Burrowbun; the branches over a Mossback cut back, or water
  * brought to it; a shiny stone tossed by a Pebblepup's pile. The right act gets its tell, the band's chime and a line;
  * close but wrong gets a nudge, and after a few misses the nudge points closer (never naming the act). Three helps of one
- * beast and it trusts you.
+ * beast and it trusts you. Stage 6's four (SPEC §43.13): flowers planted round a Bumblepuff's bare nest, lots of them; a
+ * branch of a Loomworm's own tree brought down to it; a lost Cloudcalf led home to its pod by someone up at its height;
+ * and a Boulderback waited for in the dark, light put away, until it comes to you.
  */
 public final class KinHelp {
     private KinHelp() {}
@@ -41,7 +53,9 @@ public final class KinHelp {
 
     private record Pending(ServerPlayer player, BlockPos pos, int what, long at) {}
 
-    private static final int TILL = 0, WATER = 1, CLEARED = 2, FIRE = 3;
+    private static final int TILL = 0, WATER = 1, CLEARED = 2, FIRE = 3, BLOOM = 4;
+    /** Flowers round a Bumblepuff's nest (within six) before it counts them as enough; a Boulderback's wait (ticks). */
+    static final int FLOWERS = 3, NEST_REACH = 6, DARK_WAIT = 20 * 30;
     private static final List<Pending> PENDING = new ArrayList<>();
     /** Dull stones a Pebblepup has already pushed off (item entity ids), so each nudges once. */
     private static final Set<Integer> PUSHED = new HashSet<>();
@@ -58,6 +72,15 @@ public final class KinHelp {
         BlockState s = e.getPlacedBlock();
         BlockPos pos = e.getPos();
         KinHome.placed(level, p, pos, s);
+        boolean flower = s.is(BlockTags.FLOWERS);
+        if (flower || s.is(BlockTags.SAPLINGS) || s.is(Blocks.SWEET_BERRY_BUSH) || s.is(Blocks.AZALEA)) {
+            KinBeast b = nestNear(level, pos);
+            if (b != null) {
+                if (flower) bloom(level, b, p, pos);
+                else nudge(b, p, "[It buzzed round the leaves and lost interest. It wants flowers.]");
+                return;
+            }
+        }
         for (KinBeast b : wild(level, pos, KinKind.EMBERKIT)) {
             if (cold(s)) nudge(b, p, "[It shrank away from the cold blue flame.]");
             else if (warm(s)) {
@@ -94,8 +117,14 @@ public final class KinHelp {
         if (held.is(ItemTags.HOES)) PENDING.add(new Pending(p, pos, TILL, level.getGameTime() + 1));
         else if (held.is(Items.WATER_BUCKET)) PENDING.add(new Pending(p, pos.relative(e.getFace() == null ? net.minecraft.core.Direction.UP : e.getFace()), WATER,
                 level.getGameTime() + 1));
-        else if (held.is(Items.BONE_MEAL)) for (KinBeast b : wild(level, pos, KinKind.MOSSBACK))
-            nudge(b, p, "[The garden on its back perked up for a moment. That isn't what it's after.]");
+        else if (held.is(Items.BONE_MEAL)) {
+            for (KinBeast b : wild(level, pos, KinKind.MOSSBACK)) {
+                nudge(b, p, "[The garden on its back perked up for a moment. That isn't what it's after.]");
+                break;
+            }
+            // bone meal on the grass by a Bumblepuff's nest brings flowers up: counted once they're there
+            if (nestNear(level, pos) != null) PENDING.add(new Pending(p, pos, BLOOM, level.getGameTime() + 2));
+        }
         if (held.is(Items.FLINT_AND_STEEL) || held.is(Items.FIRE_CHARGE))
             PENDING.add(new Pending(p, pos.relative(e.getFace() == null ? net.minecraft.core.Direction.UP : e.getFace()), FIRE, level.getGameTime() + 1));
         if (held.is(Items.WATER_BUCKET)) for (KinBeast b : wild(level, pos, KinKind.PONDLING)) {
@@ -185,6 +214,10 @@ public final class KinHelp {
                         break;
                     }
                 }
+                case BLOOM -> {
+                    KinBeast b = nestNear(level, q.pos());
+                    if (b != null && b.mark != null && flowersNear(level, b.mark) >= FLOWERS) help(b, q.player());
+                }
                 case FIRE -> {
                     BlockState f = level.getBlockState(q.pos());
                     if (!f.is(BlockTags.FIRE) && !warm(f)) break;
@@ -210,8 +243,174 @@ public final class KinHelp {
             case PONDLING -> {
                 if (b.mark != null && b.tickCount % 2400 == 0) sour(level, b.mark);
             }
+            case LOOMWORM -> {
+                Tree t = Tree.of(level, b.origin);
+                tossed(level, b, t::branch, s -> s.is(ItemTags.LEAVES) || s.is(ItemTags.SAPLINGS), "[It sniffed the leaves and turned its head away. They're off the wrong tree.]");
+            }
+            case CLOUDCALF -> calf(level, b);
+            case BOULDERBACK -> dark(level, b);
             default -> {}
         }
+    }
+
+    // ---- Bumblepuffs: the bare meadow --------------------------------------------------------------------------------------
+
+    /** The wild Bumblepuff whose nest is within six of a spot, or null. */
+    private static @org.jspecify.annotations.Nullable KinBeast nestNear(ServerLevel level, BlockPos pos) {
+        for (KinBeast b : level.getEntitiesOfClass(KinBeast.class, new AABB(pos).inflate(24), x -> x.isAlive() && x.kind() == KinKind.BUMBLEPUFF && x.home == null
+                && x.mark != null && x.mark.closerThan(pos, NEST_REACH + 1))) return b;
+        return null;
+    }
+
+    /** Flowers round a nest: within six across and two up or down. */
+    static int flowersNear(ServerLevel level, BlockPos nest) {
+        int n = 0;
+        for (BlockPos at : BlockPos.betweenClosed(nest.offset(-NEST_REACH, -3, -NEST_REACH), nest.offset(NEST_REACH, 2, NEST_REACH)))
+            if (level.getBlockState(at).is(BlockTags.FLOWERS)) n++;
+        return n;
+    }
+
+    /** A flower planted by its nest: with lots round it now, it's helped; with one or two, it wants more. */
+    private static void bloom(ServerLevel level, KinBeast b, ServerPlayer p, BlockPos pos) {
+        if (b.mark == null) return;
+        int n = flowersNear(level, b.mark) + (level.getBlockState(pos).is(BlockTags.FLOWERS) ? 0 : 1);
+        if (n >= FLOWERS) help(b, p);
+        else KinWatch.say(p, "[It bumbled down to the flower and back up again. One or two isn't enough. It wants lots.]", 6);
+    }
+
+    // ---- Loomworms: the right tree -------------------------------------------------------------------------------------------
+
+    /** The tree a Loomworm lives on, from its land: the log it lies on, and the branch it eats (leaves, or a sapling). */
+    enum Tree {
+        OAK(Blocks.OAK_LOG, Items.OAK_LEAVES, Items.OAK_SAPLING),
+        BIRCH(Blocks.BIRCH_LOG, Items.BIRCH_LEAVES, Items.BIRCH_SAPLING),
+        SPRUCE(Blocks.SPRUCE_LOG, Items.SPRUCE_LEAVES, Items.SPRUCE_SAPLING),
+        DARK_OAK(Blocks.DARK_OAK_LOG, Items.DARK_OAK_LEAVES, Items.DARK_OAK_SAPLING);
+
+        final Block log;
+        final Item leaves, sapling;
+
+        Tree(Block log, Item leaves, Item sapling) {
+            this.log = log;
+            this.leaves = leaves;
+            this.sapling = sapling;
+        }
+
+        static Tree of(ServerLevel level, BlockPos at) {
+            Holder<Biome> b = level.getBiome(at);
+            if (b.is(Biomes.DARK_FOREST)) return DARK_OAK;
+            if (b.is(Tags.Biomes.IS_BIRCH_FOREST)) return BIRCH;
+            if (b.is(BiomeTags.IS_TAIGA)) return SPRUCE;
+            return OAK;
+        }
+
+        boolean branch(ItemStack s) {
+            return s.is(leaves) || s.is(sapling);
+        }
+    }
+
+    // ---- Cloudcalves: the pod ------------------------------------------------------------------------------------------------
+
+    /** A point in the sky 48 to 72 blocks off {@code from}: where a pod calls from, or where its calf is lost next. */
+    static BlockPos pod(ServerLevel level, BlockPos from, long seed) {
+        net.minecraft.util.RandomSource r = net.minecraft.util.RandomSource.create(from.asLong() ^ seed * 0x9E3779B97F4A7C15L);
+        double a = r.nextDouble() * Math.PI * 2;
+        int d = 48 + r.nextInt(25);
+        int x = from.getX() + (int) Math.round(Math.cos(a) * d), z = from.getZ() + (int) Math.round(Math.sin(a) * d);
+        // no chunk is loaded for it: an unloaded column takes the height it was lost at
+        int y = level.hasChunkAt(new BlockPos(x, 0, z)) ? Math.max(from.getY() - KinSpawner.CLOUD_UP, level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z))
+                : from.getY() - KinSpawner.CLOUD_UP + 6;
+        return new BlockPos(x, y + KinSpawner.CLOUD_UP, z);
+    }
+
+    /**
+     * A lost Cloudcalf circles where it is, its pod calling now and then from a way off. Someone up at its height (no more
+     * than four blocks under it) within 16 blocks, and it follows them; led within 12 blocks of its pod (across the map),
+     * it's home: helped, and whoever led it hears the Cloud bell. A while after it drifts off, lost somewhere new.
+     */
+    private static void calf(ServerLevel level, KinBeast b) {
+        if (b.mark == null) return;
+        long now = level.getGameTime();
+        boolean home = b.origin.equals(b.mark);
+        if (!home && b.tickCount % 200 == 0) {
+            var call = KinContent.CALL.get(KinKind.CLOUDCALF);
+            if (call != null) level.playSound(null, b.mark, call.get(), SoundSource.NEUTRAL, 4F, 0.7F);
+            level.sendParticles(ParticleTypes.CLOUD, b.mark.getX() + 0.5, b.mark.getY() + 0.5, b.mark.getZ() + 0.5, 16, 2.5, 0.8, 2.5, 0.01);
+        }
+        ServerPlayer leader = b.leader != null && level.getServer().getPlayerList().getPlayer(b.leader) instanceof ServerPlayer sp && sp.level() == level
+                && sp.distanceToSqr(b) < 32 * 32 ? sp : null;
+        if (leader == null) {
+            b.leader = null;
+            if (home) {
+                if (now - b.lastHelp > 2400) b.wildAt(pod(level, b.mark, now / 2400));
+                return;
+            }
+            for (ServerPlayer p : level.getEntitiesOfClass(ServerPlayer.class, b.getBoundingBox().inflate(16), x -> !x.isSpectator())) {
+                if (p.getY() < b.getY() - 4 || Kinship.of(p).afraid(KinKind.CLOUDCALF, now)) continue;
+                b.leader = p.getUUID();
+                KinWatch.met(p, b);
+                KinWatch.say(p, "[It stopped circling and called to you. Up here, it'll follow you.]", 8);
+                return;
+            }
+            return;
+        }
+        double px = leader.getX() - b.mark.getX() - 0.5, pz = leader.getZ() - b.mark.getZ() - 0.5, cx = b.getX() - b.mark.getX() - 0.5, cz = b.getZ() - b.mark.getZ() - 0.5;
+        if (px * px + pz * pz < 144 && cx * cx + cz * cz < 144) {
+            b.leader = null;
+            b.wildAt(b.mark);
+            level.sendParticles(ParticleTypes.CLOUD, b.getX(), b.getY() + 0.5, b.getZ(), 30, 1.5, 0.6, 1.5, 0.02);
+            help(b, leader);
+            dev.awaken.bells.Bells.ring(leader, "cloud", "the day you brought a Cloudcalf home to its pod");
+        }
+    }
+
+    // ---- Boulderbacks: the dark ----------------------------------------------------------------------------------------------
+
+    /**
+     * A Boulderback in the dark: a light near it and it backs off into the dark. Someone within 12 blocks carrying no light
+     * who keeps still (or creeps, crouched) for 30 seconds, and it comes to them: helped. Walking about starts the wait again.
+     */
+    private static void dark(ServerLevel level, KinBeast b) {
+        ServerPlayer near = null;
+        for (ServerPlayer p : level.getEntitiesOfClass(ServerPlayer.class, b.getBoundingBox().inflate(12), x -> !x.isSpectator()))
+            if (near == null || p.distanceToSqr(b) < near.distanceToSqr(b)) near = p;
+        if (near == null) {
+            b.quietFor = null;
+            b.quietTicks = 0;
+            return;
+        }
+        if (lit(near)) {
+            b.quietTicks = 0;
+            Vec3 away = DefaultRandomPos.getPosAway(b, 10, 4, near.position());
+            if (away != null && b.getNavigation().isDone()) b.getNavigation().moveTo(away.x, away.y, away.z, 1.1);
+            if (b.tickCount % 200 == 0) nudge(b, near, "[It backed away from your light, into the dark.]");
+            return;
+        }
+        boolean moved = !near.isCrouching() && near.position().distanceToSqr(b.quietAt) > 0.25;
+        if (!near.getUUID().equals(b.quietFor) || moved) {
+            b.quietFor = near.getUUID();
+            b.quietAt = near.position();
+            b.quietTicks = 0;
+            return;
+        }
+        if (near.isCrouching()) b.quietAt = near.position();
+        b.quietTicks += 10;
+        if (b.quietTicks == DARK_WAIT / 2) {
+            KinWatch.say(near, "[Something big shifted in the dark. It's a step closer.]", 6);
+            b.getNavigation().moveTo(near, 0.4);
+        }
+        if (b.quietTicks >= DARK_WAIT) {
+            b.quietTicks = 0;
+            b.getNavigation().moveTo(near, 0.5);
+            help(b, near);
+        }
+    }
+
+    /** Whether a player carries a light: anything in either hand that would glow if it were set down. */
+    static boolean lit(ServerPlayer p) {
+        for (ItemStack s : new ItemStack[]{p.getMainHandItem(), p.getOffhandItem()})
+            if (s.getItem() instanceof BlockItem bi && bi.getBlock().defaultBlockState().getLightEmission() > 0) return true;
+        return false;
     }
 
     /** Something tossed by its spot: what it wants it takes (one at a time), what it doesn't it pushes off, once each. */
@@ -450,6 +649,10 @@ public final class KinHelp {
             case PONDLING -> "The water's clear. It slid straight in.";
             case SNUFFLET -> "It squealed at what you dug up and wagged its whole back end.";
             case CHIMEWREN -> "It's singing the bell's note back to you, nearly right.";
+            case BUMBLEPUFF -> "It rolled about in the flowers until it was yellow all over.";
+            case LOOMWORM -> "It ate the whole branch and started spinning straight away.";
+            case CLOUDCALF -> "It's home with its pod, and they're all calling at once.";
+            case BOULDERBACK -> "It came out of the dark and leaned against you, very gently.";
             default -> "It's pleased.";
         };
     }
@@ -480,6 +683,10 @@ public final class KinHelp {
             case PONDLING -> "[It keeps peering down at something dark on the bottom of the pond.]";
             case SNUFFLET -> "[It keeps snuffling at one patch of ground and looking up at you.]";
             case CHIMEWREN -> "[They go quiet whenever a bell sounds anywhere, and listen.]";
+            case BUMBLEPUFF -> "[It keeps landing on the bare ground round its nest, looking for something that isn't there any more.]";
+            case LOOMWORM -> "[It keeps stretching up toward the leaves over its log, far out of reach.]";
+            case CLOUDCALF -> "[It keeps turning toward the calling, then looking at anyone up high with it.]";
+            case BOULDERBACK -> "[It never takes its eyes off your light. It won't come any nearer while it's out.]";
             default -> "";
         };
     }

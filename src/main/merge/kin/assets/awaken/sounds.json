@@ -493,5 +493,137 @@
         "volume": 0.8
       }
     ]
+  },
+  "kin.bumblepuff.call": {
+    "subtitle": "subtitles.awaken.kin.bumblepuff.call",
+    "sounds": [
+      {
+        "name": "minecraft:entity.bee.loop",
+        "type": "event",
+        "pitch": 0.7,
+        "volume": 0.6
+      }
+    ]
+  },
+  "kin.bumblepuff.tell": {
+    "subtitle": "subtitles.awaken.kin.bumblepuff.tell",
+    "sounds": [
+      {
+        "name": "minecraft:entity.bee.pollinate",
+        "type": "event",
+        "pitch": 0.9,
+        "volume": 0.8
+      }
+    ]
+  },
+  "kin.bumblepuff.worry": {
+    "subtitle": "subtitles.awaken.kin.bumblepuff.worry",
+    "sounds": [
+      {
+        "name": "minecraft:entity.bee.hurt",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 0.7
+      }
+    ]
+  },
+  "kin.loomworm.call": {
+    "subtitle": "subtitles.awaken.kin.loomworm.call",
+    "sounds": [
+      {
+        "name": "minecraft:entity.silverfish.ambient",
+        "type": "event",
+        "pitch": 0.5,
+        "volume": 0.4
+      }
+    ]
+  },
+  "kin.loomworm.tell": {
+    "subtitle": "subtitles.awaken.kin.loomworm.tell",
+    "sounds": [
+      {
+        "name": "minecraft:block.wool.place",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 0.8
+      }
+    ]
+  },
+  "kin.loomworm.worry": {
+    "subtitle": "subtitles.awaken.kin.loomworm.worry",
+    "sounds": [
+      {
+        "name": "minecraft:entity.silverfish.hurt",
+        "type": "event",
+        "pitch": 0.6,
+        "volume": 0.5
+      }
+    ]
+  },
+  "kin.cloudcalf.call": {
+    "subtitle": "subtitles.awaken.kin.cloudcalf.call",
+    "sounds": [
+      {
+        "name": "minecraft:entity.allay.ambient_without_item",
+        "type": "event",
+        "pitch": 0.5,
+        "volume": 1.0
+      }
+    ]
+  },
+  "kin.cloudcalf.tell": {
+    "subtitle": "subtitles.awaken.kin.cloudcalf.tell",
+    "sounds": [
+      {
+        "name": "minecraft:entity.allay.item_given",
+        "type": "event",
+        "pitch": 0.6,
+        "volume": 0.9
+      }
+    ]
+  },
+  "kin.cloudcalf.worry": {
+    "subtitle": "subtitles.awaken.kin.cloudcalf.worry",
+    "sounds": [
+      {
+        "name": "minecraft:entity.allay.hurt",
+        "type": "event",
+        "pitch": 0.5,
+        "volume": 0.8
+      }
+    ]
+  },
+  "kin.boulderback.call": {
+    "subtitle": "subtitles.awaken.kin.boulderback.call",
+    "sounds": [
+      {
+        "name": "minecraft:entity.ravager.ambient",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 0.4
+      }
+    ]
+  },
+  "kin.boulderback.tell": {
+    "subtitle": "subtitles.awaken.kin.boulderback.tell",
+    "sounds": [
+      {
+        "name": "minecraft:entity.sniffer.happy",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 0.9
+      }
+    ]
+  },
+  "kin.boulderback.worry": {
+    "subtitle": "subtitles.awaken.kin.boulderback.worry",
+    "sounds": [
+      {
+        "name": "minecraft:entity.sniffer.scenting",
+        "type": "event",
+        "pitch": 0.7,
+        "volume": 0.8
+      }
+    ]
   }
 }

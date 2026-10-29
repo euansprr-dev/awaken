@@ -576,3 +576,48 @@ happens).
 - **Vent stone**: two at every Emberkit spring; drops itself. **Pond rot**: on wild Pondling ponds; drops nothing, never
   held. **Woken clapper**: from every bell you wake. **Granary keystone**: in every town granary; drops itself.
 - **Source**: `WorksModule` (`Sources.declare`), loot tables, recipes above.
+
+## Stage 6: the second half's bells and beasts (§43.13)
+
+### Bells from the second half (gates, the Court, the Above, the Deep, the city)
+- **Get**: a gate Lord felled at its bell's rank or above (every theme has one); a Sovereign felled (its domain's bell,
+  for everyone within 96); the Descent's strata reached; the Above's firsts (wind, island, Halo, star, storm); a Siege
+  with the Night Bell at B rank; the Carillon's four (Roost, Choir Square, market, Quay) by rank or bell count.
+- **For**: the hundred filling as you go through the whole game, each bell a mark of a place or a deed.
+- **Know**: the bracketed line and the Book; due city bells you're away from are remembered aloud with where they are.
+- **Source**: `Bells.lordFell`, `Bells.sovereignFell`, `Bells.moments`, `Bells.city`, `BigDays`.
+- **Links**: the tower's song; the voices.
+- **Edges**: a Sovereign's kill credit must be a player; a bell already held never rings twice; city bells ring only in
+  the city.
+
+### Bells of the land further out, and people remembering them
+- **Get**: the C, B and A bands' sleeping bells (the people's homes, the Hill, the Ford, the Thaw, the Boulder, the
+  Leviathan's), woken where they lie.
+- **For**: reasons to travel far out as rank rises.
+- **Know**: once a play-day in Carillon someone remembers one still asleep within 7,200 blocks (a Remembered lead with
+  an area 20 blocks off).
+- **Source**: `BellSites` (bands and pools), `Bells.city` (Remembered leads), `BellBook.rememberedDay` (schema 2).
+- **Links**: Track; the Book's leads.
+- **Edges**: none within reach and no lead is filed; a lead for a bell since woken drops from the Book.
+
+### Spirit bells and dream bells
+- **Get**: spirit bells (the Veil: five, on their own 960-block grid) rung by a spirit coming within 3; dream bells (the
+  Lucidium: five, one a dream) struck lucid enough (40, 60, 80) and carried out on waking.
+- **For**: the Veil and the Lucidium each holding part of the hundred.
+- **Know**: a body near a spirit bell feels "cold and still" (a Seen lead); a spirit hears its hum; a dream says a bell is
+  ringing; waking without it files a Dreamt lead.
+- **Source**: `BellSites.tickSpirits`, `DreamBells`.
+- **Links**: the Veil (`Veil.isSpirit`), the Lucidium (`Lucidium.isDreaming`, `lucidity`).
+- **Edges**: a dream isn't saved (logging out forgets it); too dim a strike says so plainly; a spirit bell's toll reaches
+  only spirits.
+
+### The four last kin (Bumblepuff, Loomworm, Cloudcalf, Boulderback)
+- **Get**: met in the wild (flower fields; old, dark and birch woods; the sky over peaks 4,800 out; caves under the
+  land), helped three times, then they follow you home to a nook.
+- **For**: honey and wax, thread and cloth, rain on the fields, stone and faster building.
+- **Know**: three watch lines each, vague to plain; rumours on the Hearth page with the sort of place and a real region.
+- **Source**: `KinSpawner` (sites), `KinHelp` (acts), `KinHome.nookFor`, `KinWorks.daily/rain`.
+- **Links**: the Cloud Bell (a Cloudcalf brought home); Thatchbacks build faster with a Boulderback home.
+- **Edges**: a Bumblepuff with one or two flowers asks for lots; a Loomworm refuses the wrong tree; a Cloudcalf won't
+  follow anyone more than 4 below it and is lost again two minutes after it's home; a Boulderback backs from any light
+  in either hand; with no cave under its site it gets a cut pocket at y -30; each day's output starts again each morning.

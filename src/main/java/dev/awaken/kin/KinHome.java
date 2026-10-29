@@ -115,6 +115,36 @@ public final class KinHome {
                 Room rookery = WorkRooms.room(level, a, RoomType.ROOKERY);
                 return rookery == null ? null : WorkRooms.heart(level, rookery, ChimePerchBlock.class);
             }
+            case BUMBLEPUFF -> {
+                // a bee nest or a hive: bees' homes are points of interest, so no blocks are scanned
+                return level.getPoiManager().findClosest(t -> t.is(net.minecraft.tags.PoiTypeTags.BEE_HOME), a, r,
+                        net.minecraft.world.entity.ai.village.poi.PoiManager.Occupancy.ANY).orElse(null);
+            }
+            case LOOMWORM -> {
+                // leaves it can reach from the ground: a tree's lowest branches, or a hedge
+                for (int ring = 2; ring <= r; ring += 2)
+                    for (int dx = -ring; dx <= ring; dx += 2)
+                        for (int dz = -ring; dz <= ring; dz += 2) {
+                            if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) continue;
+                            int x = a.getX() + dx, z = a.getZ() + dz;
+                            if (!level.hasChunkAt(new BlockPos(x, a.getY(), z))) continue;
+                            BlockPos g = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
+                            for (int dy = 0; dy <= 3; dy++) if (level.getBlockState(g.above(dy)).is(BlockTags.LEAVES)) return g;
+                        }
+                return null;
+            }
+            case CLOUDCALF -> {
+                BlockPos field = scan(level, a, r, (s, top) -> s.is(Blocks.FARMLAND) && level.canSeeSky(top.above()));
+                return field == null ? null : field.above(6);
+            }
+            case BOULDERBACK -> {
+                // a room at home with no light and no sky: a cellar, a dark store
+                for (Room rm : WorkRooms.home(level, a).map(x -> x.rooms).orElse(List.of())) {
+                    BlockPos c = rm.centre();
+                    if (level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, c) <= 2 && !level.canSeeSky(c)) return c;
+                }
+                return null;
+            }
             default -> {
                 return null;
             }

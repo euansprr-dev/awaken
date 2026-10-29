@@ -13441,3 +13441,31 @@ Built in `dev.awaken.bells` (`Bells`, `BellSites`, `DreamBells`, `BellCatalog`) 
   Strike it with lucidity at least 40 (C), 60 (B) or 80 (A) and you hold it ("Wake, and it's yours."); too dim and your
   hands go through it. Wake holding it and it's yours ("carried out of a dream"); wake without it and the Book files a
   Dreamt lead (the new lead kind). Not saved: a dream isn't.
+- **The last four kin** (`KinKind` built: all sixteen live now; fliers are `KinKind.flies()`: Lampwing, Bumblepuff,
+  Cloudcalf). Each has a rig in `tools/art/specs/kin.py` (11 clips), vanilla stand-in sounds and the usual watch lines.
+  - *Bumblepuff* (flower fields: `c:is_floral`; two at a site; health 10, speed 0.2). Its site is an old bee nest on a
+    stripped log, the meadow round it picked bare (flowers gone within 5, a third of the grass worn to coarse dirt). Help:
+    flowers round its nest, lots of them: a flower planted within 6 of the nest counts once there are 3 or more there (bone
+    meal that brings them up counts too); with fewer, "It wants lots". A sapling, a berry bush or an azalea is a nudge.
+    Nook: a bee nest or beehive at home (the POI manager finds it, no block scan). Work: 2 honeycomb and a honey bottle a
+    day into the nearest chest.
+  - *Loomworm* (old growth, dark forest, birch forest; health 10, speed 0.1). Its site is a fallen log of its own tree
+    (dark oak in dark forest, birch in birch forest, spruce in taiga, oak otherwise). Help: a branch of that tree (its
+    leaves or sapling) tossed by it; any other tree's is refused. Nook: leaves at home it can reach from the ground (within
+    3 above a column, or a hedge). Work: 4 string and a white wool a day.
+  - *Cloudcalf* (B land: 4,800 blocks or more from the centre, over mountain peaks; health 20, flying speed 0.3). Lost
+    alone 8 blocks above the peak, its pod calling now and then (the calf's call at low pitch and a cloud puff) from a
+    point 48 to 72 blocks off. The pod is heard, never seen as beasts: the JOURNEY's sky islands aren't overworld land, so
+    the calf lives over the high peaks instead and isn't a mount. Help: someone no more than 4 blocks under it, within 16,
+    and it follows them (lost again past 32); led within 12 blocks of the pod across the map it's home, helped, and its
+    guide hears the Cloud Bell ("the day you brought a Cloudcalf home to its pod"). Two minutes after it drifts off, lost
+    somewhere new 48 to 72 from the pod. Nook: farmland open to the sky at home, 6 above it. Work: rain: it hangs over the
+    field, falling-water drops under it, and every 5 s each crop within 4 across (2 to 10 below) has a one-in-four growth
+    step and farmland there is soaked to full.
+  - *Boulderback* (deep caves: a cave biome under the column at y -24 or -44, never the deep dark; health 30, speed 0.18).
+    It stands in cave air under its site (within 12 of it, from y -8 down), or in a 5 by 3 by 5 pocket cut at y -30 when
+    there's no cave there; moss and a few stones of cobbled deepslate make its den. Help: no light in either hand (any
+    item that would glow if set down) and keep still, or creep crouched, within 12 of it for 30 s; at 15 s it takes a step
+    closer. Walking about starts the wait again; a light and it backs off into the dark (a nudge every 10 s). Nook: a room
+    at home with block light 2 or less and no sky. Work: 16 cobbled deepslate a day, and while it's home every Thatchback
+    there lays a block every 4 ticks instead of 10.

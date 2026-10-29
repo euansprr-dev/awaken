@@ -206,6 +206,10 @@ public final class KinWatch {
                 case PONDLING -> "[It's watching your bucket.]";
                 case SNUFFLET -> "[It's watching your shovel.]";
                 case CHIMEWREN -> "[It's trying out the sound of your footsteps.]";
+                case BUMBLEPUFF -> "[It's sniffing at your hands.]";
+                case LOOMWORM -> "[It's looking at the leaves on your boots.]";
+                case CLOUDCALF -> "[It's circling a little nearer, watching which way you go.]";
+                case BOULDERBACK -> "[It's watching your hands, not your face.]";
                 default -> "[It's watching what you do.]";
             };
             case FRIENDLY -> switch (k) {
@@ -221,6 +225,10 @@ public final class KinWatch {
                 case PONDLING -> "[It says the water tastes wrong.]";
                 case SNUFFLET -> "[It says there's something good down there.]";
                 case CHIMEWREN -> "[It's tired of its own songs. It wants a new one.]";
+                case BUMBLEPUFF -> "[It says there's nothing left to eat round here.]";
+                case LOOMWORM -> "[It's hungry, and it's fussy.]";
+                case CLOUDCALF -> "[It says it can hear them, but they're too far to see.]";
+                case BOULDERBACK -> "[It says your light hurts its eyes.]";
                 default -> "";
             };
             case KIN -> "[It's telling the others you're all right. It calls you " + k.callsYou + ".]";

@@ -34,11 +34,16 @@ import java.util.Set;
  * bells carry, in the city's basin, on a settlement's ground or inside a Hearth. A site fills when a player comes within
  * 96 blocks (never closer than 24, so nothing pops in under their nose), and fills again three days after its beasts
  * are gone. Rumours (the Hearth page's needs) are picked from these same sites, so a rumour always points at a real one.
+ * Stage 6's four (SPEC §43.13): a Bumblepuff by its old nest in flower fields, a Loomworm on a fallen log in old woods,
+ * a Cloudcalf lost in the sky over the high peaks far out (B land), its pod calling from a way off, and a Boulderback in
+ * a cave under the column (a real one when there is one, else a pocket in the deepslate).
  */
 public final class KinSpawner {
     private KinSpawner() {}
 
     static final int CELL_SHIFT = 7, NEAR = 96, AWAY = 24, REFILL_DAYS = 3, RUMOUR_REACH = 600, RUMOUR_MIN = 100;
+    /** Cloudcalves live this far out from the world's centre (B land) and drift this high over the peaks. */
+    static final int CLOUD_FROM = 4800, CLOUD_UP = 8;
 
     record Site(long cell, BlockPos at, KinKind kind) {}
 
@@ -93,8 +98,18 @@ public final class KinSpawner {
             case PONDLING -> b.is(Tags.Biomes.IS_SWAMP);
             case SNUFFLET -> b.is(Tags.Biomes.IS_OLD_GROWTH) || b.is(Biomes.DARK_FOREST);
             case CHIMEWREN -> b.is(Tags.Biomes.IS_PLAINS) || b.is(Biomes.MEADOW) || b.is(Tags.Biomes.IS_SAVANNA) || b.is(BiomeTags.IS_FOREST);
+            case BUMBLEPUFF -> b.is(Tags.Biomes.IS_FLORAL);
+            case LOOMWORM -> b.is(Tags.Biomes.IS_OLD_GROWTH) || b.is(Biomes.DARK_FOREST) || b.is(Tags.Biomes.IS_BIRCH_FOREST);
+            case CLOUDCALF -> level.getBiome(at.atY(160)).is(Tags.Biomes.IS_MOUNTAIN_PEAK)
+                    && Math.hypot(at.getX() - TheLull.centre(level.getServer()).getX(), at.getZ() - TheLull.centre(level.getServer()).getZ()) >= CLOUD_FROM;
+            case BOULDERBACK -> deep(level.getBiome(at.atY(-24))) || deep(level.getBiome(at.atY(-44)));
             default -> false;
         };
+    }
+
+    /** A cave's biome under the land (lush caves, dripstone), never the deep dark. */
+    private static boolean deep(Holder<Biome> b) {
+        return (b.is(Tags.Biomes.IS_CAVE) || b.is(Tags.Biomes.IS_UNDERGROUND)) && !b.is(Biomes.DEEP_DARK);
     }
 
     /** The wild: past the ridge, off the city's basin, off settlements' ground and outside every Hearth. */
@@ -149,7 +164,7 @@ public final class KinSpawner {
 
     static int group(KinKind k) {
         return switch (k) {
-            case BURROWBUN, PEBBLEPUP, TOTTER, PUFFWOOL -> 2;
+            case BURROWBUN, PEBBLEPUP, TOTTER, PUFFWOOL, BUMBLEPUFF -> 2;
             case CHIMEWREN -> 3;
             case DUMPLIN -> 4;
             default -> 1;
@@ -159,7 +174,7 @@ public final class KinSpawner {
     /** The site's beasts, at their spot (a Pebblepup's pile set down by it). */
     static List<KinBeast> fill(ServerLevel level, Site s) {
         List<KinBeast> out = new ArrayList<>();
-        BlockPos spot = stand(level, s.at().getX(), s.at().getZ(), s.kind());
+        BlockPos spot = s.kind() == KinKind.BOULDERBACK ? cave(level, s.at().getX(), s.at().getZ()) : stand(level, s.at().getX(), s.at().getZ(), s.kind());
         if (spot == null) return out;
         // the site's own look, and the second place some kinds have: a flock's nest, a pond, a smell under the ground
         BlockPos mark = switch (s.kind()) {
@@ -186,14 +201,25 @@ public final class KinSpawner {
             case DUMPLIN -> nest(level, spot);
             case PONDLING -> pond(level, spot);
             case SNUFFLET -> KinHelp.digSpot(level, spot, level.getGameTime());
+            case BUMBLEPUFF -> hive(level, spot);
+            case LOOMWORM -> {
+                fallen(level, spot, KinHelp.Tree.of(level, spot));
+                yield null;
+            }
+            case CLOUDCALF -> KinHelp.pod(level, spot.above(CLOUD_UP), level.getGameTime());
+            case BOULDERBACK -> {
+                den(level, spot);
+                yield null;
+            }
             default -> null;
         };
-        // a Dumplin flock is lost: it stands well off from its nest
-        BlockPos home = s.kind() == KinKind.DUMPLIN && mark != null ? KinHelp.lost(level, mark, level.getGameTime() / 2400) : spot;
+        // a Dumplin flock is lost: it stands well off from its nest; a Cloudcalf drifts high over the peak, lost
+        BlockPos home = s.kind() == KinKind.DUMPLIN && mark != null ? KinHelp.lost(level, mark, level.getGameTime() / 2400)
+                : s.kind() == KinKind.CLOUDCALF ? spot.above(CLOUD_UP) : spot;
         for (int i = 0; i < group(s.kind()); i++) {
             BlockPos at = i == 0 ? home : home.offset(level.getRandom().nextInt(5) - 2, 0, level.getRandom().nextInt(5) - 2);
-            BlockPos g = KinHelp.ground(level, at.getX(), at.getZ());
-            KinBeast b = KinHome.spawn(level, s.kind(), s.kind() == KinKind.LAMPWING ? g.above(2) : g, EntitySpawnReason.NATURAL);
+            BlockPos g = s.kind() == KinKind.BOULDERBACK || s.kind() == KinKind.CLOUDCALF ? at : KinHelp.ground(level, at.getX(), at.getZ());
+            KinBeast b = KinHome.spawn(level, s.kind(), s.kind() == KinKind.LAMPWING || s.kind() == KinKind.BUMBLEPUFF ? g.above(2) : g, EntitySpawnReason.NATURAL);
             if (b == null) continue;
             b.wildAt(home);
             b.mark = mark;
@@ -273,6 +299,64 @@ public final class KinSpawner {
         level.setBlock(water.below(), dev.awaken.kin.works.WorksContent.POND_ROT.get().defaultBlockState(), 3);
         level.setBlock(water.offset(1, -1, -1), dev.awaken.kin.works.WorksContent.POND_ROT.get().defaultBlockState(), 3);
         return water;
+    }
+
+    /** A Bumblepuff's old nest on a stump, the meadow round it picked bare: no flowers, the grass worn to dirt in patches. */
+    private static @Nullable BlockPos hive(ServerLevel level, BlockPos spot) {
+        BlockPos g = flat(level, spot, 2, 1);
+        if (g == null) return spot;
+        level.setBlock(g, Blocks.STRIPPED_OAK_LOG.defaultBlockState(), 3);
+        level.setBlock(g.above(), Blocks.BEE_NEST.defaultBlockState(), 3);
+        var r = level.getRandom();
+        for (int dx = -5; dx <= 5; dx++)
+            for (int dz = -5; dz <= 5; dz++) {
+                BlockPos at = KinHelp.ground(level, g.getX() + dx, g.getZ() + dz);
+                if (level.getBlockState(at).is(net.minecraft.tags.BlockTags.FLOWERS)) level.setBlock(at, Blocks.AIR.defaultBlockState(), 3);
+                if (level.getBlockState(at.below()).is(Blocks.GRASS_BLOCK) && r.nextInt(3) == 0) level.setBlock(at.below(), Blocks.COARSE_DIRT.defaultBlockState(), 3);
+            }
+        return g.above();
+    }
+
+    /** A Loomworm's fallen log: three logs of the tree it lives on, lying along the ground. */
+    private static void fallen(ServerLevel level, BlockPos spot, KinHelp.Tree t) {
+        for (int i = 1; i <= 3; i++) {
+            BlockPos g = flat(level, spot, i, 0);
+            if (g != null) level.setBlock(g, t.log.defaultBlockState().setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS, net.minecraft.core.Direction.Axis.X), 3);
+        }
+    }
+
+    /**
+     * A Boulderback's dark: cave air under the column (within 12 blocks of it, from y -8 down, two blocks of headroom),
+     * or, with no cave there, a pocket cut in the deepslate at y -30.
+     */
+    private static BlockPos cave(ServerLevel level, int x, int z) {
+        int floor = level.getMinY() + 6;
+        for (int r = 0; r <= 12; r += 2)
+            for (int dx = -r; dx <= r; dx += 2)
+                for (int dz = -r; dz <= r; dz += 2) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+                    for (int y = -8; y > floor; y--) {
+                        BlockPos at = new BlockPos(x + dx, y, z + dz);
+                        if (level.getBlockState(at).isAir() && level.getBlockState(at.above()).isAir() && level.getBlockState(at.below()).isSolid()) return at;
+                    }
+                }
+        BlockPos c = new BlockPos(x, -30, z);
+        for (int dx = -2; dx <= 2; dx++)
+            for (int dz = -2; dz <= 2; dz++)
+                for (int dy = 0; dy <= 2; dy++)
+                    if (!level.getBlockState(c.offset(dx, dy, dz)).is(Blocks.BEDROCK)) level.setBlock(c.offset(dx, dy, dz), Blocks.AIR.defaultBlockState(), 3);
+        return c;
+    }
+
+    /** Its den: moss on the floor round it and a few stones it's carried there. */
+    private static void den(ServerLevel level, BlockPos spot) {
+        var r = level.getRandom();
+        for (int i = 0; i < 8; i++) {
+            BlockPos at = spot.offset(r.nextInt(5) - 2, 0, r.nextInt(5) - 2);
+            if (!level.getBlockState(at).isAir() || !level.getBlockState(at.below()).isSolid()) continue;
+            level.setBlock(at.below(), Blocks.MOSS_BLOCK.defaultBlockState(), 3);
+            if (i % 3 == 0 && !at.equals(spot)) level.setBlock(at, Blocks.COBBLED_DEEPSLATE.defaultBlockState(), 3);
+        }
     }
 
     /** Dry ground near a column to stand on (a Mossback at a river stands on its bank), or null. */
@@ -372,6 +456,10 @@ public final class KinSpawner {
             case PONDLING -> "fishes a still pond in the marsh";
             case SNUFFLET -> "roots about in the old woods";
             case CHIMEWREN -> "sings in a flock out in the open country";
+            case BUMBLEPUFF -> "drifts about the flower fields";
+            case LOOMWORM -> "spins on a fallen log in the old woods";
+            case CLOUDCALF -> "drifts in the sky over the high peaks, calling";
+            case BOULDERBACK -> "lives deep in the caves, in the dark";
             default -> "lives out there";
         };
         String sort = k.sort.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + k.sort.substring(1);

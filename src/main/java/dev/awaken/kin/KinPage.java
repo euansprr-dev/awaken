@@ -29,7 +29,8 @@ public final class KinPage {
 
     /** The beast needs in the order a home meets them (the Ember's light and field first). */
     static final KinKind[] NEEDS = {KinKind.LAMPWING, KinKind.BURROWBUN, KinKind.MOSSBACK, KinKind.PEBBLEPUP, KinKind.THATCHBACK, KinKind.EMBERKIT,
-            KinKind.DUMPLIN, KinKind.PUFFWOOL, KinKind.TOTTER, KinKind.PONDLING, KinKind.SNUFFLET, KinKind.CHIMEWREN};
+            KinKind.DUMPLIN, KinKind.PUFFWOOL, KinKind.TOTTER, KinKind.PONDLING, KinKind.SNUFFLET, KinKind.CHIMEWREN, KinKind.BUMBLEPUFF, KinKind.LOOMWORM,
+            KinKind.BOULDERBACK, KinKind.CLOUDCALF};
     /** The page shows this many beast needs at once (the earliest unmet); the next shows once one is met. */
     static final int NEEDS_SHOWN = 4;
 
@@ -117,6 +118,14 @@ public final class KinPage {
             case SNUFFLET -> "Nobody forages round your home.";
             case CHIMEWREN -> KinHome.nookFor(level, h, k) != null ? "Nothing brings you word of sleeping bells."
                     : "Nothing brings you word of sleeping bells. Chimewrens roost in a Rookery: a room with a Chime Perch, made round the clapper of a bell you've woken.";
+            case BUMBLEPUFF -> KinHome.nookFor(level, h, k) != null ? "Nothing at home makes honey or wax."
+                    : "Nothing at home makes honey or wax. A Bumblepuff lives in a bee nest or a beehive.";
+            case LOOMWORM -> KinHome.nookFor(level, h, k) != null ? "Nobody spins you thread or cloth."
+                    : "Nobody spins you thread or cloth. A Loomworm wants leaves at home it can reach from the ground: a low tree, or a hedge.";
+            case BOULDERBACK -> KinHome.nookFor(level, h, k) != null ? "Nobody carries stone for your works."
+                    : "Nobody carries stone for your works. Whatever does would want somewhere dark at home: a room with no light and no sky.";
+            case CLOUDCALF -> KinHome.nookFor(level, h, k) != null ? "Nothing waters your fields."
+                    : "Nothing waters your fields, and there aren't any open to the sky.";
             default -> null;
         };
     }
@@ -151,6 +160,10 @@ public final class KinPage {
                     case PONDLING -> "fishing";
                     case SNUFFLET -> "foraging";
                     case CHIMEWREN -> "singing on its perch";
+                    case BUMBLEPUFF -> "drifting round the hive";
+                    case LOOMWORM -> "spinning";
+                    case CLOUDCALF -> "raining on the field";
+                    case BOULDERBACK -> "sitting in the dark";
                     default -> "working";
                 };
                 case KinBeast.CARRY -> b.task == KinWorks.FETCH_TAKE || b.task == KinWorks.FETCH_PUT ? "fetching something to the Ledger" : "carrying things where they go";
@@ -169,6 +182,10 @@ public final class KinPage {
                 case PONDLING -> b.made + " fish today";
                 case SNUFFLET -> b.made + " things foraged today";
                 case CHIMEWREN -> "sang you a note today";
+                case BUMBLEPUFF -> "left you honey today";
+                case LOOMWORM -> "spun you thread today";
+                case CLOUDCALF -> b.made + " crops rained on today";
+                case BOULDERBACK -> "brought you stone today";
                 default -> "";
             };
         }

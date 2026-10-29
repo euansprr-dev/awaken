@@ -16,6 +16,13 @@ Stage 5 brings the working eight (SPEC §43.12):
   kin_snufflet   a striped wild piglet with a long, never-still snout
   kin_chimewren  a small blue songbird with a cocked, barred tail and a brass crest that catches the light
 
+Stage 6 brings the last four (SPEC §43.13):
+
+  kin_bumblepuff  a fuzzy gold-and-black bee as big as a loaf, on wings too small for it, so it bobs as it floats
+  kin_loomworm    a fat leaf-green caterpillar with cream tufts and a round face; it rears for leaves and weaves
+  kin_cloudcalf   a sky-blue whale calf with a pale throat, star freckles that glow at dusk, a little cloud on its back
+  kin_boulderback a mossy, tusked hill of a beast with stones grown into its back and small eyes that shine green
+
     python3 tools/art/build_all.py kin     textures (textures/entity/kin/<id>.png, _blink, _glow) and
                                            src/main/java/dev/awaken/kin/client/KinData.java
     python3 tools/art/specs/kin.py preview DIR [ids]
@@ -43,10 +50,12 @@ JAVA_OUT = os.path.join(ROOT, "src/main/java/dev/awaken/kin/client/KinData.java"
 
 SCALE = {"kin_lampwing": 0.55, "kin_burrowbun": 0.62, "kin_mossback": 0.85, "kin_pebblepup": 0.7,
          "kin_totter": 0.85, "kin_thatchback": 0.9, "kin_emberkit": 0.75, "kin_puffwool": 0.8,
-         "kin_dumplin": 0.5, "kin_pondling": 0.85, "kin_snufflet": 0.9, "kin_chimewren": 0.45}
+         "kin_dumplin": 0.5, "kin_pondling": 0.85, "kin_snufflet": 0.9, "kin_chimewren": 0.45,
+         "kin_bumblepuff": 0.6, "kin_loomworm": 0.7, "kin_cloudcalf": 1.0, "kin_boulderback": 1.0}
 TEMPER = {"kin_lampwing": "cute", "kin_burrowbun": "cute", "kin_mossback": "grazer", "kin_pebblepup": "cute",
           "kin_totter": "cute", "kin_thatchback": "grazer", "kin_emberkit": "cute", "kin_puffwool": "grazer",
-          "kin_dumplin": "cute", "kin_pondling": "cute", "kin_snufflet": "cute", "kin_chimewren": "cute"}
+          "kin_dumplin": "cute", "kin_pondling": "cute", "kin_snufflet": "cute", "kin_chimewren": "cute",
+          "kin_bumblepuff": "cute", "kin_loomworm": "cute", "kin_cloudcalf": "grazer", "kin_boulderback": "grazer"}
 
 
 def build_hook():
@@ -1784,12 +1793,594 @@ def paint_chimewren(r, P):
 
 # =====================================================================================================================
 
+# =====================================================================================================================
+# Stage 6 (SPEC §43.13): the Bumblepuff, the Loomworm, the Cloudcalf and the Boulderback
+# =====================================================================================================================
+
+# --- Bumblepuff: a fuzzy bee as big as a loaf that floats more than it flies ------------------------------------------
+
+def bumblepuff():
+    r = Rig("kin_bumblepuff", (64, 64))
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 1.0, 2.0, (0.1, 0.25), 0.0
+    body = r.bone("body", (0, 12, 0))
+    body.cube("fuzz", -5, -5, -5, 10, 10, 10)
+    body.cube("collar", -5.5, -4.5, -5.5, 11, 9, 2)
+    rump = body.bone("rump", (0, 0.5, 4.5), (-8, 0, 0))
+    rump.cube("orump", -4, -4, 0, 8, 8, 4)
+    rump.cube("tuft", -1, -1, 4, 2, 2, 1)
+    head = body.bone("head", (0, 0, -5.5), (6, 0, 0))
+    head.cube("ohead", -3, -3, -4, 6, 6, 4)
+    head.cube("snout", -1.5, 0.5, -5, 3, 2, 1)
+
+    def side(sd, nm, mir, sh):
+        ant = head.bone("ant_" + nm, (sd * 1.5, -3, -3), (-25, 0, sd * 22))
+        ant.cube("stalk_" + nm, -0.5, -4, -0.5, 1, 4, 1, mirror=mir, share=sh("stalk_l"))
+        ant.cube("knob_" + nm, -1, -6, -1, 2, 2, 2, mirror=mir, share=sh("knob_l"))
+        w = body.bone("wing_" + nm, (sd * 2, -5, -1), (0, sd * -12, -sd * 18))
+        if sd > 0:
+            w.cube("wingf_l", 0, 0, -2, 7, 0, 5)
+        else:
+            w.cube("wingf_r", -7, 0, -2, 7, 0, 5, mirror=True, share="wingf_l")
+        hw = body.bone("hwing_" + nm, (sd * 2, -5, 2), (0, sd * 18, -sd * 12))
+        if sd > 0:
+            hw.cube("wingh_l", 0, 0, 0, 5, 0, 4)
+        else:
+            hw.cube("wingh_r", -5, 0, 0, 5, 0, 4, mirror=True, share="wingh_l")
+        leg = body.bone("legs_" + nm, (sd * 2.5, 4.5, -1), (15, 0, sd * 15))
+        leg.cube("oleg_" + nm, -0.5, 0, -2.5, 1, 2, 5, mirror=mir, share=sh("oleg_l"))
+    sym(side)
+    r.look = [("head", 1.0, 0.8)]
+    r.pack()
+
+    def buzz(cl, amp, beats, bob=0.6):
+        # little wings going nineteen to the dozen and hardly holding it up: it bobs on every beat
+        for nm, sg in (("l", 1), ("r", -1)):
+            cycle(cl, "wing_" + nm, "rot", lambda p, sg=sg: (0, sg * -12, -sg * (18 + amp * s(p * beats))), beats * 4)
+            cycle(cl, "hwing_" + nm, "rot", lambda p, sg=sg: (0, sg * 18, -sg * (12 + amp * 0.8 * s(p * beats, -0.1))), beats * 4)
+        cycle(cl, "body", "pos", lambda p: (0, bob * s(p), 0), 8)
+
+    idle = clip_of(r, "idle", 1.6, loop=True)
+    buzz(idle, 35, 16, 0.8)
+    cycle(idle, "rump", "rot", lambda p: (-8 + 4 * s(p, 0.3), 0, 0), 8)
+    for nm, sg in (("l", 1), ("r", -1)):
+        cycle(idle, "legs_" + nm, "rot", lambda p, sg=sg: (15 + 10 * s(p, 0.2), 0, sg * 15), 8)
+        cycle(idle, "ant_" + nm, "rot", lambda p, sg=sg: (-25 + 8 * s(p, 0.1 * sg), 0, sg * 22), 8)
+    move = clip_of(r, "move", 0.8, loop=True)
+    buzz(move, 40, 10, 0.5)
+    hold(move, "body", rot=(12, 0, 0))
+    hold(move, "rump", rot=(-2, 0, 0))
+    run = clip_of(r, "run", 0.5, loop=True)
+    buzz(run, 45, 8, 0.4)
+    hold(run, "body", rot=(20, 0, 0))
+    hold(run, "ant_l", rot=(-60, 0, 15))
+    hold(run, "ant_r", rot=(-60, 0, -15))
+    want = clip_of(r, "want", 3.2, loop=True)
+    # sinks to the bare ground by its nest, pats about for a flower that isn't there, and floats up again, drooping
+    buzz(want, 25, 32, 0.3)
+    want.pos("body", keys((0, 0, 0, 0), (0.8, 0, -5, 0), (2.0, 0, -5, 0), (2.7, 0, -1, 0), (3.2, 0, 0, 0)))
+    want.rot("head", keys((0, 6, 0, 0), (0.8, 30, 0, 0), (1.2, 30, -20, 0), (1.6, 30, 20, 0), (2.0, 30, 0, 0), (2.7, 14, 0, 0), (3.2, 6, 0, 0)))
+    for nm, sg in (("l", 1), ("r", -1)):
+        want.rot("legs_" + nm, keys((0, 15, 0, sg * 15), (0.9, -20, 0, sg * 10), (1.2, 10, 0, sg * 10), (1.5, -20, 0, sg * 10),
+                                    (1.8, 10, 0, sg * 10), (2.2, 15, 0, sg * 15), (3.2, 15, 0, sg * 15)))
+        want.rot("ant_" + nm, keys((0, -25, 0, sg * 22), (2.0, -25, 0, sg * 22), (2.4, 20, 0, sg * 35), (3.0, 20, 0, sg * 35), (3.2, -25, 0, sg * 22)))
+    tell = clip_of(r, "tell", 1.4)
+    # a happy roll in the air, fuzz fluffing out
+    buzz(tell, 45, 14, 0.4)
+    tell.rot("body", keys((0, 0, 0, 0), (0.2, 0, 0, -20), (0.7, 0, 0, 200), (1.0, 0, 0, 360), (1.4, 0, 0, 360)))
+    tell.pos("body", keys((0, 0, 0, 0), (0.5, 0, 3, 0), (1.0, 0, 2, 0), (1.4, 0, 0, 0)))
+    tell.scale("body", keys((0, 1, 1, 1), (0.4, 1.12, 1.12, 1.12), (1.0, 1.05, 1.05, 1.05), (1.4, 1, 1, 1)))
+    nudge = clip_of(r, "nudge", 1.0)
+    buzz(nudge, 30, 10, 0.3)
+    nudge.rot("head", keys((0, 6, 0, 0), (0.2, 6, -25, 0), (0.4, 6, 25, 0), (0.6, 6, -15, 0), (1.0, 6, 0, 0)))
+    nudge.pos("body", keys((0, 0, 0, 0), (0.3, 0, 0, 1.5), (1.0, 0, 0, 0)))
+    work = clip_of(r, "work", 2.4, loop=True)
+    # drifting round its hive, the rump pumping as it makes comb
+    buzz(work, 35, 24, 0.6)
+    cycle(work, "body", "rot", lambda p: (4 * s(p), 0, 8 * s(p, 0.25)), 8)
+    cycle(work, "rump", "scale", lambda p: (1 + 0.06 * s(p * 3), 1 + 0.08 * s(p * 3), 1 - 0.05 * s(p * 3)), 12)
+    sleep = clip_of(r, "sleep", 4.0, loop=True)
+    # down on the ground, wings laid back, a fuzzy heap that breathes
+    hold(sleep, "body", pos=(0, -6.5, 0), rot=(-4, 0, 0))
+    for nm, sg in (("l", 1), ("r", -1)):
+        hold(sleep, "wing_" + nm, rot=(0, sg * -70, sg * 4))
+        hold(sleep, "hwing_" + nm, rot=(0, sg * -40, sg * 4))
+        hold(sleep, "ant_" + nm, rot=(25, 0, sg * 35))
+        hold(sleep, "legs_" + nm, rot=(-30, 0, sg * 50))
+    hold(sleep, "head", rot=(20, 0, 0))
+    cycle(sleep, "body", "scale", lambda p: (1 + 0.04 * s(p), 1 + 0.05 * s(p), 1 + 0.03 * s(p)), 8)
+    sniff = clip_of(r, "sniff", 1.2)
+    buzz(sniff, 30, 12, 0.3)
+    for nm, sg in (("l", 1), ("r", -1)):
+        sniff.rot("ant_" + nm, keys((0, -25, 0, sg * 22), (0.2, 0, 0, sg * 10), (0.4, -30, 0, sg * 30), (0.6, 0, 0, sg * 10), (1.2, -25, 0, sg * 22)))
+    sniff.rot("head", keys((0, 6, 0, 0), (0.3, 25, 0, 0), (0.9, 25, 0, 0), (1.2, 6, 0, 0)))
+    carry = clip_of(r, "carry", 0.6, loop=True)
+    buzz(carry, 45, 8, 0.4)
+    hold(carry, "legs_l", rot=(-40, 0, 10))
+    hold(carry, "legs_r", rot=(-40, 0, -10))
+    hide = clip_of(r, "hide", 1.0, loop=True)
+    buzz(hide, 15, 16, 0.15)
+    hold(hide, "body", pos=(0, -4, 0), rot=(-15, 0, 0))
+    hold(hide, "ant_l", rot=(30, 0, 10))
+    hold(hide, "ant_r", rot=(30, 0, -10))
+    stubs(r)
+    return r
+
+
+def paint_bumblepuff(r, P):
+    gold = Ramp("#6a4810", "#94661a", "#c08a24", "#e0ac36", "#f0c040", "#f8d870", "#fff0b0")
+    soot = Ramp("#0e0a08", "#1a1410", "#2a221a", "#3a3026", "#4a3e32")
+    fuzz = combine(p_fur(0.9, 2, 4, 2), p_blotch("bumblepuff", 3, 0.3))
+    P.paint("fuzz", gold, 4.2, fuzz)
+    P.paint("orump", gold, 4.2, fuzz)
+    # two soft black bands round the middle, three round the rump; the tuft at the end gold
+    for cb, bands in (("fuzz", (6, 7)), ("orump", (0, 1, 4, 5))):
+        for fname in ("top", "west", "east", "bottom"):
+            def band(f, i, j, bands=bands, fname=fname):
+                z = j if fname in ("top", "bottom") else (i if fname == "west" else f.w - 1 - i)
+                if fname == "west":
+                    z = f.w - 1 - i
+                return soot.at(2.6 + 0.6 * ((i + j) % 2)) if z in bands else None
+            face_fill(P, cb, fname, band)
+    P.paint("collar", Ramp("#c8b48a", "#e0d0a8", "#f2e6c8", "#fff8e8"), 2.6, p_fur(0.9, 2, 3, 2))
+    P.paint("tuft", gold, 5.0)
+    P.paint("ohead", soot, 2.6, p_fur(0.5, 2, 1, 2))
+    P.paint("snout", gold, 3.4)
+    P.paint("stalk_l", soot, 2.0)
+    P.paint("knob_l", gold, 4.0)
+    P.paint("oleg_l", soot, 1.8)
+    # little glassy wings: pale, a vein or two, a bright edge
+    for cb in ("wingf_l", "wingh_l"):
+        for fname in ("top", "bottom"):
+            face_fill(P, cb, fname, lambda f, i, j: None if (i == f.w - 1 and j in (0, f.h - 1)) else
+                      (hexc("#f4f8ff") if i == f.w - 1 or j == 0 else (hexc("#b8c8dc") if (i + 2 * j) % 5 == 0 else hexc("#dfe8f4"))))
+        for fname in ("north", "south", "west", "east"):
+            face_fill(P, cb, fname, lambda f, i, j: hexc("#dfe8f4"))
+    # big glossy eyes on the head's sides, a soft smile under the snout
+    with P.eyes():
+        for fname in ("west", "east"):
+            f = P.face("ohead", fname)
+            ex = front_i(f)
+            step = 1 if fname == "west" else -1
+            for di in (0, 1, 2):
+                for j in (1, 2, 3, 4):
+                    f.set(ex + step * di, j, hexc("#0a0608"))
+            f.set(ex + step, 1, hexc("#c8d4e8"))
+            f.set(ex, 2, hexc("#6a5a70"))
+    face_fill(P, "ohead", "north", lambda f, i, j: hexc("#f0c040") if j == f.h - 1 and 0 < i < f.w - 1 else None)
+    return P.skin, P.glow
+
+
+# --- Loomworm: a fat, fuzzy caterpillar that spins ---------------------------------------------------------------------
+
+def loomworm():
+    r = Rig("kin_loomworm", (64, 64))
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 0.3, 0.6, (0.03, 0.1), 0.45
+    body = r.bone("body", (0, 20.5, 0))
+    body.cube("seg_c", -3.5, -3.5, -2.5, 7, 7, 5)
+    body.cube("tuft_c", -1, -5.5, -1, 2, 2, 2)
+    s1 = body.bone("seg1", (0, 0.5, -2.5))
+    s1.cube("oseg1", -3, -3, -4, 6, 6, 4)
+    head = s1.bone("head", (0, -0.5, -4), (-6, 0, 0))
+    head.cube("ohead", -3, -3.5, -4, 6, 6, 4)
+    s3 = body.bone("seg3", (0, 0.5, 2.5))
+    s3.cube("oseg3", -3, -3, 0, 6, 6, 4)
+    s3.cube("tuft_3", -1, -5, 1, 2, 2, 2)
+    s4 = s3.bone("seg4", (0, 0.5, 4))
+    s4.cube("oseg4", -2.5, -2.5, 0, 5, 5, 3)
+    tail = s4.bone("tail", (0, 0.5, 3), (-15, 0, 0))
+    tail.cube("otail", -2, -2, 0, 4, 4, 2)
+    tail.cube("spinneret", -0.5, -3, 1, 1, 1, 1)
+
+    def side(sd, nm, mir, sh):
+        fl = head.bone("feel_" + nm, (sd * 1.5, -3.5, -3), (-20, 0, sd * 25))
+        fl.cube("ofeel_" + nm, -0.5, -3, -0.5, 1, 3, 1, mirror=mir, share=sh("ofeel_l"))
+        x0 = 2.5 if sd > 0 else -3.5
+        body.cube("pro_" + nm, x0, 3, -1.5, 1, 1, 3, mirror=mir, share=sh("pro_l"))
+        s3.cube("prob_" + nm, x0 + (-0.5 if sd > 0 else 0.5), 2.5, 1, 1, 1, 2, mirror=mir, share=sh("prob_l"))
+    sym(side)
+    r.look = [("head", 1.0, 0.8)]
+    r.pack()
+
+    segs = [("seg1", 0.0), ("body", 0.12), ("seg3", 0.24), ("seg4", 0.36), ("tail", 0.48)]
+
+    def crawl(cl, lift, beats=1):
+        # a hump runs from tail to head, each segment lifting and pulling forward in turn
+        for nm, ph in segs:
+            if nm == "body":
+                cycle(cl, nm, "pos", lambda p, ph=ph: (0, lift * max(0, s(p * beats, -ph)), 0.3 * s(p * beats, -ph)), 8 * beats)
+            else:
+                cycle(cl, nm, "rot", lambda p, ph=ph: (-14 * lift * max(0, s(p * beats, -ph)) / 1.5, 0, 0), 8 * beats)
+        cycle(cl, "head", "rot", lambda p: (-6 + 5 * s(p * beats, 0.1), 0, 0), 8 * beats)
+        for nm, sd in (("feel_l", 1), ("feel_r", -1)):
+            cycle(cl, nm, "rot", lambda p, sd=sd: (-20 + 10 * s(p * beats * 2), 0, sd * 25), 8 * beats)
+
+    idle = clip_of(r, "idle", 3.0, loop=True)
+    cycle(idle, "body", "scale", lambda p: (1 + 0.03 * s(p), 1 + 0.04 * s(p), 1), 8)
+    idle.rot("head", keys((0, -6, 0, 0), (0.8, -6, 0, 0), (1.1, -12, 25, 0), (1.8, -12, 25, 0), (2.1, -6, -15, 0), (2.6, -6, -15, 0), (3.0, -6, 0, 0)))
+    idle.rot("feel_l", keys((0, -20, 0, 25), (0.4, -5, 0, 35), (0.6, -20, 0, 25), (3.0, -20, 0, 25)))
+    idle.rot("feel_r", keys((0, -20, 0, -25), (1.5, -20, 0, -25), (1.7, -5, 0, -35), (1.9, -20, 0, -25), (3.0, -20, 0, -25)))
+    move = clip_of(r, "move", 1.0, loop=True)
+    crawl(move, 1.5)
+    run = clip_of(r, "run", 0.6, loop=True)
+    crawl(run, 2.2)
+    want = clip_of(r, "want", 3.6, loop=True)
+    # rears up and stretches toward the leaves over it, sways, can't reach, and flops back down
+    want.rot("seg1", keys((0, 0, 0, 0), (0.7, -55, 0, 0), (2.2, -55, 0, 0), (2.6, 0, 0, 0), (3.6, 0, 0, 0)))
+    want.rot("head", keys((0, -6, 0, 0), (0.7, -30, 0, 0), (1.2, -35, 12, 0), (1.7, -35, -12, 0), (2.2, -30, 0, 0), (2.6, 8, 0, 0), (3.0, 8, 0, 0), (3.6, -6, 0, 0)))
+    want.pos("body", keys((0, 0, 0, 0), (0.7, 0, 0.5, 0.6), (2.2, 0, 0.5, 0.6), (2.6, 0, -0.3, 0), (2.9, 0, 0, 0), (3.6, 0, 0, 0)))
+    for nm, sd in (("feel_l", 1), ("feel_r", -1)):
+        want.rot(nm, keys((0, -20, 0, sd * 25), (0.7, -45, 0, sd * 15), (2.2, -45, 0, sd * 15), (2.6, 10, 0, sd * 40), (3.4, 10, 0, sd * 40), (3.6, -20, 0, sd * 25)))
+    tell = clip_of(r, "tell", 1.4)
+    # a happy wiggle, side to side all down its length, and a bounce
+    for k, (nm, ph) in enumerate(segs):
+        if nm == "body":
+            tell.pos(nm, keys((0, 0, 0, 0), (0.25, 0, 1.5, 0), (0.5, 0, 0, 0), (1.4, 0, 0, 0)))
+        else:
+            sg = 1 if k % 2 == 0 else -1
+            tell.rot(nm, keys((0, 0, 0, 0), (0.3, 0, sg * 18, 0), (0.6, 0, -sg * 18, 0), (0.9, 0, sg * 14, 0), (1.15, 0, -sg * 8, 0), (1.4, 0, 0, 0)))
+    tell.rot("head", keys((0, -6, 0, 0), (0.25, -25, 0, 0), (1.0, -20, 0, 0), (1.4, -6, 0, 0)))
+    nudge = clip_of(r, "nudge", 1.0)
+    nudge.rot("head", keys((0, -6, 0, 0), (0.2, -6, -25, 0), (0.4, -6, 25, 0), (0.6, -6, -15, 0), (1.0, -6, 0, 0)))
+    nudge.rot("seg1", keys((0, 0, 0, 0), (0.3, 15, 0, 0), (0.8, 15, 0, 0), (1.0, 0, 0, 0)))
+    work = clip_of(r, "work", 2.4, loop=True)
+    # spinning: the head weaving back and forth over its work, the tail end pumping thread
+    cycle(work, "head", "rot", lambda p: (10 + 6 * s(p * 4), 28 * s(p * 2), 0), 16)
+    cycle(work, "seg1", "rot", lambda p: (-20, 10 * s(p * 2, 0.1), 0), 16)
+    cycle(work, "tail", "rot", lambda p: (-15 - 12 * max(0, s(p * 4)), 0, 0), 16)
+    sleep = clip_of(r, "sleep", 4.0, loop=True)
+    # curled into a fat C, head tucked to its tail
+    hold(sleep, "seg1", rot=(0, 40, 0))
+    hold(sleep, "head", rot=(15, 40, 0))
+    hold(sleep, "seg3", rot=(0, -35, 0))
+    hold(sleep, "seg4", rot=(0, -40, 0))
+    hold(sleep, "tail", rot=(-5, -35, 0))
+    hold(sleep, "feel_l", rot=(30, 0, 40))
+    hold(sleep, "feel_r", rot=(30, 0, -40))
+    cycle(sleep, "body", "scale", lambda p: (1 + 0.04 * s(p), 1 + 0.05 * s(p), 1), 8)
+    sniff = clip_of(r, "sniff", 1.2)
+    sniff.rot("head", keys((0, -6, 0, 0), (0.25, 20, 0, 0), (0.95, 20, 0, 0), (1.2, -6, 0, 0)))
+    for nm, sd in (("feel_l", 1), ("feel_r", -1)):
+        sniff.rot(nm, keys((0, -20, 0, sd * 25), (0.2, 10, 0, sd * 10), (0.4, -20, 0, sd * 30), (0.6, 10, 0, sd * 10), (0.8, -20, 0, sd * 30), (1.2, -20, 0, sd * 25)))
+    carry = clip_of(r, "carry", 1.0, loop=True)
+    crawl(carry, 1.2)
+    hide = clip_of(r, "hide", 1.0, loop=True)
+    # curled tight, trembling
+    hold(hide, "seg1", rot=(20, 55, 0))
+    hold(hide, "head", rot=(40, 45, 0))
+    hold(hide, "seg3", rot=(0, -50, 0))
+    hold(hide, "seg4", rot=(0, -55, 0))
+    hold(hide, "tail", rot=(0, -50, 0))
+    hold(hide, "feel_l", rot=(50, 0, 10))
+    hold(hide, "feel_r", rot=(50, 0, -10))
+    cycle(hide, "body", "pos", lambda p: (0.12 * s(p * 5), 0, 0), 24)
+    stubs(r)
+    return r
+
+
+def paint_loomworm(r, P):
+    leaf = Ramp("#3a5a26", "#527a34", "#6c9642", "#88b056", "#a4c870", "#bcd88a", "#d8ecb0")
+    cream = Ramp("#b8ac88", "#d0c6a4", "#e6dec4", "#f6f2e2", "#ffffff")
+    fuzz = combine(p_fur(0.8, 2, 3, 2), p_blotch("loomworm", 4, 0.25))
+    for cb in ("seg_c", "oseg1", "oseg3", "oseg4", "otail"):
+        P.paint(cb, leaf, 4.0, fuzz)
+        # a pale line where one segment meets the next, and a row of soft yellow spots down each side
+        face_fill(P, cb, "top", lambda f, i, j: leaf.at(2.4) if j in (0, f.h - 1) else None)
+        for fname in ("west", "east"):
+            face_fill(P, cb, fname, lambda f, i, j: hexc("#f0e070") if j == f.h // 2 and i == f.w // 2 else
+                      (cream.at(2.6) if j >= f.h - 1 else None))
+        face_fill(P, cb, "bottom", lambda f, i, j: cream.at(1.8 + 0.5 * ((i + j) % 2)))
+    for cb in ("tuft_c", "tuft_3"):
+        P.paint(cb, cream, 3.4, p_fur(0.9, 2, 2, 2))
+    P.paint("ohead", Ramp("#4a6a30", "#5e823c", "#729a4a", "#88b05a", "#9cc46c"), 3.2, p_fur(0.4, 2, 1, 2))
+    P.paint("ofeel_l", Ramp("#3a4a2a", "#4a5e36", "#5e7444"), 2.0)
+    P.paint("spinneret", cream, 3.6)
+    for cb in ("pro_l", "prob_l"):
+        P.paint(cb, Ramp("#2e3e22", "#3e522c", "#4e6638"), 1.8)
+    # a round friendly face: big dark eyes set wide on its front, a pale little mouth
+    with P.eyes():
+        f = P.face("ohead", "north")
+        for x in (0, f.w - 2):
+            for dx in (0, 1):
+                for j in (1, 2, 3):
+                    f.set(x + dx, j, hexc("#0c100a"))
+            f.set(x + (1 if x == 0 else 0), 1, hexc("#e0ecd0"))
+    face_fill(P, "ohead", "north", lambda f, i, j: cream.at(3.0) if j == f.h - 2 and 1 < i < f.w - 2 else None)
+    return P.skin, P.glow
+
+
+# --- Cloudcalf: a sky-whale calf as big as a cow, with a little cloud riding on its back -----------------------------
+
+def cloudcalf():
+    r = Rig("kin_cloudcalf", (128, 64))
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 1.4, 2.6, (0.08, 0.2), 0.0
+    body = r.bone("body", (0, 12, 0))
+    body.cube("hull", -7, -6, -6, 14, 12, 12)
+    body.cube("belly", -6, 4, -5, 12, 3, 10)
+    head = body.bone("head", (0, 0.5, -6))
+    head.cube("ohead", -6, -5.5, -7, 12, 10, 7)
+    head.cube("melon", -5, -6.5, -6, 10, 1, 5)
+    jaw = head.bone("jaw", (0, 4.5, -0.5))
+    jaw.cube("ojaw", -5.5, 0, -6.5, 11, 2, 7)
+    tail = body.bone("tail", (0, -0.5, 6))
+    tail.cube("otail", -4.5, -4, 0, 9, 8, 7)
+    flukes = tail.bone("flukes", (0, -0.5, 7))
+    flukes.cube("stock", -2.5, -2, 0, 5, 4, 2)
+    flukes.cube("ofluke", -7, -0.5, 1, 14, 1, 5)
+    cloud = body.bone("cloud", (0, -6, -1))
+    cloud.cube("puff_a", -4, -3, -3, 8, 3, 7)
+    cloud.cube("puff_b", -2.5, -5, -1.5, 5, 2, 4)
+
+    def side(sd, nm, mir, sh):
+        fin = body.bone("fin_" + nm, (sd * 7, 2, -3), (0, sd * -20, sd * 12))
+        if sd > 0:
+            fin.cube("pfin_l", 0, -0.5, -2, 7, 1, 5)
+        else:
+            fin.cube("pfin_r", -7, -0.5, -2, 7, 1, 5, mirror=True, share="pfin_l")
+    sym(side)
+    r.look = [("head", 0.6, 0.5)]
+    r.pack()
+
+    def swim(cl, amp, bob=1.0, beats=1):
+        # the sky as water: the flukes beat slow and deep, the body rides each beat, the fins steer
+        n = 8 * beats
+        cycle(cl, "tail", "rot", lambda p: (amp * 0.5 * s(p * beats), 0, 0), n)
+        cycle(cl, "flukes", "rot", lambda p: (amp * s(p * beats, -0.15), 0, 0), n)
+        cycle(cl, "body", "pos", lambda p: (0, bob * s(p * beats, 0.25), 0), n)
+        for nm, sg in (("l", 1), ("r", -1)):
+            cycle(cl, "fin_" + nm, "rot", lambda p, sg=sg: (0, sg * -20, sg * (12 + 10 * s(p * beats, 0.3))), n)
+        cycle(cl, "cloud", "pos", lambda p: (0.3 * s(p * beats, 0.4), 0.4 * s(p * beats, 0.5), 0), n)
+
+    idle = clip_of(r, "idle", 4.0, loop=True)
+    swim(idle, 12, 1.2)
+    cycle(idle, "cloud", "scale", lambda p: (1 + 0.05 * s(p * 2), 1 + 0.08 * s(p * 2), 1 + 0.05 * s(p * 2)), 8)
+    idle.rot("head", keys((0, 0, 0, 0), (1.4, 0, 0, 0), (2.0, -4, 12, 0), (2.8, -4, 12, 0), (3.4, 0, 0, 0), (4.0, 0, 0, 0)))
+    move = clip_of(r, "move", 2.0, loop=True)
+    swim(move, 20, 1.0)
+    hold(move, "body", rot=(4, 0, 0))
+    run = clip_of(r, "run", 1.0, loop=True)
+    swim(run, 28, 0.8)
+    hold(run, "body", rot=(9, 0, 0))
+    want = clip_of(r, "want", 4.0, loop=True)
+    # calling for its pod: head up, jaw open, a long call this way and then that, listening between
+    swim(want, 10, 0.8)
+    want.rot("head", keys((0, 0, 0, 0), (0.5, -18, -20, 0), (1.5, -18, -20, 0), (2.0, -8, 0, 0), (2.5, -18, 20, 0), (3.5, -18, 20, 0), (4.0, 0, 0, 0)))
+    want.rot("jaw", keys((0, 0, 0, 0), (0.6, 18, 0, 0), (1.3, 18, 0, 0), (1.6, 0, 0, 0), (2.6, 18, 0, 0), (3.3, 18, 0, 0), (3.6, 0, 0, 0), (4.0, 0, 0, 0)))
+    want.rot("body", keys((0, 0, 0, 0), (0.5, -6, -10, 0), (1.5, -6, -10, 0), (2.0, 0, 0, 0), (2.5, -6, 10, 0), (3.5, -6, 10, 0), (4.0, 0, 0, 0)))
+    tell = clip_of(r, "tell", 2.0)
+    # a joyful roll, flukes slapping the air, the little cloud puffing up big
+    swim(tell, 30, 0.6, 2)
+    tell.rot("body", keys((0, 0, 0, 0), (0.3, -8, 0, -20), (1.0, -8, 0, 200), (1.5, 0, 0, 360), (2.0, 0, 0, 360)))
+    tell.scale("cloud", keys((0, 1, 1, 1), (0.4, 1.4, 1.5, 1.4), (1.4, 1.3, 1.4, 1.3), (2.0, 1, 1, 1)))
+    tell.rot("jaw", keys((0, 0, 0, 0), (0.3, 15, 0, 0), (1.6, 15, 0, 0), (2.0, 0, 0, 0)))
+    nudge = clip_of(r, "nudge", 1.2)
+    swim(nudge, 10, 0.4)
+    nudge.rot("head", keys((0, 0, 0, 0), (0.25, 0, -15, 0), (0.55, 0, 15, 0), (0.85, 0, -8, 0), (1.2, 0, 0, 0)))
+    nudge.rot("jaw", keys((0, 0, 0, 0), (0.2, 8, 0, 0), (0.6, 0, 0, 0), (1.2, 0, 0, 0)))
+    work = clip_of(r, "work", 3.0, loop=True)
+    # raining on the field: it hangs still, the cloud on its back swelling and squeezing
+    swim(work, 8, 0.5)
+    cycle(work, "cloud", "scale", lambda p: (1.25 + 0.1 * s(p * 2), 1.35 + 0.15 * s(p * 2), 1.25 + 0.1 * s(p * 2)), 12)
+    hold(work, "head", rot=(10, 0, 0))
+    sleep = clip_of(r, "sleep", 5.0, loop=True)
+    # come down to rest on the ground, fins flat out, flukes laid down, the cloud settled over it like a blanket
+    hold(sleep, "body", pos=(0, -5, 0))
+    hold(sleep, "fin_l", rot=(0, 0, 75))
+    hold(sleep, "fin_r", rot=(0, 0, -75))
+    hold(sleep, "tail", rot=(-8, 0, 0))
+    hold(sleep, "flukes", rot=(-10, 0, 0))
+    hold(sleep, "head", rot=(4, 0, 0))
+    cycle(sleep, "body", "scale", lambda p: (1 + 0.025 * s(p), 1 + 0.03 * s(p), 1), 8)
+    cycle(sleep, "cloud", "scale", lambda p: (1.2 + 0.05 * s(p, 0.3), 0.8 + 0.05 * s(p, 0.3), 1.2), 8)
+    sniff = clip_of(r, "sniff", 1.4)
+    swim(sniff, 10, 0.4)
+    sniff.rot("head", keys((0, 0, 0, 0), (0.3, 6, -18, 0), (0.7, 6, 18, 0), (1.1, 6, 0, 0), (1.4, 0, 0, 0)))
+    carry = clip_of(r, "carry", 2.0, loop=True)
+    swim(carry, 18, 1.0)
+    hide = clip_of(r, "hide", 1.2, loop=True)
+    hold(hide, "fin_l", rot=(0, -20, 70))
+    hold(hide, "fin_r", rot=(0, 20, -70))
+    hold(hide, "tail", rot=(25, 0, 0))
+    hold(hide, "flukes", rot=(30, 0, 0))
+    hold(hide, "head", rot=(14, 0, 0))
+    cycle(hide, "body", "pos", lambda p: (0.15 * s(p * 4), -3, 0), 24)
+    stubs(r)
+    return r
+
+
+def paint_cloudcalf(r, P):
+    sky = Ramp("#2e4266", "#3e5684", "#506ca0", "#6684b8", "#7e9ccc", "#98b4de", "#b8cef0")
+    white = Ramp("#a8b4c8", "#c4cede", "#dce4ee", "#eef2f8", "#ffffff")
+    soft = combine(p_blotch("cloudcalf", 6, 0.35), p_fur(0.3, 3, 2, 3))
+    for cb in ("hull", "ohead", "otail", "stock", "melon"):
+        P.paint(cb, sky, 4.2, soft)
+    # pale underneath: belly and jaw, with the long grooves of a whale's throat
+    P.paint("belly", white, 3.0)
+    face_fill(P, "belly", "bottom", lambda f, i, j: white.at(1.6) if i % 2 == 0 else None)
+    P.paint("ojaw", white, 3.0)
+    face_fill(P, "ojaw", "bottom", lambda f, i, j: white.at(1.6) if i % 2 == 0 else None)
+    for cb in ("hull", "ohead", "otail"):
+        for fname in ("west", "east", "north", "south"):
+            face_fill(P, cb, fname, lambda f, i, j: white.at(2.6 + 0.4 * (j - f.h + 3)) if j >= f.h - 3 else None)
+    # freckles across its back like early stars; they glow faintly when the light goes
+    for cb in ("hull", "ohead"):
+        face_fill(P, cb, "top", lambda f, i, j: white.at(3.6) if (i * 7 + j * 13) % 17 == 0 else None)
+        P.glow_face(cb, "top", lambda f, i, j: hexc("#d8e6ff") if (i * 7 + j * 13) % 17 == 0 else None)
+    for cb in ("pfin_l", "ofluke"):
+        P.paint(cb, sky, 3.2)
+        face_fill(P, cb, "top", lambda f, i, j: white.at(3.4) if j == f.h - 1 else None)
+    # the cloud it carries: soft and white, a little grey underneath
+    for cb in ("puff_a", "puff_b"):
+        P.paint(cb, white, 3.8, p_fur(0.9, 3, 3, 3))
+        face_fill(P, cb, "bottom", lambda f, i, j: white.at(1.6))
+    # a small gentle eye low on each side, toward the back of the head
+    with P.eyes():
+        for fname in ("west", "east"):
+            f = P.face("ohead", fname)
+            ex = f.w - 3 if fname == "west" else 2
+            for j in (5, 6):
+                f.set(ex, j, hexc("#0e1220"))
+                f.set(ex + (1 if fname == "west" else -1), j, hexc("#0e1220"))
+            f.set(ex, 5, hexc("#cfe0ff"))
+    return P.skin, P.glow
+
+
+# --- Boulderback: big, tusked and mossy, with eyes that glow in the dark. Looks like a monster; shy as anything --------
+
+def boulderback():
+    r = Rig("kin_boulderback", (128, 128))
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 0.9, 1.6, (0.06, 0.16), 1.0
+    body = r.bone("body", (0, 11, 0))
+    body.cube("hide", -8, -7, -10, 16, 14, 20)
+    body.cube("hump", -6, -10, -7, 12, 3, 13)
+    body.cube("moss", -6.5, -10.5, -5, 13, 1, 9)
+    body.cube("rocks", -5, -11, -1, 5, 1, 4)
+    head = body.bone("head", (0, 3, -10), (15, 0, 0))
+    head.cube("ohead", -5, -5, -7, 10, 9, 7)
+    head.cube("snout", -3, 0, -9, 6, 4, 2)
+    tail = body.bone("tail", (0, -4, 10), (25, 0, 0))
+    tail.cube("otail", -1, 0, -0.5, 2, 5, 1)
+    tail.cube("tailtuft", -1.5, 5, -1, 3, 2, 2)
+
+    def side(sd, nm, mir, sh):
+        tk = head.bone("tusk_" + nm, (sd * 3.5, 2, -7), (-30, sd * -12, 0))
+        tk.cube("tbase_" + nm, -1, -1, -5, 2, 2, 5, mirror=mir, share=sh("tbase_l"))
+        tk.cube("ttip_" + nm, -1, -4, -6, 2, 3, 2, mirror=mir, share=sh("ttip_l"))
+        ear = head.bone("ear_" + nm, (sd * 5, -4, -2), (0, 0, sd * 30))
+        ear.cube("oear_" + nm, -0.5, 0, -1, 1, 3, 2, mirror=mir, share=sh("oear_l"))
+        for part, z in (("fleg", -6), ("hleg", 6)):
+            lg = body.bone(part + "_" + nm, (sd * 5, 7, z))
+            lg.cube("o" + part + "_" + nm, -2.5, 0, -2.5, 5, 6, 5, mirror=mir, share=sh("ofleg_l") if part == "fleg" else "ofleg_l")
+    sym(side)
+    r.look = [("head", 0.7, 0.5)]
+    r.pack()
+
+    legs = [("fleg_l", 0), ("hleg_r", 0.05), ("fleg_r", 0.5), ("hleg_l", 0.55)]
+
+    def lumber(cl, swing, roll, bob):
+        gait4(cl, swing, legs)
+        cycle(cl, "body", "rot", lambda p: (0, 0, roll * s(p)), 8)
+        cycle(cl, "body", "pos", lambda p: (0, bob * abs(s(p)), 0), 8)
+        cycle(cl, "head", "rot", lambda p: (15 + 3 * s(p * 2, 0.1), 4 * s(p), 0), 8)
+        cycle(cl, "tail", "rot", lambda p: (25, 0, 12 * s(p, 0.2)), 8)
+
+    idle = clip_of(r, "idle", 4.0, loop=True)
+    cycle(idle, "body", "scale", lambda p: (1 + 0.015 * s(p), 1 + 0.02 * s(p), 1), 8)
+    idle.rot("head", keys((0, 15, 0, 0), (1.2, 15, 0, 0), (1.8, 10, 18, 0), (2.6, 10, 18, 0), (3.2, 15, 0, 0), (4.0, 15, 0, 0)))
+    idle.rot("ear_l", keys((0, 0, 0, 30), (2.9, 0, 0, 30), (3.0, 0, 0, 10), (3.15, 0, 0, 30), (4.0, 0, 0, 30)))
+    move = clip_of(r, "move", 1.2, loop=True)
+    lumber(move, 22, 3, 0.6)
+    run = clip_of(r, "run", 0.7, loop=True)
+    lumber(run, 35, 4, 1.4)
+    want = clip_of(r, "want", 4.0, loop=True)
+    # keeps very still and backs off from your light, head down and tusks low; peeks; hides its face again
+    want.pos("body", keys((0, 0, 0, 0), (1.0, 0, 0, 2.5), (2.8, 0, 0, 2.5), (4.0, 0, 0, 0)))
+    want.rot("head", keys((0, 15, 0, 0), (1.0, 38, 0, 0), (1.8, 30, -14, 0), (2.4, 30, -14, 0), (2.8, 38, 0, 0), (4.0, 15, 0, 0)))
+    for nm, sd in (("ear_l", 1), ("ear_r", -1)):
+        want.rot(nm, keys((0, 0, 0, sd * 30), (1.0, 0, 0, sd * 70), (2.8, 0, 0, sd * 70), (4.0, 0, 0, sd * 30)))
+    for nm, a in (("fleg_l", -14), ("fleg_r", -8), ("hleg_l", 10), ("hleg_r", 14)):
+        want.rot(nm, keys((0, 0, 0, 0), (0.4, a, 0, 0), (0.8, 0, 0, 0), (2.8, 0, 0, 0), (3.4, -a, 0, 0), (4.0, 0, 0, 0)))
+    tell = clip_of(r, "tell", 2.0)
+    # a slow, happy rumble: it rocks, lifts its head to you and gives a little stamp
+    tell.rot("head", keys((0, 15, 0, 0), (0.4, -10, 0, 0), (1.4, -10, 0, 0), (2.0, 15, 0, 0)))
+    tell.rot("body", keys((0, 0, 0, 0), (0.5, 0, 0, 4), (1.0, 0, 0, -4), (1.5, 0, 0, 3), (2.0, 0, 0, 0)))
+    tell.rot("fleg_l", keys((0, 0, 0, 0), (1.2, 0, 0, 0), (1.4, -25, 0, 0), (1.6, 0, 0, 0), (2.0, 0, 0, 0)))
+    tell.scale("body", keys((0, 1, 1, 1), (0.6, 1.04, 1.05, 1.02), (1.4, 1.04, 1.05, 1.02), (2.0, 1, 1, 1)))
+    for nm, sd in (("ear_l", 1), ("ear_r", -1)):
+        tell.rot(nm, keys((0, 0, 0, sd * 30), (0.4, 0, 0, sd * 5), (1.6, 0, 0, sd * 5), (2.0, 0, 0, sd * 30)))
+    nudge = clip_of(r, "nudge", 1.2)
+    # a snort and a step back
+    nudge.rot("head", keys((0, 15, 0, 0), (0.2, 5, 0, 0), (0.35, 25, -10, 0), (0.6, 25, 10, 0), (1.2, 15, 0, 0)))
+    nudge.pos("body", keys((0, 0, 0, 0), (0.4, 0, 0, 1.5), (1.2, 0, 0, 0)))
+    work = clip_of(r, "work", 3.0, loop=True)
+    # carrying stone: head down to its load, a heave forward, set down, back for more
+    cycle(work, "head", "rot", lambda p: (30 + 10 * s(p * 2), 0, 0), 8)
+    cycle(work, "body", "pos", lambda p: (0, 0.6 * max(0, s(p * 2)), -1.2 * s(p * 2)), 8)
+    gait4(work, 10, legs)
+    sleep = clip_of(r, "sleep", 5.0, loop=True)
+    # lies down like a hill, head on its front feet, and breathes very slowly
+    hold(sleep, "body", pos=(0, -5.5, 0))
+    for nm in ("fleg_l", "fleg_r"):
+        hold(sleep, nm, rot=(-80, 0, 0))
+    for nm in ("hleg_l", "hleg_r"):
+        hold(sleep, nm, rot=(80, 0, 0))
+    hold(sleep, "head", rot=(28, 0, 0), pos=(0, -0.5, 0))
+    hold(sleep, "ear_l", rot=(0, 0, 80))
+    hold(sleep, "ear_r", rot=(0, 0, -80))
+    cycle(sleep, "body", "scale", lambda p: (1 + 0.02 * s(p), 1 + 0.03 * s(p), 1), 8)
+    sniff = clip_of(r, "sniff", 1.4)
+    sk = [(0, 15, 0, 0)]
+    for k in range(5):
+        sk += [(0.25 + k * 0.16, 36, 0, 0), (0.33 + k * 0.16, 30, 0, 0)]
+    sk.append((1.4, 15, 0, 0))
+    sniff.rot("head", sk, "lin")
+    carry = clip_of(r, "carry", 1.3, loop=True)
+    lumber(carry, 18, 2, 0.5)
+    hold(carry, "head", rot=(28, 0, 0))
+    hide = clip_of(r, "hide", 1.2, loop=True)
+    # crouched as small as something that big can make itself, face tucked down between its feet
+    hold(hide, "body", pos=(0, -3.5, 1))
+    for nm in ("fleg_l", "fleg_r"):
+        hold(hide, nm, rot=(-55, 0, 0))
+    for nm in ("hleg_l", "hleg_r"):
+        hold(hide, nm, rot=(55, 0, 0))
+    hold(hide, "head", rot=(45, 0, 0), pos=(0, 0.5, 1))
+    hold(hide, "ear_l", rot=(0, 0, 85))
+    hold(hide, "ear_r", rot=(0, 0, -85))
+    cycle(hide, "body", "rot", lambda p: (0, 0, 1.2 * s(p * 5)), 24)
+    stubs(r)
+    return r
+
+
+def paint_boulderback(r, P):
+    slate = Ramp("#1e2420", "#2a322c", "#38423a", "#48544a", "#5a685c", "#6e7e70", "#86968a")
+    moss = Ramp("#24401a", "#345a22", "#46762c", "#5a8e36", "#72a844", "#8cc058")
+    stone = Ramp("#3a3c40", "#4c5056", "#62666c", "#7a7e84", "#94989e")
+    P.paint("hide", slate, 3.6, combine(p_stone(P.rng, 0.6, 3), p_fur(0.3, 2, 2, 2)))
+    # the plates on its back: big stones grown into the hide, with moss in the cracks
+    P.paint("hump", stone, 3.0, p_stone(P.rng, 0.9, 4))
+    P.paint("rocks", stone, 3.4, p_stone(P.rng, 1.0, 2))
+    P.paint("moss", moss, 3.6, p_fur(0.9, 2, 2, 2))
+    for fname in ("west", "east", "north", "south"):
+        face_fill(P, "hump", fname, lambda f, i, j: moss.at(2.4 + (i % 2)) if j == 0 and (i * 3) % 4 != 1 else None)
+        face_fill(P, "hide", fname, lambda f, i, j: moss.at(2.0 + 0.6 * ((i + j) % 2)) if j < 2 and (i * 5 + j) % 3 != 0 else None)
+    face_fill(P, "hide", "top", lambda f, i, j: moss.at(2.4 + 0.8 * ((i * 3 + j) % 3 == 0)) if (i * 7 + j * 3) % 5 < 3 else None)
+    face_fill(P, "hide", "bottom", lambda f, i, j: slate.at(1.6))
+    P.paint("ohead", slate, 3.4, p_stone(P.rng, 0.4, 2))
+    P.paint("snout", Ramp("#2a2a2c", "#3a3a3e", "#4e4c52", "#625e64"), 2.6)
+    face_fill(P, "snout", "north", lambda f, i, j: hexc("#141416") if j == 1 and i in (1, f.w - 2) else None)
+    ivory = Ramp("#8a7e66", "#aa9e84", "#c8bea2", "#e2dac2", "#f4eee0")
+    for cb in ("tbase_l", "ttip_l"):
+        P.paint(cb, ivory, 3.4, R.p_bands(2, 0.5))
+    P.paint("oear_l", slate, 2.8)
+    P.paint("ofleg_l", slate, 3.0, p_stone(P.rng, 0.4, 2))
+    face_fill(P, "ofleg_l", "bottom", lambda f, i, j: hexc("#121614"))
+    face_fill(P, "ofleg_l", "north", lambda f, i, j: hexc("#1a1e1a") if j == f.h - 1 and i % 2 == 0 else None)
+    P.paint("otail", slate, 2.6)
+    P.paint("tailtuft", moss, 3.0, p_fur(0.8, 2, 2, 2))
+    # small deep-set eyes that shine pale green in the dark, under a heavy brow
+    with P.eyes():
+        for fname in ("west", "east"):
+            f = P.face("ohead", fname)
+            ex = front_i(f) + (1 if fname == "west" else -1)
+            for j in (3, 4):
+                f.set(ex, j, hexc("#0c120e"))
+                f.set(ex + (1 if fname == "west" else -1), j, hexc("#0c120e"))
+            f.set(ex, 3, hexc("#b8f0b0"))
+        P.glow_face("ohead", fname, lambda f, i, j: hexc("#b8f0b0") if j == 3 and i == front_i(f) + (1 if f.name == "west" else -1) else None)
+    for fname in ("west", "east"):
+        P.glow_face("ohead", fname, lambda f, i, j: hexc("#a8f0a0") if j in (3, 4) and i == front_i(f) + (1 if f.name == "west" else -1) else None)
+    face_fill(P, "ohead", "north", lambda f, i, j: slate.at(1.4) if j == 2 else None)
+    return P.skin, P.glow
+
+
 DESIGNS = {"kin_lampwing": (lampwing, paint_lampwing), "kin_burrowbun": (burrowbun, paint_burrowbun),
            "kin_mossback": (mossback, paint_mossback), "kin_pebblepup": (pebblepup, paint_pebblepup),
            "kin_totter": (totter, paint_totter), "kin_thatchback": (thatchback, paint_thatchback),
            "kin_emberkit": (emberkit, paint_emberkit), "kin_puffwool": (puffwool, paint_puffwool),
            "kin_dumplin": (dumplin, paint_dumplin), "kin_pondling": (pondling, paint_pondling),
-           "kin_snufflet": (snufflet, paint_snufflet), "kin_chimewren": (chimewren, paint_chimewren)}
+           "kin_snufflet": (snufflet, paint_snufflet), "kin_chimewren": (chimewren, paint_chimewren),
+           "kin_bumblepuff": (bumblepuff, paint_bumblepuff), "kin_loomworm": (loomworm, paint_loomworm),
+           "kin_cloudcalf": (cloudcalf, paint_cloudcalf), "kin_boulderback": (boulderback, paint_boulderback)}
 
 
 def rigs(only=None):

@@ -79,8 +79,12 @@ public class KinBeast extends PathfinderMob {
     public @Nullable BlockPos mark;
     /** The day a Puffwool was last brushed at home (its wool comes once a day). */
     public long brushedDay = -1;
-    /** Who a lost Dumplin flock is following home. Not saved: a flock that loses its leader circles again. */
+    /** Who a lost Dumplin flock (or a lost Cloudcalf) is following home. Not saved: one that loses its leader circles again. */
     public @Nullable UUID leader;
+    /** A Boulderback's wait (SPEC §43.13), not saved: who's keeping still in the dark near it, for how long, and where. */
+    public int quietTicks;
+    public @Nullable UUID quietFor;
+    public net.minecraft.world.phys.Vec3 quietAt = net.minecraft.world.phys.Vec3.ZERO;
     /** Its errand at home (SPEC §43.12), not saved: what it's doing, from where to where, what for, and for whom. */
     public int task;
     public @Nullable BlockPos taskFrom, taskTo;
@@ -93,7 +97,7 @@ public class KinBeast extends PathfinderMob {
 
     public KinBeast(EntityType<? extends KinBeast> type, Level level) {
         super(type, level);
-        if (kind() == KinKind.LAMPWING) {
+        if (kind().flies()) {
             moveControl = new FlyingMoveControl<>(this, 20, true);
             setNoGravity(true);
         }
@@ -108,23 +112,31 @@ public class KinBeast extends PathfinderMob {
     }
 
     public static AttributeSupplier.Builder attributes(KinKind k) {
-        AttributeSupplier.Builder b = PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, k == KinKind.MOSSBACK || k == KinKind.THATCHBACK ? 16 : 10)
+        AttributeSupplier.Builder b = PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, switch (k) {
+                    case MOSSBACK, THATCHBACK -> 16;
+                    case CLOUDCALF -> 20;
+                    case BOULDERBACK -> 30;
+                    default -> 10;
+                })
                 .add(Attributes.FOLLOW_RANGE, 24).add(Attributes.MOVEMENT_SPEED, switch (k) {
                     case MOSSBACK -> 0.12;
                     case BURROWBUN -> 0.3;
                     case PEBBLEPUP, SNUFFLET -> 0.28;
                     case CHIMEWREN, EMBERKIT -> 0.3;
                     case TOTTER, PONDLING -> 0.22;
-                    case PUFFWOOL -> 0.2;
+                    case PUFFWOOL, BUMBLEPUFF, CLOUDCALF -> 0.2;
+                    case LOOMWORM -> 0.1;
+                    case BOULDERBACK -> 0.18;
                     default -> 0.25;
                 });
-        if (k == KinKind.LAMPWING) b.add(Attributes.FLYING_SPEED, 0.45);
+        if (k.flies()) b.add(Attributes.FLYING_SPEED, k == KinKind.CLOUDCALF ? 0.3 : k == KinKind.BUMBLEPUFF ? 0.35 : 0.45);
         return b;
     }
 
     @Override
     protected PathNavigation createNavigation(Level level) {
-        if (KinContent.kindOf(getType()) == KinKind.LAMPWING) {
+        KinKind fk = KinContent.kindOf(getType());
+        if (fk != null && fk.flies()) {
             FlyingPathNavigation n = new FlyingPathNavigation(this, level);
             n.setCanOpenDoors(false);
             n.setCanFloat(true);
@@ -168,7 +180,7 @@ public class KinBeast extends PathfinderMob {
 
     /** Where it shows its want: a Snufflet where it smells something, a Pondling by its pond, the rest at their own spot. */
     public BlockPos wantSpot() {
-        return (kind() == KinKind.SNUFFLET || kind() == KinKind.PONDLING) && mark != null ? mark : origin;
+        return (kind() == KinKind.SNUFFLET || kind() == KinKind.PONDLING || kind() == KinKind.BUMBLEPUFF) && mark != null ? mark : origin;
     }
 
     /** Starts an act (restarts it when {@code again}: a second tell still plays its clip). */
@@ -219,7 +231,7 @@ public class KinBeast extends PathfinderMob {
         goalSelector.addGoal(4, new LeadGoal());
         goalSelector.addGoal(5, new HomeGoal());
         goalSelector.addGoal(6, new WantGoal());
-        goalSelector.addGoal(7, k == KinKind.LAMPWING ? new WaterAvoidingRandomFlyingGoal(this, 0.8) : new WaterAvoidingRandomStrollGoal(this, 0.8));
+        goalSelector.addGoal(7, k.flies() ? new WaterAvoidingRandomFlyingGoal(this, 0.8) : new WaterAvoidingRandomStrollGoal(this, 0.8));
         goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8F));
         goalSelector.addGoal(9, new RandomLookAroundGoal(this));
     }
@@ -427,7 +439,7 @@ public class KinBeast extends PathfinderMob {
             left--;
             BlockPos at = wantSpot();
             double d = distanceToSqr(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
-            if (d > (at == origin ? 9 : 4)) getNavigation().moveTo(at.getX() + 0.5, at.getY() + (kind() == KinKind.LAMPWING ? 2 : 0), at.getZ() + 0.5, 0.9);
+            if (d > (at == origin ? 9 : 4)) getNavigation().moveTo(at.getX() + 0.5, at.getY() + (kind().flies() ? 2 : 0), at.getZ() + 0.5, 0.9);
             else {
                 getNavigation().stop();
                 // a Snufflet snuffles at its spot; the rest show their want
@@ -454,8 +466,8 @@ public class KinBeast extends PathfinderMob {
         if ((a == TELL || a == NUDGE || a == SNIFF) && tickCount - actAt() > 50) act(IDLE);
         if (a == IDLE && getDeltaMovement().horizontalDistanceSqr() < 1.0E-4 && KinWatch.asleepNow(this)) act(SLEEP);
         else if (a == SLEEP && !KinWatch.asleepNow(this)) act(IDLE);
-        // a Lampwing settles to the ground to sleep, and is up in the air again when it wakes
-        if (kind() == KinKind.LAMPWING) {
+        // a flier settles to the ground to sleep, and is up in the air again when it wakes
+        if (kind().flies()) {
             boolean down = act() == SLEEP;
             if (isNoGravity() == down) setNoGravity(!down);
         }
@@ -519,12 +531,12 @@ public class KinBeast extends PathfinderMob {
 
     @Override
     protected void checkFallDamage(double ya, boolean onGround, net.minecraft.world.level.block.state.BlockState onState, BlockPos pos) {
-        if (kind() != KinKind.LAMPWING) super.checkFallDamage(ya, onGround, onState, pos);
+        if (!kind().flies()) super.checkFallDamage(ya, onGround, onState, pos);
     }
 
     @Override
     public boolean causeFallDamage(double distance, float multiplier, DamageSource source) {
-        return kind() != KinKind.LAMPWING && super.causeFallDamage(distance, multiplier, source);
+        return !kind().flies() && super.causeFallDamage(distance, multiplier, source);
     }
 
     // ---- saving (schema 2: schema 1 plus mark and brushed_day) --------------------------------------------------------

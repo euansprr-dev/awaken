@@ -51,7 +51,7 @@ final class KinCommands {
                         ServerPlayer p = c.getSource().getPlayerOrException();
                         KinKind k = KinKind.of(StringArgumentType.getString(c, "kind"));
                         BlockPos at = KinHelp.ground(p.level(), p.getBlockX() + 4, p.getBlockZ());
-                        KinBeast b = KinHome.spawn(p.level(), k, k == KinKind.LAMPWING ? at.above(2) : at, EntitySpawnReason.COMMAND);
+                        KinBeast b = KinHome.spawn(p.level(), k, k.flies() ? at.above(k == KinKind.CLOUDCALF ? 4 : 2) : at, EntitySpawnReason.COMMAND);
                         return b == null ? 0 : 1;
                     })))
                     .then(Commands.literal("home").then(Commands.argument("kind", StringArgumentType.word())

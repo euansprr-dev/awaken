@@ -68,8 +68,10 @@ public final class KinWorks {
     static final int FETCH_PATIENCE = 20 * 60;
     /** An Emberkit smelts one item this often (ticks); each SMELT bell at home takes 15 off, never under 40. */
     static final int SMELT_EVERY = 100, SMELT_FASTEST = 40, SMELT_BELL = 15;
-    /** A Thatchback places one block of a plan this often, from a plan within this reach of the Anchor. */
-    static final int BUILD_EVERY = 10, PLAN_REACH = 64;
+    /** A Thatchback places one block of a plan this often (faster with a Boulderback home to carry stone), from a plan within this reach of the Anchor. */
+    static final int BUILD_EVERY = 10, BUILD_STONE = 4, PLAN_REACH = 64;
+    /** Stage 6's four (SPEC §43.13): a Bumblepuff's comb and honey, a Loomworm's thread and cloth, a Boulderback's stone, once a day; a Cloudcalf's rain. */
+    static final int COMB = 2, HONEY = 1, STRING = 4, CLOTH = 1, STONE = 16, RAIN_EVERY = 100, RAIN_REACH = 4;
     /** Pondlings fish and Snufflets forage once in this many ticks, so many a day; Dumplins lay this many eggs a day. */
     static final int FISH_EVERY = 1200, FISH_DAY = 4, FORAGE_EVERY = 1200, FORAGE_DAY = 4, EGG_EVERY = 2400, EGGS_DAY = 2;
     /** A Puffwool's wool, once a day, when it's brushed. */
@@ -90,8 +92,45 @@ public final class KinWorks {
             case PONDLING -> pondling(level, b);
             case SNUFFLET -> snufflet(level, b);
             case CHIMEWREN -> chimewren(level, b);
+            case BUMBLEPUFF -> daily(level, b, 4, new ItemStack(Items.HONEYCOMB, COMB), new ItemStack(Items.HONEY_BOTTLE, HONEY));
+            case LOOMWORM -> daily(level, b, 3, new ItemStack(Items.STRING, STRING), new ItemStack(Items.WOOL.white(), CLOTH));
+            case BOULDERBACK -> daily(level, b, 4, new ItemStack(Items.COBBLED_DEEPSLATE, STONE));
+            case CLOUDCALF -> rain(level, b);
             default -> {}
         }
+    }
+
+    /** Pottering round its nook, and once a day (a couple of minutes into its day) what it makes, into the nearest chest. */
+    private static void daily(ServerLevel level, KinBeast b, int r, ItemStack... made) {
+        potter(b, r);
+        if (b.made > 0 || !KinHome.every(b, 2400)) return;
+        for (ItemStack s : made) putOrDrop(level, b, b.nook, s.copy());
+        b.made = 1;
+        b.act(KinBeast.WORK, true);
+    }
+
+    /**
+     * A Cloudcalf rains on its field: it hangs over it and every five seconds the crops under it (four blocks round) take a
+     * growth step and the farmland soaks. Rain you can see falls from it the whole time it's working.
+     */
+    private static void rain(ServerLevel level, KinBeast b) {
+        if (b.distanceToSqr(Vec3.atCenterOf(b.nook)) > 4) walk(b, b.nook, 0.6);
+        b.act(KinBeast.WORK);
+        if (KinHome.every(b, 10))
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.FALLING_WATER, b.getX(), b.getY() - 0.2, b.getZ(), 6, 1.6, 0.1, 1.6, 0);
+        if (!KinHome.every(b, RAIN_EVERY)) return;
+        BlockPos c = b.blockPosition();
+        for (int dx = -RAIN_REACH; dx <= RAIN_REACH; dx++)
+            for (int dz = -RAIN_REACH; dz <= RAIN_REACH; dz++)
+                for (int dy = -10; dy <= -2; dy++) {
+                    BlockPos at = c.offset(dx, dy, dz);
+                    BlockState s = level.getBlockState(at);
+                    if (s.is(net.minecraft.tags.BlockTags.CROPS) && s.isRandomlyTicking() && b.getRandom().nextInt(4) == 0) {
+                        s.randomTick(level, at, b.getRandom());
+                        b.made++;
+                    } else if (s.is(net.minecraft.world.level.block.Blocks.FARMLAND) && s.getValue(net.minecraft.world.level.block.FarmlandBlock.MOISTURE) < 7)
+                        level.setBlock(at, s.setValue(net.minecraft.world.level.block.FarmlandBlock.MOISTURE, 7), 2);
+                }
     }
 
     /** A better nook since it came (a Smeltery built for the Emberkit, a Storehouse for the Totter): it moves in. */
@@ -436,7 +475,8 @@ public final class KinWorks {
             walk(b, at, 1.0);
             return;
         }
-        if (!KinHome.every(b, BUILD_EVERY)) return;
+        boolean stone = KinWorld.get(level.getServer()).at(b.home).stream().anyMatch(m -> m.kind() == KinKind.BOULDERBACK);
+        if (!KinHome.every(b, stone ? BUILD_STONE : BUILD_EVERY)) return;
         if (WorkPlans.build(level, plan)) {
             b.made++;
             b.held(new ItemStack(Items.OAK_PLANKS));

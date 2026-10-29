@@ -64,5 +64,21 @@
   "block.awaken.storehouse_drop": "The Drop",
   "block.awaken.ledger_desk": "Ledger Desk",
   "block.awaken.work_plan": "Work Plan",
-  "item.awaken.woken_clapper": "Woken Clapper"
+  "item.awaken.woken_clapper": "Woken Clapper",
+  "subtitles.awaken.kin.bumblepuff.call": "Bumblepuff hums",
+  "subtitles.awaken.kin.bumblepuff.tell": "Bumblepuff buzzes happily",
+  "subtitles.awaken.kin.bumblepuff.worry": "Bumblepuff buzzes, alarmed",
+  "entity.awaken.kin_bumblepuff": "Bumblepuff",
+  "subtitles.awaken.kin.loomworm.call": "Loomworm chirrs",
+  "subtitles.awaken.kin.loomworm.tell": "Loomworm spins",
+  "subtitles.awaken.kin.loomworm.worry": "Loomworm curls up",
+  "entity.awaken.kin_loomworm": "Loomworm",
+  "subtitles.awaken.kin.cloudcalf.call": "Cloudcalf calls",
+  "subtitles.awaken.kin.cloudcalf.tell": "Cloudcalf sings",
+  "subtitles.awaken.kin.cloudcalf.worry": "Cloudcalf cries",
+  "entity.awaken.kin_cloudcalf": "Cloudcalf",
+  "subtitles.awaken.kin.boulderback.call": "Boulderback rumbles",
+  "subtitles.awaken.kin.boulderback.tell": "Boulderback huffs softly",
+  "subtitles.awaken.kin.boulderback.worry": "Boulderback snorts",
+  "entity.awaken.kin_boulderback": "Boulderback"
 }

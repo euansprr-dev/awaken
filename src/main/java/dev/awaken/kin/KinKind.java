@@ -7,7 +7,8 @@ import java.util.Locale;
  * The land's own beasts that can live with you (SPEC §43.5; JOURNEY part 2's table). Each kind's words are what the
  * System can say about it: what sort of animal, where it lives, its three watch lines (vague to plain; the third states
  * the want, never the help), its job at home, its nook, its name for you at Kin. {@link #built} kinds walk the world
- * now; the rest come in later stages and are never shown until they do. Stage 5 brings the second eight.
+ * now; the rest come in later stages and are never shown until they do. Stage 5 brings the second eight, stage 6 the
+ * last four (the Bumblepuff, the Loomworm, the Cloudcalf and the Boulderback).
  */
 public enum KinKind {
     LAMPWING("Lampwing", true, "a moth the size of a cat with a glowing belly", "the edges of woods, after dark",
@@ -64,7 +65,12 @@ public enum KinKind {
                     "They want someone up high to follow home to their nest."),
             "Leaves eggs in the nearest chest every day.",
             "a pen at your home: a hay bale to nest in", "Tall One", 0xE8C27A),
-    BUMBLEPUFF("Bumblepuff", false, "a fuzzy bee as big as a loaf", "flower fields", List.of(), "", "", "", 0),
+    BUMBLEPUFF("Bumblepuff", true, "a fuzzy bee as big as a loaf that floats more than it flies", "flower fields",
+            List.of("It drifts from one bare patch of ground to the next and back to its old nest.",
+                    "Somebody picked the meadow round its nest bare. It hasn't anywhere to go.",
+                    "It wants flowers round its nest. Lots of them."),
+            "Leaves honeycomb and honey in the nearest chest every day: wax for your candles.",
+            "a bee nest or a beehive at your home", "Flower-Bringer", 0xF0C040),
     PONDLING("Pondling", true, "a frog-axolotl that fishes", "still water",
             List.of("It sits at the water's edge and won't go in.",
                     "Something at the bottom of the pond is souring the water.",
@@ -83,9 +89,24 @@ public enum KinKind {
                     "They want to hear a new song. A bell, maybe: they're the one kind that loves them."),
             "In a Rookery, sings you a note your song is missing, and which way it came from.",
             "a Rookery (a Chime Perch in a room)", "Bell-Ringer", 0x8FB0DC),
-    LOOMWORM("Loomworm", false, "a fat, fuzzy caterpillar that spins", "old woods' canopy", List.of(), "", "", "", 0),
-    CLOUDCALF("Cloudcalf", false, "a sky-whale calf that drifts", "the sky islands", List.of(), "", "", "", 0),
-    BOULDERBACK("Boulderback", false, "something big and tusked that glows in the dark", "deep caves", List.of(), "", "", "", 0);
+    LOOMWORM("Loomworm", true, "a fat, fuzzy caterpillar that spins", "old woods",
+            List.of("It's lying on a fallen log, looking up at the branches.",
+                    "It's eaten every leaf it can reach, and it won't touch the wrong tree's.",
+                    "It wants a branch of the tree it lives on, brought down to it."),
+            "Spins thread and cloth: string and white wool in the nearest chest every day.",
+            "leaves at your home it can reach: a tree, or a hedge", "Leaf-Bringer", 0xB8D88A),
+    CLOUDCALF("Cloudcalf", true, "a sky-whale calf as big as a cow that drifts", "the sky over the high peaks",
+            List.of("It drifts in slow circles, calling out over the peaks.",
+                    "It's alone. Something it belongs with is calling back, far off, and it can't tell where.",
+                    "It wants its pod. It would follow someone up at its own height who knew the way."),
+            "Rains on your fields: crops under it grow faster and the soil stays wet.",
+            "open sky over a field at your home", "Pod-Finder", 0xA8C8F0),
+    BOULDERBACK("Boulderback", true, "something big, tusked and mossy, with eyes that glow in the dark", "deep caves",
+            List.of("It's standing very still in the dark, watching your light.",
+                    "Every time a light comes near, it backs away into the dark.",
+                    "It wants to be left alone in the dark. If you put your light away and wait, it might come to you."),
+            "Carries stone: your works go up more than twice as fast while it's home, and it brings up stone from below every day.",
+            "somewhere dark at your home: no light and no sky", "Quiet One", 0x6A8A5A);
 
     public final String title, sort, where, job, nook, callsYou;
     public final boolean built;
@@ -105,6 +126,11 @@ public enum KinKind {
         this.colour = colour;
     }
 
+    /** The kinds that fly (a moth, a bee, a sky-whale calf): flying moves, no fall damage, down to the ground to sleep. */
+    public boolean flies() {
+        return this == LAMPWING || this == BUMBLEPUFF || this == CLOUDCALF;
+    }
+
     public String id() {
         return name().toLowerCase(Locale.ROOT);
     }
@@ -114,7 +140,7 @@ public enum KinKind {
         return LAMPWING;
     }
 
-    /** The kinds that live in the world now (stage 2: four; stage 5: twelve). */
+    /** The kinds that live in the world now (stage 2: four; stage 5: twelve; stage 6: all sixteen). */
     public static List<KinKind> livingNow() {
         return java.util.Arrays.stream(values()).filter(k -> k.built).toList();
     }

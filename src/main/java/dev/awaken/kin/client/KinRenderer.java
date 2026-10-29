@@ -122,7 +122,7 @@ public final class KinRenderer extends EntityRenderer<KinBeast, KinRenderState> 
         double speed = Math.hypot(e.getX() - e.xo, e.getZ() - e.zo);
         s.walkAnimationSpeed = Mth.clamp((float) speed * 6F, 0F, 1F);
         s.modelScale = scale;
-        s.airborne = kind == KinKind.LAMPWING && e.act() != KinBeast.SLEEP;
+        s.airborne = kind.flies() && e.act() != KinBeast.SLEEP;
         Anim a = anims.computeIfAbsent(e, x -> new Anim());
         int want = model.clip(clipFor(e.act(), speed));
         if (want < 0) want = model.clip("idle");

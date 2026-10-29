@@ -39,6 +39,8 @@ public final class KinContent {
                 case EMBERKIT, PONDLING -> 0.5F;
                 case DUMPLIN -> 0.45F;
                 case CHIMEWREN -> 0.35F;
+                case LOOMWORM -> 0.5F;
+                case CLOUDCALF, BOULDERBACK -> 1.4F;
                 default -> 0.6F;
             }, h = switch (k) {
                 case BURROWBUN, SNUFFLET -> 0.55F;
@@ -47,6 +49,10 @@ public final class KinContent {
                 case EMBERKIT -> 0.4F;
                 case DUMPLIN -> 0.5F;
                 case PONDLING, CHIMEWREN -> 0.35F;
+                case BUMBLEPUFF -> 0.5F;
+                case LOOMWORM -> 0.4F;
+                case CLOUDCALF -> 1.0F;
+                case BOULDERBACK -> 1.4F;
                 default -> 0.6F;
             };
             TYPES.put(k, ENTITIES.registerEntityType("kin_" + k.id(), KinBeast::new, MobCategory.CREATURE,
