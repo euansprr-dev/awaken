@@ -94,7 +94,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Pyre | Nightmare | Fear | Flier | kit | A, the Pyre Mare | ✓ 2a699e47 | ✓ 2a699e47 | — |
 | The Undertow | Nightmare | Fear | Caster | kit | A, the Old Snapper | ✓ 7063327c | ✓ 7063327c | — |
 | The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | kit | A, the Throng | ✓ 43eb6a0c | ✓ 43eb6a0c | — |
-| The Thousand Legs | Nightmare | Fear | Crawler | kit | A, the House Centipede | — | — | — |
+| The Thousand Legs | Nightmare | Fear | Crawler | kit | A, the House Centipede | ✓ 5eb9480a | ✓ 5eb9480a | — |
 | The Fuse | Nightmare | Fear | Construct | creeper ×2 | — | — | — | — |
 | The Faceless | Nightmare | Fear | Duelist | player | — | — | — | — |
 
