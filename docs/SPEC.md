@@ -10329,7 +10329,12 @@ Built 2026-10-28. Four themes, twenty worlds, on the cave engine (38.10) with a 
   - **Foundry**: brick-gridded iron floors, brass-banded walls with pipes and furnaces; the Works Floor's machine pits
     (four deep under a grate, furnaces at the bottom, gears turning in them); the Great Engine's gear (radius up to 10,
     its axle on two iron pillars, high enough to walk under); the Stopped Hour's 70 pieces hanging in the air round a clock
-    face on the back wall; pipe runs along every tunnel and steam curtains across the Pipe Maze's.
+    face on the back wall; pipe runs along every tunnel and steam curtains across the Pipe Maze's. A tunnel's wall pipes
+    stop short of a doorway's middle (its two inner blocks, four blocks in: `Dress.inDoorway`), so where the way bends
+    hard by a door and its wall swings across the doorway no pipe closes it (29 Oct, Euan: "fix the Pipe Maze doorway
+    block"; GameTest `gateworlds_pipe_maze_doorways`). This changes the carve by a few blocks of pipe at such doorways, so a
+    Foundry gate already open shows a seam there where old chunks meet new ones (Euan: "a seam in Foundry gates already
+    open is fine").
   - **Desert**: dunes; the Buried Colossus's head (radius 15, rising 6 to 36 out of the sand, its eyes glowing glass)
     placed in the first free corner, and a colonnade along its tunnels; glass only on faces you can see (the Glass Caves;
     elsewhere carved sandstone, so no glass ever shows the void through the shell); the Sunken City's lots (12 square, a
@@ -10637,8 +10642,8 @@ Built 2026-10-29. Two themes (ten worlds) and fifteen rare worlds, all on the ca
     concrete or terracotta, a light into the nearest light block. One patch on a calm cavern's floor keeps its true
     colours: the_true_colour or the_right_colour. Built rooms keep theirs.
   - A worn theme meets rooms it never meets at home (the gate's own Rig rooms), so `BorrowedDress` keeps the middle of
-    every doorway open at foot and head height, four blocks in, after the theme's dress (a Pipe Maze pipe can otherwise
-    cross a Rig room's way out). The theme's own worlds are untouched.
+    every doorway open at foot and head height, four blocks in, after the theme's dress (a piece of it can otherwise
+    cross a Rig room's way out). The Foundry's own tunnels keep their pipes out of doorways themselves (38.11).
   - The secrets an event gives that aren't named after it are listed in `WorldThemes.GIVES`.
 - **Calm** (a recipe's `calm` param, `Rooms.calm`; the Quiet and the Last Campfire): its rooms wake empty, an arena is an
   ordinary room, and the gate's clock doesn't press you there.

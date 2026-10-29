@@ -411,6 +411,63 @@ public final class GateWorldBellTests {
         for (String id : CAVE_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
         // the D themes (38.11)
         for (String id : D_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
+        AwakenTests.register("gateworlds_pipe_maze_doorways", 1200, h -> {
+            // a Foundry tunnel's wall pipes stop short of a doorway's middle (38.11), even where the way bends hard by the
+            // door and its wall swings across the doorway
+            String id = "awaken:clockwork_foundry/pipe_maze";
+            GateWorld w = GateWorlds.get(id);
+            h.assertTrue(w != null, "the Pipe Maze loads");
+            List<String> moods = w.moods().stream().map(GateWorld.Mood::id).toList();
+            int bends = 0, across = 0;
+            for (int i = 0; i < 10 && across == 0; i++) {
+                GatePlan p = dressed(plan(0x919EL + i * 7919L, i, Theme.CLOCKWORK_FOUNDRY), id, moods.get(i % moods.size()));
+                for (int fl = 1; fl <= p.floors(); fl++) {
+                    FloorWorld fw = p.worldFor(0, fl);
+                    Plots.Plot plot = FloorBuilder.plotFor(p, 0, fl);
+                    if (fw == null || plot == null) continue;
+                    CaveEngine.Cave cave = null;
+                    FloorLayout f = null;
+                    for (int v = 0; v < 3 && f == null; v++) {
+                        cave = new CaveEngine.Cave(new WorldEngine.Ctx(p, p.theme(), 0, fl, fl == p.floors(), plot, fw.world(), w, fw.mood(),
+                                Hash.of(p.seed(), 400, fl * 8 + v), v));
+                        f = cave.run();
+                    }
+                    if (f == null) continue;
+                    WorldCheck wc = new WorldCheck(p, f);
+                    FoundryDress dress = (FoundryDress) cave.dress;
+                    double half = cave.hw + 0.4;
+                    for (ChainLayout.Link l : cave.chain.links.values()) {
+                        Room r = f.room(l.w());
+                        ChainLayout.Way way = ChainLayout.Way.of(r, l, cave.seed);
+                        if (way.straight()) continue;
+                        bends++;
+                        int[] b = Dress.box(r);
+                        for (int x = b[0]; x <= b[2]; x++) for (int z = b[1]; z <= b[3]; z++) {
+                            if (!Dress.inDoorway(r, x, z, 4)) continue;
+                            double[] at = way.at(x + 0.5, z + 0.5);
+                            boolean wall = at != null && Math.abs(at[0]) > half - 1.1 && Math.abs(at[0]) <= half;
+                            String where = " at " + x + " " + z + " (floor " + fl + " of " + p + ")";
+                            // where the way bends hard the carve itself cuts the doorway's corner (wall left standing, its
+                            // skin a pipe up the wall here and there); wherever it opened the doorway no tunnel pipe lies
+                            // across it and there's room to stand, the floor stepping a block here and there
+                            if (!wc.pass(x, cave.W, z) && !wc.pass(x, cave.W + 1, z) && !wc.pass(x, cave.W + 2, z)) continue;
+                            for (int y = cave.W; y <= cave.W + 3; y++) {
+                                var st = wc.at(x, y, z);
+                                h.assertTrue(st != dress.pipeX && st != dress.pipeZ, "a pipe lies across room " + r.id + "'s doorway at height " + (y - cave.W) + where);
+                            }
+                            int feet = Integer.MIN_VALUE;
+                            for (int y = cave.W - 1; y <= cave.W + 2 && feet == Integer.MIN_VALUE; y++) if (wc.node(x, y, z)) feet = y;
+                            h.assertTrue(feet != Integer.MIN_VALUE, "room " + r.id + "'s doorway is half closed (" + wc.at(x, cave.W, z).getBlock().getDescriptionId() + ", "
+                                    + wc.at(x, cave.W + 1, z).getBlock().getDescriptionId() + ")" + where);
+                            // where the wall's head-height pipe ran before it stopped short of the doorway
+                            if (wall && (feet == cave.W || feet == cave.W + 1)) across++;
+                        }
+                    }
+                }
+            }
+            h.assertTrue(across > 0, "a way bent hard enough by a door to swing its wall pipes across the doorway was carved (" + bends + " bends)");
+            h.succeed();
+        });
         // the C themes (38.12)
         for (String id : C_WORLDS) world("gateworlds_" + id.substring(id.indexOf('/') + 1), "awaken:" + id, 6);
         // the sky, the abyss and the rare worlds (38.13)
