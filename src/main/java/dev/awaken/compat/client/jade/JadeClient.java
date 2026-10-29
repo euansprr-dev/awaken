@@ -67,7 +67,7 @@ public final class JadeClient {
         r.registerEntityComponent(new Creature(), AwakenMob.class);
         r.registerEntityComponent(new Townsperson(), TownNpc.class);
 
-        r.addRayTraceCallback((hit, accessor, original) -> hidden(accessor) ? null : accessor);
+        r.addRayTraceCallback((hit, accessor, original) -> hidden(accessor) || plated(accessor) ? null : accessor);
         r.addBeforeTooltipCollectCallback((theme, accessor) -> {
             if (CompatClientConfig.systemStyle() && isAwaken(accessor) && IThemeHelper.get().hasTheme(THEME)) {
                 theme.setValue(IThemeHelper.get().getTheme(THEME));
@@ -91,6 +91,16 @@ public final class JadeClient {
         if (a instanceof EntityAccessor ea) return SpoilerRule.disguised(ea.getEntity());
         if (a instanceof BlockAccessor ba) return SpoilerRule.disguised(ba.getBlockState());
         return false;
+    }
+
+    /**
+     * A creature wearing Awaken's plate gets no Jade card: the plate is its one readout (Euan 2026-10-29: "only the plate
+     * shows"). Players and tamed pets have no plate, so they keep Jade's card; so does everything while plates are off.
+     */
+    static boolean plated(Accessor<?> a) {
+        if (!(a instanceof EntityAccessor ea) || !(ea.getEntity() instanceof net.minecraft.world.entity.LivingEntity e)) return false;
+        if (e instanceof net.minecraft.world.entity.player.Player || e instanceof net.minecraft.world.entity.TamableAnimal t && t.isTame()) return false;
+        return dev.awaken.living.client.LivingClient.platesOn() && dev.awaken.core.api.CreatureTag.of(e).present();
     }
 
     static boolean isAwaken(Accessor<?> a) {

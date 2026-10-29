@@ -1466,7 +1466,9 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   Trophy Mounts. Creatures: temperament from the fauna role (and "Hostile now"), level and rank (from the spawn's
   content level) and role (Elite, Warden, Gate Lord...); a creature the Codex doesn't have yet shows only "Not in your
   Codex yet". Townsfolk: job, whose town, the rank they came at. Jade never names mimics, dormant statues, the
-  ritual's Seated One and statues or Veil marks, and decoys show their name only. Server facts come from
+  ritual's Seated One and statues or Veil marks, and decoys show their name only. While plates show (SPEC §21.1), a
+  creature that wears one gets no Jade card at all: the plate is its one readout (Euan 2026-10-29, "only the plate
+  shows"); players, tamed pets and blocks keep theirs. Server facts come from
   `compat.LookAt` (plain Awaken code); without Jade on the server the client-only lines remain. Tests:
   `compat_look_at_gate_rule`, `compat_look_at_machines`, `compat_look_at_creatures`.
 - Xaero's World Map is shut in instanced dimensions (`compat.WorldMaps`, 2026-10-24): a map of every chunk in view
