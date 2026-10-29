@@ -12183,6 +12183,33 @@ here as it goes.
   someone in Carillon reacts to. The System reads them in brackets ("[She got as far as the bridge.]").
 - At the Wake they stand and walk home over one play-day (stage 7).
 
+Built (stage 1, `dev.awaken.world.stilled`): blocks `awaken:stilled` (a block entity, drawn by its own jointed model:
+knees, elbows, the body pivoting at the hips; twelve hand-set poses: milestone, walking, grave, a pair on a cart's
+tail, a lead with no dog, reaching, looking back, waiting, a lantern, a parent with a child, curled, sat on a bundle;
+five looks, man, woman, old man, old woman, girl; textures from `tools/art/stilled.py`) and `awaken:left_chest` (a
+locked trunk), both bedrock-hard, immovable, dragon- and wither-immune, cancelled on any break (only `/awaken stilled
+remove`, which also keeps the spot from ever being used again). Spots (`StilledSpots`, pure from the seed and the
+centre): the north road's three at the ridge +12, +170 and +330 (Aldo's letter to Ilse is letter 0); the first
+hamlet's near edge, which the third takes (REACHING, the hamlet's key) when the hamlet's anchor lies within 300 of
+its road spot; then one a cell (1,000 within 3,000, two cells in three; 2,000 to 6,000; 3,000 past), the cell's spot
+moved to the edge of the nearest empty settlement within 400 (walked out from its anchor past its ground, +8, facing
+it), else 4 blocks beside the nearest laid road within 300, else dropped; a cell's never within 270 of a named spot
+not yet placed. Rolls: carry letter 40%, key 35%, keepsake 25% (no city: keepsakes become letters 6 in 11, else keys);
+pairs and a parent with a child one in ten each. A key opens the nearest empty settlement no placed key opens yet,
+within 1,200 (its own home last; the hamlet's for the hamlet's figure), else it's a letter; a keepsake names a real
+Carillon household (a citizen record's family name) and who the owner was to them by the figure's look. Worked out
+within 640 of a player, placed within 96 on loaded natural ground (never within 150 of another, in a Hearth, on a
+settlement's ground or in the city reserve); placed and dropped spots are saved (`world_stilled`, schema 1) with each
+player's marks. Reading one: the System's bracketed line (name, the pose's reading, what they hold) and the thing, once
+per player; a key or keepsake lost before it's used is held again for you, a letter whenever you don't hold it.
+A key's tag names the settlement (filled in once it's planned) and Track points at its well; the left chest stands 3
+to 6 blocks from that well when its keyholder comes within 64; opened with the key it gives the first early pattern
+not known, else the first of the six relics not had from a chest, else three essence, plus `chests/left_behind`
+supplies, and keeps the key. A keepsake used in Carillon names the district a member of its family is in now and
+Tracks them (the System keeps the register; Teodor has no archive); shown to one of them (use on them) they say,
+once, in plain words what it was and why the owner went back, and you keep it (`Settlements.onShown`). Counters:
+`awaken:stilled_met`, `awaken:stilled_letters_read`, `awaken:left_chests_opened`, `awaken:keepsakes_shown`.
+
 ### 43.4 No allies: Echoes removed
 - Nothing a player owns fights for them except their own powers' short-lived summons and decoys. Beasts never fight.
 - Removed: Echo binding (the bind key's use, chance by SPI and rank), the Echo cap, role pads and the Barracks room, the

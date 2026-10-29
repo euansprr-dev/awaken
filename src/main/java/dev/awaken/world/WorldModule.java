@@ -10,5 +10,6 @@ public final class WorldModule {
         dev.awaken.world.fauna.FaunaModule.init(modBus);
         dev.awaken.world.anomaly.AnomalyModule.init(modBus);
         dev.awaken.world.landmark.LandmarkModule.init(modBus);
+        dev.awaken.world.stilled.StilledModule.init(modBus);
     }
 }

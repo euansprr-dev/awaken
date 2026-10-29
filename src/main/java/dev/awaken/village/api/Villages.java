@@ -56,7 +56,17 @@ public final class Villages {
         void addMood(MinecraftServer server, String key, int delta);
 
         boolean reserved(Level level, BlockPos pos, int margin);
+
+        default List<Empty> emptyNear(net.minecraft.server.level.ServerLevel level, BlockPos pos, int within) {
+            return List.of();
+        }
     }
+
+    /**
+     * (SPEC §43.1, §43.3) A settlement that stands empty (not a holdfast): its key, its anchor (y 0), and once it's
+     * planned its name and its well's water block (else null; asking plans it soon).
+     */
+    public record Empty(String key, BlockPos anchor, @Nullable String name, @Nullable BlockPos well) {}
 
     private static @Nullable Access access;
 
@@ -132,5 +142,13 @@ public final class Villages {
      */
     public static boolean reserved(Level level, BlockPos pos, int margin) {
         return access != null && access.reserved(level, pos, margin);
+    }
+
+    /**
+     * The empty settlements whose anchors lie within a distance, nearest first (pure from the seed; towns and wayhouses
+     * whose sites aren't found yet are left out). Those not yet planned are planned on the planner thread, never waited for.
+     */
+    public static List<Empty> emptyNear(net.minecraft.server.level.ServerLevel level, BlockPos pos, int within) {
+        return access == null ? List.of() : access.emptyNear(level, pos, within);
     }
 }

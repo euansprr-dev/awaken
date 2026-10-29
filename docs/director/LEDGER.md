@@ -88,19 +88,22 @@ happens).
 - **Get**: posed stone figures, block `awaken:stilled` (a block entity drawn by its own renderer; about twelve poses).
   The first three on the north road in the first 400 blocks past the ridge (Aldo on the milestone just past it); one
   or two on the road to the first hamlet; then one per 1,000 x 1,000 cell within 3,000 blocks of Carillon (two cells in
-  three), one per 2,000 x 2,000 to 6,000, one per 3,000 x 3,000 past that; near a road, a settlement or a Hearth's old
-  ground; never within 150 blocks of another (a seated pair is one figure); never in a gate, below the surface or in
-  the city. Stage 4 adds the one on the way to the first sleeping bell near your Ember.
+  three), one per 2,000 x 2,000 to 6,000, one per 3,000 x 3,000 past that; a cell's sits at the edge of the empty
+  settlement nearest its spot (within 400, on the spot's side, facing home), else beside the road nearest it (within
+  300), else nowhere; never within 150 blocks of another (a seated pair is one figure); never in a gate, below the
+  surface or in the city. When the first hamlet is as near as the third, the third sits at its near edge instead,
+  reaching for it with its key (built). Stage 4 adds the one on the way to the first sleeping bell near your Ember.
 - **For**: the feeling of the Lull; each carries a thing (below).
 - **Know**: Ilse names Aldo; they sit on the roads you walk; reading one (use) gives the System's bracketed line and
   what they hold.
-- **Source**: `world.stilled` places them at runtime in loaded land once a player is within 96 of a chosen spot
-  (natural ground only: no player-placed blocks near, not in a Hearth's radius, not in the city reserve), and keeps
-  each spot placed in saved data so it's never placed twice.
+- **Source**: `world.stilled.StilledPlacer` works a spot out once a player is within 640 and places the figure once
+  one is within 96 and its ground is loaded (natural ground: never wood, planks, path, slabs, stairs, cobblestone,
+  bricks, farmland or anything with a block entity; two free cells above; searched 6 round; not in a Hearth, the city
+  reserve or a settlement's ground), and keeps each spot placed or dropped in saved data so it's never tried twice.
 - **Links**: letters (stage 4's Found leads), keys (left chests), keepsakes (Carillon's families), Lampwings and
   Dumplins (stage 2 and 5 roost on them), the Wake (stage 7: they stand and walk home).
 - **Edges**: unbreakable (no tool, explosion, piston or power moves or breaks one; `destroySpeed` -1, blast resistance
-  of bedrock, push reaction BLOCK); a creative player can't break one either (only `/awaken stilled remove`). What they
+  of bedrock, push reaction IMMOVEABLE; dragon- and wither-immune); a creative player can't break one either (only `/awaken stilled remove`). What they
   carry is per player: each player takes it once; if you lose it before using it, the Stilled still holds it for you.
 
 ### Things the Stilled carry
@@ -111,10 +114,11 @@ happens).
   opens that settlement's left chest. **Know**: the System reads the tag aloud; Track gives the settlement's bearing.
   **Edges**: the chest is placed by the well when a player holding the key comes within 64; the key is used up when the
   chest opens; a lost key can be taken from the Stilled again until its chest is opened.
-- **A keepsake** (`awaken:keepsake`): a named thing (a dog whistle, a ring, a christening spoon) with a Carillon
-  family's name. **For**: the city remembers them. **Know**: the System: "Somebody in Carillon might know this name";
-  Teodor at the archive keeps the register of who came in from the land and tells you where that family lives (Track
-  points there). **Source**: the family names are Carillon's own households (`data/awaken/city/citizens.json`).
+- **A keepsake** (`awaken:stilled_keepsake`; `awaken:keepsake` is the village troubles' own): a named thing (a dog
+  whistle, a ring, a christening spoon) with a Carillon family's name. **For**: the city remembers them. **Know**: the
+  System: "Somebody in Carillon might know this name"; used inside Carillon, the System keeps the city's register (Teodor
+  has no archive): it says which district a member of that family is in right now and Track points there (a line to try
+  in the daytime when none of them are out). **Source**: the family names are Carillon's own households (`data/awaken/city/citizens.json`).
   **Edges**: showing it (use on a citizen of that family) gives their reaction in plain words, once; you keep the
   keepsake. Never a task, never a reward screen.
 
@@ -124,13 +128,14 @@ happens).
   know yet (Spear, Rapier, Chain-blade, Glaive, Twinblades: the five the Wayfarers used to teach), else the first of the
   six old relics they haven't had from a chest (Shepherd's Lantern, Lumen Tonic, Climber's Hook, Caravan Writ,
   Herdcaller Horn, Rider's Spurs: the Wayfarers' chains' rewards), else three essence shards; with it some supplies
-  (bread, torches, string, a bandage). Patterns through `ArmsApi.leftChestPattern`.
+  (bread, torches, string, candles, leather, dried kelp, paper). Patterns through `ArmsApi.leftChestPattern`.
 - **Know**: the key's tag; the chest is by the well, the middle of every settlement.
 - **Source**: `world.stilled.LeftChests`; loot table `awaken:chests/left_behind` for the supplies.
 - **Links**: arms (the five patterns' early home moves from the Wayfarers to here: `data/awaken/arms/style_homes.json`
   "found" in place of "teacher"; the Armoury says "Found early in a chest someone left behind").
-- **Edges**: per player (each opens their own with their own key); unbreakable while any key for it is still out;
-  opening without the key: "[Locked. Whoever had the key went back for something.]"
+- **Edges**: per player (each opens their own with their own key; one placed key per settlement); always unbreakable,
+  like the Stilled; the key stays in the lock; opening without the key: "[Locked. Whoever had the key went back for
+  something.]"; opened again: "[It's empty now. You took what they left, and the key's still in the lock.]"
 
 ### Echoes removed (§43.4)
 - **What goes**: binding, the Echo roster, the field army, the chooser screen and its payloads, the Echo cap and SPI's

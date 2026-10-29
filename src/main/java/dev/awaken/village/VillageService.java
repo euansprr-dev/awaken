@@ -113,6 +113,11 @@ public final class VillageService {
         }
     }
 
+    /** Plans a settlement on the planner thread for someone who asked of it (an empty one's name and well, SPEC §43.3). */
+    static void planSoon(ServerLevel level, SettlementGrid.Anchor a) {
+        plan(level, a);
+    }
+
     /** Plans a settlement on a worker thread (the land read is slow); the next tick starts it. */
     private static void plan(ServerLevel level, SettlementGrid.Anchor a) {
         if (!PLANNING.add(a.key())) return;

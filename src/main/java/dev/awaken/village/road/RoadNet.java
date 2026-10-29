@@ -789,6 +789,22 @@ public final class RoadNet {
         return best;
     }
 
+    /** The laid road point nearest (x, z) within any {@code reach} (it scans the chunks round), or null. */
+    public static @Nullable Nearest nearestWithin(double x, double z, double reach) {
+        int cx = (int) Math.floor(x) >> 4, cz = (int) Math.floor(z) >> 4, w = (int) Math.ceil(reach / 16) + 1;
+        Nearest best = null;
+        for (int dx = -w; dx <= w; dx++)
+            for (int dz = -w; dz <= w; dz++) {
+                List<Spot> l = BY_CHUNK.get(net.minecraft.world.level.ChunkPos.pack(cx + dx, cz + dz));
+                if (l == null) continue;
+                for (Spot e : l) {
+                    double d = Math.hypot(e.road().x()[e.point()] - x, e.road().z()[e.point()] - z);
+                    if (d <= reach && (best == null || d < best.distance())) best = new Nearest(e.road(), e.point(), d);
+                }
+            }
+        return best;
+    }
+
     /** The distance to the laid road point nearest (x, z) if one is within {@code reach} (any reach: it scans the chunks round), else -1. */
     public static double distanceWithin(double x, double z, double reach) {
         int cx = (int) Math.floor(x) >> 4, cz = (int) Math.floor(z) >> 4, w = (int) Math.ceil(reach / 16) + 1;
