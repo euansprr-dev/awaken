@@ -387,50 +387,39 @@ def lordscale():
         "horn_tip": AW.Mat("obsidian", 3, 0.35, 0.75, details=(tip("gold", 5, 2),)),
         "cloth": AW.Mat("wine", 4, 0.0, 0.2, details=(folds(3), gold_hem_cloth())),
         "cloth_sigil": AW.Mat("wine", 4, 0.0, 0.2, details=(folds(3), gold_hem_cloth(), sigil())),
-        "tabard": AW.Mat("wine", 4, 0.0, 0.2, details=(folds(3), gold_hem_cloth(width=3.0))),
+        "tabard": AW.Mat("wine", 4, 0.0, 0.2, details=(folds(3), gold_hem_cloth(width=2.0))),
+        "tabard_wide": AW.Mat("wine", 4, 0.0, 0.2, details=(folds(3), gold_hem_cloth(width=3.0))),
         "lining": AW.Mat("wine", 2, 0.0, 0.15),
         "plate_seam": AW.Mat("lord", 3, 0.55, 0.85, details=(hem("gold", 5), seam("ember", row=None, column=None))),
     }
 
-    # ---- helmet: a closed helm, its brow and jaw a texel proud of the shell, a burning slit between; two great
-    # horns sweeping out, up and back from the temples; a fan of gold-tipped spines down the crown
+    # ---- helmet: a closed helm the size of the head, its brow and prow a texel proud, a burning slit between; a gold
+    # ridge from the nose over the crown; two horns sweeping back from the temples and rising behind
     head = [
-        B(-5, 5, 8, 9, -5, 6, "plate_hem", "shell"),                   # the crown plate
-        B(-3, 3, 9, 10, -4, 5, "plate", "crown"),                      # stepped up: a dome in two plates
-        B(-1, 1, 10, 11, -4, 5, "rimmed", "crest"),                    # the crest's root, the spines ride it
-        B(4, 5, 0, 8, -5, 6, "plate", "shell"), B(-5, -4, 0, 8, -5, 6, "plate", "shell"),
-        B(-4, 4, 0, 8, -5, -4, "plate_lames", "shell"),                # the back, in lames
-        B(-4, 4, 5, 8, 4, 6, "rimmed", "brow"),                        # the brow, two texels proud of the face
-        B(-4, 4, 0, 4, 4, 6, "plate", "jaw"),                          # the jaw plate
-        B(-3, -1, 4, 5, 4, 5, "eye", "eyes"), B(1, 3, 4, 5, 4, 5, "eye", "eyes"),  # the slit, sunk a texel
-        B(-1, 1, 4, 5, 4, 6, "plate_plain", "jaw"), B(-4, -3, 4, 5, 4, 6, "plate_plain", "jaw"),
-        B(3, 4, 4, 5, 4, 6, "plate_plain", "jaw"),
-        B(-1, 1, 0, 8, 6, 7, "gold_ridge", "ridge"),                   # the nasal ridge, down the brow and jaw
-        B(-5, 5, 6, 7, 6, 7, "gold", "band"),                          # a gold band across the brow
-        B(-5, 5, -1, 0, -6, 6, "plate_hem", "rim"),                     # the helm's lower rim, flaring a texel
-        B(-5, 5, 0, 2, -6, -5, "plate_hem", "neck"),                    # the neck guard
-        B(-1, 1, 2, 8, -6, -5, "gold_ridge", "back_ridge"),
+        B(-5, 5, 8, 9, -5, 5, "plate", "shell"),                       # the crown, a texel over the skull
+        B(4, 5, -1, 8, -5, 5, "plate", "shell"), B(-5, -4, -1, 8, -5, 5, "plate", "shell"),
+        B(-4, 4, -1, 8, -5, -4, "plate_lames", "shell"),               # the back, in lames
+        B(-4, 4, 5, 8, 4, 6, "plate_hem", "brow"),                      # the brow, a texel proud, gold over the slit
+        B(-4, 4, -1, 4, 4, 5, "plate", "jaw"),                         # the jaw, flush with the shell
+        B(-3, 3, -1, 3, 5, 6, "plate_hem", "prow"),                    # its prow, under the slit
+        B(-3, -1, 4, 5, 4, 5, "eye", "eyes"), B(1, 3, 4, 5, 4, 5, "eye", "eyes"),  # the slit, sunk between them
+        B(-1, 1, 4, 5, 4, 5, "plate_plain", "jaw"), B(-4, -3, 4, 5, 4, 5, "plate_plain", "jaw"),
+        B(3, 4, 4, 5, 4, 5, "plate_plain", "jaw"),
+        B(-1, 1, 3, 8, 6, 7, "gold_ridge", "ridge"),                   # the nasal, down the brow to the slit
+        B(-1, 1, 9, 11, -3, 4, "plate", "crest"),                       # a low dark crest over the crown
+        B(-5, 5, 0, 2, -6, -5, "plate_hem", "neck"),                   # the neck guard
     ]
-    cheek = [B(5, 6, 0, 6, -1, 6, "plate", "cheek"), B(6, 7, -1, 3, 0, 5, "plate", "cheek")]
-    head += cheek + mirror(cheek)
-    horn = chain((5.5, 6.5, 0.0), [((1, 0.25, -0.1), 4, 3, 3, "horn"), ((0.8, 0.75, -0.45), 4, 3, 3, "horn"),
-                                   ((0.25, 1.0, -0.75), 4, 2, 2, "horn"), ((-0.1, 0.65, -1.0), 4, 2, 2, "horn_tip"),
-                                   ((-0.25, 0.1, -1.0), 3, 1, 1, "horn_tip")], "horn")
+    horn = chain((4.5, 6.5, 1.0), [((0.85, 0.1, -0.5), 4, 3, 3, "horn"), ((0.45, 0.55, -0.7), 4, 2, 2, "horn"),
+                                   ((0.1, 1.0, -0.45), 4, 2, 2, "horn"), ((0.0, 1.0, 0.2), 3, 1, 1, "horn_tip")], "horn")
     head += horn + mirror(horn)
-    head.append(B(5, 6, 5, 8, -1, 2, "gold", "horn_root"))
-    head.append(B(-6, -5, 5, 8, -1, 2, "gold", "horn_root"))
-    for z, n, lean in ((3.0, 4, 20), (0.0, 5, 32), (-3.0, 4, 45)):
-        sp = chain((0, 10.5, z), [((0, math.cos(math.radians(lean)), -math.sin(math.radians(lean))), n, 2, 1, "horn_tip")],
-                   f"spine{z}", up=(1, 0, 0))
-        head += sp
 
     # ---- chestplate: a cuirass with a stepped chevron of plates down the breast, a burning heart-stone at its
-    # middle in a gold frame, a standing collar behind the helm; molten seams down its flanks
+    # middle in a gold frame, a standing collar behind the helm
     body = [
-        B(-5, 5, -10, 0, -3, 3, "plate_hem", "cuirass"),
-        B(-4, 4, -5, -1, 3, 4, "rimmed", "breast"),
-        B(-3, 3, -7, -5, 3, 4, "rimmed", "breast2"),
-        B(-2, 2, -9, -7, 3, 4, "rimmed", "breast3"),
+        B(-5, 5, -10, 0, -3, 3, "plate", "cuirass"),
+        B(-4, 4, -5, -1, 3, 4, "plate_hem", "breast"),
+        B(-3, 3, -7, -5, 3, 4, "plate_hem", "breast2"),
+        B(-2, 2, -9, -7, 3, 4, "plate_hem", "breast3"),
         B(-5, 5, 0, 2, -4, -3, "rimmed", "collar"),                    # the standing collar at the back
         B(-5, -4, 0, 2, -3, 1, "rimmed", "collar"), B(4, 5, 0, 2, -3, 1, "rimmed", "collar"),
         B(-1, 1, -9, 0, -4, -3, "gold_ridge", "spine"),                # the spine ridge down the back
@@ -438,28 +427,21 @@ def lordscale():
     ]
     body += AW.frame((0, -3, 4.5), 4, 2, 1, 45, "gold", "heart_frame")
     body.append(VX.rbox((0, -3, 4.5), (2, 2, 2), 45, "ember_gem", "heart"))
-    for x0, y0 in ((-4, -7), (3, -7), (-3, -9), (2, -9)):  # molten seams tracing the chevron's steps: a burning V
-        body.append(B(x0, x0 + 1, y0, y0 + 2, 3, 4, "ember", "chevron_seam"))
 
-    # ---- arms: three lames of pauldron stepping out and down like a wing's coverts, two swept spikes on the top
-    # lame; a scaled upper arm; a pointed elbow; a vambrace with a molten seam; a flared gold cuff; clawed fingers
+    # ---- arms: a great pauldron over the shoulder, its outer edge rising, two lames under it stepping in, one swept
+    # spike; a scaled upper arm; an elbow cop behind; a vambrace in lames with a molten seam down its outer side
     right_arm = [
-        VX.Box((-1.0, 3.0, 0.0), (3.0, 1.0, 3.0), "plate_hem", "pauldron1", rot(0, 0, 12)),
-        VX.Box((-1.7, 1.2, 0.0), (3.5, 1.0, 4.0), "plate_hem", "pauldron2", rot(0, 0, 22)),
-        VX.Box((-2.6, -0.7, 0.0), (3.5, 1.0, 4.5), "plate_hem", "pauldron3", rot(0, 0, 32)),
+        VX.Box((-2.0, 3.5, 0.0), (3.5, 1.5, 4.0), "plate_hem", "pauldron1", rot(0, 0, -14)),
+        VX.Box((-1.5, 1.0, 0.0), (3.0, 1.0, 3.5), "plate", "pauldron2", rot(0, 0, -6)),
+        B(-4, 1, -2, 0, -3, 3, "plate", "pauldron3"),
         B(-4, 2, -6, -2, -3, 3, "scale_plain", "rerebrace"),
         B(-4, 2, -6, -4, -4, -3, "plate", "couter"),                    # the elbow cop, behind
-        B(-3, 1, -6, -5, -5, -4, "gold", "couter_point"),
         B(-4, 2, -10, -6, -3, 3, "plate_lames", "vambrace"),
-        B(-5, 3, -7, -6, -4, 4, "gold", "cuff"),
         B(-4, 2, -11, -10, -3, 3, "plate", "gauntlet"),                  # the knuckles, a texel under the hand
         B(-5, -4, -10, -7, -1, 1, "ember", "arm_seam"),                  # the vambrace's molten seam, outer side
     ]
-    for x in (-4, -2, 0):  # claws off the fingers' front edge
-        right_arm.append(B(x, x + 1, -12, -11, 1, 3, "gold", f"claw{x}"))
-    for z, n, lean in ((1.5, 5, 20), (-1.5, 4, 35)):
-        right_arm += chain((-3.5, 3.5, z), [((-math.sin(math.radians(25)), math.cos(math.radians(25)), -math.sin(math.radians(lean)) * 0.6), n, 2, 2, "horn"),
-                                            ((-0.5, 0.8, -0.7), 2, 1, 1, "horn_tip")], f"pspike{z}")
+    right_arm += chain((-4.0, 5.0, -1.0), [((-0.35, 1.0, -0.35), 4, 2, 2, "horn"), ((-0.2, 1.0, -0.6), 3, 1, 1, "horn_tip")],
+                       "pspike")
     left_arm = mirror(right_arm)
 
     # ---- cape: three links of wine cloth hemmed in gold, the Lord's chevron on the back, its lower edge cut
@@ -475,31 +457,28 @@ def lordscale():
     for x0, ln in ((-5, 6), (-3, 5), (-1, 6), (1, 5), (3, 6)):  # the cut edge: tongues of cloth of two lengths
         cape2.append(B(x0, x0 + 2, -ln, 0, -1, 0, "cloth", f"cape_t{x0}", hem=True))
 
-    # ---- leggings: a gold-buckled belt with a molten stone; scaled cuisses; flared tassets on the hips; knee cops
-    # with a gold fin; a wine tabard front and back that the legs push as they stride
+    # ---- leggings: a gold-hemmed belt with a molten stone; scaled cuisses; a plate over each hip; knee cops; a wine
+    # tabard front and back to the knee that the legs push as they stride
     belt = [B(-5, 5, -13, -10, -4, 4, "plate_hem", "belt"),
             B(-2, 2, -13, -10, 4, 5, "gold", "buckle"),
             B(-1, 1, -12, -11, 5, 6, "eye", "buckle_stone")]
     right_leg = [
         B(-3, 2, -6, 0, -3, 3, "scale", "cuisse"),                       # five wide: flush with the other leg's
-        B(-4, -3, -3, 1, -3, 3, "plate_hem", "tasset1"),
-        B(-5, -4, -5, -2, -3, 3, "plate_hem", "tasset2"),
-        B(-3, 2, -8, -6, 3, 4, "rimmed", "poleyn"),
+        B(-4, -3, -4, 1, -3, 3, "plate_hem", "tasset"),
+        B(-3, 2, -8, -6, 3, 4, "plate", "poleyn"),
     ]
     left_leg = mirror(right_leg)
-    front_cloth = [B(-3, 3, -7, 0, 0, 1, "tabard", "tabard", hem=True)]
-    back_cloth = [B(-3, 3, -9, 0, -1, 0, "tabard", "tabard", hem=True)]
+    front_cloth = [B(-2, 2, -6, 0, 0, 1, "tabard", "tabard", hem=True)]
+    back_cloth = [B(-3, 3, -7, 0, -1, 0, "tabard_wide", "tabard", hem=True)]
 
-    # ---- boots: greaves with a gold ridge; pointed sabatons a texel under the sole; gold spurs; ankle wings
+    # ---- boots: greaves with a gold ridge; pointed sabatons a texel under the sole; gold spurs
     right_boot = [
         B(-3, 2, -11, -6, -3, 3, "plate", "greave"),
         B(-1, 1, -11, -8, 3, 4, "gold_ridge", "greave_ridge"),
-        B(-3, 2, -13, -11, -3, 3, "plate_hem", "sabaton"),
+        B(-3, 2, -13, -11, -3, 3, "plate", "sabaton"),
         B(-2, 2, -13, -11, 3, 5, "plate", "toe"),
         B(-1, 1, -13, -12, 5, 6, "gold", "toe_tip"),
-        B(-1, 1, -11, -10, -5, -3, "gold", "spur"),
-        B(-4, -3, -10, -8, -2, 2, "gold", "wing"),
-        B(-5, -4, -9, -7, -3, 0, "gold", "wing2"),
+        B(-1, 1, -11, -10, -4, -3, "gold", "spur"),
     ]
     left_boot = mirror(right_boot)
 
