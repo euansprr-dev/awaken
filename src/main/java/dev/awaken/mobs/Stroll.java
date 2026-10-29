@@ -20,9 +20,9 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * {@code /awaken admin stroll <targets> <blocks per tick> <ticks> [degrees per tick]}: moves still (NoAI) creatures
- * forward along their facing on the server, every tick, turning as they go; each call queues a leg after the ones
- * before. Tours film the motion layer's gait with it (SPEC §23.1): a tp a command is one step per round trip, which a
+ * {@code /awaken admin stroll <targets> <blocks per tick> <ticks> [degrees per tick] [climb, blocks per tick]}: moves
+ * still (NoAI) creatures forward along their facing on the server, every tick, turning as they go and climbing or
+ * diving (a flier or swimmer, summoned NoGravity); each call queues a leg after the ones before. Tours film the motion layer's gait with it (SPEC §23.1): a tp a command is one step per round trip, which a
  * busy runner turns into a crawl.
  */
 final class Stroll {
@@ -36,17 +36,19 @@ final class Stroll {
                 .then(Commands.literal("stroll").then(Commands.argument("targets", EntityArgument.entities())
                         .then(Commands.argument("speed", FloatArgumentType.floatArg(0.0F, 2.0F))
                                 .then(Commands.argument("ticks", IntegerArgumentType.integer(1, 2000))
-                                        .executes(c -> queue(c, 0.0F))
+                                        .executes(c -> queue(c, 0.0F, 0.0F))
                                         .then(Commands.argument("turn", FloatArgumentType.floatArg(-90.0F, 90.0F))
-                                                .executes(c -> queue(c, FloatArgumentType.getFloat(c, "turn"))))))))));
+                                                .executes(c -> queue(c, FloatArgumentType.getFloat(c, "turn"), 0.0F))
+                                                .then(Commands.argument("climb", FloatArgumentType.floatArg(-1.0F, 1.0F))
+                                                        .executes(c -> queue(c, FloatArgumentType.getFloat(c, "turn"), FloatArgumentType.getFloat(c, "climb")))))))))));
     }
 
-    private static int queue(CommandContext<CommandSourceStack> c, float turn) throws CommandSyntaxException {
+    private static int queue(CommandContext<CommandSourceStack> c, float turn, float climb) throws CommandSyntaxException {
         float speed = FloatArgumentType.getFloat(c, "speed");
         int ticks = IntegerArgumentType.getInteger(c, "ticks");
         int n = 0;
         for (Entity e : EntityArgument.getEntities(c, "targets")) {
-            QUEUE.computeIfAbsent(e, k -> new ArrayDeque<>()).add(new float[]{speed, ticks, turn});
+            QUEUE.computeIfAbsent(e, k -> new ArrayDeque<>()).add(new float[]{speed, ticks, turn, climb});
             n++;
         }
         return n;
@@ -65,7 +67,7 @@ final class Stroll {
             float[] leg = legs.peek();
             float yaw = e.getYRot() + leg[2];
             float a = yaw * Mth.DEG_TO_RAD;
-            e.snapTo(e.getX() - Mth.sin(a) * leg[0], e.getY(), e.getZ() + Mth.cos(a) * leg[0], yaw, e.getXRot());
+            e.snapTo(e.getX() - Mth.sin(a) * leg[0], e.getY() + leg[3], e.getZ() + Mth.cos(a) * leg[0], yaw, e.getXRot());
             if (e instanceof LivingEntity l) {
                 l.setYBodyRot(yaw);
                 l.setYHeadRot(yaw);
