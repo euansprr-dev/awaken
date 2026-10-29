@@ -75,7 +75,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Ossuary King | Guardian | Orchard | Brute | kit | A, the Orchard King | ✓ ab74a510 | ✓ ab74a510 | — |
 | The Great Listener | Guardian | Silent | Brute | kit | B, the Hush Bat | ✓ af969446 | ✓ af969446 | — |
 | The Furnace Engine | Guardian | Foundry | Brute | kit | A, the Iron Horse | ✓ 4193ade1 | ✓ 4193ade1 | — |
-| The Drowned Moon | Guardian | Inverted | Flier | elder guardian ×1.6 | — | — | — | — |
+| The Drowned Moon | Guardian | Inverted | Flier | kit | A, the Moon Angler | ✓ 1643236a | ✓ 1643236a | — |
 | The Architect of Rooms | Guardian | Dreaming | Caster | evoker ×1.8 | — | — | — | — |
 | The Shadow Regent | Guardian | Court | Duelist | player ×1.6 | — | — | — | — |
 | The Seed Warden | Guardian | Seed | Caster | cube shade ×1.6 | — | — | — | — |
