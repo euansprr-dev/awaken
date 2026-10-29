@@ -79,7 +79,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Architect of Rooms | Guardian | Dreaming | Caster | kit | A, the Hermit House | ✓ cadf2a15 | ✓ cadf2a15 | — |
 | The Shadow Regent | Guardian | Court | Duelist | kit | A, the Long Shadow | ✓ 3feaab86 | ✓ 3feaab86 | — |
 | The Seed Warden | Guardian | Seed | Caster | kit | A, the Husk That Opens | ✓ a6726d89 | ✓ a6726d89 | — |
-| Sovereign of Hunger | Sovereign | Court | Beast | kit | A, the Gorged King | — | — | — |
+| Sovereign of Hunger | Sovereign | Court | Beast | kit | A, the Gorged King | ✓ 7a319255 | ✓ 7a319255 | — |
 | Sovereign of Silence | Sovereign | Court | Brute | cube listener ×1.9 | — | — | — | — |
 | Sovereign of Sleep | Sovereign | Court | Flier | phantom ×3.2 | — | — | — | — |
 | Sovereign of Machines | Sovereign | Court | Brute | iron golem ×1.9 | — | — | — | — |
