@@ -304,6 +304,46 @@ public final class KinHome {
         return out;
     }
 
+    /**
+     * The tower rings its song (SPEC §43.7): every beast living here takes it by how many bells the home holds. Under 20
+     * they bolt for their nooks, 20 to 49 hunker where they are, 50 to 79 stop and listen, 80 to 99 gather under the
+     * tower, and at 100 they sing. Wild beasts within 48 of a song with gaps in it scatter.
+     */
+    public static void song(ServerLevel level, BlockPos anchor, BlockPos tower, int bells, long until) {
+        for (KinWorld.Homed m : KinWorld.get(level.getServer()).at(anchor)) {
+            if (!(level.getEntity(m.id()) instanceof KinBeast b)) continue;
+            if (bells < 20) {
+                b.hideUntil = Math.max(b.hideUntil, until);
+                continue;
+            }
+            b.songUntil = until;
+            b.songAt = tower;
+            b.songMode = bells < 50 ? KinBeast.SONG_HUNKER : bells < 80 ? KinBeast.SONG_LISTEN : bells < 100 ? KinBeast.SONG_GATHER : KinBeast.SONG_SING;
+        }
+        if (bells < 100) scare(level, tower, 48, 600);
+    }
+
+    /** A bell rung in the wild (SPEC §43.7): wild beasts within {@code reach} run from it for {@code ticks}. */
+    public static void scare(ServerLevel level, BlockPos at, int reach, int ticks) {
+        long until = level.getGameTime() + ticks;
+        for (KinBeast b : level.getEntitiesOfClass(KinBeast.class, new net.minecraft.world.phys.AABB(at).inflate(reach), x -> x.home == null))
+            b.hideUntil = Math.max(b.hideUntil, until);
+    }
+
+    /** The peal Gather (SPEC §43.7): every beast living here comes to the tower and waits there a while. */
+    public static int gather(ServerLevel level, BlockPos anchor, BlockPos tower, int ticks) {
+        int n = 0;
+        for (KinWorld.Homed m : KinWorld.get(level.getServer()).at(anchor))
+            if (level.getEntity(m.id()) instanceof KinBeast b) {
+                b.hideUntil = 0;
+                b.songUntil = level.getGameTime() + ticks;
+                b.songAt = tower;
+                b.songMode = KinBeast.SONG_GATHER;
+                n++;
+            }
+        return n;
+    }
+
     /** The tag on wild beasts running from a raid: they leave the world once they've run their course. */
     public static final String STREAM = "awaken_kin_stream";
 
@@ -581,16 +621,22 @@ public final class KinHome {
         return out;
     }
 
+    /** One nugget in this many crushed: the home's Shed bells (SPEC §43.7) make it more often, never better than one in 16. */
+    static int nuggetPer(ServerLevel level, KinBeast b) {
+        if (b.home == null) return NUGGET_PER;
+        return Math.max(16, NUGGET_PER - 4 * dev.awaken.bells.Bells.voice(level, b.home, dev.awaken.bells.BellCatalog.Voice.SHED));
+    }
+
     /** What one item becomes in a Pebblepup's paws, or null if it isn't theirs to work. Never more than came in. */
     static @Nullable List<ItemStack> process(ServerLevel level, KinBeast b, ItemStack s) {
         if (rubble(s)) {
             List<ItemStack> out = new ArrayList<>(List.of(new ItemStack(Items.GRAVEL)));
-            if (level.getRandom().nextInt(NUGGET_PER) == 0) out.add(new ItemStack(level.getRandom().nextInt(3) == 0 ? Items.GOLD_NUGGET : Items.IRON_NUGGET));
+            if (level.getRandom().nextInt(nuggetPer(level, b)) == 0) out.add(new ItemStack(level.getRandom().nextInt(3) == 0 ? Items.GOLD_NUGGET : Items.IRON_NUGGET));
             return out;
         }
         if (s.is(Items.GRAVEL)) {
             List<ItemStack> out = new ArrayList<>(List.of(new ItemStack(level.getRandom().nextInt(4) == 0 ? Items.FLINT : Items.SAND)));
-            if (level.getRandom().nextInt(NUGGET_PER) == 0) out.add(new ItemStack(level.getRandom().nextInt(3) == 0 ? Items.GOLD_NUGGET : Items.IRON_NUGGET));
+            if (level.getRandom().nextInt(nuggetPer(level, b)) == 0) out.add(new ItemStack(level.getRandom().nextInt(3) == 0 ? Items.GOLD_NUGGET : Items.IRON_NUGGET));
             return out;
         }
         Block block = Block.byItem(s.getItem());

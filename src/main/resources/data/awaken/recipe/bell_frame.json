@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "L": "#minecraft:logs",
+    "P": "#minecraft:planks",
+    "B": "minecraft:bell"
+  },
+  "pattern": [
+    "PPP",
+    "LBL",
+    "L L"
+  ],
+  "result": {
+    "id": "awaken:bell_frame"
+  }
+}

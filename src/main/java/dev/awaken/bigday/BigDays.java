@@ -131,12 +131,14 @@ public final class BigDays {
         Raid r = home.raid;
         if (r == null) {
             if (!home.ready || level.getDifficulty() == Difficulty.PEACEFUL || play < FIRST || today - home.last < GAP) return;
+            // the home's Raid bells (SPEC §43.7) hear it a day sooner
+            int lead = dev.awaken.bells.Bells.voice(level, h.pos, dev.awaken.bells.BellCatalog.Voice.RAID) > 0 ? 2 : 1;
             if (home.next < 0) {
                 // due: a play-day or two from now, never said when
-                home.next = today + 1 + level.getRandom().nextInt(home.raids == 0 ? 2 : 3);
+                home.next = today + lead + level.getRandom().nextInt(home.raids == 0 ? 2 : 3);
                 d.setDirty();
             }
-            if (home.next == today + 1 && tod >= PlayDays.MORNING && tod < DUSK) warn(level, d, h, home, today + 1);
+            if (home.next > today && home.next - today <= lead && tod >= PlayDays.MORNING && tod < DUSK) warn(level, d, h, home, home.next);
             else if (home.next <= today) home.next = today + 1; // missed its warning (nobody's clock ran): warn tomorrow
             return;
         }
@@ -265,6 +267,9 @@ public final class BigDays {
             if (near != null) m.setTarget(near);
             else m.getNavigation().moveTo(h.pos.getX() + 0.5, h.pos.getY(), h.pos.getZ() + 0.5, 1.0);
         }
+        // the home's Glow bells (SPEC §43.7): none of them hides at your walls
+        if (now % 40 == 9 && dev.awaken.bells.Bells.voice(level, h.pos, dev.awaken.bells.BellCatalog.Voice.GLOW) > 0)
+            for (Mob m : mobs) m.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.GLOWING, 60, 0, true, false));
     }
 
     private static void wave(ServerLevel level, HearthRecord h, Raid r, Vec3 b, int normals, int elites) {
@@ -321,6 +326,7 @@ public final class BigDays {
             for (ServerPlayer p : here) {
                 Progression.count(p, "awaken:raids_held");
                 Progression.bestMoment(p, "Held my home through its first raid");
+                dev.awaken.bells.Bells.ring(p, "night", "the morning your home held");
             }
         } else KinHome.hide(level, h.pos, 0);
         for (ServerPlayer p : here)
@@ -328,6 +334,27 @@ public final class BigDays {
                     .body(Component.literal(r.lordDown ? "They're gone. Your home stood." : "What was left of them went back into the dark."))
                     .priority(6).ttl(20 * 8).build());
         finish(d, home, r);
+    }
+
+    /** The night each raid was stilled by the peal Stillness, by anchor: once a night. Not saved. */
+    private static final java.util.Map<Long, Long> STILLED = new java.util.HashMap<>();
+
+    /**
+     * The peal Stillness (SPEC §43.7): during a raid's night at this home, the raid's creatures within 48 of whoever rang
+     * it slow to a crawl and lose their strength for ten seconds. Once a night. False if there's no raid to still.
+     */
+    public static boolean still(ServerLevel level, BlockPos anchor, ServerPlayer by) {
+        Home home = BigDayData.get(level.getServer()).peek(anchor);
+        if (home == null || home.raid == null || home.raid.phase != Raid.NIGHT) return false;
+        if (STILLED.getOrDefault(anchor.asLong(), -1L) == home.raid.day) return false;
+        STILLED.put(anchor.asLong(), home.raid.day);
+        for (Mob m : mobs(level, anchor))
+            if (m.distanceToSqr(by) < 48 * 48) {
+                m.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.SLOWNESS, 200, 3));
+                m.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, 200, 1));
+                level.sendParticles(ParticleTypes.END_ROD, m.getX(), m.getY() + m.getBbHeight(), m.getZ(), 4, 0.2, 0.2, 0.2, 0.01);
+            }
+        return true;
     }
 
     /** Nobody home: it breaks what it can reach on its side and carries off what it can, both put right. */

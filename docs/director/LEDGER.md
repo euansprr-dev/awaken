@@ -360,3 +360,119 @@ happens).
   its trail and tracked on the card. Peaceful: no raid (the gate settles). The server down at dusk or a skipped night:
   it came while you were away. A Hearth taken up drops its Big Days. Shared Hearths: every member home counts and is
   hunted; the warning and the away note go to every member online.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Stage 4: the first thirty bells and the tower's song (§43.7)
+
+### The hundred and the Bell Book
+- **Get**: the Book is yours from your first bell (it lives on you, kept through death). Thirty bells can be rung in
+  stage 4 (SPEC §43.7 "Built (stage 4)" lists them); 00 and 31 hold their places; the rest are empty slots with a rank.
+- **For**: the long goal of the game: a hundred bells, each a note in your song and most with a voice that helps your
+  home; three together make a peal.
+- **Know**: the first bell's card says where it went ("It's gone home to your tower") and what it does; six seconds
+  later the Signal says there were a hundred and to find them; the Codex shows the hundred, each slot's rank telling
+  how far off it is.
+- **Source**: `bells.BellCatalog`, `bells.BellBook` (attachment `bell_book`, schema 1), `bells.Bells` (public API: `ring`,
+  `has`, `count`, `voice`, `lordFell`, `holdfastHeard`), counter `awaken:bells`.
+- **Links**: every system that gives one (below); the tower; the voices; stage 5's leads (Sung, Found).
+- **Edges**: a bell rings home once per player; held bells stay held through death; the slots never name a bell you
+  have no lead on.
+
+### Bells from moments (Ember, Nook, Lintel, Founding, Registry, Tenor, Second, Garden, Drowned Choir, Dreaming, Spirit, Night, Watch, Curfew, and the gate worlds' six)
+- **Get**: doing the thing: a Hearth, a beast living with you, a Grand room, Hearth tier 2, the first gate cleared, D
+  and C rank, Descent strata 2 and 3, the first lucid dream, the first spirit spoken to, a raid held to dawn, ringing a
+  holdfast's bell from inside its walls (Watch, then Curfew), and the Lord of a Bell Crypt, Fungal Hollow, Ember Mine,
+  Hive, Overgrown Temple or Lantern Night Market gate at the bell's rank or above.
+- **For**: each is its voice in your tower and its note in your song.
+- **Know**: the moment itself (the card names the bell and where it rang); a holdfast's bell is filed as a Rung lead
+  the first time you stand inside its walls ("Ring it yourself and its note goes home with you").
+- **Source**: `Bells.moments` (every 5 s per player), `BigDays` dawn (Night), `gates.GateEvents` (a Lord's death),
+  `village.Holdfast.bellAt` with a right-click on its bell (`BellModule`).
+- **Links**: the Hearth, kin, the Registry, Provings, raids, holdfasts, the gates, the Descent, Lucidium, the Veil.
+- **Edges**: states already true in an old world ring at once the first time (an old Hearth rings the Ember); a gate
+  below the bell's rank gives nothing (the Crypt Bell wants D); the whole run's party within 96 of the Lord shares it;
+  without a home the bell is held and hangs once there is one.
+
+### Sleeping places (Wren, Barrow, Mere, Wayside, Cairn, Spire, Reed, Thorn, Crag, Fen)
+- **Get**: out in the land: the Wren Bell 90 to 160 blocks from every home; the others in the 640-block cells past the
+  ridge, E bells nearest, then D, then C. Strike the bell (use or hit) once it's free: dug out, dived for, climbed to, or
+  its keeper killed.
+- **For**: the bells nobody hands you, and the land put back: a grey, dead patch turns green again round a woken bell.
+- **Know**: the hum. Within 64 you hear a bell's note from its direction (a Heard lead with a bearing, in the Book);
+  from another side it crosses into an area you can Track; within 24 the grey ground is Seen ("Something here is keeping
+  it that way").
+- **Source**: `bells.BellSites` (planned from the seed, built when a player comes within 96), `bells.BellWorld` (saved
+  `bells`, schema 1), block `awaken:sleeping_bell` (no item: it can't be broken or moved, and drops nothing).
+- **Links**: the Book's leads and Track; the keeper is a themed elite (`MobHooks.spawnThemed`, gate id `bell:<key>`);
+  the Fault mend; the tower.
+- **Edges**: no site in the city, a Hearth or deep water (the cell stays empty); a home's Wren site avoids the city
+  (12 tries, else 120 east); Peaceful: no keeper, the bell is free; a keeper that despawns comes back next time someone
+  is within 16; everyone within 48 at the waking rings it home; a woken bell still rings home for a player who arrives
+  later and strikes it; the painting back finishes even if the player leaves.
+
+### Leads (Heard, Seen, Rung)
+- **Get**: filed by the System when you hear, see or stand at a bell (above). Sung (the Chimewren) and Found (the
+  Stilled's letters) are stage 5's sources; Remembered is the Deep's.
+- **For**: direction without telling: a bearing, then an area, then the place.
+- **Know**: the System's bracketed line when each is filed; the Book's Bell Leads lists them newest first.
+- **Source**: `Bells.heard/seen/holdfastHeard`, `Bells.track` (the top-right card, kind `bell`).
+- **Links**: `core.api.Destinations` (the card); the Book page.
+- **Edges**: one bearing: Track points to where you heard it; two bearings: the area's middle, up to 20 blocks off the
+  bell, so the last stretch is yours to search; ringing the bell clears its lead and the card.
+
+### The bell frame, the belfry and the tower
+- **Get**: the bell frame comes with your first bell; lost, make one (planks over logs and a bell). Set it down inside
+  your own Hearth.
+- **For**: where your bells hang and your song rings from; at 20 bells a belfry goes up round it, at 50 a stone tower.
+- **Know**: placing it says how many hang and that they ring at dawn and dusk; using it says how many more until the
+  belfry or tower; the Book's Your Tower says the same.
+- **Source**: block `awaken:bell_frame` (loot table drops itself), `bells.BellTower`; belfry and tower built from vanilla
+  blocks (stripped dark oak, dark oak planks, deepslate tiles, stone bricks, bells).
+- **Links**: the Hearth; every member's bells; the song; Gather's meeting place.
+- **Edges**: outside your own Hearth it pops off with a line; a second frame pops off and says where the first is; a
+  broken frame drops and the song rings from the Anchor until a new one is set; the belfry or tower waits for clear
+  space (a once-a-day note) and tries again at every song; a tower takes the belfry's leftovers down; shared Hearths
+  hang every member's bells and a bell once hung stays.
+
+### The song and the beasts
+- **Get**: every dawn and dusk at home, from the frame (the belfry's or tower's top once built).
+- **For**: hearing what you have and what's missing: each bell's note in its place, a knock where one's gone; and your
+  beasts' answer, which grows with your bells (hide, hunker, listen, gather, sing).
+- **Know**: it rings on its own; the Book has "Play the song" to hear it anywhere.
+- **Source**: `BellTower.tick/song`, payload `bells_song`, `bells.client.SongPlayer`, `KinHome.song`.
+- **Links**: the kin; the hundred; stage 7's Hundred Peal.
+- **Edges**: heard within 256; a night slept through still wakes to the dawn song; a restart in the song's window may
+  ring it again (harmless); no bells hung, no song.
+
+### Voices
+- **Get**: each bell's voice works while it hangs at home (the card and the Book say what it does).
+- **For**: Rest, Growth, Kin, Ward, Stride, Glow, Shed, Raid, Homeward (numbers in SPEC §43.7).
+- **Know**: the bell's card; Your Tower lists every voice your bells have, with counts.
+- **Source**: `Bells.voice` (public), used by `Bells.body`, `BellModule` (crops, spawns), `kin.Kinship`, `kin.KinHome`,
+  `bigday.BigDays`, `Peals`.
+- **Links**: the Hearth, kin, raids, the Ore Shed, the handbell.
+- **Edges**: counted over the home's hung bells, so a household shares them; caps keep them from running away (Growth
+  and Kin count 5 bells at most, Ward 80%, Shed 1 in 16).
+
+### The handbell and its peals
+- **Get**: with your first bell; lost, make one (a stick over two copper ingots).
+- **For**: a plain ring (out in the wild the land's beasts run from it for a minute), and the peals: Homeward (Ember,
+  Wren, Wayside), Gather (Nook, Founding, Root), Stillness (Tenor, Night, Watch).
+- **Know**: its tooltip ("Sneak and use to change the peal"); a bell's card names a peal it completes; Your Tower shows
+  peals you have and those one bell away.
+- **Source**: item `awaken:handbell`, `bells.Peals`.
+- **Links**: the Hearth (Homeward, Gather), kin (Gather, the scare), raids (Stillness).
+- **Edges**: Homeward: no home, not the overworld, moved or hit while it gathers, or rung again inside 5 minutes: it
+  says why; a restart cancels one gathering. Gather with no beasts says so. Stillness only during a raid's night at your
+  home, once a night. A peal whose bells you no longer all hold (never, today) falls back to a plain ring.
+
+### The Bell Book page
+- **Get**: the Codex, once you hold a bell: The Hundred Bells, Bell Leads, Your Tower.
+- **For**: seeing the whole goal at a glance, following leads, knowing your tower.
+- **Know**: the first bell's Signal line; the Codex tab.
+- **Source**: `bells.BellPage` (built on the server), `bells.BellNet` (`bells_page`, `bells_ask`, `bells_track`),
+  `bells.client.BellBookSection`.
+- **Links**: Track and the top-right card; the song player.
+- **Edges**: the page asks every two seconds while open; hovering never moves the page (two lines kept under the
+  board); a bell you have no lead on shows only its number and rank.

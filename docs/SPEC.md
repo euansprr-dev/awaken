@@ -13209,6 +13209,56 @@ once, in plain words what it was and why the owner went back, and you keep it (`
 - The Hundred Peal (the only big moment that doesn't glitch) raises Kinship a step for many kinds land-wide and gives
   the Kinsong. Then the Deep answers: harder breaks, the Gnawed spread, Grieving Sovereigns. Fighting never ends.
 - Leads: Heard, Seen, Sung, Found, Rung, Remembered. None told by people at home.
+- **Built (stage 4, `dev.awaken.bells`; rows in LEDGER.md "Stage 4")**. The hundred (`BellCatalog`): numbered 00 to 99
+  with a name, rank, source and voice; a bell's number is its step in the song. Thirty are built: Registry 03, Ember 07,
+  Nook 12, Wren 17, Barrow 21, Mere 26, Wayside 34, Tenor 40, Lintel 44, Founding 46, Night 50, Watch 52, Curfew 55,
+  Crypt 58, Second 60, Spore 61, Ember Mine 63, Hive 66, Root 68, Cairn 71, Spire 73, Reed 76, Garden 79, Drowned Choir
+  82, Dreaming 85, Spirit 88, Thorn 91, Crag 93, Fen 95, Lantern 97. 00 (the Seed) and 31 (the Thaw) keep their places
+  for later stages; every other slot shows its rank, empty. The Bell Book is the attachment `bell_book` (schema 1, kept
+  through death): bells held (play-day and where), leads (how learned, the System's lines, bearings), the tracked lead,
+  the handbell's peal, Homeward's next time.
+  Moments ring a bell home (states checked every 5 s per player, events when they happen): a Hearth (Ember), a beast
+  living with you (Nook), a Grand room (Lintel), the Hearth's tier 2 (Founding), the first gate cleared (Registry), D and
+  C rank (Tenor, Second), Descent strata 2 and 3 (Garden, Drowned Choir), the first lucid dream (Dreaming), the first
+  spirit spoken to (Spirit), a raid held to dawn (Night), a holdfast's bell rung from inside its walls (Watch, then
+  Curfew; standing inside files a Rung lead), and a gate world's Lord at the bell's rank or above (Crypt from the Bell
+  Crypt, Spore, Ember Mine, Hive and Root from their worlds, Lantern from the Lantern Night Market) for everyone in the
+  run within 96. The first bell gives the handbell and the bell frame, and six seconds later the Signal's one line:
+  "There were a hundred. Find them. Ring them all and I can show you the bottom."
+  Sleeping places (`BellSites`; saved data `bells`, schema 1): each 640-block cell past the ridge (+120) may hold one, its
+  rank by distance from the centre (E to 1,300 blocks at 85%, D to 2,800 at 70%, C to 4,800 at 60%) and its bell from the
+  band's three; every home's own (the Wren Bell) is buried 90 to 160 blocks out, away from the city. Each is built in one
+  go when a player comes within 96 (never in the city or a Hearth; a bell over water deeper than 12 is lost). Kinds:
+  buried (dig it out), kept (a themed elite of the bell's rank comes out when a player is within 16 and must die first;
+  on Peaceful none comes), sunk (on a pond's bed), high (on a crag). Grey moss, coarse earth and dead bushes over radius
+  7 mark the place asleep. It hums every 8 s to a player within 64 who doesn't hold it: a Heard lead with a bearing;
+  heard again from 32 or more blocks away at a different angle, the two bearings cross into an area whose middle sits up
+  to 20 blocks off the bell. Within 24 it's Seen. Struck free, it wakes: bronze, a toll heard 256 blocks off, the Fault
+  mend for players within 48, the bell home with everyone within 48, and the land turned back over radius 14, ring by
+  ring.
+  The tower (`BellTower`): the bell frame, set inside your own Hearth (anywhere else it pops off), one per home; every
+  bell held by anyone who lives there hangs in it, and a bell once hung stays. At 20 bells a timber belfry goes up round
+  it (5 by 5, 10 high, four bells under its beams, a deepslate-tile roof); at 50 a stone tower (5 by 5, an arch on the
+  frame's side) with a nine-bell belfry on top, 15 high. Each goes up only into clear space; otherwise a note once a
+  play-day, and it tries again at every song. The song at dawn (clock 23,600 to 400, so a night slept through wakes to
+  it) and dusk (11,600 to 12,400): bell #n's note at step n (D major pentatonic, 15 tuned bells, D3 to B5) or a dull
+  knock where it's missing, 4 ticks a step (20 s), heard 256 blocks out. Beasts living there: under 20 bells they hide,
+  20 to 49 hunker, 50 to 79 listen, 80 to 99 gather within 4 of the tower, 100 sing; under 100 the land's wild beasts
+  within 48 run for 30 s.
+  Voices, counted over the home's hung bells: Rest (Regeneration I by your fire, II from 3 bells), Growth (a crop that
+  didn't grow on its tick gets 5% a bell, up to 5 bells), Kin (help warms 10% more a bell, up to 5), Ward (natural night
+  creatures inside the Hearth fail to spawn 20% a bell, up to 80%), Stride (Speed I inside, II from 3), Glow (a raid's
+  creatures glow), Shed (the Ore Shed's nugget odds: one in 32 rubble, 4 fewer a bell, down to 16), Raid (warned two
+  days ahead, not one), Homeward (the peal takes 2 s, not 5).
+  The handbell: use rings it (2 s cooldown; outside a Hearth the land's beasts within 24 run for a minute); sneak-use
+  sets the peal. Homeward (Ember, Wren, Wayside): stand still 5 s (2 with the Registry Handbell hung), then you're beside your Anchor; every 5 minutes,
+  overworld only, broken by moving or a hit. Gather (Nook, Founding, Root): your beasts come to the tower and wait a
+  minute. Stillness (Tenor, Night, Watch): a raid's creatures within 48 get Slowness IV and Weakness II for 10 s, once
+  a raid night. The Bell Book page is in the Codex (The Hundred Bells, Bell Leads, Your Tower, with "Play the song");
+  payloads `bells_song`, `bells_page`, `bells_ask`, `bells_track`; Track puts the lead's area (or the start of its one
+  bearing) on the top-right card. Recipes: handbell (a stick over two copper ingots), bell frame (planks, logs, a bell).
+  Sounds `bells.note_0..14`, `gap`, `handbell`, `toll`, `hum`, `wake` (`tools/art/specs/audio_bells.py`); art from
+  `tools/art/specs/bells.py`. Commands `/awaken admin bells give <id> | tower <n> | song | site <id> | wake | page`.
 
 ### 43.8 Faults and Big Days
 - A Fault is one reusable director: tell, break, words in the black, held cut, aftermath, mend. Sizes: flicker (under

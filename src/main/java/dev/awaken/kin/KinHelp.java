@@ -202,6 +202,10 @@ public final class KinHelp {
             KinWatch.say(p, "[It won't come near you. Not after what happened.]", 6);
             return;
         }
+        if (b.home == null && b.hideUntil > now) {
+            KinWatch.say(p, "[It's running from the bell. Give it a minute to settle.]", 5);
+            return;
+        }
         KinWatch.met(p, b);
         b.lastHelp = now;
         int n = b.helps.merge(p.getUUID(), 1, Integer::sum);

@@ -68,6 +68,11 @@ public class KinBeast extends PathfinderMob {
     public final List<ItemStack> carry = new ArrayList<>();
     public int made;
     public long madeDay = -1, hideUntil, lastHelp, nextWant;
+    /** The tower's song (SPEC §43.7): how it takes it, and where the tower is, until {@code songUntil}. Not saved. */
+    public long songUntil;
+    public int songMode;
+    public @Nullable BlockPos songAt;
+    public static final int SONG_HUNKER = 1, SONG_LISTEN = 2, SONG_GATHER = 3, SONG_SING = 4;
     /** Ticks a player's want-watching has gone on (one watcher at a time). */
     public int watchTicks;
     public @Nullable UUID watcher;
@@ -173,6 +178,7 @@ public class KinBeast extends PathfinderMob {
         KinKind k = KinContent.kindOf(getType());
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new HideGoal());
+        goalSelector.addGoal(1, new SongGoal());
         goalSelector.addGoal(2, new PanicGoal(this, 1.5));
         goalSelector.addGoal(3, new AvoidEntityGoal<>(this, Player.class, p -> p instanceof ServerPlayer sp && KinWatch.scares(this, sp), 10F, 1.1, 1.5,
                 EntitySelector.NO_CREATIVE_OR_SPECTATOR::test));
@@ -205,6 +211,43 @@ public class KinBeast extends PathfinderMob {
             BlockPos to = nook != null ? nook : origin;
             if (distanceToSqr(to.getX() + 0.5, to.getY(), to.getZ() + 0.5) > 4) getNavigation().moveTo(to.getX() + 0.5, to.getY(), to.getZ() + 0.5, 1.4);
             if (tickCount % 40 == 0) heal(1F);
+        }
+
+        @Override
+        public void stop() {
+            act(IDLE);
+        }
+    }
+
+    /**
+     * The tower rings (SPEC §43.7): with a song still full of gaps it hunkers where it is, ears flat; with more bells it
+     * stops and listens, then gathers under the tower, and at a hundred it sings.
+     */
+    final class SongGoal extends Goal {
+        SongGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
+        }
+
+        @Override
+        public boolean canUse() {
+            return songUntil > level().getGameTime() && songAt != null && hideUntil <= level().getGameTime();
+        }
+
+        @Override
+        public void start() {
+            getNavigation().stop();
+            act(songMode == SONG_HUNKER ? HIDE : songMode == SONG_SING ? TELL : IDLE);
+        }
+
+        @Override
+        public void tick() {
+            BlockPos at = songAt;
+            if (at == null) return;
+            if (songMode != SONG_HUNKER) getLookControl().setLookAt(at.getX() + 0.5, at.getY() + 2.5, at.getZ() + 0.5);
+            if ((songMode == SONG_GATHER || songMode == SONG_SING) && distanceToSqr(at.getX() + 0.5, at.getY(), at.getZ() + 0.5) > 16)
+                getNavigation().moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.9);
+            else getNavigation().stop();
+            if (songMode == SONG_SING && tickCount % 40 == 0) act(TELL, true);
         }
 
         @Override

@@ -151,6 +151,8 @@ final class GateEvents {
         }
         if (!GateService.inGate(dead)) return;
         RunEvents.onGateMobDeath(level, g, dead, killer, role);
+        // a gate world's bell hangs at its Lord (SPEC §43.7)
+        if (role.role() == MobRole.Role.BOSS) dev.awaken.bells.Bells.lordFell(level, dead, g.plan.rank(), g.plan.theme().name(), g.party, killer);
         // Death, not the corpse's eventual removal, ends saved membership (a stop during the death animation is safe).
         GateMobs.Key key = GateMobs.remove(dead);
         if (key != null) RunEvents.mobGone(level, key);

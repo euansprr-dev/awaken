@@ -133,7 +133,9 @@ public final class Kinship {
     public static int warmed(ServerPlayer p, int points) {
         if (points <= 0) return points;
         int spi = dev.awaken.progression.Progression.profile(p).stat(dev.awaken.progression.Stat.SPI);
-        return Math.round(points * (1F + Math.min(30, Math.max(0, spi)) / 100F));
+        // and the home's Kin bells (SPEC §43.7): +10% each, to +50%
+        int bells = Math.min(5, dev.awaken.bells.Bells.voice(p, dev.awaken.bells.BellCatalog.Voice.KIN));
+        return Math.round(points * (1F + Math.min(30, Math.max(0, spi)) / 100F + bells * 0.1F));
     }
 
     /** Adds (or takes) Kinship; true when it crossed into a new step. */
