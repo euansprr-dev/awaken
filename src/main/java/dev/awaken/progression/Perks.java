@@ -16,7 +16,7 @@ public final class Perks {
     public static final String COOLDOWN_REDUCTION = "awaken:cooldown_reduction";       // [powers] fraction
     public static final String FALL_RESIST = "awaken:fall_resist";                     // [progression] fraction
     public static final String EXPLOSION_RESIST = "awaken:explosion_resist";           // [progression] fraction
-    public static final String BIND_CHANCE = "awaken:bind_chance";                     // [hearth] add
+    public static final String SUMMON_STRENGTH = "awaken:summon_strength";             // [powers] fraction
     public static final String LUCIDITY_START = "awaken:lucidity_start";               // [lucidium] add
     public static final String CORD_LENGTH = "awaken:cord_length";                     // [veil] add
     public static final String STEALTH = "awaken:stealth";                             // [mobs] detection multiplier

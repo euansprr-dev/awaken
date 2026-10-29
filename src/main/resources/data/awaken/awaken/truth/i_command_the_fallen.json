@@ -1,15 +1,15 @@
 {
-  "text": "I command the fallen.",
-  "hint": "Bind twenty Echoes.",
+  "text": "I command the shadows.",
+  "hint": "Use shadow powers two hundred times.",
   "condition": {
     "type": "counter",
-    "counter": "awaken:echoes_bound",
-    "value": 20
+    "counter": "awaken:power_uses/shadow",
+    "value": 200
   },
   "reward": {
     "perks": [
       {
-        "id": "awaken:bind_chance",
+        "id": "awaken:summon_strength",
         "amount": 0.15
       }
     ]

@@ -87,7 +87,7 @@ STEPS = {
                           [item("essence_shard", 8)],
                           goal("As a spirit, drift into a gate", c("gates_scouted"), "Its Lord is on the card",
                                requires=["unlock:awaken:veil"])),
-    # L21-30 · C-rank (22 gear C, 25 Second Awakening, 30 Echo roles exist): dream control, the town grows.
+    # L21-30 · C-rank (22 gear C, 25 Second Awakening, 30 The far towns exist): dream control, the town grows.
     "dream_bell": step(21, "The Dream Bell", "Lucid sooner. Arm it by your bed: you wake at midnight; sleep again.",
                        [recipes("dream_bell"), item("dream_residue")],
                        goal("Arm a Dream Bell by your bed; sleep", c("lucid_dreams", 2), "The dream answers you",
@@ -153,10 +153,6 @@ STEPS = {
     "push_deeper": step(43, "Push past comfort", "16 essence. Deeper floors fill the Satchel faster.",
                         [item("essence_shard", 16)],
                         goal("Clear a floor deeper than usual", c("floors_pushed_past_comfort"), "Deeper floors pay more")),
-    "echo_army": step(44, "An army of Echoes", "12 essence. Your field army grows with Spirit.",
-                      [item("essence_shard", 12)],
-                      goal("Fight beside four Echoes at once", c("echo_army_peak", 4), "Role pads for the rest",
-                           requires=["unlock:awaken:echoes"])),
     # L46-50 · B-rank (45 B trial, 50 the Hollow Court exist): the B strata and the Ascension hints (the Halo).
     "the_foundry": step(46, "The Foundry", "Stratum 6, a Power Core. Light five conduits to open its pit.",
                         [core()],

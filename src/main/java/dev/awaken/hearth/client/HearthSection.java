@@ -9,7 +9,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 
-/** Status screen section "HEARTH": tier and radius, recognised rooms, the town, Echoes, trophies and records. */
+/** Status screen section "HEARTH": tier and radius, recognised rooms, the town, trophies and records. */
 final class HearthSection extends dev.awaken.signal.client.UiSection {
     private static final String[] ROMAN = {"", "I", "II", "III", "IV", "V"};
 
@@ -32,22 +32,18 @@ final class HearthSection extends dev.awaken.signal.client.UiSection {
     public boolean visible() {
         HearthView v = view();
         var player = Minecraft.getInstance().player;
-        return v.has() || !v.echoes().isEmpty() || player != null && dev.awaken.progression.Progression.profile(player).awakened();
+        return v.has() || player != null && dev.awaken.progression.Progression.profile(player).awakened();
     }
 
     @Override
     protected void build(dev.awaken.signal.client.Ui ui) {
         HearthView v = view();
-        long field = v.echoes().stream().filter(HearthView.EchoView::field).count();
-        long duty = v.echoes().stream().filter(e -> !e.duty().isEmpty()).count();
-        String echoes = "Echoes " + v.echoes().size() + " · " + field + "/" + v.fieldCap() + " marching · " + duty + " on duty";
         if (!v.has()) {
             ui.text("Meditation Mat", Glass.TEXT);
             ui.text(dev.awaken.hearth.guide.Guide.MAT_RECIPE, Glass.LABEL);
             ui.text(dev.awaken.hearth.guide.Guide.MAT_USE, Glass.LABEL);
-            ui.text("No Hearth yet · the Wayfarers keep a fire up the north road: carry a coal from it and set it down where you'd live",
+            ui.text("No Hearth yet · Ilse keeps the last fire up the north road: carry a coal from it and set it down where you'd live",
                     Glass.a(Glass.LABEL, 1f));
-            if (!v.echoes().isEmpty()) ui.text(echoes, Glass.a(Glass.VIOLET, 1f));
             return;
         }
         String head = (v.tier() <= 0 ? "Hearthfire" : "Tier " + ROMAN[Math.max(0, Math.min(5, v.tier()))] + " · Forge " + ROMAN[Math.max(0, Math.min(5, v.forgeTier()))])
@@ -73,9 +69,8 @@ final class HearthSection extends dev.awaken.signal.client.UiSection {
         var open = ui.flow();
         if (open.button("Your Hearth: rooms and upgrades", Glass.LANTERN, true)) GuideClient.send(dev.awaken.hearth.guide.Guide.Act.OPEN);
         open.end();
-        ui.text("Town · " + (v.town().isEmpty() ? "Nobody has moved in yet" : String.join(", ", v.town())), Glass.a(Glass.TEXT, 1f));
-        ui.text(echoes, Glass.a(Glass.VIOLET, 1f));
-        ui.text("Trophies " + v.trophies() + " · Records " + v.records() + " · Pads " + v.pads(), Glass.a(Glass.LABEL, 1f));
+        if (!v.town().isEmpty()) ui.text("Town · " + String.join(", ", v.town()), Glass.a(Glass.TEXT, 1f));
+        ui.text("Trophies " + v.trophies() + " · Records " + v.records(), Glass.a(Glass.LABEL, 1f));
         ui.text("Meditation Mat", Glass.TEXT);
         ui.text(dev.awaken.hearth.guide.Guide.MAT_RECIPE, Glass.LABEL);
         ui.text(dev.awaken.hearth.guide.Guide.MAT_USE, Glass.LABEL);

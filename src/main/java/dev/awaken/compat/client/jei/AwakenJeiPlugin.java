@@ -6,7 +6,6 @@ import dev.awaken.above.MachineType;
 import dev.awaken.compat.Discovered;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.hearth.HearthContent;
-import dev.awaken.hearth.echo.EchoRole;
 import dev.awaken.hearth.request.RequestContent;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -29,7 +28,7 @@ import java.util.List;
 
 /**
  * Awaken in JEI (SPEC §14): Awaken's own ways of making things as categories in the System's glass (crafting-table
- * recipes with their level road step, the Fabricator, the Frame Forge, tempering, Hearth upgrades, Echo duty, essence,
+ * recipes with their level road step, the Fabricator, the Frame Forge, tempering, Hearth upgrades, essence,
  * core fusing) and Codex pages for key items, all under the spoiler guard ({@link SpoilerGuard}). JEI finds this class
  * by its annotation, only when JEI is installed.
  */
@@ -53,7 +52,6 @@ public final class AwakenJeiPlugin implements IModPlugin {
                 new Categories.BossDrops(gui.createDrawableItemLike(CoreApi.LORD_HEART.get())),
                 new Categories.Blueprint(gui.createDrawableItemLike(dev.awaken.arms.ArmsItems.blueprintItem("daggers"))),
                 new Categories.Upgrade(gui.createDrawableItemLike(HearthContent.HEARTH_ANCHOR_ITEM.get())),
-                new Categories.EchoDuty(gui.createDrawableItemLike(HearthContent.ROLE_PAD_ITEMS.get(EchoRole.MINE).get())),
                 new Categories.Essence(gui.createDrawableItemLike(AboveItems.CELL.get())),
                 new Categories.Fuse(gui.createDrawableItemLike(RequestContent.CORE_SHARD.get())),
                 new Categories.Codex(gui.createDrawableItemLike(CoreApi.LORD_HEART.get())));
@@ -76,8 +74,6 @@ public final class AwakenJeiPlugin implements IModPlugin {
         for (var p : patterns) SpoilerGuard.own(Categories.BLUEPRINT, p, p.blueprint().getItem());
         var upgrades = Recipes.upgrades();
         for (var u : upgrades) SpoilerGuard.own(Categories.UPGRADE, u, u.station().getItem());
-        var duties = Recipes.duties();
-        for (var d : duties) SpoilerGuard.own(Categories.DUTY, d, d.pad().getItem());
         var essence = Recipes.essence();
         for (var e : essence) SpoilerGuard.own(Categories.ESSENCE, e, e.output().getItem());
         var fuses = Recipes.fuses();
@@ -91,7 +87,6 @@ public final class AwakenJeiPlugin implements IModPlugin {
         r.addRecipes(Categories.BOSS, bosses);
         r.addRecipes(Categories.BLUEPRINT, patterns);
         r.addRecipes(Categories.UPGRADE, upgrades);
-        r.addRecipes(Categories.DUTY, duties);
         r.addRecipes(Categories.ESSENCE, essence);
         r.addRecipes(Categories.FUSE, fuses);
         r.addRecipes(Categories.CODEX, pages);
@@ -105,7 +100,6 @@ public final class AwakenJeiPlugin implements IModPlugin {
         r.addCraftingStation(Categories.TEMPER, HearthContent.FORGE_ITEM.get());
         r.addCraftingStation(Categories.BLUEPRINT, HearthContent.FORGE_ITEM.get());
         r.addCraftingStation(Categories.UPGRADE, HearthContent.HEARTH_ANCHOR_ITEM.get(), HearthContent.FORGE_ITEM.get());
-        r.addCraftingStation(Categories.DUTY, HearthContent.ROLE_PAD_ITEMS.get(EchoRole.MINE).get());
         r.addCraftingStation(Categories.ESSENCE, AboveItems.CELL.get(), AboveItems.machine(MachineType.REACTOR));
         r.addCraftingStation(Categories.FUSE, RequestContent.CORE_SHARD.get());
     }

@@ -264,7 +264,6 @@ final class GuideSections {
             GuideData.RecipeView r = rv.get();
             ItemStack result = stack(r.result());
             String extra = switch (f) {
-                case PAD -> " (any role pad works)";
                 case TROPHY -> ", then hang a Lord's trophy on it";
                 default -> "";
             };

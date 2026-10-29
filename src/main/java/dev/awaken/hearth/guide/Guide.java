@@ -66,8 +66,7 @@ public final class Guide {
     public static final String MAT_USE = "Place it beside your bed for better dreams. You can meditate without a mat.";
 
     /** Recipes the Anchor teaches when it takes root: the Hearth's furniture. */
-    public static final List<String> FURNITURE_RECIPES = List.of("meditation_mat", "forge", "trophy_mount", "role_pad_guard",
-            "role_pad_haul", "role_pad_farm", "role_pad_mine", "role_pad_train");
+    public static final List<String> FURNITURE_RECIPES = List.of("meditation_mat", "forge", "trophy_mount");
 
     private static final Set<UUID> OPEN = new HashSet<>();
 

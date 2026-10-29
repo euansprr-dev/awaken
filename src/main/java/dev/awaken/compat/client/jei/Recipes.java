@@ -14,7 +14,6 @@ import dev.awaken.gear.Piece;
 import dev.awaken.hearth.Costs;
 import dev.awaken.hearth.HearthContent;
 import dev.awaken.hearth.Upgrades;
-import dev.awaken.hearth.echo.EchoRole;
 import dev.awaken.hearth.request.CoreShardItem;
 import dev.awaken.hearth.request.RequestContent;
 import dev.awaken.lucidium.LucidiumContent;
@@ -40,7 +39,7 @@ import java.util.Map;
 
 /**
  * Awaken's own ways of making things, as JEI recipes. Everything is read from the systems' public constants (the
- * Fabricator's blueprints, the Frame Forge's pieces, the Hearth's prices, the Mine Echo's roll), so JEI always shows
+ * Fabricator's blueprints, the Frame Forge's pieces, the Hearth's prices), so JEI always shows
  * what the game does. This is the one place compat reads those modules; a rename breaks here and nowhere else.
  */
 final class Recipes {
@@ -167,38 +166,6 @@ final class Recipes {
     private static List<ItemStack> parts(List<Costs.Part> parts) {
         List<ItemStack> out = new ArrayList<>(parts.size());
         for (Costs.Part p : parts) out.add(new ItemStack(p.item(), p.count()));
-        return out;
-    }
-
-    /** What a Mine Echo brings up every few minutes, by Anchor tier: every outcome of the roll with its chance. */
-    record Duty(int tier, ItemStack pad, List<ItemStack> ores, List<Integer> permille) {}
-
-    /** The level of the Echo the table assumes (the roll gets a little better with stronger Echoes). */
-    static final int DUTY_ECHO_LEVEL = 10;
-
-    static List<Duty> duties() {
-        List<Duty> out = new ArrayList<>();
-        ItemStack pad = new ItemStack(HearthContent.ROLE_PAD_ITEMS.get(EchoRole.MINE).get());
-        // (W6) a Mine Echo works your Mine head's shaft: what comes up is the shaft's depth (five depths, high to deep)
-        int[] feet = {48, 24, 8, -12, -40};
-        for (int tier = 1; tier <= 5; tier++) {
-            Map<Item, int[]> counts = new LinkedHashMap<>();
-            Map<Item, Integer> amount = new LinkedHashMap<>();
-            net.minecraft.util.RandomSource rnd = net.minecraft.util.RandomSource.create(tier * 7919L);
-            for (int roll = 0; roll < 1000; roll++) {
-                for (ItemStack s : dev.awaken.hearth.settle.MineHead.haul(rnd, feet[tier - 1], null, 0)) {
-                    counts.computeIfAbsent(s.getItem(), k -> new int[1])[0]++;
-                    amount.merge(s.getItem(), s.getCount(), Math::max);
-                }
-            }
-            List<ItemStack> ores = new ArrayList<>();
-            List<Integer> chance = new ArrayList<>();
-            counts.forEach((item, n) -> {
-                ores.add(new ItemStack(item, amount.get(item)));
-                chance.add(n[0]);
-            });
-            out.add(new Duty(tier, pad, ores, chance));
-        }
         return out;
     }
 

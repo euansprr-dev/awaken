@@ -3,7 +3,6 @@ package dev.awaken.hearth.room;
 import dev.awaken.hearth.HearthContent;
 import dev.awaken.hearth.block.ForgeBlock;
 import dev.awaken.hearth.block.MeditationMatBlock;
-import dev.awaken.hearth.block.RolePadBlock;
 import dev.awaken.hearth.block.TrophyMountBlock;
 import dev.awaken.hearth.echo.EchoRole;
 import net.minecraft.core.Holder;
@@ -39,7 +38,8 @@ public enum Furniture {
     STAND("an armour stand", "stand", "the armour stand", null),
     TROPHY("a Lord's trophy on a Trophy Mount", "trophy", "the trophy", "trophy_mount"),
     MACHINE("a Precursor machine", "machine", "the machine", null),
-    PAD("a role pad", "pad", "the role pad", "role_pad_guard"),
+    /** (SPEC §43.4) the old role pad, a plain block now: no room wants it; the slot keeps saved rooms' counts in place. */
+    PAD("a role pad", "pad", "the role pad", null),
     COOKER("a furnace or smoker", "stove", "the stove", null),
     CRAFTING("a crafting table", "table", "the crafting table", null),
     BARREL("a barrel", "barrel", "the barrel", null),
@@ -90,7 +90,6 @@ public enum Furniture {
         Block b = s.getBlock();
         if (b instanceof MeditationMatBlock) return MAT;
         if (b instanceof ForgeBlock) return FORGE;
-        if (b instanceof RolePadBlock) return PAD;
         if (b instanceof TrophyMountBlock) return TROPHY;
         if (s.is(BlockTags.ANVIL)) return ANVIL;
         if (s.is(BlockTags.BEDS)) {

@@ -37,15 +37,13 @@ public final class Combat {
 
     // ---- who is who -------------------------------------------------------------------------------------------------
 
-    /** On the player's side: the player, other players, their summons, decoys, dominated mobs, pets and Echoes. */
+    /** On the player's side: the player, other players, their summons, decoys, dominated mobs and pets. */
     public static boolean isAlly(ServerPlayer player, Entity e) {
         if (e == player || e instanceof Player) return true;
         if (e instanceof PowerSummon s) return true;
         if (Allies.isAlly(e)) return true;
         if (e instanceof OwnableEntity oe && oe.getOwner() instanceof Player) return true;
-        if (e instanceof ArmorStand || e instanceof Mannequin) return true;
-        Optional<MobRole> role = e.getExistingData(CoreApi.MOB_ROLE.get());
-        return role.isPresent() && role.get().role() == MobRole.Role.ECHO;
+        return e instanceof ArmorStand || e instanceof Mannequin;
     }
 
     /**
@@ -103,8 +101,8 @@ public final class Combat {
      */
     public static boolean hurtFrom(ServerPlayer owner, @Nullable Entity direct, LivingEntity target, float amount, Forces.@Nullable Force force, boolean resetIframes) {
         if (amount <= 0 || !target.isAlive()) return false;
-        if (force == Forces.Force.CHARGE && ForceInteractions.isOwnEcho(owner, target)) {
-            ForceInteractions.overcharge(owner, target); // Charge meets Echoes
+        if (force == Forces.Force.CHARGE && ForceInteractions.isOwnSummon(owner, target)) {
+            ForceInteractions.overcharge(owner, target); // Charge meets your summons
             return false;
         }
         if (isAlly(owner, target)) return false;

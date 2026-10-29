@@ -6,7 +6,6 @@ import dev.awaken.hearth.HearthRecord;
 import dev.awaken.hearth.HearthService;
 import dev.awaken.hearth.Household;
 import dev.awaken.hearth.Upgrades;
-import dev.awaken.hearth.echo.Duty;
 import dev.awaken.hearth.room.Room;
 import dev.awaken.hearth.room.RoomType;
 import dev.awaken.signal.Signal;
@@ -47,7 +46,7 @@ import java.util.UUID;
  * you give them to workers inside of your village"). Oren takes commissions: hand him the makings of a piece and he
  * forges it overnight, a temper up, into the Forge's chest. Hettie harvests ripe crops and replants them, the harvest
  * into the chest nearest the field, and keeps two of each beast in the pen breeding. Ilse brews the herbs you bring into
- * tonics overnight (home-cooked, so they last half again). The miner (or a Mine Echo) brings up the evening's ore. Wren
+ * tonics overnight (home-cooked, so they last half again). The miner brings up the evening's ore. Wren
  * strings rope lines between your roofs, one a play-day. Run once a second while the home is loaded; nothing allocates
  * unless there's work to do.
  */
@@ -96,7 +95,7 @@ public final class Work {
 
     public static void tick(ServerLevel level, HearthRecord h, long now) {
         Folk f = h.folk;
-        if (f.settlers.isEmpty() && f.commissions.isEmpty() && f.brews.isEmpty() && Duty.mineEchoes(level, h) == 0) return;
+        if (f.settlers.isEmpty() && f.commissions.isEmpty() && f.brews.isEmpty()) return;
         long day = Settlers.today(level.getServer());
         int tod = (int) Math.floorMod(level.getOverworldClockTime(), 24000L);
         deliver(level, h, day);
@@ -238,7 +237,7 @@ public final class Work {
                 ItemStack piece = new ItemStack(item);
                 Upgrades.applyTemper(piece, Math.max(1, c.temper()));
                 BlockPos at = anvil(level, h);
-                ItemStack left = Duty.put(level, h, piece, at, 10);
+                ItemStack left = Chests.put(level, h, piece, at, 10);
                 if (!left.isEmpty()) f.stash.add(new Folk.Stack(c.item(), 1, "oren:" + c.player()));
                 level.playSound(null, at, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 0.6f, 1.25f);
                 ServerPlayer p = level.getServer().getPlayerList().getPlayer(c.player());
@@ -257,7 +256,7 @@ public final class Work {
                 ItemStack out = new ItemStack(tonic, Math.max(1, b.count() / 2));
                 out.set(HearthContent.HOME_COOKED.get(), true);
                 BlockPos at = greenhouse(h);
-                ItemStack left = Duty.put(level, h, out, at, 10);
+                ItemStack left = Chests.put(level, h, out, at, 10);
                 if (!left.isEmpty()) f.stash.add(new Folk.Stack(BuiltInRegistries.ITEM.getKey(tonic).toString(), left.getCount(), "ilse:" + b.player()));
                 ServerPlayer p = level.getServer().getPlayerList().getPlayer(b.player());
                 if (p != null) Signal.toast(p, Component.literal("Ilse's tonics are ready · " + out.getCount() + " " + out.getHoverName().getString()
@@ -282,7 +281,7 @@ public final class Work {
 
     // ---- the evening haul -------------------------------------------------------------------------------------------
 
-    /** Each shaft worked (a miner who lives here, or a Mine Echo on duty: one a shaft) brings up its haul. */
+    /** Each shaft worked (a miner who lives here: one a shaft) brings up its haul. */
     public static void evening(ServerLevel level, HearthRecord h, long day) {
         Folk f = h.folk;
         f.haulDay = day;
@@ -291,7 +290,7 @@ public final class Work {
         if (shafts.isEmpty()) return;
         int miners = 0;
         for (Folk.Settler s : f.settlers) if (s.home() && "miner".equals(s.who.role())) miners++;
-        int workers = Math.min(shafts.size(), miners + Duty.mineEchoes(level, h));
+        int workers = Math.min(shafts.size(), miners);
         List<String> said = new ArrayList<>();
         for (int k = 0; k < workers; k++) {
             MineHead.Shaft s = shafts.get(k);
@@ -302,7 +301,7 @@ public final class Work {
                 if (lode != null && st.is(MineHead.item(lode))) s.lode().ifPresent(v -> f.lodeTaken.merge(v.id(), st.getCount(), Integer::sum));
                 said.add(st.getCount() + " " + st.getHoverName().getString().toLowerCase(java.util.Locale.ROOT));
                 h.oresBrought += st.getCount();
-                ItemStack rest = Duty.put(level, h, st.copy(), s.hatch(), 10);
+                ItemStack rest = Chests.put(level, h, st.copy(), s.hatch(), 10);
                 if (!rest.isEmpty()) f.stash.add(new Folk.Stack(BuiltInRegistries.ITEM.getKey(rest.getItem()).toString(), rest.getCount(), "mine"));
             }
             BlockPos top = s.hatch().above();
@@ -343,7 +342,7 @@ public final class Work {
                     kept = true;
                 }
                 if (d.isEmpty()) continue;
-                ItemStack left = Duty.put(level, h, d, crop, 12);
+                ItemStack left = Chests.put(level, h, d, crop, 12);
                 if (!left.isEmpty()) h.folk.stash.add(new Folk.Stack(BuiltInRegistries.ITEM.getKey(left.getItem()).toString(), left.getCount(), "field"));
             }
             h.cropsHarvested++;

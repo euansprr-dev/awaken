@@ -37,7 +37,6 @@ final class Beats {
                 return; // one per check, so they never stack up
             }
         }
-        lineOnce(p, s, "first_echo", prof.counter(Counters.ECHOES_BOUND) >= 1);
         lineOnce(p, s, "first_stratum", prof.counter(Counters.DEPTH_RECORD) >= 1);
         lineOnce(p, s, "night_awake", prof.counter("awaken:nights_awake") >= 1);
         lineOnce(p, s, "directive_dismissed_many", prof.counter("awaken:directives_dismissed") >= 5);

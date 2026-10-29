@@ -551,7 +551,6 @@ public final class Town {
         out.add("Gate Lords · " + p.counter("awaken:bosses_killed"));
         long depth = p.counter(Counters.DEPTH_RECORD);
         out.add("Deepest · " + (depth > 0 ? "stratum " + depth : "not yet"));
-        out.add("Echoes · " + hp.echoes.size());
         int best = hp.bests.values().stream().mapToInt(Integer::intValue).min().orElse(0);
         if (best > 0) out.add("Best lap · " + dev.awaken.hearth.training.Training.formatTime(best));
         return out;

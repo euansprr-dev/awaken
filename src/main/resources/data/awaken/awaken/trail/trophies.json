@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "title": "Trophies",
+  "area": "home",
+  "blurb": "Hang what you have beaten, and hold home when a gate breaks near it.",
+  "weight": 60,
+  "opens": [
+    "hearth_tier:1"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "trophy",
+      "text": "Hang a boss trophy on a Trophy Mount.",
+      "done": [
+        "counter:awaken:trophies_placed"
+      ],
+      "hint": "The first time you beat each Gate Lord it drops its trophy."
+    },
+    {
+      "id": "hall",
+      "text": "Make a Trophy Hall.",
+      "done": [
+        "room:trophy_hall"
+      ],
+      "hint": "Each different boss in it adds 1% damage and half a heart."
+    },
+    {
+      "id": "break",
+      "text": "Hold a gate break near home.",
+      "done": [
+        "counter:awaken:breaks_held_at_hearth"
+      ],
+      "hint": "The Hearth shields you while it lasts."
+    }
+  ],
+  "finish": {
+    "line": "Your home has a hall of what you have beaten, and it held.",
+    "levels": 0.05
+  }
+}

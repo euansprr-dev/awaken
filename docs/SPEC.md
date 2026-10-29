@@ -476,7 +476,7 @@ of `AwakenConfig.Client`.
 - `dev.awaken.hearth.Hearth` — a Hearth's owner and members ("Together"): `record HearthInfo(owner, ownerName, anchor,
   tier, radius, members, foundedFrom)` with `has(UUID)`, `hearthsOf(MinecraftServer, UUID)` / `hearthsOf(ServerPlayer)`,
   `home(ServerPlayer)`, `isMember(ServerPlayer, BlockPos anchor)`, `isMember(MinecraftServer, UUID player, UUID owner)`,
-  `hearthAt(ServerLevel, BlockPos)`; plus `anchor`, `atHome`, `hasRoom`, `isSanctuary`, `inRoom`, `ownedEchoes`.
+  `hearthAt(ServerLevel, BlockPos)`; plus `anchor`, `atHome`, `hasRoom`, `isSanctuary`, `inRoom` (`ownedEchoes` went with the Echoes, §43.4).
   (W6, §28.8) `record Village(owner, name, anchor, radius, tier, people, gather, bell)` and `villages(MinecraftServer)`: homes
   grown to Tier IV+ (the festival's and caravans' hook); a home's people run on the people engine as settlement
   `hearth:<owner>`. `core.api.HearthHooks` gained `greenhouse(Level, BlockPos)` (both sides) and `study(ServerPlayer)`.
@@ -12167,6 +12167,11 @@ here as it goes.
 - SPI's Echo cap becomes +1% Kinship gained per SPI point, to +30%.
 - Old saves (schema bump): bound Echoes are released on load with one System line ("Your Echoes have gone back to the
   Deep."); role pads stay as plain blocks that drop their materials.
+- What took binding's place in progression: the Shadowbinder path scores shadow power use and gives **Summon Strength**
+  (perk `awaken:summon_strength`, a fraction: Legion's soldiers and Tech drones hit harder and last longer by it; path
+  +25%, the truth "I command the shadows." +15%, the title Shadow Lord +10%); level road 7 becomes "What they carried"
+  (the Stilled's keys) and 30 "The far towns" (the holdfasts), 44 is dropped; Echo directives, the drill and the trail
+  are retargeted (LEDGER.md has each line). The B key stays for the Veil's "wear a creature".
 
 ### 43.5 Beasts and Kinship
 - Three natures: **kin** (befriendable, never hunted), **wild quarry** (§41's herds and packs, hunted, never tamed) and

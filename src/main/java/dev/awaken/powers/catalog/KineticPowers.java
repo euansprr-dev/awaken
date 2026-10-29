@@ -537,7 +537,7 @@ final class KineticPowers {
                 Combat.knockFrom(e, at, 0.5, 0.3);
                 Fx.at(c, FxKind.LIGHTNING, at.add(0, 1.5, 0)).to(e.position().add(0, e.getBbHeight() * 0.5, 0)).ticks(6).noAnim().send();
             }
-            if (ring == 0) ForceInteractions.chargeEchoes(c.player, at, radius);
+            if (ring == 0) ForceInteractions.chargeSummons(c.player, at, radius);
             c.sound(at, PowerSounds.THUNDER, 1.5f, 1.0f - ring * 0.1f);
             Fx.quake(c.level, at, 20, 4f);
         });

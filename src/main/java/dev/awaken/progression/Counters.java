@@ -51,7 +51,6 @@ public final class Counters {
     public static final String SPIRITS_SPOKEN = "awaken:spirits_spoken";
 
     // Hearth / Echoes / Above / Descent
-    public static final String ECHOES_BOUND = "awaken:echoes_bound";
     public static final String MACHINES_BUILT = "awaken:machines_built";
     public static final String MACHINES_SCANNED = "awaken:machines_scanned";
     public static final String DEPTH_RECORD = "awaken:depth_record";

@@ -1,9 +1,5 @@
 package dev.awaken.hearth;
 
-import dev.awaken.hearth.echo.Duty;
-import dev.awaken.hearth.echo.EchoRecord;
-import dev.awaken.hearth.echo.EchoRole;
-import dev.awaken.hearth.echo.Echoes;
 import dev.awaken.hearth.player.HearthPlayer;
 import dev.awaken.hearth.player.HearthView;
 import dev.awaken.hearth.room.Room;
@@ -17,7 +13,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 /** Builds the owner's {@link HearthView} and pushes it when it changed. Cheap; call after anything it shows changes. */
 public final class HearthViews {
@@ -31,19 +26,10 @@ public final class HearthViews {
     static HearthView build(ServerPlayer sp) {
         HearthPlayer hp = HearthService.player(sp);
         Optional<HearthRecord> ho = HearthService.homeOf(sp);
-        long now = sp.level().getGameTime();
-        // pads are worked by the owner's Echoes: a member's Echoes never show as on duty at a shared Hearth
-        Map<UUID, Duty.Assignment> duties = ho.filter(h -> h.owner.equals(sp.getUUID())).map(h -> Duty.assignments(hp, h)).orElse(Map.of());
-        List<HearthView.EchoView> echoes = new ArrayList<>();
-        for (EchoRecord e : hp.echoes) {
-            Duty.Assignment a = duties.get(e.id());
-            echoes.add(new HearthView.EchoView(e.id(), e.name(), e.level(), e.field(), a == null ? "" : a.role().id, e.downUntil() > now, e.isBoss()));
-        }
         int records = hp.bests.size();
         if (ho.isEmpty()) {
             HearthView.Home rested = new HearthView.Home("", hp.restedUntil, Comfort.restedMinutes(hp.restedComfort), 0, "");
-            return new HearthView(false, BlockPos.ZERO, 0, 0, 0, List.of(), List.of(), 0, Echoes.fieldCap(sp), 0, hp.fieldOut,
-                    echoes, List.copyOf(hp.rumours), records, rested);
+            return new HearthView(false, BlockPos.ZERO, 0, 0, 0, List.of(), List.of(), 0, List.copyOf(hp.rumours), records, rested);
         }
         HearthRecord h = ho.get();
         Map<RoomType, Integer> counts = new EnumMap<>(RoomType.class);
@@ -62,7 +48,7 @@ public final class HearthViews {
         }
         HearthView.Home home = new HearthView.Home(h.displayName(), hp.restedUntil, Comfort.restedMinutes(hp.restedComfort), h.comfort, h.style,
                 List.copyOf(greenhouses));
-        return new HearthView(true, h.pos, h.tier, h.radius(), h.forgeTier, rooms, town, h.hallTrophies.size(), Echoes.fieldCap(sp),
-                h.pads.size(), hp.fieldOut, echoes, List.copyOf(hp.rumours), records, home);
+        return new HearthView(true, h.pos, h.tier, h.radius(), h.forgeTier, rooms, town, h.hallTrophies.size(), List.copyOf(hp.rumours),
+                records, home);
     }
 }

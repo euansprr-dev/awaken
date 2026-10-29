@@ -126,17 +126,32 @@ happens).
   opening without the key: "[Locked. Whoever had the key went back for something.]"
 
 ### Echoes removed (§43.4)
-- **What goes**: binding (the B key's bind and its key mapping), the Echo roster, the field army, the chooser screen,
-  the Echo cap and SPI's line, role pads' work and the Barracks room, Guard, Haul, Farm, Mine and Train, Echo Duty, the
-  Mine Echo, Echo kill credit, the JEI "Mine Echo" page, the pad tooltip.
+- **What goes**: binding, the Echo roster, the field army, the chooser screen and its payloads, the Echo cap and SPI's
+  line, role pads' work and recipes and the Barracks room, Guard, Haul, Farm, Mine and Train, Echo Duty, the Mine Echo,
+  the JEI "Mine Echo" page, the pad tooltip, `/awaken hearth echoes`, the "Echoes bound" counter row, the first-Echo
+  Signal line, the Echo glossary entry, the bind sounds. The B key stays: the Veil's "wear a creature" uses it (its
+  label now says so).
+- **What took their place in progression** (nothing may point at binding):
+  - Shadowbinder path: "You command shadows. The soldiers you raise hit harder and stay longer." Scored on shadow power
+    use (3 a use); its perk is the new **Summon Strength** (+25%: Legion's soldiers and Tech drones hit harder and last
+    longer, by the same fraction). The truth "I command the shadows." (200 shadow uses, +15%) and the title Shadow Lord
+    (500 uses, +10%) carry it too. Echo Whisper (latent) now gives +64 Veil cord.
+  - Directives and drill: "Use shadow powers twenty times." (Shadowbinder), "Take 200 damage holding the line."
+    (Warden), drill "Use shadow powers ten times"; "Bind an Echo." is gone.
+  - Level road: 7 "What they carried" ("The stone people still hold things. A key names the town its chest is in."),
+    30 "The far towns" ("A few walled towns kept their bells and their people. Listen for one ringing on the hour."),
+    44 "An army of Echoes" gone. 7 and 30 are the never-stuck nudges for the Stilled's keys and the holdfasts.
+  - The trail "Trophies and Echoes" is "Trophies" (trophy, Trophy Hall, a break held at home).
 - **What stays**: the Echoing tag, the Grave Echo, gates' ghosts, the pick's Echo rung, Echo Palm, Heavy Echo. Echo
   Swap swaps with your own summons and decoys. Charge overcharges your own summons ("Charge meets your summons").
-- **Old saves** (HearthPlayer schema 3): bound Echoes are released on load with one System line, "Your Echoes have
+- **Old saves** (HearthPlayer schema 5): bound Echoes are released on load with one System line, "Your Echoes have
   gone back to the Deep."; an Echo's body in the world (an entity with the old Echo link or the ECHO mob role) is
   removed when it loads. Role pads stay as plain blocks that drop their materials (two smooth stone slabs, an essence
   shard and the pad's tool) and can't be crafted any more. A saved Barracks reading becomes no room type.
-- **SPI**: "Stronger in the Veil and in dreams, and the wild's beasts warm to you sooner." (+1% Kinship per point to
-  +30%, stage 2.)
+- **SPI**: stage 1 says "Stronger in the Veil and in dreams."; stage 2 adds ", and the wild's beasts warm to you
+  sooner." with Kinship (+1% per point to +30%).
+- **Test**: `hearth_old_echoes_released` (an old roster is read, told once, never written back; an Echo's body is
+  recognised).
 
 ### No people at the Hearth
 - **What goes**: settlers moving in (W1, W6), the townsfolk at the Hearth (Oren, Mira, Teodor, Sun, Vael), their work

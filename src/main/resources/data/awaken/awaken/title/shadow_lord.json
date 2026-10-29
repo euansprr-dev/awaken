@@ -1,14 +1,14 @@
 {
   "name": "Shadow Lord",
-  "description": "Bound fifty Echoes.",
+  "description": "Used shadow powers five hundred times.",
   "condition": {
     "type": "counter",
-    "counter": "awaken:echoes_bound",
-    "value": 50
+    "counter": "awaken:power_uses/shadow",
+    "value": 500
   },
   "perks": [
     {
-      "id": "awaken:bind_chance",
+      "id": "awaken:summon_strength",
       "amount": 0.1
     }
   ]
