@@ -3205,10 +3205,12 @@ def _aw_hollowheart(d):
 
 
 def _aw_leviathan(d):
-    # the lure grows out of the crown: a bone stalk rising off the front of the sail and arching forward, its light
-    # hanging before the face, as the deep's fish hunt
-    head = chain((0.0, 9.0, 3.5), [((0.0, 1.0, 0.25), 4, 2, 2, "bone"), ((0.0, -0.5, 1.0), 4, 1, 1, "tooth")], "stalk", up=(1, 0, 0))
-    head.append(B(-1.5, 1.5, 9, 12, 7, 10, "lure", "bulb"))
+    # the lure grows out of the crown: a bone stalk rising off the front of the sail, arching over and dropping, its
+    # small light hanging before the brow on the stalk's tip, as the deep's fish hunt (a light the size of the old
+    # 3-texel bulb, sat on the helm, read as a block)
+    head = chain((0.0, 10.0, 2.0), [((0.0, 1.0, -0.1), 4, 2, 2, "bone"), ((0.0, -0.35, 1.0), 5, 1, 1, "tooth")], "stalk",
+                 up=(1, 0, 0))
+    head.append(B(-1, 1, 10.4, 12.4, 6.0, 8.0, "lure", "bulb"))
     return {"helmet": {"head": head}}
 
 

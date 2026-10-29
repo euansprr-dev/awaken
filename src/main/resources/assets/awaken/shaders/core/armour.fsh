@@ -106,9 +106,14 @@ void main() {
                 : h < 0.75 ? mix(vec3(0.85, 0.16, 0.03), vec3(1.0, 0.58, 0.12), (h - 0.45) / 0.3)
                 : h < 1.0 ? mix(vec3(1.0, 0.58, 0.12), vec3(1.0, 0.9, 0.5), (h - 0.75) / 0.25)
                 : vec3(1.0, 0.97, 0.88);
+        // white heat (the Starfire) keeps the piece's form: its darker metal glows a little less, so it never
+        // flattens into one white shape
+        float white = smoothstep(0.95, 1.15, h);
+        float lum = dot(col, vec3(0.3, 0.59, 0.11));
+        hot *= mix(1.0, 0.6 + 0.4 * smoothstep(0.04, 0.5, lum), white);
         float glow = smoothstep(0.08, 0.6, h);
         col = mix(col, col * 0.35 + hot * (0.75 + 0.25 * rim), glow);
-        col += hot * glow * (0.25 + 0.3 * sin(GameTime * 240.0 * TAU * 0.4 + along * 6.0) * 0.5 + 0.15);
+        col += hot * glow * (0.25 + 0.3 * sin(GameTime * 240.0 * TAU * 0.4 + along * 6.0) * 0.5 + 0.15) * (1.0 - 0.75 * white);
     }
 
     fragColor = apply_fog(vec4(min(col, vec3(1.0)), 1.0) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,
