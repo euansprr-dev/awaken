@@ -199,8 +199,16 @@ final class CavesTests {
                             placed.computeIfAbsent(want, r -> new int[1])[0]++;
                             seedPlaced++;
                         }
-                        for (CaveRegion r : CaveRegion.ORDER) {
-                            if (r.band == band && (y <= CaveRegion.MAX_Y) && r.holds(hum, temp, cont, ero)) onLand.computeIfAbsent(r, q -> new int[1])[0]++;
+                        // its land: where its land holds and no region tried before it in the band, over the same slot, holds
+                        for (int ri = 0; ri < CaveRegion.ORDER.size(); ri++) {
+                            CaveRegion r = CaveRegion.ORDER.get(ri);
+                            if (r.band != band || y > CaveRegion.MAX_Y || !r.holds(hum, temp, cont, ero)) continue;
+                            boolean taken = false;
+                            for (int ei = 0; ei < ri && !taken; ei++) {
+                                CaveRegion e = CaveRegion.ORDER.get(ei);
+                                taken = e.band == band && e.fromQuantile < r.toQuantile && r.fromQuantile < e.toQuantile && e.holds(hum, temp, cont, ero);
+                            }
+                            if (!taken) onLand.computeIfAbsent(r, q -> new int[1])[0]++;
                         }
                         // as Lithostitched sees it: the climate quantised in the biome's target point, the fields as they are
                         Map<String, Float> at = new HashMap<>();
@@ -340,44 +348,50 @@ final class CavesTests {
                 }
             }
         }
-        // whole chunks over each region (the first few found on seed 777), plain against shaped
-        long seed = STUDIO_SEEDS[0];
-        RandomState plain = p.random(h, seed, false), shaped = p.random(h, seed, true);
-        Map<CaveRegion, List<ChunkPos>> found = regionChunks(h, plain, p.plainSettings().noiseRouter(), 8);
+        // whole chunks over each region (the first few found near the origin, on the first studio seed that has it: the
+        // Windcleft needs mountains), plain against shaped
+        Map<CaveRegion, Long> found = new EnumMap<>(CaveRegion.class);
         int changedHigh = 0, changedTop = 0;
         StringBuilder opened = new StringBuilder();
-        for (var e : found.entrySet()) {
-            long open0 = 0, open1 = 0, below = 0;
-            for (ChunkPos pos : e.getValue()) {
-                ProtoChunk a = build(level, p.plain(), plain, pos, heights), b = build(level, p.shaped(), shaped, pos, heights);
-                BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-                for (int dx = 0; dx < 16; dx++) {
-                    for (int dz = 0; dz < 16; dz++) {
-                        int top = a.getHeight(Heightmap.Types.WORLD_SURFACE_WG, dx, dz);
-                        for (int y = -60; y <= top; y++) {
-                            at.set(pos.getMinBlockX() + dx, y, pos.getMinBlockZ() + dz);
-                            BlockState sa = a.getBlockState(at), sb = b.getBlockState(at);
-                            boolean same = sa == sb;
-                            if (y > CaveRegion.MAX_Y + 5 && !same) changedHigh++;
-                            else if (y > top - 12 && !same) changedTop++;
-                            if (y <= CaveRegion.MAX_Y) {
-                                below++;
-                                if (open(sa)) open0++;
-                                if (open(sb)) open1++;
+        for (long seed : STUDIO_SEEDS) {
+            if (found.size() == CaveRegion.ORDER.size()) break;
+            RandomState plain = p.random(h, seed, false), shaped = p.random(h, seed, true);
+            for (var e : regionChunks(h, plain, p.plainSettings().noiseRouter(), 8).entrySet()) {
+                // a narrow shape (the Windcleft's cracks) may miss one or two chunks: take a seed with four or more
+                if (found.containsKey(e.getKey()) || e.getValue().size() < 4 && seed != STUDIO_SEEDS[STUDIO_SEEDS.length - 1]) continue;
+                found.put(e.getKey(), seed);
+                long open0 = 0, open1 = 0, below = 0;
+                for (ChunkPos pos : e.getValue()) {
+                    ProtoChunk a = build(level, p.plain(), plain, pos, heights), b = build(level, p.shaped(), shaped, pos, heights);
+                    BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+                    for (int dx = 0; dx < 16; dx++) {
+                        for (int dz = 0; dz < 16; dz++) {
+                            int top = a.getHeight(Heightmap.Types.WORLD_SURFACE_WG, dx, dz);
+                            for (int y = -60; y <= top; y++) {
+                                at.set(pos.getMinBlockX() + dx, y, pos.getMinBlockZ() + dz);
+                                BlockState sa = a.getBlockState(at), sb = b.getBlockState(at);
+                                boolean same = sa == sb;
+                                if (y > CaveRegion.MAX_Y + 5 && !same) changedHigh++;
+                                else if (y > top - 12 && !same) changedTop++;
+                                if (y <= CaveRegion.MAX_Y) {
+                                    below++;
+                                    if (open(sa)) open0++;
+                                    if (open(sb)) open1++;
+                                }
                             }
                         }
                     }
                 }
+                opened.append(String.format(Locale.ROOT, " %s (%d chunks, seed %d): open %.1f%% -> %.1f%%;", e.getKey().id, e.getValue().size(), seed,
+                        open0 * 100.0 / Math.max(1, below), open1 * 100.0 / Math.max(1, below)));
+                // over all its chunks: a shape opens in patches (a terrace layer on about 30% of the land), so one chunk may miss
+                h.assertTrue(open1 > open0 + below / 200, e.getKey().id + "'s shapes open new cave under its land: " + open0 + " -> " + open1 + " of " + below);
             }
-            opened.append(String.format(Locale.ROOT, " %s (%d chunks): open %.1f%% -> %.1f%%;", e.getKey().id, e.getValue().size(),
-                    open0 * 100.0 / Math.max(1, below), open1 * 100.0 / Math.max(1, below)));
-            // over all its chunks: a shape opens in patches (a terrace layer on about 30% of the land), so one chunk may miss
-            h.assertTrue(open1 > open0 + below / 200, e.getKey().id + "'s shapes open new cave under its land: " + open0 + " -> " + open1 + " of " + below);
         }
         Awaken.LOG.info("[caves] the land on top: {} of {} grid columns moved{}; in region chunks {} blocks changed above y {} and {} in the top 12 "
                 + "under the ground; cave under y {}:{} {} ms", moved, columns * 2, where, changedHigh, CaveRegion.MAX_Y + 5, changedTop, CaveRegion.MAX_Y,
                 opened, System.currentTimeMillis() - t0);
-        for (CaveRegion r : CaveRegion.ORDER) h.assertTrue(found.containsKey(r), r.id + " is found near the origin of seed " + seed);
+        for (CaveRegion r : CaveRegion.ORDER) h.assertTrue(found.containsKey(r), r.id + " is found near the origin of a studio seed");
         h.assertTrue(moved == 0, "the surface and sea floor never move (" + moved + " columns did:" + where + ")");
         h.assertTrue(changedHigh == 0 && changedTop == 0, "nothing changes above the cap or in the top 12 blocks (" + changedHigh + ", " + changedTop + ")");
         h.succeed();
@@ -772,19 +786,22 @@ final class CavesTests {
         DensityFunction[] fields = new DensityFunction[3];
         for (var band : CaveRegion.Band.values()) fields[band.ordinal()] = fn(functions, "caves/" + band.key());
         Map<CaveRegion, List<ChunkPos>> out = new EnumMap<>(CaveRegion.class);
-        for (int cx = -48; cx <= 48; cx += 6) {
-            for (int cz = -48; cz <= 48; cz += 6) {
+        for (int cx = -48; cx <= 48; cx += 3) {
+            for (int cz = -48; cz <= 48; cz += 3) {
                 int x = cx * 16 + 8, z = cz * 16 + 8;
                 float hum = rs.sampleBlockValueUncached(router.vegetation(), x, 0, z), temp = rs.sampleBlockValueUncached(router.temperature(), x, 0, z);
                 float cont = rs.sampleBlockValueUncached(router.continents(), x, 0, z), ero = rs.sampleBlockValueUncached(router.erosion(), x, 0, z);
-                for (int y = 0; y <= CaveRegion.MAX_Y; y += 8) {
+                for (int y = -56; y <= CaveRegion.MAX_Y; y += 8) {
                     float d = rs.sampleBlockValueUncached(router.depth(), x, y, z);
                     if (d < CaveShapeFunction.SEAL + CaveShapeFunction.SEAL_FADE) continue;
                     CaveRegion.Band band = CaveRegion.Band.at(y, d);
                     CaveRegion r = CaveRegion.at(y, d, rs.sampleBlockValueUncached(fields[band.ordinal()], x, 0, z), hum, temp, cont, ero);
                     if (r == null) continue;
                     var list = out.computeIfAbsent(r, k -> new ArrayList<>());
-                    if (list.size() < each && !list.contains(new ChunkPos(cx, cz))) list.add(new ChunkPos(cx, cz));
+                    // spread out (six chunks apart at least), so one patch of a shape doesn't stand for the region
+                    boolean near = false;
+                    for (ChunkPos q : list) near |= Math.abs(q.x() - cx) < 6 && Math.abs(q.z() - cz) < 6;
+                    if (list.size() < each && !near) list.add(new ChunkPos(cx, cz));
                 }
             }
         }

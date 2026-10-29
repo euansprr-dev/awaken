@@ -23,8 +23,18 @@ import java.util.Locale;
  * vanilla's own climate bands, so they line up with the biomes on top.
  */
 public enum CaveRegion {
+    // the Shallows: the humid land, then the dry land and the shore
     ROOTWAYS("rootways", Band.SHALLOWS, -10, 0f, 1f, Shape.TUBES, true, Box.ROOTED),
-    OCHRE_DEEP("ochre_deep", Band.MIDDLE, -10, 0f, 1f, Shape.TERRACES, true, Box.TEMPERATE, Box.WARM_WET);
+    PALE_HALLS("pale_halls", Band.SHALLOWS, -9, 0f, 1f, Shape.HALLS, true, Box.DRY, Box.SHORE),
+    // the Middle Dark: under hills and mountains (where the Shallows are over y 59, so the cracks have the whole band
+    // to y 59), then the shore and the wet lowland, then the frozen, hot and warm-dry land, then the rest
+    WINDCLEFT("windcleft", Band.MIDDLE, -13, 0f, 1f, Shape.FISSURES, true, Box.HIGHLAND),
+    DROWNED_GALLERIES("drowned_galleries", Band.MIDDLE, -12, 0f, 1f, Shape.LAKES, true, Box.SHORE, Box.MARSH),
+    GLIMMER_HOLLOWS("glimmer_hollows", Band.MIDDLE, -11, 0f, 1f, Shape.GEODES, true, Box.FROZEN, Box.HOT, Box.WARM_DRY),
+    OCHRE_DEEP("ochre_deep", Band.MIDDLE, -10, 0f, 1f, Shape.TERRACES, true, Box.TEMPERATE, Box.WARM_WET),
+    // the Deep: under any land, the cover split between the two
+    BLACK_VAULTS("black_vaults", Band.DEEP, -10, 0f, 0.55f, Shape.VAULTS, true, Box.LAND),
+    VIOLET_DEEP("violet_deep", Band.DEEP, -10, 0.55f, 1f, Shape.WARPED, true, Box.LAND);
 
     /**
      * The regions' tiers (SPEC §42.2). The Deep is below y 0, as the Singing Deep's band; above it the tiers follow the
@@ -67,6 +77,19 @@ public enum CaveRegion {
          */
         public static final Box TEMPERATE = new Box(LO, HI, -0.45f, 0.2f, -0.19f, HI, LO, HI);
         public static final Box WARM_WET = new Box(-0.1f, HI, 0.2f, 0.55f, -0.19f, HI, LO, HI);
+        /** The Windcleft's: hills, mountains and peaks (vanilla's two lowest erosion bands), inland, any climate. */
+        public static final Box HIGHLAND = new Box(LO, HI, LO, HI, -0.11f, HI, LO, -0.375f);
+        /** The Pale Halls': the dry land (plains, meadow, savanna), not frozen and not desert, inland; and the shore. */
+        public static final Box DRY = new Box(LO, -0.1f, -0.45f, 0.55f, -0.11f, HI, LO, HI);
+        public static final Box SHORE = new Box(LO, HI, -0.45f, 0.55f, -0.19f, -0.11f, LO, HI);
+        /** The Drowned Galleries' wet lowland: the flattest land (vanilla's swamp erosion band), inland, not frozen or hot. */
+        public static final Box MARSH = new Box(LO, HI, -0.45f, 0.55f, -0.11f, HI, 0.55f, HI);
+        /** The Glimmer Hollows': frozen land, hot land and warm dry land (the Frost Spires, deserts, badlands, the Glass Steppe). */
+        public static final Box FROZEN = new Box(LO, HI, LO, -0.45f, -0.19f, HI, LO, HI);
+        public static final Box HOT = new Box(LO, HI, 0.55f, HI, -0.19f, HI, LO, HI);
+        public static final Box WARM_DRY = new Box(LO, -0.1f, 0.2f, 0.55f, -0.19f, HI, LO, HI);
+        /** The Deep's: any land, coast or inland (under the sea stays plain). */
+        public static final Box LAND = new Box(LO, HI, LO, HI, -0.19f, HI, LO, HI);
 
         public boolean holds(float humidity, float temperature, float continents, float erosion) {
             return humidity >= minHumidity && humidity <= maxHumidity && temperature >= minTemperature && temperature <= maxTemperature
@@ -75,7 +98,7 @@ public enum CaveRegion {
     }
 
     /** The shape family a region's caves take ({@link CaveShapes}). */
-    public enum Shape { NONE, TUBES, TERRACES }
+    public enum Shape { NONE, TUBES, TERRACES, HALLS, FISSURES, LAKES, GEODES, VAULTS, WARPED }
 
     /**
      * Caves start this far under the ground (the climate's depth: about 128 blocks per unit, so 20 blocks), above which a
@@ -95,7 +118,7 @@ public enum CaveRegion {
     /** The slot of the band's region field, as quantiles of that field (0 to 1): {@link Fields#value} turns them into field values. */
     public final float fromQuantile, toQuantile;
     public final Shape shape;
-    /** In the pack now (P0-P2: two regions; P3 the rest). */
+    /** In the pack now (P0-P2: two regions; P3: all eight). */
     public final boolean injected;
     /** The land above it may have: any of these. */
     public final List<Box> boxes;

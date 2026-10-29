@@ -16,7 +16,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -41,7 +40,7 @@ final class RegionCommands {
 
     static void register() {
         AwakenCommands.add((root, ctx) -> {
-            var ids = Arrays.stream(CaveRegion.values()).map(r -> r.id).toList();
+            var ids = CaveRegion.ORDER.stream().map(r -> r.id).toList();
             root.then(Commands.literal("caves").requires(AwakenCommands.admin()).then(Commands.literal("goto")
                     .then(Commands.argument("region", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(ids, b))
                             .executes(c -> go(c, 0))
@@ -53,10 +52,10 @@ final class RegionCommands {
     private static int go(CommandContext<CommandSourceStack> c, int pick) throws CommandSyntaxException {
         ServerPlayer p = c.getSource().getPlayerOrException();
         String id = StringArgumentType.getString(c, "region");
-        CaveRegion region = Arrays.stream(CaveRegion.values()).filter(r -> r.id.equals(id)).findFirst().orElse(null);
+        CaveRegion region = CaveRegion.ORDER.stream().filter(r -> r.id.equals(id)).findFirst().orElse(null);
         if (region == null) {
             c.getSource().sendFailure(Component.literal("No such cave region: " + String.join(", ",
-                    Arrays.stream(CaveRegion.values()).map(r -> r.id).toList())));
+                    CaveRegion.ORDER.stream().map(r -> r.id).toList())));
             return 0;
         }
         ServerLevel level = p.level();

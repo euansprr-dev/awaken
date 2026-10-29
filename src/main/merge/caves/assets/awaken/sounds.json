@@ -58,6 +58,73 @@
       }
     ]
   },
+  "caves.crystal_ring": {
+    "subtitle": "subtitles.awaken.caves.crystal_ring",
+    "sounds": [
+      {
+        "name": "awaken:caves/crystal_ring1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:caves/crystal_ring2",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:caves/crystal_ring3",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:caves/crystal_ring4",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "caves.lake_lap": {
+    "subtitle": "subtitles.awaken.caves.lake_lap",
+    "sounds": [
+      {
+        "name": "awaken:caves/lake_lap"
+      }
+    ]
+  },
+  "caves.pebble_fall": {
+    "subtitle": "subtitles.awaken.caves.pebble_fall",
+    "sounds": [
+      {
+        "name": "awaken:caves/pebble_fall1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:caves/pebble_fall2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:caves/pebble_fall3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "caves.pool_drip": {
+    "subtitle": "subtitles.awaken.caves.pool_drip",
+    "sounds": [
+      {
+        "name": "awaken:caves/pool_drip1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:caves/pool_drip2",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:caves/pool_drip3",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:caves/pool_drip4",
+        "attenuation_distance": 24
+      }
+    ]
+  },
   "caves.rock_tick": {
     "subtitle": "subtitles.awaken.caves.rock_tick",
     "sounds": [
@@ -96,11 +163,44 @@
       }
     ]
   },
+  "caves.vault_rumble": {
+    "subtitle": "subtitles.awaken.caves.vault_rumble",
+    "sounds": [
+      {
+        "name": "awaken:caves/vault_rumble1",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "awaken:caves/vault_rumble2",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "awaken:caves/vault_rumble3",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "caves.violet_hum": {
+    "subtitle": "subtitles.awaken.caves.violet_hum",
+    "sounds": [
+      {
+        "name": "awaken:caves/violet_hum"
+      }
+    ]
+  },
   "caves.warm_hum": {
     "subtitle": "subtitles.awaken.caves.warm_hum",
     "sounds": [
       {
         "name": "awaken:caves/warm_hum"
+      }
+    ]
+  },
+  "caves.wind_moan": {
+    "subtitle": "subtitles.awaken.caves.wind_moan",
+    "sounds": [
+      {
+        "name": "awaken:caves/wind_moan"
       }
     ]
   }

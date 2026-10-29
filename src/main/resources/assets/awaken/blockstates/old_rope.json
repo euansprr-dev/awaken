@@ -1,0 +1,38 @@
+{
+  "variants": {
+    "tip=false": [
+      {
+        "model": "awaken:block/caves/old_rope"
+      },
+      {
+        "model": "awaken:block/caves/old_rope",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/old_rope",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/old_rope",
+        "y": 270
+      }
+    ],
+    "tip=true": [
+      {
+        "model": "awaken:block/caves/old_rope_tip"
+      },
+      {
+        "model": "awaken:block/caves/old_rope_tip",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/old_rope_tip",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/old_rope_tip",
+        "y": 270
+      }
+    ]
+  }
+}

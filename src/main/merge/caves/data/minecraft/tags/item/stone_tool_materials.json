@@ -2,6 +2,12 @@
   "replace": false,
   "values": [
     "awaken:rootstone",
-    "awaken:ochre_stone"
+    "awaken:ochre_stone",
+    "awaken:limestone",
+    "awaken:banded_slate",
+    "awaken:siltstone",
+    "awaken:glimmerstone",
+    "awaken:column_basalt",
+    "awaken:seepstone"
   ]
 }

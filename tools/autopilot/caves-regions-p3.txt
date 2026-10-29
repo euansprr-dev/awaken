@@ -1,0 +1,236 @@
+# The Living Deep P3 (SPEC §42.8): the other six regions in a new world, as caves-regions.txt shows the Rootways and the
+# Ochre Deep. The same seed (Euan's New World, 9) with the pack's terrain. Each region at its roomiest floor near spawn
+# (/awaken caves goto, searched from a point in its band): the caption first (HUD on, two quick shots), then as a player
+# sees it (a torch in the off hand, Lens Cinematic, Bright gamma: the drawn light shows best here), with night vision to
+# show its rock and pieces, and up at the roof (glow-worm stars, old ropes, hanging crystals). The underlife's lineup
+# once (both rows: the regions' own behind). Last, a board in the sky with every P3 block at noon: nothing may show the
+# missing-texture pattern.
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
+#   tools/tour-ci.sh tools/autopilot/caves-regions-p3.txt 3000
+world caves_regions_p3 creative -9010908364552097449
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+camera first
+cmd time set 6000
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+cmd item replace entity @s weapon.offhand with minecraft:torch
+
+# ---- 1. the Pale Halls (the Shallows): caption, the hall, its roof of glow-worm stars, the lineup ----
+hud on
+cmd execute positioned -150 40 -280 run awaken caves goto pale_halls 0
+wait 60
+shotnow ph_caption_a
+wait 80
+shotnow ph_caption_b
+wait 300
+hud off
+shot ph_torch
+cmd tp @s ~ ~ ~ ~ -40
+wait 40
+shot ph_roof_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+cmd tp @s ~ ~ ~ ~ 0
+wait 30
+shot ph_nv
+cmd awaken underlife lineup
+wait 40
+cmd tp @s ~ ~ ~ ~ 20
+wait 10
+shot ph_lineup_nv
+cmd awaken underlife clear
+cmd effect clear @s minecraft:night_vision
+
+# ---- 2. the Windcleft (the Middle Dark under hills and mountains): the crack, up its height ----
+hud on
+cmd execute positioned -150 30 -280 run awaken caves goto windcleft 0
+wait 60
+shotnow wc_caption_a
+wait 80
+shotnow wc_caption_b
+wait 300
+hud off
+shot wc_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot wc_nv
+cmd tp @s ~ ~ ~ ~ -50
+wait 30
+shot wc_roof_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 3. the Drowned Galleries: a lake cavern, its light on the roof ----
+hud on
+cmd execute positioned -150 12 -280 run awaken caves goto drowned_galleries 0
+wait 60
+shotnow dg_caption_a
+wait 80
+shotnow dg_caption_b
+wait 300
+hud off
+shot dg_torch
+cmd tp @s ~ ~ ~ ~ -35
+wait 40
+shot dg_roof_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+cmd tp @s ~ ~ ~ ~ 10
+wait 30
+shot dg_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 4. the Glimmer Hollows: a geode room ----
+hud on
+cmd execute positioned -150 14 -280 run awaken caves goto glimmer_hollows 0
+wait 60
+shotnow gh_caption_a
+wait 80
+shotnow gh_caption_b
+wait 300
+hud off
+shot gh_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot gh_nv
+cmd tp @s ~ ~ ~ ~ -40
+wait 30
+shot gh_roof_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 5. the Black Vaults (the Deep): a hall over the lava, its heat ----
+hud on
+cmd execute positioned -150 -50 -280 run awaken caves goto black_vaults 0
+wait 60
+shotnow bv_caption_a
+wait 80
+shotnow bv_caption_b
+wait 300
+hud off
+shot bv_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot bv_nv
+cmd tp @s ~ ~ ~ ~ -40
+wait 30
+shot bv_roof_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 6. the Violet Deep: warped tunnels and a chamber ----
+hud on
+cmd execute positioned -150 -30 -280 run awaken caves goto violet_deep 0
+wait 60
+shotnow vd_caption_a
+wait 80
+shotnow vd_caption_b
+wait 300
+hud off
+shot vd_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot vd_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 7. every P3 block on a board in the sky at noon (a stone wall, floor and roof; the player in spectator) ----
+cmd gamemode spectator
+cmd tp @s -149.5 253 -277.5 180 12
+wait 200
+cmd fill -161 249 -290 -137 259 -290 minecraft:stone
+cmd fill -161 249 -289 -137 249 -283 minecraft:stone
+cmd fill -144 259 -289 -137 259 -286 minecraft:stone
+# the six rocks, then their ores, two by two in the wall
+cmd fill -158 256 -290 -157 257 -290 awaken:limestone
+cmd fill -155 256 -290 -154 257 -290 awaken:banded_slate
+cmd fill -152 256 -290 -151 257 -290 awaken:siltstone
+cmd fill -149 256 -290 -148 257 -290 awaken:glimmerstone
+cmd fill -146 256 -290 -145 257 -290 awaken:column_basalt
+cmd fill -143 256 -290 -142 257 -290 awaken:seepstone
+cmd fill -158 253 -290 -157 254 -290 awaken:limestone_iron_ore
+cmd fill -155 253 -290 -154 254 -290 awaken:banded_slate_gold_ore
+cmd fill -152 253 -290 -151 254 -290 awaken:siltstone_lapis_ore
+cmd fill -149 253 -290 -148 254 -290 awaken:siltstone_copper_ore
+cmd fill -146 253 -290 -145 254 -290 awaken:glimmerstone_redstone_ore
+cmd fill -143 253 -290 -142 254 -290 awaken:column_basalt_diamond_ore
+# the overlays and a wall crystal on the wall's face
+cmd fill -158 250 -289 -158 251 -289 awaken:rime[north=true]
+cmd fill -156 250 -289 -156 251 -289 awaken:glow_algae[north=true]
+cmd setblock -154 251 -289 awaken:amber_crystal[facing=south]
+cmd setblock -152 251 -289 awaken:glacial_crystal[facing=south]
+# the floor: rubble, then pebbles, of the six rocks
+cmd setblock -158 250 -287 awaken:limestone_rubble
+cmd setblock -156 250 -287 awaken:slate_rubble
+cmd setblock -154 250 -287 awaken:siltstone_rubble
+cmd setblock -152 250 -287 awaken:glimmer_rubble
+cmd setblock -150 250 -287 awaken:basalt_rubble
+cmd setblock -148 250 -287 awaken:seepstone_rubble
+cmd setblock -158 250 -286 awaken:limestone_pebbles
+cmd setblock -156 250 -286 awaken:slate_pebbles
+cmd setblock -154 250 -286 awaken:siltstone_pebbles
+cmd setblock -152 250 -286 awaken:glimmer_pebbles
+cmd setblock -150 250 -286 awaken:basalt_pebbles
+cmd setblock -148 250 -286 awaken:seepstone_pebbles
+# formations of the six rocks (base, frustum, tip)
+cmd setblock -158 250 -284 awaken:pointed_limestone[thickness=base]
+cmd setblock -158 251 -284 awaken:pointed_limestone[thickness=frustum]
+cmd setblock -158 252 -284 awaken:pointed_limestone[thickness=tip]
+cmd setblock -156 250 -284 awaken:pointed_slate[thickness=base]
+cmd setblock -156 251 -284 awaken:pointed_slate[thickness=frustum]
+cmd setblock -156 252 -284 awaken:pointed_slate[thickness=tip]
+cmd setblock -154 250 -284 awaken:pointed_siltstone[thickness=base]
+cmd setblock -154 251 -284 awaken:pointed_siltstone[thickness=frustum]
+cmd setblock -154 252 -284 awaken:pointed_siltstone[thickness=tip]
+cmd setblock -152 250 -284 awaken:pointed_glimmer[thickness=base]
+cmd setblock -152 251 -284 awaken:pointed_glimmer[thickness=frustum]
+cmd setblock -152 252 -284 awaken:pointed_glimmer[thickness=tip]
+cmd setblock -150 250 -284 awaken:pointed_basalt[thickness=base]
+cmd setblock -150 251 -284 awaken:pointed_basalt[thickness=frustum]
+cmd setblock -150 252 -284 awaken:pointed_basalt[thickness=tip]
+cmd setblock -148 250 -284 awaken:pointed_seepstone[thickness=base]
+cmd setblock -148 251 -284 awaken:pointed_seepstone[thickness=frustum]
+cmd setblock -148 252 -284 awaken:pointed_seepstone[thickness=tip]
+# the regions' own pieces on the floor
+cmd setblock -146 250 -284 awaken:rimstone[variant=0]
+cmd setblock -145 250 -284 awaken:rimstone[variant=1]
+cmd setblock -144 250 -284 awaken:rimstone[variant=2]
+cmd setblock -142 250 -284 awaken:cave_pearls
+cmd setblock -141 250 -284 awaken:silt
+cmd setblock -140 250 -284 awaken:ash
+cmd setblock -139 250 -284 awaken:shed_chitin
+cmd setblock -146 250 -286 awaken:violet_growth[variant=0]
+cmd setblock -145 250 -286 awaken:violet_growth[variant=1]
+cmd setblock -144 250 -286 awaken:violet_growth[variant=2]
+cmd setblock -142 250 -286 awaken:amber_crystal[facing=up]
+cmd setblock -141 250 -286 awaken:glacial_crystal[facing=up]
+cmd setblock -139 250 -286 awaken:driftwood[axis=x]
+# from the roof: an old rope with its frayed tip, a hanging crystal
+cmd setblock -140 258 -288 awaken:old_rope[tip=false]
+cmd setblock -140 257 -288 awaken:old_rope[tip=false]
+cmd setblock -140 256 -288 awaken:old_rope[tip=true]
+cmd setblock -138 258 -288 awaken:amber_crystal[facing=down]
+wait 100
+shot bd01_wall
+cmd tp @s -149.5 254 -280.5 180 40
+wait 60
+shot bd02_floor
+cmd tp @s -141.5 253 -282.5 200 10
+wait 60
+shot bd03_roof_pieces
+quit
