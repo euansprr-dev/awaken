@@ -35,6 +35,15 @@ public final class CreatureLife {
         return LifeRig.of(root, LifeProfile.temperament(temperament), null, false);
     }
 
+    /**
+     * As {@link #rig(ModelPart, String)}, and its feet plant by the profile {@code motion} names in
+     * {@code assets/awaken/life/motion.json} (SPEC §23.1; its rig's id). With no profile of that name, exactly as without.
+     * The renderer then sets {@link Life#grounded}, {@link Life#legsFree}, {@link Life#gaitRun} and {@link Life#bodyScale}.
+     */
+    public static LifeRig rig(ModelPart root, String temperament, String motion) {
+        return LifeRig.of(root, LifeProfile.temperament(temperament), null, false, motion);
+    }
+
     /** The creature's life on this rig: the one it holds if it fits, else a new one (once per creature). */
     public static Life life(@Nullable Object held, LifeRig rig, int seed) {
         return Life.of(held, rig, seed);

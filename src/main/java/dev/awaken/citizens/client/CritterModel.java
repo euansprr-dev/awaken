@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * One of the city's animals (tools/art/specs/city_fauna.py): a hero rig whose clips the brain picks by name
@@ -35,6 +36,9 @@ final class CritterModel extends EntityModel<CritterRenderState> {
     private final ModelPart wheelL, wheelR, rower;
     private final ModelPart[] loads;
     final LifeRig life;
+    /** Clips that stand or walk on the feet, which plant (SPEC §23.1); a sit, a loaf, a groom or a pant keeps its legs. */
+    private static final Set<String> FEET = Set.of("idle", "walk", "trot", "sniff", "peck", "call");
+    private final boolean[] onFeet, trots;
 
     CritterModel(ModelPart root, HeroRig rig, String temperament) {
         super(root, RenderTypes::entityCutout);
@@ -60,7 +64,23 @@ final class CritterModel extends EntityModel<CritterRenderState> {
         String[] ln = {"load_hay", "load_crates", "load_casks", "load_nets"};
         loads = new ModelPart[ln.length];
         for (int i = 0; i < ln.length; i++) loads[i] = rig.bone(ln[i]) >= 0 ? lookup.apply(ln[i]) : null;
-        life = CreatureLife.rig(root, temperament);
+        onFeet = new boolean[clips.size()];
+        trots = new boolean[clips.size()];
+        for (int i = 0; i < onFeet.length; i++) {
+            onFeet[i] = FEET.contains(clips.get(i).name());
+            trots[i] = clips.get(i).name().equals("trot");
+        }
+        life = CreatureLife.rig(root, temperament, rig.id);
+    }
+
+    /** A clip that doesn't stand or walk on the feet is playing: they let go to it. */
+    boolean legsFree(int clip) {
+        return clip >= 0 && clip < onFeet.length && !onFeet[clip];
+    }
+
+    /** 0..1 how much the clips trot, by their weights: the feet take their longer stride. */
+    float trot(int clip, int prev, float prevWeight) {
+        return (clip >= 0 && trots[clip] ? 1F - prevWeight : 0F) + (prev >= 0 && trots[prev] ? prevWeight : 0F);
     }
 
     int clip(String name) {

@@ -140,6 +140,15 @@ final class WildRenderer extends EntityRenderer<WildCritter, WildRenderState> {
         life.walk = s.walkAnimationSpeed;
         life.airborne = s.airborne;
         life.busy = s.clip >= 0 && s.clipTime < 0.2F;
+        // a walker's feet plant on the ground (SPEC §23.1); on a perch, or in a sit, a pounce, a hop or a swim the clip
+        // keeps its legs, and a trot takes the longer stride
+        WildModel m = models[k];
+        HeroRig r = m.rig();
+        life.grounded = !s.airborne;
+        life.legsFree = m.legsFree(s.clip) || k < WildKinds.SQUIRREL && e.state == Birds.PERCH || s.sink > 0F;
+        life.gaitRun = Math.max(m.trot(s.clip, s.prevClip, s.prevWeight),
+                Mth.clamp((e.speed - r.runFrom) / Math.max(0.01F, r.runFull - r.runFrom), 0F, 1F));
+        life.bodyScale = s.modelScale;
         CreatureLife.tick(life, s, true);
         s.life = life;
         if (s.blink != null && CreatureLife.eyesClosed(life) > 0.5F) s.texture = s.blink;

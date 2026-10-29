@@ -619,11 +619,14 @@ of `AwakenConfig.Client`.
   retired or tips are off: skip the probe). Installed by the signal module in M4 B6; until then every call does nothing.
   Tip text and triggers are data; any module may offer its own tips (the Ascent for its tiers).
 - `dev.awaken.mobs.client.life.CreatureLife` (client, §23) — the life layer for any module's bodies:
-  `LifeRig rig(ModelPart root, String temperament)` once per model; `Life life(Object held, LifeRig rig, int seed)` once
+  `LifeRig rig(ModelPart root, String temperament)` once per model, or `rig(root, temperament, String motion)` for a body
+  whose feet plant by the `motion.json` profile of that id (its rig's id; none there, exactly as the two-argument form;
+  §23.1 "The wild's and the city's walkers"); `Life life(Object held, LifeRig rig, int seed)` once
   per creature (keep it on the entity's client data); `tick(Life, LivingEntityRenderState, boolean steerHead)` once a frame
   in `extractRenderState`; `apply(LifeRig, Life, LivingEntityRenderState)` at the end of `setupAnim` (safe to run once per
   layer); optional `rootPose(Life, PoseStack, state)` in `setupRotations`; `eyesClosed(Life)` 0..1 for a texture blink.
-  Per-frame inputs are public fields on `Life` (`hurt`, `walk`, `stride`, `busy`, `lookWeight`, `windup`, `roar`, `dying`).
+  Per-frame inputs are public fields on `Life` (`hurt`, `walk`, `stride`, `busy`, `lookWeight`, `windup`, `roar`, `dying`;
+  for planted feet `grounded`, `legsFree`, `gaitRun`, `bodyScale`).
 - `dev.awaken.core.api.Strikes` (§24) — how a blow can be answered: `enum Kind {LIGHT, HEAVY, PERILOUS, GRAB, NONE}`
   (`deflectable()`, `blockable()`, `dodgeable()`); `deliver(Entity by, Kind, BooleanSupplier blow)` names the class of
   the blow it runs (a mob's swing, an ability's hit); `of(DamageSource)` reads it back (defaults: an untold melee or a
@@ -2567,6 +2570,8 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
       residents, children, the Watch, porters, washers, shopkeepers and millers. Boats: one moored every 24 blocks along
       each quay inside the wall (a quarter left empty, none within 6 of a bridge); two rowed up and down the river, one
       round the canal; rowing from 23000 to 18000, bow lanterns lit after dusk (a third of the moored ones too).
+      Tours only: client command `/awaken critters lineup pace|pace_<pigeon|gull|cat|dog>|off` sets the walkers
+      pacing 5-block lanes before the camera (a walk out, a stand turning round, a trot back) for §23.1's feet.
     - Hand lanterns and lit street lamps are drawn light (`citizens.client.CityGlow`: an additive core, halo and pool on
       the ground), never light blocks; `/awaken citizens lanterns blocks|glow` keeps the old path for measuring only.
       Choir Square's festoons: paper lanterns strung between the bowl's eight lamp posts, lit 12200-19500.
@@ -5185,13 +5190,28 @@ Replaces §21.11 decision 18's kit. Built 2026-10-28 by one builder, no sub-agen
     tips a forward-faller onto its side, never into the striker). The walkers fall forward; the creeper, the chicken and the beasts onto
     their left; a spider rolls over in place and does not turn. A vanilla body at D keeps its glow's fade though Fight Feel's own fall
     clears the state's `deathTime` (the layer reads the fall from its own render data).
+17. **With Fresh Animations, its moves 1:1** (Euan 2026-10-29: "for all vanilla mob upgrades, literally just use the fresh animations 1:1, they are
+    perfect already"; he chose to keep the rung's size, eyes and extras). When EMF is loaded and the resource packs hold a model for the
+    species (`minecraft:optifine/cem/<id>.jem` or `emf/cem/`), read on each renderer rebuild, a form from C up keeps the vanilla body, which the
+    pack animates, at the rung's height (`state.scale *= FormShape.heightFactor`, about the feet; the walkers stay near vanilla's height in their
+    wider box). Nothing of the pack is shipped or read beyond that check: its terms forbid redistribution and our repo is public, so the moves
+    come from the player's own install (a modpack may bundle FA by its terms). The rig's extras ride the vanilla parts (`living.forms.FormFit`,
+    pure): every bone that isn't the body (body = base, hips, torso, head, neck, abdomen, tail, spinner, legs, shins, arms, forearms, hands,
+    coxae, ears, wings, eyes, jaws, fangs) is anchored to the vanilla part its body bone maps to (walkers: torso and hips on `body`, `arm_r` on
+    `right_arm`...; beasts and the chicken: `neck` and `head` on `head`; spider: torso on `body0`, abdomen on `body1`) and moved from the form's
+    box onto vanilla's grown to the rung: a point outside keeps its distance from the face it's beside, one inside spreads with it; plates on a
+    body bone move cube by cube, a chain (crowns, horns, claws, petals, crystals) moves with its root. Vanilla rest boxes are read from 26.3's
+    models (FA keeps vanilla's joints). `living.client.forms.FormExtras`, one layer per species' vanilla renderer, draws each part's pieces as
+    one baked model, carried by that part's pose from its own fields times the inverse of its vanilla rest (not `translateAndRotate`, which EMF
+    moves to the hand on an arm), in the form's skin and glow. The form's own clips, cued moves, life layer, halos and fall don't run then: FA
+    acts it all. The forms' eyes are `FormLayers`' as at D. LITE and OFF, no EMF, or no model for a species: as before.
 14. **Perf.** Per entity one `FormBody`, created on first sight, reused; no allocation per frame; halos past 48 blocks skipped; the life layer's
     springs past 32 as elsewhere. Rigs: at most 60 bones (tested). Server: one cue per move, one dimension refresh per form change.
 - Not yet (F3 follow-ups): presence motes at A and S and heavy footfalls, distance LOD for sub-pixel growth, a voice layer per family
   (`audio_living.py`), the wind-up light trail at S, a gallery command. The vanilla cow and pig variants (warm, cold) are not read: the form's
   own family paints them.
 - Dev: `/awaken living form <species> <rung> [family]`, `/awaken living formrow <species> [family]`; tour `tools/autopilot/forms-parade.txt`.
-- Tests: `forms_bodies` (every species and rung has a rig that passes its checks, its clips, its paints and coats), `forms_size` (the hitbox follows the form on the server),
+- Tests: `forms_bodies` (every species and rung has a rig that passes its checks, its clips, its paints and coats), `forms_fit` (with a model pack every non-body bone rides a vanilla part, none lost, each by its part), `forms_size` (the hitbox follows the form on the server),
   `forms_cue` (the cue codec round-trips; the second blow's caps), plus `living_form_mix`, `living_form_state`, `living_form_moves`.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
@@ -5721,7 +5741,11 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
 - **Data**: `assets/awaken/life/motion.json` (schemaVersion 1), by rig id. A body not listed moves exactly as before (the
   kit's bosses have no entry). `gait`: `pattern` (`ripple`: one pair at a time from the back forward, each `lag` of a
   cycle after the pair behind it, the two sides half a cycle apart (`lag` 0: one wave over the side); `alternate`:
-  opposite sets; `ripple-alternate`: the first walking, the second once it runs, 0.45 in and 0.25 out), `duty` (share of
+  opposite sets; `ripple-alternate`: the first walking, the second once it runs, 0.45 in and 0.25 out; `bound`: a
+  ripple walking and, once it runs, the forefeet together and the hind pair half a cycle later, the right foot of each
+  pair 0.06 of a cycle behind the left (an otter's lope); `hop`: every foot at once, the body rising with them (a
+  negative `bob`) and pitching by `rock` radians, nose up as it leaves the ground and down as it comes in, its single
+  re-steps rocking nothing (a rabbit, a cricket)), `duty` (share of
   a cycle a foot stands, walking and running), `lift` (px a step rises), `stride` (blocks a cycle covers; 0 the rig's
   own), `reach` (blocks a planted foot may trail before it steps at once), `settle` (blocks from home a foot may rest
   when the body stops), `crouch` (px the body sinks on its legs), `radius` and `fan` (where each foot stands: px out
@@ -5733,7 +5757,8 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   clips while the body rears: a wind-up, a strike or a cue, a roar, or a still threat; a roar lets one pair more go),
   `knees` (`auto`, `forward`, `back`: which way a leg that stands straight at rest bends; `auto` breaks the forelegs of a
   body with legs one behind another forward and every other leg back, a bird's and a biped's back; a leg bent at rest
-  keeps its own bulge).
+  keeps its own bulge), `mixed` (a one-bone leg walks rigid beside legs that bend: `LegRig.stiff`, per leg), `hindBack`
+  (px the hind feet stand behind their rest spot: a leg lying nearly straight at rest can step no further forward).
   `body`: `headLevel` (the head holds level against the gait's and the ground's pitch and roll), `twist` (the body turns
   this share of its look, at most 0.35 rad), `slope` (it pitches and rolls with the ground under its planted feet),
   `land` (a landing squashes it by how far it fell: a spring at 3 Hz kicked by the fall speed), `still` (a stalking
@@ -5752,9 +5777,12 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   ride the body bone; a pose-stack body would carry them off their spots), or that have no head bone at all and a motion
   profile (the weaver queen's face is on its thorax; a headless body without one keeps its old pose-stack motion), or
   hand-built bodies the root carries (below). A gait with `arms` walks on its arms too: ARM-role chains are found as
-  legs are (the Hushling's long arms plant like forelegs).
-- **One-bone legs and the root's carry** (batch 4, 2026-10-29: the hand-built walkers): a rigid gait also takes a
-  one-bone leg, a LEG-role bone with cubes and no leg below it (a vanilla-shaped body's block of a leg), its own block
+  legs are (the Hushling's long arms plant like forelegs). Toes: several LEG-role bones under a knee with nothing
+  below them (the Mycelord's roots) ride the knee's block, which is then the shin. A flat pad (a block thinner than it
+  is long and wide, not pointing down: a toad's foot, a walking mushroom's) reaches with its sole's far edge, not
+  halfway up it, so it stands on the ground instead of sunk into it.
+- **One-bone legs and the root's carry** (batch 4, 2026-10-29: the hand-built walkers): a rigid gait (or a `mixed`
+  one, its other legs bending) also takes a one-bone leg, a LEG-role bone with cubes and no leg below it (a vanilla-shaped body's block of a leg), its own block
   the whole leg (`knee` -1), swung as any rigid leg. A hand-built body (`LifeModel`, no hero rig) with a gait whose legs
   don't all hang from its body bone, or whose body bone doesn't carry its head (the stag's legs and neck hang off the
   model root), has its body's motions carried by the root part (`LifeRig.rootCarries`): the dip, lean and roll the pose
@@ -5902,9 +5930,55 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   about six steps a second; the
   **Shroomlet** (`shroomlet`; two 3 px legs off the root) a toddler's waddle (0.22/0.32 blocks, roll 0.08); the
   **Listener** (`listener`; two 16 px legs off the root) a long stalking stride (1.2/1.9 blocks, 2.5/4.5 px, shoulder
-  0.3, `still`, creep 1). The Scree Marmot (2 px legs) and the Mudskipper (the lizard body at 0.75) are left on their
-  own swing: planted, their legs would step eight or nine times a second; the snail and the breathbell have no legs; the
-  chime cricket hops.
+  0.3, `still`, creep 1).
+- **Batch 5** (2026-10-29: the rest of our walkers, and the legless; strides from the feet test, about 0.9 of the most
+  it allows): the **Mire Mother** (`mire_mother`, named beast; `arms`: her two-bone arms plant their hands, the hand
+  the shin, the wrist bending over it; folded hind legs with flat feet) a toad's crawl, a ripple walking and a trot when
+  she lunges (duty 0.75/0.5, 0.45/0.7 blocks, 3/4.5 px, 0.42 s swings, bob 0.6), her hind feet 4 px behind their rest
+  spot (`hindBack`), and her haunches 2.5 px lower in the spec (`fauna_heroes.py`): her hind feet hung 2.5 px above the
+  ground; the **Mycelord** (`mycelord`, named beast; two stubby rigid legs on flat feet, the roots riding them as toes)
+  a heavy biped's waddle (0.32/0.45 blocks, 0.4 s swings, roll 0.06); the **Tidesteed** (`tidesteed`; two three-bone
+  forelegs, the flipper riding the shin) an alternating walk (0.7/1.1 blocks), its swim as before; the **Brook Otter**
+  (`brook_otter`; `mixed`: one-bone forelegs stiff, two-bone hind legs bending, the paw the shin) a ripple walk and a
+  bound when it runs (duty 0.55/0.35, 0.34/0.52 blocks), the body arching with each pair (rock −0.08: forefeet up lift
+  the chest, hind feet up the rump), its swim as before; the **Scree Marmot** (`scree_marmot`; 2 px one-bone legs off
+  the root) a scurry and a bound (duty 0.62/0.3, 0.24/0.5 blocks; reach 0.12 and settle 0.02, so a 2 px leg never
+  leans past its limit; a walking duty under a half left neighbouring feet always up, blocking each other's catch-up
+  steps); the **Mudskipper** (`mudskipper`; the basilisk's body at 0.75, `HAND_FEET` shared) skipping on its fins
+  (`hop`, duty 0.3/0.27, 0.45/0.5 blocks, rising 1.6 px, rock 0.2); the **Chime Cricket** (`chime_cricket`; only its
+  two-bone hind legs plant, its four small one-bone legs keep their clip) hopping (`hop`, duty 0.25/0.22, 0.6/0.8
+  blocks, rising 2 px, rock 0.25). Legless: the **snails** (Gloam and Sporeback, `WildModels.Snail`) crawl on a wave
+  whose pace is the ground's: the foot stretches out from a tail that stays put and gathers it in after, the shell and
+  head keep their own length, the shell rocks with each push and sways side to side once in two, the eye stalks sweep
+  back under way and now and then one draws halfway in and out (a snail's blink); the **Breathbell** (`breathbell`; a
+  `fly` block with no wings or spine) leans into its drift (tilt 0.35 at 2 blocks a second, bank 0.12), its pulse,
+  skirt and trailing tentacles its clips' and springs'. The **walking forms** (`form_zombie_2`..`_5`,
+  `form_skeleton_2`..`_5`, SPEC 21.13; two 12 px one-bone legs from the hips, rigid, shoulder 0.3) a biped's walk off
+  the Listener's scaled to their legs (duty 0.62/0.4, 0.85/1.35 blocks, 2/3.4 px, 0.32 s swings, roll 0.05); the
+  **creeper forms** (`form_creeper_2`..`_5`; four one-bone legs of 6, 7, 7 and 8 px) a diagonal shuffle at every
+  speed (`alternate`, duty 0.66/0.42, about 0.1 and 0.18 blocks a cycle per px of leg; the largest's run 1.4).
+  These are the forms' own bodies; with Fresh Animations installed every vanilla species' form moves by FA 1:1 instead (SPEC 21.13
+  item 17, Euan 2026-10-29), its pieces riding FA's parts.
+- **The wild's and the city's walkers** (2026-10-29; a cross-module edit the orchestrator approved: client code only,
+  the wildlife module's `WildModel` and `WildRenderer`, the citizens module's `CritterModel` and `CritterRenderer`; no
+  server, entity, spawn or data change). Each model binds `CreatureLife.rig(root, temperament, rig.id)` (§12); a rig
+  with no `motion.json` profile behaves exactly as before. The renderer sets `grounded` (not flying or landing, a city
+  cat not mid-leap), `legsFree` (a perched bird, a sitting animal, a swimming duck, or any clip but idle, walk, trot,
+  sniff, listen, peck, caw and call: a sit, a loaf, a groom, a pant, a pounce, a hop, the fox's bolt keep their legs),
+  `gaitRun` (a trot clip's weight, or the speed between the rig's `runFrom` and `runFull`, whichever is more) and
+  `bodyScale` (the model's own scale, so the feet land where it is drawn). Profiles: the **fox** (`wild_fox`; `mixed`:
+  8 px one-bone forelegs stiff, the hind leg and hock bending) and the city **cat** and **dog** (`city_cat`,
+  `city_dog`, the same build at 7 and 9 px) a ripple walk and a trot (duty 0.66/0.45, 0.66/0.42, 0.64/0.42; strides
+  0.6/0.9, 0.55/0.95, 0.7/1.2 blocks), the cat's crouch 1.1 px (its hind feet are drawn 1 px off the ground); the
+  **crow** (`wild_crow`) and the city **pigeon** and **gull** (`city_pigeon`, `city_gull`; rigid 3 and 4 px legs whose
+  toe plates put the foot 1 px ahead of the hip, so a forward step runs out of leg first: a deeper crouch, 0.5 to 0.6
+  px, and the pigeon's duty 0.5/0.45 keep the hips within their drop) an alternating walk (0.34 to 0.5 blocks; the
+  feet never take a cycle under 0.2 blocks, so a pigeon at 0.6 can't go shorter). Not planted: the **city horse** (its
+  walk clip bends knee and hock in time with the cart; `fknee` and `hhock` aren't leg names, and rigid legs would lose
+  that), the **heron** (it wades: its feet would reach for the bed under the water), and the hoppers and climbers
+  (songbird, woodpecker, squirrel, rabbit, frog), whose clips are their gait. Test: `creature_fauna_feet` (every walker
+  here has its gait, its rig in its module's sources, and every leg plants); `creature_motion_feet` checks their
+  strides with the rest.
 - **Flight** (`Flight`, plain math checked on the server; a `fly` block, by rig id or, for a hand-built body, by its
   creature id): while airborne or swimming (or `always`, for a body always under way: serpents, the ray) the body noses
   into a cruise (`tilt` at `fast` blocks a second) and pitches along its path's climb or dive (`climb`, the share), banks
@@ -9858,7 +9932,8 @@ hundred glow quads, culled by distance and view.
 **API additions** (§12): `core.audio.client.Soundscape.hushAt(x, y, z)` (what is left of birds and insects at a point);
 `citizens.client.CityLife.inside(x, z, margin)` (within Carillon's wall plus a margin). Client command
 `/awaken wildlife [on|off|count|dial <x>|lineup [clip|insects|off] [variant]]` (`count`: what's near, what the camera
-can see, and where the songbirds are; `lineup`: every body, or every insect, posed before the camera on a stage); tours
+can see, and where the songbirds are; `lineup`: every body, or every insect, posed before the camera on a stage;
+`lineup pace` or `pace_fox`/`pace_crow`: the walkers pace 5-block lanes, a walk out and a trot back, for §23.1's feet); tours
 log the census every 30 s as `[wildlife] in view N of M near: ...`. Tours: `tools/autopilot/wild-life.txt` (the stage by
 day and night, then forest, rain, flowers, river, Mirror Marsh, Lumen Forest), `wild-forest.txt` (the quick loop).
 

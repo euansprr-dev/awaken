@@ -1,5 +1,8 @@
 package dev.awaken.citizens.client;
 
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import dev.awaken.Awaken;
 import dev.awaken.citizens.CitizenBody;
 import dev.awaken.citizens.CitizensContent;
 import dev.awaken.citizens.CityCritter;
@@ -7,6 +10,8 @@ import dev.awaken.citizens.Roster;
 import dev.awaken.city.CityPlan;
 import dev.awaken.mobs.client.anim.HeroRig;
 import net.minecraft.client.Minecraft;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -19,8 +24,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.client.event.sound.PlaySoundEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 
 import java.util.ArrayList;
@@ -119,6 +126,15 @@ public final class CityCritters {
 
     static void init() {
         CityCritter.brain = CityCritters::think;
+        // the studio's line-up, for tours only: /awaken critters lineup pace | pace_<pigeon|gull|cat|dog> | off
+        NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
+                Commands.literal(Awaken.MODID).then(Commands.literal("critters").then(Commands.literal("lineup")
+                        .then(Commands.argument("what", StringArgumentType.word()).executes(c -> {
+                            String line = lineup(Minecraft.getInstance().level, StringArgumentType.getString(c, "what"));
+                            Awaken.LOG.info("[citizens] {}", line);
+                            Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(Component.literal(line));
+                            return Command.SINGLE_SUCCESS;
+                        }))))));
     }
 
     // ---- homes ----------------------------------------------------------------------------------------------------
@@ -549,6 +565,10 @@ public final class CityCritters {
         c.cartYO = c.cartY;
         c.speed = 0F;
         ClientLevel level = (ClientLevel) c.level();
+        if (c.state == PACE) {
+            paceStep(c, level);
+            return;
+        }
         Home h = c.home >= 0 && c.home < HOMES.size() ? HOMES.get(c.home) : null;
         try {
             switch (c.kind) {
@@ -562,6 +582,78 @@ public final class CityCritters {
         } catch (RuntimeException ex) {
             c.discard();
         }
+    }
+
+    // ---- the studio (tours) ------------------------------------------------------------------------------------------
+
+    /**
+     * A line-up walker's beat (SPEC §23.1, its feet): out along its lane at a walk, a stand turning round, back at a trot.
+     * Its far end is (tx, tz), the near (vx, vz); vy 0 walks, 1 trots.
+     */
+    static final int PACE = 98;
+    private static final String[] PACERS = {"pigeon", "gull", "cat", "dog"};
+    private static final List<CityCritter> SHOWN = new ArrayList<>();
+
+    /** The walkers whose feet plant, each pacing a 5-block lane across the view, side-on, the nearest 3 blocks out. */
+    static String lineup(ClientLevel level, String what) {
+        for (CityCritter c : SHOWN) c.discard();
+        SHOWN.clear();
+        if (level == null || Minecraft.getInstance().player == null || !what.startsWith("pace")) return "critter line-up cleared";
+        String only = what.length() > 5 ? what.substring(5) : "";
+        LocalPlayer p = Minecraft.getInstance().player;
+        float yaw = p.getYRot() * Mth.DEG_TO_RAD;
+        double fx = -Mth.sin(yaw), fz = Mth.cos(yaw), rx = -fz, rz = fx;
+        for (int k = 0; k < PACERS.length; k++) {
+            if (!only.isEmpty() && !only.equals(PACERS[k])) continue;
+            double d = 3.0 + SHOWN.size() * 1.5, x = p.getX() + fx * d - rx * 2.5, z = p.getZ() + fz * d - rz * 2.5;
+            double y = ground(level, x, z, null);
+            CityCritter c = new CityCritter(CitizensContent.CRITTER.get(), level);
+            c.setId(nextId--);
+            c.kind = k;
+            c.seed = 1000 + k;
+            c.state = PACE;
+            c.vx = x;
+            c.vz = z;
+            c.tx = x + rx * 5;
+            c.tz = z + rz * 5;
+            c.timer = 30;
+            c.setPos(x, y, z);
+            c.setYRot((float) (Mth.atan2(p.getZ() - z, p.getX() - x) * Mth.RAD_TO_DEG) - 90F);
+            c.yRotO = c.getYRot();
+            c.xo = x;
+            c.yo = y;
+            c.zo = z;
+            clip(c, "idle");
+            level.addEntity(c);
+            SHOWN.add(c);
+        }
+        return SHOWN.size() + " critters pacing in the line-up";
+    }
+
+    /** A step of the beat: at an end it stands, turning round on the spot, then goes back the other way. */
+    private static void paceStep(CityCritter c, ClientLevel level) {
+        boolean trot = c.vy > 0.5 && CLIPS[c.kind].containsKey("trot");
+        if (c.timer > 0) {
+            face(c, c.tx - c.getX(), c.tz - c.getZ(), 9F);
+            if (--c.timer == 0) clip(c, trot ? "trot" : "walk");
+            return;
+        }
+        // the brains' own paces: a pigeon's and a gull's walk (bird), a cat's walk and flight (cat), a dog's (dog)
+        double sp = switch (c.kind) {
+            case CityCritter.PIGEON -> 0.045;
+            case CityCritter.GULL -> 0.06;
+            case CityCritter.CAT -> trot ? 0.11 : 0.045;
+            default -> trot ? 0.14 : 0.06;
+        };
+        if (!walk(c, level, c.tx, c.tz, sp, 12F, null)) return;
+        double ox = c.vx, oz = c.vz;
+        c.vx = c.tx;
+        c.vz = c.tz;
+        c.tx = ox;
+        c.tz = oz;
+        c.vy = 1 - c.vy;
+        c.timer = 30;
+        clip(c, "idle");
     }
 
     private static void clip(CityCritter c, String name) {
