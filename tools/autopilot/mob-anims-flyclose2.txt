@@ -1,0 +1,288 @@
+# Creatures to the Fresh Animations bar (SPEC 23.1, Flight), the rest of the fliers and swimmers (flyclose has the
+# owl, the moths, the bogwick, the coil, the glimmerfin and the Tidesteed), close up and in half-speed time: each circles a
+# camera at its own distance, a cruise lap then half a slower one, the camera at its middle height turning with it
+# from the middle of the circle, so the bank, the beat, the glides and the head held level stay big and whole in
+# frame; vanilla's beside it under Fresh Animations, a little further round the same circle (a bee, a cod).
+# Clips: fly_<name>.
+# Clips: run-autopilot/clips/<name> (python3 -I tools/ascent/clip.py <dir> makes an mp4 and a contact sheet).
+# ci knobs: PACK=perf,feel
+world flyclose2 creative 783
+waitworld
+wait 40
+# the opening's sky flight holds the camera: skip it first
+cmd awaken opening skip
+wait 30
+# the studio's chunks first: a busy runner's server can fall seconds behind the script
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -32 -32 32 48
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+camera first
+hud off
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd effect give @s minecraft:regeneration infinite 4 true
+cmd effect give @s minecraft:saturation infinite 0 true
+cmd effect give @s minecraft:night_vision infinite 0 true
+info
+cmd tp @s 0.5 201 0.5 0 0
+wait 100
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd gamemode spectator
+wait 5
+# the Petalwing and a bee
+cmd summon awaken:petalwing 1.18 203.0 3.22 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[76.0f,0f]}
+cmd summon minecraft:bee -0.18 203.0 3.22 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[104.0f,0f]}
+cmd tp @s 0.5 201.73 0.5 0 0
+look 0 0
+wait 30
+cmd tick rate 10
+wait 5
+cmd awaken ascent pilot rec fly_petal 550 2
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 40
+cmd awaken admin stroll @e[tag=flier] 0.070 251 1.432
+turn 1.432 251
+wait 125
+shot fly_petal_cruise
+wait 126
+cmd awaken admin stroll @e[tag=flier] 0.042 209 0.859
+turn 0.859 209
+wait 104
+shot fly_petal_slow
+wait 105
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 45
+cmd tick rate 20
+wait 5
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# the Breathbell, drifting slowly
+cmd summon awaken:breathbell 0.50 204.0 3.50 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90.0f,0f]}
+cmd tp @s 0.5 202.88 0.5 0 0
+look 0 0
+wait 30
+cmd tick rate 10
+wait 5
+cmd awaken ascent pilot rec fly_bell 781 2
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 40
+cmd awaken admin stroll @e[tag=flier] 0.050 377 0.955
+turn 0.955 377
+wait 188
+shot fly_bell_cruise
+wait 189
+cmd awaken admin stroll @e[tag=flier] 0.030 314 0.573
+turn 0.573 314
+wait 157
+shot fly_bell_slow
+wait 157
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 45
+cmd tick rate 20
+wait 5
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# the sand swimmers in open air: the Dune Ray, the Dune Wyrm, the Cord Eater
+cmd summon awaken:dune_ray 0.50 202.5 5.00 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90.0f,0f]}
+cmd tp @s 0.5 201.18 0.5 0 0
+look 0 0
+wait 30
+cmd tick rate 10
+wait 5
+cmd awaken ascent pilot rec fly_ray 522 2
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 40
+cmd awaken admin stroll @e[tag=flier] 0.120 236 1.528
+turn 1.528 236
+wait 118
+shot fly_ray_cruise
+wait 118
+cmd awaken admin stroll @e[tag=flier] 0.072 196 0.917
+turn 0.917 196
+wait 98
+shot fly_ray_slow
+wait 98
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 45
+cmd tick rate 20
+wait 5
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd summon awaken:dune_wyrm 0.50 202.0 6.00 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90.0f,0f]}
+cmd tp @s 0.5 200.88 0.5 0 0
+look 0 0
+wait 30
+cmd tick rate 10
+wait 5
+cmd awaken ascent pilot rec sand_wyrm 618 2
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 40
+cmd awaken admin stroll @e[tag=flier] 0.120 288 1.250
+turn 1.250 288
+wait 144
+shot sand_wyrm_cruise
+wait 144
+cmd awaken admin stroll @e[tag=flier] 0.072 240 0.750
+turn 0.750 240
+wait 120
+shot sand_wyrm_slow
+wait 120
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 45
+cmd tick rate 20
+wait 5
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd summon awaken:cord_eater 0.50 202.0 4.00 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90.0f,0f]}
+cmd tp @s 0.5 200.68 0.5 0 0
+look 0 0
+wait 30
+cmd tick rate 10
+wait 5
+cmd awaken ascent pilot rec sand_cord 493 2
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 40
+cmd awaken admin stroll @e[tag=flier] 0.100 220 1.637
+turn 1.637 220
+wait 110
+shot sand_cord_cruise
+wait 110
+cmd awaken admin stroll @e[tag=flier] 0.060 183 0.982
+turn 0.982 183
+wait 91
+shot sand_cord_slow
+wait 92
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 45
+cmd tick rate 20
+wait 5
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# the swimmers in a tank: the Lantern Maw and a cod, the eels, the otter
+cmd fill -8 201 -8 9 207 9 minecraft:water
+wait 20
+cmd summon awaken:lantern_maw 1.12 203.5 3.43 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[78.0f,0f]}
+cmd summon minecraft:cod -0.12 203.5 3.43 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[102.0f,0f]}
+cmd tp @s 0.5 202.18 0.5 0 0
+look 0 0
+wait 30
+cmd tick rate 10
+wait 5
+cmd awaken ascent pilot rec swim_maw 583 2
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 40
+cmd awaken admin stroll @e[tag=flier] 0.070 269 1.337
+turn 1.337 269
+wait 134
+shot swim_maw_cruise
+wait 135
+cmd awaken admin stroll @e[tag=flier] 0.042 224 0.802
+turn 0.802 224
+wait 112
+shot swim_maw_slow
+wait 112
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 45
+cmd tick rate 20
+wait 5
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd summon awaken:deep_eel 1.25 203.5 4.02 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[78.0f,0f]}
+cmd summon awaken:tide_eel -0.25 203.5 4.02 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[102.0f,0f]}
+cmd tp @s 0.5 202.13 0.5 0 0
+look 0 0
+wait 30
+cmd tick rate 10
+wait 5
+cmd awaken ascent pilot rec swim_eels 550 2
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 40
+cmd awaken admin stroll @e[tag=flier] 0.090 251 1.432
+turn 1.432 251
+wait 125
+shot swim_eels_cruise
+wait 126
+cmd awaken admin stroll @e[tag=flier] 0.054 209 0.859
+turn 0.859 209
+wait 104
+shot swim_eels_slow
+wait 105
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 45
+cmd tick rate 20
+wait 5
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd summon awaken:brook_otter 0.50 203.5 3.30 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90.0f,0f]}
+cmd tp @s 0.5 202.13 0.5 0 0
+look 0 0
+wait 30
+cmd tick rate 10
+wait 5
+cmd awaken ascent pilot rec swim_otter 448 2
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 40
+cmd awaken admin stroll @e[tag=flier] 0.090 195 1.842
+turn 1.842 195
+wait 97
+shot swim_otter_cruise
+wait 98
+cmd awaken admin stroll @e[tag=flier] 0.054 163 1.105
+turn 1.105 163
+wait 81
+shot swim_otter_slow
+wait 82
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 45
+cmd tick rate 20
+wait 5
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd fill -8 201 -8 9 207 9 minecraft:air
+wait 10
+cmd gamemode creative
+info
+quit
