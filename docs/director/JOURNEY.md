@@ -388,6 +388,7 @@ then 8, 12, 18, 24 by its last tier, plus the nooks each work brings.
 | D | **The Smeltery** | A vent stone from a hot spring (caves) | Emberkits | Smelts the ore you drop in its chest |
 | D | **The Rookery** | A bell you've woken (any) | Chimewrens | Bell leads by song; the Map fills round you |
 | C | **The Foundry** | Bell bronze and Deepglass (the Singing Deep, the Descent) | Emberkits, Thatchbacks | Casts the six bells of the Singing Deep, and the tower's frames |
+| C | **The Storehouse** (Euan's addition, 29 Oct) | A Totter that's Kin, and the keystone from an empty town's granary | Totters | One place to drop everything. You tip it into the Drop, you watch it pile up, the Totters sort it onto its shelves, and the Ledger finds anything (below) |
 | C | **Hives and the Loom** | A queen's comb from a flower field; a branch of the loom tree | Bumblepuffs, Loomworms | Candles, cloth, comfort; Rested lasts longer |
 | B | **The Works** | A sky core and a machine plan (the Above) | Emberkits for heat, Totters for lines | Machines run off your bells; lines move things across the whole home |
 | B | **The Shrine** | A spirit's blessing (the Veil) | | Fracture care; dreaming on purpose (the Lucidium) |
@@ -401,9 +402,37 @@ The beasts take the boring work a step at a time. The right-hand column never ch
 |---|---|---|
 | E, first home | One field tended (a Burrowbun); the yard lit at night (a Lampwing) | Everything else: mine, smelt in your own furnace, carry, craft, forge |
 | D | Each work has its beast and its chest. Drop raw ore in the Smeltery's chest and the Emberkits smelt it; drop rubble in the Ore Shed and the Pebblepups sort it; the fields and pens run | Find and mine every ore; carry ingots from the Smeltery to the Forge; fetch the rare things; forge |
-| C | Totters carry between works inside the yard: Smeltery to the Forge's chest, fields to the larder, wool to the Loom; chests sorted by colour | Find and mine; fetch; forge |
-| B | The Works' lines: machines off your bells move things across the whole home (ore from the Ore Shed through the Smeltery into the Forge's rack) | Find and mine; fetch; forge; choose the plan |
+| C | Totters carry between works inside the yard: Smeltery to the Forge's chest, fields to the larder, wool to the Loom. The Storehouse: drop anything in one place and the Totters sort it onto its shelves | Find and mine; fetch; forge |
+| B | The Works' lines: machines off your bells move things across the whole home (ore from the Ore Shed through the Smeltery into the Forge's rack; every work takes what it needs from the Storehouse and sends what it makes back) | Find and mine; fetch; forge; choose the plan |
 | S | Every work linked; the Great Belfry built by every beast you have | Find and mine; fetch; forge; hang the bells |
+
+### The Storehouse (Euan, 29 Oct: "dump anything in there ... and your beasts actually come and sort it all")
+At C, with the Totters, the Thatchbacks can build **the Storehouse**: a long timber hall with a skylight over a wide
+sunken bin in the middle, **the Drop**, and its walls lined with shelves, racks, crates and barrels. It's the answer to
+coming home from a long trip with a full bag.
+- **You dump it all in one place.** Tip anything into the Drop: by hand, a stack at a time, or "Empty my bag" (keeps
+  your hotbar, armour and anything you've marked). What you drop falls in as real things and piles up: ingots clink onto
+  the heap, logs roll to the edge, gems skitter, a sword lands across the top. The heap rises with how much is in it.
+  Each kind of thing lands with its own sound.
+- **Then the Totters sort it.** They come down the ramps from their nooks, each takes an armful (you see what it's
+  carrying), waddles it to where it belongs and puts it away: blocks stacked in crates, ingots on racks, tools on pegs,
+  food in baskets, seeds in drawers, gate loot in its own locked press. The shelves fill where you can see them. They
+  paint a sign over each bay the first time something goes there. The more Totters live with you, the faster the heap
+  goes down; one Totter clears a full bag in about a minute, four in a few seconds.
+- **The bays.** Stone and earth, wood, ore and metal, gems, food, plants and seed, beast and monster drops, gate
+  loot, gear, bells and leads, odd things. A bay that fills grows a second rack; when the whole hall is full the
+  Totters stack the overflow under an awning outside, and the Hearth page says the Storehouse needs another bay
+  (timber and iron you bring).
+- **You can find anything.** At the Ledger desk by the door you look anything up (type or browse by bay). Pick it and
+  the Totter on duty fetches it to the desk while you watch; or "Show me" lights a lantern over its shelf. Crafting at
+  home already takes from the home's chests, and it takes from the Storehouse too.
+- **It only holds what you bring.** Nothing in it grows or multiplies. At B the Works' lines connect it to every work
+  (the Smeltery takes its ore from the Storehouse and the Forge's rack its ingots); at S everything is linked.
+- **Made to feel good.** The heap and the shelves are the show: real 3D items on the heap and on the shelves (capped
+  and drawn more simply far away, so it costs little), a short settle as things land, the Totters' own carrying walk
+  and their pleased chirp when a bay fills, soft light through the skylight onto the heap, warm lanterns over the bays.
+  A shared Hearth works the same for every member.
+- Built in stage 5, with the Totters and the works up to the Foundry.
 
 ### The Hearth page (the System)
 Euan dropped the Board: "keep the hearth then to the system". The Hearth becomes one page of the band, **Hearth**,
@@ -751,7 +780,8 @@ built. No tours: build, test, push for CI, and hand each stage to the orchestrat
    the Ore Shed; the automation ladder's first two rungs.
 3. **Faults.** The kit and its sound, then the Ringer's Great Fault and the first raid (tuned for one player alone).
 4. **The bells' first thirty** and the tower's song with the beasts' reaction.
-5. **The rest of the kin** and the works up to the Foundry, with the Totters' carrying.
+5. **The rest of the kin** and the works up to the Foundry, with the Totters' carrying and the Storehouse (Euan's
+   addition, part 3).
 6. **The second half's bells and beasts** layer by layer (the Above and the Cloudcalf, the Veil, the Lucidium, the Court).
 7. **The Hundred Peal, the Kinsong and the Deep's answer**, the Stilled waking at the Wake, and the journey test across
    every stop.

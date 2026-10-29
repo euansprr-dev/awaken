@@ -12190,11 +12190,21 @@ here as it goes.
   yard, and build works from plans with timber from that woodlot and stone and metal the player brings. The player mines
   every ore, fetches every rare thing and forges.
 - Automation ladder: E one field and the light; D each work's beast processes its own chest (Smeltery, Ore Shed, fields,
-  pens); C Totters carry between works inside the yard; B the Works' lines move things across the home; S every work
+  pens); C Totters carry between works inside the yard and sort the Storehouse; B the Works' lines move things across the home; S every work
   linked. Details: JOURNEY part 3.
 - The Mine head becomes **the Ore Shed** (lode heart; Pebblepups sort and crush ore and rubble the player brings, a few
   nuggets from a stack of rubble at most; never ore by itself).
 - Nooks: 2 at the Ember, 4 at the Anchor, then 8, 12, 18, 24 by its last tier, plus each work's own.
+- **The Storehouse** (Euan, 29 Oct; C, with the Totters; rare things: a Totter that's Kin and an empty town's granary
+  keystone): a timber hall with **the Drop**, a sunken bin the player tips anything into (by hand, a stack, or "Empty
+  my bag", which keeps the hotbar, armour and marked items). Dropped things pile up as real 3D items (the heap rises with
+  the count; each kind lands with its own sound); the home's Totters carry armfuls to bays by kind (stone and earth,
+  wood, ore and metal, gems, food, plants and seed, drops, gate loot, gear, bells and leads, odd things), where shelves,
+  racks, pegs and crates show what's in them. One Totter clears a full bag in about a minute, four in a few seconds. A
+  full bay grows a rack; a full hall stacks outside and asks for another bay. **The Ledger** desk looks anything up: a
+  Totter fetches it to the desk, or "Show me" lights its bay. Home crafting takes from it. It only holds what the player
+  brings; at B the Works' lines link it to every work. Items are counted data, not entities; the heap and shelves draw
+  at most a capped number of item models, simpler far away. Detail: JOURNEY part 3, "The Storehouse".
 - **The Hearth page** is a band page (Home, Your beasts, Kin) between Journal and Truths. Nothing on it expires or
   renews daily. No Board, no requests, no Daily Regimen.
 
@@ -12224,5 +12234,5 @@ SPI's line in the stat table, GOALS.md's Hearth Board, Echo Hall and Generals. J
 ### 43.10 Stages
 1. The world rule (43.1 to 43.4). 2. The first beasts, Kinship, the Hearth page, Fields and the Ore Shed (43.5, 43.6).
 3. Faults, the Ringer's Great Fault, the first raid (43.8). 4. The first thirty bells and the tower's song (43.7).
-5. The rest of the kin and the works to the Foundry. 6. The second half's bells and beasts. 7. The Hundred Peal, the
+5. The rest of the kin and the works to the Foundry, with the Storehouse. 6. The second half's bells and beasts. 7. The Hundred Peal, the
 Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY part 8).
