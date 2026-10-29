@@ -168,7 +168,7 @@ final class DeepBestiary {
     }
 
     private static void sovereigns(List<MobDef> out) {
-        out.add(m("sovereign_hunger", "Sovereign of Hunger", Theme.COURT, Tier.SOVEREIGN, Model.RAVAGER, "Hunger gone wrong: devours, gorges, and only gets hungrier").hp(34).dmg(5.5).spd(0.3).scale(1.8F).tint(0xC86060).glow(0xFF4A4A).bar(BossBarColor.RED).arena(26)
+        out.add(m("sovereign_hunger", "Sovereign of Hunger", Theme.COURT, Tier.SOVEREIGN, Model.RAVAGER, "Hunger gone wrong: devours, gorges, and only gets hungrier").hp(34).dmg(5.5).spd(0.3).scale(1.8F).size(1.6F, 2.0F).tint(0xC86060).glow(0xFF4A4A).bar(BossBarColor.RED).arena(26)
                 .intro("It ate the direction it came from.")
                 .phase(1.0F, "The Sovereign of Hunger opens its jaws.", a(CHARGE, "Devour").power(1.6F).heavy(), a(PULL, "Gnawing Pull").radius(12))
                 .phase(0.66F, "It is still hungry.", a(SUMMON, "Hounds of the Court").summon("court_hound").n(2), a(SLAM, "Gorge").radius(4.5F), a(CHARGE, "Devour"))

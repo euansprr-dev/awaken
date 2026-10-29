@@ -10348,6 +10348,58 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   - **On the floor.** Nothing of it goes into the floor but its three threads, which brush it by at most 1.6 px.
   - **Meter.** Worst kink outside a strike 4.5° (the intro); held at most 12% on every move; the swipe strings dip 38%,
     the Clasp into a swipe 44% (its own valves close through rest as it clasps).
+- **The Sovereign of Hunger, the Gorged King** (body and motion, `kit/bosses/sovereign_hunger.py`). "It ate the
+  direction it came from." A king who ate his court, grown so heavy he crawls on his knuckles. His crimson robe falls in
+  folds over a hunched back, gold at its hems, his crest on the back of it in gold thread (a crowned mouth), an ermine
+  capelet over his shoulders and his chain of office across his breast. Under it hangs a belly so swollen the robe has
+  split open over its top: pale, stretched shiny, thin purple veins and pale stretch marks over it. Across its front
+  runs a second mouth, its lips dark and wet, a row of yellow teeth along each, and inside a dark tongue and a red lit
+  gullet; the lower lip is a hinge at the back, so the front drops open. His arms are long and starved, grey, with puffed
+  sleeves, ermine cuffs, gold bangles and a gold ring on every finger; he walks on his fingers folded under his palms
+  and spreads them to slap. His short legs are bent under him, the train dragging behind in three links. His head is
+  small and starved, sunk cheeks and two red sparks in dark sockets, a thin beard, and his gold crown with its red stone
+  has slipped down to one side. 72 cubes (432 faces) on 25 bones; 63 px to the crown's points at true size (3.9 blocks),
+  the hump 3.4 blocks, the belly 2.5 blocks across and hanging 0.8 blocks off the floor. The hitbox is 1.6 x 2.0 at
+  its scale of 1.8.
+  - **His idle.** He breathes hard, three breaths in six seconds, the belly swelling with each (a scale track) and
+    swaying after him; the belly mouth chews on nothing, twice; his small head jerks from one place to another and holds
+    there, looking for food; the fingers of one hand drum on the floor; he shifts his weight from hand to hand and his
+    crown rocks. Walking he knuckle-walks one limb at a time, each long arm swinging round and planting its fist, the
+    belly swinging from side to side under him and the train dragging; running he lopes, both arms thrown forward
+    together and his legs hopping after, the belly bouncing.
+  - **His moves.** The Slap and its mirror (LIGHT, a string): one long arm lifted high and out to his side, the ringed
+    fingers spread, as he leans onto his other hand and turns away; then he lunges after it, low and forward, and rakes
+    the open hand across in front of him, the belly swinging out the other way. Devour (HEAVY, a gap closer, 7 blocks):
+    he crouches, rocks back onto his legs with his arms flung wide and the belly mouth gaping, holds, then throws
+    himself forward and lands belly first, the mouth snapping shut on you; he chews and pushes himself up. Whoever is
+    behind him gets the Sweep: he looks back over his shoulder, draws his right arm up over his hump and swings it round
+    behind him, low over the floor, and brings it back round his side. Gnawing Pull: hands planted wide, he lowers his
+    front and breathes in, the belly mouth gaping at you and the belly swelling (a scale track to 1.13), his train
+    blown toward him, then the mouth gnaws at the air. Hounds of the Court (into the second phase, "It is still
+    hungry"): he sits back on his haunches and claps his long hands twice over the belly, then throws his head back and
+    roars with both mouths, his arms wide. Gorge (HEAVY): he crouches, rises, rears up over the floor in front of him and
+    drops the belly mouth on it, and worries the bite from side to side like a dog with meat, the floor breaking round
+    him. Starving Frenzy (into the third phase, "Starving"): he rears half up and claws at the air, left and right,
+    faster and faster, the belly mouth snapping with each. Famine (the signature): he folds over his belly with his arms
+    round it and his head bowed, shuddering, and breathes in until the belly caves in to his ribs (a scale track to
+    0.78); then he throws his arms wide and his head back and howls with the belly mouth gaping, and the belly slowly
+    swells again. His intro starts where the kneel leaves him, slumped on his belly with his arms out in front of him:
+    he lifts his head and sniffs one way and the other, pushes himself up, sits back and yawns with the belly mouth,
+    and comes forward onto his knuckles to look at you. Broken, his arms slide out from under him and he flops onto
+    his belly; he rises by pushing himself up. His death: he rears back on his legs clutching his belly, its mouth
+    gaping, sways, falls forward onto it, and it spreads under him; his arms reach out ahead along the floor, his crown
+    tips forward off his head, the belly mouth opens once more, slowly, and closes (5 s).
+  - **How his keys are written.** One pose function over his parts (his hips and chest, the belly's swing and sag, the
+    mouth's opening, each hand and foot by two-bone IK, how they lie, the fingers' spread, the train, the crown). A pose
+    on his belly is solved where it lies: its height is found from the belly and the mouth first, then the hands and
+    feet reach for their places (letting the solved body down afterwards would sink them into the floor). On his belly
+    his legs fold under him like a frog's with the knees out to the sides, and they stay that way as he pushes himself
+    up, so the knees never swing from one side to the other in a tick. The belly mouth opens wide only where his front
+    is raised: on the floor its lip would dig in.
+  - **On the floor.** His hands, his feet, the belly's lower lip, his head and the train's end are kept out of the
+    floor by the ground pass; nothing goes into it by more than 1.5 px in any clip.
+  - **Meter.** Worst kink outside a strike 5.6° (the Sweep's planted hand as he turns), every other move under 4.5°;
+    held at most 14% (the intro); the slap strings dip 36 to 40%, the slaps into the Gorge 41%.
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

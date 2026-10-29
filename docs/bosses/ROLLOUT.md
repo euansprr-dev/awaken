@@ -79,7 +79,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Architect of Rooms | Guardian | Dreaming | Caster | kit | A, the Hermit House | ✓ cadf2a15 | ✓ cadf2a15 | — |
 | The Shadow Regent | Guardian | Court | Duelist | kit | A, the Long Shadow | ✓ 3feaab86 | ✓ 3feaab86 | — |
 | The Seed Warden | Guardian | Seed | Caster | kit | A, the Husk That Opens | ✓ a6726d89 | ✓ a6726d89 | — |
-| Sovereign of Hunger | Sovereign | Court | Beast | ravager ×1.8 | — | — | — | — |
+| Sovereign of Hunger | Sovereign | Court | Beast | kit | A, the Gorged King | — | — | — |
 | Sovereign of Silence | Sovereign | Court | Brute | cube listener ×1.9 | — | — | — | — |
 | Sovereign of Sleep | Sovereign | Court | Flier | phantom ×3.2 | — | — | — | — |
 | Sovereign of Machines | Sovereign | Court | Brute | iron golem ×1.9 | — | — | — | — |
@@ -208,3 +208,10 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   spins). **Picked A**, 2026-10-29: its phase lines ("The Seed Warden unfolds", "The door opens a crack") are what its
   body does, the Seed's last door is the light inside it, and no other boss is a closed pod that opens. B is a knight
   and a door again, after the Mirror Knight and the Architect's doors; C is one shape spinning and reads as a leaf.
+- **The Sovereign of Hunger** (`sovereign_hunger`): A the Gorged King (a crowned king grown so fat he crawls on his
+  knuckles, his robe split over a belly that is a second mouth, red inside, his own face small and starved under a
+  slipping crown), B the Open Jaw (a gaunt crowned beast that is almost all mouth), C the Feast Table (a banquet table
+  walking on its carved legs, its cloth the lips of a mouth). **Picked A**, 2026-10-29: "Hunger gone wrong" is a king
+  who ate his court and is still hungry, Devour and Gorge are what that belly mouth does, and no other boss is a person
+  with a mouth for a stomach. B is one more four-legged beast after the Thornback and the Iron Horse; C is one more
+  walking piece of furniture after the Sleeper's bed and the Architect's house.
