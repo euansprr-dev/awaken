@@ -12,7 +12,8 @@ Round 10 found with it: a buffered press takes over a tick of the first strike's
 and ArmsFeel.paused ran the hands' clock on by a whole hit-stop between its end and the next tick (BUGGY_HOLD plays that).
 
   python3 tools/art/swing_clicks.py report STYLE [--swings PATH] [--every T] [--down T] [--hits] [--clicks N] [--mastery]
-  python3 tools/art/swing_clicks.py sheet OUT STYLE T0 T1 [same options]
+  python3 tools/art/swing_clicks.py sheet OUT STYLE T0 T1 [same options] [--cell PX] [--cols N]
+  python3 tools/art/swing_clicks.py film OUT.mp4 STYLE LABEL=SWINGS [LABEL=SWINGS ...]   slow, then fast: a video
 """
 import json
 import math
@@ -262,7 +263,7 @@ def play(style, swings, every=3.0, down=1.2, clicks=12, hits=False, start=0.3, m
     frames = []
     now, end = 0.0, presses[-1] + 24
     next_tick = 1.0
-    pi = ri = 0
+    pi = 0
     while now <= end:
         while next_tick <= now + 1e-9:
             t_tick = next_tick
@@ -283,9 +284,10 @@ def play(style, swings, every=3.0, down=1.2, clicks=12, hits=False, start=0.3, m
                         c.bite_at, c.bite_rate, c.bite_ticks = c.move_time(t_tick), bite[0], bite[1]
                     c.log.append((t_tick, f"hit-stop {h[1]} {c.moves[h[1]].get('hitstop')} ms"))
             next_tick += 1.0
-        while ri < len(releases) and releases[ri] <= now:  # ArmsPredict.frame: a release is read every frame
+        # ArmsPredict.frame: a press let go is read every frame from the key itself (a click between two ticks is let go
+        # on the frame after its press is taken up)
+        if c.press_held and c.hold_open and not any(p <= now < r for p, r in zip(presses, releases)):
             c.release(now)
-            ri += 1
         shown = c.hands(now)
         frames.append((now, c.move, c.view_time(now) if c.move else 0.0, c.chain_time(now) if c.move else 0.0, shown))
         now += DT
@@ -352,12 +354,12 @@ def report(style, swings, **kw):
                   f" next 2 ticks: main {sm:.2f} off {so:.2f} gap {gp:.2f}")
 
 
-def sheet(out, style, swings, t0, t1, **kw):
+def sheet(out, style, swings, t0, t1, cell=320, cols=6, **kw):
     from PIL import Image, ImageChops, ImageDraw, ImageOps
     held = L.Held("gatewrought_" + style)
     frames, _ = play(style, swings, **kw)
     rows = measure(style, frames, held, swings)
-    W, H = 320, 180
+    W, H = cell, cell * 9 // 16
     cells = []
     for (now, mv, vt, ct, shown), r in zip(frames, rows):
         if now < t0 or now > t1:
@@ -368,7 +370,6 @@ def sheet(out, style, swings, t0, t1, **kw):
         dr = ImageDraw.Draw(im)
         dr.text((4, 2), f"{now:.2f} {mv or '-'} {vt:.2f}/{ct:.2f}  gap {r[5]:.2f}", fill=(255, 110, 110) if r[5] < 0.12 else (210, 210, 220))
         cells.append(im)
-    cols = 6
     img = Image.new("RGB", (W * cols, ((len(cells) + cols - 1) // cols) * H), (14, 15, 20))
     for k, c in enumerate(cells):
         img.paste(c, ((k % cols) * W, (k // cols) * H))
@@ -376,12 +377,45 @@ def sheet(out, style, swings, t0, t1, **kw):
     print(out, len(cells))
 
 
+def film(out, style, takes, **kw):
+    """An MP4 at 60 fps (ffmpeg): each take a run of clicks, every swings file in it shown one above the other, both
+    blades as the game shows them. {@code takes}: [(caption, play options)]; kw["files"]: [(label, swings)]."""
+    import shutil
+    import subprocess
+    import tempfile
+    from PIL import Image, ImageChops, ImageDraw, ImageOps
+    held = L.Held("gatewrought_" + style)
+    files = kw.pop("files")
+    tmp = tempfile.mkdtemp(prefix="clicks-film-", dir=os.path.dirname(os.path.abspath(out)))
+    n = 0
+    try:
+        for caption, opts in takes:
+            runs = [play(style, sw, **opts)[0] for _, sw in files]
+            for k in range(min(len(r) for r in runs)):
+                img = Image.new("RGB", (L.W, L.H * len(files)), (14, 15, 20))
+                for j, (label, _) in enumerate(files):
+                    now, mv, vt, ct, shown = runs[j][k]
+                    off = ImageOps.mirror(L.frame(held, *shown["off"]))
+                    im = ImageChops.lighter(L.frame(held, *shown["main"]), off)
+                    dr = ImageDraw.Draw(im)
+                    dr.text((12, 10), f"{label}   {caption}", fill=(225, 225, 235))
+                    dr.text((12, 26), f"{mv or 'rest'}", fill=(150, 150, 165))
+                    img.paste(im, (0, L.H * j))
+                img.save(os.path.join(tmp, f"{n:05d}.png"))
+                n += 1
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(FPS), "-i", os.path.join(tmp, "%05d.png"),
+                        "-pix_fmt", "yuv420p", "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2", out], check=True)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    print(out, n, "frames")
+
+
 def main(argv):
     if not argv:
         raise SystemExit(__doc__)
     kw, swings = {}, None
     for flag, key, conv in (("--every", "every", float), ("--down", "down", float), ("--clicks", "clicks", int),
-                            ("--start", "start", float)):
+                            ("--start", "start", float), ("--cell", "cell", int), ("--cols", "cols", int)):
         if flag in argv:
             i = argv.index(flag)
             kw[key] = conv(argv[i + 1])
@@ -399,6 +433,11 @@ def main(argv):
     swings = swings or L.load_swings()
     if argv[0] == "report":
         report(argv[1], swings, **kw)
+    elif argv[0] == "film":  # film OUT STYLE LABEL=SWINGS... : slow clicks, then fast with landed blows, mastery on
+        files = [(a.split("=", 1)[0], json.load(open(a.split("=", 1)[1]))["styles"]) for a in argv[3:]]
+        takes = [("clicked slowly", dict(every=10.0, down=0.6, clicks=5, mastery=True)),
+                 ("clicked fast, held, every blow landing", dict(every=3.0, down=1.2, clicks=10, hits=True, mastery=True))]
+        film(argv[1], argv[2], takes, files=files)
     elif argv[0] == "sheet":
         sheet(argv[1], argv[2], swings, float(argv[3]), float(argv[4]), **kw)
     else:
