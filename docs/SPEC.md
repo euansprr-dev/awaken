@@ -619,11 +619,14 @@ of `AwakenConfig.Client`.
   retired or tips are off: skip the probe). Installed by the signal module in M4 B6; until then every call does nothing.
   Tip text and triggers are data; any module may offer its own tips (the Ascent for its tiers).
 - `dev.awaken.mobs.client.life.CreatureLife` (client, §23) — the life layer for any module's bodies:
-  `LifeRig rig(ModelPart root, String temperament)` once per model; `Life life(Object held, LifeRig rig, int seed)` once
+  `LifeRig rig(ModelPart root, String temperament)` once per model, or `rig(root, temperament, String motion)` for a body
+  whose feet plant by the `motion.json` profile of that id (its rig's id; none there, exactly as the two-argument form;
+  §23.1 "The wild's and the city's walkers"); `Life life(Object held, LifeRig rig, int seed)` once
   per creature (keep it on the entity's client data); `tick(Life, LivingEntityRenderState, boolean steerHead)` once a frame
   in `extractRenderState`; `apply(LifeRig, Life, LivingEntityRenderState)` at the end of `setupAnim` (safe to run once per
   layer); optional `rootPose(Life, PoseStack, state)` in `setupRotations`; `eyesClosed(Life)` 0..1 for a texture blink.
-  Per-frame inputs are public fields on `Life` (`hurt`, `walk`, `stride`, `busy`, `lookWeight`, `windup`, `roar`, `dying`).
+  Per-frame inputs are public fields on `Life` (`hurt`, `walk`, `stride`, `busy`, `lookWeight`, `windup`, `roar`, `dying`;
+  for planted feet `grounded`, `legsFree`, `gaitRun`, `bodyScale`).
 - `dev.awaken.core.api.Strikes` (§24) — how a blow can be answered: `enum Kind {LIGHT, HEAVY, PERILOUS, GRAB, NONE}`
   (`deflectable()`, `blockable()`, `dodgeable()`); `deliver(Entity by, Kind, BooleanSupplier blow)` names the class of
   the blow it runs (a mob's swing, an ability's hit); `of(DamageSource)` reads it back (defaults: an untold melee or a
@@ -5929,6 +5932,26 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   the Listener's scaled to their legs (duty 0.62/0.4, 0.85/1.35 blocks, 2/3.4 px, 0.32 s swings, roll 0.05); the
   **creeper forms** (`form_creeper_2`..`_5`; four one-bone legs of 6, 7, 7 and 8 px) a diagonal shuffle at every
   speed (`alternate`, duty 0.66/0.42, about 0.1 and 0.18 blocks a cycle per px of leg; the largest's run 1.4).
+- **The wild's and the city's walkers** (2026-10-29; a cross-module edit the orchestrator approved: client code only,
+  the wildlife module's `WildModel` and `WildRenderer`, the citizens module's `CritterModel` and `CritterRenderer`; no
+  server, entity, spawn or data change). Each model binds `CreatureLife.rig(root, temperament, rig.id)` (§12); a rig
+  with no `motion.json` profile behaves exactly as before. The renderer sets `grounded` (not flying or landing, a city
+  cat not mid-leap), `legsFree` (a perched bird, a sitting animal, a swimming duck, or any clip but idle, walk, trot,
+  sniff, listen, peck, caw and call: a sit, a loaf, a groom, a pant, a pounce, a hop, the fox's bolt keep their legs),
+  `gaitRun` (a trot clip's weight, or the speed between the rig's `runFrom` and `runFull`, whichever is more) and
+  `bodyScale` (the model's own scale, so the feet land where it is drawn). Profiles: the **fox** (`wild_fox`; `mixed`:
+  8 px one-bone forelegs stiff, the hind leg and hock bending) and the city **cat** and **dog** (`city_cat`,
+  `city_dog`, the same build at 7 and 9 px) a ripple walk and a trot (duty 0.66/0.45, 0.66/0.42, 0.64/0.42; strides
+  0.6/0.9, 0.55/0.95, 0.7/1.2 blocks), the cat's crouch 1.1 px (its hind feet are drawn 1 px off the ground); the
+  **crow** (`wild_crow`) and the city **pigeon** and **gull** (`city_pigeon`, `city_gull`; rigid 3 and 4 px legs whose
+  toe plates put the foot 1 px ahead of the hip, so a forward step runs out of leg first: a deeper crouch, 0.5 to 0.6
+  px, and the pigeon's duty 0.5/0.45 keep the hips within their drop) an alternating walk (0.34 to 0.5 blocks; the
+  feet never take a cycle under 0.2 blocks, so a pigeon at 0.6 can't go shorter). Not planted: the **city horse** (its
+  walk clip bends knee and hock in time with the cart; `fknee` and `hhock` aren't leg names, and rigid legs would lose
+  that), the **heron** (it wades: its feet would reach for the bed under the water), and the hoppers and climbers
+  (songbird, woodpecker, squirrel, rabbit, frog), whose clips are their gait. Test: `creature_fauna_feet` (every walker
+  here has its gait, its rig in its module's sources, and every leg plants); `creature_motion_feet` checks their
+  strides with the rest.
 - **Flight** (`Flight`, plain math checked on the server; a `fly` block, by rig id or, for a hand-built body, by its
   creature id): while airborne or swimming (or `always`, for a body always under way: serpents, the ray) the body noses
   into a cruise (`tilt` at `fast` blocks a second) and pitches along its path's climb or dive (`climb`, the share), banks

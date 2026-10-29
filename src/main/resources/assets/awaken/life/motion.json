@@ -363,6 +363,30 @@
     "tide_eel": {
       "fly": {"always": true, "spine": ["seg0", "seg1", "seg2", "seg3", "seg4", "seg5"], "fast": 4, "bank": 0.1, "climb": 0.6, "level": 0.5, "bend": 0.45}
     },
+    "wild_fox": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.66, 0.45], "stride": [0.6, 0.9], "lift": [1.6, 2.4], "reach": 0.3, "settle": 0.05, "crouch": 0.4, "regrip": [4.0, 10.0], "swing": 0.3, "bob": 0.35, "roll": 0.04, "lead": 0.1, "rock": 0.03, "shoulder": 0.5, "mixed": true},
+      "body": {"headLevel": 0.6, "twist": 0.25, "slope": 0.75, "land": 1.0, "shift": 0.35, "nod": 0.04}
+    },
+    "wild_crow": {
+      "gait": {"pattern": "alternate", "duty": [0.6, 0.5], "stride": [0.42, 0.5], "lift": [0.9, 1.1], "reach": 0.16, "settle": 0.03, "crouch": 0.6, "regrip": [3.0, 8.0], "swing": 0.14, "bob": 0.3, "roll": 0.05, "knees": "rigid"},
+      "body": {"headLevel": 0.7, "twist": 0.35, "slope": 0.6, "land": 1.0, "shift": 0.15}
+    },
+    "city_pigeon": {
+      "gait": {"pattern": "alternate", "duty": [0.5, 0.45], "stride": [0.34, 0.4], "lift": [0.7, 0.9], "reach": 0.12, "settle": 0.02, "crouch": 0.5, "regrip": [3.0, 8.0], "swing": 0.12, "bob": 0.3, "roll": 0.05, "knees": "rigid"},
+      "body": {"headLevel": 0.7, "twist": 0.35, "slope": 0.6, "land": 1.0, "shift": 0.15}
+    },
+    "city_gull": {
+      "gait": {"pattern": "alternate", "duty": [0.56, 0.5], "stride": [0.42, 0.5], "lift": [0.9, 1.1], "reach": 0.16, "settle": 0.03, "crouch": 0.55, "regrip": [3.0, 8.0], "swing": 0.14, "bob": 0.3, "roll": 0.05, "knees": "rigid"},
+      "body": {"headLevel": 0.7, "twist": 0.3, "slope": 0.6, "land": 1.0, "shift": 0.15}
+    },
+    "city_cat": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.66, 0.42], "stride": [0.55, 0.95], "lift": [1.4, 2.2], "reach": 0.26, "settle": 0.04, "crouch": 1.1, "regrip": [4.0, 10.0], "swing": 0.28, "bob": 0.25, "roll": 0.03, "lead": 0.05, "rock": 0.02, "shoulder": 0.5, "mixed": true},
+      "body": {"headLevel": 0.7, "twist": 0.3, "slope": 0.8, "land": 1.0, "shift": 0.3, "nod": 0.03}
+    },
+    "city_dog": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.64, 0.42], "stride": [0.7, 1.2], "lift": [1.8, 2.8], "reach": 0.32, "settle": 0.05, "crouch": 0.7, "regrip": [4.0, 10.0], "swing": 0.3, "bob": 0.35, "roll": 0.04, "lead": 0.05, "rock": 0.03, "shoulder": 0.5, "mixed": true},
+      "body": {"headLevel": 0.6, "twist": 0.3, "slope": 0.75, "land": 1.0, "shift": 0.35, "nod": 0.04}
+    },
     "cord_eater": {
       "fly": {"always": true, "spine": ["seg0", "seg1", "seg2", "seg3", "seg4", "seg5"], "fast": 4, "bank": 0.1, "climb": 0.6, "level": 0.5, "bend": 0.45}
     }

@@ -1,5 +1,6 @@
 package dev.awaken.mobs.entity;
 
+import dev.awaken.citizens.client.CityFaunaData;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.living.forms.FormRigs;
 import dev.awaken.mobs.client.anim.HeroRig;
@@ -13,6 +14,7 @@ import dev.awaken.mobs.client.life.MotionProfile;
 import dev.awaken.mobs.def.Bestiary;
 import dev.awaken.mobs.def.MobDef;
 import dev.awaken.mobs.def.Model;
+import dev.awaken.wildlife.client.WildFaunaData;
 import net.minecraft.util.Mth;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -139,6 +141,32 @@ public final class LifeTests {
         return LifeBones.bind(bones);
     }
 
+    /** The wild's and the city's walkers: other modules' rigs whose feet plant through CreatureLife's motion id (SPEC §23.1). */
+    static final List<String> FAUNA_WALKERS = List.of("wild_fox", "wild_crow", "city_pigeon", "city_gull", "city_cat", "city_dog");
+    private static Map<String, HeroRig> fauna;
+
+    /** A wild or city animal's rig by id, from its module's sources (they never reach HeroRig's own table). */
+    static synchronized HeroRig fauna(String id) {
+        if (fauna == null) {
+            Map<String, HeroRig> m = new HashMap<>();
+            for (List<String[]> sources : List.of(WildFaunaData.SOURCES, CityFaunaData.SOURCES)) {
+                for (String[] s : sources) {
+                    HeroRig r = HeroRig.parse(s);
+                    m.put(r.id, r);
+                }
+            }
+            fauna = m;
+        }
+        return fauna.get(id);
+    }
+
+    /** Our bodies' rigs, the forms' (the living module's, SPEC 21.13), or the wild's and the city's animals'. */
+    static HeroRig walkerRig(String id) {
+        HeroRig r = HeroRig.get(id);
+        if (r == null) r = FormRigs.all().get(id);
+        return r != null ? r : fauna(id);
+    }
+
     /** Ears and tails by a plain reading of the name, independent of the binder's own rules. */
     static boolean looksLike(String name, String part) {
         String n = name.toLowerCase(Locale.ROOT);
@@ -219,8 +247,8 @@ public final class LifeTests {
             int rigid = 0;
             for (MotionProfile mp : MotionProfile.all().values()) {
                 if (mp.gait() == null) continue; // flight alone: creature_motion_flight
-                // our bodies' rigs, or the forms' (the living module's, SPEC 21.13), or a hand-built walker's legs
-                HeroRig r = HeroRig.get(mp.id()) != null ? HeroRig.get(mp.id()) : FormRigs.all().get(mp.id());
+                // our bodies' rigs, the forms', the wild's and the city's animals', or a hand-built walker's legs
+                HeroRig r = walkerRig(mp.id());
                 HandBody hand = r == null && HAND_FEET.containsKey(mp.id()) ? handBody(HAND_FEET.get(mp.id())) : null;
                 if (r == null && hand == null) {
                     problems.add("motion.json names no rig " + mp.id());
@@ -331,8 +359,39 @@ public final class LifeTests {
             // the Mycelord's two and the otter's forelegs walk stiff beside them
             int stiffHero = 2 + 2;
             int formWalkers = 4 * 2 + 4 * 2 + 4 * 4; // the zombie, skeleton and creeper forms' one-bone legs
-            h.assertTrue(rigid >= 12 * 4 + 4 * 2 + 3 * 4 + handLegs + stiffHero + formWalkers, "the grazers', the walking forms', chickens', hoofed beasts', hand-built walkers', the Mycelord's and the otter's forelegs are rigid (" + rigid + ")");
-            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 4 + 8 + 12 * 4 + 4 * 2 + 3 * 4 + handLegs + 2 + 4 + 4 + 2 + 2 + formWalkers, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's legs and the long arms it lopes on, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four, the hand-built walkers' one-bone legs, the Mycelord's two, the otter's and Mire Mother's four, the Tidesteed's and the cricket's hind pair, the walking forms' (and every other gait's) are checked (" + checked + ")");
+            int faunaRigid = 2 * 6; // the fox's, cat's and dog's forelegs, the crow's, pigeon's and gull's legs
+            h.assertTrue(rigid >= 12 * 4 + 4 * 2 + 3 * 4 + handLegs + stiffHero + formWalkers + faunaRigid, "the grazers', the walking forms', chickens', hoofed beasts', hand-built walkers', the Mycelord's, the otter's and the wild and city animals' forelegs are rigid (" + rigid + ")");
+            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 4 + 8 + 12 * 4 + 4 * 2 + 3 * 4 + handLegs + 2 + 4 + 4 + 2 + 2 + formWalkers + 3 * 4 + 3 * 2, "the wild and city animals' legs, the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's legs and the long arms it lopes on, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four, the hand-built walkers' one-bone legs, the Mycelord's two, the otter's and Mire Mother's four, the Tidesteed's and the cricket's hind pair, the walking forms' (and every other gait's) are checked (" + checked + ")");
+            h.assertTrue(problems.isEmpty(), String.join("; ", problems));
+            h.succeed();
+        });
+
+        // SPEC §23.1, "The wild's and the city's walkers": CreatureLife.rig(root, temperament, motion) plants another
+        // module's body by its rig's id; each walker has its gait, its rig in its module's sources, and every leg plants
+        AwakenTests.register("creature_fauna_feet", 20, h -> {
+            List<String> problems = new ArrayList<>();
+            for (String id : FAUNA_WALKERS) {
+                MotionProfile mp = MotionProfile.of(id);
+                HeroRig r = fauna(id);
+                if (mp == null || mp.gait() == null || r == null) {
+                    problems.add(id + (r == null ? ": no rig in its module's sources" : ": no gait in motion.json"));
+                    continue;
+                }
+                LifeBones.Binding b = bind(r);
+                int own = 0; // a leg is a limb whose parent isn't one
+                for (int i = 0; i < b.bones().size(); i++) {
+                    int p = b.bones().get(i).parent();
+                    if (b.roles()[i] == Role.LEG && (p < 0 || b.roles()[p] != Role.LEG)) own++;
+                }
+                float[][] pose = new float[r.bones.size()][];
+                for (int i = 0; i < pose.length; i++) {
+                    HeroRig.Bone bone = r.bones.get(i);
+                    pose[i] = new float[]{bone.px(), bone.py(), bone.pz(), bone.rx(), bone.ry(), bone.rz()};
+                }
+                LegRig legs = LegRig.of(mp.gait(), b, pose, i -> box(r.bones.get(i)));
+                int n = legs == null ? 0 : legs.n;
+                if (n < 2 || n != own) problems.add(id + ": " + n + " of its " + own + " legs plant");
+            }
             h.assertTrue(problems.isEmpty(), String.join("; ", problems));
             h.succeed();
         });
