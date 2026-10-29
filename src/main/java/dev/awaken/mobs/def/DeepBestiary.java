@@ -150,7 +150,7 @@ final class DeepBestiary {
                 .phase(1.0F, "The Drowned Moon rises.", a(BEAM, "Moonbeam").bolt(BoltKind.WATER).power(1.8F).heavy(), a(LIFT, "Tide Turn").radius(4))
                 .phase(0.5F, "The tide turns.", a(PULL, "Undertow").radius(14), a(NOVA, "Tide Halo").n(14).bolt(BoltKind.WATER), a(LIFT, "Tide Turn").radius(5))
                 .parts(P("moon_scale", "Drowned Moon Scale", "water")).build());
-        out.add(m("guardian_dreaming", "The Architect of Rooms", Theme.DREAMING, Tier.GUARDIAN, Model.EVOKER, "The floor shifts, doors open behind you, the ceiling falls").hp(30).dmg(5).spd(0.26).scale(1.8F).tint(0xE0B0E0).bar(BossBarColor.PINK).arena(22)
+        out.add(m("guardian_dreaming", "The Architect of Rooms", Theme.DREAMING, Tier.GUARDIAN, Model.EVOKER, "The floor shifts, doors open behind you, the ceiling falls").hp(30).dmg(5).spd(0.26).scale(1.8F).size(2.0F, 3.0F).tint(0xE0B0E0).bar(BossBarColor.PINK).arena(22)
                 .intro("You didn't come in through that door.")
                 .phase(1.0F, "The Architect redraws the room.", a(FANGS, "Shifting Floor").n(14), a(BLINK, "Door Step"))
                 .phase(0.5F, "The room changes.", a(DECOY, "Other Rooms").n(2), a(RAIN, "Falling Ceiling").n(5).bolt(BoltKind.DREAM), a(FANGS, "Shifting Floor").n(16))

@@ -76,7 +76,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Great Listener | Guardian | Silent | Brute | kit | B, the Hush Bat | ✓ af969446 | ✓ af969446 | — |
 | The Furnace Engine | Guardian | Foundry | Brute | kit | A, the Iron Horse | ✓ 4193ade1 | ✓ 4193ade1 | — |
 | The Drowned Moon | Guardian | Inverted | Flier | kit | A, the Moon Angler | ✓ 1643236a | ✓ 1643236a | — |
-| The Architect of Rooms | Guardian | Dreaming | Caster | evoker ×1.8 | — | — | — | — |
+| The Architect of Rooms | Guardian | Dreaming | Caster | kit | A, the Hermit House | — | — | — |
 | The Shadow Regent | Guardian | Court | Duelist | player ×1.6 | — | — | — | — |
 | The Seed Warden | Guardian | Seed | Caster | cube shade ×1.6 | — | — | — | — |
 | Sovereign of Hunger | Sovereign | Court | Beast | ravager ×1.8 | — | — | — | — |
@@ -188,3 +188,10 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   veils). **Picked A**, 2026-10-29: the intro line becomes a trap, the moon is bait, and the mouth gives it a face and
   real blows. B has no face or limbs to fight with; C drifts like the Sleeper's veils. Nothing else on the roster is a
   fish (the Sky Leviathan is a ray, the Glass Serpent a serpent).
+- **The Architect of Rooms** (`guardian_dreaming`): A the Hermit House (a hermit crab as big as a cottage that has made
+  its shell of a crooked lit house, looking out of its doorway, one huge claw before its face), B the Doorframe Man (a
+  tall figure that is a standing doorframe, a lit room inside it where its chest would be), C the Draughtsman (a hunched
+  architect drawing the room in the air with long compass legs). **Picked A**, 2026-10-29: the house makes its doors and
+  rooms literal (the Door Step is the crab shutting itself in, Other Rooms its house shaking), and nothing on the roster
+  is a crab or carries its home. B is one more tall thin figure beside the Hollow Herald; C's compass legs walk like the
+  Long-Legs'.

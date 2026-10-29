@@ -10184,6 +10184,48 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     threads and the kelp may lie on the floor.
   - **Meter.** No kinks outside a strike (worst 2.8°); held at most 3% on every move; dips at most 42%. Through a snap its
     gill covers stay flared, its spines up and its rod lifted, so the whole body never crosses rest at once.
+- **The Architect of Rooms, the Hermit House** (body and motion, `kit/bosses/guardian_dreaming.py`). "You didn't come in
+  through that door." A hermit crab as big as a cottage that has made its shell of a house: a crooked two-storey house
+  of lilac clapboard on a stone footing, its upper storey turned askew on the lower like a house in a dream, a stepped
+  slate roof, a leaning brick chimney, a lamp hanging by the door, and every window lit from inside. Where the front door
+  should be the crab looks out: a coral carapace, two black eyes on stalks that swivel each its own way, long feelers,
+  mouthparts that never stop working, one huge granular claw held folded before its face and a small one for picking,
+  and four long banded legs that carry the house tipped back on its back. The door hangs open on its hinge beside it;
+  through the doorway, past the crab, there is a room with another lit door in it. 81 cubes (486 faces) on 42 bones;
+  2.5 blocks wide, 3.5 long and 3 tall at true size. The hitbox is 2.0 x 3.0 at the def's scale 1.8 (3.6 x 5.4 blocks),
+  round its house. Its legs stand by two-bone solves to where they stand, their knees riding up and out.
+  - **The idle.** Its house rocks a little on its back and the upper storey sways on the lower; its eyes look about,
+    each its own way; its feelers sweep; the big claw twitches open and shut; once a loop the small claw picks at the
+    floor and brings it to its mouth; a back leg shifts on each side in turn; the door creaks and the lamp swings. It
+    walks on its diagonal pairs by turns, the house rocking from side to side and nodding, the upper storey swaying
+    after it; running it goes low and the house lurches. Turning, each pair steps round while the other holds.
+  - **Its moves.** The snip of its small claw and the crush of its big one (LIGHT, a string, then the Claw Hammer): drawn
+    back open beside its face, then out and shut, leaning out of its door. The Claw Hammer (HEAVY, a hold) rears back in
+    its doorway with the big claw raised high over its house, trembling, and brings it down on the floor before it. The
+    Scuttle (HEAVY, a gap closer, 8 blocks) crouches with the big claw thrust out open and rushes at you on all four
+    legs, the house lurching, and shuts it. Whoever is behind it gets the house: it braces its front legs, tips the
+    house forward and heaves it back into them. The Shifting Floor rises on its legs with its claws up and drums them on
+    the floor in a running ripple, three times round, the house juddering and the door rattling. The Door Step backs
+    into its house, folding its legs in under the walls, and swings the door shut; the house sits shut on the floor
+    rocking while the crab turns about inside it; the door opens and it comes out eyes first, somewhere else. Other
+    Rooms (into the second phase) draws in with its claws up while its house shakes, rocking hard from side to side,
+    the upper storey twisting on the lower and the door banging open and shut. The Falling Ceiling (the signature)
+    rears up on its back legs, the house tipped back to the floor and its front legs lifted, and reaches both claws up
+    as high as they go, open and trembling; it takes hold of the air, shuts both claws on it and pulls the ceiling
+    down, coming down hard on its front legs and holding it there, juddering. It waits shut in its house, its legs
+    folded under the walls and its big claw across the doorway as a lid; its intro brings its eyes up out of the
+    doorway to look one way and the other, stands up out of the house and raises both claws wide at you, clacking them.
+    Its death rears with its claws flung up, lurches to its right, then goes over to its left, slowly and then all at
+    once, and lands on its side on the floor with a bounce, the upper storey jolting and the chimney rocking; the crab
+    spills half out of the door with it, its claws falling open, and its legs on the high side kick in the air and curl
+    in, one twitching after; its door swings open and hangs (5 s). Its mouthparts flutter under every clip, written in
+    after it is made.
+  - **On the floor.** Every pose of its death is lifted or lowered as a whole so the lowest part of the fallen house
+    lies on the floor; its legs there are placed in the crab's own frame, so they fall with it. Drawn in, the house sits
+    level on its footing just clear of the floor. The ground pass bends the knees, the claws and (in its death) the
+    feelers back off the floor.
+  - **Meter.** Worst kink outside a strike 4.5°; held at most 14% on every move; dips at most 27%. Shut in its house on
+    the Door Step it never stops: the house rocks, the crab turns inside it and its eyes look about the room.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
