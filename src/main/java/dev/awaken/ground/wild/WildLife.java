@@ -179,12 +179,12 @@ public final class WildLife {
     static void restore(ServerLevel level, BlockPos pos, int kind) {
         int room = level.getBlockState(pos.above()).isAir() ? level.getBlockState(pos.above(2)).isAir() ? 3 : 2 : 1;
         if (kind == TrampledGrassBlock.RYE && room >= 3) {
-            BlockState rye = WildBlocks.WILD_RYE.get().defaultBlockState().setValue(WildDoubleBlock.LOOK, WildLooks.look(level, WildBlocks.WILD_RYE.get(), pos));
+            BlockState rye = WildDoubleBlock.grown(WildBlocks.WILD_RYE.get(), level, pos);
             level.setBlock(pos.above(2), rye.setValue(DoublePlantBlock.HALF, DoubleBlockHalf.UPPER), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             level.setBlock(pos.above(), rye.setValue(DoublePlantBlock.HALF, DoubleBlockHalf.LOWER), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             level.setBlock(pos, WildBlocks.RYE_STEMS.get().defaultBlockState(), Block.UPDATE_ALL);
         } else if ((kind == TrampledGrassBlock.RYE || kind == TrampledGrassBlock.LONG) && room >= 2) {
-            placeTall(level, pos, WildBlocks.LONG_GRASS.get().defaultBlockState().setValue(WildDoubleBlock.LOOK, WildLooks.look(level, WildBlocks.LONG_GRASS.get(), pos)));
+            placeTall(level, pos, WildDoubleBlock.grown(WildBlocks.LONG_GRASS.get(), level, pos));
         } else if (kind == TrampledGrassBlock.TALL && room >= 2) {
             placeTall(level, pos, Blocks.TALL_GRASS.defaultBlockState());
         } else if (kind == TrampledGrassBlock.SHORT || kind == TrampledGrassBlock.TALL) {
@@ -202,7 +202,7 @@ public final class WildLife {
     /** Bone meal on meadow grass: long grass, where there is room. */
     static void growTall(ServerLevel level, BlockPos pos, Block tall) {
         if (!level.getBlockState(pos.above()).isAir()) return;
-        placeTall(level, pos, tall.defaultBlockState().setValue(WildDoubleBlock.LOOK, WildLooks.look(level, tall, pos)));
+        placeTall(level, pos, tall instanceof WildDoubleBlock ? WildDoubleBlock.grown(tall, level, pos) : tall.defaultBlockState());
     }
 
     // ---- running through, and the client's effects ------------------------------------------------------------------------

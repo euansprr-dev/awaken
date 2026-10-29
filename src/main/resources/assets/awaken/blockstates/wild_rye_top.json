@@ -1,61 +1,58 @@
 {
   "variants": {
-    "half=lower,look=0": [
-      {
-        "model": "awaken:block/wild/wild_rye_middle_0"
-      },
-      {
-        "model": "awaken:block/wild/wild_rye_middle_1"
-      }
-    ],
-    "half=lower,look=1": [
-      {
-        "model": "awaken:block/wild/wild_rye_middle_0"
-      },
-      {
-        "model": "awaken:block/wild/wild_rye_middle_1"
-      }
-    ],
-    "half=lower,look=2": [
-      {
-        "model": "awaken:block/wild/wild_rye_middle_0"
-      },
-      {
-        "model": "awaken:block/wild/wild_rye_middle_1"
-      }
-    ],
-    "half=upper,look=0": [
-      {
-        "model": "awaken:block/wild/wild_rye_top_gold_0"
-      },
-      {
-        "model": "awaken:block/wild/wild_rye_top_gold_1"
-      },
-      {
-        "model": "awaken:block/wild/wild_rye_top_gold_2"
-      }
-    ],
-    "half=upper,look=1": [
-      {
-        "model": "awaken:block/wild/wild_rye_top_glass_0"
-      },
-      {
-        "model": "awaken:block/wild/wild_rye_top_glass_1"
-      },
-      {
-        "model": "awaken:block/wild/wild_rye_top_glass_2"
-      }
-    ],
-    "half=upper,look=2": [
-      {
-        "model": "awaken:block/wild/wild_rye_top_gold_0"
-      },
-      {
-        "model": "awaken:block/wild/wild_rye_top_gold_1"
-      },
-      {
-        "model": "awaken:block/wild/wild_rye_top_gold_2"
-      }
-    ]
+    "half=lower,look=0,shape=0": {
+      "model": "awaken:block/wild/wild_rye_middle_0"
+    },
+    "half=lower,look=0,shape=1": {
+      "model": "awaken:block/wild/wild_rye_middle_1"
+    },
+    "half=lower,look=0,shape=2": {
+      "model": "awaken:block/wild/wild_rye_middle_2"
+    },
+    "half=lower,look=1,shape=0": {
+      "model": "awaken:block/wild/wild_rye_middle_0"
+    },
+    "half=lower,look=1,shape=1": {
+      "model": "awaken:block/wild/wild_rye_middle_1"
+    },
+    "half=lower,look=1,shape=2": {
+      "model": "awaken:block/wild/wild_rye_middle_2"
+    },
+    "half=lower,look=2,shape=0": {
+      "model": "awaken:block/wild/wild_rye_middle_0"
+    },
+    "half=lower,look=2,shape=1": {
+      "model": "awaken:block/wild/wild_rye_middle_1"
+    },
+    "half=lower,look=2,shape=2": {
+      "model": "awaken:block/wild/wild_rye_middle_2"
+    },
+    "half=upper,look=0,shape=0": {
+      "model": "awaken:block/wild/wild_rye_top_gold_0"
+    },
+    "half=upper,look=0,shape=1": {
+      "model": "awaken:block/wild/wild_rye_top_gold_1"
+    },
+    "half=upper,look=0,shape=2": {
+      "model": "awaken:block/wild/wild_rye_top_gold_2"
+    },
+    "half=upper,look=1,shape=0": {
+      "model": "awaken:block/wild/wild_rye_top_glass_0"
+    },
+    "half=upper,look=1,shape=1": {
+      "model": "awaken:block/wild/wild_rye_top_glass_1"
+    },
+    "half=upper,look=1,shape=2": {
+      "model": "awaken:block/wild/wild_rye_top_glass_2"
+    },
+    "half=upper,look=2,shape=0": {
+      "model": "awaken:block/wild/wild_rye_top_gold_0"
+    },
+    "half=upper,look=2,shape=1": {
+      "model": "awaken:block/wild/wild_rye_top_gold_1"
+    },
+    "half=upper,look=2,shape=2": {
+      "model": "awaken:block/wild/wild_rye_top_gold_2"
+    }
   }
 }

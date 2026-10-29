@@ -1,6 +1,7 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "awaken:block/wild/long_grass_top_green_0"
+    "layer0": "awaken:block/wild/long_grass_top_green_0",
+    "layer1": "awaken:block/wild/long_grass_top_green_0_overlay"
   }
 }

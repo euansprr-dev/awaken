@@ -48,7 +48,7 @@ public class RyeStemsBlock extends VegetationBlock {
 
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity by, ItemStack itemStack) {
-        BlockState rye = WildBlocks.WILD_RYE.get().defaultBlockState().setValue(WildDoubleBlock.LOOK, WildLooks.look(level, WildBlocks.WILD_RYE.get(), pos));
+        BlockState rye = WildDoubleBlock.grown(WildBlocks.WILD_RYE.get(), level, pos);
         level.setBlock(pos.above(), rye.setValue(WildDoubleBlock.HALF, DoubleBlockHalf.LOWER), 2);
         level.setBlockAndUpdate(pos.above(2), rye.setValue(WildDoubleBlock.HALF, DoubleBlockHalf.UPPER));
     }

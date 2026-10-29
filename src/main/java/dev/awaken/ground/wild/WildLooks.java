@@ -37,6 +37,11 @@ public final class WildLooks {
         return 0;
     }
 
+    /** Which of a two-block plant's three drawings stands in this column (SPEC §41.2): both halves take it, so they meet. */
+    public static int shape(int x, int z) {
+        return (int) (hash(x ^ 0x5EA4, z) * 3);
+    }
+
     /** As {@link #look(LevelReader, Block, BlockPos)} where only the column is known (no biome: the default look). */
     public static int look(Block block, int x, int z) {
         if (block == WildBlocks.LONG_GRASS.get()) return longGrass(x, z, 0.5);

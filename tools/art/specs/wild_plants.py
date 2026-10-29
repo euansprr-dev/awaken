@@ -5,10 +5,16 @@ way the game's grass does, so every biome and the lawn drift colour them. The ov
 heads, flowers, berries, canes, frost); the block models lay it on the same planes as the blades, the way vanilla lays a grass
 block's side overlay, so no pixel is tinted that should not be. Three or four versions of each, picked per block.
 
+A two-block plant's upper half grows out of its own lower half: each upper version is drawn from the top row of the lower
+version with the same number (its seam), a blade, stalk or stem rising from every pixel there in the same layer and shade,
+and nothing else on its bottom row. The block's `shape` keeps the two together in game (SPEC §41.2). `check` (and every
+build) fails when a seam does not meet.
+
   textures/block/wild/<plant>[_<part>][_<look>]_<n>.png and ..._overlay.png (the overlay only where a plant has one)
 
 Run: python3 tools/art/build_all.py wild_plants        (writes the textures)
      python3 tools/art/specs/wild_plants.py sheet <dir> (the style sheet's pictures: every sprite x8 in three biome tints)
+     python3 tools/art/specs/wild_plants.py check       (every two-block plant's seams meet)
 """
 import math
 import os
@@ -82,6 +88,60 @@ def blade(p, r, x0, y0, length, lean, shades=BLADE, gaps=0.0, bend=2.0, own=None
     return pts
 
 
+def seam(p, row=0):
+    """A lower half's seam: {x: ("t", grey) or ("u", rgba)} along `row` (its top), what its upper must carry on from."""
+    out = {}
+    for x in range(16):
+        u, t = p.u.get(x, row), p.t.get(x, row)
+        if u[3]:
+            out[x] = ("u", u)
+        elif t[3]:
+            out[x] = ("t", t[0])
+    return out
+
+
+def rise(p, r, x0, root, length, lean, tip, bend=2.0, own=None, own_from=3):
+    """A blade growing up out of a seam pixel at (x0, 15): its first pixel is the root's own (same layer, same shade), it
+    lightens toward `tip` (a grey) as it climbs and drifts `lean` pixels sideways toward its tip. With `own` (colours) it
+    turns to them from its `own_from`th pixel (grass drying from the tip). Returns its pixels, root first."""
+    kind, v = root
+    pts = []
+    for i in range(length):
+        f = i / max(1, length - 1)
+        x, y = int(round(x0 + lean * f ** bend)), 15 - i
+        if y < 0:
+            break
+        if i == 0:
+            (p.own if kind == "u" else p.tint)(x, y, v[:3] if kind == "u" else v)
+        elif own and i >= own_from:
+            p.own(x, y, own[r.randrange(len(own))])
+        elif kind == "u" and i < own_from:
+            p.own(x, y, v[:3])
+        else:
+            base = v if kind == "t" else 132
+            p.tint(x, y, base + (tip - base) * f + r.randint(-4, 4))
+        pts.append((x, y))
+    return pts
+
+
+def fork(p, r, pts, lean, tip, own=None):
+    """A second blade leaving a blade a few pixels up (so it joins), leaning its own way."""
+    if len(pts) < 6:
+        return
+    k = r.randint(2, 4)
+    x0, y0 = pts[k]
+    L = r.randint(3, max(3, len(pts) - k))
+    for i in range(1, L):
+        f = i / max(1, L - 1)
+        x, y = int(round(x0 + lean * f ** 1.6)), y0 - i
+        if y < 0:
+            break
+        if own:
+            p.own(x, y, own[r.randrange(len(own))])
+        else:
+            p.tint(x, y, 150 + (tip - 150) * f + r.randint(-4, 4))
+
+
 def ellipse(cx, cy, rx, ry, x, y):
     return (x - cx) ** 2 / (rx * rx) + (y - cy) ** 2 / (ry * ry)
 
@@ -142,16 +202,20 @@ def long_bottom(n):
     return p
 
 def long_top(look, n):
-    """Long grass, the upper block, in one of three looks: green, going to seed (gold heads), tawny and dry."""
+    """Long grass, the upper block, in one of three looks: green, going to seed (gold heads), tawny and dry. Every stem of
+    its own lower block (long_bottom(n)) carries on up into a blade; some fork. Tawny blades dry from a few pixels up, so the
+    green stems still meet."""
     r = rng("long_top", look, n)
     p = Pair()
     heads = {"green": 0.18, "seeding": 0.75, "tawny": 0.35}[look]
-    for k in range(15):
-        x0 = 1 + (k * 5 + r.randint(0, 4)) % 14
+    for x0, root in sorted(seam(long_bottom(n)).items()):
         L = r.randint(5, 15)
         lean = r.choice((-5, -4, -2, -1, 1, 2, 4, 5))
         dry = look == "tawny" and r.random() < 0.55
-        pts = blade(p, r, x0, 15, L, lean, shades=TIP, own=TAWNY if dry else None)
+        own = TAWNY if dry else None
+        pts = rise(p, r, x0, root, L, lean, 190, own=own, own_from=r.randint(3, 5))
+        if r.random() < 0.45:
+            fork(p, r, pts, -lean // 2 or 2, 186, own=own)
         if pts and L > 7 and r.random() < heads:
             x, y = pts[-1]
             cols = GOLD if look == "seeding" else STRAW
@@ -161,15 +225,22 @@ def long_top(look, n):
     return p
 
 
+# the rye's stems stand in the same columns, each its own shade, in every version of its foot, so any foot meets any middle
+RYE_COLS = (0, 2, 5, 7, 9, 12, 14)
+
+
+def rye_shade(x0):
+    return ((x0 * 37) % 13) - 6
+
+
 def rye_stems(n):
     """Wild rye, the bottom block: stiff close stems (it bends from its middle, so the foot stands still), a leaf or two."""
     r = rng("rye_stems", n)
     p = Pair()
-    for k in range(9):
-        x0 = (k * 4 + r.randint(0, 2)) % 16
-        base = r.randint(-6, 6)
+    for x0 in RYE_COLS:
+        base = rye_shade(x0)
         for i in range(16):
-            p.tint(x0, 15 - i, 96 + base + i * 1.6 + r.randint(-2, 2))
+            p.tint(x0, 15 - i, 96 + base + i * 1.6 + (r.randint(-2, 2) if i < 15 else 0))
         if r.random() < 0.6:                             # a leaf leaving the stem, falling away
             y = r.randint(2, 9)
             d = r.choice((-1, 1))
@@ -182,12 +253,11 @@ def rye_middle(n):
     r = rng("rye_middle", n)
     p = Pair()
     xs = []
-    for k in range(9):
-        x0 = (k * 4 + r.randint(0, 2)) % 16
+    for x0 in RYE_COLS:
         lean = r.choice((-1, 0, 0, 1))
-        base = r.randint(-6, 6)
+        base = rye_shade(x0)
         for i in range(16):
-            p.tint(x0 + int(round(lean * i / 15)), 15 - i, 118 + base + i * 1.8 + r.randint(-2, 2))
+            p.tint(x0 + int(round(lean * i / 15)), 15 - i, 96 + base + 24 + i * 1.8 + (r.randint(-2, 2) if i else 0))
         xs.append(x0)
     for _ in range(4):
         x0, y0 = r.choice(xs), r.randint(5, 12)
@@ -203,17 +273,23 @@ def rye_top(look, n):
     p = Pair()
     ear = GLASS if look == "glass" else GOLD
     awn = (250, 254, 255) if look == "glass" else (238, 222, 168)
-    for k in range(5):                                   # leaves without ears, behind
-        blade(p, r, 1 + (k * 3 + n) % 14, 15, r.randint(4, 8), r.choice((-4, -3, 3, 4)), shades=(136, 146, 156, 166, 176))
-    starts = [(2, 1), (6, -1), (9, 1), (13, -1), (11, 1)][: 4 + n % 2]
-    for k, (x0, d) in enumerate(starts):
-        L = (9, 12, 7, 10, 5)[(k + n) % 5]
+    roots = sorted(seam(rye_middle(n)).items())        # every stem of its own middle carries on up
+    eared = set(range(0, len(roots), 2) if n % 2 == 0 else range(1, len(roots), 2)) if len(roots) > 3 else set(range(len(roots)))
+    for k, (x0, root) in enumerate(roots):
+        if k in eared:
+            continue                                     # a leaf without an ear, behind
+        rise(p, r, x0, root, r.randint(4, 8), r.choice((-4, -3, 3, 4)), 176)
+    for k, (x0, root) in enumerate(roots):
+        if k not in eared:
+            continue
+        d = 1 if (k + n) % 2 == 0 else -1
+        L = (9, 12, 7, 10, 8)[(k + n) % 5]                # long enough that the hanging ear clears the seam
         pts = []
         for i in range(L):                               # the stem, bending over toward its tip
             f = i / (L - 1)
             x = int(round(x0 + d * 2 * f ** 2.5))
             pts.append((x, 15 - i))
-            p.tint(x, 15 - i, 146 + i * 3)
+            p.tint(x, 15 - i, root[1] + i * 3 if i else root[1])
         x, y = pts[-1]
         for i in range(5):                               # the ear: a two-wide spike hanging out and down from the tip
             hx, hy = x + d * (1 + i // 2), y + i
@@ -298,7 +374,8 @@ def cow_parsley(part, n):
         else:
             top = (4, 2, 6)[(i + n) % 3]
             lean = (-1, 0, 1)[(i + n * 2) % 3]
-            pts = blade(p, r, x0, 15, 16 - top, lean, shades=(128, 138, 148, 156, 164), bend=3)
+            root = seam(cow_parsley("bottom", n))[x0]       # the stem its own lower half ends in
+            pts = rise(p, r, x0, root, 16 - top, lean, 164, bend=3)
             hx, hy = pts[-1]
             for dx in (-3, -2, -1, 1, 2, 3):              # the umbel's spokes
                 p.tint(hx + dx, hy - (1 if abs(dx) < 3 else 0), 158)
@@ -330,10 +407,11 @@ def foxglove(part, n, colour="purple"):
                 p.own(x0 + d, y + 2, bell[2])
         else:
             L = 12 + r.randint(0, 2)
+            v = seam(foxglove("bottom", n, colour))[x0][1]    # the spike's shade where its lower half leaves it
             for i in range(L):
-                p.tint(x0, 15 - i, 130 + i * 3)
+                p.tint(x0, 15 - i, v + i * 2)
             top = 16 - L
-            for y in range(top + 1, 16, 3):
+            for y in range(top + 1, 13, 3):                  # bells clear of the seam: the lower half's carry on below
                 big = y > top + 4
                 p.own(x0 + d, y, bell[2] if not big else bell[0])
                 p.own(x0 + d, y + 1, bell[1])
@@ -456,10 +534,14 @@ def bracken(part, n, turned=False):
         else:
             p.tint(x, y, v if v >= 0 else 104)
     stalks = (5, 10) if n % 2 == 0 else (4, 11)
+    shoot = stalks[0] + 2 if n % 2 == 0 and not turned else None   # a young frond, still curled at the top of its stalk
     if part == "bottom":
         for x0 in stalks:
             for i in range(16):
                 put(x0, 15 - i, -1 if turned else 100 + i * 2)
+        if shoot is not None:
+            for i in range(16):
+                p.tint(shoot, 15 - i, 108 + i * 2)
         x0 = stalks[0]
         for i in range(1, 6):                            # one low frond near the ground
             put(x0 - i, 11 + i // 2, 128 + i * 8)
@@ -467,24 +549,27 @@ def bracken(part, n, turned=False):
             if i > 1:
                 put(x0 - i, 10 + i // 2, 140 + i * 6)
     else:
-        # two fronds: a big one rising on the left stalk and arching out right, a smaller, higher one from the right back left
-        for k, (x0, d, rise, length) in enumerate(((stalks[0] - 2, 1, 7, 11), (stalks[1] + 2, -1, 11, 8))):
-            rib = [(x0, 15 - i) for i in range(rise)]
-            top = 15 - rise
+        # two fronds: a big one rising on the left stalk and arching out right, a smaller, higher one from the right back left;
+        # each stalk carries on from its own lower half and leans out two pixels as it rises
+        low = seam(bracken("bottom", n, turned))
+        for k, (x0, d, up, length) in enumerate(((stalks[0], 1, 7, 11), (stalks[1], -1, 11, 8))):
+            rib = [(x0 - d * int(round(2 * (i / (up - 1)) ** 2)), 15 - i) for i in range(up)]
+            top = 15 - up
+            x1 = rib[-1][0]
             for i in range(1, length):
-                rib.append((x0 + d * i, top - int(round(2 * math.sin(min(1.0, i / length) * 2.6)))))
-            for x, y in rib:
-                put(x, y, -1 if turned else 112)
-            for j, (x, y) in enumerate(rib[rise:]):
+                rib.append((x1 + d * i, top - int(round(2 * math.sin(min(1.0, i / length) * 2.6)))))
+            for j, (x, y) in enumerate(rib):
+                put(x, y, -1 if turned else low[x0][1] - min(j, 6) * 3)
+            for j, (x, y) in enumerate(rib[up:]):
                 w = 4 if 1 < j < length - 4 else 3 if j < length - 2 else 1
                 if j % 2 == 0:                           # combed: a leaflet every other pixel, slanting toward the tip
                     for h in range(1, w + 1):
                         put(x + d * (h // 2), y + h, 124 + h * 9 + r.randint(-6, 6))
                     put(x, y - 1, 156 + r.randint(-6, 6))
-            if not turned and k == 0 and n % 2 == 0:     # a fiddlehead still curled
-                fx = x0 + 5
+            if shoot is not None and k == 0:            # a fiddlehead still curled, on its own stalk
+                v = low[shoot][1]
                 for (dx, dy) in ((0, 0), (0, -1), (0, -2), (1, -3), (2, -3), (2, -2)):
-                    p.tint(fx + dx, 15 + dy, 150 - dy * 6)
+                    p.tint(shoot + dx, 15 + dy, v if dy == 0 else 150 - dy * 6)
     return p
 
 def reeds(part, n, pale=False):
@@ -492,14 +577,18 @@ def reeds(part, n, pale=False):
     r = rng("reeds", part, n, pale)
     p = Pair()
     head = [(214, 206, 186), (190, 180, 160), (232, 226, 210)] if pale else [(112, 70, 40), (92, 56, 32), (126, 84, 50)]
-    for k in range(9):
-        x0 = 1 + (k * 2 + r.randint(0, 1)) % 15
-        if part == "bottom":
+    if part == "bottom":
+        for k in range(9):
+            x0 = 1 + (k * 2 + r.randint(0, 1)) % 15
             blade(p, r, x0, 15, 16, 0, shades=(108, 118, 128, 138, 148))
-        else:
-            blade(p, r, x0, 15, r.randint(5, 15), r.choice((-2, -1, 0, 1, 2)), shades=(130, 142, 154, 164, 176), bend=2.5)
+        return p
+    roots = seam(reeds("bottom", n, pale))           # every blade of its own lower half carries on up
+    heads = {min(roots, key=lambda x: abs(x - want)) for want in ((4, 10) if n % 2 == 0 else (6, 12))}
+    for x0, root in sorted(roots.items()):
+        if x0 not in heads:
+            rise(p, r, x0, root, r.randint(5, 15), r.choice((-2, -1, 0, 1, 2)), 176, bend=2.5)
     if part == "top":
-        for x0 in ((4, 10) if n % 2 == 0 else (6, 12)):
+        for x0 in sorted(heads):
             top = r.randint(2, 5)
             for y in range(top, top + 6):
                 p.own(x0, y, head[y % 2])
@@ -507,7 +596,7 @@ def reeds(part, n, pale=False):
             p.own(x0, top - 1, (160, 150, 112))
             p.own(x0, top - 2, (160, 150, 112))
             for y in range(top + 6, 16):
-                p.tint(x0, y, 132)
+                p.tint(x0, y, roots[x0][1] if y == 15 else 132)
     return p
 
 
@@ -670,6 +759,7 @@ for i in range(3):
         PAIRS[f"long_grass_top_{look}_{i}"] = lambda i=i, look=look: long_top(look, i)
     for look in ("gold", "glass"):
         PAIRS[f"wild_rye_top_{look}_{i}"] = lambda i=i, look=look: rye_top(look, i)
+    PAIRS[f"wild_rye_middle_{i}"] = lambda i=i: rye_middle(i)
     PAIRS[f"thistle_{i}"] = lambda i=i: thistle(i)
     PAIRS[f"heather_{i}"] = lambda i=i: heather(i)
     PAIRS[f"gorse_{i}"] = lambda i=i: gorse(i)
@@ -689,7 +779,6 @@ for i in range(3):
         PAIRS[f"bramble_{fruit}_{i}"] = lambda i=i, fruit=fruit: bramble(i, fruit)
 for i in range(2):
     PAIRS[f"wild_rye_stems_{i}"] = lambda i=i: rye_stems(i)
-    PAIRS[f"wild_rye_middle_{i}"] = lambda i=i: rye_middle(i)
     PAIRS[f"trampled_fresh_{i}"] = lambda i=i: trampled("fresh", i)
     PAIRS[f"trampled_old_{i}"] = lambda i=i: trampled("old", i)
     PAIRS[f"trampled_rise_{i}"] = lambda i=i: trampled_rise(i)
@@ -746,7 +835,52 @@ def seed(n):
     return c
 
 
+# ---- the seams --------------------------------------------------------------------------------------------------------
+def seams():
+    """Every lower and upper drawing that stand together in game: (lower, upper). The block's shape pairs version n with n;
+    the rye's foot is picked at random, so every foot meets every middle."""
+    out = []
+    for i in range(3):
+        for look in ("green", "seeding", "tawny"):
+            out.append((f"long_grass_bottom_{i}", f"long_grass_top_{look}_{i}"))
+        for look in ("gold", "glass"):
+            out.append((f"wild_rye_middle_{i}", f"wild_rye_top_{look}_{i}"))
+        for j in range(2):
+            out.append((f"wild_rye_stems_{j}", f"wild_rye_middle_{i}"))
+        for plant in ("cow_parsley", "foxglove", "bracken", "reeds"):
+            out.append((f"{plant}_bottom_{i}", f"{plant}_top_{i}"))
+        out.append((f"bracken_bottom_turned_{i}", f"bracken_top_turned_{i}"))
+        out.append((f"reeds_bottom_pale_{i}", f"reeds_top_pale_{i}"))
+    return out
+
+
+def check_seams():
+    """Fails (SystemExit) when any lower's top row and its upper's bottom row differ: the columns, the layer (tinted or its
+    own colour), or the shade by more than a few steps."""
+    made = {}
+
+    def get(name):
+        if name not in made:
+            made[name] = PAIRS[name]()
+        return made[name]
+    bad = []
+    for lo, up in seams():
+        a, b = seam(get(lo), 0), seam(get(up), 15)
+        if sorted(a) != sorted(b):
+            bad.append(f"{lo} {sorted(a)} vs {up} {sorted(b)}")
+            continue
+        for x in a:
+            (ka, va), (kb, vb) = a[x], b[x]
+            far = ka != kb or (abs(va - vb) > 12 if ka == "t" else max(abs(c - d) for c, d in zip(va[:3], vb[:3])) > 24)
+            if far:
+                bad.append(f"{lo} / {up} column {x}: {a[x]} vs {b[x]}")
+    if bad:
+        raise SystemExit("seams that do not meet:\n  " + "\n  ".join(bad))
+    return len(seams())
+
+
 def build(out):
+    check_seams()
     out.item("blackberries", blackberries())
     for i in range(3):
         out.particle(f"wild_seed_{i}", seed(i))
@@ -755,6 +889,10 @@ def build(out):
         out.block("wild/" + name, p.t)
         if p.has_overlay():
             out.block("wild/" + name + "_overlay", p.u)
+        else:                                            # an overlay left from an older drawing would still be used
+            stale = os.path.join(out.root, "assets/awaken/textures/block/wild", name + "_overlay.png")
+            if os.path.exists(stale):
+                os.remove(stale)
     for name, make in CANVASES.items():
         out.block("wild/" + name, make())
 
@@ -797,3 +935,5 @@ def sheet(outdir):
 if __name__ == "__main__":
     if len(sys.argv) > 2 and sys.argv[1] == "sheet":
         sheet(sys.argv[2])
+    elif len(sys.argv) > 1 and sys.argv[1] == "check":
+        print(check_seams(), "seams meet")
