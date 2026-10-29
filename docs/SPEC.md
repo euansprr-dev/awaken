@@ -6222,6 +6222,33 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       nearest the blades come 0.15 -> 0.26. The chain judge passes every strike (strike 5's jump 0.34 -> 0.25). Left:
       the daggers' other moves (heavy, riposte, Art, slipcut, undercut, plunge, execution) still come from the rules;
       unseen in game.
+  - *Round 12, no spinning* (Euan 2026-10-29, after round 11: "they still don't feel smooth"; "it feels more like they
+    are spinning and making circles than stabbing and slashing"). The cause, measured (`swing_chain.py twist`, new: the
+    blade's turn about its own length over a move, its change of direction taken out): round 11 turned the daggers'
+    blades 80-127 degrees a strike (84 a stab: every key pose set its own edge), round 10's rules 114-252, and every
+    other style's rules still do 150-400 (no judge measured it, so no round fixed it). On top, the Catmull-Rom curve
+    through every pose rounded each turn back into a loop, and the stabs' way home was squeezed into four frames.
+    - A pose's turn is the least turn from the stance, plus its own roll only where a cut needs its edge turned toward
+      the cut: 36 degrees for strike 3 and the Slipcut, 42 the Undercut, 30 the finisher, 70 the Art, turned in the
+      wind-up and back through the way home, never in the blow. A stab, the twin push, the heavy, the riposte, the
+      Plunge and the Execution turn none (in the stance the edge faces down and away, so a chop down and forward leads
+      with it unturned).
+    - A thrust is solved from where its point lands (just under the crosshair): the wind-up lays the blade on the line
+      from the stance to it, the drive pushes straight along the blade (point lead 0.99), and the way home keeps the
+      line and turns into the stance last. A cut is one stroke, a short lift (the blow lands a tick in) then one sweep
+      with the hit at its middle. Between two poses the grip goes straight, or on an arc that is set.
+    - Every chain strike is still home by the chain's next press for the hand that strikes next (`arms_chain_flow`):
+      the stabs by 3.5 ticks, the cut by 4, the twin push by 6, the finisher by 6.6. The heavy waits coiled while it
+      charges (the game shows its first pose) and drives both points deep; the riposte is a deeper stab; the Slipcut a
+      flatter cut, the Undercut a low one, the Art the widest; the Plunge waits high while it falls and chops down
+      through the target as it lands, the Execution raises over the target and chops. All twelve daggers' moves are
+      set by hand now (`swing_choreo.py`); no hand crosses further than 0.06 past the middle.
+    - Twist a move, round 11 -> 12: stabs 84 -> 0, the twin push 93 -> 0, the cut 127 -> 73, the finisher 120 -> 65;
+      heavy 122 -> 0, riposte 131 -> 1, Plunge 91 -> 2, Execution 155 -> 0, Slipcut 178 -> 75, Undercut 179 -> 79, Art
+      268 -> 143. Fast clicks (as round 11's): steps over 0.2 of the screen a frame 405 -> 4, with mastery 359 -> 36,
+      the worst 0.29 -> 0.26, the nearest the blades come 0.26 -> 0.27; held mashing with every blow landing, the worst
+      0.24 -> 0.14. The chain judge passes every strike; every dagger move leads with its point (0.99-1.00) or edge
+      (0.70-0.99). Left: every other style's twist (the shared rules, `anim_lab.rig_pose`); unseen in game.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
