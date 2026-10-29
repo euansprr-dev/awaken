@@ -8573,9 +8573,10 @@ the land to where its people gather, arriving there (an AMBIENT line to players 
 
 **The Atlas** (`RoadAtlas`, attachment `awaken:road_atlas`, schemaVersion 1, kept through death; payload
 `village_road_atlas`): every second, the stretch of road a player stands on (within 6; eight points of it) and the
-settlement they're in; 3,000 stretches and 400 places at most; the whole on login, then only what's new. Drawn through
-`MapMarks.Line`/`registerLines` under the marks (casing and colour by class; settlements labelled with "· town",
-"· mining town", "· inn").
+settlement they're in; 3,000 stretches and 400 places at most; the whole on login, then only what's new. Settlements
+are marks labelled with "· town", "· mining town", "· inn". The walked stretches are kept but no longer drawn on the map
+(Euan 2026-10-29: "Let's remove this trail from the map"); `MapMarks.Line`/`registerLines` stay for any line a module
+wants later.
 
 **API** (§12): `dev.awaken.core.api.RoadHooks` (`Route`, `Access.stretch/arrived`, `install`, the Hearth call site);
 `MapMarks.Line`, `LineSource`, `registerLines`, `lines`.
