@@ -11876,3 +11876,114 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
 - **Tests**: `wild_hunt` (zones on the body; a tenth on the head doesn't break the horns, a sixth does: they drop, it staggers;
   at a third it limps and bleeds its herd's trail toward its bed; its body lies still, a stranger can't carve, three carves,
   then it's gone and its bones stay).
+
+## 43. The Journey (one city and the wild, the beasts' Hearth, the bells' song, Faults; plan docs/director/JOURNEY.md, page https://claude.ai/artifact/UZ4vpKGoSJkisZRkmoHj3D; Euan approved the entire plan 2026-10-29: "Go ahead with the entire plan")
+
+Source of truth for the rules below; `docs/director/JOURNEY.md` has the detail, the lines and the hour-by-hour journey.
+Where this section and an earlier one disagree, this one wins (each change is listed in 43.9). Built in seven stages
+(43.10), each by one builder that adds its numbers here as it goes.
+
+### 43.1 The world rule
+- About nine-tenths of the world is wild and empty of people. Outside Carillon the only living people are players (the
+  Awakened) and the people of the rare **holdfasts** (43.2). Nobody else lives, walks or camps in the wild.
+- **The Lull** is why: where the gates leak the Deep, ordinary people stop feeling, sit down, go still and turn to stone
+  over months. Bells keep it off; the Awakened are immune. Eleven years ago the land's bells fell asleep and the villages
+  walked to Carillon.
+- Every settlement AWAKEN places (§28 W0, W3, W7) still generates, emptied: no citizens, troubles, settlers or found
+  scenes of people. Furniture, letters, silent chimes, loot and beasts stay. Village troubles become beast troubles (W4's
+  rules unchanged).
+- **The Last Fire** is the Wayfarer camp (450 blocks up the north road), Ilse alone; Hettie moves into the city. Ilse's
+  scene and lines are JOURNEY part 1, verbatim, in plain speech. She never gives a task. She comes to the player's home
+  exactly once, after the Wake ending. The Ember sets only past the Last Fire's ridge and outside any holdfast's sound.
+- Vael meets the player only in the city and in gates. Townsfolk that lived at the Hearth (Oren, Mira, Teodor, Sun, Vael)
+  live in Carillon in their roles.
+
+### 43.2 Holdfasts
+- A holdfast is one of the biggest walled W7 towns, kept full of people, whose bell never stopped (rung by hand in
+  shifts). None within 1,500 blocks of the Last Fire's ridge; the first 1,500 to 2,500 blocks out; then about one per
+  3,000 x 3,000 blocks. Every other settlement is empty.
+- Its bell rings on the hour, audible from far off; the Map shades its bearing. It's one of the hundred bells, already
+  awake, filed in the Bell Book (as **Rung**) the first time a player stands inside its walls and hears it.
+- Inside: citizens with the city's dialogue rules (they talk, react and carry rumours, never give tasks), a small market
+  (emeralds), a bed, a ringer on shift. A tamer on the wildness field (§41) to the bell's reach. Its people never leave
+  and never come to a Hearth.
+
+### 43.3 The stone people (the Stilled)
+- Not mobs: unbreakable, unmovable, unmineable posed figures (about twelve hand-made poses, their own look), untouched by
+  powers and raids.
+- Placement: three on the north road in the first 400 blocks past the Last Fire's ridge (the first, Aldo, on the
+  milestone just past it); one or two on the road to the first empty hamlet; one on the way to the first sleeping bell
+  near the player's first Ember. Elsewhere about one per 1,000 x 1,000 blocks within 3,000 of Carillon and rarer past
+  that, near roads, villages and homes; never two within 150 blocks except a seated pair; never in a gate or a deep cave.
+- Most carry a letter (a Found bell lead), a key (a chest in a nearby empty settlement) or a keepsake with a name that
+  someone in Carillon reacts to. The System reads them in brackets ("[She got as far as the bridge.]").
+- At the Wake they stand and walk home over one play-day (stage 7).
+
+### 43.4 No allies: Echoes removed
+- Nothing a player owns fights for them except their own powers' short-lived summons and decoys. Beasts never fight.
+- Removed: Echo binding (the bind key's use, chance by SPI and rank), the Echo cap, role pads and the Barracks room, the
+  roles Guard/Haul/Farm/Mine/Train, Echo Duty, the Mine Echo, Echo kills' credit, the Echo Hall and Generals (GOALS.md).
+- Kept (not allies): the Echoing tag, the Grave Echo, gates' ghosts, the pick's Echo rung, Echo Palm, Heavy Echo. Echo
+  Swap targets the player's own summons and decoys only.
+- SPI's Echo cap becomes +1% Kinship gained per SPI point, to +30%.
+- Old saves (schema bump): bound Echoes are released on load with one System line ("Your Echoes have gone back to the
+  Deep."); role pads stay as plain blocks that drop their materials.
+
+### 43.5 Beasts and Kinship
+- Three natures: **kin** (befriendable, never hunted), **wild quarry** (§41's herds and packs, hunted, never tamed) and
+  **the Deep's** (gate creatures and the Gnawed, always hostile). Sixteen kin (JOURNEY part 2 table); each has a want,
+  a day, fears and its own look and sound. One style sheet first; the Lampwing is judged by Euan before any other kind.
+- Kinship per kind: Wary, Curious, Friendly, Kin. Up on each help and each day one lives with you; down when one is hurt,
+  far down (and the kind runs for days) when one is killed. Befriended beasts never die: hurt, they hide and return.
+- Five steps: hear of it or meet and read it (band or Binoculars, §39), watch, help, trust (three helps of one beast),
+  home (a free nook it likes).
+- **What the System tells, and never tells.** Every kin card says "Could live with you" and its home job; quarry cards
+  say "Quarry"; the Deep's things get no card. Each Hearth need carries a rumour: the sort of animal and a real region,
+  picked from an actual place that kind lives within 600 blocks, named by landmarks the player knows, Track a rough
+  bearing. Watching adds up to three want lines, vague to plain; the third states the want. The help is never stated.
+  The right act gets the beast's tell, the band's chime and a line; a near miss gets a nudge line; after a few misses
+  the line points closer, never naming the act. The Kin list always holds at least one rumour not yet followed.
+- The System translates beasts in brackets as subtitles do, only up close and only for kinds read, more as Kinship grows.
+
+### 43.6 The Hearth, run by beasts
+- **Beasts do the boring work only.** Nothing at home produces ore, gems, gate loot, essence or XP from nothing. Beasts
+  tend what grows (crops, wool, eggs, honey), process and carry what the player brings, keep the woodlot, light the
+  yard, and build works from plans with timber from that woodlot and stone and metal the player brings. The player mines
+  every ore, fetches every rare thing and forges.
+- Automation ladder: E one field and the light; D each work's beast processes its own chest (Smeltery, Ore Shed, fields,
+  pens); C Totters carry between works inside the yard; B the Works' lines move things across the home; S every work
+  linked. Details: JOURNEY part 3.
+- The Mine head becomes **the Ore Shed** (lode heart; Pebblepups sort and crush ore and rubble the player brings, a few
+  nuggets from a stack of rubble at most; never ore by itself).
+- Nooks: 2 at the Ember, 4 at the Anchor, then 8, 12, 18, 24 by its last tier, plus each work's own.
+- **The Hearth page** is a band page (Home, Your beasts, Kin) between Journal and Truths. Nothing on it expires or
+  renews daily. No Board, no requests, no Daily Regimen.
+
+### 43.7 The bells and the beasts
+- The tower rings the player's song at dawn and dusk. The player's beasts react by bells held: under 20 bolt for their
+  nooks; 20 to 49 hunker; 50 to 79 listen, uneasy; 80 to 99 gather under the tower; 100 sing. A handbell peal in the
+  wild scares nearby kin away for a minute.
+- The Hundred Peal (the only big moment that doesn't glitch) raises Kinship a step for many kinds land-wide and gives
+  the Kinsong. Then the Deep answers: harder breaks, the Gnawed spread, Grieving Sovereigns. Fighting never ends.
+- Leads: Heard, Seen, Sung, Found, Rung, Remembered. None told by people at home.
+
+### 43.8 Faults and Big Days
+- A Fault is one reusable director: tell, break, words in the black, held cut, aftermath, mend. Sizes: flicker (under
+  1 s), Fault (3 to 5 s), Great Fault (10 to 20 s, hand-made, about eight in the game). Its own sound suite, made like
+  the Ritual's. At most three flashes a second; client setting **Faults: full / gentle / still**; reduced motion and
+  `cameraShake` honoured; plays with Lens off; plays for every player in the event's reach. A woken bell ends on a mend.
+- Big Days: about one per five play-days at most, never in a world's first two hours, never two in a row, warned by the
+  world's signs. Raids from the first Great Bell; the first raid opens on a Great Fault and is tuned for one player with
+  no help (a level-12 player in D gear who stands and fights holds it). A raid while away breaks what it reaches and
+  takes at most a chest's worth from the larder, never a beast, never the Forge's racks.
+
+### 43.9 Changes to earlier sections
+§10 (Echoes, Barracks, town NPCs at the Hearth), §28 W0/W1/W3/W4/W6/W7 (citizens, troubles, settlers, the Mine head
+and Mine Echo), §41 (tamers: Carillon, its farmland, roads, holdfasts, Hearths; hunts take quarry and the Gnawed only),
+SPI's line in the stat table, GOALS.md's Hearth Board, Echo Hall and Generals. JOURNEY part 9 has the full table.
+
+### 43.10 Stages
+1. The world rule (43.1 to 43.4). 2. The first beasts, Kinship, the Hearth page, Fields and the Ore Shed (43.5, 43.6).
+3. Faults, the Ringer's Great Fault, the first raid (43.8). 4. The first thirty bells and the tower's song (43.7).
+5. The rest of the kin and the works to the Foundry. 6. The second half's bells and beasts. 7. The Hundred Peal, the
+Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY part 8).
