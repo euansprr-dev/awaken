@@ -95,7 +95,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Undertow | Nightmare | Fear | Caster | kit | A, the Old Snapper | ✓ 7063327c | ✓ 7063327c | — |
 | The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | kit | A, the Throng | ✓ 43eb6a0c | ✓ 43eb6a0c | — |
 | The Thousand Legs | Nightmare | Fear | Crawler | kit | A, the House Centipede | ✓ 5eb9480a | ✓ 5eb9480a | — |
-| The Fuse | Nightmare | Fear | Construct | creeper ×2 | — | — | — | — |
+| The Fuse | Nightmare | Fear | Construct | kit | A, the Jack | — | — | — |
 | The Faceless | Nightmare | Fear | Duelist | player | — | — | — | — |
 
 ## The rounds so far
@@ -306,3 +306,10 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   than you can count, its leg fan is a shape no other boss has, and A Thousand Legs is every one of them hammering the
   floor round you. B coils like the Cinder Wyrm and rears like the Glass Serpent; C is the Long-Legs' tall spider
   shape again.
+- **The Fuse** (`nightmare_explosion`): A the Jack (a jack-in-the-box as big as a cart whose jack is a black iron bomb
+  with a painted grin, three lit fuses curling from its crown for a jester's cap, on a long iron spring), B the Sea
+  Mine (a hovering horned iron mine trailing its chains), C the Sapper Mole (an iron digging machine with powder kegs
+  on its back). **Picked A**, 2026-10-30: the fear of the fuse is the wait for the bang, and a jack-in-the-box is
+  that wait made into a toy: the crank ticks and you don't know when it pops. No other boss is a toy, and its box,
+  spring and lid give it a shape and moves of its own. B is one more round thing hanging in the air after the
+  Moon Angler's moon; C digs like the Thorn Pangolin.

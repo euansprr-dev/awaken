@@ -245,7 +245,7 @@ final class DeepBestiary {
                 .intro("You can hear them in the walls.")
                 .phase(1.0F, "Legs everywhere.", a(ROOT, "Web").radius(2.5F), a(LEAP, "Drop").radius(3).heavy())
                 .phase(0.5F, "The walls open.", a(SUMMON, "Hatchlings").summon("capweaver").n(3), a(ROOT, "Web").radius(3)).build());
-        out.add(m("nightmare_explosion", "The Fuse", Theme.FEAR, Tier.NIGHTMARE, Model.CREEPER, "A hiss you can't find, and lines of fire to dodge").hp(22).dmg(4).spd(0.26).scale(2.0F).glow(0xFFFFFF).bar(BossBarColor.WHITE).arena(22)
+        out.add(m("nightmare_explosion", "The Fuse", Theme.FEAR, Tier.NIGHTMARE, Model.CREEPER, "A hiss you can't find, and lines of fire to dodge").hp(22).dmg(4).spd(0.26).scale(2.0F).size(1.10F, 2.78F).glow(0xFFFFFF).bar(BossBarColor.WHITE).arena(22)
                 .intro("Hsssss.")
                 .phase(1.0F, "Somewhere, a fuse.", a(RAIN, "Fuse Lines").n(4).bolt(BoltKind.FIRE), a(BURST, "Blast Ring").radius(10).inner(3).heavy())
                 .phase(0.5F, "Shorter fuse.", a(RAIN, "Fuse Lines").n(6).bolt(BoltKind.FIRE).wind(26), a(BURST, "Blast Ring").radius(12).inner(3).heavy()).build());

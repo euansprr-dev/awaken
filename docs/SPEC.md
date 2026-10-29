@@ -13891,6 +13891,60 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   - **Meter.** Worst kink outside a strike 3.8° (the Lasso's throw); held at most 11% (the Bite into the Lasso into
     the Bite); no still spells; the strings dip at most 38% (the Drop into the Bite). Wind-ups 12.9 (the Bite) to 28.4
     (A Thousand Legs).
+- **The Fuse, the Jack** (body and motion, `kit/bosses/nightmare_explosion.py`). "Hsssss." A jack-in-the-box as big
+  as a cart: a black lacquered toy box on brass ball feet, bound in tarnished brass, a faded red and cream harlequin
+  painted on its sides and scorched along the bottom, its lid thrown back on its hinge and lined with the same
+  harlequin. A crank on its right side turns on its own, ticking, and a lit fuse hangs from it. Out of the box on a
+  long iron spring of ten coils stands the Jack: its head is a round black iron bomb with a wide grin and two diamond
+  eyes painted on in chipped white, and in place of a jester's cap three lit fuses curl out of its crown, a spark at
+  the end of each. Under its head a sooty ruff with tattered harlequin flaps, and two long thin arms in harlequin
+  sleeves with white gloves and fingers too long. Deep in the box something burns white, seen past the spring and
+  through the keyhole; the sparks glow too. 97 cubes on 46 bones; the box is 2.25 blocks across and 2.3 tall to its
+  rim, its open lid stands 4.5, the Jack's head is 4 to 5.2 blocks up and its sparks reach 5.6. The hitbox is
+  1.10 x 2.78 at its scale of 2.0 (2.2 x 5.6 blocks). The spring's links carry its squash and stretch (each coil
+  closes or opens along the spring) and its bend; the Jack's arms and head keep the spring's time, and their own
+  springs (forearms, fingers, head, ruff flaps, fuses) give the overlap.
+  - **Its idle.** It sways on its spring in a slow loop, its head rolling the other way a beat behind, its arms
+    hanging and swinging after it, its fingers flexing, its fuses bobbing; the crank ticks round a click at a time
+    (6 s). Now and then the Jack jerks its head over to one side and holds it there, grinning, and lets it come back;
+    once it bobs on its spring three times, quickly, as if it were laughing.
+  - **How it moves.** It hops: the box lands, the Jack bounces down on its spring and up again as it pushes off, and
+    in the air it hangs at full stretch, its arms floating up and its fuses streaming; each landing bounces the lid
+    and ticks the crank (0.75 s, 1.2 blocks a hop). Running it bounds, longer and higher (0.5 s, 2.4 blocks), the
+    Jack thrown back as it jumps and forward as it lands. It turns with two small hops.
+  - **Struck, broken, down and its death.** Struck, the Jack is knocked back on its spring and comes wobbling back,
+    its arms flung up; from the side it bends away from the blow. Broken, it flops forward over the front of the box,
+    its arms hanging down outside it and its head lolling, and bounces itself upright again. Its death (5 s): the Jack
+    jerks up out of the box at full stretch and shudders there, its arms flailing; the spring goes slack and it sags
+    down into the box, swaying, its head lolling out over the front and its hands on the floor; the lid falls onto its
+    neck, the crank turns back one click, and a finger twitches.
+  - **Its moves.** The Pop (LIGHT): it sinks down on its spring with its hands drawn up beside its head, then springs
+    out at you head first, the spring flung out long and bent over toward you, its hands grabbing. The Slap (LIGHT,
+    after the Pop): it twists away with its right arm drawn back behind it, then swings a long backhand across in
+    front of it, the spring twisting with it. Pop Goes (HEAVY, its delay): it sinks slowly into the box and the lid
+    comes down over it; the crank ticks, and ticks, and the box trembles; then the lid bursts open and it springs up
+    at you with its arms wide. The Bound (HEAVY, its gap closer): it sinks deep onto its spring and the box tips back;
+    the whole box jumps, the Jack flung up at full stretch over it, and comes down on you, the Jack slammed down into
+    the box by the landing and springing up again. Fuse Lines (ability Fuse Lines): it rises high and throws its head
+    back with its arms spread like a showman's, then whips its head down at you twice, flinging its sparks. The Lid
+    (LIGHT, for whoever is behind it): it ducks forward and the lid comes up off its hinge, then slams back over the
+    hinge onto the floor behind the box. Shorter Fuse (into the second phase): it shakes and bounces on its spring,
+    cackling, its head thrown back and its arms hugging itself and flung out, while the crank whirls round. The Blast
+    Ring (PERILOUS, the signature, ability Blast Ring): it crams itself down into the box and the lid slams shut; the
+    box shudders and jolts, light leaking from under the lid; then the lid is blown back, the Jack shoots up out of
+    the box with its arms flung wide and the ring goes out; only right beside the box are you safe. Its intro,
+    "Hsssss.": the box stands shut; the crank turns a click at a time on its own and the box trembles; the lid flies
+    open and the Jack springs up with its back to you, wobbling, and turns its head round, slowly, all the way, to
+    grin at you. Every recovery wobbles on the spring, less each time; under every move its fuses bob, its fingers
+    flex and the crank's fuse sways.
+  - **On the floor.** The ground pass lifts its fingers, hands and forearms, its head (by the top coils) and its lid
+    out of the floor in every clip, its death included.
+  - **Its sounds** (chosen on paper, not heard in game): a creeper's hiss and a trapdoor's creak under its tells, a
+    lit TNT and a note block's chime under the heavy ones and the Blast Ring; a sweep and a chain for its swings;
+    TNT and fire for Fuse Lines; an explosion, falling wood and a chain under its blows; a creeper's hiss, a bell and
+    a witch's cackle for Shorter Fuse and its intro; wood and chain for its hops.
+  - **Meter.** Worst kink outside a strike 4.1° (the Lid); held at most 1% (its intro); no still spells; the strings
+    dip at most 33% (the Pop into the Slap into the Pop). Wind-ups 20.9 (the Pop) to 39.0 (Pop Goes).
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
