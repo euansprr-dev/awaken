@@ -136,7 +136,24 @@ in the off hand. It stands in eight ordinary caves picked from his saved chunks 
 by spawn, the Shallows and the Middle Dark under the Elderwood, a Middle Dark cavern, the Deep twice, a lush and a
 sulfur cave), each shot as a player sees it and again with night vision to show its shape and blocks; then the Singing
 Deep's nearest mouth (outside, its throat, its joint into the cave), the first sinkhole, and the Elderwood's ground above
-for the bar. The page shows the shots; what they show is summarised in section 2.4.
+for the bar.
+
+Run 40808985959 passed (25 shots, 12 min). What the shots show, with block names read from his save around each spot:
+- **First cave by spawn** (Shallows, y 40): stone, andesite, granite, diorite, dirt; one patch of copper ore; nothing on
+  the floor, nothing growing or moving.
+- **Shallows under the Elderwood** (the roots style's ground): in the 21-block cube round the spot, 8 rooted dirt and 7
+  hanging roots among about 7,700 blocks of rock, gravel and dirt. None of it in view.
+- **Middle Dark cavern** (y 29): black with the torch; with night vision a fine terraced hall, grey and bare, creepers the
+  only life.
+- **The Deep** (y -38, y -52): deepslate everywhere; in the cavern one Deepglass vein, tuff, out-of-sight lava, a zombie
+  and a skeleton.
+- **Vanilla's cave biomes** (lush pocket in sulfur caves, y 13; sulfur caves, y 4): the only colourful caves in the tour,
+  all vanilla blocks (sulfur, cinnabar, moss, azalea); one Delver lamp is the only Awaken block in the sulfur chamber.
+- **The Singing Deep's grotto:** moss and a way on; the strongest underground place today, and rare.
+- **The ground above** (the Elderwood, the land by the first mouth): fallen leaves, flowers, long and dry grass, pebbles.
+- Not usable: the two mouth-interior shots stayed on the surface (the `place go` hop didn't enter), the sinkhole-rim shot
+  looks at the sky, the second Middle Dark shot repeats the first (the jump's chunk took 22 s to generate on the runner),
+  and the Deep passage's torch shot came before its chunk drew. Left out rather than re-toured.
 
 ### 2.4 Why the caves still read as vanilla (root causes, ranked)
 
