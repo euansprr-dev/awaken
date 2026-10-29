@@ -305,6 +305,7 @@ public final class LifeRig {
         can[Idle.SCRATCH.ordinal()] = head != null && hind.length > 0 && this.legs == null; // planted feet don't kick
         can[Idle.PERK.ordinal()] = head != null;
         can[Idle.SETTLE.ordinal()] = body != null || rootMotion;
+        can[Idle.GRAZE.ordinal()] = head != null && this.legs != null; // a walker on planted feet crops what's under them
     }
 
     /**
@@ -446,7 +447,7 @@ public final class LifeRig {
             MotionProfile.Body mb = motion.body();
             if (lg != null) {
                 float wgt = lg.weight;
-                float pitch = lg.groundPitch * mb.slope() * wgt, roll = (lg.groundRoll * mb.slope() + lg.gaitRoll) * wgt;
+                float pitch = (lg.groundPitch * mb.slope() + lg.gaitPitch) * wgt, roll = (lg.groundRoll * mb.slope() + lg.gaitRoll) * wgt;
                 body.y += (lg.rig.gait.crouch() + life.creep + lg.groundY + lg.gaitY + lg.vault) * wgt;
                 body.x += life.shiftX * wgt;
                 body.z += life.shiftZ * wgt;
@@ -479,6 +480,8 @@ public final class LifeRig {
             head.zRot += life.headRoll;
         }
         if (neck != null) neck.xRot += life.neckPitch;
+        ModelPart low = neck != null ? neck : head;
+        if (low != null) low.y += life.neckDrop;
         if (jaw != null) jaw.xRot += life.jawOpen;
         // the eyes lead the head toward what it looks at; with no eyelids they squint shut to blink
         for (ModelPart e : eyes) {

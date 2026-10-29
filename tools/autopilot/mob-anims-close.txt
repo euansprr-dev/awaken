@@ -49,10 +49,10 @@ wait 5
 # cow: vanilla under Fresh Animations
 cmd summon minecraft:cow -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
 cmd execute as @e[tag=walker] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s -10.0 200.13 0.0 0 2
+cmd tp @s -10.0 200.18 -0.5 0 2
 look 0 2
 wait 40
-cmd awaken ascent pilot rec close_cow_fa 135 2
+cmd awaken ascent pilot rec close_cow_fa 270 2
 cmd awaken admin stroll @e[tag=walker] 0.05 100
 glide 0.05 0 0 100
 wait 100
@@ -80,10 +80,10 @@ wait 5
 cmd tag @e[type=minecraft:cow,limit=1,sort=nearest] add walker
 cmd tp @e[tag=walker] -10.0 201 2.0 -90 0
 cmd execute as @e[tag=walker] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s -10.0 200.13 0.0 0 2
+cmd tp @s -10.0 200.18 -0.5 0 2
 look 0 2
 wait 40
-cmd awaken ascent pilot rec close_cow_ours 135 2
+cmd awaken ascent pilot rec close_cow_ours 270 2
 cmd awaken admin stroll @e[tag=walker] 0.05 100
 glide 0.05 0 0 100
 wait 100
@@ -103,20 +103,20 @@ wait 25
 cmd kill @e[type=minecraft:item]
 cmd kill @e[type=minecraft:experience_orb]
 wait 5
-# cow: the two at rest, half a minute
-cmd summon minecraft:cow -1.10 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Rotation:[90f,0f]}
+# cow: the two at rest, half a minute (ours first, so the tag can't take theirs)
 cmd tp @s 0.5 201 0.0 0 0
 wait 3
 cmd awaken living form cow 3
 wait 5
 cmd tag @e[type=minecraft:cow,limit=1,sort=nearest] add ours
-cmd tp @e[tag=ours] 1.10 201 2.0 90 0
+cmd tp @e[tag=ours] 1.50 201 2.0 90 0
+cmd summon minecraft:cow -1.50 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Rotation:[90f,0f]}
 cmd execute as @e[type=minecraft:cow] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s 0.0 200.28 -1.20 0 4
+cmd tp @s 0.0 200.33 -2.00 0 4
 look 0 4
 wait 40
 shot close_cow_idle
-cmd awaken ascent pilot rec close_cow_idle 150 4
+cmd awaken ascent pilot rec close_cow_idle 600 4
 wait 610
 cmd kill @e[type=!minecraft:player,distance=..80]
 wait 25
@@ -126,10 +126,10 @@ wait 5
 # pig: vanilla under Fresh Animations
 cmd summon minecraft:pig -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
 cmd execute as @e[tag=walker] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s -10.0 199.83 0.5 0 2
+cmd tp @s -10.0 199.93 0.0 0 2
 look 0 2
 wait 40
-cmd awaken ascent pilot rec close_pig_fa 135 2
+cmd awaken ascent pilot rec close_pig_fa 270 2
 cmd awaken admin stroll @e[tag=walker] 0.05 100
 glide 0.05 0 0 100
 wait 100
@@ -157,10 +157,10 @@ wait 5
 cmd tag @e[type=minecraft:pig,limit=1,sort=nearest] add walker
 cmd tp @e[tag=walker] -10.0 201 2.0 -90 0
 cmd execute as @e[tag=walker] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s -10.0 199.83 0.5 0 2
+cmd tp @s -10.0 199.93 0.0 0 2
 look 0 2
 wait 40
-cmd awaken ascent pilot rec close_pig_ours 135 2
+cmd awaken ascent pilot rec close_pig_ours 270 2
 cmd awaken admin stroll @e[tag=walker] 0.05 100
 glide 0.05 0 0 100
 wait 100
@@ -180,20 +180,20 @@ wait 25
 cmd kill @e[type=minecraft:item]
 cmd kill @e[type=minecraft:experience_orb]
 wait 5
-# pig: the two at rest, half a minute
-cmd summon minecraft:pig -0.80 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Rotation:[90f,0f]}
+# pig: the two at rest, half a minute (ours first, so the tag can't take theirs)
 cmd tp @s 0.5 201 0.0 0 0
 wait 3
 cmd awaken living form pig 3
 wait 5
 cmd tag @e[type=minecraft:pig,limit=1,sort=nearest] add ours
-cmd tp @e[tag=ours] 0.80 201 2.0 90 0
+cmd tp @e[tag=ours] 1.20 201 2.0 90 0
+cmd summon minecraft:pig -1.20 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Rotation:[90f,0f]}
 cmd execute as @e[type=minecraft:pig] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s 0.0 199.98 -0.40 0 4
+cmd tp @s 0.0 200.08 -1.20 0 4
 look 0 4
 wait 40
 shot close_pig_idle
-cmd awaken ascent pilot rec close_pig_idle 150 4
+cmd awaken ascent pilot rec close_pig_idle 600 4
 wait 610
 cmd kill @e[type=!minecraft:player,distance=..80]
 wait 25
@@ -203,10 +203,10 @@ wait 5
 # sheep: vanilla under Fresh Animations
 cmd summon minecraft:sheep -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
 cmd execute as @e[tag=walker] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s -10.0 199.98 0.30000000000000004 0 2
+cmd tp @s -10.0 200.03 -0.10000000000000009 0 2
 look 0 2
 wait 40
-cmd awaken ascent pilot rec close_sheep_fa 135 2
+cmd awaken ascent pilot rec close_sheep_fa 270 2
 cmd awaken admin stroll @e[tag=walker] 0.05 100
 glide 0.05 0 0 100
 wait 100
@@ -234,10 +234,10 @@ wait 5
 cmd tag @e[type=minecraft:sheep,limit=1,sort=nearest] add walker
 cmd tp @e[tag=walker] -10.0 201 2.0 -90 0
 cmd execute as @e[tag=walker] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s -10.0 199.98 0.30000000000000004 0 2
+cmd tp @s -10.0 200.03 -0.10000000000000009 0 2
 look 0 2
 wait 40
-cmd awaken ascent pilot rec close_sheep_ours 135 2
+cmd awaken ascent pilot rec close_sheep_ours 270 2
 cmd awaken admin stroll @e[tag=walker] 0.05 100
 glide 0.05 0 0 100
 wait 100
@@ -257,20 +257,20 @@ wait 25
 cmd kill @e[type=minecraft:item]
 cmd kill @e[type=minecraft:experience_orb]
 wait 5
-# sheep: the two at rest, half a minute
-cmd summon minecraft:sheep -0.90 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Rotation:[90f,0f]}
+# sheep: the two at rest, half a minute (ours first, so the tag can't take theirs)
 cmd tp @s 0.5 201 0.0 0 0
 wait 3
 cmd awaken living form sheep 3
 wait 5
 cmd tag @e[type=minecraft:sheep,limit=1,sort=nearest] add ours
-cmd tp @e[tag=ours] 0.90 201 2.0 90 0
+cmd tp @e[tag=ours] 1.30 201 2.0 90 0
+cmd summon minecraft:sheep -1.30 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Rotation:[90f,0f]}
 cmd execute as @e[type=minecraft:sheep] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s 0.0 200.13 -0.72 0 4
+cmd tp @s 0.0 200.18 -1.36 0 4
 look 0 4
 wait 40
 shot close_sheep_idle
-cmd awaken ascent pilot rec close_sheep_idle 150 4
+cmd awaken ascent pilot rec close_sheep_idle 600 4
 wait 610
 cmd kill @e[type=!minecraft:player,distance=..80]
 wait 25
@@ -280,10 +280,10 @@ wait 5
 # chicken: vanilla under Fresh Animations
 cmd summon minecraft:chicken -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
 cmd execute as @e[tag=walker] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s -10.0 199.68 0.8999999999999999 0 2
+cmd tp @s -10.0 199.83 0.3999999999999999 0 2
 look 0 2
 wait 40
-cmd awaken ascent pilot rec close_chicken_fa 135 2
+cmd awaken ascent pilot rec close_chicken_fa 270 2
 cmd awaken admin stroll @e[tag=walker] 0.04 100
 glide 0.04 0 0 100
 wait 100
@@ -311,10 +311,10 @@ wait 5
 cmd tag @e[type=minecraft:chicken,limit=1,sort=nearest] add walker
 cmd tp @e[tag=walker] -10.0 201 2.0 -90 0
 cmd execute as @e[tag=walker] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s -10.0 199.68 0.8999999999999999 0 2
+cmd tp @s -10.0 199.83 0.3999999999999999 0 2
 look 0 2
 wait 40
-cmd awaken ascent pilot rec close_chicken_ours 135 2
+cmd awaken ascent pilot rec close_chicken_ours 270 2
 cmd awaken admin stroll @e[tag=walker] 0.04 100
 glide 0.04 0 0 100
 wait 100
@@ -334,20 +334,20 @@ wait 25
 cmd kill @e[type=minecraft:item]
 cmd kill @e[type=minecraft:experience_orb]
 wait 5
-# chicken: the two at rest, half a minute
-cmd summon minecraft:chicken -0.50 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Rotation:[90f,0f]}
+# chicken: the two at rest, half a minute (ours first, so the tag can't take theirs)
 cmd tp @s 0.5 201 0.0 0 0
 wait 3
 cmd awaken living form chicken 3
 wait 5
 cmd tag @e[type=minecraft:chicken,limit=1,sort=nearest] add ours
-cmd tp @e[tag=ours] 0.50 201 2.0 90 0
+cmd tp @e[tag=ours] 0.80 201 2.0 90 0
+cmd summon minecraft:chicken -0.80 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Rotation:[90f,0f]}
 cmd execute as @e[type=minecraft:chicken] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s 0.0 199.83 0.24 0 4
+cmd tp @s 0.0 199.98 -0.56 0 4
 look 0 4
 wait 40
 shot close_chicken_idle
-cmd awaken ascent pilot rec close_chicken_idle 150 4
+cmd awaken ascent pilot rec close_chicken_idle 600 4
 wait 610
 cmd kill @e[type=!minecraft:player,distance=..80]
 wait 25
@@ -357,10 +357,10 @@ wait 5
 # spider: vanilla under Fresh Animations
 cmd summon minecraft:spider -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
 cmd execute as @e[tag=walker] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s -10.0 199.83 -0.20000000000000018 0 2
+cmd tp @s -10.0 199.88 -0.6000000000000001 0 2
 look 0 2
 wait 40
-cmd awaken ascent pilot rec close_spider_fa 135 2
+cmd awaken ascent pilot rec close_spider_fa 270 2
 cmd awaken admin stroll @e[tag=walker] 0.06 100
 glide 0.06 0 0 100
 wait 100
@@ -388,10 +388,10 @@ wait 5
 cmd tag @e[type=minecraft:spider,limit=1,sort=nearest] add walker
 cmd tp @e[tag=walker] -10.0 201 2.0 -90 0
 cmd execute as @e[tag=walker] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s -10.0 199.83 -0.20000000000000018 0 2
+cmd tp @s -10.0 199.88 -0.6000000000000001 0 2
 look 0 2
 wait 40
-cmd awaken ascent pilot rec close_spider_ours 135 2
+cmd awaken ascent pilot rec close_spider_ours 270 2
 cmd awaken admin stroll @e[tag=walker] 0.06 100
 glide 0.06 0 0 100
 wait 100
@@ -411,20 +411,20 @@ wait 25
 cmd kill @e[type=minecraft:item]
 cmd kill @e[type=minecraft:experience_orb]
 wait 5
-# spider: the two at rest, half a minute
-cmd summon minecraft:spider -1.30 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Rotation:[90f,0f]}
+# spider: the two at rest, half a minute (ours first, so the tag can't take theirs)
 cmd tp @s 0.5 201 0.0 0 0
 wait 3
 cmd awaken living form spider 3
 wait 5
 cmd tag @e[type=minecraft:spider,limit=1,sort=nearest] add ours
-cmd tp @e[tag=ours] 1.30 201 2.0 90 0
+cmd tp @e[tag=ours] 1.60 201 2.0 90 0
+cmd summon minecraft:spider -1.60 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Rotation:[90f,0f]}
 cmd execute as @e[type=minecraft:spider] run data merge entity @s {NoAI:1b,OnGround:1b,PersistenceRequired:1b}
-cmd tp @s 0.0 199.98 -1.52 0 4
+cmd tp @s 0.0 200.03 -2.16 0 4
 look 0 4
 wait 40
 shot close_spider_idle
-cmd awaken ascent pilot rec close_spider_idle 150 4
+cmd awaken ascent pilot rec close_spider_idle 600 4
 wait 610
 cmd kill @e[type=!minecraft:player,distance=..80]
 wait 25

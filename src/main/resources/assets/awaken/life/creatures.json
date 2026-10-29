@@ -20,7 +20,7 @@
     "grazer": {
       "breath": 0.38, "blink": [2.5, 6.0], "headSpeed": 9.0, "headDamping": 0.75,
       "springHz": 2.6, "springDamping": 0.28, "bob": 0.6, "sway": 1.8, "fidget": [3.0, 7.0],
-      "idles": {"look": 4, "sniff": 3, "flick": 3, "shake": 1, "stretch": 1, "perk": 2, "scratch": 1}
+      "idles": {"look": 4, "sniff": 2, "flick": 3, "shake": 1, "stretch": 1, "perk": 2, "scratch": 1, "graze": 6}
     },
     "hunter": {
       "breath": 0.3, "blink": [5.0, 11.0], "headSpeed": 7.0, "headDamping": 1.0, "eyeLead": 0.25,
@@ -31,7 +31,7 @@
     "beast": {
       "breath": 0.2, "breathDepth": 1.3, "blink": [4.0, 9.0], "headSpeed": 3.6, "headDamping": 0.9, "eyeLead": 0.2,
       "springHz": 1.4, "springDamping": 0.32, "springGain": 1.2, "bob": 1.3, "sway": 2.6, "lean": 0.7, "fidget": [6.0, 12.0],
-      "idles": {"look": 3, "sniff": 2, "shake": 2, "stretch": 1, "yawn": 1, "settle": 2, "flick": 1},
+      "idles": {"look": 3, "sniff": 2, "shake": 2, "stretch": 1, "yawn": 1, "settle": 2, "flick": 1, "graze": 3},
       "stagger": 0.7, "mass": 2.2
     },
     "lord": {

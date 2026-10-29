@@ -185,8 +185,9 @@ public final class LegRig {
         offRipple = new float[n];
         offAlternate = new float[n];
         float reachSum = 0;
-        // the ripple runs from the back forward: a pair steps a lag after the pair behind it (the larger offset steps first)
-        float lag = gait.lag() > 0 ? gait.lag() : 0.5F / perSide;
+        // the ripple runs from the back forward: a pair steps a lag after the pair behind it (the larger offset steps first);
+        // a negative lag runs it from the front
+        float lag = gait.lag() != 0 ? gait.lag() : 0.5F / perSide;
         for (int i = 0; i < n; i++) {
             float o = (side[i] < 0 ? 0.5F : 0.0F) + rank[i] * lag;
             offRipple[i] = o - (float) Math.floor(o);

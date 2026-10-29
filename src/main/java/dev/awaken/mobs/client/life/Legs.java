@@ -16,7 +16,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * <p>A planted foot stays where it stood in the world while the body moves over it, so it never slides. A gait clock
  * runs with the ground the body covers (and the arc its feet sweep when it turns on the spot); each foot lifts when the
  * clock reaches its place in the pattern (one at a time from the back when slow, alternating sets when fast) and swings
- * on an arc to where its home will be halfway through its next stand, on the ground under that spot. A foot left too
+ * on an arc to where its home will be halfway through its next stand (or further, by the gait's lead), on the ground
+ * under that spot. A foot left too
  * far behind (a shove, a slide) steps at once; when the body stops, the feet left out of place step back under it one
  * at a time; a calm creature now and then lifts a foot and sets it down again. Off the ground, hanging, swimming or
  * dying, the clips own the legs (the weight eases to 0) and the feet stand at home again when it lands.
@@ -32,7 +33,7 @@ public final class Legs {
     /** 0..1: how much the feet own the legs over the clips; how much the front pairs, and one more in a roar, have let go to them (a rear). */
     float weight, rear, rear2;
     /** The body over its feet: px it sinks (the ground under them, a step's share), pitch and roll (radians, model). */
-    float groundY, groundPitch, groundRoll, gaitY, gaitRoll;
+    float groundY, groundPitch, groundRoll, gaitY, gaitRoll, gaitPitch;
     /** How far the front pair's feet are through their steps (0 planted, 1 a whole step up): the head nods with them. */
     float foreLift;
     /** Px the body drops so a long step's planted feet stay in reach (its hips vault over them). */
@@ -91,6 +92,7 @@ public final class Legs {
             else if (init) out(x, y, z, yaw, sc);
             gaitY *= 0.8F;
             gaitRoll *= 0.8F;
+            gaitPitch *= 0.8F;
             vault *= 0.8F;
             return;
         }
@@ -138,7 +140,7 @@ public final class Legs {
         if (fast != wasFast) for (int i = 0; i < rig.n; i++) prevQ[i] = frac(clock - adv + off[i]);
         boolean moving = rate > 0.15F;
         // a landing a foot aims for: its home halfway through the stand after this swing, never further than it can reach
-        float ahead = moving ? Math.min(3.0F, duty * cycle * 0.5F) : 0.0F;
+        float ahead = moving ? Math.min(3.0F, duty * cycle * (0.5F + g.lead())) : 0.0F;
         float speed = Mth.sqrt(vx * vx + vz * vz);
         if (speed * ahead > g.reach() * 0.8F * sc) ahead = g.reach() * 0.8F * sc / speed;
         int lifted = 0;
@@ -212,6 +214,8 @@ public final class Legs {
         double gy = ground(hx, y, hz);
         float k = u[i];
         float e = k * k * (3.0F - 2.0F * k);
+        // a rigid leg has no knee to fold: its hoof swings through a touch past its spot and settles back onto it
+        if (rig.rigid) e += 0.25F * k * Mth.sin(Mth.PI * k);
         // up quickly, down a touch slower: the arc peaks before the middle of the swing
         float arc = Mth.sin(Mth.PI * (float) Math.pow(k, 0.75));
         fx[i] = sx[i] + (hx - sx[i]) * e;
@@ -250,14 +254,16 @@ public final class Legs {
      * feet), sinking a touch while feet are up and leaning off a lifted one (the step's weight shift).
      */
     private void carriage(double y, float sc, float dt, MotionProfile.Gait g) {
-        float sum = 0, front = 0, back = 0, left = 0, right = 0, up = 0, lean = 0, fore = 0, need = 0;
+        float sum = 0, front = 0, back = 0, left = 0, right = 0, up = 0, lean = 0, fore = 0, hind = 0, need = 0;
         int nf = 0, nb = 0, nl = 0, nr = 0, np = 0;
         for (int i = 0; i < rig.n; i++) {
             if (swinging[i]) {
                 float arc = Mth.sin(Mth.PI * u[i]);
                 up += arc;
-                lean -= rig.side[i] * arc;
+                // a quadruped's forequarters carry more of its weight: a diagonal pair up still tips it off the forefoot
+                lean -= rig.side[i] * arc * (rig.perSide == 2 && rig.rank[i] == 1 ? 0.6F : 1.0F);
                 if (rig.rank[i] == 0) fore += arc;
+                else if (rig.rank[i] == rig.perSide - 1) hind += arc;
                 continue;
             }
             float h = (float) (fy[i] - y) / sc;
@@ -292,6 +298,8 @@ public final class Legs {
         float b = Math.min(1.0F, dt / 0.05F);
         gaitY += (g.bob() * up / Math.max(1.0F, rig.n * 0.5F) - gaitY) * b;
         gaitRoll += (g.roll() * lean - gaitRoll) * b;
+        // a forefoot up dips the nose, a hind foot up the rump: the body rocks fore and aft twice a stride
+        gaitPitch += ((rig.perSide > 1 ? g.rock() * (fore - hind) : 0.0F) - gaitPitch) * b;
         foreLift += (fore - foreLift) * b;
         // the vault: past what the crouch and the ground already sink it, the hips drop to the furthest planted foot
         vault += (Mth.clamp(need - g.crouch() - groundY, 0.0F, rig.vaultMax) - vault) * b;

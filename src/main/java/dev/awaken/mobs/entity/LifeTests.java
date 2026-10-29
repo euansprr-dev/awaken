@@ -191,8 +191,10 @@ public final class LifeTests {
                         float duty = run == 0 ? g.dutyWalk() : g.dutyRun();
                         float st = run == 0 ? (g.strideWalk() > 0 ? g.strideWalk() : r.walkStride)
                                 : g.strideRun() > 0 ? g.strideRun() : g.strideWalk() > 0 ? g.strideWalk() : r.runStride;
-                        float half = Math.min(duty * st * 8.0F, g.reach() * 16.0F);
+                        // it lands lead further ahead than half its stand and trails that much less
+                        float stand = duty * st * 16.0F;
                         for (int sg = -1; sg <= 1; sg += 2) {
+                            float half = Math.min(stand * (0.5F + (sg < 0 ? g.lead() : -g.lead())), g.reach() * 16.0F);
                             float drop = legs.sink(i, hx, 24, hz + sg * half) - s;
                             if (drop > legs.vaultMax + 0.01F) problems.add(mp.id() + " leg " + i + ": a " + (run == 0 ? "walk" : "run")
                                     + " stride of " + st + " blocks sweeps its foot " + half + " px, so the hips must drop " + drop + " px (most " + legs.vaultMax + ")");

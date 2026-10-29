@@ -90,7 +90,7 @@ public final class Life {
     private float stX, stZ, stXv, stZv, lastHurt, tension, roarAt = -10;
     private boolean wasRoar, wasAggressive;
     // the outputs apply() and rootPose() add
-    float bodyPitch, bodyRoll, dip, headNod, headRoll, neckPitch, jawOpen, scratch;
+    float bodyPitch, bodyRoll, dip, headNod, headRoll, neckPitch, neckDrop, jawOpen, scratch;
     int scratchSide;
     // the motion profile's: the gait's roll (the head holds level against it), the body's turn toward its look, a
     // stalker's crouch (px), a landing's squash (px) and how fast it springs back, its weight drifting over its feet (px)
@@ -291,6 +291,7 @@ public final class Life {
         if (fly != null) flight(fly, dead);
         headNod = idleNod;
         neckPitch = idleNeck;
+        neckDrop = idleDrop;
         float roarJaw = rig.jaw != null && !roarClip && roarT >= 0.25F && roarT < 1.5F ? 0.45F * envelope(roarT - 0.25F, 1.25F, 0.15F, 0.3F) : 0.0F;
         jawOpen = idleJaw + roarJaw + (dead ? 0.25F * Math.min(1.0F, dying / 0.6F) : 0.0F);
         if (roarT >= 0 && roarT < 0.35F) depth += 1.2F * (roarT / 0.35F); // it fills its chest before the roar
@@ -507,7 +508,7 @@ public final class Life {
 
     // ---- idle fidgets -------------------------------------------------------------------------------------------------
 
-    private float idlePitch, idleRoll, idleDip, idleNod, idleHeadRoll, idleNeck, idleJaw;
+    private float idlePitch, idleRoll, idleDip, idleNod, idleHeadRoll, idleNeck, idleDrop, idleJaw;
 
     private void idles(LivingEntityRenderState s, boolean dead, boolean reduce) {
         if (s.isInWater) wasInWater = true;
@@ -532,7 +533,7 @@ public final class Life {
             }
         }
         idleEnv += (target - idleEnv) * Math.min(1.0F, dt / (target > idleEnv ? 0.05F : 0.25F));
-        fYaw = fPitch = idlePitch = idleRoll = idleDip = idleNod = idleHeadRoll = idleNeck = idleJaw = scratch = yawnShut = shakeAccel = 0;
+        fYaw = fPitch = idlePitch = idleRoll = idleDip = idleNod = idleHeadRoll = idleNeck = idleDrop = idleJaw = scratch = yawnShut = shakeAccel = 0;
         if (idle < 0 && idleEnv < 0.01F) return;
         float u = t - idleAt, e = idleEnv;
         float side = idleSide;
@@ -587,6 +588,24 @@ public final class Life {
                 fPitch = -0.16F * k;
                 fYaw = side * 0.2F * k;
             }
+            case GRAZE -> {
+                // down to the grass at its feet (the neck sinks in front of the chest, the forequarters dip), a tug at
+                // each bite, up again chewing; small bodies peck quicker
+                float up = idleLen - 1.6F, hz = Mth.clamp(1.4F * Mth.sqrt(14.0F / Math.max(4.0F, legLength())), 1.0F, 3.2F);
+                float k = envelope(u, up, 0.8F, 0.6F) * e;
+                float bite = u < up ? Mth.sin(u * Mth.TWO_PI * hz) : 0.0F, tug = bite > 0 ? bite * bite * k : 0.0F;
+                boolean neck = rig.neck != null;
+                fPitch = 0.55F * k;
+                fYaw = side * 0.12F * k * Mth.sin(u * 0.7F);
+                idlePitch = 0.07F * k;
+                idleDip = 0.8F * k;
+                idleNeck = (neck ? 0.65F : 0.0F) * k - 0.08F * tug;
+                idleNod = (neck ? 0.15F : 0.55F) * k + 0.07F * tug;
+                idleDrop = 3.0F * k;
+                float chew = envelope(u - up + 0.3F, 1.9F, 0.2F, 0.4F) * e, c = Mth.sin(u * 15.0F);
+                idleJaw = 0.2F * tug + 0.14F * chew * (0.5F + 0.5F * c);
+                idleHeadRoll = 0.05F * chew * c;
+            }
             case SETTLE -> {
                 float k = envelope(u, idleLen, 0.8F, 0.9F) * e;
                 idleRoll = side * 0.06F * k;
@@ -609,6 +628,14 @@ public final class Life {
             if (r <= 0) return i;
         }
         return -1;
+    }
+
+    /** The legs' mean length (px), or a cow's when it has no planted legs. */
+    private float legLength() {
+        if (legs == null || legs.rig.n == 0) return 14.0F;
+        float sum = 0;
+        for (int i = 0; i < legs.rig.n; i++) sum += legs.rig.reach(i);
+        return sum / legs.rig.n;
     }
 
     private float idleWeight(int i, float base) {
@@ -634,6 +661,7 @@ public final class Life {
             case SCRATCH -> 1.4F;
             case PERK -> 1.2F;
             case SETTLE -> 2.6F;
+            case GRAZE -> 5.0F + 4.0F * rand();
         };
         if (which == Idle.SHAKE.ordinal()) wetUntil = -10;
         if (which == Idle.FLICK.ordinal() && rig.n > 0) {

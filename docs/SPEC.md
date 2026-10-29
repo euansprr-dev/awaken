@@ -5542,7 +5542,11 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
 - **Idle fidgets**, only when still, calm and within 32 blocks, chosen by weight from what the body has: look around (the
   head lags the eyes), sniff (head down, quick nods), flick (an ear, a tail, a feeler or a wing), shake (body roll at
   7.5 Hz, everything loose flops; a creature fresh out of water shakes itself dry once it stops), stretch, yawn (eyes
-  squint shut), scratch (a hind leg kicks), perk (head up, alert), settle (a weight shift). Herds never move in step:
+  squint shut), scratch (a hind leg kicks), perk (head up, alert), settle (a weight shift), graze (a walker on planted
+  feet only: 5-9 s; the forequarters dip 0.07 rad and sink 0.8 px, the neck bends 0.65 rad and sinks 3 px in front of the
+  chest (the head 0.55 rad without a neck), the head looks 0.55 rad down and drifts side to side, a tug and a jaw snap
+  at each bite (1.4 a second for a cow's 14 px legs, quicker for shorter legs, up to 3.2: a chicken pecks), then 1.6 s
+  head up chewing; the grazer temperament weighs it 6, the beast 3; Euan 2026-10-29). Herds never move in step:
   each creature's timers, breath phase and rate (±10%) and idle clock start from its own seed.
 - **Graph blending, no pops**: the angry stance, held poses, swimming and the glide ease in and out (0.05-0.3 s); swim
   and wing loops run on integrated clocks (age × speed jumped their phase when the speed changed); one-shot clips (bite,
@@ -5591,7 +5595,9 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   when the body stops), `crouch` (px the body sinks on its legs), `radius` and `fan` (where each foot stands: px out
   from its hip, the front ones fanned forward and the back ones back by `fan` degrees), `regrip` (seconds between a calm
   creature's idle re-grips of one foot), `swing` (the longest a step takes), `bob` (px the body sinks while feet are up),
-  `roll` (radians it leans off a lifted foot), `rear` (how far the front `rearPairs` pairs, 1 unless set, let go to the
+  `roll` (radians it leans off a lifted foot; a four-legged body's hind foot counts 0.6, so a trot's diagonal pair
+  still tips it off the forefoot), `rock` (radians it noses down while forefeet are up and up while hind feet are,
+  twice a stride on a walk), `rear` (how far the front `rearPairs` pairs, 1 unless set, let go to the
   clips while the body rears: a wind-up, a strike or a cue, a roar, or a still threat; a roar lets one pair more go),
   `knees` (`auto`, `forward`, `back`: which way a leg that stands straight at rest bends; `auto` breaks the forelegs of a
   body with legs one behind another forward and every other leg back, a bird's and a biped's back; a leg bent at rest
@@ -5623,7 +5629,14 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   its spot. The vault reaches from that turned pivot. The check: every leg straight at rest whose thigh doesn't reach
   past the knee's pivot by enough to hide 20° of bend (the thigh's overreach against the shin's half-thickness) must be
   rigid. Rigid: the forms' pigs, cows, sheep (shoulder 0.5) and chickens (0), the sow, the stag and the ram (0.5);
-  their steps lift 0.65 of what the knees had (the leg slides up into the body to clear the ground).
+  their steps lift 0.65 of what the knees had (the leg slides up into the body to clear the ground), and a rigid hoof's
+  swing runs a touch past its spot and settles back onto it (its path's ease plus 0.25·u·sin(πu), about 4%).
+- **Fresh Animations' walk, read close up** (2026-10-29, `mob-anims-close`: vanilla's cow, pig, sheep beside ours side
+  on): their forefoot steps before the hind foot on its side (ours stepped hind first, so the near feet met in a V under
+  the belly), their legs reach forward more than they trail, and the cow and sheep step shorter. So the four-legged
+  walkers (the form grazers, the sow, the stag, the ram) ripple from the front (`lag` -0.25), land 0.2 of a stand
+  further ahead (`lead`), roll 0.045 off a lifted foot (a trot's diagonal pair too), rock 0.035 fore and aft, hold the
+  head 0.7 level, and the forms' cows and sheep walk 0.8 of their old stride.
 - **Feet** (`Legs`, per creature, from the render extraction once a frame; nothing allocated): a planted foot keeps its
   world position while the body moves over it. A gait clock runs with the ground covered plus the arc the feet sweep
   when it turns on the spot (yaw × the feet's mean distance from the middle), so a turn steps too. A foot lifts when the
@@ -5755,7 +5768,11 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   each way, a climb, a dive, a hover; a blow and a death in the air; the swimmers in a tank);
   `tools/autopilot/mob-anims-close.txt` (close_*: each grazer and the spider side on at leg height, a spectator camera
   gliding beside it, first vanilla's under Fresh Animations then ours at rung 3 on the same walk, trot, stop and half
-  turn; then the two at rest side by side for half a minute).
+  turn; then the two at rest side by side for half a minute); `tools/autopilot/mob-anims-flyclose.txt` (fly_*, swim_*
+  close and at half speed (`/tick rate 10`): each flier hovers, then circles a spectator camera twice that turns with it
+  from the circle's middle, beside a parrot, a bee or a cod on a wider circle). A NoAI fauna creature refreshes its pose
+  bits every tick (`FaunaMob.tick`), so a tour's still flier shows itself aloft (the first fliers tour's owls hung
+  upright in the air, perched).
 
 ## 24. Hands: the first-person system (plan docs/anims/PLAN.md, page https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy; approved 2026-10-25)
 
