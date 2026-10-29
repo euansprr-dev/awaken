@@ -6305,8 +6305,20 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   stays down over a block (its mining, `Minecraft.continueAttack` through `onClickInput`), and each of those was taken
   as a new press, restarting the swing every tick; now only a press the key was not already down for counts, and the
   repeats are swallowed. Every new press strikes wherever it points; outside a fight (100 ticks) a block the weapon
-  cuts faster than a bare hand (a web, bamboo, leaves; never in creative) is still cut. The old rule (any block under the
-  crosshair outside a fight is mined) meant a click at the ground mined with no swing at all. Held = a heavy (charges from 6 ticks, full at the glint, 16;
+  cuts faster than a bare hand (a log or planks with an axe, a web, bamboo or leaves with a sword; never in creative)
+  is still mined. The old rule (any block under the crosshair outside a fight is mined) meant a click at the ground
+  mined with no swing at all. **Only a fight opens the window** (Euan 2026-10-29: "I can't use a normal axe to break
+  trees because it charges the hit like an attack"): every strike opened it, so one swing that missed a log, or hit
+  leaves (an axe cuts them no faster than a hand), made every press for the next 5 s a strike, and each one kept it
+  open. The window now opens only on something that means a fight (`ArmsRules.meansFight`):
+  - a press at a creature: locked, under the crosshair, or the mark within the style's longest blow plus its step in
+    (`ArmsRules.markReach`; a cow marked across a field is no fight);
+  - a blow either way, a guard's answer, a dodge, or a blow landing on you.
+  A strike at the air or a block still swings but leaves the window shut, so the next press on a log chops it. The
+  HUD's busy look, the combat camera and the dodge still count any swing (`ArmsPredict.busyAt`). A hold goes on as its
+  press began (`ArmsRules.attack`): a strike's hold stays the strike over a log, and a mining hold keeps mining whatever
+  the crosshair slides onto, as vanilla does. `arms_attack_key` holds the rule, and checks that every fighting axe and
+  sword (vanilla's and ours) cuts logs and planks, or webs and bamboo. Held = a heavy (charges from 6 ticks, full at the glint, 16;
   a release on the glint or any time after is the full blow: motion 2.4, posture 20, 110 ms hit-stop; held on to 24
   with Resonance full it is the Art). **The glint is the full charge** (Euan 2026-10-29: "the yellow ting happens before
   the full charge, and then nothing different happens for that attack sometimes"): it was a window of 2 ticks either

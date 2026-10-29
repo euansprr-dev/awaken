@@ -74,7 +74,19 @@ public final class ArmsPredict {
     static double dodgeX, dodgeZ;
     static int dodgeCharges = -1, dodgeRechargeAt;
     private static boolean sprintWas;
+    /**
+     * The last tick something meant a fight (SPEC §40 "One press is one press"): a press at a creature
+     * ({@link ArmsRules#meansFight}), a blow either way, a guard's answer, a dodge. Until it (or a blow on us) is
+     * {@link ArmsRules#FIGHT_TICKS} old the attack key mines no block. A press at the air or a block leaves it be.
+     */
     static int fightAt = -1000;
+    /** The last strike pressed, wherever it pointed. */
+    static int swungAt = -1000;
+
+    /** The last strike or fight, for the HUD's busy look, the combat camera and the dodge (a swing at a tree counts). */
+    static int busyAt() {
+        return Math.max(fightAt, swungAt);
+    }
 
     static int nextSeq() {
         return ++seq;
@@ -90,7 +102,7 @@ public final class ArmsPredict {
     /** In a fight now, as the shoulder camera sees it: a fighting weapon in hand and a blow either way in the last 3 s. */
     static boolean engaged() {
         LocalPlayer p = Minecraft.getInstance().player;
-        return p != null && ticks - Math.max(fightAt, hurtAt) < 60 && fights(p) && ArmsComfort.combatCamera();
+        return p != null && ticks - Math.max(busyAt(), hurtAt) < 60 && fights(p) && ArmsComfort.combatCamera();
     }
 
     /** Presses taken so far (the autopilot's trace). */
@@ -98,23 +110,29 @@ public final class ArmsPredict {
 
     /** The attack key has stayed down since the last press it gave (cleared at a tick's end once it's up), and that press's tick. */
     private static boolean attackHeld;
+    /** The attack key has stayed down since vanilla took it to mine (cleared with {@link #attackHeld}). */
+    private static boolean mineHeld;
     private static int pressedAt = -1000;
 
     /**
-     * The attack key: every new press is a strike, wherever it points; outside a fight a block the blade itself cuts
-     * faster than a hand (a web, bamboo, leaves) is still cut. Vanilla asks again every tick the key stays down over a
-     * block (its mining): that is a hold, never another press (each one restarted the swing, and a held heavy shook in
-     * place, seen by Euan 2026-10-25).
+     * The attack key ({@link ArmsRules#attack}): every new press is a strike, wherever it points; outside a fight a
+     * block the weapon cuts faster than a hand (a log with an axe, a web, bamboo) is still mined. Vanilla asks again
+     * every tick the key stays down over a block (its mining): that is a hold, never another press (each one restarted
+     * the swing, and a held heavy shook in place, seen by Euan 2026-10-25), and it goes on as its press began.
      */
     static void onKey(InputEvent.InteractionKeyMappingTriggered e) {
         if (!e.isAttack()) return;
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null || !fights(p)) return;
-        if (ticks - fightAt > 100 && cuts(mc, p)) return;
+        ArmsRules.Attack a = ArmsRules.attack(attackHeld, mineHeld, ticks - Math.max(fightAt, hurtAt), cuts(mc, p));
+        if (a == ArmsRules.Attack.MINE) {
+            mineHeld = true;
+            return;
+        }
         e.setCanceled(true);
         e.setSwingHand(false);
-        if (attackHeld || ticks == pressedAt) return;
+        if (a == ArmsRules.Attack.HELD || ticks == pressedAt) return;
         pressedAt = ticks;
         attackHeld = true;
         press(p, mc);
@@ -138,7 +156,8 @@ public final class ArmsPredict {
         charging = false;
         Archetype.MoveDef heavyDef = st.move(Archetype.Move.HEAVY);
         holdOpen = heavyDef != null && heavyDef.charge().isPresent();
-        fightAt = ticks;
+        swungAt = ticks;
+        if (meansFight(mc, p, st, target)) fightAt = ticks;
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(s, ArmsPayloads.PRESS_STRIKE, p.getYRot(), p.getXRot(), target));
         Archetype.MoveDef riposte = st.move(Archetype.Move.RIPOSTE);
         if (riposte != null && ticks - deflectAt <= riposte.window()) {
@@ -182,6 +201,14 @@ public final class ArmsPredict {
         int aim = dev.awaken.core.api.Aim.target();
         if (dev.awaken.core.api.Aim.locked()) return pressed = aim;
         return pressed = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : aim;
+    }
+
+    /** Whether a press at {@code target} means a fight ({@link ArmsRules#meansFight}): locked, under the crosshair, or the mark in reach. */
+    private static boolean meansFight(Minecraft mc, LocalPlayer p, Archetypes.Loaded st, int target) {
+        if (target < 0) return false;
+        double gap = p.level().getEntity(target) instanceof Entity t ? dev.awaken.core.api.Aim.gap(p.getEyePosition(), t.getBoundingBox())
+                : Double.POSITIVE_INFINITY;
+        return ArmsRules.meansFight(dev.awaken.core.api.Aim.locked(), mc.hitResult instanceof EntityHitResult, gap, ArmsRules.markReach(st));
     }
 
     /** The creature the last press meant, for the step in. */
@@ -414,7 +441,7 @@ public final class ArmsPredict {
             dodgeRechargeAt = ticks + style.def().dodge().recharge();
         }
         if (!BROKEN.isEmpty()) BROKEN.values().removeIf(until -> until < ticks);
-        if (!mc.options.keyAttack.isDown()) attackHeld = false;
+        if (!mc.options.keyAttack.isDown()) attackHeld = mineHeld = false;
     }
 
     /** The waiting strike, a tap after all: its swish now, its arc on the blade's clock from {@code at}, its body clip. */
@@ -568,7 +595,7 @@ public final class ArmsPredict {
     }
 
     private static boolean canDodge(LocalPlayer p) {
-        boolean engaged = fights(p) || ticks - fightAt < 100;
+        boolean engaged = fights(p) || ticks - busyAt() < 100;
         return engaged && ArmsConfig.enabled() && p.onGround() && !p.isInLiquid() && !p.isPassenger() && !p.isSpectator() && !p.getAbilities().flying
                 && !Body.isSliding(p) && !Body.isMantling(p) && !MovementHooks.wallRunning(p) && !MovementHooks.hanging(p);
     }
@@ -788,7 +815,7 @@ public final class ArmsPredict {
         dodgeCharges = -1;
         resonance = 0;
         BROKEN.clear();
-        attackHeld = false;
+        attackHeld = mineHeld = false;
         BladeTrail.reset();
         ArmsTells.reset();
         ArmsFeel.reset();
