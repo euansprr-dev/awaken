@@ -41,6 +41,12 @@ import java.util.List;
 final class ForgeScreen extends Screen implements dev.awaken.signal.client.QuietScreen, dev.awaken.signal.client.ReadingScreen {
     static final int EDGE = 0xFF7FC3FF, LANTERN = 0xFFFFCF7A, TITLE = 0xFFF4F6FB, LABEL = 0xFFAFC2D8, DIM = 0xFF6F8299, GOOD = 0xFF9FE6D6, BAD = 0xFFFF8A7A;
     private static final int ROW = 18;
+    /** The screen is too short for the whole list (a large GUI scale): tighter rows, no headings or explanations. */
+    private boolean tight;
+
+    private int row() {
+        return tight ? 16 : ROW;
+    }
     /** The catalyst chosen to inlay (its Force + 1; 0 none), kept between visits so Forge another keeps it. */
     private static int inlay;
 
@@ -185,7 +191,7 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
         g.centeredText(font, Component.literal(s.archetype.label + " armour, " + s.rank.label + "-rank"), px + pw / 2, y, LABEL);
         y += 10;
         ArmourPayloads.Offer first = offer(0);
-        if (first != null && (first.flags() & ArmourPayloads.KNOWN_WHOLE) != 0) {
+        if (first != null && (first.flags() & ArmourPayloads.KNOWN_WHOLE) != 0 && !tight) {
             g.centeredText(font, Component.literal("You've forged this set whole before."), px + pw / 2, y, GOOD);
             y += 10;
         }
@@ -195,15 +201,15 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
         rowsY = y;
         for (int i = 0; i < 4; i++) {
             ArmourPayloads.Offer o = offer(i);
-            int ry = rowsY + i * ROW;
+            int ry = rowsY + i * row();
             boolean sel = i == piece;
-            boolean over = mouseX >= px + 6 && mouseX < px + pw - 6 && mouseY >= ry && mouseY < ry + ROW - 1;
-            g.fill(px + 6, ry, px + pw - 6, ry + ROW - 1, sel ? 0xF01A2436 : over ? 0xE0141C2A : 0x00000000);
-            if (sel) g.fill(px + 6, ry, px + 8, ry + ROW - 1, 0xFF000000 | s.rank.colour);
+            boolean over = mouseX >= px + 6 && mouseX < px + pw - 6 && mouseY >= ry && mouseY < ry + row() - 1;
+            g.fill(px + 6, ry, px + pw - 6, ry + row() - 1, sel ? 0xF01A2436 : over ? 0xE0141C2A : 0x00000000);
+            if (sel) g.fill(px + 6, ry, px + 8, ry + row() - 1, 0xFF000000 | s.rank.colour);
             ItemStack it = item(s, ForgeSong.PIECES[i]);
             if (!it.isEmpty()) {
-                g.item(it, px + 11, ry + 1);
-                g.text(font, it.getHoverName(), px + 31, ry + 5, TITLE, false);
+                g.item(it, px + 11, ry + (tight ? 0 : 1));
+                g.text(font, it.getHoverName(), px + 31, ry + (tight ? 4 : 5), TITLE, false);
             }
             String state;
             int colour;
@@ -223,16 +229,18 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
                 state = "Needs more";
                 colour = BAD;
             }
-            g.text(font, state, px + pw - 10 - font.width(state), ry + 5, colour, false);
+            g.text(font, state, px + pw - 10 - font.width(state), ry + (tight ? 4 : 5), colour, false);
         }
-        y = rowsY + 4 * ROW + 3;
+        y = rowsY + 4 * row() + 3;
 
         // what the chosen piece takes, two to a line (creative takes nothing: its counts stay quiet)
         ArmourPayloads.Offer o = offer(piece);
         if (o != null) {
             ItemStack it = item(s, ForgeSong.PIECES[piece]);
-            g.text(font, "What the " + it.getHoverName().getString() + " takes", px + 8, y, LABEL, false);
-            y += 11;
+            if (!tight) {
+                g.text(font, "What the " + it.getHoverName().getString() + " takes", px + 8, y, LABEL, false);
+                y += 11;
+            }
             boolean can = (o.flags() & ArmourPayloads.CAN) != 0;
             int col = (pw - 16) / 2;
             List<ArmourPayloads.Need> needs = o.needs();
@@ -245,7 +253,11 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
                 String count = Math.min(n.have(), n.need()) + "/" + n.need();
                 g.text(font, count, nx + 18, ny + 4, ok ? GOOD : can ? DIM : BAD, false);
                 int lx = nx + 20 + font.width(count) + 3;
-                g.text(font, font.plainSubstrByWidth(n.label(), nx + col - 2 - lx), lx, ny + 4, ok ? LABEL : TITLE, false);
+                // a label too long for its half ("Trophy (S)") drops its rank first: the set's rank is said above
+                String label = n.label();
+                int room = nx + col - 2 - lx;
+                if (font.width(label) > room && label.indexOf(" (") > 0) label = label.substring(0, label.indexOf(" ("));
+                g.text(font, font.plainSubstrByWidth(label, room), lx, ny + 4, ok ? LABEL : TITLE, false);
             }
             y += (needs.size() + 1) / 2 * 17;
         }
@@ -270,9 +282,11 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
                 }
             }
             y += 20;
-            String line = inlay == 0 ? "No inlay. Choose a catalyst to set into this piece." : ArmourInlay.line(Forces.Force.values()[inlay - 1]);
-            g.text(font, font.plainSubstrByWidth(line, pw - 16), px + 8, y, inlay == 0 ? DIM : ArmourInlay.colour(Forces.Force.values()[inlay - 1]), false);
-            y += 12;
+            if (!tight) {
+                String line = inlay == 0 ? "No inlay. Choose a catalyst to set into this piece." : ArmourInlay.line(Forces.Force.values()[inlay - 1]);
+                g.text(font, font.plainSubstrByWidth(line, pw - 16), px + 8, y, inlay == 0 ? DIM : ArmourInlay.colour(Forces.Force.values()[inlay - 1]), false);
+                y += 12;
+            }
         }
 
         // where things stand
@@ -284,10 +298,12 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
         boolean memory = o != null && (o.flags() & ArmourPayloads.FROM_MEMORY) != 0;
         int want = y + (memory ? 14 : 4);
         buttonY = Math.min(py + ph - 34, want);
-        if (want > buttonY && ph < height - 24) {
-            // more than fits (a long note on a small screen): the panel grows from the next frame rather than overlap
-            ph = Math.min(height - 24, want + 34 - py);
-            py = (height - ph) / 2;
+        if (want > buttonY) {
+            // more than fits: the panel grows from the next frame rather than overlap, and once it can't, the list tightens
+            if (ph < height - 24) {
+                ph = Math.min(height - 24, want + 34 - py);
+                py = (height - ph) / 2;
+            } else tight = true;
         }
         boolean can = o != null && (o.flags() & ArmourPayloads.CAN) != 0 && busy == null;
         button(g, px + 8, "Forge it", can, mouseX, mouseY);
@@ -516,8 +532,8 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
             if (mx >= px + pw - 20 && mx < px + pw - 8) return pick(1);
         }
         for (int i = 0; i < 4; i++) {
-            int ry = rowsY + i * ROW;
-            if (mx >= px + 6 && mx < px + pw - 6 && my >= ry && my < ry + ROW - 1) {
+            int ry = rowsY + i * row();
+            if (mx >= px + 6 && mx < px + pw - 6 && my >= ry && my < ry + row() - 1) {
                 piece = i;
                 return true;
             }
