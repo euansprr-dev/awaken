@@ -210,7 +210,7 @@ final class DeepBestiary {
                 .phase(0.66F, "Stay.", a(SUMMON, "Rooted Ones").summon("vine_creaker").n(2), a(FANGS_RING, "Hearth Ring").n(12), a(FANGS, "Root Lance").n(16))
                 .phase(0.33F, "Never leave.", a(ROOT, "Hold Fast").radius(4.5F).heavy(), a(NOVA, "Thorn Halo").n(16).bolt(BoltKind.THORN), a(FANGS_RING, "Hearth Ring").n(14))
                 .parts(P("root_heart", "Heart of Roots", "wood")).build());
-        out.add(m("sovereign_ash", "Sovereign of Ash", Theme.COURT, Tier.SOVEREIGN, Model.BLAZE, "Burnout gone wrong: cinders, ashfall, and a burnout you have to outrun").hp(32).dmg(5.5).spd(0.3).scale(2.4F).tint(0x9A9090).glow(0xFF7A2A).traits(FIRE_IMMUNE).bar(BossBarColor.RED).arena(26)
+        out.add(m("sovereign_ash", "Sovereign of Ash", Theme.COURT, Tier.SOVEREIGN, Model.BLAZE, "Burnout gone wrong: cinders, ashfall, and a burnout you have to outrun").hp(32).dmg(5.5).spd(0.3).scale(2.4F).size(1.25F, 1.65F).tint(0x9A9090).glow(0xFF7A2A).traits(FIRE_IMMUNE).bar(BossBarColor.RED).arena(26)
                 .intro("It burned everything to keep going.")
                 .phase(1.0F, "The Sovereign of Ash smoulders.", a(BOLT, "Cinders").n(5).bolt(BoltKind.FIRE), a(CLOUD, "Ash Cloud").radius(3.5F).fx(MobEffects.BLINDNESS, 60, 0))
                 .phase(0.66F, "Ashfall.", a(RAIN, "Ashfall").n(6).bolt(BoltKind.FIRE), a(SUMMON, "Embers").summon("ember_imp").n(2), a(BOLT, "Cinders").n(5).bolt(BoltKind.FIRE))

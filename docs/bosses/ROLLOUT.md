@@ -86,7 +86,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | Sovereign of Mirrors | Sovereign | Court | Duelist | kit | A, the Vanity | ✓ 8f309193 | ✓ 8f309193 | — |
 | Sovereign of Storms | Sovereign | Court | Flier | kit | A, the Gale Hound | ✓ c7a4c0fd | ✓ c7a4c0fd | — |
 | Sovereign of Roots | Sovereign | Court | Caster | kit | A, the Hearthstone Toad | ✓ 7008ed48 | ✓ 7008ed48 | — |
-| Sovereign of Ash | Sovereign | Court | Flier | blaze ×2.4 | — | — | — | — |
+| Sovereign of Ash | Sovereign | Court | Flier | kit | A, the Cinder Wyrm | — | — | — |
 | The Signal's Shadow | Final | Seed | Duelist | cube shade ×2 | — | — | — | — |
 | The Long Drop | Nightmare | Fear | Flier | phantom ×2.4 | — | — | — | — |
 | The Pyre | Nightmare | Fear | Flier | blaze ×2 | — | — | — | — |
@@ -258,3 +258,10 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   toad that has sat under a hearth so long the hearth has grown into it, Hold Fast is a toad's tongue, the Thorn Halo
   is a toad blowing itself up, and no other boss is a frog or a toad. B is a second big four-legged mammal straight
   after the Gale Hound; C is one more digger after the Thorn Pangolin.
+- **The Sovereign of Ash** (`sovereign_ash`): A the Cinder Wyrm (a four-legged dragon nearly burnt out: charcoal hide
+  with ember cracks, ash lying on its back, its ribs burnt open on one flank with its heart glowing between them, and
+  holed burnt-leather wings), B the Ash Moth (a huge moth shedding ash off its wings), C the Charcoal Giant (a burnt
+  giant of charcoal and embers). **Picked A**, 2026-10-29: "It burned everything to keep going" is a dragon burning its
+  own body down, the Heart of Ash is the heart you can see between its burnt-open ribs, Ashfall and Burnout are its
+  wings and its last fire, and no other boss is a dragon. B is a second big insect flier after the Hive Regent's
+  Empress; C is the Living Forge's burning giant again.

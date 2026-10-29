@@ -10699,6 +10699,67 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     most 30% outside the croak (43%: three croaks on held haunches) and the intro (50%, its stone stillness); the Leap into
     the Tongue dips 21%. The Tongue into the Gulp dips 77% for one frame: the planted arms swing through rest at full
     speed as the body rocks over its hands in the flick. That is a crossing, not a stall.
+- **The Sovereign of Ash, the Cinder Wyrm** (body and motion, `kit/bosses/sovereign_ash.py`). "It burned everything to
+  keep going." A four-legged dragon that has burned so long it is nearly burnt out. Its hide is charcoal: rows of dark
+  charred scales with thin ember cracks wandering through them that glow hot only at their middles, grey ash lying on
+  its back and flaking down its sides, and pale bone at its horns, teeth, claws and the plates along its spine. On its
+  left flank the hide has burnt away and its ribs stand open, one of them burnt short, and between them its heart glows
+  (the Heart of Ash it drops). Its wings are burnt leather on charred spars, holed through and ragged along their
+  trailing edges (the holes and the rags are see-through), with glowing rims; folded, they lie along its sides with
+  their thumb claws at its shoulders. It stands low and heavy, its head up on a long neck of three bones and a long tail
+  of five ending in a spade. Slit fire eyes, fire in its nostrils and down its throat. 117 cubes on 43 bones; its head
+  stands 4.5 blocks up. The hitbox is 1.25 x 1.65 at its scale of 2.4 (3.0 x 4.0 blocks), round its trunk.
+  - **Its idle.** It stands breathing slow and deep (8 s), its sides heaving and its tail sweeping slowly over the floor.
+    It looks one way; it lowers its head and snorts; its folded wings lift and shiver the ash off them and settle; it
+    looks the other way; it shifts its weight off one forefoot and back.
+  - **Its walk and run.** It walks heavily, one foot at a time, its shoulders rolling and its head swinging low from side
+    to side, its tail sweeping behind (1.6 s a stride, 1.1 blocks). It runs in a heavy bounding trot, the diagonal pairs
+    together, its wings half open and lifting with each stride to steady it, its head low and its tail stretched out
+    (0.8 s, 2.6 blocks). It turns on the spot a foot at a time.
+  - **Struck, broken and its death.** Struck, it throws its head up and back and its wings jerk half open; from the side
+    it twists away from the blow. Broken, it sinks onto its belly with its forelegs folded under it, its neck along the
+    floor and its wings slumped open, panting; it gets up with a push of its forelegs and shakes its head and wings. Its
+    death (5.5 s): its heart flares, it rears its head with its wings half open and shakes; they fall, its forelegs fold
+    and it goes down onto its chest, rolls over onto its right side with its burnt-open side up, lifts its head once and
+    lets it fall along the floor, and its wings crumble to their bones (their fingers shrink to half).
+  - **Its moves.** The Claw (LIGHT): it rears its front up off one forefoot, the foot high with the claws spread, its
+    weight going back onto the other (never so far that leg locks straight), and rakes it down across in front of it.
+    The Bite (LIGHT, after the Claw): it draws its neck back in an S with its wings flaring and its jaws opening on the
+    fire in its throat, and strikes down and forward and snaps them shut, its wings kept half open through the lunge.
+    The Wing Rush (HEAVY, its gap closer, 8 blocks, a 6-tick hold): it crouches with its wings raised high over its back,
+    beats them down once and throws itself at you low over the floor, forefeet reaching and jaws wide, and lands on
+    braced forefeet with its wings flung out. The Tail Sweep (for whoever is behind it): it looks back over its
+    shoulder, that wing lifting out of the way, and swings its hindquarters round, its tail sweeping low behind it.
+    Cinders: it draws its head back high and spits five times, its head snapping forward with each. Ash Cloud: it rears
+    up on its hind legs with its wings spread high and beats them down twice, hard, and comes down on its forefeet.
+    Ashfall (into the second phase): it springs up on a great downbeat and hangs in the air two blocks up, beating its
+    wings slowly with its legs hanging and its tail swinging, shakes the ash off itself in a rain, and drops back onto
+    its four feet. Embers: it hunches and heaves three times like a cat bringing something up, its burnt-open side
+    clenching, and shakes its head. Last Embers (HEAVY): it rears right up with its wings flung back, holds, and comes
+    down on its forefeet with all its weight, wings, head and jaws flung out. Burnout (the signature, into the third
+    phase): it wraps its wings over itself like a cloak, their arms up over its shoulders and the leather hanging down
+    its sides and over its neck, and curls down inside them trembling harder and harder as it swells; then it throws
+    them wide and its head up with its jaws open, and sags, smoking. Its intro: it lies curled like a burnt-out log with
+    its chin on the floor, lifts its head and looks at you, gets up, shakes the ash off and spreads its wings wide.
+  - **Its fight.** First: the Claw into the Bite (and on into the Wing Rush), the Bite, the Wing Rush into the Claw,
+    Cinders, Ash Cloud close, the Tail Sweep behind. After Ashfall: the same with Embers and Ashfall itself, the Claw
+    into the Bite into Ash Cloud. After Burnout: Last Embers close, the Claw into the Bite into Last Embers, the Wing
+    Rush, Ashfall, Cinders, Burnout again. It enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over the body (its roll, hips, loin, chest, the three neck bones
+    sharing a nod and a turn, the head and jaw, the tail sharing a lift and a sweep with a curl at its end, and the
+    wings), each leg by two-bone IK to a wrist or hock, the feet turned flat on the floor. A wing's bind pose is folded,
+    and the fold is solved from where its bones should point (the arm back and down along its side, the forearm
+    forward, the hand back), not guessed. Its turns blend from that fold to fully open by how far it spreads, plus a
+    lift and a sweep at its root, a bend along its length (+ down), a bend forward round its body at the elbow and
+    wrist, its fingers fanning as it opens, and a wingbeat run out along it from the root. The right wing mirrors the
+    left. In its pose function a turn is + to its right and a pitch or bend + dips its front.
+  - **On the floor.** Between keys any foot that would sag into the floor has its leg solved again that tick to stand on
+    it; the ground pass then keeps every foot and the tail tip out, in the death, the kneel, the rise and its intro its
+    head and jaw too. In the death the wing it lies on rests on the floor.
+  - **Its sounds** (chosen on paper, not heard in game): the ender dragon's growl and wingbeats pitched low, a blaze's
+    breath, burning and shot, a fire's crackle and a lava pop, a ravager's step.
+  - **Meter.** Worst kink outside a strike 4.4° (the Claw's rake); held at most 19%; no still spells; the strings dip at
+    most 31% (into and after the Bite). Wind-ups 13.4 (the Claw) to 43.9 (Last Embers).
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our
