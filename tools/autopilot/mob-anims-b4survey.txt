@@ -1,0 +1,321 @@
+# Creatures to the Fresh Animations bar (SPEC 23.1), batch 4 survey: the hand-built walkers with no motion profile
+# yet, now that the life layer reaches their models (2fa13502). Each filmed side on at leg height by a camera that
+# rides beside it: a walk, a trot, a walk, a stop and a half turn on the spot, then ten seconds at rest.
+# Clips: b4_<name>, b4_<name>_idle.
+# Clips: run-autopilot/clips/<name> (python3 -I tools/ascent/clip.py <dir> makes an mp4 and a contact sheet).
+# ci knobs: PACK=perf,feel
+world b4survey creative 779
+waitworld
+wait 40
+# the opening's sky flight holds the camera: skip it first
+cmd awaken opening skip
+wait 30
+# the studio's chunks first: a busy runner's server can fall seconds behind the script
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -32 -32 32 48
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+camera first
+hud off
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd effect give @s minecraft:regeneration infinite 4 true
+cmd effect give @s minecraft:saturation infinite 0 true
+cmd effect give @s minecraft:night_vision infinite 0 true
+info
+cmd tp @s 0.5 201 0.5 0 0
+wait 100
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd gamemode spectator
+wait 5
+# stag
+cmd summon awaken:frost_stag -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 200.18 -2.64 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec b4_stag 270 2
+cmd awaken admin stroll @e[tag=walker] 0.06 100
+glide 0.06 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.14 50
+glide 0.14 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.06 20
+glide 0.06 0 0 20
+wait 20
+shot b4_stag_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot b4_stag_turned
+cmd awaken ascent pilot rec b4_stag_idle 200 4
+wait 210
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# tortoise
+cmd summon awaken:mossback -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 199.73 -0.48 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec b4_tortoise 270 2
+cmd awaken admin stroll @e[tag=walker] 0.03 100
+glide 0.03 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.06 50
+glide 0.06 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.03 20
+glide 0.03 0 0 20
+wait 20
+shot b4_tortoise_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot b4_tortoise_turned
+cmd awaken ascent pilot rec b4_tortoise_idle 200 4
+wait 210
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# basilisk
+cmd summon awaken:crested_basilisk -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 199.68 -0.24 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec b4_basilisk 270 2
+cmd awaken admin stroll @e[tag=walker] 0.05 100
+glide 0.05 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.12 50
+glide 0.12 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.05 20
+glide 0.05 0 0 20
+wait 20
+shot b4_basilisk_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot b4_basilisk_turned
+cmd awaken ascent pilot rec b4_basilisk_idle 200 4
+wait 210
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# mudskipper
+cmd summon awaken:mudskipper -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 199.55 0.38 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec b4_mudskipper 270 2
+cmd awaken admin stroll @e[tag=walker] 0.04 100
+glide 0.04 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.1 50
+glide 0.1 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.04 20
+glide 0.04 0 0 20
+wait 20
+shot b4_mudskipper_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot b4_mudskipper_turned
+cmd awaken ascent pilot rec b4_mudskipper_idle 200 4
+wait 210
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# marmot
+cmd summon awaken:scree_marmot -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 199.63 0.00 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec b4_marmot 270 2
+cmd awaken admin stroll @e[tag=walker] 0.05 100
+glide 0.05 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.12 50
+glide 0.12 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.05 20
+glide 0.05 0 0 20
+wait 20
+shot b4_marmot_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot b4_marmot_turned
+cmd awaken ascent pilot rec b4_marmot_idle 200 4
+wait 210
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# shroomlet
+cmd summon awaken:shroomlet -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 199.85 -1.08 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec b4_shroomlet 270 2
+cmd awaken admin stroll @e[tag=walker] 0.04 100
+glide 0.04 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.09 50
+glide 0.09 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.04 20
+glide 0.04 0 0 20
+wait 20
+shot b4_shroomlet_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot b4_shroomlet_turned
+cmd awaken ascent pilot rec b4_shroomlet_idle 200 4
+wait 210
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# scarab
+cmd summon awaken:glass_scarab -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 199.53 0.40 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec b4_scarab 270 2
+cmd awaken admin stroll @e[tag=walker] 0.04 100
+glide 0.04 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.1 50
+glide 0.1 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.04 20
+glide 0.04 0 0 20
+wait 20
+shot b4_scarab_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot b4_scarab_turned
+cmd awaken ascent pilot rec b4_scarab_idle 200 4
+wait 210
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# cricket
+cmd summon awaken:chime_cricket -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 199.58 0.24 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec b4_cricket 270 2
+cmd awaken admin stroll @e[tag=walker] 0.04 100
+glide 0.04 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.1 50
+glide 0.1 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.04 20
+glide 0.04 0 0 20
+wait 20
+shot b4_cricket_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot b4_cricket_turned
+cmd awaken ascent pilot rec b4_cricket_idle 200 4
+wait 210
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# listener
+cmd summon awaken:listener -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 200.58 -4.56 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec b4_listener 270 2
+cmd awaken admin stroll @e[tag=walker] 0.05 100
+glide 0.05 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.1 50
+glide 0.1 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.05 20
+glide 0.05 0 0 20
+wait 20
+shot b4_listener_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot b4_listener_turned
+cmd awaken ascent pilot rec b4_listener_idle 200 4
+wait 210
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# snail
+cmd summon awaken:gloam_snail -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 199.68 -0.24 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec b4_snail 270 2
+cmd awaken admin stroll @e[tag=walker] 0.02 100
+glide 0.02 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.03 50
+glide 0.03 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.02 20
+glide 0.02 0 0 20
+wait 20
+shot b4_snail_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot b4_snail_turned
+cmd awaken ascent pilot rec b4_snail_idle 200 4
+wait 210
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd gamemode creative
+info
+quit
