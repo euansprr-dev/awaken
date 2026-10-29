@@ -2,12 +2,14 @@
 # PACK=perf,feel,comfort,world, the pack he plays): first person against a still husk, every frame recorded (the clip
 # recorder, run-autopilot/clips/<name>/). The chain clicked slowly (each strike apart) and fast (a click every 3 ticks),
 # a heavy, then the same by night, and the fast chain once from behind. The ribbons are live and as the player sees them.
+# Filmed at a tenth of the speed (/tick rate 2: the CI runner draws a few frames a second, so at full speed a dagger's
+# one-tick stab would be a frame); the ribbons age at the world's pace, so they live as many ticks as in play.
 world armsrepro creative 778
 waitworld
 wait 60
 cmd awaken opening skip
 wait 40
-cmd awaken powers starter 1
+cmd awaken powers starter 2
 gui 0
 cmd gamerule send_command_feedback false
 cmd gamerule spawn_mobs false
@@ -31,7 +33,8 @@ camera first
 look 0 4
 wait 10
 shot d14_rest_day
-cmd awaken ascent pilot rec d14_slow_day 52 1
+cmd tick rate 2
+cmd awaken ascent pilot rec d14_slow_day 52 2
 wait 2
 arms strike
 wait 8
@@ -41,7 +44,7 @@ arms strike
 wait 9
 arms strike
 wait 29
-cmd awaken ascent pilot rec d14_fast_day 46 1
+cmd awaken ascent pilot rec d14_fast_day 46 2
 wait 2
 arms strike
 wait 3
@@ -59,14 +62,14 @@ arms strike
 wait 3
 arms strike
 wait 27
-cmd awaken ascent pilot rec d14_heavy_day 36 1
+cmd awaken ascent pilot rec d14_heavy_day 36 2
 wait 2
 arms heavy 14
 wait 38
 cmd time set 18000
 wait 20
 shot d14_rest_night
-cmd awaken ascent pilot rec d14_slow_night 52 1
+cmd awaken ascent pilot rec d14_slow_night 52 2
 wait 2
 arms strike
 wait 8
@@ -76,7 +79,7 @@ arms strike
 wait 9
 arms strike
 wait 29
-cmd awaken ascent pilot rec d14_fast_night 46 1
+cmd awaken ascent pilot rec d14_fast_night 46 2
 wait 2
 arms strike
 wait 3
@@ -116,4 +119,5 @@ wait 3
 arms strike
 wait 27
 camera first
+cmd tick rate 20
 quit

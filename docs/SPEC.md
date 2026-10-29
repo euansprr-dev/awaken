@@ -6306,7 +6306,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       from 0.8 of the blade to the point at 0.6 brightness. A move without its own ticks keeps the old window (0.15 before
       the blow to 0.6 after its active ticks), so the other weapons are as they were. `arms_feel_rules` holds a move's
       own ticks around its hit and no more than half a tick past it, every dagger move to have them, and every look to
-      be a band toward the point.
+      be a band toward the point. A ribbon's times (its life, its blow's window, a kill's flare) run at the world's own
+      pace: real time at 20 ticks a second, slowed with it under `/tick rate`, so a slowed film shows it as long as play.
     - A jab is a line from the stance's own grip (no pull-back: never bigger on the screen than the stance), out to its
       mark under the crosshair on the hit, held a third of a tick, eased home in 1.2-1.8 ticks.
     - A slash is a lever from low at the shoulder (0.62,-0.85,-0.30): set 42-48 degrees back on its hand's side by two
