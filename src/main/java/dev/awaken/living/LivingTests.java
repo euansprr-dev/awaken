@@ -196,7 +196,7 @@ final class LivingTests {
                 h.assertTrue(deck.current().ticksLeft() >= dev.awaken.signal.ui.ChoiceDeck.FOLD_TICKS, e.getKey() + ": the card has its full time left once shown");
                 checked++;
             }
-            h.assertTrue(checked > 5, "the quests with an ask were checked: " + checked);
+            h.assertTrue(checked >= 2, "the quests with an ask were checked (Bram's and Oren's, SPEC §43.1): " + checked);
             h.succeed();
         });
 

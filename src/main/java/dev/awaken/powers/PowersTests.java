@@ -306,7 +306,7 @@ final class PowersTests {
             h.assertTrue(ForceInteractions.reactionFor(Forces.Force.FROST, subject(none, false, true, false, false, false))
                     == ForceInteractions.Reaction.STEAM, "frost + burning");
             h.assertTrue(ForceInteractions.reactionFor(Forces.Force.CHARGE, subject(none, true, false, false, true, false))
-                    == ForceInteractions.Reaction.OVERCHARGE, "charge + your echo (even wet)");
+                    == ForceInteractions.Reaction.OVERCHARGE, "charge + your summon (even wet)");
             h.assertTrue(ForceInteractions.reactionFor(Forces.Force.HEAT, subject(none, true, false, false, false, false))
                     == ForceInteractions.Reaction.NONE, "heat + water does nothing");
             h.succeed();
@@ -428,8 +428,8 @@ final class PowersTests {
         });
     }
 
-    private static ForceInteractions.Subject subject(EnumSet<Forces.Tag> tags, boolean wet, boolean burning, boolean frozen, boolean echo, boolean vol) {
-        return new ForceInteractions.Subject(tags, wet, burning, frozen, echo, vol);
+    private static ForceInteractions.Subject subject(EnumSet<Forces.Tag> tags, boolean wet, boolean burning, boolean frozen, boolean summon, boolean vol) {
+        return new ForceInteractions.Subject(tags, wet, burning, frozen, summon, vol);
     }
 
     private static ServerPlayer player(GameTestHelper h, BlockPos rel) {

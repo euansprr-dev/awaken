@@ -166,7 +166,8 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         var home = dev.awaken.arms.ArmsHomes.of(d.style());
         if (home != null && v.door() != ArmouryCache.FORGE && (ArmouryCache.known(d.style()) || entry(d.style()) != null)) {
             String plaque = "Free: " + home.gate() + " teaches it, in " + home.rank().label + "-rank gates."
-                    + (home.teacher() == null ? "" : " " + Character.toUpperCase(home.teacher().person().charAt(0)) + home.teacher().person().substring(1) + " teaches it early.");
+                    + (home.teacher() == null ? "" : " " + Character.toUpperCase(home.teacher().person().charAt(0)) + home.teacher().person().substring(1) + " teaches it early.")
+                    + (home.leftChest() ? " Found early in a chest someone left behind." : "");
             List<FormattedCharSequence> lines = font.split(Component.literal(plaque), dw);
             for (int i = 0; i < Math.min(2, lines.size()); i++) g.text(font, lines.get(i), dx, py + ph - 44 + i * 10, DIM, false);
         }

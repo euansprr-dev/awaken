@@ -17,7 +17,6 @@ import dev.awaken.gates.GateVortexBlockEntity;
 import dev.awaken.gates.block.GateBlocks;
 import dev.awaken.hearth.Upgrades;
 import dev.awaken.hearth.block.HearthAnchorBlock;
-import dev.awaken.hearth.block.RolePadBlock;
 import dev.awaken.hearth.block.TrophyMountBlock;
 import dev.awaken.hearth.block.TrophyMountBlockEntity;
 import dev.awaken.hearth.town.TownNpc;
@@ -62,7 +61,6 @@ public final class JadeClient {
         r.registerBlockComponent(new Door(), DoorCoreBlock.class);
         r.registerBlockComponent(new Terminal(), LogTerminalBlock.class);
         r.registerBlockComponent(new Hearth(), HearthAnchorBlock.class);
-        r.registerBlockComponent(new Pad(), RolePadBlock.class);
         r.registerBlockComponent(new Trophy(), TrophyMountBlock.class);
         r.registerEntityComponent(new Creature(), AwakenMob.class);
         r.registerEntityComponent(new Townsperson(), TownNpc.class);
@@ -115,7 +113,7 @@ public final class JadeClient {
                 int rank = ServerData.GATE.decodeFromData(ba).map(LookAt.Gate::rank).orElse(ba.getBlockState().getValue(GateBlocks.Core.RANK));
                 return Rank.of(rank).colour;
             }
-            if (ba.getBlock() instanceof HearthAnchorBlock || ba.getBlock() instanceof RolePadBlock) return Glass.LANTERN;
+            if (ba.getBlock() instanceof HearthAnchorBlock) return Glass.LANTERN;
             if (ba.getBlock() instanceof DoorCoreBlock) return Rank.of(ba.getBlockState().getValue(DoorCoreBlock.RANK)).colour;
         } else if (a instanceof EntityAccessor ea) {
             if (ea.getEntity() instanceof TownNpc) return Glass.LANTERN;
@@ -298,20 +296,6 @@ public final class JadeClient {
         @Override
         public Identifier getUid() {
             return ServerData.HEARTH_ID;
-        }
-    }
-
-    static final class Pad implements IBlockComponentProvider {
-        @Override
-        public void appendTooltip(ITooltip t, BlockAccessor a, IPluginConfig config) {
-            if (!(a.getBlock() instanceof RolePadBlock pad)) return;
-            t.add(row("Echo duty", pad.role.label, pad.role.colour));
-            t.add(note(pad.role.does));
-        }
-
-        @Override
-        public Identifier getUid() {
-            return Awaken.id("role_pad");
         }
     }
 

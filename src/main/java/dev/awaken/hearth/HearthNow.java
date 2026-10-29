@@ -151,7 +151,6 @@ public final class HearthNow {
                 case SHELTER, BEDROOM -> true;
                 // the Anchor's rooms once there is an Anchor; the rest once you have what they're made of
                 case SANCTUARY, ARMORY -> !h.hearthfire();
-                case BARRACKS -> h.furniture[Furniture.PAD.ordinal()] > 0 || holdsPad(p);
                 case TROPHY_HALL -> h.furniture[Furniture.TROPHY.ordinal()] > 0 || holds(p, HearthContent.TROPHY_ITEM.get());
                 case WORKSHOP -> h.furniture[Furniture.MACHINE.ordinal()] > 0;
                 case KITCHEN, STUDY, GREENHOUSE, STABLE, HALL, BELL_TOWER -> started(t, h);
@@ -200,11 +199,6 @@ public final class HearthNow {
             first = false;
         }
         return Fit.first(Fit.TRACKER, full.toString(), tight.toString(), missing.toString(), plain.toString());
-    }
-
-    private static boolean holdsPad(ServerPlayer p) {
-        for (var item : HearthContent.ROLE_PAD_ITEMS.values()) if (holds(p, item.get())) return true;
-        return false;
     }
 
     static boolean holds(ServerPlayer p, Item item) {

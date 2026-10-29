@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "level": 7,
+  "title": "What they carried",
+  "text": "The stone people still hold things. A key names the town its chest is in.",
+  "grants": [
+    {
+      "type": "flag",
+      "id": "awaken:stilled_told"
+    }
+  ],
+  "quiet": false
+}

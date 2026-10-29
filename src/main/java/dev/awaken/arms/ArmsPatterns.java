@@ -171,6 +171,17 @@ final class ArmsPatterns {
         }
     }
 
+    /** A left chest opened (SPEC §43.3): the first early-found style, in file order, this fighter doesn't know yet. False when they know all of them. */
+    static boolean leftChest(ServerPlayer p) {
+        for (ArmsHomes.Home h : ArmsHomes.all()) {
+            if (!h.leftChest() || ArmsIssue.INSTANCE.knows(p, h.style())) continue;
+            if (!ArmsIssue.INSTANCE.learn(p, h.style(), "a chest someone left behind")) continue;
+            dev.awaken.progression.Progression.count(p, "awaken:patterns_from_left_chests");
+            return true;
+        }
+        return false;
+    }
+
     private static String cap(String s) {
         return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }

@@ -8,7 +8,37 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "awaken:role_pad_guard"
+          "name": "minecraft:smooth_stone_slab",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": 2
+            }
+          ]
+        }
+      ],
+      "rolls": 1
+    },
+    {
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:essence_shard"
+        }
+      ],
+      "rolls": 1
+    },
+    {
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:iron_sword"
         }
       ],
       "rolls": 1

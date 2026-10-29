@@ -37,6 +37,20 @@ public final class RoadAccess implements RoadHooks.Access {
     }
 
     @Override
+    public Optional<RoadHooks.RoadPoint> nearestRoad(ServerLevel level, BlockPos pos, int reach) {
+        RoadNet.Nearest n = RoadNet.nearestWithin(pos.getX() + 0.5, pos.getZ() + 0.5, reach);
+        if (n == null) return Optional.empty();
+        Road r = n.road();
+        int i = n.point(), a = Math.max(0, i - 1), b = Math.min(r.points() - 1, i + 1);
+        double dx = r.x()[b] - r.x()[a], dz = r.z()[b] - r.z()[a], len = Math.hypot(dx, dz);
+        if (len < 1e-6) {
+            dx = 1;
+            len = 1;
+        }
+        return Optional.of(new RoadHooks.RoadPoint(new BlockPos((int) Math.floor(r.x()[i]), r.y()[i], (int) Math.floor(r.z()[i])), dx / len, dz / len));
+    }
+
+    @Override
     public Optional<RoadHooks.Route> stretch(ServerLevel level, BlockPos pos, int min, int max, int length, long seed) {
         Random r = new Random(seed);
         int want = Math.max(8, length / RoadPlanner.STEP);

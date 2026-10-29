@@ -113,6 +113,11 @@ public final class VillageService {
         }
     }
 
+    /** Plans a settlement on the planner thread for someone who asked of it (an empty one's name and well, SPEC §43.3). */
+    static void planSoon(ServerLevel level, SettlementGrid.Anchor a) {
+        plan(level, a);
+    }
+
     /** Plans a settlement on a worker thread (the land read is slow); the next tick starts it. */
     private static void plan(ServerLevel level, SettlementGrid.Anchor a) {
         if (!PLANNING.add(a.key())) return;
@@ -133,8 +138,16 @@ public final class VillageService {
         });
     }
 
-    /** Its people start (or its saved ones go on), once its ground is seen to be painted. */
+    /**
+     * Its people start (or its saved ones go on), once its ground is seen to be painted. Only a holdfast's (SPEC §43.1,
+     * §43.2): every other settlement stands empty, and one whose people an older world saved never starts again.
+     */
     static @Nullable Live start(ServerLevel level, VillagePlan plan) {
+        if (!dev.awaken.village.road.Holdfasts.isKey(plan.key)) {
+            ABSENT.add(plan.key);
+            Awaken.LOG.info("[village] {} ({}) is left empty (SPEC §43.1)", plan.name, plan.key);
+            return null;
+        }
         BlockPos well = plan.ground(plan.well[0], plan.well[1]);
         if (!level.isLoaded(well)) return null;
         if (!level.getBlockState(well).is(Blocks.WATER)) {

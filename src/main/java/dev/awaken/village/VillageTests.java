@@ -25,6 +25,90 @@ final class VillageTests {
         AwakenTests.registerIsolated("village_trade", 400, VillageTests::trade);
         dev.awaken.village.road.RoadTests.register();
         AwakenTests.register("wild_tamers", 400, WildTamers::test);
+        AwakenTests.registerIsolated("village_holdfasts", 400, VillageTests::holdfasts);
+    }
+
+    /**
+     * The holdfasts (SPEC §43.1, §43.2), over a roads' world made for a seed: the first lies 1,500 to 2,500 past the ridge;
+     * every one is 1,500 or more past it, 2,000 from the first and 1,500 from each other, and not every town is one;
+     * only a holdfast's people start; the bell tolls three at dawn, noon and dusk, one otherwise, is heard in reach
+     * (filed once per player with the System's line) and keeps who stood inside; the Ember is refused where it's heard.
+     */
+    private static void holdfasts(GameTestHelper h) {
+        long seed = 4242L;
+        var level = h.getLevel();
+        var reg = level.registryAccess();
+        var ns = reg.lookupOrThrow(net.minecraft.core.registries.Registries.NOISE_SETTINGS).getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD);
+        var preset = reg.lookupOrThrow(net.minecraft.core.registries.Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
+                .getOrThrow(net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists.OVERWORLD);
+        var gen = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(net.minecraft.world.level.biome.MultiNoiseBiomeSource.createFromPreset(preset), ns);
+        var rs = net.minecraft.world.level.levelgen.RandomState.create(reg.lookupOrThrow(net.minecraft.core.registries.Registries.NOISE), seed, ns.value());
+        var had = dev.awaken.village.road.RoadWorld.get();
+        AwakenTests.Live live = AwakenTests.survivalPlayer(h, "j1-holdfast", net.minecraft.core.BlockPos.ZERO.above(2));
+        var p = live.player();
+        dev.awaken.village.road.RoadNet.clear();
+        try {
+            var w = dev.awaken.village.road.RoadWorld.of(seed, 0, 0, gen, rs, net.minecraft.world.level.LevelHeightAccessor.create(-64, 384), false);
+            dev.awaken.village.road.RoadWorld.use(w);
+            int ridge = dev.awaken.core.api.TheLull.RIDGE_CLASSIC;
+            int[] f = dev.awaken.village.road.Holdfasts.firstCell(w);
+            h.assertTrue(f != null, "a first holdfast is found");
+            int[] fh = w.regions.heart(f[0], f[1]);
+            double fd = Math.hypot(fh[0], fh[1]);
+            h.assertTrue(fd >= ridge + 1500 && fd <= ridge + 2500, "the first lies 1,500 to 2,500 past the ridge: " + (int) fd);
+            var all = dev.awaken.village.road.Holdfasts.within(w, 8);
+            int towns = 0;
+            for (int i = -8; i <= 8; i++) for (int j = -8; j <= 8; j++) if (dev.awaken.village.road.RoadNet.townCell(w, i, j)) towns++;
+            // about one a 3,000-block square (17 x 17 regions of 1,600 hold some 80 squares): never every town
+            h.assertTrue(all.size() >= 2 && all.size() < towns, "some towns are holdfasts, not all: " + all.size() + " of " + towns);
+            for (int[] a : all) {
+                int[] ah = w.regions.heart(a[0], a[1]);
+                h.assertTrue(Math.hypot(ah[0], ah[1]) >= ridge + 1500, "none within 1,500 of the ridge: " + a[0] + "," + a[1]);
+                for (int[] b : all) {
+                    if (a == b) continue;
+                    int[] bh = w.regions.heart(b[0], b[1]);
+                    boolean first = a[0] == f[0] && a[1] == f[1] || b[0] == f[0] && b[1] == f[1];
+                    double d = Math.hypot(ah[0] - bh[0], ah[1] - bh[1]);
+                    h.assertTrue(d >= (first ? 2000 : 1500), "holdfasts keep apart: " + (int) d);
+                }
+            }
+            String key = "t" + f[0] + "_" + f[1];
+            h.assertTrue(dev.awaken.village.road.Holdfasts.isKey(key) && !dev.awaken.village.road.Holdfasts.isKey("test:village_trade"),
+                    "a key names a holdfast's town or not");
+            // only a holdfast's people start: any other settlement is left empty
+            net.minecraft.core.BlockPos o = h.absolutePos(net.minecraft.core.BlockPos.ZERO);
+            VillagePlan plan = TestLand.at(58L, o.getX(), o.getY(), o.getZ()).plan("test:holdfast_empty", 778L, false);
+            h.assertTrue(plan != null && VillageService.start(level, plan) == null && VillageService.LIVE.get(plan.key) == null,
+                    "an empty settlement's people never start");
+            // the bell: three at dawn, noon and dusk, one on the other hours
+            h.assertTrue(Holdfast.tolls(0) == 3 && Holdfast.tolls(6000) == 3 && Holdfast.tolls(12000) == 3 && Holdfast.tolls(24000 + 12500) == 3
+                    && Holdfast.tolls(1000) == 1 && Holdfast.tolls(18000) == 1, "three at dawn, noon and dusk, one otherwise");
+            h.assertTrue(Holdfast.bearing(10, -10).equals("to the north-east") && Holdfast.bearing(0, 50).equals("to the south"), "bearings");
+            var bell = p.blockPosition().offset(300, 20, -300);
+            live.sent();
+            Holdfast.toll(level, key, bell);
+            h.assertTrue(live.sent().stream().anyMatch(m -> m instanceof net.minecraft.network.protocol.game.ClientboundSoundPacket),
+                    "a toll in reach is heard");
+            h.assertTrue(Holdfast.heard(p).containsKey(key) && !Holdfast.heard(p).get(key).inside(), "the first hearing is kept");
+            Holdfast.toll(level, key, p.blockPosition().offset(900, 0, 0));
+            h.assertTrue(live.sent().stream().noneMatch(m -> m instanceof net.minecraft.network.protocol.game.ClientboundSoundPacket),
+                    "out of reach, not heard");
+            Holdfast.stoodInside(p, key, bell);
+            h.assertTrue(Holdfast.heard(p).get(key).inside() && Holdfast.heard(p).get(key).bell() == bell.asLong(), "standing inside is kept");
+            // the Ember: refused within a holdfast's sound, not past it
+            var town = dev.awaken.village.road.Holdfasts.first();
+            h.assertTrue(town != null, "the first holdfast's town has a site");
+            h.assertTrue(dev.awaken.core.api.TheLull.holdfastHeard(level, new net.minecraft.core.BlockPos(town.x() + 500, 70, town.z())),
+                    "its bell is heard 500 out");
+            h.assertTrue(!dev.awaken.core.api.TheLull.holdfastHeard(level, new net.minecraft.core.BlockPos(town.x() + 900, 70, town.z() + 400)),
+                    "and not 985 out");
+        } finally {
+            dev.awaken.village.road.RoadWorld.use(had);
+            dev.awaken.village.road.RoadNet.clear();
+            Holdfast.get(level.getServer()).known.remove(p.getUUID());
+            live.leave();
+        }
+        h.succeed();
     }
 
     /**

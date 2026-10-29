@@ -7,7 +7,7 @@ import java.util.Optional;
 
 /**
  * Plain-word explanations of AWAKEN's own words, shown on hover in the Status screen. A word matches its term plus a
- * simple ending ("Echoes", "Fractured", "play-days", "Extraction").
+ * simple ending ("Seals", "Fractured", "play-days", "Extraction").
  */
 public final class Glossary {
     private Glossary() {}
@@ -22,7 +22,6 @@ public final class Glossary {
         add("Veil", "The spirit side of the world. Sneak and hold G to leave your body: secrets and ore glow, spirits talk, and you can scout a gate from inside.");
         add("Fracture", "What a death leaves behind: for a few minutes you're about 15% weaker and a little slower. Resting at your Hearth or meditating heals it faster.");
         add("Reassessment", "The trial that raises your rank. When your level is high enough, take it at the Spire in your town or at a Reassessment Monolith.");
-        add("Echo", "A defeated elite or boss you bound to you (press B soon after the kill). Echoes guard your home, train or fight beside you.");
         add("Flow", "A power that slows the world around you while you keep your speed. AGI makes it last longer.");
         add("Kinetic", "Raw physical force: punches, slams, shockwaves. Kinetic powers grow with STR.");
         add("Truth", "A statement about who you're becoming. Declare up to three; when you've lived one it becomes TRUE for good and gives its reward.");

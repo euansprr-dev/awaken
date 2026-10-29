@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "level": 30,
+  "title": "The far towns",
+  "text": "A few walled towns kept their bells and their people. Listen for one ringing on the hour.",
+  "grants": [
+    {
+      "type": "flag",
+      "id": "awaken:holdfast_told"
+    }
+  ],
+  "quiet": false
+}

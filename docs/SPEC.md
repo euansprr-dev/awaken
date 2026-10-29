@@ -476,7 +476,7 @@ of `AwakenConfig.Client`.
 - `dev.awaken.hearth.Hearth` — a Hearth's owner and members ("Together"): `record HearthInfo(owner, ownerName, anchor,
   tier, radius, members, foundedFrom)` with `has(UUID)`, `hearthsOf(MinecraftServer, UUID)` / `hearthsOf(ServerPlayer)`,
   `home(ServerPlayer)`, `isMember(ServerPlayer, BlockPos anchor)`, `isMember(MinecraftServer, UUID player, UUID owner)`,
-  `hearthAt(ServerLevel, BlockPos)`; plus `anchor`, `atHome`, `hasRoom`, `isSanctuary`, `inRoom`, `ownedEchoes`.
+  `hearthAt(ServerLevel, BlockPos)`; plus `anchor`, `atHome`, `hasRoom`, `isSanctuary`, `inRoom` (`ownedEchoes` went with the Echoes, §43.4).
   (W6, §28.8) `record Village(owner, name, anchor, radius, tier, people, gather, bell)` and `villages(MinecraftServer)`: homes
   grown to Tier IV+ (the festival's and caravans' hook); a home's people run on the people engine as settlement
   `hearth:<owner>`. `core.api.HearthHooks` gained `greenhouse(Level, BlockPos)` (both sides) and `study(ServerPlayer)`.
@@ -13021,3 +13021,207 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   hangs 1.4 to 2.6 over it, flickering (none closer than 4). Budget ≤ 0.1 ms a frame (§42.6), not yet measured.
 - **A jump** (a teleport, a respawn): the region at the camera is read again at once, not on the next second, and what
   belongs to the region you left (glow-worms, rust beetles, swifts, crayfish, glass and ash moths, crawlers) fades away.
+
+## 43. The Journey (one city and the wild, the beasts' Hearth, the bells' song, Faults; plan docs/director/JOURNEY.md, page https://claude.ai/artifact/UZ4vpKGoSJkisZRkmoHj3D; Euan approved the entire plan 2026-10-29: "Go ahead with the entire plan")
+
+Source of truth for the rules below; `docs/director/JOURNEY.md` has the detail, the lines and the hour-by-hour journey.
+Where this section and an earlier one disagree, this one wins (each change is listed in 43.9). Built in seven stages
+(43.10) by the game director session itself (Euan, 29 Oct: "do all the work yourself"), which adds each stage's numbers
+here as it goes.
+
+### 43.1 The world rule
+- About nine-tenths of the world is wild and empty of people. Outside Carillon the only living people are players (the
+  Awakened) and the people of the rare **holdfasts** (43.2). Nobody else lives, walks or camps in the wild.
+- **The Lull** is why: where the gates leak the Deep, ordinary people stop feeling, sit down, go still and turn to stone
+  over months. Bells keep it off; the Awakened are immune. Eleven years ago the land's bells fell asleep and the villages
+  walked to Carillon.
+- Every settlement AWAKEN places (§28 W0, W3, W7) still generates, emptied: no citizens, troubles, settlers or found
+  scenes of people. Furniture, letters, silent chimes, loot and beasts stay. Village troubles become beast troubles (W4's
+  rules unchanged).
+- Found scenes and every Wayfarer chain but Bram's and Oren's are retired (their distress flares too). Their five early
+  patterns (Spear, Glaive, Rapier, Chain-blade, Twinblades) and six relics are found in left chests instead (43.3); old
+  Journals drop retired chains at login; the scenes record is schema 2.
+- **The Last Fire** is the Wayfarer camp (450 blocks up the north road), Ilse alone; Hettie moves into the city's market
+  square (spot `hettie`; it lives in `City`'s later spots, not in plan.json, because the plan's hash covers its spots and
+  a world whose city was built from another hash gets no citizens). Ilse's scene and lines are JOURNEY part 1, verbatim, in plain speech. She never gives a task. She comes to the player's home
+  exactly once, after the Wake ending. The Ember sets only past the Last Fire's ridge and outside any holdfast's sound.
+- Vael meets the player only in the city and in gates. Townsfolk that lived at the Hearth (Oren, Mira, Teodor, Sun, Vael)
+  live in Carillon in their roles.
+
+### 43.2 Holdfasts
+- A holdfast is one of the biggest walled W7 towns, kept full of people, whose bell never stopped (rung by hand in
+  shifts). None within 1,500 blocks of the Last Fire's ridge; the first 1,500 to 2,500 blocks out; then about one per
+  3,000 x 3,000 blocks. Every other settlement is empty.
+- Its bell rings on the hour, audible from far off; the Map shades its bearing. It's one of the hundred bells, already
+  awake, filed in the Bell Book (as **Rung**) the first time a player stands inside its walls and hears it.
+- Inside: citizens with the city's dialogue rules (they talk, react and carry rumours, never give tasks), a small market
+  (emeralds), a bed, a ringer on shift. A tamer on the wildness field (§41) to the bell's reach. Its people never leave
+  and never come to a Hearth.
+- **Built (stage 1)**: `village.road.Holdfasts` chooses them, pure from the seed (old worlds alike). The first is the
+  lowest-rolled town region (its own salt) whose heart is 1,500 to 2,500 blocks past the ridge (ridge = `TheLull`'s 510
+  with Carillon, 360 without) and whose land takes a town, found at server start after the first town (`RoadWorld`).
+  Then each 3,000-block square, counted from the centre, picks its lowest-rolled town region whose heart lies 1,500 or
+  more past the ridge; the pick stands unless its heart is within 2,000 of the first's or within 1,500 of a
+  neighbouring square's lower-rolled pick. A pick whose land takes no town leaves its square without one (its heart
+  is still tamed). With 1,600-block regions that's about half the walled towns. `VillageService.start` starts only a
+  holdfast's people; any other settlement is left empty (logged once). `village.Holdfast` rings the bell
+  (`awaken:holdfast.bell`, the city's hour and district bells at pitch 0.78 and 0.72): one toll on the in-game hour,
+  three 50 ticks apart at dawn (0), noon (6000) and dusk (12000), only while a player is within 768; a player more than
+  32 blocks off hears it played 32 blocks away along its bearing, its volume falling to 0.3 at 768. The first toll a
+  player hears gives "[A bell. A real one, ringing, somewhere to the north-east.]" (eight bearings) and keeps the
+  bell's place; standing inside its walls is kept too (saved data `village_holdfasts`, schema 1, per player, for stage
+  4's Map shading and Rung). The Ember is refused within 768 of one (`TheLull.holdfastHeard`). Its notice board reads
+  "[The board has the bell's shift list and a few notes they've left each other. Nothing on it is for you.]";
+  an empty settlement's reads "[The notices are years old. The last one says the chime has stopped and they're all
+  going to the city.]" Village troubles never start by themselves any more (commands still start one; festivals go
+  on), and a camp's raid never becomes a village's Burning (it raids a Hearth instead). The wildness field's tamers are
+  the city, the holdfasts' regions and the roads (§41.1); empty settlements no longer tame their land.
+
+### 43.3 The stone people (the Stilled)
+- Not mobs: unbreakable, unmovable, unmineable posed figures (about twelve hand-made poses, their own look), untouched by
+  powers and raids.
+- Placement: three on the north road in the first 400 blocks past the Last Fire's ridge (the first, Aldo, on the
+  milestone just past it); one or two on the road to the first empty hamlet; one on the way to the first sleeping bell
+  near the player's first Ember. Elsewhere about one per 1,000 x 1,000 blocks within 3,000 of Carillon and rarer past
+  that, near roads, villages and homes; never two within 150 blocks except a seated pair; never in a gate or a deep cave.
+- A left chest gives, once per player: the first early pattern they don't know (Spear, Rapier, Chain-blade, Glaive,
+  Twinblades), else the first of the six old relics they haven't had from one, else three essence; and supplies.
+- Most carry a letter (a Found bell lead), a key (a chest in a nearby empty settlement) or a keepsake with a name that
+  someone in Carillon reacts to. The System reads them in brackets ("[She got as far as the bridge.]").
+- At the Wake they stand and walk home over one play-day (stage 7).
+
+Built (stage 1, `dev.awaken.world.stilled`): blocks `awaken:stilled` (a block entity, drawn by its own jointed model:
+knees, elbows, the body pivoting at the hips; twelve hand-set poses: milestone, walking, grave, a pair on a cart's
+tail, a lead with no dog, reaching, looking back, waiting, a lantern, a parent with a child, curled, sat on a bundle;
+five looks, man, woman, old man, old woman, girl; textures from `tools/art/stilled.py`) and `awaken:left_chest` (a
+locked trunk), both bedrock-hard, immovable, dragon- and wither-immune, cancelled on any break (only `/awaken stilled
+remove`, which also keeps the spot from ever being used again). Spots (`StilledSpots`, pure from the seed and the
+centre): the north road's three at the ridge +12, +170 and +330 (Aldo's letter to Ilse is letter 0); the first
+hamlet's near edge, which the third takes (REACHING, the hamlet's key) when the hamlet's anchor lies within 300 of
+its road spot; then one a cell (1,000 within 3,000, two cells in three; 2,000 to 6,000; 3,000 past), the cell's spot
+moved to the edge of the nearest empty settlement within 400 (walked out from its anchor past its ground, +8, facing
+it), else 4 blocks beside the nearest laid road within 300, else dropped; a cell's never within 270 of a named spot
+not yet placed. Rolls: carry letter 40%, key 35%, keepsake 25% (no city: keepsakes become letters 6 in 11, else keys);
+pairs and a parent with a child one in ten each. A key opens the nearest empty settlement no placed key opens yet,
+within 1,200 (its own home last; the hamlet's for the hamlet's figure), else it's a letter; a keepsake names a real
+Carillon household (a citizen record's family name) and who the owner was to them by the figure's look. Worked out
+within 640 of a player, placed within 96 on loaded natural ground (never within 150 of another, in a Hearth, on a
+settlement's ground or in the city reserve); placed and dropped spots are saved (`world_stilled`, schema 1) with each
+player's marks. Reading one: the System's bracketed line (name, the pose's reading, what they hold) and the thing, once
+per player; a key or keepsake lost before it's used is held again for you, a letter whenever you don't hold it.
+A key's tag names the settlement (filled in once it's planned) and Track points at its well; the left chest stands 3
+to 6 blocks from that well when its keyholder comes within 64; opened with the key it gives the first early pattern
+not known, else the first of the six relics not had from a chest, else three essence, plus `chests/left_behind`
+supplies, and keeps the key. A keepsake used in Carillon names the district a member of its family is in now and
+Tracks them (the System keeps the register; Teodor has no archive); shown to one of them (use on them) they say,
+once, in plain words what it was and why the owner went back, and you keep it (`Settlements.onShown`). Counters:
+`awaken:stilled_met`, `awaken:stilled_letters_read`, `awaken:left_chests_opened`, `awaken:keepsakes_shown`.
+
+### 43.4 No allies: Echoes removed
+- Nothing a player owns fights for them except their own powers' short-lived summons and decoys. Beasts never fight.
+- Removed: Echo binding (the bind key's use, chance by SPI and rank), the Echo cap, role pads and the Barracks room, the
+  roles Guard/Haul/Farm/Mine/Train, Echo Duty, the Mine Echo, Echo kills' credit, the Echo Hall and Generals (GOALS.md).
+- Kept (not allies): the Echoing tag, the Grave Echo, gates' ghosts, the pick's Echo rung, Echo Palm, Heavy Echo. Echo
+  Swap targets the player's own summons and decoys only.
+- SPI's Echo cap becomes +1% Kinship gained per SPI point, to +30%.
+- Old saves (schema bump): bound Echoes are released on load with one System line ("Your Echoes have gone back to the
+  Deep."); role pads stay as plain blocks that drop their materials.
+- What took binding's place in progression: the Shadowbinder path scores shadow power use and gives **Summon Strength**
+  (perk `awaken:summon_strength`, a fraction: Legion's soldiers and Tech drones hit harder and last longer by it; path
+  +25%, the truth "I command the shadows." +15%, the title Shadow Lord +10%); level road 7 becomes "What they carried"
+  (the Stilled's keys), 30 "The far towns" (the holdfasts) and 44 "What was left" (a left chest opened); Echo directives, the drill and the trail
+  are retargeted (LEDGER.md has each line). The B key stays for the Veil's "wear a creature".
+
+### 43.5 Beasts and Kinship
+- Three natures: **kin** (befriendable, never hunted), **wild quarry** (§41's herds and packs, hunted, never tamed) and
+  **the Deep's** (gate creatures and the Gnawed, always hostile). Sixteen kin (JOURNEY part 2 table); each has a want,
+  a day, fears and its own look and sound. One style sheet first; the Lampwing is judged by Euan before any other kind.
+- Kinship per kind: Wary, Curious, Friendly, Kin. Up on each help and each day one lives with you; down when one is hurt,
+  far down (and the kind runs for days) when one is killed. Befriended beasts never die: hurt, they hide and return.
+- Five steps: hear of it or meet and read it (band or Binoculars, §39), watch, help, trust (three helps of one beast),
+  home (a free nook it likes).
+- **What the System tells, and never tells.** Every kin card says "Could live with you" and its home job; quarry cards
+  say "Quarry"; the Deep's things get no card. Each Hearth need carries a rumour: the sort of animal and a real region,
+  picked from an actual place that kind lives within 600 blocks, named by landmarks the player knows, Track a rough
+  bearing. Watching adds up to three want lines, vague to plain; the third states the want. The help is never stated.
+  The right act gets the beast's tell, the band's chime and a line; a near miss gets a nudge line; after a few misses
+  the line points closer, never naming the act. The Kin list always holds at least one rumour not yet followed.
+- The System translates beasts in brackets as subtitles do, only up close and only for kinds read, more as Kinship grows.
+
+### 43.6 The Hearth, run by beasts
+- **Beasts do the boring work only.** Nothing at home produces ore, gems, gate loot, essence or XP from nothing. Beasts
+  tend what grows (crops, wool, eggs, honey), process and carry what the player brings, keep the woodlot, light the
+  yard, and build works from plans with timber from that woodlot and stone and metal the player brings. The player mines
+  every ore, fetches every rare thing and forges.
+- Automation ladder: E one field and the light; D each work's beast processes its own chest (Smeltery, Ore Shed, fields,
+  pens); C Totters carry between works inside the yard and sort the Storehouse; B the Works' lines move things across the home; S every work
+  linked. Details: JOURNEY part 3.
+- The Mine head becomes **the Ore Shed** (lode heart; Pebblepups sort and crush ore and rubble the player brings, a few
+  nuggets from a stack of rubble at most; never ore by itself).
+- Nooks: 2 at the Ember, 4 at the Anchor, then 8, 12, 18, 24 by its last tier, plus each work's own.
+- Tiers no longer ask for people (stage 1): IV asks for a bell tower and six rooms, V for ten rooms, two of them Grand.
+  The Spire's Board and Monolith come with the Anchor (they came with the first settler).
+- **The Storehouse** (Euan, 29 Oct; C, with the Totters; rare things: a Totter that's Kin and an empty town's granary
+  keystone): a timber hall with **the Drop**, a sunken bin the player tips anything into (by hand, a stack, or "Empty
+  my bag", which keeps the hotbar, armour and marked items). Dropped things pile up as real 3D items (the heap rises with
+  the count; each kind lands with its own sound); the home's Totters carry armfuls to bays by kind (stone and earth,
+  wood, ore and metal, gems, food, plants and seed, drops, gate loot, gear, bells and leads, odd things), where shelves,
+  racks, pegs and crates show what's in them. One Totter clears a full bag in about a minute, four in a few seconds. A
+  full bay grows a rack; a full hall stacks outside and asks for another bay. **The Ledger** desk looks anything up: a
+  Totter fetches it to the desk, or "Show me" lights its bay. Home crafting takes from it. It only holds what the player
+  brings; at B the Works' lines link it to every work. Items are counted data, not entities; the heap and shelves draw
+  at most a capped number of item models, simpler far away. Detail: JOURNEY part 3, "The Storehouse".
+- **The Hearth page** is a band page (Home, Your beasts, Kin) between Journal and Truths. Nothing on it expires or
+  renews daily. No Board, no requests, no Daily Regimen.
+
+### 43.7 The bells and the beasts
+- The tower rings the player's song at dawn and dusk. The player's beasts react by bells held: under 20 bolt for their
+  nooks; 20 to 49 hunker; 50 to 79 listen, uneasy; 80 to 99 gather under the tower; 100 sing. A handbell peal in the
+  wild scares nearby kin away for a minute.
+- The Hundred Peal (the only big moment that doesn't glitch) raises Kinship a step for many kinds land-wide and gives
+  the Kinsong. Then the Deep answers: harder breaks, the Gnawed spread, Grieving Sovereigns. Fighting never ends.
+- Leads: Heard, Seen, Sung, Found, Rung, Remembered. None told by people at home.
+
+### 43.8 Faults and Big Days
+- A Fault is one reusable director: tell, break, words in the black, held cut, aftermath, mend. Sizes: flicker (under
+  1 s), Fault (3 to 5 s), Great Fault (10 to 20 s, hand-made, about eight in the game). Its own sound suite, made like
+  the Ritual's. At most three flashes a second; client setting **Faults: full / gentle / still**; reduced motion and
+  `cameraShake` honoured; plays with Lens off; plays for every player in the event's reach. A woken bell ends on a mend.
+- Big Days: about one per five play-days at most, never in a world's first two hours, never two in a row, warned by the
+  world's signs. Raids from the first Great Bell; the first raid opens on a Great Fault and is tuned for one player with
+  no help (a level-12 player in D gear who stands and fights holds it). A raid while away breaks what it reaches and
+  takes at most a chest's worth from the larder, never a beast, never the Forge's racks.
+
+### 43.9 Changes to earlier sections
+§10 (Echoes, Barracks, town NPCs at the Hearth), §28 W0/W1/W3/W4/W6/W7 (citizens, troubles, settlers, the Mine head
+and Mine Echo), §41 (tamers: Carillon, its farmland, roads, holdfasts, Hearths; hunts take quarry and the Gnawed only),
+SPI's line in the stat table, GOALS.md's Hearth Board, Echo Hall and Generals. JOURNEY part 9 has the full table.
+
+### 43.10 Stages
+1. The world rule (43.1 to 43.4). 2. The first beasts, Kinship, the Hearth page, Fields and the Ore Shed (43.5, 43.6).
+3. Faults, the Ringer's Great Fault, the first raid (43.8). 4. The first thirty bells and the tower's song (43.7).
+5. The rest of the kin and the works to the Foundry, with the Storehouse. 6. The second half's bells and beasts. 7. The Hundred Peal, the
+Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY part 8).
+
+### 43.11 The bar (Euan, 29 Oct: "fully featured ... everything has a recipe, everything has a path ... never left unsure about how to keep going")
+- **Ledger**: `docs/director/LEDGER.md`, a row for everything the Journey adds or changes (source, use, how you come to
+  know it, recipe or source, links, edge cases); a stage's rows come before its code and none says "later" at hand-off.
+- **`journey_ledger`** GameTest: every `awaken` item and block has a way in (recipe, loot table, drop, trade, work,
+  reward, world placement; code sources declared through `dev.awaken.core.api.Sources`) or is on the reviewed list of
+  things never held; every Journey recipe is unlocked in the recipe book on first holding an ingredient.
+  Built (stage 1): `Sources.declare(how, ids...)` and `Sources.neverHeld(why, ids...)` (paths in `awaken`); the test
+  reads every recipe's result, every loot table's item entries and every quest's relic from the loaded data, takes
+  spawn eggs as creative's own and a block with an item as its item's question, and fails naming each thing with no way
+  in. The pre-Journey audit (29 Oct: 115 items and 73 item-less blocks with no data source) is the reviewed list
+  `core.test.LedgerSources`, each with the class that gives it; new things declare where they're made. The recipe book
+  check starts with stage 2's first Journey recipe.
+- **Direction without telling**: every open goal has a pull in the world (seen, heard, read or tracked). Patterns:
+  JOURNEY "The bar".
+- **Never stuck**: a player who moves no goal for one play-day of play time gets the top need's rumour one step plainer;
+  after two, Track's bearing narrows. Never the act.
+- **Edge cases** in each stage's lines: shared Hearths and parties, two players at one beast or bell, death, logout,
+  chunk unload, restart, old saves, other dimensions, Peaceful, game rules, full inventory, a broken work, a beast that
+  can't reach its nook.
+- **Creatures**: Fresh Animations level (own model, three idles or more, look-at, blink, breathing, follow-through,
+  own gaits, reactions, own sounds and particles). The Lampwing passes Euan in game before any other kind.
+- **Hand-off**: the Ledger re-read against the code, the diff reviewed, the full suite green on CI.

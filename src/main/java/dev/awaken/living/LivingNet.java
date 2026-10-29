@@ -215,18 +215,6 @@ public final class LivingNet {
         }
     }
 
-    /** Where this player's open scenes are (SPEC §21.5): each sends up a distress flare now and then. Every 5 s. */
-    public record Tells(java.util.List<net.minecraft.core.BlockPos> at) implements CustomPacketPayload {
-        public static final Type<Tells> TYPE = new Type<>(Awaken.id("living_tells"));
-        public static final StreamCodec<ByteBuf, Tells> STREAM_CODEC =
-                net.minecraft.core.BlockPos.STREAM_CODEC.apply(ByteBufCodecs.list(8)).map(Tells::new, Tells::at);
-
-        @Override
-        public Type<Tells> type() {
-            return TYPE;
-        }
-    }
-
     /**
      * One happening's tell (SPEC §21.6): which kind of tell, where it is now, how big, how far along (0..1), and its line's
      * direction (dx, dz; zero for one that stays put).
@@ -381,7 +369,6 @@ public final class LivingNet {
         });
         r.playToClient(Happenings.TYPE, Happenings.STREAM_CODEC);
         r.playToClient(Journal.TYPE, Journal.STREAM_CODEC);
-        r.playToClient(Tells.TYPE, Tells.STREAM_CODEC);
         r.playToClient(CampSmoke.TYPE, CampSmoke.STREAM_CODEC);
         r.playToClient(RegionMsg.TYPE, RegionMsg.STREAM_CODEC);
         r.playToClient(LandMsg.TYPE, LandMsg.STREAM_CODEC);

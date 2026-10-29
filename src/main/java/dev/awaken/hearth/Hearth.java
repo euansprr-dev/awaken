@@ -1,12 +1,10 @@
 package dev.awaken.hearth;
 
-import dev.awaken.hearth.echo.Echoes;
 import dev.awaken.hearth.room.RoomType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
@@ -15,7 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Public API of the hearth module for other modules (lucidium reads Sanctuaries, powers' echo_swap reads Echoes, the
+ * Public API of the hearth module for other modules (lucidium reads Sanctuaries, the
  * city moves townsfolk to a Hearth you share). Server side only; every call is cheap. A Hearth has one owner and any
  * number of members (SPEC "Together"); "belongs" and "member of" mean either.
  */
@@ -85,11 +83,6 @@ public final class Hearth {
     /** Whether this player's home Hearth (own or shared) has at least one room of this type. */
     public static boolean hasRoom(ServerPlayer player, RoomType type) {
         return HearthService.homeOf(player).map(h -> h.hasRoom(type)).orElse(false);
-    }
-
-    /** The player's live field Echoes (summoned, alive, in the player's level). For echo_swap and friends. */
-    public static List<LivingEntity> ownedEchoes(ServerPlayer player) {
-        return Echoes.fieldEntities(player);
     }
 
     /** The player's home Anchor position (own Hearth, else the first shared one), if they have one (always in the overworld). */

@@ -7,9 +7,9 @@
   ],
   "scene": "resident",
   "giver": "bram",
-  "summary": "Take Bram's letters to Ilse at the Wayfarer camp up the north road. She'll explain the rest.",
+  "summary": "Take Bram's letters to Ilse at the Last Fire up the north road. She'll explain the rest.",
   "ask": [
-    "Bram: Ilse runs a camp for new hunters up the north road. Take these letters to her, and she'll explain the rest."
+    "Bram: Ilse keeps the last fire up the north road. Past it, it's only hunters. Take these letters to her, and she'll explain the rest."
   ],
   "steps": [
     {
@@ -40,8 +40,8 @@
         "target": "camp",
         "radius": 16
       },
-      "text": "Take the letters to the Wayfarer camp up the north road",
-      "place": "Wayfarer camp",
+      "text": "Take the letters to the Last Fire up the north road",
+      "place": "the Last Fire",
       "reward": {
         "levels": 0.1
       }
@@ -56,9 +56,8 @@
       "place": "Ilse",
       "tally": true,
       "done": [
-        "Ilse: You must be one of Bram's new hunters. He said he'd send someone. Have you got our letters?",
-        "Ilse: Thank you! We've been waiting a whole week for these.",
-        "Ilse: Here, take an ember from our fire. Carry it with you, and when you find a spot you'd like to live, place it there. That'll be your home."
+        "Ilse: You're the one from the square. Sit down, the kettle's nearly on.",
+        "Ilse: Here. It's a coal from this fire. Put it down wherever you want to live, and that's your home. Nobody will come and bother you out there. Nobody can."
       ],
       "reward": {
         "item": "awaken:hearth_ember"

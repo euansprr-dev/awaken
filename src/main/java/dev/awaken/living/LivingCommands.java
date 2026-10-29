@@ -143,29 +143,6 @@ final class LivingCommands {
                 p.teleportTo(p.level().getServer().overworld(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, java.util.Set.of(), 180F, 10F, true);
                 return 1;
             }));
-            // tours: stand <distance> blocks south of your newest open scene, facing it (to see its flare)
-            l.then(Commands.literal("view").requires(AwakenCommands.admin())
-                    .then(Commands.argument("distance", IntegerArgumentType.integer(4, 400)).executes(c -> {
-                        ServerPlayer p = c.getSource().getPlayerOrException();
-                        var scene = dev.awaken.living.wayfarer.Scenes.newest(p);
-                        if (scene == null) return 0;
-                        int d = IntegerArgumentType.getInteger(c, "distance");
-                        ServerLevel level = p.level().getServer().overworld();
-                        int x = scene.getX(), z = scene.getZ() + d;
-                        // there once its land is made (SPEC §28.9, "Arrivals")
-                        dev.awaken.core.api.Passage.go(p, level, x + 0.5, z + 0.5, () -> {
-                            // above the canopy round the spot, on a small glass stand (a tour's camera, never inside leaves)
-                            int y = 0;
-                            for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++)
-                                y = Math.max(y, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x + dx, z + dz));
-                            y += d > 20 ? 6 : 1;
-                            if (d > 20) for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++)
-                                level.setBlock(new net.minecraft.core.BlockPos(x + dx, y - 1, z + dz), net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState(), 3);
-                            float pitch = (float) -Math.toDegrees(Math.atan2(scene.getY() + 20 - (y + 1.6), d));
-                            p.teleportTo(level, x + 0.5, y, z + 0.5, java.util.Set.of(), 180F, pitch, true);
-                        });
-                        return 1;
-                    })));
             l.then(Commands.literal("talk").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 var near = p.level().getEntitiesOfClass(dev.awaken.living.wayfarer.Wayfarer.class, p.getBoundingBox().inflate(24));
@@ -174,13 +151,6 @@ final class LivingCommands {
                 dev.awaken.living.wayfarer.Wayfarers.talkTo(p, near.getFirst());
                 return 1;
             }));
-            l.then(Commands.literal("scene").requires(AwakenCommands.admin())
-                    .then(Commands.argument("chain", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
-                        ServerPlayer p = c.getSource().getPlayerOrException();
-                        var at = dev.awaken.living.wayfarer.Scenes.force(p, com.mojang.brigadier.arguments.StringArgumentType.getString(c, "chain"));
-                        c.getSource().sendSuccess(() -> Component.literal(at == null ? "No such chain." : "Scene at " + at.toShortString()), false);
-                        return at == null ? 0 : 1;
-                    })));
             // the World Pulse (Phase D): start a kind here now, list what's on, end it all
             l.then(Commands.literal("happen").requires(AwakenCommands.admin())
                     .then(Commands.argument("kind", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {

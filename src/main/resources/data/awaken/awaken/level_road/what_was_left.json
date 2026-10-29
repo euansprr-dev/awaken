@@ -1,0 +1,23 @@
+{
+  "schema": 2,
+  "level": 44,
+  "title": "What was left",
+  "text": "12 essence. A key from the stone people still opens what someone left.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 12
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Open a chest someone left behind",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:left_chests_opened",
+      "value": 1
+    },
+    "toast": "Somebody meant it for you"
+  }
+}

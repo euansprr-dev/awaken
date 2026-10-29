@@ -1,0 +1,9 @@
+{
+  "holdfast.bell": {
+    "subtitle": "subtitles.awaken.holdfast.bell",
+    "sounds": [
+      {"name": "awaken:city/bell_hour", "pitch": 0.78, "attenuation_distance": 96},
+      {"name": "awaken:city/bell_district", "pitch": 0.72, "attenuation_distance": 96}
+    ]
+  }
+}
