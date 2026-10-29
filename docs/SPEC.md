@@ -5182,13 +5182,28 @@ Replaces §21.11 decision 18's kit. Built 2026-10-28 by one builder, no sub-agen
     tips a forward-faller onto its side, never into the striker). The walkers fall forward; the creeper, the chicken and the beasts onto
     their left; a spider rolls over in place and does not turn. A vanilla body at D keeps its glow's fade though Fight Feel's own fall
     clears the state's `deathTime` (the layer reads the fall from its own render data).
+17. **With Fresh Animations, its moves 1:1** (Euan 2026-10-29: "for all vanilla mob upgrades, literally just use the fresh animations 1:1, they are
+    perfect already"; he chose to keep the rung's size, eyes and extras). When EMF is loaded and the resource packs hold a model for the
+    species (`minecraft:optifine/cem/<id>.jem` or `emf/cem/`), read on each renderer rebuild, a form from C up keeps the vanilla body, which the
+    pack animates, at the rung's height (`state.scale *= FormShape.heightFactor`, about the feet; the walkers stay near vanilla's height in their
+    wider box). Nothing of the pack is shipped or read beyond that check: its terms forbid redistribution and our repo is public, so the moves
+    come from the player's own install (a modpack may bundle FA by its terms). The rig's extras ride the vanilla parts (`living.forms.FormFit`,
+    pure): every bone that isn't the body (body = base, hips, torso, head, neck, abdomen, tail, spinner, legs, shins, arms, forearms, hands,
+    coxae, ears, wings, eyes, jaws, fangs) is anchored to the vanilla part its body bone maps to (walkers: torso and hips on `body`, `arm_r` on
+    `right_arm`...; beasts and the chicken: `neck` and `head` on `head`; spider: torso on `body0`, abdomen on `body1`) and moved from the form's
+    box onto vanilla's grown to the rung: a point outside keeps its distance from the face it's beside, one inside spreads with it; plates on a
+    body bone move cube by cube, a chain (crowns, horns, claws, petals, crystals) moves with its root. Vanilla rest boxes are read from 26.3's
+    models (FA keeps vanilla's joints). `living.client.forms.FormExtras`, one layer per species' vanilla renderer, draws each part's pieces as
+    one baked model, carried by that part's pose from its own fields times the inverse of its vanilla rest (not `translateAndRotate`, which EMF
+    moves to the hand on an arm), in the form's skin and glow. The form's own clips, cued moves, life layer, halos and fall don't run then: FA
+    acts it all. The forms' eyes are `FormLayers`' as at D. LITE and OFF, no EMF, or no model for a species: as before.
 14. **Perf.** Per entity one `FormBody`, created on first sight, reused; no allocation per frame; halos past 48 blocks skipped; the life layer's
     springs past 32 as elsewhere. Rigs: at most 60 bones (tested). Server: one cue per move, one dimension refresh per form change.
 - Not yet (F3 follow-ups): presence motes at A and S and heavy footfalls, distance LOD for sub-pixel growth, a voice layer per family
   (`audio_living.py`), the wind-up light trail at S, a gallery command. The vanilla cow and pig variants (warm, cold) are not read: the form's
   own family paints them.
 - Dev: `/awaken living form <species> <rung> [family]`, `/awaken living formrow <species> [family]`; tour `tools/autopilot/forms-parade.txt`.
-- Tests: `forms_bodies` (every species and rung has a rig that passes its checks, its clips, its paints and coats), `forms_size` (the hitbox follows the form on the server),
+- Tests: `forms_bodies` (every species and rung has a rig that passes its checks, its clips, its paints and coats), `forms_fit` (with a model pack every non-body bone rides a vanilla part, none lost, each by its part), `forms_size` (the hitbox follows the form on the server),
   `forms_cue` (the cue codec round-trips; the second blow's caps), plus `living_form_mix`, `living_form_state`, `living_form_moves`.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
@@ -5934,6 +5949,8 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   the Listener's scaled to their legs (duty 0.62/0.4, 0.85/1.35 blocks, 2/3.4 px, 0.32 s swings, roll 0.05); the
   **creeper forms** (`form_creeper_2`..`_5`; four one-bone legs of 6, 7, 7 and 8 px) a diagonal shuffle at every
   speed (`alternate`, duty 0.66/0.42, about 0.1 and 0.18 blocks a cycle per px of leg; the largest's run 1.4).
+  These are the forms' own bodies; with Fresh Animations installed every vanilla species' form moves by FA 1:1 instead (SPEC 21.13
+  item 17, Euan 2026-10-29), its pieces riding FA's parts.
 - **The wild's and the city's walkers** (2026-10-29; a cross-module edit the orchestrator approved: client code only,
   the wildlife module's `WildModel` and `WildRenderer`, the citizens module's `CritterModel` and `CritterRenderer`; no
   server, entity, spawn or data change). Each model binds `CreatureLife.rig(root, temperament, rig.id)` (§12); a rig
