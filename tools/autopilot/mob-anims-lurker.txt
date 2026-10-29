@@ -38,7 +38,10 @@ wait 40
 cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
 cmd fill -24 201 -16 24 214 40 minecraft:air
 cmd kill @e[type=!minecraft:player,distance=..80]
-wait 20
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
 # 1. idle, no AI: the lurker's feet stay planted and now and then one re-grips; the cone sways, the fangs taste the air
 cmd tp @s 0.5 202.4 -3.5 0 22
 look 0 22
@@ -58,7 +61,10 @@ shot lurk_idle_close
 cmd awaken ascent pilot rec lurk_idle_close 120 2
 wait 125
 cmd kill @e[type=!minecraft:player,distance=..80]
-wait 10
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
 # 2. a walk into a run, a stop, a half turn on the spot, a creep back, close from a perch, beside vanilla's spider under
 # Fresh Animations (no AI: strolled by the server every tick, so the feet must keep up)
 cmd summon awaken:drip_lurker -5.0 201 1.5 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
@@ -137,7 +143,10 @@ shot lurk_hunt_c
 wait 85
 cmd gamemode creative
 cmd kill @e[type=!minecraft:player,distance=..80]
-wait 10
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
 cmd time set 6000
 info
 quit
