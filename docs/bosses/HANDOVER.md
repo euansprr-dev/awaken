@@ -5,6 +5,10 @@ account, that finishes the roll-out. You start with none of that session's memor
 that isn't already in `docs/bosses/ROLLOUT.md` (the tracker and every pick's reasons) and SPEC §35.9–35.11 (the
 decisions, and one bullet per finished boss). Read those two first, then this.
 
+**Finished 2026-10-30.** The boss-plan session resumed on the evening of 2026-10-29 and finished all 41 itself: the
+Signal's Shadow and the seven Nightmares are in, each with its ROLLOUT row and SPEC §35.11 bullet. Below is the record
+of how it was done (the workflow, the lessons, the known gaps) and the queue after it.
+
 ## What Euan asked for
 
 - 2026-10-28: "every boss needs to be revamped to this level of standard ... all unique ... Truly let's push this to
