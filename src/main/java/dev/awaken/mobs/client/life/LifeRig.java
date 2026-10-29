@@ -517,6 +517,8 @@ public final class LifeRig {
         }
         // last: the legs reach for where the feet stand, whatever the body above them did
         if (legs != null && lg != null && lg.rig == legs.rig) legs.apply(lg);
+        if (fly != null && fly.flapAmp() > 0 && life.frame % 30 == 0 && flyWings.length > 0) // PROBE
+            org.slf4j.LoggerFactory.getLogger("awaken-probe").info("owl end zRot={} xRot={} yRot={}", flyWings[0].zRot, flyWings[0].xRot, flyWings[0].yRot);
     }
 
     /**
@@ -535,6 +537,7 @@ public final class LifeRig {
         float amp = f.flapAmp() > 0 ? 1.0F : Mth.lerp(w, 1.0F, life.keep);
         float[] m = life.wingMean;
         float e = 0;
+        float probe0 = flyWings.length > 0 ? flyWings[0].zRot : 0; // PROBE
         for (int i = 0; i < flyWings.length; i++) {
             ModelPart q = flyWings[i];
             q.zRot -= flyWingSide[i] * own * stroke;
@@ -543,6 +546,9 @@ public final class LifeRig {
             e -= flyWingSide[i] * (q.zRot - m[i]);
         }
         if (once && flyWings.length > 0) life.wingE = e / flyWings.length;
+        if (f.flapAmp() > 0 && once && life.frame % 30 == 0) org.slf4j.LoggerFactory.getLogger("awaken-probe").info( // PROBE
+                "owl fly w={} keep={} beat={} stroke={} own={} air={} cruise={} zBefore={} zAfter={} mean={}", w, life.keep, life.beat,
+                stroke, own, life.airborne, life.cruise, probe0, flyWings.length > 0 ? flyWings[0].zRot : 0, m.length > 0 ? m[0] : 0);
         for (int i = 0; i < flyTips.length; i++) flyTips[i].zRot -= flyTipSide[i] * own * f.tipAmp() * trail;
         int n = flySpine.length;
         if (n > 0) {
