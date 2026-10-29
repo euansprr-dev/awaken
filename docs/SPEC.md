@@ -298,6 +298,36 @@ States: BUILDING → READY → ACTIVE ⇄ OPEN → CLEARED | BROKEN → RELEASED
 Break: spill wave + roaming Gate Lord with boss bar at the gate; blight (desaturation + grey fog) within 96 blocks until
 cleared; better loot. Warning one play-day ahead when within 256 blocks of a Hearth. The Gate Stabiliser pushes a break
 back by play-days. After the "Break the Signal" ending no gate breaks; after "Wake up" there is no blight.
+**Seen first** (Euan, 29 Oct 2026: "way too many gates breaking that I haven't even seen yet... a gate should only start
+the timer if you've been close to it"): a gate's break clock starts the first time any player comes within 64 blocks
+(`Breaks.SEEN_RADIUS`, about where the vortex reads clearly over the land; 3D distance from its ground block, checked once
+a second). Any player's approach starts it, owner or not (the gate stands in everyone's world and whoever is near can
+clear it); a spectator's never does, and Spirit Sight or a Gate Scanner reading from afar doesn't count. The clock then
+runs the play-days it was rolled with (1-4 by rank, plus any Stabiliser days): `breaksOnPlayDay = seen day + (rolled break
+day − created day)`. Until then the gate waits: it never warns or breaks, `GateRecord.waiting`/`counting` say so, and
+every reader shows no clock (`GateView.breaksOnPlayDay` is `Long.MAX_VALUE`, `GateHooks.waiting(level, id)` tells a
+waiting gate from a calm one; the Hearth's and a village's bells, the Grey Fields, Spirit Sight's card ("Not until
+someone goes near it"), the Gate Scanner and its Atlas marks, the gate card, the Atlas's gate marks (beacon flag
+`WAITING`), Jade and `/awaken gate info`'s timer line ("waits to be seen"). The Director's cap (4 standing gates per owner
+within 1,500 blocks) counts waiting gates, so a waiting gate nobody visits folds away quietly after 7 play-days unseen
+(`Breaks.UNSEEN_DAYS`, `GateRecord.foldsOnPlayDay`): no break, no Lord, no message. Saved as `seen_day` and `folds_on`
+(gate registry schema 4); loading an older save sends every standing gate that can break back to unseen, folding 7
+play-days from that load, and leaves broken ones as they are.
+**Where a gate stands** (29 Oct 2026, Euan's save: gates 41-46 failed in a row, gate 40 showed a beam over nothing):
+a gate replaces natural ground only, and that now includes the Awakened Lands' own (fused and scorched glass, sunshard,
+riven shale, faultstone, fault seam, hoarfrost, frostspar, mirepeat, the Wild Lands' trodden earth, salt licks and
+wallows) and the Soft Land's step slabs (`#awaken:gates_ground`). A bottom slab of a ground material lying on a natural
+block is a soft step, never a build, so it no longer refuses the spot (every Soft Land footprint has some); a top slab,
+or any other slab, still is someone's build. A step is good ground to stand on. The vortex's own column (the anchor
+and its cores) always forms over whatever grew there unless it is a block entity or unbreakable. A gate stands when its
+anchor core holds the vortex (`Overworld.stands`); a build whose vortex can't stand fails and comes down, with the real
+reason in the trace ("a Hearth within 64 blocks", "someone's build in the footprint", "wet or open ground", "its vortex
+had no room"). A loaded gate whose vortex is missing (an old doorway, or the anchor that Lands ground blocked before
+this) is rebuilt once per server run, checked every 10 s; if it still can't stand it folds away quietly (a broken one,
+or one with someone inside, is hidden instead). Every surface that shows a gate shows only one that stands (built, not
+released, not fallen: `GateExterior.shown`): the pillar and the Atlas marks (beacons), Far Sight's pillars, the Now line,
+the Horizon's first gate, `GateHooks.near` (Spirit Sight, the Gate Scanner, the bells, the villages) and `Gates.near`.
+The first gate's "A gate has opened N m" waits until it stands, so a failed build never announced anything.
 
 Themes (15), layouts (8), modifiers (14), twists (8), bosses: exactly as in `docs/plan.html` gate generator.
 
@@ -7410,7 +7440,8 @@ checklist titled "Your home", not Now lines (which leave the HUD, §27.11):
   hint; from afar: home on the Now line; an Anchor's guide; then the next room at home only).
 
 **Setting it down** (use on the top of a block). Refused, each with its reason: soft ground or no room, the city reserve
-(`CityBasin.reserved`), a Precursor ward (`WardHooks.at`), any gate not released within 64 (`GateHooks.near`), another
+(`CityBasin.reserved`), a Precursor ward (`WardHooks.at`), any gate that stands within 64 (`GateHooks.near`; one still
+forming fails its build on the Hearth instead, §7), another
 Hearth's radius, a household rule (`Household.refusesOwnAnchor`). Founds a **Tier 0 Hearthfire** (`awaken:hearthfire`,
 `HearthfireBlock` + an empty block entity that lists loaded fires for the client's glow; light 14; strength 2 / 1200,
 immovable, owner-only to break; loot table empty: the code returns the coal). `HearthRecord.tier` 0, radius 24

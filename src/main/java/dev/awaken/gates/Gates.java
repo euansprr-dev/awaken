@@ -37,7 +37,7 @@ import java.util.Optional;
 public final class Gates {
     private Gates() {}
 
-    /** What anyone can know about a gate from outside. */
+    /** What anyone can know about a gate from outside. {@code breaksInDays} is -1 while its clock doesn't run. */
     public record GateInfo(int id, BlockPos pos, Rank rank, GateState state, long breaksInDays, boolean scripted) {}
 
     /** A player's current run. */
@@ -53,7 +53,7 @@ public final class Gates {
     }
 
     private static GateInfo info(MinecraftServer s, GateRecord g) {
-        return new GateInfo(g.id, g.pos, g.plan.rank(), g.state, g.breaksIn(PlayDays.current(s)), g.scripted);
+        return new GateInfo(g.id, g.pos, g.plan.rank(), g.state, g.counting(s) ? g.breaksIn(PlayDays.current(s)) : -1, g.scripted);
     }
 
     /** The gate whose surface structure stands at (or within 4 blocks of) pos, or whose cell contains pos in the gate dimension. */
@@ -113,7 +113,7 @@ public final class Gates {
         if (g == null || g.state == GateState.RELEASED) return Optional.empty();
         GatePlan p = g.plan;
         return Optional.of(new GatePreview(g.id, p.rank(), p.theme(), p.theme().omen, p.layout(), p.modifiers(), p.floors(), p.boss(),
-                p.theme().bossName, p.twist(), g.breaksIn(PlayDays.current(s)), p.combos()));
+                p.theme().bossName, p.twist(), g.counting(s) ? g.breaksIn(PlayDays.current(s)) : -1, p.combos()));
     }
 
     /** The Veil scouted this gate: from now on its card shows everything. Counts {@code awaken:gates_scouted} once. */
@@ -245,7 +245,7 @@ public final class Gates {
         MinecraftServer s = level.getServer();
         List<GateInfo> out = new ArrayList<>();
         if (level.dimension() != Level.OVERWORLD) return out;
-        for (GateRecord g : GateRegistry.get(s).near(pos, radius, false)) out.add(info(s, g));
+        for (GateRecord g : GateRegistry.get(s).near(pos, radius, false)) if (GateExterior.shown(g)) out.add(info(s, g));
         return out;
     }
 

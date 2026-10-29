@@ -9,6 +9,7 @@ import dev.awaken.gates.content.GatePlan;
 import dev.awaken.gates.content.Layout;
 import dev.awaken.gates.content.Theme;
 import dev.awaken.gates.content.Twist;
+import dev.awaken.gates.net.GatePayloads;
 import dev.awaken.progression.Rank;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -26,9 +27,11 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * The surface gate's upkeep (docs/modules/structures.md): gates built before the vortex get the new structure the
@@ -59,30 +62,68 @@ public final class GateExterior {
         GateExteriorTests.register();
     }
 
-    // ---- gates built before the vortex ---------------------------------------------------------------------------------
+    // ---- every loaded gate stands (old doorways, a vortex that never formed) --------------------------------------------
 
     private static void onServerTick(ServerTickEvent.Post e) {
         MinecraftServer server = e.getServer();
         if (server.getTickCount() % 200 != 37) return;
+        // GameTests repair their own gates: a stand-in record on another test's plot is never rebuilt or folded
+        if (server instanceof net.minecraft.gametest.framework.GameTestServer) return;
         upgradeLoaded(server);
     }
 
-    /** Rebuilds every loaded surface gate that still has the old doorway. Returns how many it rebuilt. */
+    /** Gates already rebuilt once this run (never again until a restart: a rebuild that can't take never loops). */
+    private static final Set<Integer> REBUILT = new HashSet<>();
+    /** Broken gates whose vortex couldn't stand this run: never shown (the unbroken ones fold away instead). */
+    private static final Set<Integer> FALLEN = new HashSet<>();
+
+    /** Repairs every loaded surface gate whose vortex doesn't stand ({@link #repair}). Returns how many it rebuilt. */
     static int upgradeLoaded(MinecraftServer server) {
-        ServerLevel over = server.overworld();
         int n = 0;
-        for (GateRecord g : List.copyOf(GateRegistry.get(server).all())) {
-            if (!g.structurePlaced || g.state == GateState.RELEASED || g.state == GateState.BUILDING) continue;
-            if (!over.isLoaded(Overworld.anchor(g.pos)) || !over.isLoaded(g.pos.offset(16, 0, 16)) || !over.isLoaded(g.pos.offset(-16, 0, -16))) continue;
-            if (!Overworld.legacy(over, g)) continue;
-            Overworld.sweepLegacy(over, g, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
-            Overworld.place(over, g, g.state == GateState.BROKEN);
-            g.trace.add("surface rebuilt as a vortex");
-            GateRegistry.get(server).setDirty();
-            Awaken.LOG.info("[gates] gate {} rebuilt as a vortex at {}", g.id, g.pos);
-            n++;
-        }
+        for (GateRecord g : List.copyOf(GateRegistry.get(server).all())) if (repair(server, g)) n++;
         return n;
+    }
+
+    /**
+     * A loaded surface gate whose vortex doesn't stand is rebuilt: the old doorway (built before the vortex), or one
+     * whose anchor never formed (Lands ground in its opening before the gates knew it, SPEC §7). Once per gate per run; a
+     * gate that still can't stand folds away quietly (a broken one, or one with someone inside, is only hidden). Returns
+     * whether it rebuilt the gate.
+     */
+    static boolean repair(MinecraftServer server, GateRecord g) {
+        ServerLevel over = server.overworld();
+        if (!g.structurePlaced || g.state == GateState.RELEASED || g.state == GateState.BUILDING) return false;
+        if (!over.isLoaded(Overworld.anchor(g.pos)) || !over.isLoaded(g.pos.offset(16, 0, 16)) || !over.isLoaded(g.pos.offset(-16, 0, -16))) return false;
+        if (Overworld.stands(over, g) || !REBUILT.add(g.id)) return false;
+        boolean legacy = Overworld.legacy(over, g);
+        Overworld.sweepLegacy(over, g, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+        boolean stands = Overworld.place(over, g, g.state == GateState.BROKEN);
+        GateRegistry.get(server).setDirty();
+        if (stands) {
+            g.trace.add(legacy ? "surface rebuilt as a vortex" : "surface rebuilt: its vortex was missing");
+            Awaken.LOG.info("[gates] gate {} rebuilt as a vortex at {}", g.id, g.pos);
+            return true;
+        }
+        g.trace.add("its vortex can't stand at " + g.pos.toShortString());
+        Awaken.LOG.warn("[gates] gate {} can't stand at {}", g.id, g.pos);
+        if (g.state == GateState.BROKEN || !g.inside.isEmpty()) {
+            FALLEN.add(g.id);
+            GatePayloads.syncBeaconsAround(server, g.pos);
+        } else {
+            g.trace.add("folded: nothing stood to see");
+            GateService.release(server, g);
+        }
+        return false;
+    }
+
+    /** Whether a gate is there to see: its surface was built and its vortex didn't fall. Every surface that shows gates asks. */
+    public static boolean shown(GateRecord g) {
+        return g.structurePlaced && g.state != GateState.RELEASED && !FALLEN.contains(g.id);
+    }
+
+    static void forget() {
+        REBUILT.clear();
+        FALLEN.clear();
     }
 
     // ---- showcase gates (game masters) ---------------------------------------------------------------------------------

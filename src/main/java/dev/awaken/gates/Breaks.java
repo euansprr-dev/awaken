@@ -45,6 +45,13 @@ public final class Breaks {
     private Breaks() {}
 
     public static final int BLIGHT_RADIUS = 96;
+    /**
+     * A gate's break clock starts the first time any player (not a spectator) comes within this many blocks of it: about
+     * where the vortex reads clearly over the land (SPEC §7, "Seen first").
+     */
+    public static final int SEEN_RADIUS = 64;
+    /** An unseen gate folds away quietly after this many play-days, so gates nobody visits never pile up. */
+    public static final int UNSEEN_DAYS = 7;
     private static final Map<Integer, ServerBossEvent> BARS = new HashMap<>();
     private static final List<Integer> PENDING = new ArrayList<>();
 
@@ -56,6 +63,14 @@ public final class Breaks {
     /** One gate on a new play-day: warned the day before, broken (or folded, or deferred) on the day. */
     static void newPlayDay(MinecraftServer server, GateRecord g, long day) {
         if (g.neverBreaks(server) || !(g.state == GateState.READY || g.state == GateState.OPEN || g.state == GateState.ACTIVE)) return;
+        if (g.waiting(server)) {
+            // nobody has come close: no clock, no break; left unseen long enough, it folds away without a sound
+            if (g.foldsOnPlayDay >= 0 && day >= g.foldsOnPlayDay && g.inside.isEmpty()) {
+                g.trace.add("folded unseen on play-day " + day);
+                GateService.release(server, g);
+            }
+            return;
+        }
         if (day >= g.breaksOnPlayDay) {
             if (g.state == GateState.ACTIVE && someoneOnlineInside(server, g)) {
                 g.trace.add("break deferred on play-day " + day + ": someone is inside");
@@ -72,6 +87,60 @@ public final class Breaks {
         } else if (day == g.breaksOnPlayDay - 1 && !g.warned) {
             warn(server, g);
         }
+    }
+
+    // ---- seen first ---------------------------------------------------------------------------------------------------
+
+    /** Once a second: any player who comes within {@link #SEEN_RADIUS} of a waiting gate starts its clock. */
+    static void sightings(MinecraftServer server) {
+        if (server.getTickCount() % 20 != 7) return;
+        // GameTests start their gates' clocks themselves: a test's player never starts another test's
+        if (server instanceof net.minecraft.gametest.framework.GameTestServer) return;
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) sight(server, p);
+    }
+
+    /** The waiting gates this player is close enough to see start their clocks. Returns how many. */
+    static int sight(MinecraftServer server, ServerPlayer p) {
+        if (p.isSpectator() || p.level().dimension() != net.minecraft.world.level.Level.OVERWORLD) return 0;
+        int n = 0;
+        for (GateRecord g : GateRegistry.get(server).near(p.blockPosition(), SEEN_RADIUS, true)) {
+            if (g.state == GateState.BUILDING || !GateExterior.shown(g) || !g.waiting(server)) continue;
+            seen(server, g, p.getName().getString());
+            n++;
+        }
+        return n;
+    }
+
+    /** Starts a gate's clock: it breaks as many play-days from now as it was rolled with (stabilising counts). */
+    static void seen(MinecraftServer server, GateRecord g, String by) {
+        long today = PlayDays.current(server);
+        long span = Math.max(1, g.breaksOnPlayDay - g.createdDay);
+        g.seenDay = today;
+        g.breaksOnPlayDay = today + span;
+        g.foldsOnPlayDay = -1;
+        g.warned = false;
+        g.trace.add("seen on play-day " + today + " by " + by + ": breaks on play-day " + g.breaksOnPlayDay);
+        GateRegistry.get(server).setDirty();
+        GatePayloads.syncBeaconsAround(server, g.pos);
+    }
+
+    /** Schema 4 (old saves): every standing gate that hasn't broken waits to be seen again, from today. */
+    static void unseeAll(MinecraftServer server, GateRegistry reg) {
+        long today = PlayDays.current(server);
+        int n = 0;
+        for (GateRecord g : reg.all()) if (unsee(g, today)) n++;
+        reg.migrated();
+        dev.awaken.Awaken.LOG.info("[gates] schema 4: {} standing gates wait to be seen", n);
+    }
+
+    /** One gate of an old save: standing and able to break, it waits to be seen; anything else stays as it was. */
+    static boolean unsee(GateRecord g, long today) {
+        if (!g.state.standing() || g.scripted || g.wandering() || g.plan.skybornTrial()) return false;
+        g.seenDay = -1;
+        g.foldsOnPlayDay = today + UNSEEN_DAYS;
+        g.warned = false;
+        g.trace.add("waits to be seen (gates schema 4, play-day " + today + ")");
+        return true;
     }
 
     /** Whether a Hearth the gate's owner doesn't share stands within a break's reach (gates with no owner: never). */
@@ -129,8 +198,9 @@ public final class Breaks {
         GatePayloads.syncBeaconsAround(server, g.pos);
     }
 
-    /** Spill wave and Lord once the area is loaded. */
+    /** Who comes close (once a second), then the spill wave and Lord once the area is loaded. */
     static void tick(MinecraftServer server) {
+        sightings(server);
         ServerLevel over = server.overworld();
         GateRegistry reg = GateRegistry.get(server);
         if (!PENDING.isEmpty()) {
@@ -300,7 +370,7 @@ public final class Breaks {
         GateRecord best = null;
         double bestD = Double.MAX_VALUE;
         for (GateRecord g : GateRegistry.get(server).near(p.blockPosition(), Director.MAX_DIST, true)) {
-            if (g.neverBreaks(server) || g.breaksIn(today) > 1) continue;
+            if (!g.counting(server) || g.breaksIn(today) > 1) continue;
             double d = g.pos.distSqr(p.blockPosition());
             if (d < bestD) {
                 bestD = d;

@@ -28,7 +28,7 @@ final class GateAccess implements GateHooks.Access {
         GatePlan p = g.plan;
         return new GateHooks.GateView(g.key(), g.pos, p.rank().ordinal(), p.theme().themeId(), p.theme().displayName, p.theme().omen,
                 p.layout().displayName, p.modifiers().stream().map(m -> m.displayName).toList(), p.twist().displayName, p.floors(),
-                p.boss(), g.state.name(), g.neverBreaks(level.getServer()) ? Long.MAX_VALUE : g.breaksOnPlayDay, g.mouth());
+                p.boss(), g.state.name(), g.counting(level.getServer()) ? g.breaksOnPlayDay : Long.MAX_VALUE, g.mouth());
     }
 
     private static GateRecord record(ServerLevel level, String id) {
@@ -42,7 +42,7 @@ final class GateAccess implements GateHooks.Access {
     @Override
     public List<GateHooks.GateView> near(ServerLevel level, BlockPos pos, int radius) {
         GateRegistry reg = GateRegistry.get(level.getServer());
-        return Gates.near(level, pos, radius).stream().map(i -> reg.gate(i.id())).filter(g -> g != null && g.state != GateState.RELEASED)
+        return Gates.near(level, pos, radius).stream().map(i -> reg.gate(i.id())).filter(g -> g != null && GateExterior.shown(g))
                 .map(g -> view(level, g)).toList();
     }
 
@@ -105,6 +105,12 @@ final class GateAccess implements GateHooks.Access {
     public void release(ServerLevel level, String id) {
         GateRecord g = record(level, id);
         if (g != null) GateService.release(level.getServer(), g);
+    }
+
+    @Override
+    public boolean waiting(ServerLevel level, String id) {
+        GateRecord g = record(level, id);
+        return g != null && g.waiting(level.getServer());
     }
 
     @Override

@@ -79,7 +79,8 @@ public final class FarLandmarks {
 
     static void gates(ServerLevel level, BlockPos around, int radius, Consumer<Landmark> out) {
         for (Gates.GateInfo g : Gates.near(level, around, radius)) {
-            if (g.state() == GateState.CLEARED || g.state() == GateState.RELEASED) continue;
+            // as the gate pillars show them: not while it forms
+            if (g.state() == GateState.CLEARED || g.state() == GateState.RELEASED || g.state() == GateState.BUILDING) continue;
             int argb = g.state() == GateState.BROKEN ? 0xFFFF2030 : RANK[Math.clamp(g.rank().ordinal(), 0, RANK.length - 1)];
             out.accept(new Landmark(g.pos(), 900, argb, 1500));
         }

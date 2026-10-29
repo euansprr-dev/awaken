@@ -1,0 +1,26 @@
+{
+  "values": [
+    { "id": "#awaken:ground/soft_slabs", "required": false },
+    "minecraft:stone_slab",
+    "minecraft:andesite_slab",
+    "minecraft:granite_slab",
+    "minecraft:diorite_slab",
+    "minecraft:tuff_slab",
+    "minecraft:sandstone_slab",
+    "minecraft:red_sandstone_slab",
+    { "id": "awaken:fused_glass", "required": false },
+    { "id": "awaken:scorched_glass", "required": false },
+    { "id": "awaken:sunshard", "required": false },
+    { "id": "awaken:sunshard_cluster", "required": false },
+    { "id": "awaken:faultstone", "required": false },
+    { "id": "awaken:fault_seam", "required": false },
+    { "id": "awaken:riven_shale", "required": false },
+    { "id": "awaken:hoarfrost", "required": false },
+    { "id": "awaken:frostspar", "required": false },
+    { "id": "awaken:frostspar_cluster", "required": false },
+    { "id": "awaken:mirepeat", "required": false },
+    { "id": "awaken:trodden_earth", "required": false },
+    { "id": "awaken:salt_lick", "required": false },
+    { "id": "awaken:wallow", "required": false }
+  ]
+}
