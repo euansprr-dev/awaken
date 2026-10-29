@@ -143,7 +143,14 @@ public final class DepthBlocks {
             slab("fungal_loam", MapColor.DIRT, SoundType.ROOTED_DIRT),
             stairs("fungal_loam", MapColor.DIRT, SoundType.ROOTED_DIRT),
             new Def("fungal_moss_drift", Kind.DRIFT, "fungal_moss", MapColor.COLOR_CYAN, SoundType.MOSS),
-            new Def("fungal_spores", Kind.BITS, "", MapColor.COLOR_MAGENTA, SoundType.FUNGUS)
+            new Def("fungal_spores", Kind.BITS, "", MapColor.COLOR_MAGENTA, SoundType.FUNGUS),
+            // Bell Crypt (its own engines, stage 3)
+            slab("crypt_limestone", MapColor.STONE, SoundType.STONE),
+            stairs("crypt_limestone", MapColor.STONE, SoundType.STONE),
+            slab("crypt_flagstone", MapColor.COLOR_GRAY, SoundType.STONE),
+            stairs("crypt_flagstone", MapColor.COLOR_GRAY, SoundType.STONE),
+            new Def("crypt_dust", Kind.DRIFT, "crypt_limestone_worn", MapColor.STONE, SoundType.SAND),
+            new Def("crypt_bones", Kind.BITS, "", MapColor.TERRACOTTA_WHITE, SoundType.BONE_BLOCK)
     );
 
     /** Registers every depth block after the blocks they're cut from ({@code base} finds those by id); by id, table order. */

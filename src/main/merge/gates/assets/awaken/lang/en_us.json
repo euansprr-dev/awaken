@@ -159,6 +159,7 @@
   "subtitles.awaken.gate.world.field": "Bells ring far across the water",
   "subtitles.awaken.gate.world.rest": "Old wood creaks in a quiet room",
   "block.awaken.bell_prop": "Swinging Bell",
+  "block.awaken.crypt_bell_toppled": "Toppled Bell",
   "block.awaken.bell_tower": "The Bell Tower",
   "block.awaken.fungal_rock": "Hollow Rock",
   "block.awaken.fungal_rock_veined": "Veined Hollow Rock",
@@ -574,5 +575,11 @@
   "block.awaken.fungal_loam_slab": "Loam Slab",
   "block.awaken.fungal_loam_stairs": "Loam Stairs",
   "block.awaken.fungal_moss_drift": "Glow Moss Drift",
-  "block.awaken.fungal_spores": "Fallen Spore Caps"
+  "block.awaken.fungal_spores": "Fallen Spore Caps",
+  "block.awaken.crypt_limestone_slab": "Crypt Limestone Slab",
+  "block.awaken.crypt_limestone_stairs": "Crypt Limestone Stairs",
+  "block.awaken.crypt_flagstone_slab": "Flagstone Slab",
+  "block.awaken.crypt_flagstone_stairs": "Flagstone Stairs",
+  "block.awaken.crypt_dust": "Limestone Dust",
+  "block.awaken.crypt_bones": "Bone Shards"
 }

@@ -161,6 +161,10 @@
     "awaken:abyss_tiles_slab",
     "awaken:abyss_tiles_stairs",
     "awaken:fungal_rock_slab",
-    "awaken:fungal_rock_stairs"
+    "awaken:fungal_rock_stairs",
+    "awaken:crypt_limestone_slab",
+    "awaken:crypt_limestone_stairs",
+    "awaken:crypt_flagstone_slab",
+    "awaken:crypt_flagstone_stairs"
   ]
 }

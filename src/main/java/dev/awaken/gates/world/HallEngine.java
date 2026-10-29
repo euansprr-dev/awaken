@@ -65,6 +65,8 @@ final class HallEngine implements WorldEngine {
         final List<FloorAir.Light> lights = new ArrayList<>(), minor = new ArrayList<>();
         final List<FloorAir.Shaft> shafts = new ArrayList<>();
         Sculpt s;
+        /** The Bell Crypt's wear (content 7), null before. */
+        CryptWear wear;
 
         Plan(Ctx c) {
             this.c = c;
@@ -391,6 +393,15 @@ final class HallEngine implements WorldEngine {
                 if (rise < 2 || lat % 4 == 0 || rise % 9 == 8) return trim;
                 return side == 0 || side == 2 ? grille : grilleZ;
             });
+            // the years on its floors (38.14, stage 3), new gates only
+            if (c.plan().contentVersion() >= 7) {
+                wear = new CryptWear(p, W, seed, floor, wet, trim, (r, x, z) -> {
+                    // the bays' pits and their causeway hold the water; the rope shaft and the rest are their own
+                    Kind k = kinds.get(r.id);
+                    return k == null || k == Kind.ROPES || k == Kind.REST || k == Kind.BAY && Math.abs(x + 0.5 - AXIS) < ARCADE + 1;
+                });
+                wear.apply(s);
+            }
             p.handbells(s);
             s.seal();
         }
@@ -825,6 +836,7 @@ final class HallEngine implements WorldEngine {
         // ---- what the floor walks on and how its air glows ----------------------------------------------------------
 
         boolean walk(Room r, int x, int z) {
+            if (wear != null && !wear.level(x, z)) return false;
             Kind k = kinds.get(r.id);
             if (k == null) return false;
             double aa = Math.abs(x + 0.5 - AXIS);

@@ -10801,6 +10801,22 @@ now, fought-on second storeys in a later plan.
   end without a jump (no rise over 0.6 of a block by what you stand on: a slab or a stair is a step, a full block a
   jump) and fails a world that needs one (`jumps`, 0 in all three); and counts the columns where the walk (jumps
   allowed) got more than 4 over the ground (`climbs`): a built cave world must have none (0 in all three).
+- **The Bell Crypt's own engines (stage 3)** keep their architecture, and the years show on their flagstones
+  (`CryptWear`, content 7, made after each engine's carve and before its handbells): the stones sink half a block in
+  patches (a flagstone slab where the noise is under 0.38) and where a patch sinks deepest (under 0.24, every stone round
+  it sunk too) a wet hollow opens a block down onto wet flagstone, moss on a third of it and a hidden light in every
+  other stone (it's a block under the floor's lights); rubble from the vault lies at the walls' feet where the place is
+  three clear out from the wall (crumbling limestone in a corner, a limestone stair with its back to the wall, one in
+  eight a fallen piece of tracery, a limestone slab a block further out); limestone dust drifts one to three layers
+  against half the walls' feet; bone shards lie in patches; moss grows round the hollows; and one bell lies toppled on
+  its side (`crypt_bell_toppled`: the swinging bell's model turned over, its mouth to its facing) in the floor's biggest
+  place, off its middle, slabs and dust round it. Doorways (the threshold and a block past it, 3 round the middle),
+  handbells (3.5), every mark of 49 blocks or less and every basin (with 2 or 3 round them) stay as built, and each
+  engine keeps its own: the Hall its bays' pits and causeway (13.5 either side of the nave's axis) and the Rope Shaft
+  and the rest, the Passages the Charnel Well, the Field of Bells everything within 3 of an island's shore, its
+  causeways and its landings. A spawn or a feature stands only where no stone in its three by three has sunk and 3 or
+  more from the bell. The crypt's depth blocks: limestone and flagstone slabs and stairs, Limestone Dust (a drift of
+  worn limestone) and Bone Shards (bits).
 - **Measured** (`gateworlds_depth`, the Hive held to the targets): the Comb flat 47%, 13 heights, 21% partial, 36%
   plumb, roof spread 6.1, detail 40; the Brood Hall 41%, 14, 23%, 38%, 7.1, 43; the Swarm 52%, 12, 18%, 34%, 6.3, 45
   (today's rooms: flat about 98%, plumb 97%). Honey Lake is a sea world (stage 2). A world's floor plans in 6 to 10 ms.

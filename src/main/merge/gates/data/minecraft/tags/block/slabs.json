@@ -29,6 +29,8 @@
     "awaken:shrine_stone_slab",
     "awaken:abyss_tiles_slab",
     "awaken:fungal_rock_slab",
-    "awaken:fungal_loam_slab"
+    "awaken:fungal_loam_slab",
+    "awaken:crypt_limestone_slab",
+    "awaken:crypt_flagstone_slab"
   ]
 }

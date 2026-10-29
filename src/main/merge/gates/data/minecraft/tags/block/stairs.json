@@ -27,6 +27,8 @@
     "awaken:shrine_stone_stairs",
     "awaken:abyss_tiles_stairs",
     "awaken:fungal_rock_stairs",
-    "awaken:fungal_loam_stairs"
+    "awaken:fungal_loam_stairs",
+    "awaken:crypt_limestone_stairs",
+    "awaken:crypt_flagstone_stairs"
   ]
 }

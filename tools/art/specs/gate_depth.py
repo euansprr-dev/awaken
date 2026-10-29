@@ -69,6 +69,12 @@ for _t, (_pairs, _drift, _bits) in THEMES.items():
     if _drift:
         DEPTH[_drift[0] + "_drift"] = ("drift", _drift[0], _drift[1], "shovel")
     DEPTH[_bits[0]] = ("bits", "", _bits[1], None)
+# the Bell Crypt's own engines (stage 3): its dust wears worn limestone
+for _base, _en in (("crypt_limestone", "Crypt Limestone"), ("crypt_flagstone", "Flagstone")):
+    DEPTH[_base + "_slab"] = ("slab", _base, _en + " Slab", "pickaxe")
+    DEPTH[_base + "_stairs"] = ("stairs", _base, _en + " Stairs", "pickaxe")
+DEPTH["crypt_dust"] = ("drift", "crypt_limestone_worn", "Limestone Dust", "shovel")
+DEPTH["crypt_bones"] = ("bits", "", "Bone Shards", None)
 
 # each theme's bits: its art module, the ramp they're drawn in, how they're shaped
 BITS = {
@@ -85,6 +91,7 @@ BITS = {
     "sky_pebbles": ("sky", "skyrock", "crumbs"),
     "abyss_wax_stubs": ("abyss", "wax", "crumbs"),
     "fungal_spores": ("fungal", "fcap", "crumbs"),
+    "crypt_bones": ("bell", "bone_n", "shards"),
 }
 
 
@@ -159,7 +166,9 @@ def textures():
     out = {"hive_wax_crumbs": tex_crumbs(P, "hwax", "hive")}
     for name, (module, ramp, style) in BITS.items():
         # each theme's own ramps, set just before its bits (two themes may name a ramp alike)
-        P = K.px(importlib.import_module("gate_worlds_" + module).RAMPS)
+        m = importlib.import_module("gate_worlds_" + module)
+        # the Bell Crypt's spec keeps its ramps in its own palette builder
+        P = K.px(m.RAMPS) if hasattr(m, "RAMPS") else m._px()
         out[name] = tex_crumbs(P, ramp, name) if style == "crumbs" else tex_shapes(P, ramp, name, style)
     return out
 
