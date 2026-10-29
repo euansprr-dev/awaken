@@ -13198,7 +13198,7 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   barrel; the shaft rule is gone); lode hearts drop themselves, and a heart a player set down gives only itself back.
   The band has seven pages (rail nodes every 29 units). Never stuck: a rumour unfollowed for 24,000 ticks of play names
   its distance to 50 blocks and the land; after 48,000 Track's offset narrows from ±48 to ±8. Commands:
-  `/awaken admin kin summon|home|meet|watch|points|trust|lesson|site|page`. Tests (CI): `kin_kinship_steps`,
+  `/awaken admin kin summon|home|meet|watch|points|trust|lesson|site|yard|page` (`yard`, for tours: a Hearthfire where the player stands, whatever the Lull says, with a field of ripe wheat and a chest east of it and an Ore Shed with an iron lode heart and a barrel of rubble west of it). Look tour: `tools/autopilot/journey-2.txt`. Tests (CI): `kin_kinship_steps`,
   `kin_ore_shed_limits`, `kin_fields_harvest`, `kin_rumours_real`, `hearth_ore_shed`. Sounds are pitched vanilla events
   for now (`kin.<kind>.call/tell/worry`, `kin.chime`); the kin's own suite comes with the style pass Euan judges.
 

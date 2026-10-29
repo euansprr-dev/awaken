@@ -3,14 +3,30 @@ package dev.awaken.kin;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.awaken.core.AwakenCommands;
+import dev.awaken.delve.DelveContent;
+import dev.awaken.delve.Ore;
+import dev.awaken.hearth.Embers;
 import dev.awaken.hearth.Hearth;
+import dev.awaken.hearth.HearthRecord;
+import dev.awaken.hearth.HearthService;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.FarmlandBlock;
+import net.minecraft.world.level.block.LanternBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.phys.AABB;
 
 import java.util.List;
@@ -18,8 +34,8 @@ import java.util.Optional;
 
 /**
  * Admin tools for the kin: {@code /awaken admin kin summon <kind> | home <kind> | meet <kind> | watch <kind> <lines> |
- * points <kind> <n> | trust | lesson | site | page}. {@code home} brings one home to the player's Hearth at once (for
- * tours), {@code lesson} sends the first fire's Lampwing now, {@code site} fills the nearest wild site.
+ * points <kind> <n> | trust | lesson | site | yard | page}. {@code home} brings one home to the player's Hearth at once (for
+ * tours), {@code yard} founds a ready-made home where the player stands, {@code lesson} sends the first fire's Lampwing now, {@code site} fills the nearest wild site.
  */
 final class KinCommands {
     private KinCommands() {}
@@ -106,6 +122,7 @@ final class KinCommands {
                                 }
                         return 0;
                     }))
+                    .then(Commands.literal("yard").executes(c -> yard(c.getSource().getPlayerOrException()) ? 1 : 0))
                     .then(Commands.literal("page").executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
                         KinNet.Page page = KinPage.build(p);
@@ -129,6 +146,56 @@ final class KinCommands {
         if (b == null) return false;
         Kinship.of(p).kind(k).met = true;
         KinHome.settle(level, b, h.get().anchor(), nook, p);
+        return true;
+    }
+
+    /**
+     * Tours only: a home right here, whatever the Lull says. The Hearthfire where the player stands, a field east of it
+     * (ripe wheat either side of a water channel, a chest at its end) and an Ore Shed west of it (a stone room with an iron
+     * lode heart and a barrel of rubble), the heart counted as the player's own. False when they already have a home.
+     */
+    static boolean yard(ServerPlayer p) {
+        if (Hearth.home(p).isPresent()) return false;
+        ServerLevel level = p.level();
+        BlockPos a = p.blockPosition(), g = a.below();
+        BlockState air = Blocks.AIR.defaultBlockState();
+        for (BlockPos q : BlockPos.betweenClosed(g.offset(-13, 0, -6), g.offset(16, 0, 6))) level.setBlock(q, Blocks.GRASS_BLOCK.defaultBlockState(), 2);
+        for (BlockPos q : BlockPos.betweenClosed(a.offset(-13, 0, -6), a.offset(16, 5, 6))) level.setBlock(q, air, 2);
+        // the field: farmland and ripe wheat either side of a water channel, the chest at its end
+        for (int x = 4; x <= 12; x++)
+            for (int z = -2; z <= 2; z++) {
+                if (z == 0) level.setBlock(g.offset(x, 0, z), Blocks.WATER.defaultBlockState(), 3);
+                else {
+                    level.setBlock(g.offset(x, 0, z), Blocks.FARMLAND.defaultBlockState().setValue(FarmlandBlock.MOISTURE, 7), 2);
+                    level.setBlock(a.offset(x, 0, z), ((CropBlock) Blocks.WHEAT).getStateForAge(7), 2);
+                }
+            }
+        level.setBlock(a.offset(13, 0, 0), Blocks.CHEST.defaultBlockState(), 3);
+        // the Ore Shed: a 5x5 stone room, a door on its east side, the heart and a barrel inside
+        BlockPos s = a.offset(-10, 0, -2);
+        for (int x = 0; x < 5; x++)
+            for (int z = 0; z < 5; z++) {
+                level.setBlock(s.offset(x, -1, z), Blocks.STONE_BRICKS.defaultBlockState(), 2);
+                level.setBlock(s.offset(x, 3, z), Blocks.SPRUCE_PLANKS.defaultBlockState(), 2);
+                boolean wall = x == 0 || x == 4 || z == 0 || z == 4;
+                for (int y = 0; y < 3; y++) if (wall) level.setBlock(s.offset(x, y, z), Blocks.COBBLESTONE.defaultBlockState(), 2);
+            }
+        BlockPos door = s.offset(4, 0, 2);
+        level.setBlock(door, Blocks.OAK_DOOR.defaultBlockState().setValue(DoorBlock.FACING, Direction.WEST), 3);
+        level.setBlock(door.above(), Blocks.OAK_DOOR.defaultBlockState().setValue(DoorBlock.FACING, Direction.WEST).setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER), 3);
+        level.setBlock(s.offset(2, 2, 2), Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true), 3);
+        BlockPos heart = s.offset(2, 0, 1), barrel = s.offset(2, 0, 3);
+        BlockState hs = DelveContent.HEARTS.get(Ore.IRON).get().defaultBlockState();
+        level.setBlock(heart, hs, 3);
+        level.setBlock(barrel, Blocks.BARREL.defaultBlockState(), 3);
+        if (level.getBlockEntity(barrel) instanceof Container c) {
+            c.setItem(0, new ItemStack(Items.COBBLESTONE, 32));
+            c.setItem(1, new ItemStack(Items.GRAVEL, 16));
+        }
+        HearthRecord r = Embers.found(p, level, a);
+        KinHome.placed(level, p, heart, hs);
+        HearthService.scanNow(level, r);
+        p.teleportTo(a.getX() + 0.5, a.getY(), a.getZ() + 4.5);
         return true;
     }
 }
