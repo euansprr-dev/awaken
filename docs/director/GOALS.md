@@ -1,6 +1,7 @@
 # AWAKEN: the road (director, second pass)
 
-Written 29 Oct 2026 by the game-director session, after Euan's notes on the first pass (`IDEAS.md`).
+Written 29 Oct 2026 by the game-director session, after Euan's notes on the first pass (`IDEAS.md`), and revised the
+same day after his second note (no task list for each day, and no announcing the fight at each rank).
 Nothing here is approved or built. It's a direction for Euan to push on; each part then gets its own plan through
 `.claude/PLANNING-PROCESS.md`.
 
@@ -31,6 +32,23 @@ Nothing here is approved or built. It's a direction for Euan to push on; each pa
 "what am I doing, and why?" at every hour of the game. A feature list makes that worse: more things to do with no reason
 to do them. This pass starts from the goal and works down.
 
+## Euan's second note (the same day)
+
+- He doesn't want the K menu to have tasks for each day: "no good game has a task list for each day", least of all a
+  sandbox survival game like Minecraft.
+- Nobody needs to know that a boss fight waits at the next rank. No other game tells you every time. "It just happens
+  the first time, and then you start knowing, okay, then every time I'm going to reassess, there's a boss that's going
+  to be waiting for me." You're guided so that you fall into it, "but you still don't know what's going to happen."
+
+**What changes.** The goal and the parts stay; how the game hands them to you changes. The Road screen and its Today
+list are gone. No screen, card, toast or line names a Warden, its hall or its gift before you meet it, or says that a
+fight waits at the next rank. Guidance comes from the world: what you can see and hear from where you stand, people who
+ask you in person, and the far goal, told once in a scene and then always in sight.
+
+**This doesn't undo his first note.** He stopped at hour four because nothing in front of him was worth going to and
+nothing said where it all ends, not because he lacked a list. A list would cover that up, and he's right that it's the
+wrong fix. The fix is a world that pulls wherever you stand, and an end you know about.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## How the best games set the goal
@@ -39,21 +57,39 @@ to do them. This pass starts from the goal and works down.
 |---|---|---|
 | Hunter x Hunter, Greed Island | Collect the 100 designated slot cards, numbered 000 to 099 | A number you can count. Each card is ranked by how hard it is to get (SS down to H) and some exist in only a few copies, so players compete and trade. Collecting 001 to 099 earns 000, the prize. |
 | Solo Leveling | Reach S-rank; get the Holy Water of Life for his mother | A personal reason. The way there is a climb with named stops (the Demon Castle's floors, an ingredient from Vulcan on floor 50). His job change is a hidden dungeon whose boss, Igris, becomes his first shadow. |
-| Monster Hunter | Raise your Hunter Rank | Each rank cap is lifted by an Urgent Quest against one named monster. Ranking up *is* a boss fight. |
+| Monster Hunter | Raise your Hunter Rank | Each rank cap is lifted by an Urgent Quest against one named monster. Ranking up *is* a boss fight. (Every one is named in advance: that's the part we don't take.) |
 | Elden Ring | Become Elden Lord | Great Runes from the shardbearers. Two open the capital; the rest are optional, and each one restored at its tower gives a power. Partial to progress, all for the full prize. |
 | Vault Hunters | Collect the 25 Artifacts | They come from vault crates. Assembled on a wall, they make the frame for the Final Vault. |
 | Stardew Valley | Restore the Community Center | Six rooms of bundles, each drawn from a different activity (crafting, crops and animals, fishing, mining). Each room restored unlocks a place or a service. The bundles teach the whole game. |
 | Terraria | The Moon Lord | Four pillars, each a small event of its own, drop the fragments for the last gear. After the first win the rematch is quicker. |
 
+And how the best games guide you to it without a list:
+
+| Game | How it guides | What we take |
+|---|---|---|
+| Elden Ring | No quest log and no tracker, chosen for the sense of discovery. The Erdtree is in sight from almost everywhere; Stormveil stands in your way; Margit is simply there on the road. | The far goal is something you can see. The next big thing stands in your way; it isn't on a list. |
+| Breath of the Wild | Nintendo's triangle rule: big landmarks pull from far off, middle-sized hills hide what's behind them, so you crest a ridge and see something new. "Gravity": places that pull to different degrees lead you different ways and let you get sidetracked. Following the towers felt forced; the scattered landmarks felt like your own choice. | Wherever you stand, something in sight is worth walking to. New things show over ridges. |
+| Dark Souls | The first boss, the Asylum Demon, drops on you from above. There's a door to run through, and you come back for it with a weapon. After that a fog wall means a boss, and you never know which one. | The first Proving is a surprise with a fair way out. After it you know the pattern, never the details. |
+| Solo Leveling, the Job Change | It comes out of nowhere at level 40. Igris on the throne, waves of knights, then a hidden class he didn't know existed, and Igris rises as his first shadow. | The rank-up's fight and its gift are both surprises. The gift is the moment. |
+| Terraria | The Eye of Cthulhu turns up uninvited: "You feel an evil presence watching you…", and it comes that night. Events speak in lines like that. The Guide helps only when you ask him. | The world warns you in its own voice. Help is there when you ask, never pushed. |
+| Outer Wilds | The ship log records what you found and the rumours you heard, drawn as a web. Nothing in it is an order. If you're stuck, you're missing something you haven't seen yet. | The Book keeps what you've found and heard, never what to do. |
+| Minecraft | The End is never announced. An Eye of Ender flies toward the stronghold and you follow it. Advancements pop after you've done something, never before. | Things that point. Praise after, never instructions before. |
+
 What runs through them:
 1. **A number you can count**, shown from early on (100 cards, 25 artifacts, two runes).
 2. **Every piece has its own story of how you got it.** Nobody remembers a drop; everyone remembers the fight.
-3. **The rank-up is a named fight** you know about in advance.
+3. **The rank-up fight is a surprise the first time.** After it you know there'll be one, never which (Dark Souls' fog
+   walls, the Job Change).
 4. **The collection teaches the whole game.** Stardew's rooms send you to every activity; Greed Island's cards to every
    corner of the island.
 5. **Part of it to progress, all of it for the real prize.** You can finish without 100%, but 100% is what people chase.
 6. **Each piece is worth having on its own**: a card's effect, a rune's power.
 7. **You can see or hear your progress**: a restored building, a wall of artifacts.
+8. **The end is told once and stays in sight**: the Erdtree, Greed Island's empty slots. The road there is yours to find.
+9. **Something in sight, always.** Wherever you stand, the world shows you something worth walking to.
+10. **The world speaks in its own voice**: signs, sounds, people in person. Never a list of jobs.
+11. **Records, not orders.** What you've found and heard, never what to do today.
+12. **Help when you ask**, never pushed (Terraria's Guide; Awaken already has "Anything for me?").
 
 Sources: [Greed Island (Academic Kids)](https://academickids.com/encyclopedia/index.php/Greed_Island),
 [Ruler's Blessing](https://hunterxhunter.fandom.com/wiki/Ruler%27s_Blessing_(G.I_card)),
@@ -63,24 +99,56 @@ Sources: [Greed Island (Academic Kids)](https://academickids.com/encyclopedia/in
 [Elden Ring Great Runes](https://eldenring.wiki.gg/wiki/Great_Runes),
 [Vault Hunters end goal](https://www.vintageisthenewold.com/faq/what-is-the-end-goal-of-vault-hunters),
 [Stardew bundles](https://stardewvalley.fandom.com/wiki/Bundles),
-[Terraria Lunar Events](https://terraria.wiki.gg/wiki/Lunar_Events), [Celestial Sigil](https://terraria.wiki.gg/wiki/Celestial_Sigil).
+[Terraria Lunar Events](https://terraria.wiki.gg/wiki/Lunar_Events), [Celestial Sigil](https://terraria.wiki.gg/wiki/Celestial_Sigil),
+[Elden Ring and discovery (Siliconera on Miyazaki)](https://www.siliconera.com/elden-ring-gameplay-development-explained-by-hidetaka-miyazaki/),
+[Elden Ring's missing quest log (VGC)](https://www.videogameschronicle.com/news/a-new-ios-app-lets-players-track-quests-and-npcs-in-elden-ring/),
+[Breath of the Wild's triangle rule (Nintendo Everything, CEDEC 2017)](https://nintendoeverything.com/nintendo-on-the-behind-the-scenes-creation-of-zelda-breath-of-the-wild),
+[Gigazine on the same talk](https://gigazine.net/gsc_news/en/20171004-breath-of-the-wild-design-secret),
+[How Nintendo solved Zelda's open world problem (GMTK)](https://gmtk.substack.com/p/how-nintendo-solved-zeldas-open-world),
+[Northern Undead Asylum](https://en.wikipedia.org/wiki/Northern_Undead_Asylum),
+[Solo Leveling episode 11](https://solo-leveling.fandom.com/wiki/Episode_11),
+[Eye of Cthulhu](https://terraria.wiki.gg/wiki/Eye_of_Cthulhu).
 
 ---------------------------------------------------------------------------------------------------------------------
 
-## The shape: three horizons, always on screen
+## How the game guides: found, not told
 
-At any moment the player should be able to answer three questions without thinking:
+The player should always be able to answer three questions, and every part we design is checked against them: where
+does this all end? What's the big thing in front of me? What's worth doing right here? The world answers them. A screen
+doesn't.
 
-1. **What am I working toward?** The far goal: the Hundred Bells (part 1). "You have 9 of 100."
-2. **What's my next big thing?** The middle goals: the next **Proving** (part 2: "The Ringer waits at level 10. Beat it
-   for D-rank, the Great Bell Tenor and the Tether") and the Hearth's next **work** (part 3: "Oren wants a Foundry. It
-   needs bell bronze from the Singing Deep and Deepglass from the Descent").
-3. **What do I do today?** The near goals: the things those need, routed through the guidance Awaken already has (the Now
-   line, Trails, Promises' "What waits", the compass).
+1. **Where it ends: told once, then always in sight.** The night your first bell rings, the Signal tells you about the
+   hundred, once. After that the goal is a sound and a building: your tower's song with notes missing at dawn and dusk,
+   its frame with room for more, the city's bell still ringing wrong. The Bell Book is the one place you can count, and
+   it's a record (part 1). The Hearth's end is told the same way, once: Oren shows you the old plan of the Great Belfry
+   when he builds your Cottage (part 3).
+2. **The big thing in front of you: found.** Things you've seen and can't do yet: a gate whose light is too strong for
+   you, a door that reads your rank, a scaffold your people put up and left for you, a bell humming under ice you can't
+   break yet. And, once you've lived through your first Reassessment, knowing that the next one hides something too.
+   Nobody assigns these. You saw them.
+3. **What to do now: whatever pulls you.** From anywhere, something in sight or earshot is worth going to: a gate's
+   light on the horizon, a sleeping bell's note, smoke over a village, a herd on the ridge, someone who calls you over.
+   You pick. Nothing in the game says "today".
 
-**The Road** is the first page of the K menu: three cards, far, middle, near, each with a picture, a count and one plain
-line. Everything else in the journal sits behind it. Today the near horizon exists (§27, §33); the middle is a level
-number; the far is missing. This document fills the other two.
+**What's on screen, and what isn't**
+- **Gone:** the Road page and its Today list. No page, card, toast or Signal line names a Warden, its hall or its
+  gift, or says a fight waits at the next rank. Bells get no map markers and no hint list.
+- **Stays, because you chose it:** the small card top right for a chain you took (his own ask, §27.10), and the one place
+  you set on the Atlas (§27.11).
+- **Stays, because you asked:** "Anything for me?" at the Registry (§27.8) answers in plain words when you ask, and
+  never gives away a Proving or a bell.
+- **The Book and the Journal are records:** what you've found, what people told you (in their own words, with who and
+  where), what happened. Never what to do.
+- **Today's lines that look ahead** come under the same rule when the Provings are built: "D-rank at level 10. It opens
+  a sealed vault for you, and more." ("Anything for me?"), "D-rank opens at level 10: gate floors give the most XP" (the
+  capability clock, §27.9), "Your D-rank trial is ready" (the Now line) and the level road's "A-rank trial (70)". They
+  say only that the Registry will measure you again: never what waits, never what it gives (decision 7). A lock you met
+  stays in Saved for later (§27.1): that's a door you saw, not a spoiler.
+
+**How we know it works.** Discovery fails quietly: a player who sees nothing worth going to is back where Euan stopped.
+So the pull gets a test. A GameTest stands a player at 40 random spots in a test world at each rank and counts what's in
+reach: a gate, landmark or village within 200 blocks, a sleeping bell within earshot, a person with an ask, a scaffold at
+home. Every spot needs at least one. A CI tour looks at a handful of them.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -93,8 +161,8 @@ Carillon is a city of bells, and the game begins with "the bell rings wrong". Ma
   piece of the world (a stone, a beast, a storm, a dream, a Sovereign's grief). Rung together they were the Choir's song.
 - When the Keepers went down to hold the Seed, the bells scattered into the layers. The gates swallowed most of them.
   That's why the city's bell rings wrong: it's ringing alone.
-- The Signal sets the goal plainly, the first night after the Registry: "There were a hundred. Find them. Ring them all
-  and I can show you the bottom." (It knows: it's you, from a loop that didn't.)
+- The Signal says it once, the night your first bell rings in your Ember's smoke: "There were a hundred. Find them.
+  Ring them all and I can show you the bottom." (It knows: it's you, from a loop that didn't.) It never says it again.
 - Vael is collecting them too, and tells you their count every time you meet: "Fourteen. You?"
 
 ### What a bell is
@@ -118,7 +186,7 @@ Carillon is a city of bells, and the game begins with "the bell rings wrong". Ma
 | 8 | **The Hollow Court** | One in each Sovereign's domain | The end game |
 | 16 | **The gate worlds** | One per gate world, from its Lord, at the rank and modifier that world's bell asks for | Every gate theme, harder runs |
 | 13 | **The Wilds** | The three legendary beasts, hunts, wonders | The Wild Lands, hunting, exploring |
-| 13 | **Villages and Carillon** | A village's founding chime when you're its Friend or end its trouble; Carillon's guild bells (the Registry's handbell on day one, the bell-founders, the Runners' Roost, Choir Square) | People, villages, the city |
+| 13 | **Villages and Carillon** | A village's founding chime when you're its Friend or end its trouble; Carillon's guild bells (the Registry's handbell, the bell-founders, the Runners' Roost, Choir Square) | People, villages, the city |
 | 10 | **The Descent** | One per stratum, found through that stratum's rule | The Deep, stratum by stratum |
 | 6 | **The Singing Deep** | Cast at your own Foundry from rare sung metals | Mining, the Foundry |
 | 6 | **The Veil** | Spirit bells, heard and taken only in spirit form | The Veil, possession |
@@ -127,13 +195,25 @@ Carillon is a city of bells, and the game begins with "the bell rings wrong". Ma
 | 5 | **Big Days** (part 4) | Only from events | Answering the world when it calls |
 | 4 | **Your own** | Cast from your Ember, your first Grand room, your first settler's gift, your town's founding | The Hearth itself |
 
-That's every pillar of the game, each with a reason to go there that you can count. The Bell Book shows all hundred
-slots from the start: unknown ones show only their rank and a blank; a rumour (from Mira's Map Room, a settler, a spirit,
-Teodor's Archive) adds a hint in plain words ("A bell sleeps under the ice where the herd won't cross. B-rank.").
+That's every pillar of the game, each with a reason to go there that you can count. This table is for us; the player
+never sees where the bells are.
 
-**Pacing.** Two by the end of hour one (the Registry's handbell and your Ember's). About ten by hour four, each from a
-different system, so the hours where Euan stopped are the hours where the book starts filling. About thirty at C, fifty-five
-at B, seventy-five at A, ninety at S, ninety-nine before the Seed.
+### How you find them
+- **You hear them.** A sleeping bell hums its note under the world's sound, faint and from one direction, within about 64
+  blocks. You learn it once: your second bell is close to home, and you find it by ear. After that a low note on the wind
+  means a bell. (Hollow Knight's mapmaker works the same way: you find him by his humming.)
+- **Your tower tells you what's missing.** At dawn and dusk your bells play their song with gaps in it. When a sleeping
+  bell's hum is a note your song is missing, you recognise it.
+- **People tell you, in their own words, when you're with them.** A settler at supper, a villager you've helped, Mira
+  when you drop in at her Map Room, a spirit in the Veil: "There's a bell under the ice where the herd won't cross. I've
+  heard it." The Book writes down what they said, who said it and where. Nothing goes on the map unless you put it there.
+- **The Bell Book opens with your first bell.** It shows all hundred slots: the ones you have, and empty ones that show
+  only their rank. Nothing says which slots are Great Bells or where a slot's bell sleeps. It's a record of what you've
+  found and heard, never a list of what to do.
+
+**Pacing.** Two by the end of hour one: your Ember's, the night you light it, and the one you find by ear close to home.
+About ten by hour four, each from a different system, so the hours where Euan stopped are the hours where the book starts
+filling. About thirty at C, fifty-five at B, seventy-five at A, ninety at S, ninety-nine before the Seed.
 
 ### The tower
 Your Hearth's bell tower is where they hang. It grows with them: a frame at five, a belfry at twenty, a tower at fifty,
@@ -180,12 +260,42 @@ play-day. Euan's longest run ended here: the D trial failed on day 10, and he st
   phases: water drains, a floor gives way, the roof opens to the sky.
 - **Built to the bosses' bar and beyond.** The Living Forge standard is the floor. These are the six fights people
   remember. One Warden first, judged by Euan, the way the bosses started.
-- **Known in advance.** From the moment you reach a rank, the Road shows the next Warden's name, its hall and what it
-  gives. Halfway to the level you get a glimpse of it (a dream, a vision at the Spire).
-- **Fair to retry.** Fall and you wake at the hall's door, ready to go again now, not tomorrow. After three falls the
-  Signal says plainly what killed you.
+- **Found, not announced.** Nothing names a Warden, its hall or its gift before you meet it, and nothing says a fight
+  waits at the next rank. You're told only what the world already says: you've outgrown your rank, and the Registry
+  will measure you again when you're ready.
+- **Fair the first time.** The first Warden comes on a player who didn't prepare for it, so the Ringer is tuned for a
+  level-10 hunter who came as they were. Its hall has a way out, like the Asylum Demon's door: a stair up out of the
+  water takes you home, and the Reading Bell takes you back when you're ready.
+- **Fair to retry.** Fall and you wake at the hall's door, free to go again now or leave, not tomorrow. After three
+  falls the Signal says plainly what killed you.
 - **Readable.** Telegraphed moves, no swarm of adds, four to eight minutes.
 - **With friends.** A party at the level takes it together; it scales.
+
+### The first one: you fall into it
+1. **Level 10.** Your band chimes, as it does now: you've outgrown E-rank, and the Registry will measure you again
+   whenever you're ready, at the Spire in your town or at the Registry in Carillon. It sounds like paperwork, the same
+   measuring you had on your first day.
+2. **You go when you like.** You put your hand on the Reading Bell, as on day one. It rings, and your number comes up.
+   Then it rings again, lower, and it doesn't stop. The clerk steps back: "That's not our bell." (At home, your people
+   come out of their doors to listen.)
+3. **The floor is water.** You're knee-deep in a flooded nave with bells hanging in the dark above you, and something up
+   there is swinging them. Its name comes when it drops into the light: the Ringer.
+4. **The fight** (the table below). You can leave by the stair; if you fall, you wake at the hall's door.
+5. **You win.** The water drains, and its chain is lying at your feet: the Tether, which nobody told you about. The
+   Great Bell Tenor hangs free above the pit. You're back at the Reading Bell, and your band reads D.
+6. **Home.** At dawn the Tenor is standing in your yard. Oren: "It was here when we got up. It took eight of us to stand
+   it up, and none of us heard it come." That dusk it rings in your tower's song, the lowest note you have.
+
+### After the first: you know something waits, never what
+- The next time you're measured, the clerk remembers: "Last time the bell didn't stop. Go when you're ready." That's all
+  anyone says.
+- Each one surprises in a new way, so knowing doesn't make it routine. The Examiner doesn't take you anywhere: the room
+  you're standing in turns into the Hall of Reflections, and it fights the way you do. The Unmade is the bridge you land
+  on, and it stands up. The Sky Warden takes you up, not down. The surprise moves from whether there's a fight to what
+  it is and how it begins. (Sketches; the boss plan designs them.)
+- Each gift is a surprise too. Nobody says the C Proving brings your Path, or that the Unmade will rise for you after
+  you beat it.
+- The table below is for us. The player never sees it.
 
 ### The six Wardens (first sketches; the boss plan designs them)
 
@@ -215,9 +325,17 @@ at III, diamonds at IV, diamonds, obsidian and a Lord's Heart at V). Settlers co
 room stand. Oren builds the first cottage over a day. Everything else you build by hand, and after Tier V there's nothing.
 
 ### The change
-- **Works, not tiers.** The Hearth grows by **works**: a Forge, a Foundry, a Map Room, the Works, the Great Belfry. Each
-  work is asked for by the settler it belongs to, in their own words ("If I'm casting bells, I need bronze that sings.
-  The miners say it's below the river.").
+- **Works, not tiers.** The Hearth grows by **works**: a Forge, a Foundry, a Map Room, the Works, the Great Belfry.
+- **Asked in person, once.** A work is asked for by the person it belongs to, when you're home: they come and find you
+  and say it in their own words ("If I'm casting bells, I need bronze that sings. The miners say it's below the
+  river."). After that the ask lives in the world, not on a list: the work's plan is pinned up on its site with the
+  scaffold, and what it needs is drawn on the plan, like Stardew's bundle rooms. Look at the plan to remember. The
+  Journal keeps what they said.
+- **One or two at a time.** A work is asked for only when its person has come and the work before it stands, so there
+  are one or two open asks, never a board of twenty.
+- **Where it ends, told once.** When Oren builds your Cottage, he shows you the whole plan of what your Hearth could
+  become, with the Great Belfry drawn at the top. "That's the old belfry. Nobody's ever found what its clapper was made
+  from. The bell-founders say it came out of the deepest gates there are." The plan hangs on your wall from then on.
 - **You fetch the rare things.** Each work needs one to three things only adventure gives: a Lord's Heart, sung metal,
   Deepglass, a sky core, a spirit's blessing. Those are what send you into each part of the game, in order, with a reason.
 - **They gather the common things.** Timber, stone, iron, food: your people gather and make them over the play-days (the
@@ -242,7 +360,7 @@ room stand. Oren builds the first cottage over a day. Everything else you build 
 | E–D | The Greenhouse | Ilse | Wild plants (the Wild Lands) | Herbs and tonics |
 | D | The Forge | Oren | A Lord's Heart and a pattern from a gate | Tempering and commissions |
 | D | The Mine Head | a miner | A sung vein found with the Tuning Fork (the Singing Deep) | Ore every day |
-| D | The Map Room | Mira | A Wayfarer's chart and a Lookout | A bell rumour every morning; the Atlas fills |
+| D | The Map Room | Mira | A Wayfarer's chart and a Lookout | News of bells when you drop in; the Atlas fills |
 | C | The Foundry | Oren and a Carillon bell-founder | Bell bronze (the Singing Deep), Deepglass (the Descent's third stratum) | Casts bells and the tower's frame |
 | C | The Archive | Teodor | Precursor logs (the Descent), scans (the Halo) | Reads bell hints and peals aloud |
 | B | The Sanctuary | Sun | A spirit's blessing (the Veil) | Fracture care; dreams on purpose (the Lucidium) |
@@ -253,7 +371,7 @@ room stand. Oren builds the first cottage over a day. Everything else you build 
 
 The tier names stay (Homestead to Town) and are earned by works built. The Great Belfry is the Hearth's last work and the
 goal's monument at once, and its keystone is exactly what Euan described: something deep in an S-rank gate, so from the
-first look at the Hearth's plan you know that's where this ends.
+day Oren shows you the plan you know that's where this ends.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -264,7 +382,10 @@ Not every night. A few times a week of play, the world does something big, and y
 **The rules**
 - At most one Big Day every four play-days or so, a little more often at higher ranks. Never in a world's first two
   hours, never while you're in a gate.
-- **Always warned** at least half a day ahead: what, where, and when, in plain words, with the compass.
+- **Warned by the world**, at least half a day ahead, in its own signs: your bells shiver at dusk before a Bell Raid; a
+  runner comes up the road from a village with a Break and says where; Carillon's great bell tolls for a Toll Gate; the
+  ground hums where a Lord walks. The first time a sign comes, someone near you says in plain words what it means ("The
+  bells are shaking. Something's heard them."). After that, the sign is enough.
 - **Your choice.** Skip it and little is lost: a village is hurt and recovers; at your Hearth your people and Echoes hold
   the walls and you get a report at dawn. Answer it and there's something worth having, sometimes one of the five event
   bells.
@@ -294,7 +415,7 @@ Euan's sense is right: past hour four the game drops below the bar of its first 
 | The Descent | Ten strata of terrain plus a rule each (`Terrain.java`, 1,100 lines for all) | Each stratum built to the Gate Worlds look, its bell found through its rule |
 | The Above and Halo | Thirteen machines; the Halo is 454 lines | A place worth flying to, six bells, the Works' plans |
 | The Veil and Lucidium | Systems with little to do in them | Six bells each, found through their own verbs |
-| The story | A 73-line bible; Rival beats by rank | The Signal states the goal; Vael races you for bells; each Warden says why it tests you |
+| The story | A 73-line bible; Rival beats by rank | The Signal tells you the goal once, the night your first bell rings; Vael races you for bells; each Warden says why it tests you |
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -314,8 +435,9 @@ Euan's sense is right: past hour four the game drops below the bar of its first 
 At our pace (all of Awaken from the MDK in about 30 hours; the Singing Deep and the villages each one to two days with
 several builders). Art and Euan's look rounds come on top.
 
-1. **First, what Euan plays next (hours 0 to 17).** The Road screen; bells as a system (the book, the tower, notes,
-   voices, peals) with the first thirty bells; the Ringer and the Examiner; the works up to the Foundry; Big Days' rules
+1. **First, what Euan plays next (hours 0 to 17).** The guidance rule (the bells' hum, the tower's song, the Book as a
+   record, the measuring's words, today's look-ahead lines brought under it, the pull test); bells as a system (the
+   book, the tower, notes, voices, peals) with the first thirty bells; the Ringer and the Examiner; the works up to the Foundry; Big Days' rules
    with Bell Raids and village Breaks. Several builders, about four to six days with look rounds. The Ringer goes first,
    as the bar.
 2. **Then the middle (17 to 70 hours).** The Unmade and the Sky Warden; works to the Ringing Gate; bells 31 to 75; the
@@ -324,7 +446,7 @@ several builders). Art and Euan's look rounds come on top.
    full peal and the endings; server limits. The biggest phase.
 
 **Risks.** A hundred bells could become a checklist: each one must be a moment, not a drop (rule: no bell is a random
-drop). The Provings are six premium fights on top of the bosses already in flight, and Euan's bar for bosses is high.
+drop, and none gets a map marker). Discovery fails quietly, so the pull test above runs on every push. The Provings are six premium fights on top of the bosses already in flight, and Euan's bar for bosses is high.
 The works overlap Between the Gates' Hearth and settler code (one owner). Bells overlap Carillon's city sessions (the
 city's bells, districts and bell-founders). Nobody plays a hundred hours to test it, so every bell, Proving and work
 needs a command to reach it and a CI tour.
@@ -333,9 +455,16 @@ needs a command to reach it and a CI tour.
 
 ## 8. What I need from Euan
 
+His second note is already the rule above (found, not told), so it isn't asked again.
+
 1. Is **the Hundred Bells** the goal? If not, which way should it lean?
 2. Should **Wake** need the full hundred, with the story finishable before it?
-3. Should the **Provings' gifts** carry the existing unlocks (Tether, Path, first General, Skyborn, the Court, the Seed)?
-4. Hearth **works**: your people build to a plan by default, you can build it yourself if you want?
-5. **Big Days**: about one every four play-days, warned, skippable, with a muffled tower for trips?
+3. Should each **Proving's gift**, a surprise, be the unlock that rank already has (the Tether at D, moving from the vault
+   door; the Path at C; the first General at B; Skyborn at A; the Court at S; the Seed at Sovereign)?
+4. Hearth **works**: asked in person, the plan pinned at the site, your people build it by default, and you can build it
+   yourself if you want?
+5. **Big Days**: about one every four play-days, warned by the world's own signs, skippable, with a muffled tower for
+   trips?
 6. Start with **the first phase** (what you'd play next), the Ringer first as the bar?
+7. Bring **today's lines that look ahead** under the same rule, so they say only that the Registry will measure you
+   again, never what waits or what the rank opens?
