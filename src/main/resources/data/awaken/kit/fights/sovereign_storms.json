@@ -1,0 +1,161 @@
+{
+ "schemaVersion": 1,
+ "id": "sovereign_storms",
+ "moves": "sovereign_storms",
+ "intro": {
+  "pose": "idle",
+  "move": "arrive"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "snap",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "rake"
+      ],
+      [
+       "rake",
+       "bolt"
+      ]
+     ]
+    },
+    {
+     "move": "clap",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "bolt",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "snap"
+      ]
+     ]
+    },
+    {
+     "move": "howl",
+     "weight": 2
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "spears",
+   "pool": [
+    {
+     "move": "snap",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "rake"
+      ],
+      [
+       "rake",
+       "clap"
+      ]
+     ]
+    },
+    {
+     "move": "updraft",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "bolt",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "snap",
+       "rake"
+      ]
+     ]
+    },
+    {
+     "move": "spears",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "howl",
+     "weight": 2
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "overdrive",
+   "pool": [
+    {
+     "move": "howl",
+     "weight": 2
+    },
+    {
+     "move": "clap",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "bolt",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "snap",
+       "rake"
+      ]
+     ]
+    },
+    {
+     "move": "snap",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "rake",
+       "bolt"
+      ]
+     ]
+    },
+    {
+     "move": "spears",
+     "weight": 1,
+     "when": "FAR"
+    },
+    {
+     "move": "updraft",
+     "weight": 1,
+     "when": "NEAR"
+    },
+    {
+     "move": "overdrive",
+     "weight": 1
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.25
+ }
+}

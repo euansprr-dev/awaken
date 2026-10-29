@@ -198,7 +198,7 @@ final class DeepBestiary {
                 .phase(0.66F, "A hall of you.", a(DECOY, "Hall of Mirrors").n(3), a(BLINK, "Through the Glass"), a(CHARGE, "Mirrored Lunge"))
                 .phase(0.33F, "Shatter.", a(NOVA, "Shatter").n(20).bolt(BoltKind.GLASS).heavy(), a(DECOY, "Hall of Mirrors").n(2), a(GUARD, "Flawless Parry"))
                 .parts(P("mirror_heart", "Heart of Mirrors", "mirror")).build());
-        out.add(m("sovereign_storms", "Sovereign of Storms", Theme.COURT, Tier.SOVEREIGN, Model.BREEZE, "Speed and power gone wrong: lightning on every circle, thunder that throws you").hp(32).dmg(5.5).spd(0.32).scale(2.4F).tint(0xB8D8FF).glow(0x7FC3FF).bar(BossBarColor.BLUE).arena(28)
+        out.add(m("sovereign_storms", "Sovereign of Storms", Theme.COURT, Tier.SOVEREIGN, Model.BREEZE, "Speed and power gone wrong: lightning on every circle, thunder that throws you").hp(32).dmg(5.5).spd(0.32).scale(2.4F).size(1.2F, 1.48F).tint(0xB8D8FF).glow(0x7FC3FF).bar(BossBarColor.BLUE).arena(28)
                 .intro("It went so fast it left itself behind.")
                 .phase(1.0F, "The Sovereign of Storms crackles.", a(RAIN, "Lightning").n(4).bolt(BoltKind.CHARGE), a(GUST, "Thunderclap").radius(10).power(0.8F))
                 .phase(0.66F, "The storm thickens.", a(BOLT, "Storm Spears").n(5).bolt(BoltKind.CHARGE), a(LIFT, "Updraft").radius(4), a(RAIN, "Lightning").n(5).bolt(BoltKind.CHARGE))

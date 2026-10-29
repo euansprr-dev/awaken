@@ -10602,6 +10602,50 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   - **Meter.** Worst kink outside a strike 5.1° (Shatter's head, flicking from mirror to mirror on purpose), every
     other move under 5°; the Reflection alone from rest 7.1° (in the fight it always follows the parry, 4.9°); held at
     most 50% (the Hall, which turns slowly on purpose); the cut strings dip 6 to 30%.
+- **The Sovereign of Storms, the Gale Hound** (body and motion, `kit/bosses/sovereign_storms.py`). "It went so fast it
+  left itself behind." A huge lean hound built for speed: a deep chest and a tucked waist, long legs with big dark pads
+  and claws, a long narrow head with a deep muzzle, black lips and fangs, and tall ears swept back. Its hide is slate
+  blue-black run through with zig-zag veins of lightning down its flanks, legs and neck, and a glowing ridge along its
+  spine. Its ruff, the crest down its neck and back, its cheeks and its long plume of a tail are thundercloud, pale
+  grey billowing to white, with sparks in them: the tail is the wind it left behind, four bones long, each piece
+  wider than the last. Its eyes are white-hot under a heavy brow, its throat glows when its jaws open, and its ears
+  glow faintly inside. 62 cubes (372 faces) on 28 bones; the tips of its ears 3.5 blocks up. The hitbox is 1.2 x 1.48
+  at its scale of 2.4 (2.9 x 3.55 blocks), round its trunk.
+  - **Its idle.** It stands panting (6 s), its ribs and jaw working; it looks to one side, sniffs the air with its nose
+    up, flicks an ear, looks to the other side, and shifts a forepaw. It walks paw by paw (1.2 s), its head low, and
+    runs at a hound's gallop (0.6 s): the hind pair and then the fore pair, two flights a stride, its back flexing and
+    stretching and the plume streaming out behind.
+  - **Its moves.** The Snap (LIGHT): it draws back on its haunches with its lips up off its fangs, then lunges in from
+    the shoulders and snaps its jaws shut. The Rake (LIGHT, after the Snap): it rears its front up off its left forepaw,
+    the paw high with the claws out, and rakes it down across in front of it. The Bolt (HEAVY, its gap closer, held 8
+    ticks): it drops into a crouch with its hind legs bunched under it and its hackles up, quivers, and leaps 8 blocks
+    at you stretched out flat with its forelegs reaching, landing on braced forelegs with its jaws snapping shut.
+    Thunderclap (HEAVY, held 8 ticks): it rears right up on its hind legs with its forelegs curled to its chest, and
+    comes down on its forepaws with all its weight, as a fox comes down on a mouse. Lightning: it sits back on its
+    haunches as a dog sits (its hips drawn back over its hind paws, the hocks down) and howls at the sky, its throat
+    working. Storm Spears (into the second phase): head low and hackles up, it barks five times, its front jolting up
+    with each. Updraft: it whirls once round on the spot after its own tail, its paws dancing, and stops dead facing
+    you. Whoever is behind it gets the Tail Lash (LIGHT): it looks back over its shoulder and whips its plume across
+    behind it. Overdrive (the signature, into the third phase): it plants its legs wide and shakes itself like a wet
+    dog from its nose to the end of its plume, harder and faster, the shake running down its body a joint behind the
+    one before, and at its end its ruff and plume swell (scale 1 to 1.35) as the storm bursts off it; it drops into a
+    sprinter's crouch. Its intro: it stands still as if listening, then the wind it outran catches it up and blows its
+    plume up and forward over its back and its ruff up; they settle, it shakes its head and lowers it at you, growling.
+    Broken, it drops onto its belly with its forelegs out and lies panting; it rises with a push of its forelegs and
+    shakes its head. Struck from one side it yelps and twists away to the other. Its death (5.2 s): it staggers, sways,
+    goes down on its chest and rolls over onto its side, its legs stiff and then slack, while its ruff and plume thin
+    away to half.
+  - **How its keys are written.** One pose function over the body (its hips, loin and chest, neck, head and jaw, ears,
+    hackles and plume), each leg by two-bone IK to a paw (or from its hips in their own axes), the paws turned flat on
+    the floor heading the way it heads. The paws it stands on through a move are held where they stand, every tick.
+    The Updraft's whirl is a whole turn of its roll bone on top of its keys, a key a tick; the Overdrive's swell is
+    scale tracks on its ruff and plume. In its pose function a turn and a lean are + to its right, a plume's sweep + to
+    its left, a plume's lift and the hackles + up.
+  - **On the floor.** Between keys any paw that would sag into the floor has its leg solved again that tick to stand on
+    it; the ground pass then keeps every paw out (a flex of the wrist or hock), in the death and the kneel its head
+    too. Nothing goes into it by more than 1.5 px.
+  - **Meter.** Worst kink outside a strike 5.5° (the Rake's paw starting up), 6.6° in the Bolt into the Snap and the
+    Rake; held at most 21%; the cut strings dip 3 to 33%.
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

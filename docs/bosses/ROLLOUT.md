@@ -84,7 +84,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | Sovereign of Sleep | Sovereign | Court | Flier | kit | A, the Night Owl | ✓ 8d12f035 | ✓ 8d12f035 | — |
 | Sovereign of Machines | Sovereign | Court | Brute | kit | A, the Armillary | ✓ e30286bc | ✓ e30286bc | — |
 | Sovereign of Mirrors | Sovereign | Court | Duelist | kit | A, the Vanity | ✓ 8f309193 | ✓ 8f309193 | — |
-| Sovereign of Storms | Sovereign | Court | Flier | breeze ×2.4 | — | — | — | — |
+| Sovereign of Storms | Sovereign | Court | Flier | kit | A, the Gale Hound | — | — | — |
 | Sovereign of Roots | Sovereign | Court | Caster | creaking ×1.9 | — | — | — | — |
 | Sovereign of Ash | Sovereign | Court | Flier | blaze ×2.4 | — | — | — | — |
 | The Signal's Shadow | Final | Seed | Duelist | cube shade ×2 | — | — | — | — |
@@ -245,3 +245,9 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   a creature that never stops looking at itself, the Mirrored Lunge is every mirror swinging round to show you
   yourself, Shatter is all five bursting, and no other boss has six arms or carries its own reflections. B is the
   Mirror Knight's mirror mask and sword again; C is one more figure of crystal after the Glass Serpent.
+- **The Sovereign of Storms** (`sovereign_storms`): A the Gale Hound (a huge lean storm hound veined with lightning,
+  its ruff and long plume of a tail thundercloud), B the Thunder Ray (a sky manta of thundercloud trailing a lightning
+  whip of a tail), C the Djinn of the Gale (a figure riding a whirlwind). **Picked A**, 2026-10-29: "It went so fast it
+  left itself behind" is an animal that is all speed, its tail is the wind it left behind, the Bolt is a hound's leap,
+  Overdrive is a wet dog's shake that throws the storm off, and no other boss is a hound or a wolf. B is a third great
+  flat sky animal after the Moon Angler and the Sky Leviathan; C is the vanilla Breeze grown big.
