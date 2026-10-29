@@ -12178,8 +12178,8 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   **cave swifts** (half its roosts, **0.5**: never seen to hang, they wheel about the roost from the start, 3 to 11 blocks
   round it and up to 7 under, faster and on longer glides than bats, wings beating in bursts); the Drowned Galleries'
   **crayfish** (half its pools, **0.5**, where the bottom is rock within 6: they creep on the lake floor at 0.01 a tick and
-  shoot off backwards when you lean over); the Glimmer Hollows' **glass moths** (its moths, and a crystal's light of **3** or
-  more brings two or three, as a torch on the wall does elsewhere); the Black Vaults' **ash moths** (up to 4) and 7 bats; the
+  shoot off backwards when you lean over); the Glimmer Hollows' **glass moths** (its moths, and a crystal, light **4**, brings
+  two or three, as a torch on the wall does elsewhere); the Black Vaults' **ash moths** (up to 4) and 7 bats; the
   Violet Deep's **chitin crawlers** (its beetles, up to 5, bigger). `/awaken underlife lineup` adds a second row of them.
 - **The Lens looks** (`looks_caves.json`, exposure 1.0 for all): the Pale Halls cool and clean (blue-grey shadows, saturation
   0.92, haze tint 0.7/0.78/0.84); the Windcleft cold and crisp (contrast 1.14, warmth -0.1, haze 0.22); the Drowned Galleries

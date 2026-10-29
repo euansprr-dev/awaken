@@ -61,8 +61,8 @@ final class Underlife {
     /** A moth's anchor that follows the hand instead of staying put. */
     static final int HAND = -2;
     static final int REACH = 22, LEAVE = 28;
-    /** The light a Glimmer Hollows crystal gives (4) is enough for glass moths: 3 or more. */
-    static final int GLIMMER_LIGHT = 3;
+    /** A Glimmer Hollows crystal's light (4) is enough for glass moths: the air beside it lit 3. */
+    static final int GLIMMER_LIGHT = 4;
     /** Half the Windcleft's roosts are swifts, and half the Drowned Galleries' pools hold crayfish. */
     static final float SWIFTS = 0.5F, CRAYFISH_POOLS = 0.5F;
 
@@ -271,8 +271,8 @@ final class Underlife {
      */
     private static void lamp(ClientLevel level, int cx, int cy, int cz) {
         boolean glimmer = region == CaveRegion.GLIMMER_HOLLOWS;
-        int need = glimmer ? GLIMMER_LIGHT : UnderSites.MOTH_LIGHT;
-        if (count[MOTH] + 2 > want(MOTH) || level.getBrightness(LightLayer.BLOCK, M.set(cx, cy, cz)) < need + 1) return;
+        int need = glimmer ? GLIMMER_LIGHT : UnderSites.MOTH_LIGHT, bright = glimmer ? GLIMMER_LIGHT - 1 : UnderSites.MOTH_LIGHT + 1;
+        if (count[MOTH] + 2 > want(MOTH) || level.getBrightness(LightLayer.BLOCK, M.set(cx, cy, cz)) < bright) return;
         for (int dx = -2; dx <= 2; dx++) {
             for (int dy = -2; dy <= 2; dy++) {
                 for (int dz = -2; dz <= 2; dz++) {
