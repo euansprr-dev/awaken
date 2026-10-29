@@ -236,6 +236,7 @@ public final class LifeTests {
                     problems.add(mp.id() + ": a gait but fewer than two legs");
                     continue;
                 }
+                if (mp.gait().arms() && legs.n < 4) problems.add(mp.id() + ": it walks on its arms but only " + legs.n + " limbs plant");
                 if (hand != null) { // every one-bone leg of a hand-built walker is found
                     int own = 0;
                     for (int i = 0; i < b.bones().size(); i++) if (b.roles()[i] == Role.LEG) own++;
@@ -322,7 +323,7 @@ public final class LifeTests {
             }
             int handLegs = 4 + 4 + 4 + 6 + 2 + 2; // the frost stag's, mossback's, basilisk's, scarab's, shroomlet's and Listener's
             h.assertTrue(rigid >= 12 * 4 + 4 * 2 + 3 * 4 + handLegs, "the grazers', chickens', hoofed beasts' and hand-built walkers' legs are rigid (" + rigid + ")");
-            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 2 + 8 + 12 * 4 + 4 * 2 + 3 * 4 + handLegs, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's two, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four, the hand-built walkers' one-bone legs (and every other gait's) are checked (" + checked + ")");
+            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 4 + 8 + 12 * 4 + 4 * 2 + 3 * 4 + handLegs, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's legs and the long arms it lopes on, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four, the hand-built walkers' one-bone legs (and every other gait's) are checked (" + checked + ")");
             h.assertTrue(problems.isEmpty(), String.join("; ", problems));
             h.succeed();
         });

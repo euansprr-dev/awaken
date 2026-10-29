@@ -213,7 +213,7 @@ public final class Life {
             ly = s.y;
             lz = s.z;
             lastBody = s.bodyRot;
-            headYaw = targetYaw = Mth.clamp(s.yRot, -170, 170) * Mth.DEG_TO_RAD;
+            headYaw = targetYaw = Mth.clamp(Mth.wrapDegrees(s.yRot) * Mth.DEG_TO_RAD, -p.neck(), p.neck());
             headPitch = targetPitch = Mth.clamp(s.xRot, -75, 75) * Mth.DEG_TO_RAD;
         }
         float step = (age - lastAge) / 20.0F;
@@ -301,9 +301,12 @@ public final class Life {
         jawOpen = idleJaw + roarJaw + (dead ? 0.25F * Math.min(1.0F, dying / 0.6F) : 0.0F);
         if (roarT >= 0 && roarT < 0.35F) depth += 1.2F * (roarT / 0.35F); // it fills its chest before the roar
         // the head: toward what it looks at, plus its fidget's look, leading into a turn
-        float rawYaw = Mth.clamp(s.yRot, -170, 170) * Mth.DEG_TO_RAD, rawPitch = Mth.clamp(s.xRot, -75, 75) * Mth.DEG_TO_RAD;
+        // never further than its neck reaches (a look over its shoulder would wring it round); a look that passes behind
+        // it holds the side the head already turned to, so the face never swings across its back
+        float neck = p.neck(), rawYaw = Mth.wrapDegrees(s.yRot) * Mth.DEG_TO_RAD, rawPitch = Mth.clamp(s.xRot, -75, 75) * Mth.DEG_TO_RAD;
+        if (Math.abs(rawYaw) > neck) rawYaw = (Math.abs(rawYaw) > 2.0F && Math.abs(headYaw) > 0.1F ? Math.signum(headYaw) : Math.signum(rawYaw)) * neck;
         float into = moving > 0.2F ? Mth.clamp(yawRate * 0.16F, -0.45F, 0.45F) : 0.0F;
-        targetYaw = rawYaw * lookWeight + fYaw + into;
+        targetYaw = Mth.clamp(rawYaw * lookWeight + fYaw + into, -neck, neck);
         targetPitch = rawPitch * lookWeight + fPitch;
         if (dead) {
             targetYaw = headYaw;
@@ -318,7 +321,10 @@ public final class Life {
             headYaw += headYawV * h;
             headPitch += headPitchV * h;
         }
-        headYaw = Mth.clamp(headYaw, -3.0F, 3.0F);
+        if (Math.abs(headYaw) > neck) { // the spring's overshoot stops at the neck's reach too
+            headYaw = Math.copySign(neck, headYaw);
+            headYawV = 0;
+        }
         headPitch = Mth.clamp(headPitch, -1.3F, 1.3F);
         float lead = far ? 0.0F : p.eyeLead();
         eyeYaw = Mth.clamp(targetYaw - headYaw, -lead, lead);
@@ -842,6 +848,12 @@ public final class Life {
             x -= tw * dX;
             y -= tw * dY;
             zz -= tw * dZ;
+            int hg = r.hinge[j];
+            if (hg == 0) { // a hanging plate turns about the edge it hangs from, never off it
+                y = zz = vyy = vzz = 0;
+            } else if (hg == 2) {
+                x = y = vxx = vyy = 0;
+            }
             float m = r.maxAngle[j], mag = x * x + y * y + zz * zz;
             if (mag > m * m) {
                 float sc = m / Mth.sqrt(mag);

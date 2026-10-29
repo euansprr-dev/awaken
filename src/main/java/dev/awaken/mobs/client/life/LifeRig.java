@@ -41,6 +41,8 @@ public final class LifeRig {
     final ModelPart[] sp;
     final float[] dx, dy, dz, invLen, w2, damp, gain, maxAngle;
     final int[] chain, driver, role;
+    /** A hanging plate's one hinge, the edge it hangs from (0 its x axis, 2 its z axis), or -1: it swings every way. */
+    final int[] hinge;
     final ModelPart[] drivers;
     /** The body's motions (stagger, lean, the step's dip) go on the pose stack: its body bone doesn't carry the head. */
     final boolean rootMotion;
@@ -80,7 +82,7 @@ public final class LifeRig {
         n = 0;
         sp = new ModelPart[0];
         dx = dy = dz = invLen = w2 = damp = gain = maxAngle = new float[0];
-        chain = driver = role = new int[0];
+        chain = driver = role = hinge = new int[0];
         drivers = new ModelPart[0];
         rootMotion = true;
         rootCarries = false;
@@ -138,6 +140,28 @@ public final class LifeRig {
             pivots[i] = pivot(root, path);
         }
         return new LifeRig(p, LifeBones.bind(bones), root, parts, pivots, geo, paths, rig, idleClip, motionId);
+    }
+
+    /**
+     * A flat part hanging down (a skirt, a beard, a curtain of moss: every cube of its own a plane with height) swings
+     * only about the edge it hangs from: the plane's level axis. Swung any other way its far end would lift off what
+     * it hangs from. -1 for anything else.
+     */
+    private static int hinge(ModelPart part) {
+        float[] box = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+        part.visit(new PoseStack(), (pose, path, index, cube) -> {
+            if (!path.isEmpty()) return;
+            box[0] = Math.min(box[0], cube.minX);
+            box[1] = Math.min(box[1], cube.minY);
+            box[2] = Math.min(box[2], cube.minZ);
+            box[3] = Math.max(box[3], cube.maxX);
+            box[4] = Math.max(box[4], cube.maxY);
+            box[5] = Math.max(box[5], cube.maxZ);
+        });
+        if (box[0] > box[3] || box[4] - box[1] < 1.0F) return -1;
+        if (box[3] - box[0] < 0.01F && box[5] - box[2] >= 1.0F) return 2; // a plane along the body's length: it flares out
+        if (box[5] - box[2] < 0.01F && box[3] - box[0] >= 1.0F) return 0; // a plane across it: it flaps fore and aft
+        return -1;
     }
 
     private static void addPath(String path, List<String> paths, Map<String, Integer> index) {
@@ -241,6 +265,7 @@ public final class LifeRig {
         chain = new int[n];
         driver = new int[n];
         role = new int[n];
+        hinge = new int[n];
         Map<Integer, Integer> remap = new HashMap<>();
         List<ModelPart> drv = new ArrayList<>();
         Map<Integer, Integer> drvIndex = new HashMap<>();
@@ -254,6 +279,7 @@ public final class LifeRig {
             tail |= r == Role.TAIL;
             sp[j] = parts[bone];
             role[j] = r.ordinal();
+            hinge[j] = r == Role.DANGLE ? hinge(parts[bone]) : -1;
             float[] g = geo.get(paths.get(bone));
             float[] pv = pivots[bone];
             float cx = g[0] / g[3] - pv[0], cy = g[1] / g[3] - pv[1], cz = g[2] / g[3] - pv[2];

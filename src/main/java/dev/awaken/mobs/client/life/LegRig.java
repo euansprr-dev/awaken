@@ -307,23 +307,23 @@ public final class LegRig {
     }
 
     /**
-     * The legs of a body: each LEG-role bone that hangs from a non-leg and has exactly one LEG-role child, which has at
-     * most one leg below it (a foot, held as it stands at rest) with none below that (a two-bone leg, or three); on a
-     * rigid gait also each LEG-role bone with geometry and no leg below it (a one-bone leg, a hand-built body's block).
-     * {@code pose}: each bone's rest (x, y, z px; x, y, z rotation radians); {@code box}: each bone's own cubes' box,
-     * or null. Null when the body has fewer than two such legs.
+     * The legs of a body (and its arms, when the gait walks on them): each LEG-role bone that hangs from a non-leg and
+     * has exactly one LEG-role child, which has at most one leg below it (a foot, held as it stands at rest) with none
+     * below that (a two-bone leg, or three); on a rigid gait also each LEG-role bone with geometry and no leg below it
+     * (a one-bone leg, a hand-built body's block). {@code pose}: each bone's rest (x, y, z px; x, y, z rotation
+     * radians); {@code box}: each bone's own cubes' box, or null. Null when the body has fewer than two such legs.
      */
     public static @Nullable LegRig of(MotionProfile.Gait gait, LifeBones.Binding b, float[][] pose, IntFunction<float @Nullable []> box) {
         List<LifeBones.Bone> bones = b.bones();
         int count = bones.size();
         List<int[]> legs = new ArrayList<>(), chains = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            if (b.roles()[i] != Role.LEG) continue;
+            if (!limb(gait, b.roles()[i])) continue;
             int p = bones.get(i).parent();
-            if (p >= 0 && b.roles()[p] == Role.LEG) continue;
+            if (p >= 0 && limb(gait, b.roles()[p])) continue;
             int child = -1, kids = 0;
             for (int j = 0; j < count; j++) {
-                if (bones.get(j).parent() == i && b.roles()[j] == Role.LEG) {
+                if (bones.get(j).parent() == i && limb(gait, b.roles()[j])) {
                     child = j;
                     kids++;
                 }
@@ -340,14 +340,14 @@ public final class LegRig {
             // below the knee at most a foot (a tarsus that rides the shin as it stands at rest), with nothing below it
             int foot = -1, feet = 0;
             for (int j = 0; j < count; j++) {
-                if (bones.get(j).parent() == child && b.roles()[j] == Role.LEG) {
+                if (bones.get(j).parent() == child && limb(gait, b.roles()[j])) {
                     foot = j;
                     feet++;
                 }
             }
             if (feet > 1) continue;
             boolean deeper = false;
-            for (int j = 0; j < count && foot >= 0; j++) if (bones.get(j).parent() == foot && b.roles()[j] == Role.LEG) deeper = true;
+            for (int j = 0; j < count && foot >= 0; j++) if (bones.get(j).parent() == foot && limb(gait, b.roles()[j])) deeper = true;
             if (deeper) continue;
             List<Integer> chain = new ArrayList<>();
             for (int k = p; k >= 0; k = bones.get(k).parent()) chain.addFirst(k);
@@ -355,6 +355,11 @@ public final class LegRig {
             chains.add(chain.stream().mapToInt(Integer::intValue).toArray());
         }
         return legs.size() >= 2 ? new LegRig(gait, legs, chains, pose, box) : null;
+    }
+
+    /** A bone of a limb that walks: a leg's, or an arm's when the gait walks on its arms too. */
+    private static boolean limb(MotionProfile.Gait gait, Role r) {
+        return r == Role.LEG || gait.arms() && r == Role.ARM;
     }
 
     // ---- the solve (per frame) --------------------------------------------------------------------------------------

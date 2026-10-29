@@ -27,15 +27,19 @@ public final class MobsClient {
     /**
      * NeoForge clears a render state's data right after extractRenderState (RenderStateExtensions), so the look our
      * renderers put there never reached the model: no life layer (SPEC §23), tint, glow or flash. This puts the same
-     * look back after the clear. Bosses (their own renderers, and AwMobRenderer's) are left as they are for now.
+     * look back after the clear: on every hero and wild body, the gate wardens among them (the weaver queen's and the
+     * thousandfoot's feet, every neck's reach), and on AwMobRenderer's bodies but its bosses (the boss session's).
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static void looks(RegisterRenderStateModifiersEvent e) {
-        BiConsumer<Entity, EntityRenderState> back = (entity, state) -> {
+        BiConsumer<Entity, EntityRenderState> all = (entity, state) -> {
+            if (entity instanceof AwakenMob m) state.setRenderData(AwModels.LOOK, m.lastLook());
+        };
+        BiConsumer<Entity, EntityRenderState> notBosses = (entity, state) -> {
             if (entity instanceof AwakenMob m && !AwMobRenderer.boss(m.def())) state.setRenderData(AwModels.LOOK, m.lastLook());
         };
-        e.registerEntityModifier((Class) HeroRenderer.class, (BiConsumer) back);
-        e.registerEntityModifier((Class) WildRenderer.class, (BiConsumer) back);
-        e.registerEntityModifier((Class) AwMobRenderer.class, (BiConsumer) back);
+        e.registerEntityModifier((Class) HeroRenderer.class, (BiConsumer) all);
+        e.registerEntityModifier((Class) WildRenderer.class, (BiConsumer) all);
+        e.registerEntityModifier((Class) AwMobRenderer.class, (BiConsumer) notBosses);
     }
 }
