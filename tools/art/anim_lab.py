@@ -497,7 +497,8 @@ def rig_pose(style_row, m, held, t):
         tk = SS.thrust_knobs(sid, SS.move_name(style_row, m)) if form == "stab" else None
         return thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, (c, hit, ea, fe, total), tk,
                            home_ticks, lambda: SS.chain_start(style_row, SS.move_name(style_row, m), held),
-                           lambda: SS.pull_back(style_row, SS.move_name(style_row, m), held))
+                           lambda: SS.pull_back(style_row, SS.move_name(style_row, m), held),
+                           lambda: SS.chain_links(style_row, SS.move_name(style_row, m))[1])
     if form == "spin":
         return spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, (c, hit, ea, fe, total), home_ticks,
                          (sid, SS.move_name(style_row, m), lambda: SS.chain_start(style_row, SS.move_name(style_row, m), held),
@@ -624,7 +625,7 @@ THRUST_FROM = {
 
 
 def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, ph, tk=None, home_ticks=None,
-                start_of=None, pull_of=None):
+                start_of=None, pull_of=None, win_of=None):
     c, hit, ea, fe, total = ph
     if form in ("jab", "hook", "upper", "over"):
         return punch_pose(form, m, held, wt, t, g, rest, windup_pose, back_home, ph)
@@ -676,9 +677,9 @@ def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, ba
         if t < 0:
             return at(back_d - pull, -12)
         p = (t / max(1e-6, hit)) ** tk["push"]
-        src = (start_of() if start_of else None) or rest
-        if m["swing"].get("hand") == "both":  # both hands from their set, side by side (the last cut is drawn there)
-            src = at(back_d - pull, -12)
+        src = start_of() if start_of else None
+        if src is None:  # a both-hands push not chained (the heavy's release): from its set, side by side
+            src = at(back_d - pull, -12) if m["swing"].get("hand") == "both" else rest
         return lerp_pose(src, at(out_d, 22), p)
     if t < c:
         return windup_pose(at(back_d, -8), at(back_d - pull, -12))
@@ -688,7 +689,8 @@ def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, ba
     if tk is not None:  # Swing Studio: a beat at full reach, snapped back to the ready line, home without a crawl
         import swing_studio as SS
         return SS.thrust_after(tk, m, t, hit, total, lambda d, tw: at(d, tw), out_d, back_d, rest,
-                               pull_of() if pull_of else None)
+                               pull_of() if pull_of else None, SS.home_by(m) if start_of and start_of() is not None else None,
+                               win_of() if win_of else None)
     if t < fe:  # held at full reach a beat, the twist going in
         x = (t - hit) / max(1e-6, fe - hit)
         return at(out_d + 0.02 * math.sin(math.pi * x), 22 + 6 * x)

@@ -150,14 +150,28 @@ def thrust_knobs(sid, mv):
     return k
 
 
-def thrust_after(tk, m, t, hit, total, at, out_d, back_d, rest, pull=None):
+def home_by(m):
+    """When a chained both-hands push is home (ticks of its clip; the daggers' strike 4): by the mastery strike's press,
+    within its end; None for any other move."""
+    if m["swing"].get("hand") != "both" or m.get("cadence"):
+        return None
+    return min(m["windup"] + m["active"] + MASTERY_LINK, m["windup"] + m["active"] + m["recovery"])
+
+
+def thrust_after(tk, m, t, hit, total, at, out_d, back_d, rest, pull=None, home=None, win=None):
     """After a thrust's hit: a beat at full reach (the twist going in), snapped back to the ready line as fast as it went
     in, held there still for the chain's next press, then home: never a slow slide back across the view. With
     {@code pull} (pull_back: the other hand strikes next), drawn on back to it as it snaps, there by the earliest press
-    and held to the move's end."""
+    and held to the move's end. With {@code home} (home_by: a chained both-hands push), from the beat straight back into
+    the rest pose by then: round 10 (Euan 2026-10-29, the daggers' strike 4: "it comes back to an unnatural position
+    and then glitches back into the usual holding stance"), it snapped back end on to the ready line in the middle of
+    the view and turned home from there 100 degrees in three frames."""
     hold_end = hit + tk["hold"]
+    cad = win if win is not None else m.get("cadence")  # the chain's next press (chain_links)
+    if home is not None and t >= hold_end:
+        x = min(1.0, (t - hold_end) / max(1e-6, home - hold_end))
+        return L.lerp_pose(at(out_d, 28), rest, L.ease_in_out_sine(x))
     snap_end = hold_end + tk["snap"]
-    cad = m.get("cadence")
     up = max(snap_end, cad[0] + 0.25) if cad else snap_end
     up = min(up, total - min(tk["rise"], 1.0))
     if pull is not None and cad:
@@ -208,15 +222,21 @@ def chain_links(st, mv):
         return None, None
     i = chain.index(mv)
 
-    def press(m):
+    def press(m, first):
         cad = m.get("cadence")
-        return (cad[0], cad[1]) if cad else (m["windup"] + m["active"] + MASTERY_LINK,) * 2
+        w = (cad[0], cad[1]) if cad else (m["windup"] + m["active"] + MASTERY_LINK,) * 2
+        # a chain's first strike starts on its press, a tick into the chain's count (ArmsPredict and ArmsServer both
+        # take the tick before for its start), so a buffered press takes over a tick of its clip early (round 10, Euan
+        # 2026-10-29: "when you click fast, it starts losing its form": the second stab left from the first one's
+        # half-drawn hand); never inside its blow, which the hands' blend covers (the twinblades' window opens as their
+        # first cut ends: a tick early, its follow-through would be hurried off the bottom of the screen)
+        return (max(w[0] - 1, m["windup"] + m["active"]), w[1]) if first else w
 
     prev = None
     if i > 0:
         pm = st["moves"][chain[i - 1]]
-        prev = (chain[i - 1], press(pm)[0])
-    nxt = press(st["moves"][mv]) if i + 1 < len(chain) else None
+        prev = (chain[i - 1], press(pm, i == 1)[0])
+    nxt = press(st["moves"][mv], i == 0) if i + 1 < len(chain) else None
     return prev, nxt
 
 
@@ -407,7 +427,7 @@ def idle_target(st, mv, held, cur):
     return src
 
 
-IDLE_CLEAR = 0.25  # the idle hand's blade keeps this far (ndc) from the striking blade and its forearm
+IDLE_CLEAR = 0.35  # the idle hand's blade keeps this far (ndc) from the striking blade and its forearm (round 10: 0.25 left strike 3's hilt over the left tip, "it stabs it")
 IDLE_YIELD = (np.array([0.14, -0.42, 0.16]), np.eye(3))  # where it gives way to: low, back, on its own side
 IDLE_LEAD = 1.0  # it starts to give way at least this long (ticks) before the striking blade comes near
 # Swing Studio round 9 (Euan 2026-10-29, the daggers: "the transition in between each stab is what's off"): the hand
@@ -417,7 +437,7 @@ IDLE_LEAD = 1.0  # it starts to give way at least this long (ticks) before the s
 IDLE_BRIDGE = 2.0
 IDLE_BACK = 2.0
 IDLE_PACE = 2.5  # ticks it takes to give way all the way (to IDLE_YIELD), or to come back from it
-HAUL_LEAD = 0.5  # a blade hauled back across to a both-hands strike's set sets off this long before its carry ends
+HAUL_LEAD = 1.0  # a blade hauled back across to rest for a both-hands strike sets off this long before its carry ends (round 10: home is further across than the set was)
 _YIELD = {}
 _HAUL = {}
 
@@ -829,7 +849,9 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
     def hauled(pose, tt):
         key = (sid, mv, held.wid)
         if key not in _HAUL:
-            ready = L.rig_pose(st, st["moves"][nmv], held, -0.01)
+            # into the rest pose, the usual holding stance the push leaves from (round 10: hauled to that push's set,
+            # end on in the middle of the view, it sat in "an unnatural position", Euan 2026-10-29)
+            ready = rest
             low = at(stop, -lag * 0.3, 0.0, 1.0, drop)
             _HAUL[key] = (ready, _load_track(held, far_led(st, mv), lambda q: out(q), low, ready, LOAD_TURN / 3))
         ready, track = _HAUL[key]
@@ -860,10 +882,8 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
         ready = _lifted(held, low)
         if to_both:
             # (held where its carry left it, far across, the other hand's blade was mirrored onto the far side and the
-            # two crossed as they left)
-            if t < up:
-                return out(hauled(low, t), spun)
-            low = hauled(low, math.inf)  # there
+            # two crossed as they left); home already, it stays there
+            return out(hauled(low, t), spun)
         elif ready is not low:
             # back across the screen to a set takes all the time there is before the press
             haul = max(0.5, min(1.5, nxt[0] - exit_t))

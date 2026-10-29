@@ -166,6 +166,9 @@ final class SwingTests {
                 Archetype.MoveDef def = style.move(prev);
                 if (def == null) continue;
                 float press = def.hasCadence() ? def.cadence().get(0) : def.windup() + def.active() + ArmsRules.MASTERY_LINK;
+                // the first strike begins a tick into the chain's count, so it hands over a tick early, never in its blow
+                // (round 10)
+                if (i == 0) press = Math.max(press - 1, def.windup() + def.active());
                 // a both-hands strike's off hand drives in from where it waited (round 9, the daggers' strike 4)
                 boolean offStruck = FpSwings.hand(st, prev) == FpSwings.Hand.OFF;
                 if (FpSwings.hand(st, next) == FpSwings.Hand.BOTH && FpSwings.idle(st, next, 0, true, b, qb)
