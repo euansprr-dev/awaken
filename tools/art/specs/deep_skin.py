@@ -868,7 +868,7 @@ def cave_pearls(seed=0):
 
 
 def root_amber(seed=0):
-    """Root amber (P4, the Rootways' find; waits on the style sheet's section 6 OK before it's built): resin an old root bled
+    """Root amber (P4, the Rootways' find; Euan OK'd section 6 on 29 October): resin an old root bled
     into a crack, hardened in the dark into honey-coloured nuggets (the model's beads cut their faces from this, as cave
     pearls do). Light comes through it, so it's gold in the body with darker flow lines where the resin ran, warm and deep
     rather than flat; pale glints where a facet catches your lamp, and now and then a gnat or a seed caught inside, a dark
@@ -1157,6 +1157,7 @@ def build(out):
         out.particle(f"caves/seep_{i}", seep(i))
     # the six P3 regions' dressing
     for name, fn in (("rimstone", rimstone), ("silt", silt), ("ash", ash_drift), ("cave_pearls", cave_pearls), ("shed_chitin", shed_chitin),
+                     ("root_amber", root_amber),
                      ("rime", rime), ("cave_weed", cave_weed)):
         out.block(f"caves/{name}", fn())
     for kind in CRYSTAL:
@@ -1310,16 +1311,17 @@ def drift_model(name, variant):
 
 
 def bits_model(name, variant):
-    """Small things lying on the floor: cave pearls (four to six round beads in a hollow) or shed chitin (thin curved
-    plates at odd angles)."""
+    """Small things lying on the floor: cave pearls (four to six round beads in a hollow), root amber (two to four squat
+    nuggets) or shed chitin (thin curved plates at odd angles)."""
     r = rng("bits_model", name, variant)
     els = []
-    pearls = name == "cave_pearls"
-    for _ in range(r.randint(4, 6) if pearls else r.randint(2, 3)):
-        if pearls:
-            w = r.choice((1.5, 2, 2.5))
+    pearls, amber = name == "cave_pearls", name == "root_amber"
+    for _ in range(r.randint(4, 6) if pearls else r.randint(2, 4) if amber else r.randint(2, 3)):
+        if pearls or amber:
+            w = r.choice((1.5, 2, 2.5)) if pearls else r.choice((1.5, 2, 2.5, 3))
             x, z = r.uniform(4, 12 - w), r.uniform(4, 12 - w)
-            els.append(box((round(x, 2), 0, round(z, 2)), (round(x + w, 2), w, round(z + w, 2)), "#t"))
+            h = w if pearls else round(w * 0.75 * 2) / 2
+            els.append(box((round(x, 2), 0, round(z, 2)), (round(x + w, 2), h, round(z + w, 2)), "#t"))
         else:
             w, d = r.uniform(3, 5.5), r.uniform(2, 3.5)
             x, z = r.uniform(1.5, 14.5 - w), r.uniform(1.5, 14.5 - d)
@@ -1364,7 +1366,7 @@ def model_dict():
     for name in DRIFT_HEIGHT:
         for v in range(3):
             out[f"{name}_{v}"] = drift_model(name, v)
-    for name in ("cave_pearls", "shed_chitin"):
+    for name in ("cave_pearls", "shed_chitin", "root_amber"):
         for v in range(3):
             out[f"{name}_{v}"] = bits_model(name, v)
     for name in ("amber_crystal", "glacial_crystal"):

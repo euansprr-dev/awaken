@@ -37,7 +37,7 @@ public final class RegionFinds {
             case ROOTWAYS -> new Lore("The first caves under the forests. The trees' roots come down through the roof, and glowcaps light the floor.",
                     "The first caves under a forest, taiga or jungle.",
                     "Copper and coal lodes lie here more often than anywhere else.",
-                    "Glowcaps grow on the floor. Pick one to take home.", List.of("awaken:glowcap"), 0x6F9A84);
+                    "Root amber lies in beads on the floor under the root curtains, where the old roots bled long ago.", List.of("awaken:root_amber"), 0x6F9A84);
             case PALE_HALLS -> new Lore("Wide, flat-roofed halls of pale limestone, with still pools stepping down the slopes.",
                     "The first caves under plains, meadows, savanna or the shore.",
                     "Iron lodes lie here more often than elsewhere, in the limestone's red stains.",

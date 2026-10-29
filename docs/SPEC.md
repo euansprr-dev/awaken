@@ -13066,17 +13066,19 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   stood in show what they are, their metal and keepsake, the rest only where to look ("Below y 0, under any land.").
 - **Trails**: "The Regions Below" (deep, free, opens with the first region found: a step per region, the hint where it
   lies; finish 0.05 of a level) and "Keepsakes from Below" (deep, free, the same opening: hold each region's keepsake;
-  finish 0.03): glowcaps, cave pearls, the Delvers' old rope, driftwood, an amber or glacial crystal, ember lichen, a
+  finish 0.03): root amber, cave pearls, the Delvers' old rope, driftwood, an amber or glacial crystal, ember lichen, a
   Hollow's shed shell. The Black Vaults have none yet (their cooled flows and column stumps aren't built).
 - **The finds**: each keepsake is a piece the region already lays and that drops itself, so it can go home and be set
-  down. Root amber (the Rootways' own find on the plan's page) waits on its drawing (style sheet section 6); until then
-  the Rootways' keepsake is a glowcap.
+  down. The Rootways' is root amber (`awaken:root_amber`, style sheet section 6, OK'd by Euan 2026-10-29): beads of old
+  resin like cave pearls (no collision, instant break, three bead models), laid on the rock floor under one root curtain
+  in twenty (`CaveSkinFeature.ROOT_AMBER` 0.05) where the curtain's room is under seven blocks tall.
 - **Pacing** (`tools/sim/pacing_sim.py`, re-run 2026-10-29): the sim counts lodes found per mining minute, not per region,
   and lodes by region keep every region's count, so its numbers hold within run-to-run noise (balanced: level 10 at 3.9 h,
   25 at 16.8 h, 50 at 51.3 h; D metal at 1.1 h, C at 12.8 h; all 15 target checks pass).
 - **Tests**: `caves_lodes_by_region` (seed 777's overworld noise, 400 lode regions round the origin: every region keeps
   each ore's count; no homes, or homes everywhere, plan as before; iron at home at least 1.6 times as often, all ores 1.4;
-  the homes are the rock's twins), `caves_region_journal` (once, filed under the region's name; every keepsake is an item;
+  the homes are the rock's twins), `caves_region_rock` (root amber only in the Rootways, on rock under a root curtain),
+  `caves_region_journal` (once, filed under the region's name; every keepsake is an item;
   both trails name every region and keepsake), and `delve_hearth_points` (the region's line, and none without one).
 - **Measured 2026-10-29** (`caves_lodes_by_region`): lodes in their ore's regions without and with homes: iron 134 to 254
   of 1,200 (1.9 times), copper 67 to 116, coal 70 to 104, Deepglass 63 to 96, diamond 56 to 72 of 330, gold 4 to 8, lapis

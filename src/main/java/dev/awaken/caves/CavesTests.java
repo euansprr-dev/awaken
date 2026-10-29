@@ -607,7 +607,7 @@ final class CavesTests {
         long nanos = 0, fillNanos = 0;
         // each chunk's dressing against its own fill; the gate takes the middle one, so one slow fill or pause can't swing it
         List<Double> ratios = new ArrayList<>();
-        int n = 0, floors = 0, glowcaps = 0, roots = 0, rust = 0, flow = 0, ember = 0, swapped = 0;
+        int n = 0, floors = 0, glowcaps = 0, roots = 0, amber = 0, rust = 0, flow = 0, ember = 0, swapped = 0;
         for (CaveRegion region : new CaveRegion[] {CaveRegion.ROOTWAYS, CaveRegion.OCHRE_DEEP}) {
             CaveSkin.RegionKit kit = CaveSkin.kit(region);
             Block rock = kit.rock().get();
@@ -728,6 +728,12 @@ final class CavesTests {
                                 "a root curtain hangs from rock in the Rootways at " + x + " " + y + " " + z);
                         h.assertTrue(s.getValue(SkinBlocks.RootCurtain.TIP) == !(next.getBlock() instanceof SkinBlocks.RootCurtain),
                                 "a root curtain's last block is its tip");
+                    } else if (b == CaveSkin.ROOT_AMBER.get()) {
+                        amber++;
+                        int up = 1;
+                        while (up < 7 && !(cells.get(x, y + up, z).getBlock() instanceof SkinBlocks.RootCurtain)) up++;
+                        h.assertTrue(region == CaveRegion.ROOTWAYS && cells.get(x, y - 1, z).isSolidRender() && up < 7,
+                                "root amber lies on rock under a root curtain in the Rootways at " + x + " " + y + " " + z);
                     } else if (b == CaveSkin.RUST_CRUST.get() || b == CaveSkin.RUST_FLOWSTONE.get() || b == CaveSkin.EMBER_LICHEN.get()) {
                         h.assertTrue(region == CaveRegion.OCHRE_DEEP, b + " only in the Ochre Deep");
                         if (b == CaveSkin.RUST_CRUST.get()) rust++;
@@ -740,10 +746,10 @@ final class CavesTests {
             }
         }
         double ms = nanos / 1e6 / n, fill = fillNanos / 1e6 / n, glow = glowcaps / (double) Math.max(1, floors);
-        Awaken.LOG.info("[caves] regions on {} timed chunks of " + 2 * REGION_CHUNKS + ": {} cells of region rock, {} glowcaps ({} of {} open floors), {} root curtain blocks, {} rust crust, {} rust flowstone, {} ember lichen; {} ms a chunk against {} ms to fill it",
-                n, swapped, glowcaps, String.format(Locale.ROOT, "%.3f", glow), floors, roots, rust, flow, ember, String.format(Locale.ROOT, "%.3f", ms),
+        Awaken.LOG.info("[caves] regions on {} timed chunks of " + 2 * REGION_CHUNKS + ": {} cells of region rock, {} glowcaps ({} of {} open floors), {} root curtain blocks, {} root amber, {} rust crust, {} rust flowstone, {} ember lichen; {} ms a chunk against {} ms to fill it",
+                n, swapped, glowcaps, String.format(Locale.ROOT, "%.3f", glow), floors, roots, amber, rust, flow, ember, String.format(Locale.ROOT, "%.3f", ms),
                 String.format(Locale.ROOT, "%.2f", fill));
-        h.assertTrue(glowcaps > 0 && roots > 0 && rust > 0 && flow > 0 && ember > 0, "every region piece is laid");
+        h.assertTrue(glowcaps > 0 && roots > 0 && amber > 0 && rust > 0 && flow > 0 && ember > 0, "every region piece is laid");
         h.assertTrue(glow <= GLOW_MAX, "glowcaps stay sparse: " + Math.round(glow * 1000) / 10.0 + "% of open floors (gate " + Math.round(GLOW_MAX * 100) + "%)");
         Collections.sort(ratios);
         double mid = ratios.isEmpty() ? 0 : (ratios.get((ratios.size() - 1) / 2) + ratios.get(ratios.size() / 2)) / 2;

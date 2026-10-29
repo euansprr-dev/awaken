@@ -11,11 +11,11 @@
   "steps": [
     {
       "id": "rootways",
-      "text": "Pick a glowcap in the Rootways.",
+      "text": "Find root amber in the Rootways.",
       "done": [
-        "holds:awaken:glowcap"
+        "holds:awaken:root_amber"
       ],
-      "hint": "Glowcaps are the teal mushrooms on the Rootways' floor."
+      "hint": "Look on the floor under the root curtains: old resin lies there in small orange beads."
     },
     {
       "id": "pale_halls",
