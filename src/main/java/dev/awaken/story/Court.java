@@ -66,9 +66,19 @@ final class Court {
         LivingEntity credit = e.getKillCredit();
         boolean earned = credit instanceof ServerPlayer
                 || (credit != null && MobRole.of(credit).role() == MobRole.Role.ECHO);
+        boolean grieving = e.getPersistentData().getBooleanOr(GRIEVING_TAG, false);
         for (ServerPlayer p : e.level().getServer().getPlayerList().getPlayers()) {
             if (p.level() != e.level() || p.distanceTo(e) > 96) continue;
             StoryProgress s = Prologue.progress(p);
+            // a Grieving form set to rest (SPEC §43.14): once each, a great deal of experience and its harder hoard
+            if (sov != null && earned && grieving && s.seen.add("grieving:" + boss)) {
+                Progression.grantLevels(p, 0.5, Progression.XpSource.STORY);
+                Progression.bestMoment(p, "Laid " + sov.name() + "'s grief to rest");
+                Signal.send(p, SignalWindow.builder(SignalWindow.Kind.REVELATION, Component.literal("Grieving " + sov.name()))
+                        .body(Component.literal("It's quiet now. What it carried was grief, and it's put it down at last.")).priority(9).ttl(20 * 8).build());
+                Prologue.sync(p);
+                continue;
+            }
             if (sov != null && earned && s.sovereignsDefeated.add(boss)) {
                 Progression.count(p, "awaken:sovereigns_defeated");
                 Progression.markNewThing(p, "sovereign");
@@ -84,7 +94,7 @@ final class Court {
                 // the world's story has one ending: the first to reach it chooses, later ones are told it
                 p.level().getServer().execute(() -> {
                     if (StoryWorld.get(p.level().getServer()).ended()) tell(p);
-                    else AwakenNet.send(p, new StoryPayloads.OpenEnding());
+                    else AwakenNet.send(p, offer(p));
                 });
             }
         }
@@ -101,11 +111,16 @@ final class Court {
      * free; a player in the Seed whose Court is empty starts the finale (once at a time).
      */
     static final String COURT_TAG = "awaken_court";
+    /** A Sovereign's Grieving form (SPEC §43.14): met again after the Deep answered, harder, once each. */
+    static final String GRIEVING_TAG = "awaken_grieving";
+    /** How much harder the Court is after the Deep answered: an unbeaten Sovereign, and a Grieving form. */
+    static final int ANGRIER = 10, GRIEVING = 20;
     private static final java.util.Map<java.util.UUID, java.util.UUID> SUMMONED = new java.util.HashMap<>();
 
     static void forget() {
         SUMMONED.clear();
         PLAYING.clear();
+        LATER.clear();
     }
 
     /**
@@ -122,12 +137,22 @@ final class Court {
             java.util.UUID mine = SUMMONED.get(p.getUUID());
             if (mine != null && level.getEntity(mine) instanceof LivingEntity alive && alive.isAlive()) continue;
             StoryProgress s = Prologue.progress(p);
+            boolean answered = dev.awaken.core.api.BellHooks.deepAnswered(server);
             String next = ORDER.stream().filter(id -> !s.sovereignsDefeated.contains(id)).findFirst().orElse(null);
+            // all eight set free, and the Deep has answered the Hundred Peal: their Grieving forms, one by one
+            boolean grief = next == null && answered;
+            if (grief) next = ORDER.stream().filter(id -> !s.seen.contains("grieving:" + id)).findFirst().orElse(null);
             if (next == null) continue;
             net.minecraft.core.BlockPos at = floorNear(level, p.blockPosition().offset(p.getRandom().nextInt(31) - 15, 0, p.getRandom().nextInt(31) - 15));
-            LivingEntity boss = dev.awaken.core.api.MobHooks.spawnBoss(level, next, at, Rank.S.contentLevel, "");
+            int lv = Rank.S.contentLevel + (grief ? GRIEVING : answered ? ANGRIER : 0);
+            LivingEntity boss = dev.awaken.core.api.MobHooks.spawnBoss(level, next, at, lv, "");
             if (boss != null) {
                 boss.getPersistentData().putBoolean(COURT_TAG, true);
+                if (grief) {
+                    boss.getPersistentData().putBoolean(GRIEVING_TAG, true);
+                    StoryContent.Sovereign sov = StoryContent.SOVEREIGNS.get(net.minecraft.resources.Identifier.tryParse(next));
+                    if (sov != null) boss.setCustomName(Component.literal("Grieving " + sov.name()));
+                }
                 SUMMONED.put(p.getUUID(), boss.getUUID());
             }
         }
@@ -147,7 +172,7 @@ final class Court {
         }
         if (Prologue.storyOn() && s.seen.contains("seed:defeated") && !s.seen.contains("ending:chosen")) {
             if (w.ended()) tell(p);
-            else AwakenNet.send(p, new StoryPayloads.OpenEnding());
+            else AwakenNet.send(p, offer(p));
         }
     }
 
@@ -172,9 +197,50 @@ final class Court {
 
     private static final List<Playing> PLAYING = new ArrayList<>();
 
+    /** The ending choice for this player: Wake up is open only once they've rung their Hundred Peal (SPEC §43.14). */
+    static StoryPayloads.OpenEnding offer(ServerPlayer p) {
+        return new StoryPayloads.OpenEnding(dev.awaken.core.api.BellHooks.pealed(p));
+    }
+
+    /** Players who said "not yet" at the Seed: false while they're still in it, true once they've left. Not saved. */
+    private static final java.util.Map<java.util.UUID, Boolean> LATER = new java.util.HashMap<>();
+
+    /** Every 5 s: one who said "not yet", left the Seed and has come back into it is asked again. */
+    static void laterTick(MinecraftServer server) {
+        if (LATER.isEmpty() || server.getTickCount() % 100 != 50) return;
+        LATER.entrySet().removeIf(e -> {
+            ServerPlayer p = server.getPlayerList().getPlayer(e.getKey());
+            if (p == null) return true;
+            boolean in = dev.awaken.descent.Descent.depthOf(p) == 10;
+            if (!in) {
+                e.setValue(true);
+                return false;
+            }
+            if (!e.getValue()) return false;
+            StoryProgress s = Prologue.progress(p);
+            if (s.seen.contains("ending:chosen")) return true;
+            if (StoryWorld.get(server).ended()) tell(p);
+            else AwakenNet.send(p, offer(p));
+            return true;
+        });
+    }
+
     static void choose(ServerPlayer p, String which) {
         StoryProgress s = Prologue.progress(p);
         if (!s.seen.contains("seed:defeated") || s.seen.contains("ending:chosen")) return;
+        if (which.equals("later")) {
+            LATER.put(p.getUUID(), false);
+            Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The Seed will wait."))
+                    .body(Component.literal("Come back down to it when you're ready, and it'll ask you again."
+                            + (dev.awaken.core.api.BellHooks.pealed(p) ? "" : " To wake, you'll need all hundred bells ringing together in your Great Belfry first.")))
+                    .priority(8).ttl(20 * 10).build());
+            return;
+        }
+        // Wake up needs the Hundred Peal: without it the choice is asked again
+        if (which.equals("wake") && !dev.awaken.core.api.BellHooks.pealed(p)) {
+            AwakenNet.send(p, offer(p));
+            return;
+        }
         StoryWorld w = StoryWorld.get(p.level().getServer());
         if (w.ended()) {
             // someone chose first (both stood at the Seed): the world keeps its ending, this player is told it

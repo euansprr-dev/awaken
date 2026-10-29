@@ -61,6 +61,10 @@ final class StilledPlacer {
         if (level.players().isEmpty()) return;
         Stilled data = Stilled.get(server);
         BlockPos c = TheLull.centre(server);
+        if (dev.awaken.core.api.StoryHooks.colourRestored(server)) {
+            rise(level, data, c);
+            return;
+        }
         int ridge = TheLull.ridge(server);
         List<StilledSpots.Spot> fixed = StilledSpots.fixed(c.getX(), c.getZ(), ridge, firstHamlet(level, c, ridge), level.getSeed());
         for (ServerPlayer p : level.players()) {
@@ -83,6 +87,26 @@ final class StilledPlacer {
                 if (Math.hypot(r.at().getX() - p.getX(), r.at().getZ() - p.getZ()) > NEAR || !level.isLoaded(r.at())) continue;
                 place(level, data, r, fixed);
             }
+        }
+    }
+
+    /**
+     * After the Wake (SPEC §43.14) nobody new sits down, and every Stilled in a loaded chunk stands up, shakes off the
+     * stone and walks toward the bells; their spot is closed so they never come back. Their letters and keys stay true.
+     */
+    static void rise(ServerLevel level, Stilled data, BlockPos bells) {
+        for (Map.Entry<String, Long> e : data.placed.entrySet()) {
+            if (e.getValue() == Stilled.SKIPPED) continue;
+            BlockPos at = BlockPos.of(e.getValue());
+            if (!level.isLoaded(at) || !(level.getBlockEntity(at) instanceof StilledBlockEntity be)) continue;
+            String name = be.name;
+            level.removeBlock(at, false);
+            level.sendParticles(new net.minecraft.core.particles.BlockParticleOption(net.minecraft.core.particles.ParticleTypes.BLOCK,
+                    net.minecraft.world.level.block.Blocks.STONE.defaultBlockState()), at.getX() + 0.5, at.getY() + 0.8, at.getZ() + 0.5, 40, 0.3, 0.6, 0.3, 0.1);
+            level.playSound(null, at, net.minecraft.sounds.SoundEvents.GRINDSTONE_USE, net.minecraft.sounds.SoundSource.BLOCKS, 1F, 0.6F);
+            dev.awaken.core.api.LivingHooks.risen(level, at, name, bells);
+            e.setValue(Stilled.SKIPPED);
+            data.setDirty();
         }
     }
 

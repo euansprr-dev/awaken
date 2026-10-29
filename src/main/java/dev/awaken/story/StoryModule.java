@@ -83,6 +83,7 @@ public final class StoryModule {
             Rival.tick(e.getServer());
             Court.tick(e.getServer());
             Court.courtTick(e.getServer());
+            Court.laterTick(e.getServer());
         });
         bus.addListener(PlayerEvent.PlayerLoggedInEvent.class, e -> {
             if (e.getEntity() instanceof ServerPlayer p) {
@@ -215,7 +216,7 @@ public final class StoryModule {
                 Prologue.progress(p).seen.remove("ending:chosen");
                 // the world keeps one ending: once chosen, this tells it ("ending reset" lets the world choose again)
                 if (StoryWorld.get(p.level().getServer()).ended()) Court.tell(p);
-                else AwakenNet.send(p, new StoryPayloads.OpenEnding());
+                else AwakenNet.send(p, Court.offer(p));
                 return 1;
             }).then(Commands.literal("reset").executes(c -> {
                 StoryWorld w = StoryWorld.get(c.getSource().getServer());
