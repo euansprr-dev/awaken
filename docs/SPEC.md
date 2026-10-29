@@ -5780,7 +5780,9 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   each way, a climb, a dive, a hover; a blow and a death in the air; the swimmers in a tank);
   `tools/autopilot/mob-anims-close.txt` (close_*: each grazer and the spider side on at leg height, a spectator camera
   gliding beside it, first vanilla's under Fresh Animations then ours at rung 3 on the same walk, trot, stop and half
-  turn; then the two at rest side by side for half a minute); `tools/autopilot/mob-anims-flyclose.txt` (fly_*, swim_*
+  turn; then the two at rest side by side for half a minute); `tools/autopilot/mob-anims-beastclose.txt` (bclose_*:
+  the sow, the stag and the ram the same way, after vanilla's pig under Fresh Animations, each then half a minute at
+  rest); `tools/autopilot/mob-anims-flyclose.txt` (fly_*, swim_*
   close and at half speed (`/tick rate 10`): each flier hovers, then circles a spectator camera at its own distance, a
   cruise lap and half a slower one, the camera's eye at the body's middle turning with it from the circle's middle,
   a parrot, a bee or a cod a little further round the same circle). A NoAI fauna creature refreshes its pose
