@@ -167,8 +167,9 @@ def play(sid, swings=None, rhythm="mash", wid=None):
         lt = t - s0
         hand = hand_of(swings, sid, mv)
         d, R = sample(sid, mv, lt, swings)
-        idle = idle_of(sid, mv, lt, swings) if hand != "both" else None
-        other = "off" if hand == "main" else "main"
+        # the hand not striking; in a both-hands move, the off hand's own way into it when it has one (round 9)
+        idle = idle_of(sid, mv, lt, swings)
+        other = "off" if hand in ("main", "both") else "main"
         if i != cur:
             cur = i
             m = st["moves"][mv]
@@ -176,7 +177,7 @@ def play(sid, swings=None, rhythm="mash", wid=None):
             d2, R2 = sample(sid, mv, lt + 0.1, swings)
             vd, w = (d2 - d) / 0.1, rot_vec(R2 @ R.T) / 0.1
             for h, b in blends.items():
-                moves = hand == "both" or h == hand or (hand == "main" and h == "main")
+                moves = (hand == "both" and (h == "main" or idle is None)) or h == hand
                 if moves:
                     b.begin(t, d, R, vd, w, ticks)
                 elif idle is not None and h == other:
@@ -185,7 +186,7 @@ def play(sid, swings=None, rhythm="mash", wid=None):
                     b.begin(t, np.zeros(3), np.eye(3), np.zeros(3), np.zeros(3), ticks)
         shown = {}
         for h, b in blends.items():
-            moves = hand == "both" or h == hand
+            moves = (hand == "both" and (h == "main" or idle is None)) or h == hand
             src = (d, R) if moves else idle if idle is not None and h == other else (np.zeros(3), np.eye(3))
             shown[h] = b.apply(t, *src)
         sd, sR = shown["off" if hand == "off" else "main"]

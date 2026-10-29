@@ -496,7 +496,8 @@ def rig_pose(style_row, m, held, t):
     if form in ("stab", "jab", "bash", "hook", "upper", "over"):
         tk = SS.thrust_knobs(sid, SS.move_name(style_row, m)) if form == "stab" else None
         return thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, (c, hit, ea, fe, total), tk,
-                           home_ticks, lambda: SS.chain_start(style_row, SS.move_name(style_row, m), held))
+                           home_ticks, lambda: SS.chain_start(style_row, SS.move_name(style_row, m), held),
+                           lambda: SS.pull_back(style_row, SS.move_name(style_row, m), held))
     if form == "spin":
         return spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, (c, hit, ea, fe, total), home_ticks,
                          (sid, SS.move_name(style_row, m), lambda: SS.chain_start(style_row, SS.move_name(style_row, m), held),
@@ -623,7 +624,7 @@ THRUST_FROM = {
 
 
 def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, ph, tk=None, home_ticks=None,
-                start_of=None):
+                start_of=None, pull_of=None):
     c, hit, ea, fe, total = ph
     if form in ("jab", "hook", "upper", "over"):
         return punch_pose(form, m, held, wt, t, g, rest, windup_pose, back_home, ph)
@@ -686,7 +687,8 @@ def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, ba
         return at(back_d - pull + (out_d - back_d + pull) * p, -12 + 34 * p)
     if tk is not None:  # Swing Studio: a beat at full reach, snapped back to the ready line, home without a crawl
         import swing_studio as SS
-        return SS.thrust_after(tk, m, t, hit, total, lambda d, tw: at(d, tw), out_d, back_d, rest)
+        return SS.thrust_after(tk, m, t, hit, total, lambda d, tw: at(d, tw), out_d, back_d, rest,
+                               pull_of() if pull_of else None)
     if t < fe:  # held at full reach a beat, the twist going in
         x = (t - hit) / max(1e-6, fe - hit)
         return at(out_d + 0.02 * math.sin(math.pi * x), 22 + 6 * x)
@@ -928,12 +930,13 @@ def bake(out=SWINGS, solve=False, round_=None):
                             + [round(float(v), 3) for v in cam])
             moves[mv] = {"form": form_of(m)[0], "weight": SS.weight_class(sid), "hand": m["swing"].get("hand", "main"),
                          "keys": keys, "bite": SS.bite_of(sid, mv)}
-            if SS.idle_next(st, mv) or SS.gives_way(st, mv, held):
+            twin = SS.twin_from(st, mv, held) is not None
+            if SS.idle_next(st, mv) or SS.gives_way(st, mv, held) or twin:
                 # the hand not striking: drawn back to the next strike's set (Swing Studio round 4), out of the
-                # striking blade's way (round 7)
+                # striking blade's way (round 7); in a both-hands push, the off hand's own way into it (round 9)
                 idle = []
                 for tt in np.arange(0, total + 1e-6, KEY_DT):
-                    d, R = SS.idle_pose(st, mv, held, float(tt))
+                    d, R = SS.twin_pose(st, mv, held, float(tt)) if twin else SS.idle_pose(st, mv, held, float(tt))
                     idle.append([round(float(tt), 3)] + [round(float(v), 4) for v in d] + [round(float(v), 5) for v in mat_quat(R)])
                 moves[mv]["idle"] = idle
             if SS.far_led(st, mv):  # led by a double weapon's other end: its trail follows that end (Swing Studio round 5)
