@@ -20,7 +20,8 @@ screen close
 window 1280 720
 cmd gamemode creative
 cmd tp @s 0.5 200 0.5 0 0
-wait 100
+cmd forceload add -16 -16 16 16
+wait 300
 cmd fill -10 199 -6 12 199 11 minecraft:smooth_stone
 cmd fill -10 200 11 12 207 11 minecraft:smooth_sandstone
 wait 20
