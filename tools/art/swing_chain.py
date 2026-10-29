@@ -125,7 +125,9 @@ def schedule(st, rhythm):
             break
         cad = m.get("cadence")
         if cad:
-            t += cad[0] if rhythm == "mash" else (cad[0] + cad[1]) / 2
+            # a chain's first strike starts on its press, a tick into the chain's count: a buffered press takes over a
+            # tick of its clip early (swing_studio.chain_links)
+            t += cad[0] - (1 if i == 0 else 0) if rhythm == "mash" else (cad[0] + cad[1]) / 2
         else:
             t += m["windup"] + m["active"] + MASTERY_LINK
     return out

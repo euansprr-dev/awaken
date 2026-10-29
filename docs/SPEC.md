@@ -6436,6 +6436,36 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       largest step: strike 2 0.48 -> 0.11, strike 3 0.40 -> 0 (it waits), strike 4's off hand 0.18 (its own push),
       strike 5 0.29 -> 0.18, the Art, the slipcut and the undercut 0.41 -> 0.18. Left: the haul (0.26), and all of it
       unseen in game.
+  - *Round 10, the way home and fast clicks* (Euan 2026-10-29: "the travel back from the right hand swipe... comes back
+    to an unnatural position and then glitches back into the usual holding stance"; "when you click fast, it starts
+    losing its form"; "the right hand still kind of goes very close to the left hand and kind of stabs it"):
+    - A strike before a both-hands one is hauled back into the rest pose, the usual holding stance (it was hauled to
+      that strike's set, end on in the middle of the view, and the blend pulled it home from there). It sets off 1 tick
+      before its carry ends (was 0.5: home is further across than the set was).
+    - A chained both-hands push (the daggers' strike 4) drives from where the hands are (the main from rest, the off
+      hand from where it waited) and, after its beat at full reach, turns straight back into the rest pose on an
+      in-out ease, there by the mastery strike's press (`swing_studio.home_by`: wind-up + active + 2, within its end).
+      It used to snap back end on to the ready line in the middle of the view and turn home from there, 100 degrees in
+      three frames; now at most 8 degrees a frame. A quicker draw out of the middle (1.5 snaps) was tried and dropped:
+      it stepped 0.36 of the screen in a frame and gained nothing at a steady pace.
+    - The idle hand keeps 0.35 (ndc) from the striking blade and its forearm (was 0.25: strike 3's hilt passed over the
+      left blade's tip). The nearest strike 3 comes to it: 0.26 -> 0.39.
+    - A chain's first strike begins on its press a tick into the chain's count (`ArmsPredict` on the key and
+      `ArmsServer` on the packet both take the tick before for its start), so a buffered press takes over a tick of its
+      clip early. The bake hands over there (`chain_links`), never inside its blow (the twin blades' window opens as
+      their first cut ends; the blend covers that tick). The second stab used to leave from the first one's half-drawn
+      hand.
+    - Hit-stop's clock (`ArmsFeel.paused`) counts an ended hold in full until the tick banks it. Between a hold's end
+      and the next tick it counted none, so the hands' clock ran on by the whole hold and then back (up to a whole
+      tick of the clip in one frame, then back again). A second hold before that tick banks the first (its pause was
+      lost).
+    - Fast clicks are judged by `tools/art/swing_clicks.py`: ArmsPredict's clock (press, buffer, the wait at the set and
+      the rush, the server's chain shift, hit-stop, bite) and ArmsHands' sources and `SwingBlend`, frame by frame at
+      60 fps. Over clicks every 2-5 ticks, each held 0.6-2.5, with and without landed blows: steps over 0.3 of the
+      screen a frame 72 -> 10, the worst 1.02 -> 0.54 (the left hand as strike 3 takes over from a strike 2 held by
+      its hit-stop), the nearest the blades come off the both-hands push 0.26 -> 0.31. Steps of 0.2-0.3 rise 364 ->
+      425 (strike 2's left hand draws further back to clear strike 3). Left: strike 5's own jump (0.34, as in round
+      9), and all of it unseen in game.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past

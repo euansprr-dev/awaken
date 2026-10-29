@@ -101,6 +101,8 @@ final class ArmsFeel implements CombatFeedback.Sink {
             holdUntil = Math.max(holdUntil, now + ms * 1_000_000L);
             return;
         }
+        // a hold that ended since the last tick is banked first, or a quick second hit would lose its pause
+        if (holdUntil != 0) pausedTotal += holdUntil - holdStart;
         holdStart = now;
         holdUntil = now + ms * 1_000_000L;
     }
@@ -221,8 +223,8 @@ final class ArmsFeel implements CombatFeedback.Sink {
 
     /** Nanos the hands have been held so far (moves' clocks subtract it so a swing resumes where it froze). */
     static long paused() {
-        long now = System.nanoTime();
-        return now < holdUntil ? pausedTotal + (now - holdStart) : pausedTotal;
+        // an ended hold counts in full until tick() banks it, so the clocks never jump ahead and back between frames
+        return holdUntil == 0 ? pausedTotal : pausedTotal + Math.min(System.nanoTime(), holdUntil) - holdStart;
     }
 
     static boolean holding() {
