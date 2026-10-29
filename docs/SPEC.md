@@ -10915,7 +10915,9 @@ now, fought-on second storeys in a later plan.
   and waits for the land there before its first gate; a gate made by `gate open ... world` stands where it's opened,
   even over a village's edge (a tour can't pick another spot); `gate interior enter` takes the gate opened last when
   it's ready (`GateService.lastOpened`, not saved), not a gate that formed by itself beside it since, and while
-  that gate is still forming it says so and enters none (a tour's shots would show another world); `gate open` with no
+  that gate is still forming it says so and enters none (a tour's shots would show another world), and the same when
+  it never stood (its build failed on wet ground or someone's build: one tour's "Root Halls" shots were the Forge
+  Below again); `gate open` with no
   dry ground within 30 looks 30 to 120 out, then 120 to 300 (a tour's hop can land on a coast). Tours
   `gate-depth-themes-a`, `-b` and `-c` (every other theme's cave worlds at 7), `gate-depth-lands` (seven lands, isles and
   seas at 6 and 7) and `gate-depth-crypt` (the Bell Crypt's four at 6 and 7) are the same on CI, and wait 1,000

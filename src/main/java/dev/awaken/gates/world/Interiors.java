@@ -171,6 +171,11 @@ public final class Interiors {
             c.getSource().sendFailure(Component.literal("Gate " + last.id + " is still forming."));
             return 0;
         }
+        // or it never stood (its build failed: wet ground, someone's build): enter none, the same way
+        if (GateService.lastOpened > 0 && (last == null || last.state == GateState.RELEASED)) {
+            c.getSource().sendFailure(Component.literal("Gate " + GateService.lastOpened + " isn't standing (its build failed, or it's gone), so there's nothing to enter."));
+            return 0;
+        }
         GateRecord best = null;
         for (GateRecord g : GateRegistry.get(c.getSource().getServer()).all()) {
             if (!g.state.enterable() || !g.interiorReady || g.state == GateState.BUILDING) continue;
