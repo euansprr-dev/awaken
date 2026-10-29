@@ -71,7 +71,7 @@ final class Formations {
         // a small place (a chunk's cavern) gets one or two things in its wild, a big one up to three clusters of two to four
         if (spots.size() < 3) return;
         boolean small = spots.size() < 40;
-        int clusters = small ? 1 : Math.min(3, 1 + spots.size() / 150);
+        int clusters = (int) Math.round((small ? 1 : Math.min(3, 1 + spots.size() / 150)) * rf.thingsK);
         for (int k = 0; k < clusters; k++) {
             // the cluster's first piece where one fits (four tries), the rest round it
             int[] at = null;

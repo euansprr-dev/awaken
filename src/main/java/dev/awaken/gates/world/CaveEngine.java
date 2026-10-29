@@ -311,7 +311,7 @@ final class CaveEngine implements WorldEngine {
 
         /**
          * How a shaped place's wall changes as it rises (38.14), blocks it's worn back (below 0, bulging in): lumps over
-         * every face, taller than wide, bigger the higher (the theme says how big: {@link Dress#lumps}); where the wall
+         * every face, taller than wide, bigger the higher (the theme and the world say how big: {@link Relief#lumpsK}); where the wall
          * stands tall, a lean in or out as it rises and here and there a ledge where it steps back. All of it starts 2.5
          * over the highest ground or piece standing within 3 ({@link Relief#near}), past a jump, so no wall is a stair to
          * its roof. Under the roof it bulges a block down at most (headroom stays over 2), and it's never worn back nearer
@@ -320,11 +320,11 @@ final class CaveEngine implements WorldEngine {
         double wall(double x, double y, double z, double h, double dd, boolean under, int x0, int z0, int x1, int z1) {
             double hb = h - relief.near((int) Math.floor(x), (int) Math.floor(z));
             if (hb < 2.5) return 0;
-            double push = (Hash.noise3(seed + 51, x, y * 0.6, z, 5) - 0.5) * 2.6 * dress.lumps() * Relief.smooth(2.5, 5, hb);
+            double push = (Hash.noise3(seed + 51, x, y * 0.6, z, 5) - 0.5) * 2.6 * relief.lumpsK * Relief.smooth(2.5, 5, hb);
             if (!under && dd > -4 && dd < 3) {
                 push += Relief.clamp((Hash.noise(seed + 53, x, z, 16) - 0.42) * 0.5 * Math.max(0, hb - 3), -2.2, 2.2);
                 double band = 5 + Hash.noise(seed + 55, x, z, 11) * 4;
-                push += 1.6 * Relief.smooth(0.5, 0.6, Hash.noise(seed + 57, x, z, 9) * dress.ledges()) * Relief.smooth(band - 0.5, band + 0.5, hb);
+                push += 1.6 * Relief.smooth(0.5, 0.6, Hash.noise(seed + 57, x, z, 9) * relief.ledgesK) * Relief.smooth(band - 0.5, band + 0.5, hb);
             }
             if (push > 0) push = Math.min(push, Math.min(2.9, Math.max(0, Math.min(Math.min(x - x0, x1 + 1 - x), Math.min(z - z0, z1 + 1 - z)) - 2.5)));
             return Math.max(under ? -1 : -2.5, push);

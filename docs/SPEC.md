@@ -10722,6 +10722,11 @@ now, fought-on second storeys in a later plan.
   a block where it's gentle (the way's margin and a fought middle); the rises and the hollows are each only lowered
   toward the floor line until no step is too steep (eight neighbours), and where a rise meets a hollow each comes to
   within half the step of the line, so nothing is ever raised to meet a pad.
+- **A world's own depth numbers** (optional, in its recipe's `params`, 1 the usual; they only shape version 7 floors, so
+  a released world's version 6 floors are untouched): `depth_ground` (how bold the ground is away from the way: the
+  terraces, mounds and hollows), `depth_things` (how many things stand in its places: clusters times it, 0 none),
+  `depth_lumps` (its walls' lumps, times the theme's `Dress.lumps`), `depth_ledges` (how often a tall wall steps back,
+  times `Dress.ledges`). No Hive world sets them yet.
 - **The walk guarantee** (plan time, `Relief.ease`): every doorway and the anchor must be joined over the place's
   ground (round what the dress blocked) with no step over half a block. Where they aren't, the place's ground is
   halved, and if that's still not enough, flat; either is logged (`[gates] <world> place <id>: no way through without a
@@ -10790,8 +10795,8 @@ now, fought-on second storeys in a later plan.
   end without a jump (no rise over 0.6 of a block by what you stand on: a slab or a stair is a step, a full block a
   jump) and fails a world that needs one (`jumps`, 0 in all three); and counts the columns where the walk (jumps
   allowed) got more than 4 over the ground (`climbs`): a built cave world must have none (0 in all three).
-- **Measured** (`gateworlds_depth`, the Hive held to the targets): the Comb flat 47%, 13 heights, 19% partial, 37%
-  plumb, roof spread 6.1, detail 40; the Brood Hall 41%, 14, 21%, 39%, 7.1, 43; the Swarm 52%, 12, 16%, 34%, 6.3, 45
+- **Measured** (`gateworlds_depth`, the Hive held to the targets): the Comb flat 47%, 13 heights, 21% partial, 36%
+  plumb, roof spread 6.1, detail 40; the Brood Hall 41%, 14, 23%, 38%, 7.1, 43; the Swarm 52%, 12, 18%, 34%, 6.3, 45
   (today's rooms: flat about 98%, plumb 97%). Honey Lake is a sea world (stage 2). A world's floor plans in 6 to 10 ms.
 - **Tour `gate-depth-hive`** (CI): the Comb, the Brood Hall and the Swarm at version 6 and at version 7 on the same
   floors, each floor 1's biggest place and its second. Its tools (game master, tours): `/awaken gate open <rank>

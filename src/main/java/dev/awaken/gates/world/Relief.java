@@ -25,6 +25,13 @@ final class Relief {
     /** The theme's ground pieces ({@link #ROOF}: a stair hung upside down where the roof steps). */
     static final int BANK = 0, SLAB = 1, STAIRS = 2, DRIFT = 3, BITS = 4, ROOF = 5;
 
+    /**
+     * A world's own depth numbers (its recipe's {@code params}, all optional, 1 the usual; SPEC 38.14): how bold its
+     * ground is away from the way, how many things stand in it, how big its walls' lumps are, how often a wall steps back
+     * at a ledge.
+     */
+    final double groundK, thingsK, lumpsK, ledgesK;
+
     final CaveEngine.Cave c;
     final int W;
     final long seed;
@@ -44,6 +51,10 @@ final class Relief {
 
     Relief(CaveEngine.Cave c) {
         this.c = c;
+        this.groundK = c.param("depth_ground", 1);
+        this.thingsK = c.param("depth_things", 1);
+        this.lumpsK = c.param("depth_lumps", 1) * c.dress.lumps();
+        this.ledgesK = c.param("depth_ledges", 1) * c.dress.ledges();
         this.W = c.W;
         this.seed = c.seed ^ 0x5E11EFL;
     }
@@ -226,7 +237,7 @@ final class Relief {
                 double dn = Hash.noise(seed + 29, px, pz, 6);
                 double dip = dn < 0.3 ? -smooth(0.3, 0.12, dn) * 2 : 0;
                 // off the way the ground stands a slab higher on the whole, so the way reads as a path worn into it
-                double hh = roll + wild * (terrace + mound + dip + 0.6);
+                double hh = roll + wild * ((terrace + mound + dip) * groundK + 0.6);
                 // on the way half a step up at most; gentle where you fight, bold only at its edges
                 if (wd < 1.8) hh = clamp(hh, 0, 0.5);
                 else if (wd < 3.5) hh = clamp(hh, -1, 1);
