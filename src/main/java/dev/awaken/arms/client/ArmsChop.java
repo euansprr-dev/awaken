@@ -355,6 +355,12 @@ final class ArmsChop {
         return true;
     }
 
+    /** The autopilot's trace: cutting, which loop, the clock, its rate, the blows so far, the block's progress ticks. */
+    static String state() {
+        return on ? String.format(java.util.Locale.ROOT, "%s phase=%.2f rate=%.2f blows=%d progress=%d body=%s", chop ? "chop" : "hack",
+                phase, rate, blows, progressTicks, bodySynced) : "off";
+    }
+
     static void reset() {
         on = wanted = false;
         bodySynced = false;
