@@ -23,7 +23,8 @@ cmd difficulty peaceful
 cmd gamerule send_command_feedback false
 hud off
 # away from Carillon first: gates never form in its reserve, and the first hop (no gates yet) stays close; on CI the
-# land out there takes a while to make, so wait for it before the first gate looks for dry ground
+# land out there takes a while to make, so wait for it before the first gate looks for dry ground (and the
+# first gate there takes longer to form: 666 ticks once)
 cmd tp @s 6000 200 6000
 wait 600
 
@@ -31,7 +32,7 @@ wait 600
 cmd awaken gate hop
 wait 300
 cmd awaken gate open E nightmare world 7 awaken:nightmare/the_house
-wait 500
+wait 1000
 cmd awaken gate interior enter
 wait 300
 cmd awaken gate interior goto place

@@ -10918,7 +10918,11 @@ now, fought-on second storeys in a later plan.
   that gate is still forming it says so and enters none (a tour's shots would show another world); `gate open` with no
   dry ground within 30 looks 30 to 120 out, then 120 to 300 (a tour's hop can land on a coast). Tours
   `gate-depth-themes-a`, `-b` and `-c` (every other theme's cave worlds at 7), `gate-depth-lands` (seven lands, isles and
-  seas at 6 and 7) and `gate-depth-crypt` (the Bell Crypt's four at 6 and 7) are the same on CI.
+  seas at 6 and 7) and `gate-depth-crypt` (the Bell Crypt's four at 6 and 7) are the same on CI, and wait 1,000
+  ticks for their first gate (CI's first took 666 once). The lands tour shoots `gate interior goto over` (`over2`:
+  the second place): the same place hovering 8 over the highest ground within 4 of where you walk in (at most 3 under
+  an open land's lid), looking down at its middle, flying if you may; from the ground a land's place view faced a bank
+  or a house, and an isle's stood in the cloud between pillars.
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 
