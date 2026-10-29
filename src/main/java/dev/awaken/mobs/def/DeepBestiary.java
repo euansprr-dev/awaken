@@ -225,7 +225,7 @@ final class DeepBestiary {
     }
 
     private static void nightmares(List<MobDef> out) {
-        out.add(m("nightmare_falling", "The Long Drop", Theme.FEAR, Tier.NIGHTMARE, Model.PHANTOM, "Lifts you up and lets you fall").hp(22).dmg(4).spd(0.4).scale(2.4F).bar(BossBarColor.PURPLE).arena(22)
+        out.add(m("nightmare_falling", "The Long Drop", Theme.FEAR, Tier.NIGHTMARE, Model.PHANTOM, "Lifts you up and lets you fall").hp(22).dmg(4).spd(0.4).scale(2.4F).size(0.67F, 1.62F).bar(BossBarColor.PURPLE).arena(22)
                 .intro("You never hit the ground. You always nearly do.")
                 .phase(1.0F, "The ground falls away.", a(LIFT, "Lift").radius(3.5F), a(CHARGE, "Fall With Me").heavy())
                 .phase(0.5F, "Further down.", a(LIFT, "Lift").radius(4.5F), a(DARKNESS, "No Bottom"), a(CHARGE, "Fall With Me")).build());

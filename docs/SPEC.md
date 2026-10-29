@@ -13642,6 +13642,53 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     ring, the illusioner's mirror move as it vanishes, the warden's heartbeat under Seed Collapse.
   - **Meter.** Worst kink outside a strike 3.7° (the Directive); held at most 2%; no still spells; the strings dip at
     most 35% (Come Down into the Lash). Wind-ups 13.0 (the Recoil) to 17.5 (the Lash).
+- **The Long Drop, the Hand from Above** (body and motion, `kit/bosses/nightmare_falling.py`). "Lifts you up and lets
+  you fall." A hand as big as a cart, pale as something that has never seen daylight, hanging down out of the dark on an
+  arm that goes up into it and never ends. Its fingers are too long, the middle one longer than its palm, with knuckles
+  like knots and long yellowed nails hooked at their ends, and their tips have gone the violet of a dead hand's. It
+  hangs with its fingers down and forward and its palm turned down, the way a hand comes down to pick something up,
+  and the lines of its palm glow faint violet: you see them as it comes down on you. Veins on the back of its hand and
+  up its forearm; the arm goes from the pale of its wrist to black up in the dark. 70 cubes on 20 bones; its wrist hangs
+  3.6 blocks up and its fingertips just clear the floor. The hitbox is 0.67 x 1.62 at its scale of 2.4 (1.6 x 3.9
+  blocks), round its hand.
+  - **Its idle.** It hangs in the dark (8 s), swaying a little on its arm like something hung up, its fingers never
+    still: a ripple runs across them like drumming on a table, twice; it turns its palm to you and back; its thumb rubs
+    across the ends of its fingers; it curls slowly half into a fist and lets go; its index finger taps once.
+  - **How it moves.** It glides as if drawn along by its arm, its fingers trailing back behind it (1.4 s, 1.6 blocks),
+    and races with them streaming out behind and spread (0.9 s, 2.8 blocks). Turning, its fingers sweep round after it.
+  - **Struck, broken and its death.** Struck, it jerks back with its fingers flung out stiff and splayed; from the side
+    it jerks away from the blow. Broken, it drops to the floor palm down, its fingers lying out limp; it gets up on its
+    fingertips like something standing and lifts away. Its death (5 s): its fingers claw at the air, stiff and shaking;
+    it clenches into a fist, trembling, and slowly opens and goes limp; and it is drawn back up into the dark it came
+    from, shrinking away until it is gone.
+  - **Its moves.** The Backhand (LIGHT): it swings out to its left, drawing its fingers in, and swings back across with
+    the backs of its fingers leading, its nails raking across you. The Clutch (LIGHT, after the Backhand): it draws back
+    with its fingers flung wide open at you and snatches down, closing into a fist as it comes. Fall With Me (HEAVY,
+    its gap closer, 8 blocks, a 6-tick hold): it rises high, its fingers turning down at you spread wide like a spider
+    dropping on its thread, holds, dives, and slams flat on the floor palm down with its fingers splayed. Lift: it
+    reaches down in front of it with its fingers spread, closes them round you like a cage, slowly, and lifts, its
+    fingers trembling with the weight, then lets go, its fingers springing open. No Bottom (into the second phase): it
+    closes into a fist and trembles harder and harder, then opens over you palm down, its fingers flung wide and stiff
+    and shaking. The Flick (for whoever is behind it): it swings its hand back under itself, curls its middle finger
+    tight against its thumb and flicks it out behind it. The Long Drop (the signature): it rises up into the dark,
+    curling into a fist and trembling, falls like a stone, opening as it comes, and slams flat on the floor, its
+    fingers twitching before it lifts. Its intro: it lies on the floor palm down as if it had been dropped there; its
+    fingers twitch one at a time; it gets up on its fingertips, lifts off the floor, turns its palm to you and beckons
+    twice with its index finger.
+  - **Its fight.** First: the Backhand into the Clutch (and on into Fall With Me), the Clutch, Fall With Me into the
+    Backhand, Lift, the Flick behind. After No Bottom: the Backhand into the Clutch into Lift, Fall With Me into the
+    Backhand and the Clutch, Lift, No Bottom, the Long Drop, the Flick. It enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over where it hangs (its pos and a turn round its wrist), its wrist,
+    its arm (turned back against the hand's own pitch and roll so it keeps reaching up into the dark), its four fingers
+    (a curl, a claw, a spread and a ripple across them, each with a share at each knuckle) and its thumb. Under every
+    move a drift layer stirs its fingertips and thumb, each finger at its own pace.
+  - **On the floor.** The ground pass uncurls its fingers and thumb, forward and up, wherever they meet the floor. When
+    it stands on its fingertips the pose is let down until they rest on the floor.
+  - **Its sounds** (chosen on paper, not heard in game): the phantom it was, kept low and slow, its swoop and flap for
+    the air it moves; cracking bone for its knuckles and the Flick; a body falling a long way and a door broken in for
+    its slams; the elder guardian's curse and the sculk shrieker under the Long Drop.
+  - **Meter.** Worst kink outside a strike 3.6° (the Flick); held at most 8%; no still spells; the strings dip at most
+    38% (out of Fall With Me into the Backhand). Wind-ups 18.7 (the Clutch) to 45.1 (the Long Drop).
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

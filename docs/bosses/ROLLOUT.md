@@ -90,7 +90,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | Sovereign of Roots | Sovereign | Court | Caster | kit | A, the Hearthstone Toad | ✓ 7008ed48 | ✓ 7008ed48 | — |
 | Sovereign of Ash | Sovereign | Court | Flier | kit | A, the Cinder Wyrm | ✓ d3b188fd | ✓ d3b188fd | — |
 | The Signal's Shadow | Final | Seed | Duelist | kit | A, the Signal Cuttlefish | ✓ df6001890 | ✓ df6001890 | — |
-| The Long Drop | Nightmare | Fear | Flier | phantom ×2.4 | — | — | — | — |
+| The Long Drop | Nightmare | Fear | Flier | kit | A, the Hand from Above | — | — | — |
 | The Pyre | Nightmare | Fear | Flier | blaze ×2 | — | — | — | — |
 | The Undertow | Nightmare | Fear | Caster | drowned ×2 | — | — | — | — |
 | The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | zombie ×1.7 | — | — | — | — |
@@ -274,3 +274,9 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   skin shows the words you have read all game; the Lance is its tentacles, Signal Step its jet and ink, and nothing
   else in the roster swims like it. B is another big four-legged mammal after the Gale Hound; C is the Hive Regent's
   upright insect again, with glass wings.
+- **The Long Drop** (`nightmare_falling`): A the Hand from Above (a hand as big as a cart with too-long fingers and
+  yellowed nails, hanging out of the dark on an arm that never ends), B the Gibbet Kite (a stretched-skin kite
+  trailing a cage), C the Gargoyle (a winged stone gargoyle that drops off its ledge). **Picked A**, 2026-10-29:
+  "Lifts you up and lets you fall" is a hand that picks you up and opens, Fall With Me is a hand slamming flat on
+  the floor, and no other boss is a hand. B reads less clearly at a glance; C repeats Unit Zero's cathedral statue
+  and the owl's wings.
