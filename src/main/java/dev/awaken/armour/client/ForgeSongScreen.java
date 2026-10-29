@@ -596,7 +596,11 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         ArmorType piece = ForgeSong.PIECES[d.piece() % 4];
         ForgeSong.Quality q = ForgeSong.Quality.of(d.quality());
         float k = Mth.clamp((now - doneAt) / 14F, 0F, 1F);
-        int cw = Math.min(300, width - 40), ch = 92, cx = width / 2 - cw / 2;
+        int cw = Math.min(300, width - 40), cx = width / 2 - cw / 2;
+        var about = font.split(Component.literal(doneAbout(q)), cw - 20);
+        var woke = d.woke() ? font.split(Component.literal(set.setName + " stands whole on the stand. Wear all four and it wakes on you too."), cw - 20)
+                : java.util.List.<net.minecraft.util.FormattedCharSequence>of();
+        int ch = doneHeight(d, cw);
         int cy = height - Math.max(10, height / 14) - ch - 10 + (int) ((1F - k) * 20);
         int alpha = (int) (k * 0xE8);
         g.fill(cx, cy, cx + cw, cy + ch, alpha << 24 | 0x0F1724);
@@ -611,17 +615,34 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         pose.scale(1.5F, 1.5F);
         g.text(font, q.label, 0, 0, q.colour, true);
         pose.popMatrix();
-        String about = switch (q) {
+        int ly = cy + 42;
+        for (var line : about) {
+            g.text(font, line, cx + 10, ly, LABEL, false);
+            ly += 10;
+        }
+        for (var line : woke) {
+            g.text(font, line, cx + 10, ly + 2, 0xFF000000 | set.rank.colour, false);
+            ly += 10;
+        }
+        button(g, cx + 10, cy + ch - 24, "Forge another");
+        button(g, cx + cw - 10 - bw("Done"), cy + ch - 24, "Done");
+    }
+
+    private static String doneAbout(ForgeSong.Quality q) {
+        return switch (q) {
             case PLAIN -> "Plain work. It'll serve.";
             case FINE -> "Fine work. It leaves the forge tempered once.";
             case MASTERWORK -> "Masterwork. Tempered twice, and you can forge it from memory now.";
             case FLAWLESS -> "Flawless. Tempered three times, and known by heart.";
         };
-        g.text(font, about, cx + 10, cy + 42, LABEL, false);
-        if (d.woke()) g.text(font, set.setName + " stands whole on the stand. Wear all four and it wakes on you too.", cx + 10, cy + 54,
-                0xFF000000 | set.rank.colour, false);
-        button(g, cx + 10, cy + ch - 24, "Forge another");
-        button(g, cx + cw - 10 - bw("Done"), cy + ch - 24, "Done");
+    }
+
+    /** The finished card's height: its lines wrapped to its width, the buttons under them. */
+    private int doneHeight(ArmourPayloads.Done d, int cw) {
+        ArmourSet set = ArmourSet.values()[Math.min(d.piece() / 4, ArmourSet.values().length - 1)];
+        int lines = font.split(Component.literal(doneAbout(ForgeSong.Quality.of(d.quality()))), cw - 20).size();
+        if (d.woke()) lines += font.split(Component.literal(set.setName + " stands whole on the stand. Wear all four and it wakes on you too."), cw - 20).size();
+        return 74 + 10 * lines;
     }
 
     private int bw(String s) {
@@ -636,7 +657,7 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
     }
 
     private boolean doneClick(double x, double y) {
-        int cw = Math.min(300, width - 40), ch = 92, cx = width / 2 - cw / 2;
+        int cw = Math.min(300, width - 40), ch = doneHeight(done, cw), cx = width / 2 - cw / 2;
         int cy = height - Math.max(10, height / 14) - ch - 10;
         int by = cy + ch - 24;
         if (y < by || y >= by + 18) return false;
