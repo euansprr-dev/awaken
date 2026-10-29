@@ -7,6 +7,9 @@
     "awaken:desert_sand",
     "awaken:desert_sand_rippled",
     "awaken:frost_snow",
-    "awaken:sky_turf"
+    "awaken:sky_turf",
+    "awaken:hive_floor_slab",
+    "awaken:hive_floor_stairs",
+    "awaken:hive_pollen_drift"
   ]
 }

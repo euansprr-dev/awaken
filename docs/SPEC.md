@@ -10705,6 +10705,51 @@ now, fought-on second storeys in a later plan.
   plan's cost) and logs them; worlds whose ground is built (`GateDepthTests.DEEP`) are held to the dry caves' targets
   (flat 55% or less, 8 heights or more, 12% partial, 65% plumb or less, roof spread 6, detail 35). The world tests'
   reach checks read the ground.
+- **Shaped ground (`Relief`, stage 1).** A cave world whose dress says `depth()` (the Hive so far) and whose floor is
+  enclosed (not an open land, isles, sea, plain or hall: stage 2) gets a height field in half blocks, -4 to +8, solved
+  at plan time after the dress (so it knows where the dress set things down) and before the lights; one column
+  operation per place lays it at carve time. The field: a roll everywhere (+-1.8 blocks); away from the way (the line
+  from each doorway to the middle and on to the anchor, faded in over 1.8 to 5.8 blocks) terraces climbing toward the
+  walls (up to 4 blocks, their edges ragged), mounds, hollows, and the ground standing a slab higher on the whole, so
+  the way reads as a path worn into it. On the way's core half a step up at most, within 3.5 of it a block either way;
+  in a fought place's middle (`q` < 0.5) half a block down to a block up. Never closer than 3.5 under the roof (or
+  under what the dress hangs low: `Dress.headroom`). **Flat pads** stay at the floor line and are never shaped:
+  2.5 round each doorway, 3 round the anchors, a lake's water, 1 past each blocked spot, 2 round each hand spot, the
+  dress's centre pad (`Dress.pad`: the Comb's honey pools 3.4), and every small mark (49 blocks or less, 1.5 round it:
+  nooks, bells, props, touchstones; an event's or a basin's wide box isn't one). **Steps**: no step over a block, half
+  a block where it's gentle (the way's margin and a fought middle); the rises and the hollows are each only lowered
+  toward the floor line until no step is too steep (eight neighbours), and where a rise meets a hollow each comes to
+  within half the step of the line, so nothing is ever raised to meet a pad.
+- **Tunnels** swell slowly along the way, up to a block, never a step over half a block (a slab between), flat 2.5 round
+  each doorway; their arch rises with the floor and vaults and dips along the way (-0.7 to +3).
+- **Laying it** (`Relief.column`): under a raised floor full blocks of the theme's bank (`Dress.ground(BANK)`, the
+  Hive's wax with every third layer dark), its top skinned as floor; a half step is a stair facing up a straight ramp,
+  else a slab (on the Hive's pollen a pollen drift four layers deep); a hollow is opened with a shell under it. What grew
+  on the floor line is moved up onto the new ground; elsewhere a drift at a rise's foot or in a dip (55%, one or two
+  layers) or bits (`Dress.bits`, the Hive's wax crumbs at 14%).
+- **Walls and roof over shaped ground.** A groove 1 high is cut into the wall's foot at the local ground (0.9 to 1.7
+  deep, the wall's first 2 blocks), so walls aren't plumb from feet to head. The roof rises with the terraces (the
+  terrace's height is added to it: no trench at a wall's foot), swells and dips away from the walls (+-7.5) and opens
+  into chimneys here and there (up to 12 higher, `CaveEngine.CHIMNEY`; the carve reaches 19 over a place's roof).
+- **Thin blocks are open** (`Sculpt.thinOpen`, every version 7 floor): a palette block that isn't a full solid cube and
+  holds no fluid (a slab, a drift, crumbs, a carpet) gets the shell's skin under or over it as floor or ceiling, as air
+  does.
+- **Lights** over shaped ground hang at head height over where you stand, and a place's lights reach 2 blocks into its
+  wall's foot. **Spots** a live thing is put on (`walk`) need their 3 x 3 level on shaped ground.
+- **Depth blocks** (`gates.block.DepthBlocks`, art `tools/art/specs/gate_depth.py`, the same table): slabs and stairs
+  cut from a theme's blocks wearing their texture (soft when cut from a soft block, else they want the stone's tool),
+  a drift that piles in layers like snow (you stand a layer under its top, mobs path over four layers or fewer), and
+  bits underfoot (no collision, broken at a touch). The Hive's: wax slab and stairs, dark wax slab, packed wax floor
+  slab and stairs, capped comb slab, pollen drift, wax crumbs. They join `#minecraft:slabs` and `#stairs` (blocks and
+  items); a double slab drops two.
+- **The Hive's dress over shaped ground.** Drips hang thicker and longer (12%, up to 5). **Comb sheets** hang from the
+  roof as a real hive's comb does: at most one in each 6 x 6 patch (the Comb 75%, the Swarm 55%, others 40%), a wall of
+  cells a block thick and 5 to 9 long, deepest in its middle (up to 7), its lower edge dark wax; never within 4 blocks
+  over where you stand, never within 1.5 of a wall (4 round the Brood Hall's ledges), never in a boss's room. The Brood
+  Hall's great place keeps 6 of head room under its lowest ledge (`Dress.headroom`).
+- **Measured** (`gateworlds_depth`, the Hive held to the targets): the Comb flat 48%, 11 heights, 19% partial, 21%
+  plumb, roof spread 6.1, detail 43; the Brood Hall 42%, 11, 20%, 21%, 7.1, 46; the Swarm 54%, 10, 13%, 17%, 6.3, 47
+  (today's rooms: flat about 98%, plumb 97%). Honey Lake is a sea world (stage 2). A place plans in about 5 ms.
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 

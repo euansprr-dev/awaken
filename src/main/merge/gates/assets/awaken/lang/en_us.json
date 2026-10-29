@@ -492,5 +492,13 @@
   "block.awaken.rare_heart_vein": "Heart Vein",
   "block.awaken.rare_doorway": "Doorway Shimmer",
   "block.awaken.rare_figure": "Pale Figure",
-  "block.awaken.rare_lantern_dark": "Unlit Lantern Fruit"
+  "block.awaken.rare_lantern_dark": "Unlit Lantern Fruit",
+  "block.awaken.hive_wax_slab": "Hive Wax Slab",
+  "block.awaken.hive_wax_stairs": "Hive Wax Stairs",
+  "block.awaken.hive_wax_dark_slab": "Dark Hive Wax Slab",
+  "block.awaken.hive_floor_slab": "Packed Wax Floor Slab",
+  "block.awaken.hive_floor_stairs": "Packed Wax Floor Stairs",
+  "block.awaken.hive_comb_capped_slab": "Capped Comb Slab",
+  "block.awaken.hive_pollen_drift": "Pollen Drift",
+  "block.awaken.hive_wax_crumbs": "Wax Crumbs"
 }

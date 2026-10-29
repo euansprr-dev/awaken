@@ -249,11 +249,15 @@ public final class GatesRegistry {
     public static final java.util.Map<String, DeferredBlock<? extends Block>> SETS = dev.awaken.gates.block.ThemeBlocks.registerSets(BLOCKS);
     public static final List<DeferredItem<BlockItem>> SET_ITEMS = java.util.stream.Stream.<DeferredBlock<? extends Block>>concat(java.util.stream.Stream.of(BELL_TOWER),
             SETS.values().stream()).map(ITEMS::registerSimpleBlockItem).toList();
+    /** Slabs, stairs, drifts and bits cut from the themes' blocks for the places' ground (SPEC §38.14), after them. */
+    public static final java.util.Map<String, DeferredBlock<? extends Block>> DEPTH_BLOCKS = dev.awaken.gates.block.DepthBlocks.register(BLOCKS, THEME_BLOCKS::get);
+    public static final List<DeferredItem<BlockItem>> DEPTH_ITEMS = DEPTH_BLOCKS.values().stream().map(ITEMS::registerSimpleBlockItem).toList();
 
     /** A theme block by id (SPEC §38.10), for code that names one. */
     public static Block theme(String id) {
         DeferredBlock<? extends Block> b = THEME_BLOCKS.get(id);
         if (b == null) b = SETS.get(id);
+        if (b == null) b = DEPTH_BLOCKS.get(id);
         return b.get();
     }
 
@@ -556,6 +560,7 @@ public final class GatesRegistry {
         for (var item : WORLD_ITEMS) e.accept(item.get());
         for (var item : THEME_ITEMS) e.accept(item.get());
         for (var item : SET_ITEMS) e.accept(item.get());
+        for (var item : DEPTH_ITEMS) e.accept(item.get());
         for (var item : RIG_ITEMS) e.accept(item.get());
     }
 }

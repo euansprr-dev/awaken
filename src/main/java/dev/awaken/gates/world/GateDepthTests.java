@@ -256,7 +256,7 @@ public final class GateDepthTests {
      * The worlds whose places have their depth so far (38.14): each is held to the plan's targets for dry caves. A
      * world joins when its theme's ground is built.
      */
-    static final List<String> DEEP = List.of();
+    static final List<String> DEEP = List.of("awaken:hive/the_comb", "awaken:hive/brood_hall", "awaken:hive/the_swarm");
 
     public static void register() {
         AwakenTests.register("gateworlds_depth", 6000, h -> {

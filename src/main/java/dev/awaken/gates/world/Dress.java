@@ -144,6 +144,35 @@ abstract class Dress {
     /** After every place is carved, before each is dressed. */
     void world() {}
 
+    /** Whether a version 7 floor shapes its places' ground (SPEC §38.14, {@link Relief}). */
+    boolean depth() {
+        return false;
+    }
+
+    /**
+     * A piece of shaped ground at a block ({@link Relief#BANK} under a raised floor, {@link Relief#SLAB} or
+     * {@link Relief#STAIRS} on a half step, a {@link Relief#DRIFT} at the foot of a rise, {@link Relief#BITS} lying on it),
+     * or null: the bank skinned like the shell, no half step, nothing lying there.
+     */
+    BlockState ground(int part, int x, int y, int z) {
+        return null;
+    }
+
+    /** How far round a place's middle its ground stays flat (something stands or lies there: a pool, a hero piece). */
+    double pad(Room r, CaveEngine.Kind k) {
+        return 0;
+    }
+
+    /** How thickly the bits lie on shaped ground. */
+    double bits() {
+        return 0;
+    }
+
+    /** The most room over a column of a place, blocks over the floor line, where the dress hangs something low (a ledge). */
+    double headroom(Room r, CaveEngine.Kind k, int x, int z) {
+        return 999;
+    }
+
     void cavern(Room r, CaveEngine.Kind k) {}
 
     void tunnel(Room r, ChainLayout.Link l) {}
