@@ -5924,7 +5924,11 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   head keep their own length, the shell rocks with each push and sways side to side once in two, the eye stalks sweep
   back under way and now and then one draws halfway in and out (a snail's blink); the **Breathbell** (`breathbell`; a
   `fly` block with no wings or spine) leans into its drift (tilt 0.35 at 2 blocks a second, bank 0.12), its pulse,
-  skirt and trailing tentacles its clips' and springs'.
+  skirt and trailing tentacles its clips' and springs'. The **walking forms** (`form_zombie_2`..`_5`,
+  `form_skeleton_2`..`_5`, SPEC 21.13; two 12 px one-bone legs from the hips, rigid, shoulder 0.3) a biped's walk off
+  the Listener's scaled to their legs (duty 0.62/0.4, 0.85/1.35 blocks, 2/3.4 px, 0.32 s swings, roll 0.05); the
+  **creeper forms** (`form_creeper_2`..`_5`; four one-bone legs of 6, 7, 7 and 8 px) a diagonal shuffle at every
+  speed (`alternate`, duty 0.66/0.42, about 0.1 and 0.18 blocks a cycle per px of leg; the largest's run 1.4).
 - **Flight** (`Flight`, plain math checked on the server; a `fly` block, by rig id or, for a hand-built body, by its
   creature id): while airborne or swimming (or `always`, for a body always under way: serpents, the ray) the body noses
   into a cruise (`tilt` at `fast` blocks a second) and pitches along its path's climb or dive (`climb`, the share), banks

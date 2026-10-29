@@ -330,8 +330,9 @@ public final class LifeTests {
             int handLegs = 4 + 4 + 4 + 6 + 2 + 2 + 4 + 4; // the frost stag's, mossback's, basilisk's, scarab's, shroomlet's, Listener's, mudskipper's and marmot's
             // the Mycelord's two and the otter's forelegs walk stiff beside them
             int stiffHero = 2 + 2;
-            h.assertTrue(rigid >= 12 * 4 + 4 * 2 + 3 * 4 + handLegs + stiffHero, "the grazers', chickens', hoofed beasts', hand-built walkers', the Mycelord's and the otter's forelegs are rigid (" + rigid + ")");
-            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 4 + 8 + 12 * 4 + 4 * 2 + 3 * 4 + handLegs + 2 + 4 + 4 + 2 + 2, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's legs and the long arms it lopes on, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four, the hand-built walkers' one-bone legs, the Mycelord's two, the otter's and Mire Mother's four, the Tidesteed's and the cricket's hind pair (and every other gait's) are checked (" + checked + ")");
+            int formWalkers = 4 * 2 + 4 * 2 + 4 * 4; // the zombie, skeleton and creeper forms' one-bone legs
+            h.assertTrue(rigid >= 12 * 4 + 4 * 2 + 3 * 4 + handLegs + stiffHero + formWalkers, "the grazers', the walking forms', chickens', hoofed beasts', hand-built walkers', the Mycelord's and the otter's forelegs are rigid (" + rigid + ")");
+            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 4 + 8 + 12 * 4 + 4 * 2 + 3 * 4 + handLegs + 2 + 4 + 4 + 2 + 2 + formWalkers, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's legs and the long arms it lopes on, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four, the hand-built walkers' one-bone legs, the Mycelord's two, the otter's and Mire Mother's four, the Tidesteed's and the cricket's hind pair, the walking forms' (and every other gait's) are checked (" + checked + ")");
             h.assertTrue(problems.isEmpty(), String.join("; ", problems));
             h.succeed();
         });
