@@ -53,6 +53,8 @@ final class CityViews {
         // street level, one per district (ALONG views pick the clearest street near the spot and look down it)
         add("square", 0, 1.0, 30, 0, 50, -46);
         add("market", 50, 1.0, 20, 0, 6, 0);
+        // Hettie by the cloth and produce stalls in the sunken market square (City's later spot "hettie", SPEC §43.1)
+        add("hettie", -12, 0, 2, -18, 0.2, -4);
         add("bellwatch", -150, 1.0, -40, -150, 6, -62);
         add("quay", -58, 1.0, -44, -64, 14, 4);
         add("terrace", 0, 9.0, -104, 0, 30, -150);

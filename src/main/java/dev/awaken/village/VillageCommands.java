@@ -25,7 +25,8 @@ import java.util.Set;
  * <pre>
  * list                  the settlements meant to be within 2,000 blocks (planned ones with their names and size)
  * view &lt;key&gt; &lt;name&gt;     stand at a framing of a settlement: hill, green, street, inn, smithy, mill, dock, field, pen,
- *                       notice, bell, house1, house2 (inside), night (the street at dusk); key "first" or "nearest"
+ *                       notice, bell, house1, house2 (inside), night (the street at dusk); key "first", "nearest",
+ *                       "first_town" or "first_holdfast"
  * info                  the settlement you stand in: its plan, people, state and your standing
  * stats                 plans made and the painter's cost
  * </pre>
@@ -57,7 +58,7 @@ final class VillageCommands {
                 .then(dev.awaken.village.road.RoadCommands.node())
                 .then(Commands.literal("view").then(Commands.argument("key", StringArgumentType.word())
                         .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("first", "nearest", "nearest_village", "nearest_town", "first_town",
-                                "nearest_mine", "nearest_wayhouse"), b))
+                                "nearest_mine", "nearest_wayhouse", "first_holdfast"), b))
                         .then(Commands.argument("name", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(VIEWS, b))
                                 .executes(c -> view(c.getSource(), StringArgumentType.getString(c, "key"), StringArgumentType.getString(c, "name"))))))));
     }
@@ -172,6 +173,11 @@ final class VillageCommands {
         long seed = level.getSeed();
         int[] centre = SettlementGrid.centre();
         if (key.equals("first")) return Plans.of(SettlementGrid.first(seed, centre), terrain(level));
+        // (SPEC §43.2) the first holdfast past the ridge: the nearest settlement people still live in
+        if (key.equals("first_holdfast")) {
+            SettlementGrid.Anchor a = dev.awaken.village.road.Holdfasts.first();
+            return a == null ? null : Plans.of(a, terrain(level));
+        }
         // (SPEC §28.9) the first town a player meets: its region's town
         if (key.equals("first_town")) {
             var town = dev.awaken.village.road.RoadNet.firstTown();
