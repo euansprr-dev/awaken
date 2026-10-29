@@ -69,6 +69,7 @@ public final class Awaken {
         dev.awaken.binoculars.BinocularsModule.init(modBus);
         dev.awaken.aim.AimModule.init(modBus);
         dev.awaken.kin.KinModule.init(modBus);
+        dev.awaken.fault.FaultModule.init(modBus);
     }
 
     public static Identifier id(String path) {
