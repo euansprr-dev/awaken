@@ -89,14 +89,14 @@ animal, review it honestly, make the mp4s, write its SPEC §23.1 bullet. The wor
 
 | # | Creature(s) | Body (where it's defined) | What it needs |
 |---|---|---|---|
-| ~~1~~ | Mire Mother, Mycelord | done in batch 5 (c8d99e0f): her arms plant (`arms`), `hindBack` 4; his roots ride his feet as toes | SPEC §23.1 "Batch 5" |
+| ~~1~~ | Mire Mother, Mycelord | done in batch 5 (c8d99e0f; close tour b5walk 40876409832, all its clips reviewed): her arms plant (`arms`), `hindBack` 4; his roots ride his feet as toes | SPEC §23.1 "Batch 5" |
 | ~~2~~ | Mudskipper | done in batch 5: the new `hop` pattern on the basilisk's legs (`HAND_FEET` shared) | |
 | ~~3~~ | Brook Otter, Tidesteed | done in batch 5: per-leg stiffness (`mixed`), the new `bound` pattern; the Tidesteed's three-bone forelegs | swims re-filmed in flyclose2 |
 | ~~4~~ | Chime Cricket, Scree Marmot | done in batch 5: `hop` for the cricket (hind legs plant), `bound` for the marmot (walk duty 0.62: under a half blocks catch-up steps) | |
 | ~~5~~ | snails, Breathbell | done in batch 5: the snails' sole wave in `WildModels.Snail`; the Breathbell's drift lean (`fly` with no wings) | |
-| 6 | **Fliers and swimmers, a close re-check** | see the table above's B3 | flyclose (40846570969) and flyclose2 (40876525692, the second half; its last clip, the otter's swim, was lost to a CI GPU loss) were filmed and reviewed; see the shared notes for what each showed |
+| 6 | **Fliers and swimmers, a close re-check** | see the table above's B3 | flyclose (40846570969) and flyclose2 (40876525692, the second half; its last clip, the otter's swim, was lost to a CI GPU loss) were filmed and reviewed close: sane (petalwing beside FA's bee, the bell's drift, the ray's beat, the wyrm, cord eater, eels and maw) |
 | ~~7~~ | walking forms | done in batch 5 (985bdb12): zombie, skeleton, creeper 2–5 walk on planted rigid legs; tour b5forms 40877148239 | the forms rebuild (docs/forms/PLAN.md) may replace these bodies |
-| ~~8~~ | other modules' walkers | done (ae5074a2, orchestrator-approved cross-module edit): `CreatureLife.rig(root, temperament, motion)`; fox, crow, city cat, dog, pigeon, gull plant their feet | not planted, on purpose: the city horse (its clip bends knee and hock with the cart), the heron (wades), the hoppers and climbers |
+| ~~8~~ | other modules' walkers | done (ae5074a2, orchestrator-approved cross-module edit): `CreatureLife.rig(root, temperament, motion)`; fox, crow, city cat, dog, pigeon, gull plant their feet | close tour wcwalk 40883308017 (`/awaken wildlife lineup pace_<fox|crow>`, `/awaken critters lineup pace_<pigeon|gull|cat|dog>`, a camera riding beside each) beside FA's fox, wolf, cat and chicken. Not planted, on purpose: the city horse (its clip bends knee and hock with the cart), the heron (wades), the hoppers and climbers |
 | — | **Vanilla-bodied fauna**: gloomstalker (fox), crag ram (goat), canopy prowler (ocelot), frostfinch (parrot), bog toad and dart frog (frog), the drones (bee), bloom sprite (allay) | `AwMobRenderer` on vanilla model layers | Presumably FA animates these through its model layers. **Unverified:** film one beside its vanilla twin under FA. If FA doesn't reach our entity types, raise it. |
 | — | **Seep heart** | fauna3, rooted | No gait by design. Leave it. |
 
