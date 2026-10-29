@@ -24,6 +24,8 @@ public final class HeldLightFlood {
     public static final int NO_EDGE = 127;
     /** Points along the holder-to-flame line {@link #clear} tries, flame first: a hand's reach in about 3 cm steps. */
     private static final int PULL = 16;
+    /** How far a flame pulled out of rock sits back from it along that line, in blocks. */
+    private static final double OFF = 0.2;
 
     private static final Direction[] DIRS = Direction.values();
 
@@ -73,19 +75,30 @@ public final class HeldLightFlood {
     /**
      * Where a flame held against rock shines from: at a wall the hand's point is inside the block, and a flood from in
      * there finds nothing in front of it (the face looking at you stays black). The point on the line from where the
-     * holder stands ({@code a}) to the flame ({@code f}) just before the line enters rock, into {@code out}: the flame
-     * itself when its cell is open. False when the holder's own cell is rock.
+     * holder stands ({@code a}) to the flame ({@code f}) just before the line enters rock, then {@link #OFF} further back
+     * (a flame has a size: shining from on the face, it lit the face only at a grazing angle), into {@code out}: the
+     * flame itself when its cell is open. False when the holder's own cell is rock.
      */
     public static boolean clear(Level level, double ax, double ay, double az, double fx, double fy, double fz, double[] out, BlockPos.MutableBlockPos m) {
+        double len = Math.max(1e-3, Math.sqrt((ax - fx) * (ax - fx) + (ay - fy) * (ay - fy) + (az - fz) * (az - fz)));
         for (int i = 0; i <= PULL; i++) {
-            double back = i / (double) PULL, x = fx + (ax - fx) * back, y = fy + (ay - fy) * back, z = fz + (az - fz) * back;
-            if (level.getBlockState(m.set(x, y, z)).isSolidRender()) continue;
-            out[0] = x;
-            out[1] = y;
-            out[2] = z;
+            if (!along(level, ax, ay, az, fx, fy, fz, i, out, m)) continue;
+            if (i > 0 && !along(level, ax, ay, az, fx, fy, fz, Math.min(PULL, i + (int) Math.ceil(OFF / len * PULL)), out, m)) {
+                along(level, ax, ay, az, fx, fy, fz, i, out, m);
+            }
             return true;
         }
         return false;
+    }
+
+    /** The point {@code i} steps back from the flame toward the holder, into {@code out}; true when its cell is open. */
+    private static boolean along(Level level, double ax, double ay, double az, double fx, double fy, double fz, int i, double[] out,
+                                 BlockPos.MutableBlockPos m) {
+        double back = i / (double) PULL;
+        out[0] = fx + (ax - fx) * back;
+        out[1] = fy + (ay - fy) * back;
+        out[2] = fz + (az - fz) * back;
+        return !level.getBlockState(m.set(out[0], out[1], out[2])).isSolidRender();
     }
 
     /** True once the flood has walked everything in reach or kept its cap of surfaces. */

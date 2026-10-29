@@ -7706,11 +7706,12 @@ torch in the hand are two lights and add. Players holding one within 48 (at most
 read from their synced hands, so it is the same for everyone in multiplayer. The flame sits in the hand at the side
 (0.98 up, 0.3 ahead, 0.38 out; 0.78 crouching), or in your own first person 0.32 under the eye, 0.4 ahead and 0.3 to
 the holding side, following your look. Held against a wall (that point inside a block: you stand within 0.4 of it)
-the flame shines from the block's open side, the point on the line from the holder's middle at the flame's height to
-the flame just before it enters rock, in 16 steps of about 3 cm (`HeldLightFlood.clear`; Euan 2026-10-29, "some more
-shadow issues with underground torches held here": the flood started inside the block, so the face looking straight
-at you stayed black while its neighbours lit). Only a holder whose own cell is rock falls back to the cell above the
-feet.
+the flame shines from the block's open side: the point on the line from the holder's middle at the flame's height to
+the flame just before it enters rock (16 steps of about 3 cm), then 0.2 blocks further back along it, since a flame has
+a size (`HeldLightFlood.clear`; Euan 2026-10-29, "some more shadow issues with underground torches held here": the
+flood started inside the block, so the face looking straight at you stayed black while its neighbours lit; from right
+on the face it lit the face only at a grazing angle). Only a holder whose own cell is rock falls back to the cell above
+the feet.
 - *Finding the surfaces* (`delve.HeldLightFlood`, common and pure, walked by `delve.client.TorchGlow`): a flood from the
   flame's cell through every cell that isn't a full opaque block (as the game's light spreads: round corners, never
   through rock), within a sphere of the reach, each step costing 1 plus the cell's light dampening (leaves and water dim
@@ -7725,8 +7726,8 @@ feet.
   (so a face a break opens lights a frame or two later, not up to half a second), or every 10 ticks (changes out of
   sight). A light standing where the light is already as bright as its own (noon) floods and draws no surfaces.
   GameTest `delve_held_light_faces` holds every face of a room with a standing block and a step, once each, and the
-  cap's edge; `delve_held_light_wall` a torch pressed to a block at chest height (its front face lit, an open flame
-  left where it is, a holder in rock with no open side).
+  cap's edge; `delve_held_light_wall` a torch pressed to a block at chest height (its front face lit, the flame at
+  least 0.15 off it, an open flame left where it is, a holder in rock with no open side).
 - *What stands in the light* (`TorchGlow.lightEntity`, a NeoForge render-state modifier on every entity renderer, no
   mixin): a dropped item, a mob, a player, and through your own render state your first-person hands, what they hold
   and your body's limbs, take the block light a held light gives where they stand: the flame's level less the straight

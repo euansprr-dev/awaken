@@ -457,8 +457,8 @@ final class DelveTests {
 
     /**
      * A torch held against a wall (SPEC §28.3): pressed to a block at chest height, the hand's point is inside it; the
-     * flame shines from the block's open side, so the flood finds the face looking at you (it started inside the rock and
-     * left that face black). A flame in the open stays put; a holder inside rock has no open side.
+     * flame shines from a little off the block's open side, so the flood finds the face looking at you (it started inside
+     * the rock and left that face black). A flame in the open stays put; a holder inside rock has no open side.
      */
     private static void heldLightWall(GameTestHelper h) {
         ServerLevel level = h.getLevel();
@@ -476,6 +476,7 @@ final class DelveTests {
         h.assertTrue(HeldLightFlood.clear(level, ax, ay, az, ax - 0.3, ay, az + 0.4, out, m), "a flame against the wall has an open side");
         BlockPos at = BlockPos.containing(out[0], out[1], out[2]);
         h.assertValueEqual(at, o.offset(2, 1, 2), "the flame shines from the cell in front of the stone");
+        h.assertTrue(out[2] <= o.getZ() + 3 - 0.15, "and a little off its face, not on it: " + (o.getZ() + 3 - out[2]));
         HeldLightFlood f = new HeldLightFlood(8192, 1024);
         f.start(level, at.asLong(), HeldLight.of(new ItemStack(Items.TORCH)).reach(), 1024);
         while (!f.done()) f.step(900);
