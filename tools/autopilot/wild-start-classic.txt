@@ -1,0 +1,51 @@
+# Wild start plan (docs/wild-start/PLAN.md §2): today's Classic start, a new world with the Carillon pack off, from the
+# first minute through the awakening: what the screen, the Journal and the land around spawn give a player with no
+# city. Shots only (no frame times). Run on CI:
+#   tools/tour-ci.sh tools/autopilot/wild-start-classic.txt 1500 PACK=perf,world TECTONIC=awakened
+# ci knobs: CITY=off
+world wildClassic survival 20261029
+waitworld
+gui 0
+window 1440 900
+info
+cmd gamerule send_command_feedback false
+cmd weather clear 1000000
+cmd time set 1000
+# the first minute: the Signal's glitch is the Classic start's only opening
+wait 160
+shot c01_first_minute
+look 180 0
+wait 20
+shot c02_spawn_north
+# awakened as the Bell Crypt's Accept leaves you (the ritual itself is the prologue's own tour)
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 60
+screen close
+wait 120
+shot c03_awake_hud
+cmd awaken admin xp 600
+wait 100
+shot c04_level3_hud
+screen holo journal
+wait 40
+shot c05_journal
+trails browse world
+wait 20
+trails open
+wait 20
+shot c06_trails_world
+trails browse weapons
+wait 20
+trails open
+wait 20
+shot c07_trails_weapons
+screen close
+# up north at the Wayfarer camp: Ilse, Hettie and Hale (Hale stands here in a world with no city)
+cmd awaken living camp
+wait 200
+shot c08_camp
+wait 100
+shot c09_camp_hud
+quit

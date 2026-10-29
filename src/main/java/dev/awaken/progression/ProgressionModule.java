@@ -138,6 +138,7 @@ public final class ProgressionModule {
         WorldLatents.init();
         ProgressionTests.register();
         OnboardingTests.register();
+        WildProbeTests.register();
         RoadTests.register();
     }
 

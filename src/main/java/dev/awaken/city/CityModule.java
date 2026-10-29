@@ -76,8 +76,20 @@ public final class CityModule {
     }
 
     private static void onAddPackFinders(AddPackFindersEvent e) {
+        // diagnostic for docs/wild-start/PLAN.md (not for merge): config/awaken-terrain-dev.properties "city=off" leaves
+        // the pack off new worlds, as switching it off on the Data Packs screen does (tours' CITY=off)
+        PackSource source = devCityOff() ? PackSource.create(PackSource.NO_DECORATION, false) : PackSource.BUILT_IN;
         e.addPackFinders(Awaken.id("datapacks/carillon"), PackType.SERVER_DATA, Component.translatable("awaken.city.pack"),
-                PackSource.BUILT_IN, false, Pack.Position.TOP);
+                source, false, Pack.Position.TOP);
+    }
+
+    private static boolean devCityOff() {
+        var f = net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get().resolve("awaken-terrain-dev.properties");
+        try {
+            return java.nio.file.Files.exists(f) && java.nio.file.Files.readString(f).lines().anyMatch(l -> l.trim().equals("city=off"));
+        } catch (java.io.IOException ex) {
+            return false;
+        }
     }
 
     /** {@code CityHooks} (SPEC §16.9): what other modules may ask about the city. */

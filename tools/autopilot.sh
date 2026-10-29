@@ -60,7 +60,9 @@ elif [ -f run-autopilot/config/tectonic.json ]; then
   cp pack/tectonic/default.json run-autopilot/config/tectonic.json
 fi
 # CITY=on: terrain's dev switch for the city basin (config/awaken-terrain-dev.properties); unset removes it
+# CITY=off: new worlds without the Carillon pack (the Classic start; a diagnostic for docs/wild-start/PLAN.md)
 if [ "$CITY" = on ]; then echo "city=on" > run-autopilot/config/awaken-terrain-dev.properties
+elif [ "$CITY" = off ]; then echo "city=off" > run-autopilot/config/awaken-terrain-dev.properties
 else rm -f run-autopilot/config/awaken-terrain-dev.properties; fi
 # ROADSTARTS=off: Road starts' switch off for this run (a local config read at mod load); unset removes it (on)
 if [ "$ROADSTARTS" = off ]; then echo "roadStarts = false" > run-autopilot/config/awaken-roadstarts-server.toml
