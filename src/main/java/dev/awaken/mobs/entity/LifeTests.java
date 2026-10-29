@@ -3,6 +3,7 @@ package dev.awaken.mobs.entity;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.living.forms.FormRigs;
 import dev.awaken.mobs.client.anim.HeroRig;
+import dev.awaken.mobs.client.life.Flight;
 import dev.awaken.mobs.client.life.LegRig;
 import dev.awaken.mobs.client.life.LifeBones;
 import dev.awaken.mobs.client.life.LifeBones.Role;
@@ -147,13 +148,13 @@ public final class LifeTests {
             Matrix3f hr = new Matrix3f(), kr = new Matrix3f(), back = new Matrix3f();
             Vector3f e = new Vector3f(), want = new Vector3f();
             for (MotionProfile mp : MotionProfile.all().values()) {
+                if (mp.gait() == null) continue; // flight alone: creature_motion_flight
                 // our bodies' rigs, or the forms' (the living module's, SPEC 21.13)
                 HeroRig r = HeroRig.get(mp.id()) != null ? HeroRig.get(mp.id()) : FormRigs.all().get(mp.id());
                 if (r == null) {
                     problems.add("motion.json names no rig " + mp.id());
                     continue;
                 }
-                if (mp.gait() == null) continue;
                 LifeBones.Binding b = bind(r);
                 // the feet ride a body bone that carries the head (LifeRig binds legs only then)
                 boolean carries = b.head() < 0 && b.body() >= 0; // a headless body carries it all
@@ -229,6 +230,55 @@ public final class LifeTests {
                 }
             }
             h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 2 + 8 + 12 * 4 + 4 * 2 + 3 * 4, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's two, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four (and every other gait's) are checked (" + checked + ")");
+            h.assertTrue(problems.isEmpty(), String.join("; ", problems));
+            h.succeed();
+        });
+
+        // SPEC §23, "Flight": every flight names a creature and, on a rig, bones it has; the beat sweeps down faster than
+        // it comes up and never jumps; a turn banks the body and curves the spine into it; a climb noses up and keeps the
+        // whole beat, a dive glides; the body rises as its wings sweep below their mean
+        AwakenTests.register("creature_motion_flight", 20, h -> {
+            List<String> problems = new ArrayList<>();
+            int flights = 0;
+            for (MotionProfile mp : MotionProfile.all().values()) {
+                MotionProfile.Fly f = mp.fly();
+                if (f == null) continue;
+                flights++;
+                HeroRig r = HeroRig.get(mp.id());
+                if (r == null) { // a hand-built body: its bones are checked when it binds; here, that the creature exists
+                    MobDef d = Bestiary.get(mp.id());
+                    if (d == null || (d.model != Model.MOTH && d.model != Model.RAY && d.model != Model.SERPENT))
+                        problems.add(mp.id() + ": no rig and no hand-built flier or swimmer of that name");
+                    continue;
+                }
+                List<String> names = new ArrayList<>();
+                for (HeroRig.Bone b : r.bones) names.add(b.name());
+                for (String[] list : new String[][]{f.wings(), f.tips(), f.spine(), f.fins()})
+                    for (String n : list) if (!names.contains(n)) problems.add(mp.id() + " has no bone " + n);
+                for (String n : f.wings()) if (LifeBones.side(n) == 0) problems.add(mp.id() + ": wing " + n + " has no side");
+            }
+            // the beat: top at 0, bottom at DOWN (under half the cycle), smooth through both turns and the wrap
+            if (Math.abs(Flight.stroke(0) - 1) > 1e-4F || Math.abs(Flight.stroke(Flight.DOWN) + 1) > 1e-4F || Flight.DOWN >= 0.5F)
+                problems.add("the stroke is not down fast from the top, up slow from the bottom");
+            for (float u = -1; u < 2; u += 0.01F) {
+                if (Math.abs(Flight.stroke(u + 0.005F) - Flight.stroke(u - 0.005F)) > 0.09F) problems.add("the stroke jumps at " + u);
+                if (Math.abs(Flight.stroke(u)) > 1 + 1e-4F) problems.add("the stroke leaves -1..1 at " + u);
+            }
+            // a turn to its right (yaw rising): the body tips right (-x) and the tail curves to the inside of the turn (-x)
+            if (!(Flight.bank(1.5F, 1, 0.2F) < 0) || Flight.bank(1.5F, 0, 0.2F) != 0) problems.add("a right turn does not bank it right, or it banks at a standstill");
+            if (!(Flight.bend(1.5F, 0.3F) < 0)) problems.add("a right turn does not curve the spine to the right");
+            // a climb noses up (pitch < 0) and keeps every beat; a dive noses down and glides; a hover beats
+            float up = Flight.climb(2, 2), down = Flight.climb(2, -3);
+            if (!(up > 0 && down < 0)) problems.add("the path's climb has the wrong sign");
+            if (!(Flight.pitch(up, 0.5F, 0.6F, 0.1F) < 0 && Flight.pitch(down, 0.5F, 0.6F, 0.1F) > 0)) problems.add("a climb does not nose up or a dive down");
+            if (Math.abs(Flight.keep(up, 1, 0.2F, 1) - 1) > 1e-4F) problems.add("a climb glides");
+            if (Math.abs(Flight.keep(down, 0.5F, 0.2F, 0) - 0.2F) > 1e-4F) problems.add("a dive beats");
+            if (Math.abs(Flight.keep(0, 0, 0.2F, 1) - 1) > 1e-4F) problems.add("a hover glides");
+            if (!(Flight.keep(0, 1, 0.2F, 1) < 0.25F)) problems.add("a cruise never glides between beats");
+            if (!(Flight.pace(up, 0) > Flight.pace(0, 1))) problems.add("a climb does not beat faster than a cruise");
+            // wings below their mean (the downstroke's end): the body is up (a dip below 0)
+            if (!(Flight.heave(-0.5F, 2) < 0 && Flight.heave(0.5F, 2) > 0)) problems.add("the body does not rise as the wings sweep down");
+            h.assertTrue(flights >= 15, "the fliers and swimmers have flights (" + flights + ")");
             h.assertTrue(problems.isEmpty(), String.join("; ", problems));
             h.succeed();
         });

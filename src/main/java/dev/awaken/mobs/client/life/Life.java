@@ -97,6 +97,13 @@ public final class Life {
     float swayRoll, twist, creep, land, shiftX, shiftZ;
     private float landV, airFall, shiftT, shiftW;
     private boolean wasAirborne;
+    // flight and swimming (SPEC §23, "Flight"): how much it is under way, its path's climb, its cruise (0..1), the share
+    // of its stroke it keeps, where its wings sit above their mean (read from the pose), the beat (cycles), what the body
+    // and spine do with them; each wing's and spine link's mean pose (the stroke is measured and scaled about it)
+    final MotionProfile.@org.jspecify.annotations.Nullable Fly fly;
+    float flyW, climb, cruise, keep = 1, wingE, heave, beat, flyPitch, flyRoll, bend;
+    int flyFrame = -1;
+    final float[] wingMean, spineMean;
     // idle fidgets
     private int idle = -1, idleSide;
     private float idleAt, idleLen, nextIdle, idleEnv, wetUntil = -10;
@@ -121,6 +128,9 @@ public final class Life {
         this.seed = 0x9E3779B97F4A7C15L ^ (seed * 0xBF58476D1CE4E5B9L);
         legs = rig.legs != null ? new Legs(rig.legs.rig, seed) : null;
         motion = rig.motion != null ? rig.motion.body() : MotionProfile.Body.NONE;
+        fly = rig.fly;
+        wingMean = new float[rig.flyWings.length];
+        spineMean = new float[rig.flySpine.length * 3];
         int n = rig.n;
         ax = new float[n];
         ay = new float[n];
@@ -160,6 +170,11 @@ public final class Life {
 
     public boolean far() {
         return far;
+    }
+
+    /** The beat's pace for a body that beats its own wings or tail (1 when it has no flight): see {@link Flight#pace}. */
+    public float pace() {
+        return fly != null ? Flight.pace(climb, cruise) : 1.0F;
     }
 
     /** The head's look this frame, in degrees (written over the state's look so every model's look code uses it). */
@@ -273,6 +288,7 @@ public final class Life {
         bodyPitch = stX + idlePitch - tension * 0.04F + (roarClip ? 0.0F : roarRear(roarT)) + trem * 0.6F;
         bodyRoll = stZ + sway + lean + idleRoll + trem;
         headRoll = idleHeadRoll + roarShake;
+        if (fly != null) flight(fly, dead);
         headNod = idleNod;
         neckPitch = idleNeck;
         float roarJaw = rig.jaw != null && !roarClip && roarT >= 0.25F && roarT < 1.5F ? 0.45F * envelope(roarT - 0.25F, 1.25F, 0.15F, 0.3F) : 0.0F;
@@ -348,6 +364,32 @@ public final class Life {
             shiftX = motion.shift() * shiftW * Mth.sin(shiftT * 1.31F + ph) * (0.7F + 0.3F * Mth.sin(shiftT * 0.23F + ph * 2));
             shiftZ = motion.shift() * shiftW * 0.6F * Mth.sin(shiftT * 0.83F + ph * 1.7F);
         }
+    }
+
+    /**
+     * Flight and swimming (SPEC §23, "Flight"): under way, the body noses into a cruise and along its path's climb or
+     * dive, banks into turns and rides its wings' stroke (it rises as they sweep down); a flier beats and glides by
+     * turns at a cruise and glides down a dive; the spine curves into a turn. {@link LifeRig#apply} beats, scales and
+     * reads the wings and spine.
+     */
+    private void flight(MotionProfile.Fly f, boolean dead) {
+        boolean on = !dead && (f.always() || airborne || swimming);
+        flyW += ((on ? 1.0F : 0.0F) - flyW) * Math.min(1.0F, dt / 0.3F);
+        climb += (Flight.climb(speed, vy) - climb) * Math.min(1.0F, dt / 0.25F);
+        float c = Mth.clamp(Mth.sqrt(speed * speed + vy * vy) / f.fast(), 0.0F, 1.0F);
+        cruise += (c - cruise) * Math.min(1.0F, dt / 0.3F);
+        // beat and glide by turns, on a slow wave of its own (about six seconds)
+        float lull = 0.5F + 0.5F * Mth.sin(t * 1.1F + (seed & 255) * 0.0245F);
+        keep += (Flight.keep(climb, cruise, f.glide(), lull) - keep) * Math.min(1.0F, dt / 0.35F);
+        beat += dt * f.flapHz() * Flight.pace(climb, cruise);
+        if (beat > 1024) beat -= 1024;
+        flyPitch = Flight.pitch(climb, cruise, f.climb(), f.tilt()) * flyW;
+        flyRoll = Flight.bank(yawRate, cruise, f.bank()) * flyW;
+        heave += (Flight.heave(wingE, f.heave()) * flyW - heave) * Math.min(1.0F, dt / 0.05F);
+        bend += (Flight.bend(yawRate, f.bend()) * flyW - bend) * Math.min(1.0F, dt / 0.2F);
+        bodyPitch += flyPitch;
+        bodyRoll += flyRoll;
+        dip += heave;
     }
 
     private void writeHead(LivingEntityRenderState s) {

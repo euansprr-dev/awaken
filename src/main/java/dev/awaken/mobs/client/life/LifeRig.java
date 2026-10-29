@@ -53,6 +53,10 @@ public final class LifeRig {
     /** The body's motion profile (SPEC §23, "Motion") and its legs bound for the feet, or null: it moves as before. */
     final @Nullable MotionProfile motion;
     final @Nullable LegParts legs;
+    /** Its flight (SPEC §23, "Flight") and the bones that block names, with each one's side (+1 left, -1 right). */
+    final MotionProfile.@Nullable Fly fly;
+    final ModelPart[] flyWings, flyTips, flySpine, flyFins;
+    final int[] flyWingSide, flyTipSide, flyFinSide;
 
     private LifeRig(LifeProfile p) {
         this.p = p;
@@ -74,6 +78,9 @@ public final class LifeRig {
         impact = 0;
         motion = null;
         legs = null;
+        fly = null;
+        flyWings = flyTips = flySpine = flyFins = new ModelPart[0];
+        flyWingSide = flyTipSide = flyFinSide = new int[0];
     }
 
     /**
@@ -81,6 +88,11 @@ public final class LifeRig {
      * says the model already breathes through an authored idle.
      */
     public static LifeRig of(ModelPart root, LifeProfile p, @Nullable HeroRig rig, boolean idleClip) {
+        return of(root, p, rig, idleClip, null);
+    }
+
+    /** As {@link #of(ModelPart, LifeProfile, HeroRig, boolean)}, for a hand-built body whose motion profile is its creature's id. */
+    public static LifeRig of(ModelPart root, LifeProfile p, @Nullable HeroRig rig, boolean idleClip, @Nullable String motionId) {
         // every part with geometry, by path, with its cubes' centre and size in model space
         Map<String, float[]> geo = new LinkedHashMap<>();
         PoseStack ps = new PoseStack();
@@ -112,7 +124,7 @@ public final class LifeRig {
             parts[i] = part(root, path);
             pivots[i] = pivot(root, path);
         }
-        return new LifeRig(p, LifeBones.bind(bones), root, parts, pivots, geo, paths, rig, idleClip);
+        return new LifeRig(p, LifeBones.bind(bones), root, parts, pivots, geo, paths, rig, idleClip, motionId);
     }
 
     private static void addPath(String path, List<String> paths, Map<String, Integer> index) {
@@ -143,7 +155,7 @@ public final class LifeRig {
     }
 
     private LifeRig(LifeProfile p, LifeBones.Binding b, ModelPart root, ModelPart[] parts, float[][] pivots, Map<String, float[]> geo,
-                    List<String> paths, @Nullable HeroRig rig, boolean idleClip) {
+                    List<String> paths, @Nullable HeroRig rig, boolean idleClip, @Nullable String motionId) {
         this.p = p;
         this.bones = true;
         this.binding = b;
@@ -271,8 +283,17 @@ public final class LifeRig {
         hasTail = tail;
         impact = rig != null && b.body() >= 0 ? landing(rig, b.bones().get(b.body()).name()) : 0;
         // the feet ride a body that carries its head (its body bone moves over them); else the pose stack would carry them
-        motion = rig != null ? MotionProfile.of(rig.id) : null;
+        motion = rig != null ? MotionProfile.of(rig.id) : motionId != null ? MotionProfile.of(motionId) : null;
         legs = motion != null && motion.gait() != null && !rootMotion ? LegParts.of(motion.gait(), b, root, parts) : null;
+        fly = motion != null ? motion.fly() : null;
+        String who = motion != null ? motion.id() : "";
+        flyWings = named(fly != null ? fly.wings() : NONE, b, parts, who);
+        flyTips = named(fly != null ? fly.tips() : NONE, b, parts, who);
+        flySpine = named(fly != null ? fly.spine() : NONE, b, parts, who);
+        flyFins = named(fly != null ? fly.fins() : NONE, b, parts, who);
+        flyWingSide = sides(fly != null ? fly.wings() : NONE);
+        flyTipSide = sides(fly != null ? fly.tips() : NONE);
+        flyFinSide = sides(fly != null ? fly.fins() : NONE);
         // which fidgets this body can play
         boolean springs = n > 0, limbs = countRole(b, Role.LEG) >= 2;
         can[Idle.LOOK.ordinal()] = head != null;
@@ -309,6 +330,24 @@ public final class LifeRig {
             }
         }
         return death.length() * 0.66F;
+    }
+
+    private static final String[] NONE = new String[0];
+
+    /** The parts a motion profile names (it fails at once on a name the body hasn't: a typo never silently does nothing). */
+    private static ModelPart[] named(String[] names, LifeBones.Binding b, ModelPart[] parts, String who) {
+        ModelPart[] out = new ModelPart[names.length];
+        for (int i = 0; i < names.length; i++) {
+            for (int j = 0; j < b.bones().size() && out[i] == null; j++) if (b.bones().get(j).name().equals(names[i])) out[i] = parts[j];
+            if (out[i] == null) throw new IllegalStateException(MotionProfile.PATH + ": " + who + " has no bone " + names[i]);
+        }
+        return out;
+    }
+
+    private static int[] sides(String[] names) {
+        int[] out = new int[names.length];
+        for (int i = 0; i < names.length; i++) out[i] = LifeBones.side(names[i]);
+        return out;
     }
 
     private static int countRole(LifeBones.Binding b, Role r) {
@@ -464,6 +503,7 @@ public final class LifeRig {
         if (life.scratch != 0) {
             for (int i = 0; i < hind.length; i++) if (hindSide[i] == life.scratchSide || hindSide[i] == 0) hind[i].xRot += life.scratch;
         }
+        if (fly != null) fly(life);
         // the springs: ears, tails, manes, wings and everything that dangles
         float[] ax = life.ax, ay = life.ay, az = life.az;
         for (int j = 0; j < n; j++) {
@@ -474,5 +514,54 @@ public final class LifeRig {
         }
         // last: the legs reach for where the feet stand, whatever the body above them did
         if (legs != null && lg != null && lg.rig == legs.rig) legs.apply(lg);
+    }
+
+    /**
+     * Flight and swimming on the bones (SPEC §23, "Flight"): the layer's own wingbeat for a body whose clips only glide
+     * (the tips trailing the stroke), a glide holding the wings near their mean, the wings' height read for the body's
+     * heave, the spine's swim stroke stronger with speed and curved into a turn, the fins folded back at speed, the head
+     * held level. The means always follow (a wing's mean must already be the flight pose when it takes off).
+     */
+    private void fly(Life life) {
+        MotionProfile.Fly f = fly;
+        float w = life.flyW;
+        boolean first = life.flyFrame < 0, once = life.flyFrame != life.frame; // the means move once a frame
+        life.flyFrame = life.frame;
+        float mk = first ? 1.0F : Math.min(1.0F, life.dt / 0.8F);
+        float own = f.flapAmp() * w * life.keep, stroke = Flight.stroke(life.beat), trail = Flight.stroke(life.beat - 0.12F) - stroke;
+        float amp = f.flapAmp() > 0 ? 1.0F : Mth.lerp(w, 1.0F, life.keep);
+        float[] m = life.wingMean;
+        float e = 0;
+        for (int i = 0; i < flyWings.length; i++) {
+            ModelPart q = flyWings[i];
+            q.zRot -= flyWingSide[i] * own * stroke;
+            if (once) m[i] += (q.zRot - m[i]) * mk;
+            q.zRot = m[i] + (q.zRot - m[i]) * amp;
+            e -= flyWingSide[i] * (q.zRot - m[i]);
+        }
+        if (once && flyWings.length > 0) life.wingE = e / flyWings.length;
+        for (int i = 0; i < flyTips.length; i++) flyTips[i].zRot -= flyTipSide[i] * own * f.tipAmp() * trail;
+        int n = flySpine.length;
+        if (n > 0) {
+            float k = Mth.lerp(w, 1.0F, Mth.lerp(life.cruise, f.waveSlow(), f.waveFast())), per = life.bend / n;
+            float[] sm = life.spineMean;
+            for (int i = 0; i < n; i++) {
+                ModelPart q = flySpine[i];
+                int j = i * 3;
+                if (once) {
+                    sm[j] += (q.xRot - sm[j]) * mk;
+                    sm[j + 1] += (q.yRot - sm[j + 1]) * mk;
+                    sm[j + 2] += (q.zRot - sm[j + 2]) * mk;
+                }
+                q.xRot = sm[j] + (q.xRot - sm[j]) * k;
+                q.yRot = sm[j + 1] + (q.yRot - sm[j + 1]) * k + per;
+                q.zRot = sm[j + 2] + (q.zRot - sm[j + 2]) * k;
+            }
+        }
+        for (int i = 0; i < flyFins.length; i++) flyFins[i].yRot -= flyFinSide[i] * f.tuck() * life.cruise * w;
+        if (head != null && f.level() > 0) {
+            head.xRot -= life.flyPitch * f.level();
+            head.zRot -= life.flyRoll * f.level();
+        }
     }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "about": "The motion layer (SPEC 23, Motion): how a body of ours walks on its legs and carries its weight, by rig id. A body listed here plants its feet on the ground and steps them in a gait by two-bone IK (gait), and gets the body features named in body. A body not listed moves as before. Distances in model pixels unless noted; strides, reach and settle in blocks; times in seconds; angles in radians except fan (degrees).",
+  "about": "The motion layer (SPEC 23, Motion): how a body of ours walks on its legs and carries its weight, by rig id. A body listed here plants its feet on the ground and steps them in a gait by two-bone IK (gait), and gets the body features named in body; one with a fly block carries itself through air, water or sand (SPEC 23, Flight), keyed by rig id or, for a hand-built body, its creature id. A body not listed moves as before. Distances in model pixels unless noted; strides, reach and settle in blocks; times in seconds; angles in radians except fan (degrees).",
   "creatures": {
     "drip_lurker": {
       "gait": {
@@ -220,6 +220,51 @@
     "stonehorn": {
       "gait": {"pattern": "ripple-alternate", "duty": [0.7, 0.42], "stride": [0.96, 1.79], "lift": [2.5, 4.5], "reach": 0.45, "settle": 0.08, "crouch": 0.3, "regrip": [5.0, 12.0], "swing": 0.26, "bob": 0.45, "roll": 0.03, "rear": 1.0},
       "body": {"headLevel": 0.3, "twist": 0.2, "slope": 0.9, "land": 1.2, "shift": 0.8, "nod": 0.07}
+    },
+    "hollow_owl": {
+      "fly": {"wings": ["wing_l", "wing_r"], "tips": ["wingtip_l", "wingtip_r"], "flap": [0.55, 2.4, 0.5], "heave": 2.0, "glide": 0.12, "fast": 7, "bank": 0.18, "climb": 0.6, "tilt": 0.12, "level": 0.6}
+    },
+    "bogwick": {
+      "fly": {"wings": ["bwing_l", "bwing_r"], "heave": 0.6, "glide": 0.6, "fast": 5, "bank": 0.12, "climb": 0.4, "tilt": 0.25, "level": 0.3}
+    },
+    "empress_moth": {
+      "fly": {"wings": ["wing_fl", "wing_fr", "wing_hl", "wing_hr"], "glide": 0.45, "fast": 6, "bank": 0.16, "climb": 0.45, "tilt": 0.12, "level": 0.4}
+    },
+    "plumed_coil": {
+      "fly": {"always": true, "wings": ["wing2_l", "wing2_r", "wing5_l", "wing5_r"], "spine": ["seg0", "seg1", "seg2", "seg3", "seg4", "seg5", "seg6", "seg7", "seg8", "seg9"], "heave": 0.8, "glide": 0.4, "fast": 6, "bank": 0.2, "climb": 0.6, "tilt": 0.1, "level": 0.5, "bend": 0.25, "wave": [0.7, 1.2]}
+    },
+    "dune_wyrm": {
+      "fly": {"always": true, "spine": ["seg0", "seg1", "seg2", "seg3", "seg4", "seg5", "seg6", "seg7", "seg8"], "fast": 6, "bank": 0.1, "climb": 0.7, "level": 0.4, "bend": 0.3, "wave": [0.7, 1.25]}
+    },
+    "glimmerfin": {
+      "fly": {"spine": ["tail1", "tail2", "fin"], "fins": ["pec_l", "pec_r"], "fast": 4, "bank": 0.25, "climb": 0.7, "level": 0.3, "bend": 0.3, "wave": [0.55, 1.3], "tuck": 0.6}
+    },
+    "lantern_maw": {
+      "fly": {"spine": ["mtail1", "mtail2", "caudal"], "fins": ["mpec_l", "mpec_r"], "fast": 3, "bank": 0.12, "climb": 0.5, "level": 0.3, "bend": 0.25, "wave": [0.6, 1.2], "tuck": 0.35}
+    },
+    "tidesteed": {
+      "fly": {"spine": ["ttail1", "ttail2", "ttail3", "ttail4", "fluke"], "fins": ["pec_l", "pec_r"], "fast": 5, "bank": 0.2, "climb": 0.6, "level": 0.4, "bend": 0.25, "wave": [0.6, 1.3], "tuck": 0.4}
+    },
+    "brook_otter": {
+      "fly": {"spine": ["otail1", "otail2", "otail3"], "fast": 4, "bank": 0.2, "climb": 0.6, "level": 0.4, "bend": 0.3, "wave": [0.6, 1.3]}
+    },
+    "lumen_moth": {
+      "fly": {"wings": ["wing_left", "wing_right"], "heave": 0.9, "glide": 0.7, "fast": 4, "bank": 0.25, "climb": 0.4, "tilt": 0.3, "level": 0.3}
+    },
+    "petalwing": {
+      "fly": {"wings": ["wing_left", "wing_right"], "heave": 0.9, "glide": 0.4, "fast": 4, "bank": 0.25, "climb": 0.4, "tilt": 0.25, "level": 0.3}
+    },
+    "dune_ray": {
+      "fly": {"always": true, "wings": ["wing_left", "wing_right"], "spine": ["tail", "tail_end"], "heave": 0.8, "fast": 5, "bank": 0.3, "climb": 0.5, "tilt": 0.1, "bend": 0.35}
+    },
+    "deep_eel": {
+      "fly": {"always": true, "spine": ["seg0", "seg1", "seg2", "seg3", "seg4", "seg5"], "fast": 4, "bank": 0.1, "climb": 0.6, "level": 0.5, "bend": 0.45}
+    },
+    "tide_eel": {
+      "fly": {"always": true, "spine": ["seg0", "seg1", "seg2", "seg3", "seg4", "seg5"], "fast": 4, "bank": 0.1, "climb": 0.6, "level": 0.5, "bend": 0.45}
+    },
+    "cord_eater": {
+      "fly": {"always": true, "spine": ["seg0", "seg1", "seg2", "seg3", "seg4", "seg5"], "fast": 4, "bank": 0.1, "climb": 0.6, "level": 0.5, "bend": 0.45}
     }
   }
 }

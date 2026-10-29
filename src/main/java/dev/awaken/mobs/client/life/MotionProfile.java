@@ -19,11 +19,13 @@ import java.util.Set;
  * How a body of ours moves on its legs and carries its weight (SPEC §23, "Motion"), from
  * {@code assets/awaken/life/motion.json}, keyed by rig id. A body with no entry moves as before; one with an entry gets
  * the layer's motion on top of its clips: feet planted on the ground that step in a gait ({@link Legs}), the head held
- * level against the gait, the body turning a little toward what it watches, a landing's squash, a hunter's stillness.
+ * level against the gait, the body turning a little toward what it watches, a landing's squash, a hunter's stillness;
+ * a flier or swimmer banks, pitches along its path, rides its wingbeat and curves its spine into turns ({@link Flight}).
+ * A hand-built body's profile is keyed by its creature id.
  *
  * <p>Plain data (Gson and the classpath, no Minecraft classes), so GameTests load it on the server.
  */
-public record MotionProfile(String id, @Nullable Gait gait, Body body) {
+public record MotionProfile(String id, @Nullable Gait gait, Body body, @Nullable Fly fly) {
     public static final String PATH = "/assets/awaken/life/motion.json";
 
     /** The leg patterns: one foot at a time from the back forward, opposite sets, or the first slow and the second fast. */
@@ -62,6 +64,27 @@ public record MotionProfile(String id, @Nullable Gait gait, Body body) {
         static final Body NONE = new Body(0, 0, 0, 0, false, 0, 0, 0);
     }
 
+    /**
+     * Flight and swimming (SPEC §23, "Flight"): how a body carries itself through air, water or sand. {@code always}: it
+     * is always under way (a serpent in sand, a ray over the dunes), else only while airborne or swimming. The named
+     * bones: {@code wings} (the roots of each wing, whose stroke the body rides), {@code tips} (their tips, for a beat of
+     * the layer's own), {@code spine} (the links behind the body, front first, that bend into a turn and carry the swim
+     * wave), {@code fins} (folded back at speed). {@code flap} is a beat of the layer's own for a body whose clips only
+     * glide (radians, cycles a second, the tips' share); {@code heave} how far (px per radian of stroke) the body rises
+     * as the wings sweep down; {@code glide} the share of the stroke kept while it glides (diving, or a lull at speed);
+     * {@code fast} the speed (blocks a second) of a full cruise; {@code bank} how far it rolls into a turn (radians per
+     * radian a second of turn at full cruise); {@code climb} the share of its path's climb or dive the body pitches with;
+     * {@code tilt} how far (radians) it noses down at full cruise; {@code level} (0..1) how much the head holds level;
+     * {@code bend} how far (radians, the whole spine, per radian a second of turn) the spine curves into a turn;
+     * {@code wave} how strong the spine's swim stroke is at rest and at full cruise (1: as the clip has it);
+     * {@code tuck} how far (radians) the fins fold back at full cruise.
+     */
+    public record Fly(boolean always, String[] wings, String[] tips, String[] spine, String[] fins, float flapAmp, float flapHz, float tipAmp,
+                      float heave, float glide, float fast, float bank, float climb, float tilt, float level, float bend, float waveSlow,
+                      float waveFast, float tuck) {}
+
+    private static final Set<String> FLY = Set.of("always", "wings", "tips", "spine", "fins", "flap", "heave", "glide", "fast", "bank", "climb",
+            "tilt", "level", "bend", "wave", "tuck");
     private static final Set<String> GAIT = Set.of("pattern", "duty", "lift", "reach", "settle", "crouch", "radius", "fan", "regrip", "swing",
             "stride", "bob", "roll", "rear", "rearPairs", "lag", "knees");
     private static final Set<String> BODY = Set.of("headLevel", "twist", "slope", "land", "still", "creep", "shift", "nod");
@@ -92,7 +115,8 @@ public record MotionProfile(String id, @Nullable Gait gait, Body body) {
             JsonObject c = e.getValue().getAsJsonObject();
             Gait g = c.has("gait") ? gait(e.getKey(), c.getAsJsonObject("gait")) : null;
             Body b = c.has("body") ? body(e.getKey(), c.getAsJsonObject("body")) : Body.NONE;
-            m.put(e.getKey(), new MotionProfile(e.getKey(), g, b));
+            Fly f = c.has("fly") ? fly(e.getKey(), c.getAsJsonObject("fly")) : null;
+            m.put(e.getKey(), new MotionProfile(e.getKey(), g, b, f));
         }
         return Map.copyOf(m);
     }
@@ -107,6 +131,32 @@ public record MotionProfile(String id, @Nullable Gait gait, Body body) {
                 num(o, "radius", 0), num(o, "fan", 0), regrip[0], regrip[1], num(o, "swing", 0.35F), stride[0], stride[1],
                 num(o, "bob", 0.3F), num(o, "roll", 0.02F), Math.clamp(num(o, "rear", 0), 0.0F, 1.0F), (int) num(o, "rearPairs", 1),
                 Math.clamp(num(o, "lag", 0), 0.0F, 0.5F), Knees.valueOf(str(o, "knees", "auto").toUpperCase(Locale.ROOT)));
+    }
+
+    private static Fly fly(String id, JsonObject o) {
+        for (String k : o.keySet()) if (!FLY.contains(k)) throw new IllegalStateException(PATH + ": " + id + ": unknown fly field " + k);
+        float[] wave = pair(o, "wave", 1, 1);
+        float[] flap = o.has("flap") ? floats(o.getAsJsonArray("flap")) : new float[3];
+        if (flap.length != 3) throw new IllegalStateException(PATH + ": " + id + ": flap is [radians, cycles a second, tips' share]");
+        if (o.has("tips") && flap[0] <= 0) throw new IllegalStateException(PATH + ": " + id + ": tips beat only with a flap of the layer's own");
+        return new Fly(o.has("always") && o.get("always").getAsBoolean(), names(o, "wings"), names(o, "tips"), names(o, "spine"), names(o, "fins"),
+                flap[0], flap[1], flap[2], num(o, "heave", 0), Math.clamp(num(o, "glide", 1), 0.0F, 1.0F), Math.max(0.5F, num(o, "fast", 4)),
+                num(o, "bank", 0), num(o, "climb", 0), num(o, "tilt", 0), Math.clamp(num(o, "level", 0), 0.0F, 1.0F), num(o, "bend", 0),
+                wave[0], wave[1], num(o, "tuck", 0));
+    }
+
+    private static String[] names(JsonObject o, String k) {
+        if (!o.has(k)) return new String[0];
+        JsonArray a = o.getAsJsonArray(k);
+        String[] out = new String[a.size()];
+        for (int i = 0; i < out.length; i++) out[i] = a.get(i).getAsString();
+        return out;
+    }
+
+    private static float[] floats(JsonArray a) {
+        float[] out = new float[a.size()];
+        for (int i = 0; i < out.length; i++) out[i] = a.get(i).getAsFloat();
+        return out;
     }
 
     private static Body body(String id, JsonObject o) {

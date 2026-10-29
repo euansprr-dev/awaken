@@ -5697,20 +5697,49 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   (head level 0.45, nod 0.05); the **Stonehorn** (`stonehorn`; 12 px legs) a ram's sure-footed walk (0.96/1.79 blocks,
   2.5/4.5 px) that pitches and rolls with the rock under it (slope 0.9), nod 0.07, shift 0.8. All `rear` 1: a still
   threat or a wind-up hands the front pair to the clip (the sow's snort and paw, the ram's stamp).
-- Test: `creature_motion_feet` (every motion.json entry names a rig; every gait finds two-bone legs on a body bone that
+- **Flight** (`Flight`, plain math checked on the server; a `fly` block, by rig id or, for a hand-built body, by its
+  creature id): while airborne or swimming (or `always`, for a body always under way: serpents, the ray) the body noses
+  into a cruise (`tilt` at `fast` blocks a second) and pitches along its path's climb or dive (`climb`, the share), banks
+  into a turn (`bank`, radians per radian a second of turn at a full cruise, capped 0.7), and rides its wings: the wings'
+  height above their own mean (read from the pose, the roots named in `wings`) lifts the body as they sweep down
+  (`heave` px per radian, 50 ms behind). A flier keeps all of its stroke climbing or hovering, glides down a dive
+  (`glide`, the stroke's share kept, about the wings' mean), and at a cruise beats and glides by turns on a slow wave of
+  its own (about six seconds). A body whose clips only glide (the owl's `air`) gets the layer's own beat (`flap`: radians,
+  cycles a second, the tips' trailing share): down in 40% of the cycle, up in 60%, quicker climbing and hovering (x1.15,
+  +0.4 per radian of climb), slower in a cruise (-0.35); the tips (`tips`) trail it by an eighth of a beat. The spine
+  (`spine`, the links behind the body, front first) carries its swim stroke stronger with speed (`wave`: the stroke's
+  scale at rest and at a full cruise, about each link's mean) and curves into a turn (`bend`, radians over the whole
+  spine per radian a second, the tail to the inside of the turn); fins (`fins`) fold back at speed (`tuck`); the head
+  holds level against the pitch and bank (`level`). Hand-built bodies beat on the life layer's paced clock (the moth's
+  wings, the ray's ripple, the serpent's wave), so a change of pace never jumps the phase.
+  The **Hollow Owl** beats 0.55 rad at 2.4 a second (tips 0.5) round its glide pose, heave 2, glide 0.12, banks 0.18,
+  climb 0.6; the **Bogwick** (clip beat) heave 0.6, glide 0.6, tilt 0.25; the **Empress Moth** (its clip heaves) glide
+  0.45, bank 0.16; the **Plumed Coil** wings heave 0.8, glide 0.4, spine of ten bending 0.25, wave 0.7/1.2; the **Dune
+  Wyrm** spine of nine bending 0.3, climb 0.7, wave 0.7/1.25; the **Glimmerfin** tail and caudal fin wave 0.55/1.3, bend
+  0.3, pectorals tucking 0.6, climb 0.7; the **Lantern Maw** wave 0.6/1.2, bend 0.25, bank 0.12; the **Tidesteed** tail
+  and fluke wave 0.6/1.3, bend 0.25; the **Brook Otter** swimming, tail wave 0.6/1.3, bend 0.3; the **Lumen Moth** and
+  **Petalwing** heave 0.9, glide 0.7 and 0.4, tilt 0.3 and 0.25, bank 0.25; the **Dune Ray** heave 0.8, bank 0.3, its
+  tail bending 0.35; the eels (**Deep Eel**, **Tide Eel**, **Cord-Eater**) bend 0.45 over six segments, climb 0.6.
+  The Breathbell's bell pulses as its clip has it (a jelly drifts; no bank or pitch).
+- Test: `creature_motion_feet` (every motion.json entry with a gait names a rig; every gait finds two-bone legs on a body bone that
   carries the head; every foot can reach its stance on its crouch and sunk to stalk; the IK lands each foot within 0.05 px of its
   home, a step ahead and behind, the top of a step's arc and the crouch, checked by forward kinematics; the hip's turn
   survives its ZYX Euler angles; a four-legged walker's (the form grazers', the sow's, the stag's, the ram's) forelegs' knees break forward and
   its hind legs' back; every gait's stride, walking and running,
   sweeps its planted feet no further than the hips can vault to; the forms' rigs
-  are looked up too). Tours walk still (NoAI) creatures with
-  `/awaken admin stroll <targets> <blocks per tick> <ticks> [degrees per tick]` (each call queues a leg; the server moves
+  are looked up too); `creature_motion_flight` (every flight names a creature and, on a rig, bones it has, wings with a
+  side; the beat sweeps down in under half a cycle and never jumps; a right turn banks right and curves the spine right;
+  a climb noses up and keeps every beat, a dive noses down and glides, a hover beats, a cruise glides between beats; a
+  climb beats faster than a cruise; the body rises as the wings sweep below their mean). Tours walk still (NoAI) creatures with
+  `/awaken admin stroll <targets> <blocks per tick> <ticks> [degrees per tick] [climb, blocks per tick]` (each call queues a leg; the server moves
   them every tick, so a busy runner can't turn a scripted walk into a crawl the way a tp a command did), load the studio's
   chunks first (`forceload`) and fill its floor twice. Tours on CI (PACK=perf,feel; a vanilla spider under
   Fresh Animations beside each): `tools/autopilot/mob-anims-lurker.txt` (clips run-autopilot/clips/lurk_*: idle, a walk
   into a run, a stop and a turn, a blow, a death, the hunt), `tools/autopilot/mob-anims-spiders.txt` (spid_*: the forms'
   row from vanilla's rungs to S, a walk side by side, a blow, a death, a hunt) and `tools/autopilot/mob-anims-crawlers.txt`
-  (crawl_*: the thousandfoot, wickling, hushling and weaver queen).
+  (crawl_*: the thousandfoot, wickling, hushling and weaver queen); `tools/autopilot/mob-anims-fliers.txt` (fly_*, swim_*:
+  each flier on a set course, NoGravity, beside a parrot, a bee or a cod under Fresh Animations: a cruise, a U-turn
+  each way, a climb, a dive, a hover; a blow and a death in the air; the swimmers in a tank).
 
 ## 24. Hands: the first-person system (plan docs/anims/PLAN.md, page https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy; approved 2026-10-25)
 
