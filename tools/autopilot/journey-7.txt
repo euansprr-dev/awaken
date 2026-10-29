@@ -1,0 +1,164 @@
+# The Journey, stage 7 (SPEC §43.14): what Euan sees after it. A home with 99 bells and the ending screen's Wake shut;
+# the Great Belfry by day, under its bells and by night; the Hundred Peal and the Deep's answer (its Great Fault);
+# a Gnawed Boulderback by day and by dusk; the Book and the Hearth page at 100; the ending screen open; then the Wake:
+# a Stilled stands up as one of the risen, and Ilse comes up the path to the fire.
+# ci knobs: PACK=perf,world TECTONIC=awakened
+#   tools/tour-ci.sh tools/autopilot/journey-7.txt 2400 PACK=perf,world TECTONIC=awakened
+world autopilot_journey_7 creative 29102026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the readings need it free
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+camera first
+hud off
+cmd time set 6000
+cmd clear @s
+
+# ---- 1. a home out west with 99 bells: the Wake is still shut ----
+cmd awaken city view square
+wait 200
+cmd spreadplayers ~-800 ~ 0 40 false @s
+wait 400
+cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
+cmd awaken admin kin yard
+wait 140
+screen close
+wait 20
+screen close
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
+cmd awaken admin bells tower 99
+wait 120
+hud on
+cmd awaken admin story ending
+wait 60
+shotnow j7_01_ending_locked
+screen close
+hud off
+
+# ---- 2. the Great Belfry: by day, under its bells, by night ----
+cmd awaken admin bells belfry
+wait 100
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~13 ~36 180 8
+wait 80
+shot j7_02_great_belfry
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-14 ~6 ~22 215 -6
+wait 40
+shot j7_03_great_belfry_low
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~1.5 ~11.6 ~2.5 160 -35
+wait 40
+shot j7_04_under_the_bells
+cmd time set 18000
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~13 ~36 180 8
+wait 60
+shot j7_05_great_belfry_night
+cmd time set 6000
+
+# ---- 3. the Hundred Peal, and thirty seconds on the Deep's answer ----
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~13 ~36 180 8
+hud on
+cmd awaken admin bells song
+wait 60
+shotnow j7_06_hundred_peal
+wait 200
+shotnow j7_07_peal_singing
+wait 400
+shotnow j7_08_deep_answer
+wait 70
+shotnow j7_09_deep_answer_words
+wait 90
+shotnow j7_10_deep_answer_cut
+wait 200
+hud off
+
+# ---- 4. a Gnawed Boulderback, held still: by day and at dusk ----
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~16 ~ ~16
+wait 40
+cmd awaken admin kin gnaw boulderback
+wait 10
+cmd data merge entity @e[type=awaken:kin_boulderback,limit=1,sort=nearest] {NoAI:1b}
+wait 20
+cmd gamemode spectator
+cmd execute at @e[type=awaken:kin_boulderback,limit=1,sort=nearest] run tp @s ~-3 ~1.6 ~3 225 14
+wait 40
+shot j7_11_gnawed
+cmd time set 13000
+wait 40
+shot j7_12_gnawed_dusk
+cmd time set 6000
+cmd gamemode creative
+
+# ---- 5. the Book and the Hearth page at 100 ----
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~4.5 180 10
+hud on
+screen holo codex
+wait 80
+scroll -4
+wait 20
+shotnow j7_13_book_hundred
+scroll -8
+wait 20
+shotnow j7_14_book_tower
+screen close
+screen holo hearth
+wait 80
+shotnow j7_15_hearth_page
+screen close
+
+# ---- 6. the Wake: the ending screen open, a Stilled stands up, Ilse comes to the fire ----
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~14 ~ ~-6 0 0
+cmd awaken admin stilled place walking letter
+wait 20
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~14 ~ ~-1 180 10
+wait 20
+cmd awaken admin story ending
+wait 60
+shotnow j7_16_ending_open
+screen close
+cmd awaken admin story ending choose wake
+wait 200
+screen close
+wait 20
+screen close
+hud off
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~18 ~2.5 ~-2 135 12
+wait 60
+shot j7_17_risen
+cmd execute at @e[type=awaken:wayfarer,limit=1,sort=nearest] rotated as @e[type=awaken:wayfarer,limit=1,sort=nearest] run tp @s ^ ^1.6 ^3 ~180 8
+wait 30
+shot j7_18_risen_close
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
+cmd awaken admin bells ilse
+wait 300
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~9 ~14 180 30
+wait 40
+shot j7_19_ilse_visits
+quit

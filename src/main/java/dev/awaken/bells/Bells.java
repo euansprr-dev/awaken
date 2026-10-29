@@ -530,6 +530,17 @@ public final class Bells {
                 say(m, "[Someone's coming up the path from the city. It's Ilse, from the Last Fire.]");
     }
 
+    /** Dev and tours: Ilse's visit now, as if three play-days had passed since the Wake. */
+    static boolean ilseNow(ServerPlayer p) {
+        Optional<HearthRecord> h = HearthService.data(p.level().getServer()).home(p.getUUID());
+        if (h.isEmpty()) return false;
+        BellWorld w = BellWorld.get(p.level().getServer());
+        w.woke = PlayDays.current(p.level().getServer()) - ILSE_DAYS;
+        w.home(h.get().pos).ilse = false;
+        ilse(p, h.get());
+        return w.home(h.get().pos).ilse;
+    }
+
     /** Checks the moments that are states rather than events, for one player. */
     private static void moments(ServerPlayer p) {
         MinecraftServer server = p.level().getServer();

@@ -218,7 +218,11 @@ public final class StoryModule {
                 if (StoryWorld.get(p.level().getServer()).ended()) Court.tell(p);
                 else AwakenNet.send(p, Court.offer(p));
                 return 1;
-            }).then(Commands.literal("reset").executes(c -> {
+            }).then(Commands.literal("choose").then(Commands.argument("which", StringArgumentType.word()).executes(c -> {
+                // tours: answer the ending screen as a click would (wake, calm, ascend or later)
+                Court.choose(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "which"));
+                return 1;
+            }))).then(Commands.literal("reset").executes(c -> {
                 StoryWorld w = StoryWorld.get(c.getSource().getServer());
                 w.ending = "";
                 w.endingBy = null;

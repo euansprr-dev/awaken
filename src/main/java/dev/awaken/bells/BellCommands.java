@@ -38,6 +38,7 @@ final class BellCommands {
                         tower(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "n")))))
                 .then(Commands.literal("song").executes(c -> BellTower.songNow(c.getSource().getPlayerOrException()) ? 1 : 0))
                 .then(Commands.literal("belfry").executes(c -> belfry(c.getSource().getPlayerOrException())))
+                .then(Commands.literal("ilse").executes(c -> Bells.ilseNow(c.getSource().getPlayerOrException()) ? 1 : 0))
                 .then(Commands.literal("deep").executes(c -> {
                     BellWorld w = BellWorld.get(c.getSource().getServer());
                     if (w.deepAnswered < 0) w.deepAnswered = dev.awaken.core.PlayDays.current(c.getSource().getServer());
