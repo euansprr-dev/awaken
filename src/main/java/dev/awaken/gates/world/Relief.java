@@ -39,6 +39,8 @@ final class Relief {
     final byte[] in = new byte[Plots.SIDE * Plots.SIDE];
     /** Columns that stay as the dress left them: doorways, pads, lakes (nothing banks or creeps there). */
     final java.util.BitSet pinned = new java.util.BitSet(Plots.SIDE * Plots.SIDE);
+    /** The highest ground or piece standing within 3 of each column, whole blocks (what a wall rises from: {@link CaveEngine.Cave#wall}). */
+    final byte[] near = new byte[Plots.SIDE * Plots.SIDE];
 
     Relief(CaveEngine.Cave c) {
         this.c = c;
@@ -152,6 +154,35 @@ final class Relief {
             c.s.op(b[0], W - 6, b[1], b[2], W - 6, b[3], (buf, x, y, z) -> column(buf, x, z));
         }
         c.p.ground = stand;
+        // the highest ground within 3, rows then columns
+        byte[] rows = new byte[stand.length];
+        for (int z = 0; z < Plots.SIDE; z++)
+            for (int x = 0; x < Plots.SIDE; x++) {
+                int m = 0;
+                for (int d = -3; d <= 3; d++) if (x + d >= 0 && x + d < Plots.SIDE) m = Math.max(m, stand[x + d + z * Plots.SIDE]);
+                rows[x + z * Plots.SIDE] = (byte) m;
+            }
+        for (int z = 0; z < Plots.SIDE; z++)
+            for (int x = 0; x < Plots.SIDE; x++) {
+                int m = 0;
+                for (int d = -3; d <= 3; d++) if (z + d >= 0 && z + d < Plots.SIDE) m = Math.max(m, rows[x + (z + d) * Plots.SIDE]);
+                near[x + z * Plots.SIDE] = (byte) m;
+            }
+    }
+
+    /** Something stands to {@code top} (blocks over the floor line) within r of (cx, cz): the walls near it rise from there. */
+    void lift(double cx, double cz, double r, double top) {
+        int t = (int) Math.ceil(top), x0 = (int) Math.floor(cx - r - 3), x1 = (int) Math.floor(cx + r + 3);
+        int z0 = (int) Math.floor(cz - r - 3), z1 = (int) Math.floor(cz + r + 3);
+        for (int z = Math.max(0, z0); z <= Math.min(Plots.SIDE - 1, z1); z++)
+            for (int x = Math.max(0, x0); x <= Math.min(Plots.SIDE - 1, x1); x++)
+                if (near[x + z * Plots.SIDE] < t) near[x + z * Plots.SIDE] = (byte) Math.min(127, t);
+    }
+
+    /** The highest ground (or piece standing, {@link #lift}) within 3 of (x, z), whole blocks over the floor line (0 off the plot). */
+    int near(int x, int z) {
+        if (x < 0 || z < 0 || x >= Plots.SIDE || z >= Plots.SIDE) return 0;
+        return near[x + z * Plots.SIDE];
     }
 
     void solve(Room r, CaveEngine.Kind kind) {

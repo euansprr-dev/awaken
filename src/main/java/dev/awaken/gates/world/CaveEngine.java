@@ -309,6 +309,27 @@ final class CaveEngine implements WorldEngine {
             return Math.max(3.5, dome + swell + chimney) + Math.max(0, Relief.terrace(relief.seed, q, x, z));
         }
 
+        /**
+         * How a shaped place's wall changes as it rises (38.14), blocks it's worn back (below 0, bulging in): lumps over
+         * every face, taller than wide, bigger the higher (the theme says how big: {@link Dress#lumps}); where the wall
+         * stands tall, a lean in or out as it rises and here and there a ledge where it steps back. All of it starts 2.5
+         * over the highest ground or piece standing within 3 ({@link Relief#near}), past a jump, so no wall is a stair to
+         * its roof. Under the roof it bulges a block down at most (headroom stays over 2), and it's never worn back nearer
+         * than 2.5 to the place's box, so the rock between two places stays whole.
+         */
+        double wall(double x, double y, double z, double h, double dd, boolean under, int x0, int z0, int x1, int z1) {
+            double hb = h - relief.near((int) Math.floor(x), (int) Math.floor(z));
+            if (hb < 2.5) return 0;
+            double push = (Hash.noise3(seed + 51, x, y * 0.6, z, 5) - 0.5) * 2.6 * dress.lumps() * Relief.smooth(2.5, 5, hb);
+            if (!under && dd > -4 && dd < 3) {
+                push += Relief.clamp((Hash.noise(seed + 53, x, z, 16) - 0.42) * 0.5 * Math.max(0, hb - 3), -2.2, 2.2);
+                double band = 5 + Hash.noise(seed + 55, x, z, 11) * 4;
+                push += 1.6 * Relief.smooth(0.5, 0.6, Hash.noise(seed + 57, x, z, 9) * dress.ledges()) * Relief.smooth(band - 0.5, band + 0.5, hb);
+            }
+            if (push > 0) push = Math.min(push, Math.min(2.9, Math.max(0, Math.min(Math.min(x - x0, x1 + 1 - x), Math.min(z - z0, z1 + 1 - z)) - 2.5)));
+            return Math.max(under ? -1 : -2.5, push);
+        }
+
         /** How high a shaped place's chimneys rise over its roof. */
         static final int CHIMNEY = 12;
 
@@ -572,8 +593,9 @@ final class CaveEngine implements WorldEngine {
             }
             int top = W + roofs.get(id) + 3 + (relief == null ? 0 : CHIMNEY + 4);
             s.carve(x0, W, z0, x1, top, z1, (x, y, z) -> {
-                double h = y - W, dd = d(id, x, z);
-                return Math.max(dd - foot(x, z, h, dd), Math.max(-h, h - ceil(id, x, z)));
+                double h = y - W, dd = d(id, x, z), wall = dd - foot(x, z, h, dd), roof = h - ceil(id, x, z);
+                double f = Math.max(wall, Math.max(-h, roof));
+                return relief == null || f < -3 || f > 3 ? f : f - wall(x, y, z, h, dd, roof > wall, x0, z0, x1, z1);
             });
             // a mouth from each doorway well in, whatever the ragged wall does there
             PassageEngine.Shape sh = shapes.get(id);

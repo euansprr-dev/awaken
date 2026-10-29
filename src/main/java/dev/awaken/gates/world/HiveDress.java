@@ -104,6 +104,12 @@ final class HiveDress extends Dress {
     }
 
     @Override
+    double lumps() {
+        // the comb bulges out of the walls and hangs from the roof in masses
+        return 1.3;
+    }
+
+    @Override
     BlockState creep(int x, int y, int z) {
         // capped comb creeping over floor and wall
         return capped;

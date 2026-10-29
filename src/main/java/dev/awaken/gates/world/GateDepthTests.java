@@ -151,11 +151,11 @@ public final class GateDepthTests {
     static final Map<String, Long> GOLDEN_V6_X86 = Map.of("awaken:frost_monastery/cloisters", 0xea1d0bb95632b0a3L);
 
     /** How deep a world's places are (SPEC §38.14, "How we'll know"), over its first two world floors. */
-    record Depth(int cols, double flat, int heights, double partial, double plumb, double roofSpread, double detail, double planMs, int jumps) {
+    record Depth(int cols, double flat, int heights, double partial, double plumb, double roofSpread, double detail, double planMs, int jumps, int climbs) {
         @Override
         public String toString() {
-            return String.format("cols %d flat %.1f%% heights %d partial %.1f%% plumb %.1f%% roofSD %.1f detail %.1f plan %.1f ms jumps %d",
-                    cols, flat, heights, partial, plumb, roofSpread, detail, planMs, jumps);
+            return String.format("cols %d flat %.1f%% heights %d partial %.1f%% plumb %.1f%% roofSD %.1f detail %.1f plan %.1f ms jumps %d climbs %d",
+                    cols, flat, heights, partial, plumb, roofSpread, detail, planMs, jumps, climbs);
         }
     }
 
@@ -182,7 +182,7 @@ public final class GateDepthTests {
         List<Integer> roofs = new ArrayList<>();
         Map<Integer, java.util.Set<Integer>> heights = new java.util.HashMap<>();
         Map<Integer, Integer> placeCols = new java.util.HashMap<>();
-        int floors = 0, jumps = 0;
+        int floors = 0, jumps = 0, climbs = 0;
         int[][] n4 = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
         for (FloorLayout f : l.main) {
             if (!f.isWorld() || floors >= 2) continue;
@@ -207,6 +207,11 @@ public final class GateDepthTests {
                     int feet = Integer.MIN_VALUE;
                     for (int y = base - 6; y <= base + 10 && feet == Integer.MIN_VALUE; y++) if (wc.reached(x, y, z)) feet = y;
                     if (feet == Integer.MIN_VALUE) continue;
+                    // got to more than 4 over the ground there: up a wall, onto a pillar's flare (the Brood Hall's ledges too)
+                    for (int y = base + f.ground(x, z) + 5; y <= base + 48; y++) if (wc.reached(x, y, z)) {
+                        climbs++;
+                        break;
+                    }
                     cols++;
                     BlockState under = wc.at(x, feet - 1, z);
                     double top = under.getCollisionShape(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, net.minecraft.core.BlockPos.ZERO).max(net.minecraft.core.Direction.Axis.Y);
@@ -251,7 +256,7 @@ public final class GateDepthTests {
         per.sort(null);
         int hs = per.isEmpty() ? 0 : per.get(per.size() / 2);
         return new Depth((int) cols, 100.0 * flat / Math.max(1, cols), hs, 100.0 * partial / Math.max(1, surf), 100.0 * plumb / Math.max(1, edge), sd,
-                100.0 * detail / Math.max(1, cols), planMs, jumps);
+                100.0 * detail / Math.max(1, cols), planMs, jumps, climbs);
     }
 
     static boolean full(BlockState s) {
@@ -275,7 +280,8 @@ public final class GateDepthTests {
                 Depth d = depth(measured(id, GatePlan.CONTENT_VERSION));
                 log.append("DEPTH ").append(id).append(' ').append(w.kind()).append(' ').append(d).append('\n');
                 if (!DEEP.contains(id)) continue;
-                if (d.flat() > 55 || d.heights() < 8 || d.partial() < 12 || d.plumb() > 65 || d.roofSpread() < 6 || d.detail() < 35 || d.jumps() > 0)
+                if (d.flat() > 55 || d.heights() < 8 || d.partial() < 12 || d.plumb() > 65 || d.roofSpread() < 6 || d.detail() < 35 || d.jumps() > 0
+                        || "caves".equals(w.kind()) && d.climbs() > 0)
                     short_.add(id + " (" + d + ")");
             }
             Awaken.LOG.info("[gates] depth of the worlds' places:\n{}", log);

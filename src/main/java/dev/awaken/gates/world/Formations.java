@@ -128,6 +128,7 @@ final class Formations {
         double cy = W + rf.stand(x, z) - bb * 0.35;
         int ra = (int) Math.ceil(a) + 1, rb = (int) Math.ceil(bb) + 1;
         c.blocked.add(new double[]{cx, cz, a});
+        rf.lift(cx, cz, a, cy + bb + 0.5 - W);
         Sculpt.Field f = (px, py, pz) -> {
             double dx = (px - cx) / a, dy = (py - cy) / bb, dz = (pz - cz) / a;
             return (Math.sqrt(dx * dx + dy * dy + dz * dz) - 1) * Math.min(a, bb) + (Hash.noise3(seed + 13, px, py, pz, 1.8) - 0.5) * 0.9;
@@ -148,6 +149,7 @@ final class Formations {
         double ya = W + rf.stand(ax, az) + rad * 0.3, yb = W + rf.stand(bx, bz) + rad * 0.3;
         int rr = (int) Math.ceil(len / 2 + rad) + 1;
         c.blocked.add(new double[]{cx, cz, len / 2});
+        rf.lift(cx, cz, len / 2 + rad, Math.max(ya, yb) + rad - W);
         mass(x - rr, (int) Math.floor(Math.min(ya, yb) - rad) - 1, z - rr, x + rr, (int) Math.ceil(Math.max(ya, yb) + rad) + 1, z + rr, FALLEN,
                 (px, py, pz) -> Sculpt.capsule(px, py, pz, cx - dx, ya, cz - dz, cx + dx, yb, cz + dz, rad));
         return true;
@@ -158,6 +160,7 @@ final class Formations {
         double cx = x + 0.5, cz = z + 0.5, cy = W + rf.stand(x, z) - 0.4;
         if (!room(cx, cz, 1.8)) return false;
         c.blocked.add(new double[]{cx, cz, 1.4});
+        rf.lift(cx, cz, 1.8, cy + 1.4 - W);
         mass(x - 2, (int) cy - 1, z - 2, x + 2, (int) cy + 2, z + 2, HEAP, (px, py, pz) -> {
             double dx = (px - cx) / 1.5, dy = (py - cy) / 1.1, dz = (pz - cz) / 1.5;
             return Math.sqrt(dx * dx + dy * dy + dz * dz) - 1 + (Hash.noise3(seed + 17, px, py, pz, 1.4) - 0.5) * 0.6;

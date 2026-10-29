@@ -163,6 +163,16 @@ abstract class Dress {
         return 0;
     }
 
+    /** How big the lumps on a shaped place's walls and roof are, 1 the usual (up to 1.3 blocks in or out). */
+    double lumps() {
+        return 1;
+    }
+
+    /** How often a shaped place's tall wall steps back at a ledge, 1 the usual (about a third of it). */
+    double ledges() {
+        return 1;
+    }
+
     /** How thickly the bits lie on shaped ground where it's wildest (none on the way; about one in 12 at most). */
     double bits() {
         return 0;

@@ -10749,6 +10749,14 @@ now, fought-on second storeys in a later plan.
   cells a block thick and 5 to 9 long, deepest in its middle (up to 7), its lower edge dark wax; never within 4 blocks
   over where you stand, never within 1.5 of a wall (4 round the Brood Hall's ledges), never in a boss's room. The Brood
   Hall's great place keeps 6 of head room under its lowest ledge (`Dress.headroom`).
+- **Walls that change as they rise** (`CaveEngine.Cave.wall`, in each shaped cavern's carve). Lumps over every wall and
+  roof face, taller than wide (up to 1.3 blocks in or out, bigger the higher; the theme scales them, `Dress.lumps`: the
+  Hive's comb bulges 1.3 times); where a wall stands tall it leans in or out as it rises (up to 2.2) and here and there
+  (about a third of it) steps back 1.6 at a ledge 5 to 9 over the ground (`Dress.ledges`). All of it starts 2.5 over
+  the highest ground or standing piece within 3 (`Relief.near`, raised by each outcrop, fallen piece and heap:
+  `Relief.lift`), past a jump, so no wall is a stair to its roof. Under the roof it bulges a block down at most
+  (headroom stays over 2), and it's never worn back nearer than 2.5 to the place's box, so the rock between two places
+  stays whole. Tunnels keep their own swell and vault.
 - **The way and the wild.** Each shaped column keeps how wild it is (0 on the way's core, rising to 1 away from it; a
   fought middle a third as wild; a tunnel wild only at its sides) and how far in from the wall it is. Where it's
   wildest (over 0.55) the theme's growth creeps (`Dress.creep`, the Hive's capped comb) over the floor and up the foot
@@ -10767,9 +10775,10 @@ now, fought-on second storeys in a later plan.
   the shell's own skin): the Hive's wax pillars banded dark with a honey cell here and there, wax mounds crusted with
   capped comb, fallen comb with its cells broken open, heaps of dark wax. About half the Hive's small caverns get
   something, and every bigger place.
-- **No jump on the way.** `gateworlds_depth` also walks each built world from the arrival to the end without a jump (no
-  rise over 0.6 of a block by what you stand on: a slab or a stair is a step, a full block a jump) and fails a world
-  that needs one (`jumps`, 0 in all three).
+- **No jump on the way, no climbing the walls.** `gateworlds_depth` also walks each built world from the arrival to the
+  end without a jump (no rise over 0.6 of a block by what you stand on: a slab or a stair is a step, a full block a
+  jump) and fails a world that needs one (`jumps`, 0 in all three); and counts the columns where the walk (jumps
+  allowed) got more than 4 over the ground (`climbs`): a built cave world must have none (0 in all three).
 - **Measured** (`gateworlds_depth`, the Hive held to the targets): the Comb flat 47%, 13 heights, 19% partial, 37%
   plumb, roof spread 6.1, detail 40; the Brood Hall 41%, 14, 21%, 39%, 7.1, 43; the Swarm 52%, 12, 16%, 34%, 6.3, 45
   (today's rooms: flat about 98%, plumb 97%). Honey Lake is a sea world (stage 2). A world's floor plans in 6 to 10 ms.
