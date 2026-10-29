@@ -131,7 +131,7 @@ public final class GateExterior {
     /** A stand-in record for a showcase: never registered, so no Director, break or run ever sees it. */
     static GateRecord display(BlockPos ground, int axis, int rank, boolean red) {
         Rank r = Rank.values()[GateVortex.clampRank(rank)];
-        GatePlan plan = new GatePlan(ground.asLong(), GatePlan.CONTENT_VERSION, r, Theme.BELL_CRYPT, Layout.LABYRINTH, List.of(),
+        GatePlan plan = new GatePlan(ground.asLong(), GatePlan.current(), r, Theme.BELL_CRYPT, Layout.LABYRINTH, List.of(),
                 red ? Twist.RED_GATE : Twist.NONE, 3, Theme.BELL_CRYPT.bossId(), Theme.HIVE, 0);
         return new GateRecord(-1, plan, ground, axis, -1, 0, 99, GateState.READY, Optional.empty());
     }

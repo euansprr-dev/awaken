@@ -384,7 +384,7 @@ public final class Modifiers {
             for (int x = r.x0(); x <= r.x1(); x++) {
                 for (int z = r.z0(); z <= r.z1(); z++) {
                     if (!RoomGeometry.inside(r, x, z) || RoomGeometry.solid(r, x, z)) continue;
-                    WATER.add(new Pour(level, GateService.world(g, f, x, r.dy + y + RoomGeometry.floorOffset(r, x, z), z)));
+                    WATER.add(new Pour(level, GateService.roomFloor(g, f, r, x, z).above(y + RoomGeometry.floorOffset(r, x, z))));
                 }
             }
             Signal.toast(p, Component.literal(next == 1 ? "Water seeps in." : next == 2 ? "The water is rising." : "Swim."));

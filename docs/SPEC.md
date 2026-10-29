@@ -10674,6 +10674,35 @@ Built 2026-10-29. Two themes (ten worlds) and fifteen rare worlds, all on the ca
   `gateworlds_tint` (grey and turned colours, lights, the kept patch, what passes untouched); `gateworlds_sets` covers
   every theme's piece and keepsakes.
 
+### 38.14 Depth inside the places (content version 7; page https://claude.ai/artifact/MZoFfNZsNBLpFqJhEj8dE4, plan docs/gate-depth/page.html; Euan approved it as written 2026-10-29: "Go ahead with the full plan after fixing this current issue")
+Euan, after playing a Hive gate: the rooms still read as walls, a floor and a roof. Every place gets ground that rises
+and falls in half steps, walls that change as they go up, a roof at more than one height, things standing in the space,
+and growth that thickens the further a spot is from the way you walk. The five decisions as recommended: new and
+unentered gates only; gentle on the way and on fight floors, bold at the edges (up to four blocks); about 120 new
+blocks with no style-sheet stop; the Hive first with CI shots, then every theme unless he says stop; climbable ledges
+now, fought-on second storeys in a later plan.
+- **Content version 7** (`GatePlan.CONTENT_VERSION`). A version 6 floor carves exactly the blocks it always did:
+  `gateworlds_depth_v6_golden` hashes the first world floor of a version 6 plan in each of the 75 worlds (secret
+  worlds are places on other floors), block for block, against the hashes taken from the build before version 7. A
+  gate someone entered keeps its version; READY gates nobody entered are rebuilt at 7 on the next start, as with every
+  version. **`gateWorldsDepth`** (server config, on): off, new gates are made at 6 (`GatePlan.current()`) and no gate
+  is rebuilt for 7, so the server can roll back without touching a save.
+- **The ground grid.** An engine that gives its places ground sets `WorldPlan.ground` before `finish`: where you stand
+  over each of the plot's 256 x 256 columns, in whole blocks above the floor line (a half slab's column counts the
+  block over it). The floor keeps it (`FloorLayout.ground(x, z)`, 64 KB a floor, rebuilt from the saved plan like the
+  rest of the layout; nothing new is saved). Null on a flat floor, so every version 6 floor and every room floor reads
+  0.
+- **Spawns and features stand on the ground.** `GateService.roomFloor` adds the ground, so every monster, spot, Lord,
+  NPC, flood and fallback that asks for a room's floor stands on it; the entrance and the vault bars read their
+  feature's column; the painter sets shrines, seals, caches, runes, lanterns, sigils and updrafts on it. Features keep
+  their own heights over it.
+- **Tests.** `gateworlds_depth` measures every world's places as the plan page measured them (columns you can stand
+  in, the share at the floor line, half-step heights per place as the median of places a chunk or more big, surfaces
+  that aren't full blocks, walls plumb from feet to head, the roof's spread, what stands per 100 floor blocks, and the
+  plan's cost) and logs them; worlds whose ground is built (`GateDepthTests.DEEP`) are held to the dry caves' targets
+  (flat 55% or less, 8 heights or more, 12% partial, 65% plumb or less, roof spread 6, detail 35). The world tests'
+  reach checks read the ground.
+
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 
 Builds on §28.3 (W2) and §28.5 (W5); the plan's audit (`docs/mining/proof/`) is what it was designed against: Tectonic

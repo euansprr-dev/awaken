@@ -89,7 +89,7 @@ final class GateAccess implements GateHooks.Access {
         // the story's Bell Crypt: one floor asks for the Ritual of the Bell's hall, more for today's three-floor crypt
         GatePlan plan = t == Theme.BELL_CRYPT && r == Rank.E
                 ? (floors == 1 ? Gates.ritualPlan(seed) : withFloors(Gates.prologuePlan(seed), n))
-                : new GatePlan(seed, GatePlan.CONTENT_VERSION, r, t, Layout.LABYRINTH, List.<Modifier>of(), Twist.NONE, n, t.bossId(),
+                : new GatePlan(seed, GatePlan.current(), r, t, Layout.LABYRINTH, List.<Modifier>of(), Twist.NONE, n, t.bossId(),
                         Theme.OVERGROWN_TEMPLE, 0);
         int id = Gates.openScripted(player, plan, near);
         return id < 0 ? Optional.empty() : Optional.of(Integer.toString(id));

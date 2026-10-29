@@ -83,7 +83,7 @@ public final class GateWorldBellTests {
         Room s = f.room(f.start);
         Room.Feature e = s.feature(Room.FeatureKind.ENTRANCE);
         if (e == null) return "no arrival";
-        int sy = f.baseY + s.dy + e.y();
+        int sy = f.baseY + s.dy + f.ground(e.x(), e.z()) + e.y();
         walkAll(w, f, e.x(), sy, e.z());
         if (!w.reached(e.x(), sy, e.z())) {
             String why = "the arrival isn't somewhere you can stand (" + e.x() + " " + sy + " " + e.z() + ": " + w.at(e.x(), sy, e.z()).getBlock().getDescriptionId()
@@ -101,17 +101,17 @@ public final class GateWorldBellTests {
             int y = f.baseY + r.dy;
             int missed = 0;
             // a Rig room's floor is its mechanism's (wells, presses, collapsing tiles): only its doors are checked
-            if (r.rig == null) for (int[] sp : r.spawnSpots) if (w.near(sp[0], y, sp[1], 1) == null) missed++;
+            if (r.rig == null) for (int[] sp : r.spawnSpots) if (w.near(sp[0], y + f.ground(sp[0], sp[1]), sp[1], 1) == null) missed++;
             if (missed > 0) bad.append(" room ").append(r.id).append(' ').append(r.type).append(": ").append(missed).append(" of ")
                     .append(r.spawnSpots.size()).append(" spawn spots out of reach;");
             for (Room.Feature ft : r.features) {
                 if (ft.kind() == Room.FeatureKind.UPDRAFT || ft.kind() == Room.FeatureKind.RIFT_WALL) continue;
                 // the Mirror Hall's cache is in its pavilion, which only a spirit walks into (SPEC §17)
                 if (ft.kind() == Room.FeatureKind.CACHE && r.rig != null && r.rig.kind == RigRoom.Kind.MIRROR_HALL) continue;
-                if (w.near(ft.x(), y + ft.y(), ft.z(), 2) == null)
+                if (w.near(ft.x(), y + f.ground(ft.x(), ft.z()) + ft.y(), ft.z(), 2) == null)
                     bad.append(" room ").append(r.id).append(' ').append(ft.kind()).append(" at ").append(ft.x()).append(' ').append(ft.z()).append(" out of reach;");
             }
-            if (r.spawnSpots.isEmpty() && r.features.isEmpty() && w.near(r.centerX(), y, r.centerZ(), 7) == null)
+            if (r.spawnSpots.isEmpty() && r.features.isEmpty() && w.near(r.centerX(), y + f.ground(r.centerX(), r.centerZ()), r.centerZ(), 7) == null)
                 bad.append(" room ").append(r.id).append(" (").append(r.type).append(") can't be walked into;");
         }
         bad.append(marks(w, f));
@@ -289,8 +289,11 @@ public final class GateWorldBellTests {
     static int[] goal(WorldCheck w, FloorLayout f, Room end) {
         Room.Feature shrine = end.feature(Room.FeatureKind.SHRINE);
         int[] goal = null;
-        if (shrine != null) goal = w.near(shrine.x(), f.baseY + end.dy + shrine.y(), shrine.z(), 2);
-        if (goal == null && !end.spawnSpots.isEmpty()) goal = w.near(end.spawnSpots.get(0)[0], f.baseY + end.dy, end.spawnSpots.get(0)[1], 1);
+        if (shrine != null) goal = w.near(shrine.x(), f.baseY + end.dy + f.ground(shrine.x(), shrine.z()) + shrine.y(), shrine.z(), 2);
+        if (goal == null && !end.spawnSpots.isEmpty()) {
+            int[] sp = end.spawnSpots.get(0);
+            goal = w.near(sp[0], f.baseY + end.dy + f.ground(sp[0], sp[1]), sp[1], 1);
+        }
         return goal;
     }
 

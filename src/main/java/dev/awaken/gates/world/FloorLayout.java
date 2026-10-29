@@ -54,6 +54,11 @@ public final class FloorLayout {
     public final List<Mark> marks;
     /** An open land under the real sky (SPEC §38.11): built in the open sky's dimension, not the gates'. */
     public final boolean sky;
+    /**
+     * Where you stand over each column of the plot, in blocks above the base (SPEC §38.14: a version 7 floor's ground),
+     * x + z * {@link Plots#SIDE}; null on a flat floor. Set once by the floor's engine.
+     */
+    byte[] ground;
 
     /**
      * One spot or box: a bell (its lip's centre ± its radius, lip to crown), a secret (where it's found; {@code id} the
@@ -167,6 +172,12 @@ public final class FloorLayout {
 
     public boolean isWorld() {
         return model != null;
+    }
+
+    /** Where you stand over floor-local column (x, z), in blocks above the floor line (0 on a flat floor). */
+    public int ground(int x, int z) {
+        if (ground == null || x < 0 || z < 0 || x >= Plots.SIDE || z >= Plots.SIDE) return 0;
+        return ground[x + z * Plots.SIDE];
     }
 
     public Room room(int id) {

@@ -26,8 +26,22 @@ public record GatePlan(long seed, int contentVersion, Rank rank, Theme theme, La
      * ordinary floors of the Clockwork Foundry and the Frost Monastery, which had no rig room; every other theme builds
      * exactly as version 4. 6: Gate Worlds (SPEC §38): every floor its own plot in the cell, room for height, and the
      * world and mood picked per floor ({@link #worlds}); a floor with no world builds today's rooms inside its plot.
+     * 7: depth in the worlds' places (SPEC §38.14): ground that rises and falls, walls and roofs that change with height,
+     * growth that thickens away from the way; a version 6 floor carves exactly as before.
      */
-    public static final int CONTENT_VERSION = 6;
+    public static final int CONTENT_VERSION = 7;
+
+    /**
+     * The version a new gate is made at: {@link #CONTENT_VERSION}, or the one before the depth (6) while the server's
+     * {@code gateWorldsDepth} switch is off (SPEC §38.14).
+     */
+    public static int current() {
+        try {
+            return dev.awaken.core.AwakenConfig.GATE_WORLDS_DEPTH.get() ? CONTENT_VERSION : 6;
+        } catch (IllegalStateException notLoaded) {
+            return CONTENT_VERSION;
+        }
+    }
 
     /**
      * The boss id that marks the story's ritual Bell Crypt (docs/proposals/the-ritual.md). Nothing rolls it: the Director

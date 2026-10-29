@@ -134,7 +134,7 @@ public final class Director {
         Theme annex = others.isEmpty() ? theme : others.get((int) (rng.nextDouble() * others.size()));
         int annexRule = (int) (rng.nextDouble() * 3);
         long planSeed = Hash.mix(seed ^ 0x51ED270B27C3A5L);
-        GatePlan plan = new GatePlan(planSeed, GatePlan.CONTENT_VERSION, g, theme, layout, mods, twist, floors, theme.bossId(),
+        GatePlan plan = new GatePlan(planSeed, GatePlan.current(), g, theme, layout, mods, twist, floors, theme.bossId(),
                 annex, annexRule);
         List<String> combos = plan.combos();
         tr.add("forces    " + (combos.isEmpty() ? "no special interactions" : String.join(" · ", combos)));

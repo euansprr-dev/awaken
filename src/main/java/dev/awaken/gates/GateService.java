@@ -295,8 +295,9 @@ public final class GateService {
         return new BlockPos(Cells.originX(g.cell) + f.originSlotX * 16 + x, f.baseY + yOff, Cells.originZ(g.cell) + f.originSlotZ * 16 + z);
     }
 
+    /** Where you stand in a room at floor-local (x, z): its floor, or on a world floor its ground there (SPEC §38.14). */
     public static BlockPos roomFloor(GateRecord g, FloorLayout f, Room r, int x, int z) {
-        return world(g, f, x, r.dy, z);
+        return world(g, f, x, r.dy + f.ground(x, z), z);
     }
 
     /** Where you arrive on a floor: standing on the entrance sigil of its start room. */
@@ -306,7 +307,7 @@ public final class GateService {
         Room s = f.room(f.start);
         // a world floor puts its sigil where its view is best; today's rooms have it at the room's centre
         Room.Feature e = s.feature(Room.FeatureKind.ENTRANCE);
-        return e == null ? roomFloor(g, f, s, s.centerX(), s.centerZ()) : world(g, f, e.x(), s.dy + e.y(), e.z());
+        return e == null ? roomFloor(g, f, s, s.centerX(), s.centerZ()) : roomFloor(g, f, s, e.x(), e.z()).above(e.y());
     }
 
     /** Facing (degrees) toward the start room's first doorway. */
@@ -435,14 +436,14 @@ public final class GateService {
         }
         for (GateRecord g : reg.all()) {
             if (g.state == GateState.RELEASED) continue;
-            if (g.state == GateState.READY && g.plan.contentVersion() < GatePlan.CONTENT_VERSION && g.party.isEmpty() && reg.hasFreeCell()) {
+            if (g.state == GateState.READY && g.plan.contentVersion() < GatePlan.current() && g.party.isEmpty() && reg.hasFreeCell()) {
                 // content changed and nobody entered: rebuild on the new version in a fresh cell
                 reg.releaseCell(g.cell);
                 g.cell = reg.allocateCell();
-                g.plan = dev.awaken.gates.worlds.GateWorlds.dress(server, g.plan.rebuilt(GatePlan.CONTENT_VERSION), g.owner);
+                g.plan = dev.awaken.gates.worlds.GateWorlds.dress(server, g.plan.rebuilt(GatePlan.current()), g.owner);
                 g.interiorReady = false;
                 g.state = GateState.BUILDING;
-                g.trace.add("rebuilt for content version " + GatePlan.CONTENT_VERSION);
+                g.trace.add("rebuilt for content version " + GatePlan.current());
             }
             GateCells.put(g.cell, g.plan);
             if (g.state == GateState.BUILDING) startBuild(server, g);

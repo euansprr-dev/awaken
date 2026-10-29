@@ -133,7 +133,7 @@ public final class Gates {
 
     /** The story prologue's gate: a forced E-rank Bell Crypt with no twist and no modifiers. */
     public static GatePlan prologuePlan(long seed) {
-        return new GatePlan(Hash.mix(seed), GatePlan.CONTENT_VERSION, Rank.E, Theme.BELL_CRYPT, Layout.LABYRINTH, List.of(), Twist.NONE,
+        return new GatePlan(Hash.mix(seed), GatePlan.current(), Rank.E, Theme.BELL_CRYPT, Layout.LABYRINTH, List.of(), Twist.NONE,
                 Curve.floorsFor(Rank.E, false), Theme.BELL_CRYPT.bossId(), Theme.OVERGROWN_TEMPLE, 0);
     }
 
@@ -142,7 +142,7 @@ public final class Gates {
      * hall of the Seated One. Marked by its boss ({@link GatePlan#RITUAL_BOSS}), never by a layout or a twist.
      */
     public static GatePlan ritualPlan(long seed) {
-        return new GatePlan(Hash.mix(seed), GatePlan.CONTENT_VERSION, Rank.E, Theme.BELL_CRYPT, Layout.LABYRINTH, List.of(), Twist.NONE,
+        return new GatePlan(Hash.mix(seed), GatePlan.current(), Rank.E, Theme.BELL_CRYPT, Layout.LABYRINTH, List.of(), Twist.NONE,
                 1, GatePlan.RITUAL_BOSS, Theme.OVERGROWN_TEMPLE, 0);
     }
 
@@ -151,7 +151,7 @@ public final class Gates {
      * room past it. Marked by its boss ({@link GatePlan#LEAPER_TRIAL}). Opened for a player with {@link #openScripted}.
      */
     public static GatePlan leaperTrialPlan(long seed) {
-        return new GatePlan(Hash.mix(seed), GatePlan.CONTENT_VERSION, Rank.D, Theme.CLOCKWORK_FOUNDRY, Layout.LABYRINTH, List.of(), Twist.NONE,
+        return new GatePlan(Hash.mix(seed), GatePlan.current(), Rank.D, Theme.CLOCKWORK_FOUNDRY, Layout.LABYRINTH, List.of(), Twist.NONE,
                 1, GatePlan.LEAPER_TRIAL, Theme.OVERGROWN_TEMPLE, 0);
     }
 
@@ -160,7 +160,7 @@ public final class Gates {
      * arena. Marked by its boss ({@link GatePlan#SKYBORN_TRIAL}). Opened for a player with {@link #openTrial}.
      */
     public static GatePlan skybornTrialPlan(long seed) {
-        return new GatePlan(Hash.mix(seed), GatePlan.CONTENT_VERSION, Rank.A, Theme.SKY_ARCHIPELAGO, Layout.LABYRINTH, List.of(), Twist.NONE,
+        return new GatePlan(Hash.mix(seed), GatePlan.current(), Rank.A, Theme.SKY_ARCHIPELAGO, Layout.LABYRINTH, List.of(), Twist.NONE,
                 1, GatePlan.SKYBORN_TRIAL, Theme.SKY_ARCHIPELAGO, 0);
     }
 
