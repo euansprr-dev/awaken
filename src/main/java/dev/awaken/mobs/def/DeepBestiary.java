@@ -140,7 +140,7 @@ final class DeepBestiary {
                 .phase(1.0F, "The Great Listener turns its head.", a(SLAM, "Found You").radius(3.5F).power(1.6F).heavy(), a(BEAM, "Echo Scream").bolt(BoltKind.VOID))
                 .phase(0.5F, "It stops breathing.", a(DARKNESS, "Absolute Silence").radius(20), a(SUMMON, "Ears").summon("listener").n(2), a(SLAM, "Found You").radius(3.5F).power(1.6F))
                 .parts(P("listener_ear", "Great Listener's Ear", "stone")).build());
-        out.add(m("guardian_foundry", "The Furnace Engine", Theme.FOUNDRY, Tier.GUARDIAN, Model.IRON_GOLEM, "Arc welds and rivet rain; the machines wake around it").hp(32).dmg(5).spd(0.24).scale(1.8F).tint(0x98B0D0).bar(BossBarColor.YELLOW).arena(24)
+        out.add(m("guardian_foundry", "The Furnace Engine", Theme.FOUNDRY, Tier.GUARDIAN, Model.IRON_GOLEM, "Arc welds and rivet rain; the machines wake around it").hp(32).dmg(5).spd(0.24).scale(1.8F).size(1.6F, 2.3F).tint(0x98B0D0).bar(BossBarColor.YELLOW).arena(24)
                 .intro("The foundry's heart is still warm.")
                 .phase(1.0F, "The Furnace Engine powers up.", a(SLAM, "Engine Slam").radius(4.5F).heavy(), a(BEAM, "Arc Weld").bolt(BoltKind.CHARGE))
                 .phase(0.5F, "Machines wake.", a(SUMMON, "Wake the Drones").summon("arc_drone").n(3), a(RAIN, "Rivet Rain").n(5).bolt(BoltKind.CHARGE), a(SLAM, "Engine Slam").radius(4.5F))

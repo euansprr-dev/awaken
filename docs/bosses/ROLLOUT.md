@@ -176,3 +176,9 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   blind bat as big as a barn walking on its folded wings, huge ears, eyes stitched shut), C the Many-Eared (a tick-like
   mass grown over with ears). **Picked B**, 2026-10-29: a bat finds you by screaming, which is the fight. A repeats the
   Herald's tall thin build with an object for a head; C is a second leggy crawler beside the Long-Legs.
+- **The Furnace Engine** (`guardian_foundry`): A the Iron Horse (a steam locomotive grown into a cart horse: its boiler
+  the body, its smokebox the head with the door for a mouth and the lamp for an eye, red driving wheels on its flanks,
+  its rods for legs), B the Boiler Titan (a hunched riveted giant with a furnace in its belly and chimneys for horns), C
+  the Crucible (a walking ladle of molten iron on spider legs). **Picked A**, 2026-10-29: an engine is what a foundry's
+  heart would wake into, its door opening on the fire is the Arc Weld's tell, and nothing else on the roster walks on
+  four legs like a horse. B is the Living Forge's and the Gearwright's build again; C's spider legs are the Long-Legs'.

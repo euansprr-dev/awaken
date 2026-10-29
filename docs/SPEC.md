@@ -10099,6 +10099,53 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     pass of its own for the arms, ears and fingers, so what lands on the floor rests on it.
   - **Meter.** Worst kink outside a strike 5.1°; held at most 11% on every move; dips at most 46% (Found You opens by
     going still to listen).
+- **The Furnace Engine, the Iron Horse** (body and motion, `kit/bosses/guardian_foundry.py`). "The foundry's heart is
+  still warm." A steam locomotive that grew legs and woke, built like a cart horse. Its body is the engine: a long black
+  boiler riveted in plates and banded in brass, a steam dome and a sand dome on its back, the firebox and cab at its
+  rear, the cab's windows lit by the fire and the grate glowing under its belly. Its head is the smokebox, a sooty drum
+  on a saddle ring at the boiler's front with a tall flared chimney on it, a lamp on its brow for its one eye, and its
+  round door for a mouth: hinged at its foot, it drops open on the fire inside. A red buffer beam and two buffers stand
+  under its face like tusks, and a slatted cowcatcher hangs under them like a beard. Four red driving wheels turn on its
+  flanks; its legs hang from the wheels' hubs, each a riveted iron casing, a brass knee, a cylinder and a polished rod
+  down to an iron hoof rimmed like a wheel's flange. Its coupling chain hangs behind for a tail. 133 cubes (798 faces) on
+  29 bones; 4.8 blocks from its cowcatcher to its cab and 4.25 to its chimney's crown. The hitbox is 1.6 x 2.3 at the
+  def's scale 1.8 (2.9 x 4.1 blocks), round its body.
+  - **The idle.** It stands breathing like an engine at rest: two slow chuffs a loop, its boiler swelling, its chimney
+    rocking on its seat with each one and its door rattling; its wheels ease round and back; it looks about, its lamp
+    turning; and it paws the floor with a forehoof, impatient, looking down at it, as a horse does. It walks like a cart
+    horse, one hoof at a time, its head nodding with each forehoof and its boiler rocking on its rear, its wheels
+    turning once a stride; it runs in a pounding trot, the diagonals together, its wheels turning twice a stride.
+    Turning on the spot, its wheels rock against each other.
+  - **Its blows.** The stamp shifts its weight back and away, lifts one forehoof high with its knee up by its chest, and
+    strikes it out and down onto the floor before it, its whole front driving after it and its door banging (LIGHT; a
+    string, the other hoof, then the slam). The Engine Slam crouches and rears right up on its hind legs, its
+    forehooves pawing the air, its chimney thrown back, its door open and its wheels spinning up; holds; and slams them
+    down (a 4.5 block shockwave), its head driving down and its wheels running down after. Whoever is behind gets a
+    buck: its head down, its weight on its forelegs, both hind hooves kicked out behind and its chain flung up. Full
+    Steam lowers its head and paws the floor twice, its wheels spinning up, then charges in a bound, the hind pair and
+    then the fore pair, and rams with its cowcatcher (8 blocks); it skids to a stop on braced forelegs and rocks back.
+    The Arc Weld (the signature) sets its forehooves out wide one at a time and lowers its head; its door drops open on
+    the fire and a shaking takes it, harder and harder; the arc burns from its lamp while it shakes and heaves, its
+    wheels driving round, and its door clangs shut with a jolt that runs through it. Rivet Rain sits it back, its head
+    reared and its chimney to the sky, and it chuffs five times, its whole body pumping, its wheels driving round with
+    each chuff. Wake the Drones throws its head up and blows its whistle, its head tossing, its door chattering and a
+    forehoof pawing. It waits lying cold in its stall: down on its belly, its forelegs folded under with the knees
+    forward, its hind legs folded with the hocks back, its cowcatcher folded up under its chin. It goes down and gets up
+    as a horse does: onto its front knees first, then its rear; up onto its forelegs first, sitting, then heaving its
+    rear up. Its intro opens its door a crack as the fire catches, looks about, stamps twice with its wheels jerking
+    round, blows its whistle and shakes its head out. Its death shudders with its head thrown up and its door banging
+    open, buckles on its right foreleg onto its knees, and keels over onto its right side with its legs out stiff; it
+    rocks, its upper legs droop across the lower onto the floor, its door swings open on its hinge, its boiler breathes
+    out once, and its wheels run down and stop (5 s).
+  - **The wheels.** Their turns are written into each clip after it is made, at speeds eased between keys and scaled to
+    whole turns, so a move hands back to the idle with its wheels where they were; the walk and the run turn them whole
+    turns a loop at the pace of the stride.
+  - **On the floor.** Its legs are 26 px and stand at 24.8 of it, nearly straight under it like a cart horse's, so no
+    pose that keeps a hoof on the floor lifts its body more than a pixel, and a hoof set further out is kept inside the
+    leg's reach. Between keys a hoof can sag a hair into the floor: wherever one would, that tick its leg turns by only
+    the difference between two solves, as the Hush Bat's limbs do; the ground pass flexes the fetlock for what is left.
+    The cowcatcher folds back off the floor on its hinge (lying down, kneeling).
+  - **Meter.** Worst kink outside a strike 4.3°; held at most 13% on every move; dips at most 36%.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 

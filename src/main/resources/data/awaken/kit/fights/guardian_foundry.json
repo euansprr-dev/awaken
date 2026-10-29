@@ -1,0 +1,111 @@
+{
+ "schemaVersion": 1,
+ "id": "guardian_foundry",
+ "moves": "guardian_foundry",
+ "intro": {
+  "pose": "kneel",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "stamp",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "stamp_b"
+      ],
+      [
+       "stamp_b",
+       "slam"
+      ]
+     ]
+    },
+    {
+     "move": "slam",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "charge",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "stamp"
+      ]
+     ]
+    },
+    {
+     "move": "weld",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "buck",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "drones",
+   "pool": [
+    {
+     "move": "stamp",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "stamp_b"
+      ],
+      [
+       "stamp_b",
+       "slam"
+      ]
+     ]
+    },
+    {
+     "move": "slam",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "charge",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "stamp",
+       "stamp_b"
+      ]
+     ]
+    },
+    {
+     "move": "rivets",
+     "weight": 2
+    },
+    {
+     "move": "weld",
+     "weight": 1,
+     "when": "FAR"
+    },
+    {
+     "move": "drones",
+     "weight": 1
+    },
+    {
+     "move": "buck",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}
