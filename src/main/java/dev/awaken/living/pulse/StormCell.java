@@ -31,6 +31,8 @@ public final class StormCell {
     public static final float FADE_IN_S = 12, FADE_OUT_S = 15;
     /** Its local weather: full rain within {@code RAIN_FULL} of the core's centre, none past {@code RAIN_EDGE}. */
     public static final double RAIN_FULL = 45, RAIN_EDGE = 110;
+    /** The local weather moves in steps of this much, eased by this much a tick (a step in three quarters of a second). */
+    public static final float WEATHER_STEPS = 6, WEATHER_EASE = 1F / WEATHER_STEPS / 15F;
     /** Thunder's speed over the land, in blocks a second: the world's scale, not the metre's (a strike on the horizon
      * rolls in a few seconds later, as one a few kilometres off would). */
     public static final double SOUND_SPEED = 130;
@@ -56,6 +58,18 @@ public final class StormCell {
     /** How much of its rain (and its darkness) reaches a place {@code d} blocks from the core's centre, 0..1. */
     public static float weatherAt(double d) {
         return smooth((float) ((RAIN_EDGE - d) / (RAIN_EDGE - RAIN_FULL)));
+    }
+
+    /**
+     * The step the local weather heads for, from the step it holds and the weather wanted now: in sixths, moving only once
+     * the wanted weather is well past the held step (a sixth and a bit), so it holds still between steps instead of
+     * drifting every tick as the cell moves. Every drift of the sky's light, fog and rain redrew Far Sight's cached
+     * horizon (it serves only while they hold within a hair), which cost frames all the while a storm was near.
+     */
+    public static float weatherStep(float held, float want) {
+        if (want <= 0.001F) return 0F;
+        if (Math.abs(want - held) * WEATHER_STEPS <= 0.65F) return held;
+        return Math.clamp(Math.round(want * WEATHER_STEPS), 1, (int) WEATHER_STEPS) / WEATHER_STEPS;
     }
 
     /** Seconds before a strike {@code d} blocks off is heard. */

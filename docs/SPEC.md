@@ -4690,7 +4690,8 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     distance either: the cell stands where it is, as the game's clouds do.
   - **Its local weather** (`living.client.StormSky`): this client's rain and thunder levels rise to
     `weatherAt(d)` (full within 45 blocks of the rain core's centre, none past 110, smooth between) × its strength,
-    never below the server's own weather (followed if the server changes it while overriding) and handed back as you
+    held in sixths (`StormCell.weatherStep`: it moves to a new sixth only once the wanted weather is more than 0.65 of a
+    sixth past the held one, then eases there over 0.75 s), never below the server's own weather (followed if the server changes it while overriding) and handed back as you
     leave. So under and near it the game's own rain falls on you and sounds, the sky, fog, clouds and light darken as in
     a vanilla thunderstorm, terrain's wind steadies higher (rain and thunder lift it), the world sound hears rain, and
     Lens dims its sun. Lens's cloud layer doesn't thicken for this rain (`StormSky.localRain`): the cell is the cloud
@@ -4702,10 +4703,33 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     blocks over the base), and its own thunder and impact (played at once, everywhere, at full volume) are silenced and
     played again late by the distance at 130 blocks a second (the world's scale: a strike on the horizon rolls in a few
     seconds later). Within 70 blocks: the crack (the impact, pitch 0.55-0.7) and the thunder; farther: the thunder lower
-    and softer (volume 1.15 - d/520, pitch 0.95 - d/1400) and a long low roll after it (`living.storm.roll`, three
-    synthesised takes). Every 2.5-7 s lightning flickers inside the cloud (50-210 over the base, a quarter to two fifths
-    of a strike's brightness) and rumbles far off. Each flash is a burst and its restrikes, each fading over 0.11 s.
-    The storm's rain roars from its core for 340 blocks (`living.tell.storm`, a loop; PulseSound).
+    and softer (volume 1.15 - d/520, pitch 0.95 - d/1400) and a long low roll after it (`ambient.storm.roll`, three
+    synthesised takes). The thunder and crack are the game's own under the storm's names (`ambient.storm.thunder`,
+    `ambient.storm.crack`, event references). Every 8-16 s lightning flickers inside the cloud (50-210 over the base, a
+    quarter to two fifths of a strike's brightness) and rumbles far off. Each flash is a burst and its restrikes, each
+    fading over 0.11 s, and nothing once under 0.02. The storm's rain roars from its core for 340 blocks
+    (`living.tell.storm`, a loop; PulseSound).
+  - **Its cost** (Euan, 2026-10-29: "loses a good 10 fps when it's happening and stutters"; pack/storm-perf). What it
+    cost and what changed, counted from the code (scratch `perfmodel.py`: the cloud pass's rays, bands, steps, early exit
+    and temporal one-in-four at Cinematic 560×315; the storm's strike and flicker timing; Far Sight's look tolerances):
+    - Far Sight's cached horizon serves only while its look (rain, haze to 1e-6, sky light, fog) holds within a hair.
+      The local weather drifted every tick as the cell moved, and each bolt's sky flash set the sky light to full, so
+      near a storm the far land was drawn live nearly all the time. Now the weather holds in sixths (472 breaks over a
+      storm passing 75 blocks off became 90 ticks of easing) and Far Sight holds its sky light while a storm's lightning
+      flashes (`StormSky.flashing`, two seconds after a strike).
+    - Sound Physics (the pack, 32 rays × 4 bounces, cloning the level round you when its cache is over 20 ticks old)
+      processed the storm's roll and crack, about 130 sounds a storm, one every one or two seconds. As `ambient.*`
+      events it leaves them alone (`evaluate_ambient_sounds=false`); the rain roar's loop is the one processed, once.
+    - Lens marched every cloud pixel every frame while any flash's value was above zero, 1.2 s after each strike and
+      flicker: 61% of a storm's frames at four times the pass. Now only rays passing within 180 blocks of a flash march
+      every frame, only while it is bright (over 0.08), and flickers come half as often: 21% of frames; the storm's
+      average reads in the pass fell from 4.75 to 2.74 million a frame watching it from 180 blocks, from 8.10 to 4.67 at
+      its edge. The lightning's faint wash over the whole cell (0.1 × exp(-d/180)) is gone; its glow ends by 180 blocks.
+    - The light pass's storm shadow read the full density three times a pixel (about 1.07 million texture reads a frame
+      while a storm was up); it reads the cell's outline (`stormOutline`), with no texture.
+    - The client's storm tick allocates nothing (the cells follow the tells when they arrive, every 2 s).
+    - Under its core the game's own rain costs what any rain does (its particles grow with the rain level squared).
+    - Measured on the Mac with `tools/autopilot/perf-storm.txt` (storm on, then off, one spot and view).
 
 ### 21.7 Creatures live somewhere: the ledger (Phase D, as built 2026-10-25)
 - `living.population.Ledger` (saved data `awaken:living_world`, schema 1, only cells players reached): per 512×512 cell,
@@ -5406,9 +5430,11 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
   light as a cool grey-blue of the layer's ambient brightness (its sunset hue turned the shadowed side brown), by height
   from 0.16 at the base (cold and bruised, bluer) to 1 on the tops; rain σ 0.016, its colour that sky light × 0.4 (a
   grey veil, darker than the sky), fading in from 16 to 40 blocks from the camera (nearer, the game's rain falls).
-  Lightning lights the cell from within: 3 × exp(-d/55) × exp(-τ) + 0.1 × exp(-d/180) of a cool white from the flash,
-  where τ is the cloud between the flash and the point (its density at their midpoint × d × σ × 0.35, one sample, only
-  while a flash shows), in the cloud and (half) in its rain; the core round the bolt glows and the cell's shape still
+  Lightning lights the cell from within: 3 × exp(-d/55) × exp(-τ) of a cool white from the flash, fading to nothing
+  from 130 to 180 blocks (`FLASH_REACH`), where τ is the cloud between the flash and the point (its density at their
+  midpoint × d × σ × 0.35, one sample, only while a flash shows), in the cloud and (half) in its rain; with temporal
+  Lens a ray that passes within 180 blocks of a flash marches every frame while the flash is over 0.08 (every ray did
+  while any flash was above zero: §21.6 "Its cost"), the rest one frame in four; the core round the bolt glows and the cell's shape still
   reads (an even glow over the whole cell blew a night strike out to a white disc); while a flash shows, the pixel takes up to 85% of this
   frame instead of 12-15%, so it lights at once and fades as an afterglow. The layer's clouds thin to nothing within
   330-450 blocks of a cell (it clears the sky round it), so the layer's march can skip the cell's bounds without a cut.
@@ -5421,7 +5447,8 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
 - The composite lays the cloud buffer over anything farther than where the ray enters a cell's bounds (320 radius
   round 60 downwind of its centre, ground to 48 over the top; the anvil band 245 round 150 downwind, from 72 under
   the top), never nearer than 16 blocks; the light pass darkens the
-  sun on the land under a cell, sampled where the light ray crosses three heights of its body (long shadows at dusk).
+  sun on the land under a cell, sampled where the light ray crosses three heights of its outline (`stormOutline`: body,
+  shelf, flanking towers and anvil with soft edges, no noise and no texture; long shadows at dusk).
   Its bright, flashing edges bloom and cut the screen-space shafts like the layer's clouds.
 - It builds from its base up (the density cut at a height rising with its strength, softened over 40 blocks) and rains
   out from the top down, as the fallback's cells do; its rain starts once the base has formed (strength 0.1-0.4).
