@@ -1,0 +1,161 @@
+# Lens door light (Euan 2026-10-29: "in a closed room where the shadow on the wall moves with me instead of staying
+# where it is. It's the shadow of the light coming through the door"): a closed room with a plank floor and one door in
+# its east wall, a morning sun about 28 degrees up in the east (beyond the door), Lens Cinematic, Bright gamma as Euan
+# plays. Two rooms of the same shape:
+#   A. stone bricks (vanilla blocks, which the game's heightmaps see)
+#   C. Carillon's city bricks under a clay-tile roof (Awaken blocks: 26.3's heightmaps read #minecraft:blocks_motion,
+#      and Lens's heightfield reads the heightmaps)
+# Each from four eye positions walking across the room (north to south, 5.5 blocks west of the door's sill), looking at
+# the sill, with the game's own frame (lensdebug 1), the light alone (lensdebug 7) and the light buffer (lensdebug 5);
+# then straight east at the door wall from the same places, and a shot mid-walk toward the door.
+# Whatever Lens draws of the door's light must sit in the same place in the world from every position.
+#   tools/tour-ci.sh tools/autopilot/lens-door-light-look.txt 900 PACK=perf,feel LENS=cinematic
+world lensdoor creative 20261029
+waitworld
+wait 40
+# the new-world sky shot holds the camera on the sky until it is skipped
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule awaken:living_herds false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+# a morning sun about 28 degrees up in the east (+x)
+cmd time set 1000
+# ---- in the open sky, two chunk columns 32 blocks apart: a 16x16 stone floor each (top at y 201), on it a room x 594-604
+# (C: 626-636), z 594-604 (inside 9 by 9, y 201-203, the roof at y 204), a plank floor inside, and a door two high in
+# the east wall at z 599. Filled twice: a fill before the chunk loads fails
+cmd tp @s 616 230 600
+wait 160
+cmd fill 592 199 592 607 200 607 minecraft:stone
+cmd fill 624 199 592 639 200 607 minecraft:stone
+wait 60
+cmd fill 592 199 592 607 200 607 minecraft:stone
+cmd fill 624 199 592 639 200 607 minecraft:stone
+cmd fill 592 201 592 607 215 607 minecraft:air
+cmd fill 624 201 592 639 215 607 minecraft:air
+cmd fill 594 201 594 604 204 604 minecraft:stone_bricks
+cmd fill 595 201 595 603 203 603 minecraft:air
+cmd fill 595 200 595 603 200 603 minecraft:oak_planks
+cmd fill 604 201 599 604 202 599 minecraft:air
+cmd fill 626 204 594 636 204 604 awaken:clay_tiles
+cmd fill 626 201 594 636 203 604 awaken:city_bricks
+cmd fill 627 201 595 635 203 603 minecraft:air
+cmd fill 627 200 595 635 200 603 minecraft:oak_planks
+cmd fill 636 201 599 636 202 599 minecraft:air
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd item replace entity @s weapon.offhand with minecraft:air
+cmd kill @e[type=minecraft:item]
+cmd tp @s 598.5 201 596.5 -60 10
+wait 60
+camera first
+# the heightfield re-reads the camera's chunks every half second; the light buffer settles over a few frames
+wait 160
+# ---- A: stone bricks, the eye 5.5 blocks west of the door's sill (604, 201.5, 599.5), from north to south
+cmd tp @s 598.5 201 596 -57.5 9.7
+wait 80
+shot a1
+lensdebug 1
+shot a1_game
+lensdebug 7
+shot a1_light
+lensdebug 0
+cmd tp @s 598.5 201 598 -74.7 11.1
+wait 80
+shot a2
+lensdebug 1
+shot a2_game
+lensdebug 7
+shot a2_light
+lensdebug 0
+cmd tp @s 598.5 201 600 -95.2 11.5
+wait 80
+shot a3
+lensdebug 1
+shot a3_game
+lensdebug 7
+shot a3_light
+lensdebug 0
+cmd tp @s 598.5 201 602 -114.4 10.5
+wait 80
+shot a4
+lensdebug 1
+shot a4_game
+lensdebug 7
+shot a4_light
+lensdebug 0
+# ---- C: city bricks under clay tiles, the same places 32 blocks east (the sill at 636, 201.5, 599.5)
+cmd tp @s 630.5 201 596 -57.5 9.7
+wait 120
+shot c1
+lensdebug 1
+shot c1_game
+lensdebug 7
+shot c1_light
+lensdebug 5
+shot c1_buffer
+lensdebug 0
+cmd tp @s 630.5 201 598 -74.7 11.1
+wait 80
+shot c2
+lensdebug 1
+shot c2_game
+lensdebug 7
+shot c2_light
+lensdebug 5
+shot c2_buffer
+lensdebug 0
+cmd tp @s 630.5 201 600 -95.2 11.5
+wait 80
+shot c3
+lensdebug 1
+shot c3_game
+lensdebug 7
+shot c3_light
+lensdebug 5
+shot c3_buffer
+lensdebug 0
+cmd tp @s 630.5 201 602 -114.4 10.5
+wait 80
+shot c4
+lensdebug 1
+shot c4_game
+lensdebug 7
+shot c4_light
+lensdebug 5
+shot c4_buffer
+lensdebug 0
+# ---- D: straight east at the city room's door wall from the same four places
+cmd tp @s 630.5 201 596 -90 0
+wait 80
+shot d1
+cmd tp @s 630.5 201 598 -90 0
+wait 80
+shot d2
+cmd tp @s 630.5 201 600 -90 0
+wait 80
+shot d3
+cmd tp @s 630.5 201 602 -90 0
+wait 80
+shot d4
+# ---- walking in the city room: from its north-west toward the door, a shot on the way and one after stopping
+cmd tp @s 628.5 201 596.5 -60 12
+wait 80
+walk 14
+wait 7
+shotnow w_mid
+wait 40
+shot w_stop
+quit

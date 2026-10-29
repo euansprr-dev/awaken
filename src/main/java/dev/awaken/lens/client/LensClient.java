@@ -6,6 +6,7 @@ import dev.awaken.compat.Companions;
 import dev.awaken.compat.client.FarTerrain;
 import dev.awaken.core.AwakenConfig;
 import dev.awaken.core.api.UiHooks;
+import dev.awaken.lens.LensHeights;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -15,6 +16,8 @@ import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.util.Mth;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.IEventBus;
@@ -346,6 +349,9 @@ public final class LensClient {
     private static float motionTarget, motionTx = 0.5f, motionTy = 0.5f, motion, motionX = 0.5f, motionY = 0.5f;
     // texel 21: the camera under solid cover, eased (Swift's dark floor; SPEC §22)
     private static float under;
+    // the camera's column for Swift's cover: its chunk's sections that may hold a block the heightmaps skip, its tops
+    private static boolean[] camHas = new boolean[0];
+    private static final int[] camCol = new int[2];
     private static long motionAt;
 
     /**
@@ -510,7 +516,16 @@ public final class LensClient {
         if (motion < 0.003f) motion = 0f;
         // solid blocks over the camera's column (a cave, a room): Swift keeps the game's own darks there (SPEC §22)
         var eye = camera.position();
-        float underTarget = mc.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(eye.x), Mth.floor(eye.z)) > eye.y + 0.5 ? 1f : 0f;
+        int ex = Mth.floor(eye.x), ez = Mth.floor(eye.z);
+        int roof = mc.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ex, ez);
+        // and a roof the heightmap skips (Carillon's clay tiles, any mod block outside #minecraft:blocks_motion)
+        if (roof <= eye.y + 0.5 && mc.level.getChunkSource().getChunk(ex >> 4, ez >> 4, ChunkStatus.FULL, false) instanceof LevelChunk ch) {
+            if (camHas.length < ch.getSectionsCount()) camHas = new boolean[ch.getSectionsCount()];
+            LensHeights.sections(ch, camHas);
+            LensHeights.column(ch, camHas, ex & 15, ez & 15, camCol);
+            roof = camCol[1];
+        }
+        float underTarget = roof > eye.y + 0.5 ? 1f : 0f;
         under += (underTarget - under) * (1f - (float) Math.exp(-dt * 6.0));
         params.write(debug, current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
                 // a far renderer moves vanilla's chunk fog out; Lens's haze keeps vanilla's render distance

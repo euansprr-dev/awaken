@@ -5,12 +5,12 @@ import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.renderpearl.api.commands.CommandEncoder;
 import com.mojang.renderpearl.api.textures.FilterMode;
 import com.mojang.renderpearl.api.textures.GpuTexture;
+import dev.awaken.lens.LensHeights;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import net.minecraft.world.level.levelgen.Heightmap;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -18,7 +18,8 @@ import java.util.Arrays;
 
 /**
  * Lens 2's sun shadows without a second render of the world (SPEC §22): the loaded terrain's height around the camera,
- * from the client chunks' own heightmaps, which the light pass marches toward the sun. A 1024×1024 RG16F texture,
+ * from the client chunks' own heightmaps and every solid block they skip ({@link LensHeights}: a mod block outside
+ * {@code #minecraft:blocks_motion}), which the light pass marches toward the sun. A 1024×1024 RG16F texture,
  * addressed by world block coordinate modulo 1024 (a ring buffer, so moving never shifts it): r the top of everything
  * that blocks motion (leaves included), g the same without leaves (a roof). Mips 1-4 hold the maximum of their 2×2, so
  * far steps of the march test a whole cell at once. Where the top is water, g sits at the block's base + 0.75 instead of
@@ -57,6 +58,9 @@ final class LensHeightfield {
     // slot offsets from the centre, nearest first (Chebyshev rings)
     private static final int[] ORDER = ringOrder();
     private final float[] all = new float[256], solid = new float[256];
+    // a read's sections that may hold a block the heightmaps skip, and one column's tops (LensHeights)
+    private boolean[] has = new boolean[0];
+    private final int[] col = new int[2];
     private int centreX = Integer.MIN_VALUE, centreZ, rescan, clock, maxTop = -64, nextRow;
     private boolean maxDirty;
     private ClientLevel level;
@@ -181,10 +185,12 @@ final class LensHeightfield {
         if (chunk == null || chunk.isEmpty()) return false;
         long h = 1469598103934665603L;
         int high = level.getMinY();
+        if (has.length < chunk.getSectionsCount()) has = new boolean[chunk.getSectionsCount()];
+        LensHeights.sections(chunk, has);
         for (int z = 0; z < 16; z++) {
             for (int x = 0; x < 16; x++) {
-                int a = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) + 1;
-                int s = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) + 1;
+                LensHeights.column(chunk, has, x, z, col);
+                int a = col[0], s = col[1];
                 all[x + z * 16] = a;
                 // open water on top: its column's solid top drops to base + 0.75, the shaders' water mark
                 boolean water = a == s && chunk.getFluidState(x, s - 1, z).getType().is(net.minecraft.tags.FluidTags.WATER);
