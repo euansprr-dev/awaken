@@ -51,7 +51,7 @@ final class ArmourNow {
         return mem.now;
     }
 
-    /** The piece to suggest, or null: the highest set first, then {@link #ORDER}. */
+    /** The piece to suggest, or null: the highest rank first, then {@link #ORDER}, then the rank's sets in order (its Hunter set first). */
     static @Nullable ItemStack next(ServerPlayer p) {
         Inventory inv = p.getInventory();
         int[] owned = {-1, -1, -1, -1};
@@ -65,20 +65,16 @@ final class ArmourNow {
         }
         int rank = Progression.rank(p).ordinal();
         ArmouryMemory mem = ArmouryMemory.of(p);
-        ArmourSet[] sets = ArmourSet.values();
-        for (int s = sets.length - 1; s >= 0; s--) {
-            ArmourSet set = sets[s];
-            if (set.rank.ordinal() > rank || !ArmourForge.known(mem, set)) continue;
-            for (ArmorType piece : ORDER) {
-                if (owned[ForgeSong.slot(piece)] >= set.rank.ordinal()) continue;
-                List<ForgeSong.Need> cost = ForgeSong.cost(set, piece);
-                if (cost == null || !afford(inv, cost)) continue;
-                ItemStack made = ArmourForge.make(set, piece);
-                if (made.isEmpty()) continue;
-                EquipmentSlot slot = piece.getSlot();
-                if (armour(made, slot) < armour(p.getItemBySlot(slot), slot)) continue;
-                return made;
-            }
+        for (int r = rank; r >= 0; r--) for (ArmorType piece : ORDER) for (ArmourSet set : ArmourSet.values()) {
+            if (set.rank.ordinal() != r || !ArmourForge.known(mem, set)) continue;
+            if (owned[ForgeSong.slot(piece)] >= set.rank.ordinal()) continue;
+            List<ForgeSong.Need> cost = ForgeSong.cost(set, piece);
+            if (cost == null || !afford(inv, cost)) continue;
+            ItemStack made = ArmourForge.make(set, piece);
+            if (made.isEmpty()) continue;
+            EquipmentSlot slot = piece.getSlot();
+            if (armour(made, slot) < armour(p.getItemBySlot(slot), slot)) continue;
+            return made;
         }
         return null;
     }
