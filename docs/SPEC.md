@@ -10758,8 +10758,14 @@ now, fought-on second storeys in a later plan.
   cut from a theme's blocks wearing their texture (soft when cut from a soft block, else they want the stone's tool),
   a drift that piles in layers like snow (you stand a layer under its top, mobs path over four layers or fewer), and
   bits underfoot (no collision, broken at a touch). The Hive's: wax slab and stairs, dark wax slab, packed wax floor
-  slab and stairs, capped comb slab, pollen drift, wax crumbs. They join `#minecraft:slabs` and `#stairs` (blocks and
-  items); a double slab drops two.
+  slab and stairs, capped comb slab, pollen drift, wax crumbs. Every other theme (stage 2) gets two
+  slab and stair pairs, one cut from its walls and one from its floor, a drift where its floor is soft and bits drawn
+  for it: Ember basalt and slag, ash drift, cinders; Temple stone and tiles, moss drift, fallen leaves; Archive stone
+  and tiles, paper drift, scraps; Foundry iron and brick, shavings; Desert sandstone and tile, sand drift, shards;
+  Market cobbles and boards, confetti; Frost stone and tiles, snow drift, ice chips; Palace marble and checker, shards;
+  Lab panel and floor, moss drift, screws; Dream wood and boards, plush drift, feathers; Sky rock and marble, turf
+  drift, pebbles; Abyss shrine stone and tiles, wax stubs; Fungal rock and loam, moss drift, spores (82 depth blocks in
+  all). They join `#minecraft:slabs` and `#stairs` (blocks and items); a double slab drops two.
 - **The Hive's dress over shaped ground.** Drips hang thicker and longer (12%, up to 5). **Comb sheets** hang from the
   roof as a real hive's comb does: at most one in each 6 x 6 patch (the Comb 75%, the Swarm 55%, others 40%), a wall of
   cells a block thick and 5 to 9 long, deepest in its middle (up to 7), its lower edge dark wax; never within 4 blocks

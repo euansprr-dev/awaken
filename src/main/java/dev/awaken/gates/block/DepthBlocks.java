@@ -56,7 +56,94 @@ public final class DepthBlocks {
             stairs("hive_floor", MapColor.COLOR_BROWN, SoundType.PACKED_MUD),
             slab("hive_comb_capped", MapColor.COLOR_YELLOW, SoundType.CORAL_BLOCK),
             new Def("hive_pollen_drift", Kind.DRIFT, "hive_pollen", MapColor.COLOR_YELLOW, SoundType.SAND),
-            new Def("hive_wax_crumbs", Kind.BITS, "", MapColor.COLOR_YELLOW, SoundType.CANDLE)
+            new Def("hive_wax_crumbs", Kind.BITS, "", MapColor.COLOR_YELLOW, SoundType.CANDLE),
+            // Ember Mines
+            slab("ember_basalt", MapColor.COLOR_BLACK, SoundType.BASALT),
+            stairs("ember_basalt", MapColor.COLOR_BLACK, SoundType.BASALT),
+            slab("ember_slag", MapColor.COLOR_GRAY, SoundType.NETHERRACK),
+            stairs("ember_slag", MapColor.COLOR_GRAY, SoundType.NETHERRACK),
+            new Def("ember_ash_drift", Kind.DRIFT, "ember_ash", MapColor.COLOR_LIGHT_GRAY, SoundType.SAND),
+            new Def("ember_cinders", Kind.BITS, "", MapColor.COLOR_BLACK, SoundType.NETHERRACK),
+            // Overgrown Temple
+            slab("temple_stone", MapColor.STONE, SoundType.STONE),
+            stairs("temple_stone", MapColor.STONE, SoundType.STONE),
+            slab("temple_tiles", MapColor.STONE, SoundType.STONE),
+            stairs("temple_tiles", MapColor.STONE, SoundType.STONE),
+            new Def("temple_moss_drift", Kind.DRIFT, "temple_moss", MapColor.COLOR_GREEN, SoundType.MOSS),
+            new Def("temple_leaves", Kind.BITS, "", MapColor.COLOR_GREEN, SoundType.GRASS),
+            // Drowned Archive
+            slab("archive_stone", MapColor.COLOR_CYAN, SoundType.STONE),
+            stairs("archive_stone", MapColor.COLOR_CYAN, SoundType.STONE),
+            slab("archive_tiles", MapColor.COLOR_CYAN, SoundType.STONE),
+            stairs("archive_tiles", MapColor.COLOR_CYAN, SoundType.STONE),
+            new Def("archive_paper_drift", Kind.DRIFT, "archive_paper", MapColor.SNOW, SoundType.WOOL),
+            new Def("archive_scraps", Kind.BITS, "", MapColor.SNOW, SoundType.WOOL),
+            // Clockwork Foundry
+            slab("foundry_iron", MapColor.METAL, SoundType.METAL),
+            stairs("foundry_iron", MapColor.METAL, SoundType.METAL),
+            slab("foundry_brick", MapColor.COLOR_RED, SoundType.STONE),
+            stairs("foundry_brick", MapColor.COLOR_RED, SoundType.STONE),
+            new Def("foundry_shavings", Kind.BITS, "", MapColor.GOLD, SoundType.METAL),
+            // Glass Desert
+            slab("desert_sandstone", MapColor.SAND, SoundType.STONE),
+            stairs("desert_sandstone", MapColor.SAND, SoundType.STONE),
+            slab("desert_tile", MapColor.SAND, SoundType.STONE),
+            stairs("desert_tile", MapColor.SAND, SoundType.STONE),
+            new Def("desert_sand_drift", Kind.DRIFT, "desert_sand", MapColor.SAND, SoundType.SAND),
+            new Def("desert_shards", Kind.BITS, "", MapColor.COLOR_LIGHT_BLUE, SoundType.GLASS),
+            // Lantern Night Market
+            slab("market_cobbles", MapColor.STONE, SoundType.STONE),
+            stairs("market_cobbles", MapColor.STONE, SoundType.STONE),
+            slab("market_boards", MapColor.WOOD, SoundType.WOOD),
+            stairs("market_boards", MapColor.WOOD, SoundType.WOOD),
+            new Def("market_confetti", Kind.BITS, "", MapColor.COLOR_RED, SoundType.WOOL),
+            // Frost Monastery
+            slab("frost_stone", MapColor.STONE, SoundType.STONE),
+            stairs("frost_stone", MapColor.STONE, SoundType.STONE),
+            slab("frost_tiles", MapColor.STONE, SoundType.STONE),
+            stairs("frost_tiles", MapColor.STONE, SoundType.STONE),
+            new Def("frost_snow_drift", Kind.DRIFT, "frost_snow", MapColor.SNOW, SoundType.SNOW),
+            new Def("frost_chips", Kind.BITS, "", MapColor.ICE, SoundType.GLASS),
+            // Mirror Palace
+            slab("palace_marble", MapColor.QUARTZ, SoundType.STONE),
+            stairs("palace_marble", MapColor.QUARTZ, SoundType.STONE),
+            slab("palace_checker", MapColor.QUARTZ, SoundType.STONE),
+            stairs("palace_checker", MapColor.QUARTZ, SoundType.STONE),
+            new Def("palace_shards", Kind.BITS, "", MapColor.QUARTZ, SoundType.GLASS),
+            // Precursor Lab
+            slab("lab_panel", MapColor.COLOR_LIGHT_GRAY, SoundType.METAL),
+            stairs("lab_panel", MapColor.COLOR_LIGHT_GRAY, SoundType.METAL),
+            slab("lab_floor", MapColor.COLOR_GRAY, SoundType.METAL),
+            stairs("lab_floor", MapColor.COLOR_GRAY, SoundType.METAL),
+            new Def("lab_moss_drift", Kind.DRIFT, "lab_moss", MapColor.COLOR_GREEN, SoundType.MOSS),
+            new Def("lab_screws", Kind.BITS, "", MapColor.METAL, SoundType.METAL),
+            // Nightmare
+            slab("dream_wood", MapColor.COLOR_PURPLE, SoundType.WOOD),
+            stairs("dream_wood", MapColor.COLOR_PURPLE, SoundType.WOOD),
+            slab("dream_boards", MapColor.COLOR_BROWN, SoundType.WOOD),
+            stairs("dream_boards", MapColor.COLOR_BROWN, SoundType.WOOD),
+            new Def("dream_plush_drift", Kind.DRIFT, "dream_plush", MapColor.COLOR_PINK, SoundType.WOOL),
+            new Def("dream_feathers", Kind.BITS, "", MapColor.SNOW, SoundType.WOOL),
+            // Sky Archipelago
+            slab("sky_rock", MapColor.STONE, SoundType.STONE),
+            stairs("sky_rock", MapColor.STONE, SoundType.STONE),
+            slab("sky_marble", MapColor.QUARTZ, SoundType.STONE),
+            stairs("sky_marble", MapColor.QUARTZ, SoundType.STONE),
+            new Def("sky_turf_drift", Kind.DRIFT, "sky_turf", MapColor.GRASS, SoundType.GRASS),
+            new Def("sky_pebbles", Kind.BITS, "", MapColor.STONE, SoundType.STONE),
+            // Abyssal Shrine
+            slab("shrine_stone", MapColor.COLOR_BLACK, SoundType.DEEPSLATE),
+            stairs("shrine_stone", MapColor.COLOR_BLACK, SoundType.DEEPSLATE),
+            slab("abyss_tiles", MapColor.COLOR_BLACK, SoundType.DEEPSLATE_TILES),
+            stairs("abyss_tiles", MapColor.COLOR_BLACK, SoundType.DEEPSLATE_TILES),
+            new Def("abyss_wax_stubs", Kind.BITS, "", MapColor.COLOR_LIGHT_GRAY, SoundType.CANDLE),
+            // Fungal Hollow
+            slab("fungal_rock", MapColor.COLOR_PURPLE, SoundType.STONE),
+            stairs("fungal_rock", MapColor.COLOR_PURPLE, SoundType.STONE),
+            slab("fungal_loam", MapColor.DIRT, SoundType.ROOTED_DIRT),
+            stairs("fungal_loam", MapColor.DIRT, SoundType.ROOTED_DIRT),
+            new Def("fungal_moss_drift", Kind.DRIFT, "fungal_moss", MapColor.COLOR_CYAN, SoundType.MOSS),
+            new Def("fungal_spores", Kind.BITS, "", MapColor.COLOR_MAGENTA, SoundType.FUNGUS)
     );
 
     /** Registers every depth block after the blocks they're cut from ({@code base} finds those by id); by id, table order. */

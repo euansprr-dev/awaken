@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "awaken:block/ember_basalt",
+    "top": "awaken:block/ember_basalt",
+    "side": "awaken:block/ember_basalt"
+  }
+}

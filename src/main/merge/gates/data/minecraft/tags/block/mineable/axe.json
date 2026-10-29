@@ -39,6 +39,12 @@
     "awaken:hive_wax_slab",
     "awaken:hive_wax_stairs",
     "awaken:hive_wax_dark_slab",
-    "awaken:hive_comb_capped_slab"
+    "awaken:hive_comb_capped_slab",
+    "awaken:market_boards_slab",
+    "awaken:market_boards_stairs",
+    "awaken:dream_wood_slab",
+    "awaken:dream_wood_stairs",
+    "awaken:dream_boards_slab",
+    "awaken:dream_boards_stairs"
   ]
 }
