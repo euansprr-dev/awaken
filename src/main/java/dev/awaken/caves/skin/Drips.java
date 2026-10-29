@@ -23,7 +23,11 @@ public final class Drips {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> DRIP = PARTICLES.register("cave_drip", () -> new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SPLASH = PARTICLES.register("cave_splash", () -> new SimpleParticleType(false));
 
+    /** The client's {@code cave_particles} setting (caves.client.CavesClientConfig sets it; a plain flag here). */
+    public static volatile boolean enabled = true;
+
     static void drip(Level level, BlockPos pos, RandomSource random) {
+        if (!enabled) return;
         // the point of the tip's model (deep_skin.py FORMATION "tip": 12 of 16 down from the top), a hair off centre
         level.addParticle(DRIP.get(), pos.getX() + 0.5 + (random.nextFloat() - 0.5) * 0.06, pos.getY() + 0.22,
                 pos.getZ() + 0.5 + (random.nextFloat() - 0.5) * 0.06, 0, 0, 0);

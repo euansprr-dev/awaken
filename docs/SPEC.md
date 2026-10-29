@@ -11961,6 +11961,38 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
 - **Moved to the regions**: drawn light (glow-worm fields, caustics, mica glints, lava's heat) is the regions' own (Pale
   Halls, Drowned Galleries, Windcleft, Black Vaults) and comes with them in P3; plain caves stay dark (decision 4).
 
+### 42.5 The underlife (P1; client only)
+`caves.client.Underlife` (simulation, flat arrays, nothing allocated after start), `UnderlifeRender` (quads from
+`textures/entity/caves/underlife.png`, `tools/art/specs/deep_life.py`, as the wild's insects are drawn), the sites from
+`caves.life.UnderSites` (pure block reads, shared with the test). Never saved, never sent, nothing to hit; every world,
+overworld caves only (the gates' worlds keep their own life).
+- **Under the rock**: sky light 2 or less at the eye and the land's top 5 or more above. Out of it, everything fades away.
+- **The director** (every 10 ticks): 28 cells sampled within **22** blocks (none closer than 6), at most 2 new lives a pass;
+  nothing appears in plain sight within 14 blocks (moths may: they fly in out of the dark). Each fades in over 25 ticks and
+  fades out once you're **28** away. At most **40** bodies: moths 6, beetles 5, millipedes 3, bats 14, fish 6, crickets 5.
+  The Middle Dark holds 4 moths and 7 bats; the Deep only 3 beetles and 3 fish (its own life comes with its regions).
+- **Moths** (the dusk moth): a light in your hand brings up to 2 + its level / 4 (a torch: 5) in from 6 to 12 blocks off,
+  fluttering round your hand and now and then bumping it; a light on the walls (level 12 or more) gets 2 or 3 of its own.
+- **Beetles and millipedes** walk the face of the rock (floor, wall or roof) at 0.028 and 0.013 blocks a tick in spells,
+  turning at its edges, never more than 4 blocks from where they came; still while you're within 2.2.
+- **Bats**: a roost of 4 to 8 forms under a roof with 5 open cells below it, 10 or more blocks from you. Within 6.5 blocks
+  (7.5 with a light in hand) the whole roost lets go one after another with one flurry of wings (`caves.bats`), drops,
+  and flits from point to point 2 to 7 blocks round the roost and away from you; once you're 10 blocks off each heads home
+  after 2 to 4 more flits and hangs again. Half a minute about with you still there, now and then one leaves for good.
+- **Fish** (pale, blind): 1 to 3 in a pool (a source with open air over it and water on two sides or more), drifting just
+  under the surface; within 3.2 blocks they dart off.
+- **Crickets** sit on floors by a wall and chirp (`caves.cricket`) every 5 to 16 s when you're 5 to 22 blocks away, quiet
+  nearer; within 3.2 blocks, or now and then anyway, they hop 1 to 3 blocks (away from you when it's you).
+- **Light**: the block light where each one is, or the light in your hand there (its level less the distance, eased out
+  over three quarters of its level), whichever is brighter, so your torch shows what's round you.
+- **Voices**: `caves.cricket` (4 variants) and `caves.bats` (3), from `tools/art/specs/audio_underlife.py` (-28 and -27 dBFS,
+  heard to 24 blocks, a little of the rock in each); one new voice a second at most, crickets three seconds apart; quieter
+  where the Soundscape hushes.
+- **Settings** (`config/awaken-caves-client.toml`): `underlife` and `cave_particles` (the drips), both on;
+  `drawn_cave_light` comes with the drawn light in P3. `/awaken underlife [on|off|count|lineup|clear]` (client).
+- **Later**: each region brings its own (the Rootways' glow-worm threads, the Ochre Deep's rust beetles and chime crickets in
+  P2; glass and ash moths, cave swifts, crayfish, chitin crawlers in P3), drawn from the same sheet.
+
 ### 42.6 Budgets and tests (P0, P1)
 - **The gate**: filling a chunk with the shapes costs at most **20%** more than without (`caves_gen_cost`: 24 chunks round the
   origin of seed 777, best of three rounds, warmed); the land on top never moves; structures stay whole by construction (the
@@ -11974,7 +12006,10 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
   new cave), `caves_gen_cost`, `caves_skin_census` (16 chunks of seed 777 with the shapes, dressed as the feature dresses
   them: at least **30%** of cave floor cells have a piece on them, beside them or on the wall over them; every floor piece
   lies on natural rock and every formation grows from rock; the same chunk dresses the same twice; the skin costs at most
-  **15%** of filling the chunk).
+  **15%** of filling the chunk), `caves_underlife_sites` (a stone room with a high roof, a low alcove, a pool, a lone source
+  and lichen on a wall: each cell reads as its site; a crawler stays on the wall, floor and roof, not past them or on water).
+- **Client budget**: the underlife at most **0.2 ms** a frame (40 bodies of 2 to 4 quads); measured on the Mac's perf tour at
+  the end of the plan, not yet.
 - **Measured 2026-10-29** (the skin): 1,873 pieces on 16 chunks (599 rubble, 322 formation pieces, 81 puddles, 824
   overlays), **72%** of 3,642 floor cells dressed, 0.82 ms a chunk against 24.7 ms to fill it (3%; 0.53 ms once the chunk is
   in the cache).

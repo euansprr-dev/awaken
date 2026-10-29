@@ -1,0 +1,40 @@
+{
+  "caves.bats": {
+    "subtitle": "subtitles.awaken.caves.bats",
+    "sounds": [
+      {
+        "name": "awaken:caves/bats1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:caves/bats2",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:caves/bats3",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "caves.cricket": {
+    "subtitle": "subtitles.awaken.caves.cricket",
+    "sounds": [
+      {
+        "name": "awaken:caves/cricket1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:caves/cricket2",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:caves/cricket3",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:caves/cricket4",
+        "attenuation_distance": 24
+      }
+    ]
+  }
+}

@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.JsonOps;
 import dev.awaken.Awaken;
+import dev.awaken.caves.life.UnderSites;
 import dev.awaken.caves.skin.CaveSkin;
 import dev.awaken.caves.skin.CaveSkinFeature;
 import dev.awaken.caves.skin.SkinBlocks;
@@ -25,6 +26,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.StructureManager;
@@ -34,6 +37,9 @@ import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.MultifaceBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.UpgradeData;
@@ -89,6 +95,7 @@ final class CavesTests {
         AwakenTests.register("caves_surface_untouched", 2400, CavesTests::surface);
         AwakenTests.register("caves_gen_cost", 2400, CavesTests::cost);
         AwakenTests.register("caves_skin_census", 2400, CavesTests::skin);
+        AwakenTests.register("caves_underlife_sites", 200, CavesTests::underlife);
     }
 
     // ---------------------------------------------------------------- the regions
@@ -437,7 +444,7 @@ final class CavesTests {
         int floors = 0, dressed = 0, pieces = 0, rubble = 0, formations = 0, puddles = 0, overlays = 0;
         long nanos = 0, fillNanos = 0;
         int n = 0;
-        BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
+        BlockState stone = Blocks.STONE.defaultBlockState();
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 ChunkPos pos = new ChunkPos(-40 + i * 21, -30 + j * 19);
@@ -502,7 +509,7 @@ final class CavesTests {
                         BlockState behind = cells.get(cx + dx, y + from.getStepY(), cz + dz);
                         h.assertTrue(behind.getBlock() instanceof SkinBlocks.Formation || SkinRock.of(behind.getBlock()) != null,
                                 "a formation grows from rock at " + (cx + dx) + " " + y + " " + (cz + dz) + ": " + behind);
-                    } else if (s.getBlock() instanceof net.minecraft.world.level.block.MultifaceBlock) {
+                    } else if (s.getBlock() instanceof MultifaceBlock) {
                         overlays++;
                     } else if (s.getBlock() != CaveSkin.DUSTY_WEB.get()) {
                         if (s.getBlock() instanceof SkinBlocks.Rubble) rubble++;
@@ -549,6 +556,45 @@ final class CavesTests {
         h.assertTrue(formations > 0 && puddles > 0 && rubble > 0 && overlays > 0, "every kind of piece is laid");
         h.assertTrue(ms <= fill * SKIN_SHARE, "the skin costs " + String.format(Locale.ROOT, "%.2f", ms) + " ms a chunk, "
                 + Math.round(ms / fill * 100) + "% of the fill (budget " + Math.round(SKIN_SHARE * 100) + "%)");
+        h.succeed();
+    }
+
+    /**
+     * The underlife's sites (SPEC §42.5): a stone room 9 x 7 x 9 with a low alcove (its roof at 2), a 2 x 2 pool sunk in its
+     * floor and a lone source, lichen on one wall. Each cell reads as the place it is, and a crawler stays on its face.
+     */
+    private static void underlife(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(new BlockPos(0, 3, 0));
+        BlockState stone = Blocks.STONE.defaultBlockState(), air = Blocks.AIR.defaultBlockState(),
+                water = Blocks.WATER.defaultBlockState();
+        for (int dx = -6; dx <= 6; dx++) for (int dz = -6; dz <= 6; dz++) for (int dy = -3; dy <= 8; dy++) {
+            boolean room = Math.abs(dx) <= 4 && Math.abs(dz) <= 4 && dy >= 0 && dy <= 6 && !(dx >= 3 && dy >= 2);
+            level.setBlock(o.offset(dx, dy, dz), room ? air : stone, Block.UPDATE_CLIENTS);
+        }
+        for (int dx = -3; dx <= -2; dx++) for (int dz = -3; dz <= -2; dz++) level.setBlock(o.offset(dx, -1, dz), water, Block.UPDATE_CLIENTS);
+        level.setBlock(o.offset(2, -1, 2), water, Block.UPDATE_CLIENTS);
+        level.setBlock(o.offset(-4, 1, 0), CaveSkin.LICHEN_MIDDLE.get().defaultBlockState()
+                .setValue(MultifaceBlock.getFaceProperty(Direction.WEST), true), Block.UPDATE_CLIENTS);
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        java.util.function.BiFunction<int[], Integer, Boolean> is = (c, bits) -> UnderSites.classify(level, m, o.getX() + c[0], o.getY() + c[1], o.getZ() + c[2]) == bits;
+        h.assertTrue(is.apply(new int[]{-4, 0, 0}, UnderSites.FLOOR | UnderSites.WALL), "a floor by a wall");
+        h.assertTrue(is.apply(new int[]{0, 0, 0}, UnderSites.FLOOR), "the open floor");
+        h.assertTrue(is.apply(new int[]{0, 3, 0}, 0), "mid-air is no place");
+        h.assertTrue(is.apply(new int[]{0, 6, 0}, UnderSites.ROOF | UnderSites.ROOST), "a high roof is a roost");
+        h.assertTrue(is.apply(new int[]{4, 1, 0}, UnderSites.ROOF | UnderSites.WALL), "the alcove's low roof is no roost");
+        h.assertTrue(is.apply(new int[]{-4, 1, 0}, UnderSites.WALL), "lichen on a wall is open to a crawler");
+        h.assertTrue(is.apply(new int[]{-3, -1, -3}, UnderSites.POOL), "a pool");
+        h.assertTrue(is.apply(new int[]{2, -1, 2}, 0), "a lone source is no pool");
+        h.assertTrue(is.apply(new int[]{0, -1, 0}, 0), "rock is no place");
+        // a crawler on the west wall stays on it; past the roof, in the rock, or over the pool it doesn't
+        h.assertTrue(UnderSites.onSurface(level, m, o.getX() - 4 + 0.01, o.getY() + 2.5, o.getZ() + 0.5, Direction.EAST), "on the west wall");
+        h.assertFalse(UnderSites.onSurface(level, m, o.getX() - 4 + 0.01, o.getY() + 7.5, o.getZ() + 0.5, Direction.EAST), "past the roof");
+        h.assertTrue(UnderSites.onSurface(level, m, o.getX() + 0.5, o.getY() + 0.01, o.getZ() + 0.5, Direction.UP), "on the floor");
+        h.assertFalse(UnderSites.onSurface(level, m, o.getX() - 2.5, o.getY() + 0.01, o.getZ() - 2.5, Direction.UP), "on the pool");
+        h.assertTrue(UnderSites.onSurface(level, m, o.getX() + 0.5, o.getY() + 6.99, o.getZ() + 0.5, Direction.DOWN), "on the roof");
+        h.assertTrue(UnderSites.heldLight(new ItemStack(Items.TORCH)) == 14, "a torch gives 14");
+        h.assertTrue(UnderSites.heldLight(new ItemStack(Items.STONE)) == 0, "stone gives none");
         h.succeed();
     }
 

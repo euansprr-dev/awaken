@@ -10,10 +10,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
@@ -34,6 +36,14 @@ public final class CavesModule {
 
     private static final DeferredRegister<MapCodec<? extends Feature>> FEATURES = DeferredRegister.create(Registries.FEATURE_TYPE, Awaken.MODID);
 
+    private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
+    /** The underlife's voices (SPEC §42.5; tools/art/specs/audio_underlife.py): a cave cricket's chirps, a roost bursting off the roof. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> CRICKET = sound("caves.cricket"), BATS = sound("caves.bats");
+
+    private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
+        return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Awaken.id(name)));
+    }
+
     static {
         DENSITY.register("cave_shape", () -> CaveShapeFunction.CODEC);
         FEATURES.register("cave_skin", () -> CaveSkinFeature.CODEC);
@@ -42,6 +52,7 @@ public final class CavesModule {
     public static void init(IEventBus modBus) {
         DENSITY.register(modBus);
         FEATURES.register(modBus);
+        SOUNDS.register(modBus);
         CaveSkin.init(modBus);
         Drips.init(modBus);
         modBus.addListener(AddPackFindersEvent.class, e -> e.addPackFinders(Awaken.id("datapacks/awakened_caves"), PackType.SERVER_DATA,
