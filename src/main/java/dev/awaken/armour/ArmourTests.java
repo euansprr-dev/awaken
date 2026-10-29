@@ -2,6 +2,7 @@ package dev.awaken.armour;
 
 import dev.awaken.Awaken;
 import dev.awaken.armour.net.ArmourPayloads;
+import dev.awaken.core.Forces;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.gear.GearItems;
@@ -54,6 +55,8 @@ final class ArmourTests {
         AwakenTests.register("armour_patterns", 20, ArmourTests::patterns);
         AwakenTests.register("armour_set_abilities", 40, ArmourTests::abilities);
         AwakenTests.register("armour_set_twists_cb", 40, ArmourTests::twistsCB);
+        AwakenTests.register("armour_forge_tune_inlay", 40, ArmourTests::tuneInlay);
+        AwakenTests.register("armour_looks_accents", 20, ArmourTests::looksAccents);
     }
 
     private static final List<Rank> RANKS = List.of(Rank.E, Rank.D, Rank.C, Rank.B, Rank.A, Rank.S);
@@ -186,10 +189,25 @@ final class ArmourTests {
         var ops = h.getLevel().registryAccess().createSerializationContext(NbtOps.INSTANCE);
         Forged f = new Forged(Forged.SCHEMA, "gatewrought", 2, 0, true, false, "Smith");
         h.assertTrue(Forged.CODEC.encodeStart(ops, f).flatMap(t -> Forged.CODEC.parse(ops, t)).getOrThrow().equals(f), "Forged round-trips");
+        Forged two = f.withInlay("FROST", ArmourInlay.colour(Forces.Force.FROST)).withLook("bellguard").withTrueRing(true);
+        Forged back = Forged.CODEC.encodeStart(ops, two).flatMap(t -> Forged.CODEC.parse(ops, t)).getOrThrow();
+        h.assertTrue(back.equals(two) && back.inlayForce() == Forces.Force.FROST && back.trueRing(), "schema 2's inlay, look, accent and ring too");
+        var one = new net.minecraft.nbt.CompoundTag();
+        one.putInt("schemaVersion", 1);
+        one.putString("set", "gatewrought");
+        one.putInt("quality", 2);
+        Forged old = Forged.CODEC.parse(ops, one).getOrThrow();
+        h.assertTrue(old.inlay().isEmpty() && old.look().isEmpty() && old.accent() == 0 && !old.trueRing() && old.inlayForce() == null,
+                "a schema 1 story reads with nothing inlaid, its own look");
         UUID who = UUID.randomUUID();
         ForgeWork w = new ForgeWork(ArmourSet.BEASTBOUND, ArmorType.LEGGINGS, ForgeSong.SHAPE, 1234L, 2, List.of(new ItemStack(Items.IRON_INGOT, 3)),
                 0.66F, -1F, 0.4F, List.of(1F, 0.5F, 0.9F), 1, who, false, new BlockPos(1, 2, 3), Optional.of(new BlockPos(4, 5, 6)));
+        w.tune = 0.75F;
+        w.inlayScore = 1F;
+        w.taps = 3;
+        w.inlay = Forces.Force.SPIRIT.ordinal() + 1;
         ForgeWork b = ForgeWork.CODEC.encodeStart(ops, w).flatMap(t -> ForgeWork.CODEC.parse(ops, t)).getOrThrow();
+        h.assertTrue(b.tune == 0.75F && b.inlayScore == 1F && b.taps == 3 && b.inlay == w.inlay, "the tune and the inlay round-trip");
         h.assertTrue(b.set == w.set && b.piece == w.piece && b.stage == w.stage && b.stageStart == 1234L && b.strikeBase == 2 && b.heat == 0.66F
                 && b.cut == -1F && b.quench == 0.4F && b.scores.equals(w.scores) && b.twin == 1 && b.forger.equals(who) && !b.memory
                 && b.work.equals(w.work) && b.forge.equals(w.forge), "a piece in the making round-trips");
@@ -354,6 +372,97 @@ final class ArmourTests {
         h.assertTrue(be.work() == null && f != null && be.suit(1).is(GearItems.get(HunterTier.D, Piece.CHESTPLATE)), "fitted on the stand");
         h.assertTrue(w.quench < 0.5F && f.quality() == ForgeSong.Quality.FLAWLESS.ordinal() && f.twin(),
                 "quenched too soon, yet Flawless and twin-struck, got " + f + " quench " + w.quench);
+        h.succeed();
+    }
+
+    // ---- the rank's verbs (P3) ---------------------------------------------------------------------------------------
+
+    /**
+     * B's Tune and C's Inlay: a Veilwoven cuirass started with Frostspar to inlay is heated, shaped and quenched, then
+     * tuned: a tap far off rings dull and the tuning goes on, a tap at the point rings true; the Frostspar is seated on the
+     * key. The piece comes Masterwork or better, rung true, inlaid with Frost and glowing its colour, and worn it gives
+     * Frost's toughness.
+     */
+    private static void tuneInlay(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        FittingStandBlockEntity be = stand(h, new BlockPos(1, 1, 1));
+        BlockPos pos = be.getBlockPos();
+        ServerPlayer p = smith(h, Rank.B, pos);
+        p.setGameMode(GameType.CREATIVE); // the materials are the hand's test; here the verbs
+        h.setBlock(new BlockPos(3, 1, 1), Blocks.ANVIL.defaultBlockState());
+        h.setBlock(new BlockPos(1, 1, 3), BuiltInRegistries.BLOCK.getValue(Awaken.id("forge")).defaultBlockState());
+        h.assertTrue(ForgeSong.tunes(ArmourSet.VEILWOVEN) && ForgeSong.inlays(ArmourSet.VEILWOVEN) && ForgeSong.inlays(ArmourSet.GATEWROUGHT)
+                && !ForgeSong.tunes(ArmourSet.GATEWROUGHT) && !ForgeSong.inlays(ArmourSet.BEASTBOUND), "C inlays, B also tunes");
+        act(p, pos, ArmourPayloads.START, ArmourSet.VEILWOVEN.ordinal() * 4 + 1, 0F, Forces.Force.FROST.ordinal() + 1);
+        ForgeWork w = be.work();
+        h.assertTrue(w != null && w.inlay == Forces.Force.FROST.ordinal() + 1, "the Frostspar chosen goes in with the work");
+        float gold = 0.65F * ForgeSong.HEAT_FULL;
+        w.stageStart = level.getGameTime() - (long) gold;
+        act(p, pos, ArmourPayloads.PULL, 0, gold, 0F);
+        for (int k = 0; k < ForgeSong.strikes(ArmorType.CHESTPLATE, false); k++) strikeOnBeat(h, p, be);
+        h.assertTrue(w.stage == ForgeSong.QUENCH, "shaped, then the quench");
+        w.stageStart = level.getGameTime() - 34;
+        act(p, pos, ArmourPayloads.QUENCH, 0, ForgeSong.quenchCue(w.stageStart) + 1, 0F);
+        h.assertTrue(w.stage == ForgeSong.TUNE && be.work() == w, "B's Deepglass is tuned after the quench");
+
+        float[] at = ForgeSong.truePoint(w.stageStart, w.piece);
+        float farX = at[0] > 0 ? -1F : 1F, farZ = at[1] > 0 ? -1F : 1F;
+        act(p, pos, ArmourPayloads.TAP, 0, farX, farZ);
+        h.assertTrue(w.stage == ForgeSong.TUNE && w.taps == 1 && w.tune >= 0F && w.tune < 0.5F, "a far tap rings dull, got " + w.tune);
+        act(p, pos, ArmourPayloads.TAP, 0, at[0], at[1]);
+        h.assertTrue(w.taps == 1, "a tap out of turn isn't taken");
+        act(p, pos, ArmourPayloads.TAP, 1, at[0] + 0.05F, at[1]);
+        h.assertTrue(w.stage == ForgeSong.INLAY && w.tune == 1F, "at the point it rings true, then the inlay");
+
+        w.stageStart = level.getGameTime() - 20;
+        h.assertTrue(Math.abs(ForgeSong.inlayAngle(20F)) < 0.01F && ForgeSong.inlayScore(40F) < 1F, "the notch meets the key every turn");
+        act(p, pos, ArmourPayloads.SEAT, 0, 20F, 0F);
+        ItemStack made = be.suit(1);
+        Forged f = made.get(ArmourContent.FORGED.get());
+        h.assertTrue(be.work() == null && f != null && f.inlayForce() == Forces.Force.FROST && f.trueRing()
+                && f.accent() == ArmourInlay.colour(Forces.Force.FROST), "fitted rung true, inlaid with Frost and its colour, got " + f);
+        h.assertTrue(f.quality() >= ForgeSong.Quality.MASTERWORK.ordinal(), "every verb done well: Masterwork or better, got " + f.quality());
+
+        p.setItemSlot(ArmorType.CHESTPLATE.getSlot(), made.copy());
+        ArmourAbilities.count(p, ArmourAbilities.state(p));
+        var tough = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS).getModifier(Awaken.id("armour_inlay_frost"));
+        h.assertTrue(tough != null && Math.abs(tough.amount() - ArmourInlay.FROST_TOUGHNESS) < 1e-6, "worn, the Frostspar gives its toughness");
+        h.succeed();
+    }
+
+    /**
+     * Looks and accents: a Bellguard cuirass can't take Amberwing's look until Amberwing has been forged whole; then it draws
+     * as Amberwing and stays Bellguard; a dye you carry colours its glow and is used up; none gives the inlay's colour back.
+     */
+    private static void looksAccents(GameTestHelper h) {
+        FittingStandBlockEntity be = stand(h, new BlockPos(1, 1, 1));
+        BlockPos pos = be.getBlockPos();
+        ServerPlayer p = smith(h, Rank.E, pos);
+        ItemStack chest = ArmourItems.stack(ArmourSet.BELLGUARD, ArmorType.CHESTPLATE);
+        chest.set(ArmourContent.FORGED.get(), new Forged(Forged.SCHEMA, "bellguard", 0, 0, false, false, "")
+                .withInlay("HEAT", ArmourInlay.colour(Forces.Force.HEAT)));
+        var slot = ArmorType.CHESTPLATE.getSlot();
+        p.setItemSlot(slot, chest);
+        act(p, pos, ArmourPayloads.LOOK, 1, 0F, ArmourSet.AMBERWING.ordinal() + 1);
+        h.assertTrue(ArmourLooks.drawn(p.getItemBySlot(slot)).set() == ArmourSet.BELLGUARD, "Amberwing not forged whole: the look isn't taken");
+        ArmouryMemory.of(p).forged.add(ArmourSet.AMBERWING.id);
+        act(p, pos, ArmourPayloads.LOOK, 1, 0F, ArmourSet.AMBERWING.ordinal() + 1);
+        ItemStack worn = p.getItemBySlot(slot);
+        h.assertTrue(ArmourLooks.drawn(worn).set() == ArmourSet.AMBERWING && ArmourLooks.of(worn).set() == ArmourSet.BELLGUARD,
+                "drawn as Amberwing, still a Bellguard cuirass");
+        act(p, pos, ArmourPayloads.LOOK, 1, 0F, 0F);
+        h.assertTrue(ArmourLooks.drawn(p.getItemBySlot(slot)).set() == ArmourSet.BELLGUARD, "and back to its own");
+
+        p.getInventory().add(new ItemStack(Items.DYE.pick(net.minecraft.world.item.DyeColor.RED), 1));
+        act(p, pos, ArmourPayloads.ACCENT, 0, 0F, net.minecraft.world.item.DyeColor.RED.getId() + 1);
+        Forged f = p.getItemBySlot(slot).get(ArmourContent.FORGED.get());
+        h.assertTrue(f != null && f.accent() == (0xFF000000 | net.minecraft.world.item.DyeColor.RED.getTextureDiffuseColor())
+                && p.getInventory().countItem(Items.DYE.pick(net.minecraft.world.item.DyeColor.RED)) == 0, "a red dye used for a red glow, got " + f);
+        act(p, pos, ArmourPayloads.ACCENT, 0, 0F, net.minecraft.world.item.DyeColor.BLUE.getId() + 1);
+        h.assertTrue(p.getItemBySlot(slot).get(ArmourContent.FORGED.get()).accent() == f.accent(), "no blue dye carried: unchanged");
+        act(p, pos, ArmourPayloads.ACCENT, 0, 0F, 0F);
+        h.assertTrue(p.getItemBySlot(slot).get(ArmourContent.FORGED.get()).accent() == ArmourInlay.colour(Forces.Force.HEAT),
+                "its own glow back: the Sunshard's");
         h.succeed();
     }
 

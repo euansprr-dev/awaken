@@ -13360,7 +13360,7 @@ are forged at a **Fitting Stand** (`awaken:fitting_stand`, crafted from a stick,
 dress form that holds a suit). The level road's Hunter steps grant the weapon and tool recipes only, and the E step the
 Fitting Stand's; they say where armour is made. `ArmourNow` (Now line, priority 25): "You can forge a Wildhide Vest at
 a Fitting Stand" when the pack covers a piece your rank can forge that beats what you wear there and you don't own it
-or better; `GearNow` no longer suggests armour.
+or better (the highest rank first, then cuirass, greaves, helm, boots, then the rank's sets in order, its Hunter set first); `GearNow` no longer suggests armour.
 - **The place.** E sets are cut and riveted **by hand** at a crafting table (the works table) within 6 blocks of the
   stand. D and up are forged: an anvil and the Hearth's Forge (`awaken:forge`) within 6 blocks. The stand's list says
   plainly what's missing.
@@ -13388,8 +13388,25 @@ or better; `GearNow` no longer suggests armour.
 - **A helper** at the anvil (anyone else using the stand while it's shaped) strikes the off-beats, the rests after the
   count-in, within 1.5 ticks: each adds 0.01 (0.05 at most); three make the piece **twin-struck**. A helper's blow on
   the beat isn't taken.
-- **Stepping away.** The work lives on the stand (`ForgeWork`, schemaVersion 1, synced to everyone near so they see the
-  bar glow and the shape form). It only moves while its smith is at it (`ArmourForge.AT`, not saved): Esc, logging out
+- **The rank's verbs (P3).** At the Forge, from C a piece can be **inlaid** and from B its Deepglass is **tuned**, both
+  after the quench (the tune first). Each done verb is a tenth of the quality (`ForgeSong.withVerbs`: the score times
+  1 - 0.1 a verb, plus 0.1 times each verb's mark). From memory neither is played; a chosen inlay is still set.
+  - **Inlay (C and up).** The list offers the weapons' five catalysts (`ArmsForge.catalystItem`: Sunshard Heat, copper
+    Charge, Fault Seam Gravity, Deepglass Spirit, Frostspar Frost) or none; the one chosen goes in with the materials
+    (START's aim: its Force + 1). It turns in its socket, a turn every 40 ticks from half a turn off; seated within 12
+    degrees of the key it's 1, further falls to 0.3 (`inlayScore`); left 120 ticks it seats itself at 0.5. The piece keeps
+    the Force (`Forged.inlay`), takes its colour as its accent and gives one small stat a piece whatever set it's on
+    (`ArmourInlay`, counted with the set, modifiers `awaken:armour_inlay_<force>`): Heat +1.5% melee damage, Charge +1.5%
+    speed (both multiplied base), Gravity +0.03 knockback resistance, Spirit +0.5 health, Frost +0.25 toughness. The
+    tooltip says it ("Inlaid with Frostspar: +0.25 toughness").
+  - **Tune (B and up).** The cold Deepglass rings true at one spot on the piece's face (`truePoint`, from the stage's
+    start: -0.5..0.5 across, -0.6..0.6 along, in the face's half-widths). Tap it (TAP: the tap's number, x and z; the
+    client finds the spot under the cursor): each note is clearer and nearer its pitch the nearer the spot (`clarity`,
+    1 - distance / 1.1); the screen marks each tap in its colour and says clearer or duller than before. Within 0.15 it
+    rings true: the tune is 1, the piece is marked rung true ("Its Deepglass rings true") and the tuning ends. Otherwise
+    the best of five taps counts; left 600 ticks, what was found.
+- **Stepping away.** The work lives on the stand (`ForgeWork`, schemaVersion 1, the P3 tune, taps and inlay optional;
+  synced to everyone near so they see the bar glow and the shape form). It only moves while its smith is at it (`ArmourForge.AT`, not saved): Esc, logging out
   or walking 12 blocks away holds it; coming back restarts the stage (counted in again).
 - **Finishing** fits the piece onto the stand (the piece there before goes to your pack) with its `awaken:forged`
   story (§44.7). All four of one set on the stand wakes it (a flare and a sound); the first time you make a set whole
@@ -13457,12 +13474,17 @@ counted on each equipment change.
   circling at the chest once every 64 ticks, growing in over 300 ms, drawn full-bright.
 - **Sounds** `awaken:armour.*` (`audio_forge.py`): charged, bastion, flow, edge, rune (three notes of one chord, rising
   as runes gather), overchannel, ring, rooted, gore.
-- **Mastery** (P2 to III; IV and V with P3): blows dealt or taken with a whole set on +1, an elite's or a warden's kill
+- **Mastery** (P2 to III; IV and V P3): blows dealt or taken with a whole set on +1, an elite's or a warden's kill
   +5, a gate Lord's +60, written onto every worn piece of that set in tens (`Forged.mastery`). Steps at 0, 300, 1200,
   3000, 6000 (I to V; `Forged.MASTERY`). The tooltip shows it ("Mastery II (420 / 1200)"); the System says when a set
   grows into a new step. II: the trims catch more light. III: what glows of itself glows more, and when the wearer is
   under 35% health it beats with their heart (a double beat about seventy a minute), seen by everyone. Shader: the
-  overlay's bits 10-12 the step, bit 13 the wearer is low.
+  overlay's bits 10-12 the step, bit 13 the wearer is low. IV (P3): each piece at IV grows its set's awakened parts,
+  drawn over its own (the kit's `awake` geometry, written as `<piece>_<bone>_awakened.mesh`: longer horns, a further
+  crest, a longer cape, a set's own). V (P3): with all four of one drawn set at V its aura moves about the wearer
+  (`ArmourAura`: tiny full-bright motes worked out from the time alone, nothing spawned or kept), each set its own way:
+  rising off the shoulders, falling from the face, circling the head, drifting about the body, ringing out from the
+  chest in a heartbeat, winking on the plate, or streaming back as if in wind. Stands and everyone else show it too.
 
 **44.6 Set twists.** Each set's own full-set twist on top of its archetype's ability (§44.5).
 - **Wildhide: Pounce** (P0, replaces Hunter's Sense, which outlined creatures through walls). Crouch at least 10 ticks,
@@ -13501,6 +13523,16 @@ counted on each equipment change.
   fills a fifth a blow): foes within 4 take the ability's blow and you mend half a heart for each struck (four at
   most).
 
-**44.7 A forged piece's story.** `awaken:forged` (`Forged`, schemaVersion 1): the set, quality (0-3), mastery (§44.5),
-a flaw, twin-struck, and who made it. The tooltip says it plainly ("Masterwork, twin-struck", "Forged by Name"). A
+**44.7 A forged piece's story.** `awaken:forged` (`Forged`, schemaVersion 2): the set, quality (0-3), mastery (§44.5),
+a flaw, twin-struck, and who made it; from 2 (P3) the inlaid Force's name (empty: none), the look it wears (a set id,
+empty: its own), its accent (ARGB, 0: its set's own) and whether its Deepglass rang true. A schema 1 story reads with
+those empty. The tooltip says it plainly ("Masterwork, twin-struck", "Forged by Name"). A
 Hunter piece made before the Forge Song gains a Plain story the first time it's worn.
+
+**44.8 Looks and accents (P3).** Cosmetic: never a number. At a Fitting Stand, Looks (the button by the title, or L)
+lists what you wear piece by piece, with you turning beside it. Each piece can wear the look of its own set or of any
+set you've forged whole (`ArmouryMemory.forged`) in the same slot (LOOK: the slot, the set's ordinal + 1, 0 its own; the
+server checks the set). `ArmourLooks.drawn` is what every renderer draws, worn, on a stand and on the arm: the look's set
+if it is made, else the piece's own; its numbers, ability and mastery stay the piece's. An **accent** colours what glows:
+an inlay gives its Force's colour; one dye you carry colours the whole worn suit (ACCENT: the dye's id + 1, the dye used
+up); the first swatch gives each piece its own back (its inlay's colour, if it has one).

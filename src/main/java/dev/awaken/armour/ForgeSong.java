@@ -25,8 +25,20 @@ public final class ForgeSong {
 
     // ---- stages ------------------------------------------------------------------------------------------------------
 
-    /** At the Forge (D and up): heat, shape, quench, then fit. By hand (E, at the works table): cut, rivet, fit. */
-    public static final int HEAT = 0, SHAPE = 1, QUENCH = 2, CUT = 3, RIVET = 4, DONE = 5;
+    /**
+     * At the Forge (D and up): heat, shape, quench, then fit; from B the cold Deepglass is tuned after the quench, and from
+     * C a catalyst chosen at the start is inlaid last. By hand (E, at the works table): cut, rivet, fit.
+     */
+    public static final int HEAT = 0, SHAPE = 1, QUENCH = 2, CUT = 3, RIVET = 4, DONE = 5, TUNE = 6, INLAY = 7;
+
+    /** Each rank adds a verb (plan §4.4): C Inlay, B Tune (A Fold and S Starfire come with P4). */
+    public static boolean inlays(ArmourSet set) {
+        return set.rank.ordinal() >= dev.awaken.progression.Rank.C.ordinal();
+    }
+
+    public static boolean tunes(ArmourSet set) {
+        return set.rank.ordinal() >= dev.awaken.progression.Rank.B.ordinal();
+    }
 
     public static boolean byHand(ArmourSet set) {
         return set.rank == dev.awaken.progression.Rank.E;
@@ -243,6 +255,53 @@ public final class ForgeSong {
     /** Past the cue by this long, the work is plunged for you. */
     public static final float QUENCH_LATE = 24F;
 
+    // ---- tune (B and up) -------------------------------------------------------------------------------------------------
+
+    /** Taps to find where the Deepglass rings true; within this of the point (work units) it does. */
+    public static final int TUNE_TAPS = 5;
+    public static final float TRUE_RADIUS = 0.15F;
+    /** Left this long untapped, the tuning ends with what was found. */
+    public static final float TUNE_LATE = 600F;
+
+    /** Where this piece rings true (x across, z along, -1..1), from the stage's start: a new point each time. */
+    public static float[] truePoint(long seed, ArmorType piece) {
+        long h = seed * 0x9E3779B97F4A7C15L + slot(piece) * 0xBF58476D1CE4E5B9L;
+        h ^= h >>> 31;
+        h *= 0x94D049BB133111EBL;
+        h ^= h >>> 29;
+        float a = (h & 0xFFFF) / 65535F, b = (h >>> 16 & 0xFFFF) / 65535F;
+        return new float[]{-0.5F + a, -0.6F + 1.2F * b};
+    }
+
+    public static float tapDistance(long seed, ArmorType piece, float x, float z) {
+        float[] p = truePoint(seed, piece);
+        return (float) Math.hypot(x - p[0], z - p[1]);
+    }
+
+    /** How clear a tap's note rings: 1 at the point, nothing a whole width away. */
+    public static float clarity(float d) {
+        return Mth.clamp(1F - d / 1.1F, 0F, 1F);
+    }
+
+    // ---- inlay (C and up) --------------------------------------------------------------------------------------------
+
+    /** The catalyst turns in its socket once in this many ticks, starting half a turn from its key. */
+    public static final float INLAY_TURN = 40F;
+    /** Left to turn this long, it seats itself, a little crooked. */
+    public static final float INLAY_LATE = 3 * INLAY_TURN;
+
+    /** Degrees the catalyst's notch is from the socket's key at this many ticks (-180..180). */
+    public static float inlayAngle(float t) {
+        float deg = 180F + t / INLAY_TURN * 360F;
+        return ((deg + 180F) % 360F + 360F) % 360F - 180F;
+    }
+
+    /** Seated within 12 degrees is true; further, less, never below 0.3. */
+    public static float inlayScore(float off) {
+        float a = Math.abs(off);
+        return a <= 12F ? 1F : Mth.clamp(1F - (a - 12F) / 90F, 0.3F, 1F);
+    }
+
     // ---- quality -----------------------------------------------------------------------------------------------------
 
     public enum Quality {
@@ -272,6 +331,21 @@ public final class ForgeSong {
     /** By hand: the cut and the rivets. */
     public static float handScore(float cut, float rivetMean) {
         return 0.35F * cut + 0.65F * rivetMean;
+    }
+
+    /** The rank's verbs (tune, inlay; -1 where not done) each take a tenth of the score. */
+    public static float withVerbs(float score, float tune, float inlay) {
+        int k = 0;
+        float sum = 0F;
+        if (tune >= 0F) {
+            k++;
+            sum += tune;
+        }
+        if (inlay >= 0F) {
+            k++;
+            sum += inlay;
+        }
+        return score * (1F - 0.1F * k) + 0.1F * sum;
     }
 
     public static Quality quality(float score, boolean flaw) {

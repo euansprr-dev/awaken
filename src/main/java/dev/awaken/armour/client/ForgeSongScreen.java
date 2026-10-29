@@ -2,6 +2,7 @@ package dev.awaken.armour.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.awaken.armour.ArmourContent;
+import dev.awaken.armour.ArmourInlay;
 import dev.awaken.armour.ArmourSet;
 import dev.awaken.armour.ForgeSong;
 import dev.awaken.armour.ForgeWork;
@@ -27,7 +28,8 @@ import java.util.Arrays;
  * strike each mark on the work on the set's beat (the anvil counts you in with one bar, then taps it softly), aim and
  * timing both counting; plunge it when the bell rings. By hand: draw the knife round the hide, then set the rivets on
  * the beat. A clean strike rings the set's next note, so a well-forged piece plays its tune. A helper at the anvil strikes
- * the off-beats. Your client plays your own sounds the moment you act; the server judges by its clock and keeps the work.
+ * the off-beats. B's Deepglass is tuned after the quench: tap the cold piece to find where it rings true, the note clearer
+ * the nearer you are. C and up can inlay a catalyst: it turns in its socket, and you seat it when its notch meets the key. Your client plays your own sounds the moment you act; the server judges by its clock and keeps the work.
  * Esc steps away: the work waits on the stand. Doesn't pause the game.
  */
 final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.QuietScreen, dev.awaken.signal.client.ReadingScreen {
@@ -60,6 +62,13 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
     private boolean cutting, cutSent;
     private int cutNext;
     private float cutDev, cutSamples, cutSoundAt;
+
+    // the tune (B) and the inlay (C and up)
+    private int tapNext;
+    private final float[] tapX = new float[ForgeSong.TUNE_TAPS], tapZ = new float[ForgeSong.TUNE_TAPS], tapClear = new float[ForgeSong.TUNE_TAPS];
+    private boolean tuned, seated;
+    private float seatedAt;
+    private final float[] face = new float[2], corners = new float[8];
 
     // what the screen shows for a moment
     private String callout = "";
@@ -127,6 +136,8 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
             }
             case ForgeSong.QUENCH -> quench(g, w, f, t, now);
             case ForgeSong.CUT -> cut(g, w, f);
+            case ForgeSong.TUNE -> tune(g, w, f, now);
+            case ForgeSong.INLAY -> inlay(g, w, f, t);
             default -> {}
         }
         if (ForgeClient.autoplay && !helper) autoplay(w, f, t, now);
@@ -148,6 +159,9 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         pulled = quenched = cue = cutting = cutSent = false;
         cutNext = 0;
         cutDev = cutSamples = 0;
+        tapNext = w.taps;
+        Arrays.fill(tapClear, -1F);
+        tuned = seated = false;
         bellowsAt = now;
         float blend = switch (w.stage) {
             case ForgeSong.SHAPE -> 7;
@@ -165,6 +179,8 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
             case ForgeSong.SHAPE -> w.memory ? "From memory" : "Shape";
             case ForgeSong.QUENCH -> "Quench";
             case ForgeSong.CUT -> "Cut";
+            case ForgeSong.TUNE -> "Tune";
+            case ForgeSong.INLAY -> "Inlay";
             default -> "Rivets";
         };
         g.centeredText(font, Component.literal(w.set.setName + "  ·  " + it.getHoverName().getString() + "  ·  " + stage), width / 2, top,
@@ -474,6 +490,163 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         else say("A little late", LABEL, now);
     }
 
+    // ---- the tune (B) ------------------------------------------------------------------------------------------------------
+
+    private void tune(GuiGraphicsExtractor g, ForgeWork w, ForgeFrame f, float now) {
+        tapNext = Math.max(tapNext, w.taps);
+        // the cold piece's face, faint, so you know where to tap
+        float[] c = corners;
+        boolean framed = true;
+        for (int i = 0; i < 4; i++) {
+            Vec3 at = f.mark(i == 0 || i == 3 ? -1F : 1F, i < 2 ? -1F : 1F);
+            framed &= ForgeCamera.project(at.x, at.y, at.z, width, height, p);
+            c[i * 2] = p[0];
+            c[i * 2 + 1] = p[1];
+        }
+        if (framed) for (int i = 0; i < 4; i++) {
+            int j = (i + 1) % 4;
+            line(g, c[i * 2], c[i * 2 + 1], c[j * 2], c[j * 2 + 1], 0x30AFC2D8);
+        }
+        // every tap so far, coloured by how clearly it rang
+        for (int i = 0; i < ForgeSong.TUNE_TAPS; i++) {
+            if (tapClear[i] < 0F) continue;
+            Vec3 at = f.mark(tapX[i], tapZ[i]);
+            if (!ForgeCamera.project(at.x, at.y, at.z, width, height, p)) continue;
+            disc(g, p[0], p[1], 2.5F, clarityColour(tapClear[i]));
+            ring(g, p[0], p[1], 4F + 9F * tapClear[i], 1F, clarityColour(tapClear[i]) & 0x00FFFFFF | 0x90000000);
+        }
+        if (!tuned && tapNext < ForgeSong.TUNE_TAPS) {
+            disc(g, mx, my, 1.5F, 0xC0E8F4FF);
+            ring(g, mx, my, 6F, 1F, 0x70E8F4FF);
+        }
+        // one pip a tap
+        int y = bottom() - 28, pw = 8, x0 = width / 2 - ForgeSong.TUNE_TAPS * (pw + 3) / 2;
+        for (int j = 0; j < ForgeSong.TUNE_TAPS; j++) {
+            int x = x0 + j * (pw + 3);
+            if (tapClear[j] < 0F) g.outline(x, y, pw, 4, 0x803A4A60);
+            else g.fill(x, y, x + pw, y + 4, clarityColour(tapClear[j]));
+        }
+        hint(g, tuned ? "" : "Deepglass sings when it's struck at the right spot. Tap the cold piece to find it: the nearer you tap, "
+                + "the clearer the note. Five taps. Esc steps away.");
+    }
+
+    /** Dull grey-blue for a far tap, clear ice for a near one, gold where it rang true. */
+    private static int clarityColour(float clear) {
+        if (clear >= 0.999F) return LANTERN;
+        int from = 0x5A6A88, to = 0xD8F0FF;
+        int r = (int) Mth.lerp(clear, from >> 16 & 255, to >> 16 & 255), gr = (int) Mth.lerp(clear, from >> 8 & 255, to >> 8 & 255),
+                b = (int) Mth.lerp(clear, from & 255, to & 255);
+        return 0xFF000000 | r << 16 | gr << 8 | b;
+    }
+
+    /** Where on the piece's face the cursor points (across, along: -1..1), or false off it: a search, so only on a tap. */
+    private boolean face(ForgeFrame f, float[] out) {
+        float best = Float.MAX_VALUE, bx = 0, bz = 0;
+        for (int pass = 0; pass < 2; pass++) {
+            float step = pass == 0 ? 0.1F : 0.02F, cx = bx, cz = bz;
+            int n = pass == 0 ? 11 : 5;
+            for (int i = -n; i <= n; i++) for (int k = -n; k <= n; k++) {
+                float x = pass == 0 ? i * step : cx + i * step, z = pass == 0 ? k * step : cz + k * step;
+                if (Math.abs(x) > 1.05F || Math.abs(z) > 1.05F) continue;
+                Vec3 at = f.mark(x, z);
+                if (!ForgeCamera.project(at.x, at.y, at.z, width, height, p)) continue;
+                float d = (float) Math.hypot(mx - p[0], my - p[1]);
+                if (d < best) {
+                    best = d;
+                    bx = x;
+                    bz = z;
+                }
+            }
+        }
+        out[0] = bx;
+        out[1] = bz;
+        return best < 8F;
+    }
+
+    private void tap(ForgeWork w, ForgeFrame f, float now) {
+        if (tuned || tapNext >= ForgeSong.TUNE_TAPS) return;
+        if (!face(f, face)) {
+            say("Tap the piece itself", BAD, now);
+            return;
+        }
+        tapAt(w, f, face[0], face[1], now);
+    }
+
+    private void tapAt(ForgeWork w, ForgeFrame f, float x, float z, float now) {
+        float d = ForgeSong.tapDistance(w.stageStart, w.piece, x, z);
+        boolean rings = d <= ForgeSong.TRUE_RADIUS;
+        float clear = rings ? 1F : ForgeSong.clarity(d), before = -1F;
+        for (int i = 0; i < tapNext; i++) before = Math.max(before, tapClear[i]);
+        ForgeClient.send(pos, ArmourPayloads.TAP, tapNext, x, z);
+        tapX[tapNext] = x;
+        tapZ[tapNext] = z;
+        tapClear[tapNext] = clear;
+        tapNext++;
+        Vec3 at = f.mark(x, z);
+        int[] melody = ForgeSong.song(w.set).melody();
+        ForgeClient.play(at, ArmourContent.strikeSound(w.set), 0.3F, 1.7F);
+        ForgeClient.play(at, ArmourContent.NOTE.get(), 0.4F + 0.5F * clear, ForgeSong.notePitch(melody[0]) * (1F + 0.08F * (1F - clear)));
+        if (ForgeCamera.project(at.x, at.y, at.z, width, height, p)) {
+            ringX = p[0];
+            ringY = p[1];
+            ringR = 14 + 46 * clear;
+            ringAt = now;
+        }
+        if (rings) {
+            tuned = true;
+            ForgeClient.play(at, ArmourContent.NOTE.get(), 0.8F, ForgeSong.notePitch(melody[Math.min(2, melody.length - 1)]));
+            burst(p[0], p[1], 1F, now, 1.3F);
+            say("It rings true", LANTERN, now);
+        } else if (tapNext >= ForgeSong.TUNE_TAPS) say(Math.max(before, clear) >= 0.75F ? "Nearly true. It'll keep that note" : "It never quite rang true", LABEL, now);
+        else if (before < 0F) say(clear >= 0.75F ? "Close: it nearly sings" : clear >= 0.45F ? "A clear note, but not true" : "A dull note: it's far off", LABEL, now);
+        else say(clear > before + 0.02F ? "Clearer than before" : clear < before - 0.02F ? "Duller than before" : "About as clear", clear > before ? GOOD : LABEL, now);
+    }
+
+    // ---- the inlay (C and up) ----------------------------------------------------------------------------------------
+
+    private void inlay(GuiGraphicsExtractor g, ForgeWork w, ForgeFrame f, float t) {
+        Vec3 c = f.mark(0F, 0F);
+        float cx = width / 2F, cy = height / 2F;
+        if (ForgeCamera.project(c.x, c.y, c.z, width, height, p)) {
+            cx = p[0];
+            cy = p[1];
+        }
+        int colour = w.inlay > 0 ? ArmourInlay.colour(ArmourInlay.forces()[w.inlay - 1]) : LANTERN;
+        float r = 30F, ang = ForgeSong.inlayAngle(seated ? seatedAt : Math.min(t, ForgeSong.INLAY_LATE));
+        boolean near = Math.abs(ang) <= 12F;
+        // the socket and its gold key at the top
+        disc(g, cx, cy, r + 5, 0xC0080B12);
+        ring(g, cx, cy, r + 5, 2F, near && !seated ? 0xE0FFE6B0 : 0xFF3A4A60);
+        diamond(g, cx, cy - r - 5, 4, LANTERN);
+        // the catalyst turning in it, its notch a bright spoke
+        disc(g, cx, cy, r * 0.75F, colour & 0x00FFFFFF | 0xC8000000);
+        disc(g, cx, cy, r * 0.42F, colour & 0x00FFFFFF | 0xF0000000);
+        float a = ang * Mth.DEG_TO_RAD, sx = Mth.sin(a), sy = -Mth.cos(a);
+        line(g, cx + sx * r * 0.35F, cy + sy * r * 0.35F, cx + sx * r, cy + sy * r, 0xFFFFFFFF);
+        diamond(g, cx + sx * r, cy + sy * r, 3, 0xFFFFFFFF);
+        if (w.inlay > 0) {
+            String name = ArmourInlay.catalystName(ArmourInlay.forces()[w.inlay - 1]);
+            g.centeredText(font, Component.literal(name), Math.round(cx), Math.round(cy + r + 12), colour);
+        }
+        hint(g, seated ? "" : "The catalyst turns in its socket. Seat it when its bright notch meets the gold key at the top: click, or press Space.");
+    }
+
+    private void seat(ForgeWork w, ForgeFrame f, float t, float now) {
+        if (seated) return;
+        seated = true;
+        seatedAt = Math.min(t, ForgeSong.INLAY_LATE);
+        ForgeClient.send(pos, ArmourPayloads.SEAT, 0, t, 0F);
+        float off = ForgeSong.inlayAngle(seatedAt), score = ForgeSong.inlayScore(off);
+        Vec3 at = f.mark(0F, 0F);
+        ForgeClient.play(at, ArmourContent.FIT.get(), 0.8F, 1.5F);
+        if (score >= 1F) {
+            int[] melody = ForgeSong.song(w.set).melody();
+            ForgeClient.play(at, ArmourContent.NOTE.get(), 0.8F, ForgeSong.notePitch(melody[0]));
+        }
+        if (ForgeCamera.project(at.x, at.y, at.z, width, height, p)) burst(p[0], p[1], score, now, 1.1F);
+        say(score >= 1F ? "Seated true" : score >= 0.7F ? "A little crooked" : "Crooked, but it holds", score >= 1F ? LANTERN : LABEL, now);
+    }
+
     // ---- the cut (by hand) -----------------------------------------------------------------------------------------------
 
     private void cut(GuiGraphicsExtractor g, ForgeWork w, ForgeFrame f) {
@@ -565,6 +738,18 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
             }
             case ForgeSong.QUENCH -> {
                 if (!quenched && t >= ForgeSong.quenchCue(w.stageStart) + 1) plunge(w, f, t, now);
+            }
+            case ForgeSong.TUNE -> {
+                // one tap in the middle, then straight to the point (tours show both notes)
+                if (tuned || tapNext >= 2) return;
+                if (tapNext == 0 && t >= 20) tapAt(w, f, 0F, 0F, now);
+                else if (tapNext == 1 && t >= 50) {
+                    float[] at = ForgeSong.truePoint(w.stageStart, w.piece);
+                    tapAt(w, f, at[0], at[1], now);
+                }
+            }
+            case ForgeSong.INLAY -> {
+                if (!seated && t > 10F && Math.abs(ForgeSong.inlayAngle(t)) <= 4F) seat(w, f, t, now);
             }
             case ForgeSong.CUT -> {
                 if (cutSent || t < 20) return;
@@ -689,6 +874,8 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
                 else strike(w, f, t, now);
             }
             case ForgeSong.QUENCH -> plunge(w, f, t, now);
+            case ForgeSong.TUNE -> tap(w, f, now);
+            case ForgeSong.INLAY -> seat(w, f, t, now);
             case ForgeSong.CUT -> {
                 if (!press || cutSent) return false;
                 if (cutNext == 0 && Math.hypot(mx - cutPath[0][0], my - cutPath[0][1]) < CUT_TOL * 1.5F) {

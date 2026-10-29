@@ -3,7 +3,9 @@ package dev.awaken.armour.client;
 import com.google.common.reflect.TypeToken;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.awaken.Awaken;
+import dev.awaken.armour.ArmourContent;
 import dev.awaken.armour.ArmourLooks;
+import dev.awaken.armour.Forged;
 import dev.awaken.armour.client.ArmourMeshes.Bone;
 import dev.awaken.armour.net.ArmourPayloads;
 import net.minecraft.client.Minecraft;
@@ -84,7 +86,7 @@ public final class ArmourClient {
         ItemStack[] worn = null;
         for (ArmorType slot : SLOTS) {
             ItemStack stack = entity.getItemBySlot(slot.getSlot());
-            ArmourLooks.Look look = ArmourLooks.of(stack);
+            ArmourLooks.Look look = ArmourLooks.drawn(stack);
             if (look == null || look.piece() != slot || ArmourMeshes.piece(look.set(), slot) == null) continue;
             if (worn == null) worn = new ItemStack[ArmorType.values().length];
             worn[slot.ordinal()] = stack;
@@ -141,7 +143,7 @@ public final class ArmourClient {
 
     private static boolean hasCape(@Nullable ItemStack chest) {
         if (chest == null) return false;
-        ArmourLooks.Look look = ArmourLooks.of(chest);
+        ArmourLooks.Look look = ArmourLooks.drawn(chest);
         if (look == null) return false;
         ArmourMesh[] bones = ArmourMeshes.piece(look.set(), ArmorType.CHESTPLATE);
         return bones != null && bones[Bone.CAPE0.ordinal()] != null;
@@ -172,12 +174,13 @@ public final class ArmourClient {
      */
     public static boolean dressArm(Player player, HumanoidArm side, PoseStack ps, SubmitNodeCollector out, int light) {
         ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
-        ArmourLooks.Look look = ArmourLooks.of(chest);
+        ArmourLooks.Look look = ArmourLooks.drawn(chest);
         if (look == null || look.piece() != ArmorType.CHESTPLATE) return false;
         ArmourMesh[] bones = ArmourMeshes.piece(look.set(), ArmorType.CHESTPLATE);
         ArmourMesh mesh = bones == null ? null : bones[(side == HumanoidArm.RIGHT ? Bone.RIGHT_ARM : Bone.LEFT_ARM).ordinal()];
         if (mesh == null) return false;
-        ArmourLayer.draw(out, ps, mesh, look.set(), light, chest.hasFoil());
+        Forged f = chest.get(ArmourContent.FORGED.get());
+        ArmourLayer.draw(out, ps, mesh, look.set(), light, chest.hasFoil(), 0, 0, -1, f == null ? 0 : f.masteryStep(), false, f == null ? 0 : f.accent());
         return true;
     }
 }

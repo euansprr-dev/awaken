@@ -133,6 +133,12 @@ final class ForgeClient {
         String text = q.label + (f.twin() ? ", twin-struck" : "") + (f.flaw() ? ", with a scale flaw" : "");
         lines.add(at++, Component.literal(text).withColor(q.colour & 0xFFFFFF));
         if (!f.maker().isEmpty()) lines.add(at++, Component.literal("Forged by " + f.maker()).withColor(0x6F8299));
+        if (f.trueRing()) lines.add(at++, Component.literal("Its Deepglass rings true").withColor(0x9FD8E8));
+        var force = f.inlayForce();
+        if (force != null) lines.add(at++, Component.literal(dev.awaken.armour.ArmourInlay.line(force)).withColor(dev.awaken.armour.ArmourInlay.colour(force) & 0xFFFFFF));
+        ArmourLooks.Look drawn = ArmourLooks.drawn(e.getItemStack());
+        if (drawn != null && look != null && drawn.set() != look.set())
+            lines.add(at++, Component.literal("Wears the look of " + drawn.set().setName).withColor(0xB8A6FF));
         int step = f.masteryStep();
         if (step > 0 || f.mastery() > 0) {
             String next = step < Forged.MASTERY_BUILT ? " (" + f.mastery() + " / " + Forged.MASTERY[step + 1] + ")" : "";

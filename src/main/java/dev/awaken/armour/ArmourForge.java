@@ -3,6 +3,7 @@ package dev.awaken.armour;
 import dev.awaken.Awaken;
 import dev.awaken.armour.net.ArmourPayloads;
 import dev.awaken.core.AwakenNet;
+import dev.awaken.core.Forces;
 import dev.awaken.gear.SetBonus;
 import dev.awaken.hearth.Upgrades;
 import dev.awaken.progression.Progression;
@@ -10,6 +11,7 @@ import dev.awaken.progression.Rank;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -19,6 +21,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -191,8 +195,13 @@ public final class ArmourForge {
         ForgeWork w = be.work();
         long now = level.getGameTime();
         switch (a.act()) {
-            case ArmourPayloads.START, ArmourPayloads.MEMORY -> start(p, level, be, a.a(), a.act() == ArmourPayloads.MEMORY);
+            // a start's aim names the catalyst to inlay (its Force + 1; 0 none)
+            case ArmourPayloads.START, ArmourPayloads.MEMORY -> start(p, level, be, a.a(), a.act() == ArmourPayloads.MEMORY, Math.round(a.aim()));
             case ArmourPayloads.TAKE -> takeSuit(p, be);
+            // Looks and accents, on what you wear (SPEC §44.8): a is the slot, aim the set's ordinal + 1 (0 its own look)
+            case ArmourPayloads.LOOK -> look(p, a.a(), Math.round(a.aim()));
+            // aim: the dye's id + 1 (0 each piece's own glow back)
+            case ArmourPayloads.ACCENT -> accent(p, Math.round(a.aim()));
             case ArmourPayloads.OPEN -> open(p, be);
             case ArmourPayloads.LEAVE -> AT.remove(p.getUUID());
             case ArmourPayloads.RESUME -> {
@@ -223,6 +232,17 @@ public final class ArmourForge {
                 float off = clamp(a.t(), now - w.stageStart) - ForgeSong.quenchCue(w.stageStart);
                 w.quench = ForgeSong.quench(off);
                 level.playSound(p, w.work, ArmourContent.QUENCH.get(), SoundSource.BLOCKS, 1F, 1F);
+                quenched(level, be, w);
+            }
+            case ArmourPayloads.TAP -> {
+                // a tap on the cold Deepglass: a is the tap's number, t and aim where it fell (x across, z along)
+                if (w == null || w.stage != ForgeSong.TUNE || !mine(p, w) || a.a() != w.taps) return;
+                tap(level, be, w, Mth.clamp(a.t(), -1.2F, 1.2F), Mth.clamp(a.aim(), -1.2F, 1.2F), p);
+            }
+            case ArmourPayloads.SEAT -> {
+                if (w == null || w.stage != ForgeSong.INLAY || !mine(p, w)) return;
+                w.inlayScore = ForgeSong.inlayScore(ForgeSong.inlayAngle(clamp(a.t(), now - w.stageStart)));
+                level.playSound(p, w.work, ArmourContent.FIT.get(), SoundSource.BLOCKS, 0.8F, 1.5F);
                 finish(level, be, w);
             }
             case ArmourPayloads.CUT -> {
@@ -253,7 +273,7 @@ public final class ArmourForge {
         return Mth.clamp(client, server - ForgeSong.LAG, server + 2F);
     }
 
-    static void start(ServerPlayer p, ServerLevel level, FittingStandBlockEntity be, int code, boolean memory) {
+    static void start(ServerPlayer p, ServerLevel level, FittingStandBlockEntity be, int code, boolean memory, int catalyst) {
         ArmourSet[] sets = ArmourSet.values();
         if (code < 0 || code / 4 >= sets.length || be.work() != null) return;
         ArmourSet set = sets[code / 4];
@@ -273,11 +293,25 @@ public final class ArmourForge {
             open(p, be);
             return;
         }
+        // C and up: the catalyst chosen to inlay, if any, goes in with the rest
+        Forces.Force chosen = ForgeSong.inlays(set) && catalyst > 0 && catalyst <= ArmourInlay.forces().length
+                ? ArmourInlay.forces()[catalyst - 1] : null;
+        Item catalystItem = chosen == null ? Items.AIR : ArmourInlay.catalyst(chosen);
+        Forces.Force force = catalystItem == Items.AIR ? null : chosen;
+        Predicate<ItemStack> isCatalyst = s -> s.is(catalystItem);
+        if (force != null && !p.isCreative() && count(p.getInventory(), isCatalyst) < 1) {
+            open(p, be);
+            return;
+        }
         List<ItemStack> taken = new ArrayList<>();
-        if (!p.isCreative()) for (ForgeSong.Need n : cost) taken.addAll(take(p.getInventory(), matcher(n), n.count()));
+        if (!p.isCreative()) {
+            for (ForgeSong.Need n : cost) taken.addAll(take(p.getInventory(), matcher(n), n.count()));
+            if (force != null) taken.addAll(take(p.getInventory(), isCatalyst, 1));
+        }
         long now = level.getGameTime();
         ForgeWork w = new ForgeWork(set, piece, ForgeSong.firstStage(set), now, 0, taken, -1F, -1F, -1F, List.of(), 0, p.getUUID(), memory,
                 work, Optional.ofNullable(fire));
+        w.inlay = force == null ? 0 : force.ordinal() + 1;
         AT.put(p.getUUID(), stand);
         be.setWork(w);
         level.playSound(null, fire != null ? fire : work, fire != null ? ArmourContent.BELLOWS.get() : ArmourContent.CUT.get(), SoundSource.BLOCKS, 0.9F, 1F);
@@ -314,6 +348,33 @@ public final class ArmourForge {
         be.changed();
     }
 
+    /** After the quench: B tunes its Deepglass, then a chosen catalyst is inlaid, then the piece is done. */
+    static void quenched(ServerLevel level, FittingStandBlockEntity be, ForgeWork w) {
+        if (ForgeSong.tunes(w.set) && !w.memory) {
+            w.begin(ForgeSong.TUNE, level.getGameTime());
+            be.changed();
+        } else afterTune(level, be, w);
+    }
+
+    static void afterTune(ServerLevel level, FittingStandBlockEntity be, ForgeWork w) {
+        if (w.inlay > 0 && !w.memory) {
+            w.begin(ForgeSong.INLAY, level.getGameTime());
+            be.changed();
+        } else finish(level, be, w);
+    }
+
+    /** A tap on the cold Deepglass: the nearer the point, the clearer it rings; at the point it rings true and the tuning ends. */
+    static void tap(ServerLevel level, FittingStandBlockEntity be, ForgeWork w, float x, float z, @Nullable ServerPlayer smith) {
+        float d = ForgeSong.tapDistance(w.stageStart, w.piece, x, z);
+        float clear = ForgeSong.clarity(d);
+        w.taps++;
+        w.tune = Math.max(w.tune, d <= ForgeSong.TRUE_RADIUS ? 1F : clear);
+        int[] melody = ForgeSong.song(w.set).melody();
+        level.playSound(smith, w.work, ArmourContent.NOTE.get(), SoundSource.BLOCKS, 0.4F + 0.5F * clear, ForgeSong.notePitch(melody[0]) * (1F + 0.08F * (1F - clear)));
+        if (d <= ForgeSong.TRUE_RADIUS || w.taps >= ForgeSong.TUNE_TAPS) afterTune(level, be, w);
+        else be.changed();
+    }
+
     /** Each tick of a stand with work on it: only while its smith is at it, anything left too long happens by itself. */
     static void tick(ServerLevel level, FittingStandBlockEntity be, ForgeWork w) {
         BlockPos at = AT.get(w.forger);
@@ -332,6 +393,18 @@ public final class ArmourForge {
                 if (t > ForgeSong.quenchCue(w.stageStart) + ForgeSong.QUENCH_LATE + ForgeSong.LAG) {
                     w.quench = ForgeSong.quench(ForgeSong.QUENCH_LATE);
                     level.playSound(null, w.work, ArmourContent.QUENCH.get(), SoundSource.BLOCKS, 1F, 0.9F);
+                    quenched(level, be, w);
+                }
+            }
+            case ForgeSong.TUNE -> {
+                if (t > ForgeSong.TUNE_LATE) {
+                    w.tune = Math.max(w.tune, 0F);
+                    afterTune(level, be, w);
+                }
+            }
+            case ForgeSong.INLAY -> {
+                if (t > ForgeSong.INLAY_LATE + ForgeSong.LAG) {
+                    w.inlayScore = 0.5F;
                     finish(level, be, w);
                 }
             }
@@ -349,6 +422,7 @@ public final class ArmourForge {
         else {
             float score = ForgeSong.byHand(w.set) ? ForgeSong.handScore(Math.max(0F, w.cut), w.strikeMean())
                     : ForgeSong.forgeScore(Math.max(0F, w.heat), w.strikeMean(), Math.max(0F, w.quench));
+            if (!ForgeSong.byHand(w.set)) score = ForgeSong.withVerbs(score, w.tune, w.inlayScore);
             score += Math.min(ForgeSong.TWIN_MAX, w.twin * ForgeSong.TWIN_BONUS);
             flaw = !ForgeSong.byHand(w.set) && ForgeSong.flawed(w.heat);
             q = ForgeSong.quality(score, flaw);
@@ -360,7 +434,12 @@ public final class ArmourForge {
             return;
         }
         String maker = smith != null ? smith.getGameProfile().name() : "";
-        piece.set(ArmourContent.FORGED.get(), new Forged(Forged.SCHEMA, w.set.id, q.ordinal(), 0, flaw, twin, maker));
+        Forged story = new Forged(Forged.SCHEMA, w.set.id, q.ordinal(), 0, flaw, twin, maker).withTrueRing(w.tune >= 1F);
+        if (w.inlay > 0) {
+            Forces.Force f = ArmourInlay.forces()[w.inlay - 1];
+            story = story.withInlay(f.name(), ArmourInlay.colour(f));
+        }
+        piece.set(ArmourContent.FORGED.get(), story);
         if (q.temper > 0) Upgrades.applyTemper(piece, q.temper);
 
         int slot = ForgeSong.slot(w.piece);
@@ -406,6 +485,48 @@ public final class ArmourForge {
                 .body(Component.literal("You forged " + set.setName + " whole. " + set.archetype.label + " armour, " + set.rank.label + "-rank."));
         for (ArmourBonus.Line l : ArmourBonus.lines(set)) w.row(Component.literal(l.pieces() + " pieces"), Component.literal(l.text()));
         Signal.send(p, w.ttl(20 * 12).build());
+    }
+
+    /** Looks: a worn piece takes the look of a set you have forged whole, in its own slot; its numbers stay its own. */
+    static void look(ServerPlayer p, int slot, int set) {
+        if (slot < 0 || slot > 3) return;
+        ArmorType piece = ForgeSong.PIECES[slot];
+        ItemStack worn = p.getItemBySlot(piece.getSlot());
+        ArmourLooks.Look own = ArmourLooks.of(worn);
+        if (own == null || own.piece() != piece) return;
+        String look = "";
+        if (set > 0 && set <= ArmourSet.values().length && ArmourSet.values()[set - 1] != own.set()) {
+            ArmourSet target = ArmourSet.values()[set - 1];
+            if (!target.made() || !ArmouryMemory.of(p).forgedWhole(target)) return;
+            look = target.id;
+        }
+        worn.set(ArmourContent.FORGED.get(), story(worn, own.set()).withLook(look));
+    }
+
+    /** Accents: one dye you carry colours the glow of the whole suit you wear; none gives each piece its own back (its inlay's). */
+    static void accent(ServerPlayer p, int dye) {
+        DyeColor colour = dye > 0 && dye <= DyeColor.values().length ? DyeColor.byId(dye - 1) : null;
+        List<ItemStack> pieces = new ArrayList<>();
+        for (ArmorType piece : ForgeSong.PIECES) {
+            ItemStack worn = p.getItemBySlot(piece.getSlot());
+            ArmourLooks.Look l = ArmourLooks.of(worn);
+            if (l != null && l.piece() == piece) pieces.add(worn);
+        }
+        if (pieces.isEmpty()) return;
+        if (colour != null && !p.isCreative()
+                && take(p.getInventory(), s -> s.getItem() instanceof DyeItem && s.get(DataComponents.DYE) == colour, 1).isEmpty()) return;
+        for (ItemStack worn : pieces) {
+            Forged story = story(worn, ArmourLooks.of(worn).set());
+            Forces.Force inlaid = story.inlayForce();
+            int c = colour != null ? 0xFF000000 | colour.getTextureDiffuseColor() : inlaid != null ? ArmourInlay.colour(inlaid) : 0;
+            worn.set(ArmourContent.FORGED.get(), story.withAccent(c));
+        }
+    }
+
+    /** A piece's story, a Plain one if it has none yet. */
+    private static Forged story(ItemStack stack, ArmourSet set) {
+        Forged story = stack.get(ArmourContent.FORGED.get());
+        return story != null ? story : new Forged(Forged.SCHEMA, set.id, 0, 0, false, false, "");
     }
 
     static void takeSuit(ServerPlayer p, FittingStandBlockEntity be) {

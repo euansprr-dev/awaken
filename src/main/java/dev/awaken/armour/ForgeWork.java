@@ -13,10 +13,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * A piece in the making, kept on its Fitting Stand (SPEC §44.4; schemaVersion 1): the set and piece, the stage and the
- * game tick it began, the strikes counted when this run of the stage began (a smith who walks away picks up there, counted
- * in again), what was taken in (given back if the stand is broken), and every judgement so far. Synced to everyone near
- * with the stand, so they see the bar glow and the shape form.
+ * A piece in the making, kept on its Fitting Stand (SPEC §44.4; schemaVersion 1, the P3 fields optional): the set and
+ * piece, the stage and the game tick it began, the strikes counted when this run of the stage began (a smith who walks
+ * away picks up there, counted in again), what was taken in (given back if the stand is broken), every judgement so far,
+ * and the rank's verbs: the tune's taps and the catalyst to inlay. Synced to everyone near with the stand, so they see
+ * the bar glow and the shape form.
  */
 public final class ForgeWork {
     public static final int SCHEMA = 1;
@@ -28,6 +29,9 @@ public final class ForgeWork {
     public int strikeBase;
     public final List<ItemStack> materials;
     public float heat = -1F, cut = -1F, quench = -1F;
+    /** B's tune (-1 until done; 1 rang true) and the taps so far; C's inlay: the catalyst's Force + 1 (0 none) and how it seated. */
+    public float tune = -1F, inlayScore = -1F;
+    public int taps, inlay;
     public final List<Float> scores;
     public int twin;
     public final UUID forger;
@@ -97,14 +101,26 @@ public final class ForgeWork {
             Codec.LONG.fieldOf("stageStart").forGetter(w -> w.stageStart),
             Codec.INT.optionalFieldOf("strikeBase", 0).forGetter(w -> w.strikeBase),
             ItemStack.OPTIONAL_CODEC.listOf().optionalFieldOf("materials", List.of()).forGetter(w -> w.materials),
-            Codec.FLOAT.listOf().optionalFieldOf("judged", List.of(-1F, -1F, -1F)).forGetter(w -> List.of(w.heat, w.cut, w.quench)),
+            Codec.FLOAT.listOf().optionalFieldOf("judged", List.of(-1F, -1F, -1F)).forGetter(w -> List.of(w.heat, w.cut, w.quench, w.tune, w.inlayScore)),
             Codec.FLOAT.listOf().optionalFieldOf("scores", List.of()).forGetter(w -> w.scores),
             Codec.INT.optionalFieldOf("twin", 0).forGetter(w -> w.twin),
             UUIDUtil.CODEC.fieldOf("forger").forGetter(w -> w.forger),
             Codec.BOOL.optionalFieldOf("memory", false).forGetter(w -> w.memory),
             BlockPos.CODEC.fieldOf("work").forGetter(w -> w.work),
-            BlockPos.CODEC.optionalFieldOf("forge").forGetter(w -> w.forge)
-    ).apply(i, (v, set, piece, stage, start, base, mats, judged, scores, twin, forger, memory, work, forge) -> new ForgeWork(set, piece, stage, start,
-            base, mats, judged.size() > 0 ? judged.get(0) : -1F, judged.size() > 1 ? judged.get(1) : -1F, judged.size() > 2 ? judged.get(2) : -1F,
-            scores, twin, forger, memory, work, forge)));
+            BlockPos.CODEC.optionalFieldOf("forge").forGetter(w -> w.forge),
+            Codec.INT.optionalFieldOf("taps", 0).forGetter(w -> w.taps),
+            Codec.INT.optionalFieldOf("inlay", 0).forGetter(w -> w.inlay)
+    ).apply(i, (v, set, piece, stage, start, base, mats, judged, scores, twin, forger, memory, work, forge, taps, inlay) -> {
+        ForgeWork w = new ForgeWork(set, piece, stage, start, base, mats, judged(judged, 0), judged(judged, 1), judged(judged, 2), scores, twin, forger,
+                memory, work, forge);
+        w.tune = judged(judged, 3);
+        w.inlayScore = judged(judged, 4);
+        w.taps = taps;
+        w.inlay = inlay;
+        return w;
+    }));
+
+    private static float judged(List<Float> l, int i) {
+        return l.size() > i ? l.get(i) : -1F;
+    }
 }

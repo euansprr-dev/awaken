@@ -2389,6 +2389,7 @@ def to_part(P, direction=False):
 
 
 def bone_y(bone):
+    bone = bone.split("@")[0]
     if bone.startswith("cape"):
         return PIVOT["cape0"][1] - CAPE_LINK * int(bone[4:])
     return PIVOT[bone][1]
@@ -2405,17 +2406,18 @@ def make(design, width=128):
     groups, faces = [], []
     VX.WARNINGS.clear()
     warns = []
-    parts = dict(design["pieces"])
+    parts = [(p, b, boxes) for p, bones in design["pieces"].items() for b, boxes in bones.items()]
     if design.get("rune"):
-        parts["rune"] = {"rune": design["rune"]}
-    for piece, bones in parts.items():
-        for bone, boxes in bones.items():
-            fs = VX.faces(boxes)
-            warns += [f"{piece}/{bone}: {w}" for w in VX.WARNINGS]
-            for f in fs:
-                f.group = (piece, bone)
-            groups.append((piece, bone))
-            faces += fs
+        parts.append(("rune", "rune", design["rune"]))
+    # mastery IV's awakened parts: drawn over the piece's own on the same bone (bone@awake, <piece>_<bone>_awakened.mesh)
+    parts += [(p, b + "@awake", boxes) for p, bones in design.get("awake", {}).items() for b, boxes in bones.items()]
+    for piece, bone, boxes in parts:
+        fs = VX.faces(boxes)
+        warns += [f"{piece}/{bone}: {w}" for w in VX.WARNINGS]
+        for f in fs:
+            f.group = (piece, bone)
+        groups.append((piece, bone))
+        faces += fs
     height = VX.pack(faces, width)
     albedo = np.zeros((height, width, 4), dtype=np.uint8)
     material = np.zeros((height, width, 4), dtype=np.uint8)
@@ -2461,7 +2463,8 @@ def write(design):
             os.remove(os.path.join(mesh_dir, old))
     accent = AW.hex_rgb(design["accent"])
     for (piece, bone), b in meshes.items():
-        MS.write(os.path.join(mesh_dir, "rune.mesh" if piece == "rune" else f"{piece}_{bone}.mesh"), b, accent)
+        name = "rune" if piece == "rune" else f"{piece}_{bone.replace('@awake', '_awakened')}"
+        MS.write(os.path.join(mesh_dir, name + ".mesh"), b, accent)
     tex_dir = os.path.join(RES, "assets/awaken/textures/entity/armour")
     os.makedirs(tex_dir, exist_ok=True)
     Image.fromarray(np.concatenate([albedo, material], axis=1), "RGBA").save(os.path.join(tex_dir, sid + ".png"))
@@ -2491,7 +2494,7 @@ def piece_model(design, piece, meshes):
     pos, nrm, uv, al = [], [], [], []
     spread = ICON_SPREAD.get(piece, 0.0)
     for (p, bone), b in meshes.items():
-        if p != piece or bone in ICON_SKIP:
+        if p != piece or bone in ICON_SKIP or "@" in bone:
             continue
         P, N = rest(bone, b.pos, b.nrm)
         if bone.endswith("_leg"):
@@ -2645,6 +2648,7 @@ def rest(bone, P, N, cape=6.0, curl=4.0):
     few degrees, each link a little more."""
     P = to_part(P)
     N = to_part(N, True)
+    bone = bone.split("@")[0]
     if bone.startswith("cape"):
         k = int(bone[4:])
         piv = np.array(PIVOT["cape0"], dtype=float)
@@ -2658,11 +2662,13 @@ def rest(bone, P, N, cape=6.0, curl=4.0):
     return np.array(PIVOT[bone], dtype=float) + P, N
 
 
-def figure(design, skin=True):
+def figure(design, skin=True, awake=False):
     meshes, albedo, material, _ = make(design)
     tex = np.concatenate([albedo, material], axis=1)
     pos, nrm, uv, al = [], [], [], []
     for (piece, bone), b in meshes.items():
+        if "@" in bone and not awake:
+            continue
         P, N = rest(bone, b.pos, b.nrm)
         pos.append(P)
         nrm.append(N)
@@ -2687,8 +2693,8 @@ def skin_mesh():
     return out
 
 
-def render(design, yaw, pitch, scale=13.0, size=(520, 620), centre=(0, 17, 0), time=0.27, light=1.0):
-    m, tex, sk = figure(design)
+def render(design, yaw, pitch, scale=13.0, size=(520, 620), centre=(0, 17, 0), time=0.27, light=1.0, awake=False):
+    m, tex, sk = figure(design, awake=awake)
     W, H = size
     view = MR.rot(yaw, pitch)
     c = np.asarray(centre, dtype=float) / 16.0
@@ -2766,8 +2772,11 @@ def preview(out_dir, only=None):
         tiles = [render(design, yaw, pitch) for yaw, pitch in views]
         close = render(design, -25, 10, scale=34, size=(520, 620), centre=(0, 27, 0))
         night = render(design, -30, 8, light=0.25, time=0.33)
-        sheet = Image.new("RGB", (530 * 7 + 10, 640), (24, 26, 34))
-        for i, t in enumerate(tiles + [close, night]):
+        extra = []
+        if design.get("awake"):  # mastery IV: front and back awakened
+            extra = [render(design, -30, 10, awake=True), render(design, 150, 10, awake=True)]
+        sheet = Image.new("RGB", (530 * (7 + len(extra)) + 10, 640), (24, 26, 34))
+        for i, t in enumerate(tiles + [close, night] + extra):
             sheet.paste(t, (10 + i * 530, 10))
         path = os.path.join(out_dir, sid + ".png")
         sheet.save(path)
@@ -2790,7 +2799,7 @@ def check():
         if albedo.shape[0] > 512:
             bad.append(f"{sid}: atlas {albedo.shape[0]} tall")
         for piece, bones in BONES.items():
-            for bone in design["pieces"].get(piece, {}):
+            for bone in list(design["pieces"].get(piece, {})) + list(design.get("awake", {}).get(piece, {})):
                 if bone not in bones:
                     bad.append(f"{sid}: {piece} on a bone the game doesn't draw it on ({bone})")
         per = {p: sum(len(b.pos) for (pp, _), b in meshes.items() if pp == p) // 3 for p in BONES}

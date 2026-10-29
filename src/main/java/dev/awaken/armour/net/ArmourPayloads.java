@@ -18,7 +18,8 @@ public final class ArmourPayloads {
     private ArmourPayloads() {}
 
     /** What an {@link Act} does. */
-    public static final int START = 0, MEMORY = 1, TAKE = 2, PULL = 3, STRIKE = 4, QUENCH = 5, CUT = 6, LEAVE = 7, RESUME = 8, TWIN = 9, OPEN = 10;
+    public static final int START = 0, MEMORY = 1, TAKE = 2, PULL = 3, STRIKE = 4, QUENCH = 5, CUT = 6, LEAVE = 7, RESUME = 8, TWIN = 9, OPEN = 10,
+            TAP = 11, SEAT = 12, LOOK = 13, ACCENT = 14;
 
     /**
      * Client → server, at a Fitting Stand. START / MEMORY: forge the piece {@code a} (set ordinal × 4 + slot), in full or

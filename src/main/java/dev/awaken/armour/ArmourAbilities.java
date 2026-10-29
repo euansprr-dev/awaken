@@ -135,7 +135,9 @@ public final class ArmourAbilities {
     private static final Identifier HEALTH_ID = Awaken.id("armour_half_health"), FALL_ID = Awaken.id("armour_half_fall"),
             SWING_ID = Awaken.id("armour_half_swing"), FOOTING_ID = Awaken.id("armour_half_footing"),
             RUSH_ID = Awaken.id("armour_rush"), TEMPO_ID = Awaken.id("armour_tempo"), SLIP_ID = Awaken.id("armour_slipstream"),
-            ROOTED_ID = Awaken.id("armour_rooted");
+            ROOTED_ID = Awaken.id("armour_rooted"), INLAY_HEAT_ID = Awaken.id("armour_inlay_heat"),
+            INLAY_FROST_ID = Awaken.id("armour_inlay_frost"), INLAY_GRAVITY_ID = Awaken.id("armour_inlay_gravity"),
+            INLAY_CHARGE_ID = Awaken.id("armour_inlay_charge"), INLAY_SPIRIT_ID = Awaken.id("armour_inlay_spirit");
     private static final EquipmentSlot[] SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
 
     /** A player's live armour state (attachment {@code awaken:armour_state}, unsaved). */
@@ -190,9 +192,13 @@ public final class ArmourAbilities {
         Arrays.fill(s.pieces, 0);
         s.full = null;
         s.power = 0;
+        int[] inlays = new int[Forces.Force.values().length];
         for (EquipmentSlot slot : SLOTS) {
             ArmourLooks.Look l = ArmourLooks.of(p.getItemBySlot(slot));
             if (l == null || l.piece().getSlot() != slot) continue;
+            Forged story = p.getItemBySlot(slot).get(ArmourContent.FORGED.get());
+            Forces.Force inlaid = story == null ? null : story.inlayForce();
+            if (inlaid != null) inlays[inlaid.ordinal()]++;
             if (++s.pieces[l.set().ordinal()] == 4) s.full = l.set();
             if (l.set().hunter == null) s.power += (float) ArmourItems.numbers(l.set()).power();
         }
@@ -212,6 +218,17 @@ public final class ArmourAbilities {
         modify(p, Attributes.FALL_DAMAGE_MULTIPLIER, FALL_ID, strider ? HALF_FALL : 0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, false);
         modify(p, Attributes.ATTACK_SPEED, SWING_ID, duelist ? HALF_SWING : 0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, false);
         modify(p, Attributes.KNOCKBACK_RESISTANCE, FOOTING_ID, lord ? LORD_KNOCKBACK : 0, AttributeModifier.Operation.ADD_VALUE, false);
+        // each inlaid piece adds its Force's small share, whatever set it is on (SPEC §44.4, "Inlay")
+        modify(p, Attributes.ATTACK_DAMAGE, INLAY_HEAT_ID, inlays[Forces.Force.HEAT.ordinal()] * ArmourInlay.HEAT_DAMAGE,
+                AttributeModifier.Operation.ADD_MULTIPLIED_BASE, false);
+        modify(p, Attributes.ARMOR_TOUGHNESS, INLAY_FROST_ID, inlays[Forces.Force.FROST.ordinal()] * ArmourInlay.FROST_TOUGHNESS,
+                AttributeModifier.Operation.ADD_VALUE, false);
+        modify(p, Attributes.KNOCKBACK_RESISTANCE, INLAY_GRAVITY_ID, inlays[Forces.Force.GRAVITY.ordinal()] * ArmourInlay.GRAVITY_FOOTING,
+                AttributeModifier.Operation.ADD_VALUE, false);
+        modify(p, Attributes.MOVEMENT_SPEED, INLAY_CHARGE_ID, inlays[Forces.Force.CHARGE.ordinal()] * ArmourInlay.CHARGE_SPEED,
+                AttributeModifier.Operation.ADD_MULTIPLIED_BASE, false);
+        modify(p, Attributes.MAX_HEALTH, INLAY_SPIRIT_ID, inlays[Forces.Force.SPIRIT.ordinal()] * ArmourInlay.SPIRIT_HEALTH,
+                AttributeModifier.Operation.ADD_VALUE, true);
         if (p.getHealth() > p.getMaxHealth()) p.setHealth(p.getMaxHealth());
         // a set taken off (or swapped for another) takes its charge with it
         if (s.full != was || s.full == null || ability(s.full) == null) {

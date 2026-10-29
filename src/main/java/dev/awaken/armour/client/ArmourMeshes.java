@@ -32,6 +32,8 @@ final class ArmourMeshes {
     private static final Map<ArmourSet, ArmourMesh[][]> MESHES = new EnumMap<>(ArmourSet.class);
     private static final Map<ArmourSet, Identifier> TEXTURES = new EnumMap<>(ArmourSet.class);
     private static final Map<ArmourSet, ArmourMesh> RUNES = new EnumMap<>(ArmourSet.class);
+    /** Mastery IV's awakened parts (&lt;piece&gt;_&lt;bone&gt;_awakened.mesh), drawn over the piece's own: [piece][bone]. */
+    private static final Map<ArmourSet, ArmourMesh[][]> AWAKENED = new EnumMap<>(ArmourSet.class);
 
     static ArmourMesh @Nullable [][] of(ArmourSet set) {
         return MESHES.get(set);
@@ -40,6 +42,12 @@ final class ArmourMeshes {
     /** A piece's meshes by bone, or null where the set has none for it. */
     static ArmourMesh @Nullable [] piece(ArmourSet set, ArmorType piece) {
         ArmourMesh[][] table = MESHES.get(set);
+        return table == null ? null : table[piece.ordinal()];
+    }
+
+    /** A piece's awakened parts by bone, or null where the set has none for it. */
+    static ArmourMesh @Nullable [] awakened(ArmourSet set, ArmorType piece) {
+        ArmourMesh[][] table = AWAKENED.get(set);
         return table == null ? null : table[piece.ordinal()];
     }
 
@@ -55,24 +63,30 @@ final class ArmourMeshes {
     static void reload(ResourceManager manager) {
         MESHES.clear();
         RUNES.clear();
+        AWAKENED.clear();
         for (ArmourSet set : ArmourSet.values()) {
             ArmourMesh[][] table = new ArmourMesh[ArmorType.values().length][];
-            int found = 0;
+            ArmourMesh[][] awake = new ArmourMesh[ArmorType.values().length][];
+            int found = 0, woke = 0;
             for (ArmorType piece : ArmorType.values()) {
-                ArmourMesh[] bones = new ArmourMesh[BONES.length];
+                ArmourMesh[] bones = new ArmourMesh[BONES.length], extra = new ArmourMesh[BONES.length];
                 for (Bone bone : BONES) {
-                    Identifier file = Awaken.id("armour/" + set.id + "/" + piece.getName() + "_" + bone.file + ".mesh");
-                    var res = manager.getResource(file);
-                    if (res.isEmpty()) continue;
-                    try (InputStream in = res.get().open()) {
-                        bones[bone.ordinal()] = ArmourMesh.read(in);
+                    String base = "armour/" + set.id + "/" + piece.getName() + "_" + bone.file;
+                    ArmourMesh m = load(manager, Awaken.id(base + ".mesh"));
+                    if (m != null) {
+                        bones[bone.ordinal()] = m;
                         table[piece.ordinal()] = bones;
                         found++;
-                    } catch (IOException e) {
-                        Awaken.LOG.error("[armour] the mesh {} did not load: {}", file, e.getMessage());
+                    }
+                    ArmourMesh a = load(manager, Awaken.id(base + "_awakened.mesh"));
+                    if (a != null) {
+                        extra[bone.ordinal()] = a;
+                        awake[piece.ordinal()] = extra;
+                        woke++;
                     }
                 }
             }
+            if (woke > 0) AWAKENED.put(set, awake);
             Identifier runeFile = Awaken.id("armour/" + set.id + "/rune.mesh");
             var rune = manager.getResource(runeFile);
             if (rune.isPresent()) {
@@ -86,5 +100,16 @@ final class ArmourMeshes {
             else if (set.hunter != null) Awaken.LOG.error("[armour] no meshes for the Hunter set {}: vanilla's shell is drawn", set.id);
         }
         ArmourPipelines.recheck();
+    }
+
+    private static @Nullable ArmourMesh load(ResourceManager manager, Identifier file) {
+        var res = manager.getResource(file);
+        if (res.isEmpty()) return null;
+        try (InputStream in = res.get().open()) {
+            return ArmourMesh.read(in);
+        } catch (IOException e) {
+            Awaken.LOG.error("[armour] the mesh {} did not load: {}", file, e.getMessage());
+            return null;
+        }
     }
 }

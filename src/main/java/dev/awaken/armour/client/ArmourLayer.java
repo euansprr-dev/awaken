@@ -41,26 +41,43 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
         ArmourGlow.Glow glow = state.getRenderData(ArmourClient.GLOW);
         int energy = ArmourGlow.energy(glow), flash = ArmourGlow.flash(glow);
         boolean low = state.getRenderData(ArmourClient.LOW) != null;
+        ArmourSet aura = null;
+        int mastered = 0;
         for (ArmorType slot : SLOTS) {
             ItemStack stack = worn[slot.ordinal()];
             if (stack == null) continue;
-            ArmourLooks.Look look = ArmourLooks.of(stack);
+            ArmourLooks.Look look = ArmourLooks.drawn(stack);
             if (look == null || look.piece() != slot) continue;
             ArmourMesh[] bones = ArmourMeshes.piece(look.set(), slot);
             if (bones == null) continue;
             boolean foil = stack.hasFoil();
             Forged forged = stack.get(ArmourContent.FORGED.get());
             int mastery = forged == null ? 0 : forged.masteryStep();
+            int accent = forged == null ? 0 : forged.accent();
+            // mastery IV: the set's awakened parts grow over the piece's own
+            ArmourMesh[] awake = mastery >= AWAKENED ? ArmourMeshes.awakened(look.set(), slot) : null;
             for (Bone b : ArmourMeshes.BONES) {
-                ArmourMesh mesh = bones[b.ordinal()];
-                if (mesh == null) continue;
+                ArmourMesh mesh = bones[b.ordinal()], extra = awake == null ? null : awake[b.ordinal()];
+                if (mesh == null && extra == null) continue;
                 ps.pushPose();
-                if (place(ps, getParentModel(), b, state)) draw(out, ps, mesh, look.set(), light, foil, energy, flash, -1, mastery, low);
+                if (place(ps, getParentModel(), b, state)) {
+                    if (mesh != null) draw(out, ps, mesh, look.set(), light, foil, energy, flash, -1, mastery, low, accent);
+                    if (extra != null) draw(out, ps, extra, look.set(), light, foil, energy, flash, -1, mastery, low, accent);
+                }
                 ps.popPose();
             }
+            // mastery V: the whole set drawn as one, every piece at V, wears the set's aura
+            if (mastery >= AURA && (aura == null || aura == look.set())) {
+                aura = look.set();
+                mastered++;
+            }
         }
+        if (mastered == 4) ArmourAura.draw(out, ps, aura, state.ageInTicks);
         if (glow != null && glow.runes > 0) runes(ps, out, worn[ArmorType.CHESTPLATE.ordinal()], glow, state.ageInTicks);
     }
+
+    /** Mastery steps (0-based) at which the awakened parts grow (IV) and the aura comes (V). */
+    static final int AWAKENED = 3, AURA = 4;
 
     /** Rune circle: how far out from the body, at what height (model space, y down), a turn's length in ticks. */
     private static final float RUNE_RADIUS = 0.85F, RUNE_Y = 0.42F, RUNE_TURN = 64F;
@@ -169,20 +186,28 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
         draw(out, ps, mesh, set, light, foil, energy, flash, heat, 0, false);
     }
 
-    /** With the piece's mastery step (0-7: I to V and room) and whether its wearer is low (mastery III's heartbeat). */
     static void draw(SubmitNodeCollector out, PoseStack ps, ArmourMesh mesh, ArmourSet set, int light, boolean foil, int energy, int flash, int heat,
                      int mastery, boolean low) {
+        draw(out, ps, mesh, set, light, foil, energy, flash, heat, mastery, low, 0);
+    }
+
+    /**
+     * With the piece's mastery step (0-7: I to V and room), whether its wearer is low (mastery III's heartbeat) and its
+     * accent colour (0: the set's own; an inlay's or a dye's, SPEC §44.8).
+     */
+    static void draw(SubmitNodeCollector out, PoseStack ps, ArmourMesh mesh, ArmourSet set, int light, boolean foil, int energy, int flash, int heat,
+                     int mastery, boolean low, int accentColour) {
         boolean ours = ArmourPipelines.ok();
         var texture = ArmourMeshes.texture(set);
         int v = (foil ? 256 : 0) | (heat >= 0 ? 512 : 0) | (mastery & 7) << 10 | (low ? 8192 : 0) | Math.min(255, Math.max(0, flash));
         int u = heat >= 0 ? Math.min(255, heat) : Math.min(255, Math.max(0, energy));
         int packed = ours ? v << 16 | u : OverlayTexture.NO_OVERLAY;
+        int accent = !ours ? 0xFFFFFF : accentColour != 0 ? accentColour & 0xFFFFFF : mesh.accent();
         out.submitCustomGeometry(ps, ours ? ArmourPipelines.armour(texture) : ArmourPipelines.fallback(texture),
-                (pose, buffer) -> emit(mesh, pose, buffer, light, packed, ours));
+                (pose, buffer) -> emit(mesh, pose, buffer, light, packed, ours, accent));
     }
 
-    private static void emit(ArmourMesh mesh, PoseStack.Pose pose, VertexConsumer buffer, int light, int overlay, boolean ours) {
-        int accent = ours ? mesh.accent() : 0xFFFFFF;
+    private static void emit(ArmourMesh mesh, PoseStack.Pose pose, VertexConsumer buffer, int light, int overlay, boolean ours, int accent) {
         int r = accent >> 16 & 255, g = accent >> 8 & 255, b = accent & 255;
         float[] p = mesh.pos(), uv = mesh.uv();
         byte[] n = mesh.normal(), along = mesh.along();

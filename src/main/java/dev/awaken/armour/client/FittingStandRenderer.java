@@ -36,6 +36,7 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
     public static final class State extends BlockEntityRenderState {
         final @Nullable ArmourSet[] suit = new ArmourSet[4];
         final boolean[] foil = new boolean[4];
+        final int[] mastery = new int[4], accent = new int[4];
         float yaw, wake, age;
         boolean whole;
         // the work
@@ -69,9 +70,12 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
         s.yaw = be.getBlockState().getValue(FittingStandBlock.FACING).toYRot();
         for (int i = 0; i < 4; i++) {
             ItemStack st = be.suit(i);
-            ArmourLooks.Look look = ArmourLooks.of(st);
+            ArmourLooks.Look look = ArmourLooks.drawn(st);
             s.suit[i] = look != null && ForgeSong.slot(look.piece()) == i ? look.set() : null;
             s.foil[i] = st.hasFoil();
+            dev.awaken.armour.Forged f = st.get(dev.awaken.armour.ArmourContent.FORGED.get());
+            s.mastery[i] = f == null ? 0 : f.masteryStep();
+            s.accent[i] = f == null ? 0 : f.accent();
         }
         s.whole = be.wholeSet() != null;
         s.wake = Math.max(0F, 1F - (s.age - be.wokeAt) / 50F);
@@ -125,20 +129,25 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
         ps.translate(0F, -1.501F, 0F);
         int flash = (int) (s.wake * 255);
         int energy = s.whole ? (int) (70 + 50 * Math.sin(s.age * 0.08)) : 0;
+        int mastered = 0;
         for (int slot = 0; slot < 4; slot++) {
             ArmourSet set = s.suit[slot];
             if (set == null) continue;
             ArmourMesh[] bones = ArmourMeshes.piece(set, ForgeSong.PIECES[slot]);
             if (bones == null) continue;
+            ArmourMesh[] awake = s.mastery[slot] >= ArmourLayer.AWAKENED ? ArmourMeshes.awakened(set, ForgeSong.PIECES[slot]) : null;
             for (Bone b : ArmourMeshes.BONES) {
-                ArmourMesh mesh = bones[b.ordinal()];
-                if (mesh == null) continue;
+                ArmourMesh mesh = bones[b.ordinal()], extra = awake == null ? null : awake[b.ordinal()];
+                if (mesh == null && extra == null) continue;
                 ps.pushPose();
                 rest(ps, b);
-                ArmourLayer.draw(out, ps, mesh, set, s.lightCoords, s.foil[slot], energy, flash, -1);
+                if (mesh != null) ArmourLayer.draw(out, ps, mesh, set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot]);
+                if (extra != null) ArmourLayer.draw(out, ps, extra, set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot]);
                 ps.popPose();
             }
+            if (s.mastery[slot] >= ArmourLayer.AURA && set == s.suit[0]) mastered++;
         }
+        if (mastered == 4) ArmourAura.draw(out, ps, s.suit[0], s.age);
         ps.popPose();
     }
 
