@@ -20,7 +20,8 @@ import java.util.Map;
 /**
  * Where each style comes from (docs/arms-progression/PLAN.md §3.4), read once from the mod's own
  * {@code data/awaken/arms/style_homes.json} on both sides: the gate that teaches it, the rank Hale's rack stocks it at
- * (the rank of its master Lord), the person who teaches it early, and the prices and level bands by rank.
+ * (the rank of its master Lord), the person who teaches it early or the left chest it is found in early (SPEC §43.5),
+ * and the prices and level bands by rank.
  */
 public final class ArmsHomes {
     private ArmsHomes() {}
@@ -31,8 +32,8 @@ public final class ArmsHomes {
     /** A person who teaches a style as the last step of a job. */
     public record Teacher(String person, String chain, String line) {}
 
-    /** One style's homes: its gate theme (an id and a name), its rank, its master Lord, and an early teacher if any. */
-    public record Home(String style, String theme, String gate, Rank rank, String lord, @Nullable Teacher teacher) {}
+    /** One style's homes: its gate theme (an id and a name), its rank, its master Lord, an early teacher if any, and whether a left chest holds it early. */
+    public record Home(String style, String theme, String gate, Rank rank, String lord, @Nullable Teacher teacher, boolean leftChest) {}
 
     private static final Map<String, Home> BY_STYLE = new LinkedHashMap<>();
     private static final Map<String, Home> BY_THEME = new LinkedHashMap<>();
@@ -77,7 +78,8 @@ public final class ArmsHomes {
                     t = new Teacher(to.get("person").getAsString(), to.get("chain").getAsString(), to.get("line").getAsString());
                 }
                 Home h = new Home(o.get("id").getAsString(), o.get("theme").getAsString(), o.get("gate").getAsString(),
-                        rank(o.get("rank").getAsString()), o.get("lord").getAsString(), t);
+                        rank(o.get("rank").getAsString()), o.get("lord").getAsString(), t,
+                        o.has("found") && o.get("found").getAsString().equals("left_chest"));
                 BY_STYLE.put(h.style(), h);
                 BY_THEME.put(h.theme(), h);
             }

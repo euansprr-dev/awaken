@@ -68,10 +68,10 @@ final class HearthCommands {
                         return given ? 1 : 0;
                     }))
                     .then(Commands.literal("camp").executes(c -> {
-                        // the nearest camp resident hands the coal over as a talk would (the tour's "Ilse gives the Ember")
+                        // Ilse hands the coal over as a talk would (the tour's "Ilse gives the Ember")
                         ServerPlayer sp = c.getSource().getPlayerOrException();
                         var near = sp.level().getEntitiesOfClass(dev.awaken.living.wayfarer.Wayfarer.class, sp.getBoundingBox().inflate(32),
-                                w -> w.who().equals("ilse") || w.who().equals("hettie"));
+                                w -> w.who().equals("ilse"));
                         near.sort(java.util.Comparator.comparingDouble(w -> w.distanceToSqr(sp)));
                         var inv = sp.getInventory();
                         for (int i = 0; i < inv.getContainerSize(); i++) if (inv.getItem(i).is(HearthContent.EMBER_ITEM.get())) inv.setItem(i, net.minecraft.world.item.ItemStack.EMPTY);

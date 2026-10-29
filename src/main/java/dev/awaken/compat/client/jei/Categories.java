@@ -263,6 +263,7 @@ final class Categories {
             JeiLook.wrap(g, "Hale sells it at " + rank + "-rank for " + ArmsHomes.rackPrice(r.rank()) + " essence. A village of level " + ArmsHomes.band(r.rank())
                     + " sells it for " + ArmsHomes.villagePrice(r.rank()) + " emeralds.", 9, 86, W - 18, Glass.TEXT, 3);
             if (r.home().teacher() != null) JeiLook.fit(g, "Also taught early by " + cap(r.home().teacher().person()) + ".", 9, 108, W - 18, Glass.VIOLET);
+            else if (r.home().leftChest()) JeiLook.fit(g, "Also found early in a chest someone left behind.", 9, 108, W - 18, Glass.VIOLET);
         }
 
         private static String cap(String s) {

@@ -18,6 +18,7 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -38,83 +39,36 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * GameTests for W6 (SPEC §28.8), one per mechanism: someone you know moves into the spare Snug bedroom (and waits for one
- * before it stands, and for a tier past the cap), takes it as "Oren's room" and lives on the people engine; the tiers read
- * the home (four rooms with a Fine one and a field, a Grand room, a bell tower and four people, eight) and the Anchor's
- * flame follows the tier; a Mine head is a hatch over a climbable shaft whose depth decides the evening's haul.
+ * GameTests for W6 (SPEC §28.8), one per mechanism: an older world's settlers move to the city (SPEC §43.6) with their
+ * work in hand finished; the tiers read the home (four rooms with a Fine one and a field, a Grand room, a bell tower and
+ * six rooms, ten with two Grand) and the Anchor's flame follows the tier; a Mine head is a hatch over a climbable shaft whose depth decides the evening's haul.
  */
 public final class SettleTests {
     private SettleTests() {}
 
     public static void register() {
-        AwakenTests.registerIsolated("hearth_settler_moves_in", 900, h -> {
+        // (SPEC §43.6) nobody lives at a Hearth: an older world's settlers move to the city, their work in hand finished first
+        AwakenTests.register("hearth_people_moved_to_city", 100, h -> {
             ServerLevel level = h.getLevel();
-            BlockPos origin = h.absolutePos(BlockPos.ZERO);
-            BlockPos base = new BlockPos((origin.getX() & ~15) + 4, origin.getY() + 110, (origin.getZ() & ~15) + 4);
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
             HearthData data = HearthData.get(level.getServer());
-            UUID owner = UUID.randomUUID();
-            HearthRecord rec = new HearthRecord(owner, "test", base.offset(10, 12, 4), HearthService.OVERWORLD);
-            level.setBlock(rec.pos, HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3);
+            HearthRecord rec = new HearthRecord(sp.getUUID(), "test", h.absolutePos(new BlockPos(1, 1, 1)), HearthService.OVERWORLD);
             data.put(rec);
-            BlockPos spare = base.offset(12, 0, 0);
             try {
-                room(level, base);
-                AwakenTests.awaitLight(h, base.offset(-1, -1, -1), base.offset(9, 6, 9));
-                HearthService.scanNow(level, rec);
-                List<Settlers.Bedroom> beds = Settlers.bedrooms(level, rec);
-                h.assertTrue(beds.size() == 1, "one bedroom read (" + beds.size() + ")");
-                rec.folk.ownBeds.put(owner, beds.getFirst().bed());
-                Folk.Person oren = Settlers.forceKnow(level, rec, "oren");
-                h.assertTrue(oren != null, "Oren is known");
-                // your own bed is yours: no spare yet, so Oren waits, and says why
-                h.assertTrue(Settlers.spare(level, rec).isEmpty(), "your own bedroom is never a spare");
-                List<Settlers.Waiting> waiting = Settlers.waiting(level, rec);
-                h.assertTrue(!waiting.isEmpty() && waiting.getFirst().line().equals("Oren will come when there's a bed for him"),
-                        "Oren waits for a bed: " + (waiting.isEmpty() ? "nobody" : waiting.getFirst().line()));
-                h.assertFalse(Settlers.invite(level, rec, null), "nobody comes without a spare bedroom");
-                // a second Snug bedroom: he comes and takes it
-                room(level, spare);
-                AwakenTests.awaitLight(h, spare.offset(-1, -1, -1), spare.offset(9, 6, 9));
-                HearthService.scanNow(level, rec);
-                h.assertTrue(Settlers.spare(level, rec).size() == 1, "the new bedroom is a spare");
-                h.assertTrue(Settlers.invite(level, rec, null), "Oren sets out");
-                Folk.Settler s = rec.folk.settler(oren.id());
-                h.assertTrue(s != null && s.bed != null && s.bed.getX() >= spare.getX(), "he takes the spare bedroom, not yours");
-                if (s.state == Folk.Settler.COMING) Arrival.movedIn(level, rec, s, true); // the walk itself is the tour's
-                h.assertTrue(s.home(), "moved in");
-                Room his = null;
-                for (Room r : rec.rooms) if (r.contains(s.bed)) his = r;
-                h.assertTrue(his != null && Settlers.roomName(rec, his).equals("Oren's room"), "his room is Oren's room");
-                // the tier holds one at Tier I: the next one waits for Tier II
-                Settlers.forceKnow(level, rec, "mira");
-                boolean tierWait = false;
-                for (Settlers.Waiting w : Settlers.waiting(level, rec)) tierWait |= w.who().given().equals("Mira") && w.why().startsWith("Tier II");
-                h.assertTrue(tierWait, "Mira waits for Tier II");
-                // he lives a day on the people engine: the home is a settlement, his record walks to the anvil, the bed
-                HomePeople.changed(rec);
-                HomePeople.sync(level, rec, level.getGameTime());
-                for (int i = 0; i < 400 && HomePeople.settlement(rec) == null; i++) HomePeople.tick(level);
-                var settlement = HomePeople.settlement(rec);
-                h.assertTrue(settlement != null && settlement.key().equals(HomePeople.key(owner)), "the Hearth runs as a settlement");
-                int r = HomePeople.recordOf(rec, oren.id());
-                h.assertTrue(r >= 0 && settlement.personName(r).equals("Oren") && settlement.job(r).equals("smith"),
-                        "Oren is its smith (" + (r < 0 ? "no record" : settlement.personName(r) + ", " + settlement.job(r)) + ")");
-                // the walk graph lies on the Hearth's own land (a roster is offsets from its origin, the Anchor, not the world's)
-                float reach = HomePeople.graphReach(rec);
-                h.assertTrue(reach > 0 && reach < 48, "the walk graph lies round the Anchor (furthest node " + reach + " off)");
-                // saved with the Hearth
-                var json = HearthRecord.CODEC.encodeStart(JsonOps.INSTANCE, rec).getOrThrow();
-                HearthRecord back = HearthRecord.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();
-                Folk.Settler again = back.folk.settler(oren.id());
-                h.assertTrue(again != null && again.home() && s.bed.equals(again.bed) && back.folk.known.containsKey("mira_scout"),
-                        "who lives here, their beds and who you know survive a save");
+                rec.folk.settlers.add(new Folk.Settler(Settlers.forceKnow(level, rec, "oren"), null, Folk.Settler.HOME, 0));
+                rec.folk.commissions.add(new Folk.Commission(sp.getUUID(), "minecraft:iron_sword", 1, Long.MAX_VALUE - 1));
+                Settlers.upkeep(level, rec, level.getGameTime());
+                h.assertTrue(rec.folk.settlers.isEmpty() && rec.folk.known.isEmpty(), "nobody lives here now");
+                h.assertTrue(rec.folk.commissions.isEmpty() && rec.folk.stash.isEmpty(), "Oren's piece was finished, not lost");
+                boolean left = !level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, new net.minecraft.world.phys.AABB(rec.pos).inflate(3),
+                        e -> e.getItem().is(net.minecraft.world.item.Items.IRON_SWORD)).isEmpty();
+                h.assertTrue(left, "with no chest at home, it's set down by the fire");
+                h.assertTrue(dev.awaken.hearth.guide.Cottage.state(sp, rec) == dev.awaken.hearth.guide.GuideData.COTTAGE_NONE, "nobody offers a cottage");
+                h.assertTrue(TierRules.needs(rec, 4).stream().noneMatch(n -> n.text().contains("people")), "no tier asks for people");
+                for (var e : level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, new net.minecraft.world.phys.AABB(rec.pos).inflate(3))) e.discard();
                 h.succeed();
             } finally {
-                HomePeople.stop(rec);
-                data.remove(owner);
-                level.removeBlock(rec.pos, false);
-                clear(level, base, 9, 6, 9);
-                clear(level, spare, 9, 6, 9);
+                data.remove(sp.getUUID());
             }
         });
 
@@ -138,14 +92,20 @@ public final class SettleTests {
                 h.assertFalse(TierRules.met(rec, 3), "no Grand room yet");
                 rec.rooms = List.of(fake(Reading.Grade.GRAND, RoomType.HALL), fake(Reading.Grade.SNUG, RoomType.BEDROOM));
                 h.assertTrue(TierRules.met(rec, 3), "a Grand room: a Hall");
-                // IV: a bell tower and four people; V: eight
-                rec.rooms = List.of(fake(Reading.Grade.GRAND, RoomType.HALL), fake(Reading.Grade.SNUG, RoomType.BELL_TOWER));
-                for (int i = 0; i < 3; i++) rec.folk.settlers.add(new Folk.Settler(Settlers.outsider("t" + i, "here", i), null, Folk.Settler.HOME, 0));
-                h.assertFalse(TierRules.met(rec, 4), "three people aren't a village");
-                rec.folk.settlers.add(new Folk.Settler(Settlers.outsider("t3", "here", 3), null, Folk.Settler.HOME, 0));
-                h.assertTrue(TierRules.met(rec, 4), "a bell tower and four people: a Village");
-                h.assertFalse(TierRules.met(rec, 5), "four aren't a town");
-                h.assertTrue(Settlers.cap(1) == 1 && Settlers.cap(2) == 2 && Settlers.cap(3) == 4 && Settlers.cap(4) >= 8, "settlers' caps by tier");
+                // IV: a bell tower and six rooms; V: ten rooms, two Grand (SPEC §43.6: nobody moves in)
+                List<Room> five = new java.util.ArrayList<>(List.of(fake(Reading.Grade.GRAND, RoomType.HALL), fake(Reading.Grade.SNUG, RoomType.BELL_TOWER)));
+                for (int i = 0; i < 3; i++) five.add(fake(Reading.Grade.SNUG, RoomType.BEDROOM));
+                rec.rooms = List.copyOf(five);
+                h.assertFalse(TierRules.met(rec, 4), "five rooms aren't a village");
+                five.add(fake(Reading.Grade.SNUG, RoomType.KITCHEN));
+                rec.rooms = List.copyOf(five);
+                h.assertTrue(TierRules.met(rec, 4), "a bell tower and six rooms: a Village");
+                for (int i = 0; i < 4; i++) five.add(fake(Reading.Grade.SNUG, RoomType.BEDROOM));
+                rec.rooms = List.copyOf(five);
+                h.assertFalse(TierRules.met(rec, 5), "ten rooms with one Grand aren't a town");
+                five.add(fake(Reading.Grade.GRAND, RoomType.SANCTUARY));
+                rec.rooms = List.copyOf(five);
+                h.assertTrue(TierRules.met(rec, 5), "ten rooms, two Grand: a Town");
                 h.assertTrue(HearthRecord.radiusForTier(4) == 80 && HearthRecord.radiusForTier(5) == 96, "Village 80, Town 96");
                 // the Anchor's flame follows the tier
                 level.setBlock(at, HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3);

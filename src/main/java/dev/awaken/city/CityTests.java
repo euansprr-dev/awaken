@@ -725,7 +725,7 @@ final class CityTests {
             try {
                 Level level = h.getLevel();
                 CityBuffer buf = new CityBuffer(24, 24);
-                for (String id : new String[]{"high_gate_yard", "bounty_post", "quartermaster", "association_board", "bellwatch_cellar"}) {
+                for (String id : new String[]{"high_gate_yard", "bounty_post", "quartermaster", "association_board", "bellwatch_cellar", "hettie"}) {
                     BlockPos s = CityHooks.spot(level, id);
                     h.assertTrue(s != null, id + " resolves");
                     h.assertTrue(l.inCity(s.getX(), s.getZ()), id + " lies in the city: " + s);

@@ -11,7 +11,8 @@ import java.util.List;
  * Tiers grow from the home (SPEC §28.8, PLAN 4.8, Enshrouded's ladder): beside the rank and the metal each tier already
  * asks for ({@link Upgrades#anchorTier}: iron at II, gold and amethyst at III, diamonds at IV, diamonds, obsidian and a
  * Lord's Heart at V), the home must have grown. II Steading: four rooms, one of them Fine, and a field or a pen. III Hall:
- * a Grand room. IV Village: a bell tower and four people living here. V Town: eight. The Anchor's flame shows the tier.
+ * a Grand room. IV Village: a bell tower and six rooms. V Town: ten rooms, two of them Grand (SPEC §43.6: nobody moves in
+ * any more, so the tiers read what you built; the beasts' nooks grow with the tier). The Anchor's flame shows the tier.
  */
 public final class TierRules {
     private TierRules() {}
@@ -22,7 +23,6 @@ public final class TierRules {
     /** What the home needs for {@code target} (2-5), each ticked against the last reading. */
     public static List<Need> needs(HearthRecord h, int target) {
         List<Need> out = new ArrayList<>();
-        int living = h.folk.living();
         switch (target) {
             case 2 -> {
                 boolean fine = false;
@@ -38,9 +38,14 @@ public final class TierRules {
             }
             case 4 -> {
                 out.add(new Need("a bell tower", h.hasRoom(RoomType.BELL_TOWER)));
-                out.add(new Need("four people living here (" + Math.min(living, 4) + "/4)", living >= 4));
+                out.add(new Need("six rooms (" + Math.min(h.rooms.size(), 6) + "/6)", h.rooms.size() >= 6));
             }
-            case 5 -> out.add(new Need("eight people living here (" + Math.min(living, 8) + "/8)", living >= 8));
+            case 5 -> {
+                int grand = 0;
+                for (Room r : h.rooms) if (r.reading().grade() == Reading.Grade.GRAND) grand++;
+                out.add(new Need("ten rooms (" + Math.min(h.rooms.size(), 10) + "/10)", h.rooms.size() >= 10));
+                out.add(new Need("two of them Grand (" + Math.min(grand, 2) + "/2)", grand >= 2));
+            }
             default -> {
             }
         }

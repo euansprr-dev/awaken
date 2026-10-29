@@ -30,7 +30,7 @@
   "awaken.jei.codex.fabricator.text": "Builds every Precursor machine whose blueprint you have scanned, from the parts in your pack. It needs no power. Its screen lists only the blueprints you know, so every broken machine you find adds one.",
   "awaken.jei.codex.hearth_anchor.title": "Hearth Anchor",
   "awaken.jei.codex.hearth_anchor.kind": "The Hearth · your base",
-  "awaken.jei.codex.hearth_anchor.text": "Place it to make a home: you respawn here, Oren the Blacksmith arrives and a small Spire rises nearby. It reaches 48 blocks at first, 8 more each tier. Rooms are found by what's in them: a Sanctuary, an Armory, a Trophy Hall, a Workshop, a Barracks. It teaches the Hearth's furniture.",
+  "awaken.jei.codex.hearth_anchor.text": "Place it to make a home: you respawn here, and its Spire Board and Monolith come with it. It reaches 48 blocks at first, 8 more each tier. Rooms are found by what's in them: a Sanctuary, an Armory, a Trophy Hall, a Workshop. It teaches the Hearth's furniture.",
   "awaken.jei.codex.forge.title": "Forge",
   "awaken.jei.codex.forge.kind": "The Hearth · tempering",
   "awaken.jei.codex.forge.text": "Temper any weapon or armour piece here: one level anywhere, two per Forge tier inside an Armory (an anvil, a Forge and an armour stand in one room). Use it empty-handed to upgrade the Forge itself. Tempered gear keeps its set bonus.",

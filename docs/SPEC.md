@@ -12131,7 +12131,11 @@ here as it goes.
 - Every settlement AWAKEN places (§28 W0, W3, W7) still generates, emptied: no citizens, troubles, settlers or found
   scenes of people. Furniture, letters, silent chimes, loot and beasts stay. Village troubles become beast troubles (W4's
   rules unchanged).
-- **The Last Fire** is the Wayfarer camp (450 blocks up the north road), Ilse alone; Hettie moves into the city. Ilse's
+- Found scenes and every Wayfarer chain but Bram's and Oren's are retired (their distress flares too). Their five early
+  patterns (Spear, Glaive, Rapier, Chain-blade, Twinblades) and six relics are found in left chests instead (43.3); old
+  Journals drop retired chains at login; the scenes record is schema 2.
+- **The Last Fire** is the Wayfarer camp (450 blocks up the north road), Ilse alone; Hettie moves into the city's market
+  square (spot `hettie`). Ilse's
   scene and lines are JOURNEY part 1, verbatim, in plain speech. She never gives a task. She comes to the player's home
   exactly once, after the Wake ending. The Ember sets only past the Last Fire's ridge and outside any holdfast's sound.
 - Vael meets the player only in the city and in gates. Townsfolk that lived at the Hearth (Oren, Mira, Teodor, Sun, Vael)
@@ -12154,6 +12158,8 @@ here as it goes.
   milestone just past it); one or two on the road to the first empty hamlet; one on the way to the first sleeping bell
   near the player's first Ember. Elsewhere about one per 1,000 x 1,000 blocks within 3,000 of Carillon and rarer past
   that, near roads, villages and homes; never two within 150 blocks except a seated pair; never in a gate or a deep cave.
+- A left chest gives, once per player: the first early pattern they don't know (Spear, Rapier, Chain-blade, Glaive,
+  Twinblades), else the first of the six old relics they haven't had from one, else three essence; and supplies.
 - Most carry a letter (a Found bell lead), a key (a chest in a nearby empty settlement) or a keepsake with a name that
   someone in Carillon reacts to. The System reads them in brackets ("[She got as far as the bridge.]").
 - At the Wake they stand and walk home over one play-day (stage 7).
@@ -12170,7 +12176,7 @@ here as it goes.
 - What took binding's place in progression: the Shadowbinder path scores shadow power use and gives **Summon Strength**
   (perk `awaken:summon_strength`, a fraction: Legion's soldiers and Tech drones hit harder and last longer by it; path
   +25%, the truth "I command the shadows." +15%, the title Shadow Lord +10%); level road 7 becomes "What they carried"
-  (the Stilled's keys) and 30 "The far towns" (the holdfasts), 44 is dropped; Echo directives, the drill and the trail
+  (the Stilled's keys), 30 "The far towns" (the holdfasts) and 44 "What was left" (a left chest opened); Echo directives, the drill and the trail
   are retargeted (LEDGER.md has each line). The B key stays for the Veil's "wear a creature".
 
 ### 43.5 Beasts and Kinship
@@ -12200,6 +12206,8 @@ here as it goes.
 - The Mine head becomes **the Ore Shed** (lode heart; Pebblepups sort and crush ore and rubble the player brings, a few
   nuggets from a stack of rubble at most; never ore by itself).
 - Nooks: 2 at the Ember, 4 at the Anchor, then 8, 12, 18, 24 by its last tier, plus each work's own.
+- Tiers no longer ask for people (stage 1): IV asks for a bell tower and six rooms, V for ten rooms, two of them Grand.
+  The Spire's Board and Monolith come with the Anchor (they came with the first settler).
 - **The Storehouse** (Euan, 29 Oct; C, with the Totters; rare things: a Totter that's Kin and an empty town's granary
   keystone): a timber hall with **the Drop**, a sunken bin the player tips anything into (by hand, a stack, or "Empty
   my bag", which keeps the hotbar, armour and marked items). Dropped things pile up as real 3D items (the heap rises with

@@ -229,8 +229,8 @@ public final class HearthService {
 
     /**
      * Tier I begins (an Anchor placed, or a Hearthfire raised by a Lord's Heart): the guide's toast, the furniture in the
-     * recipe book, the town's first arrival, Oren's cottage offer, the household told. A toast shows the title and the
-     * first sentence: keep both short. The rest is in Recent messages.
+     * recipe book, the Spire's Board and Monolith, the household told. A toast shows the title and the first sentence:
+     * keep both short. The rest is in Recent messages.
      */
     static void anchorTookRoot(ServerPlayer sp, ServerLevel level, HearthRecord r, boolean sister, String title, String body) {
         Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(title)).body(Component.literal(body))
@@ -239,9 +239,9 @@ public final class HearthService {
         if (Progression.profile(sp).awakened()) Progression.markNewThing(sp, "hearth");
         DirectorLog.log(sp, "hearth", "anchor at " + r.pos.toShortString() + (sister ? " (a sister home)" : ""));
         Town.onHearthCreated(sp, level, r);
+        Town.raiseSpire(level, r);
         HearthViews.refresh(sp);
         Household.refresh(level.getServer(), r);
-        Cottage.afterAnchorPlaced(sp);
     }
 
     /** The Anchor teaches the Hearth's furniture in the recipe book (Meditation Mat, Forge, Trophy Mount). */

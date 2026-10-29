@@ -153,6 +153,9 @@ STEPS = {
     "push_deeper": step(43, "Push past comfort", "16 essence. Deeper floors fill the Satchel faster.",
                         [item("essence_shard", 16)],
                         goal("Clear a floor deeper than usual", c("floors_pushed_past_comfort"), "Deeper floors pay more")),
+    "what_was_left": step(44, "What was left", "12 essence. A key from the stone people still opens what someone left.",
+                          [item("essence_shard", 12)],
+                          goal("Open a chest someone left behind", c("left_chests_opened"), "Somebody meant it for you")),
     # L46-50 · B-rank (45 B trial, 50 the Hollow Court exist): the B strata and the Ascension hints (the Halo).
     "the_foundry": step(46, "The Foundry", "Stratum 6, a Power Core. Light five conduits to open its pit.",
                         [core()],

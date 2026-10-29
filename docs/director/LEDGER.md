@@ -42,7 +42,10 @@ happens).
   Carillon world, 360 in a classic one). `core.api.TheLull` holds the numbers.
 - **For**: the Ember sets only past it; the Stilled's first three sit just past it; holdfasts keep 1,500 blocks from it.
 - **Know**: Ilse: "Past that ridge the bells don't carry"; the Ember's refusal inside it says so in plain words.
-- **Edges**: Hearths placed inside it before this change stay where they are. Moving home uses the same rule.
+- **Edges**: Hearths placed inside it before this change stay where they are. Moving home uses the same rule. The
+  refusal: "You can still hear the city's bells here. Your home has to be out past the ridge beyond the Last Fire, where
+  they don't carry." A holdfast's: "You can still hear the holdfast's bell here. Your home has to be further out, where
+  it doesn't carry." Only the overworld has a ridge. Tests measure from `TheLull.testCentre`.
 
 ### Empty settlements
 - **Get**: every hamlet, village, mining village, town and wayhouse AWAKEN places (§28 W0, W3, W7) still generates,
@@ -116,8 +119,10 @@ happens).
 ### Left chests
 - **Get**: block `awaken:left_chest`, placed by an empty settlement's well when a key's holder comes near.
 - **For**: what someone left behind: per player, on first opening, the first of the early weapon patterns they don't
-  know yet (Spear, Glaive, Rapier, Chain-blade, Twinblades: the five the Wayfarers used to teach), else three essence
-  shards; with it some supplies (bread, torches, string, a bandage).
+  know yet (Spear, Rapier, Chain-blade, Glaive, Twinblades: the five the Wayfarers used to teach), else the first of the
+  six old relics they haven't had from a chest (Shepherd's Lantern, Lumen Tonic, Climber's Hook, Caravan Writ,
+  Herdcaller Horn, Rider's Spurs: the Wayfarers' chains' rewards), else three essence shards; with it some supplies
+  (bread, torches, string, a bandage). Patterns through `ArmsApi.leftChestPattern`.
 - **Know**: the key's tag; the chest is by the well, the middle of every settlement.
 - **Source**: `world.stilled.LeftChests`; loot table `awaken:chests/left_behind` for the supplies.
 - **Links**: arms (the five patterns' early home moves from the Wayfarers to here: `data/awaken/arms/style_homes.json`
@@ -140,7 +145,8 @@ happens).
     (Warden), drill "Use shadow powers ten times"; "Bind an Echo." is gone.
   - Level road: 7 "What they carried" ("The stone people still hold things. A key names the town its chest is in."),
     30 "The far towns" ("A few walled towns kept their bells and their people. Listen for one ringing on the hour."),
-    44 "An army of Echoes" gone. 7 and 30 are the never-stuck nudges for the Stilled's keys and the holdfasts.
+    44 "What was left" (12 essence; its goal: open a chest someone left behind, counter `awaken:left_chests_opened`).
+    7, 30 and 44 are the never-stuck nudges for the Stilled's keys, the holdfasts and the left chests.
   - The trail "Trophies and Echoes" is "Trophies" (trophy, Trophy Hall, a break held at home).
 - **What stays**: the Echoing tag, the Grave Echo, gates' ghosts, the pick's Echo rung, Echo Palm, Heavy Echo. Echo
   Swap swaps with your own summons and decoys. Charge overcharges your own summons ("Charge meets your summons").
@@ -161,16 +167,43 @@ happens).
 - **What replaces it**: stage 2's beasts (fields, the Ore Shed); the cottage: stage 1 leaves the guide's own plan for
   you to build; stage 2's first Thatchback raises it from that plan over a play-day once the Anchor stands.
 - **The Mine head**: stays a room type and does nothing until stage 2 turns it into the Ore Shed.
+- **Tiers that asked for people**: IV now asks for a bell tower and six rooms, V for ten rooms with two of them Grand
+  (`hearth.TierRules`, §43.6). Stage 2's nooks grow with the tier instead.
+- **The Spire's Board and Monolith** came with the first settler; they come with the Anchor now (Tier I), and an old
+  world's Anchor without them gets them on the owner's next visit. Both keep their recipes.
+- **Tests**: `hearth_people_moved_to_city` (an old settler with a commission: delivered, gone, the line; no cottage
+  offer; no tier asks for people), the tier test (six rooms, then ten with two Grand).
 
 ### No people in the wild
 - **What goes**: found scenes (Wren, Gus, Pell, Marta and their chains: Wren's Rope, Ash on the Wind, the Hermit's Horn,
   Iron in the Ranks, Crowns in the Dark, Marta's Wheel, the Caravan Road, Pell's Message, Silk on the Road, the Bell at
   the Crossing), Ilse's Moth Lights and Hettie's Ten Sheep Short (people never give tasks outside the opening).
-- **Hettie** lives in Carillon now, by the market's pens, with her own lines (never a task).
+- **Hettie** lives in Carillon now, in the market square by the cloth and produce stalls (city spot `hettie`, on the
+  square's floor two below the street), with her own lines about the hills and the walk in (never a task). A classic
+  world has no city and no Hettie.
 - **Hale** stays at the High Gate's quartermaster spot (in the city).
-- **Old saves**: a retired chain in a player's Journal is dropped quietly; a Wayfarer body of someone who no longer
-  lives out there is removed when it loads.
-- **Vael**: his rank beats wait until you're next in the city or in a gate.
+- **Ilse's lines** after her scene: four of her own (the kettle, what it looks like out there, Aldo, watch before you
+  draw), after the pulse rumours; her coal line again for a lost Ember ("Lost your coal? That's all right. Take another
+  from the fire.").
+- **Bram**: "Ilse keeps the last fire up the north road. Past it, it's only hunters." in his brief and his ask; the
+  errand's place is "the Last Fire"; the High Gate's shot names THE LAST FIRE; so does the Horizon line.
+- **Gone with the found scenes**: their distress flares (the `living_tells` payload and its drawing), the dev commands
+  `living scene` and `living view`, the found-scene tours' steps (`living-c`, `living-c-check`).
+- **Their relics** keep a way in: the six (Shepherd's Lantern, Lumen Tonic, Climber's Hook (was Wren's Hook), Caravan
+  Writ, Herdcaller Horn, Rider's Spurs (was Pell's Spurs)) wait in left chests after the five patterns (see Left
+  chests). Pell's Letter, an errand item with no errand left, goes on the never-held list.
+- **Their patterns**: Spear, Glaive, Rapier, Chain-blade and Twinblades are found early in left chests (style homes
+  `"found": "left_chest"`); Oren still teaches the Greatblade at the end of his chain. The Finding Patterns trail's
+  people step becomes "Find a pattern in a chest someone left behind" (counter `awaken:patterns_from_left_chests`); its
+  village step names a holdfast's smith.
+- **Old saves**: a retired chain in a player's Journal is dropped quietly at login (`QuestEngine.prune`); the scenes
+  record (schema 2) drops found scenes and places Hettie again in the city; a scene's Wayfarer leaves once its scene
+  is gone, and Hettie's camp body once she's out of the city, each only when nobody stands within 16.
+- **Vael**: his rank beats wait until you're next in the city or in a gate (marked waiting in his seen set, so a
+  restart keeps them; the latest plays first).
+- **Tests**: `arms_style_homes` (Oren once; five found in left chests, in order, skipping known ones),
+  `city_spots` (Hettie's spot has room and a floor), `hearth_ember_founds` (the ridge refuses; past it the coal takes),
+  `living_camp_keeps` (nothing needs the night now).
 
 ### The wildness field (§41)
 - **Tamers now**: Carillon (and its farmland), the laid roads, the holdfasts' towns, Hearths. Empty settlements no

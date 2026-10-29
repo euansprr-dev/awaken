@@ -1786,6 +1786,7 @@ class Plan:
             'bounty_post': [-10, 1, -249],           # west of the road: the bounty post (the living module)
             'association_board': [0, TERRACE_LIFT + 1, -149],   # the Association atrium's north wall, facing the great door
             'bellwatch_cellar': [kx - 1, 1, kz],     # the room under Bellwatch's bell tower, in the Knoll
+            'hettie': [-18, -1, -4],                 # the market square (its floor is 2 below the street) by the cloth and produce stalls: Hettie (SPEC §43.1)
         }
 
     def to_json(self):

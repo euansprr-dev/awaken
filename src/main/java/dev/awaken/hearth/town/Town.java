@@ -225,6 +225,7 @@ public final class Town {
             HearthService.dirty(level.getServer());
         }
         if (now % 200 < 20) {
+            if (h.spire == null) raiseSpire(level, h); // an Anchor whose Spire never came (an old world's, its settler gone)
             dev.awaken.hearth.settle.Settlers.upkeep(level, h, now);
             if (owner != null) refreshBoards(owner, level, h);
         }
@@ -506,8 +507,8 @@ public final class Town {
     // ---- the Spire --------------------------------------------------------------------------------------------------
 
     /**
-     * The town Spire's pieces for the owner to place where they like (SPEC §28.2): its Spire Board and Reassessment
-     * Monolith come as items, never stamped into your ground (it used to replace nine blocks of your courtyard). The
+     * The Spire's pieces for the owner to place where they like (SPEC §28.2): its Spire Board and Reassessment Monolith
+     * come as items with the Anchor (SPEC §43.6: nobody moves in to bring them now), never stamped into your ground. The
      * Board placed inside the Hearth becomes its Spire Board. Retried by upkeep while the owner is away.
      */
     public static void raiseSpire(ServerLevel level, HearthRecord h) {
@@ -515,8 +516,8 @@ public final class Town {
         HearthService.owner(level.getServer(), h).ifPresent(sp -> {
             sp.getInventory().placeItemBackInInventory(new ItemStack(HearthContent.SPIRE_BOARD_ITEM.get()), net.minecraft.util.Prediction.SERVER_ONLY);
             sp.getInventory().placeItemBackInInventory(new ItemStack(HearthContent.MONOLITH_ITEM.get()), net.minecraft.util.Prediction.SERVER_ONLY);
-            Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The town Spire"))
-                    .body(Component.literal("Oren brought its Board and Monolith. Set them up where you like: the Board shows your record, the Monolith tests your rank."))
+            Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Your Spire"))
+                    .body(Component.literal("Your home's Spire Board and Monolith are in your pack. Set them up where you like: the Board shows your record, the Monolith tests your rank."))
                     .ttl(20 * 8).build());
             h.spire = h.pos;
             HearthService.dirty(level.getServer());
