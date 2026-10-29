@@ -28,6 +28,12 @@ final class BladeTrail {
     private static final long MIN_GAP = 3_000_000L;
 
     private static final int[] ENTITY = new int[RINGS], HEAD = new int[RINGS], COUNT = new int[RINGS], ARGB = new int[RINGS];
+    /**
+     * Which of the wielder's hands a ring traces (0 the main, 1 the off hand's twin), and its light (round 14): each blade
+     * of a pair lays its own, so a strike passing from one hand to the other never joins them in a band across the view.
+     */
+    private static final int[] SIDE = new int[RINGS];
+    private static final float[] LIGHT = new float[RINGS];
     /** The blow each ring traces: it samples until this (ns); 0 for none. */
     private static final long[] UNTIL = new long[RINGS];
     /** A kill's flare on the ring (SPEC §25 "Fight Feel"): when it flared (ns); it burns toward white and fades. */
@@ -42,21 +48,32 @@ final class BladeTrail {
 
     /** A blow on {@code entity} is in the air from now for {@code ms}: its blade traces while it lasts, in {@code argb}. */
     static void open(int entity, int ms, int argb) {
-        int r = ring(entity, true);
+        open(entity, 0, ms, argb, 1F);
+    }
+
+    /** The same for one hand's blade ({@code side} 1: the off hand's twin), its light scaled by {@code light}. */
+    static void open(int entity, int side, int ms, int argb, float light) {
+        int r = ring(entity, side, true);
         if (r < 0) return;
         UNTIL[r] = System.nanoTime() + ms * 1_000_000L;
         ARGB[r] = argb;
+        LIGHT[r] = light;
     }
 
     /** A killing blow: {@code entity}'s ribbon flares once. */
     static void flare(int entity) {
-        int r = ring(entity, false);
-        if (r >= 0) FLARE[r] = System.nanoTime();
+        long now = System.nanoTime();
+        for (int r = 0; r < RINGS; r++) if (ENTITY[r] == entity) FLARE[r] = now;
     }
 
     /** Whether {@code entity}'s blade is tracing now (the renderers sample only then). */
     static boolean open(int entity) {
-        int r = ring(entity, false);
+        return open(entity, 0);
+    }
+
+    /** Whether that hand's blade of {@code entity} is tracing now. */
+    static boolean open(int entity, int side) {
+        int r = ring(entity, side, false);
         return r >= 0 && System.nanoTime() < UNTIL[r];
     }
 
@@ -75,7 +92,12 @@ final class BladeTrail {
      * {@code hand}: the hands' pass of first person). Called by the renderers each frame while {@link #open(int)}.
      */
     static void sample(int entity, Matrix4f pose, float rx, float ry, float rz, float tx, float ty, float tz, boolean hand) {
-        int r = ring(entity, false);
+        sample(entity, 0, pose, rx, ry, rz, tx, ty, tz, hand);
+    }
+
+    /** The same for one hand's blade. */
+    static void sample(int entity, int side, Matrix4f pose, float rx, float ry, float rz, float tx, float ty, float tz, boolean hand) {
+        int r = ring(entity, side, false);
         if (r < 0) return;
         long now = System.nanoTime();
         if (now >= UNTIL[r]) return;
@@ -118,7 +140,7 @@ final class BladeTrail {
             if (ENTITY[r] == Integer.MIN_VALUE) continue;
             int n = COUNT[r];
             long newest = n > 0 ? AT[r * N + (HEAD[r] - 1 + N) % N] : 0, oldest = n > 0 ? AT[r * N + (HEAD[r] - n + N) % N] : 0;
-            b.append(" | e=").append(ENTITY[r]).append(" n=").append(n).append(" newestAge=").append((now - newest) / 1_000_000)
+            b.append(" | e=").append(ENTITY[r]).append(" side=").append(SIDE[r]).append(" n=").append(n).append(" newestAge=").append((now - newest) / 1_000_000)
                     .append("ms oldestAge=").append((now - oldest) / 1_000_000).append("ms until=").append((UNTIL[r] - real) / 1_000_000).append("ms");
         }
         return b.toString();
@@ -134,11 +156,11 @@ final class BladeTrail {
         return String.format(java.util.Locale.ROOT, "%.2f", v);
     }
 
-    private static int ring(int entity, boolean claim) {
+    private static int ring(int entity, int side, boolean claim) {
         int free = -1, oldest = -1;
         long oldestAt = Long.MAX_VALUE;
         for (int r = 0; r < RINGS; r++) {
-            if (ENTITY[r] == entity) return r;
+            if (ENTITY[r] == entity && SIDE[r] == side) return r;
             if (ENTITY[r] == Integer.MIN_VALUE && free < 0) free = r;
             if (UNTIL[r] < oldestAt) {
                 oldestAt = UNTIL[r];
@@ -148,6 +170,7 @@ final class BladeTrail {
         if (!claim) return -1;
         int r = free >= 0 ? free : oldest;
         ENTITY[r] = entity;
+        SIDE[r] = side;
         COUNT[r] = HEAD[r] = 0;
         return r;
     }
@@ -243,7 +266,7 @@ final class BladeTrail {
         int argb = ARGB[r];
         int cr = argb >> 16 & 255, cg = argb >> 8 & 255, cb = argb & 255;
         // strong enough to read on a noon sky: the colour's own alpha (the rhythm's brightness) lifted, never faint
-        float alpha = Math.min(0.95F, 0.55F + 0.5F * ((argb >>> 24) / 255F));
+        float alpha = Math.min(0.95F, 0.55F + 0.5F * ((argb >>> 24) / 255F)) * LIGHT[r];
         long since = System.nanoTime() - FLARE[r];
         if (FLARE[r] != 0 && since >= 0 && since < FLARE_LIFE) {
             float f = 1F - since / (float) FLARE_LIFE;

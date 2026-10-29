@@ -6292,6 +6292,39 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       over 0.3 264 times (worst 0.55) and the longsword 549 (worst 1.05). The chain judge passes every
       strike mashed and in time; every dagger move leads with its point (1.00) or edge (0.85-0.99); `arms_chain_flow`
       passes. Unseen in game.
+  - *Round 14, calm daggers and one ribbon a blade* (Euan 2026-10-29, after playing round 13: "figures of eight
+    arriving everywhere", "when you slash, your left hand goes up", "it arrives, like, under your left arm", "too much
+    going on at once"). Read from his own clip of the game (the offline renders drew neither arms nor ribbons): both
+    daggers shared one ribbon, so a band ran between them; the ribbon traced the whole move, pull-back and way home
+    included, so a stab drew a loop and fast clicks drew figures of eight; it was screen-wide and bright; the other hand
+    rose out of each cut's way; the slash took the longsword's diagonal and ended low under the other hand; a stab's
+    pull-back brought the arm at the camera.
+    - The ribbons (`BladeTrail`): one per hand (a ring per wielder and side; the off hand's twin lays side 1). A move
+      may name its ribbon's ticks (`trail` [from, to] in fp_swings.json) and a style its look (`trail` [root, light]: where
+      the band starts on the blade, grip 0 to point 1, and how bright it is). The daggers' ribbon is the stroke alone: a
+      stab's from 0.4 tick before the hit to 0.12 after, a cut's from 0.45 before to the end of its carry (0.4 after),
+      from 0.8 of the blade to the point at 0.6 brightness. A move without its own ticks keeps the old window (0.15 before
+      the blow to 0.6 after its active ticks), so the other weapons are as they were. `arms_feel_rules` holds a move's
+      own ticks around its hit and no more than half a tick past it, every dagger move to have them, and every look to
+      be a band toward the point.
+    - A jab is a line from the stance's own grip (no pull-back: never bigger on the screen than the stance), out to its
+      mark under the crosshair on the hit, held a third of a tick, eased home in 1.2-1.8 ticks.
+    - A slash is a lever from low at the shoulder (0.62,-0.85,-0.30): set 42-48 degrees back on its hand's side by two
+      thirds of the wind-up, through the target on the hit, stopped 8-12 degrees past it, in front (its point ends just
+      over the middle, level or a little falling). The Undercut rises from low; the Plunge and the Execution stay chops
+      from overhead.
+    - The hand not striking stays still in its stance (`STILL`); only the twin push and the heavy move both hands.
+    - `swing_chain.py calm` (new) holds the daggers to this: the other hand's point moves at most 0.03 of the screen, no
+      grip comes nearer the camera than the stance's by more than 0.04 block, the ribbon ends at most 0.45 tick past
+      the hit; a stab is no bigger than 1.05 of the stance before the hit and within 0.15 of the crosshair on it; a cut's
+      point ends no more than 0.25 past the middle and at least 0.2 from the other hand's. Round 14 passes all twelve
+      (stabs: still 0, near 0, size 1.00, mark 0.05-0.09; cuts: past 0.08-0.14, gap 0.24-0.38). The daggers leave
+      round 13's `like` rules, which ask for big strokes.
+    - Clicked at every speed (round 11's sweep), round 13 -> 14: steps over 0.2 of the screen a frame 582 -> 0, the
+      worst 0.34 -> 0.15, the nearest the blades come 0.13 -> 0.16. The chain judge passes mashed and in time; every
+      first-person dagger move leads with its point (0.99-1.00) or edge (0.98-0.99); the cuts turn 229-279 degrees,
+      the Plunge 77, the Execution 129. The four third-person dagger lead misses are round 13's, unchanged. Filmed in
+      the game before Euan plays it (`tools/autopilot/arms-daggers-r14.txt`, the clip recorder, day and night).
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past

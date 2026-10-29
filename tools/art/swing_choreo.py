@@ -1,4 +1,4 @@
-"""Swing Studio's choreography (rounds 11-13): a style's moves set by hand, both hands at once, as a few key poses on a
+"""Swing Studio's choreography (rounds 11-14): a style's moves set by hand, both hands at once, as a few key poses on a
 timeline, in place of the rules that worked each pose out (anim_lab.rig_pose, swing_studio's give-way, haul and pull).
 
 Euan 2026-10-29, after round 10: "it still feels like it's going to unnecessary distances sometimes... the right arm
@@ -21,6 +21,12 @@ fast. Round 13 sets each form on the weapon that reads clean (`swing_chain.py li
   press (`describe` shows when), so whatever the clicking, the next strike takes over from the pose it was set from;
 - the hand not striking gives a little to a stab, and is out of a cut's way before it sweeps past: out to its own side
   and up for a falling cut (it ends under it), a little down for the level one; a rising cut and a chop pass clear.
+
+After round 13, in game: "figures of eight arriving everywhere... when you slash, your left hand goes up... it arrives,
+like, under your left arm... too much going on at once". Round 14 calms the daggers (`swing_chain.py calm` holds it):
+a jab goes out from the stance's own grip with no pull-back (`STANCE`), a slash is a short lever from low at the
+shoulder (`LOW`) that stops just past the middle, in front, and the hand not striking stays still (`STILL`). Each move
+also names its ribbon's ticks (`trail`): the stroke alone, never the way home.
 
 A spot is where the grip sits on the screen (ndc), how far ahead of the eye, which way the blade points on the screen
 (degrees from the left, as the guard's), how far its tip leans away along the eye's ray, and its roll. Each hand's track
@@ -55,7 +61,7 @@ def line(tip, depth, src, roll=0.0):
     eye, the blade laid on the line to it from {@code src} (view space), by the least turn from the stance. A key on it
     is (name, back): the whole blade drawn back along its own line, so between two keys on one line it only slides, the
     point held on its mark (on the screen it hardly moves: the blade grows as it comes back, shrinks as it goes out)."""
-    return dict(kind="line", tip=tip, depth=depth, src=np.array(src, dtype=float), roll=roll)
+    return dict(kind="line", tip=tip, depth=depth, src=None if src is None else np.array(src, dtype=float), roll=roll)
 
 
 def arc(way, target=(0.0, -0.20, -1.15), pivot=(0.62, -0.52, -0.30), mid=L.MID, eye=1.0):
@@ -69,30 +75,31 @@ def arc(way, target=(0.0, -0.20, -1.15), pivot=(0.62, -0.52, -0.30), mid=L.MID, 
 
 
 REST = None  # the holding stance: vanilla's hold, the hand at its rest
+STANCE = None  # a line's source at the stance's own grip: the jab goes out from where the hand holds
+LOW = (0.62, -0.85, -0.30)  # a slash's lever from low at the shoulder: the hand stays down, never nearer than the stance
 
-# the daggers (each hand's own: a right hand's poses; the left's are mirrored by the game). Round 13: the stabs on the
-# rapier's line, the cuts on the longsword's lever (swing_chain.py like holds each to them)
+# the daggers (each hand's own: a right hand's poses; the left's are mirrored by the game). Round 14, after Euan saw
+# round 13 in game: "when you slash, your left hand goes up... too much going on at once", the slash "arrives under
+# your left arm", and the stabs pulled the arm in at the camera. So the hand not striking stays still, a stab is a short
+# jab out from the stance with no pull-back, and a slash a short sweep in front at chest height that ends just past the
+# middle, on its own side of the other blade
 DAGGERS = {
-    # the stabs: drawn back toward the eye on the line to the point under the crosshair, out along it, back along it
-    "line_hi": line((-0.03, -0.05), 1.15, (0.34, -0.40, -0.30)),
-    "line_lo": line((-0.02, -0.10), 1.10, (0.22, -0.66, -0.34)),
-    "line_pair": line((0.07, -0.07), 1.10, (0.36, -0.42, -0.30)),
-    "line_deep": line((0.06, -0.04), 1.30, (0.36, -0.44, -0.30)),
-    "line_rip": line((-0.02, -0.03), 1.25, (0.34, -0.40, -0.30)),
-    # the hand not striking gives a little as the other drives (the body turns into the blow)
-    "give": spot((0.74, -1.24), 0.63, 69.0, -2.0),
-    # out of a cut's way as it sweeps past: out to its own side and up (the falling cuts end under it), or a little
-    # down (the level one passes over it); a rising cut and a chop pass clear of the stance
-    "aside": spot((1.30, -0.80), 0.55, 48.0, -6.0),
-    "low": spot((1.00, -1.60), 0.50, 55.0, -6.0),
-    # the cuts: set high in view, one sweep through the target
-    "cut_3": arc((-0.85, -0.52)),
-    "cut_5": arc((-0.85, -0.52)),
-    "cut_slip": arc((-1.0, -0.15), (0.0, -0.12, -1.15)),
-    "cut_under": arc((-0.8, 0.6), (0.0, -0.15, -1.15)),
-    "cut_art": arc((-0.9, -0.45)),
-    "chop_p": arc((-0.21, -0.98), eye=0.5),
-    "chop_x": arc((-0.21, -0.98), eye=0.5),
+    # the jabs: out from the stance's grip along the line to a mark just under the crosshair (the grip goes away from
+    # the eye, never toward it), on the hand's own side of it
+    "jab_1": line((0.05, -0.10), 1.00, STANCE),
+    "jab_2": line((0.04, -0.15), 0.95, STANCE),
+    "jab_pair": line((0.09, -0.10), 1.00, STANCE),
+    "jab_deep": line((0.06, -0.07), 1.10, STANCE),
+    "jab_rip": line((0.03, -0.08), 1.06, STANCE),
+    # the slashes: set back on the hand's own side, one sweep through the target at chest height, stopping just past
+    # the middle (the Undercut rises from low on its side; the chops fall from above it)
+    "cut_3": arc((-1.0, -0.15), (0.06, -0.22, -1.0), LOW, eye=0.5),
+    "cut_5": arc((-1.0, -0.15), (0.06, -0.22, -1.0), LOW, eye=0.5),
+    "cut_slip": arc((-1.0, 0.0), (0.06, -0.18, -1.0), LOW, eye=0.5),
+    "cut_under": arc((-0.75, 0.66), (0.06, -0.18, -1.0), LOW, eye=0.5),
+    "cut_art": arc((-1.0, -0.1), (0.06, -0.20, -1.0), LOW, eye=0.5),
+    "chop_p": arc((-0.35, -0.94), (0.04, -0.22, -1.0), (0.75, -0.85, -0.45), eye=0.5),
+    "chop_x": arc((-0.35, -0.94), (0.04, -0.22, -1.0), (0.75, -0.85, -0.45), eye=0.5),
 }
 
 # per move: the striking hand's track and the other's, (tick, pose, ease into it[, bulge[, turn ease]]); a pose is REST,
@@ -101,56 +108,59 @@ DAGGERS = {
 # turn only): a way home that keeps the blade on the line it came out on and turns it into the stance last.
 
 
-def STAB(ln, hit=1.0, back=0.42, hold=0.33, snap=0.67, home=1.0, start=None, to=0.75):
-    """A thrust on line {@code ln} landing at {@code hit}: drawn back {@code back} blocks along it by half the wind-up
-    and a hair further to the drive, out to the point in the wind-up's last frame, a hair past it for {@code hold},
-    snapped back along the line to {@code to} of the draw in {@code snap}, then into the stance in {@code home}."""
-    return [(0.0, start or REST, "io"), (hit * 0.5, (ln, back - 0.04), "io"), (max(hit * 0.5, hit - 0.33), (ln, back), "io"),
-            (hit, (ln, 0.0), "in"), (hit + hold, (ln, -0.03), "out"), (hit + hold + snap, (ln, back * to), "io"),
-            (hit + hold + snap + home, REST, "io")]
+def JAB(ln, hit=1.0, hold=0.33, back=1.2):
+    """A jab on line {@code ln} landing at {@code hit}: straight out from the stance to its mark, gathering speed into
+    it (the point aimed early, so it drives along the blade), a hair past it for {@code hold}, then back into the stance
+    in {@code back}, the way it went."""
+    return [(0.0, REST, "io"), (hit, (ln, 0.0), "in", 0.0, "out"), (hit + hold, (ln, -0.02), "out"),
+            (hit + hold + back, REST, "io")]
 
 
-def CUT(c, hit=1.0, pre=32.0, stop=44.0, set_=0.67, lag=6.0, carry=0.5, home=2.4, start=None, low=-0.2):
-    """A cut on lever {@code c} landing at {@code hit}: set {@code pre} degrees back (the wrist trailing {@code lag})
-    by {@code set_} and a hair further to the drive, through the target on the hit, fastest there (the wrist whipping
-    square on the turn's own ease), carried on to {@code stop} in {@code carry}, then home in {@code home}, bowed
-    {@code low} under the view."""
+def CUT(c, hit=1.0, pre=28.0, stop=14.0, set_=0.67, lag=5.0, carry=0.4, home=2.0, start=None):
+    """A slash on lever {@code c} landing at {@code hit}: set {@code pre} degrees back on its own side (the wrist
+    trailing {@code lag}) by {@code set_} and a hair further to the drive, through the target on the hit, fastest
+    there, carried on to {@code stop} in {@code carry}, then home in {@code home} the way it came."""
     return [(0.0, start or REST, "io"), (set_, (c, -pre, lag), "io"), (max(set_, hit - 0.5), (c, -pre - 3, lag), "io"),
-            (hit, (c, 0.0), "in", 0.0, "out"), (hit + carry, (c, stop), "out"), (hit + carry + 0.1, (c, stop + 1), "out"),
-            (hit + carry + 0.1 + home, REST, "io", low)]
+            (hit, (c, 0.0), "in", 0.0, "out"), (hit + carry, (c, stop), "out"), (hit + carry + home, REST, "io")]
 
 
-def GIVE(hit=1.0, home=3.0):
-    return [(0.0, REST, "io"), (hit, "give", "io"), (home, REST, "io")]
-
-
-def TUCK(down=0.9, up=2.8, home=3.9, to="aside"):
-    """The other hand out of a cut's way by {@code down}, before it sweeps past, back once the cut's hand is home."""
-    return [(0.0, REST, "io"), (down, to, "io"), (up, to, "lin"), (home, REST, "io")]
-
+STILL = [(0.0, REST, "io")]  # the hand not striking holds the stance
 
 CHORE = {
     "daggers": {
         "poses": DAGGERS,
         "moves": {
-            "strike_1": {"strike": STAB("line_hi", back=0.46), "other": GIVE()},
-            "strike_2": {"strike": STAB("line_lo", back=0.33), "other": GIVE(home=3.8)},
-            "strike_3": {"strike": CUT("cut_3"), "other": TUCK()},
-            "strike_4": {"strike": STAB("line_pair", 2.0, 0.42, 0.33, 0.5, 1.5),
-                         "other": STAB("line_pair", 2.0, 0.42, 0.33, 0.5, 1.5)},
-            "strike_5": {"strike": CUT("cut_5", 2.0, 42.0, 46.0, 1.35, home=3.6), "other": TUCK(1.8, 5.0, 6.4)},
-            "heavy": {"strike": STAB("line_deep", 1.0, 0.55, 0.4, 0.6, 2.0, ("line_deep", 0.53), 0.85),
-                      "other": STAB("line_deep", 1.0, 0.55, 0.4, 0.6, 2.0, ("line_deep", 0.53), 0.85)},
-            "riposte": {"strike": STAB("line_rip", 1.0, 0.58, 0.5, 0.5, 1.4), "other": GIVE(1.0, 3.4)},
-            "slipcut": {"strike": CUT("cut_slip", home=3.4), "other": TUCK(0.9, 3.4, 4.8, "low")},
-            "undercut": {"strike": CUT("cut_under", pre=40.0, home=3.4), "other": GIVE(1.0, 3.6)},
-            "art": {"strike": CUT("cut_art", 2.0, 46.0, 48.0, 1.2, 8.0, 0.6, 3.4), "other": TUCK(1.8, 5.0, 6.6)},
-            "plunge": {"strike": CUT("chop_p", 1.0, 36.0, 28.0, 0.0, 6.0, 0.5, 2.2, ("chop_p", -36.0, 6.0)),
-                       "other": GIVE(1.0, 3.6)},
-            "execution": {"strike": CUT("chop_x", 2.0, 38.0, 30.0, 1.2, 8.0, 0.5, 3.0), "other": GIVE(2.0, 5.0)},
+            "strike_1": {"strike": JAB("jab_1"), "other": STILL},
+            "strike_2": {"strike": JAB("jab_2"), "other": STILL},
+            "strike_3": {"strike": CUT("cut_3", pre=42.0, stop=8.0), "other": STILL},
+            "strike_4": {"strike": JAB("jab_pair", 2.0, 0.33, 1.4), "other": JAB("jab_pair", 2.0, 0.33, 1.4)},
+            "strike_5": {"strike": CUT("cut_5", 2.0, 42.0, 8.0, 1.35, home=2.6), "other": STILL},
+            "heavy": {"strike": JAB("jab_deep", 1.0, 0.4, 1.8), "other": JAB("jab_deep", 1.0, 0.4, 1.8)},
+            "riposte": {"strike": JAB("jab_rip", 1.0, 0.4, 1.4), "other": STILL},
+            "slipcut": {"strike": CUT("cut_slip", pre=42.0, stop=8.0, home=2.6), "other": STILL},
+            "undercut": {"strike": CUT("cut_under", pre=42.0, stop=12.0, home=2.6), "other": STILL},
+            "art": {"strike": CUT("cut_art", 2.0, 48.0, 12.0, 1.2, 6.0, 0.4, 3.0), "other": STILL},
+            "plunge": {"strike": CUT("chop_p", 1.0, 20.0, 12.0, 0.0, 4.0, 0.4, 2.2, ("chop_p", -20.0, 4.0)), "other": STILL},
+            "execution": {"strike": CUT("chop_x", 2.0, 22.0, 12.0, 1.2, 4.0, 0.4, 2.8), "other": STILL},
         },
     },
 }
+
+# the ribbon (round 14): a style's first-person look [root along the blade, light], and per move the ticks it lays it,
+# the stroke alone (a jab's drive, a slash from its set through its carry), never the way home
+TRAIL_LOOK = {"daggers": [0.8, 0.6]}
+
+
+def trail(sid, mv):
+    """[from, to] clip ticks a set move's blade lays its ribbon, or None."""
+    if not has(sid, mv):
+        return None
+    keys = CHORE[sid]["moves"][mv]["strike"]
+    hit = next(k[0] for k in keys if isinstance(k[1], tuple) and k[1][1] == 0.0)
+    after = next(k[0] for k in keys if k[0] > hit)
+    lever = CHORE[sid]["poses"][keys[1][1][0]]["kind"] == "arc"
+    return [round(max(0.0, hit - (0.45 if lever else 0.4)), 3), round(after if lever else hit + 0.12, 3)]
+
 
 EASE = {"io": L.ease_in_out_sine, "in": lambda x: x * x, "out": lambda x: 1 - (1 - x) ** 2, "lin": lambda x: x,
         "late": lambda x: L.ease_in_out_sine(x) ** 2}
@@ -195,7 +205,7 @@ def _grip(held, pose):
 def _on_line(held, p, back):
     z = p["depth"]
     T = np.array([p["tip"][0] * ASP / F_ * z, p["tip"][1] / F_ * z, -z])
-    a = T - p["src"]
+    a = T - (H0 + held.grip if p["src"] is None else p["src"])
     a /= np.linalg.norm(a)
     R = L.axis_rot(a, p["roll"]) @ L.turn_to(held.axis, a)
     G = T - R @ (held.tip - held.grip) - a * back
@@ -334,7 +344,9 @@ def quick(base, out):
                             + [round(float(v), 5) for v in L.mat_quat(R)] + [round(float(v), 3) for v in cam])
                 d, R = pose(sid, mv, held, float(tt), "other")
                 idle.append([round(float(tt), 3)] + [round(float(v), 4) for v in d] + [round(float(v), 5) for v in L.mat_quat(R)])
-            row.update(keys=keys, idle=idle, bite=bite(sid, mv), set=SS.set_of(st, mv, held))
+            row.update(keys=keys, idle=idle, bite=bite(sid, mv), set=SS.set_of(st, mv, held), trail=trail(sid, mv))
+        if sid in TRAIL_LOOK:
+            data["styles"][sid]["trail"] = TRAIL_LOOK[sid]
     json.dump(data, open(out, "w"), separators=(",", ":"))
     return out
 
