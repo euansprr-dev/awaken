@@ -1,6 +1,6 @@
 # The wild's two-block plants meet at their seams (SPEC 41.2, 'Halves that meet'): every tall plant in every look and
 # shape, set down on a platform in the sky with both halves' states written out, side on at the seam's height. Each
-# group of six: a wide shot, then each three close. Run: tools/tour-ci.sh tools/autopilot/wild-seams.txt 900
+# group of six: a wide shot, then each three close, against a dark wall. Run: tools/tour-ci.sh tools/autopilot/wild-seams.txt 900
 world wildseams781 creative 781
 waitworld
 gui 0
@@ -20,10 +20,13 @@ camera first
 hud off
 cmd gamemode spectator
 cmd tp @s 50.5 205 5.5 180 0
-wait 100
-cmd fill -4 199 -4 132 199 4 minecraft:grass_block
+cmd forceload add -8 -8 136 16
+wait 300
 cmd fill -4 200 -4 132 206 12 minecraft:air
-wait 20
+cmd fill -4 199 -4 132 199 4 minecraft:grass_block
+# a dark wall behind the plants, so pale heads and the seams read against it rather than sky and cloud
+cmd fill -4 199 -3 132 206 -3 minecraft:dark_oak_planks
+wait 40
 # ---- group 1: long0 shape 0, long0 shape 1, long0 shape 2, long1 shape 0, long1 shape 1, long1 shape 2
 cmd setblock 0 201 0 awaken:long_grass[half=upper,look=0,shape=0]
 cmd setblock 0 200 0 awaken:long_grass[half=lower,look=0,shape=0]
