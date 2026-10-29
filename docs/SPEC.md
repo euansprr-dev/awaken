@@ -12087,7 +12087,8 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   left but the untwinned ores' shells, each twin is placed and each untwinned ore keeps its shell as it was; above, the
   rock is untouched; glowcaps stand on rock and only in the Rootways, root curtains hang from rock or root with the tip
   last, rust, flowstone and ember only in the Ochre Deep (and no mineral crust or wet streaks there); every piece is laid;
-  glowcaps on at most **6%** of open floors; the skin with the regions at most **25%** of the fill.
+  glowcaps on at most **6%** of open floors; the skin with the regions at most **25%** of the fill (each chunk against its own
+  fill, the middle of the six; the rock rule reads each section once).
 - **Measured 2026-10-29**: 91,828 cells of region rock on 8 chunks, 46 glowcaps (2.0% of 2,273 open floors), 83 root
   curtain blocks, 137 rust crust, 37 rust flowstone, 32 ember lichen; 2.2 ms a chunk against 34.2 ms to fill it (6%; the
   skin alone 0.5 ms).

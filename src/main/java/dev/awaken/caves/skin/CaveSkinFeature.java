@@ -370,9 +370,13 @@ public final class CaveSkinFeature implements Feature {
      * keeps the 26 cells round it as they were (within its section), so it sits in a pocket of the stone it grew in.
      * Written straight to the sections: rock for rock, nothing the heightmaps or the light care about.
      */
+    /** A section's states as read, one per worldgen thread (the rock rule reads each cell once). */
+    private static final ThreadLocal<BlockState[]> SECTION = ThreadLocal.withInitial(() -> new BlockState[4096]);
+
     static int regionRock(ChunkAccess chunk, int cx, int cz, int[] tops, int maxTop, Regions regions) {
         CaveRegion[] q = new CaveRegion[64];
         long[] keep = new long[64];
+        BlockState[] states = SECTION.get();
         int changed = 0;
         for (int si = 0; si < chunk.getSectionsCount(); si++) {
             int baseY = SectionPos.sectionToBlockCoord(chunk.getSectionYFromSectionIndex(si));
@@ -386,13 +390,17 @@ public final class CaveSkinFeature implements Feature {
                 any |= q[k] != null;
             }
             if (!any) continue;
-            boolean shells = false;
-            if (section.getStates().maybeHas(CaveSkinFeature::ore)) {
+            boolean shells = false, read = section.getStates().maybeHas(CaveSkinFeature::ore);
+            if (read) {
+                // the whole section is read once here, and the rock pass below works from what was read
                 Arrays.fill(keep, 0L);
                 for (int idx = 0; idx < 4096; idx++) {
                     int x = idx & 15, z = idx >> 4 & 15, y = idx >> 8;
                     BlockState s = section.getBlockState(x, y, z);
-                    if (!ore(s)) continue;
+                    states[idx] = s;
+                    // nearly every cell is host rock, deepslate or air: skip those before the tag lookup
+                    Block sb = s.getBlock();
+                    if (host(sb) || sb == Blocks.DEEPSLATE || s.isAir() || !ore(s)) continue;
                     CaveRegion r = q[(y >> 2) << 4 | (z >> 2) << 2 | x >> 2];
                     if (r != null && CaveSkin.kit(r).twins().containsKey(s.getBlock())) continue;
                     for (int dy = Math.max(0, y - 1); dy <= Math.min(15, y + 1); dy++)
@@ -414,14 +422,14 @@ public final class CaveSkinFeature implements Feature {
                     for (int z = z0; z < z0 + 4; z++) {
                         for (int x = x0; x < x0 + 4; x++) {
                             if (baseY + y >= tops[z << 4 | x] + UNDER_GROUND - REGION_UNDER) continue;
-                            BlockState s = section.getBlockState(x, y, z);
+                            BlockState s = read ? states[y << 8 | z << 4 | x] : section.getBlockState(x, y, z);
                             Block b = s.getBlock();
                             if (host(b)) {
                                 int bit = y << 8 | z << 4 | x;
                                 if (shells && (keep[bit >> 6] & 1L << (bit & 63)) != 0) continue;
                                 section.setBlockState(x, y, z, rock, false);
                                 changed++;
-                            } else if (!s.isAir() && ore(s)) {
+                            } else if (b != Blocks.DEEPSLATE && !s.isAir() && ore(s)) {
                                 var twin = kit.twins().get(b);
                                 if (twin != null) {
                                     section.setBlockState(x, y, z, twin.get().defaultBlockState(), false);
