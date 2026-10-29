@@ -297,15 +297,30 @@ public final class ForgeSong {
             HunterTier.A, new String[]{"hide 1, core 2, metal 2, ess 1", "hide 2, core 2, metal 3, heart 1, ess 1", "hide 2, core 1, metal 2, ess 2", "hide 2, core 1, metal 2, ess 1"},
             HunterTier.S, new String[]{"core 2, metal 2, heart 1, ess 1", "core 2, bind 2, metal 3, heart 1, ess 1", "core 2, bind 2, metal 2, ess 1", "core 2, metal 2, ess 1"}));
 
-    /** What a piece takes, or null where the set isn't made yet (its pattern comes in a later phase). */
+    /**
+     * The other sets' costs (SPEC §44.4): the rank's hide, trophies, bindings and metal with what each set is made of.
+     * E by hand from the wilds: Bellguard copper, Rootwarden logs, moss and resin, Amberwing hide and resin. D forged on
+     * iron: Cleftrunner with wool for its wraps, Lanternlight with lanterns, Bladeward a trophy, Hornlord a Lord's heart.
+     */
+    private static final Map<ArmourSet, String[]> SET_COSTS = new EnumMap<>(Map.of(
+            ArmourSet.BELLGUARD, new String[]{"copper 5, hide 1, ess 1", "copper 7, hide 2, ess 1", "copper 6, hide 1, ess 1", "copper 3, hide 1, ess 1"},
+            ArmourSet.ROOTWARDEN, new String[]{"log 3, moss 1, resin 1, ess 1", "log 4, hide 2, moss 2, resin 2, ess 1", "log 3, moss 2, resin 1, ess 1", "log 2, hide 1, resin 1, ess 1"},
+            ArmourSet.AMBERWING, new String[]{"hide 3, resin 1, ess 1", "hide 4, resin 3, bind 1, ess 1", "hide 4, bind 2, ess 1", "hide 2, bind 1, resin 1, ess 1"},
+            ArmourSet.CLEFTRUNNER, new String[]{"metal 2, wool 1, ess 1", "metal 3, hide 2, wool 2, ess 1", "metal 2, hide 2, ess 1", "metal 2, hide 1, ess 1"},
+            ArmourSet.LANTERNLIGHT, new String[]{"wool 3, metal 1, ess 1", "metal 3, wool 3, lantern 2, ess 2", "wool 4, metal 1, ess 1", "metal 2, hide 1, ess 1"},
+            ArmourSet.BLADEWARD, new String[]{"metal 3, core 1, ess 1", "metal 4, hide 2, core 1, ess 1", "metal 3, hide 1, ess 2", "metal 2, hide 1, ess 1"},
+            ArmourSet.HORNLORD, new String[]{"metal 3, core 2, ess 2", "metal 4, core 2, heart 1, ess 2", "metal 3, core 1, hide 2, ess 1", "metal 2, core 1, ess 1"}));
+
+    /** What a piece takes, or null where the set isn't made yet (its items come in a later phase). */
     public static @Nullable List<Need> cost(ArmourSet set, ArmorType piece) {
-        if (set.hunter == null) return null;
-        String line = HUNTER_COSTS.get(set.hunter)[slot(piece)];
+        String[] lines = set.hunter != null ? HUNTER_COSTS.get(set.hunter) : SET_COSTS.get(set);
+        if (lines == null || !set.made()) return null;
+        String line = lines[slot(piece)];
         List<Need> out = new ArrayList<>();
+        HunterTier t = set.tier();
         for (String part : line.split(", ")) {
             String[] kv = part.split(" ");
             int n = Integer.parseInt(kv[1]);
-            HunterTier t = set.hunter;
             out.add(switch (kv[0]) {
                 case "hide" -> new Need(t.hideTag(), null, n);
                 case "core" -> new Need(t.coreTag(), null, n);
@@ -313,7 +328,14 @@ public final class ForgeSong {
                 case "metal" -> new Need(t.metalTag(), null, n);
                 case "heart" -> new Need(null, Awaken.id("lord_heart"), n);
                 case "amethyst" -> new Need(null, Identifier.withDefaultNamespace("amethyst_shard"), n);
-                default -> new Need(null, Awaken.id("essence_shard"), n);
+                case "copper" -> new Need(null, Identifier.withDefaultNamespace("copper_ingot"), n);
+                case "moss" -> new Need(null, Identifier.withDefaultNamespace("moss_block"), n);
+                case "resin" -> new Need(null, Identifier.withDefaultNamespace("resin_clump"), n);
+                case "lantern" -> new Need(null, Identifier.withDefaultNamespace("lantern"), n);
+                case "log" -> new Need(TagKey.create(Registries.ITEM, Identifier.withDefaultNamespace("logs")), null, n);
+                case "wool" -> new Need(TagKey.create(Registries.ITEM, Identifier.withDefaultNamespace("wool")), null, n);
+                case "ess" -> new Need(null, Awaken.id("essence_shard"), n);
+                default -> throw new IllegalStateException("unknown cost " + kv[0] + " for " + set.id);
             });
         }
         return out;

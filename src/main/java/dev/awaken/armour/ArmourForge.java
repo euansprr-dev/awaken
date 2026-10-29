@@ -64,7 +64,8 @@ public final class ArmourForge {
         boolean hand = table(level, be.getBlockPos()) != null;
         List<ArmourPayloads.Offer> out = new ArrayList<>();
         for (ArmourSet set : ArmourSet.values()) {
-            if (set.rank.ordinal() > rank.ordinal() || !known(mem, set)) continue;
+            if (set.rank.ordinal() > rank.ordinal() || !set.made()) continue;
+            boolean known = known(mem, set);
             for (ArmorType piece : ForgeSong.PIECES) {
                 List<ForgeSong.Need> cost = ForgeSong.cost(set, piece);
                 if (cost == null) continue;
@@ -76,8 +77,8 @@ public final class ArmourForge {
                     needs.add(new ArmourPayloads.Need(label(n, set), icon(n), have, n.count()));
                 }
                 boolean placed = ForgeSong.byHand(set) ? hand : metal;
-                int flags = (afford && placed ? ArmourPayloads.CAN : 0) | (mem.fromMemory(set, piece) ? ArmourPayloads.FROM_MEMORY : 0)
-                        | (mem.forgedWhole(set) ? ArmourPayloads.KNOWN_WHOLE : 0);
+                int flags = (afford && placed && known ? ArmourPayloads.CAN : 0) | (mem.fromMemory(set, piece) ? ArmourPayloads.FROM_MEMORY : 0)
+                        | (mem.forgedWhole(set) ? ArmourPayloads.KNOWN_WHOLE : 0) | (known ? 0 : ArmourPayloads.NO_PATTERN);
                 out.add(new ArmourPayloads.Offer(set.ordinal() * 4 + ForgeSong.slot(piece), needs, flags));
             }
         }
@@ -88,9 +89,9 @@ public final class ArmourForge {
         return new ArmourPayloads.Offers(be.getBlockPos(), rank.ordinal(), out, place, byHand);
     }
 
-    /** Hunter sets come with rank; every other set's pattern is found in the world (later phases). */
+    /** Hunter sets come with rank and the E sets are known from the start; every other set's pattern is found in the world. */
     static boolean known(ArmouryMemory mem, ArmourSet set) {
-        return set.hunter != null || mem.patterns.contains(set.id);
+        return set.hunter != null || set.rank == Rank.E || mem.patterns.contains(set.id);
     }
 
     // ---- the place -----------------------------------------------------------------------------------------------------
@@ -159,6 +160,8 @@ public final class ArmourForge {
             if (path.startsWith("hunter_hide")) return "Hide (" + r + ")";
             if (path.startsWith("hunter_core")) return "Trophy (" + r + ")";
             if (path.startsWith("hunter_bind")) return "Binding (" + r + ")";
+            if (path.equals("logs")) return "Logs";
+            if (path.equals("wool")) return "Wool";
             return switch (set.rank) {
                 case D -> "Iron";
                 case C -> "Diamond";
@@ -401,8 +404,7 @@ public final class ArmourForge {
     static void name(ServerPlayer p, ArmourSet set) {
         var w = SignalWindow.builder(SignalWindow.Kind.REVELATION, Component.literal(set.setName))
                 .body(Component.literal("You forged " + set.setName + " whole. " + set.archetype.label + " armour, " + set.rank.label + "-rank."));
-        if (set.hunter != null) for (SetBonus.Line l : SetBonus.lines(set.hunter))
-            w.row(Component.literal(l.pieces() + " pieces"), Component.literal(l.text()));
+        for (ArmourBonus.Line l : ArmourBonus.lines(set)) w.row(Component.literal(l.pieces() + " pieces"), Component.literal(l.text()));
         Signal.send(p, w.ttl(20 * 12).build());
     }
 

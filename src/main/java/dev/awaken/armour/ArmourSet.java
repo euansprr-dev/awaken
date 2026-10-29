@@ -62,6 +62,20 @@ public enum ArmourSet {
 
     private static final ArmourSet[] VALUES = values();
 
+    /** The highest rank whose own-item sets are built (P2: E and D; plan §6.2 adds C and B, then A and S). */
+    static final Rank MADE_TO = Rank.D;
+
+    /** Whether the set's pieces exist as items: the Hunter sets always, the others from the phase that builds them. */
+    public boolean made() {
+        return hunter != null || rank.ordinal() <= MADE_TO.ordinal();
+    }
+
+    /** The Hunter tier of this set's rank: its armour numbers, hide, trophies, bindings and metal. */
+    public HunterTier tier() {
+        for (HunterTier t : HunterTier.values()) if (t.rank == rank) return t;
+        throw new IllegalStateException("no Hunter tier at " + rank);
+    }
+
     public static ArmourSet of(HunterTier tier) {
         for (ArmourSet s : VALUES) if (s.hunter == tier) return s;
         throw new IllegalArgumentException("no armour set for " + tier);

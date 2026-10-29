@@ -41,8 +41,9 @@ public final class ArmourPayloads {
                 ByteBufCodecs.VAR_INT, Need::need, Need::new);
     }
 
-    /** {@link Offer#flags}: you can make it now; you can forge it from memory; you have made this set whole before. */
-    public static final int CAN = 1, FROM_MEMORY = 2, KNOWN_WHOLE = 4;
+    /** {@link Offer#flags}: you can make it now; you can forge it from memory; you have made this set whole before; you
+     * haven't found the set's pattern yet (the list shows it, and where patterns come from). */
+    public static final int CAN = 1, FROM_MEMORY = 2, KNOWN_WHOLE = 4, NO_PATTERN = 8;
 
     /** A piece the stand offers: set ordinal × 4 + slot, what it takes, and flags. */
     public record Offer(int piece, List<Need> needs, int flags) {
@@ -70,5 +71,17 @@ public final class ArmourPayloads {
                 BlockPos.STREAM_CODEC, Done::pos, ByteBufCodecs.VAR_INT, Done::piece, ByteBufCodecs.VAR_INT, Done::quality,
                 ByteBufCodecs.BOOL, Done::woke, ByteBufCodecs.BOOL, Done::first, Done::new);
         @Override public Type<Done> type() { return TYPE; }
+    }
+
+    /**
+     * Server → the wearer and everyone tracking them: a whole set's charge (0-100; Hornlord's lowered horns), the runes
+     * circling them (0-3) and a flare (0 none, else how bright) when an ability fires (SPEC §44.5, "The look").
+     */
+    public record Charge(int entity, int charge, int runes, int flash) implements CustomPacketPayload {
+        public static final Type<Charge> TYPE = new Type<>(Awaken.id("armour_charge"));
+        public static final StreamCodec<ByteBuf, Charge> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, Charge::entity, ByteBufCodecs.VAR_INT, Charge::charge, ByteBufCodecs.VAR_INT, Charge::runes,
+                ByteBufCodecs.VAR_INT, Charge::flash, Charge::new);
+        @Override public Type<Charge> type() { return TYPE; }
     }
 }

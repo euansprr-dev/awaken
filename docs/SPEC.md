@@ -630,6 +630,11 @@ of `AwakenConfig.Client`.
   projectile LIGHT, a blast with an entity PERILOUS, fire, falls, drowning, freezing and the void NONE). Tells:
   `installTells(TellSource)`, `tell(Entity)` → `Tell(ticks, kind)` or null (both sides). Stagger: `installStaggers`,
   `stagger(LivingEntity, ticks)` (server). The mobs module installs both for its creatures.
+- `dev.awaken.core.api.FightMoments` (§44.5) — the moments of a fight, told by whoever owns them so others can answer
+  without reaching in: `enum Moment {HIT, FINISHER, DEFLECT, PERFECT_DODGE, BREAK, KILL, GUARD, PERFECT_HEAVY, CAST}`,
+  `listen(Listener)` (`on(ServerPlayer, Moment, @Nullable LivingEntity target)`), `report(player, moment, target)`
+  (server). Arms reports its eight through `Marks.fire` (the same moments its marks answer), powers reports CAST from
+  `Casting` after each cast. The armour module listens (set abilities).
 - `dev.awaken.core.api.BodyMaterial` (§24) — what a blade meets: `FLESH, ARMOR, BONE, WOOD, STONE, SPIRIT, SLIME`;
   `of(Entity)` (both sides; armour ≥ 10 over flesh or bone answers ARMOR), `install(Source)` (the mobs module answers for
   its bodies through `MobDef.material()`), vanilla defaults by type.
@@ -13282,11 +13287,45 @@ blocks through stone, no marks, no danger sense).
 E, five at each rank D-S (one of each archetype, plus a Lord-forged set). The six Hunter sets keep their item ids and
 are one set each (`ArmourSet.hunter`): Wildhide (E, Strider), Beastbound (D, Bulwark), Gatewrought (C, Duelist),
 Veilwoven (B, Channeler), Lordscale (A, Lord-forged), Sovereign Weave (S, Lord-forged). `ArmourLooks.of(stack)` names
-the set and piece a worn item is drawn as. The other 23 (plan §4.2) get items, recipes and art from P2 on.
+the set and piece a worn item is drawn as. The other 23 (plan §4.2) get items, recipes and art phase by phase
+(`ArmourSet.MADE_TO`: P2 made E and D). A made set with no Hunter items has its own (`ArmourItems`, `<set>_helmet`
+`_chestplate` `_leggings` `_boots`, a `ForgedArmourItem` each, and above E a `<set>_pattern`), in the Awakened Gear tab.
+- **P2's seven**, each with its own look (`armour_sets.py`; 32px icons drawn from the meshes, a pattern is a vellum sheet
+  with its helm in ink and a seal in its rank's colour, a Lord's in gold):
+  - **Bellguard** (E, Bulwark): a bell-founders' guard cast in bronze; a bell worn mouth down with a green-lit eye-slit
+    and its hanging loop, bell-dome pauldrons, a small bell cast on the breast, a copper skirt; patina drips.
+  - **Rootwarden** (E, Channeler): a moss hood under a bark circlet, a bark mask with two amber eyes, antlers of
+    branching wood, bark plates bound by roots to a sap heart, a leaf apron; its runes are amber seeds.
+  - **Amberwing** (E, Duelist): black leather, a closed helm with a band of lit amber across the eyes and a swept fin,
+    two pairs of amber wings crossing on the back (lit, holding dark motes), an amber sash.
+  - **Cleftrunner** (D, Strider): a dusk-blue hood, a long red scarf over mouth and nose whose tail streams behind,
+    blue lamellar laced in red on the breast and the right shoulder, iron only on forearms and shins.
+  - **Lanternlight** (D, Channeler): a deep cowl whose face is only dark with a little lamp at its brow, a tall iron
+    collar, charcoal robes trimmed in brass, a burning lantern caged on each shoulder; its runes are little lamps.
+  - **Bladeward** (D, Duelist): an oxblood brigandine studded in brass, a close steel helm cut in a dark T with a red
+    plume, one great layered pauldron on the left with a neck guard, a half cape.
+  - **Hornlord** (D, Lord-forged): blackened iron with embers in its cracks, a closed helm with a burning slit and great
+    pale horns banded in gold, a fur mantle and ragged fur cape, sabatons split like hooves.
 
 **44.3 Numbers.** A set sits on its rank's Hunter numbers (`HunterTier.Armour`). Bulwark +1 point on the cuirass and
 greaves, +0.5 toughness, +0.05 knockback; Strider -1 on the cuirass, +5% speed a piece; Channeler -1 on the cuirass, +3%
-power damage a piece; Duelist the rank's numbers; Lord-forged +1 on the cuirass. (P2: in a spec table with a stats test.)
+power damage a piece; Duelist the rank's numbers; Lord-forged +1 on the cuirass (`ArmourItems.numbers`; durability,
+enchantability and sound are the rank's). The made sets (test `armour_numbers` holds this table):
+
+| Set | Rank | Archetype | Helm | Cuirass | Greaves | Boots | Total | Toughness | Knockback | A piece |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Bellguard | E | Bulwark | 2 | 5 | 4 | 1 | 12 | 0.5 | 0.05 | |
+| Rootwarden | E | Channeler | 2 | 3 | 3 | 1 | 9 | 0 | 0 | +3% power damage |
+| Amberwing | E | Duelist | 2 | 4 | 3 | 1 | 10 | 0 | 0 | |
+| Cleftrunner | D | Strider | 2 | 5 | 5 | 2 | 14 | 0.5 | 0 | +5% speed |
+| Lanternlight | D | Channeler | 2 | 5 | 5 | 2 | 14 | 0.5 | 0 | +3% power damage |
+| Bladeward | D | Duelist | 2 | 6 | 5 | 2 | 15 | 0.5 | 0 | |
+| Hornlord | D | Lord-forged | 2 | 7 | 5 | 2 | 16 | 0.5 | 0 | |
+
+Costs (`ForgeSong.SET_COSTS`, helm / cuirass / greaves / boots; hide, metal, core and bind are the rank's own tags, ess
+the essence shard): Bellguard copper 5, 7, 6, 3 with hide; Rootwarden logs, moss, resin and hide; Amberwing hide, resin
+and bind; Cleftrunner metal, wool and hide; Lanternlight wool and metal, its cuirass two lanterns; Bladeward metal, hide
+and core; Hornlord metal and core, its cuirass a Lord's heart. E is cut by hand, D forged.
 
 **44.4 The Forge Song (P1).** Armour is never crafted on the grid: every Hunter armour recipe is gone and the pieces
 are forged at a **Fitting Stand** (`awaken:fitting_stand`, crafted from a stick, a copper ingot, wool and planks; a
@@ -13341,14 +13380,72 @@ or better; `GearNow` no longer suggests armour.
   copper, iron, diamond, Deepglass, netherite, starmetal by rank), bellows, pull, quench, count, note (a bell at C5,
   pitched per note), cut, fit, wake, miss.
 - Progression counters `awaken:armour_started`, `awaken:armour_forged`.
+- **Patterns (P2).** The Hunter sets come with rank and the E sets are known from the start; every other set needs its
+  pattern (the stand lists it greyed, "Pattern not found", and says where patterns come from). A pattern is an item
+  (`PatternItem`, stacks to 16): use it to learn the set for good (`ArmouryMemory.patterns`); one already known says so
+  and can be given away. Patterns drop from gate creatures (`ArmourPatterns`, needs a player's kill and a gate id on
+  `MobRole`): an elite 20%, a warden 50%, the gate's Lord always. The set is one of the gate's rank (its content level as
+  `ArmsApi.rankOfLevel`) whose pattern the killer doesn't know; a Lord gives its rank's Lord-forged set first, other
+  creatures never give one. Nothing drops once you know them all.
 
-**44.6 Set twists.** Each set's own full-set twist on top of its archetype's ability (§44.4, P2).
+**44.5 Set abilities (P2).** `ArmourAbilities` (server; state `awaken:armour_state`, unsaved: a relog starts empty).
+A made set's own pieces: **two** give its archetype's half bonus, **four** its archetype's ability and its own twist
+(§44.6). A Hunter set keeps its own bonuses (`gear/SetBonus`) and, whole, gains its archetype's ability too; the
+Lord-forged have no archetype ability, their twist is the Lord's move. Only one set is ever whole. Every piece is
+counted on each equipment change.
+- **Half bonuses** (two of a made set; one each even with two sets): Bulwark +1 heart; Strider falls hurt a third less
+  (fall damage multiplier -1/3); Channeler powers +10%; Duelist +6% attack speed; Lord-forged +1 heart and +0.2
+  knockback resistance. A Channeler piece adds its +3% power damage worn alone.
+- **The fight's moments** come from `FightMoments` (§12): arms' HIT, FINISHER, DEFLECT, PERFECT_DODGE, BREAK, KILL,
+  GUARD, PERFECT_HEAVY and powers' CAST.
+- **Bastion** (Bulwark): a charge to 100; a guarded blow +20, a deflect +30, a blow taken +8. Full, the next deflect,
+  guard or perfect heavy bursts: everyone hostile within 3.5 takes the ability's blow (4 + 2 a rank above E), is thrown
+  back (1.1, lifted 0.35) and staggered 30 ticks; a shockwave and a quake.
+- **Flow** (Strider): a perfect dodge +35, wall-running +2 a tick, sliding +1 a tick. Full, the next blow that would land
+  (any blow a fighter could answer: `Strikes.of` not NONE) strikes an afterimage instead, and you run 30% faster for
+  40 ticks. (The plan's "the dodge carries twice as far" needs the Runner's insides; this is the same promise kept from
+  outside.)
+- **Edge** (Duelist): a deflect +35, a finisher +30, a clean hit +6, a perfect dodge +20. Full, your next hit sends a
+  wave along its swing: everyone else within 5 blocks and 50° of your heading takes 80% of your attack damage.
+- **Runes** (Channeler): each power you cast puts a rune circling you, up to three, each lasting 400 ticks from the last
+  cast. A cast with three overchannels: the runes fly at the three nearest foes within 8 (the ability's blow, as
+  magic), and your powers hit 35% harder for 40 ticks.
+- An ability's own blow on a body of 150 health or more is held to 3% of it (at least 2): a Lord is never burst down by
+  armour.
+- **The look.** The charge and runes go to the wearer and everyone tracking them (`Charge` payload: entity, charge,
+  runes, flash; sent when the charge moves 5, fills or empties, the runes change, or something is released, and to
+  anyone who starts tracking). On the armour (`ArmourGlow`): as the charge fills its glowing parts brighten and its rim
+  takes the accent (energy up to two thirds); full it breathes (1.4 s); a release flares the whole set for 450 ms. A
+  Channeler's runes are its set's own little mesh (`armour/<set>/rune.mesh`: amber seeds, little lamps, Veil-stones)
+  circling at the chest once every 64 ticks, growing in over 300 ms, drawn full-bright.
+- **Sounds** `awaken:armour.*` (`audio_forge.py`): charged, bastion, flow, edge, rune (three notes of one chord, rising
+  as runes gather), overchannel, ring, rooted, gore.
+- **Mastery** (P2 to III; IV and V with P3): blows dealt or taken with a whole set on +1, an elite's or a warden's kill
+  +5, a gate Lord's +60, written onto every worn piece of that set in tens (`Forged.mastery`). Steps at 0, 300, 1200,
+  3000, 6000 (I to V; `Forged.MASTERY`). The tooltip shows it ("Mastery II (420 / 1200)"); the System says when a set
+  grows into a new step. II: the trims catch more light. III: what glows of itself glows more, and when the wearer is
+  under 35% health it beats with their heart (a double beat about seventy a minute), seen by everyone. Shader: the
+  overlay's bits 10-12 the step, bit 13 the wearer is low.
+
+**44.6 Set twists.** Each set's own full-set twist on top of its archetype's ability (§44.5).
 - **Wildhide: Pounce** (P0, replaces Hunter's Sense, which outlined creatures through walls). Crouch at least 10 ticks,
   then jump: you leap along your look's heading (0.95 forward, 0.62 up; the jumping client applies it, movement being the
   client's). The server sees the same jump (vanilla replays it) and holds the leap for 50 ticks: the first melee hit in
   that time deals +50% and shoves the target 0.7 along your heading, with crit sparks; then the leap is spent. 60 ticks
   cooldown. Numbers in `gear/SetBonus` (`POUNCE_*`), logic in `gear/Pounce`.
+- **Bellguard: Ring.** A deflect rings the armour like a bell: everyone hostile within 3 staggered 20 ticks; 60 ticks
+  cooldown.
+- **Rootwarden: Rooted.** A cast while standing still on the ground: no knockback for 40 ticks, and you mend half a
+  heart; 40 ticks cooldown.
+- **Amberwing: Tempo.** A deflect or a perfect dodge: +15% attack speed and +10% speed for 60 ticks (the plan's "rhythm
+  steps last twice as long" needs arms' insides; this is the same tempo from outside).
+- **Cleftrunner: Slipstream.** Coming out of a wall-run or a slide: +25% speed for 30 ticks.
+- **Lanternlight: Kindle.** While your runes burn, anyone who strikes you in melee within 4 catches fire for 60 ticks.
+- **Bladeward: Parry Ward.** After a deflect, blows that land in the next 40 ticks do half.
+- **Hornlord: Gore.** Sprint on the ground for 25 ticks and the horns lower (the set's glow fills as they do); the first
+  foe within 1.6 in front of you is gored: 6 + 2 a rank above E, thrown (1.5, lifted 0.45), staggered 30 ticks; 100
+  ticks cooldown.
 
-**44.7 A forged piece's story.** `awaken:forged` (`Forged`, schemaVersion 1): the set, quality (0-3), mastery (P3),
+**44.7 A forged piece's story.** `awaken:forged` (`Forged`, schemaVersion 1): the set, quality (0-3), mastery (§44.5),
 a flaw, twin-struck, and who made it. The tooltip says it plainly ("Masterwork, twin-struck", "Forged by Name"). A
 Hunter piece made before the Forge Song gains a Plain story the first time it's worn.

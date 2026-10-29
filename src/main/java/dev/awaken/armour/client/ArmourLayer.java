@@ -3,8 +3,10 @@ package dev.awaken.armour.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import dev.awaken.armour.ArmourContent;
 import dev.awaken.armour.ArmourLooks;
 import dev.awaken.armour.ArmourSet;
+import dev.awaken.armour.Forged;
 import dev.awaken.armour.client.ArmourMeshes.Bone;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -36,6 +38,9 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
     public void submit(PoseStack ps, SubmitNodeCollector out, int light, S state, float yRot, float xRot) {
         ItemStack[] worn = state.getRenderData(ArmourClient.WORN);
         if (state.isInvisible || worn == null) return;
+        ArmourGlow.Glow glow = state.getRenderData(ArmourClient.GLOW);
+        int energy = ArmourGlow.energy(glow), flash = ArmourGlow.flash(glow);
+        boolean low = state.getRenderData(ArmourClient.LOW) != null;
         for (ArmorType slot : SLOTS) {
             ItemStack stack = worn[slot.ordinal()];
             if (stack == null) continue;
@@ -44,13 +49,42 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
             ArmourMesh[] bones = ArmourMeshes.piece(look.set(), slot);
             if (bones == null) continue;
             boolean foil = stack.hasFoil();
+            Forged forged = stack.get(ArmourContent.FORGED.get());
+            int mastery = forged == null ? 0 : forged.masteryStep();
             for (Bone b : ArmourMeshes.BONES) {
                 ArmourMesh mesh = bones[b.ordinal()];
                 if (mesh == null) continue;
                 ps.pushPose();
-                if (place(ps, getParentModel(), b, state)) draw(out, ps, mesh, look.set(), light, foil);
+                if (place(ps, getParentModel(), b, state)) draw(out, ps, mesh, look.set(), light, foil, energy, flash, -1, mastery, low);
                 ps.popPose();
             }
+        }
+        if (glow != null && glow.runes > 0) runes(ps, out, worn[ArmorType.CHESTPLATE.ordinal()], glow, state.ageInTicks);
+    }
+
+    /** Rune circle: how far out from the body, at what height (model space, y down), a turn's length in ticks. */
+    private static final float RUNE_RADIUS = 0.85F, RUNE_Y = 0.42F, RUNE_TURN = 64F;
+
+    /**
+     * A Channeler's runes circling its wearer at the chest (SPEC §44.5, Runes): its set's own rune, each one apart and
+     * bobbing, a new one growing in.
+     */
+    private static void runes(PoseStack ps, SubmitNodeCollector out, @org.jspecify.annotations.Nullable ItemStack chest, ArmourGlow.Glow glow, float age) {
+        ArmourLooks.Look look = chest == null ? null : ArmourLooks.of(chest);
+        ArmourMesh rune = look == null ? null : ArmourMeshes.rune(look.set());
+        if (rune == null) return;
+        long now = net.minecraft.util.Util.getMillis();
+        int n = Math.min(glow.runes, glow.runeAt.length);
+        for (int i = 0; i < n; i++) {
+            float a = (age / RUNE_TURN + i / (float) n) * net.minecraft.util.Mth.TWO_PI;
+            float grow = Math.min(1F, (now - glow.runeAt[i]) / 300F);
+            ps.pushPose();
+            ps.translate(net.minecraft.util.Mth.cos(a) * RUNE_RADIUS, RUNE_Y + 0.06F * net.minecraft.util.Mth.sin(age * 0.12F + i * 2.1F),
+                    net.minecraft.util.Mth.sin(a) * RUNE_RADIUS);
+            ps.rotate(Axis.YP, -a + net.minecraft.util.Mth.HALF_PI);
+            ps.scale(grow, grow, grow);
+            draw(out, ps, rune, look.set(), net.minecraft.util.LightCoordsUtil.FULL_BRIGHT, false, 255, 0, -1, 0, false);
+            ps.popPose();
         }
     }
 
@@ -132,9 +166,15 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
      * in the making, which the shader lights from within (SPEC §44.4).
      */
     static void draw(SubmitNodeCollector out, PoseStack ps, ArmourMesh mesh, ArmourSet set, int light, boolean foil, int energy, int flash, int heat) {
+        draw(out, ps, mesh, set, light, foil, energy, flash, heat, 0, false);
+    }
+
+    /** With the piece's mastery step (0-7: I to V and room) and whether its wearer is low (mastery III's heartbeat). */
+    static void draw(SubmitNodeCollector out, PoseStack ps, ArmourMesh mesh, ArmourSet set, int light, boolean foil, int energy, int flash, int heat,
+                     int mastery, boolean low) {
         boolean ours = ArmourPipelines.ok();
         var texture = ArmourMeshes.texture(set);
-        int v = (foil ? 256 : 0) | (heat >= 0 ? 512 : 0) | Math.min(255, Math.max(0, flash));
+        int v = (foil ? 256 : 0) | (heat >= 0 ? 512 : 0) | (mastery & 7) << 10 | (low ? 8192 : 0) | Math.min(255, Math.max(0, flash));
         int u = heat >= 0 ? Math.min(255, heat) : Math.min(255, Math.max(0, energy));
         int packed = ours ? v << 16 | u : OverlayTexture.NO_OVERLAY;
         out.submitCustomGeometry(ps, ours ? ArmourPipelines.armour(texture) : ArmourPipelines.fallback(texture),

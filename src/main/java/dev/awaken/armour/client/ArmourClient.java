@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import dev.awaken.Awaken;
 import dev.awaken.armour.ArmourLooks;
 import dev.awaken.armour.client.ArmourMeshes.Bone;
+import dev.awaken.armour.net.ArmourPayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -28,9 +29,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.ArmorType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import net.neoforged.neoforge.client.event.RenderArmEvent;
+import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jspecify.annotations.Nullable;
@@ -51,11 +54,19 @@ public final class ArmourClient {
         modBus.addListener((RegisterRenderStateModifiersEvent e) -> e.registerEntityModifier(
                 new TypeToken<LivingEntityRenderer<LivingEntity, LivingEntityRenderState, ?>>() {}, ArmourClient::readWorn));
         NeoForge.EVENT_BUS.addListener(RenderArmEvent.class, ArmourClient::onArm);
+        modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> e.register(ArmourPayloads.Charge.TYPE,
+                (msg, ctx) -> Minecraft.getInstance().execute(() -> ArmourGlow.on(msg))));
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> ArmourGlow.clear());
         ForgeClient.init(modBus);
     }
 
     /** Our pieces each slot wears, by {@link ArmorType} ordinal (null where none), for {@link ArmourLayer}. */
     static final ContextKey<ItemStack[]> WORN = new ContextKey<>(Awaken.id("armour_worn"));
+    /** The wearer's set ability glow ({@link ArmourGlow}), and whether they are low (mastery III's heartbeat). */
+    static final ContextKey<ArmourGlow.Glow> GLOW = new ContextKey<>(Awaken.id("armour_glow"));
+    static final ContextKey<Boolean> LOW = new ContextKey<>(Awaken.id("armour_low"));
+    /** Below this share of health a mastered set beats with your heart. */
+    private static final float LOW_HEALTH = 0.35F;
 
     private static final ArmorType[] SLOTS = {ArmorType.HELMET, ArmorType.CHESTPLATE, ArmorType.LEGGINGS, ArmorType.BOOTS};
 
@@ -80,6 +91,9 @@ public final class ArmourClient {
         }
         if (worn == null) return;
         state.setRenderData(WORN, worn);
+        ArmourGlow.Glow glow = ArmourGlow.of(entity.getId());
+        if (glow != null) state.setRenderData(GLOW, glow);
+        if (entity.getHealth() < entity.getMaxHealth() * LOW_HEALTH) state.setRenderData(LOW, Boolean.TRUE);
         AvatarRenderState a = state instanceof AvatarRenderState av ? av : null;
         if (worn[ArmorType.HELMET.ordinal()] != null) {
             h.headEquipment = ItemStack.EMPTY;

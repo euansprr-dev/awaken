@@ -31,6 +31,7 @@ final class ArmourMeshes {
     /** A set's meshes: [piece ordinal][bone ordinal], null where a piece has none. */
     private static final Map<ArmourSet, ArmourMesh[][]> MESHES = new EnumMap<>(ArmourSet.class);
     private static final Map<ArmourSet, Identifier> TEXTURES = new EnumMap<>(ArmourSet.class);
+    private static final Map<ArmourSet, ArmourMesh> RUNES = new EnumMap<>(ArmourSet.class);
 
     static ArmourMesh @Nullable [][] of(ArmourSet set) {
         return MESHES.get(set);
@@ -42,12 +43,18 @@ final class ArmourMeshes {
         return table == null ? null : table[piece.ordinal()];
     }
 
+    /** A Channeler set's rune (assets/awaken/armour/&lt;set&gt;/rune.mesh), circling its wearer; null where it has none. */
+    static @Nullable ArmourMesh rune(ArmourSet set) {
+        return RUNES.get(set);
+    }
+
     static Identifier texture(ArmourSet set) {
         return TEXTURES.computeIfAbsent(set, s -> Awaken.id("textures/entity/armour/" + s.id + ".png"));
     }
 
     static void reload(ResourceManager manager) {
         MESHES.clear();
+        RUNES.clear();
         for (ArmourSet set : ArmourSet.values()) {
             ArmourMesh[][] table = new ArmourMesh[ArmorType.values().length][];
             int found = 0;
@@ -64,6 +71,15 @@ final class ArmourMeshes {
                     } catch (IOException e) {
                         Awaken.LOG.error("[armour] the mesh {} did not load: {}", file, e.getMessage());
                     }
+                }
+            }
+            Identifier runeFile = Awaken.id("armour/" + set.id + "/rune.mesh");
+            var rune = manager.getResource(runeFile);
+            if (rune.isPresent()) {
+                try (InputStream in = rune.get().open()) {
+                    RUNES.put(set, ArmourMesh.read(in));
+                } catch (IOException e) {
+                    Awaken.LOG.error("[armour] the mesh {} did not load: {}", runeFile, e.getMessage());
                 }
             }
             if (found > 0) MESHES.put(set, table);

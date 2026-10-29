@@ -51,6 +51,12 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
         // open on the best set you can make something of now, else the highest you know
         set = Math.max(0, sets.size() - 1);
         for (int i = sets.size() - 1; i >= 0; i--) {
+            if (!locked(sets.get(i))) {
+                set = i;
+                break;
+            }
+        }
+        for (int i = sets.size() - 1; i >= 0; i--) {
             if (anyCan(sets.get(i))) {
                 set = i;
                 break;
@@ -64,6 +70,12 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
                 break;
             }
         }
+    }
+
+    private boolean locked(ArmourSet s) {
+        for (ArmourPayloads.Offer o : offers.offers())
+            if (o.piece() / 4 == s.ordinal()) return (o.flags() & ArmourPayloads.NO_PATTERN) != 0;
+        return true;
     }
 
     private boolean anyCan(ArmourSet s) {
@@ -136,7 +148,7 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
 
         ArmourSet s = current();
         if (s == null) {
-            wrap(g, "There's nothing your rank can forge here yet. Hunter armour comes with rank; other sets' patterns are found out in the world.",
+            wrap(g, "There's nothing your rank can forge here yet. Hunter armour comes with rank; other sets' patterns are carried by gate creatures.",
                     px + 8, y, pw - 16, LABEL, 4);
             footer(g);
             return;
@@ -178,6 +190,9 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
             if (o == null) {
                 state = "";
                 colour = DIM;
+            } else if ((o.flags() & ArmourPayloads.NO_PATTERN) != 0) {
+                state = "Pattern not found";
+                colour = DIM;
             } else if ((o.flags() & ArmourPayloads.CAN) != 0) {
                 state = (o.flags() & ArmourPayloads.FROM_MEMORY) != 0 ? "Ready, known by heart" : "Ready";
                 colour = GOOD;
@@ -217,7 +232,7 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
 
         // where things stand
         String note = busy != null ? busy + " is forging here. Come back when the piece is done, or help at the anvil while it's shaped."
-                : place(s);
+                : o != null && (o.flags() & ArmourPayloads.NO_PATTERN) != 0 ? patternWhere(s) : place(s);
         if (!note.isEmpty()) y = wrap(g, note, px + 8, y + 2, pw - 16, LANTERN, 2) + 2;
 
         // the buttons
@@ -234,6 +249,13 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
             button(g, px + pw - 8 - bw(take), take, true, mouseX, mouseY);
         }
         footer(g);
+    }
+
+    /** Where a set's pattern comes from, plainly. */
+    static String patternWhere(ArmourSet s) {
+        return s.archetype == dev.awaken.armour.Archetype.LORD
+                ? "You haven't found this pattern. A " + s.rank.label + "-rank gate's Lord carries it."
+                : "You haven't found this pattern. " + s.rank.label + "-rank gate creatures carry the patterns: the strong ones sometimes, their Lords always.";
     }
 
     private String place(ArmourSet s) {

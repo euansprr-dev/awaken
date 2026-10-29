@@ -41,6 +41,9 @@ public final class ArmourContent {
     static final Supplier<AttachmentType<ArmouryMemory>> ARMOURY = ATTACHMENTS.register("armoury",
             () -> AttachmentType.builder(ArmouryMemory::fresh).serialize(ArmouryMemory.CODEC).copyOnDeath().build());
 
+    static final Supplier<AttachmentType<ArmourAbilities.State>> STATE = ATTACHMENTS.register("armour_state",
+            () -> AttachmentType.builder(ArmourAbilities.State::new).build());
+
     /** A strike's ring by what is struck: hide and copper at E, then iron, diamond, Deepglass, netherite and starmetal. */
     public static final DeferredHolder<SoundEvent, SoundEvent> STRIKE_HIDE = sound("strike_hide"), STRIKE_COPPER = sound("strike_copper"),
             STRIKE_IRON = sound("strike_iron"), STRIKE_DIAMOND = sound("strike_diamond"), STRIKE_DEEPGLASS = sound("strike_deepglass"),
@@ -50,8 +53,18 @@ public final class ArmourContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> BELLOWS = sound("bellows"), PULL = sound("pull"), QUENCH = sound("quench"),
             COUNT = sound("count"), NOTE = sound("note"), CUT = sound("cut"), FIT = sound("fit"), WAKE = sound("wake"), MISS = sound("miss");
 
+    /** The set abilities (SPEC §44.5, §44.6): a charge filling to full, Bastion's burst, Flow's afterimage, Edge's wave, a rune
+     * joining the circle, an overchannel, Bellguard's ring, Rootwarden's rooting, Hornlord's gore. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> CHARGED = ability("charged"), BASTION = ability("bastion"), FLOW = ability("flow"),
+            EDGE = ability("edge"), RUNE = ability("rune"), OVERCHANNEL = ability("overchannel"), RING = ability("ring"),
+            ROOTED = ability("rooted"), GORE = ability("gore");
+
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register("forge." + name, () -> SoundEvent.createVariableRangeEvent(Awaken.id("forge." + name)));
+    }
+
+    private static DeferredHolder<SoundEvent, SoundEvent> ability(String name) {
+        return SOUNDS.register("armour." + name, () -> SoundEvent.createVariableRangeEvent(Awaken.id("armour." + name)));
     }
 
     /** The ring a set's metal makes under the hammer. */

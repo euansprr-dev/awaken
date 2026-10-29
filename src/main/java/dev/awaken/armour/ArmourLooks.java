@@ -6,7 +6,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.ArmorType;
 import org.jspecify.annotations.Nullable;
 
-/** Which set's meshes a worn item is drawn with (SPEC §44.1): the six Hunter sets by their items. */
+/** Which set's meshes a worn item is drawn with (SPEC §44.1): the six Hunter sets by their items, the others by their own. */
 public final class ArmourLooks {
     private ArmourLooks() {}
 
@@ -14,6 +14,7 @@ public final class ArmourLooks {
     public record Look(ArmourSet set, ArmorType piece) {}
 
     private static final Look[][] HUNTER = new Look[dev.awaken.gear.HunterTier.values().length][ArmorType.values().length];
+    private static final Look[][] OWN = new Look[ArmourSet.values().length][4];
 
     public static @Nullable Look of(ItemStack stack) {
         if (stack.isEmpty()) return null;
@@ -22,6 +23,12 @@ public final class ArmourLooks {
             Look[] row = HUNTER[g.tier.ordinal()];
             Look look = row[g.piece.armorType.ordinal()];
             if (look == null) row[g.piece.armorType.ordinal()] = look = new Look(ArmourSet.of(g.tier), g.piece.armorType);
+            return look;
+        }
+        if (item instanceof ForgedArmourItem f) {
+            Look[] row = OWN[f.set.ordinal()];
+            Look look = row[ForgeSong.slot(f.piece)];
+            if (look == null) row[ForgeSong.slot(f.piece)] = look = new Look(f.set, f.piece);
             return look;
         }
         return null;

@@ -1,6 +1,9 @@
 package dev.awaken.armour.client;
 
+import dev.awaken.armour.Archetype;
+import dev.awaken.armour.ArmourBonus;
 import dev.awaken.armour.ArmourContent;
+import dev.awaken.armour.ArmourLooks;
 import dev.awaken.armour.FittingStandBlockEntity;
 import dev.awaken.armour.ForgeSong;
 import dev.awaken.armour.Forged;
@@ -113,16 +116,28 @@ final class ForgeClient {
 
     // ---- the tooltip ---------------------------------------------------------------------------------------------------
 
-    /** A forged piece names its quality (in its colour), a twin-struck piece says so, and who made it, plainly. */
+    /**
+     * A forged piece names its quality (in its colour), a twin-struck piece says so, who made it, plainly, and its mastery
+     * once it has grown; a Hunter piece adds its archetype's ability (its own bonuses are the gear module's lines).
+     */
     private static void onTooltip(ItemTooltipEvent e) {
+        var lines = e.getToolTip();
+        ArmourLooks.Look look = ArmourLooks.of(e.getItemStack());
+        if (look != null && look.set().hunter != null && look.set().archetype != Archetype.LORD) {
+            lines.add(Component.literal(dev.awaken.gear.SetBonus.FULL + " worn: " + ArmourBonus.ability(look.set().archetype)).withColor(0x8A93A6));
+        }
         Forged f = e.getItemStack().get(ArmourContent.FORGED.get());
         if (f == null) return;
-        var lines = e.getToolTip();
         int at = Math.min(1, lines.size());
         ForgeSong.Quality q = ForgeSong.Quality.of(f.quality());
         String text = q.label + (f.twin() ? ", twin-struck" : "") + (f.flaw() ? ", with a scale flaw" : "");
         lines.add(at++, Component.literal(text).withColor(q.colour & 0xFFFFFF));
-        if (!f.maker().isEmpty()) lines.add(at, Component.literal("Forged by " + f.maker()).withColor(0x6F8299));
+        if (!f.maker().isEmpty()) lines.add(at++, Component.literal("Forged by " + f.maker()).withColor(0x6F8299));
+        int step = f.masteryStep();
+        if (step > 0 || f.mastery() > 0) {
+            String next = step < Forged.MASTERY_BUILT ? " (" + f.mastery() + " / " + Forged.MASTERY[step + 1] + ")" : "";
+            lines.add(at, Component.literal("Mastery " + Forged.numeral(step) + next).withColor(look == null ? 0xC9D2E3 : look.set().rank.colour));
+        }
     }
 
     // ---- shared ------------------------------------------------------------------------------------------------------

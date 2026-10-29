@@ -20,6 +20,7 @@ layout(location = 4) in vec2 texCoord0;
 layout(location = 5) in vec3 worldNormal;
 layout(location = 6) in vec3 viewNormal;
 layout(location = 7) flat in vec4 state;
+layout(location = 8) flat in vec2 mastery;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -73,9 +74,22 @@ void main() {
     float band = exp(-pow((along - (cycle * 1.8 - 0.4)) * 7.0, 2.0));
     col += band * (0.12 + 0.55 * metal) * gloss * (0.6 + flash);
 
+    // mastery (SPEC §44.5): from II the trims (bright gloss metal) catch more light; from III what glows of itself
+    // glows more, and when the wearer is low it beats with their heart (a double beat, about seventy a minute)
+    float step = mastery.x;
+    float trims = step >= 1.0 ? metal * gloss * smoothstep(0.35, 0.7, max(alb.r, max(alb.g, alb.b))) : 0.0;
+    col += alb.rgb * trims * (0.22 + 0.25 * spec) + accent * trims * rim * 0.25;
+    float beat = 0.0;
+    if (step >= 2.0 && mastery.y > 0.5) {
+        float ph = fract(GameTime * 1200.0 * 1.15);
+        beat = exp(-pow((ph - 0.06) * 22.0, 2.0)) + 0.6 * exp(-pow((ph - 0.26) * 22.0, 2.0));
+    }
+    float seams = step >= 2.0 ? 1.35 + 1.4 * beat : 1.0;
+
     // what glows of itself, pulsing in turn along its flow
     float pulse = flow > 0.0 ? 0.55 + 0.45 * sin(GameTime * 240.0 * TAU * 0.6 - flow * 12.0) : 1.0;
-    col += alb.rgb * emit * pulse * (1.0 + 1.5 * energy) * 1.6;
+    col += alb.rgb * emit * pulse * (1.0 + 1.5 * energy) * 1.6 * seams;
+    col += accent * beat * (0.12 + 0.5 * emit) * 0.8;
     col += accent * flash * (0.18 + 0.6 * emit + 0.35 * rim);
 
     // an enchantment's shimmer, our own (vanilla's glint is drawn inside its own shaders): a violet light drifting down
