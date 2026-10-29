@@ -127,7 +127,14 @@ final class SwingTests {
                 if (e.getKey().strike()) {
                     h.assertTrue(c.set() >= 0 && c.set() <= def.windup(), a.id() + " " + e.getKey().key + " waits at its set, by its hit (" + c.set() + ")");
                 }
+                // round 14: a move's own ribbon ticks are its stroke alone, through the hit and never on into the way home
+                float hit = def.windup() > 0 ? def.windup() : def.active() * 0.5F;
+                h.assertTrue(c.trailTo() < 0 || c.trailFrom() <= hit && hit <= c.trailTo() && c.trailTo() <= hit + 0.5F,
+                        a.id() + " " + e.getKey().key + "'s ribbon is its stroke alone (" + c.trailFrom() + ".." + c.trailTo() + ", hit " + hit + ")");
+                h.assertTrue(!a.id().equals("daggers") || c.trailTo() >= 0, "the Daggers' " + e.getKey().key + " has its own ribbon ticks");
             }
+            float[] look = st.trail();
+            h.assertTrue(look == null || look[0] >= 0.5F && look[0] < 1F && look[1] > 0 && look[1] <= 1F, a.id() + "'s ribbon look is a band toward the point");
             Vector3f d = new Vector3f(), at = new Vector3f();
             Quaternionf q = new Quaternionf();
             h.assertTrue(FpSwings.guard(st, true, d, q) && Math.abs(q.lengthSquared() - 1) < 1e-3F, a.id() + " has a guard");
