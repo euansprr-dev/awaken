@@ -6,6 +6,11 @@ same day after his second note (no task list for each day, and no announcing the
 Nothing here is approved or built. It's a direction for Euan to push on; each part then gets its own plan through
 `.claude/PLANNING-PROCESS.md`.
 
+**Fourth note (same day): read `JOURNEY.md` first.** Euan: no people outside Carillon, no settlers, tamed beasts run
+the Hearth, the System is the link to the beasts, bells tied to how beasts feel, big moments glitch like the opening.
+`JOURNEY.md` keeps parts 1, 2 and 4 here (bells, Provings, Big Days) with the changes it lists, and replaces part 3 (the
+Hearth Board, settlers, works built by people) and every lead or ask that came from people outside the city.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## What Euan said
