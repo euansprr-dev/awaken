@@ -12,7 +12,8 @@ No subscription, AI service, Mojang recording or paid asset was used.
 | 0292.wav | Small Bell #1; GlaneurDeSons | https://bigsoundbank.com/small-bell-1-s0292.html | Watch/crier handbell |
 | 0294.wav | Small Bell #3; GlaneurDeSons | https://bigsoundbank.com/small-bell-3-s0294.html | Cart harness |
 
-Rebuild: `python3 tools/art/specs/audio_city.py` (Python, NumPy, ffmpeg).
+Rebuild: `python3 tools/art/specs/audio_city.py` (Python, NumPy, ffmpeg). The gate worlds' bells
+(`tools/art/specs/audio_gate_worlds.py`, SPEC §38.9) are made from the same two recordings, 3446 and 0292.
 Source hashes are asserted by the generator. It converts to 44.1 kHz mono, removes
 DC and rumble below 45 Hz, trims only quiet tails, fades boundaries and normalizes
 true peaks with at least 6 dB of headroom after Vorbis decoding. District pitch is

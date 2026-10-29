@@ -1,0 +1,185 @@
+{
+  "ambientocclusion": false,
+  "elements": [
+    {
+      "faces": {
+        "north": {
+          "texture": "#cross",
+          "tintindex": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#cross",
+          "tintindex": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "from": [
+        0.8,
+        0,
+        8
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "rescale": true
+      },
+      "shade_direction_override": "up",
+      "to": [
+        15.2,
+        16,
+        8
+      ]
+    },
+    {
+      "faces": {
+        "east": {
+          "texture": "#cross",
+          "tintindex": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#cross",
+          "tintindex": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "from": [
+        8,
+        0,
+        0.8
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "rescale": true
+      },
+      "shade_direction_override": "up",
+      "to": [
+        8,
+        16,
+        15.2
+      ]
+    },
+    {
+      "faces": {
+        "north": {
+          "texture": "#overlay",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#overlay",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "from": [
+        0.8,
+        0,
+        8
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "rescale": true
+      },
+      "shade_direction_override": "up",
+      "to": [
+        15.2,
+        16,
+        8
+      ]
+    },
+    {
+      "faces": {
+        "east": {
+          "texture": "#overlay",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#overlay",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "from": [
+        8,
+        0,
+        0.8
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "rescale": true
+      },
+      "shade_direction_override": "up",
+      "to": [
+        8,
+        16,
+        15.2
+      ]
+    }
+  ],
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "#cross"
+  }
+}

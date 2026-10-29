@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "awaken:blocks/crypt_handbell",
+  "pools": [
+    {
+      "rolls": 1,
+      "bonus_rolls": 0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:crypt_handbell"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "theme": "drowned_archive",
+  "name": "The Sunken Shelves",
+  "line": "The bookshelves stand on the sea floor here, and their reading lamps are still burning under the water.",
+  "tier": "deep",
+  "rarity": "uncommon",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "sea": 1,
+    "sky": 30
+  },
+  "biome": "awaken:gate_world/sunken_shelves",
+  "moods": [
+    {
+      "id": "quiet",
+      "name": "Quiet",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "high_tide",
+      "name": "High tide",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/sunken_shelves_high_tide",
+      "life": [
+        "drips",
+        "mist"
+      ]
+    },
+    {
+      "id": "lamplit",
+      "name": "Lamplit",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/sunken_shelves_lamplit",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "paper_storm",
+      "name": "Paper storm",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/sunken_shelves_paper_storm",
+      "life": [
+        "paper"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:archive_stone",
+    "wall_glow": "awaken:archive_stone_carved",
+    "floor": "awaken:archive_tiles",
+    "trim": "awaken:archive_stone_carved",
+    "shelf": "awaken:archive_shelf",
+    "shelf_lit": "awaken:archive_shelf_lit",
+    "planks": "awaken:archive_planks",
+    "lamp": "awaken:archive_lamp",
+    "paper": "awaken:archive_paper",
+    "kelp": "awaken:archive_kelp",
+    "glass": "awaken:archive_sea_glass",
+    "fall": "awaken:archive_inkfall",
+    "touch": "awaken:archive_lectern",
+    "bridge": "awaken:archive_paper_bridge",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "standing_shelves"
+  ],
+  "life": [
+    "paper",
+    "drips",
+    "pale_fish",
+    "dust"
+  ],
+  "sound": "awaken:gate.world.archive_atrium",
+  "events": [
+    "the_tide",
+    "the_wakening"
+  ],
+  "rule": "reading",
+  "secrets": [
+    {
+      "id": "the_open_book",
+      "name": "The open book"
+    },
+    {
+      "id": "the_lit_shelf",
+      "name": "The shelf that's still lit"
+    }
+  ],
+  "keepsake": "drowned_lamp",
+  "keepsake_name": "A Lamp That Burns Under Water",
+  "keepsake_from": "the_lit_shelf"
+}

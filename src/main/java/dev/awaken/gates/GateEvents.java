@@ -68,6 +68,7 @@ final class GateEvents {
         RunEvents.tick(server);
         Breaks.tick(server);
         GateCard.tick(server);
+        dev.awaken.gates.worlds.WorldLive.tick(server);
         int t = server.getTickCount();
         if (t % 100 == 50) {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
@@ -79,6 +80,7 @@ final class GateEvents {
     private static void onStarted(ServerStartedEvent e) {
         resetStatics();
         GateService.onStarted(e.getServer());
+        GateMobs.restore(e.getServer());
     }
 
     private static void onStopped(ServerStoppedEvent e) {
@@ -90,18 +92,21 @@ final class GateEvents {
     private static void resetStatics() {
         GateMobs.clear();
         Breaks.clear();
+        GateExterior.forget();
         GateCard.resetAll();
         dev.awaken.gates.run.Hud.resetAll();
         dev.awaken.gates.run.Interactions.resetAll();
         dev.awaken.gates.run.Modifiers.resetAll();
         dev.awaken.gates.run.Twists.resetAll();
         dev.awaken.gates.run.RigDirector.resetAll();
+        dev.awaken.gates.worlds.WorldLive.clear();
     }
 
     private static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         RunEvents.onLogin(p);
         GatePayloads.syncBeacons(p);
+        dev.awaken.gates.worlds.WorldsLive.sync(p);
     }
 
     private static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
@@ -131,6 +136,7 @@ final class GateEvents {
                 : dead.getKillCredit() instanceof ServerPlayer sp ? sp : null; // finished by fire, a fall or an Echo after your hit
         MobRole role = dead.getData(CoreApi.MOB_ROLE.get());
         RunEvents.onMobDeath(level, dead, killer, role);
+        if (dev.awaken.gates.worlds.WorldLive.ringer(dead)) dev.awaken.gates.worlds.WorldLive.died(level, dead);
         if (role.gateId().isEmpty()) return;
         GateRecord g;
         try {
@@ -145,6 +151,9 @@ final class GateEvents {
         }
         if (!GateService.inGate(dead)) return;
         RunEvents.onGateMobDeath(level, g, dead, killer, role);
+        // Death, not the corpse's eventual removal, ends saved membership (a stop during the death animation is safe).
+        GateMobs.Key key = GateMobs.remove(dead);
+        if (key != null) RunEvents.mobGone(level, key);
     }
 
     private static void onJoin(EntityJoinLevelEvent e) {
@@ -155,6 +164,11 @@ final class GateEvents {
             return;
         }
         if (!GateService.isGateLevel(e.getLevel())) return;
+        // a swinging bell is made again when someone comes near; one saved with its chunk leaves (SPEC §38.6)
+        if (e.loadedFromDisk() && dev.awaken.gates.worlds.WorldProps.prop(e.getEntity())) {
+            e.setCanceled(true);
+            return;
+        }
         if (e.getLevel() instanceof ServerLevel gl && staleInCell(gl, e.getEntity(), e.loadedFromDisk())) {
             e.setCanceled(true);
             return;

@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "theme": "lantern_night_market",
+  "name": "The Festival",
+  "line": "Tonight's the festival. When the big lantern goes up, a thousand more go up with it.",
+  "tier": "wonder",
+  "rarity": "rare",
+  "kind": "open",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "night": 1,
+    "lid": 20,
+    "square": 1
+  },
+  "biome": "awaken:gate_world/festival",
+  "moods": [
+    {
+      "id": "market_night",
+      "name": "Market night",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "fireworks",
+      "name": "Fireworks",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/festival_fireworks",
+      "life": [
+        "fireflies"
+      ]
+    },
+    {
+      "id": "rain",
+      "name": "Rain",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/festival_rain",
+      "life": [
+        "rain"
+      ]
+    },
+    {
+      "id": "ghost_market",
+      "name": "Ghost market",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/festival_ghost_market",
+      "life": [
+        "procession",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "floor": "awaken:market_cobbles",
+    "boards": "awaken:market_boards",
+    "wall": "awaken:market_plaster",
+    "trim": "awaken:market_timber",
+    "timber": "awaken:market_timber",
+    "roof": "awaken:market_roof",
+    "wall_glow": "awaken:market_paper_wall",
+    "lantern": "awaken:market_lantern",
+    "lights": "awaken:market_lights",
+    "cloth": "awaken:market_cloth",
+    "goods": "awaken:market_goods",
+    "boat_lamp": "awaken:market_boat_lamp",
+    "touch": "awaken:market_wish_lantern",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_great_lantern"
+  ],
+  "life": [
+    "fireflies",
+    "moths",
+    "smoke"
+  ],
+  "sound": "awaken:gate.world.market_festival",
+  "events": [
+    "fireworks",
+    "the_festival"
+  ],
+  "rule": "wishes",
+  "secrets": [
+    {
+      "id": "the_first_wish",
+      "name": "The first wish"
+    },
+    {
+      "id": "the_wish_tree",
+      "name": "The wish tree"
+    },
+    {
+      "id": "the_festival",
+      "name": "The lanterns going up"
+    }
+  ],
+  "keepsake": "spirit_lantern",
+  "keepsake_name": "A Lantern Spirit's Lantern",
+  "keepsake_from": "the_festival",
+  "tall": true,
+  "signature": "lantern_spirits"
+}

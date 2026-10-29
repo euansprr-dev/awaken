@@ -1,0 +1,25 @@
+{
+  "type": "lithostitched:replace_partially",
+  "dimension": "minecraft:overworld",
+  "priority": -13,
+  "targets": "#awaken:caves/hosts",
+  "replacement": "awaken:windcleft",
+  "parameters": {
+    "awaken:caves/y": {
+      "min_inclusive": 0.0,
+      "max_inclusive": 59.0
+    },
+    "depth": {
+      "min_inclusive": 0.34
+    },
+    "awaken:caves/middle": {
+      "max_inclusive": 0.1248
+    },
+    "continentalness": {
+      "min_inclusive": -0.11
+    },
+    "erosion": {
+      "max_inclusive": -0.375
+    }
+  }
+}

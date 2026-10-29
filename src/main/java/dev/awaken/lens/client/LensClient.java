@@ -12,9 +12,11 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraft.util.Mth;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -342,6 +344,8 @@ public final class LensClient {
 
     // moving fast through the air: the target the Feel Director sets, and what's drawn (eased per frame)
     private static float motionTarget, motionTx = 0.5f, motionTy = 0.5f, motion, motionX = 0.5f, motionY = 0.5f;
+    // texel 21: the camera under solid cover, eased (Swift's dark floor; SPEC §22)
+    private static float under;
     private static long motionAt;
 
     /**
@@ -504,11 +508,15 @@ public final class LensClient {
         motionX += (motionTx - motionX) * k;
         motionY += (motionTy - motionY) * k;
         if (motion < 0.003f) motion = 0f;
+        // solid blocks over the camera's column (a cave, a room): Swift keeps the game's own darks there (SPEC §22)
+        var eye = camera.position();
+        float underTarget = mc.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(eye.x), Mth.floor(eye.z)) > eye.y + 0.5 ? 1f : 0f;
+        under += (underTarget - under) * (1f - (float) Math.exp(-dt * 6.0));
         params.write(debug, current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
                 // a far renderer moves vanilla's chunk fog out; Lens's haze keeps vanilla's render distance
                 FarTerrain.renderDistanceFogEnd(fog.renderDistanceEnd), fog.environmentalEnd, tear > 0 ? Math.min(1f, tear + tearStep * partial) : 0f, crush, bloomBoost,
                 UiHooks.focus(), motion, motionX, motionY,
-                FarTerrain.active(), FarTerrain.readable(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(), FarTerrain.near(), FarTerrain.far());
+                FarTerrain.active(), FarTerrain.readable(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(), FarTerrain.near(), FarTerrain.far(), under);
         params.uploadIfChanged();
     }
 

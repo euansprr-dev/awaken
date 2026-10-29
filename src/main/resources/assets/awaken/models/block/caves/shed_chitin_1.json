@@ -1,0 +1,163 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/caves/shed_chitin",
+    "t": "awaken:block/caves/shed_chitin"
+  },
+  "elements": [
+    {
+      "from": [
+        1.95,
+        0,
+        6.89
+      ],
+      "to": [
+        5.64,
+        1,
+        8.99
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10.36,
+            15,
+            14.05,
+            16
+          ],
+          "texture": "#t"
+        },
+        "south": {
+          "uv": [
+            1.95,
+            15,
+            5.64,
+            16
+          ],
+          "texture": "#t"
+        },
+        "east": {
+          "uv": [
+            7.01,
+            15,
+            9.11,
+            16
+          ],
+          "texture": "#t"
+        },
+        "west": {
+          "uv": [
+            6.89,
+            15,
+            8.99,
+            16
+          ],
+          "texture": "#t"
+        },
+        "up": {
+          "uv": [
+            1.95,
+            6.89,
+            5.64,
+            8.99
+          ],
+          "texture": "#t"
+        },
+        "down": {
+          "uv": [
+            1.95,
+            7.01,
+            5.64,
+            9.11
+          ],
+          "texture": "#t"
+        }
+      },
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          3.79,
+          0,
+          7.94
+        ]
+      }
+    },
+    {
+      "from": [
+        6.88,
+        0,
+        4.57
+      ],
+      "to": [
+        12.19,
+        1,
+        7.83
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3.81,
+            15,
+            9.12,
+            16
+          ],
+          "texture": "#t"
+        },
+        "south": {
+          "uv": [
+            6.88,
+            15,
+            12.19,
+            16
+          ],
+          "texture": "#t"
+        },
+        "east": {
+          "uv": [
+            8.17,
+            15,
+            11.43,
+            16
+          ],
+          "texture": "#t"
+        },
+        "west": {
+          "uv": [
+            4.57,
+            15,
+            7.83,
+            16
+          ],
+          "texture": "#t"
+        },
+        "up": {
+          "uv": [
+            6.88,
+            4.57,
+            12.19,
+            7.83
+          ],
+          "texture": "#t"
+        },
+        "down": {
+          "uv": [
+            6.88,
+            8.17,
+            12.19,
+            11.43
+          ],
+          "texture": "#t"
+        }
+      },
+      "rotation": {
+        "angle": -22.5,
+        "axis": "y",
+        "origin": [
+          9.54,
+          0,
+          6.2
+        ]
+      }
+    }
+  ]
+}

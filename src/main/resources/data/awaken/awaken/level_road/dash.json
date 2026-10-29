@@ -2,7 +2,7 @@
   "schema": 1,
   "level": 3,
   "title": "Dash",
-  "text": "Left Alt: burst forward, even in mid-air.",
+  "text": "A burst forward on your movement power key, even in mid-air.",
   "grants": [
     {
       "type": "power",

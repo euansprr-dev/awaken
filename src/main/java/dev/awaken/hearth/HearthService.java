@@ -3,9 +3,6 @@ package dev.awaken.hearth;
 import dev.awaken.core.AwakenConfig;
 import dev.awaken.core.DirectorLog;
 import dev.awaken.core.PlayDays;
-import dev.awaken.hearth.echo.Duty;
-import dev.awaken.hearth.echo.EchoRole;
-import dev.awaken.hearth.echo.Echoes;
 import dev.awaken.hearth.player.HearthPlayer;
 import dev.awaken.hearth.guide.Cottage;
 import dev.awaken.hearth.guide.Guide;
@@ -69,8 +66,8 @@ import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The Hearth's server side: Anchors, pads, room scans, protection, respawn, Fracture healing, and the per-second upkeep
- * that drives the town, the Echoes on duty and breaks near home. All of it is budgeted (SPEC performance header).
+ * The Hearth's server side: Anchors, room scans, protection, respawn, Fracture healing, and the per-second upkeep
+ * that drives the home and breaks near it. All of it is budgeted (SPEC performance header).
  */
 public final class HearthService {
     private HearthService() {}
@@ -90,6 +87,7 @@ public final class HearthService {
         bus.addListener(HearthService::onBreak);
         bus.addListener(HearthService::onPlace);
         bus.addListener(HearthService::onRespawnPosition);
+        bus.addListener(net.neoforged.bus.api.EventPriority.LOWEST, net.neoforged.neoforge.event.entity.living.LivingDeathEvent.class, HearthService::onFall);
         bus.addListener(HearthService::onSetSpawn);
         bus.addListener(HearthService::onLogin);
         bus.addListener(HearthService::onRespawn);
@@ -111,7 +109,7 @@ public final class HearthService {
 
     /**
      * Server stop (singleplayer reuses the JVM): what the module remembers about people of the world that stopped,
-     * namely breaks near their Hearths, Echo duty, invitations, askings at Anchors and open offers.
+     * namely breaks near their Hearths, invitations, askings at Anchors and open offers.
      */
     static void forgetPeople() {
         Breaks.clear();
@@ -119,7 +117,6 @@ public final class HearthService {
         dev.awaken.hearth.settle.Arrival.clear();
         dev.awaken.hearth.settle.HomePeople.clear();
         dev.awaken.hearth.settle.MineHead.clear();
-        Duty.clear();
         Household.forgetAll();
         Offers.forgetAll();
     }
@@ -232,8 +229,8 @@ public final class HearthService {
 
     /**
      * Tier I begins (an Anchor placed, or a Hearthfire raised by a Lord's Heart): the guide's toast, the furniture in the
-     * recipe book, the town's first arrival, Oren's cottage offer, the household told. A toast shows the title and the
-     * first sentence: keep both short. The rest is in Recent messages.
+     * recipe book, the Spire's Board and Monolith, the household told. A toast shows the title and the first sentence:
+     * keep both short. The rest is in Recent messages.
      */
     static void anchorTookRoot(ServerPlayer sp, ServerLevel level, HearthRecord r, boolean sister, String title, String body) {
         Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(title)).body(Component.literal(body))
@@ -242,12 +239,12 @@ public final class HearthService {
         if (Progression.profile(sp).awakened()) Progression.markNewThing(sp, "hearth");
         DirectorLog.log(sp, "hearth", "anchor at " + r.pos.toShortString() + (sister ? " (a sister home)" : ""));
         Town.onHearthCreated(sp, level, r);
+        Town.raiseSpire(level, r);
         HearthViews.refresh(sp);
         Household.refresh(level.getServer(), r);
-        Cottage.afterAnchorPlaced(sp);
     }
 
-    /** The Anchor teaches the Hearth's furniture in the recipe book (Meditation Mat, Forge, Trophy Mount, role pads). */
+    /** The Anchor teaches the Hearth's furniture in the recipe book (Meditation Mat, Forge, Trophy Mount). */
     static void unlockFurnitureRecipes(ServerPlayer sp) {
         var recipes = sp.level().getServer().getRecipeManager();
         List<ResourceKey<Recipe<?>>> keys = new ArrayList<>();
@@ -282,7 +279,6 @@ public final class HearthService {
         if (r.isEmpty()) return;
         HearthRecord h = r.get();
         List<ServerPlayer> household = Household.online(level.getServer(), h);
-        Duty.releaseAll(level, h);
         Town.dissolve(level, h);
         dev.awaken.hearth.settle.HomePeople.stop(h);
         d.keep(h); // the members share it again when the owner places the Anchor anew
@@ -303,51 +299,7 @@ public final class HearthService {
         }
     }
 
-    // ---- pads and room-relevant changes ------------------------------------------------------------------------------
-
-    public static void onPadPlaced(ServerLevel level, BlockPos pos, EchoRole role) {
-        data(level.getServer()).containing(pos, level.dimension().identifier().toString()).ifPresent(h -> {
-            h.pads.put(pos.immutable(), role);
-            h.scanAt = level.getGameTime() + 40;
-            dirty(level.getServer());
-            owner(level.getServer(), h).ifPresent(sp -> {
-                Duty.reassign(sp, level, h);
-                HearthViews.refresh(sp);
-            });
-        });
-    }
-
-    public static void onPadRemoved(ServerLevel level, BlockPos pos) {
-        data(level.getServer()).containing(pos, level.dimension().identifier().toString()).ifPresent(h -> {
-            if (h.pads.remove(pos) == null) return;
-            Duty.releasePad(level, h, pos);
-            h.mineProgress.remove(pos);
-            h.scanAt = level.getGameTime() + 40;
-            dirty(level.getServer());
-            owner(level.getServer(), h).ifPresent(sp -> {
-                Duty.reassign(sp, level, h);
-                HearthViews.refresh(sp);
-            });
-        });
-    }
-
-    public static void describePad(ServerPlayer sp, ServerLevel level, BlockPos pos, EchoRole role) {
-        Optional<HearthRecord> h = data(level.getServer()).containing(pos, level.dimension().identifier().toString());
-        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(role.label + " pad"))
-                .body(Component.literal("An Echo standing here " + role.does + "."));
-        if (h.isEmpty()) {
-            w.footer(Component.literal("Outside any Hearth: place it within your Anchor's radius"));
-        } else {
-            String who = Duty.workerName(level, h.get(), pos);
-            w.row(Component.literal("Working"), Component.literal(who == null ? "Nobody yet: bind another Echo" : who));
-            if (role == EchoRole.MINE) {
-                // (W6) a Mine Echo works your Mine head's shaft: its haul comes up with the evening's
-                w.row(Component.literal("Works"), Component.literal(h.get().hasRoom(RoomType.MINE_HEAD)
-                        ? "your shaft · the haul comes up each evening" : "nothing yet · needs a Mine head (a hatch over a shaft 16 deep, with a ladder)"));
-            }
-        }
-        Signal.send(sp, w.ttl(20 * 6).build());
-    }
+    // ---- room-relevant changes ----------------------------------------------------------------------------------------
 
     /** Something room-relevant changed at {@code pos}: rescan that Hearth soon (debounced). */
     public static void blockChanged(ServerLevel level, BlockPos pos) {
@@ -574,6 +526,12 @@ public final class HearthService {
         return homeOf(sp);
     }
 
+    /** A player who falls may wake at their Hearth: its land is made while they're down (SPEC §28.9, "Arrivals"). */
+    private static void onFall(net.neoforged.neoforge.event.entity.living.LivingDeathEvent e) {
+        if (!(e.getEntity() instanceof ServerPlayer sp) || !enabled()) return;
+        wakeHearth(sp).ifPresent(h -> dev.awaken.core.api.Passage.warm(levelOf(sp.level().getServer(), h), h.pos.getX() + 0.5, h.pos.getZ() + 0.5));
+    }
+
     private static void onRespawnPosition(PlayerRespawnPositionEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer sp)) return;
         MinecraftServer server = sp.level().getServer();
@@ -793,8 +751,6 @@ public final class HearthService {
             if (!h.hearthfire()) Town.upkeep(level, h, owner, now);
             if (!h.hearthfire()) dev.awaken.hearth.settle.Work.tick(level, h, now);
             RoomEffects.bells(level, h);
-            // role pads are worked by the owner's Echoes (members' Echoes march with them)
-            if (owner != null) Duty.upkeep(owner, level, h, now);
         }
         if (server.getTickCount() % 100 < 20) {
             List<ServerPlayer> home = h.members.isEmpty() ? (owner == null ? List.of() : List.of(owner)) : Household.online(server, h);
@@ -803,8 +759,8 @@ public final class HearthService {
     }
 
     /**
-     * Called when a room scan finishes: store the rooms and their reading, Comfort, Style and the land; register pads
-     * placed before the Hearth knew them; update trophy bonuses; tell the owner about kinds of room new to this home.
+     * Called when a room scan finishes: store the rooms and their reading, Comfort, Style and the land; update trophy
+     * bonuses; tell the owner about kinds of room new to this home.
      */
     static void onRoomsScanned(MinecraftServer server, HearthRecord h, Scan scan) {
         List<Room> rooms = scan.rooms();
@@ -826,7 +782,6 @@ public final class HearthService {
             if (r.types().contains(RoomType.TROPHY_HALL)) trophies.addAll(r.trophies());
         }
         h.hallTrophies = Set.copyOf(trophies);
-        registerPads(server, h, scan.pads());
         boolean announce = h.scannedOnce || h.announceFirstScan;
         h.scannedOnce = true;
         h.announceFirstScan = false;
@@ -854,19 +809,6 @@ public final class HearthService {
             HearthViews.refresh(sp);
             Guide.refresh(sp);
         }
-    }
-
-    /** Pads the Hearth found that it didn't know (placed before the fire took, or outside the old radius) join it now. */
-    static void registerPads(MinecraftServer server, HearthRecord h, List<Scan.Pad> found) {
-        boolean added = false;
-        for (Scan.Pad p : found) {
-            if (h.pads.containsKey(p.pos())) continue;
-            h.pads.put(p.pos().immutable(), p.role());
-            added = true;
-        }
-        if (!added) return;
-        dirty(server);
-        owner(server, h).ifPresent(sp -> Duty.reassign(sp, levelOf(server, h), h));
     }
 
     /** Where the household stands in the radius: a room with nothing in it yet is still read (the first night's shelter). */

@@ -1,7 +1,24 @@
 {
   "style": "daggers",
-  "round": 2,
-  "_notes": "Round 2: the studio's shapes; the stabs snap back to the ready line in 0.6 of a tick and wait there for the next press.",
+  "round": 7,
+  "_notes": "Round 2: the studio's shapes; the stabs snap back to the ready line in 0.6 of a tick and wait there for the next press. Round 4: the idle hand draws back to the next strike's set while the other strikes. Round 6 (Euan 2026-10-28: 'glitchy and not smooth... doesn't smoothly switch hands... strikes in unnatural ways... tiny near glitchy movements'): each stab is one push from where the hand is, gathering speed into the hit (push: the ease's power); the idle hand sets off from where it already is, never back through rest; strike 5's off-hand slash carries less and comes straight home, on the screen. Round 7 (Euan 2026-10-28: 'the right hand literally stabs the left one... on the 2nd click'): strike 3 is a forehand from the main's own side (its backhand set sat over the left hand, and the right hand drew to it through the left hand's stab); strike 4's two blades drive in side by side, each aimed out on its own side (spread, metres); the idle hand gives way to the striking blade on every strike, strike 5 too.",
+  "idleHand": true,
   "cut": {},
-  "thrust": {}
+  "thrust": {
+    "push": 1.6
+  },
+  "moves": {
+    "strike_5": {
+      "cut": {
+        "carry": 14.0,
+        "exit_drop": 0.1,
+        "lowered": 0.0
+      }
+    },
+    "strike_4": {
+      "thrust": {
+        "spread": 0.2
+      }
+    }
+  }
 }

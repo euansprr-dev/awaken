@@ -2,7 +2,6 @@ package dev.awaken.hearth;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.awaken.hearth.echo.EchoRole;
 import dev.awaken.hearth.room.Furniture;
 import dev.awaken.hearth.room.Miss;
 import dev.awaken.hearth.room.Room;
@@ -44,20 +43,16 @@ public final class HearthRecord {
     public final Set<String> arrived = new LinkedHashSet<>();
     public final Map<String, UUID> npcs = new HashMap<>();
     public BlockPos spire;
-    /** Role pads inside the radius, in placement order (assignment order). */
-    public final LinkedHashMap<BlockPos, EchoRole> pads = new LinkedHashMap<>();
-    /** Echo entity currently working each pad (runtime + saved so we don't double-spawn after a restart). */
-    public final Map<BlockPos, UUID> padEchoes = new HashMap<>();
     /** Gate breaks seen near this Hearth, by gate id. */
     public final Map<String, BreakState> breaks = new HashMap<>();
     /** Rank ordinal of a rank-up still waiting to be celebrated at home (-1 = none). */
     public int pendingCelebration = -1;
-    /** Ticks of Mine duty accumulated since the last ore delivery, per pad. */
-    public final Map<BlockPos, Integer> mineProgress = new HashMap<>();
     public long createdDay;
     public long itemsHauled, cropsHarvested, oresBrought;
     /** A cell inside the cottage Oren raised here (null = none): the guide says "Oren built this one". */
     public BlockPos cottage;
+    /** Oren's cottage while he builds it over a day (null = not building; SPEC §28.11). */
+    public dev.awaken.hearth.guide.CottageBuild cottageBuild;
     /** Players who share this Hearth with its owner (SPEC "Together"), uuid → last known name, in the order they joined. */
     public final LinkedHashMap<UUID, String> members = new LinkedHashMap<>();
     /** The owner of the Hearth this one was founded from as a sister home (null = founded on its own). */
@@ -100,15 +95,6 @@ public final class HearthRecord {
         ).apply(i, BreakState::new));
     }
 
-    private record Pad(BlockPos pos, EchoRole role, Optional<UUID> echo, int mine) {
-        static final Codec<Pad> CODEC = RecordCodecBuilder.create(i -> i.group(
-                BlockPos.CODEC.fieldOf("pos").forGetter(Pad::pos),
-                EchoRole.CODEC.fieldOf("role").forGetter(Pad::role),
-                UUIDUtil.CODEC.optionalFieldOf("echo").forGetter(Pad::echo),
-                Codec.INT.optionalFieldOf("mine", 0).forGetter(Pad::mine)
-        ).apply(i, Pad::new));
-    }
-
     private record Npc(String id, Optional<UUID> entity) {
         static final Codec<Npc> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("id").forGetter(Npc::id),
@@ -132,10 +118,10 @@ public final class HearthRecord {
         ).apply(i, Core::new));
     }
 
-    private record Town(List<Npc> npcs, List<Pad> pads, List<BreakState> breaks, List<Long> tallies) {
+    /** (SPEC §43.4) an older save's role pads ("pads") are no longer read: the pads are plain blocks now. */
+    private record Town(List<Npc> npcs, List<BreakState> breaks, List<Long> tallies) {
         static final Codec<Town> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Npc.CODEC.listOf().optionalFieldOf("npcs", List.of()).forGetter(Town::npcs),
-                Pad.CODEC.listOf().optionalFieldOf("pads", List.of()).forGetter(Town::pads),
                 BreakState.CODEC.listOf().optionalFieldOf("breaks", List.of()).forGetter(Town::breaks),
                 Codec.LONG.listOf().optionalFieldOf("tallies", List.of()).forGetter(Town::tallies)
         ).apply(i, Town::new));
@@ -187,7 +173,8 @@ public final class HearthRecord {
             Town.CODEC.fieldOf("town").forGetter(HearthRecord::town),
             Household.CODEC.optionalFieldOf("household", Household.NONE).forGetter(HearthRecord::household),
             Home.CODEC.optionalFieldOf("home", Home.NONE).forGetter(HearthRecord::home),
-            dev.awaken.hearth.settle.Folk.CODEC.optionalFieldOf("folk").forGetter(r -> java.util.Optional.of(r.folk))
+            dev.awaken.hearth.settle.Folk.CODEC.optionalFieldOf("folk").forGetter(r -> java.util.Optional.of(r.folk)),
+            dev.awaken.hearth.guide.CottageBuild.CODEC.optionalFieldOf("cottage_build").forGetter(r -> java.util.Optional.ofNullable(r.cottageBuild))
     ).apply(i, HearthRecord::fromSaved));
 
     public HearthRecord(UUID owner, String ownerName, BlockPos pos, String dimension) {
@@ -205,9 +192,7 @@ public final class HearthRecord {
     private Town town() {
         List<Npc> n = new ArrayList<>();
         for (String id : arrived) n.add(new Npc(id, Optional.ofNullable(npcs.get(id))));
-        List<Pad> p = new ArrayList<>();
-        pads.forEach((pos, role) -> p.add(new Pad(pos, role, Optional.ofNullable(padEchoes.get(pos)), mineProgress.getOrDefault(pos, 0))));
-        return new Town(n, p, List.copyOf(breaks.values()), List.of(itemsHauled, cropsHarvested, oresBrought));
+        return new Town(n, List.copyOf(breaks.values()), List.of(itemsHauled, cropsHarvested, oresBrought));
     }
 
     private Household household() {
@@ -222,9 +207,11 @@ public final class HearthRecord {
         return new Home(Home.SCHEMA, name, List.copyOf(rooms), comfort, style, land);
     }
 
-    private static HearthRecord fromSaved(Core c, Town t, Household h, Home home, java.util.Optional<dev.awaken.hearth.settle.Folk> folk) {
+    private static HearthRecord fromSaved(Core c, Town t, Household h, Home home, java.util.Optional<dev.awaken.hearth.settle.Folk> folk,
+                                          java.util.Optional<dev.awaken.hearth.guide.CottageBuild> build) {
         HearthRecord r = fromParts(c, t);
         folk.ifPresent(f -> r.folk = f);
+        r.cottageBuild = build.orElse(null);
         r.name = home.name;
         r.comfort = home.comfort;
         r.style = home.style;
@@ -253,11 +240,6 @@ public final class HearthRecord {
         for (Npc n : t.npcs) {
             r.arrived.add(n.id);
             n.entity.ifPresent(u -> r.npcs.put(n.id, u));
-        }
-        for (Pad p : t.pads) {
-            r.pads.put(p.pos, p.role);
-            p.echo.ifPresent(u -> r.padEchoes.put(p.pos, u));
-            if (p.mine > 0) r.mineProgress.put(p.pos, p.mine);
         }
         for (BreakState b : t.breaks) r.breaks.put(b.gateId(), b);
         if (t.tallies.size() >= 3) {

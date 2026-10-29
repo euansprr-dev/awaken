@@ -1,0 +1,227 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/market_lantern",
+    "paper": "awaken:block/market_lantern",
+    "glow": "awaken:block/market_lantern_glow",
+    "cap": "awaken:block/market_timber_top"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        3,
+        3
+      ],
+      "to": [
+        13,
+        12,
+        13
+      ],
+      "faces": {
+        "down": {
+          "texture": "#paper",
+          "uv": [
+            0,
+            2,
+            16,
+            14
+          ]
+        },
+        "up": {
+          "texture": "#paper",
+          "uv": [
+            0,
+            2,
+            16,
+            14
+          ]
+        },
+        "north": {
+          "texture": "#paper",
+          "uv": [
+            0,
+            2,
+            16,
+            14
+          ]
+        },
+        "south": {
+          "texture": "#paper",
+          "uv": [
+            0,
+            2,
+            16,
+            14
+          ]
+        },
+        "west": {
+          "texture": "#paper",
+          "uv": [
+            0,
+            2,
+            16,
+            14
+          ]
+        },
+        "east": {
+          "texture": "#paper",
+          "uv": [
+            0,
+            2,
+            16,
+            14
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        2.98,
+        3,
+        2.98
+      ],
+      "to": [
+        13.02,
+        12,
+        13.02
+      ],
+      "faces": {
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            2,
+            16,
+            14
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            2,
+            16,
+            14
+          ]
+        },
+        "west": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            2,
+            16,
+            14
+          ]
+        },
+        "east": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            2,
+            16,
+            14
+          ]
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        5,
+        12,
+        5
+      ],
+      "to": [
+        11,
+        13,
+        11
+      ],
+      "faces": {
+        "down": {
+          "texture": "#cap"
+        },
+        "up": {
+          "texture": "#cap"
+        },
+        "north": {
+          "texture": "#cap"
+        },
+        "south": {
+          "texture": "#cap"
+        },
+        "west": {
+          "texture": "#cap"
+        },
+        "east": {
+          "texture": "#cap"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        2,
+        5
+      ],
+      "to": [
+        11,
+        3,
+        11
+      ],
+      "faces": {
+        "down": {
+          "texture": "#cap"
+        },
+        "up": {
+          "texture": "#cap"
+        },
+        "north": {
+          "texture": "#cap"
+        },
+        "south": {
+          "texture": "#cap"
+        },
+        "west": {
+          "texture": "#cap"
+        },
+        "east": {
+          "texture": "#cap"
+        }
+      }
+    },
+    {
+      "from": [
+        7.5,
+        13,
+        7.5
+      ],
+      "to": [
+        8.5,
+        16,
+        8.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#cap"
+        },
+        "up": {
+          "texture": "#cap"
+        },
+        "north": {
+          "texture": "#cap"
+        },
+        "south": {
+          "texture": "#cap"
+        },
+        "west": {
+          "texture": "#cap"
+        },
+        "east": {
+          "texture": "#cap"
+        }
+      }
+    }
+  ]
+}

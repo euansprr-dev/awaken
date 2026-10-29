@@ -10,7 +10,7 @@ import java.util.List;
 public enum Craft {
     HUNTING("hunting", "Hunting", "hunt", 0xFF9A5A, List.of(
             new Perk(5, "field_dressing", "Field Dressing", "Animals you kill drop a hide or more meat a third of the time."),
-            new Perk(10, "tracks", "Tracks", "A creature you've read leaves glowing tracks on the band for 30 seconds."),
+            new Perk(10, "tracks", "Tracks", "Tracks on the ground glow amber and last three times as long, and a creature you've read leaves glowing tracks for 30 seconds."),
             new Perk(20, "weak_spot", "Weak Spot", "Critical hits deal 15% more to kinds you've killed twenty of."),
             new Perk(30, "stalker", "Stalker", "Sneak attacks on a creature that hasn't seen you deal half again as much."),
             new Perk(40, "trophy", "Trophy", "Beasts drop their parts twice."),

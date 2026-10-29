@@ -15,13 +15,13 @@ import java.util.Optional;
  * home the player lives at (their own, else the one they are a member of), and the place "hearth" a step can point at.
  * <pre>
  * room:sanctuary      a room of that kind stands (shelter, bedroom, sanctuary, kitchen, forge, study, greenhouse, stable, hall,
- *                     bell_tower, lookout, trophy_hall, workshop, barracks, mine_head)
+ *                     bell_tower, lookout, trophy_hall, workshop, mine_head)
  * rooms:bedroom:2     that many rooms of the kind        grade:fine   a room of that grade or better (snug, fine, grand)
  * hearth_tier:2       the Hearth's tier or more          forge_tier:2 the Forge's tier or more
- * settlers:2          that many people live here         pads:1       role pads in the radius      duty:1  Echoes working them
+ * settlers:2          that many people live here
  * cottage             Oren raised a cottage              named        the ground has a name
  * tip:guide_seen      one of the Hearth's markers for the player (Your Hearth opened, cottage offered...)
- * furniture:forge     that piece is in the radius (bed, mat, anvil, forge, stand, trophy, pad, cooker, lectern...)
+ * furniture:forge     that piece is in the radius (bed, mat, anvil, forge, stand, trophy, cooker, lectern...)
  * </pre>
  */
 final class HearthTrails {
@@ -44,8 +44,6 @@ final class HearthTrails {
         TrailsApi.condition("hearth_tier", (p, rest) -> home(p).map(h -> h.tier >= number(rest)).orElse(false));
         TrailsApi.condition("forge_tier", (p, rest) -> home(p).map(h -> h.forgeTier >= number(rest)).orElse(false));
         TrailsApi.condition("settlers", (p, rest) -> home(p).map(h -> h.folk.settlers.size() >= number(rest)).orElse(false));
-        TrailsApi.condition("pads", (p, rest) -> home(p).map(h -> h.pads.size() >= number(rest)).orElse(false));
-        TrailsApi.condition("duty", (p, rest) -> home(p).map(h -> h.padEchoes.size() >= number(rest)).orElse(false));
         TrailsApi.condition("cottage", (p, rest) -> home(p).map(h -> h.cottage != null).orElse(false));
         TrailsApi.condition("named", (p, rest) -> home(p).map(h -> !h.name.isEmpty()).orElse(false));
         TrailsApi.condition("tip", (p, rest) -> HearthService.player(p).tips.contains(rest));

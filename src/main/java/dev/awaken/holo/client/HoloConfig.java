@@ -53,6 +53,11 @@ public final class HoloConfig {
     public static final ModConfigSpec.BooleanValue REDUCED_MOTION = B
             .comment("Panels follow your view directly instead of trailing it, and open with a short fade.")
             .define("reducedMotion", false);
+    public static final ModConfigSpec.EnumValue<dev.awaken.core.api.HudState.Screen> SCREEN = B
+            .comment("The screen: CLEAR shows the world and only what you need right now (health and Aether in a fight, the hotbar",
+                    "when you change slot, the way when you drift off it; hold Tab for the rest on your wrist), with a dot only when you",
+                    "can mine, place or use something. CLEAR_CROSSHAIR is the same with the crosshair kept. CLASSIC is the HUD as it was.")
+            .defineEnum("screen", dev.awaken.core.api.HudState.Screen.CLEAR);
     public static final ModConfigSpec SPEC = B.build();
 
     // cached once a tick
@@ -62,11 +67,13 @@ public final class HoloConfig {
     static InventoryStyle inventoryStyle = InventoryStyle.HOLO;
     static boolean hudFade = true;
     static BandSize bandSize = BandSize.NORMAL;
+    static dev.awaken.core.api.HudState.Screen screen = dev.awaken.core.api.HudState.Screen.CLEAR;
     /** Overrides for the autopilot (null = use the config). */
     static HudMotion forcedHudMotion;
     static StatusStyle forcedStyle;
     static InventoryStyle forcedInventory;
     static Boolean forcedHudFade;
+    static dev.awaken.core.api.HudState.Screen forcedScreen;
 
     static void register() {
         try {
@@ -85,6 +92,7 @@ public final class HoloConfig {
             inventoryStyle = forcedInventory != null ? forcedInventory : INVENTORY_STYLE.get();
             hudFade = forcedHudFade != null ? forcedHudFade : HUD_FADE.get();
             bandSize = BAND_SIZE.get();
+            screen = forcedScreen != null ? forcedScreen : SCREEN.get();
         } catch (RuntimeException e) {
             // keep the last good values
         }

@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "theme": "lantern_night_market",
+  "name": "The Last Campfire",
+  "line": "A clearing with a fire going, and pale people sitting round it. One of the seats is empty.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "open",
+  "tall": true,
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "lid": 16,
+    "slope": 0.2,
+    "night": 1,
+    "calm": 1,
+    "tunnel": 3.0
+  },
+  "biome": "awaken:gate_world/the_last_campfire",
+  "moods": [
+    {
+      "id": "fireside",
+      "name": "By the fire",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "embers",
+        "fireflies"
+      ]
+    },
+    {
+      "id": "late",
+      "name": "Late",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_last_campfire_late",
+      "life": [
+        "embers",
+        "stars"
+      ]
+    }
+  ],
+  "blocks": {
+    "floor": "minecraft:grass_block",
+    "wall": "minecraft:stone"
+  },
+  "hero": [],
+  "life": [
+    "embers",
+    "fireflies"
+  ],
+  "sound": "awaken:gate.world.rare_campfire",
+  "events": [
+    "the_echoes"
+  ],
+  "rule": "",
+  "secrets": [
+    {
+      "id": "the_empty_seat",
+      "name": "The empty seat"
+    }
+  ],
+  "keepsake": "ember_in_a_jar",
+  "keepsake_name": "An Ember in a Jar",
+  "keepsake_from": "the_empty_seat"
+}

@@ -1,0 +1,133 @@
+{
+  "ambientocclusion": false,
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#flat",
+          "tintindex": 0,
+          "uv": [
+            0,
+            16,
+            16,
+            0
+          ]
+        },
+        "up": {
+          "texture": "#flat",
+          "tintindex": 0,
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "from": [
+        0,
+        0.25,
+        0
+      ],
+      "to": [
+        16,
+        0.25,
+        16
+      ]
+    },
+    {
+      "faces": {
+        "north": {
+          "texture": "#rise",
+          "tintindex": 0,
+          "uv": [
+            0,
+            10,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#rise",
+          "tintindex": 0,
+          "uv": [
+            0,
+            10,
+            16,
+            16
+          ]
+        }
+      },
+      "from": [
+        0.8,
+        0,
+        8
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "rescale": true
+      },
+      "shade_direction_override": "up",
+      "to": [
+        15.2,
+        6,
+        8
+      ]
+    },
+    {
+      "faces": {
+        "east": {
+          "texture": "#rise",
+          "tintindex": 0,
+          "uv": [
+            0,
+            10,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#rise",
+          "tintindex": 0,
+          "uv": [
+            0,
+            10,
+            16,
+            16
+          ]
+        }
+      },
+      "from": [
+        8,
+        0,
+        0.8
+      ],
+      "rotation": {
+        "angle": 45,
+        "axis": "y",
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "rescale": true
+      },
+      "shade_direction_override": "up",
+      "to": [
+        8,
+        6,
+        15.2
+      ]
+    }
+  ],
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "#flat"
+  }
+}

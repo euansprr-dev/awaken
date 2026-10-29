@@ -182,7 +182,7 @@ public final class Glass {
 
     private static boolean casting() {
         for (KeyMapping k : AwakenKeys.POWER_SLOTS) if (k.isDown()) return true;
-        return AwakenKeys.ULTIMATE.isDown() || AwakenKeys.MOVEMENT.isDown();
+        return AwakenKeys.ULTIMATE.isDown() || AwakenKeys.MOVEMENT.isDown() || AwakenKeys.ROPE.isDown();
     }
 
     private static boolean gripping(LocalPlayer p) {

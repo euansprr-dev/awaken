@@ -55,7 +55,7 @@ public record Room(EnumSet<RoomType> types, BlockPos min, BlockPos max, LongSet 
     }
 
     /** As before the reading: a room holding just these (the tests' shorthand). */
-    public static EnumSet<RoomType> classify(int beds, int mats, int anvils, int forges, int stands, int trophies, int machines, int pads) {
+    public static EnumSet<RoomType> classify(int beds, int mats, int anvils, int forges, int stands, int trophies, int machines) {
         int[] c = new int[Furniture.COUNT];
         c[Furniture.BED.ordinal()] = beds;
         c[Furniture.MAT.ordinal()] = mats;
@@ -64,7 +64,6 @@ public record Room(EnumSet<RoomType> types, BlockPos min, BlockPos max, LongSet 
         c[Furniture.STAND.ordinal()] = stands;
         c[Furniture.TROPHY.ordinal()] = trophies;
         c[Furniture.MACHINE.ordinal()] = machines;
-        c[Furniture.PAD.ordinal()] = pads;
         return classify(c, new int[Tally.F_COUNT]);
     }
 

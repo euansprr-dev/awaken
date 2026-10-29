@@ -3,6 +3,7 @@ package dev.awaken.living.client.forms;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.awaken.Awaken;
+import dev.awaken.core.api.CombatFeedback;
 import dev.awaken.living.combat.Forms.Species;
 import dev.awaken.mobs.client.anim.HeroRenderState;
 import dev.awaken.mobs.client.anim.HeroRig;
@@ -58,6 +59,11 @@ final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel> {
     private final RenderType halo;
     private final int roar, deathClip, angry, angryMelee;
     private final float deathLength;
+    /** Which way the body's own death clip falls, in its frame (x its left, -z its front); zero for a fall in place. */
+    private final float fallX, fallZ;
+    private static final float[] BLOW = new float[2];
+    /** The cave spider's body: the spider's, smaller. */
+    private static final float CAVE = 0.7F;
     /** The chains from the root to each eye (empty: no eyes to light). */
     final ModelPart[][] eyes;
     final float scale;
@@ -95,6 +101,17 @@ final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel> {
         angryMelee = m.clip("angry_melee");
         deathClip = m.clip("death");
         deathLength = m.length(deathClip);
+        // measured from the clips (where the head ends up): the walkers fall forward, the creeper, the chicken and the beasts onto their left
+        float[] fall = switch (body) {
+            case "zombie" -> new float[]{0.0F, -1.0F};
+            case "skeleton" -> new float[]{-0.25F, -1.0F};
+            case "creeper" -> new float[]{1.0F, -0.3F};
+            case "chicken" -> new float[]{1.0F, -0.2F};
+            case "pig", "cow", "sheep" -> new float[]{1.0F, 0.0F};
+            default -> new float[]{0.0F, 0.0F};
+        };
+        fallX = fall[0];
+        fallZ = fall[1];
         eyes = new ModelPart[][]{chain(m, rig, "eye_l"), chain(m, rig, "eye_r")};
         addLayer(new Glow(this));
         if (body.equals("sheep") || body.equals("pig")) addLayer(new Coat(this));
@@ -173,8 +190,31 @@ final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel> {
         b.look.hurt = mob.hurtTime > 0 ? Mth.clamp((mob.hurtTime - partialTicks) / 10.0F, 0.0F, 1.0F) : 0.0F;
         s.hurt = mob.hurtTime > 0 ? (10 - mob.hurtTime + partialTicks) / 20.0F : -1;
         s.dying = mob.deathTime > 0 || mob.isDeadOrDying() ? (mob.deathTime + partialTicks) / 20.0F : -1;
+        fallAlongBlow(mob, b, s);
         resolveCue(mob, b, s, partialTicks);
         live(mob, b, s);
+    }
+
+    /**
+     * A body a blow killed falls the way the blow went (Fight Feel, SPEC §21.13): as the fall starts it turns, over a fifth of a second,
+     * so its death clip's own fall points along the blow, at most a quarter turn and a bit (a blow from the front tips a forward-faller
+     * onto its side, not into the striker). No blow, or a body that falls in place (the spider rolls over): no turn.
+     */
+    private void fallAlongBlow(Mob mob, FormBody b, HeroRenderState s) {
+        if (s.dying < 0) {
+            b.fallChosen = false;
+            b.fallTurn = 0.0F;
+            return;
+        }
+        if (!b.fallChosen) {
+            b.fallChosen = true;
+            b.fallTurn = 0.0F;
+            float k = fallX * fallX + fallZ * fallZ < 1e-4F ? 0.0F : CombatFeedback.blowOn(mob.getId(), BLOW);
+            if (k > 0) {
+                b.fallTurn = dev.awaken.living.combat.FormShape.fallTurn(fallX, fallZ, s.bodyRot, BLOW[0], BLOW[1]);
+            }
+        }
+        if (b.fallTurn != 0.0F) s.bodyRot += b.fallTurn * Mth.clamp(s.dying / 0.2F, 0.0F, 1.0F);
     }
 
     /** Which clip the move plays now, how far in, how strongly; a wind-up cut short lets go over a moment. */
@@ -267,6 +307,10 @@ final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel> {
         life.walk = s.airborne ? 0.0F : s.walk;
         life.airborne = s.airborne;
         life.swimming = mob.isInWater();
+        // the motion layer's feet (SPEC §23.1): planted while it stands on the ground, not on a wall or a web
+        life.grounded = mob.onGround() && !mob.onClimbable();
+        life.gaitRun = s.run;
+        life.bodyScale = b.species == Species.CAVE_SPIDER ? CAVE : 1.0F;
         life.tick(s, true);
     }
 
@@ -297,7 +341,7 @@ final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel> {
     @Override
     protected void scale(HeroRenderState s, PoseStack pose) {
         FormBody b = s.getRenderData(FormBodies.BODY);
-        float k = b != null && b.species == Species.CAVE_SPIDER ? 0.7F : 1.0F;
+        float k = b != null && b.species == Species.CAVE_SPIDER ? CAVE : 1.0F;
         if (b != null && b.look.swell > 0) {
             float swell = b.look.swell;
             float wobble = 1.0F + Mth.sin(swell * 100.0F) * swell * 0.01F;

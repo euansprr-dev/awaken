@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/spore_puffball"
+    },
+    "lit=true": {
+      "model": "awaken:block/spore_puffball_lit"
+    }
+  }
+}

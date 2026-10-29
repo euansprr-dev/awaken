@@ -261,18 +261,29 @@ final class GateTests {
         AwakenTests.register("gates_dimension_json", 20, h -> {
             var server = h.getLevel().getServer();
             var ops = RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE, server.registryAccess());
-            var res = server.getResourceManager().getResource(dev.awaken.Awaken.id("dimension/gates.json"));
-            h.assertTrue(res.isPresent(), "dimension/gates.json is in the mod's data");
-            try (var reader = res.get().openAsReader()) {
-                var json = com.google.gson.JsonParser.parseReader(reader);
-                var stem = net.minecraft.world.level.dimension.LevelStem.CODEC.parse(ops, json).getOrThrow();
-                h.assertTrue(stem.generator() instanceof dev.awaken.gates.world.GateChunkGenerator, "generator is the gate cell generator");
-                var source = stem.generator().getBiomeSource();
-                h.assertTrue(source instanceof dev.awaken.gates.world.GateBiomeSource, "biome source is cell-aware");
-                h.assertTrue(source.possibleBiomes().size() == Theme.values().length + 1, "one biome per theme plus the void, was " + source.possibleBiomes().size());
-                h.assertTrue(stem.type().value().minY() == 0 && stem.type().value().height() == 256, "dimension height");
-            } catch (java.io.IOException e) {
-                h.fail("could not read the dimension: " + e);
+            // the gates' own dimension, and the open sky's (38.11) with the same generator and biomes under a real sky
+            for (String dim : List.of("gates", "gates_sky")) {
+                var res = server.getResourceManager().getResource(dev.awaken.Awaken.id("dimension/" + dim + ".json"));
+                h.assertTrue(res.isPresent(), "dimension/" + dim + ".json is in the mod's data");
+                try (var reader = res.get().openAsReader()) {
+                    var json = com.google.gson.JsonParser.parseReader(reader);
+                    var stem = net.minecraft.world.level.dimension.LevelStem.CODEC.parse(ops, json).getOrThrow();
+                    h.assertTrue(stem.generator() instanceof dev.awaken.gates.world.GateChunkGenerator, "generator is the gate cell generator");
+                    var source = stem.generator().getBiomeSource();
+                    h.assertTrue(source instanceof dev.awaken.gates.world.GateBiomeSource, "biome source is cell-aware");
+                    // one biome per theme, the void, and every world's own and its moods' (SPEC §38.6)
+                    java.util.Set<String> worlds = new java.util.HashSet<>();
+                    for (var w : dev.awaken.gates.worlds.GateWorlds.all().values()) {
+                        if (!w.biome().isEmpty()) worlds.add(w.biome());
+                        for (var m : w.moods()) if (!m.biome().isEmpty()) worlds.add(m.biome());
+                    }
+                    h.assertTrue(source.possibleBiomes().size() == Theme.values().length + 1 + worlds.size(),
+                            "one biome per theme, the void and each world's, was " + source.possibleBiomes().size());
+                    h.assertTrue(stem.type().value().minY() == 0 && stem.type().value().height() == 256, "dimension height");
+                    h.assertTrue(stem.type().value().hasSkyLight() == dim.equals("gates_sky"), dim + " has sky light only under the open sky");
+                } catch (java.io.IOException e) {
+                    h.fail("could not read the dimension " + dim + ": " + e);
+                }
             }
             h.succeed();
         });
@@ -326,10 +337,15 @@ final class GateTests {
                 h.assertTrue(d >= Director.FIRST_MIN - 2 && d <= Director.FIRST_MAX + 2, "250-400 blocks out: " + Math.round(d));
                 h.assertTrue(g.plan.rank() == dev.awaken.progression.Progression.rank(p), "at the player's own rank");
                 h.assertTrue(dev.awaken.progression.Progression.profile(p).counter(Director.FIRST_GATE) == g.id + 1L, "remembered as their first");
+                h.assertTrue(Director.firstGateSite(p).isEmpty() && g.announceTo.isPresent(), "nothing shown or said while it forms");
+                g.structurePlaced = true; // as the build leaves it once the vortex stands
                 var site = Director.firstGateSite(p);
                 h.assertTrue(site.size() == 1 && site.getFirst().raised() && site.getFirst().where().equals(g.pos), "raised on the Horizon: " + site);
             } finally {
-                if (g != null) GateService.release(server, g);
+                if (g != null) {
+                    g.structurePlaced = false;
+                    GateService.release(server, g);
+                }
                 server.getPlayerList().remove(p);
             }
             h.succeed();
@@ -477,7 +493,7 @@ final class GateTests {
                         int cx = (Cells.originX(cell) >> 4) + bf.originSlotX + gx, cz = (Cells.originZ(cell) >> 4) + bf.originSlotZ + gz;
                         level.getChunk(cx, cz);
                         GatePainter.paint(l, cell, cx, cz, (x, y, z, s) -> {
-                            if (Cells.floorAtY(y) == bf.floor) level.setBlock(new BlockPos(cx * 16 + x, y, cz * 16 + z), s, 818);
+                            if (bf.paints(y)) level.setBlock(new BlockPos(cx * 16 + x, y, cz * 16 + z), s, 818);
                         });
                     }
                 }
@@ -619,7 +635,7 @@ final class GateTests {
                 int chunkZ = (Cells.originZ(cell) >> 4) + f.originSlotZ + sz;
                 int bx0 = sx * 16, bz0 = sz * 16;
                 GatePainter.paint(l, cell, chunkX, chunkZ, (x, y, z, s) -> {
-                    if (Cells.floorAtY(y) == f.floor) out.put(key(bx0 + x, y, bz0 + z), s);
+                    if (f.paints(y)) out.put(key(bx0 + x, y, bz0 + z), s);
                 });
             }
         }

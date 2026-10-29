@@ -14,6 +14,7 @@ import dev.awaken.progression.Progression;
 import dev.awaken.progression.ProgressionModule;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -33,6 +34,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.NeoForge;
@@ -61,16 +63,64 @@ final class DelveTests {
         AwakenTests.register("delve_tier_metals", 40, DelveTests::tierMetals);
         AwakenTests.register("delve_tuning_fork", 40, DelveTests::tuningFork);
         AwakenTests.register("delve_held_light", 20, DelveTests::heldLight);
+        AwakenTests.register("delve_held_light_faces", 20, DelveTests::heldLightFaces);
+        AwakenTests.register("delve_held_light_wall", 20, DelveTests::heldLightWall);
         AwakenTests.register("progression_ore_xp", 60, DelveTests::oreXp);
         AwakenTests.register("delve_true_strike", 40, DelveTests::trueStrike);
         AwakenTests.register("delve_strike_rules", 20, DelveTests::strikeRules);
         AwakenTests.register("delve_lodes_air", 100, DelveTests::lodesAir);
         AwakenTests.register("delve_thinned_ores", 20, DelveTests::thinnedOres);
         AwakenTests.register("delve_waking_pick", 20, DelveTests::wakingPick);
+        // its own batch: it reads a count of the server thread's lode plans, which other tests make on purpose
+        AwakenTests.registerIsolated("delve_veins_flyover", 200, DelveTests::veinsFlyOver);
         PickTests.register();
         LampTests.register();
         BandTests.register();
         StyleTests.register();
+    }
+
+    // ---- the server thread never plans a region (SPEC §28.9) ----------------------------------------------------------
+
+    /**
+     * A fast flight over new land: the veins near the player, the hum's search and the block under them every 96 blocks
+     * plan no lode region on the server thread. A heart broken where its region isn't planned yet waits, and opens its
+     * lode (the same one the plan holds) once the worker has planned it.
+     */
+    private static void veinsFlyOver(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        int before = LodePlans.serverPlans();
+        for (int i = 0; i < 40; i++) {
+            BlockPos at = new BlockPos(-3_000_000 - i * 96, 20, 3_000_000);
+            p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+            p.tickCount = Math.floorMod(-p.getId(), 40);
+            Veins.tickPlayer(p);
+            Veins.nearest(level, at, Ore.IRON, WakingPick.HUM_REACH);
+            Veins.lodeAt(level, at);
+        }
+        h.assertValueEqual(LodePlans.serverPlans() - before, 0, "lode regions planned on the server thread during the flight");
+
+        int rx = -11_000, rz = 11_000;
+        Lode l = LodePlans.planNow(level.getSeed(), rx, rz).getFirst();
+        int planned = LodePlans.serverPlans();
+        h.assertTrue(!DelveData.get(level).heartBroken(l.id()), "the far heart is whole");
+        Veins.broke(level, java.util.UUID.randomUUID(), null, l.heartPos());
+        h.assertValueEqual(Veins.waiting(), 1, "a heart broken before its plan waits");
+        h.assertTrue(!DelveData.get(level).heartBroken(l.id()), "and isn't settled yet");
+        long until = System.currentTimeMillis() + 60_000;
+        while (Veins.waiting() > 0 && System.currentTimeMillis() < until) {
+            Veins.tick(level.getServer());
+            try {
+                Thread.sleep(5);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        h.assertValueEqual(Veins.waiting(), 0, "hearts still waiting");
+        h.assertTrue(DelveData.get(level).heartBroken(l.id()), "once planned, the heart opened its own lode");
+        h.assertValueEqual(LodePlans.serverPlans() - planned, 0, "and the plan was the worker's");
+        h.succeed();
     }
 
     // ---- a heart opens its vein -------------------------------------------------------------------------------------
@@ -356,6 +406,86 @@ final class DelveTests {
         h.assertTrue(HeldLight.of(ItemStack.EMPTY) == HeldLight.NONE, "nothing in hand, no light");
         h.assertTrue(HeldLight.offhandWins(new ItemStack(Items.REDSTONE_TORCH), new ItemStack(Items.LANTERN)), "the brighter hand carries");
         h.assertTrue(!HeldLight.offhandWins(new ItemStack(Items.TORCH), new ItemStack(Items.TORCH)), "the main hand on a tie");
+        h.succeed();
+    }
+
+    /**
+     * Held light finds every face it touches (SPEC §28.3): in a stone room with a block standing on its floor and a step
+     * against a wall, the flood gives each face that a room cell touches exactly once, the standing block's top and its
+     * four sides alike (it once kept one face a block and left the rest black), and nothing behind the walls; a cap
+     * stops it with an edge for the light to fade out over.
+     */
+    private static void heldLightFaces(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(new BlockPos(0, 2, 0));
+        for (int dx = 0; dx < 9; dx++) for (int dy = 0; dy < 7; dy++) for (int dz = 0; dz < 9; dz++) {
+            boolean room = dx >= 2 && dx <= 6 && dy >= 2 && dy <= 4 && dz >= 2 && dz <= 6;
+            level.setBlock(o.offset(dx, dy, dz), room ? Blocks.AIR.defaultBlockState() : Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+        }
+        BlockPos standing = o.offset(3, 2, 3), step = o.offset(6, 2, 5);
+        level.setBlock(standing, Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+        level.setBlock(step, Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+        // every face a room cell touches, as "x,y,z face"
+        Set<String> want = new java.util.HashSet<>();
+        for (int dx = 2; dx <= 6; dx++) for (int dy = 2; dy <= 4; dy++) for (int dz = 2; dz <= 6; dz++) {
+            BlockPos c = o.offset(dx, dy, dz);
+            if (level.getBlockState(c).isSolidRender()) continue;
+            for (Direction d : Direction.values()) {
+                BlockPos nb = c.relative(d);
+                if (level.getBlockState(nb).isSolidRender()) want.add(nb.toShortString() + " " + d.getOpposite());
+            }
+        }
+        HeldLightFlood f = new HeldLightFlood(8192, 1024);
+        f.start(level, o.offset(4, 3, 4).asLong(), HeldLight.of(new ItemStack(Items.TORCH)).reach(), 1024);
+        while (!f.done()) f.step(900);
+        Set<String> got = new java.util.HashSet<>();
+        for (int i = 0; i < f.n; i++) {
+            String face = f.face[i] < HeldLightFlood.WHOLE ? Direction.values()[f.face[i]].toString() : "whole";
+            h.assertTrue(got.add(BlockPos.of(f.pos[i]).toShortString() + " " + face), "a face found twice: " + BlockPos.of(f.pos[i]).toShortString() + " " + face);
+        }
+        for (Direction d : new Direction[]{Direction.UP, Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST}) {
+            h.assertTrue(got.contains(standing.toShortString() + " " + d), "the standing block's " + d + " face is lit");
+        }
+        h.assertTrue(got.contains(step.toShortString() + " up") && got.contains(step.toShortString() + " west"), "the step's tread and riser are lit");
+        h.assertValueEqual(got, want, "the faces the room touches");
+        h.assertTrue(f.edge == HeldLightFlood.NO_EDGE, "nothing capped a small room: " + f.edge);
+        f.start(level, o.offset(4, 3, 4).asLong(), 10.5F, 10);
+        while (!f.done()) f.step(900);
+        h.assertTrue(f.n == 10 && f.edge == f.steps[9], "a cap keeps 10 and marks its edge: " + f.n + ", " + f.edge);
+        h.succeed();
+    }
+
+    /**
+     * A torch held against a wall (SPEC §28.3): pressed to a block at chest height, the hand's point is inside it; the
+     * flame shines from a little off the block's open side, so the flood finds the face looking at you (it started inside
+     * the rock and left that face black). A flame in the open stays put; a holder inside rock has no open side.
+     */
+    private static void heldLightWall(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(new BlockPos(0, 2, 0));
+        for (int dx = 0; dx < 5; dx++) for (int dy = 0; dy < 4; dy++) for (int dz = 0; dz < 5; dz++) {
+            level.setBlock(o.offset(dx, dy, dz), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+        }
+        // a stone on a ledge, its north face toward the holder standing against it
+        BlockPos stone = o.offset(2, 1, 3);
+        level.setBlock(o.offset(2, 0, 3), Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+        level.setBlock(stone, Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+        double ax = o.getX() + 2.5, ay = o.getY() + 1.3, az = o.getZ() + 2.69;
+        double[] out = new double[3];
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        h.assertTrue(HeldLightFlood.clear(level, ax, ay, az, ax - 0.3, ay, az + 0.4, out, m), "a flame against the wall has an open side");
+        BlockPos at = BlockPos.containing(out[0], out[1], out[2]);
+        h.assertValueEqual(at, o.offset(2, 1, 2), "the flame shines from the cell in front of the stone");
+        h.assertTrue(out[2] <= o.getZ() + 3 - 0.15, "and a little off its face, not on it: " + (o.getZ() + 3 - out[2]));
+        HeldLightFlood f = new HeldLightFlood(8192, 1024);
+        f.start(level, at.asLong(), HeldLight.of(new ItemStack(Items.TORCH)).reach(), 1024);
+        while (!f.done()) f.step(900);
+        boolean front = false;
+        for (int i = 0; i < f.n; i++) front |= f.pos[i] == stone.asLong() && f.face[i] == Direction.NORTH.ordinal();
+        h.assertTrue(front, "the stone's face looking at the holder is lit");
+        h.assertTrue(HeldLightFlood.clear(level, ax, ay, az - 1, ax - 0.3, ay, az - 0.6, out, m) && out[2] == az - 0.6, "a flame in the open stays put");
+        h.assertFalse(HeldLightFlood.clear(level, o.getX() + 2.5, o.getY() + 0.5, o.getZ() + 3.5, o.getX() + 2.5, o.getY() + 1.5, o.getZ() + 3.9, out, m),
+                "a holder inside rock has no open side");
         h.succeed();
     }
 

@@ -9,6 +9,7 @@ import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.api.MobHooks;
 import dev.awaken.core.api.MobRole;
+import dev.awaken.core.api.Passage;
 import dev.awaken.hearth.HearthContent;
 import dev.awaken.hearth.HearthService;
 import dev.awaken.hearth.Offers;
@@ -20,6 +21,7 @@ import dev.awaken.progression.content.Content;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -44,8 +46,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -239,7 +243,7 @@ public final class Trials {
         int cell = data.allocate(kind == Kind.PENALTY);
         BlockPos centre = TrialChunkGenerator.centre(cell);
         trials.getChunk(centre.getX() >> 4, centre.getZ() >> 4);
-        data.returns.put(sp.getUUID(), new TrialData.Return(sp.level().dimension().identifier().toString(), sp.getX(), sp.getY(), sp.getZ(), sp.getYRot()));
+        data.returns.put(sp.getUUID(), new TrialData.Return(sp.level().dimension().identifier().toString(), sp.getX(), standingY(sp), sp.getZ(), sp.getYRot()));
         data.setDirty();
         Session s = new Session(sp.getUUID(), kind, target, trials, centre, true, practice, cell);
         SESSIONS.put(sp.getUUID(), s);
@@ -554,6 +558,25 @@ public final class Trials {
                 .priority(6).build());
     }
 
+    /**
+     * The height the way home comes back at: the player's own, or in the air (a Penalty Zone opens mid-jump or on the
+     * wing) the ground under them, so coming home is never a fall. Read from their chunk only once it's finished; one
+     * still generating would be waited for on the server thread, and keeps the height as it is.
+     */
+    public static double standingY(ServerPlayer sp) {
+        if (sp.onGround()) return sp.getY();
+        LevelChunk chunk = sp.level().getChunkSource().getChunkNow(sp.getBlockX() >> 4, sp.getBlockZ() >> 4);
+        if (chunk == null) return sp.getY();
+        BlockPos.MutableBlockPos under = new BlockPos.MutableBlockPos();
+        for (int y = Math.min(sp.getBlockY(), chunk.getMaxY()); y > chunk.getMinY(); y--) {
+            BlockState b = chunk.getBlockState(under.set(sp.getBlockX(), y - 1, sp.getBlockZ()));
+            VoxelShape shape = b.getCollisionShape(chunk, under);
+            if (!shape.isEmpty()) return Math.min(sp.getY(), y - 1 + shape.max(Direction.Axis.Y));
+            if (!b.getFluidState().isEmpty()) return y;
+        }
+        return sp.getY();
+    }
+
     /** Back to where the player stood before the trial (or their Hearth, or the world spawn). */
     static void sendHome(ServerPlayer sp) {
         MinecraftServer server = sp.level().getServer();
@@ -569,12 +592,19 @@ public final class Trials {
             pos = new Vec3(r.x(), r.y(), r.z());
             yaw = r.yaw();
         }
+        BlockPos hearth = null;
         if (dest == null || dest.dimension() == DIMENSION) {
             dest = server.overworld();
-            pos = HearthService.wakeHearth(sp).map(h -> HearthService.safeSpotNear(server.overworld(), h.pos))
-                    .orElse(Vec3.atBottomCenterOf(server.overworld().getRespawnData().pos()));
+            hearth = HearthService.wakeHearth(sp).map(h -> h.pos).orElse(null);
+            pos = Vec3.atBottomCenterOf(hearth != null ? hearth : server.overworld().getRespawnData().pos());
         }
-        sp.teleport(new TeleportTransition(dest, pos, Vec3.ZERO, yaw, 0f, TeleportTransition.PLAY_PORTAL_SOUND));
+        ServerLevel to = dest;
+        Vec3 at = pos;
+        BlockPos anchor = hearth;
+        float face = yaw;
+        // home once its land is made (SPEC §28.9, "Arrivals"); the spot by the Hearth is found once it's there
+        Passage.go(sp, to, at.x, at.z, () -> sp.teleport(new TeleportTransition(to, anchor != null ? HearthService.safeSpotNear(to, anchor) : at,
+                Vec3.ZERO, face, 0f, TeleportTransition.PLAY_PORTAL_SOUND)));
     }
 
     // ---- events -----------------------------------------------------------------------------------------------------

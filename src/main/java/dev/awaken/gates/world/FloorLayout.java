@@ -7,8 +7,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-/** One floor: a grid of slots, the rooms on it, and where it starts and ends. Immutable once built. */
+/**
+ * One floor: a grid of slots, the rooms on it, and where it starts and ends. Immutable once built. A world floor (SPEC
+ * §38) also carries its plot, the place map its rooms (places) are found by, its world and mood, the biome it shows, its
+ * Gate Air data and the model that carves it.
+ */
 public final class FloorLayout {
     /** 0 = main dungeon, 1 = annex (Double Gate second dungeon or the inner gate). */
     public final int area;
@@ -27,9 +32,100 @@ public final class FloorLayout {
     public final int end;
     /** Monsters planned on this floor (kill XP is split across them). */
     public final int plannedMobs;
+    /** The floor's plot (content version 6+), or null for the stacked bands of older gates. */
+    public final Plots.Plot plot;
+    /** The y range this floor paints (both inclusive): its band, or a world's height inside its plot. */
+    public final int yLo, yHi;
+    /** Places of a world floor, any shape and stacked; null on rooms floors (the slot grid answers). */
+    public final PlaceMap places;
+    /** The world recipe id and mood ("" on rooms floors), and the biome the floor shows ("" = the theme's). */
+    public final String world, mood, biome;
+    public final FloorAir air;
+    /** Carves a world floor's chunks; null on rooms floors ({@link GatePainter} paints them). */
+    public final WorldModel model;
+    /** Which way you face on arriving (a world's best view), or NaN: toward the start room's first door. */
+    public final float arrivalYaw;
+    /** Places that are a world of their own inside this one (a secret world behind an odd rope): room id → world id. */
+    public final Map<Integer, String> placeWorlds;
+    /** The biome each of those places shows (its own world's). */
+    public final Map<Integer, String> placeBiomes;
+
+    /** Spots a world's live layer finds again (SPEC §38.8), floor-local x/z and y above the base like Gate Air. */
+    public final List<Mark> marks;
+    /** An open land under the real sky (SPEC §38.11): built in the open sky's dimension, not the gates'. */
+    public final boolean sky;
+    /**
+     * Where you stand over each column of the plot, in blocks above the base (SPEC §38.14: a version 7 floor's ground),
+     * x + z * {@link Plots#SIDE}; null on a flat floor. Set once by the floor's engine.
+     */
+    byte[] ground;
+    /** The columns of a version 7 floor's high ledges and their stairs (SPEC §38.14, stage 4), null if none. Not saved. */
+    java.util.BitSet high;
+
+    /**
+     * One spot or box: a bell (its lip's centre ± its radius, lip to crown), a secret (where it's found; {@code id} the
+     * recipe's secret), a basin the Flood fills, an event's trigger ({@code id} the event).
+     */
+    public record Mark(String kind, String id, int x0, int y0, int z0, int x1, int y1, int z1) {
+        public static final String BELL = "bell", SECRET = "secret", BASIN = "basin", TRIGGER = "trigger";
+        /** Something the live layer shows as a display entity and moves (a swinging bell: id "bell:" + 10 x radius). */
+        public static final String PROP = "prop";
+        /** Where a world's rule block stands (a puffball, a vent, a drum, a brazier: SPEC §38.10), like a handbell. */
+        public static final String TOUCH = "touch";
+        /** A hidden nook whose secret ({@code id}) is found by standing in it (SPEC §38.10). */
+        public static final String NOOK = "nook";
+        /**
+         * A hall's fold (SPEC §38.12): its three slots' blocks. Walk on through its middle and you're back at its start;
+         * turn round after going through twice and the hall turns round with you, so you come out at its far end.
+         */
+        public static final String FOLD = "fold";
+        /**
+         * A doorway of the Library of Doors (SPEC §38.13): its shimmer's blocks, {@code id} the way out of it ("dx,dz").
+         * Step into one and you step out of the next on the floor.
+         */
+        public static final String DOOR = "door";
+        /** A bell mark's id for a handbell on the floor (the rest are hung bells; "still" and "lowest" are named ones). */
+        public static final String HANDBELL = "handbell";
+
+        public double cx() { return (x0 + x1 + 1) / 2.0; }
+        public double cz() { return (z0 + z1 + 1) / 2.0; }
+        /** Half its width: a hung bell's radius. */
+        public double r() { return (x1 - x0 + 1) / 2.0; }
+        public boolean contains(int x, int y, int z) {
+            return x >= x0 && x <= x1 && y >= y0 && y <= y1 && z >= z0 && z <= z1;
+        }
+    }
+
+    /** What a floor is framed by beyond its rooms: where it stands, how it's found, what it is. */
+    record Frame(Plots.Plot plot, int yLo, int yHi, PlaceMap places, String world, String mood, String biome, FloorAir air,
+                 WorldModel model, float arrivalYaw, Map<Integer, String> placeWorlds, Map<Integer, String> placeBiomes, List<Mark> marks,
+                 boolean sky) {
+        Frame {
+            placeWorlds = Map.copyOf(placeWorlds);
+            placeBiomes = Map.copyOf(placeBiomes);
+            marks = List.copyOf(marks);
+        }
+
+        static Frame band(Plots.Plot plot, int baseY) {
+            return new Frame(plot, baseY - Cells.BAND_BELOW, baseY + Cells.BAND_ABOVE - 1, null, "", "", "", FloorAir.NONE, null, Float.NaN, Map.of(), Map.of(),
+                    List.of(), false);
+        }
+    }
+
+    /** The marks of a kind. */
+    public List<Mark> marks(String kind) {
+        List<Mark> out = new java.util.ArrayList<>();
+        for (Mark m : marks) if (m.kind().equals(kind)) out.add(m);
+        return out;
+    }
 
     FloorLayout(int area, int floor, int baseY, int originSlotX, int originSlotZ, int w, int h, Theme theme,
                 boolean bossFloor, List<Room> rooms, int start, int end) {
+        this(area, floor, baseY, originSlotX, originSlotZ, w, h, theme, bossFloor, rooms, start, end, Frame.band(null, baseY));
+    }
+
+    FloorLayout(int area, int floor, int baseY, int originSlotX, int originSlotZ, int w, int h, Theme theme,
+                boolean bossFloor, List<Room> rooms, int start, int end, Frame frame) {
         this.area = area;
         this.floor = floor;
         this.baseY = baseY;
@@ -50,6 +146,40 @@ public final class FloorLayout {
         this.start = start;
         this.end = end;
         this.plannedMobs = planned;
+        this.plot = frame.plot();
+        this.yLo = frame.yLo();
+        this.yHi = frame.yHi();
+        this.places = frame.places();
+        this.world = frame.world();
+        this.mood = frame.mood();
+        this.biome = frame.biome();
+        this.air = frame.air();
+        this.model = frame.model();
+        this.arrivalYaw = frame.arrivalYaw();
+        this.placeWorlds = frame.placeWorlds();
+        this.placeBiomes = frame.placeBiomes();
+        this.marks = frame.marks();
+        this.sky = frame.sky();
+    }
+
+    /** The world a place belongs to: its own (a secret world inside this floor's) or the floor's. */
+    public String worldOf(Room r) {
+        return r == null ? world : placeWorlds.getOrDefault(r.id, world);
+    }
+
+    /** Whether this floor paints height y (tests and tools filter a chunk's blocks by floor with it). */
+    public boolean paints(int y) {
+        return y >= yLo && y <= yHi;
+    }
+
+    public boolean isWorld() {
+        return model != null;
+    }
+
+    /** Where you stand over floor-local column (x, z), in blocks above the floor line (0 on a flat floor). */
+    public int ground(int x, int z) {
+        if (ground == null || x < 0 || z < 0 || x >= Plots.SIDE || z >= Plots.SIDE) return 0;
+        return ground[x + z * Plots.SIDE];
     }
 
     public Room room(int id) {
@@ -63,11 +193,18 @@ public final class FloorLayout {
         return id < 0 ? null : rooms.get(id);
     }
 
-    /** Room at cell-local block coordinates (x, z inside the cell), or null. */
+    /** Room at cell-local block coordinates (x, z inside the cell), or null. On a world floor: the ground place. */
     public Room roomAtLocal(int cellLocalX, int cellLocalZ) {
+        if (places != null) return room(places.groundAt(toFloorX(cellLocalX), toFloorZ(cellLocalZ)));
         int gx = Math.floorDiv(cellLocalX, 16) - originSlotX;
         int gz = Math.floorDiv(cellLocalZ, 16) - originSlotZ;
         return roomAtSlot(gx, gz);
+    }
+
+    /** Room at cell-local x/z and absolute y: a world floor's places can stack (a gallery over an aisle). */
+    public Room roomAt(int cellLocalX, int y, int cellLocalZ) {
+        if (places != null) return room(places.at(toFloorX(cellLocalX), y - baseY, toFloorZ(cellLocalZ)));
+        return roomAtLocal(cellLocalX, cellLocalZ);
     }
 
     /** Whether a cell slot column belongs to this floor's grid (plus a one-slot margin of solid rock). */

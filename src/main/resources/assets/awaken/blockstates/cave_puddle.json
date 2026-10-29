@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/caves/puddle"
+      },
+      {
+        "model": "awaken:block/caves/puddle",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/puddle",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/puddle",
+        "y": 270
+      }
+    ]
+  }
+}

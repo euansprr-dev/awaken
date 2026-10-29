@@ -19,9 +19,9 @@ public record Where(GateRecord gate, GateLayout layout, FloorLayout floor, Room 
         if (g == null) return null;
         GateLayout l = GateLayout.of(g.plan);
         int lx = Cells.localX(cell, pos.getX()), lz = Cells.localZ(cell, pos.getZ());
-        FloorLayout f = l.floorAt(lx, pos.getY());
+        FloorLayout f = l.floorAt(lx, lz, pos.getY());
         if (f == null) return new Where(g, l, null, null, 0, 0);
-        Room r = f.roomAtLocal(lx, lz);
+        Room r = f.roomAt(lx, pos.getY(), lz);
         return new Where(g, l, f, r, f.toFloorX(lx), f.toFloorZ(lz));
     }
 

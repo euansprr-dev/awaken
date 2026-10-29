@@ -1,0 +1,30 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/ember_cinders",
+    "bits": "awaken:block/ember_cinders"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0.1,
+        0
+      ],
+      "to": [
+        16,
+        0.1,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#bits"
+        },
+        "up": {
+          "texture": "#bits"
+        }
+      }
+    }
+  ]
+}

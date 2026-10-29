@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "theme": "glass_desert",
+  "name": "The Buried Colossus",
+  "line": "Dunes under a real sun, a line of old columns, and a stone head as big as a hill looking out of the sand.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "open",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "lid": 16,
+    "slope": 0.7,
+    "lake": 1,
+    "tunnel": 2.6
+  },
+  "biome": "awaken:gate_world/buried_colossus",
+  "moods": [
+    {
+      "id": "high_sun",
+      "name": "High sun",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "golden_hour",
+      "name": "Golden hour",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/buried_colossus_golden_hour",
+      "life": [
+        "sand"
+      ]
+    },
+    {
+      "id": "sandstorm",
+      "name": "Sandstorm",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/buried_colossus_sandstorm",
+      "life": [
+        "sand",
+        "dust"
+      ]
+    },
+    {
+      "id": "night",
+      "name": "Night",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/buried_colossus_night",
+      "life": [
+        "fireflies"
+      ]
+    }
+  ],
+  "blocks": {
+    "floor": "awaken:desert_sand",
+    "floor_rippled": "awaken:desert_sand_rippled",
+    "wall": "awaken:desert_sandstone",
+    "wall_glow": "awaken:desert_sandstone_carved",
+    "trim": "awaken:desert_sandstone_carved",
+    "brick": "awaken:desert_brick",
+    "tile": "awaken:desert_tile",
+    "column": "awaken:desert_column",
+    "glass": "awaken:desert_glass",
+    "glass_glow": "awaken:desert_glass_glowing",
+    "crystal": "awaken:desert_crystal",
+    "grass": "awaken:desert_grass",
+    "fall": "awaken:desert_sandfall",
+    "touch": "awaken:desert_mirror",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_head",
+    "colonnade"
+  ],
+  "life": [
+    "sand",
+    "dust",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.desert_wind",
+  "events": [
+    "sandstorm"
+  ],
+  "rule": "sun",
+  "secrets": [
+    {
+      "id": "the_first_mirror",
+      "name": "The first mirror"
+    },
+    {
+      "id": "the_colossus_eye",
+      "name": "The colossus's eye"
+    },
+    {
+      "id": "the_singing_sand",
+      "name": "The singing sand",
+      "leads_to": "awaken:glass_desert/hourglass"
+    }
+  ],
+  "keepsake": "colossus_eye",
+  "keepsake_name": "A Shard of the Colossus's Eye",
+  "keepsake_from": "the_colossus_eye",
+  "tall": true
+}

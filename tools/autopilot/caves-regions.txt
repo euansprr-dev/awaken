@@ -1,0 +1,215 @@
+# The Living Deep P2 (SPEC §42.7): the Rootways and the Ochre Deep in a new world, with the cave textures in. The seed is
+# Euan's New World (9), as caves-today.txt (the same caves before the revamp), with the pack's terrain. Each region at
+# its three roomiest floors near spawn (/awaken caves goto, every pick searched from the same point): first with the HUD
+# for the region's caption (five quick shots, as the server may still be finding and building the place), then as a
+# player sees it (a torch in the off hand, Lens Cinematic, Bright gamma), with night vision to show its rock and growth,
+# and up at the roof (root curtains, glow-worm threads); the underlife's lineup in each. Last, a board in the sky with
+# every new block at noon: nothing may show the missing-texture pattern.
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
+#   tools/tour-ci.sh tools/autopilot/caves-regions.txt 3000
+world caves_regions creative -9010908364552097449
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+camera first
+cmd time set 6000
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+cmd item replace entity @s weapon.offhand with minecraft:torch
+
+# ---- 1. the Rootways, its roomiest floor near spawn: the caption first (HUD on), then the cave ----
+hud on
+cmd execute positioned -150 40 -280 run awaken caves goto rootways 0
+wait 20
+waitpassage
+wait 60
+shotnow rw01_caption_a
+wait 80
+shotnow rw01_caption_b
+wait 80
+shotnow rw01_caption_c
+wait 80
+shotnow rw01_caption_d
+wait 80
+shotnow rw01_caption_e
+wait 300
+hud off
+shot rw01_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot rw01_nv
+cmd tp @s ~ ~ ~ ~ -40
+wait 30
+shot rw01_roof_nv
+cmd awaken underlife lineup
+wait 40
+cmd tp @s ~ ~ ~ ~ 20
+wait 10
+shot rw01_lineup_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 2. the Rootways, the next two floors ----
+cmd execute positioned -150 40 -280 run awaken caves goto rootways 1
+wait 20
+waitpassage
+wait 300
+shot rw02_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot rw02_nv
+cmd tp @s ~ ~ ~ ~ -40
+wait 30
+shot rw02_roof_nv
+cmd effect clear @s minecraft:night_vision
+cmd execute positioned -150 40 -280 run awaken caves goto rootways 2
+wait 20
+waitpassage
+wait 300
+shot rw03_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot rw03_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 3. the Ochre Deep, its roomiest floor near spawn: the caption, then the cave ----
+hud on
+cmd execute positioned -150 20 -280 run awaken caves goto ochre_deep 0
+wait 20
+waitpassage
+wait 60
+shotnow od01_caption_a
+wait 80
+shotnow od01_caption_b
+wait 80
+shotnow od01_caption_c
+wait 80
+shotnow od01_caption_d
+wait 80
+shotnow od01_caption_e
+wait 300
+hud off
+shot od01_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot od01_nv
+cmd tp @s ~ ~ ~ ~ -40
+wait 30
+shot od01_roof_nv
+cmd awaken underlife lineup
+wait 40
+cmd tp @s ~ ~ ~ ~ 20
+wait 10
+shot od01_lineup_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 4. the Ochre Deep, the next two floors ----
+cmd execute positioned -150 20 -280 run awaken caves goto ochre_deep 1
+wait 20
+waitpassage
+wait 300
+shot od02_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot od02_nv
+cmd tp @s ~ ~ ~ ~ -40
+wait 30
+shot od02_roof_nv
+cmd effect clear @s minecraft:night_vision
+cmd execute positioned -150 20 -280 run awaken caves goto ochre_deep 2
+wait 20
+waitpassage
+wait 300
+shot od03_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot od03_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 5. every new block on a board in the sky at noon (a stone wall, floor and roof; the player in spectator) ----
+cmd gamemode spectator
+cmd tp @s -149.5 253 -277.5 180 12
+wait 200
+cmd fill -161 249 -290 -137 259 -290 minecraft:stone
+cmd fill -161 249 -289 -137 249 -283 minecraft:stone
+cmd fill -144 259 -289 -137 259 -286 minecraft:stone
+# the rock and its ores, two by two in the wall
+cmd fill -158 255 -290 -157 256 -290 awaken:rootstone
+cmd fill -155 255 -290 -154 256 -290 awaken:ochre_stone
+cmd fill -152 255 -290 -151 256 -290 awaken:rootstone_coal_ore
+cmd fill -149 255 -290 -148 256 -290 awaken:rootstone_copper_ore
+cmd fill -146 255 -290 -145 256 -290 awaken:ochre_iron_ore
+# the overlays on the wall's face, two high
+cmd fill -158 251 -289 -158 252 -289 awaken:cave_lichen_shallows[north=true]
+cmd fill -156 251 -289 -156 252 -289 awaken:cave_lichen_middle[north=true]
+cmd fill -154 251 -289 -154 252 -289 awaken:cave_lichen_deep[north=true]
+cmd fill -152 251 -289 -152 252 -289 awaken:mineral_crust[north=true]
+cmd fill -150 251 -289 -150 252 -289 awaken:wet_streaks[north=true]
+cmd fill -148 251 -289 -148 252 -289 awaken:rust_crust[north=true]
+cmd fill -146 251 -289 -146 252 -289 awaken:rust_flowstone[north=true]
+cmd fill -144 251 -289 -144 252 -289 awaken:ember_lichen[north=true]
+# root curtains from the roof
+cmd setblock -141 258 -288 awaken:root_curtain[tip=false]
+cmd setblock -141 257 -288 awaken:root_curtain[tip=false]
+cmd setblock -141 256 -288 awaken:root_curtain[tip=true]
+cmd setblock -139 258 -287 awaken:root_curtain[tip=false]
+cmd setblock -139 257 -287 awaken:root_curtain[tip=true]
+# the floor: rubble and pebbles of every rock
+cmd setblock -158 250 -287 awaken:stone_rubble
+cmd setblock -156 250 -287 awaken:deepslate_rubble
+cmd setblock -154 250 -287 awaken:tuff_rubble
+cmd setblock -152 250 -287 awaken:rootstone_rubble
+cmd setblock -150 250 -287 awaken:ochre_rubble
+cmd setblock -148 250 -287 awaken:stone_pebbles
+cmd setblock -146 250 -287 awaken:deepslate_pebbles
+cmd setblock -144 250 -287 awaken:tuff_pebbles
+cmd setblock -142 250 -287 awaken:rootstone_pebbles
+cmd setblock -140 250 -287 awaken:ochre_pebbles
+# formations of every rock (base, frustum, tip), a puddle, the three glowcaps and a dusty web
+cmd setblock -158 250 -285 awaken:pointed_stone[thickness=base]
+cmd setblock -158 251 -285 awaken:pointed_stone[thickness=frustum]
+cmd setblock -158 252 -285 awaken:pointed_stone[thickness=tip]
+cmd setblock -156 250 -285 awaken:pointed_deepslate[thickness=base]
+cmd setblock -156 251 -285 awaken:pointed_deepslate[thickness=frustum]
+cmd setblock -156 252 -285 awaken:pointed_deepslate[thickness=tip]
+cmd setblock -154 250 -285 awaken:pointed_tuff[thickness=base]
+cmd setblock -154 251 -285 awaken:pointed_tuff[thickness=frustum]
+cmd setblock -154 252 -285 awaken:pointed_tuff[thickness=tip]
+cmd setblock -152 250 -285 awaken:pointed_rootstone[thickness=base]
+cmd setblock -152 251 -285 awaken:pointed_rootstone[thickness=frustum]
+cmd setblock -152 252 -285 awaken:pointed_rootstone[thickness=tip]
+cmd setblock -150 250 -285 awaken:pointed_ochre[thickness=base]
+cmd setblock -150 251 -285 awaken:pointed_ochre[thickness=frustum]
+cmd setblock -150 252 -285 awaken:pointed_ochre[thickness=tip]
+cmd setblock -148 250 -285 awaken:cave_puddle
+cmd setblock -146 250 -285 awaken:glowcap[variant=0]
+cmd setblock -145 250 -285 awaken:glowcap[variant=1]
+cmd setblock -144 250 -285 awaken:glowcap[variant=2]
+cmd setblock -142 250 -285 awaken:dusty_web
+wait 100
+shot bd01_wall
+cmd tp @s -149.5 254 -280.5 180 40
+wait 60
+shot bd02_floor
+cmd tp @s -141.5 253 -282.5 200 10
+wait 60
+shot bd03_roots_glowcaps
+quit

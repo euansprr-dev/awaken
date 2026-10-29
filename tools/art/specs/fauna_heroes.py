@@ -2581,7 +2581,10 @@ def hollow_owl():
     body = r.bone("body", (0, 21, 0))
     body.cube("obody", -3.5, -9, -3, 7, 9, 6)
     body.cube("chest", -3, -8, -3.6, 6, 6, 1)
-    head = body.bone("head", (0, -9, 0))
+    # the shoulders (no cube): in flight the body lies forward and this turns back upright under the head and wings,
+    # so the face still looks ahead and the wings still beat up and down about the line of flight
+    yoke = body.bone("yoke", (0, -8.5, 0))
+    head = yoke.bone("head", (0, -0.5, 0))
     head.cube("ohead", -4, -7, -3.5, 8, 7, 7)
     head.bone("disc", (0, -3.5, -3.5)).cube("disc", -4, -3, -0.5, 8, 6, 1)
     head.bone("beak", (0, -3.5, -4)).cube("beak", -0.5, 0, -1, 1, 2, 1)
@@ -2591,7 +2594,7 @@ def hollow_owl():
         def sh(n, side=side):
             return None if side > 0 else n
         head.bone("tuft_" + nm, (side * 2.5, -7, -1), (-15, 0, side * 20)).cube("tuft_" + nm, -1, -3, 0, 2, 3, 0, mirror=mir, share=sh("tuft_l"))
-        wing = body.bone("wing_" + nm, (side * 3.5, -8.5, 0), (0, 0, side * -4))
+        wing = yoke.bone("wing_" + nm, (side * 3.5, 0, 0), (0, 0, side * -4))
         wing.cube("owing_" + nm, 0 if side > 0 else -1, 0, -3, 1, 7, 7, mirror=mir, share=sh("owing_l"))
         tip = wing.bone("wingtip_" + nm, (side * 0.5, 6.5, 1), (30, 0, side * -6))
         tip.cube("wingtip_" + nm, 0, 0, -3, 0, 6, 7, mirror=mir, share=sh("wingtip_l"))
@@ -2621,17 +2624,19 @@ def owl_clips(r):
     cycle(walk, "body", "rot", lambda p: (0, 0, 8 * s(p)), 8)
     cycle(walk, "body", "pos", lambda p: (0, 0.6 * abs(s(p)), 0), 8)
     cycle(walk, "head", "rot", lambda p: (0, 0, -8 * s(p)), 8)
-    # gliding: wings straight out and still, primaries splayed, legs tucked; it rocks on the air without a beat
+    # in the air: the body lies forward along the line of flight, nose a little up (the yoke keeps the head and wings
+    # upright), wings straight out with the primaries splayed, legs trailed under the fanned tail; the beat is the
+    # motion layer's own (motion.json), this only rocks on the air
     air = r.clip("air", 3.0, loop=True)
     for nm, sg in (("wing_l", 1), ("wing_r", -1)):
         cycle(air, nm, "rot", lambda p, sg=sg: (0, 0, sg * (-92 + 4 * s(p, 0.25 if sg > 0 else 0.75))), 8)
         air.rot(nm.replace("wing", "wingtip"), [(0, -8, 0, sg * 6), (3.0, -8, 0, sg * 6)])
-    cycle(air, "body", "rot", lambda p: (12 + 3 * s(p), 0, 5 * s(p, 0.1)), 8)
+    cycle(air, "body", "rot", lambda p: (75 + 2 * s(p), 0, 0), 8)
+    cycle(air, "yoke", "rot", lambda p: (-75 - 2 * s(p), 0, 0), 8)
     for nm in ("oleg_l", "oleg_r"):
-        air.rot(nm, [(0, 60, 0, 0), (3.0, 60, 0, 0)])
-    air.rot("tail", [(0, -20, 0, 0), (3.0, -20, 0, 0)])
+        air.rot(nm, [(0, -10, 0, 0), (3.0, -10, 0, 0)])
+    air.rot("tail", [(0, -100, 0, 0), (3.0, -100, 0, 0)])
     air.scale("tail", [(0, 1.5, 1, 1.2), (3.0, 1.5, 1, 1.2)])
-    air.rot("head", [(0, -12, 0, 0), (3.0, -12, 0, 0)])
     # Talon Dive: it hunches, wings mantling half open, then throws its talons forward
     dw = r.clip("dive_windup", 0.8)
     dw.rot("body", [(0, 0, 0, 0), (0.8, 24, 0, 0)])

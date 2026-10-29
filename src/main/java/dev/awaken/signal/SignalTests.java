@@ -43,6 +43,49 @@ final class SignalTests {
         Signal.onAction("signaltest", (p, action, accepted) -> ANSWERS.incrementAndGet());
         NowHooks.register(p -> TEST_NOW.getOrDefault(p.getUUID(), List.of()));
 
+        // the clear screen's Now line (SPEC §40.6): 8 s when new, then it fades while you walk toward the place; it comes back
+        // when you look more than 70° away for 3 s, stand still 2 s or come within 50 m; it holds 3 s so it never blinks
+        AwakenTests.register("hud_now_line_returns", 20, h -> {
+            var now = new dev.awaken.signal.ui.CornerShow.NowLine();
+            int fresh = dev.awaken.signal.ui.CornerShow.NowLine.FRESH, hold = dev.awaken.signal.ui.CornerShow.NowLine.HOLD;
+            int t = 0;
+            for (; t < fresh; t++) h.assertTrue(now.tick(t, 5, 400, true, false), "new: shown at " + t);
+            for (int i = 0; i < hold; i++, t++) h.assertTrue(now.tick(t, 5, 400, true, false), "held after it went quiet, " + i);
+            h.assertFalse(now.tick(t++, 5, 400, true, false), "walking toward it: gone");
+            // turned away: back after 3 s, not before
+            for (int i = 0; i < dev.awaken.signal.ui.CornerShow.NowLine.TURN_TICKS - 1; i++, t++)
+                h.assertFalse(now.tick(t, 120, 400, true, false), "not yet back, " + i);
+            h.assertTrue(now.tick(t++, 120, 400, true, false), "turned away 3 s: back");
+            // let it go again, then stand still: back after 2 s
+            for (int i = 0; i <= hold; i++, t++) now.tick(t, 5, 400, true, false);
+            h.assertFalse(now.tick(t++, 5, 400, true, false), "walking on: gone again");
+            boolean back = false;
+            for (int i = 0; i < dev.awaken.signal.ui.CornerShow.NowLine.STILL_TICKS; i++, t++) back = now.tick(t, 5, 400, false, false);
+            h.assertTrue(back, "stood still 2 s: back");
+            // near the place it stays; in a fight it steps aside
+            for (int i = 0; i < 200; i++, t++) h.assertTrue(now.tick(t, 5, 30, true, false), "within 50 m it stays");
+            h.assertFalse(now.tick(t, 5, 30, true, true), "a fight: aside");
+            h.succeed();
+        });
+
+        // the task card (SPEC §40.6): 8 s after a change; a step that teaches a key stays until the key is pressed, then 8 s
+        AwakenTests.register("hud_task_card_teaches", 20, h -> {
+            var card = new dev.awaken.signal.ui.CornerShow.TaskCard();
+            int show = dev.awaken.signal.ui.CornerShow.TaskCard.SHOW;
+            h.assertFalse(card.tick(false, false, false), "nothing changed: hidden");
+            card.changed();
+            for (int i = 0; i < show - 1; i++) h.assertTrue(card.tick(false, false, false), "shown after a change, " + i);
+            h.assertFalse(card.tick(false, false, false), "gone at 8 s");
+            card.changed();
+            for (int i = 0; i < show * 3; i++) h.assertTrue(card.tick(true, false, true), "a lesson stays, even in a fight, " + i);
+            h.assertTrue(card.tick(true, true, false), "pressed: still shown");
+            for (int i = 0; i < show - 1; i++) h.assertTrue(card.tick(true, false, false), "8 s from the press, " + i);
+            h.assertFalse(card.tick(true, false, false), "then gone");
+            card.changed();
+            h.assertFalse(card.tick(false, false, true), "a plain change steps aside in a fight");
+            h.succeed();
+        });
+
         // the task card wraps a long step instead of cutting it (Euan, 2026-10-27): no line wider than the card, the words and the
         // key kept in order, the count and compass on the last line or one of their own, an ellipsis only past the last line
         AwakenTests.register("signal_task_wrap", 20, h -> {
@@ -163,9 +206,10 @@ final class SignalTests {
 
         AwakenTests.register("signal_glossary_terms", 20, h -> {
             for (String w : List.of("Satchel", "Extract", "Extraction", "Seal", "play-days", "Veil", "Fractured", "Reassessment",
-                    "Echoes", "Flow", "Kinetic", "Truths", "Directive", "Latents")) {
+                    "Flow", "Kinetic", "Truths", "Directive", "Latents")) {
                 h.assertTrue(Glossary.lookup(w).isPresent(), "glossary explains " + w);
             }
+            h.assertTrue(Glossary.lookup("Echoes").isEmpty(), "Echoes are gone (SPEC §43.4), so the glossary doesn't explain them");
             h.assertTrue(Glossary.lookup("Flowers").isEmpty() && Glossary.lookup("Sealant").isEmpty(), "no false friends");
             h.succeed();
         });
@@ -306,6 +350,44 @@ final class SignalTests {
             h.succeed();
         });
 
+        // SPEC §26.3 (Euan, 2026-10-29): a find made on purpose shows the moment it's made, not a calm gap later; it
+        // waits only while nothing can show, and a world's settling minutes don't hold it
+        AwakenTests.register("notice_find_shows_at_once", 20, h -> {
+            Pace.Rules r = Pace.Rules.of(Pace.Density.STANDARD);
+            Pace<String> pace = new Pace<>(r);
+            pace.offer(0, "level", Notices.Tier.IMPORTANT, "", false);
+            pace.poll(0, false, false, true); // something just took the screen
+            pace.offer(1, "slow", Notices.Tier.IMPORTANT, "creature", false);
+            pace.offer(2, "glimmerfish", Notices.Tier.IMPORTANT, "creature", false, true);
+            List<Pace.Out<String>> out = pace.poll(2, false, false, true);
+            h.assertTrue(out.size() == 1 && out.get(0).act() == Pace.Act.SHOW && out.get(0).first().equals("glimmerfish")
+                    && out.get(0).items().size() == 1, "the find shows at once, ahead of an older paced one: " + out);
+            for (long t = 3; t < r.calmGap(); t++) h.assertTrue(pace.poll(t, false, false, true).isEmpty(), "the paced one keeps its gap at " + t);
+            h.assertTrue(pace.poll(2 + r.calmGap(), false, false, true).stream().anyMatch(o -> o.first().equals("slow")), "then the paced one");
+            // settling: only the immediate shows; blocked (a screen, a fight): it waits, then goes first
+            Pace<String> settling = new Pace<>(r);
+            settling.offer(0, "paced", Notices.Tier.IMPORTANT, "", false);
+            settling.offer(0, "lesson", Notices.Tier.IMPORTANT, "creature", true, true);
+            h.assertTrue(settling.poll(0, true, true, true).isEmpty(), "blocked: nothing shows");
+            out = settling.poll(1, false, true, true);
+            h.assertTrue(out.size() == 1 && out.get(0).moment() && out.get(0).first().equals("lesson"), "settling: the lesson shows: " + out);
+            for (long t = 2; t < 200; t++) h.assertTrue(settling.poll(t, false, true, true).isEmpty(), "settling holds the paced one at " + t);
+            // the burst limit doesn't hold it either
+            Pace<String> burst = new Pace<>(r);
+            for (int i = 0; i < r.burst(); i++) burst.mark(i);
+            burst.offer(5, "find", Notices.Tier.IMPORTANT, "creature", false, true);
+            h.assertTrue(burst.poll(5, false, false, false).size() == 1, "a full burst doesn't hold it");
+            // only a find made on purpose is immediate, and the flag survives the wire
+            var looked = Finds.now(SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Glimmerfish")).tier(Notices.Tier.IMPORTANT).moment(),
+                    Finds.Find.of("creature", "New creature · Glimmerfish", "Glimmerfish", "", 0xFFFFFF, true));
+            var passed = Finds.now(SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Commons")).tier(Notices.Tier.IMPORTANT),
+                    Finds.Find.of("biome", "New biome · Commons", "Commons", "", 0xFFFFFF, false));
+            h.assertTrue(looked.immediate() && !passed.immediate(), "intent finds are immediate, the rest paced");
+            var decoded = SignalWindow.CODEC.parse(NbtOps.INSTANCE, SignalWindow.CODEC.encodeStart(NbtOps.INSTANCE, looked).getOrThrow()).getOrThrow();
+            h.assertTrue(decoded.immediate() && decoded.moment() && !decoded.fleeting(), "the flags survive the codec");
+            h.succeed();
+        });
+
         AwakenTests.register("notice_critical_bypasses_queue", 20, h -> {
             Pace<String> pace = new Pace<>(Pace.Rules.of(Pace.Density.MINIMAL));
             for (int i = 0; i < 4; i++) pace.offer(0, "info" + i, Notices.Tier.IMPORTANT, "", true);
@@ -350,6 +432,54 @@ final class SignalTests {
             h.succeed();
         });
 
+        AwakenTests.register("signal_dialogue_use_once", 20, h -> {
+            var press = new dev.awaken.core.api.Dialogue.Press();
+            var advance = dev.awaken.core.api.Dialogue.Press.Result.ADVANCE;
+            var consume = dev.awaken.core.api.Dialogue.Press.Result.CONSUME;
+            var pass = dev.awaken.core.api.Dialogue.Press.Result.PASS;
+            h.assertTrue(press.use(true, false) == pass, "first NPC interaction reaches the server");
+            press.capture();
+            h.assertTrue(press.use(true, false) == consume, "holding cannot resend while its reply is in flight");
+            press.release();
+            h.assertTrue(press.use(true, false) == consume, "a fast second click waits for the server reply instead of restarting");
+            h.assertTrue(press.use(false, true) == consume && press.use(true, true) == consume, "offhand and held reply do not skip its first line");
+            press.release();
+            StoryPager speech = new StoryPager("", "Hale: Take your time. Read the next line before taking the weapon.");
+            List<String> first = speech.next(80, StoryPager.MAX_LINES, SignalText::approxWidth);
+            int chunks = speech.chunksTaken();
+            h.assertTrue(press.use(true, true) == advance, "fresh press advances");
+            speech.next(80, StoryPager.MAX_LINES, SignalText::approxWidth);
+            h.assertTrue(speech.chunksTaken() == chunks + 1 && !first.isEmpty(), "exactly one subtitle chunk advances");
+            h.assertTrue(press.use(false, true) == consume && press.use(true, true) == consume, "neither second hand nor held repeats advance again");
+            h.assertTrue(press.use(true, false) == consume, "last line cannot fall through into item use or conversation restart");
+            press.release();
+            h.assertTrue(press.use(true, false) == pass, "a new click after the conversation can interact normally");
+            press.capture();
+            press.release();
+            for (int i = 0; i < 20; i++) press.tick();
+            h.assertTrue(press.use(true, false) == pass, "a speaker with no reply cannot leave use locked");
+            // the System's speech takes use only inside a conversation the player started (no sources on a server)
+            dev.awaken.core.api.Dialogue.reset();
+            h.assertFalse(dev.awaken.core.api.Dialogue.talking(), "speech that just arrives never takes the use key");
+            dev.awaken.core.api.Dialogue.capture();
+            h.assertTrue(dev.awaken.core.api.Dialogue.talking(), "using on a speaker opens a conversation");
+            for (int i = 0; i < 100; i++) dev.awaken.core.api.Dialogue.tick();
+            h.assertFalse(dev.awaken.core.api.Dialogue.talking(), "a conversation with no speech closes after its reply time");
+            dev.awaken.core.api.Dialogue.reset();
+            h.assertTrue(SignalWindow.Presentation.resolve(SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Hale: Hold on."))
+                    .dialogue().build()) == SignalWindow.Presentation.STORY, "a spoken line is shown as speech");
+            var choice = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Hale"))
+                    .dialogue().choice("signaltest:weapon", "Take it", "Wait").build();
+            var deck = new ChoiceDeck();
+            deck.offer(choice, 200);
+            h.assertTrue(choice.dialogue() && SignalWindow.Presentation.resolve(choice) == SignalWindow.Presentation.CHOICE
+                    && deck.pending().size() == 1, "NPC speech marking preserves the explicit choice");
+            var encoded = SignalWindow.CODEC.encodeStart(NbtOps.INSTANCE, choice).getOrThrow();
+            var decoded = SignalWindow.CODEC.parse(NbtOps.INSTANCE, encoded).getOrThrow();
+            h.assertTrue(decoded.dialogue() && decoded.action().equals(choice.action()), "dialogue/choice semantics survive network codec");
+            h.succeed();
+        });
+
         AwakenTests.register("signal_story_pager_keeps_every_word", 20, h -> {
             String body = "You just couldn't see them. Now the world has noticed you back: the motes in the grass, the lines over the ore, the thing watching from the trees.";
             StoryPager pager = new StoryPager("The gates were always there.", body);
@@ -358,18 +488,54 @@ final class SignalTests {
             int guard = 0;
             boolean pushed = false;
             while (!pager.done() && guard++ < 50) {
-                List<String> chunk = pager.next(150, SignalText::approxWidth);
-                h.assertTrue(!chunk.isEmpty() && chunk.size() <= StoryPager.MAX_LINES, "1-2 lines per subtitle");
+                List<String> chunk = pager.next(150, 2, SignalText::approxWidth);
+                h.assertTrue(!chunk.isEmpty() && chunk.size() <= 2, "1-2 lines per subtitle: " + chunk);
                 for (String l : chunk) h.assertTrue(SignalText.approxWidth(l) <= 150, "line fits: " + l);
                 if (!pushed && guard == 2) { // the width changes under a chunk: put it back and cut it narrower
-                    pager.pushBack(chunk, false);
+                    pager.pushBack();
                     pushed = true;
                     continue;
                 }
-                for (String l : chunk) words.addAll(List.of(l.split(" ")));
+                String page = String.join(" ", chunk);
+                // a page never stops mid-clause: it ends a sentence, or (a sentence longer than a page) at a comma or colon
+                h.assertTrue(page.matches(".*[.!?,:;]$"), "a page ends at a sentence or clause: " + page);
+                words.addAll(List.of(page.split(" ")));
             }
             String all = "The gates were always there. " + body;
             h.assertTrue(String.join(" ", words).equals(all), "every word, in order: " + String.join(" ", words));
+            // with room, a page is whole sentences together and none is cut
+            StoryPager wide = new StoryPager("", "Oren: I'm Oren, the smith. Most hunters buy cheap blades off a cart. They snap.");
+            List<String> one = wide.next(290, 3, SignalText::approxWidth);
+            h.assertTrue(wide.done() && String.join(" ", one).endsWith("They snap."), "short sentences share a page: " + one);
+            h.succeed();
+        });
+
+        AwakenTests.register("signal_choice_waits_for_speech", 20, h -> {
+            ChoiceDeck deck = new ChoiceDeck();
+            deck.offer(choice("signaltest:offer"), 20 * 60, true); // asked while the giver is still talking
+            for (int i = 0; i < 300; i++) {
+                deck.tick(0, 0, false, true);
+                h.assertTrue(deck.current() == null, "no card while the speech goes on (tick " + i + ")");
+            }
+            for (int i = 0; i < ChoiceDeck.GAP_TICKS - 1; i++) deck.tick(0, 0, false, false);
+            h.assertTrue(deck.current() == null, "a beat after the last line first");
+            deck.tick(0, 0, false, false);
+            deck.tick(0, 0, false, false);
+            h.assertTrue(deck.current() != null && deck.current().action.equals("signaltest:offer"), "the card comes once they've finished");
+            // a warning never waits; a card asked in silence doesn't either
+            ChoiceDeck urgent = new ChoiceDeck();
+            urgent.offer(SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("Run?")).choice("signaltest:warn", "Yes", "No").ttl(600).build(), 600, true);
+            urgent.tick(0, 0, false, true);
+            h.assertTrue(urgent.current() != null, "a warning shows over speech");
+            ChoiceDeck quiet = new ChoiceDeck();
+            quiet.offer(choice("signaltest:quiet"), 600, false);
+            quiet.tick(0, 0, false, true);
+            h.assertTrue(quiet.current() != null, "a card asked before the speech isn't held back by it");
+            // speech that never ends can't hide a card for good
+            ChoiceDeck stuck = new ChoiceDeck();
+            stuck.offer(choice("signaltest:stuck"), ChoiceDeck.SPEECH_WAIT_TICKS + 100, true);
+            for (int i = 0; i < ChoiceDeck.SPEECH_WAIT_TICKS + 2; i++) stuck.tick(0, 0, false, true);
+            h.assertTrue(stuck.current() != null, "a card waits for speech at most a minute");
             h.succeed();
         });
 
@@ -566,6 +732,16 @@ final class SignalTests {
                         storyChecks(bad, at, w, hgt, s, c.rect(), cross);
                     }
                 }
+                for (int q = 1; q <= 2; q++) { // an offer: its body says in full what you agree to
+                    SignalLayout.Card c = SignalLayout.choice(w, hgt, s, q, SignalLayout.CHOICE_BODY_LINES);
+                    check(bad, at + " offer " + q, c.rect(), cross, w, hgt);
+                    if (c.bodyLines() < SignalLayout.CHOICE_BODY_LINES) bad.add(at + " offer drops body lines " + c.bodyLines());
+                    if (c.rect().bottom() > hgt - SignalLayout.POWER_BAR_H) bad.add(at + " offer reaches the power bar " + c.rect());
+                    if (c.rect().h() > hgt * SignalLayout.MAX_HEIGHT_BODY + 1) bad.add(at + " offer taller than 30% " + c.rect());
+                    if (SignalLayout.choiceHeight(c.lines(), c.bodyLines()) * c.scale() > c.rect().h() + 1) bad.add(at + " offer content taller than its rect");
+                    for (Rect t : toasts) if (c.rect().intersects(t)) bad.add(at + " offer under a toast " + c.rect());
+                    storyChecks(bad, at, w, hgt, s, c.rect(), cross);
+                }
                 for (int n : new int[]{0, 1, 3, 8, 20}) {
                     for (boolean footer : new boolean[]{false, true}) {
                         SignalLayout.Card p = SignalLayout.panel(w, hgt, s, n, footer);
@@ -633,7 +809,7 @@ final class SignalTests {
     }
 
     private static void storyChecks(List<String> bad, String at, int w, int h, double s, Rect avoid, Rect cross) {
-        for (int lines = 1; lines <= 2; lines++) {
+        for (int lines = 1; lines <= StoryPager.maxLines(w, h, s); lines++) {
             SignalLayout.Card st = SignalLayout.story(w, h, s, lines, avoid);
             check(bad, at + " story " + lines, st.rect(), cross, w, h);
             if (avoid != null && st.rect().intersects(avoid)) bad.add(at + " story under the card " + st.rect() + " vs " + avoid);

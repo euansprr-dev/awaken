@@ -1,6 +1,6 @@
 {
-  "text": "Hold {key.awaken.movement} while looking at a ring or a ledge above you to throw your rope. Press {key.forward} to swing, and let go to fly off. If the ring is right above you, the rope pulls you up and over the edge.",
-  "short": "{key.awaken.movement} at a ring above",
+  "text": "Hold {key.awaken.rope} while looking at a ring or a ledge above you to throw your rope. Press {key.forward} to swing, and let go to fly off. If the ring is right above you, the rope pulls you up and over the edge.",
+  "short": "{key.awaken.rope} at a ring above",
   "priority": 70,
   "show_for": 200,
   "retire_after_done": 3,

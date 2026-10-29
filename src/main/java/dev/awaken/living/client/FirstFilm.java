@@ -255,7 +255,7 @@ final class FirstFilm {
                 Cinema.sound(LivingContent.REGION_ENTER.get(), 0.8F, 0.6F);
             }
             if (age == RISE + 6) {
-                Cinema.barNote("THE WAYFARER CAMP", "UP THE NORTH ROAD  ·  " + metres + " M AWAY  ·  YOUR NEXT STOP", HOLD - RISE + 10);
+                Cinema.barNote("THE LAST FIRE", "UP THE NORTH ROAD  ·  " + metres + " M AWAY  ·  YOUR NEXT STOP", HOLD - RISE + 10);
             }
             if (age == RISE + 16 && !line.isEmpty()) Cinema.line(who, line, 20 * 4 + line.length());
             if (age == LENGTH - 22) Cinema.bars(false);

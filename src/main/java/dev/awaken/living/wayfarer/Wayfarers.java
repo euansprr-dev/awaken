@@ -7,6 +7,7 @@ import dev.awaken.living.quest.QuestState;
 import dev.awaken.progression.Requirements;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
+import dev.awaken.signal.ui.StoryPager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import org.jspecify.annotations.Nullable;
@@ -15,9 +16,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The people of the wilds (SPEC §21, Phase C), and what happens when you talk to one: a step waiting on them moves on,
- * something you carry for them changes hands, a chain they give is offered on a choice card, or they say something of
- * their own. Lines are authored; none is generated.
+ * The Wayfarers (SPEC §21, §43.1): Ilse at the Last Fire, Hettie in Carillon's market square, Hale at the High Gate; and
+ * what happens when you talk to one: a step waiting on them moves on, something you carry for them changes hands, or they
+ * say something of their own. None of them gives a task. Lines are authored; none is generated.
  */
 public final class Wayfarers {
     private Wayfarers() {}
@@ -26,13 +27,17 @@ public final class Wayfarers {
     public record Person(String name, boolean slim, List<String> idle) {}
 
     static final Map<String, Person> PEOPLE = Map.of(
-            "wren", new Person("Wren", true, List.of("Wren: The wind up here has opinions.", "Wren: I'm fine. Mostly fine. Ledge-fine.")),
-            "hettie", new Person("Hettie", true, List.of("Hettie: They come back, the sheep. Usually.", "Hettie: Wipe your boots. The ewes judge.")),
-            "ilse", new Person("Ilse", true, List.of("Ilse: Moths know where the ground is generous.", "Ilse: Sit. Nobody out here runs anywhere.")),
-            "gus", new Person("Gus", false, List.of("Gus: Mountain's quiet today. Don't trust it.", "Gus: You're standing on my good rock.")),
-            "pell", new Person("Pell", false, List.of("Pell: Two good legs once. Faster than you. Ask anyone.", "Pell: The roads aren't roofs. Too flat. Too honest.")),
-            "hale", new Person("Hale", false, List.of("Hale: Licence? Fine. The Commons bite less than they look. Mostly.", "Hale: Board's there. Work for new licences.")),
-            "marta", new Person("Marta", true, List.of("Marta: Everything's for sale. Except the wagons. And me.", "Marta: Roads are long. Bring a story.")));
+            "ilse", new Person("Ilse", true, List.of(
+                    "Ilse: Sit down a minute. The kettle's on.",
+                    "Ilse: Tell me what it looks like out there. I haven't seen past that ridge in eleven years.",
+                    "Ilse: Did you say hello to Aldo for me? He's on the milestone, just past the ridge.",
+                    "Ilse: Watch before you draw. Most of what lives out there just wants to be left alone.")),
+            "hettie", new Person("Hettie", true, List.of(
+                    "Hettie: I had forty sheep up in the hills once. Now I've got a stall and a view of the fountain.",
+                    "Hettie: When the bells went quiet up our way, we walked here. All of us, and the dogs. It took nine days.",
+                    "Hettie: The city's loud. You get used to it. I still keep waiting for a ewe to shout at me.",
+                    "Hettie: If you're going out past the ridge, wrap up. It's colder out there than it looks from here.")),
+            "hale", new Person("Hale", false, List.of("Hale: Licence? Fine. The Commons bite less than they look. Mostly.", "Hale: Board's there. Work for new licences.")));
 
     public static @Nullable Person get(String who) {
         return PEOPLE.get(who);
@@ -96,12 +101,22 @@ public final class Wayfarers {
         return false;
     }
 
-    /** A chain offered on a choice card: Y takes it into the Journal, N leaves it (it can be asked for again). */
+    /**
+     * A chain offered on a choice card: Y takes it into the Journal, N leaves it (it can be asked for again). The giver
+     * says their lines first; the card says in plain words what you agree to and shows once they've finished (the
+     * client holds a card asked during speech), so it lives 30 s past the time the lines take to say.
+     */
     static void offer(ServerPlayer p, String chain, QuestDef d, long scene) {
         if (!d.ask().isEmpty()) QuestEngine.sayLines(p, d.ask());
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.title()))
+        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.title())).dialogue()
                 .body(Component.literal(d.summary().isEmpty() ? "Help?" : d.summary()))
-                .choice(ACTION + ":" + chain + "#" + scene, "Help", "Not now").ttl(20 * 30).build());
+                .choice(ACTION + ":" + chain + "#" + scene, "Help", "Not now")
+                .ttl(offerTtl(d.ask())).build());
+    }
+
+    /** How long an offer stays open: 30 s, plus the time its ask takes to say (the card shows after it). */
+    public static int offerTtl(List<String> ask) {
+        return 20 * 30 + StoryPager.readTicks(ask);
     }
 
     public static final String ACTION = "living_quest";

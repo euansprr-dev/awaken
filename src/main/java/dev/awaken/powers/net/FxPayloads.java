@@ -51,6 +51,7 @@ public final class FxPayloads {
         buf.writeInt(e.seed());
         ByteBufCodecs.VAR_INT.encode(buf, Math.max(0, e.ticks()));
         ByteBufCodecs.VAR_INT.encode(buf, e.flags());
+        ByteBufCodecs.VAR_INT.encode(buf, e.power());
     }
 
     static Fx read(ByteBuf buf) {
@@ -66,6 +67,7 @@ public final class FxPayloads {
         int seed = buf.readInt();
         int ticks = ByteBufCodecs.VAR_INT.decode(buf);
         int flags = ByteBufCodecs.VAR_INT.decode(buf);
-        return new Fx(new FxEvent(kind, style, caster, target, x, y, z, dx, dy, dz, colour, scale, aux, seed, ticks, flags));
+        int power = ByteBufCodecs.VAR_INT.decode(buf);
+        return new Fx(new FxEvent(kind, style, caster, target, x, y, z, dx, dy, dz, colour, scale, aux, seed, ticks, flags, power));
     }
 }

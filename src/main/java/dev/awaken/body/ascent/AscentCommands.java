@@ -101,8 +101,8 @@ final class AscentCommands {
         ServerPlayer p = src.getPlayerOrException();
         double[] a = RappelStage.build(p, lineOf(line));
         src.sendSuccess(() -> Component.literal(String.format(java.util.Locale.ROOT,
-                "Rappel stage: a %d-deep shaft, the passage %d under the lip. Hold Left Alt (the line), Shift with Space to pay it out, "
-                        + "Space again with your feet on the wall to kick off it, let go of Left Alt by the passage to drop in. Anchor %.1f %.1f %.1f.",
+                "Rappel stage: a %d-deep shaft, the passage %d under the lip. Hold the rope key (the line), Shift with Space to pay it out, "
+                        + "Space again with your feet on the wall to kick off it, let go of it by the passage to drop in. Anchor %.1f %.1f %.1f.",
                 RappelStage.DEPTH, RappelStage.PASSAGE, a[0], a[1], a[2])).withStyle(ChatFormatting.AQUA), false);
         return 1;
     }
@@ -378,9 +378,10 @@ final class AscentCommands {
         ServerPlayer p = src.getPlayerOrException();
         if (AscentServer.tiers(p) == 0) grant(src, "all");
         int n = AscentSandbox.build(p);
-        src.sendSuccess(() -> Component.literal("Sandbox: " + n + " giant trees ahead. Hold Left Alt (Tether) at a trunk or branch "
-                + "to swing, W at the bottom to pump, let go to fly, Space to jump off the rope. Space in the air opens the wings; "
-                + "Space again while gliding takes flight (Ctrl to boost).").withStyle(ChatFormatting.AQUA), false);
+        src.sendSuccess(() -> Component.literal("Sandbox: " + n + " giant trees ahead, and a city street behind the tower. Hold the rope "
+                + "key (Left Alt) in the air to swing: it finds something good to swing from where you're heading, lets go at the top, "
+                + "and keeps swinging while you hold it. Tap it at a ledge to pull yourself up. Space jumps off the rope. Space in the "
+                + "air opens the wings; Space again while gliding takes flight (Ctrl to boost).").withStyle(ChatFormatting.AQUA), false);
         return n;
     }
 }

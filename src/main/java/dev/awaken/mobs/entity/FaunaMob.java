@@ -380,6 +380,7 @@ public class FaunaMob extends AwakenMob {
     @Override
     public void tick() {
         super.tick();
+        if (!level().isClientSide() && isNoAi()) updatePose(); // a still creature (a tour's, a display's) still shows it's aloft
         if (level().isClientSide()) {
             clientAnimTick();
             burrowAnim = (pose() & P_BURROW) != 0 ? Math.min(1.0F, burrowAnim + 1.0F / BURROW_TICKS) : 0.0F;

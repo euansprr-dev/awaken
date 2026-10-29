@@ -70,19 +70,19 @@
     "subtitle": "subtitles.awaken.delve.cave.settle",
     "sounds": [
       {
-        "name": "awaken:amb_cave_settle_1",
+        "name": "awaken:delve/settle_1",
         "attenuation_distance": 32
       },
       {
-        "name": "awaken:amb_cave_settle_2",
+        "name": "awaken:delve/settle_2",
         "attenuation_distance": 32
       },
       {
-        "name": "awaken:amb_cave_settle_3",
+        "name": "awaken:delve/settle_3",
         "attenuation_distance": 32
       },
       {
-        "name": "awaken:amb_cave_settle_4",
+        "name": "awaken:delve/settle_4",
         "attenuation_distance": 32
       }
     ]
@@ -100,7 +100,7 @@
     "subtitle": "subtitles.awaken.delve.cave.breath",
     "sounds": [
       {
-        "name": "awaken:amb_cave_breath",
+        "name": "awaken:delve/cave_breath",
         "attenuation_distance": 24
       }
     ]
@@ -160,6 +160,25 @@
         "name": "awaken:delve_deep_seep",
         "attenuation_distance": 16,
         "stream": true
+      }
+    ]
+  },
+  "delve.band.room": {
+    "subtitle": "subtitles.awaken.delve.band.room",
+    "sounds": [
+      {
+        "name": "awaken:delve/band_room",
+        "attenuation_distance": 16,
+        "stream": true
+      }
+    ]
+  },
+  "delve.cave.answers": {
+    "subtitle": "subtitles.awaken.delve.cave.answers",
+    "sounds": [
+      {
+        "name": "awaken:delve/cave_answers",
+        "attenuation_distance": 48
       }
     ]
   }

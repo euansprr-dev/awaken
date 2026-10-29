@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "theme": "fungal_hollow",
+  "name": "The Glowing Deep",
+  "line": "Glowcaps grow tall round a black lake down here, and the water falling into it glows.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "lake": 1,
+    "roof": 12
+  },
+  "biome": "awaken:gate_world/glowing_deep",
+  "moods": [
+    {
+      "id": "quiet",
+      "name": "Quiet",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "bloom",
+      "name": "Bloom",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/glowing_deep_bloom",
+      "life": [
+        "spores",
+        "moths"
+      ]
+    },
+    {
+      "id": "drought",
+      "name": "Drought",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/glowing_deep_drought",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "migration",
+      "name": "Migration",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/glowing_deep_migration",
+      "life": [
+        "moths",
+        "fireflies"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:fungal_rock",
+    "wall_glow": "awaken:fungal_rock_veined",
+    "floor": "awaken:fungal_loam",
+    "floor_glow": "awaken:fungal_moss",
+    "trim": "awaken:fungal_rock_veined",
+    "stem": "awaken:glowcap_stem",
+    "cap": "awaken:glowcap_cap",
+    "gills": "awaken:glowcap_gills",
+    "roots": "awaken:lumen_roots",
+    "sprouts": "awaken:glowcap_sprouts",
+    "threads": "awaken:mycelium_threads",
+    "fall": "awaken:fungal_glowfall",
+    "touch": "awaken:spore_puffball",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "glowfall"
+  ],
+  "life": [
+    "spores",
+    "drips",
+    "mist",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.hollow_glow",
+  "events": [
+    "spore_burst"
+  ],
+  "rule": "spores",
+  "secrets": [
+    {
+      "id": "old_puffball",
+      "name": "The old puffball"
+    },
+    {
+      "id": "behind_the_falls",
+      "name": "Behind the glowing falls"
+    },
+    {
+      "id": "the_threads",
+      "name": "The threads in the wall",
+      "leads_to": "awaken:fungal_hollow/mycelium_mind"
+    }
+  ],
+  "keepsake": "glowfall_vial",
+  "keepsake_name": "A Vial of the Glowing Falls",
+  "keepsake_from": "behind_the_falls"
+}

@@ -4,8 +4,6 @@ import dev.awaken.core.CoreModule;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.HearthHooks;
 import dev.awaken.core.api.MobRole;
-import dev.awaken.hearth.echo.Echoes;
-import dev.awaken.hearth.net.HearthNet;
 import dev.awaken.hearth.town.Town;
 import dev.awaken.hearth.town.TownNpc;
 import dev.awaken.hearth.town.Townsfolk;
@@ -33,7 +31,7 @@ import java.util.UUID;
 
 /**
  * HEARTH: the home base that grows into a town, from the Ember's first fire to the Anchor; the reading of the rooms you
- * build, Comfort and Rested; the Echo army, trophies, the Training Grounds and the Reassessment trials. See
+ * build, Comfort and Rested; trophies, the Training Grounds and the Reassessment trials (Echoes are gone: SPEC §43.4). See
  * docs/modules/hearth.md and SPEC sections 4.4, 10 and 28.
  */
 public final class HearthModule {
@@ -45,7 +43,6 @@ public final class HearthModule {
         dev.awaken.hearth.kit.HomeKit.init(modBus);
         modBus.addListener(HearthModule::attributes);
         modBus.addListener(HearthModule::creativeTab);
-        modBus.addListener(HearthNet::register);
         modBus.addListener(dev.awaken.hearth.net.HomeNet::register);
 
         var bus = NeoForge.EVENT_BUS;
@@ -67,12 +64,17 @@ public final class HearthModule {
         dev.awaken.hearth.guide.Guide.init(modBus);
         Offers.init();
         Later.init();
-        Echoes.init();
+        dev.awaken.hearth.echo.OldEchoes.init();
         Training.init();
         Trials.init();
         dev.awaken.hearth.request.Requests.init(modBus);
 
         HearthHooks.install(new HearthHooks.Lookup() {
+            @Override
+            public net.minecraft.world.item.ItemStack keepsake(String id, String name, long day) {
+                return dev.awaken.hearth.trophy.Trophies.make("awaken:keepsake/" + id, name, day);
+            }
+
             @Override
             public Optional<BlockPos> nearest(ServerLevel level, BlockPos pos, int radius) {
                 return HearthData.get(level.getServer()).nearest(pos, level.dimension().identifier().toString(), radius).map(h -> h.pos);
@@ -175,6 +177,7 @@ public final class HearthModule {
         dev.awaken.hearth.settle.SettleTests.register();
         TogetherHearthTests.register();
         dev.awaken.hearth.guide.GuideTests.register();
+        dev.awaken.hearth.guide.CottageBuildTests.register();
     }
 
     private static void attributes(EntityAttributeCreationEvent e) {
@@ -191,31 +194,17 @@ public final class HearthModule {
         if (e.getServer().getTickCount() % 100 == 7 && HearthService.enabled()) Trials.checkPending(e.getServer());
     }
 
-    /** One death listener for the module: Echo bookkeeping, trophies and lingering Echoes. */
+    /** One death listener for the module: trophies. */
     private static void onDeath(LivingDeathEvent e) {
         if (!HearthService.enabled()) return;
         LivingEntity dead = e.getEntity();
-        if (!(dead.level() instanceof ServerLevel level)) return;
-        if (dead instanceof ServerPlayer sp) {
-            Echoes.onOwnerDeath(sp);
-            return;
-        }
-        if (Echoes.isEcho(dead)) {
-            Echoes.onEchoDeath(dead, level);
-            return;
-        }
+        if (!(dead.level() instanceof ServerLevel level) || dead instanceof ServerPlayer) return;
         Entity cause = e.getSource().getEntity();
-        Entity direct = e.getSource().getDirectEntity();
-        Entity echo = direct != null && Echoes.isEcho(direct) ? direct : cause != null && Echoes.isEcho(cause) ? cause : null;
-        if (echo != null) Echoes.creditKill(echo, dead);
-        ServerPlayer killer = cause instanceof ServerPlayer p ? p : echo != null ? Echoes.owner(echo) : null;
+        ServerPlayer killer = cause instanceof ServerPlayer p ? p : null;
         if (killer == null && dead.getKillCredit() instanceof ServerPlayer p) killer = p;
         if (killer == null) return;
         boolean trialMob = dead.getExistingData(CoreApi.MOB_ROLE.get()).map(MobRole::gateId).filter(g -> g.startsWith("trial:")).isPresent();
         if (trialMob) return;
         Trophies.onDeath(e, killer, level);
-        Echoes.onKill(dead, killer, level);
-        // the party in range each get their own chance to bind it (SPEC "Together": separate rolls per player)
-        for (ServerPlayer mate : dev.awaken.core.api.Parties.sharing(killer, dead)) Echoes.onKill(dead, mate, level);
     }
 }

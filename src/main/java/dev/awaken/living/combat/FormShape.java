@@ -2,6 +2,7 @@ package dev.awaken.living.combat;
 
 import dev.awaken.living.LivingContent;
 import dev.awaken.living.combat.Forms.Species;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.neoforged.neoforge.event.entity.EntityEvent;
@@ -69,6 +70,22 @@ public final class FormShape {
         if (f == null || f.rung() < 2) return;
         float fw = widthFactor(sp.layout, f.rung()), fh = heightFactor(sp.layout, f.rung());
         if (fw != 1.0F || fh != 1.0F) e.setNewSize(e.getNewSize().scale(fw, fh));
+    }
+
+    /** The most a body turns as it falls into a blow: a blow from the front tips a forward-faller onto its side, not into the striker. */
+    public static final float MAX_FALL_TURN = 100.0F;
+
+    /**
+     * The turn (degrees of body yaw) that lays a death clip's fall along a blow (SPEC §21.13): the clip falls along (fallX, fallZ) in the
+     * body's frame (x its left, -z its front), the body faces {@code bodyRot}, the blow goes along (blowX, blowZ) in the world. Pure, for
+     * the client renderer and the tests.
+     */
+    public static float fallTurn(float fallX, float fallZ, float bodyRot, float blowX, float blowZ) {
+        if (fallX * fallX + fallZ * fallZ < 1e-4F || blowX * blowX + blowZ * blowZ < 1e-4F) return 0.0F;
+        float yaw = bodyRot * Mth.DEG_TO_RAD, c = Mth.cos(yaw), s = Mth.sin(yaw);
+        float wx = fallX * c + fallZ * s, wz = fallX * s - fallZ * c;   // the clip's fall in the world
+        float delta = Mth.wrapDegrees((float) (Mth.atan2(-blowX, blowZ) - Mth.atan2(-wx, wz)) * Mth.RAD_TO_DEG);
+        return Mth.clamp(delta, -MAX_FALL_TURN, MAX_FALL_TURN);
     }
 
     /** Re-reads the size after the form is set or loaded (the client does the same when the synced form arrives). */

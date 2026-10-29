@@ -89,6 +89,7 @@ final class ArmsOffHand {
         ps.pushPose();
         // vanilla's resting hand on the off side, risen as far as the main hand (a pair is drawn together)
         ps.translate(inv * 0.56F, -0.52F + mainEquip * -0.6F, -0.72F);
+        ArmsHands.guardOn(ps, p, t, e.getPartialTick(), inv);
         mc.getItemModelResolver().updateForLiving(FIRST, t, arm == HumanoidArm.RIGHT ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, p);
         FIRST.submit(ps, e.getSubmitNodeCollector(), e.getPackedLight(), OverlayTexture.NO_OVERLAY, 0);

@@ -208,7 +208,7 @@ final class TogetherHearthTests {
             h.succeed();
         });
 
-        // A kill at home shares with the household nearby: each their own home XP and their own chance to bind its Echo.
+        // A kill at home shares home XP with the household nearby, and nobody is offered its Echo (SPEC §43.4).
         AwakenTests.registerIsolated("together_rewards_shared_outside_gates", 100, h -> {
             ServerLevel level = h.getLevel();
             ServerPlayer owner = null, friend = null, stranger = null;
@@ -230,9 +230,8 @@ final class TogetherHearthTests {
                 h.assertTrue(progress(owner) > xo, "the killer's home XP");
                 h.assertTrue(progress(friend) > xf, "the household member beside them shares it");
                 h.assertTrue(progress(stranger) == xs, "a stranger standing there doesn't");
-                h.assertTrue(HearthService.player(owner).tips.contains("linger") && HearthService.player(friend).tips.contains("linger"),
-                        "its Echo lingers for the killer and for the member, each to bind themselves");
-                h.assertFalse(HearthService.player(stranger).tips.contains("linger"), "not for the stranger");
+                h.assertFalse(HearthService.player(owner).tips.contains("linger") || HearthService.player(friend).tips.contains("linger")
+                        || HearthService.player(stranger).tips.contains("linger"), "no Echo lingers for anyone: Echoes are gone");
             } finally {
                 if (elite != null) elite.discard();
                 cleanup(h, made, owner, friend, stranger);
@@ -240,8 +239,8 @@ final class TogetherHearthTests {
             h.succeed();
         });
 
-        // Server stop: invitations, askings at an Anchor and open offers are forgotten with the world (and its breaks
-        // and Echo duty, cleared by the same call).
+        // Server stop: invitations, askings at an Anchor and open offers are forgotten with the world (and its breaks,
+        // cleared by the same call).
         AwakenTests.registerIsolated("together_hearth_stop_forgets", 60, h -> {
             ServerLevel level = h.getLevel();
             ServerPlayer owner = null, friend = null, stranger = null;

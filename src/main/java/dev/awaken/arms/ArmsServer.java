@@ -2,6 +2,7 @@ package dev.awaken.arms;
 
 import dev.awaken.arms.net.ArmsPayloads;
 import dev.awaken.core.AwakenNet;
+import dev.awaken.core.api.Aim;
 import dev.awaken.core.api.CreatureTag;
 import dev.awaken.core.api.MobRole;
 import dev.awaken.core.api.CoreApi;
@@ -73,6 +74,10 @@ final class ArmsServer {
     private static int pendingPosture;
     private static float pendingCap;
     private static boolean pendingLanded;
+    // its push (SPEC §25 "Fight Feel"): the flat way the blade went, and how hard against vanilla's strength
+    private static final float[] PUSH = new float[2];
+    private static float pendingPushScale;
+    private static boolean pendingPush;
     // a blow re-applied after its latency grace: how long it waited, and its class
     private static int heldTicks;
     private static Strikes.@Nullable Kind heldKind;
@@ -128,7 +133,7 @@ final class ArmsServer {
         switch (msg.what()) {
             case ArmsPayloads.PRESS_STRIKE -> {
                 s.seq = msg.seq();
-                s.aimed = msg.target();
+                s.aimed = Aim.meantId(p, msg.target(), msg.yaw(), msg.pitch(), pressReach(style));
                 // the press is down: if it is held into a charge, the strike it begins must never land (Euan
                 // 2026-10-26: "when you're charging up, it attacks once and then charges up")
                 s.holdSeq = msg.seq();
@@ -154,6 +159,7 @@ final class ArmsServer {
             }
             case ArmsPayloads.PRESS_RELEASE -> {
                 if (msg.seq() != s.chargeSeq || s.chargeStart == ArmsState.NO_CHARGE) return;
+                if (msg.target() >= 0) s.aimed = Aim.meantId(p, msg.target(), msg.yaw(), msg.pitch(), pressReach(style));
                 Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
                 if (heavy == null || heavy.charge().isEmpty()) return;
                 int held = heavy.charge().get().min() + (int) (now - s.chargeStart);
@@ -215,7 +221,22 @@ final class ArmsServer {
             return;
         }
         begin(p, s, style, Archetype.Move.HEAVY, -1, 0, now, seq);
-        s.perfectHeavy = heavy.charge().isPresent() && heavy.charge().get().perfect(held);
+        s.perfectHeavy = heavy.charge().isPresent() && heavy.charge().get().perfect(held + GLINT_GRACE);
+    }
+
+    /**
+     * The furthest a press's creature may be and still be the one it meant (SPEC §40): the style's longest reach, the
+     * blade's growth over a full chain, and the step in.
+     */
+    static double pressReach(Archetypes.Loaded style) {
+        float most = 0;
+        for (Archetype.MoveDef d : style.moves().values()) most = Math.max(most, d.art().isPresent() ? Math.max(d.reach(), d.art().get().range()) : d.reach());
+        return most + 0.3 + style.def().traits().reachPerStep() * 5 + Aim.stepIn(style.id());
+    }
+
+    /** A chain's first strike or a heavy steps in toward the meant creature (SPEC §40); the rest strike where they stand. */
+    static boolean stepsIn(ArmsState s) {
+        return s.move == Archetype.Move.HEAVY || (s.move != null && s.move.strike() && s.step == 0);
     }
 
     /** Whether a style's press can be held into a charge (its heavy charges). */
@@ -229,6 +250,12 @@ final class ArmsServer {
      * tap or charge well before: the charge at its heavy's min, ArmsPredict): no word from it never holds a blow back.
      */
     static final int HOLD_WAIT = 4;
+
+    /**
+     * Ticks the server's count of a charge may run behind the fighter's and still be full: its start is the charge's
+     * press heard, a tick or so after the fighter's, so a release on the ting the fighter heard is never short here.
+     */
+    static final int GLINT_GRACE = 1;
 
     static void begin(ServerPlayer p, ArmsState s, Archetypes.Loaded style, Archetype.Move move, int step, int cadence, long now, int seq) {
         Archetype.MoveDef def = style.move(move);
@@ -357,17 +384,19 @@ final class ArmsServer {
         double reach = def.reachAt(now - s.moveStart) + 0.3 + grow;
         Vec3 eye = p.getEyePosition();
         float yaw = p.getYRot() + focusTurn(p, s);
-        AABB box = p.getBoundingBox().inflate(reach + 1, 1.5, reach + 1);
+        // the meant creature (a press's, checked by Aim.meant) is reached by the step in and above the band: a flier
+        // circling overhead is struck when it is the one you meant (SPEC §40)
+        double meantReach = reach + (s.style != null && stepsIn(s) ? Aim.stepIn(s.style.id()) : 0F);
+        AABB box = p.getBoundingBox().inflate(meantReach + 1, Math.max(1.5, meantReach), meantReach + 1);
         for (LivingEntity t : level.getEntitiesOfClass(LivingEntity.class, box, t -> t != p && t.isAlive() && !s.hasHit(t.getId()))) {
             boolean aimed = t.getId() == s.aimed;
             if (!aimed && !foe(p, t)) continue;
+            boolean meant = aimed && !(t instanceof Player);
             Vec3 c = t.getBoundingBox().getCenter();
-            Vec3 closest = new Vec3(Mth.clamp(eye.x, t.getBoundingBox().minX, t.getBoundingBox().maxX),
-                    Mth.clamp(eye.y, t.getBoundingBox().minY, t.getBoundingBox().maxY), Mth.clamp(eye.z, t.getBoundingBox().minZ, t.getBoundingBox().maxZ));
-            if (closest.distanceTo(eye) > reach) continue;
+            if (Aim.gap(eye, t.getBoundingBox()) > (meant ? meantReach : reach)) continue;
             float toward = (float) (Mth.atan2(c.z - p.getZ(), c.x - p.getX()) * Mth.RAD_TO_DEG) - 90F;
             if (!aimed && !ArmsRules.inArc(toward - yaw, def.arc())) continue;
-            if (t.getBoundingBox().maxY < p.getY() - 1.0 || t.getBoundingBox().minY > p.getEyeY() + 1.5) continue;
+            if (!meant && (t.getBoundingBox().maxY < p.getY() - 1.0 || t.getBoundingBox().minY > p.getEyeY() + 1.5)) continue;
             s.markHit(t.getId());
             hit(p, s, def, t, now);
         }
@@ -407,8 +436,9 @@ final class ArmsServer {
         int ms = def.hitstop();
         if (now - s.lastHitstopAt < ArmsRules.HITSTOP_GAP) ms = 0;
         else s.lastHitstopAt = now;
-        AwakenNet.send(p, new ArmsPayloads.Result(s.moveSeq, ArmsPayloads.HIT, t.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
-        seen(p, new ArmsPayloads.Seen(t.getId(), ArmsPayloads.HIT, p.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
+        int blow = Blow.of(s.move == null ? 0 : s.move.ordinal()).pack();
+        AwakenNet.send(p, new ArmsPayloads.Result(s.moveSeq, ArmsPayloads.HIT, t.getId(), ms, blow));
+        seen(p, new ArmsPayloads.Seen(t.getId(), ArmsPayloads.HIT, p.getId(), ms, blow));
     }
 
     /** A Plunge in the air: it lands as the move (all round, harder the further it fell), or gives up in water or after 5 s. */
@@ -488,6 +518,20 @@ final class ArmsServer {
         boolean primed = ArmsForge.bladePrimed(p, s, now);
         if (primed) pendingMotion *= ArmsForge.BLADE_PRIME;
         pendingLanded = false;
+        // the blow pushes the way the blade went: away from the striker, turned along a side cut
+        float side = ArmsRules.side(def, p.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT);
+        double ax = t.getX() - p.getX(), az = t.getZ() - p.getZ(), an = Math.sqrt(ax * ax + az * az);
+        if (an < 1e-4) {
+            ax = -Mth.sin(p.getYRot() * Mth.DEG_TO_RAD);
+            az = Mth.cos(p.getYRot() * Mth.DEG_TO_RAD);
+        } else {
+            ax /= an;
+            az /= an;
+        }
+        ArmsRules.push(ax, az, side, PUSH);
+        boolean pushes = ArmsConfig.directionalKnockback() && !ArmsRules.lordBody(t.getMaxHealth());
+        pendingPush = pushes;
+        pendingPushScale = ArmsRules.pushScale(def);
         // a combo's blows come faster than vanilla's half second of immunity: each move strikes each creature once
         if (t.getLastHurtByMob() == p) t.damageCooldownTime = 0;
         try {
@@ -496,8 +540,23 @@ final class ArmsServer {
         } finally {
             if (speed != null) speed.removeModifier(FULL_STRENGTH);
             pendingBy = pendingTarget = -1;
+            pendingPush = false;
         }
         if (!pendingLanded) return;
+        int lift = ArmsRules.lift(def);
+        // a player's push is sent and put back by vanilla's attack; only a creature is pinned or lifted here
+        if (pushes && lift != 0 && !(t instanceof Player)) {
+            Vec3 v = t.getDeltaMovement();
+            double resist = 1 - t.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE);
+            t.setDeltaMovement(v.x, lift < 0 ? Math.min(v.y, 0) : v.y + ArmsRules.LIFT * resist, v.z);
+            t.needsSync = true;
+        }
+        boolean kill = t.isDeadOrDying();
+        if (s.bodiesSeq != s.moveSeq) {
+            s.bodiesSeq = s.moveSeq;
+            s.bodies = 0;
+        }
+        s.bodies++;
         landedTraits(p, s, t, traits);
         ArmsForge.landed(p, s, t, now, primed);
         Marks.fire(p, Marks.Trigger.HIT, t);
@@ -508,12 +567,49 @@ final class ArmsServer {
         s.fightAt = now;
         if (s.focus != t.getId()) s.focus = t.getId();
         s.focusSeenAt = now;
-        int ms = s.perfectHeavy && def.charge().isPresent() ? def.charge().get().glintHitstop() : def.hitstop();
-        if (now - s.lastHitstopAt < ArmsRules.HITSTOP_GAP) ms = 0;
-        else s.lastHitstopAt = now;
-        AwakenNet.send(p, new ArmsPayloads.Result(s.moveSeq, ArmsPayloads.HIT, t.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
-        seen(p, new ArmsPayloads.Seen(t.getId(), ArmsPayloads.HIT, p.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
+        int base = s.perfectHeavy && def.charge().isPresent() ? def.charge().get().glintHitstop() : def.hitstop();
+        int ms;
+        if (now - s.lastHitstopAt >= ArmsRules.HITSTOP_GAP) {
+            s.lastHitstopAt = now;
+            s.freezeSeq = s.moveSeq;
+            s.freezeFrom = s.bodies;
+            s.freezeBase = base;
+            ms = base;
+        } else if (now == s.lastHitstopAt && s.freezeSeq == s.moveSeq) {
+            // another body in the same sweep: the one freeze grows (a kill's own share is added by whoever sees it)
+            ms = ArmsRules.hitstop(s.freezeBase, s.bodies - s.freezeFrom + 1);
+        } else {
+            ms = 0;
+        }
+        boolean strong = def.finisher() || s.perfectHeavy || s.move == Archetype.Move.EXECUTION;
+        int blow = new Blow(s.move == null ? 0 : s.move.ordinal(), kill, kill && noneHunting(p, t), strong, s.bodies, lift,
+                Blow.yawByte(PUSH[0], PUSH[1]), Math.round(side * 7)).pack();
+        AwakenNet.send(p, new ArmsPayloads.Result(s.moveSeq, ArmsPayloads.HIT, t.getId(), ms, blow));
+        seen(p, new ArmsPayloads.Seen(t.getId(), ArmsPayloads.HIT, p.getId(), ms, blow));
+        if (blowSeen != null) blowSeen.seen(t.getId(), ms, blow);
         if (def.finisher()) resonance(p, s, ArmsRules.RESONANCE_FINISHER);
+    }
+
+    /** Test stand-in: told every HIT as it is sent (the struck body, the freeze, the packed {@link Blow}). */
+    interface BlowSeen {
+        void seen(int target, int ms, int blow);
+    }
+
+    static @Nullable BlowSeen blowSeen;
+
+    /** The fight is over with this kill: no other hostile within 16 blocks hunts the striker. */
+    static boolean noneHunting(ServerPlayer p, LivingEntity dead) {
+        return p.level().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(ArmsRules.LAST_RANGE),
+                m -> m != dead && m.isAlive() && m.getTarget() == p && m.distanceToSqr(p) <= ArmsRules.LAST_RANGE * ArmsRules.LAST_RANGE).isEmpty();
+    }
+
+    /** An Arms blow pushes the way the blade went (SPEC §25 "Fight Feel"); a kill throws the body further along it. */
+    static void onKnockBack(net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent e) {
+        if (!pendingPush || e.getEntity().getId() != pendingTarget) return;
+        // vanilla pushes against the ratio
+        e.setRatioX(-PUSH[0]);
+        e.setRatioZ(-PUSH[1]);
+        e.setStrength(e.getStrength() * pendingPushScale * (e.getEntity().isDeadOrDying() ? ArmsRules.KILL_PUSH : 1F));
     }
 
     /** A Break held longer (a Weave through the broken body). */
@@ -667,6 +763,8 @@ final class ArmsServer {
                 resonance(p, s, ArmsRules.RESONANCE_DEFLECT * charged);
                 if (by instanceof LivingEntity attacker && src.getDirectEntity() == by) {
                     addPosture(attacker, (int) ((kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT) * charged), p);
+                    // a flier's dive turned aside brings it down (SPEC §40): the opening a fight in the air needs
+                    Strikes.ground(attacker, Aim.GROUNDED_TICKS);
                 }
                 ArmsWeaves.open(p, s, ArmsWeaves.DEFLECT, now, by == null ? -1 : by.getId());
                 Marks.fire(p, Marks.Trigger.DEFLECT, by instanceof LivingEntity l ? l : null);

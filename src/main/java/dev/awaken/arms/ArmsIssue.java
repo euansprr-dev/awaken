@@ -68,8 +68,12 @@ public final class ArmsIssue implements ArmsApi.Hooks {
         remember(p, style);
         giveItem(p, new ItemStack(blueprint));
         Archetypes.Loaded st = Archetypes.get(style);
-        Signal.toast(p, Component.literal("PATTERN · ").withColor(0x6FB3FF).append(Component.literal((st == null ? style : st.def().name()) + " Blueprint").withColor(0xD6ECFF))
-                .append(Component.literal(" · " + source).withColor(0xC8C2B0)));
+        dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("pattern/" + style,
+                "Pattern learned", (st == null ? style : st.def().name()) + " Blueprint", "You can make weapons in this style now.",
+                java.util.List.of("You learned it from " + source.replaceFirst("^from ", "") + ".",
+                        "The Blueprint is in your inventory. Use it at a crafting table with the weapon's materials, and you get the Blueprint back.",
+                        "You won't forget it. The Forge Armoury lists the styles you know and what each one costs."),
+                dev.awaken.core.api.NoticeEvents.Kind.PERMANENT, 0x6FB3FF));
         Progression.markNewThing(p, "pattern:" + style);
         ArmsArmoury.sendView(p);
         return true;
@@ -134,6 +138,11 @@ public final class ArmsIssue implements ArmsApi.Hooks {
     @Override
     public void questDone(ServerPlayer p, String chain) {
         ArmsPatterns.questDone(p, chain);
+    }
+
+    @Override
+    public boolean leftChestPattern(ServerPlayer p) {
+        return ArmsPatterns.leftChest(p);
     }
 
     @Override
@@ -206,8 +215,10 @@ public final class ArmsIssue implements ArmsApi.Hooks {
             if (bp != null && !ArmsForge.owns(p, style)) giveItem(p, new ItemStack(bp));
         }
         Archetypes.Loaded st = Archetypes.get(style);
-        Signal.toast(p, Component.literal("ISSUED · ").withColor(0xE2B450).append(weapon.getName(new ItemStack(weapon)).copy().withColor(0xFFE3A0))
-                .append(Component.literal(" · " + (st == null ? style : st.def().name())).withColor(0xC8C2B0)));
+        ArmsNotices.reward(p, "weapon/hale/issue", "Weapon issued", new ItemStack(weapon),
+                "Hale gave you this weapon, its crafting pattern, and a spare Fang blade.",
+                java.util.List.of("To make another, use the pattern at a crafting table with its materials. You keep the pattern.",
+                        "Crouch and talk to Hale to see his other styles and patterns."));
         ArmsApi.say(p, "Hale: Good choice. That one's yours. I've put its pattern in your pack too, so you can make more of them later. "
                 + "The spare blade is a Fang, and everything you forge starts from one. When you want a different style, crouch and talk to me, and I'll show you the rack. "
                 + "I sell the patterns for essence, and the more you've done, the more I'll show you.");
@@ -239,10 +250,10 @@ public final class ArmsIssue implements ArmsApi.Hooks {
         if (Progression.profile(p).counter(SHARD_CARD) > 0 || !Progression.profile(p).awakened()) return;
         if (!p.getInventory().contains(s -> s.is(CoreApi.ESSENCE_SHARD.get()))) return;
         Progression.setCounter(p, SHARD_CARD, 1);
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Essence Shard"))
-                .body(Component.literal("What awakened creatures leave behind. Hunters at night drop about one for every two kills. "
-                        + "Armour, weapons and patterns are all made with it."))
-                .ttl(20 * 12).build());
+        dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("item/essence_shard", "Material found", "Essence Shard",
+                "You spend these on weapons, armour and Hale's patterns.",
+                java.util.List.of("Awakened creatures drop them. Night hunters drop about one for every two you kill.",
+                        "Recipes and Hale's rack show how many you need."), dev.awaken.core.api.NoticeEvents.Kind.DISCOVERY, 0xE2B450));
     }
 
     static @Nullable String optionName(String style) {

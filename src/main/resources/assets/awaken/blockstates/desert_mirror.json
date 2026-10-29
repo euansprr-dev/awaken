@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/desert_mirror"
+    },
+    "lit=true": {
+      "model": "awaken:block/desert_mirror_lit"
+    }
+  }
+}

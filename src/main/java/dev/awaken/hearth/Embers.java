@@ -5,6 +5,7 @@ import dev.awaken.core.DirectorLog;
 import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.GateHooks;
+import dev.awaken.core.api.TheLull;
 import dev.awaken.core.api.WardHooks;
 import dev.awaken.hearth.net.HomeNet;
 import dev.awaken.hearth.player.HearthPlayer;
@@ -57,9 +58,8 @@ public final class Embers {
 
     /** The errand that ends at the camp: its ilse step hands the first Ember over itself (chain ids are full ids). */
     static final String CHAIN = "awaken:the_last_delivery";
-    static final String ILSE_LINE = "Ilse: Here, take an ember from our fire. Carry it with you, and when you find a spot you'd like to live, place it there. That'll be your home.";
-    static final String ILSE_AGAIN = "Ilse: Lost your ember? That's fine, take another one.";
-    static final String HETTIE_LINE = "Hettie: Take an ember from the fire before it gets dark. Place it wherever you want your home to be.";
+    static final String ILSE_LINE = "Ilse: Here. It's a coal from this fire. Put it down wherever you want to live, and that's your home.";
+    static final String ILSE_AGAIN = "Ilse: Lost your coal? That's all right. Take another from the fire.";
 
     /** True while a fire is being raised to the Anchor (its removal is not a Hearth ending). */
     private static boolean raising;
@@ -98,7 +98,7 @@ public final class Embers {
     }
 
     /**
-     * Talking to Ilse or Hettie at the camp with no Ember and no Hearth gives one (a lost coal comes back). Not while
+     * Talking to Ilse at the Last Fire with no Ember and no Hearth gives one (a lost coal comes back). Not while
      * The Last Delivery still has its camp step to come: that step hands the first one over itself.
      */
     private static void onInteract(PlayerInteractEvent.EntityInteract e) {
@@ -115,14 +115,14 @@ public final class Embers {
     }
 
     /**
-     * A camp resident ({@code who}: ilse or hettie) hands over a coal if this player should have one, with their line.
+     * Ilse ({@code who}) hands over a coal from the Last Fire if this player should have one, with her line.
      * {@code first}: say Ilse's first-night line whatever came before (tours). True when one was given.
      */
     public static boolean campGives(ServerPlayer sp, String who, boolean first) {
-        if (!who.equals("ilse") && !who.equals("hettie")) return false;
+        if (!who.equals("ilse")) return false;
         boolean again = HearthService.player(sp).emberGiven && !first;
         if (!give(sp)) return false;
-        say(sp, who.equals("hettie") ? HETTIE_LINE : again ? ILSE_AGAIN : ILSE_LINE);
+        say(sp, again ? ILSE_AGAIN : ILSE_LINE);
         return true;
     }
 
@@ -210,6 +210,9 @@ public final class Embers {
             return Optional.of("Place it on solid, open ground.");
         }
         if (CityBasin.reserved(at.getX(), at.getZ())) return Optional.of("You can't make your home inside the city. Take it outside the walls.");
+        // the Lull's edges (SPEC §43.1): a home is out in the quiet, where no bell carries
+        if (TheLull.bellsCarry(level, at)) return Optional.of("You can still hear the city's bells here. Your home has to be out past the ridge beyond the Last Fire, where they don't carry.");
+        if (TheLull.holdfastHeard(level, at)) return Optional.of("You can still hear the holdfast's bell here. Your home has to be further out, where it doesn't carry.");
         if (dev.awaken.village.api.Villages.reserved(level, at, 8)) return Optional.of("You can't make your home inside a village. Take it past the last house.");
         if (WardHooks.at(level, at).isPresent()) return Optional.of("Old Precursor stone protects this ground, so your ember won't work here.");
         for (GateHooks.GateView g2 : GateHooks.near(level, at, GATE_CLEARANCE)) {

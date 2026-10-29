@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "awaken:blocks/sky_lantern",
+  "pools": [
+    {
+      "rolls": 1,
+      "bonus_rolls": 0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:sky_lantern"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

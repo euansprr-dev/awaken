@@ -1,0 +1,928 @@
+<title>AWAKEN Clear Screen and Lock-on</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column under wide "game screen" frames; slate neutrals leaning to the band's cyan, tell colours (white, amber, red, violet) as the only other hues. */
+:root {
+  --bg: #eef1f3; --panel: #ffffff; --ink: #141b21; --muted: #56636d; --rule: #d2d9df;
+  --holo: #0f7fa3; --holo-soft: #dcf0f6; --gold: #9a6a12; --gold-soft: #f5ead2;
+  --good: #1f7a4a; --bad: #b03228; --warn: #a65d00;
+  --display: "Chakra Petch", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  /* the game screen's own colours (the same in both page themes) */
+  --g-holo: #7fe3ff; --g-ink: #e9f7fb; --g-glass: rgba(8, 22, 30, 0.62); --g-light: #ffffff; --g-heavy: #ffb340;
+  --g-peril: #ff4a3d; --g-grab: #b77bff; --g-gold: #ffcf6b; --g-hp: #e8564a; --g-aether: #ffd36b;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1418; --panel: #161d23; --ink: #e2e9ee; --muted: #94a3ae; --rule: #28323a;
+  --holo: #6fd2f0; --holo-soft: #12303b; --gold: #e2b252; --gold-soft: #33291a;
+  --good: #5fca8f; --bad: #f0786d; --warn: #f0a548; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f1418; --panel: #161d23; --ink: #e2e9ee; --muted: #94a3ae; --rule: #28323a;
+  --holo: #6fd2f0; --holo-soft: #12303b; --gold: #e2b252; --gold-soft: #33291a;
+  --good: #5fca8f; --bad: #f0786d; --warn: #f0a548; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 16.5px/1.62 var(--body); }
+.wrap { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 80px; }
+.col { max-width: 70ch; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.12; text-wrap: balance; }
+h1 { font-size: clamp(2.3rem, 6vw, 3.4rem); margin: 6px 0 4px; font-weight: 700; letter-spacing: 0.01em; }
+h2 { font-size: 1.85rem; margin: 60px 0 10px; font-weight: 700; padding-top: 14px; border-top: 2px solid var(--ink); }
+h3 { font-size: 1.25rem; margin: 28px 0 6px; font-weight: 600; }
+p { margin: 8px 0; }
+ul, ol { padding-left: 22px; margin: 8px 0; }
+li { margin: 5px 0; }
+a { color: var(--holo); }
+code { font: 0.86em var(--mono); background: var(--holo-soft); padding: 1px 5px; border-radius: 3px; }
+.eyebrow { font: 600 0.76rem/1.2 var(--mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.16rem; max-width: 64ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font: 0.8rem/1.4 var(--mono); color: var(--muted); margin-top: 10px; }
+.status { display: inline-block; font: 600 0.74rem/1 var(--mono); padding: 5px 8px; border-radius: 3px; background: var(--gold-soft); color: var(--gold); letter-spacing: 0.05em; text-transform: uppercase; }
+.short { background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--holo); padding: 12px 20px; margin: 22px 0; }
+.short h3 { margin-top: 6px; }
+.tbl { overflow-x: auto; margin: 12px 0 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; background: var(--panel); }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+th { font: 600 0.7rem/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); background: var(--bg); }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tag { display: inline-block; font: 600 0.68rem/1 var(--mono); padding: 3px 6px; border-radius: 3px; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+.t-keep { background: var(--holo-soft); color: var(--holo); }
+.t-move { background: var(--gold-soft); color: var(--gold); }
+.t-gone { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); }
+.note { font-size: 0.86rem; color: var(--muted); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 14px 0; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 14px 16px; min-width: 0; }
+.card h3 { margin-top: 2px; }
+.pick { border-color: var(--holo); box-shadow: inset 0 3px 0 var(--holo); }
+.big { font: 700 2rem/1 var(--display); font-variant-numeric: tabular-nums; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 14px 0; }
+.stat { background: var(--panel); border: 1px solid var(--rule); padding: 12px 14px; }
+.stat .lab { font: 0.78rem/1.35 var(--body); color: var(--muted); margin-top: 6px; }
+.up { color: var(--good); } .down { color: var(--bad); }
+.dec { counter-reset: d; list-style: none; padding: 0; }
+.dec > li { counter-increment: d; background: var(--panel); border: 1px solid var(--rule); padding: 12px 16px 12px 52px; position: relative; margin: 10px 0; }
+.dec > li::before { content: counter(d); position: absolute; left: 14px; top: 12px; font: 700 1.3rem/1 var(--display); color: var(--holo); }
+.dec .rec { font: 600 0.72rem/1 var(--mono); color: var(--good); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ---------- the game screen frames ---------- */
+.screen-wrap { margin: 18px 0 8px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.tabs button { font: 600 0.86rem/1 var(--display); letter-spacing: 0.04em; padding: 9px 13px; background: var(--panel); color: var(--ink); border: 1px solid var(--rule); cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tabs button:focus-visible, .ctl button:focus-visible, #arena:focus-visible { outline: 2px solid var(--holo); outline-offset: 2px; }
+.screen { position: relative; width: 100%; aspect-ratio: 16 / 10; max-width: 100%; overflow: hidden; background: #0b1418 center / cover no-repeat; container-type: inline-size; color: var(--g-ink); font-family: var(--display); user-select: none; }
+.screen .layer { position: absolute; inset: 0; transition: opacity 0.35s ease; }
+.screen .layer[hidden] { display: none !important; }
+.screen img.shot { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cap { font-size: 0.92rem; color: var(--muted); margin: 6px 0 0; max-width: 78ch; }
+/* HUD pieces in the mock, sized in container units so they scale with the frame */
+.hud-now { position: absolute; left: 2.2cqw; top: 2.6cqw; display: flex; align-items: center; gap: 0.9cqw; padding: 0.55cqw 1.1cqw; background: var(--g-glass); border-left: 0.22cqw solid var(--g-holo); font-size: 1.75cqw; letter-spacing: 0.04em; }
+.hud-now .dist { color: var(--g-holo); font-family: var(--mono); font-size: 1.45cqw; }
+.hud-now .fade { opacity: 0.55; font-size: 1.15cqw; font-family: var(--mono); margin-left: 0.6cqw; }
+.beam { position: absolute; width: 0.36cqw; top: 0; height: 23%; background: linear-gradient(to bottom, rgba(255, 207, 107, 0), rgba(255, 207, 107, 0.85)); box-shadow: 0 0 1.2cqw rgba(255, 207, 107, 0.7); }
+.beam-lab { position: absolute; font-size: 1.1cqw; letter-spacing: 0.12em; color: var(--g-gold); text-shadow: 0 0 0.6cqw #000; white-space: nowrap; }
+.lines { position: absolute; left: 50%; bottom: 3.4cqw; transform: translateX(-50%); width: 27cqw; display: grid; gap: 0.55cqw; }
+.seg { display: grid; grid-template-columns: repeat(20, 1fr); gap: 0.18cqw; height: 0.62cqw; }
+.seg i { background: currentColor; opacity: 0.95; box-shadow: 0 0 0.5cqw currentColor; }
+.seg i.off { opacity: 0.18; box-shadow: none; }
+.seg.hp { color: var(--g-hp); } .seg.ae { color: var(--g-aether); height: 0.42cqw; }
+.slots { position: absolute; right: 2cqw; bottom: 2.2cqw; display: grid; grid-template-columns: repeat(3, 2.9cqw); gap: 0.45cqw; }
+.slots b { height: 2.9cqw; background: var(--g-glass); border: 0.12cqw solid rgba(127, 227, 255, 0.45); position: relative; font: 500 0.95cqw/1 var(--mono); }
+.slots b span { position: absolute; right: 0.25cqw; bottom: 0.2cqw; opacity: 0.8; }
+.slots b.cd::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.55) 60%, transparent 60%); }
+.slots b.ready { border-color: var(--g-holo); box-shadow: 0 0 0.8cqw rgba(127, 227, 255, 0.6) inset; }
+.callout { position: absolute; width: 2.4cqw; height: 2.4cqw; border-radius: 50%; background: #f2c14e; color: #111; font: 700 1.35cqw/2.4cqw var(--mono); text-align: center; box-shadow: 0 0 0 0.25cqw rgba(0,0,0,0.55); }
+.glance-dim { position: absolute; inset: 0; background: radial-gradient(ellipse at 22% 95%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.25) 60%); }
+.legend[hidden] { display: none; }
+.legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 4px 18px; font-size: 0.88rem; margin-top: 8px; }
+.legend span b { display: inline-block; width: 1.4em; height: 1.4em; border-radius: 50%; background: #f2c14e; color: #111; font: 700 0.8rem/1.4em var(--mono); text-align: center; margin-right: 6px; }
+
+/* ---------- the arena ---------- */
+.arena-box { margin: 16px 0 8px; background: #071015; border: 1px solid var(--rule); }
+#arena { display: block; width: 100%; aspect-ratio: 16 / 9; max-width: 100%; cursor: crosshair; touch-action: none; }
+.ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; background: var(--panel); border-top: 1px solid var(--rule); }
+.ctl button { font: 600 0.85rem/1 var(--display); letter-spacing: 0.04em; padding: 10px 12px; border: 1px solid var(--rule); background: var(--bg); color: var(--ink); cursor: pointer; }
+.ctl button[aria-pressed="true"] { background: var(--holo); color: var(--bg); border-color: var(--holo); }
+.ctl .sep { flex: 1; }
+.ctl .touch { display: none; }
+@media (pointer: coarse) { .ctl .touch { display: inline-block; } }
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; padding: 10px; background: var(--panel); border-top: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+.score div { font: 0.78rem/1.3 var(--body); color: var(--muted); }
+.score b { display: block; font: 700 1.3rem/1.1 var(--display); color: var(--ink); }
+.keys { font: 0.82rem/1.6 var(--mono); color: var(--muted); padding: 8px 10px; background: var(--panel); border-top: 1px solid var(--rule); }
+kbd { font: 600 0.78rem/1 var(--mono); border: 1px solid var(--rule); border-bottom-width: 2px; padding: 2px 5px; border-radius: 3px; background: var(--bg); color: var(--ink); }
+
+.ret-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }
+.ret { background: #0a1519; color: #e9f7fb; padding: 10px; text-align: center; font: 0.8rem/1.35 var(--body); }
+.ret svg { width: 100%; height: auto; display: block; }
+.ret b { display: block; font: 600 0.9rem/1.2 var(--display); letter-spacing: 0.04em; margin-top: 4px; }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none !important; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { transform-origin: 60px 60px; animation: spin 6s linear infinite; }
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">AWAKEN plan · HUD and combat aim</div>
+  <h1>Clear Screen and Lock-on</h1>
+  <p class="lede">The screen shows the world and only what you need right now. A glance at your wrist shows the rest. Fights get an RPG lock-on in place of the crosshair, so fast and flying creatures can be hit, while timing, spacing, dodges and parries still decide who wins.</p>
+  <div class="meta"><span class="status">Plan · waiting for your OK</span><span>28 Oct 2026</span><span>branch claude/hud-lockon-plan-bbb130</span><span>nothing built yet</span></div>
+
+  <div class="short col">
+    <h3>In short</h3>
+    <ul>
+      <li><b>Why fliers kill you.</b> I replayed the flying creatures' own movement code. A Bell Wisp spends <b>77% of the fight out of your katana's reach</b>, circling about 4 blocks out and often above the height a blade can reach. You can only hit it in the half second of its dive. Nothing in the game today steps you in, tracks it, or warns you of a dive from behind.</li>
+      <li><b>The lock-on.</b> The creature nearest the middle of your view is marked on its own. Press a key to lock it: the camera follows it, the mouse switches targets with a flick or the wheel, and your strikes reach it with a short step in, at any height your weapon reaches. Limits keep the skill: a cone, a range, no snaps behind you, and no change to timing or damage. With those rules the wisp is in reach for <b>49% of the fight</b>, not 23%.</li>
+      <li><b>The clear screen.</b> Exploring, you see only the world, plus one line when you drift off your route. Fighting adds health, Aether, your powers and the lock. Holding <kbd>Tab</kbd> raises your wrist, and the band shows everything else. The crosshair becomes a small dot that shows only when you can mine, place or use something.</li>
+      <li><b>Safe to try.</b> One setting brings back today's HUD and crosshair exactly. It builds in 4 stages, about 15 to 22 hours. <b>Six decisions</b> are at the end.</li>
+    </ul>
+  </div>
+
+  <!-- ===================================================== -->
+  <h2>The screen, today and proposed</h2>
+  <p class="col">Same camp, four moments. <b>Today</b> is a real screenshot from a tour. The other three are mock-ups drawn over a real screenshot with the HUD painted out. Pick a moment.</p>
+
+  <div class="screen-wrap">
+    <div class="tabs" role="group" aria-label="Which moment">
+      <button type="button" id="tab-today" data-s="today" aria-pressed="true">Today</button>
+      <button type="button" id="tab-explore" data-s="explore" aria-pressed="false">Exploring</button>
+      <button type="button" id="tab-fight" data-s="fight" aria-pressed="false">Fighting</button>
+      <button type="button" id="tab-glance" data-s="glance" aria-pressed="false">Holding Tab</button>
+    </div>
+    <div class="screen" id="screen">
+      <!-- today: the real tour shot -->
+      <div class="layer" data-l="today">
+        <img class="shot" src="img/screen-today.jpg" alt="A tour screenshot of AWAKEN today: two Now cards top left, a task card top right, a subtitle, hearts, hunger, the hotbar, the level chip, six power slots and the crosshair.">
+        <span class="callout" style="left:1%;top:2%">1</span>
+        <span class="callout" style="left:1%;top:9.2%">2</span>
+        <span class="callout" style="left:75.5%;top:1.5%">3</span>
+        <span class="callout" style="left:51.5%;top:46%">4</span>
+        <span class="callout" style="left:25.5%;top:84.5%">5</span>
+        <span class="callout" style="left:72.5%;top:84.5%">6</span>
+        <span class="callout" style="left:25.5%;top:93%">7</span>
+        <span class="callout" style="left:9%;top:93%">8</span>
+        <span class="callout" style="left:81%;top:79%">9</span>
+      </div>
+      <!-- exploring -->
+      <div class="layer" data-l="explore" hidden>
+        <img class="shot" src="img/screen-clear.jpg" alt="The same camp with nothing on screen but a gold beam on the horizon and one small line top left.">
+        <div class="beam" style="left:57%"></div>
+        <div class="beam-lab" style="left:54%;top:24.5%">WAYFARER CAMP</div>
+        <div class="hud-now"><span>◆ Wayfarer camp</span><span class="dist">↖ 270 m</span><span class="fade">fades as you walk</span></div>
+      </div>
+      <!-- fighting -->
+      <div class="layer" data-l="fight" hidden>
+        <img class="shot" src="img/screen-clear.jpg" alt="">
+        <svg viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%" aria-label="A locked wisp with its plate, a second wisp with a thin bar, a warning arc on the left edge, health and Aether lines low in the middle and small power slots bottom right.">
+          <defs>
+            <radialGradient id="wg" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset="0.35" stop-color="#bff4ff"/><stop offset="1" stop-color="#7fe3ff" stop-opacity="0"/></radialGradient>
+            <radialGradient id="wg2" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset="0.35" stop-color="#d7c2ff"/><stop offset="1" stop-color="#b77bff" stop-opacity="0"/></radialGradient>
+          </defs>
+          <!-- locked wisp -->
+          <circle cx="930" cy="300" r="62" fill="url(#wg)"/>
+          <circle cx="930" cy="300" r="15" fill="#ffffff"/>
+          <g fill="none" stroke="#7fe3ff" stroke-width="3">
+            <path d="M 862 300 A 68 68 0 0 1 930 232" />
+            <path d="M 998 300 A 68 68 0 0 1 930 368" />
+            <circle cx="930" cy="300" r="80" stroke-opacity="0.35" stroke-width="1.5"/>
+          </g>
+          <g stroke="#7fe3ff" stroke-width="3"><line x1="930" y1="210" x2="930" y2="222"/><line x1="930" y1="378" x2="930" y2="390"/><line x1="840" y1="300" x2="852" y2="300"/><line x1="1008" y1="300" x2="1020" y2="300"/></g>
+          <path d="M 930 178 l 9 9 l -9 9 l -9 -9 z" fill="#7fe3ff"/>
+          <!-- its plate -->
+          <g transform="translate(855 128)">
+            <rect width="150" height="38" fill="rgba(8,22,30,0.72)" stroke="#7fe3ff" stroke-opacity="0.6"/>
+            <text x="8" y="16" fill="#e9f7fb" font-family="Chakra Petch, sans-serif" font-size="13" letter-spacing="1">BELL WISP</text>
+            <rect x="110" y="5" width="34" height="15" fill="#e8a33d"/><text x="114" y="17" fill="#111" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600">Lv 6</text>
+            <g fill="#7fe3ff"><rect x="8" y="25" width="11" height="6"/><rect x="21" y="25" width="11" height="6"/><rect x="34" y="25" width="11" height="6"/><rect x="47" y="25" width="11" height="6"/><rect x="60" y="25" width="11" height="6"/><rect x="73" y="25" width="11" height="6"/></g>
+            <g fill="#7fe3ff" opacity="0.2"><rect x="86" y="25" width="11" height="6"/><rect x="99" y="25" width="11" height="6"/><rect x="112" y="25" width="11" height="6"/><rect x="125" y="25" width="11" height="6"/></g>
+          </g>
+          <!-- second wisp, in the fight: a thin bar only -->
+          <circle cx="1290" cy="210" r="36" fill="url(#wg2)"/>
+          <circle cx="1290" cy="210" r="9" fill="#ffffff"/>
+          <rect x="1262" y="160" width="56" height="4" fill="#b77bff"/>
+          <!-- a dive winding up off-screen, left: the threat arc -->
+          <path d="M 18 300 A 420 420 0 0 0 18 560" fill="none" stroke="#ffb340" stroke-width="7" stroke-linecap="round"/>
+          <path d="M 40 430 l -16 -14 l 0 28 z" fill="#ffb340"/>
+          <text x="48" y="436" fill="#ffb340" font-family="Chakra Petch, sans-serif" font-size="17" letter-spacing="1">BEHIND YOU</text>
+        </svg>
+        <div class="lines" aria-hidden="true">
+          <div class="seg hp"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="off"></i><i class="off"></i><i class="off"></i><i class="off"></i><i class="off"></i><i class="off"></i></div>
+          <div class="seg ae"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="off"></i><i class="off"></i><i class="off"></i><i class="off"></i><i class="off"></i><i class="off"></i><i class="off"></i><i class="off"></i></div>
+        </div>
+        <div class="slots" aria-hidden="true"><b class="ready"><span>Z</span></b><b class="cd"><span>X</span></b><b><span>C</span></b><b><span>V</span></b><b class="ready"><span>R</span></b><b><span>Alt</span></b></div>
+      </div>
+      <!-- glance -->
+      <div class="layer" data-l="glance" hidden>
+        <img class="shot" src="img/screen-clear.jpg" alt="">
+        <div class="glance-dim"></div>
+        <svg viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%" aria-label="Your left forearm raised into view from the lower left, the band on its wrist projecting a panel with health, Aether, food, level, the current task, the way to your destination and your hotbar.">
+          <!-- forearm: blocky, Minecraft proportions -->
+          <g transform="translate(420 1080) rotate(-48) scale(1.35)">
+            <rect x="-70" y="-560" width="140" height="560" fill="#b9845f"/>
+            <rect x="-70" y="-560" width="46" height="560" fill="#a8734f"/>
+            <rect x="24" y="-560" width="46" height="560" fill="#c99671"/>
+            <rect x="-70" y="-170" width="140" height="170" fill="#3c5a7a"/>
+            <rect x="-70" y="-170" width="140" height="18" fill="#2f4864"/>
+            <!-- the band -->
+            <rect x="-74" y="-470" width="148" height="56" fill="#0d1a20"/>
+            <rect x="-74" y="-462" width="148" height="4" fill="#7fe3ff"/>
+            <rect x="-74" y="-424" width="148" height="4" fill="#7fe3ff"/>
+            <path d="M 0 -452 l 9 9 l -9 9 l -9 -9 z" fill="#7fe3ff"/>
+            <rect x="-70" y="-560" width="140" height="70" fill="#c49170"/>
+          </g>
+          <!-- beams from the band to the panel -->
+          <path d="M 850 665 L 640 550 M 880 670 L 1200 550" stroke="#7fe3ff" stroke-opacity="0.35" stroke-width="2"/>
+          <!-- the panel -->
+          <g transform="translate(640 150)">
+            <rect width="560" height="400" fill="rgba(8,22,30,0.80)" stroke="#7fe3ff" stroke-opacity="0.7" stroke-width="2"/>
+            <path d="M 0 18 V 0 H 18 M 542 0 H 560 V 18 M 560 382 V 400 H 542 M 18 400 H 0 V 382" stroke="#7fe3ff" stroke-width="4" fill="none"/>
+            <g font-family="Chakra Petch, sans-serif" fill="#e9f7fb">
+              <text x="24" y="42" font-size="24" letter-spacing="2">LEVEL 2 · E RANK</text>
+              <text x="536" y="42" font-size="15" text-anchor="end" fill="#ffcf6b">3 points to spend</text>
+              <text x="24" y="84" font-size="15" fill="#9fd9ea">HEALTH</text><text x="536" y="84" font-size="15" text-anchor="end" font-family="IBM Plex Mono, monospace">14 / 20</text>
+              <rect x="24" y="92" width="512" height="10" fill="#3a1714"/><rect x="24" y="92" width="358" height="10" fill="#e8564a"/>
+              <text x="24" y="128" font-size="15" fill="#9fd9ea">AETHER</text><text x="536" y="128" font-size="15" text-anchor="end" font-family="IBM Plex Mono, monospace">60 / 100</text>
+              <rect x="24" y="136" width="512" height="7" fill="#3a3016"/><rect x="24" y="136" width="307" height="7" fill="#ffd36b"/>
+              <text x="24" y="168" font-size="15" fill="#9fd9ea">FOOD</text><text x="536" y="168" font-size="15" text-anchor="end" font-family="IBM Plex Mono, monospace">18 / 20</text>
+              <rect x="24" y="176" width="512" height="5" fill="#33261a"/><rect x="24" y="176" width="461" height="5" fill="#d99a52"/>
+              <line x1="24" y1="200" x2="536" y2="200" stroke="#7fe3ff" stroke-opacity="0.3"/>
+              <text x="24" y="228" font-size="14" fill="#9fd9ea" letter-spacing="1">NOW</text>
+              <text x="24" y="254" font-size="20">Tell Kestrel what you found</text>
+              <text x="24" y="280" font-size="15" fill="#9fd9ea">then: Bring the letters to Ilse</text>
+              <g transform="translate(482 252)"><circle r="30" fill="none" stroke="#7fe3ff" stroke-opacity="0.6" stroke-width="2"/><path d="M 0 -24 L 7 4 L 0 -2 L -7 4 Z" fill="#ffcf6b" transform="rotate(-38)"/></g>
+              <text x="24" y="310" font-size="17" fill="#ffcf6b">◆ Wayfarer camp · 270 m</text>
+              <!-- hotbar row -->
+              <g transform="translate(24 330)">
+                <rect x="0" width="52" height="52" fill="rgba(127,227,255,0.12)" stroke="#e9f7fb" stroke-width="3"/>
+                <rect x="58" width="52" height="52" fill="rgba(127,227,255,0.08)" stroke="#7fe3ff" stroke-opacity="0.4"/>
+                <rect x="116" width="52" height="52" fill="rgba(127,227,255,0.08)" stroke="#7fe3ff" stroke-opacity="0.4"/>
+                <rect x="174" width="52" height="52" fill="rgba(127,227,255,0.08)" stroke="#7fe3ff" stroke-opacity="0.4"/>
+                <rect x="232" width="52" height="52" fill="rgba(127,227,255,0.08)" stroke="#7fe3ff" stroke-opacity="0.4"/>
+                <rect x="290" width="52" height="52" fill="rgba(127,227,255,0.08)" stroke="#7fe3ff" stroke-opacity="0.4"/>
+                <rect x="348" width="52" height="52" fill="rgba(127,227,255,0.08)" stroke="#7fe3ff" stroke-opacity="0.4"/>
+                <rect x="406" width="52" height="52" fill="rgba(127,227,255,0.08)" stroke="#7fe3ff" stroke-opacity="0.4"/>
+                <rect x="464" width="48" height="52" fill="rgba(127,227,255,0.08)" stroke="#7fe3ff" stroke-opacity="0.4"/>
+                <text x="26" y="34" font-size="15" text-anchor="middle">Katana</text>
+                <text x="84" y="34" font-size="15" text-anchor="middle">Pick</text>
+                <text x="142" y="34" font-size="15" text-anchor="middle">Torch</text>
+                <text x="200" y="34" font-size="15" text-anchor="middle">Bread</text>
+              </g>
+            </g>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <p class="cap" id="cap">Today: nine things on screen at once while you walk through a camp. Each number is listed below.</p>
+    <div class="legend" id="legend">
+      <span><b>1</b>Now card: your task step</span><span><b>2</b>Now card: a place and its distance</span>
+      <span><b>3</b>Task card: "Your body remembers" 0/4</span><span><b>4</b>Crosshair (under the subtitle)</span>
+      <span><b>5</b>Hearts</span><span><b>6</b>Hunger</span><span><b>7</b>Hotbar with the Aether line over it</span>
+      <span><b>8</b>Level chip "LV 2 · E +3"</span><span><b>9</b>Six power slots with an energy bar</span>
+    </div>
+  </div>
+
+  <!-- ===================================================== -->
+  <h2>Try the lock-on</h2>
+  <p class="col">A small arena with two Bell Wisps and a Gale Harpy. They move with the same rules as the game's fliers (the <code>FlyHunt</code> goal and the flier's move control, replayed at 20 ticks a second). You stand still holding a katana. Play 30 seconds as <b>Today</b>, then 30 seconds as <b>Lock-on</b>, and compare the numbers under the arena. The lock-on uses the limits proposed below.</p>
+  <div class="arena-box">
+    <canvas id="arena" tabindex="0" aria-label="Lock-on arena. Click to look with the mouse. Space or click strikes, Q locks, the wheel switches, Shift dodges."></canvas>
+    <div class="ctl" role="group" aria-label="Arena controls">
+      <button type="button" id="m-cross" aria-pressed="false">Today: crosshair</button>
+      <button type="button" id="m-lock" aria-pressed="true">Proposed: lock-on</button>
+      <span class="sep"></span>
+      <button type="button" class="touch" id="t-strike">Strike</button>
+      <button type="button" class="touch" id="t-lock">Lock</button>
+      <button type="button" class="touch" id="t-switch">Switch</button>
+      <button type="button" class="touch" id="t-dodge">Dodge</button>
+      <button type="button" id="reset">Restart</button>
+    </div>
+    <div class="score" aria-live="polite">
+      <div><b id="s-time">0.0 s</b>time</div>
+      <div><b id="s-hit">0 / 0</b>strikes that landed</div>
+      <div><b id="s-kill">0</b>creatures down</div>
+      <div><b id="s-taken">0</b>blows taken</div>
+      <div><b id="s-dodged">0</b>dodged</div>
+    </div>
+    <div class="keys">Click the arena to look with the mouse (Esc gives the mouse back). <kbd>Click</kbd> or <kbd>Space</kbd> strike · <kbd>Q</kbd> or <kbd>middle click</kbd> lock / unlock · <kbd>wheel</kbd> or a quick flick switches target · <kbd>Shift</kbd> dodge · arrow keys also look. On a phone: drag to look and use the buttons.</div>
+  </div>
+  <p class="note">What the mock leaves out: you can't walk, there is no hit-stop or swing animation, and the creatures take three hits. The reach, arc, height band, step-in and lock limits are the real numbers. The two wisps glint white as they rear for a dive (the LIGHT tell); a dodge in that window avoids the blow.</p>
+
+  <h3>The lock's look</h3>
+  <p class="col">Drawn in the band's own language: thin cyan arcs, corner ticks and the System's diamond. It doesn't look like vanilla, Zelda's fairy or Souls' dot. The ring is also where a creature's tell shows, so the warning sits where you're already looking.</p>
+  <div class="ret-row">
+    <div class="ret"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="16" fill="#bff4ff"/><g stroke="#7fe3ff" stroke-width="2.5" fill="none" opacity="0.8"><path d="M 30 40 V 30 H 40"/><path d="M 80 30 H 90 V 40"/><path d="M 90 80 V 90 H 80"/><path d="M 40 90 H 30 V 80"/></g></svg><b>Marked</b>Nearest the middle. Strikes steer to it.</div>
+    <div class="ret"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="16" fill="#bff4ff"/><g class="spin" fill="none" stroke="#7fe3ff" stroke-width="3"><path d="M 24 60 A 36 36 0 0 1 60 24"/><path d="M 96 60 A 36 36 0 0 1 60 96"/></g><g stroke="#7fe3ff" stroke-width="3"><line x1="60" y1="12" x2="60" y2="20"/><line x1="60" y1="100" x2="60" y2="108"/><line x1="12" y1="60" x2="20" y2="60"/><line x1="100" y1="60" x2="108" y2="60"/></g><path d="M 60 2 l 5 5 l -5 5 l -5 -5 z" fill="#7fe3ff"/></svg><b>Locked</b>The camera follows it.</div>
+    <div class="ret"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="16" fill="#bff4ff"/><circle cx="60" cy="60" r="28" fill="none" stroke="#ffffff" stroke-width="4"/><circle cx="60" cy="60" r="44" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.4"/></svg><b>Light tell</b>White ring closes in. Block, deflect or dodge.</div>
+    <div class="ret"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="16" fill="#bff4ff"/><circle cx="60" cy="60" r="30" fill="none" stroke="#ffb340" stroke-width="5"/><circle cx="60" cy="60" r="30" fill="none" stroke="#ff4a3d" stroke-width="5" stroke-dasharray="6 9" transform="rotate(20 60 60)"/></svg><b>Heavy / perilous</b>Amber, or red when only a dodge saves you.</div>
+    <div class="ret"><svg viewBox="0 0 120 120" aria-hidden="true"><path d="M 8 20 A 70 70 0 0 0 8 100" fill="none" stroke="#ffb340" stroke-width="6" stroke-linecap="round"/><path d="M 24 60 l -10 -9 v 18 z" fill="#ffb340"/></svg><b>Behind you</b>A wind-up you can't see, on the screen's edge.</div>
+  </div>
+
+  <!-- ===================================================== -->
+  <h2>What I found</h2>
+  <h3>Why fast fliers are so hard to hit</h3>
+  <p class="col">I read the code every flier runs and replayed it (<code>docs/hud-lockon/proof/flysim.py</code>: <code>MobGoals.FlyHunt</code>, <code>FlyerMoveControl</code> and vanilla's air drag from <code>LivingEntity.travelInAir</code>), against a player standing still, 20 runs of 2 minutes each. This is a replay of the code, not a game run.</p>
+  <div class="stats">
+    <div class="stat"><div class="big">23%</div><div class="lab">of the fight a Bell Wisp is in reach of a katana (Gale Harpy 19%)</div></div>
+    <div class="stat"><div class="big">~450 ms</div><div class="lab">a typical window to hit it, once a dive brings it in</div></div>
+    <div class="stat"><div class="big">44%</div><div class="lab">of the points it circles to are above the height a blade can strike</div></div>
+    <div class="stat"><div class="big">5.7°</div><div class="lab">how wide a wisp looks at 4 blocks. It crosses your view at about 60°/s, 200°/s at its fastest.</div></div>
+    <div class="stat"><div class="big">~20</div><div class="lab">dives a minute from each flier you don't kill: one about every 3 seconds</div></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>What the code does</th><th>Where</th><th>What it means in a fight</th></tr></thead>
+    <tbody>
+      <tr><td>Fliers circle 3.5 blocks plus their own width from you, 2 to 4 blocks over your feet. They come in only for a dive, then pull back for 1.5 to 2.5 s.</td><td><code>mobs/entity/MobGoals.java</code> FlyHunt</td><td>Most weapons reach 2.4 to 3.4 blocks. The flier is out of reach while it circles, so only the dive's half second counts.</td></tr>
+      <tr><td>A melee sweep skips anything whose bottom is more than 1.5 blocks over your eyes, even the creature you aimed at.</td><td><code>arms/ArmsServer.java</code> sweep</td><td>A flier hanging just over your head can't be cut at all, whatever you do.</td></tr>
+      <tr><td>Your strike's "aimed" creature is only the one exactly under the crosshair, sent with the press.</td><td><code>arms/client/ArmsPredict.java</code></td><td>Narrow weapons (spear 25°, rapier 20°, daggers 30°) need the crosshair on a 6° target that is moving fast.</td></tr>
+      <tr><td>A soft "focus" exists: after you hit something, your arc turns up to 15° toward it, sideways only. Your body never moves toward it.</td><td><code>ArmsRules.focusTurn</code></td><td>The first hit is the hard one, and nothing ever helps upward.</td></tr>
+      <tr><td>Each swing has a <code>lunge</code> number (0 to 1.3 blocks), but it moves only the drawn hands.</td><td><code>ArmsHands</code>, <code>archetypes.json</code></td><td>The swing looks like it steps in, but it doesn't.</td></tr>
+      <tr><td>A blow from out of view shows a red shard only after it lands. The dive's tell (0.4 s) is a glint on the creature.</td><td><code>ArmsHud</code>, <code>ArmsTells</code></td><td>A dive from behind gives no warning you can see.</td></tr>
+      <tr><td>Powers aim with a "fat ray" 0.3 to 1 block wide along your look.</td><td><code>powers/Combat.aimEntity</code></td><td>At 16 blocks a wisp needs your aim within about 4°.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="col">Two of my guesses turned out wrong, so I've left them out of the fix. Flier speed isn't the main cause: the dive is short, and the real problem is that the flier is out of reach the rest of the time. And the height limit costs a katana only a few points on its own (23% to 26%), because a flier that high is usually out of reach anyway. The lever that matters is reach to the creature you mean to hit.</p>
+
+  <h3>What the screen carries today</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Piece</th><th>Code</th><th>Today</th><th>Proposed</th></tr></thead>
+    <tbody>
+      <tr><td>Crosshair</td><td>vanilla <code>CROSSHAIR</code>; Arms' Resonance arc under it</td><td>Always</td><td><span class="tag t-gone">Gone</span> The lock marks in a fight; a dot only when you can mine, place or use something.</td></tr>
+      <tr><td>Hotbar</td><td>vanilla <code>HOTBAR</code></td><td>Always</td><td><span class="tag t-move">Wrist</span> On the wrist panel. It pops up for 2 s when you scroll or press 1 to 9, and the held item's name shows.</td></tr>
+      <tr><td>Hearts, hunger, armour, XP bar</td><td>vanilla layers</td><td>Always</td><td><span class="tag t-move">When needed</span> Health and Aether as two thin lines, low and centred, in a fight, when hurt, or when low. Food only when hungry. Armour and XP on the wrist.</td></tr>
+      <tr><td>Aether</td><td><code>ascent_aether</code></td><td>A line over the XP bar</td><td><span class="tag t-move">When needed</span> Under health while it's spent or in a fight.</td></tr>
+      <tr><td>Task card, top right</td><td><code>signal.client.TaskHud</code></td><td>Whenever a task is tracked</td><td><span class="tag t-move">When needed</span> 8 s after a step changes or ticks, then the wrist. A step that teaches a key stays until you've pressed it.</td></tr>
+      <tr><td>Now line, top left</td><td><code>signal.client.TrackerHud</code> (SPEC §27.11)</td><td>Whenever you're going somewhere</td><td><span class="tag t-keep">Stays, quieter</span> One place, as now. It fades while you walk toward it and comes back when you turn away, stop, or get near.</td></tr>
+      <tr><td>Guidance in the world</td><td>Atlas destination beam, Trails (SPEC §33)</td><td>On</td><td><span class="tag t-keep">Keep</span> This already shows the way in the world. The Now line backs it up.</td></tr>
+      <tr><td>Power slots</td><td><code>powers.client.PowerHud</code>; fades to 35% when calm</td><td>Always (dimmed when calm)</td><td><span class="tag t-move">When needed</span> Hidden when calm, smaller, back at once in a fight, when you press a power key, or while a cooldown runs.</td></tr>
+      <tr><td>Level chip</td><td><code>progression</code> <code>level</code> layer</td><td>Always (dimmed when calm)</td><td><span class="tag t-move">Wrist</span> On the wrist. It shows for 3 s with the "+XP" rise.</td></tr>
+      <tr><td>Creature plates</td><td><code>living.client.LivingPlates</code> (in the world)</td><td>Everyone fighting you, plus whatever is under the crosshair</td><td><span class="tag t-keep">Keep, fewer</span> The locked or marked creature gets the full plate. Others in the fight get a thin bar.</td></tr>
+      <tr><td>Boss Plate</td><td><code>living.client.BossPlate</code> (SPEC §35.1)</td><td>Top of the screen in a boss fight</td><td><span class="tag t-keep">Keep</span> As built.</td></tr>
+      <tr><td>Gate floor panel</td><td><code>gates.client.RunHudLayer</code></td><td>Always in a gate</td><td><span class="tag t-move">One line</span> "Floor 3 · 4:12 left", growing to the full panel when something changes. The collapse clock never hides.</td></tr>
+      <tr><td>System toasts and cards</td><td><code>signal</code> director (SPEC §26)</td><td>When something is said</td><td><span class="tag t-keep">Keep</span> They already wait their turn.</td></tr>
+      <tr><td>Sprint line, Flow, dodge pips</td><td><code>body</code>, <code>arms</code></td><td>Only while they matter</td><td><span class="tag t-keep">Keep</span> Already quiet.</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ===================================================== -->
+  <h2>How the lock-on works</h2>
+  <div class="grid2">
+    <div class="card"><h3>Marked (always on in a fight)</h3>
+      <p>Twice a tick-pair the game picks the creature nearest the middle of your view: within 25° of the middle, within 24 blocks, in sight, and hostile or hunting you. It prefers the one already marked, so the mark doesn't flicker between two close creatures. Your strikes steer to it and its plate opens. Turn away and it's gone.</p></div>
+    <div class="card"><h3>Locked (press the lock key)</h3>
+      <p>The camera turns to keep the creature in the middle, at most 300° a second and eased, so it never snaps. Your mouse keeps a quarter of its pull, so you can still look a little off. A quick flick or the mouse wheel moves the lock to the next creature that way. It holds through dodges, slides and jumps. It lets go when you press the key again, when the creature has been out of sight for 1.5 s, or when it's 40 blocks away. When the creature dies, it moves to the next one fighting you in front, if there is one.</p></div>
+  </div>
+
+  <h3>What it changes in a fight, and the limits that keep the skill</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>With a marked or locked creature</th><th>The limit</th></tr></thead>
+    <tbody>
+      <tr><td><b>Step in.</b> A strike started just out of reach carries you toward the creature. The swing's own <code>lunge</code> becomes real movement, about 1 block (daggers and fists 1.2, maul and greatblade 0.6, spear and glaive 0.4).</td><td>Only at the start of a chain or a heavy. Only if the creature is within reach plus the step. You still have to be close.</td></tr>
+      <tr><td><b>Reach upward.</b> The creature you mean counts anywhere in its body that your weapon reaches, so a rising cut reaches a flier at head height or above.</td><td>Your weapon's reach, measured from your eyes as today. Other creatures in the arc keep today's height rule.</td></tr>
+      <tr><td><b>Strike the one you mean.</b> The server takes the marked creature as the aimed one.</td><td>Within 35° of where you're looking, in sight, no walls. The server checks it. The arc still hits what it hits today.</td></tr>
+      <tr><td><b>Powers bend toward it.</b> Bolts and beams aim a little toward the locked creature.</td><td>At most 10° for bolts and 18° for powers that already seek. Beyond that a power goes where you look.</td></tr>
+      <tr><td><b>Bows.</b> The lock aims you at its body.</td><td>No bend. While you draw, the lock loosens to a gentle pull, so drop and lead are still yours.</td></tr>
+      <tr><td><b>Fliers can be brought down.</b> A flier whose stance breaks, or whose dive you deflect, falls and lies on the ground for 2.5 s, open to an Execution.</td><td>Normal and elite fliers. Kit bosses only where their fight script allows (boss-plan's call).</td></tr>
+      <tr><td><b>Dives from behind are shown.</b> A creature within 12 blocks winding up out of view puts an arc on that edge of the screen, in its tell's colour, for the length of the tell.</td><td>Only tells. You still have to turn or dodge in time.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="col"><b>Never changed:</b> wind-up, active and recovery times, damage, posture, hit-stop, the parry and deflect windows, dodge timing and its charges, and every creature's tells. There are no 360° snaps and no lock through walls. Players can't be locked.</p>
+  <p class="col">With these limits the replay gives a Bell Wisp in a katana's reach <b>49% of the fight, up from 23%</b> (Gale Harpy 19% to 40%), and the window to hit it grows from about 450 to 600 ms. With their own steps a spear goes from 39% to 61% and daggers from 20% to 38%. A brought-down flier adds a free 2.5 s on top. Run it yourself: <code>python3 -I docs/hud-lockon/proof/flysim.py</code> for today, add <code>1.0</code> for the lock.</p>
+
+  <h3>With the rest of the game</h3>
+  <ul class="col">
+    <li><b>Bosses' tells.</b> The tell's class shows on the lock ring (white light, amber heavy, red perilous, violet grab), from the same synced tell the game already draws on the creature (<code>ArmsTells</code>). The Boss Plate stays at the top.</li>
+    <li><b>Swings (the Swing Studio).</b> First-person cuts already aim "through the target under the crosshair on the hit tick". They'll aim through the locked creature instead. That is one line in <code>ArmsHands</code>, and weapon-anims-plan's tuning is untouched.</li>
+    <li><b>Blocking projectiles.</b> A raised guard faces where you look, so a lock faces it toward the creature. Arrows from elsewhere still need you to turn.</li>
+    <li><b>The rope and flight.</b> In the air, gliding, flying or on the rope, the lock keeps its creature and its mark, and your strikes and powers still go to it. The camera isn't turned, because your look steers you there. Stage 4 adds an air lunge: a strike within 8 blocks in the air carries you to the creature. The target picker is shared with rope-swing-plan so there aren't two.</li>
+    <li><b>Mining, building, using things.</b> No crosshair. A small dot appears in the middle when you hold a block, tool, bucket, bow or crossbow, or look at something you can use within reach (a door, a chest, a person). The block outline stays as it is.</li>
+    <li><b>Multiplayer.</b> The lock is yours alone. Others see nothing. The server trusts only the creature's id, checked against its own limits.</li>
+  </ul>
+
+  <!-- ===================================================== -->
+  <h2>The clear screen</h2>
+  <p class="col">The HUD has three states, plus one key.</p>
+  <div class="grid2">
+    <div class="card"><h3>Exploring</h3><p>Nothing but the world. One line, top left, when you're heading somewhere: it shows for 8 s when the place is new, fades while you walk toward it, and comes back when you turn more than 70° away for 3 s, stop for 2 s, or come within 50 m. The gold beam on the place and your Trails show the way in the world. You are never left without a way to see where to go.</p></div>
+    <div class="card"><h3>Fighting</h3><p>From the moment something hostile hunts you, or you're hurt, until 4 s after it ends. Health and Aether as two thin lines low in the middle, your powers small in the corner, and the lock. Nothing else.</p></div>
+    <div class="card"><h3>Glancing (hold <kbd>Tab</kbd>)</h3><p>Your left forearm comes up into view and the band projects one panel: level and rank, health, Aether, food, armour, the current task and the next step, the way to your destination with a needle, and your hotbar. Let go and it lowers. You can keep walking and looking while you hold it. In multiplayer the player list joins the panel. A quick tap shows the whole panel for 4 s without the arm.</p></div>
+    <div class="card"><h3>Classic</h3><p>One setting gives today's HUD and crosshair back, exactly as they are now. A second setting keeps the clear screen but brings back the crosshair. Nothing is lost while you decide.</p></div>
+  </div>
+  <p class="col">Why the wrist: the band is already on your wrist in the game (<code>holo.client.Wrist</code> draws the raised forearm and band for the K menu), so the glance is the same gesture you already make. This follows Metro's watch, where you raise your arm to read your status (<a href="https://en.wikipedia.org/wiki/Metro_Exodus">Metro Exodus</a>). The panel stays flat and readable instead of being printed on the arm, because Metro and Far Cry 2 show the cost of making information hard to read (see below).</p>
+
+  <!-- ===================================================== -->
+  <h2>Three ways to do this</h2>
+  <div class="grid2">
+    <div class="card"><h3>A. Turn the dials</h3><p>Fade more of today's HUD when calm, widen the melee arc and lift the height limit. About 4 to 6 h.</p><p class="note">It loses because the screen still looks like today in every fight, and a wider arc helps every swing equally, which makes the fight easier without making it feel aimed. Fliers still sit out of reach.</p></div>
+    <div class="card pick"><h3>B. Clear screen and lock-on (recommended)</h3><p>Three HUD states and the wrist glance; a mark and a lock that step you in, reach up to the one you mean, show dives from behind and bring fliers down; a dot only when needed; Classic one click away. About 15 to 22 h in 4 stages.</p><p class="note">It wins because it fixes the measured cause (reach to the creature you mean) while timing stays yours, and every HUD piece gets a clear rule for when it shows.</p></div>
+    <div class="card"><h3>C. Everything on the body</h3><p>No screen HUD at all: health only on the band, the map only in the Atlas, no lines. Like Dead Space or Metro on its hardest setting.</p><p class="note">It loses because you said the screen must never be cryptic or leave you lost. Players of Metro and Far Cry 2 often got lost (sources below).</p></div>
+  </div>
+  <p class="col">What would change my mind: if your playtest of stage 1 shows fliers are still out of reach, the next lever is the fliers themselves (a closer orbit, or a hover before the dive), which is a mobs-module change and boss-plan's area.</p>
+
+  <!-- ===================================================== -->
+  <h2>What other games taught</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Game</th><th>What it does</th><th>What we take</th></tr></thead>
+    <tbody>
+      <tr><td>Dead Space</td><td>Health is a light strip on the suit's spine, blue to red. Ammo shows only when you aim (<a href="https://gdcvault.com/play/1017723/Crafting-Destruction-The-Evolution-of">Ignacio, GDC 2013</a>; <a href="https://www.hudsandguis.com/2012/08/22/dead-space-2-diegetic-interface-design">HUDs and GUIs</a>).</td><td>Health in segments, shown only when it matters. A behind-the-back spine doesn't work in first person, so the segments sit low and centred.</td></tr>
+      <tr><td>Metro Exodus</td><td>A watch and a clipboard carry status and the map. On hard, there is no HUD at all. Reviewers note you get lost often (<a href="https://en.wikipedia.org/wiki/Metro_Exodus">Wikipedia</a>; <a href="https://www.worthplaying.com/article/2019/2/13/reviews/112891-pc-review-metro-exodus/">Worthplaying review</a>).</td><td>Raise your arm to read your status: the Tab glance. Keep the Now line so you're never lost.</td></tr>
+      <tr><td>Far Cry 2</td><td>A handheld map and GPS. The HUD appears only when health or ammo is low. Its 3D map didn't help navigation, and a locator was added (<a href="https://ricethresher.org/article/2008/10/far-cry-2-an-ambitious-immersive-experience">Rice Thresher</a>; <a href="https://www.slideshare.net/slideshow/game-design-2-lecture-7-immersion-through-ui-slideshare/27866402">UI lecture</a>).</td><td>Show health when it changes. When immersion and function clash, function wins.</td></tr>
+      <tr><td>Ghost of Tsushima</td><td>The guiding wind replaces the minimap. Accessibility reviewers found it hard to read late in the game (<a href="https://www.androidcentral.com/ghost-tsushima-creative-director-interview">interview</a>; <a href="https://caniplaythat.com/2020/07/29/ghost-of-tsushima-accessibility-review/">Can I Play That</a>).</td><td>Guidance in the world (the beam and Trails), with a readable line that comes back when you drift.</td></tr>
+      <tr><td>Red Dead Redemption 2, Horizon</td><td>A HUD you can customise, and Horizon's "dynamic" mode that shows pieces when relevant. A reviewer said it didn't hide enough (<a href="https://www.gamespot.com/articles/here-are-red-dead-redemption-2s-hud-options/1100-6461911/">GameSpot</a>; <a href="https://kotaku.com/horizon-zero-dawns-little-details-are-polished-and-wel-1793056896">Kotaku</a>).</td><td>Every piece gets its own reason to show, not one global fade.</td></tr>
+      <tr><td>Zelda: Ocarina of Time</td><td>Z-targeting: lock one enemy among many. It came from sword fights and a ninja show (<a href="https://www.siliconera.com/z-targeting-in-the-legend-of-zelda-ocarina-of-time-was-inspired-by-ninjas/">Siliconera</a>; <a href="https://zeldawiki.wiki/wiki/Z-Targeting">Zelda Wiki</a>).</td><td>The lock, and a marker with its own character.</td></tr>
+      <tr><td>Elden Ring, Dark Souls</td><td>Lock on with Q or middle mouse; the right stick or Shift and an arrow switches targets (<a href="https://vulkk.com/2022/02/26/elden-ring-pc-and-console-controls-guide-and-lists/">controls list</a>). Players complain about switching by accident (<a href="https://steamcommunity.com/app/1245620/discussions/0/3183487594836181102">Steam thread</a>).</td><td>Middle mouse by default. A flick must be quick and deliberate to switch.</td></tr>
+      <tr><td>Monster Hunter</td><td>Two cameras: "focus" follows the monster, "target" turns to it only on a press (<a href="https://steamcommunity.com/app/582010/discussions/0/1628538005505774704/">Steam thread</a>; <a href="https://gamewith.net/monster-hunter-wilds/52610">GameWith</a>).</td><td>Follow by default, Snap as a setting (decision 4).</td></tr>
+      <tr><td>God of War, Spider-Man, Witcher 3</td><td>Melee pulls you a short way to the enemy you face, and fights hinge on reading tells and dodging. I found no primary source for their exact numbers, so ours come from our own replay.</td><td>The step-in, kept short and only at the start of a chain.</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ===================================================== -->
+  <h2>How it's built</h2>
+  <h3>Where the code goes</h3>
+  <ul class="col">
+    <li>A new module, <code>dev.awaken.aim</code>: the mark and lock (client), the shared picker <code>AimRules</code> (pure, tested), the reticle, the threat arcs and the dot. Settings in <code>awaken-aim-client.toml</code>.</li>
+    <li>A public API <code>core.api.Aim</code> (SPEC §12): the marked or locked creature on the client, and the server's limit checks. Arms, powers and the rope read it.</li>
+    <li>The HUD states live in <code>holo</code>, which already runs the calm fade (<code>CalmHud</code>, <code>HudFade</code>) and the wrist. Each module's layer asks <code>core.api.HudState</code> for its alpha with one line, as <code>docs/proposals/holo-ui.md</code> §8 planned.</li>
+    <li>Small hooks in other modules, listed for whoever merges: arms (press check, step-in, reach up, swing aim point), powers (the cast carries a target id; bend within the cap), mobs (a flier brought down), living (plate rules), signal (Now line and task card rules), progression (level chip), gates (the one-line panel).</li>
+    <li>Nothing new is saved. The lock is client state, and the server checks every press as it does today. Every new decision goes into SPEC §40 in the same commit.</li>
+  </ul>
+  <h3>The server never trusts more than it does now</h3>
+  <p class="col">The press already carries a creature id. The server accepts it only if the creature is alive, in this level, within reach plus the step plus 0.6, within 35° of the press's look, and in sight. Otherwise the swing is a normal sweep. The step-in is your own movement, like the dodge, so the server's movement checks still apply. Players are never accepted as a lock.</p>
+  <h3>Cost per frame</h3>
+  <p class="col">The mark is picked every other tick from at most 32 nearby creatures, with at most 6 line-of-sight checks, using reused arrays and no allocation. The reticle is one projected point and a few lines in a GUI layer. Budget: under 0.05 ms a tick and 0.05 ms a frame. No mixins: the camera turn uses <code>CalculatePlayerTurnEvent</code> and the player's own rotation, the wheel uses <code>InputEvent.MouseScrollingEvent</code>, and hiding the vanilla layers uses <code>RenderGuiLayerEvent.Pre</code> (all checked in <code>.ref</code>).</p>
+
+  <h3>When things go wrong</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Case</th><th>What happens</th></tr></thead>
+    <tbody>
+      <tr><td>The locked creature dies</td><td>The lock moves to the next creature fighting you within 60° in front and 12 blocks, else it lets go with a short fade.</td></tr>
+      <tr><td>It goes behind a wall, or you teleport or change dimension</td><td>The mark keeps it for 1.5 s, then lets go. Teleports and dimension changes let go at once.</td></tr>
+      <tr><td>A screen opens, F1, spectator, a scene or the opening camera</td><td>The lock pauses and nothing is drawn. The camera is never turned under a scene (it respects <code>InputLock</code>).</td></tr>
+      <tr><td>Lag: client and server disagree</td><td>The server's checks refuse; it's an ordinary swing. No hit is ever granted outside the limits.</td></tr>
+      <tr><td>The camera turning makes you queasy</td><td>Reduced motion switches to Snap (turn only when you press). Lock camera can be set to Off.</td></tr>
+      <tr><td>A camera mod (Shoulder Surfing, Camera Overhaul)</td><td>The lock turns the player, which those mods follow. To check in your playtest, as the K menu's map scene still is.</td></tr>
+      <tr><td>Lost while exploring</td><td>The Now line comes back whenever you turn away, stop, or arrive, and the Tab glance always shows the way.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Stages</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Stage</th><th>What you get</th><th>Tests</th><th class="n">Time</th></tr></thead>
+    <tbody>
+      <tr><td>0. Rules</td><td>The picker and limits (<code>AimRules</code>), the server's press check, step-in reach, reach upward for the creature you mean, fliers brought down. No visuals.</td><td><code>aim_soft_pick</code>, <code>aim_caps</code>, <code>aim_flier_locked_hits</code> (a wisp 2.2 blocks over your eyes: locked hits, unlocked misses), <code>aim_no_wall</code>, <code>aim_no_player</code>, <code>aim_flier_brought_down</code></td><td class="n">2–3 h</td></tr>
+      <tr><td>1. Lock-on</td><td>The mark, the lock key, the camera, switching, the reticle and its tells, the arcs for dives from behind, the dot, powers' bend, bows, swings aim at the lock. The crosshair goes.</td><td><code>aim_power_bend_cap</code>, the replay rerun with the built numbers</td><td class="n">6–8 h</td></tr>
+      <tr><td>2. Clear screen</td><td>Exploring, fighting, Classic; Now line and task card rules; health and Aether lines; hotbar pop-up; plates thinned; gate panel in one line.</td><td><code>hud_states</code>, <code>hud_now_line_returns</code>, <code>hud_classic_unchanged</code></td><td class="n">4–6 h</td></tr>
+      <tr><td>3. The glance</td><td>Hold Tab: wrist up, the band's panel. Tap for 4 s.</td><td><code>hud_glance_rows</code></td><td class="n">3–5 h</td></tr>
+      <tr><td>4. In the air (after you play 1–3)</td><td>Air lunge on the rope and in flight; a radial item wheel if you want one.</td><td>its own</td><td class="n">3–5 h</td></tr>
+    </tbody>
+  </table></div>
+  <p class="col">Each stage merges on its own, behind its setting, with CI green. I run only my own tests while building (<code>-Ptests=aim_,hud_</code>), push my branch and dispatch the full GameTests run, then hand back. No tours and no client launches: you see it in game.</p>
+  <h3>How we'll know it worked</h3>
+  <ul class="col">
+    <li>The replay with the built numbers: a katana keeps a Bell Wisp in reach at least 40% of the fight (23% today).</li>
+    <li>Tests prove no hit lands outside the limits: past the angle, through a wall, beyond the step, or on a player.</li>
+    <li>With Classic on, every HUD layer draws as it does today (a test compares them).</li>
+    <li>Your playtest decides the feel: three wisps in a gate, a harpy on a peak, a boss, mining a vein, building a wall, walking to a destination, the rope and flight. Fliers should feel fair and still need dodges. You should never feel lost.</li>
+  </ul>
+  <h3>Working with the other builders</h3>
+  <ul class="col">
+    <li><b>rope-swing-plan:</b> nothing is committed on its branch yet. The rope's anchors stay theirs; the creature picker (<code>AimRules</code>) is offered to them so there's one, not two. I've left a note in the shared notes folder.</li>
+    <li><b>weapon-anims-plan:</b> one hook, the swing's aim point reads the lock. Their curves are untouched.</li>
+    <li><b>boss-plan:</b> the lock ring reads the synced tell; whether kit fliers can be brought down is theirs to say.</li>
+  </ul>
+
+  <!-- ===================================================== -->
+  <h2>Decisions for you</h2>
+  <ol class="dec">
+    <li><b>Go ahead with B, stages 0 to 3 now?</b> Stage 4 (the air lunge, an item wheel) waits until you've played 1 to 3.<br><span class="rec">Recommended: yes</span></li>
+    <li><b>The lock key.</b> Middle mouse, like Elden Ring on PC. When nothing is marked, middle click still picks blocks as it does today. If you play on a trackpad, name a key instead.<br><span class="rec">Recommended: middle mouse</span></li>
+    <li><b>The glance key.</b> Hold <kbd>Tab</kbd> to raise your wrist; in multiplayer the player list joins the panel.<br><span class="rec">Recommended: Tab</span></li>
+    <li><b>The locked camera.</b> Follow (the camera keeps the creature in the middle) or Snap (the camera turns to it only when you press, like Monster Hunter's target camera). The other stays a setting.<br><span class="rec">Recommended: Follow</span></li>
+    <li><b>Bring fliers down</b> when their stance breaks or you deflect their dive, for 2.5 s on the ground.<br><span class="rec">Recommended: yes</span></li>
+    <li><b>On by default</b> for everyone, with Classic (today's HUD and crosshair) one setting away.<br><span class="rec">Recommended: yes</span></li>
+  </ol>
+</div>
+
+<script>
+(() => {
+  // ---------- the screen tabs ----------
+  const caps = {
+    today: "Today: nine things on screen at once while you walk through a camp. Each number is listed below.",
+    explore: "Exploring: the world, the gold beam on your destination, and one line that fades while you walk toward it.",
+    fight: "Fighting (mock-up): the lock on the wisp you mean, a thin bar on the other, an amber arc for a dive winding up behind you, health and Aether low in the middle, powers small in the corner.",
+    glance: "Holding Tab (mock-up): your wrist comes up and the band shows everything else, the hotbar included. Let go and it lowers."
+  };
+  const tabs = document.querySelectorAll('.tabs button');
+  const layers = document.querySelectorAll('#screen .layer');
+  const cap = document.getElementById('cap'), legend = document.getElementById('legend');
+  function show(s) {
+    tabs.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === s)));
+    layers.forEach(l => { l.hidden = l.dataset.l !== s; });
+    cap.textContent = caps[s];
+    legend.hidden = s !== 'today';
+  }
+  tabs.forEach(b => b.addEventListener('click', () => show(b.dataset.s)));
+
+  // ---------- the arena ----------
+  const cv = document.getElementById('arena'), ctx = cv.getContext('2d');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DEG = Math.PI / 180, EYE = 1.62, TPS = 20, DT = 1 / TPS;
+  // the katana's first strike (archetypes.json) and the proposed limits
+  const REACH = 3.1 + 0.3, ARC = 120, STEP = 1.0, AIM_CAP = 35, SOFT_CONE = 25, SOFT_RANGE = 24, TURN = 300, MOUSE_KEEP = 0.25;
+  let W = 960, H = 540, F = 1, dpr = 1;
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = Math.max(320, r.width); H = W * 9 / 16;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    F = (H / 2) / Math.tan(35 * DEG);
+  }
+  new ResizeObserver(resize).observe(cv);
+  resize();
+
+  // a seeded random so every restart is the same arena
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const trees = [], ground = [];
+  for (let i = 0; i < 46; i++) { const a = rnd() * Math.PI * 2, r = 13 + rnd() * 22; trees.push({ x: Math.sin(a) * r, z: Math.cos(a) * r, w: 1 + rnd() * 0.9, h: 6 + rnd() * 6 }); }
+  for (let i = 0; i < 520; i++) { const a = rnd() * Math.PI * 2, r = 1.5 + Math.sqrt(rnd()) * 26; ground.push({ x: Math.sin(a) * r, z: Math.cos(a) * r, s: rnd() }); }
+
+  let mode = 'lock', view, mobs, st, lock, soft, strike, dodge, fx, hurt, flick;
+  const KINDS = { wisp: { name: 'BELL WISP', w: 0.4, h: 0.8, spd: 0.5, col: '#7fe3ff' }, harpy: { name: 'GALE HARPY', w: 0.9, h: 0.5, spd: 0.45, col: '#b77bff' } };
+  function spawn(kind, i) {
+    const a = rnd() * Math.PI * 2;
+    return { kind, k: KINDS[kind], x: Math.sin(a) * 9, y: 3 + rnd() * 2, z: Math.cos(a) * 9, vx: 0, vy: 0, vz: 0, px: 0, py: 0, pz: 0,
+      angle: rnd() * 6.28, retarget: 0, cd: 20 + i * 15, tell: -1, dive: 0, wanted: null, mod: 1, op: 'WAIT', hp: 3, flash: 0, dead: 0, id: i };
+  }
+  function restart() {
+    seed = 7; view = { yaw: 0, pitch: 8 };
+    mobs = [spawn('wisp', 0), spawn('wisp', 1), spawn('harpy', 2)];
+    st = { t: 0, swings: 0, hits: 0, kills: 0, taken: 0, dodged: 0 };
+    lock = null; soft = null; strike = null; dodge = { left: 0, cd: 0 }; fx = []; hurt = 0; flick = { acc: 0, t: 0 };
+  }
+  restart();
+
+  // ---- the flier's own rules (MobGoals.FlyHunt, FlyerMoveControl, LivingEntity.travelInAir) ----
+  function tickMob(m) {
+    m.px = m.x; m.py = m.y; m.pz = m.z;
+    if (m.dead) { if (--m.dead === 0) Object.assign(m, spawn(m.kind, m.id)); return; }
+    if (m.flash > 0) m.flash--;
+    const reachMob = (m.k.w + 0.6) * 0.5 + 1.3;
+    let busy = false;
+    if (m.cd > 0) m.cd--;
+    if (m.cd <= 0) {
+      if (m.tell < 0) m.tell = 8;
+      if (m.tell > 0) {
+        if (--m.tell === 0) m.dive = 30;
+        m.wanted = [m.x, m.y, m.z]; m.mod = 0.6; m.op = 'MOVE'; busy = true;
+      } else {
+        m.wanted = [0, EYE - 1.8 * 0.3, 0]; m.mod = 1.2; m.op = 'MOVE';
+        const hit = m.x * m.x + m.y * m.y + m.z * m.z < reachMob * reachMob;
+        if (hit) {
+          if (dodge.left > 0) st.dodged++; else { st.taken++; hurt = 1; }
+        }
+        if (hit || --m.dive <= 0) { m.cd = 30 + Math.floor(rnd() * 20); m.tell = -1; m.retarget = 0; }
+        busy = true;
+      }
+    }
+    if (!busy && --m.retarget <= 0) {
+      m.retarget = 12; m.angle += 0.6 + rnd() * 0.4;
+      const r = 3.5 + m.k.w, y = 2 + rnd() * 2;
+      m.wanted = [Math.cos(m.angle) * r, y, Math.sin(m.angle) * r]; m.mod = 1; m.op = 'MOVE';
+    }
+    if (m.op === 'MOVE' && m.wanted) {
+      const dx = m.wanted[0] - m.x, dy = m.wanted[1] - m.y, dz = m.wanted[2] - m.z, L = Math.hypot(dx, dy, dz);
+      if (L < Math.max(0.5, Math.max(m.k.w, m.k.h) * 0.5)) { m.op = 'WAIT'; m.vx *= 0.5; m.vy *= 0.5; m.vz *= 0.5; }
+      else { const a = m.k.spd * m.mod * 0.16 / L; m.vx += dx * a; m.vy += dy * a; m.vz += dz * a; }
+    } else { m.vx *= 0.8; m.vy *= 0.8; m.vz *= 0.8; }
+    m.x += m.vx; m.y += m.vy; m.z += m.vz;
+    if (m.y < 0.15) { m.y = 0.15; m.vy = 0; }
+    m.vx *= 0.91; m.vz *= 0.91; m.vy *= 0.98;
+  }
+
+  // ---- geometry ----
+  function basis() {
+    const y = view.yaw * DEG, p = view.pitch * DEG, cp = Math.cos(p), sp = Math.sin(p);
+    return { f: [cp * Math.sin(y), sp, cp * Math.cos(y)], r: [Math.cos(y), 0, -Math.sin(y)], u: [-sp * Math.sin(y), cp, -sp * Math.cos(y)] };
+  }
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  function project(B, x, y, z) {
+    const v = [x, y - EYE, z], cz = dot(v, B.f);
+    if (cz < 0.05) return null;
+    return { x: W / 2 + dot(v, B.r) / cz * F, y: H / 2 - dot(v, B.u) / cz * F, z: cz };
+  }
+  const centre = m => [m.x, m.y + m.k.h / 2, m.z];
+  function offAngle(B, m) { const c = centre(m), v = [c[0], c[1] - EYE, c[2]], L = Math.hypot(...v); return Math.acos(Math.max(-1, Math.min(1, dot(v, B.f) / L))) / DEG; }
+  // closest point of its box to the eye (the server's reach test)
+  function boxDist(m) {
+    const cx = Math.max(m.x - m.k.w / 2, Math.min(0, m.x + m.k.w / 2)), cy = Math.max(m.y, Math.min(EYE, m.y + m.k.h)), cz = Math.max(m.z - m.k.w / 2, Math.min(0, m.z + m.k.w / 2));
+    return Math.hypot(cx, cy - EYE, cz);
+  }
+  const yawTo = m => Math.atan2(m.x, m.z) / DEG;
+  const wrap = a => ((a + 540) % 360) - 180;
+  const inBand = m => !(m.y + m.k.h < -1 || m.y > EYE + 1.5);
+
+  function pickSoft(B) {
+    let best = null, bs = 1e9;
+    for (const m of mobs) {
+      if (m.dead) continue;
+      const a = offAngle(B, m), d = Math.hypot(m.x, m.y, m.z);
+      if (a > SOFT_CONE || d > SOFT_RANGE) continue;
+      const s = a - (soft === m ? 8 : 0);
+      if (s < bs) { bs = s; best = m; }
+    }
+    return best;
+  }
+  function switchLock(dir) {
+    if (!lock) return;
+    const B = basis(), here = project(B, ...centre(lock));
+    const hx = here ? here.x : W / 2;
+    let best = null, bd = 1e9;
+    for (const m of mobs) {
+      if (m.dead || m === lock) continue;
+      const rel = wrap(yawTo(m) - view.yaw);
+      const p = project(B, ...centre(m)), sx = p ? p.x : (rel > 0 ? W * 2 : -W);
+      const d = (sx - hx) * dir;
+      if (d > 0 && d < bd) { bd = d; best = m; }
+    }
+    if (best) lock = best;
+  }
+  function toggleLock() {
+    if (mode !== 'lock') return;
+    if (lock) { lock = null; return; }
+    const B = basis();
+    lock = pickSoft(B);
+    if (!lock) { // the nearest one hunting you within 60 degrees in front
+      let bd = 1e9;
+      for (const m of mobs) { if (m.dead) continue; const a = offAngle(B, m), d = Math.hypot(m.x, m.y, m.z); if (a < 60 && d < 32 && d < bd) { bd = d; lock = m; } }
+    }
+  }
+  function doStrike() {
+    if (strike) return;
+    st.swings++;
+    const target = mode === 'lock' ? (lock || soft) : null;
+    let step = 0;
+    if (target && boxDist(target) > REACH && boxDist(target) <= REACH + STEP && offAngle(basis(), target) <= AIM_CAP) step = 1;
+    strike = { t: 0, target, step, landed: false, done: [] };
+  }
+  function resolveStrike() {
+    // two active ticks after a 3-tick wind-up, as the katana's first strike
+    const B = basis(), before = strike.landed;
+    for (const m of mobs) {
+      if (m.dead || strike.done.includes(m)) continue;
+      let ok;
+      if (m === strike.target) ok = boxDist(m) <= REACH + (strike.step ? STEP : 0) && offAngle(B, m) <= AIM_CAP;
+      else ok = boxDist(m) <= REACH && Math.abs(wrap(yawTo(m) - view.yaw)) <= ARC / 2 && inBand(m);
+      if (!ok) continue;
+      strike.done.push(m); strike.landed = true;
+      m.hp--; m.flash = 4;
+      const L = Math.hypot(m.x, m.z) || 1; m.vx += m.x / L * 0.5; m.vz += m.z / L * 0.5; m.cd = Math.max(m.cd, 12); m.tell = -1;
+      const p = project(B, ...centre(m)); if (p) fx.push({ x: p.x, y: p.y, t: 0, text: 'HIT', col: '#ffffff' });
+      if (m.hp <= 0) { m.dead = 50; st.kills++; if (lock === m) { lock = null; toggleLockNext(); } }
+    }
+    if (!before && strike.landed) st.hits++;
+  }
+  function toggleLockNext() {
+    const B = basis(); let bd = 1e9;
+    for (const m of mobs) { if (m.dead) continue; const a = offAngle(B, m), d = Math.hypot(m.x, m.y, m.z); if (a < 60 && d < 12 && d < bd) { bd = d; lock = m; } }
+  }
+
+  // ---- input ----
+  let locked = false, lastMX = null, lastMY = null, dragging = false;
+  function look(dx, dy) {
+    const k = (mode === 'lock' && lock) ? MOUSE_KEEP : 1;
+    view.yaw += dx * 0.16 * k; view.pitch = Math.max(-80, Math.min(80, view.pitch - dy * 0.16 * k));
+    if (mode === 'lock' && lock) { flick.acc += dx; }
+  }
+  cv.addEventListener('click', e => {
+    cv.focus();
+    if (!locked && cv.requestPointerLock) { try { const p = cv.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (_) {} if (!locked) { doStrike(); } return; }
+    doStrike();
+  });
+  document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === cv; });
+  cv.addEventListener('mousemove', e => {
+    if (locked) { look(e.movementX, e.movementY); return; }
+    if (lastMX !== null && e.buttons === 0) look((e.clientX - lastMX) * 0.8, (e.clientY - lastMY) * 0.8);
+    lastMX = e.clientX; lastMY = e.clientY;
+  });
+  cv.addEventListener('mouseleave', () => { lastMX = lastMY = null; });
+  cv.addEventListener('mousedown', e => { if (e.button === 1) { e.preventDefault(); toggleLock(); } });
+  cv.addEventListener('auxclick', e => e.preventDefault());
+  cv.addEventListener('wheel', e => { if (mode === 'lock' && lock) { e.preventDefault(); switchLock(e.deltaY > 0 ? 1 : -1); } }, { passive: false });
+  cv.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') { dragging = true; lastMX = e.clientX; lastMY = e.clientY; } });
+  cv.addEventListener('pointermove', e => { if (dragging && e.pointerType === 'touch') { look((e.clientX - lastMX) * 0.9, (e.clientY - lastMY) * 0.9); lastMX = e.clientX; lastMY = e.clientY; } });
+  cv.addEventListener('pointerup', () => { dragging = false; });
+  const held = {};
+  cv.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if ([' ', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(k)) e.preventDefault();
+    if (k === ' ' || k === 'j') doStrike();
+    if (k === 'q') toggleLock();
+    if (k === 'shift' && dodge.cd <= 0) { dodge.left = 6; dodge.cd = 18; }
+    held[k] = true;
+  });
+  cv.addEventListener('keyup', e => { held[e.key.toLowerCase()] = false; });
+  function setMode(m) {
+    mode = m; lock = null; soft = null;
+    document.getElementById('m-cross').setAttribute('aria-pressed', String(m === 'cross'));
+    document.getElementById('m-lock').setAttribute('aria-pressed', String(m === 'lock'));
+    restart(); cv.focus();
+  }
+  document.getElementById('m-cross').addEventListener('click', () => setMode('cross'));
+  document.getElementById('m-lock').addEventListener('click', () => setMode('lock'));
+  document.getElementById('reset').addEventListener('click', () => { restart(); cv.focus(); });
+  document.getElementById('t-strike').addEventListener('click', doStrike);
+  document.getElementById('t-lock').addEventListener('click', toggleLock);
+  document.getElementById('t-switch').addEventListener('click', () => switchLock(1));
+  document.getElementById('t-dodge').addEventListener('click', () => { if (dodge.cd <= 0) { dodge.left = 6; dodge.cd = 18; } });
+
+  // ---- the loop ----
+  let acc = 0, last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (held['arrowleft']) look(-500 * dt, 0); if (held['arrowright']) look(500 * dt, 0);
+    if (held['arrowup']) look(0, -400 * dt); if (held['arrowdown']) look(0, 400 * dt);
+    acc += dt;
+    while (acc >= DT) {
+      acc -= DT; st.t += DT;
+      mobs.forEach(tickMob);
+      if (dodge.left > 0) dodge.left--; if (dodge.cd > 0) dodge.cd--;
+      if (strike) { strike.t++; if (strike.t === 3 || strike.t === 4) resolveStrike(); if (strike.t >= 7) { if (!strike.landed) fx.push({ x: W / 2, y: H / 2 + 40, t: 0, text: 'MISS', col: '#9fb3bd' }); strike = null; } }
+      // a quick, deliberate flick switches the lock
+      flick.t++; if (flick.t >= 2) { if (Math.abs(flick.acc) > 70) switchLock(Math.sign(flick.acc)); flick.acc = 0; flick.t = 0; }
+      if (lock && (lock.dead || Math.hypot(lock.x, lock.y, lock.z) > 40)) lock = null;
+    }
+    // the locked camera: eased, at most TURN degrees a second
+    if (mode === 'lock' && lock) {
+      const c = centre(lock), want = Math.atan2(c[0], c[2]) / DEG, wantP = Math.atan2(c[1] - EYE, Math.hypot(c[0], c[2])) / DEG;
+      const dy = wrap(want - view.yaw), dp = wantP - view.pitch;
+      const ry = Math.min(Math.abs(dy), Math.max(Math.abs(dy) * 9 * dt, 0), TURN * dt), rp = Math.min(Math.abs(dp), Math.abs(dp) * 9 * dt, TURN * dt);
+      view.yaw += Math.sign(dy) * ry; view.pitch = Math.max(-80, Math.min(80, view.pitch + Math.sign(dp) * rp));
+    }
+    const B = basis();
+    soft = mode === 'lock' && !lock ? pickSoft(B) : null;
+    draw(B, acc / DT, dt);
+    document.getElementById('s-time').textContent = st.t.toFixed(1) + ' s';
+    document.getElementById('s-hit').textContent = st.hits + ' / ' + st.swings;
+    document.getElementById('s-kill').textContent = st.kills;
+    document.getElementById('s-taken').textContent = st.taken;
+    document.getElementById('s-dodged').textContent = st.dodged;
+    requestAnimationFrame(frame);
+  }
+
+  function draw(B, alpha, dt) {
+    // sky and ground, the horizon from the pitch
+    const hy = H / 2 + Math.tan(view.pitch * DEG) * F;
+    const sky = ctx.createLinearGradient(0, hy - H, 0, hy);
+    sky.addColorStop(0, '#0d2b38'); sky.addColorStop(1, '#6fa7b4');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    const gr = ctx.createLinearGradient(0, hy, 0, hy + H * 0.8);
+    gr.addColorStop(0, '#1f4a41'); gr.addColorStop(1, '#0d241f');
+    ctx.fillStyle = gr; ctx.fillRect(0, Math.max(0, hy), W, H);
+    // ground specks give the turn its motion
+    for (const g of ground) {
+      const p = project(B, g.x, 0, g.z); if (!p || p.y < hy) continue;
+      const s = Math.max(1, 0.22 / p.z * F);
+      ctx.fillStyle = g.s > 0.7 ? '#2f6b5c' : g.s > 0.35 ? '#173a33' : '#5fd6c4';
+      ctx.globalAlpha = g.s > 0.92 ? 0.9 : 0.55; ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s * 0.6);
+    }
+    ctx.globalAlpha = 1;
+    // trees and creatures, far to near
+    const things = [];
+    for (const t of trees) { const p = project(B, t.x, 0, t.z); if (p) things.push({ d: p.z, t, p }); }
+    for (const m of mobs) {
+      if (m.dead) continue;
+      const x = m.px + (m.x - m.px) * alpha, y = m.py + (m.y - m.py) * alpha, z = m.pz + (m.z - m.pz) * alpha;
+      const p = project(B, x, y + m.k.h / 2, z); m.screen = p; if (p) things.push({ d: p.z, m, p });
+    }
+    things.sort((a, b) => b.d - a.d);
+    for (const o of things) {
+      if (o.t) {
+        const top = project(B, o.t.x, o.t.h, o.t.z), w = o.t.w / o.p.z * F;
+        const fog = Math.min(1, o.p.z / 36);
+        ctx.fillStyle = `rgb(${Math.round(40 + 70 * fog)},${Math.round(52 + 90 * fog)},${Math.round(58 + 95 * fog)})`;
+        ctx.fillRect(o.p.x - w / 2, top ? top.y : -10, w, o.p.y - (top ? top.y : -10));
+        ctx.fillStyle = `rgba(95,214,196,${0.35 * (1 - fog)})`; ctx.fillRect(o.p.x - w / 2, o.p.y - w * 0.3, w, w * 0.3);
+        // the canopy: a blocky crown over the trunk, with a few glowing leaves
+        const crown = project(B, o.t.x, o.t.h + 4, o.t.z);
+        if (top && crown) {
+          const cw = w * 3.4;
+          ctx.fillStyle = `rgb(${Math.round(16 + 60 * fog)},${Math.round(58 + 70 * fog)},${Math.round(60 + 80 * fog)})`;
+          ctx.fillRect(o.p.x - cw / 2, crown.y, cw, (top.y - crown.y) * 1.25);
+          ctx.fillRect(o.p.x - cw * 0.32, crown.y - (top.y - crown.y) * 0.35, cw * 0.64, (top.y - crown.y) * 0.4);
+          ctx.fillStyle = `rgba(127,227,255,${0.5 * (1 - fog)})`;
+          for (let i = 0; i < 4; i++) ctx.fillRect(o.p.x - cw / 2 + ((i * 37 + o.t.h * 13) % 1) * cw + i * cw / 4.3, crown.y + (top.y - crown.y) * (0.3 + 0.2 * (i % 2)), Math.max(1, w * 0.18), Math.max(1, w * 0.18));
+        }
+      } else drawMob(o.m, o.p);
+    }
+    // plates: today, everyone in the fight wears one; proposed, the one you mean wears the full plate
+    for (const m of mobs) {
+      if (m.dead || !m.screen) continue;
+      if (mode === 'cross') plate(m, true);
+      else if (m === lock || m === soft) plate(m, true); else plate(m, false);
+    }
+    if (mode === 'lock') {
+      if (soft) brackets(soft); if (lock) ring(lock);
+      threats(B);
+    }
+    // HUD
+    if (mode === 'cross') hudToday(); else hudClear();
+    // floating words
+    for (let i = fx.length - 1; i >= 0; i--) {
+      const f = fx[i]; f.t += dt;
+      if (f.t > 0.6) { fx.splice(i, 1); continue; }
+      ctx.globalAlpha = 1 - f.t / 0.6; ctx.fillStyle = f.col; ctx.font = '600 15px "Chakra Petch", sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(f.text, f.x, f.y - 24 - f.t * 40); ctx.globalAlpha = 1;
+    }
+    // a step in reads as a small push of the view; a dodge as a slide
+    if (strike && strike.step && strike.t < 4 && !reduce) { ctx.strokeStyle = 'rgba(127,227,255,0.25)'; ctx.lineWidth = 2; ctx.strokeRect(6 + strike.t * 3, 6 + strike.t * 3, W - 12 - strike.t * 6, H - 12 - strike.t * 6); }
+    if (dodge.left > 0) { ctx.fillStyle = 'rgba(127,227,255,0.10)'; ctx.fillRect(0, 0, W, H); }
+    if (hurt > 0) { const v = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.9); v.addColorStop(0, 'rgba(160,20,20,0)'); v.addColorStop(1, `rgba(160,20,20,${0.55 * hurt})`); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H); hurt = Math.max(0, hurt - dt * 2.5); }
+    if (!locked && st.t < 3) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(W / 2 - 150, 16, 300, 30); ctx.fillStyle = '#e9f7fb'; ctx.font = '14px "IBM Plex Sans", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Click to look with the mouse', W / 2, 36); }
+  }
+  function drawMob(m, p) {
+    const r = Math.max(3, Math.max(m.k.w, m.k.h) / 2 / p.z * F);
+    const telling = m.tell > 0 && m.cd <= 0;
+    const col = m.flash > 0 ? '#ffffff' : m.k.col;
+    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 3);
+    g.addColorStop(0, '#ffffff'); g.addColorStop(0.3, col); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, r * 3, 0, Math.PI * 2); ctx.fill();
+    if (m.kind === 'harpy') {
+      ctx.fillStyle = '#1b1426';
+      const flap = Math.sin(st.t * 18 + m.id) * r * 0.6;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - r * 2.4, p.y - r * 0.4 + flap); ctx.lineTo(p.x - r * 0.8, p.y + r * 0.3); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + r * 2.4, p.y - r * 0.4 + flap); ctx.lineTo(p.x + r * 0.8, p.y + r * 0.3); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(2, r * 0.45), 0, Math.PI * 2); ctx.fill();
+    if (telling) { // the LIGHT tell: a white glint
+      const k = m.tell / 8; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(p.x - r * 2.2 * (1 - k + 0.3), p.y); ctx.lineTo(p.x + r * 2.2 * (1 - k + 0.3), p.y); ctx.moveTo(p.x, p.y - r * 2.2 * (1 - k + 0.3)); ctx.lineTo(p.x, p.y + r * 2.2 * (1 - k + 0.3)); ctx.stroke();
+    }
+  }
+  function plate(m, full) {
+    const p = m.screen, r = Math.max(6, Math.max(m.k.w, m.k.h) / 2 / p.z * F);
+    const y = p.y - r * 2.4 - (full ? 34 : 10);
+    if (!full) { ctx.fillStyle = m.k.col; ctx.fillRect(p.x - 18, y, 36 * m.hp / 3, 3); return; }
+    ctx.fillStyle = 'rgba(8,22,30,0.72)'; ctx.fillRect(p.x - 62, y, 124, 28);
+    ctx.strokeStyle = 'rgba(127,227,255,0.6)'; ctx.lineWidth = 1; ctx.strokeRect(p.x - 62 + 0.5, y + 0.5, 123, 27);
+    ctx.fillStyle = '#e9f7fb'; ctx.font = '600 11px "Chakra Petch", sans-serif'; ctx.textAlign = 'left'; ctx.fillText(m.k.name, p.x - 56, y + 12);
+    ctx.fillStyle = '#e8a33d'; ctx.fillRect(p.x + 28, y + 3, 28, 12); ctx.fillStyle = '#111'; ctx.font = '600 10px "IBM Plex Mono", monospace'; ctx.fillText('Lv 6', p.x + 31, y + 12);
+    for (let i = 0; i < 10; i++) { ctx.fillStyle = i < Math.round(m.hp / 3 * 10) ? m.k.col : 'rgba(127,227,255,0.18)'; ctx.fillRect(p.x - 56 + i * 11.2, y + 19, 9.5, 5); }
+  }
+  function brackets(m) {
+    const p = m.screen; if (!p) return; const r = Math.max(14, Math.max(m.k.w, m.k.h) / 2 / p.z * F * 2.2), l = r * 0.4;
+    ctx.strokeStyle = 'rgba(127,227,255,0.85)'; ctx.lineWidth = 2; ctx.beginPath();
+    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { ctx.moveTo(p.x + sx * r, p.y + sy * (r - l)); ctx.lineTo(p.x + sx * r, p.y + sy * r); ctx.lineTo(p.x + sx * (r - l), p.y + sy * r); }
+    ctx.stroke();
+  }
+  function ring(m) {
+    const p = m.screen; if (!p) return;
+    const base = Math.max(18, Math.max(m.k.w, m.k.h) / 2 / p.z * F * 2.4);
+    const telling = m.tell > 0 && m.cd <= 0;
+    const spin = reduce ? 0 : st.t * 1.2;
+    if (telling) { // the tell closes in on the ring, in its class's colour
+      const k = m.tell / 8;
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.arc(p.x, p.y, base * (1 + k), 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.strokeStyle = '#7fe3ff'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(p.x, p.y, base, Math.PI + spin, Math.PI * 1.5 + spin); ctx.stroke();
+    ctx.beginPath(); ctx.arc(p.x, p.y, base, spin, Math.PI * 0.5 + spin); ctx.stroke();
+    ctx.beginPath();
+    for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) { ctx.moveTo(p.x + dx * (base + 6), p.y + dy * (base + 6)); ctx.lineTo(p.x + dx * (base + 13), p.y + dy * (base + 13)); }
+    ctx.stroke();
+    ctx.fillStyle = '#7fe3ff'; ctx.beginPath(); const ty = p.y - base - 22; ctx.moveTo(p.x, ty - 6); ctx.lineTo(p.x + 6, ty); ctx.lineTo(p.x, ty + 6); ctx.lineTo(p.x - 6, ty); ctx.fill();
+  }
+  function threats(B) {
+    for (const m of mobs) {
+      if (m.dead || !(m.tell > 0 && m.cd <= 0)) continue;
+      const p = m.screen;
+      if (p && p.x > 0 && p.x < W && p.y > 0 && p.y < H) continue;
+      if (Math.hypot(m.x, m.y, m.z) > 12) continue;
+      const rel = wrap(yawTo(m) - view.yaw), right = rel > 0;
+      const x = right ? W - 10 : 10, cy = H / 2, k = reduce ? 1 : 0.7 + 0.3 * Math.sin(st.t * 20);
+      ctx.strokeStyle = `rgba(255,255,255,${k})`; ctx.lineWidth = 6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x, cy - H * 0.16); ctx.quadraticCurveTo(x + (right ? -22 : 22), cy, x, cy + H * 0.16); ctx.stroke(); ctx.lineCap = 'butt';
+      ctx.fillStyle = '#ffffff'; ctx.font = '600 12px "Chakra Petch", sans-serif'; ctx.textAlign = right ? 'right' : 'left';
+      ctx.fillText(Math.abs(rel) > 120 ? 'BEHIND YOU' : (right ? 'RIGHT' : 'LEFT'), right ? x - 26 : x + 26, cy + 4);
+    }
+  }
+  function hudToday() {
+    // the vanilla crosshair
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(W / 2 - 9, H / 2 - 1, 18, 2); ctx.fillRect(W / 2 - 1, H / 2 - 9, 2, 18);
+    const bw = Math.min(W * 0.46, 420), bx = W / 2 - bw / 2, by = H - 40;
+    for (let i = 0; i < 9; i++) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bx + i * bw / 9 + 1, by, bw / 9 - 2, 32); ctx.strokeStyle = i === 0 ? '#fff' : 'rgba(255,255,255,0.25)'; ctx.strokeRect(bx + i * bw / 9 + 1.5, by + 0.5, bw / 9 - 3, 31); }
+    const hp = Math.max(0, 10 - st.taken);
+    for (let i = 0; i < 10; i++) { ctx.fillStyle = i < hp ? '#e23b3b' : '#3a1212'; ctx.fillRect(bx + i * 16, by - 18, 12, 11); }
+    for (let i = 0; i < 10; i++) { ctx.fillStyle = '#b8743a'; ctx.fillRect(bx + bw - 12 - i * 16, by - 18, 12, 11); }
+    ctx.fillStyle = 'rgba(232,163,61,0.85)'; ctx.font = '600 14px "Chakra Petch", sans-serif'; ctx.textAlign = 'right'; ctx.fillText('LV 2 · E +3', bx - 14, by + 22);
+    for (let i = 0; i < 6; i++) { ctx.fillStyle = 'rgba(8,22,30,0.55)'; ctx.fillRect(W - 128 + (i % 3) * 40, H - 86 + Math.floor(i / 3) * 40, 36, 36); }
+  }
+  function hudClear() {
+    const w = Math.min(W * 0.3, 290), x = W / 2 - w / 2, y = H - 26, hp = Math.max(0, 20 - st.taken * 2);
+    for (let i = 0; i < 20; i++) { ctx.fillStyle = i < hp ? '#e8564a' : 'rgba(232,86,74,0.18)'; ctx.fillRect(x + i * w / 20, y, w / 20 - 2, 5); }
+    for (let i = 0; i < 20; i++) { ctx.fillStyle = i < 13 ? '#ffd36b' : 'rgba(255,211,107,0.18)'; ctx.fillRect(x + i * w / 20, y + 9, w / 20 - 2, 3); }
+    for (let i = 0; i < 6; i++) { ctx.fillStyle = 'rgba(8,22,30,0.55)'; ctx.strokeStyle = 'rgba(127,227,255,0.45)'; const sx = W - 92 + (i % 3) * 28, sy = H - 62 + Math.floor(i / 3) * 28; ctx.fillRect(sx, sy, 24, 24); ctx.strokeRect(sx + 0.5, sy + 0.5, 23, 23); }
+  }
+  requestAnimationFrame(frame);
+})();
+</script>

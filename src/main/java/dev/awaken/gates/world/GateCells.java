@@ -31,11 +31,16 @@ public final class GateCells {
         return cell < 0 ? null : PLANS.get(cell);
     }
 
-    /** Theme at a block column (annex half uses the annex theme), or null outside any live cell. */
-    public static Theme themeAt(int blockX, int blockZ) {
+    /** Theme at a block (a version 6+ floor's own theme, else the annex half's or the gate's), or null outside any live cell. */
+    public static Theme themeAt(int blockX, int y, int blockZ) {
         int cell = Cells.cellAt(blockX, blockZ);
         GatePlan p = plan(cell);
         if (p == null) return null;
-        return Cells.localX(cell, blockX) >= Cells.ANNEX_SLOT_X * 16 ? p.annexTheme() : p.theme();
+        int lx = Cells.localX(cell, blockX);
+        if (p.contentVersion() >= Plots.FIRST_VERSION) {
+            FloorLayout f = GateLayout.of(p).floorAt(lx, Cells.localZ(cell, blockZ), y);
+            return f == null ? p.theme() : f.theme;
+        }
+        return lx >= Cells.ANNEX_SLOT_X * 16 ? p.annexTheme() : p.theme();
     }
 }

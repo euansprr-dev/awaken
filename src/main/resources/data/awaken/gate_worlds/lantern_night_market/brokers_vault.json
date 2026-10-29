@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "theme": "lantern_night_market",
+  "name": "The Broker's Vault",
+  "line": "Where the Broker keeps every wish anyone ever paid for, each one in its own lantern.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "roof": 10
+  },
+  "biome": "awaken:gate_world/brokers_vault",
+  "moods": [],
+  "blocks": {
+    "floor": "awaken:market_cobbles",
+    "boards": "awaken:market_boards",
+    "wall": "awaken:market_plaster",
+    "trim": "awaken:market_timber",
+    "timber": "awaken:market_timber",
+    "roof": "awaken:market_roof",
+    "wall_glow": "awaken:market_paper_wall",
+    "lantern": "awaken:market_lantern",
+    "lights": "awaken:market_lights",
+    "cloth": "awaken:market_cloth",
+    "goods": "awaken:market_goods",
+    "boat_lamp": "awaken:market_boat_lamp",
+    "touch": "awaken:market_wish_lantern",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "wish_lanterns"
+  ],
+  "life": [
+    "fireflies",
+    "dust"
+  ],
+  "sound": "awaken:gate.world.market_festival",
+  "events": [],
+  "rule": "wishes",
+  "secrets": [
+    {
+      "id": "the_wish_ledger",
+      "name": "The wish ledger"
+    }
+  ],
+  "keepsake": "wish_ledger",
+  "keepsake_name": "A Page from the Wish Ledger",
+  "keepsake_from": "the_wish_ledger"
+}

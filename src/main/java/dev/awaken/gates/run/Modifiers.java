@@ -247,12 +247,12 @@ public final class Modifiers {
             if (!p.onGround() && p.getDeltaMovement().y > 0.2) run.noise += 1;
             Long lastListener = LISTENER_AT.get(p.getUUID());
             if (run.noise >= 24 && (lastListener == null || now - lastListener > 600) && r != null && !r.type.safe() && f != null) {
-                LISTENER_AT.put(p.getUUID(), now);
-                run.noise = 6;
                 BlockPos at = Pressure.spotNear(level, g, f, p, 9);
                 if (at != null) {
                     LivingEntity l = Rooms.spawn(level, g, f, -1, MobRole.Role.ELITE, at);
                     if (l != null) {
+                        LISTENER_AT.put(p.getUUID(), now);
+                        run.noise = 6;
                         l.setCustomName(Component.literal("Listener"));
                         var fr = l.getAttribute(Attributes.FOLLOW_RANGE);
                         if (fr != null) fr.setBaseValue(Math.max(fr.getBaseValue(), 40));
@@ -266,11 +266,11 @@ public final class Modifiers {
         if (g.plan.has(Modifier.MIRROR) && !g.plan.friendly() && f != null) {
             String key = g.id + ":" + run.area + ":" + run.floor + ":" + run.runIndex;
             if (!key.equals(SHADE_FLOOR.get(p.getUUID())) && now - run.floorStartedAt > 40 * 20 && r != null && !r.type.safe()) {
-                SHADE_FLOOR.put(p.getUUID(), key);
                 BlockPos at = Pressure.spotNear(level, g, f, p, 8);
                 if (at != null) {
                     GateShade shade = GatesRegistry.SHADE.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
                     if (shade != null) {
+                        SHADE_FLOOR.put(p.getUUID(), key);
                         boolean glass = g.plan.has(Modifier.GLASS);
                         double dmg = p.getAttributeValue(Attributes.ATTACK_DAMAGE) * (glass ? 1.0 : 0.6);
                         shade.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, p.getYRot() + 180, 0);
@@ -348,7 +348,9 @@ public final class Modifiers {
 
     // ---- Flooding ---------------------------------------------------------------------------------------------------
 
-    private static final ArrayDeque<BlockPos> WATER = new ArrayDeque<>();
+    /** Water to pour, each in the level its floor lives in. */
+    private record Pour(ServerLevel level, BlockPos at) {}
+    private static final ArrayDeque<Pour> WATER = new ArrayDeque<>();
 
     /** Server start/stop: pending bursts and queued water hold the old world's levels; gate ids restart per world. */
     public static void resetAll() {
@@ -382,7 +384,7 @@ public final class Modifiers {
             for (int x = r.x0(); x <= r.x1(); x++) {
                 for (int z = r.z0(); z <= r.z1(); z++) {
                     if (!RoomGeometry.inside(r, x, z) || RoomGeometry.solid(r, x, z)) continue;
-                    WATER.add(GateService.world(g, f, x, r.dy + y + RoomGeometry.floorOffset(r, x, z), z));
+                    WATER.add(new Pour(level, GateService.roomFloor(g, f, r, x, z).above(y + RoomGeometry.floorOffset(r, x, z))));
                 }
             }
             Signal.toast(p, Component.literal(next == 1 ? "Water seeps in." : next == 2 ? "The water is rising." : "Swim."));
@@ -391,14 +393,11 @@ public final class Modifiers {
 
     private static void tickWater(MinecraftServer server) {
         if (WATER.isEmpty()) return;
-        ServerLevel gl = GateService.gateLevel(server);
-        if (gl == null) {
-            WATER.clear();
-            return;
-        }
         for (int i = 0; i < WATER_PER_TICK && !WATER.isEmpty(); i++) {
-            BlockPos p = WATER.poll();
-            if (gl.isLoaded(p) && gl.getBlockState(p).isAir()) gl.setBlock(p, Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
+            Pour w = WATER.poll();
+            ServerLevel lv = w.level();
+            BlockPos p = w.at();
+            if (lv.isLoaded(p) && lv.getBlockState(p).isAir()) lv.setBlock(p, Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
     }
 

@@ -53,8 +53,6 @@ public final class LivingClient {
     static final List<PlateRules.Candidate> PICKED = new ArrayList<>();
     private static final List<PlateRules.Candidate> CANDIDATES = new ArrayList<>();
     static final List<ItemEntity> PILLARS = new ArrayList<>();
-    /** This player's open scenes, each sending up a flare now and then (from the server every 5 s). */
-    static volatile List<net.minecraft.core.BlockPos> TELLS = List.of();
     private static final Map<Integer, Long> FIGHT = new HashMap<>(), LOOK = new HashMap<>(), SCAN = new HashMap<>(), FIRST_PICK = new HashMap<>();
     private static final Map<Integer, float[]> DRAIN = new HashMap<>();
     private static final java.util.Set<Integer> SEEN = new java.util.HashSet<>();
@@ -68,12 +66,14 @@ public final class LivingClient {
         return DreadFx.land();
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static void init(IEventBus modBus) {
         LivingClientConfig.register();
         PulseSound.init();
         JournalSection.register();
         AlmanacSection.register();
         CraftsSection.register();
+        SpoorFx.init();
         // rumours: a "?" on the map where you heard something is happening
         dev.awaken.core.api.MapMarks.register(dev.awaken.living.wonder.WonderWatch::marks);
         dev.awaken.core.api.MapMarks.register(p -> {
@@ -84,6 +84,15 @@ public final class LivingClient {
             return out;
         });
         modBus.addListener(RegisterGuiLayersEvent.class, LivingHud::register);
+        // a quarry's carcass lies on its side as a creature does at the end of its fall, without the red of the hurt (SPEC §41.4)
+        modBus.addListener(net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent.class, e ->
+                e.registerEntityModifier((Class) net.minecraft.client.renderer.entity.LivingEntityRenderer.class, (entity, state) -> {
+                    if (entity instanceof net.minecraft.world.entity.LivingEntity le && dev.awaken.living.hunt.Carcass.is(le)
+                            && state instanceof net.minecraft.client.renderer.entity.state.LivingEntityRenderState s) {
+                        s.deathTime = 20F;
+                        s.hasRedOverlay = false;
+                    }
+                }));
         FormLayers.init(modBus);
         dev.awaken.living.client.forms.FormBodies.init(modBus);
         modBus.addListener(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers.class,
@@ -97,12 +106,13 @@ public final class LivingClient {
             e.register(LivingNet.LevelUp.TYPE, (m, ctx) -> onLevelUp(m));
             e.register(LivingNet.Shown.TYPE, (m, ctx) -> shown = m.shown());
             e.register(LivingNet.Journal.TYPE, (m, ctx) -> JournalSection.entries = List.copyOf(m.entries()));
-            e.register(LivingNet.Tells.TYPE, (m, ctx) -> TELLS = List.copyOf(m.at()));
             e.register(LivingNet.CampSmoke.TYPE, (m, ctx) -> PulseFx.camp(m.at()));
             e.register(LivingNet.FirstScene.TYPE, (m, ctx) -> FirstFilm.onScene(m));
             e.register(LivingNet.Happenings.TYPE, (m, ctx) -> PulseFx.onTells(m));
             e.register(LivingNet.BossBind.TYPE, (m, ctx) -> BossPlate.onBind(m));
             e.register(LivingNet.BossLine.TYPE, (m, ctx) -> BossPlate.onLine(m));
+            e.register(LivingNet.Spoor.TYPE, (m, ctx) -> SpoorFx.onSpoor(m));
+            e.register(LivingNet.Trail.TYPE, (m, ctx) -> SpoorFx.onTrail(m));
         });
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
@@ -111,6 +121,7 @@ public final class LivingClient {
         bus.addListener(SubmitCustomGeometryEvent.class, LivingFx::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, PulseFx::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, CraftFx::submit);
+        bus.addListener(SubmitCustomGeometryEvent.class, SpoorFx::submit);
         bus.addListener(ClientTickEvent.Post.class, CraftFx::tick);
         bus.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LivingPlates::extract);
         // the Boss Plate (SPEC §35.1): before anyone else reads a bar, so ours are cancelled and sized first
@@ -119,13 +130,13 @@ public final class LivingClient {
         bus.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, BossPlate::extract);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> BossPlate.reset());
+        bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> SpoorFx.reset());
     }
 
     private static void reset() {
         PICKED.clear();
         CANDIDATES.clear();
         PILLARS.clear();
-        TELLS = List.of();
         PulseFx.reset();
         PulseSound.reset();
         CraftFx.reset();

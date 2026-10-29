@@ -390,21 +390,36 @@ final class ArmsTests {
 
     /**
      * The lab's first-person swings (FpSwings, tools/art/anim_lab.py): keys for every style's every move, each ending
-     * at rest; on the hit tick a slash's hand is turned well off its rest, not slid (the old wave); and the view move of
-     * any turn is exactly the hand turned about its own place (as HandPose's roll-and-tilt one).
+     * at rest, but a pair's strike the other hand's follows, which waits where it drew back to, still, from the earliest
+     * press to its end (Swing Studio round 9: with no press the rest blend takes it home, as it does the idle hand); on
+     * the hit tick a slash's hand is turned well off its rest, not slid (the old wave); and the view move of any turn is
+     * exactly the hand turned about its own place (as HandPose's roll-and-tilt one).
      */
     static void fpSwings(GameTestHelper h) {
-        org.joml.Vector3f d = new org.joml.Vector3f();
-        org.joml.Quaternionf q = new org.joml.Quaternionf();
+        org.joml.Vector3f d = new org.joml.Vector3f(), w = new org.joml.Vector3f();
+        org.joml.Quaternionf q = new org.joml.Quaternionf(), qw = new org.joml.Quaternionf();
         for (Archetypes.Loaded a : Archetypes.all()) {
             FpSwings.Style st = FpSwings.style(a.id());
             h.assertTrue(st != null, a.id() + " has its swings");
+            java.util.List<Archetype.Move> chain = new java.util.ArrayList<>(a.chain());
+            chain.addAll(a.masteryChain());
             for (var e : a.moves().entrySet()) {
                 Archetype.MoveDef def = e.getValue();
                 if (def.swing() == null) continue;
                 h.assertTrue(FpSwings.sample(st, e.getKey(), 0, true, d, q), a.id() + " " + e.getKey() + " has keys");
                 FpSwings.sample(st, e.getKey(), def.total() + 1, true, d, q);
-                h.assertTrue(d.length() < 1e-3F && Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends at rest");
+                int i = chain.indexOf(e.getKey());
+                FpSwings.Hand mine = FpSwings.hand(st, e.getKey());
+                FpSwings.Hand next = i >= 0 && i + 1 < chain.size() ? FpSwings.hand(st, chain.get(i + 1)) : null;
+                boolean waits = next != null && def.hasCadence() && mine != FpSwings.Hand.BOTH && next != FpSwings.Hand.BOTH && next != mine;
+                if (waits && FpSwings.idle(st, chain.get(i + 1), 0, true, w, qw)) {
+                    // it waits still where it drew back to; the next strike's idle hand sets off from there
+                    FpSwings.sample(st, e.getKey(), def.cadence().get(0), true, w, qw);
+                    h.assertTrue(w.distance(d) < 1e-3F && Math.abs(Math.abs(qw.dot(q)) - 1) < 1e-3F,
+                            a.id() + " " + e.getKey() + " waits still from the earliest press to its end");
+                } else {
+                    h.assertTrue(d.length() < 1e-3F && Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends at rest");
+                }
                 // third person's wrist (ArmsWrist): home by the clip's end, and from the hand's rest unless loosed from a
                 // held draw (no wind-up: it starts as the charge held it)
                 float len = FpSwings.wristLength(st, e.getKey());
@@ -654,8 +669,9 @@ final class ArmsTests {
         h.assertTrue(mastered != null && mastered.move() == Archetype.Move.STRIKE_4, "mastered, the finisher's recovery carries on into the mastery strike");
         h.assertTrue(Math.abs(ArmsRules.motion(s1, 3, false) - s1.motion() * 1.24F) < 1e-4, "three rhythm steps: +24%");
         Archetype.MoveDef heavy = a.move(Archetype.Move.HEAVY);
-        h.assertTrue(heavy != null && heavy.charge().isPresent() && heavy.charge().get().perfect(heavy.charge().get().glint() + 2)
-                && !heavy.charge().get().perfect(heavy.charge().get().glint() + 3), "the glint: a release within 2 ticks is perfect");
+        h.assertTrue(heavy != null && heavy.charge().isPresent() && heavy.charge().get().perfect(heavy.charge().get().glint())
+                && heavy.charge().get().perfect(heavy.charge().get().max()) && !heavy.charge().get().perfect(heavy.charge().get().glint() - 1),
+                "the glint is the full charge: a release on it or any time after is the full blow, never before it");
         h.assertTrue(ArmsRules.recovery(s1, a, a.def().baseSpeed() * 2) < s1.recovery() && ArmsRules.recovery(s1, a, a.def().baseSpeed()) == s1.recovery(),
                 "faster arms recover sooner");
         h.succeed();

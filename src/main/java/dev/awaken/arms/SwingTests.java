@@ -16,6 +16,7 @@ final class SwingTests {
         AwakenTests.register("arms_swing_blend", 20, SwingTests::blend);
         AwakenTests.register("arms_swing_reload", 20, SwingTests::reload);
         AwakenTests.register("arms_feel_rules", 20, SwingTests::feelRules);
+        AwakenTests.register("arms_chain_flow", 20, SwingTests::chainFlow);
     }
 
     /**
@@ -101,12 +102,15 @@ final class SwingTests {
         h.succeed();
     }
 
-    private static final Set<String> TWO_HANDED = Set.of("katana", "greatblade", "maul", "spear", "glaive", "scythe", "warstaff");
+    private static final Set<String> TWO_HANDED = Set.of("katana", "greatblade", "maul", "spear", "glaive", "scythe", "warstaff",
+            "twinblades");
 
     /**
      * The baked file's feel rules: every swish starts on the press or after it and before the blow's active ticks end,
      * so the whoosh never trails the blow; every bite slows the hands without stopping them; the two-handed weapons,
-     * and only they, close the off hand on the handle below the main, a hand's width or more from it.
+     * and only they, close the off hand on the handle below the main, a hand's width or more from it. Round 8: every
+     * chain strike says where a press still down waits, at or before its hit; every style holds its guard with the hand
+     * on the weapon in view (Euan 2026-10-29: "blocking with most weapons hides the weapon under your view").
      */
     static void feelRules(GameTestHelper h) {
         for (Archetypes.Loaded a : Archetypes.all()) {
@@ -120,7 +124,24 @@ final class SwingTests {
                 h.assertTrue(c.swish() >= 0 && c.swish() <= def.windup() + Math.max(def.active(), 1) + 0.01F,
                         a.id() + " " + e.getKey().key + "'s swish starts by its hit (" + c.swish() + ")");
                 h.assertTrue(c.biteTicks() == 0 || c.biteRate() > 0 && c.biteRate() <= 1, a.id() + " " + e.getKey().key + "'s bite slows, never stops");
+                if (e.getKey().strike()) {
+                    h.assertTrue(c.set() >= 0 && c.set() <= def.windup(), a.id() + " " + e.getKey().key + " waits at its set, by its hit (" + c.set() + ")");
+                }
+                // round 14: a move's own ribbon ticks are its stroke alone, through the hit and never on into the way home
+                float hit = def.windup() > 0 ? def.windup() : def.active() * 0.5F;
+                h.assertTrue(c.trailTo() < 0 || c.trailFrom() <= hit && hit <= c.trailTo() && c.trailTo() <= hit + 0.5F,
+                        a.id() + " " + e.getKey().key + "'s ribbon is its stroke alone (" + c.trailFrom() + ".." + c.trailTo() + ", hit " + hit + ")");
+                h.assertTrue(!a.id().equals("daggers") || c.trailTo() >= 0, "the Daggers' " + e.getKey().key + " has its own ribbon ticks");
             }
+            float[] look = st.trail();
+            h.assertTrue(look == null || look[0] >= 0.5F && look[0] < 1F && look[1] > 0 && look[1] <= 1F, a.id() + "'s ribbon look is a band toward the point");
+            Vector3f d = new Vector3f(), at = new Vector3f();
+            Quaternionf q = new Quaternionf();
+            h.assertTrue(FpSwings.guard(st, true, d, q) && Math.abs(q.lengthSquared() - 1) < 1e-3F, a.id() + " has a guard");
+            // the hand on the weapon in guard, as the eye sees it at a 70 degree view: on the screen, ahead of the eye
+            q.transform(at.set(st.hand())).add(d).add(0.56F, -0.52F, -0.72F);
+            float f = 1F / (float) Math.tan(Math.toRadians(35)), x = at.x / -at.z * f / (16F / 9F), y = at.y / -at.z * f;
+            h.assertTrue(at.z < -0.2F && Math.abs(x) < 1 && Math.abs(y) < 1, a.id() + "'s guard holds its hand in view (" + x + ", " + y + ")");
             boolean two = TWO_HANDED.contains(a.id());
             h.assertTrue((st.offHand() != null) == two && (st.vanillaOffHand() != null) == two,
                     a.id() + (two ? " is held in both hands" : " is held in one"));
@@ -129,6 +150,60 @@ final class SwingTests {
                 h.assertTrue(gap > 0.08F && gap < 0.6F, a.id() + "'s off hand is a hand's width or more down the handle (" + gap + ")");
             }
         }
+        h.succeed();
+    }
+
+    /**
+     * Round 3's chain (Euan 2026-10-28: "the second slice is not even visible"): each strike of a chain, struck by the
+     * same hand as the one before it, starts where that one holds the blade on the earliest press it chains from, so
+     * the blend has nothing to carry and the next blow is wound up in view, never from below the frame; round 4's: one
+     * struck by the other hand of a pair starts where that hand drew back to while the last one landed.
+     */
+    static void chainFlow(GameTestHelper h) {
+        Vector3f a = new Vector3f(), b = new Vector3f();
+        Quaternionf qa = new Quaternionf(), qb = new Quaternionf();
+        int links = 0, twins = 0;
+        for (Archetypes.Loaded style : Archetypes.all()) {
+            FpSwings.Style st = FpSwings.style(style.id());
+            if (st == null) continue;
+            java.util.List<Archetype.Move> chain = new java.util.ArrayList<>(style.chain());
+            chain.addAll(style.masteryChain());
+            for (int i = 0; i + 1 < chain.size(); i++) {
+                Archetype.Move prev = chain.get(i), next = chain.get(i + 1);
+                Archetype.MoveDef def = style.move(prev);
+                if (def == null) continue;
+                float press = def.hasCadence() ? def.cadence().get(0) : def.windup() + def.active() + ArmsRules.MASTERY_LINK;
+                // the first strike begins a tick into the chain's count, so it hands over a tick early, never in its blow
+                // (round 10)
+                if (i == 0) press = Math.max(press - 1, def.windup() + def.active());
+                // a both-hands strike's off hand drives in from where it waited (round 9, the daggers' strike 4)
+                boolean offStruck = FpSwings.hand(st, prev) == FpSwings.Hand.OFF;
+                if (FpSwings.hand(st, next) == FpSwings.Hand.BOTH && FpSwings.idle(st, next, 0, true, b, qb)
+                        && (offStruck ? FpSwings.sample(st, prev, press, true, a, qa) : FpSwings.idle(st, prev, press, true, a, qa))) {
+                    float turn = (float) Math.toDegrees(2 * Math.acos(Math.min(1F, Math.abs(qa.dot(qb)))));
+                    h.assertTrue(a.distance(b) < 0.02F && turn < 3F,
+                            style.id() + " " + next.key + "'s off hand starts where it waited after " + prev.key + " (" + a.distance(b) + ", " + turn + " degrees)");
+                    twins++;
+                }
+                // the hand that throws the next strike (both hands play the main's): the same as this one's, or the
+                // idle hand drawn back while this one struck (round 4, the daggers)
+                boolean same = (FpSwings.hand(st, prev) == FpSwings.Hand.OFF) == (FpSwings.hand(st, next) == FpSwings.Hand.OFF);
+                boolean there = same ? FpSwings.sample(st, prev, press, true, a, qa) : FpSwings.idle(st, prev, press, true, a, qa);
+                if (!there || !FpSwings.sample(st, next, 0, true, b, qb)) continue;
+                float turn = (float) Math.toDegrees(2 * Math.acos(Math.min(1F, Math.abs(qa.dot(qb)))));
+                h.assertTrue(a.distance(b) < 0.02F && turn < 3F,
+                        style.id() + " " + next.key + " starts where its hand is after " + prev.key + " (" + a.distance(b) + ", " + turn + " degrees)");
+                links++;
+            }
+        }
+        h.assertTrue(links > 30, "the chains' links are checked (" + links + ")");
+        h.assertTrue(twins > 0, "a both-hands strike's off hand is checked (the daggers' strike 4)");
+        // the Twin Blades' figure-eight (round 5): the ends take turns down the light chain, so the link above from a
+        // strike to one led by the other end holds only because the first carried on round end for end by the press
+        FpSwings.Style tw = FpSwings.style("twinblades");
+        boolean[] far = new boolean[3];
+        for (int i = 0; i < 3; i++) far[i] = FpSwings.far(tw, Archetype.Move.byKey("strike_" + (i + 1)));
+        h.assertTrue(tw != null && !far[0] && far[1] && !far[2], "the twin blades' ends take turns: strike 2 leads with the other end");
         h.succeed();
     }
 }

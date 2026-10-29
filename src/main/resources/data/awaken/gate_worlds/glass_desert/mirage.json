@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "theme": "glass_desert",
+  "name": "The Mirage",
+  "line": "There's a palace on the far side of the sand. However long you walk, it never gets any closer.",
+  "tier": "wonder",
+  "rarity": "rare",
+  "kind": "open",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "lid": 18,
+    "slope": 0.5,
+    "lake": 1
+  },
+  "biome": "awaken:gate_world/mirage",
+  "moods": [
+    {
+      "id": "high_sun",
+      "name": "High sun",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "golden_hour",
+      "name": "Golden hour",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/mirage_golden_hour",
+      "life": [
+        "sand"
+      ]
+    },
+    {
+      "id": "sandstorm",
+      "name": "Sandstorm",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/mirage_sandstorm",
+      "life": [
+        "sand",
+        "dust"
+      ]
+    },
+    {
+      "id": "night",
+      "name": "Night",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/mirage_night",
+      "life": [
+        "fireflies"
+      ]
+    }
+  ],
+  "blocks": {
+    "floor": "awaken:desert_sand",
+    "floor_rippled": "awaken:desert_sand_rippled",
+    "wall": "awaken:desert_sandstone",
+    "wall_glow": "awaken:desert_sandstone_carved",
+    "trim": "awaken:desert_sandstone_carved",
+    "brick": "awaken:desert_brick",
+    "tile": "awaken:desert_tile",
+    "column": "awaken:desert_column",
+    "glass": "awaken:desert_glass",
+    "glass_glow": "awaken:desert_glass_glowing",
+    "crystal": "awaken:desert_crystal",
+    "grass": "awaken:desert_grass",
+    "fall": "awaken:desert_sandfall",
+    "touch": "awaken:desert_mirror",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_palace"
+  ],
+  "life": [
+    "sand",
+    "dust",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.desert_wind",
+  "events": [
+    "the_mirage",
+    "sand_walker"
+  ],
+  "rule": "sun",
+  "secrets": [
+    {
+      "id": "the_first_mirror",
+      "name": "The first mirror"
+    },
+    {
+      "id": "the_mirror_pool",
+      "name": "The mirror pool"
+    }
+  ],
+  "keepsake": "walkers_glass",
+  "keepsake_name": "The Sand Walker's Glass Heart",
+  "keepsake_from": "sand_walker",
+  "tall": true,
+  "signature": "sand_walker"
+}

@@ -17,7 +17,6 @@ import dev.awaken.gates.GateVortexBlockEntity;
 import dev.awaken.gates.block.GateBlocks;
 import dev.awaken.hearth.Upgrades;
 import dev.awaken.hearth.block.HearthAnchorBlock;
-import dev.awaken.hearth.block.RolePadBlock;
 import dev.awaken.hearth.block.TrophyMountBlock;
 import dev.awaken.hearth.block.TrophyMountBlockEntity;
 import dev.awaken.hearth.town.TownNpc;
@@ -62,12 +61,11 @@ public final class JadeClient {
         r.registerBlockComponent(new Door(), DoorCoreBlock.class);
         r.registerBlockComponent(new Terminal(), LogTerminalBlock.class);
         r.registerBlockComponent(new Hearth(), HearthAnchorBlock.class);
-        r.registerBlockComponent(new Pad(), RolePadBlock.class);
         r.registerBlockComponent(new Trophy(), TrophyMountBlock.class);
         r.registerEntityComponent(new Creature(), AwakenMob.class);
         r.registerEntityComponent(new Townsperson(), TownNpc.class);
 
-        r.addRayTraceCallback((hit, accessor, original) -> hidden(accessor) ? null : accessor);
+        r.addRayTraceCallback((hit, accessor, original) -> hidden(accessor) || plated(accessor) ? null : accessor);
         r.addBeforeTooltipCollectCallback((theme, accessor) -> {
             if (CompatClientConfig.systemStyle() && isAwaken(accessor) && IThemeHelper.get().hasTheme(THEME)) {
                 theme.setValue(IThemeHelper.get().getTheme(THEME));
@@ -93,6 +91,16 @@ public final class JadeClient {
         return false;
     }
 
+    /**
+     * A creature wearing Awaken's plate gets no Jade card: the plate is its one readout (Euan 2026-10-29: "only the plate
+     * shows"). Players and tamed pets have no plate, so they keep Jade's card; so does everything while plates are off.
+     */
+    static boolean plated(Accessor<?> a) {
+        if (!(a instanceof EntityAccessor ea) || !(ea.getEntity() instanceof net.minecraft.world.entity.LivingEntity e)) return false;
+        if (e instanceof net.minecraft.world.entity.player.Player || e instanceof net.minecraft.world.entity.TamableAnimal t && t.isTame()) return false;
+        return dev.awaken.living.client.LivingClient.platesOn() && dev.awaken.core.api.CreatureTag.of(e).present();
+    }
+
     static boolean isAwaken(Accessor<?> a) {
         if (a instanceof BlockAccessor ba) return BuiltInRegistries.BLOCK.getKey(ba.getBlock()).getNamespace().equals(Awaken.MODID);
         if (a instanceof EntityAccessor ea) return BuiltInRegistries.ENTITY_TYPE.getKey(ea.getEntity().getType()).getNamespace().equals(Awaken.MODID);
@@ -105,7 +113,7 @@ public final class JadeClient {
                 int rank = ServerData.GATE.decodeFromData(ba).map(LookAt.Gate::rank).orElse(ba.getBlockState().getValue(GateBlocks.Core.RANK));
                 return Rank.of(rank).colour;
             }
-            if (ba.getBlock() instanceof HearthAnchorBlock || ba.getBlock() instanceof RolePadBlock) return Glass.LANTERN;
+            if (ba.getBlock() instanceof HearthAnchorBlock) return Glass.LANTERN;
             if (ba.getBlock() instanceof DoorCoreBlock) return Rank.of(ba.getBlockState().getValue(DoorCoreBlock.RANK)).colour;
         } else if (a instanceof EntityAccessor ea) {
             if (ea.getEntity() instanceof TownNpc) return Glass.LANTERN;
@@ -288,20 +296,6 @@ public final class JadeClient {
         @Override
         public Identifier getUid() {
             return ServerData.HEARTH_ID;
-        }
-    }
-
-    static final class Pad implements IBlockComponentProvider {
-        @Override
-        public void appendTooltip(ITooltip t, BlockAccessor a, IPluginConfig config) {
-            if (!(a.getBlock() instanceof RolePadBlock pad)) return;
-            t.add(row("Echo duty", pad.role.label, pad.role.colour));
-            t.add(note(pad.role.does));
-        }
-
-        @Override
-        public Identifier getUid() {
-            return Awaken.id("role_pad");
         }
     }
 

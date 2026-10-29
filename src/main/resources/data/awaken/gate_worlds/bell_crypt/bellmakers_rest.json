@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "theme": "bell_crypt",
+  "name": "The Bellmaker's Rest",
+  "line": "The warm room at the top of the rope where the bells were cast. Nobody has been up here in a long time.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "rest",
+  "roles": [
+    "floor"
+  ],
+  "biome": "awaken:gate_world/bellmakers_rest",
+  "moods": [],
+  "blocks": {
+    "wall": "awaken:crypt_limestone",
+    "wall_worn": "awaken:crypt_limestone_worn",
+    "wall_crumbling": "awaken:crypt_limestone_crumbling",
+    "floor": "awaken:crypt_flagstone",
+    "floor_wet": "awaken:crypt_flagstone_wet",
+    "trim": "awaken:crypt_tracery",
+    "bronze": "awaken:crypt_patina",
+    "candles": "awaken:crypt_candles",
+    "glass": "awaken:crypt_moon_glass",
+    "rose": "awaken:crypt_rose_glass",
+    "niche": "awaken:crypt_niche",
+    "vestment": "awaken:crypt_vestment",
+    "rope": "awaken:crypt_bell_rope",
+    "lily": "awaken:crypt_lily_candle"
+  },
+  "hero": [
+    "half_cast_bell"
+  ],
+  "life": [
+    "moths",
+    "smoke",
+    "shaft_dust"
+  ],
+  "sound": "awaken:gate.world.rest",
+  "rule": "bells",
+  "keepsake": "bellmakers_clapper",
+  "keepsake_name": "The Bellmaker's Clapper",
+  "keepsake_from": "arrival"
+}

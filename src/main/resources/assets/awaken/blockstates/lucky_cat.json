@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "full=true": {
+      "model": "awaken:block/lucky_cat"
+    },
+    "full=false": {
+      "model": "awaken:block/lucky_cat_empty"
+    }
+  }
+}

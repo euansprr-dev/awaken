@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#awaken:wild/savanna",
+  "features": [
+    "awaken:wild/savanna_ground",
+    "awaken:wild/savanna_bush",
+    "awaken:wild/savanna_giant"
+  ],
+  "step": "vegetal_decoration"
+}

@@ -47,6 +47,9 @@ public final class AscentClient {
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.CONTEXTUAL_INFO_BAR, dev.awaken.Awaken.id("ascent_aether"), AscentFlow::renderAether));
         FeelDirector.init(modBus);
+        RopeTuning.init();
+        // the Tab glance shows the Aether (SPEC §40.7)
+        dev.awaken.core.api.HudState.installAether(() -> AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.SKYBORN) ? AscentMoves.aether : -1);
         var bus = NeoForge.EVENT_BUS;
         // before the Awakened Body's own moves: an airborne state owns the body and the body's moves stand aside
         bus.addListener(EventPriority.HIGH, MovementInputUpdateEvent.class, AscentMoves::onInput);
@@ -117,6 +120,7 @@ public final class AscentClient {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
         AscentMoves.tick();
+        RopeTuning.tick();
         SovereignClient.tick(mc);
         AscentFlow.tick(mc.player);
         AscentScene.tick(mc.player);

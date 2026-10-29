@@ -22,6 +22,7 @@ final class AscentTests {
         AwakenTests.registerIsolated("ascent_latency", 60, AscentTests::latency);
         AwakenTests.registerIsolated("ascent_tether_vow", 200, AscentTests::tetherVow);
         AwakenTests.register("ascent_aether", 40, AscentTests::aether);
+        AwakenTests.register("ascent_sprint_flies_again", 20, AscentTests::sprintFliesAgain);
         AwakenTests.registerIsolated("ascent_sky_rig", 100, AscentTests::skyRig);
         AwakenTests.registerIsolated("ascent_tether_spire", 100, AscentTests::tetherSpire);
         AwakenTests.register("ascent_windway", 20, AscentTests::windway);
@@ -31,6 +32,8 @@ final class AscentTests {
         AwakenTests.register("ascent_sovereign", 40, AscentTests::sovereign);
         // the rappel and the rope's fittings (SPEC §28.5)
         AwakenTests.registerIsolated("ascent_rappel", 60, AscentRappelTests::rappel);
+        // the assisted swing (SPEC §17.31)
+        AscentSwingTests.register();
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -488,6 +491,32 @@ final class AscentTests {
      * Aether (SPEC §17.8): a minute of cruise, about 19 s of boost, 20 s to fill in the sun, an updraft filling it even
      * in flight, mastery trimming the drain; the server folds a flight it can't afford into a glide, and won't start one.
      */
+    /**
+     * Euan, 2026-10-28: once the bar refilled, sprint did nothing until a tap of jump. The empty meter folds a boost into
+     * a glide; boosting held through it, the glide takes flight again once the meter is back, and a press always tries.
+     */
+    private static void sprintFliesAgain(GameTestHelper h) {
+        // boosting until the meter runs dry, then gliding in the sun with sprint still held
+        double a = 1;
+        int t = 0;
+        while (a > 0 && t < 2000) {
+            a = Math.max(0, AscentRules.aetherStep(a, true, AscentRules.AETHER_BOOST, true, false, 0));
+            t++;
+        }
+        h.assertTrue(a == 0, "the boost empties the meter (" + t + " ticks)");
+        h.assertFalse(AscentRules.sprintTakesFlight(false, true, true, a), "held at empty: still a glide");
+        int back = 0;
+        while (!AscentRules.sprintTakesFlight(false, true, true, a) && back < 2000) {
+            a = AscentRules.aetherStep(a, false, 0, true, false, 0);
+            back++;
+        }
+        h.assertTrue(back <= 101, "sprint held takes flight again " + back + " ticks after the meter emptied (about 5 s in the sun)");
+        h.assertTrue(AscentRules.sprintTakesFlight(true, true, false, 0.3), "a press takes a plain glide into flight");
+        h.assertTrue(AscentRules.sprintTakesFlight(true, true, true, 0.01), "a press always tries (the weak beat if it can't)");
+        h.assertFalse(AscentRules.sprintTakesFlight(false, true, false, 1), "sprint held into a plain glide (a run off a cliff) stays a glide");
+        h.succeed();
+    }
+
     private static void aether(GameTestHelper h) {
         int cruise = ticksToEmpty(AscentRules.AETHER_CRUISE, 0), boost = ticksToEmpty(AscentRules.AETHER_BOOST, 0);
         h.assertTrue(Math.abs(cruise - 1200) <= 1 && Math.abs(boost - 375) <= 1, "cruise " + cruise + " ticks, boost " + boost);

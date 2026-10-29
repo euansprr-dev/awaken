@@ -12,6 +12,9 @@ feathers. Never the body's cloth-and-grit alone, never a vanilla sound.
 - rope_bite:    the line biting into wood or stone: a short thump, a crackle of light, a glass ting
 - rope_strain:  the line taking your weight: a taut low hum with a creak of friction through it
 - rope_release: let go: the line's twang falling away, a flick of air
+- rope_swoop:   the bottom of a swing (SPEC §17.31): the body's rush of air through the low point, the taut line
+                humming and creaking under the full weight
+- rope_snap:    a let-go in the window: the line springing free with a bright crack, a rising fifth of glass, air flicked
 - launch:       thrown off the rope: a body-sized whoosh rising
 - wind:         the rush of air past your ears (a seamless loop; the game raises its pitch and volume with speed)
 - wings_open:   the wings opening: a deep push of air, feathers shaking out, a breath of light
@@ -149,6 +152,35 @@ def rope_release(seed):
     return finish(x)
 
 
+def rope_swoop(seed):
+    n = K.ns(0.85)
+    # the air: a body-sized swoop whose band rises to the low point and falls away past it
+    x = at(n, 0.0, sweep(0.8, 380, 1500, 1.1, seed + 1, 0.45, 1.4)) * 0.7
+    x += at(n, 0.25, sweep(0.5, 1500, 650, 1.3, seed + 2, 0.1, 1.2)) * 0.35
+    # the line under full weight: a low glass hum swelling through the bottom, stick-slip creaks rising with the strain
+    hum = thread(98, 0.85, 1.2, seed + 3, 0.3)
+    t = np.arange(n) / K.SR
+    u = t / t[-1]
+    swell = np.sin(np.pi * np.clip(u * 1.15, 0, 1)) ** 2
+    rate = 18 + 22 * swell
+    pulses = np.maximum(0, np.sin(2 * np.pi * np.cumsum(rate) / K.SR)) ** 8
+    creak = norm(K.bandnoise(n, 640, 3.5, seed + 4)) * pulses * swell
+    x += hum * 0.3 * swell + creak * 0.3
+    return finish(x, 0.2, 8000)
+
+
+def rope_snap(seed):
+    n = K.ns(0.6)
+    # the crack of the line springing free, then its glass ringing up a fifth as it flies off
+    c = K.highpass(K.bandnoise(K.ns(0.04), 5200, 0.7, seed + 1) * K.perc(K.ns(0.04), 0.0004, 0.014), 2500, 2)
+    x = at(n, 0.0, c) * 0.8
+    x += at(n, 0.0, thump(160, 90, 0.12, 0.05, 0.4, 900, seed + 2)) * 0.35
+    x += at(n, 0.01, thread(660, 0.5, 0.35, seed + 3, 0.9)) * 0.25
+    x += at(n, 0.06, K.glass(990, K.ns(0.5), bright=0.7, t60=0.35, seed=seed + 4)) * 0.2
+    x += at(n, 0.0, sweep(0.22, 1800, 5200, 1.2, seed + 5, 0.2, 1.1, "white")) * 0.3
+    return finish(x, 0.22)
+
+
 def launch(seed):
     n = K.ns(0.7)
     x = at(n, 0.0, sweep(0.6, 300, 2400, 0.9, seed + 1, 0.35, 1.3)) * 0.8
@@ -261,6 +293,8 @@ SOUNDS_SPEC = [
     ("ascent_rope_bite", rope_bite, -21.0, "ascent.rope_bite", "A line of light bites", 1.0, 24),
     ("ascent_rope_strain", rope_strain, -22.0, "ascent.rope_strain", "A line takes weight", 1.0, 20),
     ("ascent_rope_release", rope_release, -22.0, "ascent.rope_release", "A line lets go", 1.0, 20),
+    ("ascent_rope_swoop", rope_swoop, -21.0, "ascent.rope_swoop", "Someone swings through", 1.0, 24),
+    ("ascent_rope_snap", rope_snap, -20.5, "ascent.rope_snap", "A line snaps free", 1.0, 24),
     ("ascent_launch", launch, -20.5, "ascent.launch", "Someone launches off a line", 1.0, 24),
     ("ascent_wind", wind, -21.0, "ascent.wind", "Wind rushes past", 1.0, 16),
     ("ascent_wings_open", wings_open, -20.0, "ascent.wings_open", "Wings of light open", 1.0, 32),

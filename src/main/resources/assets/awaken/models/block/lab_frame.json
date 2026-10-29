@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "awaken:block/lab_frame",
+    "end": "awaken:block/lab_frame_top"
+  }
+}

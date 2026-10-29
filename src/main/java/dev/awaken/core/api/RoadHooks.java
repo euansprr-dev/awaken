@@ -29,6 +29,19 @@ public final class RoadHooks {
 
         /** A caravan reached a settlement along its road: its trade and its news come in with it. */
         default void arrived(ServerLevel level, String settlementKey, String from, boolean defended) {}
+
+        /** (SPEC §43.3) The laid road's point nearest a place within a reach, and the way the road runs there. */
+        default Optional<RoadPoint> nearestRoad(ServerLevel level, BlockPos pos, int reach) {
+            return Optional.empty();
+        }
+    }
+
+    /** A point on a laid road (its surface column) and the way the road runs there (a unit vector along it). */
+    public record RoadPoint(BlockPos at, double alongX, double alongZ) {}
+
+    /** The laid road nearest a place within a reach (only roads already laid; no chunk loads). */
+    public static Optional<RoadPoint> nearestRoad(ServerLevel level, BlockPos pos, int reach) {
+        return access.nearestRoad(level, pos, reach);
     }
 
     private static Access access = new Access() {};

@@ -5,7 +5,7 @@ import net.minecraft.client.KeyMapping;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Text with key placeholders ("Hold {key.awaken.movement} at a ring") in the player's own bindings ("Hold Left Alt"). */
+/** Text with key placeholders ("Hold {key.awaken.rope} at a ring") in the player's own bindings ("Hold Left Alt"). */
 public final class KeyText {
     private KeyText() {}
 

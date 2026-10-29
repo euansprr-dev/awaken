@@ -10,5 +10,6 @@ public final class WorldClient {
         dev.awaken.world.fauna.client.FaunaClient.init(modBus);
         dev.awaken.world.anomaly.client.AnomalyClient.init(modBus);
         dev.awaken.world.landmark.client.LandmarkClient.init(modBus);
+        dev.awaken.world.stilled.client.StilledClient.init(modBus);
     }
 }

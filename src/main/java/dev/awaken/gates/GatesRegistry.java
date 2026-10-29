@@ -50,6 +50,13 @@ public final class GatesRegistry {
     private GatesRegistry() {}
 
     public static final ResourceKey<Level> GATES = ResourceKey.create(Registries.DIMENSION, Awaken.id("gates"));
+    /** The gates under an open sky (SPEC §38.11): the same cells and plots, only the open lands' floors built in it. */
+    public static final ResourceKey<Level> GATES_SKY = ResourceKey.create(Registries.DIMENSION, Awaken.id("gates_sky"));
+
+    /** Whether a dimension is one gates are built in. */
+    public static boolean isGateDim(ResourceKey<Level> dim) {
+        return dim == GATES || dim == GATES_SKY;
+    }
 
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(Awaken.MODID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
@@ -192,6 +199,73 @@ public final class GatesRegistry {
             RIME_BRICK, FROST_WINDOW, MIRROR, LAB_PANEL, LAB_RACK, DREAM_PAPER, CLOUD, SKY, VOID_GLASS, SIGNAL_LAMP, MIRROR_CRACKED, WELL_RIM);
     public static final List<DeferredItem<BlockItem>> INTERIOR_ITEMS = INTERIOR_BLOCKS.stream().map(ITEMS::registerSimpleBlockItem).toList();
 
+    // ---- gate worlds' blocks (SPEC §38.6; textures tools/art/specs/gate_worlds_*.py) ----------------------------------
+
+    /** Bell Crypt: limestone in three states of wear, carved tracery, worn and wet flagstones. */
+    public static final DeferredBlock<Block> CRYPT_LIMESTONE = BLOCKS.registerSimpleBlock("crypt_limestone", stoneLike(MapColor.STONE, SoundType.STONE, 0));
+    public static final DeferredBlock<Block> CRYPT_LIMESTONE_WORN = BLOCKS.registerSimpleBlock("crypt_limestone_worn", stoneLike(MapColor.STONE, SoundType.STONE, 0));
+    public static final DeferredBlock<Block> CRYPT_LIMESTONE_CRUMBLING = BLOCKS.registerSimpleBlock("crypt_limestone_crumbling", stoneLike(MapColor.STONE, SoundType.STONE, 0));
+    public static final DeferredBlock<Block> CRYPT_TRACERY = BLOCKS.registerSimpleBlock("crypt_tracery", stoneLike(MapColor.STONE, SoundType.STONE, 0));
+    public static final DeferredBlock<Block> CRYPT_FLAGSTONE = BLOCKS.registerSimpleBlock("crypt_flagstone", stoneLike(MapColor.COLOR_GRAY, SoundType.STONE, 0));
+    public static final DeferredBlock<Block> CRYPT_FLAGSTONE_WET = BLOCKS.registerSimpleBlock("crypt_flagstone_wet", stoneLike(MapColor.COLOR_GRAY, SoundType.MUD_BRICKS, 0));
+    /** Patina bronze: the great bells. Strike it and the Belfry's rule answers. */
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Bronze> CRYPT_PATINA = BLOCKS.registerBlock("crypt_patina",
+            dev.awaken.gates.block.WorldBlocks.Bronze::new, stoneLike(MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0));
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Candles> CRYPT_CANDLES = BLOCKS.registerBlock("crypt_candles",
+            dev.awaken.gates.block.WorldBlocks.Candles::new,
+            p -> soft(MapColor.SAND, SoundType.CANDLE, 0.1F, 0).apply(p).noOcclusion().lightLevel(dev.awaken.gates.block.WorldBlocks.Candles::light));
+    /** Moonlight that isn't there: the lancets' glass. */
+    public static final DeferredBlock<net.minecraft.world.level.block.TransparentBlock> CRYPT_MOON_GLASS = BLOCKS.registerBlock("crypt_moon_glass",
+            net.minecraft.world.level.block.TransparentBlock::new, glassy(MapColor.COLOR_LIGHT_BLUE, SoundType.GLASS, 10));
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.RoseGlass> CRYPT_ROSE_GLASS = BLOCKS.registerBlock("crypt_rose_glass",
+            dev.awaken.gates.block.WorldBlocks.RoseGlass::new, glassy(MapColor.COLOR_PURPLE, SoundType.GLASS, 6));
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Facing> CRYPT_NICHE = BLOCKS.registerBlock("crypt_niche",
+            p -> new dev.awaken.gates.block.WorldBlocks.Facing(p, false), stoneLike(MapColor.SAND, SoundType.BONE_BLOCK, 5));
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Facing> CRYPT_VESTMENT = BLOCKS.registerBlock("crypt_vestment",
+            p -> new dev.awaken.gates.block.WorldBlocks.Facing(p, true), p -> soft(MapColor.COLOR_CYAN, SoundType.WOOL, 0.2F, 0).apply(p).noOcclusion().noCollision());
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Thin> CRYPT_BELL_ROPE = BLOCKS.registerBlock("crypt_bell_rope",
+            p -> new dev.awaken.gates.block.WorldBlocks.Thin(p, Block.box(6, 0, 6, 10, 16, 10)),
+            p -> soft(MapColor.COLOR_BROWN, SoundType.WOOL, 0.3F, 0).apply(p).noOcclusion());
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Thin> CRYPT_LILY_CANDLE = BLOCKS.registerBlock("crypt_lily_candle",
+            p -> new dev.awaken.gates.block.WorldBlocks.Thin(p, Block.box(1, 0, 1, 15, 1.5, 15)),
+            p -> soft(MapColor.PLANT, SoundType.LILY_PAD, 0.1F, 6).apply(p).noOcclusion());
+    /** A handbell in a stone yoke on the floor: the bell anyone can reach and strike (SPEC §38.8). */
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Handbell> CRYPT_HANDBELL = BLOCKS.registerBlock("crypt_handbell",
+            dev.awaken.gates.block.WorldBlocks.Handbell::new, p -> stoneLike(MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0).apply(p).noOcclusion());
+    /** A swinging bell's body: never placed, only shown by a block display (SPEC §38.6). */
+    public static final DeferredBlock<Block> BELL_PROP = BLOCKS.registerBlock("bell_prop", Block::new,
+            p -> stoneLike(MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0).apply(p).noOcclusion().noLootTable());
+    /** A bay bell fallen from the vault (SPEC §38.14, stage 3): the swinging bell's look on its side, its mouth to its facing. */
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.Facing> CRYPT_BELL_TOPPLED = BLOCKS.registerBlock("crypt_bell_toppled",
+            p -> new dev.awaken.gates.block.WorldBlocks.Facing(p, false),
+            p -> stoneLike(MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0).apply(p).noOcclusion().noLootTable());
+    public static final List<DeferredBlock<? extends Block>> WORLD_BLOCKS = List.of(CRYPT_LIMESTONE, CRYPT_LIMESTONE_WORN, CRYPT_LIMESTONE_CRUMBLING,
+            CRYPT_TRACERY, CRYPT_FLAGSTONE, CRYPT_FLAGSTONE_WET, CRYPT_PATINA, CRYPT_CANDLES, CRYPT_MOON_GLASS, CRYPT_ROSE_GLASS, CRYPT_NICHE,
+            CRYPT_VESTMENT, CRYPT_BELL_ROPE, CRYPT_LILY_CANDLE, CRYPT_HANDBELL);
+    public static final List<DeferredItem<BlockItem>> WORLD_ITEMS = WORLD_BLOCKS.stream().map(ITEMS::registerSimpleBlockItem).toList();
+    /** The Bell Crypt's set piece, yours when all five of its keepsakes are (SPEC §38.8, "Sets"). */
+    public static final DeferredBlock<dev.awaken.gates.block.WorldBlocks.BellTower> BELL_TOWER = BLOCKS.registerBlock("bell_tower",
+            dev.awaken.gates.block.WorldBlocks.BellTower::new, p -> stoneLike(MapColor.STONE, SoundType.STONE, 6).apply(p).noOcclusion());
+    /** Every theme after the Bell Crypt's world blocks (SPEC §38.10 on), by id, from one table. */
+    public static final java.util.Map<String, DeferredBlock<? extends Block>> THEME_BLOCKS = dev.awaken.gates.block.ThemeBlocks.register(BLOCKS);
+    public static final List<DeferredItem<BlockItem>> THEME_ITEMS = THEME_BLOCKS.values().stream().map(ITEMS::registerSimpleBlockItem).toList();
+    /** The themes' set pieces after the Bell Tower (38.8 "Sets"). */
+    public static final java.util.Map<String, DeferredBlock<? extends Block>> SETS = dev.awaken.gates.block.ThemeBlocks.registerSets(BLOCKS);
+    public static final List<DeferredItem<BlockItem>> SET_ITEMS = java.util.stream.Stream.<DeferredBlock<? extends Block>>concat(java.util.stream.Stream.of(BELL_TOWER),
+            SETS.values().stream()).map(ITEMS::registerSimpleBlockItem).toList();
+    /** Slabs, stairs, drifts and bits cut from the themes' blocks for the places' ground (SPEC §38.14), after them. */
+    public static final java.util.Map<String, DeferredBlock<? extends Block>> DEPTH_BLOCKS = dev.awaken.gates.block.DepthBlocks.register(BLOCKS,
+            id -> THEME_BLOCKS.containsKey(id) ? THEME_BLOCKS.get(id) : WORLD_BLOCKS.stream().filter(b -> b.getId().getPath().equals(id)).findFirst().orElse(null));
+    public static final List<DeferredItem<BlockItem>> DEPTH_ITEMS = DEPTH_BLOCKS.values().stream().map(ITEMS::registerSimpleBlockItem).toList();
+
+    /** A theme block by id (SPEC §38.10), for code that names one. */
+    public static Block theme(String id) {
+        DeferredBlock<? extends Block> b = THEME_BLOCKS.get(id);
+        if (b == null) b = SETS.get(id);
+        if (b == null) b = DEPTH_BLOCKS.get(id);
+        return b.get();
+    }
+
     // ---- the Gate Rig's Mirror Hall (SPEC §17): the turning mirror, the lens, the seal --------------------------------
 
     public static final DeferredBlock<RigBlocks.Mirror> RIG_MIRROR = BLOCKS.registerBlock("gate_rig_mirror",
@@ -260,6 +334,22 @@ public final class GatesRegistry {
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_BARS = sound("gate.bars");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RUNE = sound("gate.rune");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_SOLVED = sound("gate.solved");
+    // gate worlds' live layer (SPEC §38.8): bells struck and tolling, the Ringer, the Flood, the bone fall, the swing,
+    // the fall caught, a secret found, a world's title card
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_STRIKE = sound("gate.world.strike");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_HANDBELL = sound("gate.world.handbell");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_TOLL = sound("gate.world.toll");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_RINGER = sound("gate.world.ringer");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_FLOOD = sound("gate.world.flood");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_BONES = sound("gate.world.bone_fall");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_SWING = sound("gate.world.swing");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_CATCH = sound("gate.world.catch");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_FOUND = sound("gate.world.found");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_ARRIVE = sound("gate.world.arrive");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_GREAT = sound("gate.world.great_bell");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_HUM = sound("gate.world.hum");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_DRIP = sound("gate.world.drip");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_WORLD_STORM = sound("gate.world.storm");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_ALARM = sound("gate.alarm");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_COLLAPSE = sound("gate.collapse");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_CLEARED = sound("gate.cleared");
@@ -274,6 +364,49 @@ public final class GatesRegistry {
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_LAB = sound("gate.ambient.lab");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_GLASS = sound("gate.ambient.glass");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_WIND = sound("gate.ambient.wind");
+    // gate worlds (SPEC §38.6, §38.9): each world's sound bed (the bells and the rest are above)
+    public static final List<String> WORLD_SOUNDS = List.of("belfry", "ossuary", "shaft", "field", "rest");
+    static {
+        for (String w : WORLD_SOUNDS) sound("gate.world." + w);
+    }
+    /**
+     * Every theme after the Bell Crypt's sounds (SPEC §38.10 on), registered as gate.world.&lt;name&gt;: three beds a theme, its
+     * touchstone, its events and moments, and its arrival sting (arrive_&lt;theme&gt;). From tools/art/specs/
+     * audio_gate_worlds_caves.py (38.10), audio_gate_worlds_d.py (38.11), audio_gate_worlds_c.py (38.12) and
+     * audio_gate_worlds_b.py (38.13).
+     */
+    public static final List<String> THEME_SOUNDS = List.of(
+            "hollow_glow", "hollow_roots", "hollow_bloom", "mine_works", "mine_chasm", "mine_sea",
+            "hive_comb", "hive_brood", "hive_lake", "temple_courts", "temple_halls", "temple_falls",
+            "puff", "bellows", "drum", "brazier", "tremor", "swarm", "rains", "wakening", "bloom", "surface", "choir", "saint",
+            "arrive_fungal_hollow", "arrive_ember_mines", "arrive_hive", "arrive_overgrown_temple",
+            // the D themes (38.11)
+            "archive_stacks", "archive_atrium", "archive_ink", "foundry_works", "foundry_pipes", "foundry_engine",
+            "desert_wind", "desert_city", "desert_glass", "market_street", "market_water", "market_festival",
+            "page", "pages", "tide", "bookworm", "valve", "overdrive", "powercut", "clockwork", "chime", "sandstorm", "shimmer",
+            "walker", "wish", "fireworks", "release", "festival", "spirits",
+            "arrive_drowned_archive", "arrive_clockwork_foundry", "arrive_glass_desert", "arrive_lantern_night_market",
+            // the C themes (38.12)
+            "frost_chant", "frost_ice", "frost_wind", "palace_halls", "palace_under", "palace_white",
+            "lab_hum", "lab_servers", "lab_sim", "dream_house", "dream_hall", "dream_deep",
+            "wheel", "bells", "blizzard", "icecrack", "still", "monk", "mirror", "shatter", "doubled", "whale", "reflection",
+            "console", "lockdown", "breach", "glitch", "draw", "musicbox", "lullaby", "alarm", "stirs", "sleepwalker", "fold",
+            "arrive_frost_monastery", "arrive_mirror_palace", "arrive_precursor_lab", "arrive_nightmare",
+            // the B themes and the rare worlds (38.13)
+            "sky_wind", "sky_ruins", "sky_high", "abyss_steps", "abyss_lake", "abyss_void",
+            "rare_quiet", "rare_rain", "rare_aurora", "rare_campfire", "rare_heart",
+            "skychime", "gale", "sunburst", "great_wind", "roc", "offering", "hush", "hunger", "starfall", "knock", "watcher",
+            "arrive_rare", "echoes", "heartbeat", "doorway", "arrive_sky_archipelago", "arrive_abyssal_shrine");
+    private static final java.util.Map<String, DeferredHolder<SoundEvent, SoundEvent>> THEME_SOUND = new java.util.HashMap<>();
+    static {
+        for (String n : THEME_SOUNDS) THEME_SOUND.put(n, sound("gate.world." + n));
+    }
+
+    /** A theme's sound by its name (gate.world.&lt;name&gt;), or null when this build has none by that name. */
+    public static SoundEvent worldSound(String name) {
+        DeferredHolder<SoundEvent, SoundEvent> h = THEME_SOUND.get(name);
+        return h == null ? null : h.get();
+    }
 
     // the Gate Rig (tools/art/specs/audio_rig.py): the collapse, the mirrors and the light, the wells, the cave-in
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_CRACK = sound("gate.rig.crack");
@@ -314,6 +447,56 @@ public final class GatesRegistry {
     /** A well's mote: it drifts toward the well's "down". */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_MOTE =
             PARTICLES.register("gate_rig_mote", () -> new SimpleParticleType(false));
+    // a world floor's small life (SPEC §38.9; sprites from tools/art/specs/gate_worlds_bell.py), made only on the client
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_MOTH =
+            PARTICLES.register("gate_world_moth", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_BAT =
+            PARTICLES.register("gate_world_bat", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_FISH =
+            PARTICLES.register("gate_world_fish", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_RAT =
+            PARTICLES.register("gate_world_rat", () -> new SimpleParticleType(false));
+    // a world's air (SPEC §38.9 "Air"; sprites from tools/art/specs/gate_worlds_air.py), tinted on the client
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_WISP =
+            PARTICLES.register("gate_air_wisp", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_STREAK =
+            PARTICLES.register("gate_air_streak", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_FLAKE =
+            PARTICLES.register("gate_air_flake", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_ORB =
+            PARTICLES.register("gate_air_orb", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_FLASH =
+            PARTICLES.register("gate_air_flash", () -> new SimpleParticleType(false));
+    /** A glowing mote the server sends in a colour (a world's rule showing the way: spores, cinders, pollen, fireflies). */
+    public static final DeferredHolder<ParticleType<?>, ParticleType<net.minecraft.core.particles.ColorParticleOption>> P_TRAIL =
+            PARTICLES.register("gate_world_trail", () -> coloured(false));
+    /** Something light falling or blown in a colour (spore dust, ash, petals, leaves), sent by the server for a world's event. */
+    public static final DeferredHolder<ParticleType<?>, ParticleType<net.minecraft.core.particles.ColorParticleOption>> P_DRIFT =
+            PARTICLES.register("gate_world_drift", () -> coloured(false));
+
+    private static ParticleType<net.minecraft.core.particles.ColorParticleOption> coloured(boolean always) {
+        return new ParticleType<>(always) {
+            @Override
+            public com.mojang.serialization.MapCodec<net.minecraft.core.particles.ColorParticleOption> codec() {
+                return net.minecraft.core.particles.ColorParticleOption.codec(this);
+            }
+
+            @Override
+            public net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, net.minecraft.core.particles.ColorParticleOption> streamCodec() {
+                return net.minecraft.core.particles.ColorParticleOption.streamCodec(this);
+            }
+        };
+    }
+
+    /** A {@link #P_TRAIL} mote of a colour. */
+    public static net.minecraft.core.particles.ColorParticleOption trail(int rgb) {
+        return net.minecraft.core.particles.ColorParticleOption.create(P_TRAIL.get(), 0xFF000000 | rgb);
+    }
+
+    /** A {@link #P_DRIFT} flake of a colour. */
+    public static net.minecraft.core.particles.ColorParticleOption drift(int rgb) {
+        return net.minecraft.core.particles.ColorParticleOption.create(P_DRIFT.get(), 0xFF000000 | rgb);
+    }
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Awaken.id(name)));
@@ -338,6 +521,15 @@ public final class GatesRegistry {
             () -> AttachmentType.builder(RunState::none).serialize(RunState.MAP_CODEC, RunState::active).build());
     public static final Supplier<AttachmentType<GateMemory>> MEMORY = ATTACHMENTS.register("gate_memory",
             () -> AttachmentType.builder(GateMemory::new).serialize(GateMemory.MAP_CODEC).copyOnDeath().build());
+    /** The Atlas of Gates and the world director's memory (SPEC §38). */
+    public static final Supplier<AttachmentType<dev.awaken.gates.worlds.GateAtlas>> ATLAS = ATTACHMENTS.register("gate_atlas",
+            () -> AttachmentType.builder(dev.awaken.gates.worlds.GateAtlas::new)
+                    .serialize(dev.awaken.gates.worlds.GateAtlas.MAP_CODEC, a -> !a.isEmpty()).copyOnDeath().build());
+    /** A gate monster's world and look, synced to whoever sees it (SPEC §38.8). */
+    public static final Supplier<AttachmentType<dev.awaken.gates.worlds.WorldLook>> WORLD_LOOK = ATTACHMENTS.register("gate_world_look",
+            () -> AttachmentType.builder(() -> dev.awaken.gates.worlds.WorldLook.NONE)
+                    .serialize(dev.awaken.gates.worlds.WorldLook.MAP_CODEC, dev.awaken.gates.worlds.WorldLook::isSet)
+                    .sync(dev.awaken.gates.worlds.WorldLook.STREAM_CODEC).build());
     public static final Supplier<AttachmentType<GearStash>> STASH = ATTACHMENTS.register("gate_stash",
             () -> AttachmentType.builder(() -> GearStash.EMPTY).serialize(GearStash.MAP_CODEC, s -> !s.isEmpty()).copyOnDeath().build());
 
@@ -370,6 +562,10 @@ public final class GatesRegistry {
         for (var item : List.of(FRAME_ITEM, FRAME_CRACKED_ITEM, SHRINE_ITEM, SEAL_ITEM, CACHE_ITEM, BARS_ITEM, RUNE_ITEM, ENTRANCE_ITEM,
                 LANTERN_ITEM, UPDRAFT_ITEM)) e.accept(item.get());
         for (var item : INTERIOR_ITEMS) e.accept(item.get());
+        for (var item : WORLD_ITEMS) e.accept(item.get());
+        for (var item : THEME_ITEMS) e.accept(item.get());
+        for (var item : SET_ITEMS) e.accept(item.get());
+        for (var item : DEPTH_ITEMS) e.accept(item.get());
         for (var item : RIG_ITEMS) e.accept(item.get());
     }
 }

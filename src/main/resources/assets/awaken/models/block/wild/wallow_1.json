@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "minecraft:block/mud",
+    "side": "awaken:block/wild/wallow_side_1",
+    "top": "awaken:block/wild/wallow_top_1"
+  }
+}

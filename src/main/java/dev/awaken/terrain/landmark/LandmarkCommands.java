@@ -112,40 +112,43 @@ public final class LandmarkCommands {
         BlockPos start = found.getFirst();
         var chunk = level.getChunk(start.getX() >> 4, start.getZ() >> 4, ChunkStatus.STRUCTURE_STARTS);
         var st = chunk.getStartForStructure(structure.get().value());
-        BlockPos centre = start;
-        int top = 20, bottom = 0;
+        BlockPos mid = start;
+        int hi = 20, lo = 0;
         if (st != null) {
             for (var piece : st.getPieces()) {
                 if (piece instanceof LandmarkPiece lp) {
-                    centre = lp.centre();
+                    mid = lp.centre();
                     int[] b = lp.voxels().bounds();
-                    top = b[4];
-                    bottom = b[1];
+                    hi = b[4];
+                    lo = b[1];
                 }
             }
         }
+        BlockPos centre = mid;
+        int top = hi, bottom = lo;
         int vx = centre.getX(), vz = centre.getZ() + distance;
-        level.getChunk(vx >> 4, vz >> 4);
-        int vy = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, vx, vz);
-        while (vy > level.getMinY() + 1) {
-            var below = level.getBlockState(new BlockPos(vx, vy - 1, vz));
-            if (!below.is(BlockTags.LOGS) && !below.is(BlockTags.LEAVES) && !below.canBeReplaced()) break;
-            vy--;
-        }
-        vy += above;
-        // look at the middle of what stands there (a drift's shards, a spire's crystal, a scar's spires and bowl)
-        double aimY = switch (l) {
-            case SHARD_DRIFT -> centre.getY() + (top + bottom) * 0.5;
-            case AURORA_SPIRE -> centre.getY() + top * 0.4;
-            case GATE_SCAR -> centre.getY() + Math.min(8, top * 0.3);
-        };
-        double aim = aimY - (vy + 1.62);
-        float pitch = (float) -Math.toDegrees(Math.atan2(aim, Math.max(4, distance)));
-        sp.teleportTo(level, vx + 0.5, vy + 0.1, vz + 0.5, Set.<Relative>of(), 180.0F, pitch, true);
-        Awaken.LOG.info("[terrain] landmarkvisit {} centre {} {} {} spans {}..{}, viewed from {} {} {}", l.getSerializedName(), centre.getX(), centre.getY(),
-                centre.getZ(), bottom, top, vx, vy, vz);
-        BlockPos f = centre;
-        c.getSource().sendSuccess(() -> Component.literal(l.getSerializedName() + " at " + f.toShortString()), false);
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(sp, level, vx + 0.5, vz + 0.5, () -> {
+            int vy = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, vx, vz);
+            while (vy > level.getMinY() + 1) {
+                var below = level.getBlockState(new BlockPos(vx, vy - 1, vz));
+                if (!below.is(BlockTags.LOGS) && !below.is(BlockTags.LEAVES) && !below.canBeReplaced()) break;
+                vy--;
+            }
+            vy += above;
+            // look at the middle of what stands there (a drift's shards, a spire's crystal, a scar's spires and bowl)
+            double aimY = switch (l) {
+                case SHARD_DRIFT -> centre.getY() + (top + bottom) * 0.5;
+                case AURORA_SPIRE -> centre.getY() + top * 0.4;
+                case GATE_SCAR -> centre.getY() + Math.min(8, top * 0.3);
+            };
+            double aim = aimY - (vy + 1.62);
+            float pitch = (float) -Math.toDegrees(Math.atan2(aim, Math.max(4, distance)));
+            sp.teleportTo(level, vx + 0.5, vy + 0.1, vz + 0.5, Set.<Relative>of(), 180.0F, pitch, true);
+            Awaken.LOG.info("[terrain] landmarkvisit {} centre {} {} {} spans {}..{}, viewed from {} {} {}", l.getSerializedName(), centre.getX(), centre.getY(),
+                    centre.getZ(), bottom, top, vx, vy, vz);
+            c.getSource().sendSuccess(() -> Component.literal(l.getSerializedName() + " at " + centre.toShortString()), false);
+        });
         return 1;
     }
 }

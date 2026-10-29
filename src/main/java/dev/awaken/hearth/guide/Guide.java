@@ -66,8 +66,7 @@ public final class Guide {
     public static final String MAT_USE = "Place it beside your bed for better dreams. You can meditate without a mat.";
 
     /** Recipes the Anchor teaches when it takes root: the Hearth's furniture. */
-    public static final List<String> FURNITURE_RECIPES = List.of("meditation_mat", "forge", "trophy_mount", "role_pad_guard",
-            "role_pad_haul", "role_pad_farm", "role_pad_mine", "role_pad_train");
+    public static final List<String> FURNITURE_RECIPES = List.of("meditation_mat", "forge", "trophy_mount");
 
     private static final Set<UUID> OPEN = new HashSet<>();
 
@@ -190,7 +189,8 @@ public final class Guide {
         for (Furniture f : Furniture.values()) recipe(sp, f).ifPresent(recipes::add);
         boolean wakeHere = HearthService.wakesAt(sp).map(w -> w == h).orElse(false);
         return new GuideData(h.tier, h.radius(), rest, Math.max(1, rest / 2), wakeHere, h.pos, cards, recipes,
-                town(h), coming(sp, h), upgrade(sp, h), Cottage.state(sp, h), home(h));
+                town(h), coming(sp, h), upgrade(sp, h), Cottage.state(sp, h),
+                Cottage.status(sp.level().getServer(), h), home(h));
     }
 
     /** The home as read: its name, Comfort and what adds a point, Style, the land, and each room's reading (best first). */

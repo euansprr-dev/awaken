@@ -1,0 +1,125 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/foundry_pipe",
+    "pipe": "awaken:block/foundry_pipe",
+    "end": "awaken:block/foundry_pipe_end",
+    "wheel": "awaken:block/foundry_valve_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        0,
+        5
+      ],
+      "to": [
+        11,
+        10,
+        11
+      ],
+      "faces": {
+        "down": {
+          "texture": "#pipe"
+        },
+        "up": {
+          "texture": "#pipe"
+        },
+        "north": {
+          "texture": "#pipe"
+        },
+        "south": {
+          "texture": "#pipe"
+        },
+        "west": {
+          "texture": "#pipe"
+        },
+        "east": {
+          "texture": "#pipe"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        0,
+        4
+      ],
+      "to": [
+        12,
+        2,
+        12
+      ],
+      "faces": {
+        "up": {
+          "texture": "#end"
+        },
+        "north": {
+          "texture": "#end"
+        },
+        "south": {
+          "texture": "#end"
+        },
+        "west": {
+          "texture": "#end"
+        },
+        "east": {
+          "texture": "#end"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        12,
+        2
+      ],
+      "to": [
+        14,
+        12,
+        14
+      ],
+      "faces": {
+        "up": {
+          "texture": "#wheel"
+        },
+        "down": {
+          "texture": "#wheel"
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        7,
+        10,
+        7
+      ],
+      "to": [
+        9,
+        12.5,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#end"
+        },
+        "up": {
+          "texture": "#end"
+        },
+        "north": {
+          "texture": "#end"
+        },
+        "south": {
+          "texture": "#end"
+        },
+        "west": {
+          "texture": "#end"
+        },
+        "east": {
+          "texture": "#end"
+        }
+      }
+    }
+  ]
+}

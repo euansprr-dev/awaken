@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "awaken:blocks/hive_royal",
+  "pools": [
+    {
+      "rolls": 1,
+      "bonus_rolls": 0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:hive_royal"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

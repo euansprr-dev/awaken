@@ -40,6 +40,8 @@ public final class GroundClient {
     public static void init(IEventBus modBus) {
         GroundClientConfig.register(modBus);
         FreshView.init();
+        WildPlantsClient.init(modBus);
+        WildTint.init();
         modBus.addListener(GroundClient::wrapModels);
         modBus.addListener(GroundClient::drift);
         NeoForge.EVENT_BUS.addListener(GroundClient::commands);
@@ -89,7 +91,7 @@ public final class GroundClient {
     }
 
     /** A grass colour source with the drift on it, for blocks in a world (City Sight's probe at the origin and items keep the plain colour). */
-    private static final class DriftTint implements BlockTintSource {
+    static final class DriftTint implements BlockTintSource {
         private final BlockTintSource base;
 
         DriftTint(BlockTintSource base) {
@@ -106,7 +108,7 @@ public final class GroundClient {
             int c = this.base.colorInWorld(state, level, pos);
             if (!GroundClientConfig.drift()) return c;
             if (pos.getX() == 0 && pos.getY() == 0 && pos.getZ() == 0) return c;    // not a place: a per-biome probe
-            return LawnDrift.apply(c, pos.getX(), pos.getZ());
+            return WildTint.apply(LawnDrift.apply(c, pos.getX(), pos.getZ()), pos.getX(), pos.getZ());
         }
 
         @Override

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "awaken:block/temple_root",
+    "end": "awaken:block/temple_root_top"
+  }
+}

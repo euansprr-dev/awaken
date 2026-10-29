@@ -1,7 +1,6 @@
 package dev.awaken.arms.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import dev.awaken.arms.Archetype;
 import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.Arms;
@@ -62,17 +61,34 @@ final class ArmsHands {
         FirstPerson.View.add(v.main, 1, MOVE[0], MOVE[1], MOVE[2], MOVE[3], MOVE[4], MOVE[5]);
     }
 
-    /** The blade lays its ribbon through the blow, on the hands' own clock: from just before it starts to just after. */
+    /**
+     * The blade lays its ribbon through the blow, on the hands' own clock: from just before it starts to just after, or
+     * (round 14) over the clip's own trail ticks, the stroke alone. The striking hand's blade lays it, each blade of a
+     * pair its own ring; a both-hands strike with its own ticks lays both.
+     */
     private static void trace(LocalPlayer p) {
         Archetypes.Loaded style = ArmsPredict.style;
         Archetype.Move m = ArmsPredict.move;
         if (style == null || m == null || ArmsPredict.charging || preview != null) return;
         Archetype.MoveDef def = style.move(m);
         if (def == null) return;
+        FpSwings.Style fs = FpSwings.style(style.id());
+        FpSwings.Clip clip = FpSwings.clip(fs, m);
+        boolean own = clip != null && clip.trailTo() >= 0;
         float t = ArmsPredict.viewTime(), b = blowStart(def);
-        if (t >= b - 0.15F && t <= b + def.active() + 0.6F) {
-            BladeTrail.open(p.getId(), 60, ArmsFx.colour(p.getMainHandItem(), ArmsPredict.cadence, ArmsPredict.perfectHeavy, m));
-        }
+        if (own ? t < clip.trailFrom() || t > clip.trailTo() : t < b - 0.15F || t > b + def.active() + 0.6F) return;
+        int argb = ArmsFx.colour(p.getMainHandItem(), ArmsPredict.cadence, ArmsPredict.perfectHeavy, m);
+        float light = fs != null && fs.trail() != null ? fs.trail()[1] : 1F;
+        FpSwings.Hand h = clip == null ? FpSwings.Hand.MAIN : clip.hand();
+        if (h != FpSwings.Hand.OFF) BladeTrail.open(p.getId(), 0, 60, argb, light);
+        if (h == FpSwings.Hand.OFF || h == FpSwings.Hand.BOTH && own) BladeTrail.open(p.getId(), 1, 60, argb, light);
+    }
+
+    /** Where the ribbon starts along the blade in first person (a style's own, else from mid-blade). */
+    static float trailRoot() {
+        var style = ArmsPredict.style;
+        FpSwings.Style fs = style == null ? null : FpSwings.style(style.id());
+        return fs != null && fs.trail() != null ? fs.trail()[0] : 0.5F;
     }
 
     // vanilla's handheld first-person display (item/handheld.json) and where a sword's blade runs on its sprite:
@@ -90,15 +106,7 @@ final class ArmsHands {
         int inv = arm == HumanoidArm.RIGHT ? 1 : -1;
         ArmsHands.equip = equip;
         ps.translate(inv * HX, HY + equip * -0.6F, HZ);
-        float g = guard(p, partial);
-        if (g > 0) {
-            // across the body, edge out (vanilla's own blocking pose, eased in), knocked back by a shot on it
-            float j = jolt(partial) * g;
-            ps.translate(inv * -0.141F * g + joltSide * JOLT_X * j, 0.08F * g + JOLT_Y * j, 0.141F * g + JOLT_Z * j);
-            ps.rotateDegrees(Axis.XP, -102.25F * g + JOLT_TIP * j);
-            ps.rotateDegrees(Axis.YP, inv * 13.37F * g);
-            ps.rotateDegrees(Axis.ZP, inv * 78.05F * g);
-        }
+        guardOn(ps, p, stack, partial, inv);
         if (BladeTrail.open(p.getId()) && ArmsItems.of(stack.getItem()) == null) {
             // a vanilla blade: where its sprite's edge is drawn (our weapons sample their own mesh as they draw)
             M.set(ps.last().pose()).translate(1.13F / 16F, 3.2F / 16F, 1.13F / 16F) // both hands: as handheld.json
@@ -107,6 +115,46 @@ final class ArmsHands {
         }
         return true;
     }
+
+    /**
+     * The guard on a hand's pose stack (at its resting place) while the guard is up: the weapon across the body, mirrored
+     * for a left hand ({@code inv} -1; a pair's twin is the main's mirrored, so the two cross).
+     */
+    static void guardOn(PoseStack ps, LocalPlayer p, ItemStack stack, float partial, int inv) {
+        float g = guard(p, partial);
+        if (g <= 0) return;
+        float j = jolt(partial) * g;
+        Archetypes.Loaded style = Arms.styleOf(stack);
+        guardMove(style == null ? null : FpSwings.style(style.id()), ArmsItems.of(stack.getItem()) != null, g, j, inv, GD, GQ);
+        if (inv < 0) {
+            GD.x = -GD.x;
+            GQ.set(GQ.x, -GQ.y, -GQ.z, GQ.w);
+        }
+        ps.translate(GD.x, GD.y, GD.z);
+        ps.rotate(GQ);
+    }
+
+    /**
+     * The guard's move and turn about the hand's place (authored right-handed), {@code g} of the way up, jolted by
+     * {@code j}: the style's own (Swing Studio round 8: across the body in view, its tip up to the left; Euan 2026-10-29:
+     * "blocking with most weapons hides the weapon under your view"), else vanilla 1.8's block turn.
+     */
+    private static void guardMove(FpSwings.@Nullable Style st, boolean ours, float g, float j, int inv, org.joml.Vector3f d,
+                                  org.joml.Quaternionf q) {
+        if (FpSwings.guard(st, ours, d, GQ2)) {
+            d.mul(g);
+            ID.slerp(GQ2, g, q);
+        } else {
+            q.identity().rotateX(-102.25F * g * Mth.DEG_TO_RAD).rotateY(13.37F * g * Mth.DEG_TO_RAD).rotateZ(78.05F * g * Mth.DEG_TO_RAD);
+            d.set(-0.141F * g, 0.08F * g, 0.141F * g);
+        }
+        // a shot on it: knocked back toward the eye, up and away from the side it struck, its tip thrown back
+        d.add(inv * joltSide * JOLT_X * j, JOLT_Y * j, JOLT_Z * j);
+        GQ2.rotationX(JOLT_TIP * j * Mth.DEG_TO_RAD).mul(q, q);
+    }
+
+    private static final org.joml.Vector3f GD = new org.joml.Vector3f();
+    private static final org.joml.Quaternionf GQ = new org.joml.Quaternionf(), GQ2 = new org.joml.Quaternionf();
 
     /** The guard's blend: up over its first ticks of use. */
     private static float guard(LocalPlayer p, float partial) {
@@ -137,12 +185,20 @@ final class ArmsHands {
     private static final org.joml.Vector3f D = new org.joml.Vector3f();
     private static final org.joml.Quaternionf Q = new org.joml.Quaternionf();
 
+    private static boolean far;
+
+    /** Whether the move on the hands now is led by its double weapon's other end (its trail runs along that end). */
+    static boolean far() {
+        return far;
+    }
+
     /**
      * The lab's swing (FpSwings), when it has one for the move: an arc about the sword arm's pivot, the edge leading,
      * through the target under the crosshair on the hit tick. A held heavy waits at the heavy's drawn-back start (and
      * trembles), an armed Plunge at the Plunge's. Mirrored for a left main arm. False: the row's own swing below.
      */
     private static boolean lab(LocalPlayer p, FirstPerson.View v) {
+        far = false;
         var style = ArmsPredict.style != null ? ArmsPredict.style : preview != null ? Archetypes.get(Arms.LONGSWORD) : null;
         if (style == null) return false;
         Archetype.Move m;
@@ -166,6 +222,7 @@ final class ArmsHands {
         boolean ours = ArmsItems.of(p.getMainHandItem().getItem()) != null;
         FpSwings.Style st = FpSwings.style(style.id());
         boolean has = m != null && FpSwings.sample(st, m, t, ours, D, Q);
+        far = has && FpSwings.far(st, m);
         if (!has) {
             D.zero();
             Q.identity();
@@ -179,6 +236,13 @@ final class ArmsHands {
         // which hand strikes: a weapon in each hand (the Daggers) strikes with the off hand too, the main's move mirrored
         FpSwings.Hand hand = !has || preview != null ? FpSwings.Hand.MAIN : FpSwings.hand(st, m);
         boolean mainMoves = has && hand != FpSwings.Hand.OFF, offMoves = has && hand != FpSwings.Hand.MAIN;
+        // a weapon in each hand: the hand not striking draws back to the next strike's set while this one lands (Swing
+        // Studio round 4; Euan 2026-10-28: "let the idle hand draw back while the other strikes"); in a both-hands
+        // strike, the off hand's own way into it, from where it waited (round 9)
+        boolean idle = has && !tremble && FpSwings.idle(st, m, t, ours, IDLE_D, IDLE_Q);
+        boolean twin = idle && hand == FpSwings.Hand.BOTH;
+        if (twin) offMoves = false;
+        boolean mainIdle = idle && !mainMoves, offIdle = idle && !offMoves;
         // a change of source (a chained strike, a move ended or refused, the charge taken up): each hand carried from
         // where it was shown into the new one, never a jump (SwingBlend)
         float now = handsNow();
@@ -189,14 +253,16 @@ final class ArmsHands {
             Archetype.MoveDef def = m == null ? null : style.move(m);
             float ticks = def == null ? REST_BLEND : Mth.clamp(def.windup() * 0.8F, 1F, 2.5F);
             sourceMotion(st, m, t, ours, has && !tremble);
-            MAIN_B.begin(now, mainMoves ? D : ZERO, mainMoves ? Q : ID, mainMoves ? VD : ZERO, mainMoves ? VW : ZERO, ticks);
-            OFF_B.begin(now, offMoves ? D : ZERO, offMoves ? Q : ID, offMoves ? VD : ZERO, offMoves ? VW : ZERO, ticks);
+            MAIN_B.begin(now, mainMoves ? D : mainIdle ? IDLE_D : ZERO, mainMoves ? Q : mainIdle ? IDLE_Q : ID, mainMoves ? VD : ZERO,
+                    mainMoves ? VW : ZERO, ticks);
+            OFF_B.begin(now, offMoves ? D : offIdle ? IDLE_D : ZERO, offMoves ? Q : offIdle ? IDLE_Q : ID, offMoves ? VD : ZERO,
+                    offMoves ? VW : ZERO, ticks);
         }
-        boolean mainShown = mainMoves || MAIN_B.active(now), offShown = offMoves || OFF_B.active(now);
-        if (mainMoves) MAIN_D.set(D); else MAIN_D.zero();
-        if (mainMoves) MAIN_Q.set(Q); else MAIN_Q.identity();
-        if (offMoves) OFF_D.set(D); else OFF_D.zero();
-        if (offMoves) OFF_Q.set(Q); else OFF_Q.identity();
+        boolean mainShown = mainMoves || mainIdle || MAIN_B.active(now), offShown = offMoves || offIdle || OFF_B.active(now);
+        if (mainMoves) MAIN_D.set(D); else if (mainIdle) MAIN_D.set(IDLE_D); else MAIN_D.zero();
+        if (mainMoves) MAIN_Q.set(Q); else if (mainIdle) MAIN_Q.set(IDLE_Q); else MAIN_Q.identity();
+        if (offMoves) OFF_D.set(D); else if (offIdle) OFF_D.set(IDLE_D); else OFF_D.zero();
+        if (offMoves) OFF_Q.set(Q); else if (offIdle) OFF_Q.set(IDLE_Q); else OFF_Q.identity();
         MAIN_B.apply(now, MAIN_D, MAIN_Q);
         OFF_B.apply(now, OFF_D, OFF_Q);
         if (!mainShown && !offShown) return false;
@@ -218,7 +284,8 @@ final class ArmsHands {
     private static long shownNanos;
     private static boolean shownCharging;
     private static final org.joml.Vector3f VD = new org.joml.Vector3f(), VW = new org.joml.Vector3f(), ZERO = new org.joml.Vector3f(),
-            DA = new org.joml.Vector3f();
+            DA = new org.joml.Vector3f(), IDLE_D = new org.joml.Vector3f();
+    private static final org.joml.Quaternionf IDLE_Q = new org.joml.Quaternionf();
     private static final org.joml.Quaternionf ID = new org.joml.Quaternionf(), QA = new org.joml.Quaternionf(), QC = new org.joml.Quaternionf();
 
     /** The new source's motion at {@code t} into VD, VW (zero for a held pose). */
@@ -255,31 +322,37 @@ final class ArmsHands {
         if (st == null) return;
         boolean ours = ArmsItems.of(p.getMainHandItem().getItem()) != null;
         int inv = p.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
-        float g = guard(p, partial);
-        onMain(G.set(ours ? st.hand() : st.vanillaGrip()), g, g > 0 ? jolt(partial) * g : 0, inv);
+        float g = guard(p, partial), j = g > 0 ? jolt(partial) * g : 0;
+        if (g > 0) guardMove(st, ours, g, j, inv, GD, GUARD);
+        onMain(G.set(ours ? st.hand() : st.vanillaGrip()), g);
         FirstPerson.View.fist(v.gripMain, 1, inv * G.x, G.y, G.z);
         org.joml.Vector3f both = ours ? st.offHand() : st.vanillaOffHand();
         if (!ArmsOffHand.shownTwin(p).isEmpty()) {
             G.set(st.hand());
+            if (g > 0) { // the twin up in guard too, mirrored: the pair crossed
+                GUARD.transform(G);
+                G.add(GD);
+            }
             OFF_Q.transform(G);
             G.add(OFF_D).add(HX, HY + ArmsOffHand.equip() * -0.6F, HZ); // the twin rises with the main hand
             FirstPerson.View.fist(v.gripOff, 1, -inv * G.x, G.y, G.z);
         } else if (both != null && p.getOffhandItem().isEmpty()) {
             // a two-handed weapon with the off hand free: the off hand closes on the handle below the main, through
-            // every swing and the guard (SPEC §25 "Swing Studio": the katana, greatblade, maul, spear, glaive, scythe and
-            // war-staff); a stance's own off fist still takes the hand (Hands' hideOff)
-            onMain(G.set(both), g, g > 0 ? jolt(partial) * g : 0, inv);
+            // every swing and the guard (SPEC §25 "Swing Studio": the katana, greatblade, maul, spear, glaive, scythe,
+            // war-staff and twin blades); a stance's own off fist still takes the hand (Hands' hideOff)
+            onMain(G.set(both), g);
             FirstPerson.View.fist(v.gripOff, 1, inv * G.x, G.y, G.z);
         }
     }
 
-    /** A point on the main weapon (hand space, authored right-handed) to where it is this frame: the guard, the swing. */
-    private static void onMain(org.joml.Vector3f at, float g, float j, int inv) {
+    /**
+     * A point on the main weapon (hand space, authored right-handed) to where it is this frame: the guard (GUARD and GD,
+     * set by the caller from guardMove: the hands go with the blade), the swing.
+     */
+    private static void onMain(org.joml.Vector3f at, float g) {
         if (g > 0) {
-            // the guard (transform below): across the body, edge out, and its jolt (the hands go with the blade)
-            GUARD.identity().rotateX((-102.25F * g + JOLT_TIP * j) * Mth.DEG_TO_RAD).rotateY(13.37F * g * Mth.DEG_TO_RAD).rotateZ(78.05F * g * Mth.DEG_TO_RAD);
             GUARD.transform(at);
-            at.add(-0.141F * g + inv * joltSide * JOLT_X * j, 0.08F * g + JOLT_Y * j, 0.141F * g + JOLT_Z * j);
+            at.add(GD);
         }
         MAIN_Q.transform(at);
         at.add(MAIN_D).add(HX, HY + equip * -0.6F, HZ);
@@ -304,6 +377,12 @@ final class ArmsHands {
     static boolean offStrikes() {
         var style = ArmsPredict.style;
         return style != null && ArmsPredict.move != null && FpSwings.hand(FpSwings.style(style.id()), ArmsPredict.move) == FpSwings.Hand.OFF;
+    }
+
+    /** Whether the off hand's twin strikes in the move on the hands now, alone or with the main. */
+    static boolean twinStrikes() {
+        var style = ArmsPredict.style;
+        return style != null && ArmsPredict.move != null && FpSwings.hand(FpSwings.style(style.id()), ArmsPredict.move) != FpSwings.Hand.MAIN;
     }
 
     /** Autopilot only: hold the hands at a fraction (0..1) through a move, for a still review frame. */

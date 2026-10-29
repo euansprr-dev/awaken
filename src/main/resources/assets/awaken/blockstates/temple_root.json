@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/temple_root"
+    },
+    "axis=z": {
+      "model": "awaken:block/temple_root",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "awaken:block/temple_root",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

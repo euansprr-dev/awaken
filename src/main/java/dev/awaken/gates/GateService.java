@@ -35,6 +35,9 @@ import java.util.concurrent.CompletableFuture;
  * floor), state changes, release and cleanup of cells. All on the server thread.
  */
 public final class GateService {
+    /** The gate the game master opened last (`/awaken gate open`): `gate interior enter` takes it first. Not saved. */
+    public static volatile int lastOpened;
+
     private GateService() {}
 
     /** Radius (chunks) of the first floor around the entrance generated before the gate is READY. */
@@ -50,6 +53,7 @@ public final class GateService {
         final long startedNanos = System.nanoTime();
         CompletableFuture<?> surface, interior;
         ChunkPos surfaceChunk, interiorChunk;
+        ServerLevel interiorLevel;
         boolean surfaceDone, interiorDone;
         int attempts;
 
@@ -60,7 +64,10 @@ public final class GateService {
     }
 
     private static final Map<Integer, Build> BUILDS = new HashMap<>();
-    private static final List<int[]> PREGEN = new ArrayList<>();
+    /** A next floor's start being generated: its level, chunk and when it was asked for. */
+    private record Pregen(ServerLevel level, int x, int z, int at) {}
+
+    private static final List<Pregen> PREGEN = new ArrayList<>();
     private static Path worldRoot;
 
     public static long now(MinecraftServer server) {
@@ -79,9 +86,36 @@ public final class GateService {
         return testLevel != null ? testLevel : server.getLevel(GatesRegistry.GATES);
     }
 
-    /** The level gates are built in. */
+    /** The level a floor is built in: the open sky's for an open land (SPEC §38.11), else the gates'. */
+    public static ServerLevel levelOf(MinecraftServer server, FloorLayout f) {
+        if (testLevel != null) return testLevel;
+        if (f != null && f.sky) {
+            ServerLevel sky = server.getLevel(GatesRegistry.GATES_SKY);
+            if (sky != null) return sky;
+        }
+        return server.getLevel(GatesRegistry.GATES);
+    }
+
+    public static ServerLevel levelOf(MinecraftServer server, GateRecord g, int area, int floor) {
+        return levelOf(server, GateLayout.of(g.plan).floor(area, floor));
+    }
+
+    /** Every level gates are built in that this server has (the gates' and the open sky's; the stand-in in tests). */
+    public static List<ServerLevel> levels(MinecraftServer server) {
+        if (testLevel != null) return List.of(testLevel);
+        ServerLevel gl = server.getLevel(GatesRegistry.GATES), sky = server.getLevel(GatesRegistry.GATES_SKY);
+        if (gl == null) return sky == null ? List.of() : List.of(sky);
+        return sky == null ? List.of(gl) : List.of(gl, sky);
+    }
+
+    /** Whether open lands can be built (the open sky's dimension is there; tests paint them in their stand-in). */
+    public static boolean hasSky(MinecraftServer server) {
+        return testLevel != null || server.getLevel(GatesRegistry.GATES_SKY) != null;
+    }
+
+    /** A level gates are built in. */
     public static boolean isGateLevel(net.minecraft.world.level.Level level) {
-        return testLevel != null ? level == testLevel : level.dimension() == GatesRegistry.GATES;
+        return testLevel != null ? level == testLevel : GatesRegistry.isGateDim(level.dimension());
     }
 
     /** Inside the gate world: in the gate level and inside a cell's area. */
@@ -101,7 +135,10 @@ public final class GateService {
         GateRegistry reg = GateRegistry.get(server);
         int cell = reg.allocateCell();
         long day = PlayDays.current(server);
+        // each floor's world and mood, picked now and saved with the plan (SPEC §38)
+        plan = dev.awaken.gates.worlds.GateWorlds.dress(server, plan, owner);
         GateRecord g = new GateRecord(id, plan, ground, axis, cell, day, day + breaksInDays, GateState.BUILDING, owner);
+        g.foldsOnPlayDay = day + Breaks.UNSEEN_DAYS; // until someone comes close (SPEC §7, "Seen first")
         g.trace.addAll(trace);
         g.scripted = scripted;
         reg.put(g);
@@ -116,9 +153,10 @@ public final class GateService {
         b.surfaceChunk = ChunkPos.containing(g.pos);
         if (!g.structurePlaced) b.surface = over.getChunkSource().addTicketAndLoadWithRadius(GatesRegistry.BUILD_TICKET.get(), b.surfaceChunk, 1);
         else b.surfaceDone = true;
-        ServerLevel gl = gateLevel(server);
+        ServerLevel gl = levelOf(server, g, 0, 1);
         if (gl != null && !g.interiorReady) {
             BlockPos entry = entrance(g, 0, 1);
+            b.interiorLevel = gl;
             b.interiorChunk = ChunkPos.containing(entry);
             b.interior = gl.getChunkSource().addTicketAndLoadWithRadius(GatesRegistry.BUILD_TICKET.get(), b.interiorChunk, PREGEN_RADIUS);
         } else b.interiorDone = true;
@@ -146,16 +184,17 @@ public final class GateService {
             if (!b.surfaceDone && b.surface != null && b.surface.isDone()) {
                 b.surfaceDone = true;
                 server.overworld().getChunkSource().removeTicketWithRadius(GatesRegistry.BUILD_TICKET.get(), b.surfaceChunk, 1);
-                if (!placeSurface(server, g)) {
+                String why = placeSurface(server, g);
+                if (why != null) {
                     it.remove();
-                    fail(server, g, "no ground for the gate at the chosen spot");
+                    fail(server, g, why);
                     continue;
                 }
                 finished++;
             }
             if (!b.interiorDone && b.interior != null && b.interior.isDone()) {
                 b.interiorDone = true;
-                ServerLevel gl = gateLevel(server);
+                ServerLevel gl = b.interiorLevel;
                 if (gl != null) gl.getChunkSource().removeTicketWithRadius(GatesRegistry.BUILD_TICKET.get(), b.interiorChunk, PREGEN_RADIUS);
                 g.interiorReady = true;
                 reg.setDirty();
@@ -168,6 +207,7 @@ public final class GateService {
                 Awaken.LOG.debug("[gates] gate {} ready ({} ticks)", g.id, t - b.started);
                 GatePayloads.syncBeaconsAround(server, g.pos);
                 dev.awaken.core.audio.AudioCues.playNear(server.overworld(), g.pos, 640, dev.awaken.core.audio.Cue.GATE_FORMING);
+                if (g.announceTo.isPresent()) Director.announceFirst(server, g);
                 continue;
             }
             if (t - b.started > BUILD_TIMEOUT && System.nanoTime() - b.startedNanos > BUILD_TIMEOUT_NANOS) {
@@ -180,11 +220,12 @@ public final class GateService {
 
     private static void releaseTickets(MinecraftServer server, Build b) {
         if (b.surfaceChunk != null && !b.surfaceDone) server.overworld().getChunkSource().removeTicketWithRadius(GatesRegistry.BUILD_TICKET.get(), b.surfaceChunk, 1);
-        ServerLevel gl = gateLevel(server);
+        ServerLevel gl = b.interiorLevel;
         if (gl != null && b.interiorChunk != null && !b.interiorDone) gl.getChunkSource().removeTicketWithRadius(GatesRegistry.BUILD_TICKET.get(), b.interiorChunk, PREGEN_RADIUS);
     }
 
-    private static boolean placeSurface(MinecraftServer server, GateRecord g) {
+    /** Builds the surface; returns why it can't stand here (the build fails), or null when it stands. */
+    private static String placeSurface(MinecraftServer server, GateRecord g) {
         ServerLevel over = server.overworld();
         int y = Overworld.groundY(over, g.pos.getX(), g.pos.getZ());
         BlockPos ground = new BlockPos(g.pos.getX(), y, g.pos.getZ());
@@ -192,22 +233,20 @@ public final class GateService {
         // must form) moves to the nearest clear spot instead of failing
         int rank = g.plan.rank().ordinal();
         boolean mustForm = g.scripted || g.plan.skybornTrial();
-        if (!mustForm && !Overworld.goodGround(over, ground)) {
-            g.trace.add("wet or open ground at " + ground.toShortString());
-            return false;
-        }
+        if (!mustForm && !Overworld.goodGround(over, ground)) return "wet or open ground at " + ground.toShortString();
         if (!mustForm && !g.anyGround && !Overworld.untouched(over, ground, g.axis, rank)) {
-            g.trace.add("built on, or near a Hearth, at " + ground.toShortString());
-            return false;
+            return (dev.awaken.core.api.HearthHooks.nearest(over, ground, 64).isPresent() ? "a Hearth within 64 blocks of "
+                    : "someone's build in the footprint at ") + ground.toShortString();
         }
         if (mustForm && !Overworld.untouched(over, ground, g.axis, rank)) {
             ground = Overworld.clearSpotNear(over, ground, g.axis).orElse(ground);
         }
         g.pos = ground; // the generator's height estimate can be a few blocks off: stand on the real ground
-        Overworld.place(over, g, false);
         g.structurePlaced = true;
         GateRegistry.get(server).setDirty();
-        return true;
+        // a gate that can't stand is never left half-built: what did go up comes down with the failed build
+        if (!Overworld.place(over, g, false)) return "its vortex had no room at " + ground.toShortString();
+        return null;
     }
 
     /** A build failed: the cell is released and the Director rolls again later. You never see a broken gate. */
@@ -228,26 +267,24 @@ public final class GateService {
 
     /** Pre-generate the start of the next floor while a player fights on this one (one request at a time). */
     public static void pregenFloor(MinecraftServer server, GateRecord g, int area, int floor) {
-        ServerLevel gl = gateLevel(server);
-        if (gl == null) return;
         FloorLayout f = GateLayout.of(g.plan).floor(area, floor);
         if (f == null) return;
+        ServerLevel gl = levelOf(server, f);
+        if (gl == null) return;
         BlockPos e = entrance(g, area, floor);
         ChunkPos cp = ChunkPos.containing(e);
         if (gl.getChunkSource().hasChunk(cp.x(), cp.z())) return;
         gl.getChunkSource().addTicketWithRadius(GatesRegistry.BUILD_TICKET.get(), cp, 2);
-        PREGEN.add(new int[]{cp.x(), cp.z(), (int) (now(server) % Integer.MAX_VALUE)});
+        PREGEN.add(new Pregen(gl, cp.x(), cp.z(), (int) (now(server) % Integer.MAX_VALUE)));
     }
 
     private static void tickPregen(MinecraftServer server) {
         if (PREGEN.isEmpty() || server.getTickCount() % 20 != 0) return;
-        ServerLevel gl = gateLevel(server);
-        if (gl == null) return;
         long t = now(server) % Integer.MAX_VALUE;
         PREGEN.removeIf(p -> {
-            boolean loaded = gl.getChunkSource().hasChunk(p[0], p[1]);
-            if (loaded || t - p[2] > 1200 || t < p[2]) {
-                gl.getChunkSource().removeTicketWithRadius(GatesRegistry.BUILD_TICKET.get(), new ChunkPos(p[0], p[1]), 2);
+            boolean loaded = p.level().getChunkSource().hasChunk(p.x(), p.z());
+            if (loaded || t - p.at() > 1200 || t < p.at()) {
+                p.level().getChunkSource().removeTicketWithRadius(GatesRegistry.BUILD_TICKET.get(), new ChunkPos(p.x(), p.z()), 2);
                 return true;
             }
             return false;
@@ -261,8 +298,9 @@ public final class GateService {
         return new BlockPos(Cells.originX(g.cell) + f.originSlotX * 16 + x, f.baseY + yOff, Cells.originZ(g.cell) + f.originSlotZ * 16 + z);
     }
 
+    /** Where you stand in a room at floor-local (x, z): its floor, or on a world floor its ground there (SPEC §38.14). */
     public static BlockPos roomFloor(GateRecord g, FloorLayout f, Room r, int x, int z) {
-        return world(g, f, x, r.dy, z);
+        return world(g, f, x, r.dy + f.ground(x, z), z);
     }
 
     /** Where you arrive on a floor: standing on the entrance sigil of its start room. */
@@ -270,13 +308,16 @@ public final class GateService {
         FloorLayout f = GateLayout.of(g.plan).floor(area, floor);
         if (f == null) return new BlockPos(Cells.originX(g.cell) + 40, Cells.FLOOR1_Y, Cells.originZ(g.cell) + 40);
         Room s = f.room(f.start);
-        return roomFloor(g, f, s, s.centerX(), s.centerZ());
+        // a world floor puts its sigil where its view is best; today's rooms have it at the room's centre
+        Room.Feature e = s.feature(Room.FeatureKind.ENTRANCE);
+        return e == null ? roomFloor(g, f, s, s.centerX(), s.centerZ()) : roomFloor(g, f, s, e.x(), e.z()).above(e.y());
     }
 
     /** Facing (degrees) toward the start room's first doorway. */
     public static float entranceYaw(GateRecord g, int area, int floor) {
         FloorLayout f = GateLayout.of(g.plan).floor(area, floor);
         if (f == null) return 0;
+        if (!Float.isNaN(f.arrivalYaw)) return f.arrivalYaw;
         Room s = f.room(f.start);
         if (s.doors.isEmpty()) return 0;
         return switch (s.doors.get(0).side) {
@@ -327,11 +368,16 @@ public final class GateService {
      */
     static void recycleWhileRunning(MinecraftServer server, int cell) {
         if (testLevel != null) return;
-        ServerLevel gl = server.getLevel(GatesRegistry.GATES);
-        if (gl == null) return;
+        List<ServerLevel> levels = levels(server);
+        if (levels.isEmpty()) return;
         int cx = Cells.originX(cell) >> 4, cz = Cells.originZ(cell) >> 4;
-        dev.awaken.core.RegionRecycler.eraseWhenUnloaded(gl, dev.awaken.core.RegionRecycler.square(cx, cz, Cells.SIZE >> 4),
-                () -> GateRegistry.get(server).cellRecycled(cell));
+        // the cell is free again once it's erased in both gate dimensions (the open sky's too)
+        int[] left = {levels.size()};
+        for (ServerLevel lv : levels) {
+            dev.awaken.core.RegionRecycler.eraseWhenUnloaded(lv, dev.awaken.core.RegionRecycler.square(cx, cz, Cells.SIZE >> 4), () -> {
+                if (--left[0] == 0) GateRegistry.get(server).cellRecycled(cell);
+            });
+        }
     }
 
     private static final List<Integer> REMOVALS = new ArrayList<>();
@@ -382,22 +428,25 @@ public final class GateService {
         PREGEN.clear();
         REMOVALS.clear();
         GateRegistry reg = GateRegistry.get(server);
-        Path dim = DimensionType.getStorageFolder(GatesRegistry.GATES, worldRoot);
+        if (reg.loadedSchema() < 4) Breaks.unseeAll(server, reg);
         for (Integer cell : List.copyOf(reg.releasedCells())) {
             boolean any = false;
-            for (String sub : List.of("region", "entities", "poi")) any |= Files.exists(dim.resolve(sub).resolve(Cells.regionFile(cell)));
+            for (var key : List.of(GatesRegistry.GATES, GatesRegistry.GATES_SKY)) {
+                Path dim = DimensionType.getStorageFolder(key, worldRoot);
+                for (String sub : List.of("region", "entities", "poi")) any |= Files.exists(dim.resolve(sub).resolve(Cells.regionFile(cell)));
+            }
             if (!any) reg.cellFreed(cell);
         }
         for (GateRecord g : reg.all()) {
             if (g.state == GateState.RELEASED) continue;
-            if (g.state == GateState.READY && g.plan.contentVersion() < GatePlan.CONTENT_VERSION && g.party.isEmpty() && reg.hasFreeCell()) {
+            if (g.state == GateState.READY && g.plan.contentVersion() < GatePlan.current() && g.party.isEmpty() && reg.hasFreeCell()) {
                 // content changed and nobody entered: rebuild on the new version in a fresh cell
                 reg.releaseCell(g.cell);
                 g.cell = reg.allocateCell();
-                g.plan = g.plan.rebuilt(GatePlan.CONTENT_VERSION);
+                g.plan = dev.awaken.gates.worlds.GateWorlds.dress(server, g.plan.rebuilt(GatePlan.current()), g.owner);
                 g.interiorReady = false;
                 g.state = GateState.BUILDING;
-                g.trace.add("rebuilt for content version " + GatePlan.CONTENT_VERSION);
+                g.trace.add("rebuilt for content version " + GatePlan.current());
             }
             GateCells.put(g.cell, g.plan);
             if (g.state == GateState.BUILDING) startBuild(server, g);
@@ -419,15 +468,18 @@ public final class GateService {
         } catch (RuntimeException e) {
             return;
         }
-        Path dim = DimensionType.getStorageFolder(GatesRegistry.GATES, worldRoot);
         int deleted = 0;
         for (Integer cell : List.copyOf(reg.releasedCells())) {
             if (reg.byCell(cell) != null) continue; // a live gate owns it again (never delete a used cell)
-            for (String sub : List.of("region", "entities", "poi")) {
-                try {
-                    if (Files.deleteIfExists(dim.resolve(sub).resolve(Cells.regionFile(cell)))) deleted++;
-                } catch (IOException e) {
-                    Awaken.LOG.warn("[gates] could not delete {} of cell {}: {}", sub, cell, e.toString());
+            // both dimensions: an open land's floor was built under the sky, the rest in the gates
+            for (var key : List.of(GatesRegistry.GATES, GatesRegistry.GATES_SKY)) {
+                Path dim = DimensionType.getStorageFolder(key, worldRoot);
+                for (String sub : List.of("region", "entities", "poi")) {
+                    try {
+                        if (Files.deleteIfExists(dim.resolve(sub).resolve(Cells.regionFile(cell)))) deleted++;
+                    } catch (IOException e) {
+                        Awaken.LOG.warn("[gates] could not delete {} of cell {}: {}", sub, cell, e.toString());
+                    }
                 }
             }
         }

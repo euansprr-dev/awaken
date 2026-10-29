@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "awaken:block/crypt_flagstone_wet",
+    "bottom": "awaken:block/crypt_limestone_top",
+    "side": "awaken:block/crypt_limestone_worn"
+  }
+}

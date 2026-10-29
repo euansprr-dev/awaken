@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "theme": "frost_monastery",
+  "name": "The Glass Sea",
+  "line": "A sea frozen so clear you can watch the fish swimming under your feet. Something much bigger is down there too.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "open",
+  "tall": true,
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "lid": 16,
+    "sea": 1,
+    "slope": 0.1,
+    "tunnel": 3
+  },
+  "biome": "awaken:gate_world/the_glass_sea",
+  "moods": [
+    {
+      "id": "clear_ice",
+      "name": "Clear ice",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "snow",
+        "stars"
+      ]
+    },
+    {
+      "id": "snowfall",
+      "name": "Snowfall",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_glass_sea_snowfall",
+      "life": [
+        "snow",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {},
+  "hero": [],
+  "life": [
+    "snow",
+    "stars"
+  ],
+  "sound": "awaken:gate.world.rare_aurora",
+  "events": [
+    "the_ice_sings"
+  ],
+  "rule": "prayer",
+  "secrets": [
+    {
+      "id": "the_swimmer",
+      "name": "The swimmer"
+    },
+    {
+      "id": "the_frozen_bottle",
+      "name": "The frozen bottle"
+    }
+  ],
+  "keepsake": "message_bottle",
+  "keepsake_name": "A Message in a Bottle",
+  "keepsake_from": "the_frozen_bottle"
+}

@@ -1,0 +1,76 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.5,
+  "downfall": 0.0,
+  "effects": {
+    "water_color": "#3a8a7a"
+  },
+  "attributes": {
+    "minecraft:visual/fog_color": "#1e3027",
+    "minecraft:visual/sky_color": "#26472c",
+    "minecraft:visual/fog_start_distance": 14.0,
+    "minecraft:visual/fog_end_distance": 119.0,
+    "minecraft:visual/water_fog_color": "#0a2a24",
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {},
+        "spawns_by_category": {
+          "ambient": [],
+          "axolotls": [],
+          "creature": [],
+          "misc": [],
+          "monster": [],
+          "underground_water_creature": [],
+          "water_ambient": [],
+          "water_creature": []
+        }
+      }
+    },
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:falling_spore_blossom"
+          },
+          "probability": 0.003
+        },
+        {
+          "particle": {
+            "type": "minecraft:firefly"
+          },
+          "probability": 0.0012
+        },
+        {
+          "particle": {
+            "type": "minecraft:falling_water"
+          },
+          "probability": 0.016
+        }
+      ]
+    },
+    "minecraft:audio/ambient_sounds": {
+      "loop": "awaken:gate.world.temple_courts",
+      "mood": {
+        "sound": "minecraft:ambient.cave",
+        "tick_delay": 6000,
+        "block_search_extent": 8,
+        "offset": 2.0
+      },
+      "additions": {
+        "sound": "awaken:gate.world.rains",
+        "tick_chance": 0.01
+      }
+    },
+    "minecraft:audio/background_music": {
+      "default": {
+        "sound": "awaken:music.gate.overgrown_temple",
+        "min_delay": 3600,
+        "max_delay": 12000
+      }
+    }
+  },
+  "carvers": [],
+  "features": []
+}

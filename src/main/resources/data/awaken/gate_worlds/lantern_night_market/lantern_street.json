@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "theme": "lantern_night_market",
+  "name": "The Lantern Street",
+  "line": "Stalls and canals under strings of lanterns, and somebody haggling on every corner.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "open",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "night": 1,
+    "lid": 16,
+    "tunnel": 3.2,
+    "slope": 0.1
+  },
+  "biome": "awaken:gate_world/lantern_street",
+  "moods": [
+    {
+      "id": "market_night",
+      "name": "Market night",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "fireworks",
+      "name": "Fireworks",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/lantern_street_fireworks",
+      "life": [
+        "fireflies"
+      ]
+    },
+    {
+      "id": "rain",
+      "name": "Rain",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/lantern_street_rain",
+      "life": [
+        "rain"
+      ]
+    },
+    {
+      "id": "ghost_market",
+      "name": "Ghost market",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/lantern_street_ghost_market",
+      "life": [
+        "procession",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "floor": "awaken:market_cobbles",
+    "boards": "awaken:market_boards",
+    "wall": "awaken:market_plaster",
+    "trim": "awaken:market_timber",
+    "timber": "awaken:market_timber",
+    "roof": "awaken:market_roof",
+    "wall_glow": "awaken:market_paper_wall",
+    "lantern": "awaken:market_lantern",
+    "lights": "awaken:market_lights",
+    "cloth": "awaken:market_cloth",
+    "goods": "awaken:market_goods",
+    "boat_lamp": "awaken:market_boat_lamp",
+    "touch": "awaken:market_wish_lantern",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "canals",
+    "facades"
+  ],
+  "life": [
+    "fireflies",
+    "moths",
+    "smoke"
+  ],
+  "sound": "awaken:gate.world.market_street",
+  "events": [
+    "lantern_release"
+  ],
+  "rule": "wishes",
+  "secrets": [
+    {
+      "id": "the_first_wish",
+      "name": "The first wish"
+    },
+    {
+      "id": "the_canal_shrine",
+      "name": "The canal shrine"
+    },
+    {
+      "id": "the_red_door",
+      "name": "The red door",
+      "leads_to": "awaken:lantern_night_market/brokers_vault"
+    }
+  ],
+  "keepsake": "shrine_bell",
+  "keepsake_name": "A Bell from the Canal Shrine",
+  "keepsake_from": "the_canal_shrine",
+  "tall": true
+}

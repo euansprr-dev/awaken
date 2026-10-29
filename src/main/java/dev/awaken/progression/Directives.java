@@ -100,7 +100,9 @@ public final class Directives {
         p.directives.add(new Profile.DirectiveState(OPENING, true, today, today + Math.max(4, def.expiresDays()), Progression.snapshot(p, cs)));
         p.counters.put("awaken:directive_offered/" + OPENING, today + 1);
         p.counters.merge("awaken:directive_offers", 1L, Long::sum);
-        Signal.toast(player, Component.literal("Directive · " + def.text() + " Your first gate will open somewhere outside the city walls."));
+        ProgressionNotices.tell(player, "directive/" + OPENING + "/accepted/" + today, "Directive accepted", def.text(),
+                "Your first gate will open somewhere outside the city walls.", dev.awaken.core.api.NoticeEvents.Kind.TASK,
+                "Clear the first floor of a gate, then follow your task card.", "Reward: " + RewardWords.describe(def.reward()) + ".");
         DirectorLog.log(player, "directive", "the Registry's own: " + OPENING + ", accepted");
         Progression.markDirty(player);
         return true;
@@ -114,10 +116,15 @@ public final class Directives {
         List<String> parts = new ArrayList<>();
         if (r.levels() > 0) parts.add(String.format("%.0f%% of a level", r.levels() * 100));
         if (r.statPoints() > 0) parts.add("+" + r.statPoints() + " point" + (r.statPoints() > 1 ? "s" : ""));
-        r.stat().ifPresent(s -> parts.add("+" + Math.max(1, r.statAmount()) + " " + s.name()));
+        r.stat().ifPresent(s -> parts.add("+" + Math.max(1, r.statAmount()) + " " + s.displayName));
         r.power().ifPresent(pw -> parts.add("a power"));
         r.item().ifPresent(i -> parts.add("an item"));
         return parts.isEmpty() ? "Recognition" : String.join(", ", parts);
+    }
+
+    /** How long is left, said plainly (the last day still counts: a directive expires the day after it). */
+    static String timeLeft(long days) {
+        return days <= 0 ? "Finish it today." : days == 1 ? "You have until tomorrow to finish it." : "You have " + days + " days to finish it.";
     }
 
     /** Signal answer: Y accepts (baseline starts now), N dismisses. */
@@ -137,7 +144,9 @@ public final class Directives {
                 Set<String> cs = new HashSet<>();
                 def.condition().counters(cs);
                 p.directives.set(i, new Profile.DirectiveState(key, true, d.offeredDay(), d.expiresDay(), Progression.snapshot(p, cs)));
-                Signal.toast(player, Component.literal("Directive accepted"));
+                ProgressionNotices.tell(player, "directive/" + key + "/accepted/" + d.offeredDay(), "Directive accepted", def.text(),
+                        "It's on your task list. " + timeLeft(d.expiresDay() - PlayDays.current(player.level().getServer())), dev.awaken.core.api.NoticeEvents.Kind.TASK,
+                        "Only what you do from now on counts. Your Journal shows how far along you are.", "Reward: " + RewardWords.describe(def.reward()) + ".");
             }
             Progression.markDirty(player);
             return;
@@ -155,8 +164,9 @@ public final class Directives {
                 p.counters.merge("awaken:directive_done/" + d.id(), 1L, Long::sum);
                 p.counters.merge(Counters.DIRECTIVES_KEPT_STREAK, 1L, Long::sum);
                 dev.awaken.core.audio.AudioCues.ui(player, dev.awaken.core.audio.UiSound.QUEST_DONE);
-                Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Directive complete"))
-                        .body(Component.literal(def.text())).row(Component.literal("Reward"), Component.literal(describe(def.reward()))).build());
+                ProgressionNotices.tell(player, "directive/" + d.id() + "/" + p.counter("awaken:directive_done/" + d.id()),
+                        "Directive complete", def.text(), "Done, and the reward is yours.", dev.awaken.core.api.NoticeEvents.Kind.TASK,
+                        "Reward: " + RewardWords.describe(def.reward()) + ".", "It's off your task list now.");
                 RewardHooks.apply(player, def.reward(), Progression.XpSource.DIRECTIVE);
                 Progression.evaluate(player, Counters.DIRECTIVES_KEPT_STREAK);
                 Progression.markDirty(player);

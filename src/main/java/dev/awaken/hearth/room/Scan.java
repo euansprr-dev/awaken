@@ -1,6 +1,5 @@
 package dev.awaken.hearth.room;
 
-import dev.awaken.hearth.echo.EchoRole;
 import net.minecraft.core.BlockPos;
 
 import java.util.List;
@@ -8,13 +7,13 @@ import java.util.List;
 /**
  * One finished room scan: the closed rooms, the furniture that isn't in one (and why), how many of each piece of
  * furniture the radius holds ({@code furniture[Furniture.ordinal()]}; trophies count only when mounted), what the land
- * round the rooms has (for Comfort), the faces of each material family over every room (the home's Style), and every role pad in the radius (pads placed before the Hearth join it).
+ * round the rooms has (for Comfort), and the faces of each material family over every room (the home's Style).
  */
-public record Scan(List<Room> rooms, List<Miss> misses, int[] furniture, Land land, List<Pad> pads, int[] families, Yard yard) {
-    public static final Scan EMPTY = new Scan(List.of(), List.of(), new int[Furniture.COUNT], Land.NONE, List.of(), new int[Materials.FAMILIES], Yard.NONE);
+public record Scan(List<Room> rooms, List<Miss> misses, int[] furniture, Land land, int[] families, Yard yard) {
+    public static final Scan EMPTY = new Scan(List.of(), List.of(), new int[Furniture.COUNT], Land.NONE, new int[Materials.FAMILIES], Yard.NONE);
 
-    public Scan(List<Room> rooms, List<Miss> misses, int[] furniture, Land land, List<Pad> pads, int[] families) {
-        this(rooms, misses, furniture, land, pads, families, Yard.NONE);
+    public Scan(List<Room> rooms, List<Miss> misses, int[] furniture, Land land, int[] families) {
+        this(rooms, misses, furniture, land, families, Yard.NONE);
     }
 
     /**
@@ -28,9 +27,6 @@ public record Scan(List<Room> rooms, List<Miss> misses, int[] furniture, Land la
     public int count(Furniture f) {
         return furniture.length > f.ordinal() ? furniture[f.ordinal()] : 0;
     }
-
-    /** A role pad the sweep found. */
-    public record Pad(BlockPos pos, EchoRole role) {}
 
     /**
      * The land's features outside the rooms (PLAN 4.5): a field (farmland), a pen (farm animals by fences), a garden (a

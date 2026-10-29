@@ -1,0 +1,12 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#awaken:wild/taiga",
+  "features": [
+    "awaken:wild/taiga_ground",
+    "awaken:wild/taiga_bush",
+    "awaken:wild/taiga_giant",
+    "awaken:wild/taiga_snag",
+    "awaken:wild/taiga_deadfall"
+  ],
+  "step": "vegetal_decoration"
+}

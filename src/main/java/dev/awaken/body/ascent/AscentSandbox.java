@@ -17,8 +17,9 @@ import java.util.Set;
 
 /**
  * Phase 0's feel sandbox ({@code /awaken ascent sandbox}): a lane of giant trees in front of you, trunks 26-38 tall
- * with branches to swing from, and a launch tower at its start for glides and dives. Plain blocks, persistent leaves,
- * built at once; the player lands on the tower facing down the lane.
+ * with branches to swing from, and a launch tower at its start for glides and dives; behind the tower a city street
+ * (the swing bench's "city", SPEC §17.31): towers 22-39 high either side of a 16-wide street, a skybridge across it and
+ * a wall at its end. Plain blocks, persistent leaves, built at once; the player lands on the tower facing down the lane.
  */
 final class AscentSandbox {
     private AscentSandbox() {}
@@ -69,9 +70,43 @@ final class AscentSandbox {
             tree(level, r, x, g, z, 26 + r.nextInt(13));
             n++;
         }
+        city(level, o, -fx, -fz, ground, RandomSource.create(o.asLong() + 11));
         float yaw = facing.toYRot();
         p.teleportTo(level, o.getX() + 0.5, top + 1, o.getZ() + 0.5, Set.of(), yaw, 8F, true);
         return n;
+    }
+
+    /**
+     * The city street behind the tower, running along (fx, fz) from it: hollow towers (walls, a lit band every 6 up, a
+     * roof) either side, a skybridge 15 up a third of the way, and a wall across the end (the same boxes as the bench's).
+     */
+    private static void city(ServerLevel level, BlockPos o, int fx, int fz, int ground, RandomSource r) {
+        int sx = -fz, sz = fx;
+        BlockState wall = Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(), band = Blocks.SEA_LANTERN.defaultBlockState(),
+                roof = Blocks.POLISHED_BLACKSTONE.defaultBlockState();
+        for (int side : new int[] {-1, 1}) {
+            int along = 8;
+            while (along < 230) {
+                int len = 14 + r.nextInt(8), h = 22 + r.nextInt(18);
+                int a0 = side < 0 ? -26 : 8, a1 = side < 0 ? -8 : 26;
+                for (int a = along; a < along + len; a++) for (int c = a0; c < a1; c++) {
+                    int x = o.getX() + fx * a + sx * c, z = o.getZ() + fz * a + sz * c;
+                    boolean edge = a == along || a == along + len - 1 || c == a0 || c == a1 - 1;
+                    int g = Math.min(ground, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z));
+                    for (int y = g - 2; y < ground + h; y++) {
+                        if (edge) set(level, x, y, z, (y - ground) % 6 == 3 ? band : wall);
+                    }
+                    set(level, x, ground + h - 1, z, roof);
+                }
+                along += len + 5 + r.nextInt(3);
+            }
+        }
+        for (int a = 96; a < 100; a++) for (int c = -8; c < 8; c++) for (int y = 15; y < 18; y++) {
+            set(level, o.getX() + fx * a + sx * c, ground + y, o.getZ() + fz * a + sz * c, wall);
+        }
+        for (int c = -26; c < 26; c++) for (int y = -2; y < 40; y++) for (int a = 238; a < 240; a++) {
+            set(level, o.getX() + fx * a + sx * c, ground + y, o.getZ() + fz * a + sz * c, (y % 6 == 3) ? band : wall);
+        }
     }
 
     /** A giant: a 3x3 trunk, three branches out of its upper half, and a wide crown of leaves that never decay. */

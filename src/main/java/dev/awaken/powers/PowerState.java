@@ -23,7 +23,7 @@ public final class PowerState {
         return STATES.computeIfAbsent(player.getUUID(), k -> new PowerState());
     }
 
-    static @Nullable PowerState peek(Player player) {
+    public static @Nullable PowerState peek(Player player) {
         return STATES.get(player.getUUID());
     }
 
@@ -40,8 +40,18 @@ public final class PowerState {
     final List<Running> running = new ArrayList<>();
     private final Map<String, Buff> buffs = new HashMap<>();
 
+    /** A ladder step's second press (SPEC 36.3): within its window the key runs {@code run}, free; the cooldown waits for it. */
+    record FollowUp(PowerType type, long until, Runnable run) {}
+
+    final Map<String, FollowUp> followUps = new HashMap<>();
+
     // dash chains
     int dashChain;
+
+    /** Dashes in the current airborne chain before this one (a ladder step counts them). */
+    public int dashChain() {
+        return dashChain;
+    }
     boolean wasOnGround = true;
 
     // combat
@@ -61,6 +71,9 @@ public final class PowerState {
         /** Kill tokens: ordinary kills pay mastery while tokens last; one returns every 10 s, at most 6. */
         float killTokens = Mastery.KILL_TOKENS;
         long tokensAt;
+        /** Use-based earning (SPEC 36.8): the minute it counts in and what it has paid in that minute. */
+        long useMinute = -1;
+        float usePaid;
 
         Track(PowerType type) {
             this.type = type;
@@ -96,6 +109,7 @@ public final class PowerState {
     long lastDangerHash;
     int flowTickBank;
 
+    long previewAt = Long.MIN_VALUE;
     boolean loadoutDirty;
 
     void refreshPerks(ServerPlayer player, long now) {
@@ -112,6 +126,9 @@ public final class PowerState {
         flowTickBank++;
     }
 
+    /** Danger Sense's Sixth Sense: threats it warned of (entity id to the tick), to see a warned blow dodged. */
+    public final Map<Integer, Long> warned = new HashMap<>();
+
     // ---- buffs ------------------------------------------------------------------------------------------------------
 
     public void buff(String key, long until, double value) {
@@ -126,6 +143,14 @@ public final class PowerState {
             return 0;
         }
         return b.value();
+    }
+
+    /** Adds {@code delta} to a live buff's value, keeping its end; returns the new value (0 when it isn't live). */
+    public double adjust(String key, long now, double delta) {
+        Buff b = buffs.get(key);
+        if (b == null || b.until() < now) return 0;
+        buffs.put(key, new Buff(b.until(), b.value() + delta));
+        return b.value() + delta;
     }
 
     public boolean has(String key, long now) {
@@ -181,6 +206,11 @@ public final class PowerState {
         public static final String BRACE = "brace";
         public static final String BRACE_REFLECT = "brace_reflect";
         public static final String NANITE = "nanite";
+        public static final String NANITE_ARC = "ladder_nanite_arc";
+        public static final String AURA_GUARD = "ladder_aura_guard";
+        public static final String FROST_SHATTER = "ladder_frost_shatter";
+        public static final String FROST_BLOOM = "ladder_frost_bloom";
+        public static final String TWIN_CASTS = "ladder_twin_casts";
         public static final String CLOAK = "cloak";
         public static final String READ_INTENT = "read_intent";
         public static final String FORESIGHT = "foresight";
@@ -189,5 +219,29 @@ public final class PowerState {
         public static final String BULWARK = "bulwark";
         public static final String OVERLOAD_COST = "overload_cost";
         public static final String CONDUIT = "conduit";
+        /** A ladder step's guard: damage taken is cut by the value (SPEC 36.3). */
+        public static final String GUARD = "ladder_guard";
+        /** Dash's Momentum (SPEC 36): the next blow within a second hits harder (value = the multiplier). */
+        public static final String MOMENTUM = "ladder_momentum";
+        /** Shadow Step's Blinding: the backstab blinds for this many ticks. */
+        public static final String BACKSTAB_BLIND = "ladder_backstab_blind";
+        /** Brace's Counter Shove: damage the brace took off, summed for the shove when it ends. */
+        public static final String BRACE_ABSORBED = "ladder_brace_absorbed";
+        /** Brace's Unmoved: projectiles are cut by this much more while braced. */
+        public static final String BRACE_PROJECTILE = "ladder_brace_projectile";
+        /** Brace's Mountain Stance: the plates left; each one catches a whole hit. */
+        public static final String BRACE_PLATES = "ladder_brace_plates";
+        /** Hover's Calm Air: projectiles are cut by this much while you hover. */
+        public static final String HOVER_CALM = "ladder_hover_calm";
+        /** Barrier's Halo Ward: plates left to stop a projectile each. */
+        public static final String BARRIER_PLATES = "ladder_barrier_plates";
+        /** Overload's Live Wire: during the afterglow, an energy hit jumps to a second foe for this share. */
+        public static final String LIVE_WIRE = "ladder_live_wire";
+        /** Cloak's Shade Step: while cloaked, Shadow Step and Echo Swap cost nothing. */
+        public static final String CLOAK_FREE = "ladder_cloak_free";
+        /** Read Intent's Open Book: blows on a read foe are critical. */
+        public static final String READ_CRIT = "ladder_read_crit";
+        /** Thunderclap's Heaven's Clap: blows chain lightning to a second foe for this share of the hit. */
+        public static final String CHAIN_BLOWS = "ladder_chain_blows";
     }
 }

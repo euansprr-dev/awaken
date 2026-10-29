@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "awaken:blocks/hive_floor_stairs",
+  "pools": [
+    {
+      "rolls": 1,
+      "bonus_rolls": 0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:hive_floor_stairs"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

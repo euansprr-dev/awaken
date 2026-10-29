@@ -8,8 +8,8 @@
   "reward": {
     "perks": [
       {
-        "id": "awaken:bind_chance",
-        "amount": 0.1
+        "id": "awaken:cord_length",
+        "amount": 64
       }
     ]
   }

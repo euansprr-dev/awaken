@@ -1,0 +1,15 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/wild/frost_grass_0"
+      },
+      {
+        "model": "awaken:block/wild/frost_grass_1"
+      },
+      {
+        "model": "awaken:block/wild/frost_grass_2"
+      }
+    ]
+  }
+}

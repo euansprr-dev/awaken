@@ -331,6 +331,9 @@ public final class AwakenTests {
         RegistryDump.register();
         WorldgenTests.register();
         InputHoldTests.register();
+        EdgeHoldTests.register();
+        PassageTests.register();
+        JourneyLedgerTests.register();
         FUNCTIONS.register(modBus);
         modBus.addListener(AwakenTests::onRegisterTests);
         NeoForge.EVENT_BUS.addListener(AwakenTests::onDespawnCheck);

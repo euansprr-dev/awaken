@@ -63,6 +63,24 @@ public final class Settlements {
         TALK.add(t);
     }
 
+    /**
+     * (SPEC §43.3) A citizen of any settlement, Carillon too, shown what a player holds in their main hand (a keepsake
+     * with their family's name): the first that answers true has answered, before any talk.
+     */
+    public interface Shown {
+        boolean shown(net.minecraft.server.level.ServerPlayer p, Settlement s, int rec, net.minecraft.world.item.ItemStack held);
+    }
+
+    private static final java.util.List<Shown> SHOWN = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    public static void onShown(Shown s) {
+        SHOWN.add(s);
+    }
+
+    public static java.util.List<Shown> shown() {
+        return SHOWN;
+    }
+
     public static java.util.List<Talk> talkers() {
         return TALK;
     }
@@ -108,5 +126,13 @@ public final class Settlements {
     /** How many of a settlement's people have a body now. */
     public static int bodies(int id) {
         return access == null ? 0 : access.bodies(id);
+    }
+
+    /**
+     * (SPEC §28.11) Whether one of its people can stand with their feet in cell (x, y, z): a floor, two clear rows, no
+     * water or fire. The engine's own rule, for a builder choosing where its people stand.
+     */
+    public static boolean standable(net.minecraft.world.level.BlockGetter ground, int x, int y, int z) {
+        return dev.awaken.citizens.Footing.standable(ground, x, y, z);
     }
 }

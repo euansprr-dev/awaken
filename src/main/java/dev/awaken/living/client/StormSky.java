@@ -87,11 +87,15 @@ public final class StormSky {
         return true;
     }
 
-    /** The cell's flash at {@code now}, 0..1: a burst and its restrikes, each gone in a fraction of a second. */
+    /**
+     * The cell's flash at {@code now}, 0..1: a burst and its restrikes, each gone in a fraction of a second; nothing once
+     * it is too faint to see (Lens marches a flash's rays every frame while it shows, so a long invisible tail cost frames).
+     */
     static float flash(Cell c, float now) {
         float s = (now - c.flashAt) / 20F;
         if (s < 0F || s > 1.2F) return 0F;
-        return c.flashAmp * Math.min(1F, pulse(s, 0F) + 0.7F * pulse(s, c.re1) + 0.45F * pulse(s, c.re2));
+        float f = c.flashAmp * Math.min(1F, pulse(s, 0F) + 0.7F * pulse(s, c.re1) + 0.45F * pulse(s, c.re2));
+        return f < 0.02F ? 0F : f;
     }
 
     private static float pulse(float s, float at) {
@@ -131,6 +135,14 @@ public final class StormSky {
         return setRain < 0F ? level : serverThunder * serverRain;
     }
 
+    /**
+     * Whether a storm's lightning has flashed the sky in the last two seconds (a bolt's own sky flash lasts up to about
+     * 1.5 s): Far Sight holds its cached horizon's sky light through it rather than redrawing the far land for a flash.
+     */
+    public static boolean flashing() {
+        return LivingClient.ticks - lastStrikeAt < 40;
+    }
+
     /** Storms show only in the overworld, while the Living Wilds are shown. */
     private static boolean here() {
         Minecraft mc = Minecraft.getInstance();
@@ -139,20 +151,28 @@ public final class StormSky {
 
     // ---- every tick -------------------------------------------------------------------------------------------------
 
-    static void tick(Minecraft mc) {
+    /** The cells follow the storm tells: called when the tells arrive (every 2 s), not every tick. */
+    static void sync() {
         float now = LivingClient.ticks;
-        // the cells follow the storm tells
-        CELLS.removeIf(c -> !PulseFx.SHOWN.containsKey(c.id) || !"storm".equals(PulseFx.SHOWN.get(c.id).tell));
+        for (int i = CELLS.size() - 1; i >= 0; i--) {
+            PulseFx.Shown s = PulseFx.SHOWN.get(CELLS.get(i).id);
+            if (s == null || !"storm".equals(s.tell)) CELLS.remove(i);
+        }
         for (var e : PulseFx.SHOWN.entrySet()) {
             if (!"storm".equals(e.getValue().tell)) continue;
             boolean known = false;
-            for (Cell c : CELLS) known |= c.id == e.getKey();
+            for (int i = 0; i < CELLS.size(); i++) known |= CELLS.get(i).id == e.getKey();
             if (!known) CELLS.add(new Cell(e.getKey(), now, e.getValue().y));
         }
+    }
+
+    static void tick(Minecraft mc) {
+        float now = LivingClient.ticks;
         Vec3 cam = mc.gameRenderer.mainCamera().position();
         float want = 0F;
         boolean here = here();
-        for (Cell c : CELLS) {
+        for (int i = 0; i < CELLS.size(); i++) {
+            Cell c = CELLS.get(i);
             if (!place(c, now)) continue;
             double cx = c.x + c.windX * StormCell.RAIN_AHEAD, cz = c.z + c.windZ * StormCell.RAIN_AHEAD;
             if (here) want = Math.max(want, StormCell.weatherAt(Math.sqrt((cam.x - cx) * (cam.x - cx) + (cam.z - cz) * (cam.z - cz))) * c.strength);
@@ -162,12 +182,16 @@ public final class StormSky {
                 flashAt(c, now, c.x + Math.cos(a) * r + c.windX * 20, c.baseY + 50 + RANDOM.nextDouble() * 160,
                         c.z + Math.sin(a) * r + c.windZ * 20, 0.25F + 0.15F * RANDOM.nextFloat());
                 hear(now, c.fx, c.fy, c.fz, cam, false);
-                c.nextFlicker = now + 50 + RANDOM.nextInt(90);
+                c.nextFlicker = now + 160 + RANDOM.nextInt(160);
             }
         }
-        if (mc.level != null) weather(mc.level, want);
+        // the weather moves in sixths, eased over three quarters of a second, and holds between (StormCell.weatherStep); away
+        // from the overworld it is simply gone
+        step = here ? StormCell.weatherStep(step, want) : 0F;
+        shown = here ? shown + Mth.clamp(step - shown, -StormCell.WEATHER_EASE, StormCell.WEATHER_EASE) : 0F;
+        if (mc.level != null) weather(mc.level, shown);
         sounds(mc, now);
-        RECENT.removeIf(b -> now - b[3] > 10);
+        for (int i = RECENT.size() - 1; i >= 0; i--) if (now - RECENT.get(i)[3] > 10) RECENT.remove(i);
     }
 
     private static void flashAt(Cell c, float now, double x, double y, double z, float amp) {
@@ -184,6 +208,9 @@ public final class StormSky {
 
     // the server's own weather (what to hand back), and what this client last set over it (-1: not overriding)
     private static float serverRain, serverThunder, setRain = -1F, setThunder;
+    // the storm's weather: the sixth it is heading to, and what is shown on the way there
+    private static float step, shown;
+    private static float lastStrikeAt = -1000F;
     private static ClientLevel weatherLevel;
 
     /** Rain and thunder at least {@code want} here, never less than the server's own (followed if it changes). */
@@ -216,6 +243,7 @@ public final class StormSky {
 
     static void reset() {
         CELLS.clear();
+        step = shown = 0F;
         PENDING.clear();
         RECENT.clear();
         Minecraft mc = Minecraft.getInstance();
@@ -229,8 +257,11 @@ public final class StormSky {
 
     // ---- strikes and their thunder ------------------------------------------------------------------------------------
 
-    private static final Identifier THUNDER = SoundEvents.LIGHTNING_BOLT_THUNDER.location(), CRACK = SoundEvents.LIGHTNING_BOLT_IMPACT.location(),
-            ROLL = dev.awaken.living.LivingContent.STORM_ROLL.getId();
+    private static final Identifier THUNDER = SoundEvents.LIGHTNING_BOLT_THUNDER.location(), CRACK = SoundEvents.LIGHTNING_BOLT_IMPACT.location();
+    // the storm's own voices are ambient.* events (the vanilla thunder and crack under its own names, and the roll):
+    // Sound Physics leaves ambient sounds alone, where it ray-traced (and cloned the level for) one every second or two
+    private static final Identifier MY_THUNDER = dev.awaken.living.LivingContent.STORM_THUNDER.getId(),
+            MY_CRACK = dev.awaken.living.LivingContent.STORM_CRACK.getId(), ROLL = dev.awaken.living.LivingContent.STORM_ROLL.getId();
     /** The storm's strikes of the last half second (x, y, z, client tick): their own thunder is silenced, ours comes late. */
     private static final List<double[]> RECENT = new ArrayList<>();
     /** Thunder on its way: (client tick it arrives, x, y, z, distance, 1 a strike / 0 lightning inside the cloud). */
@@ -259,6 +290,7 @@ public final class StormSky {
         }
         if (best == null) return;
         RECENT.add(new double[]{x, y, z, now});
+        lastStrikeAt = now;
         // the strike lights the cloud from inside, just over where it came down
         flashAt(best, now, x, best.baseY + 25, z, 1F);
         hear(now, x, y, z, Minecraft.getInstance().gameRenderer.mainCamera().position(), true);
@@ -292,11 +324,11 @@ public final class StormSky {
             if (p[5] > 0) {
                 if (d < StormCell.CRACK) {
                     // close: the crack, white and hard, and the game's thunder right on it
-                    play(mc, CRACK, p, 1F, 0.55F + 0.15F * RANDOM.nextFloat());
-                    play(mc, THUNDER, p, 1F, 0.85F + 0.15F * RANDOM.nextFloat());
+                    play(mc, MY_CRACK, p, 1F, 0.55F + 0.15F * RANDOM.nextFloat());
+                    play(mc, MY_THUNDER, p, 1F, 0.85F + 0.15F * RANDOM.nextFloat());
                 } else {
                     // far: no crack; the thunder lower and softer the farther, and a long roll after it
-                    play(mc, THUNDER, p, (float) Mth.clamp(1.15 - d / 520, 0.3, 1), (float) Mth.clamp(0.95 - d / 1400, 0.62, 0.95));
+                    play(mc, MY_THUNDER, p, (float) Mth.clamp(1.15 - d / 520, 0.3, 1), (float) Mth.clamp(0.95 - d / 1400, 0.62, 0.95));
                     play(mc, ROLL, p, (float) Mth.clamp((d - 40) / 300, 0.2, 0.85), 0.9F + 0.15F * RANDOM.nextFloat());
                 }
             } else {

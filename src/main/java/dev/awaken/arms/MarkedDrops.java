@@ -54,12 +54,12 @@ final class MarkedDrops {
         ItemEntity drop = new ItemEntity(level, at.x, at.y + 0.5, at.z, stack);
         drop.setGlowingTag(true);
         level.addFreshEntity(drop);
-        List<String> marks = Marks.of(stack).marks();
-        Signal.toast(p, Component.literal("MARKED · ").withColor(0x6FB3FF).append(stack.getHoverName().copy().withColor(0xD6ECFF))
-                .append(Component.literal(" · " + String.join(", ", marks.stream().map(id -> {
-                    Marks.Mark m = Marks.get(id);
-                    return m == null ? id : m.name();
-                }).toList())).withColor(0xC8C2B0)));
+        List<String> details = new java.util.ArrayList<>();
+        details.add("It's on the ground where the enemy fell. Pick it up and hold it to use its Marks.");
+        details.addAll(ArmsNotices.marks(stack));
+        dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("marked_drop/" + drop.getUUID(),
+                "Marked weapon", stack.getHoverName().getString(), "The enemy dropped a weapon with Marks on it.", details,
+                dev.awaken.core.api.NoticeEvents.Kind.REWARD, 0x6FB3FF));
     }
 
     /** The forged tier (a rank's letter) whose gates sit at this content level. */

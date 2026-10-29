@@ -579,6 +579,167 @@ def s_glyph_circle():
     return [b]
 
 
+# ---- the ladder's sprites (SPEC 36.5) ----------------------------------------------------------------------------------
+
+def _seal(b, c, r_out=14.6, r_in=11.8, ticks=24):
+    """The ring every family sigil sits in: a bright outer circle, a dimmer inner one, short ticks between."""
+    for p in circle_pts(c, c, r_out):
+        b.put(*p, 4)
+    for p in circle_pts(c, c, r_in):
+        b.put(*p, 2)
+    for i in range(ticks):
+        a = i / ticks * math.tau
+        r0 = 12.6 if i % 3 == 0 else 13.2
+        b.line(c + math.cos(a) * r0, c + math.sin(a) * r0, c + math.cos(a) * 13.9, c + math.sin(a) * 13.9, 3 if i % 3 == 0 else 2)
+
+
+def _sigil(fam):
+    b = Bands(32)
+    c = 15.5
+    _seal(b, c)
+    if fam == 0:  # Kinetic: a heavy four-point star with cracks running out from it
+        for a in range(4):
+            t = a * math.pi / 2
+            tip = (c + math.cos(t) * 9.5, c + math.sin(t) * 9.5)
+            l = (c + math.cos(t + 0.9) * 3.2, c + math.sin(t + 0.9) * 3.2)
+            r = (c + math.cos(t - 0.9) * 3.2, c + math.sin(t - 0.9) * 3.2)
+            b.poly([l, tip, r], 4)
+            b.line(c + math.cos(t + math.pi / 4) * 4, c + math.sin(t + math.pi / 4) * 4, c + math.cos(t + math.pi / 4) * 8.5,
+                   c + math.sin(t + math.pi / 4) * 8.5, 2)
+        b.grow(3, src=4, where=lambda x, y: math.hypot(x - c, y - c) < 3.5)
+    elif fam == 1:  # Velocity: two chevrons driving right through a speed line
+        for k, dx in enumerate((-3.5, 2.5)):
+            b.poly([(c + dx - 3, c - 6), (c + dx + 3, c), (c + dx - 3, c + 6)], 4 - k)
+        b.line(c - 9, c, c - 5, c, 3)
+        b.line(c - 9, c - 3, c - 7, c - 3, 2)
+        b.line(c - 9, c + 3, c - 7, c + 3, 2)
+    elif fam == 2:  # Flight: a pair of swept wings over a rising point
+        for sgn in (-1, 1):
+            pts = [(c + sgn * (1 + i * 1.1), c + 1 - math.sin(i / 7 * math.pi * 0.9) * 6 + i * 0.4) for i in range(8)]
+            b.poly(pts, 4)
+            b.poly([(x, y + 2.2) for x, y in pts[1:-1]], 2)
+        b.poly([(c, c - 8), (c - 1.5, c - 5), (c + 1.5, c - 5), (c, c - 8)], 3)
+    elif fam == 3:  # Energy: a sun, a hot disc and eight rays, long and short
+        for p in circle_pts(c, c, 3.6):
+            b.put(*p, 4)
+        b.grow(3, src=4, where=lambda x, y: math.hypot(x - c, y - c) < 3.2)
+        for i in range(8):
+            a = i / 8 * math.tau
+            r1 = 9.8 if i % 2 == 0 else 7.6
+            b.line(c + math.cos(a) * 5.2, c + math.sin(a) * 5.2, c + math.cos(a) * r1, c + math.sin(a) * r1, 4 if i % 2 == 0 else 3)
+    elif fam == 4:  # Shadow: a crescent with a single star in its arms
+        for p in circle_pts(c, c, 8.0):
+            if math.hypot(p[0] - (c + 3.6), p[1] - (c - 1.5)) > 6.6:
+                b.put(*p, 4)
+        for p in circle_pts(c + 3.6, c - 1.5, 6.6):
+            if math.hypot(p[0] - c, p[1] - c) < 8.0:
+                b.put(*p, 3)
+        b.put(c + 4, c + 2, 4)
+        b.grow(2, src=4, where=lambda x, y: math.hypot(x - (c + 4), y - (c + 2)) < 1.6)
+    elif fam == 5:  # Mind: an eye, the lids as two arcs, a bright pupil
+        for i in range(17):
+            x = c - 8 + i
+            h = math.sqrt(max(0.0, 1 - ((x - c) / 8.5) ** 2)) * 5.2
+            b.put(x, c - h, 4)
+            b.put(x, c + h, 3)
+        for p in circle_pts(c, c, 2.6):
+            b.put(*p, 4)
+        b.put(c, c, 3)
+        b.put(c + 1, c, 3)
+    elif fam == 6:  # Architect: a square set in a square, the compass marks at its corners
+        b.poly([(c - 6, c - 6), (c + 6, c - 6), (c + 6, c + 6), (c - 6, c + 6), (c - 6, c - 6)], 4)
+        b.poly([(c, c - 8.5), (c + 8.5, c), (c, c + 8.5), (c - 8.5, c), (c, c - 8.5)], 2)
+        b.line(c - 6, c, c + 6, c, 3)
+        b.line(c, c - 6, c, c + 6, 3)
+    elif fam == 7:  # Tech: a hex with circuit traces ending in nodes
+        hexp = [(c + math.cos(math.pi / 6 + i * math.pi / 3) * 6.5, c + math.sin(math.pi / 6 + i * math.pi / 3) * 6.5) for i in range(7)]
+        b.poly(hexp, 4)
+        for i in (0, 2, 4):
+            a = math.pi / 6 + i * math.pi / 3
+            x0, y0 = c + math.cos(a) * 6.5, c + math.sin(a) * 6.5
+            x1, y1 = c + math.cos(a) * 9.6, c + math.sin(a) * 9.6
+            b.line(x0, y0, x1, y1, 3)
+            b.force(x1, y1, 4)
+        b.put(c, c, 4)
+        b.grow(3, src=4, where=lambda x, y: math.hypot(x - c, y - c) < 1.6)
+    else:  # Spirit: a lotus of three petals over a still line
+        for ang, lv in ((-90, 4), (-145, 3), (-35, 3)):
+            a = math.radians(ang)
+            tip = (c + math.cos(a) * 9.5, c + 3 + math.sin(a) * 9.5)
+            base = (c, c + 4)
+            nx, ny = -math.sin(a), math.cos(a)
+            w = 3.2
+            mid1 = (base[0] + (tip[0] - base[0]) * 0.5 + nx * w, base[1] + (tip[1] - base[1]) * 0.5 + ny * w)
+            mid2 = (base[0] + (tip[0] - base[0]) * 0.5 - nx * w, base[1] + (tip[1] - base[1]) * 0.5 - ny * w)
+            b.poly([base, mid1, tip, mid2, base], lv)
+        b.line(c - 7, c + 6, c + 7, c + 6, 2)
+    return b
+
+
+def s_sigil():
+    """One rune disc per family, in family order (PowerType.Family): the ladder's sigils at a palm or under the feet."""
+    return [_sigil(f) for f in range(9)]
+
+
+def s_petal():
+    """A lotus petal: a teardrop, pointed at the top, its lit midrib; the second frame curls."""
+    frames = []
+    for curl in (0.0, 1.0):
+        b = Bands(16)
+        for y in range(16):
+            u = (y + 0.5) / 16.0
+            half = 5.4 * math.sin(math.pi * min(1.0, u ** 0.75)) ** 0.9
+            cx = 7.5 + curl * (u - 0.5) * 2.0
+            for x in range(16):
+                d = abs(x - cx)
+                if d <= half:
+                    b.put(x, y, 3 if d < half - 1.2 else 2)
+        b.line(7.5 + curl * -0.6, 13, 7.5 + curl * 0.9, 2, 4)
+        frames.append(b)
+    return frames
+
+
+def s_feather():
+    frames = []
+    for curl in (0.0, 1.0):
+        b = Bands(16)
+        spine = [(7.5 + curl * math.sin(i / 14 * math.pi) * 1.5, 14.5 - i) for i in range(15)]
+        for i, (x, y) in enumerate(spine):
+            half = math.sin(min(1.0, i / 12.0) * math.pi * 0.85) * (4.6 - i * 0.18)
+            for k in range(1, int(half) + 1):
+                lv = 3 if k < half * 0.6 else 2
+                b.put(x - k, y - k * 0.35, lv)
+                b.put(x + k, y - k * 0.35, lv)
+        b.poly(spine, 4)
+        frames.append(b)
+    return frames
+
+
+def s_plate():
+    """A stone plate (alpha): an irregular slab, a lit top edge, a dark lower lip."""
+    frames = []
+    for pts in (((2, 4), (12, 2), (14, 9), (4, 13)), ((1, 7), (9, 2), (14, 6), (11, 13), (3, 12))):
+        b = Bands(16)
+        for y in range(16):
+            for x in range(16):
+                inside = True
+                for i in range(len(pts)):
+                    p, q = pts[i], pts[(i + 1) % len(pts)]
+                    if (q[0] - p[0]) * (y - p[1]) - (q[1] - p[1]) * (x - p[0]) < 0:
+                        inside = False
+                        break
+                if inside:
+                    b.put(x, y, 3, 1)
+        for i in range(len(pts)):
+            p, q = pts[i], pts[(i + 1) % len(pts)]
+            top = (p[1] + q[1]) / 2 < 7
+            for x, y in bresenham(*p, *q):
+                b.force(x, y, 4, 0 if top else 2)
+        b.line(6, 7, 9, 9, 3, 2)
+        frames.append(b)
+    return frames
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Alpha sprites
 
@@ -832,6 +993,8 @@ SPEC = {  # name: (kind, size, frames, maker)
     "smoke": ("alpha", 16, 6, s_smoke), "dust": ("alpha", 16, 6, s_dust), "decal_crack": ("alpha", 32, 1, s_crack),
     "decal_scorch": ("alpha", 32, 1, s_scorch), "decal_pool": ("alpha", 32, 1, s_pool),
     "halo": ("add", 64, 1, s_halo),
+    "sigil": ("add", 32, 9, s_sigil), "petal": ("add", 16, 2, s_petal), "feather": ("add", 16, 2, s_feather),
+    "plate": ("alpha", 16, 2, s_plate),
 }
 
 _IMAGES = {}

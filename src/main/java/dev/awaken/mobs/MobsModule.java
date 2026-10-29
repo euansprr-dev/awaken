@@ -38,16 +38,19 @@ public final class MobsModule {
         Strikes.installTells(e -> e instanceof AwakenMob m && m.telegraphTicks() > 0 && m.tellKind() != Strikes.Kind.NONE
                 ? new Strikes.Tell(m.telegraphTicks(), m.tellKind()) : null);
         Strikes.installStaggers(MobsModule::stagger);
+        Strikes.installGrounder((e, ticks) -> e instanceof AwakenMob m && m.ground(ticks));
         BodyMaterial.install(e -> e instanceof AwakenMob m ? m.def().material() : null);
         Signal.onAction("mobs", Mobs::onSignalAction);
         MobsCommands.register();
+        Stroll.init(); // tours: still creatures walked on the server (SPEC §23.1)
         MobsTests.register();
         dev.awaken.mobs.entity.BossHomeTests.register();
+        dev.awaken.mobs.entity.FlightTests.register();
     }
 
     /** Ours stagger through their own stance (the wind-up ends, they stand still); any other mob is slowed to a stop. */
     private static boolean stagger(LivingEntity e, int ticks) {
-        if (e instanceof AwakenMob m) return m.stagger(ticks);
+        if (e instanceof AwakenMob m) return m.ground(Math.max(ticks, dev.awaken.core.api.Aim.GROUNDED_TICKS)) || m.stagger(ticks); // a flier's broken stance brings it down
         if (!(e instanceof Mob mob) || !mob.isAlive()) return false;
         mob.getNavigation().stop();
         mob.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, ticks, 6, false, false));

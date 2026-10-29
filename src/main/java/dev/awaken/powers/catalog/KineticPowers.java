@@ -7,6 +7,8 @@ import dev.awaken.powers.Combat;
 import dev.awaken.powers.FlyingBlocks;
 import dev.awaken.powers.ForceInteractions;
 import dev.awaken.powers.Fx;
+import dev.awaken.powers.ladder.Riders;
+import dev.awaken.powers.ladder.Steps;
 import dev.awaken.powers.Moves;
 import dev.awaken.powers.PowerSounds;
 import dev.awaken.powers.PowerState;
@@ -16,6 +18,7 @@ import dev.awaken.powers.PowerType.Result;
 import dev.awaken.powers.PowerType.Slot;
 import dev.awaken.powers.PowerType.Variant;
 import dev.awaken.powers.Running;
+import dev.awaken.powers.Scheduler;
 import dev.awaken.powers.TerrainLedger;
 import dev.awaken.powers.fx.CastAnim;
 import dev.awaken.powers.fx.FxEvent;
@@ -54,7 +57,10 @@ final class KineticPowers {
                 .variant(Variant.of("Pounce", "Higher; the landing hits far harder").dmg(1.8f))
                 .predict((p, variant, level, strafe, forward) -> {
                     Vec3 f = Moves.flat(p.getLookAngle());
-                    double h = variant == 1 ? 1.5 : 1.1;
+                    // Comet Arc (2) carries further: the same table on both sides, so the client's prediction agrees
+                    var type = dev.awaken.powers.PowerRegistry.get("leap");
+                    double further = type == null ? 1 : dev.awaken.powers.ladder.PowerLadder.kit(type, level).range;
+                    double h = (variant == 1 ? 1.5 : 1.1) * further;
                     double y = variant == 2 ? 1.15 : variant == 1 ? 0.8 : 0.95;
                     return new Vec3(f.x * h, y, f.z * h);
                 })
@@ -102,18 +108,31 @@ final class KineticPowers {
         BlockPos ground = findGround(c, 24);
         double height = ground == null ? 0 : c.player.getY() - (ground.getY() + 1);
         if (Combat.airborne(c.player) && height > 1.5) {
-            Moves.launch(c.player, new Vec3(0, -2.4, 0));
-            Moves.noFall(c, 80);
-            double startY = c.player.getY();
-            Running r = Casting.start(c, 70);
+            // Worldbreaker (5): a beat's hang in the air, light round both fists, before the drive down
+            int hang = c.step(5) ? 6 : 0;
+            Moves.launch(c.player, hang > 0 ? Vec3.ZERO : new Vec3(0, -2.4, 0));
+            Moves.noFall(c, 80 + hang);
+            Running r = Casting.start(c, 70 + hang);
             // the dive: a comet trail and both fists raised, then the slam on landing
             Fx.at(c, FxKind.TRAIL, c.pos()).aux(2).ticks(70).send();
             r.tick(rr -> {
-                if (rr.age > 1 && (c.player.onGround() || c.player.isInWater())) {
+                if (rr.age < hang) {
+                    Moves.launch(c.player, Vec3.ZERO);
+                    return;
+                }
+                if (rr.age == hang && hang > 0) {
+                    rr.value = c.player.getY();
+                    Moves.launch(c.player, new Vec3(0, -2.4, 0));
+                    c.sound(PowerSounds.WHOOSH, 1f, 0.5f);
+                    return;
+                }
+                if (rr.age > hang + 1 && (c.player.onGround() || c.player.isInWater())) {
+                    double startY = hang > 0 ? rr.value : r.pos.y;
                     slamImpact(c, Math.min(14, Math.max(0, startY - c.player.getY()) * 0.6));
                     rr.stop();
                 }
             });
+            r.pos = c.pos();
             c.sound(PowerSounds.WHOOSH, 1f, 0.6f);
             return Result.OK;
         }
@@ -125,6 +144,15 @@ final class KineticPowers {
         Vec3 at = c.pos();
         double radius = c.radius(4.5);
         float dmg = c.dmg(c.type.damage + (float) bonus);
+        if (c.step(5) && c.type.path.equals("ground_slam")) {
+            // Worldbreaker: the slam pulls foes in first; the aftershock then throws them out
+            float pull = c.num(5, "pull", 0.7f);
+            for (LivingEntity e : Combat.foesAround(c.player, at.add(0, 0.5, 0), radius * 1.5)) {
+                Vec3 in = at.subtract(e.position());
+                if (in.lengthSqr() > 1) Combat.push(e, in.normalize().scale(pull).add(0, 0.1, 0));
+            }
+        }
+        double inner = radius * c.num(4, "inner", 0f);
         int hit = 0;
         LivingEntity first = null;
         for (LivingEntity e : Combat.foesAround(c.player, at.add(0, 0.5, 0), radius)) {
@@ -134,6 +162,8 @@ final class KineticPowers {
                 if (hit <= 4) Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).dir(e.position().subtract(at)).scale(0.9).noAnim().send();
             }
             Combat.knockFrom(e, at, 0.6, 0.55);
+            // Upheaval (4): the foes in the inner half are popped into the air
+            if (inner > 0 && e.distanceToSqr(at) < inner * inner) Combat.push(e, new Vec3(0, c.num(4, "lift", 0.65f), 0));
             if (c.is(2)) Combat.stun(e, 20);
         }
         for (LivingEntity e : Combat.bystandersAround(c.player, at.add(0, 0.5, 0), radius)) Combat.knockFrom(e, at, 0.45, 0.4);
@@ -159,14 +189,38 @@ final class KineticPowers {
         c.sound(PowerSounds.WHOOSH, 1f, 0.8f);
         Fx.at(c, FxKind.DASH, c.pos()).dir(c.player.getDeltaMovement()).ticks(20).send();
         Running r = Casting.start(c, 100);
+        if (c.step(5)) {
+            // Titanfall: press again in the air to drive straight down
+            c.followUp(90, () -> {
+                if (c.player.onGround() || r.stopping()) return;
+                r.value = c.player.getY();
+                r.count = 1;
+                Moves.launch(c.player, new Vec3(0, -2.6, 0));
+                Fx.at(c, FxKind.TRAIL, c.pos()).aux(2).ticks(30).plain().send();
+                c.sound(PowerSounds.WHOOSH, 1f, 0.5f);
+            });
+        }
         r.tick(rr -> {
             if (rr.age > 4 && (c.player.onGround() || c.player.isInWater())) {
                 Vec3 at = c.pos();
-                double landing = 3.0;
-                Moves.blast(c, at.add(0, 0.5, 0), landing, c.dmg(), null, 0.8, 0.4);
-                Fx.at(c, FxKind.SLAM, at).scale(landing).flag(FxEvent.REACH).flag(FxEvent.FULL, c.is(2)).anim(CastAnim.SLAM).send();
-                c.sound(at, PowerSounds.IMPACT, 0.8f, 1.1f);
-                Fx.quake(c.level, at, 8, 1.2f);
+                if (rr.count == 1) {
+                    // the plunge lands like a Ground Slam from that height
+                    slamImpact(c, Math.min(14, Math.max(0, rr.value - c.player.getY()) * 0.6));
+                } else {
+                    double landing = 3.0;
+                    // Hard Landing (3) hits harder
+                    Moves.blast(c, at.add(0, 0.5, 0), landing, c.dmg() * c.num(3, "land", 1f), null, 0.8, 0.4);
+                    Fx.at(c, FxKind.SLAM, at).scale(landing).flag(FxEvent.REACH).flag(FxEvent.FULL, c.is(2)).anim(CastAnim.SLAM).send();
+                    c.sound(at, PowerSounds.IMPACT, 0.8f, 1.1f);
+                    Fx.quake(c.level, at, 8, 1.2f);
+                }
+                if (c.step(4)) {
+                    // Rebound: you can't be knocked back for a second after
+                    Moves.addMod(c.player, Attributes.KNOCKBACK_RESISTANCE, "leap_steady", 1.0, AttributeModifier.Operation.ADD_VALUE);
+                    dev.awaken.powers.Scheduler.after((int) c.num(4, "steady", 20),
+                            () -> Moves.removeMod(c.player, Attributes.KNOCKBACK_RESISTANCE, "leap_steady"));
+                }
+                Casting.endFollowUp(c);
                 rr.stop();
             }
         });
@@ -178,10 +232,11 @@ final class KineticPowers {
         // wind-up: the fist cocked back over the shoulder, energy gathering at the knuckles
         Fx.at(c, FxKind.CHARGE, c.player.getEyePosition()).ticks(c.type.maxDuration).scale(1.1).send();
         Running r = Casting.channel(c, c.type.maxDuration);
+        int full = c.chargeTicks(20); // Knuckle Shards (2): full charge sooner
         r.tick(rr -> {
-            if (rr.age == 20) c.sound(PowerSounds.CHARGE_UP, 0.6f, 1.6f);
+            if (rr.age == full) c.sound(PowerSounds.CHARGE_UP, 0.6f, 1.6f);
         }).end((rr, why) -> {
-            double charge = Math.min(1.0, rr.age / 20.0);
+            double charge = Math.min(1.0, rr.age / (double) full);
             Fx.end(c, c.player, 0);
             if (why == Running.Why.CANCELLED) return;
             LivingEntity t = Combat.aimEntity(c.player, c.player.getEyePosition(), c.player.getLookAngle(), 4.5, 0.6, true);
@@ -203,7 +258,19 @@ final class KineticPowers {
                 }
                 default -> Combat.knockFrom(t, c.pos(), 0.8 + 1.4 * charge, 0.45 + 0.6 * charge);
             }
-            Fx.at(c, FxKind.IMPACT, at).dir(c.player.getLookAngle()).scale(1.1 + 1.6 * charge).flag(FxEvent.FULL, charge >= 1).send();
+            Vec3 look = c.player.getLookAngle();
+            if (c.step(3)) {
+                // Shockfist: a cone of force bursts out of the far side, along the punch
+                double reach = c.num(3, "reach", 3.5f);
+                for (LivingEntity e : Combat.foesInCone(c.player, at, look, reach, 35)) {
+                    if (e == t) continue;
+                    Combat.hurtFrom(c.player, null, e, dmg * c.num(3, "behind", 0.5f), null, true);
+                    Combat.knockFrom(e, at, 1.0 + 0.6 * charge, 0.3);
+                }
+            }
+            // Cannonball: a fully charged target flies and hits what it crashes into
+            if (c.step(4) && charge >= 1 && !c.is(2)) Steps.carry(c, t, dmg * c.num(4, "fly", 0.6f), 20);
+            Fx.at(c, FxKind.IMPACT, at).target(t).dir(look).scale(1.1 + 1.6 * charge).flag(FxEvent.FULL, charge >= 1).send();
             if (c.is(2)) Fx.at(c, FxKind.SLAM, t.position()).scale(2.2).noAnim().send();
             c.sound(at, PowerSounds.PUNCH, 1.2f, 1.1f - 0.3f * (float) charge);
             c.feel(t, (int) (40 + 40 * charge), 1.5f + 3f * (float) charge);
@@ -249,26 +316,51 @@ final class KineticPowers {
         float dmg = c.dmg();
         float radius = (float) c.radius(2.5);
         BlockState main = states.get(0);
+        // Mountain Hurl (5): the throw's heart is a slab
+        boolean hurl = c.step(5);
+        List<FlyingBlocks.@org.jspecify.annotations.Nullable Flyer> thrown = new ArrayList<>();
         switch (c.variant) {
             case 1 -> {
-                var f = FlyingBlocks.launch(c.level, c.player, main, origin, vel.scale(0.9), dmg, null, radius, 2.2f);
+                var f = FlyingBlocks.launch(c.level, c.player, main, origin, vel.scale(0.9), dmg, null, radius, hurl ? 2.8f : 2.2f);
                 if (f != null) f.stun = 20;
                 Fx.trailOn(c, f, 40);
+                thrown.add(f);
             }
             case 2 -> {
                 for (int i = 0; i < 5; i++) {
                     double yaw = (i - 2) * 0.18;
                     Vec3 d = dir.yRot((float) yaw).scale(1.6).add(0, 0.3 + 0.05 * i, 0);
-                    Fx.trailOn(c, FlyingBlocks.launch(c.level, c.player, states.get(i % states.size()), origin.add(0, i * 0.15, 0), d, dmg, null,
-                            radius * 0.6f, 0.7f), 30);
+                    var f = FlyingBlocks.launch(c.level, c.player, states.get(i % states.size()), origin.add(0, i * 0.15, 0), d, dmg, null,
+                            radius * 0.6f, hurl && i == 2 ? 1.6f : 0.7f);
+                    Fx.trailOn(c, f, 30);
+                    thrown.add(f);
                 }
             }
             default -> {
                 for (int i = 0; i < Math.min(3, states.size()); i++) {
                     Vec3 offset = new Vec3((i - 1) * 0.5, i * 0.35, 0).yRot(-c.yRot() * net.minecraft.util.Mth.DEG_TO_RAD);
-                    Fx.trailOn(c, FlyingBlocks.launch(c.level, c.player, states.get(i), origin.add(offset), vel, dmg, null, radius, 1.1f), 30);
+                    var f = FlyingBlocks.launch(c.level, c.player, states.get(i), origin.add(offset), vel, dmg, null, radius, hurl && i == 1 ? 2.0f : 1.1f);
+                    Fx.trailOn(c, f, 30);
+                    thrown.add(f);
                 }
             }
+        }
+        if (c.step(3)) {
+            // the first chunk down is the one that bursts (Shrapnel) and, awakened, rolls out as a line of shock
+            boolean[] down = {false};
+            Vec3 flat = c.flatLook();
+            java.util.function.Consumer<Vec3> land = at -> {
+                if (down[0]) return;
+                down[0] = true;
+                ripLands(c, at, flat, main, dmg);
+            };
+            for (var f : thrown) if (f != null) f.onLand = land;
+        }
+        // Twin Rip (4): the off hand tears out a second chunk a beat later, at the next closest foe
+        if (c.step(4)) {
+            LivingEntity aimed = Combat.aimEntity(c, 16, 1.0);
+            BlockState second = states.get(Math.min(1, states.size() - 1));
+            Scheduler.after(Math.max(1, (int) c.num(4, "delay", 8)), () -> twinRip(c, aimed, second, dmg * c.num(4, "twin", 0.6f), radius));
         }
         Vec3 at = Vec3.atCenterOf(centre);
         Fx.at(c, FxKind.SLAM, at.add(0, 0.5, 0)).scale(2.6).send();
@@ -277,9 +369,50 @@ final class KineticPowers {
         return Result.OK;
     }
 
+    /** Where Terrain Rip's first chunk comes down: Shrapnel (3) and Mountain Hurl's line of shock (5). */
+    private static void ripLands(Cast c, Vec3 at, Vec3 flat, BlockState state, float dmg) {
+        if (c.player.isRemoved()) return;
+        Fx.at(c, FxKind.SLAM, at).scale(1.4).noAnim().flag(FxEvent.QUIET).send();
+        int rocks = (int) c.num(3, "rocks", 3);
+        float share = c.num(3, "share", 0.35f);
+        Vec3 from = at.add(0, 0.7, 0);
+        for (LivingEntity e : Steps.nearest(c, at, 7, rocks, null)) {
+            Vec3 to = e.getBoundingBox().getCenter();
+            double dist = to.distanceTo(from);
+            Vec3 v = to.subtract(from).normalize().scale(0.95).add(0, 0.02 * dist, 0);
+            var rock = FlyingBlocks.launch(c.level, c.player, state, from, v, dmg * share, null, 0, 0.45f);
+            if (rock != null) rock.gravity(0.04);
+        }
+        if (c.step(5)) {
+            Steps.roll(c, at.add(flat.scale(0.8)), flat, 7.5, dmg * c.num(5, "hurl", 1.0f), 1.4, null);
+            c.sound(at, PowerSounds.STOMP_PLANT, 1.3f, 0.8f);
+            Fx.quake(c.level, at, 14, 2.5f);
+        }
+    }
+
+    /** Twin Rip's second throw: from the off-hand side, lobbed at the next closest foe (or alongside the first). */
+    private static void twinRip(Cast c, @org.jspecify.annotations.Nullable LivingEntity aimed, BlockState state, float dmg, float radius) {
+        if (c.player.isRemoved() || !c.player.isAlive()) return;
+        float yaw = c.player.getYRot() * net.minecraft.util.Mth.DEG_TO_RAD;
+        Vec3 side = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw)).scale(0.7);
+        Vec3 from = c.player.position().add(0, 1.4, 0).add(side);
+        List<LivingEntity> near = Steps.nearest(c, c.player.position(), 16, 1, aimed);
+        Vec3 vel;
+        if (!near.isEmpty()) {
+            Vec3 to = near.get(0).getBoundingBox().getCenter();
+            double t = to.distanceTo(from) / 1.5;
+            vel = to.subtract(from).normalize().scale(1.5).add(0, 0.03 * t, 0);
+        } else {
+            vel = c.player.getLookAngle().yRot(0.22f).scale(1.5).add(0, 0.3, 0);
+        }
+        Fx.at(c, FxKind.SLAM, c.player.position().add(side.scale(1.6))).scale(1.3).noAnim().flag(FxEvent.QUIET).send();
+        Fx.trailOn(c, FlyingBlocks.launch(c.level, c.player, state, from, vel, dmg, null, radius * 0.8f, 1.0f), 30);
+        c.sound(c.player.position(), PowerSounds.RIP, 1.0f, 1.0f);
+    }
+
     /** The stamp: the wave leaves when the foot lands (the profile's wind-up, run by Casting) from where you look then. */
     static Result shockwave(Cast c) {
-        double range = c.is(1) ? 7 : c.is(2) ? 14 : 9;
+        double range = c.range(c.is(1) ? 7 : c.is(2) ? 14 : 9);
         double half = c.is(1) ? 50 : c.is(2) ? 15 : 30;
         Vec3 origin = c.pos().add(0, 0.5, 0);
         Vec3 dir = c.flatLook();
@@ -305,16 +438,29 @@ final class KineticPowers {
             }
         });
         Fx.quake(c.level, origin, 10, 1.5f);
+        Vec3 tip = origin.add(dir.scale(range));
+        // Spine (3): the crack the wave leaves erupts into a row of stone spikes
+        if (c.step(3)) Steps.lineAfter(c, origin, tip, (int) c.num(3, "delay", 10), dmg * c.num(3, "spine", 0.5f), 1.0, null, FxKind.SLAM);
+        if (c.step(5)) {
+            // Landbreaker: the fissure burns behind the crest
+            int burn = (int) c.num(5, "burn", 40);
+            float dps = c.num(5, "dps", 1.0f) * c.dmg(1f);
+            for (double d = 1.5; d < range; d += 2.5) Riders.lingerAt(c, origin.add(dir.scale(d)), "burn", burn, 1.3f, dps, false);
+        }
         return Result.OK;
     }
 
     static Result brace(Cast c) {
         double reduction = c.is(1) ? 0.75 : c.is(2) ? 0.45 : 0.6;
-        double reflect = c.is(1) ? 0 : c.is(2) ? 1.0 : 0.5;
+        double reflect = (c.is(1) ? 0 : c.is(2) ? 1.0 : 0.5) + c.num(2, "reflect", 0f);
         int ticks = c.ticks(60);
         PowerState st = PowerState.of(c.player);
         st.buff(PowerState.Buffs.BRACE, c.now() + ticks, reduction);
         if (reflect > 0) st.buff(PowerState.Buffs.BRACE_REFLECT, c.now() + ticks, reflect);
+        // Counter Shove (3) sums what the brace takes off; Unmoved (4) cuts projectiles; Mountain Stance (5) raises plates
+        if (c.step(3)) st.buff(PowerState.Buffs.BRACE_ABSORBED, c.now() + ticks + 2, 1e-6);
+        if (c.step(4)) st.buff(PowerState.Buffs.BRACE_PROJECTILE, c.now() + ticks, c.num(4, "projectile", 0.5f));
+        if (c.step(5)) st.buff(PowerState.Buffs.BRACE_PLATES, c.now() + ticks, c.num(5, "blocks", 3));
         Moves.addMod(c.player, Attributes.KNOCKBACK_RESISTANCE, "brace", 1.0, AttributeModifier.Operation.ADD_VALUE);
         c.sound(PowerSounds.BRACE, 1f, 0.8f);
         Fx.at(c, FxKind.RING, c.pos()).scale(1.8).ticks(9).send();
@@ -323,13 +469,27 @@ final class KineticPowers {
         r.end((rr, why) -> {
             Fx.end(c, c.player, FxKind.Aura.BRACE.ordinal() + 1);
             Moves.removeMod(c.player, Attributes.KNOCKBACK_RESISTANCE, "brace");
+            double absorbed = st.buff(PowerState.Buffs.BRACE_ABSORBED, c.now());
+            double plates = st.buff(PowerState.Buffs.BRACE_PLATES, c.now());
             st.clearBuff(PowerState.Buffs.BRACE);
             st.clearBuff(PowerState.Buffs.BRACE_REFLECT);
+            st.clearBuff(PowerState.Buffs.BRACE_ABSORBED);
+            st.clearBuff(PowerState.Buffs.BRACE_PROJECTILE);
+            st.clearBuff(PowerState.Buffs.BRACE_PLATES);
             if (why == Running.Why.EXPIRED) {
                 double burst = 3.0;
-                Moves.blast(c, c.pos().add(0, 0.5, 0), burst, c.dmg(), null, 0.9, 0.3);
+                float shove = c.step(3) ? (float) absorbed * c.num(3, "shove", 0.4f) : 0;
+                Moves.blast(c, c.pos().add(0, 0.5, 0), burst, c.dmg() + shove, null, c.step(3) ? 1.4 : 0.9, 0.3);
                 Fx.at(c, FxKind.SLAM, c.pos()).scale(burst).flag(FxEvent.REACH).anim(CastAnim.STOMP).send();
                 c.sound(PowerSounds.IMPACT, 0.8f, 1.2f);
+                if (c.step(5)) {
+                    // the plates fly outward and cut what's near; ones that caught a hit fly too, cracked
+                    float cut = c.dmg() * c.num(5, "share", 0.5f) * (plates >= 1 ? 1f : 0.6f);
+                    for (LivingEntity e : Combat.foesAround(c.player, c.pos(), 4.5)) {
+                        Combat.hurtFrom(c.player, null, e, cut, null, true);
+                        Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).scale(0.8).plain().flag(FxEvent.QUIET).send();
+                    }
+                }
             }
         });
         return Result.OK;
@@ -337,23 +497,27 @@ final class KineticPowers {
 
     static Result thunderclap(Cast c) {
         Vec3 at = c.pos();
+        int stun = 30 + (int) c.num(2, "stun", 0);
         if (c.is(2)) {
             LivingEntity t = Combat.aimEntity(c, 16, 1.0);
             if (t == null) return Result.fail("no_target");
             Fx.at(c, FxKind.STRIKE, t.position()).scale(1.3).send();
             c.hurt(t, c.dmg(), Forces.Force.CHARGE);
-            Combat.stun(t, 30);
+            Combat.stun(t, stun);
             LivingEntity from = t;
             int forks = 0;
             for (LivingEntity o : Combat.foesAround(c.player, t.position(), 7)) {
                 if (o == t || forks >= 3) continue;
                 Fx.at(c, FxKind.LIGHTNING, from.position().add(0, 1, 0)).to(o.position().add(0, 1, 0)).ticks(7).noAnim().send();
                 c.hurt(o, c.dmg() * 0.3f, Forces.Force.CHARGE);
-                Combat.stun(o, 15);
+                Combat.stun(o, stun / 2);
                 forks++;
             }
             c.sound(t.position(), PowerSounds.THUNDER, 1.4f, 1.1f);
             c.feel(t, 70, 4f);
+            // the storm steps (4, 5) gather over you here too: a small ring at your feet carries their looks
+            if (c.step(4)) Fx.at(c, FxKind.RING, at).scale(1.4).ticks(8).noAnim().send();
+            thunderSteps(c);
             return Result.OK;
         }
         int rings = c.is(1) ? 3 : 1;
@@ -369,14 +533,41 @@ final class KineticPowers {
                 if (rings > 1 && rr.hit.contains(e.getId() * 10 + ring)) continue;
                 rr.hit.add(e.getId() * 10 + ring);
                 c.hurt(e, c.dmg(), Forces.Force.CHARGE);
-                Combat.stun(e, 30);
+                Combat.stun(e, stun);
                 Combat.knockFrom(e, at, 0.5, 0.3);
                 Fx.at(c, FxKind.LIGHTNING, at.add(0, 1.5, 0)).to(e.position().add(0, e.getBbHeight() * 0.5, 0)).ticks(6).noAnim().send();
             }
-            if (ring == 0) ForceInteractions.chargeEchoes(c.player, at, radius);
+            if (ring == 0) ForceInteractions.chargeSummons(c.player, at, radius);
             c.sound(at, PowerSounds.THUNDER, 1.5f, 1.0f - ring * 0.1f);
             Fx.quake(c.level, at, 20, 4f);
         });
+        thunderSteps(c);
         return Result.OK;
+    }
+
+    /** Thunderhead (4): a storm knot drops a bolt a second on a foe near you. Heaven's Clap (5): your blows chain. */
+    private static void thunderSteps(Cast c) {
+        if (c.step(4)) {
+            int bolts = Math.max(1, (int) c.num(4, "storm", 60) / 20);
+            float dmg = c.dmg() * c.num(4, "share", 0.35f);
+            for (int i = 1; i <= bolts; i++) Scheduler.after(20 * i, () -> stormBolt(c, dmg));
+        }
+        if (c.step(5)) {
+            PowerState.of(c.player).buff(PowerState.Buffs.CHAIN_BLOWS, c.now() + (long) c.num(5, "chainbuff", 60), c.num(5, "chain", 0.5f));
+        }
+    }
+
+    private static void stormBolt(Cast c, float dmg) {
+        if (c.player.isRemoved() || !c.player.isAlive()) return;
+        List<LivingEntity> near = Steps.nearest(c, c.player.position(), 9, 3, null);
+        if (near.isEmpty()) return;
+        LivingEntity t = near.get(c.player.getRandom().nextInt(near.size()));
+        Vec3 knot = c.player.position().add(0, c.player.getBbHeight() + 1.2, 0);
+        Vec3 hit = t.position().add(0, t.getBbHeight() * 0.5, 0);
+        Fx.at(c, FxKind.LIGHTNING, knot).to(hit).ticks(7).scale(1.3).plain().send();
+        Fx.at(c, FxKind.STRIKE, t.position()).scale(0.8).plain().flag(FxEvent.QUIET).send();
+        Combat.hurtFrom(c.player, null, t, dmg, Forces.Force.CHARGE, true);
+        Combat.stun(t, 10);
+        c.sound(t.position(), PowerSounds.THUNDER, 0.7f, 1.4f);
     }
 }

@@ -885,6 +885,19 @@ final class CitizenWork implements Ledger.Work {
     }
 
     /** Each think: the clip, the props in hand and the flags for what this record is doing now. */
+    private static final Act[] CROWD = {Act.TALK, Act.LOOK_AROUND, Act.CHEER, Act.ARMS_CROSSED, Act.TALK, Act.HANDS_BEHIND, Act.LOOK_AROUND};
+    private static final Act[] PLAYING = {Act.PLAY, Act.CHEER, Act.PLAY, Act.LOOK_AROUND, Act.WAVE, Act.PLAY, Act.TALK};
+
+    /**
+     * (SPEC §28.11) What someone in a crowd (or a child at play) is doing now: each person's own spells of eight to
+     * sixteen seconds, out of step with the next one, so a gathering never moves as one.
+     */
+    static Act crowdAct(int i, long now, boolean young) {
+        Act[] set = young ? PLAYING : CROWD;
+        long spell = 160 + (i % 5) * 40L;
+        return set[(int) Math.floorMod((now + i * 733L) / spell + i, (long) set.length)];
+    }
+
     void show(CitizenBody b, int i, long now) {
         if (d.role[i] == Roles.REPAIR) {
             b.setAct(d.state[i] == STAND ? Act.TROWEL : Act.NONE);
@@ -949,6 +962,9 @@ final class CitizenWork implements Ledger.Work {
                         off = Props.LANTERN;
                 }
             }
+        } else if (st == STAND && d.spot[i] <= -2) {
+            // (SPEC §28.11) one of a crowd round a full place, not at its work: a word, a cheer, a look round
+            act = crowdAct(i, now, job == CHILD || pk == P_PLAY);
         } else if (st == STAND) {
             switch (pk) {
                 case P_LAMP -> {
@@ -995,7 +1011,7 @@ final class CitizenWork implements Ledger.Work {
                     off = Props.SCROLL;
                 }
                 case P_SIT -> act = Act.SIT;
-                case P_PLAY -> act = Act.PLAY;
+                case P_PLAY -> act = crowdAct(i, now, true);
                 case P_MILL -> act = Act.HAUL;
                 case P_TAVERN_OUT -> {
                     if (job == TAVERNKEEPER) {
@@ -1046,7 +1062,7 @@ final class CitizenWork implements Ledger.Work {
                         act = Act.READ;
                         main = Props.BOOK;
                     } else if (job == CHILD) {
-                        act = Act.PLAY;
+                        act = crowdAct(i, now, true);
                     } else if (job == BAKER) {
                         act = Act.SERVE;
                         main = Props.BREAD;

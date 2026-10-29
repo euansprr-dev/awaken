@@ -5,6 +5,22 @@
     "minecraft:fern",
     "minecraft:large_fern",
     "minecraft:bush",
-    "awaken:turf_slab"
+    "awaken:turf_slab",
+    "awaken:meadow_grass",
+    "awaken:frost_grass",
+    "awaken:long_grass",
+    "awaken:wild_rye",
+    "awaken:wild_rye_top",
+    "awaken:trampled_grass",
+    "awaken:dry_tussock",
+    "awaken:bracken",
+    "awaken:clover",
+    "awaken:cow_parsley",
+    "awaken:foxglove",
+    "awaken:thistle",
+    "awaken:heather",
+    "awaken:gorse",
+    "awaken:bramble",
+    "awaken:reeds"
   ]
 }

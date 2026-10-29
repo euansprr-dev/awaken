@@ -1,6 +1,7 @@
 package dev.awaken.powers;
 
 import dev.awaken.core.Forces;
+import dev.awaken.powers.fx.FxKind;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -45,6 +46,15 @@ public final class Bolts {
         public int bounces;
         /** Stun ticks on hit. */
         public int stun;
+        /** The cast that fired it: its hits run the ladder's riders and its streak carries the power's looks (SPEC 36.4). */
+        public @Nullable Cast cast;
+        /** Foes it still goes through (a ladder's pierce), each further one taking {@link #pierceShare} of the last. */
+        public int pierce;
+        public float pierceShare = 1f;
+        /** A cast's bolt whose power sends no landing of its own (a drone's shot): the bolt draws it. */
+        public boolean land;
+        float scaleNext = 1f;
+        int hits;
         final Set<Integer> hit = new HashSet<>();
 
         Bolt(ServerLevel level, ServerPlayer owner, @Nullable Entity shooter, Vec3 pos, Vec3 vel, float damage, Forces.@Nullable Force force,
@@ -92,9 +102,18 @@ public final class Bolts {
         BlockHitResult wall = b.level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, CollisionContext.empty()));
         Vec3 end = wall.getType() == HitResult.Type.MISS ? to : wall.getLocation();
         LivingEntity target = firstTarget(b, from, end);
-        Fx.streak(b.level, from, target != null ? target.getBoundingBox().getCenter() : end, b.argb, 2, 3);
+        Vec3 streakTo = target != null ? target.getBoundingBox().getCenter() : end;
+        if (b.cast != null) Fx.streak(b.level, from, streakTo, b.argb, 2, 3, PowerRegistry.index(b.cast.type) + 1, b.cast.powerLevel);
+        else Fx.streak(b.level, from, streakTo, b.argb, 2, 3);
         if (target != null) {
             impact(b, target.getBoundingBox().getCenter(), target);
+            if (b.pierce > 0) {
+                // a ladder's pierce: through this one and on, weaker for each
+                b.pierce--;
+                b.scaleNext *= b.pierceShare;
+                b.pos = streakTo;
+                return false;
+            }
             return true;
         }
         if (wall.getType() != HitResult.Type.MISS) {
@@ -120,7 +139,7 @@ public final class Bolts {
         double bestD = Double.MAX_VALUE;
         boolean overcharges = b.force == Forces.Force.CHARGE && b.shooter == b.owner;
         for (LivingEntity e : b.level.getEntitiesOfClass(LivingEntity.class, box, x -> x != b.shooter && x != b.owner
-                && !b.hit.contains(x.getId()) && (Combat.isFoeOrTarget(b.owner, x) || (overcharges && ForceInteractions.isOwnEcho(b.owner, x))))) {
+                && !b.hit.contains(x.getId()) && (Combat.isFoeOrTarget(b.owner, x) || (overcharges && ForceInteractions.isOwnSummon(b.owner, x))))) {
             AABB eb = e.getBoundingBox().inflate(0.3);
             Optional<Vec3> hit = eb.contains(from) ? Optional.of(from) : eb.clip(from, to);
             if (hit.isPresent() && from.distanceToSqr(hit.get()) < bestD) {
@@ -133,8 +152,11 @@ public final class Bolts {
 
     private static void impact(Bolt b, Vec3 at, @Nullable LivingEntity target) {
         if (target != null) {
+            b.hits++;
             b.hit.add(target.getId());
-            Combat.hurtFrom(b.owner, b.shooter, target, b.damage, b.force, true);
+            float dmg = b.damage * b.scaleNext;
+            if (b.cast != null) Combat.hurtBy(b.cast, b.shooter, target, dmg, b.force);
+            else Combat.hurtFrom(b.owner, b.shooter, target, dmg, b.force, true);
             if (b.stun > 0) Combat.stun(target, b.stun);
         }
         if (b.blast > 0) {
@@ -143,8 +165,14 @@ public final class Bolts {
                 Combat.hurtFrom(b.owner, b.shooter, e, b.damage * 0.5f, b.force, true);
                 Combat.knockFrom(e, at, 0.5, 0.25);
             }
-            b.level.sendParticles(ParticleTypes.EXPLOSION, at.x, at.y, at.z, 1, 0, 0, 0, 0);
+            if (b.cast != null) Fx.at(b.cast, FxKind.NOVA, at).scale(b.blast).plain().send();
+            else b.level.sendParticles(ParticleTypes.EXPLOSION, at.x, at.y, at.z, 1, 0, 0, 0, 0);
             b.level.playSound(null, at.x, at.y, at.z, PowerSounds.BLAST.get(), SoundSource.PLAYERS, 0.7f, 1.4f);
+        }
+        if (b.cast != null) {
+            // a cast's bolt: the power sends its own landing; the foes a pierce goes on through get theirs here
+            if (b.hits > 1 || b.land) Fx.at(b.cast, FxKind.IMPACT, at).dir(b.vel).scale(b.land && b.hits <= 1 ? 0.6 : 0.9).plain().send();
+            return;
         }
         b.level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, 6, 0.15, 0.15, 0.15, 0.25);
         b.level.sendParticles(Fx.dust(b.argb & 0xFFFFFF, 1.2f), at.x, at.y, at.z, 4, 0.2, 0.2, 0.2, 0.02);

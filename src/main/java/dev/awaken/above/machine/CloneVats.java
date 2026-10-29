@@ -88,8 +88,9 @@ public final class CloneVats {
         Optional<GlobalPos> gp = d.cloneVat();
         ServerLevel level = gp.isPresent() ? sp.level().getServer().getLevel(gp.get().dimension()) : null;
         if (level != null) {
-            BlockPos feet = Travel.safeSpot(level, gp.get().pos());
-            Travel.teleport(sp, level, feet);
+            BlockPos vat = gp.get().pos();
+            // the spot is read once its land is made (SPEC §28.9, "Arrivals")
+            dev.awaken.core.api.Passage.go(sp, level, vat.getX() + 0.5, vat.getZ() + 0.5, () -> Travel.teleport(sp, level, Travel.safeSpot(level, vat)));
             Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("You wake in the Clone Vat."))
                     .body(Component.literal("Same you. Mostly. What you carried out of the gate came with you."))
                     .footer(Component.literal("Next clone grows when the Vat has power")).ttl(20 * 8).build());

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/temple_brazier"
+    },
+    "lit=true": {
+      "model": "awaken:block/temple_brazier_lit"
+    }
+  }
+}

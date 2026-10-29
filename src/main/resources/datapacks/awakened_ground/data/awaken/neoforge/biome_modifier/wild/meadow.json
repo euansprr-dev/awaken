@@ -1,0 +1,14 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#awaken:wild/meadow",
+  "features": [
+    "awaken:wild/meadow_ground",
+    "awaken:wild/meadow_bush",
+    "awaken:wild/meadow_hedgerow",
+    "awaken:wild/meadow_thicket",
+    "awaken:wild/meadow_giant",
+    "awaken:wild/meadow_deadfall",
+    "awaken:wild/meadow_snag"
+  ],
+  "step": "vegetal_decoration"
+}

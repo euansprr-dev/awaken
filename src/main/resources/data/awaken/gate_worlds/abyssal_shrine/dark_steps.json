@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "theme": "abyssal_shrine",
+  "name": "The Dark Steps",
+  "line": "Pale steps going down into the dark, one landing after another, with candles left on them.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "isles",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "under": 16,
+    "tunnel": 1.6,
+    "roof": 12
+  },
+  "biome": "awaken:gate_world/dark_steps",
+  "moods": [
+    {
+      "id": "vigil",
+      "name": "The vigil",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "silence",
+      "name": "Silence",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/dark_steps_silence",
+      "life": [
+        "mist"
+      ]
+    },
+    {
+      "id": "starfall",
+      "name": "Falling stars",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/dark_steps_starfall",
+      "life": [
+        "stars"
+      ]
+    },
+    {
+      "id": "hunger",
+      "name": "Hunger",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/dark_steps_hunger",
+      "life": [
+        "mist",
+        "drips"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:shrine_stone",
+    "floor": "awaken:abyss_tiles",
+    "trim": "awaken:abyss_pale",
+    "wall_glow": "awaken:abyss_rune",
+    "glass": "awaken:abyss_glass",
+    "candles": "awaken:abyss_candles",
+    "star": "awaken:abyss_star",
+    "veil": "awaken:abyss_veil",
+    "iris": "awaken:abyss_iris",
+    "pupil": "awaken:abyss_pupil",
+    "sclera": "awaken:abyss_sclera",
+    "touch": "awaken:abyss_offering",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_way_down"
+  ],
+  "life": [
+    "dust",
+    "drips"
+  ],
+  "sound": "awaken:gate.world.abyss_steps",
+  "events": [
+    "the_hush",
+    "hunger"
+  ],
+  "rule": "vigil",
+  "secrets": [
+    {
+      "id": "the_first_offering",
+      "name": "The first offering"
+    },
+    {
+      "id": "the_bottom_step",
+      "name": "The bottom step"
+    },
+    {
+      "id": "the_open_eye",
+      "name": "The eye in the dark",
+      "leads_to": "awaken:abyssal_shrine/the_eye"
+    }
+  ],
+  "keepsake": "vigil_candle",
+  "keepsake_name": "A Vigil Candle",
+  "keepsake_from": "the_bottom_step"
+}

@@ -104,6 +104,13 @@
       "why": "Camera roll and sway that give movement weight."
     },
     {
+      "slug": "countereds-smooth-steps",
+      "profiles": [
+        "feel"
+      ],
+      "why": "Smooths the camera when stepping up stairs, slabs and blocks (Euan 2026-10-29)."
+    },
+    {
       "slug": "shoulder-surfing-reloaded",
       "profiles": [
         "feel"
@@ -249,6 +256,12 @@
       "source": "pack/spr/sound_rates.properties",
       "target": "config/sound_physics_remastered/sound_rates.properties",
       "why": "Keeps the System's voice, the UI, the music (cues, tracks, layered stems) and the Ritual's scripted voices dry; everything else of Awaken's gets the room it is in. SPR adds every other sound event to the file on its first start."
+    },
+    {
+      "profile": "feel",
+      "source": "pack/shouldersurfing/shouldersurfing-client.toml",
+      "target": "config/shouldersurfing-client.toml",
+      "why": "Shoulder Surfing 5.2.0's own defaults, exactly as it writes them on a first start. Without the file, NeoForge writes it during loading and its config watcher fires Shoulder Surfing's reload on another thread, which crashes the game ('Initializing game', gameRenderer null) if the window isn't up yet: half the CI tours on a fresh folder. Write it again from a fresh start when the lock moves Shoulder Surfing: a missing key makes NeoForge rewrite the file and the race is back."
     }
   ]
 }

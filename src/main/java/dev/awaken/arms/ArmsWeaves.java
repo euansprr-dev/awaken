@@ -5,6 +5,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.awaken.core.Forces;
 import dev.awaken.core.api.WeaveHooks;
+import dev.awaken.core.api.NoticeEvents;
 import dev.awaken.powers.Fx;
 import dev.awaken.powers.PowerType;
 import dev.awaken.powers.fx.FxKind;
@@ -212,12 +213,49 @@ public final class ArmsWeaves implements WeaveHooks.Weaver {
             p.setData(ArmsContent.MEMORY, m);
             sync(p);
         }
-        Component text = Component.literal("WEAVE · ").withStyle(Style.EMPTY.withColor(0xE2B450))
-                .append(Component.literal(name(opening, fam)).withStyle(Style.EMPTY.withColor(fam.colour)));
-        if (first) {
-            Signal.toast(p, text);
-            dev.awaken.progression.Progression.markNewThing(p, "weave");
-        } else p.sendOverlayMessage(text);
+        // Also records a previously known weave on its first use after this Journal update. Identical events dedupe.
+        NoticeEvents.tell(p, explanation(opening, fam));
+        if (first) dev.awaken.progression.Progression.markNewThing(p, "weave");
+    }
+
+    private static final NoticeEvents.Event[][] EXPLANATIONS = new NoticeEvents.Event[4][PowerType.Family.values().length];
+    static {
+        for (int opening = DEFLECT; opening <= RHYTHM; opening++) for (PowerType.Family family : PowerType.Family.values())
+            EXPLANATIONS[opening - 1][family.ordinal()] = explain(opening, family);
+    }
+
+    /** The same four mechanisms that weave() executes, distinguished from a permanently learned power. */
+    public static NoticeEvents.Event explanation(int opening, PowerType.Family family) {
+        return EXPLANATIONS[opening - 1][family.ordinal()];
+    }
+
+    private static NoticeEvents.Event explain(int opening, PowerType.Family family) {
+        String condition = switch (opening) {
+            case DEFLECT -> "Deflect a blow";
+            case DODGE -> "Dodge perfectly";
+            case BREAK -> "Break an enemy's posture";
+            default -> "Land a finisher in full rhythm";
+        };
+        String summary = switch (opening) {
+            case DEFLECT -> "Your cast bursts out around you.";
+            case DODGE -> "An echo of you strikes the enemies nearby.";
+            case BREAK -> "An extra strike, and the enemy stays broken 1 second longer.";
+            default -> "Your next 3 weapon hits carry the power's element.";
+        };
+        String effect = switch (opening) {
+            case DEFLECT -> "The burst hits everything within 4 blocks for 1.2 times your attack damage.";
+            case DODGE -> "The echo strikes 0.3 seconds later, hitting everything within 3 blocks for your attack damage.";
+            case BREAK -> "The strike hits for 1.6 times your attack damage, as long as the enemy is still alive and within 16 blocks. "
+                    + "Against anything with 150 health or more, it does at most 3% of its maximum health.";
+            default -> "For the next 5 seconds, each of those three hits adds 40% of its damage as the power's element, at least 1.";
+        };
+        List<String> details = new java.util.ArrayList<>(List.of(condition + ", then cast a " + family.label + " power within "
+                + WINDOW / 20.0 + " seconds.", effect));
+        if (opening != RHYTHM) details.add("It hits 8% harder for each level of the power you cast."); // weave(): 1 + 0.08 per level
+        details.add("The power you cast costs " + Math.round((1 - COST) * 100) + "% less energy.");
+        details.add("It's a combo, not a new power: do the same again to repeat it.");
+        return new NoticeEvents.Event("weave/" + id(opening, family), "Combat weave", name(opening, family), summary, details,
+                NoticeEvents.Kind.COMBAT, family.colour);
     }
 
     /**

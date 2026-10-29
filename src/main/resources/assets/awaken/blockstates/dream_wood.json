@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/dream_wood"
+    },
+    "axis=z": {
+      "model": "awaken:block/dream_wood",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "awaken:block/dream_wood",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

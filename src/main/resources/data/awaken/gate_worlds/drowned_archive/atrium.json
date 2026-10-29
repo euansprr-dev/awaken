@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "theme": "drowned_archive",
+  "name": "The Atrium",
+  "line": "A great hall under a dome of sea glass, with clear water on the floor and light coming down through it.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "lake": 1,
+    "roof": 16,
+    "wobble": 0.8
+  },
+  "biome": "awaken:gate_world/atrium",
+  "moods": [
+    {
+      "id": "quiet",
+      "name": "Quiet",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "high_tide",
+      "name": "High tide",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/atrium_high_tide",
+      "life": [
+        "drips",
+        "mist"
+      ]
+    },
+    {
+      "id": "lamplit",
+      "name": "Lamplit",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/atrium_lamplit",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "paper_storm",
+      "name": "Paper storm",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/atrium_paper_storm",
+      "life": [
+        "paper"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:archive_stone",
+    "wall_glow": "awaken:archive_stone_carved",
+    "floor": "awaken:archive_tiles",
+    "trim": "awaken:archive_stone_carved",
+    "shelf": "awaken:archive_shelf",
+    "shelf_lit": "awaken:archive_shelf_lit",
+    "planks": "awaken:archive_planks",
+    "lamp": "awaken:archive_lamp",
+    "paper": "awaken:archive_paper",
+    "kelp": "awaken:archive_kelp",
+    "glass": "awaken:archive_sea_glass",
+    "fall": "awaken:archive_inkfall",
+    "touch": "awaken:archive_lectern",
+    "bridge": "awaken:archive_paper_bridge",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "sea_glass_dome"
+  ],
+  "life": [
+    "paper",
+    "drips",
+    "pale_fish",
+    "dust"
+  ],
+  "sound": "awaken:gate.world.archive_atrium",
+  "events": [
+    "the_tide"
+  ],
+  "rule": "reading",
+  "secrets": [
+    {
+      "id": "the_open_book",
+      "name": "The open book"
+    },
+    {
+      "id": "the_pool_coin",
+      "name": "The coin in the pool"
+    },
+    {
+      "id": "the_loose_shelf",
+      "name": "The loose shelf",
+      "leads_to": "awaken:drowned_archive/last_readers_room"
+    }
+  ],
+  "keepsake": "pool_coin",
+  "keepsake_name": "A Coin from the Atrium Pool",
+  "keepsake_from": "the_pool_coin"
+}

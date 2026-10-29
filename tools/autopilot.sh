@@ -14,6 +14,7 @@
 #   FARSIGHT=off|near|full  Far Sight's reach (unset: whatever run-autopilot's client config says; CI tours: off)
 #   TECTONIC=<preset>       Tectonic settings from pack/tectonic/<preset>.json (unset: Tectonic's defaults)
 #   CITY=on                 ask for the city basin before Carillon exists (terrain's dev switch)
+#   ROADSTARTS=off          Road starts off (config/awaken-roadstarts-server.toml, SPEC §28.9); unset: on
 #   WORLD_FROM=<world dir>  a copy of that world (never the original) as saves/copied, for the script's "world copied"
 cd "$(dirname "$0")/.."
 SCRIPT=${1:?script}
@@ -61,6 +62,9 @@ fi
 # CITY=on: terrain's dev switch for the city basin (config/awaken-terrain-dev.properties); unset removes it
 if [ "$CITY" = on ]; then echo "city=on" > run-autopilot/config/awaken-terrain-dev.properties
 else rm -f run-autopilot/config/awaken-terrain-dev.properties; fi
+# ROADSTARTS=off: Road starts' switch off for this run (a local config read at mod load); unset removes it (on)
+if [ "$ROADSTARTS" = off ]; then echo "roadStarts = false" > run-autopilot/config/awaken-roadstarts-server.toml
+else rm -f run-autopilot/config/awaken-roadstarts-server.toml; fi
 # DH=swift|cinematic|default rewrites Distant Horizons' settings for this run
 [ -n "$DH" ] && { python3 -I tools/pack.py dhconfig run-autopilot "$DH" > /dev/null || exit 1; }
 GRADLE_ARGS=()

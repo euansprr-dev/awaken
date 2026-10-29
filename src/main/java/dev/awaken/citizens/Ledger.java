@@ -39,6 +39,31 @@ final class Ledger {
         default void roleArrived(int i, long now) {}
     }
 
+    /** Whether a body can stand somewhere (SPEC §28.11): the level's ground ({@link Footing}), or anywhere in a test with no level. */
+    interface Ground {
+        /** A body can stand with its feet here (ground not loaded yet: yes, checked again when a body comes). */
+        boolean stands(double x, double y, double z);
+
+        /** Open ground at (x, z) on row y or one off it, nothing over it: the feet height, NaN when none (not loaded: y). */
+        double open(double x, double y, double z);
+    }
+
+    static final Ground ANYWHERE = new Ground() {
+        @Override
+        public boolean stands(double x, double y, double z) {
+            return true;
+        }
+
+        @Override
+        public double open(double x, double y, double z) {
+            return y;
+        }
+    };
+
+    /** Ring slots round a full place (SPEC §28.11): this many at most, this far apart, the first ring this far out of its spots. */
+    static final int RING = 64;
+    static final double RING_GAP = 1.4;
+
     final Roster r;
     final StreetNet g;
     final CitizensData d;
@@ -46,6 +71,15 @@ final class Ledger {
     final @Nullable CitizenBody[] body;
     /** One bit per spot per place: who stands where. */
     final long[] spotMask;
+    /** Spots found with a block, water or fire on them: no claim takes them (until the roster is rebuilt). */
+    final long[] badSpot;
+    /** One bit per ring slot per place (a record on slot k holds spot {@code -2 - k}). */
+    final long[] ringMask;
+    /** Ring slots found on water, in a wall or under a roof. */
+    final long[] ringBad;
+    /** Each place's ring slots (world x, z pairs), laid out the first time it fills; and the feet height found for each. */
+    private final double[][] ring, ringY;
+    Ground ground = ANYWHERE;
     /** A spot an event gives a record (a place in a bucket line), or NaN: where it stands when its place has no spot. */
     final double[] rx, ry, rz;
     private final long[] lastGame, lastClock;
@@ -59,6 +93,7 @@ final class Ledger {
     // counters (reset by commands and tests)
     long arrivals, late, noRoute, jumps, waits, overflow, early;
     final double[] tmp = new double[3];
+    private final double[] probe = new double[3];
 
     /** The crowd's scratch: whether this record gets a body in the pass running now (Crowd.rebalance). */
     final boolean[] want;
@@ -79,6 +114,11 @@ final class Ledger {
         this.streetY = streetY;
         body = new CitizenBody[n];
         spotMask = new long[r.places];
+        badSpot = new long[r.places];
+        ringMask = new long[r.places];
+        ringBad = new long[r.places];
+        ring = new double[r.places][];
+        ringY = new double[r.places][];
         rx = new double[n];
         ry = new double[n];
         rz = new double[n];
@@ -132,6 +172,10 @@ final class Ledger {
                 if (s >= 0 && d.place[i] >= 0) {
                     int k = s - r.spotStart[d.place[i]];
                     if (k >= 0 && k < 64) spotMask[d.place[i]] |= 1L << k;
+                    else d.spot[i] = -1;
+                } else if (s <= -2) {
+                    int k = -2 - s;
+                    if (d.place[i] >= 0 && k < RING) ringMask[d.place[i]] |= 1L << k;
                     else d.spot[i] = -1;
                 }
             }
@@ -315,6 +359,9 @@ final class Ledger {
         } else if (cur == sched) {
             leaveEarly(i, sched, tod, now);
         }
+        // (SPEC §28.11) children at play don't stand still: another spot on the green every twenty seconds or so
+        if (d.state[i] == STAND && d.place[i] >= 0 && r.pKind[d.place[i]] == Roster.P_PLAY && Math.floorMod(now + i * 397L, 400L) < 20)
+            claim(i, d.place[i], 700 + (int) (now / 400));
         if (body[i] != null) {
             return; // the body walks and arrives
         }
@@ -505,32 +552,124 @@ final class Ledger {
     // ---- spots --------------------------------------------------------------------------------------------------
 
     void claim(int i, int place) {
+        claim(i, place, 400 + d.seg[i] + d.legs[i]);
+    }
+
+    /** Claims a free spot of a place (where the seeded pick {@code salt} lands, or the next free one), else a ring slot. */
+    void claim(int i, int place, int salt) {
         release(i);
         int cnt = Math.min(64, r.spots(place));
         if (cnt == 0) return;
-        long m = spotMask[place];
-        int start = rnd(i, 400 + d.seg[i] + d.legs[i], cnt);
+        int start = rnd(i, salt, cnt);
         for (int k = 0; k < cnt; k++) {
             int b = (start + k) % cnt;
-            if ((m & (1L << b)) == 0) {
-                spotMask[place] = m | (1L << b);
-                d.spot[i] = r.spotStart[place] + b;
-                return;
+            if (((spotMask[place] | badSpot[place]) & (1L << b)) != 0) continue;
+            int s = r.spotStart[place] + b;
+            spotWorld(s, place, probe);
+            if (!ground.stands(probe[0], probe[1], probe[2])) {
+                // a block, water or a fire where the plan put a spot: nobody stands in it (SPEC §28.11)
+                badSpot[place] |= 1L << b;
+                continue;
             }
+            spotMask[place] |= 1L << b;
+            d.spot[i] = s;
+            return;
         }
         overflow++;
+        // (SPEC §28.11) full: a free slot on the rings round it, the nearest ring first, spread round each ring
+        double[] pts = ring(place);
+        for (int a = 0; a < RING; ) {
+            int ringNo = (int) pts[a * 3 + 2], e = a;
+            while (e < RING && (int) pts[e * 3 + 2] == ringNo) e++;
+            int len = e - a, from = rnd(i, 500 + ringNo, len);
+            for (int q = 0; q < len; q++) {
+                int k = a + (from + q) % len;
+                if (((ringMask[place] | ringBad[place]) & (1L << k)) != 0) continue;
+                double y = streetY + r.pRy[place] + 1, f = ground.open(pts[k * 3], y, pts[k * 3 + 1]);
+                if (Double.isNaN(f)) {
+                    ringBad[place] |= 1L << k;
+                    continue;
+                }
+                ringMask[place] |= 1L << k;
+                ringY[place][k] = f;
+                d.spot[i] = -2 - k;
+                return;
+            }
+            a = e;
+        }
+        // every ring taken: a seeded step aside of the node (position())
     }
 
     void release(int i) {
         int s = d.spot[i];
-        if (s >= 0) {
-            int p = d.place[i];
-            if (p >= 0) {
+        if (s == -1) return;
+        int p = d.place[i];
+        if (p >= 0) {
+            if (s >= 0) {
                 int k = s - r.spotStart[p];
                 if (k >= 0 && k < 64) spotMask[p] &= ~(1L << k);
+            } else if (-2 - s < RING) {
+                ringMask[p] &= ~(1L << (-2 - s));
             }
-            d.spot[i] = -1;
         }
+        d.spot[i] = -1;
+    }
+
+    /**
+     * A place's ring slots, laid out the first time it fills: rings {@link #RING_GAP} apart from just outside its farthest
+     * spot, points the same gap apart round each (x, z, ring number per slot). Nothing standable is checked here: the
+     * claim checks each slot's ground.
+     */
+    private double[] ring(int place) {
+        double[] pts = ring[place];
+        if (pts != null) return pts;
+        double ox = cx + r.pX[place], oz = cz + r.pZ[place], far = 0;
+        int s0 = r.spotStart[place], cnt = Math.min(64, r.spots(place));
+        for (int s = s0; s < s0 + cnt; s++) far = Math.max(far, Math.hypot(r.spotX[s] - r.pX[place], r.spotZ[s] - r.pZ[place]));
+        pts = new double[RING * 3];
+        int k = 0;
+        for (int j = 0; k < RING; j++) {
+            double rad = far + RING_GAP * (j + 1);
+            int m = Math.max(6, (int) (2 * Math.PI * rad / RING_GAP));
+            double off = rnd(place, 900 + j, 360) * Math.PI / 180.0;
+            for (int q = 0; q < m && k < RING; q++, k++) {
+                double a = off + q * 2 * Math.PI / m;
+                pts[k * 3] = ox + Math.cos(a) * rad;
+                pts[k * 3 + 1] = oz + Math.sin(a) * rad;
+                pts[k * 3 + 2] = j;
+            }
+        }
+        double[] ys = new double[RING];
+        Arrays.fill(ys, Double.NaN);
+        ringY[place] = ys;
+        return ring[place] = pts;
+    }
+
+    /** A ring slot's world position (feet); a slot claimed before a load finds its ground again. */
+    void ringWorld(int place, int k, double[] out) {
+        double[] pts = ring(place);
+        out[0] = pts[k * 3];
+        out[2] = pts[k * 3 + 1];
+        double y = ringY[place][k];
+        if (Double.isNaN(y)) {
+            double base = streetY + r.pRy[place] + 1, f = ground.open(out[0], base, out[2]);
+            y = ringY[place][k] = Double.isNaN(f) ? base : f;
+        }
+        out[1] = y;
+    }
+
+    /** Where a record's spot or ring slot is (world feet into out); false when it holds neither. */
+    boolean spotAt(int i, double[] out) {
+        int s = d.spot[i], p = d.place[i];
+        if (s >= 0) {
+            spotWorld(s, p, out);
+            return true;
+        }
+        if (s <= -2 && p >= 0 && -2 - s < RING) {
+            ringWorld(p, -2 - s, out);
+            return true;
+        }
+        return false;
     }
 
     // ---- positions --------------------------------------------------------------------------------------------------
@@ -543,11 +682,7 @@ final class Ledger {
         // (M4 Walls) on a tower's stair: inside the tower, out of sight
         if (st != STAND && b >= 0 && g.hidden(a, b)) return false;
         if (st == STAND) {
-            int s = d.spot[i];
-            if (s >= 0) {
-                spotWorld(s, d.place[i], out);
-                return true;
-            }
+            if (spotAt(i, out)) return true;
             if (!Double.isNaN(rx[i])) {
                 out[0] = rx[i];
                 out[1] = ry[i];
@@ -600,6 +735,13 @@ final class Ledger {
         int s = d.spot[i];
         if (s >= 0) return r.spotYaw[s];
         int p = d.place[i];
+        if (s <= -2 && p >= 0 && -2 - s < RING) {
+            // on a ring: toward the middle, turning a little to the neighbours now and then (every ten seconds or so)
+            double[] pts = ring(p);
+            int k = -2 - s;
+            double dx = cx + r.pX[p] - pts[k * 3], dz = cz + r.pZ[p] - pts[k * 3 + 1];
+            return (float) Math.toDegrees(Math.atan2(-dx, dz)) + rnd(i, (int) (lastGame[i] / 200), 51) - 25;
+        }
         return p >= 0 ? r.pYaw[p] : 0f;
     }
 

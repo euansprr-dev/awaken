@@ -1,12 +1,16 @@
 package dev.awaken.gates.client;
 
+import com.mojang.blaze3d.buffers.Std140Builder;
+import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.RenderPass;
 import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.renderpearl.api.textures.FilterMode;
 import dev.awaken.Awaken;
+import dev.awaken.compat.client.FarTerrain;
 import dev.awaken.gates.net.GatePayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
@@ -28,7 +32,8 @@ import org.lwjgl.system.MemoryUtil;
 /**
  * Light pillars over every known gate, coloured by rank, visible up to 1500 blocks. Pillars beyond a safe distance are
  * drawn at a clamped distance along the view ray and scaled down by the same factor, so they look exactly as far away as
- * they are but never fall past the far plane or into the fog.
+ * they are but never fall past the far plane or into the fog. Their shader still hides them behind any land in front of
+ * where they really stand, the chunks' and Far Sight's alike (gate_pillar.fsh; SPEC §7).
  */
 public final class Pillars {
     private Pillars() {}
@@ -100,58 +105,101 @@ public final class Pillars {
         float day = 0.4F + 0.6F * dark; // 0.4 at noon, 1 at night
         // the far plane is at least four render distances out (Camera.update): every vertex stays well inside it
         float far = mc.options.getEffectiveRenderDistance() * 16 * 4 * 0.85F;
+        // the pillars' own pipelines hide them behind any land in front of where they really stand (RigPipelines); a
+        // driver that can't build them draws them as before, tested only against the chunks' depth where they are drawn
+        var haze = RenderSystem.getCompiledPipelineNullable(RigPipelines.PILLAR_HAZE);
+        var light = RenderSystem.getCompiledPipelineNullable(RigPipelines.PILLAR_LIGHT);
+        stretched = haze != null && light != null;
+        int quadBytes = stretched ? 96 : 64;
         GpuBuffer buf = ring.currentBuffer();
         int hazeQuads, allQuads;
         try (GpuBufferSlice.MappedView view = buf.map(false, true)) {
             at = MemoryUtil.memAddress(view.data());
-            end = at + (long) MAX_QUADS * 64;
+            end = at + (long) MAX_QUADS * quadBytes;
             for (Draw d : draws) pillar(d, time, day, far, false);
-            hazeQuads = quads(view);
+            hazeQuads = quads(view, quadBytes);
             for (Draw d : draws) pillar(d, time, day, far, true);
-            allQuads = quads(view);
+            allQuads = quads(view, quadBytes);
         }
         if (allQuads > 0) {
-            var glow = RenderSystem.getCompiledPipelineNullable(RigPipelines.GLOW);
             RenderTarget main = mc.gameRenderer.mainRenderTarget();
             RenderSystem.AutoStorageIndexBuffer quadIndex = RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
             GpuBuffer indices = quadIndex.getBuffer(allQuads * 6);
+            GpuBuffer planes = stretched ? farPlanes() : null;
             try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "awaken gate pillars",
                     main.getColorTextureView(), Optional.empty(), main.getDepthTextureView(), OptionalDouble.empty())) {
                 RenderSystem.bindDefaultUniforms(pass);
                 pass.setUniform("DynamicTransforms", RenderSystem.getDynamicUniforms().writeTransform(new Matrix4f(e.getModelViewMatrix())));
+                if (stretched) {
+                    pass.setUniform("GatePillar", planes);
+                    pass.setUniform("FarDepthSampler", FarTerrain.depthTexture().getTextureView(),
+                            RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+                }
                 pass.setIndexBuffer(indices, quadIndex.type());
                 pass.setVertexBuffer(0, buf.slice());
                 if (hazeQuads > 0) {
-                    pass.setPipeline(RenderSystem.getCompiledPipeline(RenderPipelines.DEBUG_QUADS));
+                    pass.setPipeline(stretched ? haze : RenderSystem.getCompiledPipeline(RenderPipelines.DEBUG_QUADS));
                     pass.drawIndexed(hazeQuads * 6, 1, 0, 0, 0);
                 }
                 if (allQuads > hazeQuads) {
-                    pass.setPipeline(glow != null ? glow : RenderSystem.getCompiledPipeline(RenderPipelines.DEBUG_QUADS));
+                    var glow = RenderSystem.getCompiledPipelineNullable(RigPipelines.GLOW);
+                    pass.setPipeline(stretched ? light : glow != null ? glow : RenderSystem.getCompiledPipeline(RenderPipelines.DEBUG_QUADS));
                     pass.drawIndexed((allQuads - hazeQuads) * 6, 1, 0, hazeQuads * 4, 0);
                 }
             }
+            if (stretched) planeRing.rotate();
         }
         ring.rotate();
     }
 
+    /**
+     * This frame's far-land planes for the pillar shader: Far Sight's depth convention, and whether to test against it
+     * at all (only while it draws and shares a depth; never under Distant Horizons, whose depth Lens trusts only once it
+     * proves itself). The device's depth range always, for the pillar's own depth.
+     */
+    private static GpuBuffer farPlanes() {
+        boolean test = FarTerrain.active() && FarTerrain.readable() && !DH;
+        int flags = (FarTerrain.reverseZ() ? 1 : 0) | (FarTerrain.zeroToOne() ? 2 : 0)
+                | (RenderSystem.getDevice().getDeviceInfo().isZZeroToOne() ? 4 : 0);
+        GpuBuffer b = planeRing.currentBuffer();
+        try (GpuBufferSlice.MappedView view = b.map(false, true)) {
+            Std140Builder.intoBuffer(view.data()).putVec4(FarTerrain.near(), FarTerrain.far(), flags, test ? 1F : 0F);
+        }
+        return b;
+    }
+
+    private static final boolean DH = net.neoforged.fml.ModList.get().isLoaded("distanthorizons");
+    private static final MappableRingBuffer planeRing = new MappableRingBuffer(() -> "awaken gate pillar planes",
+            GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_MAP_WRITE, new Std140SizeCalculator().putVec4().get());
+
     /** Room for every pillar's quads (a far pillar takes ~400, a near one ~800); past it the rest are left out. */
     private static final int MAX_QUADS = 24576;
     private static final MappableRingBuffer ring = new MappableRingBuffer(() -> "awaken gate pillars",
-            GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_MAP_WRITE, MAX_QUADS * 64);
+            GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_MAP_WRITE, MAX_QUADS * 96);
     /** Where the next vertex goes in the mapped buffer, and where it ends. */
     private static long at, end;
+    /** Vertices carry the pillar's stretch (POSITION_TEX_COLOR, the pillars' own pipelines) or not (POSITION_COLOR). */
+    private static boolean stretched;
+    /** How many times further off this pillar really stands than where it is drawn (1 / its scale). */
+    private static float stretch = 1F;
 
-    private static int quads(GpuBufferSlice.MappedView view) {
-        return (int) ((at - MemoryUtil.memAddress(view.data())) / 64);
+    private static int quads(GpuBufferSlice.MappedView view, int quadBytes) {
+        return (int) ((at - MemoryUtil.memAddress(view.data())) / quadBytes);
     }
 
-    /** One vertex: position and colour (r, g, b, a bytes), as POSITION_COLOR lays them out. */
+    /** One vertex: position, the stretch when the pillars' own pipelines draw, and colour (r, g, b, a bytes). */
     private static void vertex(float x, float y, float z, int argb) {
         MemoryUtil.memPutFloat(at, x);
         MemoryUtil.memPutFloat(at + 4, y);
         MemoryUtil.memPutFloat(at + 8, z);
-        MemoryUtil.memPutInt(at + 12, (argb & 0xFF00FF00) | (argb >> 16 & 0xFF) | (argb & 0xFF) << 16);
-        at += 16;
+        at += 12;
+        if (stretched) {
+            MemoryUtil.memPutFloat(at, stretch);
+            MemoryUtil.memPutFloat(at + 4, 0F);
+            at += 8;
+        }
+        MemoryUtil.memPutInt(at, (argb & 0xFF00FF00) | (argb >> 16 & 0xFF) | (argb & 0xFF) << 16);
+        at += 4;
     }
 
     /** Rows up the column (denser near the foot, where it is seen from close by). */
@@ -171,6 +219,7 @@ public final class Pillars {
 
     private static void pillar(Draw d, float time, float day, float far, boolean light) {
         float k = d.scale();
+        stretch = 1F / k;
         float bx = (float) d.dx() + 0.5F * k, by = (float) d.dy(), bz = (float) d.dz() + 0.5F * k;
         // the ribbons turn about the pillar's axis to face the camera (the camera is at the origin)
         float tx = -bx, tz = -bz, tl = (float) Math.sqrt(tx * tx + tz * tz);
@@ -219,7 +268,7 @@ public final class Pillars {
             float a = strength * foot * up * up * (3F - 2F * up) * bands;
             if (i > 0) {
                 float y0 = by + ROWS[i - 1] * h;
-                if (at + (long) n * 128 > end) return;
+                if (at + (long) n * (stretched ? 192 : 128) > end) return;
                 for (int j = 0; j < n; j++) {
                     float x0 = half * j / n, x1 = half * (j + 1) / n;
                     int b0 = col(argb, pa * bell[j]), b1 = col(argb, a * bell[j]), o0 = col(argb, pa * bell[j + 1]), o1 = col(argb, a * bell[j + 1]);

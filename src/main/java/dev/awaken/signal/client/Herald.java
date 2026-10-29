@@ -82,7 +82,7 @@ public final class Herald {
         String body = w.body().map(Component::getString).orElse("");
         String label = w.footer().map(Component::getString).map(SignalText::stripKeyHints).orElse("");
         Item item = new Item(w.title().getString(), SignalText.toastDetail(w), SystemHud.accent(w), label.isBlank() ? "Discovery" : label, body, w);
-        PACE.offer(ticks, item, w.tier(), w.topic(), w.moment());
+        PACE.offer(ticks, item, w.tier(), w.topic(), w.moment(), w.immediate());
         log("offer", w.tier(), w.topic(), item.title());
     }
 
@@ -118,12 +118,20 @@ public final class Herald {
 
     // ---- the rules --------------------------------------------------------------------------------------------------
 
-    /** Nothing paced shows now: a screen, a fight, a scene, a card or moment already up, or a world still settling. */
+    /** Nothing paced shows now: {@link #blocked}, or a world still settling. */
     static boolean held(Minecraft mc) {
+        return blocked(mc) || mc.level.getGameTime() < SETTLE;
+    }
+
+    /**
+     * Nothing paced shows, not even an immediate find: a screen, a fight, a scene, a card or moment already up, or not
+     * awakened yet. A settling world doesn't block: a creature studied in its first minutes still shows (SPEC §26.3).
+     */
+    static boolean blocked(Minecraft mc) {
         if (mc.player == null || mc.level == null) return true;
         if (mc.gui.screen() != null || Moment.active() || SystemHud.cardUp() || !HOLDERS.isEmpty()) return true;
         if (SystemHud.inCombat() || UiHooks.focus() > 0.2f) return true;
-        return !Progression.profile(mc.player).awakened() || mc.level.getGameTime() < SETTLE;
+        return !Progression.profile(mc.player).awakened();
     }
 
     static boolean calm() {
@@ -141,7 +149,8 @@ public final class Herald {
         }
         if (SystemHud.inCombat()) lastFight = ticks;
         Journal.tick(mc.gui.screen() != null);
-        List<Pace.Out<Item>> out = PACE.poll(ticks, held(mc), calm());
+        boolean blocked = blocked(mc);
+        List<Pace.Out<Item>> out = PACE.poll(ticks, blocked, blocked || mc.level.getGameTime() < SETTLE, calm());
         if (out.isEmpty()) return;
         List<Item> filed = new ArrayList<>(0);
         for (Pace.Out<Item> o : out) {

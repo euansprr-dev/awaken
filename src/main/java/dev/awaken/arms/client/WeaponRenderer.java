@@ -35,10 +35,11 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
 
     /**
      * The blade's live state (0..255 each): its energy and its flash; whether it is the fighter's own in first person;
-     * who lays its ribbon (an entity id, -1 for nobody: a stand, a frame); and in third person, the arm it is in (0 not
-     * a hand's, 1 right, 2 left) and whose, so a move's wrist turns it ({@link ArmsWrist}).
+     * who lays its ribbon (an entity id, -1 for nobody: a stand, a frame); in third person, the arm it is in (0 not
+     * a hand's, 1 right, 2 left) and whose, so a move's wrist turns it ({@link ArmsWrist}); and whether it is the off
+     * hand's twin of a pair, which lays its own ribbon (round 14).
      */
-    record State(int energy, int flash, boolean hand, int wielder, int arm, int holder) {}
+    record State(int energy, int flash, boolean hand, int wielder, int arm, int holder, boolean twin) {}
 
     private final String weapon;
     private final Identifier texture;
@@ -70,12 +71,16 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         // its light lifting off it, from where it is drawn (the energy: a charging heavy sheds more)
         WeaponMotes.emit(mesh, poseStack.last().pose(), state != null && state.hand(), state == null ? 0 : state.energy() / 255F);
         // a blow in the air: the blade's own ribbon, from its middle to its point
-        if (state != null && state.wielder() >= 0 && BladeTrail.open(state.wielder())) {
+        int side = state != null && state.twin() ? 1 : 0;
+        if (state != null && state.wielder() >= 0 && BladeTrail.open(state.wielder(), side)) {
             float[] line = blade(mesh);
-            // first person from mid-blade (the tip's path mostly leaves the view), from 78% along seen from outside
-            float k = state.hand() ? (0.5F - 0.78F) / (1F - 0.78F) : 0F;
-            BladeTrail.sample(state.wielder(), poseStack.last().pose(), line[0] + (line[0] - line[3]) * -k, line[1] + (line[1] - line[4]) * -k,
-                    line[2] + (line[2] - line[5]) * -k, line[3], line[4], line[5], state.hand());
+            // first person from mid-blade (the tip's path mostly leaves the view) or the style's own root, from 78% along
+            // seen from outside; a double weapon led by its other end (the Twin Blades' figure-eight) lays it along that end
+            float k = state.hand() ? (ArmsHands.trailRoot() - 0.78F) / (1F - 0.78F) : 0F;
+            int r = state.hand() && ArmsHands.far() ? 6 : 0, e = r + 3;
+            BladeTrail.sample(state.wielder(), side, poseStack.last().pose(), line[r] + (line[r] - line[e]) * -k,
+                    line[r + 1] + (line[r + 1] - line[e + 1]) * -k, line[r + 2] + (line[r + 2] - line[e + 2]) * -k, line[e],
+                    line[e + 1], line[e + 2], state.hand());
         }
         if (ours && !mesh.anchors().isEmpty()) {
             float energy = state == null ? 0 : state.energy() / 255F, flash = state == null ? 0 : state.flash() / 255F;
@@ -146,11 +151,12 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
     }
 
     private static @Nullable WeaponMesh lineOf;
-    private static final float[] LINE = new float[6];
+    private static final float[] LINE = new float[12];
 
     /**
      * Where the blade runs on a mesh (item space): its outer fifth, the line from the corner nearest the pommel to the
-     * one furthest along (the weapons are straight along it), from 78% of the way to the point. Once per mesh.
+     * one furthest along (the weapons are straight along it), from 78% of the way to the point; then the same from
+     * the other end (a double weapon's other blade). Once per mesh.
      */
     private static float[] blade(WeaponMesh mesh) {
         if (lineOf == mesh) return LINE;
@@ -165,6 +171,8 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         for (int c = 0; c < 3; c++) {
             LINE[c] = p[base * 3 + c] + (p[tip * 3 + c] - p[base * 3 + c]) * 0.78F;
             LINE[3 + c] = p[tip * 3 + c];
+            LINE[6 + c] = p[tip * 3 + c] + (p[base * 3 + c] - p[tip * 3 + c]) * 0.78F;
+            LINE[9 + c] = p[base * 3 + c];
         }
         lineOf = mesh;
         return LINE;
@@ -185,10 +193,12 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
     /** A hand's weapon in third person, marked with its arm and holder (a few kept, nothing made per frame). */
     private static State inArm(@Nullable State s, int arm, int holder) {
         int energy = s == null ? 0 : s.energy(), flash = s == null ? 0 : s.flash(), wielder = s == null ? -1 : s.wielder();
+        boolean twin = s != null && s.twin();
         int slot = Math.floorMod(holder * 2 + arm, ARMS.length);
         State st = ARMS[slot];
-        if (st == null || st.energy() != energy || st.flash() != flash || st.wielder() != wielder || st.arm() != arm || st.holder() != holder) {
-            ARMS[slot] = st = new State(energy, flash, false, wielder, arm, holder);
+        if (st == null || st.energy() != energy || st.flash() != flash || st.wielder() != wielder || st.arm() != arm || st.holder() != holder
+                || st.twin() != twin) {
+            ARMS[slot] = st = new State(energy, flash, false, wielder, arm, holder, twin);
         }
         return st;
     }
@@ -199,8 +209,8 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         if (p == null) return null;
         boolean hand = mc.options.getCameraType().isFirstPerson();
         if (stack != p.getMainHandItem()) {
-            // the off hand's twin (a pair, the Daggers): it lays the ribbon while it strikes, at rest otherwise
-            if (stack == ArmsOffHand.twinOf(p)) return ArmsHands.offStrikes() ? twin(p, hand) : null;
+            // the off hand's twin (a pair, the Daggers): it lays its own ribbon while it strikes, alone or with the main
+            if (stack == ArmsOffHand.twinOf(p)) return ArmsHands.twinStrikes() ? twin(p, hand) : null;
             return other(mc, stack);
         }
         int wielder = ArmsHands.offStrikes() ? -1 : p.getId();
@@ -211,7 +221,7 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
             flash = ArmsPredict.glinting() || ArmsPredict.perfectHeavy && ArmsPredict.move == Archetype.Move.HEAVY ? 255 : 0;
         }
         if (last == null || last.energy() != energy || last.flash() != flash || last.hand() != hand || last.wielder() != wielder) {
-            last = new State(energy, flash, hand, wielder, 0, -1);
+            last = new State(energy, flash, hand, wielder, 0, -1, false);
         }
         return last;
     }
@@ -219,7 +229,7 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
     private static @Nullable State twinState;
 
     private static State twin(LocalPlayer p, boolean hand) {
-        if (twinState == null || twinState.hand() != hand || twinState.wielder() != p.getId()) twinState = new State(0, 0, hand, p.getId(), 0, -1);
+        if (twinState == null || twinState.hand() != hand || twinState.wielder() != p.getId()) twinState = new State(0, 0, hand, p.getId(), 0, -1, true);
         return twinState;
     }
 
@@ -230,7 +240,7 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
             if (o.getMainHandItem() != stack) continue;
             int slot = Math.floorMod(o.getId(), OTHERS.length);
             State st = OTHERS[slot];
-            if (st == null || st.wielder() != o.getId()) OTHERS[slot] = st = new State(0, 0, false, o.getId(), 0, -1);
+            if (st == null || st.wielder() != o.getId()) OTHERS[slot] = st = new State(0, 0, false, o.getId(), 0, -1, false);
             return st;
         }
         return null;

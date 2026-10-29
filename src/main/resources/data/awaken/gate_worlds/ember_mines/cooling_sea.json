@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "theme": "ember_mines",
+  "name": "The Cooling Sea",
+  "line": "Islands of crust float on a sea of glowing magma. Something big swims under it.",
+  "tier": "wonder",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "sea": 1,
+    "sky": 40
+  },
+  "biome": "awaken:gate_world/cooling_sea",
+  "moods": [
+    {
+      "id": "banked",
+      "name": "Banked",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "eruption",
+      "name": "Eruption",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/cooling_sea_eruption",
+      "life": [
+        "embers",
+        "smoke"
+      ]
+    },
+    {
+      "id": "ashfall",
+      "name": "Ashfall",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/cooling_sea_ashfall",
+      "life": [
+        "ash"
+      ]
+    },
+    {
+      "id": "shift_change",
+      "name": "Shift change",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/cooling_sea_shift_change",
+      "life": [
+        "embers",
+        "dust"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:ember_basalt",
+    "wall_glow": "awaken:ember_basalt_cracked",
+    "floor": "awaken:ember_ash",
+    "slag": "awaken:ember_slag",
+    "trim": "awaken:mine_planks",
+    "timber": "awaken:mine_timber",
+    "planks": "awaken:mine_planks",
+    "lamp": "awaken:mine_lamp",
+    "crust": "awaken:magma_crust",
+    "crystal": "awaken:ember_crystal",
+    "fall": "awaken:ember_moltenfall",
+    "touch": "awaken:ember_bellows",
+    "fluid": "minecraft:lava"
+  },
+  "hero": [
+    "crust_islands"
+  ],
+  "life": [
+    "embers",
+    "dust",
+    "smoke",
+    "bats"
+  ],
+  "sound": "awaken:gate.world.mine_sea",
+  "events": [
+    "tremor",
+    "slag_wyrm"
+  ],
+  "rule": "embers",
+  "secrets": [
+    {
+      "id": "foremans_bellows",
+      "name": "The foreman's bellows"
+    },
+    {
+      "id": "the_crust_shrine",
+      "name": "The shrine on the crust"
+    }
+  ],
+  "keepsake": "wyrm_scale",
+  "keepsake_name": "A Slag Wyrm's Scale",
+  "keepsake_from": "slag_wyrm",
+  "signature": "slag_wyrm"
+}

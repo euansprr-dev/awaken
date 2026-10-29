@@ -1,0 +1,34 @@
+{
+  "aim.lock": {
+    "subtitle": "subtitles.awaken.aim.lock",
+    "sounds": [
+      {
+        "name": "awaken:ui_aim_lock"
+      }
+    ]
+  },
+  "aim.switch": {
+    "subtitle": "subtitles.awaken.aim.switch",
+    "sounds": [
+      {
+        "name": "awaken:ui_aim_switch"
+      }
+    ]
+  },
+  "aim.release": {
+    "subtitle": "subtitles.awaken.aim.release",
+    "sounds": [
+      {
+        "name": "awaken:ui_aim_release"
+      }
+    ]
+  },
+  "aim.break": {
+    "subtitle": "subtitles.awaken.aim.break",
+    "sounds": [
+      {
+        "name": "awaken:ui_aim_break"
+      }
+    ]
+  }
+}

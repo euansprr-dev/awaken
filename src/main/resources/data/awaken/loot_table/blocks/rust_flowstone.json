@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "awaken:blocks/rust_flowstone",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:rust_flowstone",
+          "conditions": [
+            {
+              "condition": "minecraft:match_tool",
+              "predicate": {
+                "items": "minecraft:shears"
+              }
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

@@ -3,12 +3,15 @@ package dev.awaken.living.wayfarer;
 import dev.awaken.core.test.AwakenTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 
 /**
  * The scene finder's GameTest (SPEC §21.5): a cliff ledge and flat road ground in real terrain, never on forbidden land;
- * and the Wayfarers' camp's (SPEC §27.6): laid round its fire, keeping its ground, its bedrolls' rule.
+ * and the Wayfarers' camp's (SPEC §27.6): laid round its fire, keeping its ground, its bedrolls' rule; and dry land
+ * sought only in finished chunks (SPEC §28.9).
  */
 public final class SceneTests {
     private SceneTests() {}
@@ -50,6 +53,25 @@ public final class SceneTests {
                 h.assertTrue(Scenes.findSpot(level, base.offset(24, 0, 0), "road", RandomSource.create(2L), 0, 6) == null, "nor a road there");
             } finally {
                 Scenes.forbidden = was;
+            }
+            h.succeed();
+        });
+
+        // a chunk loaded but still generating (under a player flying over new land) is passed by, never waited for on
+        // the server thread (SPEC §28.9's audit): the camp's search once held the tick a second at a time on one
+        AwakenTests.register("living_dry_land_never_waits", 20, h -> {
+            ServerLevel level = h.getLevel();
+            var cache = level.getChunkSource();
+            ChunkPos o = ChunkPos.containing(h.absolutePos(BlockPos.ZERO));
+            ChunkPos c = new ChunkPos(o.x() - 400 - (int) (level.getGameTime() % 64), o.z() + 400);
+            h.assertTrue(cache.getChunkNow(c.x(), c.z()) == null, "chunk " + c + " isn't loaded yet");
+            cache.addTicketAndLoadWithRadius(TicketType.PORTAL, c, 0);
+            try {
+                h.assertTrue(cache.hasChunk(c.x(), c.z()) && cache.getChunkNow(c.x(), c.z()) == null, "loaded, still generating");
+                h.assertTrue(Scenes.dryLand(level, c.getMiddleBlockPosition(0), 0) == null, "no ground found there yet");
+                h.assertTrue(cache.getChunkNow(c.x(), c.z()) == null, "and the chunk wasn't made on the server thread");
+            } finally {
+                cache.removeTicketWithRadius(TicketType.PORTAL, c, 0);
             }
             h.succeed();
         });
@@ -108,11 +130,7 @@ public final class SceneTests {
                 Camp.onTarget(outside);
                 h.assertFalse(outside.isCanceled(), "out past the edge, the wilds are the wilds");
                 p.snapTo(fire.getX() + 4.5, fire.getY(), fire.getZ() + 0.5);
-                // a step that needs the dark: the bedroll says so instead of sleeping it away
-                String moths = dev.awaken.living.quest.QuestBook.get("awaken:moth_lights") != null ? "awaken:moth_lights" : "moth_lights";
-                h.assertTrue(Camp.nightNeeded(p) == null, "no step needs the night yet");
-                h.assertTrue(dev.awaken.living.quest.QuestEngine.devStep(p, moths, "moths"), "Moth Lights at its first step");
-                h.assertTrue(Camp.nightNeeded(p) != null && Camp.nightNeeded(p).contains("night"), "the moths need the night: " + Camp.nightNeeded(p));
+                h.assertTrue(Camp.nightNeeded(p) == null, "no step needs the night");
             } catch (RuntimeException e) {
                 z.discard();
                 restore.run();

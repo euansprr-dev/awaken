@@ -109,7 +109,7 @@ public class AwakenMob extends Monster {
     private ItemStack stolen = ItemStack.EMPTY;
     int fleeTicks;
     @Nullable Player robbed;
-    private int fallenTicks, fuseTicks, decoyTicks, hopCooldown, guardTicks, frenzyTicks, auraTicks, auraPulse, staggerTicks;
+    private int fallenTicks, fuseTicks, decoyTicks, hopCooldown, guardTicks, frenzyTicks, auraTicks, auraPulse, staggerTicks, groundedTicks;
     private float auraRadius, auraDamage;
     private BoltKind auraBolt = BoltKind.PLAIN;
     private @Nullable MobEffectInstance auraEffect;
@@ -326,6 +326,26 @@ public class AwakenMob extends Monster {
         return staggerTicks > 0;
     }
 
+    /**
+     * Brought down (SPEC §40): a normal or elite flier whose stance broke or whose dive was deflected drops out of the
+     * air and stands open on the ground for {@code ticks}, then rises. A kit flier's fight script decides its own.
+     */
+    public boolean ground(int ticks) {
+        if (!isAlive() || !def().flies() || scriptedFight() || flag(F_DECOY)) return false;
+        if (def().tier != Tier.NORMAL && def().tier != Tier.ELITE) return false;
+        stagger(ticks);
+        groundedTicks = Math.max(groundedTicks, ticks);
+        setNoGravity(false);
+        Vec3 v = getDeltaMovement();
+        setDeltaMovement(v.x * 0.3, Math.min(v.y, -0.35), v.z * 0.3);
+        needsSync = true;
+        return true;
+    }
+
+    public boolean grounded() {
+        return groundedTicks > 0;
+    }
+
     public MobRole.Role syncedRole() {
         int i = entityData.get(DATA_ROLE);
         MobRole.Role[] r = MobRole.Role.values();
@@ -424,6 +444,12 @@ public class AwakenMob extends Monster {
         if (flag(F_HAUNTED)) tickPhasing(level);
         if (guardTicks > 0 && --guardTicks == 0) setFlag(F_GUARDING, false);
         if (staggerTicks > 0) staggerTicks--;
+        if (groundedTicks > 0 && --groundedTicks == 0) {
+            Vec3 v = getDeltaMovement();
+            setDeltaMovement(v.x, 0.32, v.z); // up again
+        }
+        // a flier always flies unless brought down (a save taken while down comes back with gravity on)
+        if (groundedTicks == 0 && d.flies() && !isNoGravity()) setNoGravity(true);
         if (frenzyTicks > 0 && --frenzyTicks == 0) endFrenzy();
         if (auraTicks > 0) tickAura(level);
         if (fleeTicks > 0) fleeTicks--;
@@ -566,6 +592,11 @@ public class AwakenMob extends Monster {
         return flag(F_FALLEN) || flag(F_DORMANT) || flag(F_FUSING) || watched || staggerTicks > 0 || (abilities != null && abilities.holdsStill());
     }
 
+    /** Whether its idle wandering waits (a named beast watching someone who walked into its territory). */
+    protected boolean idleHeld() {
+        return false;
+    }
+
     @Nullable AbilityRunner runner() {
         return abilities;
     }
@@ -676,7 +707,7 @@ public class AwakenMob extends Monster {
 
     @Override
     public boolean canAttack(LivingEntity target) {
-        return !(target instanceof AwakenMob) && super.canAttack(target);
+        return !(target instanceof AwakenMob) && dev.awaken.core.api.GateHooks.mayTarget(this, target) && super.canAttack(target);
     }
 
     @Override
@@ -798,9 +829,13 @@ public class AwakenMob extends Monster {
 
     // ---- bars ----------------------------------------------------------------------------------------------------
 
+    private Component barName() {
+        return syncedRole() == MobRole.Role.WARDEN ? getDisplayName().copy().append(" · Warden") : getDisplayName();
+    }
+
     protected void ensureBar() {
         if (bar != null || level().isClientSide()) return;
-        bar = new ServerBossEvent(Mth.createInsecureUUID(random), getDisplayName(), def().barColor,
+        bar = new ServerBossEvent(Mth.createInsecureUUID(random), barName(), def().barColor,
                 role().role() == MobRole.Role.BOSS ? def().tier.overlay() : BossEvent.BossBarOverlay.PROGRESS);
         bar.setProgress(getHealth() / getMaxHealth());
         if (role().role() == MobRole.Role.BOSS) bar.setDarkenScreen(def().tier == Tier.FINAL || def().tier == Tier.SOVEREIGN);
@@ -837,7 +872,7 @@ public class AwakenMob extends Monster {
     }
 
     private boolean sameStorey(ServerPlayer p) {
-        return Math.abs(p.getY() - getY()) <= BAR_STOREY;
+        return Math.abs(p.getY() - getY()) <= BAR_STOREY && dev.awaken.core.api.GateHooks.showsBossBar(this, p);
     }
 
     private void refreshBarPlayers() {
@@ -851,7 +886,7 @@ public class AwakenMob extends Monster {
     @Override
     public void setCustomName(@Nullable Component name) {
         super.setCustomName(name);
-        if (bar != null) bar.setName(getDisplayName());
+        if (bar != null) bar.setName(barName());
     }
 
     public @Nullable ServerBossEvent bar() {
@@ -938,10 +973,15 @@ public class AwakenMob extends Monster {
         decoyTicks = in.getIntOr("awaken_decoy", 0);
         stolen = in.read("awaken_stolen", ItemStack.CODEC).orElse(ItemStack.EMPTY);
         entityData.set(DATA_ROLE, (byte) role().role().ordinal());
-        if (bar != null) bar.setName(getDisplayName());
+        if (bar != null) bar.setName(barName());
     }
 
     // ---- client look ---------------------------------------------------------------------------------------------
+
+    /** The look {@link #look} filled last, without filling it again (null before it is first drawn). */
+    public @Nullable AwLook lastLook() {
+        return look;
+    }
 
     /** Fills and returns this entity's reusable look (client render thread). */
     public AwLook look(float partialTicks) {

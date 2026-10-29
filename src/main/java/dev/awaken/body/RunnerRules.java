@@ -1,5 +1,6 @@
 package dev.awaken.body;
 
+import dev.awaken.powers.ladder.PowerLadder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.BlockGetter;
@@ -162,6 +163,29 @@ public final class RunnerRules {
     /** A run's length and grip with or without Wall Stride, link {@code link} of a chain. */
     public static int runLength(int link, Rank rank, boolean stride) {
         return stride ? (int) Math.round(STRIDE_TICKS * Math.pow(LINK_SHARE, link)) : runLength(link, rank);
+    }
+
+    /**
+     * A run's length with Wall Stride at {@code level} (0 = without it). Its ladder (SPEC 36): Spark Steps (2) a half second
+     * longer, Street Runner (5) a second more on each wall chained from the last.
+     */
+    public static int runLength(int link, Rank rank, int level) {
+        if (level <= 0) return runLength(link, rank);
+        int n = runLength(link, rank, true);
+        if (level >= 2) n += (int) PowerLadder.num("wall_run", 2, "extra", 10);
+        if (level >= 5 && link > 0) n += (int) PowerLadder.num("wall_run", 5, "chain", 20);
+        return n;
+    }
+
+    /** The run's vertical target with Wall Stride at {@code level}: Steady (4) never sinks. */
+    public static double runTarget(int age, int ticks, int grip, int level) {
+        if (level < 4) return runTarget(age, ticks, grip, level > 0);
+        return age < grip ? STRIDE_GRIP_UP * (1 - age / (double) Math.max(1, grip)) : 0;
+    }
+
+    /** Kick-off (3): a wall jump leaves with this much more of the run's speed. */
+    public static double strideKick(int level) {
+        return level >= 3 ? 1 + PowerLadder.num("wall_run", 3, "kick", 0.35f) : 1;
     }
 
     public static int runGrip(int link, boolean stride) {

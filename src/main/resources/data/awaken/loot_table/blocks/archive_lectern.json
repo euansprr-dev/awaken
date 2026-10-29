@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "awaken:blocks/archive_lectern",
+  "pools": [
+    {
+      "rolls": 1,
+      "bonus_rolls": 0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:archive_lectern"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

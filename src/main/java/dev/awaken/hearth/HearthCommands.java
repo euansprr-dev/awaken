@@ -4,11 +4,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.awaken.core.AwakenCommands;
-import dev.awaken.hearth.echo.BindMath;
-import dev.awaken.hearth.echo.Duty;
-import dev.awaken.hearth.echo.EchoRecord;
-import dev.awaken.hearth.echo.EchoRole;
-import dev.awaken.hearth.echo.Echoes;
 import dev.awaken.hearth.player.HearthPlayer;
 import dev.awaken.hearth.room.Room;
 import dev.awaken.hearth.town.Town;
@@ -32,8 +27,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * /awaken hearth info|echoes|guide and the admin tools /awaken admin trial &lt;rank&gt;|penalty, /awaken admin town arrive
- * &lt;npc&gt;, /awaken admin hearth scan, /awaken admin hearth cottage [reset|offer|view outside|inside|side].
+ * /awaken hearth info|guide and the admin tools /awaken admin trial &lt;rank&gt;|penalty, /awaken admin town arrive
+ * &lt;npc&gt;, /awaken admin hearth scan, /awaken admin hearth cottage [reset|offer|hurry|view outside|inside|side].
  */
 final class HearthCommands {
     private HearthCommands() {}
@@ -42,7 +37,6 @@ final class HearthCommands {
         AwakenCommands.add((root, ctx) -> {
             root.then(Commands.literal("hearth")
                     .then(Commands.literal("info").executes(HearthCommands::info))
-                    .then(Commands.literal("echoes").executes(HearthCommands::echoes))
                     .then(Commands.literal("guide").executes(HearthCommands::guide))
                     // sharing a Hearth (SPEC "Together"): every player may use these
                     .then(Commands.literal("members").executes(HearthCommands::members))
@@ -74,10 +68,10 @@ final class HearthCommands {
                         return given ? 1 : 0;
                     }))
                     .then(Commands.literal("camp").executes(c -> {
-                        // the nearest camp resident hands the coal over as a talk would (the tour's "Ilse gives the Ember")
+                        // Ilse hands the coal over as a talk would (the tour's "Ilse gives the Ember")
                         ServerPlayer sp = c.getSource().getPlayerOrException();
                         var near = sp.level().getEntitiesOfClass(dev.awaken.living.wayfarer.Wayfarer.class, sp.getBoundingBox().inflate(32),
-                                w -> w.who().equals("ilse") || w.who().equals("hettie"));
+                                w -> w.who().equals("ilse"));
                         near.sort(java.util.Comparator.comparingDouble(w -> w.distanceToSqr(sp)));
                         var inv = sp.getInventory();
                         for (int i = 0; i < inv.getContainerSize(); i++) if (inv.getItem(i).is(HearthContent.EMBER_ITEM.get())) inv.setItem(i, net.minecraft.world.item.ItemStack.EMPTY);
@@ -155,6 +149,15 @@ final class HearthCommands {
                 return rooms.size();
             })).then(Commands.literal("cottage").executes(HearthCommands::cottage)
                     .then(Commands.literal("reset").executes(HearthCommands::cottageReset))
+                    .then(Commands.literal("hurry").executes(c -> {
+                        // as if the rest of the day had passed: the build catches up over the next few ticks
+                        ServerPlayer sp = c.getSource().getPlayerOrException();
+                        boolean ok = HearthService.hearthOf(sp).map(h -> dev.awaken.hearth.guide.Cottage.hurry(h,
+                                dev.awaken.hearth.guide.Cottage.DURATION)).orElse(false);
+                        if (ok) c.getSource().sendSuccess(() -> Component.literal("Oren finishes the cottage"), false);
+                        else c.getSource().sendFailure(Component.literal("Oren isn't building a cottage here."));
+                        return ok ? 1 : 0;
+                    }))
                     .then(Commands.literal("offer").executes(c -> {
                         ServerPlayer sp = c.getSource().getPlayerOrException();
                         boolean sent = dev.awaken.hearth.guide.Cottage.offer(sp);
@@ -292,11 +295,8 @@ final class HearthCommands {
         List<String> town = new ArrayList<>();
         for (String id : h.arrived) town.add(Townsfolk.displayName(id));
         lines.add("Town: " + (town.isEmpty() ? "nobody yet" : String.join(", ", town)));
-        Map<EchoRole, Integer> pads = new java.util.EnumMap<>(EchoRole.class);
-        for (EchoRole r : h.pads.values()) pads.merge(r, 1, Integer::sum);
-        lines.add("Role pads: " + (pads.isEmpty() ? "none" : pads.toString().toLowerCase(Locale.ROOT)));
         lines.add("Trophies in a Hall: " + h.hallTrophies.size() + " different bosses");
-        lines.add("Echoes have hauled " + h.itemsHauled + " items, harvested " + h.cropsHarvested + " crops, brought up " + h.oresBrought + " ore");
+        lines.add("Hauled " + h.itemsHauled + " items, harvested " + h.cropsHarvested + " crops, brought up " + h.oresBrought + " ore");
         if (Breaks.active(h)) lines.add("A break is happening near home");
         for (String l : lines) c.getSource().sendSuccess(() -> Component.literal(l), false);
         return 1;
@@ -325,7 +325,10 @@ final class HearthCommands {
     private static int cottageReset(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
         ServerPlayer sp = c.getSource().getPlayerOrException();
         HearthService.player(sp).tips.removeIf(t -> t.startsWith("cottage_"));
-        HearthService.hearthOf(sp).ifPresent(h -> h.cottage = null);
+        HearthService.hearthOf(sp).ifPresent(h -> {
+            h.cottage = null;
+            h.cottageBuild = null;
+        });
         c.getSource().sendSuccess(() -> Component.literal("Oren's cottage can be offered and raised again"), false);
         return 1;
     }
@@ -357,25 +360,6 @@ final class HearthCommands {
         float pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
         sp.teleportTo((ServerLevel) sp.level(), fx, fy, fz, java.util.Set.of(), yaw, pitch, true);
         return 1;
-    }
-
-    private static int echoes(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
-        ServerPlayer sp = c.getSource().getPlayerOrException();
-        HearthPlayer hp = HearthService.player(sp);
-        int spi = Progression.stat(sp, Stat.SPI);
-        int pads = HearthService.hearthOf(sp).map(h -> h.pads.size()).orElse(0);
-        c.getSource().sendSuccess(() -> Component.literal("Echoes " + hp.echoes.size() + " / " + BindMath.totalCap(spi, pads)
-                + " · field cap " + BindMath.fieldCap(spi) + " · role pads " + pads + " · army " + (hp.fieldOut ? "called" : "dismissed")), false);
-        Map<UUID, Duty.Assignment> duties = HearthService.hearthOf(sp).map(h -> Duty.assignments(hp, h)).orElse(Map.of());
-        long now = sp.level().getGameTime();
-        for (EchoRecord e : hp.echoes) {
-            Duty.Assignment a = duties.get(e.id());
-            String post = e.field() ? "marches with you" : a != null ? a.role().label + " at " + a.pad().toShortString() : "resting at home";
-            String state = e.downUntil() > now ? " · reforming " + (e.downUntil() - now) / 20 + "s" : Echoes.isOut(sp.level().getServer(), e.id()) ? " · out" : "";
-            c.getSource().sendSuccess(() -> Component.literal("• " + e.name() + " (" + e.origin().toLowerCase(Locale.ROOT) + ") Lv " + e.level()
-                    + " · " + post + state), false);
-        }
-        return hp.echoes.size();
     }
 
     private static int trial(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {

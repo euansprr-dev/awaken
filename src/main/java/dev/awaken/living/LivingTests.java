@@ -32,8 +32,26 @@ final class LivingTests {
         dev.awaken.living.wayfarer.SceneTests.register();
         dev.awaken.living.pulse.PulseTests.register();
         dev.awaken.living.population.LedgerTests.register();
+        dev.awaken.living.population.WildHerdTests.register();
         dev.awaken.living.camp.CampTests.register();
         dev.awaken.living.craft.CraftTests.register();
+        // the clear screen (SPEC §40.6): the creature you mean keeps the full plate; the others fighting you get a thin bar;
+        // one under your look or a notable beast keeps its full plate; Classic thins nothing
+        AwakenTests.register("hud_thin_plates", 20, h -> {
+            long now = 1000;
+            var other = new PlateRules.Candidate(7, 5, now - 10, Long.MIN_VALUE, false, false);
+            var meant = new PlateRules.Candidate(8, 5, now - 10, Long.MIN_VALUE, false, false);
+            var looked = new PlateRules.Candidate(9, 5, now - 10, now, false, false);
+            var notable = new PlateRules.Candidate(10, 5, now - 10, Long.MIN_VALUE, true, false);
+            var calm = new PlateRules.Candidate(11, 5, Long.MIN_VALUE, now, false, false);
+            h.assertTrue(PlateRules.thin(true, other, now, 8), "another fighting you: thin");
+            h.assertFalse(PlateRules.thin(true, meant, now, 8), "the one you mean: full");
+            h.assertFalse(PlateRules.thin(true, looked, now, 8), "under your look: full");
+            h.assertFalse(PlateRules.thin(true, notable, now, 8), "a notable beast: full");
+            h.assertFalse(PlateRules.thin(true, calm, now, 8), "not in a fight: as before");
+            h.assertFalse(PlateRules.thin(false, other, now, 8), "Classic: as before");
+            h.succeed();
+        });
         // the Boss Plate's payloads carry a bar's binding and its lines intact (SPEC §35.1)
         AwakenTests.register("boss_plate_bind", 20, h -> {
             java.util.UUID bar = java.util.UUID.randomUUID();
@@ -105,6 +123,83 @@ final class LivingTests {
             }
             h.succeed();
         });
+        // Euan 2026-10-28: Oren's lines were cut mid-sentence and his card came before he'd said what it was about
+        AwakenTests.register("living_quest_lines_fit_the_box", 20, h -> {
+            int[][] sizes = {{378, 246}, {480, 270}, {640, 360}, {960, 540}};
+            double[] scales = {0.75, 1.0, 1.5};
+            List<String> bad = new ArrayList<>();
+            for (var e : dev.awaken.living.quest.QuestBook.all().entrySet()) {
+                var d = e.getValue();
+                List<String> lines = new ArrayList<>(d.ask());
+                for (var st : d.steps()) {
+                    lines.addAll(st.start());
+                    lines.addAll(st.done());
+                }
+                for (int[] sz : sizes) {
+                    for (double sc : scales) {
+                        int max = dev.awaken.signal.ui.StoryPager.maxLines(sz[0], sz[1], sc);
+                        int width = dev.awaken.signal.ui.SignalLayout.storyTextWidth(dev.awaken.signal.ui.SignalLayout.story(sz[0], sz[1], sc, max, null));
+                        boolean strict = sc == 1.0 && sz[0] <= 480; // the owner's screen and the usual one: whole sentences only
+                        for (String line : lines) {
+                            var pager = new dev.awaken.signal.ui.StoryPager("", line);
+                            List<String> words = new ArrayList<>();
+                            for (int guard = 0; !pager.done() && guard < 40; guard++) {
+                                List<String> page = pager.next(width, max, dev.awaken.signal.ui.SignalText::approxWidth);
+                                String text = String.join(" ", page);
+                                if (page.size() > max) bad.add(e.getKey() + ": a page taller than the box: " + text);
+                                for (String l : page) if (dev.awaken.signal.ui.SignalText.approxWidth(l) > width) bad.add(e.getKey() + ": wider than the box: " + l);
+                                if (!text.matches(strict ? ".*[.!?…][\"'”’)]?$" : ".*[.!?…,:;][\"'”’)]?$"))
+                                    bad.add(e.getKey() + " at " + sz[0] + "x" + sz[1] + "@" + sc + ": a page stops mid-sentence: " + text);
+                                words.addAll(List.of(text.split(" ")));
+                            }
+                            if (!String.join(" ", words).equals(line.trim().replaceAll("\\s+", " "))) bad.add(e.getKey() + ": words lost from: " + line);
+                        }
+                    }
+                }
+                // the card says in plain words what you agree to, whole
+                String body = dev.awaken.signal.ui.SignalText.cardBody(d.summary(), dev.awaken.signal.ui.SignalLayout.CARD_W_BODY - 12, dev.awaken.signal.ui.SignalText::approxWidth);
+                if (d.summary().isBlank() || !body.equals(d.summary().trim())) bad.add(e.getKey() + ": the offer card can't show the whole summary: " + d.summary());
+            }
+            h.assertTrue(bad.isEmpty(), bad.size() + " problems: " + String.join(" | ", bad.subList(0, Math.min(5, bad.size()))));
+            h.succeed();
+        });
+
+        AwakenTests.register("living_quest_offer_after_ask", 20, h -> {
+            // the client as it plays a giver's ask (480x270 at scale 1, the default type speed) with the card sent alongside
+            int max = dev.awaken.signal.ui.StoryPager.maxLines(480, 270, 1.0);
+            int width = dev.awaken.signal.ui.SignalLayout.storyTextWidth(dev.awaken.signal.ui.SignalLayout.story(480, 270, 1.0, max, null));
+            int checked = 0;
+            for (var e : dev.awaken.living.quest.QuestBook.all().entrySet()) {
+                var d = e.getValue();
+                if (d.ask().isEmpty()) continue;
+                int speech = 0;
+                for (String line : d.ask()) {
+                    var pager = new dev.awaken.signal.ui.StoryPager("", line);
+                    while (!pager.done()) {
+                        int chars = 0;
+                        for (String l : pager.next(width, max, dev.awaken.signal.ui.SignalText::approxWidth)) chars += l.length();
+                        speech += dev.awaken.signal.ui.StoryPager.typeTicks(chars, 3.0) + dev.awaken.signal.ui.StoryPager.holdTicks(chars);
+                    }
+                    speech += dev.awaken.signal.ui.StoryPager.FADE_TICKS + 1;
+                }
+                var deck = new dev.awaken.signal.ui.ChoiceDeck();
+                var card = dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE, net.minecraft.network.chat.Component.literal(d.title()))
+                        .body(net.minecraft.network.chat.Component.literal(d.summary())).choice("living_quest:" + e.getKey(), "Help", "Not now").build();
+                deck.offer(card, dev.awaken.living.wayfarer.Wayfarers.offerTtl(d.ask()), true);
+                int shownAt = -1;
+                for (int t = 0; t < speech + 60 && shownAt < 0; t++) {
+                    deck.tick(0, 0, false, t < speech);
+                    if (deck.current() != null) shownAt = t;
+                }
+                h.assertTrue(shownAt >= speech, e.getKey() + ": the card came at " + shownAt + " before the ask ended at " + speech);
+                h.assertTrue(shownAt >= 0 && shownAt <= speech + dev.awaken.signal.ui.ChoiceDeck.GAP_TICKS + 2, e.getKey() + ": the card came late or never: " + shownAt);
+                h.assertTrue(deck.current().ticksLeft() >= dev.awaken.signal.ui.ChoiceDeck.FOLD_TICKS, e.getKey() + ": the card has its full time left once shown");
+                checked++;
+            }
+            h.assertTrue(checked >= 2, "the quests with an ask were checked (Bram's and Oren's, SPEC §43.1): " + checked);
+            h.succeed();
+        });
+
         AwakenTests.register("progression_first_scenes", 100, h -> {
             var server = h.getLevel().getServer();
             net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
@@ -628,6 +723,17 @@ final class LivingTests {
             h.succeed();
         });
 
+        AwakenTests.register("forms_fall_turn", 20, h -> {
+            // a body facing south (yaw 0: its front +z, its left +x) struck toward the east (+x)
+            float side = dev.awaken.living.combat.FormShape.fallTurn(1, 0, 0, 1, 0);   // a beast falls onto its left: already east
+            h.assertTrue(Math.abs(side) < 0.5F, "a beast struck toward its left falls as it stands: " + side);
+            float fwd = dev.awaken.living.combat.FormShape.fallTurn(0, -1, 0, 1, 0);   // a walker falls forward: a quarter turn
+            h.assertTrue(Math.abs(Math.abs(fwd) - 90) < 0.5F, "a walker turns a quarter to fall east: " + fwd);
+            float back = dev.awaken.living.combat.FormShape.fallTurn(0, -1, 0, 0, -1);   // struck from the front: never into the striker
+            h.assertTrue(Math.abs(back) <= dev.awaken.living.combat.FormShape.MAX_FALL_TURN, "a blow from the front turns at most a quarter and a bit: " + back);
+            h.assertTrue(dev.awaken.living.combat.FormShape.fallTurn(0, 0, 0, 1, 0) == 0, "a body that falls in place does not turn");
+            h.succeed();
+        });
         AwakenTests.register("forms_cue", 20, h -> {
             // the cue a body acts a move out from round-trips (late joiners place the phase from its start tick)
             var cue = new LivingNet.FormCue(42, "lunge", 123_456L, 20, 18);
@@ -684,23 +790,23 @@ final class LivingTests {
         });
 
         AwakenTests.register("living_quiet_land", 100, h -> {
-            // SPEC 21.11 decision 23: animals thin by rank, the ambient life more so, the shyness grows with the rank
-            var Q = dev.awaken.living.combat.QuietLand.class;
-            h.assertTrue(dev.awaken.living.combat.QuietLand.keep(0) == 1F && dev.awaken.living.combat.QuietLand.keep(1) == 0.8F && dev.awaken.living.combat.QuietLand.keep(5) == 0.1F, "E all, D four fifths, S a tenth");
-            for (int r = 1; r <= 5; r++) h.assertTrue(dev.awaken.living.combat.QuietLand.keep(r) < dev.awaken.living.combat.QuietLand.keep(r - 1), "thinner each rank");
+            // SPEC 21.11 decision 23 as changed by SPEC 41 decision 2: animals thin by wildness (people's land), never by rank;
+            // the ambient life still thins by rank, and the shyness grows with it
+            h.assertTrue(dev.awaken.living.combat.QuietLand.keep(dev.awaken.living.api.Wildness.Band.TAMED) < dev.awaken.living.combat.QuietLand.keep(dev.awaken.living.api.Wildness.Band.PASTURE)
+                    && dev.awaken.living.combat.QuietLand.keep(dev.awaken.living.api.Wildness.Band.WILD) == 1F && dev.awaken.living.combat.QuietLand.keep(dev.awaken.living.api.Wildness.Band.DEEP) == 1F,
+                    "fewer wild animals in people's land, all of them in the wild");
             h.assertTrue(dev.awaken.living.combat.QuietLand.wild(-1) == 1F && dev.awaken.living.combat.QuietLand.wild(5) == 1F && dev.awaken.living.combat.QuietLand.wild(130) < 0.05F, "birdsong all through E and nearly gone in S");
-            h.assertTrue(dev.awaken.living.combat.QuietLand.wild(80) < dev.awaken.living.combat.QuietLand.keep(4), "A: more birds go than animals");
             h.assertTrue(dev.awaken.living.combat.QuietLand.shy(1) == 10F && dev.awaken.living.combat.QuietLand.shy(5) == 26F, "10 blocks in D, 26 in S");
-            // a real spawn: none turned away in E land (the test land), a pig in a hearthless D land world is thinned about as often as the table says
+            // a real spawn: thinned about as often as the land's band says
             var level = h.getLevel();
             var rnd = net.minecraft.util.RandomSource.create(5);
             var pig = h.spawn(net.minecraft.world.entity.EntityTypes.PIG, 1, 2, 1);
             int turned = 0;
             for (int i = 0; i < 400; i++) if (dev.awaken.living.combat.QuietLand.thins(level, pig, net.minecraft.world.entity.EntitySpawnReason.NATURAL, rnd)) turned++;
-            int rank = dev.awaken.living.region.RegionMap.rankOf(dev.awaken.living.api.Regions.creatureLevel(level, pig.blockPosition(), dev.awaken.living.api.Regions.Role.NEUTRAL));
-            double expect = rank <= 0 ? 0 : 1 - dev.awaken.living.combat.QuietLand.keep(rank);
+            var band = dev.awaken.living.api.Wildness.band(dev.awaken.living.api.Wildness.land(level, pig.getBlockX(), pig.getBlockZ()));
+            double expect = 1 - dev.awaken.living.combat.QuietLand.keep(band);
             if (dev.awaken.living.api.Regions.landCap(level, pig.blockPosition()) != Integer.MAX_VALUE) expect = 0;
-            h.assertTrue(Math.abs(turned / 400.0 - expect) < 0.12, "here (rank " + rank + ") " + turned + " of 400 turned away, expected about " + Math.round(expect * 400));
+            h.assertTrue(Math.abs(turned / 400.0 - expect) < 0.12, "here (" + band + ") " + turned + " of 400 turned away, expected about " + Math.round(expect * 400));
             h.assertTrue(!dev.awaken.living.combat.QuietLand.thins(level, pig, net.minecraft.world.entity.EntitySpawnReason.BREEDING, rnd), "bred animals are never turned away");
             h.succeed();
         });

@@ -37,10 +37,12 @@ import java.util.List;
 public final class SystemHud {
     private SystemHud() {}
 
-    static final int OPEN_TICKS = 4, CLOSE_TICKS = 6, STORY_FADE = 10;
+    static final int OPEN_TICKS = 4, CLOSE_TICKS = 6, STORY_FADE = StoryPager.FADE_TICKS;
     private static final int MAX_STORIES = 8, MAX_PANELS = 2;
 
-    record ToastItem(String title, String detail, int colour) {}
+    record ToastItem(String title, String detail, int colour, boolean journal) {
+        ToastItem(String title, String detail, int colour) { this(title, detail, colour, false); }
+    }
 
     private static final class Story {
         final SignalWindow w;
@@ -53,7 +55,10 @@ public final class SystemHud {
 
         Story(SignalWindow w) {
             this.w = w;
-            this.pager = new StoryPager(w.title().getString(), w.body().map(Component::getString).orElse(""));
+            this.pager = w.dialogue()
+                    ? new StoryPager("", w.title().getString() + w.body().map(b -> ": " + b.getString()).orElse("")
+                            + w.footer().map(f -> " " + f.getString()).orElse(""))
+                    : new StoryPager(w.title().getString(), w.body().map(Component::getString).orElse(""));
         }
     }
 
@@ -95,7 +100,7 @@ public final class SystemHud {
         switch (p) {
             case CHOICE -> {
                 Herald.log("card", w.tier(), w.topic(), w.title().getString());
-                DECK.offer(w, w.ttlTicks());
+                DECK.offer(w, w.ttlTicks(), speaking()); // a card asked while someone talks waits for them to finish
                 Herald.took();
                 // a revelation that asks something ("Will you accept?") is also spoken in full beside its card
                 if (w.kind() == SignalWindow.Kind.REVELATION) STORIES.addLast(w);
@@ -134,6 +139,16 @@ public final class SystemHud {
         }
         else Herald.offer(text, tier, topic, colour);
         if (response) Herald.took();
+    }
+
+    /** Already saved by the server: a small explanation, never an automatic panel or dialogue. */
+    static void event(dev.awaken.core.api.NoticeEvents.Event event) {
+        BURST.offer(ticks, new ToastItem(event.title(), event.summary(), event.colour(), true));
+    }
+
+    static void tickSavedEvents() {
+        ticks++;
+        tickToasts(Minecraft.getInstance());
     }
 
     /** An info panel the director let through. */
@@ -271,7 +286,7 @@ public final class SystemHud {
             no = 0;
         }
         ChoiceDeck.Choice before = DECK.current();
-        ChoiceDeck.Answer a = DECK.tick(yes, no, paused);
+        ChoiceDeck.Answer a = DECK.tick(yes, no, paused, speaking());
         if (a != null) send(a, before == null ? null : before.window());
         ChoiceDeck.Choice cur = DECK.current();
         String action = cur == null ? "" : cur.action;
@@ -320,8 +335,13 @@ public final class SystemHud {
     private static void addToast(Minecraft mc, ToastBurst.Out<ToastItem> out) {
         String title, detail;
         int colour;
-        if (out.merged()) {
-            title = out.items().size() + " new things · " + key(AwakenKeys.STATUS);
+        ToastItem explanation = out.items().stream().filter(ToastItem::journal).findFirst().orElse(null);
+        if (out.merged() && explanation != null) {
+            title = explanation.title();
+            detail = explanation.detail();
+            colour = explanation.colour();
+        } else if (out.merged()) {
+            title = out.items().size() + " new things (press " + key(AwakenKeys.STATUS) + ")";
             List<String> names = new ArrayList<>();
             for (ToastItem t : out.items()) names.add(t.title());
             detail = String.join(" · ", names);
@@ -335,7 +355,11 @@ public final class SystemHud {
         double mult = mc.options.notificationDisplayTime().get();
         long[] live = {ticks + Math.round(SignalToast.BASE_MS * mult / 50.0) + 40};
         LIVE_TOASTS.add(live);
-        mc.gui.toastManager().addToast(new SignalToast(title, detail, colour, () -> live[0] = 0));
+        boolean saved = explanation != null;
+        String more = saved && out.merged() ? "this and " + (out.items().size() - 1) + " more" : "more";
+        String hint = !saved ? "" : AwakenKeys.STATUS.isUnbound() ? "Set a Status key in Controls to read " + more + " in your Journal"
+                : "Press " + key(AwakenKeys.STATUS) + " to read " + more + " in your Journal";
+        mc.gui.toastManager().addToast(new SignalToast(title, detail, colour, hint, () -> live[0] = 0));
     }
 
     private static void tickPanel() {
@@ -356,6 +380,38 @@ public final class SystemHud {
             return AwakenConfig.Client.SIGNAL_TYPE_SPEED.get();
         } catch (IllegalStateException notLoaded) {
             return 3.0;
+        }
+    }
+
+    /** Whether a story line is on screen or waiting to be said. */
+    static boolean speaking() {
+        return story != null || !STORIES.isEmpty();
+    }
+
+    /** NPC speech on screen or next to be said, or a speaker's choice card (a press then waits for its keys). */
+    static boolean dialogueActive() {
+        return story != null && story.w.dialogue()
+                || story == null && !STORIES.isEmpty() && STORIES.peekFirst().dialogue()
+                || DECK.current() != null && DECK.current().window().dialogue();
+    }
+
+    /** One press: finish the line being typed, else the next page, else the next line (the server may send it). */
+    static void advanceDialogue() {
+        if (story == null) { tickStory(Minecraft.getInstance()); return; }
+        if (!story.w.dialogue() || story.w.action().isPresent()) return;
+        if (story.closingAt < 0 && story.age < story.typeTicks) { // the first press finishes the line being typed
+            story.age = story.typeTicks;
+            return;
+        }
+        if (!story.pager.done()) {
+            nextChunk(Minecraft.getInstance());
+            story.first = false;
+            story.closingAt = -1;
+        } else {
+            String topic = story.w.topic();
+            story = null;
+            dev.awaken.core.api.Dialogue.finished(topic);
+            tickStory(Minecraft.getInstance());
         }
     }
 
@@ -380,7 +436,7 @@ public final class SystemHud {
         if (width < story.width) {
             for (String l : story.lines) {
                 if (mc.font.width(l) > width) {
-                    story.pager.pushBack(story.lines, story.titleChunk);
+                    story.pager.pushBack();
                     boolean wasFirst = story.first;
                     nextChunk(mc);
                     story.first = wasFirst;
@@ -406,21 +462,23 @@ public final class SystemHud {
     }
 
     private static void nextChunk(Minecraft mc) {
-        int width = storyWidth(mc, StoryPager.MAX_LINES);
+        int w = mc.getWindow().getGuiScaledWidth(), h = mc.getWindow().getGuiScaledHeight();
+        int max = StoryPager.maxLines(w, h, scale());
+        int width = storyWidth(mc, max);
         story.titleChunk = story.pager.titleNext();
-        story.lines = story.pager.next(width, mc.font::width);
+        story.lines = story.pager.next(width, max, mc.font::width);
         story.width = width;
         int chars = 0;
         for (String l : story.lines) chars += l.length();
-        story.typeTicks = (int) Math.ceil(chars / Math.max(0.5, typeSpeed()));
+        story.typeTicks = StoryPager.typeTicks(chars, typeSpeed());
         story.holdTicks = StoryPager.holdTicks(chars);
         story.age = 0;
     }
 
     // ---- layout of the card slot ----------------------------------------------------------------------------------
 
-    private static String choiceBody(SignalWindow w) {
-        String body = w.body().map(Component::getString).map(SignalText::firstSentence).orElse("");
+    private static String choiceBody(SignalWindow w, int width, Font font) {
+        String body = w.body().map(Component::getString).map(t -> SignalText.cardBody(t, width, font::width)).orElse("");
         if (!body.isBlank()) return body;
         if (!w.rows().isEmpty()) return SignalText.collapseRows(w.rows());
         return w.footer().map(Component::getString).map(SignalText::stripKeyHints).orElse("");
@@ -428,7 +486,7 @@ public final class SystemHud {
 
     /** The last layout worked out, per window and screen size: cards are drawn every frame but change rarely. */
     private record Memo(SignalWindow w, int sw, int sh, double s, SignalLayout.Card card, List<String> question,
-                        String body, List<PanelLine> lines, String footer) {
+                        List<String> body, List<PanelLine> lines, String footer) {
         boolean matches(SignalWindow w2, int sw2, int sh2, double s2) {
             return w == w2 && sw == sw2 && sh == sh2 && s == s2;
         }
@@ -440,11 +498,14 @@ public final class SystemHud {
         if (choiceMemo != null && choiceMemo.matches(w, sw, sh, s)) return choiceMemo;
         int tw = SignalLayout.CARD_W - 12;
         int q = Math.min(2, Math.max(1, SignalText.wrap(w.title().getString(), tw, font::width).size()));
-        String body = choiceBody(w);
-        SignalLayout.Card card = SignalLayout.choice(sw, sh, s, q, !body.isBlank());
+        String body = choiceBody(w, SignalLayout.CARD_W_BODY - 12, font);
+        int b = body.isBlank() ? 0 : SignalText.wrap(body, tw, font::width).size();
+        if (b > 1) b = Math.max(2, Math.min(SignalLayout.CHOICE_BODY_LINES, SignalText.wrap(body, SignalLayout.CARD_W_BODY - 12, font::width).size()));
+        SignalLayout.Card card = SignalLayout.choice(sw, sh, s, q, b);
         int cw = card.textWidth();
         List<String> question = SignalText.wrapAtMost(w.title().getString(), cw, card.lines(), font::width);
-        choiceMemo = new Memo(w, sw, sh, s, card, question, SignalText.ellipsize(body, cw, font::width), List.of(), "");
+        List<String> bodyLines = card.bodyLines() == 0 ? List.of() : SignalText.wrapAtMost(body, cw, card.bodyLines(), font::width);
+        choiceMemo = new Memo(w, sw, sh, s, card, question, bodyLines, List.of(), "");
         return choiceMemo;
     }
 
@@ -473,7 +534,7 @@ public final class SystemHud {
         List<PanelLine> lines = panelLines(font, w);
         String footer = panelFooter(w);
         SignalLayout.Card card = SignalLayout.panel(sw, sh, s, lines.size(), !footer.isBlank());
-        panelMemo = new Memo(w, sw, sh, s, card, List.of(), "", lines, footer);
+        panelMemo = new Memo(w, sw, sh, s, card, List.of(), List.of(), lines, footer);
         return panelMemo;
     }
 
@@ -513,7 +574,7 @@ public final class SystemHud {
         SignalLayout.Card card = m.card();
         Rect r = card.rect();
         float alpha = Math.min(1f, (cardAge + pt) / OPEN_TICKS);
-        int w0 = SignalLayout.CARD_W, h0 = SignalLayout.choiceHeight(card.lines(), card.extra());
+        int w0 = card.textWidth() + 12, h0 = SignalLayout.choiceHeight(card.lines(), m.body().size());
         int tw = card.textWidth();
         g.pose().pushMatrix();
         g.pose().translate(r.x(), r.y());
@@ -528,8 +589,8 @@ public final class SystemHud {
             HudLook.text(g, font, line, tx, ty, Glass.a(Glass.TITLE, alpha), true);
             ty += SignalLayout.LINE;
         }
-        if (card.extra()) {
-            HudLook.text(g, font, m.body(), tx, ty, Glass.a(Glass.TEXT, 0.8f * alpha), false);
+        for (String line : m.body()) {
+            HudLook.text(g, font, line, tx, ty, Glass.a(Glass.TEXT, 0.8f * alpha), false);
             ty += SignalLayout.LINE;
         }
         ty += 2;
@@ -603,7 +664,7 @@ public final class SystemHud {
             ty += SignalLayout.LINE;
         }
         if (cut) {
-            String more = "+" + (lines.size() - show) + " more · " + key(AwakenKeys.STATUS);
+            String more = "Press " + key(AwakenKeys.STATUS) + " to see " + (lines.size() - show) + " more";
             HudLook.text(g, font, SignalText.ellipsize(more, tw, font::width), tx, ty, Glass.a(Glass.LABEL, alpha), false);
             ty += SignalLayout.LINE;
         }
@@ -660,6 +721,15 @@ public final class SystemHud {
             int lx = (w0 - font.width(full)) / 2; // centred on the whole line so it doesn't shift while typing
             if (!part.isEmpty()) HudLook.text(g, font, part, lx, ty, Glass.a(colour, alpha), true);
             ty += SignalLayout.LINE;
+        }
+        // a speaker waits on you: a small bobbing chevron beside the last line, only while a press would go on
+        if (left >= 0 && st.closingAt < 0 && st.w.dialogue() && dev.awaken.core.api.Dialogue.talking()) {
+            double t = (st.age - st.typeTicks + pt) * 0.22;
+            int c = Glass.a(Glass.EDGE, alpha * (0.6f + 0.4f * (float) Math.sin(t)));
+            int cx = bx + widest + 12, cy = ty - SignalLayout.LINE + 2 + (int) Math.round(Math.sin(t));
+            g.fill(cx - 2, cy, cx + 3, cy + 1, c);
+            g.fill(cx - 1, cy + 1, cx + 2, cy + 2, c);
+            g.fill(cx, cy + 2, cx + 1, cy + 3, c);
         }
         g.pose().popMatrix();
     }

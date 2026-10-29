@@ -157,14 +157,60 @@ public final class LivingNet {
         }
     }
 
-    /** Where this player's open scenes are (SPEC §21.5): each sends up a distress flare now and then. Every 5 s. */
-    public record Tells(java.util.List<net.minecraft.core.BlockPos> at) implements CustomPacketPayload {
-        public static final Type<Tells> TYPE = new Type<>(Awaken.id("living_tells"));
-        public static final StreamCodec<ByteBuf, Tells> STREAM_CODEC =
-                net.minecraft.core.BlockPos.STREAM_CODEC.apply(ByteBufCodecs.list(8)).map(Tells::new, Tells::at);
+    /**
+     * One sign on the ground near the player (SPEC §41.3): its id, kind (0 prints, 1 droppings, 2 bones), where, the way the
+     * prints point, how many left it, its age in ticks when sent, hooves or paws, and whether this player has read it.
+     */
+    public record SpoorMark(int id, int kind, double x, double y, double z, float yaw, int count, int age, boolean hoofed, boolean read)
+            implements CustomPacketPayload {
+        public static final Type<SpoorMark> TYPE = new Type<>(Awaken.id("living_spoor_mark"));
+        public static final StreamCodec<ByteBuf, SpoorMark> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, SpoorMark::id,
+                ByteBufCodecs.VAR_INT, SpoorMark::kind,
+                ByteBufCodecs.DOUBLE, SpoorMark::x,
+                ByteBufCodecs.DOUBLE, SpoorMark::y,
+                ByteBufCodecs.DOUBLE, SpoorMark::z,
+                ByteBufCodecs.FLOAT, SpoorMark::yaw,
+                ByteBufCodecs.VAR_INT, SpoorMark::count,
+                ByteBufCodecs.VAR_INT, SpoorMark::age,
+                ByteBufCodecs.BOOL, SpoorMark::hoofed,
+                ByteBufCodecs.BOOL, SpoorMark::read,
+                SpoorMark::new);
 
         @Override
-        public Type<Tells> type() {
+        public Type<SpoorMark> type() {
+            return TYPE;
+        }
+    }
+
+    /** The signs within sight of the player, every second while they change (at most 64, nearest first). */
+    public record Spoor(java.util.List<SpoorMark> marks) implements CustomPacketPayload {
+        public static final Type<Spoor> TYPE = new Type<>(Awaken.id("living_spoor"));
+        public static final StreamCodec<ByteBuf, Spoor> STREAM_CODEC = SpoorMark.STREAM_CODEC.apply(ByteBufCodecs.list(64)).map(Spoor::new, Spoor::marks);
+
+        @Override
+        public Type<Spoor> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * The trail the player is on (SPEC §41.3): stage 0 none, 1 reading, 2 the motes lead to the next sign ({@code sign} its
+     * id), 3 they lead to the quarry; where the motes go, and the quarry's name ("aurochs herd").
+     */
+    public record Trail(int stage, int sign, double x, double y, double z, String quarry) implements CustomPacketPayload {
+        public static final Type<Trail> TYPE = new Type<>(Awaken.id("living_trail"));
+        public static final StreamCodec<ByteBuf, Trail> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, Trail::stage,
+                ByteBufCodecs.VAR_INT, Trail::sign,
+                ByteBufCodecs.DOUBLE, Trail::x,
+                ByteBufCodecs.DOUBLE, Trail::y,
+                ByteBufCodecs.DOUBLE, Trail::z,
+                ByteBufCodecs.stringUtf8(64), Trail::quarry,
+                Trail::new);
+
+        @Override
+        public Type<Trail> type() {
             return TYPE;
         }
     }
@@ -323,7 +369,6 @@ public final class LivingNet {
         });
         r.playToClient(Happenings.TYPE, Happenings.STREAM_CODEC);
         r.playToClient(Journal.TYPE, Journal.STREAM_CODEC);
-        r.playToClient(Tells.TYPE, Tells.STREAM_CODEC);
         r.playToClient(CampSmoke.TYPE, CampSmoke.STREAM_CODEC);
         r.playToClient(RegionMsg.TYPE, RegionMsg.STREAM_CODEC);
         r.playToClient(LandMsg.TYPE, LandMsg.STREAM_CODEC);
@@ -335,5 +380,7 @@ public final class LivingNet {
         r.playToClient(BossBind.TYPE, BossBind.STREAM_CODEC);
         r.playToClient(BossLine.TYPE, BossLine.STREAM_CODEC);
         r.playToClient(FormCue.TYPE, FormCue.STREAM_CODEC);
+        r.playToClient(Spoor.TYPE, Spoor.STREAM_CODEC);
+        r.playToClient(Trail.TYPE, Trail.STREAM_CODEC);
     }
 }

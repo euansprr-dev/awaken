@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "awaken:block/wild/bramble_ripe_0",
+    "layer1": "awaken:block/wild/bramble_ripe_0_overlay"
+  }
+}

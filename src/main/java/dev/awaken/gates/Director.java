@@ -134,7 +134,7 @@ public final class Director {
         Theme annex = others.isEmpty() ? theme : others.get((int) (rng.nextDouble() * others.size()));
         int annexRule = (int) (rng.nextDouble() * 3);
         long planSeed = Hash.mix(seed ^ 0x51ED270B27C3A5L);
-        GatePlan plan = new GatePlan(planSeed, GatePlan.CONTENT_VERSION, g, theme, layout, mods, twist, floors, theme.bossId(),
+        GatePlan plan = new GatePlan(planSeed, GatePlan.current(), g, theme, layout, mods, twist, floors, theme.bossId(),
                 annex, annexRule);
         List<String> combos = plan.combos();
         tr.add("forces    " + (combos.isEmpty() ? "no special interactions" : String.join(" · ", combos)));
@@ -250,13 +250,21 @@ public final class Director {
         if (g == null) g = spawnFor(server, p, Progression.rank(p), null, FIRST_MIN, FIRST_MAX, false, angle, Math.PI);
         if (g == null) return null;
         Progression.setCounter(p, FIRST_GATE, g.id + 1L);
+        g.announceTo = Optional.of(p.getUUID()); // said once it stands: a build that fails never told anyone of a gate
+        DirectorLog.log(p, "gate", "the first gate, on purpose: #" + g.id + " after " + waited + " passes");
+        return g;
+    }
+
+    /** The first gate stands: "A gate has opened 320 m N" to the player it formed for, if they're on. */
+    static void announceFirst(MinecraftServer server, GateRecord g) {
+        ServerPlayer p = g.announceTo.map(u -> server.getPlayerList().getPlayer(u)).orElse(null);
+        g.announceTo = Optional.empty();
+        if (p == null) return;
         int dist = (int) Math.round(Math.sqrt(p.blockPosition().distSqr(g.pos.atY(p.getBlockY()))));
         String dir = DIRS[(int) Math.round(((Math.toDegrees(Math.atan2(g.pos.getX() - p.getX(), -(g.pos.getZ() - p.getZ()))) + 360) % 360) / 45.0) % 8];
         dev.awaken.signal.Signal.toast(p, net.minecraft.network.chat.Component.literal("A gate has opened " + dist + " m " + dir
                 + " · clear its floors to get stronger"), dev.awaken.core.api.Notices.Tier.IMPORTANT, "gate");
-        DirectorLog.log(p, "gate", "the first gate, on purpose: #" + g.id + " " + dist + " m " + dir + " after " + waited + " passes");
         dev.awaken.core.api.TipHooks.offer(p, dev.awaken.Awaken.id("first/gate"));
-        return g;
     }
 
     /** The Horizon line: a player's first gate, raised while it stands and until they've cleared a floor. */
@@ -265,7 +273,7 @@ public final class Director {
         long id = prof.counter(FIRST_GATE) - 1;
         if (id < 0 || prof.counter("awaken:floors_cleared") > 0 || p.level().dimension() != Level.OVERWORLD) return java.util.List.of();
         GateRecord g = GateRegistry.get(p.level().getServer()).gate((int) id);
-        if (g == null || !g.state.standing()) return java.util.List.of();
+        if (g == null || !g.state.standing() || !GateExterior.shown(g)) return java.util.List.of();
         return java.util.List.of(new dev.awaken.core.api.HorizonHooks.Site("gate:first", "First gate · " + g.plan.rank().label + "-rank",
                 g.pos, "", true));
     }
@@ -341,12 +349,15 @@ public final class Director {
         trace.add(0, "seed      " + Long.toHexString(roll.plan().seed()) + " · rolled for " + p.getGameProfile().name());
         trace.add("place     " + dist + " m " + dir + " at " + spot.getX() + " " + spot.getY() + " " + spot.getZ()
                 + (HearthHooks.nearest(over, spot, 256).isPresent() ? " (within 256 of a Hearth)" : ""));
-        GateRecord g = GateService.create(server, id, roll.plan(), spot, p.getRandom().nextInt(2), Optional.of(p.getUUID()),
+        GateRecord g = GateService.create(server, id, tourPlan == null ? roll.plan() : tourPlan.apply(roll.plan()), spot, p.getRandom().nextInt(2), Optional.of(p.getUUID()),
                 roll.breaksInDays(), trace, false);
         g.nearHearth = HearthHooks.nearest(over, spot, 256).isPresent();
         for (String line : roll.trace()) DirectorLog.log(p, "gate", "#" + id + " " + line.replaceAll("\\s+", " "));
         return g;
     }
+
+    /** Tours (`gate open ... world`): set around one spawn to remake the rolled plan before the gate is made. */
+    static java.util.function.UnaryOperator<dev.awaken.gates.content.GatePlan> tourPlan;
 
     /** Gates made before owners were counted (none on record) count for whoever is near, as they always did. */
     static boolean ownedBy(GateRecord g, ServerPlayer p) {

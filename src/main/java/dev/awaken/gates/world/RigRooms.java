@@ -83,6 +83,23 @@ public final class RigRooms {
         }
     }
 
+    /**
+     * A world floor's Rig room (SPEC §38.5): the programme's archetype planned again on the room the world hosts it in
+     * (the same size, its own doors). Null when it doesn't fit there; the room then stays an ordinary place.
+     */
+    static RigRoom rebuild(FloorBuilder.Builder b, Room r, RigRoom.Kind kind) {
+        r.shape = Room.Shape.RECT;
+        r.piece = null;
+        Palette p = b.theme.palette();
+        Kit k = Kit.of(b.theme);
+        return switch (kind) {
+            case COLLAPSE_RUN -> RigCollapse.build(r, b.theme, p, k, b.rank);
+            case MIRROR_HALL -> RigMirrors.build(r, p, k, b.rank);
+            case GRAVITY_WELLS -> RigWells.build(r, b.theme, p, b.rank);
+            case GAUNTLET -> RigGauntlet.build(r, b.theme, p, k, b.rank);
+        };
+    }
+
     /** The Leaper's Gauntlet (SPEC §17.10): its hall is the trial's course, laid by hand, not by the room's hash. */
     static void trial(FloorBuilder.Builder b) {
         List<Integer> path = b.path();

@@ -45,14 +45,19 @@ import java.util.stream.Stream;
  */
 public final class GateChunkGenerator extends ChunkGenerator {
     public static final MapCodec<GateChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-            BiomeSource.CODEC.fieldOf("biome_source").forGetter(g -> g.biomeSource)
+            BiomeSource.CODEC.fieldOf("biome_source").forGetter(g -> g.biomeSource),
+            com.mojang.serialization.Codec.BOOL.optionalFieldOf("sky", false).forGetter(g -> g.sky)
     ).apply(i, i.stable(GateChunkGenerator::new)));
+
+    /** The open sky's generator (SPEC §38.11): it builds only the open lands' floors; the gates' builds everything else. */
+    final boolean sky;
 
     public static final int MIN_Y = 0;
     public static final int HEIGHT = 256;
 
-    public GateChunkGenerator(BiomeSource biomeSource) {
+    public GateChunkGenerator(BiomeSource biomeSource, boolean sky) {
         super(biomeSource);
+        this.sky = sky;
     }
 
     @Override
@@ -74,7 +79,7 @@ public final class GateChunkGenerator extends ChunkGenerator {
         GatePlan plan = GateCells.plan(cell);
         if (plan == null) return CompletableFuture.completedFuture(chunk);
         try {
-            fill(chunk, plan, cell, chunkX, chunkZ);
+            fill(chunk, plan, cell, chunkX, chunkZ, sky);
         } catch (RuntimeException e) {
             // never break chunk generation over one bad room: log, leave the chunk as built so far
             Awaken.LOG.error("[gates] failed to paint chunk {},{} of cell {}", chunkX, chunkZ, cell, e);
@@ -84,6 +89,10 @@ public final class GateChunkGenerator extends ChunkGenerator {
 
     /** Paints one chunk of a cell into a proto chunk. */
     static void fill(ChunkAccess chunk, GatePlan plan, int cell, int chunkX, int chunkZ) {
+        fill(chunk, plan, cell, chunkX, chunkZ, false);
+    }
+
+    static void fill(ChunkAccess chunk, GatePlan plan, int cell, int chunkX, int chunkZ, boolean sky) {
         GateLayout layout = GateLayout.of(plan);
         int sections = chunk.getSectionsCount();
         LevelChunkSection[] acquired = new LevelChunkSection[sections];
@@ -112,7 +121,7 @@ public final class GateChunkGenerator extends ChunkGenerator {
                     top[idx] = y;
                     topState[idx] = state;
                 }
-            });
+            }, sky);
         } finally {
             for (LevelChunkSection s : acquired) if (s != null) s.release();
         }

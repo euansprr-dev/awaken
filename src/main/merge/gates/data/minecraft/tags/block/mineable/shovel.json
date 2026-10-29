@@ -1,0 +1,27 @@
+{
+  "values": [
+    "awaken:fungal_loam",
+    "awaken:ember_ash",
+    "awaken:hive_floor",
+    "awaken:hive_pollen",
+    "awaken:desert_sand",
+    "awaken:desert_sand_rippled",
+    "awaken:frost_snow",
+    "awaken:sky_turf",
+    "awaken:hive_floor_slab",
+    "awaken:hive_floor_stairs",
+    "awaken:hive_pollen_drift",
+    "awaken:ember_ash_drift",
+    "awaken:temple_moss_drift",
+    "awaken:archive_paper_drift",
+    "awaken:desert_sand_drift",
+    "awaken:frost_snow_drift",
+    "awaken:lab_moss_drift",
+    "awaken:dream_plush_drift",
+    "awaken:sky_turf_drift",
+    "awaken:fungal_loam_slab",
+    "awaken:fungal_loam_stairs",
+    "awaken:fungal_moss_drift",
+    "awaken:crypt_dust"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "awaken:block/market_timber",
+    "end": "awaken:block/market_timber_top"
+  }
+}

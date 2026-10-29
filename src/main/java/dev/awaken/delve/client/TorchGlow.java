@@ -3,20 +3,25 @@ package dev.awaken.delve.client;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.awaken.Awaken;
 import dev.awaken.delve.HeldLight;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import dev.awaken.delve.HeldLightFlood;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
+import net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -25,13 +30,15 @@ import java.util.List;
 /**
  * Light carried in a hand (SPEC §28.3, "Held light"): a torch, a lantern, glowstone, any held block that gives light
  * ({@link HeldLight}) lights the world round whoever holds it, drawn and never placed (no light blocks, nothing relit).
- * <p>The light finds its surfaces the way the game's own light spreads: a flood from the flame through open cells (a
- * sphere of its reach, walls stop it, so it turns corners but never goes through rock), done a few hundred cells a frame
- * and redone when the flame moves to another block. Each face it reaches (and each plant, slab or lantern in a reached
- * cell) is drawn again over itself with its own quads, additively, in the light's colour, by how much brighter the
- * game's light curve would make it there than it already is: nothing at noon, the most in a cave. In the open it also
- * reads like the Ember: a soft pool at your feet and a halo at the hand (hidden in your own first person). Flames
- * flicker; glowstone and sea lanterns are steady. Every player within {@link #OTHERS} carries theirs.
+ * <p>The light finds its surfaces the way the game's own light spreads ({@link HeldLightFlood}: from the flame through
+ * open cells, a sphere of its reach, walls stop it, so it turns corners but never goes through rock), done a few hundred
+ * cells a frame and redone when the flame moves to another block or one of its blocks is broken or built over. Each face
+ * it reaches (and each plant, slab or lantern in a reached cell) is drawn again over itself with its own quads,
+ * additively, in the light's colour, by how much brighter the game's light curve would make it there than it already
+ * is: nothing at noon, the most in a cave. What stands in the light (a dropped item, a mob, a player, your own hands and
+ * what they hold) takes it too, through its render state ({@link #lightEntity}). In the open it also reads like the
+ * Ember: a soft pool at your feet and a halo at the hand (hidden in your own first person). Flames flicker; glowstone and
+ * sea lanterns are steady. Every player within {@link #OTHERS} carries theirs.
  */
 public final class TorchGlow {
     private TorchGlow() {}
@@ -41,12 +48,18 @@ public final class TorchGlow {
     /** Others' held lights are drawn within this of you; at most SLOTS lights at once (yours first). */
     static final double OTHERS = 48;
     static final int SLOTS = 12;
-    /** The surfaces one light may draw (yours, another's), nearest first, and the quads all of them may draw a frame. */
-    static final int MAX_OWN = 640, MAX_OTHER = 240, MAX_QUADS = 2600;
-    /** Flood cells walked a frame (all lights, one at a time), and a still light's refresh (blocks change). */
+    /**
+     * The surfaces one light may draw (yours, another's), nearest first, and the quads all of them may draw a frame. Every
+     * face a reached cell touches counts (a ledge is two), so a big cave fills yours before the reach; the light then
+     * fades out over the last flood steps it kept instead of stopping at a hard edge.
+     */
+    static final int MAX_OWN = 1024, MAX_OTHER = 240, MAX_QUADS = 3400;
+    /** Flood cells walked a frame (all lights, one at a time), and a still light's refresh (blocks changed out of sight). */
     static final int CELLS_PER_FRAME = 900, REFRESH_TICKS = 10;
     /** A flood step's worth of distance: light that had to go round a wall is dimmer than its straight line says. */
-    static final float STEP = 0.55F;
+    static final float STEP = HeldLightFlood.STEP;
+    /** Flood steps over which the light fades out before a cap's edge. */
+    static final float EDGE_STEPS = 3F;
     /** The lit surfaces' gain over the game's own light curve, and how far in from the reach the light starts to fade. */
     static final float BRIGHT = 1.15F, FADE = 0.3F;
     /** The pool at the feet (its radius a share of the reach, its strength at a level 15 light in the dark) and the halo. */
@@ -74,9 +87,10 @@ public final class TorchGlow {
         double x, y, z, feet;
         float flicker, dark;
         boolean dim;            // as bright where it stands as its own light: nothing drawn but the halo
+        boolean stale;          // one of its blocks was broken or built over since its flood: redo it now
         long origin = Long.MIN_VALUE, builtTick;
         HeldLight.Kind builtKind = HeldLight.NONE;
-        int n;
+        int n, edge = HeldLightFlood.NO_EDGE;
         long[] pos = new long[MAX_OWN];
         byte[] face = new byte[MAX_OWN], steps = new byte[MAX_OWN], lit = new byte[MAX_OWN];
     }
@@ -98,17 +112,12 @@ public final class TorchGlow {
 
     // the flood: one light at a time, into its own back buffer, swapped in when done
     private static Light building;
-    private static int buildCap;
-    private static float buildReach;
     private static long buildFrom;
-    private static final long[] Q = new long[8192];
-    private static final byte[] QS = new byte[8192];
-    private static int head, tail, bn;
-    private static long[] bPos = new long[MAX_OWN];
-    private static byte[] bFace = new byte[MAX_OWN], bSteps = new byte[MAX_OWN], bLit = new byte[MAX_OWN];
-    private static final LongOpenHashSet SEEN = new LongOpenHashSet(8192);
+    private static final HeldLightFlood FLOOD = new HeldLightFlood(8192, MAX_OWN);
     private static final Direction[] DIRS = Direction.values();
     private static final BlockPos.MutableBlockPos M = new BlockPos.MutableBlockPos(), N = new BlockPos.MutableBlockPos();
+    /** This frame's lights are live (the setting on, a world, a light held): what {@link #lightEntity} reads. */
+    private static boolean live;
 
     // ---- per frame -----------------------------------------------------------------------------------------------------
 
@@ -122,6 +131,7 @@ public final class TorchGlow {
     static void submit(SubmitCustomGeometryEvent e) {
         Minecraft mc = Minecraft.getInstance();
         level = mc.level;
+        live = false;
         if (level == null || mc.player == null || !DelveClientConfig.heldLight()) {
             if (building != null) building = null;
             return;
@@ -139,6 +149,7 @@ public final class TorchGlow {
         RenderType lit = surfaces() ? DelveRender.lit() : null;
         try {
             if (!gather(mc)) return;
+            live = true;
             if (lit != null) flood();
         } catch (RuntimeException ex) {
             Awaken.LOG.error("[delve] held light failed", ex);
@@ -246,7 +257,15 @@ public final class TorchGlow {
             l.y = y + (p.isCrouching() ? 0.78 : 0.98);
             l.z = z + fz * 0.3 + lz * side * 0.38;
         }
+        // at a wall the hand's point is inside the block: the flame shines from its open side
+        if (HeldLightFlood.clear(level, x, l.y, z, l.x, l.y, l.z, OUT, M)) {
+            l.x = OUT[0];
+            l.y = OUT[1];
+            l.z = OUT[2];
+        }
     }
+
+    private static final double[] OUT = new double[3];
 
     // ---- the flood -----------------------------------------------------------------------------------------------------
 
@@ -255,20 +274,23 @@ public final class TorchGlow {
         if (building == null) start();
         int budget = CELLS_PER_FRAME;
         while (building != null && budget > 0) {
-            budget -= step(budget);
-            if (head >= tail || bn >= buildCap) finish();
+            budget -= FLOOD.step(budget);
+            if (FLOOD.done()) finish();
             if (building == null && budget > 0) start();
         }
     }
 
-    /** Picks the light whose surfaces are stale (moved a block, its kind changed, or REFRESH_TICKS old), yours first. */
+    /**
+     * Picks the light whose surfaces are stale (moved a block, its kind changed, one of its blocks broken or built over,
+     * or REFRESH_TICKS old), yours first.
+     */
     private static void start() {
         long now = level.getGameTime();
         Light best = null;
         for (Light l : LIGHTS) {
             if (l.id < 0 || !l.seen || l.dim) continue;
             long o = BlockPos.asLong(Mth.floor(l.x), Mth.floor(l.y), Mth.floor(l.z));
-            boolean stale = o != l.origin || l.kind != l.builtKind || now - l.builtTick >= REFRESH_TICKS || now < l.builtTick;
+            boolean stale = l.stale || o != l.origin || l.kind != l.builtKind || now - l.builtTick >= REFRESH_TICKS || now < l.builtTick;
             if (!stale) continue;
             if (best == null || l.own) best = l;
             if (l.own) break;
@@ -278,76 +300,16 @@ public final class TorchGlow {
         int ox = Mth.floor(l.x), oy = Mth.floor(l.y), oz = Mth.floor(l.z);
         M.set(ox, oy, oz);
         if (level.getBlockState(M).isSolidRender()) {
-            // the hand is in a wall: start from the cell above the feet
+            // the holder is in rock too (flame() found no open side): start from the cell above the feet
             oy = Mth.floor(l.feet + 0.5);
             M.set(ox, oy, oz);
             if (level.getBlockState(M).isSolidRender()) return;
         }
         building = l;
         buildFrom = BlockPos.asLong(Mth.floor(l.x), Mth.floor(l.y), Mth.floor(l.z));
-        buildCap = l.own ? MAX_OWN : MAX_OTHER;
-        buildReach = l.kind.reach();
         l.builtKind = l.kind;
-        SEEN.clear();
-        long o = BlockPos.asLong(ox, oy, oz);
-        SEEN.add(o);
-        Q[0] = o;
-        QS[0] = 0;
-        head = 0;
-        tail = 1;
-        bn = 0;
-    }
-
-    /** Walks up to {@code budget} cells; returns how many it walked. */
-    private static int step(int budget) {
-        long o = Q[0];
-        int ox = BlockPos.getX(o), oy = BlockPos.getY(o), oz = BlockPos.getZ(o);
-        float r2 = (buildReach + 0.5F) * (buildReach + 0.5F);
-        int maxSteps = Math.min(120, (int) (buildReach / STEP) + 2);
-        int walked = 0;
-        while (head < tail && walked < budget && bn < buildCap) {
-            long c = Q[head];
-            int s = QS[head];
-            head++;
-            walked++;
-            for (Direction d : DIRS) {
-                long nb = BlockPos.offset(c, d);
-                int x = BlockPos.getX(nb), y = BlockPos.getY(nb), z = BlockPos.getZ(nb);
-                int dx = x - ox, dy = y - oy, dz = z - oz;
-                if (dx * dx + dy * dy + dz * dz > r2 || level.isOutsideBuildHeight(y) || !SEEN.add(nb)) continue;
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
-                M.set(x, y, z);
-                BlockState st = level.getBlockState(M);
-                if (st.isSolidRender()) {
-                    // a wall: its face toward the cell the light came from
-                    N.set(BlockPos.getX(c), BlockPos.getY(c), BlockPos.getZ(c));
-                    record(nb, d.getOpposite().ordinal(), s + 1, N);
-                    if (bn >= buildCap) break;
-                    continue;
-                }
-                int ns = s + 1 + st.getLightDampening();
-                if (!st.isAir() && st.getFluidState().isEmpty()) {
-                    record(nb, 6, ns, M);       // a plant, a slab, a lantern: the whole of it
-                    if (bn >= buildCap) break;
-                }
-                if (ns < maxSteps && tail < Q.length) {
-                    Q[tail] = nb;
-                    QS[tail] = (byte) ns;
-                    tail++;
-                }
-            }
-        }
-        return Math.max(1, walked);
-    }
-
-    /** One surface reached: where, which face (6: the whole block), how far by the flood, and the light already there. */
-    private static void record(long p, int face, int steps, BlockPos lightAt) {
-        bPos[bn] = p;
-        bFace[bn] = (byte) face;
-        bSteps[bn] = (byte) Math.min(127, steps);
-        int b = level.getBrightness(LightLayer.BLOCK, lightAt), s = level.getBrightness(LightLayer.SKY, lightAt);
-        bLit[bn] = (byte) (b << 4 | s);
-        bn++;
+        l.stale = false;
+        FLOOD.start(level, BlockPos.asLong(ox, oy, oz), l.kind.reach(), l.own ? MAX_OWN : MAX_OTHER);
     }
 
     /** The flood is done: its surfaces become the light's (the buffers swap, nothing is copied or allocated). */
@@ -356,24 +318,56 @@ public final class TorchGlow {
         building = null;
         long[] p = l.pos;
         byte[] f = l.face, s = l.steps, lt = l.lit;
-        l.pos = bPos;
-        l.face = bFace;
-        l.steps = bSteps;
-        l.lit = bLit;
-        l.n = bn;
-        bPos = p;
-        bFace = f;
-        bSteps = s;
-        bLit = lt;
+        l.pos = FLOOD.pos;
+        l.face = FLOOD.face;
+        l.steps = FLOOD.steps;
+        l.lit = FLOOD.lit;
+        l.n = FLOOD.n;
+        l.edge = FLOOD.edge;
+        FLOOD.pos = p;
+        FLOOD.face = f;
+        FLOOD.steps = s;
+        FLOOD.lit = lt;
         l.origin = buildFrom;
         l.builtTick = level.getGameTime();
+    }
+
+    // ---- what stands in the light --------------------------------------------------------------------------------------
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    static void modifiers(RegisterRenderStateModifiersEvent e) {
+        e.registerEntityModifier((Class) EntityRenderer.class, (entity, state) -> lightEntity((Entity) entity, (EntityRenderState) state));
+    }
+
+    /**
+     * Held light reaches what stands in it (SPEC §28.3): an entity's render state (a dropped item, a mob, a player, and
+     * through yours your hands and what they hold in first person) takes the block light a held light gives where it
+     * stands, the flame's level less its distance (its bearer, holding it, the whole level), eased out over the reach as
+     * the lit faces are, when that is brighter than the light already there. A straight line, so through a thin wall too
+     * (rare, and out of sight); the flames are last frame's (entities are gathered before the world is drawn).
+     */
+    static void lightEntity(Entity e, EntityRenderState s) {
+        if (!live) return;
+        double x = e.getX(), y = e.getY() + e.getBbHeight() * 0.5, z = e.getZ();
+        float best = 0F;
+        for (Light l : LIGHTS) {
+            if (l.id < 0 || !l.seen) continue;
+            double dx = l.x - x, dy = l.y - y, dz = l.z - z;
+            // its bearer holds the flame: their hands and what they hold take its whole level, not their middle's
+            float d = l.id == e.getId() ? 0F : (float) Math.sqrt(dx * dx + dy * dy + dz * dz), r = l.kind.reach();
+            if (d >= r) continue;
+            float fade = Mth.clamp((r - d) / (r * FADE), 0F, 1F);
+            best = Math.max(best, (l.kind.emission() - d) * fade * fade * (3 - 2 * fade));
+        }
+        int b = Math.min(15, (int) (best + 0.5F));
+        if (b > LightCoordsUtil.block(s.lightCoords)) s.lightCoords = LightCoordsUtil.withBlock(s.lightCoords, b);
     }
 
     // ---- drawing -------------------------------------------------------------------------------------------------------
 
     // the light and surface being drawn
     private static double lx, ly, lz;
-    private static float emission, reach, flick, floorDist, hereCurve;
+    private static float emission, reach, flick, floorDist, hereCurve, edgeFade, midTurn;
     private static int rgb;
 
     /** The game's light curve (a level's brightness on the lightmap, before gamma). */
@@ -401,8 +395,11 @@ public final class TorchGlow {
         float fade = Mth.clamp((reach - (float) d) / (reach * FADE), 0F, 1F);
         fade = fade * fade * (3 - 2 * fade);
         float turn = 0.8F;
-        if (n != null && d > 1e-3) turn = 0.4F + 0.6F * Math.max(0F, (float) ((dx * n.getStepX() + dy * n.getStepY() + dz * n.getStepZ()) / d));
-        return DelveRender.col(rgb, add * BRIGHT * turn * fade * flick);
+        if (n != null && d > 1e-3) {
+            float k = (float) ((dx * n.getStepX() + dy * n.getStepY() + dz * n.getStepZ()) / d);
+            turn = 0.4F + 0.6F * Math.max(0F, Math.max(midTurn, k));
+        }
+        return DelveRender.col(rgb, add * BRIGHT * turn * fade * flick * edgeFade);
     };
 
     private static final net.minecraft.client.renderer.SubmitNodeCollector.CustomGeometryRenderer DRAW_LIT = (pose, vc) -> {
@@ -442,15 +439,33 @@ public final class TorchGlow {
             int lit = l.lit[i] & 255;
             int here = existing(lit >> 4, lit & 15);
             if (emission - Math.max(0F, dc - 0.9F) <= here) continue;   // already as bright as the flame could make it
+            // near the edge a cap left, the light eases out over its last flood steps (no hard line across a big cave)
+            edgeFade = l.edge >= HeldLightFlood.NO_EDGE ? 1F : Mth.clamp((l.edge - l.steps[i]) / EDGE_STEPS, 0F, 1F);
+            if (edgeFade <= 0F) continue;
             hereCurve = curve(here);
             floorDist = Math.max(0F, l.steps[i] * STEP - 1.2F);
             M.set(x, y, z);
             BlockState s = level.getBlockState(M);
-            if (s.isAir() || !s.getFluidState().isEmpty()) continue;
+            // broken since the flood: the faces behind it are open now, so the light floods again next frame (a newly
+            // opened face lit a frame or two after the break, not up to REFRESH_TICKS later)
+            if (s.isAir() || !s.getFluidState().isEmpty()) {
+                if (building != l) l.stale = true;
+                continue;
+            }
             int f = l.face[i];
-            if (f < 6) {
+            midTurn = -1F;
+            if (f < HeldLightFlood.WHOLE) {
                 N.setWithOffset(M, DIRS[f]);
-                if (level.getBlockState(N).isSolidRender()) continue;   // built over since the flood
+                if (level.getBlockState(N).isSolidRender()) {   // built over since the flood: the new block's faces want light
+                    if (building != l) l.stale = true;
+                    continue;
+                }
+                // a face turns to the flame by its middle's angle too: a flame held right in front of a face lights all of
+                // it, where its corners alone see it at a grazing angle and the face pressed to your torch read dim
+                Direction dir = DIRS[f];
+                double mx = lx - (x + 0.5 + dir.getStepX() * 0.5), my = ly - (y + 0.5 + dir.getStepY() * 0.5);
+                double mz = lz - (z + 0.5 + dir.getStepZ() * 0.5), md = Math.sqrt(mx * mx + my * my + mz * mz);
+                if (md > 1e-3) midTurn = (float) ((mx * dir.getStepX() + my * dir.getStepY() + mz * dir.getStepZ()) / md);
             }
             drawn += DelveRender.litBlock(vc, level, s, M, f, SURFACE, cx, cy, cz);
         }
@@ -488,6 +503,7 @@ public final class TorchGlow {
 
     static void reset() {
         building = null;
+        live = false;
         for (Light l : LIGHTS) {
             l.id = -1;
             l.n = 0;

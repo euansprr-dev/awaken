@@ -143,27 +143,6 @@ final class LivingCommands {
                 p.teleportTo(p.level().getServer().overworld(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, java.util.Set.of(), 180F, 10F, true);
                 return 1;
             }));
-            // tours: stand <distance> blocks south of your newest open scene, facing it (to see its flare)
-            l.then(Commands.literal("view").requires(AwakenCommands.admin())
-                    .then(Commands.argument("distance", IntegerArgumentType.integer(4, 400)).executes(c -> {
-                        ServerPlayer p = c.getSource().getPlayerOrException();
-                        var scene = dev.awaken.living.wayfarer.Scenes.newest(p);
-                        if (scene == null) return 0;
-                        int d = IntegerArgumentType.getInteger(c, "distance");
-                        ServerLevel level = p.level().getServer().overworld();
-                        int x = scene.getX(), z = scene.getZ() + d;
-                        level.getChunk(x >> 4, z >> 4);
-                        // above the canopy round the spot, on a small glass stand (a tour's camera, never inside leaves)
-                        int y = 0;
-                        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++)
-                            y = Math.max(y, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x + dx, z + dz));
-                        y += d > 20 ? 6 : 1;
-                        if (d > 20) for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++)
-                            level.setBlock(new net.minecraft.core.BlockPos(x + dx, y - 1, z + dz), net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState(), 3);
-                        float pitch = (float) -Math.toDegrees(Math.atan2(scene.getY() + 20 - (y + 1.6), d));
-                        p.teleportTo(level, x + 0.5, y, z + 0.5, java.util.Set.of(), 180F, pitch, true);
-                        return 1;
-                    })));
             l.then(Commands.literal("talk").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 var near = p.level().getEntitiesOfClass(dev.awaken.living.wayfarer.Wayfarer.class, p.getBoundingBox().inflate(24));
@@ -172,13 +151,6 @@ final class LivingCommands {
                 dev.awaken.living.wayfarer.Wayfarers.talkTo(p, near.getFirst());
                 return 1;
             }));
-            l.then(Commands.literal("scene").requires(AwakenCommands.admin())
-                    .then(Commands.argument("chain", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
-                        ServerPlayer p = c.getSource().getPlayerOrException();
-                        var at = dev.awaken.living.wayfarer.Scenes.force(p, com.mojang.brigadier.arguments.StringArgumentType.getString(c, "chain"));
-                        c.getSource().sendSuccess(() -> Component.literal(at == null ? "No such chain." : "Scene at " + at.toShortString()), false);
-                        return at == null ? 0 : 1;
-                    })));
             // the World Pulse (Phase D): start a kind here now, list what's on, end it all
             l.then(Commands.literal("happen").requires(AwakenCommands.admin())
                     .then(Commands.argument("kind", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
@@ -200,10 +172,12 @@ final class LivingCommands {
                             return 0;
                         }
                         var at = found.getFirst();
-                        level.getChunk(at.getX() >> 4, at.getZ() >> 4);
-                        int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ()) + 1;
-                        p.teleportTo(level, at.getX() + 0.5, y, at.getZ() + 0.5, java.util.Set.of(), p.getYRot(), 0F, true);
-                        c.getSource().sendSuccess(() -> Component.literal("At " + at.getX() + " " + y + " " + at.getZ()), false);
+                        // there once its land is made (SPEC §28.9, "Arrivals")
+                        dev.awaken.core.api.Passage.go(p, level, at.getX() + 0.5, at.getZ() + 0.5, () -> {
+                            int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ()) + 1;
+                            p.teleportTo(level, at.getX() + 0.5, y, at.getZ() + 0.5, java.util.Set.of(), p.getYRot(), 0F, true);
+                            c.getSource().sendSuccess(() -> Component.literal("At " + at.getX() + " " + y + " " + at.getZ()), false);
+                        });
                         return 1;
                     })));
             l.then(Commands.literal("face").requires(AwakenCommands.admin()).executes(c -> faceHappening(c.getSource().getPlayerOrException(), 0)));
@@ -282,23 +256,26 @@ final class LivingCommands {
         if (list.isEmpty()) return 0;
         var h = list.getLast();
         ServerLevel level = p.level().getServer().overworld();
-        double px = p.getX(), py, pz = p.getZ();
+        double px = p.getX(), pz = p.getZ();
         if (distance > 0) {
             double dx = px - h.centre.x, dz = pz - h.centre.z, len = Math.max(1, Math.sqrt(dx * dx + dz * dz));
             px = h.centre.x + dx / len * distance;
             pz = h.centre.z + dz / len * distance;
         }
-        // a tour's camera: on a small glass stand over the canopy (high for a view from afar, the Hilltop Test)
-        level.getChunk((int) px >> 4, (int) pz >> 4);
-        int top = 0;
-        for (int ox = -2; ox <= 2; ox++) for (int oz = -2; oz <= 2; oz++)
-            top = Math.max(top, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, (int) px + ox, (int) pz + oz));
-        py = top + (distance > 0 ? 3 : 20);
-        for (int ox = -1; ox <= 1; ox++) for (int oz = -1; oz <= 1; oz++)
-            level.setBlock(new net.minecraft.core.BlockPos((int) Math.floor(px) + ox, (int) py - 1, (int) Math.floor(pz) + oz), net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState(), 3);
-        double dx = h.centre.x - px, dy = h.centre.y + 6 - (py + 1.6), dz = h.centre.z - pz;
-        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
-        p.teleportTo(level, px, py, pz, java.util.Set.of(), yaw, pitch, true);
+        // a tour's camera: on a small glass stand over the canopy (high for a view from afar, the Hilltop Test), once its
+        // land is made (SPEC §28.9, "Arrivals")
+        double sx = px, sz = pz;
+        dev.awaken.core.api.Passage.go(p, level, sx, sz, () -> {
+            int top = 0;
+            for (int ox = -2; ox <= 2; ox++) for (int oz = -2; oz <= 2; oz++)
+                top = Math.max(top, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, (int) sx + ox, (int) sz + oz));
+            double sy = top + (distance > 0 ? 3 : 20);
+            for (int ox = -1; ox <= 1; ox++) for (int oz = -1; oz <= 1; oz++)
+                level.setBlock(new net.minecraft.core.BlockPos((int) Math.floor(sx) + ox, (int) sy - 1, (int) Math.floor(sz) + oz), net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState(), 3);
+            double dx = h.centre.x - sx, dy = h.centre.y + 6 - (sy + 1.6), dz = h.centre.z - sz;
+            float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
+            p.teleportTo(level, sx, sy, sz, java.util.Set.of(), yaw, pitch, true);
+        });
         return 1;
     }
 
@@ -408,8 +385,11 @@ final class LivingCommands {
         var s = sites.getFirst();
         int x = s.x(), z = s.z() + 46;
         var terrain = dev.awaken.living.wonder.WonderFeature.terrain(level, level.getChunkSource().getGenerator());
-        p.teleportTo(level, x + 0.5, terrain.ground(x, z) + 2, z + 0.5, java.util.Set.of(), 180F, 8F, true);
-        p.sendSystemMessage(Component.literal(s.kind().display + " at " + s.x() + ", " + s.z() + " in " + s.regionName()));
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(p, level, x + 0.5, z + 0.5, () -> {
+            p.teleportTo(level, x + 0.5, terrain.ground(x, z) + 2, z + 0.5, java.util.Set.of(), 180F, 8F, true);
+            p.sendSystemMessage(Component.literal(s.kind().display + " at " + s.x() + ", " + s.z() + " in " + s.regionName()));
+        });
         return 1;
     }
 
@@ -581,11 +561,14 @@ final class LivingCommands {
                 return false;
             }
         }
-        level.getChunk(at.getX() >> 4, at.getZ() >> 4);
-        int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ());
         double dx = look.getX() - at.getX(), dz = look.getZ() - at.getZ();
-        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-        p.teleportTo(level, at.getX() + 0.5, y, at.getZ() + 0.5, java.util.Set.of(), yaw, pitch, true);
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), tilt = pitch;
+        net.minecraft.core.BlockPos stand = at;
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(p, level, stand.getX() + 0.5, stand.getZ() + 0.5, () -> {
+            int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, stand.getX(), stand.getZ());
+            p.teleportTo(level, stand.getX() + 0.5, y, stand.getZ() + 0.5, java.util.Set.of(), yaw, tilt, true);
+        });
         return true;
     }
 }

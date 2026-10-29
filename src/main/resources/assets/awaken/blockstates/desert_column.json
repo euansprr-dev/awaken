@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/desert_column"
+    },
+    "axis=z": {
+      "model": "awaken:block/desert_column",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "awaken:block/desert_column",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

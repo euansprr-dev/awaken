@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "theme": "overgrown_temple",
+  "name": "The Quiet",
+  "line": "A meadow at night under more stars than you've ever seen. Nothing here wants to hurt you.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "open",
+  "tall": true,
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "lid": 16,
+    "slope": 0.25,
+    "night": 1,
+    "calm": 1,
+    "tunnel": 3.0
+  },
+  "biome": "awaken:gate_world/the_quiet",
+  "moods": [
+    {
+      "id": "clear_night",
+      "name": "A clear night",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "stars",
+        "fireflies"
+      ]
+    },
+    {
+      "id": "first_light",
+      "name": "First light",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_quiet_first_light",
+      "life": [
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "floor": "minecraft:grass_block",
+    "wall": "minecraft:stone"
+  },
+  "hero": [],
+  "life": [
+    "stars",
+    "fireflies"
+  ],
+  "sound": "awaken:gate.world.rare_quiet",
+  "events": [
+    "shooting_star"
+  ],
+  "rule": "",
+  "secrets": [
+    {
+      "id": "the_wish",
+      "name": "The wish"
+    },
+    {
+      "id": "the_lone_tree",
+      "name": "The lone tree"
+    }
+  ],
+  "keepsake": "wishing_stone",
+  "keepsake_name": "A Wishing Stone",
+  "keepsake_from": "the_wish"
+}

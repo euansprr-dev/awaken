@@ -127,9 +127,12 @@ public final class Runs {
         GateService.setState(server, g, GateState.ACTIVE);
         GateRegistry.get(server).setDirty();
         BlockPos e = GateService.entrance(g, 0, 1);
-        p.teleport(new TeleportTransition(gl, GateService.center(e), Vec3.ZERO, GateService.entranceYaw(g, 0, 1), 0F,
+        // the first floor's level: the open sky's when it's an open land
+        ServerLevel to = GateService.levelOf(server, g, 0, 1);
+        if (to == null) to = gl;
+        p.teleport(new TeleportTransition(to, GateService.center(e), Vec3.ZERO, GateService.entranceYaw(g, 0, 1), 0F,
                 TeleportTransition.PLAY_PORTAL_SOUND));
-        gl.playSound(null, e, GatesRegistry.SND_ENTER.get(), SoundSource.PLAYERS, 1F, 1F);
+        to.playSound(null, e, GatesRegistry.SND_ENTER.get(), SoundSource.PLAYERS, 1F, 1F);
         GatePlan plan = g.plan;
         if (plan.ritual()) {
             // the story's hall: no floors, no Shrine, nothing to plan for. The story speaks from here on.
@@ -173,17 +176,22 @@ public final class Runs {
         run.noise = 0;
         FloorLayout f = GateLayout.of(g.plan).floor(area, floor);
         FloorState fs = g.floor(area, floor);
-        ServerLevel gl = GateService.gateLevel(server);
+        ServerLevel gl = GateService.levelOf(server, f);
         if (!fs.entered()) {
             fs.enteredAt = now(server);
             if (gl != null && f != null) Rooms.floorFirstEntered(gl, g, f);
+        }
+        if (gl != null && f != null) {
+            Where at = Where.at(server, p.blockPosition());
+            if (at != null && at.room() != null) Rooms.prepareAround(gl, g, f, at.room());
         }
         Modifiers.applyTo(p, g);
         Twists.arrive(p, g, run, f);
         if (area == 0 && floor < g.plan.floors()) GateService.pregenFloor(server, g, 0, floor + 1);
         if (area == 1 && floor == 1) GateService.pregenFloor(server, g, 1, 2);
         RigDirector.sendScene(p);
-        if (floor > 1 || area == 1) {
+        dev.awaken.gates.worlds.WorldsLive.arrive(p, g, f);
+        if ((floor > 1 || area == 1) && (f == null || f.world.isEmpty())) { // a world floor's title card says it instead
             Signal.toast(p, Component.literal((area == 1 ? (g.plan.is(Twist.GATE_WITHIN) ? "Inner gate · " : "Second gate · ") : "")
                     + "Floor " + floor + (f != null && f.bossFloor ? " · the Lord waits" : "")));
         }
@@ -219,7 +227,8 @@ public final class Runs {
             // fell out of the dungeon (or noclip): put them back at the floor's entrance
             if (p.getY() < Cells.floorY(6) - 40 || w == null || w.gate().id != g.id) {
                 BlockPos e = GateService.entrance(g, run.area, run.floor);
-                p.teleportTo(gl, e.getX() + 0.5, e.getY(), e.getZ() + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);
+                ServerLevel back = GateService.levelOf(server, g, run.area, run.floor);
+                p.teleportTo(back != null ? back : gl, e.getX() + 0.5, e.getY(), e.getZ() + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);
             }
             return;
         }
@@ -229,7 +238,9 @@ public final class Runs {
         if (Rooms.admitAtBars(gl, p, g, f)) return;
         Room r = w.room();
         if (r != null) {
+            Rooms.prepareAround(gl, g, f, r);
             Rooms.enter(gl, p, g, f, r, w.x(), w.z());
+            dev.awaken.gates.worlds.WorldLive.enter(gl, p, g, f, r);
             if (r.id == f.end && !f.bossFloor) floorCleared(p, g, run, f);
         }
         Modifiers.tickPlayer(p, g, run, f, r);
@@ -240,13 +251,16 @@ public final class Runs {
     /** Per gate, once a second: pressure, rising water, collapse, twist actors, room bookkeeping. */
     static void tickGates(MinecraftServer server) {
         if (server.getTickCount() % 20 != 0) return;
-        ServerLevel gl = GateService.gateLevel(server);
-        if (gl == null) return;
+        List<ServerLevel> levels = GateService.levels(server);
+        if (levels.isEmpty()) return;
         for (GateRecord g : List.copyOf(GateRegistry.get(server).all())) {
             if (g.state != GateState.ACTIVE && !(g.state == GateState.CLEARED && !g.inside.isEmpty())) continue;
-            Pressure.tick(gl, g);
-            Modifiers.tickGate(gl, g);
-            Twists.tickGate(gl, g);
+            // each level's players (an open land's are under the sky): every tick groups them by their floor
+            for (ServerLevel gl : levels) {
+                Pressure.tick(gl, g);
+                Modifiers.tickGate(gl, g);
+                Twists.tickGate(gl, g);
+            }
         }
     }
 
@@ -266,6 +280,7 @@ public final class Runs {
         }
         GateRegistry.get(server).setDirty();
         run.floorsCleared++;
+        dev.awaken.gates.worlds.WorldsLive.cleared(p, f);
         double reward = floorReward(p, g, f.area, f.floor);
         double bonus = reward * (1 - Curve.KILL_SHARE);
         run.satchelXp += bonus;
@@ -312,7 +327,10 @@ public final class Runs {
         ServerLevel gl = (ServerLevel) p.level();
         BlockPos e = GateService.entrance(g, run.area, next);
         gl.playSound(null, p.blockPosition(), GatesRegistry.SND_SEAL.get(), SoundSource.PLAYERS, 1F, 1F);
-        p.teleportTo(gl, e.getX() + 0.5, e.getY(), e.getZ() + 0.5, Set.of(), GateService.entranceYaw(g, run.area, next), 0F, true);
+        dev.awaken.gates.worlds.WorldsLive.journey(p, f);
+        // the next floor may stand under the open sky (or come back from it): its own level
+        ServerLevel to = GateService.levelOf(p.level().getServer(), f);
+        p.teleportTo(to != null ? to : gl, e.getX() + 0.5, e.getY(), e.getZ() + 0.5, Set.of(), GateService.entranceYaw(g, run.area, next), 0F, true);
         if (run.area == 0 && next > p.getData(GatesRegistry.MEMORY.get()).comfortFloor()) {
             DirectorLog.log(p, "gate", "deeper than your usual (" + p.getData(GatesRegistry.MEMORY.get()).comfortFloor() + ")");
         }
@@ -384,12 +402,23 @@ public final class Runs {
         RigDirector.leave(p);
         if (teleport && p.isAlive()) {
             ServerLevel over = server.overworld();
-            BlockPos to = g != null && g.structurePlaced ? g.mouth() : over.getRespawnData().pos();
-            if (g == null || !g.structurePlaced) to = over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, to);
+            BlockPos out = g != null && g.structurePlaced ? g.mouth() : over.getRespawnData().pos();
             float yaw = g == null ? 0 : (g.axis == 0 ? 0F : -90F);
-            p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, yaw, 0F, TeleportTransition.PLAY_PORTAL_SOUND));
-            over.playSound(null, to, GatesRegistry.SND_EXIT.get(), SoundSource.PLAYERS, 1F, 1F);
+            // out once the land at the mouth is made (SPEC §28.9, "Arrivals"); the gate lets go of you either way
+            dev.awaken.core.api.Passage.go(p, over, out.getX() + 0.5, out.getZ() + 0.5, () -> {
+                BlockPos to = g != null && g.structurePlaced ? out
+                        : over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, out);
+                p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, yaw, 0F, TeleportTransition.PLAY_PORTAL_SOUND));
+                over.playSound(null, to, GatesRegistry.SND_EXIT.get(), SoundSource.PLAYERS, 1F, 1F);
+                leftGate(server, p, g);
+            }, () -> leftGate(server, p, g));
+        } else {
+            leftGate(server, p, g);
         }
+    }
+
+    /** The gate lets go of a player whose run ended, once they're out of it. */
+    private static void leftGate(MinecraftServer server, ServerPlayer p, GateRecord g) {
         // only after you are out: a cleared gate can't be released while you still stand in its cell
         if (g != null) {
             g.inside.remove(p.getUUID());
@@ -425,8 +454,12 @@ public final class Runs {
             Hud.clear(p);
             if (inGate) {
                 ServerLevel over = server.overworld();
-                BlockPos to = over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, over.getRespawnData().pos());
-                p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, 0F, 0F, TeleportTransition.PLAY_PORTAL_SOUND));
+                BlockPos home = over.getRespawnData().pos();
+                // home once its land is made (SPEC §28.9, "Arrivals")
+                dev.awaken.core.api.Passage.go(p, over, home.getX() + 0.5, home.getZ() + 0.5, () -> {
+                    BlockPos to = over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, home);
+                    p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, 0F, 0F, TeleportTransition.PLAY_PORTAL_SOUND));
+                });
             }
         }
         Claims.deliver(p);
@@ -638,9 +671,13 @@ public final class Runs {
         } else if (GateService.inGate(p) && !p.isCreative() && !p.isSpectator()) {
             // standing in a gate with no run (a cell that was cleaned up): bring them home
             ServerLevel over = server.overworld();
-            BlockPos to = over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, over.getRespawnData().pos());
-            p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, 0F, 0F, TeleportTransition.DO_NOTHING));
-            Signal.toast(p, Component.literal("The gate you were in is gone."));
+            BlockPos home = over.getRespawnData().pos();
+            // home once its land is made (SPEC §28.9, "Arrivals")
+            dev.awaken.core.api.Passage.go(p, over, home.getX() + 0.5, home.getZ() + 0.5, () -> {
+                BlockPos to = over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, home);
+                p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, 0F, 0F, TeleportTransition.DO_NOTHING));
+                Signal.toast(p, Component.literal("The gate you were in is gone."));
+            });
         }
         if (p.isAlive()) restoreGear(p);
         Claims.deliver(p);

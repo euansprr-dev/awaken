@@ -1,11 +1,6 @@
 package dev.awaken.hearth;
 
 import dev.awaken.core.test.AwakenTests;
-import dev.awaken.hearth.echo.BindMath;
-import dev.awaken.hearth.echo.Duty;
-import dev.awaken.hearth.echo.EchoRecord;
-import dev.awaken.hearth.echo.EchoRole;
-import dev.awaken.hearth.echo.Echoes;
 import dev.awaken.hearth.room.Room;
 import dev.awaken.hearth.room.RoomType;
 import dev.awaken.hearth.training.Training;
@@ -81,124 +76,32 @@ final class HearthTests {
             h.succeed();
         });
 
-        AwakenTests.register("hearth_bind_chance_and_cap", 20, h -> {
-            double elite = BindMath.chance("ELITE", 5, 0, 0, 0);
-            h.assertTrue(Math.abs(elite - 0.55) < 1e-9, "base elite chance 55%, was " + elite);
-            h.assertTrue(Math.abs(BindMath.chance("WARDEN", 15, 0, 0, 0) - 0.45) < 1e-9, "SPI +1% per point over 5");
-            h.assertTrue(Math.abs(BindMath.chance("ELITE", 5, 2, 0, 0) - 0.75) < 1e-9, "+10% per rank above the fallen");
-            h.assertTrue(Math.abs(BindMath.chance("ELITE", 5, 0, 2, 0) - 0.25) < 1e-9, "-15% per rank below the fallen");
-            h.assertTrue(Math.abs(BindMath.chance("BOSS", 5, 0, 0, 0.25) - 0.45) < 1e-9, "BIND_CHANCE perk adds");
-            h.assertTrue(BindMath.chance("BOSS", 0, 0, 6, 0) == BindMath.MIN_CHANCE, "never below 5%");
-            h.assertTrue(BindMath.chance("ELITE", 200, 6, 0, 1) == BindMath.MAX_CHANCE, "never above 95%");
-            h.assertFalse(BindMath.bossAllowed(Rank.A.ordinal(), ""), "A-rank can't bind bosses");
-            h.assertTrue(BindMath.bossAllowed(Rank.S.ordinal(), ""), "S-rank can");
-            h.assertTrue(BindMath.bossAllowed(Rank.D.ordinal(), BindMath.SHADOWBINDER), "Shadowbinders can");
-            h.assertTrue(BindMath.fieldCap(5) == 3 && BindMath.fieldCap(6) == 4 && BindMath.fieldCap(17) == 5 && BindMath.fieldCap(18) == 6, "cap = 3 + SPI/6");
-            h.assertTrue(BindMath.totalCap(12, 3) == 8, "pads add roster room");
-            h.assertTrue(BindMath.rankOfLevel(4) == 0 && BindMath.rankOfLevel(17) == 1 && BindMath.rankOfLevel(60) == 3, "mob rank from content level");
-            EchoRecord r = new EchoRecord(UUID.randomUUID(), "minecraft:zombie", new CompoundTag(), "Z", 1, 0, true, 0, "ELITE", 5, 0);
-            EchoRecord up = r.withXp(EchoRecord.xpToNext(1) + EchoRecord.xpToNext(2));
-            h.assertTrue(up.level() == 3 && up.xp() == 0, "echo levels from kills, was " + up.level());
-            h.succeed();
-        });
-
-        AwakenTests.register("hearth_role_pad_assignment", 20, h -> {
-            List<EchoRecord> roster = new ArrayList<>();
-            EchoRecord field = rec("Field", 9, true, 0);
-            EchoRecord low = rec("Low", 1, false, 3);
-            EchoRecord mid = rec("Mid", 3, false, 2);
-            EchoRecord top = rec("Top", 5, false, 1);
-            roster.add(field); roster.add(low); roster.add(mid); roster.add(top);
-            LinkedHashMap<BlockPos, EchoRole> pads = new LinkedHashMap<>();
-            BlockPos farm = new BlockPos(1, 0, 0), guard = new BlockPos(2, 0, 0), haul = new BlockPos(3, 0, 0), mine = new BlockPos(4, 0, 0);
-            pads.put(farm, EchoRole.FARM);
-            pads.put(guard, EchoRole.GUARD);
-            pads.put(haul, EchoRole.HAUL);
-            Map<UUID, Duty.Assignment> as = Duty.assign(roster, pads);
-            h.assertTrue(!as.containsKey(field.id()), "marching Echoes never take a pad");
-            h.assertTrue(as.get(top.id()).pad().equals(guard), "the strongest guards first");
-            h.assertTrue(as.get(mid.id()).pad().equals(farm), "then pads in placement order");
-            h.assertTrue(as.get(low.id()).pad().equals(haul), "last pad gets the last Echo");
-            pads.put(mine, EchoRole.MINE);
-            as = Duty.assign(roster, pads);
-            h.assertTrue(as.size() == 3 && as.values().stream().noneMatch(a -> a.pad().equals(mine)), "a pad with nobody left stays empty");
-            pads.clear();
-            h.assertTrue(Duty.assign(roster, pads).isEmpty(), "no pads, no duty");
-            h.succeed();
-        });
-
-        AwakenTests.register("hearth_echo_never_targets_owner", 100, h -> {
-            ServerPlayer owner = h.makeMockServerPlayerInLevel();
-            ServerLevel level = h.getLevel();
-            BlockPos at = h.absolutePos(new BlockPos(0, 1, 0));
-            Zombie echo = spawnZombie(level, at);
-            Zombie mate = spawnZombie(level, at.east());
-            Zombie foe = spawnZombie(level, at.west());
-            Echoes.makeEcho(echo, owner.getUUID(), rec("Echo", 1, true, 0), false);
-            Echoes.makeEcho(mate, owner.getUUID(), rec("Mate", 1, true, 0), false);
-            h.assertTrue(Echoes.isEcho(echo) && Echoes.isEcho(mate) && !Echoes.isEcho(foe), "links set");
-            h.assertFalse(Echoes.canTarget(echo, owner), "never its owner");
-            h.assertFalse(Echoes.canTarget(echo, mate), "never another of the owner's Echoes");
-            h.assertTrue(Echoes.canTarget(echo, foe), "monsters are fair game");
-            echo.setTarget(owner);
-            h.assertTrue(echo.getTargetUnchecked() == null, "setTarget(owner) is refused");
-            echo.setTarget(mate);
-            h.assertTrue(echo.getTargetUnchecked() == null, "setTarget(ally) is refused");
-            echo.setTarget(foe);
-            h.assertTrue(echo.getTargetUnchecked() == foe, "setTarget(monster) works");
-            float before = echo.getHealth();
-            echo.hurtServer(level, level.damageSources().playerAttack(owner), 5f);
-            h.assertTrue(echo.getHealth() == before, "the owner can't hurt their own Echo");
-            float ob = owner.getHealth();
-            owner.hurtServer(level, level.damageSources().source(net.minecraft.world.damagesource.DamageTypes.MOB_ATTACK, echo, owner), 4f);
-            h.assertTrue(owner.getHealth() == ob, "an Echo's strike never lands on its owner");
-            mate.hurtServer(level, level.damageSources().mobAttack(echo), 4f);
-            h.assertTrue(mate.getHealth() == mate.getMaxHealth(), "Echoes don't hurt each other");
-            for (Entity e : List.of(echo, mate, foe)) e.discard();
-            h.succeed();
-        });
-
-        AwakenTests.register("hearth_bind_summon_duty", 100, h -> {
+        // (SPEC §43.4) an older save's Echoes are read only to be let go: one line at login, never written back
+        AwakenTests.register("hearth_old_echoes_released", 20, h -> {
+            CompoundTag old = new CompoundTag();
+            old.putInt("schema", 4);
+            net.minecraft.nbt.ListTag echoes = new net.minecraft.nbt.ListTag();
+            for (int k = 0; k < 2; k++) {
+                CompoundTag e = new CompoundTag();
+                e.putString("name", "Echo " + k);
+                echoes.add(e);
+            }
+            old.put("echoes", echoes);
+            var hp = dev.awaken.hearth.player.HearthPlayer.MAP_CODEC.codec().parse(net.minecraft.nbt.NbtOps.INSTANCE, old).getOrThrow();
+            h.assertTrue(hp.echoesToRelease == 2, "two Echoes to let go, got " + hp.echoesToRelease);
+            var again = dev.awaken.hearth.player.HearthPlayer.MAP_CODEC.codec().encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, hp).getOrThrow();
+            h.assertTrue(again instanceof CompoundTag c && !c.contains("echoes"), "and never written back");
             ServerPlayer sp = h.makeMockServerPlayerInLevel();
-            ServerLevel level = h.getLevel();
-            BlockPos at = h.absolutePos(new BlockPos(0, 1, 0));
-            sp.setPos(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
-            Progression.awaken(sp);
-            Zombie elite = spawnZombie(level, at.north(2));
-            elite.setData(dev.awaken.core.api.CoreApi.MOB_ROLE.get(), new dev.awaken.core.api.MobRole(
-                    dev.awaken.core.api.MobRole.Role.ELITE, 5, "", java.util.Optional.empty(), ""));
-            Echoes.Lingering l = Echoes.linger(sp, elite, "ELITE", 5);
-            elite.discard();
-            h.assertTrue(Echoes.bindAttempt(sp, l, 0.0) == Echoes.BindResult.BOUND, "a sure roll binds");
-            var hp = HearthService.player(sp);
-            h.assertTrue(hp.echoes.size() == 1 && hp.echoes.get(0).field(), "bound into the field army");
-            Echoes.summonField(sp);
-            List<LivingEntity> out = Echoes.fieldEntities(sp);
-            h.assertTrue(out.size() == 1, "summoned one Echo, got " + out.size());
-            LivingEntity e = out.get(0);
-            h.assertTrue(e instanceof Zombie && Echoes.isEcho(e) && Echoes.link(e).owner().equals(sp.getUUID()), "a zombie copy linked to its owner");
-            h.assertTrue(e.getExistingData(dev.awaken.core.api.CoreApi.MOB_ROLE.get()).map(r -> r.role() == dev.awaken.core.api.MobRole.Role.ECHO).orElse(false),
-                    "role ECHO");
-            h.assertFalse(dev.awaken.core.Forces.has(e, dev.awaken.core.Forces.Tag.ECHO), "an ally is not Echoing (it would get up when it dies)");
-            h.assertTrue(Hearth.ownedEchoes(sp).contains(e), "Hearth.ownedEchoes sees it");
-            Echoes.dismissField(sp, true);
-            h.assertTrue(Echoes.fieldEntities(sp).isEmpty() && !hp.fieldOut, "dismissed");
-
-            // Send it home onto a Guard pad: it walks out of the roster's field list and onto the pad.
-            UUID id = hp.echoes.get(0).id();
-            hp.replace(hp.echoes.get(0).withField(false));
-            HearthRecord home = new HearthRecord(sp.getUUID(), "test", at.east(3), HearthService.OVERWORLD);
-            home.pads.put(at.south(2), EchoRole.GUARD);
-            // Duty only spawns workers on entity-ticking pads: keep running upkeep until the fresh test area ticks.
-            h.succeedWhen(() -> {
-                Duty.upkeep(sp, level, home, level.getGameTime());
-                var worker = Echoes.live(level.getServer(), id);
-                h.assertTrue(worker != null && Echoes.link(worker).duty(), "the Echo works the pad (pad ticking="
-                        + level.isPositionEntityTicking(at.south(2)) + ")");
-                h.assertTrue(worker.blockPosition().closerThan(at.south(2), 2.5), "standing on its pad");
-                Duty.releaseAll(level, home);
-                h.assertTrue(Echoes.live(level.getServer(), id) == null, "released from duty");
-            });
+            HearthService.player(sp).echoesToRelease = 2;
+            h.assertTrue(dev.awaken.hearth.echo.OldEchoes.release(sp), "told once");
+            h.assertFalse(dev.awaken.hearth.echo.OldEchoes.release(sp), "and only once");
+            Zombie body = spawnZombie(h.getLevel(), h.absolutePos(new BlockPos(0, 1, 0)));
+            h.assertFalse(dev.awaken.hearth.echo.OldEchoes.isOldEcho(body), "a plain zombie is not an old Echo");
+            body.setData(dev.awaken.core.api.CoreApi.MOB_ROLE.get(), new dev.awaken.core.api.MobRole(
+                    dev.awaken.core.api.MobRole.Role.ECHO, 5, "", java.util.Optional.empty(), ""));
+            h.assertTrue(dev.awaken.hearth.echo.OldEchoes.isOldEcho(body), "an Echo's body is");
+            body.discard();
+            h.succeed();
         });
 
         AwakenTests.registerIsolated("hearth_room_detection", 600, h -> {
@@ -224,9 +127,9 @@ final class HearthTests {
             level.setBlock(rec.pos, HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3);
             HearthData data = HearthData.get(level.getServer());
             data.put(rec);
-            h.assertTrue(Room.classify(1, 1, 0, 0, 0, 0, 0, 0).contains(RoomType.SANCTUARY), "bed + mat classify as a Sanctuary");
-            h.assertTrue(Room.classify(0, 0, 1, 1, 1, 2, 1, 1).containsAll(java.util.EnumSet.of(RoomType.ARMORY, RoomType.TROPHY_HALL,
-                    RoomType.WORKSHOP, RoomType.BARRACKS)), "armory, hall, workshop, barracks");
+            h.assertTrue(Room.classify(1, 1, 0, 0, 0, 0, 0).contains(RoomType.SANCTUARY), "bed + mat classify as a Sanctuary");
+            h.assertTrue(Room.classify(0, 0, 1, 1, 1, 2, 1).containsAll(java.util.EnumSet.of(RoomType.ARMORY, RoomType.TROPHY_HALL,
+                    RoomType.WORKSHOP)), "armory, hall, workshop");
             h.succeedWhen(() -> {
                 HearthService.scanNow(level, rec);
                 boolean ok = rec.hasRoom(RoomType.SANCTUARY) && Hearth.isSanctuary(level, base.offset(2, 1, 2));
@@ -283,6 +186,16 @@ final class HearthTests {
         });
 
         AwakenTests.register("hearth_trials_dimension", 100, h -> {
+            // a trial opened in the air (a Penalty Zone mid-jump, on the wing) comes home to the ground under the player
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            h.setBlock(new BlockPos(1, 1, 1), Blocks.STONE);
+            for (int y = 2; y <= 8; y++) h.setBlock(new BlockPos(1, y, 1), Blocks.AIR);
+            BlockPos aloft = h.absolutePos(new BlockPos(1, 7, 1)), ground = h.absolutePos(new BlockPos(1, 2, 1));
+            sp.snapTo(aloft.getX() + 0.5, aloft.getY() + 0.4, aloft.getZ() + 0.5, 0, 0);
+            sp.setOnGround(false);
+            h.assertTrue(Trials.standingY(sp) == ground.getY(), "home at the ground (" + ground.getY() + "), not " + Trials.standingY(sp));
+            sp.setOnGround(true);
+            h.assertTrue(Trials.standingY(sp) == sp.getY(), "on the ground, where they stand");
             var regs = h.getLevel().registryAccess();
             h.assertTrue(regs.lookupOrThrow(net.minecraft.core.registries.Registries.DIMENSION_TYPE)
                     .get(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION_TYPE, dev.awaken.Awaken.id("trials"))).isPresent(),
@@ -338,15 +251,10 @@ final class HearthTests {
             h.assertTrue(TrialChunkGenerator.arenaBlock(false, 0, TrialChunkGenerator.FLOOR + 2, 5) != null, "hall walls exist");
             h.assertTrue(TrialChunkGenerator.arenaBlock(true, 10, TrialChunkGenerator.FLOOR, 10).is(Blocks.SAND), "desert floor is sand");
             h.assertTrue(Trials.Kind.forTarget(Rank.D) == Trials.Kind.WAVES && Trials.Kind.forTarget(Rank.A) == Trials.Kind.DESCENT, "trial per rank");
-            h.assertTrue(!Duty.rollOre(0, 1, 1).isEmpty() && Duty.rollOre(999, 50, 5).is(Items.DIAMOND), "mine table");
             h.assertTrue(dev.awaken.hearth.trophy.Trophies.bonusCount(25) == 20, "trophy bonus capped");
             h.assertTrue(HearthService.restSeconds(1) == 30 && HearthService.restSeconds(5) == 14, "rest time by tier");
             h.succeed();
         });
-    }
-
-    private static EchoRecord rec(String name, int level, boolean field, long day) {
-        return new EchoRecord(UUID.randomUUID(), "minecraft:zombie", new CompoundTag(), name, level, 0, field, 0, "ELITE", 5, day);
     }
 
     private static Zombie spawnZombie(ServerLevel level, BlockPos at) {

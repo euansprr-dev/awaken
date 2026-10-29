@@ -89,23 +89,32 @@ final class TravelMachines {
         int cost = cost(here, dst.target());
         ServerLevel target = player.level().getServer().getLevel(dst.target().dimension());
         if (target == null) return false;
-        if (dst.kind().equals("pylon")) {
-            target.getChunk(dst.target().pos().getX() >> 4, dst.target().pos().getZ() >> 4);
-            if (!(target.getBlockEntity(dst.target().pos()) instanceof MachineBlockEntity other) || other.type() != MachineType.WAYPOINT_PYLON) {
-                PylonNetwork.get(player.level().getServer()).removeAt(dst.target());
-                player.sendOverlayMessage(Component.literal("That pylon is gone."));
-                return false;
-            }
-        }
+        BlockPos to = dst.target().pos();
+        boolean pylon = dst.kind().equals("pylon");
+        // a pylon whose land is loaded is checked now; one whose land isn't, once it is (no load on the tick, SPEC §28.9)
+        if (pylon && target.getChunkSource().getChunkNow(to.getX() >> 4, to.getZ() >> 4) != null && gone(player, target, dst)) return false;
         if (!be.draw(cost)) {
             player.sendOverlayMessage(Component.literal("Not enough essence"));
             return false;
         }
-        target.getChunk(dst.target().pos().getX() >> 4, dst.target().pos().getZ() >> 4);
-        BlockPos feet = dst.exact() ? dst.target().pos() : Travel.safeSpot(target, dst.target().pos());
-        Travel.teleport(player, target, feet);
-        Progression.count(player, Above.PYLON_JUMPS, 1);
-        DirectorLog.log(player, "pylon", "to " + dst.kind() + " " + dst.name() + " for " + cost);
+        // there once its land is made or read in (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(player, target, to.getX() + 0.5, to.getZ() + 0.5, () -> {
+            if (pylon && gone(player, target, dst)) {
+                be.addEssence(cost);
+                return;
+            }
+            Travel.teleport(player, target, dst.exact() ? to : Travel.safeSpot(target, to));
+            Progression.count(player, Above.PYLON_JUMPS, 1);
+            DirectorLog.log(player, "pylon", "to " + dst.kind() + " " + dst.name() + " for " + cost);
+        });
+        return true;
+    }
+
+    /** Whether the destination pylon no longer stands (then it's forgotten, and the player told). Its land must be loaded. */
+    private static boolean gone(ServerPlayer player, ServerLevel target, Destination dst) {
+        if (target.getBlockEntity(dst.target().pos()) instanceof MachineBlockEntity other && other.type() == MachineType.WAYPOINT_PYLON) return false;
+        PylonNetwork.get(player.level().getServer()).removeAt(dst.target());
+        player.sendOverlayMessage(Component.literal("That pylon is gone."));
         return true;
     }
 

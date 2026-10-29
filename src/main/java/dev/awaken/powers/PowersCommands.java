@@ -85,6 +85,26 @@ final class PowersCommands {
                 c.getSource().sendSuccess(() -> Component.literal(r.ok() ? "Cast " + t.name : "Failed: " + r.reason()), false);
                 return r.ok() ? 1 : 0;
             })));
+            // the ladder (SPEC 36.9): a power at a level on its key, ready to cast; and a level's moment again
+            power.then(Commands.literal("showcase").then(Commands.argument("id", StringArgumentType.word()).suggests(POWERS)
+                    .then(Commands.argument("level", IntegerArgumentType.integer(1, Loadout.MAX_LEVEL))
+                            .executes(c -> showcase(c.getSource(), StringArgumentType.getString(c, "id"), IntegerArgumentType.getInteger(c, "level"), 0))
+                            .then(Commands.argument("variant", IntegerArgumentType.integer(0, 9))
+                                    .executes(c -> showcase(c.getSource(), StringArgumentType.getString(c, "id"), IntegerArgumentType.getInteger(c, "level"),
+                                            IntegerArgumentType.getInteger(c, "variant")))))));
+            power.then(Commands.literal("evolve").then(Commands.argument("id", StringArgumentType.word()).suggests(POWERS)
+                    .then(Commands.argument("level", IntegerArgumentType.integer(2, Loadout.MAX_LEVEL)).executes(c -> {
+                        ServerPlayer sp = c.getSource().getPlayerOrException();
+                        PowerType t = PowerRegistry.get(StringArgumentType.getString(c, "id"));
+                        if (t == null) return 0;
+                        int level = IntegerArgumentType.getInteger(c, "level");
+                        Powers.setLevel(sp, t, level - 1, 0);
+                        Loadout.Owned o = Powers.loadout(sp).get(t.id.toString());
+                        Powers.loadout(sp).owned().put(t.id.toString(), new Loadout.Owned(t.id.toString(), o == null ? 0 : o.variant(), level));
+                        dev.awaken.powers.ladder.Evolution.moment(sp, t, level);
+                        Powers.markDirty(sp);
+                        return 1;
+                    }))));
             var energy = Commands.literal("energy").then(Commands.literal("full").executes(c -> {
                 Powers.fillEnergy(c.getSource().getPlayerOrException());
                 c.getSource().sendSuccess(() -> Component.literal("Energy full"), false);
@@ -129,6 +149,26 @@ final class PowersCommands {
         ItemStack core = PowerContent.core(t, variant);
         if (!sp.addItem(core)) sp.drop(core, false, net.minecraft.util.Prediction.SERVER_ONLY);
         src.sendSuccess(() -> Component.literal("Gave a Power Core: " + t.name + (variant > 0 ? " (" + t.variant(variant).name() + ")" : "")), true);
+        return 1;
+    }
+
+    /** The power at a level, on the key it fits (the first active key for an active), cooldowns clear and energy full. */
+    private static int showcase(CommandSourceStack src, String id, int level, int variant) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer sp = src.getPlayerOrException();
+        PowerType t = PowerRegistry.get(id);
+        if (t == null) {
+            src.sendFailure(Component.literal("Unknown power " + id));
+            return 0;
+        }
+        Powers.setLevel(sp, t, level, variant);
+        if (!t.isPassive()) {
+            int slot = t.slot == PowerType.Slot.ULTIMATE ? Loadout.ULTIMATE : t.slot == PowerType.Slot.MOVEMENT ? Loadout.MOVEMENT : 0;
+            Powers.equip(sp, slot, t.id.toString());
+        }
+        Powers.resetCooldowns(sp);
+        Powers.fillEnergy(sp);
+        src.sendSuccess(() -> Component.literal(t.name + " at level " + level + ": ").withColor(t.family.colour)
+                .append(dev.awaken.powers.ladder.PowerLadder.name(t.path, level)), false);
         return 1;
     }
 

@@ -1,0 +1,38 @@
+{
+  "pools": [
+    {
+      "entries": [
+        {
+          "children": [
+            {
+              "condition": "minecraft:tool/can_shear",
+              "name": "awaken:bramble",
+              "type": "minecraft:item"
+            },
+            {
+              "modifier": [
+                {
+                  "count": {
+                    "max": 2,
+                    "min": 0,
+                    "type": "minecraft:uniform"
+                  },
+                  "type": "minecraft:set_count"
+                },
+                {
+                  "type": "minecraft:explosion_decay"
+                }
+              ],
+              "name": "minecraft:stick",
+              "type": "minecraft:item"
+            }
+          ],
+          "type": "minecraft:alternatives"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:blocks/bramble",
+  "type": "minecraft:block"
+}

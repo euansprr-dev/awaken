@@ -2,7 +2,6 @@ package dev.awaken.hearth;
 
 import dev.awaken.core.api.TrailsApi;
 import dev.awaken.core.test.AwakenTests;
-import dev.awaken.hearth.echo.EchoRole;
 import dev.awaken.hearth.room.Furniture;
 import dev.awaken.hearth.room.Reading;
 import dev.awaken.hearth.room.Room;
@@ -40,7 +39,7 @@ final class HearthTrailTests {
                         "cottage|room:sanctuary", "room:kitchen|room:shelter"}) {
                     h.assertTrue(Conditions.met(sp, t), "'" + t + "' holds in a home with a grand sanctuary");
                 }
-                for (String t : new String[] {"room:kitchen", "rooms:sanctuary:2", "hearth_tier:2", "forge_tier:2", "settlers:1", "pads:1", "duty:1", "cottage", "named",
+                for (String t : new String[] {"room:kitchen", "rooms:sanctuary:2", "hearth_tier:2", "forge_tier:2", "settlers:1", "cottage", "named",
                         "furniture:forge", "tip:guide_seen", "room:nonsense", "grade:nonsense", "furniture:nonsense"}) {
                     h.assertTrue(!Conditions.met(sp, t), "'" + t + "' does not");
                 }
@@ -48,13 +47,12 @@ final class HearthTrailTests {
                 rec.forgeTier = 2;
                 rec.name = "Ashford";
                 rec.cottage = new BlockPos(1, 65, 1);
-                rec.pads.put(new BlockPos(2, 64, 2), EchoRole.GUARD);
                 rec.furniture[Furniture.FORGE.ordinal()] = 1;
                 HearthService.player(sp).tips.add("guide_seen");
-                for (String t : new String[] {"hearth_tier:3", "forge_tier:2", "named", "cottage", "pads:1", "furniture:forge", "tip:guide_seen"}) {
+                for (String t : new String[] {"hearth_tier:3", "forge_tier:2", "named", "cottage", "furniture:forge", "tip:guide_seen"}) {
                     h.assertTrue(Conditions.met(sp, t), "'" + t + "' holds after the home grew");
                 }
-                h.assertTrue(!Conditions.met(sp, "hearth_tier:4") && !Conditions.met(sp, "pads:2"), "and the next step does not");
+                h.assertTrue(!Conditions.met(sp, "hearth_tier:4") && !Conditions.met(sp, "forge_tier:3"), "and the next step does not");
                 h.assertTrue(rec.pos.equals(TrailsApi.placeOf("hearth", sp)), "the place 'hearth' is the fire");
                 for (String t : new String[] {"room:bell_tower", "rooms:bedroom:2", "grade:grand", "furniture:trophy", "holds:awaken:hearth_ember", "count:awaken:x:1", "a|b"}) {
                     h.assertTrue(Conditions.known(t) == !t.equals("a|b"), "'" + t + "' is " + (t.equals("a|b") ? "not " : "") + "a word trails knows");

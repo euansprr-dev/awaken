@@ -11,10 +11,10 @@ import java.util.Locale;
  * What waiting on the roads costs (SPEC §28.9, Cost): every lattice chunk whose legs weren't known yet when world
  * generation or the planner ahead of the players asked (how long, on which thread, planned or waited for), the planner's
  * queue, and any wait on the server's own thread, which is a stall and is logged at once. Summed into one log line every
- * 30 s while anything happened, with the roads, plans and noise columns made in that time. On a tour (the autopilot) a
- * watch also samples the server thread 20 times a second: how much of its ticking was spent planning roads or
- * settlements, and what it was doing when a tick, or a task between ticks (a player's packet, a command), ran over a
- * second (to tell a stall of ours from anyone else's).
+ * 30 s while anything happened, with the roads, plans and noise columns made in that time. A watch on the server thread logs
+ * what it was doing when a tick, or a task between ticks (a player's packet, a command), ran over two seconds (one second
+ * on a tour, where it also samples how much of the ticking went on planning roads or settlements), and any chunk it had
+ * to wait for far from every player, with who asked: to tell a stall of ours from anyone else's.
  */
 final class RoadTimer {
     private RoadTimer() {}
@@ -30,6 +30,25 @@ final class RoadTimer {
 
     static boolean onServer() {
         return Thread.currentThread() == server;
+    }
+
+    /** When the server's tick under way began (0 between ticks). */
+    private static volatile long tickFrom;
+    /** A tick that has run this long is late: the planners' jobs ahead of the players wait for it. */
+    static final long LATE_NS = 40_000_000L;
+
+    /** The server's tick begins and ends (the planners ahead hold back while one is late). */
+    static void tickBegins() {
+        tickFrom = System.nanoTime();
+    }
+
+    static void tickEnds() {
+        tickFrom = 0;
+    }
+
+    static boolean serverLate() {
+        long t = tickFrom;
+        return t != 0 && System.nanoTime() - t > LATE_NS;
     }
 
     /** A lattice chunk's legs, asked before they were known: planned on this thread, or waited for (another was planning them). */
@@ -55,9 +74,17 @@ final class RoadTimer {
     static void server(long ns, String what) {
         synchronized (RoadTimer.class) {
             onServer++;
+            serverWaitsEver++;
             serverNs += ns;
         }
         if (ns >= STALL_NS) RoadNet.log("the server thread waited {} ms for {}", ms(ns), what);
+    }
+
+    /** Every wait of the server thread's for the roads or settlements since the server started (the tests). */
+    private static long serverWaitsEver;
+
+    static synchronized long serverWaits() {
+        return serverWaitsEver;
     }
 
     /** Every 30 s while anything happened: the window's sums. */
@@ -90,47 +117,135 @@ final class RoadTimer {
             columns0 = GenTerrain.COLUMNS.sum();
             worst = "";
         }
+        FAR_TOLD.clear();
+        tickFrom = 0;
     }
 
-    // ---- the server thread watched (tours) ----------------------------------------------------------------------------
+    // ---- the server thread watched -------------------------------------------------------------------------------------
 
-    /** A tick (or a task between ticks) this long is logged with the server thread's stack (once a tick). */
+    /** On a tour, a tick (or a task between ticks) this long is logged with the server thread's stack (once a tick). */
     static final long LONG_TICK_NS = 1_000_000_000L;
+    /** In play the watch only looks every half second and takes a stack once a tick has run this long. */
+    static final long LONG_TICK_PLAY_NS = 2_000_000_000L;
+    /** A tick still running is told again this often: one line named only a 6.5-minute freeze's first 26 s. */
+    static final long RETELL_NS = 10_000_000_000L;
 
-    /** On a tour, from the server's start until it stops: the server thread sampled 20 times a second. */
+    /**
+     * From the server's start until it stops: on a tour the server thread sampled 20 times a second (how much of its
+     * ticking went on planning, and the stack of any tick over a second); in play only the tick counter, read twice a
+     * second, and a stack when a tick has run two seconds, so a player's log says what held the server. A tick still
+     * running is told again every {@link #RETELL_NS}, each time with what every thread not waiting for work is doing, Road
+     * starts' lattice chunks not given back, and the chunk under each player followed to what it waits on (ChunkWaits).
+     */
     static void watch(net.minecraft.server.MinecraftServer s) {
-        if (System.getProperty("awaken.autopilot") == null) return;
+        boolean tour = System.getProperty("awaken.autopilot") != null;
         Thread st = s.getRunningThread();
+        long every = tour ? 50_000_000L : 500_000_000L, after = tour ? LONG_TICK_NS : LONG_TICK_PLAY_NS;
         Thread t = new Thread(() -> {
             int seen = -1;
-            long since = System.nanoTime();
-            boolean told = false;
+            long since = System.nanoTime(), tellAt = after;
             while (s.isRunning()) {
-                java.util.concurrent.locks.LockSupport.parkNanos(50_000_000L);
-                StackTraceElement[] stack = st.getStackTrace();
-                boolean ticking = calls(stack, "net.minecraft.server.MinecraftServer", "tickServer");
-                synchronized (RoadTimer.class) {
-                    if (ticking) samples++;
-                    if (ticking && planning(stack)) planning++;
+                java.util.concurrent.locks.LockSupport.parkNanos(every);
+                StackTraceElement[] stack = null;
+                if (tour) {
+                    stack = st.getStackTrace();
+                    boolean ticking = calls(stack, "net.minecraft.server.MinecraftServer", "tickServer");
+                    synchronized (RoadTimer.class) {
+                        if (ticking) samples++;
+                        if (ticking && planning(stack)) planning++;
+                    }
                 }
                 int tick = s.getTickCount();
                 long now = System.nanoTime();
                 if (tick != seen) {
                     seen = tick;
                     since = now;
-                    told = false;
-                } else if (!told && (ticking || calls(stack, "net.minecraft.util.thread.BlockableEventLoop", "doRunTask")) && now - since >= LONG_TICK_NS) {
-                    told = true;
-                    int gen = 0;
-                    for (var e : Thread.getAllStackTraces().entrySet())
-                        if (e.getKey() != st && calls(e.getValue(), RoadNet.class.getName(), "startsIn")) gen++;
-                    RoadNet.log("tick {} has run {} ms{}: {} (roads being laid for {} other threads){}", tick, ms(now - since),
-                            ticking ? "" : " (a task between ticks)", top(stack), gen, planning(stack) ? " (road or settlement planning)" : "");
+                    tellAt = after;
+                } else if (now - since >= tellAt && !s.isPaused() && s.getPlayerCount() > 0) {
+                    if (stack == null) stack = st.getStackTrace();
+                    // 26.3 handles the players' packets before tickServer (processPacketsAndTick): a move into land not
+                    // generated yet waits there, in NeoForge's setPosRaw
+                    boolean ticking = calls(stack, "net.minecraft.server.MinecraftServer", "processPacketsAndTick");
+                    if (!ticking && !calls(stack, "net.minecraft.util.thread.BlockableEventLoop", "doRunTask")) continue;
+                    tellAt = now - since + RETELL_NS;
+                    int gen = 0, idle = 0, busy = 0;
+                    StringBuilder others = new StringBuilder();
+                    // every thread that isn't waiting for work, of any name: whoever is making (or holding) the chunk
+                    for (var e : Thread.getAllStackTraces().entrySet()) {
+                        Thread o = e.getKey();
+                        if (o == st || o == Thread.currentThread()) continue;
+                        if (calls(e.getValue(), RoadNet.class.getName(), "startsIn")) gen++;
+                        if (idle(e.getValue())) idle++;
+                        else if (busy++ < 32) others.append("\n  ").append(o.getName()).append(" [").append(o.getState()).append("]: ").append(top(e.getValue(), 14));
+                    }
+                    RoadNet.log("tick {} has run {} ms{}: {} (roads being laid for {} other threads, {} lattice chunks set aside){}\n  Road starts {}; {}{}{}{}", tick,
+                            ms(now - since), ticking ? "" : " (a task between ticks)", top(stack, 24), gen, RoadNet.setAside(),
+                            planning(stack) ? " (road or settlement planning)" : "", dev.awaken.turbo.roadstarts.RoadStarts.status(),
+                            dev.awaken.turbo.roadstarts.RoadStarts.outstanding(), ChunkWaits.describe(s), others,
+                            "\n  (" + idle + " threads waiting for work" + (busy > 32 ? ", " + (busy - 32) + " more busy not shown" : "") + ")");
                 }
             }
         }, "Awaken stall watch");
         t.setDaemon(true);
         t.start();
+    }
+
+    /** When each caller of a far chunk was last told (server thread only). */
+    private static final java.util.Map<String, Long> FAR_TOLD = new java.util.HashMap<>();
+    /** Far chunks the server thread waited for, and the last of them (the tests). */
+    static int farLoads;
+    static long lastFar = Long.MIN_VALUE;
+
+    /**
+     * A chunk the server thread waited for (a {@code getChunk} that had to load it) further than view distance from every
+     * player in its level: who asked, once a minute a caller. Such a read waits for whatever that level's world generation
+     * is doing, and a lattice chunk still being given its roads holds all of it (SPEC §28.9, Cost), so this is how a
+     * freeze names its cause in a player's log. Chunks loaded for a ticket, or near a player, cost nothing to check. While
+     * it waits the server thread runs other chunks' last steps too, so a chunk without a getChunk's own ticket ("unknown")
+     * is named with the tickets it has: the stack then shows whose wait it rode in, not who asked for it.
+     */
+    static void loaded(net.neoforged.neoforge.event.level.ChunkEvent.Load e) {
+        if (!(e.getLevel() instanceof net.minecraft.server.level.ServerLevel level) || !level.getServer().isSameThread()) return;
+        var c = e.getChunk().getPos();
+        int near = Integer.MAX_VALUE;
+        for (var p : level.players())
+            near = Math.min(near, Math.max(Math.abs(p.chunkPosition().x() - c.x()), Math.abs(p.chunkPosition().z() - c.z())));
+        if (near <= level.getServer().getPlayerList().getViewDistance() + 2) return;
+        var frames = StackWalker.getInstance().walk(f -> f.limit(120).toList());
+        String cache = net.minecraft.server.level.ServerChunkCache.class.getName();
+        int k = -1;
+        for (int i = 0; i < frames.size(); i++) if (frames.get(i).getClassName().equals(cache) && frames.get(i).getMethodName().equals("getChunk")) k = i;
+        if (k < 0) return;
+        farLoads++;
+        lastFar = c.pack();
+        StringBuilder b = new StringBuilder();
+        String who = null;
+        int n = 0;
+        for (int i = k + 1; i < frames.size() && n < 12; i++) {
+            var f = frames.get(i);
+            String cls = f.getClassName();
+            if (n == 0 && (cls.startsWith("net.minecraft.world.level.") || cls.equals(net.minecraft.server.level.ServerLevel.class.getName()))) continue;
+            if (f.getMethodName().equals("tickServer")) break;
+            if (who == null && !cls.startsWith("net.minecraft.")) who = cls + "." + f.getMethodName();
+            if (n++ > 0) b.append(" < ");
+            b.append(cls.substring(cls.lastIndexOf('.') + 1)).append('.').append(f.getMethodName()).append(':').append(f.getLineNumber());
+        }
+        String key = who != null ? who : b.toString();
+        long now = level.getServer().getTickCount();
+        Long last = FAR_TOLD.get(key);
+        if (last != null && now - last < 1200) return;
+        FAR_TOLD.put(key, now);
+        RoadNet.log("the server thread waited for {} chunk {},{} ({}, {}; {}): {}", level.dimension().identifier(), c.x(), c.z(), e.isNewChunk() ? "new" : "from disk",
+                near == Integer.MAX_VALUE ? "no player in that world" : near + " chunks from the nearest player", tickets(level, c), b);
+    }
+
+    /** A chunk's own tickets by type ("unknown" is a getChunk's), or that it is held by a neighbour's. */
+    private static String tickets(net.minecraft.server.level.ServerLevel level, net.minecraft.world.level.ChunkPos c) {
+        var all = level.getChunkSource().getDataStorage().computeIfAbsent(net.minecraft.world.level.TicketStorage.TYPE).getTickets(c.pack());
+        if (all.isEmpty()) return "held by a neighbour's ticket";
+        StringBuilder t = new StringBuilder("tickets");
+        for (var ticket : all) t.append(' ').append(net.minecraft.core.registries.BuiltInRegistries.TICKET_TYPE.getKey(ticket.getType()));
+        return t.toString();
     }
 
     private static boolean calls(StackTraceElement[] stack, String cls, String method) {
@@ -150,13 +265,34 @@ final class RoadTimer {
         return false;
     }
 
-    /** The stack's first frames, our own and the game's, down to the tick. */
-    private static String top(StackTraceElement[] stack) {
+    /** Frames of a thread waiting for work (a pool's, a queue's, a timer's, a socket's, the JVM's own). */
+    private static final String[][] WAITING_FOR_WORK = {
+            {"java.util.concurrent.ForkJoinPool", "awaitWork"}, {"java.util.concurrent.ThreadPoolExecutor", "getTask"},
+            {"java.util.concurrent.LinkedBlockingQueue", "take"}, {"java.util.concurrent.LinkedBlockingDeque", "takeFirst"},
+            {"java.util.concurrent.ArrayBlockingQueue", "take"}, {"java.util.concurrent.LinkedTransferQueue", "take"},
+            {"java.util.concurrent.SynchronousQueue", "take"}, {"java.util.concurrent.DelayQueue", "take"},
+            {"java.util.TimerThread", "mainLoop"}, {"java.lang.ref.ReferenceQueue", "remove"},
+            {"java.lang.ref.Reference", "waitForReferencePendingList"}, {"java.lang.Thread", "sleep"},
+            {"java.lang.Thread", "sleepNanos"}, {"io.netty.channel.kqueue.Native", "keventWait"}, {"io.netty.channel.epoll.Native", "epollWait"},
+            {"sun.nio.ch.KQueue", "poll"}, {"sun.nio.ch.EPoll", "wait"}, {"sun.nio.ch.Net", "accept"},
+    };
+
+    /** A thread waiting for work (of any pool or kind): not one making or holding a chunk. */
+    private static boolean idle(StackTraceElement[] stack) {
+        if (stack.length == 0) return true;
+        for (int i = 0; i < Math.min(stack.length, 8); i++) {
+            for (String[] w : WAITING_FOR_WORK) if (stack[i].getMethodName().equals(w[1]) && stack[i].getClassName().equals(w[0])) return true;
+        }
+        return false;
+    }
+
+    /** The stack's first {@code most} frames, our own and the game's, down to the tick. */
+    private static String top(StackTraceElement[] stack, int most) {
         StringBuilder b = new StringBuilder();
         int n = 0;
         for (StackTraceElement f : stack) {
             if (f.getMethodName().equals("tickServer")) break;
-            if (n++ == 24) {
+            if (n++ == most) {
                 b.append(" < ...");
                 break;
             }

@@ -1,6 +1,8 @@
 package dev.awaken.gates;
 
+import dev.awaken.core.PlayDays;
 import dev.awaken.core.RegionRecycler;
+import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.gates.content.Layout;
 import dev.awaken.gates.content.Theme;
@@ -14,15 +16,76 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * GameTests for the Director and cells with several players (SPEC "Together"): the standing-gate cap is per owner,
- * a veteran's gates never form near (or break on) a newcomer's Hearth, and cells are reused while running.
+ * a veteran's gates never form near (or break on) a newcomer's Hearth, cells are reused while running, and any player
+ * who comes close starts a gate's clock.
  */
 final class TogetherGateTests {
     private TogetherGateTests() {}
 
     static void register() {
+        // SPEC §7 "Seen first": a gate's clock starts the first time anyone (owner or not) comes within
+        // SEEN_RADIUS; until then it never breaks and readers see no clock, and left unseen it folds away quietly. An old
+        // save sends standing gates back to unseen and leaves broken ones be.
+        AwakenTests.registerIsolated("together_gates_seen_first", 100, h -> {
+            ServerLevel level = h.getLevel();
+            var server = level.getServer();
+            // (a spectator never starts it either; the test's mock players are always creative, so that one isn't here)
+            ServerPlayer near = GateLiveTests.player(h), far = GateLiveTests.player(h);
+            GateRecord g = null, lone = null;
+            try {
+                long today = PlayDays.current(server);
+                g = GateLiveTests.standUp(h, GateLiveTests.plan(4343, Theme.BELL_CRYPT, Layout.LABYRINTH, Twist.NONE, 0));
+                g.structurePlaced = true;
+                g.breaksOnPlayDay = 3; // formed on play-day 0, rolled to break three play-days on
+                g.foldsOnPlayDay = today + Breaks.UNSEEN_DAYS;
+                h.assertTrue(g.waiting(server) && !g.counting(server), "a new gate waits to be seen");
+                Breaks.newPlayDay(server, g, today + 4);
+                h.assertTrue(g.state == GateState.READY && !g.warned, "unseen, its break day passes and it stands, " + g.state);
+                var view = GateHooks.get(level, g.key()).orElseThrow();
+                h.assertTrue(view.breaksOnPlayDay() == Long.MAX_VALUE && GateHooks.waiting(level, g.key()), "other modules see no clock");
+
+                BlockPos at = g.pos;
+                far.teleportTo(level, at.getX() + Breaks.SEEN_RADIUS + 16, at.getY() + 1, at.getZ(), Set.of(), 0, 0, true);
+                Breaks.sight(server, far);
+                h.assertTrue(g.waiting(server), "too far off: it still waits, " + g.trace);
+                near.teleportTo(level, at.getX() + 30, at.getY() + 1, at.getZ() + 30, Set.of(), 0, 0, true);
+                h.assertTrue(Breaks.sight(server, near) >= 1 && g.seenDay == today && g.breaksOnPlayDay == today + 3,
+                        "anyone close starts it, as many play-days on as it was rolled with: breaks on " + g.breaksOnPlayDay);
+                int traced = g.trace.size();
+                Breaks.sight(server, near);
+                h.assertTrue(g.trace.size() == traced && GateHooks.get(level, g.key()).orElseThrow().breaksOnPlayDay() == today + 3,
+                        "once, and other modules see the clock");
+                Breaks.newPlayDay(server, g, today + 2);
+                h.assertTrue(g.warned, "a seen gate's clock runs: warned the day before it breaks");
+
+                lone = GateLiveTests.standUp(h, GateLiveTests.plan(4344, Theme.HIVE, Layout.LABYRINTH, Twist.NONE, 0));
+                lone.foldsOnPlayDay = today + 1;
+                Breaks.newPlayDay(server, lone, today);
+                h.assertTrue(lone.state == GateState.READY, "not yet");
+                Breaks.newPlayDay(server, lone, today + 1);
+                h.assertTrue(lone.state == GateState.RELEASED && lone.trace.getLast().startsWith("folded unseen"),
+                        "left unseen, it folds away quietly: " + lone.state);
+
+                h.assertTrue(Breaks.unsee(g, today) && g.waiting(server) && g.foldsOnPlayDay == today + Breaks.UNSEEN_DAYS,
+                        "an old save: a standing gate waits to be seen again");
+                g.state = GateState.BROKEN;
+                g.seenDay = -1;
+                h.assertFalse(Breaks.unsee(g, today) || g.waiting(server), "a broken one stays as it was");
+            } finally {
+                GateLiveTests.teardown(level, null, g, lone);
+                if (g != null) {
+                    g.structurePlaced = false; // a stand-in: nothing to take down
+                    GateService.release(server, g);
+                }
+                for (ServerPlayer p : new ServerPlayer[]{near, far}) server.getPlayerList().remove(p);
+            }
+            h.succeed();
+        });
+
         AwakenTests.registerIsolated("together_gates_director_per_owner", 100, h -> {
             ServerLevel level = h.getLevel();
             var server = level.getServer();
@@ -53,6 +116,7 @@ final class TogetherGateTests {
                 g.owner = Optional.of(vet.getUUID());
                 g.pos = anchor.offset(60, 0, 0);
                 g.breaksOnPlayDay = 0;
+                g.seenDay = 0;
                 g.state = GateState.READY;
                 h.assertTrue(Breaks.foreignHearthNear(server, g), "it stands near a Hearth its owner doesn't share");
                 Breaks.newPlayDay(server, g, 5);

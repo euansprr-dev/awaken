@@ -228,6 +228,27 @@ final class PowersTests {
             });
         });
 
+        // a blink aimed a little low glides along the ground (it stopped dead at its first step into the floor)
+        AwakenTests.register("powers_blink_low_aim", 40, h -> {
+            floor(h, 18); // past the step's 14 blocks from where it starts, so it never runs off the edge
+            // clear of the test's own block (a blink across it stopped at once), stepping away from it (yaw 180 looks north)
+            ServerPlayer sp = player(h, new BlockPos(0, 1, -3));
+            Vec3 home = sp.position();
+            h.runAfterDelay(3, () -> {
+                // a blink (Moves.blinkTarget) and a phase through walls (Moves.phaseTarget)
+                for (String id : List.of("lightning_step", "ghost_step")) {
+                    PowerType step = PowerRegistry.get(id);
+                    Powers.learn(sp, step.id, 0);
+                    sp.snapTo(home.x, home.y, home.z, 180f, 12f);
+                    PowerType.Result r = Casting.cast(sp, step, -1, false, 180f, 12f);
+                    h.assertTrue(r.ok(), id + " casts looking down: " + r.reason());
+                    h.assertTrue(home.z - sp.getZ() > 4 && Math.abs(sp.getY() - home.y) < 0.01,
+                            id + " goes forward along the ground: " + (home.z - sp.getZ()) + "," + (sp.getY() - home.y));
+                }
+                h.succeed();
+            });
+        });
+
         AwakenTests.register("powers_energy_gate", 40, h -> {
             ServerPlayer sp = player(h, new BlockPos(0, 1, 0));
             PowerType nova = PowerRegistry.get("nova");
@@ -285,7 +306,7 @@ final class PowersTests {
             h.assertTrue(ForceInteractions.reactionFor(Forces.Force.FROST, subject(none, false, true, false, false, false))
                     == ForceInteractions.Reaction.STEAM, "frost + burning");
             h.assertTrue(ForceInteractions.reactionFor(Forces.Force.CHARGE, subject(none, true, false, false, true, false))
-                    == ForceInteractions.Reaction.OVERCHARGE, "charge + your echo (even wet)");
+                    == ForceInteractions.Reaction.OVERCHARGE, "charge + your summon (even wet)");
             h.assertTrue(ForceInteractions.reactionFor(Forces.Force.HEAT, subject(none, true, false, false, false, false))
                     == ForceInteractions.Reaction.NONE, "heat + water does nothing");
             h.succeed();
@@ -332,6 +353,11 @@ final class PowersTests {
                 h.assertTrue(hit && z.getHealth() < hp, "the charge landed (hit=" + hit + ", hp " + hp + " -> " + z.getHealth()
                         + ", alive=" + z.isAlive() + ", invul=" + z.isInvulnerable() + ", cd=" + z.damageCooldownTime + ")");
                 h.assertTrue(Progression.profile(sp).counter(Counters.FORCE_INTERACTIONS) > before, "reaction counted (wet=" + z.isInWater() + ")");
+                var reaction = ForceInteractions.explanation(ForceInteractions.Reaction.STUN_SPREAD);
+                h.assertTrue(sp.getData(dev.awaken.signal.NoticeHistory.HISTORY).entries().stream().anyMatch(e ->
+                        e.event().equals(reaction) && e.event().kind() == dev.awaken.core.api.NoticeEvents.Kind.COMBAT
+                        && e.event().details().getFirst().contains("you are also stunned for 1 second")),
+                        "the actual wet-charge reaction leaves its risk and duration readable in Journal");
                 h.assertTrue(z.hasEffect(PowerContent.STUNNED), "a zombie standing in water is stunned by charge (effects="
                         + z.getActiveEffects() + ", wet=" + z.isInWater() + ", tagged=" + Forces.has(z, Forces.Tag.WATER)
                         + ", pos=" + z.blockPosition() + ", alive=" + z.isAlive() + ")");
@@ -402,8 +428,8 @@ final class PowersTests {
         });
     }
 
-    private static ForceInteractions.Subject subject(EnumSet<Forces.Tag> tags, boolean wet, boolean burning, boolean frozen, boolean echo, boolean vol) {
-        return new ForceInteractions.Subject(tags, wet, burning, frozen, echo, vol);
+    private static ForceInteractions.Subject subject(EnumSet<Forces.Tag> tags, boolean wet, boolean burning, boolean frozen, boolean summon, boolean vol) {
+        return new ForceInteractions.Subject(tags, wet, burning, frozen, summon, vol);
     }
 
     private static ServerPlayer player(GameTestHelper h, BlockPos rel) {

@@ -69,6 +69,16 @@ public final class PlateRules {
         return c.lastFight != Long.MIN_VALUE && now - c.lastFight <= FIGHT_TICKS;
     }
 
+    /**
+     * The clear screen (SPEC §40.6): the creature you mean (locked or marked) keeps the full plate, and so does one under
+     * your look or a notable beast; the others fighting you show only a thin bar.
+     */
+    public static boolean thin(boolean clear, Candidate c, long now, int meant) {
+        if (!clear || c.id == meant || c.notable) return false;
+        boolean looked = c.lastLook != Long.MIN_VALUE && now - c.lastLook <= LOOK_FADE;
+        return fighting(c, now) && !looked;
+    }
+
     /** The plate's visibility (0..1) now: full while fighting, looked at or notable and near; then it fades. */
     public static float visibility(Candidate c, long now, double lookRange) {
         if (c.excluded) return 0;

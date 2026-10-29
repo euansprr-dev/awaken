@@ -411,7 +411,7 @@ final class AudioLayerTests {
         }
         List<String> mustBeDry = new ArrayList<>(List.of("awaken:level_up", "awaken:rank_up", "awaken:signal.chime", "awaken:signal.open",
                 "awaken:signal.warning", "awaken:music.layers", "awaken:amb.layers"));
-        for (String v : new String[]{"words", "tear", "close", "drain", "heartbeat", "void"}) mustBeDry.add("awaken:story.ritual." + v);
+        for (String v : new String[]{"words", "tear", "close", "drain", "heartbeat", "void", "hall"}) mustBeDry.add("awaken:story.ritual." + v);
         for (Identifier id : BuiltInRegistries.SOUND_EVENT.keySet()) {
             if (id.getNamespace().equals("awaken") && (id.getPath().startsWith("music.") || id.getPath().startsWith("ui."))) mustBeDry.add(id.toString());
         }

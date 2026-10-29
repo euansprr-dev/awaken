@@ -40,18 +40,33 @@ public final class GatePainter {
 
     /** Paints every floor band that covers this chunk. */
     public static void paint(GateLayout layout, int cell, int chunkX, int chunkZ, Sink out) {
+        paint(layout, cell, chunkX, chunkZ, out, false);
+    }
+
+    /**
+     * Paints the floors of one dimension: the gates' ({@code sky} false) or the open sky's (true, only the open lands:
+     * SPEC §38.11). The two share cells and plots, so each floor stands in exactly one of them.
+     */
+    public static void paint(GateLayout layout, int cell, int chunkX, int chunkZ, Sink out, boolean sky) {
         int lcx = chunkX * 16 - Cells.originX(cell), lcz = chunkZ * 16 - Cells.originZ(cell);
         if (lcx < 0 || lcz < 0 || lcx >= Cells.SIZE || lcz >= Cells.SIZE) return;
         int slotX = lcx >> 4, slotZ = lcz >> 4;
-        for (FloorLayout f : layout.main) if (f.coversSlot(slotX, slotZ, 1)) paintFloor(layout.plan, f, slotX, slotZ, out);
-        for (FloorLayout f : layout.annex) if (f.coversSlot(slotX, slotZ, 1)) paintFloor(layout.plan, f, slotX, slotZ, out);
+        for (FloorLayout f : layout.main) if (f.sky == sky) paintAny(layout.plan, f, slotX, slotZ, out);
+        for (FloorLayout f : layout.annex) if (f.sky == sky) paintAny(layout.plan, f, slotX, slotZ, out);
+    }
+
+    /** A world floor carves its own plot (SPEC §38); a rooms floor paints its grid plus a slot of rock around it. */
+    private static void paintAny(GatePlan plan, FloorLayout f, int slotX, int slotZ, Sink out) {
+        if (f.model != null) {
+            if (f.coversSlot(slotX, slotZ, 0)) f.model.carve(plan, f, slotX, slotZ, out);
+        } else if (f.coversSlot(slotX, slotZ, 1)) paintFloor(plan, f, slotX, slotZ, out);
     }
 
     static void paintFloor(GatePlan plan, FloorLayout f, int slotX, int slotZ, Sink out) {
         int gx = slotX - f.originSlotX, gz = slotZ - f.originSlotZ;
         Room r = f.roomAtSlot(gx, gz);
         Palette p = f.theme.palette();
-        int yLo = f.baseY - Cells.BAND_BELOW, yHi = f.baseY + Cells.BAND_ABOVE - 1;
+        int yLo = f.yLo, yHi = f.yHi;
         if (r == null) {
             for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) for (int y = yLo; y <= yHi; y++) out.set(x, y, z, p.fill());
             return;
@@ -60,6 +75,23 @@ public final class GatePainter {
         for (int bx = 0; bx < 16; bx++) for (int bz = 0; bz < 16; bz++) c.column(bx, bz);
         c.features();
         if (r.rig != null) RigRooms.stamp(c);
+    }
+
+    /**
+     * A world floor's built room (the Lord's arena, a Rig room: SPEC §38.5) painted as today's rooms are, inside its own
+     * band of heights; the world carves everything round it.
+     */
+    static void paintBuilt(GatePlan plan, FloorLayout f, Room r, int gx, int gz, Sink out) {
+        int floorY = f.baseY + r.dy;
+        Ctx c = new Ctx(plan, f, r, f.theme.palette(), out, gx, gz, floorY - Cells.BAND_BELOW, floorY + Cells.BAND_ABOVE - 1);
+        for (int bx = 0; bx < 16; bx++) for (int bz = 0; bz < 16; bz++) c.column(bx, bz);
+        c.features();
+        if (r.rig != null) RigRooms.stamp(c);
+    }
+
+    /** A world place's features (shrine, seal, caches, runes, the entrance sigil) in one of its chunks. */
+    static void paintFeatures(GatePlan plan, FloorLayout f, Room r, int gx, int gz, Sink out) {
+        new Ctx(plan, f, r, f.theme.palette(), out, gx, gz, f.yLo, f.yHi).features();
     }
 
     /** Per-room painting state (one per chunk and floor; never shared between threads). */
@@ -881,12 +913,14 @@ public final class GatePainter {
             for (Room.Feature ft : r.features) {
                 if (ft.kind() == Room.FeatureKind.INNER_GATE) innerGate(ft, x0, z0);
                 if (ft.kind() == Room.FeatureKind.RIFT_WALL) riftWall(ft, x0, z0);
+                // on a world floor's ground (38.14) a feature stands where you'd stand over its column
+                int up = f.ground(ft.x(), ft.z());
                 if (ft.kind() == Room.FeatureKind.VAULT_CACHE) {
-                    for (int[] b : FeatureBlocks.vaultBars(ft)) put(b[0], floorY + b[1], b[2], x0, z0, GatesRegistry.BARS.get().defaultBlockState());
+                    for (int[] b : FeatureBlocks.vaultBars(ft)) put(b[0], floorY + up + b[1], b[2], x0, z0, GatesRegistry.BARS.get().defaultBlockState());
                 }
                 int bx = ft.x() - x0, bz = ft.z() - z0;
                 if (bx < 0 || bx > 15 || bz < 0 || bz > 15) continue;
-                int y = floorY + ft.y();
+                int y = floorY + up + ft.y();
                 switch (ft.kind()) {
                     case SHRINE -> set(bx, y, bz, GatesRegistry.SHRINE.get().defaultBlockState());
                     case SEAL -> set(bx, y, bz, GatesRegistry.SEAL.get().defaultBlockState());
@@ -897,7 +931,7 @@ public final class GatePainter {
                     }
                     case ENTRANCE -> set(bx, y - 1, bz, GatesRegistry.ENTRANCE.get().defaultBlockState());
                     case LANTERN -> set(bx, y, bz, GatesRegistry.LANTERN.get().defaultBlockState());
-                    case UPDRAFT -> set(bx, floorY - 4, bz, GatesRegistry.UPDRAFT.get().defaultBlockState());
+                    case UPDRAFT -> set(bx, y, bz, GatesRegistry.UPDRAFT.get().defaultBlockState());
                     default -> {}
                 }
             }

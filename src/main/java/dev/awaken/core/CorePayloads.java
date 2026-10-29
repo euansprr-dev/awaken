@@ -2,6 +2,7 @@ package dev.awaken.core;
 
 import dev.awaken.Awaken;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,10 +19,19 @@ public final class CorePayloads {
         @Override public Type<FlagUnfair> type() { return TYPE; }
     }
 
+    /** Server → client: a teleport is waiting for its land ({@code on}), or has moved the player ({@link dev.awaken.core.api.Passage}). */
+    public record PassageWait(boolean on) implements CustomPacketPayload {
+        public static final Type<PassageWait> TYPE = new Type<>(Awaken.id("passage_wait"));
+        public static final StreamCodec<ByteBuf, PassageWait> STREAM_CODEC = ByteBufCodecs.BOOL.map(PassageWait::new, PassageWait::on);
+        @Override public Type<PassageWait> type() { return TYPE; }
+    }
+
     static void register(RegisterPayloadHandlersEvent event) {
-        event.registrar("1").playToServer(FlagUnfair.TYPE, FlagUnfair.STREAM_CODEC, (msg, ctx) -> {
+        var r = event.registrar("1");
+        r.playToServer(FlagUnfair.TYPE, FlagUnfair.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) flagUnfair(sp);
         });
+        r.playToClient(PassageWait.TYPE, PassageWait.STREAM_CODEC);
     }
 
     /**

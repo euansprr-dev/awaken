@@ -16,13 +16,15 @@ public final class GateHooks {
 
     /**
      * A gate as other modules see it. rank = Rank ordinal; state = BUILDING/READY/ACTIVE/OPEN/CLEARED/BROKEN/RELEASED;
-     * mouth = where a player stands in front of the portal; breaksOnPlayDay = Long.MAX_VALUE for gates that never break.
+     * mouth = where a player stands in front of the portal; breaksOnPlayDay = Long.MAX_VALUE for gates whose break clock
+     * doesn't run: they never break, or nobody has come close yet ({@link #waiting}, SPEC §7 "Seen first").
      */
     public record GateView(String id, BlockPos pos, int rank, String theme, String themeName, String omen, String layout,
                            List<String> modifiers, String twist, int floors, String boss, String state, long breaksOnPlayDay,
                            BlockPos mouth) {}
 
     public interface Access {
+        /** The gates that stand within {@code radius} (never a failed, half-built or fallen one). */
         List<GateView> near(ServerLevel level, BlockPos pos, int radius);
         Optional<GateView> get(ServerLevel level, String id);
         /** Mark a gate as scouted by this player (shows full detail on its card). */
@@ -37,6 +39,12 @@ public final class GateHooks {
         default Optional<String> openWandering(ServerPlayer player, BlockPos near, int floors, int lifetimeTicks) { return Optional.empty(); }
         /** Release a gate now (refused while someone stands inside). */
         default void release(ServerLevel level, String id) {}
+        /** Gate-owned encounter boundaries; non-gate entities remain unrestricted. */
+        default boolean mayTarget(net.minecraft.world.entity.LivingEntity mob, net.minecraft.world.entity.LivingEntity target) { return true; }
+        /** Whether a tracked boss belongs to this player's currently encountered gate fight. */
+        default boolean showsBossBar(net.minecraft.world.entity.Entity mob, ServerPlayer player) { return true; }
+        /** Whether this gate's break clock waits for someone to come close (it would break, but nobody has seen it yet). */
+        default boolean waiting(ServerLevel level, String id) { return false; }
     }
 
     private static Access access = new Access() {
@@ -58,4 +66,7 @@ public final class GateHooks {
     public static Optional<String> openScripted(ServerPlayer p, String theme, int rank, BlockPos near, int floors) { return access.openScripted(p, theme, rank, near, floors); }
     public static Optional<String> openWandering(ServerPlayer p, BlockPos near, int floors, int lifetimeTicks) { return access.openWandering(p, near, floors, lifetimeTicks); }
     public static void release(ServerLevel level, String id) { access.release(level, id); }
+    public static boolean mayTarget(net.minecraft.world.entity.LivingEntity mob, net.minecraft.world.entity.LivingEntity target) { return access.mayTarget(mob, target); }
+    public static boolean showsBossBar(net.minecraft.world.entity.Entity mob, ServerPlayer player) { return access.showsBossBar(mob, player); }
+    public static boolean waiting(ServerLevel level, String id) { return access.waiting(level, id); }
 }

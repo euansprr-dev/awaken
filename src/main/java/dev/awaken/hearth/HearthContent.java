@@ -80,7 +80,7 @@ public final class HearthContent {
     // ---- blocks -----------------------------------------------------------------------------------------------------
 
     public static final DeferredBlock<HearthAnchorBlock> HEARTH_ANCHOR = BLOCKS.registerBlock("hearth_anchor", HearthAnchorBlock::new,
-            p -> p.mapColor(MapColor.COLOR_ORANGE).strength(25f, 1200f).sound(SoundType.LODESTONE).lightLevel(s -> s.getValue(HearthAnchorBlock.TIER) >= 4 ? 15 : 14)
+            p -> p.mapColor(MapColor.COLOR_ORANGE).strength(25f, 1200f).sound(SoundType.LODESTONE).lightLevel(s -> 15).noOcclusion()
                     .pushReaction(PushReaction.IMMOVEABLE).instrument(NoteBlockInstrument.BASEDRUM));
     /** The Ember's fire: a Tier 0 Hearth (SPEC §28.2). No item: the Hearth Ember sets it down. */
     public static final DeferredBlock<HearthfireBlock> HEARTHFIRE = BLOCKS.registerBlock("hearthfire", HearthfireBlock::new,
@@ -177,10 +177,10 @@ public final class HearthContent {
 
     // ---- attachments ------------------------------------------------------------------------------------------------
 
-    /** Everything the hearth module remembers about a player: Echo roster, rumours, bests, trial cooldown. */
+    /** Everything the hearth module remembers about a player: rumours, bests, trial cooldown, Rested. */
     public static final Supplier<AttachmentType<HearthPlayer>> PLAYER = ATTACHMENTS.register("hearth_player", () -> AttachmentType
             .builder(HearthPlayer::new).serialize(HearthPlayer.MAP_CODEC).copyOnDeath().build());
-    /** What the owner's client needs to draw the HEARTH section, the Echo chooser and Mira's rumours. Not saved. */
+    /** What the owner's client needs to draw the HEARTH section and Mira's rumours. Not saved. */
     public static final Supplier<AttachmentType<HearthView>> VIEW = ATTACHMENTS.register("hearth_view", () -> AttachmentType
             .builder(() -> HearthView.EMPTY).sync((holder, to) -> holder == to, HearthView.STREAM_CODEC).build());
     /** The room the player stands in at home, for their room panel. Not saved. */
@@ -189,7 +189,7 @@ public final class HearthContent {
     /** Rank aura shown to everyone who can see the player. */
     public static final Supplier<AttachmentType<Aura>> AURA = ATTACHMENTS.register("aura", () -> AttachmentType
             .builder(() -> Aura.NONE).sync(Aura.STREAM_CODEC).build());
-    /** Marks an entity as somebody's Echo. Saved with the entity and synced so clients can draw it as a shadow. */
+    /** Marked somebody's Echo in an older world: kept only so that body is recognised and let go on load (SPEC §43.4). */
     public static final Supplier<AttachmentType<EchoLink>> ECHO_LINK = ATTACHMENTS.register("echo_link", () -> AttachmentType
             .builder(() -> EchoLink.NONE).serialize(EchoLink.MAP_CODEC, l -> l != EchoLink.NONE).sync(EchoLink.STREAM_CODEC).build());
 
@@ -213,9 +213,6 @@ public final class HearthContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_FIRE = sound("hearth.fire");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_LIFT = sound("hearth.lift");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_ROOM = sound("hearth.room");
-    public static final DeferredHolder<SoundEvent, SoundEvent> SND_BIND = sound("hearth.bind");
-    public static final DeferredHolder<SoundEvent, SoundEvent> SND_BIND_FAIL = sound("hearth.bind_fail");
-    public static final DeferredHolder<SoundEvent, SoundEvent> SND_SUMMON = sound("hearth.summon");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_ANCHOR = sound("hearth.anchor");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_CHECKPOINT = sound("hearth.checkpoint");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RECORD = sound("hearth.record");
@@ -232,7 +229,6 @@ public final class HearthContent {
     /** Items shown in the shared creative tab, in order. */
     static List<DeferredItem<?>> tabItems() {
         List<DeferredItem<?>> out = new java.util.ArrayList<>(List.of(EMBER_ITEM, HEARTH_ANCHOR_ITEM, MEDITATION_MAT_ITEM, FORGE_ITEM, TROPHY_MOUNT_ITEM));
-        for (EchoRole r : EchoRole.values()) out.add(ROLE_PAD_ITEMS.get(r));
         out.addAll(List.of(SPIRE_BOARD_ITEM, MONOLITH_ITEM, START_GATE_ITEM, CHECKPOINT_RING_ITEM, FINISH_GATE_ITEM, TARGET_DUMMY_ITEM));
         return out;
     }
@@ -247,9 +243,5 @@ public final class HearthContent {
         PARTICLES.register(modBus);
         SOUNDS.register(modBus);
         CHUNK_GENERATORS.register(modBus);
-    }
-
-    static boolean isRolePad(Block b) {
-        return b instanceof RolePadBlock;
     }
 }

@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "package": "dev.awaken.turbo.roadstarts.mixin",
+  "mixins": [
+    "ChunkStatusTasksMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  },
+  "minVersion": "0.8"
+}

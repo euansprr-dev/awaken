@@ -16,6 +16,29 @@ import java.util.Set;
 public final class FloorState {
     /** Room triggers: room id, or (room id << 8 | zone) for cavern zones. */
     public final Set<Integer> triggered = new LinkedHashSet<>();
+    /** Encounters already populated, independently of whether anyone has engaged them. */
+    public final Set<Integer> prepared = new LinkedHashSet<>();
+    /** Live encounter members, including entities in unloaded chunks. UUID string -> room/zone key. */
+    public final Map<String, Integer> living = new HashMap<>();
+    /** Members not yet attempted because the gate's live-entity budget was full. */
+    public final Map<Integer, Company> pendingCompanies = new HashMap<>();
+
+    public static final class Company {
+        public final int normals, elites, offset;
+        public int next;
+        public Company(int normals, int elites, int offset, int next) {
+            this.normals = normals;
+            this.elites = elites;
+            this.offset = offset;
+            this.next = next;
+        }
+        public static final Codec<Company> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.fieldOf("normals").forGetter(c -> c.normals),
+                Codec.INT.fieldOf("elites").forGetter(c -> c.elites),
+                Codec.INT.fieldOf("offset").forGetter(c -> c.offset),
+                Codec.INT.fieldOf("next").forGetter(c -> c.next)
+        ).apply(i, Company::new));
+    }
     public final Set<Integer> clearedRooms = new LinkedHashSet<>();
     /** Arena wave reached per room (1 or 2). */
     public final Map<Integer, Integer> waves = new HashMap<>();
@@ -42,6 +65,8 @@ public final class FloorState {
     public final Set<Integer> locked = new LinkedHashSet<>();
     /** The Gate Rig's rooms on this floor: tracks, swapped groups, latches (SPEC §17). */
     public RigState rig = new RigState();
+    /** A world floor's live layer (SPEC §38.8): events that ran, the Flood, the Ringer, secrets opened. Saved since v6 plots. */
+    public final Set<String> world = new LinkedHashSet<>();
 
     private record Sets(List<Integer> triggered, List<Integer> cleared, List<Integer> solved, List<Integer> lanterns, List<Integer> locked) {
         static final Codec<Sets> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -79,10 +104,22 @@ public final class FloorState {
                     List.copyOf(f.puzzlesSolved), List.copyOf(f.lanternsTaken), List.copyOf(f.locked))),
             Maps.CODEC.fieldOf("maps").forGetter(f -> new Maps(str(f.waves), str(f.runes), str(f.water))),
             Flags.CODEC.fieldOf("flags").forGetter(f -> new Flags(f.enteredAt, f.pressureWaves, f.warden, f.alarm, f.shrineOpen, f.spiritDone, f.collapsed)),
-            RigState.CODEC.optionalFieldOf("rig").forGetter(f -> f.rig.empty() ? java.util.Optional.empty() : java.util.Optional.of(f.rig))
-    ).apply(i, (s, m, fl, rig) -> {
+            RigState.CODEC.optionalFieldOf("rig").forGetter(f -> f.rig.empty() ? java.util.Optional.empty() : java.util.Optional.of(f.rig)),
+            Codec.STRING.listOf().optionalFieldOf("world", List.of()).forGetter(f -> List.copyOf(f.world)),
+            Codec.INT.listOf().optionalFieldOf("prepared").forGetter(f -> java.util.Optional.of(List.copyOf(f.prepared))),
+            Maps.M.optionalFieldOf("living", Map.of()).forGetter(f -> Map.copyOf(f.living)),
+            Codec.unboundedMap(Codec.STRING, Company.CODEC).optionalFieldOf("pending_companies", Map.of()).forGetter(f -> {
+                Map<String, Company> out = new HashMap<>();
+                f.pendingCompanies.forEach((k, v) -> out.put(Integer.toString(k), v));
+                return out;
+            })
+    ).apply(i, (s, m, fl, rig, world, prepared, living, pending) -> {
         FloorState f = new FloorState();
         f.triggered.addAll(s.triggered);
+        // Old saves already populated every triggered encounter; never spawn those a second time.
+        f.prepared.addAll(prepared.orElse(s.triggered));
+        f.living.putAll(living);
+        pending.forEach((k, v) -> f.pendingCompanies.put(Integer.parseInt(k), v));
         f.clearedRooms.addAll(s.cleared);
         f.puzzlesSolved.addAll(s.solved);
         f.lanternsTaken.addAll(s.lanterns);
@@ -98,6 +135,7 @@ public final class FloorState {
         f.spiritDone = fl.spiritDone;
         f.collapsed = fl.collapsed;
         rig.ifPresent(r -> f.rig = r);
+        f.world.addAll(world);
         return f;
     }));
 

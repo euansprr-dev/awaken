@@ -32,6 +32,9 @@ public final class SenseModule {
     /** Loops round the listener: the deep's hum below y 0, and the seep's second voice over it. */
     public static final DeferredHolder<SoundEvent, SoundEvent> DEEP_HUM = sound("delve.deep.hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> DEEP_SEEP = sound("delve.deep.seep");
+    /** Recorded (SPEC §34.5): the band's room tone round the listener (pitched by band), and the cave answering a heart. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> BAND_ROOM = sound("delve.band.room");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CAVE_ANSWERS = sound("delve.cave.answers");
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String path) {
         return SOUNDS.register(path, () -> SoundEvent.createVariableRangeEvent(Awaken.id(path)));

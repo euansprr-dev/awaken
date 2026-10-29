@@ -143,7 +143,8 @@ final class GuideSections {
             int st = data.get().cottage();
             ui.card(Glass.LANTERN, in -> {
                 switch (st) {
-                    case GuideData.COTTAGE_BUILDING -> in.text("Oren is raising it beside your Anchor. Close this and watch.", Glass.a(Glass.TEXT, 1f));
+                    case GuideData.COTTAGE_BUILDING -> in.text(data.get().cottageNote().isEmpty()
+                            ? "Oren is looking for a good spot beside your Anchor." : data.get().cottageNote(), Glass.a(Glass.TEXT, 1f));
                     case GuideData.COTTAGE_NO_ROOM -> {
                         in.text("Oren found no open ground for it. Clear a flat patch about 12 blocks across near the Anchor, away "
                                 + "from your builds (a few trees are fine), then try again.", Glass.a(Glass.TEXT, 1f));
@@ -263,7 +264,6 @@ final class GuideSections {
             GuideData.RecipeView r = rv.get();
             ItemStack result = stack(r.result());
             String extra = switch (f) {
-                case PAD -> " (any role pad works)";
                 case TROPHY -> ", then hang a Lord's trophy on it";
                 default -> "";
             };

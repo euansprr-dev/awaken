@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "theme": "precursor_lab",
+  "name": "The Garden Dome",
+  "line": "A garden under a lit dome, still watered and still growing, with nobody left to see it.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "roof": 14
+  },
+  "biome": "awaken:gate_world/garden_dome",
+  "moods": [],
+  "blocks": {
+    "wall": "awaken:lab_panel",
+    "wall_glow": "awaken:lab_panel_lit",
+    "floor": "awaken:lab_floor",
+    "trim": "awaken:lab_frame",
+    "frame": "awaken:lab_frame",
+    "glass": "awaken:lab_glass",
+    "rack": "awaken:lab_rack",
+    "tank": "awaken:lab_tank",
+    "cables": "awaken:lab_cables",
+    "lamp": "awaken:lab_light",
+    "holo": "awaken:lab_hologram",
+    "moss": "awaken:lab_moss",
+    "sketch": "awaken:lab_sketch",
+    "touch": "awaken:lab_console",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_dome"
+  ],
+  "life": [
+    "dust",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.lab_sim",
+  "events": [],
+  "rule": "power",
+  "secrets": [
+    {
+      "id": "the_last_seed",
+      "name": "The last seed"
+    }
+  ],
+  "keepsake": "last_seed",
+  "keepsake_name": "The Last Seed",
+  "keepsake_from": "the_last_seed"
+}

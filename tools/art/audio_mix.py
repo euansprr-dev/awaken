@@ -30,6 +30,7 @@ SOUNDS = os.path.join(ROOT, "src/main/resources/assets/awaken/sounds")
 
 # category: (gated RMS target dBFS, tolerance dB, true-peak ceiling dBFS, Vorbis quality for --fix)
 TARGETS = {
+    "recorded": (-30.0, 40.0, -6.0, 5),  # authored transients: peak only; never RMS-normalize
     "music": (-19.0, 2.0, -1.0, 3),
     "ui": (-24.0, 3.0, -3.0, 5),
     "amb": (-28.0, 3.0, -6.0, 4),
@@ -44,6 +45,14 @@ TARGETS = {
 MANIFESTS = os.path.join(ROOT, "src/main/resources/assets/awaken/music_layers")
 
 
+def recorded(path):
+    relative = os.path.relpath(path, SOUNDS).replace(os.sep, "/")
+    folder, _, filename = relative.partition("/")
+    manifest = os.path.join(ROOT, "tools/art/sources", folder, "measurements.json")
+    if folder not in ("city", "ritual") or not os.path.isfile(manifest): return False
+    with open(manifest) as f: return filename.removesuffix(".ogg") in json.load(f)
+
+
 def category(name):
     for p in ("music", "ui", "amb", "layer", "arms", "power"):
         if name.startswith(p + "_"):
@@ -55,7 +64,7 @@ def measure(path):
     x = K.read_audio(path)
     return {
         "file": os.path.relpath(path, SOUNDS),
-        "cat": category(os.path.basename(path)),
+        "cat": "recorded" if recorded(path) else category(os.path.basename(path)),
         "dur": len(x) / K.SR,
         "ch": 1 if x.ndim == 1 else x.shape[1],
         "rms": K.gated_rms(x),
@@ -67,7 +76,7 @@ def measure(path):
 def verdict(m):
     tgt, tol, ceil, _ = TARGETS[m["cat"]]
     bad = []
-    if abs(m["rms"] - tgt) > tol:
+    if m["cat"] != "recorded" and abs(m["rms"] - tgt) > tol:
         bad.append(f"RMS {m['rms']:.1f} (target {tgt:.0f}±{tol:.0f})")
     if m["tp"] > ceil + 0.05:
         bad.append(f"peak {m['tp']:.1f} > {ceil:.0f}")
@@ -82,7 +91,7 @@ def report(fix=False):
     for f in files:
         m, x = measure(f)
         bad = verdict(m)
-        if bad and fix and m["cat"] != "layer":
+        if bad and fix and m["cat"] not in ("layer", "recorded"):
             tgt, tol, ceil, q = TARGETS[m["cat"]]
             y = K.master(x, tgt, ceil)
             K.write_ogg(f, y, q)

@@ -7,7 +7,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The full interior of one gate: main floors (1..floors, the last one holds the Gate Lord) and, for Double Gate and
- * Gate within a Gate, two annex floors in the other half of the cell. A pure function of the {@link GatePlan}.
+ * Gate within a Gate, two annex floors in the other half of the cell (version 6+: every floor in its own plot, see
+ * {@link Plots}). A pure function of the {@link GatePlan}.
  */
 public final class GateLayout {
     public final GatePlan plan;
@@ -26,8 +27,13 @@ public final class GateLayout {
         return f >= 1 && f <= list.size() ? list.get(f - 1) : null;
     }
 
-    /** Floor at cell-local coordinates (x inside the cell, absolute y). */
-    public FloorLayout floorAt(int cellLocalX, int y) {
+    /** Floor at cell-local coordinates (x, z inside the cell, absolute y), or null between floors. */
+    public FloorLayout floorAt(int cellLocalX, int cellLocalZ, int y) {
+        if (plan.contentVersion() >= Plots.FIRST_VERSION) {
+            for (FloorLayout f : main) if (f.plot != null && f.plot.contains(cellLocalX, cellLocalZ, y)) return f;
+            for (FloorLayout f : annex) if (f.plot != null && f.plot.contains(cellLocalX, cellLocalZ, y)) return f;
+            return null;
+        }
         int f = Cells.floorAtY(y);
         if (f == 0) return null;
         int area = cellLocalX >= Cells.ANNEX_SLOT_X * 16 ? 1 : 0;
@@ -42,7 +48,7 @@ public final class GateLayout {
     public static GateLayout of(GatePlan plan) {
         long key = plan.seed() * 31 + plan.contentVersion();
         GateLayout l = CACHE.get(key);
-        if (l != null && l.plan.equals(plan)) return l;
+        if (l != null && (l.plan == plan || l.plan.equals(plan))) return l;
         l = FloorBuilder.build(plan);
         if (CACHE.size() > 256) CACHE.clear();
         CACHE.put(key, l);

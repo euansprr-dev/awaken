@@ -71,7 +71,7 @@ public final class Pressure {
             for (ServerPlayer p : players) since = Math.min(since, Runs.run(p).floorStartedAt);
             long onFloor = now - since;
             FloorLayout f = GateLayout.of(g.plan).floor(first.area, first.floor);
-            if (f == null) continue;
+            if (f == null || Rooms.calm(f, null)) continue;
             FloorState fs = g.floor(first.area, first.floor);
             if (onFloor >= start(g) - 600 && onFloor < start(g) - 580) {
                 for (ServerPlayer p : players) Signal.toast(p, Component.literal("The gate stirs."));
@@ -92,10 +92,10 @@ public final class Pressure {
                 GateRegistry.get(level.getServer()).setDirty();
             }
             if (onFloor >= WARDEN && !fs.warden && !f.bossFloor) {
-                fs.warden = true;
                 ServerPlayer target = players.get(level.getRandom().nextInt(players.size()));
                 BlockPos at = spotNear(level, g, f, target, 10);
-                if (at != null) Rooms.spawn(level, g, f, -1, MobRole.Role.WARDEN, at);
+                if (at == null || Rooms.spawn(level, g, f, -1, MobRole.Role.WARDEN, at) == null) continue;
+                fs.warden = true;
                 level.playSound(null, target.blockPosition(), GatesRegistry.SND_WARDEN.get(), SoundSource.HOSTILE, 2F, 0.7F);
                 for (ServerPlayer p : players) {
                     Signal.send(p, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("The Warden is here"))
@@ -118,20 +118,37 @@ public final class Pressure {
         return n;
     }
 
-    /** An open spot in the player's room (or a neighbouring one) a few blocks away; never inside a safe room. */
+    static boolean eligible(FloorState fs, Room room) {
+        if (room.type.safe() || fs.clearedRooms.contains(room.id)) return false;
+        if (room.type == Room.Type.CAVERN) {
+            for (int zone = 0; zone < room.area(); zone++) if (fs.triggered.contains(Rooms.cavernKey(room, zone)) && !fs.clearedRooms.contains(Rooms.cavernKey(room, zone))) return true;
+            return false;
+        }
+        return fs.triggered.contains(room.id);
+    }
+
+    /** Reinforcements join engaged, unfinished fights. Cleared and merely previewed rooms stay quiet. */
     static BlockPos spotNear(ServerLevel level, GateRecord g, FloorLayout f, ServerPlayer target, int minDist) {
         Where w = Where.at(level.getServer(), target.blockPosition());
         if (w == null || w.room() == null || w.floor() == null || w.floor().area != f.area || w.floor().floor != f.floor) return null;
         List<Room> candidates = new ArrayList<>();
-        if (!w.room().type.safe()) candidates.add(w.room());
+        FloorState fs = g.floor(f.area, f.floor);
+        if (eligible(fs, w.room())) candidates.add(w.room());
         for (Room.Door d : w.room().doors) {
             Room o = f.room(d.toRoom);
-            if (o != null && !o.type.safe()) candidates.add(o);
+            if (o != null && eligible(fs, o)) candidates.add(o);
         }
         BlockPos best = null;
         double bestScore = Double.MAX_VALUE;
         for (Room r : candidates) {
             for (BlockPos p : Rooms.spots(level, g, f, r)) {
+                if (r.type == Room.Type.CAVERN) {
+                    Where at = Where.at(level.getServer(), p);
+                    if (at == null || at.room() == null) continue;
+                    int zone = (at.x() >> 4) - r.gx + ((at.z() >> 4) - r.gz) * r.gw;
+                    int key = Rooms.cavernKey(r, zone);
+                    if (!fs.triggered.contains(key) || fs.clearedRooms.contains(key)) continue;
+                }
                 double d = Math.sqrt(p.distSqr(target.blockPosition()));
                 if (d < minDist) continue;
                 double score = Math.abs(d - minDist - 2) + level.getRandom().nextDouble() * 3;

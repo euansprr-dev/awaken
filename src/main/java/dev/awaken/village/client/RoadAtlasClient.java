@@ -10,9 +10,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * The roads and settlements on the client's Atlas (SPEC §28.9): the stretches of road this player has walked, drawn as
- * lines on the land they know (a highroad wider and paler than a lane), and the settlements they've found, marked and
- * named in their kind's colour.
+ * The roads and settlements on the client's Atlas (SPEC §28.9): the stretches of road this player has walked (kept, no
+ * longer drawn) and the settlements they've found, marked and named in their kind's colour.
  */
 public final class RoadAtlasClient {
     private RoadAtlasClient() {}
@@ -30,15 +29,7 @@ public final class RoadAtlasClient {
     }
 
     static void init() {
-        MapMarks.registerLines(p -> {
-            List<MapMarks.Line> out = new ArrayList<>(WALKED.size());
-            for (RoadAtlas.Walked w : WALKED) {
-                int[] xz = new int[w.xz().size()];
-                for (int i = 0; i < xz.length; i++) xz[i] = w.xz().get(i);
-                out.add(new MapMarks.Line(xz, w.cls() == 0 ? 0xE8D2A6 : 0xC9AE80, w.cls() == 0 ? 2 : 1));
-            }
-            return out;
-        });
+        // the walked roads are kept but no longer drawn as lines on the map (Euan 2026-10-29: take the trail off the map)
         MapMarks.register(p -> {
             List<MapMarks.Mark> out = new ArrayList<>(FOUND.size());
             for (RoadAtlas.Found f : FOUND) out.add(new MapMarks.Mark(new BlockPos(f.x(), 64, f.z()), colour(f.kind()), label(f), true));

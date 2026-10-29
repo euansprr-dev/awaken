@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "theme": "fungal_hollow",
+  "name": "The Spore Canopy",
+  "line": "A forest of mushrooms forty blocks tall, and all of it underground.",
+  "tier": "deep",
+  "rarity": "uncommon",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "tower": 45,
+    "roof": 14
+  },
+  "biome": "awaken:gate_world/spore_canopy",
+  "moods": [
+    {
+      "id": "quiet",
+      "name": "Quiet",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "bloom",
+      "name": "Bloom",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/spore_canopy_bloom",
+      "life": [
+        "spores",
+        "moths"
+      ]
+    },
+    {
+      "id": "drought",
+      "name": "Drought",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/spore_canopy_drought",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "migration",
+      "name": "Migration",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/spore_canopy_migration",
+      "life": [
+        "moths",
+        "fireflies"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:fungal_rock",
+    "wall_glow": "awaken:fungal_rock_veined",
+    "floor": "awaken:fungal_loam",
+    "floor_glow": "awaken:fungal_moss",
+    "trim": "awaken:fungal_rock_veined",
+    "stem": "awaken:glowcap_stem",
+    "cap": "awaken:glowcap_cap",
+    "gills": "awaken:glowcap_gills",
+    "roots": "awaken:lumen_roots",
+    "sprouts": "awaken:glowcap_sprouts",
+    "threads": "awaken:mycelium_threads",
+    "fall": "awaken:fungal_glowfall",
+    "touch": "awaken:spore_puffball",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "giant_glowcaps"
+  ],
+  "life": [
+    "spores",
+    "drips",
+    "mist",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.hollow_glow",
+  "events": [
+    "spore_burst",
+    "the_wakening"
+  ],
+  "rule": "spores",
+  "secrets": [
+    {
+      "id": "old_puffball",
+      "name": "The old puffball"
+    },
+    {
+      "id": "hollow_stem",
+      "name": "The hollow stem"
+    }
+  ],
+  "keepsake": "glowcap_slice",
+  "keepsake_name": "A Slice of the Giant Glowcap",
+  "keepsake_from": "hollow_stem"
+}

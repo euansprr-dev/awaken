@@ -111,6 +111,9 @@ final class SettlementTests {
         Settlement before = Citizens.swapCarillon(city);
         Crowd pool = city.crowd;
         int capPlayer = pool.capPlayer, capWorld = pool.capWorld;
+        // the pool's caps and nearness are measured here, not who sees whom arrive (citizens_arrivals_unseen) or the
+        // ground they arrive on (the flat test world under Carillon's plan)
+        pool.rules = false;
         AwakenTests.Live[] player = {AwakenTests.survivalPlayer(h, "w0-a", BlockPos.ZERO.above(2))};
         // the shared test world keeps every earlier test's players: only this test's own decide here
         Citizens.onlyPlayers = List.of(player[0].player());
@@ -135,6 +138,7 @@ final class SettlementTests {
                 Citizens.onlyPlayers = null;
                 pool.capPlayer = capPlayer;
                 pool.capWorld = capWorld;
+                pool.rules = true;
                 if (player[0] != null) player[0].leave();
                 if (hamlet[0] != null) Settlements.unregister(hamlet[0].id);
                 Citizens.swapCarillon(before);
@@ -148,6 +152,15 @@ final class SettlementTests {
 
     private static void step(GameTestHelper h, ServerLevel level, BlockPos origin, long el, Settlement city, Crowd pool, Settlement[] hamlet,
                              AwakenTests.Live[] player, List<String> problems, String[] cost, long[] hamletLedger) {
+        // nothing stands under the plans' streets here (on CI the test world's grass is 65 blocks down), and with the
+        // rules off a body comes in on the street all the same: it fell, the pool judged it by where it lay (some 30
+        // further off than its person), cut it and gave its person a new body every pass, and the one-pass nearness
+        // check caught that churn. Held at the level it came in at, a body stays where its person is, as on real streets.
+        for (CitizenBody b : pool.bodies) {
+            if (b.isNoGravity()) continue;
+            b.setNoGravity(true);
+            b.setDeltaMovement(b.getDeltaMovement().multiply(1, 0, 1));
+        }
         if (el == 300) pool.stats.startWindow("carillon");
         if (el == 900) {
             cost[0] = pool.stats.endWindow();

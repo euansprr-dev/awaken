@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/mine_timber"
+    },
+    "axis=z": {
+      "model": "awaken:block/mine_timber",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "awaken:block/mine_timber",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

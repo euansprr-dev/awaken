@@ -61,7 +61,8 @@ def main(out):
         problems.append("no client log: the tour never started (see the Tour step)")
     elif "WATCHDOG" in text:
         problems.append(f"stopped by the watchdog after {os.environ.get('TOUR_TIMEOUT', '?')} s: the script needs a final"
-                        " quit, or a longer timeout")
+                        " quit, or a longer timeout"
+                        + ("; the game's thread dumps are at the end of tour.log" if "WATCHDOG thread dump" in text else ""))
     elif exit_code is None:
         problems.append("Gradle never finished")
     elif exit_code != 0:

@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "theme": "precursor_lab",
+  "name": "The Simulation",
+  "line": "A world drawn in glowing lines. Wherever you look, it fills itself in.",
+  "tier": "wonder",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "roof": 14,
+    "wobble": 1.0
+  },
+  "biome": "awaken:gate_world/simulation",
+  "moods": [
+    {
+      "id": "running",
+      "name": "Running",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "lockdown",
+      "name": "Lockdown",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/simulation_lockdown",
+      "life": [
+        "steam"
+      ]
+    },
+    {
+      "id": "breach",
+      "name": "Breach",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/simulation_breach",
+      "life": [
+        "mist",
+        "drips"
+      ]
+    },
+    {
+      "id": "reboot",
+      "name": "Reboot",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/simulation_reboot",
+      "life": [
+        "dust"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:lab_panel",
+    "wall_glow": "awaken:lab_panel_lit",
+    "floor": "awaken:lab_floor",
+    "trim": "awaken:lab_frame",
+    "frame": "awaken:lab_frame",
+    "glass": "awaken:lab_glass",
+    "rack": "awaken:lab_rack",
+    "tank": "awaken:lab_tank",
+    "cables": "awaken:lab_cables",
+    "lamp": "awaken:lab_light",
+    "holo": "awaken:lab_hologram",
+    "moss": "awaken:lab_moss",
+    "sketch": "awaken:lab_sketch",
+    "touch": "awaken:lab_console",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "sketch_world"
+  ],
+  "life": [
+    "dust",
+    "steam"
+  ],
+  "sound": "awaken:gate.world.lab_sim",
+  "events": [
+    "lockdown",
+    "the_crash"
+  ],
+  "rule": "power",
+  "secrets": [
+    {
+      "id": "the_first_login",
+      "name": "The first login"
+    },
+    {
+      "id": "the_unfinished",
+      "name": "The unfinished corner"
+    },
+    {
+      "id": "the_crash",
+      "name": "The crash"
+    }
+  ],
+  "keepsake": "glitch_shard",
+  "keepsake_name": "A Piece of the Glitch",
+  "keepsake_from": "the_glitch",
+  "signature": "the_glitch"
+}

@@ -1,0 +1,9 @@
+{
+  "text": "There are tracks here. Crouch over them for a moment to read what passed this way.",
+  "priority": 35,
+  "show_for": 160,
+  "retire_after_done": 1,
+  "retire_after_shown": 3,
+  "cooldown": 2400,
+  "awake": "after"
+}

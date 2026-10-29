@@ -91,6 +91,7 @@ final class FxRecipes {
             case METEOR -> meteor(e, st, mine);
             case LIFT -> lift(e, st);
             case ULT -> ultBeat(e, st, mc);
+            case EVOLVE -> evolve(e, st, caster);
             case FLASH -> {
                 if (mine) FxScreen.flash(st.mid, e.scale(), 6);
             }
@@ -104,6 +105,7 @@ final class FxRecipes {
     private static void sound(FxEvent e, ClientLevel level) {
         net.minecraft.sounds.SoundEvent ev = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.byId(e.colour());
         if (ev != null) level.playLocalSound(e.x(), e.y(), e.z(), ev, net.minecraft.sounds.SoundSource.PLAYERS, e.scale(), e.aux(), false);
+        LadderFx.tierSound(e, level);
     }
 
     /** Where a caster's beams and orbs start: their palm, or the core for a profile that opens the chest. */
@@ -333,7 +335,7 @@ final class FxRecipes {
             halo.flags |= Shape.PULSE;
             halo.fadeOut = 3;
         }
-        Shape core = attach(disc(0, 0, 0, st == FxStyle.KINETIC ? FLARE : GLOW, 0.1f * sc, 0.45f * sc, life, st.core, 0xFFFFFFFF), caster, origin);
+        Shape core = attach(disc(0, 0, 0, st.plain() == FxStyle.KINETIC ? FLARE : GLOW, 0.1f * sc, 0.45f * sc, life, st.core, 0xFFFFFFFF), caster, origin);
         if (core != null) {
             core.emitter = E_CHARGE;
             core.emitParam = -1; // the core emits nothing
@@ -379,7 +381,7 @@ final class FxRecipes {
         sparks(x, y, z, n((int) (9 * s)), 0.32f * s, st, 6, 0.01f, bx, by, bz, 0.8f);
         // a ring of force punched out along the hit
         if (dl > 1e-3) ring(x, y, z, 0.15f * s, 1.3f * s, 0.25f * s, 0.05f, 9, alpha(st.mid, 0.95f), alpha(st.edge, 0), (float) bx, (float) by, (float) bz);
-        switch (st) {
+        switch (st.plain()) {
             case KINETIC -> {
                 smokePuffs(x, y, z, n((int) (4 * s)), 0.3f, 0.5f * s, st, 0.05f, 14);
                 ring(x, y, z, 0.2f * s, 1.8f * s, 0.4f * s, 0.08f, 6, alpha(st.mid, 0.9f), alpha(st.edge, 0), (float) bx, (float) by, (float) bz);
@@ -645,12 +647,12 @@ final class FxRecipes {
         ring(x, y + 0.08, z, 0.3f, r - 0.3f, 0.9f, 0.3f, 14, alpha(st.mid, 1f), alpha(st.edge, 0.5f), 0, 1, 0);
         ring(x, y + 0.06, z, 0.5f, r - 0.1f, 0.5f, 0.1f, 15, alpha(st.mid, 0.6f), alpha(st.edge, 0), 0, 1, 0);
         decal(x, y, z, CRACK, r * 1.1f, 0xD82A2420, 90);
-        if (st == FxStyle.GRAVITY) decal(x, y, z, SCORCH, r * 0.8f, 0xC0201830, 70);
+        if (st.plain() == FxStyle.GRAVITY) decal(x, y, z, SCORCH, r * 0.8f, 0xC0201830, 70);
         debris(x, y, z, r * 0.4f, n((int) (14 * big)), 0.48f, 0.22f);
         debris(x, y, z, r * 0.25f, n((int) (4 * big)), 0.62f, 0.12f);
         dustRing(x, y, z, r * 0.8f, n((int) (16 * big)), st, 0.09f);
         sparks(x, y + 0.2, z, n(10), 0.45f, st, 7, 0.02f, 0, 0.4, 0, 0.3f);
-        if (st == FxStyle.HEAT || e.variant() == 1 && st == FxStyle.GRAVITY) embers(x, y + 0.3, z, n(14), r * 0.5f, FxStyle.HEAT, 0.004f);
+        if (st.plain() == FxStyle.HEAT || e.variant() == 1 && st.plain() == FxStyle.GRAVITY) embers(x, y + 0.3, z, n(14), r * 0.5f, FxStyle.HEAT, 0.004f);
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null && !e.has(FxEvent.QUIET)) {
             double d = mc.player.position().distanceTo(new net.minecraft.world.phys.Vec3(x, y, z));
@@ -724,8 +726,8 @@ final class FxRecipes {
         sphereBurst(x, y, z, 0.2f, r * 0.55f, 7, st);
         ring(x, FxWorld.groundY(x, y, z) + 0.08, z, 0.4f, r - 0.4f, 0.8f, 0.35f, 18, alpha(st.mid, 1f), alpha(st.edge, 0.2f), 0, 1, 0);
         sparks(x, y, z, n((int) (22 * big)), 0.6f, st, 8, 0, 0, 0, 0, 0);
-        if (st == FxStyle.HEAT || st == FxStyle.ENERGY) embers(x, y, z, n((int) (14 * big)), r * 0.4f, FxStyle.HEAT, 0.003f);
-        if (st == FxStyle.GRAVITY) dustRing(x, FxWorld.groundY(x, y, z), z, r * 0.6f, n(12), st, -0.08f);
+        if (st.plain() == FxStyle.HEAT || st.plain() == FxStyle.ENERGY) embers(x, y, z, n((int) (14 * big)), r * 0.4f, FxStyle.HEAT, 0.003f);
+        if (st.plain() == FxStyle.GRAVITY) dustRing(x, FxWorld.groundY(x, y, z), z, r * 0.6f, n(12), st, -0.08f);
         if (e.has(FxEvent.ULT)) {
             glyphAt(x, FxWorld.groundY(x, y, z), z, r * 0.8f, st, 40, 0.04f);
             for (int i = 0; i < n(6); i++) {
@@ -831,7 +833,7 @@ final class FxRecipes {
         b.fadeOut = 2;
         b.emitter = E_BEAM;
         b.range = e.scale();
-        if (st == FxStyle.CHARGE) b.flags |= Shape.FLICKER;
+        if (st.plain() == FxStyle.CHARGE) b.flags |= Shape.FLICKER;
         if (caster != null) {
             attach(b, caster, originAnchor(caster));
             if (mine && follow) {
@@ -858,7 +860,7 @@ final class FxRecipes {
             s.c1 = 0xFFFFFFFF;
             s.fadeIn = 0;
             s.fadeOut = 3;
-            if (st == FxStyle.CHARGE) s.flags |= Shape.FLICKER;
+            if (st.plain() == FxStyle.CHARGE) s.flags |= Shape.FLICKER;
         }
         FxWorld.sprite(HALO, bx, by, bz, 0, 0, 0, 4, 1.8f * Math.max(0.6f, e.scale()), 0.6f, alpha(c, 1f), alpha(c, 0), FxPool.ADD);
         if (R.chance(0.5f)) {
@@ -945,23 +947,23 @@ final class FxRecipes {
                 Shape t = attach(FxWorld.shape(Shape.TRAIL, life + 8), caster, anchor);
                 if (t != null) {
                     t.a = anchor == Anchors.BODY ? 0.28f : 0.14f;
-                    t.c0 = alpha(st == FxStyle.KINETIC ? st.mid : st.core, 0.85f);
+                    t.c0 = alpha(st.plain() == FxStyle.KINETIC ? st.mid : st.core, 0.85f);
                     t.c1 = alpha(st.mid, 0);
                     t.fadeOut = 6;
                     t.pushHistory(t.x, t.y, t.z);
                 }
             }
-            if (st != FxStyle.KINETIC) {
+            if (st.plain() != FxStyle.KINETIC) {
                 FxAfterimages.capture(caster, 12, st.mid, 0);
                 Shape g = emitter(e, E_GHOSTS, life, caster, Anchors.FEET);
                 if (g != null) g.emitParam = 2;
             }
-            if (st == FxStyle.HEAT) {
+            if (st.plain() == FxStyle.HEAT) {
                 Shape f = emitter(e, E_TRAIL, life, caster, Anchors.FEET);
                 if (f != null) f.emitParam = 1;
             }
         }
-        if (caster != null && caster.onGround()) dustRing(x, y, z, 0.5f, n(st == FxStyle.KINETIC ? 10 : 4), st, 0.06f);
+        if (caster != null && caster.onGround()) dustRing(x, y, z, 0.5f, n(st.plain() == FxStyle.KINETIC ? 10 : 4), st, 0.06f);
         if (mine) {
             FxScreen.fovPunch(0.07f, 7);
             FxScreen.speedLines(7);
@@ -971,7 +973,7 @@ final class FxRecipes {
     private static void blink(FxEvent e, FxStyle st, Entity caster, boolean mine) {
         double ax = e.x(), ay = e.y(), az = e.z();
         double bx = ax + e.dx(), by = ay + e.dy(), bz = az + e.dz();
-        switch (st) {
+        switch (st.plain()) {
             case SHADOW -> {
                 smokePuffs(ax, ay + 1, az, n(12), 0.4f, 0.7f, st, 0.04f, 18);
                 smokePuffs(bx, by + 1, bz, n(10), 0.35f, 0.6f, st, 0.03f, 16);
@@ -1015,9 +1017,9 @@ final class FxRecipes {
                     s.c1 = st.core;
                     s.fadeIn = 0;
                     s.fadeOut = 5;
-                    if (st == FxStyle.CHARGE) s.flags |= Shape.FLICKER;
+                    if (st.plain() == FxStyle.CHARGE) s.flags |= Shape.FLICKER;
                 }
-                if (st == FxStyle.CHARGE) arc(ax, ay + 1, az, bx, by + 1, bz, st, 6, 0.06f);
+                if (st.plain() == FxStyle.CHARGE) arc(ax, ay + 1, az, bx, by + 1, bz, st, 6, 0.06f);
                 flare(ax, ay + 1, az, 1.2f, st, 4);
                 flare(bx, by + 1, bz, 1.4f, st, 5);
                 sparks(bx, by + 1, bz, n(10), 0.3f, st, 6, 0.01f, 0, 0, 0, 0);
@@ -1059,14 +1061,14 @@ final class FxRecipes {
         for (int anchor : anchors) {
             Shape t = attach(FxWorld.shape(Shape.TRAIL, life), caster, anchor);
             if (t == null) continue;
-            t.a = st == FxStyle.FLIGHT ? 0.12f : 0.18f;
-            t.c0 = alpha(st == FxStyle.FLIGHT ? st.core : st.mid, 0.8f);
+            t.a = st.plain() == FxStyle.FLIGHT ? 0.12f : 0.18f;
+            t.c0 = alpha(st.plain() == FxStyle.FLIGHT ? st.core : st.mid, 0.8f);
             t.c1 = alpha(st.edge, 0);
             t.fadeOut = 8;
             t.pushHistory(t.x, t.y, t.z);
         }
         Shape fx = emitter(e, E_TRAIL, life, caster, Anchors.FEET);
-        if (fx != null) fx.emitParam = st == FxStyle.HEAT ? 1 : st == FxStyle.FLIGHT ? 2 : 0;
+        if (fx != null) fx.emitParam = st.plain() == FxStyle.HEAT ? 1 : st.plain() == FxStyle.FLIGHT ? 2 : 0;
     }
 
     private static void afterimage(FxEvent e, FxStyle st, Entity caster) {
@@ -1080,7 +1082,7 @@ final class FxRecipes {
     private static void smoke(FxEvent e, FxStyle st, float big) {
         float s = Math.max(0.5f, e.scale()) * big;
         smokePuffs(e.x(), e.y() + 0.6, e.z(), n((int) (12 * s)), 0.5f * s, 0.7f * s, st, 0.05f, 20);
-        if (st == FxStyle.SHADOW) {
+        if (st.plain() == FxStyle.SHADOW) {
             tendrils(e.x(), e.y(), e.z(), n(5), st);
             decal(e.x(), FxWorld.groundY(e.x(), e.y() + 0.5, e.z()), e.z(), POOL, 2.4f * s, 0xD8100C1C, 50);
         }
@@ -1099,7 +1101,7 @@ final class FxRecipes {
             d.a = r * 0.2f;
             d.b = r;
             d.c = 2.4f;
-            d.d = st == FxStyle.ARCHITECT ? 0.14f : 0.05f;
+            d.d = st.plain() == FxStyle.ARCHITECT ? 0.14f : 0.05f;
             d.c0 = alpha(col(e), 0.85f);
             d.c1 = alpha(col(e), 0.85f);
             d.flags |= Shape.HOLD | Shape.PULSE | (ground ? Shape.HEMI : 0);
@@ -1112,7 +1114,7 @@ final class FxRecipes {
         }
         double gy = ground ? e.y() : FxWorld.groundY(e.x(), e.y(), e.z());
         ring(e.x(), gy + 0.08, e.z(), 0.3f, r * 1.05f, 0.6f, 0.15f, 10, alpha(st.core, 0.9f), alpha(st.mid, 0), 0, 1, 0);
-        if (st == FxStyle.ENERGY && caster != null) {
+        if (st.plain() == FxStyle.ENERGY && caster != null) {
             Shape sh = attach(FxWorld.shape(Shape.SHELL, life), caster, Anchors.BODY);
             if (sh != null) {
                 sh.sprite = HEX.index();
@@ -1123,7 +1125,7 @@ final class FxRecipes {
                 sh.fadeOut = 6;
             }
         }
-        if (st == FxStyle.ARCHITECT || st == FxStyle.SPIRIT) glyphAt(e.x(), gy, e.z(), r * 0.9f, st, Math.min(life, 60), 0.02f);
+        if (st.plain() == FxStyle.ARCHITECT || st.plain() == FxStyle.SPIRIT) glyphAt(e.x(), gy, e.z(), r * 0.9f, st, Math.min(life, 60), 0.02f);
     }
 
     private static void vortex(FxEvent e, FxStyle st, float big) {
@@ -1325,7 +1327,7 @@ final class FxRecipes {
         g.b = radius;
         g.c = spin;
         g.c0 = alpha(st.mid, 0.9f);
-        g.c1 = alpha(st == FxStyle.ARCHITECT ? st.accent : st.mid, 0.7f);
+        g.c1 = alpha(st.plain() == FxStyle.ARCHITECT ? st.accent : st.mid, 0.7f);
         g.fadeIn = 3;
         g.fadeOut = Math.max(4, life / 4);
     }
@@ -1542,7 +1544,7 @@ final class FxRecipes {
         Shape t = attach(FxWorld.shape(Shape.TRAIL, life), caster, Anchors.BODY);
         if (t != null) {
             t.a = 0.55f;
-            t.c0 = alpha(st == FxStyle.HEAT ? FxStyle.HEAT.core : st.core, 0.9f);
+            t.c0 = alpha(st.plain() == FxStyle.HEAT ? FxStyle.HEAT.core : st.core, 0.9f);
             t.c1 = alpha(st.mid, 0);
             t.fadeOut = 6;
             t.pushHistory(t.x, t.y, t.z);
@@ -1597,17 +1599,17 @@ final class FxRecipes {
                     double r = 1.1 + R.f(0, 0.4f);
                     double px = s.x + vx / l * r, py = s.y + vy / l * r, pz = s.z + vz / l * r;
                     int life = 6;
-                    PowerFxParticles.Sprite sp = st == FxStyle.CHARGE ? BOLT : st == FxStyle.TECH ? MOTE : SPARK;
+                    PowerFxParticles.Sprite sp = st.plain() == FxStyle.CHARGE ? BOLT : st.plain() == FxStyle.TECH ? MOTE : SPARK;
                     int p = FxWorld.sprite(sp, px, py, pz, (s.x - px) / life, (s.y - py) / life, (s.z - pz) / life, life, 0.16f, 0.06f, alpha(st.mid, 0.4f),
                             st.core, FxPool.ADD | (sp == SPARK ? FxPool.STRETCH : 0));
                     FxWorld.drag(p, 1f);
                 }
-                if (st == FxStyle.KINETIC && s.age % 3 == 0) {
+                if (st.plain() == FxStyle.KINETIC && s.age % 3 == 0) {
                     int p = FxWorld.sprite(DUST, s.x, s.y - 0.2, s.z, R.s() * 0.02, -0.02, R.s() * 0.02, 12, 0.3f, 0.7f, 0x90B6AC93, 0x00B6AC93,
                             FxPool.LIT | FxPool.ANIM);
                     FxWorld.drag(p, 0.9f);
                 }
-                if (st == FxStyle.CHARGE && s.age % 3 == 0) {
+                if (st.plain() == FxStyle.CHARGE && s.age % 3 == 0) {
                     arc(s.x, s.y, s.z, s.x + R.s() * 0.9, s.y + R.s() * 0.9, s.z + R.s() * 0.9, st, 2, 0.025f);
                 }
                 if (s.age > 18 && s.age % 6 == 0) {
@@ -1620,9 +1622,9 @@ final class FxRecipes {
                 double ex = s.ex, ey = s.ey, ez = s.ez;
                 int k = n(2);
                 for (int i = 0; i < k; i++) {
-                    int p = FxWorld.sprite(st == FxStyle.HEAT ? EMBER : SPARK, ex, ey, ez, R.s() * 0.12, R.f(0, 0.15f), R.s() * 0.12, 6 + R.i(6), 0.18f,
-                            0.05f, st.core, alpha(st.mid, 0), FxPool.ADD | (st == FxStyle.HEAT ? FxPool.ANIM : FxPool.STRETCH));
-                    FxWorld.grav(p, st == FxStyle.HEAT ? -0.004f : 0.02f);
+                    int p = FxWorld.sprite(st.plain() == FxStyle.HEAT ? EMBER : SPARK, ex, ey, ez, R.s() * 0.12, R.f(0, 0.15f), R.s() * 0.12, 6 + R.i(6), 0.18f,
+                            0.05f, st.core, alpha(st.mid, 0), FxPool.ADD | (st.plain() == FxStyle.HEAT ? FxPool.ANIM : FxPool.STRETCH));
+                    FxWorld.grav(p, st.plain() == FxStyle.HEAT ? -0.004f : 0.02f);
                 }
                 {
                     // (every other tick) rings riding down the beam: seen from behind the caster (where the beam itself hides behind the
@@ -1650,7 +1652,7 @@ final class FxRecipes {
                     ring(ex, ey, ez, 0.2f, 1.1f, 0.18f, 0.05f, 6, alpha(s.c0, 0.9f), alpha(st.edge, 0), bdx, bdy, bdz);
                     ring(s.x, s.y, s.z, 0.1f, 0.55f, 0.1f, 0.03f, 5, alpha(s.c0, 0.9f), alpha(st.edge, 0), bdx, bdy, bdz);
                 }
-                if (s.age % 10 == 0 && st == FxStyle.HEAT) {
+                if (s.age % 10 == 0 && st.plain() == FxStyle.HEAT) {
                     double gy = FxWorld.groundY(ex, ey + 0.2, ez);
                     if (Math.abs(gy - ey) < 0.4) decal(ex, gy, ez, SCORCH, 0.9f, 0xA0201410, 60);
                     smokePuffs(ex, ey, ez, 1, 0.1f, 0.3f, FxStyle.KINETIC, 0.03f, 14);
@@ -1708,7 +1710,7 @@ final class FxRecipes {
                 if (s.age % 3 == 0) {
                     // motes drifting up inside the dome
                     float a = R.f(0, 6.28f), rr = s.b * R.f(0, 0.9f);
-                    int p = FxWorld.sprite(st == FxStyle.SPIRIT ? WISP : MOTE, s.x + Mth.cos(a) * rr, s.y + R.f(0, 0.5f), s.z + Mth.sin(a) * rr, 0, 0.03, 0,
+                    int p = FxWorld.sprite(st.plain() == FxStyle.SPIRIT ? WISP : MOTE, s.x + Mth.cos(a) * rr, s.y + R.f(0, 0.5f), s.z + Mth.sin(a) * rr, 0, 0.03, 0,
                             20, 0.25f, 0.08f, alpha(st.core, 0.8f), alpha(st.mid, 0), FxPool.ADD | FxPool.ANIM);
                     FxWorld.drag(p, 0.98f);
                 }
@@ -1837,7 +1839,7 @@ final class FxRecipes {
             case E_METEOR -> {
                 int k = n(3);
                 for (int i = 0; i < k; i++) {
-                    int p = FxWorld.sprite(st == FxStyle.HEAT || s.style == FxStyle.GRAVITY ? EMBER : SPARK, s.x + R.s() * 0.4, s.y + R.s() * 0.6, s.z + R.s() * 0.4,
+                    int p = FxWorld.sprite(st.plain() == FxStyle.HEAT || s.style.plain() == FxStyle.GRAVITY ? EMBER : SPARK, s.x + R.s() * 0.4, s.y + R.s() * 0.6, s.z + R.s() * 0.4,
                             R.s() * 0.05, R.f(0.1f, 0.3f), R.s() * 0.05, 8 + R.i(4), 0.25f, 0.05f, st.core, alpha(st.mid, 0), FxPool.ADD | FxPool.ANIM);
                     FxWorld.drag(p, 0.9f);
                 }
@@ -1967,5 +1969,106 @@ final class FxRecipes {
                 }
             }
         }
+    }
+
+    // ---- the ladder (SPEC 36.6) ---------------------------------------------------------------------------------------
+
+    /** Each family's mote for its climb: Flight's feathers, Spirit's petals, Architect's plates... */
+    private static final Sprite[] CLIMB = {SHARD, WIND, FEATHER, EMBER, WISP, RUNE, PLATE, HEX, PETAL};
+
+    /**
+     * A power climbed a step: its family's seal opens under the caster, motes of the family spiral up the body and a ring runs
+     * out over the ground. aux 0 is the short sting in a fight; 1 the moment when calm, with a column of light; level 5 adds a
+     * dome, a second ring and the seal drawn twice the size (in the awakened palette, LadderFx.restyle).
+     */
+    private static void evolve(FxEvent e, FxStyle st, @org.jspecify.annotations.Nullable Entity caster) {
+        int level = Fx.levelOf(e);
+        dev.awaken.powers.PowerType type = dev.awaken.powers.PowerRegistry.byIndex(e.power() - 1);
+        int family = type == null ? 0 : type.family.ordinal();
+        boolean full = e.aux() >= 1;
+        boolean top = full && level >= 5;
+        double x = e.x(), y = e.y(), z = e.z();
+        if (caster != null) {
+            x = caster.getX();
+            y = caster.getY();
+            z = caster.getZ();
+        }
+        double gy = FxWorld.groundY(x, y + 0.5, z) + 0.035;
+
+        Shape seal = FxWorld.shape(Shape.SIGIL, full ? (top ? 64 : 46) : 20);
+        if (seal != null) {
+            seal.x = x;
+            seal.y = gy;
+            seal.z = z;
+            seal.sprite = SIGIL.index();
+            seal.frame = family;
+            seal.a = 0.3f;
+            seal.b = full ? (top ? 3.4f : 2.3f) : 1.3f;
+            seal.c = full ? 0.035f : 0.06f;
+            seal.c0 = alpha(st.mid, 0.95f);
+            seal.c1 = alpha(st.core, 0.9f);
+            seal.flags |= Shape.HOLD | Shape.PULSE;
+            seal.fadeIn = 3;
+            seal.fadeOut = full ? 16 : 7;
+            if (caster != null) attach(seal, caster, Anchors.FEET);
+        }
+
+        // the family's motes spiral up the body
+        Sprite mote = CLIMB[Math.min(family, CLIMB.length - 1)];
+        boolean lit = !mote.additive();
+        int count = n(full ? (top ? 34 : 22) : 10);
+        float height = full ? 2.2f : 1.6f;
+        for (int i = 0; i < count; i++) {
+            float t = i / (float) Math.max(1, count - 1);
+            double ang = i * 2.39996 + R.f(-0.2f, 0.2f);
+            double r = 0.75 - 0.35 * t;
+            double px = x + Math.cos(ang) * r, pz = z + Math.sin(ang) * r, py = y + 0.1 + t * height * 0.5;
+            double tx = -Math.sin(ang) * 0.05, tz = Math.cos(ang) * 0.05;
+            int c0 = lit ? 0xFFFFFFFF : FxWorld.mix(st.core, st.mid, 0.35f + 0.3f * t);
+            int c1 = lit ? 0x00FFFFFF : alpha(st.edge, 0);
+            int p = FxWorld.sprite(mote, px, py, pz, tx, R.f(0.05f, 0.09f), tz, 18 + R.i(10) + (full ? 8 : 0), R.f(0.16f, 0.26f), 0.05f, c0, c1,
+                    lit ? FxPool.LIT : FxPool.ADD);
+            FxWorld.drag(p, 0.95f);
+            FxWorld.spin(p, R.f(0, 6.28f), R.f(-0.2f, 0.2f));
+        }
+
+        // a ring runs out over the ground
+        Shape ring = ring(x, gy + 0.02, z, 0.4f, full ? (top ? 6f : 4.2f) : 2.4f, 0.5f, 0.08f, full ? 16 : 10, alpha(st.core, 0.95f),
+                alpha(st.edge, 0), 0, 1, 0);
+        if (ring != null) ring.fadeIn = 0;
+        flare(x, y + 1.1, z, full ? 0.9f : 0.5f, st, full ? 9 : 6);
+        if (!full) return;
+
+        Shape col = FxWorld.shape(Shape.COLUMN, top ? 34 : 26);
+        if (col != null) {
+            col.x = x;
+            col.y = gy;
+            col.z = z;
+            col.a = top ? 10f : 6f;
+            col.b = top ? 0.7f : 0.45f;
+            col.c0 = alpha(st.core, 0.9f);
+            col.c1 = alpha(st.edge, 0.15f);
+            col.fadeIn = 3;
+            col.fadeOut = 16;
+            col.seed = e.seed();
+        }
+        if (!top) return;
+        Shape dome = FxWorld.shape(Shape.SPHERE, 30);
+        if (dome != null) {
+            dome.x = x;
+            dome.y = gy;
+            dome.z = z;
+            dome.a = 0.8f;
+            dome.b = 3.6f;
+            dome.c = 3f;
+            dome.d = 0.08f;
+            dome.c0 = alpha(st.mid, 0.75f);
+            dome.c1 = alpha(st.edge, 0.08f);
+            dome.flags |= Shape.HEMI | Shape.RIM;
+            dome.fadeIn = 2;
+            dome.fadeOut = 14;
+        }
+        Shape late = ring(x, gy + 0.03, z, 0.6f, 7.5f, 0.35f, 0.05f, 18, alpha(st.accent, 0.9f), alpha(st.edge, 0), 0, 1, 0);
+        if (late != null) late.age = -8;
     }
 }

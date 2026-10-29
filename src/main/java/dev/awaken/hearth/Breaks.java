@@ -2,7 +2,6 @@ package dev.awaken.hearth;
 
 import dev.awaken.core.DirectorLog;
 import dev.awaken.core.api.GateHooks;
-import dev.awaken.hearth.echo.Duty;
 import dev.awaken.progression.Counters;
 import dev.awaken.progression.Progression;
 import dev.awaken.signal.Signal;
@@ -67,7 +66,7 @@ public final class Breaks {
                     Signal.send(p, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("A gate broke near your Hearth"))
                             .row(Component.literal("Gate"), Component.literal(rankLabel(g.rank()) + "-rank · " + g.themeName()))
                             .row(Component.literal("Distance"), Component.literal((int) Math.sqrt(g.pos().distSqr(h.pos)) + " blocks"))
-                            .body(Component.literal(Duty.guardCount(h) > 0 ? "The Guards are on their way." : "Hold the line. Guard pads would help."))
+                            .body(Component.literal("Close it before it reaches home."))
                             .priority(6).build());
                 }
             }
@@ -97,7 +96,6 @@ public final class Breaks {
         }
         if (defend != null) ACTIVE.add(h.owner);
         else ACTIVE.remove(h.owner);
-        Duty.defend(level, h, defend);
         if (changed) HearthService.dirty(level.getServer());
     }
 

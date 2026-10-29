@@ -4,6 +4,7 @@ import dev.awaken.arms.Archetype;
 import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.ArmsData;
 import dev.awaken.arms.ArmsItems;
+import dev.awaken.arms.FpSwings;
 import dev.awaken.core.api.BodyMaterial;
 import dev.awaken.powers.client.fx.FxClient;
 import dev.awaken.powers.fx.FxStyle;
@@ -82,7 +83,10 @@ final class ArmsFx {
         if (BladeTrail.ownRibbon(e, !held.isEmpty() && ArmsItems.of(held.getItem()) != null)) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null || e.getId() != mc.player.getId() || !mc.options.getCameraType().isFirstPerson()) {
-                BladeTrail.open(e.getId(), (def.active() + 1) * 50 + 30, argb);
+                // our own off-hand strike seen from outside: the twin lays its own ring (round 14), as in first person
+                boolean twin = mc.player != null && e.getId() == mc.player.getId()
+                        && FpSwings.hand(FpSwings.style(p.style.id()), p.move) == FpSwings.Hand.OFF;
+                BladeTrail.open(e.getId(), twin ? 1 : 0, (def.active() + 1) * 50 + 30, argb, 1F);
             }
             if (def.art().isPresent()) artWave(e, def);
             return;
@@ -137,7 +141,12 @@ final class ArmsFx {
      * The blow's way through the struck body and its weight (CombatFeedback.blow): ahead from the wielder, swept
      * sideways as the swing travels across (a thrust straight in), heavier with the move's damage.
      */
-    static void blow(Entity target, Entity by, Archetype.MoveDef def) {
+    static void blow(Entity target, Entity by, Archetype.MoveDef def, dev.awaken.arms.Blow b) {
+        if (target instanceof LivingEntity && b.cleave() > 0) {
+            // the server's own way for the blow, the one its push took (our creatures' clips play along it)
+            dev.awaken.core.api.CombatFeedback.blow(target.getId(), b.dirX(), b.dirZ(), Mth.clamp(def.motion() / 1.2F, 0.6F, 3F));
+            return;
+        }
         float yaw = by.getYRot() * Mth.DEG_TO_RAD;
         float fx = -Mth.sin(yaw), fz = Mth.cos(yaw), rx = -Mth.cos(yaw), rz = -Mth.sin(yaw);
         float side = 0;
@@ -152,8 +161,8 @@ final class ArmsFx {
     }
 
     /** Where a blade landed, along the line from the wielder. */
-    static void hit(Entity target, Entity by, Archetype.MoveDef def) {
-        blow(target, by, def);
+    static void hit(Entity target, Entity by, Archetype.MoveDef def, dev.awaken.arms.Blow b) {
+        blow(target, by, def, b);
         Vec3 centre = target.getBoundingBox().getCenter();
         Vec3 dir = centre.subtract(by.getEyePosition());
         dir = dir.lengthSqr() < 1e-6 ? Vec3.ZERO : dir.normalize();

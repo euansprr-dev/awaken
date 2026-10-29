@@ -44,7 +44,7 @@ final class RitualHallTests {
             h.assertTrue(hall.gw == 3 && hall.gh == 3 && hall.height == PiecesRitual.VAULT_H, "the hall keeps an arena's slots (3x3) under the band");
             h.assertTrue(f.criticalPath().size() == 2 && start.doorTo(hall.id) != null, "the antechamber opens straight into the hall");
             h.assertTrue(start.feature(Room.FeatureKind.ENTRANCE) != null && hall.features.isEmpty(), "an entrance sigil, and no Lord's spot in the hall");
-            h.assertTrue(f.baseY + PiecesRitual.VAULT_H < Cells.floorY(1) + Cells.BAND_ABOVE, "the vault stays inside the floor's band");
+            h.assertTrue(f.baseY + PiecesRitual.VAULT_H <= f.yHi, "the vault stays inside the floor's band");
             Map<Long, BlockState> b = InteriorTests.paintFloor(l, f, 21);
             int floor = f.baseY;
             // the Seated One: seated 22 blocks, its raised hand at most 24 above the dais, inside |u| <= 6.5 and w 33..40

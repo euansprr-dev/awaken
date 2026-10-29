@@ -12,9 +12,11 @@ import org.jspecify.annotations.Nullable;
  * @param target entity id of the target, or -1
  * @param colour ARGB override; 0 = the style's own colours
  * @param flags  low 16 bits: {@link #ULT}, {@link #FOLLOW}, ...; high 16 bits: the caster's {@link CastAnim}
+ * @param power  the power that sent it ({@code PowerRegistry} index + 1, 0 none): the client draws that power's ladder looks
+ *               at the level in the flags (SPEC 36.4)
  */
 public record FxEvent(FxKind kind, FxStyle style, int caster, int target, double x, double y, double z,
-                      float dx, float dy, float dz, int colour, float scale, float aux, int seed, int ticks, int flags) {
+                      float dx, float dy, float dz, int colour, float scale, float aux, int seed, int ticks, int flags, int power) {
 
     /** An ultimate: bigger, longer, with a screen beat. */
     public static final int ULT = 1;
@@ -33,6 +35,8 @@ public record FxEvent(FxKind kind, FxStyle style, int caster, int target, double
     public static final int REACH = 128;
     /** Variant index (0-3) in bits 5-6, for recipes with per-variant looks. */
     public static final int VARIANT_SHIFT = 5;
+    /** (Bits 8-10 are the power's level, {@code Fx.LEVEL_SHIFT}.) A ladder rider's side effect: in the power's palette, without its look layers. */
+    public static final int RIDER = 1 << 11;
 
     public Vec3 pos() {
         return new Vec3(x, y, z);
@@ -78,7 +82,7 @@ public record FxEvent(FxKind kind, FxStyle style, int caster, int target, double
         private final FxKind kind;
         private FxStyle style;
         private final double x, y, z;
-        private int caster = -1, target = -1, colour, seed, ticks, flags;
+        private int caster = -1, target = -1, colour, seed, ticks, flags, power;
         private float dx, dy, dz, scale = 1, aux;
 
         Builder(FxKind kind, FxStyle style, Vec3 at) {
@@ -154,6 +158,23 @@ public record FxEvent(FxKind kind, FxStyle style, int caster, int target, double
             return this;
         }
 
+        public Builder unflag(int f) {
+            this.flags &= ~f;
+            return this;
+        }
+
+        /** The power that sent the event (registry index + 1; 0 none). */
+        public Builder power(int p) {
+            this.power = Math.max(0, p);
+            return this;
+        }
+
+        /** No pose, no profile beat: a ladder rider's effect must never restart a cast animation. */
+        public Builder clearPose() {
+            this.flags &= 0xFFFF;
+            return this;
+        }
+
         public Builder variant(int v) {
             this.flags = (flags & ~(3 << VARIANT_SHIFT)) | ((Math.max(0, Math.min(3, v)) & 3) << VARIANT_SHIFT);
             return this;
@@ -171,7 +192,7 @@ public record FxEvent(FxKind kind, FxStyle style, int caster, int target, double
         }
 
         public FxEvent build() {
-            return new FxEvent(kind, style, caster, target, x, y, z, dx, dy, dz, colour, scale, aux, seed, ticks, flags);
+            return new FxEvent(kind, style, caster, target, x, y, z, dx, dy, dz, colour, scale, aux, seed, ticks, flags, power);
         }
     }
 }

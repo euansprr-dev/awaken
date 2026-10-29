@@ -141,8 +141,8 @@ final class OpeningRegistry {
                 if (age == 10) say(p, at, w, "The band keeps track of everything about you: what you can do, what you've done, and what you've earned.");
                 if (age == 140) say(p, at, w, "You get better at whatever you practise. The more you run, the faster you get. The more you fight, the harder you hit.");
                 if (age == 280) say(p, at, w, "Gates are how hunters get stronger. Every floor you clear makes you tougher, and once you've cleared enough, the Lens raises your rank.");
-                // where new hunters go first: Ilse's camp, whose Ember founds a Hearth (SPEC §28, W1)
-                if (age == 430) say(p, at, w, "The bells keep the city safe, but outside the walls it's up to hunters. Ilse runs a camp up the north road, and she looks after new hunters.");
+                // where new hunters go first: Ilse at the Last Fire, whose coal founds a Hearth (SPEC §28 W1, §43.1)
+                if (age == 430) say(p, at, w, "The bells keep the city safe. Outside the walls it's up to hunters. Ilse keeps the last fire up the north road, and she looks after new hunters.");
                 if (age >= BRIEF_TICKS) step(p, OPEN);
             }
             case OPEN -> {
@@ -182,9 +182,9 @@ final class OpeningRegistry {
                 if (age >= DIRECTIVE_TICKS) step(p, LETTERS);
             }
             case LETTERS -> {
-                // what a hunter is for, and where to go first: Ilse's camp, with letters he hands you like the band
+                // what a hunter is for, and where to go first: the Last Fire, with letters he hands you like the band
                 if (age == 10) say(p, at, w, "Oh, and one more thing. As a hunter, your job is to protect the city from whatever is out in the wilds, beyond the walls.");
-                if (age == LETTERS_OUT) say(p, at, w, "Ilse runs a camp for new hunters up the north road. Take these letters to her, and she'll explain the rest.");
+                if (age == LETTERS_OUT) say(p, at, w, "Ilse keeps the last fire up the north road. Past it, it's only hunters. Take these letters to her, and she'll explain the rest.");
                 if (lead) toDesk(p, at, w, age >= LETTERS_OUT ? "serve" : "hands_behind", age >= LETTERS_OUT ? "letters" : "");
                 if (w.ready || !client && age > LETTERS_OUT + 20 || age > LETTERS_OUT + SCREEN_MAX) {
                     giveLetters(p);

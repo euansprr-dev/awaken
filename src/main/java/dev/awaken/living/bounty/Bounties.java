@@ -3,10 +3,12 @@ package dev.awaken.living.bounty;
 import dev.awaken.Awaken;
 import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.CoreApi;
+import dev.awaken.core.api.NoticeEvents;
 import dev.awaken.living.LivingContent;
 import dev.awaken.living.quest.QuestEngine;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.Requirements;
+import dev.awaken.progression.RewardWords;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -127,7 +129,15 @@ public final class Bounties {
     }
 
     static String reward(BountyDef d) {
-        return "Pays " + Math.round(d.levels() * 100) + "% of a level" + (d.essence() > 0 ? " and " + d.essence() + " essence." : ".");
+        return "Pays " + pay(d) + ".";
+    }
+
+    /** What Hale pays, as you'd say it: "a quarter of a level's worth of XP and 30 essence". */
+    static String pay(BountyDef d) {
+        List<String> parts = new ArrayList<>();
+        if (d.levels() > 0) parts.add(RewardWords.levelsWorth(d.levels()));
+        if (d.essence() > 0) parts.add(d.essence() + " essence");
+        return parts.isEmpty() ? "his thanks" : RewardWords.and(parts);
     }
 
     /** The choice card: take the notice, or put it at the back of the board. */
@@ -143,7 +153,7 @@ public final class Bounties {
         if (accepted) {
             s.taken.add(new BountyState.Taken(id, 0));
             BountyDef d = defs.get(id);
-            if (d != null) Signal.toast(p, Component.literal("Bounty taken · " + d.title()));
+            if (d != null) notice(p, "taken/" + id + "/" + s.done, d, "Bounty taken", task(d) + ". " + reward(d), NoticeEvents.Kind.TASK);
         } else {
             s.offered.add(id);
         }
@@ -173,7 +183,19 @@ public final class Bounties {
         s.done++;
         Progression.count(p, "awaken:bounties_done");
         QuestEngine.sayLine(p, "Hale: " + (s.done == 1 ? "First one. Not bad. The board likes you now." : "Good. Here."));
-        Signal.toast(p, Component.literal("Bounty done · " + d.title()));
+        notice(p, "paid/" + t.id() + "/" + s.done, d, "Bounty completed", "Hale paid you " + pay(d) + ".", NoticeEvents.Kind.REWARD);
+    }
+
+    private static void notice(ServerPlayer p, String id, BountyDef d, String category, String summary, NoticeEvents.Kind kind) {
+        List<String> details = new ArrayList<>();
+        if (!d.text().isBlank()) details.add(d.text());
+        String how = task(d) + ". " + reward(d);
+        if (!how.equals(summary)) details.add(how);
+        if (d.objective().type().equals("collect")) details.add(d.keep()
+                ? "Hale only needs to see it; you keep it."
+                : "Hale takes the items when you hand them in.");
+        details.add("Hale pays when you hand it in, and only once each time you finish it.");
+        NoticeEvents.tell(p, new NoticeEvents.Event("bounty/" + id, category, d.title(), summary, details, kind, 0x7FC3FF));
     }
 
     // ---- progress -----------------------------------------------------------------------------------------------------
@@ -190,7 +212,7 @@ public final class Bounties {
             if (d == null || !d.objective().type().equals("kill") || !matches(d.objective().target(), type)) continue;
             if (t.progress() >= d.objective().count()) continue;
             s.taken.set(i, new BountyState.Taken(t.id(), t.progress() + 1));
-            if (t.progress() + 1 >= d.objective().count()) Signal.toast(p, Component.literal("Bounty ready · " + d.title() + " · turn in at the High Gate"));
+            if (t.progress() + 1 >= d.objective().count()) notice(p, "ready/" + t.id() + "/" + s.done, d, "Bounty ready", "That's it done. Take it back to Hale at the High Gate to get paid.", NoticeEvents.Kind.TASK);
             changed = true;
         }
         if (changed) save(p, s);

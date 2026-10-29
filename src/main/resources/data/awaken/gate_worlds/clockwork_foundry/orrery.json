@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "theme": "clockwork_foundry",
+  "name": "The Orrery",
+  "line": "Brass planets turning round a little sun in the dark. One of them is small enough to hold.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "roof": 10
+  },
+  "biome": "awaken:gate_world/orrery",
+  "moods": [],
+  "blocks": {
+    "wall": "awaken:foundry_iron",
+    "floor": "awaken:foundry_brick",
+    "brick": "awaken:foundry_brick",
+    "trim": "awaken:foundry_brass",
+    "gear": "awaken:foundry_gear",
+    "grate": "awaken:foundry_grille",
+    "pipe": "awaken:foundry_pipe",
+    "wall_glow": "awaken:foundry_furnace",
+    "lamp": "awaken:foundry_bulb",
+    "fall": "awaken:foundry_steam",
+    "sparks": "awaken:foundry_sparks",
+    "cables": "awaken:foundry_cables",
+    "touch": "awaken:foundry_valve",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "brass_planets"
+  ],
+  "life": [
+    "dust",
+    "fireflies"
+  ],
+  "sound": "awaken:gate.world.foundry_engine",
+  "events": [],
+  "rule": "steam",
+  "secrets": [
+    {
+      "id": "the_little_planet",
+      "name": "The little planet"
+    }
+  ],
+  "keepsake": "little_planet",
+  "keepsake_name": "The Little Brass Planet",
+  "keepsake_from": "the_little_planet"
+}

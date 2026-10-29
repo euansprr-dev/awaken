@@ -33,6 +33,14 @@ final class ArmsComfort {
     static final ModConfigSpec.BooleanValue LOW_HEALTH = B
             .comment("Under 30% health: a slow heartbeat, and the frame's edges cool and fade (with Lens on).")
             .define("lowHealth", true);
+    // Fight Feel (SPEC §25 "Fight Feel")
+    static final ModConfigSpec.BooleanValue RECOIL = B
+            .comment("A struck body recoils along the blow and springs back, and a body you kill falls the way the blade went.")
+            .define("recoil", true);
+    static final ModConfigSpec.BooleanValue KILL_MOMENT = B
+            .comment("A killing blow is its own moment: a longer freeze, a harder kick, its own sound and the ribbon's flare;",
+                    "the last foe of a fight lets the view breathe out.")
+            .define("killMoment", true);
     // Swing Studio (SPEC §25 "Swing Studio"): the swings read from a tuning folder while tuning is on (/awaken swing tune)
     static final ModConfigSpec.BooleanValue SWING_TUNING = B
             .comment("Swing Studio: read the first-person swings from the tuning folder as the lab writes them (/awaken swing tune on|off).")
@@ -77,6 +85,14 @@ final class ArmsComfort {
 
     static boolean combatCamera() {
         return on(COMBAT_CAMERA);
+    }
+
+    static boolean recoil() {
+        return on(RECOIL);
+    }
+
+    static boolean killMoment() {
+        return on(KILL_MOMENT);
     }
 
     static boolean lowHealth() {

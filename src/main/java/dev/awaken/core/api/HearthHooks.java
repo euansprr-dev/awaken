@@ -56,6 +56,13 @@ public final class HearthHooks {
         default void systemRespawn(ServerPlayer player, ServerPlayer.@Nullable RespawnConfig to, boolean lent) {
             player.setRespawnPosition(to, false);
         }
+        /**
+         * A gate world's keepsake as a thing to hang in your Trophy Hall (SPEC §38.8): {@code id} the keepsake's, the
+         * name it's shown by, the day it was found. Empty when no Hearth is installed.
+         */
+        default net.minecraft.world.item.ItemStack keepsake(String id, String name, long day) {
+            return net.minecraft.world.item.ItemStack.EMPTY;
+        }
         /** The metal the player's home is short of for its next tier, when only materials stand in the way (SPEC §34.1). */
         default Optional<MetalNeed> metalNeed(ServerPlayer player) { return Optional.empty(); }
     }
@@ -127,6 +134,11 @@ public final class HearthHooks {
     /** Whether {@code pos} lies in a Greenhouse at a Hearth (either side): herbs ripen three times as often there. */
     public static boolean greenhouse(net.minecraft.world.level.Level level, BlockPos pos) {
         return lookup.greenhouse(level, pos);
+    }
+
+    /** A gate world's keepsake to hang at home (a trophy), or empty. */
+    public static net.minecraft.world.item.ItemStack keepsake(String id, String name, long day) {
+        return lookup.keepsake(id, name, day);
     }
 
     /** Whether the player stands at home with a Study: the Blueprints' paper is halved. */

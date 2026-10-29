@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "theme": "mirror_palace",
+  "name": "The White",
+  "line": "Nothing but white in every direction. A tree of glass, a door on its own, and something huge swimming far off.",
+  "tier": "wonder",
+  "rarity": "rare",
+  "kind": "plain",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "band": 4
+  },
+  "biome": "awaken:gate_world/the_white",
+  "moods": [
+    {
+      "id": "bright",
+      "name": "Bright",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "shattered",
+      "name": "Shattered",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/the_white_shattered",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "candlelit",
+      "name": "Candlelit",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/the_white_candlelit",
+      "life": [
+        "fireflies"
+      ]
+    },
+    {
+      "id": "doubled",
+      "name": "Doubled",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_white_doubled",
+      "life": [
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:palace_marble",
+    "wall_glow": "awaken:palace_marble_veined",
+    "floor": "awaken:palace_checker",
+    "trim": "awaken:palace_gilt",
+    "mirror": "awaken:palace_mirror",
+    "mirror_cracked": "awaken:palace_mirror_cracked",
+    "glass": "awaken:palace_glass_floor",
+    "white": "awaken:palace_white",
+    "shadow": "awaken:palace_shadow",
+    "curtain": "awaken:palace_curtain",
+    "chandelier": "awaken:palace_chandelier",
+    "candelabra": "awaken:palace_candelabra",
+    "crystal": "awaken:palace_crystal",
+    "touch": "awaken:mirror_stand",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "glass_tree",
+    "lone_door",
+    "the_whale"
+  ],
+  "life": [
+    "dust"
+  ],
+  "sound": "awaken:gate.world.palace_white",
+  "events": [
+    "shatter",
+    "the_whale"
+  ],
+  "rule": "reflections",
+  "secrets": [
+    {
+      "id": "the_first_look",
+      "name": "The first look"
+    },
+    {
+      "id": "the_lone_door",
+      "name": "The door on its own"
+    },
+    {
+      "id": "the_whale",
+      "name": "The whale's eye"
+    }
+  ],
+  "keepsake": "reflection_eye",
+  "keepsake_name": "Your Reflection's Eye",
+  "keepsake_from": "the_reflection",
+  "signature": "the_reflection"
+}

@@ -593,6 +593,7 @@ def write(root=None):
 def build(out):
     """build_all.py entry: writes the clips JSON (no textures) and the profile table."""
     import power_gestures  # noqa: F401
+    import power_level_gestures  # noqa: F401  (the ladder's level clips, SPEC 36)
     write(out.root)
     power_gestures.write_table(out.root)
 
@@ -834,6 +835,7 @@ def silhouette(img, scale=0.22):
 
 def main(argv):
     import power_gestures  # noqa: F401  (registers the per-power clips and the profile table)
+    import power_level_gestures  # noqa: F401  (and the ladder's level clips)
     cmd = argv[0] if argv else "build"
     if cmd == "build":
         path = write()

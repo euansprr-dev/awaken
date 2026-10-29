@@ -1,0 +1,7 @@
+{
+  "parent": "awaken:block/wild/leaves_overlay",
+  "textures": {
+    "all": "awaken:block/wild/hawthorn_leaves_0",
+    "overlay": "awaken:block/wild/hawthorn_leaves_0_overlay"
+  }
+}

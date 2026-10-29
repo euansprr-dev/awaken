@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "theme": "abyssal_shrine",
+  "name": "The Eye",
+  "line": "Something enormous is looking up at you out of the dark. It blinks.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "roof": 12
+  },
+  "biome": "awaken:gate_world/the_eye",
+  "moods": [],
+  "blocks": {
+    "wall": "awaken:shrine_stone",
+    "floor": "awaken:abyss_tiles",
+    "trim": "awaken:abyss_pale",
+    "wall_glow": "awaken:abyss_rune",
+    "glass": "awaken:abyss_glass",
+    "candles": "awaken:abyss_candles",
+    "star": "awaken:abyss_star",
+    "veil": "awaken:abyss_veil",
+    "iris": "awaken:abyss_iris",
+    "pupil": "awaken:abyss_pupil",
+    "sclera": "awaken:abyss_sclera",
+    "touch": "awaken:abyss_offering",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_eye"
+  ],
+  "life": [
+    "dust",
+    "mist"
+  ],
+  "sound": "awaken:gate.world.abyss_void",
+  "events": [],
+  "rule": "vigil",
+  "secrets": [
+    {
+      "id": "the_eye_blinks",
+      "name": "The eye blinks"
+    }
+  ],
+  "keepsake": "eye_stone",
+  "keepsake_name": "An Eye Stone",
+  "keepsake_from": "the_eye_blinks"
+}

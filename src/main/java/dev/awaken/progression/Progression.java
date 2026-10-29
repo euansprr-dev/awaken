@@ -1,5 +1,7 @@
 package dev.awaken.progression;
 
+import dev.awaken.core.api.NoticeEvents.Kind;
+
 import dev.awaken.Awaken;
 import dev.awaken.core.AwakenConfig;
 import dev.awaken.core.CoreModule;
@@ -178,6 +180,9 @@ public final class Progression {
     }
 
     /** Grants a fraction of the player's current level (used by rewards: "0.25 levels"). */
+    private static final String LEVEL_HOW = "Spend them on Status, where each stat says what it does.";
+    private static final String LEVEL_NEW = "Anything this level unlocks has its own entry in your Journal.";
+
     public static int grantLevels(ServerPlayer player, double fraction, XpSource source) {
         return grantXp(player, fraction * Curve.xpToNext(profile(player).level) / xpScale(player), source);
     }
@@ -249,10 +254,12 @@ public final class Progression {
         // the Living Wilds shows its own moment (and its own sound) when it can; otherwise the toast as ever (SPEC §21.1)
         boolean moment = dev.awaken.core.api.LivingHooks.levelMoment(player, p.level, gained);
         if (!moment) player.level().playSound(null, player.blockPosition(), CoreModule.LEVEL_UP.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
-        if (!moment) Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE,
-                        Component.literal(gained > 1 ? "Level " + (p.level - gained) + " → " + p.level : "Level " + p.level))
-                .body(Component.literal("+" + gained * Curve.POINTS_PER_LEVEL + " points to spend · K"))
-                .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 5).build());
+        var levelEvent = new dev.awaken.core.api.NoticeEvents.Event("level/" + p.level, "Level gained", "Level " + p.level,
+                "You have " + gained * Curve.POINTS_PER_LEVEL + " new stat points to spend on Status.",
+                gained > 1 ? List.of("You went from level " + (p.level - gained) + " to " + p.level + " in one go.", LEVEL_HOW, LEVEL_NEW) : List.of(LEVEL_HOW, LEVEL_NEW),
+                Kind.PERMANENT, 0x86C9F0);
+        if (moment) dev.awaken.core.api.NoticeEvents.remember(player, levelEvent);
+        else dev.awaken.core.api.NoticeEvents.tell(player, levelEvent);
         if (p.unspent > 0) dev.awaken.core.api.TipHooks.offer(player, dev.awaken.Awaken.id("first/level")); // where points go, and how you grow (SPEC §27.7)
         // after the level toast, so each level's unlock (the level road) reads as its consequence
         int top = p.level;
@@ -358,7 +365,7 @@ public final class Progression {
     // ---- counters ---------------------------------------------------------------------------------------------------
 
     private static final java.util.Set<String> LOGGED = java.util.Set.of(Counters.GATES_CLEARED, Counters.FLOORS_CLEARED,
-            "awaken:bosses_killed", Counters.LUCID_DREAMS, Counters.DREAMS, Counters.ECHOES_BOUND, Counters.MACHINES_BUILT,
+            "awaken:bosses_killed", Counters.LUCID_DREAMS, Counters.DREAMS, Counters.MACHINES_BUILT,
             "awaken:waystones_lit", Counters.NIGHTMARES_BEATEN, "awaken:gates_scouted", Counters.SECRETS_FOUND);
 
     public static void count(ServerPlayer player, String counter, long amount) {
@@ -406,26 +413,26 @@ public final class Progression {
                     } else if (truth.emergent().isPresent() && !p.truthsTrue.contains(key) && !p.truthsOffered.contains(key)
                             && !p.truthsDeclared.contains(key) && truth.emergent().get().test(p, null)) {
                         p.truthsOffered.add(key);
-                        Signal.send(player, SignalWindow.builder(SignalWindow.Kind.TRUTH, Component.literal("The Signal noticed something."))
-                                .body(Component.literal("“" + truth.text() + "”")).footer(Component.literal("A new Truth is available · K"))
-                                .ttl(20 * 8).build());
+                        ProgressionNotices.tell(player, "truth/offered/" + key, "Truth available", truth.text(),
+                                "You can declare this Truth on the Truths page. Its reward comes once you make it true.", Kind.DISCOVERY,
+                                truth.hint().orElse("Its entry on the Truths page says what it takes."), "Reward if you do: " + RewardWords.describe(truth.reward()) + ".");
                     }
                 }
                 Defs.TitleDef title = Content.TITLES.get(id);
                 if (title != null && !p.titles.contains(key) && title.condition().test(p, null)) {
                     p.titles.add(key);
                     markNewThing(player, "title");
-                    Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Title earned"))
-                            .row(Component.literal("Title"), Component.literal(title.name()))
-                            .body(Component.literal(title.description())).footer(Component.literal("Equip it from Status · K")).build());
+                    ProgressionNotices.tell(player, "title/" + key, "Title earned", title.name(), title.description(), Kind.PERMANENT,
+                            title.perks().isEmpty() ? new String[]{"It has no perks. Equip it on the Truths page if you'd like to wear it."}
+                                    : new String[]{"Equip it on the Truths page for its perks: " + RewardWords.perks(title.perks()) + ".",
+                                            "Its perks only work while it's equipped."});
                 }
                 Defs.LatentDef latent = Content.LATENTS.get(id);
                 if (latent != null && !p.latents.contains(key) && latent.condition().test(p, null)) {
                     p.latents.add(key);
                     markNewThing(player, "latent");
-                    Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("A latent ability woke up"))
-                            .row(Component.literal("Latent"), Component.literal(latent.name()))
-                            .body(Component.literal(latent.description())).priority(3).build());
+                    ProgressionNotices.tell(player, "latent/" + key, "Ability awakened", latent.name(), latent.description(), Kind.PERMANENT,
+                            "It's yours for good and works on its own, with no title to equip.", "Reward: " + RewardWords.describe(latent.reward()) + ".");
                     RewardHooks.apply(player, latent.reward(), XpSource.TRUTH);
                     applyAttributes(player);
                 }
@@ -441,9 +448,9 @@ public final class Progression {
         p.truthsDeclared.remove(key);
         markNewThing(player, "truth");
         player.level().playSound(null, player.blockPosition(), CoreModule.RANK_UP.get(), SoundSource.PLAYERS, 0.6f, 1.4f);
-        Signal.send(player, SignalWindow.builder(SignalWindow.Kind.TRUTH, Component.literal("“" + truth.text() + "”"))
-                .body(Component.literal("It's true now."))
-                .footer(Component.literal("True").withStyle(ChatFormatting.GREEN)).priority(4).ttl(20 * 8).build());
+        ProgressionNotices.tell(player, "truth/true/" + key, "Truth fulfilled", truth.text(),
+                "You made it true. Its reward and perks are yours for good.", Kind.PERMANENT,
+                "Reward: " + RewardWords.describe(truth.reward()) + ".", "Its perks work on their own; they don't take a title slot.");
         RewardHooks.apply(player, truth.reward(), XpSource.TRUTH);
         applyAttributes(player);
         markDirty(player);
@@ -649,6 +656,9 @@ public final class Progression {
                 .body(Component.literal("Reassessment passed. The world will treat you differently now."))
                 .row(Component.literal("New gates"), Component.literal(next.label + "-rank pillars will appear"))
                 .priority(9).ttl(20 * 10).build());
+        ProgressionNotices.remember(player, "rank/" + next.name(), "Rank advanced", next.label + "-rank",
+                "You passed reassessment, so " + next.label + "-rank gates will start to appear for you.",
+                "Three new Truths are waiting on the Truths page.");
         markNewThing(player, "rank");
         offerTruths(player, 3);
         evaluate(player, Counters.RANK);
@@ -704,6 +714,9 @@ public final class Progression {
         p.path = path;
         p.pathsOffered.clear();
         d.signaturePower().ifPresent(pw -> RewardHooks.learnPower(player, pw));
+        ProgressionNotices.remember(player, "path/" + path, "Path chosen", d.name(), d.description(),
+                d.perks().isEmpty() ? "It has no perks of its own." : "Its perks: " + RewardWords.perks(d.perks()) + ".",
+                "If it comes with a power, that power has its own entry, and you can put it on a key on the Powers page.");
         markNewThing(player, "path");
         Signal.send(player, SignalWindow.builder(SignalWindow.Kind.REVELATION, Component.literal(d.name()))
                 .body(Component.literal(d.description())).priority(9).ttl(20 * 12).build());

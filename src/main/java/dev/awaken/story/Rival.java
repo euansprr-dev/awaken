@@ -31,17 +31,58 @@ final class Rival {
         SCENES.clear();
     }
 
+    /** A beat waiting for the city or a gate (kept in the story's seen marks, so it survives a restart). */
+    static final String WAIT = "rival_wait:";
+    /** The beats in rank order: when several waited, only the latest plays. */
+    static final List<String> ORDER = List.of("e", "d", "c", "b", "a", "s", "sovereign");
+
     static void onRankUp(ServerPlayer p, Rank rank) {
         String key = rank == Rank.SOVEREIGN ? "sovereign" : rank.name().toLowerCase();
-        StoryContent.RivalBeat beat = StoryContent.RIVAL.get(Awaken.id(key));
-        if (beat == null) return;
+        if (StoryContent.RIVAL.get(Awaken.id(key)) == null) return;
         StoryProgress s = Prologue.progress(p);
-        if (!s.seen.add("rival:" + key)) return;
+        if (s.seen.contains("rival:" + key)) return;
+        // (SPEC §43.1) nobody but the Awakened walks the wild: Vael finds you next time you're in the city or in a gate
+        if (!meetable(p)) {
+            if (s.seen.add(WAIT + key)) Prologue.sync(p);
+            return;
+        }
+        play(p, key);
+    }
+
+    static boolean meetable(ServerPlayer p) {
+        return dev.awaken.core.api.CityHooks.inCity(p.level(), p.blockPosition()) || dev.awaken.core.api.GateHooks.inGate(p);
+    }
+
+    /** Plays a beat now; every beat that waited is spent with it. */
+    static void play(ServerPlayer p, String key) {
+        StoryContent.RivalBeat beat = StoryContent.RIVAL.get(Awaken.id(key));
+        StoryProgress s = Prologue.progress(p);
+        for (String k : List.copyOf(s.seen)) if (k.startsWith(WAIT)) s.seen.add("rival:" + k.substring(WAIT.length()));
+        s.seen.removeIf(k -> k.startsWith(WAIT));
+        s.seen.add("rival:" + key);
         Prologue.sync(p);
-        SCENES.add(new Scene(p, beat.lines(), new int[]{0}, new VaelEntity[1], p.level().getGameTime() + 20 * 8));
+        if (beat != null) SCENES.add(new Scene(p, beat.lines(), new int[]{0}, new VaelEntity[1], p.level().getGameTime() + 20 * 8));
+    }
+
+    /** Every five seconds: a waiting beat plays once its player is in the city or a gate (the latest rank's only). */
+    static void waiting(MinecraftServer server) {
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+            StoryProgress s = Prologue.progress(p);
+            String latest = null;
+            for (String k : s.seen) {
+                if (!k.startsWith(WAIT)) continue;
+                String key = k.substring(WAIT.length());
+                if (latest == null || ORDER.indexOf(key) > ORDER.indexOf(latest)) latest = key;
+            }
+            if (latest == null || !meetable(p)) continue;
+            boolean running = false;
+            for (Scene sc : SCENES) running |= sc.player() == p;
+            if (!running) play(p, latest);
+        }
     }
 
     static void tick(MinecraftServer server) {
+        if (server.getTickCount() % 100 == 0) waiting(server);
         Iterator<Scene> it = SCENES.iterator();
         while (it.hasNext()) {
             Scene sc = it.next();
@@ -57,7 +98,7 @@ final class Rival {
                 continue;
             }
             if ((now - sc.startAt()) >= i * 20L * 6) {
-                Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Vael"))
+                Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Vael")).dialogue()
                         .body(Component.literal(sc.lines().get(i))).ttl(20 * 6).priority(6).build());
                 sc.next()[0] = i + 1;
             }

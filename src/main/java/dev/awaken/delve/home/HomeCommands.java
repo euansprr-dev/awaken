@@ -14,10 +14,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.TicketType;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -183,13 +181,13 @@ final class HomeCommands {
         BlockPos at = Layout.world(n, new BlockPos((int) Math.floor(g.x() + Math.cos(turn) * back), g.floorY(), (int) Math.floor(g.z() + Math.sin(turn) * back)));
         BlockPos centre = Layout.world(n, new BlockPos(g.x(), g.floorY(), g.z()));
         float yaw = yaw(at, centre);
-        target.getChunkSource().addTicketAndLoadWithRadius(TicketType.PORTAL, ChunkPos.containing(at), 1).thenRunAsync(() -> {
-            if (p.isRemoved()) return;
+        // there once its land is made (SPEC §28.9, "Arrivals")
+        dev.awaken.core.api.Passage.go(p, target, at.getX() + 0.5, at.getZ() + 0.5, () -> {
             // room to stand, should a spire of crystal have grown just there
             for (int h = 0; h <= 1; h++) if (!target.getBlockState(at.above(h)).isAir()) target.setBlock(at.above(h), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
             p.teleportTo(target, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), yaw, 12F, true);
             p.resetFallDistance();
-        }, server);
+        });
         c.getSource().sendSuccess(() -> Component.literal("To stratum " + n + "'s grotto at " + centre.toShortString()
                 + (g.cache() ? " (with a cache)" : "")), false);
         return 1;

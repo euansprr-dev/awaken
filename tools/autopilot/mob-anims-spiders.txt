@@ -1,0 +1,171 @@
+# Creatures to the Fresh Animations bar (SPEC 23.1): the forms' spiders (rungs C to S, our bodies) beside vanilla's
+# spider under Fresh Animations (rungs 0 and 1 of the row wear it). A row at rest (feet planted, re-grips), a walk into
+# a run, a stop and a turn on the spot side by side, a blow, a death, then a hunt with their AI at night.
+# Clips: run-autopilot/clips/spid_* (python3 -I tools/ascent/clip.py <dir> makes an mp4 and a contact sheet).
+# ci knobs: PACK=perf,feel
+world spidersfa creative 779
+waitworld
+wait 40
+# the opening's sky flight holds the camera: skip it first
+cmd awaken opening skip
+wait 30
+# the studio's chunks first: a busy runner's server can fall seconds behind the script
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -32 -32 32 48
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+camera first
+hud off
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd effect give @s minecraft:regeneration infinite 4 true
+cmd effect give @s minecraft:saturation infinite 0 true
+cmd effect give @s minecraft:night_vision infinite 0 true
+info
+cmd tp @s 0.5 201 0.5 0 0
+wait 100
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 1. the row at rest: 0 and 1 are vanilla's spider under Fresh Animations, 2 to 5 our bodies; feet planted, a re-grip now and then
+cmd tp @s 0.5 201 -6.0 0 0
+wait 5
+cmd awaken living formrow spider
+wait 5
+cmd execute as @e[type=minecraft:spider] run data merge entity @s {OnGround:1b,Invulnerable:0b,PersistenceRequired:1b}
+cmd tp @s 0.5 203.6 -6.5 0 14
+look 0 14
+wait 40
+shot spid_row
+cmd awaken ascent pilot rec spid_row 200 2
+wait 100
+shot spid_row_b
+wait 105
+# close on C (ours) beside 1 (Fresh Animations)
+cmd tp @s 0.0 201.8 -1.5 0 16
+look 0 16
+wait 10
+shot spid_row_close
+cmd awaken ascent pilot rec spid_row_close 120 2
+wait 125
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 2. a walk into a run, a stop, a half turn on the spot, a creep back, side by side: rung 3 (front), vanilla's (behind)
+cmd tp @s -5.0 201 -2.5 0 0
+wait 5
+cmd awaken living form spider 3
+wait 5
+cmd tag @e[type=minecraft:spider,limit=1,sort=nearest] add walker
+cmd tp @e[tag=walker] -5.0 201 1.5 -90 0
+cmd summon minecraft:spider -5.0 201 4.5 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd execute as @e[tag=walker] run data merge entity @s {OnGround:1b,Invulnerable:0b,PersistenceRequired:1b}
+cmd fill 0 201 -4 0 202 -4 minecraft:barrier
+cmd tp @s 0.5 203 -3.5 0 30
+look 0 30
+wait 30
+cmd awaken ascent pilot rec spid_walk 200 2
+cmd awaken admin stroll @e[tag=walker] 0.05 40
+cmd awaken admin stroll @e[tag=walker] 0.09 16
+cmd awaken admin stroll @e[tag=walker] 0.16 6
+cmd awaken admin stroll @e[tag=walker] 0.2 16
+cmd awaken admin stroll @e[tag=walker] 0.1 4
+cmd awaken admin stroll @e[tag=walker] 0.05 4
+cmd awaken admin stroll @e[tag=walker] 0.0 26
+cmd awaken admin stroll @e[tag=walker] 0.0 30 6
+cmd awaken admin stroll @e[tag=walker] 0.0 10
+cmd awaken admin stroll @e[tag=walker] 0.04 30
+wait 45
+shot spid_walk_mid
+wait 30
+shot spid_run
+wait 30
+shot spid_stop
+wait 45
+shot spid_turned
+wait 45
+cmd fill 0 201 -4 0 202 -4 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 3. a blow (the body jerks over its planted feet), a heavier one, then the death (it rolls over, legs curling)
+cmd tp @s 0.5 201 -2.0 0 0
+wait 5
+cmd awaken living form spider 3
+wait 5
+cmd tag @e[type=minecraft:spider,limit=1,sort=nearest] add ours
+cmd tp @e[tag=ours] -1.4 201 2.0 180 0
+cmd summon minecraft:spider 2.4 201 2.2 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd execute as @e[type=minecraft:spider] run data merge entity @s {OnGround:1b,Invulnerable:0b,PersistenceRequired:1b}
+cmd tp @s 0.5 203.0 -3.0 0 22
+look 0 22
+wait 30
+cmd awaken ascent pilot rec spid_hit 90 2
+cmd damage @e[tag=ours,limit=1] 1 minecraft:player_attack by @s
+cmd damage @e[type=minecraft:spider,tag=!ours,limit=1] 1 minecraft:player_attack by @s
+wait 3
+shot spid_hit
+wait 37
+cmd damage @e[tag=ours,limit=1] 2 minecraft:player_attack by @s
+cmd damage @e[type=minecraft:spider,tag=!ours,limit=1] 2 minecraft:player_attack by @s
+wait 50
+cmd awaken ascent pilot rec spid_death 40 2
+cmd kill @e[type=minecraft:spider]
+wait 9
+shot spid_death_mid
+wait 33
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 4. the hunt (AI, at night): our B alone; it runs in, rears, bites (B's foreleg stab), leaps
+cmd time set 18000
+cmd tp @s 0.5 201 3.0 180 0
+wait 5
+cmd awaken living form spider 4
+wait 5
+cmd tag @e[type=minecraft:spider,limit=1,sort=nearest] add ours
+cmd tp @e[tag=ours] -1.0 201 -6.0 0 0
+cmd execute as @e[tag=ours] run data merge entity @s {NoAI:0b,Silent:0b,Invulnerable:0b,OnGround:1b,PersistenceRequired:1b}
+cmd tp @s 0.5 201 8.0 180 10
+look 180 10
+cmd gamemode survival
+wait 10
+cmd damage @e[tag=ours,limit=1] 1 minecraft:player_attack by @s
+cmd awaken ascent pilot rec spid_hunt 240 2
+wait 40
+shot spid_hunt_a
+wait 60
+shot spid_hunt_b
+wait 60
+shot spid_hunt_c
+wait 85
+cmd gamemode creative
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd time set 6000
+info
+quit

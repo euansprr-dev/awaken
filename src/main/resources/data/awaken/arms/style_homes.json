@@ -68,15 +68,15 @@
     {"id": "maul", "theme": "awaken:bell_crypt", "gate": "the Bell Crypt", "rank": "E", "lord": "Bell Warden"},
     {"id": "scythe", "theme": "awaken:fungal_hollow", "gate": "the Fungal Hollow", "rank": "E", "lord": "Mother of Spores"},
     {"id": "warstaff", "theme": "awaken:overgrown_temple", "gate": "the Overgrown Temple", "rank": "E", "lord": "Root Saint"},
-    {"id": "spear", "theme": "awaken:drowned_archive", "gate": "the Drowned Archive", "rank": "D", "lord": "Drowned Archivist", "teacher": {"person": "hettie", "chain": "ten_sheep_short", "line": "Hettie: You earned this. Here is how a spear is made. Keep your distance from the wolves, and let the point do the work."}},
-    {"id": "rapier", "theme": "awaken:glass_desert", "gate": "the Glass Desert", "rank": "D", "lord": "Glass Serpent", "teacher": {"person": "pell", "chain": "pells_message", "line": "Pell: One more thing for the road. This is how a rapier is made. Quick hands and a straight back, and don't ever stand still."}},
-    {"id": "chainblade", "theme": "awaken:lantern_market", "gate": "the Lantern Night Market", "rank": "D", "lord": "Lantern Broker", "teacher": {"person": "marta", "chain": "caravan_road", "line": "Marta: Take this. It's the pattern for a blade on a chain. The caravan guards swear by it, and so do I. Don't tell them I gave it away."}},
+    {"id": "spear", "theme": "awaken:drowned_archive", "gate": "the Drowned Archive", "rank": "D", "lord": "Drowned Archivist", "found": "left_chest"},
+    {"id": "rapier", "theme": "awaken:glass_desert", "gate": "the Glass Desert", "rank": "D", "lord": "Glass Serpent", "found": "left_chest"},
+    {"id": "chainblade", "theme": "awaken:lantern_market", "gate": "the Lantern Night Market", "rank": "D", "lord": "Lantern Broker", "found": "left_chest"},
     {"id": "gauntlets", "theme": "awaken:clockwork_foundry", "gate": "the Clockwork Foundry", "rank": "D", "lord": "Gearwright Colossus"},
-    {"id": "glaive", "theme": "awaken:frost_monastery", "gate": "the Frost Monastery", "rank": "C", "lord": "Abbot of Frost", "teacher": {"person": "gus", "chain": "hermits_horn", "line": "Gus: A glaive is a spear that learned to sweep. This is its pattern. Mind the mountain when you swing it."}},
+    {"id": "glaive", "theme": "awaken:frost_monastery", "gate": "the Frost Monastery", "rank": "C", "lord": "Abbot of Frost", "found": "left_chest"},
     {"id": "shieldblade", "theme": "awaken:mirror_palace", "gate": "the Mirror Palace", "rank": "C", "lord": "Mirror Knight"},
     {"id": "precursor", "theme": "awaken:precursor_lab", "gate": "the Precursor Lab", "rank": "C", "lord": "Unit Zero"},
     {"id": "katana", "theme": "awaken:nightmare", "gate": "the Nightmare gates", "rank": "C", "lord": "Sleeper"},
-    {"id": "twinblades", "theme": "awaken:sky_archipelago", "gate": "the Sky Archipelago", "rank": "B", "lord": "Sky Leviathan", "teacher": {"person": "wren", "chain": "wrens_rope", "line": "Wren: I found this pattern up on the high ledges. Two blades, always moving. You'll like it. I think."}},
+    {"id": "twinblades", "theme": "awaken:sky_archipelago", "gate": "the Sky Archipelago", "rank": "B", "lord": "Sky Leviathan", "found": "left_chest"},
     {"id": "greatblade", "theme": "awaken:abyssal_shrine", "gate": "the Abyssal Shrine", "rank": "A", "lord": "Hollow Herald", "teacher": {"person": "oren", "chain": "orens_first_steel", "line": "Oren: A big blade is just a hammer that's been taught manners. Here's its pattern. I'll show you once, so read it properly."}}
   ]
 }

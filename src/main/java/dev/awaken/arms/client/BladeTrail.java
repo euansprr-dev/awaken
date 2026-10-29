@@ -28,8 +28,17 @@ final class BladeTrail {
     private static final long MIN_GAP = 3_000_000L;
 
     private static final int[] ENTITY = new int[RINGS], HEAD = new int[RINGS], COUNT = new int[RINGS], ARGB = new int[RINGS];
+    /**
+     * Which of the wielder's hands a ring traces (0 the main, 1 the off hand's twin), and its light (round 14): each blade
+     * of a pair lays its own, so a strike passing from one hand to the other never joins them in a band across the view.
+     */
+    private static final int[] SIDE = new int[RINGS];
+    private static final float[] LIGHT = new float[RINGS];
     /** The blow each ring traces: it samples until this (ns); 0 for none. */
     private static final long[] UNTIL = new long[RINGS];
+    /** A kill's flare on the ring (SPEC §25 "Fight Feel"): when it flared (ns); it burns toward white and fades. */
+    private static final long[] FLARE = new long[RINGS];
+    private static final long FLARE_LIFE = 160_000_000L;
     private static final double[] ROOT = new double[RINGS * N * 3], TIP = new double[RINGS * N * 3];
     private static final long[] AT = new long[RINGS * N];
 
@@ -39,16 +48,33 @@ final class BladeTrail {
 
     /** A blow on {@code entity} is in the air from now for {@code ms}: its blade traces while it lasts, in {@code argb}. */
     static void open(int entity, int ms, int argb) {
-        int r = ring(entity, true);
+        open(entity, 0, ms, argb, 1F);
+    }
+
+    /** The same for one hand's blade ({@code side} 1: the off hand's twin), its light scaled by {@code light}. */
+    static void open(int entity, int side, int ms, int argb, float light) {
+        int r = ring(entity, side, true);
         if (r < 0) return;
-        UNTIL[r] = System.nanoTime() + ms * 1_000_000L;
+        UNTIL[r] = time() + ms * 1_000_000L;
         ARGB[r] = argb;
+        LIGHT[r] = light;
+    }
+
+    /** A killing blow: {@code entity}'s ribbon flares once. */
+    static void flare(int entity) {
+        long now = time();
+        for (int r = 0; r < RINGS; r++) if (ENTITY[r] == entity) FLARE[r] = now;
     }
 
     /** Whether {@code entity}'s blade is tracing now (the renderers sample only then). */
     static boolean open(int entity) {
-        int r = ring(entity, false);
-        return r >= 0 && System.nanoTime() < UNTIL[r];
+        return open(entity, 0);
+    }
+
+    /** Whether that hand's blade of {@code entity} is tracing now. */
+    static boolean open(int entity, int side) {
+        int r = ring(entity, side, false);
+        return r >= 0 && time() < UNTIL[r];
     }
 
     /**
@@ -66,9 +92,14 @@ final class BladeTrail {
      * {@code hand}: the hands' pass of first person). Called by the renderers each frame while {@link #open(int)}.
      */
     static void sample(int entity, Matrix4f pose, float rx, float ry, float rz, float tx, float ty, float tz, boolean hand) {
-        int r = ring(entity, false);
+        sample(entity, 0, pose, rx, ry, rz, tx, ty, tz, hand);
+    }
+
+    /** The same for one hand's blade. */
+    static void sample(int entity, int side, Matrix4f pose, float rx, float ry, float rz, float tx, float ty, float tz, boolean hand) {
+        int r = ring(entity, side, false);
         if (r < 0) return;
-        long now = System.nanoTime();
+        long now = time();
         if (now >= UNTIL[r]) return;
         int last = (HEAD[r] - 1 + N) % N;
         if (COUNT[r] > 0 && now - AT[r * N + last] < MIN_GAP) return;
@@ -103,13 +134,13 @@ final class BladeTrail {
     /** Autopilot only: each ring's samples and ages now, on the clock ribbons age by. */
     static String state() {
         StringBuilder b = new StringBuilder("frozen=" + frozen);
-        long now = clock(), real = System.nanoTime();
+        long now = clock(), real = time();
         b.append(" clockLag=").append((real - now) / 1_000_000).append("ms");
         for (int r = 0; r < RINGS; r++) {
             if (ENTITY[r] == Integer.MIN_VALUE) continue;
             int n = COUNT[r];
             long newest = n > 0 ? AT[r * N + (HEAD[r] - 1 + N) % N] : 0, oldest = n > 0 ? AT[r * N + (HEAD[r] - n + N) % N] : 0;
-            b.append(" | e=").append(ENTITY[r]).append(" n=").append(n).append(" newestAge=").append((now - newest) / 1_000_000)
+            b.append(" | e=").append(ENTITY[r]).append(" side=").append(SIDE[r]).append(" n=").append(n).append(" newestAge=").append((now - newest) / 1_000_000)
                     .append("ms oldestAge=").append((now - oldest) / 1_000_000).append("ms until=").append((UNTIL[r] - real) / 1_000_000).append("ms");
         }
         return b.toString();
@@ -125,11 +156,11 @@ final class BladeTrail {
         return String.format(java.util.Locale.ROOT, "%.2f", v);
     }
 
-    private static int ring(int entity, boolean claim) {
+    private static int ring(int entity, int side, boolean claim) {
         int free = -1, oldest = -1;
         long oldestAt = Long.MAX_VALUE;
         for (int r = 0; r < RINGS; r++) {
-            if (ENTITY[r] == entity) return r;
+            if (ENTITY[r] == entity && SIDE[r] == side) return r;
             if (ENTITY[r] == Integer.MIN_VALUE && free < 0) free = r;
             if (UNTIL[r] < oldestAt) {
                 oldestAt = UNTIL[r];
@@ -139,6 +170,7 @@ final class BladeTrail {
         if (!claim) return -1;
         int r = free >= 0 ? free : oldest;
         ENTITY[r] = entity;
+        SIDE[r] = side;
         COUNT[r] = HEAD[r] = 0;
         return r;
     }
@@ -156,10 +188,26 @@ final class BladeTrail {
     static boolean frozen;
     private static long lastSampleAt;
 
-    /** The clock ribbons age by: real time, or (frozen) held just after the last sample. */
+    /** The clock ribbons age by: {@link #time()}, or (frozen) held just after the last sample. */
     private static long clock() {
-        long now = System.nanoTime();
+        long now = time();
         return frozen ? Math.min(now, lastSampleAt + 15_000_000L) : now;
+    }
+
+    private static long paced, pacedAt;
+
+    /**
+     * The ribbons' time (ns): real time at the world's own pace, so under {@code /tick rate} (a slowed film) a ribbon
+     * lives as many ticks as it does in play; at the normal 20 a second it is real time.
+     */
+    private static long time() {
+        long real = System.nanoTime();
+        if (pacedAt == 0) paced = real;
+        var level = Minecraft.getInstance().level;
+        double pace = level == null ? 1.0 : level.tickRateManager().tickrate() / 20.0;
+        paced += pacedAt == 0 ? 0 : (long) ((real - pacedAt) * pace);
+        pacedAt = real;
+        return paced;
     }
 
     static void onSubmit(SubmitCustomGeometryEvent e) {
@@ -234,7 +282,15 @@ final class BladeTrail {
         int argb = ARGB[r];
         int cr = argb >> 16 & 255, cg = argb >> 8 & 255, cb = argb & 255;
         // strong enough to read on a noon sky: the colour's own alpha (the rhythm's brightness) lifted, never faint
-        float alpha = Math.min(0.95F, 0.55F + 0.5F * ((argb >>> 24) / 255F));
+        float alpha = Math.min(0.95F, 0.55F + 0.5F * ((argb >>> 24) / 255F)) * LIGHT[r];
+        long since = time() - FLARE[r];
+        if (FLARE[r] != 0 && since >= 0 && since < FLARE_LIFE) {
+            float f = 1F - since / (float) FLARE_LIFE;
+            cr += Math.round((255 - cr) * 0.6F * f);
+            cg += Math.round((255 - cg) * 0.6F * f);
+            cb += Math.round((255 - cb) * 0.6F * f);
+            alpha = Math.min(1F, alpha + 0.25F * f);
+        }
         for (int a = 0; a + 1 < m; a++) band(buffer, a, a + 1, cr, cg, cb, alpha);
     }
 

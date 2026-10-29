@@ -73,6 +73,12 @@ public final class HoloClient {
         INVENTORY.handsOver = true;
         modBus.addListener(RegisterRenderPipelinesEvent.class, HoloPipelines::onRegister);
         dev.awaken.signal.client.HudLook.install(HoloGuiLook.INSTANCE);
+        // the clear screen (SPEC §40.6): every layer asks the director how strongly it shows
+        dev.awaken.core.api.HudState.install(HudDirector.INSTANCE);
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
+                net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, HudDirector.VITALS, Vitals::render));
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
+                net.neoforged.neoforge.client.gui.VanillaGuiLayers.TAB_LIST, Glance.LAYER, Glance::render));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, HoloClient::onPayloads);
         modBus.addListener(RegisterRenderStateModifiersEvent.class,
                 e -> e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, HoloOthers::modify));
@@ -94,6 +100,7 @@ public final class HoloClient {
         bus.addListener(EventPriority.LOWEST, RenderGuiEvent.Post.class, HudMotion::endFrame);
         bus.addListener(ClientTickEvent.Pre.class, e -> Wrist.tickStart(wristClosing()));
         bus.addListener(ClientTickEvent.Post.class, e -> onTick());
+        bus.addListener(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered.class, HudDirector.INSTANCE::onKey);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
         bus.addListener(ClientPlayerNetworkEvent.LoggingIn.class, e -> HoloPipelines.recheck());
         bus.addListener(ClientPlayerNetworkEvent.Clone.class, e -> HoloOthers.clear());
@@ -248,6 +255,8 @@ public final class HoloClient {
         HoloConfig.refresh();
         STATUS.sizeStep = HoloConfig.bandSize.step; // the Band size setting (SPEC §30.6)
         CalmHud.tick();
+        Glance.tick();
+        HudDirector.INSTANCE.tick();
         HoloBoot.tick();
         Minecraft m0 = Minecraft.getInstance();
         // the band came off with the K menu open: the menu has nothing to stand on
@@ -277,6 +286,8 @@ public final class HoloClient {
         ViewMath.update(cam);
         HudMotion.update(cam.yRot, cam.xRot, dt);
         CalmHud.frame(dt * 1000f);
+        HudDirector.INSTANCE.frame(dt * 1000f);
+        Glance.frame(dt * 1000f);
         HoloOthers.advance(dt * 1000f);
         easeReadFocus(dt);
         UiHooks.setFocus(FOCUS_OWNER, (float) focus());
@@ -403,6 +414,16 @@ public final class HoloClient {
                 HoloConfig.refresh();
                 return String.format(java.util.Locale.ROOT, "hud fade %s alpha=%.2f", HoloConfig.hudFade ? "on" : "off", CalmHud.alpha());
             }
+            case "screen" -> { // screen clear|clear_crosshair|classic|auto: the clear screen's setting, for tours
+                HoloConfig.forcedScreen = a[1].equals("auto") ? null
+                        : dev.awaken.core.api.HudState.Screen.valueOf(a[1].toUpperCase(java.util.Locale.ROOT));
+                HoloConfig.refresh();
+                return "screen " + HoloConfig.screen;
+            }
+            case "fight" -> { // fight on|off: as if a fight had just started (or ended long ago)
+                HudDirector.INSTANCE.forceFight(a[1].equals("on"));
+                return "fighting " + HudDirector.INSTANCE.fighting();
+            }
             case "hud" -> {
                 HoloConfig.forcedHudMotion = HoloConfig.HudMotion.valueOf(a[1].toUpperCase(java.util.Locale.ROOT));
                 HoloConfig.refresh();
@@ -462,6 +483,9 @@ public final class HoloClient {
         DEMO.timeline.close();
         sent = HoloKind.NONE;
         CalmHud.reset();
+        HudDirector.INSTANCE.reset();
+        Vitals.reset();
+        Glance.reset();
         HoloBoot.reset();
     }
 }

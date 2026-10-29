@@ -40,7 +40,8 @@ layout(location = 0) out vec4 fragColor;
 #endif
 
 // The parameter texture (LensParams, 32x1): 0 flags and debug, 1-2 far plane and sun, 3-8 the look, 9 sunset, 10-11 fog,
-// 12 sun glow, 13 the story's moments, 14 holo focus, 15 far terrain's planes, 16 motion; 17-31 free.
+// 12 sun glow, 13 the story's moments, 14 holo focus, 15 far terrain's planes, 16 motion, 17-20 Lens 2's light, mist
+// and magic, 21 the camera under cover (LensParams); 22-31 free.
 #include <awaken:lens_block.glsl>
 
 vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
@@ -198,7 +199,15 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
         float cover = 0.0;
         if (F(15).x > 0.0) {
             vec3 hp = p + f12.xyz + n * 0.1;
-            cover = heightAt(ivec2(floor(hp.xz)), 0).g - hp.y;
+            ivec2 col = ivec2(floor(hp.xz));
+            cover = heightAt(col, 0).g - hp.y;
+            // under an eave with open sky beside it (a roof's overhang, a gable's rake) it's the open ground's shade, not
+            // a room's: else a sharp step runs along the roof line (Euan 2026-10-28). A room, a wall's thickness in, keeps its own
+            if (cover > 1.0) {
+                float side = min(min(heightAt(col + ivec2(1, 0), 0).g, heightAt(col - ivec2(1, 0), 0).g),
+                        min(heightAt(col + ivec2(0, 1), 0).g, heightAt(col - ivec2(0, 1), 0).g));
+                cover = min(cover, side - hp.y);
+            }
         }
         float open = 1.0 - smoothstep(1.0, 7.0, cover);
         // faces turned from the sun shade only as it lowers: at noon (straight overhead in Minecraft) the walls keep the
@@ -315,6 +324,8 @@ void main() {
     } else {
         c = texture(InSampler, uvc).rgb;
     }
+    // the frame as the game drew it: under cover, the floor Lens's darks never fall below
+    vec3 game = c;
     vec4 p0 = P(0), p1 = P(1), g = P(3), shadowT = P(4), highT = P(5), b = P(6), h = P(7), hz = P(8), sunset = P(9);
     vec4 fogColor = P(10), fogDist = P(11), p12 = P(12), sunPos = P(2);
     // 13: the story's moments: r the tear from black (0 off), g crushed blacks, b extra bloom (LensParams)
@@ -490,6 +501,26 @@ void main() {
     c = clamp((c - 0.5) * (g.g * 2.0) + 0.5, 0.0, 1.0);
 #endif
     c = mix(vec3(luma(c)), c, g.b * 2.0);
+    // Under solid cover (a cave, a room) Lens never takes the dark below the game's own: the grade's black point and
+    // shadow tint would crush a cave at light 0 (on Bright, about 6% grey) and a hand or tool held there to pure black.
+    // The darks keep at least 85% of what the game drew, so a cave stays as dark and moody as the game made it and
+    // never reads as a black void; the mids and lights keep the look's contrast (Euan 2026-10-29, SPEC §22). Cinematic
+    // and Ultra read cover per pixel from the heightfield (a dark doorway seen from the street too); Swift by the camera.
+#ifdef LENS_LIGHT
+    float under = 0.0;
+    if (!open && !plate && F(15).x > 0.0 && max(abs(pRel.x), abs(pRel.z)) < F(15).z) {
+        // the air in front of the surface (a step toward the camera), so a trunk's or a cliff's own column is never its cover
+        vec3 hw = pRel * (1.0 - 0.3 / max(length(pRel), 0.3)) + F(12).xyz;
+        under = smoothstep(0.5, 1.5, heightAt(ivec2(floor(hw.xz)), 0).g - hw.y);
+    }
+#else
+    float under = sky ? 0.0 : P(21).r;
+#endif
+    if (under > 0.0) c = mix(c, max(c, game * 0.85), under * (1.0 - smoothstep(0.05, 0.22, luma(game))));
+    // Within arm's reach (your hand and what it holds, a wall at your nose) never darker than the game at all: a held
+    // torch's handle, lit by its own flame, read dark under a cave look (Euan 2026-10-29). Eased out as Lens's light
+    // eases in, 1.25 to 1.45 blocks. (sky || farTerrain, not Lens light's `open`: Swift has no LENS_LIGHT and no `open`)
+    if (!(sky || farTerrain)) c = mix(c, max(c, game), 1.0 - smoothstep(1.25, 1.45, d));
     // crushed blacks: the darks fall to black and the light that's left looks brighter against them
     float crush = rit.g * 0.2;
     c = max(c - crush, 0.0) / (1.0 - crush);

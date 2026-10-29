@@ -71,6 +71,19 @@ public final class CitizenFx {
         b.speechKind = msg.kind();
     }
 
+    static boolean dialogueActive() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.crosshairPickEntity instanceof CitizenBody b && mc.player != null && mc.player.distanceToSqr(b) <= 36
+                && b.speech != null && b.tickCount < b.speechUntil;
+    }
+
+    static void advanceDialogue() {
+        if (Minecraft.getInstance().crosshairPickEntity instanceof CitizenBody b) {
+            b.speech = null;
+            b.speechUntil = b.tickCount;
+        }
+    }
+
     /** The name over a citizen you look at (made once per body). */
     static FormattedCharSequence label(CitizenBody b) {
         if (b.label == null) {

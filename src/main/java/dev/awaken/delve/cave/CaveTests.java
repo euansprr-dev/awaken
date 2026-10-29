@@ -29,6 +29,89 @@ final class CaveTests {
         AwakenTests.register("delve_cave_routes", 200, CaveTests::routes);
         AwakenTests.registerIsolated("delve_seep", 600, CaveTests::seep);
         AwakenTests.register("delve_hearth_points", 200, CaveTests::hearthPoints);
+        // its own batch: it installs a Hearth lookup, as delve_hearth_points does
+        AwakenTests.registerIsolated("delve_pick_trail", 200, CaveTests::pickTrail);
+        // its own batch: it reads a count of the server thread's lode plans, which other tests make on purpose
+        AwakenTests.registerIsolated("delve_horizon_flyover", 200, CaveTests::horizonFlyOver);
+    }
+
+    /**
+     * A fast flight over new land (SPEC §28.9): the Horizon's look every 96 blocks plans no lode region on the server
+     * thread and each look is quick; once the worker has answered, the sinkholes are the ones a search on the spot finds.
+     */
+    private static void horizonFlyOver(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        CaveHorizon.clear();
+        int before = dev.awaken.delve.LodePlans.serverPlans();
+        long worst = 0;
+        BlockPos at = null;
+        for (int i = 0; i < 40; i++) {
+            at = new BlockPos(3_000_000 + i * 96, 90, -3_000_000);
+            long t0 = System.nanoTime();
+            CaveHorizon.near(level, at, new int[]{CaveHorizon.NEW_PER_CALL});
+            worst = Math.max(worst, System.nanoTime() - t0);
+        }
+        h.assertValueEqual(dev.awaken.delve.LodePlans.serverPlans() - before, 0, "lode regions planned on the server thread during the flight");
+        h.assertTrue(worst < 250_000_000L, "the slowest look took " + worst / 1_000_000 + " ms");
+        long until = System.currentTimeMillis() + 60_000;
+        while (CaveHorizon.unknown(level, at) > 0 && System.currentTimeMillis() < until) {
+            CaveHorizon.near(level, at, new int[]{CaveHorizon.NEW_PER_CALL});
+            try {
+                Thread.sleep(5);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        h.assertValueEqual(CaveHorizon.unknown(level, at), 0, "candidates the worker hasn't answered");
+        List<Long> got = CaveHorizon.near(level, at, new int[]{0}).stream().map(Spec::id).toList();
+        List<Long> want = CaveHorizon.near(level, at, (set, c, first) -> CaveHorizon.search(level, set, c, first)).stream().map(Spec::id).toList();
+        h.assertValueEqual(got, want, "the worker's sinkholes are the search's");
+        // and the count sees a plan made here (so the flight's zero means something)
+        int counted = dev.awaken.delve.LodePlans.serverPlans();
+        dev.awaken.delve.LodePlans.region(level.getSeed(), 12_000, -12_000);
+        h.assertTrue(dev.awaken.delve.LodePlans.serverPlans() == counted + 1, "a plan on the server thread is counted");
+        CaveHorizon.clear();
+        h.succeed();
+    }
+
+    /**
+     * The trail "The Delver's Pick" (SPEC §34.4): one step per verse, in the verses' order, on the furthest-woken counter;
+     * its place "adit" answers once the search is done, and a home with no adit near (the flat test world) is handed the pick.
+     */
+    @SuppressWarnings("removal")
+    private static void pickTrail(GameTestHelper h) {
+        var trail = dev.awaken.trails.Trails.get("awaken:the_delvers_pick");
+        h.assertTrue(trail != null && trail.linear(), "the trail ships, in order");
+        var verses = dev.awaken.delve.PickVerses.VERSES;
+        h.assertValueEqual(trail.steps().size(), verses.length, "a step to find the pick and one per verse");
+        h.assertValueEqual(trail.steps().getFirst().done(), List.of("counter:" + dev.awaken.delve.WakingPick.PULLED), "the first step is the pull");
+        for (int i = 1; i < verses.length; i++) {
+            h.assertValueEqual(trail.steps().get(i).done(), List.of("count:" + dev.awaken.delve.PickVerses.WOKEN + ":" + i), "step " + i + " waits for " + verses[i].title);
+        }
+        h.assertTrue(dev.awaken.core.api.TrailsApi.hasPlace(PickTrail.PLACE), "the place 'adit' is known");
+        ServerLevel level = h.getLevel();
+        BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
+        h.assertTrue(PickTrail.find(level, at).isEmpty(), "no adit on flat land");
+        var p = h.makeMockServerPlayerInLevel();
+        p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        var before = dev.awaken.core.api.HearthHooks.installed();
+        try {
+            dev.awaken.core.api.HearthHooks.install(new dev.awaken.core.api.HearthHooks.Lookup() {
+                @Override public java.util.Optional<BlockPos> nearest(ServerLevel l, BlockPos pos, int radius) { return java.util.Optional.of(at); }
+                @Override public java.util.Optional<BlockPos> hearthOf(ServerLevel l, java.util.UUID player) { return java.util.Optional.of(at); }
+            });
+            long until = System.currentTimeMillis() + 20_000;
+            while (!dev.awaken.delve.WakingPick.carries(p) && System.currentTimeMillis() < until) {
+                h.assertTrue(dev.awaken.core.api.TrailsApi.placeOf(PickTrail.PLACE, p) == null, "no adit to point at");
+                Thread.onSpinWait();
+            }
+            h.assertTrue(dev.awaken.delve.WakingPick.carries(p), "no adit near home: the Hearth hands the pick over");
+            h.assertTrue(dev.awaken.trails.Conditions.met(p, trail.steps().getFirst().done().getFirst()), "and the first step is done");
+        } finally {
+            dev.awaken.core.api.HearthHooks.install(before);
+        }
+        h.succeed();
     }
 
     /**

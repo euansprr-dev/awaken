@@ -1,0 +1,167 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/hive_candle",
+    "wax": "awaken:block/hive_candle",
+    "flame": "awaken:block/hive_candle_flame"
+  },
+  "elements": [
+    {
+      "from": [
+        6.5,
+        0,
+        6.5
+      ],
+      "to": [
+        9.5,
+        7,
+        9.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            9,
+            3,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            9,
+            3,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            9,
+            3,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            9,
+            3,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            9,
+            3,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#wax",
+          "uv": [
+            0,
+            9,
+            3,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        6,
+        7,
+        8
+      ],
+      "to": [
+        10,
+        11,
+        8
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "y",
+        "angle": 45,
+        "rescale": true
+      },
+      "shade_direction_override": "up",
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            5,
+            8,
+            9
+          ],
+          "texture": "#flame"
+        },
+        "south": {
+          "uv": [
+            4,
+            5,
+            8,
+            9
+          ],
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        8,
+        7,
+        6
+      ],
+      "to": [
+        8,
+        11,
+        10
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "y",
+        "angle": 45,
+        "rescale": true
+      },
+      "shade_direction_override": "up",
+      "faces": {
+        "west": {
+          "uv": [
+            4,
+            5,
+            8,
+            9
+          ],
+          "texture": "#flame"
+        },
+        "east": {
+          "uv": [
+            4,
+            5,
+            8,
+            9
+          ],
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}

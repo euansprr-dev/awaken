@@ -82,6 +82,18 @@ final class Settlement implements dev.awaken.citizens.api.Settlement {
         recognition = new Recognition(this);
         lanterns = new Lanterns(this);
         ledger.work = work;
+        // (SPEC §28.11) spots and ring slots on the real ground: nobody stands in a block, in water or under a roof's edge
+        ledger.ground = new Ledger.Ground() {
+            @Override
+            public boolean stands(double x, double y, double z) {
+                return Footing.standableIfLoaded(level, x, y, z);
+            }
+
+            @Override
+            public double open(double x, double y, double z) {
+                return Footing.open(level, x, y, z);
+            }
+        };
         // how far from its origin its people can be: its furthest node, and a spot or an event's place beside it
         double far = 0;
         for (int i = 0; i < net.n; i++) far = Math.max(far, Math.hypot(net.x[i] - site.cx(), net.z[i] - site.cz()));

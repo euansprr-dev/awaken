@@ -84,10 +84,10 @@ public final class PowerCoreItem extends Item {
         Loadout.Owned owned = l == null ? null : l.get(type.id.toString());
         if (owned == null) {
             out.accept(Component.literal("Use to learn").withStyle(ChatFormatting.AQUA));
-        } else if (owned.level() < Loadout.MAX_LEVEL) {
-            out.accept(Component.literal("Known · use to level up (Lv " + owned.level() + " → " + (owned.level() + 1) + ")").withStyle(ChatFormatting.AQUA));
         } else {
-            out.accept(Component.literal("Known at max level · use to swap to this variant").withStyle(ChatFormatting.DARK_AQUA));
+            for (String line : dev.awaken.powers.PowerPreviews.client.apply(type, variantOf(stack))) {
+                out.accept(Component.literal(line).withStyle(ChatFormatting.AQUA));
+            }
         }
     }
 

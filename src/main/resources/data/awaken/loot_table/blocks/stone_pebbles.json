@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "awaken:blocks/stone_pebbles",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:stone_pebbles"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

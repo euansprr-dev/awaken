@@ -1,0 +1,145 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/pocket_engine",
+    "body": "awaken:block/pocket_engine",
+    "face": "awaken:block/pocket_engine_face",
+    "glow": "awaken:block/pocket_engine_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        0,
+        3
+      ],
+      "to": [
+        13,
+        10,
+        13
+      ],
+      "faces": {
+        "down": {
+          "texture": "#body"
+        },
+        "up": {
+          "texture": "#body"
+        },
+        "north": {
+          "texture": "#body"
+        },
+        "south": {
+          "texture": "#body"
+        },
+        "west": {
+          "texture": "#body"
+        },
+        "east": {
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "from": [
+        2.9,
+        1,
+        4
+      ],
+      "to": [
+        2.9,
+        9,
+        12
+      ],
+      "faces": {
+        "west": {
+          "texture": "#face"
+        }
+      }
+    },
+    {
+      "from": [
+        13.1,
+        1,
+        4
+      ],
+      "to": [
+        13.1,
+        9,
+        12
+      ],
+      "faces": {
+        "east": {
+          "texture": "#face"
+        }
+      }
+    },
+    {
+      "from": [
+        6,
+        10,
+        6
+      ],
+      "to": [
+        10,
+        12,
+        10
+      ],
+      "faces": {
+        "down": {
+          "texture": "#body"
+        },
+        "up": {
+          "texture": "#body"
+        },
+        "north": {
+          "texture": "#body"
+        },
+        "south": {
+          "texture": "#body"
+        },
+        "west": {
+          "texture": "#body"
+        },
+        "east": {
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "from": [
+        2.85,
+        1,
+        4
+      ],
+      "to": [
+        2.85,
+        9,
+        12
+      ],
+      "faces": {
+        "west": {
+          "texture": "#glow"
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        13.15,
+        1,
+        4
+      ],
+      "to": [
+        13.15,
+        9,
+        12
+      ],
+      "faces": {
+        "east": {
+          "texture": "#glow"
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}

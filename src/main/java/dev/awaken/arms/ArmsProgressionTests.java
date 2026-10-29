@@ -209,19 +209,25 @@ final class ArmsProgressionTests {
         h.succeed();
     }
 
-    /** The people who teach early: a chain's end pays its style once, or its price if it is already yours. */
+    /** Early homes: Oren's chain pays the Greatblade once (its price if known); left chests give the five found early in order (SPEC §43.3). */
     static void homes(net.minecraft.gametest.framework.GameTestHelper h) {
         ServerPlayer sp = survivor(h);
         ArmsApi.install(ArmsIssue.INSTANCE);
-        ArmsPatterns.questDone(sp, "ten_sheep_short");
-        h.assertTrue(ArmsApi.knows(sp, "spear") && count(sp, item("spear_blueprint")) == 1, "Hettie teaches the Spear at the end of Ten Sheep Short");
-        ArmsPatterns.questDone(sp, "ten_sheep_short");
-        h.assertTrue(count(sp, item("spear_blueprint")) == 1, "once");
+        ArmsPatterns.questDone(sp, "orens_first_steel");
+        h.assertTrue(ArmsApi.knows(sp, "greatblade") && count(sp, item("greatblade_blueprint")) == 1, "Oren teaches the Greatblade at the end of his chain");
+        ArmsPatterns.questDone(sp, "orens_first_steel");
+        h.assertTrue(count(sp, item("greatblade_blueprint")) == 1, "once");
         ServerPlayer knows = survivor(h);
         ArmsIssue.INSTANCE.learn(knows, "greatblade", "a test");
         ArmsPatterns.questDone(knows, "orens_first_steel");
         h.assertTrue(count(knows, CoreApi.ESSENCE_SHARD.get()) == ArmsHomes.rackPrice(ArmsHomes.of("greatblade").rank()), "a style you know pays its price instead");
-        h.assertTrue(ArmsHomes.all().stream().filter(x -> x.teacher() != null).count() == 6, "six people teach");
+        h.assertTrue(ArmsHomes.all().stream().filter(x -> x.teacher() != null).count() == 1, "only Oren teaches");
+        h.assertTrue(ArmsHomes.all().stream().filter(ArmsHomes.Home::leftChest).count() == 5, "five are found early in left chests");
+        ServerPlayer finder = survivor(h);
+        ArmsIssue.INSTANCE.learn(finder, "rapier", "a test");
+        h.assertTrue(ArmsApi.leftChestPattern(finder) && ArmsApi.knows(finder, "spear"), "the first chest gives the Spear");
+        h.assertTrue(ArmsApi.leftChestPattern(finder) && ArmsApi.knows(finder, "chainblade"), "the next skips a style you know");
+        h.assertTrue(ArmsApi.leftChestPattern(finder) && ArmsApi.leftChestPattern(finder) && !ArmsApi.leftChestPattern(finder), "and none once all five are known");
         h.succeed();
     }
 

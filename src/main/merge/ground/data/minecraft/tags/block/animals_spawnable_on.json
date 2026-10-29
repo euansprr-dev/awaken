@@ -1,5 +1,7 @@
 {
   "values": [
-    "awaken:turf_slab"
+    "awaken:turf_slab",
+    "awaken:wild_sward",
+    "awaken:trodden_earth"
   ]
 }

@@ -1,10 +1,14 @@
 package dev.awaken.gates.world;
 
+import dev.awaken.Awaken;
+import dev.awaken.gates.content.FloorWorld;
 import dev.awaken.gates.content.GatePlan;
 import dev.awaken.gates.content.Layout;
 import dev.awaken.gates.content.Modifier;
 import dev.awaken.gates.content.Theme;
 import dev.awaken.gates.content.Twist;
+import dev.awaken.gates.worlds.GateWorld;
+import dev.awaken.gates.worlds.GateWorlds;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -43,6 +47,11 @@ final class FloorBuilder {
             return new GateLayout(plan, main, List.of());
         }
         for (int f = 1; f <= plan.floors(); f++) {
+            FloorLayout w = worldFloor(plan, plan.theme(), 0, f, f == plan.floors());
+            if (w != null) {
+                main.add(w);
+                continue;
+            }
             Builder b = new Builder(plan, plan.theme(), 0, f, Hash.of(plan.seed(), 0, f));
             if (f == plan.floors()) b.bossFloor(false);
             else b.layout(plan.layout());
@@ -51,14 +60,94 @@ final class FloorBuilder {
         List<FloorLayout> annex = new ArrayList<>();
         if (plan.hasAnnex()) {
             Theme at = plan.annexTheme();
-            Builder a1 = new Builder(plan, at, 1, 1, Hash.of(plan.seed(), 1, 1));
-            a1.labyrinth(4, 4);
-            annex.add(a1.finish());
-            Builder a2 = new Builder(plan, at, 1, 2, Hash.of(plan.seed(), 1, 2));
-            a2.bossFloor(plan.twist() == Twist.GATE_WITHIN);
-            annex.add(a2.finish());
+            FloorLayout w1 = worldFloor(plan, at, 1, 1, false);
+            if (w1 != null) annex.add(w1);
+            else {
+                Builder a1 = new Builder(plan, at, 1, 1, Hash.of(plan.seed(), 1, 1));
+                a1.labyrinth(4, 4);
+                annex.add(a1.finish());
+            }
+            // the annex's second floor is always a Lord's: the inner gate's keeper (a small arena) or the echo's
+            boolean innerBoss = plan.twist() == Twist.GATE_WITHIN;
+            FloorLayout w2 = worldFloor(plan, at, 1, 2, true);
+            if (w2 != null) annex.add(w2);
+            else {
+                Builder a2 = new Builder(plan, at, 1, 2, Hash.of(plan.seed(), 1, 2));
+                a2.bossFloor(innerBoss);
+                annex.add(a2.finish());
+            }
         }
         return new GateLayout(plan, main, annex);
+    }
+
+    /**
+     * A floor's rooms exactly as today's builder makes them, logic only (types, monsters, keys, features, the Rig, the
+     * path): a world floor's programme, which its engine re-hosts on the world's own places (SPEC §38.5).
+     */
+    static Builder programme(GatePlan plan, Theme theme, int area, int floor) {
+        Builder b = new Builder(plan, theme, area, floor, Hash.of(plan.seed(), area, floor));
+        if (area == 0) {
+            if (floor == plan.floors()) b.bossFloor(false);
+            else b.layout(plan.layout());
+        } else if (floor == 1) b.labyrinth(4, 4);
+        else b.bossFloor(plan.twist() == Twist.GATE_WITHIN);
+        b.finishRooms();
+        return b;
+    }
+
+    /** Every floor of a plan in plot order: [area, floor] (main floors, then the annex's two). */
+    static List<int[]> floorOrder(GatePlan plan) {
+        List<int[]> out = new ArrayList<>();
+        if (plan.ritual() || plan.skybornTrial() || plan.leaperTrial()) {
+            out.add(new int[]{0, 1});
+            return out;
+        }
+        for (int f = 1; f <= plan.floors(); f++) out.add(new int[]{0, f});
+        if (plan.hasAnnex()) {
+            out.add(new int[]{1, 1});
+            out.add(new int[]{1, 2});
+        }
+        return out;
+    }
+
+    /** A floor's plot (content version 6+, else null): a function of the saved plan only, so plots never move. */
+    static Plots.Plot plotFor(GatePlan plan, int area, int floor) {
+        if (plan.contentVersion() < Plots.FIRST_VERSION) return null;
+        List<int[]> order = floorOrder(plan);
+        boolean[] tall = new boolean[order.size()];
+        int at = -1;
+        for (int i = 0; i < order.size(); i++) {
+            int[] af = order.get(i);
+            FloorWorld w = plan.worldFor(af[0], af[1]);
+            tall[i] = w != null && w.tall();
+            if (af[0] == area && af[1] == floor) at = i;
+        }
+        return at < 0 ? null : Plots.assign(tall)[at];
+    }
+
+    /**
+     * The floor its world's engine plans (SPEC §38), or null for today's rooms: no world picked, the recipe gone, an
+     * engine this build doesn't have, or three variations that couldn't make a complete floor.
+     */
+    static FloorLayout worldFloor(GatePlan plan, Theme theme, int area, int floor, boolean bossFloor) {
+        FloorWorld fw = plan.worldFor(area, floor);
+        if (fw == null) return null;
+        Plots.Plot plot = plotFor(plan, area, floor);
+        GateWorld w = GateWorlds.get(fw.world());
+        if (w == null || (bossFloor ? !w.boss() : !w.ordinary())) return null;
+        WorldEngine e = plot == null ? null : WorldEngine.of(w.kind());
+        if (e == null) return null;
+        for (int v = 0; v < 3; v++) {
+            try {
+                FloorLayout f = e.plan(new WorldEngine.Ctx(plan, theme, area, floor, bossFloor, plot, fw.world(), w, fw.mood(),
+                        Hash.of(plan.seed(), 400 + area, floor * 8 + v), v));
+                if (f != null) return f;
+            } catch (RuntimeException ex) {
+                Awaken.LOG.error("[gates] world {} failed to plan floor {} (variation {})", fw.world(), floor, v, ex);
+            }
+        }
+        Awaken.LOG.warn("[gates] world {} gave no complete floor {} ({}): today's rooms instead", fw.world(), floor, WorldEngine.WHY.get());
+        return null;
     }
 
     static final class Builder {
@@ -68,6 +157,8 @@ final class FloorBuilder {
         final long seed;
         final SplittableRandom rnd;
         final int rank;
+        /** The floor's plot (version 6+), or null (the stacked bands). */
+        final Plots.Plot plot;
         int w, h;
         int[] occ;
         final List<Room> rooms = new ArrayList<>();
@@ -83,6 +174,7 @@ final class FloorBuilder {
             this.seed = seed;
             this.rnd = new SplittableRandom(seed);
             this.rank = plan.rank().ordinal();
+            this.plot = plotFor(plan, area, floor);
         }
 
         // ---- grid helpers -----------------------------------------------------------------------------------------
@@ -540,6 +632,20 @@ final class FloorBuilder {
         // ---- finishing --------------------------------------------------------------------------------------------
 
         FloorLayout finish() {
+            finishRooms();
+            if (plot != null) {
+                // version 6: today's rooms inside the floor's own plot, the same rooms as version 5 built
+                int baseY = plot.minY() + Plots.ROOMS_BASE;
+                return new FloorLayout(area, floor, baseY, plot.slotX() + Cells.GRID_ORIGIN, plot.slotZ() + Cells.GRID_ORIGIN, w, h,
+                        theme, bossFloor, rooms, start, end, FloorLayout.Frame.band(plot, baseY));
+            }
+            int baseY = Cells.floorY(floor);
+            int ox = area == 0 ? Cells.GRID_ORIGIN : Cells.ANNEX_SLOT_X + Cells.GRID_ORIGIN;
+            return new FloorLayout(area, floor, baseY, ox, Cells.GRID_ORIGIN, w, h, theme, bossFloor, rooms, start, end);
+        }
+
+        /** Everything a floor's rooms are (types, monsters, features, the Rig, the path), before the floor is placed. */
+        void finishRooms() {
             if (start < 0 || end < 0 || rooms.isEmpty()) labyrinth(4, 4);
             ensureConnected();
             boolean friendly = plan.friendly();
@@ -582,9 +688,6 @@ final class FloorBuilder {
                 }
             }
             markPath();
-            int baseY = Cells.floorY(floor);
-            int ox = area == 0 ? Cells.GRID_ORIGIN : Cells.ANNEX_SLOT_X + Cells.GRID_ORIGIN;
-            return new FloorLayout(area, floor, baseY, ox, Cells.GRID_ORIGIN, w, h, theme, bossFloor, rooms, start, end);
         }
 
         /**

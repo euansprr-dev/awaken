@@ -1,0 +1,88 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "side": "awaken:block/abyss_iris",
+    "particle": "awaken:block/abyss_iris",
+    "glow": "awaken:block/abyss_iris_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#side",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#side",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#side",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#side",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#side",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#side",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#glow",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#glow",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#glow",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#glow",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#glow",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#glow",
+          "cullface": "east"
+        }
+      },
+      "light_emission": 15,
+      "shade_direction_override": "up"
+    }
+  ]
+}

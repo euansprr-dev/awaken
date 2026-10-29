@@ -1,0 +1,87 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "side": "awaken:block/fungal_moss",
+    "particle": "awaken:block/fungal_moss",
+    "top": "awaken:block/fungal_moss_top",
+    "bottom": "awaken:block/fungal_loam",
+    "glow": "awaken:block/fungal_moss_glow",
+    "glow_top": "awaken:block/fungal_moss_top_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#bottom",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#top",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#side",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#side",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#side",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#side",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#glow_top",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#glow",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#glow",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#glow",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#glow",
+          "cullface": "east"
+        }
+      },
+      "light_emission": 15,
+      "shade_direction_override": "up"
+    }
+  ]
+}

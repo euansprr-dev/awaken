@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "theme": "mirror_palace",
+  "name": "The Reflection",
+  "line": "The gate you came in by, every colour gone out of it and the lights all red. Your reflection is a little late.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "mirror": 1
+  },
+  "biome": "awaken:gate_world/the_reflection",
+  "moods": [
+    {
+      "id": "grey",
+      "name": "Grey",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "red_light",
+      "name": "Red light",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_reflection_red_light",
+      "life": [
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {},
+  "hero": [],
+  "life": [
+    "dust"
+  ],
+  "sound": "awaken:gate.world.palace_under",
+  "events": [
+    "doubled"
+  ],
+  "rule": "",
+  "secrets": [
+    {
+      "id": "the_true_colour",
+      "name": "The true colour"
+    }
+  ],
+  "keepsake": "grey_rose",
+  "keepsake_name": "A Grey Rose",
+  "keepsake_from": "the_true_colour"
+}

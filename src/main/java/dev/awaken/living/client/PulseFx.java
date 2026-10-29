@@ -89,6 +89,7 @@ final class PulseFx {
             s.since = now;
         }
         SHOWN.keySet().retainAll(keep);
+        StormSky.sync();
     }
 
     static void reset() {
