@@ -10734,6 +10734,11 @@ now, fought-on second storeys in a later plan.
   else a slab (on the Hive's pollen a pollen drift four layers deep); a hollow is opened with a shell under it. What grew
   on the floor line is moved up onto the new ground; elsewhere a drift at a rise's foot or in a dip (55%, one or two
   layers) or bits (by how wild it is: below).
+- **Soft steps at walls and roof steps** (`Relief.soften`, after the ground is laid): off the way (wild 0.3 or more),
+  about half the wall feet that rise sheer from a full block get the theme's stair (`Dress.ground(STAIRS)`), its back to
+  the wall; where the roof over a column is a block higher than beside it (on one side only), the theme's roof stair
+  (`Dress.ground(ROOF)`, the Hive's wax stairs) hangs upside down under it, stepping down to the lower roof, where the
+  roof is 4 or more over where you stand. Never on a pad; a column at a chunk's edge is left.
 - **Walls and roof over shaped ground.** A groove 1 high is cut into the wall's foot at the local ground (0.9 to 1.7
   deep, the wall's first 2 blocks), so walls aren't plumb from feet to head. The roof rises with the terraces (the
   terrace's height is added to it: no trench at a wall's foot), swells and dips away from the walls (+-7.5) and opens

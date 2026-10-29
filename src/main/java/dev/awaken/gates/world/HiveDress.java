@@ -13,7 +13,7 @@ import java.util.List;
 final class HiveDress extends Dress {
     final BlockState wax, waxDark, comb, capped, honey, floor, pollen, drip, drum, royal, petals, candle;
     /** Shaped ground (SPEC §38.14): wax banks in bands, floor slabs and stairs, pollen drifted, wax crumbs. */
-    final BlockState floorSlab, floorStairs, drift, crumbs;
+    final BlockState floorSlab, floorStairs, drift, crumbs, waxStairs;
     final boolean theComb, brood, lake, swarm;
 
     HiveDress(CaveEngine.Cave c) {
@@ -34,6 +34,7 @@ final class HiveDress extends Dress {
         floorStairs = mat("ground_stairs", "awaken:hive_floor_stairs");
         drift = mat("ground_drift", "awaken:hive_pollen_drift");
         crumbs = mat("ground_bits", "awaken:hive_wax_crumbs");
+        waxStairs = mat("roof_stairs", "awaken:hive_wax_stairs");
         String n = name();
         theComb = n.equals("the_comb");
         brood = n.equals("brood_hall");
@@ -88,6 +89,8 @@ final class HiveDress extends Dress {
             case Relief.STAIRS -> pollenHere ? null : floorStairs;
             case Relief.DRIFT -> drift;
             case Relief.BITS -> crumbs;
+            // the roof steps down in wax
+            case Relief.ROOF -> waxStairs;
             default -> null;
         };
     }

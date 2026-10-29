@@ -151,8 +151,9 @@ abstract class Dress {
 
     /**
      * A piece of shaped ground at a block ({@link Relief#BANK} under a raised floor, {@link Relief#SLAB} or
-     * {@link Relief#STAIRS} on a half step, a {@link Relief#DRIFT} at the foot of a rise, {@link Relief#BITS} lying on it),
-     * or null: the bank skinned like the shell, no half step, nothing lying there.
+     * {@link Relief#STAIRS} on a half step or at a wall's foot, a {@link Relief#DRIFT} at the foot of a rise,
+     * {@link Relief#BITS} lying on it, a {@link Relief#ROOF} stair hung where the roof steps), or null: the bank skinned like
+     * the shell, no half step, nothing lying there.
      */
     BlockState ground(int part, int x, int y, int z) {
         return null;

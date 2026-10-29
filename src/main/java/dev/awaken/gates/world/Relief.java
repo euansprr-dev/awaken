@@ -22,8 +22,8 @@ import java.util.List;
 final class Relief {
     /** Most a place's ground rises and sinks, in half blocks. */
     static final int RISE = 8, SINK = 4;
-    /** The theme's ground pieces. */
-    static final int BANK = 0, SLAB = 1, STAIRS = 2, DRIFT = 3, BITS = 4;
+    /** The theme's ground pieces ({@link #ROOF}: a stair hung upside down where the roof steps). */
+    static final int BANK = 0, SLAB = 1, STAIRS = 2, DRIFT = 3, BITS = 4, ROOF = 5;
 
     final CaveEngine.Cave c;
     final int W;
@@ -152,6 +152,7 @@ final class Relief {
             int[] b = Dress.box(r);
             for (int z = b[1]; z <= b[3]; z++) for (int x = b[0]; x <= b[2]; x++) stand[x + z * Plots.SIDE] = (byte) stand(x, z);
             c.s.op(b[0], W - 6, b[1], b[2], W - 6, b[3], (buf, x, y, z) -> column(buf, x, z));
+            if (e.getValue() != CaveEngine.Kind.LINK) c.s.op(b[0], W - 5, b[1], b[2], W - 5, b[3], (buf, x, y, z) -> soften(buf, x, z));
         }
         c.p.ground = stand;
         // the highest ground within 3, rows then columns
@@ -471,6 +472,55 @@ final class Relief {
                 if (wall != null) b.set(nx, yy, nz, wall);
             }
         }
+    }
+
+    /**
+     * Soft steps where the ground meets a wall and where the roof steps (38.14): off the way, half the wall's feet that
+     * rise sheer from a full block get a stair, its back to the wall; and where the roof over a column is a block higher
+     * than beside it, a stair hangs upside down under it, stepping down to the lower roof. Only where there's room:
+     * 4 or more over where you stand under a roof stair, 3 clear over a foot stair. A column whose neighbours aren't all
+     * in this chunk is left (the buffer can't see them).
+     */
+    void soften(Sculpt.Buf b, int x, int z) {
+        if (inside(x, z) <= 0 || pinned.get(x + z * Plots.SIDE) || (x & 15) == 0 || (x & 15) == 15 || (z & 15) == 0 || (z & 15) == 15) return;
+        int f = W + stand(x, z);
+        if (!b.open(x, f, z) || !b.open(x, f + 1, z) || !full(b, x, f - 1, z)) return;
+        Dress d = c.dress;
+        // the roof over the column, and a neighbour's a block lower
+        int top = f + 2;
+        while (top < f + 48 && b.open(x, top, z)) top++;
+        int roof = top;
+        if (roof - f >= 4 && full(b, x, roof, z)) {
+            BlockState hang = d.ground(ROOF, x, roof - 1, z);
+            Direction to = only(b, x, z, (nx, nz) -> full(b, nx, roof - 1, nz) && b.open(nx, roof - 2, nz),
+                    (nx, nz) -> b.open(nx, roof - 1, nz));
+            if (hang != null && to != null && hang.hasProperty(StairBlock.FACING))
+                b.set(x, roof - 1, z, hang.setValue(StairBlock.FACING, to).setValue(StairBlock.HALF, net.minecraft.world.level.block.state.properties.Half.TOP));
+        }
+        // a wall's foot: off the way, every other one by the noise
+        if (wild(x, z) < 0.3 || !b.open(x, f + 2, z) || Hash.noise(seed + 47, x, z, 3) < 0.5) return;
+        BlockState step = d.ground(STAIRS, x, f, z);
+        Direction wall = only(b, x, z, (nx, nz) -> full(b, nx, f, nz) && full(b, nx, f + 1, nz), (nx, nz) -> b.open(nx, f, nz));
+        if (step != null && wall != null && step.hasProperty(StairBlock.FACING)) b.set(x, f, z, step.setValue(StairBlock.FACING, wall));
+    }
+
+    /** The one side of (x, z) that is {@code is}, with the side across from it {@code across}; null if none or more. */
+    private static Direction only(Sculpt.Buf b, int x, int z, java.util.function.BiPredicate<Integer, Integer> is,
+                                  java.util.function.BiPredicate<Integer, Integer> across) {
+        Direction one = null;
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            if (!is.test(x + dir.getStepX(), z + dir.getStepZ())) continue;
+            if (one != null) return null;
+            one = dir;
+        }
+        return one != null && across.test(x - one.getStepX(), z - one.getStepZ()) ? one : null;
+    }
+
+    /** A full block there: the shell's skin, or a palette block that's a full cube. */
+    private static boolean full(Sculpt.Buf b, int x, int y, int z) {
+        if (b.get(x, y, z) == Sculpt.SOLID) return true;
+        BlockState s = b.state(x, y, z);
+        return s != null && s.isSolidRender();
     }
 
     /** Sets what grew on the floor line on the new ground (on a half step it's lost: it would float). */
