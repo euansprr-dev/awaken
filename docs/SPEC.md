@@ -5186,16 +5186,30 @@ magic.
 - **Light pass** (per pixel of the reduced buffer, from the full-size depth): position and normal from depth (of the
   two neighbours per axis the one continuing the centre's plane; a normal within 0.9 of an axis snaps to it, since
   block faces are axis-aligned), then:
-  - **Sun shadow from the heightfield**: march from the surface (nudged 0.06 along its normal) toward the light, 24
-    steps on Cinematic / 40 on Ultra, each longer than the last (to about 250 blocks), far steps testing a whole max
-    cell (mip by the stride) so a stride can't skip a ridge; solid → shadow, through leaves the light fades
-    (exp(-0.9 × stride)) for flecks under trees. Stops above the window's highest surface or past the trusted radius.
-    A heightmap counts a slab, stair or carpet as a whole block, so a surface's own column only counts from a block
-    above it; a point more than a block under its column's solid top (a roof, a cave) gets no sun.
+  - **Sun shadow from the heightfield**: from the surface (nudged 0.06 along its normal) toward the light, in two
+    parts. Near: every column the ray crosses, cell by cell, for the first 10 cells on Cinematic / 16 on Ultra, each
+    tested at the ray's lowest point over it (where it enters, since it climbs), so a step's or a wall's shadow is
+    whole and crisp to its far edge. Far: 15 / 24 steps from there, each longer than the last (to about 250 blocks, the
+    same reach as before), steps testing a whole max cell (mip by the stride) so a stride can't skip a ridge. Solid →
+    shadow; through leaves the light fades (exp(-0.9 × the length through the cell or the stride)) for flecks under
+    trees. Stops above the window's highest surface or past the trusted radius. A heightmap counts a slab, stair or
+    fence as a whole block (a carpet not at all), so a surface's own column only counts from a block above it; a point
+    more than a block under its column's solid top (a roof, a cave) gets no sun.
+    Why the near part (Euan 2026-10-29, "shadows break in the corner of my screen"): with point samples alone, a
+    one-block step's shadow came in two strengths. Toward its far edge the ray is under the step's top for only a
+    short wedge, and the strides there (0.6 to 0.75 blocks) jumped it about half the time, so the shadow faded out
+    partway, with a stepped edge against the stretch beside the step's corner that the march still caught. The near
+    walk costs about what the steps it replaces did (10 + 15 lookups on Cinematic for 24).
+    The ray leans across a sun disc about 1.4° wide (0.012 radians in radius), by each pixel's noise each frame, so a
+    shadow's edge is a penumbra that widens away from what casts it and the frames smooth it below the light buffer's
+    texels. A crisp edge at 960 × 540 would show as four-pixel stairs on a 4K screen.
   - **Contact shadows**: 6 / 12 steps through the depth buffer toward the light, 0.35 to 3 blocks (longer far off):
-    mobs, grass, slabs and block edges the heightfield can't hold. Within 96 blocks.
-  - **Ambient occlusion**: 6 / 10 cosine-weighted samples in a 0.9-block hemisphere against the depth buffer. Within
-    96 blocks.
+    mobs, grass, slabs and block edges the heightfield can't hold. Within 96 blocks. A hit within 4% of the screen's
+    edge counts less, down to nothing at the edge, so they fade out there rather than end in a line where the march
+    runs off the screen. Whatever is off the screen is the heightfield's, which never depends on the screen.
+  - **Ambient occlusion**: 6 / 10 cosine-weighted samples in a 0.9-block hemisphere against the depth buffer, averaged
+    over the samples that land on screen (at the edge a corner keeps its darkness, not a lighter rim). Within 96
+    blocks.
   - **Temporal accumulation**: each frame uses fresh noise (interleaved gradient noise stepped per frame) and blends
     into last frame's result reprojected by the frame matrices (0.14 new on Cinematic, 0.1 on Ultra); of the 2×2
     history texels only those that saw the same distance count (disocclusion), dithered into 8 bits so slow changes
