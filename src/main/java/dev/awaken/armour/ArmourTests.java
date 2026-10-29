@@ -151,6 +151,15 @@ final class ArmourTests {
         h.assertTrue(r.beats() == 4 && r.due(0) == 32F && r.due(1) == 40F && r.due(3) == 52F && r.due(4) == 64F,
                 "one bar to count in, then strikes on the x's");
         h.assertTrue(!r.offBeat(4F) && r.offBeat(36F) && !r.offBeat(32F), "the rests after the count-in are a helper's");
+        // at S the stand offers every set's four pieces: the list must go out whole (it once had room for 64 and dropped the smith)
+        h.assertTrue(ArmourSet.values().length * ForgeSong.PIECES.length <= ArmourPayloads.Offers.MAX, "the stand's list fits its payload");
+        var all = new java.util.ArrayList<ArmourPayloads.Offer>();
+        for (int k = 0; k < ArmourSet.values().length * ForgeSong.PIECES.length; k++)
+            all.add(new ArmourPayloads.Offer(k, List.of(new ArmourPayloads.Need("metal", "minecraft:iron_ingot", 1, 4)), 0));
+        var buf = io.netty.buffer.Unpooled.buffer();
+        ArmourPayloads.Offers.STREAM_CODEC.encode(buf, new ArmourPayloads.Offers(BlockPos.ZERO, 5, all, "", ""));
+        h.assertTrue(ArmourPayloads.Offers.STREAM_CODEC.decode(buf).offers().size() == all.size(), "every offer comes back");
+        buf.release();
         for (ArmourSet set : ArmourSet.values()) {
             ForgeSong.Song song = ForgeSong.song(set);
             h.assertTrue(song != null && song.melody().length == 8 && song.rhythm().beats() >= 3

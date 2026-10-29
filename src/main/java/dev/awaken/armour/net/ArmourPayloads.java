@@ -58,9 +58,11 @@ public final class ArmourPayloads {
      * metal can be worked (empty: all there); {@code hand} the same for work by hand.
      */
     public record Offers(BlockPos pos, int rank, List<Offer> offers, String place, String hand) implements CustomPacketPayload {
+        /** Every set's four pieces at S (29 sets, 116 offers today), with room for more sets: a longer list can't be sent. */
+        public static final int MAX = 256;
         public static final Type<Offers> TYPE = new Type<>(Awaken.id("forge_offers"));
         public static final StreamCodec<ByteBuf, Offers> STREAM_CODEC = StreamCodec.composite(
-                BlockPos.STREAM_CODEC, Offers::pos, ByteBufCodecs.VAR_INT, Offers::rank, Offer.STREAM_CODEC.apply(ByteBufCodecs.list(64)), Offers::offers,
+                BlockPos.STREAM_CODEC, Offers::pos, ByteBufCodecs.VAR_INT, Offers::rank, Offer.STREAM_CODEC.apply(ByteBufCodecs.list(MAX)), Offers::offers,
                 ByteBufCodecs.STRING_UTF8, Offers::place, ByteBufCodecs.STRING_UTF8, Offers::hand, Offers::new);
         @Override public Type<Offers> type() { return TYPE; }
     }
