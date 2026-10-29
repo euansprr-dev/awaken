@@ -26,7 +26,12 @@ public abstract class LifeModel extends EntityModel<LivingEntityRenderState> {
     }
 
     public LifeRig bindLife(LifeProfile p) {
-        if (life == null || life.p != p) life = LifeRig.of(root(), p, null, false);
+        return bindLife(p, null);
+    }
+
+    /** Binds the temperament and, when {@code id} has one, the creature's motion profile (its flight, SPEC §23). */
+    public LifeRig bindLife(LifeProfile p, @Nullable String id) {
+        if (life == null || life.p != p) life = LifeRig.of(root(), p, null, false, id);
         return life;
     }
 

@@ -1,0 +1,145 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/caves/silt",
+    "t": "awaken:block/caves/silt"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            14,
+            16,
+            16
+          ],
+          "texture": "#t"
+        },
+        "south": {
+          "uv": [
+            0,
+            14,
+            16,
+            16
+          ],
+          "texture": "#t"
+        },
+        "east": {
+          "uv": [
+            0,
+            14,
+            16,
+            16
+          ],
+          "texture": "#t"
+        },
+        "west": {
+          "uv": [
+            0,
+            14,
+            16,
+            16
+          ],
+          "texture": "#t"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#t"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#t"
+        }
+      }
+    },
+    {
+      "from": [
+        3.94,
+        2,
+        2.39
+      ],
+      "to": [
+        12.78,
+        4,
+        12.1
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3.22,
+            12,
+            12.06,
+            14
+          ],
+          "texture": "#t"
+        },
+        "south": {
+          "uv": [
+            3.94,
+            12,
+            12.78,
+            14
+          ],
+          "texture": "#t"
+        },
+        "east": {
+          "uv": [
+            3.9,
+            12,
+            13.61,
+            14
+          ],
+          "texture": "#t"
+        },
+        "west": {
+          "uv": [
+            2.39,
+            12,
+            12.1,
+            14
+          ],
+          "texture": "#t"
+        },
+        "up": {
+          "uv": [
+            3.94,
+            2.39,
+            12.78,
+            12.1
+          ],
+          "texture": "#t"
+        },
+        "down": {
+          "uv": [
+            3.94,
+            3.9,
+            12.78,
+            13.61
+          ],
+          "texture": "#t"
+        }
+      }
+    }
+  ]
+}

@@ -5,11 +5,14 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.SeagrassBlock;
+import net.minecraft.world.level.block.BonemealSource;
 import net.minecraft.world.level.block.VegetationBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -275,6 +278,108 @@ public final class SkinBlocks {
         protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess ticks, BlockPos pos, Direction dir,
                                          BlockPos neighbourPos, BlockState neighbour, RandomSource random) {
             return dir == Direction.DOWN && !canSurvive(state, level, pos) ? Blocks.AIR.defaultBlockState() : state;
+        }
+    }
+
+    /**
+     * A low drift on the floor (SPEC §42.8): the Pale Halls' rimstone, the Drowned Galleries' silt banks, the Black Vaults'
+     * ash. A few pixels high, walked over like a carpet that's there; held by the floor under it.
+     */
+    public static final class Drift extends Block {
+        private final VoxelShape shape;
+
+        public Drift(Properties p, double height) {
+            super(p);
+            shape = Block.box(0, 0, 0, 16, height, 16);
+            registerDefaultState(defaultBlockState().setValue(VARIANT, 0));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(VARIANT);
+        }
+
+        @Override
+        protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+            return shape;
+        }
+
+        @Override
+        protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+            return level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
+        }
+
+        @Override
+        protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess ticks, BlockPos pos, Direction dir,
+                                         BlockPos neighbourPos, BlockState neighbour, RandomSource random) {
+            return dir == Direction.DOWN && !canSurvive(state, level, pos) ? Blocks.AIR.defaultBlockState() : state;
+        }
+
+        @Override
+        protected boolean isPathfindable(BlockState state, PathComputationType type) {
+            return type == PathComputationType.LAND;
+        }
+    }
+
+    /** The Drowned Galleries' driftwood (SPEC §42.8): a bleached branch lying on the floor along its axis, a low step. */
+    public static final class Driftwood extends Block {
+        public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.HORIZONTAL_AXIS;
+        private static final VoxelShape X = Block.box(0, 0, 4, 16, 6, 12), Z = Block.box(4, 0, 0, 12, 6, 16);
+
+        public Driftwood(Properties p) {
+            super(p);
+            registerDefaultState(defaultBlockState().setValue(AXIS, Direction.Axis.X));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(AXIS);
+        }
+
+        @Override
+        protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+            return state.getValue(AXIS) == Direction.Axis.X ? X : Z;
+        }
+
+        @Override
+        protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+            return level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
+        }
+
+        @Override
+        protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess ticks, BlockPos pos, Direction dir,
+                                         BlockPos neighbourPos, BlockState neighbour, RandomSource random) {
+            return dir == Direction.DOWN && !canSurvive(state, level, pos) ? Blocks.AIR.defaultBlockState() : state;
+        }
+
+        @Override
+        protected BlockState rotate(BlockState state, Rotation rotation) {
+            return switch (rotation) {
+                case CLOCKWISE_90, COUNTERCLOCKWISE_90 -> state.setValue(AXIS, state.getValue(AXIS) == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X);
+                default -> state;
+            };
+        }
+
+        @Override
+        protected boolean isPathfindable(BlockState state, PathComputationType type) {
+            return type == PathComputationType.LAND;
+        }
+    }
+
+    /** The Drowned Galleries' pale cave weed (SPEC §42.8): seagrass's habits (it needs still water over a floor), no growing tall. */
+    public static final class CaveWeed extends SeagrassBlock {
+        public CaveWeed(Properties p) {
+            super(p);
+        }
+
+        @Override
+        public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state, BonemealSource source) {
+            return false;
+        }
+
+        @Override
+        public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state, BonemealSource source) {
+            return false;
         }
     }
 }

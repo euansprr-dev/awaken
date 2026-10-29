@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "awaken:rootways"
+    "awaken:rootways",
+    "awaken:drowned_galleries"
   ]
 }

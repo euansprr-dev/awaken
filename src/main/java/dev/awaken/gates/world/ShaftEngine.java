@@ -124,6 +124,8 @@ final class ShaftEngine implements WorldEngine {
         final BlockState wall, worn, crumbling, floor, wet, trim, bronze, candle, rope, chain0, lamp, light, grille, grilleZ, post, handbell;
         final List<FloorAir.Light> lights = new ArrayList<>();
         Sculpt s;
+        /** The Bell Crypt's wear (content 7), null before. */
+        CryptWear wear;
 
         Plan(Ctx c) {
             this.c = c;
@@ -440,6 +442,11 @@ final class ShaftEngine implements WorldEngine {
             if (hero("bell_column")) bellColumn();
             if (bridged) bridge();
             p.screens(s, W, (lat, rise, side) -> rise < 1 || rise % 4 == 3 || lat % 4 == 0 ? trim : side == 0 || side == 2 ? grille : grilleZ);
+            // the years on its floors (38.14, stage 3), new gates only
+            if (c.plan().contentVersion() >= 7) {
+                wear = new CryptWear(p, W, seed, floor, wet, trim, (r, x, z) -> false);
+                wear.apply(s);
+            }
             p.handbells(s);
             s.seal();
         }
@@ -745,6 +752,7 @@ final class ShaftEngine implements WorldEngine {
         // ---- what the floor walks on and how its air glows ----------------------------------------------------------
 
         boolean walk(Room r, int x, int z) {
+            if (wear != null && !wear.level(x, z)) return false;
             Kind k = kinds.get(r.id);
             if (k == null || k == Kind.BUILT) return false;
             if (onStair(r, upDoor(r), x, z)) return false;

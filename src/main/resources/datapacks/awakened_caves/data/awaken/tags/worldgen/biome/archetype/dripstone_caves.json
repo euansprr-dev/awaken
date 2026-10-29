@@ -1,6 +1,11 @@
 {
   "replace": false,
   "values": [
-    "awaken:ochre_deep"
+    "awaken:ochre_deep",
+    "awaken:pale_halls",
+    "awaken:windcleft",
+    "awaken:glimmer_hollows",
+    "awaken:black_vaults",
+    "awaken:violet_deep"
   ]
 }

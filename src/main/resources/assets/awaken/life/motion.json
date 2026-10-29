@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "about": "The motion layer (SPEC 23, Motion): how a body of ours walks on its legs and carries its weight, by rig id. A body listed here plants its feet on the ground and steps them in a gait by two-bone IK (gait), and gets the body features named in body; one with a fly block carries itself through air, water or sand (SPEC 23, Flight), keyed by rig id or, for a hand-built body, its creature id. A body not listed moves as before. Distances in model pixels unless noted; strides, reach and settle in blocks; times in seconds; angles in radians except fan (degrees).",
+  "creatures": {
+    "drip_lurker": {
+      "gait": {
+        "pattern": "ripple-alternate",
+        "duty": [0.78, 0.55], "stride": [1.0, 1.3],
+        "lift": [3.0, 4.5],
+        "reach": 0.55,
+        "settle": 0.08,
+        "crouch": 1.0,
+        "radius": 10,
+        "fan": 42,
+        "regrip": [3.0, 8.0],
+        "swing": 0.3,
+        "bob": 0.25,
+        "roll": 0.025,
+        "rear": 0.9
+      },
+      "body": {"headLevel": 0.6, "twist": 0.2, "slope": 0.8, "land": 1.0, "still": true, "creep": 2.5, "shift": 0.6}
+    },
+    "thousandfoot": {
+      "gait": {
+        "pattern": "ripple",
+        "lag": 0.2,
+        "duty": [0.65, 0.55],
+        "lift": [2.5, 3.5],
+        "stride": [1.0, 1.6],
+        "reach": 0.5,
+        "settle": 0.08,
+        "regrip": [5.0, 12.0],
+        "swing": 0.22,
+        "bob": 0.1,
+        "roll": 0.01,
+        "rear": 1.0,
+        "rearPairs": 3
+      },
+      "body": {"headLevel": 0.3, "twist": 0.3, "slope": 0.7, "land": 0.8, "shift": 0.4}
+    },
+    "wickling": {
+      "gait": {
+        "pattern": "alternate",
+        "duty": [0.6, 0.45],
+        "lift": [1.0, 1.6],
+        "stride": [0.35, 0.6],
+        "reach": 0.18,
+        "settle": 0.04,
+        "regrip": [3.0, 7.0],
+        "swing": 0.15,
+        "bob": 0.1,
+        "roll": 0.04,
+        "rear": 1.0
+      },
+      "body": {"headLevel": 0.4, "twist": 0.4, "slope": 0.8, "land": 1.0, "shift": 0.25}
+    },
+    "hushling": {
+      "gait": {
+        "pattern": "alternate",
+        "duty": [0.6, 0.4],
+        "lift": [2.0, 3.5],
+        "stride": [0.9, 1.5],
+        "reach": 0.35,
+        "settle": 0.08,
+        "regrip": [4.0, 9.0],
+        "swing": 0.3,
+        "bob": -0.6,
+        "roll": 0.05
+      },
+      "body": {"headLevel": 0.5, "twist": 0.3, "slope": 0.6, "land": 1.0, "still": true, "creep": 1.5, "shift": 0.5}
+    },
+    "weaver_queen": {
+      "gait": {
+        "pattern": "alternate",
+        "duty": [0.62, 0.5],
+        "lift": [4.0, 7.0],
+        "stride": [1.4, 2.6],
+        "reach": 0.9,
+        "settle": 0.12,
+        "regrip": [4.0, 10.0],
+        "swing": 0.32,
+        "bob": 0.5,
+        "roll": 0.02,
+        "rear": 1.0
+      },
+      "body": {"twist": 0.15, "slope": 0.85, "land": 1.0, "shift": 0.9}
+    },
+    "form_spider_2": {
+      "gait": {
+        "pattern": "alternate",
+        "duty": [0.62, 0.5],
+        "lift": [3.0, 5.0],
+        "reach": 0.5,
+        "settle": 0.1,
+        "regrip": [4.0, 10.0],
+        "swing": 0.22,
+        "bob": 0.35,
+        "roll": 0.02,
+        "rear": 1.0
+      },
+      "body": {"headLevel": 0.5, "twist": 0.25, "slope": 0.85, "land": 1.0, "shift": 0.5}
+    },
+    "form_spider_3": {
+      "gait": {
+        "pattern": "alternate",
+        "duty": [0.62, 0.5],
+        "lift": [3.5, 5.5],
+        "reach": 0.55,
+        "settle": 0.1,
+        "regrip": [4.0, 10.0],
+        "swing": 0.24,
+        "bob": 0.4,
+        "roll": 0.02,
+        "rear": 1.0
+      },
+      "body": {"headLevel": 0.5, "twist": 0.25, "slope": 0.85, "land": 1.0, "shift": 0.6}
+    },
+    "form_spider_4": {
+      "gait": {
+        "pattern": "alternate",
+        "duty": [0.62, 0.5],
+        "lift": [4.0, 6.5],
+        "reach": 0.62,
+        "settle": 0.1,
+        "regrip": [4.0, 10.0],
+        "swing": 0.26,
+        "bob": 0.45,
+        "roll": 0.02,
+        "rear": 1.0
+      },
+      "body": {"headLevel": 0.5, "twist": 0.25, "slope": 0.85, "land": 1.0, "shift": 0.7}
+    },
+    "form_spider_5": {
+      "gait": {
+        "pattern": "alternate",
+        "duty": [0.62, 0.5],
+        "lift": [4.5, 7.0],
+        "reach": 0.7,
+        "settle": 0.1,
+        "regrip": [4.0, 10.0],
+        "swing": 0.28,
+        "bob": 0.5,
+        "roll": 0.02,
+        "rear": 1.0
+      },
+      "body": {"headLevel": 0.5, "twist": 0.25, "slope": 0.85, "land": 1.0, "shift": 0.8}
+    },
+    "form_pig_2": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.68, 0.42], "stride": [0.66, 1.19], "lift": [1.04, 1.66], "reach": 0.36, "settle": 0.06, "crouch": 0.2, "regrip": [5.0, 12.0], "swing": 0.22, "bob": 0.35, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.25, "slope": 0.8, "land": 1.0, "shift": 0.35, "nod": 0.07}
+    },
+    "form_pig_3": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.68, 0.42], "stride": [0.74, 1.34], "lift": [1.17, 1.87], "reach": 0.39, "settle": 0.06, "crouch": 0.23, "regrip": [5.0, 12.0], "swing": 0.22, "bob": 0.35, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.25, "slope": 0.8, "land": 1.0, "shift": 0.4, "nod": 0.07}
+    },
+    "form_pig_4": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.68, 0.42], "stride": [0.83, 1.49], "lift": [1.3, 2.08], "reach": 0.42, "settle": 0.06, "crouch": 0.25, "regrip": [5.0, 12.0], "swing": 0.22, "bob": 0.35, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.25, "slope": 0.8, "land": 1.0, "shift": 0.45, "nod": 0.07}
+    },
+    "form_pig_5": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.68, 0.42], "stride": [0.91, 1.64], "lift": [1.43, 2.29], "reach": 0.45, "settle": 0.06, "crouch": 0.28, "regrip": [5.0, 12.0], "swing": 0.22, "bob": 0.35, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.25, "slope": 0.8, "land": 1.0, "shift": 0.5, "nod": 0.07}
+    },
+    "form_cow_2": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.72, 0.45], "stride": [0.87, 1.94], "lift": [1.55, 2.55], "reach": 0.55, "settle": 0.08, "crouch": 0.31, "regrip": [6.0, 14.0], "swing": 0.3, "bob": 0.5, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.2, "slope": 0.85, "land": 1.0, "shift": 0.6, "nod": 0.09}
+    },
+    "form_cow_3": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.72, 0.45], "stride": [1.0, 2.22], "lift": [1.77, 2.91], "reach": 0.6, "settle": 0.08, "crouch": 0.35, "regrip": [6.0, 14.0], "swing": 0.3, "bob": 0.5, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.2, "slope": 0.85, "land": 1.0, "shift": 0.7, "nod": 0.09}
+    },
+    "form_cow_4": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.72, 0.45], "stride": [1.13, 2.5], "lift": [1.99, 3.28], "reach": 0.65, "settle": 0.08, "crouch": 0.4, "regrip": [6.0, 14.0], "swing": 0.3, "bob": 0.5, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.2, "slope": 0.85, "land": 1.0, "shift": 0.8, "nod": 0.09}
+    },
+    "form_cow_5": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.72, 0.45], "stride": [1.25, 2.78], "lift": [2.21, 3.64], "reach": 0.7, "settle": 0.08, "crouch": 0.44, "regrip": [6.0, 14.0], "swing": 0.3, "bob": 0.5, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.2, "slope": 0.85, "land": 1.0, "shift": 0.9, "nod": 0.09}
+    },
+    "form_sheep_2": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.7, 0.42], "stride": [0.7, 1.64], "lift": [1.29, 2.15], "reach": 0.43, "settle": 0.06, "crouch": 0.28, "regrip": [5.0, 12.0], "swing": 0.24, "bob": 0.3, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.25, "slope": 0.8, "land": 1.0, "shift": 0.35, "nod": 0.08}
+    },
+    "form_sheep_3": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.7, 0.42], "stride": [0.77, 1.79], "lift": [1.4, 2.34], "reach": 0.47, "settle": 0.06, "crouch": 0.3, "regrip": [5.0, 12.0], "swing": 0.24, "bob": 0.3, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.25, "slope": 0.8, "land": 1.0, "shift": 0.4, "nod": 0.08}
+    },
+    "form_sheep_4": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.7, 0.42], "stride": [0.83, 1.93], "lift": [1.52, 2.54], "reach": 0.51, "settle": 0.06, "crouch": 0.33, "regrip": [5.0, 12.0], "swing": 0.24, "bob": 0.3, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.25, "slope": 0.8, "land": 1.0, "shift": 0.45, "nod": 0.08}
+    },
+    "form_sheep_5": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.7, 0.42], "stride": [0.9, 2.08], "lift": [1.64, 2.73], "reach": 0.55, "settle": 0.06, "crouch": 0.35, "regrip": [5.0, 12.0], "swing": 0.24, "bob": 0.3, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.25, "slope": 0.8, "land": 1.0, "shift": 0.5, "nod": 0.08}
+    },
+    "form_chicken_2": {
+      "gait": {"pattern": "alternate", "duty": [0.62, 0.4], "stride": [0.54, 0.94], "lift": [1.09, 1.56], "reach": 0.24, "settle": 0.04, "crouch": 0.3, "regrip": [3.0, 8.0], "swing": 0.16, "bob": 0.4, "roll": 0.05, "knees": "rigid"},
+      "body": {"headLevel": 0.7, "twist": 0.35, "slope": 0.6, "land": 1.2, "shift": 0.2}
+    },
+    "form_chicken_3": {
+      "gait": {"pattern": "alternate", "duty": [0.62, 0.4], "stride": [0.64, 1.09], "lift": [1.27, 1.82], "reach": 0.27, "settle": 0.04, "crouch": 0.35, "regrip": [3.0, 8.0], "swing": 0.16, "bob": 0.4, "roll": 0.05, "knees": "rigid"},
+      "body": {"headLevel": 0.7, "twist": 0.35, "slope": 0.6, "land": 1.2, "shift": 0.2}
+    },
+    "form_chicken_4": {
+      "gait": {"pattern": "alternate", "duty": [0.62, 0.4], "stride": [0.91, 1.56], "lift": [1.82, 2.6], "reach": 0.3, "settle": 0.04, "crouch": 0.5, "regrip": [3.0, 8.0], "swing": 0.16, "bob": 0.4, "roll": 0.05, "knees": "rigid"},
+      "body": {"headLevel": 0.7, "twist": 0.35, "slope": 0.6, "land": 1.2, "shift": 0.2}
+    },
+    "form_chicken_5": {
+      "gait": {"pattern": "alternate", "duty": [0.62, 0.4], "stride": [1.09, 1.88], "lift": [2.18, 3.12], "reach": 0.33, "settle": 0.04, "crouch": 0.6, "regrip": [3.0, 8.0], "swing": 0.16, "bob": 0.4, "roll": 0.05, "knees": "rigid"},
+      "body": {"headLevel": 0.7, "twist": 0.35, "slope": 0.6, "land": 1.2, "shift": 0.2}
+    },
+    "briar_sow": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.7, 0.42], "stride": [0.8, 1.49], "lift": [1.3, 2.27], "reach": 0.4, "settle": 0.08, "crouch": 0.3, "regrip": [5.0, 12.0], "swing": 0.26, "bob": 0.4, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.2, "slope": 0.8, "land": 1.2, "shift": 0.7, "nod": 0.06}
+    },
+    "old_antler": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.72, 0.4], "stride": [1.41, 2.81], "lift": [2.27, 4.23], "reach": 0.7, "settle": 0.1, "crouch": 0.4, "regrip": [6.0, 14.0], "swing": 0.32, "bob": 0.4, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.25, "slope": 0.85, "land": 1.0, "shift": 0.7, "nod": 0.05}
+    },
+    "stonehorn": {
+      "gait": {"pattern": "ripple-alternate", "duty": [0.7, 0.42], "stride": [0.96, 1.79], "lift": [1.62, 2.93], "reach": 0.45, "settle": 0.08, "crouch": 0.3, "regrip": [5.0, 12.0], "swing": 0.26, "bob": 0.45, "roll": 0.045, "rear": 1.0, "lag": -0.25, "lead": 0.2, "rock": 0.035, "knees": "rigid", "shoulder": 0.5},
+      "body": {"headLevel": 0.7, "twist": 0.2, "slope": 0.9, "land": 1.2, "shift": 0.8, "nod": 0.07}
+    },
+    "hollow_owl": {
+      "fly": {"wings": ["wing_l", "wing_r"], "tips": ["wingtip_l", "wingtip_r"], "flap": [0.7, 2.4, 0.5], "heave": 2.0, "glide": 0.12, "fast": 7, "bank": 0.18, "climb": 0.6, "tilt": 0.12, "level": 0.6}
+    },
+    "bogwick": {
+      "fly": {"wings": ["bwing_l", "bwing_r"], "heave": 0.6, "glide": 0.6, "fast": 5, "bank": 0.12, "climb": 0.4, "tilt": 0.25, "level": 0.3}
+    },
+    "empress_moth": {
+      "fly": {"wings": ["wing_fl", "wing_fr", "wing_hl", "wing_hr"], "glide": 0.45, "fast": 6, "bank": 0.16, "climb": 0.45, "tilt": 0.12, "level": 0.4}
+    },
+    "plumed_coil": {
+      "fly": {"always": true, "wings": ["wing2_l", "wing2_r", "wing5_l", "wing5_r"], "spine": ["seg0", "seg1", "seg2", "seg3", "seg4", "seg5", "seg6", "seg7", "seg8", "seg9"], "heave": 0.8, "glide": 0.4, "fast": 6, "bank": 0.2, "climb": 0.6, "tilt": 0.1, "level": 0.5, "bend": 0.25, "wave": [0.7, 1.2]}
+    },
+    "dune_wyrm": {
+      "fly": {"always": true, "spine": ["seg0", "seg1", "seg2", "seg3", "seg4", "seg5", "seg6", "seg7", "seg8"], "fast": 6, "bank": 0.1, "climb": 0.7, "level": 0.4, "bend": 0.3, "wave": [0.7, 1.25]}
+    },
+    "glimmerfin": {
+      "fly": {"spine": ["tail1", "tail2", "fin"], "fins": ["pec_l", "pec_r"], "fast": 4, "bank": 0.25, "climb": 0.7, "level": 0.3, "bend": 0.3, "wave": [0.55, 1.3], "tuck": 0.6}
+    },
+    "lantern_maw": {
+      "fly": {"spine": ["mtail1", "mtail2", "caudal"], "fins": ["mpec_l", "mpec_r"], "fast": 3, "bank": 0.12, "climb": 0.5, "level": 0.3, "bend": 0.25, "wave": [0.6, 1.2], "tuck": 0.35}
+    },
+    "tidesteed": {
+      "fly": {"spine": ["ttail1", "ttail2", "ttail3", "ttail4", "fluke"], "fins": ["pec_l", "pec_r"], "fast": 5, "bank": 0.2, "climb": 0.6, "level": 0.4, "bend": 0.25, "wave": [0.6, 1.3], "tuck": 0.4}
+    },
+    "brook_otter": {
+      "fly": {"spine": ["otail1", "otail2", "otail3"], "fast": 4, "bank": 0.2, "climb": 0.6, "level": 0.4, "bend": 0.3, "wave": [0.6, 1.3]}
+    },
+    "lumen_moth": {
+      "fly": {"wings": ["wing_left", "wing_right"], "heave": 0.9, "glide": 0.7, "fast": 4, "bank": 0.25, "climb": 0.4, "tilt": 0.3, "level": 0.3}
+    },
+    "petalwing": {
+      "fly": {"wings": ["wing_left", "wing_right"], "heave": 0.9, "glide": 0.4, "fast": 4, "bank": 0.25, "climb": 0.4, "tilt": 0.25, "level": 0.3}
+    },
+    "dune_ray": {
+      "fly": {"always": true, "wings": ["wing_left", "wing_right"], "spine": ["tail", "tail_end"], "heave": 0.8, "fast": 5, "bank": 0.3, "climb": 0.5, "tilt": 0.1, "bend": 0.35}
+    },
+    "deep_eel": {
+      "fly": {"always": true, "spine": ["seg0", "seg1", "seg2", "seg3", "seg4", "seg5"], "fast": 4, "bank": 0.1, "climb": 0.6, "level": 0.5, "bend": 0.45}
+    },
+    "tide_eel": {
+      "fly": {"always": true, "spine": ["seg0", "seg1", "seg2", "seg3", "seg4", "seg5"], "fast": 4, "bank": 0.1, "climb": 0.6, "level": 0.5, "bend": 0.45}
+    },
+    "cord_eater": {
+      "fly": {"always": true, "spine": ["seg0", "seg1", "seg2", "seg3", "seg4", "seg5"], "fast": 4, "bank": 0.1, "climb": 0.6, "level": 0.5, "bend": 0.45}
+    }
+  }
+}

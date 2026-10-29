@@ -1,0 +1,22 @@
+{
+  "type": "lithostitched:replace_partially",
+  "dimension": "minecraft:overworld",
+  "priority": -10,
+  "targets": "#awaken:caves/hosts",
+  "replacement": "awaken:violet_deep",
+  "parameters": {
+    "awaken:caves/y": {
+      "max_inclusive": -0.5
+    },
+    "depth": {
+      "min_inclusive": 0.16
+    },
+    "awaken:caves/deep": {
+      "min_inclusive": -0.19,
+      "max_inclusive": -0.018
+    },
+    "continentalness": {
+      "min_inclusive": -0.19
+    }
+  }
+}

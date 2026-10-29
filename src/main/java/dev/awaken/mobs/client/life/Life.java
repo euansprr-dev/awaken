@@ -50,10 +50,25 @@ public final class Life {
     public boolean boss;
     /** The body has its own roar clip: the layer only adds the breath and the shudder, not the rear. */
     public boolean roarClip;
+    /** On its feet on the ground (not falling, leaping or climbing): the feet may plant (SPEC §23, "Motion"). */
+    public boolean grounded = true;
+    /** A pose's clip owns the legs (hanging, resting, beached): the feet let go. */
+    public boolean legsFree;
+    /** It creeps up on a target (a hunter's stalk): a still body holds its breath and its fidgets, and sinks low. */
+    public boolean stalking;
+    /** A held pose rears it on its hind feet (a wickling reaching for its vine): the front pairs let go to the clip. */
+    public boolean rearing;
+    /** 0..1 how much it runs (the run clip's weight), for the feet's gait. */
+    public float gaitRun;
+    /** The renderer's own scale on top of the entity's (a cave spider's 0.7), so the feet land where the body is drawn. */
+    public float bodyScale = 1;
 
     // ---- what the layer works out ----------------------------------------------------------------------------------
     final LifeRig rig;
     final LifeProfile p;
+    /** The feet, for a body whose motion profile has a gait; the motion profile's body features. */
+    final @org.jspecify.annotations.Nullable Legs legs;
+    final MotionProfile.Body motion;
     int frame, springFrame = -1;
     private float lastAge = Float.NaN;
     float dt, t;
@@ -75,8 +90,20 @@ public final class Life {
     private float stX, stZ, stXv, stZv, lastHurt, tension, roarAt = -10;
     private boolean wasRoar, wasAggressive;
     // the outputs apply() and rootPose() add
-    float bodyPitch, bodyRoll, dip, headNod, headRoll, neckPitch, jawOpen, scratch;
+    float bodyPitch, bodyRoll, dip, headNod, headRoll, neckPitch, neckDrop, jawOpen, scratch;
     int scratchSide;
+    // the motion profile's: the gait's roll (the head holds level against it), the body's turn toward its look, a
+    // stalker's crouch (px), a landing's squash (px) and how fast it springs back, its weight drifting over its feet (px)
+    float swayRoll, twist, creep, land, shiftX, shiftZ;
+    private float landV, airFall, shiftT, shiftW;
+    private boolean wasAirborne;
+    // flight and swimming (SPEC §23, "Flight"): how much it is under way, its path's climb, its cruise (0..1), the share
+    // of its stroke it keeps, where its wings sit above their mean (read from the pose), the beat (cycles), what the body
+    // and spine do with them; each wing's and spine link's mean pose (the stroke is measured and scaled about it)
+    final MotionProfile.@org.jspecify.annotations.Nullable Fly fly;
+    float flyW, climb, cruise, keep = 1, wingE, heave, beat, flyPitch, flyRoll, bend;
+    int flyFrame = -1;
+    final float[] wingMean, spineMean;
     // idle fidgets
     private int idle = -1, idleSide;
     private float idleAt, idleLen, nextIdle, idleEnv, wetUntil = -10;
@@ -99,6 +126,11 @@ public final class Life {
         this.rig = rig;
         this.p = rig.p;
         this.seed = 0x9E3779B97F4A7C15L ^ (seed * 0xBF58476D1CE4E5B9L);
+        legs = rig.legs != null ? new Legs(rig.legs.rig, seed) : null;
+        motion = rig.motion != null ? rig.motion.body() : MotionProfile.Body.NONE;
+        fly = rig.fly;
+        wingMean = new float[rig.flyWings.length];
+        spineMean = new float[rig.flySpine.length * 3];
         int n = rig.n;
         ax = new float[n];
         ay = new float[n];
@@ -138,6 +170,11 @@ public final class Life {
 
     public boolean far() {
         return far;
+    }
+
+    /** The beat's pace for a body that beats its own wings or tail (1 when it has no flight): see {@link Flight#pace}. */
+    public float pace() {
+        return fly != null ? Flight.pace(climb, cruise) : 1.0F;
     }
 
     /** The head's look this frame, in degrees (written over the state's look so every model's look code uses it). */
@@ -200,6 +237,8 @@ public final class Life {
         if (breathPhase > Mth.TWO_PI * 64) breathPhase -= Mth.TWO_PI * 64;
         breath = Mth.sin(breathPhase - 0.35F * Mth.sin(breathPhase)); // a quicker in-breath, a slower out
         depth = p.breathDepth() * (1.0F + 1.2F * exertion);
+        boolean hold = motion.still() && stalking && dying < 0;
+        if (hold) depth *= 0.25F; // it holds its breath while it creeps
         if (dead) {
             float end = deathLength > 0 ? deathLength : 1.0F;
             float after = dying - end * 0.8F;
@@ -239,16 +278,20 @@ public final class Life {
         thudV += (-tw * tw * thud - 2 * 0.35F * tw * thudV) * dt;
         thud = Mth.clamp(thud + thudV * dt, -3.0F, 3.0F);
         // a wind-up gathers the body low; a step dips it, heavier for heavier creatures
-        dip = (dead ? 0.0F : p.bob() * moving * stepWave) + idleDip + tension * 0.7F + thud;
+        motionBody(dead);
+        dip = (dead ? 0.0F : p.bob() * moving * stepWave) + idleDip + tension * 0.7F + thud + land;
         float sway = p.sway() * Mth.DEG_TO_RAD * moving * Mth.sin(Mth.TWO_PI * phase);
         float lean = Mth.clamp(-yawRate * Math.min(1.0F, speed / 4.0F) * 0.09F * p.lean(), -0.22F, 0.22F);
+        swayRoll = sway + lean;
         float trem = tension * tension * (reduce ? 0.5F : 1.0F) * 0.03F * Mth.sin(t * 107.0F + tremPhase);
         float roarShake = roarT >= 0.3F && roarT < 1.4F ? 0.035F * Mth.sin(roarT * 44.0F) * (1.0F - (roarT - 0.3F) / 1.1F) : 0.0F;
         bodyPitch = stX + idlePitch - tension * 0.04F + (roarClip ? 0.0F : roarRear(roarT)) + trem * 0.6F;
         bodyRoll = stZ + sway + lean + idleRoll + trem;
         headRoll = idleHeadRoll + roarShake;
+        if (fly != null) flight(fly, dead);
         headNod = idleNod;
         neckPitch = idleNeck;
+        neckDrop = idleDrop;
         float roarJaw = rig.jaw != null && !roarClip && roarT >= 0.25F && roarT < 1.5F ? 0.45F * envelope(roarT - 0.25F, 1.25F, 0.15F, 0.3F) : 0.0F;
         jawOpen = idleJaw + roarJaw + (dead ? 0.25F * Math.min(1.0F, dying / 0.6F) : 0.0F);
         if (roarT >= 0 && roarT < 0.35F) depth += 1.2F * (roarT / 0.35F); // it fills its chest before the roar
@@ -276,8 +319,79 @@ public final class Life {
         eyeYaw = Mth.clamp(targetYaw - headYaw, -lead, lead);
         eyePitch = Mth.clamp(targetPitch - headPitch, -lead * 0.6F, lead * 0.6F);
         if (steerHead) writeHead(s);
+        twist = motion.twist() > 0 && !dead ? Mth.clamp(headYaw * motion.twist(), -0.35F, 0.35F) : 0.0F;
+        if (legs != null) {
+            MotionProfile.Gait g = legs.rig.gait;
+            float st = g.strideWalk() > 0 ? Mth.lerp(gaitRun, g.strideWalk(), g.strideRun() > 0 ? g.strideRun() : g.strideWalk())
+                    : stride > 0 ? stride : 1.0F;
+            boolean calmFeet = !busy && !far && tension < 0.05F && !hold;
+            // a wind-up, a strike, a roar or a still threat lifts the front pair: their clips rear and strike with them
+            boolean front = windup >= 0 || roar || rearing || (busy && hurt <= 0.01F) || (aggressive && walk < 0.1F);
+            float rear = front && !dead ? g.rear() : 0.0F, k = Math.min(1.0F, dt / 0.12F);
+            legs.rear += (rear - legs.rear) * k;
+            // a roar lifts one pair more
+            legs.rear2 += ((roar && !dead ? g.rear() : 0.0F) - legs.rear2) * k;
+            legs.face = rig.body != null ? twist * Mth.RAD_TO_DEG : 0.0F; // the body bone turns with its look, the hips with it
+            legs.update(s, dt, bodyScale, grounded && !legsFree && !dead && !swimming, st, gaitRun, calmFeet);
+        }
         // a boss on a body with no fall clip topples its whole weight (root level)
         deathFall(dead);
+    }
+
+    /**
+     * The motion profile's body (SPEC §23, "Motion"): a landing squashes it by how far it fell and it springs back up; a
+     * stalker sinks low on its legs.
+     */
+    private void motionBody(boolean dead) {
+        if (motion.land() > 0) {
+            if (!grounded) airFall = Math.min(airFall, vy);
+            else if (wasAirborne) {
+                landV += Math.min(60.0F, -airFall * 7.0F) * motion.land();
+                airFall = 0;
+            }
+            wasAirborne = !grounded;
+            float w = Mth.TWO_PI * 3.0F;
+            landV += (-w * w * land - 2 * 0.45F * w * landV) * dt;
+            land = Mth.clamp(land + landV * dt, -2.0F, 6.0F);
+        }
+        float want = stalking && !dead ? motion.creep() : 0.0F;
+        creep += (want - creep) * Math.min(1.0F, dt / 0.4F);
+        // standing, its weight drifts over its planted feet on two slow, unrelated beats (its own phase), so the legs
+        // keep giving and taking; a held breath stills it, walking hands the weight to the gait
+        if (motion.shift() > 0) {
+            boolean calm = !dead && grounded && !legsFree && walk < 0.1F && !(motion.still() && stalking);
+            shiftW += ((calm ? 1.0F : 0.0F) - shiftW) * Math.min(1.0F, dt / 0.6F);
+            shiftT += dt;
+            float ph = (seed & 1023) * 0.0061F;
+            shiftX = motion.shift() * shiftW * Mth.sin(shiftT * 1.31F + ph) * (0.7F + 0.3F * Mth.sin(shiftT * 0.23F + ph * 2));
+            shiftZ = motion.shift() * shiftW * 0.6F * Mth.sin(shiftT * 0.83F + ph * 1.7F);
+        }
+    }
+
+    /**
+     * Flight and swimming (SPEC §23, "Flight"): under way, the body noses into a cruise and along its path's climb or
+     * dive, banks into turns and rides its wings' stroke (it rises as they sweep down); a flier beats and glides by
+     * turns at a cruise and glides down a dive; the spine curves into a turn. {@link LifeRig#apply} beats, scales and
+     * reads the wings and spine.
+     */
+    private void flight(MotionProfile.Fly f, boolean dead) {
+        boolean on = !dead && (f.always() || airborne || swimming);
+        flyW += ((on ? 1.0F : 0.0F) - flyW) * Math.min(1.0F, dt / 0.3F);
+        climb += (Flight.climb(speed, vy) - climb) * Math.min(1.0F, dt / 0.25F);
+        float c = Mth.clamp(Mth.sqrt(speed * speed + vy * vy) / f.fast(), 0.0F, 1.0F);
+        cruise += (c - cruise) * Math.min(1.0F, dt / 0.3F);
+        // beat and glide by turns, on a slow wave of its own (about six seconds)
+        float lull = 0.5F + 0.5F * Mth.sin(t * 1.1F + (seed & 255) * 0.0245F);
+        keep += (Flight.keep(climb, cruise, f.glide(), lull) - keep) * Math.min(1.0F, dt / 0.35F);
+        beat += dt * f.flapHz() * Flight.pace(climb, cruise);
+        if (beat > 1024) beat -= 1024;
+        flyPitch = Flight.pitch(climb, cruise, f.climb(), f.tilt()) * flyW;
+        flyRoll = Flight.bank(yawRate, cruise, f.bank()) * flyW;
+        heave += (Flight.heave(wingE, f.heave()) * flyW - heave) * Math.min(1.0F, dt / 0.05F);
+        bend += (Flight.bend(yawRate, f.bend()) * flyW - bend) * Math.min(1.0F, dt / 0.2F);
+        bodyPitch += flyPitch;
+        bodyRoll += flyRoll;
+        dip += heave;
     }
 
     private void writeHead(LivingEntityRenderState s) {
@@ -395,7 +509,7 @@ public final class Life {
 
     // ---- idle fidgets -------------------------------------------------------------------------------------------------
 
-    private float idlePitch, idleRoll, idleDip, idleNod, idleHeadRoll, idleNeck, idleJaw;
+    private float idlePitch, idleRoll, idleDip, idleNod, idleHeadRoll, idleNeck, idleDrop, idleJaw;
 
     private void idles(LivingEntityRenderState s, boolean dead, boolean reduce) {
         if (s.isInWater) wasInWater = true;
@@ -403,10 +517,15 @@ public final class Life {
             wasInWater = false;
             wetUntil = t + 6.0F; // fresh out of the water: it'll shake itself dry when it stops
         }
-        boolean calm = !far && !dead && !busy && walk < 0.08F && tension < 0.05F && t - roarAt > 2.0F && !swimming && !airborne;
+        boolean calm = !far && !dead && !busy && walk < 0.08F && tension < 0.05F && t - roarAt > 2.0F && !swimming && !airborne
+                && !(motion.still() && stalking);
         if (idle < 0) {
             if (calm && !reduce && t >= nextIdle) start(pick());
             else if (!calm) nextIdle = Math.max(nextIdle, t + 1.5F + rand()); // settle a moment before fidgeting again
+        } else if (!calm && idleEnv < 0.02F) {
+            // a fidget it walked out of is over: a pause later in the walk mustn't drop it back into the middle of a graze
+            idle = -1;
+            nextIdle = Math.max(nextIdle, t + 1.5F + rand());
         }
         float target = 0;
         if (idle >= 0) {
@@ -419,7 +538,7 @@ public final class Life {
             }
         }
         idleEnv += (target - idleEnv) * Math.min(1.0F, dt / (target > idleEnv ? 0.05F : 0.25F));
-        fYaw = fPitch = idlePitch = idleRoll = idleDip = idleNod = idleHeadRoll = idleNeck = idleJaw = scratch = yawnShut = shakeAccel = 0;
+        fYaw = fPitch = idlePitch = idleRoll = idleDip = idleNod = idleHeadRoll = idleNeck = idleDrop = idleJaw = scratch = yawnShut = shakeAccel = 0;
         if (idle < 0 && idleEnv < 0.01F) return;
         float u = t - idleAt, e = idleEnv;
         float side = idleSide;
@@ -474,6 +593,24 @@ public final class Life {
                 fPitch = -0.16F * k;
                 fYaw = side * 0.2F * k;
             }
+            case GRAZE -> {
+                // down to the grass at its feet (the neck sinks in front of the chest, the forequarters dip), a tug at
+                // each bite, up again chewing; small bodies peck quicker
+                float up = idleLen - 1.6F, hz = Mth.clamp(1.4F * Mth.sqrt(14.0F / Math.max(4.0F, legLength())), 1.0F, 3.2F);
+                float k = envelope(u, up, 0.8F, 0.6F) * e;
+                float bite = u < up ? Mth.sin(u * Mth.TWO_PI * hz) : 0.0F, tug = bite > 0 ? bite * bite * k : 0.0F;
+                boolean neck = rig.neck != null;
+                fPitch = 0.55F * k;
+                fYaw = side * 0.12F * k * Mth.sin(u * 0.7F);
+                idlePitch = 0.07F * k;
+                idleDip = 0.8F * k;
+                idleNeck = (neck ? 0.65F : 0.0F) * k - 0.08F * tug;
+                idleNod = (neck ? 0.15F : 0.55F) * k + 0.07F * tug;
+                idleDrop = 3.0F * k;
+                float chew = envelope(u - up + 0.3F, 1.9F, 0.2F, 0.4F) * e, c = Mth.sin(u * 15.0F);
+                idleJaw = 0.2F * tug + 0.14F * chew * (0.5F + 0.5F * c);
+                idleHeadRoll = 0.05F * chew * c;
+            }
             case SETTLE -> {
                 float k = envelope(u, idleLen, 0.8F, 0.9F) * e;
                 idleRoll = side * 0.06F * k;
@@ -496,6 +633,14 @@ public final class Life {
             if (r <= 0) return i;
         }
         return -1;
+    }
+
+    /** The legs' mean length (px), or a cow's when it has no planted legs. */
+    private float legLength() {
+        if (legs == null || legs.rig.n == 0) return 14.0F;
+        float sum = 0;
+        for (int i = 0; i < legs.rig.n; i++) sum += legs.rig.reach(i);
+        return sum / legs.rig.n;
     }
 
     private float idleWeight(int i, float base) {
@@ -521,6 +666,7 @@ public final class Life {
             case SCRATCH -> 1.4F;
             case PERK -> 1.2F;
             case SETTLE -> 2.6F;
+            case GRAZE -> 5.0F + 4.0F * rand();
         };
         if (which == Idle.SHAKE.ordinal()) wetUntil = -10;
         if (which == Idle.FLICK.ordinal() && rig.n > 0) {

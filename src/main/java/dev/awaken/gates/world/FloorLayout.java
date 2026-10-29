@@ -59,6 +59,8 @@ public final class FloorLayout {
      * x + z * {@link Plots#SIDE}; null on a flat floor. Set once by the floor's engine.
      */
     byte[] ground;
+    /** The columns of a version 7 floor's high ledges and their stairs (SPEC §38.14, stage 4), null if none. Not saved. */
+    java.util.BitSet high;
 
     /**
      * One spot or box: a bell (its lip's centre ± its radius, lip to crown), a secret (where it's found; {@code id} the

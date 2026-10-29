@@ -98,6 +98,7 @@ final class CavesTests {
         AwakenTests.register("caves_skin_census", 2400, CavesTests::skin);
         AwakenTests.register("caves_underlife_sites", 200, CavesTests::underlife);
         AwakenTests.register("caves_region_rock", 2400, CavesTests::regionRock);
+        AwakenTests.register("caves_region_pieces", 2400, CavesTests::regionPieces);
     }
 
     // ---------------------------------------------------------------- the regions
@@ -199,8 +200,16 @@ final class CavesTests {
                             placed.computeIfAbsent(want, r -> new int[1])[0]++;
                             seedPlaced++;
                         }
-                        for (CaveRegion r : CaveRegion.ORDER) {
-                            if (r.band == band && (y <= CaveRegion.MAX_Y) && r.holds(hum, temp, cont, ero)) onLand.computeIfAbsent(r, q -> new int[1])[0]++;
+                        // its land: where its land holds and no region tried before it in the band, over the same slot, holds
+                        for (int ri = 0; ri < CaveRegion.ORDER.size(); ri++) {
+                            CaveRegion r = CaveRegion.ORDER.get(ri);
+                            if (r.band != band || y > CaveRegion.MAX_Y || !r.holds(hum, temp, cont, ero)) continue;
+                            boolean taken = false;
+                            for (int ei = 0; ei < ri && !taken; ei++) {
+                                CaveRegion e = CaveRegion.ORDER.get(ei);
+                                taken = e.band == band && e.fromQuantile < r.toQuantile && r.fromQuantile < e.toQuantile && e.holds(hum, temp, cont, ero);
+                            }
+                            if (!taken) onLand.computeIfAbsent(r, q -> new int[1])[0]++;
                         }
                         // as Lithostitched sees it: the climate quantised in the biome's target point, the fields as they are
                         Map<String, Float> at = new HashMap<>();
@@ -340,44 +349,50 @@ final class CavesTests {
                 }
             }
         }
-        // whole chunks over each region (the first few found on seed 777), plain against shaped
-        long seed = STUDIO_SEEDS[0];
-        RandomState plain = p.random(h, seed, false), shaped = p.random(h, seed, true);
-        Map<CaveRegion, List<ChunkPos>> found = regionChunks(h, plain, p.plainSettings().noiseRouter(), 8);
+        // whole chunks over each region (the first few found near the origin, on the first studio seed that has it: the
+        // Windcleft needs mountains), plain against shaped
+        Map<CaveRegion, Long> found = new EnumMap<>(CaveRegion.class);
         int changedHigh = 0, changedTop = 0;
         StringBuilder opened = new StringBuilder();
-        for (var e : found.entrySet()) {
-            long open0 = 0, open1 = 0, below = 0;
-            for (ChunkPos pos : e.getValue()) {
-                ProtoChunk a = build(level, p.plain(), plain, pos, heights), b = build(level, p.shaped(), shaped, pos, heights);
-                BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-                for (int dx = 0; dx < 16; dx++) {
-                    for (int dz = 0; dz < 16; dz++) {
-                        int top = a.getHeight(Heightmap.Types.WORLD_SURFACE_WG, dx, dz);
-                        for (int y = -60; y <= top; y++) {
-                            at.set(pos.getMinBlockX() + dx, y, pos.getMinBlockZ() + dz);
-                            BlockState sa = a.getBlockState(at), sb = b.getBlockState(at);
-                            boolean same = sa == sb;
-                            if (y > CaveRegion.MAX_Y + 5 && !same) changedHigh++;
-                            else if (y > top - 12 && !same) changedTop++;
-                            if (y <= CaveRegion.MAX_Y) {
-                                below++;
-                                if (open(sa)) open0++;
-                                if (open(sb)) open1++;
+        for (long seed : STUDIO_SEEDS) {
+            if (found.size() == CaveRegion.ORDER.size()) break;
+            RandomState plain = p.random(h, seed, false), shaped = p.random(h, seed, true);
+            for (var e : regionChunks(h, plain, p.plainSettings().noiseRouter(), 8).entrySet()) {
+                // a narrow shape (the Windcleft's cracks) may miss one or two chunks: take a seed with four or more
+                if (found.containsKey(e.getKey()) || e.getValue().size() < 4 && seed != STUDIO_SEEDS[STUDIO_SEEDS.length - 1]) continue;
+                found.put(e.getKey(), seed);
+                long open0 = 0, open1 = 0, below = 0;
+                for (ChunkPos pos : e.getValue()) {
+                    ProtoChunk a = build(level, p.plain(), plain, pos, heights), b = build(level, p.shaped(), shaped, pos, heights);
+                    BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+                    for (int dx = 0; dx < 16; dx++) {
+                        for (int dz = 0; dz < 16; dz++) {
+                            int top = a.getHeight(Heightmap.Types.WORLD_SURFACE_WG, dx, dz);
+                            for (int y = -60; y <= top; y++) {
+                                at.set(pos.getMinBlockX() + dx, y, pos.getMinBlockZ() + dz);
+                                BlockState sa = a.getBlockState(at), sb = b.getBlockState(at);
+                                boolean same = sa == sb;
+                                if (y > CaveRegion.MAX_Y + 5 && !same) changedHigh++;
+                                else if (y > top - 12 && !same) changedTop++;
+                                if (y <= CaveRegion.MAX_Y) {
+                                    below++;
+                                    if (open(sa)) open0++;
+                                    if (open(sb)) open1++;
+                                }
                             }
                         }
                     }
                 }
+                opened.append(String.format(Locale.ROOT, " %s (%d chunks, seed %d): open %.1f%% -> %.1f%%;", e.getKey().id, e.getValue().size(), seed,
+                        open0 * 100.0 / Math.max(1, below), open1 * 100.0 / Math.max(1, below)));
+                // over all its chunks: a shape opens in patches (a terrace layer on about 30% of the land), so one chunk may miss
+                h.assertTrue(open1 > open0 + below / 200, e.getKey().id + "'s shapes open new cave under its land: " + open0 + " -> " + open1 + " of " + below);
             }
-            opened.append(String.format(Locale.ROOT, " %s (%d chunks): open %.1f%% -> %.1f%%;", e.getKey().id, e.getValue().size(),
-                    open0 * 100.0 / Math.max(1, below), open1 * 100.0 / Math.max(1, below)));
-            // over all its chunks: a shape opens in patches (a terrace layer on about 30% of the land), so one chunk may miss
-            h.assertTrue(open1 > open0 + below / 200, e.getKey().id + "'s shapes open new cave under its land: " + open0 + " -> " + open1 + " of " + below);
         }
         Awaken.LOG.info("[caves] the land on top: {} of {} grid columns moved{}; in region chunks {} blocks changed above y {} and {} in the top 12 "
                 + "under the ground; cave under y {}:{} {} ms", moved, columns * 2, where, changedHigh, CaveRegion.MAX_Y + 5, changedTop, CaveRegion.MAX_Y,
                 opened, System.currentTimeMillis() - t0);
-        for (CaveRegion r : CaveRegion.ORDER) h.assertTrue(found.containsKey(r), r.id + " is found near the origin of seed " + seed);
+        for (CaveRegion r : CaveRegion.ORDER) h.assertTrue(found.containsKey(r), r.id + " is found near the origin of a studio seed");
         h.assertTrue(moved == 0, "the surface and sea floor never move (" + moved + " columns did:" + where + ")");
         h.assertTrue(changedHigh == 0 && changedTop == 0, "nothing changes above the cap or in the top 12 blocks (" + changedHigh + ", " + changedTop + ")");
         h.succeed();
@@ -565,6 +580,14 @@ final class CavesTests {
     private static final java.util.Set<Block> HOSTS = java.util.Set.of(Blocks.STONE, Blocks.ANDESITE, Blocks.DIORITE, Blocks.GRANITE, Blocks.TUFF);
     /** The regions' gates (SPEC §42.7): glowcaps on at most this share of open floor cells, and the regions' cost per chunk. */
     static final double GLOW_MAX = 0.06, REGION_SHARE = 0.25;
+    /** Chunks filled for each region, and how many of them first only warm the code (the timing is the rest's). */
+    static final int REGION_CHUNKS = 5, REGION_WARM = 2;
+    /**
+     * Each warming chunk is dressed this many times, and each timed one filled and dressed this many times (fresh copies):
+     * the fastest of each is the work's cost. On the CI runner the region rule ran 3 to 5 times its Mac cost after two warm
+     * dressings (the skin, warm from its own test, didn't): the compiler hadn't caught up with code only this test runs.
+     */
+    static final int REGION_WARM_RUNS = 6, REGION_REPEATS = 5;
 
     /**
      * The regions' own (SPEC §42.7), on real filled chunks (the census's) told they are all one region: four Rootways, four
@@ -588,36 +611,13 @@ final class CavesTests {
         for (CaveRegion region : new CaveRegion[] {CaveRegion.ROOTWAYS, CaveRegion.OCHRE_DEEP}) {
             CaveSkin.RegionKit kit = CaveSkin.kit(region);
             Block rock = kit.rock().get();
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < REGION_CHUNKS; i++) {
                 ChunkPos pos = new ChunkPos(-40 + i * 21, region == CaveRegion.ROOTWAYS ? -30 : -11);
                 long f0 = System.nanoTime();
                 ProtoChunk chunk = build(level, p.shaped(), rs, pos, heights);
                 long fillOne = System.nanoTime() - f0;
-                if (i > 0) fillNanos += fillOne;
                 int cx = pos.getMinBlockX(), cz = pos.getMinBlockZ();
-                BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
-                CaveSkinFeature.Cells cells = new CaveSkinFeature.Cells() {
-                    @Override
-                    public BlockState get(int x, int y, int z) {
-                        if ((x & ~15) != cx || (z & ~15) != cz || y < -64 || y >= 320) return stone;
-                        return chunk.getSection(chunk.getSectionIndex(y)).getBlockState(x & 15, y & 15, z & 15);
-                    }
-
-                    @Override
-                    public void set(int x, int y, int z, BlockState state) {
-                        chunk.setBlockState(m.set(x, y, z), state, 0);
-                    }
-
-                    @Override
-                    public int top(int x, int z) {
-                        return chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x & 15, z & 15);
-                    }
-
-                    @Override
-                    public int minY() {
-                        return -64;
-                    }
-                };
+                CaveSkinFeature.Cells cells = benchCells(chunk, cx, cz);
                 int under = CaveSkinFeature.UNDER_GROUND, limit = CaveSkinFeature.REGION_UNDER;
                 // plant the ores in solid host rock (all 26 round it host), under the region's limit, three apart in y
                 List<BlockPos> ores = new ArrayList<>();
@@ -650,10 +650,27 @@ final class CavesTests {
                     }
                 }
                 CaveSkinFeature.Regions regions = (x, y, z) -> region;
+                if (i < REGION_WARM) {
+                    for (int run = 1; run < REGION_WARM_RUNS; run++) {
+                        ProtoChunk copy = build(level, p.shaped(), rs, pos, heights);
+                        CaveSkinFeature.dress(benchCells(copy, cx, cz), cx, cz, seed, copy, regions);
+                    }
+                }
                 long t = System.nanoTime();
                 CaveSkinFeature.dress(cells, cx, cz, seed, chunk, regions);
-                if (i > 0) {
+                if (i >= REGION_WARM) {
                     long one = System.nanoTime() - t;
+                    // again on fresh copies: the fastest fill and dressing measure the work (a pause or a busy machine only adds)
+                    for (int rep = 1; rep < REGION_REPEATS; rep++) {
+                        long f1 = System.nanoTime();
+                        ProtoChunk copy = build(level, p.shaped(), rs, pos, heights);
+                        fillOne = Math.min(fillOne, System.nanoTime() - f1);
+                        CaveSkinFeature.Cells again = benchCells(copy, cx, cz);
+                        long t1 = System.nanoTime();
+                        CaveSkinFeature.dress(again, cx, cz, seed, copy, regions);
+                        one = Math.min(one, System.nanoTime() - t1);
+                    }
+                    fillNanos += fillOne;
                     nanos += one;
                     ratios.add(one / (double) fillOne);
                     n++;
@@ -723,7 +740,7 @@ final class CavesTests {
             }
         }
         double ms = nanos / 1e6 / n, fill = fillNanos / 1e6 / n, glow = glowcaps / (double) Math.max(1, floors);
-        Awaken.LOG.info("[caves] regions on {} timed chunks of 8: {} cells of region rock, {} glowcaps ({} of {} open floors), {} root curtain blocks, {} rust crust, {} rust flowstone, {} ember lichen; {} ms a chunk against {} ms to fill it",
+        Awaken.LOG.info("[caves] regions on {} timed chunks of " + 2 * REGION_CHUNKS + ": {} cells of region rock, {} glowcaps ({} of {} open floors), {} root curtain blocks, {} rust crust, {} rust flowstone, {} ember lichen; {} ms a chunk against {} ms to fill it",
                 n, swapped, glowcaps, String.format(Locale.ROOT, "%.3f", glow), floors, roots, rust, flow, ember, String.format(Locale.ROOT, "%.3f", ms),
                 String.format(Locale.ROOT, "%.2f", fill));
         h.assertTrue(glowcaps > 0 && roots > 0 && rust > 0 && flow > 0 && ember > 0, "every region piece is laid");
@@ -732,6 +749,79 @@ final class CavesTests {
         double mid = ratios.isEmpty() ? 0 : (ratios.get((ratios.size() - 1) / 2) + ratios.get(ratios.size() / 2)) / 2;
         h.assertTrue(mid <= REGION_SHARE, "the skin with the regions costs " + String.format(Locale.ROOT, "%.2f", ms) + " ms a chunk, "
                 + Math.round(mid * 100) + "% of the fill on the middle chunk (budget " + Math.round(REGION_SHARE * 100) + "%)");
+        h.succeed();
+    }
+
+    /** The P3 regions' own pieces (SPEC §42.8), by region: the first of each is its floor's, and must be laid. */
+    private static Map<CaveRegion, List<Block>> pieces() {
+        Map<CaveRegion, List<Block>> m = new java.util.EnumMap<>(CaveRegion.class);
+        m.put(CaveRegion.PALE_HALLS, List.of(CaveSkin.RIMSTONE.get(), CaveSkin.CAVE_PEARLS.get()));
+        m.put(CaveRegion.WINDCLEFT, List.of(CaveSkin.RIME.get(), CaveSkin.OLD_ROPE.get()));
+        m.put(CaveRegion.DROWNED_GALLERIES, List.of(CaveSkin.SILT.get(), CaveSkin.DRIFTWOOD.get(), CaveSkin.CAVE_WEED.get(), CaveSkin.GLOW_ALGAE.get()));
+        m.put(CaveRegion.GLIMMER_HOLLOWS, List.of(CaveSkin.AMBER_CRYSTAL.get(), CaveSkin.GLACIAL_CRYSTAL.get()));
+        m.put(CaveRegion.BLACK_VAULTS, List.of(CaveSkin.ASH.get()));
+        m.put(CaveRegion.VIOLET_DEEP, List.of(CaveSkin.VIOLET_GROWTH.get(), CaveSkin.SHED_CHITIN.get()));
+        return m;
+    }
+
+    /**
+     * The P3 regions' pieces (SPEC §42.8) on real filled chunks, two told they are all one region for each of the six:
+     * each lays its floor's piece (the Glimmer Hollows either crystal) and no other region's, and driftwood and shed
+     * chitin keep to their own share of the roll (at most twice their rate of the open floors: a silt or growth roll that
+     * missed its field once laid driftwood on a third of the Drowned Galleries' floor).
+     */
+    private static void regionPieces(GameTestHelper h) {
+        Pair p = pair(h);
+        var level = h.getLevel();
+        LevelHeightAccessor heights = LevelHeightAccessor.create(-64, 384);
+        long seed = STUDIO_SEEDS[0];
+        RandomState rs = p.random(h, seed, true);
+        Map<CaveRegion, List<Block>> pieces = pieces();
+        StringBuilder log = new StringBuilder();
+        int k = 0;
+        for (var e : pieces.entrySet()) {
+            CaveRegion region = e.getKey();
+            Map<Block, Integer> count = new java.util.IdentityHashMap<>();
+            int floors = 0;
+            for (int i = 0; i < 2; i++) {
+                ChunkPos pos = new ChunkPos(-40 + i * 21, -50 + k * 9);
+                ProtoChunk chunk = build(level, p.shaped(), rs, pos, heights);
+                int cx = pos.getMinBlockX(), cz = pos.getMinBlockZ();
+                CaveSkinFeature.Cells cells = benchCells(chunk, cx, cz);
+                int limit = CaveSkinFeature.REGION_UNDER;
+                for (int dx = 0; dx < 16; dx++) for (int dz = 0; dz < 16; dz++) {
+                    int top = cells.top(cx + dx, cz + dz);
+                    for (int y = -60; y < top - limit; y++) {
+                        if (cells.get(cx + dx, y, cz + dz).isAir() && cells.get(cx + dx, y - 1, cz + dz).isSolidRender()) floors++;
+                    }
+                }
+                CaveSkinFeature.dress(cells, cx, cz, seed, chunk, (x, y, z) -> region);
+                for (int dx = 0; dx < 16; dx++) for (int dz = 0; dz < 16; dz++) for (int y = -62; y < 300; y++) {
+                    Block b = cells.get(cx + dx, y, cz + dz).getBlock();
+                    for (var other : pieces.entrySet()) {
+                        if (!other.getValue().contains(b)) continue;
+                        h.assertTrue(other.getKey() == region, b + " only in the " + other.getKey() + ", not the " + region + " at " + (cx + dx) + " " + y + " " + (cz + dz));
+                        count.merge(b, 1, Integer::sum);
+                    }
+                }
+            }
+            k++;
+            List<Block> own = e.getValue();
+            int first = region == CaveRegion.GLIMMER_HOLLOWS ? count.getOrDefault(own.get(0), 0) + count.getOrDefault(own.get(1), 0)
+                    : count.getOrDefault(own.get(0), 0);
+            log.append(region.id).append(": ").append(floors).append(" floors");
+            for (Block b : own) log.append(", ").append(count.getOrDefault(b, 0)).append(' ').append(b.builtInRegistryHolder().key().identifier().getPath());
+            log.append("; ");
+            h.assertTrue(first > 0, "the " + region + " lays its floor's " + own.get(0) + " (" + floors + " open floors)");
+            for (Block b : new Block[] {CaveSkin.DRIFTWOOD.get(), CaveSkin.SHED_CHITIN.get()}) {
+                if (!own.contains(b)) continue;
+                double rate = b == CaveSkin.DRIFTWOOD.get() ? CaveSkinFeature.DRIFTWOOD : CaveSkinFeature.CHITIN;
+                double share = count.getOrDefault(b, 0) / (double) Math.max(1, floors);
+                h.assertTrue(share <= 2 * rate, b + " keeps to its share in the " + region + ": " + String.format(Locale.ROOT, "%.3f", share)
+                        + " of open floors (rate " + rate + ")");
+            }
+        }
+        Awaken.LOG.info("[caves] region pieces: {}", log);
         h.succeed();
     }
 
@@ -780,19 +870,22 @@ final class CavesTests {
         DensityFunction[] fields = new DensityFunction[3];
         for (var band : CaveRegion.Band.values()) fields[band.ordinal()] = fn(functions, "caves/" + band.key());
         Map<CaveRegion, List<ChunkPos>> out = new EnumMap<>(CaveRegion.class);
-        for (int cx = -48; cx <= 48; cx += 6) {
-            for (int cz = -48; cz <= 48; cz += 6) {
+        for (int cx = -48; cx <= 48; cx += 3) {
+            for (int cz = -48; cz <= 48; cz += 3) {
                 int x = cx * 16 + 8, z = cz * 16 + 8;
                 float hum = rs.sampleBlockValueUncached(router.vegetation(), x, 0, z), temp = rs.sampleBlockValueUncached(router.temperature(), x, 0, z);
                 float cont = rs.sampleBlockValueUncached(router.continents(), x, 0, z), ero = rs.sampleBlockValueUncached(router.erosion(), x, 0, z);
-                for (int y = 0; y <= CaveRegion.MAX_Y; y += 8) {
+                for (int y = -56; y <= CaveRegion.MAX_Y; y += 8) {
                     float d = rs.sampleBlockValueUncached(router.depth(), x, y, z);
                     if (d < CaveShapeFunction.SEAL + CaveShapeFunction.SEAL_FADE) continue;
                     CaveRegion.Band band = CaveRegion.Band.at(y, d);
                     CaveRegion r = CaveRegion.at(y, d, rs.sampleBlockValueUncached(fields[band.ordinal()], x, 0, z), hum, temp, cont, ero);
                     if (r == null) continue;
                     var list = out.computeIfAbsent(r, k -> new ArrayList<>());
-                    if (list.size() < each && !list.contains(new ChunkPos(cx, cz))) list.add(new ChunkPos(cx, cz));
+                    // spread out (six chunks apart at least), so one patch of a shape doesn't stand for the region
+                    boolean near = false;
+                    for (ChunkPos q : list) near |= Math.abs(q.x() - cx) < 6 && Math.abs(q.z() - cz) < 6;
+                    if (list.size() < each && !near) list.add(new ChunkPos(cx, cz));
                 }
             }
         }
@@ -804,6 +897,34 @@ final class CavesTests {
      * thread this test holds: no structure starts (the beardifier is empty for both fills alike) and the surface laid as
      * plains everywhere (an uncached biome lookup per column would cost more than the fill and hide its cost).
      */
+    /** One filled chunk's cells for the skin (stone all round it), as the bench reads and writes them. */
+    private static CaveSkinFeature.Cells benchCells(ProtoChunk chunk, int cx, int cz) {
+        BlockState stone = Blocks.STONE.defaultBlockState();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        return new CaveSkinFeature.Cells() {
+            @Override
+            public BlockState get(int x, int y, int z) {
+                if ((x & ~15) != cx || (z & ~15) != cz || y < -64 || y >= 320) return stone;
+                return chunk.getSection(chunk.getSectionIndex(y)).getBlockState(x & 15, y & 15, z & 15);
+            }
+
+            @Override
+            public void set(int x, int y, int z, BlockState state) {
+                chunk.setBlockState(m.set(x, y, z), state, 0);
+            }
+
+            @Override
+            public int top(int x, int z) {
+                return chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x & 15, z & 15);
+            }
+
+            @Override
+            public int minY() {
+                return -64;
+            }
+        };
+    }
+
     private static ProtoChunk build(ServerLevel level, NoiseBasedChunkGenerator gen, RandomState rs, ChunkPos pos, LevelHeightAccessor heights) {
         ProtoChunk chunk = new ProtoChunk(pos, UpgradeData.EMPTY, heights, level.palettedContainerFactory(), null);
         Holder<Biome> plains = level.registryAccess().lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS);

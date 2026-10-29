@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "awaken:block/crypt_flagstone",
+    "top": "awaken:block/crypt_flagstone",
+    "side": "awaken:block/crypt_flagstone"
+  }
+}

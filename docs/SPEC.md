@@ -5642,7 +5642,13 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
 - **Idle fidgets**, only when still, calm and within 32 blocks, chosen by weight from what the body has: look around (the
   head lags the eyes), sniff (head down, quick nods), flick (an ear, a tail, a feeler or a wing), shake (body roll at
   7.5 Hz, everything loose flops; a creature fresh out of water shakes itself dry once it stops), stretch, yawn (eyes
-  squint shut), scratch (a hind leg kicks), perk (head up, alert), settle (a weight shift). Herds never move in step:
+  squint shut), scratch (a hind leg kicks), perk (head up, alert), settle (a weight shift), graze (a walker on planted
+  feet only: 5-9 s; the forequarters dip 0.07 rad and sink 0.8 px, the neck bends 0.65 rad and sinks 3 px in front of the
+  chest (the head 0.55 rad without a neck), the head looks 0.55 rad down and drifts side to side, a tug and a jaw snap
+  at each bite (1.4 a second for a cow's 14 px legs, quicker for shorter legs, up to 3.2: a chicken pecks), then 1.6 s
+  head up chewing; the grazer temperament weighs it 6, the beast 3; Euan 2026-10-29). A fidget it walks out of is
+  over once it has faded (a pause later in the walk dropped the second close tour's sheep back into the middle of a
+  graze). Herds never move in step:
   each creature's timers, breath phase and rate (±10%) and idle clock start from its own seed.
 - **Graph blending, no pops**: the angry stance, held poses, swimming and the glide ease in and out (0.05-0.3 s); swim
   and wing loops run on integrated clocks (age × speed jumped their phase when the speed changed); one-shot clips (bite,
@@ -5661,6 +5667,12 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
   inside `with P.eyes():` (`fauna_rig.EyeRec`) and writes `<id>_blink.png` (the skin under the eye with a lash line)
   and `<id>_glow_blink.png` (the eyes' light out); the renderer draws them while the eyes are shut. 14 creatures have
   them; existing textures are byte-identical.
+- **The look reaches the model** (fixed 2026-10-29): NeoForge clears a render state's data right after
+  `extractRenderState` (`RenderStateExtensions.onUpdateEntityRenderState`), so the `AwLook` our renderers set there was
+  gone by `setupAnim`: `Life.from` was null and the layer's pose (legs, flight, springs, blinks), tint, glow and flash
+  never drew on the Hero, Wild and hand-built (`AwMobRenderer`) bodies; only form bodies (extracted from a modifier)
+  had it. `MobsClient` registers a render state modifier that puts the entity's same look back after the clear. Bosses
+  (the kit's renderer, and `AwMobRenderer`'s boss tiers) are left out until the boss work takes it.
 - **Cost and limits**: client only; nothing allocated per frame (render states carry a reference); springs and fidgets
   off past 32 blocks (springs settle), blinks off past 32; breath and the slow head everywhere (cheap). Reduced motion
   (`awaken-client` `reducedMotion`, the body module's) turns idle fidgets off and halves springs, tremble and stagger;
@@ -5673,6 +5685,232 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
 - Test: `creature_life_binds` (every body of ours gets a temperament, every rig and hand-built naming with ears or a tail
   gets springs on them, every creature that blinks has lids, eye bones or a closed-eye skin). Tour:
   `tools/autopilot/creature-life.txt` (PACK=perf,feel; clips in run-autopilot/clips/life_*).
+
+### 23.1 Motion: feet on the ground, weight over them (Euan 2026-10-29: "on par with Fresh Animations")
+
+Every Awaken creature on our own bodies (not bosses, not people) moves to the bar Fresh Animations sets for vanilla's
+mobs. The principles are learned from it, never its files: a stride driven by ground speed, weight that shifts over the
+feet, overlap and follow-through, idles with variety, head and eye life, reactions to hits and turns, anticipation and
+follow-through on attacks, and every creature moving the way its body and nature say. The life layer above already gives
+breath, springs, fidgets, the look, the stagger and the fall; the motion layer adds the feet and the carriage.
+
+- **Data**: `assets/awaken/life/motion.json` (schemaVersion 1), by rig id. A body not listed moves exactly as before (the
+  kit's bosses have no entry). `gait`: `pattern` (`ripple`: one pair at a time from the back forward, each `lag` of a
+  cycle after the pair behind it, the two sides half a cycle apart (`lag` 0: one wave over the side); `alternate`:
+  opposite sets; `ripple-alternate`: the first walking, the second once it runs, 0.45 in and 0.25 out), `duty` (share of
+  a cycle a foot stands, walking and running), `lift` (px a step rises), `stride` (blocks a cycle covers; 0 the rig's
+  own), `reach` (blocks a planted foot may trail before it steps at once), `settle` (blocks from home a foot may rest
+  when the body stops), `crouch` (px the body sinks on its legs), `radius` and `fan` (where each foot stands: px out
+  from its hip, the front ones fanned forward and the back ones back by `fan` degrees), `regrip` (seconds between a calm
+  creature's idle re-grips of one foot), `swing` (the longest a step takes), `bob` (px the body sinks while feet are up),
+  `roll` (radians it leans off a lifted foot; a four-legged body's hind foot counts 0.6, so a trot's diagonal pair
+  still tips it off the forefoot), `rock` (radians it noses down while forefeet are up and up while hind feet are,
+  twice a stride on a walk), `rear` (how far the front `rearPairs` pairs, 1 unless set, let go to the
+  clips while the body rears: a wind-up, a strike or a cue, a roar, or a still threat; a roar lets one pair more go),
+  `knees` (`auto`, `forward`, `back`: which way a leg that stands straight at rest bends; `auto` breaks the forelegs of a
+  body with legs one behind another forward and every other leg back, a bird's and a biped's back; a leg bent at rest
+  keeps its own bulge).
+  `body`: `headLevel` (the head holds level against the gait's and the ground's pitch and roll), `twist` (the body turns
+  this share of its look, at most 0.35 rad), `slope` (it pitches and rolls with the ground under its planted feet),
+  `land` (a landing squashes it by how far it fell: a spring at 3 Hz kicked by the fall speed), `still` (a stalking
+  hunter holds its breath to a quarter, plays no fidgets and no re-grips), `creep` (px it sinks while stalking), `shift`
+  (px its weight drifts over its planted feet while it stands, on two slow unrelated beats in its own phase, leaning a
+  little over the side it moves to; the legs give and take under it; gone in 0.6 s once it walks, stalks or lets go),
+  `nod` (radians the neck, or the head without one, dips while a forefoot is up: a grazer's head bobbing with its steps).
+- **Legs** (`LegRig`, plain data, checked on the server): a leg is a LEG-role bone that hangs from a non-leg with exactly
+  one LEG-role child (hip and knee), which has at most one LEG-role child of its own (a foot, the tarsus of a long
+  spider leg: it rides the shin as it stands at rest, the IK reaching with its tip) and nothing below that. Each is posed
+  by two-bone IK in the hip's parent frame: the
+  knee goes where the two lengths meet on the side it bulged at rest (its pole), the hip's rest frame is turned onto the
+  new thigh frame, and the knee only bends about its own hinge (the shortest turn between two directions both square to
+  it). Applied last in `LifeRig.apply` (after the clips, the look and the springs), blended over the clips by the feet's
+  weight; out of reach the leg points straight at its target. Only bodies whose body bone carries the head (the feet
+  ride the body bone; a pose-stack body would carry them off their spots), or that have no head bone at all and a motion
+  profile (the weaver queen's face is on its thorax; a headless body without one keeps its old pose-stack motion).
+- **Rigid legs** (`knees: rigid`; Euan 2026-10-29, the form cow's shins came off its thighs): a blocky leg whose shin
+  pivots right on the thigh's end face opens a wedge at any knee bend, so it has no knee, as Fresh Animations' cows,
+  pigs, sheep, chickens and horses have none. Its knee holds its rest whatever the clips do; the whole leg turns toward
+  its foot's spot about a point `shoulder` × its length above the hip (a shoulder blade's or a pelvis's swing: the
+  leg's top slides fore and aft inside the body, as far as the body's own cubes have room ahead of and behind it, so
+  the leg reaches far at a modest angle), then its pivot slides straight up into the body (at most half the leg) or a
+  touch down (the depth the leg's top sits inside the body, less 1 px for its tilted corners) until the foot stands on
+  its spot. The vault reaches from that turned pivot. The check: every leg straight at rest whose thigh doesn't reach
+  past the knee's pivot by enough to hide 20° of bend (the thigh's overreach against the shin's half-thickness) must be
+  rigid. Rigid: the forms' pigs, cows, sheep (shoulder 0.5) and chickens (0), the sow, the stag and the ram (0.5);
+  their steps lift 0.65 of what the knees had (the leg slides up into the body to clear the ground), and a rigid hoof's
+  swing runs a touch past its spot and settles back onto it (its path's ease plus 0.25·u·sin(πu), about 4%).
+- **Fresh Animations' walk, read close up** (2026-10-29, `mob-anims-close`: vanilla's cow, pig, sheep beside ours side
+  on): their forefoot steps before the hind foot on its side (ours stepped hind first, so the near feet met in a V under
+  the belly), their legs reach forward more than they trail, and the cow and sheep step shorter. So the four-legged
+  walkers (the form grazers, the sow, the stag, the ram) ripple from the front (`lag` -0.25), land 0.2 of a stand
+  further ahead (`lead`), roll 0.045 off a lifted foot (a trot's diagonal pair too), rock 0.035 fore and aft, hold the
+  head 0.7 level, and the forms' cows and sheep walk 0.8 of their old stride.
+- **Starts** (2026-10-29, the second close tour: our cow, pig and spider did the splits setting off and breaking into
+  a trot, and FA's never do, its swing growing with the pace): from a stand, or into a new gait, the stride starts at
+  0.4 of its length and grows to the whole of it over 0.9 s (a change of gait starts at 0.7), so the first steps are
+  short and quick and the feet still waiting their turn are never left far behind. A landing is never further ahead of
+  its home than its place in a steady stride (duty × stride × (0.5 + lead), plus 5% of a stride), and a planted foot
+  trailing more than its steady lift point (duty × stride × (0.5 - lead)) plus 30% of a stride steps at once (a
+  catch-up, 0.75 of a swing, 0.12 s to `swing`; past 38% it steps even while a neighbour is up).
+- **Turns** (2026-10-29, the orchestrator's read of the close tour: a cow and a pig turned on the spot crossed their
+  legs in an X and were still leaning a second and a half later): a planted foot's trail is read along its own home's
+  path, the body's turn included (its home 0.1 s on, from the body's way and turn), and the landing's cap counts the
+  turn's speed at the feet too. Swinging round on the spot (the turn's speed at the feet over the body's way), a foot
+  steps as soon as it is three `settle`s off its spot and slides after the body past four (FA's feet slide through a
+  turn; a quick one outruns any steps). A rigid leg's planted foot slides rather than lean more than 40° from its
+  shoulder (`Legs.SLIP`). Standing, feet off their spots step back the furthest first, up to half of them at once but
+  never two neighbours (one at a time left the last leg leaning for 1.5 s). The feet stand and step under the body
+  bone's twist toward its look (`Legs.face`; vanilla keeps a standing mob's body 50° behind its facing after a turn,
+  so the head stays round and the twist stays), though they are handed to the legs in the root's model space.
+- **Feet** (`Legs`, per creature, from the render extraction once a frame; nothing allocated): a planted foot keeps its
+  world position while the body moves over it. A gait clock runs with the ground covered plus the arc the feet sweep
+  when it turns on the spot (yaw × the feet's mean distance from the middle), so a turn steps too. A foot lifts when the
+  clock reaches its place in the pattern, swings for (1 - duty) of a cycle (0.08 s to `swing`) on an arc that peaks
+  before the middle, and lands where its home will be halfway through its next stand (velocity and turn rate ahead,
+  capped at 80% of `reach`), on the ground under that spot (collision tops from a block above the feet to three below,
+  never more than a block up or down). A foot left beyond `reach` steps at once unless a neighbour (same side, next
+  rank, or its opposite) is up. Stopped for 0.3 s, the foot furthest out of place (beyond `settle`) steps back under the
+  body, one at a time; a calm one re-grips. The body rides its feet: half the planted feet's mean height (±4 px), nose
+  up a rise and leaning across a slope (front against back feet, left against right, ±0.35 rad, eased over 0.12 s),
+  sinking `bob` × the share of feet in the air and leaning off a lifted one. The hips vault: a straight leg at full
+  height reaches only a little forward or back, so the body drops as far as its furthest planted foot needs (past what
+  the crouch and the ground sink it, at most a quarter of the mean leg, eased over 0.05 s), which gives a long-legged
+  walk its dip at every step. Off the ground (the `P_AIR` pose bit),
+  hanging, resting, sleeping, beached, deflated, swimming or dying, the clips own the legs (the weight eases out over
+  0.12 s, the feet held planted meanwhile); landing, the feet stand at home again and ease back in over 0.15 s. A
+  first sight or a jump of more than 3 blocks stands them at home. Inputs from the renderer: `grounded` (the feet may
+  plant), `legsFree` (a pose that holds the legs), `stalking`, `rearing` (a held pose that rears it on its hind feet: the
+  front pairs go to the clip), `gaitRun` (0..1) and `bodyScale` (a renderer's own scale on top of the entity's, so the
+  feet's world spots match the drawn body: the cave spider's 0.7). WildRenderer: grounded unless `P_AIR`, legs free while
+  hanging, resting, beached, asleep or deflated, rearing while it ripens. HeroRenderer (the named beasts): grounded unless
+  `P_AIR`, legs free while it rests or burrows. FormRenderer: on the ground and not climbing.
+- **Clips** of a profiled body move the body over its feet, the head, the tail, the jaw, and own the legs only when the
+  feet let go (hanging, leaping, dying, a wind-up's front pair). Their walk and run legs stay for anything drawn without
+  a life (the clip is what shows if nothing plants the feet).
+- **Drip Lurker** (`drip_lurker`; six two-bone legs, hunter): ripple-alternate, duty 0.78/0.55, steps 3/4.5 px high, feet
+  10 px out from the hips fanned 42°, crouch 1 px, reach 0.55, re-grips every 3-8 s, `rear` 0.9; head level 0.6, twist
+  0.2, slope 0.8, land 1, `still` with a 2.5 px creep; temperament: no step bob, sway 0.3, look/sniff/stretch/settle
+  fidgets. It strides 1.0 blocks walking and 1.3 running (its rig's 1.0/1.8; were 1.6/3.0, too long for its legs). Motion: it waits on
+  planted feet with the cone swaying like a stalactite in a draught and the fangs tasting the air one at a time; it
+  creeps low on a slow ripple of single steps, holding its breath and its fidgets while it stalks; it glides level over
+  its feet when it walks (no bob), cone lagging, and leans into a run on alternating sets; angry and still it sinks, head
+  down, fangs spread and quivering; every wind-up lets its front pair go so it rears them, spread and trembling, before
+  the lunge throws the body forward with the fangs snapping shut, overshoots and settles; Spike Drop rears high then
+  crashes cone-first, the body squashing and the cone whipping after; a blow jerks the body up and back over its planted
+  feet with the cone lagging; it dies rearing with its legs flung out, drops on its side and the legs curl up over it
+  and twitch one by one; hanging, each leg flexes on its own breath round the cone. Its rest pose stands the front pair
+  forward and the back pair back (the rig had the front legs raked backward).
+- **Wickling** (`wickling`; four two-bone legs): a salamander's diagonal trot (`alternate`) at every speed on tiny quick
+  steps (1/1.6 px high, stride 0.35/0.6 blocks, 0.15 s swings, reach 0.18), its spine wave from the clip bending over the
+  planted feet, a lizard's roll (0.04); head level 0.4, twist 0.4, shift 0.25. Ripening it rears on its hind feet and its
+  forefeet, drawn up off the ground, knead the air in turn while the tail braces.
+- **Hushling** (`hushling`; two two-bone hind legs, long arms swung by its clips): a crouched biped's alternating steps,
+  duty 0.6/0.4, 2/3.5 px, stride 0.9/1.5 blocks; its body rises (bob -0.6) while a foot is up, as a biped's does, and
+  rolls off it (0.05); a hunter: `still`, creep 1.5; head level 0.5, twist 0.3, shift 0.5.
+- **Weaver Queen** (`weaver_queen`, named beast; eight three-bone legs, femur 12, tibia 14, tarsus 6 px, no head bone):
+  an alternating tetrapod on long reaching steps (4/7 px high, stride 1.4/2.6 blocks, reach 0.9, 0.32 s swings), bob 0.5;
+  twist 0.15, slope 0.85, shift 0.9 (the heaviest drift: a big body settling over eight feet).
+- **Form spiders** (`form_spider_2`..`_5`, the forms' C-and-up bodies, SPEC 21.13; eight two-bone legs, coxa fan then
+  femur and shin): they replace the spider Fresh Animations draws below C, so they must beat it. Alternating tetrapods
+  (L1 R2 L3 R4, then the others) on their rest stance, duty 0.62/0.5, steps from 3/5 px (C) to 4.5/7 px (S) high, reach
+  0.5 to 0.7 blocks, quick swings (0.22 to 0.28 s), bob 0.35 to 0.5 px, `rear` 1 (angry, its front pair spread off the
+  ground; a roar, both front pairs); head level 0.5, twist 0.25, slope 0.85, land 1. The renderer plants the feet while it
+  stands on the ground and not on a wall (`onGround` and not climbing); the cave spider's body is 0.7 of the spider's.
+- **Thousandfoot** (`thousandfoot`, named beast; fourteen two-bone legs, seven segments): a centipede's ripple, back to
+  front with each pair a fifth of a cycle behind (two waves down each side), the sides in opposition; duty 0.65/0.55,
+  steps 2.5/3.5 px, stride 1.0/1.6 blocks (its clips' 2.6/5.0 are far past its legs' reach), reach 0.5, quick 0.22 s
+  swings, almost no bob (0.1 px) or roll; its walk's sideways spine wave bends the segments over the planted feet; a wind-up
+  lets its front three pairs go (`rearPairs` 3: the Coil Strike's S rears them), a roar four. Head level 0.3, twist 0.3,
+  slope 0.7, land 0.8. Its rest pose sits a pixel lower with the legs out flatter (thigh -10°, shin 84°) so every foot
+  reaches the ground (they hung 3 px above it).
+- **Form grazers** (`form_pig_2`..`_5`, `form_cow_2`..`_5`, `form_sheep_2`..`_5`, SPEC 21.13; four straight two-bone
+  legs, thigh and shin): a lateral walk (`ripple-alternate`: right hind, right fore, left hind, left fore, a quarter of a
+  cycle apart) into a trot of diagonal pairs; they stand sunk 2.2-2.5% of a leg on their crouch so the forelegs'
+  knees break forward and the hocks back (about 25° at rest, deep while a foot is up), and the neck nods with the
+  forefeet (`nod`). Strides come from the leg (L px): a planted foot sweeps ±0.45 L walking and ±0.5 L running, so
+  stride = 0.45 L / (8 × duty) walking and 0.5 L / (8 × duty) running (a pig's 0.66/1.19 blocks at rung 2 to a cow's
+  1.56/2.78 at 5; the rigs' clip strides were past their legs). Pig: duty 0.68/0.42, steps a fifth of a leg high (a third running), quick 0.22 s swings, bob 0.35,
+  roll 0.035, nod 0.07, shift 0.35-0.5. Cow: duty 0.72/0.45, steps 17%/28% of a leg, 0.3 s swings, bob 0.5, nod 0.09,
+  shift 0.6-0.9 (a heavy body settling). Sheep between them, nod 0.08. All `rear` 1: angry and still, its front pair
+  goes to the clip so it paws; a charge's wind-up rocks back on planted hind feet. Head level 0.3-0.35, twist 0.2-0.25,
+  slope 0.8-0.85.
+- **Form chickens** (`form_chicken_2`..`_5`; two straight legs from the base, the foot drawn on the shank): a bird's
+  alternating strut, duty 0.62/0.4, stride from the leg as the grazers', steps 28%/40% of a leg high, quick 0.16 s swings, sunk 5% of a leg so the ankles
+  break back; the head holds still in space against the body (head level 0.7) while the clip thrusts the neck; bob
+  0.4, roll 0.05, land 1.2, shift 0.2.
+- **Hoofed beasts** (named beasts on four two-bone legs, by HeroRenderer; strides from the foreleg as the grazers'):
+  the **Briar Sow** (`briar_sow`; short forelegs, 10 px, under a heavy chest, long bent hind legs) walks a lateral
+  sequence on short quick steps (0.8/1.49 blocks, 2/3.5 px high, 0.26 s swings) into a trot when she charges, sunk
+  0.3 px, bob 0.4, nod 0.06, a heavy drift (shift 0.7), land 1.2; the **Old Antler** (`old_antler`; 18 px legs) a
+  stag's high-stepping walk (1.41/2.81 blocks, 3.5/6.5 px high, 0.32 s swings, reach 0.7), the head carried high
+  (head level 0.45, nod 0.05); the **Stonehorn** (`stonehorn`; 12 px legs) a ram's sure-footed walk (0.96/1.79 blocks,
+  2.5/4.5 px) that pitches and rolls with the rock under it (slope 0.9), nod 0.07, shift 0.8. All `rear` 1: a still
+  threat or a wind-up hands the front pair to the clip (the sow's snort and paw, the ram's stamp).
+- **Flight** (`Flight`, plain math checked on the server; a `fly` block, by rig id or, for a hand-built body, by its
+  creature id): while airborne or swimming (or `always`, for a body always under way: serpents, the ray) the body noses
+  into a cruise (`tilt` at `fast` blocks a second) and pitches along its path's climb or dive (`climb`, the share), banks
+  into a turn (`bank`, radians per radian a second of turn at a full cruise, capped 0.7), and rides its wings: the wings'
+  height above their own mean (read from the pose, the roots named in `wings`) lifts the body as they sweep down
+  (`heave` px per radian, 50 ms behind). A flier keeps all of its stroke climbing or hovering, glides down a dive
+  (`glide`, the stroke's share kept, about the wings' mean), and at a cruise beats and glides by turns on a slow wave of
+  its own (about six seconds). A body whose clips only glide (the owl's `air`) gets the layer's own beat (`flap`: radians,
+  cycles a second, the tips' trailing share): down in 40% of the cycle, up in 60%, quicker climbing and hovering (x1.15,
+  +0.4 per radian of climb), slower in a cruise (-0.35); the tips (`tips`) trail it by an eighth of a beat. The spine
+  (`spine`, the links behind the body, front first) carries its swim stroke stronger with speed (`wave`: the stroke's
+  scale at rest and at a full cruise, about each link's mean) and curves into a turn (`bend`, radians over the whole
+  spine per radian a second, the tail to the inside of the turn); fins (`fins`) fold back at speed (`tuck`); the head
+  holds level against the pitch and bank (`level`). Hand-built bodies beat on the life layer's paced clock (the moth's
+  wings, the ray's ripple, the serpent's wave), so a change of pace never jumps the phase.
+  The **Hollow Owl** beats 0.7 rad at 2.4 a second (tips 0.5) round its glide pose, heave 2, glide 0.12, banks 0.18,
+  climb 0.6. In the air its body lies forward along the line of flight (75° off its upright stance, a 2° rock), and a
+  cube-less `yoke` at the shoulders turns back by as much under the head and wings: the face still looks ahead, the wings
+  still spread level and beat up and down about the line of flight (a wing hung from a pitched body would row); the legs
+  trail under the tail, which fans straight back. Before this it flew upright, a perched owl hung in the air; the **Bogwick** (clip beat) heave 0.6, glide 0.6, tilt 0.25; the **Empress Moth** (its clip heaves) glide
+  0.45, bank 0.16; the **Plumed Coil** wings heave 0.8, glide 0.4, spine of ten bending 0.25, wave 0.7/1.2; the **Dune
+  Wyrm** spine of nine bending 0.3, climb 0.7, wave 0.7/1.25; the **Glimmerfin** tail and caudal fin wave 0.55/1.3, bend
+  0.3, pectorals tucking 0.6, climb 0.7; the **Lantern Maw** wave 0.6/1.2, bend 0.25, bank 0.12; the **Tidesteed** tail
+  and fluke wave 0.6/1.3, bend 0.25; the **Brook Otter** swimming, tail wave 0.6/1.3, bend 0.3; the **Lumen Moth** and
+  **Petalwing** heave 0.9, glide 0.7 and 0.4, tilt 0.3 and 0.25, bank 0.25; the **Dune Ray** heave 0.8, bank 0.3, its
+  tail bending 0.35; the eels (**Deep Eel**, **Tide Eel**, **Cord-Eater**) bend 0.45 over six segments, climb 0.6.
+  The Breathbell's bell pulses as its clip has it (a jelly drifts; no bank or pitch).
+- Test: `creature_motion_feet` (every motion.json entry with a gait names a rig; every gait finds two-bone legs on a body bone that
+  carries the head; every foot can reach its stance on its crouch and sunk to stalk; the IK lands each foot within 0.05 px of its
+  home, a step ahead and behind, the top of a step's arc and the crouch, checked by forward kinematics; the hip's turn
+  survives its ZYX Euler angles; a straight leg whose knee can't hide 20° of bend is rigid (the four-legged walkers all
+  are, so no knee of theirs breaks either way), and a rigid leg's foot lands within 0.05 px of each spot within 97% of
+  its length with its top kept inside the body (no further fore, aft or down than its room, no more than 70% of its
+  length up); at least 68 rigid legs; every gait's stride, walking and running,
+  sweeps its planted feet no further than the hips can vault to; every gait's feet, on flat ground through a stand, a
+  sudden walk (a cycle a second), a sudden run and a stop, never plant further ahead of home than a steady stride's
+  landing plus 10% of a stride or trail further than its lift point plus 40%, and a rigid leg never swings past 35°
+  walking or 45° running (about its pivot `shoulder` above the hip); then turned on the spot at 120° a second as a
+  client sees it (the body held until its facing is 50° ahead, then dragged along 50° behind, the body bone twisted its
+  share of that look), no planted foot is more than four `settle`s (+1 px) off its spot under the twisted body nor a
+  rigid leg past 25°, and stood 1.5 s after it every foot is back within a `settle` (+0.75 px) (the old feet failed 22
+  gaits); the forms' rigs
+  are looked up too); `creature_motion_flight` (every flight names a creature and, on a rig, bones it has, wings with a
+  side; the beat sweeps down in under half a cycle and never jumps; a right turn banks right and curves the spine right;
+  a climb noses up and keeps every beat, a dive noses down and glides, a hover beats, a cruise glides between beats; a
+  climb beats faster than a cruise; the body rises as the wings sweep below their mean). Tours walk still (NoAI) creatures with
+  `/awaken admin stroll <targets> <blocks per tick> <ticks> [degrees per tick] [climb, blocks per tick]` (each call queues a leg; the server moves
+  them every tick, so a busy runner can't turn a scripted walk into a crawl the way a tp a command did), load the studio's
+  chunks first (`forceload`) and fill its floor twice. Tours on CI (PACK=perf,feel; a vanilla spider under
+  Fresh Animations beside each): `tools/autopilot/mob-anims-lurker.txt` (clips run-autopilot/clips/lurk_*: idle, a walk
+  into a run, a stop and a turn, a blow, a death, the hunt), `tools/autopilot/mob-anims-spiders.txt` (spid_*: the forms'
+  row from vanilla's rungs to S, a walk side by side, a blow, a death, a hunt) and `tools/autopilot/mob-anims-crawlers.txt`
+  (crawl_*: the thousandfoot, wickling, hushling and weaver queen); `tools/autopilot/mob-anims-fliers.txt` (fly_*, swim_*:
+  each flier on a set course, NoGravity, beside a parrot, a bee or a cod under Fresh Animations: a cruise, a U-turn
+  each way, a climb, a dive, a hover; a blow and a death in the air; the swimmers in a tank);
+  `tools/autopilot/mob-anims-close.txt` (close_*: each grazer and the spider side on at leg height, a spectator camera
+  gliding beside it, first vanilla's under Fresh Animations then ours at rung 3 on the same walk, trot, stop and half
+  turn; then the two at rest side by side for half a minute); `tools/autopilot/mob-anims-beastclose.txt` (bclose_*:
+  the sow, the stag and the ram the same way, after vanilla's pig under Fresh Animations, each then half a minute at
+  rest); `tools/autopilot/mob-anims-flyclose.txt` (fly_*, swim_*
+  close and at half speed (`/tick rate 10`): each flier hovers, then circles a spectator camera at its own distance, a
+  cruise lap and half a slower one, the camera's eye at the body's middle turning with it from the circle's middle,
+  a parrot, a bee or a cod a little further round the same circle). A NoAI fauna creature refreshes its pose
+  bits every tick (`FaunaMob.tick`), so a tour's still flier shows itself aloft (the first fliers tour's owls hung
+  upright in the air, perched).
 
 ## 24. Hands: the first-person system (plan docs/anims/PLAN.md, page https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy; approved 2026-10-25)
 
@@ -6657,6 +6895,22 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       first-person dagger move leads with its point (0.99-1.00) or edge (0.98-0.99); the cuts turn 229-279 degrees,
       the Plunge 77, the Execution 129. The four third-person dagger lead misses are round 13's, unchanged. Filmed in
       the game before Euan plays it (`tools/autopilot/arms-daggers-r14.txt`, the clip recorder, day and night).
+  - *Round 15, a jab that keeps its fist low* (Euan 2026-10-29, after the round 14 film: "Keep the fist lower in the
+    jab before I play, so the forearm doesn't swing into the corner"). The forearm is Hands' (`WorldBody.drawFist`: drawn
+    0.6 block up to the fist from under the corner, at its true size), and the dagger stance holds the fist below the
+    frame, so a jab that slid its grip up the line to a mark under the crosshair lifted the fist 0.47-0.60 of the screen
+    and brought 0.23-0.28 of the screen's area in forearm with it (0.04 at rest).
+    - A jab's line runs to a mark deep in the target (1.5 ahead of the eye, the same place on the screen) and stops
+      short of it (`line`'s short and reach): aimed by half the wind-up with the fist where it holds (the blade tips onto
+      its line, so it points into the target), then driven its reach (6 cm) along the blade to the hit. The fist rises
+      0.20, the forearm covers 0.10, the blade shrinks to 0.77-0.81 of its stance size as it goes in, and the point lands
+      0.45-0.48 from the crosshair, on the target at fighting range.
+    - `swing_chain.py calm` holds a stab to it: the fist risen at most 0.22, the forearm (its own model of Hands') at
+      most 0.11, the blade at the hit at most 0.85 of the stance's size, the point within 0.5 of the crosshair (in place
+      of round 14's within 0.15 of the mark). The rise and the forearm are shown for every move: the slashes rise
+      0.30-0.45 (forearm 0.16-0.25), the chops 0.71-0.73 (0.36-0.37), unchanged this round.
+    - Every jab leads with its point (1.00), the chain judge passes mashed and in time, the click sweep steps nothing
+      over 0.2 (worst 0.15), and the blades come no nearer than 0.26 (round 14: 0.16). Filmed in game again.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
@@ -10999,6 +11253,228 @@ now, fought-on second storeys in a later plan.
   plan's cost) and logs them; worlds whose ground is built (`GateDepthTests.DEEP`) are held to the dry caves' targets
   (flat 55% or less, 8 heights or more, 12% partial, 65% plumb or less, roof spread 6, detail 35). The world tests'
   reach checks read the ground.
+- **Shaped ground (`Relief`, stage 1).** A cave world whose dress says `depth()` (the Hive so far) and whose floor is
+  enclosed (not an open land, isles, sea, plain or hall: stage 2) gets a height field in half blocks, -4 to +8, solved
+  at plan time after the dress (so it knows where the dress set things down) and before the lights; one column
+  operation per place lays it at carve time. The field: a roll everywhere (+-1.8 blocks); away from the way (the line
+  from each doorway to the middle and on to the anchor, faded in over 1.8 to 5.8 blocks) terraces climbing toward the
+  walls (up to 4 blocks, their edges ragged), mounds, hollows, and the ground standing a slab higher on the whole, so
+  the way reads as a path worn into it. On the way's core half a step up at most, within 3.5 of it a block either way;
+  in a fought place's middle (`q` < 0.5) half a block down to a block up, rolling half again as much off the way (half
+  steps you run over without a thought). No specks: a rise or a hollow needs four of
+  its eight neighbours rising or sinking with it (a wall counts with it; two passes), or it's flattened, so no lone slab
+  lies on the floor like a dropped tile and no small pit reads as a hole. Never closer than 3.5 under the roof (or
+  under what the dress hangs low: `Dress.headroom`). **Flat pads** stay at the floor line and are never shaped:
+  each doorway (4 deep either side of its wall, across the opening), 3 round the anchors, a lake's water, 1 past each blocked spot, 2 round each hand spot, the
+  dress's centre pad (`Dress.pad`: the Comb's honey pools 3.4), and every small mark (49 blocks or less, 1.5 round it:
+  nooks, bells, props, touchstones; an event's or a basin's wide box isn't one). **Steps**: no step over a block, half
+  a block where it's gentle (the way's margin and a fought middle); the rises and the hollows are each only lowered
+  toward the floor line until no step is too steep (eight neighbours), and where a rise meets a hollow each comes to
+  within half the step of the line, so nothing is ever raised to meet a pad.
+- **A world's own depth numbers** (optional, in its recipe's `params`, 1 the usual; they only shape version 7 floors, so
+  a released world's version 6 floors are untouched): `depth_ground` (how bold the ground is away from the way: the
+  terraces, mounds and hollows), `depth_things` (how many things stand in its places: clusters times it, 0 none),
+  `depth_lumps` (its walls' lumps, times the theme's `Dress.lumps`), `depth_ledges` (how often a tall wall steps back,
+  times `Dress.ledges`), `depth_roof` (how far the roof swells and dips), `depth_shelves` (the high ledges, stage 4). The
+  Root Warrens and the Last Room set `depth_roof` 1.9 and 2.2, the Root Halls 1.5 and the Pipe Maze 1.3 (their low
+  roofs spread too little otherwise). Whatever the dress hangs from the roof (`Dress.hang`: roots, icicles, chains) and
+  the Fungal tunnels' roots stop as far over the highest ground within 3 as over the floor line before, so raised ground
+  never makes one a ladder. In Upward Rain mud (it stands 7/8 of a block) gives way to moss beside a half step up: from
+  mud onto a slab is a jump.
+- **The walk guarantee** (plan time, `Relief.ease`): every doorway and the anchor must be joined over the place's
+  ground (round what the dress blocked) with no step over half a block. Where they aren't, the place's ground is
+  halved, and if that's still not enough, flat; either is logged (`[gates] <world> place <id>: no way through without a
+  jump`). On the Hive it never has to (`gateworlds_depth_ease` holds the rule on a ridge a block high, halved, and two
+  blocks high, flattened).
+- **Tunnels** swell slowly along the way, up to a block, never a step over half a block (a slab between), flat 2.5 round
+  each doorway; their arch rises with the floor and vaults and dips along the way (-0.7 to +3).
+- **Laying it** (`Relief.column`): under a raised floor full blocks of the theme's bank (`Dress.ground(BANK)`, the
+  Hive's wax with every third layer dark), its top skinned as floor; a half step is a stair facing up a straight ramp,
+  else a slab (on the Hive's pollen a pollen drift four layers deep); a hollow is opened with a shell under it. What grew
+  on the floor line is moved up onto the new ground; elsewhere a drift at a rise's foot or in a dip (55%, one or two
+  layers) or bits (by how wild it is: below).
+- **Soft steps at walls and roof steps** (`Relief.soften`, after the ground is laid): off the way (wild 0.3 or more),
+  about half the wall feet that rise sheer from a full block get the theme's stair (`Dress.ground(STAIRS)`), its back to
+  the wall; where the roof over a column is a block higher than beside it (on one side only), the theme's roof stair
+  (`Dress.ground(ROOF)`, the Hive's wax stairs) hangs upside down under it, stepping down to the lower roof, where the
+  roof is 4 or more over where you stand. Never on a pad; a column at a chunk's edge is left.
+- **Walls and roof over shaped ground.** A groove 1 high is cut into the wall's foot at the local ground (0.9 to 1.7
+  deep, the wall's first 2 blocks), so walls aren't plumb from feet to head. The roof rises with the terraces (the
+  terrace's height is added to it: no trench at a wall's foot), swells and dips away from the walls (+-7.5) and opens
+  into chimneys here and there (up to 12 higher, `CaveEngine.CHIMNEY`; the carve reaches 19 over a place's roof).
+- **Thin blocks are open** (`Sculpt.thinOpen`, every version 7 floor): a palette block that isn't a full solid cube and
+  holds no fluid (a slab, a drift, crumbs, a carpet) gets the shell's skin under or over it as floor or ceiling, as air
+  does.
+- **Lights** over shaped ground hang at head height over where you stand, and a place's lights reach 2 blocks into its
+  wall's foot. **Spots** a live thing is put on (`walk`) need their 3 x 3 level on shaped ground, on a whole
+  block (never a half step).
+- **Depth blocks** (`gates.block.DepthBlocks`, art `tools/art/specs/gate_depth.py`, the same table): slabs and stairs
+  cut from a theme's blocks wearing their texture (soft when cut from a soft block, else they want the stone's tool),
+  a drift that piles in layers like snow (you stand a layer under its top, mobs path over four layers or fewer), and
+  bits underfoot (no collision, broken at a touch). The Hive's: wax slab and stairs, dark wax slab, packed wax floor
+  slab and stairs, capped comb slab, pollen drift, wax crumbs. Every other theme (stage 2) gets two
+  slab and stair pairs, one cut from its walls and one from its floor, a drift where its floor is soft and bits drawn
+  for it: Ember basalt and slag, ash drift, cinders; Temple stone and tiles, moss drift, fallen leaves; Archive stone
+  and tiles, paper drift, scraps; Foundry iron and brick, shavings; Desert sandstone and tile, sand drift, shards;
+  Market cobbles and boards, confetti; Frost stone and tiles, snow drift, ice chips; Palace marble and checker, shards;
+  Lab panel and floor, moss drift, screws; Dream wood and boards, plush drift, feathers; Sky rock and marble, turf
+  drift, pebbles; Abyss shrine stone and tiles, wax stubs; Fungal rock and loam, moss drift, spores (82 depth blocks in
+  all). They join `#minecraft:slabs` and `#stairs` (blocks and items); a double slab drops two.
+- **The Hive's dress over shaped ground.** Drips hang thicker and longer (12%, up to 5). **Comb sheets** hang from the
+  roof as a real hive's comb does: at most one in each 6 x 6 patch (the Comb 75%, the Swarm 55%, others 40%), a wall of
+  cells a block thick and 5 to 9 long, deepest in its middle (up to 7), its lower edge dark wax; never within 4 blocks
+  over where you stand, never within 1.5 of a wall (4 round the Brood Hall's ledges), never in a boss's room. The Brood
+  Hall's great place keeps 6 of head room under its lowest ledge (`Dress.headroom`).
+- **Walls that change as they rise** (`CaveEngine.Cave.wall`, in each shaped cavern's carve). Lumps over every wall and
+  roof face, taller than wide (up to 1.3 blocks in or out, bigger the higher; the theme scales them, `Dress.lumps`: the
+  Hive's comb bulges 1.3 times); where a wall stands tall it leans in or out as it rises (up to 2.2) and here and there
+  (about a third of it) steps back 1.6 at a ledge 5 to 9 over the ground (`Dress.ledges`). All of it starts 2.5 over
+  the highest ground or standing piece within 3 (`Relief.near`, raised by each outcrop, fallen piece and heap:
+  `Relief.lift`), past a jump, so no wall is a stair to its roof. Under the roof it bulges a block down at most
+  (headroom stays over 2), and it's never worn back nearer than 2.5 to the place's box, so the rock between two places
+  stays whole. Tunnels keep their own swell and vault.
+- **The way and the wild.** Each shaped column keeps how wild it is (0 on the way's core, rising to 1 away from it; a
+  fought middle a third as wild; a tunnel wild only at its sides) and how far in from the wall it is. Where it's
+  wildest (over 0.55) the theme's growth creeps (`Dress.creep`, the Hive's capped comb) over the floor and up the foot
+  of the walls beside it (up to 4 high, thicker the wilder; never on a pad); drifts bank against the wall (wild over
+  0.45, within 3 of it, deepest at its foot, up to 7 layers); bits lie by how wild it is (`Dress.bits` x wild: the
+  Hive's crumbs at most about one in 12 floor blocks, none on the way); the dress's growth thickens with it (0.2 to 2
+  times). A wall nook's crawl mouth is kept clear (1.5 round it), so a banked drift never seals it.
+- **Things standing in the space** (`Formations`, once the ground is solved, before the lights). In each shaped place's
+  wild (never a boss's room) a chunk's cavern gets one or two pieces and a bigger place up to three clusters of two to
+  four (one more cluster per 150 wild spots): a **pillar** from the ground to the roof (only a cluster's first, 2.5 or
+  more from the wall where the roof is 7 or more over the ground; slimmest a little under halfway, flaring into the
+  ground and wider into the roof), an **outcrop** half sunk and lumpy with slabs where its top steps up, a **fallen
+  piece** 4 to 7 long lying along the ground half sunk (each end on the ground under it), a **heap** with a drift
+  slumped round it. A piece's footprint is wild ground (0.35 or more) or the wall (an outcrop may lean on it), never a
+  pad or the way; each is blocked, so nothing spawns or stands in it. The theme cuts them (`Dress.formation`; null is
+  the shell's own skin): the Hive's wax pillars banded dark with a honey cell here and there, wax mounds crusted with
+  capped comb, fallen comb with its cells broken open, heaps of dark wax. About half the Hive's small caverns get
+  something, and every bigger place.
+- **No jump on the way, no climbing the walls.** `gateworlds_depth` also walks each built world from the arrival to the
+  end without a jump (no rise over 0.6 of a block by what you stand on: a slab or a stair is a step, a full block a
+  jump) and fails a world that needs one (`jumps`, 0 in all three); and counts the columns where the walk (jumps
+  allowed) got more than 4 over the ground (`climbs`): a built cave world must have none (0 in all three).
+- **Every theme's caves (stage 2).** Every enclosed cave world of every theme shapes its places by the Hive's rules,
+  in its own pieces (`Dress.kit`, `Dress.pieces`): a half step is a slab of the floor (on a soft floor its drift four
+  layers deep: Ember's ash, the Temple's moss, the Glass Caves' sand everywhere, Frost's snow, the Lab garden's moss,
+  the Fungal moss and all of the Bloom), a ramp the floor's stairs; the wall's stairs stand at a wall's foot and hang
+  where the roof steps, the wall's slab crowns an outcrop (`Relief.FOOT`, `Relief.CAP`: null falls back to the floor's
+  stairs and slab, so the Hive is as it was). Growth creeps where it's wildest in Ember (magma crust), the Temple
+  (mossy stone), the Glass Caves (sand), Frost (snow), Dream (plush), the Lab (moss in from the garden) and the Fungal Hollow (glowing
+  moss); the Archive, Foundry, Market, Palace and Abyss stay bare. What stands in the wild: Ember basalt pillars banded with glowing
+  cracks, cooled lava humps, a collapsed frame in the mine, slag heaps; the Temple columns banded with carving (roots in the Great Tree and
+  the Root Halls), mossy outcrops, a fallen column; the Archive shelves floor to roof banded with written stone, a
+  toppled bookcase, book piles; the Foundry pipe bundles banded with brass, scrap iron with gears in it, a fallen gear
+  half sunk, scrap heaps; the Glass Caves sandstone pillars, glass outcrops glowing here and there, a half-buried column; the Broker's Vault timber
+  posts and heaps of cobbles; Frost ice pillars banded with glowing ice, ice boulders under snow, a fallen icefall; the
+  Palace marble columns banded with gilt, a toppled gilt frame, a heap of broken mirror; the Lab frames banded with light, racks, a
+  heap of panels; Dream bedposts, heaps of sheets and plush; the Abyss pillars banded with runes, a fallen pale column;
+  the Fungal Hollow mushroom stems floor to roof, rock crusted with moss, a fallen cap, heaps of loam (the
+  plan page's table, as near as each theme's blocks allow). Not shaped: a world under a
+  glass floor (`mirror`: the Inverted Palace, the Reflection: the world below copies it), the Simulation (its lines are
+  everything), the White, the Sleeper's Dream (its void blocks would skin a raised island's sides) and the Endless
+  Hall (a fold that reads the same both ways).
+- **Open lands, islands and seas** shape their places too (the Market's Rooftops keeps its line: you stand on roofs
+  there). Under the sky nothing hangs where a roof would step and no pillar stands (nothing to hold up; not over an
+  island either). An island's (the isles, a sea's islands) ground is half as bold and makes **hummocks** instead of
+  terraces: rising between its middle and its edge, back to the floor line at the drop, so no rim stands at it;
+  nothing stands out over its edge; its bridges and causeways stay flat. The Sky's pieces: marble slabs on its ruins,
+  turf drifted four layers deep elsewhere, rock stairs at its cliffs, rock outcrops under turf, fallen ruin stones,
+  pebbles; turf creeping.
+- **The rare worlds** take the ground of the look they wear (`BorrowedDress` passes every depth hook on), but the
+  Other Gate keeps its line (its colours turn only on full blocks, so slabs would show true colours) and so does the
+  Endless Stair (its landings are the same landing again). The rare lands in their own clothes (the Quiet, Upward Rain,
+  the Aurora Steppe, the Lantern Orchard, the Last Campfire) step in the Soft Land's slabs of the soil underfoot (turf,
+  mud, coarse dirt, podzol: SPEC 31.2), mossy cobblestone stairs at the hillsides, snow drifted on the Steppe, pebbles
+  and twigs, moss (snow on the Steppe) creeping, mossy boulders, fallen trees and heaps of earth. A fallen piece's log,
+  stem or column lies along it (its axis).
+- **Doorways stay at the floor line**, 4 deep either side of the wall across the opening (`Relief.doorway`, what the
+  doorway test checks; a door's lintel is set for the floor line: a Rig room's way out, a tunnel's mouth), and the groove
+  at a wall's foot isn't cut there (it would open only the wall's bottom block). Over shaped ground a light may sit up to
+  5 over its column, on top of whatever stands there, or in the column beside it where a wall's bulge fills its own; an
+  isle's rim keeps its lights in the air just off it. **Bits lie in patches** (`Relief.litter`: a quarter as thick between
+  them, up to 2.75 times in them, about as many on the whole), as the plan asked (clusters, not an even scatter), and a
+  third as thick on the way as off it (0.35 + 0.65 of how wild); the themes that grow little else lie thicker: the
+  Archive's pages 0.5, the Palace's glass 0.45, the Foundry's shavings, Dream's lost things and the Abyss's wax 0.42,
+  Ember's cinders 0.34, the Glass Caves and the Lab 0.3, the Market's confetti 0.25, the Quiet lands 0.15, Frost 0.12,
+  the Temple and the Fungal Hollow 0.1 (the Hive and the Sky 0.083). The roof's swell over shaped places is +-9 (was
+  7.5), up to 1.6 times that under a low roof (11 over its roof height: a low roof can't dip, it stops 3.5 over the
+  floor); a tunnel's vaults over shaped ground rise up to 13 over the floor line (9 before), +-4.5 along the way. The
+  Fungal Hollow's walls bulge 1.15 times (shelf fungus), the Bloom's 1.5 (its gills fold).
+- **Shores, cloisters and vaults.** An island's shore never sinks (no hollow within 3 of its edge: the sea or the drop
+  stands level with it). Under the Cloisters' roofed walks the ground stays at the line (`FrostDress.headroom` 3.5).
+  On content 7 a feature that finds no level spot near takes the nearest free one, so a vault's bars never close round
+  a touchstone or a handbell. The tests' light check lets light into layers (snow, a drift) as the game does.
+- **The Bell Crypt's own engines (stage 3)** keep their architecture, and the years show on their flagstones
+  (`CryptWear`, content 7, made after each engine's carve and before its handbells): the stones sink half a block in
+  patches (a flagstone slab where the noise is under 0.38) and where a patch sinks deepest (under 0.24, every stone round
+  it sunk too) a wet hollow opens a block down onto wet flagstone, moss on a third of it and a hidden light in every
+  other stone (it's a block under the floor's lights); rubble from the vault lies at the walls' feet where the place is
+  three clear out from the wall (crumbling limestone in a corner, a limestone stair with its back to the wall, one in
+  eight a fallen piece of tracery, a limestone slab a block further out); limestone dust drifts one to three layers
+  against half the walls' feet; bone shards lie in patches; moss grows round the hollows; and one bell lies toppled on
+  its side (`crypt_bell_toppled`: the swinging bell's model turned over, its mouth to its facing) in the floor's biggest
+  place, off its middle, slabs and dust round it. Doorways (the threshold and a block past it, 3 round the middle),
+  handbells (3.5), every mark of 49 blocks or less and every basin (with 2 or 3 round them) stay as built, and each
+  engine keeps its own: the Hall its bays' pits and causeway (13.5 either side of the nave's axis) and the Rope Shaft
+  and the rest, the Passages the Charnel Well, the Field of Bells everything within 3 of an island's shore, its
+  causeways and its landings. A spawn or a feature stands only where no stone in its three by three has sunk and 3 or
+  more from the bell. The crypt's depth blocks: limestone and flagstone slabs and stairs, Limestone Dust (a drift of
+  worn limestone) and Bone Shards (bits).
+- **High ledges (stage 4)** in the big caverns of the cave worlds (a great cavern two, a cavern of four chunks or more
+  one, times the recipe's optional `depth_shelves`; never an open land, an isle or a sea): a shelf against the wall, 3
+  or 4 blocks up (even odds), 3.5 to 5 either side of where it's set and about 4 deep (its edge ragged), with a stair of
+  one-block steps, 2 along the wall and 3 deep, down from one end, so it's reached a jump at a time. A shelf is tried
+  every 15 degrees round the place's middle, 2.5 in from the wall where the way is 6 or more off, farthest from the way
+  first, then its stair the other way round; it stands only where every column of it and its stair is in the place,
+  unpinned, 3.5 or more off the way, 3 or more from anything the dress set down and under the dress's head room with
+  3.5 to spare, a doorway at least its half length and twice its height and 4 away, another ledge 20, with 12 columns on
+  top and 2 on the bottom step. The ledges stand as set (the specks, the steps' rule and the walk guarantee pass them by;
+  the ground beside them never sinks), the roof lifts by the highest ledge within 2, and nothing is placed on one or
+  beside it: no spawn or feature on a ledge or its stair (the nearest free spot for a feature skips them too), no
+  formation within 2. A quiet place to stand and look out, not a place to fight. The floor keeps their columns
+  (`FloorLayout.high`, not saved) for the test (`gateworlds_ledges`: the Brood Hall, the Glowing Deep, the Working Mine
+  and the Atrium have them, 85% of their columns or more reached on foot, nothing on them).
+- **Held to the targets** (`gateworlds_depth`): 32 dry caves of every theme (`DEEP`) as above, and none with a way up a
+  wall it didn't have at version 6 (`climbs` no more than version 6's on the same floors); 28 open lands, isles and seas
+  (`LANDS`, each measured at version 6 too on the same floors) to twice their partial surfaces, as the plan set, and
+  more detail than before; and every world with no jump on its way (the test logs where a way needs one). Held to what
+  they measure instead (`FLAT_MOST`, `DETAIL_LEAST`, `PARTIAL_TIMES`): the Swarm and the Forge Below 59% flat (many small
+  fought places, 58.6% and 58.5%), the Forge Below's and the Stacks' detail 34.5 (both 35.0, a hair under), Upward
+  Rain's partial 1.4 times (its mud counted as partial at version 6), the Gates' Heart's 1.95 (1.97). Not held: the
+  Bloom (61% flat, 69% plumb: its folds are its walls) and the worlds that keep their line.
+- **Measured** (`gateworlds_depth`, 2026-10-29 with every stage in). The 32 dry caves: flat 43 to 59% (mean 50), 11 to
+  15 heights, partial 14 to 22% (18), plumb 20 to 47% (40), roof spread 6.1 to 9.8 (7.1), detail 35 to 51 (41); the Comb
+  54%, 13, 19%, 38%, 6.4, 38; the Brood Hall 46%, 14, 22%, 40%, 7.3, 42; the Swarm 59%, 13, 16%, 36%, 6.6, 43 (today's
+  rooms: flat about 98%, plumb 97%). The lands, isles and seas: partial 2 to 50 times version 6's (the Sky's isles about
+  3.3, the Abyss's steps 2.2, the seas 2.3 to 35), detail 1.5 to 7.5 times, flat down from 88 to 99% to 41 to 61% on the
+  lands, 27 to 30% to 11 to 17% on the seas. The Bell Crypt (its own engines, not held to the caves' numbers): the Sunken
+  Belfry flat 68 to 51%, partial 2.1 to 12.8%, detail 10.3 to 16.4; the Ossuary Ways 92 to 79%, 9.8 to 15.3%, 10.2 to 14;
+  the Bell Shaft 91 to 66%, 0.8 to 19.1%, 11.5 to 21.4; the Field of Bells (black water between its islands) 14 to 13%,
+  1.4 to 2.7%, 2.5 to 3. A gate's four floors plan in 8 ms (median, warm) to 50 ms (the Fungal Hollow's, with other
+  builders on the machine), the ledge search under 2 ms of it, so a floor stays well inside its 50 ms.
+- **Tour `gate-depth-hive`** (CI): the Comb, the Brood Hall and the Swarm at version 6 and at version 7 on the same
+  floors, each floor 1's biggest place and its second. Its tools (game master, tours): `/awaken gate open <rank>
+  <theme> world <version> <world id>` makes a gate whose floors are all that world, on the depth test's plan (seed,
+  layout, four floors), so a world's two versions are the same floors; `/awaken gate interior goto place|place2` stands
+  just inside a world floor's biggest (or second) place where you walk in (else a doorway), a block over the ground,
+  facing its middle. The tour starts 6,000 blocks out (no gate forms in Carillon's reserve) with the HUD off,
+  and waits for the land there before its first gate; a gate made by `gate open ... world` stands where it's opened,
+  even over a village's edge (a tour can't pick another spot); `gate interior enter` takes the gate opened last when
+  it's ready (`GateService.lastOpened`, not saved), not a gate that formed by itself beside it since, and while
+  that gate is still forming it says so and enters none (a tour's shots would show another world), and the same when
+  it never stood (its build failed on wet ground or someone's build: one tour's "Root Halls" shots were the Forge
+  Below again); `gate open` with no
+  dry ground within 30 looks 30 to 120 out, then 120 to 300 (a tour's hop can land on a coast). Tours
+  `gate-depth-themes-a`, `-b` and `-c` (every other theme's cave worlds at 7), `gate-depth-lands` (seven lands, isles and
+  seas at 6 and 7) and `gate-depth-crypt` (the Bell Crypt's four at 6 and 7) are the same on CI, and wait 1,000
+  ticks for their first gate (CI's first took 666 once). `gate interior goto over` (`over2`: the second place) shows
+  the same place hovering 8 over the highest ground within 4 of where you walk in (at most 3 under an open land's lid),
+  looking down at its middle, flying if you may. The lands tour uses it for the Dark Steps and the Honey Lake, where it
+  reads well; in the open lands (kind `open`) its shots show only sky and fog on CI, with Lens on or off, though the
+  plan puts the camera 10 over an open plaza looking 28 degrees down (cause not found), so those keep `place`, which
+  faces a bank or a house there (and an isle's stands in the cloud).
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 
@@ -12272,8 +12748,12 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
   or fall). For every cave: **`cave_lichen_shallows`**, **`_middle`**, **`_deep`** (the band's colour), **`mineral_crust`**,
   **`wet_streaks`** (multiface, like glow lichen), **`cave_puddle`** (a skin of water, no collision, tinted by the biome's
   water colour, drops nothing), **`dusty_web`** (a cobweb that drops string or itself). Rubble, the formations and the
-  regions' rocks are in **`#minecraft:blocks_motion_no_leaves`**: 26.3 reads heightmaps, suffocation, rain and fire
-  spread from that tag, not from a block's shape.
+  regions' rocks (P3: and the drifts and driftwood) are in **`#minecraft:blocks_motion_no_leaves`**: 26.3 reads
+  heightmaps, suffocation, rain and fire spread from that tag, not from a block's shape.
+  The same file carries the other modules' natural rock and ground that no vanilla tag takes in (the Lands' frostspar,
+  sunshard, fused and scorched glass, faultstone, fault seam and riven shale; the wild's salt lick and wallow; the Singing
+  Deep's deepglass; their logs, planks, dirt and slabs come in through `#logs`, `#planks`, `#dirt` and `#slabs`): it is the
+  only Awaken file in that tag, and without them the heightmaps looked straight through those blocks.
 - **The feature** `awaken:cave_skin` (`CaveSkinFeature`, placed `awaken:caves/skin`, every `#minecraft:is_overworld` biome
   at `top_layer_modification`, so it comes after every structure and feature): per chunk, every column bottom to top below
   the ground less **6**, section by section from the palettes; only cells where air meets natural rock are looked at.
@@ -12322,7 +12802,7 @@ overworld caves only (the gates' worlds keep their own life).
   heard to 24 blocks, a little of the rock in each); one new voice a second at most, crickets three seconds apart; quieter
   where the Soundscape hushes.
 - **Settings** (`config/awaken-caves-client.toml`): `underlife` and `cave_particles` (the drips), both on;
-  `drawn_cave_light` comes with the drawn light in P3. `/awaken underlife [on|off|count|lineup|clear]` (client).
+  `drawn_cave_light` (on) came with the drawn light in P3 (§42.8). `/awaken underlife [on|off|count|lineup|clear]` (client).
 - **Later**: each region brings its own (the Rootways' glow-worm threads, the Ochre Deep's rust beetles and chime crickets in
   P2; glass and ash moths, cave swifts, crayfish, chitin crawlers in P3), drawn from the same sheet.
 
@@ -12408,20 +12888,139 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   the Ochre Deep's beetles are **rust beetles** and its crickets sing the chime crickets' song. `/awaken underlife lineup`
   shows a rust beetle and a glow-worm cluster with the rest.
 - **Finding one** (admin, `caves.RegionCommands`): `/awaken caves goto <region> [pick]` finds the nearest cell of the
-  region's biome as `/locate biome` does (within **3,200** blocks), generates the 7 × 7 chunks round it, and takes you to
-  the dry floor there with the most room (eight rays of up to 16 blocks at head height), facing the longest. `pick` 1 to 9
+  region's biome as `/locate biome` does (within **3,200** blocks), makes the 3 × 3 chunks round it in a passage (§28.9,
+  "Arrivals": generating 7 × 7 on the server thread stopped it for 27 s on the CI runner, and a tour's shots ran ahead of
+  the move), and takes you to the dry floor there with the most room (eight rays of up to 16 blocks at head height, each
+  stopping where the loaded land or the region ends, so a room inside the region wins), facing the longest; no floor with
+  lava within **4** blocks across (from a block under it to two over: it flows in once the land is live). `pick` 1 to 9
   is the next-best floor, each at least **14** blocks from the better ones. For tours (`tools/autopilot/caves-regions.txt`)
   and for finding a region to play in.
-- **Test** `caves_region_rock`: eight filled chunks of seed 777 (the census's), four told they are all Rootways and four all
-  Ochre Deep, with coal, copper, iron and gold ore planted in host rock: under the land's last 10 blocks no host rock is
+- **Test** `caves_region_rock`: ten filled chunks of seed 777 (the census's), five told they are all Rootways and five all
+  Ochre Deep (the first two of each only warm the code, each dressed **6** times on fresh copies: cold, the rock rule took
+  2.4 to 5.7 ms a chunk, warm 0.5 to 1.3; on the CI runner two warm dressings left it at 3 to 5 times its Mac cost, 25 to
+  30% of the fill, run 40845508580),
+  with coal, copper, iron and gold ore planted in host rock: under the land's last 10 blocks no host rock is
   left but the untwinned ores' shells, each twin is placed and each untwinned ore keeps its shell as it was; above, the
   rock is untouched; glowcaps stand on rock and only in the Rootways, root curtains hang from rock or root with the tip
   last, rust, flowstone and ember only in the Ochre Deep (and no mineral crust or wet streaks there); every piece is laid;
   glowcaps on at most **6%** of open floors; the skin with the regions at most **25%** of the fill (each chunk against its own
-  fill, the middle of the six; the rock rule reads each section once).
+  fill, the middle of the six, each the fastest of five fills and five dressings of fresh copies, as a pause or a busy
+  machine only adds; the rock rule reads each section once).
 - **Measured 2026-10-29**: 91,828 cells of region rock on 8 chunks, 46 glowcaps (2.0% of 2,273 open floors), 83 root
   curtain blocks, 137 rust crust, 37 rust flowstone, 32 ember lichen; 2.2 ms a chunk against 34.2 ms to fill it (6%; the
-  skin alone 0.5 ms).
+  skin alone 0.5 ms). Re-measured as the fastest of three: 1.2 to 1.9 ms a chunk against 11 to 19 ms (10 to 13%); one
+  timing each had swung from 6% to 28% between runs (on CI 27%).
+
+### 42.8 The other six regions (P3)
+- **The table** (`CaveRegion`; the pack's injectors from `tools/content/caves_content.py`; a region joins the pack, its
+  `injected` flag, once its shape and kit are in). The land boxes, on vanilla's band edges:
+
+  | Region | Band | Priority | Slot of the cover | Land above |
+  |---|---|---|---|---|
+  | The Rootways | Shallows | -10 | all | humid inland, not frozen or desert (P0) |
+  | **The Pale Halls** | Shallows | -9 | all | dry land (humidity under -0.1, temperature -0.45 to 0.55, inland), and the shore (continents -0.19 to -0.11) |
+  | **The Windcleft** | Middle | -13 | all | hills, mountains and peaks: erosion -0.375 or less, inland, any climate |
+  | **The Drowned Galleries** | Middle | -12 | all | the shore, and the flattest land (erosion 0.55 or more, inland, not frozen or hot) |
+  | **The Glimmer Hollows** | Middle | -11 | all | frozen land (temperature -0.45 or less), hot land (0.55 or more), warm dry land |
+  | The Ochre Deep | Middle | -10 | all | temperate land, warm wet land (P0) |
+  | **The Black Vaults** | Deep | -10 | 0 to 0.55 | any land, coast or inland |
+  | **The Violet Deep** | Deep | -10 | 0.55 to 1 | any land, coast or inland |
+
+  The Windcleft is the Middle Dark's, not the Shallows' as the plan drew it: under hills and mountains the Shallows lie over
+  y 59, where no region goes, so the cracks take the Middle Dark there (y 0 to 59, 20 to 55 blocks of height). Hot and
+  frozen land keeps plain Shallows (the Frost Spires' frostspar caves); under the sea every band stays plain.
+- **The shapes** (`CaveShapes`; densities as §42.3, corner-sampled, nothing under 5 wide or 6 high):
+  - **Halls** (the Pale Halls): wide halls with flat roofs and floors on one bedding plane, 7.5 high (passages 5.5), their
+    middle 10 to 13 blocks under the seal, where `shape_flat` at 0.7 scale is over **0.08** (about 45%), joined by passages
+    along `shape_a`'s zero lines (half-width **0.03**).
+  - **Fissures** (the Windcleft): along the zero lines of `shape_a` at 0.55 scale (long, straight-ish cracks), half-width
+    **0.022** (5 to 6 blocks) and **0.012** more in a ledge band every 24 blocks (phase by `shape_flat`), from y 56 down to
+    about y 4, closing over the last 8 blocks.
+  - **Lakes** (the Drowned Galleries): wide low caverns 8 high round y 8 to 16 (`shape_flat`), where `shape_flat` at 0.6 is
+    over **0.13** (about 35%), joined by low passages along `shape_b`'s zero lines (half-width **0.03**); the aquifers flood
+    what lies under their water.
+  - **Geodes** (the Glimmer Hollows): round rooms 5 to 8 in radius (squashed a quarter in height) in **70%** of the cells of
+    a jittered **28**-block 3D grid, off throats along `shape_a` at 1.1 scale (half-width **0.03**) 5.5 high round y 7 to 21.
+  - **Vaults** (the Black Vaults): halls on the Deep's floor (from about y -55, over the lava sea) where `shape_flat` at 0.5
+    is over **0** (half), their roof rising from 12 high at the edge to **48** in the middle, held up by rock columns 7
+    across on a jittered **16**-block grid.
+  - **Warped** (the Violet Deep): tunnels winding in 3D where `shape_a` and `shape_b` at 0.9 × 1.4 × 0.9 are both within
+    **0.06** of zero (vanilla's noodles, wider), and vaulted chambers 16 high round y -30 where `shape_flat` at 0.8 is over
+    **0.22**.
+  - **Shafts** join the bands: one in **40%** of the cells of a **160**-block grid, 7 across, from the seal (held off the
+    ground like every shape) down to y **-14**, only in a column whose Middle Dark is a region and whose Shallows or Deep is
+    one too; never above y 59.
+  - **Chasms**, by the same rule and to the same depth: in another **30%** of those cells, a slot as wide as a shaft, 24 to
+    48 long at any heading, through the cell's point (over the Black Vaults they open into the halls' roofs).
+- **Rock and ores** (as §42.7: the rock rule, a twin's vanilla drops and XP, an ore without a twin in its own pocket):
+  **`limestone`** (pale, wandering bedding planes, solution pits; the Pale Halls), **`banded_slate`** (blue-grey bands with
+  mica; the Windcleft), **`siltstone`** (green-grey damp laminae; the Drowned Galleries), **`glimmerstone`** (sandy, amber
+  flecks; the Glimmer Hollows), **`column_basalt`** (the side of a rank of columns; the Black Vaults), **`seepstone`**
+  (violet, a slanting Deepglass vein; the Violet Deep), each with the skin's kit. Twins: `limestone_iron_ore`,
+  `banded_slate_gold_ore`, `siltstone_lapis_ore`, `siltstone_copper_ore`, `glimmerstone_redstone_ore` (lights when touched,
+  as redstone ore), `column_basalt_diamond_ore` (deepslate diamond's drops).
+- **Each region's own pieces** (`CaveSkinFeature`; rolls per cell as §42.4; a drift is a low floor layer that needs a sturdy
+  floor and can be walked over; every piece is in `#minecraft:blocks_motion_no_leaves` if it has a collision box):
+  - **The Pale Halls**: drips from any roof (not only wet ones) at **0.3**; the puddle under them holds **`cave_pearls`** at
+    **0.4**; **`rimstone`** (3 px high, terraced pool dams; pickaxe) on open floor at **0.1** where a 3D field at 6 passes
+    **0.15**: in fields.
+  - **The Windcleft**: rubble along walls at **0.35** (scree; plain caves 0.18); **`rime`** (frost overlay, both cells over a
+    floor by a wall) where a field at 5 passes **0.3**, in place of lichen; **`old_rope`** (a Delvers' rope, climbable, wool
+    sound) from a roof at **0.012**, 3 to **12** blocks, its last block the frayed tip, never reaching the floor.
+  - **The Drowned Galleries**: **`silt`** (4 px; shovel) on open floor at **0.35** by water or where a field at 6 passes
+    **0.35**; **`driftwood`** (a log on its side, axe) at **0.012**; **`cave_weed`** (pale seagrass, no bone meal) on a lake
+    floor under still water at **0.3**; **`glow_algae`** (overlay, light **4**) on the rock at the waterline at **0.5**.
+  - **The Glimmer Hollows**: a crystal on floors, walls (both cells, facing out of the rock) and roofs (hanging) at **0.07**
+    each: **`amber_crystal`** (light **4**, amethyst's sound), or **`glacial_crystal`** (pale ice blue) under land colder than **0.3** base
+    temperature (read once a chunk at the land's top).
+  - **The Black Vaults**: **`ash`** (2 px, shovel) on open floor at **0.3**, in fields.
+  - **The Violet Deep**: **`violet_growth`** (three shapes, light **4**, no collision) on open floor at **0.08** where a
+    field at 5 passes **0.1**; **`shed_chitin`** (the crawlers' cast plates, pebble-like) at **0.03**.
+  - Driftwood and shed chitin have their own band of the roll, under silt's and the growth's: a roll in silt's or the
+    growth's band that misses its field lays nothing (it once fell through to driftwood, on a third of the floor).
+  - **Test** `caves_region_pieces`: two filled chunks of seed 777 for each of the six, told they are all that region: each
+    lays its floor's piece (rimstone, rime, silt, a crystal, ash, violet growth) and none of another region's; driftwood
+    and shed chitin at most twice their rate of the open floors. **Measured 2026-10-29**: the Pale Halls 20 rimstone and
+    18 pearls on 504 open floors; the Windcleft 149 rime and 31 rope blocks on 1,277; the Drowned Galleries 26 silt, 10
+    driftwood (1.2%), 87 weed and 32 algae on 830; the Glimmer Hollows 186 amber crystals on 825 (seed 777's land is warm:
+    no glacial); the Black Vaults 115 ash on 825; the Violet Deep 23 growths and 23 chitin (2.4%) on 952.
+- **The air** (`RegionClient`, as §42.7: 2 motes tried a tick, off with `cave_particles`): the Pale Halls' and the Drowned
+  Galleries' `awaken:cave_mist` (a wisp 0.2 to 0.8 over still water one or two blocks under the spot, hanging); the
+  Windcleft's `cave_mica` (a glint of 8 to 17 ticks on a wall face beside the spot, three sprites there and back); the
+  Glimmer Hollows' `cave_glitter` (the same glint, smaller, in the air); the Black Vaults' `cave_ash` (flakes sinking, one in
+  three dark); the Violet Deep's `cave_seep` (violet motes rising 0.005 a tick).
+- **Sound** (`tools/art/specs/audio_underlife.py`, as §42.7): the Pale Halls' `caves.pool_drip` (a drop into a pool under a
+  roof within 12 blocks, every 4.5 to 9 seconds, each place its own pitch of eight); the Windcleft's `caves.pebble_fall` (6 to
+  18 blocks off and over you, every 20 to 40 seconds); the Glimmer Hollows' `caves.crystal_ring` (a crystal within **6**
+  blocks rings while you move faster than **0.08** blocks a tick, every 1.5 to 3 seconds; glacial higher); the Black Vaults'
+  `caves.vault_rumble` (16 to 32 blocks off and under you, every 35 to 70 seconds). Beds (8-second seamless loops, filtered
+  round the loop so the seam doesn't click; the old bed fades as the new one comes in): the Windcleft's `caves.wind_moan`
+  (**0.5**), the Drowned Galleries' `caves.lake_lap` (**0.4**), the Violet Deep's `caves.violet_hum` (**0.4**), with the
+  Ochre Deep's warm hum.
+- **The underlife's own** (§42.5's director): glow-worm threads in the Pale Halls as in the Rootways; the Windcleft's
+  **cave swifts** (half its roosts, **0.5**: never seen to hang, they wheel about the roost from the start, 3 to 11 blocks
+  round it and up to 7 under, faster and on longer glides than bats, wings beating in bursts); the Drowned Galleries'
+  **crayfish** (half its pools, **0.5**, where the bottom is rock within 6: they creep on the lake floor at 0.01 a tick and
+  shoot off backwards when you lean over); the Glimmer Hollows' **glass moths** (its moths, and a crystal, light **4**, brings
+  two or three, as a torch on the wall does elsewhere); the Black Vaults' **ash moths** (up to 4) and 7 bats; the
+  Violet Deep's **chitin crawlers** (its beetles, up to 5, bigger). `/awaken underlife lineup` adds a second row of them.
+- **The Lens looks** (`looks_caves.json`, exposure 1.0 for all): the Pale Halls cool and clean (blue-grey shadows, saturation
+  0.92, haze tint 0.7/0.78/0.84); the Windcleft cold and crisp (contrast 1.14, warmth -0.1, haze 0.22); the Drowned Galleries
+  wet and green (haze 0.46 toward 0.28/0.6/0.58, water 0.8); the Glimmer Hollows' amber light on violet shadows (bloom 1.2 from
+  0.42, fog glow 1.15); the Black Vaults vast and black (contrast 1.18, haze toward 0.56/0.3/0.2, fog glow 1.2); the Violet
+  Deep uncanny (violet shadows, haze toward 0.5/0.34/0.7, vignette 0.3).
+- **Drawn light** (`caves.client.DrawnLight`; setting `drawn_cave_light`; never a light block, so spawns are untouched):
+  **6** columns a tick looked at within **40** blocks of the camera, at most **400** lights, drawn to **48** in one additive
+  pass (the lightning blend, depth-tested, no depth written, as `citizens.client.CityGlow`; its own pipeline
+  `awaken:pipeline/cave_glow`, the game's lightning type if that fails), fading in and out over 60 ticks and over the last
+  8 blocks of the reach; a region's lights fade once you've left it. The Pale Halls' **glow-worm stars**: a roof **6** or
+  more over its floor gets two or three pale blue-green points on its underside (a core and a faint halo, a few pixels
+  across at any distance: 0.035 + 0.0022 a block), brightening and dimming slowly, living 15 to 30 seconds. The Drowned
+  Galleries' **lake light**: over still water, two soft teal discs 1.6 to 2.8 across on the roof, drifting against each
+  other (none closer than 2.5). The Black Vaults' **heat**: over lava (looked for 48 down) a red-orange glow 2.6 to 4.2 across
+  hangs 1.4 to 2.6 over it, flickering (none closer than 4). Budget ≤ 0.1 ms a frame (§42.6), not yet measured.
+- **A jump** (a teleport, a respawn): the region at the camera is read again at once, not on the next second, and what
+  belongs to the region you left (glow-worms, rust beetles, swifts, crayfish, glass and ash moths, crawlers) fades away.
 
 ## 43. The Journey (one city and the wild, the beasts' Hearth, the bells' song, Faults; plan docs/director/JOURNEY.md, page https://claude.ai/artifact/UZ4vpKGoSJkisZRkmoHj3D; Euan approved the entire plan 2026-10-29: "Go ahead with the entire plan")
 

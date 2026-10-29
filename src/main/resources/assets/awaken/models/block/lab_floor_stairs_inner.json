@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "awaken:block/lab_floor",
+    "top": "awaken:block/lab_floor",
+    "side": "awaken:block/lab_floor"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "awaken:block/hive_comb_capped",
+    "top": "awaken:block/hive_comb_capped",
+    "side": "awaken:block/hive_comb_capped"
+  }
+}

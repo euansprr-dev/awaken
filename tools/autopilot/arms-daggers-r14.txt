@@ -1,4 +1,4 @@
-# The daggers, round 14 (SPEC §25 "Round 14"), filmed in the real game before Euan plays them (run with
+# The daggers, rounds 14-15 (SPEC §25 "Round 14", "Round 15"), filmed in the real game before Euan plays them (run with
 # PACK=perf,feel,comfort,world, the pack he plays): first person against a still husk, every frame recorded (the clip
 # recorder, run-autopilot/clips/<name>/). The chain clicked slowly (each strike apart) and fast (a click every 3 ticks),
 # a heavy, then the same by night, and the fast chain once from behind. The ribbons are live and as the player sees them.

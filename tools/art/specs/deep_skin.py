@@ -59,8 +59,15 @@ ROCKS = {
     "seepstone": ["#130e1c", "#201830", "#2c2240", "#3a2e52", "#4b3e66", "#5e5080", "#7a6c9e"],
 }
 SKIN_ROCKS = ("stone", "deepslate", "tuff")
-# the ores that live in the P2 regions, with the region's rock behind them: (rock, ore, block id)
-TWINS = [("rootstone", "coal", "rootstone_coal_ore"), ("rootstone", "copper", "rootstone_copper_ore"), ("ochre", "iron", "ochre_iron_ore")]
+# the regions' rocks (their art name: their block)
+REGION_BLOCK = {"rootstone": "rootstone", "ochre": "ochre_stone", "limestone": "limestone", "slate": "banded_slate",
+                "siltstone": "siltstone", "glimmer": "glimmerstone", "basalt": "column_basalt", "seepstone": "seepstone"}
+REGION_ROCKS = tuple(REGION_BLOCK)
+# the ores that live in the regions, with the region's rock behind them: (rock, ore, block id); P2's three, P3's six
+TWINS = [("rootstone", "coal", "rootstone_coal_ore"), ("rootstone", "copper", "rootstone_copper_ore"), ("ochre", "iron", "ochre_iron_ore"),
+         ("limestone", "iron", "limestone_iron_ore"), ("slate", "gold", "banded_slate_gold_ore"), ("siltstone", "lapis", "siltstone_lapis_ore"),
+         ("siltstone", "copper", "siltstone_copper_ore"), ("glimmer", "redstone", "glimmerstone_redstone_ore"),
+         ("basalt", "diamond", "column_basalt_diamond_ore")]
 
 
 def ramp(rock):
@@ -189,9 +196,28 @@ def region_rock(rock, seed=0):
             if rock in ("limestone", "slate", "ochre", "siltstone"):
                 period = {"limestone": 5.3, "slate": 3.2, "ochre": 4.1, "siltstone": 2.7}[rock]
                 k += math.sin((y + math.sin(x * 0.4 + band_phase) * 0.6) * 2 * math.pi / period) * (1.1 if rock != "limestone" else 0.6)
-            if rock == "limestone" and y % 8 == 3:
-                k -= 1.3
             c.set(x, y, R[max(1, min(6, int(round(k))))])
+    if rock == "limestone":
+        # bedding planes that wander and break off (a straight full-width line every 8 reads as planks), small solution
+        # pits with a pale lip, and a few shell fragments in the bed
+        for y0 in (3, 11):
+            x, y, run = r.randrange(16), y0, 0
+            for _ in range(r.randint(9, 13)):
+                c.set(x % 16, y % 16, R[2])
+                if r.random() < 0.4:
+                    c.set(x % 16, (y + 1) % 16, R[5])
+                x += 1
+                if r.random() < 0.3:
+                    y += r.choice((-1, 1))
+        for _ in range(4):
+            x, y = r.randrange(16), r.randrange(16)
+            c.set(x, y, R[1])
+            c.set(x, (y + 1) % 16, R[6])
+        for _ in range(3):
+            x, y = r.randrange(15), r.randrange(15)
+            c.set(x, y, R[6])
+            c.set(x + 1, y + 1, R[6])
+            c.set(x + 1, y, R[4])
     if rock == "rootstone":
         # one old root threading through, a step darker than the rock (not black), its lit upper edge; pale grit
         x, y = r.randrange(16), 0
@@ -211,20 +237,38 @@ def region_rock(rock, seed=0):
         for i in range(5):
             c.set(r.randrange(16), r.randrange(16), H("#f0b040") if i else H("#ffe08a"))
     if rock == "basalt":
-        for y in range(16):
-            for x in (0, 5, 11):
-                xx = (x + (1 if (y // 4) % 2 else 0)) % 16
+        # the side of a rank of columns: joints running the block's height, each column's lit edge beside its joint, and
+        # each column cracked across at its own height (one line across every column reads as bricks)
+        joints = (0, 5, 11)
+        for i, x0 in enumerate(joints):
+            for y in range(16):
+                xx = (x0 + (1 if 5 <= y < 11 and i == 1 else 0)) % 16
                 c.set(xx, y, R[0])
-        for x in range(16):
-            if x % 5 != 0:
-                c.set(x, 7, R[1])
+                c.set((xx + 1) % 16, y, R[4] if r.random() < 0.7 else R[3])
+            w = (joints[(i + 1) % 3] - x0) % 16
+            yc = r.randrange(16)
+            for x in range(x0 + 2, x0 + w):
+                c.set(x % 16, (yc + (1 if x - x0 > w // 2 else 0)) % 16, R[1])
     if rock == "seepstone":
-        x = r.randint(2, 6)
-        for y in range(16):
-            x += r.choice((-1, 0, 1)) if y % 2 else 0
-            c.set(x % 16, y, H("#9a62e0"))
-            if r.random() < 0.3:
-                c.set((x + 1) % 16, y, H("#d8b0ff"))
+        # a Deepglass vein crossing the block on a slant, with a short branch, its bright core in places (a vein straight
+        # down the block's height lines up into stripes over a wall)
+        x, y = r.randrange(16), r.randrange(16)
+        pts = []
+        for _ in range(r.randint(10, 13)):
+            pts.append((x, y))
+            x += 1
+            y += r.choice((0, 1, 1, -1))
+        bx, by = pts[len(pts) // 2]
+        for _ in range(4):
+            by += 1
+            bx += r.choice((-1, 0))
+            pts.append((bx, by))
+        for i, (vx, vy) in enumerate(pts):
+            c.set(vx % 16, vy % 16, H("#9a62e0"))
+            if i % 3 == 1:
+                c.set(vx % 16, vy % 16, H("#d8b0ff"))
+        for _ in range(3):
+            c.set(r.randrange(16), r.randrange(16), H("#6e44a8"))
     return c
 
 
@@ -329,6 +373,10 @@ ORE = {
     "coal": ["#3a3434", "#151314", "#221f20", "#353132", "#9a9496"],
     "copper": ["#7fc0a4", "#8c4a24", "#b8642e", "#e08a50", "#ffd0a0"],     # the rim a verdigris bloom
     "iron": ["#e8bc94", "#3a2622", "#563830", "#7a5a52", "#e6e2dc"],
+    "gold": ["#a07a28", "#8a6414", "#c8961e", "#f0c84a", "#fff2a8"],
+    "lapis": ["#2a3a7a", "#1a2a6e", "#2846a0", "#3c64d2", "#9ab8ff"],
+    "redstone": ["#5a1010", "#7a0a0a", "#aa1414", "#e02828", "#ff9a8a"],
+    "diamond": ["#2a6a66", "#1a8a84", "#3ac2b8", "#7ae8e0", "#e8fffc"],
 }
 
 
@@ -731,13 +779,316 @@ PARTICLES = {
 }
 
 
+# ---- the six P3 regions' dressing (SPEC §42.8) ---------------------------------------------------------------------------
+
+def _wave(r, n=16, amp=1.2, period=None):
+    period = period or r.uniform(5, 9)
+    ph = r.uniform(0, 6.3)
+    return [amp * math.sin(ph + x * 2 * math.pi / period) for x in range(n)]
+
+
+def rimstone(seed=0):
+    """The Pale Halls' rimstone: cream calcite laid down in thin wet terraces, each a scalloped ridge (a bright lip, the
+    shadow under it, a smooth glossy pan behind), with a few pale sparkles where it's still wet."""
+    r = rng("rimstone", seed)
+    R = [H("#8f8670"), H("#b3aa90"), H("#cdc5aa"), H("#ddd6bd"), H("#ece6d0"), H("#fbf8ec")]
+    c = Canvas(16, 16)
+    rows = [3, 8, 13]
+    waves = [_wave(r, amp=1.0) for _ in rows]
+    for y in range(16):
+        for x in range(16):
+            # distance below the nearest ridge above this pixel
+            d = min(((y - (ry + w[x])) % 16) for ry, w in zip(rows, waves))
+            k = 5 if d < 0.8 else 1 if d < 1.8 else 2 if d < 2.8 else 3 + (1 if r.random() < 0.18 else 0)
+            c.set(x, y, R[k])
+    for _ in range(5):
+        c.set(r.randrange(16), r.randrange(16), R[5])
+    return c
+
+
+def silt(seed=0):
+    """The Drowned Galleries' silt: fine grey-green mud the water left, smooth and damp, with faint ripple marks (soft
+    low ridges, lit on their up-current side), darker wet hollows and a few pale flecks of shell."""
+    r = rng("silt", seed)
+    S = [H("#30362f"), H("#3e463c"), H("#4a5347"), H("#566052"), H("#646e5e"), H("#8a917c")]
+    c = Canvas(16, 16)
+    ridges = [r.uniform(0, 16) for _ in range(3)]
+    bend = [r.uniform(-1.2, 1.2) for _ in range(3)]
+    for y in range(16):
+        for x in range(16):
+            v = 2.4 + r.uniform(-0.35, 0.35)
+            for ry, b in zip(ridges, bend):
+                d = (y - (ry + b * math.sin(x * 0.45 + ry))) % 16
+                if d < 1.0:
+                    v += 1.0                                       # the lit crest
+                elif d < 2.0:
+                    v -= 0.8                                       # its lee
+            c.set(x, y, S[max(1, min(4, round(v)))])
+    for _ in range(3):
+        c.set(r.randrange(16), r.randrange(16), S[5])
+    for _ in range(4):
+        c.set(r.randrange(16), r.randrange(16), S[0])
+    return c
+
+
+def ash_drift(seed=0):
+    """The Black Vaults' ash: soft grey drifts with a darker charcoal grit through them, and a few cinders still pale at
+    their ends; no texture of a sand, the grains too fine to see."""
+    r = rng("ash", seed)
+    A = [H("#2a2928"), H("#3e3c3a"), H("#55524f"), H("#6a6662"), H("#7f7a75"), H("#a39d95")]
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            v = 0.5 + 0.25 * math.sin(x * 0.7 + r.uniform(-0.2, 0.2)) * math.cos(y * 0.55) + r.uniform(-0.18, 0.18)
+            k = 1 + round(v * 2)
+            c.set(x, y, A[max(1, min(3, k))])
+    for _ in range(9):
+        c.set(r.randrange(16), r.randrange(16), A[0])
+    for _ in range(3):
+        x, y = r.randrange(15), r.randrange(16)
+        c.set(x, y, A[0])
+        c.set(x + 1, y, A[5])
+    return c
+
+
+def cave_pearls(seed=0):
+    """Cave pearls: beads of calcite rolled smooth in a drip's pool, pale with a soft lustre (a bright spot up and left, a
+    warm shadow down and right, a faint pink and green sheen between)."""
+    r = rng("pearls", seed)
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            u, v = (x % 4) / 3.0, (y % 4) / 3.0
+            d = math.hypot(u - 0.35, v - 0.3)
+            base = mix(H("#fbf6e8"), H("#b9ad92"), min(1.0, d * 1.1))
+            if 0.35 < d < 0.55 and r.random() < 0.35:
+                base = mix(base, H("#f1d6dc") if (x + y) % 2 else H("#d8ecd8"), 0.5)
+            c.set(x, y, base)
+    return c
+
+
+def shed_chitin(seed=0):
+    """Shed chitin: the thin husks the Hollows leave, translucent violet-grey plates curved like a beetle's back (lit along
+    the ridge, dark at the rims), crossed by a few arched segment seams, with a dull sheen."""
+    r = rng("chitin", seed)
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            u = (x + 0.5) / 16
+            arch = 4 * u * (1 - u)                                    # the curve across a plate: 0 at its rims, 1 on its ridge
+            seam = (y + round(3 * (1 - arch))) % 5 == 0
+            k = 0.2 + 0.65 * arch + r.uniform(-0.06, 0.06) - (0.3 if seam else 0)
+            col = mix(H("#241a2e"), H("#b4a4c4"), max(0.0, min(1.0, k)))
+            if arch > 0.9 and r.random() < 0.25:
+                col = H("#e2d8ec")                                    # the sheen on the ridge
+            c.set(x, y, (*col[:3], 240))
+    return c
+
+
+CRYSTAL = {"amber": ["#4a2208", "#8a4a10", "#c8781e", "#f0a838", "#ffd27a", "#fff2c8"],
+           "glacial": ["#14304a", "#25587e", "#4a8cba", "#82c2e8", "#c2e8fa", "#f4fcff"]}
+
+
+def crystal_cluster(kind, glow=False, seed=0):
+    """A Glimmer Hollows crystal, side-on (a cross, turned by its face): three or four six-sided points of different
+    heights from a common foot, each dark on its shadow side, clear in the middle and bright along its lit edge, its tip a
+    pale facet; the glow layer is each point's lit body (all but its shadow side), so in the dark the whole cluster shows
+    as a soft lamp while the torch still finds its shadow side."""
+    r = rng("crystal", kind, seed)
+    C = [H(h) for h in CRYSTAL[kind]]
+    c = Canvas(16, 16)
+    points = [(8, 14, 3), (4, 9, 2), (12, 10, 2)] + ([(10, 6, 1)] if r.random() < 0.6 else [])
+    for cx, h, w in points:
+        lean = r.choice((-1, 0, 1)) if w < 3 else 0
+        top = 16 - h
+        for y in range(top, 16):
+            t = (y - top) / max(1, h)
+            off = round(lean * (1 - t))
+            half = max(0, min(w, round(w * min(1.0, (y - top + 1) / 3.0))))
+            for dx in range(-half, half + 1):
+                x = cx + dx + off
+                k = 1 if dx == -half else 4 if dx == half else 3 if dx == 0 else 2
+                if y == top:
+                    k = 5
+                if glow:
+                    if k >= 2:
+                        c.set(x, y, (*C[k][:3], 150 if k == 2 else 210))
+                    continue
+                c.set(x, y, C[k])
+    return c
+
+
+def old_rope(tip=False, seed=0):
+    """An old Delvers' rope down a crack: one hemp rope twisted in three plies (a diagonal run of dark, mid and lit),
+    greyed and dusty with age, now and then a hard knot (a fat twist a pixel wider each side) for a hand; at the tip it
+    ends in a frayed tuft."""
+    r = rng("rope", tip, seed)
+    R = [H("#2e261c"), H("#5a4a36"), H("#7d6a50"), H("#a08c6c"), H("#c4b494")]
+    c = Canvas(16, 16)
+    end = r.randint(9, 12) if tip else 16
+    knot = -9 if tip else r.randint(4, 10)
+    for y in range(end):
+        fat = 1 if knot <= y < knot + 3 else 0
+        for k, x in enumerate(range(7 - fat, 10 + fat)):
+            ply = (y + k) % 3
+            c.set(x, y, R[1 + ply] if x < 9 + fat else R[1 + min(2, ply + 1)])
+        c.set(6 - fat, y, R[0])
+        if fat and y == knot + 1:
+            c.set(7 - fat, y, R[4])
+    if tip:
+        for _ in range(7):
+            x, l = r.randint(6, 10), r.randint(1, 4)
+            for k in range(l):
+                c.set(x + (k if x > 8 else -k) // 2, end + k, (*R[4 if k else 2][:3], 220))
+    return c
+
+
+def cave_weed(seed=0):
+    """The Drowned Galleries' cave weed: pale ghostly fronds that never saw the sun, long thin blades swaying from a
+    tuft, near-white at their tips and a faint grey-green toward the root, see-through at the edges."""
+    r = rng("weed", seed)
+    W = [H("#56685c"), H("#7e9284"), H("#a8bcae"), H("#d0ded4"), H("#eef6f0")]
+    c = Canvas(16, 16)
+    for base in (3, 6, 8, 10, 13):
+        h = r.randint(8, 15)
+        x = base + r.uniform(-0.5, 0.5)
+        sway = r.uniform(-0.25, 0.25)
+        for k in range(h):
+            y = 15 - k
+            x += sway + 0.35 * math.sin(k * 0.6 + base)
+            t = k / h
+            col = W[min(4, int(t * 4.5))]
+            c.set(round(x), y, (*col[:3], 230 if t < 0.85 else 170))
+    return c
+
+
+def violet_growth(variant, glow=False):
+    """The Violet Deep's growths: soft violet stalks bending under their weight, each ending in a round swollen bulb (dark
+    plum underneath, violet skin, lit pores and a frilled crown magenta-white); the glow layer is only the pores and the
+    crown, so the bulbs shine in the dark while the stalks take the cave's light."""
+    r = rng("violet", variant)
+    c = Canvas(16, 16)
+    stems = ([(5, 9, 2.2), (11, 12, 2.8)], [(4, 7, 1.8), (8, 12, 2.8), (12, 9, 2.0)], [(6, 13, 3.0), (11, 8, 2.0), (3, 6, 1.5)])[variant]
+    for sx, h, b in stems:
+        bend = r.choice((-1, 1))
+        cy = 16 - h + b
+        cx = sx + bend
+        if not glow:
+            for y in range(round(cy + b), 16):
+                x = sx + (bend if y < cy + b + 2 else 0)
+                c.set(x, y, H("#2e1438") if y > 13 else H("#55286a"))
+        for y in range(round(cy - b) - 1, round(cy + b) + 1):
+            for x in range(round(cx - b) - 1, round(cx + b) + 2):
+                d = math.hypot((x + 0.5 - cx - 0.5) / b, (y + 0.5 - cy) / (b * 0.85))
+                if d > 1.05:
+                    continue
+                crown = y < cy - b * 0.45 and (x + y) % 2 == 0
+                pore = d < 0.8 and r.random() < 0.18
+                if glow:
+                    if crown or pore:
+                        c.set(x, y, H("#ffd0ff") if crown else H("#e070ff"))
+                    continue
+                if crown:
+                    col = H("#f0b0ff")
+                elif y > cy + b * 0.35:
+                    col = H("#4a1e60")                              # the bulb's dark underside
+                elif x < cx:
+                    col = H("#7a34a8")
+                else:
+                    col = H("#a050d4")
+                c.set(x, y, H("#e070ff") if pore else col)
+    return c
+
+
+def rime(seed=0):
+    """The Windcleft's rime: hoarfrost feathered on the rock where the draught runs cold, white fern-like plumes growing
+    into the wind from a few roots, blue in their shadows, over about two fifths of the face."""
+    r = rng("rime", seed)
+    c = Canvas(16, 16)
+    for _ in range(r.randint(4, 5)):
+        x, y = r.uniform(0, 16), r.uniform(4, 16)
+        ang = r.uniform(-2.2, -0.9)
+        for k in range(r.randint(5, 9)):
+            px, py = int(x) % 16, int(y) % 16
+            c.set(px, py, H("#f4fbff"))
+            for side in (-1, 1):                                  # the feather's barbs
+                bx, by = px + side, py + (1 if k % 2 else 0)
+                if r.random() < 0.75:
+                    c.set(bx % 16, by % 16, (*H("#bcd8ec")[:3], 220))
+                if r.random() < 0.3:
+                    c.set((bx + side) % 16, (by + 1) % 16, (*H("#86aac6")[:3], 200))
+            x += math.cos(ang)
+            y += math.sin(ang)
+    return c
+
+
+def glow_algae(glow=False, seed=0):
+    """The Drowned Galleries' glow algae: a slick green-teal film along the waterline (the face's lower third), mottled
+    and see-through, its upper edge ragged with blobs and a few thin runs climbing the wet rock; its living specks glow
+    (the glow layer is only the specks)."""
+    r = rng("algae", seed)
+    c = Canvas(16, 16)
+    edge = [11 + 1.2 * math.sin(x * 0.9 + r.uniform(0, 0.4)) + r.uniform(-0.8, 0.8) for x in range(16)]
+    runs = {r.randrange(16): r.randint(4, 7) for _ in range(3)}
+    for x in range(16):
+        top = round(edge[x])
+        if x in runs:
+            top = min(top, runs[x])
+        for y in range(top, 16):
+            thin = x in runs and y < round(edge[x])
+            if glow:
+                if r.random() < (0.06 if thin else 0.16):
+                    c.set(x, y, H("#b6ffe0") if r.random() < 0.4 else H("#5ef0b4"))
+                continue
+            t = (y - top) / max(1, 16 - top)
+            col = mix(H("#2f8f6c"), H("#17473a"), t)
+            if r.random() < 0.25:
+                col = mix(col, H("#4fb88c"), 0.5)
+            c.set(x, y, (*col[:3], 150 if thin else 205))
+    return c
+
+
+def driftwood(end=False, seed=0):
+    """Driftwood: a branch the water carried in and bleached silver-grey, its bark gone, long grain lines running along it
+    with dark cracks between and the odd knot; its broken end shows pale rings round a darker heart."""
+    r = rng("driftwood", end, seed)
+    D = [H("#3a3832"), H("#5e5a50"), H("#827d70"), H("#a39d8e"), H("#c4beae"), H("#dcd8cc")]
+    c = Canvas(16, 16)
+    if end:
+        for y in range(16):
+            for x in range(16):
+                d = math.hypot(x - 7.5, y - 7.5)
+                k = 0 if d > 7.6 else 1 if d < 1.5 else 4 if int(d * 1.3) % 2 else 3
+                c.set(x, y, D[k])
+        for k in range(r.randint(1, 2)):
+            a = r.uniform(0, 6.3)
+            for s in range(2, 8):
+                c.set(round(7.5 + math.cos(a) * s), round(7.5 + math.sin(a) * s), D[1])
+        return c
+    for x in range(16):
+        k = 3 if x % 3 else 4
+        for y in range(16):
+            c.set(x, y, D[k] if r.random() > 0.12 else D[k - 1])
+    for _ in range(3):
+        x = r.randrange(16)
+        y0, l = r.randrange(16), r.randint(4, 10)
+        for y in range(y0, y0 + l):
+            c.set(x, y % 16, D[0])
+            c.set(x + 1, y % 16, D[5]) if r.random() < 0.5 else None
+    kx, ky = r.randint(3, 12), r.randint(3, 12)
+    for dx, dy in ((0, 0), (1, 0), (0, 1), (1, 1)):
+        c.set(kx + dx, ky + dy, D[1])
+    c.set(kx, ky, D[0])
+    return c
+
+
 def build(out):
-    for rock in SKIN_ROCKS + ("rootstone", "ochre"):
+    for rock in SKIN_ROCKS + REGION_ROCKS:
         out.block(f"caves/{rock}_rubble", rubble(rock))
         out.block(f"caves/{rock}_formation", formation(rock))
         out.block(f"caves/{rock}_formation_tip", formation(rock, tip=True))
-    for rock in ("rootstone", "ochre"):
-        out.block(f"caves/{rock}" if rock == "rootstone" else "caves/ochre_stone", region_rock(rock))
+    for rock in REGION_ROCKS:
+        out.block(f"caves/{REGION_BLOCK[rock]}", region_rock(rock))
     for rock, ore, name in TWINS:
         out.block(f"caves/{name}", ore_twin(rock, ore))
     for v in range(3):
@@ -771,19 +1122,32 @@ def build(out):
     for i in range(2):
         out.particle(f"caves/mist_{i}", mist(i))
         out.particle(f"caves/seep_{i}", seep(i))
+    # the six P3 regions' dressing
+    for name, fn in (("rimstone", rimstone), ("silt", silt), ("ash", ash_drift), ("cave_pearls", cave_pearls), ("shed_chitin", shed_chitin),
+                     ("rime", rime), ("cave_weed", cave_weed)):
+        out.block(f"caves/{name}", fn())
+    for kind in CRYSTAL:
+        out.block(f"caves/{kind}_crystal", crystal_cluster(kind))
+        out.block(f"caves/{kind}_crystal_glow", crystal_cluster(kind, glow=True))
+    out.block("caves/old_rope", old_rope())
+    out.block("caves/old_rope_tip", old_rope(tip=True))
+    for v in range(3):
+        out.block(f"caves/violet_growth_{v}", violet_growth(v))
+        out.block(f"caves/violet_growth_{v}_glow", violet_growth(v, glow=True))
+    out.block("caves/glow_algae", glow_algae())
+    out.block("caves/glow_algae_glow", glow_algae(glow=True))
+    out.block("caves/driftwood", driftwood())
+    out.block("caves/driftwood_end", driftwood(end=True))
     for i in range(3):
         out.particle(f"caves/mica_{i}", glint(PARTICLES["mica"], i + 1))
         out.particle(f"caves/glitter_{i}", glint(PARTICLES["glitter"], i + 1))
-    for rock in ROCKS:
-        if rock not in SKIN_ROCKS + ("rootstone", "ochre"):
-            out.block(f"caves/{rock}", region_rock(rock))  # P3's rocks, on the style sheet now
 
 
 # ---- models -------------------------------------------------------------------------------------------------------------
 # The skin's shapes in Minecraft's model format (elements in pixels, 16 a block). Formations are real tapered columns, a few
 # boxes each, so they catch light on their sides; rubble is a low heap of fragments of the rock on a bed of broken rock.
 ROCK_TEXTURE = {"stone": "minecraft:block/stone", "deepslate": "minecraft:block/deepslate", "tuff": "minecraft:block/tuff",
-                "rootstone": "awaken:block/caves/rootstone", "ochre": "awaken:block/caves/ochre_stone"}
+                **{rock: f"awaken:block/caves/{b}" for rock, b in REGION_BLOCK.items()}}
 # boxes (x0, y0, x1, y1) of a stalagmite's four thicknesses, x the half-width round the column's middle
 FORMATION = {
     "base": [(6.5, 0, 3), (6.0, 3, 6), (5.5, 6, 9), (5.0, 9, 12), (4.5, 12, 16)],
@@ -884,9 +1248,67 @@ def cross_model(tex, glow_tex=None, glow=0):
     return m
 
 
+# the six P3 regions' floor drifts (SPEC §42.8): their height in pixels, as SkinBlocks.Drift's shape
+DRIFT_HEIGHT = {"rimstone": 3, "silt": 4, "ash": 2}
+
+
+def drift_model(name, variant):
+    """A low drift on the floor. Rimstone: a thin wet floor with a raised lip of dam along one or two edges (a terrace's
+    step); silt: a soft bank mounding up in the middle; ash: a flat layer with a few heaped patches."""
+    r = rng("drift_model", name, variant)
+    h = DRIFT_HEIGHT[name]
+    if name == "rimstone":
+        els = [box((0, 0, 0), (16, 1, 16), "#t")]
+        lips = ([(0, 16, 0, 2.5)], [(0, 16, 0, 2.5), (0, 2.5, 2.5, 16)], [(0, 6, 0, 3), (5, 11, 0, 2), (10, 16, 0, 3.5)])[variant]
+        for x0, x1, z0, z1 in lips:
+            els.append(box((x0, 1, z0), (x1, h, z1), "#t"))
+    elif name == "silt":
+        els = [box((0, 0, 0), (16, 2, 16), "#t")]
+        x0, z0 = r.uniform(1, 4), r.uniform(1, 4)
+        els.append(box((round(x0, 2), 2, round(z0, 2)), (round(x0 + r.uniform(8, 11), 2), h, round(z0 + r.uniform(8, 11), 2)), "#t"))
+    else:
+        els = [box((0, 0, 0), (16, 1, 16), "#t")]
+        for _ in range(2 + variant):
+            w, d = r.uniform(3, 6), r.uniform(3, 6)
+            x, z = r.uniform(0, 16 - w), r.uniform(0, 16 - d)
+            els.append(box((round(x, 2), 1, round(z, 2)), (round(x + w, 2), h, round(z + d, 2)), "#t"))
+    return {"parent": "minecraft:block/block", "textures": {"particle": f"awaken:block/caves/{name}", "t": f"awaken:block/caves/{name}"},
+            "elements": els}
+
+
+def bits_model(name, variant):
+    """Small things lying on the floor: cave pearls (four to six round beads in a hollow) or shed chitin (thin curved
+    plates at odd angles)."""
+    r = rng("bits_model", name, variant)
+    els = []
+    pearls = name == "cave_pearls"
+    for _ in range(r.randint(4, 6) if pearls else r.randint(2, 3)):
+        if pearls:
+            w = r.choice((1.5, 2, 2.5))
+            x, z = r.uniform(4, 12 - w), r.uniform(4, 12 - w)
+            els.append(box((round(x, 2), 0, round(z, 2)), (round(x + w, 2), w, round(z + w, 2)), "#t"))
+        else:
+            w, d = r.uniform(3, 5.5), r.uniform(2, 3.5)
+            x, z = r.uniform(1.5, 14.5 - w), r.uniform(1.5, 14.5 - d)
+            els.append(box((round(x, 2), 0, round(z, 2)), (round(x + w, 2), 1, round(z + d, 2)), "#t",
+                           rot={"angle": r.choice((-22.5, 22.5, -45, 45)), "axis": "y", "origin": [round(x + w / 2, 2), 0, round(z + d / 2, 2)]}))
+    return {"parent": "minecraft:block/block", "textures": {"particle": f"awaken:block/caves/{name}", "t": f"awaken:block/caves/{name}"},
+            "elements": els}
+
+
+def driftwood_model():
+    """A bleached branch lying along z (the blockstate turns it for x): bark round it, the grain at its broken ends, and a
+    snapped-off side branch."""
+    els = [box((5, 0, 0.5), (10.5, 5, 15.5), "#bark", faces=("east", "west", "up", "down")),
+           box((5, 0, 0.5), (10.5, 5, 15.5), "#end", faces=("north", "south")),
+           box((10.5, 1.5, 8.5), (14, 3.5, 10.5), "#bark", rot={"angle": -22.5, "axis": "y", "origin": [10.5, 2.5, 9.5]})]
+    return {"parent": "minecraft:block/block", "textures": {"particle": "awaken:block/caves/driftwood", "bark": "awaken:block/caves/driftwood",
+            "end": "awaken:block/caves/driftwood_end"}, "elements": els}
+
+
 def model_dict():
     out = {}
-    for rock in SKIN_ROCKS + ("rootstone", "ochre"):
+    for rock in SKIN_ROCKS + REGION_ROCKS:
         for d in ("up", "down"):
             for t in THICKNESSES:
                 out[f"{rock}_formation_{d}_{t}"] = formation_model(rock, d, t)
@@ -900,11 +1322,28 @@ def model_dict():
         out[f"glowcap_{v}"] = cross_model(f"awaken:block/caves/glowcap_{v}", f"awaken:block/caves/glowcap_{v}_glow", glow=12)
     for t in ("root_curtain", "root_curtain_tip"):
         out[t] = cross_model(f"awaken:block/caves/{t}")
-    for rock in ("rootstone", "ochre_stone") + tuple(t[2] for t in TWINS):
+    for rock in tuple(REGION_BLOCK.values()) + tuple(t[2] for t in TWINS):
         out[rock] = {"parent": "minecraft:block/cube_all", "textures": {"all": f"awaken:block/caves/{rock}"}}
     out["puddle"] = {"ambientocclusion": False, "render_type": "minecraft:translucent", "textures": {"particle": "awaken:block/caves/puddle", "t": "awaken:block/caves/puddle"},
                      "elements": [box((0, 0.2, 0), (16, 0.2, 16), "#t", faces=("up",), tint=0)]}
     out["dusty_web"] = {"parent": "minecraft:block/cross", "render_type": "minecraft:cutout", "textures": {"cross": "awaken:block/caves/dusty_web"}}
+    # the six P3 regions' dressing (SPEC §42.8)
+    for name in DRIFT_HEIGHT:
+        for v in range(3):
+            out[f"{name}_{v}"] = drift_model(name, v)
+    for name in ("cave_pearls", "shed_chitin"):
+        for v in range(3):
+            out[f"{name}_{v}"] = bits_model(name, v)
+    for name in ("amber_crystal", "glacial_crystal"):
+        out[name] = cross_model(f"awaken:block/caves/{name}", f"awaken:block/caves/{name}_glow", glow=10)
+    for t in ("old_rope", "old_rope_tip"):
+        out[t] = cross_model(f"awaken:block/caves/{t}")
+    out["cave_weed"] = cross_model("awaken:block/caves/cave_weed")
+    for v in range(3):
+        out[f"violet_growth_{v}"] = cross_model(f"awaken:block/caves/violet_growth_{v}", f"awaken:block/caves/violet_growth_{v}_glow", glow=11)
+    out["rime"] = overlay_model("rime")
+    out["glow_algae"] = overlay_model("glow_algae", glow=10)
+    out["driftwood"] = driftwood_model()
     return out
 
 

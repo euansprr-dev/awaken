@@ -432,8 +432,35 @@ def like(styles=None, swings=None):
 # `near` (an arm drawn in at the camera); a stab never grows past `pull` of the stance's size before the hit (no
 # pull-back) and lands within `mark` of the crosshair; a slash ends its stroke (the ribbon's last tick) no further past
 # the middle than `past`, at least `gap` from the other blade's point; the ribbon covers the hit and stops within
-# `after` ticks of it (never the way home).
-CALM = {"daggers": dict(still=0.03, near=0.04, pull=1.05, mark=0.15, past=0.25, gap=0.2, after=0.45)}
+# `after` ticks of it (never the way home). Round 15 (Euan, after the round 14 film: "keep the fist lower in the jab, so
+# the forearm doesn't swing into the corner"): a stab's fist rises no more than `rise` of the screen over its stance's,
+# the forearm drawn up to it covers no more than `arm` of the screen (`forearm`), the blade drives away (its size on
+# the screen at the hit at most `go` of the stance's) and its point still lands on the target, within `point` of the
+# crosshair. The rise and the forearm are shown for every move.
+CALM = {"daggers": dict(still=0.03, near=0.04, pull=1.05, rise=0.22, arm=0.11, go=0.85, point=0.5, past=0.25, gap=0.2,
+                        after=0.45)}
+
+# Hands' first-person forearm (anims WorldBody.drawFist): drawn REACH up to the fist from under the corner at ANCHOR
+# (view space, a right arm), THICK across, at its true size: a fist risen into the view brings the forearm with it
+FOREARM_ANCHOR, FOREARM_REACH, FOREARM_THICK = np.array([0.48, -0.84, -0.53]), 0.6, 0.25
+
+
+def forearm(fist):
+    """How much of the screen (ndc area, the screen is 4) the forearm up to a right fist at {@code fist} covers."""
+    d = fist - FOREARM_ANCHOR
+    d = d / np.linalg.norm(d)
+    root, area, prev = fist - d * FOREARM_REACH, 0.0, None
+    for u in np.linspace(0, 1, 41):
+        q = root + (fist - root) * u
+        if -q[2] < 0.05:
+            prev = None
+            continue
+        n = S.ndc(q)
+        if prev is not None and abs(n[0]) < 1.3 and abs(n[1]) < 1.3:
+            inside = abs(n[0]) <= 1 and abs(n[1]) <= 1
+            area += float(np.linalg.norm(n - prev)) * FOREARM_THICK / -q[2] * S.F_ * (1.0 if inside else 0.5)
+        prev = n
+    return area
 
 
 def calm(styles=None, swings=None):
@@ -450,7 +477,7 @@ def calm(styles=None, swings=None):
 
         def seen(d, R):
             g, tip = H0 + d + R @ held.grip, H0 + d + R @ held.tip
-            return S.ndc(g), S.ndc(tip), float(-g[2])
+            return S.ndc(g), S.ndc(tip), float(-g[2]), forearm(g)
         rest = seen(np.zeros(3), np.eye(3))
         print(f"{sid}: stance grip depth {rest[2]:.2f}, point {rest[1].round(2)}")
         for mv in SC.CHORE[sid]["moves"]:
@@ -467,21 +494,27 @@ def calm(styles=None, swings=None):
             tr = clip.get("trail")
             got["after"] = (tr[1] - hit) if tr and tr[0] <= hit else math.inf
             k = int(round(hit / DT))
+            hands = fr + (oth if both else [])
+            got["rise"] = max(f[0][1] for f in hands) - rest[0][1]
+            got["arm"] = max(f[3] for f in hands)
             if form == "stab":
-                size = [float(np.linalg.norm(f[1] - f[0])) / float(np.linalg.norm(rest[1] - rest[0])) for f in fr[:k]]
-                got["pull"] = max(size) if size else 1.0
-                got["mark"] = float(np.linalg.norm(fr[k][1] - S.ndc(L.TARGET)))
+                size = [float(np.linalg.norm(f[1] - f[0])) / float(np.linalg.norm(rest[1] - rest[0])) for f in fr]
+                got["pull"] = max(size[:k]) if k else 1.0
+                got["go"] = size[k]
+                got["point"] = float(np.linalg.norm(fr[k][1]))
             else:
                 e = min(len(fr) - 1, int(round((tr[1] if tr else hit) / DT)))
                 got["past"] = -float(fr[e][1][0])
                 got["gap"] = math.inf if both else float(np.linalg.norm(fr[e][1] - oth[e][1] * flip))
             for key, v in got.items():
+                if form != "stab" and key in ("rise", "arm"):
+                    continue  # shown, held for the jabs (round 15)
                 if (v < bars[key]) if key == "gap" else (v > bars[key]):
                     miss.append(key)
             print(f"  {mv:10s} {form:5s} " + "  ".join(f"{key} {v:.2f}{' !' if key in miss else ''}" for key, v in got.items()))
             if miss:
                 bad.append((sid, mv, miss))
-    print(f"{len(bad)} set moves out of round 14's rules")
+    print(f"{len(bad)} set moves out of the calm rules (rounds 14-15)")
     return bad
 
 

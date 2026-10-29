@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "awaken:banded_slate_gold_ore",
+    "awaken:glimmerstone_redstone_ore",
+    "awaken:column_basalt_diamond_ore"
+  ]
+}

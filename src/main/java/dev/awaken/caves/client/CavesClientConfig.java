@@ -21,10 +21,15 @@ public final class CavesClientConfig {
             .comment("Cave particles: drops forming on a stalactite's tip, falling and splashing where they land.",
                     "Off, the stalactites stay dry. (Minimal particles in the game's own settings hides them too.)")
             .define("cave_particles", true);
+    public static final ModConfigSpec.BooleanValue DRAWN_LIGHT = B
+            .comment("Drawn cave light: the Pale Halls' glow-worm stars on high roofs, the light of the Drowned Galleries' lakes",
+                    "wavering on the roof, the heat hanging over the Black Vaults' lava. Drawn on your screen only, never a light",
+                    "block, so the dark still holds its monsters. Off, those caves are as dark as any other.")
+            .define("drawn_cave_light", true);
     public static final ModConfigSpec SPEC = B.build();
 
     // read every tick: cached, updated when the file loads or changes
-    private static volatile boolean underlife = true;
+    private static volatile boolean underlife = true, drawnLight = true;
 
     static void register(net.neoforged.bus.api.IEventBus modBus) {
         try {
@@ -41,13 +46,19 @@ public final class CavesClientConfig {
         try {
             underlife = UNDERLIFE.get();
             Drips.enabled = CAVE_PARTICLES.get();
+            drawnLight = DRAWN_LIGHT.get();
         } catch (RuntimeException e) {
             underlife = true;
             Drips.enabled = true;
+            drawnLight = true;
         }
     }
 
     public static boolean underlife() {
         return underlife;
+    }
+
+    public static boolean drawnLight() {
+        return drawnLight;
     }
 }

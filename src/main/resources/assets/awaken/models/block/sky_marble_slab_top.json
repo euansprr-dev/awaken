@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "awaken:block/sky_marble",
+    "top": "awaken:block/sky_marble",
+    "side": "awaken:block/sky_marble"
+  }
+}

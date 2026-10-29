@@ -37,6 +37,52 @@ class BorrowedDress extends Dress {
         return tint;
     }
 
+    /** Shaped ground (38.14) is the look's own; a tinted world keeps its floor line (its colours turn only on full blocks). */
+    @Override
+    boolean depth() {
+        return tint == null && in.depth();
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return in.ground(part, x, y, z);
+    }
+
+    @Override
+    double pad(Room r, CaveEngine.Kind k) {
+        return in.pad(r, k);
+    }
+
+    @Override
+    double lumps() {
+        return in.lumps();
+    }
+
+    @Override
+    double ledges() {
+        return in.ledges();
+    }
+
+    @Override
+    double bits() {
+        return in.bits();
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return in.creep(x, y, z);
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        return in.formation(part, x, y, z);
+    }
+
+    @Override
+    double headroom(Room r, CaveEngine.Kind k, int x, int z) {
+        return in.headroom(r, k, x, z);
+    }
+
     @Override
     int glow() {
         return tint == null ? in.glow() : grey ? 0xd83a3a : Tint.turn(in.glow(), 150);

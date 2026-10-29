@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "awaken:block/frost_tiles",
+    "top": "awaken:block/frost_tiles",
+    "side": "awaken:block/frost_tiles"
+  }
+}

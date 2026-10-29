@@ -1,4 +1,4 @@
-"""Swing Studio's choreography (rounds 11-14): a style's moves set by hand, both hands at once, as a few key poses on a
+"""Swing Studio's choreography (rounds 11-15): a style's moves set by hand, both hands at once, as a few key poses on a
 timeline, in place of the rules that worked each pose out (anim_lab.rig_pose, swing_studio's give-way, haul and pull).
 
 Euan 2026-10-29, after round 10: "it still feels like it's going to unnecessary distances sometimes... the right arm
@@ -27,6 +27,9 @@ like, under your left arm... too much going on at once". Round 14 calms the dagg
 a jab goes out from the stance's own grip with no pull-back (`STANCE`), a slash is a short lever from low at the
 shoulder (`LOW`) that stops just past the middle, in front, and the hand not striking stays still (`STILL`). Each move
 also names its ribbon's ticks (`trail`): the stroke alone, never the way home.
+After the round 14 film: "keep the fist lower in the jab, so the forearm doesn't swing into the corner". Round 15 aims
+each jab at a mark deep in the target and stops it short (`line`'s short and reach): the blade tips onto its line with
+the fist where it holds, then drives 6 cm along the blade, so the fist rises 0.2 of the screen.
 
 A spot is where the grip sits on the screen (ndc), how far ahead of the eye, which way the blade points on the screen
 (degrees from the left, as the guard's), how far its tip leans away along the eye's ray, and its roll. Each hand's track
@@ -56,12 +59,15 @@ def spot(g, z, ang, lean, roll=0.0):
     return dict(kind="spot", g=g, z=z, ang=ang, lean=lean, roll=roll)
 
 
-def line(tip, depth, src, roll=0.0):
+def line(tip, depth, src, roll=0.0, short=0.0, reach=0.0):
     """A thrust's line (round 13, the rapier's): the point at the hit at ndc {@code tip}, {@code depth} ahead of the
     eye, the blade laid on the line to it from {@code src} (view space), by the least turn from the stance. A key on it
     is (name, back): the whole blade drawn back along its own line, so between two keys on one line it only slides, the
-    point held on its mark (on the screen it hardly moves: the blade grows as it comes back, shrinks as it goes out)."""
-    return dict(kind="line", tip=tip, depth=depth, src=None if src is None else np.array(src, dtype=float), roll=roll)
+    point held on its mark (on the screen it hardly moves: the blade grows as it comes back, shrinks as it goes out).
+    Round 15, a jab that keeps its fist low: the drive stops {@code short} of the mark and goes out {@code reach} along
+    the blade from where the jab aims it (`JAB`), so the mark only gives the blade its line into the target."""
+    return dict(kind="line", tip=tip, depth=depth, src=None if src is None else np.array(src, dtype=float), roll=roll,
+                short=short, reach=reach)
 
 
 def arc(way, target=(0.0, -0.20, -1.15), pivot=(0.62, -0.52, -0.30), mid=L.MID, eye=1.0):
@@ -85,12 +91,14 @@ LOW = (0.62, -0.85, -0.30)  # a slash's lever from low at the shoulder: the hand
 # middle, on its own side of the other blade
 DAGGERS = {
     # the jabs: out from the stance's grip along the line to a mark just under the crosshair (the grip goes away from
-    # the eye, never toward it), on the hand's own side of it
-    "jab_1": line((0.05, -0.10), 1.00, STANCE),
-    "jab_2": line((0.04, -0.15), 0.95, STANCE),
-    "jab_pair": line((0.09, -0.10), 1.00, STANCE),
-    "jab_deep": line((0.06, -0.07), 1.10, STANCE),
-    "jab_rip": line((0.03, -0.08), 1.06, STANCE),
+    # the eye, never toward it), on the hand's own side of it. Round 15 (Euan: "keep the fist lower in the jab, so the
+    # forearm doesn't swing into the corner"): the mark lies deep in the target, and the drive stops short of it, so
+    # the fist rises 0.2 of the screen and no more (the forearm is drawn up to it from under the corner)
+    "jab_1": line((0.05, -0.10), 1.5, STANCE, short=0.494, reach=0.063),
+    "jab_2": line((0.04, -0.15), 1.5, STANCE, short=0.481, reach=0.064),
+    "jab_pair": line((0.09, -0.10), 1.5, STANCE, short=0.461, reach=0.065),
+    "jab_deep": line((0.06, -0.07), 1.5, STANCE, short=0.500, reach=0.063),
+    "jab_rip": line((0.03, -0.08), 1.5, STANCE, short=0.521, reach=0.062),
     # the slashes: set back on the hand's own side, one sweep through the target at chest height, stopping just past
     # the middle (the Undercut rises from low on its side; the chops fall from above it)
     "cut_3": arc((-1.0, -0.15), (0.06, -0.22, -1.0), LOW, eye=0.5),
@@ -111,7 +119,13 @@ DAGGERS = {
 def JAB(ln, hit=1.0, hold=0.33, back=1.2):
     """A jab on line {@code ln} landing at {@code hit}: straight out from the stance to its mark, gathering speed into
     it (the point aimed early, so it drives along the blade), a hair past it for {@code hold}, then back into the stance
-    in {@code back}, the way it went."""
+    in {@code back}, the way it went. A line with a reach (round 15) is aimed first, the fist where it holds, by half
+    the wind-up, then driven its reach along the blade to stop short of its mark."""
+    p = DAGGERS[ln]
+    if p["reach"] > 0:
+        s = p["short"]
+        return [(0.0, REST, "io"), (hit * 0.5, (ln, s + p["reach"]), "io"), (hit, (ln, s), "in"),
+                (hit + hold, (ln, s - 0.02), "out"), (hit + hold + back, REST, "io")]
     return [(0.0, REST, "io"), (hit, (ln, 0.0), "in", 0.0, "out"), (hit + hold, (ln, -0.02), "out"),
             (hit + hold + back, REST, "io")]
 
@@ -155,8 +169,9 @@ def trail(sid, mv):
     """[from, to] clip ticks a set move's blade lays its ribbon, or None."""
     if not has(sid, mv):
         return None
-    keys = CHORE[sid]["moves"][mv]["strike"]
-    hit = next(k[0] for k in keys if isinstance(k[1], tuple) and k[1][1] == 0.0)
+    keys, poses = CHORE[sid]["moves"][mv]["strike"], CHORE[sid]["poses"]
+    # the hit: the key on a lever's target (0 degrees) or at a line's drive end (its short of the mark)
+    hit = next(k[0] for k in keys if isinstance(k[1], tuple) and k[1][1] == poses[k[1][0]].get("short", 0.0))
     after = next(k[0] for k in keys if k[0] > hit)
     lever = CHORE[sid]["poses"][keys[1][1][0]]["kind"] == "arc"
     return [round(max(0.0, hit - (0.45 if lever else 0.4)), 3), round(after if lever else hit + 0.12, 3)]

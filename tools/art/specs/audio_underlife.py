@@ -1,13 +1,17 @@
 """The Living Deep's underlife voices (SPEC §42.5): the cave cricket you hear long before you see it, and a roost of bats
 bursting off the roof as you pass under; and the regions' own (SPEC §42.7): old roots creaking in the Rootways' roof, and
-in the Ochre Deep the rock ticking as it settles, the chime crickets' chorus and a warm hum under it all. Synthesised from scratch with tools/art/audiokit.py and the wild voices' helpers
+in the Ochre Deep the rock ticking as it settles, the chime crickets' chorus and a warm hum under it all; and the other
+six's (SPEC §42.8): drips echoing into the Pale Halls' pools, the wind moaning through the Windcleft and pebbles falling
+down its cracks, the Drowned Galleries' lakes lapping, the Glimmer Hollows' crystals ringing, a rumble deep in the Black
+Vaults, and the Violet Deep's hum. Synthesised from scratch with tools/art/audiokit.py and the wild voices' helpers
 (tools/art/specs/audio_wild.py); nothing is recorded or copied.
 
     python3 tools/art/specs/audio_underlife.py         render every one-shot, write the events and subtitles
     python3 tools/art/specs/audio_underlife.py json    only the events and subtitles
 
-One-shots (sounds/caves/<name><n>.ogg, mono), played where the creature is; one loop (sounds/caves/warm_hum.ogg), the
-Ochre Deep's bed, played round the listener and seamless end to start. Unlike the wild's, which are dry because the
+One-shots (sounds/caves/<name><n>.ogg, mono), played where the creature is; loops (sounds/caves/<name>.ogg), a region's
+bed (the Ochre Deep's hum, the Windcleft's wind, the Drowned Galleries' lapping, the Violet Deep's hum), played round the
+listener and seamless end to start. Unlike the wild's, which are dry because the
 open air gives back nothing, each carries a little of the rock round it: a few hard early reflections and a short dark
 tail, so a chirp reads as in a passage, not in a meadow. Mastered as the wild's (-28 dBFS gated RMS, <= -6 dBTP).
 Event ids never start with `ambient.` (Sound Physics skips those).
@@ -178,6 +182,150 @@ def warm_hum(seed):
     return y
 
 
+def hall(x, seed, t60=2.4, wet=0.45):
+    """A big still hall round the voice (the Pale Halls, the Black Vaults): a few far reflections and a long dark tail."""
+    y = np.concatenate([x, np.zeros(K.ns(t60))])
+    ir = K.reverb_ir(t60=t60, predelay=0.03, bright=0.25, width=0.0, early=0.4, size=1.0, seed=seed)
+    tail = K.mono(K.convolve(y, ir))[:len(y)]
+    out = y + wet * tail / (np.max(np.abs(tail)) + 1e-9) * np.max(np.abs(y))
+    b = W.Buf()
+    b.x = out
+    return b.out(floor_db=-60.0, tail=0.05)
+
+
+def pool_drip(v, seed):
+    """A drop falling into a still pool in a pale hall: the tick of the drop meeting the water, the small bubble it
+    traps ringing up in pitch over a few hundredths of a second, sometimes a second smaller drop after; then the hall
+    gives it back, long and soft."""
+    r = K.rng(seed)
+    b = W.Buf()
+    t = 0.01
+    for k in range(1 + int(r.random() < 0.35)):
+        L = K.ns(0.09)
+        f0 = r.uniform(900, 1500) * (1.25 if k else 1.0)
+        f = W.curve(L, [(0, f0), (0.4, f0 * r.uniform(1.6, 2.1)), (1, f0 * 2.3)], ms=2)
+        ph = 2 * np.pi * np.cumsum(f) / SR
+        u = np.arange(L) / SR
+        bubble = np.sin(ph) * np.exp(-u / r.uniform(0.012, 0.02))
+        tick = K.highpass(K.noise(K.ns(0.004), "white", seed + k), 3000, 2) * np.hanning(K.ns(0.004))
+        b.add(tick, t, 0.35)
+        b.add(bubble, t + 0.002, 1.0 if not k else 0.5)
+        t += r.uniform(0.12, 0.3)
+    return hall(b.out(), seed + 1, t60=2.6, wet=0.55)
+
+
+def pebble_fall(v, seed):
+    """Pebbles let go somewhere up a crack: a first knock, then three to seven more bouncing down, quicker and smaller
+    as they go, ringing in the tall narrow rock."""
+    r = K.rng(seed)
+    b = W.Buf()
+    t = 0.01
+    gap = r.uniform(0.18, 0.3)
+    for k in range(int(r.integers(4, 9))):
+        base = r.uniform(1100, 2400) * (1 + 0.08 * k)
+        y = W.knock(r, base, [(1, 1, 0.03), (1.83, 0.45, 0.02), (3.1, 0.25, 0.012)], hard=r.uniform(0.6, 1.0), click=0.9,
+                    click_fc=6500)
+        b.add(y, t, r.uniform(0.6, 1.0) * 0.82 ** k)
+        t += gap * r.uniform(0.7, 1.1)
+        gap *= 0.8
+    return rock(b.out(), seed + 2, wet=0.42)
+
+
+def crystal_ring(v, seed):
+    """Crystals ringing as you brush past: two to four strikes a breath apart, each a cluster of glassy partials (not
+    harmonic: 1, 2.76, 5.4, 8.9) that rings for a second or two and beats slowly, the cluster a little apart in pitch."""
+    r = K.rng(seed)
+    b = W.Buf()
+    t = 0.01
+    f0 = r.uniform(1250, 1800)
+    for k in range(2 + v % 3):
+        f = f0 * r.choice([1.0, 1.122, 1.26, 1.335, 1.5])
+        y = K.modal(f, (1, 2.76, 5.4, 8.9), (1, 0.45, 0.2, 0.08), (1.6, 0.9, 0.45, 0.2), K.ns(2.2), attack=0.004,
+                    seed=W._sd(r), detune_cents=4.0, pair=0.5)
+        b.add(y, t, r.uniform(0.5, 1.0))
+        t += r.uniform(0.09, 0.28)
+    return hall(b.out(), seed + 4, t60=1.6, wet=0.35)
+
+
+def vault_rumble(v, seed):
+    """Something heavy shifting far off under the Black Vaults: a low rumble swelling over two to four seconds and
+    dying away, with a few deep knocks inside it, heard through a great deal of rock."""
+    r = K.rng(seed)
+    n = K.ns(r.uniform(2.5, 4.0))
+    u = np.arange(n) / (n - 1)
+    env = np.sin(np.pi * u ** 0.7) ** 1.5 * (1 + 0.35 * K.smooth_noise(n, 3, seed))
+    x = W._unit(K.lowpass(K.noise(n, "brown", seed), 110, 2)) * env
+    b = W.Buf()
+    b.add(x, 0.0)
+    for k in range(int(r.integers(2, 5))):
+        y = W.knock(r, r.uniform(60, 110), [(1, 1, 0.25), (1.6, 0.5, 0.15)], hard=0.3, dull=2.0, click=0.0)
+        b.add(K.lowpass(y, 300, 2), r.uniform(0.3, n / SR - 0.6), r.uniform(0.4, 0.8))
+    return hall(K.lowpass(b.out(), 400, 2), seed + 6, t60=3.0, wet=0.5)
+
+
+def _seam(x, n, fade):
+    """The last `fade` samples crossfaded into the first, so the loop has no seam."""
+    w = np.sin(0.5 * np.pi * np.arange(fade) / fade) ** 2
+    y = x[:n].copy()
+    y[:fade] = x[:fade] * w + x[n:n + fade] * (1 - w)
+    return y
+
+
+def wind_moan(seed):
+    """The Windcleft's bed: wind through the cracks, a breathy band of noise whose centre wanders slowly, and over it a
+    hollow moan (two narrow resonances, a fifth apart) that swells and sinks; ten seconds, looping without a seam."""
+    n, fade = K.ns(10.0), K.ns(1.0)
+    m = n + fade
+    gust = 0.6 + 0.4 * K.smooth_noise(m, 0.4, seed)
+    breath = np.zeros(m)
+    src = K.noise(m, "pink", seed + 1)
+    # the band moves through a few overlapping bands, faded by a slow curve each
+    for i, fc in enumerate((260, 380, 540, 760)):
+        g = np.clip(0.5 + 0.6 * K.smooth_noise(m, 0.25, seed + 10 + i), 0, 1)
+        breath += K.bandpass(src, fc, 1.6) * g
+    moan = (K.bandpass(K.noise(m, "white", seed + 2), 330, 28) + 0.6 * K.bandpass(K.noise(m, "white", seed + 3), 495, 30))
+    swell = np.clip(0.3 + 0.7 * K.smooth_noise(m, 0.15, seed + 4), 0, 1) ** 2
+    x = W._unit(breath) * gust + 0.8 * W._unit(moan) * swell
+    return _seam(x, n, fade)
+
+
+def lake_lap(seed):
+    """The Drowned Galleries' bed: still water lapping at rock and silt, soft swells every second or so with the small
+    gurgles of water in hollows; ten seconds, looping without a seam."""
+    n, fade = K.ns(10.0), K.ns(1.0)
+    m = n + fade
+    r = K.rng(seed)
+    b = np.zeros(m)
+    t = 0
+    while t < m:
+        L = int(K.ns(r.uniform(0.5, 1.1)))
+        u = np.arange(L) / L
+        env = np.sin(np.pi * u) ** 2.5
+        sw = K.lowpass(K.noise(L, "pink", W._sd(r)), r.uniform(500, 900), 2) * env * r.uniform(0.5, 1.0)
+        e = min(m, t + L)
+        b[t:e] += sw[:e - t]
+        t += int(K.ns(r.uniform(0.6, 1.3)))
+    for k in range(int(r.integers(5, 9))):
+        L = K.ns(r.uniform(0.04, 0.09))
+        g = K.bandpass(K.noise(L, "white", W._sd(r)), r.uniform(350, 900), 9) * np.hanning(L)
+        i = int(r.integers(0, m - L))
+        b[i:i + L] += 0.5 * g / (np.max(np.abs(g)) + 1e-9) * np.max(np.abs(b) + 1e-9)
+    x = W._unit(b) + 0.15 * W._unit(K.lowpass(K.noise(m, "brown", seed + 5), 150, 2))
+    return _seam(x, n, fade)
+
+
+def violet_hum(seed):
+    """The Violet Deep's bed, the seep's second voice: a low hum on 41 Hz shaped through two vowel-like resonances, so
+    it sounds almost sung, wavering slowly in pitch and beating against itself; eight seconds, looping without a seam."""
+    n, fade = K.ns(8.0), K.ns(0.5)
+    m = n + fade
+    x = K.drone(41.0, m, partials=(1, 2, 3, 4, 5, 6, 8, 10, 12), amps=(1, 0.7, 0.55, 0.45, 0.35, 0.3, 0.2, 0.14, 0.1),
+                beat=0.2, seed=seed)
+    x = K.bandpass(x, 480, 3.0) + 0.8 * K.bandpass(x, 820, 4.0) + 0.5 * K.lowpass(x, 120, 2)
+    wob = 1 + 0.2 * K.smooth_noise(m, 0.3, seed + 1)
+    return _seam(W._unit(x) * wob, n, fade)
+
+
 # event: (file stem, voice, variants, reach in blocks, gated RMS dBFS, subtitle)
 SHOTS = {
     "caves.cricket": ("cricket", cricket, 4, 24, -28.0, "Cave cricket chirps"),
@@ -185,9 +333,16 @@ SHOTS = {
     "caves.root_creak": ("root_creak", root_creak, 3, 20, -30.0, "Roots creak overhead"),
     "caves.rock_tick": ("rock_tick", rock_tick, 4, 16, -30.0, "Rock ticks"),
     "caves.chime_cricket": ("chime_cricket", chime_cricket, 4, 24, -29.0, "Chime crickets ring"),
+    "caves.pool_drip": ("pool_drip", pool_drip, 4, 24, -31.0, "Water drips into a pool"),
+    "caves.pebble_fall": ("pebble_fall", pebble_fall, 3, 28, -30.0, "Pebbles fall"),
+    "caves.crystal_ring": ("crystal_ring", crystal_ring, 4, 16, -31.0, "Crystals ring"),
+    "caves.vault_rumble": ("vault_rumble", vault_rumble, 3, 48, -29.0, "Deep rumble"),
 }
 # loops: (file stem, maker, gated RMS dBFS, subtitle)
-LOOPS = {"caves.warm_hum": ("warm_hum", warm_hum, -30.0, "Warm hum in the rock")}
+LOOPS = {"caves.warm_hum": ("warm_hum", warm_hum, -30.0, "Warm hum in the rock"),
+         "caves.wind_moan": ("wind_moan", wind_moan, -31.0, "Wind moans in the cracks"),
+         "caves.lake_lap": ("lake_lap", lake_lap, -32.0, "Water laps"),
+         "caves.violet_hum": ("violet_hum", violet_hum, -31.0, "Low hum in the rock")}
 
 
 def path(name, k):
@@ -237,7 +392,9 @@ def render_shots():
 def render_loops():
     q = TARGETS["sfx"][3]
     for eid, (name, fn, rms, _) in LOOPS.items():
-        y = K.highpass(fn(sum(map(ord, name)) * 17), 40, 2)
+        y = fn(sum(map(ord, name)) * 17)
+        # filtered as a loop (three copies, the middle kept), so its ends still meet
+        y = K.highpass(np.concatenate([y, y, y]), 40, 2)[len(y):2 * len(y)]
         y = y * K.dbamp(rms - K.gated_rms(y))      # no fades: the ends must meet
         if K.true_peak(y) > W.CEIL:
             y = y * K.dbamp(W.CEIL - K.true_peak(y) - 0.15)

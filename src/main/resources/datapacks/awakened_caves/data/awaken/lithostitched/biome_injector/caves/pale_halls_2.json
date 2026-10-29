@@ -1,0 +1,28 @@
+{
+  "type": "lithostitched:replace_partially",
+  "dimension": "minecraft:overworld",
+  "priority": -9,
+  "targets": "#awaken:caves/hosts",
+  "replacement": "awaken:pale_halls",
+  "parameters": {
+    "awaken:caves/y": {
+      "min_inclusive": 0.0,
+      "max_inclusive": 59.0
+    },
+    "depth": {
+      "min_inclusive": 0.16,
+      "max_inclusive": 0.3399
+    },
+    "awaken:caves/shallows": {
+      "max_inclusive": 0.1102
+    },
+    "temperature": {
+      "min_inclusive": -0.45,
+      "max_inclusive": 0.55
+    },
+    "continentalness": {
+      "min_inclusive": -0.19,
+      "max_inclusive": -0.11
+    }
+  }
+}
