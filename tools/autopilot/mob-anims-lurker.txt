@@ -59,34 +59,40 @@ cmd awaken ascent pilot rec lurk_idle_close 120 2
 wait 125
 cmd kill @e[type=!minecraft:player,distance=..80]
 wait 10
-# 2. a walk, a run, a stop, a turn on the spot, a creep back (no AI: strolled by the server every tick, so the feet must keep up)
-cmd tp @s 0.5 203.2 -5.5 0 16
-look 0 16
-cmd summon awaken:drip_lurker -6.0 201 1.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
-cmd summon minecraft:spider -6.0 201 3.6 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+# 2. a walk into a run, a stop, a half turn on the spot, a creep back, close from a perch, beside vanilla's spider under
+# Fresh Animations (no AI: strolled by the server every tick, so the feet must keep up)
+cmd summon awaken:drip_lurker -5.0 201 1.5 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd summon minecraft:spider -5.0 201 4.5 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd fill 0 201 -4 0 202 -4 minecraft:barrier
+cmd tp @s 0.5 203 -3.5 0 30
+look 0 30
 wait 30
-cmd awaken ascent pilot rec lurk_walk 230 2
-cmd awaken admin stroll @e[tag=walker] 0.06 40
-cmd awaken admin stroll @e[tag=walker] 0.1 20
+cmd awaken ascent pilot rec lurk_walk 200 2
+cmd awaken admin stroll @e[tag=walker] 0.05 40
+cmd awaken admin stroll @e[tag=walker] 0.09 16
 cmd awaken admin stroll @e[tag=walker] 0.16 6
-cmd awaken admin stroll @e[tag=walker] 0.28 22
-cmd awaken admin stroll @e[tag=walker] 0.14 4
-cmd awaken admin stroll @e[tag=walker] 0.06 4
-cmd awaken admin stroll @e[tag=walker] 0 30
-cmd awaken admin stroll @e[tag=walker] 0 30 6
-cmd awaken admin stroll @e[tag=walker] 0 10
-cmd awaken admin stroll @e[tag=walker] 0.03 30
-wait 50
+cmd awaken admin stroll @e[tag=walker] 0.2 16
+cmd awaken admin stroll @e[tag=walker] 0.1 4
+cmd awaken admin stroll @e[tag=walker] 0.05 4
+cmd awaken admin stroll @e[tag=walker] 0.0 26
+cmd awaken admin stroll @e[tag=walker] 0.0 30 6
+cmd awaken admin stroll @e[tag=walker] 0.0 10
+cmd awaken admin stroll @e[tag=walker] 0.04 30
+wait 45
 shot lurk_walk_mid
-wait 42
-shot lurk_run
-wait 34
-shot lurk_stop
 wait 30
-shot lurk_walk_turned
-wait 60
+shot lurk_run
+wait 30
+shot lurk_stop
+wait 45
+shot lurk_turned
+wait 45
+cmd fill 0 201 -4 0 202 -4 minecraft:air
 cmd kill @e[type=!minecraft:player,distance=..80]
-wait 10
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
 # 3. a blow: the body jerks over its planted feet, the cone lags; then a heavier one from the other side
 cmd tp @s 0.5 202.4 -3.0 0 20
 look 0 20
@@ -110,7 +116,9 @@ wait 9
 shot lurk_death_mid
 wait 33
 cmd kill @e[type=!minecraft:player,distance=..80]
-wait 10
+wait 25
+cmd kill @e[type=minecraft:item]
+wait 5
 # 5. the hunt (AI, at night, alone: a charging spider filled the frame): it creeps low and still-breathed, rears, lunges, bites
 cmd time set 18000
 cmd tp @s 0.5 201 -6.0 0 12

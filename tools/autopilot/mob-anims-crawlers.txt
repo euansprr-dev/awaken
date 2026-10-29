@@ -55,36 +55,103 @@ shot crawl_row_b
 wait 105
 cmd kill @e[type=!minecraft:player,distance=..80]
 wait 10
-# 2. a walk, a run, a stop, a turn on the spot, a creep: four lanes crossing the view (no AI: strolled every tick)
-cmd summon awaken:wickling -7.0 201 1.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
-cmd summon awaken:hushling -7.0 201 3.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
-cmd summon awaken:thousandfoot -7.0 201 6.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
-cmd summon awaken:weaver_queen -7.0 201 10.5 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
-cmd tp @s 0.5 206.0 -6.5 0 26
-look 0 26
+# 2. small: a walk, a run, a stop, a half turn on the spot, a creep back (no AI: strolled every tick)
+cmd summon awaken:wickling -3.6 201 1.5 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd summon awaken:hushling -3.6 201 3.5 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd fill 0 201 -3 0 202 -3 minecraft:barrier
+cmd tp @s 0.5 203 -3.0 0 32
+look 0 32
 wait 30
-cmd awaken ascent pilot rec crawl_walk 260 2
-cmd awaken admin stroll @e[tag=walker] 0.05 40
-cmd awaken admin stroll @e[tag=walker] 0.09 20
-cmd awaken admin stroll @e[tag=walker] 0.14 6
-cmd awaken admin stroll @e[tag=walker] 0.25 22
-cmd awaken admin stroll @e[tag=walker] 0.12 4
-cmd awaken admin stroll @e[tag=walker] 0.05 4
-cmd awaken admin stroll @e[tag=walker] 0 30
-cmd awaken admin stroll @e[tag=walker] 0 30 6
-cmd awaken admin stroll @e[tag=walker] 0 10
-cmd awaken admin stroll @e[tag=walker] 0.03 30
-wait 50
-shot crawl_walk_mid
-wait 42
-shot crawl_run
-wait 34
-shot crawl_stop
+cmd awaken ascent pilot rec crawl_walk_small 200 2
+cmd awaken admin stroll @e[tag=walker] 0.035 40
+cmd awaken admin stroll @e[tag=walker] 0.063 16
+cmd awaken admin stroll @e[tag=walker] 0.112 6
+cmd awaken admin stroll @e[tag=walker] 0.14 16
+cmd awaken admin stroll @e[tag=walker] 0.07 4
+cmd awaken admin stroll @e[tag=walker] 0.035 4
+cmd awaken admin stroll @e[tag=walker] 0.0 26
+cmd awaken admin stroll @e[tag=walker] 0.0 30 6
+cmd awaken admin stroll @e[tag=walker] 0.0 10
+cmd awaken admin stroll @e[tag=walker] 0.028 30
+wait 45
+shot crawl_small_walk_mid
 wait 30
-shot crawl_turned
-wait 60
+shot crawl_small_run
+wait 30
+shot crawl_small_stop
+wait 45
+shot crawl_small_turned
+wait 45
+cmd fill 0 201 -3 0 202 -3 minecraft:air
 cmd kill @e[type=!minecraft:player,distance=..80]
-wait 10
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 2. thousandfoot: a walk, a run, a stop, a half turn on the spot, a creep back (no AI: strolled every tick)
+cmd summon awaken:thousandfoot -5.0 201 3.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd fill 0 201 -4 0 202 -4 minecraft:barrier
+cmd tp @s 0.5 203 -4.0 0 25
+look 0 25
+wait 30
+cmd awaken ascent pilot rec crawl_walk_thousandfoot 200 2
+cmd awaken admin stroll @e[tag=walker] 0.05 40
+cmd awaken admin stroll @e[tag=walker] 0.09 16
+cmd awaken admin stroll @e[tag=walker] 0.16 6
+cmd awaken admin stroll @e[tag=walker] 0.2 16
+cmd awaken admin stroll @e[tag=walker] 0.1 4
+cmd awaken admin stroll @e[tag=walker] 0.05 4
+cmd awaken admin stroll @e[tag=walker] 0.0 26
+cmd awaken admin stroll @e[tag=walker] 0.0 30 6
+cmd awaken admin stroll @e[tag=walker] 0.0 10
+cmd awaken admin stroll @e[tag=walker] 0.04 30
+wait 45
+shot crawl_thousandfoot_walk_mid
+wait 30
+shot crawl_thousandfoot_run
+wait 30
+shot crawl_thousandfoot_stop
+wait 45
+shot crawl_thousandfoot_turned
+wait 45
+cmd fill 0 201 -4 0 202 -4 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 2. queen: a walk, a run, a stop, a half turn on the spot, a creep back (no AI: strolled every tick)
+cmd summon awaken:weaver_queen -5.5 201 4.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd fill 0 201 -5 0 203 -5 minecraft:barrier
+cmd tp @s 0.5 204 -5.0 0 24
+look 0 24
+wait 30
+cmd awaken ascent pilot rec crawl_walk_queen 200 2
+cmd awaken admin stroll @e[tag=walker] 0.055 40
+cmd awaken admin stroll @e[tag=walker] 0.099 16
+cmd awaken admin stroll @e[tag=walker] 0.176 6
+cmd awaken admin stroll @e[tag=walker] 0.22 16
+cmd awaken admin stroll @e[tag=walker] 0.11 4
+cmd awaken admin stroll @e[tag=walker] 0.055 4
+cmd awaken admin stroll @e[tag=walker] 0.0 26
+cmd awaken admin stroll @e[tag=walker] 0.0 30 6
+cmd awaken admin stroll @e[tag=walker] 0.0 10
+cmd awaken admin stroll @e[tag=walker] 0.044 30
+wait 45
+shot crawl_queen_walk_mid
+wait 30
+shot crawl_queen_run
+wait 30
+shot crawl_queen_stop
+wait 45
+shot crawl_queen_turned
+wait 45
+cmd fill 0 201 -5 0 203 -5 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
 # 3. a blow (the body jerks over its planted feet), a heavier one, then the deaths
 cmd summon awaken:wickling -4.5 201 6.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["crawler"],Rotation:[180f,0f]}
 cmd summon awaken:hushling -1.5 201 6.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["crawler"],Rotation:[180f,0f]}
@@ -106,6 +173,7 @@ wait 12
 shot crawl_death_mid
 wait 40
 cmd kill @e[type=!minecraft:player,distance=..80]
-wait 10
+wait 25
+cmd kill @e[type=minecraft:item]
 info
 quit
