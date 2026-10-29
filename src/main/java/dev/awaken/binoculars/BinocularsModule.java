@@ -1,6 +1,14 @@
 package dev.awaken.binoculars;
 
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.awaken.Awaken;
+import dev.awaken.core.AwakenCommands;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -26,6 +34,14 @@ public final class BinocularsModule {
     static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
     /** Drawn in the hands and at other players' eyes; never given to anyone. */
     public static final DeferredItem<Item> BINOCULARS = ITEMS.registerSimpleItem("binoculars", p -> p.stacksTo(1));
+
+    /** {@code /awaken spotting aim}: for tours, faces the nearest thing the player could spot (§39.10). */
+    private static int aim(CommandContext<CommandSourceStack> c, String what) throws CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        String said = Spotter.aim(p, what);
+        c.getSource().sendSuccess(() -> Component.literal("Spotting: " + said), false);
+        return 1;
+    }
 
     public static void init(IEventBus modBus) {
         ITEMS.register(modBus);
@@ -54,6 +70,11 @@ public final class BinocularsModule {
             if (e.getEntity() instanceof ServerPlayer p) BinocularsRelay.reset(p, BinocularsRelay.SEND);
         });
         NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, e -> Spotter.clear());
+        AwakenCommands.add((root, ctx) -> root.then(Commands.literal("spotting").requires(AwakenCommands.admin())
+                .then(Commands.literal("aim").executes(c -> aim(c, "any"))
+                        .then(Commands.argument("what", StringArgumentType.word())
+                                .suggests((c, b) -> SharedSuggestionProvider.suggest(new String[]{"creature", "place"}, b))
+                                .executes(c -> aim(c, StringArgumentType.getString(c, "what")))))));
         BinocularsTests.register();
     }
 }

@@ -337,6 +337,44 @@ public final class Spotter {
         return x >= s.x0 && x <= s.x1 && y >= s.y0 && y <= s.y1 && z >= s.z0 && z <= s.z1;
     }
 
+    // ---- for tours and testing ------------------------------------------------------------------------------------------
+
+    /**
+     * {@code /awaken spotting aim [creature|place]}: turns the player to the nearest thing they could spot (a creature, or
+     * a standing thing), as the sources offer them now. Returns what it aimed at, or why not.
+     */
+    static String aim(ServerPlayer p, String what) {
+        Watch w = new Watch();
+        double reach = reach(p.level().getServer());
+        for (Spotting.Source s : Spotting.sources()) {
+            w.intoMoving = s.moves();
+            w.current = s;
+            s.gather(p, reach, w);
+        }
+        boolean creatures = !"place".equals(what), places = !"creature".equals(what);
+        Candidate best = null;
+        double bestD = Double.MAX_VALUE;
+        Vec3 eye = p.getEyePosition();
+        for (int pass = 0; pass < 2; pass++) {
+            if (pass == 0 ? !places : !creatures) continue;
+            Candidate[] list = pass == 0 ? w.standing : w.moving;
+            int n = pass == 0 ? w.nStanding : w.nMoving;
+            for (int i = 0; i < n; i++) {
+                Candidate c = list[i];
+                Vec3 at = c.entity != null ? c.entity.getBoundingBox().getCenter() : new Vec3((c.x0 + c.x1) * 0.5, (c.y0 + c.y1) * 0.5, (c.z0 + c.z1) * 0.5);
+                double d = at.distanceTo(eye);
+                if (d < bestD) {
+                    bestD = d;
+                    best = c;
+                }
+            }
+        }
+        if (best == null) return "nothing unfound within " + Math.round(reach) + " blocks";
+        Vec3 at = best.entity != null ? best.entity.getBoundingBox().getCenter() : new Vec3((best.x0 + best.x1) * 0.5, (best.y0 + best.y1) * 0.5, (best.z0 + best.z1) * 0.5);
+        p.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, at);
+        return "aimed at " + best.ref + " " + Math.round(bestD) + " blocks off";
+    }
+
     // ---- telling the client ---------------------------------------------------------------------------------------------
 
     static void send(ServerPlayer p, Phase phase) {
