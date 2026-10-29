@@ -1,0 +1,218 @@
+# Armour P4 (SPEC §44.2, §44.5): the eight A and S sets. As forged, the row by day, each close from the front, the row
+# from behind and from the side; then all eight at mastery V (awakened parts and aura), the row by day, each close, the
+# row by night; then worn on the player: Galewing and Signal's Echo at V, front, back and side.
+# A studio at y 200, noon, a sandstone wall behind.
+# ci knobs: LENS=cinematic
+world armoursets4 creative 4444
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+cmd gamemode creative
+cmd tp @s 0.5 200 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -10 199 -6 12 199 11 minecraft:smooth_stone
+cmd fill -10 200 11 12 207 11 minecraft:smooth_sandstone
+wait 20
+hud off
+camera first
+# as forged
+cmd kill @e[type=minecraft:armor_stand]
+cmd summon minecraft:armor_stand 6.8 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:leviathan_helmet"},chest:{id:"awaken:leviathan_chestplate"},legs:{id:"awaken:leviathan_leggings"},feet:{id:"awaken:leviathan_boots"}}}
+cmd summon minecraft:armor_stand 5.0 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:galewing_helmet"},chest:{id:"awaken:galewing_chestplate"},legs:{id:"awaken:galewing_leggings"},feet:{id:"awaken:galewing_boots"}}}
+cmd summon minecraft:armor_stand 3.2 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:halo_choir_helmet"},chest:{id:"awaken:halo_choir_chestplate"},legs:{id:"awaken:halo_choir_leggings"},feet:{id:"awaken:halo_choir_boots"}}}
+cmd summon minecraft:armor_stand 1.4 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:dreamsteel_helmet"},chest:{id:"awaken:dreamsteel_chestplate"},legs:{id:"awaken:dreamsteel_leggings"},feet:{id:"awaken:dreamsteel_boots"}}}
+cmd summon minecraft:armor_stand -0.4 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:starfall_helmet"},chest:{id:"awaken:starfall_chestplate"},legs:{id:"awaken:starfall_leggings"},feet:{id:"awaken:starfall_boots"}}}
+cmd summon minecraft:armor_stand -2.2 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:riftwalker_helmet"},chest:{id:"awaken:riftwalker_chestplate"},legs:{id:"awaken:riftwalker_leggings"},feet:{id:"awaken:riftwalker_boots"}}}
+cmd summon minecraft:armor_stand -4.0 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:nightcourt_helmet"},chest:{id:"awaken:nightcourt_chestplate"},legs:{id:"awaken:nightcourt_leggings"},feet:{id:"awaken:nightcourt_boots"}}}
+cmd summon minecraft:armor_stand -5.8 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:signals_echo_helmet"},chest:{id:"awaken:signals_echo_chestplate"},legs:{id:"awaken:signals_echo_leggings"},feet:{id:"awaken:signals_echo_boots"}}}
+wait 30
+cmd tp @s 0.5 200 -3.0 0 8
+wait 30
+shot p4_plain_row
+cmd tp @s 6.8 200 2.5 0 8
+wait 20
+shot p4_leviathan_plain
+cmd tp @s 5.0 200 2.5 0 8
+wait 20
+shot p4_galewing_plain
+cmd tp @s 3.2 200 2.5 0 8
+wait 20
+shot p4_halo_choir_plain
+cmd tp @s 1.4 200 2.5 0 8
+wait 20
+shot p4_dreamsteel_plain
+cmd tp @s -0.4 200 2.5 0 8
+wait 20
+shot p4_starfall_plain
+cmd tp @s -2.2 200 2.5 0 8
+wait 20
+shot p4_riftwalker_plain
+cmd tp @s -4.0 200 2.5 0 8
+wait 20
+shot p4_nightcourt_plain
+cmd tp @s -5.8 200 2.5 0 8
+wait 20
+shot p4_signals_echo_plain
+cmd tp @s 0.5 200 10.4 180 8
+wait 20
+shot p4_plain_row_back
+cmd tp @s 9.5 200 4.5 90 8
+wait 20
+shot p4_plain_side
+cmd tp @s 6.8 200 6.5 180 8
+wait 20
+shot p4_leviathan_plain_back
+cmd tp @s 5.0 200 6.5 180 8
+wait 20
+shot p4_galewing_plain_back
+cmd tp @s 3.2 200 6.5 180 8
+wait 20
+shot p4_halo_choir_plain_back
+cmd tp @s 1.4 200 6.5 180 8
+wait 20
+shot p4_dreamsteel_plain_back
+cmd tp @s -0.4 200 6.5 180 8
+wait 20
+shot p4_starfall_plain_back
+cmd tp @s -2.2 200 6.5 180 8
+wait 20
+shot p4_riftwalker_plain_back
+cmd tp @s -4.0 200 6.5 180 8
+wait 20
+shot p4_nightcourt_plain_back
+cmd tp @s -5.8 200 6.5 180 8
+wait 20
+shot p4_signals_echo_plain_back
+# awakened: mastery V
+cmd kill @e[type=minecraft:armor_stand]
+cmd summon minecraft:armor_stand 6.8 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:leviathan_helmet",components:{"awaken:forged":{set:"leviathan",mastery:6000}}},chest:{id:"awaken:leviathan_chestplate",components:{"awaken:forged":{set:"leviathan",mastery:6000}}},legs:{id:"awaken:leviathan_leggings",components:{"awaken:forged":{set:"leviathan",mastery:6000}}},feet:{id:"awaken:leviathan_boots",components:{"awaken:forged":{set:"leviathan",mastery:6000}}}}}
+cmd summon minecraft:armor_stand 5.0 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:galewing_helmet",components:{"awaken:forged":{set:"galewing",mastery:6000}}},chest:{id:"awaken:galewing_chestplate",components:{"awaken:forged":{set:"galewing",mastery:6000}}},legs:{id:"awaken:galewing_leggings",components:{"awaken:forged":{set:"galewing",mastery:6000}}},feet:{id:"awaken:galewing_boots",components:{"awaken:forged":{set:"galewing",mastery:6000}}}}}
+cmd summon minecraft:armor_stand 3.2 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:halo_choir_helmet",components:{"awaken:forged":{set:"halo_choir",mastery:6000}}},chest:{id:"awaken:halo_choir_chestplate",components:{"awaken:forged":{set:"halo_choir",mastery:6000}}},legs:{id:"awaken:halo_choir_leggings",components:{"awaken:forged":{set:"halo_choir",mastery:6000}}},feet:{id:"awaken:halo_choir_boots",components:{"awaken:forged":{set:"halo_choir",mastery:6000}}}}}
+cmd summon minecraft:armor_stand 1.4 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:dreamsteel_helmet",components:{"awaken:forged":{set:"dreamsteel",mastery:6000}}},chest:{id:"awaken:dreamsteel_chestplate",components:{"awaken:forged":{set:"dreamsteel",mastery:6000}}},legs:{id:"awaken:dreamsteel_leggings",components:{"awaken:forged":{set:"dreamsteel",mastery:6000}}},feet:{id:"awaken:dreamsteel_boots",components:{"awaken:forged":{set:"dreamsteel",mastery:6000}}}}}
+cmd summon minecraft:armor_stand -0.4 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:starfall_helmet",components:{"awaken:forged":{set:"starfall",mastery:6000}}},chest:{id:"awaken:starfall_chestplate",components:{"awaken:forged":{set:"starfall",mastery:6000}}},legs:{id:"awaken:starfall_leggings",components:{"awaken:forged":{set:"starfall",mastery:6000}}},feet:{id:"awaken:starfall_boots",components:{"awaken:forged":{set:"starfall",mastery:6000}}}}}
+cmd summon minecraft:armor_stand -2.2 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:riftwalker_helmet",components:{"awaken:forged":{set:"riftwalker",mastery:6000}}},chest:{id:"awaken:riftwalker_chestplate",components:{"awaken:forged":{set:"riftwalker",mastery:6000}}},legs:{id:"awaken:riftwalker_leggings",components:{"awaken:forged":{set:"riftwalker",mastery:6000}}},feet:{id:"awaken:riftwalker_boots",components:{"awaken:forged":{set:"riftwalker",mastery:6000}}}}}
+cmd summon minecraft:armor_stand -4.0 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:nightcourt_helmet",components:{"awaken:forged":{set:"nightcourt",mastery:6000}}},chest:{id:"awaken:nightcourt_chestplate",components:{"awaken:forged":{set:"nightcourt",mastery:6000}}},legs:{id:"awaken:nightcourt_leggings",components:{"awaken:forged":{set:"nightcourt",mastery:6000}}},feet:{id:"awaken:nightcourt_boots",components:{"awaken:forged":{set:"nightcourt",mastery:6000}}}}}
+cmd summon minecraft:armor_stand -5.8 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:signals_echo_helmet",components:{"awaken:forged":{set:"signals_echo",mastery:6000}}},chest:{id:"awaken:signals_echo_chestplate",components:{"awaken:forged":{set:"signals_echo",mastery:6000}}},legs:{id:"awaken:signals_echo_leggings",components:{"awaken:forged":{set:"signals_echo",mastery:6000}}},feet:{id:"awaken:signals_echo_boots",components:{"awaken:forged":{set:"signals_echo",mastery:6000}}}}}
+wait 30
+cmd tp @s 0.5 200 -3.0 0 8
+wait 40
+shot p4_awake_row
+cmd tp @s 6.8 200 2.5 0 8
+wait 20
+shot p4_leviathan_awake
+cmd tp @s 5.0 200 2.5 0 8
+wait 20
+shot p4_galewing_awake
+cmd tp @s 3.2 200 2.5 0 8
+wait 20
+shot p4_halo_choir_awake
+cmd tp @s 1.4 200 2.5 0 8
+wait 20
+shot p4_dreamsteel_awake
+cmd tp @s -0.4 200 2.5 0 8
+wait 20
+shot p4_starfall_awake
+cmd tp @s -2.2 200 2.5 0 8
+wait 20
+shot p4_riftwalker_awake
+cmd tp @s -4.0 200 2.5 0 8
+wait 20
+shot p4_nightcourt_awake
+cmd tp @s -5.8 200 2.5 0 8
+wait 20
+shot p4_signals_echo_awake
+cmd tp @s 6.8 200 6.5 180 8
+wait 20
+shot p4_leviathan_awake_back
+cmd tp @s 5.0 200 6.5 180 8
+wait 20
+shot p4_galewing_awake_back
+cmd tp @s 3.2 200 6.5 180 8
+wait 20
+shot p4_halo_choir_awake_back
+cmd tp @s 1.4 200 6.5 180 8
+wait 20
+shot p4_dreamsteel_awake_back
+cmd tp @s -0.4 200 6.5 180 8
+wait 20
+shot p4_starfall_awake_back
+cmd tp @s -2.2 200 6.5 180 8
+wait 20
+shot p4_riftwalker_awake_back
+cmd tp @s -4.0 200 6.5 180 8
+wait 20
+shot p4_nightcourt_awake_back
+cmd tp @s -5.8 200 6.5 180 8
+wait 20
+shot p4_signals_echo_awake_back
+cmd time set 18000
+cmd tp @s 0.5 200 -3.0 0 8
+wait 30
+shot p4_awake_row_night
+cmd tp @s 4.1 200 2.0 0 8
+wait 20
+shot p4_awake_night_a
+cmd tp @s -3.1 200 2.0 0 8
+wait 20
+shot p4_awake_night_s
+cmd time set 6000
+cmd kill @e[type=minecraft:armor_stand]
+# worn: galewing at mastery V on the player
+cmd item replace entity @s armor.head with awaken:galewing_helmet[awaken:forged={set:"galewing",mastery:6000}]
+cmd item replace entity @s armor.chest with awaken:galewing_chestplate[awaken:forged={set:"galewing",mastery:6000}]
+cmd item replace entity @s armor.legs with awaken:galewing_leggings[awaken:forged={set:"galewing",mastery:6000}]
+cmd item replace entity @s armor.feet with awaken:galewing_boots[awaken:forged={set:"galewing",mastery:6000}]
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd tp @s 9.5 200 7.5 180 0
+wait 30
+camera front
+look 180 5
+wait 20
+shot p4_galewing_worn_front
+cmd tp @s 9.5 200 5.5 0 0
+camera back
+look 0 15
+wait 20
+shot p4_galewing_worn_back
+cmd tp @s 9.5 200 5.5 0 0
+camera back
+look 90 10
+wait 20
+shot p4_galewing_worn_side
+camera first
+# worn: signals_echo at mastery V on the player
+cmd item replace entity @s armor.head with awaken:signals_echo_helmet[awaken:forged={set:"signals_echo",mastery:6000}]
+cmd item replace entity @s armor.chest with awaken:signals_echo_chestplate[awaken:forged={set:"signals_echo",mastery:6000}]
+cmd item replace entity @s armor.legs with awaken:signals_echo_leggings[awaken:forged={set:"signals_echo",mastery:6000}]
+cmd item replace entity @s armor.feet with awaken:signals_echo_boots[awaken:forged={set:"signals_echo",mastery:6000}]
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd tp @s 9.5 200 7.5 180 0
+wait 30
+camera front
+look 180 5
+wait 20
+shot p4_signals_echo_worn_front
+cmd tp @s 9.5 200 5.5 0 0
+camera back
+look 0 15
+wait 20
+shot p4_signals_echo_worn_back
+cmd tp @s 9.5 200 5.5 0 0
+camera back
+look 90 10
+wait 20
+shot p4_signals_echo_worn_side
+camera first
+quit

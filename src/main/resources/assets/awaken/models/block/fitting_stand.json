@@ -1,0 +1,24 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "minecraft:block/stripped_dark_oak_log",
+    "wood": "minecraft:block/stripped_dark_oak_log",
+    "foot": "minecraft:block/polished_deepslate",
+    "pad": "minecraft:block/brown_wool",
+    "iron": "minecraft:block/iron_block"
+  },
+  "elements": [
+    { "from": [2, 0, 2], "to": [14, 2, 14],
+      "faces": { "down": {"texture": "#foot"}, "up": {"texture": "#foot"}, "north": {"texture": "#foot"}, "south": {"texture": "#foot"}, "east": {"texture": "#foot"}, "west": {"texture": "#foot"} } },
+    { "from": [4, 2, 4], "to": [12, 3, 12],
+      "faces": { "up": {"texture": "#iron"}, "north": {"texture": "#iron"}, "south": {"texture": "#iron"}, "east": {"texture": "#iron"}, "west": {"texture": "#iron"} } },
+    { "from": [7, 3, 7], "to": [9, 22, 9],
+      "faces": { "north": {"texture": "#wood"}, "south": {"texture": "#wood"}, "east": {"texture": "#wood"}, "west": {"texture": "#wood"} } },
+    { "from": [5, 13, 6], "to": [11, 21, 10],
+      "faces": { "down": {"texture": "#pad"}, "up": {"texture": "#pad"}, "north": {"texture": "#pad"}, "south": {"texture": "#pad"}, "east": {"texture": "#pad"}, "west": {"texture": "#pad"} } },
+    { "from": [2, 21, 7], "to": [14, 23, 9],
+      "faces": { "down": {"texture": "#wood"}, "up": {"texture": "#wood"}, "north": {"texture": "#wood"}, "south": {"texture": "#wood"}, "east": {"texture": "#wood"}, "west": {"texture": "#wood"} } },
+    { "from": [6.5, 23, 6.5], "to": [9.5, 26, 9.5],
+      "faces": { "up": {"texture": "#iron"}, "north": {"texture": "#iron"}, "south": {"texture": "#iron"}, "east": {"texture": "#iron"}, "west": {"texture": "#iron"} } }
+  ]
+}

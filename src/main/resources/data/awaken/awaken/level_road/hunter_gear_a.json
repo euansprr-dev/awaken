@@ -2,15 +2,11 @@
   "schema": 1,
   "level": 67,
   "title": "Lordscale gear · A",
-  "text": "Lordscale gear is plated in netherite and set with parts from B-rank and A-rank Lords. The recipes are in your recipe book.",
+  "text": "Lordscale gear is plated in netherite and set with parts from B-rank and A-rank Lords. Its armour is forged at a Fitting Stand. The other recipes are in your recipe book.",
   "grants": [
     {
       "type": "recipe",
       "ids": [
-        "awaken:lordscale_helmet",
-        "awaken:lordscale_chestplate",
-        "awaken:lordscale_leggings",
-        "awaken:lordscale_boots",
         "awaken:lordscale_blade",
         "awaken:lordscale_focus",
         "awaken:lordscale_mattock"

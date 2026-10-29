@@ -1,0 +1,154 @@
+# Armour roster (SPEC §44, phase 0): the six Hunter sets drawn as sculpted meshes. Six armour stands in rank order
+# (Wildhide, Beastbound, Gatewrought, Veilwoven, Lordscale, Sovereign Weave, left to right), a zombie in Veilwoven (every
+# humanoid wears them); the row, each stand close from the front and from behind, the side, by night (the glows); then
+# the player in Wildhide (the tail and pelt) and in Sovereign Weave, front, back and walking, and each gauntlet in first
+# person. A studio at y 200, noon, a sandstone wall behind.
+# ci knobs: LENS=cinematic
+world armourroster creative 4242
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+cmd gamemode creative
+cmd tp @s 0.5 200 0.5 0 0
+wait 100
+cmd fill -10 199 -6 12 199 11 minecraft:smooth_stone
+cmd fill -10 200 11 12 207 11 minecraft:smooth_sandstone
+wait 20
+cmd kill @e[type=minecraft:armor_stand]
+cmd summon minecraft:armor_stand 5.0 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:wildhide_helmet"},chest:{id:"awaken:wildhide_chestplate"},legs:{id:"awaken:wildhide_leggings"},feet:{id:"awaken:wildhide_boots"}}}
+cmd summon minecraft:armor_stand 3.2 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:beastbound_helmet"},chest:{id:"awaken:beastbound_chestplate"},legs:{id:"awaken:beastbound_leggings"},feet:{id:"awaken:beastbound_boots"}}}
+cmd summon minecraft:armor_stand 1.4 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:gatewrought_helmet"},chest:{id:"awaken:gatewrought_chestplate"},legs:{id:"awaken:gatewrought_leggings"},feet:{id:"awaken:gatewrought_boots"}}}
+cmd summon minecraft:armor_stand -0.4 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:veilwoven_helmet"},chest:{id:"awaken:veilwoven_chestplate"},legs:{id:"awaken:veilwoven_leggings"},feet:{id:"awaken:veilwoven_boots"}}}
+cmd summon minecraft:armor_stand -2.2 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:lordscale_helmet"},chest:{id:"awaken:lordscale_chestplate"},legs:{id:"awaken:lordscale_leggings"},feet:{id:"awaken:lordscale_boots"}}}
+cmd summon minecraft:armor_stand -4.0 200 4.5 {ShowArms:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:sovereign_helmet"},chest:{id:"awaken:sovereign_chestplate"},legs:{id:"awaken:sovereign_leggings"},feet:{id:"awaken:sovereign_boots"}}}
+cmd summon minecraft:zombie 7.0 200 4.5 {NoAI:1b,PersistenceRequired:1b,Silent:1b,Rotation:[200f,0f],equipment:{head:{id:"awaken:veilwoven_helmet"},chest:{id:"awaken:veilwoven_chestplate"},legs:{id:"awaken:veilwoven_leggings"},feet:{id:"awaken:veilwoven_boots"}}}
+wait 20
+hud off
+camera first
+cmd tp @s 0.5 200 -1.5 0 8
+wait 30
+shot roster_row
+# each stand close, from the front
+cmd tp @s 5.0 200 2.5 0 8
+wait 20
+shot roster_wildhide
+cmd tp @s 3.2 200 2.5 0 8
+wait 20
+shot roster_beastbound
+cmd tp @s 1.4 200 2.5 0 8
+wait 20
+shot roster_gatewrought
+cmd tp @s -0.4 200 2.5 0 8
+wait 20
+shot roster_veilwoven
+cmd tp @s -2.2 200 2.5 0 8
+wait 20
+shot roster_lordscale
+cmd tp @s -4.0 200 2.5 0 8
+wait 20
+shot roster_sovereign
+cmd tp @s 7.0 200 2.5 0 8
+wait 20
+shot roster_zombie
+# from behind: the row, then each stand
+cmd tp @s 0.5 200 10.4 180 8
+wait 20
+shot roster_row_back
+cmd tp @s 5.0 200 6.5 180 8
+wait 20
+shot roster_wildhide_back
+cmd tp @s 3.2 200 6.5 180 8
+wait 20
+shot roster_beastbound_back
+cmd tp @s 1.4 200 6.5 180 8
+wait 20
+shot roster_gatewrought_back
+cmd tp @s -0.4 200 6.5 180 8
+wait 20
+shot roster_veilwoven_back
+cmd tp @s -4.0 200 6.5 180 8
+wait 20
+shot roster_sovereign_back
+# the side, along the row
+cmd tp @s 9.5 200 4.5 90 8
+wait 20
+shot roster_side
+# by night
+cmd time set 18000
+cmd tp @s 0.5 200 -1.5 0 8
+wait 30
+shot roster_row_night
+cmd tp @s 1.4 200 2.6 0 8
+wait 20
+shot roster_gatewrought_night
+cmd tp @s -0.4 200 2.6 0 8
+wait 20
+shot roster_veilwoven_night
+cmd tp @s -4.0 200 2.6 0 8
+wait 20
+shot roster_sovereign_night
+cmd time set 6000
+# worn: Wildhide on the player
+cmd item replace entity @s armor.head with awaken:wildhide_helmet
+cmd item replace entity @s armor.chest with awaken:wildhide_chestplate
+cmd item replace entity @s armor.legs with awaken:wildhide_leggings
+cmd item replace entity @s armor.feet with awaken:wildhide_boots
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd tp @s 9.5 200 7.5 180 0
+wait 30
+camera front
+look 180 5
+wait 20
+shot roster_wildhide_worn_front
+cmd tp @s 9.5 200 5.5 0 0
+camera back
+look 0 15
+wait 20
+shot roster_wildhide_worn_back
+cmd tp @s 9.5 200 -2.5 0 0
+camera back
+look 0 12
+wait 10
+walk 30
+wait 20
+shotnow roster_wildhide_worn_walk
+wait 30
+camera first
+hud on
+cmd tp @s 9.5 200 5.5 0 10
+wait 30
+shot roster_wildhide_fp
+hud off
+# worn: Sovereign Weave on the player
+cmd item replace entity @s armor.head with awaken:sovereign_helmet
+cmd item replace entity @s armor.chest with awaken:sovereign_chestplate
+cmd item replace entity @s armor.legs with awaken:sovereign_leggings
+cmd item replace entity @s armor.feet with awaken:sovereign_boots
+cmd tp @s 9.5 200 7.5 180 0
+wait 30
+camera front
+look 180 5
+wait 20
+shot roster_sovereign_worn_front
+cmd tp @s 9.5 200 5.5 0 0
+camera back
+look 0 15
+wait 20
+shot roster_sovereign_worn_back
+camera first
+hud on
+cmd tp @s 9.5 200 5.5 0 10
+wait 30
+shot roster_sovereign_fp
+quit

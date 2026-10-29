@@ -68,6 +68,7 @@ public final class Awaken {
         dev.awaken.caves.CavesModule.init(modBus);
         dev.awaken.binoculars.BinocularsModule.init(modBus);
         dev.awaken.aim.AimModule.init(modBus);
+        dev.awaken.armour.ArmourModule.init(modBus);
     }
 
     public static Identifier id(String path) {
