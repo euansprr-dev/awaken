@@ -5671,8 +5671,11 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
   `extractRenderState` (`RenderStateExtensions.onUpdateEntityRenderState`), so the `AwLook` our renderers set there was
   gone by `setupAnim`: `Life.from` was null and the layer's pose (legs, flight, springs, blinks), tint, glow and flash
   never drew on the Hero, Wild and hand-built (`AwMobRenderer`) bodies; only form bodies (extracted from a modifier)
-  had it. `MobsClient` registers a render state modifier that puts the entity's same look back after the clear. Bosses
-  (the kit's renderer, and `AwMobRenderer`'s boss tiers) are left out until the boss work takes it.
+  had it. `MobsClient` registers a render state modifier that puts the entity's same look back after the clear. Since
+  2026-10-29 (the boss work) it covers bosses too: the kit's renderer (so a kit body's springs, breath, blinks and
+  wind-up glow draw, SPEC §35), `AwMobRenderer`'s boss tiers, and the humanoid and skinned renderers
+  (`AwHumanoidRenderer`, `AwSkinRenderer`), which set the same look and had lost their tint, see-through and flash.
+  Modifiers match by renderer class, so each renderer that doesn't extend another is registered by name.
 - **Cost and limits**: client only; nothing allocated per frame (render states carry a reference); springs and fidgets
   off past 32 blocks (springs settle), blinks off past 32; breath and the slow head everywhere (cheap). Reduced motion
   (`awaken-client` `reducedMotion`, the body module's) turns idle fidgets off and halves springs, tremble and stagger;
