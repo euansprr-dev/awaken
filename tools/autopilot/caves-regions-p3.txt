@@ -1,10 +1,10 @@
 # The Living Deep P3 (SPEC §42.8): the other six regions in a new world, as caves-regions.txt shows the Rootways and the
 # Ochre Deep. The same seed (Euan's New World, 9) with the pack's terrain. Each region at its roomiest floor near spawn
-# (/awaken caves goto, searched from a point in its band): the caption first (HUD on, two quick shots), then as a player
-# sees it (a torch in the off hand, Lens Cinematic, Bright gamma: the drawn light shows best here), with night vision to
-# show its rock and pieces, and up at the roof (glow-worm stars, old ropes, hanging crystals). The underlife's lineup
-# once (both rows: the regions' own behind). Last, a board in the sky with every P3 block at noon: nothing may show the
-# missing-texture pattern.
+# (/awaken caves goto, searched from a point in its band; its land is made in a passage, waited out before the shots):
+# the caption first (HUD on, two quick shots), then as a player sees it (a torch in the off hand, Lens Cinematic, Bright
+# gamma: the drawn light shows best here), with night vision to show its rock and pieces, and up at the roof (glow-worm
+# stars, old ropes, hanging crystals). The underlife's lineup once (both rows: the regions' own behind). Last, a board in
+# the sky with every P3 block at noon: nothing may show the missing-texture pattern.
 # ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
 #   tools/tour-ci.sh tools/autopilot/caves-regions-p3.txt 3000
 world caves_regions_p3 creative -9010908364552097449
@@ -39,6 +39,8 @@ cmd item replace entity @s weapon.offhand with minecraft:torch
 # ---- 1. the Pale Halls (the Shallows): caption, the hall, its roof of glow-worm stars, the lineup ----
 hud on
 cmd execute positioned -150 40 -280 run awaken caves goto pale_halls 0
+wait 20
+waitpassage
 wait 60
 shotnow ph_caption_a
 wait 80
@@ -64,6 +66,8 @@ cmd effect clear @s minecraft:night_vision
 # ---- 2. the Windcleft (the Middle Dark under hills and mountains): the crack, up its height ----
 hud on
 cmd execute positioned -150 30 -280 run awaken caves goto windcleft 0
+wait 20
+waitpassage
 wait 60
 shotnow wc_caption_a
 wait 80
@@ -82,6 +86,8 @@ cmd effect clear @s minecraft:night_vision
 # ---- 3. the Drowned Galleries: a lake cavern, its light on the roof ----
 hud on
 cmd execute positioned -150 12 -280 run awaken caves goto drowned_galleries 0
+wait 20
+waitpassage
 wait 60
 shotnow dg_caption_a
 wait 80
@@ -101,6 +107,8 @@ cmd effect clear @s minecraft:night_vision
 # ---- 4. the Glimmer Hollows: a geode room ----
 hud on
 cmd execute positioned -150 14 -280 run awaken caves goto glimmer_hollows 0
+wait 20
+waitpassage
 wait 60
 shotnow gh_caption_a
 wait 80
@@ -119,6 +127,8 @@ cmd effect clear @s minecraft:night_vision
 # ---- 5. the Black Vaults (the Deep): a hall over the lava, its heat ----
 hud on
 cmd execute positioned -150 -50 -280 run awaken caves goto black_vaults 0
+wait 20
+waitpassage
 wait 60
 shotnow bv_caption_a
 wait 80
@@ -137,6 +147,8 @@ cmd effect clear @s minecraft:night_vision
 # ---- 6. the Violet Deep: warped tunnels and a chamber ----
 hud on
 cmd execute positioned -150 -30 -280 run awaken caves goto violet_deep 0
+wait 20
+waitpassage
 wait 60
 shotnow vd_caption_a
 wait 80

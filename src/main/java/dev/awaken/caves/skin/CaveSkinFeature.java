@@ -73,7 +73,7 @@ public final class CaveSkinFeature implements Feature {
      * landing a pearl now and then; the Windcleft's scree, rime and ropes; the Drowned Galleries' silt, driftwood, weed
      * and algae; the Glimmer Hollows' crystals on every face; the Black Vaults' ash; the Violet Deep's growths and husks.
      */
-    static final float PALE_DRIP = 0.3F, RIMSTONE = 0.1F, RIM_FIELD = 0.15F, PEARLS = 0.4F, SCREE = 0.35F, RIME_FIELD = 0.3F,
+    public static final float PALE_DRIP = 0.3F, RIMSTONE = 0.1F, RIM_FIELD = 0.15F, PEARLS = 0.4F, SCREE = 0.35F, RIME_FIELD = 0.3F,
             ROPE = 0.012F, SILT = 0.35F, SILT_FIELD = 0.35F, DRIFTWOOD = 0.012F, WEED = 0.3F, WEED_FIELD = 0F, ALGAE = 0.5F,
             CRYSTAL = 0.07F, ASH = 0.3F, ASH_FIELD = 0F, VIOLET = 0.08F, VIOLET_FIELD = 0.1F, CHITIN = 0.03F;
     /** The longest old rope down a crack, and the Glimmer Hollows' frost line (the land's base temperature). */
@@ -260,14 +260,15 @@ public final class CaveSkinFeature implements Feature {
                     ? CaveSkin.RIMSTONE.get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant) : null;
             case DROWNED_GALLERIES -> roll > 1 - SILT && (shore(c, x, y, z) || field3(seed, x, y, z, 6, 0x5117) > SILT_FIELD)
                     ? CaveSkin.SILT.get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant)
-                    : roll > 1 - SILT - DRIFTWOOD ? CaveSkin.DRIFTWOOD.get().defaultBlockState()
+                    // its own band of the roll: a silt roll that missed the field lays nothing (it laid driftwood on a third of the floor)
+                    : roll > 1 - SILT - DRIFTWOOD && roll <= 1 - SILT ? CaveSkin.DRIFTWOOD.get().defaultBlockState()
                     .setValue(SkinBlocks.Driftwood.AXIS, variant == 0 ? Direction.Axis.Z : Direction.Axis.X) : null;
             case GLIMMER_HOLLOWS -> roll > 1 - CRYSTAL ? crystal.defaultBlockState().setValue(AmethystClusterBlock.FACING, Direction.UP) : null;
             case BLACK_VAULTS -> roll > 1 - ASH && field3(seed, x, y, z, 8, 0x0A5E) > ASH_FIELD
                     ? CaveSkin.ASH.get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant) : null;
             case VIOLET_DEEP -> roll > 1 - VIOLET && field3(seed, x, y, z, 5, 0x7101) > VIOLET_FIELD
                     ? CaveSkin.VIOLET_GROWTH.get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant)
-                    : roll > 1 - VIOLET - CHITIN ? CaveSkin.SHED_CHITIN.get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant) : null;
+                    : roll > 1 - VIOLET - CHITIN && roll <= 1 - VIOLET ? CaveSkin.SHED_CHITIN.get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant) : null;
             default -> null;
         };
         if (s == null) return false;

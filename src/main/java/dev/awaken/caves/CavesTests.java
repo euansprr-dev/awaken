@@ -98,6 +98,7 @@ final class CavesTests {
         AwakenTests.register("caves_skin_census", 2400, CavesTests::skin);
         AwakenTests.register("caves_underlife_sites", 200, CavesTests::underlife);
         AwakenTests.register("caves_region_rock", 2400, CavesTests::regionRock);
+        AwakenTests.register("caves_region_pieces", 2400, CavesTests::regionPieces);
     }
 
     // ---------------------------------------------------------------- the regions
@@ -581,8 +582,12 @@ final class CavesTests {
     static final double GLOW_MAX = 0.06, REGION_SHARE = 0.25;
     /** Chunks filled for each region, and how many of them first only warm the code (the timing is the rest's). */
     static final int REGION_CHUNKS = 5, REGION_WARM = 2;
-    /** Each timed chunk is filled and dressed this many times (fresh copies): the fastest of each is the work's cost. */
-    static final int REGION_REPEATS = 3;
+    /**
+     * Each warming chunk is dressed this many times, and each timed one filled and dressed this many times (fresh copies):
+     * the fastest of each is the work's cost. On the CI runner the region rule ran 3 to 5 times its Mac cost after two warm
+     * dressings (the skin, warm from its own test, didn't): the compiler hadn't caught up with code only this test runs.
+     */
+    static final int REGION_WARM_RUNS = 6, REGION_REPEATS = 5;
 
     /**
      * The regions' own (SPEC §42.7), on real filled chunks (the census's) told they are all one region: four Rootways, four
@@ -645,6 +650,12 @@ final class CavesTests {
                     }
                 }
                 CaveSkinFeature.Regions regions = (x, y, z) -> region;
+                if (i < REGION_WARM) {
+                    for (int run = 1; run < REGION_WARM_RUNS; run++) {
+                        ProtoChunk copy = build(level, p.shaped(), rs, pos, heights);
+                        CaveSkinFeature.dress(benchCells(copy, cx, cz), cx, cz, seed, copy, regions);
+                    }
+                }
                 long t = System.nanoTime();
                 CaveSkinFeature.dress(cells, cx, cz, seed, chunk, regions);
                 if (i >= REGION_WARM) {
@@ -738,6 +749,79 @@ final class CavesTests {
         double mid = ratios.isEmpty() ? 0 : (ratios.get((ratios.size() - 1) / 2) + ratios.get(ratios.size() / 2)) / 2;
         h.assertTrue(mid <= REGION_SHARE, "the skin with the regions costs " + String.format(Locale.ROOT, "%.2f", ms) + " ms a chunk, "
                 + Math.round(mid * 100) + "% of the fill on the middle chunk (budget " + Math.round(REGION_SHARE * 100) + "%)");
+        h.succeed();
+    }
+
+    /** The P3 regions' own pieces (SPEC §42.8), by region: the first of each is its floor's, and must be laid. */
+    private static Map<CaveRegion, List<Block>> pieces() {
+        Map<CaveRegion, List<Block>> m = new java.util.EnumMap<>(CaveRegion.class);
+        m.put(CaveRegion.PALE_HALLS, List.of(CaveSkin.RIMSTONE.get(), CaveSkin.CAVE_PEARLS.get()));
+        m.put(CaveRegion.WINDCLEFT, List.of(CaveSkin.RIME.get(), CaveSkin.OLD_ROPE.get()));
+        m.put(CaveRegion.DROWNED_GALLERIES, List.of(CaveSkin.SILT.get(), CaveSkin.DRIFTWOOD.get(), CaveSkin.CAVE_WEED.get(), CaveSkin.GLOW_ALGAE.get()));
+        m.put(CaveRegion.GLIMMER_HOLLOWS, List.of(CaveSkin.AMBER_CRYSTAL.get(), CaveSkin.GLACIAL_CRYSTAL.get()));
+        m.put(CaveRegion.BLACK_VAULTS, List.of(CaveSkin.ASH.get()));
+        m.put(CaveRegion.VIOLET_DEEP, List.of(CaveSkin.VIOLET_GROWTH.get(), CaveSkin.SHED_CHITIN.get()));
+        return m;
+    }
+
+    /**
+     * The P3 regions' pieces (SPEC §42.8) on real filled chunks, two told they are all one region for each of the six:
+     * each lays its floor's piece (the Glimmer Hollows either crystal) and no other region's, and driftwood and shed
+     * chitin keep to their own share of the roll (at most twice their rate of the open floors: a silt or growth roll that
+     * missed its field once laid driftwood on a third of the Drowned Galleries' floor).
+     */
+    private static void regionPieces(GameTestHelper h) {
+        Pair p = pair(h);
+        var level = h.getLevel();
+        LevelHeightAccessor heights = LevelHeightAccessor.create(-64, 384);
+        long seed = STUDIO_SEEDS[0];
+        RandomState rs = p.random(h, seed, true);
+        Map<CaveRegion, List<Block>> pieces = pieces();
+        StringBuilder log = new StringBuilder();
+        int k = 0;
+        for (var e : pieces.entrySet()) {
+            CaveRegion region = e.getKey();
+            Map<Block, Integer> count = new java.util.IdentityHashMap<>();
+            int floors = 0;
+            for (int i = 0; i < 2; i++) {
+                ChunkPos pos = new ChunkPos(-40 + i * 21, -50 + k * 9);
+                ProtoChunk chunk = build(level, p.shaped(), rs, pos, heights);
+                int cx = pos.getMinBlockX(), cz = pos.getMinBlockZ();
+                CaveSkinFeature.Cells cells = benchCells(chunk, cx, cz);
+                int limit = CaveSkinFeature.REGION_UNDER;
+                for (int dx = 0; dx < 16; dx++) for (int dz = 0; dz < 16; dz++) {
+                    int top = cells.top(cx + dx, cz + dz);
+                    for (int y = -60; y < top - limit; y++) {
+                        if (cells.get(cx + dx, y, cz + dz).isAir() && cells.get(cx + dx, y - 1, cz + dz).isSolidRender()) floors++;
+                    }
+                }
+                CaveSkinFeature.dress(cells, cx, cz, seed, chunk, (x, y, z) -> region);
+                for (int dx = 0; dx < 16; dx++) for (int dz = 0; dz < 16; dz++) for (int y = -62; y < 300; y++) {
+                    Block b = cells.get(cx + dx, y, cz + dz).getBlock();
+                    for (var other : pieces.entrySet()) {
+                        if (!other.getValue().contains(b)) continue;
+                        h.assertTrue(other.getKey() == region, b + " only in the " + other.getKey() + ", not the " + region + " at " + (cx + dx) + " " + y + " " + (cz + dz));
+                        count.merge(b, 1, Integer::sum);
+                    }
+                }
+            }
+            k++;
+            List<Block> own = e.getValue();
+            int first = region == CaveRegion.GLIMMER_HOLLOWS ? count.getOrDefault(own.get(0), 0) + count.getOrDefault(own.get(1), 0)
+                    : count.getOrDefault(own.get(0), 0);
+            log.append(region.id).append(": ").append(floors).append(" floors");
+            for (Block b : own) log.append(", ").append(count.getOrDefault(b, 0)).append(' ').append(b.builtInRegistryHolder().key().identifier().getPath());
+            log.append("; ");
+            h.assertTrue(first > 0, "the " + region + " lays its floor's " + own.get(0) + " (" + floors + " open floors)");
+            for (Block b : new Block[] {CaveSkin.DRIFTWOOD.get(), CaveSkin.SHED_CHITIN.get()}) {
+                if (!own.contains(b)) continue;
+                double rate = b == CaveSkin.DRIFTWOOD.get() ? CaveSkinFeature.DRIFTWOOD : CaveSkinFeature.CHITIN;
+                double share = count.getOrDefault(b, 0) / (double) Math.max(1, floors);
+                h.assertTrue(share <= 2 * rate, b + " keeps to its share in the " + region + ": " + String.format(Locale.ROOT, "%.3f", share)
+                        + " of open floors (rate " + rate + ")");
+            }
+        }
+        Awaken.LOG.info("[caves] region pieces: {}", log);
         h.succeed();
     }
 
