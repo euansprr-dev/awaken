@@ -1,8 +1,9 @@
 # A gate pillar behind a ridge (Euan, 29 Oct: "One of the gate beams is showing on top of the cliff here even tho the
-# gate is behind it"). Render distance 6 (96 blocks): a pillar past 67 blocks used to be pulled in to 67, so land
-# between 67 blocks and the end of the chunks didn't hide it. Here a stone block stands 72-88 blocks ahead, 8 blocks over
-# the eye line, between the camera and a C-rank gate 200 and then 400 blocks off. The beam must show only above the
-# block, never across its face. (Far Sight's land, the other half of the fix, stays on the Mac: Far Sight is off here.)
+# gate is behind it"). Render distance 6 (96 blocks): a pillar past 67 blocks used to be drawn pulled in to 67, so land
+# between 67 blocks and the end of the chunks never hid it. This seed's first C gate forms at 1104 82 -1113 (gate 1 in
+# the log); the camera stands east of it over open land, 200 and then 400 blocks off, looking west, and a stone wall
+# rises 80 blocks in front of it to 8 blocks over the eye. The beam must show only above the wall, never across its
+# face. (Far Sight's land, the other half of the fix, stays on the Mac: Far Sight is off here.)
 # Run on GitHub's Mac runners:
 #   tools/tour-ci.sh tools/autopilot/pillars-ridge.txt 1500 TECTONIC=awakened PACK=perf,world,horizon
 # ci knobs: RD=6
@@ -33,18 +34,18 @@ wait 20
 cmd awaken gate open C
 wait 200
 cmd awaken gate list
-# ---- 200 blocks: the open view, then a block in front at 72-88 blocks
-cmd awaken gate frame 200 4
-wait 200
+# ---- 200 blocks east, looking west: the open view, then a wall 80 blocks ahead
+cmd tp @s 1304 110 -1113 90 -12
+wait 240
 shot ridge_200_open
-cmd execute at @s rotated ~ 0 positioned ^ ^ ^80 run fill ~-8 ~-60 ~-8 ~8 ~8 ~8 stone
+cmd fill 1222 60 -1125 1226 118 -1101 stone
 wait 120
 shot ridge_200_behind
-# ---- 400 blocks: pulled in along the sight line, still behind the block
-cmd awaken gate frame 400 4
+# ---- 400 blocks east: drawn pulled in along the sight line, still behind its wall
+cmd tp @s 1504 110 -1113 90 -12
 wait 240
 shot ridge_400_open
-cmd execute at @s rotated ~ 0 positioned ^ ^ ^80 run fill ~-8 ~-60 ~-8 ~8 ~8 ~8 stone
+cmd fill 1422 60 -1125 1426 118 -1101 stone
 wait 120
 shot ridge_400_behind
 quit
