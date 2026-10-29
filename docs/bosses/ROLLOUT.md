@@ -83,7 +83,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | Sovereign of Silence | Sovereign | Court | Brute | kit | A, the Stone Ear | ✓ 8559df31 | ✓ 8559df31 | — |
 | Sovereign of Sleep | Sovereign | Court | Flier | kit | A, the Night Owl | ✓ 8d12f035 | ✓ 8d12f035 | — |
 | Sovereign of Machines | Sovereign | Court | Brute | kit | A, the Armillary | ✓ e30286bc | ✓ e30286bc | — |
-| Sovereign of Mirrors | Sovereign | Court | Duelist | kit | A, the Vanity | — | — | — |
+| Sovereign of Mirrors | Sovereign | Court | Duelist | kit | A, the Vanity | ✓ 8f309193 | ✓ 8f309193 | — |
 | Sovereign of Storms | Sovereign | Court | Flier | breeze ×2.4 | — | — | — | — |
 | Sovereign of Roots | Sovereign | Court | Caster | creaking ×1.9 | — | — | — | — |
 | Sovereign of Ash | Sovereign | Court | Flier | blaze ×2.4 | — | — | — | — |
