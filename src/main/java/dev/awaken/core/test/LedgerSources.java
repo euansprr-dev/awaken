@@ -62,6 +62,7 @@ final class LedgerSources {
                 "wall_spout", "wares", "wheel_face", "well_windlass", "wayfarer_bedroll", "cargo_crate", "camp_pot");
         Sources.declare("set by the gates as they open, run and close", "gate_core", "gate_exit", "gate_fissure", "gate_inner", "gate_return", "gate_rift",
                 "bell_prop");
+        Sources.declare("the gate rooms' own wear, laid as a room is built (gates.world.CryptWear, SPEC §38.14)", "crypt_bell_toppled");
         Sources.declare("a power's construct, made by casting", "construct", "dream_construct");
         Sources.declare("an anomaly in the land (world.anomaly)", "anomaly_fallen_star", "anomaly_spirit_cache");
         Sources.declare("a Hearth's fire, lit at its founding (hearth)", "hearthfire");
