@@ -73,7 +73,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Thornback | Guardian | Gardens | Beast | kit | B, the Thorn Pangolin | ✓ e2e9a90b | ✓ e2e9a90b | — |
 | The Choirmaster | Guardian | Choir | Caster | kit | C, the Cantor | ✓ 951aa818 | ✓ 951aa818 | — |
 | The Ossuary King | Guardian | Orchard | Brute | kit | A, the Orchard King | ✓ ab74a510 | ✓ ab74a510 | — |
-| The Great Listener | Guardian | Silent | Brute | cube listener ×1.8 | B, the Hush Bat | — | — | — |
+| The Great Listener | Guardian | Silent | Brute | kit | B, the Hush Bat | ✓ af969446 | ✓ af969446 | — |
 | The Furnace Engine | Guardian | Foundry | Brute | iron golem ×1.8 | — | — | — | — |
 | The Drowned Moon | Guardian | Inverted | Flier | elder guardian ×1.6 | — | — | — | — |
 | The Architect of Rooms | Guardian | Dreaming | Caster | evoker ×1.8 | — | — | — | — |
