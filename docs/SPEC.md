@@ -670,6 +670,9 @@ of `AwakenConfig.Client`.
   The holo module installs the director; until then everything shows as it always has.
 - `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
   mobs module grounds normal and elite fliers, never a kit flier).
+- `dev.awaken.delve.api.Lodes` (§28.3, §42.9) — `nearest(level, pos, ore[, radius])`, `heart(level, pos)`; `Homes`
+  (`favours(ore, x, y, z)`, `place(x, y, z)`: pure, any thread) and `homes(seed, homes)`: where each ore is at home
+  underground, installed on the overworld's load by the caves in a world made with the cave regions (null at server stop).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -14612,6 +14615,51 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   hangs 1.4 to 2.6 over it, flickering (none closer than 4). Budget ≤ 0.1 ms a frame (§42.6), not yet measured.
 - **A jump** (a teleport, a respawn): the region at the camera is read again at once, not on the next second, and what
   belongs to the region you left (glow-worms, rust beetles, swifts, crayfish, glass and ash moths, crawlers) fades away.
+
+### 42.9 Mining ties (P4)
+- **Lodes by region** (`caves.RegionHomes`, delve's `Lodes.Homes`): a region favours the ores its rock has twins for: the
+  Rootways coal and copper, the Pale Halls and the Ochre Deep iron, the Windcleft gold, the Drowned Galleries lapis and
+  copper, the Glimmer Hollows redstone, the Black Vaults diamond, and the Violet Deep Deepglass (its seeps are there).
+  `LodePlans` rolls each deep lode's heart as before; when it isn't in one of its ore's regions it rolls a second spot in
+  the same 256-block lode region and takes it only if that one is. Every lode region keeps its lodes of every ore; the
+  wall lodes (§34.2) stay on the walls they find. The region at a point is read from the world's noise as the pack's
+  injectors read it (the band's field at y 0, the land's climate, the depth: seven uncached samples), so it answers for
+  chunks nobody has made, on any thread. An ore's band decides how much it matters: redstone lies below y -4 and the
+  Glimmer Hollows above y 0, so the Hollows' redstone stays vanilla's; lapis and gold meet their Middle Dark regions only
+  from y 0 to 8 and 16; emerald has no region.
+- **Which worlds**: only a world made with the regions (flag `awaken:awakened_caves`) whose first load comes with P4 (no
+  `awaken:caves` record and its clock at 0): the record (schema 1, `lodes_by_region`) is written then, and a regions
+  world from P2 or P3 records `false` and keeps the plans its chunks were laid by. The GameTest world loads the pack too
+  and keeps its plans (delve's tests stand on them); the region tests plan through `LodePlans.planWith`.
+- **The Hearth's line** (§34.1): when the mouth's way in goes down into a region (where its throat ends, else where it
+  joins the caves), the line ends "It goes down into the Ochre Deep." Without one (and in every world without the
+  regions) the line is as it was.
+- **The Journal** (`caves.RegionFinds`): the first time an awakened player stands in a region (the biome underfoot, every
+  2 s, staggered, under y 63) it's counted (`awaken:discovered/cave_region/<id>`, no XP: the Wilds' biome discovery pays
+  for the same steps and shows its find) and its page is filed without a toast (category "Cave region"): what it is, the
+  metal at home there and what to take home.
+- **The Codex** (`caves.client.RegionCodex`, category "Cave regions"): once you've found one, all eight; the ones you've
+  stood in show what they are, their metal and keepsake, the rest only where to look ("Below y 0, under any land.").
+- **Trails**: "The Regions Below" (deep, free, opens with the first region found: a step per region, the hint where it
+  lies; finish 0.05 of a level) and "Keepsakes from Below" (deep, free, the same opening: hold each region's keepsake;
+  finish 0.03): root amber, cave pearls, the Delvers' old rope, driftwood, an amber or glacial crystal, ember lichen, a
+  Hollow's shed shell. The Black Vaults have none yet (their cooled flows and column stumps aren't built).
+- **The finds**: each keepsake is a piece the region already lays and that drops itself, so it can go home and be set
+  down. The Rootways' is root amber (`awaken:root_amber`, style sheet section 6, OK'd by Euan 2026-10-29): beads of old
+  resin like cave pearls (no collision, instant break, three bead models), laid on the rock floor under one root curtain
+  in twenty (`CaveSkinFeature.ROOT_AMBER` 0.05) where the curtain's room is under seven blocks tall.
+- **Pacing** (`tools/sim/pacing_sim.py`, re-run 2026-10-29): the sim counts lodes found per mining minute, not per region,
+  and lodes by region keep every region's count, so its numbers hold within run-to-run noise (balanced: level 10 at 3.9 h,
+  25 at 16.8 h, 50 at 51.3 h; D metal at 1.1 h, C at 12.8 h; all 15 target checks pass).
+- **Tests**: `caves_lodes_by_region` (seed 777's overworld noise, 400 lode regions round the origin: every region keeps
+  each ore's count; no homes, or homes everywhere, plan as before; iron at home at least 1.6 times as often, all ores 1.4;
+  the homes are the rock's twins), `caves_region_rock` (root amber only in the Rootways, on rock under a root curtain),
+  `caves_region_journal` (once, filed under the region's name; every keepsake is an item;
+  both trails name every region and keepsake), and `delve_hearth_points` (the region's line, and none without one).
+- **Measured 2026-10-29** (`caves_lodes_by_region`): lodes in their ore's regions without and with homes: iron 134 to 254
+  of 1,200 (1.9 times), copper 67 to 116, coal 70 to 104, Deepglass 63 to 96, diamond 56 to 72 of 330, gold 4 to 8, lapis
+  5 to 7, redstone 0; all 399 to 657 of 4,867 (1.65 times). Where a lode region lies wholly outside an ore's regions its
+  second roll can't reach one, so the rise is under twice for the patchier regions. 800 plans and the counting: 176 ms.
 
 ## 43. The Journey (one city and the wild, the beasts' Hearth, the bells' song, Faults; plan docs/director/JOURNEY.md, page https://claude.ai/artifact/UZ4vpKGoSJkisZRkmoHj3D; Euan approved the entire plan 2026-10-29: "Go ahead with the entire plan")
 

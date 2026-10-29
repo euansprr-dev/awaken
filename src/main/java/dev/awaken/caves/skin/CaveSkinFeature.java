@@ -68,6 +68,8 @@ public final class CaveSkinFeature implements Feature {
     /** The regions' own (SPEC §42.7): their rock stops this far under the ground; growth and glow by these chances. */
     public static final int REGION_UNDER = 10;
     static final float GLOWCAP = 0.12F, GLOW_FIELD = 0.2F, ROOTS = 0.14F, ROOT_FIELD = 0.1F, EMBER = 0.1F, RUST = 0.2F;
+    /** Root amber (SPEC §42.9, the Rootways' find): under this share of root curtains, beads of it on the floor. */
+    public static final float ROOT_AMBER = 0.05F;
     /**
      * The six P3 regions' own (SPEC §42.8): the Pale Halls drip everywhere (straws) and grow rimstone in patches, a drop's
      * landing a pearl now and then; the Windcleft's scree, rime and ropes; the Drowned Galleries' silt, driftwood, weed
@@ -418,7 +420,10 @@ public final class CaveSkinFeature implements Feature {
 
     // ---- the regions' own (SPEC §42.7) ------------------------------------------------------------------------------
 
-    /** Root curtains hanging from a Rootways roof: one to three blocks, at most half the room under them. */
+    /**
+     * Root curtains hanging from a Rootways roof: one to three blocks, at most half the room under them; under now and then
+     * one, on the floor, a few beads of root amber where the old root bled long ago.
+     */
     private static int roots(Cells c, long seed, int x, int y, int z) {
         if (!clean(c, x, y, z)) return 0;
         int room = 0;
@@ -427,6 +432,11 @@ public final class CaveSkinFeature implements Feature {
         int n = Math.min(1 + (int) (chance(seed, x, y, z, 10) * 3), room / 2);
         BlockState root = CaveSkin.ROOT_CURTAIN.get().defaultBlockState();
         for (int k = 0; k < n; k++) c.set(x, y - k, z, root.setValue(SkinBlocks.RootCurtain.TIP, k == n - 1));
+        int floor = y - room + 1;
+        if (room < 7 && chance(seed, x, y, z, 17) < ROOT_AMBER && rock(c.get(x, floor - 1, z)) != null && clean(c, x, floor, z)) {
+            c.set(x, floor, z, CaveSkin.ROOT_AMBER.get().defaultBlockState().setValue(SkinBlocks.VARIANT, (int) (chance(seed, x, floor, z, 16) * 3)));
+            n++;
+        }
         return n;
     }
 

@@ -135,6 +135,11 @@ final class CaveTests {
                 "There's a sinkhole in the ground 180 m south of your home. The cave at the bottom of it runs past iron.", "the doline's line");
         h.assertValueEqual(MouthPointer.line(cleft, home, "iron"),
                 "There's a narrow gorge cut into the cliff 180 m south of your home. It leads into a cave that runs past iron.", "the cleft's line");
+        // a world with cave regions names the one the way in goes down into (SPEC §42.9); no region, the line as it was
+        h.assertValueEqual(MouthPointer.line(hill, home, "iron", "the Ochre Deep"), "There's a cave mouth in the hillside 180 m south of your home."
+                + " The cave behind it runs past iron. It goes down into the Ochre Deep.", "the region's line");
+        h.assertValueEqual(MouthPointer.line(hill, home, "iron", null), MouthPointer.line(hill, home, "iron"), "no region, no change");
+        h.assertTrue(MouthPointer.place(level.getSeed(), hill) == null, "a world without regions names none");
         h.assertTrue(MouthPointer.leads(level.getSeed(), adit, dev.awaken.delve.Ore.IRON), "an iron adit leads to iron");
         h.assertFalse(MouthPointer.leads(level.getSeed(), adit, dev.awaken.delve.Ore.COPPER), "an iron adit doesn't lead to copper");
         BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));

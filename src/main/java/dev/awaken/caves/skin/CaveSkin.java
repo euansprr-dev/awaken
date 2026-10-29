@@ -184,6 +184,9 @@ public final class CaveSkin {
     public static final DeferredBlock<SkinBlocks.Glowcap> VIOLET_GROWTH = SET.withItem(SET.blocks.registerBlock("violet_growth", SkinBlocks.Glowcap::new,
             p -> p.mapColor(MapColor.COLOR_PURPLE).noCollision().instabreak().sound(SoundType.NETHER_SPROUTS).lightLevel(st -> 4)
                     .offsetType(BlockBehaviour.OffsetType.XZ).pushReaction(PushReaction.POPPED)));
+    /** Root amber (SPEC §42.9): the Rootways' find, beads of old resin under the root curtains. */
+    public static final DeferredBlock<SkinBlocks.Pebbles> ROOT_AMBER = SET.withItem(SET.blocks.registerBlock("root_amber", SkinBlocks.Pebbles::new,
+            p -> p.mapColor(MapColor.COLOR_ORANGE).sound(SoundType.CALCITE).noCollision().instabreak().replaceable().pushReaction(PushReaction.POPPED)));
     public static final DeferredBlock<SkinBlocks.Pebbles> SHED_CHITIN = SET.withItem(SET.blocks.registerBlock("shed_chitin", SkinBlocks.Pebbles::new,
             p -> p.mapColor(MapColor.TERRACOTTA_PURPLE).sound(SoundType.BONE_BLOCK).noCollision().instabreak().replaceable()
                     .pushReaction(PushReaction.POPPED).offsetType(BlockBehaviour.OffsetType.XZ)));
