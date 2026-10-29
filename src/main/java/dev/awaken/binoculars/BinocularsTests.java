@@ -1,19 +1,26 @@
 package dev.awaken.binoculars;
 
 import dev.awaken.core.api.Destinations;
+import dev.awaken.core.api.Spotting;
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.progression.Progression;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
  * GameTests for the binoculars (SPEC §39.9): the key and what lowers them, the steps and the zoom curve, the look speed,
- * the feel file, the relay, and marking a spot. The look and feel in the hands are Euan's to judge in game.
+ * the feel file, the relay, marking a spot, and spotting (§39.10). The look and feel in the hands are Euan's to judge in game.
  */
 final class BinocularsTests {
     private BinocularsTests() {}
@@ -236,6 +243,103 @@ final class BinocularsTests {
             h.assertTrue(GlassRules.distance(5140).equals("5.1 km") && GlassRules.distance(Double.NaN).equals("far"), "km and far");
             h.assertTrue(GlassRules.bearing(0F).equals("S") && GlassRules.bearing(-90F).equals("E") && GlassRules.bearing(180F).equals("N"), "bearings");
             level.getServer().getPlayerList().remove(p);
+            h.succeed();
+        });
+        // SPEC §39.10: the centre of the glass held on something unfound for HOLD ticks finds it; the server checks the
+        // look, the slack, a clear line and the hold; one slip is forgiven, two start over; nothing found is offered again
+        AwakenTests.registerIsolated("binoculars_spotting", 60, h -> {
+            var level = h.getLevel();
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            BlockPos base = h.absolutePos(new BlockPos(1, 50, 1));
+            // open air for the looks (plots are reused: clear what another test left up here)
+            for (int x = -10; x <= 10; x++) for (int y = -1; y <= 5; y++) for (int z = -1; z <= 33; z++)
+                level.setBlock(base.offset(x, y, z), Blocks.AIR.defaultBlockState(), 2);
+            p.setPos(base.getX() + 0.5, base.getY(), base.getZ() + 0.5);
+            Progression.awaken(p);
+            Vec3 a = Vec3.atCenterOf(base.offset(0, 1, 30)), b = Vec3.atCenterOf(base.offset(8, 1, 30));
+            var pig = h.spawn(EntityTypes.PIG, base.offset(-8, 1, 24).subtract(h.absolutePos(BlockPos.ZERO)));
+            pig.setNoAi(true);
+            pig.setNoGravity(true);
+            Set<Object> found = new HashSet<>();
+            int[] finds = {0};
+            Spotting.Source standing = new Spotting.Source() {
+                public boolean moves() { return false; }
+                public void gather(ServerPlayer who, double reach, Spotting.Sink out) {
+                    if (who != p) return;
+                    if (!found.contains("a")) out.place(1, a.x - 1, a.y - 1, a.z - 1, a.x + 1, a.y + 1, a.z + 1, "a");
+                    if (!found.contains("b")) out.place(2, b.x - 1, b.y - 1, b.z - 1, b.x + 1, b.y + 1, b.z + 1, "b");
+                }
+                public boolean find(ServerPlayer who, Object ref) {
+                    finds[0]++;
+                    return found.add(ref);
+                }
+            };
+            Spotting.Source moving = new Spotting.Source() {
+                public boolean moves() { return true; }
+                public void gather(ServerPlayer who, double reach, Spotting.Sink out) {
+                    if (who == p && !found.contains(pig)) out.entity(pig, pig);
+                }
+                public boolean find(ServerPlayer who, Object ref) {
+                    finds[0]++;
+                    return found.add(ref);
+                }
+            };
+            List<Spotting.Source> sources = List.of(standing, moving);
+            java.util.function.Consumer<Vec3> aim = at -> p.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, at);
+            try {
+                h.assertTrue(BinocularsRelay.receive(p, true, recorder(new ArrayList<>())) == BinocularsRelay.Result.RELAYED && BinocularsRelay.looking(p),
+                        "the glass is up");
+                int t = 1000;
+                // beside it, past the slack: nothing
+                aim.accept(a.add(3.5, 0, 0));
+                h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.NOTHING, "the centre beside it finds nothing");
+                // held on it: a hold starts, runs, and finds it at HOLD ticks
+                aim.accept(a);
+                t += Spotter.PERIOD;
+                int start = t;
+                h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.STARTED, "held on it: a hold starts");
+                for (t += Spotter.PERIOD; t - start < Spotter.HOLD; t += Spotter.PERIOD)
+                    h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.HOLDING, "still holding at " + (t - start));
+                h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.FOUND && found.contains("a") && finds[0] == 1, "found after the hold");
+                t += Spotter.PERIOD;
+                h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.NOTHING, "nothing shows over something found");
+                // behind a wall: nothing
+                for (int y = 0; y <= 2; y++) for (int x = 3; x <= 5; x++) level.setBlock(base.offset(x, y, 15), Blocks.STONE.defaultBlockState(), 2);
+                aim.accept(b);
+                t += Spotter.PERIOD;
+                h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.NOTHING, "a wall hides it");
+                for (int y = 0; y <= 2; y++) for (int x = 3; x <= 5; x++) level.setBlock(base.offset(x, y, 15), Blocks.AIR.defaultBlockState(), 2);
+                // one slip is forgiven, two start over
+                t += Spotter.PERIOD;
+                h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.STARTED, "the wall gone: a hold starts");
+                aim.accept(b.add(0, 40, 0));
+                t += Spotter.PERIOD;
+                h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.SLIPPED, "one look off is a slip");
+                aim.accept(b);
+                t += Spotter.PERIOD;
+                h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.HOLDING, "back on it: the same hold");
+                aim.accept(b.add(0, 40, 0));
+                t += Spotter.PERIOD;
+                Spotter.look(p, t, sources);
+                t += Spotter.PERIOD;
+                h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.LOST, "two looks off lose it");
+                h.assertTrue(!found.contains("b") && finds[0] == 1, "a lost hold finds nothing");
+                // something moving: its bounds are read at each look
+                aim.accept(pig.getBoundingBox().getCenter());
+                t += Spotter.PERIOD;
+                start = t;
+                h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.STARTED, "held on a creature: a hold starts");
+                for (t += Spotter.PERIOD; t - start < Spotter.HOLD; t += Spotter.PERIOD) Spotter.look(p, t, sources);
+                h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.FOUND && found.contains(pig), "the creature is found");
+                // lowered: the next look is nothing, and the glass down stops the server looking
+                BinocularsRelay.reset(p, recorder(new ArrayList<>()));
+                h.assertTrue(!BinocularsRelay.looking(p), "the glass is down");
+            } finally {
+                Spotter.forget(p);
+                BinocularsRelay.forget(p);
+                pig.discard();
+                level.getServer().getPlayerList().remove(p);
+            }
             h.succeed();
         });
     }

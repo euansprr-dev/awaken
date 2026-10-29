@@ -7,14 +7,16 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * Binoculars (SPEC §39), common half: the {@code awaken:binoculars} relay that lets others see yours up, the sounds, and
- * the display-only {@code awaken:binoculars} item the hands and other players' models draw (in no loot, recipe or tab:
- * you always have them, on a key). Everything you see through them is client side ({@code binoculars.client}); the
+ * Binoculars (SPEC §39), common half: the {@code awaken:binoculars} relay that lets others see yours up, the sounds,
+ * spotting ({@link Spotter}: the view held on something unfound finds it, §39.10), and the display-only
+ * {@code awaken:binoculars} item the hands and other players' models draw (in no loot, recipe or tab: you always have
+ * them, on a key). Everything you see through them is client side ({@code binoculars.client}); the
  * side-agnostic rules it follows ({@link GlassRules}, {@link GlassKey}, {@link GlassState}, {@link GlassSpring},
  * {@link GlassFeel}) are checked by GameTests.
  */
@@ -29,12 +31,18 @@ public final class BinocularsModule {
         ITEMS.register(modBus);
         BinocularsSounds.register(modBus);
         modBus.addListener(BinocularsNet::register);
-        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, e -> BinocularsRelay.flush(e.getServer(), BinocularsRelay.SEND));
+        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, e -> {
+            BinocularsRelay.flush(e.getServer(), BinocularsRelay.SEND);
+            Spotter.tick(e.getServer());
+        });
         NeoForge.EVENT_BUS.addListener(PlayerEvent.StartTracking.class, e -> {
             if (e.getEntity() instanceof ServerPlayer tracker) BinocularsRelay.onStartTracking(tracker, e.getTarget());
         });
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> {
-            if (e.getEntity() instanceof ServerPlayer p) BinocularsRelay.forget(p);
+            if (e.getEntity() instanceof ServerPlayer p) {
+                BinocularsRelay.forget(p);
+                Spotter.forget(p);
+            }
         });
         NeoForge.EVENT_BUS.addListener(LivingDeathEvent.class, e -> {
             if (e.getEntity() instanceof ServerPlayer p) BinocularsRelay.reset(p, BinocularsRelay.SEND);
@@ -45,6 +53,7 @@ public final class BinocularsModule {
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerChangedDimensionEvent.class, e -> {
             if (e.getEntity() instanceof ServerPlayer p) BinocularsRelay.reset(p, BinocularsRelay.SEND);
         });
+        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, e -> Spotter.clear());
         BinocularsTests.register();
     }
 }

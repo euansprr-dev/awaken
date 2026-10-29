@@ -459,6 +459,9 @@ of `AwakenConfig.Client`.
   binoculars' magnification now, 1 when none, §39: Far Sight's panorama steps aside while it is over 1.05).
   `core.api.FarGround` (client): `install(Sampler, BooleanSupplier ready)`, `ground(x, z)` (the far land's ground top, NaN when
   unknown; thread-safe, sampled off the render thread), `ready()` (the far land drew lately). Far Sight installs it (§39.8).
+  `core.api.Spotting` (server): `register(Source)`, `sources()`; `Source.moves()`, `gather(player, reach, Sink)`, `find(player,
+  ref)`; `Sink.place(key, bounds, ref)`, `Sink.entity(entity, ref)`: what the binoculars can spot (§39.10). Fauna, landmarks
+  and wonders register sources.
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
@@ -7528,7 +7531,8 @@ The rules below replace that.
   (`AttackEntityEvent`, `EntityInteract`). Proximity alone never counts, except something big in plain view: a named
   beast or a creature ≥2.5 blocks tall, within 16 blocks and within 60° of the view (`Sightings`). Biomes and
   happenings are big and in plain view: standing in one, witnessing one counts (but they never carry the lesson).
-  Lairs (reach the den), landmarks and gates (reach them) are found by going there.
+  Lairs (reach the den), landmarks and gates (reach them) are found by going there. **Through the binoculars** (§39.10),
+  holding the glass on a creature, lair, landmark, gate or wonder you haven't found for 2 s finds it from afar.
 - **Telling** (`Finds.tell(player, Find)` after `Progression.discover` returned true):
   1. the first find ever made on purpose (`intent`) is the **lesson**: a moment with the name, its hint, and "A
      discovery. You studied something new: it pays a little XP, and what you learned is kept in your Journal and Codex
@@ -13812,6 +13816,51 @@ readout says "Too far to tell" for a moment and nothing is set. The server check
   hold on (`PlateRules.lookRange(per, zoom)`, used by `LivingClient.plates`; a far creature joins the candidates by itself, the
   40-block box stays). Uses only what your game already has about it; nothing new from the server. Tested in `living_plate_rules`.
 - **Creatures** beyond the server's tracking range (animals 160, monsters 128) aren't there to draw; not changed.
+
+### 39.10 Spotting: discover by looking (`Spotter`, `core.api.Spotting`, `client.GlassSpot`; Euan 2026-10-29: "Make it so I can discover things if I look at them a few s with my binauculars")
+With the binoculars up, holding the centre of the view on something you haven't found for **2 s** finds it, through the same
+discovery path as going there (`Progression.discover` → `Finds.tell`: the cue, the Journal, the Codex, a first-of-kind toast or
+the lesson), on purpose (`intent`), so it shows at once (§26.3).
+- **The rule (server, `binoculars.Spotter`).** Every `PERIOD` (4) ticks, for each player whose binoculars are up
+  (`BinocularsRelay.looking`: a change still held by the relay's rate limit counts), the server casts the player's own look
+  (eyes and view as it has them) against what the sources offer. Each thing's bounds are widened by `SLACK_DEG` (0.6°) at its
+  distance; the nearest the look enters wins. It then needs a clear line through loaded blocks by what you see (`VISUAL` shapes:
+  glass and water hide nothing, leaves and stone do; an unloaded chunk hides it; a block inside the thing's own bounds is the
+  thing), aimed where the look meets its bounds, else at their middle. The same thing on `HOLD` (40) ticks of looks finds it;
+  one missed look is forgiven (`GRACE` 1: a leaf, the sway), a second or another thing starts over. Reach: the server's view
+  distance in blocks, held to 64..512 (`REACH_MIN`/`REACH_MAX`): the loaded land, since the server can't see Far Sight's land.
+  No spotting by a spectator, the dead, before awakening, or inside Carillon's walls; a thing inside the walls is never spotted
+  (§26.3b). Standing things are gathered once a second (`STANDING_EVERY` 20), creatures at every look; candidates live in a
+  fixed pool of 64 per player (no allocation per look beyond the sources' own gathering).
+- **The API (`core.api.Spotting`).** A module registers a `Source` (`moves()`, `gather(player, reach, Sink)`, `find(player,
+  ref)`); `Sink.place(key, bounds, ref)` for a standing thing, `Sink.entity(entity, ref)` for a moving one. A source offers only
+  what the player hasn't found, never loads a chunk, and re-checks in `find` (it may have gone).
+- **What counts** (the sources):
+  - **Creatures** (`world.fauna.FaunaSpotting`): any fauna kind you haven't studied, out to the reach (past `Sightings.RANGE`
+    24 / `BEAST_RANGE` 48); found by `Sightings.discover`, so a named beast is its moment and its lair rumour follows.
+  - **Lairs** (same file): a den (its clearing, 13×10×13 round the den block) of a beast whose lair discovery you haven't had;
+    `Lairs.spotted` pays the lair's discovery and puts the den on your tracker. It is "found" in the band's sense (the tracker
+    stops pointing) when you stand in it, which then pays nothing more. A cave lair is underground, so the clear line hides it.
+  - **Landmarks and gates** (`world.landmark.LandmarkSpotting`): the Well (17×11×17 round its centre), a Precursor ruin of a kind
+    you haven't found (its real bounds, where its start chunk is loaded; ruins are found by the placement maths, no chunk
+    generated), a gate of a theme you haven't stood at (9×12×9 round its block). Seeing one pays the same discovery as reaching
+    it and puts it on the Gate Map (`LandmarkWatch.spot`, `reachGate`). **Kept separate from "reached"**: the landmark's
+    reached flag, `awaken:landmarks_reached` (directives count places stood at), the Horizon line and a climb site's rope promise
+    (`Promises.seen`) stay for standing there. A gate's break clock still waits for someone to come close (§7).
+  - **Wonders** (`living.wonder.WonderSpotting`): a wonder you haven't found, by its plan's real bounds; seeing it is finding it
+    (`WonderWatch.find`: remembered, on the Atlas, `awaken:wonders_found`). A wonder is made to be looked at from afar.
+  - Not spotted: biomes (stood in), happenings (witnessed; they come and go too fast for a hold), secrets and caves (small or
+    underground), ores and lodes (mined), forms (hit).
+- **The look (client, `GlassSpot`).** A ring of 24 ticks round the centre of the glass (radius 11 GUI px, dim cream) lights
+  amber one by one, clockwise from the top, over the hold, the leading tick white; four corner brackets close in from 19 to 13
+  px as it fills. The last tick waits for the server's word. When the find lands the ring flashes white and spreads 6 px, the
+  brackets turn 45° and close into the find cue's diamond, and it all fades over 650 ms with a high focus click
+  (`binoculars.step` at pitch 1.7); slipping off fades it where it stood (180 ms). Nothing shows over something already found:
+  the ring is drawn only from the server's `awaken:binoculars_spot` (S2C, `Spot(phase, hold)`: lost, holding, found). Hidden
+  under F1 like the readout; reduced motion keeps the flash and fade without the turn and spread.
+- **Test** `binoculars_spotting`: beside it past the slack finds nothing; held on it, a hold starts, runs and finds at 40 ticks,
+  then nothing shows over it; a wall hides it; one slip is forgiven, two lose it and a lost hold finds nothing; a moving thing's
+  bounds are read at each look; the glass down stops the looking.
 
 ### 39.9 Settings (`config/awaken-binoculars-client.toml`) and commands
 - `enabled` (true; off frees the key), `key_mode` (TAP_HOLD, HOLD, TOGGLE), `look_speed` (100, 50..150 %), `sway` (true), `edge`

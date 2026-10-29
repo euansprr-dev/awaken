@@ -45,6 +45,12 @@ public final class BinocularsRelay {
         return e != null && e.up;
     }
 
+    /** Whether they're looking through them now: a change still waiting on the rate limit counts (spotting, §39.10). */
+    public static boolean looking(ServerPlayer p) {
+        Entry e = STATE.get(p.getUUID());
+        return e != null && (e.pending != null ? e.pending : e.up);
+    }
+
     /** A player's client says theirs went up or down. {@code deliver} filters (and, in tests, records) recipients. */
     public static Result receive(ServerPlayer p, boolean up, Predicate<ServerPlayer> deliver) {
         if (p.isDeadOrDying() || p.isRemoved()) return Result.REJECTED;
