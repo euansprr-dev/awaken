@@ -5745,8 +5745,11 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   spine per radian a second, the tail to the inside of the turn); fins (`fins`) fold back at speed (`tuck`); the head
   holds level against the pitch and bank (`level`). Hand-built bodies beat on the life layer's paced clock (the moth's
   wings, the ray's ripple, the serpent's wave), so a change of pace never jumps the phase.
-  The **Hollow Owl** beats 0.55 rad at 2.4 a second (tips 0.5) round its glide pose, heave 2, glide 0.12, banks 0.18,
-  climb 0.6; the **Bogwick** (clip beat) heave 0.6, glide 0.6, tilt 0.25; the **Empress Moth** (its clip heaves) glide
+  The **Hollow Owl** beats 0.7 rad at 2.4 a second (tips 0.5) round its glide pose, heave 2, glide 0.12, banks 0.18,
+  climb 0.6. In the air its body lies forward along the line of flight (75° off its upright stance, a 2° rock), and a
+  cube-less `yoke` at the shoulders turns back by as much under the head and wings: the face still looks ahead, the wings
+  still spread level and beat up and down about the line of flight (a wing hung from a pitched body would row); the legs
+  trail under the tail, which fans straight back. Before this it flew upright, a perched owl hung in the air; the **Bogwick** (clip beat) heave 0.6, glide 0.6, tilt 0.25; the **Empress Moth** (its clip heaves) glide
   0.45, bank 0.16; the **Plumed Coil** wings heave 0.8, glide 0.4, spine of ten bending 0.25, wave 0.7/1.2; the **Dune
   Wyrm** spine of nine bending 0.3, climb 0.7, wave 0.7/1.25; the **Glimmerfin** tail and caudal fin wave 0.55/1.3, bend
   0.3, pectorals tucking 0.6, climb 0.7; the **Lantern Maw** wave 0.6/1.2, bend 0.25, bank 0.12; the **Tidesteed** tail

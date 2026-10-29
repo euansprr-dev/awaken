@@ -222,7 +222,7 @@
       "body": {"headLevel": 0.7, "twist": 0.2, "slope": 0.9, "land": 1.2, "shift": 0.8, "nod": 0.07}
     },
     "hollow_owl": {
-      "fly": {"wings": ["wing_l", "wing_r"], "tips": ["wingtip_l", "wingtip_r"], "flap": [0.55, 2.4, 0.5], "heave": 2.0, "glide": 0.12, "fast": 7, "bank": 0.18, "climb": 0.6, "tilt": 0.12, "level": 0.6}
+      "fly": {"wings": ["wing_l", "wing_r"], "tips": ["wingtip_l", "wingtip_r"], "flap": [0.7, 2.4, 0.5], "heave": 2.0, "glide": 0.12, "fast": 7, "bank": 0.18, "climb": 0.6, "tilt": 0.12, "level": 0.6}
     },
     "bogwick": {
       "fly": {"wings": ["bwing_l", "bwing_r"], "heave": 0.6, "glide": 0.6, "fast": 5, "bank": 0.12, "climb": 0.4, "tilt": 0.25, "level": 0.3}
