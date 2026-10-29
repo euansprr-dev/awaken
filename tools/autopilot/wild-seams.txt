@@ -156,3 +156,4 @@ shot seams_g6_wide
 cmd tp @s 122.5 199.9 3.4 180 0
 wait 30
 shot seams_g6_a
+quit
