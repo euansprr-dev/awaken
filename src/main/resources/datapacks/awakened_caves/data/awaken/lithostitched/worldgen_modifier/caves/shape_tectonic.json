@@ -1,0 +1,27 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "tectonic"
+    }
+  ],
+  "type": "lithostitched:wrap_density_function",
+  "target_function": "tectonic:caves",
+  "wrapper_function": {
+    "type": "awaken:cave_shape",
+    "input": {
+      "type": "lithostitched:wrapped_marker"
+    },
+    "depth": "minecraft:overworld/depth",
+    "shallows": "awaken:caves/shallows",
+    "middle": "awaken:caves/middle",
+    "deep": "awaken:caves/deep",
+    "humidity": "minecraft:overworld/vegetation",
+    "temperature": "minecraft:overworld/temperature",
+    "continents": "minecraft:overworld/continents",
+    "erosion": "minecraft:overworld/erosion",
+    "noise_a": "awaken:caves/shape_a",
+    "noise_b": "awaken:caves/shape_b",
+    "flat": "awaken:caves/shape_flat"
+  }
+}

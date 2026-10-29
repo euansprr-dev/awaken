@@ -1,0 +1,493 @@
+package dev.awaken.caves;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import com.mojang.serialization.JsonOps;
+import dev.awaken.Awaken;
+import dev.awaken.core.test.AwakenTests;
+import dev.awaken.terrain.api.BiomeTable;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.tags.BiomeTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeManager;
+import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
+import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.level.chunk.UpgradeData;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.NoiseRouter;
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.WorldOptions;
+import net.minecraft.world.level.levelgen.blending.Blender;
+import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
+import net.minecraft.world.level.levelgen.densityfunction.DensityFunctions;
+import net.minecraft.world.level.levelgen.densityfunction.DfRewriteRule;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.neoforged.neoforge.common.Tags;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.function.Predicate;
+
+/**
+ * The Living Deep's ground truth (SPEC §42, P0). The GameTest world has no Lithostitched or Tectonic, so the caves pack's
+ * injectors and wrapper are read as data and applied to the vanilla generator the way Lithostitched applies them: the
+ * injectors are held to {@link CaveRegion} point by point and their shares measured on the five studio seeds; the
+ * shape wrapper is spliced into vanilla's {@code minecraft:overworld/caves/entrances} (its registry value replaced, as
+ * Lithostitched's {@code wrap_density_function} does), and the land on top must not move by a block, nor chunk filling
+ * cost more than {@link #COST_MAX} times as much. Structures stay whole by construction: the router's wrapped caves sit
+ * under the beardifier, which still carves and fills around every structure piece.
+ */
+final class CavesTests {
+    private CavesTests() {}
+
+    /** The terrain studio's five seeds (tools/autopilot/terrain-survey.txt, as PlacementTests). */
+    static final long[] STUDIO_SEEDS = {777L, 20261024L, 4242L, 1337L, 90210L};
+    /** The gate (SPEC §42.6): filling a chunk with the shapes costs at most this much more. */
+    static final double COST_MAX = 1.20;
+    private static final ResourceKey<DensityFunction> ENTRANCES =
+            ResourceKey.create(Registries.DENSITY_FUNCTION, Identifier.withDefaultNamespace("overworld/caves/entrances"));
+
+    static void register() {
+        AwakenTests.register("caves_region_shares", 2400, CavesTests::shares);
+        AwakenTests.register("caves_surface_untouched", 2400, CavesTests::surface);
+        AwakenTests.register("caves_gen_cost", 2400, CavesTests::cost);
+    }
+
+    // ---------------------------------------------------------------- the regions
+
+    /** One replace_partially injector: where its target stands and every parameter is in range, the replacement goes. */
+    record Rule(Identifier id, int priority, ResourceKey<Biome> replacement, Map<String, float[]> ranges) {
+        boolean holds(Map<String, Float> at) {
+            for (var e : ranges.entrySet()) {
+                float v = at.get(e.getKey());
+                if (v < e.getValue()[0] || v > e.getValue()[1]) return false;
+            }
+            return true;
+        }
+    }
+
+    private static final List<String> CLIMATE = List.of("depth", "humidity", "temperature", "continentalness", "erosion");
+
+    private static void shares(GameTestHelper h) {
+        var server = h.getLevel().getServer();
+        var access = h.getLevel().registryAccess();
+        h.assertTrue(server.getPackRepository().getSelectedIds().contains(CavesModule.PACK_ID), "a new world loads the caves pack");
+        var biomes = access.lookupOrThrow(Registries.BIOME);
+        var functions = access.lookupOrThrow(Registries.DENSITY_FUNCTION);
+
+        // the region biomes: in the overworld (lodes, Deepglass, lamps and the Hollows reach them), not underground-tagged
+        // (that tag turns the Hollows' band spawns off), each with an archetype, and good for vanilla's underground structures
+        TagKey<Biome> hosts = TagKey.create(Registries.BIOME, Awaken.id("caves/hosts"));
+        for (CaveRegion r : CaveRegion.ORDER) {
+            var b = biomes.get(r.biome());
+            h.assertTrue(b.isPresent(), r.id + " is a biome");
+            h.assertTrue(b.get().is(BiomeTags.IS_OVERWORLD) && !b.get().is(Tags.Biomes.IS_UNDERGROUND) && !b.get().is(hosts), r.id + " is overworld, not underground-tagged, not a host");
+            h.assertTrue(BiomeTable.archetype(b.get()) != null, r.id + " has an archetype");
+            h.assertTrue(b.get().is(BiomeTags.HAS_MINESHAFT), r.id + " can hold a mineshaft");
+        }
+        // the hosts are the land's own biomes: none of vanilla's cave biomes (the deep dark keeps its cities)
+        var hostSet = biomes.getOrThrow(hosts);
+        h.assertTrue(hostSet.size() >= 40 && hostSet.stream().noneMatch(b -> b.is(Tags.Biomes.IS_UNDERGROUND) || b.is(Biomes.DEEP_DARK)
+                || b.is(Biomes.DRIPSTONE_CAVES) || b.is(Biomes.LUSH_CAVES)), "the hosts are the vanilla land biomes: " + hostSet.size());
+
+        // the injectors say what CaveRegion says
+        List<Rule> rules = new ArrayList<>();
+        for (var e : files(server, "lithostitched/biome_injector").entrySet()) {
+            JsonObject o = json(h, e.getValue());
+            h.assertTrue("lithostitched:replace_partially".equals(str(o, "type")) && "minecraft:overworld".equals(str(o, "dimension")),
+                    e.getKey() + " is an overworld replace_partially injector");
+            h.assertTrue("#awaken:caves/hosts".equals(str(o, "targets")), e.getKey() + " targets the hosts");
+            Map<String, float[]> ranges = new TreeMap<>();
+            for (var p : o.getAsJsonObject("parameters").entrySet()) {
+                JsonObject range = p.getValue().getAsJsonObject();
+                ranges.put(p.getKey(), new float[]{range.has("min_inclusive") ? range.get("min_inclusive").getAsFloat() : -Float.MAX_VALUE,
+                        range.has("max_inclusive") ? range.get("max_inclusive").getAsFloat() : Float.MAX_VALUE});
+                h.assertTrue(CLIMATE.contains(p.getKey()) || p.getKey().startsWith("awaken:caves/"), e.getKey() + " reads a known parameter: " + p.getKey());
+            }
+            rules.add(new Rule(e.getKey(), o.get("priority").getAsInt(), ResourceKey.create(Registries.BIOME, Identifier.parse(str(o, "replacement"))), ranges));
+        }
+        rules.sort(Comparator.comparingInt(Rule::priority).thenComparing(r -> r.id().toString()));
+        for (CaveRegion r : CaveRegion.ORDER) {
+            long n = rules.stream().filter(x -> x.replacement().equals(r.biome())).count();
+            h.assertTrue(n == r.boxes.size(), r.id + " has an injector per box of land: " + n + " for " + r.boxes.size());
+        }
+        h.assertTrue(rules.stream().allMatch(x -> CaveRegion.ORDER.stream().anyMatch(r -> r.biome().equals(x.replacement()))), "every injector places a region");
+
+        // measured on the studio seeds: the injectors point by point against CaveRegion, the fields' deciles, the shares
+        var settings = access.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(NoiseGeneratorSettings.OVERWORLD).value();
+        Map<String, DensityFunction> fields = new HashMap<>();
+        for (var band : CaveRegion.Band.values()) fields.put(band.key(), fn(functions, "caves/" + band.key()));
+        DensityFunction yFn = fn(functions, "caves/y");
+        final int radius = 3072, step = 128;
+        int side = radius * 2 / step + 1;
+        float[][] decile = new float[3][side * side * STUDIO_SEEDS.length];
+        int columns = 0, points = 0, disagree = 0, ambiguous = 0;
+        Map<CaveRegion.Band, int[]> inBand = new EnumMap<>(CaveRegion.Band.class);
+        Map<CaveRegion, int[]> placed = new EnumMap<>(CaveRegion.class), onLand = new EnumMap<>(CaveRegion.class);
+        StringBuilder bySeed = new StringBuilder();
+        long t0 = System.currentTimeMillis();
+        for (long seed : STUDIO_SEEDS) {
+            RandomState rs = RandomState.create(access.lookupOrThrow(Registries.NOISE), seed, settings);
+            NoiseRouter router = settings.noiseRouter();
+            int seedPoints = 0, seedPlaced = 0;
+            for (int i = 0; i < side; i++) {
+                for (int j = 0; j < side; j++) {
+                    int x = -radius + i * step, z = -radius + j * step;
+                    float[] field = new float[3];
+                    for (var band : CaveRegion.Band.values()) field[band.ordinal()] = rs.sampleBlockValueUncached(fields.get(band.key()), x, 0, z);
+                    for (int k = 0; k < 3; k++) decile[k][columns] = field[k];
+                    columns++;
+                    float hum = rs.sampleBlockValueUncached(router.vegetation(), x, 0, z), temp = rs.sampleBlockValueUncached(router.temperature(), x, 0, z);
+                    float cont = rs.sampleBlockValueUncached(router.continents(), x, 0, z), ero = rs.sampleBlockValueUncached(router.erosion(), x, 0, z);
+                    for (int y = -56; y <= 120; y += 8) {
+                        float d = rs.sampleBlockValueUncached(router.depth(), x, y, z);
+                        if (d < CaveRegion.MIN_DEPTH) continue;
+                        CaveRegion.Band band = CaveRegion.Band.at(y, d);
+                        if (y <= CaveRegion.MAX_Y || band == CaveRegion.Band.DEEP) {
+                            inBand.computeIfAbsent(band, b -> new int[1])[0]++;
+                            seedPoints++;
+                        }
+                        CaveRegion want = CaveRegion.at(y, d, field[band.ordinal()], hum, temp, cont, ero);
+                        if (want != null) {
+                            placed.computeIfAbsent(want, r -> new int[1])[0]++;
+                            seedPlaced++;
+                        }
+                        for (CaveRegion r : CaveRegion.ORDER) {
+                            if (r.band == band && (y <= CaveRegion.MAX_Y) && r.holds(hum, temp, cont, ero)) onLand.computeIfAbsent(r, q -> new int[1])[0]++;
+                        }
+                        // as Lithostitched sees it: the climate quantised in the biome's target point, the fields as they are
+                        Map<String, Float> at = new HashMap<>();
+                        at.put("depth", q(d));
+                        at.put("humidity", q(hum));
+                        at.put("temperature", q(temp));
+                        at.put("continentalness", q(cont));
+                        at.put("erosion", q(ero));
+                        at.put("awaken:caves/y", rs.sampleBlockValueUncached(yFn, x, y, z));
+                        for (var b : CaveRegion.Band.values()) at.put("awaken:caves/" + b.key(), field[b.ordinal()]);
+                        Rule first = null;
+                        for (Rule rule : rules) {
+                            if (!rule.holds(at)) continue;
+                            if (first == null) first = rule;
+                            else if (rule.priority() == first.priority() && !rule.replacement().equals(first.replacement())) ambiguous++;
+                        }
+                        ResourceKey<Biome> got = first == null ? null : first.replacement();
+                        if (got == null ? want != null : want == null || !got.equals(want.biome())) disagree++;
+                        points++;
+                    }
+                }
+            }
+            bySeed.append(String.format(Locale.ROOT, " %d: %.0f%%", seed, seedPlaced * 100.0 / Math.max(1, seedPoints)));
+        }
+        // the fields' deciles, against CaveRegion.Fields
+        StringBuilder deciles = new StringBuilder();
+        float worst = 0;
+        for (var band : CaveRegion.Band.values()) {
+            float[] v = Arrays.copyOf(decile[band.ordinal()], columns);
+            Arrays.sort(v);
+            deciles.append(' ').append(band.key()).append(" {-9f");
+            for (int d = 1; d <= 9; d++) {
+                float m = v[columns * d / 10];
+                worst = Math.max(worst, Math.abs(m - CaveRegion.Fields.QUANTILES[band.ordinal()][d]));
+                deciles.append(String.format(Locale.ROOT, ", %.3ff", m));
+            }
+            deciles.append(", 9f}");
+        }
+        StringBuilder split = new StringBuilder();
+        for (CaveRegion r : CaveRegion.ORDER) {
+            int n = placed.getOrDefault(r, new int[1])[0], band = inBand.getOrDefault(r.band, new int[1])[0], land = onLand.getOrDefault(r, new int[1])[0];
+            split.append(String.format(Locale.ROOT, " %s %.0f%% of the %s (%.0f%% of its land there, want %.0f%%);", r.id, n * 100.0 / Math.max(1, band),
+                    r.band.key(), n * 100.0 / Math.max(1, land), slot(r) * 100));
+        }
+        Awaken.LOG.info("[caves] regions on the studio seeds ({} columns, {} points under the ground): placed by seed{}; {} injectors, "
+                        + "against CaveRegion {} points differ, {} ambiguous; field deciles (worst off the table by {}):{};{} {} ms", columns, points, bySeed, rules.size(),
+                disagree, ambiguous, String.format(Locale.ROOT, "%.3f", worst), deciles, split, System.currentTimeMillis() - t0);
+
+        h.assertTrue(disagree <= points / 1000, "the injectors and CaveRegion agree (" + disagree + " of " + points + " points differ)");
+        h.assertTrue(ambiguous == 0, "no point meets two regions' injectors at one priority (" + ambiguous + ")");
+        h.assertTrue(worst <= 0.03f, "CaveRegion.Fields matches the fields' measured deciles (worst by " + worst + "; the log has the table)");
+        for (CaveRegion r : CaveRegion.ORDER) {
+            int n = placed.getOrDefault(r, new int[1])[0], land = onLand.getOrDefault(r, new int[1])[0];
+            double share = n / (double) Math.max(1, land);
+            h.assertTrue(n > 0, r.id + " is placed on the studio seeds");
+            h.assertTrue(Math.abs(share - slot(r)) <= 0.12, r.id + " takes " + Math.round(share * 100) + "% of its land in its band, want about "
+                    + Math.round(slot(r) * 100) + "%");
+        }
+        h.succeed();
+    }
+
+    /** A region's share of its band, where its land is: its slot's width of the band's cover. */
+    private static double slot(CaveRegion r) {
+        return (r.toQuantile - r.fromQuantile) * CaveRegion.Fields.COVER[r.band.ordinal()];
+    }
+
+    /** A climate value as a biome's target point holds it (Lithostitched reads it back from there). */
+    private static float q(float v) {
+        return Climate.quantizeCoord(v) / 10000f;
+    }
+
+    // ---------------------------------------------------------------- the land on top, and the cost
+
+    /** Vanilla's overworld generator, and the same with the caves pack's wrapper spliced in as Lithostitched would. */
+    record Pair(NoiseBasedChunkGenerator plain, NoiseBasedChunkGenerator shaped, NoiseGeneratorSettings plainSettings, NoiseGeneratorSettings shapedSettings) {
+        RandomState random(GameTestHelper h, long seed, boolean shapedOne) {
+            return RandomState.create(h.getLevel().registryAccess().lookupOrThrow(Registries.NOISE), seed, shapedOne ? shapedSettings : plainSettings);
+        }
+    }
+
+    private static Pair pair(GameTestHelper h) {
+        var server = h.getLevel().getServer();
+        var access = h.getLevel().registryAccess();
+        JsonObject modifier = json(h, files(server, "lithostitched/worldgen_modifier").get(Awaken.id("caves/shape_vanilla")));
+        h.assertTrue(modifier != null && "minecraft:overworld/caves/entrances".equals(str(modifier, "target_function")),
+                "the vanilla wrapper targets vanilla's cave entrances");
+        // the marker is the function it wraps
+        JsonObject wrapper = modifier.getAsJsonObject("wrapper_function").deepCopy();
+        h.assertTrue("lithostitched:wrapped_marker".equals(str(wrapper.getAsJsonObject("input"), "type")), "the wrapper wraps its marker");
+        wrapper.add("input", new JsonPrimitive(ENTRANCES.identifier().toString()));
+        var parsed = DensityFunction.CODEC.parse(RegistryOps.create(JsonOps.INSTANCE, access), wrapper);
+        h.assertTrue(parsed.isSuccess(), "the wrapper decodes: " + parsed.error().map(e -> e.message()).orElse(""));
+        DensityFunction shape = parsed.getOrThrow();
+        h.assertTrue(shape instanceof CaveShapeFunction, "the wrapper is awaken:cave_shape");
+        DfRewriteRule splice = new DfRewriteRule() {
+            @Override
+            public DensityFunction rewrite(DensityFunction f) {
+                return f instanceof DensityFunctions.HolderHolder(Holder<DensityFunction> held) && held.is(ENTRANCES) ? shape : f.rewriteChildren(this);
+            }
+        };
+        var holder = access.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(NoiseGeneratorSettings.OVERWORLD);
+        NoiseGeneratorSettings s = holder.value();
+        NoiseRouter r = s.noiseRouter();
+        NoiseRouter shaped = new NoiseRouter(r.temperature(), r.vegetation(), r.continents(), r.erosion(), r.depth(), r.ridges(),
+                r.chunkSurfaceLevel(), splice.rewrite(r.finalDensity()));
+        h.assertTrue(!shaped.finalDensity().equals(r.finalDensity()), "the wrapper is spliced into the overworld's final density");
+        NoiseGeneratorSettings ss = new NoiseGeneratorSettings(s.noiseSettings(), s.defaultBlock(), s.defaultFluid(), shaped, s.materialRule(),
+                s.spawnTarget(), s.seaLevel(), s.disableMobGeneration(), s.aquifers(), s.useLegacyRandomSource(), s.debugFunctions());
+        var preset = access.lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST).getOrThrow(MultiNoiseBiomeSourceParameterLists.OVERWORLD);
+        var source = MultiNoiseBiomeSource.createFromPreset(preset);
+        return new Pair(new NoiseBasedChunkGenerator(source, holder), new NoiseBasedChunkGenerator(source, Holder.direct(ss)), s, ss);
+    }
+
+    /**
+     * The land on top does not move: on the studio seeds the surface and the sea floor are the same in every column of a
+     * grid, and in whole chunks over each region every block above y {@code MAX_Y + 5} and the top 12 blocks under the
+     * ground are the same; under it, the regions' shapes open new cave.
+     */
+    private static void surface(GameTestHelper h) {
+        Pair p = pair(h);
+        var level = h.getLevel();
+        LevelHeightAccessor heights = LevelHeightAccessor.create(-64, 384);
+        int columns = 0, moved = 0;
+        StringBuilder where = new StringBuilder();
+        long t0 = System.currentTimeMillis();
+        for (long seed : STUDIO_SEEDS) {
+            RandomState plain = p.random(h, seed, false), shaped = p.random(h, seed, true);
+            for (int x = -1536; x <= 1536; x += 128) {
+                for (int z = -1536; z <= 1536; z += 128) {
+                    columns++;
+                    for (var type : new Heightmap.Types[]{Heightmap.Types.WORLD_SURFACE_WG, Heightmap.Types.OCEAN_FLOOR_WG}) {
+                        int a = p.plain().getBaseHeight(x, z, type, heights, plain), b = p.shaped().getBaseHeight(x, z, type, heights, shaped);
+                        if (a == b) continue;
+                        moved++;
+                        if (where.length() < 400) where.append(String.format(Locale.ROOT, " %d@%d,%d %s %d->%d", seed, x, z, type, a, b));
+                    }
+                }
+            }
+        }
+        // whole chunks over each region (the first few found on seed 777), plain against shaped
+        long seed = STUDIO_SEEDS[0];
+        RandomState plain = p.random(h, seed, false), shaped = p.random(h, seed, true);
+        Map<CaveRegion, List<ChunkPos>> found = regionChunks(h, plain, p.plainSettings().noiseRouter(), 8);
+        int changedHigh = 0, changedTop = 0;
+        StringBuilder opened = new StringBuilder();
+        for (var e : found.entrySet()) {
+            long open0 = 0, open1 = 0, below = 0;
+            for (ChunkPos pos : e.getValue()) {
+                ProtoChunk a = build(level, p.plain(), plain, pos, heights), b = build(level, p.shaped(), shaped, pos, heights);
+                BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+                for (int dx = 0; dx < 16; dx++) {
+                    for (int dz = 0; dz < 16; dz++) {
+                        int top = a.getHeight(Heightmap.Types.WORLD_SURFACE_WG, dx, dz);
+                        for (int y = -60; y <= top; y++) {
+                            at.set(pos.getMinBlockX() + dx, y, pos.getMinBlockZ() + dz);
+                            BlockState sa = a.getBlockState(at), sb = b.getBlockState(at);
+                            boolean same = sa == sb;
+                            if (y > CaveRegion.MAX_Y + 5 && !same) changedHigh++;
+                            else if (y > top - 12 && !same) changedTop++;
+                            if (y <= CaveRegion.MAX_Y) {
+                                below++;
+                                if (open(sa)) open0++;
+                                if (open(sb)) open1++;
+                            }
+                        }
+                    }
+                }
+            }
+            opened.append(String.format(Locale.ROOT, " %s (%d chunks): open %.1f%% -> %.1f%%;", e.getKey().id, e.getValue().size(),
+                    open0 * 100.0 / Math.max(1, below), open1 * 100.0 / Math.max(1, below)));
+            // over all its chunks: a shape opens in patches (a terrace layer on about 30% of the land), so one chunk may miss
+            h.assertTrue(open1 > open0 + below / 200, e.getKey().id + "'s shapes open new cave under its land: " + open0 + " -> " + open1 + " of " + below);
+        }
+        Awaken.LOG.info("[caves] the land on top: {} of {} grid columns moved{}; in region chunks {} blocks changed above y {} and {} in the top 12 "
+                + "under the ground; cave under y {}:{} {} ms", moved, columns * 2, where, changedHigh, CaveRegion.MAX_Y + 5, changedTop, CaveRegion.MAX_Y,
+                opened, System.currentTimeMillis() - t0);
+        for (CaveRegion r : CaveRegion.ORDER) h.assertTrue(found.containsKey(r), r.id + " is found near the origin of seed " + seed);
+        h.assertTrue(moved == 0, "the surface and sea floor never move (" + moved + " columns did:" + where + ")");
+        h.assertTrue(changedHigh == 0 && changedTop == 0, "nothing changes above the cap or in the top 12 blocks (" + changedHigh + ", " + changedTop + ")");
+        h.succeed();
+    }
+
+    /**
+     * The gate (SPEC §42.6): filling chunks with the regions' shapes costs at most {@link #COST_MAX} times the plain
+     * fill, on chunks spread round the origin of seed 777, best of three rounds each, warmed first. The fill is the
+     * noise pass only; chunk generation as a whole (surface, carvers, features, light) costs more, so its share is less.
+     */
+    private static void cost(GameTestHelper h) {
+        Pair p = pair(h);
+        var level = h.getLevel();
+        LevelHeightAccessor heights = LevelHeightAccessor.create(-64, 384);
+        long seed = STUDIO_SEEDS[0];
+        RandomState plain = p.random(h, seed, false), shaped = p.random(h, seed, true);
+        List<ChunkPos> chunks = new ArrayList<>();
+        for (int i = 0; i < 6; i++) for (int j = 0; j < 4; j++) chunks.add(new ChunkPos(-60 + i * 24, -36 + j * 24));
+        for (ChunkPos pos : chunks) {
+            build(level, p.plain(), plain, pos, heights);
+            build(level, p.shaped(), shaped, pos, heights);
+        }
+        long best0 = Long.MAX_VALUE, best1 = Long.MAX_VALUE;
+        for (int round = 0; round < 3; round++) {
+            for (int k = 0; k < 2; k++) {
+                boolean shapedOne = (round + k) % 2 == 1;
+                long t = System.nanoTime();
+                for (ChunkPos pos : chunks) build(level, shapedOne ? p.shaped() : p.plain(), shapedOne ? shaped : plain, pos, heights);
+                t = System.nanoTime() - t;
+                if (shapedOne) best1 = Math.min(best1, t);
+                else best0 = Math.min(best0, t);
+            }
+        }
+        double ratio = best1 / (double) best0;
+        Awaken.LOG.info("[caves] chunk fill on {} chunks: plain {} ms a chunk, with the shapes {} ms ({}x, gate {}x)", chunks.size(),
+                String.format(Locale.ROOT, "%.2f", best0 / 1e6 / chunks.size()), String.format(Locale.ROOT, "%.2f", best1 / 1e6 / chunks.size()),
+                String.format(Locale.ROOT, "%.3f", ratio), COST_MAX);
+        h.assertTrue(ratio <= COST_MAX, "the shapes cost " + String.format(Locale.ROOT, "%.0f", (ratio - 1) * 100) + "% more per chunk fill (gate "
+                + Math.round((COST_MAX - 1) * 100) + "%)");
+        h.succeed();
+    }
+
+    /** Up to {@code each} chunks per region near the origin, where the region holds at the chunk's middle at some height. */
+    private static Map<CaveRegion, List<ChunkPos>> regionChunks(GameTestHelper h, RandomState rs, NoiseRouter router, int each) {
+        var functions = h.getLevel().registryAccess().lookupOrThrow(Registries.DENSITY_FUNCTION);
+        DensityFunction[] fields = new DensityFunction[3];
+        for (var band : CaveRegion.Band.values()) fields[band.ordinal()] = fn(functions, "caves/" + band.key());
+        Map<CaveRegion, List<ChunkPos>> out = new EnumMap<>(CaveRegion.class);
+        for (int cx = -48; cx <= 48; cx += 6) {
+            for (int cz = -48; cz <= 48; cz += 6) {
+                int x = cx * 16 + 8, z = cz * 16 + 8;
+                float hum = rs.sampleBlockValueUncached(router.vegetation(), x, 0, z), temp = rs.sampleBlockValueUncached(router.temperature(), x, 0, z);
+                float cont = rs.sampleBlockValueUncached(router.continents(), x, 0, z), ero = rs.sampleBlockValueUncached(router.erosion(), x, 0, z);
+                for (int y = 0; y <= CaveRegion.MAX_Y; y += 8) {
+                    float d = rs.sampleBlockValueUncached(router.depth(), x, y, z);
+                    if (d < CaveShapeFunction.SEAL + CaveShapeFunction.SEAL_FADE) continue;
+                    CaveRegion.Band band = CaveRegion.Band.at(y, d);
+                    CaveRegion r = CaveRegion.at(y, d, rs.sampleBlockValueUncached(fields[band.ordinal()], x, 0, z), hum, temp, cont, ero);
+                    if (r == null) continue;
+                    var list = out.computeIfAbsent(r, k -> new ArrayList<>());
+                    if (list.size() < each && !list.contains(new ChunkPos(cx, cz))) list.add(new ChunkPos(cx, cz));
+                }
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Fills one chunk (the noise, the surface and the carvers) away from the live world, which would wait on the server
+     * thread this test holds: no structure starts (the beardifier is empty for both fills alike) and the surface laid as
+     * plains everywhere (an uncached biome lookup per column would cost more than the fill and hide its cost).
+     */
+    private static ProtoChunk build(ServerLevel level, NoiseBasedChunkGenerator gen, RandomState rs, ChunkPos pos, LevelHeightAccessor heights) {
+        ProtoChunk chunk = new ProtoChunk(pos, UpgradeData.EMPTY, heights, level.palettedContainerFactory(), null);
+        Holder<Biome> plains = level.registryAccess().lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS);
+        var biomes = new BiomeManager((qx, qy, qz) -> plains, BiomeManager.obfuscateSeed(rs.seed()));
+        gen.buildTerrain(chunk, Blender.empty(), rs, noStructures(level), biomes, null, gen.getBiomeSource().possibleBiomes()).join();
+        return chunk;
+    }
+
+    private static StructureManager noStructures(ServerLevel level) {
+        return new StructureManager(level, new WorldOptions(0L, false, false), null) {
+            @Override
+            public List<StructureStart> startsForStructure(int sectionX, int sectionZ, Predicate<Structure> matcher) {
+                return List.of();
+            }
+        };
+    }
+
+    private static boolean open(BlockState s) {
+        return s.isAir() || !s.getFluidState().isEmpty();
+    }
+
+    // ---------------------------------------------------------------- the pack as data
+
+    private static DensityFunction fn(net.minecraft.core.HolderLookup.RegistryLookup<DensityFunction> functions, String path) {
+        return functions.getOrThrow(ResourceKey.create(Registries.DENSITY_FUNCTION, Awaken.id(path))).value();
+    }
+
+    /** The caves pack's own JSON files under {@code folder}, by id without the folder or the extension (as LandsPack.files). */
+    static SortedMap<Identifier, Resource> files(MinecraftServer server, String folder) {
+        SortedMap<Identifier, Resource> out = new TreeMap<>();
+        var pack = server.getPackRepository().getPack(CavesModule.PACK_ID);
+        if (pack == null) return out;
+        for (var e : server.getResourceManager().listResources(folder, id -> id.getPath().endsWith(".json")).entrySet()) {
+            if (!e.getValue().sourcePackId().equals(pack.getId())) continue;
+            String p = e.getKey().getPath();
+            out.put(Identifier.fromNamespaceAndPath(e.getKey().getNamespace(), p.substring(folder.length() + 1, p.length() - ".json".length())), e.getValue());
+        }
+        return out;
+    }
+
+    private static JsonObject json(GameTestHelper h, Resource r) {
+        if (r == null) return null;
+        try (Reader in = r.openAsReader()) {
+            return JsonParser.parseReader(in).getAsJsonObject();
+        } catch (IOException | RuntimeException e) {
+            h.fail("unreadable caves pack file: " + e);
+            return null;
+        }
+    }
+
+    private static String str(JsonObject o, String key) {
+        if (o == null || !o.has(key)) return null;
+        JsonElement e = o.get(key);
+        return e.isJsonPrimitive() ? e.getAsString() : null;
+    }
+}

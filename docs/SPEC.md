@@ -11861,3 +11861,89 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
 - **Tests**: `wild_hunt` (zones on the body; a tenth on the head doesn't break the horns, a sixth does: they drop, it staggers;
   at a third it limps and bleeds its herd's trail toward its bed; its body lies still, a stranger can't carve, three carves,
   then it's gone and its bones stay).
+
+## 42. The Living Deep (cave regions; plan docs/caves/PLAN.md, page https://claude.ai/artifact/22qoPjWycfwhdxYxH8xGsR; Euan approved all eleven recommendations 2026-10-29: "Go with the full plan")
+
+Caves get their own geography: cave regions with their own shapes, rock, skin, light, life and air, and a skin for every
+cave. Module `caves` (package `dev.awaken.caves`); its worldgen lives in the built-in data pack `awakened_caves` behind the
+feature flag `awaken:awakened_caves`, so only worlds created with it change (old worlds and Euan's current world keep their
+caves). Phases: P0 ground truth (42.1-42.3, 42.6); P1 the skin, drawn light, underlife and cave particles (style sheet to Euan
+first); P2 the Rootways and the Ochre Deep with their full kit, then Euan plays a new world; P3 the other six regions, shafts
+and chasms; P4 the mining ties. Each phase adds its numbers here. The pack's data is written by
+`tools/content/caves_content.py`, from tables that mirror `CaveRegion` (the GameTests hold them to it).
+
+### 42.1 The bands
+- **Tiers follow the ground** (decided in P0; the plan's fixed y 40 would leave lowland, ground near y 64, almost no Shallows):
+  the climate's depth (vanilla's: about 1/128 per block under the land's preliminary surface) decides. A point is a cave
+  region only where the depth is at least **0.16** (about 20 blocks down) and y is at most **59**.
+  - **The Shallows**: depth 0.16 to 0.34 (about 20 to 43 blocks under the ground), y 0 or more.
+  - **The Middle Dark**: depth 0.34 or more, y 0 to 59.
+  - **The Deep**: below y 0 (the Singing Deep's band).
+- **The cap at y 59**: the game and Awaken read the land's biome at about sea level (lairs at y 67, the wide world's region
+  names at y 63, gate spots at y 64), so under hills that must stay the land's own biome. Biomes are read on 4-block corners:
+  the highest region corner is y 56. Under hills the first caves above y 59 stay plain caves (with the skin from P1).
+
+### 42.2 The regions
+- **A region is a cave biome** (`awaken:<id>`) that Lithostitched `replace_partially` injectors put in place of the land's
+  biome underground: targets `#awaken:caves/hosts` (every vanilla overworld biome but its cave biomes: dripstone, lush and
+  sulfur caves and the deep dark keep their places, the deep dark its ancient cities), **priority -10** (before the Lands'
+  injectors at 0, so a region wins under an Awakened biome too), parameters: the band (`depth`, and `awaken:caves/y`, the y as a
+  density function), the band's region field, and the land's climate (`humidity`, `temperature`, `continentalness`). A region
+  with several boxes of land has one injector per box.
+- **The region fields** `awaken:caves/shallows`, `middle`, `deep`: a 2D noise each (base octave -9, two octaves: patches of
+  about 500 blocks). `CaveRegion.Fields` holds each field's measured deciles (`caves_region_shares` checks them on the studio
+  seeds to 0.03); a region's slot is a range of quantiles of the band's **cover**: regions take **two thirds of the Shallows
+  and the Middle Dark** and **half of the Deep**; the rest stays plain caves.
+- **The land boxes** follow vanilla's climate band edges (temperature -0.45 / 0.2 / 0.55, humidity -0.1, continents -0.19 the
+  coast and -0.11 inland), so they line up with the biomes on top. The rule reads the climate, not the biome above: the cave
+  density can't see biomes, and shapes and biome must agree.
+- **Built in P0, kitted in P2:**
+  - **The Rootways** (`awaken:rootways`, archetype lush caves): the Shallows, its whole cover, under humid land (humidity -0.1
+    or more), not frozen and not desert (temperature -0.45 to 0.55), inland (continents -0.11 or more): forests, birch and dark
+    forest, taiga, jungle, the Elderwood and Lumen Forest.
+  - **The Ochre Deep** (`awaken:ochre_deep`, archetype dripstone caves): the Middle Dark, its whole cover, under temperate land
+    (temperature -0.45 to 0.2) or warm wet land (0.2 to 0.55 with humidity -0.1 or more), coast or inland (continents -0.19 or
+    more). Frozen, hot and warm-dry land (the Frost Spires, deserts, badlands, savanna and the Glass Steppe) is the Glimmer
+    Hollows' in P3 and keeps today's crystal caves (`CaveStyle`) until then; under the sea stays plain.
+  - P3 shares the bands among all eight regions (slots of the cover by the land above).
+- **The biomes**: vanilla's dripstone caves' features, carvers and spawns without its dripstone or the surface plants (a
+  region never reaches the surface), the region's water colour (Rootways `#3b6f62`, Ochre `#a8622c`) and music (lush caves',
+  dripstone caves'). Tags: `#minecraft:is_overworld` (lodes, Deepglass, lamps, ore thinning, the Hollows' bands reach them;
+  never `#c:is_underground`), `#awaken:archetype/<vanilla>`, `#awaken:caves/regions`, and vanilla's underground structure
+  tags (`has_structure/mineshaft`, `trial_chambers`, `ruined_portal_standard`, `stronghold_biased_to`) so structures that
+  start underground still find a good biome.
+
+### 42.3 The shapes
+- `awaken:cave_shape` (`CaveShapeFunction`) wraps the overworld's cave density with Lithostitched's `wrap_density_function`:
+  Tectonic's `tectonic:caves` when Tectonic is loaded, vanilla's `minecraft:overworld/caves/entrances` without it. It returns
+  **min(input, shape)**: every cave that was there stays; a region adds its own. The region at a corner is `CaveRegion.at`, read
+  from the same fields and climate the injectors read.
+- **Held off the ground**: a shape opens only past depth **0.22** (about 28 blocks under the preliminary surface) and fades in
+  over the next **0.06** (about 8 blocks); never above y 59; a shape never lowers the density below -1.
+- **Cost**: it sits inside the router's interpolation (sampled on the 4 × 8 × 4 cell corners, 5 × 49 × 5 a chunk); everything
+  2D (the fields, the climate, the depth as a line in y, each shape's column values) is read once per column, so a corner costs
+  a few multiplications.
+- **The Rootways' tubes**: two crossing families of channels along the zero lines of two 2D noises (`awaken:caves/shape_a`,
+  `shape_b`, about 128 blocks), half-width 0.035 in noise units, 0.095 in a hall (where `shape_flat`, about 256 blocks, rises),
+  about 5 to 9 blocks wide; galleries 5.5 to 8 high, their middle 7 to 11 blocks under the seal, held 3 blocks under the cap.
+- **The Ochre Deep's terraces**: a gallery 9 high in every 16-block layer (from y -64, tilted up to 4 blocks by `shape_flat`),
+  each layer's footprint a slice of a 3D noise (`shape_a` at 0.8 scale, a slice per layer) above **0.17**, so neighbouring
+  layers differ and their edges make ledges and drops.
+
+### 42.6 Budgets and tests (P0)
+- **The gate**: filling a chunk with the shapes costs at most **20%** more than without (`caves_gen_cost`: 24 chunks round the
+  origin of seed 777, best of three rounds, warmed); the land on top never moves; structures stay whole by construction (the
+  wrapped caves sit under the beardifier, which still carves and fills around every structure piece).
+- **Tests** (vanilla generator; no Lithostitched or Tectonic in GameTests, so the pack is read as data and applied as they
+  would): `caves_region_shares` (the region biomes and their tags; the hosts; one injector per box; the injectors and
+  `CaveRegion` agree point by point on the five studio seeds with the climate quantised as a biome target point holds it; the
+  fields' deciles; each region takes its slot's share of its land in its band, within 12 points), `caves_surface_untouched`
+  (the wrapper spliced into vanilla's entrances as Lithostitched would: surface and sea floor equal on a 25 × 25 grid per seed;
+  in whole chunks over each region nothing changes above y 64 or in the top 12 blocks under the ground, and the shapes open
+  new cave), `caves_gen_cost`.
+- **Measured 2026-10-29** (GameTests, vanilla generator): chunk fill (noise, surface, carvers) 12.89 ms plain, 13.07 ms with
+  the shapes (**+1.4%**, gate 20%); the land on top: 0 of 6,250 grid columns moved, 0 blocks changed above y 64 or in the top
+  12 under the ground; under y 59 in region chunks the shapes take open cave from 13.5% to 18.7% (Rootways) and 12.4% to
+  14.5% (Ochre Deep); the regions take 66% (Rootways) and 64% (Ochre Deep) of their land in their band, 24% of all the
+  Shallows and 46% of all the Middle Dark; the injectors and `CaveRegion` agree at all but 34 of 155,148 points (the climate's
+  quantisation at the edges).
