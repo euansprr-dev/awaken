@@ -3,10 +3,11 @@
 # eye height. An iron axe chops the middle log out with the key held (vanilla's mining) and holds on past the break,
 # then lets go: the way up, each blow, the kick back, the ease out to rest. First person, then third person from behind
 # (the shoulder camera) and from in front (the camera stops at the trunk, looking back), then the forged axe in first
-# person, then an iron sword hacking a web in first person and from behind. Every frame is recorded (the clip recorder,
-# run-autopilot/clips/<name>/) at a quarter of the speed (/tick rate 5: the runner draws a few frames a second), with
-# arms trace logging the chop's clock, rate and blows each tick. Watch for the blade through the log or the body, a pop
-# going in or out, a blow landing off the break, and the hands back at rest after.
+# person, then an iron sword hacking a web in first person, from behind and from in front (the camera sees through a
+# web: the whole body). No camera films the side: both third-person views sit on the look line through the block. Every
+# frame is recorded (the clip recorder, run-autopilot/clips/<name>/) at under a sixth of the speed (/tick rate 3: the
+# runner draws a few frames a second), with arms trace logging the chop's clock, rate and blows each tick. Watch for the
+# blade through the log or the body, a pop going in or out, a blow landing off the break, and the hands back at rest.
 # ci knobs: PACK=perf,feel,comfort,world
 world armschop creative 778
 waitworld
@@ -43,7 +44,7 @@ wait 20
 shot chop_rest_fp
 # the runner draws few frames for a while after the first shot: let it settle before the first take
 wait 120
-cmd tick rate 5
+cmd tick rate 3
 cmd awaken ascent pilot rec chop_axe_fp 36 2
 arms trace 36
 wait 2
@@ -99,6 +100,16 @@ camera back
 look 0 3
 wait 8
 cmd awaken ascent pilot rec hack_web_back 30 2
+arms trace 30
+wait 2
+arms chop 18
+wait 28
+cmd setblock ~ ~1 ~2 minecraft:cobweb
+cmd kill @e[type=minecraft:item]
+camera front
+look 0 3
+wait 8
+cmd awaken ascent pilot rec hack_web_front 30 2
 arms trace 30
 wait 2
 arms chop 18

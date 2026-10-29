@@ -6327,7 +6327,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     the crosshair, stopped in the wood with a small kick back; the hack (a blade, 6 ticks): a quicker diagonal from low
     on the hand's side that carries on through. Each loop starts and ends on its blow and is entered on the way up
     (3 ticks in, 2.5 for the hack); it eases out to rest over 4 ticks when the mining stops (`ArmsChop`).
-  - Each blow lands on the frame the block breaks: every tick the loop's rate is solved from the block's own break
+  - Each blow lands on the frame the block breaks (the last frame before the tick vanilla breaks it): every tick the loop's rate is solved from the block's own break
     time (the progress vanilla's `MultiPlayerGameMode` adds a tick, read through `BlockState.getDestroyProgress`,
     counted only on ticks it adds some: its 5-tick wait after a break is kept until the next mining spends it) so
     the next blow, or the one a loop later, lands then, held to 0.6-1.7 of its pace; between blocks (vanilla's 5-tick

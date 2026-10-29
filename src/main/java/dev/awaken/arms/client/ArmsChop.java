@@ -127,20 +127,21 @@ final class ArmsChop {
     private static void follow(Minecraft mc, LocalPlayer p, FpSwings.Loop loop, boolean axe) {
         BlockPos pos = wantPos;
         BlockState state = mc.level.getBlockState(pos);
-        // the block's progress as vanilla sums it: one more tick of it for every tick it adds some, never while its wait
-        // after the last break runs out (5 ticks, kept until the next mining spends them: the tour's second log broke
-        // 4 ticks after its blow)
+        // the block's progress as vanilla sums it: one more tick of it for every tick it adds some (the first on the
+        // tick the block changes, when the press adds its own), never while its wait after the last break runs out
+        // (5 ticks, kept until the next mining spends them: the tour's second log broke 4 ticks after its blow)
         boolean d = mc.gameMode != null && mc.gameMode.isDestroying();
         boolean adding = d && mc.gameMode.getDestroyStage() >= 0;
-        progressTicks = adding && pos.equals(at) ? progressTicks + 1 : 0;
+        progressTicks = adding ? (pos.equals(at) ? progressTicks + 1 : 1) : 0;
         if (!pos.equals(at)) before = at;
         at = pos;
         face = wantFace;
         point = wantAt;
         if (!state.isAir()) cutState = state;
         float g = d ? state.getDestroyProgress(p, mc.level, pos) : 0F;
-        // the ticks of clock until the frame the block goes (it vanishes the tick it breaks; a pose shows a tick late)
-        int need = adding && g > 0 ? Math.max(0, Mth.ceil(1F / g - progressTicks - 1e-3F) - 1) : -1;
+        // the ticks of clock, this one's step among them, until the frame the block goes: a pose shows a tick late and
+        // the block vanishes the tick it breaks, so the blow is the last frame before that tick (tour 2: a tick early)
+        int need = adding && g > 0 ? Math.max(0, Mth.ceil(1F / g - progressTicks - 1e-3F)) : -1;
         float period = loop.period();
         boolean third = !mc.options.getCameraType().isFirstPerson();
         if (!on || chop != axe) {
@@ -149,9 +150,8 @@ final class ArmsChop {
             // begun on the way up; a block that goes sooner than the first blow would land begins it further on, and
             // one gone at once (bamboo to a blade) begins on the blow
             float start = loop.enter();
-            int first = g > 0 ? Mth.ceil(1F / g - 1e-3F) - 1 : -1; // its progress starts next tick, unless a wait is left
             if (!d) start = period - 1F;
-            else if (first >= 0 && first < period - start) start = period - Math.max(1, first);
+            else if (need >= 0 && need < period - start) start = period - Math.max(1, need);
             phase = phaseO = start;
             rate = 1F;
             blows = Mth.floor(start / period);
