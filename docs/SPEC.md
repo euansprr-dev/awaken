@@ -10919,10 +10919,12 @@ now, fought-on second storeys in a later plan.
   dry ground within 30 looks 30 to 120 out, then 120 to 300 (a tour's hop can land on a coast). Tours
   `gate-depth-themes-a`, `-b` and `-c` (every other theme's cave worlds at 7), `gate-depth-lands` (seven lands, isles and
   seas at 6 and 7) and `gate-depth-crypt` (the Bell Crypt's four at 6 and 7) are the same on CI, and wait 1,000
-  ticks for their first gate (CI's first took 666 once). The lands tour shoots `gate interior goto over` (`over2`:
-  the second place): the same place hovering 8 over the highest ground within 4 of where you walk in (at most 3 under
-  an open land's lid), looking down at its middle, flying if you may; from the ground a land's place view faced a bank
-  or a house, and an isle's stood in the cloud between pillars.
+  ticks for their first gate (CI's first took 666 once). `gate interior goto over` (`over2`: the second place) shows
+  the same place hovering 8 over the highest ground within 4 of where you walk in (at most 3 under an open land's lid),
+  looking down at its middle, flying if you may. The lands tour uses it for the Dark Steps and the Honey Lake, where it
+  reads well; in the open lands (kind `open`) its shots show only sky and fog on CI, with Lens on or off, though the
+  plan puts the camera 10 over an open plaza looking 28 degrees down (cause not found), so those keep `place`, which
+  faces a bank or a house there (and an isle's stands in the cloud).
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 
