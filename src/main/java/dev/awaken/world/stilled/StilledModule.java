@@ -1,6 +1,7 @@
 package dev.awaken.world.stilled;
 
 import dev.awaken.citizens.api.Settlements;
+import dev.awaken.core.api.Sources;
 import net.minecraft.gametest.framework.GameTestServer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
@@ -28,6 +29,11 @@ public final class StilledModule {
             if (e.getState().is(StilledContent.STILLED.get()) || e.getState().is(StilledContent.LEFT_CHEST.get())) e.setCanceled(true);
         });
         Settlements.onShown(Stilled::shown);
+        Sources.declare("a Stilled hands it over when you read them (world.stilled.Stilled)", "stilled_letter", "stilled_key", "stilled_keepsake");
+        Sources.declare("sat down along the roads and at empty settlements' edges as players come near (world.stilled.StilledPlacer)", "stilled");
+        Sources.declare("stands by an empty settlement's well when a key's holder comes near (world.stilled.LeftChests)", "left_chest");
+        Sources.declare("the first of the six old relics you haven't had from one, in a left chest (world.stilled.LeftChests)",
+                "shepherds_lantern", "lumen_tonic", "wrens_hook", "caravan_writ", "herdcaller_horn", "pells_spurs");
         StilledCommands.register();
         StilledTests.register();
     }

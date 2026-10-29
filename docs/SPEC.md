@@ -12302,6 +12302,12 @@ Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY pa
 - **`journey_ledger`** GameTest: every `awaken` item and block has a way in (recipe, loot table, drop, trade, work,
   reward, world placement; code sources declared through `dev.awaken.core.api.Sources`) or is on the reviewed list of
   things never held; every Journey recipe is unlocked in the recipe book on first holding an ingredient.
+  Built (stage 1): `Sources.declare(how, ids...)` and `Sources.neverHeld(why, ids...)` (paths in `awaken`); the test
+  reads every recipe's result, every loot table's item entries and every quest's relic from the loaded data, takes
+  spawn eggs as creative's own and a block with an item as its item's question, and fails naming each thing with no way
+  in. The pre-Journey audit (29 Oct: 115 items and 73 item-less blocks with no data source) is the reviewed list
+  `core.test.LedgerSources`, each with the class that gives it; new things declare where they're made. The recipe book
+  check starts with stage 2's first Journey recipe.
 - **Direction without telling**: every open goal has a pull in the world (seen, heard, read or tracked). Patterns:
   JOURNEY "The bar".
 - **Never stuck**: a player who moves no goal for one play-day of play time gets the top need's rumour one step plainer;
