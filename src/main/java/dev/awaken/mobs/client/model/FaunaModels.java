@@ -234,6 +234,11 @@ public final class FaunaModels {
         }
 
         @Override
+        public boolean legsHeld(AwLook l) { // tucked into its shell
+            return (l.fauna & (FaunaMob.P_GUARD | FaunaMob.P_REST | FaunaMob.P_BURROW)) != 0;
+        }
+
+        @Override
         protected void pose(LivingEntityRenderState s) {
             boolean tucked = has(s, FaunaMob.P_GUARD) || has(s, FaunaMob.P_REST);
             float w = tucked ? 0 : walk(s, 0.7F, 0.9F);
@@ -252,7 +257,9 @@ public final class FaunaModels {
             head.y = tucked ? 18 : 17;
             head.yRot = tucked ? 0 : Motion.yaw(s, 0.8F);
             head.xRot = has(s, FaunaMob.P_GRAZE) ? 0.75F + Mth.sin(s.ageInTicks * 0.3F) * 0.1F : Motion.pitch(s, 0.6F);
-            shell.y = tucked ? 22 : 20 + Mth.sin(s.walkAnimationPos * 0.45F) * 0.25F * s.walkAnimationSpeed;
+            Life life = Life.from(s); // on planted feet (SPEC §23, "Motion") the gait's bob takes over the shell's
+            float own = life != null ? 1.0F - life.feet() : 1.0F;
+            shell.y = tucked ? 22 : 20 + Mth.sin(s.walkAnimationPos * 0.45F) * 0.25F * s.walkAnimationSpeed * own;
             shell.yScale = Motion.breathe(s, 0.07F, 0.02F);
             shell.zRot = Motion.shudder(s, 0.08F);
             tail.y = tucked ? 21 : 18;
@@ -345,11 +352,16 @@ public final class FaunaModels {
             for (int i = 0; i < 3; i++) {
                 float z = -2 + i * 2;
                 body.addOrReplaceChild("leg" + (i * 2), CubeListBuilder.create().texOffs(16, 20).addBox(0, 0, -0.5F, 3, 1, 1),
-                        PartPose.offsetAndRotation(2.5F, -0.5F, z, 0, (i - 1) * -0.5F, 0.8F));
+                        PartPose.offsetAndRotation(2.5F, -0.5F, z, 0, (i - 1) * -0.25F, 0.8F));
                 body.addOrReplaceChild("leg" + (i * 2 + 1), CubeListBuilder.create().mirror().texOffs(16, 20).addBox(-3, 0, -0.5F, 3, 1, 1),
-                        PartPose.offsetAndRotation(-2.5F, -0.5F, z, 0, (i - 1) * 0.5F, -0.8F));
+                        PartPose.offsetAndRotation(-2.5F, -0.5F, z, 0, (i - 1) * 0.25F, -0.8F));
             }
             return LayerDefinition.create(mesh, 32, 32);
+        }
+
+        @Override
+        public boolean legsHeld(AwLook l) { // digging in
+            return l.faunaAnim > 0 || super.legsHeld(l);
         }
 
         @Override
@@ -360,7 +372,7 @@ public final class FaunaModels {
             for (int i = 0; i < 6; i++) {
                 int pair = i / 2;
                 float phase = (i % 2 == 0 ? 0 : Mth.PI) + pair * 2.1F;
-                legs[i].yRot = (pair - 1) * (i % 2 == 0 ? -0.5F : 0.5F) + Mth.sin(scuttle + phase + (burrow > 0 ? s.ageInTicks * 1.4F : 0)) * amp;
+                legs[i].yRot = (pair - 1) * (i % 2 == 0 ? -0.25F : 0.25F) + Mth.sin(scuttle + phase + (burrow > 0 ? s.ageInTicks * 1.4F : 0)) * amp;
             }
             head.yRot = Motion.yaw(s, 0.7F);
             head.xRot = Motion.pitch(s, 0.4F);

@@ -619,17 +619,25 @@ of `AwakenConfig.Client`.
   retired or tips are off: skip the probe). Installed by the signal module in M4 B6; until then every call does nothing.
   Tip text and triggers are data; any module may offer its own tips (the Ascent for its tiers).
 - `dev.awaken.mobs.client.life.CreatureLife` (client, §23) — the life layer for any module's bodies:
-  `LifeRig rig(ModelPart root, String temperament)` once per model; `Life life(Object held, LifeRig rig, int seed)` once
+  `LifeRig rig(ModelPart root, String temperament)` once per model, or `rig(root, temperament, String motion)` for a body
+  whose feet plant by the `motion.json` profile of that id (its rig's id; none there, exactly as the two-argument form;
+  §23.1 "The wild's and the city's walkers"); `Life life(Object held, LifeRig rig, int seed)` once
   per creature (keep it on the entity's client data); `tick(Life, LivingEntityRenderState, boolean steerHead)` once a frame
   in `extractRenderState`; `apply(LifeRig, Life, LivingEntityRenderState)` at the end of `setupAnim` (safe to run once per
   layer); optional `rootPose(Life, PoseStack, state)` in `setupRotations`; `eyesClosed(Life)` 0..1 for a texture blink.
-  Per-frame inputs are public fields on `Life` (`hurt`, `walk`, `stride`, `busy`, `lookWeight`, `windup`, `roar`, `dying`).
+  Per-frame inputs are public fields on `Life` (`hurt`, `walk`, `stride`, `busy`, `lookWeight`, `windup`, `roar`, `dying`;
+  for planted feet `grounded`, `legsFree`, `gaitRun`, `bodyScale`).
 - `dev.awaken.core.api.Strikes` (§24) — how a blow can be answered: `enum Kind {LIGHT, HEAVY, PERILOUS, GRAB, NONE}`
   (`deflectable()`, `blockable()`, `dodgeable()`); `deliver(Entity by, Kind, BooleanSupplier blow)` names the class of
   the blow it runs (a mob's swing, an ability's hit); `of(DamageSource)` reads it back (defaults: an untold melee or a
   projectile LIGHT, a blast with an entity PERILOUS, fire, falls, drowning, freezing and the void NONE). Tells:
   `installTells(TellSource)`, `tell(Entity)` → `Tell(ticks, kind)` or null (both sides). Stagger: `installStaggers`,
   `stagger(LivingEntity, ticks)` (server). The mobs module installs both for its creatures.
+- `dev.awaken.core.api.FightMoments` (§44.5) — the moments of a fight, told by whoever owns them so others can answer
+  without reaching in: `enum Moment {HIT, FINISHER, DEFLECT, PERFECT_DODGE, BREAK, KILL, GUARD, PERFECT_HEAVY, CAST}`,
+  `listen(Listener)` (`on(ServerPlayer, Moment, @Nullable LivingEntity target)`), `report(player, moment, target)`
+  (server). Arms reports its eight through `Marks.fire` (the same moments its marks answer), powers reports CAST from
+  `Casting` after each cast. The armour module listens (set abilities).
 - `dev.awaken.core.api.BodyMaterial` (§24) — what a blade meets: `FLESH, ARMOR, BONE, WOOD, STONE, SPIRIT, SLIME`;
   `of(Entity)` (both sides; armour ≥ 10 over flesh or bone answers ARMOR), `install(Source)` (the mobs module answers for
   its bodies through `MobDef.material()`), vanilla defaults by type.
@@ -670,6 +678,9 @@ of `AwakenConfig.Client`.
   The holo module installs the director; until then everything shows as it always has.
 - `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
   mobs module grounds normal and elite fliers, never a kit flier).
+- `dev.awaken.delve.api.Lodes` (§28.3, §42.9) — `nearest(level, pos, ore[, radius])`, `heart(level, pos)`; `Homes`
+  (`favours(ore, x, y, z)`, `place(x, y, z)`: pure, any thread) and `homes(seed, homes)`: where each ore is at home
+  underground, installed on the overworld's load by the caves in a world made with the cave regions (null at server stop).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -928,7 +939,7 @@ Plan v2 · the road to 50 (details in docs/modules/road.md):
 Plan v2 · Hunter gear (details in docs/modules/gear.md):
 - Module `gear`: tiers E Wildhide, D Beastbound, C Gatewrought, B Veilwoven; 4 armour pieces, a blade, a power focus
   and a mattock each, at vanilla stone/copper, iron, diamond and netherite strength. A and S are designed only.
-- Set bonuses at 2 and 4 pieces per tier (E Perception: quiet sneaking, Hunter's Sense; D Strength/Vitality: hearts,
+- Set bonuses at 2 and 4 pieces per tier (E Perception: quiet sneaking, Pounce (§44.6); D Strength/Vitality: hearts,
   Cornered; C Five Forces: Force ward, primed strikes; B Veil/Spirit: Spirit ward, meditation heal, Veil Flicker).
   Numbers live in `gear/SetBonus`.
 - A focus adds +6/9/12/15% power damage in either hand (+2% per temper level), under the boss cap.
@@ -2559,6 +2570,8 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
       residents, children, the Watch, porters, washers, shopkeepers and millers. Boats: one moored every 24 blocks along
       each quay inside the wall (a quarter left empty, none within 6 of a bridge); two rowed up and down the river, one
       round the canal; rowing from 23000 to 18000, bow lanterns lit after dusk (a third of the moored ones too).
+      Tours only: client command `/awaken critters lineup pace|pace_<pigeon|gull|cat|dog>|off` sets the walkers
+      pacing 5-block lanes before the camera (a walk out, a stand turning round, a trot back) for §23.1's feet.
     - Hand lanterns and lit street lamps are drawn light (`citizens.client.CityGlow`: an additive core, halo and pool on
       the ground), never light blocks; `/awaken citizens lanterns blocks|glow` keeps the old path for measuring only.
       Choir Square's festoons: paper lanterns strung between the bowl's eight lamp posts, lit 12200-19500.
@@ -5177,13 +5190,28 @@ Replaces §21.11 decision 18's kit. Built 2026-10-28 by one builder, no sub-agen
     tips a forward-faller onto its side, never into the striker). The walkers fall forward; the creeper, the chicken and the beasts onto
     their left; a spider rolls over in place and does not turn. A vanilla body at D keeps its glow's fade though Fight Feel's own fall
     clears the state's `deathTime` (the layer reads the fall from its own render data).
+17. **With Fresh Animations, its moves 1:1** (Euan 2026-10-29: "for all vanilla mob upgrades, literally just use the fresh animations 1:1, they are
+    perfect already"; he chose to keep the rung's size, eyes and extras). When EMF is loaded and the resource packs hold a model for the
+    species (`minecraft:optifine/cem/<id>.jem` or `emf/cem/`), read on each renderer rebuild, a form from C up keeps the vanilla body, which the
+    pack animates, at the rung's height (`state.scale *= FormShape.heightFactor`, about the feet; the walkers stay near vanilla's height in their
+    wider box). Nothing of the pack is shipped or read beyond that check: its terms forbid redistribution and our repo is public, so the moves
+    come from the player's own install (a modpack may bundle FA by its terms). The rig's extras ride the vanilla parts (`living.forms.FormFit`,
+    pure): every bone that isn't the body (body = base, hips, torso, head, neck, abdomen, tail, spinner, legs, shins, arms, forearms, hands,
+    coxae, ears, wings, eyes, jaws, fangs) is anchored to the vanilla part its body bone maps to (walkers: torso and hips on `body`, `arm_r` on
+    `right_arm`...; beasts and the chicken: `neck` and `head` on `head`; spider: torso on `body0`, abdomen on `body1`) and moved from the form's
+    box onto vanilla's grown to the rung: a point outside keeps its distance from the face it's beside, one inside spreads with it; plates on a
+    body bone move cube by cube, a chain (crowns, horns, claws, petals, crystals) moves with its root. Vanilla rest boxes are read from 26.3's
+    models (FA keeps vanilla's joints). `living.client.forms.FormExtras`, one layer per species' vanilla renderer, draws each part's pieces as
+    one baked model, carried by that part's pose from its own fields times the inverse of its vanilla rest (not `translateAndRotate`, which EMF
+    moves to the hand on an arm), in the form's skin and glow. The form's own clips, cued moves, life layer, halos and fall don't run then: FA
+    acts it all. The forms' eyes are `FormLayers`' as at D. LITE and OFF, no EMF, or no model for a species: as before.
 14. **Perf.** Per entity one `FormBody`, created on first sight, reused; no allocation per frame; halos past 48 blocks skipped; the life layer's
     springs past 32 as elsewhere. Rigs: at most 60 bones (tested). Server: one cue per move, one dimension refresh per form change.
 - Not yet (F3 follow-ups): presence motes at A and S and heavy footfalls, distance LOD for sub-pixel growth, a voice layer per family
   (`audio_living.py`), the wind-up light trail at S, a gallery command. The vanilla cow and pig variants (warm, cold) are not read: the form's
   own family paints them.
 - Dev: `/awaken living form <species> <rung> [family]`, `/awaken living formrow <species> [family]`; tour `tools/autopilot/forms-parade.txt`.
-- Tests: `forms_bodies` (every species and rung has a rig that passes its checks, its clips, its paints and coats), `forms_size` (the hitbox follows the form on the server),
+- Tests: `forms_bodies` (every species and rung has a rig that passes its checks, its clips, its paints and coats), `forms_fit` (with a model pack every non-body bone rides a vanilla part, none lost, each by its part), `forms_size` (the hitbox follows the form on the server),
   `forms_cue` (the cue codec round-trips; the second blow's caps), plus `living_form_mix`, `living_form_state`, `living_form_moves`.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
@@ -5668,14 +5696,27 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
   and `<id>_glow_blink.png` (the eyes' light out); the renderer draws them while the eyes are shut. 14 creatures have
   them; existing textures are byte-identical.
 - **The look reaches the model** (fixed 2026-10-29): NeoForge clears a render state's data right after
-  `extractRenderState` (`RenderStateExtensions.onUpdateEntityRenderState`), so the `AwLook` our renderers set there was
-  gone by `setupAnim`: `Life.from` was null and the layer's pose (legs, flight, springs, blinks), tint, glow and flash
-  never drew on the Hero, Wild and hand-built (`AwMobRenderer`) bodies; only form bodies (extracted from a modifier)
-  had it. `MobsClient` registers a render state modifier that puts the entity's same look back after the clear. Since
-  2026-10-29 (the boss work) it covers bosses too: the kit's renderer (so a kit body's springs, breath, blinks and
-  wind-up glow draw, SPEC §35), `AwMobRenderer`'s boss tiers, and the humanoid and skinned renderers
-  (`AwHumanoidRenderer`, `AwSkinRenderer`), which set the same look and had lost their tint, see-through and flash.
-  Modifiers match by renderer class, so each renderer that doesn't extend another is registered by name.
+  `extractRenderState` (`RenderStateExtensions.onUpdateEntityRenderState`), so the `AwLook` our renderers set there
+  was gone by `setupAnim`: `Life.from` was null and the layer's pose (legs, flight, springs, blinks), tint, glow and
+  flash never drew on the Hero, Wild and hand-built (`AwMobRenderer`) bodies; only form bodies (extracted from a
+  modifier) had it. `MobsClient` registers a render state modifier that puts the entity's same look back after the
+  clear, on every Hero and Wild body, the gate wardens among them (Euan: the weaver queen spun and the thousandfoot
+  glided, their feet never planted). Since 2026-10-29 (the boss work) it covers bosses too: the kit's renderer (so a
+  kit body's springs, breath, blinks and wind-up glow draw, SPEC §35), `AwMobRenderer`'s boss tiers, and the humanoid
+  and skinned renderers (`AwHumanoidRenderer`, `AwSkinRenderer`), which set the same look and had lost their tint,
+  see-through and flash. Modifiers match by renderer class, so each renderer that doesn't extend another is registered
+  by name.
+- **The neck's reach** (Euan 2026-10-29: the Briar Sow swung its head round almost backwards in a second): the head
+  turns no further from the body than its temperament's `neck` (radians; default 1.15, cute 1.3, grazer 1.0, hunter
+  1.2, beast 0.8, lord 0.75, monster 1.1, spirit 1.4, insect 0.6, swimmer 0.45, citizen 1.2), its spring's overshoot
+  included; a look that passes behind it (beyond 115°) holds the side the head already turned to, so the face never
+  swings across the back. It was ±172°, and every body's look code draws `Life`'s head.
+- **Hanging plates** (Euan 2026-10-29: the Stonehorn's fleece came off its barrel): a DANGLE spring whose own cubes are
+  a plane with height (a skirt, a beard, a curtain of moss) swings only about the edge it hangs from, the plane's level
+  axis: one along the body flares out, one across it flaps fore and aft. Turned any other way, a plate hinged at one
+  end of its top edge lifts the other end off what it hangs from. The Stonehorn's own clips did that too (its side
+  skirts pitched 6° walking and 22° running about their front corners, 2-8 px off the barrel at the back): they flare
+  out now (2.5±2.5° walking, 7±5° running) and only the front skirt and the beard swing fore and aft.
 - **Cost and limits**: client only; nothing allocated per frame (render states carry a reference); springs and fidgets
   off past 32 blocks (springs settle), blinks off past 32; breath and the slow head everywhere (cheap). Reduced motion
   (`awaken-client` `reducedMotion`, the body module's) turns idle fidgets off and halves springs, tremble and stagger;
@@ -5700,7 +5741,11 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
 - **Data**: `assets/awaken/life/motion.json` (schemaVersion 1), by rig id. A body not listed moves exactly as before (the
   kit's bosses have no entry). `gait`: `pattern` (`ripple`: one pair at a time from the back forward, each `lag` of a
   cycle after the pair behind it, the two sides half a cycle apart (`lag` 0: one wave over the side); `alternate`:
-  opposite sets; `ripple-alternate`: the first walking, the second once it runs, 0.45 in and 0.25 out), `duty` (share of
+  opposite sets; `ripple-alternate`: the first walking, the second once it runs, 0.45 in and 0.25 out; `bound`: a
+  ripple walking and, once it runs, the forefeet together and the hind pair half a cycle later, the right foot of each
+  pair 0.06 of a cycle behind the left (an otter's lope); `hop`: every foot at once, the body rising with them (a
+  negative `bob`) and pitching by `rock` radians, nose up as it leaves the ground and down as it comes in, its single
+  re-steps rocking nothing (a rabbit, a cricket)), `duty` (share of
   a cycle a foot stands, walking and running), `lift` (px a step rises), `stride` (blocks a cycle covers; 0 the rig's
   own), `reach` (blocks a planted foot may trail before it steps at once), `settle` (blocks from home a foot may rest
   when the body stops), `crouch` (px the body sinks on its legs), `radius` and `fan` (where each foot stands: px out
@@ -5712,7 +5757,8 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   clips while the body rears: a wind-up, a strike or a cue, a roar, or a still threat; a roar lets one pair more go),
   `knees` (`auto`, `forward`, `back`: which way a leg that stands straight at rest bends; `auto` breaks the forelegs of a
   body with legs one behind another forward and every other leg back, a bird's and a biped's back; a leg bent at rest
-  keeps its own bulge).
+  keeps its own bulge), `mixed` (a one-bone leg walks rigid beside legs that bend: `LegRig.stiff`, per leg), `hindBack`
+  (px the hind feet stand behind their rest spot: a leg lying nearly straight at rest can step no further forward).
   `body`: `headLevel` (the head holds level against the gait's and the ground's pitch and roll), `twist` (the body turns
   this share of its look, at most 0.35 rad), `slope` (it pitches and rolls with the ground under its planted feet),
   `land` (a landing squashes it by how far it fell: a spring at 3 Hz kicked by the fall speed), `still` (a stalking
@@ -5729,7 +5775,26 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   it). Applied last in `LifeRig.apply` (after the clips, the look and the springs), blended over the clips by the feet's
   weight; out of reach the leg points straight at its target. Only bodies whose body bone carries the head (the feet
   ride the body bone; a pose-stack body would carry them off their spots), or that have no head bone at all and a motion
-  profile (the weaver queen's face is on its thorax; a headless body without one keeps its old pose-stack motion).
+  profile (the weaver queen's face is on its thorax; a headless body without one keeps its old pose-stack motion), or
+  hand-built bodies the root carries (below). A gait with `arms` walks on its arms too: ARM-role chains are found as
+  legs are (the Hushling's long arms plant like forelegs). Toes: several LEG-role bones under a knee with nothing
+  below them (the Mycelord's roots) ride the knee's block, which is then the shin. A flat pad (a block thinner than it
+  is long and wide, not pointing down: a toad's foot, a walking mushroom's) reaches with its sole's far edge, not
+  halfway up it, so it stands on the ground instead of sunk into it.
+- **One-bone legs and the root's carry** (batch 4, 2026-10-29: the hand-built walkers): a rigid gait (or a `mixed`
+  one, its other legs bending) also takes a one-bone leg, a LEG-role bone with cubes and no leg below it (a vanilla-shaped body's block of a leg), its own block
+  the whole leg (`knee` -1), swung as any rigid leg. A hand-built body (`LifeModel`, no hero rig) with a gait whose legs
+  don't all hang from its body bone, or whose body bone doesn't carry its head (the stag's legs and neck hang off the
+  model root), has its body's motions carried by the root part (`LifeRig.rootCarries`): the dip, lean and roll the pose
+  stack had, and the gait's crouch, ground, step, vault, drift and twist, turned about the body bone's pivot (the root
+  translated by pivot − R·pivot), so the legs' tops ride the body and the feet's solve, which starts from the root, sees
+  it; `Life.rootPose` skips them then. `AwMobRenderer` feeds the feet: grounded unless `P_AIR`, legs free in the body's
+  own held poses (`LifeModel.legsHeld`: resting and burrowing; the mossback tucked or guarding, the scarab and marmot
+  digging in, the marmot up on its haunches, the basilisk sprinting upright), and how much it runs from its pace: a
+  mob's ground pace goes nearly as its speed squared (1.6·speed² blocks a tick at a goal's 1.0), so it runs from
+  1.25× that to 2.3×. A body's own walk bob and roll give way to the feet (`Life.feet()`: the shroomlet's waddle, the
+  mossback's shell bob). The feet test checks the hand-built walkers from plain data mirroring their models
+  (`LifeTests.HAND_FEET`; keep in sync).
 - **Rigid legs** (`knees: rigid`; Euan 2026-10-29, the form cow's shins came off its thighs): a blocky leg whose shin
   pivots right on the thigh's end face opens a wedge at any knee bend, so it has no knee, as Fresh Animations' cows,
   pigs, sheep, chickens and horses have none. Its knee holds its rest whatever the clips do; the whole leg turns toward
@@ -5807,9 +5872,12 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   steps (1/1.6 px high, stride 0.35/0.6 blocks, 0.15 s swings, reach 0.18), its spine wave from the clip bending over the
   planted feet, a lizard's roll (0.04); head level 0.4, twist 0.4, shift 0.25. Ripening it rears on its hind feet and its
   forefeet, drawn up off the ground, knead the air in turn while the tail braces.
-- **Hushling** (`hushling`; two two-bone hind legs, long arms swung by its clips): a crouched biped's alternating steps,
-  duty 0.6/0.4, 2/3.5 px, stride 0.9/1.5 blocks; its body rises (bob -0.6) while a foot is up, as a biped's does, and
-  rolls off it (0.05); a hunter: `still`, creep 1.5; head level 0.5, twist 0.3, shift 0.5.
+- **Hushling** (`hushling`; two two-bone hind legs and long two-bone arms it lopes on, `arms`): its hands plant like
+  forefeet (Euan 2026-10-29: swung by its clips alone they sank into the floor under its crouch and never stepped); its
+  upper arm runs a px past the elbow over the thinner forearm, so the elbow bends to plant a hand without opening (it
+  hid none: a straight arm whose block ends on its elbow's pivot must not bend, and a stiff one couldn't reach the floor
+  under the crouch), a diagonal lope, duty 0.6/0.4, 2/3.5 px, stride 0.9/1.5 blocks; its body rises (bob -0.6) while a foot is up and rolls
+  off it (0.05); a hunter: `still`, creep 1.5; head level 0.5, twist 0.3, shift 0.5.
 - **Weaver Queen** (`weaver_queen`, named beast; eight three-bone legs, femur 12, tibia 14, tarsus 6 px, no head bone):
   an alternating tetrapod on long reaching steps (4/7 px high, stride 1.4/2.6 blocks, reach 0.9, 0.32 s swings), bob 0.5;
   twist 0.15, slope 0.85, shift 0.9 (the heaviest drift: a big body settling over eight feet).
@@ -5849,6 +5917,68 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   (head level 0.45, nod 0.05); the **Stonehorn** (`stonehorn`; 12 px legs) a ram's sure-footed walk (0.96/1.79 blocks,
   2.5/4.5 px) that pitches and rolls with the rock under it (slope 0.9), nod 0.07, shift 0.8. All `rear` 1: a still
   threat or a wind-up hands the front pair to the clip (the sow's snort and paw, the ram's stamp).
+- **Hand-built walkers** (batch 4; one-bone legs, rigid, the root's carry where their legs hang off it; strides from the
+  longest planted sweep a vault of a quarter leg allows, at about 0.9 of it): the **Frost Stag** (`frost_stag`; 12 px
+  legs off the root) the Old Antler's walk scaled to its legs (0.85/1.4 blocks, 2/3.6 px high, 0.28 s swings), about
+  1.5 steps a second at its wander; the **Mossback** (`mossback`; 5 px legs under its shell) a tortoise's slow
+  lateral sequence, three feet always down (duty 0.8/0.6, 0.3/0.42 blocks, 1/1.5 px, 0.35 s swings), a step about every
+  two seconds, nodding (0.05); the **Crested Basilisk** (`crested_basilisk`; 4 px sprawled legs on its body) a
+  lizard's diagonal trot (0.2/0.32 blocks, crouch 1 so its sprawled feet reach the ground, quick 0.12 s swings) with its
+  own clip's spine wiggle over planted feet, its upright sprint left to the clip; the **Glass Scarab** (`glass_scarab`;
+  six 3 px legs, the front and back pairs splayed 0.25 rad fore and aft, was 0.5: a stiff leg pointing forward can't
+  reach further forward without the body dropping) an insect's alternating tripod (0.22/0.28 blocks, 0.08 s swings),
+  about six steps a second; the
+  **Shroomlet** (`shroomlet`; two 3 px legs off the root) a toddler's waddle (0.22/0.32 blocks, roll 0.08); the
+  **Listener** (`listener`; two 16 px legs off the root) a long stalking stride (1.2/1.9 blocks, 2.5/4.5 px, shoulder
+  0.3, `still`, creep 1).
+- **Batch 5** (2026-10-29: the rest of our walkers, and the legless; strides from the feet test, about 0.9 of the most
+  it allows): the **Mire Mother** (`mire_mother`, named beast; `arms`: her two-bone arms plant their hands, the hand
+  the shin, the wrist bending over it; folded hind legs with flat feet) a toad's crawl, a ripple walking and a trot when
+  she lunges (duty 0.75/0.5, 0.45/0.7 blocks, 3/4.5 px, 0.42 s swings, bob 0.6), her hind feet 4 px behind their rest
+  spot (`hindBack`), and her haunches 2.5 px lower in the spec (`fauna_heroes.py`): her hind feet hung 2.5 px above the
+  ground; the **Mycelord** (`mycelord`, named beast; two stubby rigid legs on flat feet, the roots riding them as toes)
+  a heavy biped's waddle (0.32/0.45 blocks, 0.4 s swings, roll 0.06); the **Tidesteed** (`tidesteed`; two three-bone
+  forelegs, the flipper riding the shin) an alternating walk (0.7/1.1 blocks), its swim as before; the **Brook Otter**
+  (`brook_otter`; `mixed`: one-bone forelegs stiff, two-bone hind legs bending, the paw the shin) a ripple walk and a
+  bound when it runs (duty 0.55/0.35, 0.34/0.52 blocks), the body arching with each pair (rock −0.08: forefeet up lift
+  the chest, hind feet up the rump), its swim as before; the **Scree Marmot** (`scree_marmot`; 2 px one-bone legs off
+  the root) a scurry and a bound (duty 0.62/0.3, 0.24/0.5 blocks; reach 0.12 and settle 0.02, so a 2 px leg never
+  leans past its limit; a walking duty under a half left neighbouring feet always up, blocking each other's catch-up
+  steps); the **Mudskipper** (`mudskipper`; the basilisk's body at 0.75, `HAND_FEET` shared) skipping on its fins
+  (`hop`, duty 0.3/0.27, 0.45/0.5 blocks, rising 1.6 px, rock 0.2); the **Chime Cricket** (`chime_cricket`; only its
+  two-bone hind legs plant, its four small one-bone legs keep their clip) hopping (`hop`, duty 0.25/0.22, 0.6/0.8
+  blocks, rising 2 px, rock 0.25). Legless: the **snails** (Gloam and Sporeback, `WildModels.Snail`) crawl on a wave
+  whose pace is the ground's: the foot stretches out from a tail that stays put and gathers it in after, the shell and
+  head keep their own length, the shell rocks with each push and sways side to side once in two, the eye stalks sweep
+  back under way and now and then one draws halfway in and out (a snail's blink); the **Breathbell** (`breathbell`; a
+  `fly` block with no wings or spine) leans into its drift (tilt 0.35 at 2 blocks a second, bank 0.12), its pulse,
+  skirt and trailing tentacles its clips' and springs'. The **walking forms** (`form_zombie_2`..`_5`,
+  `form_skeleton_2`..`_5`, SPEC 21.13; two 12 px one-bone legs from the hips, rigid, shoulder 0.3) a biped's walk off
+  the Listener's scaled to their legs (duty 0.62/0.4, 0.85/1.35 blocks, 2/3.4 px, 0.32 s swings, roll 0.05); the
+  **creeper forms** (`form_creeper_2`..`_5`; four one-bone legs of 6, 7, 7 and 8 px) a diagonal shuffle at every
+  speed (`alternate`, duty 0.66/0.42, about 0.1 and 0.18 blocks a cycle per px of leg; the largest's run 1.4).
+  These are the forms' own bodies; with Fresh Animations installed every vanilla species' form moves by FA 1:1 instead (SPEC 21.13
+  item 17, Euan 2026-10-29), its pieces riding FA's parts.
+- **The wild's and the city's walkers** (2026-10-29; a cross-module edit the orchestrator approved: client code only,
+  the wildlife module's `WildModel` and `WildRenderer`, the citizens module's `CritterModel` and `CritterRenderer`; no
+  server, entity, spawn or data change). Each model binds `CreatureLife.rig(root, temperament, rig.id)` (§12); a rig
+  with no `motion.json` profile behaves exactly as before. The renderer sets `grounded` (not flying or landing, a city
+  cat not mid-leap), `legsFree` (a perched bird, a sitting animal, a swimming duck, or any clip but idle, walk, trot,
+  sniff, listen, peck, caw and call: a sit, a loaf, a groom, a pant, a pounce, a hop, the fox's bolt keep their legs),
+  `gaitRun` (a trot clip's weight, or the speed between the rig's `runFrom` and `runFull`, whichever is more) and
+  `bodyScale` (the model's own scale, so the feet land where it is drawn). Profiles: the **fox** (`wild_fox`; `mixed`:
+  8 px one-bone forelegs stiff, the hind leg and hock bending) and the city **cat** and **dog** (`city_cat`,
+  `city_dog`, the same build at 7 and 9 px) a ripple walk and a trot (duty 0.66/0.45, 0.66/0.42, 0.64/0.42; strides
+  0.6/0.9, 0.55/0.95, 0.7/1.2 blocks), the cat's crouch 1.1 px (its hind feet are drawn 1 px off the ground); the
+  **crow** (`wild_crow`) and the city **pigeon** and **gull** (`city_pigeon`, `city_gull`; rigid 3 and 4 px legs whose
+  toe plates put the foot 1 px ahead of the hip, so a forward step runs out of leg first: a deeper crouch, 0.5 to 0.6
+  px, and the pigeon's duty 0.5/0.45 keep the hips within their drop) an alternating walk (0.34 to 0.5 blocks; the
+  feet never take a cycle under 0.2 blocks, so a pigeon at 0.6 can't go shorter). Not planted: the **city horse** (its
+  walk clip bends knee and hock in time with the cart; `fknee` and `hhock` aren't leg names, and rigid legs would lose
+  that), the **heron** (it wades: its feet would reach for the bed under the water), and the hoppers and climbers
+  (songbird, woodpecker, squirrel, rabbit, frog), whose clips are their gait. Test: `creature_fauna_feet` (every walker
+  here has its gait, its rig in its module's sources, and every leg plants); `creature_motion_feet` checks their
+  strides with the rest.
 - **Flight** (`Flight`, plain math checked on the server; a `fly` block, by rig id or, for a hand-built body, by its
   creature id): while airborne or swimming (or `always`, for a body always under way: serpents, the ray) the body noses
   into a cruise (`tilt` at `fast` blocks a second) and pitches along its path's climb or dive (`climb`, the share), banks
@@ -9802,7 +9932,8 @@ hundred glow quads, culled by distance and view.
 **API additions** (§12): `core.audio.client.Soundscape.hushAt(x, y, z)` (what is left of birds and insects at a point);
 `citizens.client.CityLife.inside(x, z, margin)` (within Carillon's wall plus a margin). Client command
 `/awaken wildlife [on|off|count|dial <x>|lineup [clip|insects|off] [variant]]` (`count`: what's near, what the camera
-can see, and where the songbirds are; `lineup`: every body, or every insect, posed before the camera on a stage); tours
+can see, and where the songbirds are; `lineup`: every body, or every insect, posed before the camera on a stage;
+`lineup pace` or `pace_fox`/`pace_crow`: the walkers pace 5-block lanes, a walk out and a trot back, for §23.1's feet); tours
 log the census every 30 s as `[wildlife] in view N of M near: ...`. Tours: `tools/autopilot/wild-life.txt` (the stage by
 day and night, then forest, rain, flowers, river, Mirror Marsh, Lumen Forest), `wild-forest.txt` (the quick loop).
 
@@ -15034,6 +15165,51 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
 - **A jump** (a teleport, a respawn): the region at the camera is read again at once, not on the next second, and what
   belongs to the region you left (glow-worms, rust beetles, swifts, crayfish, glass and ash moths, crawlers) fades away.
 
+### 42.9 Mining ties (P4)
+- **Lodes by region** (`caves.RegionHomes`, delve's `Lodes.Homes`): a region favours the ores its rock has twins for: the
+  Rootways coal and copper, the Pale Halls and the Ochre Deep iron, the Windcleft gold, the Drowned Galleries lapis and
+  copper, the Glimmer Hollows redstone, the Black Vaults diamond, and the Violet Deep Deepglass (its seeps are there).
+  `LodePlans` rolls each deep lode's heart as before; when it isn't in one of its ore's regions it rolls a second spot in
+  the same 256-block lode region and takes it only if that one is. Every lode region keeps its lodes of every ore; the
+  wall lodes (§34.2) stay on the walls they find. The region at a point is read from the world's noise as the pack's
+  injectors read it (the band's field at y 0, the land's climate, the depth: seven uncached samples), so it answers for
+  chunks nobody has made, on any thread. An ore's band decides how much it matters: redstone lies below y -4 and the
+  Glimmer Hollows above y 0, so the Hollows' redstone stays vanilla's; lapis and gold meet their Middle Dark regions only
+  from y 0 to 8 and 16; emerald has no region.
+- **Which worlds**: only a world made with the regions (flag `awaken:awakened_caves`) whose first load comes with P4 (no
+  `awaken:caves` record and its clock at 0): the record (schema 1, `lodes_by_region`) is written then, and a regions
+  world from P2 or P3 records `false` and keeps the plans its chunks were laid by. The GameTest world loads the pack too
+  and keeps its plans (delve's tests stand on them); the region tests plan through `LodePlans.planWith`.
+- **The Hearth's line** (§34.1): when the mouth's way in goes down into a region (where its throat ends, else where it
+  joins the caves), the line ends "It goes down into the Ochre Deep." Without one (and in every world without the
+  regions) the line is as it was.
+- **The Journal** (`caves.RegionFinds`): the first time an awakened player stands in a region (the biome underfoot, every
+  2 s, staggered, under y 63) it's counted (`awaken:discovered/cave_region/<id>`, no XP: the Wilds' biome discovery pays
+  for the same steps and shows its find) and its page is filed without a toast (category "Cave region"): what it is, the
+  metal at home there and what to take home.
+- **The Codex** (`caves.client.RegionCodex`, category "Cave regions"): once you've found one, all eight; the ones you've
+  stood in show what they are, their metal and keepsake, the rest only where to look ("Below y 0, under any land.").
+- **Trails**: "The Regions Below" (deep, free, opens with the first region found: a step per region, the hint where it
+  lies; finish 0.05 of a level) and "Keepsakes from Below" (deep, free, the same opening: hold each region's keepsake;
+  finish 0.03): root amber, cave pearls, the Delvers' old rope, driftwood, an amber or glacial crystal, ember lichen, a
+  Hollow's shed shell. The Black Vaults have none yet (their cooled flows and column stumps aren't built).
+- **The finds**: each keepsake is a piece the region already lays and that drops itself, so it can go home and be set
+  down. The Rootways' is root amber (`awaken:root_amber`, style sheet section 6, OK'd by Euan 2026-10-29): beads of old
+  resin like cave pearls (no collision, instant break, three bead models), laid on the rock floor under one root curtain
+  in twenty (`CaveSkinFeature.ROOT_AMBER` 0.05) where the curtain's room is under seven blocks tall.
+- **Pacing** (`tools/sim/pacing_sim.py`, re-run 2026-10-29): the sim counts lodes found per mining minute, not per region,
+  and lodes by region keep every region's count, so its numbers hold within run-to-run noise (balanced: level 10 at 3.9 h,
+  25 at 16.8 h, 50 at 51.3 h; D metal at 1.1 h, C at 12.8 h; all 15 target checks pass).
+- **Tests**: `caves_lodes_by_region` (seed 777's overworld noise, 400 lode regions round the origin: every region keeps
+  each ore's count; no homes, or homes everywhere, plan as before; iron at home at least 1.6 times as often, all ores 1.4;
+  the homes are the rock's twins), `caves_region_rock` (root amber only in the Rootways, on rock under a root curtain),
+  `caves_region_journal` (once, filed under the region's name; every keepsake is an item;
+  both trails name every region and keepsake), and `delve_hearth_points` (the region's line, and none without one).
+- **Measured 2026-10-29** (`caves_lodes_by_region`): lodes in their ore's regions without and with homes: iron 134 to 254
+  of 1,200 (1.9 times), copper 67 to 116, coal 70 to 104, Deepglass 63 to 96, diamond 56 to 72 of 330, gold 4 to 8, lapis
+  5 to 7, redstone 0; all 399 to 657 of 4,867 (1.65 times). Where a lode region lies wholly outside an ore's regions its
+  second roll can't reach one, so the rise is under twice for the patchier regions. 800 plans and the counting: 176 ms.
+
 ## 43. The Journey (one city and the wild, the beasts' Hearth, the bells' song, Faults; plan docs/director/JOURNEY.md, page https://claude.ai/artifact/UZ4vpKGoSJkisZRkmoHj3D; Euan approved the entire plan 2026-10-29: "Go ahead with the entire plan")
 
 Source of truth for the rules below; `docs/director/JOURNEY.md` has the detail, the lines and the hour-by-hour journey.
@@ -15237,3 +15413,373 @@ Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY pa
 - **Creatures**: Fresh Animations level (own model, three idles or more, look-at, blink, breathing, follow-through,
   own gaits, reactions, own sounds and particles). The Lampwing passes Euan in game before any other kind.
 - **Hand-off**: the Ledger re-read against the code, the diff reviewed, the full suite green on CI.
+
+## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
+
+Module `armour` (`dev.awaken.armour`, client `armour.client`). Built in phases P0-P5 (plan §6.2); this section grows
+with each phase. Abilities follow one rule: they change your body, your blows, your movement and what everyone in front
+of you sees, and never show you anything you could not see without them (no outlines, no glowing creatures, no ores or
+blocks through stone, no marks, no danger sense).
+
+**44.1 The look (P0).** Every set is drawn as sculpted meshes on the body's bones, never as vanilla's flat shell.
+- A piece is one mesh per bone it rides (`assets/awaken/armour/<set>/<piece>_<bone>.mesh`, bones `head body right_arm
+  left_arm right_leg left_leg cape0 cape1 cape2 front_cloth back_cloth`) and one texture a set
+  (`textures/entity/armour/<set>.png`, albedo left, material map right: metal, gloss, emissive, flow). `ArmourMeshes`
+  reads them on each resource reload; a set with no meshes is skipped (a Hunter set without them logs an error).
+- `ArmourLayer` draws each mesh where its bone is posed this frame (`ModelPart.translateAndRotate`), so armour follows
+  every animation. The cape hangs in three links from a yoke, swung by the avatar's cape lean and flap, each link
+  curling further; the leg cloth is pushed by the stride. It is on players and mannequins (both arm widths), armour
+  stands (legs a texel lower) and every living renderer whose model is a `HumanoidModel` (zombies, skeletons, piglins,
+  ours).
+- `ArmourClient.readWorn` (a render state modifier on every living renderer, only for entity types that got the layer):
+  each worn piece whose set has meshes for it is put in the state's render data (`awaken:armour_worn`), taken out of
+  `HumanoidRenderState.head/chest/legs/feetEquipment` (so vanilla's armour layer and the Hunter silhouettes draw nothing
+  for it), and the skin's outer layer under it is hidden (hat, jacket and sleeves, trousers); a helm is not drawn again
+  as a hat item; a set's cape hides the player's own. A piece without meshes is left to vanilla: the Hunter sets keep
+  their equipment assets and silhouettes as the fallback.
+- The shader `awaken:core/armour` (the weapons' kind, its own copy): metal catches a studio reflection, a sheen climbs
+  from feet to crown, emissive seams glow in the dark and pulse, enchanted pieces shimmer (the foil bit in the overlay
+  channel). If the pipeline doesn't build, the same mesh draws through vanilla's entity cutout.
+- First person: the empty hand wears the cuirass's arm mesh (`RenderArmEvent`). `ArmourClient.dressArm(player, side,
+  poseStack, collector, light)` is public for every other first-person arm drawer: the pose on the arm's bone, it draws
+  the worn cuirass's arm and returns whether it drew.
+- Nothing new is sent: equipment already syncs to everyone who sees you.
+- **Art kit** `tools/art/specs/armour_sets.py` (`build [set]`, `check`, `preview DIR [set]`): a set is a design in
+  texels (x your left, y up, z forward) of boxes, chains and mirrored parts with painters (hems, rims, scales, lames,
+  seams, sigils, gems, edge columns, side seams); 9,000 corners a set at most; `check` refuses unknown bones and two faces
+  in one plane on different grids. Proportion rules: the helm within a texel or two of the skull, its height from horns
+  or a crest; shoulders rise; cloth stops at the knee; gold hems only on the top plate of a stack; glow is few and
+  placed. Every set has its own silhouette a stranger would name and its own palette.
+
+**44.2 The roster.** `ArmourSet` (29) and `Archetype` (Bulwark, Strider, Channeler, Duelist, Lord-forged): four sets at
+E, five at each rank D-S (one of each archetype, plus a Lord-forged set). The six Hunter sets keep their item ids and
+are one set each (`ArmourSet.hunter`): Wildhide (E, Strider), Beastbound (D, Bulwark), Gatewrought (C, Duelist),
+Veilwoven (B, Channeler), Lordscale (A, Lord-forged), Sovereign Weave (S, Lord-forged). `ArmourLooks.of(stack)` names
+the set and piece a worn item is drawn as. The other 23 (plan §4.2) get items, recipes and art phase by phase
+(`ArmourSet.MADE_TO`: P2 made E and D, P3 C and B, P4 A and S: all of them). A made set with no Hunter items has its own (`ArmourItems`, `<set>_helmet`
+`_chestplate` `_leggings` `_boots`, a `ForgedArmourItem` each, and above E a `<set>_pattern`), in the Awakened Gear tab.
+- **P2's seven**, each with its own look (`armour_sets.py`; 32px icons drawn from the meshes, a pattern is a vellum sheet
+  with its helm in ink and a seal in its rank's colour, a Lord's in gold):
+  - **Bellguard** (E, Bulwark): a bell-founders' guard cast in bronze; a bell worn mouth down with a green-lit eye-slit
+    and its hanging loop, bell-dome pauldrons, a small bell cast on the breast, a copper skirt; patina drips.
+  - **Rootwarden** (E, Channeler): a moss hood under a bark circlet, a bark mask with two amber eyes, antlers of
+    branching wood, bark plates bound by roots to a sap heart, a leaf apron; its runes are amber seeds.
+  - **Amberwing** (E, Duelist): black leather, a closed helm with a band of lit amber across the eyes and a swept fin,
+    two pairs of amber wings crossing on the back (lit, holding dark motes), an amber sash.
+  - **Cleftrunner** (D, Strider): a dusk-blue hood, a long red scarf over mouth and nose whose tail streams behind,
+    blue lamellar laced in red on the breast and the right shoulder, iron only on forearms and shins.
+  - **Lanternlight** (D, Channeler): a deep cowl whose face is only dark with a little lamp at its brow, a tall iron
+    collar, charcoal robes trimmed in brass, a burning lantern caged on each shoulder; its runes are little lamps.
+  - **Bladeward** (D, Duelist): an oxblood brigandine studded in brass, a close steel helm cut in a dark T with a red
+    plume, one great layered pauldron on the left with a neck guard, a half cape.
+  - **Hornlord** (D, Lord-forged): blackened iron with embers in its cracks, a closed helm with a burning slit and great
+    pale horns banded in gold, a fur mantle and ragged fur cape, sabatons split like hooves.
+- **P3's eight** (the plan's Sunshard is named **Sunward**, so it isn't mistaken for the sunshard crystal it is made with):
+  - **Vaultbreaker** (C, Bulwark): diamond-studded steel; a closed helm under great curled ram's horns, a round shield
+    of a pauldron on the left with a pearl boss, heavy tassets.
+  - **Frostwalker** (C, Strider): clear ice plates over white wolf fur; a closed ice helm under a crown of icicles, a
+    fur mantle, a cape whose hem has frozen.
+  - **Sunward** (C, Channeler): a gold breast under a white coif; a great sun disc rayed in gold stands behind the
+    head, long white tabards with a sun rune; its runes are little suns.
+  - **Shardcrown** (C, Lord-forged): dark steel with violet crystal growing out of it; a crown of shards, shards at the
+    shoulders, a crystal cluster for a heart.
+  - **Deepcarapace** (B, Bulwark): black Deepglass chitin like a cave beetle's, cave-cyan seams; a ridged dome helm
+    with one horn, wing cases closed on the back.
+  - **Cloudrunner** (B, Strider): sky-white plate over slate; a closed helm with a storm-lit slit, feathered fins
+    swept back from the helm, shoulders and heels, a mantle of feathers.
+  - **Tidebreaker** (B, Duelist): sea-green scale edged in amethyst; a fin crest, fins at cheek and shoulder, a cape
+    cut in tongues like a breaking wave.
+  - **Hollowheart** (B, Lord-forged): bone over deep red; a crown of bone spikes, an open rib cage on the chest holding
+    the Lord's hollowed heart, glowing at its core, and a ragged red cape.
+- **P4's eight** (the A and S Lords are the Hunter sets Lordscale and Sovereign Weave). Blades and feathers are turned
+  toward the front (the kit's `facing`), so a set reads from the front as well as the side:
+  - **Leviathan** (A, Bulwark): drowned netherite, deep-water blue; a closed helm with a lure's glow for its slit, a
+    webbed fin down the crown and a great frill fanning back from each ear on bone spines; a sail down the back, bone
+    spines on the pauldrons.
+  - **Galewing** (A, Strider): netherite feathered; a storm-lit slit, a great white wing at each temple, folded wings on
+    the back rising over the shoulders and falling to the knee in a V.
+  - **Halo Choir** (A, Channeler): porcelain plate edged in gold; one upright slit of light framed in gold, behind it a
+    gold halo with two white wings; a gold bell on the breast, a bell skirt; its runes are little gold bells.
+  - **Dreamsteel** (A, Duelist): mirror-bright plate coming gently apart; a sallet with a pale slit under a broken crown
+    of mirror shards standing off the head; plates hanging a finger off a night-blue suit; pauldrons of three floating
+    plates.
+  - **Starfall** (S, Bulwark): a fallen star's dark metal burning white where it broke; a great helm with a slit of white
+    fire, a comet at each temple trailing silver past the crown, massive stepped pauldrons with fire in their seams, a
+    star burning in the breast.
+  - **Riftwalker** (S, Strider): dark violet plates hanging off black cloth with the rift's light between them; a hood
+    over darkness torn by one violet slit; behind the wearer a rift stands open, a tear of violet light taller than they
+    are; a ragged cape breaking into squares.
+  - **Nightcourt** (S, Duelist): the Hollow Court's duelists; a tall cocked hat with a silver band and a white plume, a
+    silver mask, a high-collared coat with two rows of silver buttons, fringed epaulettes and two long tails; riding boots.
+  - **Signal's Echo** (S, Channeler): the System's own look, worn; white robes and plate that glitch sideways, a deep hood
+    dark but for one cyan line, and over it the System's marker, a white diamond with a cyan core; its runes are little
+    framed squares of light.
+
+**44.3 Numbers.** A set sits on its rank's Hunter numbers (`HunterTier.Armour`). Bulwark +1 point on the cuirass and
+greaves, +0.5 toughness, +0.05 knockback; Strider -1 on the cuirass, +5% speed a piece; Channeler -1 on the cuirass, +3%
+power damage a piece; Duelist the rank's numbers; Lord-forged +1 on the cuirass (`ArmourItems.numbers`; durability,
+enchantability and sound are the rank's). The made sets (test `armour_numbers` holds this table):
+
+| Set | Rank | Archetype | Helm | Cuirass | Greaves | Boots | Total | Toughness | Knockback | A piece |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Bellguard | E | Bulwark | 2 | 5 | 4 | 1 | 12 | 0.5 | 0.05 | |
+| Rootwarden | E | Channeler | 2 | 3 | 3 | 1 | 9 | 0 | 0 | +3% power damage |
+| Amberwing | E | Duelist | 2 | 4 | 3 | 1 | 10 | 0 | 0 | |
+| Cleftrunner | D | Strider | 2 | 5 | 5 | 2 | 14 | 0.5 | 0 | +5% speed |
+| Lanternlight | D | Channeler | 2 | 5 | 5 | 2 | 14 | 0.5 | 0 | +3% power damage |
+| Bladeward | D | Duelist | 2 | 6 | 5 | 2 | 15 | 0.5 | 0 | |
+| Hornlord | D | Lord-forged | 2 | 7 | 5 | 2 | 16 | 0.5 | 0 | |
+| Vaultbreaker | C | Bulwark | 3 | 9 | 7 | 3 | 22 | 2.5 | 0.05 | |
+| Frostwalker | C | Strider | 3 | 7 | 6 | 3 | 19 | 2 | 0 | +5% speed |
+| Sunward | C | Channeler | 3 | 7 | 6 | 3 | 19 | 2 | 0 | +3% power damage |
+| Shardcrown | C | Lord-forged | 3 | 9 | 6 | 3 | 21 | 2 | 0 | |
+| Deepcarapace | B | Bulwark | 3 | 9 | 8 | 3 | 23 | 3 | 0.1 | |
+| Cloudrunner | B | Strider | 3 | 7 | 7 | 3 | 20 | 2.5 | 0.05 | +5% speed |
+| Tidebreaker | B | Duelist | 3 | 8 | 7 | 3 | 21 | 2.5 | 0.05 | |
+| Hollowheart | B | Lord-forged | 3 | 9 | 7 | 3 | 22 | 2.5 | 0.05 | |
+| Leviathan | A | Bulwark | 3 | 10 | 8 | 3 | 24 | 3.5 | 0.15 | |
+| Galewing | A | Strider | 3 | 8 | 7 | 3 | 21 | 3 | 0.1 | +5% speed |
+| Halo Choir | A | Channeler | 3 | 8 | 7 | 3 | 21 | 3 | 0.1 | +3% power damage |
+| Dreamsteel | A | Duelist | 3 | 9 | 7 | 3 | 22 | 3 | 0.1 | |
+| Starfall | S | Bulwark | 4 | 10 | 8 | 4 | 26 | 4 | 0.2 | |
+| Riftwalker | S | Strider | 4 | 8 | 7 | 4 | 23 | 3.5 | 0.15 | +5% speed |
+| Nightcourt | S | Duelist | 4 | 9 | 7 | 4 | 24 | 3.5 | 0.15 | |
+| Signal's Echo | S | Channeler | 4 | 8 | 7 | 4 | 23 | 3.5 | 0.15 | +3% power damage |
+
+Costs (`ForgeSong.SET_COSTS`, helm / cuirass / greaves / boots; hide, metal, core and bind are the rank's own tags, ess
+the essence shard): Bellguard copper 5, 7, 6, 3 with hide; Rootwarden logs, moss, resin and hide; Amberwing hide, resin
+and bind; Cleftrunner metal, wool and hide; Lanternlight wool and metal, its cuirass two lanterns; Bladeward metal, hide
+and core; Hornlord metal and core, its cuirass a Lord's heart. C on diamond: Vaultbreaker metal, hide and core;
+Frostwalker frostspar and hide; Sunward gold, sunshard and wool; Shardcrown amethyst and core, its cuirass a Lord's heart.
+B on Deepglass: Deepcarapace metal, hide and core; Cloudrunner feathers and wool; Tidebreaker amethyst and hide;
+Hollowheart bone and core, its cuirass a Lord's heart. A on netherite: Leviathan prismarine shards, hide and core;
+Galewing feathers and phantom membrane; Halo Choir gold, its cuirass a bell, its greaves wool; Dreamsteel glass, core and
+hide. S on starmetal: Starfall core, Riftwalker echo shards and bind, Nightcourt bind (the Court's thread), Signal's Echo
+core and bind. The A and S Lords (Lordscale, Sovereign Weave) keep the Hunter costs, a Lord's heart in each. E is cut by
+hand, D and up forged.
+
+**44.4 The Forge Song (P1).** Armour is never crafted on the grid: every Hunter armour recipe is gone and the pieces
+are forged at a **Fitting Stand** (`awaken:fitting_stand`, crafted from a stick, a copper ingot, wool and planks; a
+dress form that holds a suit). The level road's Hunter steps grant the weapon and tool recipes only, and the E step the
+Fitting Stand's; they say where armour is made. `ArmourNow` (Now line, priority 25): "You can forge a Wildhide Vest at
+a Fitting Stand" when the pack covers a piece your rank can forge that beats what you wear there and you don't own it
+or better (the highest rank first, then cuirass, greaves, helm, boots, then the rank's sets in order, its Hunter set first); `GearNow` no longer suggests armour.
+- **The place.** E sets are cut and riveted **by hand** at a crafting table (the works table) within 6 blocks of the
+  stand. D and up are forged: an anvil and the Hearth's Forge (`awaken:forge`) within 6 blocks. The stand's list says
+  plainly what's missing.
+- **The list** (`ArmourForge.offers`, payload `Offers`): every set your rank can forge (Hunter sets come with rank;
+  others need their pattern, P2), each piece with what it takes (have / need) and flags: can make now, known by heart,
+  forged whole before. Its costs are the old recipes' (`ForgeSong.HUNTER_COSTS`). Starting takes the materials into the
+  work (`ForgeWork.materials`; breaking the stand gives them back with the suit). Creative skips them.
+- **The song.** Times are game ticks from the stage's start; the client sends what it did and when (`Act`), the server
+  judges by its own clock within `LAG` 10 ticks behind and 2 ahead (`ArmourForge.clamp`). At the Forge: **Heat**, a bar
+  climbing over `HEAT_FULL` 120 ticks; pull it in the gold (0.55-0.75: heat score 1), early and the strikes count x0.7-1,
+  past 0.85 the piece keeps a scale flaw (never Flawless), at 1.15 it comes out burnt by itself. **Shape**: the anvil
+  counts in one bar of the set's rhythm (`ForgeSong.Song`: ticks a step and a bar of x and ., e.g. Wildhide 4
+  "x.x.xx..", Lordscale 7 "x...x...x.x....."), then each strike is due on the next x; the piece's marks (`marks`,
+  the same every time) are struck in turn; a strike scores 0.6 timing (1 within 1.5 ticks, 0 at 6) + 0.4 aim (1 inside
+  half a mark, 0 at two marks; the client reports the aim); 8 ticks either side is its window, a beat left unstruck is
+  a miss (0). Helm 8 strikes, cuirass 12, greaves 10, boots 6. A clean strike (0.8) rings the set's next melody note,
+  so a well-forged piece plays its tune. **Quench**: a bell rings 24-35 ticks in (`quenchCue`); plunge within 4 ticks
+  for 1, early hisses (0.35), late cools in the air (falling to 0.2, plunged for you after 24). By hand: **Cut**, the
+  knife drawn round the piece's outline (the client scores keeping to the line and finishing it), then **Rivets** on the
+  beat (half the strikes, ringing copper).
+- **Quality**: at the Forge 0.2 heat + 0.65 strikes (x early) + 0.15 quench; by hand 0.35 cut + 0.65 rivets. Plain
+  below 0.55, Fine, Masterwork from 0.75, Flawless from 0.9. A piece leaves with Temper 0/1/2/3 (the Hearth's Temper
+  goes on from there). Masterwork or better puts it **in memory**: from then on From memory forges it in one heat (or
+  cut) and one strike, always Fine.
+- **A helper** at the anvil (anyone else using the stand while it's shaped) strikes the off-beats, the rests after the
+  count-in, within 1.5 ticks: each adds 0.01 (0.05 at most); three make the piece **twin-struck**. A helper's blow on
+  the beat isn't taken.
+- **The rank's verbs (P3, P4).** At the Forge, from C a piece can be **inlaid** and from B its Deepglass is **tuned**,
+  both after the quench (the tune first); from A it is **folded** and at S struck **white** (Starfire), both after the
+  shaping and before the quench. Each done verb is a tenth of the quality (`ForgeSong.withVerbs`: the score times 1 - 0.1
+  a verb, plus 0.1 times each verb's mark). From memory none is played; a chosen inlay is still set.
+  - **Inlay (C and up).** The list offers the weapons' five catalysts (`ArmsForge.catalystItem`: Sunshard Heat, copper
+    Charge, Fault Seam Gravity, Deepglass Spirit, Frostspar Frost) or none; the one chosen goes in with the materials
+    (START's aim: its Force + 1). It turns in its socket, a turn every 40 ticks from half a turn off; seated within 12
+    degrees of the key it's 1, further falls to 0.3 (`inlayScore`); left 120 ticks it seats itself at 0.5. The piece keeps
+    the Force (`Forged.inlay`), takes its colour as its accent and gives one small stat a piece whatever set it's on
+    (`ArmourInlay`, counted with the set, modifiers `awaken:armour_inlay_<force>`): Heat +1.5% melee damage, Charge +1.5%
+    speed (both multiplied base), Gravity +0.03 knockback resistance, Spirit +0.5 health, Frost +0.25 toughness. The
+    tooltip says it ("Inlaid with Frostspar: +0.25 toughness").
+  - **Fold (A and up).** After the shaping the netherite is doubled over and struck in pairs: three folds, each two
+    strikes on one mark (`foldMarks`, down the middle of the piece), to the Fold's own rhythm (`FOLD_RHYTHM`, 4 ticks a
+    step, "xx......": quick-quick, then a rest), counted in like the shaping. Its strikes follow the shaping's in the same
+    list (`ForgeWork.stageFrom`/`strikesNeeded`); the fold's mark is their mean (`ForgeWork.fold`). They ring low (pitch
+    0.8). The metal flares back up a little with each fold.
+  - **Starfire (S).** After the fold the heat goes white: a fast chain of eight marks scattered over the face
+    (`starfireMarks`, new each time from the stage's start, each well away from the last) to `STARFIRE_RHYTHM` (4 ticks
+    a step, "x.x.x.x."); the screen shows only the next few, white, and a struck mark is gone. Its mark is the mean
+    (`ForgeWork.starfire`); they ring high (1.2). The strikes' mean the quality weighs stays the shaping's.
+  - **Tune (B and up).** The cold Deepglass rings true at one spot on the piece's face (`truePoint`, from the stage's
+    start: -0.5..0.5 across, -0.6..0.6 along, in the face's half-widths). Tap it (TAP: the tap's number, x and z; the
+    client finds the spot under the cursor): each note is clearer and nearer its pitch the nearer the spot (`clarity`,
+    1 - distance / 1.1); the screen marks each tap in its colour and says clearer or duller than before. Within 0.15 it
+    rings true: the tune is 1, the piece is marked rung true ("Its Deepglass rings true") and the tuning ends. Otherwise
+    the best of five taps counts; left 600 ticks, what was found.
+- **Stepping away.** The work lives on the stand (`ForgeWork`, schemaVersion 2: the P3 tune, taps and inlay and the P4
+  fold and starfire optional, the judged list growing to heat, cut, quench, tune, inlay, fold, starfire;
+  synced to everyone near so they see the bar glow and the shape form). It only moves while its smith is at it (`ArmourForge.AT`, not saved): Esc, logging out
+  or walking 12 blocks away holds it; coming back restarts the stage (counted in again).
+- **Finishing** fits the piece onto the stand (the piece there before goes to your pack) with its `awaken:forged`
+  story (§44.7). All four of one set on the stand wakes it (a flare and a sound); the first time you make a set whole
+  the System names it and what wearing it does (a Revelation window with its set bonus lines). Sneak-use takes the suit.
+- **Client** (`armour.client`): `FittingStandRenderer` draws the suit on its form and the work: a squat blank glowing in
+  the Forge's mouth, then laid face up on the anvil drawing toward the piece strike by strike and cooling (the armour
+  shader's heat mode: overlay bit 9, heat in the energy channel, dull red to white, lit from within). `ForgeCamera`
+  (a client-only camera entity, as the opening's): wide on stand, anvil and Forge while choosing, over the shoulder at
+  the fire, still and close above the metal for the strikes, low for the quench, down on the works table, a slow turn
+  round the stand for the fit; hands, block outline, your own body and the HUD (bar subtitles and chat) step aside.
+  `ForgeScreen` (the list) and `ForgeSongScreen` (the gauge, the marks projected onto the metal with approach rings, a
+  beat lane, pips per strike, the cut line, the helper's off-beats, the result card). The smith's client plays its own
+  pull, strikes, notes and quench the moment they happen (the server plays them to everyone else), the count-in and a
+  soft tap on each beat. Neither screen pauses the game.
+- Sounds `awaken:forge.*` (`tools/art/specs/audio_forge.py`, from CC0 recordings): a strike for each metal (hide,
+  copper, iron, diamond, Deepglass, netherite, starmetal by rank), bellows, pull, quench, count, note (a bell at C5,
+  pitched per note), cut, fit, wake, miss.
+- Progression counters `awaken:armour_started`, `awaken:armour_forged`.
+- **Patterns (P2).** The Hunter sets come with rank and the E sets are known from the start; every other set needs its
+  pattern (the stand lists it greyed, "Pattern not found", and says where patterns come from). A pattern is an item
+  (`PatternItem`, stacks to 16): use it to learn the set for good (`ArmouryMemory.patterns`); one already known says so
+  and can be given away. Patterns drop from gate creatures (`ArmourPatterns`, needs a player's kill and a gate id on
+  `MobRole`): an elite 20%, a warden 50%, the gate's Lord always. The set is one of the gate's rank (its content level as
+  `ArmsApi.rankOfLevel`) whose pattern the killer doesn't know; a Lord gives its rank's Lord-forged set first, other
+  creatures never give one (at A and S the Lord-forged sets are Hunter sets and need none, so a Lord gives one of its
+  rank's other four). Nothing drops once you know them all.
+
+**44.5 Set abilities (P2).** `ArmourAbilities` (server; state `awaken:armour_state`, unsaved: a relog starts empty).
+A made set's own pieces: **two** give its archetype's half bonus, **four** its archetype's ability and its own twist
+(§44.6). A Hunter set keeps its own bonuses (`gear/SetBonus`) and, whole, gains its archetype's ability too; the
+Lord-forged have no archetype ability, their twist is the Lord's move. Only one set is ever whole. Every piece is
+counted on each equipment change.
+- **Half bonuses** (two of a made set; one each even with two sets): Bulwark +1 heart; Strider falls hurt a third less
+  (fall damage multiplier -1/3); Channeler powers +10%; Duelist +6% attack speed; Lord-forged +1 heart and +0.2
+  knockback resistance. A Channeler piece adds its +3% power damage worn alone.
+- **The fight's moments** come from `FightMoments` (§12): arms' HIT, FINISHER, DEFLECT, PERFECT_DODGE, BREAK, KILL,
+  GUARD, PERFECT_HEAVY and powers' CAST.
+- **Bastion** (Bulwark): a charge to 100; a guarded blow +20, a deflect +30, a blow taken +8. Full, the next deflect,
+  guard or perfect heavy bursts: everyone hostile within 3.5 takes the ability's blow (4 + 2 a rank above E), is thrown
+  back (1.1, lifted 0.35) and staggered 30 ticks; a shockwave and a quake.
+- **Flow** (Strider): a perfect dodge +35, wall-running +2 a tick, sliding +1 a tick. Full, the next blow that would land
+  (any blow a fighter could answer: `Strikes.of` not NONE) strikes an afterimage instead, and you run 30% faster for
+  40 ticks. (The plan's "the dodge carries twice as far" needs the Runner's insides; this is the same promise kept from
+  outside.)
+- **Edge** (Duelist): a deflect +35, a finisher +30, a clean hit +6, a perfect dodge +20. Full, your next hit sends a
+  wave along its swing: everyone else within 5 blocks and 50° of your heading takes 80% of your attack damage.
+- **Runes** (Channeler): each power you cast puts a rune circling you, up to three, each lasting 400 ticks from the last
+  cast. A cast with three overchannels: the runes fly at the three nearest foes within 8 (the ability's blow, as
+  magic), and your powers hit 35% harder for 40 ticks.
+- An ability's own blow on a body of 150 health or more is held to 3% of it (at least 2): a Lord is never burst down by
+  armour.
+- **By rank (P3).** The ability grows with the set's own rank (a Hunter set's too; the set's lines say what it does):
+  - C: Bastion: a landing from 4 blocks or more with Bastion full bursts it. Flow: foes within 3 of the afterimage swing
+    at it and are staggered 20 ticks (the plan's "wall-runs last longer" is the Runner's insides; this is the Strider's
+    C step from outside). Runes: each rune stops one arrow or bolt (a projectile's blow cancelled, a rune spent). Edge: a
+    perfect dodge with Edge full cuts the wave at once, toward the creature dodged.
+  - B: Bastion: the burst carries the Force of your last power hit (its damage type, so the Forces' reactions follow;
+    its slam in the Force's colours). Flow: an afterimage left in the air rushes you on along your look (1.1, lifted
+    0.25). Runes: an overchannel gives back a quarter of your energy. Edge: those the wave cuts bleed, 1 every 10 ticks
+    for 60.
+  - A (P4): Bastion, Flow and Edge hold a **second charge** (filling to 200; a release spends 100, the rest waits); a
+    Channeler gathers a **fourth rune** and overchannels four.
+  - S (P4): everything the ability does **reaches half again as far** (`S_REACH` 1.5: the Bastion's burst, Edge's wave,
+    the runes' reach and the foes who reel from an afterimage).
+- **The look.** The charge and runes go to the wearer and everyone tracking them (`Charge` payload: entity, charge,
+  runes, flash; sent when the charge moves 5, fills or empties, the runes change, or something is released, and to
+  anyone who starts tracking). On the armour (`ArmourGlow`): as the charge fills its glowing parts brighten and its rim
+  takes the accent (energy up to two thirds); full it breathes (1.4 s); a release flares the whole set for 450 ms. A
+  Channeler's runes are its set's own little mesh (`armour/<set>/rune.mesh`: amber seeds, little lamps, Veil-stones)
+  circling at the chest once every 64 ticks, growing in over 300 ms, drawn full-bright.
+- **Sounds** `awaken:armour.*` (`audio_forge.py`): charged, bastion, flow, edge, rune (three notes of one chord, rising
+  as runes gather), overchannel, ring, rooted, gore.
+- **Mastery** (P2 to III; IV and V P3): blows dealt or taken with a whole set on +1, an elite's or a warden's kill
+  +5, a gate Lord's +60, written onto every worn piece of that set in tens (`Forged.mastery`). Steps at 0, 300, 1200,
+  3000, 6000 (I to V; `Forged.MASTERY`). The tooltip shows it ("Mastery II (420 / 1200)"); the System says when a set
+  grows into a new step. II: the trims catch more light. III: what glows of itself glows more, and when the wearer is
+  under 35% health it beats with their heart (a double beat about seventy a minute), seen by everyone. Shader: the
+  overlay's bits 10-12 the step, bit 13 the wearer is low. IV (P3): each piece at IV grows its set's awakened parts,
+  drawn over its own (the kit's `awake` geometry, written as `<piece>_<bone>_awakened.mesh`: longer horns, a further
+  crest, a longer cape, a set's own). V (P3): with all four of one drawn set at V its aura moves about the wearer
+  (`ArmourAura`: tiny full-bright motes worked out from the time alone, nothing spawned or kept), each set its own way:
+  rising off the shoulders, falling from the face, circling the head, drifting about the body, ringing out from the
+  chest in a heartbeat, winking on the plate, or streaming back as if in wind. Stands and everyone else show it too.
+
+**44.6 Set twists.** Each set's own full-set twist on top of its archetype's ability (§44.5).
+- **Wildhide: Pounce** (P0, replaces Hunter's Sense, which outlined creatures through walls). Crouch at least 10 ticks,
+  then jump: you leap along your look's heading (0.95 forward, 0.62 up; the jumping client applies it, movement being the
+  client's). The server sees the same jump (vanilla replays it) and holds the leap for 50 ticks: the first melee hit in
+  that time deals +50% and shoves the target 0.7 along your heading, with crit sparks; then the leap is spent. 60 ticks
+  cooldown. Numbers in `gear/SetBonus` (`POUNCE_*`), logic in `gear/Pounce`.
+- **Bellguard: Ring.** A deflect rings the armour like a bell: everyone hostile within 3 staggered 20 ticks; 60 ticks
+  cooldown.
+- **Rootwarden: Rooted.** A cast while standing still on the ground: no knockback for 40 ticks, and you mend half a
+  heart; 40 ticks cooldown.
+- **Amberwing: Tempo.** A deflect or a perfect dodge: +15% attack speed and +10% speed for 60 ticks (the plan's "rhythm
+  steps last twice as long" needs arms' insides; this is the same tempo from outside).
+- **Cleftrunner: Slipstream.** Coming out of a wall-run or a slide: +25% speed for 30 ticks.
+- **Lanternlight: Kindle.** While your runes burn, anyone who strikes you in melee within 4 catches fire for 60 ticks.
+- **Bladeward: Parry Ward.** After a deflect, blows that land in the next 40 ticks do half.
+- **Hornlord: Gore.** Sprint on the ground for 25 ticks and the horns lower (the set's glow fills as they do); the first
+  foe within 1.6 in front of you is gored: 6 + 2 a rank above E, thrown (1.5, lifted 0.45), staggered 30 ticks; 100
+  ticks cooldown.
+- **Vaultbreaker: Vault Wall.** A guarded blow glances off: its striker is thrown back (1.0) and staggered 15 ticks;
+  10 ticks cooldown.
+- **Frostwalker: Rime Path.** Still water under your feet freezes as you go (frosted ice in a disk of 3, as vanilla's
+  Frost Walker), and a perfect dodge breathes frost: foes within 3 are slowed (Slowness II, 60 ticks) and frosted.
+- **Sunward: Noon.** An overchannel flares the sun at your back: foes within 5 burn 80 ticks; you and allies within 5
+  mend a heart.
+- **Shardcrown: Shatter** (the C Lord's move). A blow that takes you under half health bursts crystal out of the
+  armour: foes within 3.5 take the ability's blow and are thrown (1.2, lifted 0.4); for 60 ticks blows do a third less;
+  600 ticks cooldown.
+- **Deepcarapace: Shell.** Crouching and standing still closes the shell: blows do 40% less and fill Bastion twice
+  (16 each).
+- **Cloudrunner: Featherfall.** Falls never hurt; crouching while falling in the air you drift down (Slow Falling, no
+  particles, renewed while you crouch).
+- **Tidebreaker: Undertow.** The cutting wave drags those it cuts toward you (0.7) instead of throwing them back; in
+  water or rain the Edge fills twice as fast.
+- **Leviathan: Abyss Pull.** Its Bastion first drags everyone hostile within 6 toward you (0.9), then bursts 8 ticks
+  later (the charge is spent at the pull). Under water you never run out of breath (Water Breathing, no particles,
+  renewed while under).
+- **Galewing: Gust.** A perfect dodge beats the wings: foes within 3 are thrown back (0.9) and you lift (0.35); 40 ticks
+  cooldown.
+- **Halo Choir: Hymn.** While three runes circle you, blows do a fifth less; an overchannel rings the halo, staggering
+  foes within 5 for 30 ticks.
+- **Dreamsteel: Mirror.** A deflect throws half the striker's attack damage back at them (as thorns); 20 ticks cooldown.
+- **Starfall: Meteor.** Falls never hurt you; a landing from 6 blocks or more strikes like a falling star: foes within
+  4 (6 at S) take the ability's blow as Heat, burn 80 ticks and are thrown (1.2, lifted 0.5); 100 ticks cooldown.
+- **Riftwalker: Riftstep.** When the afterimage takes a blow from a creature within 12, you step out of the rift 1.5
+  blocks behind it, facing it (if there's room), and run on faster.
+- **Nightcourt: Riposte.** After a deflect, your next blade blow within 40 ticks lands 60% harder.
+- **Signal's Echo: Echo.** An overchannel comes again 20 ticks later: its runes fly out once more at three quarters.
+- **Hollowheart: Hollow Pulse** (the B Lord's move). Every fifth blow you land the caged heart beats (the set's glow
+  fills a fifth a blow): foes within 4 take the ability's blow and you mend half a heart for each struck (four at
+  most).
+
+**44.7 A forged piece's story.** `awaken:forged` (`Forged`, schemaVersion 2): the set, quality (0-3), mastery (§44.5),
+a flaw, twin-struck, and who made it; from 2 (P3) the inlaid Force's name (empty: none), the look it wears (a set id,
+empty: its own), its accent (ARGB, 0: its set's own) and whether its Deepglass rang true. A schema 1 story reads with
+those empty. The tooltip says it plainly ("Masterwork, twin-struck", "Forged by Name"). A
+Hunter piece made before the Forge Song gains a Plain story the first time it's worn.
+
+**44.8 Looks and accents (P3).** Cosmetic: never a number. At a Fitting Stand, Looks (the button by the title, or L)
+lists what you wear piece by piece, with you turning beside it. Each piece can wear the look of its own set or of any
+set you've forged whole (`ArmouryMemory.forged`) in the same slot (LOOK: the slot, the set's ordinal + 1, 0 its own; the
+server checks the set). `ArmourLooks.drawn` is what every renderer draws, worn, on a stand and on the arm: the look's set
+if it is made, else the piece's own; its numbers, ability and mastery stay the piece's. An **accent** colours what glows:
+an inlay gives its Force's colour; one dye you carry colours the whole worn suit (ACCENT: the dye's id + 1, the dye used
+up); the first swatch gives each piece its own back (its inlay's colour, if it has one).
+
+**44.9 Settings and pacing (P5).** Client settings (`ArmourClientConfig`, `config/awaken-armour-client.toml`, in the mod's
+settings screen; also `/awaken armour sculpted on|near|off` and `/awaken armour camera cinematic|first`):
+- **Sculpted armour** ON (default) / NEAR / OFF. NEAR draws the sculpted look within 24 blocks of the camera and the flat
+  painted look beyond (the rank's Hunter look stands in for a set without its own; lighter with many armoured figures in
+  view); OFF always draws flat, and the first-person gauntlet with it. The Fitting Stand always shows the sculpted suit
+  and the work. (The plan's far meshes are not built: every set is 600-1,000 triangles, well under its 2,500 budget, so
+  NEAR is the fallback until the Mac's perf pass says more is needed.)
+- **Forge camera** CINEMATIC (default) / FIRST_PERSON: first person keeps the eye at yours, at your own field of view,
+  and turns it to each shot's subject (the stand, the Forge's mouth, the metal, the stand for the fit); the marks project
+  the same way.
+- **Mastery pacing** (`tools/sim/armour_mastery.py`, from the Java's numbers): about 23 XP a minute of fighting in a whole
+  set (blows dealt and taken, the odd elite), 26 running gates (a Lord every 20 minutes): mastery II in a quarter hour,
+  III within the hour, IV in about two hours and V in about four.

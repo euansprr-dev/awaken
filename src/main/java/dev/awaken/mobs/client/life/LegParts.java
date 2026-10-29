@@ -17,7 +17,8 @@ import org.jspecify.annotations.Nullable;
 final class LegParts {
     final LegRig rig;
     private final ModelPart root;
-    private final ModelPart[] hip, knee;
+    private final ModelPart[] hip;
+    private final @Nullable ModelPart[] knee;
     private final ModelPart[][] up;
     private final Matrix4f fk = new Matrix4f(), inv = new Matrix4f();
     private final Matrix3f hr = new Matrix3f(), kr = new Matrix3f();
@@ -33,7 +34,7 @@ final class LegParts {
         up = new ModelPart[rig.n][];
         for (int i = 0; i < rig.n; i++) {
             hip[i] = parts[rig.hip[i]];
-            knee[i] = parts[rig.knee[i]];
+            knee[i] = rig.knee[i] >= 0 ? parts[rig.knee[i]] : null; // a one-bone leg has none
             int[] chain = rig.up[i];
             // legs on one body share their parent: one array, so the solve reuses its product
             ModelPart[] same = null;
@@ -75,7 +76,7 @@ final class LegParts {
     void apply(Legs legs) {
         float all = legs.weight;
         // a rigid leg has no knee, whatever its clips do (a bent shin on a blocky leg opens its joint)
-        if (rig.rigid) for (int i = 0; i < rig.n; i++) set(knee[i], rig.restKnee(i), 1.0F);
+        if (rig.anyStiff) for (int i = 0; i < rig.n; i++) if (rig.stiff[i] && knee[i] != null) set(knee[i], rig.restKnee(i), 1.0F);
         if (all <= 0.001F) return;
         last = null;
         for (int i = 0; i < rig.n; i++) {
@@ -91,7 +92,7 @@ final class LegParts {
                 last = chain;
             }
             ModelPart h = hip[i], k = knee[i];
-            if (rig.rigid) {
+            if (rig.stiff[i]) {
                 if (!rig.solveRigid(i, inv, h.x, h.y, h.z, legs.tx[i], legs.ty[i], legs.tz[i], hr, pv)) continue;
                 set(h, hr, wgt);
                 h.x += (pv.x - h.x) * wgt;

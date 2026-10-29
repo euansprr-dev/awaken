@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "title": "The Regions Below",
+  "area": "deep",
+  "blurb": "The caves under the world aren't all the same. Each region has its own rock, its own life and its own metal.",
+  "weight": 122,
+  "opens": [
+    "counter:awaken:discovered/cave_region/rootways|counter:awaken:discovered/cave_region/pale_halls|counter:awaken:discovered/cave_region/windcleft|counter:awaken:discovered/cave_region/drowned_galleries|counter:awaken:discovered/cave_region/glimmer_hollows|counter:awaken:discovered/cave_region/ochre_deep|counter:awaken:discovered/cave_region/black_vaults|counter:awaken:discovered/cave_region/violet_deep"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "rootways",
+      "text": "Find the Rootways.",
+      "done": [
+        "counter:awaken:discovered/cave_region/rootways"
+      ],
+      "hint": "The first caves under a forest, taiga or jungle. The trees' roots hang through the roof."
+    },
+    {
+      "id": "pale_halls",
+      "text": "Find the Pale Halls.",
+      "done": [
+        "counter:awaken:discovered/cave_region/pale_halls"
+      ],
+      "hint": "The first caves under plains, meadows, savanna or the shore: wide halls of pale limestone."
+    },
+    {
+      "id": "windcleft",
+      "text": "Find the Windcleft.",
+      "done": [
+        "counter:awaken:discovered/cave_region/windcleft"
+      ],
+      "hint": "Deeper under hills and mountains, above y 0: tall cracks where the wind moans."
+    },
+    {
+      "id": "drowned_galleries",
+      "text": "Find the Drowned Galleries.",
+      "done": [
+        "counter:awaken:discovered/cave_region/drowned_galleries"
+      ],
+      "hint": "Deeper under swamps, marshes and the shore, above y 0: halls full of still lakes."
+    },
+    {
+      "id": "glimmer_hollows",
+      "text": "Find the Glimmer Hollows.",
+      "done": [
+        "counter:awaken:discovered/cave_region/glimmer_hollows"
+      ],
+      "hint": "Deeper under deserts, badlands, savanna or frozen land, above y 0: crystals on the walls."
+    },
+    {
+      "id": "ochre_deep",
+      "text": "Find the Ochre Deep.",
+      "done": [
+        "counter:awaken:discovered/cave_region/ochre_deep"
+      ],
+      "hint": "Deeper under forests, plains and hills, above y 0: red ochre stone, iron country."
+    },
+    {
+      "id": "black_vaults",
+      "text": "Find the Black Vaults.",
+      "done": [
+        "counter:awaken:discovered/cave_region/black_vaults"
+      ],
+      "hint": "Below y 0, under any land: great halls of black basalt and ash."
+    },
+    {
+      "id": "violet_deep",
+      "text": "Find the Violet Deep.",
+      "done": [
+        "counter:awaken:discovered/cave_region/violet_deep"
+      ],
+      "hint": "Below y 0, under any land: violet chambers where the Hollows nest. Go ready to fight."
+    }
+  ],
+  "finish": {
+    "line": "You've stood in every region under the world.",
+    "levels": 0.05
+  }
+}

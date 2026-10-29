@@ -91,7 +91,8 @@ final class ArmsTests {
             }
             checked++;
         }
-        h.assertTrue(checked >= 138, "the gear and arms recipes were read (42 gear pieces and 96 weapons): " + checked);
+        // Hunter armour is forged at a Fitting Stand (SPEC §44.4): 18 gear pieces keep recipes
+        h.assertTrue(checked >= 114, "the gear and arms recipes were read (18 gear pieces and 96 weapons): " + checked);
         java.util.Set<String> lang = new java.util.HashSet<>();
         try (var in = ArmsTests.class.getResourceAsStream("/assets/awaken/lang/en_us.json")) {
             h.assertTrue(in != null, "the merged lang file is on the classpath");
