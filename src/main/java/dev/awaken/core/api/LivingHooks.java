@@ -21,6 +21,11 @@ public final class LivingHooks {
 
         /** Whether this fauna species lives in the living module's ledger here (herds), so it never spawns naturally. */
         default boolean ledgered(net.minecraft.server.level.ServerLevel level, String speciesId) { return false; }
+
+        /** The Kinsong (SPEC §43.14): ends the stampedes running within {@code reach} of {@code at}; how many it ended. */
+        default int calm(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos at, int reach) { return 0; }
+        default void risen(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos at, String name, net.minecraft.core.BlockPos toward) {}
+        default boolean visit(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos from, net.minecraft.core.BlockPos fire) { return false; }
     }
 
     private static Bridge bridge = new Bridge() {};
@@ -32,6 +37,21 @@ public final class LivingHooks {
     /** Whether a fauna species' herds live in the Living Wilds' ledger instead of spawning naturally (SPEC §21.7). */
     public static boolean ledgered(net.minecraft.server.level.ServerLevel level, String speciesId) {
         return bridge.ledgered(level, speciesId);
+    }
+
+    /** The Kinsong stops a stampede near {@code at} (the herd settles where it stands); returns how many it stopped. */
+    public static int calm(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos at, int reach) {
+        return bridge.calm(level, at, reach);
+    }
+
+    /** After the Wake (SPEC §43.14): one of the Stilled, stood up at {@code at}, walking toward {@code toward}. */
+    public static void risen(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos at, String name, net.minecraft.core.BlockPos toward) {
+        bridge.risen(level, at, name, toward);
+    }
+
+    /** After the Wake: Ilse comes up the path at {@code from} to visit the fire at {@code fire}. False when she couldn't. */
+    public static boolean visit(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos from, net.minecraft.core.BlockPos fire) {
+        return bridge.visit(level, from, fire);
     }
 
     public static boolean paysKills() {

@@ -14855,12 +14855,21 @@ here as it goes.
   Twinblades), else the first of the six old relics they haven't had from one, else three essence; and supplies.
 - Most carry a letter (a Found bell lead), a key (a chest in a nearby empty settlement) or a keepsake with a name that
   someone in Carillon reacts to. The System reads them in brackets ("[She got as far as the bridge.]").
-- At the Wake they stand and walk home over one play-day (stage 7).
+- At the Wake they stand and walk toward the bells (built in stage 7, §43.14).
 
 Built (stage 1, `dev.awaken.world.stilled`): blocks `awaken:stilled` (a block entity, drawn by its own jointed model:
 knees, elbows, the body pivoting at the hips; twelve hand-set poses: milestone, walking, grave, a pair on a cart's
 tail, a lead with no dog, reaching, looking back, waiting, a lantern, a parent with a child, curled, sat on a bundle;
-five looks, man, woman, old man, old woman, girl; textures from `tools/art/stilled.py`) and `awaken:left_chest` (a
+six looks, man, woman, old man, old woman, girl, child. Rebuilt 29 Oct after the first tour read as a mob with a
+stone skin: they are Carillon's own people turned to stone, on the citizens' player-shaped body with split elbows and
+knees and joint fillers; each look has six stone skins made from real citizens' closed-eyes skins (their own light and
+dark and a ghost of their colours under weathered stone, moss where the sky fell on them, damp moss at the feet, lichen
+on the back, cracks), the block's place picking one (no save change). Props are their own material: what they carried
+in their stone, the milestone the road's sandstone, the headstone slate, the cart and the pack the world's own. One rig,
+`assets/awaken/rigs/stilled.json`, holds parts, poses and the second figure of two; `tools/art/stilled.py` writes it
+(each pose lifted so its lowest point meets the ground) and the textures, `tools/art/rig.py` draws it as the game does
+(`python3 tools/art/stilled.py preview OUT.png [pose...]`), and `StilledModel` reads the same file). The named figures on the north road are never dropped for standing near another (a winding road once dropped
+the second beside Aldo); only the land's own figures keep 150 apart and `awaken:left_chest` (a
 locked trunk), both bedrock-hard, immovable, dragon- and wither-immune, cancelled on any break (only `/awaken stilled
 remove`, which also keeps the spot from ever being used again). Spots (`StilledSpots`, pure from the seed and the
 centre): the north road's three at the ridge +12, +170 and +330 (Aldo's letter to Ilse is letter 0); the first
@@ -14938,8 +14947,28 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   Totter fetches it to the desk, or "Show me" lights its bay. Home crafting takes from it. It only holds what the player
   brings; at B the Works' lines link it to every work. Items are counted data, not entities; the heap and shelves draw
   at most a capped number of item models, simpler far away. Detail: JOURNEY part 3, "The Storehouse".
+- **Built (stage 5)**: the other eight kin, the works to the Foundry and the Storehouse: §43.12.
 - **The Hearth page** is a band page (Home, Your beasts, Kin) between Journal and Truths. Nothing on it expires or
   renews daily. No Board, no requests, no Daily Regimen.
+- **Built (stage 2, `dev.awaken.kin`; rows in LEDGER.md "Stage 2")**: four kin walk the world (Lampwing, Burrowbun,
+  Mossback, Pebblepup; art `tools/art/specs/kin.py` → `textures/entity/kin/`, `kin.client.KinData`), each a hero rig
+  whose synced act (idle, want, flee, tell, nudge, work, sleep, follow, hide, sniff, carry) picks its clip. Wild sites:
+  one per 128-block cell in about half the cells, kind by biome tag (forest; plains or meadow; swamp or river; mountain,
+  windswept or stony shore), filled 24 to 96 blocks from a player, again three days after they're gone. Kinship numbers:
+  steps at 10, 40, 100; help +10, a day at home +4, hurt −15, killed −60 and three days' fear; SPI warms gains +1% a
+  point to +30%. Reading: 1 s in a 9° cone at 32 blocks with the band, 3.5° at 128 with Binoculars. Watching: 3 s within
+  16 blocks for each of three want lines, 20 s apart (the lesson Lampwing 1.5 s, 4 s). Trust after three helps of one
+  beast. Nooks 2, 4, 8, 12, 18, 24 by tier plus 2 for the Ore Shed. Work: the Lampwing's roost holds a real light
+  (level 13) at night and stops natural hostile spawns within 32 blocks; Burrowbuns harvest within 14 of their nook,
+  replant, and carry to a chest within 8; a Mossback gives crops within 8 six random ticks every 5 s by day; Pebblepups
+  work one item every 2 s from barrels within 4 of the heart (rubble to gravel, gravel to flint 1 in 4 or sand, ore
+  blocks to an iron pick's drops, a nugget 1 in 32). The Ore Shed is `RoomType.MINE_HEAD` relabelled (a lode heart and a
+  barrel; the shaft rule is gone); lode hearts drop themselves, and a heart a player set down gives only itself back.
+  The band has seven pages (rail nodes every 29 units). Never stuck: a rumour unfollowed for 24,000 ticks of play names
+  its distance to 50 blocks and the land; after 48,000 Track's offset narrows from ±48 to ±8. Commands:
+  `/awaken admin kin summon|home|meet|watch|points|trust|lesson|site|yard|page` (`yard`, for tours: a Hearthfire where the player stands, whatever the Lull says, with a field of ripe wheat and a chest east of it and an Ore Shed with an iron lode heart and a barrel of rubble west of it). Look tour: `tools/autopilot/journey-2.txt`. Tests (CI): `kin_kinship_steps`,
+  `kin_ore_shed_limits`, `kin_fields_harvest`, `kin_rumours_real`, `hearth_ore_shed`. Sounds are pitched vanilla events
+  for now (`kin.<kind>.call/tell/worry`, `kin.chime`); the kin's own suite comes with the style pass Euan judges.
 
 ### 43.7 The bells and the beasts
 - The tower rings the player's song at dawn and dusk. The player's beasts react by bells held: under 20 bolt for their
@@ -14948,6 +14977,56 @@ once, in plain words what it was and why the owner went back, and you keep it (`
 - The Hundred Peal (the only big moment that doesn't glitch) raises Kinship a step for many kinds land-wide and gives
   the Kinsong. Then the Deep answers: harder breaks, the Gnawed spread, Grieving Sovereigns. Fighting never ends.
 - Leads: Heard, Seen, Sung, Found, Rung, Remembered. None told by people at home.
+- **Built (stage 4, `dev.awaken.bells`; rows in LEDGER.md "Stage 4")**. The hundred (`BellCatalog`): numbered 00 to 99
+  with a name, rank, source and voice; a bell's number is its step in the song. Thirty are built: Registry 03, Ember 07,
+  Nook 12, Wren 17, Barrow 21, Mere 26, Wayside 34, Tenor 40, Lintel 44, Founding 46, Night 50, Watch 52, Curfew 55,
+  Crypt 58, Second 60, Spore 61, Ember Mine 63, Hive 66, Root 68, Cairn 71, Spire 73, Reed 76, Garden 79, Drowned Choir
+  82, Dreaming 85, Spirit 88, Thorn 91, Crag 93, Fen 95, Lantern 97. 00 (the Seed) and 31 (the Thaw) keep their places
+  for later stages; every other slot shows its rank, empty. The Bell Book is the attachment `bell_book` (schema 1, kept
+  through death): bells held (play-day and where), leads (how learned, the System's lines, bearings), the tracked lead,
+  the handbell's peal, Homeward's next time.
+  Moments ring a bell home (states checked every 5 s per player, events when they happen): a Hearth (Ember), a beast
+  living with you (Nook), a Grand room (Lintel), the Hearth's tier 2 (Founding), the first gate cleared (Registry), D and
+  C rank (Tenor, Second), Descent strata 2 and 3 (Garden, Drowned Choir), the first lucid dream (Dreaming), the first
+  spirit spoken to (Spirit), a raid held to dawn (Night), a holdfast's bell rung from inside its walls (Watch, then
+  Curfew; standing inside files a Rung lead), and a gate world's Lord at the bell's rank or above (Crypt from the Bell
+  Crypt, Spore, Ember Mine, Hive and Root from their worlds, Lantern from the Lantern Night Market) for everyone in the
+  run within 96. The first bell gives the handbell and the bell frame, and six seconds later the Signal's one line:
+  "There were a hundred. Find them. Ring them all and I can show you the bottom."
+  Sleeping places (`BellSites`; saved data `bells`, schema 1): each 640-block cell past the ridge (+120) may hold one, its
+  rank by distance from the centre (E to 1,300 blocks at 85%, D to 2,800 at 70%, C to 4,800 at 60%) and its bell from the
+  band's three; every home's own (the Wren Bell) is buried 90 to 160 blocks out, away from the city. Each is built in one
+  go when a player comes within 96 (never in the city or a Hearth; a bell over water deeper than 12 is lost). Kinds:
+  buried (dig it out), kept (a themed elite of the bell's rank comes out when a player is within 16 and must die first;
+  on Peaceful none comes), sunk (on a pond's bed), high (on a crag). Grey moss, coarse earth and dead bushes over radius
+  7 mark the place asleep. It hums every 8 s to a player within 64 who doesn't hold it: a Heard lead with a bearing;
+  heard again from 32 or more blocks away at a different angle, the two bearings cross into an area whose middle sits up
+  to 20 blocks off the bell. Within 24 it's Seen. Struck free, it wakes: bronze, a toll heard 256 blocks off, the Fault
+  mend for players within 48, the bell home with everyone within 48, and the land turned back over radius 14, ring by
+  ring.
+  The tower (`BellTower`): the bell frame, set inside your own Hearth (anywhere else it pops off), one per home; every
+  bell held by anyone who lives there hangs in it, and a bell once hung stays. At 20 bells a timber belfry goes up round
+  it (5 by 5, 10 high, four bells under its beams, a deepslate-tile roof); at 50 a stone tower (5 by 5, an arch on the
+  frame's side) with a nine-bell belfry on top, 15 high. Each goes up only into clear space; otherwise a note once a
+  play-day, and it tries again at every song. The song at dawn (clock 23,600 to 400, so a night slept through wakes to
+  it) and dusk (11,600 to 12,400): bell #n's note at step n (D major pentatonic, 15 tuned bells, D3 to B5) or a dull
+  knock where it's missing, 4 ticks a step (20 s), heard 256 blocks out. Beasts living there: under 20 bells they hide,
+  20 to 49 hunker, 50 to 79 listen, 80 to 99 gather within 4 of the tower, 100 sing; under 100 the land's wild beasts
+  within 48 run for 30 s.
+  Voices, counted over the home's hung bells: Rest (Regeneration I by your fire, II from 3 bells), Growth (a crop that
+  didn't grow on its tick gets 5% a bell, up to 5 bells), Kin (help warms 10% more a bell, up to 5), Ward (natural night
+  creatures inside the Hearth fail to spawn 20% a bell, up to 80%), Stride (Speed I inside, II from 3), Glow (a raid's
+  creatures glow), Shed (the Ore Shed's nugget odds: one in 32 rubble, 4 fewer a bell, down to 16), Raid (warned two
+  days ahead, not one), Homeward (the peal takes 2 s, not 5).
+  The handbell: use rings it (2 s cooldown; outside a Hearth the land's beasts within 24 run for a minute); sneak-use
+  sets the peal. Homeward (Ember, Wren, Wayside): stand still 5 s (2 with the Registry Handbell hung), then you're beside your Anchor; every 5 minutes,
+  overworld only, broken by moving or a hit. Gather (Nook, Founding, Root): your beasts come to the tower and wait a
+  minute. Stillness (Tenor, Night, Watch): a raid's creatures within 48 get Slowness IV and Weakness II for 10 s, once
+  a raid night. The Bell Book page is in the Codex (The Hundred Bells, Bell Leads, Your Tower, with "Play the song");
+  payloads `bells_song`, `bells_page`, `bells_ask`, `bells_track`; Track puts the lead's area (or the start of its one
+  bearing) on the top-right card. Recipes: handbell (a stick over two copper ingots), bell frame (planks, logs, a bell).
+  Sounds `bells.note_0..14`, `gap`, `handbell`, `toll`, `hum`, `wake` (`tools/art/specs/audio_bells.py`); art from
+  `tools/art/specs/bells.py`. Commands `/awaken admin bells give <id> | tower <n> | song | site <id> | wake | page`.
 
 ### 43.8 Faults and Big Days
 - A Fault is one reusable director: tell, break, words in the black, held cut, aftermath, mend. Sizes: flicker (under
@@ -14959,6 +15038,25 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   no help (a level-12 player in D gear who stands and fights holds it). A raid while away breaks what it reaches and
   takes at most a chest's worth from the larder, never a beast, never the Forge's racks.
 
+- **Built (stage 3).** Faults: `fault.Faults.play/playNear/mend/mendNear` (public API), payloads `fault_play` and
+  `fault_mend`; sizes flicker 14 ticks, Fault (tell 10, break 22, black at least 34, cut up to 40), Great Fault (tell 22,
+  break 60, black at least 110, cut up to 90); words type at 1.1 characters a tick with a 10-tick beat between lines,
+  each glyph arriving broken for 3 ticks; a Great Fault's key plays once per player (`awaken:fault_<key>`), then as a
+  Fault. Client config `faults` (FULL, GENTLE, STILL) in `awaken-faults-client.toml`; screen flashes or camera shake
+  off make FULL play GENTLE; band layouts change at most every 7 ticks. Sounds `fault.tell/tear/voice/drop/mend/flicker`
+  (`tools/art/specs/audio_fault.py`). The Ringer's Great Fault (`ringer`) opens the D Reassessment (the waves trial
+  stands in for the Ringer's hall) and the trial's end mends it. Raids (`bigday.BigDays`, saved `big_days` schema 1):
+  a home is ready once its owner is D rank; never in the first 2 h of play (144,000 ticks); one every 5 play-days at
+  most; due 1 to 2 play-days later the first time, 1 to 3 after; warned the morning before; dusk at 12,200, dawn at
+  23,200; within 160 blocks counts as home. Waves 4/6/8 normals with 0/1/2 elites, 52 blocks out along the breach's
+  bearing, the next at 2 or fewer left or after a minute, then the Lord (role BREAK, level 12 the first time); the
+  Lord's death drops a Lord's Heart. The breach: the nearest standing gate within 700 blocks (over 120 away), else 400
+  blocks on one of eight bearings from the home's position. The first raid's Great Fault is `first_raid`. Away: at most
+  10 doors/trapdoors/fence gates/wooden fences/glass on the breach side, mended one per 300 ticks; at most 9 stacks of
+  food from the fullest chest, left in a chest 70 blocks out and tracked. Commands `/awaken admin fault
+  flicker|fault|great <key>|mend`, `/awaken admin bigday raid [first]|dawn`. Tests (CI): `fault_great_once`,
+  `bigday_away_raid`.
+
 ### 43.9 Changes to earlier sections
 §10 (Echoes, Barracks, town NPCs at the Hearth), §28 W0/W1/W3/W4/W6/W7 (citizens, troubles, settlers, the Mine head
 and Mine Echo), §41 (tamers: Carillon, its farmland, roads, holdfasts, Hearths; hunts take quarry and the Gnawed only),
@@ -14968,7 +15066,7 @@ SPI's line in the stat table, GOALS.md's Hearth Board, Echo Hall and Generals. J
 1. The world rule (43.1 to 43.4). 2. The first beasts, Kinship, the Hearth page, Fields and the Ore Shed (43.5, 43.6).
 3. Faults, the Ringer's Great Fault, the first raid (43.8). 4. The first thirty bells and the tower's song (43.7).
 5. The rest of the kin and the works to the Foundry, with the Storehouse. 6. The second half's bells and beasts. 7. The Hundred Peal, the
-Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY part 8).
+Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY part 8). **Built (stage 7, §43.14)**.
 
 ### 43.11 The bar (Euan, 29 Oct: "fully featured ... everything has a recipe, everything has a path ... never left unsure about how to keep going")
 - **Ledger**: `docs/director/LEDGER.md`, a row for everything the Journey adds or changes (source, use, how you come to
@@ -14992,6 +15090,224 @@ Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY pa
 - **Creatures**: Fresh Animations level (own model, three idles or more, look-at, blink, breathing, follow-through,
   own gaits, reactions, own sounds and particles). The Lampwing passes Euan in game before any other kind.
 - **Hand-off**: the Ledger re-read against the code, the diff reviewed, the full suite green on CI.
+
+### 43.12 The working kin and the works (stage 5; rows in LEDGER.md "Stage 5")
+Built in `dev.awaken.kin` (`KinWorks`, `KinHelp`, `KinHome`, `KinSpawner`) and `dev.awaken.kin.works`; art
+`tools/art/specs/kin.py` (rigs) and `tools/art/specs/works.py` (blocks).
+- **Eight more kin** walk the world, each its own rig and clips (idle, move, run, want, tell, nudge, work, sleep, sniff,
+  carry, hide), sounds `kin.<kind>.call/tell/worry` (pitched vanilla events until the style pass):
+  Totter (a round blue beetle, wing cases with a row of pale spots), Thatchback (a beaver-badger with a paddle tail),
+  Emberkit (a salamander kitten glowing down its back; fire-immune), Puffwool (a cloud of a sheep), Dumplin (a round
+  bird that can't fly, flocks of 4), Pondling (a frog-axolotl with glowing gill tips), Snufflet (a striped wild piglet),
+  Chimewren (a blue songbird with a brass crest, flocks of 3). Groups: Totter and Puffwool 2.
+- **Where they live** (site kind by biome): Totter forest but not old growth; Thatchback river; Emberkit hot and not wet;
+  Puffwool meadow, plateau or cherry grove; Dumplin plains or savanna; Pondling swamp; Snufflet old growth or dark
+  forest; Chimewren plains, meadow, savanna or forest. Each site is dressed for its want: the Totter's ground strewn
+  with sticks, flint, bone and feathers (items that never despawn); logs along the Thatchback's bank; a 2×2 hot spring
+  with two vent stones for the Emberkit; berry bushes round the Puffwool; a hay nest for the Dumplins, who start lost
+  16 to 24 blocks from it; a 3×3 pond for the Pondling, mud-bottomed with two blocks of pond rot; a spot of ground the
+  Snufflet keeps snuffling at. Rumours name each place in plain words.
+- **Helps** (the System never names them; a near miss is a nudge): Totter, toss it one of the scattered things;
+  Thatchback, toss it logs (planks get "not that"); Emberkit, something warm near it (a lit campfire, magma, a vent
+  stone, fire, or flint and steel); Puffwool, a brush (shears only frighten it); Dumplins, stand somewhere a block and
+  a half above them within 10 and they follow you (32 blocks' leash) to their nest; a flock left alone for 2,400 ticks
+  wanders off again; Pondling, break every block of pond rot (it regrows one every 2,400 ticks while any is left; a
+  water bucket is a nudge); Snufflet, dig the block it's snuffling at (above it: "deeper"): bone, flint, a mushroom, a
+  gold nugget or an amethyst shard, or 1 in 4 an old letter (a Found lead), and it picks a new spot; Chimewrens, ring
+  or wake a bell near them (only a player who holds a bell; a peal reaches 24 blocks, a waking 48). A note block or bell used
+  near them is a nudge. Handbell peals never scare Chimewrens.
+- **Nooks**: Totter the Storehouse's Drop, else any room with chests; Thatchback the nearest Work Plan within 64, else
+  a stack of logs; Emberkit above a Smeltery's vent stone, else beside a lit campfire; Puffwool and Dumplin a hay bale;
+  Pondling (like the Mossback) water open to the sky; Snufflet open grass; Chimewren a Rookery's Chime Perch. Each
+  checks its nook every 1,200 ticks and moves to a better one.
+- **Work Plans** (`awaken:work_plan`, paper, coal and planks): set one down facing the door, sneak-use it to choose
+  (Smeltery, Rookery, Foundry, Storehouse, Ore Shed), use it to read the bill or how far it's got. A Thatchback at that home lays one block every 10 ticks
+  from the chests and barrels within eight blocks that hold it (not just the nearest: the plan's own barrels would hide
+  yours): floor, walls with log corners, a door toward the front, a window each side (walled up with no glass), a flat
+  roof (the Storehouse's has a skylight over the Drop), lanterns if there are any, the furniture, the work's rare thing
+  last in the middle. Blocks already right count; anything of yours in the way is built round; it waits, saying on
+  what. Sizes: 7×7 rooms, the Storehouse 7×9. A player can build any work by hand; the room reads the same.
+- **Smeltery** (a vent stone and a furnace in a room): an Emberkit smelts ore and raw metal from the room's chests and
+  barrels at its vent, one every 100 ticks, 15 faster for each Smeltery bell (SMELT voice), never under 40; no fuel; the
+  results go back into the room's chests. Only what you bring: nothing else is smelted.
+- **Storehouse** (the Drop, `awaken:storehouse_drop`: planks, a granary keystone and barrels): use it holding
+  something to tip that stack in, sneak-use to empty your bag (all but the hotbar, armour and marked items), use it
+  empty-handed to hear how it stands. The heap holds 64 stacks
+  as data and draws at most 24 items near, 8 past 24 blocks, each landing with its kind's sound (`works.land_*`).
+  Totters take three stacks an armful to the bay of its sort (§43.6's eleven), or to an empty chest or barrel that
+  becomes a new bay with a painted sign; a full hall puts the armful back and the Totter rests 1,200 ticks; the Drop
+  says the hall is full. Between works, Totters carry the Smeltery's ingots, nuggets and gems to an Armoury chest (or
+  the Drop) and the Burrowbun field chests' crops and food to a Kitchen chest (or the Drop), leaving 32 of each seed crop
+  in the field chest for planting.
+- **The Ledger** (`awaken:ledger_desk`: a book and quill over planks): lists everything shelved or on the heap, by bay,
+  with a search. "Fetch it": a Totter brings the stack to the desk (with no Totter free, or none back within 1,200 ticks, it's set
+  out on the desk); "Show me": a light over its bay. Payloads `works_ledger` (to the client) and `works_ledger_ask`.
+- **Rookery** (a Chime Perch, `awaken:chime_perch`: planks over a woken clapper and a stick; a clapper comes loose from
+  every bell you wake): its Chimewrens bring each online member one Sung lead a day: one bearing toward the nearest
+  sleeping bell they hold no lead on, within 1,200 blocks of home, with a line naming the direction.
+- **Foundry** (the Crucible, `awaken:foundry_crucible`: bell bronze, deepglass shards and a furnace): casts the Singing
+  Deep's five bells in order when the room's chests hold the metal: Sung Iron (12 iron, 4 bell bronze), Sung Copper (16
+  copper, 4), Sung Gold (12 gold, 6), Deepglass (16 deepglass shards, 8), Starmetal (4 starmetal, 8). A cast takes 600
+  ticks (300 with a Thatchback at home), the Crucible glowing; the metal is taken only when it's done (a cut-off cast
+  starts again). Each member gets the bell (online at once, the rest when they next come home; saved per home in
+  `kin` world data, field `cast`). Using the Crucible says what's next and what's missing.
+- **Found leads**: an old letter dug up with a Snufflet names a stretch of land round a sleeping bell within 800 blocks
+  (two bearings' worth: an area 20 blocks off the bell), and Tracks it if nothing else is tracked.
+- **Bells' voices** (stage 5): 14 Sung Iron and 45 Sung Copper, SMELT ("The Smeltery's Emberkits smelt faster."); 28
+  Deepglass GLOW; 49 Sung Gold SHED; 51 Starmetal STRIDE. The True Bell (36) keeps none until stage 7.
+- **Wool**: a Puffwool at home gives three wool a day to a member who brushes it. Dumplins leave 2 eggs a day (one
+  every 2,400 ticks) in the nearest chest; Pondlings fish 4 a day (one every 1,200 ticks) from water by their nook;
+  Snufflets forage 4 a day (mushrooms, berries, herbs) round home. Never ore, gems, gate loot or XP.
+- **Granary keystone** (`awaken:granary_keystone`): set against a wall on the ground floor of every town granary.
+- **Saves**: `KinBeast` schema 2 (adds `mark`, `brushed_day`; what it carries shows on its back), `DropBlockEntity`
+  schema 1, `WorkPlanBlockEntity` schema 1 (`work`, `step`, `waiting`), `KinWorld.cast`. Errands are not saved: a
+  restart puts an armful back down where the Totter stood.
+- **Sources** (`journey_ledger`): recipes for the perch, Crucible, Drop, Ledger and Work Plan; vent stones from Emberkit
+  springs, the clapper from waking bells, the keystone from granaries, pond rot never held (it drops nothing). Every
+  block drops itself.
+- **Tests** (CI): `works_plan_builds`, `works_bays_sort`, with stage 2's kin tests. `/awaken admin kin works` raises a Smeltery, a Storehouse (a heap on its Drop), a Foundry (Sung Iron's metal) and a Rookery north of your home from their plans; tour `journey-5`.
+
+### 43.13 The second half's bells and beasts (stage 6; rows in LEDGER.md "Stage 6")
+Built in `dev.awaken.bells` (`Bells`, `BellSites`, `DreamBells`, `BellCatalog`) with one line each in `bigday.BigDays`
+(Siege) and `kin.KinWorks` (Founders).
+- **Every bell but two has a voice now** (the Seed, 00, and the True Bell, 36, came with stage 7, §43.14). New voices, felt inside
+  your own Hearth: Sight (night vision), Breath (no drowning under water), Feather (a fall doesn't hurt), Haste (I, II from
+  3), Warmth (fire and lava don't burn), Might (Strength I, II from 3), Guard (Resistance I, II from 3).
+- **Moments** (checked every 5 s with stage 4's): the Great Bells of the B, A, S and Sovereign Provings (Third, Fourth,
+  Fifth, the Bourdon) with the rank; the Toll Bell for the twenty-fifth gate cleared; the Descent's bells on reaching
+  each stratum (Shallows at the Rim, Bone in the Bone Orchard, Echo in the Silent Halls, Furnace in the Precursor
+  Foundry, Black Water under the Inverted Sea, Weight in the Dreaming Stratum, the Deepest at the Seed); the Crystal
+  Bell the first time Deepglass is in your inventory; the Above's: Wind for the first Tether Spire scanned, Island for
+  the first sky platform, the Halo Bell aboard the Halo, the Star Bell at the Halo at S rank, the Storm Bell in the air
+  above y 160 in a thunderstorm.
+- **Gate worlds**: every theme now has its bell from its Lord at the bell's rank or above (Archive C, Gear C, Glass C,
+  Frost B, Mirror B, Counting B for the Precursor Lab, Sleeper B for the Nightmare, Sky A, Herald S for the Abyssal
+  Shrine).
+- **The Court**: each Sovereign that a player fells rings its domain's bell for everyone within 96 (Hunger, Silence, the
+  Sorrow Bell for Sleep, the Throne Bell for Machines, the Oath Bell for Mirrors, the Crown Bell for Storms, the Grief
+  Bell for Roots, Ash).
+- **Big Days**: the Siege Bell with the Night Bell when a home holds a raid and its member is B rank or above.
+- **The wild's big moments** (source WILDS; they were down as Big Days, but the World Pulse already holds them, §21.6):
+  from C rank, witnessing a Stampede rings the Stampede Bell and witnessing the Deep Tide (new moon) the Flood Bell
+  (`Bells.witnessed`, called from `Pulse.witness`); at A rank, standing under open sky between 16000 and 20000 on a new
+  moon's night rings the Eclipse Bell. Every bell but the Seed (00) and the True Bell (36) now has a source (both came with stage 7, §43.14).
+- **Carillon** (Remembered leads while you're in the city): the Roost's bell rings for you within 16 of the Roost at C
+  rank; Choir Square's within 20 of the square with 20 bells; the market's in the market district at B rank; the
+  Quay's (the Harbour Bell) on the Quay with 50 bells. A due bell you're away from is remembered aloud with where it is.
+  The Founders' Bell comes with your Foundry's first cast.
+- **The land, further out**: the C band also holds the homes people left (Fenwick's, sunk by a lake; the Mill Bell,
+  buried; the Shepherd's, kept); a B band (4,800 to 7,200 blocks, half its cells) holds the Hill (high), the Ford
+  (sunk) and the Thaw Bell (kept); an A band (7,200 to 9,600, two in five) the Boulder (kept) and the Leviathan's (high).
+  Once a play-day in Carillon someone remembers one of the people's bells still asleep within 7,200 blocks, in plain
+  words, with the area 20 blocks off it ("An old woman in the square says Fenwick had a bell, by the lake, to the
+  west."); the Bell Book keeps `remembered_day` (schema 2).
+- **Spirit bells** (the Veil: Ghost Lantern and Whisper in the C band, Wake and Mourner in B, the Veil Bell in A; two in
+  five cells of their own 960-block grid): nothing a body can touch, the ground round them asleep (radius 5) and the bell
+  hanging 7 above it. A body within 24 feels it ("The air here is cold and still, as if something hangs in it that only
+  a spirit could see." filed Seen). A spirit sees it drawn in cold light every 10 ticks, hears it hum within 64 ("Heard
+  in spirit: a bell's note ..."), and rings it by coming within 3. Its toll is sent only to spirits within 256, and it
+  goes home with the spirit and every other spirit within 48. The land turns back as usual.
+- **Dream bells** (the Lucidium: Daydream, Lullaby, Falling, Nightmare, Lucid, offered in that order, one a dream): in a
+  dream the next one not held is set down awake 24 to 40 blocks off on the dream's ground and rings its note every 5 s.
+  Strike it with lucidity at least 40 (C), 60 (B) or 80 (A) and you hold it ("Wake, and it's yours."); too dim and your
+  hands go through it. Wake holding it and it's yours ("carried out of a dream"); wake without it and the Book files a
+  Dreamt lead (the new lead kind). Not saved: a dream isn't.
+- **The last four kin** (`KinKind` built: all sixteen live now; fliers are `KinKind.flies()`: Lampwing, Bumblepuff,
+  Cloudcalf). Each has a rig in `tools/art/specs/kin.py` (11 clips), vanilla stand-in sounds and the usual watch lines.
+  - *Bumblepuff* (flower fields: `c:is_floral`; two at a site; health 10, speed 0.2). Its site is an old bee nest on a
+    stripped log, the meadow round it picked bare (flowers gone within 5, a third of the grass worn to coarse dirt). Help:
+    flowers round its nest, lots of them: a flower planted within 6 of the nest counts once there are 3 or more there (bone
+    meal that brings them up counts too); with fewer, "It wants lots". A sapling, a berry bush or an azalea is a nudge.
+    Nook: a bee nest or beehive at home (the POI manager finds it, no block scan). Work: 2 honeycomb and a honey bottle a
+    day into the nearest chest.
+  - *Loomworm* (old growth, dark forest, birch forest; health 10, speed 0.1). Its site is a fallen log of its own tree
+    (dark oak in dark forest, birch in birch forest, spruce in taiga, oak otherwise). Help: a branch of that tree (its
+    leaves or sapling) tossed by it; any other tree's is refused. Nook: leaves at home it can reach from the ground (within
+    3 above a column, or a hedge). Work: 4 string and a white wool a day.
+  - *Cloudcalf* (B land: 4,800 blocks or more from the centre, over mountain peaks; health 20, flying speed 0.3). Lost
+    alone 8 blocks above the peak, its pod calling now and then (the calf's call at low pitch and a cloud puff) from a
+    point 48 to 72 blocks off. The pod is heard, never seen as beasts: the JOURNEY's sky islands aren't overworld land, so
+    the calf lives over the high peaks instead and isn't a mount. Help: someone no more than 4 blocks under it, within 16,
+    and it follows them (lost again past 32); led within 12 blocks of the pod across the map it's home, helped, and its
+    guide hears the Cloud Bell ("the day you brought a Cloudcalf home to its pod"). Two minutes after it drifts off, lost
+    somewhere new 48 to 72 from the pod. Nook: farmland open to the sky at home, 6 above it. Work: rain: it hangs over the
+    field, falling-water drops under it, and every 5 s each crop within 4 across (2 to 10 below) has a one-in-four growth
+    step and farmland there is soaked to full.
+  - *Boulderback* (deep caves: a cave biome under the column at y -24 or -44, never the deep dark; health 30, speed 0.18).
+    It stands in cave air under its site (within 12 of it, from y -8 down), or in a 5 by 3 by 5 pocket cut at y -30 when
+    there's no cave there; moss and a few stones of cobbled deepslate make its den. Help: no light in either hand (any
+    item that would glow if set down) and keep still, or creep crouched, within 12 of it for 30 s; at 15 s it takes a step
+    closer. Walking about starts the wait again; a light and it backs off into the dark (a nudge every 10 s). Nook: a room
+    at home with block light 2 or less and no sky. Work: 16 cobbled deepslate a day, and while it's home every Thatchback
+    there lays a block every 4 ticks instead of 10.
+
+### 43.14 The Hundred Peal, the Kinsong, the Deep's answer and the Wake (stage 7; rows in LEDGER.md "Stage 7")
+Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with the Deep's answer read through
+`core.api.BellHooks` by `gates.Breaks`, `story.Court`, `kin.KinSpawner` and `kin.KinPage`, and the Wake's people in
+`living.wayfarer` and `world.stilled`.
+- **The last two bells.** The Seed Bell (00, S, voice Kin) is cast round the Heart-clapper the day a home's Great Belfry
+  goes up, and rings home for every member then or the next time they're about (so the hundredth bell is never the one
+  you can't get, and the Peal comes before the Seed, not after it). The True Bell (36, S, voice Glow) is the Foundry's
+  sixth mould: 8 Starmetal Ingots and 16 Bell Bronze, cast only while a member of S rank is online; the Foundry's status
+  says so while it waits. All hundred bells now have a source (`bells_catalog_ring` checks it).
+- **The Great Belfry** (tower stage 3): it needs the stone tower (50 bells) and two pieces set into the bell frame by
+  hand (each says why if it can't go in: not your frame, no tower yet, already set, already built). The **Heart-clapper**
+  drops from every S-rank (or higher) gate world's Lord to the killer and their party within 96; a **Sovereign's Relic**
+  from every Sovereign felled, to the same people. Each is epic, unstackable, fireproof, and given only to someone who
+  isn't already carrying one, whose home hasn't set that piece and has no Great Belfry yet; so a lost piece always
+  comes again from the next Lord or Sovereign. With both in, every beast living there gathers at the tower for 30 s
+  (dust, stone and timber knocks) and it goes up; with no beasts it goes up at the next song. It needs a clear 7 by 7,
+  23 high round the frame (otherwise a note, and it tries again every song); the tower's own belfry comes down under it.
+  The build: the tower's lower five floors, a stone-brick shaft (deepslate corners, windows), a deepslate-rimmed floor at
+  10, piers at the corners and mid-sides, dark-oak beams at 16 with 24 bells hung under them in two rings and the Seed
+  Bell in the middle, lanterns, a three-step roof and a gold-capped spire with a lightning rod at 22. The song then
+  rings from the Great Belfry. The Hearth page's pin names its needs from A rank and its state once built; the Bell
+  Book's next line names it when the tower is full.
+- **The Hundred Peal**: the first song after the Great Belfry holds all hundred bells rings all of them together, once
+  per home. Every player in the overworld hears it (the whole song, a mend of any Fault, a REVELATION "The Hundred
+  Peal"); the home's beasts sing; every wild kin within the tower's hearing (256) comes to the tower for the song's
+  length and any Gnawed among them are freed. Each member: every kind they've met goes a step up (Curious, Friendly,
+  Kin), the Chimewren to at least Friendly, fear cleared; a best moment; the Kinsong; the Wake opens to them
+  (`BellBook.pealed`, schema 3). It's the one big moment that doesn't glitch.
+- **The Deep answers** (the world's first Hundred Peal, saved as `deep_answered` in `bells`, schema 2): 30 s after the
+  Peal, every player who heard it sees the Great Fault `deep_answer` ("SIGNAL HEARD BELOW", the camera pulled up and back
+  from the tower over 90 ticks) and then, plainly: "The Deep heard your bells. Gates will break sooner now, and harder,
+  and the Gnawed will spread wherever the Kinsong doesn't reach." From then on: a gate's time to break is halved; a
+  break's spill is half as many again and its creatures and Lord are 10 levels higher; the Sovereigns come back angrier
+  (+10 levels), and once all eight are beaten each returns as a Grieving Sovereign (+20, "Grieving <name>"; felling one
+  grants half a level and a REVELATION once per Sovereign per player). Fighting never ends.
+- **The Gnawed**: a wild kin the Deep has got into (`KinBeast` with the synced flag `gnawed`: sunk purple-black, ember
+  eyes, ash, a low voice). After the Deep answers, a fresh kin site has a one-in-four chance that its first beast is
+  Gnawed, unless the Kinsong rang within 256 blocks in the last 3 play-days. A Gnawed beast hunts players (not creative
+  or spectator) with a melee hit (Boulderback 7; Mossback, Thatchback and Cloudcalf 5; others 3), doesn't panic, follow,
+  lead or want. You can't kill it: brought below 1 health it's freed, never dies, and the one who freed it gets a Help
+  step of Kinship; the Kinsong frees it at once; killing a Gnawed costs no Kinship. The first sight of one (24 blocks, in
+  view) plays a flicker and a line; after that a line every 2 minutes.
+- **The Kinsong** (the handbell's peal for anyone with the Peal; sneak-use cycles to it): the land's beasts within 48
+  stop (no target, no anger, a riled one slowed for 15 s; never monsters, gate things, wardens, bosses or camps); wild
+  kin within 48 come to listen for a minute and any Gnawed is freed; a Stampede within 80 slows and stops; it never
+  scares kin. Each one is kept (x, z, play-day; last 64, 8 days). After the Deep has answered, the Deep's creatures hear
+  it: 30 s later, at most once in 5 minutes, 2 to 4 of the player's rank (an elite first) from the Abyssal Shrine, the
+  Nightmare or the Bell Crypt come up 18 to 26 blocks off, hunting them.
+- **The Wake needs the Peal.** At the Seed, the ending screen shows the Wake dimmed until the player has rung (or
+  heard as a member) the Hundred Peal: "Needs the Hundred Peal: all hundred bells ringing together in your Great
+  Belfry." A **Not yet** under the cards closes it ("The Seed will wait."), and it's offered again the next time they
+  come back down to the Seed. The server refuses a Wake without the Peal.
+- **After the Wake** (the world's colour restored): no new Stilled sit down, and every placed one in a loaded chunk
+  stands up (stone dust, a grinding sound) as a risen Wayfarer with their name (or "Someone") in a stone-grey skin with
+  moss on the head and shoulders (`wayfarer/risen.png`), walking toward Carillon 20 blocks at a time; they're gone once
+  nobody's within 48 or they're nearly there, and their spot never fills again. Spoken to, they say one of three plain
+  lines ("I can hear the bells again. I'm going home."). Their letters and keys stay true. Three play-days after the
+  first Wake the bells see, Ilse walks out from the Last Fire to visit each home once: by day (1000 to 9000), when a
+  member is within 24 of the Anchor, she comes up the path 28 blocks out on the city's side, walks to the fire and stays
+  by it, saying four things in turn (she followed the bells; eleven years she meant to walk out; Aldo came back over the
+  ridge with the dog; "sit down and tell me what it's like out here"); she leaves at dusk or after 20 minutes with
+  nobody near. At the Last Fire after the Wake she talks about Aldo coming back, the risen on the roads and maybe
+  visiting. Decision (stage 7): JOURNEY's "legendary beasts come to your tower" for the Peal is the wild kin in hearing
+  coming instead; there are no legendary beasts in the game.
+- Commands: `/awaken admin bells belfry` (grows the tower if needed, sets both pieces, raises it now), `bells deep`
+  (the Deep has answered), `bells tower <n>` (now skips the Seed), `/awaken admin kin gnaw <kind>`. Test (CI):
+  `bells_hundred_peal` (the Great Belfry's plan; no Kinsong or Wake before the Peal, both after).
 
 ## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
 

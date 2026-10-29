@@ -109,6 +109,21 @@ public final class LivingModule {
             public boolean ledgered(net.minecraft.server.level.ServerLevel level, String speciesId) {
                 return dev.awaken.living.population.Ledger.ledgered(speciesId) && dev.awaken.living.population.Ledger.herdsOn(level);
             }
+
+            @Override
+            public int calm(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos at, int reach) {
+                return dev.awaken.living.pulse.Pulse.calm(level, at, reach);
+            }
+
+            @Override
+            public void risen(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos at, String name, net.minecraft.core.BlockPos toward) {
+                dev.awaken.living.wayfarer.Wayfarers.risen(level, at, name, toward);
+            }
+
+            @Override
+            public boolean visit(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos from, net.minecraft.core.BlockPos fire) {
+                return dev.awaken.living.wayfarer.Wayfarers.visit(level, from, fire);
+            }
         });
         Progression.onXpGranted(XpStream::granted);
         var bus = NeoForge.EVENT_BUS;

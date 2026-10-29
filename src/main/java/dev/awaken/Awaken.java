@@ -68,6 +68,10 @@ public final class Awaken {
         dev.awaken.caves.CavesModule.init(modBus);
         dev.awaken.binoculars.BinocularsModule.init(modBus);
         dev.awaken.aim.AimModule.init(modBus);
+        dev.awaken.kin.KinModule.init(modBus);
+        dev.awaken.fault.FaultModule.init(modBus);
+        dev.awaken.bigday.BigDayModule.init(modBus);
+        dev.awaken.bells.BellModule.init(modBus);
         dev.awaken.armour.ArmourModule.init(modBus);
     }
 

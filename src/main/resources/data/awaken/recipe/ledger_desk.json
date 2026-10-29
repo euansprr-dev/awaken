@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "B": "minecraft:writable_book",
+    "P": "#minecraft:planks",
+    "S": "minecraft:stick"
+  },
+  "pattern": [
+    " B ",
+    "PPP",
+    "S S"
+  ],
+  "result": {
+    "id": "awaken:ledger_desk"
+  }
+}

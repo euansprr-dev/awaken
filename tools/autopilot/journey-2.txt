@@ -1,0 +1,240 @@
+# The Journey, stage 2 (SPEC §43.3, §43.5, §43.6): what Euan sees after it. The rebuilt Stilled in a studio (six poses
+# close, then the row), their things and a lode heart in the inventory, the key's chest by the first hamlet's well, the
+# first holdfast; the four kin close in a studio by day and the lit ones by night; then a home (/awaken admin kin yard:
+# a Hearthfire, a field and an Ore Shed) with a Burrowbun and a Pebblepup at work, the Hearth page, the first fire's
+# Lampwing lesson, and the yard at night with its Lampwing home.
+# The studio floats 300 east of the city at y 260: inside the ridge, so no wild figure can be placed on it.
+# ci knobs: PACK=perf,world TECTONIC=awakened
+#   tools/tour-ci.sh tools/autopilot/journey-2.txt 2400 PACK=perf,world TECTONIC=awakened
+world autopilot_journey_2 creative 29102026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the readings need it free
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+camera first
+hud off
+cmd time set 3500
+cmd clear @s
+
+# ---- 1. the studio: the rebuilt Stilled, six poses close, then the row ----
+cmd awaken city view square
+wait 300
+cmd tp @s ~300 262 ~
+wait 200
+cmd summon minecraft:marker ~ 261 ~ {Tags:["studio"]}
+cmd execute at @e[type=marker,tag=studio,limit=1] run fill ~-6 ~-2 ~-14 ~78 ~-2 ~10 minecraft:dirt
+cmd execute at @e[type=marker,tag=studio,limit=1] run fill ~-6 ~-1 ~-14 ~78 ~-1 ~10 minecraft:grass_block
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~0 ~ ~ 180 0
+cmd awaken stilled place milestone letter
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~6 ~ ~ 180 0
+cmd awaken stilled place walking keepsake
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~12 ~ ~ 180 0
+cmd awaken stilled place grave letter
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~18 ~ ~ 180 0
+cmd awaken stilled place pair key
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~24 ~ ~ 180 0
+cmd awaken stilled place lead letter
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~30 ~ ~ 180 0
+cmd awaken stilled place reaching key
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~36 ~ ~ 180 0
+cmd awaken stilled place looking_back keepsake
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~42 ~ ~ 180 0
+cmd awaken stilled place waiting letter
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~48 ~ ~ 180 0
+cmd awaken stilled place lantern key
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~54 ~ ~ 180 0
+cmd awaken stilled place child keepsake
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~60 ~ ~ 180 0
+cmd awaken stilled place curled letter
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~66 ~ ~ 180 0
+cmd awaken stilled place bundle key
+wait 40
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~2.3 ~ ~3.1 145.3 11
+wait 40
+shot j2_01_stilled_milestone
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~8.3 ~ ~3.1 145.3 11
+wait 40
+shot j2_02_stilled_walking
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~20.3 ~ ~3.1 145.3 11
+wait 40
+shot j2_03_stilled_pair
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~32.3 ~ ~3.1 145.3 11
+wait 40
+shot j2_04_stilled_reaching
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~50.3 ~ ~3.1 145.3 11
+wait 40
+shot j2_05_stilled_lantern
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~56.3 ~ ~3.1 145.3 11
+wait 40
+shot j2_06_stilled_child
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~33 ~3 ~22 180 8
+wait 40
+shot j2_07_stilled_row
+cmd gamemode creative
+
+# ---- 2. what they carry, and a lode heart, in the inventory ----
+cmd clear @s
+cmd give @s awaken:stilled_letter
+cmd give @s awaken:stilled_key
+cmd give @s awaken:stilled_keepsake
+cmd give @s awaken:iron_lode_heart
+cmd gamemode survival
+hud on
+compat inventory
+wait 20
+shotnow j2_08_their_things
+screen close
+hud off
+cmd gamemode creative
+cmd clear @s
+
+# ---- 3. the four kin, close, by day (held still: wild ones keep their distance) ----
+cmd time set 6000
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~0 ~ ~-8 90 0
+cmd awaken admin kin summon lampwing
+wait 5
+cmd data merge entity @e[type=awaken:kin_lampwing,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~8 ~ ~-8 90 0
+cmd awaken admin kin summon burrowbun
+wait 5
+cmd data merge entity @e[type=awaken:kin_burrowbun,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~16 ~ ~-8 90 0
+cmd awaken admin kin summon mossback
+wait 5
+cmd data merge entity @e[type=awaken:kin_mossback,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~24 ~ ~-8 90 0
+cmd awaken admin kin summon pebblepup
+wait 5
+cmd data merge entity @e[type=awaken:kin_pebblepup,limit=1,sort=nearest] {NoAI:1b}
+wait 40
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~5.3 ~0.6 ~-5.8 151 2
+wait 40
+shot j2_09_kin_lampwing
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~1.8 ~-0.4 ~-8 270 12
+wait 30
+shot j2_10_kin_lampwing_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~13.2 ~-0.6 ~-5.8 151 16
+wait 40
+shot j2_11_kin_burrowbun
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~9.8 ~-0.4 ~-8 270 12
+wait 30
+shot j2_12_kin_burrowbun_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~21.2 ~-0.6 ~-5.8 151 16
+wait 40
+shot j2_13_kin_mossback
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~17.8 ~-0.4 ~-8 270 12
+wait 30
+shot j2_14_kin_mossback_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~29.2 ~-0.6 ~-5.8 151 16
+wait 40
+shot j2_15_kin_pebblepup
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~25.8 ~-0.4 ~-8 270 12
+wait 30
+shot j2_16_kin_pebblepup_side
+# the lit ones by night: the Lampwing's lamp, the Pebblepup's crystals
+cmd time set 18000
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~5.3 ~0.6 ~-5.8 151 2
+wait 60
+shot j2_17_kin_lampwing_night
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~29.2 ~-0.6 ~-5.8 151 16
+wait 30
+shot j2_18_kin_pebblepup_night
+cmd gamemode creative
+cmd time set 3500
+
+# ---- 4. the key's chest by the first hamlet's well, and the first holdfast ----
+cmd awaken village view first green
+wait 400
+cmd awaken stilled view chest
+wait 150
+shot j2_19_left_chest
+cmd awaken village view first_holdfast green
+wait 600
+shot j2_20_holdfast_green
+cmd awaken village view first_holdfast bell
+wait 200
+shot j2_21_holdfast_bell
+
+# ---- 5. a home out west: the Hearthfire, a field and an Ore Shed ----
+cmd awaken city view square
+wait 200
+cmd time set 6000
+cmd spreadplayers ~-800 ~ 0 40 false @s
+wait 400
+cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
+cmd awaken admin kin yard
+wait 140
+screen close
+wait 20
+screen close
+cmd awaken admin kin home burrowbun
+cmd awaken admin kin home pebblepup
+cmd tick sprint 600
+wait 160
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~1 ~8 ~17 180 24
+wait 60
+shot j2_22_yard_day
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~8 ~2.5 ~6 180 28
+wait 30
+shot j2_23_field_burrowbun
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-6.4 ~0.2 ~1.6 125 25
+wait 30
+shot j2_24_ore_shed_pebblepup
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~4.5 180 10
+cmd awaken admin kin meet mossback
+cmd awaken admin kin watch mossback 2
+hud on
+screen holo hearth
+wait 80
+shotnow j2_25_hearth_page_day
+screen close
+hud off
+
+# ---- 6. night: the first fire's lesson, then the Lampwing home ----
+cmd awaken admin kin lesson
+wait 120
+hud on
+screen holo hearth
+wait 80
+shotnow j2_26_hearth_page_lesson
+screen close
+hud off
+cmd awaken admin kin home lampwing
+wait 200
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~4.5 ~0.3 ~4 160 10
+wait 60
+shot j2_27_lampwing_at_the_fire
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~1 ~8 ~17 180 24
+wait 40
+shot j2_28_yard_night
+cmd gamemode creative
+quit

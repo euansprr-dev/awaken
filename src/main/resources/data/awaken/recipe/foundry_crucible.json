@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "B": "awaken:bell_bronze_ingot",
+    "G": "awaken:deepglass_shard",
+    "F": "minecraft:furnace"
+  },
+  "pattern": [
+    "B B",
+    "GFG",
+    "BBB"
+  ],
+  "result": {
+    "id": "awaken:foundry_crucible"
+  }
+}

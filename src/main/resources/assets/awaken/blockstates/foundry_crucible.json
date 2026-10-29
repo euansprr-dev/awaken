@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/foundry_crucible"
+    },
+    "lit=true": {
+      "model": "awaken:block/foundry_crucible_lit"
+    }
+  }
+}

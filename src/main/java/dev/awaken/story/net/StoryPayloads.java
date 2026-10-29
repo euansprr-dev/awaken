@@ -12,13 +12,14 @@ public final class StoryPayloads {
     private StoryPayloads() {}
 
     /** Server → client: open the ending choice. */
-    public record OpenEnding() implements CustomPacketPayload {
+    /** {@code wake}: whether Wake up is open to this player (it needs their Hundred Peal, SPEC §43.14). */
+    public record OpenEnding(boolean wake) implements CustomPacketPayload {
         public static final Type<OpenEnding> TYPE = new Type<>(Awaken.id("story_open_ending"));
-        public static final StreamCodec<ByteBuf, OpenEnding> STREAM_CODEC = StreamCodec.unit(new OpenEnding());
+        public static final StreamCodec<ByteBuf, OpenEnding> STREAM_CODEC = ByteBufCodecs.BOOL.map(OpenEnding::new, OpenEnding::wake);
         @Override public Type<OpenEnding> type() { return TYPE; }
     }
 
-    /** Client → server: the player chose an ending (become | break | wake). */
+    /** Client → server: the player chose an ending (become | break | wake), or "later" (not yet: the Seed waits). */
     public record ChooseEnding(String which) implements CustomPacketPayload {
         public static final Type<ChooseEnding> TYPE = new Type<>(Awaken.id("story_choose_ending"));
         public static final StreamCodec<ByteBuf, ChooseEnding> STREAM_CODEC =

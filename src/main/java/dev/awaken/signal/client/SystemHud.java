@@ -314,7 +314,8 @@ public final class SystemHud {
     private static void tickToasts(Minecraft mc) {
         for (ToastBurst.Out<ToastItem> out : BURST.poll(ticks)) TOAST_WAIT.addLast(out);
         LIVE_TOASTS.removeIf(t -> t[0] <= ticks);
-        if (mc.gui.screen() instanceof QuietScreen) return; // they wait (and merge) until the player is back
+        // they wait (and merge) until the player is back, or a Fault lets go of the screen
+        if (mc.gui.screen() instanceof QuietScreen || dev.awaken.core.api.HudState.toastsWait) return;
         boolean any = false;
         while (!TOAST_WAIT.isEmpty() && LIVE_TOASTS.size() < SignalLayout.MAX_TOASTS) {
             int free = SignalLayout.MAX_TOASTS - LIVE_TOASTS.size();

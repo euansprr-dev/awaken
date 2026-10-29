@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "awake=false": {
+      "model": "awaken:block/sleeping_bell"
+    },
+    "awake=true": {
+      "model": "awaken:block/sleeping_bell_awake"
+    }
+  }
+}

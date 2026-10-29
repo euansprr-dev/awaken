@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": "awaken:woken_clapper",
+    "P": "#minecraft:planks",
+    "S": "minecraft:stick"
+  },
+  "pattern": [
+    "PPP",
+    " C ",
+    " S "
+  ],
+  "result": {
+    "id": "awaken:chime_perch"
+  }
+}

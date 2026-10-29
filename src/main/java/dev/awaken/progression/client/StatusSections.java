@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Extension points for the band (key K): six pages and never more (SPEC §30): Status, Powers, Journal, Truths, Codex,
- * Map. Modules add sections to a page from their client init; sections stack inside the page and scroll. A page can
+ * Extension points for the band (key K): seven pages and never more (SPEC §30, §43.6): Status, Powers, Journal,
+ * Hearth, Truths, Codex, Map. Modules add sections to a page from their client init; sections stack inside the page and scroll. A page can
  * instead open something of its own (the Map opens the Atlas table): {@link #setPageAction}.
  */
 public final class StatusSections {
@@ -17,7 +17,7 @@ public final class StatusSections {
 
     /** The band's pages, in the order of the rail. */
     public enum Tab {
-        STATUS("Status"), POWERS("Powers"), JOURNAL("Journal"), TRUTHS("Truths"), CODEX("Codex"), MAP("Map");
+        STATUS("Status"), POWERS("Powers"), JOURNAL("Journal"), HEARTH("Hearth"), TRUTHS("Truths"), CODEX("Codex"), MAP("Map");
 
         private final String label;
 

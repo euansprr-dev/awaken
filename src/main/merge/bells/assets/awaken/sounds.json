@@ -1,0 +1,162 @@
+{
+  "bells.note_0": {
+    "subtitle": "subtitles.awaken.bells.note_0",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_0"
+      }
+    ]
+  },
+  "bells.note_1": {
+    "subtitle": "subtitles.awaken.bells.note_1",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_1"
+      }
+    ]
+  },
+  "bells.note_2": {
+    "subtitle": "subtitles.awaken.bells.note_2",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_2"
+      }
+    ]
+  },
+  "bells.note_3": {
+    "subtitle": "subtitles.awaken.bells.note_3",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_3"
+      }
+    ]
+  },
+  "bells.note_4": {
+    "subtitle": "subtitles.awaken.bells.note_4",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_4"
+      }
+    ]
+  },
+  "bells.note_5": {
+    "subtitle": "subtitles.awaken.bells.note_5",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_5"
+      }
+    ]
+  },
+  "bells.note_6": {
+    "subtitle": "subtitles.awaken.bells.note_6",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_6"
+      }
+    ]
+  },
+  "bells.note_7": {
+    "subtitle": "subtitles.awaken.bells.note_7",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_7"
+      }
+    ]
+  },
+  "bells.note_8": {
+    "subtitle": "subtitles.awaken.bells.note_8",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_8"
+      }
+    ]
+  },
+  "bells.note_9": {
+    "subtitle": "subtitles.awaken.bells.note_9",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_9"
+      }
+    ]
+  },
+  "bells.note_10": {
+    "subtitle": "subtitles.awaken.bells.note_10",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_10"
+      }
+    ]
+  },
+  "bells.note_11": {
+    "subtitle": "subtitles.awaken.bells.note_11",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_11"
+      }
+    ]
+  },
+  "bells.note_12": {
+    "subtitle": "subtitles.awaken.bells.note_12",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_12"
+      }
+    ]
+  },
+  "bells.note_13": {
+    "subtitle": "subtitles.awaken.bells.note_13",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_13"
+      }
+    ]
+  },
+  "bells.note_14": {
+    "subtitle": "subtitles.awaken.bells.note_14",
+    "sounds": [
+      {
+        "name": "awaken:bell_note_14"
+      }
+    ]
+  },
+  "bells.gap": {
+    "subtitle": "subtitles.awaken.bells.gap",
+    "sounds": [
+      {
+        "name": "awaken:bell_gap"
+      }
+    ]
+  },
+  "bells.handbell": {
+    "subtitle": "subtitles.awaken.bells.handbell",
+    "sounds": [
+      {
+        "name": "awaken:bell_handbell"
+      }
+    ]
+  },
+  "bells.toll": {
+    "subtitle": "subtitles.awaken.bells.toll",
+    "sounds": [
+      {
+        "name": "awaken:bell_toll"
+      }
+    ]
+  },
+  "bells.hum": {
+    "subtitle": "subtitles.awaken.bells.hum",
+    "sounds": [
+      {
+        "name": "awaken:bell_hum"
+      }
+    ]
+  },
+  "bells.wake": {
+    "subtitle": "subtitles.awaken.bells.wake",
+    "sounds": [
+      {
+        "name": "awaken:bell_wake"
+      }
+    ]
+  }
+}

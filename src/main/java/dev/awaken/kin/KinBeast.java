@@ -1,0 +1,664 @@
+package dev.awaken.kin;
+
+import com.mojang.serialization.Codec;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.FlyingMoveControl;
+import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomFlyingGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import org.jspecify.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+/**
+ * One of the kin (SPEC §43.5): a beast of the land with a want and a day. Wild, it keeps near its own spot (a Lampwing's
+ * edge of the trees, a Pebblepup's pile) and shows its want there; it runs from you as far as its kind's Kinship with you
+ * says. Helped three times by one player it trusts them, and follows them home if their Hearth has a nook it likes
+ * ({@link KinHome}); then it lives there and works. A beast that lives with someone never dies: badly hurt, it hides
+ * and comes back. What it is doing is one synced act, which the client turns into its clips.
+ */
+public class KinBeast extends PathfinderMob {
+    public static final int IDLE = 0, WANT = 1, FLEE = 2, TELL = 3, NUDGE = 4, WORK = 5, SLEEP = 6, FOLLOW = 7, HIDE = 8, SNIFF = 9, CARRY = 10;
+    private static final EntityDataAccessor<Integer> DATA_ACT = SynchedEntityData.defineId(KinBeast.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_ACT_AT = SynchedEntityData.defineId(KinBeast.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_HOMED = SynchedEntityData.defineId(KinBeast.class, EntityDataSerializers.BOOLEAN);
+    /** What it's carrying where you can see it (a Totter's armful, a Thatchback's plank, a Pondling's fish). */
+    /** The Deep has got into it (SPEC §43.14): dark, ember-eyed, and it fights. */
+    private static final EntityDataAccessor<Boolean> DATA_GNAWED = SynchedEntityData.defineId(KinBeast.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<ItemStack> DATA_HELD = SynchedEntityData.defineId(KinBeast.class, EntityDataSerializers.ITEM_STACK);
+
+    private @Nullable KinKind kind;
+    /** Its own spot in the wild (a pile, a burrow field, the edge of the trees). */
+    public BlockPos origin = BlockPos.ZERO;
+    /** Where it lives: the Hearth's Anchor and its nook; null while wild. */
+    public @Nullable BlockPos home, nook;
+    public final Map<UUID, Integer> helps = new HashMap<>();
+    public final Set<UUID> trusted = new HashSet<>();
+    public @Nullable UUID follow;
+    /** Who it lives with (the one who brought it home). */
+    public @Nullable UUID keeper;
+    public final List<ItemStack> carry = new ArrayList<>();
+    public int made;
+    public long madeDay = -1, hideUntil, lastHelp, nextWant;
+    /** The tower's song (SPEC §43.7): how it takes it, and where the tower is, until {@code songUntil}. Not saved. */
+    public long songUntil;
+    public int songMode;
+    public @Nullable BlockPos songAt;
+    public static final int SONG_HUNKER = 1, SONG_LISTEN = 2, SONG_GATHER = 3, SONG_SING = 4;
+    /** A second place of its own (SPEC §43.12): a Dumplin flock's nest, where a Snufflet smells something, a Pondling's pond. */
+    public @Nullable BlockPos mark;
+    /** The day a Puffwool was last brushed at home (its wool comes once a day). */
+    public long brushedDay = -1;
+    /** Who a lost Dumplin flock (or a lost Cloudcalf) is following home. Not saved: one that loses its leader circles again. */
+    public @Nullable UUID leader;
+    /** A Boulderback's wait (SPEC §43.13), not saved: who's keeping still in the dark near it, for how long, and where. */
+    public int quietTicks;
+    public @Nullable UUID quietFor;
+    public net.minecraft.world.phys.Vec3 quietAt = net.minecraft.world.phys.Vec3.ZERO;
+    /** Its errand at home (SPEC §43.12), not saved: what it's doing, from where to where, what for, and for whom. */
+    public int task;
+    public @Nullable BlockPos taskFrom, taskTo;
+    public net.minecraft.world.item.@Nullable Item taskItem;
+    public @Nullable UUID taskFor;
+    public long taskUntil;
+    /** Ticks a player's want-watching has gone on (one watcher at a time). */
+    public int watchTicks;
+    public @Nullable UUID watcher;
+
+    public KinBeast(EntityType<? extends KinBeast> type, Level level) {
+        super(type, level);
+        if (kind().flies()) {
+            moveControl = new FlyingMoveControl<>(this, 20, true);
+            setNoGravity(true);
+        }
+    }
+
+    public KinKind kind() {
+        if (kind == null) {
+            KinKind k = KinContent.kindOf(getType());
+            kind = k == null ? KinKind.LAMPWING : k;
+        }
+        return kind;
+    }
+
+    public static AttributeSupplier.Builder attributes(KinKind k) {
+        AttributeSupplier.Builder b = PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, switch (k) {
+                    case MOSSBACK, THATCHBACK -> 16;
+                    case CLOUDCALF -> 20;
+                    case BOULDERBACK -> 30;
+                    default -> 10;
+                })
+                .add(Attributes.FOLLOW_RANGE, 24).add(Attributes.MOVEMENT_SPEED, switch (k) {
+                    case MOSSBACK -> 0.12;
+                    case BURROWBUN -> 0.3;
+                    case PEBBLEPUP, SNUFFLET -> 0.28;
+                    case CHIMEWREN, EMBERKIT -> 0.3;
+                    case TOTTER, PONDLING -> 0.22;
+                    case PUFFWOOL, BUMBLEPUFF, CLOUDCALF -> 0.2;
+                    case LOOMWORM -> 0.1;
+                    case BOULDERBACK -> 0.18;
+                    default -> 0.25;
+                })
+                // only ever used by a Gnawed one (SPEC §43.14): the bigger the beast, the harder it hits
+                .add(Attributes.ATTACK_DAMAGE, switch (k) {
+                    case BOULDERBACK -> 7;
+                    case MOSSBACK, THATCHBACK, CLOUDCALF -> 5;
+                    default -> 3;
+                });
+        if (k.flies()) b.add(Attributes.FLYING_SPEED, k == KinKind.CLOUDCALF ? 0.3 : k == KinKind.BUMBLEPUFF ? 0.35 : 0.45);
+        return b;
+    }
+
+    @Override
+    protected PathNavigation createNavigation(Level level) {
+        KinKind fk = KinContent.kindOf(getType());
+        if (fk != null && fk.flies()) {
+            FlyingPathNavigation n = new FlyingPathNavigation(this, level);
+            n.setCanOpenDoors(false);
+            n.setCanFloat(true);
+            return n;
+        }
+        return super.createNavigation(level);
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder b) {
+        super.defineSynchedData(b);
+        b.define(DATA_ACT, IDLE);
+        b.define(DATA_ACT_AT, 0);
+        b.define(DATA_HOMED, false);
+        b.define(DATA_HELD, ItemStack.EMPTY);
+        b.define(DATA_GNAWED, false);
+    }
+
+    // ---- the Gnawed (SPEC §43.14) -------------------------------------------------------------------------------------
+
+    public boolean gnawed() {
+        return entityData.get(DATA_GNAWED);
+    }
+
+    /** The Deep gets into it, or lets go of it. A freed one runs for a while and is itself again. */
+    public void gnawed(boolean on) {
+        if (gnawed() == on) return;
+        entityData.set(DATA_GNAWED, on);
+        if (!on) {
+            setTarget(null);
+            setAggressive(false);
+            hideUntil = level().getGameTime() + 20 * 20;
+        }
+    }
+
+    // ---- what it's doing --------------------------------------------------------------------------------------------
+
+    public int act() {
+        return entityData.get(DATA_ACT);
+    }
+
+    public int actAt() {
+        return entityData.get(DATA_ACT_AT);
+    }
+
+    public boolean homed() {
+        return entityData.get(DATA_HOMED);
+    }
+
+    public ItemStack held() {
+        return entityData.get(DATA_HELD);
+    }
+
+    /** Shows what it's carrying (one of it: the look, not the count). */
+    public void held(ItemStack s) {
+        ItemStack one = s.isEmpty() ? ItemStack.EMPTY : s.copyWithCount(1);
+        if (!ItemStack.matches(one, held())) entityData.set(DATA_HELD, one);
+    }
+
+    /** Where it shows its want: a Snufflet where it smells something, a Pondling by its pond, the rest at their own spot. */
+    public BlockPos wantSpot() {
+        return (kind() == KinKind.SNUFFLET || kind() == KinKind.PONDLING || kind() == KinKind.BUMBLEPUFF) && mark != null ? mark : origin;
+    }
+
+    /** Starts an act (restarts it when {@code again}: a second tell still plays its clip). */
+    public void act(int a, boolean again) {
+        if (act() == a && !again) return;
+        entityData.set(DATA_ACT, a);
+        entityData.set(DATA_ACT_AT, tickCount);
+    }
+
+    public void act(int a) {
+        act(a, false);
+    }
+
+    /** Lives with someone, or was trusted: befriended (they never die). */
+    public boolean befriended() {
+        return home != null || !trusted.isEmpty();
+    }
+
+    public void settle(BlockPos anchor, BlockPos nook, UUID keeper) {
+        this.home = anchor.immutable();
+        this.nook = nook.immutable();
+        this.keeper = keeper;
+        this.follow = null;
+        entityData.set(DATA_HOMED, true);
+        setPersistenceRequired();
+        setHomeTo(nook, 24);
+    }
+
+    public void leaveHome() {
+        home = nook = null;
+        keeper = null;
+        entityData.set(DATA_HOMED, false);
+        setHomeTo(origin, 16);
+    }
+
+    // ---- goals ------------------------------------------------------------------------------------------------------
+
+    @Override
+    protected void registerGoals() {
+        KinKind k = KinContent.kindOf(getType());
+        goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.MeleeAttackGoal(this, 1.2, true) {
+            @Override
+            public boolean canUse() {
+                return gnawed() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return gnawed() && super.canContinueToUse();
+            }
+        });
+        targetSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal<>(this, Player.class, true,
+                (t, l) -> gnawed() && !(t instanceof Player pl && (pl.isCreative() || pl.isSpectator()))));
+        goalSelector.addGoal(1, new HideGoal());
+        goalSelector.addGoal(1, new SongGoal());
+        goalSelector.addGoal(2, new PanicGoal(this, 1.5) {
+            @Override
+            public boolean canUse() {
+                return !gnawed() && super.canUse();
+            }
+        });
+        goalSelector.addGoal(3, new AvoidEntityGoal<>(this, Player.class, p -> p instanceof ServerPlayer sp && KinWatch.scares(this, sp), 10F, 1.1, 1.5,
+                EntitySelector.NO_CREATIVE_OR_SPECTATOR::test));
+        goalSelector.addGoal(4, new FollowGoal());
+        goalSelector.addGoal(4, new LeadGoal());
+        goalSelector.addGoal(5, new HomeGoal());
+        goalSelector.addGoal(6, new WantGoal());
+        goalSelector.addGoal(7, k.flies() ? new WaterAvoidingRandomFlyingGoal(this, 0.8) : new WaterAvoidingRandomStrollGoal(this, 0.8));
+        goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8F));
+        goalSelector.addGoal(9, new RandomLookAroundGoal(this));
+    }
+
+    /** Badly hurt while it lives with someone: it runs off to its nook and stays hidden until it's well. */
+    final class HideGoal extends Goal {
+        HideGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
+        }
+
+        @Override
+        public boolean canUse() {
+            return hideUntil > level().getGameTime();
+        }
+
+        @Override
+        public void start() {
+            act(HIDE);
+        }
+
+        @Override
+        public void tick() {
+            BlockPos to = nook != null ? nook : origin;
+            if (distanceToSqr(to.getX() + 0.5, to.getY(), to.getZ() + 0.5) > 4) getNavigation().moveTo(to.getX() + 0.5, to.getY(), to.getZ() + 0.5, 1.4);
+            if (tickCount % 40 == 0) heal(1F);
+        }
+
+        @Override
+        public void stop() {
+            act(IDLE);
+        }
+    }
+
+    /**
+     * The tower rings (SPEC §43.7): with a song still full of gaps it hunkers where it is, ears flat; with more bells it
+     * stops and listens, then gathers under the tower, and at a hundred it sings.
+     */
+    final class SongGoal extends Goal {
+        SongGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
+        }
+
+        @Override
+        public boolean canUse() {
+            return songUntil > level().getGameTime() && songAt != null && hideUntil <= level().getGameTime();
+        }
+
+        @Override
+        public void start() {
+            getNavigation().stop();
+            act(songMode == SONG_HUNKER ? HIDE : songMode == SONG_SING ? TELL : IDLE);
+        }
+
+        @Override
+        public void tick() {
+            BlockPos at = songAt;
+            if (at == null) return;
+            if (songMode != SONG_HUNKER) getLookControl().setLookAt(at.getX() + 0.5, at.getY() + 2.5, at.getZ() + 0.5);
+            if ((songMode == SONG_GATHER || songMode == SONG_SING) && distanceToSqr(at.getX() + 0.5, at.getY(), at.getZ() + 0.5) > 16)
+                getNavigation().moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.9);
+            else getNavigation().stop();
+            if (songMode == SONG_SING && tickCount % 40 == 0) act(TELL, true);
+        }
+
+        @Override
+        public void stop() {
+            act(IDLE);
+        }
+    }
+
+    /** Trusting someone whose home has a nook for it: it comes along, a few steps behind. */
+    final class FollowGoal extends Goal {
+        FollowGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        private @Nullable ServerPlayer who() {
+            if (follow == null || !(level() instanceof ServerLevel sl)) return null;
+            return sl.getServer().getPlayerList().getPlayer(follow) instanceof ServerPlayer p && p.level() == level() ? p : null;
+        }
+
+        @Override
+        public boolean canUse() {
+            return home == null && !gnawed() && who() != null;
+        }
+
+        @Override
+        public void start() {
+            act(FOLLOW);
+        }
+
+        @Override
+        public void tick() {
+            ServerPlayer p = who();
+            if (p == null) return;
+            getLookControl().setLookAt(p, 30F, 30F);
+            double d = distanceToSqr(p);
+            if (d > 48 * 48) {
+                follow = null;
+                return;
+            }
+            if (d > 9) getNavigation().moveTo(p, d > 100 ? 1.3 : 1.0);
+            else getNavigation().stop();
+        }
+
+        @Override
+        public void stop() {
+            act(IDLE);
+        }
+    }
+
+    /** A lost Dumplin flock follows whoever stood up high where they could see them, a few steps behind (SPEC §43.12). */
+    final class LeadGoal extends Goal {
+        LeadGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        private @Nullable ServerPlayer who() {
+            if (leader == null || !(level() instanceof ServerLevel sl)) return null;
+            return sl.getServer().getPlayerList().getPlayer(leader) instanceof ServerPlayer p && p.level() == level() ? p : null;
+        }
+
+        @Override
+        public boolean canUse() {
+            return home == null && !gnawed() && who() != null;
+        }
+
+        @Override
+        public void start() {
+            act(FOLLOW);
+        }
+
+        @Override
+        public void tick() {
+            ServerPlayer p = who();
+            if (p == null) return;
+            getLookControl().setLookAt(p, 30F, 30F);
+            double d = distanceToSqr(p);
+            if (d > 6) getNavigation().moveTo(p, d > 64 ? 1.3 : 1.0);
+            else getNavigation().stop();
+        }
+
+        @Override
+        public void stop() {
+            act(IDLE);
+        }
+    }
+
+    /** At home: its work, by its kind ({@link KinHome#work}). */
+    final class HomeGoal extends Goal {
+        HomeGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            return home != null && level() instanceof ServerLevel;
+        }
+
+        @Override
+        public void tick() {
+            if (level() instanceof ServerLevel sl) KinHome.work(sl, KinBeast.this);
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return false;
+        }
+
+        @Override
+        public void stop() {
+            act(IDLE);
+        }
+    }
+
+    /** Wild: now and then it goes back to its spot and shows its want there (what a watcher learns from). */
+    final class WantGoal extends Goal {
+        private int left;
+
+        WantGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (home != null || follow != null || leader != null || gnawed()) return false;
+            long now = level().getGameTime();
+            if (now < nextWant || !KinWatch.wantsNow(KinBeast.this)) return false;
+            return true;
+        }
+
+        @Override
+        public void start() {
+            left = 20 * (4 + random.nextInt(4));
+            act(WANT, true);
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return left > 0 && home == null && follow == null && leader == null;
+        }
+
+        @Override
+        public void tick() {
+            left--;
+            BlockPos at = wantSpot();
+            double d = distanceToSqr(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+            if (d > (at == origin ? 9 : 4)) getNavigation().moveTo(at.getX() + 0.5, at.getY() + (kind().flies() ? 2 : 0), at.getZ() + 0.5, 0.9);
+            else {
+                getNavigation().stop();
+                // a Snufflet snuffles at its spot; the rest show their want
+                int want = kind() == KinKind.SNUFFLET && at != origin ? SNIFF : WANT;
+                if (act() != want) act(want, want == SNIFF);
+            }
+        }
+
+        @Override
+        public void stop() {
+            nextWant = level().getGameTime() + 20 * (10 + random.nextInt(20));
+            if (act() == WANT || act() == SNIFF) act(IDLE);
+        }
+    }
+
+    // ---- life -------------------------------------------------------------------------------------------------------
+
+    @Override
+    protected void customServerAiStep(ServerLevel level) {
+        super.customServerAiStep(level);
+        if (tickCount % 10 == 0) KinHelp.beastTick(level, this);
+        // a one-shot act ends by itself
+        int a = act();
+        if ((a == TELL || a == NUDGE || a == SNIFF) && tickCount - actAt() > 50) act(IDLE);
+        if (a == IDLE && getDeltaMovement().horizontalDistanceSqr() < 1.0E-4 && KinWatch.asleepNow(this)) act(SLEEP);
+        else if (a == SLEEP && !KinWatch.asleepNow(this)) act(IDLE);
+        // a flier settles to the ground to sleep, and is up in the air again when it wakes
+        if (kind().flies()) {
+            boolean down = act() == SLEEP;
+            if (isNoGravity() == down) setNoGravity(!down);
+        }
+    }
+
+    @Override
+    public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
+        if (gnawed()) {
+            // fighting a Gnawed one costs no Kinship; beaten down to a heart, the Deep lets go of it instead of it dying
+            if (damage < getHealth() - 1F) return super.hurtServer(level, source, damage);
+            boolean hit = super.hurtServer(level, source, Math.max(0F, getHealth() - 1F));
+            KinWatch.freed(this, source.getEntity() instanceof ServerPlayer p ? p : null);
+            return hit;
+        }
+        if (source.getEntity() instanceof ServerPlayer p && !p.isCreative()) KinWatch.hurtBy(this, p);
+        if (befriended()) {
+            // never dies: at most it's left at one heart, and then it hides
+            float clamped = Math.min(damage, getHealth() - 1F);
+            if (clamped <= 0F) {
+                hideUntil = level.getGameTime() + 20 * 30;
+                return false;
+            }
+            boolean hit = super.hurtServer(level, source, clamped);
+            if (getHealth() <= 2F) hideUntil = level.getGameTime() + 20 * 30;
+            return hit;
+        }
+        return super.hurtServer(level, source, damage);
+    }
+
+    @Override
+    public void die(DamageSource source) {
+        if (!level().isClientSide() && !gnawed() && source.getEntity() instanceof ServerPlayer p) KinWatch.killedBy(this, p);
+        if (home != null && level() instanceof ServerLevel sl) KinWorld.get(sl.getServer()).leave(home, getUUID());
+        super.die(source);
+    }
+
+    @Override
+    public boolean removeWhenFarAway(double distSqr) {
+        return false;
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        if (gnawed() && level() instanceof ServerLevel sl && (tickCount + getId()) % 8 == 0) {
+            net.minecraft.world.phys.Vec3 eye = getEyePosition().add(getLookAngle().scale(getBbWidth() * 0.45));
+            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.SMALL_FLAME, eye.x, eye.y, eye.z, 1, 0.05, 0.02, 0.05, 0);
+            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.ASH, getX(), getY() + getBbHeight() * 0.6, getZ(), 2, getBbWidth() * 0.4, 0.2, getBbWidth() * 0.4, 0);
+        }
+    }
+
+    @Override
+    public float getVoicePitch() {
+        return gnawed() ? 0.55F : super.getVoicePitch();
+    }
+
+    @Override
+    protected @Nullable SoundEvent getAmbientSound() {
+        var s = KinContent.CALL.get(kind());
+        return s == null || act() == SLEEP ? null : s.get();
+    }
+
+    @Override
+    public int getAmbientSoundInterval() {
+        return 240;
+    }
+
+    @Override
+    protected @Nullable SoundEvent getHurtSound(DamageSource source) {
+        var s = KinContent.WORRY.get(kind());
+        return s == null ? null : s.get();
+    }
+
+    @Override
+    protected float getSoundVolume() {
+        return 0.6F;
+    }
+
+    @Override
+    public boolean canBeLeashed() {
+        return false;
+    }
+
+    @Override
+    protected void checkFallDamage(double ya, boolean onGround, net.minecraft.world.level.block.state.BlockState onState, BlockPos pos) {
+        if (!kind().flies()) super.checkFallDamage(ya, onGround, onState, pos);
+    }
+
+    @Override
+    public boolean causeFallDamage(double distance, float multiplier, DamageSource source) {
+        return !kind().flies() && super.causeFallDamage(distance, multiplier, source);
+    }
+
+    // ---- saving (schema 2: schema 1 plus mark and brushed_day) --------------------------------------------------------
+
+    private static final Codec<Map<UUID, Integer>> HELPS = Codec.unboundedMap(UUIDUtil.STRING_CODEC, Codec.INT);
+
+    @Override
+    protected void addAdditionalSaveData(ValueOutput out) {
+        super.addAdditionalSaveData(out);
+        out.putInt("kin_schema", 2);
+        out.store("origin", BlockPos.CODEC, origin);
+        out.storeNullable("home", BlockPos.CODEC, home);
+        out.storeNullable("nook", BlockPos.CODEC, nook);
+        out.store("helps", HELPS, new HashMap<>(helps));
+        out.store("trusted", UUIDUtil.STRING_CODEC.listOf(), List.copyOf(trusted));
+        out.storeNullable("follow", UUIDUtil.STRING_CODEC, follow);
+        out.storeNullable("keeper", UUIDUtil.STRING_CODEC, keeper);
+        out.store("carry", ItemStack.CODEC.listOf(), carry.stream().filter(s -> !s.isEmpty()).toList());
+        out.putInt("made", made);
+        out.putLong("made_day", madeDay);
+        out.putLong("hide_until", hideUntil);
+        out.storeNullable("mark", BlockPos.CODEC, mark);
+        out.putLong("brushed_day", brushedDay);
+        out.putBoolean("gnawed", gnawed());
+    }
+
+    @Override
+    protected void readAdditionalSaveData(ValueInput in) {
+        super.readAdditionalSaveData(in);
+        origin = in.read("origin", BlockPos.CODEC).orElse(blockPosition());
+        home = in.read("home", BlockPos.CODEC).orElse(null);
+        nook = in.read("nook", BlockPos.CODEC).orElse(null);
+        helps.clear();
+        helps.putAll(in.read("helps", HELPS).orElse(Map.of()));
+        trusted.clear();
+        trusted.addAll(in.read("trusted", UUIDUtil.STRING_CODEC.listOf()).orElse(List.of()));
+        follow = in.read("follow", UUIDUtil.STRING_CODEC).orElse(null);
+        keeper = in.read("keeper", UUIDUtil.STRING_CODEC).orElse(null);
+        carry.clear();
+        carry.addAll(in.read("carry", ItemStack.CODEC.listOf()).orElse(List.of()));
+        made = in.getIntOr("made", 0);
+        madeDay = in.getLongOr("made_day", -1);
+        hideUntil = in.getLongOr("hide_until", 0);
+        mark = in.read("mark", BlockPos.CODEC).orElse(null);
+        brushedDay = in.getLongOr("brushed_day", -1);
+        entityData.set(DATA_GNAWED, in.getBooleanOr("gnawed", false));
+        held(carry.isEmpty() ? ItemStack.EMPTY : carry.getFirst());
+        entityData.set(DATA_HOMED, home != null);
+        if (home != null && nook != null) setHomeTo(nook, 24);
+        else setHomeTo(origin, 16);
+    }
+
+    /** Placed in the wild at its spot (the spawner, a command). */
+    public void wildAt(BlockPos spot) {
+        origin = spot.immutable();
+        setHomeTo(origin, 16);
+        setPersistenceRequired();
+    }
+}

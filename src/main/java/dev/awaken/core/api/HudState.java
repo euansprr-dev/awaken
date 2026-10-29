@@ -42,6 +42,9 @@ public final class HudState {
         @Override public float alpha(Identifier layer) { return 1F; }
     };
 
+    /** A Fault holds the screen (SPEC §43.8): the System's toasts wait until it lets go. Client only. */
+    public static volatile boolean toastsWait;
+
     /** Half the vitals lines' width (GUI px): health, Aether and food share one centre. */
     public static final int VITALS_HALF = 62;
 

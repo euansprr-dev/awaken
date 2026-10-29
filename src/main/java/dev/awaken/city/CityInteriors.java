@@ -1093,13 +1093,15 @@ final class CityInteriors {
 
         // ---- barns and granaries -------------------------------------------------------------------------------------
 
-        /** Hay stacked against the walls (sacks heaped in a granary), crates and barrels, a hay cart in a big barn. No beds, no light. */
+        /** Hay stacked against the walls (sacks heaped in a granary, and its keystone), crates and barrels, a hay cart in a big barn. No beds, no light. */
         void storeRoom() {
             boolean granary = use.equals("granary");
             List<Integer> g = work;
             for (Floor F : floors) {
                 if (F.idx > 0 && F.start < 0) continue;
                 if (F.idx == 0 && !granary && F.w >= 5 && F.d >= 5) cart(F);
+                // every granary keeps its keystone against a wall: what a Storehouse's Drop is built round (SPEC §43.12)
+                if (F.idx == 0 && granary) wallPiece(F, one(dev.awaken.kin.works.WorksContent.GRANARY_KEYSTONE.get().defaultBlockState()), FACE_ONE, null, false, g, 6, 2);
                 int n = Math.max(3, F.n() / 3);
                 for (int i = 0; i < n && room(F); i++) {
                     int roll = rnd(100);

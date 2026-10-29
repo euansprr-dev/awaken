@@ -1,0 +1,50 @@
+{
+  "fault.tell": {
+    "subtitle": "subtitles.awaken.fault.tell",
+    "sounds": [
+      {
+        "name": "awaken:ui_fault_tell"
+      }
+    ]
+  },
+  "fault.tear": {
+    "subtitle": "subtitles.awaken.fault.tear",
+    "sounds": [
+      {
+        "name": "awaken:ui_fault_tear"
+      }
+    ]
+  },
+  "fault.voice": {
+    "subtitle": "subtitles.awaken.fault.voice",
+    "sounds": [
+      {
+        "name": "awaken:ui_fault_voice"
+      }
+    ]
+  },
+  "fault.drop": {
+    "subtitle": "subtitles.awaken.fault.drop",
+    "sounds": [
+      {
+        "name": "awaken:ui_fault_drop"
+      }
+    ]
+  },
+  "fault.mend": {
+    "subtitle": "subtitles.awaken.fault.mend",
+    "sounds": [
+      {
+        "name": "awaken:ui_fault_mend"
+      }
+    ]
+  },
+  "fault.flicker": {
+    "subtitle": "subtitles.awaken.fault.flicker",
+    "sounds": [
+      {
+        "name": "awaken:ui_fault_flicker"
+      }
+    ]
+  }
+}

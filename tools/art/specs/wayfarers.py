@@ -1232,9 +1232,38 @@ def compose(w: Wayfarer) -> Canvas:
     return cv
 
 
+STONE = [(46, 45, 42), (66, 65, 61), (88, 86, 81), (112, 110, 104), (138, 135, 128), (166, 163, 155), (190, 187, 178)]
+MOSS = [(52, 70, 34), (72, 96, 44), (98, 124, 58)]
+# top faces of the head, hat, body and both arms (classic layout): where the moss grew while they sat
+TOPS = [(8, 0, 16, 8), (40, 0, 48, 8), (20, 16, 28, 20), (44, 16, 48, 20), (36, 48, 40, 52), (20, 32, 28, 36), (44, 32, 48, 36)]
+
+
+def risen() -> Canvas:
+    """One of the Stilled, stood up after the Wake (SPEC 43.14): a traveller's clothes gone to weathered stone, moss on
+    the head and shoulders where it grew while they sat, lichen flecks. Wren's cut, because she dressed for the road."""
+    im = compose(BY_ID["wren"]).image()
+    out = Canvas(64, 64)
+    for y in range(64):
+        for x in range(64):
+            r, g, bl, al = im.getpixel((x, y))
+            if al == 0:
+                continue
+            lum = (0.3 * r + 0.59 * g + 0.11 * bl) / 255
+            px = STONE[min(len(STONE) - 1, int(lum * 1.15 * len(STONE)))]
+            top = any(x0 <= x < x1 and y0 <= y < y1 for x0, y0, x1, y1 in TOPS)
+            n = h01("risen", "moss", x, y)
+            if (top and n < 0.62) or n < 0.035:
+                px = MOSS[int(h01("risen", "mt", x, y) * len(MOSS))]
+            elif h01("risen", "lichen", x, y) < 0.03:
+                px = (150, 148, 108)
+            out.set(x, y, (*px, 255))
+    return out
+
+
 def build(out):
     for w in WAYFARERS:
         out.entity("wayfarer/" + w.file, compose(w))
+    out.entity("wayfarer/risen", risen())
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -1285,7 +1314,7 @@ def disk_check():
         print("on disk: nothing built yet (python3 tools/art/build_all.py wayfarers)")
         return
     have = sorted(f for f in os.listdir(OUT_DIR) if f.endswith(".png"))
-    want = sorted(w.file + ".png" for w in WAYFARERS)
+    want = sorted([w.file + ".png" for w in WAYFARERS] + ["risen.png"])
     assert have == want, f"wayfarer skins on disk differ from the spec: missing {set(want) - set(have)}, extra {set(have) - set(want)}"
     for w in WAYFARERS:
         im = Image.open(os.path.join(OUT_DIR, w.file + ".png")).convert("RGBA")

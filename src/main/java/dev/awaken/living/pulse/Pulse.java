@@ -167,6 +167,8 @@ public final class Pulse extends SavedData {
         }
         Behaviour b = Behaviours.get(def.behaviour());
         if (b != null) b.witnessed(p, h, def);
+        // two of the hundred bells are heard only in the wild's big moments (SPEC §43.13)
+        dev.awaken.bells.Bells.witnessed(p, path);
     }
 
     /** For one player: a happening now, if the world around them is quiet and it's been long enough. */
@@ -294,6 +296,24 @@ public final class Pulse extends SavedData {
         }
         p.happenings.clear();
         p.setDirty();
+        return n;
+    }
+
+    /**
+     * The Kinsong (SPEC §43.14): every stampede running within {@code reach} of {@code at} stops where it is, its herd
+     * standing still and harmless till the happening's time is up. Returns how many it stopped.
+     */
+    public static int calm(ServerLevel level, BlockPos at, int reach) {
+        int n = 0;
+        for (Happening h : get(level.getServer()).active()) {
+            if (!"stampede".equals(net.minecraft.resources.Identifier.parse(h.kind).getPath()) || h.data.containsKey("calmed")) continue;
+            if (h.centre.distanceToSqr(at.getX() + 0.5, h.centre.y, at.getZ() + 0.5) > (double) reach * reach) continue;
+            h.data.put("calmed", 1);
+            for (UUID id : h.participants)
+                if (level.getEntity(id) instanceof net.minecraft.world.entity.Mob m) m.getNavigation().stop();
+            n++;
+        }
+        if (n > 0) get(level.getServer()).setDirty();
         return n;
     }
 
