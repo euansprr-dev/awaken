@@ -19,12 +19,16 @@ screen close
 cmd difficulty peaceful
 cmd gamerule send_command_feedback false
 camera first
-# away from Carillon (nothing inside its walls is a find), and wait for the land out there
-cmd tp @s 6000 160 6000 0 0
-wait 600
+# away from Carillon (nothing inside its walls is a find), onto land that has loaded (a far tp's chunks may not be ready
+# on CI: the fills then say "That position is not loaded")
+cmd tp @s 6000 200 6000
+wait 400
+cmd awaken gate hop
+wait 300
 
 # ---- a creature across the sky -----------------------------------------------------------------------------------------
-cmd tp @s 6000 160 6000 0 0
+cmd tp @s ~ ~40 ~ 0 0
+wait 10
 cmd fill ~-2 ~-1 ~-2 ~2 ~-1 ~2 minecraft:smooth_stone
 cmd fill ~-2 ~-1 ~58 ~2 ~-1 ~62 minecraft:smooth_stone
 cmd kill @e[type=!minecraft:player,distance=..160]
