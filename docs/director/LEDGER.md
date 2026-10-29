@@ -621,3 +621,13 @@ happens).
 - **Edges**: a Bumblepuff with one or two flowers asks for lots; a Loomworm refuses the wrong tree; a Cloudcalf won't
   follow anyone more than 4 below it and is lost again two minutes after it's home; a Boulderback backs from any light
   in either hand; with no cave under its site it gets a cut pocket at y -30; each day's output starts again each morning.
+
+### The wild's bells (Stampede, Flood, Eclipse)
+- **Get**: from C rank, witness a Stampede (Stampede Bell) or the Deep Tide on a new moon (Flood Bell); at A rank, stand
+  under open sky in the middle of a new moon's night (Eclipse Bell).
+- **For**: the last three of the hundred's sources; reasons to be out in the wild at its biggest moments.
+- **Know**: the bracketed ring line; the Book lists them under the wilds.
+- **Source**: `Bells.witnessed` (from `Pulse.witness`), `Bells.moments`.
+- **Links**: the World Pulse's happenings (§21.6); Stride, Breath and Sight voices.
+- **Edges**: witnessed below C rank it rings nothing then; the next Stampede or Deep Tide after C does; a roof over you
+  on the new moon's night and the Eclipse Bell waits.

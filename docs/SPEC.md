@@ -13420,6 +13420,10 @@ Built in `dev.awaken.bells` (`Bells`, `BellSites`, `DreamBells`, `BellCatalog`) 
   Sorrow Bell for Sleep, the Throne Bell for Machines, the Oath Bell for Mirrors, the Crown Bell for Storms, the Grief
   Bell for Roots, Ash).
 - **Big Days**: the Siege Bell with the Night Bell when a home holds a raid and its member is B rank or above.
+- **The wild's big moments** (source WILDS; they were down as Big Days, but the World Pulse already holds them, §21.6):
+  from C rank, witnessing a Stampede rings the Stampede Bell and witnessing the Deep Tide (new moon) the Flood Bell
+  (`Bells.witnessed`, called from `Pulse.witness`); at A rank, standing under open sky between 16000 and 20000 on a new
+  moon's night rings the Eclipse Bell. Every bell but the Seed (00) and the True Bell (36) now has a source.
 - **Carillon** (Remembered leads while you're in the city): the Roost's bell rings for you within 16 of the Roost at C
   rank; Choir Square's within 20 of the square with 20 bells; the market's in the market district at B rank; the
   Quay's (the Harbour Bell) on the Quay with 50 bells. A due bell you're away from is remembered aloud with where it is.

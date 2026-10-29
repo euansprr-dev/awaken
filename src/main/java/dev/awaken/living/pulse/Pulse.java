@@ -167,6 +167,8 @@ public final class Pulse extends SavedData {
         }
         Behaviour b = Behaviours.get(def.behaviour());
         if (b != null) b.witnessed(p, h, def);
+        // two of the hundred bells are heard only in the wild's big moments (SPEC §43.13)
+        dev.awaken.bells.Bells.witnessed(p, path);
     }
 
     /** For one player: a happening now, if the world around them is quiet and it's been long enough. */

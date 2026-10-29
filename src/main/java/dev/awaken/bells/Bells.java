@@ -523,7 +523,26 @@ public final class Bells {
         if (rank.ordinal() >= Rank.S.ordinal() && dev.awaken.above.halo.Halo.in(p)) ring(p, "star", "under the stars at the Halo");
         if (p.level().dimension() == Level.OVERWORLD && p.level().isThundering() && p.getY() > 160 && !p.onGround() && !p.isInWater())
             ring(p, "storm", "in the sky, in a storm");
+        // the Eclipse Bell: out under the open sky in the middle of a new moon's night, at A rank
+        if (rank.ordinal() >= Rank.A.ordinal() && p.level().dimension() == Level.OVERWORLD) {
+            long clock = p.level().getOverworldClockTime(), tod = clock % 24000L;
+            if ((clock / 24000L) % 8 == 4 && tod >= 16000 && tod <= 20000 && p.level().canSeeSky(p.blockPosition().above()))
+                ring(p, "eclipse", "under the dark of the moon");
+        }
         city(p);
+    }
+
+    /**
+     * A World Pulse happening witnessed (SPEC §43.13), from C rank: the Stampede Bell in a stampede's thunder, the Flood
+     * Bell when the Deep Tide comes up under the new moon. {@code happening} is the happening's path ("stampede").
+     */
+    public static void witnessed(ServerPlayer p, String happening) {
+        if (Progression.rank(p).ordinal() < Rank.C.ordinal()) return;
+        switch (happening) {
+            case "stampede" -> ring(p, "stampede", "in the thunder of a stampede");
+            case "deep_tide" -> ring(p, "flood", "when the Deep Tide came up under the new moon");
+            default -> {}
+        }
     }
 
     // ---- voices -----------------------------------------------------------------------------------------------------

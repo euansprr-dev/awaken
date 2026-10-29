@@ -24,7 +24,7 @@ final class BellTests {
         AwakenTests.register("bells_site_wakes", 60, BellTests::siteWakes);
     }
 
-    /** A hundred bells numbered in order, thirty-five of them built; a bell rings home once, and the first brings the handbell. */
+    /** A hundred bells numbered in order, all but the Seed and the True Bell built (98); a bell rings home once, and the first brings the handbell. */
     static void catalogRing(GameTestHelper h) {
         Set<String> ids = new HashSet<>();
         int built = 0;
@@ -33,7 +33,7 @@ final class BellTests {
             h.assertTrue(d != null && d.no() == i && ids.add(d.id()), "bell " + i + " is in its place, its id unique");
             if (d.built()) built++;
         }
-        h.assertTrue(built == 35, "thirty-five bells are built (" + built + ")");
+        h.assertTrue(built == 98, "all but the Seed and the True Bell are built (" + built + ")");
         h.assertTrue(BellCatalog.MELODY.length == 100, "the song has a step for every bell");
         for (BellCatalog.Peal pl : BellCatalog.PEALS)
             for (String id : pl.bells()) h.assertTrue(BellCatalog.of(id) != null && BellCatalog.of(id).built(), pl.name() + "'s " + id + " is a built bell");
