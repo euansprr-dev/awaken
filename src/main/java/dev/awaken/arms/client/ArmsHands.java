@@ -220,8 +220,11 @@ final class ArmsHands {
         FpSwings.Hand hand = !has || preview != null ? FpSwings.Hand.MAIN : FpSwings.hand(st, m);
         boolean mainMoves = has && hand != FpSwings.Hand.OFF, offMoves = has && hand != FpSwings.Hand.MAIN;
         // a weapon in each hand: the hand not striking draws back to the next strike's set while this one lands (Swing
-        // Studio round 4; Euan 2026-10-28: "let the idle hand draw back while the other strikes")
-        boolean idle = has && !tremble && hand != FpSwings.Hand.BOTH && FpSwings.idle(st, m, t, ours, IDLE_D, IDLE_Q);
+        // Studio round 4; Euan 2026-10-28: "let the idle hand draw back while the other strikes"); in a both-hands
+        // strike, the off hand's own way into it, from where it waited (round 9)
+        boolean idle = has && !tremble && FpSwings.idle(st, m, t, ours, IDLE_D, IDLE_Q);
+        boolean twin = idle && hand == FpSwings.Hand.BOTH;
+        if (twin) offMoves = false;
         boolean mainIdle = idle && !mainMoves, offIdle = idle && !offMoves;
         // a change of source (a chained strike, a move ended or refused, the charge taken up): each hand carried from
         // where it was shown into the new one, never a jump (SwingBlend)

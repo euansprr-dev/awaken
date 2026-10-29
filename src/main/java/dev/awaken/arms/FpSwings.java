@@ -49,7 +49,8 @@ public final class FpSwings {
      * (0: on the press) and {@code swishSound} the studio's sound in place of the row's own (null: the row's), and the bite, after a landed hit's hit-stop the hands running at {@code biteRate} for
      * {@code biteTicks} through the body (0 ticks: none). {@code idle} (schema 6, round 4; empty for none): a weapon in
      * each hand, the hand not striking, laid out like {@code keys} and authored for its own hand: still until the blow
-     * lands, then drawn back to the next strike's set and held there for the press. {@code far} (round 5): a double
+     * lands, then drawn back to the next strike's set and held there for the press; in a both-hands strike (round 9), the
+     * off hand's own way into it from where it waited, the main's after the hit. {@code far} (round 5): a double
      * weapon led by its other end, turned end for end (the Twin Blades' figure-eight): its trail runs along that end.
      * {@code set} (round 8; -1 for none): when the drive begins, the strike's set, where a press still down waits.
      */
@@ -324,7 +325,7 @@ public final class FpSwings {
 
     /**
      * The hand not striking a move at {@code t} ticks of it (Clip's idle; for its own hand, mirrored by the caller like
-     * an off-hand strike). False when it has none (it rests).
+     * an off-hand strike), or a both-hands strike's off hand. False when it has none (it rests, or plays the main's).
      */
     public static boolean idle(@Nullable Style st, Archetype.@Nullable Move m, float t, boolean ours, Vector3f d, Quaternionf q) {
         Clip c = st == null || m == null ? null : st.moves().get(m);

@@ -150,21 +150,32 @@ def thrust_knobs(sid, mv):
     return k
 
 
-def thrust_after(tk, m, t, hit, total, at, out_d, back_d, rest):
+def thrust_after(tk, m, t, hit, total, at, out_d, back_d, rest, pull=None):
     """After a thrust's hit: a beat at full reach (the twist going in), snapped back to the ready line as fast as it went
-    in, held there still for the chain's next press, then home: never a slow slide back across the view."""
+    in, held there still for the chain's next press, then home: never a slow slide back across the view. With
+    {@code pull} (pull_back: the other hand strikes next), drawn on back to it as it snaps, there by the earliest press
+    and held to the move's end."""
     hold_end = hit + tk["hold"]
     snap_end = hold_end + tk["snap"]
     cad = m.get("cadence")
     up = max(snap_end, cad[0] + 0.25) if cad else snap_end
     up = min(up, total - min(tk["rise"], 1.0))
+    if pull is not None and cad:
+        # through the move's end: with no press it is carried home from there (SwingBlend's rest, 3 ticks; its tick
+        # home from out there was 0.44 of the screen a frame)
+        up = total
     if t < hold_end:
         x = (t - hit) / max(1e-6, tk["hold"])
         return at(out_d + 0.02 * math.sin(math.pi * x), 22 + 6 * x)
+    ready = at(back_d, -8)
     if t < snap_end:
         x = (t - hold_end) / max(1e-6, tk["snap"])
-        return at(out_d + (back_d - out_d) * L.ease_in_out_sine(x), 28 - 36 * L.ease_in_out_sine(x))
-    ready = at(back_d, -8)
+        ready = at(out_d + (back_d - out_d) * L.ease_in_out_sine(x), 28 - 36 * L.ease_in_out_sine(x))
+    if pull is not None:
+        by = max(snap_end, cad[0]) if cad else snap_end
+        ready = L.lerp_pose(ready, pull, L.ease_in_out_sine((t - hold_end) / max(1e-6, by - hold_end)))
+    elif t < snap_end:
+        return ready
     if t < up:
         return ready
     x = min(1.0, (t - up) / max(1e-6, min(tk["rise"], total - up)))
@@ -311,9 +322,6 @@ def _turn_sense(held, at):
 
 # ---- the idle hand (round 4: a weapon in each hand) ---------------------------------------------------------------------
 
-IDLE_DRAW = 1.5  # ticks the idle hand takes to draw back to the next strike's set, from the striking hand's hit
-
-
 def idle_next(st, mv):
     """The next strike, when the hand not striking this one strikes it (or both do) and the style has its idle hand
     drawn back (a feel spec's idleHand): Euan 2026-10-28, "let the idle hand draw back while the other strikes"."""
@@ -401,8 +409,17 @@ def idle_target(st, mv, held, cur):
 
 IDLE_CLEAR = 0.25  # the idle hand's blade keeps this far (ndc) from the striking blade and its forearm
 IDLE_YIELD = (np.array([0.14, -0.42, 0.16]), np.eye(3))  # where it gives way to: low, back, on its own side
-IDLE_LEAD = 1.0  # it starts to give way this long (ticks) before the striking blade comes near, and comes back as slowly
+IDLE_LEAD = 1.0  # it starts to give way at least this long (ticks) before the striking blade comes near
+# Swing Studio round 9 (Euan 2026-10-29, the daggers: "the transition in between each stab is what's off"): the hand
+# that gave way stays down through a gap shorter than IDLE_BRIDGE (it dipped, rose and dipped again as the striking
+# hand cut across and then hauled back past it), and comes back over the time left before the next press, up to
+# IDLE_BACK (back as fast as it went, while its way turned it to the next set, it snapped 0.48 of the screen a frame)
+IDLE_BRIDGE = 2.0
+IDLE_BACK = 2.0
+IDLE_PACE = 2.5  # ticks it takes to give way all the way (to IDLE_YIELD), or to come back from it
+HAUL_LEAD = 0.5  # a blade hauled back across to a both-hands strike's set sets off this long before its carry ends
 _YIELD = {}
+_HAUL = {}
 
 
 def _hand_points(held, pose, hand, arm):
@@ -461,13 +478,56 @@ def idle_pose(st, mv, held, t):
     plan = _YIELD[key]
     if plan is None:
         return raw
-    ts, need = plan
-    # each moment's need, spread IDLE_LEAD either side on a sine (it moves away before the blade comes, never a jolt)
-    w = np.clip(1.0 - np.abs(ts - t) / IDLE_LEAD, 0.0, 1.0)
-    a = float(np.max(need * (0.5 - 0.5 * np.cos(np.pi * w))))
+    a = _yield_at(st, mv, plan, t)
     if a <= 1e-4:
         return raw
     return L.lerp_pose(raw, IDLE_YIELD, a)
+
+
+def _yield_spans(st, mv, plan):
+    """[(from, to, how far)]: the stretches the idle hand must give way through, joined across gaps under IDLE_BRIDGE."""
+    ts, need = plan
+    spans = []
+    for tt, a in zip(ts, need):
+        if a <= 1e-3:
+            continue
+        if spans and tt - spans[-1][1] <= IDLE_BRIDGE:
+            spans[-1] = (spans[-1][0], float(tt), max(spans[-1][2], float(a)))
+        else:
+            spans.append((float(tt), float(tt), float(a)))
+    return spans
+
+
+def _yield_at(st, mv, plan, t):
+    """How far the idle hand has given way at t: out on a sine toward each moment's need, over IDLE_PACE a whole
+    yield (IDLE_LEAD at least) before it, held through its stretch at the most it has needed so far, back over IDLE_PACE
+    or the time left before the next press. Round 9: it went all the way out by the stretch's first need (out a whole
+    yield in a tick, 0.43 of the screen a frame)."""
+    m = st["moves"][mv]
+    total = m["windup"] + m["active"] + m["recovery"]
+    _, win = chain_links(st, mv)
+    press = win[0] if win else total
+    ts, need = plan
+    a = 0.0
+    for y0, y1, most in _yield_spans(st, mv, plan):
+        if t > y1:
+            room = press - 0.25 - y1 if y1 < press else IDLE_LEAD
+            back = max(IDLE_LEAD * 0.5, min(max(IDLE_BACK, IDLE_PACE * most), room))
+            a = max(a, most * _sine(1.0 - (t - y1) / back))
+            continue
+        for tt, ai in zip(ts, need):
+            if ai <= 1e-3 or not y0 <= tt <= y1:
+                continue
+            if tt <= t:
+                a = max(a, float(ai))
+            else:
+                a = max(a, ai * _sine(1.0 - (tt - t) / max(IDLE_LEAD, IDLE_PACE * ai)))
+    return a
+
+
+def _sine(k):
+    k = min(1.0, max(0.0, k))
+    return 0.5 - 0.5 * math.cos(math.pi * k)
 
 
 def _gives_room(st, mv):
@@ -489,8 +549,9 @@ def gives_way(st, mv, held):
 def _idle_way(st, mv, held, t):
     """The idle hand's way through this move ((d, R), authored for its own hand like any move), or None: it rests.
     Where it was (idle_source) until the striking hand's hit, so nothing pulls the eye off the blow; then drawn to the
-    next strike's set over IDLE_DRAW (done by the earliest press), held there through the chain's window, home by the
-    move's end."""
+    next strike's set by the earliest press, held there through the chain's window, home by the move's end. Round 9:
+    drawn over all that time (in 1.5 ticks it crossed 0.3 of the screen a frame); for a both-hands push next it stays
+    where it is, the push takes it from there (twin_pose)."""
     nmv = idle_next(st, mv)
     if nmv is None:
         return None
@@ -499,10 +560,10 @@ def _idle_way(st, mv, held, t):
     _, win = chain_links(st, mv)
     hit = L.hit_tick(m)
     total = m["windup"] + m["active"] + m["recovery"]
-    drawn = min(hit + IDLE_DRAW, win[0]) if win else hit + IDLE_DRAW
+    drawn = max(hit + 0.5, win[0]) if win else total
     end = min(win[1], total) if win else total
     src = idle_source(st, mv, held)
-    target = idle_target(st, nmv, held, mv)
+    target = src if _pushes_twin(st, nmv) else idle_target(st, nmv, held, mv)
     if t <= hit:
         return src
     if t < drawn:
@@ -511,6 +572,79 @@ def _idle_way(st, mv, held, t):
     if t < end or back <= 0:
         return target
     return L.lerp_pose(target, rest, L.ease_in_out_sine(min(1.0, (t - end) / back)))
+
+
+_PULL = {}
+
+
+def pull_back(st, mv, held):
+    """Where a stab's hand draws back to after its blow when the other hand strikes next (a style whose idle hand moves),
+    so that blow passes it by: toward its own rest, and as far on low and back on its own side (IDLE_YIELD) as keeps its
+    blade IDLE_CLEAR from the striking blade and forearm all through it; None: it waits on the ready line. Round 9
+    (Euan 2026-10-29, the daggers: "the transition in between each stab is what's off"): it waited mid-screen, in the
+    next blow's way, so as it became the idle hand it dived out of the way and sprang back in a frame or two."""
+    key = (st["id"], mv, held.wid)
+    if key in _PULL:
+        return _PULL[key]
+    nmv = chain_next(st, mv)
+    if not feel(st["id"]).get("idleHand") or nmv is None or hand_of(st, mv) == "both":
+        return None
+    h = hand_of(st, nmv)
+    if h == "both" or side(h) == side(hand_of(st, mv)):
+        return None
+    _PULL[key] = None  # asked again while working it out: it waits on the ready line
+    # the next blow is worked out from this hand's ready line; what that leaves in the caches is dropped, so nothing
+    # downstream keeps a chain worked out before this hand drew back
+    caches = (_START, _FIT, _TRACKS, _YIELD, _READY, _PULL, _HAUL, L._SPIN_FROM, L._REAP_FIT)
+    kept = [dict(c) for c in caches]
+    n = st["moves"][nmv]
+    strikes = [_hand_points(held, L.rig_pose(st, n, held, float(t)), h, True)
+               for t in np.arange(0.0, n["windup"] + n["active"] + n["recovery"] + 1e-6, 0.25)]
+    for c, k in zip(caches, kept):
+        c.clear()
+        c.update(k)
+    rest = (np.zeros(3), np.eye(3))
+    me = side(hand_of(st, mv))
+    _PULL[key] = None
+    for k in np.linspace(0.0, 1.0, 21):
+        p = L.lerp_pose(rest, IDLE_YIELD, float(k))
+        if all(_gap(_hand_points(held, p, me, False), s) >= IDLE_CLEAR for s in strikes):
+            _PULL[key] = p
+            break
+    return _PULL[key]
+
+
+def _pushes_twin(st, mv):
+    """A both-hands push of a style whose idle hand moves: the off hand drives into it from where it is (twin_pose)."""
+    return (bool(feel(st["id"]).get("idleHand")) and hand_of(st, mv) == "both" and L.form_of(st["moves"][mv])[0] == "stab"
+            and bool((thrust_knobs(st["id"], mv) or {}).get("push")))
+
+
+def twin_from(st, mv, held):
+    """Where the off hand is when a both-hands push is pressed (authored for its own hand), or None: it plays the
+    main's, mirrored."""
+    if not _pushes_twin(st, mv):
+        return None
+    prev, _ = chain_links(st, mv)
+    if prev is None or hand_of(st, prev[0]) == "both":
+        return None
+    pmv, at = prev
+    if side(hand_of(st, pmv)) == "off":
+        return L.rig_pose(st, st["moves"][pmv], held, float(at))
+    return idle_pose(st, pmv, held, float(at))
+
+
+def twin_pose(st, mv, held, t):
+    """The off hand's own way through a both-hands push (round 9, the daggers' strike 4): from where it is on the press
+    into the same blow as the main's (mirrored) by the hit, gathering speed as the main's push does, then the main's.
+    It was the main's from the first frame, so the hand that had given way low sprang up to the set in the blend."""
+    m = st["moves"][mv]
+    src = twin_from(st, mv, held)
+    hit = L.hit_tick(m)
+    if src is None or t >= hit:
+        return L.rig_pose(st, m, held, t)
+    p = (max(0.0, t) / max(1e-6, hit)) ** thrust_knobs(st["id"], mv)["push"]
+    return L.lerp_pose(src, L.rig_pose(st, m, held, hit), p)
 
 
 def hand_of(st, mv):
@@ -685,6 +819,24 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
         x = min(1.0, (t - hit) / max(0.5, nxt[0] - hit))
         spun = 180.0 * (1 - (1 - x) ** 2)
         lk = spun / 180.0
+    # both hands strike next, each from its own side (the daggers' strike 4): the blade is hauled back to that strike's
+    # set, setting off HAUL_LEAD before its carry ends, as the carry slows, at an even pace on the screen (round 9: it
+    # waited out the carry's tail far across, then crossed back 0.33 of the screen a frame)
+    nmv = chain_next(st, mv) if nxt is not None else None
+    to_both = nmv is not None and hand_of(st, nmv) == "both" and hand_of(st, mv) != "both"
+    h0 = max(hit, exit_t - HAUL_LEAD) if to_both else exit_t
+
+    def hauled(pose, tt):
+        key = (sid, mv, held.wid)
+        if key not in _HAUL:
+            ready = L.rig_pose(st, st["moves"][nmv], held, -0.01)
+            low = at(stop, -lag * 0.3, 0.0, 1.0, drop)
+            _HAUL[key] = (ready, _load_track(held, far_led(st, mv), lambda q: out(q), low, ready, LOAD_TURN / 3))
+        ready, track = _HAUL[key]
+        k = L.ease_in_out_sine((tt - h0) / max(0.5, nxt[0] - h0))
+        k = float(np.interp(k * track[-1], track, np.linspace(0.0, 1.0, len(track))))
+        return L.lerp_pose(pose, ready, k)
+
     if t < exit_t:
         # through the target and on: one continuous fall of speed from the hit's own (1 - (1 - x)^k leaves at k times
         # the mean, matched to the drive's end so nothing stutters), the wrist leading a touch, carried on and down out of
@@ -696,7 +848,8 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
         y = 1 - (1 - x) ** k
         # the wrist's lead and the drop ride the same fall of speed, so nothing moves on once the blade has stopped
         lead = -lag * 0.3 * math.sin(math.pi * 0.5 * min(1.0, y / 0.5))
-        return out(at(stop * y, lead, 0.0, 1.0, drop * y), spun)
+        pose = at(stop * y, lead, 0.0, 1.0, drop * y)
+        return out(hauled(pose, t) if to_both and t > h0 else pose, spun)
     # out of the frame it waits for the chain's next press (the next strike leaves from down there: SwingBlend carries the
     # pose), then rises home
     low = at(stop, -lag * 0.3, 0.0, 1.0, drop)
@@ -705,15 +858,15 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
         up = min(max(exit_t, nxt[1]), total - min(kn["rise"], 1.5))
         # a blow that lands low (a maul's slam) is hauled back up to a height the eye reads before the next press
         ready = _lifted(held, low)
-        nmv = chain_next(st, mv)
-        if nmv is not None and hand_of(st, nmv) == "both" and hand_of(st, mv) != "both":
-            # both hands strike next, each from its own side: the blade is drawn back to that strike's set as it waits
+        if to_both:
             # (held where its carry left it, far across, the other hand's blade was mirrored onto the far side and the
-            # two crossed as they left: the daggers' strike 4)
-            ready = L.rig_pose(st, st["moves"][nmv], held, -0.01)
-        if ready is not low:
+            # two crossed as they left)
+            if t < up:
+                return out(hauled(low, t), spun)
+            low = hauled(low, math.inf)  # there
+        elif ready is not low:
             # back across the screen to a set takes all the time there is before the press
-            haul = max(0.5, nxt[0] - exit_t if nmv is not None and hand_of(st, nmv) == "both" else min(1.5, nxt[0] - exit_t))
+            haul = max(0.5, min(1.5, nxt[0] - exit_t))
             if t < up:
                 return out(L.lerp_pose(low, ready, L.ease_in_out_sine(min(1.0, (t - exit_t) / haul))), spun)
             low = ready
@@ -1237,6 +1390,8 @@ def live(sid, moves=None, spec=None):
     _FIT.clear()
     _TRACKS.clear()
     _YIELD.clear()
+    _PULL.clear()
+    _HAUL.clear()
     L._SPIN_FROM.clear()
     L._REAP_FIT.clear()
     _READY.clear()

@@ -155,7 +155,7 @@ final class SwingTests {
     static void chainFlow(GameTestHelper h) {
         Vector3f a = new Vector3f(), b = new Vector3f();
         Quaternionf qa = new Quaternionf(), qb = new Quaternionf();
-        int links = 0;
+        int links = 0, twins = 0;
         for (Archetypes.Loaded style : Archetypes.all()) {
             FpSwings.Style st = FpSwings.style(style.id());
             if (st == null) continue;
@@ -166,6 +166,15 @@ final class SwingTests {
                 Archetype.MoveDef def = style.move(prev);
                 if (def == null) continue;
                 float press = def.hasCadence() ? def.cadence().get(0) : def.windup() + def.active() + ArmsRules.MASTERY_LINK;
+                // a both-hands strike's off hand drives in from where it waited (round 9, the daggers' strike 4)
+                boolean offStruck = FpSwings.hand(st, prev) == FpSwings.Hand.OFF;
+                if (FpSwings.hand(st, next) == FpSwings.Hand.BOTH && FpSwings.idle(st, next, 0, true, b, qb)
+                        && (offStruck ? FpSwings.sample(st, prev, press, true, a, qa) : FpSwings.idle(st, prev, press, true, a, qa))) {
+                    float turn = (float) Math.toDegrees(2 * Math.acos(Math.min(1F, Math.abs(qa.dot(qb)))));
+                    h.assertTrue(a.distance(b) < 0.02F && turn < 3F,
+                            style.id() + " " + next.key + "'s off hand starts where it waited after " + prev.key + " (" + a.distance(b) + ", " + turn + " degrees)");
+                    twins++;
+                }
                 // the hand that throws the next strike (both hands play the main's): the same as this one's, or the
                 // idle hand drawn back while this one struck (round 4, the daggers)
                 boolean same = (FpSwings.hand(st, prev) == FpSwings.Hand.OFF) == (FpSwings.hand(st, next) == FpSwings.Hand.OFF);
@@ -178,6 +187,7 @@ final class SwingTests {
             }
         }
         h.assertTrue(links > 30, "the chains' links are checked (" + links + ")");
+        h.assertTrue(twins > 0, "a both-hands strike's off hand is checked (the daggers' strike 4)");
         // the Twin Blades' figure-eight (round 5): the ends take turns down the light chain, so the link above from a
         // strike to one led by the other end holds only because the first carried on round end for end by the press
         FpSwings.Style tw = FpSwings.style("twinblades");

@@ -6345,6 +6345,33 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       holds the hand on the weapon in view.
     - Left: the daggers' haul from strike 3's far end back to strike 4's set (0.35 of the screen in a frame at 60 fps,
       over the 0.3 gate); the guard is unseen in game.
+  - *Round 9, between the stabs* (Euan 2026-10-29: "it still feels a bit rough at the part with it hits with both
+    daggers once"; "it's not at the moment of pushing. The transition in between each stab is whats off"):
+    - A stab of an idle-hand style whose next strike is the other hand's draws back after its blow toward its own rest,
+      and on toward the give-way pose (0.14 out, 0.42 down, 0.16 back) as far as keeps its blade 0.25 (ndc) from the
+      next blow's blade and forearm all through it (`pull_back`). It is there by the earliest press and held to the
+      move's end (with no press, `SwingBlend` takes it home over 3 ticks). It used to wait on its ready line mid-screen,
+      in the next blow's way, so as it became the idle hand it dived out of the way and sprang back in a frame or two.
+      The daggers: strike 1's right hand goes back to rest, strike 2's left hand down to the bottom left, under strike
+      3's forehand and its forearm. Test `arms_fp_swings`: such a clip ends where it waits, still from the earliest
+      press (it sprang home from there in its last tick, 0.44 of the screen a frame); every other clip ends at rest.
+    - The idle hand draws to the next strike's set from the striking hand's hit to the earliest press (was 1.5 ticks:
+      0.3 of the screen a frame). It gives way toward each moment's need over 2.5 ticks for the whole way (1 at least),
+      holds the most it has needed until the stretch ends, and comes back as slowly (it went all the way out by the
+      stretch's first need: 0.43 of the screen a frame).
+    - A both-hands push of an idle-hand style (the daggers' strike 4) bakes the off hand's own track in the move's
+      `idle` keys: from where it waited into the same blow as the main's (mirrored), on the same x^push, the main's
+      from the hit on. Before it the idle hand stays where it is (it waited low, then the blend lifted it 0.3 of the
+      screen a frame to the main's set). `ArmsHands` plays a both-hands move's `idle` keys on the off hand;
+      `arms_chain_flow` checks that they start where the off hand waited.
+    - A strike before a both-hands one sets off back to that strike's set 0.5 ticks before its carry ends, as the carry
+      slows, timed along its path on the screen (it waited out the carry's tail, then crossed back 0.33 of the screen
+      a frame; now 0.26).
+    - Measured at 60 fps (both blades' middles, the chain and on into strike 1): steps over 0.2 of the screen a frame
+      21 -> 6 mashing, 20 -> 6 at a steady pace, all six in strike 3's own slash and its haul back. The idle hand's
+      largest step: strike 2 0.48 -> 0.11, strike 3 0.40 -> 0 (it waits), strike 4's off hand 0.18 (its own push),
+      strike 5 0.29 -> 0.18, the Art, the slipcut and the undercut 0.41 -> 0.18. Left: the haul (0.26), and all of it
+      unseen in game.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
