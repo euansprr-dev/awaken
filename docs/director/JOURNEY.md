@@ -25,6 +25,54 @@ https://claude.ai/artifact/UZ4vpKGoSJkisZRkmoHj3D (same link, marked approved).
   carrying the ingots from one work to the forge. (Part 3, "The automation ladder".)
 - "Go ahead with the entire plan. I think this is really, really good." He'll play it through himself to check it.
 
+## The bar (Euan, 29 Oct, as the build began)
+
+"Make sure this is fully featured. You truly think of every single edge case, you think of every single connection ...
+so everything actually links, everything has a recipe, everything has a path, and nothing is ... left for assumption
+... nothing is something that would be impossible to discover, and everything has a direction but that isn't clearly
+stated ... taking inspiration from all of the best games ... you're never left unsure about how to play the game and
+how to keep going." Built at AAA level, with the mobs and the kin on par with Fresh Animations and the bar we keep
+setting: "the single best RPG someone could ever want."
+
+How the build holds to it (each is checked, not hoped for):
+1. **The Ledger** (`docs/director/LEDGER.md`). Every thing the Journey adds or changes (item, block, beast, work, bell,
+   line, screen, rule) has a row: how you get it, what it's for, how you come to know it exists (its direction), its
+   recipe or source, what it links to, and its edge cases. A stage's rows are written before its code and finished
+   before hand-off; no row may say "later" or "TBD" when a stage is handed over.
+2. **Nothing without a way in** (GameTest `journey_ledger`). Every `awaken` item and block has at least one way in: a
+   recipe, a loot table, a drop, a trade, a work that makes it, a reward or a placement in the world, each declared in
+   code where it isn't data, or it's on a short reviewed list of things that are never meant to be held (technical
+   blocks). Every recipe the Journey adds unlocks in the recipe book the first time you hold one of its ingredients.
+3. **Direction without telling.** Every open goal has at least one pull in the world you can find without being told:
+   something you can see from far off, hear, read or track. What we take from the best:
+   - *Breath of the Wild*: you see it, you go there. Bell towers, a holdfast's bell, a camp's smoke, the gates' pillars
+     and the Stilled on the roads are landmarks you can spot from high ground.
+   - *Elden Ring*: the guidance is in the world, not in a list. A sleeping bell hums and the Map shades its bearing.
+   - *Outer Wilds*: rumours that point at places and mark where there's more, never the answer. Kin rumours and the
+     Bell Book's leads work this way.
+   - *Subnautica*: scanning teaches. Reading a beast with the band, a Stilled's letter or a holdfast's talk files
+     what you learned.
+   - *Stardew Valley*: the Community Center's bundles, restored by the Junimos. The Hearth page's needs show what's
+     missing and fill as you bring things; the beasts then do the work.
+   - *Minecraft*: the recipe book opens a recipe as soon as you hold an ingredient.
+   - *Monster Hunter*: research comes in steps. Each watch adds a line to a kind's card.
+   - *Hollow Knight*: you hear the mapmaker humming before you find him. You hear a bell before you see it.
+4. **Never stuck.** The journey test (part 8) at every stop. And in play: when a player has moved no goal forward for
+   a whole play-day of play time, the System makes the top need's rumour one step plainer, and after a second day the
+   Track bearing narrows. It never says what to do, only where to look.
+5. **Edge cases first.** Every stage's SPEC lines say what happens with: shared Hearths and parties, two players at
+   the same beast or bell, death and respawn, logging out mid-way, chunk unloads, a server restart, old saves, other
+   dimensions, Peaceful, the game rules, a full inventory, a broken work, and a beast that can't reach its nook.
+6. **The creature bar.** Every kin and beast reaches the bar of the creature sessions (Fresh Animations level): its
+   own model, never a vanilla mob reskinned; at least three idles; head and eyes that look at you; blinking and
+   breathing; ears, tails and fluff that follow through; its own walk, run or hop; reactions to the bells, to help, to
+   fear, joy and sleep; its own sounds; and its own particles where it shows a want. The Lampwing goes to Euan in game
+   first, and no other kind is built until it passes.
+7. **Moments made like the opening.** Each stage lists its moments (the first Kin card, the first bell, the first raid)
+   with the camera, sound and light designed for each, and each plays right with Lens off and on.
+8. **A review before hand-off.** At each stage's end: the Ledger re-read against the code, the stage's diff reviewed
+   for bugs, the full GameTest suite on CI.
+
 ## What Euan said (fourth note)
 
 - **No people outside the city.** The world changed and only hunters can live out there, so everyone lives in Carillon.
@@ -734,6 +782,9 @@ Recasting stays cosmetic.
   Book.
 - **Nothing ever stalls:** no bell, work or Proving needs something the player can't reach at that rank; every Fault
   hands back control; a raid never leaves the Hearth unable to work.
+- **Nothing without a way in:** `journey_ledger` (the bar, above): every item and block has a source, and every Journey
+  recipe unlocks when you first hold an ingredient.
+- **Never stuck in play:** a player who moves no goal for a play-day gets a plainer rumour, then a narrower bearing.
 - **A journey tour on CI** (tools/tour-ci.sh), when Euan asks for one: one shot of the Hearth page, the Bell Book and
   the home at each stop. (Builders themselves run no tours.)
 - **Euan plays it through himself** once stages 1 to 3 are in, starting with the first eight hours, because that's

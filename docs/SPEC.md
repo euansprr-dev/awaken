@@ -12236,3 +12236,20 @@ SPI's line in the stat table, GOALS.md's Hearth Board, Echo Hall and Generals. J
 3. Faults, the Ringer's Great Fault, the first raid (43.8). 4. The first thirty bells and the tower's song (43.7).
 5. The rest of the kin and the works to the Foundry, with the Storehouse. 6. The second half's bells and beasts. 7. The Hundred Peal, the
 Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY part 8).
+
+### 43.11 The bar (Euan, 29 Oct: "fully featured ... everything has a recipe, everything has a path ... never left unsure about how to keep going")
+- **Ledger**: `docs/director/LEDGER.md`, a row for everything the Journey adds or changes (source, use, how you come to
+  know it, recipe or source, links, edge cases); a stage's rows come before its code and none says "later" at hand-off.
+- **`journey_ledger`** GameTest: every `awaken` item and block has a way in (recipe, loot table, drop, trade, work,
+  reward, world placement; code sources declared through `dev.awaken.core.api.Sources`) or is on the reviewed list of
+  things never held; every Journey recipe is unlocked in the recipe book on first holding an ingredient.
+- **Direction without telling**: every open goal has a pull in the world (seen, heard, read or tracked). Patterns:
+  JOURNEY "The bar".
+- **Never stuck**: a player who moves no goal for one play-day of play time gets the top need's rumour one step plainer;
+  after two, Track's bearing narrows. Never the act.
+- **Edge cases** in each stage's lines: shared Hearths and parties, two players at one beast or bell, death, logout,
+  chunk unload, restart, old saves, other dimensions, Peaceful, game rules, full inventory, a broken work, a beast that
+  can't reach its nook.
+- **Creatures**: Fresh Animations level (own model, three idles or more, look-at, blink, breathing, follow-through,
+  own gaits, reactions, own sounds and particles). The Lampwing passes Euan in game before any other kind.
+- **Hand-off**: the Ledger re-read against the code, the diff reviewed, the full suite green on CI.
