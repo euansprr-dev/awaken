@@ -237,7 +237,7 @@ final class ArmourTests {
     }
 
     /**
-     * Wildhide by hand (E): the stand offers only Wildhide and says it needs a works table; with one near and the hide in
+     * Wildhide by hand (E): the stand offers the E sets and says it needs a works table; with one near and the hide in
      * the pack the Now line names the vest; the cut and six rivets on the beat make it Flawless (Temper 3) on the stand,
      * remembered by heart; from memory it comes Fine and the first goes back to the pack; a smith who steps away holds the
      * work; breaking the stand gives the materials back.
@@ -248,8 +248,8 @@ final class ArmourTests {
         BlockPos pos = be.getBlockPos();
         ServerPlayer p = smith(h, Rank.E, pos);
         var offers = ArmourForge.offers(p, be);
-        h.assertTrue(offers.offers().size() == 4 && offers.offers().stream().allMatch(o -> o.piece() / 4 == ArmourSet.WILDHIDE.ordinal()),
-                "E offers Wildhide's four pieces");
+        h.assertTrue(offers.offers().size() == 16 && offers.offers().stream().allMatch(o -> ArmourSet.values()[o.piece() / 4].rank == Rank.E),
+                "E offers the four E sets' pieces, got " + offers.offers().size());
         h.assertTrue(offers.offers().stream().noneMatch(o -> (o.flags() & ArmourPayloads.CAN) != 0) && !offers.hand().isEmpty(),
                 "nothing to make yet, and it says a works table is wanted");
         h.setBlock(new BlockPos(3, 1, 1), Blocks.CRAFTING_TABLE.defaultBlockState());

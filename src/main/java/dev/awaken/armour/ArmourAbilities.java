@@ -2,6 +2,7 @@ package dev.awaken.armour;
 
 import dev.awaken.Awaken;
 import dev.awaken.armour.net.ArmourPayloads;
+import dev.awaken.core.AwakenNet;
 import dev.awaken.core.api.FightMoments;
 import dev.awaken.core.api.MobRole;
 import dev.awaken.core.api.MovementHooks;
@@ -31,7 +32,6 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -498,14 +498,20 @@ public final class ArmourAbilities {
         sync(p, s, 255);
     }
 
-    /** The charge and runes to the wearer and everyone tracking them, when they change enough to see. */
+    /** How far others see a set's charge (a player's tracking range). */
+    private static final double SYNC_RANGE = 80;
+
+    /** The charge and runes to the wearer and everyone near enough to see them, when they change enough to see. */
     private static void sync(ServerPlayer p, State s, int flash) {
         boolean changed = s.runes != s.sentRunes || Math.abs(s.charge - s.sentCharge) >= 5 || (s.charge >= FULL) != (s.sentCharge >= FULL)
                 || (s.charge == 0) != (s.sentCharge == 0);
         if (!changed && flash == 0) return;
         s.sentCharge = s.charge;
         s.sentRunes = s.runes;
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(p, new ArmourPayloads.Charge(p.getId(), s.charge, s.runes, flash));
+        // through AwakenNet: a test's or another mod's fake player has no channel for it, and sending would throw
+        ArmourPayloads.Charge msg = new ArmourPayloads.Charge(p.getId(), s.charge, s.runes, flash);
+        for (ServerPlayer o : ((ServerLevel) p.level()).players())
+            if (o == p || o.distanceToSqr(p) < SYNC_RANGE * SYNC_RANGE) AwakenNet.send(o, msg);
     }
 
     /** Writes the experience earned so far onto every piece of the whole set worn. */
