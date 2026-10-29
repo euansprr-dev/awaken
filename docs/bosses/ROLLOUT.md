@@ -93,7 +93,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Long Drop | Nightmare | Fear | Flier | kit | A, the Hand from Above | ✓ cf9d617d | ✓ cf9d617d | — |
 | The Pyre | Nightmare | Fear | Flier | kit | A, the Pyre Mare | ✓ 2a699e47 | ✓ 2a699e47 | — |
 | The Undertow | Nightmare | Fear | Caster | kit | A, the Old Snapper | ✓ 7063327c | ✓ 7063327c | — |
-| The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | zombie ×1.7 | — | — | — | — |
+| The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | kit | A, the Throng | — | — | — |
 | The Thousand Legs | Nightmare | Fear | Crawler | spider ×2.6 | — | — | — | — |
 | The Fuse | Nightmare | Fear | Construct | creeper ×2 | — | — | — | — |
 | The Faceless | Nightmare | Fear | Duelist | player | — | — | — | — |
@@ -293,3 +293,9 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   wriggling until you come close, the Undertow is that mouth drawing the water in, and no other boss is a turtle. B is
   one more robed figure after the Pilgrim and the Cantor; C's bell is the Bell Warden's shape again and its threads
   the Signal Cuttlefish's arms.
+- **The Hollow Crowd** (`nightmare_undead`): A the Throng (a hunched giant made of people pressed into one body,
+  heads standing out of it everywhere and every one the same face), B the Procession (mourners walking as one under a
+  coffin), C the Chain (a line of sleepwalkers holding hands). **Picked A**, 2026-10-30: "They all have the same face"
+  is a crowd that is one body and turns every face to you at once, it falls down and gets up again the way a crowd
+  closes back in, and no other boss is made of people. B is one more robed figure after the Pilgrim and the Cantor; C
+  reads as several mobs, not one boss.

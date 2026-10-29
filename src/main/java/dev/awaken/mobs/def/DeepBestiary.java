@@ -237,7 +237,7 @@ final class DeepBestiary {
                 .intro("You can't remember which way is up.")
                 .phase(1.0F, "The water closes.", a(PULL, "Undertow").radius(12), a(CONE, "Rush of Water").bolt(BoltKind.WATER).radius(6))
                 .phase(0.5F, "No air.", a(AURA, "Lungful").radius(7).bolt(BoltKind.WATER).fx(MobEffects.SLOWNESS, 40, 1), a(BOLT, "Black Water").n(4).bolt(BoltKind.WATER)).build());
-        out.add(m("nightmare_undead", "The Hollow Crowd", Theme.FEAR, Tier.NIGHTMARE, Model.ZOMBIE, "More of them every time you look; it gets up once").hp(22).dmg(4).spd(0.26).scale(1.7F).traits(RISES).bar(BossBarColor.GREEN).arena(22)
+        out.add(m("nightmare_undead", "The Hollow Crowd", Theme.FEAR, Tier.NIGHTMARE, Model.ZOMBIE, "More of them every time you look; it gets up once").hp(22).dmg(4).spd(0.26).scale(1.7F).size(1.43F, 3.54F).traits(RISES).bar(BossBarColor.GREEN).arena(22)
                 .intro("They all have the same face.")
                 .phase(1.0F, "The crowd shuffles closer.", a(SLAM, "Crush").radius(3.5F), a(SUMMON, "More of Them").summon("sleepwalker").n(2))
                 .phase(0.5F, "Closer.", a(SUMMON, "More of Them").summon("sleepwalker").n(3), a(CHARGE, "Surge").heavy()).build());

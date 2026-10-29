@@ -13799,6 +13799,51 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   - **Meter.** Worst kink outside a strike 4.0° (the Lunge into the Snap and the Rake); held at most 3%; no still spells; the strings dip at most 37% (the
     Snap into the Rake into the Lunge). Wind-ups 12.6 (the Snap) to 52.2 (Which Way Is Up). The intro's first frames
     show kinks in the meter only, where it blends from swimming into the lying start.
+- **The Hollow Crowd, the Throng** (body and motion, `kit/bosses/nightmare_undead.py`). "More of them every time you
+  look; it gets up once." A hunched giant made of people pressed together into one body. Its back is a hill of
+  shoulders, coats and bare backs, with someone's legs sticking out of it and a torn cloak over it; its legs are
+  bundles of legs bound in rags; its long arms drag their knuckles. Six heads stand out of its shoulders, back and
+  belly, and every one has the same face: grey and slack, the mouth hanging open, two black holes for eyes. Its own
+  head sits low on its front like a gorilla's, bigger than the rest, the same face. Four thin pale arms grow out of it
+  and grope at the air. Nothing glows. 90 cubes on 44 bones; it stands 6.0 blocks tall and 4.6 across its arms. The
+  hitbox is 1.43 x 3.54 at its scale of 1.7 (2.4 x 6.0 blocks).
+  - **Its idle.** It stands swaying (6 s), its weight going slowly from foot to foot like a crowd shifting, breathing
+    heavily. Every head moves on its own, one tilting, one turning, one nodding, and now and then one jerks. Its small
+    arms grope and its jaw works. Once in a while a shudder runs through the whole crowd of it, every head at once.
+  - **How it moves.** It shambles (1.8 s, 2.2 blocks): its body rolls over each foot and drops onto it, the right
+    foot scuffs, the long arms swing slack and the heads bob out of time with each other. Hurrying, it lurches into a
+    run (0.95 s, 3.8 blocks).
+  - **Struck, broken, down and its death.** Struck, the whole crowd of it flinches: every head jerks back, the small
+    arms snatch in, its jaw drops. Broken, it sinks onto its right knee and its knuckles, every head hanging, and
+    pushes itself up. Struck down the first time (it RISES), it pitches forward onto its face, the small arms flopping
+    out and the heads lolling; then the heads lift off the floor one by one and turn to you, the small arms push at
+    the floor, and it heaves itself up onto its knees and its feet, every head snapping round to you. Its death (6 s):
+    it staggers and sinks onto its knees, and its heads look every way, lost, turning and turning; it sags, slumps over
+    onto its side, and its small arms reach on a while, and stop.
+  - **Its moves.** The Swipe (LIGHT): its right arm swings back and sweeps across in front of it at chest height, the
+    back of the big hand leading, every head turning with it. The Grab (LIGHT, after the Swipe): it draws its left hand
+    back, lunges a step and snatches with the big hand open, every small arm reaching with it. Crush (HEAVY, an 8-tick
+    hold): it rears up with both fists together over its heads, every face turned up, holds, and brings them down on
+    the floor in front of it, its knees giving under the blow. Surge (HEAVY, its gap closer, a 10-tick hold): it drops
+    onto its knuckles, every face on you, holds, and drives at you in one long lunge, arms sweeping in to scoop you up.
+    More of Them (its answer to a player who keeps away; it throws nothing): it tears a person off one shoulder and
+    then the other and throws them down, and they get up. Closer (into the second phase): every head turns to you at
+    once, a shudder runs up it and people fall off it, and it leans in at you. The Elbow (for whoever is behind it):
+    its heads turn round first, then it twists and swings its right arm back behind it. All of Them (the signature):
+    it rears up to its whole height with its arms flung wide and every face on you, then falls on you, the whole crowd
+    of it, flat on its face with its arms flung out ahead, and gathers itself up off the floor onto one knee and its
+    feet. Its intro: every head on it is bowed; they lift one by one to look at you, the same face each time, with a
+    jerk, the belly first and the back last; its own head lifts last, its jaw drops, and it settles into its stoop.
+  - **On the floor.** The ground pass lifts its hands, heads and small arms out of the floor (its feet too in the
+    kneeling, lying and running clips). Lying, its small arms are turned out of the floor at the shoulder by the least
+    it takes, and All of Them keeps the arms where they fell through the first key of getting up, so none of them
+    swings through the floor.
+  - **Its sounds** (chosen on paper, not heard in game): zombies, husks and zombie villagers groaning together, kept low
+    and slow, a warden's heartbeat under the heavy tells and its agitation under All of Them; a zombie's infection for
+    More of Them; a mace's ground smash, breaking mud and a door being beaten for its blows; a ravager's heavy step.
+  - **Meter.** Worst kink outside a strike 4.3° (Crush); held at most 14% (the intro, the heads bowed and waiting); no
+    still spells; the strings dip at most 31% (the Swipe into the Grab into Crush). Wind-ups 14.4 (the Grab) to 31.1
+    (Crush).
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 

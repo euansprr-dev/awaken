@@ -1,0 +1,107 @@
+{
+ "schemaVersion": 1,
+ "id": "nightmare_undead",
+ "moves": "nightmare_undead",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "swipe",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "grab"
+      ],
+      [
+       "grab",
+       "crush"
+      ]
+     ]
+    },
+    {
+     "move": "crush",
+     "weight": 3,
+     "when": "NEAR"
+    },
+    {
+     "move": "surge",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "swipe"
+      ]
+     ]
+    },
+    {
+     "move": "more",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "elbow",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "closer",
+   "pool": [
+    {
+     "move": "swipe",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "grab"
+      ],
+      [
+       "grab",
+       "crush"
+      ]
+     ]
+    },
+    {
+     "move": "crush",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "surge",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "swipe",
+       "grab"
+      ]
+     ]
+    },
+    {
+     "move": "more",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "all",
+     "weight": 2
+    },
+    {
+     "move": "elbow",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.25
+ }
+}
