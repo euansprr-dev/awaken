@@ -50,13 +50,35 @@ float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
     if (f15.x < 1.0) return 1.0;
     vec3 o = p + vec3(f12.x, f12.y, f12.z) + n * 0.06;
     // under a roof or in a cave: nothing from the sun (the composite fades its model out there). A heightmap counts a
-    // slab, a stair or a carpet as its whole block, so its own column only shadows from a block above the surface
+    // slab, a stair or a fence as its whole block, so its own column only shadows from a block above the surface
     ivec2 own = ivec2(floor(o.xz));
     if (o.y < heightAt(own, 0).g - 1.0) return 0.0;
-    float maxH = f15.y, trust = f15.z, horiz = max(length(l.xz), 1.0e-3);
-    int steps = ultra ? 40 : 24;
+    float maxH = f15.y, trust = f15.z, horiz = max(length(l.xz), 1.0e-3), vis = 1.0;
+    // near: every column the ray crosses, at its lowest point over it (where it enters: it climbs), so a step's or a
+    // wall's shadow is whole to its far edge. Point samples spaced like the far march skip the thin wedge of a low
+    // occluder near the end of its shadow, which faded it and cut it off in a stepped edge (Euan 2026-10-29)
+    ivec2 c = own, dirI = ivec2(l.x >= 0.0 ? 1 : -1, l.z >= 0.0 ? 1 : -1);
+    vec2 per = 1.0 / max(abs(l.xz), vec2(1.0e-5));
+    vec2 next = (vec2(c) + max(vec2(dirI), 0.0) - o.xz) * vec2(dirI) * per;
+    float t = 0.0;
+    int nearCells = ultra ? 16 : 10;
+    for (int i = 0; i < nearCells; i++) {
+        if (next.x < next.y) { t = next.x; next.x += per.x; c.x += dirI.x; }
+        else { t = next.y; next.y += per.y; c.y += dirI.y; }
+        float y = o.y + l.y * (l.y >= 0.0 ? t : min(next.x, next.y));
+        if (y > maxH) return vis;
+        if (max(abs(float(c.x) + 0.5 - f12.x), abs(float(c.y) + 0.5 - f12.z)) > trust) return vis;
+        vec2 h = heightAt(c, 0);
+        if (y < h.g) return 0.0;
+        if (y < h.r) {
+            vis *= exp(-0.9 * (min(next.x, next.y) - t));
+            if (vis < 0.03) return 0.0;
+        }
+    }
+    // far: steps each longer than the last from there, the same reach as before
+    int steps = ultra ? 24 : 15;
     float base = ultra ? 0.25 : 0.32, grow = ultra ? 0.13 : 0.23;
-    float t = base * (0.4 + noise), vis = 1.0;
+    t += (base + t * grow) * noise;
     for (int i = 0; i < steps; i++) {
         vec3 q = o + l * t;
         if (q.y > maxH) break;
@@ -89,8 +111,11 @@ float contactShadow(vec3 p, vec3 n, vec3 l, float dist, float noise, mat4 vp, bo
         float sd = texelFetch(DepthSampler, ivec2(s.xy * InSize), 0).r;
         float zs = linearDepth(sd, zFar, z01), zq = linearDepth(s.z, zFar, z01);
         float delta = zq - zs;
-        // something stands between this point and the light: in front of the ray, but not a wall far in front of it
-        if (zs > 1.25 && delta > 0.015 + zq * 0.003 && delta < 0.5 + zq * 0.02) return 0.0;
+        // something stands between this point and the light: in front of the ray, but not a wall far in front of it.
+        // Toward the screen's edge a hit counts less, so contact shadows fade out there rather than end in a line where
+        // the march runs off the screen (what's off it is the heightfield's, which never depends on the screen)
+        if (zs > 1.25 && delta > 0.015 + zq * 0.003 && delta < 0.5 + zq * 0.02)
+            return 1.0 - smoothstep(0.0, 0.04, min(min(s.x, s.y), min(1.0 - s.x, 1.0 - s.y)));
     }
     return 1.0;
 }
@@ -205,7 +230,13 @@ void main() {
         vec3 n = normalAt(px, p, depth, inv, z01, InSize);
         mat4 vp = frameMat(4);
         if (f14.w > 0.0 && P(17).r > 0.0 && dot(n, f14.xyz) > -0.1) {
-            vis = sunVisibility(p, n, f14.xyz, noise, ultra);
+            // the sun as a small disc (about 1.4 degrees across): each frame's ray leans a little across it, so a
+            // shadow's edge is a penumbra that widens away from what casts it, smoothed by the frames below the light
+            // buffer's texels (a crisp edge at 960 x 540 would show as stairs of four pixels on a 4K screen)
+            vec3 l = f14.xyz, a1 = normalize(cross(l, abs(l.z) < 0.9 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0)));
+            float ang = ign(gl_FragCoord.xy + vec2(41.0, 11.0), f12.w + 53.0) * 6.2832, rad = 0.012 * sqrt(noise2);
+            l = normalize(l + (a1 * cos(ang) + cross(l, a1) * sin(ang)) * rad);
+            vis = sunVisibility(p, n, l, noise, ultra);
             if (vis > 0.0 && dist < 96.0) vis *= contactShadow(p, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra);
             // the clouds' moving shadows
             if (vis > 0.0) vis *= cloudShadow(p, f14.xyz, cloudParams(), f12.y);
