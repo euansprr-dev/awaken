@@ -5207,9 +5207,10 @@ magic.
     mobs, grass, slabs and block edges the heightfield can't hold. Within 96 blocks. A hit within 4% of the screen's
     edge counts less, down to nothing at the edge, so they fade out there rather than end in a line where the march
     runs off the screen. Whatever is off the screen is the heightfield's, which never depends on the screen.
-  - **Ambient occlusion**: 6 / 10 cosine-weighted samples in a 0.9-block hemisphere against the depth buffer, averaged
-    over the samples that land on screen (at the edge a corner keeps its darkness, not a lighter rim). Within 96
-    blocks.
+  - **Ambient occlusion**: 6 / 10 cosine-weighted samples in a 0.9-block hemisphere against the depth buffer. Within
+    96 blocks. A sample off the screen counts as open, so the screen's edge is a little lighter. Averaging only the
+    samples on screen was tried (2026-10-29) and made the edge darker than the middle instead (the samples left on
+    screen there lean toward the occluded side).
   - **Temporal accumulation**: each frame uses fresh noise (interleaved gradient noise stepped per frame) and blends
     into last frame's result reprojected by the frame matrices (0.14 new on Cinematic, 0.1 on Ultra); of the 2×2
     history texels only those that saw the same distance count (disocclusion), dithered into 8 bits so slow changes

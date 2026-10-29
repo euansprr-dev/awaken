@@ -127,8 +127,7 @@ float ambient(vec3 p, vec3 n, float noise, float noise2, mat4 vp, bool z01, floa
     vec3 t1 = normalize(abs(n.y) < 0.9 ? cross(n, vec3(0.0, 1.0, 0.0)) : cross(n, vec3(1.0, 0.0, 0.0)));
     vec3 t2 = cross(n, t1);
     vec3 o = p + n * 0.03;
-    // (only the samples on screen count: at its edge a pixel keeps the corner's darkness, not a lighter rim)
-    float occ = 0.0, seen = 0.0;
+    float occ = 0.0;
     for (int i = 0; i < samples; i++) {
         float fi = (float(i) + noise) / float(samples);
         float a = (float(i) + noise2) * 2.39996;
@@ -137,13 +136,12 @@ float ambient(vec3 p, vec3 n, float noise, float noise2, mat4 vp, bool z01, floa
         float len = radius * mix(0.2, 1.0, fract(fi * 7.31 + noise2) );
         vec3 s = project(vp, o + (t1 * h.x + t2 * h.y + n * h.z) * len, z01);
         if (s.x <= 0.0 || s.y <= 0.0 || s.x >= 1.0 || s.y >= 1.0) continue;
-        seen += 1.0;
         float sd = texelFetch(DepthSampler, ivec2(s.xy * InSize), 0).r;
         float zs = linearDepth(sd, zFar, z01), zq = linearDepth(s.z, zFar, z01);
         float delta = zq - zs;
         if (zs > 1.25 && delta > 0.02) occ += 1.0 - smoothstep(radius, radius * 2.5, delta);
     }
-    return 1.0 - occ / max(seen, 1.0);
+    return 1.0 - occ / float(samples);
 }
 
 // whether a point in the air (camera-relative) is in sunlight: 1 lit, 0 in a terrain shadow, dimmer under leaves
