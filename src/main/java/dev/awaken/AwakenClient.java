@@ -68,5 +68,6 @@ public final class AwakenClient {
         dev.awaken.caves.client.CavesClient.init(modBus);
         dev.awaken.ground.client.GroundClient.init(modBus);
         dev.awaken.aim.client.AimClient.init(modBus);
+        dev.awaken.kin.client.KinClient.init(modBus);
     }
 }

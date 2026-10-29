@@ -478,6 +478,7 @@ public final class Autopilot {
                     var tab = switch (t) {
                         case "powers" -> dev.awaken.progression.client.StatusSections.Tab.POWERS;
                         case "journal" -> dev.awaken.progression.client.StatusSections.Tab.JOURNAL;
+                        case "hearth" -> dev.awaken.progression.client.StatusSections.Tab.HEARTH;
                         case "map" -> dev.awaken.progression.client.StatusSections.Tab.MAP;
                         case "codex" -> dev.awaken.progression.client.StatusSections.Tab.CODEX;
                         case "truths" -> dev.awaken.progression.client.StatusSections.Tab.TRUTHS;

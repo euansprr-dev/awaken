@@ -7,6 +7,7 @@ import static dev.awaken.hearth.room.Furniture.BARREL;
 import static dev.awaken.hearth.room.Furniture.BED;
 import static dev.awaken.hearth.room.Furniture.BELL;
 import static dev.awaken.hearth.room.Furniture.BOOKSHELF;
+import static dev.awaken.hearth.room.Furniture.LODE_HEART;
 import static dev.awaken.hearth.room.Furniture.COOKER;
 import static dev.awaken.hearth.room.Furniture.CRAFTING;
 import static dev.awaken.hearth.room.Furniture.FORGE;
@@ -58,10 +59,10 @@ public enum RoomType {
             "Every different Lord's trophy hung here gives +1% damage and +0.5 max health.", "+1% damage for each Lord."),
     WORKSHOP("Workshop", "workshop", List.of(MACHINE), null, 16, 3, "machines spend a quarter less",
             "Precursor machines in this room spend a quarter less essence.", "Machines spend less here."),
-    /** (W6, PLAN 7.7) a hatch (a trapdoor in the floor) over a shaft you dug, with something to climb down it. */
-    MINE_HEAD("Mine head", "mine head", List.of(), "a hatch over a shaft 16 or more deep, with a ladder", 9, 3, "your own way down",
-            "A hatch over a shaft you dug, with a way down: your own way to the ore below home.",
-            "Your own mine.");
+    /** (SPEC §43.6) the Ore Shed (the constant keeps the old Mine head's name, so saved rooms read the same): a lode heart and a barrel. */
+    MINE_HEAD("Ore Shed", "ore shed", List.of(LODE_HEART, BARREL), null, 9, 3, "Pebblepups sort what you bring",
+            "Pebblepups sort and crush the ore and rubble you put in its barrels: gravel, flint and sand, a few nuggets from a lot of rubble, never ore by itself. It has two nooks of its own, for them.",
+            "An Ore Shed. Pebblepups can hear its heart.");
 
     /** How deep a Mine head's shaft must go from its floor (PLAN 4.6). */
     public static final int SHAFT_DEPTH = 16;
@@ -112,7 +113,6 @@ public enum RoomType {
             case HALL -> facts[Tally.F_FLOOR] >= 48;
             case BELL_TOWER -> facts[Tally.F_ELEVATION] >= 8;
             case LOOKOUT -> facts[Tally.F_ELEVATION] >= 12 && Integer.bitCount(facts[Tally.F_WINDOW_DIRS]) >= 3;
-            case MINE_HEAD -> facts.length > Tally.F_SHAFT && facts[Tally.F_SHAFT] >= SHAFT_DEPTH;
             default -> true;
         };
     }

@@ -41,7 +41,7 @@ import java.util.UUID;
 /**
  * GameTests for W6 (SPEC §28.8), one per mechanism: an older world's settlers move to the city (SPEC §43.6) with their
  * work in hand finished; the tiers read the home (four rooms with a Fine one and a field, a Grand room, a bell tower and
- * six rooms, ten with two Grand) and the Anchor's flame follows the tier; a Mine head is a hatch over a climbable shaft whose depth decides the evening's haul.
+ * six rooms, ten with two Grand) and the Anchor's flame follows the tier; the Ore Shed is a room with a lode heart and a barrel.
  */
 public final class SettleTests {
     private SettleTests() {}
@@ -120,7 +120,8 @@ public final class SettleTests {
             }
         });
 
-        AwakenTests.registerIsolated("hearth_mine_head", 900, h -> {
+        // (SPEC §43.6) the Mine head became the Ore Shed: a closed room with a lode heart and a barrel
+        AwakenTests.registerIsolated("hearth_ore_shed", 600, h -> {
             ServerLevel level = h.getLevel();
             BlockPos origin = h.absolutePos(BlockPos.ZERO);
             BlockPos base = new BlockPos((origin.getX() & ~15) + 4, origin.getY() + 120, (origin.getZ() & ~15) + 4);
@@ -129,54 +130,26 @@ public final class SettleTests {
             HearthRecord rec = new HearthRecord(owner, "test", base.offset(3, 8, 3), HearthService.OVERWORLD);
             level.setBlock(rec.pos, HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3);
             data.put(rec);
-            BlockPos hatch = base.offset(2, 0, 2);
-            int depth = 20;
             try {
-                // a 5 x 5 shed (3 x 3 inside, 3 high) with a door, a lantern and a chest; a trapdoor in its floor
+                // a 5 x 5 shed (3 x 3 inside, 3 high) with a lantern, a lode heart and a barrel
                 for (int x = 0; x < 5; x++) for (int y = 0; y < 5; y++) for (int z = 0; z < 5; z++) {
                     boolean shell = x == 0 || x == 4 || y == 0 || y == 4 || z == 0 || z == 4;
                     level.setBlock(base.offset(x, y, z), shell ? Blocks.SPRUCE_PLANKS.defaultBlockState() : Blocks.AIR.defaultBlockState(), 3);
                 }
                 level.setBlock(base.offset(1, 3, 1), Blocks.LANTERN.defaultBlockState().setValue(BlockStateProperties.HANGING, true), 3);
-                level.setBlock(base.offset(3, 1, 3), Blocks.CHEST.defaultBlockState(), 3);
-                level.setBlock(hatch, Blocks.SPRUCE_TRAPDOOR.defaultBlockState().setValue(BlockStateProperties.HALF, Half.TOP), 3);
-                // the shaft: rock round it, a ladder all the way down, a floor at its foot
-                shaft(level, hatch, depth);
+                level.setBlock(base.offset(2, 1, 2), dev.awaken.delve.DelveContent.HEARTS.get(dev.awaken.delve.Ore.IRON).get().defaultBlockState(), 3);
+                level.setBlock(base.offset(3, 1, 3), Blocks.BARREL.defaultBlockState(), 3);
                 AwakenTests.awaitLight(h, base.offset(-1, -1, -1), base.offset(5, 5, 5));
                 HearthService.scanNow(level, rec);
-                Room head = null;
-                for (Room r : rec.rooms) if (r.types().contains(RoomType.MINE_HEAD)) head = r;
-                h.assertTrue(head != null, "a hatch over a ladder shaft 20 deep is a Mine head (rooms: " + kinds(rec) + ")");
-                h.assertTrue(head.fact(Tally.F_SHAFT) == depth && head.fact(Tally.F_SHAFT_Y) == hatch.getY(), "its shaft read 20 deep");
-                int[] shallow = new int[Tally.F_COUNT];
-                shallow[Tally.F_SHAFT] = 15;
-                h.assertFalse(RoomType.MINE_HEAD.metBy(new int[Furniture.COUNT], shallow), "15 deep isn't a mine");
-                List<MineHead.Shaft> shafts = MineHead.shafts(level, rec);
-                h.assertTrue(shafts.size() == 1 && shafts.getFirst().foot() == hatch.getY() - depth, "one shaft, its foot at the hatch less 20");
-                // the depth decides what comes up; a lode it cut adds its ore (never more than is left of it)
-                RandomSource rnd = RandomSource.create(42);
-                h.assertTrue(has(MineHead.haul(rnd, 50, null, 0), Items.COAL) && !has(MineHead.haul(rnd, 50, null, 0), Items.REDSTONE),
-                        "high up: coal, no redstone");
-                h.assertTrue(has(MineHead.haul(rnd, -30, null, 0), Items.REDSTONE), "far down: redstone");
-                List<ItemStack> lode = MineHead.haul(rnd, 10, dev.awaken.delve.Ore.DIAMOND, 1);
-                int diamonds = 0;
-                for (ItemStack st : lode) if (st.is(Items.DIAMOND)) diamonds += st.getCount();
-                h.assertTrue(diamonds == 1, "a diamond lode's last one, and no more (" + diamonds + ")");
-                // a miner who lives here brings the evening's haul up into the chest by the hatch
-                rec.folk.settlers.add(new Folk.Settler(Settlers.forceKnow(level, rec, "miner"), null, Folk.Settler.HOME, 0));
-                Work.evening(level, rec, Settlers.today(level.getServer()));
-                int in = 0;
-                if (level.getBlockEntity(base.offset(3, 1, 3)) instanceof ChestBlockEntity chest) {
-                    for (int i = 0; i < chest.getContainerSize(); i++) in += chest.getItem(i).getCount();
-                }
-                h.assertTrue(in > 0, "the haul is in the chest by the shaft (" + in + " items)");
-                h.assertTrue(rec.folk.haulDay == Settlers.today(level.getServer()), "once an evening");
+                boolean shed = false;
+                for (Room r : rec.rooms) shed |= r.types().contains(RoomType.MINE_HEAD);
+                h.assertTrue(shed, "a closed room with a lode heart and a barrel is an Ore Shed (rooms: " + kinds(rec) + ")");
+                h.assertTrue(RoomType.MINE_HEAD.label.equals("Ore Shed"), "it's called the Ore Shed");
                 h.succeed();
             } finally {
                 data.remove(owner);
                 level.removeBlock(rec.pos, false);
                 clear(level, base, 5, 5, 5);
-                for (int k = 1; k <= depth + 1; k++) clear(level, hatch.offset(-1, -k, -1), 3, 1, 3);
             }
         });
     }

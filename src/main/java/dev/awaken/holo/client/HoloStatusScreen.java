@@ -41,6 +41,7 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
             {".....##.....", "....####....", "....####....", "....####....", ".....##.....", "............", "...######...", "..########..", ".##########.", ".##########.", ".##########.", "............"},
             {".......###..", "......###...", ".....###....", "....###.....", "...#######..", ".......##...", "......##....", ".....##.....", "....##......", "...##.......", "..##........", "............"},
             {"............", ".####..####.", "#....##....#", "#.##.##.##.#", "#....##....#", "#.##.##.##.#", "#....##....#", "#.##.##.##.#", "#....##....#", ".####..####.", ".....##.....", "............"},
+            {".....#......", "....##......", "....###.#...", "...#####....", "..##.####...", "..#...###...", "..#....##...", "...#..##....", "....####....", "..########..", ".#........#.", "............"},
             {".....##.....", ".....##.....", "....####....", "....####....", "..########..", "############", "############", "..########..", "....####....", "....####....", ".....##.....", ".....##....."},
             {"#####..#####", "#...#..#...#", "#.#.#..#.#.#", "#...#..#...#", "#####..#####", "............", "#####..#####", "#...#..#...#", "#.#.#..#...#", "#...#..#...#", "#####..#####", "............"},
             {"....####....", "...######...", "..###..###..", "..##....##..", "..###..###..", "...######...", "....####....", ".....##.....", ".....##.....", "............", ".##########.", "............"},
@@ -161,11 +162,12 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
             case CODEX -> "Nothing yet. What you hear, see and dream will gather here.";
             case JOURNAL -> "Nothing yet. What you take on, and what the System tells you, will be kept here.";
             case POWERS -> "No powers yet. Your first one comes soon after you awaken.";
+            case HEARTH -> "No home yet. Set a Hearthfire down out past the ridge, and this page will keep it.";
             default -> "";
         };
     }
 
-    /** The rail: the six pages down the wrist edge, the open one lit like the band's emitter; the K key at its foot. */
+    /** The rail: the seven pages down the wrist edge, the open one lit like the band's emitter; the K key at its foot. */
     private void rail(HoloGraphics gg, int mouseX, int mouseY) {
         int r = BandLayout.RAIL;
         gg.fillGradient(0, 0, r, H, Glass.a(0x05080F, 0.30f), Glass.a(0x05080F, 0.30f));

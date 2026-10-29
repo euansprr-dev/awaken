@@ -13182,6 +13182,25 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   at most a capped number of item models, simpler far away. Detail: JOURNEY part 3, "The Storehouse".
 - **The Hearth page** is a band page (Home, Your beasts, Kin) between Journal and Truths. Nothing on it expires or
   renews daily. No Board, no requests, no Daily Regimen.
+- **Built (stage 2, `dev.awaken.kin`; rows in LEDGER.md "Stage 2")**: four kin walk the world (Lampwing, Burrowbun,
+  Mossback, Pebblepup; art `tools/art/specs/kin.py` → `textures/entity/kin/`, `kin.client.KinData`), each a hero rig
+  whose synced act (idle, want, flee, tell, nudge, work, sleep, follow, hide, sniff, carry) picks its clip. Wild sites:
+  one per 128-block cell in about half the cells, kind by biome tag (forest; plains or meadow; swamp or river; mountain,
+  windswept or stony shore), filled 24 to 96 blocks from a player, again three days after they're gone. Kinship numbers:
+  steps at 10, 40, 100; help +10, a day at home +4, hurt −15, killed −60 and three days' fear; SPI warms gains +1% a
+  point to +30%. Reading: 1 s in a 9° cone at 32 blocks with the band, 3.5° at 128 with Binoculars. Watching: 3 s within
+  16 blocks for each of three want lines, 20 s apart (the lesson Lampwing 1.5 s, 4 s). Trust after three helps of one
+  beast. Nooks 2, 4, 8, 12, 18, 24 by tier plus 2 for the Ore Shed. Work: the Lampwing's roost holds a real light
+  (level 13) at night and stops natural hostile spawns within 32 blocks; Burrowbuns harvest within 14 of their nook,
+  replant, and carry to a chest within 8; a Mossback gives crops within 8 six random ticks every 5 s by day; Pebblepups
+  work one item every 2 s from barrels within 4 of the heart (rubble to gravel, gravel to flint 1 in 4 or sand, ore
+  blocks to an iron pick's drops, a nugget 1 in 32). The Ore Shed is `RoomType.MINE_HEAD` relabelled (a lode heart and a
+  barrel; the shaft rule is gone); lode hearts drop themselves, and a heart a player set down gives only itself back.
+  The band has seven pages (rail nodes every 29 units). Never stuck: a rumour unfollowed for 24,000 ticks of play names
+  its distance to 50 blocks and the land; after 48,000 Track's offset narrows from ±48 to ±8. Commands:
+  `/awaken admin kin summon|home|meet|watch|points|trust|lesson|site|page`. Tests (CI): `kin_kinship_steps`,
+  `kin_ore_shed_limits`, `kin_fields_harvest`, `kin_rumours_real`, `hearth_ore_shed`. Sounds are pitched vanilla events
+  for now (`kin.<kind>.call/tell/worry`, `kin.chime`); the kin's own suite comes with the style pass Euan judges.
 
 ### 43.7 The bells and the beasts
 - The tower rings the player's song at dawn and dusk. The player's beasts react by bells held: under 20 bolt for their

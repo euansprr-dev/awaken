@@ -1,0 +1,145 @@
+{
+  "kin.lampwing.call": {
+    "subtitle": "subtitles.awaken.kin.lampwing.call",
+    "sounds": [
+      {
+        "name": "minecraft:entity.allay.ambient_without_item",
+        "type": "event",
+        "pitch": 0.7,
+        "volume": 0.6
+      }
+    ]
+  },
+  "kin.lampwing.tell": {
+    "subtitle": "subtitles.awaken.kin.lampwing.tell",
+    "sounds": [
+      {
+        "name": "minecraft:entity.allay.item_given",
+        "type": "event",
+        "pitch": 0.9,
+        "volume": 0.8
+      }
+    ]
+  },
+  "kin.lampwing.worry": {
+    "subtitle": "subtitles.awaken.kin.lampwing.worry",
+    "sounds": [
+      {
+        "name": "minecraft:entity.allay.hurt",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 0.7
+      }
+    ]
+  },
+  "kin.burrowbun.call": {
+    "subtitle": "subtitles.awaken.kin.burrowbun.call",
+    "sounds": [
+      {
+        "name": "minecraft:entity.rabbit.ambient",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 0.7
+      }
+    ]
+  },
+  "kin.burrowbun.tell": {
+    "subtitle": "subtitles.awaken.kin.burrowbun.tell",
+    "sounds": [
+      {
+        "name": "minecraft:entity.rabbit.jump",
+        "type": "event",
+        "pitch": 1.3,
+        "volume": 0.8
+      }
+    ]
+  },
+  "kin.burrowbun.worry": {
+    "subtitle": "subtitles.awaken.kin.burrowbun.worry",
+    "sounds": [
+      {
+        "name": "minecraft:entity.rabbit.hurt",
+        "type": "event",
+        "pitch": 0.9,
+        "volume": 0.7
+      }
+    ]
+  },
+  "kin.mossback.call": {
+    "subtitle": "subtitles.awaken.kin.mossback.call",
+    "sounds": [
+      {
+        "name": "minecraft:entity.turtle.ambient_land",
+        "type": "event",
+        "pitch": 0.7,
+        "volume": 0.7
+      }
+    ]
+  },
+  "kin.mossback.tell": {
+    "subtitle": "subtitles.awaken.kin.mossback.tell",
+    "sounds": [
+      {
+        "name": "minecraft:entity.sniffer.happy",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.7
+      }
+    ]
+  },
+  "kin.mossback.worry": {
+    "subtitle": "subtitles.awaken.kin.mossback.worry",
+    "sounds": [
+      {
+        "name": "minecraft:entity.turtle.hurt",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 0.7
+      }
+    ]
+  },
+  "kin.pebblepup.call": {
+    "subtitle": "subtitles.awaken.kin.pebblepup.call",
+    "sounds": [
+      {
+        "name": "minecraft:entity.armadillo.ambient",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 0.7
+      }
+    ]
+  },
+  "kin.pebblepup.tell": {
+    "subtitle": "subtitles.awaken.kin.pebblepup.tell",
+    "sounds": [
+      {
+        "name": "minecraft:entity.sniffer.happy",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.8
+      }
+    ]
+  },
+  "kin.pebblepup.worry": {
+    "subtitle": "subtitles.awaken.kin.pebblepup.worry",
+    "sounds": [
+      {
+        "name": "minecraft:entity.armadillo.hurt",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.7
+      }
+    ]
+  },
+  "kin.chime": {
+    "subtitle": "subtitles.awaken.kin.chime",
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 0.8
+      }
+    ]
+  }
+}

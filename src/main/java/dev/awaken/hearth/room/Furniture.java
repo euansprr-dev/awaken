@@ -50,7 +50,9 @@ public enum Furniture {
     BELL("a bell", "bell", "the bell", null),
     GROWING("farmland or a planted pot", "soil", "the soil", null),
     SEAT("six seats (stairs to sit on)", "seats", "the seats", null),
-    TABLE("a table (a post with a carpet, plate or slab on it)", "table", "the table", null);
+    TABLE("a table (a post with a carpet, plate or slab on it)", "table", "the table", null),
+    /** (SPEC §43.6) the Ore Shed's heart: a lode heart broken free and carried home. */
+    LODE_HEART("a lode heart", "heart", "the lode heart", null);
 
     public static final int COUNT = values().length;
 
@@ -89,6 +91,7 @@ public enum Furniture {
         if (s.isAir()) return null;
         Block b = s.getBlock();
         if (b instanceof MeditationMatBlock) return MAT;
+        if (b instanceof dev.awaken.delve.LodeHeartBlock) return LODE_HEART;
         if (b instanceof ForgeBlock) return FORGE;
         if (b instanceof TrophyMountBlock) return TROPHY;
         if (s.is(BlockTags.ANVIL)) return ANVIL;
@@ -131,6 +134,7 @@ public enum Furniture {
             case GROWING -> new ItemStack(Items.FLOWER_POT);
             case SEAT -> new ItemStack(Items.OAK_STAIRS);
             case TABLE -> new ItemStack(Items.OAK_FENCE);
+            case LODE_HEART -> new ItemStack(dev.awaken.delve.DelveContent.HEART_ITEMS.get(dev.awaken.delve.Ore.IRON).get());
         };
     }
 

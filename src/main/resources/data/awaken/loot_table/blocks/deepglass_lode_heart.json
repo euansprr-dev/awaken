@@ -28,6 +28,15 @@
           ]
         }
       ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:deepglass_lode_heart"
+        }
+      ]
     }
   ],
   "random_sequence": "awaken:blocks/deepglass_lode_heart"

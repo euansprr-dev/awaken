@@ -28,6 +28,15 @@
           ]
         }
       ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:diamond_lode_heart"
+        }
+      ]
     }
   ],
   "random_sequence": "awaken:blocks/diamond_lode_heart"

@@ -1,0 +1,19 @@
+{
+  "entity.awaken.kin_lampwing": "Lampwing",
+  "subtitles.awaken.kin.lampwing.call": "Lampwing hums",
+  "subtitles.awaken.kin.lampwing.tell": "Lampwing trills",
+  "subtitles.awaken.kin.lampwing.worry": "Lampwing flinches",
+  "entity.awaken.kin_burrowbun": "Burrowbun",
+  "subtitles.awaken.kin.burrowbun.call": "Burrowbun snuffles",
+  "subtitles.awaken.kin.burrowbun.tell": "Burrowbun hops for joy",
+  "subtitles.awaken.kin.burrowbun.worry": "Burrowbun squeaks",
+  "entity.awaken.kin_mossback": "Mossback",
+  "subtitles.awaken.kin.mossback.call": "Mossback grumbles",
+  "subtitles.awaken.kin.mossback.tell": "Mossback hums",
+  "subtitles.awaken.kin.mossback.worry": "Mossback pulls in",
+  "entity.awaken.kin_pebblepup": "Pebblepup",
+  "subtitles.awaken.kin.pebblepup.call": "Pebblepup clicks",
+  "subtitles.awaken.kin.pebblepup.tell": "Pebblepup yips",
+  "subtitles.awaken.kin.pebblepup.worry": "Pebblepup whimpers",
+  "subtitles.awaken.kin.chime": "Band chimes"
+}

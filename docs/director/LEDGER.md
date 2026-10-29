@@ -217,3 +217,91 @@ happens).
   longer tame, so the wild grows into them.
 - **Edges**: a chunk's wildness is kept once worked out, so land already generated keeps its old value; new land follows
   the new tamers.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Stage 2: the first beasts, Kinship, the Hearth page, Fields and the Ore Shed (§43.5, §43.6)
+
+### The four kin (Lampwing, Burrowbun, Mossback, Pebblepup)
+- **Get**: entities `awaken:kin_lampwing`, `kin_burrowbun`, `kin_mossback`, `kin_pebblepup` (prefixed: `awaken:mossback` is the gate worlds' grazer), only past the ridge. The land is cut into
+  128-block cells; about half hold one site whose kind its biome picks (woods: a Lampwing; plains and meadow: two
+  Burrowbuns; swamps and rivers: a Mossback; mountains, windswept land and stony shores: two Pebblepups, with their
+  pile). A site fills when a player is 24 to 96 blocks from it and again three days after its beasts are gone. Never
+  where the bells carry, in the city's basin, on a settlement's ground or inside a Hearth.
+- **For**: each lives with you and does a boring job (below). Never hunted: no drops, and killing one costs Kinship.
+- **Know**: the Hearth page's needs each carry a rumour of a real site 100 to 600 blocks out ("A stone-skinned pup that
+  hoards shiny stones lives on the rocky slopes, about 300 blocks north-east of your home"), Track gives a rough
+  bearing; reading one with the band or Binoculars files its card ("Could live with you", its job).
+- **Source**: `kin.KinSpawner` (sites from the seed and biomes; no chunk loads), `kin.KinBeast`.
+- **Links**: the Hearth page; Kinship; the Lampwing lesson; Fields; the Ore Shed; §43.11's never stuck.
+- **Edges**: a rumour is promised to its site, so the kind it named is what fills there; a player standing on the spot
+  waits (nothing pops in at under 24 blocks); a befriended beast never dies (hurt, it hides at its nook and heals);
+  its Hearth gone, it goes back to the wild where it stands; `/kill` takes it off its home's list.
+
+### Kinship and the five steps
+- **Get**: per player, per kind (saved on the player, schema 1, kept through death): Wary, Curious (10), Friendly (40),
+  Kin (100). Help +10, each day one lives with you +4, hurt −15, killed −60 and that kind runs from you for three days.
+  Spirit warms it: +1% a point, to +30%.
+- **For**: how near a kind lets you come, how much the System puts its sounds into words, and at Kin its own name for
+  you (the Lampwing calls you Warm One).
+- **Know**: the card's standing line; the bracketed lines up close (only for kinds read).
+- **Source**: `kin.Kinship`, `kin.KinWatch` (read 1 s at 32 blocks with the band, 128 with Binoculars; watch 3 s at
+  16 to learn one want line of three), `kin.KinHelp` (the right act at its spot; three helps of one beast and it trusts
+  you).
+- **Links**: the Hearth page's Kin list; homes.
+- **Edges**: the help is never stated; a near miss gets a nudge line; after three misses the line points closer, never
+  naming the act; armed players scare a Wary kind (the lesson Lampwing doesn't scare).
+
+### The first fire's Lampwing (the lesson)
+- **Get**: once per player, the first night they're within 20 blocks of their own Hearth (any tier).
+- **For**: the whole loop in a few minutes: read it, watch it, set a warm light where it can see, it trusts you and
+  settles at your fire.
+- **Know**: "[Something's been watching your fire from the trees. It's on your Hearth page now.]"
+- **Source**: `KinHome.lessonTick`; `/awaken admin kin lesson` sends it now.
+- **Edges**: quick to read and trust, never scared unless you're armed; settling it ends the lesson; if it wanders off
+  the Hearth page still names it as "the one watching your fire".
+
+### Homes and nooks
+- **Get**: a trusted beast follows you if your Hearth has a free nook it likes (2 at the Hearthfire, 4, 8, 12, 18, 24 by
+  tier, plus 2 once the Ore Shed's heart is set down); it settles when you're both home.
+- **For**: daily Kinship, and its job.
+- **Know**: the offer line names what's missing ("It needs a tilled field at your home"); Your beasts on the page.
+- **Source**: `KinHome.offer/arrive/settle`, `KinWorld` (saved data `awaken:kin`, schema 1).
+- **Edges**: no Hearth, no free nook, or nothing it likes: a line saying so, and it stays wild and trusting; follows up to
+  48 blocks behind, then gives up until you come back.
+
+### The beasts' work
+- **Lampwing**: up at night over its roost, which is lit (a real light, level 13, gone by day); nothing from the dark
+  spawns naturally within 32 blocks of a Lampwing's roost.
+- **Burrowbun (Fields)**: harvests ripe crops within 14 of its nook, plants them again from what it picked (or seeds in
+  the field's chest), carries the harvest to the nearest chest or barrel within 8.
+- **Mossback**: crops within 8 grow faster (six random ticks every five seconds by day).
+- **Pebblepup (the Ore Shed)**: one item every two seconds from the shed's barrels (within 4 of the heart): rubble
+  (cobblestone, cobbled deepslate, tuff, andesite, diorite, granite, calcite, netherrack, blackstone) to gravel, gravel
+  to flint (1 in 4) or sand, an ore block to its drops as an iron pick would; one nugget in 32 from rubble or gravel.
+  Outputs go onto a barrel already holding them, else the emptiest. Never ore from nothing.
+- **Source**: `KinHome.work`; the page shows what each made today.
+- **Edges**: works only while its Hearth stands; sleeps by night (the Lampwing by day); a full chest leaves the harvest
+  carried until there's room.
+
+### The Ore Shed (was the Mine head)
+- **Get**: room type `MINE_HEAD` (constant kept so saved rooms read the same), now "Ore Shed": a closed room with a lode
+  heart (new furniture `LODE_HEART`) and a barrel.
+- **For**: the Pebblepups' work and their two nooks.
+- **Know**: the Hearth page ("The Ore Shed needs a lode heart. Hearts beat inside lodes, deep underground; break one free
+  and bring it home."); setting a heart down at home says to build the shed round it.
+- **Source**: every `*_lode_heart` loot table now also drops the heart itself (they left the never-held list); a heart a
+  player set down drops only itself when broken again (`KinWorld.placedHearts`, `KinHome.heartDrops`), so it never
+  gives its ore twice.
+
+### The Hearth page
+- **Get**: the band's seventh page, Hearth, between Journal and Truths.
+- **For**: Home (the tier and nooks, each beast need with its rumour and Track, the next tier's needs, the Great Belfry
+  pinned and dim), Your beasts (what each is doing now, how it's feeling, what it made today), Kin (met cards: where and
+  when, "Could live with you", its job, its want so far or "?", your standing, its latest line; heard-of kinds as dim
+  outlines with their rumour).
+- **Know**: the rail; the lesson's line; reading a kind.
+- **Source**: `KinPage` (server), `KinNet` (payloads `kin_page`, `kin_ask`, `kin_track`), `kin.client.KinPageSection`.
+- **Edges**: no home: "No home yet..."; the Kin list always holds a rumour not yet followed when one exists within 600
+  blocks; nothing on it expires or renews daily; a rumour unfollowed for a play-day gets plainer (distance to 50 blocks
+  and the land's name), after two Track's bearing narrows from ±48 to ±8.
