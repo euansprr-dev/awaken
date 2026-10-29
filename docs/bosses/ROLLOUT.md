@@ -91,7 +91,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | Sovereign of Ash | Sovereign | Court | Flier | kit | A, the Cinder Wyrm | ✓ d3b188fd | ✓ d3b188fd | — |
 | The Signal's Shadow | Final | Seed | Duelist | kit | A, the Signal Cuttlefish | ✓ df6001890 | ✓ df6001890 | — |
 | The Long Drop | Nightmare | Fear | Flier | kit | A, the Hand from Above | ✓ cf9d617d | ✓ cf9d617d | — |
-| The Pyre | Nightmare | Fear | Flier | blaze ×2 | — | — | — | — |
+| The Pyre | Nightmare | Fear | Flier | kit | A, the Pyre Mare | — | — | — |
 | The Undertow | Nightmare | Fear | Caster | drowned ×2 | — | — | — | — |
 | The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | zombie ×1.7 | — | — | — | — |
 | The Thousand Legs | Nightmare | Fear | Crawler | spider ×2.6 | — | — | — | — |
@@ -280,3 +280,9 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   "Lifts you up and lets you fall" is a hand that picks you up and opens, Fall With Me is a hand slamming flat on
   the floor, and no other boss is a hand. B reads less clearly at a glance; C repeats Unit Zero's cathedral statue
   and the owl's wings.
+- **The Pyre** (`nightmare_burning`): A the Pyre Mare (a night-black horse whose mane, tail and fetlocks are fire,
+  galloping on the air), B the Wicker Effigy (a burning wicker giant), C the Censer (a burning censer swung on chains
+  out of the dark). **Picked A**, 2026-10-29: "Fire that follows you" is a horse made of fire running you down, the
+  nightmare of the old stories is a black horse, and nothing else on the roster gallops. The Furnace Engine is a horse
+  too, but a locomotive that plods; this one is flesh and fire on the air, rearing and striking. B is the Living
+  Forge's burning giant again; C hangs and swings out of the dark like the Long Drop just did.

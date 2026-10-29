@@ -229,7 +229,7 @@ final class DeepBestiary {
                 .intro("You never hit the ground. You always nearly do.")
                 .phase(1.0F, "The ground falls away.", a(LIFT, "Lift").radius(3.5F), a(CHARGE, "Fall With Me").heavy())
                 .phase(0.5F, "Further down.", a(LIFT, "Lift").radius(4.5F), a(DARKNESS, "No Bottom"), a(CHARGE, "Fall With Me")).build());
-        out.add(m("nightmare_burning", "The Pyre", Theme.FEAR, Tier.NIGHTMARE, Model.BLAZE, "Fire that follows you").hp(22).dmg(4).spd(0.3).scale(2.0F).traits(FIRE_IMMUNE).glow(0xFF6A2A).bar(BossBarColor.RED).arena(22)
+        out.add(m("nightmare_burning", "The Pyre", Theme.FEAR, Tier.NIGHTMARE, Model.BLAZE, "Fire that follows you").hp(22).dmg(4).spd(0.3).scale(2.0F).size(0.70F, 2.55F).traits(FIRE_IMMUNE).glow(0xFF6A2A).bar(BossBarColor.RED).arena(22)
                 .intro("It smells like the last time.")
                 .phase(1.0F, "The Pyre catches.", a(BOLT, "Cinders").n(4).bolt(BoltKind.FIRE), a(AURA, "Pyre").radius(6).bolt(BoltKind.FIRE))
                 .phase(0.5F, "It spreads.", a(RAIN, "Firefall").n(5).bolt(BoltKind.FIRE), a(NOVA, "Flare").n(12).bolt(BoltKind.FIRE)).build());

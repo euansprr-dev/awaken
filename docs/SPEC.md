@@ -13689,6 +13689,61 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     its slams; the elder guardian's curse and the sculk shrieker under the Long Drop.
   - **Meter.** Worst kink outside a strike 3.6° (the Flick); held at most 8%; no still spells; the strings dip at most
     38% (out of Fall With Me into the Backhand). Wind-ups 18.7 (the Clutch) to 45.1 (the Long Drop).
+- **The Pyre, the Pyre Mare** (body and motion, `kit/bosses/nightmare_burning.py`). "Fire that follows you." A horse
+  bigger than a cart, black as the inside of a chimney with a sheen on it like oil, and everything that would be hair on
+  it is fire: its mane runs in flames down the crest of its neck, its tail is a long streamer of fire, its fetlocks are
+  feathered with flame and a flame stands up between its ears. Its eyes are white-hot, its nostrils glow and there is
+  fire behind its teeth. A burnt bridle still hangs on its head, its iron rings gone black. It never touches the ground:
+  it stands and gallops on the air a hand's breadth over the floor, and its hooves glow underneath like coals. 77 cubes
+  on 37 bones; its withers stand 3.3 blocks up and its ears 4.6. The hitbox is 0.70 x 2.55 at its scale of 2.0 (1.4 x
+  5.1 blocks), round its body.
+  - **Its idle.** It stands on the air breathing (8 s), its weight shifting from one hind leg to the other; it lifts its
+    head and looks round with its ears pricked; it paws the air with a forehoof three times, the way a horse paws the
+    ground; it snorts and tosses its head; its tail swishes. Its fire is never still: every flame leaps and falls to its
+    own beat, under everything it does.
+  - **How it moves.** It walks on the air a foot at a time, nodding (1.2 s, 1.6 blocks), and gallops on it, its body
+    rocking and its neck pumping, its ears pinned and its mane and tail streaming out behind (0.6 s, 3 blocks).
+    Turning, it steps its forelegs round with its head leading.
+  - **Struck, broken and its death.** Struck, it throws its head up and shies back with its ears pinned; from the side
+    it shies away from the blow. Broken, it goes down on its knees and then lies with its legs folded under it, its head
+    low and its fire sunk to under half; it gets up front first, heaving, and shakes its head. Its death (5.5 s): it
+    rears and screams with its fire flaring, comes down and staggers, goes down on its knees and rolls over onto its
+    side, lifts its head once and lets it fall; and its fire goes out, the flames sinking into it until there is
+    nothing but black.
+  - **Its moves.** The Strike (LIGHT): it rears a little with its ears pinned, a forehoof drawn up, and strikes it down
+    and out at you, its head snaking after it with its teeth bared. The Trample (LIGHT, after the Strike): it rears
+    higher with both forelegs folded and brings both forehooves down on you, landing braced. The Charge (HEAVY, its gap
+    closer, 9 blocks, a 6-tick hold): it drops its head with its ears pinned, paws the air once, gathers its hind legs
+    under it and holds, its fire streaming back; then it gallops at you stretched out and rears to a stop. Cinders: it
+    lifts its head and tosses it four times, flinging fire off its mane at you, stamping the air between. Pyre: it rears
+    and stamps, and stands braced while its fire roars up twice as tall all over it, shaking with the heat. Firefall
+    (into the second phase): it rears right up on its hind legs and thrashes its head from side to side, and the fire
+    flies off its mane and rains down. Flare: it gathers with its head down between its knees and its fire drawn in
+    to half, trembling, then flings its head up and its legs out and flares, its fire bursting out more than twice as
+    big. The Buck (for whoever is behind it): it drops its head and its weight onto its forelegs and kicks out behind
+    with both hind legs. Wildfire (the signature): it rears up as high as it can, screaming, pawing the air by turns,
+    its fire roaring higher and higher, holds at the top shaking, and crashes down on both forehooves. Its intro: it
+    lies burnt out with its fire down to embers; its fire catches again; it lifts its chest and looks at you, brings
+    one knee forward and unrolls that foreleg flat in front of it, then the other, sits up on them and heaves itself up,
+    shakes its head, and rears up screaming with its fire roaring.
+  - **Its fight.** First: the Strike into the Trample (and on into the Charge), the Trample, the Charge into the Strike,
+    Cinders from afar, Pyre, the Buck behind. After Firefall: the Strike into the Trample into Flare, the Charge into the
+    Strike and the Trample, Firefall, Flare, Cinders, Wildfire, the Buck. It enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over its body (rearing lifts it and sets it back so it rises on its
+    hind legs), its back's arch, its neck and head, its jaw and ears, each leg (a swing, a fold that brings the hoof up
+    behind in front and forward behind, the hoof and a spread), its tail and its mane. Its fire's size is a scale track
+    on every flame at once, after the clip is staged (`mv._fire`). Under every move a drift layer works its ears, jaw,
+    tail and breathing, stirs its legs and licks its mane and fetlock flames back and forth.
+  - **On the floor.** The ground pass folds a hoof up out of the floor and lifts its head and tail off it. Lying, it
+    rests on its body and its folded legs, never its fire; on its side its fetlocks' fire lies on the floor too. The
+    get-up's foreleg angles are solved so the hooves pass over the floor.
+  - **Its sounds** (chosen on paper, not heard in game): a horse's scream and snorting pitched low, its gallop and
+    landing, a skeleton horse's cry under them; a blaze's breath and shot, a fire's crackle, a fire charge flung, a
+    ghast's shot for the flares.
+  - **Meter.** Worst kink outside a strike 4.1° (the Trample); held at most 1%; no still spells; the strings dip at most 32% (out
+    of the Trample). Wind-ups 12.3 (the Strike) to 19.1 (the Trample). The intro's first frames show kinks in the meter
+    only: it blends there from standing, and in game the Pyre waits lying in its kneel.
+
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our
