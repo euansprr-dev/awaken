@@ -50,6 +50,9 @@ screen close
 wait 20
 screen close
 cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
+# the frame goes six blocks north, here in a wood: clear the trees round it so the tower and the Great Belfry can rise
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-4 ~-12 ~-8 ~4 ~26 ~0 minecraft:air replace #minecraft:leaves
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-4 ~-12 ~-8 ~4 ~26 ~0 minecraft:air replace #minecraft:logs
 cmd awaken admin bells tower 99
 wait 120
 hud on
@@ -63,23 +66,23 @@ hud off
 cmd awaken admin bells belfry
 wait 100
 cmd gamemode spectator
-cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~13 ~36 180 8
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~26 ~22 180 24
 wait 80
 shot j7_02_great_belfry
-cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-14 ~6 ~22 215 -6
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-16 ~20 ~10 229 14
 wait 40
-shot j7_03_great_belfry_low
-cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~1.5 ~11.6 ~2.5 160 -35
+shot j7_03_great_belfry_side
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~1.5 ~11.6 ~-2.5 160 -35
 wait 40
 shot j7_04_under_the_bells
 cmd time set 18000
-cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~13 ~36 180 8
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~26 ~22 180 24
 wait 60
 shot j7_05_great_belfry_night
 cmd time set 6000
 
 # ---- 3. the Hundred Peal, and thirty seconds on the Deep's answer ----
-cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~13 ~36 180 8
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~26 ~22 180 24
 hud on
 cmd awaken admin bells song
 wait 60
@@ -97,7 +100,7 @@ hud off
 
 # ---- 4. a Gnawed Boulderback, held still: by day and at dusk ----
 cmd gamemode creative
-cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~16 ~ ~16
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-4 ~ ~6
 wait 40
 cmd awaken admin kin gnaw boulderback
 wait 10
@@ -132,7 +135,7 @@ screen close
 
 # ---- 6. the Wake: the ending screen open, a Stilled stands up, Ilse comes to the fire ----
 cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~14 ~ ~-6 0 0
-cmd awaken admin stilled place walking letter
+cmd awaken stilled place walking letter
 wait 20
 cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~14 ~ ~-1 180 10
 wait 20
