@@ -1,0 +1,112 @@
+{
+ "schemaVersion": 1,
+ "id": "guardian_seed",
+ "moves": "guardian_seed",
+ "intro": {
+  "pose": "kneel",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "swipe",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "swipe_b"
+      ],
+      [
+       "swipe_b",
+       "clasp"
+      ]
+     ]
+    },
+    {
+     "move": "lance",
+     "weight": 3
+    },
+    {
+     "move": "marks",
+     "weight": 2
+    },
+    {
+     "move": "clasp",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "swipe"
+      ]
+     ]
+    },
+    {
+     "move": "whip",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "motes",
+   "pool": [
+    {
+     "move": "swipe",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "swipe_b"
+      ],
+      [
+       "swipe_b",
+       "clasp"
+      ]
+     ]
+    },
+    {
+     "move": "door",
+     "weight": 2,
+     "then": [
+      [
+       "swipe"
+      ]
+     ]
+    },
+    {
+     "move": "motes",
+     "weight": 1
+    },
+    {
+     "move": "lance",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "marks",
+     "weight": 2
+    },
+    {
+     "move": "clasp",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "swipe"
+      ]
+     ]
+    },
+    {
+     "move": "whip",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

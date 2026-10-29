@@ -78,7 +78,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Drowned Moon | Guardian | Inverted | Flier | kit | A, the Moon Angler | ✓ 1643236a | ✓ 1643236a | — |
 | The Architect of Rooms | Guardian | Dreaming | Caster | kit | A, the Hermit House | ✓ cadf2a15 | ✓ cadf2a15 | — |
 | The Shadow Regent | Guardian | Court | Duelist | kit | A, the Long Shadow | ✓ 3feaab86 | ✓ 3feaab86 | — |
-| The Seed Warden | Guardian | Seed | Caster | cube shade ×1.6 | — | — | — | — |
+| The Seed Warden | Guardian | Seed | Caster | kit | A, the Husk That Opens | — | — | — |
 | Sovereign of Hunger | Sovereign | Court | Beast | ravager ×1.8 | — | — | — | — |
 | Sovereign of Silence | Sovereign | Court | Brute | cube listener ×1.9 | — | — | — | — |
 | Sovereign of Sleep | Sovereign | Court | Flier | phantom ×3.2 | — | — | — | — |
@@ -202,3 +202,9 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   literally your shadow, so "It sits the way you sit" and Your Charge (falling flat and sliding over the floor as a
   cast shadow) say what it is, and nothing else on the roster is a shadow figure. B is flat and reads only from the
   front; C is one more knight beside the Mirror Knight, and the Sovereign of Mirrors is still to come.
+- **The Seed Warden** (`guardian_seed`): A the Husk That Opens (a seed as big as a house in four dark ridged valves like
+  a chestnut's case, a crack of light down its face; its halves part on a door of light, and it breathes like a
+  jellyfish), B the Doorkeeper (a kneeling armoured giant whose chest is a door), C the Samara (a winged seed that
+  spins). **Picked A**, 2026-10-29: its phase lines ("The Seed Warden unfolds", "The door opens a crack") are what its
+  body does, the Seed's last door is the light inside it, and no other boss is a closed pod that opens. B is a knight
+  and a door again, after the Mirror Knight and the Architect's doors; C is one shape spinning and reads as a leaf.

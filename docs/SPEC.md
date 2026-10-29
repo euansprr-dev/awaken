@@ -10282,6 +10282,51 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     seated, its thighs lie on the seat's top. The pool and the cast shadow lie flush on the floor.
   - **Meter.** Worst kink outside a strike 5.9° (the Cut into the Rake), most moves under 5°; held at most 13% on every
     move; dips at most 26%.
+- **The Seed Warden, the Husk That Opens** (body and motion, `kit/bosses/guardian_seed.py`). "The last door. It has
+  been waiting." A seed as big as a house hanging in the dark at the bottom of everything, in four great valves of husk
+  that close round it the way a chestnut's case does: dark cool slate, lacquered, each valve stepping out from thin
+  edges to a pale keel up its middle that a thread of light runs along, the lower edge of each scale lipped over the
+  one below and the tip hooked over the top; their insides are pale satin gold, ribbed and veined with light. Through
+  the seams you see the seed, grey-white stone with a fine grain and a crack of light down its face. The seed is two
+  halves hinged down its back; when they part, the light inside stands in the shape of a door, white in a gold frame.
+  It sits in a dark cup with a broken stalk under it frayed into three threads, and three small seeds with lit tips
+  circle it. 86 cubes (516 faces) on 36 bones; 50 px to its hooked tips at true size (3.1 blocks), hanging 14 px off
+  the floor. The hitbox is 1.8 x 3.1 at its scale of 1.6.
+  - **Its idle.** It breathes like a jellyfish: its valves close quickly and open slowly, twice in six seconds, a ripple
+    running round the four so they never move as one; each close lifts it a little and it sinks back as they open. Its
+    seed turns inside them looking about (it is the look bone), its halves easing apart a little as it breathes out and
+    the door's light swelling; the stalk swings after the body, and the small seeds rock on their orbit and bob (they
+    never spin round: a loop that turns a whole way would unwind at the wrap and on every blend). Moving, it leans its
+    top into the way it goes and pulses harder, its back valves flaring like a skirt and the stalk streaming back.
+  - **Its moves.** The Swipe and its mirror (LIGHT, a string): one front valve opens out, swings round back past its
+    side and the body leans in and turns away with it while the back valves clench and the other front valve reaches
+    across as a counterweight; then it turns back hard and the valve sweeps across in front of it, low, like a scythe.
+    An open valve sweeps by turning about the upright at its hinge; its roll only leans it while it stands up. The
+    Clasp (HEAVY, a gap closer, 8 blocks): it draws up and back and opens all four valves like a claw over you, their
+    tips hooked, then drops on you top first and clasps them shut. Whoever is behind it gets the Whip: its valves
+    splay out flat like blades and the ring of them winds back round it, then whips round the other way. The Signal
+    Lance (HEAVY, a hold): its front valves swing apart round the ring and its back ones clench, the seed opens and the
+    door swells; it leans back, then tips its top at you and the lance leaves the door. The Signal Marks: it sinks and
+    shuts, then opens to the sky like a flower with its valves bent back and its seed looking up, and four times it
+    clenches and flares, a light going up each time. The Motes (into the second phase, "The door opens a crack"): it
+    shakes like a seed head in the wind, its valves rattling, then the seed opens a crack and its three small seeds
+    fly out and go (a linear scale track to nothing) while it shudders on; they grow back over its recovery. The Door
+    Light (the signature): it shuts tight in a quarter of its wind-up and trembles harder and harder, its valves
+    clenching in growing beats, then rises and flings every valve back and down like a flower turned inside out, the
+    seed's halves opening right back and the door of light standing open; it folds back slowly. Its intro starts
+    where the kneel leaves it, shut on the floor, light leaking from its seams; it shudders, lifts, and unfolds on one
+    great pulse. Broken, it sinks to the floor shut on its cup, its stalk laid over under it and one valve slack; it
+    rises on one great pulse of its valves. Its death flings its valves open and the light flares, pulses once more,
+    weakly, then drops and its valves fall open round it on the floor like a spent flower, the seed lying open in the
+    middle with its light going out and the small seeds lying beside it (5 s).
+  - **How its keys are written.** One pose function over its parts (each valve's open, curl, splay and sweep, the ring,
+    the seed's parting and its turn, the stalk, the orbit); the door of light and the small seeds are scale tracks of
+    their own. Every move's follow-through is a pose of its own, not the last active key again (that held the body
+    still for a quarter of its recovery). Under every move its hooked tips stir, its stalk swings and the small seeds
+    bob, faded in and out at the ends. Where a pose would put a part into the floor the body is lifted by as much.
+  - **On the floor.** Nothing of it goes into the floor but its three threads, which brush it by at most 1.6 px.
+  - **Meter.** Worst kink outside a strike 4.5° (the intro); held at most 12% on every move; the swipe strings dip 38%,
+    the Clasp into a swipe 44% (its own valves close through rest as it clasps).
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

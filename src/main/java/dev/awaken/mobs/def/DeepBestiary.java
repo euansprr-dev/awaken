@@ -160,7 +160,7 @@ final class DeepBestiary {
                 .phase(1.0F, "Your shadow rises from the throne.", a(GUARD, "Your Parry"), a(CHARGE, "Your Charge"))
                 .phase(0.5F, "It learns your moves.", a(DECOY, "Your Reflections").n(2), a(BLINK, "Shadowstep"), a(NOVA, "Hollow Halo").n(12).bolt(BoltKind.VOID))
                 .parts(P("regent_shadow", "Regent's Shadow", "obsidian")).build());
-        out.add(m("guardian_seed", "The Seed Warden", Theme.SEED, Tier.GUARDIAN, Model.SHADE, "Lances of signal light around the Seed's last door").hp(34).dmg(5.5).spd(0.28).scale(1.6F).bar(BossBarColor.WHITE).arena(24)
+        out.add(m("guardian_seed", "The Seed Warden", Theme.SEED, Tier.GUARDIAN, Model.SHADE, "Lances of signal light around the Seed's last door").hp(34).dmg(5.5).spd(0.28).scale(1.6F).size(1.8F, 3.1F).bar(BossBarColor.WHITE).arena(24)
                 .intro("The last door. It has been waiting.")
                 .phase(1.0F, "The Seed Warden unfolds.", a(BEAM, "Signal Lance").bolt(BoltKind.SIGNAL), a(RAIN, "Signal Marks").n(4).bolt(BoltKind.SIGNAL))
                 .phase(0.5F, "The door opens a crack.", a(SUMMON, "Motes").summon("seed_mote").n(3), a(BURST, "Door Light").radius(13).inner(3.5F).bolt(BoltKind.SIGNAL).heavy())
