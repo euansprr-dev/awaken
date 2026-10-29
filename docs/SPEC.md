@@ -5689,10 +5689,19 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   alternating strut, duty 0.62/0.4, stride from the leg as the grazers', steps 28%/40% of a leg high, quick 0.16 s swings, sunk 5% of a leg so the ankles
   break back; the head holds still in space against the body (head level 0.7) while the clip thrusts the neck; bob
   0.4, roll 0.05, land 1.2, shift 0.2.
+- **Hoofed beasts** (named beasts on four two-bone legs, by HeroRenderer; strides from the foreleg as the grazers'):
+  the **Briar Sow** (`briar_sow`; short forelegs, 10 px, under a heavy chest, long bent hind legs) walks a lateral
+  sequence on short quick steps (0.8/1.49 blocks, 2/3.5 px high, 0.26 s swings) into a trot when she charges, sunk
+  0.3 px, bob 0.4, nod 0.06, a heavy drift (shift 0.7), land 1.2; the **Old Antler** (`old_antler`; 18 px legs) a
+  stag's high-stepping walk (1.41/2.81 blocks, 3.5/6.5 px high, 0.32 s swings, reach 0.7), the head carried high
+  (head level 0.45, nod 0.05); the **Stonehorn** (`stonehorn`; 12 px legs) a ram's sure-footed walk (0.96/1.79 blocks,
+  2.5/4.5 px) that pitches and rolls with the rock under it (slope 0.9), nod 0.07, shift 0.8. All `rear` 1: a still
+  threat or a wind-up hands the front pair to the clip (the sow's snort and paw, the ram's stamp).
 - Test: `creature_motion_feet` (every motion.json entry names a rig; every gait finds two-bone legs on a body bone that
   carries the head; every foot can reach its stance on its crouch and sunk to stalk; the IK lands each foot within 0.05 px of its
   home, a step ahead and behind, the top of a step's arc and the crouch, checked by forward kinematics; the hip's turn
-  survives its ZYX Euler angles; a form grazer's forelegs' knees break forward and its hind legs' back; every gait's stride, walking and running,
+  survives its ZYX Euler angles; a four-legged walker's (the form grazers', the sow's, the stag's, the ram's) forelegs' knees break forward and
+  its hind legs' back; every gait's stride, walking and running,
   sweeps its planted feet no further than the hips can vault to; the forms' rigs
   are looked up too). Tours walk still (NoAI) creatures with
   `/awaken admin stroll <targets> <blocks per tick> <ticks> [degrees per tick]` (each call queues a leg; the server moves

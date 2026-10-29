@@ -32,8 +32,8 @@ import java.util.regex.Pattern;
 public final class LifeTests {
     private LifeTests() {}
 
-    /** The forms' grazers: four straight legs whose knees the motion layer breaks by the leg (SPEC §23.1). */
-    private static final Pattern GRAZER = Pattern.compile("form_(pig|cow|sheep)_\\d");
+    /** Four-legged walkers (the forms' grazers, the hoofed beasts): forelegs break forward, hind legs back (SPEC §23.1). */
+    private static final Pattern FOUR_LEGS = Pattern.compile("form_(pig|cow|sheep)_\\d|briar_sow|old_antler|stonehorn");
 
     /** Our hand-built bodies' part names (mobs.client.model: AwModels, FaunaModels, WildModels), "name:parent". */
     static final Map<Model, String> HAND_BUILT = Map.ofEntries(
@@ -210,8 +210,8 @@ public final class LifeTests {
                         if (dist > legs.fold(i) + 0.2F && dist < legs.reach(i) - 0.2F && foot.distance(want) > 0.05F) {
                             problems.add(mp.id() + " leg " + i + ": the foot lands " + foot.distance(want) + " px off its target");
                         }
-                        // a grazer's straight legs on their crouch: the forelegs' knees break forward, the hocks back
-                        if (k == 0 && GRAZER.matcher(mp.id()).matches()) {
+                        // four legs on their crouch: the forelegs' knees break forward, the hocks back
+                        if (k == 0 && FOUR_LEGS.matcher(mp.id()).matches()) {
                             Vector3f kneeM = m.transformPosition(new Vector3f(knee)), hipM = m.transformPosition(new Vector3f(hp[0], hp[1], hp[2]));
                             Vector3f footM = m.transformPosition(new Vector3f(foot));
                             float t = (kneeM.y - hipM.y) / Math.max(0.01F, footM.y - hipM.y);
@@ -228,7 +228,7 @@ public final class LifeTests {
                     checked++;
                 }
             }
-            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 2 + 8 + 12 * 4 + 4 * 2, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's two, the weaver queen's eight, the form grazers' four and chickens' two (and every other gait's) are checked (" + checked + ")");
+            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 2 + 8 + 12 * 4 + 4 * 2 + 3 * 4, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's two, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four (and every other gait's) are checked (" + checked + ")");
             h.assertTrue(problems.isEmpty(), String.join("; ", problems));
             h.succeed();
         });
