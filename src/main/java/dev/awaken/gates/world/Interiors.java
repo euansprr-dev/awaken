@@ -262,15 +262,15 @@ public final class Interiors {
                 return lookFrom(f, r, r.pathIn, 0, 0, out.centerX(), f.baseY + r.dy + 1.5, out.centerZ());
             }
             case "place", "place2" -> {
-                // a world floor's biggest place (place2: its second), from just inside where you walk in, over its ground
+                // a world floor's biggest place (place2: its second), from just inside where you walk in (or a doorway), over its ground
                 if (!f.isWorld()) return null;
                 List<Room> big = new java.util.ArrayList<>();
-                for (Room o : f.rooms) if (o.type != Room.Type.BOSS && o.rig == null && o.pathIn != null && o.area() > 1) big.add(o);
+                for (Room o : f.rooms) if (o.type != Room.Type.BOSS && o.rig == null && !o.doors.isEmpty() && o.area() > 1) big.add(o);
                 big.sort((a, b) -> b.area() - a.area());
                 int k = spot.equals("place") ? 0 : 1;
                 if (big.size() <= k) return null;
                 r = big.get(k);
-                double[] v = lookFrom(f, r, r.pathIn, 3, 0, r.centerX(), 0, r.centerZ());
+                double[] v = lookFrom(f, r, r.pathIn != null ? r.pathIn : r.doors.get(0), 3, 0, r.centerX(), 0, r.centerZ());
                 // a block over where you stand there, looking at the middle a block and a half over its ground
                 double y = f.baseY + r.dy + f.ground((int) Math.floor(v[0]), (int) Math.floor(v[2])) + 1;
                 double ddx = r.centerX() + 0.5 - v[0], ddz = r.centerZ() + 0.5 - v[2];

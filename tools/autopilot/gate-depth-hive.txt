@@ -21,6 +21,10 @@ wait 20
 screen close
 cmd difficulty peaceful
 cmd gamerule send_command_feedback false
+hud off
+# away from Carillon first: gates never form in its reserve, and the first hop (no gates yet) stays close
+cmd tp @s 6000 200 6000
+wait 200
 
 # ---- The Comb ----------------------------------------------------------------------------------------------------------
 cmd awaken gate hop

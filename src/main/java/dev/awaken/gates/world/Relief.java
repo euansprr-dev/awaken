@@ -73,7 +73,7 @@ final class Relief {
                 boolean door = false;
                 for (Room.Door dr : r.doors) door |= Math.hypot(px - dr.centerX() - 0.5, pz - dr.centerZ() - 0.5) < 2.5;
                 if (door) continue;
-                double swell = (Hash.noise(seed + 31, px, pz, 13) - 0.32) * 7 + (Hash.noise(seed + 25, px, pz, 8) - 0.5) * 1.5;
+                double swell = (Hash.noise(seed + 31, px, pz, 13) - 0.26) * 7 + (Hash.noise(seed + 25, px, pz, 8) - 0.5) * 1.5;
                 v[i] = (int) Math.round(clamp(swell, 0, 2));
             }
         }
@@ -175,6 +175,28 @@ final class Relief {
                 v[i] = gi;
                 s[i] = (byte) (fight && q < 0.5 || wd < 3.5 ? 1 : 2);
                 pin[i] = pinned(r, sh, px, pz, q, lake, hands, pad);
+            }
+        }
+        // no specks: a rise or a hollow needs most of its neighbours with it (a wall counts), or it reads as a tile dropped
+        // on the floor or a hole in it
+        for (int pass = 0; pass < 2; pass++) {
+            int[] o = v.clone();
+            for (int lz = 0; lz < h; lz++) {
+                for (int lx = 0; lx < w; lx++) {
+                    int i = lx + lz * w;
+                    if (!in[i] || pin[i] || o[i] == 0) continue;
+                    int with = 0;
+                    for (int dz = -1; dz <= 1; dz++) {
+                        for (int dx = -1; dx <= 1; dx++) {
+                            int nx = lx + dx, nz = lz + dz;
+                            if ((dx | dz) == 0) continue;
+                            int n = nx + nz * w;
+                            boolean out = nx < 0 || nz < 0 || nx >= w || nz >= h || !in[n];
+                            if (out || !pin[n] && Integer.signum(o[n]) == Integer.signum(o[i])) with++;
+                        }
+                    }
+                    if (with < 4) v[i] = 0;
+                }
             }
         }
         // no step steeper than a block (half a block where it's gentle), every pad level: the rises and the hollows are each
