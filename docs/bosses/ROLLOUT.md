@@ -80,7 +80,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Shadow Regent | Guardian | Court | Duelist | kit | A, the Long Shadow | ✓ 3feaab86 | ✓ 3feaab86 | — |
 | The Seed Warden | Guardian | Seed | Caster | kit | A, the Husk That Opens | ✓ a6726d89 | ✓ a6726d89 | — |
 | Sovereign of Hunger | Sovereign | Court | Beast | kit | A, the Gorged King | ✓ 7a319255 | ✓ 7a319255 | — |
-| Sovereign of Silence | Sovereign | Court | Brute | kit | A, the Stone Ear | — | — | — |
+| Sovereign of Silence | Sovereign | Court | Brute | kit | A, the Stone Ear | ✓ 8559df31 | ✓ 8559df31 | — |
 | Sovereign of Sleep | Sovereign | Court | Flier | phantom ×3.2 | — | — | — | — |
 | Sovereign of Machines | Sovereign | Court | Brute | iron golem ×1.9 | — | — | — | — |
 | Sovereign of Mirrors | Sovereign | Court | Duelist | player ×1.8 | — | — | — | — |
