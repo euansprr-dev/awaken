@@ -7739,8 +7739,9 @@ feet.
   tinted as the world tints it, so grass and leaves come up green), additively in the light's colour, by how much the
   game's light curve (`v / (4 - 3v)`) at the flame's level less the distance would brighten it over the light already
   there (block light, or sky light less the sky's darkening): nothing in daylight, the most in a pitch-black cave, a
-  torch's floor at your feet about 0.58 of full. Gain ×1.15; turned to the flame (0.4 + 0.6 of the face's cosine; 0.8
-  for a plant's crossed quads); eased to nothing over the last 30% of the reach; light that went round a wall is at
+  torch's floor at your feet about 0.58 of full. Gain ×1.15; turned to the flame (0.4 + 0.6 of the face's cosine, the
+  better of its corner's and its middle's, so a flame held right in front of a face lights all of it rather than its
+  corners' grazing angle; 0.8 for a plant's crossed quads); eased to nothing over the last 30% of the reach; light that went round a wall is at
   least 0.55 a flood step away (less 1.2), so it is dim beyond a corner. At most 2,600 quads a frame for all lights.
 - *In the open* it reads like the Ember: a soft pool at the feet under the flame (the city lanterns' profile, radius
   0.55 of the reach, 0.15 strength at level 15 in the dark, scaled by how dark it is there) and a halo at the hand

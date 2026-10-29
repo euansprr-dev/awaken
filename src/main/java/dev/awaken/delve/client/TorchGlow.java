@@ -367,7 +367,7 @@ public final class TorchGlow {
 
     // the light and surface being drawn
     private static double lx, ly, lz;
-    private static float emission, reach, flick, floorDist, hereCurve, edgeFade;
+    private static float emission, reach, flick, floorDist, hereCurve, edgeFade, midTurn;
     private static int rgb;
 
     /** The game's light curve (a level's brightness on the lightmap, before gamma). */
@@ -395,7 +395,10 @@ public final class TorchGlow {
         float fade = Mth.clamp((reach - (float) d) / (reach * FADE), 0F, 1F);
         fade = fade * fade * (3 - 2 * fade);
         float turn = 0.8F;
-        if (n != null && d > 1e-3) turn = 0.4F + 0.6F * Math.max(0F, (float) ((dx * n.getStepX() + dy * n.getStepY() + dz * n.getStepZ()) / d));
+        if (n != null && d > 1e-3) {
+            float k = (float) ((dx * n.getStepX() + dy * n.getStepY() + dz * n.getStepZ()) / d);
+            turn = 0.4F + 0.6F * Math.max(0F, Math.max(midTurn, k));
+        }
         return DelveRender.col(rgb, add * BRIGHT * turn * fade * flick * edgeFade);
     };
 
@@ -450,12 +453,19 @@ public final class TorchGlow {
                 continue;
             }
             int f = l.face[i];
+            midTurn = -1F;
             if (f < HeldLightFlood.WHOLE) {
                 N.setWithOffset(M, DIRS[f]);
                 if (level.getBlockState(N).isSolidRender()) {   // built over since the flood: the new block's faces want light
                     if (building != l) l.stale = true;
                     continue;
                 }
+                // a face turns to the flame by its middle's angle too: a flame held right in front of a face lights all of
+                // it, where its corners alone see it at a grazing angle and the face pressed to your torch read dim
+                Direction dir = DIRS[f];
+                double mx = lx - (x + 0.5 + dir.getStepX() * 0.5), my = ly - (y + 0.5 + dir.getStepY() * 0.5);
+                double mz = lz - (z + 0.5 + dir.getStepZ() * 0.5), md = Math.sqrt(mx * mx + my * my + mz * mz);
+                if (md > 1e-3) midTurn = (float) ((mx * dir.getStepX() + my * dir.getStepY() + mz * dir.getStepZ()) / md);
             }
             drawn += DelveRender.litBlock(vc, level, s, M, f, SURFACE, cx, cy, cz);
         }
