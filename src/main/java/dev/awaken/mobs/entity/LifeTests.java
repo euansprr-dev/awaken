@@ -53,6 +53,10 @@ public final class LifeTests {
             Map.entry(Model.MUSHROOM, "body cap arm_left arm_right leg_left leg_right"),
             Map.entry(Model.MARMOT, "body head:body ear_left:head ear_right:head tail:body leg_front_left:body leg_front_right:body leg_hind_left:body leg_hind_right:body"));
 
+    /** The crested basilisk's and the mudskipper's legs (one model). */
+    private static final String LIZARD_FEET = "body@0,20,0#-3,-2,-6,3,2,6 head:body@0,-0.5,-6#-2.5,-2,-8,2.5,2,0"
+            + legs4("3,1,-4", "3,1,4", "0,-1,-1,4,1,1", ":body", ",0,0,0.6");
+
     /**
      * The hand-built walkers that plant their feet (SPEC §23, "Motion"), by creature id, as their models build them (keep
      * in sync): each bone as {@code name[:parent]@x,y,z[,rx,ry,rz][#box]}, its box its own cubes' (min xyz, max xyz).
@@ -64,8 +68,10 @@ public final class LifeTests {
                     + legs4("2.5,12,-6", "2.5,12,6", "-1.5,0,-1.5,1.5,12,1.5", "", "")),
             Map.entry("mossback", "shell@0,20,0#-7,-9,-8,7,0,8 head@0,17,-8#-2,-2,-5,2,2,0"
                     + legs4("5,19,-5.5", "5,19,5.5", "-2,0,-2,2,5,2", "", "")),
-            Map.entry("crested_basilisk", "body@0,20,0#-3,-2,-6,3,2,6 head:body@0,-0.5,-6#-2.5,-2,-8,2.5,2,0"
-                    + legs4("3,1,-4", "3,1,4", "0,-1,-1,4,1,1", ":body", ",0,0,0.6")),
+            Map.entry("crested_basilisk", LIZARD_FEET),
+            Map.entry("mudskipper", LIZARD_FEET), // the basilisk's body at 0.75
+            Map.entry("scree_marmot", "body@0,19,1#-3,-3,-5,3,3,5 head:body@0,-1,-5#-2.5,-2.5,-4,2.5,1.5,0"
+                    + legs4("2,22,-2", "2,22,4", "-1,0,-1,1,2,1", "", "")),
             Map.entry("glass_scarab", "body@0,22.5,0#-3.5,-4.5,-3.5,3.5,0,4 head:body@0,-1,-3.5#-2,-2,-2,2,1,0"
                     + " leg0:body@2.5,-0.5,-2,0,0.25,0.8#0,0,-0.5,3,1,0.5 leg1:body@-2.5,-0.5,-2,0,-0.25,-0.8#-3,0,-0.5,0,1,0.5"
                     + " leg2:body@2.5,-0.5,0,0,0,0.8#0,0,-0.5,3,1,0.5 leg3:body@-2.5,-0.5,0,0,0,-0.8#-3,0,-0.5,0,1,0.5"
@@ -246,7 +252,7 @@ public final class LifeTests {
                 float lift = Math.max(mp.gait().liftWalk(), mp.gait().liftRun());
                 for (int i = 0; i < legs.n; i++) {
                     // a straight leg whose thigh ends on its knee's pivot opens a wedge at any bend: it moves as one piece
-                    if (!legs.rigid() && legs.hides(i) < 20.0F * Mth.DEG_TO_RAD) {
+                    if (!legs.rigid(i) && legs.hides(i) < 20.0F * Mth.DEG_TO_RAD) {
                         problems.add(mp.id() + " leg " + i + ": its knee hides only " + Math.round(legs.hides(i) * Mth.RAD_TO_DEG)
                                 + " degrees of bend before its joint opens, so its legs must be rigid");
                     }
@@ -281,7 +287,7 @@ public final class LifeTests {
                         if (k == 0 || k == 4) {
                             if (dist > legs.reach(i) * 0.98F) problems.add(mp.id() + " leg " + i + ": can't reach its stance (" + dist + " of " + legs.reach(i) + " px)");
                         }
-                        if (legs.rigid()) { // one piece: the foot on its target, the leg's top inside the body
+                        if (legs.rigid(i)) { // one piece: the foot on its target, the leg's top inside the body
                             if (!legs.solveRigid(i, toParent, hp[0], hp[1], hp[2], tg[0], tg[1], tg[2], hr, pivot)) {
                                 problems.add(mp.id() + " leg " + i + ": no solve");
                                 continue;
@@ -316,14 +322,16 @@ public final class LifeTests {
                         if (!back.equals(hr, 1e-3F)) problems.add(mp.id() + " leg " + i + ": the hip's turn doesn't survive its Euler angles");
                     }
                     checked++;
-                    if (legs.rigid()) rigid++;
+                    if (legs.rigid(i)) rigid++;
                 }
                 String splits = walkTrial(mp.gait(), mp.body() != null ? mp.body().twist() : 0.0F, legs, ws, rs);
                 if (splits != null) problems.add(mp.id() + ": " + splits);
             }
-            int handLegs = 4 + 4 + 4 + 6 + 2 + 2; // the frost stag's, mossback's, basilisk's, scarab's, shroomlet's and Listener's
-            h.assertTrue(rigid >= 12 * 4 + 4 * 2 + 3 * 4 + handLegs, "the grazers', chickens', hoofed beasts' and hand-built walkers' legs are rigid (" + rigid + ")");
-            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 4 + 8 + 12 * 4 + 4 * 2 + 3 * 4 + handLegs, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's legs and the long arms it lopes on, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four, the hand-built walkers' one-bone legs (and every other gait's) are checked (" + checked + ")");
+            int handLegs = 4 + 4 + 4 + 6 + 2 + 2 + 4 + 4; // the frost stag's, mossback's, basilisk's, scarab's, shroomlet's, Listener's, mudskipper's and marmot's
+            // the Mycelord's two and the otter's forelegs walk stiff beside them
+            int stiffHero = 2 + 2;
+            h.assertTrue(rigid >= 12 * 4 + 4 * 2 + 3 * 4 + handLegs + stiffHero, "the grazers', chickens', hoofed beasts', hand-built walkers', the Mycelord's and the otter's forelegs are rigid (" + rigid + ")");
+            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 4 + 8 + 12 * 4 + 4 * 2 + 3 * 4 + handLegs + 2 + 4 + 4 + 2 + 2, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's legs and the long arms it lopes on, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four, the hand-built walkers' one-bone legs, the Mycelord's two, the otter's and Mire Mother's four, the Tidesteed's and the cricket's hind pair (and every other gait's) are checked (" + checked + ")");
             h.assertTrue(problems.isEmpty(), String.join("; ", problems));
             h.succeed();
         });
@@ -424,7 +432,7 @@ public final class LifeTests {
                     float over = Math.max(off / ahead, -off / behind);
                     String what = off > 0 ? "lands " + off + " px ahead (most " + ahead + ")"
                             : (turning ? "turning, trails " : settled ? "stood after a turn, " : "trails ") + -off + " px (most " + behind + ")";
-                    if (rig.rigid()) {
+                    if (rig.rigid(i)) {
                         float deg = (float) Math.toDegrees(Math.atan2(Math.abs(off), rig.length(i) * (1.0F + g.shoulder())));
                         float limit = turning ? 25.0F : run > 0 ? 45.0F : 35.0F;
                         if (deg / limit > over) {

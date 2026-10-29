@@ -1325,7 +1325,7 @@ def mire_mother():
         arm.cube("arm_" + nm, -2.5, 0, -2.5, 5, 9, 5, mirror=mir, share=sh("arm_l"))
         hand = arm.bone("hand_" + nm, (0, 8.5, 0), (0, 0, side * 15))
         hand.cube("hand_" + nm, -4, 0, -6, 8, 1, 7, mirror=mir, share=sh("hand_l"))
-        thigh = body.bone("thigh_" + nm, (side * 11, -1, 10), (0, side * 20, 0))
+        thigh = body.bone("thigh_" + nm, (side * 11, 1.5, 10), (0, side * 20, 0))  # low enough that her feet stand on the ground
         thigh.cube("thigh_" + nm, -3.5, -3, -9, 7, 9, 13, mirror=mir, share=sh("thigh_l"))
         foot = thigh.bone("foot_" + nm, (0, 5.5, -7), (0, side * -30, 0))
         foot.cube("foot_" + nm, -4, 0, -9, 8, 3, 10, mirror=mir, share=sh("foot_l"))

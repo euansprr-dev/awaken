@@ -15,7 +15,7 @@ import java.util.function.IntFunction;
 
 /**
  * A body's legs for the motion layer (SPEC §23, "Motion"): each leg is two bones found by role (a hip that swings, a
- * knee that bends; a rigid gait also takes a one-bone leg, a hip alone), where its foot rests (home, model px), which
+ * knee that bends; a rigid or mixed gait also takes a one-bone leg, a hip alone), where its foot rests (home, model px), which
  * way its knee bends (its bulge at rest), its place in the gait, and the two-bone IK that poses it ({@link #solve}):
  * the hip turns so the knee lies where the two lengths meet on the side the knee bulged at rest, and the knee only
  * bends about its own hinge. Made once per model.
@@ -43,8 +43,8 @@ public final class LegRig {
     /** +1 left, -1 right; the leg's rank on its side from the front (0). */
     final int[] side, rank;
     final int perSide;
-    /** The gait's phase offsets: one foot at a time from the back, and the alternating sets. */
-    final float[] offRipple, offAlternate;
+    /** The gait's phase offsets: one foot at a time from the back, the alternating sets, a bound's pairs, a hop's all. */
+    final float[] offRipple, offAlternate, offBound, offHop;
     /** Legs whose feet must not lift together with each one's (the neighbours on its side and its opposite). */
     final int[][] near;
     /** Blocks from the body's middle to a foot, on average (a turn on the spot is this far a step). */
@@ -60,6 +60,9 @@ public final class LegRig {
      * and down and still stay inside the body's cubes (its top never shows), in that frame. The same leg in model space.
      */
     final boolean rigid;
+    /** Each leg moves as one piece: every leg of a rigid gait, a mixed gait's one-bone legs; whether any does. */
+    final boolean[] stiff;
+    final boolean anyStiff;
     /** How far (radians) each knee can bend before its joint opens (the thigh's end must cover the shin's top); pi bent at rest. */
     private final float[] hides;
     private final Vector3f[] g0;
@@ -89,6 +92,7 @@ public final class LegRig {
         hipY = new float[n];
         hipZ = new float[n];
         rigid = gait.knees() == MotionProfile.Knees.RIGID;
+        stiff = new boolean[n];
         hides = new float[n];
         g0 = new Vector3f[n];
         len = new float[n];
@@ -148,6 +152,7 @@ public final class LegRig {
             homeX[i] = footM.x;
             homeY[i] = 24.0F;
             homeZ[i] = footM.z;
+            stiff[i] = rigid || one;
             hides[i] = one || u.angle(w) > 10.0F * Mth.DEG_TO_RAD ? Mth.PI : hides(box.apply(hip[i]), v1[i], box.apply(knee[i]), tip);
             Vector3f leg = new Vector3f(ft).sub(hp);
             len[i] = Math.max(0.5F, leg.length());
@@ -184,8 +189,14 @@ public final class LegRig {
                 homeZ[i] = hipZ[i] - gait.radius() * Mth.sin(a);
             }
         }
+        if (gait.hindBack() > 0 && perSide > 1) for (int i = 0; i < n; i++) if (rank[i] == perSide - 1) homeZ[i] += gait.hindBack();
         offRipple = new float[n];
         offAlternate = new float[n];
+        offBound = new float[n];
+        offHop = new float[n];
+        boolean any = false;
+        for (int i = 0; i < n; i++) any |= stiff[i];
+        anyStiff = any;
         float reachSum = 0;
         // the ripple runs from the back forward: a pair steps a lag after the pair behind it (the larger offset steps first);
         // a negative lag runs it from the front
@@ -194,6 +205,8 @@ public final class LegRig {
             float o = (side[i] < 0 ? 0.5F : 0.0F) + rank[i] * lag;
             offRipple[i] = o - (float) Math.floor(o);
             offAlternate[i] = ((rank[i] + (side[i] < 0 ? 1 : 0)) % 2) * 0.5F;
+            // the forefeet a touch apart, the hind pair half a stride behind them
+            offBound[i] = (rank[i] > 0 ? 0.5F : 0.0F) + (side[i] < 0 ? 0.06F : 0.0F);
             reachSum += Mth.sqrt(homeX[i] * homeX[i] + homeZ[i] * homeZ[i]) / 16.0F;
         }
         turnRadius = n > 0 ? reachSum / n : 0.5F;
@@ -279,6 +292,9 @@ public final class LegRig {
             }
         }
         c[axis] = Math.abs(box[axis + 3]) >= Math.abs(box[axis]) ? box[axis + 3] : box[axis];
+        // a flat pad (a toad's foot, a walking mushroom's) stands on its sole's far edge, not halfway up it
+        float h = box[4] - box[1];
+        if (axis != 1 && h < box[3] - box[0] && h < box[5] - box[2]) c[1] = box[4];
         return new Vector3f(c[0], c[1], c[2]);
     }
 
@@ -309,8 +325,8 @@ public final class LegRig {
     /**
      * The legs of a body (and its arms, when the gait walks on them): each LEG-role bone that hangs from a non-leg and
      * has exactly one LEG-role child, which has at most one leg below it (a foot, held as it stands at rest) with none
-     * below that (a two-bone leg, or three); on a rigid gait also each LEG-role bone with geometry and no leg below it
-     * (a one-bone leg, a hand-built body's block). {@code pose}: each bone's rest (x, y, z px; x, y, z rotation
+     * below that (a two-bone leg, or three; toes, legs below a knee with none below them, ride it); on a rigid or mixed
+     * gait also each LEG-role bone with geometry and no leg below it (a one-bone leg, a hand-built body's block). {@code pose}: each bone's rest (x, y, z px; x, y, z rotation
      * radians); {@code box}: each bone's own cubes' box, or null. Null when the body has fewer than two such legs.
      */
     public static @Nullable LegRig of(MotionProfile.Gait gait, LifeBones.Binding b, float[][] pose, IntFunction<float @Nullable []> box) {
@@ -328,7 +344,7 @@ public final class LegRig {
                     kids++;
                 }
             }
-            if (kids == 0 && gait.knees() == MotionProfile.Knees.RIGID && box.apply(i) != null) {
+            if (kids == 0 && (gait.knees() == MotionProfile.Knees.RIGID || gait.mixed()) && box.apply(i) != null) {
                 // a one-bone leg (a vanilla-shaped body's block of a leg): rigid, it swings whole from its hip
                 List<Integer> chain = new ArrayList<>();
                 for (int k = p; k >= 0; k = bones.get(k).parent()) chain.addFirst(k);
@@ -345,7 +361,15 @@ public final class LegRig {
                     feet++;
                 }
             }
-            if (feet > 1) continue;
+            if (feet > 1) { // toes (the Mycelord's roots) ride the knee's own block, so long as nothing hangs below them
+                boolean leaves = true;
+                for (int j = 0; j < count; j++) {
+                    int pj = bones.get(j).parent();
+                    if (pj >= 0 && bones.get(pj).parent() == child && limb(gait, b.roles()[pj]) && limb(gait, b.roles()[j])) leaves = false;
+                }
+                if (!leaves) continue;
+                foot = -1;
+            }
             boolean deeper = false;
             for (int j = 0; j < count && foot >= 0; j++) if (bones.get(j).parent() == foot && limb(gait, b.roles()[j])) deeper = true;
             if (deeper) continue;
@@ -443,6 +467,10 @@ public final class LegRig {
         return rigid;
     }
 
+    public boolean rigid(int i) {
+        return stiff[i];
+    }
+
     public float hides(int i) {
         return hides[i];
     }
@@ -479,7 +507,7 @@ public final class LegRig {
      * length: a straight leg reaches only a little forward or back at full height, so a long step pulls the hips down.
      */
     public float sink(int i, float x, float y, float z) {
-        if (rigid) { // as solveRigid has it: the pivot turned about its point above the hip, the leg and its drop the reach
+        if (stiff[i]) { // as solveRigid has it: the pivot turned about its point above the hip, the leg and its drop the reach
             float k = lift[i], vx = hipX[i] - gmx[i] * k, vy = hipY[i] - gmy[i] * k, vz = hipZ[i] - gmz[i] * k;
             float ex = x - vx, ey = y - vy, ez = z - vz, el = Mth.sqrt(ex * ex + ey * ey + ez * ez);
             float py = el > 1e-3F ? hipY[i] + (ey / el - gmy[i]) * k : hipY[i];

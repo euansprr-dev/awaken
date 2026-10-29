@@ -1208,7 +1208,7 @@ public final class HeroData {
                 cube 76 47 -2.5 0 -2.5 5 9 5 0 0
                 bone hand_l arm_l 0 8.5 0 0 0 0.2618
                 cube 0 110 -4 0 -6 8 1 7 0 0
-                bone thigh_l body 11 -1 10 0 0.3491 0
+                bone thigh_l body 11 1.5 10 0 0.3491 0
                 cube 88 0 -3.5 -3 -9 7 9 13 0 0
                 bone foot_l thigh_l 0 5.5 -7 0 -0.5236 0
                 cube 76 61 -4 0 -9 8 3 10 0 0
@@ -1216,7 +1216,7 @@ public final class HeroData {
                 cube 76 47 -2.5 0 -2.5 5 9 5 1 0
                 bone hand_r arm_r 0 8.5 0 0 0 -0.2618
                 cube 0 110 -4 0 -6 8 1 7 1 0
-                bone thigh_r body -11 -1 10 0 -0.3491 0
+                bone thigh_r body -11 1.5 10 0 -0.3491 0
                 cube 88 0 -3.5 -3 -9 7 9 13 1 0
                 bone foot_r thigh_r 0 5.5 -7 0 0.5236 0
                 cube 76 61 -4 0 -9 8 3 10 1 0

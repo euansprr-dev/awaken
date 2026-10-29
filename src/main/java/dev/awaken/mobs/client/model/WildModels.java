@@ -169,13 +169,18 @@ public final class WildModels {
         @Override
         protected void pose(LivingEntityRenderState s) {
             float amp = Math.min(1.0F, s.walkAnimationSpeed * 2.5F);
-            float crawl = Mth.sin(s.walkAnimationPos * 0.8F) * amp;
+            float wave = s.walkAnimationPos * 0.8F, crawl = Mth.sin(wave) * amp;
             boolean tucked = has(s, FaunaMob.P_GRAZE) || has(s, FaunaMob.P_REST) || has(s, FaunaMob.P_GUARD);
-            // a snail's gait is a wave down the foot: it stretches and gathers as it slides
-            foot.zScale = 1.0F + crawl * 0.08F + (Motion.breathe(s, 0.09F, 0.02F) - 1.0F);
+            // a snail's gait is a wave down the foot, its pace the ground's: the front pushes out from a tail that stays
+            // put, then the tail gathers in after it; the shell and the head keep their own length
+            float stretch = 1.0F + crawl * 0.08F + (Motion.breathe(s, 0.09F, 0.02F) - 1.0F);
+            foot.zScale = stretch;
+            foot.z = -(stretch - 1.0F) * 7.0F;
+            shell.zScale = 1.0F / stretch;
+            head.zScale = 1.0F / stretch;
             // struck: the eye stalks shrink back and the head pulls in under the shell
             float fl = Motion.flinch(s);
-            head.z = tucked ? -4.0F : -6.0F - crawl * 0.6F + fl * 2.0F;
+            head.z = tucked ? -4.0F : -6.0F - crawl * 0.3F + fl * 2.0F;
             head.y = tucked ? -0.5F : -2.0F + fl;
             head.yRot = tucked ? 0 : Motion.yaw(s, 0.6F);
             head.xRot = tucked ? 0 : Motion.pitch(s, 0.4F);
@@ -183,10 +188,16 @@ public final class WildModels {
             eyeR.visible = !tucked;
             eyeL.zRot = 0.25F + Mth.sin(s.ageInTicks * 0.2F) * 0.12F;
             eyeR.zRot = -0.25F - Mth.sin(s.ageInTicks * 0.2F + 1.3F) * 0.12F;
-            eyeL.yScale = 1.0F - fl * 0.7F;
-            eyeR.yScale = 1.0F - fl * 0.7F;
+            // under way the stalks sweep back; now and then one draws halfway in and out again (a snail's blink)
+            eyeL.xRot = -0.3F * amp;
+            eyeR.xRot = -0.3F * amp + Mth.sin(s.ageInTicks * 0.13F) * 0.06F;
+            float blinkL = Mth.clamp(Mth.sin(s.ageInTicks * 0.031F) * 8.0F - 7.0F, 0.0F, 1.0F);
+            float blinkR = Mth.clamp(Mth.sin(s.ageInTicks * 0.031F - 0.25F) * 8.0F - 7.0F, 0.0F, 1.0F);
+            eyeL.yScale = (1.0F - fl * 0.7F) * (1.0F - 0.55F * blinkL);
+            eyeR.yScale = (1.0F - fl * 0.7F) * (1.0F - 0.55F * blinkR);
+            // the shell rides the wave: it rocks fore and aft with each push and sways side to side once in two
             shell.xRot = -0.15F + crawl * 0.03F;
-            shell.zRot = Motion.shudder(s, 0.1F);
+            shell.zRot = Motion.shudder(s, 0.1F) + Mth.sin(wave * 0.5F) * 0.045F * amp;
             garden.zRot = Mth.sin(s.ageInTicks * 0.05F) * 0.05F;
         }
     }

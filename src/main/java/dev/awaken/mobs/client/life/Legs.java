@@ -140,9 +140,9 @@ public final class Legs {
         float turn = Math.abs(dyaw) * Mth.DEG_TO_RAD * rig.turnRadius * sc;
         boolean wasFast = fast;
         fast = switch (g.pattern()) {
-            case ALTERNATE -> true;
+            case ALTERNATE, HOP -> true;
             case RIPPLE -> false;
-            case RIPPLE_ALTERNATE -> fast ? run > 0.25F : run > 0.45F;
+            case RIPPLE_ALTERNATE, BOUND -> fast ? run > 0.25F : run > 0.45F;
         };
         // from a stand, or into a new gait, the first steps are short and quick and grow to the full stride over most of
         // a second (FA's swing grows with the pace the same way): the feet still waiting their turn are never left far behind
@@ -157,7 +157,8 @@ public final class Legs {
         float sw = 1.0F - duty;
         float lift = Mth.lerp(run, g.liftWalk(), g.liftRun()) / 16.0F * sc;
         float cycle = rate > 0.05F ? 1.0F / rate : 20.0F;
-        float[] off = fast ? rig.offAlternate : rig.offRipple;
+        float[] off = !fast ? rig.offRipple : g.pattern() == MotionProfile.Pattern.BOUND ? rig.offBound
+                : g.pattern() == MotionProfile.Pattern.HOP ? rig.offHop : rig.offAlternate;
         if (fast != wasFast) for (int i = 0; i < rig.n; i++) prevQ[i] = frac(clock - adv + off[i]);
         boolean moving = rate > 0.15F;
         // a landing a foot aims for: its home halfway through the stand after this swing (or further, by the lead), never
@@ -236,12 +237,12 @@ public final class Legs {
         // a planted foot left too far slides after the body, as FA's feet slide: a rigid leg never leans past SLIP from
         // its shoulder, and no foot trails more than four settles while the body swings round on the spot (its steps
         // can't keep up with a quick turn); a blocky leg thrown out sideways or legs crossed under the body read as broken
-        if (rig.rigid || pivot) {
+        if (rig.anyStiff || pivot) {
             for (int i = 0; i < rig.n; i++) {
                 if (swinging[i]) continue;
                 home(i, x, z, yaw, sc);
                 double ddx = fx[i] - hx, ddz = fz[i] - hz, far = Math.sqrt(ddx * ddx + ddz * ddz);
-                double most = rig.rigid ? (rig.len[i] + rig.lift[i]) * SLIP / 16.0F * sc : Double.MAX_VALUE;
+                double most = rig.stiff[i] ? (rig.len[i] + rig.lift[i]) * SLIP / 16.0F * sc : Double.MAX_VALUE;
                 if (pivot) most = Math.min(most, 4.0F * g.settle() * sc);
                 if (far > most) {
                     fx[i] = hx + ddx * most / far;
@@ -280,7 +281,7 @@ public final class Legs {
         float k = u[i];
         float e = k * k * (3.0F - 2.0F * k);
         // a rigid leg has no knee to fold: its hoof swings through a touch past its spot and settles back onto it
-        if (rig.rigid) e += 0.25F * k * Mth.sin(Mth.PI * k);
+        if (rig.stiff[i]) e += 0.25F * k * Mth.sin(Mth.PI * k);
         // up quickly, down a touch slower: the arc peaks before the middle of the swing
         float arc = Mth.sin(Mth.PI * (float) Math.pow(k, 0.75));
         fx[i] = sx[i] + (hx - sx[i]) * e;
@@ -363,8 +364,17 @@ public final class Legs {
         float b = Math.min(1.0F, dt / 0.05F);
         gaitY += (g.bob() * up / Math.max(1.0F, rig.n * 0.5F) - gaitY) * b;
         gaitRoll += (g.roll() * lean - gaitRoll) * b;
-        // a forefoot up dips the nose, a hind foot up the rump: the body rocks fore and aft twice a stride
-        gaitPitch += ((rig.perSide > 1 ? g.rock() * (fore - hind) : 0.0F) - gaitPitch) * b;
+        // a forefoot up dips the nose, a hind foot up the rump: the body rocks fore and aft twice a stride; a hop noses up
+        // as it leaves the ground and down as it comes in (its single re-steps don't rock it)
+        float pitch;
+        if (g.pattern() == MotionProfile.Pattern.HOP) {
+            float flight = 0;
+            for (int i = 0; i < rig.n; i++) flight += swinging[i] ? u[i] : 0.0F;
+            pitch = np == 0 && rig.n > 0 ? -g.rock() * Mth.cos(Mth.PI * flight / rig.n) : 0.0F;
+        } else {
+            pitch = rig.perSide > 1 ? g.rock() * (fore - hind) : 0.0F;
+        }
+        gaitPitch += (pitch - gaitPitch) * b;
         foreLift += (fore - foreLift) * b;
         // the vault: past what the crouch and the ground already sink it, the hips drop to the furthest planted foot
         vault += (Mth.clamp(need - g.crouch() - groundY, 0.0F, rig.vaultMax) - vault) * b;

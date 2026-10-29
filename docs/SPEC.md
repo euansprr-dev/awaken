@@ -5713,7 +5713,11 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
 - **Data**: `assets/awaken/life/motion.json` (schemaVersion 1), by rig id. A body not listed moves exactly as before (the
   kit's bosses have no entry). `gait`: `pattern` (`ripple`: one pair at a time from the back forward, each `lag` of a
   cycle after the pair behind it, the two sides half a cycle apart (`lag` 0: one wave over the side); `alternate`:
-  opposite sets; `ripple-alternate`: the first walking, the second once it runs, 0.45 in and 0.25 out), `duty` (share of
+  opposite sets; `ripple-alternate`: the first walking, the second once it runs, 0.45 in and 0.25 out; `bound`: a
+  ripple walking and, once it runs, the forefeet together and the hind pair half a cycle later, the right foot of each
+  pair 0.06 of a cycle behind the left (an otter's lope); `hop`: every foot at once, the body rising with them (a
+  negative `bob`) and pitching by `rock` radians, nose up as it leaves the ground and down as it comes in, its single
+  re-steps rocking nothing (a rabbit, a cricket)), `duty` (share of
   a cycle a foot stands, walking and running), `lift` (px a step rises), `stride` (blocks a cycle covers; 0 the rig's
   own), `reach` (blocks a planted foot may trail before it steps at once), `settle` (blocks from home a foot may rest
   when the body stops), `crouch` (px the body sinks on its legs), `radius` and `fan` (where each foot stands: px out
@@ -5725,7 +5729,8 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   clips while the body rears: a wind-up, a strike or a cue, a roar, or a still threat; a roar lets one pair more go),
   `knees` (`auto`, `forward`, `back`: which way a leg that stands straight at rest bends; `auto` breaks the forelegs of a
   body with legs one behind another forward and every other leg back, a bird's and a biped's back; a leg bent at rest
-  keeps its own bulge).
+  keeps its own bulge), `mixed` (a one-bone leg walks rigid beside legs that bend: `LegRig.stiff`, per leg), `hindBack`
+  (px the hind feet stand behind their rest spot: a leg lying nearly straight at rest can step no further forward).
   `body`: `headLevel` (the head holds level against the gait's and the ground's pitch and roll), `twist` (the body turns
   this share of its look, at most 0.35 rad), `slope` (it pitches and rolls with the ground under its planted feet),
   `land` (a landing squashes it by how far it fell: a spring at 3 Hz kicked by the fall speed), `still` (a stalking
@@ -5744,9 +5749,12 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   ride the body bone; a pose-stack body would carry them off their spots), or that have no head bone at all and a motion
   profile (the weaver queen's face is on its thorax; a headless body without one keeps its old pose-stack motion), or
   hand-built bodies the root carries (below). A gait with `arms` walks on its arms too: ARM-role chains are found as
-  legs are (the Hushling's long arms plant like forelegs).
-- **One-bone legs and the root's carry** (batch 4, 2026-10-29: the hand-built walkers): a rigid gait also takes a
-  one-bone leg, a LEG-role bone with cubes and no leg below it (a vanilla-shaped body's block of a leg), its own block
+  legs are (the Hushling's long arms plant like forelegs). Toes: several LEG-role bones under a knee with nothing
+  below them (the Mycelord's roots) ride the knee's block, which is then the shin. A flat pad (a block thinner than it
+  is long and wide, not pointing down: a toad's foot, a walking mushroom's) reaches with its sole's far edge, not
+  halfway up it, so it stands on the ground instead of sunk into it.
+- **One-bone legs and the root's carry** (batch 4, 2026-10-29: the hand-built walkers): a rigid gait (or a `mixed`
+  one, its other legs bending) also takes a one-bone leg, a LEG-role bone with cubes and no leg below it (a vanilla-shaped body's block of a leg), its own block
   the whole leg (`knee` -1), swung as any rigid leg. A hand-built body (`LifeModel`, no hero rig) with a gait whose legs
   don't all hang from its body bone, or whose body bone doesn't carry its head (the stag's legs and neck hang off the
   model root), has its body's motions carried by the root part (`LifeRig.rootCarries`): the dip, lean and roll the pose
@@ -5894,9 +5902,29 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   about six steps a second; the
   **Shroomlet** (`shroomlet`; two 3 px legs off the root) a toddler's waddle (0.22/0.32 blocks, roll 0.08); the
   **Listener** (`listener`; two 16 px legs off the root) a long stalking stride (1.2/1.9 blocks, 2.5/4.5 px, shoulder
-  0.3, `still`, creep 1). The Scree Marmot (2 px legs) and the Mudskipper (the lizard body at 0.75) are left on their
-  own swing: planted, their legs would step eight or nine times a second; the snail and the breathbell have no legs; the
-  chime cricket hops.
+  0.3, `still`, creep 1).
+- **Batch 5** (2026-10-29: the rest of our walkers, and the legless; strides from the feet test, about 0.9 of the most
+  it allows): the **Mire Mother** (`mire_mother`, named beast; `arms`: her two-bone arms plant their hands, the hand
+  the shin, the wrist bending over it; folded hind legs with flat feet) a toad's crawl, a ripple walking and a trot when
+  she lunges (duty 0.75/0.5, 0.45/0.7 blocks, 3/4.5 px, 0.42 s swings, bob 0.6), her hind feet 4 px behind their rest
+  spot (`hindBack`), and her haunches 2.5 px lower in the spec (`fauna_heroes.py`): her hind feet hung 2.5 px above the
+  ground; the **Mycelord** (`mycelord`, named beast; two stubby rigid legs on flat feet, the roots riding them as toes)
+  a heavy biped's waddle (0.32/0.45 blocks, 0.4 s swings, roll 0.06); the **Tidesteed** (`tidesteed`; two three-bone
+  forelegs, the flipper riding the shin) an alternating walk (0.7/1.1 blocks), its swim as before; the **Brook Otter**
+  (`brook_otter`; `mixed`: one-bone forelegs stiff, two-bone hind legs bending, the paw the shin) a ripple walk and a
+  bound when it runs (duty 0.55/0.35, 0.34/0.52 blocks), the body arching with each pair (rock −0.08: forefeet up lift
+  the chest, hind feet up the rump), its swim as before; the **Scree Marmot** (`scree_marmot`; 2 px one-bone legs off
+  the root) a scurry and a bound (duty 0.62/0.3, 0.24/0.5 blocks; reach 0.12 and settle 0.02, so a 2 px leg never
+  leans past its limit; a walking duty under a half left neighbouring feet always up, blocking each other's catch-up
+  steps); the **Mudskipper** (`mudskipper`; the basilisk's body at 0.75, `HAND_FEET` shared) skipping on its fins
+  (`hop`, duty 0.3/0.27, 0.45/0.5 blocks, rising 1.6 px, rock 0.2); the **Chime Cricket** (`chime_cricket`; only its
+  two-bone hind legs plant, its four small one-bone legs keep their clip) hopping (`hop`, duty 0.25/0.22, 0.6/0.8
+  blocks, rising 2 px, rock 0.25). Legless: the **snails** (Gloam and Sporeback, `WildModels.Snail`) crawl on a wave
+  whose pace is the ground's: the foot stretches out from a tail that stays put and gathers it in after, the shell and
+  head keep their own length, the shell rocks with each push and sways side to side once in two, the eye stalks sweep
+  back under way and now and then one draws halfway in and out (a snail's blink); the **Breathbell** (`breathbell`; a
+  `fly` block with no wings or spine) leans into its drift (tilt 0.35 at 2 blocks a second, bank 0.12), its pulse,
+  skirt and trailing tentacles its clips' and springs'.
 - **Flight** (`Flight`, plain math checked on the server; a `fly` block, by rig id or, for a hand-built body, by its
   creature id): while airborne or swimming (or `always`, for a body always under way: serpents, the ray) the body noses
   into a cruise (`tilt` at `fast` blocks a second) and pitches along its path's climb or dive (`climb`, the share), banks
