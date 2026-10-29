@@ -34,6 +34,16 @@
     "awaken:rimstone",
     "awaken:silt",
     "awaken:ash",
-    "awaken:driftwood"
+    "awaken:driftwood",
+    "awaken:frostspar",
+    "awaken:sunshard",
+    "awaken:fused_glass",
+    "awaken:scorched_glass",
+    "awaken:faultstone",
+    "awaken:fault_seam",
+    "awaken:riven_shale",
+    "awaken:salt_lick",
+    "awaken:wallow",
+    "awaken:deepglass"
   ]
 }

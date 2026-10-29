@@ -11944,6 +11944,10 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
   water colour, drops nothing), **`dusty_web`** (a cobweb that drops string or itself). Rubble, the formations and the
   regions' rocks (P3: and the drifts and driftwood) are in **`#minecraft:blocks_motion_no_leaves`**: 26.3 reads
   heightmaps, suffocation, rain and fire spread from that tag, not from a block's shape.
+  The same file carries the other modules' natural rock and ground that no vanilla tag takes in (the Lands' frostspar,
+  sunshard, fused and scorched glass, faultstone, fault seam and riven shale; the wild's salt lick and wallow; the Singing
+  Deep's deepglass; their logs, planks, dirt and slabs come in through `#logs`, `#planks`, `#dirt` and `#slabs`): it is the
+  only Awaken file in that tag, and without them the heightmaps looked straight through those blocks.
 - **The feature** `awaken:cave_skin` (`CaveSkinFeature`, placed `awaken:caves/skin`, every `#minecraft:is_overworld` biome
   at `top_layer_modification`, so it comes after every structure and feature): per chunk, every column bottom to top below
   the ground less **6**, section by section from the palettes; only cells where air meets natural rock are looked at.
