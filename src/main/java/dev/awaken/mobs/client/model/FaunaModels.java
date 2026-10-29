@@ -352,9 +352,9 @@ public final class FaunaModels {
             for (int i = 0; i < 3; i++) {
                 float z = -2 + i * 2;
                 body.addOrReplaceChild("leg" + (i * 2), CubeListBuilder.create().texOffs(16, 20).addBox(0, 0, -0.5F, 3, 1, 1),
-                        PartPose.offsetAndRotation(2.5F, -0.5F, z, 0, (i - 1) * -0.5F, 0.8F));
+                        PartPose.offsetAndRotation(2.5F, -0.5F, z, 0, (i - 1) * -0.25F, 0.8F));
                 body.addOrReplaceChild("leg" + (i * 2 + 1), CubeListBuilder.create().mirror().texOffs(16, 20).addBox(-3, 0, -0.5F, 3, 1, 1),
-                        PartPose.offsetAndRotation(-2.5F, -0.5F, z, 0, (i - 1) * 0.5F, -0.8F));
+                        PartPose.offsetAndRotation(-2.5F, -0.5F, z, 0, (i - 1) * 0.25F, -0.8F));
             }
             return LayerDefinition.create(mesh, 32, 32);
         }
@@ -372,7 +372,7 @@ public final class FaunaModels {
             for (int i = 0; i < 6; i++) {
                 int pair = i / 2;
                 float phase = (i % 2 == 0 ? 0 : Mth.PI) + pair * 2.1F;
-                legs[i].yRot = (pair - 1) * (i % 2 == 0 ? -0.5F : 0.5F) + Mth.sin(scuttle + phase + (burrow > 0 ? s.ageInTicks * 1.4F : 0)) * amp;
+                legs[i].yRot = (pair - 1) * (i % 2 == 0 ? -0.25F : 0.25F) + Mth.sin(scuttle + phase + (burrow > 0 ? s.ageInTicks * 1.4F : 0)) * amp;
             }
             head.yRot = Motion.yaw(s, 0.7F);
             head.xRot = Motion.pitch(s, 0.4F);

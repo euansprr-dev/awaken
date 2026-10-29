@@ -5734,8 +5734,10 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   planted feet, a lizard's roll (0.04); head level 0.4, twist 0.4, shift 0.25. Ripening it rears on its hind feet and its
   forefeet, drawn up off the ground, knead the air in turn while the tail braces.
 - **Hushling** (`hushling`; two two-bone hind legs and long two-bone arms it lopes on, `arms`): its hands plant like
-  forefeet (Euan 2026-10-29: swung by its clips alone they sank into the floor under its crouch and never stepped), a
-  diagonal lope, duty 0.6/0.4, 2/3.5 px, stride 0.9/1.5 blocks; its body rises (bob -0.6) while a foot is up and rolls
+  forefeet (Euan 2026-10-29: swung by its clips alone they sank into the floor under its crouch and never stepped); its
+  upper arm runs a px past the elbow over the thinner forearm, so the elbow bends to plant a hand without opening (it
+  hid none: a straight arm whose block ends on its elbow's pivot must not bend, and a stiff one couldn't reach the floor
+  under the crouch), a diagonal lope, duty 0.6/0.4, 2/3.5 px, stride 0.9/1.5 blocks; its body rises (bob -0.6) while a foot is up and rolls
   off it (0.05); a hunter: `still`, creep 1.5; head level 0.5, twist 0.3, shift 0.5.
 - **Weaver Queen** (`weaver_queen`, named beast; eight three-bone legs, femur 12, tibia 14, tarsus 6 px, no head bone):
   an alternating tetrapod on long reaching steps (4/7 px high, stride 1.4/2.6 blocks, reach 0.9, 0.32 s swings), bob 0.5;
@@ -5784,7 +5786,9 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   two seconds, nodding (0.05); the **Crested Basilisk** (`crested_basilisk`; 4 px sprawled legs on its body) a
   lizard's diagonal trot (0.2/0.32 blocks, crouch 1 so its sprawled feet reach the ground, quick 0.12 s swings) with its
   own clip's spine wiggle over planted feet, its upright sprint left to the clip; the **Glass Scarab** (`glass_scarab`;
-  six 3 px legs) an insect's alternating tripod (0.22/0.32 blocks, 0.08 s swings), about six steps a second; the
+  six 3 px legs, the front and back pairs splayed 0.25 rad fore and aft, was 0.5: a stiff leg pointing forward can't
+  reach further forward without the body dropping) an insect's alternating tripod (0.22/0.28 blocks, 0.08 s swings),
+  about six steps a second; the
   **Shroomlet** (`shroomlet`; two 3 px legs off the root) a toddler's waddle (0.22/0.32 blocks, roll 0.08); the
   **Listener** (`listener`; two 16 px legs off the root) a long stalking stride (1.2/1.9 blocks, 2.5/4.5 px, shoulder
   0.3, `still`, creep 1). The Scree Marmot (2 px legs) and the Mudskipper (the lizard body at 0.75) are left on their

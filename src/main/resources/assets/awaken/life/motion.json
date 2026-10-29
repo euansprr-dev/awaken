@@ -235,7 +235,7 @@
       "body": {"headLevel": 0.5, "twist": 0.3, "slope": 0.8, "land": 1.0, "shift": 0.3}
     },
     "glass_scarab": {
-      "gait": {"pattern": "alternate", "duty": [0.6, 0.5], "stride": [0.22, 0.32], "lift": [0.8, 1.1], "reach": 0.16, "settle": 0.03, "crouch": 0.3, "regrip": [3.0, 7.0], "swing": 0.08, "bob": 0.1, "roll": 0.02, "knees": "rigid", "shoulder": 0.5},
+      "gait": {"pattern": "alternate", "duty": [0.6, 0.5], "stride": [0.22, 0.28], "lift": [0.8, 1.1], "reach": 0.16, "settle": 0.03, "crouch": 0.3, "regrip": [3.0, 7.0], "swing": 0.08, "bob": 0.1, "roll": 0.02, "knees": "rigid", "shoulder": 0.5},
       "body": {"headLevel": 0.3, "twist": 0.2, "slope": 0.9, "land": 1.0, "shift": 0.15}
     },
     "shroomlet": {
