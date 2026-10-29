@@ -2180,7 +2180,18 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   whole blocks, and shows the face it meets: the top, or a side facing x or z, shaded as the game shades faces (1, 0.8,
   0.6; a side by the way the slope faces, between 0.6 and 0.8, not by the axis its column shows: a steep slope's
   staircase shows x and z sides by turns, and read per triangle that flip drew dark spikes down far mountains and
-  grooves down their walls, 2026-10-26) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
+  grooves down their walls, 2026-10-26). Where a step's top or its riser is under a few pixels on screen (1 to 3,
+  smoothly), the pixel takes the staircase's average instead: top and riser, colour and light, by the share of the
+  screen each covers (the top by how steeply the ray drops, the riser by how squarely the ray meets it; the grass and
+  snow fringes by their share of the riser), as a filtered texture would (2026-10-29, Euan: "light shimmering on far
+  sight mountain sides while I breathe": seen from near level, a steep far face's tops are a few tenths of a pixel
+  tall, so under Camera Overhaul's idle sway each pixel met a lit top and a shaded riser by turns, and the steady pass's
+  neighbourhood clamp let them through as a twinkle and cut the lit tops away, drawing the face darker). Measured
+  offline (`tools/farsight/breath.py`: the column walk, the light at noon and the steady pass replayed under a sway of a
+  few tenths of a degree at Camera Overhaul's 0.16 Hz, shimmer.py's score over the face, on Euan's 3024×1898 screen at FOV 70):
+  steep faces 900 to 3,000 m out, hard-flicker pixels before steady 1.7-11.9% → 0%, and after it the fine flicker
+  0.29-1.12 → 0.24-0.36 (the pass's own floor, what a face steep enough to show no tops scores, 0.22), with the
+  face's brightness that of the raw frames, not the clamp's 3-5% darker. Faces are lit by a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
   behind ridges, faces turned from the sun shaded only as it lowers). Grass tops stand over dirt risers (the dirt
   texture's average, a grass fringe along the top), cliffs show stone or an Awakened biome's own block (hoarfrost, riven
   shale, fused glass, mirepeat: palette rock kinds in colour flags bits 4-6), badlands their strata, every block its own
