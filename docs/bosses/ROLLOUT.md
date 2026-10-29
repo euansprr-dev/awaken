@@ -5,7 +5,7 @@ to the max." And: "Don't use multiple agents, do this all yourself." So this one
 `claude/boss-plan-f38a45`) takes all 41 boss-tier creatures through the same steps as the Forge, one at a time, and
 keeps this page current. SPEC §35.11 holds the decisions; this page is the tracker.
 
-**Paused 2026-10-29 with 33 of 41 done.** The Signal's Shadow is half done and the seven Nightmares are left. Whoever finishes reads [HANDOVER.md](HANDOVER.md) first: it has the exact next steps, the workflow, the meter targets and the forms not to repeat.
+**All 41 done 2026-10-30.** Every boss has its kit body and its motion at the Forge's bar; each row below has its commit. None of them since the first three has been seen in game, and their sounds were chosen on paper. [HANDOVER.md](HANDOVER.md) keeps the workflow, the known gaps and what is queued next (the Gate Worlds' creatures).
 
 Pick page (one tap per boss, saved to the page's store): https://claude.ai/artifact/MUoruSXr8xmWNVk4JyAAbc
 
@@ -89,14 +89,14 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | Sovereign of Storms | Sovereign | Court | Flier | kit | A, the Gale Hound | ✓ c7a4c0fd | ✓ c7a4c0fd | — |
 | Sovereign of Roots | Sovereign | Court | Caster | kit | A, the Hearthstone Toad | ✓ 7008ed48 | ✓ 7008ed48 | — |
 | Sovereign of Ash | Sovereign | Court | Flier | kit | A, the Cinder Wyrm | ✓ d3b188fd | ✓ d3b188fd | — |
-| The Signal's Shadow | Final | Seed | Duelist | cube shade ×2 | — | — | — | — |
-| The Long Drop | Nightmare | Fear | Flier | phantom ×2.4 | — | — | — | — |
-| The Pyre | Nightmare | Fear | Flier | blaze ×2 | — | — | — | — |
-| The Undertow | Nightmare | Fear | Caster | drowned ×2 | — | — | — | — |
-| The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | zombie ×1.7 | — | — | — | — |
-| The Thousand Legs | Nightmare | Fear | Crawler | spider ×2.6 | — | — | — | — |
-| The Fuse | Nightmare | Fear | Construct | creeper ×2 | — | — | — | — |
-| The Faceless | Nightmare | Fear | Duelist | player | — | — | — | — |
+| The Signal's Shadow | Final | Seed | Duelist | kit | A, the Signal Cuttlefish | ✓ df6001890 | ✓ df6001890 | — |
+| The Long Drop | Nightmare | Fear | Flier | kit | A, the Hand from Above | ✓ cf9d617d | ✓ cf9d617d | — |
+| The Pyre | Nightmare | Fear | Flier | kit | A, the Pyre Mare | ✓ 2a699e47 | ✓ 2a699e47 | — |
+| The Undertow | Nightmare | Fear | Caster | kit | A, the Old Snapper | ✓ 7063327c | ✓ 7063327c | — |
+| The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | kit | A, the Throng | ✓ 43eb6a0c | ✓ 43eb6a0c | — |
+| The Thousand Legs | Nightmare | Fear | Crawler | kit | A, the House Centipede | ✓ 5eb9480a | ✓ 5eb9480a | — |
+| The Fuse | Nightmare | Fear | Construct | kit | A, the Jack | ✓ ae6ea04f | ✓ ae6ea04f | — |
+| The Faceless | Nightmare | Fear | Duelist | kit | A, the Mannequin | ✓ d3748588 | ✓ d3748588 | — |
 
 ## The rounds so far
 
@@ -267,3 +267,59 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   own body down, the Heart of Ash is the heart you can see between its burnt-open ribs, Ashfall and Burnout are its
   wings and its last fire, and no other boss is a dragon. B is a second big insect flier after the Hive Regent's
   Empress; C is the Living Forge's burning giant again.
+- **The Signal's Shadow** (`signals_shadow`): A the Signal Cuttlefish (a cuttlefish as long as a cart, its black skin
+  showing the Signal's own windows drifting over it, its two tentacles hidden in its crown of arms), B the Antler Stag
+  (a pale stag whose antlers are the Signal's wiring), C the Glass Mantis (an upright mantis of the Signal's glass).
+  **Picked A**, 2026-10-29: "It has your voice" is a cuttlefish, the animal that talks with its skin, and this one's
+  skin shows the words you have read all game; the Lance is its tentacles, Signal Step its jet and ink, and nothing
+  else in the roster swims like it. B is another big four-legged mammal after the Gale Hound; C is the Hive Regent's
+  upright insect again, with glass wings.
+- **The Long Drop** (`nightmare_falling`): A the Hand from Above (a hand as big as a cart with too-long fingers and
+  yellowed nails, hanging out of the dark on an arm that never ends), B the Gibbet Kite (a stretched-skin kite
+  trailing a cage), C the Gargoyle (a winged stone gargoyle that drops off its ledge). **Picked A**, 2026-10-29:
+  "Lifts you up and lets you fall" is a hand that picks you up and opens, Fall With Me is a hand slamming flat on
+  the floor, and no other boss is a hand. B reads less clearly at a glance; C repeats Unit Zero's cathedral statue
+  and the owl's wings.
+- **The Pyre** (`nightmare_burning`): A the Pyre Mare (a night-black horse whose mane, tail and fetlocks are fire,
+  galloping on the air), B the Wicker Effigy (a burning wicker giant), C the Censer (a burning censer swung on chains
+  out of the dark). **Picked A**, 2026-10-29: "Fire that follows you" is a horse made of fire running you down, the
+  nightmare of the old stories is a black horse, and nothing else on the roster gallops. The Furnace Engine is a horse
+  too, but a locomotive that plods; this one is flesh and fire on the air, rearing and striking. B is the Living
+  Forge's burning giant again; C hangs and swings out of the dark like the Long Drop just did.
+- **The Undertow** (`nightmare_drowning`): A the Old Snapper (an alligator snapping turtle as big as a boat, weed
+  grown over its shell, a worm of teal light on its tongue), B the Drowned Bride (a drowned woman hanging in the water,
+  her dress and hair floating up), C the Bell Jellyfish (a huge pale jellyfish trailing its stinging threads).
+  **Picked A**, 2026-10-29: "Pulls you under and holds you there" is a snapper lying with its mouth open and its lure
+  wriggling until you come close, the Undertow is that mouth drawing the water in, and no other boss is a turtle. B is
+  one more robed figure after the Pilgrim and the Cantor; C's bell is the Bell Warden's shape again and its threads
+  the Signal Cuttlefish's arms.
+- **The Hollow Crowd** (`nightmare_undead`): A the Throng (a hunched giant made of people pressed into one body,
+  heads standing out of it everywhere and every one the same face), B the Procession (mourners walking as one under a
+  coffin), C the Chain (a line of sleepwalkers holding hands). **Picked A**, 2026-10-30: "They all have the same face"
+  is a crowd that is one body and turns every face to you at once, it falls down and gets up again the way a crowd
+  closes back in, and no other boss is made of people. B is one more robed figure after the Pilgrim and the Cantor; C
+  reads as several mobs, not one boss.
+- **The Thousand Legs** (`nightmare_arthropod`): A the House Centipede (a house centipede as long as a cart, its ten
+  pairs of long banded legs fanned out round a thin striped body, its back legs held up like a second pair of feelers),
+  B the Millipede (a black armoured millipede that coils up and rears), C the Web Spider (a pale spider hanging in its
+  web). **Picked A**, 2026-10-30: "You can hear them in the walls" is the thing that runs out of the wall on more legs
+  than you can count, its leg fan is a shape no other boss has, and A Thousand Legs is every one of them hammering the
+  floor round you. B coils like the Cinder Wyrm and rears like the Glass Serpent; C is the Long-Legs' tall spider
+  shape again.
+- **The Fuse** (`nightmare_explosion`): A the Jack (a jack-in-the-box as big as a cart whose jack is a black iron bomb
+  with a painted grin, three lit fuses curling from its crown for a jester's cap, on a long iron spring), B the Sea
+  Mine (a hovering horned iron mine trailing its chains), C the Sapper Mole (an iron digging machine with powder kegs
+  on its back). **Picked A**, 2026-10-30: the fear of the fuse is the wait for the bang, and a jack-in-the-box is
+  that wait made into a toy: the crank ticks and you don't know when it pops. No other boss is a toy, and its box,
+  spring and lid give it a shape and moves of its own. B is one more round thing hanging in the air after the
+  Moon Angler's moon; C digs like the Thorn Pangolin.
+- **The Faceless** (`nightmare_generic`): A the Mannequin (an artist's jointed wooden drawing mannequin grown twice as
+  tall as a door, with the pencil guidelines of a face begun on its egg of a head and the eyes rubbed out), B the
+  Stranger (a tall thin man in a suit with a smudged blank face), C the Dressmaker's Dummy (a headless tailor's form
+  on its stand). **Picked A**, 2026-10-30: "It was standing there the whole time" is the shape in the corner of the
+  room that you took for a coat or a chair, and a mannequin is that shape exactly: something made to stand still and
+  be looked at. Its ball joints let it turn and bend in ways nothing alive can (its head round further than a neck
+  should, its chest swivelling on its waist, its body folding too far), so its moves come from what it is. No other
+  boss is made of wood that was carved to look like us; the Duelists so far are a knight, a masked fencer, a shadow,
+  a vanity mirror and a cuttlefish. B reads as a well-known internet monster rather than ours; C has no head, arms
+  or legs to duel with.

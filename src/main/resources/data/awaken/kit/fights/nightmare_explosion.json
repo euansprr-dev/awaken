@@ -1,0 +1,116 @@
+{
+ "schemaVersion": 1,
+ "id": "nightmare_explosion",
+ "moves": "nightmare_explosion",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "pop",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "slap"
+      ],
+      [
+       "slap",
+       "pop"
+      ]
+     ]
+    },
+    {
+     "move": "slap",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "popgoes",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "bound",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "pop"
+      ]
+     ]
+    },
+    {
+     "move": "lines",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "lid",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "ring",
+     "weight": 1
+    }
+   ]
+  },
+  {
+   "transition": "shorter",
+   "pool": [
+    {
+     "move": "pop",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "slap"
+      ],
+      [
+       "slap",
+       "pop"
+      ]
+     ]
+    },
+    {
+     "move": "popgoes",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "bound",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "pop",
+       "slap"
+      ]
+     ]
+    },
+    {
+     "move": "lines",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "lid",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "ring",
+     "weight": 2
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.3
+ }
+}

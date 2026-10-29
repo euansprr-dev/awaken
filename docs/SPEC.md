@@ -13739,6 +13739,427 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     breath, burning and shot, a fire's crackle and a lava pop, a ravager's step.
   - **Meter.** Worst kink outside a strike 4.4° (the Claw's rake); held at most 19%; no still spells; the strings dip at
     most 31% (into and after the Bite). Wind-ups 13.4 (the Claw) to 43.9 (Last Embers).
+- **The Signal's Shadow, the Signal Cuttlefish** (body and motion, `kit/bosses/signals_shadow.py`). "It has your
+  voice." The Deep's last boss: a cuttlefish as long as a cart hanging in the dark at the bottom of the Well. A
+  cuttlefish talks with its skin, and this one's skin talks the way the Signal does: over its black mantle drift bands
+  of the Signal's own windows, pale glass with bright corner brackets and lines of writing in them, here and there one
+  in amber, the colour of "NOT TRUE YET". Its fin ripples all down both sides, edged with the Signal's blue. Its eyes are
+  big and pale with a black W across each. Its eight arms are held together in a crown in front of its face, and inside
+  them lie the two long tentacles it shoots out like lances. 73 cubes on 49 bones; it hangs with its eyes at your eye
+  height, 5.1 blocks long. The hitbox is 1.15 x 1.13 at its scale of 2.0 (2.3 x 2.3 blocks), round its mantle.
+  - **Its idle.** It hangs breathing (8 s), its fin rippling down both sides and never still, its arms stirring and its
+    crown slowly opening and closing. It turns side-on to look at you with one eye, then with the other; it lifts its top
+    arms and lowers them; it flares its crown once; its mantle swells as it breathes.
+  - **How it moves.** A quicker ripple runs down its fin as it goes, its arm tips trailing. It cruises on its fin with
+    its arms drawn into a point ahead of it (1.2 s, 1.4 blocks) and runs in jets, squeezing water through its funnel, its
+    fin wrapping down against its sides on each jet and its arms streaming (0.8 s, 2.6 blocks). Turning, the fin on the
+    outside works harder and its arms sweep round.
+  - **Struck, broken and its death.** Struck, it jolts back with its crown flaring and its fin flicking up; from the side
+    it rolls away from the blow. Broken, it sinks to the floor with its arms spread limp round its head, and rises out of
+    it on its fin, pushing off with its arms. Its death (5 s): it convulses with its crown flung open, writhes as it sinks
+    and turns, settles on the floor, its fin slows and stops, its arms curl in under its head one after another and its
+    mantle goes flat.
+  - **Its moves.** The Lash (LIGHT): its crown of arms rises and flares open over its head, the tips hooked down like
+    snakes about to strike, and whips down across you, fanning wide and closing as it comes, the bottom pair kept off the
+    floor. The Grasp (LIGHT, after the Lash): it draws back with its arms curled in under its face, flings them out open
+    and closes them on you like a fist. The Lance (HEAVY, its gap closer, 7 blocks, a 6-tick hold): its fin wraps down
+    and its crown parts wide, the two tentacles pale inside; it holds, then jets at you and the tentacles shoot out to
+    4.6 times their length, their clubs snapping shut, and whip back. The Recoil (for whoever is behind it): it gathers
+    its arms into a point, squeezes and jets backwards hard into them, its mantle squashing. Instruction: it draws its
+    arms into a cone at you and holds you in its eyes while the beam runs from the point, its body trembling. Signal Step:
+    it squeezes, jets backwards and is gone (it shrinks away to nothing). Directive: it lifts its top arms and flicks five
+    bolts. Echoes (into the second phase): it spreads its arms and its skin pulses, and its echoes come. Signal Marks: it
+    rises with its arms hanging like a chandelier and pulses six times. Your Echoes: it jets aside twice. Come Down: it
+    reaches every arm and both tentacles at you and draws them in. Signal Halo: it rises and flares its arms out in a star
+    round its face. Last Instruction: it rears its arms up over its head in a warning display and shudders. Seed Collapse
+    (the signature, into the third phase): it draws every arm in and squeezes itself small and tight, trembling, and
+    bursts open with its arms flung wide. Its intro: it lies on the floor of the Seed as if broken, lifts off it, opens
+    its crown of arms and looks at you.
+  - **Its fight.** First: the Lash into the Grasp (and on into the Lance), the Grasp, the Lance into the Lash,
+    Instruction and the Directive at range, Signal Step, the Recoil behind. After Echoes: the Lash into the Grasp into the
+    Recoil, the Lance into the Lash and the Grasp, Signal Marks, Your Echoes, Instruction, Signal Step. After Seed
+    Collapse: Come Down into the Lash, Signal Halo, the Lash into the Grasp into Signal Halo, the Lance into the Grasp,
+    Last Instruction, Seed Collapse again. It enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over the body (its float, the arch of its mantle's end, its head),
+    its eight arms (spread, droop, curl, bend, reach, a lift of the top pair and a writhe run out along each, a little
+    behind the one before), its fin (a ripple run from head to tail, a lift and a side) and its two tentacles. The
+    tentacles' stretch is a scale track written every tick with their clubs scaled back by the same amount, so a club
+    keeps its size. Under every move a drift layer stirs its arm tips and ripples its fin, so it is never still.
+  - **On the floor.** The ground pass keeps its arm tips, its fin and its tentacles' clubs out of the floor in every clip;
+    on the floor its body rests on its mantle.
+  - **Its sounds** (chosen on paper, not heard in game): a glow squid's voice and a squid's squirt kept low for its
+    jets, the conduit's and the beacon's hum for the Signal, the sculk sensor's clicking like writing, the amethyst's
+    ring, the illusioner's mirror move as it vanishes, the warden's heartbeat under Seed Collapse.
+  - **Meter.** Worst kink outside a strike 3.7° (the Directive); held at most 2%; no still spells; the strings dip at
+    most 35% (Come Down into the Lash). Wind-ups 13.0 (the Recoil) to 17.5 (the Lash).
+- **The Long Drop, the Hand from Above** (body and motion, `kit/bosses/nightmare_falling.py`). "Lifts you up and lets
+  you fall." A hand as big as a cart, pale as something that has never seen daylight, hanging down out of the dark on an
+  arm that goes up into it and never ends. Its fingers are too long, the middle one longer than its palm, with knuckles
+  like knots and long yellowed nails hooked at their ends, and their tips have gone the violet of a dead hand's. It
+  hangs with its fingers down and forward and its palm turned down, the way a hand comes down to pick something up,
+  and the lines of its palm glow faint violet: you see them as it comes down on you. Veins on the back of its hand and
+  up its forearm; the arm goes from the pale of its wrist to black up in the dark. 70 cubes on 20 bones; its wrist hangs
+  3.6 blocks up and its fingertips just clear the floor. The hitbox is 0.67 x 1.62 at its scale of 2.4 (1.6 x 3.9
+  blocks), round its hand.
+  - **Its idle.** It hangs in the dark (8 s), swaying a little on its arm like something hung up, its fingers never
+    still: a ripple runs across them like drumming on a table, twice; it turns its palm to you and back; its thumb rubs
+    across the ends of its fingers; it curls slowly half into a fist and lets go; its index finger taps once.
+  - **How it moves.** It glides as if drawn along by its arm, its fingers trailing back behind it (1.4 s, 1.6 blocks),
+    and races with them streaming out behind and spread (0.9 s, 2.8 blocks). Turning, its fingers sweep round after it.
+  - **Struck, broken and its death.** Struck, it jerks back with its fingers flung out stiff and splayed; from the side
+    it jerks away from the blow. Broken, it drops to the floor palm down, its fingers lying out limp; it gets up on its
+    fingertips like something standing and lifts away. Its death (5 s): its fingers claw at the air, stiff and shaking;
+    it clenches into a fist, trembling, and slowly opens and goes limp; and it is drawn back up into the dark it came
+    from, shrinking away until it is gone.
+  - **Its moves.** The Backhand (LIGHT): it swings out to its left, drawing its fingers in, and swings back across with
+    the backs of its fingers leading, its nails raking across you. The Clutch (LIGHT, after the Backhand): it draws back
+    with its fingers flung wide open at you and snatches down, closing into a fist as it comes. Fall With Me (HEAVY,
+    its gap closer, 8 blocks, a 6-tick hold): it rises high, its fingers turning down at you spread wide like a spider
+    dropping on its thread, holds, dives, and slams flat on the floor palm down with its fingers splayed. Lift: it
+    reaches down in front of it with its fingers spread, closes them round you like a cage, slowly, and lifts, its
+    fingers trembling with the weight, then lets go, its fingers springing open. No Bottom (into the second phase): it
+    closes into a fist and trembles harder and harder, then opens over you palm down, its fingers flung wide and stiff
+    and shaking. The Flick (for whoever is behind it): it swings its hand back under itself, curls its middle finger
+    tight against its thumb and flicks it out behind it. The Long Drop (the signature): it rises up into the dark,
+    curling into a fist and trembling, falls like a stone, opening as it comes, and slams flat on the floor, its
+    fingers twitching before it lifts. Its intro: it lies on the floor palm down as if it had been dropped there; its
+    fingers twitch one at a time; it gets up on its fingertips, lifts off the floor, turns its palm to you and beckons
+    twice with its index finger.
+  - **Its fight.** First: the Backhand into the Clutch (and on into Fall With Me), the Clutch, Fall With Me into the
+    Backhand, Lift, the Flick behind. After No Bottom: the Backhand into the Clutch into Lift, Fall With Me into the
+    Backhand and the Clutch, Lift, No Bottom, the Long Drop, the Flick. It enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over where it hangs (its pos and a turn round its wrist), its wrist,
+    its arm (turned back against the hand's own pitch and roll so it keeps reaching up into the dark), its four fingers
+    (a curl, a claw, a spread and a ripple across them, each with a share at each knuckle) and its thumb. Under every
+    move a drift layer stirs its fingertips and thumb, each finger at its own pace.
+  - **On the floor.** The ground pass uncurls its fingers and thumb, forward and up, wherever they meet the floor. When
+    it stands on its fingertips the pose is let down until they rest on the floor.
+  - **Its sounds** (chosen on paper, not heard in game): the phantom it was, kept low and slow, its swoop and flap for
+    the air it moves; cracking bone for its knuckles and the Flick; a body falling a long way and a door broken in for
+    its slams; the elder guardian's curse and the sculk shrieker under the Long Drop.
+  - **Meter.** Worst kink outside a strike 3.6° (the Flick); held at most 8%; no still spells; the strings dip at most
+    38% (out of Fall With Me into the Backhand). Wind-ups 18.7 (the Clutch) to 45.1 (the Long Drop).
+- **The Pyre, the Pyre Mare** (body and motion, `kit/bosses/nightmare_burning.py`). "Fire that follows you." A horse
+  bigger than a cart, black as the inside of a chimney with a sheen on it like oil, and everything that would be hair on
+  it is fire: its mane runs in flames down the crest of its neck, its tail is a long streamer of fire, its fetlocks are
+  feathered with flame and a flame stands up between its ears. Its eyes are white-hot, its nostrils glow and there is
+  fire behind its teeth. A burnt bridle still hangs on its head, its iron rings gone black. It never touches the ground:
+  it stands and gallops on the air a hand's breadth over the floor, and its hooves glow underneath like coals. 77 cubes
+  on 37 bones; its withers stand 3.3 blocks up and its ears 4.6. The hitbox is 0.70 x 2.55 at its scale of 2.0 (1.4 x
+  5.1 blocks), round its body.
+  - **Its idle.** It stands on the air breathing (8 s), its weight shifting from one hind leg to the other; it lifts its
+    head and looks round with its ears pricked; it paws the air with a forehoof three times, the way a horse paws the
+    ground; it snorts and tosses its head; its tail swishes. Its fire is never still: every flame leaps and falls to its
+    own beat, under everything it does.
+  - **How it moves.** It walks on the air a foot at a time, nodding (1.2 s, 1.6 blocks), and gallops on it, its body
+    rocking and its neck pumping, its ears pinned and its mane and tail streaming out behind (0.6 s, 3 blocks).
+    Turning, it steps its forelegs round with its head leading.
+  - **Struck, broken and its death.** Struck, it throws its head up and shies back with its ears pinned; from the side
+    it shies away from the blow. Broken, it goes down on its knees and then lies with its legs folded under it, its head
+    low and its fire sunk to under half; it gets up front first, heaving, and shakes its head. Its death (5.5 s): it
+    rears and screams with its fire flaring, comes down and staggers, goes down on its knees and rolls over onto its
+    side, lifts its head once and lets it fall; and its fire goes out, the flames sinking into it until there is
+    nothing but black.
+  - **Its moves.** The Strike (LIGHT): it rears a little with its ears pinned, a forehoof drawn up, and strikes it down
+    and out at you, its head snaking after it with its teeth bared. The Trample (LIGHT, after the Strike): it rears
+    higher with both forelegs folded and brings both forehooves down on you, landing braced. The Charge (HEAVY, its gap
+    closer, 9 blocks, a 6-tick hold): it drops its head with its ears pinned, paws the air once, gathers its hind legs
+    under it and holds, its fire streaming back; then it gallops at you stretched out and rears to a stop. Cinders: it
+    lifts its head and tosses it four times, flinging fire off its mane at you, stamping the air between. Pyre: it rears
+    and stamps, and stands braced while its fire roars up twice as tall all over it, shaking with the heat. Firefall
+    (into the second phase): it rears right up on its hind legs and thrashes its head from side to side, and the fire
+    flies off its mane and rains down. Flare: it gathers with its head down between its knees and its fire drawn in
+    to half, trembling, then flings its head up and its legs out and flares, its fire bursting out more than twice as
+    big. The Buck (for whoever is behind it): it drops its head and its weight onto its forelegs and kicks out behind
+    with both hind legs. Wildfire (the signature): it rears up as high as it can, screaming, pawing the air by turns,
+    its fire roaring higher and higher, holds at the top shaking, and crashes down on both forehooves. Its intro: it
+    lies burnt out with its fire down to embers; its fire catches again; it lifts its chest and looks at you, brings
+    one knee forward and unrolls that foreleg flat in front of it, then the other, sits up on them and heaves itself up,
+    shakes its head, and rears up screaming with its fire roaring.
+  - **Its fight.** First: the Strike into the Trample (and on into the Charge), the Trample, the Charge into the Strike,
+    Cinders from afar, Pyre, the Buck behind. After Firefall: the Strike into the Trample into Flare, the Charge into the
+    Strike and the Trample, Firefall, Flare, Cinders, Wildfire, the Buck. It enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over its body (rearing lifts it and sets it back so it rises on its
+    hind legs), its back's arch, its neck and head, its jaw and ears, each leg (a swing, a fold that brings the hoof up
+    behind in front and forward behind, the hoof and a spread), its tail and its mane. Its fire's size is a scale track
+    on every flame at once, after the clip is staged (`mv._fire`). Under every move a drift layer works its ears, jaw,
+    tail and breathing, stirs its legs and licks its mane and fetlock flames back and forth.
+  - **On the floor.** The ground pass folds a hoof up out of the floor and lifts its head and tail off it. Lying, it
+    rests on its body and its folded legs, never its fire; on its side its fetlocks' fire lies on the floor too. The
+    get-up's foreleg angles are solved so the hooves pass over the floor.
+  - **Its sounds** (chosen on paper, not heard in game): a horse's scream and snorting pitched low, its gallop and
+    landing, a skeleton horse's cry under them; a blaze's breath and shot, a fire's crackle, a fire charge flung, a
+    ghast's shot for the flares.
+  - **Meter.** Worst kink outside a strike 4.1° (the Trample); held at most 1%; no still spells; the strings dip at most 32% (out
+    of the Trample). Wind-ups 12.3 (the Strike) to 19.1 (the Trample). The intro's first frames show kinks in the meter
+    only: it blends there from standing, and in game the Pyre waits lying in its kneel.
+
+- **The Undertow, the Old Snapper** (body and motion, `kit/bosses/nightmare_drowning.py`). "Pulls you under and holds
+  you there." An alligator snapping turtle as big as a boat, so old the bottom of the river has grown over it. Its
+  shell is three rows of ridged keels, black-green with slime and patched with weed, weed hanging off its rim in long
+  rags and a length of rusted chain still caught on it, and its back edge is a row of teeth. Its head is huge and flat
+  with a hooked beak and small teal eyes set high, its skin grey-brown and warty, its throat and belly a dirty yellow.
+  On its tongue is a worm of cold teal light. It never touches the ground: it swims through the air the way it swims
+  along a river bottom, paddling with clawed webbed feet, its weed and chain trailing after it. 88 cubes on 33 bones;
+  its shell is 2.6 blocks long and 2.1 wide and its belly 1.3 blocks over the floor. The hitbox is 1.10 x 1.29 at its
+  scale of 2.0 (2.2 x 2.6 blocks), round its shell.
+  - **Its idle.** It hangs in the water (8 s), bobbing and rocking a little, paddling slowly in diagonal pairs to hold
+    its place. It lowers its head and opens its mouth and the worm on its tongue wriggles, the way a snapper waits on
+    the bottom, then shuts it; it draws its head in a little and turns to look; its tail sways and its weed stirs.
+  - **How it moves.** It swims slowly, paddling in diagonal pairs and rocking (1.6 s, 1.4 blocks). Hurrying, it strokes
+    both forefeet together and its hind feet after them, its neck out and its weed streaming back (0.9 s, 2.6 blocks).
+    Turning, the feet on the outside of the turn stroke and the others hold.
+  - **Struck, broken and its death.** Struck, its head snaps back into its shell, its feet flinch in and it lurches
+    back; from the side it rolls away from the blow, its head turning to it. Broken, it sinks to the floor and draws
+    its head and legs half in, its weed lying out round it; it puts its feet out and pushes itself up. Its death
+    (5.5 s): it gapes with its neck stretched up and paddles at nothing, then rolls slowly over onto its back as it
+    sinks, and lies belly up on the floor with its head hanging out to one side, its feet curling in; one hind foot
+    kicks once, and it is still.
+  - **Its moves.** The Snap (LIGHT): it draws its head back into its shell with its forefeet braced, and its neck
+    shoots out and its beak snaps shut on you. The Rake (LIGHT, after the Snap): it rolls toward you with a forefoot
+    raised high and rakes it down and back across you. The Lunge (HEAVY, its gap closer, 8 blocks, a 6-tick hold): it
+    draws its head in and all four feet forward and holds, then shoots forward with one stroke of all four, its mouth
+    wide, and snaps it shut. The Undertow: it lowers its head and opens its mouth as wide as it goes, the worm on its
+    tongue wriggling hard and its forefeet sculling to hold it in place while the water pulls you in, then snaps shut.
+    The Rush of Water: it rears its front up with both forefeet high and sweeps them down and back together, and the
+    water rushes out ahead. Lungful (into the second phase): it draws its head and legs into its shell and sinks,
+    trembling harder and harder, then bursts out with its legs flung wide and its mouth gaping. Black Water: it lifts
+    its head and spits four times, its neck jerking out with each. The Tail (for whoever is behind it): it turns one
+    way and sweeps its saw-ridged tail across behind it. Which Way Is Up (the signature): it rises over you, rolling
+    slowly onto its back as it goes, hangs belly up with its feet paddling at nothing, trembles, and drops on you shell
+    first; then it rolls back over, its feet pulled half in, and lifts off the floor. Its intro: it lies on the floor
+    like a rock grown over with weed, head and legs drawn in; its head slides out and looks at you; its mouth opens and
+    the worm wriggles; it shuts it, puts out its feet and lifts off the floor with a slow stroke.
+  - **Its fight.** First: the Snap into the Rake (and on into the Lunge), the Rake, the Lunge into the Snap, the
+    Undertow from afar, the Rush of Water, the Tail behind. After Lungful: the Snap into the Rake into the Undertow, the
+    Lunge into the Snap and the Rake, Black Water, the Undertow, Lungful, the Rush, Which Way Is Up, the Tail. It
+    enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over its body, its neck (drawn into the shell and shot out by
+    moving the neck bones, a nod and a turn shared between them), its head, its jaw and the worm (a wriggle and its
+    phase), each leg (a stroke, a raise out from the body, a curl and a flex of the foot), a tuck that draws its legs
+    and head toward its shell, its tail, and its weed and chain swung out from where they hang. Its swimming stroke is
+    one function: each foot sweeps back low and flat, then comes forward raised and folded. Under every move a drift
+    layer sculls its feet, sways its tail, weed and chain, works its jaw and wriggles the worm (hard in the Undertow).
+  - **On the floor.** The ground pass lifts its feet out of the floor and its head and tail off it, and swings its
+    weed and chain out. Lying, it rests on its shell and legs; rolling over it is lifted just clear of the floor, its
+    feet pulled half in.
+  - **Its sounds** (chosen on paper, not heard in game): a turtle's swimming, hurt and death kept low and slow, the
+    drowned's gurgling under them; a splash, a bubble column's churn and a whirlpool's pull for the Undertow, an elder
+    guardian's curse under Lungful and Which Way Is Up; a beak's crunch and a chain's clank.
+  - **Meter.** Worst kink outside a strike 4.0° (the Lunge into the Snap and the Rake); held at most 3%; no still spells; the strings dip at most 37% (the
+    Snap into the Rake into the Lunge). Wind-ups 12.6 (the Snap) to 52.2 (Which Way Is Up). The intro's first frames
+    show kinks in the meter only, where it blends from swimming into the lying start.
+- **The Hollow Crowd, the Throng** (body and motion, `kit/bosses/nightmare_undead.py`). "More of them every time you
+  look; it gets up once." A hunched giant made of people pressed together into one body. Its back is a hill of
+  shoulders, coats and bare backs, with someone's legs sticking out of it and a torn cloak over it; its legs are
+  bundles of legs bound in rags; its long arms drag their knuckles. Six heads stand out of its shoulders, back and
+  belly, and every one has the same face: grey and slack, the mouth hanging open, two black holes for eyes. Its own
+  head sits low on its front like a gorilla's, bigger than the rest, the same face. Four thin pale arms grow out of it
+  and grope at the air. Nothing glows. 90 cubes on 44 bones; it stands 6.0 blocks tall and 4.6 across its arms. The
+  hitbox is 1.43 x 3.54 at its scale of 1.7 (2.4 x 6.0 blocks).
+  - **Its idle.** It stands swaying (6 s), its weight going slowly from foot to foot like a crowd shifting, breathing
+    heavily. Every head moves on its own, one tilting, one turning, one nodding, and now and then one jerks. Its small
+    arms grope and its jaw works. Once in a while a shudder runs through the whole crowd of it, every head at once.
+  - **How it moves.** It shambles (1.8 s, 2.2 blocks): its body rolls over each foot and drops onto it, the right
+    foot scuffs, the long arms swing slack and the heads bob out of time with each other. Hurrying, it lurches into a
+    run (0.95 s, 3.8 blocks).
+  - **Struck, broken, down and its death.** Struck, the whole crowd of it flinches: every head jerks back, the small
+    arms snatch in, its jaw drops. Broken, it sinks onto its right knee and its knuckles, every head hanging, and
+    pushes itself up. Struck down the first time (it RISES), it pitches forward onto its face, the small arms flopping
+    out and the heads lolling; then the heads lift off the floor one by one and turn to you, the small arms push at
+    the floor, and it heaves itself up onto its knees and its feet, every head snapping round to you. Its death (6 s):
+    it staggers and sinks onto its knees, and its heads look every way, lost, turning and turning; it sags, slumps over
+    onto its side, and its small arms reach on a while, and stop.
+  - **Its moves.** The Swipe (LIGHT): its right arm swings back and sweeps across in front of it at chest height, the
+    back of the big hand leading, every head turning with it. The Grab (LIGHT, after the Swipe): it draws its left hand
+    back, lunges a step and snatches with the big hand open, every small arm reaching with it. Crush (HEAVY, an 8-tick
+    hold): it rears up with both fists together over its heads, every face turned up, holds, and brings them down on
+    the floor in front of it, its knees giving under the blow. Surge (HEAVY, its gap closer, a 10-tick hold): it drops
+    onto its knuckles, every face on you, holds, and drives at you in one long lunge, arms sweeping in to scoop you up.
+    More of Them (its answer to a player who keeps away; it throws nothing): it tears a person off one shoulder and
+    then the other and throws them down, and they get up. Closer (into the second phase): every head turns to you at
+    once, a shudder runs up it and people fall off it, and it leans in at you. The Elbow (for whoever is behind it):
+    its heads turn round first, then it twists and swings its right arm back behind it. All of Them (the signature):
+    it rears up to its whole height with its arms flung wide and every face on you, then falls on you, the whole crowd
+    of it, flat on its face with its arms flung out ahead, and gathers itself up off the floor onto one knee and its
+    feet. Its intro: every head on it is bowed; they lift one by one to look at you, the same face each time, with a
+    jerk, the belly first and the back last; its own head lifts last, its jaw drops, and it settles into its stoop.
+  - **On the floor.** The ground pass lifts its hands, heads and small arms out of the floor (its feet too in the
+    kneeling, lying and running clips). Lying, its small arms are turned out of the floor at the shoulder by the least
+    it takes, and All of Them keeps the arms where they fell through the first key of getting up, so none of them
+    swings through the floor.
+  - **Its sounds** (chosen on paper, not heard in game): zombies, husks and zombie villagers groaning together, kept low
+    and slow, a warden's heartbeat under the heavy tells and its agitation under All of Them; a zombie's infection for
+    More of Them; a mace's ground smash, breaking mud and a door being beaten for its blows; a ravager's heavy step.
+  - **Meter.** Worst kink outside a strike 4.3° (Crush); held at most 14% (the intro, the heads bowed and waiting); no
+    still spells; the strings dip at most 31% (the Swipe into the Grab into Crush). Wind-ups 14.4 (the Grab) to 31.1
+    (Crush).
+- **The Thousand Legs, the House Centipede** (body and motion, `kit/bosses/nightmare_arthropod.py`). "Webs, and the
+  sound of a thousand legs." A house centipede as long as a cart. Its body is a short row of six dusty grey-yellow
+  plates with three dark violet stripes down its back; out from under it fan ten pairs of long thin legs banded pale
+  and violet, each bowed up to a knee and down to a fine claw well out from it, longer toward the back, so the whole
+  of it is a ring of legs round a thin body. Its last pair, the longest, is held up behind it like a second pair of
+  feelers, so you can't tell which end is its head; its real feelers are as long again. Its head is small and flat,
+  with two big black eyes and a pair of curved poison claws under its front. Nothing glows. 120 cubes on 82 bones;
+  its middle is 1.1 blocks up, its knees 1.4 to 2.1, its claws stand 4.8 blocks apart across it and 5.2 from front to
+  back, and its feelers reach 3 blocks. The hitbox is 1.50 x 0.85 at its scale of 2.6 (3.9 x 2.2 blocks: its ring of
+  legs, not its feelers). Its legs reach their claws by two-bone IK, a plate's frame carrying each knee's pole.
+  - **Its idle.** It stands low on its legs, nearly still (6 s); its feelers never stop, sweeping and tasting the air
+    one after the other, its back legs sway and its head turns a little. Now and then a shiver runs up its legs from
+    the back pair to the front, each pair lifting and setting down in turn, the way they do in a wall.
+  - **How it moves.** A wave of steps runs up each side from its back legs to its front ones, the two sides out of
+    step, so its legs ripple (0.8 s, 1.75 blocks a stride); its body rides low with a little sway, its feelers held
+    forward. Running it goes lower and much faster (0.45 s, 3.0 blocks) with its feelers swept back. It turns on the
+    spot with the same ripple swung round.
+  - **Struck, broken, down and its death.** Struck, it jerks back with its front flung up, feelers back and poison
+    claws open; from the side it curls away from the blow. Broken, its legs slide out and it drops flat on its belly;
+    it gathers them in and lifts itself. Its death (5 s): it rears and thrashes, its front whipping one way and the
+    other, drops as its legs slide out, and curls up on the floor into a hook while its legs fold in one pair after
+    another from the back; one twitches, and it is still.
+  - **Its moves.** The Bite (LIGHT): it draws its head up and back off the floor with its poison claws spread, then
+    plunges, the claws snapping shut and its front legs slamming down before it, and worries at you. The Lasso (LIGHT,
+    after the Bite): its front three pairs lift back over its head, then it lunges and throws them over you in a ring
+    and folds them back to its jaws. The Drop (HEAVY, its gap closer, ability Drop): it crouches, rears its front up
+    high with its front legs spread, holds, and springs, its legs swept back along it, then flung out wide as it comes
+    down flat on you with every leg splayed. Web (ability Web): it rears with its front legs drawn in under its jaws
+    and flings them out at you wide apart; the threads tug, its front bobbing and rocking. The Lash (LIGHT, for
+    whoever is behind it): the whole of it twists, its back end swinging out with its long back legs high, then whips
+    round across behind it. Hatchlings (ability Hatchlings): it presses itself flat and shudders, its back heaving.
+    The Walls Open (into the second phase, ability Hatchlings): it rears up with its front legs spread round its head
+    like a crown and trembles, then drops flat and shudders. A Thousand Legs (PERILOUS, the signature): it rears up
+    over you with its front five pairs fanned out high round its head, comes down with them slamming into a ring round
+    you, and its legs hammer the floor pair after pair, and it settles. Its intro, "You can hear them in the walls.":
+    it lies flat with its legs pressed out and its feelers laid back; a feeler lifts, then the other; a shiver runs
+    up its legs from the back, each pair drawing in under it, and it rises onto them all and sweeps its feelers at you.
+    Under every move its feelers keep tasting, its back legs sway and its poison claws work.
+  - **On the floor.** The legs that stand through a move keep their claws where they stand every tick; the ground
+    pass lifts its claws and knees, its head and poison claws and the tips of its feelers and back legs out of the
+    floor.
+  - **Its sounds** (chosen on paper, not heard in game): a silverfish's skitter and a spider's hiss under its tells,
+    an endermite's under A Thousand Legs; scaffolding's clatter for its legs on the floor and its landing, a cobweb
+    for Web, a pointed dripstone landing under its blows.
+  - **Meter.** Worst kink outside a strike 3.8° (the Lasso's throw); held at most 11% (the Bite into the Lasso into
+    the Bite); no still spells; the strings dip at most 38% (the Drop into the Bite). Wind-ups 12.9 (the Bite) to 28.4
+    (A Thousand Legs).
+- **The Fuse, the Jack** (body and motion, `kit/bosses/nightmare_explosion.py`). "Hsssss." A jack-in-the-box as big
+  as a cart: a black lacquered toy box on brass ball feet, bound in tarnished brass, a faded red and cream harlequin
+  painted on its sides and scorched along the bottom, its lid thrown back on its hinge and lined with the same
+  harlequin. A crank on its right side turns on its own, ticking, and a lit fuse hangs from it. Out of the box on a
+  long iron spring of ten coils stands the Jack: its head is a round black iron bomb with a wide grin and two diamond
+  eyes painted on in chipped white, and in place of a jester's cap three lit fuses curl out of its crown, a spark at
+  the end of each. Under its head a sooty ruff with tattered harlequin flaps, and two long thin arms in harlequin
+  sleeves with white gloves and fingers too long. Deep in the box something burns white, seen past the spring and
+  through the keyhole; the sparks glow too. 97 cubes on 46 bones; the box is 2.25 blocks across and 2.3 tall to its
+  rim, its open lid stands 4.5, the Jack's head is 4 to 5.2 blocks up and its sparks reach 5.6. The hitbox is
+  1.10 x 2.78 at its scale of 2.0 (2.2 x 5.6 blocks). The spring's links carry its squash and stretch (each coil
+  closes or opens along the spring) and its bend; the Jack's arms and head keep the spring's time, and their own
+  springs (forearms, fingers, head, ruff flaps, fuses) give the overlap.
+  - **Its idle.** It sways on its spring in a slow loop, its head rolling the other way a beat behind, its arms
+    hanging and swinging after it, its fingers flexing, its fuses bobbing; the crank ticks round a click at a time
+    (6 s). Now and then the Jack jerks its head over to one side and holds it there, grinning, and lets it come back;
+    once it bobs on its spring three times, quickly, as if it were laughing.
+  - **How it moves.** It hops: the box lands, the Jack bounces down on its spring and up again as it pushes off, and
+    in the air it hangs at full stretch, its arms floating up and its fuses streaming; each landing bounces the lid
+    and ticks the crank (0.75 s, 1.2 blocks a hop). Running it bounds, longer and higher (0.5 s, 2.4 blocks), the
+    Jack thrown back as it jumps and forward as it lands. It turns with two small hops.
+  - **Struck, broken, down and its death.** Struck, the Jack is knocked back on its spring and comes wobbling back,
+    its arms flung up; from the side it bends away from the blow. Broken, it flops forward over the front of the box,
+    its arms hanging down outside it and its head lolling, and bounces itself upright again. Its death (5 s): the Jack
+    jerks up out of the box at full stretch and shudders there, its arms flailing; the spring goes slack and it sags
+    down into the box, swaying, its head lolling out over the front and its hands on the floor; the lid falls onto its
+    neck, the crank turns back one click, and a finger twitches.
+  - **Its moves.** The Pop (LIGHT): it sinks down on its spring with its hands drawn up beside its head, then springs
+    out at you head first, the spring flung out long and bent over toward you, its hands grabbing. The Slap (LIGHT,
+    after the Pop): it twists away with its right arm drawn back behind it, then swings a long backhand across in
+    front of it, the spring twisting with it. Pop Goes (HEAVY, its delay): it sinks slowly into the box and the lid
+    comes down over it; the crank ticks, and ticks, and the box trembles; then the lid bursts open and it springs up
+    at you with its arms wide. The Bound (HEAVY, its gap closer): it sinks deep onto its spring and the box tips back;
+    the whole box jumps, the Jack flung up at full stretch over it, and comes down on you, the Jack slammed down into
+    the box by the landing and springing up again. Fuse Lines (ability Fuse Lines): it rises high and throws its head
+    back with its arms spread like a showman's, then whips its head down at you twice, flinging its sparks. The Lid
+    (LIGHT, for whoever is behind it): it ducks forward and the lid comes up off its hinge, then slams back over the
+    hinge onto the floor behind the box. Shorter Fuse (into the second phase): it shakes and bounces on its spring,
+    cackling, its head thrown back and its arms hugging itself and flung out, while the crank whirls round. The Blast
+    Ring (PERILOUS, the signature, ability Blast Ring): it crams itself down into the box and the lid slams shut; the
+    box shudders and jolts, light leaking from under the lid; then the lid is blown back, the Jack shoots up out of
+    the box with its arms flung wide and the ring goes out; only right beside the box are you safe. Its intro,
+    "Hsssss.": the box stands shut; the crank turns a click at a time on its own and the box trembles; the lid flies
+    open and the Jack springs up with its back to you, wobbling, and turns its head round, slowly, all the way, to
+    grin at you. Every recovery wobbles on the spring, less each time; under every move its fuses bob, its fingers
+    flex and the crank's fuse sways.
+  - **On the floor.** The ground pass lifts its fingers, hands and forearms, its head (by the top coils) and its lid
+    out of the floor in every clip, its death included.
+  - **Its sounds** (chosen on paper, not heard in game): a creeper's hiss and a trapdoor's creak under its tells, a
+    lit TNT and a note block's chime under the heavy ones and the Blast Ring; a sweep and a chain for its swings;
+    TNT and fire for Fuse Lines; an explosion, falling wood and a chain under its blows; a creeper's hiss, a bell and
+    a witch's cackle for Shorter Fuse and its intro; wood and chain for its hops.
+  - **Meter.** Worst kink outside a strike 4.1° (the Lid); held at most 1% (its intro); no still spells; the strings
+    dip at most 33% (the Pop into the Slap into the Pop). Wind-ups 20.9 (the Pop) to 39.0 (Pop Goes).
+- **The Faceless, the Mannequin** (body and motion, `kit/bosses/nightmare_generic.py`). "It was standing there the
+  whole time." An artist's jointed wooden drawing mannequin, the kind that stands on a desk to be drawn from, grown
+  twice as tall as a door: pale beech worn smooth, a ball at every joint (greyer and darker where hands have worn
+  them), brass hinge pins in its elbows and knees, an egg for a head, long flat hands with their fingers jointed once
+  and grey with handling, and the broken-off peg in the small of its back where it stood on its stand. It has no face.
+  Someone began to draw one on it in pencil, the way you do: the line down the middle of its head, over the top and
+  down the back, and the line across it for the eyes, going on round its head; where the eyes would go the pencil has
+  been rubbed out, more than once, and a faint mouth line is left. It is cracked down its breast and chipped at its
+  left shoulder, and a shop's paper tag hangs from its left wrist on a string. Nothing on it glows. 60 cubes on 22
+  bones; it stands 4.2 blocks tall and 1.3 across. The hitbox is 0.41 x 2.31 at its scale of 1.8 (0.74 x 4.2
+  blocks). Its legs are planted by the leg solver on every pose; its fingers, fingertips, head and tag have their own
+  springs for the overlap.
+  - **Its idle.** It stands quite still, the way a thing stands that has never had to balance: its weight settles from
+    one hip to the other over a long while; its head tilts over to one side and stays there, looking at you, and comes
+    back; its right fingers tap three times on nothing; then its head turns, in small clicks, a little further than you
+    would like, and slowly back (6 s).
+  - **How it moves.** It walks too smoothly: its hips glide level, its head stays level and on you, and its arms swing
+    loose a beat behind, like things hung from it (1.0 s, 1.3 blocks a stride). It runs leaning in, long strides, its
+    arms hanging straight back behind it and not swinging at all (0.62 s, 2.6 blocks). It turns in two small steps
+    (0.48 s).
+  - **Struck, broken, down and its death.** Struck, it jolts back and its joints flop loose (its head lolls, its arms
+    swing) and it snaps back into its pose; from the side it bends away from the blow. Broken, it drops onto its knees
+    as if its strings were cut, slumped forward with its arms hanging and its head down, and rises the way a puppet is
+    lifted, head first. Its death (5 s): it stands rigid a moment with its head tilted; its knees go and it drops onto
+    them, slumped, and folds forward until its chest lies on its knees and its hands on the floor; its head comes loose
+    on its neck, drops off and rolls away to the side; a finger twitches.
+  - **Its moves.** The Reach (LIGHT): it turns a little away and cocks its right hand back by its ear, fingers flat,
+    its head turning to keep you; then the arm spears straight out at you as it steps in, the fingers leading. The
+    Grasp (LIGHT, after the Reach): its body turns the other way and its left hand goes out wide at its side, fingers
+    spread, then sweeps across in front of it and clutches shut. Folding (HEAVY, its delay): it bends forward at its
+    waist ball, slowly, too far, until its head hangs by its knees and its hands lie on the floor; it stays there; then
+    it unfolds in one snap, standing tall with both arms flung up over its head through whoever is in front of it.
+    Corner of Your Eye (its gap closer, ability Corner of Your Eye): it goes still and listens, its fingers curling,
+    then turns its head right away from you as if it heard something; and then it is just there in front of you,
+    crouched low with its hands reaching further, its head snapping back round to you. Lights Off (ability Lights
+    Off): it raises its right hand high over its head with the fingers spread, its head tilting back to look up at
+    it, and closes them in two jerks as if pinching out a candle, its body swaying with each; its head drops. Stare
+    (ability Stare): it leans its blank face at you and tilts it over to one side, then the other way, then further
+    than a neck should go, and holds it there trembling, its body swaying over its feet and its fingers working; then
+    it straightens. Everywhere (ability Everywhere): it snaps from pose to pose like a model for drawing, holding each:
+    pointing straight at you, both arms up over its head, wrapped round itself and crouched, and back to pointing. Wrong
+    Way Round (LIGHT, for whoever is behind it): its head turns round over its shoulder to look behind it; then its
+    whole chest swivels round on its waist ball after it, its legs staying where they are, and its right arm swings
+    across behind it. It Is Closer (into the second phase): its joints crack one after another (its neck, its right
+    wrist, its left, its neck again), each one jolting through its chest and arms, and it takes a step toward you, its
+    head jerking round to you. Hold Still (PERILOUS, the signature): it rises tall with its arms straight out at its
+    sides, lifting them higher as its head tips back; it creaks, and winds its body back round on its waist ball; then
+    it spins round on it twice, its arms out at full reach and dipping and rising as it goes, and stops dead facing
+    you, its arms swinging on after it. Its intro: it stands posed the way someone left it to be drawn, its right arm
+    raised high (trembling a little) and its left bent at its side, its head turned away and down; its fingers stop;
+    its head turns round to you in three clicks, the turn going down through its chest as its arm sinks; its arm comes
+    down; and it takes a step. Under every move its fingertips flex, one hand after the other.
+  - **On the floor.** The ground pass lifts its fingers, hands and tag and its head out of the floor in every clip,
+    and its shins and feet in kneeling, rising and its death; its death keeps its hands and its fallen head above the
+    floor.
+  - **Its sounds** (chosen on paper, not heard in game): wood. An armour stand's knock and a note block's hat under its
+    light tells, a wooden door's creak under the heavy ones and Hold Still (with the warden's close heartbeat and a
+    snare); a sweep and bamboo for its light swings, a heavy knock and wood for the heavy; a door shutting and an
+    armour stand set down for Everywhere; a candle snuffed for Lights Off; an enderman's stare for Stare; an armour
+    stand's hit and breaking wood under its blows; a door, an armour stand falling and the cave's breath for It Is
+    Closer; bamboo and a skeleton's step for its feet.
+  - **Meter.** Worst kink outside a strike 4.3° (Folding, Wrong Way Round); held at most 10% (the Grasp); no still
+    spells; the strings dip at most 28% (the Reach into the Grasp). Wind-ups 19.1 (the Reach, the Grasp) to 22.8
+    (Folding).
+
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

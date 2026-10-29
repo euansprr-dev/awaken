@@ -216,7 +216,7 @@ final class DeepBestiary {
                 .phase(0.66F, "Ashfall.", a(RAIN, "Ashfall").n(6).bolt(BoltKind.FIRE), a(SUMMON, "Embers").summon("ember_imp").n(2), a(BOLT, "Cinders").n(5).bolt(BoltKind.FIRE))
                 .phase(0.33F, "Burnout.", a(AURA, "Burnout").radius(9).bolt(BoltKind.FIRE).heavy(), a(NOVA, "Last Embers").n(16).bolt(BoltKind.FIRE), a(RAIN, "Ashfall").n(7).bolt(BoltKind.FIRE))
                 .parts(P("ash_heart", "Heart of Ash", "ember")).build());
-        out.add(m("signals_shadow", "The Signal's Shadow", Theme.SEED, Tier.FINAL, Model.SHADE, "It has your voice: every gate, every lance, then the Seed collapses").hp(40).dmg(6).spd(0.3).scale(2.0F).bar(BossBarColor.WHITE).arena(30)
+        out.add(m("signals_shadow", "The Signal's Shadow", Theme.SEED, Tier.FINAL, Model.SHADE, "It has your voice: every gate, every lance, then the Seed collapses").hp(40).dmg(6).spd(0.3).scale(2.0F).size(1.15F, 1.13F).bar(BossBarColor.WHITE).arena(30)
                 .intro("It has your voice.")
                 .phase(1.0F, "The Signal's Shadow speaks.", a(BEAM, "Instruction").bolt(BoltKind.SIGNAL).power(1.8F), a(BLINK, "Signal Step"), a(BOLT, "Directive").n(5).bolt(BoltKind.SIGNAL))
                 .phase(0.66F, "It remembers every gate.", a(SUMMON, "Echoes").summon("signal_echo").n(2), a(RAIN, "Signal Marks").n(6).bolt(BoltKind.SIGNAL), a(DECOY, "Your Echoes").n(2))
@@ -225,31 +225,31 @@ final class DeepBestiary {
     }
 
     private static void nightmares(List<MobDef> out) {
-        out.add(m("nightmare_falling", "The Long Drop", Theme.FEAR, Tier.NIGHTMARE, Model.PHANTOM, "Lifts you up and lets you fall").hp(22).dmg(4).spd(0.4).scale(2.4F).bar(BossBarColor.PURPLE).arena(22)
+        out.add(m("nightmare_falling", "The Long Drop", Theme.FEAR, Tier.NIGHTMARE, Model.PHANTOM, "Lifts you up and lets you fall").hp(22).dmg(4).spd(0.4).scale(2.4F).size(0.67F, 1.62F).bar(BossBarColor.PURPLE).arena(22)
                 .intro("You never hit the ground. You always nearly do.")
                 .phase(1.0F, "The ground falls away.", a(LIFT, "Lift").radius(3.5F), a(CHARGE, "Fall With Me").heavy())
                 .phase(0.5F, "Further down.", a(LIFT, "Lift").radius(4.5F), a(DARKNESS, "No Bottom"), a(CHARGE, "Fall With Me")).build());
-        out.add(m("nightmare_burning", "The Pyre", Theme.FEAR, Tier.NIGHTMARE, Model.BLAZE, "Fire that follows you").hp(22).dmg(4).spd(0.3).scale(2.0F).traits(FIRE_IMMUNE).glow(0xFF6A2A).bar(BossBarColor.RED).arena(22)
+        out.add(m("nightmare_burning", "The Pyre", Theme.FEAR, Tier.NIGHTMARE, Model.BLAZE, "Fire that follows you").hp(22).dmg(4).spd(0.3).scale(2.0F).size(0.70F, 2.55F).traits(FIRE_IMMUNE).glow(0xFF6A2A).bar(BossBarColor.RED).arena(22)
                 .intro("It smells like the last time.")
                 .phase(1.0F, "The Pyre catches.", a(BOLT, "Cinders").n(4).bolt(BoltKind.FIRE), a(AURA, "Pyre").radius(6).bolt(BoltKind.FIRE))
                 .phase(0.5F, "It spreads.", a(RAIN, "Firefall").n(5).bolt(BoltKind.FIRE), a(NOVA, "Flare").n(12).bolt(BoltKind.FIRE)).build());
-        out.add(m("nightmare_drowning", "The Undertow", Theme.FEAR, Tier.NIGHTMARE, Model.DROWNED, "Pulls you under and holds you there").hp(22).dmg(4).spd(0.26).scale(2.0F).glow(0x3DD8C8).bar(BossBarColor.BLUE).arena(22)
+        out.add(m("nightmare_drowning", "The Undertow", Theme.FEAR, Tier.NIGHTMARE, Model.DROWNED, "Pulls you under and holds you there").hp(22).dmg(4).spd(0.26).scale(2.0F).size(1.10F, 1.29F).glow(0x3DD8C8).bar(BossBarColor.BLUE).arena(22)
                 .intro("You can't remember which way is up.")
                 .phase(1.0F, "The water closes.", a(PULL, "Undertow").radius(12), a(CONE, "Rush of Water").bolt(BoltKind.WATER).radius(6))
                 .phase(0.5F, "No air.", a(AURA, "Lungful").radius(7).bolt(BoltKind.WATER).fx(MobEffects.SLOWNESS, 40, 1), a(BOLT, "Black Water").n(4).bolt(BoltKind.WATER)).build());
-        out.add(m("nightmare_undead", "The Hollow Crowd", Theme.FEAR, Tier.NIGHTMARE, Model.ZOMBIE, "More of them every time you look; it gets up once").hp(22).dmg(4).spd(0.26).scale(1.7F).traits(RISES).bar(BossBarColor.GREEN).arena(22)
+        out.add(m("nightmare_undead", "The Hollow Crowd", Theme.FEAR, Tier.NIGHTMARE, Model.ZOMBIE, "More of them every time you look; it gets up once").hp(22).dmg(4).spd(0.26).scale(1.7F).size(1.43F, 3.54F).traits(RISES).bar(BossBarColor.GREEN).arena(22)
                 .intro("They all have the same face.")
                 .phase(1.0F, "The crowd shuffles closer.", a(SLAM, "Crush").radius(3.5F), a(SUMMON, "More of Them").summon("sleepwalker").n(2))
                 .phase(0.5F, "Closer.", a(SUMMON, "More of Them").summon("sleepwalker").n(3), a(CHARGE, "Surge").heavy()).build());
-        out.add(m("nightmare_arthropod", "The Thousand Legs", Theme.FEAR, Tier.NIGHTMARE, Model.SPIDER, "Webs, and the sound of a thousand legs").hp(22).dmg(4).spd(0.32).scale(2.6F).bar(BossBarColor.PURPLE).arena(22)
+        out.add(m("nightmare_arthropod", "The Thousand Legs", Theme.FEAR, Tier.NIGHTMARE, Model.SPIDER, "Webs, and the sound of a thousand legs").hp(22).dmg(4).spd(0.32).scale(2.6F).size(1.50F, 0.85F).bar(BossBarColor.PURPLE).arena(22)
                 .intro("You can hear them in the walls.")
                 .phase(1.0F, "Legs everywhere.", a(ROOT, "Web").radius(2.5F), a(LEAP, "Drop").radius(3).heavy())
                 .phase(0.5F, "The walls open.", a(SUMMON, "Hatchlings").summon("capweaver").n(3), a(ROOT, "Web").radius(3)).build());
-        out.add(m("nightmare_explosion", "The Fuse", Theme.FEAR, Tier.NIGHTMARE, Model.CREEPER, "A hiss you can't find, and lines of fire to dodge").hp(22).dmg(4).spd(0.26).scale(2.0F).glow(0xFFFFFF).bar(BossBarColor.WHITE).arena(22)
+        out.add(m("nightmare_explosion", "The Fuse", Theme.FEAR, Tier.NIGHTMARE, Model.CREEPER, "A hiss you can't find, and lines of fire to dodge").hp(22).dmg(4).spd(0.26).scale(2.0F).size(1.10F, 2.78F).glow(0xFFFFFF).bar(BossBarColor.WHITE).arena(22)
                 .intro("Hsssss.")
                 .phase(1.0F, "Somewhere, a fuse.", a(RAIN, "Fuse Lines").n(4).bolt(BoltKind.FIRE), a(BURST, "Blast Ring").radius(10).inner(3).heavy())
                 .phase(0.5F, "Shorter fuse.", a(RAIN, "Fuse Lines").n(6).bolt(BoltKind.FIRE).wind(26), a(BURST, "Blast Ring").radius(12).inner(3).heavy()).build());
-        out.add(m("nightmare_generic", "The Faceless", Theme.FEAR, Tier.NIGHTMARE, Model.HUMAN, "No face: always in the corner of your eye").hp(22).dmg(4).spd(0.28).bar(BossBarColor.PINK).arena(22)
+        out.add(m("nightmare_generic", "The Faceless", Theme.FEAR, Tier.NIGHTMARE, Model.HUMAN, "No face: always in the corner of your eye").hp(22).dmg(4).spd(0.28).scale(1.8F).size(0.41F, 2.31F).bar(BossBarColor.PINK).arena(22)
                 .intro("It was standing there the whole time.")
                 .phase(1.0F, "The Faceless turns.", a(BLINK, "Corner of Your Eye"), a(DARKNESS, "Lights Off"))
                 .phase(0.5F, "It is closer.", a(DECOY, "Everywhere").n(2), a(BEAM, "Stare").bolt(BoltKind.DREAM).heavy(), a(BLINK, "Corner of Your Eye")).build());
