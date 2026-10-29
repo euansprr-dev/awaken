@@ -5,7 +5,8 @@ the time the weapon, the second slice, is not even visible... it looks like a me
 
     python3 tools/art/swing_chain.py report [style ...] [--rhythm mash|steady] [--json OUT]
     python3 tools/art/swing_chain.py strip OUT.png STYLE [--rhythm mash|steady]
-    (either with --swings PATH: a trial bake in place of the jar's file)
+    python3 tools/art/swing_chain.py twist [style ...]      every move's turn of the blade about its own length
+    (any with --swings PATH: a trial bake in place of the jar's file)
 
 Per chained strike (the second on): how much of its wind-up and blow the blade is on screen, where its set sits, the
 biggest jump of the tip between two frames (the trail's "teleport"), and how often the tip turns back on itself before
@@ -309,6 +310,34 @@ def strip(out, sid, rhythm="mash", swings=None):
     return out
 
 
+def twist(styles=None, swings=None):
+    """Per move, degrees the blade turns about its own length from start to end (frame to frame at 60 fps, the swing
+    of its direction taken out). Round 12 (Euan 2026-10-29: "it feels more like they are spinning and making circles
+    than stabbing and slashing"): no judge measured it, and every round's rules turned the daggers' blades 80-250
+    degrees a move. A stab or chop needs none, a cut only its edge turned toward the cut and back."""
+    swings = swings or L.load_swings()
+    out = {}
+    for sid, st in L.table().items():
+        if styles and sid not in styles:
+            continue
+        held = L.Held(L.REVIEW.get(sid, "gatewrought_" + sid))
+        row = {}
+        for mv, m in st["moves"].items():
+            if mv not in swings.get(sid, {}).get("moves", {}):
+                continue
+            ts = np.arange(0, m["windup"] + m["active"] + m["recovery"] + 1e-6, DT)
+            P = [L.new_pose(sid, mv, float(t), swings)[1] for t in ts]
+            tw = 0.0
+            for R0, R1 in zip(P, P[1:]):
+                a0, a1 = R0 @ held.axis, R1 @ held.axis
+                e, e1 = L.turn_to(a0, a1) @ (R0 @ held.edge), R1 @ held.edge
+                tw += abs(math.degrees(math.atan2(float(np.cross(e, e1) @ a1), float(e @ e1))))
+            row[mv] = round(tw)
+        out[sid] = row
+        print(f"{sid:11s} " + "  ".join(f"{mv} {v}" for mv, v in row.items()))
+    return out
+
+
 def main(argv):
     if not argv:
         raise SystemExit(__doc__)
@@ -332,6 +361,9 @@ def main(argv):
         return 0
     if argv[0] == "strip":
         print(strip(argv[1], argv[2], rhythm, swings))
+        return 0
+    if argv[0] == "twist":
+        twist(argv[1:] or None, swings)
         return 0
     raise SystemExit(__doc__)
 
