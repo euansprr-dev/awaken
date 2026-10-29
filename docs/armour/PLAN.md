@@ -425,9 +425,9 @@ Shots (in `docs/armour/shots/`, from CI run 40849793142 at commit 80aff6e0):
 4. Run 40849793142: the vambrace gets gold corners and a flush molten line (commit 80aff6e0).
 
 **Not seen yet:** the cape in strong wind, the set on zombies (P0), slim arms, shader packs (falls back to the entity
-cutout). The tours ran with Lens on Cinematic (`# ci knobs: LENS=cinematic`), because Lens Swift doesn't compile on
-`build/awaken-v1` today (`lens_composite.glsl:523` reads `open`, which only exists under `LENS_LIGHT`) and a new world's
-opening waits on it; reported to the orchestrator.
+cutout). The tours ran with Lens on Cinematic (`# ci knobs: LENS=cinematic`). At first that was because Lens Swift didn't
+compile on the base this branch was cut from, and a new world's opening waited on it. That was fixed on `build/awaken-v1`
+in 73cb1035, which is now merged here. The knob stays because Cinematic is the better light for hero shots.
 
 ### 5.2 The Forge Song, a piece at a glance
 
