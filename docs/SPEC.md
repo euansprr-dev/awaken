@@ -13288,7 +13288,7 @@ E, five at each rank D-S (one of each archetype, plus a Lord-forged set). The si
 are one set each (`ArmourSet.hunter`): Wildhide (E, Strider), Beastbound (D, Bulwark), Gatewrought (C, Duelist),
 Veilwoven (B, Channeler), Lordscale (A, Lord-forged), Sovereign Weave (S, Lord-forged). `ArmourLooks.of(stack)` names
 the set and piece a worn item is drawn as. The other 23 (plan §4.2) get items, recipes and art phase by phase
-(`ArmourSet.MADE_TO`: P2 made E and D). A made set with no Hunter items has its own (`ArmourItems`, `<set>_helmet`
+(`ArmourSet.MADE_TO`: P2 made E and D, P3 C and B). A made set with no Hunter items has its own (`ArmourItems`, `<set>_helmet`
 `_chestplate` `_leggings` `_boots`, a `ForgedArmourItem` each, and above E a `<set>_pattern`), in the Awakened Gear tab.
 - **P2's seven**, each with its own look (`armour_sets.py`; 32px icons drawn from the meshes, a pattern is a vellum sheet
   with its helm in ink and a seal in its rank's colour, a Lord's in gold):
@@ -13306,6 +13306,23 @@ the set and piece a worn item is drawn as. The other 23 (plan §4.2) get items, 
     plume, one great layered pauldron on the left with a neck guard, a half cape.
   - **Hornlord** (D, Lord-forged): blackened iron with embers in its cracks, a closed helm with a burning slit and great
     pale horns banded in gold, a fur mantle and ragged fur cape, sabatons split like hooves.
+- **P3's eight** (the plan's Sunshard is named **Sunward**, so it isn't mistaken for the sunshard crystal it is made with):
+  - **Vaultbreaker** (C, Bulwark): diamond-studded steel; a closed helm under great curled ram's horns, a round shield
+    of a pauldron on the left with a pearl boss, heavy tassets.
+  - **Frostwalker** (C, Strider): clear ice plates over white wolf fur; a closed ice helm under a crown of icicles, a
+    fur mantle, a cape whose hem has frozen.
+  - **Sunward** (C, Channeler): a gold breast under a white coif; a great sun disc rayed in gold stands behind the
+    head, long white tabards with a sun rune; its runes are little suns.
+  - **Shardcrown** (C, Lord-forged): dark steel with violet crystal growing out of it; a crown of shards, shards at the
+    shoulders, a crystal cluster for a heart.
+  - **Deepcarapace** (B, Bulwark): black Deepglass chitin like a cave beetle's, cave-cyan seams; a ridged dome helm
+    with one horn, wing cases closed on the back.
+  - **Cloudrunner** (B, Strider): sky-white plate over slate; a closed helm with a storm-lit slit, feathered fins
+    swept back from the helm, shoulders and heels, a mantle of feathers.
+  - **Tidebreaker** (B, Duelist): sea-green scale edged in amethyst; a fin crest, fins at cheek and shoulder, a cape
+    cut in tongues like a breaking wave.
+  - **Hollowheart** (B, Lord-forged): bone over deep red; a crown of bone spikes, an open rib cage on the chest holding
+    the Lord's hollowed heart, glowing at its core, and a ragged red cape.
 
 **44.3 Numbers.** A set sits on its rank's Hunter numbers (`HunterTier.Armour`). Bulwark +1 point on the cuirass and
 greaves, +0.5 toughness, +0.05 knockback; Strider -1 on the cuirass, +5% speed a piece; Channeler -1 on the cuirass, +3%
@@ -13321,11 +13338,22 @@ enchantability and sound are the rank's). The made sets (test `armour_numbers` h
 | Lanternlight | D | Channeler | 2 | 5 | 5 | 2 | 14 | 0.5 | 0 | +3% power damage |
 | Bladeward | D | Duelist | 2 | 6 | 5 | 2 | 15 | 0.5 | 0 | |
 | Hornlord | D | Lord-forged | 2 | 7 | 5 | 2 | 16 | 0.5 | 0 | |
+| Vaultbreaker | C | Bulwark | 3 | 9 | 7 | 3 | 22 | 2.5 | 0.05 | |
+| Frostwalker | C | Strider | 3 | 7 | 6 | 3 | 19 | 2 | 0 | +5% speed |
+| Sunward | C | Channeler | 3 | 7 | 6 | 3 | 19 | 2 | 0 | +3% power damage |
+| Shardcrown | C | Lord-forged | 3 | 9 | 6 | 3 | 21 | 2 | 0 | |
+| Deepcarapace | B | Bulwark | 3 | 9 | 8 | 3 | 23 | 3 | 0.1 | |
+| Cloudrunner | B | Strider | 3 | 7 | 7 | 3 | 20 | 2.5 | 0.05 | +5% speed |
+| Tidebreaker | B | Duelist | 3 | 8 | 7 | 3 | 21 | 2.5 | 0.05 | |
+| Hollowheart | B | Lord-forged | 3 | 9 | 7 | 3 | 22 | 2.5 | 0.05 | |
 
 Costs (`ForgeSong.SET_COSTS`, helm / cuirass / greaves / boots; hide, metal, core and bind are the rank's own tags, ess
 the essence shard): Bellguard copper 5, 7, 6, 3 with hide; Rootwarden logs, moss, resin and hide; Amberwing hide, resin
 and bind; Cleftrunner metal, wool and hide; Lanternlight wool and metal, its cuirass two lanterns; Bladeward metal, hide
-and core; Hornlord metal and core, its cuirass a Lord's heart. E is cut by hand, D forged.
+and core; Hornlord metal and core, its cuirass a Lord's heart. C on diamond: Vaultbreaker metal, hide and core;
+Frostwalker frostspar and hide; Sunward gold, sunshard and wool; Shardcrown amethyst and core, its cuirass a Lord's heart.
+B on Deepglass: Deepcarapace metal, hide and core; Cloudrunner feathers and wool; Tidebreaker amethyst and hide;
+Hollowheart bone and core, its cuirass a Lord's heart. E is cut by hand, D and up forged.
 
 **44.4 The Forge Song (P1).** Armour is never crafted on the grid: every Hunter armour recipe is gone and the pieces
 are forged at a **Fitting Stand** (`awaken:fitting_stand`, crafted from a stick, a copper ingot, wool and planks; a
@@ -13412,6 +13440,15 @@ counted on each equipment change.
   magic), and your powers hit 35% harder for 40 ticks.
 - An ability's own blow on a body of 150 health or more is held to 3% of it (at least 2): a Lord is never burst down by
   armour.
+- **By rank (P3).** The ability grows with the set's own rank (a Hunter set's too; the set's lines say what it does):
+  - C: Bastion: a landing from 4 blocks or more with Bastion full bursts it. Flow: foes within 3 of the afterimage swing
+    at it and are staggered 20 ticks (the plan's "wall-runs last longer" is the Runner's insides; this is the Strider's
+    C step from outside). Runes: each rune stops one arrow or bolt (a projectile's blow cancelled, a rune spent). Edge: a
+    perfect dodge with Edge full cuts the wave at once, toward the creature dodged.
+  - B: Bastion: the burst carries the Force of your last power hit (its damage type, so the Forces' reactions follow;
+    its slam in the Force's colours). Flow: an afterimage left in the air rushes you on along your look (1.1, lifted
+    0.25). Runes: an overchannel gives back a quarter of your energy. Edge: those the wave cuts bleed, 1 every 10 ticks
+    for 60.
 - **The look.** The charge and runes go to the wearer and everyone tracking them (`Charge` payload: entity, charge,
   runes, flash; sent when the charge moves 5, fills or empties, the runes change, or something is released, and to
   anyone who starts tracking). On the armour (`ArmourGlow`): as the charge fills its glowing parts brighten and its rim
@@ -13445,6 +13482,24 @@ counted on each equipment change.
 - **Hornlord: Gore.** Sprint on the ground for 25 ticks and the horns lower (the set's glow fills as they do); the first
   foe within 1.6 in front of you is gored: 6 + 2 a rank above E, thrown (1.5, lifted 0.45), staggered 30 ticks; 100
   ticks cooldown.
+- **Vaultbreaker: Vault Wall.** A guarded blow glances off: its striker is thrown back (1.0) and staggered 15 ticks;
+  10 ticks cooldown.
+- **Frostwalker: Rime Path.** Still water under your feet freezes as you go (frosted ice in a disk of 3, as vanilla's
+  Frost Walker), and a perfect dodge breathes frost: foes within 3 are slowed (Slowness II, 60 ticks) and frosted.
+- **Sunward: Noon.** An overchannel flares the sun at your back: foes within 5 burn 80 ticks; you and allies within 5
+  mend a heart.
+- **Shardcrown: Shatter** (the C Lord's move). A blow that takes you under half health bursts crystal out of the
+  armour: foes within 3.5 take the ability's blow and are thrown (1.2, lifted 0.4); for 60 ticks blows do a third less;
+  600 ticks cooldown.
+- **Deepcarapace: Shell.** Crouching and standing still closes the shell: blows do 40% less and fill Bastion twice
+  (16 each).
+- **Cloudrunner: Featherfall.** Falls never hurt; crouching while falling in the air you drift down (Slow Falling, no
+  particles, renewed while you crouch).
+- **Tidebreaker: Undertow.** The cutting wave drags those it cuts toward you (0.7) instead of throwing them back; in
+  water or rain the Edge fills twice as fast.
+- **Hollowheart: Hollow Pulse** (the B Lord's move). Every fifth blow you land the caged heart beats (the set's glow
+  fills a fifth a blow): foes within 4 take the ability's blow and you mend half a heart for each struck (four at
+  most).
 
 **44.7 A forged piece's story.** `awaken:forged` (`Forged`, schemaVersion 1): the set, quality (0-3), mastery (§44.5),
 a flaw, twin-struck, and who made it. The tooltip says it plainly ("Masterwork, twin-struck", "Forged by Name"). A

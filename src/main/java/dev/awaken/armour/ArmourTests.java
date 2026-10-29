@@ -23,6 +23,7 @@ import net.minecraft.world.item.equipment.ArmorType;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,6 +53,7 @@ final class ArmourTests {
         AwakenTests.register("armour_numbers", 20, ArmourTests::numbers);
         AwakenTests.register("armour_patterns", 20, ArmourTests::patterns);
         AwakenTests.register("armour_set_abilities", 40, ArmourTests::abilities);
+        AwakenTests.register("armour_set_twists_cb", 40, ArmourTests::twistsCB);
     }
 
     private static final List<Rank> RANKS = List.of(Rank.E, Rank.D, Rank.C, Rank.B, Rank.A, Rank.S);
@@ -368,7 +370,15 @@ final class ArmourTests {
                 new Row(ArmourSet.CLEFTRUNNER, 2, 5, 5, 2, 0.5F, 0F, 0.05, 0),
                 new Row(ArmourSet.LANTERNLIGHT, 2, 5, 5, 2, 0.5F, 0F, 0, 0.03),
                 new Row(ArmourSet.BLADEWARD, 2, 6, 5, 2, 0.5F, 0F, 0, 0),
-                new Row(ArmourSet.HORNLORD, 2, 7, 5, 2, 0.5F, 0F, 0, 0));
+                new Row(ArmourSet.HORNLORD, 2, 7, 5, 2, 0.5F, 0F, 0, 0),
+                new Row(ArmourSet.VAULTBREAKER, 3, 9, 7, 3, 2.5F, 0.05F, 0, 0),
+                new Row(ArmourSet.FROSTWALKER, 3, 7, 6, 3, 2F, 0F, 0.05, 0),
+                new Row(ArmourSet.SUNWARD, 3, 7, 6, 3, 2F, 0F, 0, 0.03),
+                new Row(ArmourSet.SHARDCROWN, 3, 9, 6, 3, 2F, 0F, 0, 0),
+                new Row(ArmourSet.DEEPCARAPACE, 3, 9, 8, 3, 3F, 0.1F, 0, 0),
+                new Row(ArmourSet.CLOUDRUNNER, 3, 7, 7, 3, 2.5F, 0.05F, 0.05, 0),
+                new Row(ArmourSet.TIDEBREAKER, 3, 8, 7, 3, 2.5F, 0.05F, 0, 0),
+                new Row(ArmourSet.HOLLOWHEART, 3, 9, 7, 3, 2.5F, 0.05F, 0, 0));
         for (Row r : table) {
             ArmourItems.Numbers n = ArmourItems.numbers(r.set());
             h.assertTrue(n.helm() == r.helm() && n.chest() == r.chest() && n.legs() == r.legs() && n.boots() == r.boots()
@@ -399,7 +409,9 @@ final class ArmourTests {
         h.assertTrue(next != null && next != ArmourSet.HORNLORD, "a known Lord pattern isn't given again");
         m.patterns.addAll(List.of("cleftrunner", "lanternlight", "bladeward"));
         h.assertTrue(ArmourPatterns.pick(m, Rank.D, true, r) == null && ArmourPatterns.pick(m, Rank.D, false, r) == null, "none once all are known");
-        h.assertTrue(ArmourPatterns.pick(ArmouryMemory.fresh(), Rank.C, true, r) == null, "C isn't made yet");
+        h.assertTrue(ArmourPatterns.pick(ArmouryMemory.fresh(), Rank.C, true, r) == ArmourSet.SHARDCROWN, "a C Lord gives Shardcrown's first");
+        h.assertTrue(ArmourPatterns.pick(ArmouryMemory.fresh(), Rank.B, true, r) == ArmourSet.HOLLOWHEART, "a B Lord gives Hollowheart's first");
+        h.assertTrue(ArmourPatterns.pick(ArmouryMemory.fresh(), Rank.A, true, r) == null, "A isn't made yet");
 
         ServerPlayer p = survivor(h);
         ArmouryMemory mine = ArmouryMemory.of(p);
@@ -452,6 +464,63 @@ final class ArmourTests {
         float hp = p.getHealth();
         p.hurtServer(level, p.damageSources().mobAttack(z2), 4F);
         h.assertTrue(p.getHealth() == hp && s.charge() == 0, "the afterimage takes the blow whole");
+        h.succeed();
+    }
+
+    /**
+     * P3's sets: Featherfall takes no fall, the closed Shell takes less and fills Bastion twice, a C rune stops an arrow,
+     * Vault Wall throws a striker back, Hollow Pulse beats on the fifth blow.
+     */
+    private static void twistsCB(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = survivor(h);
+        BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
+        p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0F, 0F);
+        ArmourAbilities.State s = ArmourAbilities.state(p);
+        net.minecraft.world.entity.monster.zombie.Zombie z = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(3, 1, 1));
+        z.setNoAi(true);
+
+        wear(p, ArmourSet.CLOUDRUNNER, 4);
+        float hp = p.getHealth();
+        p.hurtServer(level, p.damageSources().fall(), 6F);
+        h.assertTrue(p.getHealth() == hp, "Featherfall: a fall doesn't hurt");
+
+        wear(p, ArmourSet.DEEPCARAPACE, 4);
+        p.setShiftKeyDown(true);
+        hp = p.getHealth();
+        p.damageCooldownTime = 0;
+        p.hurtServer(level, p.damageSources().mobAttack(z), 8F);
+        float shut = hp - p.getHealth();
+        h.assertTrue(s.charge() == ArmourAbilities.BASTION_TAKEN * 2, "a blow on the closed shell fills Bastion twice, got " + s.charge());
+        p.setShiftKeyDown(false);
+        p.setHealth(p.getMaxHealth());
+        hp = p.getHealth();
+        p.damageCooldownTime = 0;
+        p.hurtServer(level, p.damageSources().mobAttack(z), 8F);
+        float open = hp - p.getHealth();
+        h.assertTrue(shut > 0 && shut < open, "the shell takes less: " + shut + " shut, " + open + " open");
+
+        wear(p, ArmourSet.SUNWARD, 4);
+        s.runes = 2;
+        p.setHealth(p.getMaxHealth());
+        hp = p.getHealth();
+        p.damageCooldownTime = 0;
+        p.hurtServer(level, level.damageSources().source(net.minecraft.world.damagesource.DamageTypes.ARROW, z), 5F);
+        h.assertTrue(p.getHealth() == hp && s.runes() == 1, "a C rune stops an arrow and is spent, runes " + s.runes());
+
+        wear(p, ArmourSet.VAULTBREAKER, 4);
+        z.snapTo(at.getX() + 1.5, at.getY(), at.getZ() + 0.5, 0F, 0F);
+        z.setDeltaMovement(Vec3.ZERO);
+        dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.GUARD, z);
+        h.assertTrue(z.getDeltaMovement().x > 0.5, "Vault Wall throws the striker back, got " + z.getDeltaMovement());
+
+        wear(p, ArmourSet.HOLLOWHEART, 4);
+        float zhp = z.getHealth();
+        for (int i = 0; i < ArmourAbilities.PULSE_BEATS - 1; i++)
+            dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.HIT, z);
+        h.assertTrue(z.getHealth() == zhp && s.charge() == ArmourAbilities.FULL * 4 / 5, "four blows: the heart fills, got " + s.charge());
+        dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.HIT, z);
+        h.assertTrue(z.getHealth() < zhp && s.charge() == 0, "the fifth beats: the zombie hurt, the heart emptied");
         h.succeed();
     }
 

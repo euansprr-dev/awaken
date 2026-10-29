@@ -119,7 +119,7 @@ public final class ForgeSong {
         song(ArmourSet.GATEWROUGHT, 4, "x.xx.x..x.x.", 66, 69, 73, 71, 69, 66, 64, 66);
         song(ArmourSet.VAULTBREAKER, 6, "x...x..x.x..", 55, 59, 62, 67, 62, 59, 55, 50);
         song(ArmourSet.FROSTWALKER, 4, "x.x.x..x", 76, 79, 83, 81, 79, 76, 74, 76);
-        song(ArmourSet.SUNSHARD, 5, "x..x.x..x...", 67, 71, 74, 79, 74, 71, 67, 74);
+        song(ArmourSet.SUNWARD, 5, "x..x.x..x...", 67, 71, 74, 79, 74, 71, 67, 74);
         song(ArmourSet.SHARDCROWN, 6, "x..x.x...x..", 61, 64, 68, 66, 64, 61, 59, 61);
         song(ArmourSet.VEILWOVEN, 6, "x...x.x.", 63, 67, 70, 74, 70, 67, 63, 70);
         song(ArmourSet.DEEPCARAPACE, 6, "x..x...x.x..", 50, 53, 57, 55, 53, 50, 48, 50);
@@ -298,18 +298,28 @@ public final class ForgeSong {
             HunterTier.S, new String[]{"core 2, metal 2, heart 1, ess 1", "core 2, bind 2, metal 3, heart 1, ess 1", "core 2, bind 2, metal 2, ess 1", "core 2, metal 2, ess 1"}));
 
     /**
-     * The other sets' costs (SPEC §44.4): the rank's hide, trophies, bindings and metal with what each set is made of.
+     * The other sets' costs (SPEC §44.3): the rank's hide, trophies, bindings and metal with what each set is made of.
      * E by hand from the wilds: Bellguard copper, Rootwarden logs, moss and resin, Amberwing hide and resin. D forged on
      * iron: Cleftrunner with wool for its wraps, Lanternlight with lanterns, Bladeward a trophy, Hornlord a Lord's heart.
+     * C on diamond: Frostwalker with frostspar, Sunward with gold and sunshard, Shardcrown amethyst and a Lord's heart.
+     * B on Deepglass: Cloudrunner with feathers, Tidebreaker amethyst, Hollowheart bone and a Lord's heart.
      */
-    private static final Map<ArmourSet, String[]> SET_COSTS = new EnumMap<>(Map.of(
-            ArmourSet.BELLGUARD, new String[]{"copper 5, hide 1, ess 1", "copper 7, hide 2, ess 1", "copper 6, hide 1, ess 1", "copper 3, hide 1, ess 1"},
-            ArmourSet.ROOTWARDEN, new String[]{"log 3, moss 1, resin 1, ess 1", "log 4, hide 2, moss 2, resin 2, ess 1", "log 3, moss 2, resin 1, ess 1", "log 2, hide 1, resin 1, ess 1"},
-            ArmourSet.AMBERWING, new String[]{"hide 3, resin 1, ess 1", "hide 4, resin 3, bind 1, ess 1", "hide 4, bind 2, ess 1", "hide 2, bind 1, resin 1, ess 1"},
-            ArmourSet.CLEFTRUNNER, new String[]{"metal 2, wool 1, ess 1", "metal 3, hide 2, wool 2, ess 1", "metal 2, hide 2, ess 1", "metal 2, hide 1, ess 1"},
-            ArmourSet.LANTERNLIGHT, new String[]{"wool 3, metal 1, ess 1", "metal 3, wool 3, lantern 2, ess 2", "wool 4, metal 1, ess 1", "metal 2, hide 1, ess 1"},
-            ArmourSet.BLADEWARD, new String[]{"metal 3, core 1, ess 1", "metal 4, hide 2, core 1, ess 1", "metal 3, hide 1, ess 2", "metal 2, hide 1, ess 1"},
-            ArmourSet.HORNLORD, new String[]{"metal 3, core 2, ess 2", "metal 4, core 2, heart 1, ess 2", "metal 3, core 1, hide 2, ess 1", "metal 2, core 1, ess 1"}));
+    private static final Map<ArmourSet, String[]> SET_COSTS = new EnumMap<>(Map.ofEntries(
+            Map.entry(ArmourSet.BELLGUARD, new String[]{"copper 5, hide 1, ess 1", "copper 7, hide 2, ess 1", "copper 6, hide 1, ess 1", "copper 3, hide 1, ess 1"}),
+            Map.entry(ArmourSet.ROOTWARDEN, new String[]{"log 3, moss 1, resin 1, ess 1", "log 4, hide 2, moss 2, resin 2, ess 1", "log 3, moss 2, resin 1, ess 1", "log 2, hide 1, resin 1, ess 1"}),
+            Map.entry(ArmourSet.AMBERWING, new String[]{"hide 3, resin 1, ess 1", "hide 4, resin 3, bind 1, ess 1", "hide 4, bind 2, ess 1", "hide 2, bind 1, resin 1, ess 1"}),
+            Map.entry(ArmourSet.CLEFTRUNNER, new String[]{"metal 2, wool 1, ess 1", "metal 3, hide 2, wool 2, ess 1", "metal 2, hide 2, ess 1", "metal 2, hide 1, ess 1"}),
+            Map.entry(ArmourSet.LANTERNLIGHT, new String[]{"wool 3, metal 1, ess 1", "metal 3, wool 3, lantern 2, ess 2", "wool 4, metal 1, ess 1", "metal 2, hide 1, ess 1"}),
+            Map.entry(ArmourSet.BLADEWARD, new String[]{"metal 3, core 1, ess 1", "metal 4, hide 2, core 1, ess 1", "metal 3, hide 1, ess 2", "metal 2, hide 1, ess 1"}),
+            Map.entry(ArmourSet.HORNLORD, new String[]{"metal 3, core 2, ess 2", "metal 4, core 2, heart 1, ess 2", "metal 3, core 1, hide 2, ess 1", "metal 2, core 1, ess 1"}),
+            Map.entry(ArmourSet.VAULTBREAKER, new String[]{"metal 3, core 1, ess 1", "metal 5, hide 2, core 1, ess 2", "metal 4, hide 1, ess 1", "metal 2, hide 1, ess 1"}),
+            Map.entry(ArmourSet.FROSTWALKER, new String[]{"metal 1, frostspar 2, hide 1, ess 1", "metal 2, hide 3, frostspar 2, ess 1", "metal 2, hide 2, frostspar 1, ess 1", "metal 1, hide 2, frostspar 1, ess 1"}),
+            Map.entry(ArmourSet.SUNWARD, new String[]{"gold 3, metal 1, sunshard 2, ess 1", "gold 3, metal 2, sunshard 1, wool 2, ess 2", "gold 2, metal 1, wool 3, ess 1", "gold 2, metal 1, ess 1"}),
+            Map.entry(ArmourSet.SHARDCROWN, new String[]{"metal 2, amethyst 3, core 1, ess 2", "metal 3, amethyst 2, core 1, heart 1, ess 2", "metal 2, amethyst 2, core 1, ess 1", "metal 2, amethyst 1, ess 1"}),
+            Map.entry(ArmourSet.DEEPCARAPACE, new String[]{"metal 2, hide 1, core 1, ess 1", "metal 4, hide 2, core 1, ess 2", "metal 3, hide 2, ess 1", "metal 2, hide 1, ess 1"}),
+            Map.entry(ArmourSet.CLOUDRUNNER, new String[]{"metal 1, feather 4, bind 1, ess 1", "metal 3, feather 6, wool 2, ess 1", "metal 2, feather 2, wool 2, ess 1", "metal 1, feather 4, ess 1"}),
+            Map.entry(ArmourSet.TIDEBREAKER, new String[]{"metal 2, amethyst 2, ess 1", "metal 3, amethyst 3, hide 2, ess 2", "metal 2, amethyst 2, hide 1, ess 1", "metal 2, hide 1, ess 1"}),
+            Map.entry(ArmourSet.HOLLOWHEART, new String[]{"metal 2, bone 4, core 1, ess 2", "metal 3, bone 4, core 1, heart 1, ess 2", "metal 2, bone 3, core 1, ess 1", "metal 2, bone 2, ess 1"})));
 
     /** What a piece takes, or null where the set isn't made yet (its items come in a later phase). */
     public static @Nullable List<Need> cost(ArmourSet set, ArmorType piece) {
@@ -332,6 +342,11 @@ public final class ForgeSong {
                 case "moss" -> new Need(null, Identifier.withDefaultNamespace("moss_block"), n);
                 case "resin" -> new Need(null, Identifier.withDefaultNamespace("resin_clump"), n);
                 case "lantern" -> new Need(null, Identifier.withDefaultNamespace("lantern"), n);
+                case "gold" -> new Need(null, Identifier.withDefaultNamespace("gold_ingot"), n);
+                case "feather" -> new Need(null, Identifier.withDefaultNamespace("feather"), n);
+                case "bone" -> new Need(null, Identifier.withDefaultNamespace("bone"), n);
+                case "sunshard" -> new Need(null, Awaken.id("sunshard"), n);
+                case "frostspar" -> new Need(null, Awaken.id("frostspar"), n);
                 case "log" -> new Need(TagKey.create(Registries.ITEM, Identifier.withDefaultNamespace("logs")), null, n);
                 case "wool" -> new Need(TagKey.create(Registries.ITEM, Identifier.withDefaultNamespace("wool")), null, n);
                 case "ess" -> new Need(null, Awaken.id("essence_shard"), n);

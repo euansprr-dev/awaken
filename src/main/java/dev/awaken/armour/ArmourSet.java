@@ -24,7 +24,7 @@ public enum ArmourSet {
     GATEWROUGHT("gatewrought", "Gatewrought", Rank.C, Archetype.DUELIST, HunterTier.C),
     VAULTBREAKER("vaultbreaker", "Vaultbreaker", Rank.C, Archetype.BULWARK, null),
     FROSTWALKER("frostwalker", "Frostwalker", Rank.C, Archetype.STRIDER, null),
-    SUNSHARD("sunshard", "Sunshard", Rank.C, Archetype.CHANNELER, null),
+    SUNWARD("sunward", "Sunward", Rank.C, Archetype.CHANNELER, null),
     SHARDCROWN("shardcrown", "Shardcrown", Rank.C, Archetype.LORD, null),
 
     VEILWOVEN("veilwoven", "Veilwoven", Rank.B, Archetype.CHANNELER, HunterTier.B),
@@ -62,8 +62,8 @@ public enum ArmourSet {
 
     private static final ArmourSet[] VALUES = values();
 
-    /** The highest rank whose own-item sets are built (P2: E and D; plan §6.2 adds C and B, then A and S). */
-    static final Rank MADE_TO = Rank.D;
+    /** The highest rank whose own-item sets are built (P2 E and D, P3 C and B; plan §6.2 adds A and S in P4). */
+    static final Rank MADE_TO = Rank.B;
 
     /** Whether the set's pieces exist as items: the Hunter sets always, the others from the phase that builds them. */
     public boolean made() {

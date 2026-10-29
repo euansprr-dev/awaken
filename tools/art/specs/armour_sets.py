@@ -1771,10 +1771,613 @@ def hornlord():
     return dict(id="hornlord", mats=mats, pieces=pieces, accent=AW.RAMPS["ember"][5])
 
 
+# ---- P3: the C and B sets with items of their own (docs/armour/PLAN.md §6.2) -----------------------------------------
+
+def closed_helm(side, back, top_, brow, face, slit):
+    """A closed helm (Hornlord's): sides, back and top a texel off the skull, a brow standing a texel proud over one
+    slit, the lower face plate; materials by part."""
+    return [
+        B(-5, -4, -1, 8, -5, 5, side, "helm"), B(4, 5, -1, 8, -5, 5, side, "helm"),
+        B(-4, 4, -1, 8, -5, -4, back, "helm"),
+        B(-5, 5, 8, 9, -5, 5, top_, "helm"),
+        B(-5, 5, 5, 8, 5, 6, brow, "brow"),
+        B(-3, 3, 4, 5, 4, 5, slit, "slit"),
+        B(-4, -3, 4, 5, 4, 5, face, "face"), B(3, 4, 4, 5, 4, 5, face, "face"),
+        B(-4, 4, -1, 4, 4, 5, face, "face"),
+    ]
+
+
+def vaultbreaker():
+    """Vaultbreaker (C, Bulwark): the plate of those who break the gates' sealed vaults. Massive steel studded with
+    diamond; a closed helm with a T of cold light, a ram's horns curling round the ears; a round pauldron on the
+    sword arm and on the other a shield of a pauldron, a diamond boss at its heart; a heavy fauld; sabatons like
+    anvils."""
+    mats = {
+        "steel": AW.Mat("flint", 5, 0.85, 0.85),
+        "steel_lames": AW.Mat("flint", 5, 0.85, 0.85, details=(lames(2, -1),)),
+        "steel_rim": AW.Mat("flint", 5, 0.85, 0.85, details=(rims("mirror", 6),)),
+        "steel_dark": AW.Mat("flint", 2, 0.8, 0.75, details=(lames(2, -1),)),
+        "studs": AW.Mat("flint", 5, 0.85, 0.85, details=(rivet_grid("pearl", 6, 2),)),
+        "diamond": AW.Mat("pearl", 5, 0.2, 1.0, emit=0.25, bevel=False),
+        "slit": AW.Mat("ice", 5, 0.0, 0.5, emit=0.75, bevel=False),
+        "horn": AW.Mat("flint", 3, 0.6, 0.7, details=(lames(1, -1),)),
+        "horn_tip": AW.Mat("flint", 5, 0.6, 0.8),
+        "leather": AW.Mat("slate", 1, 0.05, 0.35, details=(stitches("slate", 3, 2),)),
+    }
+
+    # ---- helmet: closed and heavy; a T of light; a raised comb; ram's horns sweeping back and curling forward
+    head = closed_helm("steel_rim", "steel_lames", "steel", "steel", "steel_lames", "slit") + [
+        B(-1, 1, 9, 10, -4, 5, "steel_rim", "comb"), B(-1, 1, 9, 10, 5, 6, "diamond", "comb_gem"),
+    ]
+    horn = chain((5.0, 7.0, 2.0), [((0.4, 0.5, -1.0), 4, 3, 3, "horn"), ((0.5, -0.4, -1.0), 4, 3, 3, "horn"),
+                                   ((0.3, -1.0, 0.2), 4, 3, 3, "horn"), ((0.2, -0.3, 1.0), 3, 2, 2, "horn"),
+                                   ((0.5, 0.4, 0.8), 3, 2, 2, "horn"), ((0.6, 0.8, 0.2), 2, 1, 1, "horn_tip")], "horn")
+    head += horn + mirror(horn)
+
+    # ---- chestplate: a great breastplate studded with diamond, a diamond at its heart; a fauld; the pauldrons
+    body = [
+        B(-5, 5, -10, 0, -3, 3, "steel_lames", "cuirass"),
+        B(-4, 4, -7, 0, 3, 4, "studs", "breast"),
+        B(-2, 2, -5, -1, 4, 5, "steel_rim", "boss"), B(-1, 1, -4, -2, 5, 6, "diamond", "heart"),
+        B(-6, 6, -10, -8, -4, 4, "steel_rim", "fauld"),
+        B(-5, 5, 0, 2, -4, 4, "steel_rim", "gorget"),
+    ]
+    # the sword arm: a round pauldron stepping in to a knob, tipped outward
+    dome = [B(-6, 2, -1, 1, -4, 4, "steel_rim", "pldome"), B(-5, 1, 1, 2, -3, 3, "steel", "pldome"),
+            B(-4, 0, 2, 3, -2, 2, "steel", "pldome"), B(-3, -1, 3, 4, -1, 1, "diamond", "plknob")]
+    arm = [
+        B(-4, 2, -5, -1, -3, 3, "steel_lames", "rerebrace"),
+        B(-4, 2, -9, -5, -3, 3, "steel", "vambrace"), B(-5, 3, -7, -6, -4, 4, "steel_rim", "cop"),
+        B(-4, 2, -11, -9, -3, 3, "leather", "gauntlet"), B(-5, 3, -10, -9, -4, 4, "steel_rim", "cuff"),
+    ]
+    right_arm = turned(dome, rot(0, 0, -12), (-2.0, 0.0, 0.0)) + arm
+    # the shield arm: a tall shield of a pauldron on the outer side, a diamond boss, its rim proud
+    shield = [
+        B(3, 4, -6, 5, -4, 4, "steel_rim", "shield"),
+        B(4, 5, -2, 2, -1, 1, "steel", "shield_boss"), B(5, 6, -1, 1, -1, 1, "diamond", "shield_gem"),
+        B(-1, 3, 2, 3, -3, 3, "steel", "shield_strap"),
+    ]
+    left_arm = turned(shield, rot(0, 0, 10), (3.0, 2.0, 0.0)) + mirror(arm)
+
+    # ---- leggings: a belt; steel cuisses; knee cops with a diamond stud; a plate tasset front and back
+    belt = [B(-5, 5, -13, -10, -3, 3, "steel_rim", "belt"), B(-1, 1, -12, -11, 3, 4, "diamond", "buckle")]
+    right_leg = [B(-3, 2, -6, 0, -3, 3, "steel_lames", "cuisse"), B(-3, 2, -8, -6, 3, 4, "steel_rim", "poleyn"),
+                 B(-1, 0, -7, -6, 4, 5, "diamond", "poleyn_gem")]
+    front_cloth = [B(-3, 3, -5, 0, 0, 1, "steel_dark", "tasset", hem=True)]
+    back_cloth = [B(-4, 4, -5, 0, -1, 0, "steel_dark", "tasset", hem=True)]
+
+    # ---- boots: greaves under a flared cuff; heavy square sabatons
+    right_boot = [
+        B(-4, 3, -7, -6, -4, 4, "steel_rim", "cuff"),
+        B(-3, 2, -11, -7, -3, 3, "steel", "greave"),
+        B(-4, 3, -13, -11, -4, 4, "steel_lames", "sabaton"),
+        B(-3, 2, -13, -11, 4, 6, "steel", "toe"),
+    ]
+    pieces = {
+        "helmet": {"head": head},
+        "chestplate": {"body": body, "right_arm": right_arm, "left_arm": left_arm},
+        "leggings": {"body": belt, "right_leg": right_leg, "left_leg": mirror(right_leg), "front_cloth": front_cloth, "back_cloth": back_cloth},
+        "boots": {"right_leg": right_boot, "left_leg": mirror(right_boot)},
+    }
+    return dict(id="vaultbreaker", mats=mats, pieces=pieces, accent=AW.RAMPS["pearl"][5])
+
+
+def frostwalker():
+    """Frostwalker (C, Strider): those who cross the frozen gates' white wastes. A pale ice visor under a crest of
+    icicles that runs crown to nape; a thick white fur collar; clear ice plates over white pelts, shards of it rising
+    off the shoulders; a white fur cape whose hem has frozen into ice; fur boots with an ice spur at the heel."""
+    mats = {
+        "fur": AW.Mat("wolf", 7, 0.0, 0.15, details=(fur(-1, 1),)),
+        "fur_dark": AW.Mat("wolf", 6, 0.0, 0.15, details=(fur(-1, 1),)),
+        "pelt": AW.Mat("wolf", 6, 0.0, 0.2, details=(folds(3),)),
+        "hollow": AW.Mat("ice", 0, 0.0, 0.2, bevel=False),
+        "ice": AW.Mat("ice", 5, 0.3, 1.0),
+        "ice_rim": AW.Mat("ice", 5, 0.3, 1.0, details=(rims("ice", 7),)),
+        "ice_deep": AW.Mat("ice", 3, 0.3, 1.0),
+        "icicle": AW.Mat("glass", 6, 0.2, 1.0),
+        "icicle_glow": AW.Mat("ice", 5, 0.1, 1.0, emit=0.45, bevel=False),
+        "helm": AW.Mat("ice", 4, 0.35, 1.0, details=(lames(2, -1),)),
+        "helm_top": AW.Mat("ice", 5, 0.35, 1.0),
+        "helm_brow": AW.Mat("ice", 5, 0.35, 1.0, details=(rims("ice", 7),)),
+        "slit": AW.Mat("ice", 5, 0.0, 0.4, emit=0.75, bevel=False),
+        "frost_hem": AW.Mat("pearl", 4, 0.0, 0.2, details=(folds(3), hem("ice", 6, rows=1, metal=0.3, gloss=1.0))),
+        "strap": AW.Mat("storm", 1, 0.05, 0.35),
+    }
+
+    # ---- helmet: clear ice grown into a closed helm, a slit of cold light under its brow; a crown of icicles round the
+    # brow, tallest at the front, leaning out
+    head = closed_helm("helm", "helm", "helm_top", "helm_brow", "helm", "slit") + [
+        B(-5, 5, 9, 10, -1, 5, "ice_rim", "circlet"),
+    ]
+    for x, z, h, lean, glow in ((0, 3, 6, 0, True), (-2.5, 3, 4, 10, False), (2.5, 3, 4, -10, False),
+                                (-4, 1, 3, 18, True), (4, 1, 3, -18, True)):
+        head += turned([B(x - 1, x + 1, 10, 11, z - 1, z + 1, "ice", "icicle_base"),
+                        B(x - 0.5, x + 0.5, 11, 11 + h, z - 0.5, z + 0.5, "icicle_glow" if glow else "icicle", "icicle")],
+                       rot(-8, 0, lean), (x, 10.0, z))
+
+    # ---- chestplate: white pelt; a fur collar; clear ice plates on the breast; shards of ice off the shoulders
+    body = [
+        B(-5, 5, -10, 0, -3, 3, "pelt", "pelt"),
+        B(-4, 4, -8, -2, 3, 4, "ice_rim", "plate"), B(-1, 1, -7, -3, 4, 5, "icicle_glow", "keel"),
+        B(-7, 7, -2, 2, -5, 5, "fur", "mantle"), B(-5, 5, 2, 3, -5, 2, "fur_dark", "mantle_top"),
+        B(-5, 5, -10, -9, 3, 4, "strap", "strap"),
+    ]
+    right_arm = [
+        VX.Box((-3.0, 2.0, 0.0), (3.0, 1.0, 3.5), "ice_rim", "pauldron", rot(0, 0, -16)),
+        VX.Box((-5.0, 4.0, 1.0), (0.5, 2.5, 0.5), "icicle", "shard", rot(0, 0, 28)),
+        VX.Box((-4.0, 4.5, -1.0), (0.5, 2.0, 0.5), "icicle_glow", "shard2", rot(0, 0, 18)),
+        B(-4, 2, -6, 1, -3, 3, "pelt", "sleeve"),
+        B(-4, 2, -10, -6, -3, 3, "ice", "vambrace"), B(-5, 3, -7, -6, -4, 4, "fur_dark", "cuff"),
+        B(-4, 2, -11, -10, -3, 3, "strap", "glove"),
+    ]
+    cape0 = [B(-5, 5, -6, 0, -1, 0, "fur", "cape")]
+    cape1 = [B(-5, 5, -4, 0, -1, 0, "frost_hem", "cape", hem=True)]
+
+    # ---- leggings: white pelt; ice plates at the knee; fur front and back to the knee
+    belt = [B(-5, 5, -13, -10, -3, 3, "strap", "belt"), B(-1, 1, -12, -11, 3, 4, "ice", "buckle")]
+    right_leg = [B(-3, 2, -6, 0, -3, 3, "pelt", "leg"), B(-3, 2, -8, -6, 3, 4, "ice_rim", "poleyn")]
+    front_cloth = [B(-3, 3, -5, 0, 0, 1, "fur_dark", "flap", hem=True)]
+    back_cloth = [B(-4, 4, -5, 0, -1, 0, "fur_dark", "flap", hem=True)]
+
+    # ---- boots: fur boots, an ice shin plate, an ice spur rising behind the heel
+    right_boot = [
+        B(-4, 3, -8, -6, -4, 4, "fur", "cuff"),
+        B(-3, 2, -13, -8, -3, 3, "fur_dark", "boot"),
+        B(-2, 1, -12, -8, 3, 4, "ice", "shin"),
+        VX.Box((-0.5, -11.0, -4.5), (0.5, 2.0, 0.5), "icicle_glow", "spur", rot(-40, 0, 0)),
+    ]
+    pieces = {
+        "helmet": {"head": head},
+        "chestplate": {"body": body, "right_arm": right_arm, "left_arm": mirror(right_arm), "cape0": cape0, "cape1": cape1},
+        "leggings": {"body": belt, "right_leg": right_leg, "left_leg": mirror(right_leg), "front_cloth": front_cloth, "back_cloth": back_cloth},
+        "boots": {"right_leg": right_boot, "left_leg": mirror(right_boot)},
+    }
+    return dict(id="frostwalker", mats=mats, pieces=pieces, accent=AW.RAMPS["ice"][5])
+
+
+def _disc(cx, cy, z0, z1, r, mat, part):
+    """A round disc facing forward from stepped boxes (rows of whole texels, each as wide as the circle there)."""
+    out = []
+    for k in range(-r, r):
+        y = k + 0.5
+        w = int(math.floor(math.sqrt(max(r * r - y * y, 0)) + 0.35))
+        if w > 0:
+            out.append(B(cx - w, cx + w, cy + k, cy + k + 1, z0, z1, mat, part))
+    return out
+
+
+def sunward():
+    """Sunward (C, Channeler): the sun's priests of the open gates. An ivory coif, open at the face, a gold band at
+    the brow holding a diamond; behind the head a gold sun disc with its rays, lit at its heart; a gold breastplate
+    with the sun on it over ivory robes; long ivory tabards to the knee, a gold line down each; gilded greaves. The
+    runes it leaves circling are little suns."""
+    mats = {
+        "coif": AW.Mat("ivory", 6, 0.0, 0.2, details=(folds(3),)),
+        "robe": AW.Mat("ivory", 6, 0.0, 0.2, details=(folds(3),)),
+        "tabard": AW.Mat("ivory", 6, 0.0, 0.2, details=(folds(3), marks([(0, y) for y in range(-6, 0)], "gold", 5))),
+        "gold": AW.Mat("gold", 5, 0.85, 0.9),
+        "gold_rim": AW.Mat("gold", 5, 0.85, 0.9, details=(rims("gold", 6),)),
+        "gold_lames": AW.Mat("gold", 5, 0.85, 0.9, details=(lames(2, -1),)),
+        "gold_hem": AW.Mat("gold", 5, 0.85, 0.9, details=(hem("gold", 6),)),
+        "diamond": AW.Mat("pearl", 5, 0.2, 1.0, emit=0.25, bevel=False),
+        "sun": AW.Mat("gold", 5, 0.85, 0.9, details=(rims("gold", 6),)),
+        "sun_boss": AW.Mat("gold", 6, 0.85, 0.95),
+        "sun_heart": AW.Mat("amber", 5, 0.1, 0.8, emit=0.6, bevel=False),
+        "ray": AW.Mat("gold", 5, 0.85, 0.9),
+    }
+
+    # ---- helmet: the coif round head and neck, open at the face; the brow band and its diamond; the sun disc
+    head = [
+        B(-5, -4, -1, 8, -5, 4, "coif", "coif"), B(4, 5, -1, 8, -5, 4, "coif", "coif"),
+        B(-4, 4, -1, 8, -5, -4, "coif", "coif"),
+        B(-5, 5, 8, 9, -5, 4, "coif", "coif"),
+        B(-5, 5, 6, 7, 4, 5, "gold", "band"), B(-1, 1, 6, 8, 5, 6, "diamond", "band_gem"),
+        B(-4, 4, -1, 1, 4, 5, "coif", "chin"),
+    ]
+    # the sun: a gold disc wider than the head, so its burning ring shows all round it from the front; a boss on its back
+    head += _disc(0, 5, -8, -7, 8, "sun", "disc")
+    head += _disc(0, 5, -7, -6, 7, "sun_heart", "disc_ring")
+    head += _disc(0, 5, -9, -8, 4, "sun_boss", "disc_boss")
+    for deg in range(0, 360, 45):
+        R = rot(0, 0, deg)
+        c = np.array([0.0, 5.0, -8.0]) + R @ np.array([0.0, 9.5, 0.0])
+        head.append(VX.Box(c, (0.5, 2.0 if deg % 90 == 0 else 1.5, 0.5), "ray", "ray", R))
+
+    # ---- chestplate: the ivory robe; a gold breastplate with the sun; rising gold pauldrons
+    body = [
+        B(-5, 5, -10, 0, -3, 3, "robe", "robe"),
+        B(-4, 4, -6, 0, 3, 4, "gold_rim", "breast"),
+        B(-2, 2, -4, -1, 4, 5, "gold", "sunplate"), B(-1, 1, -3, -2, 5, 6, "sun_heart", "sunface"),
+        B(-5, 5, -1, 1, -4, 4, "gold_hem", "yoke"),
+    ]
+    right_arm = [
+        VX.Box((-2.5, 2.0, 0.0), (3.5, 1.0, 4.0), "gold_hem", "pauldron", rot(0, 0, -16)),
+        VX.Box((-3.0, 3.5, 0.0), (2.0, 0.5, 3.0), "gold", "pauldron2", rot(0, 0, -22)),
+        B(-4, 2, -6, 1, -3, 3, "robe", "sleeve"),
+        B(-4, 2, -10, -6, -3, 3, "gold_lames", "vambrace"),
+        B(-4, 2, -11, -10, -3, 3, "coif", "glove"),
+    ]
+
+    # ---- leggings: a gold belt; ivory robe legs; long tabards front and back, a gold line down each
+    belt = [B(-5, 5, -13, -10, -3, 3, "gold_rim", "belt"), B(-1, 1, -12, -11, 3, 4, "diamond", "clasp")]
+    right_leg = [B(-3, 2, -6, 0, -3, 3, "robe", "leg")]
+    front_cloth = [B(-3, 3, -6, 0, 0, 1, "tabard", "tabard", hem=True)]
+    back_cloth = [B(-4, 4, -6, 0, -1, 0, "tabard", "tabard", hem=True)]
+
+    # ---- boots: gilded greaves, ivory shoes
+    right_boot = [
+        B(-3, 2, -11, -6, -3, 3, "gold_lames", "greave"), B(-4, 3, -7, -6, -4, 4, "gold_rim", "cuff"),
+        B(-3, 2, -13, -11, -3, 3, "coif", "shoe"),
+        B(-2, 2, -13, -11, 3, 4, "gold", "toe"),
+    ]
+    rune = _disc(0, 0, -0.5, 0.5, 2, "sun_heart", "rsun")
+    for deg in range(0, 360, 90):
+        R = rot(0, 0, deg)
+        c = np.array([0.0, 0.0, 0.0]) + R @ np.array([0.0, 3.0, 0.0])
+        rune.append(VX.Box(c, (0.5, 1.0, 0.5), "ray", "rray", R))
+    pieces = {
+        "helmet": {"head": head},
+        "chestplate": {"body": body, "right_arm": right_arm, "left_arm": mirror(right_arm)},
+        "leggings": {"body": belt, "right_leg": right_leg, "left_leg": mirror(right_leg), "front_cloth": front_cloth, "back_cloth": back_cloth},
+        "boots": {"right_leg": right_boot, "left_leg": mirror(right_boot)},
+    }
+    return dict(id="sunward", mats=mats, pieces=pieces, rune=rune, accent=AW.RAMPS["gold"][5])
+
+
+def shardcrown():
+    """Shardcrown (C, Lord-forged): forged round a C-rank Lord's heart, which goes on growing. Dark steel; a crown of
+    violet crystal breaking up out of a closed helm; crystal bursting from the pauldrons and the spine; the heart
+    itself, a cluster of crystal, burning in the breast."""
+    mats = {
+        "steel": AW.Mat("lacquer", 5, 0.8, 0.85),
+        "steel_lames": AW.Mat("lacquer", 5, 0.8, 0.85, details=(lames(2, -1),)),
+        "steel_rim": AW.Mat("lacquer", 5, 0.8, 0.85, details=(rims("veil", 5),)),
+        "crystal": AW.Mat("veil", 5, 0.2, 1.0, details=(lames(2, 1),)),
+        "crystal_dark": AW.Mat("veil", 3, 0.2, 1.0),
+        "crystal_glow": AW.Mat("veil", 4, 0.1, 1.0, emit=0.6, bevel=False),
+        "eye": AW.Mat("veil", 4, 0.0, 0.4, emit=0.55, bevel=False),
+        "cloth": AW.Mat("obsidian", 2, 0.0, 0.2, details=(folds(3),)),
+    }
+
+    def shard(c, h, deg_z, deg_x, mat, part, w=1.0):
+        return VX.Box(c, (w, h, w), mat, part, rot(deg_x, 0, deg_z))
+
+    # ---- helmet: closed, a violet slit; a crown of crystal shards breaking up round the crown, tallest at the front
+    head = [
+        B(-5, -4, -1, 8, -5, 5, "steel_rim", "helm"), B(4, 5, -1, 8, -5, 5, "steel_rim", "helm"),
+        B(-4, 4, -1, 8, -5, -4, "steel_lames", "helm"),
+        B(-5, 5, 8, 9, -5, 5, "steel", "helm"),
+        B(-4, 4, 5, 8, 4, 5, "steel", "brow"), B(-3, 3, 4, 5, 4, 5, "eye", "eye"),
+        B(-4, -3, 4, 5, 4, 5, "steel", "face"), B(3, 4, 4, 5, 4, 5, "steel", "face"),
+        B(-4, 4, -1, 4, 4, 5, "steel_lames", "face"),
+    ]
+    head += [shard((0.0, 11.0, 3.0), 3.0, 0, 12, "crystal_glow", "crown_c"),
+             shard((-2.5, 10.5, 2.5), 2.0, 18, 10, "crystal", "crown_l"), shard((2.5, 10.5, 2.5), 2.0, -18, 10, "crystal", "crown_r"),
+             shard((-4.0, 10.0, 0.0), 1.5, 30, 0, "crystal_dark", "crown_l2"), shard((4.0, 10.0, 0.0), 1.5, -30, 0, "crystal_dark", "crown_r2"),
+             shard((-2.0, 10.0, -3.0), 1.5, 14, -16, "crystal", "crown_l3", 0.5), shard((2.0, 10.0, -3.0), 1.5, -14, -16, "crystal", "crown_r3", 0.5)]
+
+    # ---- chestplate: dark plate; the heart, a burning cluster in the breast; crystal down the spine
+    body = [
+        B(-5, 5, -10, 0, -3, 3, "steel_lames", "cuirass"),
+        B(-4, 4, -8, 0, 3, 4, "steel_rim", "breast"),
+        B(-2, 2, -5, -1, 4, 5, "crystal_dark", "heart_bed"),
+        shard((0.0, -2.5, 5.5), 1.5, 0, 30, "crystal_glow", "heart"),
+        shard((-1.5, -3.5, 5.0), 1.0, 25, 25, "crystal", "heart2", 0.5), shard((1.5, -3.5, 5.0), 1.0, -25, 25, "crystal", "heart3", 0.5),
+        B(-6, 6, -10, -8, -4, 4, "steel_rim", "fauld"),
+        shard((0.0, -1.0, -4.5), 2.5, 0, -30, "crystal", "spine"), shard((-1.5, -4.5, -4.0), 1.5, 15, -35, "crystal_dark", "spine2"),
+        shard((1.5, -4.5, -4.0), 1.5, -15, -35, "crystal_dark", "spine3"),
+    ]
+    right_arm = [
+        VX.Box((-2.5, 2.0, 0.0), (4.0, 1.5, 4.5), "steel_rim", "pauldron", rot(0, 0, -14)),
+        shard((-4.5, 5.0, 0.0), 2.5, 30, 0, "crystal", "pshard"), shard((-3.0, 5.0, 2.0), 2.0, 15, 20, "crystal_glow", "pshard2"),
+        shard((-3.0, 4.5, -2.0), 1.5, 15, -20, "crystal_dark", "pshard3"),
+        B(-4, 2, -5, -1, -3, 3, "steel_lames", "rerebrace"),
+        B(-4, 2, -10, -5, -3, 3, "steel", "vambrace"),
+        B(-4, 2, -11, -10, -3, 3, "steel_rim", "gauntlet"),
+    ]
+    cape0 = [B(-5, 5, -6, 0, -1, 0, "cloth", "cape")]
+    cape1 = [B(-5, 5, -5, 0, -1, 0, "cloth", "cape", hem=True)]
+
+    # ---- leggings: dark plate, a shard at each knee; tassets front and back
+    belt = [B(-5, 5, -13, -10, -3, 3, "steel_rim", "belt"), B(-1, 1, -12, -11, 3, 4, "crystal_glow", "buckle")]
+    right_leg = [B(-3, 2, -6, 0, -3, 3, "steel_lames", "cuisse"), B(-3, 2, -8, -6, 3, 4, "steel_rim", "poleyn"),
+                 shard((-1.0, -6.0, 4.5), 1.0, 10, 30, "crystal", "kshard", 0.5)]
+    front_cloth = [B(-3, 3, -5, 0, 0, 1, "steel_lames", "tasset", hem=True)]
+    back_cloth = [B(-4, 4, -5, 0, -1, 0, "steel_lames", "tasset", hem=True)]
+
+    # ---- boots: dark greaves, a crystal breaking from each heel
+    right_boot = [
+        B(-3, 2, -11, -6, -3, 3, "steel_lames", "greave"), B(-4, 3, -7, -6, -4, 4, "steel_rim", "cuff"),
+        B(-3, 2, -13, -11, -3, 3, "steel", "sabaton"), B(-2, 2, -13, -11, 3, 5, "steel", "toe"),
+        shard((-0.5, -10.0, -4.0), 1.5, 0, -40, "crystal", "heel"),
+    ]
+    pieces = {
+        "helmet": {"head": head},
+        "chestplate": {"body": body, "right_arm": right_arm, "left_arm": mirror(right_arm), "cape0": cape0, "cape1": cape1},
+        "leggings": {"body": belt, "right_leg": right_leg, "left_leg": mirror(right_leg), "front_cloth": front_cloth, "back_cloth": back_cloth},
+        "boots": {"right_leg": right_boot, "left_leg": mirror(right_boot)},
+    }
+    return dict(id="shardcrown", mats=mats, pieces=pieces, accent=AW.RAMPS["veil"][5])
+
+
+def deepcarapace():
+    """Deepcarapace (B, Bulwark): Deepglass grown like the shell of the Living Deep's great beetles. A domed helm with a
+    ridge from brow to nape and its jaws swept forward at the cheeks; ridged shell pauldrons; two wing-cases closed
+    over the back, split down the middle; the shell's seams lit cave cyan."""
+    mats = {
+        "shell": AW.Mat("obsidian", 5, 0.35, 1.0, details=(rims("sea", 3),)),
+        "shell_lames": AW.Mat("obsidian", 4, 0.35, 1.0, details=(lames(2, -1),)),
+        "shell_seam": AW.Mat("obsidian", 4, 0.35, 1.0, details=(lames(3, -1), side_seam("spore", 0.7))),
+        "shell_rim": AW.Mat("obsidian", 4, 0.35, 1.0, details=(rims("sea", 4),)),
+        "ridge": AW.Mat("obsidian", 6, 0.35, 1.0),
+        "glow": AW.Mat("spore", 5, 0.0, 0.6, emit=0.75, bevel=False),
+        "horn": AW.Mat("obsidian", 3, 0.35, 1.0, details=(lames(1, -1),)),
+        "jaw": AW.Mat("obsidian", 5, 0.35, 1.0),
+        "under": AW.Mat("void", 3, 0.1, 0.4, details=(lames(2, -1),)),
+    }
+
+    # ---- helmet: a domed shell with a cyan slit under its brow; a great horn rising from the brow and sweeping back,
+    # like the cave beetles'
+    head = closed_helm("shell_lames", "shell_lames", "shell", "shell", "shell_lames", "glow") + [
+        B(-4, 4, 9, 10, -4, 4, "shell", "dome_top"),
+        B(-1, 1, 10, 11, -4, 2, "ridge", "ridge"),
+    ]
+    head += chain((0.0, 8.0, 4.0), [((0.0, 1.0, 0.35), 4, 3, 3, "horn"), ((0.0, 1.0, -0.15), 4, 2, 2, "horn"),
+                                    ((0.0, 1.0, -0.4), 3, 1, 1, "horn")], "horn")
+
+    # ---- chestplate: a segmented breast, a cyan seam down it; ridged shell pauldrons; the wing-cases on the back
+    body = [
+        B(-5, 5, -10, 0, -3, 3, "under", "cuirass"),
+        B(-4, 4, -8, 0, 3, 4, "shell_lames", "breast"), B(-1, 1, -7, 0, 4, 5, "ridge", "keel"),
+        B(-6, 6, -10, -8, -4, 4, "shell_rim", "fauld"),
+        B(-5, 0, -11, 1, -5, -3, "shell_rim", "elytron"), B(0, 5, -11, 1, -5, -3, "shell_rim", "elytron2"),
+        B(-0.5, 0.5, -10, 0, -5.5, -4.5, "glow", "elytra_seam"),
+    ]
+    right_arm = [
+        VX.Box((-2.5, 2.5, 0.0), (4.0, 1.0, 4.5), "shell_rim", "pauldron", rot(0, 0, -16)),
+        VX.Box((-3.0, 3.5, 0.0), (2.5, 0.5, 3.5), "ridge", "pauldron2", rot(0, 0, -20)),
+        B(-4, 2, -5, 0, -3, 3, "shell_lames", "rerebrace"),
+        B(-4, 2, -10, -5, -3, 3, "shell_seam", "vambrace"),
+        B(-4, 2, -11, -10, -3, 3, "shell", "gauntlet"),
+    ]
+
+    # ---- leggings: segmented cuisses, a cyan seam; shell tassets
+    belt = [B(-5, 5, -13, -10, -3, 3, "shell_rim", "belt"), B(-1, 1, -12, -11, 3, 4, "glow", "buckle")]
+    right_leg = [B(-3, 2, -6, 0, -3, 3, "shell_seam", "cuisse"), B(-3, 2, -8, -6, 3, 4, "shell", "poleyn")]
+    front_cloth = [B(-3, 3, -5, 0, 0, 1, "shell_lames", "tasset", hem=True)]
+    back_cloth = [B(-4, 4, -5, 0, -1, 0, "shell_lames", "tasset", hem=True)]
+
+    # ---- boots: shell greaves, pointed sabatons
+    right_boot = [
+        B(-3, 2, -11, -6, -3, 3, "shell_seam", "greave"), B(-4, 3, -7, -6, -4, 4, "shell_rim", "cuff"),
+        B(-3, 2, -13, -11, -3, 3, "shell", "sabaton"), B(-2, 1, -13, -11, 3, 5, "shell", "toe"),
+        B(-1, 0, -13, -12, 5, 6, "ridge", "point"),
+    ]
+    pieces = {
+        "helmet": {"head": head},
+        "chestplate": {"body": body, "right_arm": right_arm, "left_arm": mirror(right_arm)},
+        "leggings": {"body": belt, "right_leg": right_leg, "left_leg": mirror(right_leg), "front_cloth": front_cloth, "back_cloth": back_cloth},
+        "boots": {"right_leg": right_boot, "left_leg": mirror(right_boot)},
+    }
+    return dict(id="deepcarapace", mats=mats, pieces=pieces, accent=AW.RAMPS["spore"][5])
+
+
+def cloudrunner():
+    """Cloudrunner (B, Strider): the high gates' messengers, who run where the ground gives out. A sleek white helm with
+    feathered fins swept back from the temples; light white plates over slate cloth; fins of feathers on the
+    shoulders; a short mantle of long feathers at the back; feathered fins at the heels."""
+    mats = {
+        "plate": AW.Mat("white", 5, 0.6, 0.85),
+        "plate_rim": AW.Mat("white", 5, 0.6, 0.85, details=(rims("slate", 4),)),
+        "plate_lames": AW.Mat("white", 5, 0.6, 0.85, details=(lames(2, -1),)),
+        "cloth": AW.Mat("storm", 2, 0.0, 0.2, details=(folds(3),)),
+        "feather": AW.Mat("white", 6, 0.0, 0.4, details=(lames(2, -1),)),
+        "feather_b": AW.Mat("pearl", 5, 0.0, 0.4, details=(lames(2, -1),)),
+        "feather_tip": AW.Mat("storm", 3, 0.0, 0.4),
+        "visor": AW.Mat("storm", 1, 0.3, 0.8),
+        "slit": AW.Mat("storm", 6, 0.0, 0.5, emit=0.75, bevel=False),
+        "gem": AW.Mat("storm", 5, 0.1, 1.0, emit=0.4, bevel=False),
+    }
+
+    def fin(p0, ds, lens, part, flat=(1, 0, 0)):
+        """A wing of broad flat feathers fanned from p0, each along its own direction, a dark tip on each; flat: the
+        axis a feather is thin along (x: a wing at the side of the head or heel)."""
+        out = []
+        for k, (d, ln) in enumerate(zip(ds, lens)):
+            dd = np.asarray(d, dtype=float)
+            b, end = link(p0, dd, ln, 2, 1, "feather" if k % 2 == 0 else "feather_b", f"{part}{k}", up=flat)
+            t, _ = link(end, dd, 2, 2, 1, "feather_tip", f"{part}{k}t", up=flat)
+            out += [b, t]
+        return out
+
+    # ---- helmet: sleek, a dark visor with a pale slit; feathered fins swept back from the temples
+    # the face in shadow behind a nasal, a slit of storm light under the brow
+    head = closed_helm("plate_rim", "plate_lames", "plate", "plate", "visor", "slit") + [
+        B(-1, 1, 9, 10, -3, 5, "plate", "crest"),
+        B(-1, 1, 0, 4, 5, 6, "plate", "nasal"),
+    ]
+    wing = fin((5.5, 6.0, 1.5), [(0.12, 0.35, -1.0), (0.2, 0.8, -0.8), (0.28, 1.3, -0.5)], [6, 5, 4], "hfin")
+    head += wing + mirror(wing)
+
+    # ---- chestplate: light plate on slate cloth, a storm gem; feather fins rising off the shoulders; the mantle
+    body = [
+        B(-5, 5, -10, 0, -3, 3, "cloth", "cloth"),
+        B(-4, 4, -6, 0, 3, 4, "plate_rim", "breast"), B(-1, 1, -3, -1, 4, 5, "gem", "gem"),
+        B(-5, 5, -1, 1, -4, 4, "plate", "yoke"),
+    ]
+    right_arm = [
+        VX.Box((-2.5, 2.0, 0.0), (3.5, 1.0, 4.0), "plate_rim", "pauldron", rot(0, 0, -16)),
+        B(-4, 2, -6, 1, -3, 3, "cloth", "sleeve"),
+        B(-4, 2, -10, -6, -3, 3, "plate_lames", "vambrace"),
+        B(-4, 2, -11, -10, -3, 3, "visor", "glove"),
+    ] + fin((-4.5, 3.0, -1.0), [(-0.25, 0.8, -0.8), (-0.4, 1.2, -0.4)], [4, 3], "pfin")
+    cape0 = [B(-5, 5, -6, 0, -1, 0, "feather", "mantle")]
+    cape1 = [B(x0, x0 + 2, -ln, 0, -1, 0, "feather" if k % 2 == 0 else "feather_b", f"mantle_t{x0}") for k, (x0, ln) in enumerate(((-5, 2), (-3, 4), (-1, 5), (1, 4), (3, 2)))]
+    cape1 += [B(x0, x0 + 2, -ln - 1, -ln, -1, 0, "feather_tip", f"mantle_tip{x0}", hem=True) for x0, ln in ((-5, 2), (-3, 4), (-1, 5), (1, 4), (3, 2))]
+
+    # ---- leggings: slate cloth, white knee plates, a short white flap front and back
+    belt = [B(-5, 5, -13, -10, -3, 3, "plate_rim", "belt"), B(-1, 1, -12, -11, 3, 4, "gem", "buckle")]
+    right_leg = [B(-3, 2, -6, 0, -3, 3, "cloth", "leg"), B(-3, 2, -8, -6, 3, 4, "plate_rim", "poleyn")]
+    front_cloth = [B(-3, 3, -4, 0, 0, 1, "plate_lames", "flap", hem=True)]
+    back_cloth = [B(-4, 4, -4, 0, -1, 0, "plate_lames", "flap", hem=True)]
+
+    # ---- boots: white greaves; a fin of feathers swept back and up from each heel
+    right_boot = [
+        B(-3, 2, -11, -6, -3, 3, "plate_lames", "greave"), B(-4, 3, -7, -6, -4, 4, "plate_rim", "cuff"),
+        B(-3, 2, -13, -11, -3, 3, "visor", "shoe"), B(-2, 2, -13, -11, 3, 4, "plate", "toe"),
+    ] + fin((-3.5, -10.0, -1.5), [(-0.12, 0.4, -1.0), (-0.2, 0.9, -0.8)], [4, 3], "bfin")
+    pieces = {
+        "helmet": {"head": head},
+        "chestplate": {"body": body, "right_arm": right_arm, "left_arm": mirror(right_arm), "cape0": cape0, "cape1": cape1},
+        "leggings": {"body": belt, "right_leg": right_leg, "left_leg": mirror(right_leg), "front_cloth": front_cloth, "back_cloth": back_cloth},
+        "boots": {"right_leg": right_boot, "left_leg": mirror(right_boot)},
+    }
+    return dict(id="cloudrunner", mats=mats, pieces=pieces, accent=AW.RAMPS["storm"][6])
+
+
+def tidebreaker():
+    """Tidebreaker (B, Duelist): duelists of the drowned gates. Sea-green scale edged in amethyst; a helm with a tall
+    fin crest, its spines amethyst, and small fins at the cheeks; fin pauldrons swept back; a cape cut like a wave
+    breaking, its crest curling back white with foam."""
+    mats = {
+        "scale": AW.Mat("sea", 3, 0.6, 0.85, details=(scales(),)),
+        "scale_rim": AW.Mat("sea", 3, 0.6, 0.85, details=(scales(), rims("veil", 5))),
+        "helm": AW.Mat("sea", 4, 0.6, 0.85, details=(lames(2, -1),)),
+        "helm_plain": AW.Mat("sea", 4, 0.6, 0.85),
+        "plate": AW.Mat("sea", 4, 0.6, 0.85, details=(rims("veil", 5),)),
+        "plate_lames": AW.Mat("sea", 3, 0.6, 0.85, details=(lames(2, -1),)),
+        "web": AW.Mat("sea", 5, 0.2, 0.9, details=(lames(1, -1),)),
+        "spine": AW.Mat("veil", 5, 0.6, 0.9),
+        "eye": AW.Mat("lilac", 4, 0.0, 0.4, emit=0.75, bevel=False),
+        "cape": AW.Mat("sea", 3, 0.0, 0.3, details=(folds(3),)),
+        "cape_wave": AW.Mat("sea", 3, 0.0, 0.3, details=(folds(3), hem("glass", 6, rows=1, metal=0.0, gloss=0.4))),
+        "foam": AW.Mat("glass", 6, 0.0, 0.4),
+        "dark": AW.Mat("sea", 1, 0.1, 0.4),
+    }
+
+    # ---- helmet: a close scale helm, a dark visor with a violet slit; the fin crest; fins at the cheeks
+    head = closed_helm("helm", "helm", "helm_plain", "helm_plain", "helm", "eye")
+    for z0, h in ((3, 6), (1, 7), (-1, 6), (-3, 5), (-5, 3)):
+        head += [B(-0.5, 0.5, 9, 9 + h - 1, z0, z0 + 2, "web", "fin"),
+                 B(-0.5, 0.5, 9 + h - 1, 9 + h, z0, z0 + 2, "spine", "fin_spine")]
+    cheek = turned([B(5, 6, 2, 5, -1, 3, "web", "cheek"), B(5, 6, 5, 6, -1, 1, "spine", "cheek_spine")],
+                   rot(0, 25, 0), (5.0, 3.0, 1.0))
+    head += cheek + mirror(cheek)
+
+    # ---- chestplate: a scale cuirass edged in amethyst; fin pauldrons swept back; the wave cape
+    body = [
+        B(-5, 5, -10, 0, -3, 3, "scale", "cuirass"),
+        B(-4, 4, -7, 0, 3, 4, "scale_rim", "breast"),
+        B(-6, 6, -10, -8, -4, 4, "plate", "fauld"),
+    ]
+    right_arm = [
+        VX.Box((-2.5, 2.0, 0.0), (3.5, 1.0, 4.0), "plate", "pauldron", rot(0, 0, -14)),
+    ] + turned([B(-4.5, -3.5, 2, 5, -5, 0, "web", "pfin"), B(-4.5, -3.5, 5, 6, -5, -2, "spine", "pfin_spine")],
+               rot(25, 0, 0), (-4.0, 3.5, -2.5)) + [
+        B(-4, 2, -5, 0, -3, 3, "scale", "rerebrace"),
+        B(-4, 2, -10, -5, -3, 3, "plate_lames", "vambrace"),
+        B(-4, 2, -11, -10, -3, 3, "dark", "glove"),
+    ]
+    cape0 = [B(-5, 5, -6, 0, -1, 0, "cape", "cape")]
+    # the wave: the cape's lower link leans back and curls, its crest white with foam
+    # its hem cut like a wave about to break, rising to a crest and falling away, foam along its edge
+    cape1 = [B(x0, x0 + 2, -ln, 0, -1, 0, "cape_wave", f"wave{x0}", hem=True) for x0, ln in ((-5, 2), (-3, 3), (-1, 5), (1, 6), (3, 3))]
+
+    # ---- leggings: scale; plate tassets edged in amethyst
+    belt = [B(-5, 5, -13, -10, -3, 3, "plate", "belt"), B(-1, 1, -12, -11, 3, 4, "eye", "buckle")]
+    right_leg = [B(-3, 2, -6, 0, -3, 3, "scale", "cuisse"), B(-3, 2, -8, -6, 3, 4, "plate", "poleyn")]
+    front_cloth = [B(-3, 3, -5, 0, 0, 1, "plate_lames", "tasset", hem=True)]
+    back_cloth = [B(-4, 4, -5, 0, -1, 0, "plate_lames", "tasset", hem=True)]
+
+    # ---- boots: scale greaves, a fin at the heel
+    right_boot = [
+        B(-3, 2, -11, -6, -3, 3, "scale", "greave"), B(-4, 3, -7, -6, -4, 4, "plate", "cuff"),
+        B(-3, 2, -13, -11, -3, 3, "dark", "sabaton"), B(-2, 2, -13, -11, 3, 5, "plate", "toe"),
+        VX.Box((-3.5, -10.0, -3.5), (0.5, 1.5, 1.5), "web", "bfin", rot(-30, 0, 0)),
+    ]
+    pieces = {
+        "helmet": {"head": head},
+        "chestplate": {"body": body, "right_arm": right_arm, "left_arm": mirror(right_arm), "cape0": cape0, "cape1": cape1},
+        "leggings": {"body": belt, "right_leg": right_leg, "left_leg": mirror(right_leg), "front_cloth": front_cloth, "back_cloth": back_cloth},
+        "boots": {"right_leg": right_boot, "left_leg": mirror(right_boot)},
+    }
+    return dict(id="tidebreaker", mats=mats, pieces=pieces, accent=AW.RAMPS["veil"][6])
+
+
+def hollowheart():
+    """Hollowheart (B, Lord-forged): a B-rank Lord's heart, hollowed out and still beating, carried in a cage of bone
+    on the chest. Pale bone over deep red; a smooth bone helm with a dark slit, a crown of ribs sweeping back from
+    it; ribbed bone pauldrons; a ragged red cape."""
+    mats = {
+        "bone": AW.Mat("bone", 4, 0.1, 0.55),
+        "bone_lames": AW.Mat("bone", 4, 0.1, 0.55, details=(lames(2, -1),)),
+        "bone_rim": AW.Mat("bone", 4, 0.1, 0.55, details=(rims("bone", 2),)),
+        "rib": AW.Mat("bone", 6, 0.1, 0.6),
+        "rib_dark": AW.Mat("bone", 4, 0.1, 0.55),
+        "red": AW.Mat("wine", 3, 0.0, 0.3, details=(folds(3),)),
+        "red_dark": AW.Mat("wine", 2, 0.0, 0.3, details=(folds(3),)),
+        "hollow": AW.Mat("void", 2, 0.0, 0.2, bevel=False),
+        "heart": AW.Mat("wine", 6, 0.1, 0.7, emit=0.6, bevel=False),
+        "heart_core": AW.Mat("crimson", 4, 0.1, 0.7, emit=0.75, bevel=False),
+        "eye": AW.Mat("crimson", 4, 0.0, 0.4, emit=0.75, bevel=False),
+    }
+
+    # ---- helmet: smooth bone, a dark slit with a red light; a crown of ribs sweeping back
+    head = closed_helm("bone_rim", "bone_lames", "bone", "bone_rim", "bone_lames", "eye")
+    # the crown: bone spikes standing round the crown of the helm, leaning out, the front ones tallest
+    for x, z, h in ((0.0, 3.5, 6), (-3.0, 3.0, 5), (3.0, 3.0, 5), (-4.0, -0.5, 4), (4.0, -0.5, 4)):
+        out = np.array([x, 0.0, z]) / max(math.hypot(x, z), 1e-6)
+        head += chain((x, 8.5, z), [((out[0] * 0.3, 1.0, out[2] * 0.3), h - 2, 2, 2, "rib"),
+                                    ((out[0] * 0.45, 1.0, out[2] * 0.45), 3, 1, 1, "rib_dark")], f"crown{x}{z}")
+
+    # ---- chestplate: bone over red; the cage of ribs open on the breast, the heart burning in the hollow
+    body = [
+        B(-5, 5, -10, 0, -3, 3, "red", "under"),
+        B(-4, 4, -8, 0, 3, 4, "hollow", "hollow"),
+        B(-2, 2, -6, -1, 4, 5, "heart", "heart"), B(-1, 1, -7, -6, 4, 5, "heart", "heart_tip"),
+        B(-1, 1, -4, -2, 5, 6, "heart_core", "heart_core"),
+        B(-4, 4, -1, 0, 4, 6, "bone", "sternum_top"), B(-4, 4, -9, -8, 3, 5, "bone", "cage_base"),
+    ]
+    for y in (-2, -4, -6):
+        body += [B(-4, -2, y - 1, y, 5, 6, "rib", "cage"), B(2, 4, y - 1, y, 5, 6, "rib", "cage"),
+                 B(-5, -4, y - 1, y, 3, 6, "rib_dark", "cage_side"), B(4, 5, y - 1, y, 3, 6, "rib_dark", "cage_side")]
+    body += [B(-6, 6, -10, -9, -4, 3, "bone_rim", "fauld"), B(-5, 5, 0, 1, -4, 4, "bone", "yoke")]
+    right_arm = [
+        VX.Box((-2.5, 2.0, 0.0), (4.0, 1.5, 4.5), "bone_lames", "pauldron", rot(0, 0, -14)),
+        VX.Box((-4.0, 3.0, 0.0), (1.0, 1.5, 3.5), "rib", "pauldron_rib", rot(0, 0, -30)),
+        B(-4, 2, -5, -1, -3, 3, "red", "sleeve"),
+        B(-4, 2, -10, -5, -3, 3, "bone_lames", "vambrace"),
+        B(-4, 2, -11, -10, -3, 3, "red_dark", "glove"),
+    ]
+    cape0 = [B(-5, 5, -6, 0, -1, 0, "red", "cape")]
+    cape1 = [B(x0, x0 + 2, -ln, 0, -1, 0, "red_dark", f"cape_t{x0}", hem=True) for x0, ln in ((-5, 5), (-3, 3), (-1, 6), (1, 4), (3, 5))]
+
+    # ---- leggings: red cloth, bone knee plates, bone tassets
+    belt = [B(-5, 5, -13, -10, -3, 3, "bone_rim", "belt"), B(-1, 1, -12, -11, 3, 4, "heart", "buckle")]
+    right_leg = [B(-3, 2, -6, 0, -3, 3, "red", "leg"), B(-3, 2, -8, -6, 3, 4, "bone_rim", "poleyn")]
+    front_cloth = [B(-3, 3, -5, 0, 0, 1, "bone_lames", "tasset", hem=True)]
+    back_cloth = [B(-4, 4, -6, 0, -1, 0, "red_dark", "tail", hem=True)]
+
+    # ---- boots: bone greaves, red wraps
+    right_boot = [
+        B(-3, 2, -11, -6, -3, 3, "bone_lames", "greave"), B(-4, 3, -7, -6, -4, 4, "bone_rim", "cuff"),
+        B(-3, 2, -13, -11, -3, 3, "red_dark", "foot"), B(-2, 2, -13, -11, 3, 5, "bone", "toe"),
+    ]
+    pieces = {
+        "helmet": {"head": head},
+        "chestplate": {"body": body, "right_arm": right_arm, "left_arm": mirror(right_arm), "cape0": cape0, "cape1": cape1},
+        "leggings": {"body": belt, "right_leg": right_leg, "left_leg": mirror(right_leg), "front_cloth": front_cloth, "back_cloth": back_cloth},
+        "boots": {"right_leg": right_boot, "left_leg": mirror(right_boot)},
+    }
+    return dict(id="hollowheart", mats=mats, pieces=pieces, accent=AW.RAMPS["crimson"][5])
+
+
 SETS = {"wildhide": wildhide, "beastbound": beastbound, "gatewrought": gatewrought, "veilwoven": veilwoven,
         "lordscale": lordscale, "sovereign": sovereign,
         "bellguard": bellguard, "rootwarden": rootwarden, "amberwing": amberwing, "cleftrunner": cleftrunner,
-        "lanternlight": lanternlight, "bladeward": bladeward, "hornlord": hornlord}
+        "lanternlight": lanternlight, "bladeward": bladeward, "hornlord": hornlord,
+        "vaultbreaker": vaultbreaker, "frostwalker": frostwalker, "sunward": sunward, "shardcrown": shardcrown,
+        "deepcarapace": deepcarapace, "cloudrunner": cloudrunner, "tidebreaker": tidebreaker, "hollowheart": hollowheart}
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -1872,7 +2475,9 @@ def write(design):
 
 # set -> (rank, a Lord's set): the sets whose pieces are items of their own; a pattern for every rank above E
 OWN_ITEMS = {"bellguard": ("E", False), "rootwarden": ("E", False), "amberwing": ("E", False),
-             "cleftrunner": ("D", False), "lanternlight": ("D", False), "bladeward": ("D", False), "hornlord": ("D", True)}
+             "cleftrunner": ("D", False), "lanternlight": ("D", False), "bladeward": ("D", False), "hornlord": ("D", True),
+             "vaultbreaker": ("C", False), "frostwalker": ("C", False), "sunward": ("C", False), "shardcrown": ("C", True),
+             "deepcarapace": ("B", False), "cloudrunner": ("B", False), "tidebreaker": ("B", False), "hollowheart": ("B", True)}
 RANK_COLOUR = {"E": "#f4f6fb", "D": "#5fd08f", "C": "#6fb3ff", "B": "#b48cff", "A": "#f2a541", "S": "#ff5a6a"}
 ICON_SKIP = ("cape0", "cape1", "cape2", "back_cloth")  # behind the piece: they would only shrink its icon
 # each piece's turn in its icon (yaw, pitch): a helm and a chest a little from above, the legs level, boots side on

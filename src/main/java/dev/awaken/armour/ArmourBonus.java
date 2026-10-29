@@ -46,7 +46,28 @@ public final class ArmourBonus {
             case LANTERNLIGHT -> "Kindle: while your runes burn, anyone who strikes you up close catches fire";
             case BLADEWARD -> "Parry Ward: after a deflect, blows that land in the next two seconds do half";
             case HORNLORD -> "Gore: sprint for a moment and you lower your horns. The first creature you run into is gored and thrown";
+            case VAULTBREAKER -> "Vault Wall: a blow you guard glances off your plate and throws whoever struck it back, reeling";
+            case FROSTWALKER -> "Rime Path: still water freezes under your feet as you go, and a perfect dodge breathes frost that slows everyone close";
+            case SUNWARD -> "Noon: when you overchannel, the sun at your back flares. Foes near catch fire, and you and your friends near are mended";
+            case SHARDCROWN -> "Shatter: when a blow takes you under half health, crystal bursts out of your armour, cutting and throwing everyone close, and for three seconds blows do a third less";
+            case DEEPCARAPACE -> "Shell: crouch and stand still and the shell closes. Blows do 40% less, and each one fills Bastion twice as much";
+            case CLOUDRUNNER -> "Featherfall: falls never hurt you, and crouching in the air you drift down like a feather";
+            case TIDEBREAKER -> "Undertow: your cutting wave drags those it cuts toward you, and in water or rain your Edge fills twice as fast";
+            case HOLLOWHEART -> "Hollow Pulse: every fifth blow you land, the caged heart beats. A red wave hurts everyone close, and you mend for each one it strikes";
             default -> null;
+        };
+    }
+
+    /** What the archetype's ability has grown into at the set's rank (SPEC §44.5, "By rank"), or null below C. */
+    public static @org.jspecify.annotations.Nullable String growth(ArmourSet s) {
+        if (s.archetype == Archetype.LORD || s.rank.ordinal() < dev.awaken.progression.Rank.C.ordinal()) return null;
+        boolean b = s.rank.ordinal() >= dev.awaken.progression.Rank.B.ordinal();
+        return switch (s.archetype) {
+            case BULWARK -> "A hard landing bursts a full Bastion too" + (b ? ", and the burst carries the Force of your last power hit" : "");
+            case STRIDER -> "Foes close to your afterimage swing at it and reel" + (b ? ", and an afterimage left in the air rushes you on" : "");
+            case CHANNELER -> "Each rune stops one arrow or bolt" + (b ? ", and an overchannel gives back a quarter of your energy" : "");
+            case DUELIST -> "A perfect dodge with Edge full cuts back at once" + (b ? ", and the wave leaves those it cuts bleeding" : "");
+            case LORD -> null;
         };
     }
 
@@ -55,10 +76,12 @@ public final class ArmourBonus {
         if (s.hunter != null) {
             for (SetBonus.Line l : SetBonus.lines(s.hunter)) out.add(new Line(l.pieces(), l.text()));
             if (s.archetype != Archetype.LORD) out.add(new Line(SetBonus.FULL, ability(s.archetype)));
+            if (growth(s) != null) out.add(new Line(SetBonus.FULL, growth(s)));
             return out;
         }
         out.add(new Line(SetBonus.HALF, half(s.archetype)));
         if (s.archetype != Archetype.LORD) out.add(new Line(SetBonus.FULL, ability(s.archetype)));
+        if (growth(s) != null) out.add(new Line(SetBonus.FULL, growth(s)));
         String t = twist(s);
         if (t != null) out.add(new Line(SetBonus.FULL, t));
         return out;
