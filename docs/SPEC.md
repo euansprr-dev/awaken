@@ -6326,6 +6326,22 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       first-person dagger move leads with its point (0.99-1.00) or edge (0.98-0.99); the cuts turn 229-279 degrees,
       the Plunge 77, the Execution 129. The four third-person dagger lead misses are round 13's, unchanged. Filmed in
       the game before Euan plays it (`tools/autopilot/arms-daggers-r14.txt`, the clip recorder, day and night).
+  - *Round 15, a jab that keeps its fist low* (Euan 2026-10-29, after the round 14 film: "Keep the fist lower in the
+    jab before I play, so the forearm doesn't swing into the corner"). The forearm is Hands' (`WorldBody.drawFist`: drawn
+    0.6 block up to the fist from under the corner, at its true size), and the dagger stance holds the fist below the
+    frame, so a jab that slid its grip up the line to a mark under the crosshair lifted the fist 0.47-0.60 of the screen
+    and brought 0.23-0.28 of the screen's area in forearm with it (0.04 at rest).
+    - A jab's line runs to a mark deep in the target (1.5 ahead of the eye, the same place on the screen) and stops
+      short of it (`line`'s short and reach): aimed by half the wind-up with the fist where it holds (the blade tips onto
+      its line, so it points into the target), then driven its reach (6 cm) along the blade to the hit. The fist rises
+      0.20, the forearm covers 0.10, the blade shrinks to 0.77-0.81 of its stance size as it goes in, and the point lands
+      0.45-0.48 from the crosshair, on the target at fighting range.
+    - `swing_chain.py calm` holds a stab to it: the fist risen at most 0.22, the forearm (its own model of Hands') at
+      most 0.11, the blade at the hit at most 0.85 of the stance's size, the point within 0.5 of the crosshair (in place
+      of round 14's within 0.15 of the mark). The rise and the forearm are shown for every move: the slashes rise
+      0.30-0.45 (forearm 0.16-0.25), the chops 0.71-0.73 (0.36-0.37), unchanged this round.
+    - Every jab leads with its point (1.00), the chain judge passes mashed and in time, the click sweep steps nothing
+      over 0.2 (worst 0.15), and the blades come no nearer than 0.26 (round 14: 0.16). Filmed in game again.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
