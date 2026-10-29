@@ -5,6 +5,8 @@ to the max." And: "Don't use multiple agents, do this all yourself." So this one
 `claude/boss-plan-f38a45`) takes all 41 boss-tier creatures through the same steps as the Forge, one at a time, and
 keeps this page current. SPEC §35.11 holds the decisions; this page is the tracker.
 
+**Paused 2026-10-29 with 33 of 41 done.** The Signal's Shadow is half done and the seven Nightmares are left. Whoever finishes reads [HANDOVER.md](HANDOVER.md) first: it has the exact next steps, the workflow, the meter targets and the forms not to repeat.
+
 Pick page (one tap per boss, saved to the page's store): https://claude.ai/artifact/MUoruSXr8xmWNVk4JyAAbc
 
 Euan, 2026-10-29: "pick the most unique and interesting forms of each that avoid too much repetition and are CLEAR high
