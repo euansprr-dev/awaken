@@ -2372,12 +2372,320 @@ def hollowheart():
     return dict(id="hollowheart", mats=mats, pieces=pieces, accent=AW.RAMPS["crimson"][5])
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# Mastery IV: each set's awakened parts (SPEC §44.5). One bold change to the silhouette that grows out of the set's own
+# shapes (a second pair of horns, a gate over the head, a halo, longer cape tongues), drawn over the piece's own on the
+# same bone. Few new glows; nothing sculpted into a face.
+
+def chain_end(p0, links):
+    """Where chain() ends, and its last direction (to grow a horn on from its tip)."""
+    p, dd = np.asarray(p0, dtype=float), None
+    for k, (d, length, w, dep, mat) in enumerate(links):
+        dd = np.asarray(d, dtype=float) / np.linalg.norm(d)
+        if k:
+            p = p - dd * min(w, length) / 2
+        p = p + dd * length
+    return p, dd
+
+
+def moved(boxes, d):
+    d = np.asarray(d, dtype=float)
+    return [VX.Box(b.c + d, b.h, b.mat, b.part, b.R, b.name, **b.data) for b in boxes]
+
+
+def ring_bars(centre, r, n, a, b, mat, part, w=1, dep=1):
+    """A ring of n bars round centre in the plane of unit axes a and b (a halo, a floating crown)."""
+    c, a, b = (np.asarray(v, dtype=float) for v in (centre, a, b))
+    pts = [c + r * (math.cos(2 * math.pi * k / n) * a + math.sin(2 * math.pi * k / n) * b) for k in range(n)]
+    up = np.cross(a, b)
+    out = []
+    for k in range(n):
+        p0, p1 = pts[k], pts[(k + 1) % n]
+        ln = math.ceil(np.linalg.norm(p1 - p0))  # whole texels, a little over the chord so the joints close
+        u = (p1 - p0) / np.linalg.norm(p1 - p0)
+        # every other bar a texel deeper, so neighbours never share a face plane on turned grids: a beaded ring
+        bar, _ = link((p0 + p1) / 2 - u * ln / 2, u, ln, w, dep + k % 2, mat, part, up=up)
+        out.append(bar)
+    return out
+
+
+def longer(tongues, more, mat_of, part="cape_awake"):
+    """Cape tongues grown on below their ends: (x0, length) each, `more` texels longer, hemmed at the new end."""
+    return [B(x0, x0 + 2, -ln - more, -ln, -1, 0, mat_of(k), f"{part}{x0}", hem=True) for k, (x0, ln) in enumerate(tongues)]
+
+
+def _aw_wildhide(d):
+    # the wolf's hackles rise along its skull; the pelt on the shoulder bristles; bone claws at the right shoulder
+    head = []
+    for z, ln in ((2.5, 2), (-0.5, 3), (-3.5, 3)):
+        head += chain((0.0, 9.5, z), [((0, 1.0, -0.9), ln, 2, 1, "pelt_dark"), ((0, 0.5, -1.0), 2, 1, 1, "pelt_light")], f"hackle{z}")
+    left = []
+    for z, ln in ((1.5, 3), (-1.5, 3)):
+        left += chain((3.0, 3.5, z), [((0.45, 1.0, -0.2), ln, 2, 2, "pelt_dark"), ((0.3, 0.8, -0.6), 2, 1, 1, "pelt_light")], f"bristle{z}")
+    right = []
+    for z in (1.5, -1.0):
+        right += chain((-3.5, 3.0, z), [((-0.45, 1.0, 0.2), 3, 1, 1, "bone"), ((-0.1, 1.0, 0.7), 2, 1, 1, "fang")], f"claw{z}")
+    return {"helmet": {"head": head}, "chestplate": {"left_arm": left, "right_arm": right}}
+
+
+def _aw_beastbound(d):
+    # the mane stands into a crest of bristles; war-tusks rise from the brow like horns; a crest of tusks on each pauldron
+    head = [B(-1, 1, 11, 13, -1, 3, "bristle", "crest"), B(-1, 1, 13, 14, 0, 2, "bristle", "crest"),
+            B(-1, 1, 10, 12, -5, -2, "bristle", "crest")]
+    brow = chain((3.5, 7.5, 4.0), [((0.6, 1.0, -0.3), 3, 2, 2, "tusk"), ((0.2, 1.0, -0.8), 3, 2, 2, "tusk"),
+                                   ((-0.1, 0.6, -1.0), 2, 1, 1, "tusk_tip")], "war_tusk")
+    head += brow + mirror(brow)
+    arm = []
+    for z in (2.5, -2.5):
+        arm += chain((-4.5, 4.0, z), [((-0.5, 1.0, z * 0.12), 3, 2, 2, "tusk"), ((0.0, 1.0, z * 0.08), 2, 1, 1, "tusk_tip")], f"ptusk{z}")
+    return {"helmet": {"head": head}, "chestplate": {"right_arm": arm, "left_arm": mirror(arm)}}
+
+
+def _aw_gatewrought(d):
+    # a gate stands behind the head, wider than the helm: two pillars, a stepped lintel and its keystone; the doorway is
+    # open and a seam of gate light hangs in it over the crown, the visor's own slit grown tall
+    head = [B(-7, -5, 3, 15, -6, -5, "pillar", "agate"), B(5, 7, 3, 15, -6, -5, "pillar", "agate"),
+            B(-8, 8, 15, 17, -6, -5, "stone", "alintel"), B(-5, 5, 17, 18, -6, -5, "stone", "alintel_step"),
+            B(-1, 1, 18, 19, -6, -5, "silver", "akey"), B(-1, 1, 9, 15, -6, -5, "door", "aseam")]
+    arm = [VX.Box((-4.5, 5.5, 0.0), (0.5, 2.5, 1.5), "stone_dark", "astone", rot(0, 0, 18)),
+           VX.Box((-5.4, 8.3, 0.0), (0.5, 0.5, 0.5), "door", "astone_light", rot(0, 0, 18))]
+    return {"helmet": {"head": head}, "chestplate": {"right_arm": arm, "left_arm": mirror(arm)}}
+
+
+def _aw_veilwoven(d):
+    # a silver halo behind the hood with a Veil-stone at its top; the cape's ribbons fall twice as far
+    head = ring_bars((0, 8.5, -7.5), 5.5, 16, (1, 0, 0), (0, 1, 0), "silver", "halo")
+    head.append(VX.rbox((0, 14.0, -7.5), (2, 2, 3), 45, "gem", "halo_gem"))
+    mats = ("tongue", "sheer", "tongue", "sheer", "tongue")
+    cape2 = longer(((-5, 8), (-3, 6), (-1, 9), (1, 6), (3, 8)), 5, lambda k: mats[k])
+    return {"helmet": {"head": head}, "chestplate": {"cape2": cape2}}
+
+
+def _aw_lordscale(d):
+    # a second pair of horns from the crown, rising straight; a taller spike before the old on each pauldron; the cape longer
+    crown = chain((2.0, 9.0, -0.5), [((0.25, 1.0, -0.4), 3, 2, 2, "horn"), ((0.1, 1.0, -0.8), 3, 2, 2, "horn"),
+                                     ((0.0, 0.7, -1.0), 2, 1, 1, "horn_tip")], "crown_horn")
+    arm = chain((-4.0, 4.5, 1.5), [((-0.5, 1.0, 0.25), 4, 2, 2, "horn"), ((-0.25, 1.0, -0.2), 3, 1, 1, "horn_tip")], "pspike2")
+    cape2 = longer(((-5, 6), (-3, 5), (-1, 6), (1, 5), (3, 6)), 4, lambda k: "cloth")
+    return {"helmet": {"head": crown + mirror(crown)},
+            "chestplate": {"right_arm": arm, "left_arm": mirror(arm), "cape2": cape2}}
+
+
+def _aw_sovereign(d):
+    # the hollow crown rises off the head and hangs over it, spires on it lit at their tips; a second fin on each pauldron;
+    # the court cape longer
+    head = ring_bars((0, 15.5, 0), 6.0, 14, (1, 0, 0), (0, 0, 1), "silver", "high_crown")
+    for k in range(4):
+        a = math.pi / 2 * k + math.pi / 4
+        head.append(B(round(6 * math.cos(a)) - 0.5, round(6 * math.cos(a)) + 0.5, 16, 18, round(6 * math.sin(a)) - 0.5,
+                      round(6 * math.sin(a)) + 0.5, "spire", f"high_spire{k}"))
+    head.append(B(-0.5, 0.5, 16, 19, 5.5, 6.5, "spire", "high_spire_front"))
+    arm = [VX.Box((-5.5, 4.5, 2.0), (0.5, 2.0, 1.5), "fin", "pfin2", rot(-10, 0, 30))]
+    cape2 = longer(((-6, 7), (-4, 8), (-2, 9), (0, 9), (2, 8), (4, 7)), 4, lambda k: "cape")
+    return {"helmet": {"head": head}, "chestplate": {"right_arm": arm, "left_arm": mirror(arm), "cape2": cape2}}
+
+
+def _aw_bellguard(d):
+    # the bell grows its crown of canons, four cast loops round the one it hangs from; the pauldron bells flare wider
+    head = []
+    for k, (x, z) in enumerate(((3, 0), (-3, 0), (0, 3), (0, -3))):
+        lean = rot(-14 * np.sign(z), 0, 14 * np.sign(x) * -1)
+        loop = [B(-1.5, -0.5, 10, 13, -0.5, 0.5, "hoop", "canon"), B(0.5, 1.5, 10, 13, -0.5, 0.5, "hoop", "canon"),
+                B(-1.5, 1.5, 13, 14, -0.5, 0.5, "hoop", "canon")]
+        if z:
+            loop = turned(loop, rot(0, 90, 0), (0, 0, 0))
+        head += moved(turned(loop, lean, (0, 10, 0)), (x, 0, z))
+    flare = turned([B(-7, 3, -2, -1, -5, 5, "lip", "aflare")], rot(0, 0, -12), (-2.0, 0.0, 0.0))
+    return {"helmet": {"head": head}, "chestplate": {"right_arm": flare, "left_arm": mirror(flare)}}
+
+
+def _aw_rootwarden(d):
+    # the antlers grow a tine more each, in leaf; a sapling rises off each pauldron's moss
+    head = []
+    for p0, links in (((7.0, 10.5, -1.0), [((0.3, 1.0, -0.7), 3, 1, 1, "wood"), ((0.1, 1.0, -0.5), 2, 1, 1, "wood_tip")]),
+                      ((9.5, 12.0, -0.5), [((0.9, 0.6, 0.4), 2, 1, 1, "wood"), ((0.6, 1.0, 0.3), 2, 1, 1, "wood_tip")])):
+        tine = chain(p0, links, "atine")
+        end, _ = chain_end(p0, links)
+        tine += [VX.Box(end + np.array([0.5, 0.5, 0.5]), (1.0, 0.5, 1.0), "leaf", "aleaf", rot(20, 0, 15))]
+        head += tine + mirror(tine)
+    sap = chain((-3.5, 5.0, 0.5), [((-0.3, 1.0, 0.1), 3, 1, 1, "wood"), ((-0.6, 1.0, -0.2), 2, 1, 1, "wood_tip")], "sapling")
+    end, _ = chain_end((-3.5, 5.0, 0.5), [((-0.3, 1.0, 0.1), 3, 1, 1, "wood"), ((-0.6, 1.0, -0.2), 2, 1, 1, "wood_tip")])
+    sap += [VX.Box(end + np.array([-0.5, 0.5, 0.0]), (1.0, 0.5, 1.0), "leaf", "sap_leaf", rot(0, 0, 25)),
+            VX.Box((-4.0, 6.0, 1.5), (1.0, 0.5, 0.5), "leaf", "sap_leaf2", rot(0, 0, -30))]
+    return {"helmet": {"head": head}, "chestplate": {"right_arm": sap, "left_arm": mirror(sap)}}
+
+
+def _aw_amberwing(d):
+    # a third pair of wings opens high behind the shoulders; two amber feelers sweep back from the visor
+    wing = [VX.Box((4.0, 9.0, -5.5), (1.5, 6.5, 0.5), "wing", "wing_high", rot(0, 0, -14))]
+    feeler = chain((5.5, 4.5, 0.0), [((0.3, 0.5, -1.0), 4, 1, 1, "fin"), ((0.2, 0.9, -1.0), 3, 1, 1, "fin_tip")], "feeler")
+    return {"helmet": {"head": feeler + mirror(feeler)}, "chestplate": {"body": wing + mirror(wing)}}
+
+
+def _aw_cleftrunner(d):
+    # the scarf breaks loose: two long ribbons stream straight back from the collar as if the wearer were always running;
+    # its hanging ends fall longer
+    tail = chain((2.5, 1.0, -4.5), [((0.45, 0.15, -1.0), 5, 2, 1, "scarf"), ((0.6, 0.4, -1.0), 5, 2, 1, "scarf"),
+                                    ((0.6, 0.7, -1.0), 4, 1, 1, "scarf_light")], "astream")
+    low = chain((-2.5, 0.0, -4.5), [((-0.45, -0.05, -1.0), 5, 2, 1, "scarf"), ((-0.6, 0.25, -1.0), 4, 1, 1, "scarf_light")], "astream_low")
+    head = tail + low
+    cape2 = [B(0, 3, -13, -8, -1, 0, "scarf_hem", "tail_a2", hem=True), B(3, 5, -9, -5, -1, 0, "scarf_hem", "tail_b2", hem=True)]
+    return {"helmet": {"head": head}, "chestplate": {"cape2": cape2}}
+
+
+def _aw_lanternlight(d):
+    # a brass crook rises from the cowl and bends over the brow, a lantern hanging from it where the dark is deepest
+    head = [B(-0.5, 0.5, 11, 15, -4, -3, "brass", "crook"), B(-0.5, 0.5, 15, 16, -4, 8, "brass", "crook"),
+            B(-0.5, 0.5, 13, 15, 7, 8, "brass", "crook_hook"),
+            B(-1.5, 1.5, 12, 13, 6, 9, "brass", "crook_lamp"), B(-1, 1, 9, 12, 6.5, 8.5, "glass", "crook_glass"),
+            B(-1.5, 1.5, 8, 9, 6, 9, "brass", "crook_lamp")]
+    return {"helmet": {"head": head}}
+
+
+def _aw_bladeward(d):
+    # the plume trails twice as long; a steel blade stands up off the great pauldron; the half cape falls longer
+    head = [B(-1, 1, 1, 6, -13, -11, "plume", "aplume"), B(-1, 1, -3, 2, -14, -13, "plume", "aplume")]
+    blade, _ = link((4.5, 4.5, 0.0), (0.45, 1.0, 0.0), 6, 1, 3, "steel_hem", "ablade")
+    tip, _ = link((4.5, 4.5, 0.0) + np.array([0.45, 1.0, 0.0]) / np.linalg.norm((0.45, 1.0, 0.0)) * 6, (0.45, 1.0, 0.0), 2, 1, 1,
+                  "steel", "ablade_tip")
+    cape2 = longer(((0, 4), (2, 6), (4, 7)), 4, lambda k: "cape")
+    return {"helmet": {"head": head}, "chestplate": {"left_arm": [blade, tip], "cape2": cape2}}
+
+
+def _aw_hornlord(d):
+    # the great horns grow on past their tips; the fur rises in a ridge over the shoulders; a horn spike on each pauldron
+    links = [((1.0, 0.15, 0.0), 5, 3, 3, "horn"), ((0.75, 0.3, 0.7), 4, 3, 3, "horn"), ((0.15, 0.7, 0.8), 4, 2, 2, "horn_mid"),
+             ((-0.3, 1.0, 0.35), 3, 2, 2, "horn_mid"), ((-0.4, 1.0, -0.1), 3, 1, 1, "horn_tip")]
+    end, dd = chain_end((4.5, 6.5, 1.0), links)
+    grow = chain(end - dd * 0.5, [((-0.45, 0.8, -0.5), 3, 1, 1, "horn_tip"), ((-0.3, 0.2, -1.0), 2, 1, 1, "horn_tip")], "horn_grow")
+    body = [B(-6, 6, 3, 4, -5, 0, "fur_dark", "aridge"), B(-4, 4, 4, 5, -5, -1, "fur", "aridge")]
+    arm = chain((-4.5, 3.5, 0.0), [((-0.5, 1.0, 0.0), 3, 2, 2, "horn"), ((-0.2, 1.0, 0.2), 2, 1, 1, "horn_tip")], "aspike")
+    return {"helmet": {"head": grow + mirror(grow)}, "chestplate": {"body": body, "right_arm": arm, "left_arm": mirror(arm)}}
+
+
+def _aw_vaultbreaker(d):
+    # the comb rises into a stepped crest set with a diamond; the shield-pauldron grows a raised rim and a diamond spike
+    head = [B(-1, 1, 10, 12, -5, 5, "steel_rim", "acrest"), B(-1, 1, 12, 14, -3, 3, "steel", "acrest"),
+            B(-1, 1, 14, 16, -1, 1, "steel_rim", "acrest"), B(-1, 1, 10, 13, 5, 6, "diamond", "acrest_gem")]
+    rim = [B(4, 5, 4, 5, -4, 4, "steel_rim", "arim"), B(4, 5, -6, -5, -4, 4, "steel_rim", "arim"),
+           B(4, 5, -5, 4, 3, 4, "steel_rim", "arim"), B(4, 5, -5, 4, -4, -3, "steel_rim", "arim")]
+    spike, _ = link((3.5, 5.0, 0.0), (0.25, 1.0, 0.0), 3, 1, 1, "diamond", "aspike")
+    left = turned(rim + [spike], rot(0, 0, 10), (3.0, 2.0, 0.0))
+    right = turned([B(-3, -1, 4, 6, -1, 1, "diamond", "aknob")], rot(0, 0, -12), (-2.0, 0.0, 0.0))
+    return {"helmet": {"head": head}, "chestplate": {"left_arm": left, "right_arm": right}}
+
+
+def _aw_frostwalker(d):
+    # the crown of icicles closes round the back of the head; more shards break up off the shoulders
+    head = []
+    for x, z, h, lean in ((-3.0, -2.5, 4, 14), (3.0, -2.5, 4, -14), (0.0, -3.5, 5, 0)):
+        head += turned([B(x - 1, x + 1, 10, 11, z - 1, z + 1, "ice", "aicicle_base"),
+                        B(x - 0.5, x + 0.5, 11, 11 + h, z - 0.5, z + 0.5, "icicle", "aicicle")], rot(10, 0, lean), (x, 10.0, z))
+    arm = [VX.Box((-5.5, 5.5, -1.5), (0.5, 3.0, 0.5), "icicle_glow", "ashard", rot(-10, 0, 34)),
+           VX.Box((-3.0, 6.0, 1.5), (0.5, 2.5, 0.5), "icicle", "ashard2", rot(10, 0, 12))]
+    return {"helmet": {"head": head}, "chestplate": {"right_arm": arm, "left_arm": mirror(arm)}}
+
+
+def _aw_sunward(d):
+    # the sun's rays grow long and a second ring of rays opens between them; a small sun stands on each pauldron
+    head = []
+    for deg in range(0, 360, 45):
+        R = rot(0, 0, deg)
+        c = np.array([0.0, 5.0, -8.0]) + R @ np.array([0.0, 12.5 if deg % 90 == 0 else 12.0, 0.0])
+        head.append(VX.Box(c, (0.5, 1.0, 0.5), "ray", "aray", R))
+    for deg in range(0, 360, 45):
+        R = rot(0, 0, deg + 22.5)
+        c = np.array([0.0, 5.0, -8.0]) + R @ np.array([0.0, 10.0, 0.0])
+        head.append(VX.Box(c, (0.5, 1.5, 0.5), "ray", "aray2", R))
+    sun = turned(_disc(0, 0, -0.5, 0.5, 3, "sun", "arondel") + _disc(0, 0, -1.5, -0.5, 1, "sun_heart", "arondel_heart"),
+                 rot(0, -90, 0), (0, 0, 0))
+    arm = moved(sun, (-5.5, 6.0, 0.0))
+    return {"helmet": {"head": head}, "chestplate": {"right_arm": arm, "left_arm": mirror(arm)}}
+
+
+def _shard(c, h, deg_z, deg_x, mat, part, w=1.0):
+    return VX.Box(c, (w, h, w), mat, part, rot(deg_x, 0, deg_z))
+
+
+def _aw_shardcrown(d):
+    # the crystal breaks higher out of the crown, a tall spire behind the burning one; a great crystal off each pauldron
+    head = [_shard((0.0, 13.5, 0.0), 3.5, 0, -10, "crystal", "acrown"),
+            _shard((-3.5, 12.0, -1.5), 2.5, 25, -8, "crystal_glow", "acrown_l"), _shard((3.5, 12.0, -1.5), 2.5, -25, -8, "crystal_glow", "acrown_r")]
+    arm = [_shard((-5.5, 7.5, -1.0), 3.0, 30, -10, "crystal_dark", "apshard"), _shard((-2.5, 7.0, 0.5), 2.0, 8, 8, "crystal", "apshard2", 0.5)]
+    return {"helmet": {"head": head}, "chestplate": {"right_arm": arm, "left_arm": mirror(arm)}}
+
+
+def _aw_deepcarapace(d):
+    # the beetle's jaws close forward at the cheeks; the wing-cases part on wings of faint cave light
+    d["mats"]["membrane"] = AW.Mat("spore", 3, 0.0, 0.6, emit=0.35, bevel=False)
+    jaw = chain((4.5, 1.5, 3.5), [((0.35, 0.0, 1.0), 3, 2, 2, "shell_rim"), ((-0.6, 0.1, 1.0), 2, 1, 1, "ridge")], "ajaw")
+    wing = [VX.Box((3.5, -6.0, -5.5), (1.5, 6.5, 0.5), "membrane", "awing", rot(0, 0, 18))]
+    return {"helmet": {"head": jaw + mirror(jaw)}, "chestplate": {"body": wing + mirror(wing)}}
+
+
+def _feathers(p0, ds, lens, part, flat=(1, 0, 0)):
+    out = []
+    for k, (dv, ln) in enumerate(zip(ds, lens)):
+        dd = np.asarray(dv, dtype=float)
+        b, end = link(p0, dd, ln, 2, 1, "feather" if k % 2 == 0 else "feather_b", f"{part}{k}", up=flat)
+        t, _ = link(end, dd, 2, 2, 1, "feather_tip", f"{part}{k}t", up=flat)
+        out += [b, t]
+    return out
+
+
+def _aw_cloudrunner(d):
+    # the fins at the temples open into wings, two long feathers more; a longer feather on each shoulder
+    head = _feathers((5.5, 6.5, 0.5), [(0.3, 1.9, -0.4), (0.18, 0.45, -1.0)], [6, 6], "ahfin")
+    arm = _feathers((-4.5, 3.5, -1.5), [(-0.5, 1.6, -0.6)], [5], "apfin")
+    return {"helmet": {"head": head + mirror(head)}, "chestplate": {"right_arm": arm, "left_arm": mirror(arm)}}
+
+
+def _aw_tidebreaker(d):
+    # two more fins rise beside the crest, a trident of them; the wave of the cape breaks higher
+    fin = turned([B(1, 2, 9, 15, -2, 1, "web", "afin"), B(1, 2, 15, 16, -2, 0, "spine", "afin_spine")], rot(0, 0, -18), (1.5, 9.0, 0.0))
+    cape1 = longer(((-5, 2), (-3, 3), (-1, 5), (1, 6), (3, 3)), 3, lambda k: "cape_wave")
+    return {"helmet": {"head": fin + mirror(fin)}, "chestplate": {"cape1": cape1}}
+
+
+def _aw_hollowheart(d):
+    # the crown's ribs grow on and curl back; a second rib arcs over each pauldron; the cape falls in longer rags
+    head = []
+    for x, z, h in ((0.0, 3.5, 6), (-3.0, 3.0, 5), (3.0, 3.0, 5), (-4.0, -0.5, 4), (4.0, -0.5, 4)):
+        out = np.array([x, 0.0, z]) / max(math.hypot(x, z), 1e-6)
+        links = [((out[0] * 0.3, 1.0, out[2] * 0.3), h - 2, 2, 2, "rib"), ((out[0] * 0.45, 1.0, out[2] * 0.45), 3, 1, 1, "rib_dark")]
+        end, dd = chain_end((x, 8.5, z), links)
+        head += chain(end - dd * 0.5, [((out[0] * 0.5, 0.5, out[2] * 0.5 - 0.9), 3, 1, 1, "rib_dark")], f"acurl{x}{z}")
+    arm = [VX.Box((-4.5, 4.5, 0.0), (1.0, 1.5, 3.0), "rib", "apauldron_rib", rot(0, 0, -42))]
+    cape1 = longer(((-5, 5), (-3, 3), (-1, 6), (1, 4), (3, 5)), 3, lambda k: "red_dark")
+    return {"helmet": {"head": head}, "chestplate": {"right_arm": arm, "left_arm": mirror(arm), "cape1": cape1}}
+
+
+AWAKE = {"wildhide": _aw_wildhide, "beastbound": _aw_beastbound, "gatewrought": _aw_gatewrought, "veilwoven": _aw_veilwoven,
+         "lordscale": _aw_lordscale, "sovereign": _aw_sovereign, "bellguard": _aw_bellguard, "rootwarden": _aw_rootwarden,
+         "amberwing": _aw_amberwing, "cleftrunner": _aw_cleftrunner, "lanternlight": _aw_lanternlight, "bladeward": _aw_bladeward,
+         "hornlord": _aw_hornlord, "vaultbreaker": _aw_vaultbreaker, "frostwalker": _aw_frostwalker, "sunward": _aw_sunward,
+         "shardcrown": _aw_shardcrown, "deepcarapace": _aw_deepcarapace, "cloudrunner": _aw_cloudrunner,
+         "tidebreaker": _aw_tidebreaker, "hollowheart": _aw_hollowheart}
+
+
+def _awakened(sid, fn):
+    def design():
+        dsg = fn()
+        if sid in AWAKE:
+            dsg["awake"] = AWAKE[sid](dsg)
+        return dsg
+    design.__name__ = fn.__name__
+    design.__doc__ = fn.__doc__
+    return design
+
+
 SETS = {"wildhide": wildhide, "beastbound": beastbound, "gatewrought": gatewrought, "veilwoven": veilwoven,
         "lordscale": lordscale, "sovereign": sovereign,
         "bellguard": bellguard, "rootwarden": rootwarden, "amberwing": amberwing, "cleftrunner": cleftrunner,
         "lanternlight": lanternlight, "bladeward": bladeward, "hornlord": hornlord,
         "vaultbreaker": vaultbreaker, "frostwalker": frostwalker, "sunward": sunward, "shardcrown": shardcrown,
         "deepcarapace": deepcarapace, "cloudrunner": cloudrunner, "tidebreaker": tidebreaker, "hollowheart": hollowheart}
+SETS = {sid: _awakened(sid, fn) for sid, fn in SETS.items()}
 
 
 # ---------------------------------------------------------------------------------------------------------------------
