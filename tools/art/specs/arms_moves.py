@@ -235,19 +235,19 @@ def cut(name, keys, period, note):
 
 # The chop (8 ticks): the axe arm on its way up, set high over the shoulder with the body leaning back, held a beat,
 # driven down through the wood ahead with the weight forward and the knees giving, a small kick back off it.
-CH_RISE = pose(lean=2, twist=10, rl=(-12, 0, 4), rk=14, ll=(10, 0, -4), lk=12, ra=(-122, 18, 12), re=52, la=(-40, 0, -16), le=42)
-CH_SET = pose(lean=-6, twist=16, rise=0.3, rl=(-8, 0, 4), rk=8, ll=(6, 0, -4), lk=8, ra=(-168, 16, 10), re=42, la=(-52, 0, -18), le=36)
-CH_THRU = pose(lean=16, twist=-8, rise=-0.6, rl=(-26, 0, 4), rk=30, ll=(16, 0, -4), lk=18, ra=(-72, -6, 8), re=10, la=(-28, 0, -24), le=30)
-CH_KICK = pose(lean=12, twist=-4, rise=-0.3, rl=(-20, 0, 4), rk=22, ll=(14, 0, -4), lk=14, ra=(-94, 0, 10), re=24, la=(-32, 0, -20), le=34)
+CH_RISE = pose(lean=2, twist=10, rl=(-12, 0, 4), rk=14, ll=(10, 0, -4), lk=12, ra=(-118, 10, 24), re=24, la=(-40, 0, -16), le=42)
+CH_SET = pose(lean=-6, twist=16, rise=0.3, rl=(-8, 0, 4), rk=8, ll=(6, 0, -4), lk=8, ra=(-160, 10, 26), re=30, la=(-52, 0, -18), le=36)
+CH_THRU = pose(lean=16, twist=-8, rise=-0.6, rl=(-26, 0, 4), rk=30, ll=(16, 0, -4), lk=18, ra=(-52, -4, 10), re=6, la=(-28, 0, -24), le=30)
+CH_KICK = pose(lean=12, twist=-4, rise=-0.3, rl=(-20, 0, 4), rk=22, ll=(14, 0, -4), lk=14, ra=(-66, 0, 12), re=14, la=(-32, 0, -20), le=34)
 cut("arms_chop", [(0, CH_RISE, "linear"), (2, CH_SET, "easeoutsine"), (3, nudge(CH_SET, lean=-1.5, ra=(-4, 0, 0)), "easeinoutsine"),
                   (5, CH_THRU, "easeincubic"), (6, CH_KICK, "easeoutsine"), (8, CH_RISE, "easeinoutsine")], 8,
     "the chop: the axe set high over the shoulder, driven down through the wood ahead, a kick back off it")
 # The hack (6 ticks): a quicker forehand diagonal, from out at the blade's side down across the front, on through what
 # it cut, back up its side.
-HK_MID = pose(lean=7, twist=-2, rl=(-14, 0, 5), rk=15, ll=(12, 0, -4), lk=11, ra=(-98, 18, 52), re=34, la=(-28, 0, -22), le=40)
-HK_SET = pose(lean=4, twist=16, rl=(-12, 0, 5), rk=13, ll=(11, 0, -4), lk=11, ra=(-122, 56, 50), re=50, la=(-36, 0, -18), le=44)
-HK_THRU = pose(lean=11, twist=-20, rl=(-18, 0, 5), rk=18, ll=(14, 0, -5), lk=11, ra=(-78, -30, 60), re=16, la=(-22, 0, -28), le=36)
-HK_FOLLOW = pose(lean=11, twist=-26, rl=(-19, 0, 5), rk=18, ll=(14, 0, -5), lk=11, ra=(-66, -46, 58), re=12, la=(-20, 0, -30), le=34)
+HK_MID = pose(lean=7, twist=-2, rl=(-14, 0, 5), rk=15, ll=(12, 0, -4), lk=11, ra=(-30, 12, 46), re=20, la=(-28, 0, -22), le=40)
+HK_SET = pose(lean=4, twist=16, rl=(-12, 0, 5), rk=13, ll=(11, 0, -4), lk=11, ra=(-18, 36, 70), re=24, la=(-36, 0, -18), le=44)
+HK_THRU = pose(lean=11, twist=-20, rl=(-18, 0, 5), rk=18, ll=(14, 0, -5), lk=11, ra=(-40, -44, 14), re=10, la=(-22, 0, -28), le=36)
+HK_FOLLOW = pose(lean=11, twist=-26, rl=(-19, 0, 5), rk=18, ll=(14, 0, -5), lk=11, ra=(-32, -56, 16), re=8, la=(-20, 0, -30), le=34)
 cut("arms_hack", [(0, HK_MID, "linear"), (1.5, HK_SET, "easeoutsine"), (3.5, HK_THRU, "easeincubic"), (4.5, HK_FOLLOW, "easeoutsine"),
                   (6, HK_MID, "easeinoutsine")], 6,
     "the hack: a quick diagonal from the blade's side down across the front, on through, back up its side")

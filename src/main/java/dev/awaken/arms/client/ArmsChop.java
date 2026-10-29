@@ -69,7 +69,6 @@ final class ArmsChop {
     private static Direction face = Direction.UP;
     private static Vec3 point = Vec3.ZERO;
     private static int progressTicks;
-    private static boolean destroying;
     // the blows and whooshes shown so far (frame by frame: on the frame the blade lands); the body's clip on the clock
     private static int blows, drives;
     private static boolean bodySynced;
@@ -128,10 +127,12 @@ final class ArmsChop {
     private static void follow(Minecraft mc, LocalPlayer p, FpSwings.Loop loop, boolean axe) {
         BlockPos pos = wantPos;
         BlockState state = mc.level.getBlockState(pos);
-        // the block's progress as vanilla sums it: one more tick of it for every tick it goes on destroying this block
+        // the block's progress as vanilla sums it: one more tick of it for every tick it adds some, never while its wait
+        // after the last break runs out (5 ticks, kept until the next mining spends them: the tour's second log broke
+        // 4 ticks after its blow)
         boolean d = mc.gameMode != null && mc.gameMode.isDestroying();
-        progressTicks = d && destroying && pos.equals(at) ? progressTicks + 1 : 0;
-        destroying = d;
+        boolean adding = d && mc.gameMode.getDestroyStage() >= 0;
+        progressTicks = adding && pos.equals(at) ? progressTicks + 1 : 0;
         if (!pos.equals(at)) before = at;
         at = pos;
         face = wantFace;
@@ -139,7 +140,7 @@ final class ArmsChop {
         if (!state.isAir()) cutState = state;
         float g = d ? state.getDestroyProgress(p, mc.level, pos) : 0F;
         // the ticks of clock until the frame the block goes (it vanishes the tick it breaks; a pose shows a tick late)
-        int need = g > 0 ? Math.max(0, Mth.ceil(1F / g - progressTicks - 1e-3F) - 1) : -1;
+        int need = adding && g > 0 ? Math.max(0, Mth.ceil(1F / g - progressTicks - 1e-3F) - 1) : -1;
         float period = loop.period();
         boolean third = !mc.options.getCameraType().isFirstPerson();
         if (!on || chop != axe) {
@@ -148,8 +149,9 @@ final class ArmsChop {
             // begun on the way up; a block that goes sooner than the first blow would land begins it further on, and
             // one gone at once (bamboo to a blade) begins on the blow
             float start = loop.enter();
+            int first = g > 0 ? Mth.ceil(1F / g - 1e-3F) - 1 : -1; // its progress starts next tick, unless a wait is left
             if (!d) start = period - 1F;
-            else if (need < period - start) start = period - Math.max(1, need);
+            else if (first >= 0 && first < period - start) start = period - Math.max(1, first);
             phase = phaseO = start;
             rate = 1F;
             blows = Mth.floor(start / period);
@@ -217,7 +219,6 @@ final class ArmsChop {
         on = false;
         if (bodySynced) ArmsBodies.unchop(p);
         bodySynced = false;
-        destroying = false;
         progressTicks = 0;
         at = before = null;
         cutState = null;

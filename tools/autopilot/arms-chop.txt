@@ -41,6 +41,8 @@ camera first
 look 0 3
 wait 20
 shot chop_rest_fp
+# the runner draws few frames for a while after the first shot: let it settle before the first take
+wait 120
 cmd tick rate 5
 cmd awaken ascent pilot rec chop_axe_fp 36 2
 arms trace 36

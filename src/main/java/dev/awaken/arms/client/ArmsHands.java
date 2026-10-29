@@ -200,7 +200,9 @@ final class ArmsHands {
      */
     private static boolean lab(LocalPlayer p, FirstPerson.View v, float partial) {
         far = false;
-        var style = ArmsPredict.style != null ? ArmsPredict.style : preview != null ? Archetypes.get(Arms.LONGSWORD) : null;
+        // the chop is the weapon in hand's own (before any strike, or after one with another weapon)
+        Archetypes.Loaded inHand = Arms.styleOf(p.getMainHandItem());
+        var style = ArmsPredict.style != null ? ArmsPredict.style : preview != null ? Archetypes.get(Arms.LONGSWORD) : inHand;
         if (style == null) return false;
         Archetype.Move m;
         float t;
@@ -223,7 +225,7 @@ final class ArmsHands {
         boolean ours = ArmsItems.of(p.getMainHandItem().getItem()) != null;
         FpSwings.Style st = FpSwings.style(style.id());
         boolean has = m != null && FpSwings.sample(st, m, t, ours, D, Q);
-        boolean cutting = !has && preview == null && ArmsChop.pose(st, ours, partial, D, Q);
+        boolean cutting = !has && preview == null && inHand != null && ArmsChop.pose(FpSwings.style(inHand.id()), ours, partial, D, Q);
         has |= cutting;
         far = has && m != null && FpSwings.far(st, m);
         if (!has) {
