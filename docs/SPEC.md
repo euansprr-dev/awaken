@@ -13744,6 +13744,62 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     of the Trample). Wind-ups 12.3 (the Strike) to 19.1 (the Trample). The intro's first frames show kinks in the meter
     only: it blends there from standing, and in game the Pyre waits lying in its kneel.
 
+- **The Undertow, the Old Snapper** (body and motion, `kit/bosses/nightmare_drowning.py`). "Pulls you under and holds
+  you there." An alligator snapping turtle as big as a boat, so old the bottom of the river has grown over it. Its
+  shell is three rows of ridged keels, black-green with slime and patched with weed, weed hanging off its rim in long
+  rags and a length of rusted chain still caught on it, and its back edge is a row of teeth. Its head is huge and flat
+  with a hooked beak and small teal eyes set high, its skin grey-brown and warty, its throat and belly a dirty yellow.
+  On its tongue is a worm of cold teal light. It never touches the ground: it swims through the air the way it swims
+  along a river bottom, paddling with clawed webbed feet, its weed and chain trailing after it. 88 cubes on 33 bones;
+  its shell is 2.6 blocks long and 2.1 wide and its belly 1.3 blocks over the floor. The hitbox is 1.10 x 1.29 at its
+  scale of 2.0 (2.2 x 2.6 blocks), round its shell.
+  - **Its idle.** It hangs in the water (8 s), bobbing and rocking a little, paddling slowly in diagonal pairs to hold
+    its place. It lowers its head and opens its mouth and the worm on its tongue wriggles, the way a snapper waits on
+    the bottom, then shuts it; it draws its head in a little and turns to look; its tail sways and its weed stirs.
+  - **How it moves.** It swims slowly, paddling in diagonal pairs and rocking (1.6 s, 1.4 blocks). Hurrying, it strokes
+    both forefeet together and its hind feet after them, its neck out and its weed streaming back (0.9 s, 2.6 blocks).
+    Turning, the feet on the outside of the turn stroke and the others hold.
+  - **Struck, broken and its death.** Struck, its head snaps back into its shell, its feet flinch in and it lurches
+    back; from the side it rolls away from the blow, its head turning to it. Broken, it sinks to the floor and draws
+    its head and legs half in, its weed lying out round it; it puts its feet out and pushes itself up. Its death
+    (5.5 s): it gapes with its neck stretched up and paddles at nothing, then rolls slowly over onto its back as it
+    sinks, and lies belly up on the floor with its head hanging out to one side, its feet curling in; one hind foot
+    kicks once, and it is still.
+  - **Its moves.** The Snap (LIGHT): it draws its head back into its shell with its forefeet braced, and its neck
+    shoots out and its beak snaps shut on you. The Rake (LIGHT, after the Snap): it rolls toward you with a forefoot
+    raised high and rakes it down and back across you. The Lunge (HEAVY, its gap closer, 8 blocks, a 6-tick hold): it
+    draws its head in and all four feet forward and holds, then shoots forward with one stroke of all four, its mouth
+    wide, and snaps it shut. The Undertow: it lowers its head and opens its mouth as wide as it goes, the worm on its
+    tongue wriggling hard and its forefeet sculling to hold it in place while the water pulls you in, then snaps shut.
+    The Rush of Water: it rears its front up with both forefeet high and sweeps them down and back together, and the
+    water rushes out ahead. Lungful (into the second phase): it draws its head and legs into its shell and sinks,
+    trembling harder and harder, then bursts out with its legs flung wide and its mouth gaping. Black Water: it lifts
+    its head and spits four times, its neck jerking out with each. The Tail (for whoever is behind it): it turns one
+    way and sweeps its saw-ridged tail across behind it. Which Way Is Up (the signature): it rises over you, rolling
+    slowly onto its back as it goes, hangs belly up with its feet paddling at nothing, trembles, and drops on you shell
+    first; then it rolls back over, its feet pulled half in, and lifts off the floor. Its intro: it lies on the floor
+    like a rock grown over with weed, head and legs drawn in; its head slides out and looks at you; its mouth opens and
+    the worm wriggles; it shuts it, puts out its feet and lifts off the floor with a slow stroke.
+  - **Its fight.** First: the Snap into the Rake (and on into the Lunge), the Rake, the Lunge into the Snap, the
+    Undertow from afar, the Rush of Water, the Tail behind. After Lungful: the Snap into the Rake into the Undertow, the
+    Lunge into the Snap and the Rake, Black Water, the Undertow, Lungful, the Rush, Which Way Is Up, the Tail. It
+    enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over its body, its neck (drawn into the shell and shot out by
+    moving the neck bones, a nod and a turn shared between them), its head, its jaw and the worm (a wriggle and its
+    phase), each leg (a stroke, a raise out from the body, a curl and a flex of the foot), a tuck that draws its legs
+    and head toward its shell, its tail, and its weed and chain swung out from where they hang. Its swimming stroke is
+    one function: each foot sweeps back low and flat, then comes forward raised and folded. Under every move a drift
+    layer sculls its feet, sways its tail, weed and chain, works its jaw and wriggles the worm (hard in the Undertow).
+  - **On the floor.** The ground pass lifts its feet out of the floor and its head and tail off it, and swings its
+    weed and chain out. Lying, it rests on its shell and legs; rolling over it is lifted just clear of the floor, its
+    feet pulled half in.
+  - **Its sounds** (chosen on paper, not heard in game): a turtle's swimming, hurt and death kept low and slow, the
+    drowned's gurgling under them; a splash, a bubble column's churn and a whirlpool's pull for the Undertow, an elder
+    guardian's curse under Lungful and Which Way Is Up; a beak's crunch and a chain's clank.
+  - **Meter.** Worst kink outside a strike 4.0° (the Lunge into the Snap and the Rake); held at most 3%; no still spells; the strings dip at most 37% (the
+    Snap into the Rake into the Lunge). Wind-ups 12.6 (the Snap) to 52.2 (Which Way Is Up). The intro's first frames
+    show kinks in the meter only, where it blends from swimming into the lying start.
+
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

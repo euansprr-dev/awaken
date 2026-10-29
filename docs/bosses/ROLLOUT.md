@@ -92,7 +92,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Signal's Shadow | Final | Seed | Duelist | kit | A, the Signal Cuttlefish | ✓ df6001890 | ✓ df6001890 | — |
 | The Long Drop | Nightmare | Fear | Flier | kit | A, the Hand from Above | ✓ cf9d617d | ✓ cf9d617d | — |
 | The Pyre | Nightmare | Fear | Flier | kit | A, the Pyre Mare | ✓ 2a699e47 | ✓ 2a699e47 | — |
-| The Undertow | Nightmare | Fear | Caster | drowned ×2 | — | — | — | — |
+| The Undertow | Nightmare | Fear | Caster | kit | A, the Old Snapper | — | — | — |
 | The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | zombie ×1.7 | — | — | — | — |
 | The Thousand Legs | Nightmare | Fear | Crawler | spider ×2.6 | — | — | — | — |
 | The Fuse | Nightmare | Fear | Construct | creeper ×2 | — | — | — | — |
@@ -286,3 +286,10 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   nightmare of the old stories is a black horse, and nothing else on the roster gallops. The Furnace Engine is a horse
   too, but a locomotive that plods; this one is flesh and fire on the air, rearing and striking. B is the Living
   Forge's burning giant again; C hangs and swings out of the dark like the Long Drop just did.
+- **The Undertow** (`nightmare_drowning`): A the Old Snapper (an alligator snapping turtle as big as a boat, weed
+  grown over its shell, a worm of teal light on its tongue), B the Drowned Bride (a drowned woman hanging in the water,
+  her dress and hair floating up), C the Bell Jellyfish (a huge pale jellyfish trailing its stinging threads).
+  **Picked A**, 2026-10-29: "Pulls you under and holds you there" is a snapper lying with its mouth open and its lure
+  wriggling until you come close, the Undertow is that mouth drawing the water in, and no other boss is a turtle. B is
+  one more robed figure after the Pilgrim and the Cantor; C's bell is the Bell Warden's shape again and its threads
+  the Signal Cuttlefish's arms.

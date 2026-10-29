@@ -233,7 +233,7 @@ final class DeepBestiary {
                 .intro("It smells like the last time.")
                 .phase(1.0F, "The Pyre catches.", a(BOLT, "Cinders").n(4).bolt(BoltKind.FIRE), a(AURA, "Pyre").radius(6).bolt(BoltKind.FIRE))
                 .phase(0.5F, "It spreads.", a(RAIN, "Firefall").n(5).bolt(BoltKind.FIRE), a(NOVA, "Flare").n(12).bolt(BoltKind.FIRE)).build());
-        out.add(m("nightmare_drowning", "The Undertow", Theme.FEAR, Tier.NIGHTMARE, Model.DROWNED, "Pulls you under and holds you there").hp(22).dmg(4).spd(0.26).scale(2.0F).glow(0x3DD8C8).bar(BossBarColor.BLUE).arena(22)
+        out.add(m("nightmare_drowning", "The Undertow", Theme.FEAR, Tier.NIGHTMARE, Model.DROWNED, "Pulls you under and holds you there").hp(22).dmg(4).spd(0.26).scale(2.0F).size(1.10F, 1.29F).glow(0x3DD8C8).bar(BossBarColor.BLUE).arena(22)
                 .intro("You can't remember which way is up.")
                 .phase(1.0F, "The water closes.", a(PULL, "Undertow").radius(12), a(CONE, "Rush of Water").bolt(BoltKind.WATER).radius(6))
                 .phase(0.5F, "No air.", a(AURA, "Lungful").radius(7).bolt(BoltKind.WATER).fx(MobEffects.SLOWNESS, 40, 1), a(BOLT, "Black Water").n(4).bolt(BoltKind.WATER)).build());
