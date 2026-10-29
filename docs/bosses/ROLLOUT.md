@@ -80,7 +80,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Shadow Regent | Guardian | Court | Duelist | kit | A, the Long Shadow | ✓ 3feaab86 | ✓ 3feaab86 | — |
 | The Seed Warden | Guardian | Seed | Caster | kit | A, the Husk That Opens | ✓ a6726d89 | ✓ a6726d89 | — |
 | Sovereign of Hunger | Sovereign | Court | Beast | kit | A, the Gorged King | ✓ 7a319255 | ✓ 7a319255 | — |
-| Sovereign of Silence | Sovereign | Court | Brute | cube listener ×1.9 | — | — | — | — |
+| Sovereign of Silence | Sovereign | Court | Brute | kit | A, the Stone Ear | — | — | — |
 | Sovereign of Sleep | Sovereign | Court | Flier | phantom ×3.2 | — | — | — | — |
 | Sovereign of Machines | Sovereign | Court | Brute | iron golem ×1.9 | — | — | — | — |
 | Sovereign of Mirrors | Sovereign | Court | Duelist | player ×1.8 | — | — | — | — |
@@ -215,3 +215,11 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   who ate his court and is still hungry, Devour and Gorge are what that belly mouth does, and no other boss is a person
   with a mouth for a stomach. B is one more four-legged beast after the Thornback and the Iron Horse; C is one more
   walking piece of furniture after the Sleeper's bed and the Architect's house.
+- **The Sovereign of Silence** (`sovereign_silence`): A the Stone Ear (a stooped giant of pale stone, long in the arm,
+  whose whole head is one great ear with a black canal; small ears grow out of its shoulders through a black veil), B
+  the Listening Horn (a gaunt courtier whose head is a brass ear trumpet), C the Veiled Mute (a tall veiled figure, its
+  mouth stitched shut, a finger to its lips). **Picked A**, 2026-10-29: "It listened until there was nothing left to
+  hear" is a body that is all ear, No Sound At All is a finger laid across that ear as across lips, Found You is the
+  ear turning square to you, and no other boss has a head that is an organ of sense and nothing else. B is brass again
+  after the Bell Warden; C is one more robed figure after the Abbot and the Herald, and it is the Hush Bat's silence
+  again.

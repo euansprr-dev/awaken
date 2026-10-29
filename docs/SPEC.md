@@ -10400,6 +10400,56 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     floor by the ground pass; nothing goes into it by more than 1.5 px in any clip.
   - **Meter.** Worst kink outside a strike 5.6° (the Sweep's planted hand as he turns), every other move under 4.5°;
     held at most 14% (the intro); the slap strings dip 36 to 40%, the slaps into the Gorge 41%.
+- **The Sovereign of Silence, the Stone Ear** (body and motion, `kit/bosses/sovereign_silence.py`). "It listened until
+  there was nothing left to hear." A stooped giant of pale stone with a faint violet cast, long legged and long in the
+  arm, its short body bent 36 degrees forward and its hands hanging to its knees. Its whole head is one great ear on a
+  long neck rising out of the hunch: no face, only a plate of stone shaped like an ear, its rim curling over the top and
+  down the back into a hanging lobe, the ridge inside it, the flap before the canal, the back of it rounded like a
+  shell. The rim and ridges are the palest stone on it; inside them the ear is dusky flesh darkening down into the bowl
+  and to black at the canal, whose upper and back lip holds a thin cold light (a crescent, not a ring, so it never reads
+  as an eye). At rest the ear stands turned 34 degrees to its left and cocked 12, as you turn an ear to a sound; the
+  moves that aim it turn it square to you. A black veil hangs from its shoulders to its knees, gathered round the root
+  of its neck, a pale thread along its hem and its tatters; six small ears grow out of its shoulders and back through
+  it and twitch on springs. Its long hands have their fingers on one bone (they close into a fist) and the index on its
+  own (it points). 82 cubes (492 faces) on 32 bones; 96 px to the top of the ear at true size (6 blocks), the canal at
+  4.7 blocks, 3 blocks across the hands. The hitbox is 0.95 x 3.1 at its scale of 1.9 (1.8 x 5.9 blocks).
+  - **Its idle.** It stands still, listening: the ear turns slowly to one side and stops, gives a small sharp tilt as a
+    dog's head tilts, holds, and turns slowly back the other way; the small ears twitch round now and then, the long
+    fingers flex once, it breathes slowly (7 s). It walks as a stalk, long slow strides with the knees lifted high, its
+    body low and leaning into them, the arms swinging a little and the fingers trailing, the ear turning from side to
+    side as it goes.
+  - **Its moves.** The Rake and its mirror (LIGHT, a string): one long arm reaches up and back over its shoulder, the
+    other hand reaching forward, its body turning away; the hand comes down across in front of it, the fingers raking.
+    Found You (HEAVY, its gap closer, 5 blocks): it goes still and turns its ear square to you and tilts it, leaning in,
+    its fingers curling; then rears up straight with both fists over the ear, holds, and lunges at you in one long
+    stride, bringing them down together where you stand, its knees giving. No Sound At All: it straightens and lays one long finger straight up across the canal, as across lips (the
+    hand is turned to the ear's own frame, so the finger lies on the canal however the ear stands), the ear bowing over
+    it, the small ears flat, its other hand spread low at its side while the light goes out of the room. Whoever is
+    behind it gets the back-kick: it pitches forward onto its long arms and kicks its right leg straight back like a
+    mule. Inverted Scream (HEAVY, a beam from the canal as it pours, 3.6 blocks up and 2.5 forward): it grips the rim of
+    its ear in both hands and tips it right back, shuddering, the canal swelling (a scale track to 1.5); then it lets
+    go, braces, throws its arms wide and thrusts the ear at you, and the canal judders as it pours. Ears (into the second
+    phase, "It hears your heartbeat"): it reaches over each shoulder in turn, plucks an ear off it (a scale track to 0)
+    and throws it down in front of it; they grow back. Hush (into the third phase, "Silence."): it cups both hands
+    behind the rim of its ear and leans far toward you, the ear turning a little one way and the other to find you.
+    Deafening Silence (the signature): it claps both hands over its ear and curls over them, sinking, and shakes harder
+    and harder; then it straightens all at once and throws its arms wide and its ear back, the canal opening wide. Its
+    intro: it stands with its ear turned right away from you, listening to something far off; the small ears turn toward
+    you; the ear comes round slowly and stops on you, tilts, and it lowers itself into its stoop and spreads its fingers.
+    Broken, it sinks onto its right knee, the left foot planted ahead and its left hand flat on the floor, its ear
+    hanging; it rises with a push off the hand. Its death: it staggers, claps its hands over its ear, sinks onto both
+    knees and rocks, tips to its left onto that hand, and topples onto its side with its legs still folded, its left arm
+    stretched out along the floor past its head and its right hand still over its ear, the veil falling flat (4.6 s).
+  - **How its keys are written.** One pose function over its parts (its hips, spine, chest, neck and ear, each wrist by
+    two-bone IK to a point in the body or on a bone, how the hands lie, the fingers' curl and the pointing index, the
+    small ears, the veil, and how far the ear turns to you). Lying keys are solved where they lie: the body is set down
+    on its lowest solid part (the veil drapes) and the bottom leg's thigh turned at the hip, the least it can, so the
+    leg lies on the floor too. Kneeling, the shins lie flat and the feet on their insteps, soles up; on one knee the
+    front foot is planted by IK.
+  - **On the floor.** Its hands, fingers, ear and the veil's end are kept out of the floor by the ground pass, its feet
+    in the kneel, the rise, the run and the death; nothing goes into it by more than 1.5 px in any clip.
+  - **Meter.** Worst kink outside a strike 4.5° (the back-kick's kicking foot as it comes down), every other move under 4°; held at most
+    35% (the intro, which holds still on purpose); the rakes dip 14 to 17%, the Hush into Found You 41%.
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

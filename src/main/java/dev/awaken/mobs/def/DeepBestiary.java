@@ -174,7 +174,7 @@ final class DeepBestiary {
                 .phase(0.66F, "It is still hungry.", a(SUMMON, "Hounds of the Court").summon("court_hound").n(2), a(SLAM, "Gorge").radius(4.5F), a(CHARGE, "Devour"))
                 .phase(0.33F, "Starving.", a(FRENZY, "Starving Frenzy"), a(AURA, "Famine").radius(8).bolt(BoltKind.VOID).fx(MobEffects.HUNGER, 100, 2).heavy(), a(CHARGE, "Devour"))
                 .parts(P("hunger_fang", "Fang of Hunger", "crimson")).build());
-        out.add(m("sovereign_silence", "Sovereign of Silence", Theme.COURT, Tier.SOVEREIGN, Model.LISTENER, "The Veil gone wrong: hunts every sound, swallows every light").hp(34).dmg(5.5).spd(0.3).scale(1.9F).tint(0x8890A8).glow(0xE6F0FF).traits(LISTENER).bar(BossBarColor.WHITE).arena(26)
+        out.add(m("sovereign_silence", "Sovereign of Silence", Theme.COURT, Tier.SOVEREIGN, Model.LISTENER, "The Veil gone wrong: hunts every sound, swallows every light").hp(34).dmg(5.5).spd(0.3).scale(1.9F).size(0.95F, 3.1F).tint(0x8890A8).glow(0xE6F0FF).traits(LISTENER).bar(BossBarColor.WHITE).arena(26)
                 .intro("It listened until there was nothing left to hear.")
                 .phase(1.0F, "The Sovereign of Silence tilts its head.", a(SLAM, "Found You").radius(4).power(1.6F).heavy(), a(DARKNESS, "No Sound At All").radius(20))
                 .phase(0.66F, "It hears your heartbeat.", a(BEAM, "Inverted Scream").bolt(BoltKind.VOID).power(2.0F).heavy(), a(SUMMON, "Ears").summon("listener").n(2))
