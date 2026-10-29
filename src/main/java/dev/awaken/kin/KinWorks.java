@@ -587,7 +587,10 @@ public final class KinWorks {
         level.playSound(null, c.crucible(), WorksContent.CAST.get(), SoundSource.BLOCKS, 1.5F, 1F);
         level.sendParticles(ParticleTypes.LAVA, c.crucible().getX() + 0.5, c.crucible().getY() + 1, c.crucible().getZ() + 0.5, 20, 0.4, 0.3, 0.4, 0.1);
         for (UUID id : people(level, anchor))
-            if (level.getServer().getPlayerList().getPlayer(id) instanceof ServerPlayer p) Bells.ring(p, c.mould().bell(), "cast in your Foundry");
+            if (level.getServer().getPlayerList().getPlayer(id) instanceof ServerPlayer p) {
+                Bells.ring(p, c.mould().bell(), "cast in your Foundry");
+                Bells.ring(p, "founders", "the bell-founders' own, for your Foundry's first cast");
+            }
     }
 
     /** Bells the home's Foundry cast while this member was away: theirs as soon as they're about again. */
@@ -597,6 +600,7 @@ public final class KinWorks {
         List<String> cast = KinWorld.get(p.level().getServer()).cast.get(h.get().anchor().asLong());
         if (cast == null) return;
         for (String id : cast) if (!Bells.has(p, id)) Bells.ring(p, id, "cast in your Foundry");
+        if (!cast.isEmpty()) Bells.ring(p, "founders", "the bell-founders' own, for your Foundry's first cast");
     }
 
     /** What the crucible says when used: the next bell, what it needs, and who heats it. */

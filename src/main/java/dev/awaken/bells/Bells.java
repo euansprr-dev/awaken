@@ -2,7 +2,9 @@ package dev.awaken.bells;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.PlayDays;
+import dev.awaken.core.api.CityHooks;
 import dev.awaken.core.api.Destinations;
+import dev.awaken.delve.DelveContent;
 import dev.awaken.hearth.HearthRecord;
 import dev.awaken.hearth.HearthService;
 import dev.awaken.hearth.room.Reading;
@@ -24,10 +26,12 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -119,6 +123,11 @@ public final class Bells {
 
     /** A sleeping bell's hum reached this player from {@code bell}: a Heard lead, its two bearings crossed into an area. */
     static void heard(ServerPlayer p, BellCatalog.Def d, BlockPos bell) {
+        heard(p, d, bell, "A");
+    }
+
+    /** A hum heard: {@code a} starts the line ("A", or "Heard in spirit: a" for the Veil's bells). */
+    static void heard(ServerPlayer p, BellCatalog.Def d, BlockPos bell, String a) {
         BellBook b = book(p);
         BellBook.Lead l = b.leads.get(d.no());
         boolean fresh = l == null;
@@ -133,8 +142,8 @@ public final class Bells {
             l.bearings = 1;
             l.hx = p.getX();
             l.hz = p.getZ();
-            l.lines.add("A bell's note, faint, " + toward(dx, dz) + ". Your song is missing this note.");
-            say(p, "[A bell's note, faint, " + toward(dx, dz) + ". It's in your Bell Book.]");
+            l.lines.add(a + " bell's note, faint, " + toward(dx, dz) + ". Your song is missing this note.");
+            say(p, "[" + a + " bell's note, faint, " + toward(dx, dz) + ". It's in your Bell Book.]");
         } else if (l.bearings == 1 && Math.hypot(p.getX() - l.hx, p.getZ() - l.hz) >= 32
                 && Math.abs(angle(bell.getX() - l.hx, bell.getZ() - l.hz) - angle(dx, dz)) >= 0.25) {
             // the second bearing from somewhere else: the System crosses them and shades the area round the crossing
@@ -158,6 +167,11 @@ public final class Bells {
 
     /** A sleeping place seen up close. */
     static void seen(ServerPlayer p, BellCatalog.Def d) {
+        seen(p, d, "This place is asleep. Something here is keeping it that way.");
+    }
+
+    /** A sleeping place seen (or, for a spirit bell, felt) up close, in the System's words. */
+    static void seen(ServerPlayer p, BellCatalog.Def d, String line) {
         BellBook b = book(p);
         BellBook.Lead l = b.leads.computeIfAbsent(d.no(), k -> {
             BellBook.Lead n = new BellBook.Lead();
@@ -166,9 +180,9 @@ public final class Bells {
         });
         if (l.has(BellBook.How.SEEN)) return;
         l.hows |= 1 << BellBook.How.SEEN.ordinal();
-        l.lines.add("This place is asleep. Something here is keeping it that way.");
+        l.lines.add(line);
         save(p, b);
-        say(p, "[This place is asleep. Something here is keeping it that way.]");
+        say(p, "[" + line + "]");
     }
 
     /** How far a Rookery's wrens and a Snufflet's letters reach for a sleeping bell. */
@@ -317,8 +331,139 @@ public final class Bells {
     // ---- moments that ring a bell ----------------------------------------------------------------------------------------
 
     /** Gate worlds' bells by theme, each at the rank its world's bell asks for. */
-    private static final Map<String, String> GATE_BELLS = Map.of("BELL_CRYPT", "crypt", "FUNGAL_HOLLOW", "spore", "EMBER_MINES", "ember_mine",
-            "HIVE", "hive", "OVERGROWN_TEMPLE", "root", "LANTERN_NIGHT_MARKET", "lantern");
+    private static final Map<String, String> GATE_BELLS = Map.ofEntries(Map.entry("BELL_CRYPT", "crypt"), Map.entry("FUNGAL_HOLLOW", "spore"),
+            Map.entry("EMBER_MINES", "ember_mine"), Map.entry("HIVE", "hive"), Map.entry("OVERGROWN_TEMPLE", "root"),
+            Map.entry("LANTERN_NIGHT_MARKET", "lantern"), Map.entry("DROWNED_ARCHIVE", "archive"), Map.entry("CLOCKWORK_FOUNDRY", "gear"),
+            Map.entry("GLASS_DESERT", "glass"), Map.entry("FROST_MONASTERY", "frost"), Map.entry("MIRROR_PALACE", "mirror"),
+            Map.entry("PRECURSOR_LAB", "counting"), Map.entry("NIGHTMARE", "sleeper"), Map.entry("SKY_ARCHIPELAGO", "sky"),
+            Map.entry("ABYSSAL_SHRINE", "herald"));
+
+    /** The Court's eight bells, one in each Sovereign's domain (by the Sovereign's name after "sovereign_"). */
+    private static final Map<String, String> COURT_BELLS = Map.of("hunger", "hunger", "silence", "silence", "sleep", "sorrow",
+            "machines", "throne", "mirrors", "oath", "storms", "crown", "roots", "grief", "ash", "ash");
+
+    /** A Sovereign set down what it carried: its domain's bell goes home with everyone within 96 who saw it, if a player won it. */
+    static void sovereignFell(ServerLevel level, LivingEntity s) {
+        String boss = s.hasData(dev.awaken.core.api.CoreApi.MOB_ROLE.get()) ? s.getData(dev.awaken.core.api.CoreApi.MOB_ROLE.get()).bossId().orElse("") : "";
+        int at = boss.indexOf("sovereign_");
+        String id = at < 0 ? null : COURT_BELLS.get(boss.substring(at + 10));
+        if (id == null || !(s.getKillCredit() instanceof ServerPlayer)) return;
+        String where = "where the " + s.getName().getString() + " set down what it carried";
+        for (ServerPlayer p : level.players()) if (p.distanceToSqr(s) < 96 * 96) ring(p, id, where);
+    }
+
+    /** The Descent's bells by stratum (1 to 10), with where the Book says each was rung. Two and three are stage 4's. */
+    private static final String[][] DESCENT_BELLS = {null, {"shallows", "at the Rim"}, {"garden", "down in the Hanging Gardens"},
+            {"drowned_choir", "down in the Drowned Choir"}, {"bone", "in the Bone Orchard"}, {"echo", "in the Silent Halls"},
+            {"furnace", "in the Precursor Foundry"}, {"black_water", "under the Inverted Sea"}, {"weight", "in the Dreaming Stratum"},
+            null, {"deepest", "at the bottom of the world, by the Seed"}};
+
+    /** Carillon's own bells: where each rings for you, and what people in the city say about it (a Remembered lead). */
+    private record CityBell(String id, String spot, int reach, String remembered) {}
+
+    private static final List<CityBell> CITY_BELLS = List.of(
+            new CityBell("roost", "roost", 16, "The Runners say the Roost rings its bell for every Runner who comes back to it at C rank."),
+            new CityBell("square", "square", 20, "The Choir rings Choir Square's bell for anyone whose tower holds twenty bells. Stand in the square."),
+            new CityBell("market", "market", 0, "The traders say the market's bell rings for a B-rank Hunter who walks the market again."),
+            new CityBell("harbour", "quay", 0, "The dockers say the Quay's bell rings for anyone whose tower holds fifty bells. Walk the Quay."));
+
+    private static boolean cityBellDue(ServerPlayer p, String id) {
+        return switch (id) {
+            case "roost" -> Progression.rank(p).ordinal() >= Rank.C.ordinal();
+            case "square" -> count(p) >= 20;
+            case "market" -> Progression.rank(p).ordinal() >= Rank.B.ordinal();
+            case "harbour" -> count(p) >= 50;
+            default -> false;
+        };
+    }
+
+    /** In Carillon: a city bell that's due rings where it hangs, and one that's due elsewhere is remembered aloud. */
+    private static void city(ServerPlayer p) {
+        ServerLevel level = p.level();
+        if (!CityHooks.inCity(level, p.blockPosition())) return;
+        for (CityBell c : CITY_BELLS) {
+            if (has(p, c.id()) || !cityBellDue(p, c.id())) continue;
+            BlockPos at = c.spot().equals("roost") ? CityHooks.startPoint(p) : c.spot().equals("square") ? CityHooks.square(level) : null;
+            boolean here = at != null ? p.distanceToSqr(Vec3.atCenterOf(at)) < c.reach() * c.reach() : c.spot().equals(CityHooks.district(level, p.blockPosition()));
+            if (here) {
+                ring(p, c.id(), "rung for you in Carillon");
+                continue;
+            }
+            remembered(p, BellCatalog.of(c.id()), at, c.remembered());
+        }
+        // the homes people left: once a play-day, someone in the city remembers the bell of one that's still asleep
+        BellBook b = book(p);
+        long day = PlayDays.current(level.getServer());
+        if (b.rememberedDay == day) return;
+        Map.Entry<BellCatalog.Def, BellWorld.Site> s = sleepingPeople(p);
+        if (s == null) return;
+        b.rememberedDay = day;
+        save(p, b);
+        String way = toward(s.getValue().pos.getX() - p.getX(), s.getValue().pos.getZ() - p.getZ());
+        RandomOffset o = new RandomOffset(s.getValue().pos.asLong());
+        remembered(p, s.getKey(), new BlockPos(s.getValue().pos.getX() + o.x, 64, s.getValue().pos.getZ() + o.z),
+                PEOPLE_LINES.getOrDefault(s.getKey().id(), "Someone remembers a bell at the home they left") + ", " + way + ".");
+    }
+
+    /** What people in the city say about the bells of the homes they left. */
+    private static final Map<String, String> PEOPLE_LINES = Map.of(
+            "fenwick", "An old woman in the square says Fenwick had a bell, by the lake",
+            "mill", "A carter says the mill he grew up at had a bell under the floor",
+            "shepherd", "A drover says the shepherds' bell still hangs where the flocks summered, and something sits with it",
+            "hill", "A woman on the terrace says her village's bell hung on the hill above it",
+            "ford", "A ferryman says there was a bell at the ford, and it went into the river when the water rose");
+
+    /** The nearest place still asleep, of the homes people left, whose bell this player has no Remembered lead to. */
+    private static Map.@Nullable Entry<BellCatalog.Def, BellWorld.Site> sleepingPeople(ServerPlayer p) {
+        BellBook b = book(p);
+        ServerLevel level = p.level().getServer().overworld();
+        Map.Entry<BellCatalog.Def, BellWorld.Site> best = null;
+        double bd = Double.MAX_VALUE;
+        for (BellWorld.Site s : BellSites.near(level, p.blockPosition(), REMEMBERED_REACH).values()) {
+            BellCatalog.Def d = BellCatalog.of(s.bell);
+            if (d == null || d.source() != BellCatalog.Source.PEOPLE || s.state == BellWorld.Site.AWAKE || s.state == BellWorld.Site.GONE
+                    || b.held.containsKey(d.no())) continue;
+            BellBook.Lead l = b.leads.get(d.no());
+            if (l != null && l.has(BellBook.How.REMEMBERED)) continue;
+            double dd = Math.hypot(s.pos.getX() - p.getX(), s.pos.getZ() - p.getZ());
+            if (dd < bd) {
+                bd = dd;
+                best = Map.entry(d, s);
+            }
+        }
+        return best;
+    }
+
+    /** How far from the city people remember: the C and B bands' homes. */
+    static final int REMEMBERED_REACH = 7200;
+
+    /** A Dreamt lead: a dream bell rang and got away. */
+    static void dreamt(ServerPlayer p, BellCatalog.Def d, String line) {
+        BellBook b = book(p);
+        BellBook.Lead l = lead(p, b, d);
+        if (!l.has(BellBook.How.DREAMT)) {
+            l.hows |= 1 << BellBook.How.DREAMT.ordinal();
+            l.lines.add(line);
+            save(p, b);
+        }
+        say(p, "[" + line + "]");
+    }
+
+    /** A Remembered lead: what someone said, and the area it points at if it points anywhere. */
+    private static void remembered(ServerPlayer p, BellCatalog.Def d, @Nullable BlockPos at, String line) {
+        BellBook b = book(p);
+        BellBook.Lead l = lead(p, b, d);
+        if (l.has(BellBook.How.REMEMBERED)) return;
+        l.hows |= 1 << BellBook.How.REMEMBERED.ordinal();
+        if (at != null && l.bearings < 2) {
+            l.bearings = 2;
+            l.tx = at.getX();
+            l.tz = at.getZ();
+        }
+        l.lines.add(line);
+        save(p, b);
+        say(p, "[" + line + " It's in your Bell Book.]");
+    }
 
     /** A gate's Lord fell: its world's bell goes home with everyone in the run, if the gate was at its bell's rank. */
     public static void lordFell(ServerLevel level, LivingEntity lord, Rank rank, String theme, Collection<UUID> party, @Nullable ServerPlayer killer) {
@@ -355,6 +500,30 @@ public final class Bells {
         if (deepest >= 3) ring(p, "drowned_choir", "down in the Drowned Choir");
         if (prof.counter(Counters.LUCID_DREAMS) >= 1) ring(p, "dreaming", "carried out of your first lucid dream");
         if (prof.counter(Counters.SPIRITS_SPOKEN) >= 1) ring(p, "spirit", "given by the first spirit you spoke to");
+        // stage 6: the later Provings' Great Bells, the Registry's twenty-fifth gate, the Descent's strata, Deepglass in hand
+        if (rank.ordinal() >= Rank.B.ordinal()) ring(p, "third", "the Great Bell from your B-rank Proving");
+        if (rank.ordinal() >= Rank.A.ordinal()) ring(p, "fourth", "the Great Bell from your A-rank Proving");
+        if (rank.ordinal() >= Rank.S.ordinal()) ring(p, "fifth", "the Great Bell from your S-rank Proving");
+        if (rank == Rank.SOVEREIGN) ring(p, "bourdon", "the Great Bell from your last Proving");
+        if (prof.counter(Counters.GATES_CLEARED) >= 25) ring(p, "toll", "rung by the Registry for your twenty-fifth gate");
+        for (int s = 1; s < DESCENT_BELLS.length && s <= deepest; s++)
+            if (DESCENT_BELLS[s] != null) ring(p, DESCENT_BELLS[s][0], DESCENT_BELLS[s][1]);
+        if (!has(p, "crystal"))
+            for (int i = 0; i < p.getInventory().getContainerSize(); i++)
+                if (p.getInventory().getItem(i).is(DelveContent.DEEPGLASS_SHARD.get())) {
+                    ring(p, "crystal", "the first time you held Deepglass");
+                    break;
+                }
+        // the Above: a Tether Spire and a sky platform scanned, the Halo reached, the Halo at S rank, a storm on the wing
+        for (var m : dev.awaken.above.Above.data(p).ruins()) {
+            if (m.kind().equals("tether_spire")) ring(p, "wind", "in the wind at a Tether Spire");
+            if (m.kind().equals("sky_platform")) ring(p, "island", "on a sky platform");
+        }
+        if (prof.counter(dev.awaken.above.Above.HALO_REACHED) >= 1) ring(p, "halo", "aboard the Halo");
+        if (rank.ordinal() >= Rank.S.ordinal() && dev.awaken.above.halo.Halo.in(p)) ring(p, "star", "under the stars at the Halo");
+        if (p.level().dimension() == Level.OVERWORLD && p.level().isThundering() && p.getY() > 160 && !p.onGround() && !p.isInWater())
+            ring(p, "storm", "in the sky, in a storm");
+        city(p);
     }
 
     // ---- voices -----------------------------------------------------------------------------------------------------
@@ -375,16 +544,38 @@ public final class Bells {
         return h.map(r -> voice(level, r.pos, v)).orElse(0);
     }
 
-    /** Rest and Stride, for a player inside their own Hearth. */
+    /** How many of the bells at the Hearth this player stands in (their own) have voice {@code v}; 0 outside it. */
+    public static int voiceHere(ServerPlayer p, BellCatalog.Voice v) {
+        if (!(p.level() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) return 0;
+        Optional<HearthRecord> h = HearthService.data(level.getServer()).home(p.getUUID());
+        if (h.isEmpty() || p.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(h.get().pos)) > (double) h.get().radius() * h.get().radius()) return 0;
+        return voice(level, h.get().pos, v);
+    }
+
+    /** The voices a body feels inside its own Hearth: Rest, Stride, and stage 6's Sight, Breath, Haste, Warmth, Might, Guard. */
     private static void body(ServerPlayer p) {
         if (!(p.level() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) return;
         Optional<HearthRecord> h = HearthService.data(level.getServer()).home(p.getUUID());
         if (h.isEmpty() || p.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(h.get().pos)) > (double) h.get().radius() * h.get().radius()) return;
-        int rest = voice(level, h.get().pos, BellCatalog.Voice.REST), stride = voice(level, h.get().pos, BellCatalog.Voice.STRIDE);
+        int[] n = new int[BellCatalog.Voice.values().length];
+        BellWorld.Home home = BellWorld.get(level.getServer()).peek(h.get().pos);
+        if (home == null) return;
+        for (int no : home.hung) n[BellCatalog.of(no).voice().ordinal()]++;
+        int rest = n[BellCatalog.Voice.REST.ordinal()], stride = n[BellCatalog.Voice.STRIDE.ordinal()];
         if (rest > 0 && p.tickCount - p.getLastHurtByMobTimestamp() > 100 && p.getHealth() < p.getMaxHealth())
-            p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 110, rest >= 3 ? 1 : 0, true, false, true));
-        if (stride > 0 && !p.isPassenger() && !p.isFallFlying())
-            p.addEffect(new MobEffectInstance(MobEffects.SPEED, 110, stride >= 3 ? 1 : 0, true, false, true));
+            feel(p, MobEffects.REGENERATION, rest);
+        if (stride > 0 && !p.isPassenger() && !p.isFallFlying()) feel(p, MobEffects.SPEED, stride);
+        if (n[BellCatalog.Voice.SIGHT.ordinal()] > 0) p.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 320, 0, true, false, true));
+        if (n[BellCatalog.Voice.BREATH.ordinal()] > 0 && p.isUnderWater()) p.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 110, 0, true, false, true));
+        if (n[BellCatalog.Voice.HASTE.ordinal()] > 0) feel(p, MobEffects.HASTE, n[BellCatalog.Voice.HASTE.ordinal()]);
+        if (n[BellCatalog.Voice.WARMTH.ordinal()] > 0) p.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 110, 0, true, false, true));
+        if (n[BellCatalog.Voice.MIGHT.ordinal()] > 0) feel(p, MobEffects.STRENGTH, n[BellCatalog.Voice.MIGHT.ordinal()]);
+        if (n[BellCatalog.Voice.GUARD.ordinal()] > 0) feel(p, MobEffects.RESISTANCE, n[BellCatalog.Voice.GUARD.ordinal()]);
+    }
+
+    /** One voice's effect: level I with a bell of it, II from three. */
+    private static void feel(ServerPlayer p, net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> e, int bells) {
+        p.addEffect(new MobEffectInstance(e, 110, bells >= 3 ? 1 : 0, true, false, true));
     }
 
     // ---- ticking ----------------------------------------------------------------------------------------------------
@@ -392,6 +583,8 @@ public final class Bells {
     static void tick(MinecraftServer server) {
         ServerLevel ow = server.overworld();
         BellSites.tickPaint(ow);
+        BellSites.tickSpirits(ow);
+        DreamBells.tick(server);
         BellTower.tick(server);
         Peals.tick(server);
         long now = ow.getGameTime();

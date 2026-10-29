@@ -13399,3 +13399,45 @@ Built in `dev.awaken.kin` (`KinWorks`, `KinHelp`, `KinHome`, `KinSpawner`) and `
   springs, the clapper from waking bells, the keystone from granaries, pond rot never held (it drops nothing). Every
   block drops itself.
 - **Tests** (CI): `works_plan_builds`, `works_bays_sort`, with stage 2's kin tests. `/awaken admin kin works` raises a Smeltery, a Storehouse (a heap on its Drop), a Foundry (Sung Iron's metal) and a Rookery north of your home from their plans; tour `journey-5`.
+
+### 43.13 The second half's bells and beasts (stage 6; rows in LEDGER.md "Stage 6")
+Built in `dev.awaken.bells` (`Bells`, `BellSites`, `DreamBells`, `BellCatalog`) with one line each in `bigday.BigDays`
+(Siege) and `kin.KinWorks` (Founders).
+- **Every bell but two has a voice now** (the Seed, 00, and the True Bell, 36, wait for stage 7). New voices, felt inside
+  your own Hearth: Sight (night vision), Breath (no drowning under water), Feather (a fall doesn't hurt), Haste (I, II from
+  3), Warmth (fire and lava don't burn), Might (Strength I, II from 3), Guard (Resistance I, II from 3).
+- **Moments** (checked every 5 s with stage 4's): the Great Bells of the B, A, S and Sovereign Provings (Third, Fourth,
+  Fifth, the Bourdon) with the rank; the Toll Bell for the twenty-fifth gate cleared; the Descent's bells on reaching
+  each stratum (Shallows at the Rim, Bone in the Bone Orchard, Echo in the Silent Halls, Furnace in the Precursor
+  Foundry, Black Water under the Inverted Sea, Weight in the Dreaming Stratum, the Deepest at the Seed); the Crystal
+  Bell the first time Deepglass is in your inventory; the Above's: Wind for the first Tether Spire scanned, Island for
+  the first sky platform, the Halo Bell aboard the Halo, the Star Bell at the Halo at S rank, the Storm Bell in the air
+  above y 160 in a thunderstorm.
+- **Gate worlds**: every theme now has its bell from its Lord at the bell's rank or above (Archive C, Gear C, Glass C,
+  Frost B, Mirror B, Counting B for the Precursor Lab, Sleeper B for the Nightmare, Sky A, Herald S for the Abyssal
+  Shrine).
+- **The Court**: each Sovereign that a player fells rings its domain's bell for everyone within 96 (Hunger, Silence, the
+  Sorrow Bell for Sleep, the Throne Bell for Machines, the Oath Bell for Mirrors, the Crown Bell for Storms, the Grief
+  Bell for Roots, Ash).
+- **Big Days**: the Siege Bell with the Night Bell when a home holds a raid and its member is B rank or above.
+- **Carillon** (Remembered leads while you're in the city): the Roost's bell rings for you within 16 of the Roost at C
+  rank; Choir Square's within 20 of the square with 20 bells; the market's in the market district at B rank; the
+  Quay's (the Harbour Bell) on the Quay with 50 bells. A due bell you're away from is remembered aloud with where it is.
+  The Founders' Bell comes with your Foundry's first cast.
+- **The land, further out**: the C band also holds the homes people left (Fenwick's, sunk by a lake; the Mill Bell,
+  buried; the Shepherd's, kept); a B band (4,800 to 7,200 blocks, half its cells) holds the Hill (high), the Ford
+  (sunk) and the Thaw Bell (kept); an A band (7,200 to 9,600, two in five) the Boulder (kept) and the Leviathan's (high).
+  Once a play-day in Carillon someone remembers one of the people's bells still asleep within 7,200 blocks, in plain
+  words, with the area 20 blocks off it ("An old woman in the square says Fenwick had a bell, by the lake, to the
+  west."); the Bell Book keeps `remembered_day` (schema 2).
+- **Spirit bells** (the Veil: Ghost Lantern and Whisper in the C band, Wake and Mourner in B, the Veil Bell in A; two in
+  five cells of their own 960-block grid): nothing a body can touch, the ground round them asleep (radius 5) and the bell
+  hanging 7 above it. A body within 24 feels it ("The air here is cold and still, as if something hangs in it that only
+  a spirit could see." filed Seen). A spirit sees it drawn in cold light every 10 ticks, hears it hum within 64 ("Heard
+  in spirit: a bell's note ..."), and rings it by coming within 3. Its toll is sent only to spirits within 256, and it
+  goes home with the spirit and every other spirit within 48. The land turns back as usual.
+- **Dream bells** (the Lucidium: Daydream, Lullaby, Falling, Nightmare, Lucid, offered in that order, one a dream): in a
+  dream the next one not held is set down awake 24 to 40 blocks off on the dream's ground and rings its note every 5 s.
+  Strike it with lucidity at least 40 (C), 60 (B) or 80 (A) and you hold it ("Wake, and it's yours."); too dim and your
+  hands go through it. Wake holding it and it's yours ("carried out of a dream"); wake without it and the Book files a
+  Dreamt lead (the new lead kind). Not saved: a dream isn't.

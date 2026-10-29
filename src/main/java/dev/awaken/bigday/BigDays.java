@@ -327,6 +327,7 @@ public final class BigDays {
                 Progression.count(p, "awaken:raids_held");
                 Progression.bestMoment(p, "Held my home through its first raid");
                 dev.awaken.bells.Bells.ring(p, "night", "the morning your home held");
+                if (Progression.rank(p).ordinal() >= Rank.B.ordinal()) dev.awaken.bells.Bells.ring(p, "siege", "the morning your home held a raid at B rank");
             }
         } else KinHome.hide(level, h.pos, 0);
         for (ServerPlayer p : here)

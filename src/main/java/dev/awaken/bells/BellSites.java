@@ -22,6 +22,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ import java.util.UUID;
 
 /**
  * Sleeping bells out in the land (SPEC §43.7): where a bell fell, the place fell asleep with it, grey and quiet. Each
- * 640-block cell past the city's ridge may hold one (rank by distance: E near, then D, then C), and every home gets one
+ * 640-block cell past the city's ridge may hold one (rank by distance: E near, then D, C, B and A), and every home gets one
  * of its own close by (the Wren Bell). A sleeping bell hums within 64 blocks (a Heard lead, crossed into an area the
  * second time from somewhere else), looks asleep within 24 (Seen), and wakes when struck: buried ones must be dug out,
  * sunk ones dived for, high ones climbed, and kept ones have something that gathered round them to deal with first.
@@ -42,7 +43,7 @@ import java.util.UUID;
 public final class BellSites {
     private BellSites() {}
 
-    public enum Kind { BURIED, KEPT, SUNK, HIGH }
+    public enum Kind { BURIED, KEPT, SUNK, HIGH, SPIRIT }
 
     static final int CELL = 640, HUM = 64, SEEN = 24, BUILD = 96, KEEPER_WAKES = 16, WAKE_REACH = 48, PAINT = 14;
     static final UUID BEATEN = new UUID(0L, 0L);
@@ -53,13 +54,20 @@ public final class BellSites {
     static final Map<Rank, List<String>> POOL = Map.of(
             Rank.E, List.of("barrow", "mere", "wayside"),
             Rank.D, List.of("cairn", "spire", "reed"),
-            Rank.C, List.of("thorn", "crag", "fen"));
+            Rank.C, List.of("thorn", "crag", "fen", "fenwick", "mill", "shepherd"),
+            Rank.B, List.of("hill", "ford", "thaw"),
+            Rank.A, List.of("boulder", "leviathan"));
     static final Map<String, Kind> KIND = Map.ofEntries(
             Map.entry("wren", Kind.BURIED), Map.entry("barrow", Kind.BURIED), Map.entry("mere", Kind.SUNK), Map.entry("wayside", Kind.KEPT),
             Map.entry("cairn", Kind.KEPT), Map.entry("spire", Kind.HIGH), Map.entry("reed", Kind.SUNK),
-            Map.entry("thorn", Kind.KEPT), Map.entry("crag", Kind.HIGH), Map.entry("fen", Kind.SUNK));
+            Map.entry("thorn", Kind.KEPT), Map.entry("crag", Kind.HIGH), Map.entry("fen", Kind.SUNK),
+            Map.entry("fenwick", Kind.SUNK), Map.entry("mill", Kind.BURIED), Map.entry("shepherd", Kind.KEPT),
+            Map.entry("hill", Kind.HIGH), Map.entry("ford", Kind.SUNK), Map.entry("thaw", Kind.KEPT),
+            Map.entry("boulder", Kind.KEPT), Map.entry("leviathan", Kind.HIGH),
+            Map.entry("ghost", Kind.SPIRIT), Map.entry("whisper", Kind.SPIRIT), Map.entry("wake", Kind.SPIRIT), Map.entry("mourner", Kind.SPIRIT),
+            Map.entry("veil", Kind.SPIRIT));
 
-    /** Rank band by distance from the world's centre (blocks): E from past the ridge, then D, then C. */
+    /** Rank band by distance from the world's centre (blocks): E from past the ridge, then D, C, B and A. */
     static @Nullable Rank band(MinecraftServer server, int x, int z) {
         BlockPos c = TheLull.centre(server);
         double d = Math.hypot(x - c.getX(), z - c.getZ());
@@ -67,7 +75,20 @@ public final class BellSites {
         if (d < 1300) return Rank.E;
         if (d < 2800) return Rank.D;
         if (d < 4800) return Rank.C;
+        if (d < 7200) return Rank.B;
+        if (d < 9600) return Rank.A;
         return null;
+    }
+
+    /** The chance a cell of each band holds a bell. */
+    static float chance(Rank band) {
+        return switch (band) {
+            case E -> 0.85F;
+            case D -> 0.7F;
+            case C -> 0.6F;
+            case B -> 0.5F;
+            default -> 0.4F;
+        };
     }
 
     static String cellKey(int cx, int cz) {
@@ -80,8 +101,7 @@ public final class BellSites {
         int x = cx * CELL + 96 + r.nextInt(CELL - 192), z = cz * CELL + 96 + r.nextInt(CELL - 192);
         Rank band = band(level.getServer(), x, z);
         if (band == null) return null;
-        float chance = band == Rank.E ? 0.85F : band == Rank.D ? 0.7F : 0.6F;
-        if (r.nextFloat() >= chance) return null;
+        if (r.nextFloat() >= chance(band)) return null;
         List<String> pool = POOL.get(band);
         String bell = pool.get(r.nextInt(pool.size()));
         return new BellWorld.Site(bell, KIND.get(bell), new BlockPos(x, 0, z));
@@ -98,14 +118,90 @@ public final class BellSites {
                 if (s == null) s = planned(level, cx, cz);
                 if (s != null && close(s.pos, at, r)) out.put(key, s);
             }
+        for (int cx = Math.floorDiv(at.getX() - r, SPIRIT_CELL); cx <= Math.floorDiv(at.getX() + r, SPIRIT_CELL); cx++)
+            for (int cz = Math.floorDiv(at.getZ() - r, SPIRIT_CELL); cz <= Math.floorDiv(at.getZ() + r, SPIRIT_CELL); cz++) {
+                String key = spiritKey(cx, cz);
+                BellWorld.Site s = w.sites.get(key);
+                if (s == null) s = plannedSpirit(level, cx, cz);
+                if (s != null && close(s.pos, at, r)) out.put(key, s);
+            }
         for (Map.Entry<String, BellWorld.Site> e : w.sites.entrySet())
-            if (!e.getKey().startsWith("c") && close(e.getValue().pos, at, r)) out.put(e.getKey(), e.getValue());
+            if (!e.getKey().startsWith("c") && !e.getKey().startsWith("s") && close(e.getValue().pos, at, r)) out.put(e.getKey(), e.getValue());
         return out;
     }
 
     private static boolean close(BlockPos a, BlockPos b, int r) {
         double dx = a.getX() - b.getX(), dz = a.getZ() - b.getZ();
         return dx * dx + dz * dz <= (double) r * r;
+    }
+
+    // ---- spirit bells (the Veil) -------------------------------------------------------------------------------------------
+
+    /**
+     * The Veil's bells hang in the air where only a spirit can see them, on their own grid of cells from the C band out.
+     * A spirit that comes within {@link #SPIRIT_RING} of one rings it; a body near one only feels the cold.
+     */
+    static final int SPIRIT_CELL = 960, SPIRIT_HANG = 7, SPIRIT_RING = 3;
+    static final Map<Rank, List<String>> SPIRIT_POOL = Map.of(Rank.C, List.of("ghost", "whisper"), Rank.B, List.of("wake", "mourner"),
+            Rank.A, List.of("veil"));
+
+    static String spiritKey(int cx, int cz) {
+        return "s" + cx + "," + cz;
+    }
+
+    /** The spirit cell's bell as the seed lays it out (not yet built), or null: two in five cells from the C band out. */
+    static BellWorld.@Nullable Site plannedSpirit(ServerLevel level, int cx, int cz) {
+        RandomSource r = RandomSource.create(level.getSeed() ^ (cx * 198491317L + cz * 6542989L) ^ 0x5B1E17L);
+        int x = cx * SPIRIT_CELL + 96 + r.nextInt(SPIRIT_CELL - 192), z = cz * SPIRIT_CELL + 96 + r.nextInt(SPIRIT_CELL - 192);
+        Rank band = band(level.getServer(), x, z);
+        List<String> pool = band == null ? null : SPIRIT_POOL.get(band);
+        if (pool == null || r.nextFloat() >= 0.4F) return null;
+        return new BellWorld.Site(pool.get(r.nextInt(pool.size())), Kind.SPIRIT, new BlockPos(x, 0, z));
+    }
+
+    /** The spirit bells each spirit is near, refreshed with its 5 s check and drawn for it every 10 ticks. Not saved. */
+    private static final Map<UUID, Map<String, BellWorld.Site>> SPIRIT_NEAR = new HashMap<>();
+
+    /** Every 10 ticks: each spirit sees the spirit bells near it drawn in light, and one it reaches rings. */
+    static void tickSpirits(ServerLevel level) {
+        if (SPIRIT_NEAR.isEmpty() || level.getGameTime() % 10 != 0) return;
+        for (Iterator<Map.Entry<UUID, Map<String, BellWorld.Site>>> it = SPIRIT_NEAR.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<UUID, Map<String, BellWorld.Site>> e = it.next();
+            ServerPlayer p = level.getServer().getPlayerList().getPlayer(e.getKey());
+            if (p == null || p.level() != level || !dev.awaken.veil.Veil.isSpirit(p)) {
+                it.remove();
+                continue;
+            }
+            for (Map.Entry<String, BellWorld.Site> b : List.copyOf(e.getValue().entrySet())) {
+                BellWorld.Site s = b.getValue();
+                if (s.state != BellWorld.Site.ASLEEP) continue;
+                double d = Math.sqrt(p.distanceToSqr(Vec3.atCenterOf(s.pos)));
+                if (d > HUM) continue;
+                drawSpirit(level, p, s.pos, level.getGameTime());
+                if (d <= SPIRIT_RING) {
+                    wake(level, b.getKey(), s, p);
+                    e.getValue().remove(b.getKey());
+                }
+            }
+        }
+    }
+
+    /** A bell drawn in cold light for one spirit: its lip, its waist and its crown, turning slowly. */
+    private static void drawSpirit(ServerLevel level, ServerPlayer p, BlockPos at, long t) {
+        double cx = at.getX() + 0.5, cy = at.getY(), cz = at.getZ() + 0.5;
+        for (int i = 0; i < 12; i++) {
+            double a = i * Math.PI / 6 + t * 0.015;
+            level.sendParticles(p, ParticleTypes.SOUL_FIRE_FLAME, true, true, cx + Math.cos(a) * 1.4, cy, cz + Math.sin(a) * 1.4, 1, 0, 0, 0, 0);
+            if (i % 2 == 0)
+                level.sendParticles(p, ParticleTypes.END_ROD, true, true, cx + Math.cos(-a) * 0.9, cy + 1.3, cz + Math.sin(-a) * 0.9, 1, 0, 0, 0, 0);
+        }
+        level.sendParticles(p, ParticleTypes.END_ROD, true, true, cx, cy + 2.1, cz, 1, 0.04, 0.04, 0.04, 0);
+        level.sendParticles(p, ParticleTypes.SOUL, true, true, cx, cy - 0.4, cz, 1, 0.5, 0.1, 0.5, 0.01);
+    }
+
+    /** The ground under a site's bell: a spirit bell hangs above its own. */
+    private static BlockPos ground(BellWorld.Site s) {
+        return s.kind == Kind.SPIRIT ? s.pos.below(SPIRIT_HANG) : s.pos;
     }
 
     // ---- the home's own (the Wren Bell) -------------------------------------------------------------------------------
@@ -139,6 +235,8 @@ public final class BellSites {
         BellWorld w = BellWorld.get(level.getServer());
         BellBook book = Bells.book(p);
         long now = level.getGameTime();
+        boolean spirit = dev.awaken.veil.Veil.isSpirit(p);
+        if (!spirit) SPIRIT_NEAR.remove(p.getUUID());
         for (Map.Entry<String, BellWorld.Site> e : near(level, p.blockPosition(), BUILD).entrySet()) {
             String key = e.getKey();
             BellWorld.Site s = e.getValue();
@@ -155,6 +253,15 @@ public final class BellSites {
             BellCatalog.Def def = BellCatalog.of(s.bell);
             if (def == null) continue;
             double d = Math.sqrt(p.distanceToSqr(s.pos.getX() + 0.5, s.pos.getY() + 0.5, s.pos.getZ() + 0.5));
+            if (s.kind == Kind.SPIRIT) {
+                // a body only feels the cold; a spirit sees it, hears it, and can ring it
+                if (book.held.containsKey(def.no())) continue;
+                if (!spirit) {
+                    if (d <= SEEN) Bells.seen(p, def, "The air here is cold and still, as if something hangs in it that only a spirit could see.");
+                    continue;
+                }
+                SPIRIT_NEAR.computeIfAbsent(p.getUUID(), u -> new HashMap<>()).put(key, s);
+            }
             if (s.kind == Kind.KEPT && d < KEEPER_WAKES) keeper(level, key, s, p);
             if (book.held.containsKey(def.no()) || d > HUM) continue;
             Map<String, Long> mine = HEARD.computeIfAbsent(p.getUUID(), u -> new HashMap<>());
@@ -162,14 +269,15 @@ public final class BellSites {
                 mine.put(key, now);
                 p.connection.send(new ClientboundSoundPacket(BellContent.HUM, SoundSource.AMBIENT, s.pos.getX() + 0.5, s.pos.getY() + 0.5,
                         s.pos.getZ() + 0.5, 4F, BellContent.pitch(def.no()), now));
-                Bells.heard(p, def, s.pos);
+                Bells.heard(p, def, s.pos, s.kind == Kind.SPIRIT ? "Heard in spirit: a" : "A");
             }
-            if (d <= SEEN) Bells.seen(p, def);
+            if (d <= SEEN && s.kind != Kind.SPIRIT) Bells.seen(p, def);
         }
     }
 
     static void forget(ServerPlayer p) {
         HEARD.remove(p.getUUID());
+        SPIRIT_NEAR.remove(p.getUUID());
     }
 
     // ---- building a sleeping place --------------------------------------------------------------------------------------
@@ -186,6 +294,14 @@ public final class BellSites {
             return;
         }
         boolean wet = !level.getFluidState(ground).isEmpty() || level.getBlockState(ground).is(Blocks.WATER);
+        if (s.kind == Kind.SPIRIT) {
+            // nothing a body can touch: the ground round it asleep, and the bell itself in the air, seen only in spirit
+            if (!wet) dress(level, ground, 5, r);
+            s.pos = ground.above(SPIRIT_HANG);
+            s.state = BellWorld.Site.ASLEEP;
+            Awaken.LOG.info("[bells] built {} (SPIRIT) at {}", s.bell, s.pos.toShortString());
+            return;
+        }
         if (wet && s.kind != Kind.SUNK) {
             // a bell that fell into water lies on the bottom instead
             int floor = level.getHeight(Heightmap.Types.OCEAN_FLOOR, x, z);
@@ -207,6 +323,7 @@ public final class BellSites {
                 case KEPT -> kept(level, ground, bell, r);
                 case SUNK -> sunk(level, ground, bell);
                 case HIGH -> high(level, ground, bell, r);
+                case SPIRIT -> ground;
             };
         }
         s.pos = at;
@@ -342,6 +459,7 @@ public final class BellSites {
 
     /** A player strikes a sleeping (or woken) bell. */
     static void strike(ServerLevel level, BlockPos pos, ServerPlayer p) {
+        if (DreamBells.strike(p, pos)) return;
         Map.Entry<String, BellWorld.Site> e = at(level, pos);
         if (e == null) {
             level.playSound(null, pos, BellContent.HANDBELL_RING.get(), SoundSource.BLOCKS, 0.6F, 0.6F);
@@ -369,15 +487,23 @@ public final class BellSites {
         if (def == null) return;
         s.state = BellWorld.Site.AWAKE;
         BellWorld.get(level.getServer()).setDirty();
+        boolean spirit = s.kind == Kind.SPIRIT;
         BlockState st = level.getBlockState(s.pos);
         if (st.is(BellContent.SLEEPING_BELL.get())) level.setBlock(s.pos, st.setValue(SleepingBellBlock.AWAKE, true), Block.UPDATE_ALL);
-        level.playSound(null, s.pos, BellContent.TOLL.get(), SoundSource.BLOCKS, 16F, BellContent.pitch(def.no()));
-        level.playSound(null, s.pos, BellContent.WAKE.get(), SoundSource.AMBIENT, 4F, 1F);
+        if (!spirit) {
+            level.playSound(null, s.pos, BellContent.TOLL.get(), SoundSource.BLOCKS, 16F, BellContent.pitch(def.no()));
+            level.playSound(null, s.pos, BellContent.WAKE.get(), SoundSource.AMBIENT, 4F, 1F);
+        } else for (ServerPlayer q : level.players())
+            // a bell nobody living can hear
+            if (dev.awaken.veil.Veil.isSpirit(q) && q.distanceToSqr(Vec3.atCenterOf(s.pos)) < 256 * 256)
+                q.connection.send(new ClientboundSoundPacket(BellContent.TOLL, SoundSource.BLOCKS, s.pos.getX() + 0.5, s.pos.getY() + 0.5,
+                        s.pos.getZ() + 0.5, 16F, BellContent.pitch(def.no()), level.getGameTime()));
         // the place comes back the way the world does after a Fault: on the mend
         dev.awaken.fault.Faults.mendNear(level, s.pos, WAKE_REACH);
         for (ServerPlayer q : level.players())
-            if (q.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(s.pos)) < WAKE_REACH * WAKE_REACH && !Bells.book(q).held.containsKey(def.no()))
-                Bells.ring(q, def, q == by ? "where you woke it" : "you were there when it woke");
+            if (q.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(s.pos)) < WAKE_REACH * WAKE_REACH && !Bells.book(q).held.containsKey(def.no())
+                    && (!spirit || q == by || dev.awaken.veil.Veil.isSpirit(q)))
+                Bells.ring(q, def, q == by ? (spirit ? "rung in spirit, where nobody living could hear it" : "where you woke it") : "you were there when it woke");
         if (by != null) {
             // its clapper comes loose (a Chime Perch is built round one), and the wild Chimewrens near enough hear it
             dev.awaken.kin.KinApi.clapper(by);
@@ -400,7 +526,7 @@ public final class BellSites {
             Paint p = it.next();
             if (!level.isLoaded(p.s.pos)) continue; // left as it is: painted whole when someone comes back
             int r = p.ring;
-            for (int k = 0; k < 2 && r <= PAINT; k++, r++) ring(level, p.s.pos, r, level.getRandom());
+            for (int k = 0; k < 2 && r <= PAINT; k++, r++) ring(level, ground(p.s), r, level.getRandom());
             if (r > PAINT) {
                 p.s.painted = true;
                 BellWorld.get(level.getServer()).setDirty();

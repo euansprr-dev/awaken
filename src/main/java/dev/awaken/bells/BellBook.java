@@ -15,10 +15,10 @@ import java.util.Map;
  * handbell is set to, and what's been said once. Saved on the player (schema 1), kept through death.
  */
 public final class BellBook {
-    public static final int SCHEMA = 1;
+    public static final int SCHEMA = 2;
 
     /** How a lead was learned (JOURNEY part 4). Sung comes with the Chimewren (stage 5), Found with the Stilled's letters. */
-    public enum How { HEARD, SEEN, SUNG, FOUND, RUNG, REMEMBERED }
+    public enum How { HEARD, SEEN, SUNG, FOUND, RUNG, REMEMBERED, DREAMT }
 
     /** A bell held: the play-day it rang and where (in words). */
     public record Held(long day, String where) {
@@ -73,8 +73,9 @@ public final class BellBook {
             Codec.INT.optionalFieldOf("tracked", -1).forGetter(b -> b.tracked),
             Codec.BOOL.optionalFieldOf("given", false).forGetter(b -> b.given),
             Codec.STRING.optionalFieldOf("peal", "").forGetter(b -> b.peal),
-            Codec.LONG.optionalFieldOf("homeward_at", 0L).forGetter(b -> b.homewardAt)
-    ).apply(i, (schema, held, leads, tracked, given, peal, homewardAt) -> {
+            Codec.LONG.optionalFieldOf("homeward_at", 0L).forGetter(b -> b.homewardAt),
+            Codec.LONG.optionalFieldOf("remembered_day", -1L).forGetter(b -> b.rememberedDay)
+    ).apply(i, (schema, held, leads, tracked, given, peal, homewardAt, rememberedDay) -> {
         BellBook b = new BellBook();
         held.forEach((k, v) -> b.held.put(Integer.parseInt(k), v));
         leads.forEach((k, v) -> b.leads.put(Integer.parseInt(k), v));
@@ -82,6 +83,7 @@ public final class BellBook {
         b.given = given;
         b.peal = peal;
         b.homewardAt = homewardAt;
+        b.rememberedDay = rememberedDay;
         return b;
     }));
 
@@ -101,6 +103,8 @@ public final class BellBook {
     public String peal = "";
     /** Game time Homeward can next be rung. */
     public long homewardAt;
+    /** The play-day someone in Carillon last remembered a home's bell aloud (schema 2), or -1. */
+    public long rememberedDay = -1;
 
     public boolean has(String id) {
         BellCatalog.Def d = BellCatalog.of(id);

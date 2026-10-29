@@ -45,6 +45,7 @@ public final class BellModule {
             if (!(dead.level() instanceof ServerLevel level) || !dead.hasData(CoreApi.MOB_ROLE.get())) return;
             String id = dead.getData(CoreApi.MOB_ROLE.get()).gateId();
             if (id.startsWith("bell:")) BellSites.keeperDied(level, id.substring(5));
+            Bells.sovereignFell(level, dead);
         });
         bus.addListener((PlayerInteractEvent.RightClickBlock e) -> {
             if (!(e.getEntity() instanceof ServerPlayer p) || !e.getLevel().getBlockState(e.getPos()).is(Blocks.BELL)) return;
@@ -66,10 +67,14 @@ public final class BellModule {
             int n = Bells.voice(level, h.get().pos, BellCatalog.Voice.WARD);
             if (n > 0 && level.getRandom().nextFloat() < Math.min(0.8F, n * WARD_PER)) e.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
         });
+        bus.addListener((net.neoforged.neoforge.event.entity.living.LivingFallEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p && Bells.voiceHere(p, BellCatalog.Voice.FEATHER) > 0) e.setDamageMultiplier(0F);
+        });
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
                 BellSites.forget(p);
                 Peals.forget(p.getUUID());
+                DreamBells.forget(p.getUUID());
             }
         });
         Sources.declare("given with your first bell, and made again at a table (bells.Bells)", "handbell", "bell_frame");
