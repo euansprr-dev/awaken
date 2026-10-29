@@ -547,3 +547,22 @@ off); off draws the flat painted look. Item ids never change, so rolling a phase
   - **Looks and accents** are chosen at the stand: any made set's look for the same piece (it never changes what the
     piece does), and one dye for the whole suit's accent (taken from the pack; none restores the inlay's colour).
   - The Now hint names the highest rank's cuirass first, from that rank's Hunter set.
+- **P4 (2026-10-29):** the eight A and S sets (Leviathan, Galewing, Halo Choir, Dreamsteel; Starfall, Riftwalker,
+  Nightcourt, Signal's Echo), Fold and Starfire, the A and S growth and the eight twists (SPEC §44.2-44.6). Decisions:
+  - **Fold (A):** after the shaping, three folds struck in pairs down the middle of the piece, quick-quick then a rest,
+    ringing low; their mean is the fold's mark, a verb beside Tune and Inlay.
+  - **Starfire (S):** after the fold the heat goes white, the bellows roar, and eight marks come fast, scattered and
+    new each time; only the next few show. It rings high.
+  - **A growth** is a second charge (Bastion, Flow and Edge hold two; a Channeler gets a fourth rune); **S growth** is
+    reach (every ability's distances x1.5). Neither is a new button.
+  - **The twists are moments you feel**, never detection: Abyss Pull, Gust, Hymn, Mirror, Meteor (Starfall also takes
+    no fall damage), Riftstep, Riposte and Echo.
+  - A Lord at A or S gives one of its rank's other four patterns, as at C and B.
+- **P5 (2026-10-29):** the settings (SPEC §44.9): Sculpted armour on, near only (24 blocks) or off, and the Forge filmed
+  or seen from your own eyes; and the mastery pacing (`tools/sim/armour_mastery.py`: V in about four hours of
+  fighting). Not built here:
+  - **The Hall of Arms** has one line in this plan and lives in the Hearth; it needs its own design with the Hearth's
+    owner.
+  - **Far meshes:** every set is 600-1,000 triangles against a 2,500 budget, so "near only" stands in until the Mac's
+    perf pass says more is needed.
+  - **The perf pass and the sound pass** run on the Mac (timing and listening), with Euan's OK.
