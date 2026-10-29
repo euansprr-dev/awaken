@@ -268,6 +268,8 @@ def main():
     write('data/awaken/tags/worldgen/biome/caves/regions.json', {'replace': False, 'values': [f'awaken:{r}' for r in REGIONS]})
     # in the overworld (lodes, Deepglass, lamps, ore thinning and the Hollows reach them), not #c:is_underground
     write('data/minecraft/tags/worldgen/biome/is_overworld.json', {'replace': False, 'values': [f'awaken:{r}' for r in REGIONS]})
+    # the cave sound family, with the vanilla cave biomes (every overworld biome is in exactly one)
+    write('data/awaken/tags/worldgen/biome/soundscape/hollows.json', {'replace': False, 'values': [f'awaken:{r}' for r in REGIONS]})
     for tag in STRUCTURE_TAGS:
         write(f'data/minecraft/tags/worldgen/biome/{tag}.json', {'replace': False, 'values': [f'awaken:{r}' for r in REGIONS]})
     by_arch = {}

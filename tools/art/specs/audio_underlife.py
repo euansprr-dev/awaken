@@ -186,8 +186,8 @@ SHOTS = {
     "caves.rock_tick": ("rock_tick", rock_tick, 4, 16, -30.0, "Rock ticks"),
     "caves.chime_cricket": ("chime_cricket", chime_cricket, 4, 24, -29.0, "Chime crickets ring"),
 }
-# loops: (file stem, maker, gated RMS dBFS)
-LOOPS = {"caves.warm_hum": ("warm_hum", warm_hum, -30.0)}
+# loops: (file stem, maker, gated RMS dBFS, subtitle)
+LOOPS = {"caves.warm_hum": ("warm_hum", warm_hum, -30.0, "Warm hum in the rock")}
 
 
 def path(name, k):
@@ -205,8 +205,9 @@ def write_events():
         ev[eid] = {"subtitle": "subtitles.awaken." + eid,
                    "sounds": [{"name": f"awaken:caves/{name}{k + 1}", "attenuation_distance": att} for k in range(n)]}
         lang["subtitles.awaken." + eid] = sub
-    for eid, (name, _, _) in LOOPS.items():
-        ev[eid] = {"sounds": [{"name": f"awaken:caves/{name}"}]}
+    for eid, (name, _, _, sub) in LOOPS.items():
+        ev[eid] = {"subtitle": "subtitles.awaken." + eid, "sounds": [{"name": f"awaken:caves/{name}"}]}
+        lang["subtitles.awaken." + eid] = sub
     with open(spath, "w") as f:
         json.dump(dict(sorted(ev.items())), f, indent=2)
         f.write("\n")
@@ -235,7 +236,7 @@ def render_shots():
 
 def render_loops():
     q = TARGETS["sfx"][3]
-    for eid, (name, fn, rms) in LOOPS.items():
+    for eid, (name, fn, rms, _) in LOOPS.items():
         y = K.highpass(fn(sum(map(ord, name)) * 17), 40, 2)
         y = y * K.dbamp(rms - K.gated_rms(y))      # no fades: the ends must meet
         if K.true_peak(y) > W.CEIL:

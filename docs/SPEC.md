@@ -12067,7 +12067,9 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   Rootways' `caves.root_creak` (old roots' stick-slip creak through the wood's resonances, from the roof up to 10 blocks
   round, every 25 to 50 seconds); the Ochre Deep's `caves.rock_tick` (dry ticks of settling rock 3 to 12 blocks off, every 7
   to 14 seconds), `caves.chime_cricket` (a chorus of bell-like pings, 10 to 20 blocks off, every 26 to 52 seconds) and
-  `caves.warm_hum` (an 8-second seamless loop on 52 Hz round the listener, eased in at **0.45**, out as you leave).
+  `caves.warm_hum` (an 8-second seamless loop on 52 Hz round the listener, eased in at **0.45**, out as you leave;
+  subtitle "Warm hum in the rock"). Both regions sit in the world sound family `hollows` with the vanilla cave biomes
+  (`#awaken:soundscape/hollows`, from the pack), so the Soundscape plays the caves' bed under these.
 - **The underlife's own** (SPEC §42.5's director): **glow-worm threads** in the Rootways (up to **10**, clusters of two to
   four under a roof, at full light so they shine in the dark; a curtain of beaded silk from the sheet, swaying slowly);
   the Ochre Deep's beetles are **rust beetles** and its crickets sing the chime crickets' song. `/awaken underlife lineup`

@@ -97,6 +97,7 @@
     ]
   },
   "caves.warm_hum": {
+    "subtitle": "subtitles.awaken.caves.warm_hum",
     "sounds": [
       {
         "name": "awaken:caves/warm_hum"
