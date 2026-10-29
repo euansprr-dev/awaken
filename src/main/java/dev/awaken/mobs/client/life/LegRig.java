@@ -23,6 +23,8 @@ import java.util.function.IntFunction;
  * feet on the server; {@link LegParts} applies it to a model's parts.
  */
 public final class LegRig {
+    /** The vault's most, a share of the mean leg's length (a cow's long step drops its hips about a tenth of a leg). */
+    public static final float VAULT = 0.25F;
     public final MotionProfile.Gait gait;
     public final int n;
     /** Each leg's hip and knee bone (binding indices), and the bones above the hip, root first. */
@@ -48,6 +50,9 @@ public final class LegRig {
     final float turnRadius;
     /** Blocks from the front feet to the back ones, and from the left feet to the right (the slope's levers). */
     final float span, width;
+    /** Each hip at rest, model px; the most (px) the body sinks to keep a long step's planted feet in reach (its vault). */
+    public final float[] hipX, hipY, hipZ;
+    public final float vaultMax;
 
     private LegRig(MotionProfile.Gait gait, List<int[]> legs, List<int[]> chains, float[][] pose, IntFunction<float @Nullable []> box) {
         this.gait = gait;
@@ -68,7 +73,9 @@ public final class LegRig {
         homeZ = new float[n];
         side = new int[n];
         rank = new int[n];
-        float[] hipX = new float[n], hipZ = new float[n];
+        hipX = new float[n];
+        hipY = new float[n];
+        hipZ = new float[n];
         Matrix4f m = new Matrix4f();
         for (int i = 0; i < n; i++) {
             hip[i] = legs.get(i)[0];
@@ -111,6 +118,7 @@ public final class LegRig {
             Vector3f footM = m.transformPosition(new Vector3f(ft));
             Vector3f hipM = m.transformPosition(new Vector3f(hp));
             hipX[i] = hipM.x;
+            hipY[i] = hipM.y;
             hipZ[i] = hipM.z;
             side[i] = hipM.x > 0.01F ? 1 : hipM.x < -0.01F ? -1 : (footM.x >= 0 ? 1 : -1);
             homeX[i] = footM.x;
@@ -147,6 +155,9 @@ public final class LegRig {
             reachSum += Mth.sqrt(homeX[i] * homeX[i] + homeZ[i] * homeZ[i]) / 16.0F;
         }
         turnRadius = n > 0 ? reachSum / n : 0.5F;
+        float legSum = 0;
+        for (int i = 0; i < n; i++) legSum += l1[i] + l2[i];
+        vaultMax = n > 0 ? VAULT * legSum / n : 0.0F;
         float fz = 0, bz = 0, lx = 0, rx = 0;
         int nf = 0, nb = 0, nl = 0, nr = 0;
         for (int i = 0; i < n; i++) {
@@ -321,6 +332,16 @@ public final class LegRig {
 
     public float reach(int i) {
         return l1[i] + l2[i];
+    }
+
+    /**
+     * How far (px) leg i's hip must drop from rest for its foot to stand at (x, y, z) model px within 97% of the leg's
+     * length: a straight leg reaches only a little forward or back at full height, so a long step pulls the hips down.
+     */
+    public float sink(int i, float x, float y, float z) {
+        float dx = x - hipX[i], dz = z - hipZ[i], r = 0.97F * (l1[i] + l2[i]);
+        float flat = r * r - dx * dx - dz * dz;
+        return y - hipY[i] - (flat > 0 ? Mth.sqrt(flat) : 0.0F);
     }
 
     public float fold(int i) {

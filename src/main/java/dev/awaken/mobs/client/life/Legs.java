@@ -35,6 +35,8 @@ public final class Legs {
     float groundY, groundPitch, groundRoll, gaitY, gaitRoll;
     /** How far the front pair's feet are through their steps (0 planted, 1 a whole step up): the head nods with them. */
     float foreLift;
+    /** Px the body drops so a long step's planted feet stay in reach (its hips vault over them). */
+    float vault;
     private boolean init, fast;
     private double ex, ez, hx, hz;
     private float lastYaw, clock, rate, still, nextRegrip, vx, vz, yawRate, t;
@@ -89,6 +91,7 @@ public final class Legs {
             else if (init) out(x, y, z, yaw, sc);
             gaitY *= 0.8F;
             gaitRoll *= 0.8F;
+            vault *= 0.8F;
             return;
         }
         double jump = (x - ex) * (x - ex) + (z - ez) * (z - ez);
@@ -247,7 +250,7 @@ public final class Legs {
      * feet), sinking a touch while feet are up and leaning off a lifted one (the step's weight shift).
      */
     private void carriage(double y, float sc, float dt, MotionProfile.Gait g) {
-        float sum = 0, front = 0, back = 0, left = 0, right = 0, up = 0, lean = 0, fore = 0;
+        float sum = 0, front = 0, back = 0, left = 0, right = 0, up = 0, lean = 0, fore = 0, need = 0;
         int nf = 0, nb = 0, nl = 0, nr = 0, np = 0;
         for (int i = 0; i < rig.n; i++) {
             if (swinging[i]) {
@@ -260,6 +263,7 @@ public final class Legs {
             float h = (float) (fy[i] - y) / sc;
             sum += h;
             np++;
+            need = Math.max(need, rig.sink(i, tx[i], ty[i], tz[i]));
             if (rig.rank[i] == 0) {
                 front += h;
                 nf++;
@@ -289,6 +293,8 @@ public final class Legs {
         gaitY += (g.bob() * up / Math.max(1.0F, rig.n * 0.5F) - gaitY) * b;
         gaitRoll += (g.roll() * lean - gaitRoll) * b;
         foreLift += (fore - foreLift) * b;
+        // the vault: past what the crouch and the ground already sink it, the hips drop to the furthest planted foot
+        vault += (Mth.clamp(need - g.crouch() - groundY, 0.0F, rig.vaultMax) - vault) * b;
     }
 
     /** The top of the ground under (x, z), from a block above the body's feet down to three below; y if none. */

@@ -178,6 +178,20 @@ public final class LifeTests {
                     // home on its crouch (a straight-legged body always stands a touch sunk), a step's reach ahead and
                     // behind, the top of a step's arc, home with the body sunk low to stalk
                     float s = mp.gait().crouch(), c = s + mp.body().creep();
+                    // a stride's planted sweep (a foot lands up to half a stand ahead of home and trails as far behind,
+                    // never past reach), walking and running: the hips may drop to it, by no more than the vault's most
+                    MotionProfile.Gait g = mp.gait();
+                    for (int run = 0; run < 2; run++) {
+                        float duty = run == 0 ? g.dutyWalk() : g.dutyRun();
+                        float st = run == 0 ? (g.strideWalk() > 0 ? g.strideWalk() : r.walkStride)
+                                : g.strideRun() > 0 ? g.strideRun() : g.strideWalk() > 0 ? g.strideWalk() : r.runStride;
+                        float half = Math.min(duty * st * 8.0F, g.reach() * 16.0F);
+                        for (int sg = -1; sg <= 1; sg += 2) {
+                            float drop = legs.sink(i, hx, 24, hz + sg * half) - s;
+                            if (drop > legs.vaultMax + 0.01F) problems.add(mp.id() + " leg " + i + ": a " + (run == 0 ? "walk" : "run")
+                                    + " stride of " + st + " blocks sweeps its foot " + half + " px, so the hips must drop " + drop + " px (most " + legs.vaultMax + ")");
+                        }
+                    }
                     float[][] targets = {{hx, 24 - s, hz}, {hx, 24, hz - 5}, {hx, 24, hz + 5}, {hx, 24 - lift, hz - 2}, {hx, 24 - c, hz}};
                     for (int k = 0; k < targets.length; k++) {
                         float[] tg = targets[k];

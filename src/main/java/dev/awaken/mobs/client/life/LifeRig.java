@@ -408,7 +408,7 @@ public final class LifeRig {
             if (lg != null) {
                 float wgt = lg.weight;
                 float pitch = lg.groundPitch * mb.slope() * wgt, roll = (lg.groundRoll * mb.slope() + lg.gaitRoll) * wgt;
-                body.y += (lg.rig.gait.crouch() + life.creep + lg.groundY + lg.gaitY) * wgt;
+                body.y += (lg.rig.gait.crouch() + life.creep + lg.groundY + lg.gaitY + lg.vault) * wgt;
                 body.x += life.shiftX * wgt;
                 body.z += life.shiftZ * wgt;
                 // leaning into the drift: the side it moves over sinks a little

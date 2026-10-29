@@ -5623,7 +5623,10 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   rank, or its opposite) is up. Stopped for 0.3 s, the foot furthest out of place (beyond `settle`) steps back under the
   body, one at a time; a calm one re-grips. The body rides its feet: half the planted feet's mean height (±4 px), nose
   up a rise and leaning across a slope (front against back feet, left against right, ±0.35 rad, eased over 0.12 s),
-  sinking `bob` × the share of feet in the air and leaning off a lifted one. Off the ground (the `P_AIR` pose bit),
+  sinking `bob` × the share of feet in the air and leaning off a lifted one. The hips vault: a straight leg at full
+  height reaches only a little forward or back, so the body drops as far as its furthest planted foot needs (past what
+  the crouch and the ground sink it, at most a quarter of the mean leg, eased over 0.05 s), which gives a long-legged
+  walk its dip at every step. Off the ground (the `P_AIR` pose bit),
   hanging, resting, sleeping, beached, deflated, swimming or dying, the clips own the legs (the weight eases out over
   0.12 s, the feet held planted meanwhile); landing, the feet stand at home again and ease back in over 0.15 s. A
   first sight or a jump of more than 3 blocks stands them at home. Inputs from the renderer: `grounded` (the feet may
@@ -5638,7 +5641,7 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
 - **Drip Lurker** (`drip_lurker`; six two-bone legs, hunter): ripple-alternate, duty 0.78/0.55, steps 3/4.5 px high, feet
   10 px out from the hips fanned 42°, crouch 1 px, reach 0.55, re-grips every 3-8 s, `rear` 0.9; head level 0.6, twist
   0.2, slope 0.8, land 1, `still` with a 2.5 px creep; temperament: no step bob, sway 0.3, look/sniff/stretch/settle
-  fidgets. Its rig strides 1.0 blocks walking and 1.8 running (were 1.6/3.0, too long for its legs). Motion: it waits on
+  fidgets. It strides 1.0 blocks walking and 1.3 running (its rig's 1.0/1.8; were 1.6/3.0, too long for its legs). Motion: it waits on
   planted feet with the cone swaying like a stalactite in a draught and the fangs tasting the air one at a time; it
   creeps low on a slow ripple of single steps, holding its breath and its fidgets while it stalks; it glides level over
   its feet when it walks (no bob), cone lagging, and leans into a run on alternating sets; angry and still it sinks, head
@@ -5653,7 +5656,7 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   planted feet, a lizard's roll (0.04); head level 0.4, twist 0.4, shift 0.25. Ripening it rears on its hind feet and its
   forefeet, drawn up off the ground, knead the air in turn while the tail braces.
 - **Hushling** (`hushling`; two two-bone hind legs, long arms swung by its clips): a crouched biped's alternating steps,
-  duty 0.6/0.4, 2/3.5 px, stride 0.9/1.6 blocks; its body rises (bob -0.6) while a foot is up, as a biped's does, and
+  duty 0.6/0.4, 2/3.5 px, stride 0.9/1.5 blocks; its body rises (bob -0.6) while a foot is up, as a biped's does, and
   rolls off it (0.05); a hunter: `still`, creep 1.5; head level 0.5, twist 0.3, shift 0.5.
 - **Weaver Queen** (`weaver_queen`, named beast; eight three-bone legs, femur 12, tibia 14, tarsus 6 px, no head bone):
   an alternating tetrapod on long reaching steps (4/7 px high, stride 1.4/2.6 blocks, reach 0.9, 0.32 s swings), bob 0.5;
@@ -5675,19 +5678,22 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   legs, thigh and shin): a lateral walk (`ripple-alternate`: right hind, right fore, left hind, left fore, a quarter of a
   cycle apart) into a trot of diagonal pairs; they stand sunk 2.2-2.5% of a leg on their crouch so the forelegs'
   knees break forward and the hocks back (about 25° at rest, deep while a foot is up), and the neck nods with the
-  forefeet (`nod`). Pig: duty 0.68/0.42, steps a fifth of a leg high (a third running), quick 0.22 s swings, bob 0.35,
+  forefeet (`nod`). Strides come from the leg (L px): a planted foot sweeps ±0.45 L walking and ±0.5 L running, so
+  stride = 0.45 L / (8 × duty) walking and 0.5 L / (8 × duty) running (a pig's 0.66/1.19 blocks at rung 2 to a cow's
+  1.56/2.78 at 5; the rigs' clip strides were past their legs). Pig: duty 0.68/0.42, steps a fifth of a leg high (a third running), quick 0.22 s swings, bob 0.35,
   roll 0.035, nod 0.07, shift 0.35-0.5. Cow: duty 0.72/0.45, steps 17%/28% of a leg, 0.3 s swings, bob 0.5, nod 0.09,
   shift 0.6-0.9 (a heavy body settling). Sheep between them, nod 0.08. All `rear` 1: angry and still, its front pair
   goes to the clip so it paws; a charge's wind-up rocks back on planted hind feet. Head level 0.3-0.35, twist 0.2-0.25,
   slope 0.8-0.85.
 - **Form chickens** (`form_chicken_2`..`_5`; two straight legs from the base, the foot drawn on the shank): a bird's
-  alternating strut, duty 0.62/0.4, steps 28%/40% of a leg high, quick 0.16 s swings, sunk 5% of a leg so the ankles
+  alternating strut, duty 0.62/0.4, stride from the leg as the grazers', steps 28%/40% of a leg high, quick 0.16 s swings, sunk 5% of a leg so the ankles
   break back; the head holds still in space against the body (head level 0.7) while the clip thrusts the neck; bob
   0.4, roll 0.05, land 1.2, shift 0.2.
 - Test: `creature_motion_feet` (every motion.json entry names a rig; every gait finds two-bone legs on a body bone that
   carries the head; every foot can reach its stance on its crouch and sunk to stalk; the IK lands each foot within 0.05 px of its
   home, a step ahead and behind, the top of a step's arc and the crouch, checked by forward kinematics; the hip's turn
-  survives its ZYX Euler angles; a form grazer's forelegs' knees break forward and its hind legs' back; the forms' rigs
+  survives its ZYX Euler angles; a form grazer's forelegs' knees break forward and its hind legs' back; every gait's stride, walking and running,
+  sweeps its planted feet no further than the hips can vault to; the forms' rigs
   are looked up too). Tours walk still (NoAI) creatures with
   `/awaken admin stroll <targets> <blocks per tick> <ticks> [degrees per tick]` (each call queues a leg; the server moves
   them every tick, so a busy runner can't turn a scripted walk into a crawl the way a tp a command did), load the studio's
