@@ -22,6 +22,7 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.Supplier;
@@ -96,6 +97,13 @@ class AwMobRenderer<S extends LivingEntityRenderState, M extends EntityModel<? s
         lf.walk = ours ? Math.min(1.0F, state.walkAnimationSpeed * 1.6F) : 0.0F;
         lf.airborne = (l.fauna & FaunaMob.P_AIR) != 0;
         lf.swimming = state.isInWater;
+        // the feet of a hand-built body with a motion profile (SPEC §23, "Motion"): planted on the ground, let go to its
+        // own poses; it runs from about its wander's pace (a mob's ground pace goes nearly as its speed squared)
+        lf.grounded = !lf.airborne;
+        lf.legsFree = getModel() instanceof LifeModel lm && lm.legsHeld(l);
+        float pace = 1.6F * (float) (def.speed * def.speed);
+        float speed = mob instanceof FaunaMob f ? f.gaitSpeed() : (float) Math.hypot(mob.getX() - mob.xo, mob.getZ() - mob.zo);
+        lf.gaitRun = Mth.clamp((speed - pace * 1.25F) / Math.max(0.005F, pace * 1.05F), 0.0F, 1.0F);
         lf.busy = l.telegraph > 0 || l.fallen;
         lf.tick(state, ours);
     }

@@ -172,6 +172,11 @@ public final class Life {
         return far;
     }
 
+    /** 0..1: how much the motion layer's planted feet own the legs (0 with no gait): a body's own walk swing gives way. */
+    public float feet() {
+        return legs != null ? legs.weight : 0.0F;
+    }
+
     /** The beat's pace for a body that beats its own wings or tail (1 when it has no flight): see {@link Flight#pace}. */
     public float pace() {
         return fly != null ? Flight.pace(climb, cruise) : 1.0F;
@@ -713,7 +718,7 @@ public final class Life {
      * Returns true if it drew the fall (skip vanilla's flip then).
      */
     public boolean rootPose(PoseStack pose, LivingEntityRenderState s) {
-        if (rig.rootMotion) {
+        if (rig.rootMotion && !rig.rootCarries) { // a body walking on its feet has these on its root part (LifeRig.apply)
             // model space to the pose stack: model x and y are flipped here, so pitch turns the other way
             pose.translate(0.0F, -dip / 16.0F, 0.0F);
             if (bodyPitch != 0 || bodyRoll != 0) {

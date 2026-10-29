@@ -3,6 +3,7 @@ package dev.awaken.mobs.client.model;
 import dev.awaken.Awaken;
 import dev.awaken.mobs.entity.AwLook;
 import dev.awaken.mobs.entity.FaunaMob;
+import dev.awaken.mobs.client.life.Life;
 import dev.awaken.mobs.client.life.LifeModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -80,6 +81,11 @@ public final class WildModels {
             body.addOrReplaceChild("leg_hind_left", legL, PartPose.offsetAndRotation(3, 1, 4, 0, 0, 0.6F));
             body.addOrReplaceChild("leg_hind_right", legR, PartPose.offsetAndRotation(-3, 1, 4, 0, 0, -0.6F));
             return LayerDefinition.create(mesh, 64, 64);
+        }
+
+        @Override
+        public boolean legsHeld(AwLook l) { // up on its hind legs to sprint
+            return (l.fauna & FaunaMob.P_SPRINT) != 0 || super.legsHeld(l);
         }
 
         @Override
@@ -217,10 +223,13 @@ public final class WildModels {
         protected void pose(LivingEntityRenderState s) {
             float pos = s.walkAnimationPos;
             float amp = Math.min(1.0F, s.walkAnimationSpeed * 1.5F);
+            // on planted feet (SPEC §23, "Motion") the gait's own bob and roll take over the waddle
+            Life life = Life.from(s);
+            float own = life != null ? 1.0F - life.feet() : 1.0F;
             legL.xRot = Mth.cos(pos * 1.3F) * 1.0F * amp;
             legR.xRot = -Mth.cos(pos * 1.3F) * 1.0F * amp;
-            body.zRot = Mth.sin(pos * 0.65F) * 0.12F * amp;
-            body.y = 21 - Math.abs(Mth.sin(pos * 0.65F)) * 0.6F * amp;
+            body.zRot = Mth.sin(pos * 0.65F) * 0.12F * amp * own;
+            body.y = 21 - Math.abs(Mth.sin(pos * 0.65F)) * 0.6F * amp * own;
             float idle = Mth.sin(s.ageInTicks * 0.1F) * 0.08F;
             armL.zRot = -0.5F - idle;
             armR.zRot = 0.5F + idle;
@@ -276,6 +285,11 @@ public final class WildModels {
             root.addOrReplaceChild("leg_hind_left", leg, PartPose.offset(2, 22, 4));
             root.addOrReplaceChild("leg_hind_right", legM, PartPose.offset(-2, 22, 4));
             return LayerDefinition.create(mesh, 64, 32);
+        }
+
+        @Override
+        public boolean legsHeld(AwLook l) { // up on its haunches to whistle, or digging in
+            return (l.fauna & FaunaMob.P_ALERT) != 0 || l.faunaAnim > 0 || super.legsHeld(l);
         }
 
         @Override

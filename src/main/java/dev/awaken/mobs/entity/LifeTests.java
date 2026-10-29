@@ -53,6 +53,69 @@ public final class LifeTests {
             Map.entry(Model.MUSHROOM, "body cap arm_left arm_right leg_left leg_right"),
             Map.entry(Model.MARMOT, "body head:body ear_left:head ear_right:head tail:body leg_front_left:body leg_front_right:body leg_hind_left:body leg_hind_right:body"));
 
+    /**
+     * The hand-built walkers that plant their feet (SPEC §23, "Motion"), by creature id, as their models build them (keep
+     * in sync): each bone as {@code name[:parent]@x,y,z[,rx,ry,rz][#box]}, its box its own cubes' (min xyz, max xyz).
+     * Only the legs and what they hang from; every leg is one bone (a rigid gait), and the root carries a body whose
+     * legs hang off it (LifeRig).
+     */
+    static final Map<String, String> HAND_FEET = Map.ofEntries(
+            Map.entry("frost_stag", "body@0,9,0#-4,-4,-8,4,4,8 neck@0,7,-6.5,0.45,0,0#-2,-9,-2,2,1,2 head:neck@0,-9,0,-0.45,0,0#-2.5,-3,-8,2.5,2,1"
+                    + legs4("2.5,12,-6", "2.5,12,6", "-1.5,0,-1.5,1.5,12,1.5", "", "")),
+            Map.entry("mossback", "shell@0,20,0#-7,-9,-8,7,0,8 head@0,17,-8#-2,-2,-5,2,2,0"
+                    + legs4("5,19,-5.5", "5,19,5.5", "-2,0,-2,2,5,2", "", "")),
+            Map.entry("crested_basilisk", "body@0,20,0#-3,-2,-6,3,2,6 head:body@0,-0.5,-6#-2.5,-2,-8,2.5,2,0"
+                    + legs4("3,1,-4", "3,1,4", "0,-1,-1,4,1,1", ":body", ",0,0,0.6")),
+            Map.entry("glass_scarab", "body@0,22.5,0#-3.5,-4.5,-3.5,3.5,0,4 head:body@0,-1,-3.5#-2,-2,-2,2,1,0"
+                    + " leg0:body@2.5,-0.5,-2,0,0.5,0.8#0,0,-0.5,3,1,0.5 leg1:body@-2.5,-0.5,-2,0,-0.5,-0.8#-3,0,-0.5,0,1,0.5"
+                    + " leg2:body@2.5,-0.5,0,0,0,0.8#0,0,-0.5,3,1,0.5 leg3:body@-2.5,-0.5,0,0,0,-0.8#-3,0,-0.5,0,1,0.5"
+                    + " leg4:body@2.5,-0.5,2,0,-0.5,0.8#0,0,-0.5,3,1,0.5 leg5:body@-2.5,-0.5,2,0,0.5,-0.8#-3,0,-0.5,0,1,0.5"),
+            Map.entry("shroomlet", "body@0,21,0#-3,-9,-3,3,0,3 cap:body@0,-8,0#-6,-6,-6,6,0,6"
+                    + " leg_left@1.5,21,0#-1,0,-1,1,3,1 leg_right@-1.5,21,0#-1,0,-1,1,3,1"),
+            Map.entry("listener", "body@0,8,0#-4,-14,-2,4,0,2 head@0,-6,0#-4,-8,-4,4,0,4"
+                    + " leg_right@-2,8,0#-1.5,0,-1.5,1.5,16,1.5 leg_left@2,8,0#-1.5,0,-1.5,1.5,16,1.5"));
+
+    /** Four legs, front and hind pivots on the left (+x; the right mirrors them), the left leg's box (the right's mirrored). */
+    private static String legs4(String front, String hind, String box, String parent, String turn) {
+        StringBuilder out = new StringBuilder();
+        String[] b = box.split(",");
+        String mirrored = -Float.parseFloat(b[3]) + "," + b[1] + "," + b[2] + "," + -Float.parseFloat(b[0]) + "," + b[4] + "," + b[5];
+        String unturn = turn.isEmpty() ? "" : ",0,0," + -Float.parseFloat(turn.substring(turn.lastIndexOf(',') + 1));
+        for (String[] leg : new String[][]{{"front", front}, {"hind", hind}}) {
+            String[] at = leg[1].split(",");
+            out.append(" leg_").append(leg[0]).append("_left").append(parent).append('@').append(leg[1]).append(turn).append('#').append(box);
+            out.append(" leg_").append(leg[0]).append("_right").append(parent).append('@').append(-Float.parseFloat(at[0])).append(',').append(at[1])
+                    .append(',').append(at[2]).append(unturn).append('#').append(mirrored);
+        }
+        return out.toString();
+    }
+
+    /** A {@link #HAND_FEET} body: its binding, each bone's rest (x, y, z px; x, y, z rotation) and own box (or null). */
+    record HandBody(LifeBones.Binding binding, float[][] pose, float[][] boxes) {}
+
+    static HandBody handBody(String spec) {
+        List<LifeBones.Bone> bones = new ArrayList<>();
+        List<float[]> pose = new ArrayList<>(), boxes = new ArrayList<>();
+        Map<String, Integer> at = new HashMap<>();
+        for (String tok : spec.trim().split(" ")) {
+            String[] bx = tok.split("#"), pp = bx[0].split("@"), np = pp[0].split(":");
+            at.put(np[0], bones.size());
+            bones.add(new LifeBones.Bone(np[0], np.length > 1 ? at.get(np[1]) : -1));
+            float[] q = new float[6];
+            String[] v = pp[1].split(",");
+            for (int i = 0; i < v.length; i++) q[i] = Float.parseFloat(v[i]);
+            pose.add(q);
+            float[] box = null;
+            if (bx.length > 1) {
+                String[] w = bx[1].split(",");
+                box = new float[6];
+                for (int i = 0; i < 6; i++) box[i] = Float.parseFloat(w[i]);
+            }
+            boxes.add(box);
+        }
+        return new HandBody(LifeBones.bind(bones), pose.toArray(new float[0][]), boxes.toArray(new float[0][]));
+    }
+
     static LifeBones.Binding bindHandBuilt(String spec) {
         List<LifeBones.Bone> bones = new ArrayList<>();
         Map<String, Integer> at = new HashMap<>();
@@ -150,27 +213,35 @@ public final class LifeTests {
             int rigid = 0;
             for (MotionProfile mp : MotionProfile.all().values()) {
                 if (mp.gait() == null) continue; // flight alone: creature_motion_flight
-                // our bodies' rigs, or the forms' (the living module's, SPEC 21.13)
+                // our bodies' rigs, or the forms' (the living module's, SPEC 21.13), or a hand-built walker's legs
                 HeroRig r = HeroRig.get(mp.id()) != null ? HeroRig.get(mp.id()) : FormRigs.all().get(mp.id());
-                if (r == null) {
+                HandBody hand = r == null && HAND_FEET.containsKey(mp.id()) ? handBody(HAND_FEET.get(mp.id())) : null;
+                if (r == null && hand == null) {
                     problems.add("motion.json names no rig " + mp.id());
                     continue;
                 }
-                LifeBones.Binding b = bind(r);
-                // the feet ride a body bone that carries the head (LifeRig binds legs only then)
-                boolean carries = b.head() < 0 && b.body() >= 0; // a headless body carries it all
-                for (int k = b.head(); k >= 0 && b.body() >= 0; k = b.bones().get(k).parent()) if (k == b.body()) carries = true;
-                if (!carries) problems.add(mp.id() + ": its body bone doesn't carry its head, so its feet can't plant");
-                float[][] pose = new float[r.bones.size()][];
-                for (int i = 0; i < pose.length; i++) {
+                LifeBones.Binding b = r != null ? bind(r) : hand.binding();
+                if (r != null) { // the feet ride a body bone that carries the head (LifeRig binds a rig's legs only then)
+                    boolean carries = b.head() < 0 && b.body() >= 0; // a headless body carries it all
+                    for (int k = b.head(); k >= 0 && b.body() >= 0; k = b.bones().get(k).parent()) if (k == b.body()) carries = true;
+                    if (!carries) problems.add(mp.id() + ": its body bone doesn't carry its head, so its feet can't plant");
+                }
+                float[][] pose = hand != null ? hand.pose() : new float[r.bones.size()][];
+                for (int i = 0; hand == null && i < pose.length; i++) {
                     HeroRig.Bone bone = r.bones.get(i);
                     pose[i] = new float[]{bone.px(), bone.py(), bone.pz(), bone.rx(), bone.ry(), bone.rz()};
                 }
-                LegRig legs = LegRig.of(mp.gait(), b, pose, i -> box(r.bones.get(i)));
+                LegRig legs = LegRig.of(mp.gait(), b, pose, i -> hand != null ? hand.boxes()[i] : box(r.bones.get(i)));
                 if (legs == null) {
-                    problems.add(mp.id() + ": a gait but fewer than two two-bone legs");
+                    problems.add(mp.id() + ": a gait but fewer than two legs");
                     continue;
                 }
+                if (hand != null) { // every one-bone leg of a hand-built walker is found
+                    int own = 0;
+                    for (int i = 0; i < b.bones().size(); i++) if (b.roles()[i] == Role.LEG) own++;
+                    if (legs.n != own) problems.add(mp.id() + ": " + legs.n + " of its " + own + " legs plant");
+                }
+                float ws = r != null ? r.walkStride : 1.0F, rs = r != null ? r.runStride : 1.0F;
                 float lift = Math.max(mp.gait().liftWalk(), mp.gait().liftRun());
                 for (int i = 0; i < legs.n; i++) {
                     // a straight leg whose thigh ends on its knee's pivot opens a wedge at any bend: it moves as one piece
@@ -190,8 +261,8 @@ public final class LifeTests {
                     MotionProfile.Gait g = mp.gait();
                     for (int run = 0; run < 2; run++) {
                         float duty = run == 0 ? g.dutyWalk() : g.dutyRun();
-                        float st = run == 0 ? (g.strideWalk() > 0 ? g.strideWalk() : r.walkStride)
-                                : g.strideRun() > 0 ? g.strideRun() : g.strideWalk() > 0 ? g.strideWalk() : r.runStride;
+                        float st = run == 0 ? (g.strideWalk() > 0 ? g.strideWalk() : ws)
+                                : g.strideRun() > 0 ? g.strideRun() : g.strideWalk() > 0 ? g.strideWalk() : rs;
                         // it lands lead further ahead than half its stand and trails that much less
                         float stand = duty * st * 16.0F;
                         for (int sg = -1; sg <= 1; sg += 2) {
@@ -246,11 +317,12 @@ public final class LifeTests {
                     checked++;
                     if (legs.rigid()) rigid++;
                 }
-                String splits = walkTrial(mp.gait(), mp.body() != null ? mp.body().twist() : 0.0F, legs, r);
+                String splits = walkTrial(mp.gait(), mp.body() != null ? mp.body().twist() : 0.0F, legs, ws, rs);
                 if (splits != null) problems.add(mp.id() + ": " + splits);
             }
-            h.assertTrue(rigid >= 12 * 4 + 4 * 2 + 3 * 4, "the grazers', chickens' and hoofed beasts' legs are rigid (" + rigid + ")");
-            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 2 + 8 + 12 * 4 + 4 * 2 + 3 * 4, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's two, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four (and every other gait's) are checked (" + checked + ")");
+            int handLegs = 4 + 4 + 4 + 6 + 2 + 2; // the frost stag's, mossback's, basilisk's, scarab's, shroomlet's and Listener's
+            h.assertTrue(rigid >= 12 * 4 + 4 * 2 + 3 * 4 + handLegs, "the grazers', chickens', hoofed beasts' and hand-built walkers' legs are rigid (" + rigid + ")");
+            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 2 + 8 + 12 * 4 + 4 * 2 + 3 * 4 + handLegs, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's two, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four, the hand-built walkers' one-bone legs (and every other gait's) are checked (" + checked + ")");
             h.assertTrue(problems.isEmpty(), String.join("; ", problems));
             h.succeed();
         });
@@ -311,10 +383,10 @@ public final class LifeTests {
      * a step's catch-up allows, and a one-piece leg never swings past 35 degrees walking or 45 running (FA's walk is
      * well inside both). Null when it holds, else the worst.
      */
-    static String walkTrial(MotionProfile.Gait g, float twistShare, LegRig rig, HeroRig r) {
+    static String walkTrial(MotionProfile.Gait g, float twistShare, LegRig rig, float walkStride, float runStride) {
         Legs feet = new Legs(rig, 7, (x, y, z) -> 0.0);
-        float sw = g.strideWalk() > 0 ? g.strideWalk() : r.walkStride;
-        float sr = g.strideRun() > 0 ? g.strideRun() : g.strideWalk() > 0 ? g.strideWalk() : r.runStride;
+        float sw = g.strideWalk() > 0 ? g.strideWalk() : walkStride;
+        float sr = g.strideRun() > 0 ? g.strideRun() : g.strideWalk() > 0 ? g.strideWalk() : runStride;
         float dt = 1.0F / 60.0F;
         double z = 0;
         // the turn as a client sees a standing mob's (vanilla's tickHeadTurn): the body holds until its facing is 50
