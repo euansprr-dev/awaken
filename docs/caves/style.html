@@ -96,10 +96,13 @@ figure { margin: 0; position: relative; min-width: 0; }
 </style>
 
 <div class="wrap">
-  <div class="eyebrow">The Living Deep · P1 · style sheet for Euan</div>
+  <div class="eyebrow">The Living Deep · P3 · style sheet for Euan</div>
   <h1>What the caves will look like</h1>
   <p class="lede">Before any of this goes into the game, here is the look: the skin every cave gets, the two regions
   coming first, and all eight regions' rock, colours, a particle and a creature each. Say OK, or tell me what to change.</p>
+  <p><b>New on 29 October: <a href="#p3">section 5</a>, the other six regions as built for P3.</b> You OK'd sections 1 to 4
+  and they're in the game now. Section 5 is what's waiting for your OK: each region's rock, ores and the pieces only it
+  has, shown the same way as the first two.</p>
   <div class="meta"><span>Branch <b>claude/caves-plan-2815c0</b></span><span>Plan <b>docs/caves/PLAN.md</b> §4.3–4.6</span>
     <span>Art <b>tools/art/specs/deep_skin.py, deep_life.py</b></span><span>Pictures <b>tools/art/cave_diorama.py</b></span></div>
 
@@ -213,7 +216,7 @@ figure { margin: 0; position: relative; min-width: 0; }
 <div class="wrap" style="padding-block:0">
   <h2>3 · All eight regions</h2>
   <p>Each region's colours (its rock from crevice to highlight, then its light), its rock, its particle and its creature.
-  The P3 rocks are first sketches: you're OK-ing the direction and colours; they get their full pass when they're built.</p>
+  These were the directions you OK'd; <a href="#p3">section 5</a> shows the six P3 regions as built.</p>
 </div>
 
 <div class="wide" style="padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));margin-top:18px">
@@ -230,17 +233,125 @@ figure { margin: 0; position: relative; min-width: 0; }
   <div class="life" id="life"></div>
 </div>
 
+<div class="wrap" style="padding-block:0">
+  <h2 id="p3">5 · The other six regions, as built (P3)</h2>
+  <p>Each region now has its rock all the way into the walls, its ores in that rock, and pieces no other cave has. The
+  rocks had their full pass since the sketches in section 3: the limestone's bedding wanders and breaks off (straight
+  lines read as planks), the basalt shows the sides of columns (it read as bricks), and the Violet Deep's vein crosses the
+  block on a slant (straight down, it lined up into stripes across a wall).</p>
+</div>
+
+<div class="wide" style="padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:26px;margin-top:18px">
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_pale_halls.png" alt="A Pale Halls corner in pale limestone by torchlight: a field of rimstone pools on the floor, drips from the roof, glow-worm threads, mist over the floor"><span class="tagline">The Pale Halls · torch</span></figure>
+      <figure><img class="px" src="style/scene_pale_halls_flat.png" alt="The Pale Halls corner in flat light"><span class="tagline">The Pale Halls · flat light</span></figure>
+    </div>
+    <p><b>The Pale Halls</b> (the Shallows under plains, savanna, meadows and beaches): wide flat-roofed halls of pale
+    limestone. Every roof drips here, not only the wet ones, so formations are everywhere; rimstone pools lie in terraced
+    fields on the floor, and cave pearls sit in the puddles under the drips. Glow-worm threads hang from the roof, and mist
+    lies low over the still water.</p>
+  </div>
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_windcleft.png" alt="A Windcleft corner in blue-grey banded slate: scree along the walls, white rime on the walls, an old rope hanging from the roof, mica glints"><span class="tagline">The Windcleft · torch</span></figure>
+      <figure><img class="px" src="style/scene_windcleft_flat.png" alt="The Windcleft corner in flat light"><span class="tagline">The Windcleft · flat light</span></figure>
+    </div>
+    <p><b>The Windcleft</b> (the Middle Dark under hills and mountains): tall cracks in blue-grey banded slate with mica
+    that glints in your light. Scree is heaped along the walls (twice the plain caves' rubble), white rime frosts the
+    walls where the wind comes through, and now and then an old Delvers' rope hangs down a crack, up to twelve blocks,
+    never quite to the floor. You can climb it. Swifts nest in the cracks.</p>
+  </div>
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_drowned_galleries.png" alt="A Drowned Galleries corner in green-grey siltstone: silt banks on the floor, a driftwood log, pale cave weed, glowing green algae at the waterline"><span class="tagline">The Drowned Galleries · torch</span></figure>
+      <figure><img class="px" src="style/scene_drowned_galleries_flat.png" alt="The Drowned Galleries corner in flat light"><span class="tagline">The Drowned Galleries · flat light</span></figure>
+    </div>
+    <p><b>The Drowned Galleries</b> (the Middle Dark under coasts and the flattest land): low lake caverns of damp green-grey
+    siltstone. Silt banks build up along the water, old driftwood lies where a flood left it, pale cave weed grows on the
+    lake floors, and a film of algae glows green at the waterline (a faint light round every lake). Crayfish pick along the
+    bottom.</p>
+  </div>
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_glimmer_hollows.png" alt="A Glimmer Hollows corner in sandy glimmerstone: amber crystal clusters on the floor, walls and roof, glittering dust"><span class="tagline">The Glimmer Hollows · amber</span></figure>
+      <figure><img class="px" src="style/scene_glimmer_frost.png" alt="The same corner under frozen land: pale blue glacial crystals in place of the amber"><span class="tagline">The Glimmer Hollows · under frozen land</span></figure>
+    </div>
+    <p><b>The Glimmer Hollows</b> (the Middle Dark under deserts, the Glass Steppe and frozen land): round crystal rooms off
+    narrow throats, in sandy glimmerstone with amber flecks. Crystal clusters grow from the floor, the walls and the roof,
+    each glowing softly. Under hot and warm land they're amber; under frozen land (the Frost Spires) they're glacial crystals, a pale ice blue.
+    Glass moths drift through the glittering dust.</p>
+  </div>
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_black_vaults.png" alt="A Black Vaults corner in dark column basalt: a drift of grey ash on the floor, ash falling, an ash moth"><span class="tagline">The Black Vaults · torch</span></figure>
+      <figure><img class="px" src="style/scene_black_vaults_flat.png" alt="The Black Vaults corner in flat light"><span class="tagline">The Black Vaults · flat light</span></figure>
+    </div>
+    <p><b>The Black Vaults</b> (the Deep, half of all land): huge halls of column basalt over the lava sea, their roofs up to
+    48 blocks high, held up by rock pillars. Grey ash lies in drifts on the floor and falls through the air, some of it
+    still glowing; ash moths, their wing edges like cinders. Diamonds grow here, in the basalt. Where the lava sea below
+    breaks through, it lights the hall orange; this picture is torch only.</p>
+  </div>
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_violet_deep.png" alt="A Violet Deep corner in violet seepstone with slanting bright veins: violet growths glowing on the floor, shed chitin plates, rising seep"><span class="tagline">The Violet Deep · torch</span></figure>
+      <figure><img class="px" src="style/scene_violet_deep_flat.png" alt="The Violet Deep corner in flat light"><span class="tagline">The Violet Deep · flat light</span></figure>
+    </div>
+    <p><b>The Violet Deep</b> (the Deep, the other half): warped tunnels into vaulted chambers, in violet seepstone with
+    Deepglass veins. Violet growths glow in patches on the floor, the chitin crawlers leave their cast plates lying about,
+    and violet seep rises through the air. The Hollows' home ground.</p>
+  </div>
+</div>
+
+<div class="wrap" style="padding-block:0">
+  <p style="margin-top:22px"><b>The six regions' rocks and ores.</b> As in the first two, an ore that lives in a region
+  wears its rock; any other keeps a pocket of the stone it grew in.</p>
+  <div class="grid">
+    <div class="sw"><img class="px" src="style/rock_limestone.png" alt="Limestone, tiled"><span><b>limestone</b> · Pale Halls</span></div>
+    <div class="sw"><img class="px" src="style/p3_limestone_iron_ore.png" alt="Iron ore in limestone, tiled"><span><b>iron ore</b> · limestone</span></div>
+    <div class="sw"><img class="px" src="style/rock_slate.png" alt="Banded slate, tiled"><span><b>banded slate</b> · Windcleft</span></div>
+    <div class="sw"><img class="px" src="style/p3_banded_slate_gold_ore.png" alt="Gold ore in banded slate, tiled"><span><b>gold ore</b> · banded slate</span></div>
+    <div class="sw"><img class="px" src="style/rock_siltstone.png" alt="Siltstone, tiled"><span><b>siltstone</b> · Drowned</span></div>
+    <div class="sw"><img class="px" src="style/p3_siltstone_lapis_ore.png" alt="Lapis ore in siltstone, tiled"><span><b>lapis ore</b> · siltstone</span></div>
+    <div class="sw"><img class="px" src="style/p3_siltstone_copper_ore.png" alt="Copper ore in siltstone, tiled"><span><b>copper ore</b> · siltstone</span></div>
+    <div class="sw"><img class="px" src="style/rock_glimmer.png" alt="Glimmerstone, tiled"><span><b>glimmerstone</b> · Glimmer</span></div>
+    <div class="sw"><img class="px" src="style/p3_glimmerstone_redstone_ore.png" alt="Redstone ore in glimmerstone, tiled"><span><b>redstone ore</b> · glimmerstone</span></div>
+    <div class="sw"><img class="px" src="style/rock_basalt.png" alt="Column basalt, tiled"><span><b>column basalt</b> · Vaults</span></div>
+    <div class="sw"><img class="px" src="style/p3_column_basalt_diamond_ore.png" alt="Diamond ore in column basalt, tiled"><span><b>diamond ore</b> · column basalt</span></div>
+    <div class="sw"><img class="px" src="style/rock_seepstone.png" alt="Seepstone, tiled"><span><b>seepstone</b> · Violet Deep</span></div>
+  </div>
+
+  <p style="margin-top:22px"><b>The pieces only they have</b>, close up.</p>
+  <div class="grid">
+    <div class="sw"><img class="px" src="style/p3_rimstone.png" alt="Rimstone texture, tiled"><span><b>rimstone</b> · Pale Halls</span></div>
+    <div class="sw"><img class="px" src="style/p3_cave_pearls.png" alt="Cave pearls texture"><span><b>cave pearls</b> (the beads are cut from this)</span></div>
+    <div class="sw"><img class="px" src="style/p3_rime.png" alt="Rime on banded slate"><span><b>rime</b> · Windcleft</span></div>
+    <div class="sw"><img class="px" src="style/p3_old_rope.png" alt="An old rope hanging"><span><b>old rope</b></span></div>
+    <div class="sw"><img class="px" src="style/p3_old_rope_tip.png" alt="The rope's frayed end"><span><b>old rope</b> · its end</span></div>
+    <div class="sw"><img class="px" src="style/p3_silt.png" alt="Silt texture, tiled"><span><b>silt</b> · Drowned</span></div>
+    <div class="sw"><img class="px" src="style/p3_driftwood.png" alt="Driftwood bark, tiled"><span><b>driftwood</b> · its bark</span></div>
+    <div class="sw"><img class="px" src="style/p3_driftwood_end.png" alt="Driftwood's cut end, tiled"><span><b>driftwood</b> · its end</span></div>
+    <div class="sw"><img class="px" src="style/p3_cave_weed.png" alt="Pale cave weed"><span><b>cave weed</b></span></div>
+    <div class="sw"><img class="px" src="style/p3_glow_algae.png" alt="Glow algae at the waterline on siltstone"><span><b>glow algae</b> (it glows)</span></div>
+    <div class="sw"><img class="px" src="style/p3_amber_crystal.png" alt="An amber crystal cluster"><span><b>amber crystal</b> (it glows)</span></div>
+    <div class="sw"><img class="px" src="style/p3_glacial_crystal.png" alt="A glacial crystal cluster"><span><b>glacial crystal</b> (it glows)</span></div>
+    <div class="sw"><img class="px" src="style/p3_ash.png" alt="Ash texture, tiled"><span><b>ash</b> · Vaults</span></div>
+    <div class="sw"><img class="px" src="style/p3_violet_growth_0.png" alt="A violet growth"><span><b>violet growth</b> (it glows)</span></div>
+    <div class="sw"><img class="px" src="style/p3_violet_growth_1.png" alt="Another violet growth"><span><b>violet growth</b> · another</span></div>
+    <div class="sw"><img class="px" src="style/p3_shed_chitin.png" alt="Shed chitin texture"><span><b>shed chitin</b> (plates cut from this)</span></div>
+  </div>
+</div>
+
 <div class="wrap">
   <div class="ask">
     <h3>What I need from you</h3>
     <ol>
-      <li><b>The skin</b>: rubble heaps, 3D formations, lichen, crust, streaks, puddles, webs. OK to put into every cave?</li>
-      <li><b>The Rootways and the Ochre Deep</b>: their rock, water colour, particles and creatures. OK for P2?</li>
-      <li><b>The other six regions' directions</b>: colours, rock, particle and creature. Anything you'd change before P3?</li>
+      <li><b>The six regions' rocks and ores</b> (section 5): OK to put in?</li>
+      <li><b>Their own pieces</b>: rimstone and pearls, rime and the old ropes, silt, driftwood, weed and algae, the amber
+      and glacial crystals, ash, the violet growths and shed chitin. OK, or anything to change?</li>
     </ol>
-    <p class="small muted">While you look, I'm building the code side of P1 (the blocks, where the skin goes, the drawn
-    light, the underlife's movement, the particles), which doesn't depend on the textures. Nothing of this look goes into
-    the game until you OK it.</p>
+    <p class="small muted">While you look I'm building the rest of P3 that doesn't depend on the textures: the regions
+    joining the world, their look, air, sounds and creatures. Nothing of section 5 goes into the game until you OK it.</p>
   </div>
   <p class="note">Made with tools/art/specs/deep_skin.py (rocks, skin, particles, models), tools/art/specs/deep_life.py
   (the underlife's sprite sheet) and tools/art/cave_diorama.py (these pictures). Regions, bands and land come from
