@@ -6342,6 +6342,21 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       0.30-0.45 (forearm 0.16-0.25), the chops 0.71-0.73 (0.36-0.37), unchanged this round.
     - Every jab leads with its point (1.00), the chain judge passes mashed and in time, the click sweep steps nothing
       over 0.2 (worst 0.15), and the blades come no nearer than 0.26 (round 14: 0.16). Filmed in game again.
+  - *Round 16, a jab that drives out and keeps its forearm down* (Euan 2026-10-29, after the round 15 film: "Now he's
+    barely moving his hands forward anymore"). Round 15's grip went 3-6 cm deeper, too little to read as a jab. A drive
+    along the blade to a mark near the crosshair can't go far without the fist climbing the screen (the blade points
+    there, so the fist goes there), and the forearm comes up with it.
+    - A jab is a `drive`: the fist goes 27-34 cm out from the stance's grip, 9-13 cm in toward the middle and 3-4 cm
+      down, while the blade, aimed from the fist, points at the target's chest (2.6 ahead of the eye, just above the
+      crosshair, on the hand's own side for the pair). It tips onto its mark by half the wind-up with the fist where
+      it holds, then drives, and holds 6% further. The fist goes deep, so the forearm points away instead of swinging
+      up. The fist rises 0.29-0.35 of the screen (round 14: 0.52), the forearm covers 0.11-0.14 (round 14: 0.26, round
+      15: 0.10), the blade shrinks to 0.51-0.54 of its stance size, and the point lands 0.42-0.47 from the crosshair.
+      The point leads by 0.92-0.95 through the drive (it rides a little above the fist's path).
+    - `swing_chain.py calm` now holds a stab's grip at least 0.22 further from the eye at the hit than the stance's
+      (`drive`; round 15's were 0.05). The fist may rise 0.36 and the forearm cover 0.15 (round 15's bars: 0.22 and
+      0.11). The other bars stand. The chain judge passes mashed and in time, and the click sweep steps nothing over
+      0.2 (worst 0.15, the blades no nearer than 0.26). The slashes and chops are unchanged. Filmed in game again.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
