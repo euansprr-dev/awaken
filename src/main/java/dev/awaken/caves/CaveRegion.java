@@ -138,6 +138,20 @@ public enum CaveRegion {
         return ResourceKey.create(Registries.BIOME, Awaken.id(id));
     }
 
+    /** Its name as the server's lines say it, capitalised ("The Ochre Deep"); the client's caption reads {@code biome.awaken.<id>}. */
+    public String title() {
+        return switch (this) {
+            case ROOTWAYS -> "The Rootways";
+            case PALE_HALLS -> "The Pale Halls";
+            case WINDCLEFT -> "The Windcleft";
+            case DROWNED_GALLERIES -> "The Drowned Galleries";
+            case GLIMMER_HOLLOWS -> "The Glimmer Hollows";
+            case OCHRE_DEEP -> "The Ochre Deep";
+            case BLACK_VAULTS -> "The Black Vaults";
+            case VIOLET_DEEP -> "The Violet Deep";
+        };
+    }
+
     public boolean holds(float humidity, float temperature, float continents, float erosion) {
         for (Box b : boxes) if (b.holds(humidity, temperature, continents, erosion)) return true;
         return false;

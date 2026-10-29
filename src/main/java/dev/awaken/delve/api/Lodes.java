@@ -1,9 +1,11 @@
 package dev.awaken.delve.api;
 
+import dev.awaken.delve.LodePlans;
 import dev.awaken.delve.Ore;
 import dev.awaken.delve.Veins;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -34,5 +36,22 @@ public final class Lodes {
     /** The lode whose heart is at {@code pos}, if one is planned there. */
     public static Optional<View> heart(ServerLevel level, BlockPos pos) {
         return Veins.heartAt(level, pos);
+    }
+
+    /**
+     * Where each ore is at home underground (SPEC §42.9), for a world with places of its own down there: the caves install
+     * it when a world made with the cave regions loads, and lodes favour those places. Asked by worldgen and worker threads.
+     */
+    public interface Homes {
+        /** Whether (x, y, z) is in a place where {@code ore} is at home. Pure; any thread. */
+        boolean favours(Ore ore, int x, int y, int z);
+
+        /** The place at (x, y, z) by name ("the Ochre Deep"), or null. Pure; any thread. */
+        @Nullable String place(int x, int y, int z);
+    }
+
+    /** The overworld's homes for its ores (on its load; null when the server stops). Plans made after follow them. */
+    public static void homes(long seed, @Nullable Homes homes) {
+        LodePlans.homes(seed, homes);
     }
 }
