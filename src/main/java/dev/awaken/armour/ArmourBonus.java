@@ -54,6 +54,14 @@ public final class ArmourBonus {
             case CLOUDRUNNER -> "Featherfall: falls never hurt you, and crouching in the air you drift down like a feather";
             case TIDEBREAKER -> "Undertow: your cutting wave drags those it cuts toward you, and in water or rain your Edge fills twice as fast";
             case HOLLOWHEART -> "Hollow Pulse: every fifth blow you land, the caged heart beats. A red wave hurts everyone close, and you mend for each one it strikes";
+            case LEVIATHAN -> "Abyss Pull: your Bastion drags everyone near in before it bursts, and under water you never run out of breath";
+            case GALEWING -> "Gust: a perfect dodge beats your wings. Everyone close is thrown back and you lift into the air";
+            case HALO_CHOIR -> "Hymn: while three runes circle you, blows do a fifth less, and when you overchannel the halo rings, leaving everyone close reeling";
+            case DREAMSTEEL -> "Mirror: deflect a blow and half of it comes back on whoever struck it";
+            case STARFALL -> "Meteor: falls never hurt you, and a landing from six blocks or more strikes like a falling star. Everyone close burns and is thrown";
+            case RIFTWALKER -> "Riftstep: when your afterimage takes a blow, you step out of the rift behind whoever struck it";
+            case NIGHTCOURT -> "Riposte: after a deflect, your next blade blow in the next two seconds lands 60% harder";
+            case SIGNALS_ECHO -> "Echo: your overchannel comes again a second later, its runes flying out once more";
             default -> null;
         };
     }
@@ -62,11 +70,16 @@ public final class ArmourBonus {
     public static @org.jspecify.annotations.Nullable String growth(ArmourSet s) {
         if (s.archetype == Archetype.LORD || s.rank.ordinal() < dev.awaken.progression.Rank.C.ordinal()) return null;
         boolean b = s.rank.ordinal() >= dev.awaken.progression.Rank.B.ordinal();
+        boolean a = s.rank.ordinal() >= dev.awaken.progression.Rank.A.ordinal(), top = s.rank == dev.awaken.progression.Rank.S;
         return switch (s.archetype) {
-            case BULWARK -> "A hard landing bursts a full Bastion too" + (b ? ", and the burst carries the Force of your last power hit" : "");
-            case STRIDER -> "Foes close to your afterimage swing at it and reel" + (b ? ", and an afterimage left in the air rushes you on" : "");
-            case CHANNELER -> "Each rune stops one arrow or bolt" + (b ? ", and an overchannel gives back a quarter of your energy" : "");
-            case DUELIST -> "A perfect dodge with Edge full cuts back at once" + (b ? ", and the wave leaves those it cuts bleeding" : "");
+            case BULWARK -> "A hard landing bursts a full Bastion too" + (b ? ", and the burst carries the Force of your last power hit" : "")
+                    + (a ? ". Bastion holds a second charge" : "") + (top ? ", and its burst reaches half again as far" : "");
+            case STRIDER -> "Foes close to your afterimage swing at it and reel" + (b ? ", and an afterimage left in the air rushes you on" : "")
+                    + (a ? ". Flow holds a second charge" : "") + (top ? ", and foes half again as far off reel from the afterimage" : "");
+            case CHANNELER -> "Each rune stops one arrow or bolt" + (b ? ", and an overchannel gives back a quarter of your energy" : "")
+                    + (a ? ". A fourth rune circles you" : "") + (top ? ", and the runes reach half again as far" : "");
+            case DUELIST -> "A perfect dodge with Edge full cuts back at once" + (b ? ", and the wave leaves those it cuts bleeding" : "")
+                    + (a ? ". Edge holds a second charge" : "") + (top ? ", and the wave cuts half again as far" : "");
             case LORD -> null;
         };
     }

@@ -62,8 +62,8 @@ public enum ArmourSet {
 
     private static final ArmourSet[] VALUES = values();
 
-    /** The highest rank whose own-item sets are built (P2 E and D, P3 C and B; plan §6.2 adds A and S in P4). */
-    static final Rank MADE_TO = Rank.B;
+    /** The highest rank whose own-item sets are built (P2 E and D, P3 C and B, P4 A and S: all of them). */
+    static final Rank MADE_TO = Rank.S;
 
     /** Whether the set's pieces exist as items: the Hunter sets always, the others from the phase that builds them. */
     public boolean made() {

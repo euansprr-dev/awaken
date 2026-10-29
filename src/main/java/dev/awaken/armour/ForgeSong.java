@@ -26,18 +26,32 @@ public final class ForgeSong {
     // ---- stages ------------------------------------------------------------------------------------------------------
 
     /**
-     * At the Forge (D and up): heat, shape, quench, then fit; from B the cold Deepglass is tuned after the quench, and from
-     * C a catalyst chosen at the start is inlaid last. By hand (E, at the works table): cut, rivet, fit.
+     * At the Forge (D and up): heat, shape, quench, then fit; from A the shaped metal is folded and at S struck white
+     * before the quench, from B the cold Deepglass is tuned after it, and from C a catalyst chosen at the start is inlaid
+     * last. By hand (E, at the works table): cut, rivet, fit.
      */
-    public static final int HEAT = 0, SHAPE = 1, QUENCH = 2, CUT = 3, RIVET = 4, DONE = 5, TUNE = 6, INLAY = 7;
+    public static final int HEAT = 0, SHAPE = 1, QUENCH = 2, CUT = 3, RIVET = 4, DONE = 5, TUNE = 6, INLAY = 7, FOLD = 8, STARFIRE = 9;
 
-    /** Each rank adds a verb (plan §4.4): C Inlay, B Tune (A Fold and S Starfire come with P4). */
+    /** Each rank adds a verb (plan §4.4): C Inlay, B Tune, A Fold, S Starfire. */
     public static boolean inlays(ArmourSet set) {
         return set.rank.ordinal() >= dev.awaken.progression.Rank.C.ordinal();
     }
 
     public static boolean tunes(ArmourSet set) {
         return set.rank.ordinal() >= dev.awaken.progression.Rank.B.ordinal();
+    }
+
+    public static boolean folds(ArmourSet set) {
+        return set.rank.ordinal() >= dev.awaken.progression.Rank.A.ordinal();
+    }
+
+    public static boolean starfires(ArmourSet set) {
+        return set.rank == dev.awaken.progression.Rank.S;
+    }
+
+    /** The stages struck on the beat at the anvil or the works table. */
+    public static boolean struck(int stage) {
+        return stage == SHAPE || stage == RIVET || stage == FOLD || stage == STARFIRE;
     }
 
     public static boolean byHand(ArmourSet set) {
@@ -154,6 +168,23 @@ public final class ForgeSong {
         return SONGS.get(set);
     }
 
+    /**
+     * A's Fold: the netherite is doubled over and struck in pairs, quick-quick, three folds at one mark each along the
+     * fold line. S's Starfire: the heat goes white and a fast chain of marks lights and fades across the face.
+     */
+    public static final Rhythm FOLD_RHYTHM = new Rhythm(4, "xx......"), STARFIRE_RHYTHM = new Rhythm(4, "x.x.x.x.");
+    public static final int FOLD_STRIKES = 6, STARFIRE_STRIKES = 8;
+
+    /** A folded strike rings low and heavy, a white one high (the lowest of a small random spread). */
+    public static float strikePitch(int stage) {
+        return stage == FOLD ? 0.8F : stage == STARFIRE ? 1.2F : 0.95F;
+    }
+
+    /** The rhythm a strike stage is played to: Fold and Starfire their own, the rest the set's. */
+    public static Rhythm rhythm(ArmourSet set, int stage) {
+        return stage == FOLD ? FOLD_RHYTHM : stage == STARFIRE ? STARFIRE_RHYTHM : song(set).rhythm();
+    }
+
     /** A melody note as the bell's pitch (the bell is C5; folded into the octaves a sound can be pitched to). */
     public static float notePitch(int note) {
         while (note < 60) note += 12;
@@ -231,6 +262,38 @@ public final class ForgeSong {
                 }
             }
             if (m[i][1] != m[i][1]) m[i][1] = t; // never NaN
+        }
+        return m;
+    }
+
+    /** Fold: each pair of strikes on one mark, the folds walking down the middle of the piece. */
+    public static float[][] foldMarks(int n) {
+        float[][] m = new float[n][2];
+        int pairs = Math.max(1, (n + 1) / 2);
+        for (int i = 0; i < n; i++) {
+            m[i][0] = 0F;
+            m[i][1] = pairs == 1 ? 0F : -0.55F + 1.1F * (i / 2) / (pairs - 1);
+        }
+        return m;
+    }
+
+    /** Starfire: marks scattered over the face, each well away from the last, a new chain each time (from the stage's start). */
+    public static float[][] starfireMarks(long seed, int n) {
+        float[][] m = new float[n][2];
+        long h = seed * 0x9E3779B97F4A7C15L + 0x632BE59BD9B4E019L;
+        float px = 0F, pz = 0F;
+        for (int i = 0; i < n; i++) {
+            float x, z;
+            int tries = 0;
+            do {
+                h ^= h >>> 31;
+                h *= 0x94D049BB133111EBL;
+                h ^= h >>> 29;
+                x = -0.6F + 1.2F * (h & 0xFFFF) / 65535F;
+                z = -0.65F + 1.3F * (h >>> 16 & 0xFFFF) / 65535F;
+            } while (i > 0 && Math.hypot(x - px, z - pz) < 0.45F && ++tries < 8);
+            m[i][0] = px = x;
+            m[i][1] = pz = z;
         }
         return m;
     }
@@ -333,17 +396,14 @@ public final class ForgeSong {
         return 0.35F * cut + 0.65F * rivetMean;
     }
 
-    /** The rank's verbs (tune, inlay; -1 where not done) each take a tenth of the score. */
-    public static float withVerbs(float score, float tune, float inlay) {
+    /** The rank's verbs (tune, inlay, fold, starfire; -1 where not done) each take a tenth of the score. */
+    public static float withVerbs(float score, float... verbs) {
         int k = 0;
         float sum = 0F;
-        if (tune >= 0F) {
+        for (float v : verbs) {
+            if (v < 0F) continue;
             k++;
-            sum += tune;
-        }
-        if (inlay >= 0F) {
-            k++;
-            sum += inlay;
+            sum += v;
         }
         return score * (1F - 0.1F * k) + 0.1F * sum;
     }
@@ -377,6 +437,9 @@ public final class ForgeSong {
      * iron: Cleftrunner with wool for its wraps, Lanternlight with lanterns, Bladeward a trophy, Hornlord a Lord's heart.
      * C on diamond: Frostwalker with frostspar, Sunward with gold and sunshard, Shardcrown amethyst and a Lord's heart.
      * B on Deepglass: Cloudrunner with feathers, Tidebreaker amethyst, Hollowheart bone and a Lord's heart.
+     * A on netherite: Leviathan prismarine, Galewing feathers and phantom membrane, Halo Choir gold and a bell, Dreamsteel
+     * glass. S on starmetal: Starfall core, Riftwalker echo shards, Nightcourt the Court's thread, Signal's Echo core and
+     * bind. (The A and S Lords are Hunter sets: Lordscale and Sovereign Weave, a Lord's heart in their costs.)
      */
     private static final Map<ArmourSet, String[]> SET_COSTS = new EnumMap<>(Map.ofEntries(
             Map.entry(ArmourSet.BELLGUARD, new String[]{"copper 5, hide 1, ess 1", "copper 7, hide 2, ess 1", "copper 6, hide 1, ess 1", "copper 3, hide 1, ess 1"}),
@@ -393,7 +456,15 @@ public final class ForgeSong {
             Map.entry(ArmourSet.DEEPCARAPACE, new String[]{"metal 2, hide 1, core 1, ess 1", "metal 4, hide 2, core 1, ess 2", "metal 3, hide 2, ess 1", "metal 2, hide 1, ess 1"}),
             Map.entry(ArmourSet.CLOUDRUNNER, new String[]{"metal 1, feather 4, bind 1, ess 1", "metal 3, feather 6, wool 2, ess 1", "metal 2, feather 2, wool 2, ess 1", "metal 1, feather 4, ess 1"}),
             Map.entry(ArmourSet.TIDEBREAKER, new String[]{"metal 2, amethyst 2, ess 1", "metal 3, amethyst 3, hide 2, ess 2", "metal 2, amethyst 2, hide 1, ess 1", "metal 2, hide 1, ess 1"}),
-            Map.entry(ArmourSet.HOLLOWHEART, new String[]{"metal 2, bone 4, core 1, ess 2", "metal 3, bone 4, core 1, heart 1, ess 2", "metal 2, bone 3, core 1, ess 1", "metal 2, bone 2, ess 1"})));
+            Map.entry(ArmourSet.HOLLOWHEART, new String[]{"metal 2, bone 4, core 1, ess 2", "metal 3, bone 4, core 1, heart 1, ess 2", "metal 2, bone 3, core 1, ess 1", "metal 2, bone 2, ess 1"}),
+            Map.entry(ArmourSet.LEVIATHAN, new String[]{"metal 2, prism 2, hide 1, ess 1", "metal 4, prism 3, core 1, ess 2", "metal 3, prism 2, hide 1, ess 1", "metal 2, hide 1, ess 1"}),
+            Map.entry(ArmourSet.GALEWING, new String[]{"metal 1, feather 4, membrane 1, ess 1", "metal 2, feather 6, membrane 2, ess 1", "metal 2, membrane 2, hide 1, ess 1", "metal 1, feather 3, ess 1"}),
+            Map.entry(ArmourSet.HALO_CHOIR, new String[]{"gold 3, metal 1, ess 1", "gold 3, metal 2, bell 1, ess 2", "gold 2, metal 1, wool 3, ess 1", "gold 2, metal 1, ess 1"}),
+            Map.entry(ArmourSet.DREAMSTEEL, new String[]{"metal 2, glass 2, core 1, ess 1", "metal 3, glass 3, hide 1, ess 1", "metal 2, glass 2, hide 1, ess 1", "metal 2, hide 1, ess 1"}),
+            Map.entry(ArmourSet.STARFALL, new String[]{"metal 2, core 1, ess 1", "metal 4, core 2, bind 1, ess 2", "metal 3, core 1, ess 1", "metal 2, ess 1"}),
+            Map.entry(ArmourSet.RIFTWALKER, new String[]{"metal 1, echo 2, bind 1, ess 1", "metal 2, echo 3, bind 2, ess 1", "metal 2, echo 2, bind 1, ess 1", "metal 1, echo 2, ess 1"}),
+            Map.entry(ArmourSet.NIGHTCOURT, new String[]{"metal 2, bind 2, ess 1", "metal 3, bind 3, core 1, ess 2", "metal 2, bind 2, ess 1", "metal 2, bind 1, ess 1"}),
+            Map.entry(ArmourSet.SIGNALS_ECHO, new String[]{"metal 1, core 2, bind 1, ess 1", "metal 2, core 2, bind 2, ess 2", "metal 2, core 1, bind 1, ess 1", "metal 1, core 1, ess 1"})));
 
     /** What a piece takes, or null where the set isn't made yet (its items come in a later phase). */
     public static @Nullable List<Need> cost(ArmourSet set, ArmorType piece) {
@@ -423,6 +494,11 @@ public final class ForgeSong {
                 case "frostspar" -> new Need(null, Awaken.id("frostspar"), n);
                 case "log" -> new Need(TagKey.create(Registries.ITEM, Identifier.withDefaultNamespace("logs")), null, n);
                 case "wool" -> new Need(TagKey.create(Registries.ITEM, Identifier.withDefaultNamespace("wool")), null, n);
+                case "prism" -> new Need(null, Identifier.withDefaultNamespace("prismarine_shard"), n);
+                case "membrane" -> new Need(null, Identifier.withDefaultNamespace("phantom_membrane"), n);
+                case "bell" -> new Need(null, Identifier.withDefaultNamespace("bell"), n);
+                case "glass" -> new Need(null, Identifier.withDefaultNamespace("glass"), n);
+                case "echo" -> new Need(null, Identifier.withDefaultNamespace("echo_shard"), n);
                 case "ess" -> new Need(null, Awaken.id("essence_shard"), n);
                 default -> throw new IllegalStateException("unknown cost " + kv[0] + " for " + set.id);
             });

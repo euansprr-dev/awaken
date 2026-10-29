@@ -217,7 +217,7 @@ public final class ArmourForge {
                 pull(level, be, w, ForgeSong.heat(clamp(a.t(), now - w.stageStart)), p);
             }
             case ArmourPayloads.STRIKE -> {
-                if (w == null || (w.stage != ForgeSong.SHAPE && w.stage != ForgeSong.RIVET) || !mine(p, w) || a.a() < w.scores.size()) return;
+                if (w == null || !ForgeSong.struck(w.stage) || !mine(p, w) || a.a() < w.scores.size()) return;
                 float t = clamp(a.t(), now - w.stageStart);
                 // beats the smith's clock saw pass unstruck, not yet missed here (the server waits out the lag first)
                 int stage = w.stage;
@@ -330,7 +330,7 @@ public final class ArmourForge {
         w.scores.add(score);
         if (score > 0F) {
             SoundEvent ring = w.stage == ForgeSong.RIVET ? ArmourContent.STRIKE_COPPER.get() : ArmourContent.strikeSound(w.set);
-            level.playSound(smith, w.work, ring, SoundSource.BLOCKS, 1F, 0.95F + level.getRandom().nextFloat() * 0.1F);
+            level.playSound(smith, w.work, ring, SoundSource.BLOCKS, 1F, ForgeSong.strikePitch(w.stage) + level.getRandom().nextFloat() * 0.1F);
         } else level.playSound(null, w.work, ArmourContent.MISS.get(), SoundSource.BLOCKS, 0.6F, 1F);
         if (ForgeSong.clean(score)) {
             int[] melody = ForgeSong.song(w.set).melody();
@@ -339,12 +339,23 @@ public final class ArmourForge {
         }
         if (w.scores.size() >= w.strikesNeeded()) {
             if (w.memory || w.stage == ForgeSong.RIVET) finish(level, be, w);
-            else {
-                w.begin(ForgeSong.QUENCH, level.getGameTime());
-                be.changed();
-            }
+            else struckOut(level, be, w);
             return;
         }
+        be.changed();
+    }
+
+    /** A strike stage done: after the shaping A folds and S strikes white, each judged by its strikes; then the quench. */
+    static void struckOut(ServerLevel level, FittingStandBlockEntity be, ForgeWork w) {
+        int done = w.stage;
+        if (done == ForgeSong.FOLD) w.fold = w.mean(w.stageFrom(), w.strikesNeeded());
+        if (done == ForgeSong.STARFIRE) w.starfire = w.mean(w.stageFrom(), w.strikesNeeded());
+        long now = level.getGameTime();
+        if (done == ForgeSong.SHAPE && ForgeSong.folds(w.set)) w.begin(ForgeSong.FOLD, now);
+        else if ((done == ForgeSong.SHAPE || done == ForgeSong.FOLD) && ForgeSong.starfires(w.set)) {
+            w.begin(ForgeSong.STARFIRE, now);
+            level.playSound(null, w.work, ArmourContent.BELLOWS.get(), SoundSource.BLOCKS, 1F, 1.4F);
+        } else w.begin(ForgeSong.QUENCH, now);
         be.changed();
     }
 
@@ -386,7 +397,7 @@ public final class ArmourForge {
             case ForgeSong.HEAT -> {
                 if (ForgeSong.heat(t) > ForgeSong.BURNT) pull(level, be, w, ForgeSong.BURNT, null);
             }
-            case ForgeSong.SHAPE, ForgeSong.RIVET -> {
+            case ForgeSong.SHAPE, ForgeSong.RIVET, ForgeSong.FOLD, ForgeSong.STARFIRE -> {
                 if (t > w.nextDue() + ForgeSong.WINDOW + ForgeSong.LAG) strike(level, be, w, 0F, null);
             }
             case ForgeSong.QUENCH -> {
@@ -422,7 +433,7 @@ public final class ArmourForge {
         else {
             float score = ForgeSong.byHand(w.set) ? ForgeSong.handScore(Math.max(0F, w.cut), w.strikeMean())
                     : ForgeSong.forgeScore(Math.max(0F, w.heat), w.strikeMean(), Math.max(0F, w.quench));
-            if (!ForgeSong.byHand(w.set)) score = ForgeSong.withVerbs(score, w.tune, w.inlayScore);
+            if (!ForgeSong.byHand(w.set)) score = ForgeSong.withVerbs(score, w.tune, w.inlayScore, w.fold, w.starfire);
             score += Math.min(ForgeSong.TWIN_MAX, w.twin * ForgeSong.TWIN_BONUS);
             flaw = !ForgeSong.byHand(w.set) && ForgeSong.flawed(w.heat);
             q = ForgeSong.quality(score, flaw);

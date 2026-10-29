@@ -51,6 +51,14 @@ final class ArmourAura {
             case CLOUDRUNNER -> new Style(Kind.STREAM, 14, 0.026F, 30);
             case TIDEBREAKER -> new Style(Kind.STREAM, 12, 0.024F, 44);
             case HOLLOWHEART -> new Style(Kind.PULSE, 14, 0.024F, 34);
+            case LEVIATHAN -> new Style(Kind.DRIFT, 16, 0.026F, 150);
+            case GALEWING -> new Style(Kind.STREAM, 16, 0.024F, 26);
+            case HALO_CHOIR -> new Style(Kind.CROWN, 12, 0.026F, 140);
+            case DREAMSTEEL -> new Style(Kind.GLINT, 12, 0.032F, 30);
+            case STARFALL -> new Style(Kind.FALL, 16, 0.03F, 50);
+            case RIFTWALKER -> new Style(Kind.STREAM, 14, 0.028F, 40);
+            case NIGHTCOURT -> new Style(Kind.GLINT, 10, 0.026F, 52);
+            case SIGNALS_ECHO -> new Style(Kind.PULSE, 12, 0.026F, 44);
             default -> new Style(Kind.DRIFT, 10, 0.024F, 100);
         };
     }

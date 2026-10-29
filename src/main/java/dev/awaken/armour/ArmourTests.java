@@ -57,6 +57,8 @@ final class ArmourTests {
         AwakenTests.register("armour_set_twists_cb", 40, ArmourTests::twistsCB);
         AwakenTests.register("armour_forge_tune_inlay", 40, ArmourTests::tuneInlay);
         AwakenTests.register("armour_looks_accents", 20, ArmourTests::looksAccents);
+        AwakenTests.register("armour_forge_fold_starfire", 40, ArmourTests::foldStarfire);
+        AwakenTests.register("armour_set_twists_as", 80, ArmourTests::twistsAS);
     }
 
     private static final List<Rank> RANKS = List.of(Rank.E, Rank.D, Rank.C, Rank.B, Rank.A, Rank.S);
@@ -181,6 +183,15 @@ final class ArmourTests {
         h.assertTrue(ForgeSong.heatScore(0.65F) == 1F && ForgeSong.flawed(0.9F) && !ForgeSong.flawed(0.7F), "the gold band, and too hot keeps a flaw");
         h.assertTrue(ForgeSong.forgeScore(0.65F, 1F, 1F) > 0.99F && ForgeSong.forgeScore(0.3F, 1F, 1F) < 0.85F, "pulled early, the strikes count less");
         for (long seed = 0; seed < 24; seed++) h.assertTrue(ForgeSong.quenchCue(seed) >= 24 && ForgeSong.quenchCue(seed) < 36, "the cue comes in 24-35 ticks");
+        h.assertTrue(!ForgeSong.folds(ArmourSet.HOLLOWHEART) && ForgeSong.folds(ArmourSet.DREAMSTEEL) && !ForgeSong.starfires(ArmourSet.DREAMSTEEL)
+                && ForgeSong.folds(ArmourSet.STARFALL) && ForgeSong.starfires(ArmourSet.STARFALL), "A folds, S also strikes white");
+        float[][] fold = ForgeSong.foldMarks(ForgeSong.FOLD_STRIKES);
+        h.assertTrue(fold[0][1] == fold[1][1] && fold[2][1] == fold[3][1] && fold[0][1] != fold[2][1], "a fold's pair on one mark, each fold its own");
+        h.assertTrue(ForgeSong.FOLD_RHYTHM.due(1) - ForgeSong.FOLD_RHYTHM.due(0) == 4F, "a fold is struck quick-quick");
+        float[][] white = ForgeSong.starfireMarks(1234L, ForgeSong.STARFIRE_STRIKES), other = ForgeSong.starfireMarks(99L, ForgeSong.STARFIRE_STRIKES);
+        for (float[] m : white) h.assertTrue(Math.abs(m[0]) <= 1F && Math.abs(m[1]) <= 1F, "starfire's marks lie on the work");
+        h.assertTrue(white[0][0] != other[0][0] || white[0][1] != other[0][1], "a new chain each time");
+        h.assertTrue(Math.abs(ForgeSong.withVerbs(0.5F, 1F, -1F, 1F, 1F) - (0.5F * 0.7F + 0.3F)) < 1e-6, "each verb done is a tenth");
         h.succeed();
     }
 
@@ -206,8 +217,11 @@ final class ArmourTests {
         w.inlayScore = 1F;
         w.taps = 3;
         w.inlay = Forces.Force.SPIRIT.ordinal() + 1;
+        w.fold = 0.9F;
+        w.starfire = 0.6F;
         ForgeWork b = ForgeWork.CODEC.encodeStart(ops, w).flatMap(t -> ForgeWork.CODEC.parse(ops, t)).getOrThrow();
         h.assertTrue(b.tune == 0.75F && b.inlayScore == 1F && b.taps == 3 && b.inlay == w.inlay, "the tune and the inlay round-trip");
+        h.assertTrue(b.fold == 0.9F && b.starfire == 0.6F, "the fold and the starfire round-trip");
         h.assertTrue(b.set == w.set && b.piece == w.piece && b.stage == w.stage && b.stageStart == 1234L && b.strikeBase == 2 && b.heat == 0.66F
                 && b.cut == -1F && b.quench == 0.4F && b.scores.equals(w.scores) && b.twin == 1 && b.forger.equals(who) && !b.memory
                 && b.work.equals(w.work) && b.forge.equals(w.forge), "a piece in the making round-trips");
@@ -487,7 +501,15 @@ final class ArmourTests {
                 new Row(ArmourSet.DEEPCARAPACE, 3, 9, 8, 3, 3F, 0.1F, 0, 0),
                 new Row(ArmourSet.CLOUDRUNNER, 3, 7, 7, 3, 2.5F, 0.05F, 0.05, 0),
                 new Row(ArmourSet.TIDEBREAKER, 3, 8, 7, 3, 2.5F, 0.05F, 0, 0),
-                new Row(ArmourSet.HOLLOWHEART, 3, 9, 7, 3, 2.5F, 0.05F, 0, 0));
+                new Row(ArmourSet.HOLLOWHEART, 3, 9, 7, 3, 2.5F, 0.05F, 0, 0),
+                new Row(ArmourSet.LEVIATHAN, 3, 10, 8, 3, 3.5F, 0.15F, 0, 0),
+                new Row(ArmourSet.GALEWING, 3, 8, 7, 3, 3F, 0.1F, 0.05, 0),
+                new Row(ArmourSet.HALO_CHOIR, 3, 8, 7, 3, 3F, 0.1F, 0, 0.03),
+                new Row(ArmourSet.DREAMSTEEL, 3, 9, 7, 3, 3F, 0.1F, 0, 0),
+                new Row(ArmourSet.STARFALL, 4, 10, 8, 4, 4F, 0.2F, 0, 0),
+                new Row(ArmourSet.RIFTWALKER, 4, 8, 7, 4, 3.5F, 0.15F, 0.05, 0),
+                new Row(ArmourSet.NIGHTCOURT, 4, 9, 7, 4, 3.5F, 0.15F, 0, 0),
+                new Row(ArmourSet.SIGNALS_ECHO, 4, 8, 7, 4, 3.5F, 0.15F, 0, 0.03));
         for (Row r : table) {
             ArmourItems.Numbers n = ArmourItems.numbers(r.set());
             h.assertTrue(n.helm() == r.helm() && n.chest() == r.chest() && n.legs() == r.legs() && n.boots() == r.boots()
@@ -520,7 +542,8 @@ final class ArmourTests {
         h.assertTrue(ArmourPatterns.pick(m, Rank.D, true, r) == null && ArmourPatterns.pick(m, Rank.D, false, r) == null, "none once all are known");
         h.assertTrue(ArmourPatterns.pick(ArmouryMemory.fresh(), Rank.C, true, r) == ArmourSet.SHARDCROWN, "a C Lord gives Shardcrown's first");
         h.assertTrue(ArmourPatterns.pick(ArmouryMemory.fresh(), Rank.B, true, r) == ArmourSet.HOLLOWHEART, "a B Lord gives Hollowheart's first");
-        h.assertTrue(ArmourPatterns.pick(ArmouryMemory.fresh(), Rank.A, true, r) == null, "A isn't made yet");
+        ArmourSet a = ArmourPatterns.pick(ArmouryMemory.fresh(), Rank.A, true, r);
+        h.assertTrue(a != null && a.rank == Rank.A && a.hunter == null, "an A Lord gives an A set's (its Lord-forged set is Lordscale, a Hunter set): " + a);
 
         ServerPlayer p = survivor(h);
         ArmouryMemory mine = ArmouryMemory.of(p);
@@ -631,6 +654,152 @@ final class ArmourTests {
         dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.HIT, z);
         h.assertTrue(z.getHealth() < zhp && s.charge() == 0, "the fifth beats: the zombie hurt, the heart emptied");
         h.succeed();
+    }
+
+    /**
+     * A's Fold and S's Starfire (SPEC §44.4): a Starfall cuirass is shaped, folded in pairs, struck white, quenched and
+     * tuned, every verb judged; a Dreamsteel boot folds and goes straight to the quench.
+     */
+    private static void foldStarfire(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        FittingStandBlockEntity be = stand(h, new BlockPos(1, 1, 1));
+        BlockPos pos = be.getBlockPos();
+        ServerPlayer p = smith(h, Rank.S, pos);
+        p.setGameMode(GameType.CREATIVE);
+        ArmouryMemory.of(p).patterns.addAll(List.of("starfall", "dreamsteel"));
+        h.setBlock(new BlockPos(3, 1, 1), Blocks.ANVIL.defaultBlockState());
+        h.setBlock(new BlockPos(1, 1, 3), BuiltInRegistries.BLOCK.getValue(Awaken.id("forge")).defaultBlockState());
+
+        act(p, pos, ArmourPayloads.START, ArmourSet.STARFALL.ordinal() * 4 + 1, 0F, 0F);
+        ForgeWork w = be.work();
+        h.assertTrue(w != null, "a Starfall cuirass is begun");
+        float gold = 0.65F * ForgeSong.HEAT_FULL;
+        w.stageStart = level.getGameTime() - (long) gold;
+        act(p, pos, ArmourPayloads.PULL, 0, gold, 0F);
+        int shape = ForgeSong.strikes(ArmorType.CHESTPLATE, false);
+        for (int k = 0; k < shape; k++) strikeOnBeat(h, p, be);
+        h.assertTrue(w.stage == ForgeSong.FOLD && w.stageFrom() == shape && w.strikesNeeded() == shape + ForgeSong.FOLD_STRIKES,
+                "shaped, then folded: the fold's strikes follow the shaping's");
+        h.assertTrue(w.nextDue() == ForgeSong.FOLD_RHYTHM.due(0), "the fold keeps its own rhythm");
+        for (int k = 0; k < ForgeSong.FOLD_STRIKES; k++) strikeOnBeat(h, p, be);
+        h.assertTrue(w.stage == ForgeSong.STARFIRE && w.fold == 1F, "folded clean, then the heat goes white, fold " + w.fold);
+        strikeOnBeat(h, p, be);
+        act(p, pos, ArmourPayloads.STRIKE, w.scores.size(), w.nextDue() + 5F, 0F); // late
+        for (int k = 2; k < ForgeSong.STARFIRE_STRIKES; k++) strikeOnBeat(h, p, be);
+        h.assertTrue(w.stage == ForgeSong.QUENCH && w.starfire > 0.8F && w.starfire < 1F, "struck white, one late: then the quench, starfire " + w.starfire);
+        h.assertTrue(w.strikeMean() == 1F, "the strikes' mean is the shaping's alone");
+        w.stageStart = level.getGameTime() - 34;
+        act(p, pos, ArmourPayloads.QUENCH, 0, ForgeSong.quenchCue(w.stageStart) + 1, 0F);
+        h.assertTrue(w.stage == ForgeSong.TUNE, "S tunes after the quench");
+        float[] at = ForgeSong.truePoint(w.stageStart, w.piece);
+        act(p, pos, ArmourPayloads.TAP, 0, at[0], at[1]);
+        Forged f = be.suit(1).get(ArmourContent.FORGED.get());
+        h.assertTrue(be.work() == null && f != null && f.set().equals("starfall") && f.quality() >= ForgeSong.Quality.MASTERWORK.ordinal(),
+                "fitted, every verb done well, got " + f);
+
+        act(p, pos, ArmourPayloads.START, ArmourSet.DREAMSTEEL.ordinal() * 4 + 3, 0F, 0F);
+        w = be.work();
+        w.stageStart = level.getGameTime() - (long) gold;
+        act(p, pos, ArmourPayloads.PULL, 0, gold, 0F);
+        for (int k = 0; k < ForgeSong.strikes(ArmorType.BOOTS, false); k++) strikeOnBeat(h, p, be);
+        h.assertTrue(w.stage == ForgeSong.FOLD, "A folds too");
+        for (int k = 0; k < ForgeSong.FOLD_STRIKES; k++) strikeOnBeat(h, p, be);
+        h.assertTrue(w.stage == ForgeSong.QUENCH && w.starfire == -1F, "and goes straight to the quench: only S strikes white");
+        h.succeed();
+    }
+
+    /**
+     * The A and S sets' twists and growth (SPEC §44.5, §44.6): an A Edge holds two charges, a release spends one; Mirror
+     * throws a deflected blow back; Hymn's three runes soften blows, a fourth overchannels; Starfall's falls never hurt
+     * and its Meteor burns; an S Bastion reaches further; Riposte lands a blow after a deflect harder; Leviathan pulls in,
+     * then bursts; Signal's Echo overchannels again a second later.
+     */
+    private static void twistsAS(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = survivor(h);
+        BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
+        p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0F, 0F);
+        ArmourAbilities.State s = ArmourAbilities.state(p);
+        net.minecraft.world.entity.monster.zombie.Zombie z = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(3, 1, 1));
+        z.setNoAi(true);
+        z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(140);
+        z.setHealth(z.getMaxHealth());
+        z.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(Items.LEATHER_HELMET)); // no burning in the sun
+
+        wear(p, ArmourSet.DREAMSTEEL, 4);
+        for (int i = 0; i < 8; i++) dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.FINISHER, z);
+        h.assertTrue(s.charge() == 2 * ArmourAbilities.FULL, "an A Edge holds two charges, got " + s.charge());
+        dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.HIT, z);
+        h.assertTrue(s.charge() == ArmourAbilities.FULL, "a wave spends one, the second waits, got " + s.charge());
+        float zhp = z.getHealth();
+        dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.DEFLECT, z);
+        h.assertTrue(z.getHealth() < zhp, "Mirror: a deflect throws the blow back on its striker");
+
+        wear(p, ArmourSet.HALO_CHOIR, 4);
+        p.setHealth(p.getMaxHealth());
+        float hp = p.getHealth();
+        p.damageCooldownTime = 0;
+        p.hurtServer(level, p.damageSources().mobAttack(z), 8F);
+        float bare = hp - p.getHealth();
+        s.runes = ArmourAbilities.RUNES;
+        p.setHealth(p.getMaxHealth());
+        p.damageCooldownTime = 0;
+        p.hurtServer(level, p.damageSources().mobAttack(z), 8F);
+        float sung = p.getMaxHealth() - p.getHealth();
+        h.assertTrue(sung > 0 && sung < bare, "Hymn: three runes soften a blow, " + sung + " against " + bare);
+        dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.CAST, null);
+        h.assertTrue(s.runes() == ArmourAbilities.RUNES_A, "an A Channeler gathers a fourth rune");
+        z.setHealth(z.getMaxHealth());
+        dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.CAST, null);
+        h.assertTrue(s.runes() == 0 && z.getHealth() < z.getMaxHealth(), "with four the next cast overchannels");
+
+        wear(p, ArmourSet.STARFALL, 4);
+        p.setHealth(p.getMaxHealth());
+        p.damageCooldownTime = 0;
+        p.hurtServer(level, p.damageSources().fall(), 6F);
+        h.assertTrue(p.getHealth() == p.getMaxHealth(), "Starfall: falls never hurt");
+        z.setHealth(z.getMaxHealth());
+        ArmourAbilities.meteor(p, s, ArmourSet.STARFALL, level.getGameTime());
+        h.assertTrue(z.getHealth() < z.getMaxHealth() && z.isOnFire(), "Meteor: everyone close burns");
+        z.snapTo(at.getX() + 5.2, at.getY(), at.getZ() + 0.5, 0F, 0F);
+        z.setHealth(z.getMaxHealth());
+        s.charge = ArmourAbilities.FULL;
+        dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.GUARD, z);
+        h.assertTrue(z.getHealth() < z.getMaxHealth(), "an S Bastion reaches half again as far (4.7 blocks off)");
+        z.snapTo(at.getX() + 2.5, at.getY(), at.getZ() + 0.5, 0F, 0F);
+        z.clearFire();
+
+        wear(p, ArmourSet.NIGHTCOURT, 4);
+        dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.DEFLECT, z);
+        z.setHealth(z.getMaxHealth());
+        z.damageCooldownTime = 0;
+        z.hurtServer(level, p.damageSources().playerAttack(p), 6F);
+        float riposte = z.getMaxHealth() - z.getHealth();
+        z.setHealth(z.getMaxHealth());
+        z.damageCooldownTime = 0;
+        z.hurtServer(level, p.damageSources().playerAttack(p), 6F);
+        float plain = z.getMaxHealth() - z.getHealth();
+        h.assertTrue(riposte > plain * 1.4F, "Riposte: the blow after a deflect lands harder, " + riposte + " against " + plain);
+
+        wear(p, ArmourSet.LEVIATHAN, 4);
+        z.setDeltaMovement(Vec3.ZERO);
+        z.setHealth(z.getMaxHealth());
+        s.charge = ArmourAbilities.FULL;
+        dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.GUARD, z);
+        h.assertTrue(z.getDeltaMovement().x < -0.3 && s.charge() == 0 && z.getHealth() == z.getMaxHealth(),
+                "Abyss Pull drags the zombie in first, got " + z.getDeltaMovement());
+        h.runAfterDelay(ArmourAbilities.ABYSS_DELAY + 2, () -> {
+            h.assertTrue(z.getHealth() < z.getMaxHealth(), "then the burst");
+            z.snapTo(at.getX() + 2.5, at.getY(), at.getZ() + 0.5, 0F, 0F);
+            wear(p, ArmourSet.SIGNALS_ECHO, 4);
+            s.runes = ArmourAbilities.RUNES_A;
+            dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.CAST, null);
+            z.setHealth(z.getMaxHealth());
+            h.runAfterDelay(ArmourAbilities.ECHO_DELAY + 2, () -> {
+                h.assertTrue(z.getHealth() < z.getMaxHealth(), "Echo: the overchannel comes again");
+                h.succeed();
+            });
+        });
     }
 
     /** Puts the first n pieces of a set on (helm, cuirass, greaves, boots) and the rest off, and counts them. */

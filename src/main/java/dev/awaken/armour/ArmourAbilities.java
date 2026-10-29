@@ -31,6 +31,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Relative;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -49,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * What wearing a set does (SPEC §44.5, §44.6). Two pieces of a set with items of its own give its archetype's half bonus;
@@ -121,6 +123,23 @@ public final class ArmourAbilities {
     public static final double PULSE_RADIUS = 4.0;
     public static final float PULSE_HEAL = 1F;
 
+    /** P4's twists (SPEC §44.6). */
+    public static final double ABYSS_PULL_RADIUS = 6.0, ABYSS_PULL = 0.9;
+    public static final int ABYSS_DELAY = 8;
+    public static final double GUST_RADIUS = 3.0, GUST_PUSH = 0.9, GUST_LIFT = 0.35;
+    public static final int GUST_COOLDOWN = 40;
+    public static final float HYMN_SHARE = 0.8F;
+    public static final int HYMN_STAGGER = 30;
+    public static final double HYMN_RADIUS = 5.0;
+    public static final float MIRROR_SHARE = 0.5F;
+    public static final int MIRROR_COOLDOWN = 20;
+    public static final double METEOR_FALL = 6.0, METEOR_RADIUS = 4.0;
+    public static final int METEOR_FIRE = 80, METEOR_COOLDOWN = 100;
+    public static final double RIFT_BEHIND = 1.5, RIFT_REACH = 12.0;
+    public static final int RIPOSTE_TICKS = 40;
+    public static final float RIPOSTE = 0.6F, ECHO_SHARE = 0.75F;
+    public static final int ECHO_DELAY = 20;
+
     /** How the four abilities grow with the set's rank (SPEC §44.5, "By rank"). */
     public static final double SLAM_FALL = 4.0;
     public static final int AFTER_STAGGER = 20;
@@ -128,6 +147,9 @@ public final class ArmourAbilities {
     public static final float REFUND = 0.25F;
     public static final int BLEED_TICKS = 60, BLEED_EVERY = 10;
     public static final float BLEED = 1F;
+    /** A: a second charge held (Bastion, Flow, Edge) or a fourth rune. S: everything the ability does reaches half again as far. */
+    public static final int RUNES_A = 4;
+    public static final double S_REACH = 1.5;
 
     /** Mastery experience: a blow dealt or taken with the whole set on; a strong creature's kill; a gate Lord's. Written to the pieces in tens. */
     public static final int XP_BLOW = 1, XP_STRONG = 5, XP_LORD = 60, XP_FLUSH = 10;
@@ -152,6 +174,7 @@ public final class ArmourAbilities {
         long runesUntil, overUntil, rushUntil, tempoUntil, slipUntil, wardUntil, rootedUntil;
         long ringReady, rootedReady, goreReady;
         long vaultReady, shatterReady, shatterUntil;
+        long gustReady, mirrorReady, meteorReady, riposteUntil;
         /** The Force of the wearer's last power hit (a B Bastion's burst carries it), or null. */
         Forces.@Nullable Force force;
         /** The furthest fall since the wearer left the ground (a C Bastion's landing). */
@@ -288,7 +311,7 @@ public final class ArmourAbilities {
                 }
                 case CHANNELER -> {
                     if (m == FightMoments.Moment.CAST) {
-                        if (s.runes >= RUNES) overchannel(p, s, set);
+                        if (s.runes >= runeCap(set)) overchannel(p, s, set);
                         else {
                             s.runes++;
                             sound(p, ArmourContent.RUNE.get(), 0.6F, 0.9F + 0.15F * s.runes);
@@ -326,6 +349,19 @@ public final class ArmourAbilities {
             case FROSTWALKER -> {
                 if (m == FightMoments.Moment.PERFECT_DODGE) rime(p, set);
             }
+            case GALEWING -> {
+                if (m == FightMoments.Moment.PERFECT_DODGE && now >= s.gustReady) gust(p, s, set, now);
+            }
+            case DREAMSTEEL -> {
+                if (m == FightMoments.Moment.DEFLECT && target != null && now >= s.mirrorReady) mirror(p, s, set, target, now);
+            }
+            case NIGHTCOURT -> {
+                if (m == FightMoments.Moment.DEFLECT) {
+                    s.riposteUntil = now + RIPOSTE_TICKS;
+                    Fx.at(p.level(), FxKind.GLYPH, FxStyle.NEUTRAL, p.position().add(0, 0.05, 0)).caster(p).colour(glow(set)).scale(1.1).ticks(RIPOSTE_TICKS).send();
+                    sound(p, ArmourContent.EDGE.get(), 0.5F, 1.6F);
+                }
+            }
             case HOLLOWHEART -> {
                 if (m == FightMoments.Moment.HIT) {
                     if (++s.beats >= PULSE_BEATS) pulse(p, s, set);
@@ -344,31 +380,68 @@ public final class ArmourAbilities {
     }
 
     private static void fill(ServerPlayer p, State s, int amount) {
-        if (amount <= 0 || s.charge >= FULL) return;
-        s.charge = Math.min(FULL, s.charge + amount);
-        if (s.charge >= FULL) sound(p, ArmourContent.CHARGED.get(), 0.7F, 1F);
+        int cap = s.full == null ? FULL : cap(s.full);
+        if (amount <= 0 || s.charge >= cap) return;
+        int was = s.charge;
+        s.charge = Math.min(cap, s.charge + amount);
+        if (was < FULL && s.charge >= FULL) sound(p, ArmourContent.CHARGED.get(), 0.7F, 1F);
+        else if (was < cap && s.charge >= cap) sound(p, ArmourContent.CHARGED.get(), 0.8F, 1.3F); // the second charge
+    }
+
+    /** How much charge a set holds: from A a second one, kept for the next release. */
+    static int cap(ArmourSet set) {
+        return grown(set, dev.awaken.progression.Rank.A) ? 2 * FULL : FULL;
+    }
+
+    /** How many runes circle a Channeler before the next cast overchannels them: from A a fourth. */
+    static int runeCap(ArmourSet set) {
+        return grown(set, dev.awaken.progression.Rank.A) ? RUNES_A : RUNES;
+    }
+
+    /** An ability's reach at the set's rank: at S half again as far. */
+    static double reach(ArmourSet set, double r) {
+        return grown(set, dev.awaken.progression.Rank.S) ? r * S_REACH : r;
     }
 
     // ---- the four abilities -----------------------------------------------------------------------------------------
 
     /** Bastion's burst: everyone near thrown back and staggered, the ground cracked around you. */
     static void bastion(ServerPlayer p, State s, ArmourSet set) {
-        ServerLevel level = p.level();
-        float dmg = blow(set);
         // from B the burst carries the Force of your last power hit (its damage type, so the Forces' reactions follow)
         Forces.Force force = grown(set, dev.awaken.progression.Rank.B) ? s.force : null;
+        if (set == ArmourSet.LEVIATHAN) {
+            // Abyss Pull: the deep drags everyone near in first, then the burst
+            ServerLevel level = p.level();
+            double r = reach(set, ABYSS_PULL_RADIUS);
+            for (LivingEntity t : foes(p, p.position(), r)) push(p, t, -ABYSS_PULL, 0.1);
+            Fx.at(level, FxKind.VORTEX, FxStyle.KINETIC, p.position().add(0, 0.6, 0)).caster(p).colour(glow(set)).scale(r).ticks(ABYSS_DELAY + 4).send();
+            sound(p, ArmourContent.BASTION.get(), 0.7F, 0.55F);
+            release(p, s);
+            Scheduler.after(ABYSS_DELAY, () -> {
+                if (p.isAlive() && !p.isRemoved()) burst(p, s, set, force);
+            });
+            return;
+        }
+        burst(p, s, set, force);
+        release(p, s);
+    }
+
+    private static void burst(ServerPlayer p, State s, ArmourSet set, Forces.@Nullable Force force) {
+        ServerLevel level = p.level();
+        float dmg = blow(set);
+        double r = reach(set, BASTION_RADIUS);
         DamageSource src = force != null ? Combat.source(level, force, null, p) : p.damageSources().playerAttack(p);
-        for (LivingEntity t : foes(p, p.position(), BASTION_RADIUS)) {
+        for (LivingEntity t : foes(p, p.position(), r)) {
             hurt(level, t, src, dmg);
             push(p, t, 1.1, 0.35);
             Strikes.stagger(t, BASTION_STAGGER);
         }
         FxStyle style = force != null ? FxStyle.valueOf(force.name()) : FxStyle.KINETIC;
-        Fx.at(level, FxKind.SLAM, style, p.position()).caster(p).colour(glow(set)).scale(BASTION_RADIUS).send();
-        if (force != null) Fx.at(level, FxKind.NOVA, style, p.position().add(0, 1.0, 0)).caster(p).scale(BASTION_RADIUS * 0.8).send();
+        Fx.at(level, FxKind.SLAM, style, p.position()).caster(p).colour(glow(set)).scale(r).send();
+        if (force != null) Fx.at(level, FxKind.NOVA, style, p.position().add(0, 1.0, 0)).caster(p).scale(r * 0.8).send();
         Fx.quake(level, p.position(), 12, 0.8F);
         sound(p, ArmourContent.BASTION.get(), 1F, 1F);
-        release(p, s);
+        flash(p, s);
     }
 
     /**
@@ -383,7 +456,8 @@ public final class ArmourAbilities {
         double cos = Math.cos(Math.toRadians(EDGE_HALF_ANGLE));
         float dmg = (float) p.getAttributeValue(Attributes.ATTACK_DAMAGE) * EDGE_SHARE;
         DamageSource src = p.damageSources().playerAttack(p);
-        for (LivingEntity t : foes(p, p.position(), EDGE_RANGE)) {
+        double range = reach(set, EDGE_RANGE);
+        for (LivingEntity t : foes(p, p.position(), range)) {
             if (t == struck) continue;
             Vec3 to = new Vec3(t.getX() - p.getX(), 0, t.getZ() - p.getZ());
             if (to.lengthSqr() > 1e-6 && to.normalize().dot(flat) < cos) continue;
@@ -394,43 +468,67 @@ public final class ArmourAbilities {
             if (grown(set, dev.awaken.progression.Rank.B)) bleed(p, t);
         }
         Fx.at(level, FxKind.CONE, FxStyle.NEUTRAL, p.position().add(0, 1.0, 0)).caster(p).colour(glow(set)).dir(flat)
-                .scale(EDGE_RANGE).aux(EDGE_HALF_ANGLE).ticks(8).send();
+                .scale(range).aux(EDGE_HALF_ANGLE).ticks(8).send();
         sound(p, ArmourContent.EDGE.get(), 1F, 1F);
         release(p, s);
     }
 
-    /** Overchannel: the runes fly out at the three foes nearest you, and your powers hit harder for a moment. */
+    /** Overchannel: the runes fly out at the foes nearest you (three, from A four), and your powers hit harder for a moment. */
     static void overchannel(ServerPlayer p, State s, ArmourSet set) {
         ServerLevel level = p.level();
+        int n = runeCap(set);
         s.runes = 0;
         s.overUntil = level.getGameTime() + OVERCHANNEL_TICKS;
-        List<LivingEntity> near = foes(p, p.position(), RUNE_REACH);
+        runesOut(p, set, n, 1F);
+        Fx.at(level, FxKind.NOVA, FxStyle.ENERGY, p.position().add(0, 1.4, 0)).caster(p).colour(glow(set)).scale(2.0).send();
+        sound(p, ArmourContent.OVERCHANNEL.get(), 1F, 1F);
+        // from B an overchannel gives back a quarter of your energy
+        if (grown(set, dev.awaken.progression.Rank.B)) Powers.restoreEnergy(p, Powers.maxEnergy(p) * REFUND);
+        if (set == ArmourSet.SUNWARD) noon(p, set);
+        if (set == ArmourSet.HALO_CHOIR) hymn(p, set);
+        // Signal's Echo: the overchannel comes again a second later, a little fainter
+        if (set == ArmourSet.SIGNALS_ECHO) Scheduler.after(ECHO_DELAY, () -> {
+            if (!p.isAlive() || p.isRemoved()) return;
+            runesOut(p, set, n, ECHO_SHARE);
+            Fx.at(p.level(), FxKind.ECHO, FxStyle.ENERGY, p.position().add(0, 1.4, 0)).caster(p).colour(glow(set)).scale(2.0).send();
+            sound(p, ArmourContent.OVERCHANNEL.get(), 0.7F, 1.25F);
+            flash(p, state(p));
+        });
+        flash(p, s);
+    }
+
+    /** The runes flying at the nearest foes in reach, each the ability's blow (times share) as magic. */
+    private static void runesOut(ServerPlayer p, ArmourSet set, int n, float share) {
+        ServerLevel level = p.level();
+        List<LivingEntity> near = foes(p, p.position(), reach(set, RUNE_REACH));
         near.sort(Comparator.comparingDouble(t -> t.distanceToSqr(p)));
-        float dmg = blow(set);
+        float dmg = blow(set) * share;
         DamageSource src = p.damageSources().indirectMagic(p, p);
         Vec3 from = p.position().add(0, 1.4, 0);
-        for (int i = 0; i < Math.min(RUNES, near.size()); i++) {
+        for (int i = 0; i < Math.min(n, near.size()); i++) {
             LivingEntity t = near.get(i);
             Vec3 at = t.position().add(0, t.getBbHeight() * 0.6, 0);
             Fx.at(level, FxKind.BOLT, FxStyle.ENERGY, from).caster(p).colour(glow(set)).dir(at.subtract(from)).send();
             Fx.at(level, FxKind.IMPACT, FxStyle.ENERGY, at).colour(glow(set)).scale(1.4).send();
             hurt(level, t, src, dmg);
         }
-        Fx.at(level, FxKind.NOVA, FxStyle.ENERGY, from).caster(p).colour(glow(set)).scale(2.0).send();
-        sound(p, ArmourContent.OVERCHANNEL.get(), 1F, 1F);
-        // from B an overchannel gives back a quarter of your energy
-        if (grown(set, dev.awaken.progression.Rank.B)) Powers.restoreEnergy(p, Powers.maxEnergy(p) * REFUND);
-        if (set == ArmourSet.SUNWARD) noon(p, set);
-        flash(p, s);
     }
 
-    /** Flow's afterimage: the blow strikes a ghost of you, and you run on faster. */
-    static void afterimage(ServerPlayer p, State s, ArmourSet set) {
+    /** Flow's afterimage: the blow strikes a ghost of you, and you run on faster ({@code by}: who struck it, for Riftwalker). */
+    static void afterimage(ServerPlayer p, State s, ArmourSet set, @Nullable LivingEntity by) {
         ServerLevel level = p.level();
         Fx.at(level, FxKind.AFTERIMAGE, FxStyle.FLIGHT, p.position()).caster(p).colour(glow(set)).ticks(16).send();
         // from C those close swing at the ghost and stagger
         if (grown(set, dev.awaken.progression.Rank.C))
-            for (LivingEntity t : foes(p, p.position(), AFTER_RADIUS)) Strikes.stagger(t, AFTER_STAGGER);
+            for (LivingEntity t : foes(p, p.position(), reach(set, AFTER_RADIUS))) Strikes.stagger(t, AFTER_STAGGER);
+        // Riftwalker's Riftstep: you step out of the rift behind the one who struck the ghost
+        if (set == ArmourSet.RIFTWALKER && by != null && riftstep(p, set, by)) {
+            s.rushUntil = level.getGameTime() + FLOW_RUSH;
+            modify(p, Attributes.MOVEMENT_SPEED, RUSH_ID, FLOW_RUSH_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, false);
+            sound(p, ArmourContent.FLOW.get(), 1F, 0.7F);
+            release(p, s);
+            return;
+        }
         // from B a ghost left in the air rushes you on along your look
         if (grown(set, dev.awaken.progression.Rank.B) && Combat.airborne(p)) {
             Vec3 f = p.getLookAngle();
@@ -571,6 +669,74 @@ public final class ArmourAbilities {
         flash(p, s);
     }
 
+    /** Galewing's Gust: a perfect dodge beats the wings: everyone close is thrown back and you lift. */
+    static void gust(ServerPlayer p, State s, ArmourSet set, long now) {
+        s.gustReady = now + GUST_COOLDOWN;
+        ServerLevel level = p.level();
+        for (LivingEntity t : foes(p, p.position(), GUST_RADIUS)) push(p, t, GUST_PUSH, 0.2);
+        Vec3 v = p.getDeltaMovement();
+        Combat.push(p, new Vec3(v.x, Math.max(v.y, 0) + GUST_LIFT, v.z));
+        Fx.at(level, FxKind.RING, FxStyle.FLIGHT, p.position().add(0, 0.2, 0)).caster(p).colour(glow(set)).scale(GUST_RADIUS).ticks(8).send();
+        Fx.at(level, FxKind.LIFT, FxStyle.FLIGHT, p.position()).caster(p).colour(glow(set)).ticks(10).send();
+        sound(p, ArmourContent.FLOW.get(), 0.8F, 1.4F);
+        flash(p, s);
+    }
+
+    /** Halo Choir's Hymn: an overchannel rings the halo; everyone close reels. */
+    static void hymn(ServerPlayer p, ArmourSet set) {
+        double r = reach(set, HYMN_RADIUS);
+        for (LivingEntity t : foes(p, p.position(), r)) Strikes.stagger(t, HYMN_STAGGER);
+        Fx.at(p.level(), FxKind.RING, FxStyle.SPIRIT, p.position().add(0, 2.1, 0)).caster(p).colour(glow(set)).scale(r).ticks(12).send();
+        sound(p, ArmourContent.RING.get(), 1F, 1.5F);
+    }
+
+    /** Dreamsteel's Mirror: a deflected blow comes back on its striker, half as hard. */
+    static void mirror(ServerPlayer p, State s, ArmourSet set, LivingEntity t, long now) {
+        s.mirrorReady = now + MIRROR_COOLDOWN;
+        var attack = t.getAttribute(Attributes.ATTACK_DAMAGE);
+        float dmg = Math.max(1F, (attack == null ? 2F : (float) attack.getValue()) * MIRROR_SHARE);
+        hurt(p.level(), t, p.damageSources().thorns(p), dmg);
+        Vec3 at = t.position().add(0, t.getBbHeight() * 0.6, 0);
+        Fx.at(p.level(), FxKind.IMPACT, FxStyle.PRISM, at).caster(p).colour(glow(set)).dir(t.position().subtract(p.position())).scale(1.2).send();
+        sound(p, ArmourContent.RING.get(), 0.6F, 1.9F);
+        flash(p, s);
+    }
+
+    /** Starfall's Meteor: a long fall lands like a falling star; everyone close burns and is thrown. */
+    static void meteor(ServerPlayer p, State s, ArmourSet set, long now) {
+        s.meteorReady = now + METEOR_COOLDOWN;
+        ServerLevel level = p.level();
+        double r = reach(set, METEOR_RADIUS);
+        DamageSource src = Combat.source(level, Forces.Force.HEAT, null, p);
+        for (LivingEntity t : foes(p, p.position(), r)) {
+            hurt(level, t, src, blow(set));
+            t.igniteForTicks(METEOR_FIRE);
+            push(p, t, 1.2, 0.5);
+        }
+        Fx.at(level, FxKind.NOVA, FxStyle.HEAT, p.position().add(0, 0.6, 0)).caster(p).colour(glow(set)).scale(r).send();
+        Fx.at(level, FxKind.SLAM, FxStyle.HEAT, p.position()).caster(p).colour(glow(set)).scale(r).send();
+        Fx.quake(level, p.position(), 14, 0.9F);
+        sound(p, ArmourContent.BASTION.get(), 1F, 0.75F);
+        flash(p, s);
+    }
+
+    /** Riftwalker's Riftstep: out of the rift a step behind the one who struck, facing them; false if there's no room. */
+    static boolean riftstep(ServerPlayer p, ArmourSet set, LivingEntity by) {
+        if (by.level() != p.level() || by.distanceToSqr(p) > RIFT_REACH * RIFT_REACH) return false;
+        Vec3 away = new Vec3(by.getX() - p.getX(), 0, by.getZ() - p.getZ());
+        if (away.lengthSqr() < 1e-4) return false;
+        Vec3 to = by.position().add(away.normalize().scale(by.getBbWidth() / 2 + RIFT_BEHIND));
+        ServerLevel level = p.level();
+        AABB box = p.getBoundingBox().move(to.subtract(p.position()));
+        if (!level.noCollision(p, box)) return false;
+        Vec3 from = p.position();
+        float yaw = (float) Math.toDegrees(Math.atan2(-(by.getX() - to.x), by.getZ() - to.z));
+        Fx.at(level, FxKind.BLINK, FxStyle.FLIGHT, from.add(0, 1, 0)).caster(p).colour(glow(set)).dir(to.subtract(from)).send();
+        p.teleportTo(level, to.x, to.y, to.z, Set.of(), yaw, p.getXRot(), false);
+        Fx.at(level, FxKind.BLINK, FxStyle.FLIGHT, to.add(0, 1, 0)).caster(p).colour(glow(set)).send();
+        return true;
+    }
+
     /** A B wave's bleeding: a little every half second for three seconds. */
     private static void bleed(ServerPlayer p, LivingEntity t) {
         for (int k = BLEED_EVERY; k <= BLEED_TICKS; k += BLEED_EVERY) {
@@ -593,13 +759,18 @@ public final class ArmourAbilities {
         ArmourSet set = s.full;
         s.moving = p.getDeltaMovement().horizontalDistanceSqr() > 4.0E-4;
         if (set != null) {
-            // from C a hard landing bursts a full Bastion
+            // from C a hard landing bursts a full Bastion (Starfall's long fall lands as a meteor first)
             if (ability(set) == Archetype.BULWARK && grown(set, dev.awaken.progression.Rank.C)) {
                 if (!p.onGround()) s.fall = Math.max(s.fall, p.fallDistance);
                 else {
+                    if (set == ArmourSet.STARFALL && s.fall >= METEOR_FALL && now >= s.meteorReady) meteor(p, s, set, now);
                     if (s.fall >= SLAM_FALL && s.charge >= FULL) bastion(p, s, set);
                     s.fall = 0;
                 }
+            }
+            if (set == ArmourSet.LEVIATHAN && p.isUnderWater()) {
+                MobEffectInstance had = p.getEffect(MobEffects.WATER_BREATHING);
+                if (had == null || had.getDuration() < 10) p.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 40, 0, false, false, false));
             }
             if (set == ArmourSet.FROSTWALKER && p.onGround() && s.moving && !p.isPassenger()) freeze(p);
             if (set == ArmourSet.CLOUDRUNNER && p.isShiftKeyDown() && Combat.airborne(p) && p.getDeltaMovement().y < -0.1
@@ -666,11 +837,16 @@ public final class ArmourAbilities {
                 e.setCanceled(true);
                 return;
             }
+            // Starfall: falls never hurt you; a long one lands as a meteor (the landing itself is the tick's)
+            if (set == ArmourSet.STARFALL && src.is(DamageTypeTags.IS_FALL)) {
+                e.setCanceled(true);
+                return;
+            }
             Strikes.Kind kind = Strikes.of(src);
             if (set != null && kind != Strikes.Kind.NONE) {
                 if (ability(set) == Archetype.STRIDER && s.charge >= FULL) {
                     e.setCanceled(true);
-                    afterimage(p, s, set);
+                    afterimage(p, s, set, src.getEntity() instanceof LivingEntity by ? by : null);
                     return;
                 }
                 long now = p.level().getGameTime();
@@ -685,6 +861,7 @@ public final class ArmourAbilities {
                 }
                 if (set == ArmourSet.BLADEWARD && now < s.wardUntil) e.setAmount(e.getAmount() * WARD_SHARE);
                 if (set == ArmourSet.SHARDCROWN && now < s.shatterUntil) e.setAmount(e.getAmount() * SHATTER_SHARE);
+                if (set == ArmourSet.HALO_CHOIR && s.runes >= RUNES) e.setAmount(e.getAmount() * HYMN_SHARE);
                 if (shelled(p, s)) {
                     e.setAmount(e.getAmount() * SHELL_SHARE);
                     Fx.at(p.level(), FxKind.IMPACT, FxStyle.NEUTRAL, p.position().add(0, 1.0, 0)).caster(p).colour(glow(set)).scale(0.7).send();
@@ -702,6 +879,15 @@ public final class ArmourAbilities {
             if (f != null) s.force = f;
             float more = s.power + (by.level().getGameTime() < s.overUntil ? OVERCHANNEL : 0);
             if (more > 0) e.setAmount(e.getAmount() * (1 + more));
+        } else if (src.getEntity() instanceof ServerPlayer by && by != e.getEntity() && src.getDirectEntity() == by) {
+            // Nightcourt's Riposte: the first blade blow after a deflect lands hard
+            State s = state(by);
+            if (s.full == ArmourSet.NIGHTCOURT && by.level().getGameTime() < s.riposteUntil) {
+                s.riposteUntil = 0;
+                e.setAmount(e.getAmount() * (1 + RIPOSTE));
+                Fx.at(by.level(), FxKind.STRIKE, FxStyle.NEUTRAL, e.getEntity().position().add(0, e.getEntity().getBbHeight() * 0.6, 0)).caster(by)
+                        .colour(glow(s.full)).dir(e.getEntity().position().subtract(by.position())).scale(1.3).send();
+            }
         }
     }
 
@@ -722,7 +908,7 @@ public final class ArmourAbilities {
     static void onTracking(PlayerEvent.StartTracking e) {
         if (e.getTarget() instanceof ServerPlayer p && e.getEntity() instanceof ServerPlayer viewer) {
             State s = state(p);
-            if (s.charge > 0 || s.runes > 0) dev.awaken.core.AwakenNet.send(viewer, new ArmourPayloads.Charge(p.getId(), s.charge, s.runes, 0));
+            if (s.charge > 0 || s.runes > 0) dev.awaken.core.AwakenNet.send(viewer, new ArmourPayloads.Charge(p.getId(), Math.min(FULL, s.charge), s.runes, 0));
         }
     }
 
@@ -737,8 +923,9 @@ public final class ArmourAbilities {
         return s.full == ArmourSet.DEEPCARAPACE && p.isShiftKeyDown() && !s.moving;
     }
 
+    /** A release spends one charge (from A a second may be waiting). */
     private static void release(ServerPlayer p, State s) {
-        s.charge = 0;
+        s.charge = Math.max(0, s.charge - FULL);
         flash(p, s);
     }
 
@@ -758,7 +945,7 @@ public final class ArmourAbilities {
         s.sentCharge = s.charge;
         s.sentRunes = s.runes;
         // through AwakenNet: a test's or another mod's fake player has no channel for it, and sending would throw
-        ArmourPayloads.Charge msg = new ArmourPayloads.Charge(p.getId(), s.charge, s.runes, flash);
+        ArmourPayloads.Charge msg = new ArmourPayloads.Charge(p.getId(), Math.min(FULL, s.charge), s.runes, flash);
         for (ServerPlayer o : ((ServerLevel) p.level()).players())
             if (o == p || o.distanceToSqr(p) < SYNC_RANGE * SYNC_RANGE) AwakenNet.send(o, msg);
     }
@@ -876,6 +1063,14 @@ public final class ArmourAbilities {
             case CLOUDRUNNER -> 0xFFBFE2FF;
             case TIDEBREAKER -> 0xFFA98BFF;
             case HOLLOWHEART -> 0xFFF0504A;
+            case LEVIATHAN -> 0xFF4FD4A6;
+            case GALEWING -> 0xFFB0D4FF;
+            case HALO_CHOIR -> 0xFFEFBF55;
+            case DREAMSTEEL -> 0xFFF2D8FF;
+            case STARFALL -> 0xFFFFE2A0;
+            case RIFTWALKER -> 0xFFA88CFF;
+            case NIGHTCOURT -> 0xFFE8EEFF;
+            case SIGNALS_ECHO -> 0xFF98D4FF;
             default -> 0xFFD6ECFF;
         };
     }

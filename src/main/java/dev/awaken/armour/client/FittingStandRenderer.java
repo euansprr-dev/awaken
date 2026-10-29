@@ -94,6 +94,15 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
         else if (w.stage == ForgeSong.SHAPE) {
             float span = Math.max(40F, ForgeSong.song(w.set).rhythm().due(w.strikesNeeded() - 1 - w.strikeBase) + 20F);
             s.heat = Math.max(0.2F, w.heat * (1F - 0.35F * Math.min(1F, t / span)));
+        } else if (w.stage == ForgeSong.FOLD) {
+            // each fold flares the metal back up a little as it doubles over
+            float folded = (w.scores.size() - w.stageFrom()) / (float) ForgeSong.FOLD_STRIKES;
+            s.heat = Math.max(0.3F, w.heat * (0.7F + 0.15F * folded));
+        } else if (w.stage == ForgeSong.STARFIRE) {
+            // the heat goes white, and fades as the chain is struck
+            float k = (w.scores.size() - w.stageFrom()) / (float) ForgeSong.STARFIRE_STRIKES;
+            float up = Math.min(t / 10F, 1F), from = Math.max(0.3F, w.heat * 0.7F);
+            s.heat = from + (1.2F - 0.35F * k - from) * up;
         } else s.heat = Math.max(0.2F, w.heat * 0.6F);
         s.frame = ForgeFrame.of(be.getBlockPos(), w.work);
         s.workLight = LightCoordsUtil.getLightCoords(level, w.work.above());

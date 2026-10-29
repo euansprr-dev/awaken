@@ -29,7 +29,10 @@ import java.util.Arrays;
  * timing both counting; plunge it when the bell rings. By hand: draw the knife round the hide, then set the rivets on
  * the beat. A clean strike rings the set's next note, so a well-forged piece plays its tune. A helper at the anvil strikes
  * the off-beats. B's Deepglass is tuned after the quench: tap the cold piece to find where it rings true, the note clearer
- * the nearer you are. C and up can inlay a catalyst: it turns in its socket, and you seat it when its notch meets the key. Your client plays your own sounds the moment you act; the server judges by its clock and keeps the work.
+ * the nearer you are. C and up can inlay a catalyst: it turns in its socket, and you seat it when its notch meets the key.
+ * A's Fold strikes the doubled metal in quick pairs down the fold line; S's Starfire strikes a fast chain of white marks
+ * that light one after another and fade. Your client plays your own sounds the moment you act; the server judges by its
+ * clock and keeps the work.
  * Esc steps away: the work waits on the stand. Doesn't pause the game.
  */
 final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.QuietScreen, dev.awaken.signal.client.ReadingScreen {
@@ -130,7 +133,7 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         header(g, w);
         switch (w.stage) {
             case ForgeSong.HEAT -> heat(g, w, t, now);
-            case ForgeSong.SHAPE, ForgeSong.RIVET -> {
+            case ForgeSong.SHAPE, ForgeSong.RIVET, ForgeSong.FOLD, ForgeSong.STARFIRE -> {
                 if (helper) twin(g, w, f, t);
                 else shape(g, w, f, t, now);
             }
@@ -153,8 +156,12 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         Arrays.fill(predicted, Float.NaN);
         next = w.scores.size();
         int need = w.strikesNeeded();
-        marks = ForgeSong.marks(w.piece, need);
-        ForgeSong.Rhythm r = ForgeSong.song(w.set).rhythm();
+        marks = switch (w.stage) {
+            case ForgeSong.FOLD -> ForgeSong.foldMarks(ForgeSong.FOLD_STRIKES);
+            case ForgeSong.STARFIRE -> ForgeSong.starfireMarks(w.stageStart, ForgeSong.STARFIRE_STRIKES);
+            default -> ForgeSong.marks(w.piece, need);
+        };
+        ForgeSong.Rhythm r = ForgeSong.rhythm(w.set, w.stage);
         countStep = (int) Math.floor((now - w.stageStart) / r.step()) - 1;
         pulled = quenched = cue = cutting = cutSent = false;
         cutNext = 0;
@@ -164,7 +171,7 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         tuned = seated = false;
         bellowsAt = now;
         float blend = switch (w.stage) {
-            case ForgeSong.SHAPE -> 7;
+            case ForgeSong.SHAPE, ForgeSong.FOLD, ForgeSong.STARFIRE -> 7;
             case ForgeSong.QUENCH -> 12;
             default -> first ? 20 : 14;
         };
@@ -181,6 +188,8 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
             case ForgeSong.CUT -> "Cut";
             case ForgeSong.TUNE -> "Tune";
             case ForgeSong.INLAY -> "Inlay";
+            case ForgeSong.FOLD -> "Fold";
+            case ForgeSong.STARFIRE -> "Starfire";
             default -> "Rivets";
         };
         g.centeredText(font, Component.literal(w.set.setName + "  ·  " + it.getHoverName().getString() + "  ·  " + stage), width / 2, top,
@@ -282,8 +291,9 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
     // ---- strikes -----------------------------------------------------------------------------------------------------
 
     private void shape(GuiGraphicsExtractor g, ForgeWork w, ForgeFrame f, float t, float now) {
-        ForgeSong.Rhythm r = ForgeSong.song(w.set).rhythm();
-        int need = w.strikesNeeded();
+        ForgeSong.Rhythm r = ForgeSong.rhythm(w.set, w.stage);
+        int need = w.strikesNeeded(), from = w.stageFrom();
+        boolean fold = w.stage == ForgeSong.FOLD, white = w.stage == ForgeSong.STARFIRE;
         next = Math.max(next, w.scores.size());
         // beats that passed unstruck
         while (next < need && t > r.due(next - w.strikeBase) + ForgeSong.WINDOW) {
@@ -292,8 +302,10 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         }
         count(w, r, t, need);
         float markPx = 10;
-        for (int j = 0; j < need; j++) {
-            float[] m = marks[j % marks.length];
+        for (int j = from; j < need; j++) {
+            // Starfire shows only the next few of its chain; struck, they're gone
+            if (white && (j < next || j > next + 2)) continue;
+            float[] m = marks[(j - from) % marks.length];
             Vec3 at = f.mark(m[0], m[1]);
             if (!ForgeCamera.project(at.x, at.y, at.z, width, height, p)) continue;
             float px = p[0], py = p[1], rad = Math.max(6F, ForgeSong.MARK * (float) (ForgeFrame.HALF_ACROSS + ForgeFrame.HALF_ALONG) * 0.5F * p[2]);
@@ -301,9 +313,11 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
             float score = j < w.scores.size() ? w.scores.get(j) : predicted[j];
             if (!Float.isNaN(score)) disc(g, px, py, rad * 0.55F, scoreColour(score) & 0x00FFFFFF | 0xC0000000);
             else if (j == next) {
-                disc(g, px, py, rad, 0x50FFCF7A);
-                ring(g, px, py, rad, 2F, LANTERN);
+                disc(g, px, py, rad, white ? 0x70FFFFFF : 0x50FFCF7A);
+                ring(g, px, py, rad, 2F, white ? 0xFFFFFFFF : LANTERN);
                 disc(g, px, py, 2F, 0xFFFFF2C2);
+                // the first of a fold's pair: a second ring, strike it twice
+                if (fold && (j - from) % 2 == 0) ring(g, px, py, rad * 1.35F, 1F, 0xC0FFCF7A);
                 float dt = r.due(j - w.strikeBase) - t;
                 if (dt < APPROACH && dt > -ForgeSong.WINDOW) {
                     float k = Mth.clamp(dt / APPROACH, 0F, 1F);
@@ -311,17 +325,24 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
                     ring(g, px, py, rad * (1F + 2.4F * k), 1.5F, alpha << 24 | 0xFFE6B0);
                 }
             } else if (j == next + 1) {
-                disc(g, px, py, rad * 0.45F, 0x60FFCF7A);
-                ring(g, px, py, rad * 0.8F, 1F, 0xB0FFE6B0);
+                if (fold && (j - from) % 2 == 1) continue; // the pair's second blow, on the same mark
+                disc(g, px, py, rad * 0.45F, white ? 0x60FFFFFF : 0x60FFCF7A);
+                ring(g, px, py, rad * 0.8F, 1F, white ? 0x90FFFFFF : 0xB0FFE6B0);
+            } else if (white) {
+                disc(g, px, py, rad * 0.3F, 0x40FFFFFF);
             } else {
                 disc(g, px, py, rad * 0.35F, 0x70FFCF7A);
                 disc(g, px, py, 1.5F, 0xC0FFF2C2);
             }
         }
         lane(g, w, r, t, need, false);
-        pips(g, w, need);
+        pips(g, w, from, need);
         boolean countIn = t < r.bar().length() * r.step();
-        hint(g, countIn ? "Listen: the anvil counts the rhythm in. Then strike each glowing mark on the beat."
+        String how = fold ? "Fold: the metal is doubled over. Strike each mark twice, quick-quick, on the beat."
+                : white ? "Starfire: the metal's gone white. Strike the marks as they light, fast, before they fade."
+                : "Strike each glowing mark on the beat.";
+        hint(g, countIn ? "Listen: the anvil counts the rhythm in. " + how
+                : fold || white ? how + " Esc steps away; the work waits."
                 : "Strike the bright mark on the beat: click it, or press Space where you point. Esc steps away; the work waits.");
     }
 
@@ -339,13 +360,13 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
     }
 
     private void strike(ForgeWork w, ForgeFrame f, float t, float now) {
-        ForgeSong.Rhythm r = ForgeSong.song(w.set).rhythm();
+        ForgeSong.Rhythm r = ForgeSong.rhythm(w.set, w.stage);
         int need = w.strikesNeeded();
         next = Math.max(next, w.scores.size());
         if (next >= need) return;
         float off = t - r.due(next - w.strikeBase);
         if (off < -ForgeSong.WINDOW) return; // nowhere near its beat yet
-        float[] m = marks[next % marks.length];
+        float[] m = marks[(next - w.stageFrom()) % marks.length];
         Vec3 at = f.mark(m[0], m[1]);
         float radii = 9F;
         if (ForgeCamera.project(at.x, at.y, at.z, width, height, p)) {
@@ -357,7 +378,7 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         predicted[next] = score;
         if (score > 0F) {
             SoundEvent ring = w.stage == ForgeSong.RIVET ? ArmourContent.STRIKE_COPPER.get() : ArmourContent.strikeSound(w.set);
-            ForgeClient.play(at, ring, 1F, 0.95F + (now % 10) * 0.01F);
+            ForgeClient.play(at, ring, 1F, ForgeSong.strikePitch(w.stage) + (now % 10) * 0.01F);
         }
         if (ForgeSong.clean(score)) {
             int[] melody = ForgeSong.song(w.set).melody();
@@ -412,11 +433,11 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
     }
 
     /** One pip a strike, coloured by how it went. */
-    private void pips(GuiGraphicsExtractor g, ForgeWork w, int need) {
-        int y = bottom() - 28, pw = 8, x0 = width / 2 - need * (pw + 3) / 2;
-        for (int j = 0; j < need; j++) {
+    private void pips(GuiGraphicsExtractor g, ForgeWork w, int from, int need) {
+        int y = bottom() - 28, pw = 8, x0 = width / 2 - (need - from) * (pw + 3) / 2;
+        for (int j = from; j < need; j++) {
             float score = j < w.scores.size() ? w.scores.get(j) : predicted[j];
-            int x = x0 + j * (pw + 3);
+            int x = x0 + (j - from) * (pw + 3);
             if (Float.isNaN(score)) g.outline(x, y, pw, 4, 0x803A4A60);
             else g.fill(x, y, x + pw, y + 4, scoreColour(score));
         }
@@ -725,10 +746,10 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
             case ForgeSong.HEAT -> {
                 if (!pulled && ForgeSong.heat(t) >= 0.65F) pull(w, t, now);
             }
-            case ForgeSong.SHAPE, ForgeSong.RIVET -> {
+            case ForgeSong.SHAPE, ForgeSong.RIVET, ForgeSong.FOLD, ForgeSong.STARFIRE -> {
                 next = Math.max(next, w.scores.size());
-                if (next >= w.strikesNeeded() || t < ForgeSong.song(w.set).rhythm().due(next - w.strikeBase)) return;
-                float[] m = marks[next % marks.length];
+                if (next >= w.strikesNeeded() || t < ForgeSong.rhythm(w.set, w.stage).due(next - w.strikeBase)) return;
+                float[] m = marks[(next - w.stageFrom()) % marks.length];
                 Vec3 at = f.mark(m[0], m[1]);
                 if (ForgeCamera.project(at.x, at.y, at.z, width, height, p)) {
                     mx = Math.round(p[0]);
@@ -869,7 +890,7 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         ForgeFrame f = ForgeFrame.of(pos, w.work);
         switch (w.stage) {
             case ForgeSong.HEAT -> pull(w, t, now);
-            case ForgeSong.SHAPE, ForgeSong.RIVET -> {
+            case ForgeSong.SHAPE, ForgeSong.RIVET, ForgeSong.FOLD, ForgeSong.STARFIRE -> {
                 if (helper) twinStrike(w, f, t, now);
                 else strike(w, f, t, now);
             }
