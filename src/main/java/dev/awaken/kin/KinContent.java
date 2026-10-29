@@ -34,17 +34,24 @@ public final class KinContent {
         for (KinKind k : KinKind.livingNow()) {
             float w = switch (k) {
                 case LAMPWING -> 0.7F;
-                case BURROWBUN -> 0.6F;
                 case MOSSBACK -> 0.9F;
+                case THATCHBACK, PUFFWOOL -> 0.8F;
+                case EMBERKIT, PONDLING -> 0.5F;
+                case DUMPLIN -> 0.45F;
+                case CHIMEWREN -> 0.35F;
                 default -> 0.6F;
             }, h = switch (k) {
-                case LAMPWING -> 0.6F;
-                case BURROWBUN -> 0.55F;
-                case MOSSBACK -> 0.6F;
+                case BURROWBUN, SNUFFLET -> 0.55F;
+                case TOTTER -> 0.45F;
+                case PUFFWOOL -> 0.8F;
+                case EMBERKIT -> 0.4F;
+                case DUMPLIN -> 0.5F;
+                case PONDLING, CHIMEWREN -> 0.35F;
                 default -> 0.6F;
             };
             TYPES.put(k, ENTITIES.registerEntityType("kin_" + k.id(), KinBeast::new, MobCategory.CREATURE,
-                    b -> b.sized(w, h).eyeHeight(h * 0.7F).clientTrackingRange(8)));
+                    b -> k == KinKind.EMBERKIT ? b.sized(w, h).eyeHeight(h * 0.7F).clientTrackingRange(8).fireImmune()
+                            : b.sized(w, h).eyeHeight(h * 0.7F).clientTrackingRange(8)));
             CALL.put(k, sound("kin." + k.id() + ".call"));
             TELL.put(k, sound("kin." + k.id() + ".tell"));
             WORRY.put(k, sound("kin." + k.id() + ".worry"));

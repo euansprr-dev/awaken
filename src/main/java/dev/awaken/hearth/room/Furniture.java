@@ -52,7 +52,13 @@ public enum Furniture {
     SEAT("six seats (stairs to sit on)", "seats", "the seats", null),
     TABLE("a table (a post with a carpet, plate or slab on it)", "table", "the table", null),
     /** (SPEC §43.6) the Ore Shed's heart: a lode heart broken free and carried home. */
-    LODE_HEART("a lode heart", "heart", "the lode heart", null);
+    LODE_HEART("a lode heart", "heart", "the lode heart", null),
+    /** (SPEC §43.12) the works' hearts: each work's rare thing, set in its room. */
+    VENT_STONE("a vent stone", "vent stone", "the vent stone", null),
+    PERCH("a Chime Perch", "perch", "the Chime Perch", "chime_perch"),
+    CRUCIBLE("a Crucible", "crucible", "the Crucible", "foundry_crucible"),
+    DROP("the Drop", "Drop", "the Drop", "storehouse_drop"),
+    LEDGER("a Ledger desk", "ledger", "the Ledger desk", "ledger_desk");
 
     public static final int COUNT = values().length;
 
@@ -92,6 +98,11 @@ public enum Furniture {
         Block b = s.getBlock();
         if (b instanceof MeditationMatBlock) return MAT;
         if (b instanceof dev.awaken.delve.LodeHeartBlock) return LODE_HEART;
+        if (b instanceof dev.awaken.kin.works.VentStoneBlock) return VENT_STONE;
+        if (b instanceof dev.awaken.kin.works.ChimePerchBlock) return PERCH;
+        if (b instanceof dev.awaken.kin.works.CrucibleBlock) return CRUCIBLE;
+        if (b instanceof dev.awaken.kin.works.DropBlock) return DROP;
+        if (b instanceof dev.awaken.kin.works.LedgerDeskBlock) return LEDGER;
         if (b instanceof ForgeBlock) return FORGE;
         if (b instanceof TrophyMountBlock) return TROPHY;
         if (s.is(BlockTags.ANVIL)) return ANVIL;
@@ -135,6 +146,11 @@ public enum Furniture {
             case SEAT -> new ItemStack(Items.OAK_STAIRS);
             case TABLE -> new ItemStack(Items.OAK_FENCE);
             case LODE_HEART -> new ItemStack(dev.awaken.delve.DelveContent.HEART_ITEMS.get(dev.awaken.delve.Ore.IRON).get());
+            case VENT_STONE -> new ItemStack(dev.awaken.kin.works.WorksContent.VENT_STONE_ITEM.get());
+            case PERCH -> new ItemStack(dev.awaken.kin.works.WorksContent.CHIME_PERCH_ITEM.get());
+            case CRUCIBLE -> new ItemStack(dev.awaken.kin.works.WorksContent.CRUCIBLE_ITEM.get());
+            case DROP -> new ItemStack(dev.awaken.kin.works.WorksContent.DROP_ITEM.get());
+            case LEDGER -> new ItemStack(dev.awaken.kin.works.WorksContent.LEDGER_ITEM.get());
         };
     }
 

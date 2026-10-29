@@ -9,6 +9,8 @@ import dev.awaken.hearth.Embers;
 import dev.awaken.hearth.Hearth;
 import dev.awaken.hearth.HearthRecord;
 import dev.awaken.hearth.HearthService;
+import dev.awaken.kin.works.DropBlockEntity;
+import dev.awaken.kin.works.WorkPlans;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
@@ -123,6 +125,7 @@ final class KinCommands {
                         return 0;
                     }))
                     .then(Commands.literal("yard").executes(c -> yard(c.getSource().getPlayerOrException()) ? 1 : 0))
+                    .then(Commands.literal("works").executes(c -> works(c.getSource().getPlayerOrException()) ? 1 : 0))
                     .then(Commands.literal("page").executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
                         KinNet.Page page = KinPage.build(p);
@@ -197,5 +200,40 @@ final class KinCommands {
         HearthService.scanNow(level, r);
         p.teleportTo(a.getX() + 0.5, a.getY(), a.getZ() + 4.5);
         return true;
+    }
+
+    /**
+     * The works raised north of a home (checks and tours): a Smeltery with ore in its barrel, a Storehouse with a heap on
+     * its Drop, a Foundry with Sung Iron's metal and a Rookery, each built from its plan, doors toward the fire.
+     */
+    static boolean works(ServerPlayer p) {
+        Optional<Hearth.HearthInfo> home = Hearth.home(p);
+        if (home.isEmpty()) return false;
+        ServerLevel level = p.level();
+        BlockPos a = home.get().anchor(), g = a.below();
+        for (BlockPos q : BlockPos.betweenClosed(g.offset(-21, 0, -17), g.offset(19, 0, -7))) level.setBlock(q, Blocks.GRASS_BLOCK.defaultBlockState(), 2);
+        for (BlockPos q : BlockPos.betweenClosed(a.offset(-21, 0, -17), a.offset(19, 6, -7))) level.setBlock(q, Blocks.AIR.defaultBlockState(), 2);
+        String[] order = {"smeltery", "storehouse", "foundry", "rookery"};
+        boolean all = true;
+        for (int i = 0; i < order.length; i++) all &= WorkPlans.raise(level, a.offset(-15 + 10 * i, 0, -12), Direction.SOUTH, order[i]);
+        // the Smeltery's barrel holds ore, the Foundry's the first bell's metal, and the Drop a morning's haul
+        stock(level, a.offset(-15, 0, -12), new ItemStack(Items.RAW_IRON, 32), new ItemStack(Items.RAW_COPPER, 24));
+        stock(level, a.offset(5, 0, -12), new ItemStack(Items.IRON_INGOT, 12), new ItemStack(DelveContent.BELL_BRONZE_INGOT.get(), 4));
+        if (level.getBlockEntity(a.offset(-5, 0, -12)) instanceof DropBlockEntity drop)
+            for (ItemStack s : List.of(new ItemStack(Items.COBBLESTONE, 64), new ItemStack(Items.OAK_LOG, 32), new ItemStack(Items.RAW_IRON, 18),
+                    new ItemStack(Items.WHEAT, 40), new ItemStack(Items.BONE, 9), new ItemStack(Items.FLINT, 12), new ItemStack(Items.IRON_SWORD),
+                    new ItemStack(Items.CARROT, 20), new ItemStack(Items.COAL, 30), new ItemStack(Items.STICK, 24), new ItemStack(Items.DIAMOND, 3)))
+                drop.add(s);
+        HearthService.data(level.getServer()).at(a, HearthService.OVERWORLD).ifPresent(r -> HearthService.scanNow(level, r));
+        return all;
+    }
+
+    /** Fills the first barrel within a room's box round its middle. */
+    private static void stock(ServerLevel level, BlockPos middle, ItemStack... in) {
+        for (BlockPos q : BlockPos.betweenClosed(middle.offset(-3, 0, -3), middle.offset(3, 0, 3)))
+            if (level.getBlockState(q).is(Blocks.BARREL) && level.getBlockEntity(q) instanceof Container c) {
+                for (int i = 0; i < in.length; i++) c.setItem(i, in[i].copy());
+                return;
+            }
     }
 }

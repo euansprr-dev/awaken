@@ -28,7 +28,10 @@ public final class KinPage {
     private KinPage() {}
 
     /** The beast needs in the order a home meets them (the Ember's light and field first). */
-    static final KinKind[] NEEDS = {KinKind.LAMPWING, KinKind.BURROWBUN, KinKind.MOSSBACK, KinKind.PEBBLEPUP};
+    static final KinKind[] NEEDS = {KinKind.LAMPWING, KinKind.BURROWBUN, KinKind.MOSSBACK, KinKind.PEBBLEPUP, KinKind.THATCHBACK, KinKind.EMBERKIT,
+            KinKind.DUMPLIN, KinKind.PUFFWOOL, KinKind.TOTTER, KinKind.PONDLING, KinKind.SNUFFLET, KinKind.CHIMEWREN};
+    /** The page shows this many beast needs at once (the earliest unmet); the next shows once one is met. */
+    static final int NEEDS_SHOWN = 4;
 
     static KinNet.Page build(ServerPlayer p) {
         ServerLevel level = p.level();
@@ -46,12 +49,20 @@ public final class KinPage {
             int nooks = KinHome.nooks(level, info);
             home.add(List.of(TierRules.name(info.tier()) + " · " + homed.size() + " of " + nooks + " nooks taken", "", "", "head"));
             boolean full = homed.size() >= nooks;
+            int shown = 0;
             for (KinKind k : NEEDS) {
-                if (living.containsKey(k)) continue;
+                if (living.containsKey(k) || shown >= NEEDS_SHOWN) continue;
                 String need = need(level, info, k);
                 if (need == null) continue;
                 home.add(List.of(need, full ? "" : rumour(p, k, from, true), full ? "" : k.id(), "need"));
+                shown++;
             }
+            for (String line : dev.awaken.kin.works.WorkPlans.lines(level, info.anchor(), Math.max(info.radius(), 32))) home.add(List.of(line, "", "", "need"));
+            for (KinBeast t : KinApi.loaded(level, info.anchor(), KinKind.TOTTER))
+                if (t.taskUntil > level.getGameTime() && t.task == KinWorks.NONE) {
+                    home.add(List.of("The Storehouse is full. It needs another bay: one more chest or barrel in the hall.", "", "", "need"));
+                    break;
+                }
             if (full) home.add(List.of("Every nook is taken. A bigger Hearth has more, and the Ore Shed has two of its own.", "", "", "need"));
             Optional<HearthRecord> rec = HearthService.homeOf(p);
             if (rec.isPresent() && info.tier() < 5) {
@@ -95,6 +106,17 @@ public final class KinPage {
             case PEBBLEPUP -> KinWorld.get(level.getServer()).oreHeart(h.anchor()) == null
                     ? "The Ore Shed needs a lode heart. Hearts beat inside lodes, deep underground; break one free and bring it home."
                     : "Nobody works the Ore Shed.";
+            case THATCHBACK -> "Nobody builds your works for you. A Work Plan pegged out at home shows a Thatchback what to build.";
+            case EMBERKIT -> KinHome.nookFor(level, h, k) != null ? "Nobody smelts your ore for you."
+                    : "Nobody smelts your ore for you. An Emberkit needs somewhere warm: a lit campfire, or a Smeltery round a vent stone from a hot spring.";
+            case DUMPLIN -> KinHome.nookFor(level, h, k) != null ? "Nobody leaves you eggs." : "Nobody leaves you eggs. A Dumplin flock nests on a bale of hay.";
+            case PUFFWOOL -> KinHome.nookFor(level, h, k) != null ? "Nothing at home gives you wool." : "Nothing at home gives you wool. A Puffwool lies by a bale of hay.";
+            case TOTTER -> KinHome.nookFor(level, h, k) != null ? "Nobody carries things between your works."
+                    : "Nobody carries things between your works. A Totter looks after a chest or barrel in one of your rooms.";
+            case PONDLING -> KinHome.nookFor(level, h, k) != null ? "Nothing fishes your water." : "Nothing fishes your water. A Pondling needs a pond open to the sky.";
+            case SNUFFLET -> "Nobody forages round your home.";
+            case CHIMEWREN -> KinHome.nookFor(level, h, k) != null ? "Nothing brings you word of sleeping bells."
+                    : "Nothing brings you word of sleeping bells. Chimewrens roost in a Rookery: a room with a Chime Perch, made round the clapper of a bell you've woken.";
             default -> null;
         };
     }
@@ -121,14 +143,32 @@ public final class KinPage {
                     case BURROWBUN -> b.carry.isEmpty() ? "tending the fields" : "carrying the harvest to the chest";
                     case MOSSBACK -> "sitting in the wet, the crops round it growing";
                     case PEBBLEPUP -> "sorting the Ore Shed's barrels";
+                    case TOTTER -> "putting things in their places";
+                    case THATCHBACK -> "building from a plan";
+                    case EMBERKIT -> "keeping the fires hot";
+                    case PUFFWOOL -> "grazing by the hay";
+                    case DUMPLIN -> "scratching about the yard";
+                    case PONDLING -> "fishing";
+                    case SNUFFLET -> "foraging";
+                    case CHIMEWREN -> "singing on its perch";
                     default -> "working";
                 };
+                case KinBeast.CARRY -> b.task == KinWorks.FETCH_TAKE || b.task == KinWorks.FETCH_PUT ? "fetching something to the Ledger" : "carrying things where they go";
+                case KinBeast.SNIFF -> "snuffling for something";
                 default -> "about the yard";
             };
             if (today && b.made > 0) made = switch (m.kind()) {
                 case BURROWBUN -> b.made + " harvested today";
                 case MOSSBACK -> b.made + " crops grown on today";
                 case PEBBLEPUP -> b.made + " sorted today";
+                case TOTTER -> b.made + " put away today";
+                case THATCHBACK -> b.made + " blocks laid today";
+                case EMBERKIT -> b.made + " smelted today";
+                case PUFFWOOL -> b.made + " wool today";
+                case DUMPLIN -> b.made + (b.made == 1 ? " egg today" : " eggs today");
+                case PONDLING -> b.made + " fish today";
+                case SNUFFLET -> b.made + " things foraged today";
+                case CHIMEWREN -> "sang you a note today";
                 default -> "";
             };
         }

@@ -476,3 +476,103 @@ happens).
 - **Links**: Track and the top-right card; the song player.
 - **Edges**: the page asks every two seconds while open; hovering never moves the page (two lines kept under the
   board); a bell you have no lead on shows only its number and rank.
+
+## Stage 5: the rest of the kin and the works to the Foundry, with the Storehouse (§43.12)
+
+### The eight working kin (Totter, Thatchback, Emberkit, Puffwool, Dumplin, Pondling, Snufflet, Chimewren)
+- **Get**: meet one at its site (the biome table in §43.12), read it, watch its three want lines, help it three times,
+  and give it a nook it likes at home.
+- **For**: each runs one work: Totters carry and shelve, Thatchbacks build from plans, Emberkits smelt, Puffwools give
+  wool, Dumplins eggs, Pondlings fish, Snufflets forage, Chimewrens find bells.
+- **Know**: a rumour on the Hearth page names the sort of animal and its place; its site is dressed for its want (the
+  scattered heap, the short dam, the cold spring, the burrs, the empty nest, the rotten pond, the snuffled spot, the
+  same three notes); the want lines say it plainly by the third; the card says "Could live with you" and its job.
+- **Source**: `kin.KinSpawner` (sites and dressing), `kin.KinHelp` (helps and nudges), `kin.KinHome` (nooks),
+  `kin.KinWorks` (work), art `tools/art/specs/kin.py`.
+- **Links**: Kinship (§43.5); the Hearth page's needs (each new kind leads a need line once a work wants it); the works
+  below; bells (Chimewrens hear yours).
+- **Edges**: a help only counts from a player (a tossed item needs a thrower); Dumplins only follow a player standing
+  1.5 blocks above them, on the ground, within 10, and let go past 32; a flock left at its nest 2,400 ticks without
+  help is lost again 16 to 24 blocks off; pond rot regrows while any is left; the Snufflet's spot moves after each
+  dig; Chimewrens need a player who holds a bell; a frightened kind (a killing) won't take help for three days; an
+  Emberkit can't burn; a Puffwool brushed at home gives wool once a day per beast; a nook that goes away sends the
+  beast looking for a better one every 1,200 ticks.
+
+### Work Plans
+- **Get**: craft one (paper, coal, paper over planks and two sticks). Its recipe is in the book from the first paper.
+- **For**: a Thatchback builds the work for you: Smeltery, Rookery, Foundry, Storehouse or Ore Shed.
+- **Know**: using it reads the bill (only what isn't already standing) or how far it's got and what it waits on;
+  sneak-use changes the work; the Hearth page lists each plan's progress; with no Thatchback it says you can build the
+  room yourself.
+- **Source**: block `awaken:work_plan` (drops itself), `kin.works.WorkPlans`, `WorkPlanBlockEntity` (schema 1).
+- **Links**: Thatchbacks; every work; the Hearth's room scan (the built room reads as its work).
+- **Edges**: materials come from any chest or barrel within eight blocks that holds them (the plan's own barrels never
+  hide yours); no glass walls the window up; no lanterns leaves them out; a block of yours in the way is built round;
+  a block already right is counted; the work can't change once building starts (break the plan and lay it again);
+  plans more than 64 blocks from the Thatchback's nook are left for one nearer.
+
+### Smeltery and its Emberkit
+- **Get**: a room with a vent stone and a furnace (a Work Plan builds it; vent stones come from Emberkit springs).
+- **For**: ore and raw metal you bring are smelted with no fuel; the Forge stays yours.
+- **Know**: the Emberkit's need line names a Smeltery or a lit campfire; at work it lies at the vent and the furnace
+  crackles; the Smeltery bells say they speed it.
+- **Source**: `KinWorks.emberkit`, block `awaken:vent_stone` (drops itself).
+- **Links**: Totters carry its ingots to the Armoury; bells 14 and 45 (SMELT).
+- **Edges**: only ore and raw materials, never anything else; with every chest in the room full the ore waits; no Smeltery,
+  the Emberkit warms a campfire nook and smelts nothing.
+
+### The Storehouse, the Drop and the Ledger
+- **Get**: the Drop (planks, a granary keystone and two barrels; keystones stand in every town's granary), the Ledger
+  desk (a book and quill over planks and sticks), in a Storehouse room with chests or barrels; Totters living with you.
+- **For**: one place to drop everything; Totters shelve it by sort; the Ledger finds anything.
+- **Know**: the Drop says how full the heap is and whether the hall is full; new bays get a painted sign; the Ledger
+  lists every bay with a search; the Totter's need line names the Storehouse.
+- **Source**: `kin.works.Storehouse`, `DropBlockEntity` (schema 1, 64 stacks), `client.DropRenderer`,
+  `client.LedgerScreen`, payloads `works_ledger` and `works_ledger_ask`.
+- **Links**: Totters; the Smeltery's and fields' carrying; the Armoury and Kitchen.
+- **Edges**: a full heap refuses more and says so; a full hall puts the armful back and the Totter rests; "empty my
+  bag" keeps the hotbar, armour and marked items; a fetch with no Totter free is set out on the desk at once; a
+  restart drops a Totter's armful where it stood; the heap draws a capped number of items.
+
+### Rookery and the Chime Perch
+- **Get**: the Chime Perch (planks over a woken clapper and a stick; a clapper comes from every bell you wake) in a
+  room; Chimewrens living with you.
+- **For**: one Sung lead a day for each member: a bearing toward a sleeping bell you have no lead on.
+- **Know**: the Chimewren's need line names the Rookery; the lead's line names the direction; the Book files it.
+- **Source**: `KinWorks.chimewren`, `Bells.sung`, block `awaken:chime_perch` (drops itself).
+- **Links**: the Bell Book and Track; the hundred.
+- **Edges**: offline members get none that day; no unled sleeping bell within 1,200 blocks gives no lead and no line.
+
+### Foundry and the Crucible
+- **Get**: the Crucible (bell bronze, deepglass shards and a furnace) in a room with chests.
+- **For**: the Singing Deep's five bells cast from metal you bring (§43.12 lists the moulds).
+- **Know**: using the Crucible says which bell is next and what it still needs; it glows while casting; every member
+  hears the bell ring home.
+- **Source**: `KinWorks.foundry`, block `awaken:foundry_crucible` (drops itself), `KinWorld.cast`.
+- **Links**: the Singing Deep's metals; the Bell Book; Thatchbacks (they halve the time).
+- **Edges**: the metal is taken only at the end, so a cast cut off by a restart or an unloaded chunk starts again;
+  members away get the bell when they next come home; the True Bell is never cast.
+
+### Sung and Found leads
+- **Get**: Sung from a Rookery's Chimewrens; Found from an old letter a Snufflet's spot gives up (1 in 4 digs).
+- **For**: direction to a sleeping bell without being told where.
+- **Know**: the bracketed line when it's filed; the Book's Bell Leads list.
+- **Source**: `Bells.sung`, `Bells.found` (public API).
+- **Links**: Track; the sleeping places.
+- **Edges**: a Found lead points at an area 20 blocks off the bell; with no sleeping bell within 800 the letter is
+  something ordinary instead; Found tracks only if nothing else is tracked.
+
+### Home outputs (wool, eggs, fish, forage)
+- **Get**: a Puffwool brushed at home (3 wool a day), Dumplins (2 eggs a day), Pondlings (4 fish a day), Snufflets (4
+  finds a day: mushrooms, berries, herbs).
+- **For**: the tended things a home grows; never ore, gems, gate loot or XP.
+- **Know**: the beast's Your beasts line says what it made today.
+- **Source**: `KinWorks.dumplin/pondling/snufflet/brushed`.
+- **Links**: the nearest chest; Totters carry food to the Kitchen.
+- **Edges**: with no chest within eight blocks, or a full one, it's set down on the ground by the beast; Pondlings need
+  water by their nook; only members get wool; the day's count starts again each morning.
+
+### New blocks and items
+- **Vent stone**: two at every Emberkit spring; drops itself. **Pond rot**: on wild Pondling ponds; drops nothing, never
+  held. **Woken clapper**: from every bell you wake. **Granary keystone**: in every town granary; drops itself.
+- **Source**: `WorksModule` (`Sources.declare`), loot tables, recipes above.

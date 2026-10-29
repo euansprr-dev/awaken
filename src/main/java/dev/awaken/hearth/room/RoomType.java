@@ -21,6 +21,11 @@ import static dev.awaken.hearth.room.Furniture.SEAT;
 import static dev.awaken.hearth.room.Furniture.STAND;
 import static dev.awaken.hearth.room.Furniture.TABLE;
 import static dev.awaken.hearth.room.Furniture.TROPHY;
+import static dev.awaken.hearth.room.Furniture.LEDGER;
+import static dev.awaken.hearth.room.Furniture.DROP;
+import static dev.awaken.hearth.room.Furniture.CRUCIBLE;
+import static dev.awaken.hearth.room.Furniture.PERCH;
+import static dev.awaken.hearth.room.Furniture.VENT_STONE;
 
 /**
  * What rooms are for (SPEC §28.2, PLAN 4.6): each kind does something real. No menus: build it and it counts. A kind is
@@ -62,13 +67,25 @@ public enum RoomType {
     /** (SPEC §43.6) the Ore Shed (the constant keeps the old Mine head's name, so saved rooms read the same): a lode heart and a barrel. */
     MINE_HEAD("Ore Shed", "ore shed", List.of(LODE_HEART, BARREL), null, 9, 3, "Pebblepups sort what you bring",
             "Pebblepups sort and crush the ore and rubble you put in its barrels: gravel, flint and sand, a few nuggets from a lot of rubble, never ore by itself. It has two nooks of its own, for them.",
-            "An Ore Shed. Pebblepups can hear its heart.");
+            "An Ore Shed. Pebblepups can hear its heart."),
+    SMELTERY("Smeltery", "smeltery", List.of(VENT_STONE, COOKER), null, 12, 3, "Emberkits smelt what you drop in",
+            "A vent stone and a furnace: Emberkits smelt the ore you drop in the room's chest, with no fuel. It has two nooks of its own.",
+            "A Smeltery. Emberkits can feel its warmth."),
+    ROOKERY("Rookery", "rookery", List.of(PERCH), null, 9, 4, "Chimewrens sing your missing notes",
+            "A Chime Perch: Chimewrens roost here, and once a day they sing a note your song is missing, and which way it came from. Three nooks of its own.",
+            "A Rookery. Chimewrens can hear its clapper."),
+    FOUNDRY("Foundry", "foundry", List.of(CRUCIBLE, BARREL), null, 16, 4, "the Deep's bells are cast here",
+            "The Crucible and a barrel: put a Deep bell's metal and its lode heart in the barrel, and Emberkits cast the bell. A nook of its own.",
+            "A Foundry. The Deep's bells can be cast."),
+    STOREHOUSE("Storehouse", "storehouse", List.of(DROP, LEDGER), null, 30, 4, "drop anything; Totters shelve it",
+            "The Drop and the Ledger: tip anything into the Drop and the Totters shelve it in the room's chests and barrels, a bay for each sort of thing. The Ledger finds anything. Two nooks of its own.",
+            "A Storehouse. Totters can sort it.");
 
     /** How deep a Mine head's shaft must go from its floor (PLAN 4.6). */
     public static final int SHAFT_DEPTH = 16;
 
     /** The order a room takes its purpose (and its name) in: the most particular first, a plain shelter last. */
-    public static final List<RoomType> PURPOSE = List.of(SANCTUARY, HALL, KITCHEN, ARMORY, STUDY, GREENHOUSE, STABLE, BELL_TOWER,
+    public static final List<RoomType> PURPOSE = List.of(STOREHOUSE, FOUNDRY, SMELTERY, ROOKERY, SANCTUARY, HALL, KITCHEN, ARMORY, STUDY, GREENHOUSE, STABLE, BELL_TOWER,
             LOOKOUT, MINE_HEAD, TROPHY_HALL, WORKSHOP, BEDROOM, SHELTER);
 
     public final String label;

@@ -29,7 +29,8 @@ public final class BellCatalog {
         GLOW("A raid's creatures glow, so none of them hides at your walls."),
         SHED("The Ore Shed finds more nuggets in what it crushes."),
         RAID("You hear of a raid a day sooner."),
-        HOMEWARD("The peal Homeward takes you home sooner.");
+        HOMEWARD("The peal Homeward takes you home sooner."),
+        SMELT("The Smeltery's Emberkits smelt faster.");
 
         public final String words;
 
@@ -64,7 +65,7 @@ public final class BellCatalog {
             "11|stampede|The Stampede Bell|C|BIG_DAY|NONE",
             "12|nook|The Nook Bell|E|OWN|KIN",
             "13|falling|The Falling Bell|B|LUCIDIUM|NONE",
-            "14|sung_iron|The Sung Iron Bell|C|DEEP|NONE",
+            "14|sung_iron|The Sung Iron Bell|C|DEEP|SMELT",
             "15|mirror|The Mirror Bell|B|GATE_WORLD|NONE",
             "16|island|The Island Bell|B|ABOVE|NONE",
             "17|wren|The Wren Bell|E|WILDS|GROWTH",
@@ -78,7 +79,7 @@ public final class BellCatalog {
             "25|herald|The Herald's Bell|S|GATE_WORLD|NONE",
             "26|mere|The Mere Bell|E|WILDS|GROWTH",
             "27|wake|The Wake Bell|B|VEIL|NONE",
-            "28|deepglass|The Deepglass Bell|A|DEEP|NONE",
+            "28|deepglass|The Deepglass Bell|A|DEEP|GLOW",
             "29|whisper|The Whisper Bell|C|VEIL|NONE",
             "30|toll|The Toll Bell|B|GATE_WORLD|NONE",
             "31|thaw|The Thaw Bell|B|WILDS|NONE",
@@ -95,13 +96,13 @@ public final class BellCatalog {
             "42|silence|The Silence Bell|S|COURT|NONE",
             "43|daydream|The Daydream Bell|C|LUCIDIUM|NONE",
             "44|lintel|The Lintel Bell|D|OWN|REST",
-            "45|sung_copper|The Sung Copper Bell|C|DEEP|NONE",
+            "45|sung_copper|The Sung Copper Bell|C|DEEP|SMELT",
             "46|founding|The Founding Bell|D|OWN|WARD",
             "47|echo|The Echo Bell|B|DESCENT|NONE",
             "48|roost|The Roost Bell|C|PEOPLE|NONE",
-            "49|sung_gold|The Sung Gold Bell|B|DEEP|NONE",
+            "49|sung_gold|The Sung Gold Bell|B|DEEP|SHED",
             "50|night|The Night Bell|D|BIG_DAY|GLOW",
-            "51|starmetal|The Starmetal Bell|A|DEEP|NONE",
+            "51|starmetal|The Starmetal Bell|A|DEEP|STRIDE",
             "52|watch|The Watch Bell|D|PEOPLE|WARD",
             "53|halo|The Halo Bell|B|ABOVE|NONE",
             "54|eclipse|The Eclipse Bell|A|BIG_DAY|NONE",

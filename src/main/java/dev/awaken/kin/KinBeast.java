@@ -54,6 +54,8 @@ public class KinBeast extends PathfinderMob {
     private static final EntityDataAccessor<Integer> DATA_ACT = SynchedEntityData.defineId(KinBeast.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_ACT_AT = SynchedEntityData.defineId(KinBeast.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_HOMED = SynchedEntityData.defineId(KinBeast.class, EntityDataSerializers.BOOLEAN);
+    /** What it's carrying where you can see it (a Totter's armful, a Thatchback's plank, a Pondling's fish). */
+    private static final EntityDataAccessor<ItemStack> DATA_HELD = SynchedEntityData.defineId(KinBeast.class, EntityDataSerializers.ITEM_STACK);
 
     private @Nullable KinKind kind;
     /** Its own spot in the wild (a pile, a burrow field, the edge of the trees). */
@@ -73,6 +75,18 @@ public class KinBeast extends PathfinderMob {
     public int songMode;
     public @Nullable BlockPos songAt;
     public static final int SONG_HUNKER = 1, SONG_LISTEN = 2, SONG_GATHER = 3, SONG_SING = 4;
+    /** A second place of its own (SPEC §43.12): a Dumplin flock's nest, where a Snufflet smells something, a Pondling's pond. */
+    public @Nullable BlockPos mark;
+    /** The day a Puffwool was last brushed at home (its wool comes once a day). */
+    public long brushedDay = -1;
+    /** Who a lost Dumplin flock is following home. Not saved: a flock that loses its leader circles again. */
+    public @Nullable UUID leader;
+    /** Its errand at home (SPEC §43.12), not saved: what it's doing, from where to where, what for, and for whom. */
+    public int task;
+    public @Nullable BlockPos taskFrom, taskTo;
+    public net.minecraft.world.item.@Nullable Item taskItem;
+    public @Nullable UUID taskFor;
+    public long taskUntil;
     /** Ticks a player's want-watching has gone on (one watcher at a time). */
     public int watchTicks;
     public @Nullable UUID watcher;
@@ -94,11 +108,14 @@ public class KinBeast extends PathfinderMob {
     }
 
     public static AttributeSupplier.Builder attributes(KinKind k) {
-        AttributeSupplier.Builder b = PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, k == KinKind.MOSSBACK ? 16 : 10)
+        AttributeSupplier.Builder b = PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, k == KinKind.MOSSBACK || k == KinKind.THATCHBACK ? 16 : 10)
                 .add(Attributes.FOLLOW_RANGE, 24).add(Attributes.MOVEMENT_SPEED, switch (k) {
                     case MOSSBACK -> 0.12;
                     case BURROWBUN -> 0.3;
-                    case PEBBLEPUP -> 0.28;
+                    case PEBBLEPUP, SNUFFLET -> 0.28;
+                    case CHIMEWREN, EMBERKIT -> 0.3;
+                    case TOTTER, PONDLING -> 0.22;
+                    case PUFFWOOL -> 0.2;
                     default -> 0.25;
                 });
         if (k == KinKind.LAMPWING) b.add(Attributes.FLYING_SPEED, 0.45);
@@ -122,6 +139,7 @@ public class KinBeast extends PathfinderMob {
         b.define(DATA_ACT, IDLE);
         b.define(DATA_ACT_AT, 0);
         b.define(DATA_HOMED, false);
+        b.define(DATA_HELD, ItemStack.EMPTY);
     }
 
     // ---- what it's doing --------------------------------------------------------------------------------------------
@@ -136,6 +154,21 @@ public class KinBeast extends PathfinderMob {
 
     public boolean homed() {
         return entityData.get(DATA_HOMED);
+    }
+
+    public ItemStack held() {
+        return entityData.get(DATA_HELD);
+    }
+
+    /** Shows what it's carrying (one of it: the look, not the count). */
+    public void held(ItemStack s) {
+        ItemStack one = s.isEmpty() ? ItemStack.EMPTY : s.copyWithCount(1);
+        if (!ItemStack.matches(one, held())) entityData.set(DATA_HELD, one);
+    }
+
+    /** Where it shows its want: a Snufflet where it smells something, a Pondling by its pond, the rest at their own spot. */
+    public BlockPos wantSpot() {
+        return (kind() == KinKind.SNUFFLET || kind() == KinKind.PONDLING) && mark != null ? mark : origin;
     }
 
     /** Starts an act (restarts it when {@code again}: a second tell still plays its clip). */
@@ -183,6 +216,7 @@ public class KinBeast extends PathfinderMob {
         goalSelector.addGoal(3, new AvoidEntityGoal<>(this, Player.class, p -> p instanceof ServerPlayer sp && KinWatch.scares(this, sp), 10F, 1.1, 1.5,
                 EntitySelector.NO_CREATIVE_OR_SPECTATOR::test));
         goalSelector.addGoal(4, new FollowGoal());
+        goalSelector.addGoal(4, new LeadGoal());
         goalSelector.addGoal(5, new HomeGoal());
         goalSelector.addGoal(6, new WantGoal());
         goalSelector.addGoal(7, k == KinKind.LAMPWING ? new WaterAvoidingRandomFlyingGoal(this, 0.8) : new WaterAvoidingRandomStrollGoal(this, 0.8));
@@ -297,6 +331,43 @@ public class KinBeast extends PathfinderMob {
         }
     }
 
+    /** A lost Dumplin flock follows whoever stood up high where they could see them, a few steps behind (SPEC §43.12). */
+    final class LeadGoal extends Goal {
+        LeadGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        private @Nullable ServerPlayer who() {
+            if (leader == null || !(level() instanceof ServerLevel sl)) return null;
+            return sl.getServer().getPlayerList().getPlayer(leader) instanceof ServerPlayer p && p.level() == level() ? p : null;
+        }
+
+        @Override
+        public boolean canUse() {
+            return home == null && who() != null;
+        }
+
+        @Override
+        public void start() {
+            act(FOLLOW);
+        }
+
+        @Override
+        public void tick() {
+            ServerPlayer p = who();
+            if (p == null) return;
+            getLookControl().setLookAt(p, 30F, 30F);
+            double d = distanceToSqr(p);
+            if (d > 6) getNavigation().moveTo(p, d > 64 ? 1.3 : 1.0);
+            else getNavigation().stop();
+        }
+
+        @Override
+        public void stop() {
+            act(IDLE);
+        }
+    }
+
     /** At home: its work, by its kind ({@link KinHome#work}). */
     final class HomeGoal extends Goal {
         HomeGoal() {
@@ -334,7 +405,7 @@ public class KinBeast extends PathfinderMob {
 
         @Override
         public boolean canUse() {
-            if (home != null || follow != null) return false;
+            if (home != null || follow != null || leader != null) return false;
             long now = level().getGameTime();
             if (now < nextWant || !KinWatch.wantsNow(KinBeast.this)) return false;
             return true;
@@ -348,24 +419,27 @@ public class KinBeast extends PathfinderMob {
 
         @Override
         public boolean canContinueToUse() {
-            return left > 0 && home == null && follow == null;
+            return left > 0 && home == null && follow == null && leader == null;
         }
 
         @Override
         public void tick() {
             left--;
-            double d = distanceToSqr(origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5);
-            if (d > 9) getNavigation().moveTo(origin.getX() + 0.5, origin.getY() + (kind() == KinKind.LAMPWING ? 2 : 0), origin.getZ() + 0.5, 0.9);
+            BlockPos at = wantSpot();
+            double d = distanceToSqr(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+            if (d > (at == origin ? 9 : 4)) getNavigation().moveTo(at.getX() + 0.5, at.getY() + (kind() == KinKind.LAMPWING ? 2 : 0), at.getZ() + 0.5, 0.9);
             else {
                 getNavigation().stop();
-                if (act() != WANT) act(WANT);
+                // a Snufflet snuffles at its spot; the rest show their want
+                int want = kind() == KinKind.SNUFFLET && at != origin ? SNIFF : WANT;
+                if (act() != want) act(want, want == SNIFF);
             }
         }
 
         @Override
         public void stop() {
             nextWant = level().getGameTime() + 20 * (10 + random.nextInt(20));
-            if (act() == WANT) act(IDLE);
+            if (act() == WANT || act() == SNIFF) act(IDLE);
         }
     }
 
@@ -453,14 +527,14 @@ public class KinBeast extends PathfinderMob {
         return kind() != KinKind.LAMPWING && super.causeFallDamage(distance, multiplier, source);
     }
 
-    // ---- saving (schema 1) -----------------------------------------------------------------------------------------
+    // ---- saving (schema 2: schema 1 plus mark and brushed_day) --------------------------------------------------------
 
     private static final Codec<Map<UUID, Integer>> HELPS = Codec.unboundedMap(UUIDUtil.STRING_CODEC, Codec.INT);
 
     @Override
     protected void addAdditionalSaveData(ValueOutput out) {
         super.addAdditionalSaveData(out);
-        out.putInt("kin_schema", 1);
+        out.putInt("kin_schema", 2);
         out.store("origin", BlockPos.CODEC, origin);
         out.storeNullable("home", BlockPos.CODEC, home);
         out.storeNullable("nook", BlockPos.CODEC, nook);
@@ -472,6 +546,8 @@ public class KinBeast extends PathfinderMob {
         out.putInt("made", made);
         out.putLong("made_day", madeDay);
         out.putLong("hide_until", hideUntil);
+        out.storeNullable("mark", BlockPos.CODEC, mark);
+        out.putLong("brushed_day", brushedDay);
     }
 
     @Override
@@ -491,6 +567,9 @@ public class KinBeast extends PathfinderMob {
         made = in.getIntOr("made", 0);
         madeDay = in.getLongOr("made_day", -1);
         hideUntil = in.getLongOr("hide_until", 0);
+        mark = in.read("mark", BlockPos.CODEC).orElse(null);
+        brushedDay = in.getLongOr("brushed_day", -1);
+        held(carry.isEmpty() ? ItemStack.EMPTY : carry.getFirst());
         entityData.set(DATA_HOMED, home != null);
         if (home != null && nook != null) setHomeTo(nook, 24);
         else setHomeTo(origin, 16);

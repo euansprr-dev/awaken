@@ -1,0 +1,140 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "minecraft:block/oak_planks",
+    "stake": "minecraft:block/stripped_oak_log",
+    "board": "minecraft:block/oak_planks",
+    "plan": "awaken:block/work_plan"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        0,
+        9
+      ],
+      "to": [
+        4.5,
+        10,
+        10.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#stake"
+        },
+        "south": {
+          "texture": "#stake"
+        },
+        "east": {
+          "texture": "#stake"
+        },
+        "west": {
+          "texture": "#stake"
+        },
+        "up": {
+          "texture": "#stake"
+        },
+        "down": {
+          "texture": "#stake"
+        }
+      }
+    },
+    {
+      "from": [
+        11.5,
+        0,
+        9
+      ],
+      "to": [
+        13,
+        10,
+        10.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#stake"
+        },
+        "south": {
+          "texture": "#stake"
+        },
+        "east": {
+          "texture": "#stake"
+        },
+        "west": {
+          "texture": "#stake"
+        },
+        "up": {
+          "texture": "#stake"
+        },
+        "down": {
+          "texture": "#stake"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        4,
+        7.5
+      ],
+      "to": [
+        14,
+        15,
+        8.5
+      ],
+      "faces": {
+        "south": {
+          "texture": "#board"
+        },
+        "east": {
+          "texture": "#board"
+        },
+        "west": {
+          "texture": "#board"
+        },
+        "up": {
+          "texture": "#board"
+        },
+        "down": {
+          "texture": "#board"
+        }
+      },
+      "rotation": {
+        "angle": 22.5,
+        "axis": "x",
+        "origin": [
+          8,
+          4,
+          8
+        ]
+      }
+    },
+    {
+      "from": [
+        2,
+        4,
+        7.5
+      ],
+      "to": [
+        14,
+        15,
+        8.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#plan"
+        }
+      },
+      "rotation": {
+        "angle": 22.5,
+        "axis": "x",
+        "origin": [
+          8,
+          4,
+          8
+        ]
+      }
+    }
+  ]
+}

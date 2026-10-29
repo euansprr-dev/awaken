@@ -2,7 +2,13 @@ package dev.awaken.kin;
 
 import dev.awaken.delve.LodeHeartBlock;
 import dev.awaken.hearth.Hearth;
+import dev.awaken.hearth.room.Room;
 import dev.awaken.hearth.room.RoomType;
+import dev.awaken.kin.works.ChimePerchBlock;
+import dev.awaken.kin.works.VentStoneBlock;
+import dev.awaken.kin.works.WorkPlanBlockEntity;
+import dev.awaken.kin.works.WorkPlans;
+import dev.awaken.kin.works.WorkRooms;
 import dev.awaken.progression.Progression;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -75,8 +81,39 @@ public final class KinHome {
             case BURROWBUN -> {
                 return scan(level, a, r, (s, top) -> s.is(Blocks.FARMLAND));
             }
-            case MOSSBACK -> {
+            case MOSSBACK, PONDLING -> {
                 return scan(level, a, r, (s, top) -> s.getFluidState().is(net.minecraft.tags.FluidTags.WATER) && level.canSeeSky(top.above()));
+            }
+            case TOTTER -> {
+                // the Storehouse's Drop to look after, else the first room with a chest or barrel in it
+                Room store = WorkRooms.room(level, a, RoomType.STOREHOUSE);
+                if (store != null) return store.centre();
+                for (Room rm : WorkRooms.home(level, a).map(x -> x.rooms).orElse(List.of()))
+                    if (!WorkRooms.containers(level, rm).isEmpty()) return rm.centre();
+                return null;
+            }
+            case THATCHBACK -> {
+                WorkPlanBlockEntity plan = WorkPlans.near(level, a, r);
+                if (plan != null) return plan.getBlockPos();
+                return scan(level, a, r, (s, top) -> s.is(BlockTags.LOGS));
+            }
+            case EMBERKIT -> {
+                Room smeltery = WorkRooms.room(level, a, RoomType.SMELTERY);
+                BlockPos vent = smeltery == null ? null : WorkRooms.heart(level, smeltery, VentStoneBlock.class);
+                if (vent != null) return vent.above();
+                // a lit campfire: it curls up beside it, never in it
+                BlockPos fire = scan(level, a, r, (s, top) -> s.is(Blocks.CAMPFIRE) && s.getValue(net.minecraft.world.level.block.CampfireBlock.LIT));
+                return fire == null ? null : fire.below().east();
+            }
+            case PUFFWOOL, DUMPLIN -> {
+                return scan(level, a, r, (s, top) -> s.is(Blocks.HAY_BLOCK));
+            }
+            case SNUFFLET -> {
+                return scan(level, a, r, (s, top) -> s.is(Blocks.GRASS_BLOCK));
+            }
+            case CHIMEWREN -> {
+                Room rookery = WorkRooms.room(level, a, RoomType.ROOKERY);
+                return rookery == null ? null : WorkRooms.heart(level, rookery, ChimePerchBlock.class);
             }
             default -> {
                 return null;
@@ -193,6 +230,7 @@ public final class KinHome {
 
     /** Once a day for each player: Kinship for each beast that lived with them. */
     static void daily(ServerPlayer p) {
+        KinWorks.castFor(p);
         Kinship ks = Kinship.of(p);
         long day = p.level().getOverworldClockTime() / 24000L;
         if (ks.countedDay == day) return;
@@ -253,7 +291,7 @@ public final class KinHome {
                 if (every(b, 100)) grow(level, b);
             }
             case PEBBLEPUP -> shed(level, b);
-            default -> {}
+            default -> KinWorks.work(level, b);
         }
     }
 
@@ -323,10 +361,10 @@ public final class KinHome {
         if (bells < 100) scare(level, tower, 48, 600);
     }
 
-    /** A bell rung in the wild (SPEC §43.7): wild beasts within {@code reach} run from it for {@code ticks}. */
+    /** A bell rung in the wild (SPEC §43.7): wild beasts within {@code reach} run from it for {@code ticks}; Chimewrens never do. */
     public static void scare(ServerLevel level, BlockPos at, int reach, int ticks) {
         long until = level.getGameTime() + ticks;
-        for (KinBeast b : level.getEntitiesOfClass(KinBeast.class, new net.minecraft.world.phys.AABB(at).inflate(reach), x -> x.home == null))
+        for (KinBeast b : level.getEntitiesOfClass(KinBeast.class, new net.minecraft.world.phys.AABB(at).inflate(reach), x -> x.home == null && x.kind() != KinKind.CHIMEWREN))
             b.hideUntil = Math.max(b.hideUntil, until);
     }
 
@@ -368,7 +406,7 @@ public final class KinHome {
         }
     }
 
-    private static void goTo(KinBeast b, BlockPos at, double speed) {
+    static void goTo(KinBeast b, BlockPos at, double speed) {
         if (b.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(at)) > 4 && b.getNavigation().isDone()) b.getNavigation().moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, speed);
     }
 
@@ -471,12 +509,12 @@ public final class KinHome {
         return null;
     }
 
-    private interface At {
+    interface At {
         boolean ok(BlockPos at);
     }
 
     /** The nearest block round {@code c} (a few layers up and down) that passes. */
-    private static @Nullable BlockPos find(ServerLevel level, BlockPos c, int r, At t) {
+    static @Nullable BlockPos find(ServerLevel level, BlockPos c, int r, At t) {
         BlockPos best = null;
         double bd = Double.MAX_VALUE;
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
@@ -525,10 +563,7 @@ public final class KinHome {
             }
         }
         for (int i = 0; i < c.getContainerSize() && !s.isEmpty(); i++) {
-            if (c.getItem(i).isEmpty()) {
-                c.setItem(i, s.copy());
-                s.setCount(0);
-            }
+            if (c.getItem(i).isEmpty()) c.setItem(i, s.split(Math.min(s.getMaxStackSize(), c.getMaxStackSize())));
         }
         c.setChanged();
         return s;

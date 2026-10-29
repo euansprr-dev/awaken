@@ -69,6 +69,8 @@ final class Peals {
         Optional<HearthRecord> inside = level.dimension() == Level.OVERWORLD
                 ? HearthService.data(level.getServer()).containing(p.blockPosition(), HearthService.OVERWORLD) : Optional.empty();
         if (inside.isEmpty()) KinHome.scare(level, p.blockPosition(), SCARE_REACH, SCARE_TICKS);
+        // the one kind that loves them: wild Chimewrens near enough come to the sound
+        dev.awaken.kin.KinApi.bellHeard(level, p, p.blockPosition(), SCARE_REACH);
         BellBook b = Bells.book(p);
         BellCatalog.Peal pl = BellCatalog.peal(b.peal);
         if (pl == null) return;

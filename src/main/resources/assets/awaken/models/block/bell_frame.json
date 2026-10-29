@@ -5,7 +5,7 @@
     "particle": "minecraft:block/stripped_dark_oak_log",
     "wood": "minecraft:block/stripped_dark_oak_log",
     "bronze": "awaken:block/gate_bell_bronze",
-    "iron": "minecraft:block/chain"
+    "iron": "minecraft:block/iron_chain"
   },
   "elements": [
     {

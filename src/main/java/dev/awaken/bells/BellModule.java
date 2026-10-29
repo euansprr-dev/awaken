@@ -73,6 +73,7 @@ public final class BellModule {
             }
         });
         Sources.declare("given with your first bell, and made again at a table (bells.Bells)", "handbell", "bell_frame");
+        Sources.neverHeld("set out in the land by bells.BellSites; it can't be broken or moved and drops nothing", "sleeping_bell");
         BellCommands.register();
         BellTests.register();
     }

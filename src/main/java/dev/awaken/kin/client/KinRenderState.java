@@ -14,4 +14,7 @@ final class KinRenderState extends LivingEntityRenderState {
     @Nullable Life life;
     float modelScale = 1F;
     boolean airborne;
+    /** What it's carrying on its back (a Totter's armful, a Thatchback's plank), and how high its back is. */
+    final net.minecraft.client.renderer.item.ItemStackRenderState held = new net.minecraft.client.renderer.item.ItemStackRenderState();
+    float backY;
 }

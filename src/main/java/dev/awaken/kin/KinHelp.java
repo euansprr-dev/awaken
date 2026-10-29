@@ -41,7 +41,7 @@ public final class KinHelp {
 
     private record Pending(ServerPlayer player, BlockPos pos, int what, long at) {}
 
-    private static final int TILL = 0, WATER = 1, CLEARED = 2;
+    private static final int TILL = 0, WATER = 1, CLEARED = 2, FIRE = 3;
     private static final List<Pending> PENDING = new ArrayList<>();
     /** Dull stones a Pebblepup has already pushed off (item entity ids), so each nudges once. */
     private static final Set<Integer> PUSHED = new HashSet<>();
@@ -58,6 +58,15 @@ public final class KinHelp {
         BlockState s = e.getPlacedBlock();
         BlockPos pos = e.getPos();
         KinHome.placed(level, p, pos, s);
+        for (KinBeast b : wild(level, pos, KinKind.EMBERKIT)) {
+            if (cold(s)) nudge(b, p, "[It shrank away from the cold blue flame.]");
+            else if (warm(s)) {
+                if (b.blockPosition().distManhattan(pos) > 5) nudge(b, p, "[It lifted its head toward the warmth. It's too far off to feel it.]");
+                else help(b, p);
+            } else if (s.getLightEmission(level, pos) >= 10) nudge(b, p, "[It edged toward the light, then curled up again. Too small to warm it.]");
+            else break;
+            return;
+        }
         if (s.getLightEmission(level, pos) < 10) return;
         for (KinBeast b : wild(level, pos, KinKind.LAMPWING)) {
             if (cold(s)) nudge(b, p, "[It flinched from the cold blue light and went back into the trees.]");
@@ -65,6 +74,12 @@ public final class KinHelp {
             else help(b, p);
             return;
         }
+    }
+
+    /** Something an Emberkit can lie by: a lit campfire, a magma block, a vent stone. */
+    static boolean warm(BlockState s) {
+        return (s.is(Blocks.CAMPFIRE) && s.getValue(net.minecraft.world.level.block.CampfireBlock.LIT)) || s.is(Blocks.MAGMA_BLOCK)
+                || s.is(dev.awaken.kin.works.WorksContent.VENT_STONE.get()) || s.is(BlockTags.FIRE);
     }
 
     static boolean cold(BlockState s) {
@@ -81,12 +96,42 @@ public final class KinHelp {
                 level.getGameTime() + 1));
         else if (held.is(Items.BONE_MEAL)) for (KinBeast b : wild(level, pos, KinKind.MOSSBACK))
             nudge(b, p, "[The garden on its back perked up for a moment. That isn't what it's after.]");
+        if (held.is(Items.FLINT_AND_STEEL) || held.is(Items.FIRE_CHARGE))
+            PENDING.add(new Pending(p, pos.relative(e.getFace() == null ? net.minecraft.core.Direction.UP : e.getFace()), FIRE, level.getGameTime() + 1));
+        if (held.is(Items.WATER_BUCKET)) for (KinBeast b : wild(level, pos, KinKind.PONDLING)) {
+            nudge(b, p, "[More water won't help. Something at the bottom is souring it.]");
+            break;
+        }
+        BlockState at = level.getBlockState(pos);
+        if (at.is(Blocks.NOTE_BLOCK) || at.is(Blocks.BELL)) for (KinBeast b : wild(level, pos, KinKind.CHIMEWREN)) {
+            nudge(b, p, at.is(Blocks.BELL) ? "[They know that bell's song already. Every bird for miles does.]" : "[It cocked its head at the note and copied it. It's heard that one.]");
+            break;
+        }
     }
 
     static void broken(BreakBlockEvent e) {
         if (!(e.getPlayer() instanceof ServerPlayer p) || !(e.getLevel() instanceof ServerLevel level)) return;
         BlockState s = e.getState();
         BlockPos pos = e.getPos();
+        if (s.is(dev.awaken.kin.works.WorksContent.POND_ROT.get())) {
+            for (KinBeast b : wild(level, pos, KinKind.PONDLING)) {
+                BlockPos pond = b.mark == null ? b.origin : b.mark;
+                // the block's still there this tick: the last of it is this one
+                if (rotNear(level, pond) > 1) KinWatch.say(p, "[The water's a little clearer. There's still some down there.]", 6);
+                else help(b, p);
+                return;
+            }
+            return;
+        }
+        if (diggable(s)) for (KinBeast b : wild(level, pos, KinKind.SNUFFLET)) {
+            if (b.mark != null && pos.equals(b.mark)) {
+                unearth(level, b, p, pos);
+                help(b, p);
+            } else if (b.mark != null && pos.getX() == b.mark.getX() && pos.getZ() == b.mark.getZ() && pos.getY() > b.mark.getY())
+                KinWatch.say(p, "[Deeper. It's right under there.]", 5);
+            else nudge(b, p, "[It squealed and nosed at a spot a few steps over.]");
+            return;
+        }
         if (s.is(BlockTags.LEAVES) || s.is(BlockTags.LOGS)) {
             for (KinBeast b : wild(level, pos, KinKind.MOSSBACK)) {
                 BlockPos at = b.blockPosition();
@@ -140,19 +185,42 @@ public final class KinHelp {
                         break;
                     }
                 }
+                case FIRE -> {
+                    BlockState f = level.getBlockState(q.pos());
+                    if (!f.is(BlockTags.FIRE) && !warm(f)) break;
+                    for (KinBeast b : wild(level, q.pos(), KinKind.EMBERKIT)) {
+                        if (b.blockPosition().distManhattan(q.pos()) > 5) nudge(b, q.player(), "[It lifted its head toward the warmth. It's too far off to feel it.]");
+                        else help(b, q.player());
+                        break;
+                    }
+                }
                 default -> {}
             }
         }
     }
 
-    /** A Pebblepup's pile, every half second: a shiny stone tossed near it is taken; a dull one pushed off. */
+    /** Wild beasts, every half second: things tossed to them, a lost flock and its leader, the rot in a pond. */
     static void beastTick(ServerLevel level, KinBeast b) {
-        if (b.kind() != KinKind.PEBBLEPUP || b.home != null) return;
+        if (b.home != null) return;
+        switch (b.kind()) {
+            case PEBBLEPUP -> tossed(level, b, KinHelp::shiny, KinHelp::dull, "[It pushed the dull one off its pile.]");
+            case TOTTER -> tossed(level, b, KinHelp::tidy, s -> !tidy(s), "[It nudged that aside. It isn't one of its things.]");
+            case THATCHBACK -> tossed(level, b, s -> s.is(ItemTags.LOGS), s -> s.is(ItemTags.PLANKS), "[It sniffed the planks and left them. It wants whole logs.]");
+            case DUMPLIN -> flock(level, b);
+            case PONDLING -> {
+                if (b.mark != null && b.tickCount % 2400 == 0) sour(level, b.mark);
+            }
+            default -> {}
+        }
+    }
+
+    /** Something tossed by its spot: what it wants it takes (one at a time), what it doesn't it pushes off, once each. */
+    private static void tossed(ServerLevel level, KinBeast b, java.util.function.Predicate<ItemStack> wants, java.util.function.Predicate<ItemStack> refuses, String refused) {
         for (ItemEntity it : level.getEntitiesOfClass(ItemEntity.class, new AABB(b.origin).inflate(6, 3, 6), ie -> ie.isAlive() && ie.getAge() > 10)) {
             Entity thrower = it.getOwner();
             if (!(thrower instanceof ServerPlayer p)) continue;
             ItemStack s = it.getItem();
-            if (shiny(s)) {
+            if (wants.test(s)) {
                 if (b.distanceToSqr(it) > 2.5) {
                     b.getNavigation().moveTo(it, 1.2);
                     b.act(KinBeast.CARRY);
@@ -163,11 +231,152 @@ public final class KinHelp {
                 help(b, p);
                 return;
             }
-            if (dull(s) && PUSHED.add(it.getId())) {
+            if (refuses.test(s) && PUSHED.add(it.getId())) {
                 it.setDeltaMovement((it.getX() - b.origin.getX()) * 0.15, 0.25, (it.getZ() - b.origin.getZ()) * 0.15);
-                nudge(b, p, "[It pushed the dull one off its pile.]");
+                nudge(b, p, refused);
                 return;
             }
+        }
+    }
+
+    /** What a Totter tidies: the bits lying about the woods' floor. */
+    static boolean tidy(ItemStack s) {
+        return s.is(Items.STICK) || s.is(Items.FLINT) || s.is(Items.BONE) || s.is(Items.FEATHER) || s.is(ItemTags.SAPLINGS) || s.is(Items.BROWN_MUSHROOM)
+                || s.is(Items.RED_MUSHROOM);
+    }
+
+    static boolean diggable(BlockState s) {
+        return s.is(Blocks.DIRT) || s.is(Blocks.GRASS_BLOCK) || s.is(Blocks.COARSE_DIRT) || s.is(Blocks.ROOTED_DIRT) || s.is(Blocks.PODZOL) || s.is(Blocks.MUD);
+    }
+
+    // ---- Dumplins: the lost flock ------------------------------------------------------------------------------------------
+
+    /**
+     * A lost flock circles where it is until someone stands up high where they can see (on a rock, a stump, anything a
+     * block and a half above them): then it follows them. Led within eight blocks of its nest, every one of it is helped.
+     * A while after it's home it wanders off again, somewhere new, so a flock can be helped more than once.
+     */
+    private static void flock(ServerLevel level, KinBeast b) {
+        if (b.mark == null) return;
+        long now = level.getGameTime();
+        ServerPlayer leader = b.leader != null && level.getServer().getPlayerList().getPlayer(b.leader) instanceof ServerPlayer sp && sp.level() == level
+                && sp.distanceToSqr(b) < 32 * 32 ? sp : null;
+        if (leader == null) {
+            b.leader = null;
+            if (b.origin.equals(b.mark)) {
+                if (now - b.lastHelp > 2400) b.wildAt(lost(level, b.mark, now / 2400));
+                return;
+            }
+            for (ServerPlayer p : level.getEntitiesOfClass(ServerPlayer.class, b.getBoundingBox().inflate(10), x -> !x.isSpectator())) {
+                if (!p.onGround() || p.getY() < b.getY() + 1.5 || Kinship.of(p).afraid(KinKind.DUMPLIN, now)) continue;
+                boolean first = level.getEntitiesOfClass(KinBeast.class, b.getBoundingBox().inflate(16), x -> p.getUUID().equals(x.leader)).isEmpty();
+                b.leader = p.getUUID();
+                KinWatch.met(p, b);
+                if (first) KinWatch.say(p, "[The flock stopped circling and looked up at you. They'll follow you now.]", 8);
+                return;
+            }
+            return;
+        }
+        net.minecraft.world.phys.Vec3 nest = net.minecraft.world.phys.Vec3.atCenterOf(b.mark);
+        if (leader.distanceToSqr(nest) < 64 && b.distanceToSqr(nest) < 100) {
+            b.leader = null;
+            b.wildAt(b.mark);
+            help(b, leader);
+        }
+    }
+
+    /** Where a flock is lost this time: 16 to 24 blocks from its nest, the same spot for the whole flock. */
+    static BlockPos lost(ServerLevel level, BlockPos nest, long seed) {
+        net.minecraft.util.RandomSource r = net.minecraft.util.RandomSource.create(nest.asLong() ^ seed * 0x9E3779B97F4A7C15L);
+        double a = r.nextDouble() * Math.PI * 2;
+        int d = 16 + r.nextInt(9);
+        return ground(level, nest.getX() + (int) Math.round(Math.cos(a) * d), nest.getZ() + (int) Math.round(Math.sin(a) * d));
+    }
+
+    // ---- Pondlings: the rot ------------------------------------------------------------------------------------------------
+
+    /** The Deep's rot on a pond's bed round {@code pond} (the water's middle): how many blocks of it. */
+    static int rotNear(ServerLevel level, BlockPos pond) {
+        int n = 0;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int dy = -4; dy <= 0; dy++)
+            for (int dx = -2; dx <= 2; dx++)
+                for (int dz = -2; dz <= 2; dz++)
+                    if (level.getBlockState(m.set(pond.getX() + dx, pond.getY() + dy, pond.getZ() + dz)).is(dev.awaken.kin.works.WorksContent.POND_ROT.get())) n++;
+        return n;
+    }
+
+    /** The rot creeps back while a wild Pondling's pond holds less than two of it (so it can always be helped again). */
+    static void sour(ServerLevel level, BlockPos pond) {
+        if (rotNear(level, pond) >= 2) return;
+        net.minecraft.util.RandomSource r = level.getRandom();
+        for (int i = 0; i < 8; i++) {
+            BlockPos bed = pond.offset(r.nextInt(3) - 1, 0, r.nextInt(3) - 1);
+            int deep = 0;
+            while (level.getFluidState(bed).is(net.minecraft.tags.FluidTags.WATER) && deep < 4) {
+                bed = bed.below();
+                deep++;
+            }
+            BlockState s = level.getBlockState(bed);
+            if (deep == 0 || !s.isSolid() || s.is(dev.awaken.kin.works.WorksContent.POND_ROT.get())) continue;
+            level.setBlock(bed, dev.awaken.kin.works.WorksContent.POND_ROT.get().defaultBlockState(), 3);
+            return;
+        }
+    }
+
+    // ---- Snufflets: what's buried --------------------------------------------------------------------------------------------
+
+    /** A spot a block under the ground near its own spot where a Snufflet smells something, dirt it can be dug from. */
+    static @org.jspecify.annotations.Nullable BlockPos digSpot(ServerLevel level, BlockPos around, long seed) {
+        net.minecraft.util.RandomSource r = net.minecraft.util.RandomSource.create(around.asLong() ^ seed * 0xC2B2AE3D27D4EB4FL);
+        for (int i = 0; i < 8; i++) {
+            int x = around.getX() + r.nextInt(9) - 4, z = around.getZ() + r.nextInt(9) - 4;
+            BlockPos top = ground(level, x, z).below();
+            BlockState s = level.getBlockState(top);
+            if (!diggable(s) && !s.is(Blocks.MOSS_BLOCK)) continue;
+            BlockPos spot = top.below();
+            if (!diggable(level.getBlockState(spot))) {
+                if (!level.getBlockState(spot).isSolid()) continue;
+                level.setBlock(spot, Blocks.DIRT.defaultBlockState(), 3);
+            }
+            return spot;
+        }
+        return null;
+    }
+
+    /** Dug up where it was snuffling: something small, and now and then an old letter that tells of a sleeping bell. */
+    private static void unearth(ServerLevel level, KinBeast b, ServerPlayer p, BlockPos at) {
+        int r = level.getRandom().nextInt(100);
+        if (r >= 25 || !dev.awaken.bells.Bells.found(p, at)) {
+            net.minecraft.world.item.Item it = r < 45 ? Items.BONE : r < 65 ? Items.FLINT : r < 80 ? Items.BROWN_MUSHROOM : r < 93 ? Items.GOLD_NUGGET : Items.AMETHYST_SHARD;
+            net.minecraft.world.level.block.Block.popResource(level, at.above(), new ItemStack(it));
+        }
+        b.mark = digSpot(level, b.origin, level.getGameTime());
+    }
+
+    // ---- Chimewrens and Puffwools ----------------------------------------------------------------------------------------------
+
+    /** A bell this player rang or woke, heard by wild Chimewrens within {@code reach}: only a player who holds a bell has one. */
+    static void bellHeard(ServerLevel level, ServerPlayer p, BlockPos at, int reach) {
+        if (dev.awaken.bells.Bells.count(p) == 0) return;
+        for (KinBeast b : level.getEntitiesOfClass(KinBeast.class, new AABB(at).inflate(reach), x -> x.isAlive() && x.kind() == KinKind.CHIMEWREN && x.home == null))
+            help(b, p);
+    }
+
+    /** A brush on a Puffwool: wild, the burrs come out (the help); at home, its wool, once a day. Shears only frighten it. */
+    static void interact(PlayerInteractEvent.EntityInteract e) {
+        if (!(e.getEntity() instanceof ServerPlayer p) || !(e.getTarget() instanceof KinBeast b) || b.kind() != KinKind.PUFFWOOL) return;
+        if (!(p.level() instanceof ServerLevel level)) return;
+        ItemStack held = e.getItemStack();
+        if (held.is(Items.BRUSH)) {
+            e.setCanceled(true);
+            e.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
+            if (b.home == null) help(b, p);
+            else if (dev.awaken.hearth.Hearth.isMember(p, b.home)) KinWorks.brushed(level, b, p);
+        } else if (held.is(Items.SHEARS)) {
+            e.setCanceled(true);
+            e.setCancellationResult(net.minecraft.world.InteractionResult.FAIL);
+            if (b.home == null) nudge(b, p, "[It backed away from the shears. It wants the burrs out, not its wool off.]");
         }
     }
 
@@ -233,6 +442,14 @@ public final class KinHelp {
             case BURROWBUN -> "It dug straight in and came up covered in soil.";
             case MOSSBACK -> "The garden on its back is lifting toward the sun.";
             case PEBBLEPUP -> "It took the stone to its pile.";
+            case TOTTER -> "It took it back to its row and set it straight.";
+            case THATCHBACK -> "It dragged the log off to its dam.";
+            case EMBERKIT -> "It crept up to the warmth and uncurled.";
+            case PUFFWOOL -> "The burrs are out. It bounced.";
+            case DUMPLIN -> "It's home at its nest, and it hasn't stopped chirping.";
+            case PONDLING -> "The water's clear. It slid straight in.";
+            case SNUFFLET -> "It squealed at what you dug up and wagged its whole back end.";
+            case CHIMEWREN -> "It's singing the bell's note back to you, nearly right.";
             default -> "It's pleased.";
         };
     }
@@ -255,6 +472,14 @@ public final class KinHelp {
             case BURROWBUN -> "[It keeps pawing at the grass, as if the top needed breaking up first.]";
             case MOSSBACK -> "[It keeps looking up at the branches over it, and over at the nearest water.]";
             case PEBBLEPUP -> "[It's staring at the glinting bits in the rock nearby.]";
+            case TOTTER -> "[It keeps going from the things lying about to its row, and back.]";
+            case THATCHBACK -> "[It keeps looking up at the trees, then at its dam.]";
+            case EMBERKIT -> "[It keeps edging toward anything warm. A fire, most of all.]";
+            case PUFFWOOL -> "[It keeps turning so you can see the burrs tangled in its wool.]";
+            case DUMPLIN -> "[They keep looking for the tallest thing about. Something they could see from far off.]";
+            case PONDLING -> "[It keeps peering down at something dark on the bottom of the pond.]";
+            case SNUFFLET -> "[It keeps snuffling at one patch of ground and looking up at you.]";
+            case CHIMEWREN -> "[They go quiet whenever a bell sounds anywhere, and listen.]";
             default -> "";
         };
     }

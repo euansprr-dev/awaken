@@ -7,7 +7,7 @@ import java.util.Locale;
  * The land's own beasts that can live with you (SPEC §43.5; JOURNEY part 2's table). Each kind's words are what the
  * System can say about it: what sort of animal, where it lives, its three watch lines (vague to plain; the third states
  * the want, never the help), its job at home, its nook, its name for you at Kin. {@link #built} kinds walk the world
- * now; the rest come in later stages and are never shown until they do.
+ * now; the rest come in later stages and are never shown until they do. Stage 5 brings the second eight.
  */
 public enum KinKind {
     LAMPWING("Lampwing", true, "a moth the size of a cat with a glowing belly", "the edges of woods, after dark",
@@ -34,15 +34,55 @@ public enum KinKind {
                     "It wants more shiny stones for its pile."),
             "Sorts and crushes the ore and rubble you bring to the Ore Shed. With you in caves, it hears lode hearts.",
             "an Ore Shed, or bare stone at your home", "Big Stone", 0xA7A9B2),
-    TOTTER("Totter", false, "a round beetle that carries things in neat rows", "woods' floors and empty villages", List.of(), "", "", "", 0),
-    THATCHBACK("Thatchback", false, "a beaver-badger that carries planks on its tail", "rivers", List.of(), "", "", "", 0),
-    EMBERKIT("Emberkit", false, "a salamander kitten that glows from inside", "hot springs and warm caves", List.of(), "", "", "", 0),
-    PUFFWOOL("Puffwool", false, "a cloud of a sheep on tiny legs", "high pasture", List.of(), "", "", "", 0),
-    DUMPLIN("Dumplin", false, "a round bird that can't fly", "grassland, in flocks", List.of(), "", "", "", 0),
+    TOTTER("Totter", true, "a round beetle that carries things in neat rows", "woods' floors",
+            List.of("It keeps carrying things from one heap to another.",
+                    "It lines everything up in rows, and frets at the one that's out of place.",
+                    "It wants what's scattered put back in its row."),
+            "Carries between your works: the Smeltery's ingots to the Forge's chest, the fields' harvest to the larder. With a Storehouse, it shelves everything you drop.",
+            "a chest or barrel at your home to look after", "Tidy One", 0x5E86B4),
+    THATCHBACK("Thatchback", true, "a beaver-badger that carries planks on its tail", "riverbanks",
+            List.of("It keeps dragging sticks to the water and looking at what it's built.",
+                    "It's measuring its dam against the river. It isn't big enough yet.",
+                    "It wants whole logs for its dam, more than it can fell by itself."),
+            "Builds your works from their plans, with the timber and stone you leave in the plan's chest.",
+            "a Work Plan or a stack of logs at your home", "Builder", 0x8A5A3A),
+    EMBERKIT("Emberkit", true, "a salamander kitten that glows from inside", "hot springs",
+            List.of("It's curled up tight and shivering, even here.",
+                    "It keeps pressing itself against the warm stones by the water.",
+                    "It wants something warm to lie by: a fire, or a hot stone."),
+            "Smelts the ore you drop in the Smeltery's chest, with no fuel. The Forge is still yours.",
+            "a Smeltery (a vent stone and a furnace), or a lit campfire at your home", "Warm Hands", 0xF07A3A),
+    PUFFWOOL("Puffwool", true, "a cloud of a sheep on tiny legs", "high pasture",
+            List.of("It keeps rubbing itself against the rocks.",
+                    "Its wool is full of burrs from the bushes, and it can't reach them.",
+                    "It wants the burrs brushed out of its wool."),
+            "Gives you its wool once a day, when you brush it.",
+            "a pen at your home: a hay bale to lie by", "Gentle Hands", 0xE6E2EE),
+    DUMPLIN("Dumplin", true, "a round bird that can't fly", "grassland, in flocks",
+            List.of("The flock keeps wandering in circles.",
+                    "They follow whatever's tallest, and nothing here stands tall.",
+                    "They want someone up high to follow home to their nest."),
+            "Leaves eggs in the nearest chest every day.",
+            "a pen at your home: a hay bale to nest in", "Tall One", 0xE8C27A),
     BUMBLEPUFF("Bumblepuff", false, "a fuzzy bee as big as a loaf", "flower fields", List.of(), "", "", "", 0),
-    PONDLING("Pondling", false, "a frog-axolotl that fishes", "still, clean water", List.of(), "", "", "", 0),
-    SNUFFLET("Snufflet", false, "a piglet with a long snout", "old woods near ruins", List.of(), "", "", "", 0),
-    CHIMEWREN("Chimewren", false, "a round songbird that copies sounds", "everywhere, in flocks", List.of(), "", "", "", 0),
+    PONDLING("Pondling", true, "a frog-axolotl that fishes", "still water",
+            List.of("It sits at the water's edge and won't go in.",
+                    "Something at the bottom of the pond is souring the water.",
+                    "It wants the rot cleared out of its pond."),
+            "Fishes your water: a few fish in the nearest chest every day.",
+            "a pond at your home", "Clear Water", 0x6CC0B6),
+    SNUFFLET("Snufflet", true, "a piglet with a long snout", "old woods",
+            List.of("It keeps snuffling at one spot and squealing.",
+                    "Whatever it smells is deeper than it can dig.",
+                    "It wants you to dig where it's snuffling."),
+            "Forages round your home for mushrooms, berries and herbs, and leaves them in the nearest chest.",
+            "grass and open ground at your home", "Digger", 0xD89A9A),
+    CHIMEWREN("Chimewren", true, "a round songbird that copies sounds", "the open country, in flocks",
+            List.of("The flock keeps singing the same few notes over and over.",
+                    "They copy every sound they hear, and they're tired of their own songs.",
+                    "They want to hear a new song. A bell, maybe: they're the one kind that loves them."),
+            "In a Rookery, sings you a note your song is missing, and which way it came from.",
+            "a Rookery (a Chime Perch in a room)", "Bell-Ringer", 0x8FB0DC),
     LOOMWORM("Loomworm", false, "a fat, fuzzy caterpillar that spins", "old woods' canopy", List.of(), "", "", "", 0),
     CLOUDCALF("Cloudcalf", false, "a sky-whale calf that drifts", "the sky islands", List.of(), "", "", "", 0),
     BOULDERBACK("Boulderback", false, "something big and tusked that glows in the dark", "deep caves", List.of(), "", "", "", 0);
@@ -74,7 +114,7 @@ public enum KinKind {
         return LAMPWING;
     }
 
-    /** The kinds that live in the world now (stage 2: four). */
+    /** The kinds that live in the world now (stage 2: four; stage 5: twelve). */
     public static List<KinKind> livingNow() {
         return java.util.Arrays.stream(values()).filter(k -> k.built).toList();
     }

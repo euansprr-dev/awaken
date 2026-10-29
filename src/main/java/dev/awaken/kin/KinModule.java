@@ -13,7 +13,8 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 /**
  * The kin (SPEC §43.5, §43.6; JOURNEY parts 2 and 3): the land's own beasts, Kinship, the wild sites and their rumours,
- * homes and the beasts' work, and the Hearth page. Stage 2 brings the Lampwing, Burrowbun, Mossback and Pebblepup.
+ * homes and the beasts' work, and the Hearth page. Stage 2 brings the Lampwing, Burrowbun, Mossback and Pebblepup; stage 5
+ * the second eight and the works they run ({@link dev.awaken.kin.works}).
  */
 public final class KinModule {
     private KinModule() {}
@@ -22,10 +23,12 @@ public final class KinModule {
         KinContent.register(modBus);
         modBus.addListener((EntityAttributeCreationEvent e) -> KinContent.TYPES.forEach((k, t) -> e.put(t.get(), KinBeast.attributes(k).build())));
         modBus.addListener(KinNet::register);
+        dev.awaken.kin.works.WorksModule.init(modBus);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener((BlockEvent.EntityPlaceEvent e) -> KinHelp.placed(e));
         bus.addListener((PlayerInteractEvent.RightClickBlock e) -> KinHelp.used(e));
         bus.addListener((BreakBlockEvent e) -> KinHelp.broken(e));
+        bus.addListener((PlayerInteractEvent.EntityInteract e) -> KinHelp.interact(e));
         bus.addListener((MobSpawnEvent.PositionCheck e) -> KinHome.spawnCheck(e));
         bus.addListener((net.neoforged.neoforge.event.level.BlockDropsEvent e) -> KinHome.heartDrops(e));
         bus.addListener((ServerTickEvent.Post e) -> {
@@ -43,6 +46,7 @@ public final class KinModule {
         bus.addListener((ServerStoppedEvent e) -> {
             KinWatch.serverStopped();
             KinHelp.serverStopped();
+            KinWorks.serverStopped();
         });
         KinCommands.register();
         KinTests.register();

@@ -85,6 +85,14 @@ public final class KinSpawner {
             case BURROWBUN -> b.is(Tags.Biomes.IS_PLAINS) || b.is(Biomes.MEADOW);
             case MOSSBACK -> b.is(Tags.Biomes.IS_SWAMP) || b.is(BiomeTags.IS_RIVER);
             case PEBBLEPUP -> b.is(BiomeTags.IS_MOUNTAIN) || b.is(Tags.Biomes.IS_STONY_SHORES) || b.is(Tags.Biomes.IS_WINDSWEPT) || b.is(Tags.Biomes.IS_MOUNTAIN_PEAK);
+            case TOTTER -> b.is(BiomeTags.IS_FOREST) && !b.is(Tags.Biomes.IS_OLD_GROWTH);
+            case THATCHBACK -> b.is(BiomeTags.IS_RIVER);
+            case EMBERKIT -> b.is(Tags.Biomes.IS_HOT_OVERWORLD) && !b.is(Tags.Biomes.IS_WET_OVERWORLD);
+            case PUFFWOOL -> b.is(Biomes.MEADOW) || b.is(Tags.Biomes.IS_PLATEAU) || b.is(Biomes.CHERRY_GROVE);
+            case DUMPLIN -> b.is(Tags.Biomes.IS_PLAINS) || b.is(Tags.Biomes.IS_SAVANNA);
+            case PONDLING -> b.is(Tags.Biomes.IS_SWAMP);
+            case SNUFFLET -> b.is(Tags.Biomes.IS_OLD_GROWTH) || b.is(Biomes.DARK_FOREST);
+            case CHIMEWREN -> b.is(Tags.Biomes.IS_PLAINS) || b.is(Biomes.MEADOW) || b.is(Tags.Biomes.IS_SAVANNA) || b.is(BiomeTags.IS_FOREST);
             default -> false;
         };
     }
@@ -141,7 +149,9 @@ public final class KinSpawner {
 
     static int group(KinKind k) {
         return switch (k) {
-            case BURROWBUN, PEBBLEPUP -> 2;
+            case BURROWBUN, PEBBLEPUP, TOTTER, PUFFWOOL -> 2;
+            case CHIMEWREN -> 3;
+            case DUMPLIN -> 4;
             default -> 1;
         };
     }
@@ -151,16 +161,118 @@ public final class KinSpawner {
         List<KinBeast> out = new ArrayList<>();
         BlockPos spot = stand(level, s.at().getX(), s.at().getZ(), s.kind());
         if (spot == null) return out;
-        if (s.kind() == KinKind.PEBBLEPUP) pile(level, spot);
+        // the site's own look, and the second place some kinds have: a flock's nest, a pond, a smell under the ground
+        BlockPos mark = switch (s.kind()) {
+            case PEBBLEPUP -> {
+                pile(level, spot);
+                yield null;
+            }
+            case TOTTER -> {
+                scatter(level, spot);
+                yield null;
+            }
+            case THATCHBACK -> {
+                dam(level, spot);
+                yield null;
+            }
+            case EMBERKIT -> {
+                spring(level, spot);
+                yield null;
+            }
+            case PUFFWOOL -> {
+                thorns(level, spot);
+                yield null;
+            }
+            case DUMPLIN -> nest(level, spot);
+            case PONDLING -> pond(level, spot);
+            case SNUFFLET -> KinHelp.digSpot(level, spot, level.getGameTime());
+            default -> null;
+        };
+        // a Dumplin flock is lost: it stands well off from its nest
+        BlockPos home = s.kind() == KinKind.DUMPLIN && mark != null ? KinHelp.lost(level, mark, level.getGameTime() / 2400) : spot;
         for (int i = 0; i < group(s.kind()); i++) {
-            BlockPos at = i == 0 ? spot : spot.offset(level.getRandom().nextInt(5) - 2, 0, level.getRandom().nextInt(5) - 2);
+            BlockPos at = i == 0 ? home : home.offset(level.getRandom().nextInt(5) - 2, 0, level.getRandom().nextInt(5) - 2);
             BlockPos g = KinHelp.ground(level, at.getX(), at.getZ());
             KinBeast b = KinHome.spawn(level, s.kind(), s.kind() == KinKind.LAMPWING ? g.above(2) : g, EntitySpawnReason.NATURAL);
             if (b == null) continue;
-            b.wildAt(spot);
+            b.wildAt(home);
+            b.mark = mark;
             out.add(b);
         }
         return out;
+    }
+
+    /** Where a dressing block can sit on the ground near a spot (flat with it), or null. */
+    private static @Nullable BlockPos flat(ServerLevel level, BlockPos spot, int dx, int dz) {
+        BlockPos g = KinHelp.ground(level, spot.getX() + dx, spot.getZ() + dz);
+        if (Math.abs(g.getY() - spot.getY()) > 1 || !level.getBlockState(g).canBeReplaced() || !level.getBlockState(g.below()).isSolid()) return null;
+        return g;
+    }
+
+    /** A Totter's floor: sticks, flint, a bone and a feather lying about, waiting to be put back in its row. */
+    private static void scatter(ServerLevel level, BlockPos spot) {
+        net.minecraft.world.item.Item[] bits = {net.minecraft.world.item.Items.STICK, net.minecraft.world.item.Items.FLINT, net.minecraft.world.item.Items.BONE,
+                net.minecraft.world.item.Items.FEATHER, net.minecraft.world.item.Items.STICK};
+        for (net.minecraft.world.item.Item it : bits) {
+            BlockPos g = KinHelp.ground(level, spot.getX() + level.getRandom().nextInt(7) - 3, spot.getZ() + level.getRandom().nextInt(7) - 3);
+            net.minecraft.world.entity.item.ItemEntity e = new net.minecraft.world.entity.item.ItemEntity(level, g.getX() + 0.5, g.getY() + 0.1, g.getZ() + 0.5,
+                    new net.minecraft.world.item.ItemStack(it), 0, 0, 0);
+            e.setUnlimitedLifetime();
+            level.addFreshEntity(e);
+        }
+    }
+
+    /** A Thatchback's dam, not big enough yet: a few logs laid along the bank. */
+    private static void dam(ServerLevel level, BlockPos spot) {
+        for (int i = 1; i <= 3; i++) {
+            BlockPos g = flat(level, spot, i, 1);
+            if (g != null) level.setBlock(g, (i == 2 ? Blocks.STRIPPED_OAK_LOG : Blocks.OAK_LOG).defaultBlockState()
+                    .setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS, net.minecraft.core.Direction.Axis.X), 3);
+        }
+    }
+
+    /** An Emberkit's hot spring: a little pool with two vent stones steaming at its edge (where vent stones are found). */
+    private static void spring(ServerLevel level, BlockPos spot) {
+        BlockPos g = flat(level, spot, 2, 0);
+        if (g == null) return;
+        BlockPos bed = g.below();
+        for (int dx = 0; dx <= 1; dx++)
+            for (int dz = 0; dz <= 1; dz++) level.setBlock(bed.offset(dx, 0, dz), Blocks.WATER.defaultBlockState(), 3);
+        level.setBlock(bed.offset(2, 0, 0), dev.awaken.kin.works.WorksContent.VENT_STONE.get().defaultBlockState(), 3);
+        level.setBlock(bed.offset(0, 0, 2), dev.awaken.kin.works.WorksContent.VENT_STONE.get().defaultBlockState(), 3);
+    }
+
+    /** A Puffwool's pasture: the thorny bushes that tangle it. */
+    private static void thorns(ServerLevel level, BlockPos spot) {
+        for (int[] d : new int[][]{{2, 1}, {-2, 2}}) {
+            BlockPos g = flat(level, spot, d[0], d[1]);
+            if (g != null && level.getBlockState(g.below()).is(net.minecraft.tags.BlockTags.DIRT))
+                level.setBlock(g, Blocks.SWEET_BERRY_BUSH.defaultBlockState().setValue(net.minecraft.world.level.block.SweetBerryBushBlock.AGE, 3), 3);
+        }
+    }
+
+    /** A Dumplin flock's nest: a bale of hay, flattened in the middle. Its flock is lost somewhere off from it. */
+    private static @Nullable BlockPos nest(ServerLevel level, BlockPos spot) {
+        BlockPos g = flat(level, spot, 0, 0);
+        if (g == null) return spot;
+        level.setBlock(g, Blocks.HAY_BLOCK.defaultBlockState(), 3);
+        return g.above();
+    }
+
+    /** A Pondling's still pond, soured from the bottom by the Deep's rot. Its middle is the Pondling's second place. */
+    private static @Nullable BlockPos pond(ServerLevel level, BlockPos spot) {
+        BlockPos g = flat(level, spot, 3, 0);
+        if (g == null) return null;
+        BlockPos water = g.below();
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dz = -1; dz <= 1; dz++) {
+                level.setBlock(water.offset(dx, 0, dz), Blocks.WATER.defaultBlockState(), 3);
+                BlockPos bed = water.offset(dx, -1, dz);
+                if (!level.getBlockState(bed).isSolid()) level.setBlock(bed, Blocks.MUD.defaultBlockState(), 3);
+            }
+        level.setBlock(water.below(), dev.awaken.kin.works.WorksContent.POND_ROT.get().defaultBlockState(), 3);
+        level.setBlock(water.offset(1, -1, -1), dev.awaken.kin.works.WorksContent.POND_ROT.get().defaultBlockState(), 3);
+        return water;
     }
 
     /** Dry ground near a column to stand on (a Mossback at a river stands on its bank), or null. */
@@ -252,6 +364,14 @@ public final class KinSpawner {
             case BURROWBUN -> "lives in soft meadow ground";
             case MOSSBACK -> "sits by slow water, in the sun";
             case PEBBLEPUP -> "lives on the rocky slopes";
+            case TOTTER -> "tidies the floor of the woods";
+            case THATCHBACK -> "builds dams on the river";
+            case EMBERKIT -> "keeps warm by a hot spring";
+            case PUFFWOOL -> "grazes the high pasture";
+            case DUMPLIN -> "wanders the grassland in a flock";
+            case PONDLING -> "fishes a still pond in the marsh";
+            case SNUFFLET -> "roots about in the old woods";
+            case CHIMEWREN -> "sings in a flock out in the open country";
             default -> "lives out there";
         };
         String sort = k.sort.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + k.sort.substring(1);

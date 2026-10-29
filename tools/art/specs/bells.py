@@ -133,7 +133,7 @@ def frame_model():
     els += bell_shape(8, 12.5, bronze)
     return {"parent": "minecraft:block/block", "ambientocclusion": False,
             "textures": {"particle": "minecraft:block/stripped_dark_oak_log", "wood": "minecraft:block/stripped_dark_oak_log",
-                         "bronze": "awaken:block/gate_bell_bronze", "iron": "minecraft:block/chain"},
+                         "bronze": "awaken:block/gate_bell_bronze", "iron": "minecraft:block/iron_chain"},
             "elements": els}
 
 

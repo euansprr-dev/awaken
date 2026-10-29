@@ -171,6 +171,85 @@ public final class Bells {
         say(p, "[This place is asleep. Something here is keeping it that way.]");
     }
 
+    /** How far a Rookery's wrens and a Snufflet's letters reach for a sleeping bell. */
+    static final int SUNG_REACH = 1200, FOUND_REACH = 800;
+
+    /**
+     * A Chimewren came home to the Rookery singing a note this player's song is missing (SPEC §43.12): a Sung lead, one
+     * bearing from home toward the nearest sleeping bell they don't hold. A direction, never the place. False when none.
+     */
+    public static boolean sung(ServerPlayer p, BlockPos home) {
+        Map.Entry<BellCatalog.Def, BellWorld.Site> s = sleeping(p, home, SUNG_REACH, BellBook.How.SUNG);
+        if (s == null) return false;
+        BellBook b = book(p);
+        BellBook.Lead l = lead(p, b, s.getKey());
+        l.hows |= 1 << BellBook.How.SUNG.ordinal();
+        String way = toward(s.getValue().pos.getX() - home.getX(), s.getValue().pos.getZ() - home.getZ()).substring(3);
+        if (l.bearings == 0) {
+            l.bearings = 1;
+            l.hx = home.getX();
+            l.hz = home.getZ();
+        }
+        l.lines.add("Your Chimewrens came home singing a note your song is missing. They flew in from " + way + ".");
+        save(p, b);
+        say(p, "[Your Chimewrens came home singing a note you're missing. They flew in from " + way + ". It's in your Bell Book.]");
+        return true;
+    }
+
+    /**
+     * An old letter dug up where a Snufflet was snuffling (SPEC §43.12): a Found lead that names a stretch of land round
+     * the nearest sleeping bell within 800 blocks the player doesn't hold. False when there's none to tell of.
+     */
+    public static boolean found(ServerPlayer p, BlockPos at) {
+        Map.Entry<BellCatalog.Def, BellWorld.Site> s = sleeping(p, at, FOUND_REACH, BellBook.How.FOUND);
+        if (s == null) return false;
+        BellBook b = book(p);
+        BellBook.Lead l = lead(p, b, s.getKey());
+        l.hows |= 1 << BellBook.How.FOUND.ordinal();
+        BlockPos bell = s.getValue().pos;
+        RandomOffset o = new RandomOffset(bell.asLong());
+        l.bearings = 2;
+        l.tx = bell.getX() + o.x;
+        l.tz = bell.getZ() + o.z;
+        String way = toward(bell.getX() - at.getX(), bell.getZ() - at.getZ()).substring(3);
+        long far = Math.max(50, Math.round(Math.hypot(bell.getX() - at.getX(), bell.getZ() - at.getZ()) / 50.0) * 50);
+        l.lines.add("An old letter dug out of the ground. It says the bell was kept " + way + " of where it was buried, " + far
+                + " paces or so. The Book has marked the stretch it means.");
+        save(p, b);
+        if (b.tracked < 0) track(p, s.getKey().no());
+        say(p, "[An old letter, half rotted. It tells of a bell kept " + way + " of here. It's in your Bell Book.]");
+        return true;
+    }
+
+    private static BellBook.Lead lead(ServerPlayer p, BellBook b, BellCatalog.Def d) {
+        return b.leads.computeIfAbsent(d.no(), k -> {
+            BellBook.Lead n = new BellBook.Lead();
+            n.since = PlayDays.current(p.level().getServer());
+            return n;
+        });
+    }
+
+    /** The nearest place still asleep within {@code r} whose bell this player doesn't hold and has no lead of this sort to. */
+    private static Map.@Nullable Entry<BellCatalog.Def, BellWorld.Site> sleeping(ServerPlayer p, BlockPos at, int r, BellBook.How how) {
+        BellBook b = book(p);
+        ServerLevel level = p.level().getServer().overworld();
+        Map.Entry<BellCatalog.Def, BellWorld.Site> best = null;
+        double bd = Double.MAX_VALUE;
+        for (BellWorld.Site s : BellSites.near(level, at, r).values()) {
+            if (s.state == BellWorld.Site.AWAKE || s.state == BellWorld.Site.GONE) continue;
+            BellCatalog.Def d = BellCatalog.of(s.bell);
+            if (d == null || b.held.containsKey(d.no())) continue;
+            BellBook.Lead l = b.leads.get(d.no());
+            if (l != null && l.has(how)) continue;
+            double dd = Math.hypot(s.pos.getX() - at.getX(), s.pos.getZ() - at.getZ());
+            if (dd < bd) {
+                bd = dd;
+                best = Map.entry(d, s);
+            }
+        }
+        return best;
+    }
+
     /** The holdfast's bells this player hasn't rung yet, in order. A holdfast's bell is awake already. */
     private static final String[] HOLDFAST_BELLS = {"watch", "curfew"};
 

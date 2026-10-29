@@ -378,6 +378,11 @@ public final class BellSites {
         for (ServerPlayer q : level.players())
             if (q.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(s.pos)) < WAKE_REACH * WAKE_REACH && !Bells.book(q).held.containsKey(def.no()))
                 Bells.ring(q, def, q == by ? "where you woke it" : "you were there when it woke");
+        if (by != null) {
+            // its clapper comes loose (a Chime Perch is built round one), and the wild Chimewrens near enough hear it
+            dev.awaken.kin.KinApi.clapper(by);
+            dev.awaken.kin.KinApi.bellHeard(level, by, s.pos, WAKE_REACH);
+        }
         PAINTING.add(new Paint(key, s, 0));
         Awaken.LOG.info("[bells] {} woke at {}", def.id(), s.pos.toShortString());
     }

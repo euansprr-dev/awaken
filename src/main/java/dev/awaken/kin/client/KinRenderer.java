@@ -72,6 +72,7 @@ public final class KinRenderer extends EntityRenderer<KinBeast, KinRenderState> 
     private final Identifier skin;
     private final @Nullable Identifier blink, glow;
     private final float scale;
+    private final net.minecraft.client.renderer.item.ItemModelResolver items;
 
     public KinRenderer(EntityRendererProvider.Context ctx, KinKind kind) {
         super(ctx);
@@ -85,6 +86,7 @@ public final class KinRenderer extends EntityRenderer<KinBeast, KinRenderState> 
         blink = rm.getResource(b).isPresent() ? b : null;
         glow = rm.getResource(g).isPresent() ? g : null;
         scale = KinData.SCALE.getOrDefault(id, 1F);
+        items = ctx.getItemModelResolver();
     }
 
     @Override
@@ -148,6 +150,9 @@ public final class KinRenderer extends EntityRenderer<KinBeast, KinRenderState> 
         if (blink != null && CreatureLife.eyesClosed(life) > 0.5F) s.texture = blink;
         s.glow = glow;
         s.glowAlpha = 0F;
+        s.backY = e.getBbHeight() * 0.95F;
+        if (e.held().isEmpty()) s.held.clear();
+        else items.updateForTopItem(s.held, e.held(), net.minecraft.world.item.ItemDisplayContext.GROUND, e.level(), e, e.getId());
         if (glow != null && e.level() != null) {
             int block = LightCoordsUtil.block(s.lightCoords), sky = LightCoordsUtil.sky(s.lightCoords);
             float dark = e.level().getSkyDarken() / 11F;
@@ -181,6 +186,16 @@ public final class KinRenderer extends EntityRenderer<KinBeast, KinRenderState> 
                     OverlayTexture.NO_OVERLAY, ARGB.white(s.glowAlpha), null, 0);
         }
         pose.popPose();
+        if (!s.held.isEmpty()) {
+            // carried on its back, riding its walk a little
+            pose.pushPose();
+            pose.rotateDegrees(Axis.YP, 180F - s.bodyRot);
+            pose.translate(0F, s.backY + Mth.sin(s.ageInTicks * 0.5F) * 0.02F * s.walkAnimationSpeed, 0F);
+            pose.rotateDegrees(Axis.YP, 90F);
+            pose.scale(0.75F, 0.75F, 0.75F);
+            s.held.submit(pose, out, s.lightCoords, OverlayTexture.NO_OVERLAY, s.outlineColor);
+            pose.popPose();
+        }
         super.submit(s, pose, out, camera);
     }
 }

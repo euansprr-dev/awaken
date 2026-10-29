@@ -19,5 +19,6 @@ public final class KinClient {
         modBus.addListener((RegisterClientPayloadHandlersEvent e) -> e.register(KinNet.Page.TYPE, (m, ctx) -> KinPageSection.page = m));
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> KinPageSection.forget());
         KinPageSection.register();
+        dev.awaken.kin.works.client.WorksClient.init(modBus);
     }
 }

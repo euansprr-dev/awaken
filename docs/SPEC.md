@@ -13180,6 +13180,7 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   Totter fetches it to the desk, or "Show me" lights its bay. Home crafting takes from it. It only holds what the player
   brings; at B the Works' lines link it to every work. Items are counted data, not entities; the heap and shelves draw
   at most a capped number of item models, simpler far away. Detail: JOURNEY part 3, "The Storehouse".
+- **Built (stage 5)**: the other eight kin, the works to the Foundry and the Storehouse: §43.12.
 - **The Hearth page** is a band page (Home, Your beasts, Kin) between Journal and Truths. Nothing on it expires or
   renews daily. No Board, no requests, no Daily Regimen.
 - **Built (stage 2, `dev.awaken.kin`; rows in LEDGER.md "Stage 2")**: four kin walk the world (Lampwing, Burrowbun,
@@ -13322,3 +13323,79 @@ Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY pa
 - **Creatures**: Fresh Animations level (own model, three idles or more, look-at, blink, breathing, follow-through,
   own gaits, reactions, own sounds and particles). The Lampwing passes Euan in game before any other kind.
 - **Hand-off**: the Ledger re-read against the code, the diff reviewed, the full suite green on CI.
+
+### 43.12 The working kin and the works (stage 5; rows in LEDGER.md "Stage 5")
+Built in `dev.awaken.kin` (`KinWorks`, `KinHelp`, `KinHome`, `KinSpawner`) and `dev.awaken.kin.works`; art
+`tools/art/specs/kin.py` (rigs) and `tools/art/specs/works.py` (blocks).
+- **Eight more kin** walk the world, each its own rig and clips (idle, move, run, want, tell, nudge, work, sleep, sniff,
+  carry, hide), sounds `kin.<kind>.call/tell/worry` (pitched vanilla events until the style pass):
+  Totter (a round blue beetle, wing cases with a row of pale spots), Thatchback (a beaver-badger with a paddle tail),
+  Emberkit (a salamander kitten glowing down its back; fire-immune), Puffwool (a cloud of a sheep), Dumplin (a round
+  bird that can't fly, flocks of 4), Pondling (a frog-axolotl with glowing gill tips), Snufflet (a striped wild piglet),
+  Chimewren (a blue songbird with a brass crest, flocks of 3). Groups: Totter and Puffwool 2.
+- **Where they live** (site kind by biome): Totter forest but not old growth; Thatchback river; Emberkit hot and not wet;
+  Puffwool meadow, plateau or cherry grove; Dumplin plains or savanna; Pondling swamp; Snufflet old growth or dark
+  forest; Chimewren plains, meadow, savanna or forest. Each site is dressed for its want: the Totter's ground strewn
+  with sticks, flint, bone and feathers (items that never despawn); logs along the Thatchback's bank; a 2×2 hot spring
+  with two vent stones for the Emberkit; berry bushes round the Puffwool; a hay nest for the Dumplins, who start lost
+  16 to 24 blocks from it; a 3×3 pond for the Pondling, mud-bottomed with two blocks of pond rot; a spot of ground the
+  Snufflet keeps snuffling at. Rumours name each place in plain words.
+- **Helps** (the System never names them; a near miss is a nudge): Totter, toss it one of the scattered things;
+  Thatchback, toss it logs (planks get "not that"); Emberkit, something warm near it (a lit campfire, magma, a vent
+  stone, fire, or flint and steel); Puffwool, a brush (shears only frighten it); Dumplins, stand somewhere a block and
+  a half above them within 10 and they follow you (32 blocks' leash) to their nest; a flock left alone for 2,400 ticks
+  wanders off again; Pondling, break every block of pond rot (it regrows one every 2,400 ticks while any is left; a
+  water bucket is a nudge); Snufflet, dig the block it's snuffling at (above it: "deeper"): bone, flint, a mushroom, a
+  gold nugget or an amethyst shard, or 1 in 4 an old letter (a Found lead), and it picks a new spot; Chimewrens, ring
+  or wake a bell near them (only a player who holds a bell; a peal reaches 24 blocks, a waking 48). A note block or bell used
+  near them is a nudge. Handbell peals never scare Chimewrens.
+- **Nooks**: Totter the Storehouse's Drop, else any room with chests; Thatchback the nearest Work Plan within 64, else
+  a stack of logs; Emberkit above a Smeltery's vent stone, else beside a lit campfire; Puffwool and Dumplin a hay bale;
+  Pondling (like the Mossback) water open to the sky; Snufflet open grass; Chimewren a Rookery's Chime Perch. Each
+  checks its nook every 1,200 ticks and moves to a better one.
+- **Work Plans** (`awaken:work_plan`, paper, coal and planks): set one down facing the door, sneak-use it to choose
+  (Smeltery, Rookery, Foundry, Storehouse, Ore Shed), use it to read the bill or how far it's got. A Thatchback at that home lays one block every 10 ticks
+  from the chests and barrels within eight blocks that hold it (not just the nearest: the plan's own barrels would hide
+  yours): floor, walls with log corners, a door toward the front, a window each side (walled up with no glass), a flat
+  roof (the Storehouse's has a skylight over the Drop), lanterns if there are any, the furniture, the work's rare thing
+  last in the middle. Blocks already right count; anything of yours in the way is built round; it waits, saying on
+  what. Sizes: 7×7 rooms, the Storehouse 7×9. A player can build any work by hand; the room reads the same.
+- **Smeltery** (a vent stone and a furnace in a room): an Emberkit smelts ore and raw metal from the room's chests and
+  barrels at its vent, one every 100 ticks, 15 faster for each Smeltery bell (SMELT voice), never under 40; no fuel; the
+  results go back into the room's chests. Only what you bring: nothing else is smelted.
+- **Storehouse** (the Drop, `awaken:storehouse_drop`: planks, a granary keystone and barrels): use it holding
+  something to tip that stack in, sneak-use to empty your bag (all but the hotbar, armour and marked items), use it
+  empty-handed to hear how it stands. The heap holds 64 stacks
+  as data and draws at most 24 items near, 8 past 24 blocks, each landing with its kind's sound (`works.land_*`).
+  Totters take three stacks an armful to the bay of its sort (§43.6's eleven), or to an empty chest or barrel that
+  becomes a new bay with a painted sign; a full hall puts the armful back and the Totter rests 1,200 ticks; the Drop
+  says the hall is full. Between works, Totters carry the Smeltery's ingots, nuggets and gems to an Armoury chest (or
+  the Drop) and the Burrowbun field chests' crops and food to a Kitchen chest (or the Drop), leaving 32 of each seed crop
+  in the field chest for planting.
+- **The Ledger** (`awaken:ledger_desk`: a book and quill over planks): lists everything shelved or on the heap, by bay,
+  with a search. "Fetch it": a Totter brings the stack to the desk (with no Totter free, or none back within 1,200 ticks, it's set
+  out on the desk); "Show me": a light over its bay. Payloads `works_ledger` (to the client) and `works_ledger_ask`.
+- **Rookery** (a Chime Perch, `awaken:chime_perch`: planks over a woken clapper and a stick; a clapper comes loose from
+  every bell you wake): its Chimewrens bring each online member one Sung lead a day: one bearing toward the nearest
+  sleeping bell they hold no lead on, within 1,200 blocks of home, with a line naming the direction.
+- **Foundry** (the Crucible, `awaken:foundry_crucible`: bell bronze, deepglass shards and a furnace): casts the Singing
+  Deep's five bells in order when the room's chests hold the metal: Sung Iron (12 iron, 4 bell bronze), Sung Copper (16
+  copper, 4), Sung Gold (12 gold, 6), Deepglass (16 deepglass shards, 8), Starmetal (4 starmetal, 8). A cast takes 600
+  ticks (300 with a Thatchback at home), the Crucible glowing; the metal is taken only when it's done (a cut-off cast
+  starts again). Each member gets the bell (online at once, the rest when they next come home; saved per home in
+  `kin` world data, field `cast`). Using the Crucible says what's next and what's missing.
+- **Found leads**: an old letter dug up with a Snufflet names a stretch of land round a sleeping bell within 800 blocks
+  (two bearings' worth: an area 20 blocks off the bell), and Tracks it if nothing else is tracked.
+- **Bells' voices** (stage 5): 14 Sung Iron and 45 Sung Copper, SMELT ("The Smeltery's Emberkits smelt faster."); 28
+  Deepglass GLOW; 49 Sung Gold SHED; 51 Starmetal STRIDE. The True Bell (36) keeps none until stage 7.
+- **Wool**: a Puffwool at home gives three wool a day to a member who brushes it. Dumplins leave 2 eggs a day (one
+  every 2,400 ticks) in the nearest chest; Pondlings fish 4 a day (one every 1,200 ticks) from water by their nook;
+  Snufflets forage 4 a day (mushrooms, berries, herbs) round home. Never ore, gems, gate loot or XP.
+- **Granary keystone** (`awaken:granary_keystone`): set against a wall on the ground floor of every town granary.
+- **Saves**: `KinBeast` schema 2 (adds `mark`, `brushed_day`; what it carries shows on its back), `DropBlockEntity`
+  schema 1, `WorkPlanBlockEntity` schema 1 (`work`, `step`, `waiting`), `KinWorld.cast`. Errands are not saved: a
+  restart puts an armful back down where the Totter stood.
+- **Sources** (`journey_ledger`): recipes for the perch, Crucible, Drop, Ledger and Work Plan; vent stones from Emberkit
+  springs, the clapper from waking bells, the keystone from granaries, pond rot never held (it drops nothing). Every
+  block drops itself.
+- **Tests** (CI): `works_plan_builds`, `works_bays_sort`, with stage 2's kin tests. `/awaken admin kin works` raises a Smeltery, a Storehouse (a heap on its Drop), a Foundry (Sung Iron's metal) and a Rookery north of your home from their plans; tour `journey-5`.

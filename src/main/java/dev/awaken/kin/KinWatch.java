@@ -198,6 +198,14 @@ public final class KinWatch {
                 case PEBBLEPUP -> "[It's looking at the stones in your pockets.]";
                 case LAMPWING -> "[It's looking at the light you carry.]";
                 case BURROWBUN -> "[It's watching where you put your feet.]";
+                case TOTTER -> "[It's counting the things you carry.]";
+                case THATCHBACK -> "[It's looking at your axe.]";
+                case EMBERKIT -> "[It's watching your torch.]";
+                case PUFFWOOL -> "[It's looking at your hands.]";
+                case DUMPLIN -> "[They're looking up at you. You're taller than they are.]";
+                case PONDLING -> "[It's watching your bucket.]";
+                case SNUFFLET -> "[It's watching your shovel.]";
+                case CHIMEWREN -> "[It's trying out the sound of your footsteps.]";
                 default -> "[It's watching what you do.]";
             };
             case FRIENDLY -> switch (k) {
@@ -205,6 +213,14 @@ public final class KinWatch {
                 case LAMPWING -> "[It likes a warm light. The blue ones frighten it.]";
                 case BURROWBUN -> "[It says the ground here is too hard.]";
                 case MOSSBACK -> "[It's thinking about the sun.]";
+                case TOTTER -> "[It wants the mess put back in order.]";
+                case THATCHBACK -> "[It says its dam's too small, and the trees are too big for it.]";
+                case EMBERKIT -> "[It's cold. It's always cold.]";
+                case PUFFWOOL -> "[It says the burrs itch.]";
+                case DUMPLIN -> "[They've lost their way home. They'd follow anyone tall enough to see.]";
+                case PONDLING -> "[It says the water tastes wrong.]";
+                case SNUFFLET -> "[It says there's something good down there.]";
+                case CHIMEWREN -> "[It's tired of its own songs. It wants a new one.]";
                 default -> "";
             };
             case KIN -> "[It's telling the others you're all right. It calls you " + k.callsYou + ".]";
@@ -216,7 +232,7 @@ public final class KinWatch {
     /** Whether this player makes it run (its kind's Kinship with them, their manner, a killing it remembers). */
     static boolean scares(KinBeast b, ServerPlayer p) {
         if (p.isCreative() || p.isSpectator()) return false;
-        if (p.getUUID().equals(b.keeper) || b.trusted.contains(p.getUUID())) return false;
+        if (p.getUUID().equals(b.keeper) || b.trusted.contains(p.getUUID()) || p.getUUID().equals(b.leader)) return false;
         Kinship ks = Kinship.of(p);
         KinKind k = b.kind();
         if (ks.afraid(k, p.level().getGameTime())) return true;

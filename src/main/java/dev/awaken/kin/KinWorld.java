@@ -18,7 +18,8 @@ import java.util.UUID;
 /**
  * The kin's world state (schema 1): which wild spots have had their beasts and when (a spot whose beasts are gone fills
  * again after three days), the spots a rumour promised a kind, who lives at each Hearth (so nooks are counted and the
- * Hearth page lists them while their chunks sleep), each Hearth's Ore Shed heart, and the lode hearts players set down.
+ * Hearth page lists them while their chunks sleep), each Hearth's Ore Shed heart, the lode hearts players set down, and
+ * the bells each home's Foundry has cast (an optional field: schema 1 still reads).
  */
 public final class KinWorld extends SavedData {
     public static final int SCHEMA = 1;
@@ -39,6 +40,8 @@ public final class KinWorld extends SavedData {
     final Map<Long, Long> oreHearts = new HashMap<>();
     /** Lode hearts a player set down ("dimension|pos"): breaking one again gives the heart back, never its ore again. */
     final java.util.Set<String> placedHearts = new java.util.HashSet<>();
+    /** The bells each home's Foundry has cast (SPEC §43.12): every member gets them, the ones away when they next come by. */
+    final Map<Long, List<String>> cast = new HashMap<>();
 
     private static final Codec<Map<String, Long>> LONGS = Codec.unboundedMap(Codec.STRING, Codec.LONG);
 
@@ -56,14 +59,20 @@ public final class KinWorld extends SavedData {
                 return m;
             }),
             LONGS.optionalFieldOf("ore_hearts", Map.of()).forGetter(w -> keyed(w.oreHearts)),
-            Codec.STRING.listOf().optionalFieldOf("placed_hearts", List.of()).forGetter(w -> List.copyOf(w.placedHearts))
-    ).apply(i, (schema, filled, promised, homes, hearts, placed) -> {
+            Codec.STRING.listOf().optionalFieldOf("placed_hearts", List.of()).forGetter(w -> List.copyOf(w.placedHearts)),
+            Codec.unboundedMap(Codec.STRING, Codec.STRING.listOf()).optionalFieldOf("cast", Map.of()).forGetter(w -> {
+                Map<String, List<String>> m = new HashMap<>();
+                w.cast.forEach((k, v) -> m.put(Long.toString(k), List.copyOf(v)));
+                return m;
+            })
+    ).apply(i, (schema, filled, promised, homes, hearts, placed, cast) -> {
         KinWorld w = new KinWorld();
         filled.forEach((k, v) -> w.filled.put(Long.parseLong(k), v));
         promised.forEach((k, v) -> w.promised.put(Long.parseLong(k), KinKind.of(v)));
         homes.forEach((k, v) -> w.homes.put(Long.parseLong(k), new ArrayList<>(v)));
         hearts.forEach((k, v) -> w.oreHearts.put(Long.parseLong(k), v));
         w.placedHearts.addAll(placed);
+        cast.forEach((k, v) -> w.cast.put(Long.parseLong(k), new ArrayList<>(v)));
         return w;
     }));
 

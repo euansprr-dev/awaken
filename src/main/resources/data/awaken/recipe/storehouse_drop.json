@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "K": "awaken:granary_keystone",
+    "B": "minecraft:barrel",
+    "P": "#minecraft:planks"
+  },
+  "pattern": [
+    "PKP",
+    "BPB"
+  ],
+  "result": {
+    "id": "awaken:storehouse_drop"
+  }
+}
