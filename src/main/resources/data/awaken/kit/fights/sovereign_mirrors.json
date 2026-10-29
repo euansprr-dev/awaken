@@ -1,0 +1,161 @@
+{
+ "schemaVersion": 1,
+ "id": "sovereign_mirrors",
+ "moves": "sovereign_mirrors",
+ "intro": {
+  "pose": "idle",
+  "move": "preen"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "cut",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "cut_b"
+      ],
+      [
+       "cut_b",
+       "lunge"
+      ]
+     ]
+    },
+    {
+     "move": "parry",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "riposte"
+      ]
+     ]
+    },
+    {
+     "move": "lunge",
+     "weight": 3,
+     "then": [
+      [
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "behind",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "hall",
+   "pool": [
+    {
+     "move": "cut",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "cut_b"
+      ],
+      [
+       "cut_b",
+       "lunge"
+      ]
+     ]
+    },
+    {
+     "move": "through",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "cut",
+       "cut_b"
+      ]
+     ]
+    },
+    {
+     "move": "lunge",
+     "weight": 3,
+     "then": [
+      [
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "parry",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "riposte"
+      ]
+     ]
+    },
+    {
+     "move": "behind",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "shatter",
+   "pool": [
+    {
+     "move": "shatter",
+     "weight": 2
+    },
+    {
+     "move": "hall",
+     "weight": 1
+    },
+    {
+     "move": "parry",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "riposte",
+       "cut_b"
+      ]
+     ]
+    },
+    {
+     "move": "cut",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "cut_b",
+       "lunge"
+      ]
+     ]
+    },
+    {
+     "move": "through",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "behind",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

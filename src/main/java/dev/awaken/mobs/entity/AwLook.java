@@ -7,6 +7,9 @@ package dev.awaken.mobs.entity;
 public final class AwLook {
     /** ARGB multiplied over the base texture. */
     public int tint = -1;
+    /** The same without the creature's own colour (a kit body is painted in its own colours): only frost, charge,
+     *  the risen pall and a haunting tint it, and the haunting's fade. */
+    public int kitTint = -1;
     /** Emissive layer alpha 0..1. */
     public float glow = 0.6F;
     /** The creature sets its emissive strength itself, the fall included (no floor, no fade as it dies): the seep heart's beat. */

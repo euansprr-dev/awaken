@@ -72,6 +72,7 @@ public final class Awaken {
         dev.awaken.fault.FaultModule.init(modBus);
         dev.awaken.bigday.BigDayModule.init(modBus);
         dev.awaken.bells.BellModule.init(modBus);
+        dev.awaken.armour.ArmourModule.init(modBus);
     }
 
     public static Identifier id(String path) {

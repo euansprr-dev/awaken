@@ -1,0 +1,141 @@
+{
+ "schemaVersion": 1,
+ "id": "sovereign_silence",
+ "moves": "sovereign_silence",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "rake",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "rake_b"
+      ],
+      [
+       "rake_b",
+       "found"
+      ]
+     ]
+    },
+    {
+     "move": "found",
+     "weight": 3,
+     "then": [
+      [
+       "rake"
+      ]
+     ]
+    },
+    {
+     "move": "nosound",
+     "weight": 1
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "ears",
+   "pool": [
+    {
+     "move": "rake",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "rake_b"
+      ],
+      [
+       "rake_b",
+       "found"
+      ]
+     ]
+    },
+    {
+     "move": "found",
+     "weight": 3,
+     "then": [
+      [
+       "rake"
+      ]
+     ]
+    },
+    {
+     "move": "scream",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "ears",
+     "weight": 1
+    },
+    {
+     "move": "nosound",
+     "weight": 1
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "hush",
+   "pool": [
+    {
+     "move": "deafening",
+     "weight": 2
+    },
+    {
+     "move": "hush",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "found"
+      ]
+     ]
+    },
+    {
+     "move": "rake",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "rake_b",
+       "found"
+      ]
+     ]
+    },
+    {
+     "move": "found",
+     "weight": 3
+    },
+    {
+     "move": "scream",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.25
+ }
+}

@@ -1,0 +1,166 @@
+{
+ "schemaVersion": 1,
+ "id": "sovereign_ash",
+ "moves": "sovereign_ash",
+ "intro": {
+  "pose": "idle",
+  "move": "arrive"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "claw",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "bite"
+      ],
+      [
+       "bite",
+       "rush"
+      ]
+     ]
+    },
+    {
+     "move": "bite",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "rush",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "claw"
+      ]
+     ]
+    },
+    {
+     "move": "cinders",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "cloud",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "sweep",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "ashfall",
+   "pool": [
+    {
+     "move": "claw",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "bite"
+      ],
+      [
+       "bite",
+       "cloud"
+      ]
+     ]
+    },
+    {
+     "move": "rush",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "claw",
+       "bite"
+      ]
+     ]
+    },
+    {
+     "move": "cinders",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "ashfall",
+     "weight": 1
+    },
+    {
+     "move": "embers",
+     "weight": 2
+    },
+    {
+     "move": "cloud",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "sweep",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "burnout",
+   "pool": [
+    {
+     "move": "nova",
+     "weight": 3,
+     "when": "NEAR"
+    },
+    {
+     "move": "claw",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "bite",
+       "nova"
+      ]
+     ]
+    },
+    {
+     "move": "rush",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "claw",
+       "bite"
+      ]
+     ]
+    },
+    {
+     "move": "ashfall",
+     "weight": 2
+    },
+    {
+     "move": "cinders",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "burnout",
+     "weight": 1
+    },
+    {
+     "move": "sweep",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

@@ -71,5 +71,6 @@ public final class AwakenClient {
         dev.awaken.kin.client.KinClient.init(modBus);
         dev.awaken.fault.client.FaultClient.init(modBus);
         dev.awaken.bells.client.BellClient.init(modBus);
+        dev.awaken.armour.client.ArmourClient.init(modBus);
     }
 }

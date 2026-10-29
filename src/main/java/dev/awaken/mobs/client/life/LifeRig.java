@@ -41,9 +41,21 @@ public final class LifeRig {
     final ModelPart[] sp;
     final float[] dx, dy, dz, invLen, w2, damp, gain, maxAngle;
     final int[] chain, driver, role;
+    /** A hanging plate's one hinge, the edge it hangs from (0 its x axis, 2 its z axis), or -1: it swings every way. */
+    final int[] hinge;
     final ModelPart[] drivers;
     /** The body's motions (stagger, lean, the step's dip) go on the pose stack: its body bone doesn't carry the head. */
     final boolean rootMotion;
+    /**
+     * A hand-built body that walks on the motion layer's feet with its legs off the root (the stag's, the marmot's):
+     * the root part carries the body's motions, turned about the body bone's pivot, so the legs' tops ride them and the
+     * feet's solve sees them. Its pivot, model px.
+     */
+    final boolean rootCarries;
+    private final @Nullable ModelPart root;
+    private final float pivotX, pivotY, pivotZ;
+    private final org.joml.Quaternionf rq = new org.joml.Quaternionf();
+    private final Vector3f rp = new Vector3f();
     /** The model plays an authored idle (hero rigs): the procedural breath only adds what exertion brings. */
     final boolean idleClip;
     final boolean[] can = new boolean[Idle.values().length];
@@ -70,9 +82,12 @@ public final class LifeRig {
         n = 0;
         sp = new ModelPart[0];
         dx = dy = dz = invLen = w2 = damp = gain = maxAngle = new float[0];
-        chain = driver = role = new int[0];
+        chain = driver = role = hinge = new int[0];
         drivers = new ModelPart[0];
         rootMotion = true;
+        rootCarries = false;
+        root = null;
+        pivotX = pivotY = pivotZ = 0;
         idleClip = false;
         hasEars = hasTail = false;
         impact = 0;
@@ -125,6 +140,28 @@ public final class LifeRig {
             pivots[i] = pivot(root, path);
         }
         return new LifeRig(p, LifeBones.bind(bones), root, parts, pivots, geo, paths, rig, idleClip, motionId);
+    }
+
+    /**
+     * A flat part hanging down (a skirt, a beard, a curtain of moss: every cube of its own a plane with height) swings
+     * only about the edge it hangs from: the plane's level axis. Swung any other way its far end would lift off what
+     * it hangs from. -1 for anything else.
+     */
+    private static int hinge(ModelPart part) {
+        float[] box = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+        part.visit(new PoseStack(), (pose, path, index, cube) -> {
+            if (!path.isEmpty()) return;
+            box[0] = Math.min(box[0], cube.minX);
+            box[1] = Math.min(box[1], cube.minY);
+            box[2] = Math.min(box[2], cube.minZ);
+            box[3] = Math.max(box[3], cube.maxX);
+            box[4] = Math.max(box[4], cube.maxY);
+            box[5] = Math.max(box[5], cube.maxZ);
+        });
+        if (box[0] > box[3] || box[4] - box[1] < 1.0F) return -1;
+        if (box[3] - box[0] < 0.01F && box[5] - box[2] >= 1.0F) return 2; // a plane along the body's length: it flares out
+        if (box[5] - box[2] < 0.01F && box[3] - box[0] >= 1.0F) return 0; // a plane across it: it flaps fore and aft
+        return -1;
     }
 
     private static void addPath(String path, List<String> paths, Map<String, Integer> index) {
@@ -228,6 +265,7 @@ public final class LifeRig {
         chain = new int[n];
         driver = new int[n];
         role = new int[n];
+        hinge = new int[n];
         Map<Integer, Integer> remap = new HashMap<>();
         List<ModelPart> drv = new ArrayList<>();
         Map<Integer, Integer> drvIndex = new HashMap<>();
@@ -241,6 +279,7 @@ public final class LifeRig {
             tail |= r == Role.TAIL;
             sp[j] = parts[bone];
             role[j] = r.ordinal();
+            hinge[j] = r == Role.DANGLE ? hinge(parts[bone]) : -1;
             float[] g = geo.get(paths.get(bone));
             float[] pv = pivots[bone];
             float cx = g[0] / g[3] - pv[0], cy = g[1] / g[3] - pv[1], cz = g[2] / g[3] - pv[2];
@@ -282,9 +321,23 @@ public final class LifeRig {
         hasEars = ears;
         hasTail = tail;
         impact = rig != null && b.body() >= 0 ? landing(rig, b.bones().get(b.body()).name()) : 0;
-        // the feet ride a body that carries its head (its body bone moves over them); else the pose stack would carry them
+        // the feet ride a body that carries its head (its body bone moves over them); else the pose stack would carry them,
+        // unless a hand-built body's legs hang off its root: then the root carries it all
         motion = rig != null ? MotionProfile.of(rig.id) : motionId != null ? MotionProfile.of(motionId) : null;
-        legs = motion != null && motion.gait() != null && !rootMotion ? LegParts.of(motion.gait(), b, root, parts) : null;
+        LegParts lp = motion != null && motion.gait() != null ? LegParts.of(motion.gait(), b, root, parts) : null;
+        boolean under = lp != null;
+        for (int i = 0; lp != null && i < lp.rig.n; i++) {
+            boolean hangs = false;
+            for (int k : lp.rig.up[i]) hangs |= k == b.body();
+            under &= hangs;
+        }
+        rootCarries = rig == null && lp != null && body != null && (rootMotion || !under);
+        legs = !rootMotion || rootCarries ? lp : null;
+        this.root = root;
+        float[] bp = b.body() >= 0 ? pivots[b.body()] : new float[3];
+        pivotX = bp[0] * 16.0F;
+        pivotY = bp[1] * 16.0F;
+        pivotZ = bp[2] * 16.0F;
         fly = motion != null ? motion.fly() : null;
         String who = motion != null ? motion.id() : "";
         flyWings = named(fly != null ? fly.wings() : NONE, b, parts, who);
@@ -433,7 +486,7 @@ public final class LifeRig {
             body.xScale += 0.012F * a;
             body.zScale += 0.006F * a;
             body.yScale += 0.008F * a;
-            if (!rootMotion) { // else the renderer puts these on the pose stack (Life.rootPose)
+            if (!rootMotion && !rootCarries) { // else the root carries them, or the renderer's pose stack (Life.rootPose)
                 body.y += life.dip;
                 body.xRot += life.bodyPitch;
                 body.zRot += life.bodyRoll;
@@ -443,23 +496,35 @@ public final class LifeRig {
         // and the head holds level against the gait
         Legs lg = life.legs;
         float levelPitch = 0, levelRoll = life.swayRoll;
-        if (body != null && !rootMotion && motion != null) {
+        if (body != null && (!rootMotion || rootCarries) && motion != null) {
             MotionProfile.Body mb = motion.body();
+            ModelPart c = rootCarries && root != null ? root : body;
+            if (rootCarries) { // what the body bone takes above, and the pose stack for a body that walks without feet
+                c.y += life.dip;
+                c.xRot += life.bodyPitch;
+                c.zRot += life.bodyRoll;
+            }
             if (lg != null) {
                 float wgt = lg.weight;
                 float pitch = (lg.groundPitch * mb.slope() + lg.gaitPitch) * wgt, roll = (lg.groundRoll * mb.slope() + lg.gaitRoll) * wgt;
-                body.y += (lg.rig.gait.crouch() + life.creep + lg.groundY + lg.gaitY + lg.vault) * wgt;
-                body.x += life.shiftX * wgt;
-                body.z += life.shiftZ * wgt;
+                c.y += (lg.rig.gait.crouch() + life.creep + lg.groundY + lg.gaitY + lg.vault) * wgt;
+                c.x += life.shiftX * wgt;
+                c.z += life.shiftZ * wgt;
                 // leaning into the drift: the side it moves over sinks a little
                 pitch += life.shiftZ * 0.02F * wgt;
                 roll += life.shiftX * 0.03F * wgt;
-                body.xRot += pitch;
-                body.zRot += roll;
+                c.xRot += pitch;
+                c.zRot += roll;
                 levelPitch += pitch;
                 levelRoll += roll;
             }
-            body.yRot += life.twist;
+            c.yRot += life.twist;
+            if (rootCarries) { // the root turns about the body's pivot, not the model's origin a block and a half up
+                rp.set(pivotX, pivotY, pivotZ).rotate(rq.rotationZYX(c.zRot, c.yRot, c.xRot));
+                c.x += pivotX - rp.x;
+                c.y += pivotY - rp.y;
+                c.z += pivotZ - rp.z;
+            }
             if (head != null && mb.headLevel() > 0) {
                 head.xRot -= levelPitch * mb.headLevel();
                 head.zRot -= levelRoll * mb.headLevel();

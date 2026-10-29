@@ -81,7 +81,10 @@ public final class GearCombat {
             if (SetBonus.has(p, HunterTier.A, SetBonus.FULL)) overflow(e.getAmount(), p, victim, src, level);
             return;
         }
-        if (src.is(DamageTypes.PLAYER_ATTACK) && src.getDirectEntity() == p) strike(e, p, victim, level);
+        if (src.is(DamageTypes.PLAYER_ATTACK) && src.getDirectEntity() == p) {
+            Pounce.strike(e, p, victim, level);
+            strike(e, p, victim, level);
+        }
     }
 
     /** Spends a primed Force strike on a melee hit (Gatewrought, four pieces). */

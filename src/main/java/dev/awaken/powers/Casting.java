@@ -153,6 +153,7 @@ public final class Casting {
         if (carries(type)) dev.awaken.core.api.ArrivalHooks.report(player, dev.awaken.core.api.ArrivalHooks.Way.POWER, MOVE_HOLD);
         MoveTwists.afterCast(c, cost, now); // the Awakened Body's chains and family twists
         dev.awaken.core.api.WeaveHooks.cast(player, type.family.name(), type.forces.isEmpty() ? null : type.forces.iterator().next().name(), owned.level());
+        dev.awaken.core.api.FightMoments.report(player, dev.awaken.core.api.FightMoments.Moment.CAST, null);
         st.markCombatIfFoesNear(player);
         Powers.markDirty(player);
         return PowerType.Result.OK;

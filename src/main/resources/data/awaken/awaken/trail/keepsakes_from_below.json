@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "title": "Keepsakes from Below",
+  "area": "deep",
+  "blurb": "Each region under the world has something of its own you can take home and set down.",
+  "weight": 123,
+  "opens": [
+    "counter:awaken:discovered/cave_region/rootways|counter:awaken:discovered/cave_region/pale_halls|counter:awaken:discovered/cave_region/windcleft|counter:awaken:discovered/cave_region/drowned_galleries|counter:awaken:discovered/cave_region/glimmer_hollows|counter:awaken:discovered/cave_region/ochre_deep|counter:awaken:discovered/cave_region/black_vaults|counter:awaken:discovered/cave_region/violet_deep"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "rootways",
+      "text": "Find root amber in the Rootways.",
+      "done": [
+        "holds:awaken:root_amber"
+      ],
+      "hint": "Look on the floor under the root curtains: old resin lies there in small orange beads."
+    },
+    {
+      "id": "pale_halls",
+      "text": "Pick up cave pearls in the Pale Halls.",
+      "done": [
+        "holds:awaken:cave_pearls"
+      ],
+      "hint": "They form in the puddles under the drips in the limestone halls."
+    },
+    {
+      "id": "windcleft",
+      "text": "Take a length of the Delvers' old rope in the Windcleft.",
+      "done": [
+        "holds:awaken:old_rope"
+      ],
+      "hint": "The old Delvers left their ropes hanging in the cracks."
+    },
+    {
+      "id": "drowned_galleries",
+      "text": "Take a piece of driftwood from the Drowned Galleries.",
+      "done": [
+        "holds:awaken:driftwood"
+      ],
+      "hint": "It washes up on the shores of the flooded halls' lakes."
+    },
+    {
+      "id": "glimmer_hollows",
+      "text": "Break a crystal off a wall in the Glimmer Hollows.",
+      "done": [
+        "holds:awaken:amber_crystal|holds:awaken:glacial_crystal"
+      ],
+      "hint": "Amber crystals under the hot lands, glacial ones under the cold."
+    },
+    {
+      "id": "ochre_deep",
+      "text": "Cut ember lichen in the Ochre Deep.",
+      "done": [
+        "holds:awaken:ember_lichen"
+      ],
+      "hint": "It glows on the walls by the floor. Shears cut it free; it still glows at home."
+    },
+    {
+      "id": "violet_deep",
+      "text": "Pick up a Hollow's shed shell in the Violet Deep.",
+      "done": [
+        "holds:awaken:shed_chitin"
+      ],
+      "hint": "The Hollows shed their shells on the floors of the violet chambers."
+    }
+  ],
+  "finish": {
+    "line": "You've a keepsake from every region that has one.",
+    "levels": 0.03
+  }
+}

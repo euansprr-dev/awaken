@@ -149,8 +149,11 @@ OVERLAYS = {'cave_lichen_shallows': ('lichen_shallows', 'Grey-Green Cave Lichen'
             'rime': ('rime', 'Rime'), 'glow_algae': ('glow_algae', 'Glow Algae')}
 # the six P3 regions' dressing (SPEC §42.8): name, and how it's mined
 DRIFTS = {'rimstone': ('Rimstone', 'pickaxe'), 'silt': ('Silt', 'shovel'), 'ash': ('Ash', 'shovel')}
-BITS = {'cave_pearls': 'Cave Pearls', 'shed_chitin': 'Shed Chitin'}
+BITS = {'cave_pearls': 'Cave Pearls', 'shed_chitin': 'Shed Chitin', 'root_amber': 'Root Amber'}
 CRYSTALS = {'amber_crystal': 'Amber Crystal', 'glacial_crystal': 'Glacial Crystal'}
+# the other modules' natural rock and ground, for the motion tag (SPEC §42.8)
+OTHERS_ROCK = ('frostspar', 'sunshard', 'fused_glass', 'scorched_glass', 'faultstone', 'fault_seam', 'riven_shale', 'salt_lick',
+               'wallow', 'deepglass')
 
 
 def put(root, rel, data):
@@ -257,10 +260,11 @@ def skin():
     for tool in ('stone', 'iron'):
         put(MERGE, f'data/minecraft/tags/block/needs_{tool}_tool.json', {'replace': False, 'values': [f'awaken:{b}' for b, t in TWINS.items() if t[3] == tool]})
     put(MERGE, 'data/minecraft/tags/block/base_stone_overworld.json', {'replace': False, 'values': [f'awaken:{b}' for b in REGION_ROCKS]})
-    # 26.3 reads motion (heightmaps, suffocation, rain) from tags: the caves' rock and the pieces you can stand on
+    # 26.3 reads motion (heightmaps, suffocation, rain) from tags: the caves' rock and the pieces you can stand on, and the
+    # other modules' natural rock and ground the caves meet (P3: their logs, planks, dirt and slabs are in through vanilla's tags)
     put(MERGE, 'data/minecraft/tags/block/blocks_motion_no_leaves.json', {'replace': False, 'values':
         [f'awaken:{b}' for b in REGION_ROCKS] + [f'awaken:{r}_rubble' for r in SKIN_ROCKS] + [f'awaken:pointed_{r}' for r in SKIN_ROCKS]
-        + [f'awaken:{b}' for b in DRIFTS] + ['awaken:driftwood']})
+        + [f'awaken:{b}' for b in DRIFTS] + ['awaken:driftwood'] + [f'awaken:{b}' for b in OTHERS_ROCK]})
     for t in ('stone_tool_materials', 'stone_crafting_materials'):
         put(MERGE, f'data/minecraft/tags/item/{t}.json', {'replace': False, 'values': [f'awaken:{b}' for b in REGION_ROCKS]})
     # the Rootways' growth: glowcaps on the floor, root curtains from the roof

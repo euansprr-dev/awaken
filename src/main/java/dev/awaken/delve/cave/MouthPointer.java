@@ -40,8 +40,15 @@ public final class MouthPointer {
     static final int RADIUS = 400, AT_HOME = 160, LODE_NEAR = 48, LODE_MIN = 20;
     static final String ACTION = "delve_mark";
 
-    /** What the search found for one home and metal: the mouth, or nothing (a finished search with no answer). */
-    record Answer(BlockPos home, String metal, @Nullable Spec mouth) {}
+    /**
+     * What the search found for one home and metal: the mouth, or nothing (a finished search with no answer), and the cave
+     * region its way in goes down into (SPEC §42.9), if any.
+     */
+    record Answer(BlockPos home, String metal, @Nullable Spec mouth, @Nullable String place) {
+        Answer(BlockPos home, String metal, @Nullable Spec mouth) {
+            this(home, metal, mouth, null);
+        }
+    }
 
     private record Asked(BlockPos home, String metal, CompletableFuture<Answer> answer) {}
 
@@ -83,7 +90,7 @@ public final class MouthPointer {
         offer(p, a);
         BlockPos at = new BlockPos(a.mouth().x(), a.mouth().y(), a.mouth().z());
         // the mouth is a hint on the card's compass; the Now line only follows it once you mark it
-        return new Checklist.Task("delve:metal", title, List.of(gather, new Checklist.Row(line(a.mouth(), a.home(), need.metal()), "", false, 0, 0, at, "")));
+        return new Checklist.Task("delve:metal", title, List.of(gather, new Checklist.Row(line(a.mouth(), a.home(), need.metal(), a.place()), "", false, 0, 0, at, "")));
     }
 
     /** The answer for this home and metal if the search is done; starts it (off the server thread) when not asked yet. */
@@ -107,7 +114,14 @@ public final class MouthPointer {
     static Answer find(ServerLevel level, BlockPos home, String metal) {
         Ore ore = ore(metal);
         Spec s = ore == null ? null : CaveLocate.nearest(level, home, CaveKind.MOUTH, RADIUS, false, m -> leads(level.getSeed(), m, ore));
-        return new Answer(home, metal, s);
+        return new Answer(home, metal, s, s == null ? null : place(level.getSeed(), s));
+    }
+
+    /** The cave region a mouth's way in goes down into: where its throat ends, else where it joins the caves; or null. */
+    static @Nullable String place(long seed, Spec s) {
+        int[] e = Mouth.end(s);
+        String at = LodePlans.place(seed, e[0], e[1], e[2]);
+        return at != null || !s.joined() ? at : LodePlans.place(seed, s.jx(), s.jy(), s.jz());
     }
 
     /** Whether a mouth's way in reaches a lode of {@code ore}: an adit driven to one, or a lode of 20+ near its throat's end or joint. */
@@ -142,6 +156,12 @@ public final class MouthPointer {
         };
     }
 
+    /** The line, and the cave region the way in goes down into when there is one: "... It goes down into the Ochre Deep." */
+    static String line(Spec s, BlockPos home, String metal, @Nullable String place) {
+        String line = line(s, home, metal);
+        return place == null ? line : line + " It goes down into " + place + ".";
+    }
+
     static String honest(String metal) {
         return "I don't know of any old workings near your home. " + cap(metal) + " shows in cave walls: find a cave and follow its walls.";
     }
@@ -168,7 +188,7 @@ public final class MouthPointer {
         PENDING.put(p.getUUID(), new Destinations.Target(name, Level.OVERWORLD.identifier(),
                 new BlockPos(s.x(), s.y(), s.z()), "spot"));
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Old workings"))
-                .body(Component.literal(line(s, a.home(), a.metal())))
+                .body(Component.literal(line(s, a.home(), a.metal(), a.place())))
                 .choice(ACTION + ":mark", "Mark it on my map", "Not now").topic("delve_mark").ttl(20 * 60).build());
     }
 

@@ -1,0 +1,125 @@
+{
+ "schemaVersion": 1,
+ "id": "guardian_inverted",
+ "moves": "guardian_inverted",
+ "intro": {
+  "pose": "kneel",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "bite",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "bite_b"
+      ],
+      [
+       "bite_b",
+       "lift"
+      ]
+     ]
+    },
+    {
+     "move": "lift",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "bite"
+      ]
+     ]
+    },
+    {
+     "move": "beam",
+     "weight": 3
+    },
+    {
+     "move": "engulf",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "bite"
+      ]
+     ]
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "halo",
+   "pool": [
+    {
+     "move": "bite",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "bite_b"
+      ],
+      [
+       "bite_b",
+       "engulf"
+      ]
+     ]
+    },
+    {
+     "move": "undertow",
+     "weight": 2,
+     "then": [
+      [
+       "bite",
+       "bite_b"
+      ]
+     ]
+    },
+    {
+     "move": "halo",
+     "weight": 1
+    },
+    {
+     "move": "beam",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "engulf",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "bite"
+      ]
+     ]
+    },
+    {
+     "move": "lift",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "bite"
+      ]
+     ]
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

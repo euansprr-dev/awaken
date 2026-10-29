@@ -1,5 +1,7 @@
 package dev.awaken.mobs.client.life;
 
+import dev.awaken.mobs.entity.AwLook;
+import dev.awaken.mobs.entity.FaunaMob;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
@@ -44,6 +46,14 @@ public abstract class LifeModel extends EntityModel<LivingEntityRenderState> {
         super.setupAnim(s);
         pose(s);
         if (life != null) life.apply(Life.from(s), s);
+    }
+
+    /**
+     * Whether a pose of the body's own holds its legs this frame (tucked, dug in, up on its haunches): the feet of its
+     * motion profile let go to it (SPEC §23, "Motion"). Resting and burrowing, unless a body says otherwise.
+     */
+    public boolean legsHeld(AwLook l) {
+        return (l.fauna & (FaunaMob.P_REST | FaunaMob.P_BURROW)) != 0;
     }
 
     /** The body's own pose and gait for this frame (after the reset to the rest pose). */

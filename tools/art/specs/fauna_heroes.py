@@ -1325,7 +1325,7 @@ def mire_mother():
         arm.cube("arm_" + nm, -2.5, 0, -2.5, 5, 9, 5, mirror=mir, share=sh("arm_l"))
         hand = arm.bone("hand_" + nm, (0, 8.5, 0), (0, 0, side * 15))
         hand.cube("hand_" + nm, -4, 0, -6, 8, 1, 7, mirror=mir, share=sh("hand_l"))
-        thigh = body.bone("thigh_" + nm, (side * 11, -1, 10), (0, side * 20, 0))
+        thigh = body.bone("thigh_" + nm, (side * 11, 1.5, 10), (0, side * 20, 0))  # low enough that her feet stand on the ground
         thigh.cube("thigh_" + nm, -3.5, -3, -9, 7, 9, 13, mirror=mir, share=sh("thigh_l"))
         foot = thigh.bone("foot_" + nm, (0, 5.5, -7), (0, side * -30, 0))
         foot.cube("foot_" + nm, -4, 0, -9, 8, 3, 10, mirror=mir, share=sh("foot_l"))
@@ -2179,21 +2179,27 @@ def stonehorn_clips(r):
     cycle(idle, "ear_l", "rot", lambda p: (0, 0, 10 * max(0, s(p * 2, 0.2)) ** 6), 16)
     cycle(idle, "ear_r", "rot", lambda p: (0, 0, -10 * max(0, s(p * 2, 0.7)) ** 6), 16)
     cycle(idle, "tail", "rot", lambda p: (0, 0, 14 * s(p * 3)), 8)
-    for nm in ("skirt_l", "skirt_r", "skirt_f", "beard"):
+    # the side skirts hang from their whole top edge (hinged at its front end): they only flare out, never pitch,
+    # or their back ends lift off the barrel; the front skirt and the beard swing fore and aft
+    for nm, sd in (("skirt_l", -1), ("skirt_r", 1)):
+        cycle(idle, nm, "rot", lambda p, sd=sd: (0, 0, sd * (1 + s(p, 0.3))), 8)
+    for nm in ("skirt_f", "beard"):
         cycle(idle, nm, "rot", lambda p: (2 * s(p, 0.3), 0, 0), 8)
     walk = r.clip("walk", 1.3, loop=True)
     quad_gait(walk, ST_LEGS, swing=22, knee=24)
     body_bob(walk, "body", amp=0.5, roll=2.5)
     cycle(walk, "head", "rot", lambda p: (3 * c(p * 2, 0.1), 4 * s(p), 0), 8)
-    for nm in ("skirt_l", "skirt_r", "skirt_f"):
-        cycle(walk, nm, "rot", lambda p: (6 * s(p * 2, 0.2), 0, 0), 8)
+    for nm, sd in (("skirt_l", -1), ("skirt_r", 1)):
+        cycle(walk, nm, "rot", lambda p, sd=sd: (0, 0, sd * (2.5 + 2.5 * s(p * 2, 0.2))), 8)
+    cycle(walk, "skirt_f", "rot", lambda p: (6 * s(p * 2, 0.2), 0, 0), 8)
     run = r.clip("run", 0.75, loop=True)
     quad_gait(run, [("leg_fl", "shin_fl", 0.0), ("leg_fr", "shin_fr", 0.08), ("leg_hl", "shin_hl", 0.5), ("leg_hr", "shin_hr", 0.58)], swing=40, knee=40)
     cycle(run, "body", "rot", lambda p: (6 * s(p, 0.25), 0, 0), 8)
     cycle(run, "body", "pos", lambda p: (0, 1.4 * c(p * 2), 0), 8)
     cycle(run, "head", "rot", lambda p: (16 - 5 * s(p, 0.25), 0, 0), 8)
-    for nm in ("skirt_l", "skirt_r", "skirt_f"):
-        cycle(run, nm, "rot", lambda p: (14 + 8 * s(p * 2), 0, 0), 8)
+    for nm, sd in (("skirt_l", -1), ("skirt_r", 1)):
+        cycle(run, nm, "rot", lambda p, sd=sd: (0, 0, sd * (7 + 5 * s(p * 2))), 8)
+    cycle(run, "skirt_f", "rot", lambda p: (14 + 8 * s(p * 2), 0, 0), 8)
     w = r.clip("windup", 0.9)
     w.rot("head", [(0, 0, 0, 0), (0.9, 26, 0, 0)])
     w.rot("body", [(0, 0, 0, 0), (0.9, 5, 0, 0)])

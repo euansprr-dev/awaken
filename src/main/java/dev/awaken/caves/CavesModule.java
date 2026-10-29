@@ -5,8 +5,11 @@ import dev.awaken.Awaken;
 import dev.awaken.caves.skin.CaveSkin;
 import dev.awaken.caves.skin.CaveSkinFeature;
 import dev.awaken.caves.skin.Drips;
+import dev.awaken.delve.api.Lodes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
@@ -14,7 +17,10 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -64,7 +70,14 @@ public final class CavesModule {
         Drips.init(modBus);
         modBus.addListener(AddPackFindersEvent.class, e -> e.addPackFinders(Awaken.id("datapacks/awakened_caves"), PackType.SERVER_DATA,
                 Component.literal("Awakened Caves"), PackSource.BUILT_IN, false, Pack.Position.TOP));
+        // P4 (SPEC §42.9): the lodes' homes in a new regions world, the regions' Journal lines
+        NeoForge.EVENT_BUS.addListener((LevelEvent.Load e) -> {
+            if (e.getLevel() instanceof ServerLevel level && level.dimension() == Level.OVERWORLD) RegionHomes.load(level);
+        });
+        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> Lodes.homes(0L, null));
+        RegionFinds.register();
         RegionCommands.register();
         CavesTests.register();
+        RegionTests.register();
     }
 }

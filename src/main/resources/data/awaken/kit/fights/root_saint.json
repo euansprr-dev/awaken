@@ -1,0 +1,181 @@
+{
+ "schemaVersion": 1,
+ "id": "root_saint",
+ "moves": "root_saint",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "sweep",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "sweep_b"
+      ],
+      [
+       "sweep_b",
+       "palm"
+      ]
+     ]
+    },
+    {
+     "move": "palm",
+     "weight": 3
+    },
+    {
+     "move": "lance",
+     "weight": 3
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "haul",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "sweep"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "transition": "grow",
+   "pool": [
+    {
+     "move": "sweep",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "sweep_b"
+      ],
+      [
+       "sweep_b",
+       "palm"
+      ]
+     ]
+    },
+    {
+     "move": "palm",
+     "weight": 2
+    },
+    {
+     "move": "lance",
+     "weight": 3
+    },
+    {
+     "move": "grasp",
+     "weight": 2,
+     "then": [
+      [
+       "palm"
+      ]
+     ]
+    },
+    {
+     "move": "ring",
+     "weight": 2
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "haul",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "sweep"
+      ]
+     ]
+    },
+    {
+     "move": "grow",
+     "weight": 1
+    }
+   ]
+  },
+  {
+   "transition": "halo",
+   "pool": [
+    {
+     "move": "sweep",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "sweep_b",
+       "palm"
+      ]
+     ]
+    },
+    {
+     "move": "palm",
+     "weight": 2,
+     "then": [
+      [
+       "ring"
+      ]
+     ]
+    },
+    {
+     "move": "lance",
+     "weight": 3,
+     "then": [
+      [
+       "lance"
+      ]
+     ]
+    },
+    {
+     "move": "grasp",
+     "weight": 2,
+     "then": [
+      [
+       "palm"
+      ]
+     ]
+    },
+    {
+     "move": "ring",
+     "weight": 2
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "haul",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "grasp"
+      ]
+     ]
+    },
+    {
+     "move": "halo",
+     "weight": 2
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

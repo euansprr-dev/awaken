@@ -1,0 +1,159 @@
+{
+ "schemaVersion": 1,
+ "id": "hive_regent",
+ "moves": "hive_regent",
+ "intro": {
+  "pose": "idle",
+  "move": "emerge"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "cut",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "cut_b"
+      ]
+     ]
+    },
+    {
+     "move": "sting",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "dive",
+     "weight": 3,
+     "then": [
+      [
+       "cut_b"
+      ]
+     ]
+    },
+    {
+     "move": "brood",
+     "weight": 1
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "rain",
+   "pool": [
+    {
+     "move": "cut",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "cut_b"
+      ],
+      [
+       "cut_b",
+       "sting"
+      ]
+     ]
+    },
+    {
+     "move": "sting",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "volley",
+     "weight": 3,
+     "then": [
+      [
+       "volley"
+      ]
+     ]
+    },
+    {
+     "move": "dive",
+     "weight": 2,
+     "then": [
+      [
+       "cut_b"
+      ]
+     ]
+    },
+    {
+     "move": "rain",
+     "weight": 1
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "jelly",
+   "pool": [
+    {
+     "move": "frenzy",
+     "weight": 1
+    },
+    {
+     "move": "cut",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "cut_b",
+       "sting"
+      ]
+     ]
+    },
+    {
+     "move": "dive",
+     "weight": 3,
+     "then": [
+      [
+       "cut_b"
+      ],
+      [
+       "cut_b",
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "volley",
+     "weight": 2,
+     "then": [
+      [
+       "volley"
+      ]
+     ]
+    },
+    {
+     "move": "brood",
+     "weight": 1
+    },
+    {
+     "move": "sting",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.25
+ }
+}
