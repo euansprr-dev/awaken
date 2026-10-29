@@ -83,7 +83,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | Sovereign of Silence | Sovereign | Court | Brute | kit | A, the Stone Ear | ✓ 8559df31 | ✓ 8559df31 | — |
 | Sovereign of Sleep | Sovereign | Court | Flier | kit | A, the Night Owl | ✓ 8d12f035 | ✓ 8d12f035 | — |
 | Sovereign of Machines | Sovereign | Court | Brute | kit | A, the Armillary | ✓ e30286bc | ✓ e30286bc | — |
-| Sovereign of Mirrors | Sovereign | Court | Duelist | player ×1.8 | — | — | — | — |
+| Sovereign of Mirrors | Sovereign | Court | Duelist | kit | A, the Vanity | — | — | — |
 | Sovereign of Storms | Sovereign | Court | Flier | breeze ×2.4 | — | — | — | — |
 | Sovereign of Roots | Sovereign | Court | Caster | creaking ×1.9 | — | — | — | — |
 | Sovereign of Ash | Sovereign | Court | Flier | blaze ×2.4 | — | — | — | — |
@@ -238,3 +238,10 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   turning to line up into a sight round the lens, the Shutdown is everything on it stopping and starting again, and no
   other boss has a head that is an instrument. B is a fourth object on legs after the Bell, the Clock Tower and the
   Iron Horse; C is one more crowned figure after the Gorged King, and Unit Zero's ceramic automaton again.
+- **The Sovereign of Mirrors** (`sovereign_mirrors`): A the Vanity (a tall slender figure in white satin with six arms,
+  five of them holding round hand mirrors turned to its own face and the sixth a long blade of glass), B the Looking
+  Glass (a faceless courtier gazing into one hand mirror, its only face the one in the glass), C the Faceted Duelist (a
+  figure grown of mirror shards with a cut-diamond head). **Picked A**, 2026-10-29: "It only ever looked at itself" is
+  a creature that never stops looking at itself, the Mirrored Lunge is every mirror swinging round to show you
+  yourself, Shatter is all five bursting, and no other boss has six arms or carries its own reflections. B is the
+  Mirror Knight's mirror mask and sword again; C is one more figure of crystal after the Glass Serpent.

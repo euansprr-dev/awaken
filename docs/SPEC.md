@@ -10550,6 +10550,58 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     carries the weight a little past it.
   - **Meter.** Worst kink outside a strike 4.0° (the Spark Lattice), every other move under 3.9°; held at most 33% (the
     Turntable); the punch strings dip 40 to 41%.
+- **The Sovereign of Mirrors, the Vanity** (body and motion, `kit/bosses/sovereign_mirrors.py`). "It only ever looked
+  at itself." A tall slender figure in a white satin coat with silver brocade dots, a lattice bodice and a rose sash, a
+  short peplum and a coat tail hanging behind to its knees on a spring; long legs in dove-grey hose and black heeled
+  boots with pointed toes. Its face is porcelain with a small painted smile, its black hair lacquered up into a tall
+  knot with a silver pin through it and a pearl at each ear. It has six arms: the top pair in satin sleeves with puffed
+  caps and lace cuffs, the lower two pairs bare porcelain growing from its chest and waist. Five hands hold round hand
+  mirrors in bright rose-gold frames (the great one in its top left hand, half again the size of the others); the
+  glass shows a sky and a glowing glint, the great mirror the ghost of its face, and each back is polished silver with a
+  rose-gold rosette. The sixth hand holds a long blade of glass on a silver hilt, its edges glowing. Every mirror is
+  turned to its own face, wherever that is: each pose solves the hand round the handle and lays the glass toward the
+  middle of its face, so the mirrors follow its head through every clip without keys of their own. 98 cubes (588
+  faces) on 36 bones; the top of its knot 94 px up (5.9 blocks). The hitbox is 0.9 x 3.25 at its scale of 1.8 (1.6 x
+  5.85 blocks), round its body.
+  - **Its idle.** It stands admiring itself (8 s): its weight shifts from one hip to the other, it turns its face to the
+    great mirror and tilts it, glances into the mirror over its right shoulder to see its profile, lifts its chin
+    proudly with the high mirrors rising, and turns the glass blade over in its fingers; it breathes. It walks as on a
+    stage (1.4 s), each foot set down in front of the other on one line, the hips swaying and the head held high; it
+    runs gliding and leaning in (0.8 s), the mirrors drawn in close round its face.
+  - **Its moves.** The forehand and the rising backhand (LIGHT, a string) with the glass blade, its face never leaving
+    the great mirror. Mirrored Lunge (HEAVY, its gap closer, held 6 ticks): it turns side-on with the blade drawn back
+    level beside its face and every mirror swings round to face you, then it lunges, the front foot reaching far ahead
+    and the blade arm straight out. Flawless Parry (a guard): it raises the great mirror before it like a shield, the
+    blade crossed low, and every blow jolts the mirror back; the Reflection follows it (LIGHT), a straight thrust past
+    the mirror's edge. Whoever is behind it gets Over the Shoulder (LIGHT): the low right mirror swings out so it sees
+    you in it, its face turning down into the glass, and it thrusts the blade straight back under its arm. Hall of
+    Mirrors (into the second phase): all six arms spread wide with every mirror turned out on you and it turns once
+    round on its toes like a dancer. Through the Glass: it lifts the great mirror high over its head and draws it down
+    in front of itself as it bows into it. Shatter (the signature, into the third phase): it draws every mirror in close
+    round its face and turns from one to the next faster and faster, then flings all six arms wide with its head thrown
+    back as the five mirrors burst (scale 1 to 1.2 to 0 in two ticks); they grow back out of their frames one after
+    another as it recovers. Its intro: its arms hang with the mirrors face down and its head bowed; it raises them round
+    its face one after another, looking into each, and settles with a tilt of its chin. Broken, it sinks onto its right
+    knee with the blade's point on the floor and holds every mirror up round its face to see that it is not marked; it
+    rises with a push on the blade. Its death (4.8 s): it gazes into the great mirror while the other four break one
+    after another and it starts at each, then its legs give way onto its knees and it lies down on its side, curled,
+    with the last mirror held to its face.
+  - **How its keys are written.** One pose function over the body (its hips, waist, chest, neck and head), each wrist
+    by two-bone IK to a point, the blade's line, and each mirror's aim (its face, a point, or a direction). The rest is
+    the bind pose: the arms are solved onto their rest wrists, the blade's hand turned to its line and the mirrors to
+    the face, so nothing snaps at a clip's end. The aim is taken from above the wrist, not from the glass, so solving
+    it again changes nothing. A hand that has to turn a long way (the Reflection's wind-up) is solved along the way at
+    eased steps, the wrist travelling straight and the mirror's aim blended, so its turn never takes the long way
+    round; the blade keeps its flat to one side through its thrusts for the same reason. The Hall's turn is a whole
+    turn of the hips on top of its keys, a key a tick; the mirrors' bursts are scale tracks on their own bones.
+  - **On the floor.** Its hands, mirrors and blade are kept out of the floor by the ground pass in every clip, its
+    feet in the kneel, the rise, the walk and the run, and in its death its head and the great mirror too. Nothing
+    goes into it by more than 1.5 px, but for the Mirrored Lunge's back foot (1.8 px for a frame as it drives off).
+    The kneel's lift carries the right foot 12 px up and 12 px back; the death's halfway key to lying down is set
+    2.5 px high and the bow of Through the Glass has a key between set 1.5 px high.
+  - **Meter.** Worst kink outside a strike 5.1° (Shatter's head, flicking from mirror to mirror on purpose), every
+    other move under 5°; the Reflection alone from rest 7.1° (in the fight it always follows the parry, 4.9°); held at
+    most 50% (the Hall, which turns slowly on purpose); the cut strings dip 6 to 30%.
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

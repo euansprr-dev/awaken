@@ -192,7 +192,7 @@ final class DeepBestiary {
                 .phase(0.66F, "Subroutines.", a(SUMMON, "Drones").summon("arc_drone").n(3), a(RAIN, "Orbital Strike").n(6).bolt(BoltKind.CHARGE), a(BEAM, "Calculated Lance").bolt(BoltKind.CHARGE))
                 .phase(0.33F, "Shutdown.", a(BURST, "Shutdown").radius(15).inner(4).bolt(BoltKind.CHARGE).heavy(), a(NOVA, "Spark Lattice").n(16).bolt(BoltKind.CHARGE), a(SLAM, "Hydraulic Slam").radius(5))
                 .parts(P("machine_crown", "Crown of Machines", "precursor")).build());
-        out.add(m("sovereign_mirrors", "Sovereign of Mirrors", Theme.COURT, Tier.SOVEREIGN, Model.MIMIC, "The self gone wrong: your face, perfect parries, a hall of reflections").hp(32).dmg(5.5).spd(0.3).scale(1.8F).hold(Items.DIAMOND_SWORD).traits(MIMIC, REFLECT).bar(BossBarColor.WHITE).arena(24)
+        out.add(m("sovereign_mirrors", "Sovereign of Mirrors", Theme.COURT, Tier.SOVEREIGN, Model.MIMIC, "The self gone wrong: your face, perfect parries, a hall of reflections").hp(32).dmg(5.5).spd(0.3).scale(1.8F).size(0.9F, 3.25F).hold(Items.DIAMOND_SWORD).traits(MIMIC, REFLECT).bar(BossBarColor.WHITE).arena(24)
                 .intro("It only ever looked at itself.")
                 .phase(1.0F, "The Sovereign of Mirrors smiles your smile.", a(GUARD, "Flawless Parry"), a(CHARGE, "Mirrored Lunge"))
                 .phase(0.66F, "A hall of you.", a(DECOY, "Hall of Mirrors").n(3), a(BLINK, "Through the Glass"), a(CHARGE, "Mirrored Lunge"))
