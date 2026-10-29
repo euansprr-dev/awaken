@@ -13844,6 +13844,53 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   - **Meter.** Worst kink outside a strike 4.3° (Crush); held at most 14% (the intro, the heads bowed and waiting); no
     still spells; the strings dip at most 31% (the Swipe into the Grab into Crush). Wind-ups 14.4 (the Grab) to 31.1
     (Crush).
+- **The Thousand Legs, the House Centipede** (body and motion, `kit/bosses/nightmare_arthropod.py`). "Webs, and the
+  sound of a thousand legs." A house centipede as long as a cart. Its body is a short row of six dusty grey-yellow
+  plates with three dark violet stripes down its back; out from under it fan ten pairs of long thin legs banded pale
+  and violet, each bowed up to a knee and down to a fine claw well out from it, longer toward the back, so the whole
+  of it is a ring of legs round a thin body. Its last pair, the longest, is held up behind it like a second pair of
+  feelers, so you can't tell which end is its head; its real feelers are as long again. Its head is small and flat,
+  with two big black eyes and a pair of curved poison claws under its front. Nothing glows. 120 cubes on 82 bones;
+  its middle is 1.1 blocks up, its knees 1.4 to 2.1, its claws stand 4.8 blocks apart across it and 5.2 from front to
+  back, and its feelers reach 3 blocks. The hitbox is 1.50 x 0.85 at its scale of 2.6 (3.9 x 2.2 blocks: its ring of
+  legs, not its feelers). Its legs reach their claws by two-bone IK, a plate's frame carrying each knee's pole.
+  - **Its idle.** It stands low on its legs, nearly still (6 s); its feelers never stop, sweeping and tasting the air
+    one after the other, its back legs sway and its head turns a little. Now and then a shiver runs up its legs from
+    the back pair to the front, each pair lifting and setting down in turn, the way they do in a wall.
+  - **How it moves.** A wave of steps runs up each side from its back legs to its front ones, the two sides out of
+    step, so its legs ripple (0.8 s, 1.75 blocks a stride); its body rides low with a little sway, its feelers held
+    forward. Running it goes lower and much faster (0.45 s, 3.0 blocks) with its feelers swept back. It turns on the
+    spot with the same ripple swung round.
+  - **Struck, broken, down and its death.** Struck, it jerks back with its front flung up, feelers back and poison
+    claws open; from the side it curls away from the blow. Broken, its legs slide out and it drops flat on its belly;
+    it gathers them in and lifts itself. Its death (5 s): it rears and thrashes, its front whipping one way and the
+    other, drops as its legs slide out, and curls up on the floor into a hook while its legs fold in one pair after
+    another from the back; one twitches, and it is still.
+  - **Its moves.** The Bite (LIGHT): it draws its head up and back off the floor with its poison claws spread, then
+    plunges, the claws snapping shut and its front legs slamming down before it, and worries at you. The Lasso (LIGHT,
+    after the Bite): its front three pairs lift back over its head, then it lunges and throws them over you in a ring
+    and folds them back to its jaws. The Drop (HEAVY, its gap closer, ability Drop): it crouches, rears its front up
+    high with its front legs spread, holds, and springs, its legs swept back along it, then flung out wide as it comes
+    down flat on you with every leg splayed. Web (ability Web): it rears with its front legs drawn in under its jaws
+    and flings them out at you wide apart; the threads tug, its front bobbing and rocking. The Lash (LIGHT, for
+    whoever is behind it): the whole of it twists, its back end swinging out with its long back legs high, then whips
+    round across behind it. Hatchlings (ability Hatchlings): it presses itself flat and shudders, its back heaving.
+    The Walls Open (into the second phase, ability Hatchlings): it rears up with its front legs spread round its head
+    like a crown and trembles, then drops flat and shudders. A Thousand Legs (PERILOUS, the signature): it rears up
+    over you with its front five pairs fanned out high round its head, comes down with them slamming into a ring round
+    you, and its legs hammer the floor pair after pair, and it settles. Its intro, "You can hear them in the walls.":
+    it lies flat with its legs pressed out and its feelers laid back; a feeler lifts, then the other; a shiver runs
+    up its legs from the back, each pair drawing in under it, and it rises onto them all and sweeps its feelers at you.
+    Under every move its feelers keep tasting, its back legs sway and its poison claws work.
+  - **On the floor.** The legs that stand through a move keep their claws where they stand every tick; the ground
+    pass lifts its claws and knees, its head and poison claws and the tips of its feelers and back legs out of the
+    floor.
+  - **Its sounds** (chosen on paper, not heard in game): a silverfish's skitter and a spider's hiss under its tells,
+    an endermite's under A Thousand Legs; scaffolding's clatter for its legs on the floor and its landing, a cobweb
+    for Web, a pointed dripstone landing under its blows.
+  - **Meter.** Worst kink outside a strike 3.8° (the Lasso's throw); held at most 11% (the Bite into the Lasso into
+    the Bite); no still spells; the strings dip at most 38% (the Drop into the Bite). Wind-ups 12.9 (the Bite) to 28.4
+    (A Thousand Legs).
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 

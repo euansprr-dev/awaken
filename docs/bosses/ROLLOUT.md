@@ -94,7 +94,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Pyre | Nightmare | Fear | Flier | kit | A, the Pyre Mare | ✓ 2a699e47 | ✓ 2a699e47 | — |
 | The Undertow | Nightmare | Fear | Caster | kit | A, the Old Snapper | ✓ 7063327c | ✓ 7063327c | — |
 | The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | kit | A, the Throng | ✓ 43eb6a0c | ✓ 43eb6a0c | — |
-| The Thousand Legs | Nightmare | Fear | Crawler | spider ×2.6 | — | — | — | — |
+| The Thousand Legs | Nightmare | Fear | Crawler | kit | A, the House Centipede | — | — | — |
 | The Fuse | Nightmare | Fear | Construct | creeper ×2 | — | — | — | — |
 | The Faceless | Nightmare | Fear | Duelist | player | — | — | — | — |
 
@@ -299,3 +299,10 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   is a crowd that is one body and turns every face to you at once, it falls down and gets up again the way a crowd
   closes back in, and no other boss is made of people. B is one more robed figure after the Pilgrim and the Cantor; C
   reads as several mobs, not one boss.
+- **The Thousand Legs** (`nightmare_arthropod`): A the House Centipede (a house centipede as long as a cart, its ten
+  pairs of long banded legs fanned out round a thin striped body, its back legs held up like a second pair of feelers),
+  B the Millipede (a black armoured millipede that coils up and rears), C the Web Spider (a pale spider hanging in its
+  web). **Picked A**, 2026-10-30: "You can hear them in the walls" is the thing that runs out of the wall on more legs
+  than you can count, its leg fan is a shape no other boss has, and A Thousand Legs is every one of them hammering the
+  floor round you. B coils like the Cinder Wyrm and rears like the Glass Serpent; C is the Long-Legs' tall spider
+  shape again.

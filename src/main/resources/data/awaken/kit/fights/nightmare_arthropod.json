@@ -1,0 +1,111 @@
+{
+ "schemaVersion": 1,
+ "id": "nightmare_arthropod",
+ "moves": "nightmare_arthropod",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "bite",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "lasso"
+      ],
+      [
+       "lasso",
+       "bite"
+      ]
+     ]
+    },
+    {
+     "move": "lasso",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "drop",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "bite"
+      ]
+     ]
+    },
+    {
+     "move": "web",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "walls",
+   "pool": [
+    {
+     "move": "bite",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "lasso"
+      ],
+      [
+       "lasso",
+       "bite"
+      ]
+     ]
+    },
+    {
+     "move": "lasso",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "drop",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "bite",
+       "lasso"
+      ]
+     ]
+    },
+    {
+     "move": "web",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "hatch",
+     "weight": 1
+    },
+    {
+     "move": "thousand",
+     "weight": 2
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.3
+ }
+}

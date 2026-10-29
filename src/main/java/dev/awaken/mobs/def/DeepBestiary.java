@@ -241,7 +241,7 @@ final class DeepBestiary {
                 .intro("They all have the same face.")
                 .phase(1.0F, "The crowd shuffles closer.", a(SLAM, "Crush").radius(3.5F), a(SUMMON, "More of Them").summon("sleepwalker").n(2))
                 .phase(0.5F, "Closer.", a(SUMMON, "More of Them").summon("sleepwalker").n(3), a(CHARGE, "Surge").heavy()).build());
-        out.add(m("nightmare_arthropod", "The Thousand Legs", Theme.FEAR, Tier.NIGHTMARE, Model.SPIDER, "Webs, and the sound of a thousand legs").hp(22).dmg(4).spd(0.32).scale(2.6F).bar(BossBarColor.PURPLE).arena(22)
+        out.add(m("nightmare_arthropod", "The Thousand Legs", Theme.FEAR, Tier.NIGHTMARE, Model.SPIDER, "Webs, and the sound of a thousand legs").hp(22).dmg(4).spd(0.32).scale(2.6F).size(1.50F, 0.85F).bar(BossBarColor.PURPLE).arena(22)
                 .intro("You can hear them in the walls.")
                 .phase(1.0F, "Legs everywhere.", a(ROOT, "Web").radius(2.5F), a(LEAP, "Drop").radius(3).heavy())
                 .phase(0.5F, "The walls open.", a(SUMMON, "Hatchlings").summon("capweaver").n(3), a(ROOT, "Web").radius(3)).build());
