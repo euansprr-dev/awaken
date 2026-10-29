@@ -249,7 +249,7 @@ final class DeepBestiary {
                 .intro("Hsssss.")
                 .phase(1.0F, "Somewhere, a fuse.", a(RAIN, "Fuse Lines").n(4).bolt(BoltKind.FIRE), a(BURST, "Blast Ring").radius(10).inner(3).heavy())
                 .phase(0.5F, "Shorter fuse.", a(RAIN, "Fuse Lines").n(6).bolt(BoltKind.FIRE).wind(26), a(BURST, "Blast Ring").radius(12).inner(3).heavy()).build());
-        out.add(m("nightmare_generic", "The Faceless", Theme.FEAR, Tier.NIGHTMARE, Model.HUMAN, "No face: always in the corner of your eye").hp(22).dmg(4).spd(0.28).bar(BossBarColor.PINK).arena(22)
+        out.add(m("nightmare_generic", "The Faceless", Theme.FEAR, Tier.NIGHTMARE, Model.HUMAN, "No face: always in the corner of your eye").hp(22).dmg(4).spd(0.28).scale(1.8F).size(0.41F, 2.31F).bar(BossBarColor.PINK).arena(22)
                 .intro("It was standing there the whole time.")
                 .phase(1.0F, "The Faceless turns.", a(BLINK, "Corner of Your Eye"), a(DARKNESS, "Lights Off"))
                 .phase(0.5F, "It is closer.", a(DECOY, "Everywhere").n(2), a(BEAM, "Stare").bolt(BoltKind.DREAM).heavy(), a(BLINK, "Corner of Your Eye")).build());

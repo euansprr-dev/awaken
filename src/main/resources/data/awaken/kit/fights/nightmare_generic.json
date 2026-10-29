@@ -1,0 +1,115 @@
+{
+ "schemaVersion": 1,
+ "id": "nightmare_generic",
+ "moves": "nightmare_generic",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "reach",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "grasp"
+      ]
+     ]
+    },
+    {
+     "move": "grasp",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "fold",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "corner",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "reach"
+      ]
+     ]
+    },
+    {
+     "move": "lights",
+     "weight": 2
+    },
+    {
+     "move": "wrong",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "hold",
+     "weight": 1
+    }
+   ]
+  },
+  {
+   "transition": "closer",
+   "pool": [
+    {
+     "move": "reach",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "grasp"
+      ],
+      [
+       "grasp",
+       "reach"
+      ]
+     ]
+    },
+    {
+     "move": "fold",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "corner",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "reach",
+       "grasp"
+      ]
+     ]
+    },
+    {
+     "move": "stare",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "everywhere",
+     "weight": 1
+    },
+    {
+     "move": "wrong",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "hold",
+     "weight": 2
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.3
+ }
+}

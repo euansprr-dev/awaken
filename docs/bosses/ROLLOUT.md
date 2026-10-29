@@ -96,7 +96,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | kit | A, the Throng | ✓ 43eb6a0c | ✓ 43eb6a0c | — |
 | The Thousand Legs | Nightmare | Fear | Crawler | kit | A, the House Centipede | ✓ 5eb9480a | ✓ 5eb9480a | — |
 | The Fuse | Nightmare | Fear | Construct | kit | A, the Jack | ✓ ae6ea04f | ✓ ae6ea04f | — |
-| The Faceless | Nightmare | Fear | Duelist | player | — | — | — | — |
+| The Faceless | Nightmare | Fear | Duelist | kit | A, the Mannequin | — | — | — |
 
 ## The rounds so far
 
@@ -313,3 +313,13 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   that wait made into a toy: the crank ticks and you don't know when it pops. No other boss is a toy, and its box,
   spring and lid give it a shape and moves of its own. B is one more round thing hanging in the air after the
   Moon Angler's moon; C digs like the Thorn Pangolin.
+- **The Faceless** (`nightmare_generic`): A the Mannequin (an artist's jointed wooden drawing mannequin grown twice as
+  tall as a door, with the pencil guidelines of a face begun on its egg of a head and the eyes rubbed out), B the
+  Stranger (a tall thin man in a suit with a smudged blank face), C the Dressmaker's Dummy (a headless tailor's form
+  on its stand). **Picked A**, 2026-10-30: "It was standing there the whole time" is the shape in the corner of the
+  room that you took for a coat or a chair, and a mannequin is that shape exactly: something made to stand still and
+  be looked at. Its ball joints let it turn and bend in ways nothing alive can (its head round further than a neck
+  should, its chest swivelling on its waist, its body folding too far), so its moves come from what it is. No other
+  boss is made of wood that was carved to look like us; the Duelists so far are a knight, a masked fencer, a shadow,
+  a vanity mirror and a cuttlefish. B reads as a well-known internet monster rather than ours; C has no head, arms
+  or legs to duel with.

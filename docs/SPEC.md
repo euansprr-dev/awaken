@@ -13945,6 +13945,70 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     a witch's cackle for Shorter Fuse and its intro; wood and chain for its hops.
   - **Meter.** Worst kink outside a strike 4.1° (the Lid); held at most 1% (its intro); no still spells; the strings
     dip at most 33% (the Pop into the Slap into the Pop). Wind-ups 20.9 (the Pop) to 39.0 (Pop Goes).
+- **The Faceless, the Mannequin** (body and motion, `kit/bosses/nightmare_generic.py`). "It was standing there the
+  whole time." An artist's jointed wooden drawing mannequin, the kind that stands on a desk to be drawn from, grown
+  twice as tall as a door: pale beech worn smooth, a ball at every joint (greyer and darker where hands have worn
+  them), brass hinge pins in its elbows and knees, an egg for a head, long flat hands with their fingers jointed once
+  and grey with handling, and the broken-off peg in the small of its back where it stood on its stand. It has no face.
+  Someone began to draw one on it in pencil, the way you do: the line down the middle of its head, over the top and
+  down the back, and the line across it for the eyes, going on round its head; where the eyes would go the pencil has
+  been rubbed out, more than once, and a faint mouth line is left. It is cracked down its breast and chipped at its
+  left shoulder, and a shop's paper tag hangs from its left wrist on a string. Nothing on it glows. 60 cubes on 22
+  bones; it stands 4.2 blocks tall and 1.3 across. The hitbox is 0.41 x 2.31 at its scale of 1.8 (0.74 x 4.2
+  blocks). Its legs are planted by the leg solver on every pose; its fingers, fingertips, head and tag have their own
+  springs for the overlap.
+  - **Its idle.** It stands quite still, the way a thing stands that has never had to balance: its weight settles from
+    one hip to the other over a long while; its head tilts over to one side and stays there, looking at you, and comes
+    back; its right fingers tap three times on nothing; then its head turns, in small clicks, a little further than you
+    would like, and slowly back (6 s).
+  - **How it moves.** It walks too smoothly: its hips glide level, its head stays level and on you, and its arms swing
+    loose a beat behind, like things hung from it (1.0 s, 1.3 blocks a stride). It runs leaning in, long strides, its
+    arms hanging straight back behind it and not swinging at all (0.62 s, 2.6 blocks). It turns in two small steps
+    (0.48 s).
+  - **Struck, broken, down and its death.** Struck, it jolts back and its joints flop loose (its head lolls, its arms
+    swing) and it snaps back into its pose; from the side it bends away from the blow. Broken, it drops onto its knees
+    as if its strings were cut, slumped forward with its arms hanging and its head down, and rises the way a puppet is
+    lifted, head first. Its death (5 s): it stands rigid a moment with its head tilted; its knees go and it drops onto
+    them, slumped, and folds forward until its chest lies on its knees and its hands on the floor; its head comes loose
+    on its neck, drops off and rolls away to the side; a finger twitches.
+  - **Its moves.** The Reach (LIGHT): it turns a little away and cocks its right hand back by its ear, fingers flat,
+    its head turning to keep you; then the arm spears straight out at you as it steps in, the fingers leading. The
+    Grasp (LIGHT, after the Reach): its body turns the other way and its left hand goes out wide at its side, fingers
+    spread, then sweeps across in front of it and clutches shut. Folding (HEAVY, its delay): it bends forward at its
+    waist ball, slowly, too far, until its head hangs by its knees and its hands lie on the floor; it stays there; then
+    it unfolds in one snap, standing tall with both arms flung up over its head through whoever is in front of it.
+    Corner of Your Eye (its gap closer, ability Corner of Your Eye): it goes still and listens, its fingers curling,
+    then turns its head right away from you as if it heard something; and then it is just there in front of you,
+    crouched low with its hands reaching further, its head snapping back round to you. Lights Off (ability Lights
+    Off): it raises its right hand high over its head with the fingers spread, its head tilting back to look up at
+    it, and closes them in two jerks as if pinching out a candle, its body swaying with each; its head drops. Stare
+    (ability Stare): it leans its blank face at you and tilts it over to one side, then the other way, then further
+    than a neck should go, and holds it there trembling, its body swaying over its feet and its fingers working; then
+    it straightens. Everywhere (ability Everywhere): it snaps from pose to pose like a model for drawing, holding each:
+    pointing straight at you, both arms up over its head, wrapped round itself and crouched, and back to pointing. Wrong
+    Way Round (LIGHT, for whoever is behind it): its head turns round over its shoulder to look behind it; then its
+    whole chest swivels round on its waist ball after it, its legs staying where they are, and its right arm swings
+    across behind it. It Is Closer (into the second phase): its joints crack one after another (its neck, its right
+    wrist, its left, its neck again), each one jolting through its chest and arms, and it takes a step toward you, its
+    head jerking round to you. Hold Still (PERILOUS, the signature): it rises tall with its arms straight out at its
+    sides, lifting them higher as its head tips back; it creaks, and winds its body back round on its waist ball; then
+    it spins round on it twice, its arms out at full reach and dipping and rising as it goes, and stops dead facing
+    you, its arms swinging on after it. Its intro: it stands posed the way someone left it to be drawn, its right arm
+    raised high (trembling a little) and its left bent at its side, its head turned away and down; its fingers stop;
+    its head turns round to you in three clicks, the turn going down through its chest as its arm sinks; its arm comes
+    down; and it takes a step. Under every move its fingertips flex, one hand after the other.
+  - **On the floor.** The ground pass lifts its fingers, hands and tag and its head out of the floor in every clip,
+    and its shins and feet in kneeling, rising and its death; its death keeps its hands and its fallen head above the
+    floor.
+  - **Its sounds** (chosen on paper, not heard in game): wood. An armour stand's knock and a note block's hat under its
+    light tells, a wooden door's creak under the heavy ones and Hold Still (with the warden's close heartbeat and a
+    snare); a sweep and bamboo for its light swings, a heavy knock and wood for the heavy; a door shutting and an
+    armour stand set down for Everywhere; a candle snuffed for Lights Off; an enderman's stare for Stare; an armour
+    stand's hit and breaking wood under its blows; a door, an armour stand falling and the cave's breath for It Is
+    Closer; bamboo and a skeleton's step for its feet.
+  - **Meter.** Worst kink outside a strike 4.3° (Folding, Wrong Way Round); held at most 10% (the Grasp); no still
+    spells; the strings dip at most 28% (the Reach into the Grasp). Wind-ups 19.1 (the Reach, the Grasp) to 22.8
+    (Folding).
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
