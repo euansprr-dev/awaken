@@ -255,7 +255,15 @@ the rank's glow added as light, a wide haze in the rank's colour alpha-blended (
 thinning to nothing with height; no world fog (it counts height as distance and cut the column off flat), the top kept
 inside the far plane. Drawn after the level in a pass of its own (depth-tested, no depth written), never through the
 level's translucent passes (with improved transparency their composite writes a translucent's depth wherever it shows,
-so Lens took each ribbon's whole quad for solid and left its clouds out there: a hard-edged slab). Admin `/awaken gate frame <dist> <lift>` puts the camera on the line from the nearest gate toward
+so Lens took each ribbon's whole quad for solid and left its clouds out there: a hard-edged slab). Hidden by any land
+in front of where the gate really stands, near or far (Euan, 29 Oct: "One of the gate beams is showing on top of the
+cliff here even tho the gate is behind it"): a pillar drawn pulled in along its sight line was tested at the depth it was
+drawn at, so chunks between there and the gate never hid it, and Far Sight's land isn't in the game's depth at all. The
+pillars' own pipelines (`RigPipelines.PILLAR_HAZE`/`PILLAR_LIGHT`, shader `gate_pillar`) carry each pillar's stretch (how
+many times further off it really stands), write its real depth (at the far plane past it) for the game's depth test, and
+discard where far land is nearer (`compat.client.FarTerrain`'s depth and planes, while it draws and shares one; never
+under Distant Horizons). A driver that can't build them draws the pillars as before. Tour `pillars-ridge` (render
+distance 6, a stone block 72-88 blocks ahead of a gate 200 and 400 blocks off). Admin `/awaken gate frame <dist> <lift>` puts the camera on the line from the nearest gate toward
 Carillon's centre, facing the pillar (tours).
 Gate card shows rank, breaks-in, omen; PER ≥20 adds layout, ≥40 modifiers, ≥60 floor count; Veil scouting shows all.
 A gate of another rank than the hunter's says so in a "For you" row: "above your rank", or "below your rank · pays less"
