@@ -5289,8 +5289,23 @@ magic.
     user's CPU estimate, for A/B; check: the latest roll read back).
 - **Heightfield** `awaken:lens_height` (`LensHeightfield`, 1024×1024 RG16F, mips 1-4 hold the max of their 2×2; about
   5.6 MB on the GPU and the same off-heap mirror): from the client chunks' own heightmaps (26.3 sends MOTION_BLOCKING
-  and MOTION_BLOCKING_NO_LEAVES to the client): r the top of everything that blocks motion (leaves included), g without
-  leaves. A ring addressed by world block modulo 1024, a 64×64-chunk window centred on the camera's chunk: a chunk
+  and MOTION_BLOCKING_NO_LEAVES to the client): r the top of everything that blocks motion (leaves included), g
+  without leaves. **The heightfield sees every solid block** (`LensHeights`, Euan 2026-10-29: "in a closed room the
+  shadow on the wall moves with me instead of staying where it is. It's the shadow of the light coming through the
+  door"): 26.3 builds those heightmaps from `#minecraft:blocks_motion`, which holds the game's blocks and only the mod
+  blocks a tag adds, so a room of Carillon's city bricks under clay tiles read as open sky. Lens lit it as it lights
+  the street, and only the screen-space contact shadows (the door frame's, at most 3 blocks long) shaped that light,
+  so it slid with the view. Each column also takes in, from its highest block of any kind down to the heightmap's own
+  top, the first block the tag skips that the game still counts as solid (`isSolid`: a collision box most of a block,
+  or a whole block high; never leaves, which the tag holds) as the top of both. Only sections whose palettes hold such a block are
+  walked, so land without one costs one palette check a section and a chunk read. Swift's camera cover (texel 21)
+  takes the same rule at the camera's column. A room of any block now reads as covered: the model's fade under cover
+  and the 85% floor hold inside it, and its light no longer rests on the screen-space contact shadows alone, so it
+  stays put as you walk. The game's own heightmaps (rain, spawning, fire) still skip those blocks: a module that
+  builds with its own blocks adds them to `#minecraft:blocks_motion_no_leaves`. GameTest `lens_heights_skipped_roof`;
+  tour `tools/autopilot/lens-door-light-look.txt` (the same room in stone bricks and in city bricks under clay tiles,
+  a door toward the morning sun, from four places across it).
+  A ring addressed by world block modulo 1024, a 64×64-chunk window centred on the camera's chunk: a chunk
   entering the window clears its slot and is read nearest first (40 a tick), a loaded chunk is read when it arrives
   (`ChunkEvent.Load` on the client), the 5×5 chunks around the camera are re-read every 10 ticks and the rest of the
   window 12 a tick in turn (block changes show within about ten seconds; halved for the CPU after L3), and a slot uploads only when its hash changed,
@@ -5367,7 +5382,7 @@ magic.
   pixel, 0.5 to 1.5 blocks of solid heightfield (`g`) over the air in front of the surface (its point 0.3 blocks
   toward the camera, so a trunk's or a cliff's own column never counts as its cover; a dark doorway seen from the
   street does count; not the open sky, far terrain or Holo plates; not past the heightfield's trusted reach); Swift by the
-  camera (texel 21 r: the client's MOTION_BLOCKING_NO_LEAVES top above the eye + 0.5, eased over about a sixth of a
+  camera (texel 21 r: the client's MOTION_BLOCKING_NO_LEAVES top, with the blocks it skips, above the eye + 0.5, eased over about a sixth of a
   second). The open land, by day and by night, is untouched.
 - **Within arm's reach, never darker than the game at all** (Euan, 2026-10-29, "some more shadow issues with
   underground torches held here": the torch in his hand was dark): every tier, right after the cover floor, a pixel
