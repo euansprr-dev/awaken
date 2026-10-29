@@ -97,7 +97,8 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
             BlockPos f = w.forge.get();
             BlockState fs = level.getBlockState(f);
             Direction face = fs.hasProperty(HorizontalDirectionalBlock.FACING) ? fs.getValue(HorizontalDirectionalBlock.FACING) : Direction.NORTH;
-            s.mouth = new Vec3(f.getX() + 0.5 + face.getStepX() * 0.3, f.getY() + 0.32, f.getZ() + 0.5 + face.getStepZ() * 0.3);
+            // half in the fire, half out of the mouth, so the glow is seen
+            s.mouth = new Vec3(f.getX() + 0.5 + face.getStepX() * 0.5, f.getY() + 0.3, f.getZ() + 0.5 + face.getStepZ() * 0.5);
             s.mouthYaw = face.toYRot();
             s.fireLight = LightCoordsUtil.getLightCoords(level, f.relative(face));
         }

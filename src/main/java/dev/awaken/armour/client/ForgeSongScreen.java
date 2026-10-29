@@ -171,9 +171,16 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
                 0xFF000000 | w.set.rank.colour);
     }
 
+    /** The bottom of what the screen draws, above the letterbox; the hint's two lines sit there, the pips and lane above. */
+    private int bottom() {
+        return height - Math.max(10, height / 14) - 4;
+    }
+
     private void hint(GuiGraphicsExtractor g, String text) {
-        int bottom = height - Math.max(10, height / 14) - 14;
-        g.centeredText(font, Component.literal(text), width / 2, bottom, DIM);
+        if (text.isEmpty()) return;
+        var lines = font.split(Component.literal(text), Math.min(420, width - 40));
+        int n = Math.min(2, lines.size()), y = bottom() - 10 * n;
+        for (int i = 0; i < n; i++) g.centeredText(font, lines.get(i), width / 2, y + i * 10, DIM);
     }
 
     // ---- heat ----------------------------------------------------------------------------------------------------------
@@ -216,7 +223,7 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
             colour = BAD;
         }
         g.text(font, say, gx + gw + 12, needle - 4, colour, true);
-        hint(g, "Click or press Space to pull the bar from the fire while it glows in the gold.   Esc: step away, the work waits");
+        hint(g, "Pull the bar from the fire while it glows in the gold: click, or press Space. Esc steps away; the work waits.");
     }
 
     /** The shader's ramp: dull red, orange, yellow, white. */
@@ -287,14 +294,19 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
                     int alpha = (int) (255 * (1F - k) * 0.9F) + 25;
                     ring(g, px, py, rad * (1F + 2.4F * k), 1.5F, alpha << 24 | 0xFFE6B0);
                 }
-            } else if (j == next + 1) ring(g, px, py, rad, 1F, 0x80AFC2D8);
-            else disc(g, px, py, 1.5F, 0x60AFC2D8);
+            } else if (j == next + 1) {
+                disc(g, px, py, rad * 0.45F, 0x60FFCF7A);
+                ring(g, px, py, rad * 0.8F, 1F, 0xB0FFE6B0);
+            } else {
+                disc(g, px, py, rad * 0.35F, 0x70FFCF7A);
+                disc(g, px, py, 1.5F, 0xC0FFF2C2);
+            }
         }
         lane(g, w, r, t, need, false);
         pips(g, w, need);
         boolean countIn = t < r.bar().length() * r.step();
-        hint(g, countIn ? "Listen: the anvil counts the rhythm in. Then strike each mark on the beat."
-                : "Click the bright mark on the beat (Space strikes where you point).   Esc: step away, the work waits");
+        hint(g, countIn ? "Listen: the anvil counts the rhythm in. Then strike each glowing mark on the beat."
+                : "Strike the bright mark on the beat: click it, or press Space where you point. Esc steps away; the work waits.");
     }
 
     /** The count-in bar, then a soft tap on each strike's beat. */
@@ -344,7 +356,7 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
 
     /** The beat lane: what's coming slides to the line; the count-in shows as the bar to listen to. */
     private void lane(GuiGraphicsExtractor g, ForgeWork w, ForgeSong.Rhythm r, float t, int need, boolean offBeats) {
-        int lw = Math.min(320, width - 80), lx = width / 2 - lw / 2, ly = height - Math.max(10, height / 14) - 40;
+        int lw = Math.min(320, width - 80), lx = width / 2 - lw / 2, ly = bottom() - 42;
         float perTick = 2.4F;
         int hit = lx + 56;
         g.fill(lx, ly - 7, lx + lw, ly + 7, 0xB0080B12);
@@ -385,7 +397,7 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
 
     /** One pip a strike, coloured by how it went. */
     private void pips(GuiGraphicsExtractor g, ForgeWork w, int need) {
-        int y = height - Math.max(10, height / 14) - 26, pw = 8, x0 = width / 2 - need * (pw + 3) / 2;
+        int y = bottom() - 28, pw = 8, x0 = width / 2 - need * (pw + 3) / 2;
         for (int j = 0; j < need; j++) {
             float score = j < w.scores.size() ? w.scores.get(j) : predicted[j];
             int x = x0 + j * (pw + 3);
@@ -405,7 +417,7 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         lane(g, w, r, t, w.strikesNeeded(), true);
         Vec3 at = f.top();
         if (ForgeCamera.project(at.x, at.y + ForgeFrame.FACE, at.z, width, height, p)) ring(g, p[0], p[1], 14F, 1F, 0x60AFC2D8);
-        hint(g, "You're helping " + ForgeClient.name(w.forger) + ". Strike the off-beats, between their blows (click or Space).   Esc: leave");
+        hint(g, "You're helping " + ForgeClient.name(w.forger) + ". Strike the off-beats, between their blows: click, or press Space. Esc leaves.");
     }
 
     private void twinStrike(ForgeWork w, ForgeFrame f, float t, float now) {
@@ -446,7 +458,7 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
             float k = t < cueAt ? 0.5F + 0.5F * (float) Math.sin(now * 0.25) : 1F;
             ring(g, p[0], p[1], 22F, 1.5F, (int) (60 + 120 * k) << 24 | 0xFFCF7A);
         }
-        hint(g, quenched ? "" : t < cueAt ? "Hold it over the water... plunge it when the bell rings (click or Space).   Esc: step away"
+        hint(g, quenched ? "" : t < cueAt ? "Hold it over the water, and plunge it when the bell rings: click, or press Space. Esc steps away."
                 : "Plunge it! (click or Space)");
     }
 
@@ -778,16 +790,18 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         }
     }
 
+    /** A ring as a few dozen short turned bars round it (not a fill a pixel row). */
     private static void ring(GuiGraphicsExtractor g, float cx, float cy, float r, float th, int colour) {
-        int ri = (int) Math.ceil(r);
-        float in = Math.max(0F, r - th);
-        for (int dy = -ri; dy <= ri; dy++) {
-            float outer = (float) Math.sqrt(Math.max(0F, r * r - dy * dy));
-            if (outer <= 0F) continue;
-            float inner = Math.abs(dy) < in ? (float) Math.sqrt(in * in - dy * dy) : 0F;
-            int y = Math.round(cy) + dy;
-            g.fill(Math.round(cx - outer), y, Math.max(Math.round(cx - inner), Math.round(cx - outer) + 1), y + 1, colour);
-            g.fill(Math.min(Math.round(cx + inner), Math.round(cx + outer) - 1), y, Math.round(cx + outer), y + 1, colour);
+        int n = Mth.clamp((int) (r * 0.9F), 10, 40), t = Math.max(1, Math.round(th));
+        float mid = r - th / 2F, len = (float) (Math.PI * 2 * mid / n) + 1F;
+        var pose = g.pose();
+        for (int i = 0; i < n; i++) {
+            double a = Math.PI * 2 * i / n;
+            pose.pushMatrix();
+            pose.translate(cx + (float) Math.cos(a) * mid, cy + (float) Math.sin(a) * mid);
+            pose.rotate((float) (a + Math.PI / 2));
+            g.fill(-Math.round(len / 2), -t / 2, Math.round(len / 2), t - t / 2, colour);
+            pose.popMatrix();
         }
     }
 
@@ -798,12 +812,14 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         }
     }
 
+    /** A line two pixels thick as one turned bar. */
     private static void line(GuiGraphicsExtractor g, float x0, float y0, float x1, float y1, int colour) {
-        int n = (int) Math.max(1, Math.hypot(x1 - x0, y1 - y0));
-        for (int i = 0; i <= n; i++) {
-            float k = i / (float) n;
-            int x = Math.round(Mth.lerp(k, x0, x1)), y = Math.round(Mth.lerp(k, y0, y1));
-            g.fill(x, y, x + 2, y + 2, colour);
-        }
+        float len = (float) Math.hypot(x1 - x0, y1 - y0);
+        var pose = g.pose();
+        pose.pushMatrix();
+        pose.translate(x0, y0);
+        pose.rotate((float) Math.atan2(y1 - y0, x1 - x0));
+        g.fill(0, -1, Math.max(2, Math.round(len)), 1, colour);
+        pose.popMatrix();
     }
 }

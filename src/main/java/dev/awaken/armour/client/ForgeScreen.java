@@ -30,7 +30,7 @@ import java.util.List;
  */
 final class ForgeScreen extends Screen implements dev.awaken.signal.client.QuietScreen, dev.awaken.signal.client.ReadingScreen {
     static final int EDGE = 0xFF7FC3FF, LANTERN = 0xFFFFCF7A, TITLE = 0xFFF4F6FB, LABEL = 0xFFAFC2D8, DIM = 0xFF6F8299, GOOD = 0xFF9FE6D6, BAD = 0xFFFF8A7A;
-    private static final int ROW = 20;
+    private static final int ROW = 18;
 
     private final ArmourPayloads.Offers offers;
     private final @Nullable String busy;
@@ -149,15 +149,15 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
             arrow(g, px + pw - 20, y, ">", mouseX, mouseY);
         }
         g.centeredText(font, Component.literal(s.setName), px + pw / 2, y + 2, 0xFF000000 | s.rank.colour);
-        y += 13;
+        y += 12;
         g.centeredText(font, Component.literal(s.archetype.label + " armour, " + s.rank.label + "-rank"), px + pw / 2, y, LABEL);
-        y += 11;
+        y += 10;
         ArmourPayloads.Offer first = offer(0);
         if (first != null && (first.flags() & ArmourPayloads.KNOWN_WHOLE) != 0) {
             g.centeredText(font, Component.literal("You've forged this set whole before."), px + pw / 2, y, GOOD);
             y += 10;
         }
-        y += 4;
+        y += 3;
 
         // its four pieces
         rowsY = y;
@@ -165,9 +165,9 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
             ArmourPayloads.Offer o = offer(i);
             int ry = rowsY + i * ROW;
             boolean sel = i == piece;
-            boolean over = mouseX >= px + 6 && mouseX < px + pw - 6 && mouseY >= ry && mouseY < ry + ROW - 2;
-            g.fill(px + 6, ry, px + pw - 6, ry + ROW - 2, sel ? 0xF01A2436 : over ? 0xE0141C2A : 0x00000000);
-            if (sel) g.fill(px + 6, ry, px + 8, ry + ROW - 2, 0xFF000000 | s.rank.colour);
+            boolean over = mouseX >= px + 6 && mouseX < px + pw - 6 && mouseY >= ry && mouseY < ry + ROW - 1;
+            g.fill(px + 6, ry, px + pw - 6, ry + ROW - 1, sel ? 0xF01A2436 : over ? 0xE0141C2A : 0x00000000);
+            if (sel) g.fill(px + 6, ry, px + 8, ry + ROW - 1, 0xFF000000 | s.rank.colour);
             ItemStack it = item(s, ForgeSong.PIECES[i]);
             if (!it.isEmpty()) {
                 g.item(it, px + 11, ry + 1);
@@ -190,35 +190,41 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
             }
             g.text(font, state, px + pw - 10 - font.width(state), ry + 5, colour, false);
         }
-        y = rowsY + 4 * ROW + 4;
+        y = rowsY + 4 * ROW + 3;
 
-        // what the chosen piece takes
+        // what the chosen piece takes, two to a line (creative takes nothing: its counts stay quiet)
         ArmourPayloads.Offer o = offer(piece);
         if (o != null) {
             ItemStack it = item(s, ForgeSong.PIECES[piece]);
             g.text(font, "What the " + it.getHoverName().getString() + " takes", px + 8, y, LABEL, false);
-            y += 12;
-            for (ArmourPayloads.Need n : o.needs()) {
+            y += 11;
+            boolean can = (o.flags() & ArmourPayloads.CAN) != 0;
+            int col = (pw - 16) / 2;
+            List<ArmourPayloads.Need> needs = o.needs();
+            for (int k = 0; k < needs.size(); k++) {
+                ArmourPayloads.Need n = needs.get(k);
+                int nx = px + 8 + (k % 2) * col, ny = y + (k / 2) * 17;
                 boolean ok = n.have() >= n.need();
                 var icon = BuiltInRegistries.ITEM.getValue(Identifier.parse(n.icon()));
-                g.item(new ItemStack(icon), px + 10, y - 4);
+                g.item(new ItemStack(icon), nx, ny);
                 String count = Math.min(n.have(), n.need()) + "/" + n.need();
-                g.text(font, count, px + 30, y, ok ? GOOD : BAD, false);
-                g.text(font, n.label(), px + 58, y, ok ? LABEL : TITLE, false);
-                y += 15;
+                g.text(font, count, nx + 18, ny + 4, ok ? GOOD : can ? DIM : BAD, false);
+                int lx = nx + 20 + font.width(count) + 3;
+                g.text(font, font.plainSubstrByWidth(n.label(), nx + col - 2 - lx), lx, ny + 4, ok ? LABEL : TITLE, false);
             }
+            y += (needs.size() + 1) / 2 * 17;
         }
 
         // where things stand
         String note = busy != null ? busy + " is forging here. Come back when the piece is done, or help at the anvil while it's shaped."
                 : place(s);
-        if (!note.isEmpty()) y = wrap(g, note, px + 8, y + 2, pw - 16, LANTERN, 3) + 2;
+        if (!note.isEmpty()) y = wrap(g, note, px + 8, y + 2, pw - 16, LANTERN, 2) + 2;
 
         // the buttons
-        buttonY = py + ph - 46;
+        boolean memory = o != null && (o.flags() & ArmourPayloads.FROM_MEMORY) != 0;
+        buttonY = Math.min(py + ph - 34, y + (memory ? 14 : 4));
         boolean can = o != null && (o.flags() & ArmourPayloads.CAN) != 0 && busy == null;
         button(g, px + 8, "Forge it", can, mouseX, mouseY);
-        boolean memory = o != null && (o.flags() & ArmourPayloads.FROM_MEMORY) != 0;
         if (memory) {
             button(g, px + 8 + bw("Forge it") + 6, "From memory", can, mouseX, mouseY);
             g.text(font, "One heat and one strike, always Fine.", px + 8, buttonY - 11, DIM, false);
@@ -290,7 +296,7 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
         }
         for (int i = 0; i < 4; i++) {
             int ry = rowsY + i * ROW;
-            if (mx >= px + 6 && mx < px + pw - 6 && my >= ry && my < ry + ROW - 2) {
+            if (mx >= px + 6 && mx < px + pw - 6 && my >= ry && my < ry + ROW - 1) {
                 piece = i;
                 return true;
             }

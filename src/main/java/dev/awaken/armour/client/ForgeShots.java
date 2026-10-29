@@ -59,7 +59,7 @@ final class ForgeShots {
         var level = Minecraft.getInstance().level;
         BlockState s = level == null ? null : level.getBlockState(forge);
         Direction face = s != null && s.hasProperty(HorizontalDirectionalBlock.FACING) ? s.getValue(HorizontalDirectionalBlock.FACING) : Direction.NORTH;
-        Vec3 mouth = new Vec3(forge.getX() + 0.5 + face.getStepX() * 0.3, forge.getY() + 0.36, forge.getZ() + 0.5 + face.getStepZ() * 0.3);
+        Vec3 mouth = new Vec3(forge.getX() + 0.5 + face.getStepX() * 0.5, forge.getY() + 0.34, forge.getZ() + 0.5 + face.getStepZ() * 0.5);
         Vec3 side = new Vec3(-face.getStepZ(), 0, face.getStepX());
         Vec3 eye = mouth.add(face.getStepX() * 1.5, 0.55, face.getStepZ() * 1.5).add(side.scale(0.55));
         return ForgeCamera.push(eye, mouth, 52, 0.22, 140);
@@ -68,8 +68,9 @@ final class ForgeShots {
     /** Close above the metal, from the stand's side: still, so the marks don't swim. */
     static ForgeCamera.Shot anvil(ForgeFrame f) {
         Vec3 top = f.top().add(0, ForgeFrame.FACE, 0);
-        Vec3 eye = top.subtract(f.along().scale(0.62)).add(0, 1.05, 0);
-        return ForgeCamera.look(eye, top.add(f.along().scale(0.04)), 46);
+        Vec3 eye = top.subtract(f.along().scale(0.62)).add(0, 1.12, 0);
+        // looking a little short of the metal puts it in the frame's upper middle, clear of the beat lane below
+        return ForgeCamera.look(eye, top.subtract(f.along().scale(0.14)), 48);
     }
 
     /** Low beside the work for the quench, the metal against the dark. */
@@ -83,7 +84,7 @@ final class ForgeShots {
     static ForgeCamera.Shot table(ForgeFrame f) {
         Vec3 top = f.top().add(0, ForgeFrame.FACE, 0);
         Vec3 eye = top.subtract(f.along().scale(0.35)).add(0, 1.2, 0);
-        return ForgeCamera.look(eye, top.add(f.along().scale(0.05)), 46);
+        return ForgeCamera.look(eye, top.subtract(f.along().scale(0.08)), 48);
     }
 
     /** The fit: a slow turn round the suit on its stand, from its right to its left. */
