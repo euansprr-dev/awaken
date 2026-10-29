@@ -2,15 +2,11 @@
   "schema": 1,
   "level": 13,
   "title": "Beastbound gear · D",
-  "text": "Beastbound gear is bound in iron (about 14) and set with a trophy from a named beast or an E-rank Lord. The recipes are in your recipe book.",
+  "text": "Beastbound gear is bound in iron (about 14) and set with a trophy from a named beast or an E-rank Lord. Its armour is forged at a Fitting Stand, with an anvil and your Hearth's Forge near it. The other recipes are in your recipe book.",
   "grants": [
     {
       "type": "recipe",
       "ids": [
-        "awaken:beastbound_helmet",
-        "awaken:beastbound_chestplate",
-        "awaken:beastbound_leggings",
-        "awaken:beastbound_boots",
         "awaken:beastbound_blade",
         "awaken:beastbound_focus",
         "awaken:beastbound_mattock"

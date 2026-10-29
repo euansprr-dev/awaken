@@ -124,9 +124,19 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
 
     /** One mesh where the pose stands: the armour shader, or vanilla's entity cutout if that didn't build. */
     static void draw(SubmitNodeCollector out, PoseStack ps, ArmourMesh mesh, ArmourSet set, int light, boolean foil) {
+        draw(out, ps, mesh, set, light, foil, 0, 0, -1);
+    }
+
+    /**
+     * With the set's live state: energy and flash 0..255, and heat (-1 for none; else 0..255 from cold to white) for metal
+     * in the making, which the shader lights from within (SPEC §44.4).
+     */
+    static void draw(SubmitNodeCollector out, PoseStack ps, ArmourMesh mesh, ArmourSet set, int light, boolean foil, int energy, int flash, int heat) {
         boolean ours = ArmourPipelines.ok();
         var texture = ArmourMeshes.texture(set);
-        int packed = ours ? (foil ? 256 : 0) << 16 : OverlayTexture.NO_OVERLAY;
+        int v = (foil ? 256 : 0) | (heat >= 0 ? 512 : 0) | Math.min(255, Math.max(0, flash));
+        int u = heat >= 0 ? Math.min(255, heat) : Math.min(255, Math.max(0, energy));
+        int packed = ours ? v << 16 | u : OverlayTexture.NO_OVERLAY;
         out.submitCustomGeometry(ps, ours ? ArmourPipelines.armour(texture) : ArmourPipelines.fallback(texture),
                 (pose, buffer) -> emit(mesh, pose, buffer, light, packed, ours));
     }

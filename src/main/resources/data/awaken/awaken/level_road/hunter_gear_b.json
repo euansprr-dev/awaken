@@ -2,15 +2,11 @@
   "schema": 1,
   "level": 42,
   "title": "Veilwoven gear · B",
-  "text": "Veilwoven gear needs Deepglass and amethyst, and parts from C-rank and B-rank Lords. The recipes are in your recipe book.",
+  "text": "Veilwoven gear needs Deepglass and amethyst, and parts from C-rank and B-rank Lords. Its armour is forged at a Fitting Stand. The other recipes are in your recipe book.",
   "grants": [
     {
       "type": "recipe",
       "ids": [
-        "awaken:veilwoven_helmet",
-        "awaken:veilwoven_chestplate",
-        "awaken:veilwoven_leggings",
-        "awaken:veilwoven_boots",
         "awaken:veilwoven_blade",
         "awaken:veilwoven_focus",
         "awaken:veilwoven_mattock"

@@ -13288,9 +13288,67 @@ the set and piece a worn item is drawn as. The other 23 (plan §4.2) get items, 
 greaves, +0.5 toughness, +0.05 knockback; Strider -1 on the cuirass, +5% speed a piece; Channeler -1 on the cuirass, +3%
 power damage a piece; Duelist the rank's numbers; Lord-forged +1 on the cuirass. (P2: in a spec table with a stats test.)
 
+**44.4 The Forge Song (P1).** Armour is never crafted on the grid: every Hunter armour recipe is gone and the pieces
+are forged at a **Fitting Stand** (`awaken:fitting_stand`, crafted from a stick, a copper ingot, wool and planks; a
+dress form that holds a suit). The level road's Hunter steps grant the weapon and tool recipes only, and the E step the
+Fitting Stand's; they say where armour is made. `ArmourNow` (Now line, priority 25): "You can forge a Wildhide Vest at
+a Fitting Stand" when the pack covers a piece your rank can forge that beats what you wear there and you don't own it
+or better; `GearNow` no longer suggests armour.
+- **The place.** E sets are cut and riveted **by hand** at a crafting table (the works table) within 6 blocks of the
+  stand. D and up are forged: an anvil and the Hearth's Forge (`awaken:forge`) within 6 blocks. The stand's list says
+  plainly what's missing.
+- **The list** (`ArmourForge.offers`, payload `Offers`): every set your rank can forge (Hunter sets come with rank;
+  others need their pattern, P2), each piece with what it takes (have / need) and flags: can make now, known by heart,
+  forged whole before. Its costs are the old recipes' (`ForgeSong.HUNTER_COSTS`). Starting takes the materials into the
+  work (`ForgeWork.materials`; breaking the stand gives them back with the suit). Creative skips them.
+- **The song.** Times are game ticks from the stage's start; the client sends what it did and when (`Act`), the server
+  judges by its own clock within `LAG` 10 ticks behind and 2 ahead (`ArmourForge.clamp`). At the Forge: **Heat**, a bar
+  climbing over `HEAT_FULL` 120 ticks; pull it in the gold (0.55-0.75: heat score 1), early and the strikes count x0.7-1,
+  past 0.85 the piece keeps a scale flaw (never Flawless), at 1.15 it comes out burnt by itself. **Shape**: the anvil
+  counts in one bar of the set's rhythm (`ForgeSong.Song`: ticks a step and a bar of x and ., e.g. Wildhide 4
+  "x.x.xx..", Lordscale 7 "x...x...x.x....."), then each strike is due on the next x; the piece's marks (`marks`,
+  the same every time) are struck in turn; a strike scores 0.6 timing (1 within 1.5 ticks, 0 at 6) + 0.4 aim (1 inside
+  half a mark, 0 at two marks; the client reports the aim); 8 ticks either side is its window, a beat left unstruck is
+  a miss (0). Helm 8 strikes, cuirass 12, greaves 10, boots 6. A clean strike (0.8) rings the set's next melody note,
+  so a well-forged piece plays its tune. **Quench**: a bell rings 24-35 ticks in (`quenchCue`); plunge within 4 ticks
+  for 1, early hisses (0.35), late cools in the air (falling to 0.2, plunged for you after 24). By hand: **Cut**, the
+  knife drawn round the piece's outline (the client scores keeping to the line and finishing it), then **Rivets** on the
+  beat (half the strikes, ringing copper).
+- **Quality**: at the Forge 0.2 heat + 0.65 strikes (x early) + 0.15 quench; by hand 0.35 cut + 0.65 rivets. Plain
+  below 0.55, Fine, Masterwork from 0.75, Flawless from 0.9. A piece leaves with Temper 0/1/2/3 (the Hearth's Temper
+  goes on from there). Masterwork or better puts it **in memory**: from then on From memory forges it in one heat (or
+  cut) and one strike, always Fine.
+- **A helper** at the anvil (anyone else using the stand while it's shaped) strikes the off-beats, the rests after the
+  count-in, within 1.5 ticks: each adds 0.01 (0.05 at most); three make the piece **twin-struck**. A helper's blow on
+  the beat isn't taken.
+- **Stepping away.** The work lives on the stand (`ForgeWork`, schemaVersion 1, synced to everyone near so they see the
+  bar glow and the shape form). It only moves while its smith is at it (`ArmourForge.AT`, not saved): Esc, logging out
+  or walking 12 blocks away holds it; coming back restarts the stage (counted in again).
+- **Finishing** fits the piece onto the stand (the piece there before goes to your pack) with its `awaken:forged`
+  story (§44.7). All four of one set on the stand wakes it (a flare and a sound); the first time you make a set whole
+  the System names it and what wearing it does (a Revelation window with its set bonus lines). Sneak-use takes the suit.
+- **Client** (`armour.client`): `FittingStandRenderer` draws the suit on its form and the work: a squat blank glowing in
+  the Forge's mouth, then laid face up on the anvil drawing toward the piece strike by strike and cooling (the armour
+  shader's heat mode: overlay bit 9, heat in the energy channel, dull red to white, lit from within). `ForgeCamera`
+  (a client-only camera entity, as the opening's): wide on stand, anvil and Forge while choosing, over the shoulder at
+  the fire, still and close above the metal for the strikes, low for the quench, down on the works table, a slow turn
+  round the stand for the fit; hands, block outline, your own body and the HUD (bar subtitles and chat) step aside.
+  `ForgeScreen` (the list) and `ForgeSongScreen` (the gauge, the marks projected onto the metal with approach rings, a
+  beat lane, pips per strike, the cut line, the helper's off-beats, the result card). The smith's client plays its own
+  pull, strikes, notes and quench the moment they happen (the server plays them to everyone else), the count-in and a
+  soft tap on each beat. Neither screen pauses the game.
+- Sounds `awaken:forge.*` (`tools/art/specs/audio_forge.py`, from CC0 recordings): a strike for each metal (hide,
+  copper, iron, diamond, Deepglass, netherite, starmetal by rank), bellows, pull, quench, count, note (a bell at C5,
+  pitched per note), cut, fit, wake, miss.
+- Progression counters `awaken:armour_started`, `awaken:armour_forged`.
+
 **44.6 Set twists.** Each set's own full-set twist on top of its archetype's ability (§44.4, P2).
 - **Wildhide: Pounce** (P0, replaces Hunter's Sense, which outlined creatures through walls). Crouch at least 10 ticks,
   then jump: you leap along your look's heading (0.95 forward, 0.62 up; the jumping client applies it, movement being the
   client's). The server sees the same jump (vanilla replays it) and holds the leap for 50 ticks: the first melee hit in
   that time deals +50% and shoves the target 0.7 along your heading, with crit sparks; then the leap is spent. 60 ticks
   cooldown. Numbers in `gear/SetBonus` (`POUNCE_*`), logic in `gear/Pounce`.
+
+**44.7 A forged piece's story.** `awaken:forged` (`Forged`, schemaVersion 1): the set, quality (0-3), mastery (P3),
+a flaw, twin-struck, and who made it. The tooltip says it plainly ("Masterwork, twin-struck", "Forged by Name"). A
+Hunter piece made before the Forge Song gains a Plain story the first time it's worn.

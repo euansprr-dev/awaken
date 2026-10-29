@@ -19,7 +19,7 @@ layout(location = 3) in vec4 lightMapColor;
 layout(location = 4) in vec2 texCoord0;
 layout(location = 5) in vec3 worldNormal;
 layout(location = 6) in vec3 viewNormal;
-layout(location = 7) flat in vec3 state;
+layout(location = 7) flat in vec4 state;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -82,6 +82,19 @@ void main() {
     if (foil > 0.5) {
         float g = sin((along * 9.0 + nv.x * 2.0) - GameTime * 240.0 * TAU * 0.35) * 0.5 + 0.5;
         col += vec3(0.55, 0.32, 1.0) * pow(g, 6.0) * 0.45;
+    }
+
+    // metal in the making (the Forge Song): the work glows by its heat, dull red through orange and yellow to white,
+    // lit from within so it shows in a dark smithy; cold metal keeps its own colour
+    if (state.w > 0.5) {
+        float h = energy * 1.2;
+        vec3 hot = h < 0.45 ? mix(vec3(0.30, 0.03, 0.01), vec3(0.85, 0.16, 0.03), h / 0.45)
+                : h < 0.75 ? mix(vec3(0.85, 0.16, 0.03), vec3(1.0, 0.58, 0.12), (h - 0.45) / 0.3)
+                : h < 1.0 ? mix(vec3(1.0, 0.58, 0.12), vec3(1.0, 0.9, 0.5), (h - 0.75) / 0.25)
+                : vec3(1.0, 0.97, 0.88);
+        float glow = smoothstep(0.08, 0.6, h);
+        col = mix(col, col * 0.35 + hot * (0.75 + 0.25 * rim), glow);
+        col += hot * glow * (0.25 + 0.3 * sin(GameTime * 240.0 * TAU * 0.4 + along * 6.0) * 0.5 + 0.15);
     }
 
     fragColor = apply_fog(vec4(min(col, vec3(1.0)), 1.0) * ColorModulator, sphericalVertexDistance, cylindricalVertexDistance,

@@ -4,7 +4,8 @@
 // The armour shader (docs/armour/PLAN.md): the weapons' look (arms_weapon.vsh) on worn armour.
 // Vanilla's ENTITY inputs, read our way: Color is the set's accent (rgb) and how far up the figure this corner lies (a);
 // UV1 is not an overlay but the set's live state: x its energy (0..255: a set ability's charge), y its
-// flash (0..255: a perfect guard, a release) with 256 added when the piece has foil.
+// flash (0..255: a perfect guard, a release) with 256 added when the piece has foil, and 512 when it is metal in the
+// making on a Forge's anvil (then x is its heat, 0..255 for cold..white: SPEC §44.4).
 
 #include <minecraft:fog.glsl>
 #include <minecraft:dynamictransforms.glsl>
@@ -27,7 +28,7 @@ layout(location = 3) out vec4 lightMapColor;
 layout(location = 4) out vec2 texCoord0;
 layout(location = 5) out vec3 worldNormal;
 layout(location = 6) out vec3 viewNormal;
-layout(location = 7) flat out vec3 state;
+layout(location = 7) flat out vec4 state;
 
 void main() {
     vec4 view = ModelViewMat * vec4(Position, 1.0);
@@ -39,5 +40,5 @@ void main() {
     texCoord0 = UV0;
     worldNormal = Normal;
     viewNormal = mat3(ModelViewMat) * Normal;
-    state = vec3(float(UV1.x) / 255.0, float(UV1.y & 255) / 255.0, UV1.y >= 256 ? 1.0 : 0.0);
+    state = vec4(float(UV1.x) / 255.0, float(UV1.y & 255) / 255.0, (UV1.y & 256) != 0 ? 1.0 : 0.0, (UV1.y & 512) != 0 ? 1.0 : 0.0);
 }

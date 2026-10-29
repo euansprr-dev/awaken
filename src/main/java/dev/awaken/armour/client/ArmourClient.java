@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 
-/** Client entry of the armour (SPEC §44.1): its meshes, its shader, its layer, the forearm in first person. */
+/** Client entry of the armour (SPEC §44.1): its meshes, its shader, its layer, the forearm in first person; the Forge (§44.4). */
 public final class ArmourClient {
     private ArmourClient() {}
 
@@ -51,6 +51,7 @@ public final class ArmourClient {
         modBus.addListener((RegisterRenderStateModifiersEvent e) -> e.registerEntityModifier(
                 new TypeToken<LivingEntityRenderer<LivingEntity, LivingEntityRenderState, ?>>() {}, ArmourClient::readWorn));
         NeoForge.EVENT_BUS.addListener(RenderArmEvent.class, ArmourClient::onArm);
+        ForgeClient.init(modBus);
     }
 
     /** Our pieces each slot wears, by {@link ArmorType} ordinal (null where none), for {@link ArmourLayer}. */

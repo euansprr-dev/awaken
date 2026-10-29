@@ -514,3 +514,18 @@ off); off draws the flat painted look. Item ids never change, so rolling a phase
 - **Caves and mining (local_d98fb048):** region materials (carapace, Deepglass); decision 5 (Ore Sense, Vein Sight).
 - **The probe items** (`probe_lordscale_*`) have no source and would fail the Journey ledger: the branch is not for
   merge as it stands; P0 replaces them with the real Lordscale.
+
+## 9. Build log
+
+- **P0 (2026-10-29):** the six Hunter sets in their new look (SPEC §44.1). Euan kept the first designs of Beastbound
+  (the bone skull with tusks) and Sovereign Weave (the dark faceplate, white crescent, lilac crown) over the reworks:
+  bold, stylised and mysterious beats realistic; no sculpted faces.
+- **P1 (2026-10-29):** the Forge Song (SPEC §44.4, §44.7). Decisions made while building:
+  - The work lives on a **Fitting Stand** block (the Hearth's Forge has no block entity): the stand finds its anvil,
+    Forge or works table within 6 blocks, holds the piece in the making (synced, so others watch it glow and take
+    shape) and fits each finished piece on its form.
+  - E sets are made by hand at a crafting table near the stand (the works table), so the first set needs no Forge.
+  - Aim is reported by the client and only moves quality; timing is judged on the server's clock.
+  - The armour list is the stand's own screen for now; the weapons' Armoury gaining an armour list is still to agree
+    with the weapons session.
+  - The first-person option (decision 13) comes with the settings in P5; the camera is on for everyone until then.

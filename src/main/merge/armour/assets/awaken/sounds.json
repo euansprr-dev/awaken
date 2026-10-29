@@ -1,0 +1,230 @@
+{
+  "forge.strike_hide": {
+    "subtitle": "subtitles.awaken.forge.strike_hide",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_strike_hide_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:forge/forge_strike_hide_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:forge/forge_strike_hide_2",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "forge.strike_copper": {
+    "subtitle": "subtitles.awaken.forge.strike_copper",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_strike_copper_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:forge/forge_strike_copper_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:forge/forge_strike_copper_2",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "forge.strike_iron": {
+    "subtitle": "subtitles.awaken.forge.strike_iron",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_strike_iron_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:forge/forge_strike_iron_1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:forge/forge_strike_iron_2",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "forge.strike_diamond": {
+    "subtitle": "subtitles.awaken.forge.strike_diamond",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_strike_diamond_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:forge/forge_strike_diamond_1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:forge/forge_strike_diamond_2",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "forge.strike_deepglass": {
+    "subtitle": "subtitles.awaken.forge.strike_deepglass",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_strike_deepglass_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:forge/forge_strike_deepglass_1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:forge/forge_strike_deepglass_2",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "forge.strike_netherite": {
+    "subtitle": "subtitles.awaken.forge.strike_netherite",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_strike_netherite_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:forge/forge_strike_netherite_1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:forge/forge_strike_netherite_2",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "forge.strike_starmetal": {
+    "subtitle": "subtitles.awaken.forge.strike_starmetal",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_strike_starmetal_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:forge/forge_strike_starmetal_1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:forge/forge_strike_starmetal_2",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "forge.bellows": {
+    "subtitle": "subtitles.awaken.forge.bellows",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_bellows_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:forge/forge_bellows_1",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "forge.pull": {
+    "subtitle": "subtitles.awaken.forge.pull",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_pull_0",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:forge/forge_pull_1",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "forge.quench": {
+    "subtitle": "subtitles.awaken.forge.quench",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_quench_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:forge/forge_quench_1",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "forge.count": {
+    "subtitle": "subtitles.awaken.forge.count",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_count_0",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "awaken:forge/forge_count_1",
+        "attenuation_distance": 10
+      }
+    ]
+  },
+  "forge.note": {
+    "subtitle": "subtitles.awaken.forge.note",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_note_0",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "forge.cut": {
+    "subtitle": "subtitles.awaken.forge.cut",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_cut_0",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "awaken:forge/forge_cut_1",
+        "attenuation_distance": 10
+      }
+    ]
+  },
+  "forge.fit": {
+    "subtitle": "subtitles.awaken.forge.fit",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_fit_0",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:forge/forge_fit_1",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "forge.wake": {
+    "subtitle": "subtitles.awaken.forge.wake",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_wake_0",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "forge.miss": {
+    "subtitle": "subtitles.awaken.forge.miss",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_miss_0",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "awaken:forge/forge_miss_1",
+        "attenuation_distance": 10
+      }
+    ]
+  }
+}

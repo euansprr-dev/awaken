@@ -2,15 +2,11 @@
   "schema": 1,
   "level": 22,
   "title": "Gatewrought gear · C",
-  "text": "Gatewrought gear is set in diamond (about 14) with a relic from a D-rank Lord, and it matches diamond armour. The recipes are in your recipe book.",
+  "text": "Gatewrought gear is set in diamond (about 14) with a relic from a D-rank Lord, and it matches diamond armour. Its armour is forged at a Fitting Stand. The other recipes are in your recipe book.",
   "grants": [
     {
       "type": "recipe",
       "ids": [
-        "awaken:gatewrought_helmet",
-        "awaken:gatewrought_chestplate",
-        "awaken:gatewrought_leggings",
-        "awaken:gatewrought_boots",
         "awaken:gatewrought_blade",
         "awaken:gatewrought_focus",
         "awaken:gatewrought_mattock"
