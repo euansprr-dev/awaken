@@ -22,9 +22,10 @@ final class BellTests {
         AwakenTests.register("bells_peals", 40, BellTests::peals);
         AwakenTests.register("bells_tower_plans", 20, BellTests::towerPlans);
         AwakenTests.register("bells_site_wakes", 60, BellTests::siteWakes);
+        AwakenTests.register("bells_hundred_peal", 20, BellTests::hundredPeal);
     }
 
-    /** A hundred bells numbered in order, all but the Seed and the True Bell built (98); a bell rings home once, and the first brings the handbell. */
+    /** A hundred bells numbered in order, every one built (100); a bell rings home once, and the first brings the handbell. */
     static void catalogRing(GameTestHelper h) {
         Set<String> ids = new HashSet<>();
         int built = 0;
@@ -33,7 +34,7 @@ final class BellTests {
             h.assertTrue(d != null && d.no() == i && ids.add(d.id()), "bell " + i + " is in its place, its id unique");
             if (d.built()) built++;
         }
-        h.assertTrue(built == 98, "all but the Seed and the True Bell are built (" + built + ")");
+        h.assertTrue(built == 100, "every bell is built (" + built + ")");
         h.assertTrue(BellCatalog.MELODY.length == 100, "the song has a step for every bell");
         for (BellCatalog.Peal pl : BellCatalog.PEALS)
             for (String id : pl.bells()) h.assertTrue(BellCatalog.of(id) != null && BellCatalog.of(id).built(), pl.name() + "'s " + id + " is a built bell");
@@ -63,20 +64,36 @@ final class BellTests {
     /** The belfry hangs four bells in a 5×5 under ten high; the tower nine in a 5×5 under fifteen; neither touches the frame. */
     static void towerPlans(GameTestHelper h) {
         BlockPos f = new BlockPos(0, 64, 0);
-        check(h, "belfry", BellTower.belfry(f, 0), f, 4, 9);
-        check(h, "tower", BellTower.tower(f, Direction.NORTH), f, 9, 14);
+        check(h, "belfry", BellTower.belfry(f, 0), f, 2, 4, 9);
+        check(h, "tower", BellTower.tower(f, Direction.NORTH), f, 2, 9, 14);
         h.succeed();
     }
 
-    private static void check(GameTestHelper h, String what, Map<BlockPos, BlockState> plan, BlockPos f, int bells, int top) {
+    private static void check(GameTestHelper h, String what, Map<BlockPos, BlockState> plan, BlockPos f, int half, int bells, int top) {
         int n = 0;
         for (Map.Entry<BlockPos, BlockState> e : plan.entrySet()) {
             BlockPos d = e.getKey().subtract(f);
-            h.assertTrue(Math.abs(d.getX()) <= 2 && Math.abs(d.getZ()) <= 2 && d.getY() >= 0 && d.getY() <= top, what + " stays in its room: " + d);
+            h.assertTrue(Math.abs(d.getX()) <= half && Math.abs(d.getZ()) <= half && d.getY() >= 0 && d.getY() <= top, what + " stays in its room: " + d);
             h.assertTrue(!d.equals(BlockPos.ZERO), what + " leaves the frame be");
             if (e.getValue().is(Blocks.BELL)) n++;
         }
         h.assertTrue(n == bells, what + " hangs " + bells + " bells (" + n + ")");
+    }
+
+    /**
+     * The Hundred Peal's chain (SPEC §43.14): the Great Belfry hangs 25 bells in a 7×7 under twenty-three high and leaves
+     * the frame be; the Kinsong can't be rung before a player's Peal and can after, and the Wake's hook sees the Peal.
+     */
+    static void hundredPeal(GameTestHelper h) {
+        BlockPos f = new BlockPos(0, 64, 0);
+        check(h, "great belfry", BellTower.great(f, Direction.NORTH), f, 3, 25, 22);
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        h.assertTrue(!Peals.ringable(p).contains(HundredPeal.KINSONG), "no Kinsong before the Hundred Peal");
+        h.assertTrue(!dev.awaken.core.api.BellHooks.pealed(p), "the Wake stays shut before it");
+        HundredPeal.pealed(p);
+        h.assertTrue(Peals.ringable(p).contains(HundredPeal.KINSONG), "after it, the handbell rings the Kinsong");
+        h.assertTrue(dev.awaken.core.api.BellHooks.pealed(p), "and the Wake can be chosen");
+        h.succeed();
     }
 
     /** A sleeping bell struck with nothing keeping it wakes, and its bell goes home with whoever struck it. */

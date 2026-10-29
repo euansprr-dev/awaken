@@ -49,6 +49,7 @@ public final class KinWatch {
         READING.clear();
         NEXT_SUBTITLE.clear();
         NEXT_OFFER.clear();
+        NEXT_GNAWED.clear();
     }
 
     /** Every 5 ticks for each player: reading, watching, what it says up close, offers home to a trusted one nearby. */
@@ -68,6 +69,10 @@ public final class KinWatch {
             read(p, ks, near, glass);
             for (KinBeast b : near) {
                 double d2 = b.distanceToSqr(p);
+                if (b.gnawed()) {
+                    if (d2 <= 24 * 24 && p.hasLineOfSight(b)) sawGnawed(p, b);
+                    continue;
+                }
                 if (d2 <= WATCH_RANGE * WATCH_RANGE) watch(p, ks, b);
                 if (d2 <= SUBTITLE_RANGE * SUBTITLE_RANGE) subtitle(p, ks, b);
                 if (d2 <= 64 && b.trusted.contains(p.getUUID()) && b.home == null && b.follow == null) {
@@ -94,7 +99,7 @@ public final class KinWatch {
         KinBeast best = null;
         double bestDot = cos;
         for (KinBeast b : near) {
-            if (ks.kinds.containsKey(b.kind()) && ks.kinds.get(b.kind()).met) continue;
+            if (b.gnawed() || (ks.kinds.containsKey(b.kind()) && ks.kinds.get(b.kind()).met)) continue;
             Vec3 to = b.position().add(0, b.getBbHeight() * 0.5, 0).subtract(eye);
             double len = to.length();
             if (len < 1e-3 || len > (glass ? READ_RANGE_GLASS : READ_RANGE)) continue;
@@ -239,7 +244,7 @@ public final class KinWatch {
 
     /** Whether this player makes it run (its kind's Kinship with them, their manner, a killing it remembers). */
     static boolean scares(KinBeast b, ServerPlayer p) {
-        if (p.isCreative() || p.isSpectator()) return false;
+        if (p.isCreative() || p.isSpectator() || b.gnawed()) return false;
         if (p.getUUID().equals(b.keeper) || b.trusted.contains(p.getUUID()) || p.getUUID().equals(b.leader)) return false;
         Kinship ks = Kinship.of(p);
         KinKind k = b.kind();
@@ -285,6 +290,33 @@ public final class KinWatch {
         s.fearUntil = p.level().getGameTime() + Kinship.FEAR_TICKS;
         Kinship.save(p, ks);
         say(p, "[The " + b.kind().title + "s saw that. They'll run from you for days.]", 8);
+    }
+
+    // ---- the Gnawed (SPEC §43.14) ----------------------------------------------------------------------------------------
+
+    private static final Map<UUID, Long> NEXT_GNAWED = new HashMap<>();
+
+    /** A Gnawed beast in sight: the first time ever, a flicker; then the System says what it is, once in two minutes. */
+    static void sawGnawed(ServerPlayer p, KinBeast b) {
+        long now = p.level().getGameTime();
+        if (NEXT_GNAWED.getOrDefault(p.getUUID(), 0L) > now) return;
+        NEXT_GNAWED.put(p.getUUID(), now + 20 * 120);
+        if (Progression.profile(p).counter("awaken:kin/gnawed_seen") <= 0) {
+            Progression.setCounter(p, "awaken:kin/gnawed_seen", 1);
+            dev.awaken.fault.Faults.play(p, dev.awaken.fault.Fault.flicker("A " + b.kind().title + ", but the Deep has got into it."));
+        }
+        say(p, "[That " + b.kind().title + " is Gnawed: the Deep has got into it, and it will fight you. Beat it down and the Deep lets go of it. The Kinsong frees it without a fight.]", 10);
+    }
+
+    /** A Gnawed beast freed (beaten down, or by the Kinsong): itself again; whoever freed it, its kind is grateful. */
+    static void freed(KinBeast b, @org.jspecify.annotations.Nullable ServerPlayer by) {
+        b.gnawed(false);
+        if (b.level() instanceof ServerLevel sl)
+            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.SQUID_INK, b.getX(), b.getY() + b.getBbHeight() * 0.6, b.getZ(), 24, b.getBbWidth() * 0.5, 0.3, b.getBbWidth() * 0.5, 0.02);
+        if (by == null) return;
+        Kinship.add(by, b.kind(), Kinship.HELP);
+        Progression.count(by, "awaken:kin/gnawed_freed");
+        say(by, "[The Deep let go of it. It's a " + b.kind().title + " again, and its kind saw who freed it.]", 8);
     }
 
     // ---- the System's lines --------------------------------------------------------------------------------------------

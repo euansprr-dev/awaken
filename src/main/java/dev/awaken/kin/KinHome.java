@@ -394,7 +394,7 @@ public final class KinHome {
     /** A bell rung in the wild (SPEC §43.7): wild beasts within {@code reach} run from it for {@code ticks}; Chimewrens never do. */
     public static void scare(ServerLevel level, BlockPos at, int reach, int ticks) {
         long until = level.getGameTime() + ticks;
-        for (KinBeast b : level.getEntitiesOfClass(KinBeast.class, new net.minecraft.world.phys.AABB(at).inflate(reach), x -> x.home == null && x.kind() != KinKind.CHIMEWREN))
+        for (KinBeast b : level.getEntitiesOfClass(KinBeast.class, new net.minecraft.world.phys.AABB(at).inflate(reach), x -> x.home == null && !x.gnawed() && x.kind() != KinKind.CHIMEWREN))
             b.hideUntil = Math.max(b.hideUntil, until);
     }
 

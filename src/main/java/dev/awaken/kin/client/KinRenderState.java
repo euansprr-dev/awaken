@@ -8,6 +8,8 @@ import org.jspecify.annotations.Nullable;
 /** One of the kin this frame: its clips and crossfade, its coat, its glow (a Lampwing's lamp, a Pebblepup's crystals). */
 final class KinRenderState extends LivingEntityRenderState {
     int clip = -1, prevClip = -1;
+    /** The Deep has got into it (SPEC §43.14): drawn dark and bruised. */
+    boolean gnawed;
     float clipTime, prevTime, prevWeight;
     @Nullable Identifier texture, blink, glow;
     float glowAlpha;

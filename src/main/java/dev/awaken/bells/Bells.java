@@ -349,7 +349,26 @@ public final class Bells {
         String id = at < 0 ? null : COURT_BELLS.get(boss.substring(at + 10));
         if (id == null || !(s.getKillCredit() instanceof ServerPlayer)) return;
         String where = "where the " + s.getName().getString() + " set down what it carried";
-        for (ServerPlayer p : level.players()) if (p.distanceToSqr(s) < 96 * 96) ring(p, id, where);
+        for (ServerPlayer p : level.players())
+            if (p.distanceToSqr(s) < 96 * 96) {
+                ring(p, id, where);
+                belfryPiece(p, BellContent.SOVEREIGN_RELIC.get(), "[The Sovereign left something behind: a shard of its crown, still holding a little light. A Great Belfry is hung with one of these.]");
+            }
+    }
+
+    /**
+     * One of the Great Belfry's two pieces (SPEC §43.14), given to a player who isn't carrying one and whose home hasn't
+     * set one into its frame yet. Every S-rank Lord and every Sovereign gives again, so a lost one is never the end.
+     */
+    static void belfryPiece(ServerPlayer p, net.minecraft.world.item.Item piece, String line) {
+        if (p.getInventory().contains(new ItemStack(piece))) return;
+        Optional<HearthRecord> h = HearthService.data(p.level().getServer()).home(p.getUUID());
+        BellWorld.Home home = h.map(r -> BellWorld.get(p.level().getServer()).peek(r.pos)).orElse(null);
+        boolean clapper = piece == BellContent.HEART_CLAPPER.get();
+        if (home != null && (home.stage >= 3 || (clapper ? home.clapper : home.relic))) return;
+        give(p, new ItemStack(piece));
+        say(p, line);
+        Awaken.LOG.info("[bells] {} was given {}", p.getName().getString(), clapper ? "the Heart-clapper" : "a Sovereign's relic");
     }
 
     /** The Descent's bells by stratum (1 to 10), with where the Book says each was rung. Two and three are stage 4's. */
@@ -467,11 +486,48 @@ public final class Bells {
 
     /** A gate's Lord fell: its world's bell goes home with everyone in the run, if the gate was at its bell's rank. */
     public static void lordFell(ServerLevel level, LivingEntity lord, Rank rank, String theme, Collection<UUID> party, @Nullable ServerPlayer killer) {
+        // the deepest room of an S-rank gate holds the Heart-clapper (SPEC §43.14)
+        if (rank.ordinal() >= Rank.S.ordinal())
+            for (ServerPlayer p : level.players())
+                if ((p == killer || party.contains(p.getUUID())) && p.distanceToSqr(lord) < 96 * 96)
+                    belfryPiece(p, BellContent.HEART_CLAPPER.get(), "[In the Lord's hoard there's a clapper as long as your arm, black iron with something red and warm in it. It's the Heart-clapper. A Great Belfry is hung on one.]");
         String id = GATE_BELLS.get(theme);
         BellCatalog.Def d = id == null ? null : BellCatalog.of(id);
         if (d == null || rank.ordinal() < d.rank().ordinal()) return;
         for (ServerPlayer p : level.players())
             if ((p == killer || party.contains(p.getUUID())) && p.distanceToSqr(lord) < 96 * 96) ring(p, d, "at a " + Rank.valueOf(rank.name()).label + " gate's Lord");
+    }
+
+    static final int ILSE_DAYS = 3, ILSE_NEAR = 24, ILSE_PATH = 28;
+
+    /**
+     * After the Wake (SPEC §43.14), Ilse walks out from the Last Fire to see each home once: three play-days on, by day,
+     * when someone who lives there is by the fire. She comes up the path from the city's side.
+     */
+    private static void ilse(ServerPlayer p, HearthRecord h) {
+        MinecraftServer server = p.level().getServer();
+        if (!dev.awaken.core.api.StoryHooks.colourRestored(server) || !(p.level() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) return;
+        BellWorld w = BellWorld.get(server);
+        long today = PlayDays.current(server);
+        if (w.woke < 0) {
+            w.woke = today;
+            w.setDirty();
+        }
+        BellWorld.Home home = w.home(h.pos);
+        if (home.ilse || today < w.woke + ILSE_DAYS || p.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(h.pos)) > ILSE_NEAR * ILSE_NEAR) return;
+        long tod = Math.floorMod(level.getOverworldClockTime(), 24000L);
+        if (tod < 1000 || tod > 9000) return;
+        BlockPos c = dev.awaken.core.api.TheLull.centre(server);
+        double dx = c.getX() - h.pos.getX(), dz = c.getZ() - h.pos.getZ(), len = Math.max(1, Math.hypot(dx, dz));
+        int x = h.pos.getX() + (int) Math.round(dx / len * ILSE_PATH), z = h.pos.getZ() + (int) Math.round(dz / len * ILSE_PATH);
+        if (!level.hasChunkAt(new BlockPos(x, 0, z))) return;
+        BlockPos from = new BlockPos(x, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
+        if (!dev.awaken.core.api.LivingHooks.visit(level, from, h.pos)) return;
+        home.ilse = true;
+        w.setDirty();
+        for (ServerPlayer m : level.players())
+            if (h.belongs(m.getUUID()) && m.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(h.pos)) < 64 * 64)
+                say(m, "[Someone's coming up the path from the city. It's Ilse, from the Last Fire.]");
     }
 
     /** Checks the moments that are states rather than events, for one player. */
@@ -488,6 +544,11 @@ public final class Bells {
                     break;
                 }
             if (h.tier >= 2) ring(p, "founding", "the day your Hearth grew");
+            // the Great Belfry and the Hundred Peal reach a member who was away when they happened (SPEC §43.14)
+            BellWorld.Home tower = BellWorld.get(server).peek(h.pos);
+            if (tower != null && tower.stage >= 3) GreatBelfry.seed(p);
+            if (tower != null && tower.pealed >= 0) HundredPeal.pealed(p);
+            ilse(p, h);
             if (p.level() instanceof ServerLevel sl && sl.dimension() == Level.OVERWORLD) BellSites.planHome(sl, h.pos);
         }
         var prof = Progression.profile(p);
@@ -605,6 +666,8 @@ public final class Bells {
         BellSites.tickSpirits(ow);
         DreamBells.tick(server);
         BellTower.tick(server);
+        GreatBelfry.tick(server);
+        HundredPeal.tick(server);
         Peals.tick(server);
         long now = ow.getGameTime();
         if (!ONCE.isEmpty()) ONCE.entrySet().removeIf(e -> {

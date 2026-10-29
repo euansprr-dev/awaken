@@ -30,10 +30,11 @@ import java.util.Optional;
 
 /**
  * Your bell tower (SPEC §43.7). The bell frame, set inside your own Hearth, is where your bells hang. At twenty bells a
- * timber belfry goes up round it, and at fifty a stone tower under the belfry (each built only into clear space; if
- * something's in the way the System says what room it needs and tries again at the next song). At dawn and dusk it rings
- * your song, every bell held by anyone who lives there in its place and a dull knock for each one missing, heard 256
- * blocks off; and your beasts take it by how many bells there are.
+ * timber belfry goes up round it, at fifty a stone tower under the belfry, and with the Heart-clapper and a Sovereign's
+ * relic the Great Belfry on top (§43.14; each built only into clear space; if something's in the way the System says what
+ * room it needs and tries again at the next song). At dawn and dusk it rings your song, every bell held by anyone who
+ * lives there in its place and a dull knock for each one missing, heard 256 blocks off; and your beasts take it by how
+ * many bells there are. With all hundred in the Great Belfry, the next song is the Hundred Peal.
  */
 final class BellTower {
     private BellTower() {}
@@ -73,7 +74,11 @@ final class BellTower {
         BellWorld.Home home = h.map(r -> BellWorld.get(level.getServer()).peek(r.pos)).orElse(null);
         int n = home == null ? 0 : home.hung.size();
         String next = n < BELFRY ? (BELFRY - n) + " more and a belfry goes up round it." : n < TOWER ? (TOWER - n) + " more and it becomes a tower."
-                : "Every bell you find from here makes the song fuller.";
+                : home != null && home.pealed >= 0 ? "Your song is whole, and the Kinsong is yours."
+                : home != null && home.stage >= 3 ? (100 - n) + (100 - n == 1 ? " bell is" : " bells are") + " still missing. When the last one hangs, your bells ring the Hundred Peal."
+                : "Only a Great Belfry holds all hundred. It needs " + (home != null && home.clapper ? "" : "the Heart-clapper, from the Lord of an S-rank gate")
+                        + (home != null && (home.clapper || home.relic) ? "" : ", and ") + (home != null && home.relic ? "" : "a Sovereign's relic")
+                        + ", set into this frame.";
         Bells.say(p, "[" + n + " of 100 bells hang here. " + next + "]");
         if (home != null && !home.hung.isEmpty()) {
             int pick = new ArrayList<>(home.hung).get(level.getRandom().nextInt(home.hung.size()));
@@ -135,10 +140,12 @@ final class BellTower {
         Awaken.LOG.info("[bells] {} built at {} ({} bells)", want == 2 ? "tower" : "belfry", f.toShortString(), home.hung.size());
     }
 
-    /** Blocks a belfry is made of: a tower may build over its own belfry. */
-    private static boolean ours(BlockState s) {
+    /** Blocks a belfry or a tower is made of: each stage may build over the last. */
+    static boolean ours(BlockState s) {
         return s.is(Blocks.STRIPPED_DARK_OAK_LOG) || s.is(Blocks.DARK_OAK_PLANKS) || s.is(Blocks.DEEPSLATE_TILES) || s.is(Blocks.DEEPSLATE_TILE_SLAB)
-                || s.is(Blocks.DEEPSLATE_TILE_STAIRS) || s.is(Blocks.BELL) || s.is(Blocks.DEEPSLATE_TILE_WALL);
+                || s.is(Blocks.DEEPSLATE_TILE_STAIRS) || s.is(Blocks.BELL) || s.is(Blocks.DEEPSLATE_TILE_WALL) || s.is(Blocks.STONE_BRICKS)
+                || s.is(Blocks.POLISHED_ANDESITE) || s.is(Blocks.SPRUCE_PLANKS) || s.is(Blocks.DEEPSLATE_BRICKS) || s.is(Blocks.POLISHED_DEEPSLATE)
+                || s.is(Blocks.CHISELED_DEEPSLATE) || s.is(Blocks.LIGHTNING_ROD.weathering().unaffected()) || s.is(Blocks.GOLD_BLOCK) || s.is(Blocks.LANTERN);
     }
 
     /** The timber belfry, its floor {@code base} above the frame: posts, a beam ring, cross beams, bells under them, a tiled roof. */
@@ -208,6 +215,59 @@ final class BellTower {
         return out;
     }
 
+    /**
+     * The Great Belfry (SPEC §43.14) on the stone tower: the tower's five courses, a shaft of five more with a window each
+     * side, then the great belfry seven wide: deepslate piers, a ring of twenty-four bells under the beams round the Seed
+     * Bell in the middle, lanterns at the corners, a tiled roof three courses high and a gilded spire. Twenty-three high.
+     */
+    static Map<BlockPos, BlockState> great(BlockPos f, Direction face) {
+        Map<BlockPos, BlockState> out = new java.util.LinkedHashMap<>();
+        // the tower's base, as it stands
+        for (Map.Entry<BlockPos, BlockState> e : tower(f, face).entrySet()) if (e.getKey().getY() - f.getY() <= 4) out.put(e.getKey(), e.getValue());
+        // the shaft: stone brick walls, deepslate corners, a window on each face
+        for (int y = 5; y <= 9; y++)
+            for (int dx = -2; dx <= 2; dx++)
+                for (int dz = -2; dz <= 2; dz++) {
+                    boolean edge = Math.abs(dx) == 2 || Math.abs(dz) == 2, corner = Math.abs(dx) == 2 && Math.abs(dz) == 2;
+                    BlockPos p = f.offset(dx, y, dz);
+                    if (!edge) out.put(p, Blocks.AIR.defaultBlockState());
+                    else if (corner) out.put(p, Blocks.POLISHED_DEEPSLATE.defaultBlockState());
+                    else if ((y == 7 || y == 8) && (dx == 0 || dz == 0)) out.put(p, Blocks.AIR.defaultBlockState());
+                    else out.put(p, Blocks.STONE_BRICKS.defaultBlockState());
+                }
+        // the great belfry's floor, a step wider than the shaft
+        for (int dx = -3; dx <= 3; dx++)
+            for (int dz = -3; dz <= 3; dz++) {
+                boolean rim = Math.abs(dx) == 3 || Math.abs(dz) == 3;
+                out.put(f.offset(dx, 10, dz), (rim ? Blocks.DEEPSLATE_BRICKS : Blocks.SPRUCE_PLANKS).defaultBlockState());
+            }
+        // piers at the corners and the middle of each side, five high
+        for (int y = 11; y <= 15; y++)
+            for (int dx = -3; dx <= 3; dx += 3)
+                for (int dz = -3; dz <= 3; dz += 3)
+                    if (Math.abs(dx) == 3 || Math.abs(dz) == 3) out.put(f.offset(dx, y, dz), (y == 13 && dx != 0 && dz != 0 ? Blocks.CHISELED_DEEPSLATE : Blocks.DEEPSLATE_BRICKS).defaultBlockState());
+        // the beams, the ring of bells under them and the Seed Bell in the middle
+        for (int dx = -3; dx <= 3; dx++)
+            for (int dz = -3; dz <= 3; dz++) {
+                out.put(f.offset(dx, 16, dz), Blocks.DARK_OAK_PLANKS.defaultBlockState());
+                int ring = Math.max(Math.abs(dx), Math.abs(dz));
+                if (ring == 1 || ring == 2)
+                    out.put(f.offset(dx, 15, dz), Blocks.BELL.defaultBlockState().setValue(BellBlock.ATTACHMENT, BellAttachType.CEILING)
+                            .setValue(BellBlock.FACING, Math.abs(dx) >= Math.abs(dz) ? Direction.EAST : Direction.NORTH));
+            }
+        out.put(f.offset(0, 15, 0), Blocks.DARK_OAK_PLANKS.defaultBlockState());
+        out.put(f.offset(0, 14, 0), Blocks.BELL.defaultBlockState().setValue(BellBlock.ATTACHMENT, BellAttachType.CEILING).setValue(BellBlock.FACING, face));
+        for (int dx = -2; dx <= 2; dx += 4)
+            for (int dz = -2; dz <= 2; dz += 4) out.put(f.offset(dx, 11, dz), Blocks.LANTERN.defaultBlockState());
+        roof(out, f, 17, 3);
+        roof(out, f, 18, 2);
+        roof(out, f, 19, 1);
+        out.put(f.offset(0, 20, 0), Blocks.GOLD_BLOCK.defaultBlockState());
+        out.put(f.offset(0, 21, 0), Blocks.DEEPSLATE_TILE_WALL.defaultBlockState());
+        out.put(f.offset(0, 22, 0), Blocks.LIGHTNING_ROD.weathering().unaffected().defaultBlockState());
+        return out;
+    }
+
     // ---- the song ---------------------------------------------------------------------------------------------------
 
     static void tick(MinecraftServer server) {
@@ -231,8 +291,14 @@ final class BellTower {
     /** Rings one home's song now. */
     static void song(ServerLevel level, HearthRecord h, BellWorld.Home home) {
         hang(level.getServer(), h);
+        // both pieces in and nobody to raise it: it goes up now, by the song
+        if (GreatBelfry.ready(home) && home.raising == 0) GreatBelfry.build(level, h, home);
         BlockPos f = frame(level, home);
-        BlockPos at = f != null ? (home.stage == 2 ? f.above(10) : home.stage == 1 ? f.above(5) : f) : h.pos;
+        BlockPos at = f != null ? (home.stage == 3 ? f.above(14) : home.stage == 2 ? f.above(10) : home.stage == 1 ? f.above(5) : f) : h.pos;
+        if (HundredPeal.due(home)) {
+            HundredPeal.ring(level, h, home, at);
+            return;
+        }
         long lo = 0, hi = 0;
         for (int no : home.hung) {
             if (no < 64) lo |= 1L << no;

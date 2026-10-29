@@ -54,6 +54,17 @@ final class KinCommands {
                         KinBeast b = KinHome.spawn(p.level(), k, k.flies() ? at.above(k == KinKind.CLOUDCALF ? 4 : 2) : at, EntitySpawnReason.COMMAND);
                         return b == null ? 0 : 1;
                     })))
+                    .then(Commands.literal("gnaw").then(Commands.argument("kind", StringArgumentType.word())
+                            .suggests((c, b) -> SharedSuggestionProvider.suggest(KinKind.livingNow().stream().map(KinKind::id), b)).executes(c -> {
+                                ServerPlayer p = c.getSource().getPlayerOrException();
+                                KinKind k = KinKind.of(StringArgumentType.getString(c, "kind"));
+                                BlockPos at = KinHelp.ground(p.level(), p.getBlockX() + 6, p.getBlockZ());
+                                KinBeast b = KinHome.spawn(p.level(), k, k.flies() ? at.above(2) : at, EntitySpawnReason.COMMAND);
+                                if (b == null) return 0;
+                                b.wildAt(at);
+                                b.gnawed(true);
+                                return 1;
+                            })))
                     .then(Commands.literal("home").then(Commands.argument("kind", StringArgumentType.word())
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(KinKind.livingNow().stream().map(KinKind::id), b)).executes(c -> {
                                 ServerPlayer p = c.getSource().getPlayerOrException();

@@ -225,8 +225,16 @@ public final class KinSpawner {
             b.mark = mark;
             out.add(b);
         }
+        // after the Deep answered the Hundred Peal (SPEC §43.14): one site in four far from any Kinsong of the last three
+        // play-days comes back with one of its beasts Gnawed
+        if (!out.isEmpty() && dev.awaken.core.api.BellHooks.deepAnswered(level.getServer()) && level.getRandom().nextInt(GNAWED_ONE_IN) == 0
+                && !dev.awaken.core.api.BellHooks.kinsongNear(level, spot, GNAWED_CLEAR, GNAWED_DAYS))
+            out.getFirst().gnawed(true);
         return out;
     }
+
+    /** The Gnawed's odds at a filled site, and how far and how long a Kinsong keeps them off. */
+    static final int GNAWED_ONE_IN = 4, GNAWED_CLEAR = 256, GNAWED_DAYS = 3;
 
     /** Where a dressing block can sit on the ground near a spot (flat with it), or null. */
     private static @Nullable BlockPos flat(ServerLevel level, BlockPos spot, int dx, int dz) {

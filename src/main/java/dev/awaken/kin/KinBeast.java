@@ -55,6 +55,8 @@ public class KinBeast extends PathfinderMob {
     private static final EntityDataAccessor<Integer> DATA_ACT_AT = SynchedEntityData.defineId(KinBeast.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_HOMED = SynchedEntityData.defineId(KinBeast.class, EntityDataSerializers.BOOLEAN);
     /** What it's carrying where you can see it (a Totter's armful, a Thatchback's plank, a Pondling's fish). */
+    /** The Deep has got into it (SPEC §43.14): dark, ember-eyed, and it fights. */
+    private static final EntityDataAccessor<Boolean> DATA_GNAWED = SynchedEntityData.defineId(KinBeast.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<ItemStack> DATA_HELD = SynchedEntityData.defineId(KinBeast.class, EntityDataSerializers.ITEM_STACK);
 
     private @Nullable KinKind kind;
@@ -128,6 +130,12 @@ public class KinBeast extends PathfinderMob {
                     case LOOMWORM -> 0.1;
                     case BOULDERBACK -> 0.18;
                     default -> 0.25;
+                })
+                // only ever used by a Gnawed one (SPEC §43.14): the bigger the beast, the harder it hits
+                .add(Attributes.ATTACK_DAMAGE, switch (k) {
+                    case BOULDERBACK -> 7;
+                    case MOSSBACK, THATCHBACK, CLOUDCALF -> 5;
+                    default -> 3;
                 });
         if (k.flies()) b.add(Attributes.FLYING_SPEED, k == KinKind.CLOUDCALF ? 0.3 : k == KinKind.BUMBLEPUFF ? 0.35 : 0.45);
         return b;
@@ -152,6 +160,24 @@ public class KinBeast extends PathfinderMob {
         b.define(DATA_ACT_AT, 0);
         b.define(DATA_HOMED, false);
         b.define(DATA_HELD, ItemStack.EMPTY);
+        b.define(DATA_GNAWED, false);
+    }
+
+    // ---- the Gnawed (SPEC §43.14) -------------------------------------------------------------------------------------
+
+    public boolean gnawed() {
+        return entityData.get(DATA_GNAWED);
+    }
+
+    /** The Deep gets into it, or lets go of it. A freed one runs for a while and is itself again. */
+    public void gnawed(boolean on) {
+        if (gnawed() == on) return;
+        entityData.set(DATA_GNAWED, on);
+        if (!on) {
+            setTarget(null);
+            setAggressive(false);
+            hideUntil = level().getGameTime() + 20 * 20;
+        }
     }
 
     // ---- what it's doing --------------------------------------------------------------------------------------------
@@ -222,9 +248,27 @@ public class KinBeast extends PathfinderMob {
     protected void registerGoals() {
         KinKind k = KinContent.kindOf(getType());
         goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.MeleeAttackGoal(this, 1.2, true) {
+            @Override
+            public boolean canUse() {
+                return gnawed() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return gnawed() && super.canContinueToUse();
+            }
+        });
+        targetSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal<>(this, Player.class, true,
+                (t, l) -> gnawed() && !(t instanceof Player pl && (pl.isCreative() || pl.isSpectator()))));
         goalSelector.addGoal(1, new HideGoal());
         goalSelector.addGoal(1, new SongGoal());
-        goalSelector.addGoal(2, new PanicGoal(this, 1.5));
+        goalSelector.addGoal(2, new PanicGoal(this, 1.5) {
+            @Override
+            public boolean canUse() {
+                return !gnawed() && super.canUse();
+            }
+        });
         goalSelector.addGoal(3, new AvoidEntityGoal<>(this, Player.class, p -> p instanceof ServerPlayer sp && KinWatch.scares(this, sp), 10F, 1.1, 1.5,
                 EntitySelector.NO_CREATIVE_OR_SPECTATOR::test));
         goalSelector.addGoal(4, new FollowGoal());
@@ -315,7 +359,7 @@ public class KinBeast extends PathfinderMob {
 
         @Override
         public boolean canUse() {
-            return home == null && who() != null;
+            return home == null && !gnawed() && who() != null;
         }
 
         @Override
@@ -356,7 +400,7 @@ public class KinBeast extends PathfinderMob {
 
         @Override
         public boolean canUse() {
-            return home == null && who() != null;
+            return home == null && !gnawed() && who() != null;
         }
 
         @Override
@@ -417,7 +461,7 @@ public class KinBeast extends PathfinderMob {
 
         @Override
         public boolean canUse() {
-            if (home != null || follow != null || leader != null) return false;
+            if (home != null || follow != null || leader != null || gnawed()) return false;
             long now = level().getGameTime();
             if (now < nextWant || !KinWatch.wantsNow(KinBeast.this)) return false;
             return true;
@@ -475,6 +519,13 @@ public class KinBeast extends PathfinderMob {
 
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
+        if (gnawed()) {
+            // fighting a Gnawed one costs no Kinship; beaten down to a heart, the Deep lets go of it instead of it dying
+            if (damage < getHealth() - 1F) return super.hurtServer(level, source, damage);
+            boolean hit = super.hurtServer(level, source, Math.max(0F, getHealth() - 1F));
+            KinWatch.freed(this, source.getEntity() instanceof ServerPlayer p ? p : null);
+            return hit;
+        }
         if (source.getEntity() instanceof ServerPlayer p && !p.isCreative()) KinWatch.hurtBy(this, p);
         if (befriended()) {
             // never dies: at most it's left at one heart, and then it hides
@@ -492,7 +543,7 @@ public class KinBeast extends PathfinderMob {
 
     @Override
     public void die(DamageSource source) {
-        if (!level().isClientSide() && source.getEntity() instanceof ServerPlayer p) KinWatch.killedBy(this, p);
+        if (!level().isClientSide() && !gnawed() && source.getEntity() instanceof ServerPlayer p) KinWatch.killedBy(this, p);
         if (home != null && level() instanceof ServerLevel sl) KinWorld.get(sl.getServer()).leave(home, getUUID());
         super.die(source);
     }
@@ -500,6 +551,21 @@ public class KinBeast extends PathfinderMob {
     @Override
     public boolean removeWhenFarAway(double distSqr) {
         return false;
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        if (gnawed() && level() instanceof ServerLevel sl && (tickCount + getId()) % 8 == 0) {
+            net.minecraft.world.phys.Vec3 eye = getEyePosition().add(getLookAngle().scale(getBbWidth() * 0.45));
+            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.SMALL_FLAME, eye.x, eye.y, eye.z, 1, 0.05, 0.02, 0.05, 0);
+            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.ASH, getX(), getY() + getBbHeight() * 0.6, getZ(), 2, getBbWidth() * 0.4, 0.2, getBbWidth() * 0.4, 0);
+        }
+    }
+
+    @Override
+    public float getVoicePitch() {
+        return gnawed() ? 0.55F : super.getVoicePitch();
     }
 
     @Override
@@ -560,6 +626,7 @@ public class KinBeast extends PathfinderMob {
         out.putLong("hide_until", hideUntil);
         out.storeNullable("mark", BlockPos.CODEC, mark);
         out.putLong("brushed_day", brushedDay);
+        out.putBoolean("gnawed", gnawed());
     }
 
     @Override
@@ -581,6 +648,7 @@ public class KinBeast extends PathfinderMob {
         hideUntil = in.getLongOr("hide_until", 0);
         mark = in.read("mark", BlockPos.CODEC).orElse(null);
         brushedDay = in.getLongOr("brushed_day", -1);
+        entityData.set(DATA_GNAWED, in.getBooleanOr("gnawed", false));
         held(carry.isEmpty() ? ItemStack.EMPTY : carry.getFirst());
         entityData.set(DATA_HOMED, home != null);
         if (home != null && nook != null) setHomeTo(nook, 24);

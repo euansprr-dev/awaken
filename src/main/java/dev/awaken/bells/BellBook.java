@@ -15,7 +15,7 @@ import java.util.Map;
  * handbell is set to, and what's been said once. Saved on the player (schema 1), kept through death.
  */
 public final class BellBook {
-    public static final int SCHEMA = 2;
+    public static final int SCHEMA = 3;
 
     /** How a lead was learned (JOURNEY part 4). Sung comes with the Chimewren (stage 5), Found with the Stilled's letters. */
     public enum How { HEARD, SEEN, SUNG, FOUND, RUNG, REMEMBERED, DREAMT }
@@ -74,8 +74,10 @@ public final class BellBook {
             Codec.BOOL.optionalFieldOf("given", false).forGetter(b -> b.given),
             Codec.STRING.optionalFieldOf("peal", "").forGetter(b -> b.peal),
             Codec.LONG.optionalFieldOf("homeward_at", 0L).forGetter(b -> b.homewardAt),
-            Codec.LONG.optionalFieldOf("remembered_day", -1L).forGetter(b -> b.rememberedDay)
-    ).apply(i, (schema, held, leads, tracked, given, peal, homewardAt, rememberedDay) -> {
+            Codec.LONG.optionalFieldOf("remembered_day", -1L).forGetter(b -> b.rememberedDay),
+            Codec.BOOL.optionalFieldOf("pealed", false).forGetter(b -> b.pealed),
+            Codec.LONG.optionalFieldOf("kinsong_at", 0L).forGetter(b -> b.kinsongAt)
+    ).apply(i, (schema, held, leads, tracked, given, peal, homewardAt, rememberedDay, pealed, kinsongAt) -> {
         BellBook b = new BellBook();
         held.forEach((k, v) -> b.held.put(Integer.parseInt(k), v));
         leads.forEach((k, v) -> b.leads.put(Integer.parseInt(k), v));
@@ -84,6 +86,8 @@ public final class BellBook {
         b.peal = peal;
         b.homewardAt = homewardAt;
         b.rememberedDay = rememberedDay;
+        b.pealed = pealed;
+        b.kinsongAt = kinsongAt;
         return b;
     }));
 
@@ -105,6 +109,10 @@ public final class BellBook {
     public long homewardAt;
     /** The play-day someone in Carillon last remembered a home's bell aloud (schema 2), or -1. */
     public long rememberedDay = -1;
+    /** This player rang a Hundred Peal, or was home for one (schema 3): the Kinsong is theirs and the Wake is open. */
+    public boolean pealed;
+    /** Game time the Deep's things may next come for this player's Kinsong (schema 3). */
+    public long kinsongAt;
 
     public boolean has(String id) {
         BellCatalog.Def d = BellCatalog.of(id);

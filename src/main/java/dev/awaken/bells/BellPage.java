@@ -54,7 +54,10 @@ final class BellPage {
                 : !frame ? "Set your bell frame down inside your Hearth and your bells hang there."
                 : n < BellTower.BELFRY ? (BellTower.BELFRY - n) + " more bells and a belfry goes up round the frame."
                 : n < BellTower.TOWER ? (BellTower.TOWER - n) + " more bells and it becomes a stone tower."
-                : n < 100 ? (100 - n) + " bells are still missing from your song." : "Your song is whole.";
+                : home != null && home.stage < 3 ? "Your tower can't hold the rest. It needs the Great Belfry: the Heart-clapper and a Sovereign's relic, set into the frame."
+                : n < 100 ? (100 - n) + " bells are still missing from your song."
+                : home.pealed < 0 ? "Your song is whole. Ring your bells and all hundred ring together: the Hundred Peal."
+                : "Your song is whole. Your bells have rung the Hundred Peal.";
         tower.add(List.of(Integer.toString(n), Integer.toString(home == null ? 0 : home.stage), next, Long.toString(lo), Long.toString(hi), frame ? "1" : "0"));
         for (BellCatalog.Voice v : BellCatalog.Voice.values()) {
             if (v == BellCatalog.Voice.NONE) continue;
@@ -69,6 +72,7 @@ final class BellPage {
                     ? "One bell away: " + BellCatalog.of(missing.get(0)).name() + "." : missing.size() == 1 ? "One bell away." : "";
             if (!state.isEmpty()) tower.add(List.of("peal", pl.name(), pl.words(), state));
         }
+        if (b.pealed) tower.add(List.of("peal", HundredPeal.KINSONG_NAME, HundredPeal.KINSONG_WORDS, "have"));
         return new BellNet.Page(hundred, leads, tower);
     }
 }

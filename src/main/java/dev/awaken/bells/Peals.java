@@ -46,6 +46,7 @@ final class Peals {
         List<String> out = new ArrayList<>();
         out.add("");
         for (BellCatalog.Peal pl : BellCatalog.PEALS) if (pl.complete(b::has)) out.add(pl.id());
+        if (b.pealed) out.add(HundredPeal.KINSONG);
         return out;
     }
 
@@ -58,6 +59,7 @@ final class Peals {
         Bells.save(p, b);
         BellCatalog.Peal pl = BellCatalog.peal(b.peal);
         if (can.size() == 1) p.sendOverlayMessage(Component.literal("A plain ring. Your bells don't make a peal yet."));
+        else if (b.peal.equals(HundredPeal.KINSONG)) p.sendOverlayMessage(Component.literal(HundredPeal.KINSONG_NAME + ": " + HundredPeal.KINSONG_WORDS));
         else p.sendOverlayMessage(Component.literal(pl == null ? "A plain ring" : "The peal " + pl.name() + ": " + pl.words()));
         p.level().playSound(null, p.blockPosition(), BellContent.HANDBELL_RING.get(), SoundSource.PLAYERS, 0.4F, 1.5F);
     }
@@ -66,6 +68,15 @@ final class Peals {
         if (p.getCooldowns().isOnCooldown(stack)) return;
         p.getCooldowns().addCooldown(stack, RING_COOLDOWN);
         level.playSound(null, p.blockPosition(), BellContent.HANDBELL_RING.get(), SoundSource.PLAYERS, 1.5F, 1F);
+        BellBook book = Bells.book(p);
+        if (book.peal.equals(HundredPeal.KINSONG)) {
+            if (book.pealed) HundredPeal.kinsong(level, p);
+            else {
+                book.peal = "";
+                Bells.save(p, book);
+            }
+            return;
+        }
         Optional<HearthRecord> inside = level.dimension() == Level.OVERWORLD
                 ? HearthService.data(level.getServer()).containing(p.blockPosition(), HearthService.OVERWORLD) : Optional.empty();
         if (inside.isEmpty()) KinHome.scare(level, p.blockPosition(), SCARE_REACH, SCARE_TICKS);

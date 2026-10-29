@@ -39,6 +39,11 @@ public final class BellContent {
     public static final DeferredItem<BlockItem> BELL_FRAME_ITEM = ITEMS.registerSimpleBlockItem(BELL_FRAME, p -> p.stacksTo(1).rarity(Rarity.UNCOMMON));
     /** The band's handbell: rings the peals your bells make. */
     public static final DeferredItem<Handbell> HANDBELL = ITEMS.registerItem("handbell", Handbell::new, p -> p.stacksTo(1).rarity(Rarity.UNCOMMON));
+    /** The Great Belfry's two needs (SPEC §43.14): the Heart-clapper and a Sovereign's relic. */
+    public static final DeferredItem<BelfryPiece> HEART_CLAPPER = ITEMS.registerItem("heart_clapper", BelfryPiece::new,
+            p -> p.stacksTo(1).rarity(Rarity.EPIC).fireResistant());
+    public static final DeferredItem<BelfryPiece> SOVEREIGN_RELIC = ITEMS.registerItem("sovereign_relic", BelfryPiece::new,
+            p -> p.stacksTo(1).rarity(Rarity.EPIC).fireResistant());
 
     /** The tower's fifteen tuned bells (D major pentatonic, D3 to B5). */
     static final List<DeferredHolder<SoundEvent, SoundEvent>> NOTES = new ArrayList<>();

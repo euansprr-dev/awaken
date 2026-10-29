@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -26,7 +27,7 @@ import java.util.Map;
 
 /**
  * The bell frame (SPEC §43.7): two posts and a beam with a bell under it, set inside your own Hearth. Your bells hang
- * here, the belfry and the tower grow round it, and it rings your song at dawn and dusk. One per home.
+ * here, the belfry, the tower and the Great Belfry grow round it, and it rings your song at dawn and dusk. One per home.
  */
 public final class BellFrameBlock extends HorizontalDirectionalBlock {
     private static final Map<Direction, VoxelShape> SHAPE = Shapes.rotateHorizontal(Shapes.or(Block.box(1, 0, 6, 3, 16, 10),
@@ -56,6 +57,14 @@ public final class BellFrameBlock extends HorizontalDirectionalBlock {
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity by, ItemStack stack) {
         super.setPlacedBy(level, pos, state, by, stack);
         if (level instanceof ServerLevel sl) BellTower.placed(sl, pos, by instanceof ServerPlayer sp ? sp : null);
+    }
+
+    /** The Heart-clapper or a Sovereign's relic, set into the frame for the Great Belfry (SPEC §43.14). */
+    @Override
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (!stack.is(BellContent.HEART_CLAPPER.get()) && !stack.is(BellContent.SOVEREIGN_RELIC.get())) return InteractionResult.TRY_WITH_EMPTY_HAND;
+        if (player instanceof ServerPlayer sp && level instanceof ServerLevel sl) GreatBelfry.offer(sl, pos, sp, stack);
+        return InteractionResult.SUCCESS;
     }
 
     @Override

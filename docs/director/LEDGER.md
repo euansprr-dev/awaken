@@ -631,3 +631,106 @@ happens).
 - **Links**: the World Pulse's happenings (§21.6); Stride, Breath and Sight voices.
 - **Edges**: witnessed below C rank it rings nothing then; the next Stampede or Deep Tide after C does; a roof over you
   on the new moon's night and the Eclipse Bell waits.
+
+## Stage 7: the Hundred Peal, the Kinsong, the Deep's answer and the Wake (§43.14)
+
+### Heart-clapper (item)
+- **Get**: the Lord of any gate world at S rank or above, to the killer and their party within 96.
+- **For**: one of the Great Belfry's two pieces, set into your bell frame by hand.
+- **Know**: its tooltip says what it is and where it goes; the Hearth page's Great Belfry pin names it from A rank;
+  the Bell Book's next line names it once your tower is full.
+- **Source**: `Bells.lordFell` → `Bells.belfryPiece`; `Sources.declare` in `BellModule`.
+- **Links**: S-rank gates (§11), the stone tower (§43.7), the Seed Bell.
+- **Edges**: never given to someone already carrying one, or whose home has set it or has a Great Belfry; lost or
+  dropped, the next S-rank Lord gives another. Set into someone else's frame, or before your tower stands, it says why
+  and stays in your hand.
+
+### Sovereign's Relic (item)
+- **Get**: every Sovereign felled, to the killer and their party within 96.
+- **For**: the Great Belfry's other piece.
+- **Know**: as the Heart-clapper.
+- **Source**: `Bells.sovereignFell` → `Bells.belfryPiece`.
+- **Links**: the Court (§37), Grieving Sovereigns.
+- **Edges**: as the Heart-clapper; eight Sovereigns, and they come back, so it's never the last chance.
+
+### The Great Belfry (tower stage 3)
+- **Get**: both pieces in the frame of a stone tower (50 bells); your beasts raise it in 30 s, or with none it goes up
+  at the next song.
+- **For**: holds all hundred bells; the Seed Bell; the Hundred Peal rings from it.
+- **Know**: the frame's lines as each piece goes in; the Hearth page pin (needs, then "stands"); the Bell Book's next line.
+- **Source**: `GreatBelfry.offer/begin/tick/build`, `BellTower.great`, `BellTower.song`.
+- **Links**: kin gather (§43.6), the tower (§43.7).
+- **Edges**: needs a clear 7 by 7, 23 high; blocked, a note to members and it tries again every song. The old belfry
+  comes down under it. A member away when it goes up gets the Seed Bell the next time they're about.
+
+### The Seed Bell (00) and the True Bell (36)
+- **Get**: the Seed with the Great Belfry; the True Bell cast at your Foundry (8 Starmetal Ingots, 16 Bell Bronze) while
+  a member of S rank is online.
+- **For**: the last two of the hundred; Kin and Glow voices.
+- **Know**: the Seed's ring line; the Foundry's status says the True Bell waits for an S-rank member.
+- **Source**: `GreatBelfry.seed`, `KinWorks.MOULDS` ("true"), `KinWorks.next`, `KinWorks.foundryStatus`.
+- **Links**: Starmetal (§34), the Foundry (§43.12).
+- **Edges**: the Seed can't be the bell you're missing at 99: the Great Belfry needs only fifty. `bells tower <n>` skips it.
+
+### The Hundred Peal
+- **Get**: the first song after your Great Belfry holds all hundred bells; once per home.
+- **For**: a Kinship step for every kind you've met, the Kinsong, the Wake opening, a best moment; wild kin come to the tower.
+- **Know**: the REVELATION to everyone in the overworld, the members' summary line, the Bell Book ("Your song is whole.
+  Ring your bells..."), the ending screen's Wake card says it needs it.
+- **Source**: `HundredPeal.due/ring`, `KinApi.hundredPeal/peal`.
+- **Links**: Kinship (§43.5), the Wake (§43.14), the Deep's answer.
+- **Edges**: a member offline at the time gets the Kinsong and the Wake the next time they're about (`Bells.moments`);
+  another home's Peal later still steps up its own members but the Deep answers only once.
+
+### The Kinsong
+- **Get**: the handbell's peal for anyone with the Hundred Peal (sneak-use cycles to it).
+- **For**: calming the land's beasts and stampedes within reach, freeing the Gnawed, keeping the Gnawed off for 3 days
+  within 256.
+- **Know**: the Bell Book's tower list shows it with its words; the overlay says what it calmed.
+- **Source**: `Peals.ring` → `HundredPeal.kinsong`, `KinApi.kinsong`, `LivingHooks.calm` → `Pulse.calm`.
+- **Links**: stampedes (§21.6), the Gnawed.
+- **Edges**: never touches monsters, gate things, wardens, bosses or camps; after the Deep answers it draws 2 to 4 Deep
+  creatures, at most once in five minutes; creative and spectator players draw nothing.
+
+### The Deep's answer (world state)
+- **Get**: the world's first Hundred Peal; 30 s later the Great Fault `deep_answer`.
+- **For**: the endgame's pressure: gates break in half the time, spill half as many again, 10 levels higher; angrier
+  Sovereigns; the Gnawed.
+- **Know**: the Great Fault's plain line says exactly that.
+- **Source**: `HundredPeal.answer`, `BellHooks.deepAnswered` read by `Breaks`, `Court`, `KinSpawner`.
+- **Links**: breaks (§11), the Court (§37), the Gnawed.
+- **Edges**: saved (`deep_answered`), so a restart keeps it; a player offline at the time doesn't see the Fault (they
+  hear about it in the Gnawed's and the breaks' lines).
+
+### The Gnawed (kin state)
+- **Get**: after the Deep answers, one in four new kin sites, away from a recent Kinsong.
+- **For**: something to free rather than kill; a Help step of Kinship.
+- **Know**: a flicker and a line the first time; a line every 2 minutes after; the look (dark tint, ember eyes, ash).
+- **Source**: `KinSpawner`, `KinBeast.gnawed`, `KinWatch.sawGnawed/freed`, `KinApi.peal/kinsong`.
+- **Links**: Kinship, the Kinsong, the Hundred Peal.
+- **Edges**: can't be killed by a player (freed at 1 health); dies to other things like any beast with no Kinship cost.
+
+### Grieving Sovereigns
+- **Get**: after the Deep answers and all eight Sovereigns are beaten, each comes back Grieving (+20 levels).
+- **For**: endgame fights; half a level and a REVELATION the first time you fell each.
+- **Know**: the name ("Grieving <name>").
+- **Source**: `Court.courtTick`, the Court's death handler.
+- **Links**: the Court (§37), the Sovereign's Relic.
+- **Edges**: the reward once per Sovereign per player; they keep coming back.
+
+### The Wake's door (Not yet)
+- **Get**: the ending screen at the Seed.
+- **For**: the Wake needs the Peal; "Not yet" lets you leave and come back.
+- **Know**: the dimmed Wake card's words; "The Seed will wait."
+- **Source**: `Court.offer/choose/laterTick`, `EndingScreen`.
+- **Links**: the Descent (§8), the Hundred Peal.
+- **Edges**: offered again on coming back down to the Seed; the server refuses a Wake without the Peal (a re-offer).
+
+### The risen and Ilse's visit
+- **Get**: after the Wake: the Stilled stand up in loaded chunks; three play-days on, Ilse visits each home once by day.
+- **For**: the world waking up; the end of Ilse's and Aldo's story.
+- **Know**: they're in plain sight and talk when spoken to; a bracketed line when Ilse comes up the path.
+- **Source**: `StilledPlacer.rise`, `LivingHooks.risen/visit`, `Wayfarers.risen/visit`, `Wayfarer.risen/visiting`, `Bells.ilse`.
+- **Links**: the Stilled (§43.3), the Last Fire (§21), the Wake.
+- **Edges**: a Stilled in an unloaded chunk stands the next time its chunk loads near a player; Ilse doesn't come by night
+  or when nobody's at the fire, and comes the next fair day; she visits a home once (`ilse` in `bells`).

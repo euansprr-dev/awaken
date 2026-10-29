@@ -73,7 +73,9 @@ public final class KinPage {
                     for (TierRules.Need n : next) home.add(List.of(n.text(), "", "", n.met() ? "met" : "need"));
                 }
             }
-            home.add(List.of("The Great Belfry. It holds all hundred bells. What it needs isn't known yet.", "", "", "dim"));
+            String belfry = dev.awaken.core.api.BellHooks.belfry(p);
+            home.add(belfry.isEmpty() ? List.of("The Great Belfry. It holds all hundred bells. What it needs isn't known yet.", "", "", "dim")
+                    : List.of(belfry, "", "", belfry.startsWith("Your Great Belfry stands") ? "met" : "need"));
             for (KinWorld.Homed m : homed) beasts.add(beast(level, m, living.getOrDefault(m.kind(), 1)));
         }
         Kinship ks = Kinship.of(p);

@@ -123,6 +123,7 @@ public final class KinRenderer extends EntityRenderer<KinBeast, KinRenderState> 
         s.walkAnimationSpeed = Mth.clamp((float) speed * 6F, 0F, 1F);
         s.modelScale = scale;
         s.airborne = kind.flies() && e.act() != KinBeast.SLEEP;
+        s.gnawed = e.gnawed();
         Anim a = anims.computeIfAbsent(e, x -> new Anim());
         int want = model.clip(clipFor(e.act(), speed));
         if (want < 0) want = model.clip("idle");
@@ -172,6 +173,9 @@ public final class KinRenderer extends EntityRenderer<KinBeast, KinRenderState> 
         return s.airborne ? 0F : 0.3F * s.modelScale / 0.7F;
     }
 
+    /** A Gnawed one's tint: its own colours sunk toward a bruised purple-black. */
+    private static final int GNAWED = 0xFF5A4656;
+
     @Override
     public void submit(KinRenderState s, PoseStack pose, SubmitNodeCollector out, CameraRenderState camera) {
         pose.pushPose();
@@ -180,8 +184,8 @@ public final class KinRenderer extends EntityRenderer<KinBeast, KinRenderState> 
         pose.scale(-s.modelScale, -s.modelScale, s.modelScale);
         pose.translate(0F, -1.501F, 0F);
         Identifier tex = s.texture == null ? skin : s.texture;
-        out.submitModel(model, s, pose, RenderTypes.entityCutout(tex), s.lightCoords, OverlayTexture.NO_OVERLAY, -1, null, s.outlineColor);
-        if (s.glow != null && s.glowAlpha > 0.02F) {
+        out.submitModel(model, s, pose, RenderTypes.entityCutout(tex), s.lightCoords, OverlayTexture.NO_OVERLAY, s.gnawed ? GNAWED : -1, null, s.outlineColor);
+        if (s.glow != null && s.glowAlpha > 0.02F && !s.gnawed) {
             out.order(1).submitModel(model, s, pose, RenderTypes.entityTranslucentEmissive(s.glow), LightCoordsUtil.FULL_BRIGHT,
                     OverlayTexture.NO_OVERLAY, ARGB.white(s.glowAlpha), null, 0);
         }

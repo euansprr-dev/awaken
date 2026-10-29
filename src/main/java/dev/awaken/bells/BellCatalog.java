@@ -10,8 +10,9 @@ import java.util.Map;
 /**
  * The hundred bells (SPEC §43.7; GOALS part 1): each numbered 00 to 99 with its name, rank, where it comes from and its
  * voice (what it does while it hangs). Every bell's number is its note's place in the song. Stage 4 built the first
- * thirty, stage 5 the Foundry's five and stage 6 the rest (a bell is built once its voice isn't {@link Voice#NONE}); the
- * Seed (00) and the True Bell (36) wait for stage 7.
+ * thirty, stage 5 the Foundry's five, stage 6 the rest but two, and stage 7 the Seed (00, cast round the Heart-clapper as
+ * the Great Belfry goes up) and the True Bell (36, the Foundry's last cast). A bell is built once its voice isn't
+ * {@link Voice#NONE}.
  */
 public final class BellCatalog {
     private BellCatalog() {}
@@ -59,7 +60,7 @@ public final class BellCatalog {
     }
 
     private static final String[] TABLE = {
-            "00|seed|The Seed Bell|S|SEED|NONE",
+            "00|seed|The Seed Bell|S|SEED|KIN",
             "01|oath|The Oath Bell|A|COURT|GUARD",
             "02|fenwick|Fenwick's Bell|C|PEOPLE|GROWTH",
             "03|registry|The Registry Handbell|E|PEOPLE|HOMEWARD",
@@ -95,7 +96,7 @@ public final class BellCatalog {
             "33|star|The Star Bell|S|ABOVE|GLOW",
             "34|wayside|The Wayside Bell|E|WILDS|STRIDE",
             "35|mill|The Mill Bell|C|PEOPLE|GROWTH",
-            "36|true|The True Bell|S|DEEP|NONE",
+            "36|true|The True Bell|S|DEEP|GLOW",
             "37|counting|The Counting Bell|B|GATE_WORLD|HASTE",
             "38|siege|The Siege Bell|B|BIG_DAY|GLOW",
             "39|nightmare|The Nightmare's Bell|B|LUCIDIUM|GLOW",

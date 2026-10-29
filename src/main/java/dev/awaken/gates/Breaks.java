@@ -115,6 +115,8 @@ public final class Breaks {
     static void seen(MinecraftServer server, GateRecord g, String by) {
         long today = PlayDays.current(server);
         long span = Math.max(1, g.breaksOnPlayDay - g.createdDay);
+        // the Deep answered a Hundred Peal (SPEC §43.14): every gate seen from then on breaks in half the time
+        if (dev.awaken.core.api.BellHooks.deepAnswered(server)) span = Math.max(1, span / 2);
         g.seenDay = today;
         g.breaksOnPlayDay = today + span;
         g.foldsOnPlayDay = -1;
@@ -295,10 +297,18 @@ public final class Breaks {
         return dev.awaken.gates.run.Rooms.capital(g.plan.theme().bossName) + ", unbound";
     }
 
+    /** After the Deep answered (SPEC §43.14) a break comes out this many levels harder, with half again as many. */
+    static final int DEEP_LEVELS = 10;
+
+    private static int breakLevel(ServerLevel level, GateRecord g) {
+        return Progression.contentLevel(g.plan.rank()) + (dev.awaken.core.api.BellHooks.deepAnswered(level.getServer()) ? DEEP_LEVELS : 0);
+    }
+
     private static void spill(ServerLevel level, GateRecord g) {
         Overworld.place(level, g, true);
-        int lv = Progression.contentLevel(g.plan.rank());
+        int lv = breakLevel(level, g);
         int n = 6 + g.plan.rank().ordinal() * 2;
+        if (dev.awaken.core.api.BellHooks.deepAnswered(level.getServer())) n += n / 2;
         BlockPos mouth = g.mouth();
         for (int i = 0; i < n; i++) {
             double a = level.getRandom().nextDouble() * Math.PI * 2;
@@ -314,7 +324,7 @@ public final class Breaks {
     }
 
     private static void spawnLord(ServerLevel level, GateRecord g) {
-        int lv = Progression.contentLevel(g.plan.rank());
+        int lv = breakLevel(level, g);
         LivingEntity lord = MobHooks.spawnThemed(level, g.plan.theme().themeId(), MobRole.Role.BREAK, g.mouth(), lv, g.plan.theme().mobTags(), g.key());
         if (lord == null) return;
         if (lord.getMaxHealth() < 80) {

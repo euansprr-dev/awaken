@@ -13088,7 +13088,7 @@ here as it goes.
   Twinblades), else the first of the six old relics they haven't had from one, else three essence; and supplies.
 - Most carry a letter (a Found bell lead), a key (a chest in a nearby empty settlement) or a keepsake with a name that
   someone in Carillon reacts to. The System reads them in brackets ("[She got as far as the bridge.]").
-- At the Wake they stand and walk home over one play-day (stage 7).
+- At the Wake they stand and walk toward the bells (built in stage 7, §43.14).
 
 Built (stage 1, `dev.awaken.world.stilled`): blocks `awaken:stilled` (a block entity, drawn by its own jointed model:
 knees, elbows, the body pivoting at the hips; twelve hand-set poses: milestone, walking, grave, a pair on a cart's
@@ -13299,7 +13299,7 @@ SPI's line in the stat table, GOALS.md's Hearth Board, Echo Hall and Generals. J
 1. The world rule (43.1 to 43.4). 2. The first beasts, Kinship, the Hearth page, Fields and the Ore Shed (43.5, 43.6).
 3. Faults, the Ringer's Great Fault, the first raid (43.8). 4. The first thirty bells and the tower's song (43.7).
 5. The rest of the kin and the works to the Foundry, with the Storehouse. 6. The second half's bells and beasts. 7. The Hundred Peal, the
-Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY part 8).
+Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY part 8). **Built (stage 7, §43.14)**.
 
 ### 43.11 The bar (Euan, 29 Oct: "fully featured ... everything has a recipe, everything has a path ... never left unsure about how to keep going")
 - **Ledger**: `docs/director/LEDGER.md`, a row for everything the Journey adds or changes (source, use, how you come to
@@ -13403,7 +13403,7 @@ Built in `dev.awaken.kin` (`KinWorks`, `KinHelp`, `KinHome`, `KinSpawner`) and `
 ### 43.13 The second half's bells and beasts (stage 6; rows in LEDGER.md "Stage 6")
 Built in `dev.awaken.bells` (`Bells`, `BellSites`, `DreamBells`, `BellCatalog`) with one line each in `bigday.BigDays`
 (Siege) and `kin.KinWorks` (Founders).
-- **Every bell but two has a voice now** (the Seed, 00, and the True Bell, 36, wait for stage 7). New voices, felt inside
+- **Every bell but two has a voice now** (the Seed, 00, and the True Bell, 36, came with stage 7, §43.14). New voices, felt inside
   your own Hearth: Sight (night vision), Breath (no drowning under water), Feather (a fall doesn't hurt), Haste (I, II from
   3), Warmth (fire and lava don't burn), Might (Strength I, II from 3), Guard (Resistance I, II from 3).
 - **Moments** (checked every 5 s with stage 4's): the Great Bells of the B, A, S and Sovereign Provings (Third, Fourth,
@@ -13423,7 +13423,7 @@ Built in `dev.awaken.bells` (`Bells`, `BellSites`, `DreamBells`, `BellCatalog`) 
 - **The wild's big moments** (source WILDS; they were down as Big Days, but the World Pulse already holds them, §21.6):
   from C rank, witnessing a Stampede rings the Stampede Bell and witnessing the Deep Tide (new moon) the Flood Bell
   (`Bells.witnessed`, called from `Pulse.witness`); at A rank, standing under open sky between 16000 and 20000 on a new
-  moon's night rings the Eclipse Bell. Every bell but the Seed (00) and the True Bell (36) now has a source.
+  moon's night rings the Eclipse Bell. Every bell but the Seed (00) and the True Bell (36) now has a source (both came with stage 7, §43.14).
 - **Carillon** (Remembered leads while you're in the city): the Roost's bell rings for you within 16 of the Roost at C
   rank; Choir Square's within 20 of the square with 20 bells; the market's in the market district at B rank; the
   Quay's (the Harbour Bell) on the Quay with 50 bells. A due bell you're away from is remembered aloud with where it is.
@@ -13473,3 +13473,71 @@ Built in `dev.awaken.bells` (`Bells`, `BellSites`, `DreamBells`, `BellCatalog`) 
     closer. Walking about starts the wait again; a light and it backs off into the dark (a nudge every 10 s). Nook: a room
     at home with block light 2 or less and no sky. Work: 16 cobbled deepslate a day, and while it's home every Thatchback
     there lays a block every 4 ticks instead of 10.
+
+### 43.14 The Hundred Peal, the Kinsong, the Deep's answer and the Wake (stage 7; rows in LEDGER.md "Stage 7")
+Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with the Deep's answer read through
+`core.api.BellHooks` by `gates.Breaks`, `story.Court`, `kin.KinSpawner` and `kin.KinPage`, and the Wake's people in
+`living.wayfarer` and `world.stilled`.
+- **The last two bells.** The Seed Bell (00, S, voice Kin) is cast round the Heart-clapper the day a home's Great Belfry
+  goes up, and rings home for every member then or the next time they're about (so the hundredth bell is never the one
+  you can't get, and the Peal comes before the Seed, not after it). The True Bell (36, S, voice Glow) is the Foundry's
+  sixth mould: 8 Starmetal Ingots and 16 Bell Bronze, cast only while a member of S rank is online; the Foundry's status
+  says so while it waits. All hundred bells now have a source (`bells_catalog_ring` checks it).
+- **The Great Belfry** (tower stage 3): it needs the stone tower (50 bells) and two pieces set into the bell frame by
+  hand (each says why if it can't go in: not your frame, no tower yet, already set, already built). The **Heart-clapper**
+  drops from every S-rank (or higher) gate world's Lord to the killer and their party within 96; a **Sovereign's Relic**
+  from every Sovereign felled, to the same people. Each is epic, unstackable, fireproof, and given only to someone who
+  isn't already carrying one, whose home hasn't set that piece and has no Great Belfry yet; so a lost piece always
+  comes again from the next Lord or Sovereign. With both in, every beast living there gathers at the tower for 30 s
+  (dust, stone and timber knocks) and it goes up; with no beasts it goes up at the next song. It needs a clear 7 by 7,
+  23 high round the frame (otherwise a note, and it tries again every song); the tower's own belfry comes down under it.
+  The build: the tower's lower five floors, a stone-brick shaft (deepslate corners, windows), a deepslate-rimmed floor at
+  10, piers at the corners and mid-sides, dark-oak beams at 16 with 24 bells hung under them in two rings and the Seed
+  Bell in the middle, lanterns, a three-step roof and a gold-capped spire with a lightning rod at 22. The song then
+  rings from the Great Belfry. The Hearth page's pin names its needs from A rank and its state once built; the Bell
+  Book's next line names it when the tower is full.
+- **The Hundred Peal**: the first song after the Great Belfry holds all hundred bells rings all of them together, once
+  per home. Every player in the overworld hears it (the whole song, a mend of any Fault, a REVELATION "The Hundred
+  Peal"); the home's beasts sing; every wild kin within the tower's hearing (256) comes to the tower for the song's
+  length and any Gnawed among them are freed. Each member: every kind they've met goes a step up (Curious, Friendly,
+  Kin), the Chimewren to at least Friendly, fear cleared; a best moment; the Kinsong; the Wake opens to them
+  (`BellBook.pealed`, schema 3). It's the one big moment that doesn't glitch.
+- **The Deep answers** (the world's first Hundred Peal, saved as `deep_answered` in `bells`, schema 2): 30 s after the
+  Peal, every player who heard it sees the Great Fault `deep_answer` ("SIGNAL HEARD BELOW", the camera pulled up and back
+  from the tower over 90 ticks) and then, plainly: "The Deep heard your bells. Gates will break sooner now, and harder,
+  and the Gnawed will spread wherever the Kinsong doesn't reach." From then on: a gate's time to break is halved; a
+  break's spill is half as many again and its creatures and Lord are 10 levels higher; the Sovereigns come back angrier
+  (+10 levels), and once all eight are beaten each returns as a Grieving Sovereign (+20, "Grieving <name>"; felling one
+  grants half a level and a REVELATION once per Sovereign per player). Fighting never ends.
+- **The Gnawed**: a wild kin the Deep has got into (`KinBeast` with the synced flag `gnawed`: sunk purple-black, ember
+  eyes, ash, a low voice). After the Deep answers, a fresh kin site has a one-in-four chance that its first beast is
+  Gnawed, unless the Kinsong rang within 256 blocks in the last 3 play-days. A Gnawed beast hunts players (not creative
+  or spectator) with a melee hit (Boulderback 7; Mossback, Thatchback and Cloudcalf 5; others 3), doesn't panic, follow,
+  lead or want. You can't kill it: brought below 1 health it's freed, never dies, and the one who freed it gets a Help
+  step of Kinship; the Kinsong frees it at once; killing a Gnawed costs no Kinship. The first sight of one (24 blocks, in
+  view) plays a flicker and a line; after that a line every 2 minutes.
+- **The Kinsong** (the handbell's peal for anyone with the Peal; sneak-use cycles to it): the land's beasts within 48
+  stop (no target, no anger, a riled one slowed for 15 s; never monsters, gate things, wardens, bosses or camps); wild
+  kin within 48 come to listen for a minute and any Gnawed is freed; a Stampede within 80 slows and stops; it never
+  scares kin. Each one is kept (x, z, play-day; last 64, 8 days). After the Deep has answered, the Deep's creatures hear
+  it: 30 s later, at most once in 5 minutes, 2 to 4 of the player's rank (an elite first) from the Abyssal Shrine, the
+  Nightmare or the Bell Crypt come up 18 to 26 blocks off, hunting them.
+- **The Wake needs the Peal.** At the Seed, the ending screen shows the Wake dimmed until the player has rung (or
+  heard as a member) the Hundred Peal: "Needs the Hundred Peal: all hundred bells ringing together in your Great
+  Belfry." A **Not yet** under the cards closes it ("The Seed will wait."), and it's offered again the next time they
+  come back down to the Seed. The server refuses a Wake without the Peal.
+- **After the Wake** (the world's colour restored): no new Stilled sit down, and every placed one in a loaded chunk
+  stands up (stone dust, a grinding sound) as a risen Wayfarer with their name (or "Someone") in a stone-grey skin with
+  moss on the head and shoulders (`wayfarer/risen.png`), walking toward Carillon 20 blocks at a time; they're gone once
+  nobody's within 48 or they're nearly there, and their spot never fills again. Spoken to, they say one of three plain
+  lines ("I can hear the bells again. I'm going home."). Their letters and keys stay true. Three play-days after the
+  first Wake the bells see, Ilse walks out from the Last Fire to visit each home once: by day (1000 to 9000), when a
+  member is within 24 of the Anchor, she comes up the path 28 blocks out on the city's side, walks to the fire and stays
+  by it, saying four things in turn (she followed the bells; eleven years she meant to walk out; Aldo came back over the
+  ridge with the dog; "sit down and tell me what it's like out here"); she leaves at dusk or after 20 minutes with
+  nobody near. At the Last Fire after the Wake she talks about Aldo coming back, the risen on the roads and maybe
+  visiting. Decision (stage 7): JOURNEY's "legendary beasts come to your tower" for the Peal is the wild kin in hearing
+  coming instead; there are no legendary beasts in the game.
+- Commands: `/awaken admin bells belfry` (grows the tower if needed, sets both pieces, raises it now), `bells deep`
+  (the Deep has answered), `bells tower <n>` (now skips the Seed), `/awaken admin kin gnaw <kind>`. Test (CI):
+  `bells_hundred_peal` (the Great Belfry's plan; no Kinsong or Wake before the Peal, both after).

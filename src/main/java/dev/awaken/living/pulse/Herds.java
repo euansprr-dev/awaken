@@ -95,7 +95,7 @@ final class Herds {
 
     /**
      * A Stampede: a herd at a full run, 90 blocks in 40 seconds along a dust line. It hurts whoever stands in its way
-     * (get clear, or turn it with the Herdcaller Horn).
+     * (get clear, turn it with the Herdcaller Horn, or stop it with the Kinsong).
      */
     static final class Stampede implements Behaviour {
         private final Map<UUID, Long> hit = new HashMap<>();
@@ -118,6 +118,8 @@ final class Herds {
 
         @Override
         public void tick(ServerLevel level, Happening h, HappeningDef def, long now) {
+            // the Kinsong stopped it (SPEC §43.14): the herd stands and grazes where it is
+            if (h.data.containsKey("calmed")) return;
             Behaviours.walk(level, h, h.progress(now), 0.25F, 2.2, 3);
             for (UUID id : h.participants) {
                 Entity e = level.getEntity(id);

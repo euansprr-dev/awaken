@@ -545,13 +545,17 @@ public final class KinWorks {
         }
     }
 
-    /** The five bells of the Singing Deep a Foundry casts, in the order it casts them (SPEC §43.12). The True Bell isn't cast. */
+    /**
+     * The bells a Foundry casts, in the order it casts them: the Singing Deep's five (SPEC §43.12), then the True Bell
+     * (§43.14), tuned against the other five, cast only for a home with an S-rank hunter in it.
+     */
     public static final List<Mould> MOULDS = List.of(
             new Mould("sung_iron", () -> Items.IRON_INGOT, 12, 4),
             new Mould("sung_copper", () -> Items.COPPER_INGOT, 16, 4),
             new Mould("sung_gold", () -> Items.GOLD_INGOT, 12, 6),
             new Mould("deepglass", DelveContent.DEEPGLASS_SHARD, 16, 8),
-            new Mould("starmetal", DelveContent.STARMETAL_INGOT, 4, 8));
+            new Mould("starmetal", DelveContent.STARMETAL_INGOT, 4, 8),
+            new Mould("true", DelveContent.STARMETAL_INGOT, 8, 16));
 
     /** A cast under way at a home. Not saved: the metal is only taken when it's done, so a cast cut off starts again. */
     private record Cast(Mould mould, BlockPos crucible, long done) {}
@@ -589,8 +593,21 @@ public final class KinWorks {
     /** The next bell this home's Foundry hasn't cast yet. */
     private static @Nullable Mould next(ServerLevel level, BlockPos anchor, Room f) {
         List<String> done = KinWorld.get(level.getServer()).cast.getOrDefault(anchor.asLong(), List.of());
-        for (Mould m : MOULDS) if (!done.contains(m.bell())) return m;
+        for (Mould m : MOULDS) {
+            if (done.contains(m.bell())) continue;
+            // an S-rank bell waits for an S-rank hunter at home
+            dev.awaken.bells.BellCatalog.Def d = dev.awaken.bells.BellCatalog.of(m.bell());
+            if (d != null && d.rank() == dev.awaken.progression.Rank.S && !sRankHome(level, anchor)) return null;
+            return m;
+        }
         return null;
+    }
+
+    private static boolean sRankHome(ServerLevel level, BlockPos anchor) {
+        for (UUID id : people(level, anchor))
+            if (level.getServer().getPlayerList().getPlayer(id) instanceof ServerPlayer p
+                    && dev.awaken.progression.Progression.rank(p).ordinal() >= dev.awaken.progression.Rank.S.ordinal()) return true;
+        return false;
     }
 
     private static int count(ServerLevel level, Room f, Item item) {
@@ -658,7 +675,9 @@ public final class KinWorks {
         }
         Mould m = next(level, anchor, f);
         if (m == null) {
-            KinWatch.say(p, "[Every bell of the Singing Deep this Foundry can cast has been cast.]", 6);
+            boolean trueLeft = !KinWorld.get(level.getServer()).cast.getOrDefault(anchor.asLong(), List.of()).contains("true");
+            KinWatch.say(p, trueLeft ? "[The last mould is for the True Bell, tuned against the Deep's other five. It's cast only for a home with an S-rank hunter in it. It needs "
+                    + MOULDS.getLast().needs() + ".]" : "[Every bell this Foundry can cast has been cast, the True Bell last.]", 10);
             return;
         }
         boolean ember = !KinApi.loaded(level, anchor, KinKind.EMBERKIT).isEmpty() || KinWorld.get(level.getServer()).at(anchor).stream().anyMatch(x -> x.kind() == KinKind.EMBERKIT);

@@ -188,6 +188,90 @@ def woken_clapper():
     return im
 
 
+def outline(im, col):
+    px = im.load()
+    src = im.copy().load()
+    for y in range(16):
+        for x in range(16):
+            if src[x, y][3]:
+                continue
+            if any(0 <= x + dx < 16 and 0 <= y + dy < 16 and src[x + dx, y + dy][3] for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                px[x, y] = col
+
+
+def heart_clapper():
+    """The Heart-clapper (SPEC 43.14): a great bell's clapper of black iron, as long as your arm, with a heart of red
+    bronze in its ball that still glows, and cracks running out of it like veins."""
+    im = img()
+    px = im.load()
+    iron = [rgb("#121318"), rgb("#24262e"), rgb("#3c3f4a"), rgb("#5d6170"), rgb("#8a90a0")]
+    heart = [rgb("#5a0d0a"), rgb("#a5200f"), rgb("#e0481a"), rgb("#ff8a3a"), rgb("#ffd08a")]
+    # the shaft, on a slant from the loop at the top right to the ball at the bottom left
+    for i in range(7):
+        x, y = 11 - i, 2 + i
+        px[x, y] = iron[2]
+        px[x + 1, y] = iron[3] if i < 6 else iron[2]
+        px[x, y + 1] = iron[1]
+    # the loop it hangs by
+    for (x, y) in ((12, 0), (13, 0), (14, 1), (14, 2), (13, 3), (12, 2), (11, 1)):
+        px[x, y] = iron[3]
+    px[13, 0] = iron[4]
+    # the ball: a round of black iron, the heart showing through a crack in it
+    for y in range(8, 16):
+        for x in range(0, 9):
+            dx, dy = x - 3.6, y - 11.6
+            d = (dx * dx + dy * dy) ** 0.5
+            if d <= 3.9:
+                t = (dx * -0.6 + dy * 0.8) / 3.9
+                px[x, y] = iron[3] if t < -0.55 else iron[2] if t < -0.1 else iron[1] if t < 0.5 else iron[0]
+    for (x, y, k) in ((3, 11, 4), (4, 11, 3), (3, 12, 3), (2, 11, 2), (4, 12, 2), (3, 10, 2), (5, 10, 1), (1, 12, 1), (2, 13, 1),
+                      (5, 13, 1), (6, 9, 0), (1, 10, 0), (6, 14, 0)):
+        px[x, y] = heart[k]
+    outline(im, rgb("#07070a"))
+    # it's warm: a little heat coming off it
+    for (x, y) in ((8, 9), (9, 12), (0, 8)):
+        px[x, y] = rgb("#ff7a2a", 120)
+    return im
+
+
+def sovereign_relic():
+    """A Sovereign's relic (SPEC 43.14): a shard of its crown, old gold gone dark, set with a gem that still holds a
+    little of its light."""
+    im = img()
+    px = im.load()
+    gold = [rgb("#2e1c06"), rgb("#5c3b0e"), rgb("#8c6018"), rgb("#bf8d2c"), rgb("#e6c063"), rgb("#fff1b8")]
+    gem = [rgb("#1d0b3a"), rgb("#43207a"), rgb("#7a48c8"), rgb("#b892ff"), rgb("#f0e4ff")]
+    # a crown's band, broken off on both sides: three points along the top
+    for y in range(7, 13):
+        for x in range(2, 14):
+            if (y == 12 and x in (2, 13)) or (y == 7 and x in (2, 13)):
+                continue
+            t = (y - 7) / 5
+            px[x, y] = gold[4 if t < 0.2 else 3 if t < 0.5 else 2 if t < 0.8 else 1]
+    for cx, h in ((3, 3), (8, 5), (12, 3)):
+        for k in range(h):
+            y = 6 - k
+            for x in range(cx - (1 if k < h - 1 else 0), cx + (2 if k < h - 1 else 1)):
+                if 0 <= x < 16:
+                    px[x, y] = gold[4] if x == cx else gold[3]
+        px[cx, 6 - h + 1] = gold[5]
+    # the broken edges, jagged
+    for (x, y) in ((2, 9), (2, 11), (13, 8), (13, 10), (14, 9)):
+        px[x, y] = (0, 0, 0, 0)
+    # the gem in the middle
+    for (x, y, k) in ((7, 9, 2), (8, 9, 3), (9, 9, 2), (7, 10, 1), (8, 10, 2), (9, 10, 1), (8, 8, 4), (8, 11, 0)):
+        px[x, y] = gem[k]
+    px[7, 8] = gem[3]
+    # studs either side
+    for x in (4, 12):
+        px[x, 10] = gold[5]
+        px[x, 11] = gold[2]
+    outline(im, rgb("#140c02"))
+    for (x, y) in ((8, 13), (5, 14), (11, 14)):
+        px[x, y] = rgb("#b892ff", 110)
+    return im
+
+
 # ---- models -------------------------------------------------------------------------------------------------------------
 
 def box(frm, to, tex, rot=None, faces=("north", "south", "east", "west", "up", "down"), uv=None):
@@ -289,7 +373,8 @@ def build(out):
 
 def main(argv):
     painted = {"block/vent_stone": vent_stone, "block/pond_rot": pond_rot, "block/granary_keystone": granary_keystone,
-               "block/work_plan": work_plan, "item/woken_clapper": woken_clapper}
+               "block/work_plan": work_plan, "item/woken_clapper": woken_clapper,
+               "item/heart_clapper": heart_clapper, "item/sovereign_relic": sovereign_relic}
     written = []
     for rel, fn in painted.items():
         path = os.path.join(ASSETS, "textures/%s.png" % rel)
@@ -313,8 +398,9 @@ def main(argv):
     write_json("blockstates/work_plan.json", facing("awaken:block/work_plan"))
     for b in ("vent_stone", "granary_keystone", "chime_perch", "foundry_crucible", "storehouse_drop", "ledger_desk", "work_plan"):
         write_json("items/%s.json" % b, {"model": {"type": "minecraft:model", "model": "awaken:block/%s" % b}})
-    write_json("models/item/woken_clapper.json", {"parent": "minecraft:item/generated", "textures": {"layer0": "awaken:item/woken_clapper"}})
-    write_json("items/woken_clapper.json", {"model": {"type": "minecraft:model", "model": "awaken:item/woken_clapper"}})
+    for it in ("woken_clapper", "heart_clapper", "sovereign_relic"):
+        write_json("models/item/%s.json" % it, {"parent": "minecraft:item/generated", "textures": {"layer0": "awaken:item/%s" % it}})
+        write_json("items/%s.json" % it, {"model": {"type": "minecraft:model", "model": "awaken:item/%s" % it}})
     print("works:", len(written), "textures")
     if len(argv) > 2 and argv[1] == "preview":
         sheet = Image.new("RGBA", (len(written) * 136, 136), (40, 44, 52, 255))
