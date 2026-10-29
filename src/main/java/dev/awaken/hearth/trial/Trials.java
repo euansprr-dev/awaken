@@ -270,6 +270,14 @@ public final class Trials {
 
     private static void begin(ServerPlayer sp, Session s) {
         s.nextStageAt = s.level.getGameTime() + (s.teleported ? 60 : 5);
+        if (s.kind == Kind.WAVES && s.target == Rank.D && !s.practice) {
+            // the first Proving (SPEC §43.8): the Reading Bell won't stop, and the System breaks for the first time since
+            // the awakening; the first wave waits for the screen to come back
+            dev.awaken.fault.Fault ringer = new dev.awaken.fault.Fault(dev.awaken.fault.Fault.Size.GREAT, "ringer",
+                    java.util.List.of("[ERROR] … THAT'S NOT OUR BELL", "READING · RANK ▮ · RANK ▮ · RANK ▮"), "[ERROR] it rang for you last time too",
+                    "That isn't the Registry's bell. Something else is ringing it.", null, null, 0, true);
+            if (dev.awaken.fault.Faults.play(sp, ringer) == dev.awaken.fault.Fault.Size.GREAT) s.nextStageAt += ringer.length();
+        }
         s.bar.addPlayer(sp);
         // on the Boss Plate's glass (SPEC §35.1): no creature, so it draws from the bar alone
         dev.awaken.core.api.BossPlates.bind(sp, s.bar.getId(), -1, dev.awaken.core.api.BossPlates.Kind.LORD, new float[0],
@@ -501,6 +509,8 @@ public final class Trials {
     static void end(MinecraftServer server, Session s, boolean passed, String why) {
         SESSIONS.remove(s.player);
         s.state = passed ? State.PASSED : State.FAILED;
+        if (s.kind == Kind.WAVES && s.target == Rank.D && !s.practice && server.getPlayerList().getPlayer(s.player) instanceof ServerPlayer rung)
+            dev.awaken.fault.Faults.mend(rung); // the bell stops: the System steadies, held or not
         LAST.put(s.player, s.state);
         s.bar.removeAllPlayers();
         for (UUID u : s.mobs) {

@@ -305,3 +305,58 @@ happens).
 - **Edges**: no home: "No home yet..."; the Kin list always holds a rumour not yet followed when one exists within 600
   blocks; nothing on it expires or renews daily; a rumour unfollowed for a play-day gets plainer (distance to 50 blocks
   and the land's name), after two Track's bearing narrows from ±48 to ±8.
+
+## Stage 3: Faults, the Ringer's Great Fault, the first raid (§43.8)
+
+### Faults (the kit)
+- **Get**: played by the server through `fault.Faults` (`play`, `playNear`, `mend`, `mendNear`): a flicker (14 ticks), a
+  Fault (about 4 s) or a Great Fault (10 to 20 s; each key plays once per player, counted `awaken:fault_<key>`, then as a
+  Fault).
+- **For**: the start of every Big Day that threatens you and of each Proving; the mend ends a woken event (and, from
+  stage 4, every bell).
+- **Know**: it is the opening's failure again (the tell, the tear, the System's words in the black, the held cut, the
+  plain line after), so the player learns it once.
+- **Source**: `fault.Fault`, `fault.Faults`, `fault.FaultNet` (`fault_play`, `fault_mend`), `fault.client.FaultHud`;
+  sounds `fault.tell/tear/voice/drop/mend/flicker` from `tools/art/specs/audio_fault.py`.
+- **Links**: the Ringer; raids; stage 4's bells (the mend).
+- **Edges**: client setting `faults` full/gentle/still (`config/awaken-faults-client.toml`); screen flashes or camera
+  shake off play FULL as GENTLE; band layouts change at most every 7 ticks (under three a second) and slide, never
+  strobe; a Fault replacing a running one ends its cut first; logout ends it and the edge; the edge gives up after 20
+  minutes without a mend; a client without the mod's channel is skipped; Lens off still plays it (the crush is extra).
+
+### The Ringer's Great Fault
+- **Get**: the D-rank Reassessment (the waves trial, until the Ringer's hall is built) opens on the Great Fault
+  `ringer`: "[ERROR] … THAT'S NOT OUR BELL / READING · RANK ▮ · RANK ▮ · RANK ▮", the leak "it rang for you last time too",
+  then "That isn't the Registry's bell. Something else is ringing it."
+- **For**: the first Proving's surprise; it ends on the mend when the trial ends, held or not.
+- **Know**: it comes unannounced, the first break since the awakening.
+- **Source**: `hearth.trial.Trials.begin` / `end`.
+- **Links**: Faults; raids (D rank opens them).
+- **Edges**: practice runs and every later D attempt play it as a plain Fault; the first wave waits for the screen to
+  come back; the Ringer itself (the Drowned Belfry, the Tether, the Tenor) is GOALS part 2's Proving, not built here.
+
+### Raids (the first Big Day)
+- **Get**: per home, once its owner holds D rank (the first Great Bell's stand-in until the Ringer gives the Tenor):
+  never in a world's first two hours of play, at most one Big Day every five play-days, due a play-day or two later and
+  never said when.
+- **For**: the night you hold your home. Rewards: the Lord's Heart (dropped by the raid's Lord), Kinship a step with
+  every kind living there for each player who held (and a shiny stone from a Pebblepup), `awaken:raids_held`, a best
+  moment. The Big Day bell joins with stage 4's bells.
+- **Know**: the day before, a note (never an order): "Your beasts are frightened of something to the east." (with no
+  beasts: "The wild things are all moving away from the east."); four wild kin run past the house the other way; the
+  home's beasts carry things into their nooks and its Lampwings keep to their roosts.
+- **Source**: `bigday.BigDays` (schedule, warning, dusk, waves, Lord, dawn, the away raid, mending), `bigday.BigDayData`
+  (`big_days`, schema 1). Commands `/awaken admin bigday raid [first] | dawn`.
+- **Links**: Faults (a Great Fault `first_raid` the first time, a Fault after, with a held look along the breach's
+  bearing); the kin (`KinHome.hide`, `checkOn`, `stream`, the unease in `KinHome.work`); the gates (the breach is the
+  nearest standing gate within 700 blocks, its theme the raid's; else 400 blocks off on the home's own bearing and the
+  owner's D theme); the Lampwings' spawn guard keeps the yard free of risers.
+- **Edges**: waves 4, 6 and 8 (0, 1, 2 elites) come 52 blocks out along the bearing, the next when two or fewer are left
+  or after a minute, the Lord (a roaming break Lord, level 12 the first time, the owner's level after) when one is
+  left; they hunt whoever of the household is within 48, else walk to the Hearth; first light (or a slept night)
+  clears what's left and mends. Nobody home at dusk: at dawn it breaks at most 10 doors, trapdoors, gates, wooden fences
+  or glass on its side (never a chest, a rack, a bed, the fire or a beast; put back one every 15 s where nothing has
+  been put since) and carries at most 9 stacks of food out of the fullest larder chest, left in a chest 70 blocks along
+  its trail and tracked on the card. Peaceful: no raid (the gate settles). The server down at dusk or a skipped night:
+  it came while you were away. A Hearth taken up drops its Big Days. Shared Hearths: every member home counts and is
+  hunted; the warning and the away note go to every member online.

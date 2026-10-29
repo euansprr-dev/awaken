@@ -13220,6 +13220,25 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   no help (a level-12 player in D gear who stands and fights holds it). A raid while away breaks what it reaches and
   takes at most a chest's worth from the larder, never a beast, never the Forge's racks.
 
+- **Built (stage 3).** Faults: `fault.Faults.play/playNear/mend/mendNear` (public API), payloads `fault_play` and
+  `fault_mend`; sizes flicker 14 ticks, Fault (tell 10, break 22, black at least 34, cut up to 40), Great Fault (tell 22,
+  break 60, black at least 110, cut up to 90); words type at 1.1 characters a tick with a 10-tick beat between lines,
+  each glyph arriving broken for 3 ticks; a Great Fault's key plays once per player (`awaken:fault_<key>`), then as a
+  Fault. Client config `faults` (FULL, GENTLE, STILL) in `awaken-faults-client.toml`; screen flashes or camera shake
+  off make FULL play GENTLE; band layouts change at most every 7 ticks. Sounds `fault.tell/tear/voice/drop/mend/flicker`
+  (`tools/art/specs/audio_fault.py`). The Ringer's Great Fault (`ringer`) opens the D Reassessment (the waves trial
+  stands in for the Ringer's hall) and the trial's end mends it. Raids (`bigday.BigDays`, saved `big_days` schema 1):
+  a home is ready once its owner is D rank; never in the first 2 h of play (144,000 ticks); one every 5 play-days at
+  most; due 1 to 2 play-days later the first time, 1 to 3 after; warned the morning before; dusk at 12,200, dawn at
+  23,200; within 160 blocks counts as home. Waves 4/6/8 normals with 0/1/2 elites, 52 blocks out along the breach's
+  bearing, the next at 2 or fewer left or after a minute, then the Lord (role BREAK, level 12 the first time); the
+  Lord's death drops a Lord's Heart. The breach: the nearest standing gate within 700 blocks (over 120 away), else 400
+  blocks on one of eight bearings from the home's position. The first raid's Great Fault is `first_raid`. Away: at most
+  10 doors/trapdoors/fence gates/wooden fences/glass on the breach side, mended one per 300 ticks; at most 9 stacks of
+  food from the fullest chest, left in a chest 70 blocks out and tracked. Commands `/awaken admin fault
+  flicker|fault|great <key>|mend`, `/awaken admin bigday raid [first]|dawn`. Tests (CI): `fault_great_once`,
+  `bigday_away_raid`.
+
 ### 43.9 Changes to earlier sections
 §10 (Echoes, Barracks, town NPCs at the Hearth), §28 W0/W1/W3/W4/W6/W7 (citizens, troubles, settlers, the Mine head
 and Mine Echo), §41 (tamers: Carillon, its farmland, roads, holdfasts, Hearths; hunts take quarry and the Gnawed only),

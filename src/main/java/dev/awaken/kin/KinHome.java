@@ -223,6 +223,19 @@ public final class KinHome {
         }
         boolean awake = b.kind() == KinKind.LAMPWING ? KinWatch.night(level) : !KinWatch.night(level);
         if (b.kind() == KinKind.LAMPWING && every(b, 40)) lamp(level, b.nook, awake);
+        if (dev.awaken.bigday.BigDays.uneasy(level, b.home)) {
+            // a raid is coming (SPEC §43.8): Lampwings keep to their lit roosts, the rest carry things into their nooks
+            if (b.kind() == KinKind.LAMPWING) {
+                if (b.act() == KinBeast.WORK) b.act(KinBeast.IDLE);
+                goTo(b, b.nook, 0.8);
+                return;
+            }
+            if (awake && (b.tickCount / 200) % 2 == 0) {
+                b.act(KinBeast.CARRY);
+                goTo(b, b.nook, 1.0);
+                return;
+            }
+        }
         if (!awake) {
             if (b.act() == KinBeast.WORK) b.act(KinBeast.IDLE); // still in its nook, it falls asleep
             goTo(b, b.nook, 0.8);
@@ -243,6 +256,56 @@ public final class KinHome {
             default -> {}
         }
     }
+
+    /** A raid at this home (SPEC §43.8): every beast that lives here runs for its nook and stays hidden until {@code until}. */
+    public static void hide(ServerLevel level, BlockPos anchor, long until) {
+        for (KinWorld.Homed m : KinWorld.get(level.getServer()).at(anchor))
+            if (level.getEntity(m.id()) instanceof KinBeast b) b.hideUntil = Math.max(b.hideUntil, until);
+    }
+
+    /**
+     * Dawn after a raid held: the beasts come out and check on whoever held it, a Pebblepup brings a shiny stone, and
+     * each kind living here takes a step of Kinship with each of them (they saw you hold).
+     */
+    public static void checkOn(ServerLevel level, BlockPos anchor, List<ServerPlayer> held) {
+        java.util.Set<KinKind> kinds = java.util.EnumSet.noneOf(KinKind.class);
+        for (KinWorld.Homed m : KinWorld.get(level.getServer()).at(anchor)) {
+            kinds.add(m.kind());
+            if (!(level.getEntity(m.id()) instanceof KinBeast b)) continue;
+            b.hideUntil = 0;
+            ServerPlayer near = null;
+            for (ServerPlayer p : held) if (near == null || p.distanceToSqr(b) < near.distanceToSqr(b)) near = p;
+            if (near == null) continue;
+            b.getNavigation().moveTo(near, 1.0);
+            b.act(KinBeast.NUDGE);
+            if (m.kind() == KinKind.PEBBLEPUP) {
+                near.spawnAtLocation(level, new ItemStack(Items.AMETHYST_SHARD));
+                KinWatch.say(near, "[The Pebblepup drops a shiny stone at your feet.]", 8);
+            }
+        }
+        for (ServerPlayer p : held)
+            for (KinKind k : kinds) Kinship.add(p, k, Kinship.HELP);
+        if (!kinds.isEmpty()) for (ServerPlayer p : held) KinWatch.say(p, "[Your beasts are coming out to check on you. They saw you hold.]", 9);
+    }
+
+    /** Wild beasts running from what's coming: {@code n} of them from {@code from} toward {@code to}, gone once there. */
+    public static List<java.util.UUID> stream(ServerLevel level, BlockPos from, BlockPos to, int n) {
+        List<java.util.UUID> out = new java.util.ArrayList<>();
+        KinKind[] runners = {KinKind.BURROWBUN, KinKind.MOSSBACK, KinKind.PEBBLEPUP};
+        for (int i = 0; i < n; i++) {
+            BlockPos at = KinHelp.ground(level, from.getX() + level.getRandom().nextInt(17) - 8, from.getZ() + level.getRandom().nextInt(17) - 8);
+            KinBeast b = spawn(level, runners[i % runners.length], at, EntitySpawnReason.EVENT);
+            if (b == null) continue;
+            b.origin = to;
+            b.hideUntil = level.getGameTime() + 20 * 120;
+            b.addTag(STREAM);
+            out.add(b.getUUID());
+        }
+        return out;
+    }
+
+    /** The tag on wild beasts running from a raid: they leave the world once they've run their course. */
+    public static final String STREAM = "awaken_kin_stream";
 
     /** Once every {@code n} ticks of a goal that ticks every other tick (on odd or even ticks, by the entity's id). */
     static boolean every(KinBeast b, int n) {
