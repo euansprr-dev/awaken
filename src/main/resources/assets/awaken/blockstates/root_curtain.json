@@ -1,0 +1,38 @@
+{
+  "variants": {
+    "tip=false": [
+      {
+        "model": "awaken:block/caves/root_curtain"
+      },
+      {
+        "model": "awaken:block/caves/root_curtain",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/root_curtain",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/root_curtain",
+        "y": 270
+      }
+    ],
+    "tip=true": [
+      {
+        "model": "awaken:block/caves/root_curtain_tip"
+      },
+      {
+        "model": "awaken:block/caves/root_curtain_tip",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/root_curtain_tip",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/root_curtain_tip",
+        "y": 270
+      }
+    ]
+  }
+}

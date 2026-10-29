@@ -233,6 +233,9 @@ void main() {
     float slope = length(g);
     // blocks a pixel spans here (as on screen: a horizon slice's pixels are finer, FarView)
     float footprint = max(fwidth(vRel.x), fwidth(vRel.z)) * FarView.x;
+    // and across the ray, whatever the ground's tilt
+    vec3 dir = normalize(vRel);
+    float across = length(vRel) * max(length(dFdx(dir)), length(dFdy(dir))) * FarView.x;
 
     // the columns: a power of two, at least a block and a half of pixels wide, so each pixel keeps meeting the same face
     // as the camera moves (narrower, a pixel jumps between a column's lit top and its shaded side: far slopes glitter);
@@ -249,13 +252,23 @@ void main() {
     float w = exp2(floor(level));
     Hit hit;
     hit.ok = false;
+    hit.below = 0.0;
     if (!water) hit = columns(vRel, g, w);
     vec3 pos = hit.ok ? normalize(vRel) * hit.t : vRel;
     vec3 face = hit.ok ? hit.n : n;
     // a column's side is lit by the way the slope faces, not by the axis its column happens to show: a steep slope's
     // staircase shows x sides and z sides by turns as the slope turns, and with the slope read per triangle those turns
     // drew dark spikes down far mountains and grooves down their walls (Euan, 2026-10-26)
-    if (hit.ok && hit.n.y < 0.5 && dot(n.xz, n.xz) > 1e-4) face = normalize(vec3(n.x, 0.0, n.z));
+    vec3 riserN = dot(n.xz, n.xz) > 1e-4 ? normalize(vec3(n.x, 0.0, n.z)) : vec3(1.0, 0.0, 0.0);
+    if (hit.ok && hit.n.y < 0.5 && dot(n.xz, n.xz) > 1e-4) face = riserN;
+    // where a step's top or its riser is under a few pixels on screen, a pixel meets one and then the other as the camera
+    // breathes (Camera Overhaul's idle sway), a lit line and a shaded one by turns: far steep faces shimmered under the
+    // steady pass (Euan, 2026-10-29). There the pixel takes the staircase's average, the top and the riser by the share
+    // of the screen each covers (the top by how steeply the ray drops, the riser by how squarely it meets it), as a
+    // filtered texture would
+    float drop = max(-dir.y, 0.0), rise = max(g.x * dir.x, 0.0) + max(g.y * dir.z, 0.0);
+    float fine = hit.ok ? 1.0 - smoothstep(1.0, 3.0, w * min(drop, rise) / max(across, 1e-6)) : 0.0;
+    float share = drop / max(drop + rise, 1e-6), riser = max(w * slope, 1e-3);
     float y = pos.y + FarFog.z;
     vec2 world = vec2(FarCamInt.xz) + pos.xz + FarCam.xz;
     ivec2 blk = hit.ok ? hit.cell : FarCamInt.xz + ivec2(floor(rel));
@@ -297,27 +310,32 @@ void main() {
         if (!generated) snow = snowOn(world, y, g, slope, alpine);
     }
     bool grassy = top.g > top.r * 1.05 && top.g > top.b && rock < 0.5;
-    vec3 c;
-    if (hit.ok && hit.n.y < 0.5) {
-        // a column's side: stone, sand, snow blocks and the like are the same all through; under grass, dirt with the
-        // grass's fringe along its top edge; snow on the top shows as a white fringe
-        vec3 side = grassy ? mix(DIRT, top * 0.9, step(hit.below, 0.19)) : top;
-        side = mix(side, SNOW, snow * step(hit.below, 0.22 + 0.6 * alpine * float(!grassy)));
-        if (badlands > 0.0 && !generated) side = mix(side, band(y), badlands);
-        c = side;
-    } else {
-        c = mix(top, SNOW, snow);
-    }
+    // a column's side: stone, sand, snow blocks and the like are the same all through; under grass, dirt with the
+    // grass's fringe along its top edge; snow on the top shows as a white fringe (as the staircase's average: the
+    // fringe's share of a riser)
+    float snowLip = 0.22 + 0.6 * alpine * float(!grassy);
+    vec3 side = grassy ? mix(DIRT, top * 0.9, mix(step(hit.below, 0.19), min(0.19 / riser, 1.0), fine)) : top;
+    side = mix(side, SNOW, snow * mix(step(hit.below, snowLip), min(snowLip / riser, 1.0), fine));
+    if (badlands > 0.0 && !generated) side = mix(side, band(y), badlands);
+    vec3 above = mix(top, SNOW, snow);
     if (canopy > 0.0) {
         float crownGrain = farHash(blk * 5 + ivec2(17, int(floor(y / 3.0))));
-        c = mix(c, vCrown.rgb * (0.72 + 0.4 * crownGrain), canopy * 0.9);
+        vec3 crown = vCrown.rgb * (0.72 + 0.4 * crownGrain);
+        side = mix(side, crown, canopy * 0.9);
+        above = mix(above, crown, canopy * 0.9);
     }
     // every block its own shade, as block textures vary
-    c *= 0.9 + 0.2 * grain;
+    float shade = 0.9 + 0.2 * grain;
+    vec3 c = (hit.ok && hit.n.y < 0.5 ? side : above) * shade;
 
     // light: the game's face shading, a warm key where the sun reaches past the ridges, a cool shade where it doesn't
-    vec3 light = farLight(face, vCrown.a);
-    light *= mix(1.0, vInfo.a, 0.8);
+    float valley = mix(1.0, vInfo.a, 0.8);
+    vec3 light = farLight(face, vCrown.a) * valley;
+    if (fine > 0.0) {
+        vec3 average = mix(side * farLight(riserN, vCrown.a), above * farLight(vec3(0.0, 1.0, 0.0), vCrown.a), share) * shade * valley;
+        c = mix(c * light, average, fine);
+        light = vec3(1.0);
+    }
     if (water && !frozen && !keptUnder) {
         float facing = abs(normalize(vRel).y);
         // grazing far water reflects the sky by the horizon, as Lens's real water beside it does at every distance (the

@@ -1,0 +1,199 @@
+# Gate depth stage 2 (SPEC 38.14): open lands, isles and seas with shaped ground (content version 7) on the depth test's
+# plan, beside version 6 on the same floors: on floor 1 of each, the biggest place. The Dark Steps and the Honey Lake are
+# seen from over where you walk in (hovering 8 over the highest ground near there, looking down at its middle); the open
+# lands from just inside where you walk in (from over there their shots show only sky and fog, cause not found yet).
+#
+# Commands it relies on (game master):
+#   /awaken gate open <rank> <theme> world <version> <world id>   every floor in that world, on the depth test's plan
+#   /awaken gate interior enter                                    into the gate opened last (else the newest)
+#   /awaken gate interior goto <place|over>                        a world floor's biggest place, or over it
+#   /awaken gate leave, /awaken gate hop
+world autopilot_gate_depth creative 20261029
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd gamerule awaken:fauna_spawning false
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+hud off
+# away from Carillon first: gates never form in its reserve, and the first hop (no gates yet) stays close; on CI the
+# land out there takes a while to make, so wait for it before the first gate looks for dry ground (and the
+# first gate there takes longer to form: 666 ticks once)
+cmd tp @s 6000 200 6000
+wait 600
+
+# ---- cliff stair -----------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E frost_monastery world 6 awaken:frost_monastery/cliff_stair
+wait 1000
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_cliff_stair_v6
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E frost_monastery world 7 awaken:frost_monastery/cliff_stair
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_cliff_stair_v7
+cmd awaken gate leave
+wait 100
+
+# ---- sunken city -----------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E glass_desert world 6 awaken:glass_desert/sunken_city
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_sunken_city_v6
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E glass_desert world 7 awaken:glass_desert/sunken_city
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_sunken_city_v7
+cmd awaken gate leave
+wait 100
+
+# ---- festival --------------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E lantern_night_market world 6 awaken:lantern_night_market/festival
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_festival_v6
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E lantern_night_market world 7 awaken:lantern_night_market/festival
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_festival_v7
+cmd awaken gate leave
+wait 100
+
+# ---- the isles -------------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E sky_archipelago world 6 awaken:sky_archipelago/the_isles
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_the_isles_v6
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E sky_archipelago world 7 awaken:sky_archipelago/the_isles
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_the_isles_v7
+cmd awaken gate leave
+wait 100
+
+# ---- dark steps ------------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E abyssal_shrine world 6 awaken:abyssal_shrine/dark_steps
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto over
+wait 160
+shot depth_dark_steps_v6
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E abyssal_shrine world 7 awaken:abyssal_shrine/dark_steps
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto over
+wait 160
+shot depth_dark_steps_v7
+cmd awaken gate leave
+wait 100
+
+# ---- honey lake ------------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E hive world 6 awaken:hive/honey_lake
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto over
+wait 160
+shot depth_honey_lake_v6
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E hive world 7 awaken:hive/honey_lake
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto over
+wait 160
+shot depth_honey_lake_v7
+cmd awaken gate leave
+wait 100
+
+# ---- aurora steppe ---------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E frost_monastery world 6 awaken:rare/the_aurora_steppe
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_aurora_steppe_v6
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E frost_monastery world 7 awaken:rare/the_aurora_steppe
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_aurora_steppe_v7
+cmd awaken gate leave
+wait 100
+quit

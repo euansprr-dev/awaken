@@ -47,6 +47,10 @@ public final class AwakenConfig {
     public static final ModConfigSpec.BooleanValue GATE_WORLDS = B.comment("Gate Worlds: new gates' floors become worlds of their theme (SPEC §38).",
                     "Off: new gates build rooms. Gates already made keep what they have.")
             .define("gateWorlds", true);
+    public static final ModConfigSpec.BooleanValue GATE_WORLDS_DEPTH = B.comment("Gate Worlds' depth: new gates' places get ground that rises and falls,",
+                    "walls and roofs that change with height, and wild growth away from the way (SPEC §38.14).",
+                    "Off: new gates are made as before it (content version 6). Gates already made keep what they have.")
+            .define("gateWorldsDepth", true);
     public static final ModConfigSpec.ConfigValue<List<? extends String>> GATE_WORLDS_OFF = B.comment(
                     "World ids new gates never pick, e.g. \"awaken:bell_crypt/sunken_belfry\"")
             .defineListAllowEmpty("gateWorldsOff", List.of(), () -> "", o -> o instanceof String);

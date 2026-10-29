@@ -337,10 +337,15 @@ final class GateTests {
                 h.assertTrue(d >= Director.FIRST_MIN - 2 && d <= Director.FIRST_MAX + 2, "250-400 blocks out: " + Math.round(d));
                 h.assertTrue(g.plan.rank() == dev.awaken.progression.Progression.rank(p), "at the player's own rank");
                 h.assertTrue(dev.awaken.progression.Progression.profile(p).counter(Director.FIRST_GATE) == g.id + 1L, "remembered as their first");
+                h.assertTrue(Director.firstGateSite(p).isEmpty() && g.announceTo.isPresent(), "nothing shown or said while it forms");
+                g.structurePlaced = true; // as the build leaves it once the vortex stands
                 var site = Director.firstGateSite(p);
                 h.assertTrue(site.size() == 1 && site.getFirst().raised() && site.getFirst().where().equals(g.pos), "raised on the Horizon: " + site);
             } finally {
-                if (g != null) GateService.release(server, g);
+                if (g != null) {
+                    g.structurePlaced = false;
+                    GateService.release(server, g);
+                }
                 server.getPlayerList().remove(p);
             }
             h.succeed();

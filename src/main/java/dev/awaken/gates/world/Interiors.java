@@ -25,10 +25,10 @@ import java.util.Set;
  * gate's id or where its rooms are:
  * <ul>
  *   <li>{@code /awaken gate interior enter}: walk into the newest standing gate (yours first);</li>
- *   <li>{@code /awaken gate interior goto <start|piece|shrine|ante|lord|rig>}: inside a gate, stand where that place reads
- *   best (the first room facing the way on, the doorway of the floor's biggest set piece, the room before the Shrine
- *   facing its blue door, the antechamber facing the arena, the arena's doorway facing the Lord's spot, the Gate Rig's
- *   room from its doorway);</li>
+ *   <li>{@code /awaken gate interior goto <start|piece|shrine|ante|lord|rig|place|over>}: inside a gate, stand where that
+ *   place reads best (the first room facing the way on, the doorway of the floor's biggest set piece, the room before the
+ *   Shrine facing its blue door, the antechamber facing the arena, the arena's doorway facing the Lord's spot, the Gate
+ *   Rig's room from its doorway, a world floor's biggest place from where you walk in, or hovering over there);</li>
  *   <li>{@code /awaken gate rig <start|solve>}: on your floor, start the rig room's first track as if its trigger fired,
  *   or turn a Mirror Hall's mirrors to their solution (tours shoot the moments without playing them).</li>
  * </ul>
@@ -42,7 +42,7 @@ public final class Interiors {
                 .then(Commands.literal("enter").executes(Interiors::enter))
                 .then(Commands.literal("goto").then(Commands.argument("spot", StringArgumentType.word())
                         .suggests((c, b) -> {
-                            for (String s : List.of("start", "piece", "small", "shrine", "ante", "lord", "rig")) b.suggest(s);
+                            for (String s : List.of("start", "piece", "small", "shrine", "ante", "lord", "rig", "place", "place2", "over", "over2")) b.suggest(s);
                             return b.buildFuture();
                         })
                         .executes(c -> go(c, StringArgumentType.getString(c, "spot"))))))));
@@ -163,6 +163,19 @@ public final class Interiors {
 
     private static int enter(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = c.getSource().getPlayerOrException();
+        // the gate the game master opened last, if it's ready (a tour's: not a gate that formed by itself beside it since)
+        GateRecord last = GateRegistry.get(c.getSource().getServer()).gate(GateService.lastOpened);
+        if (last != null && last.state.enterable() && last.interiorReady && last.state != GateState.BUILDING) return Runs.enter(p, last) ? last.id : 0;
+        // still forming: say so rather than walk into an older gate (a tour's shots would show the wrong world)
+        if (last != null && (last.state == GateState.BUILDING || last.state.enterable() && !last.interiorReady)) {
+            c.getSource().sendFailure(Component.literal("Gate " + last.id + " is still forming."));
+            return 0;
+        }
+        // or it never stood (its build failed: wet ground, someone's build): enter none, the same way
+        if (GateService.lastOpened > 0 && (last == null || last.state == GateState.RELEASED)) {
+            c.getSource().sendFailure(Component.literal("Gate " + GateService.lastOpened + " isn't standing (its build failed, or it's gone), so there's nothing to enter."));
+            return 0;
+        }
         GateRecord best = null;
         for (GateRecord g : GateRegistry.get(c.getSource().getServer()).all()) {
             if (!g.state.enterable() || !g.interiorReady || g.state == GateState.BUILDING) continue;
@@ -201,6 +214,11 @@ public final class Interiors {
         }
         Vec3 at = Vec3.atLowerCornerOf(GateService.world(g, f, 0, 0, 0)).add(view[0], view[1] - f.baseY, view[2]);
         p.teleportTo(gl, at.x, at.y, at.z, Set.of(), (float) view[3], (float) view[4], true);
+        if (spot.startsWith("over") && p.getAbilities().mayfly) {
+            // a view from the air: hover there (creative) rather than fall before the shot
+            p.getAbilities().flying = true;
+            p.onUpdateAbilities();
+        }
         return 1;
     }
 
@@ -261,6 +279,32 @@ public final class Interiors {
                 Room.Door out = r.pathOut != null ? r.pathOut : r.pathIn;
                 return lookFrom(f, r, r.pathIn, 0, 0, out.centerX(), f.baseY + r.dy + 1.5, out.centerZ());
             }
+            case "place", "place2" -> {
+                // a world floor's biggest place (place2: its second), from just inside where you walk in (or a doorway), over its ground
+                r = biggest(f, spot.equals("place") ? 0 : 1);
+                if (r == null) return null;
+                double[] v = lookFrom(f, r, r.pathIn != null ? r.pathIn : r.doors.get(0), 3, 0, r.centerX(), 0, r.centerZ());
+                // a block over where you stand there, looking at the middle a block and a half over its ground
+                double y = f.baseY + r.dy + f.ground((int) Math.floor(v[0]), (int) Math.floor(v[2])) + 1;
+                double ddx = r.centerX() + 0.5 - v[0], ddz = r.centerZ() + 0.5 - v[2];
+                double ddy = f.baseY + r.dy + f.ground(r.centerX(), r.centerZ()) + 1.5 - (y + 1.62);
+                return new double[]{v[0], y, v[2], v[3], -Math.toDegrees(Math.atan2(ddy, Math.hypot(ddx, ddz)))};
+            }
+            case "over", "over2" -> {
+                // the same place seen from over where you walk in: hovering 8 over the highest ground near there (under an
+                // open land's lid), looking down at its middle. In the lands and isles a place view stands against a bank,
+                // a house or in the cloud between pillars; this one shows the ground's shape.
+                r = biggest(f, spot.equals("over") ? 0 : 1);
+                if (r == null) return null;
+                Room.Door d = r.pathIn != null ? r.pathIn : r.doors.get(0);
+                int dx = d.centerX(), dz = d.centerZ(), cx = r.centerX(), cz = r.centerZ();
+                dev.awaken.gates.worlds.GateWorld w = dev.awaken.gates.worlds.GateWorlds.get(f.worldOf(r));
+                int top = w != null && w.open() ? (int) w.param("lid", 16) - 3 : Integer.MAX_VALUE;
+                double y = f.baseY + r.dy + Math.min(highest(f, dx, dz, 4) + 8, top);
+                double ty = f.baseY + r.dy + highest(f, cx, cz, 2) + 1;
+                double ddx = cx - dx, ddz = cz - dz, ddy = ty - (y + 1.62);
+                return new double[]{dx + 0.5, y, dz + 0.5, Math.toDegrees(Math.atan2(-ddx, ddz)), -Math.toDegrees(Math.atan2(ddy, Math.hypot(ddx, ddz)))};
+            }
             case "lord" -> {
                 r = f.room(f.end);
                 if (r.doors.isEmpty()) return null;
@@ -272,6 +316,22 @@ public final class Interiors {
                 return null;
             }
         }
+    }
+
+    /** A world floor's k-th biggest place of more than one slot (no boss arena, no rig room), or null. */
+    private static Room biggest(FloorLayout f, int k) {
+        if (!f.isWorld()) return null;
+        List<Room> big = new java.util.ArrayList<>();
+        for (Room o : f.rooms) if (o.type != Room.Type.BOSS && o.rig == null && !o.doors.isEmpty() && o.area() > 1) big.add(o);
+        big.sort((a, b) -> b.area() - a.area());
+        return big.size() > k ? big.get(k) : null;
+    }
+
+    /** The highest ground within r of floor-local column (x, z), in blocks over the floor line. */
+    private static int highest(FloorLayout f, int x, int z, int r) {
+        int top = f.ground(x, z);
+        for (int i = -r; i <= r; i++) for (int j = -r; j <= r; j++) top = Math.max(top, f.ground(x + i, z + j));
+        return top;
     }
 
     /**

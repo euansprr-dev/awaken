@@ -13,6 +13,8 @@ import java.util.List;
 final class LabDress extends Dress {
     final BlockState panel, lit, floorTile, frame, glass, rack, tank, cables, lamp, holo, moss, sketch, console, bars,
             moss2, grass, leaves, log;
+    /** Shaped ground (SPEC §38.14): floor slabs and stairs, panel at the walls, moss drifted in the garden, screws */
+    final BlockState gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits;
     final BlockState[] flowers;
     final boolean facility, servers, containment, sim;
     private int[] secretBox;
@@ -32,6 +34,12 @@ final class LabDress extends Dress {
         moss = mat("moss", "awaken:lab_moss");
         sketch = mat("sketch", "awaken:lab_sketch");
         console = mat("touch", "awaken:lab_console");
+        gFloorSlab = mat("ground_slab", "awaken:lab_floor_slab");
+        gFloorStairs = mat("ground_stairs", "awaken:lab_floor_stairs");
+        gWallSlab = mat("wall_slab", "awaken:lab_panel_slab");
+        gWallStairs = mat("wall_stairs", "awaken:lab_panel_stairs");
+        gDrift = mat("ground_drift", "awaken:lab_moss_drift");
+        gBits = mat("ground_bits", "awaken:lab_screws");
         bars = GatePainter.state("minecraft:iron_bars");
         moss2 = GatePainter.state("minecraft:moss_block");
         grass = GatePainter.state("minecraft:short_grass");
@@ -85,6 +93,34 @@ final class LabDress extends Dress {
         if (rise == 3 && Math.floorMod(x + z, 4) != 0) return lit;
         if (Math.floorMod(x + z, 8) == 0) return frame;
         return panel;
+    }
+
+    @Override
+    boolean depth() {
+        return !sim;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return kit(part, inSecret(x, z), gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits);
+    }
+
+    @Override
+    double bits() {
+        // screws and wires lie thick
+        return 0.3;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        // moss creeping in from the garden
+        return moss2;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // frames floor to roof banded with light, racks, a fallen frame, a heap of panels
+        return pieces(part, x, y, z, frame, lit, rack, lit, frame, panel);
     }
 
     @Override

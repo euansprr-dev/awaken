@@ -23,10 +23,10 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Your own mine (SPEC §28.8, PLAN 7.7, decision 8: "the Mine Echo works a real mine head instead of rolling dice"). A
+ * Your own mine (SPEC §28.8; §43.4: no Echoes). A
  * Mine head room's shaft (a hatch over 16+ blocks of climbable shaft, {@code RoomType.MINE_HEAD}) is read for its depth and
  * for any lode it cuts (W2's {@code Lodes}: a lode block within three of the shaft anywhere down it). Each evening a miner
- * settler (or a Mine Echo on a Mine pad) brings up the ore of that depth, and if the shaft cut a lode, that lode's ore
+ * settler brings up the ore of that depth, and if the shaft cut a lode, that lode's ore
  * too, until the mine has taken half the lode's blocks. Dig deeper, find a lode, and your mine gets richer.
  */
 public final class MineHead {

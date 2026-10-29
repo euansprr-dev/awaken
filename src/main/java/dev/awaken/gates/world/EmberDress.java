@@ -12,6 +12,8 @@ import java.util.List;
  */
 final class EmberDress extends Dress {
     final BlockState basalt, cracked, slag, ash, timber, timberX, timberZ, planks, lamp, crust, crystal, fall, bellows, rail, railX, chain;
+    /** Shaped ground (SPEC §38.14): slag slabs and stairs on the floor, basalt at the walls, ash drifted, cinders */
+    final BlockState gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits;
     final boolean mine, chasm, forge, sea;
 
     EmberDress(CaveEngine.Cave c) {
@@ -29,6 +31,12 @@ final class EmberDress extends Dress {
         crystal = mat("crystal", "awaken:ember_crystal");
         fall = mat("fall", "awaken:ember_moltenfall");
         bellows = mat("touch", "awaken:ember_bellows");
+        gFloorSlab = mat("ground_slab", "awaken:ember_slag_slab");
+        gFloorStairs = mat("ground_stairs", "awaken:ember_slag_stairs");
+        gWallSlab = mat("wall_slab", "awaken:ember_basalt_slab");
+        gWallStairs = mat("wall_stairs", "awaken:ember_basalt_stairs");
+        gDrift = mat("ground_drift", "awaken:ember_ash_drift");
+        gBits = mat("ground_bits", "awaken:ember_cinders");
         rail = GatePainter.state("minecraft:rail[shape=north_south]");
         railX = GatePainter.state("minecraft:rail[shape=east_west]");
         chain = GatePainter.state("minecraft:iron_chain[axis=y]");
@@ -50,6 +58,32 @@ final class EmberDress extends Dress {
         if (floor) return Hash.noise(seed + 3, x, z, 5) > 0.6 ? ash : slag;
         double n = Hash.noise3(seed + 5, x, y, z, 4);
         return n > (ceiling ? 0.7 : 0.64) ? cracked : basalt;
+    }
+
+    @Override
+    boolean depth() {
+        return true;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return kit(part, Hash.noise(seed + 3, x, z, 5) > 0.6, gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits);
+    }
+
+    @Override
+    double bits() {
+        return 0.34;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return crust;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // basalt pillars banded with glowing cracks, cooled lava humps, a collapsed frame in the mine, slag heaps
+        return pieces(part, x, y, z, basalt, cracked, basalt, crust, mine ? planks : basalt, slag);
     }
 
     @Override

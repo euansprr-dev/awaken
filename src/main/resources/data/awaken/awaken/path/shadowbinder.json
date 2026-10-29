@@ -1,18 +1,16 @@
 {
   "name": "Shadowbinder",
-  "description": "You command the fallen. Your Echoes rise stronger and hold more of you.",
+  "description": "You command shadows. The soldiers you raise hit harder and stay longer.",
   "colour": 8019199,
   "scoring": {
-    "awaken:echoes_bound": 30.0,
-    "awaken:power_uses/shadow": 2.0
+    "awaken:power_uses/shadow": 3.0
   },
   "evidence": {
-    "awaken:echoes_bound": "You bound %d Echoes",
     "awaken:power_uses/shadow": "You used shadow powers %d times"
   },
   "perks": [
     {
-      "id": "awaken:bind_chance",
+      "id": "awaken:summon_strength",
       "amount": 0.25
     }
   ],

@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "awaken:block/sky_rock_slab"
+    },
+    "type=top": {
+      "model": "awaken:block/sky_rock_slab_top"
+    },
+    "type=double": {
+      "model": "awaken:block/sky_rock"
+    }
+  }
+}

@@ -1,0 +1,109 @@
+{
+ "schemaVersion": 1,
+ "id": "guardian_silent",
+ "moves": "guardian_silent",
+ "intro": {
+  "pose": "kneel",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "rake",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "rake_b"
+      ],
+      [
+       "rake_b",
+       "found"
+      ]
+     ]
+    },
+    {
+     "move": "found",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "bound",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "rake"
+      ]
+     ]
+    },
+    {
+     "move": "scream",
+     "weight": 2
+    },
+    {
+     "move": "buffet",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "silence",
+   "pool": [
+    {
+     "move": "rake",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "rake_b"
+      ],
+      [
+       "rake_b",
+       "found"
+      ]
+     ]
+    },
+    {
+     "move": "found",
+     "weight": 3,
+     "when": "NEAR"
+    },
+    {
+     "move": "bound",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "rake",
+       "rake_b"
+      ]
+     ]
+    },
+    {
+     "move": "scream",
+     "weight": 2
+    },
+    {
+     "move": "ears",
+     "weight": 1
+    },
+    {
+     "move": "silence",
+     "weight": 1
+    },
+    {
+     "move": "buffet",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

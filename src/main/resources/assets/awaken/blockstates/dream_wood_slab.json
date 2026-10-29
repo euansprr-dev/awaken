@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "awaken:block/dream_wood_slab"
+    },
+    "type=top": {
+      "model": "awaken:block/dream_wood_slab_top"
+    },
+    "type=double": {
+      "model": "awaken:block/dream_wood"
+    }
+  }
+}

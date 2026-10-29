@@ -255,16 +255,40 @@
       ],
       "faces": {
         "north": {
-          "texture": "#glow"
+          "texture": "#glow",
+          "uv": [
+            3,
+            8,
+            13,
+            16
+          ]
         },
         "south": {
-          "texture": "#glow"
+          "texture": "#glow",
+          "uv": [
+            3,
+            8,
+            13,
+            16
+          ]
         },
         "east": {
-          "texture": "#glow"
+          "texture": "#glow",
+          "uv": [
+            4,
+            8,
+            12,
+            16
+          ]
         },
         "west": {
-          "texture": "#glow"
+          "texture": "#glow",
+          "uv": [
+            4,
+            8,
+            12,
+            16
+          ]
         }
       },
       "light_emission": 15

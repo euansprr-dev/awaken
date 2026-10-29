@@ -83,6 +83,15 @@ public final class PulseTests {
                     "its rain falls on you near its core and fades away from it");
             h.assertTrue(StormCell.thunderDelay(StormCell.SOUND_SPEED * 2) == 2F && StormCell.thunderDelay(10) < 0.1F, "thunder comes later the farther the strike");
             h.assertTrue(StormCell.heard(300, 300) && !StormCell.heard(600, 300), "a strike reaches players past the bolt's own 256 blocks, to 640");
+            // its cost (29 Oct): the local weather holds in sixths (no drift every tick to redraw Far Sight's horizon), and
+            // its voices are ambient.* (Sound Physics leaves them alone)
+            float sixth = 1F / StormCell.WEATHER_STEPS;
+            h.assertTrue(StormCell.weatherStep(0F, 0.05F) == 0F && StormCell.weatherStep(0F, 0.2F) == sixth
+                    && StormCell.weatherStep(sixth, 0.22F) == sixth && StormCell.weatherStep(sixth, 0.3F) == 2 * sixth
+                    && StormCell.weatherStep(1F, 0.9F) == 1F && StormCell.weatherStep(1F, 0F) == 0F, "the storm's weather moves in held sixths");
+            h.assertTrue(dev.awaken.living.LivingContent.STORM_ROLL.getId().getPath().startsWith("ambient.")
+                    && dev.awaken.living.LivingContent.STORM_THUNDER.getId().getPath().startsWith("ambient.")
+                    && dev.awaken.living.LivingContent.STORM_CRACK.getId().getPath().startsWith("ambient."), "the storm's voices are ambient sounds");
             h.assertTrue(StormCell.strength(0F, 0F, 240F) == 0F && StormCell.strength(30F, 0.5F, 240F) == 1F && StormCell.strength(30F, 1F, 240F) == 0F,
                     "it builds, holds and rains itself out");
             // the hook carries the cell to Lens: camera-relative, downwind a unit, its flash where it struck

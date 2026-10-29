@@ -63,6 +63,24 @@ public final class Settlements {
         TALK.add(t);
     }
 
+    /**
+     * (SPEC §43.3) A citizen of any settlement, Carillon too, shown what a player holds in their main hand (a keepsake
+     * with their family's name): the first that answers true has answered, before any talk.
+     */
+    public interface Shown {
+        boolean shown(net.minecraft.server.level.ServerPlayer p, Settlement s, int rec, net.minecraft.world.item.ItemStack held);
+    }
+
+    private static final java.util.List<Shown> SHOWN = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    public static void onShown(Shown s) {
+        SHOWN.add(s);
+    }
+
+    public static java.util.List<Shown> shown() {
+        return SHOWN;
+    }
+
     public static java.util.List<Talk> talkers() {
         return TALK;
     }

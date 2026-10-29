@@ -38,7 +38,7 @@ import java.util.UUID;
 
 /**
  * The Five Forces table (docs/plan.html, Section 4). Forces react the same way wherever they meet, whoever caused
- * them: any damage carrying a force is checked against what the target is (tagged, wet, burning, frozen, an Echo).
+ * them: any damage carrying a force is checked against what the target is (tagged, wet, burning, frozen, one of your summons).
  *
  * <pre>
  * Heat    + Spores        chain explosion through every spore-tagged thing nearby
@@ -46,7 +46,7 @@ import java.util.UUID;
  * Gravity + Volatile      volatile mobs pulled together detonate each other
  * Spirit  + Mirror        mirror-things shatter; spirit steps walk through mirror blocks (see Spirit powers)
  * Heat    + Frost         steam: blinds mobs and hides anyone sneaking inside it
- * Charge  + Echoes        your Echoes and summons are overcharged: hit twice as hard, then expire
+ * Charge  + Summons       your summons are overcharged: hit twice as hard, then expire
  * Gravity + Architect     your walls become a battering ram (Telekinesis / Gravity Well on constructs)
  * </pre>
  * Every reaction a player causes counts {@code awaken:force_interactions}.
@@ -61,7 +61,7 @@ public final class ForceInteractions {
         VOLATILE_DETONATION("Gravity meets Volatile", "they detonate each other"),
         MIRROR_SHATTER("Spirit meets Mirror", "the mirror shatters"),
         STEAM("Heat meets Frost", "steam"),
-        OVERCHARGE("Charge meets Echoes", "overcharged"),
+        OVERCHARGE("Charge meets your summons", "overcharged"),
         WALL_THROW("Gravity meets Architect", "your wall is a battering ram");
 
         public final String title;
@@ -74,14 +74,14 @@ public final class ForceInteractions {
     }
 
     /** What a target is, for the table. Pure data so the rules can be tested without a world. */
-    public record Subject(Set<Forces.Tag> tags, boolean wet, boolean burning, boolean frozen, boolean echo, boolean volatileMob) {
+    public record Subject(Set<Forces.Tag> tags, boolean wet, boolean burning, boolean frozen, boolean summon, boolean volatileMob) {
         public static Subject of(LivingEntity e, @Nullable ServerPlayer attacker) {
             EnumSet<Forces.Tag> tags = EnumSet.noneOf(Forces.Tag.class);
             int bits = e.getExistingData(Forces.TAGS.get()).orElse(0);
             for (Forces.Tag t : Forces.Tag.values()) if ((bits & (1 << t.ordinal())) != 0) tags.add(t);
-            boolean echo = attacker != null && isOwnEcho(attacker, e);
+            boolean summon = attacker != null && isOwnSummon(attacker, e);
             return new Subject(tags, e.isInWater() || tags.contains(Forces.Tag.WATER), e.isOnFire(),
-                    e.getTicksFrozen() > 0 || tags.contains(Forces.Tag.FROSTED), echo, tags.contains(Forces.Tag.VOLATILE) || e instanceof Creeper);
+                    e.getTicksFrozen() > 0 || tags.contains(Forces.Tag.FROSTED), summon, tags.contains(Forces.Tag.VOLATILE) || e instanceof Creeper);
         }
     }
 
@@ -90,16 +90,14 @@ public final class ForceInteractions {
         return switch (force) {
             case HEAT -> s.tags().contains(Forces.Tag.SPORES) ? Reaction.SPORE_CHAIN : s.frozen() ? Reaction.STEAM : Reaction.NONE;
             case FROST -> s.burning() ? Reaction.STEAM : Reaction.NONE;
-            case CHARGE -> s.echo() ? Reaction.OVERCHARGE : s.wet() ? Reaction.STUN_SPREAD : Reaction.NONE;
+            case CHARGE -> s.summon() ? Reaction.OVERCHARGE : s.wet() ? Reaction.STUN_SPREAD : Reaction.NONE;
             case GRAVITY -> s.volatileMob() ? Reaction.VOLATILE_DETONATION : Reaction.NONE;
             case SPIRIT -> s.tags().contains(Forces.Tag.MIRROR) ? Reaction.MIRROR_SHATTER : Reaction.NONE;
         };
     }
 
-    public static boolean isOwnEcho(ServerPlayer player, Entity e) {
-        if (e instanceof PowerSummon s) return s.getOwner() == player;
-        var role = e.getExistingData(CoreApi.MOB_ROLE.get());
-        return role.isPresent() && role.get().role() == MobRole.Role.ECHO;
+    public static boolean isOwnSummon(ServerPlayer player, Entity e) {
+        return e instanceof PowerSummon s && s.getOwner() == player;
     }
 
     private static int depth;
@@ -113,7 +111,7 @@ public final class ForceInteractions {
         if (!(src.getEntity() instanceof ServerPlayer player)) return;
         if (Forces.forceOf(src) != Forces.Force.CHARGE) return;
         LivingEntity target = event.getEntity();
-        if (!isOwnEcho(player, target)) return;
+        if (!isOwnSummon(player, target)) return;
         event.setCanceled(true);
         overcharge(player, target);
     }
@@ -188,7 +186,7 @@ public final class ForceInteractions {
             case VOLATILE_DETONATION -> "Your gravity pulled two volatile creatures together, and they blew each other up.";
             case MIRROR_SHATTER -> "Your spirit shattered a mirror creature.";
             case STEAM -> "Heat met frost and burst into steam.";
-            case OVERCHARGE -> "Your charge overcharged your own Echo.";
+            case OVERCHARGE -> "Your charge overcharged one of your own summons.";
             case WALL_THROW -> "You threw your own wall like a battering ram.";
             default -> "Nothing happened.";
         };
@@ -202,8 +200,8 @@ public final class ForceInteractions {
             case MIRROR_SHATTER -> "Spirit on a mirror creature shatters it for extra damage, and a shock half as strong jumps to the mirror creatures nearby.";
             case STEAM -> "Heat on something frozen puts out both the frost and the fire and leaves a steam cloud 4 blocks wide for 8 seconds. "
                     + "Creatures inside can't see, and players sneaking inside are hidden.";
-            case OVERCHARGE -> "Hit your own Echo or summon with Charge and it hits twice as hard for up to 10 seconds, then it's gone. "
-                    + "It uses up the ally; it isn't a lasting upgrade.";
+            case OVERCHARGE -> "Hit one of your own summons with Charge and it hits twice as hard for up to 10 seconds, then it's gone. "
+                    + "It uses up the summon; it isn't a lasting upgrade.";
             case WALL_THROW -> "Use Telekinesis or Gravity Well on blocks your Architect powers made, and you can throw them as weapons.";
             default -> "No elemental reaction happened.";
         };
@@ -313,38 +311,20 @@ public final class ForceInteractions {
         }
     }
 
-    /** Charge meets Echoes: an Echo or summon hit by your charge hits twice as hard for a while, then expires. */
-    public static void overcharge(ServerPlayer player, LivingEntity echo) {
+    /** Charge meets your summons: one of your summons hit by your charge hits twice as hard for a while, then expires. */
+    public static void overcharge(ServerPlayer player, LivingEntity target) {
+        if (!(target instanceof PowerSummon s) || s.isOvercharged()) return;
+        s.overcharge(200);
         ServerLevel level = player.level();
-        if (echo instanceof PowerSummon s) {
-            if (s.isOvercharged()) return;
-            s.overcharge(200);
-        } else {
-            var dmg = echo.getAttribute(Attributes.ATTACK_DAMAGE);
-            if (dmg == null || dmg.hasModifier(OVERCHARGE_ID)) return;
-            dmg.addOrUpdateTransientModifier(new AttributeModifier(OVERCHARGE_ID, 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
-            echo.setGlowingTag(true);
-            echo.addEffect(new MobEffectInstance(MobEffects.SPEED, 200, 1));
-            Scheduler.after(200, () -> {
-                if (echo.isAlive()) {
-                    if (echo.level() instanceof ServerLevel sl) {
-                        sl.sendParticles(ParticleTypes.ELECTRIC_SPARK, echo.getX(), echo.getY() + 1, echo.getZ(), 20, 0.4, 0.6, 0.4, 0.2);
-                    }
-                    echo.discard();
-                }
-            });
-        }
-        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, echo.getX(), echo.getY() + echo.getBbHeight() * 0.5, echo.getZ(), 24, 0.4, 0.6, 0.4, 0.25);
-        level.playSound(null, echo.getX(), echo.getY(), echo.getZ(), PowerSounds.ZAP.get(), SoundSource.PLAYERS, 1.0f, 1.5f);
+        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, s.getX(), s.getY() + s.getBbHeight() * 0.5, s.getZ(), 24, 0.4, 0.6, 0.4, 0.25);
+        level.playSound(null, s.getX(), s.getY(), s.getZ(), PowerSounds.ZAP.get(), SoundSource.PLAYERS, 1.0f, 1.5f);
         count(player, Reaction.OVERCHARGE);
     }
 
-    private static final net.minecraft.resources.Identifier OVERCHARGE_ID = dev.awaken.Awaken.id("overcharged");
-
-    /** Charge powers with an area also overcharge your own Echoes and summons inside it. */
-    public static void chargeEchoes(ServerPlayer player, Vec3 centre, double radius) {
+    /** Charge powers with an area also overcharge your own summons inside it. */
+    public static void chargeSummons(ServerPlayer player, Vec3 centre, double radius) {
         for (LivingEntity e : player.level().getEntitiesOfClass(LivingEntity.class, AABB.ofSize(centre, radius * 2, radius * 2, radius * 2),
-                x -> x.isAlive() && x.position().distanceToSqr(centre) <= radius * radius && isOwnEcho(player, x))) {
+                x -> x.isAlive() && x.position().distanceToSqr(centre) <= radius * radius && isOwnSummon(player, x))) {
             overcharge(player, e);
         }
     }

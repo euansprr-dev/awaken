@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 1,
+  "_about": "The Living Deep's cave regions (SPEC \u00a742.7, \u00a742.8), merged with looks.json by Lens: the camera's biome picks one. delve's CaveLook keeps the plain cave's look off in a region (SenseState.REGION), so these play alone. Dark places stay dark: exposure at most 1.0, the shadows tinted, never lifted; a region's colour shows in its lights and its air (fogGlow, haze toward hazeTint) and the grade.",
+  "looks": {
+    "biome:awaken:rootways": {
+      "_name": "The Rootways: earthy and damp: brown rock, moss-green shadows, the glowcaps' teal blooming softly into wet air, torchlight warm against it",
+      "exposure": 1.0,
+      "contrast": 1.08,
+      "saturation": 1.12,
+      "warmth": 0.04,
+      "shadowTint": [
+        0.34,
+        0.5,
+        0.44
+      ],
+      "highlightTint": [
+        1.0,
+        0.88,
+        0.66
+      ],
+      "splitTone": 0.22,
+      "vignette": 0.22,
+      "bloom": 1.0,
+      "bloomThreshold": 0.5,
+      "haze": 0.36,
+      "hazeStart": 0.05,
+      "hazeTint": [
+        0.3,
+        0.62,
+        0.52
+      ],
+      "hazeTintMix": 0.65,
+      "hazeDesaturate": 0.08,
+      "sunsetWarmth": 0.0,
+      "ao": 0.85,
+      "fogGlow": 0.95,
+      "water": 0.55,
+      "glow": 0.9
+    },
+    "biome:awaken:ochre_deep": {
+      "_name": "The Ochre Deep: iron country: red-orange rock, rust-brown shadows, warm dust hanging in still air, the embers and every torch glowing far into it",
+      "exposure": 1.0,
+      "contrast": 1.12,
+      "saturation": 1.16,
+      "warmth": 0.16,
+      "shadowTint": [
+        0.56,
+        0.36,
+        0.26
+      ],
+      "highlightTint": [
+        1.0,
+        0.78,
+        0.48
+      ],
+      "splitTone": 0.26,
+      "vignette": 0.22,
+      "bloom": 1.05,
+      "bloomThreshold": 0.48,
+      "haze": 0.44,
+      "hazeStart": 0.04,
+      "hazeTint": [
+        0.86,
+        0.48,
+        0.24
+      ],
+      "hazeTintMix": 0.75,
+      "hazeDesaturate": 0.05,
+      "sunsetWarmth": 0.0,
+      "ao": 0.8,
+      "fogGlow": 1.1,
+      "water": 0.45,
+      "glow": 0.9
+    },
+    "biome:awaken:pale_halls": {
+      "_name": "The Pale Halls: cool and clean: pale limestone, blue-grey shadows, still pools, mist low over the water and the glow-worms' pale blue-green",
+      "exposure": 1.0,
+      "contrast": 1.04,
+      "saturation": 0.92,
+      "warmth": -0.06,
+      "shadowTint": [
+        0.42,
+        0.48,
+        0.56
+      ],
+      "highlightTint": [
+        0.96,
+        0.98,
+        1.0
+      ],
+      "splitTone": 0.18,
+      "vignette": 0.2,
+      "bloom": 0.95,
+      "bloomThreshold": 0.52,
+      "haze": 0.3,
+      "hazeStart": 0.06,
+      "hazeTint": [
+        0.7,
+        0.78,
+        0.84
+      ],
+      "hazeTintMix": 0.6,
+      "hazeDesaturate": 0.15,
+      "sunsetWarmth": 0.0,
+      "ao": 0.85,
+      "fogGlow": 0.85,
+      "water": 0.7,
+      "glow": 0.9
+    },
+    "biome:awaken:windcleft": {
+      "_name": "The Windcleft: cold and crisp: blue-grey slate, hard edges down the cracks, the wind keeping the air clear",
+      "exposure": 1.0,
+      "contrast": 1.14,
+      "saturation": 0.9,
+      "warmth": -0.1,
+      "shadowTint": [
+        0.32,
+        0.38,
+        0.5
+      ],
+      "highlightTint": [
+        0.92,
+        0.96,
+        1.0
+      ],
+      "splitTone": 0.2,
+      "vignette": 0.26,
+      "bloom": 0.85,
+      "bloomThreshold": 0.55,
+      "haze": 0.22,
+      "hazeStart": 0.08,
+      "hazeTint": [
+        0.5,
+        0.58,
+        0.7
+      ],
+      "hazeTintMix": 0.6,
+      "hazeDesaturate": 0.2,
+      "sunsetWarmth": 0.0,
+      "ao": 0.9,
+      "fogGlow": 0.8,
+      "water": 0.5,
+      "glow": 0.85
+    },
+    "biome:awaken:drowned_galleries": {
+      "_name": "The Drowned Galleries: wet and green: teal shadows, the algae's glow blooming into the mist over black water",
+      "exposure": 1.0,
+      "contrast": 1.06,
+      "saturation": 1.08,
+      "warmth": -0.04,
+      "shadowTint": [
+        0.26,
+        0.44,
+        0.46
+      ],
+      "highlightTint": [
+        0.88,
+        1.0,
+        0.94
+      ],
+      "splitTone": 0.24,
+      "vignette": 0.22,
+      "bloom": 1.05,
+      "bloomThreshold": 0.48,
+      "haze": 0.46,
+      "hazeStart": 0.03,
+      "hazeTint": [
+        0.28,
+        0.6,
+        0.58
+      ],
+      "hazeTintMix": 0.7,
+      "hazeDesaturate": 0.06,
+      "sunsetWarmth": 0.0,
+      "ao": 0.85,
+      "fogGlow": 1.05,
+      "water": 0.8,
+      "glow": 0.95
+    },
+    "biome:awaken:glimmer_hollows": {
+      "_name": "The Glimmer Hollows: the crystals' glow: amber light blooming against cool violet shadows, glitter hanging in the air",
+      "exposure": 1.0,
+      "contrast": 1.1,
+      "saturation": 1.14,
+      "warmth": 0.06,
+      "shadowTint": [
+        0.4,
+        0.34,
+        0.48
+      ],
+      "highlightTint": [
+        1.0,
+        0.9,
+        0.7
+      ],
+      "splitTone": 0.24,
+      "vignette": 0.2,
+      "bloom": 1.2,
+      "bloomThreshold": 0.42,
+      "haze": 0.28,
+      "hazeStart": 0.05,
+      "hazeTint": [
+        0.86,
+        0.7,
+        0.46
+      ],
+      "hazeTintMix": 0.55,
+      "hazeDesaturate": 0.05,
+      "sunsetWarmth": 0.0,
+      "ao": 0.8,
+      "fogGlow": 1.15,
+      "water": 0.55,
+      "glow": 1.0
+    },
+    "biome:awaken:black_vaults": {
+      "_name": "The Black Vaults: vast and black: smoky air, the lava's red glow carrying far into it, the columns standing out hard",
+      "exposure": 1.0,
+      "contrast": 1.18,
+      "saturation": 1.0,
+      "warmth": 0.1,
+      "shadowTint": [
+        0.3,
+        0.24,
+        0.24
+      ],
+      "highlightTint": [
+        1.0,
+        0.66,
+        0.4
+      ],
+      "splitTone": 0.3,
+      "vignette": 0.28,
+      "bloom": 1.15,
+      "bloomThreshold": 0.45,
+      "haze": 0.4,
+      "hazeStart": 0.06,
+      "hazeTint": [
+        0.56,
+        0.3,
+        0.2
+      ],
+      "hazeTintMix": 0.6,
+      "hazeDesaturate": 0.25,
+      "sunsetWarmth": 0.0,
+      "ao": 0.9,
+      "fogGlow": 1.2,
+      "water": 0.4,
+      "glow": 0.95
+    },
+    "biome:awaken:violet_deep": {
+      "_name": "The Violet Deep: uncanny: violet shadows, the seeps and Deepglass blooming into a close purple air",
+      "exposure": 1.0,
+      "contrast": 1.1,
+      "saturation": 1.12,
+      "warmth": -0.08,
+      "shadowTint": [
+        0.4,
+        0.3,
+        0.52
+      ],
+      "highlightTint": [
+        0.9,
+        0.82,
+        1.0
+      ],
+      "splitTone": 0.28,
+      "vignette": 0.3,
+      "bloom": 1.1,
+      "bloomThreshold": 0.45,
+      "haze": 0.42,
+      "hazeStart": 0.04,
+      "hazeTint": [
+        0.5,
+        0.34,
+        0.7
+      ],
+      "hazeTintMix": 0.7,
+      "hazeDesaturate": 0.08,
+      "sunsetWarmth": 0.0,
+      "ao": 0.85,
+      "fogGlow": 1.1,
+      "water": 0.5,
+      "glow": 1.0
+    }
+  }
+}

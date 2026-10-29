@@ -5,11 +5,17 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import dev.awaken.core.AwakenCommands;
 import dev.awaken.core.PlayDays;
+import dev.awaken.gates.content.FloorWorld;
+import dev.awaken.gates.content.GatePlan;
+import dev.awaken.gates.content.Layout;
 import dev.awaken.gates.content.Modifier;
 import dev.awaken.gates.content.Theme;
+import dev.awaken.gates.content.Twist;
 import dev.awaken.gates.run.Hud;
 import dev.awaken.gates.run.Runs;
 import dev.awaken.gates.world.Cells;
+import dev.awaken.gates.worlds.GateWorld;
+import dev.awaken.gates.worlds.GateWorlds;
 import dev.awaken.progression.Rank;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -50,7 +56,10 @@ final class GateCommands {
                                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Arrays.stream(Theme.values()).map(t -> t.id), b))
                                     .executes(c -> open(c, StringArgumentType.getString(c, "theme"), false))
                                     // tours: a gate that has a Gate Rig room
-                                    .then(Commands.literal("rig").executes(c -> open(c, StringArgumentType.getString(c, "theme"), true))))));
+                                    .then(Commands.literal("rig").executes(c -> open(c, StringArgumentType.getString(c, "theme"), true)))
+                                    // tours: every floor in one world at a content version (the depth's before and after, 38.14)
+                                    .then(Commands.literal("world").then(Commands.argument("version", IntegerArgumentType.integer(6, GatePlan.CONTENT_VERSION))
+                                            .then(Commands.argument("id", StringArgumentType.greedyString()).executes(GateCommands::openWorld)))))));
             gate.then(Commands.literal("hop").requires(AwakenCommands.admin()).executes(GateCommands::hop));
             // tours: the nearest standing gate's card, wherever it formed (a card shows by itself within 24 blocks)
             gate.then(Commands.literal("card").requires(AwakenCommands.admin()).executes(c -> {
@@ -178,14 +187,52 @@ final class GateCommands {
             c.getSource().sendFailure(Component.literal("The gate dimension isn't loaded in this world."));
             return 0;
         }
-        GateRecord g = Director.spawnFor(c.getSource().getServer(), p, rank, theme, 18, 30, rig);
+        GateRecord near = Director.spawnFor(c.getSource().getServer(), p, rank, theme, 18, 30, rig);
+        // water or another gate close by: look further out before giving up (a tour's hop can land on a coast)
+        if (near == null) near = Director.spawnFor(c.getSource().getServer(), p, rank, theme, 30, 120, rig);
+        if (near == null) near = Director.spawnFor(c.getSource().getServer(), p, rank, theme, 120, 300, rig);
+        GateRecord g = near;
         if (g == null) {
             c.getSource().sendFailure(Component.literal("No dry ground nearby for a gate."));
             return 0;
         }
         c.getSource().sendSuccess(() -> Component.literal("Gate " + g.id + " forming: " + g.plan.rank().label + " " + g.plan.theme().displayName
                 + " at " + g.pos.getX() + " " + g.pos.getY() + " " + g.pos.getZ()), true);
+        GateService.lastOpened = g.id;
         return g.id;
+    }
+
+    /**
+     * Tours: a gate whose floors are all one world (where its roles allow), made at the given content version on the depth
+     * test's plan (its seed, layout and four floors), so a world's version 6 and version 7 gates are the same floors.
+     */
+    private static int openWorld(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        String id = StringArgumentType.getString(c, "id").trim();
+        GateWorld w = GateWorlds.get(id);
+        if (w == null) {
+            c.getSource().sendFailure(Component.literal("Unknown world " + id));
+            return 0;
+        }
+        int version = IntegerArgumentType.getInteger(c, "version");
+        String mood = w.moods().isEmpty() ? "" : w.moods().get(0).id();
+        Director.tourPlan = plan -> {
+            List<FloorWorld> fw = new ArrayList<>();
+            for (int f = 1; f <= 4; f++) {
+                if (f == 4 ? w.boss() : w.ordinary()) fw.add(new FloorWorld(0, f, id, mood, w.tall()));
+            }
+            Theme t = plan.theme();
+            return new GatePlan(0xD3E7L, version, plan.rank(), t, Layout.values()[1], List.of(), Twist.NONE, 4, t.bossId(),
+                    t == Theme.HIVE ? Theme.FUNGAL_HOLLOW : Theme.HIVE, 0, fw);
+        };
+        try {
+            int gid = open(c, StringArgumentType.getString(c, "theme"), false);
+            // a tour's gate stands where it's opened, even over a village's edge (the tour can't pick another spot)
+            GateRecord g = gid > 0 ? GateRegistry.get(c.getSource().getServer()).gate(gid) : null;
+            if (g != null) g.anyGround = true;
+            return gid;
+        } finally {
+            Director.tourPlan = null;
+        }
     }
 
     /**
@@ -223,6 +270,14 @@ final class GateCommands {
         return 0;
     }
 
+    /** The /awaken gate info timer line: a waiting gate's clock hasn't started (SPEC §7, "Seen first"). */
+    static String timer(MinecraftServer s, GateRecord g) {
+        if (g.neverBreaks(s)) return "never breaks";
+        if (g.waiting(s)) return "waits to be seen (nobody has come within " + Breaks.SEEN_RADIUS + " blocks)"
+                + (g.foldsOnPlayDay >= 0 ? " · folds unseen on play-day " + g.foldsOnPlayDay : "");
+        return (g.seenDay >= 0 ? "seen on play-day " + g.seenDay + " · " : "") + "breaks on " + g.breaksOnPlayDay;
+    }
+
     private static int list(CommandContext<CommandSourceStack> c) {
         MinecraftServer s = c.getSource().getServer();
         ServerPlayer p = c.getSource().getPlayer();
@@ -243,7 +298,10 @@ final class GateCommands {
             if (p != null && p.level().dimension() == net.minecraft.world.level.Level.OVERWORLD) {
                 sb.append(' ').append((int) Math.sqrt(p.blockPosition().distSqr(g.pos))).append(" m ").append(Breaks.direction(p.blockPosition(), g.pos));
             }
-            if (g.state.standing() && !g.scripted) sb.append(" · breaks in ").append(g.breaksIn(today)).append(" play-days");
+            if (g.state.standing() && !g.scripted) {
+                if (g.waiting(s)) sb.append(" · waits to be seen");
+                else sb.append(" · breaks in ").append(g.breaksIn(today)).append(" play-days");
+            }
             if (!g.inside.isEmpty()) sb.append(" · ").append(g.inside.size()).append(" inside");
             Component line = Component.literal(sb.toString()).withColor(g.plan.rank().colour)
                     .withStyle(st -> st.withClickEvent(new ClickEvent.RunCommand("/awaken gate trace " + g.id))
@@ -274,7 +332,7 @@ final class GateCommands {
         lines.add("mods      " + (plan.modifiers().isEmpty() ? "none" : String.join(", ", plan.modifiers().stream().map((Modifier m) -> m.displayName).toList())));
         lines.add("lord      " + plan.boss() + (plan.hasAnnex() ? " · annex " + plan.annexTheme().displayName : ""));
         lines.add("where     " + g.pos.getX() + " " + g.pos.getY() + " " + g.pos.getZ() + " · cell " + g.cell + " (" + Cells.regionFile(g.cell) + ")");
-        lines.add("timer     created play-day " + g.createdDay + " · breaks on " + (g.scripted ? "never" : g.breaksOnPlayDay));
+        lines.add("timer     created play-day " + g.createdDay + " · " + timer(c.getSource().getServer(), g));
         lines.addAll(g.trace);
         lines.add("invariants: no theme from the last 3 · no layout from the last 2 · modifiers within budget · twist at least every 12");
         for (String l : lines) c.getSource().sendSuccess(() -> Component.literal(l).withStyle(ChatFormatting.GRAY), false);

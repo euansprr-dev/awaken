@@ -1,17 +1,23 @@
 package dev.awaken.village;
 
 import dev.awaken.Awaken;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.function.Consumer;
 
-/** The villages' own items: the inn's room key (bought from the innkeeper; a keepsake once the night is over). */
+/**
+ * The villages' own items and sounds: the inn's room key (bought from the innkeeper; a keepsake once the night is over)
+ * and a holdfast's bell (SPEC §43.2: the city's bell recordings, lower and slower).
+ */
 public final class VillageContent {
     private VillageContent() {}
 
@@ -19,8 +25,13 @@ public final class VillageContent {
 
     public static final DeferredItem<InnKey> INN_KEY = ITEMS.registerItem("inn_key", InnKey::new, p -> p.stacksTo(1));
 
+    private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
+    public static final DeferredHolder<SoundEvent, SoundEvent> HOLDFAST_BELL = SOUNDS.register("holdfast.bell",
+            () -> SoundEvent.createVariableRangeEvent(Awaken.id("holdfast.bell")));
+
     static void register(IEventBus modBus) {
         ITEMS.register(modBus);
+        SOUNDS.register(modBus);
     }
 
     /** The key's line in its tooltip: what it's for. */

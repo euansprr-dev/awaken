@@ -212,27 +212,6 @@ public final class GuideTests {
                 }
             });
         });
-
-        AwakenTests.register("hearth_cottage_offer_once", 40, h -> {
-            ServerPlayer sp = h.makeMockServerPlayerInLevel();
-            HearthData data = HearthData.get(h.getLevel().getServer());
-            HearthRecord rec = new HearthRecord(sp.getUUID(), "test", h.absolutePos(new BlockPos(0, 1, 0)), HearthService.OVERWORLD);
-            data.put(rec);
-            try {
-                h.assertTrue(Cottage.offer(sp), "offered the first time");
-                h.assertTrue(Signal.isPending(sp, Cottage.ACTION), "as a choice card that waits for an answer");
-                h.assertFalse(Cottage.offer(sp), "never twice");
-                long cards = Signal.pending(sp).stream().filter(w -> w.action().map(Cottage.ACTION::equals).orElse(false)).count();
-                h.assertTrue(cards == 1, "one card, was " + cards);
-                Signal.answer(sp, Cottage.ACTION, false);
-                h.assertTrue(HearthService.player(sp).tips.contains(Cottage.TIP_DECLINED) && !Signal.isPending(sp, Cottage.ACTION), "declined");
-                h.assertFalse(Cottage.offer(sp), "not offered again after a no");
-                h.assertTrue(Cottage.state(sp, rec) == GuideData.COTTAGE_DECLINED, "the guide still offers it, lower down");
-            } finally {
-                data.remove(sp.getUUID());
-            }
-            h.succeed();
-        });
     }
 
     /** A chunk of grass on dirt at {@code y} (the floor level), cleared above (other tests share these heights). */

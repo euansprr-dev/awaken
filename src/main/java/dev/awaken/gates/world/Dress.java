@@ -144,6 +144,95 @@ abstract class Dress {
     /** After every place is carved, before each is dressed. */
     void world() {}
 
+    /** Whether a version 7 floor shapes its places' ground (SPEC §38.14, {@link Relief}). */
+    boolean depth() {
+        return false;
+    }
+
+    /**
+     * A piece of shaped ground at a block ({@link Relief#BANK} under a raised floor, {@link Relief#SLAB} or
+     * {@link Relief#STAIRS} on a half step or at a wall's foot, a {@link Relief#DRIFT} at the foot of a rise,
+     * {@link Relief#BITS} lying on it, a {@link Relief#ROOF} stair hung where the roof steps, a {@link Relief#FOOT} stair
+     * at a wall's foot, a {@link Relief#CAP} slab on an outcrop), or null: the bank skinned like the shell, no half step,
+     * nothing lying there (a foot or a cap falls back to the floor's stairs or slab).
+     */
+    BlockState ground(int part, int x, int y, int z) {
+        return null;
+    }
+
+    /** How far round a place's middle its ground stays flat (something stands or lies there: a pool, a hero piece). */
+    double pad(Room r, CaveEngine.Kind k) {
+        return 0;
+    }
+
+    /** How big the lumps on a shaped place's walls and roof are, 1 the usual (up to 1.3 blocks in or out). */
+    double lumps() {
+        return 1;
+    }
+
+    /** How often a shaped place's tall wall steps back at a ledge, 1 the usual (about a third of it). */
+    double ledges() {
+        return 1;
+    }
+
+    /** How thickly the bits lie on shaped ground where it's wildest (none on the way; about one in 12 at most). */
+    double bits() {
+        return 0;
+    }
+
+    /** The theme's growth creeping over floor and wall where a place is wildest (38.14), or null. */
+    BlockState creep(int x, int y, int z) {
+        return null;
+    }
+
+    /**
+     * A block of what stands in a shaped place's wild ({@link Formations}: a {@link Formations#PILLAR}, a
+     * {@link Formations#ROCK}, a {@link Formations#FALLEN} piece, a {@link Formations#HEAP}), or null: the shell's own skin.
+     */
+    BlockState formation(int part, int x, int y, int z) {
+        return null;
+    }
+
+    /**
+     * Shaped ground the usual way: a half step is the floor's slab (on a soft floor its drift four layers deep) or its
+     * stairs up a ramp (none on a soft floor); the wall's stairs stand at a wall's foot and hang where the roof steps, its
+     * slab crowns an outcrop; then the drift and the bits. A raised floor's bank is the shell's own (null).
+     */
+    static BlockState kit(int part, boolean soft, BlockState floorSlab, BlockState floorStairs, BlockState wallSlab,
+                          BlockState wallStairs, BlockState drift, BlockState bits) {
+        boolean heaped = soft && drift != null;
+        return switch (part) {
+            case Relief.SLAB -> heaped ? drift.trySetValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LAYERS, 4) : floorSlab;
+            case Relief.STAIRS -> heaped ? null : floorStairs;
+            case Relief.FOOT, Relief.ROOF -> wallStairs;
+            case Relief.CAP -> wallSlab;
+            case Relief.DRIFT -> drift;
+            case Relief.BITS -> bits;
+            default -> null;
+        };
+    }
+
+    /**
+     * What stands in the wild the usual way: a pillar of {@code pillar} banded with {@code band} every fourth layer, an
+     * outcrop of {@code rock} crusted with {@code crust} here and there, a fallen piece of {@code fallen}, a heap of
+     * {@code heap}. A null anywhere is the shell's own skin.
+     */
+    BlockState pieces(int part, int x, int y, int z, BlockState pillar, BlockState band, BlockState rock, BlockState crust,
+                      BlockState fallen, BlockState heap) {
+        return switch (part) {
+            case Formations.PILLAR -> band != null && Math.floorMod(y - W, 4) == 0 ? band : pillar;
+            case Formations.ROCK -> crust != null && Hash.noise3(seed + 63, x, y, z, 1.6) > 0.62 ? crust : rock;
+            case Formations.FALLEN -> fallen;
+            case Formations.HEAP -> heap;
+            default -> null;
+        };
+    }
+
+    /** The most room over a column of a place, blocks over the floor line, where the dress hangs something low (a ledge). */
+    double headroom(Room r, CaveEngine.Kind k, int x, int z) {
+        return 999;
+    }
+
     void cavern(Room r, CaveEngine.Kind k) {}
 
     void tunnel(Room r, ChainLayout.Link l) {}
@@ -236,6 +325,17 @@ abstract class Dress {
         return false;
     }
 
+    /** In the middle of a doorway (the two blocks the way runs through), within {@code depth} blocks of its slot edge. */
+    static boolean inDoorway(Room r, int x, int z, int depth) {
+        for (Room.Door d : r.doors) {
+            int[] b = WorldPlan.doorBox(d, depth);
+            if (x < b[0] || x > b[1] || z < b[2] || z > b[3]) continue;
+            int lat = d.side == 0 || d.side == 2 ? x - d.gx * 16 : z - d.gz * 16;
+            if (lat > RoomGeometry.DOOR_LO && lat < RoomGeometry.DOOR_HI) return true;
+        }
+        return false;
+    }
+
     boolean nearBlocked(double x, double z, double dist) {
         for (double[] b : c.blocked) if (Math.hypot(x - b[0], z - b[1]) < b[2] + dist) return true;
         return false;
@@ -275,7 +375,9 @@ abstract class Dress {
             long h = Hash.of(seed + salt, x, z);
             if (Hash.unit(h) >= density) return;
             int len = 1 + (int) ((Hash.unit(Hash.mix(h)) * most));
-            for (int i = 0; i < len && y - i >= W + low; i++) {
+            // over shaped ground it stops as far over the highest ground near (38.14: a root you can reach is a ladder)
+            int bottom = W + low + (c.relief == null ? 0 : c.relief.near(x, z));
+            for (int i = 0; i < len && y - i >= bottom; i++) {
                 if (!buf.open(x, y - i, z)) break;
                 buf.set(x, y - i, z, pick.at(x, y - i, z, len, i));
             }
@@ -288,7 +390,9 @@ abstract class Dress {
         c.s.op(b[0], W, b[1], b[2], W, b[3], (buf, x, y, z) -> {
             if (!buf.open(x, y, z) || !solid(buf, x, y - 1, z) || !buf.open(x, y + 1, z)) return;
             long h = Hash.of(seed + salt, x, z);
-            if (Hash.unit(h) >= density || nearDoor(r, x + 0.5, z + 0.5, 2.5) || p.nearAnchor(x + 0.5, z + 0.5, 3)) return;
+            // on shaped ground it thickens with the wild: a fifth as thick on the way, near twice in the wildest corners
+            double here = c.relief == null ? density : density * (0.2 + 1.8 * c.relief.wild(x, z));
+            if (Hash.unit(h) >= here || nearDoor(r, x + 0.5, z + 0.5, 2.5) || p.nearAnchor(x + 0.5, z + 0.5, 3)) return;
             BlockState s = pick.at(x, y, z, 1, (int) (Hash.mix(h) & 7));
             if (s != null) buf.set(x, y, z, s);
         });
@@ -388,6 +492,8 @@ abstract class Dress {
                     (px, py, pz) -> Math.max(Sculpt.capsule(px, W + 1.0, pz, ax, W + 1.0, az, ex + 0.5, W + 1.0, ez + 0.5, 0.75), W - py));
             open(ex - 1, W, ez - 1, ex + 1, W + 2, ez + 1);
             p.mark(FloorLayout.Mark.NOOK, secret, ex - 1, 0, ez - 1, ex + 1, 2, ez + 1);
+            // on shaped ground the crawl's mouth stays at the floor line (two high, it's only entered from there)
+            if (c.relief != null) block(ax, az, 1.5);
             return new int[]{ex, ez, ix, iz};
         }
         return null;

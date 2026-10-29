@@ -311,7 +311,7 @@ final class EnergyPowers {
                 // Stored Charge (3): the break shock carries part of what the shield took
                 float shock = c.dmg() + amount * c.num(3, "stored", 0f);
                 Moves.blast(c, at, 4, shock, Forces.Force.CHARGE, 1.0, 0.3);
-                ForceInteractions.chargeEchoes(c.player, at, 4);
+                ForceInteractions.chargeSummons(c.player, at, 4);
                 Fx.at(c, FxKind.NOVA, at).scale(4).style(FxStyle.CHARGE).flag(FxEvent.REACH).noAnim().send();
                 c.sound(PowerSounds.BARRIER_BREAK, 1.2f, 1f);
                 // Second Skin (4): a thinner shell flickers back, once
@@ -459,7 +459,7 @@ final class EnergyPowers {
                 if (first == null) first = e;
                 if (arcs++ < 6) Fx.at(c, FxKind.LIGHTNING, at).to(e.getBoundingBox().getCenter()).ticks(8).scale(1.4).noAnim().send();
             }
-            ForceInteractions.chargeEchoes(c.player, at, radius);
+            ForceInteractions.chargeSummons(c.player, at, radius);
             // the release: an ultimate's screen beat rides on the nova (impact frame, flash, FOV punch)
             Fx.at(c, FxKind.NOVA, at).scale(radius).flag(FxEvent.REACH).send();
             c.sound(at, PowerSounds.BLAST, 2f, 0.6f);

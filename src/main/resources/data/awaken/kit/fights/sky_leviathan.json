@@ -1,0 +1,160 @@
+{
+ "schemaVersion": 1,
+ "id": "sky_leviathan",
+ "moves": "sky_leviathan",
+ "intro": {
+  "pose": "kneel",
+  "move": "unfurl"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "slap",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "slap_b"
+      ],
+      [
+       "slap_b",
+       "ram"
+      ]
+     ]
+    },
+    {
+     "move": "ram",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "wingbeat",
+     "weight": 2
+    },
+    {
+     "move": "dive",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "slap"
+      ]
+     ]
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "tide",
+   "pool": [
+    {
+     "move": "slap",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "slap_b"
+      ],
+      [
+       "slap_b",
+       "ram"
+      ]
+     ]
+    },
+    {
+     "move": "ram",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "slap"
+      ]
+     ]
+    },
+    {
+     "move": "tide",
+     "weight": 1
+    },
+    {
+     "move": "barrage",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "dive",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "ram"
+      ]
+     ]
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "storm",
+   "pool": [
+    {
+     "move": "storm",
+     "weight": 2
+    },
+    {
+     "move": "wingbeat",
+     "weight": 2,
+     "then": [
+      [
+       "slap"
+      ]
+     ]
+    },
+    {
+     "move": "dive",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "slap",
+       "slap_b"
+      ]
+     ]
+    },
+    {
+     "move": "slap",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "slap_b",
+       "ram"
+      ]
+     ]
+    },
+    {
+     "move": "ram",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

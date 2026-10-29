@@ -224,24 +224,4 @@ public final class Camp {
         }
         return null;
     }
-
-    /** Every 5 s: at night Hettie lies down on the far bedroll; by day she gets up. */
-    static void rest(MinecraftServer server) {
-        BlockPos f = fire(server);
-        ServerLevel level = server.overworld();
-        if (f == null || !level.hasChunkAt(f)) return;
-        Wayfarer hettie = Scenes.resident(server, "hettie");
-        if (hettie == null) return;
-        BlockPos head = f.offset(BEDROLLS[1][0], BEDROLLS[1][1], BEDROLLS[1][2]).relative(BEDROLL_FACING[1]);
-        for (int dy = 1; dy >= -2 && !level.getBlockState(head).is(LivingContent.BEDROLL.get()); dy--) head = f.offset(BEDROLLS[1][0], dy, BEDROLLS[1][2]).relative(BEDROLL_FACING[1]);
-        BlockState bed = level.getBlockState(head);
-        boolean dark = level.isDarkOutside();
-        if (dark && !hettie.isSleeping() && bed.is(LivingContent.BEDROLL.get()) && bed.getValue(AbstractBedBlock.PART) == BedPart.HEAD
-                && !bed.getValue(AbstractBedBlock.OCCUPIED) && hettie.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(head)) < 24 * 24) {
-            hettie.getNavigation().stop();
-            hettie.startSleeping(head);
-        } else if (!dark && hettie.isSleeping()) {
-            hettie.stopSleeping();
-        }
-    }
 }

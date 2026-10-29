@@ -3,7 +3,6 @@ package dev.awaken.hearth.room;
 import dev.awaken.hearth.HearthContent;
 import dev.awaken.hearth.HearthRecord;
 import dev.awaken.hearth.block.HearthfireBlock;
-import dev.awaken.hearth.block.RolePadBlock;
 import dev.awaken.hearth.block.TrophyMountBlockEntity;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
@@ -101,7 +100,6 @@ public final class RoomScanner {
     private final Set<Long> reported = new HashSet<>();
     private final List<Room> found = new ArrayList<>();
     private final List<Miss> misses = new ArrayList<>();
-    private final List<Scan.Pad> pads = new ArrayList<>();
     private final LongArrayList lights = new LongArrayList();
     private final int[] furniture = new int[Furniture.COUNT];
     private final int[] diagnosed = new int[Furniture.COUNT];
@@ -216,7 +214,6 @@ public final class RoomScanner {
             if (fieldCells.size() < 1024 && s.getBlock() instanceof net.minecraft.world.level.block.FarmlandBlock) fieldCells.add(p.asLong());
         }
         if (s.getBlock() instanceof net.minecraft.world.level.block.FenceGateBlock && gateCells.size() < 32) gateCells.add(p.asLong());
-        if (f == Furniture.PAD && s.getBlock() instanceof RolePadBlock pad) pads.add(new Scan.Pad(p, pad.role));
         boolean light = givesLight(s);
         if (light) lights.add(p.asLong());
         seeds.add(p);
@@ -772,7 +769,7 @@ public final class RoomScanner {
         int outdoorLights = 0;
         for (int i = 0; i < lights.size(); i++) if (!indoors.contains(lights.getLong(i))) outdoorLights++;
         Scan.Land land = new Scan.Land(farmland, animals, fences, walls, composters, flowers, outdoorLights);
-        onDone.accept(new Scan(List.copyOf(found), List.copyOf(misses), furniture.clone(), land, List.copyOf(pads), families.clone(),
+        onDone.accept(new Scan(List.copyOf(found), List.copyOf(misses), furniture.clone(), land, families.clone(),
                 new Scan.Yard(List.copyOf(fields), List.copyOf(gates), List.copyOf(beasts))));
     }
 

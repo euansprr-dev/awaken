@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "awaken:block/crypt_limestone",
+    "top": "awaken:block/crypt_limestone",
+    "side": "awaken:block/crypt_limestone"
+  }
+}

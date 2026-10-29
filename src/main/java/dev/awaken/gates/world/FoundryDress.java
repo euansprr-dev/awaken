@@ -13,6 +13,8 @@ import java.util.List;
  */
 final class FoundryDress extends Dress {
     final BlockState iron, brick, brass, gear, grate, pipe, pipeX, pipeZ, furnace, lamp, steam, sparks, cables, valve, chain;
+    /** Shaped ground (SPEC §38.14): iron slabs and stairs on the floor, brick at the walls, shavings */
+    final BlockState gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits;
     final boolean works, maze, engine, stopped;
 
     FoundryDress(CaveEngine.Cave c) {
@@ -31,6 +33,12 @@ final class FoundryDress extends Dress {
         sparks = mat("sparks", "awaken:foundry_sparks");
         cables = mat("cables", "awaken:foundry_cables");
         valve = mat("touch", "awaken:foundry_valve");
+        gFloorSlab = mat("ground_slab", "awaken:foundry_iron_slab");
+        gFloorStairs = mat("ground_stairs", "awaken:foundry_iron_stairs");
+        gWallSlab = mat("wall_slab", "awaken:foundry_brick_slab");
+        gWallStairs = mat("wall_stairs", "awaken:foundry_brick_stairs");
+        gDrift = null;
+        gBits = mat("ground_bits", "awaken:foundry_shavings");
         chain = GatePainter.state("minecraft:iron_chain[axis=y]");
         String n = name();
         works = n.equals("works_floor");
@@ -54,6 +62,33 @@ final class FoundryDress extends Dress {
         if (rise == 3) return brass;
         if (rise == 0 && Hash.unit(seed + 13, x, z) < 0.06) return furnace;
         return rise < 3 || Hash.noise3(seed + 5, x, y, z, 5) > 0.7 ? brick : iron;
+    }
+
+    @Override
+    boolean depth() {
+        return true;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return kit(part, false, gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits);
+    }
+
+    @Override
+    double bits() {
+        // bolts and shavings lie thick: the foundry grows little else
+        return 0.42;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return null;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // pipe bundles floor to roof banded with brass, scrap iron with gears in it, a fallen gear half sunk, a scrap heap
+        return pieces(part, x, y, z, pipe, brass, iron, gear, gear, iron);
     }
 
     @Override
@@ -183,15 +218,17 @@ final class FoundryDress extends Dress {
     void tunnel(Room r, ChainLayout.Link l) {
         int[] b = box(r);
         ChainLayout.Way way = ChainLayout.Way.of(r, l, seed);
-        // pipes along both walls at knee and head height; in the maze a curtain of steam across the way here and there
+        // pipes along both walls at knee and head height; in the maze a curtain of steam across the way here and there.
+        // Where the way bends hard by a door the wall swings across the doorway, so a pipe stops short of its middle.
         c.s.op(b[0], W, b[1], b[2], W + 5, b[3], (buf, x, y, z) -> {
             if (!buf.open(x, y, z)) return;
             double[] w = way.at(x + 0.5, z + 0.5);
             if (w == null) return;
             double lat = Math.abs(w[0]), half = c.hw + 0.4;
             int along = (int) Math.round(w[1]);
-            if ((y == W + 1 || (maze && y == W + 3)) && lat > half - 1.1 && lat <= half) buf.set(x, y, z, way.alongZ() ? pipeZ : pipeX);
-            else if (maze && Math.floorMod(along, 9) == 4 && lat < half - 1.1 && !nearDoor(r, x + 0.5, z + 0.5, 3)) buf.set(x, y, z, steam);
+            if ((y == W + 1 || (maze && y == W + 3)) && lat > half - 1.1 && lat <= half) {
+                if (!inDoorway(r, x, z, 4)) buf.set(x, y, z, way.alongZ() ? pipeZ : pipeX);
+            } else if (maze && Math.floorMod(along, 9) == 4 && lat < half - 1.1 && !nearDoor(r, x + 0.5, z + 0.5, 3)) buf.set(x, y, z, steam);
         });
         grow(r, 0.02, 17, (x, y, z, len, i) -> sparks);
     }

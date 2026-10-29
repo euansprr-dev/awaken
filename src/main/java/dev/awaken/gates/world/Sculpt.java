@@ -39,6 +39,11 @@ final class Sculpt {
     private final List<Op> ops = new ArrayList<>();
     private final Skin skin;
     final int yLo, yHi;
+    /**
+     * A version 7 floor (SPEC §38.14): a shell block under or over something thin (a plant, a slab, crumbs) is skinned as
+     * floor or ceiling as if the air were open there, not as wall.
+     */
+    boolean thinOpen;
     private Map<Long, int[]> buckets;
 
     Sculpt(Skin skin, int yLo, int yHi) {
@@ -183,7 +188,7 @@ final class Sculpt {
             int az = Math.max(o.z0, b.z0), bz = Math.min(o.z1, b.z0 + 15);
             for (int x = ax; x <= bx; x++) for (int z = az; z <= bz; z++) for (int y = o.y0; y <= o.y1; y++) o.v.at(b, x, y, z);
         }
-        b.flush(skin, out, skipLo, skipHi);
+        b.flush(skin, out, skipLo, skipHi, thinOpen);
     }
 
     /** One chunk column of the floor's height: markers (unset, open, solid to skin) or a palette index. */
@@ -191,6 +196,8 @@ final class Sculpt {
         int x0, z0, yLo, h;
         short[] cells = new short[16 * 16 * 256];
         private final List<BlockState> palette = new ArrayList<>();
+        /** Per palette entry: thin (not a full block, not a fluid), for {@link Sculpt#thinOpen}. */
+        private boolean[] thin = new boolean[64];
         private final Map<BlockState, Short> index = new IdentityHashMap<>();
 
         void reset(int x0, int z0, int yLo, int yHi) {
@@ -240,6 +247,8 @@ final class Sculpt {
                 p = (short) palette.size();
                 palette.add(s);
                 index.put(s, p);
+                if (p >= thin.length) thin = java.util.Arrays.copyOf(thin, p * 2);
+                thin[p] = !s.isSolidRender() && s.getFluidState().isEmpty();
             }
             cells[i] = p;
         }
@@ -254,7 +263,12 @@ final class Sculpt {
             return i < 0 || cells[i] <= SOLID ? null : palette.get(cells[i]);
         }
 
-        void flush(Skin skin, GatePainter.Sink out, int skipLo, int skipHi) {
+        /** Open air, or (thin open) something thin, for skinning the shell next to it. */
+        private boolean airy(short c, boolean thinOpen) {
+            return c == OPEN || thinOpen && c > SOLID && thin[c];
+        }
+
+        void flush(Skin skin, GatePainter.Sink out, int skipLo, int skipHi, boolean thinOpen) {
             for (int ly = 0; ly < h; ly++) {
                 int y = yLo + ly;
                 if (y >= skipLo && y <= skipHi) continue;
@@ -264,8 +278,8 @@ final class Sculpt {
                         if (c == UNSET || c == OPEN) continue;
                         BlockState s;
                         if (c == SOLID) {
-                            boolean floor = ly + 1 < h && cells[((ly + 1) * 16 + lz) * 16 + lx] == OPEN;
-                            boolean ceiling = ly > 0 && cells[((ly - 1) * 16 + lz) * 16 + lx] == OPEN;
+                            boolean floor = ly + 1 < h && airy(cells[((ly + 1) * 16 + lz) * 16 + lx], thinOpen);
+                            boolean ceiling = ly > 0 && airy(cells[((ly - 1) * 16 + lz) * 16 + lx], thinOpen);
                             s = skin.at(x0 + lx, y, z0 + lz, floor, ceiling);
                         } else s = palette.get(c);
                         if (s != null && !s.isAir()) out.set(lx, y, lz, s);

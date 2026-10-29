@@ -1,6 +1,6 @@
 {
   "text": "I walk alone.",
-  "hint": "You've cleared many gates without Echoes.",
+  "hint": "You've cleared many gates on your own.",
   "condition": {
     "type": "counter",
     "counter": "awaken:gates_solo_no_echo",

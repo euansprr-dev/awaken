@@ -1,0 +1,434 @@
+<title>Living Deep Style Sheet</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* The approval page's family (docs/caves/page.html): a dark-first survey report. Pictures are pixel art, so they keep
+   their pixels when scaled. */
+:root {
+  --bg: #111316; --panel: #1a1d21; --panel2: #22262b; --ink: #e6e2d6; --muted: #9d998e; --rule: #30343a;
+  --glow: #5cc9b5; --lamp: #e3a04a;
+  --display: "Zilla Slab", "Rockwell", Georgia, serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #eeede8; --panel: #e2e0d9; --panel2: #d8d5cc; --ink: #1b1d20; --muted: #5a5d61; --rule: #c8c4b9;
+  --glow: #18806f; --lamp: #a8620d; color-scheme: light } }
+:root[data-theme="light"] {
+  --bg: #eeede8; --panel: #e2e0d9; --panel2: #d8d5cc; --ink: #1b1d20; --muted: #5a5d61; --rule: #c8c4b9;
+  --glow: #18806f; --lamp: #a8620d; color-scheme: light }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16.5px; line-height: 1.58; }
+.wrap { max-width: 820px; margin: 0 auto; padding-block: 44px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 18px; }
+.wide { max-width: 1120px; width: 100%; margin-inline: auto; box-sizing: border-box; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.12; margin: 0; }
+h1 { font-size: clamp(2.3rem, 6.5vw, 3.6rem); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.7rem; font-weight: 700; margin-top: 44px; }
+h3 { font-size: 1.1rem; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+ul, ol { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; max-width: 68ch; }
+a { color: var(--glow); }
+b, strong { font-weight: 600; }
+.eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--glow); }
+.lede { font-size: 1.18rem; line-height: 1.5; }
+.muted { color: var(--muted); }
+.small { font-size: 0.9rem; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--mono); font-size: 0.78rem; color: var(--muted);
+  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding-block: 10px; }
+.meta b { color: var(--ink); }
+img { display: block; max-width: 100%; height: auto; }
+.px { image-rendering: pixelated; }
+
+/* scenes: torch and flat light side by side */
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.pair.one { grid-template-columns: minmax(0, 1fr); }
+figure { margin: 0; position: relative; min-width: 0; }
+.pair img { width: 100%; border-radius: 4px; background: #060608; }
+.tagline { position: absolute; left: 8px; top: 8px; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #f1eee6; background: rgba(10, 11, 13, 0.72); padding: 2px 7px; border-radius: 3px; }
+.scene { display: flex; flex-direction: column; gap: 8px; }
+.scene p { font-size: 0.95rem; color: var(--muted); }
+.scene p b { color: var(--ink); }
+@media (max-width: 620px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+
+/* swatch grids */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.sw { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.sw img { width: 100%; border-radius: 3px; }
+.sw span { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+.sw span b { color: var(--ink); font-weight: 600; }
+
+/* region cards */
+.regions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 760px) { .regions { grid-template-columns: minmax(0, 1fr); } }
+.region { background: var(--panel); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0;
+  border-top: 4px solid var(--accent); }
+.region header { display: flex; flex-direction: column; gap: 2px; }
+.region .where { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+.region .stage { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 3px; padding: 0 6px; align-self: flex-start; }
+.chips { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); height: 26px; border-radius: 4px; overflow: hidden; }
+.chips i { display: block; }
+.chips i:last-child { border-left: 2px solid var(--panel); }
+.trio { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 8px; align-items: start; }
+.trio figure { display: flex; flex-direction: column; gap: 4px; }
+.trio img { width: 100%; border-radius: 3px; }
+.trio figcaption { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); line-height: 1.35; }
+.region p { font-size: 0.9rem; color: var(--muted); }
+.region p b { color: var(--ink); }
+
+/* creatures */
+.life { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+.critter { background: var(--panel); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.critter .pic { background: #3a3836; border-radius: 4px; display: grid; place-items: center; aspect-ratio: 1.25; }
+.critter img { max-height: 120px; width: auto; }
+.critter b { font-size: 0.92rem; }
+.critter span { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+
+.ask { background: var(--panel2); border-radius: 8px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; border-left: 4px solid var(--lamp); }
+.ask ol { gap: 10px; }
+.note { font-size: 0.86rem; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 12px; }
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">The Living Deep · P3 · style sheet for Euan</div>
+  <h1>What the caves will look like</h1>
+  <p class="lede">Before any of this goes into the game, here is the look: the skin every cave gets, the two regions
+  coming first, and all eight regions' rock, colours, a particle and a creature each. Say OK, or tell me what to change.</p>
+  <p><b>New on 29 October: <a href="#p3">section 5</a>, the other six regions as built for P3.</b> You OK'd sections 1 to 4
+  and they're in the game now. Section 5 is what's waiting for your OK: each region's rock, ores and the pieces only it
+  has, shown the same way as the first two.</p>
+  <div class="meta"><span>Branch <b>claude/caves-plan-2815c0</b></span><span>Plan <b>docs/caves/PLAN.md</b> §4.3–4.6</span>
+    <span>Art <b>tools/art/specs/deep_skin.py, deep_life.py</b></span><span>Pictures <b>tools/art/cave_diorama.py</b></span></div>
+
+  <p>The cave corners are rendered from the real block models and textures, lit the way the game lights blocks (block
+  light falling one level a block, the game's light curve at the Bright setting and its warm torch colour, the fixed
+  shading on each face). It isn't the game: no smooth shadows in corners, no Lens, and the particles and creatures stand
+  still. Each corner is shown twice: by your torch, and in flat light so you can see every piece.</p>
+
+  <h2>1 · The skin: every cave</h2>
+  <p>Every cave gets this, region or not, made of the rock it sits in: rubble heaped where the floor meets a wall (its high
+  side against the wall), real 3D stalactites and stalagmites in four thicknesses (vanilla's are a flat cross), loose
+  stones, lichen in the depth band's colour, white mineral crust, wet streaks under a dripping roof, a puddle under the
+  drips that takes the cave's water colour, and a dusty web in a dry corner.</p>
+</div>
+
+<div class="wide" style="padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:26px">
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_stone.png" alt="A stone cave corner lit by a torch: rubble along the walls, stalagmites, a blue puddle, lichen and crust on the left wall"><span class="tagline">Stone · torch</span></figure>
+      <figure><img class="px" src="style/scene_stone_flat.png" alt="The same stone cave corner in flat light"><span class="tagline">Stone · flat light</span></figure>
+    </div>
+    <p><b>Shallows (stone).</b> Green-grey lichen on the left wall with a patch of crust; the shelf on the right drips,
+    so stalactites hang from it, stalagmites rise under them, and a puddle lies between. In a plain cave the water is
+    vanilla's blue.</p>
+  </div>
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_tuff.png" alt="A tuff cave corner by torchlight"><span class="tagline">Tuff · torch</span></figure>
+      <figure><img class="px" src="style/scene_deepslate.png" alt="A deepslate cave corner by torchlight"><span class="tagline">Deepslate · torch</span></figure>
+    </div>
+    <p><b>Middle Dark (tuff) and the Deep (deepslate).</b> The same kit in each rock's own colours (the middle five shades
+    of every piece are the game's own rock, so a heap reads as fallen from the wall beside it). The lichen turns gold in
+    the Middle Dark and slate-blue in the Deep.</p>
+  </div>
+  <div class="scene">
+    <div class="pair one">
+      <figure><img class="px" src="style/formations.png" alt="Stalactites and stalagmites in four thicknesses for stone, deepslate and tuff, seen almost level"><span class="tagline">Four thicknesses · stone, deepslate, tuff</span></figure>
+    </div>
+    <p><b>The formations</b> taper smoothly over one to four blocks (tip, then a narrowing piece, a middle and a base, as
+    pointed dripstone does) and meet into columns. Each is a few stacked boxes, so the torch catches its sides.</p>
+  </div>
+</div>
+
+<div class="wrap" style="padding-block:0">
+  <h3>The pieces up close</h3>
+  <div class="grid">
+    <div class="sw"><img class="px" src="style/skin_stone_rubble.png" alt="Stone rubble texture"><span><b>rubble</b> · stone</span></div>
+    <div class="sw"><img class="px" src="style/skin_stone_formation.png" alt="Stone flowstone texture"><span><b>flowstone</b> · stone</span></div>
+    <div class="sw"><img class="px" src="style/skin_stone_formation_tip.png" alt="Stone formation tip texture"><span><b>wet tip</b> · stone</span></div>
+    <div class="sw"><img class="px" src="style/skin_deepslate_rubble.png" alt="Deepslate rubble texture"><span><b>rubble</b> · deepslate</span></div>
+    <div class="sw"><img class="px" src="style/skin_tuff_rubble.png" alt="Tuff rubble texture"><span><b>rubble</b> · tuff</span></div>
+    <div class="sw"><img class="px" src="style/skin_deepslate_formation.png" alt="Deepslate flowstone texture"><span><b>flowstone</b> · deepslate</span></div>
+    <div class="sw"><img class="px" src="style/overlay_lichen_shallows.png" alt="Shallows lichen on stone"><span><b>lichen</b> · Shallows</span></div>
+    <div class="sw"><img class="px" src="style/overlay_lichen_middle.png" alt="Middle Dark lichen on stone"><span><b>lichen</b> · Middle Dark</span></div>
+    <div class="sw"><img class="px" src="style/overlay_lichen_deep.png" alt="Deep lichen on stone"><span><b>lichen</b> · the Deep</span></div>
+    <div class="sw"><img class="px" src="style/overlay_mineral_crust.png" alt="Mineral crust on stone"><span><b>mineral crust</b></span></div>
+    <div class="sw"><img class="px" src="style/overlay_wet_streaks.png" alt="Wet streaks on stone"><span><b>wet streaks</b> (beads glint)</span></div>
+    <div class="sw"><img class="px" src="style/overlay_dusty_web.png" alt="Dusty web over stone"><span><b>dusty web</b> (dew glints)</span></div>
+    <div class="sw"><img class="px" src="style/overlay_puddle_plain.png" alt="Puddle in vanilla blue water"><span><b>puddle</b> · plain cave</span></div>
+    <div class="sw"><img class="px" src="style/overlay_puddle_rootways.png" alt="Puddle in the Rootways' green water"><span><b>puddle</b> · Rootways</span></div>
+    <div class="sw"><img class="px" src="style/overlay_puddle_ochre.png" alt="Puddle in the Ochre Deep's orange water"><span><b>puddle</b> · Ochre Deep</span></div>
+  </div>
+  <p class="small muted">The puddle is animated in the game: a slow shimmer and, now and then, a ring spreading from a
+  drip. Drips themselves fall as particles and splash.</p>
+
+  <h2>2 · The first two regions (P2)</h2>
+  <p>These two come first, and you'll play them in a new world before the other six are made.</p>
+</div>
+
+<div class="wide" style="padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:26px;margin-top:18px">
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_rootways.png" alt="A Rootways cave corner in brown rootstone by torchlight: teal glowcaps on the floor, root curtains and glow-worm threads under the shelf, pale moths, green-tinted puddle"><span class="tagline">The Rootways · torch</span></figure>
+      <figure><img class="px" src="style/scene_rootways_flat.png" alt="The Rootways corner in flat light"><span class="tagline">The Rootways · flat light</span></figure>
+    </div>
+    <p><b>The Rootways</b> (the Shallows under forests, taiga and jungle): brown rootstone threaded with old roots,
+    green-grey water, spores and pollen drifting, and pale dusk moths that come to your torch. Root curtains hang
+    through the roof, teal glowcaps grow in patches on the floor (a faint light you see down the gallery), and glow-worm
+    threads hang in clusters, shining in the dark. You hear the old roots creak overhead.</p>
+  </div>
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_ochre_deep.png" alt="An Ochre Deep cave corner in banded red-orange rock: ember lichen glowing on the left wall, rust on the walls, warm dust, an orange puddle, rust beetles"><span class="tagline">The Ochre Deep · torch</span></figure>
+      <figure><img class="px" src="style/scene_ochre_deep_flat.png" alt="The Ochre Deep corner in flat light"><span class="tagline">The Ochre Deep · flat light</span></figure>
+    </div>
+    <p><b>The Ochre Deep</b> (the Middle Dark under temperate land): banded red-orange rock in terraces, orange drip
+    pools, warm dust in the air, rust beetles on the walls and floor. Rust crust and rust flowstone take the place of
+    the plain caves' crust and streaks, and ember lichen glows faintly like a dying fire. You hear the rock ticking as
+    it settles, a chorus of chime crickets off in the dark, and a low warm hum.</p>
+  </div>
+</div>
+
+<div class="wrap" style="padding-block:0">
+  <p style="margin-top:22px"><b>The two regions' own pieces</b>, close up. The ores that live in a region wear its rock
+  (coal and copper in rootstone, iron in ochre: dark hematite with iron's peach rim); any other ore keeps a pocket of
+  the stone it grew in.</p>
+  <div class="grid">
+    <div class="sw"><img class="px" src="style/p2_rootstone_coal_ore.png" alt="Coal ore in rootstone, tiled"><span><b>coal ore</b> · rootstone</span></div>
+    <div class="sw"><img class="px" src="style/p2_rootstone_copper_ore.png" alt="Copper ore in rootstone, tiled"><span><b>copper ore</b> · rootstone</span></div>
+    <div class="sw"><img class="px" src="style/p2_ochre_iron_ore.png" alt="Iron ore in ochre stone, tiled"><span><b>iron ore</b> · ochre</span></div>
+    <div class="sw"><img class="px" src="style/p2_glowcap_0.png" alt="A cluster of two teal glowcaps"><span><b>glowcaps</b> (rims and gills glow)</span></div>
+    <div class="sw"><img class="px" src="style/p2_glowcap_1.png" alt="A cluster of three teal glowcaps"><span><b>glowcaps</b> · another cluster</span></div>
+    <div class="sw"><img class="px" src="style/p2_root_curtain.png" alt="Old roots hanging, a strand of the curtain"><span><b>root curtain</b></span></div>
+    <div class="sw"><img class="px" src="style/p2_root_curtain_tip.png" alt="The frayed tip of a root curtain"><span><b>root curtain</b> · its tip</span></div>
+    <div class="sw"><img class="px" src="style/p2_rust_crust.png" alt="Rust crust on ochre stone"><span><b>rust crust</b></span></div>
+    <div class="sw"><img class="px" src="style/p2_rust_flowstone.png" alt="Rust flowstone on ochre stone"><span><b>rust flowstone</b></span></div>
+    <div class="sw"><img class="px" src="style/p2_ember_lichen.png" alt="Ember lichen on ochre stone"><span><b>ember lichen</b> (embers glow)</span></div>
+  </div>
+</div>
+
+<div class="wrap" style="padding-block:0">
+  <h2>3 · All eight regions</h2>
+  <p>Each region's colours (its rock from crevice to highlight, then its light), its rock, its particle and its creature.
+  These were the directions you OK'd; <a href="#p3">section 5</a> shows the six P3 regions as built.</p>
+</div>
+
+<div class="wide" style="padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));margin-top:18px">
+  <div class="regions" id="regions"></div>
+</div>
+
+<div class="wrap" style="padding-block:0">
+  <h2>4 · The underlife</h2>
+  <p>Small life that only your game draws (nothing saved, nothing sent, about 40 at most around you), from one sprite
+  sheet, as the surface's butterflies and dragonflies are: moths' wings hinge and beat, beetles walk the walls, fish
+  turn in pools, bats roost in clusters and scatter as you pass. Our own bodies, not vanilla's bat.</p>
+</div>
+<div class="wide" style="padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));margin-top:18px">
+  <div class="life" id="life"></div>
+</div>
+
+<div class="wrap" style="padding-block:0">
+  <h2 id="p3">5 · The other six regions, as built (P3)</h2>
+  <p>Each region now has its rock all the way into the walls, its ores in that rock, and pieces no other cave has. The
+  rocks had their full pass since the sketches in section 3: the limestone's bedding wanders and breaks off (straight
+  lines read as planks), the basalt shows the sides of columns (it read as bricks), and the Violet Deep's vein crosses the
+  block on a slant (straight down, it lined up into stripes across a wall).</p>
+</div>
+
+<div class="wide" style="padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:26px;margin-top:18px">
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_pale_halls.png" alt="A Pale Halls corner in pale limestone by torchlight: a field of rimstone pools on the floor, drips from the roof, glow-worm threads, mist over the floor"><span class="tagline">The Pale Halls · torch</span></figure>
+      <figure><img class="px" src="style/scene_pale_halls_flat.png" alt="The Pale Halls corner in flat light"><span class="tagline">The Pale Halls · flat light</span></figure>
+    </div>
+    <p><b>The Pale Halls</b> (the Shallows under plains, savanna, meadows and beaches): wide flat-roofed halls of pale
+    limestone. Every roof drips here, not only the wet ones, so formations are everywhere; rimstone pools lie in terraced
+    fields on the floor, and cave pearls sit in the puddles under the drips. Glow-worm threads hang from the roof, and mist
+    lies low over the still water.</p>
+  </div>
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_windcleft.png" alt="A Windcleft corner in blue-grey banded slate: scree along the walls, white rime on the walls, an old rope hanging from the roof, mica glints"><span class="tagline">The Windcleft · torch</span></figure>
+      <figure><img class="px" src="style/scene_windcleft_flat.png" alt="The Windcleft corner in flat light"><span class="tagline">The Windcleft · flat light</span></figure>
+    </div>
+    <p><b>The Windcleft</b> (the Middle Dark under hills and mountains): tall cracks in blue-grey banded slate with mica
+    that glints in your light. Scree is heaped along the walls (twice the plain caves' rubble), white rime frosts the
+    walls where the wind comes through, and now and then an old Delvers' rope hangs down a crack, up to twelve blocks,
+    never quite to the floor. You can climb it. Swifts nest in the cracks.</p>
+  </div>
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_drowned_galleries.png" alt="A Drowned Galleries corner in green-grey siltstone: silt banks on the floor, a driftwood log, pale cave weed, glowing green algae at the waterline"><span class="tagline">The Drowned Galleries · torch</span></figure>
+      <figure><img class="px" src="style/scene_drowned_galleries_flat.png" alt="The Drowned Galleries corner in flat light"><span class="tagline">The Drowned Galleries · flat light</span></figure>
+    </div>
+    <p><b>The Drowned Galleries</b> (the Middle Dark under coasts and the flattest land): low lake caverns of damp green-grey
+    siltstone. Silt banks build up along the water, old driftwood lies where a flood left it, pale cave weed grows on the
+    lake floors, and a film of algae glows green at the waterline (a faint light round every lake). Crayfish pick along the
+    bottom.</p>
+  </div>
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_glimmer_hollows.png" alt="A Glimmer Hollows corner in sandy glimmerstone: amber crystal clusters on the floor, walls and roof, glittering dust"><span class="tagline">The Glimmer Hollows · amber</span></figure>
+      <figure><img class="px" src="style/scene_glimmer_frost.png" alt="The same corner under frozen land: pale blue glacial crystals in place of the amber"><span class="tagline">The Glimmer Hollows · under frozen land</span></figure>
+    </div>
+    <p><b>The Glimmer Hollows</b> (the Middle Dark under deserts, the Glass Steppe and frozen land): round crystal rooms off
+    narrow throats, in sandy glimmerstone with amber flecks. Crystal clusters grow from the floor, the walls and the roof,
+    each glowing softly. Under hot and warm land they're amber; under frozen land (the Frost Spires) they're glacial crystals, a pale ice blue.
+    Glass moths drift through the glittering dust.</p>
+  </div>
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_black_vaults.png" alt="A Black Vaults corner in dark column basalt: a drift of grey ash on the floor, ash falling, an ash moth"><span class="tagline">The Black Vaults · torch</span></figure>
+      <figure><img class="px" src="style/scene_black_vaults_flat.png" alt="The Black Vaults corner in flat light"><span class="tagline">The Black Vaults · flat light</span></figure>
+    </div>
+    <p><b>The Black Vaults</b> (the Deep, half of all land): huge halls of column basalt over the lava sea, their roofs up to
+    48 blocks high, held up by rock pillars. Grey ash lies in drifts on the floor and falls through the air, some of it
+    still glowing; ash moths, their wing edges like cinders. Diamonds grow here, in the basalt. Where the lava sea below
+    breaks through, it lights the hall orange; this picture is torch only.</p>
+  </div>
+  <div class="scene">
+    <div class="pair">
+      <figure><img class="px" src="style/scene_violet_deep.png" alt="A Violet Deep corner in violet seepstone with slanting bright veins: violet growths glowing on the floor, shed chitin plates, rising seep"><span class="tagline">The Violet Deep · torch</span></figure>
+      <figure><img class="px" src="style/scene_violet_deep_flat.png" alt="The Violet Deep corner in flat light"><span class="tagline">The Violet Deep · flat light</span></figure>
+    </div>
+    <p><b>The Violet Deep</b> (the Deep, the other half): warped tunnels into vaulted chambers, in violet seepstone with
+    Deepglass veins. Violet growths glow in patches on the floor, the chitin crawlers leave their cast plates lying about,
+    and violet seep rises through the air. The Hollows' home ground.</p>
+  </div>
+</div>
+
+<div class="wrap" style="padding-block:0">
+  <p style="margin-top:22px"><b>The six regions' rocks and ores.</b> As in the first two, an ore that lives in a region
+  wears its rock; any other keeps a pocket of the stone it grew in.</p>
+  <div class="grid">
+    <div class="sw"><img class="px" src="style/rock_limestone.png" alt="Limestone, tiled"><span><b>limestone</b> · Pale Halls</span></div>
+    <div class="sw"><img class="px" src="style/p3_limestone_iron_ore.png" alt="Iron ore in limestone, tiled"><span><b>iron ore</b> · limestone</span></div>
+    <div class="sw"><img class="px" src="style/rock_slate.png" alt="Banded slate, tiled"><span><b>banded slate</b> · Windcleft</span></div>
+    <div class="sw"><img class="px" src="style/p3_banded_slate_gold_ore.png" alt="Gold ore in banded slate, tiled"><span><b>gold ore</b> · banded slate</span></div>
+    <div class="sw"><img class="px" src="style/rock_siltstone.png" alt="Siltstone, tiled"><span><b>siltstone</b> · Drowned</span></div>
+    <div class="sw"><img class="px" src="style/p3_siltstone_lapis_ore.png" alt="Lapis ore in siltstone, tiled"><span><b>lapis ore</b> · siltstone</span></div>
+    <div class="sw"><img class="px" src="style/p3_siltstone_copper_ore.png" alt="Copper ore in siltstone, tiled"><span><b>copper ore</b> · siltstone</span></div>
+    <div class="sw"><img class="px" src="style/rock_glimmer.png" alt="Glimmerstone, tiled"><span><b>glimmerstone</b> · Glimmer</span></div>
+    <div class="sw"><img class="px" src="style/p3_glimmerstone_redstone_ore.png" alt="Redstone ore in glimmerstone, tiled"><span><b>redstone ore</b> · glimmerstone</span></div>
+    <div class="sw"><img class="px" src="style/rock_basalt.png" alt="Column basalt, tiled"><span><b>column basalt</b> · Vaults</span></div>
+    <div class="sw"><img class="px" src="style/p3_column_basalt_diamond_ore.png" alt="Diamond ore in column basalt, tiled"><span><b>diamond ore</b> · column basalt</span></div>
+    <div class="sw"><img class="px" src="style/rock_seepstone.png" alt="Seepstone, tiled"><span><b>seepstone</b> · Violet Deep</span></div>
+  </div>
+
+  <p style="margin-top:22px"><b>The pieces only they have</b>, close up.</p>
+  <div class="grid">
+    <div class="sw"><img class="px" src="style/p3_rimstone.png" alt="Rimstone texture, tiled"><span><b>rimstone</b> · Pale Halls</span></div>
+    <div class="sw"><img class="px" src="style/p3_cave_pearls.png" alt="Cave pearls texture"><span><b>cave pearls</b> (the beads are cut from this)</span></div>
+    <div class="sw"><img class="px" src="style/p3_rime.png" alt="Rime on banded slate"><span><b>rime</b> · Windcleft</span></div>
+    <div class="sw"><img class="px" src="style/p3_old_rope.png" alt="An old rope hanging"><span><b>old rope</b></span></div>
+    <div class="sw"><img class="px" src="style/p3_old_rope_tip.png" alt="The rope's frayed end"><span><b>old rope</b> · its end</span></div>
+    <div class="sw"><img class="px" src="style/p3_silt.png" alt="Silt texture, tiled"><span><b>silt</b> · Drowned</span></div>
+    <div class="sw"><img class="px" src="style/p3_driftwood.png" alt="Driftwood bark, tiled"><span><b>driftwood</b> · its bark</span></div>
+    <div class="sw"><img class="px" src="style/p3_driftwood_end.png" alt="Driftwood's cut end, tiled"><span><b>driftwood</b> · its end</span></div>
+    <div class="sw"><img class="px" src="style/p3_cave_weed.png" alt="Pale cave weed"><span><b>cave weed</b></span></div>
+    <div class="sw"><img class="px" src="style/p3_glow_algae.png" alt="Glow algae at the waterline on siltstone"><span><b>glow algae</b> (it glows)</span></div>
+    <div class="sw"><img class="px" src="style/p3_amber_crystal.png" alt="An amber crystal cluster"><span><b>amber crystal</b> (it glows)</span></div>
+    <div class="sw"><img class="px" src="style/p3_glacial_crystal.png" alt="A glacial crystal cluster"><span><b>glacial crystal</b> (it glows)</span></div>
+    <div class="sw"><img class="px" src="style/p3_ash.png" alt="Ash texture, tiled"><span><b>ash</b> · Vaults</span></div>
+    <div class="sw"><img class="px" src="style/p3_violet_growth_0.png" alt="A violet growth"><span><b>violet growth</b> (it glows)</span></div>
+    <div class="sw"><img class="px" src="style/p3_violet_growth_1.png" alt="Another violet growth"><span><b>violet growth</b> · another</span></div>
+    <div class="sw"><img class="px" src="style/p3_shed_chitin.png" alt="Shed chitin texture"><span><b>shed chitin</b> (plates cut from this)</span></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="ask">
+    <h3>What I need from you</h3>
+    <ol>
+      <li><b>The six regions' rocks and ores</b> (section 5): OK to put in?</li>
+      <li><b>Their own pieces</b>: rimstone and pearls, rime and the old ropes, silt, driftwood, weed and algae, the amber
+      and glacial crystals, ash, the violet growths and shed chitin. OK, or anything to change?</li>
+    </ol>
+    <p class="small muted">While you look I'm building the rest of P3 that doesn't depend on the textures: the regions
+    joining the world, their look, air, sounds and creatures. Nothing of section 5 goes into the game until you OK it.</p>
+  </div>
+  <p class="note">Made with tools/art/specs/deep_skin.py (rocks, skin, particles, models), tools/art/specs/deep_life.py
+  (the underlife's sprite sheet) and tools/art/cave_diorama.py (these pictures). Regions, bands and land come from
+  docs/caves/PLAN.md §4.2 and SPEC §42.</p>
+</div>
+
+<script>
+const R = [
+  { id: "rootways", name: "The Rootways", where: "Shallows · forests, taiga, jungle, Elderwood", stage: "P2",
+    ramp: ["#1e140e","#33241a","#47321f","#5c4128","#735336","#8c6a48","#a8875f"], accent: "#5fd8c4",
+    rock: "rootstone", part: "spore_1", partName: "spores and pollen", critter: "moth_dusk", critterName: "dusk moth",
+    text: "<b>Earthy and close.</b> Winding galleries, root curtains, teal glowcaps far off showing the way on." },
+  { id: "pale", name: "The Pale Halls", where: "Shallows · plains, meadow, savanna, beach", stage: "P3",
+    ramp: ["#6a6352","#8a826c","#a69e86","#bdb59c","#d0c9b0","#e2dcc6","#f2eedf"], accent: "#96ffec",
+    rock: "limestone", part: "mist_0", partName: "mist over still pools", critter: "glow_worms", critterName: "glow-worm threads",
+    text: "<b>Pale and still.</b> Wide flat-roofed halls, rimstone pools, a roof of glow-worms like a field of stars." },
+  { id: "wind", name: "The Windcleft", where: "Shallows into Middle · hills, mountains, Highlands", stage: "P3",
+    ramp: ["#15181d","#22262d","#2e333a","#3e444c","#545b64","#6e7680","#8e98a2"], accent: "#fff4c8",
+    rock: "slate", part: "mica_1", partName: "mica glints", critter: "cave_swift", critterName: "cave swift",
+    text: "<b>Tall and cold.</b> Fissures 20 to 60 high, ledges and wedged stones, wind moaning, swifts in the cracks." },
+  { id: "ochre", name: "The Ochre Deep", where: "Middle Dark · temperate land", stage: "P2",
+    ramp: ["#2c1209","#4f2111","#6e2f16","#8f421d","#b05a28","#cc7a3a","#e6a25e"], accent: "#e8a050",
+    rock: "ochre", part: "warm_dust_1", partName: "warm dust", critter: "rust_beetle", critterName: "rust beetle",
+    text: "<b>Warm and layered.</b> Terraces stepping down, rust flowstone, orange pools, the chime crickets' chorus." },
+  { id: "drown", name: "The Drowned Galleries", where: "Middle Dark · rivers, coasts, Mirror Marsh", stage: "P3",
+    ramp: ["#1f2420","#2f3630","#3d453d","#4c554b","#5e685c","#737e70","#8e9a8a"], accent: "#4fd0a0",
+    rock: "siltstone", part: "mist_1", partName: "low mist", critter: "crayfish", critterName: "cave crayfish",
+    text: "<b>Wet and echoing.</b> Lake caverns and sumps, silt banks, glowing algae at the waterline." },
+  { id: "glim", name: "The Glimmer Hollows", where: "Middle Dark · Glass Steppe, Frost Spires, deserts", stage: "P3",
+    ramp: ["#3a2c1e","#5a4632","#76603f","#8f7a52","#a99466","#c2ae80","#dccaa0"], accent: "#f0b040",
+    rock: "glimmer", part: "glitter_1", partName: "glittering dust", critter: "moth_glass", critterName: "glass moth",
+    text: "<b>Bright and ringing.</b> Crystal-lined rooms off narrow throats; the crystals glow softly and ring as you pass." },
+  { id: "vault", name: "The Black Vaults", where: "the Deep · any land", stage: "P3",
+    ramp: ["#0e0e11","#18181c","#222227","#2d2d33","#3b3b42","#4c4c54","#64646e"], accent: "#ff8a3a",
+    rock: "basalt", part: "ash_0", partName: "ash, some still glowing", critter: "moth_ash", critterName: "ash moth",
+    text: "<b>Huge and hot.</b> Halls 40 to 80 high, ranks of basalt columns, lava glowing from below." },
+  { id: "violet", name: "The Violet Deep", where: "the Deep · any land", stage: "P3",
+    ramp: ["#130e1c","#201830","#2c2240","#3a2e52","#4b3e66","#5e5080","#7a6c9e"], accent: "#b884ff",
+    rock: "seepstone", part: "seep_1", partName: "rising seep", critter: "chitin_crawler", critterName: "chitin crawler",
+    text: "<b>Tight and dangerous.</b> Warped tunnels into vaulted chambers, Deepglass veins, the Hollows' home ground." },
+];
+const C = [
+  ["moth_dusk", "Dusk moth", "The Rootways. Pale wings that catch your torch, teal-dusted tips; flies to your light."],
+  ["glow_worms", "Glow-worm threads", "The Pale Halls. Beaded silk hanging from the roof, glowing blue-green."],
+  ["cave_swift", "Cave swift", "The Windcleft. Darts between the cracks where it nests."],
+  ["rust_beetle", "Rust beetle", "The Ochre Deep. Walks walls and floors; a metallic seam on its back."],
+  ["crayfish", "Cave crayfish", "The Drowned Galleries. Ghost-pale, picking along the bottom of pools."],
+  ["moth_glass", "Glass moth", "The Glimmer Hollows. See-through amber wings that glint like the crystals."],
+  ["moth_ash", "Ash moth", "The Black Vaults. Charcoal, its outer edge still glowing like a cinder."],
+  ["chitin_crawler", "Chitin crawler", "The Violet Deep. Flat violet plates, many legs; the Hollows' small kin."],
+  ["blind_fish", "Blind fish", "Any still pool. Pale pink, no eyes, see-through fins."],
+  ["cave_beetle", "Cave beetle", "Every band. Slender and dark, feelers out."],
+  ["millipede", "Millipede", "Damp walls everywhere. Chestnut, curling."],
+  ["cricket", "Cave cricket", "Heard more than seen; humped, long-legged."],
+  ["bat_roosting", "Roosting bat", "Clusters on high roofs, wrapped in their wings."],
+  ["bat_flying", "Bat in flight", "Scatters as you pass; echo bats in the Black Vaults."],
+];
+const regions = document.getElementById("regions");
+for (const r of R) {
+  const el = document.createElement("article");
+  el.className = "region";
+  el.style.setProperty("--accent", r.accent);
+  el.innerHTML = `<header><span class="stage">${r.stage}</span><h3>${r.name}</h3><span class="where">${r.where}</span></header>
+    <div class="chips" aria-label="${r.name} palette">${r.ramp.map(c => `<i style="background:${c}" title="${c}"></i>`).join("")}<i style="background:${r.accent}" title="its light ${r.accent}"></i></div>
+    <div class="trio">
+      <figure><img class="px" src="style/rock_${r.rock}.png" alt="${r.rock} rock texture, tiled"><figcaption>${r.rock}</figcaption></figure>
+      <figure><img class="px" src="style/p_${r.part}.png" alt="${r.partName} particle"><figcaption>${r.partName}</figcaption></figure>
+      <figure><img class="px" src="style/c_${r.critter}.png" alt="${r.critterName}" style="background:#3a3836"><figcaption>${r.critterName}</figcaption></figure>
+    </div>
+    <p>${r.text}</p>`;
+  regions.appendChild(el);
+}
+const life = document.getElementById("life");
+for (const [id, name, text] of C) {
+  const el = document.createElement("div");
+  el.className = "critter";
+  el.innerHTML = `<div class="pic"><img class="px" src="style/c_${id}.png" alt="${name}"></div><b>${name}</b><span>${text}</span>`;
+  life.appendChild(el);
+}
+</script>

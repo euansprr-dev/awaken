@@ -12,6 +12,8 @@ import java.util.List;
  */
 final class TempleDress extends Dress {
     final BlockState stone, mossy, carving, tiles, root, rootX, rootZ, vines, moss, brazier, idol, fern, bulb, canopy, fall;
+    /** Shaped ground (SPEC §38.14): tile slabs and stairs on the floor, the temple's stone at the walls, moss drifted, fallen leaves */
+    final BlockState gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits;
     final boolean courts, halls, falls, tree;
 
     TempleDress(CaveEngine.Cave c) {
@@ -31,6 +33,12 @@ final class TempleDress extends Dress {
         bulb = mat("bulb", "awaken:temple_lantern_bulb");
         canopy = mat("canopy", "awaken:temple_canopy");
         fall = mat("fall", "awaken:temple_waterfall");
+        gFloorSlab = mat("ground_slab", "awaken:temple_tiles_slab");
+        gFloorStairs = mat("ground_stairs", "awaken:temple_tiles_stairs");
+        gWallSlab = mat("wall_slab", "awaken:temple_stone_slab");
+        gWallStairs = mat("wall_stairs", "awaken:temple_stone_stairs");
+        gDrift = mat("ground_drift", "awaken:temple_moss_drift");
+        gBits = mat("ground_bits", "awaken:temple_leaves");
         String n = name();
         courts = n.equals("jungle_courts");
         halls = n.equals("root_halls");
@@ -53,6 +61,32 @@ final class TempleDress extends Dress {
         double n = Hash.noise3(seed + 5, x, y, z, 4);
         if (n > 0.6 - Math.max(0, 3 - rise) * 0.08) return mossy;
         return stone;
+    }
+
+    @Override
+    boolean depth() {
+        return true;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        return kit(part, Hash.noise(seed + 3, x, z, 5) > 0.64, gFloorSlab, gFloorStairs, gWallSlab, gWallStairs, gDrift, gBits);
+    }
+
+    @Override
+    double bits() {
+        return 0.1;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        return mossy;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        // columns banded with carving (roots in the tree and the root halls), mossy outcrops, a fallen column, rubble
+        return pieces(part, x, y, z, tree || halls ? root : stone, tree || halls ? null : carving, stone, mossy, stone, mossy);
     }
 
     @Override

@@ -44,7 +44,6 @@ final class Categories {
     static final IRecipeType<Recipes.Build> FRAME_FORGE = IRecipeType.create(Awaken.MODID, "frame_forge", Recipes.Build.class);
     static final IRecipeType<Recipes.Temper> TEMPER = IRecipeType.create(Awaken.MODID, "tempering", Recipes.Temper.class);
     static final IRecipeType<Recipes.Upgrade> UPGRADE = IRecipeType.create(Awaken.MODID, "hearth_upgrade", Recipes.Upgrade.class);
-    static final IRecipeType<Recipes.Duty> DUTY = IRecipeType.create(Awaken.MODID, "echo_duty", Recipes.Duty.class);
     static final IRecipeType<Recipes.Essence> ESSENCE = IRecipeType.create(Awaken.MODID, "essence", Recipes.Essence.class);
     static final IRecipeType<Recipes.Fuse> FUSE = IRecipeType.create(Awaken.MODID, "core_fusing", Recipes.Fuse.class);
     static final IRecipeType<Recipes.Page> CODEX = IRecipeType.create(Awaken.MODID, "codex", Recipes.Page.class);
@@ -264,6 +263,7 @@ final class Categories {
             JeiLook.wrap(g, "Hale sells it at " + rank + "-rank for " + ArmsHomes.rackPrice(r.rank()) + " essence. A village of level " + ArmsHomes.band(r.rank())
                     + " sells it for " + ArmsHomes.villagePrice(r.rank()) + " emeralds.", 9, 86, W - 18, Glass.TEXT, 3);
             if (r.home().teacher() != null) JeiLook.fit(g, "Also taught early by " + cap(r.home().teacher().person()) + ".", 9, 108, W - 18, Glass.VIOLET);
+            else if (r.home().leftChest()) JeiLook.fit(g, "Also found early in a chest someone left behind.", 9, 108, W - 18, Glass.VIOLET);
         }
 
         private static String cap(String s) {
@@ -330,43 +330,6 @@ final class Categories {
             JeiLook.wrap(g, "Needs " + r.rank().label + "-rank. 15% cheaper for every rank you hold above it", 9, 58, W - 18, Glass.LABEL, 2);
         }
     }
-
-    static final class EchoDuty extends SystemCategory<Recipes.Duty> {
-        EchoDuty(IDrawable icon) {
-            super(DUTY, title("echo_duty"), icon, W, 80);
-        }
-
-        @Override
-        public void setRecipe(IRecipeLayoutBuilder b, Recipes.Duty r, IFocusGroup focuses) {
-            b.addInputSlot(9, 23).add(r.pad());
-            for (int i = 0; i < r.ores().size(); i++) b.addOutputSlot(37 + 19 * i, 23).add(r.ores().get(i));
-        }
-
-        @Override
-        int accent(Recipes.Duty r) {
-            return Glass.LANTERN;
-        }
-
-        @Override
-        void drawRecipe(Recipes.Duty r, GuiGraphicsExtractor g, double mx, double my) {
-            JeiLook.title(g, "Mine Echo", 9, 8, Glass.TITLE);
-            String chip = "SHAFT TO Y " + new int[]{48, 24, 8, -12, -40}[Math.max(0, Math.min(4, r.tier() - 1))];
-            int cw = JeiLook.font().width(chip) + 8;
-            JeiLook.chip(g, chip, W - 8 - cw, 6, Glass.LANTERN);
-            JeiLook.slot(g, 9, 23);
-            JeiLook.text(g, "›", 29, 27, Glass.LABEL);
-            for (int i = 0; i < r.ores().size(); i++) {
-                JeiLook.slot(g, 37 + 19 * i, 23);
-                String pct = Math.round(r.permille().get(i) / 10.0) + "%";
-                int pw = JeiLook.font().width(pct);
-                JeiLook.text(g, pct, 37 + 19 * i + 9 - pw / 2, 44, Glass.TEXT);
-            }
-            JeiLook.wrap(g, "Each evening from your Mine head's shaft, into a chest by its hatch; a lode's ore too if the shaft cut one",
-                    9, 56, W - 18, Glass.LABEL, 2);
-        }
-    }
-
-    // ---- essence and cores ------------------------------------------------------------------------------------------
 
     static final class Essence extends SystemCategory<Recipes.Essence> {
         Essence(IDrawable icon) {

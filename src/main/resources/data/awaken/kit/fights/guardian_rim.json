@@ -1,0 +1,111 @@
+{
+ "schemaVersion": 1,
+ "id": "guardian_rim",
+ "moves": "guardian_rim",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "stab",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "stab_b"
+      ],
+      [
+       "stab_b",
+       "scythe"
+      ]
+     ]
+    },
+    {
+     "move": "scythe",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "web",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "rootfall",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "stab"
+      ]
+     ]
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "brood",
+   "pool": [
+    {
+     "move": "stab",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "stab_b"
+      ],
+      [
+       "stab_b",
+       "scythe"
+      ]
+     ]
+    },
+    {
+     "move": "scythe",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "web",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "rootfall",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "stab",
+       "stab_b"
+      ]
+     ]
+    },
+    {
+     "move": "lances",
+     "weight": 2
+    },
+    {
+     "move": "brood",
+     "weight": 1
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

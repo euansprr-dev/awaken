@@ -1,0 +1,178 @@
+{
+ "schemaVersion": 1,
+ "id": "the_sleeper",
+ "moves": "the_sleeper",
+ "intro": {
+  "pose": "kneel",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "stomp",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "stomp_b"
+      ],
+      [
+       "stomp_b",
+       "fist"
+      ]
+     ]
+    },
+    {
+     "move": "fist",
+     "weight": 3,
+     "when": "NEAR"
+    },
+    {
+     "move": "eyelids",
+     "weight": 2
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "charge",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "stomp"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "transition": "terrors",
+   "pool": [
+    {
+     "move": "stomp",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "stomp_b"
+      ],
+      [
+       "stomp_b",
+       "fist"
+      ]
+     ]
+    },
+    {
+     "move": "fist",
+     "weight": 3,
+     "when": "NEAR"
+    },
+    {
+     "move": "eyelids",
+     "weight": 1
+    },
+    {
+     "move": "terrors",
+     "weight": 1
+    },
+    {
+     "move": "dreamstep",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "fist"
+      ]
+     ]
+    },
+    {
+     "move": "charge",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "stomp"
+      ]
+     ]
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "awaken",
+   "pool": [
+    {
+     "move": "awaken",
+     "weight": 2
+    },
+    {
+     "move": "sleepwalkers",
+     "weight": 1
+    },
+    {
+     "move": "fist",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "stomp"
+      ]
+     ]
+    },
+    {
+     "move": "stomp",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "stomp_b",
+       "fist"
+      ]
+     ]
+    },
+    {
+     "move": "dreamstep",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "fist"
+      ]
+     ]
+    },
+    {
+     "move": "charge",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "stomp",
+       "stomp_b"
+      ]
+     ]
+    },
+    {
+     "move": "eyelids",
+     "weight": 1
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

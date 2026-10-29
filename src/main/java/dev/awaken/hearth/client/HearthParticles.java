@@ -10,7 +10,7 @@ import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.RandomSource;
 
 /**
- * The module's particles: dark Echo wisps, warm Hearth embers, the Hearth guide's marks, and the carried flame's own:
+ * The module's particles: dark wisps, warm Hearth embers, the Hearth guide's marks, and the carried flame's own:
  * the warmth that runs out over the land when a coal takes, the Hearthfire's tongues of flame and fireflies at night.
  */
 public final class HearthParticles {

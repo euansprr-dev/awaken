@@ -81,6 +81,8 @@ final class PassageEngine implements WorldEngine {
         /** The crypt whose back wall keeps the sealed niche (SPEC §38.8), or -1. */
         int niched = -1;
         Sculpt s;
+        /** The Bell Crypt's wear (content 7), null before. */
+        CryptWear wear;
 
         Plan(Ctx c) {
             this.c = c;
@@ -230,6 +232,11 @@ final class PassageEngine implements WorldEngine {
             p.thresholds(s, W, floor, trim);
             p.doorLights(s, W, light);
             p.screens(s, W, (lat, rise, side) -> rise % 3 == 1 ? boneY : worn);
+            // the years on its floors (38.14, stage 3), new gates only
+            if (c.plan().contentVersion() >= 7) {
+                wear = new CryptWear(p, W, seed, floor, wet, trim, (r, x, z) -> kinds.get(r.id) == Kind.WELL);
+                wear.apply(s);
+            }
             p.handbells(s);
             s.seal();
         }
@@ -581,6 +588,7 @@ final class PassageEngine implements WorldEngine {
         // ---- what the floor walks on and how its air glows ----------------------------------------------------------
 
         boolean walk(Room r, int x, int z) {
+            if (wear != null && !wear.level(x, z)) return false;
             Kind k = kinds.get(r.id);
             if (k == null) return false;
             double px = x + 0.5, pz = z + 0.5;

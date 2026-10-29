@@ -605,7 +605,7 @@ public final class Rooms {
             Room.Feature vault = r.feature(Room.FeatureKind.VAULT_CACHE);
             if (vault != null) {
                 for (int[] b : FeatureBlocks.vaultBars(vault)) {
-                    BlockPos bp = GateService.world(g, f, b[0], r.dy + b[1], b[2]);
+                    BlockPos bp = GateService.world(g, f, b[0], r.dy + f.ground(vault.x(), vault.z()) + b[1], b[2]);
                     if (level.getBlockState(bp).is(GatesRegistry.BARS.get())) level.setBlock(bp, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                 }
             }

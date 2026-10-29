@@ -3,7 +3,6 @@ package dev.awaken.hearth.player;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.awaken.hearth.echo.EchoRecord;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,8 +19,9 @@ import java.util.UUID;
  */
 public final class HearthPlayer {
     /** 2: {@code respawn_hearth}, which shared Hearth you wake at (SPEC "Together"). 3: {@code home} (W1: Rested, the Ember, rooms told).
-     * 4: {@code home.lent}, a bed lent for one fall (an inn room, SPEC §28.10). */
-    public static final int SCHEMA = 4;
+     * 4: {@code home.lent}, a bed lent for one fall (an inn room, SPEC §28.10). 5: no Echoes (SPEC §43.4): an old roster is read
+     * only to be released, with one line at the next login. */
+    public static final int SCHEMA = 5;
 
     /** A rumour Mira told: a Codex entry pointing at a gate or ruin. */
     public record Rumour(String id, String title, String body, long day) {
@@ -33,9 +33,8 @@ public final class HearthPlayer {
         ).apply(i, Rumour::new));
     }
 
-    public final List<EchoRecord> echoes = new ArrayList<>();
-    /** Whether the field army is currently called out (re-summoned on login/respawn). */
-    public boolean fieldOut;
+    /** Echoes an old save still listed (SPEC §43.4): released, and told once at the next login. */
+    public int echoesToRelease;
     public final List<Rumour> rumours = new ArrayList<>();
     /** Bosses that already gave their guaranteed first trophy. */
     public final Set<String> trophyBosses = new LinkedHashSet<>();
@@ -67,25 +66,7 @@ public final class HearthPlayer {
 
     public HearthPlayer() {}
 
-    public Optional<EchoRecord> echo(UUID id) {
-        for (EchoRecord e : echoes) if (e.id().equals(id)) return Optional.of(e);
-        return Optional.empty();
-    }
-
-    public void replace(EchoRecord r) {
-        for (int i = 0; i < echoes.size(); i++) {
-            if (echoes.get(i).id().equals(r.id())) {
-                echoes.set(i, r);
-                return;
-            }
-        }
-    }
-
-    public long fieldCount() {
-        return echoes.stream().filter(EchoRecord::field).count();
-    }
-
-    private record Saved(int schema, List<EchoRecord> echoes, boolean fieldOut, List<Rumour> rumours, List<String> trophyBosses,
+    private record Saved(int schema, List<com.mojang.serialization.Dynamic<?>> echoes, boolean fieldOut, List<Rumour> rumours, List<String> trophyBosses,
                          boolean respawnAtHearth, long trialFailDay, boolean penaltyPending, Map<String, Integer> bests,
                          List<String> tips, long rumourDay, Optional<UUID> respawnHearth, Home home) {}
 
@@ -109,7 +90,8 @@ public final class HearthPlayer {
 
     public static final MapCodec<HearthPlayer> MAP_CODEC = RecordCodecBuilder.<Saved>mapCodec(i -> i.group(
             Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(Saved::schema),
-            EchoRecord.CODEC.listOf().optionalFieldOf("echoes", List.of()).forGetter(Saved::echoes),
+            // (SPEC §43.4) read only to be released: never written again
+            Codec.PASSTHROUGH.listOf().optionalFieldOf("echoes", List.of()).forGetter(Saved::echoes),
             Codec.BOOL.optionalFieldOf("field_out", false).forGetter(Saved::fieldOut),
             Rumour.CODEC.listOf().optionalFieldOf("rumours", List.of()).forGetter(Saved::rumours),
             Codec.STRING.listOf().optionalFieldOf("trophy_bosses", List.of()).forGetter(Saved::trophyBosses),
@@ -125,8 +107,7 @@ public final class HearthPlayer {
 
     private static HearthPlayer fromSaved(Saved s) {
         HearthPlayer h = new HearthPlayer();
-        h.echoes.addAll(s.echoes);
-        h.fieldOut = s.fieldOut;
+        h.echoesToRelease = s.echoes.size();
         h.rumours.addAll(s.rumours);
         h.trophyBosses.addAll(s.trophyBosses);
         h.respawnAtHearth = s.respawnAtHearth;
@@ -148,7 +129,7 @@ public final class HearthPlayer {
     private Saved toSaved() {
         Home home = new Home(restedUntil, restedComfort, emberGiven, List.copyOf(roomsTold.keySet()), List.copyOf(roomsTold.values()), rumourDay2,
                 Optional.ofNullable(lent));
-        return new Saved(SCHEMA, List.copyOf(echoes), fieldOut, List.copyOf(rumours), List.copyOf(trophyBosses),
+        return new Saved(SCHEMA, List.of(), false, List.copyOf(rumours), List.copyOf(trophyBosses),
                 respawnAtHearth, trialFailDay, penaltyPending, Map.copyOf(bests), List.copyOf(tips), rumourDay, Optional.ofNullable(respawnHearth), home);
     }
 }

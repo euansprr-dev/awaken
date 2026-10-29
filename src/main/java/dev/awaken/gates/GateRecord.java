@@ -35,6 +35,8 @@ public final class GateRecord {
     public final List<String> trace = new ArrayList<>();
     /** Tests only, never saved: stand on the plot as found (reused test plots carry other tests' blocks and Hearths). */
     public boolean anyGround;
+    /** Never saved: the player told of this gate once it stands (the first gate's "A gate has opened"). */
+    public Optional<UUID> announceTo = Optional.empty();
     public boolean scripted;
     public boolean structurePlaced;
     public boolean interiorReady;
@@ -58,6 +60,13 @@ public final class GateRecord {
     public boolean breakHeld;
     /** A wandering gate (an anomaly): game time it fades if nobody is inside, or -1 for an ordinary gate. */
     public long expiresAt = -1;
+    /**
+     * The play-day a player first came within {@link Breaks#SEEN_RADIUS} (-1: nobody has yet). Until then a gate that
+     * could break waits: its clock doesn't run and it never breaks (SPEC §7, "Seen first").
+     */
+    public long seenDay = -1;
+    /** An unseen gate folds away quietly on this play-day, no break and no Lord (-1: seen, or it never folds). */
+    public long foldsOnPlayDay = -1;
 
     public boolean wandering() {
         return expiresAt >= 0;
@@ -102,6 +111,16 @@ public final class GateRecord {
 
     public long breaksIn(long today) {
         return Math.max(0, breaksOnPlayDay - today);
+    }
+
+    /** Waiting to be seen: a standing gate that could break, but nobody has come close yet, so its clock hasn't started. */
+    public boolean waiting(net.minecraft.server.MinecraftServer server) {
+        return seenDay < 0 && state.standing() && !neverBreaks(server);
+    }
+
+    /** Its break clock runs (or ran): it can break and isn't waiting. Every reader of {@link #breaksOnPlayDay} asks. */
+    public boolean counting(net.minecraft.server.MinecraftServer server) {
+        return !neverBreaks(server) && !waiting(server);
     }
 
     /** Where players stand when they come out: two blocks in front of the portal. */
@@ -157,8 +176,10 @@ public final class GateRecord {
             Codec.STRING.listOf().optionalFieldOf("floors_paid", List.of()).forGetter(g -> List.copyOf(g.floorsPaid)),
             Codec.BOOL.optionalFieldOf("spill_pending", false).forGetter(g -> g.spillPending),
             Codec.BOOL.optionalFieldOf("break_held", false).forGetter(g -> g.breakHeld),
-            Codec.LONG.optionalFieldOf("expires_at", -1L).forGetter(g -> g.expiresAt)
-    ).apply(i, (h, f, floors, echo, entries, paid, spill, held, expires) -> {
+            Codec.LONG.optionalFieldOf("expires_at", -1L).forGetter(g -> g.expiresAt),
+            Codec.LONG.optionalFieldOf("seen_day", -1L).forGetter(g -> g.seenDay),
+            Codec.LONG.optionalFieldOf("folds_on", -1L).forGetter(g -> g.foldsOnPlayDay)
+    ).apply(i, (h, f, floors, echo, entries, paid, spill, held, expires, seen, folds) -> {
         GateRecord g = new GateRecord(h.id, h.plan, h.pos, h.axis, h.cell, h.createdDay, h.breaks, h.state, h.owner);
         g.party.addAll(h.party);
         g.inside.addAll(h.inside);
@@ -181,6 +202,8 @@ public final class GateRecord {
         g.spillPending = spill;
         g.breakHeld = held;
         g.expiresAt = expires;
+        g.seenDay = seen;
+        g.foldsOnPlayDay = folds;
         return g;
     }));
 }

@@ -1,0 +1,30 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/palace_shards",
+    "bits": "awaken:block/palace_shards"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0.1,
+        0
+      ],
+      "to": [
+        16,
+        0.1,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#bits"
+        },
+        "up": {
+          "texture": "#bits"
+        }
+      }
+    }
+  ]
+}

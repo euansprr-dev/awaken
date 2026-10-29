@@ -200,6 +200,7 @@ public final class LivingModule {
         bus.addListener(PlayerEvent.PlayerLoggedInEvent.class, e -> {
             if (e.getEntity() instanceof ServerPlayer sp) {
                 dev.awaken.core.AwakenNet.send(sp, new LivingNet.Shown(shown(sp.level().getServer())));
+                dev.awaken.living.quest.QuestEngine.prune(sp);
                 dev.awaken.living.quest.QuestEngine.journal(sp);
             }
         });

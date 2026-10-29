@@ -38,7 +38,7 @@ public final class RewardWords {
             case Perks.COOLDOWN_REDUCTION -> "power cooldowns " + pct + "% shorter (up to half off in all)";
             case Perks.FALL_RESIST -> pct + "% less fall damage";
             case Perks.EXPLOSION_RESIST -> pct + "% less damage from explosions (up to 80% in all)";
-            case Perks.BIND_CHANCE -> a(pct) + pct + "-point better chance to bind an Echo";
+            case Perks.SUMMON_STRENGTH -> "the soldiers and drones you raise hit " + pct + "% harder and last " + pct + "% longer";
             case Perks.LUCIDITY_START -> "you start with " + n + " more Lucidity";
             case Perks.CORD_LENGTH -> "your projection cord reaches " + n + " blocks further (up to 1,024)";
             case Perks.CRIT_CHANCE -> a(pct) + pct + "-point better chance of a critical hit (up to 35% in all)";

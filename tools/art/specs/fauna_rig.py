@@ -133,6 +133,7 @@ class Rig:
         self.run_speed = (0.16, 0.32)  # blocks/tick where the run blend starts and is complete
         self.shadow = 0.8
         self.notes = ""
+        self.springs = []  # kit bodies: (bone, gain, hz, damping) secondary parts that trail the body (SPEC §35.10)
 
     def bone(self, name, pivot, rot=(0, 0, 0), parent=None):
         if name in self.by_name:
@@ -241,6 +242,8 @@ class Rig:
             out.append(f"look {bn} {f(yw)} {f(pw)}")
         for ability, prefix in self.moves.items():
             out.append(f"move {ability.replace(' ', '_')} {prefix}")
+        for bn, gain, hz, damp in self.springs:
+            out.append(f"spring {bn} {f(gain)} {f(hz)} {f(damp)}")
         for c in self.clips.values():
             out.append(f"clip {c.name} {f(c.length)} {1 if c.loop else 0}")
             for (bone, target), keys in c.tracks.items():

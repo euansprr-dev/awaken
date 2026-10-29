@@ -1,0 +1,157 @@
+{
+ "schemaVersion": 1,
+ "id": "hollow_herald",
+ "moves": "hollow_herald",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "swipe",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "swipe_b"
+      ]
+     ]
+    },
+    {
+     "move": "bolts",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "draw",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "swipe"
+      ]
+     ]
+    },
+    {
+     "move": "stride",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "swipe"
+      ]
+     ]
+    },
+    {
+     "move": "back",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "summon",
+   "pool": [
+    {
+     "move": "swipe",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "swipe_b"
+      ]
+     ]
+    },
+    {
+     "move": "unlit",
+     "weight": 2
+    },
+    {
+     "move": "summon",
+     "weight": 1
+    },
+    {
+     "move": "bolts",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "stride",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "swipe",
+       "swipe_b"
+      ]
+     ]
+    },
+    {
+     "move": "back",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "horizon",
+   "pool": [
+    {
+     "move": "horizon",
+     "weight": 1
+    },
+    {
+     "move": "collapse",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "halo",
+     "weight": 2
+    },
+    {
+     "move": "draw",
+     "weight": 1,
+     "when": "FAR",
+     "then": [
+      [
+       "collapse"
+      ]
+     ]
+    },
+    {
+     "move": "swipe",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "swipe_b"
+      ]
+     ]
+    },
+    {
+     "move": "stride",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "swipe",
+       "swipe_b"
+      ]
+     ]
+    },
+    {
+     "move": "back",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

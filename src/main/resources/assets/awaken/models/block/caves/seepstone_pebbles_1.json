@@ -1,0 +1,163 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/caves/seepstone",
+    "t": "awaken:block/caves/seepstone"
+  },
+  "elements": [
+    {
+      "from": [
+        6.03,
+        0,
+        7.28
+      ],
+      "to": [
+        9.03,
+        1,
+        9.28
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6.97,
+            15,
+            9.97,
+            16
+          ],
+          "texture": "#t"
+        },
+        "south": {
+          "uv": [
+            6.03,
+            15,
+            9.03,
+            16
+          ],
+          "texture": "#t"
+        },
+        "east": {
+          "uv": [
+            6.72,
+            15,
+            8.72,
+            16
+          ],
+          "texture": "#t"
+        },
+        "west": {
+          "uv": [
+            7.28,
+            15,
+            9.28,
+            16
+          ],
+          "texture": "#t"
+        },
+        "up": {
+          "uv": [
+            6.03,
+            7.28,
+            9.03,
+            9.28
+          ],
+          "texture": "#t"
+        },
+        "down": {
+          "uv": [
+            6.03,
+            6.72,
+            9.03,
+            8.72
+          ],
+          "texture": "#t"
+        }
+      },
+      "rotation": {
+        "angle": 22.5,
+        "axis": "y",
+        "origin": [
+          7.53,
+          0,
+          8.28
+        ]
+      }
+    },
+    {
+      "from": [
+        7.85,
+        0,
+        4.17
+      ],
+      "to": [
+        9.85,
+        1,
+        5.67
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6.15,
+            15,
+            8.15,
+            16
+          ],
+          "texture": "#t"
+        },
+        "south": {
+          "uv": [
+            7.85,
+            15,
+            9.85,
+            16
+          ],
+          "texture": "#t"
+        },
+        "east": {
+          "uv": [
+            10.33,
+            15,
+            11.83,
+            16
+          ],
+          "texture": "#t"
+        },
+        "west": {
+          "uv": [
+            4.17,
+            15,
+            5.67,
+            16
+          ],
+          "texture": "#t"
+        },
+        "up": {
+          "uv": [
+            7.85,
+            4.17,
+            9.85,
+            5.67
+          ],
+          "texture": "#t"
+        },
+        "down": {
+          "uv": [
+            7.85,
+            10.33,
+            9.85,
+            11.83
+          ],
+          "texture": "#t"
+        }
+      },
+      "rotation": {
+        "angle": -22.5,
+        "axis": "y",
+        "origin": [
+          8.85,
+          0,
+          4.92
+        ]
+      }
+    }
+  ]
+}

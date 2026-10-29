@@ -75,6 +75,7 @@ public final class RoadNet {
         PORTS.clear();
         PIECES.clear();
         SITES.clear();
+        Holdfasts.clear();
         LEGS.clear();
         LATER.clear();
         BY_CHUNK.clear();
@@ -204,13 +205,13 @@ public final class RoadNet {
         return out;
     }
 
-    private static boolean sitesKnown(int gx, int gz) {
+    static boolean sitesKnown(int gx, int gz) {
         var f = SITES.get(cellKey(gx, gz));
         return f != null && f.isDone();
     }
 
     /** A region's sites, found by the road planners (nothing if another thread is already finding them). */
-    private static void sitesSoon(RoadWorld w, int gx, int gz) {
+    static void sitesSoon(RoadWorld w, int gx, int gz) {
         long key = cellKey(gx, gz);
         if (!SITES.containsKey(key)) RoadPlanners.job("S" + gx + "," + gz, RoadPlanners.SOON, 0, () -> {
             if (!SITES.containsKey(key)) sites(w, gx, gz);
@@ -778,6 +779,22 @@ public final class RoadNet {
         Nearest best = null;
         for (int dx = -1; dx <= 1; dx++)
             for (int dz = -1; dz <= 1; dz++) {
+                List<Spot> l = BY_CHUNK.get(net.minecraft.world.level.ChunkPos.pack(cx + dx, cz + dz));
+                if (l == null) continue;
+                for (Spot e : l) {
+                    double d = Math.hypot(e.road().x()[e.point()] - x, e.road().z()[e.point()] - z);
+                    if (d <= reach && (best == null || d < best.distance())) best = new Nearest(e.road(), e.point(), d);
+                }
+            }
+        return best;
+    }
+
+    /** The laid road point nearest (x, z) within any {@code reach} (it scans the chunks round), or null. */
+    public static @Nullable Nearest nearestWithin(double x, double z, double reach) {
+        int cx = (int) Math.floor(x) >> 4, cz = (int) Math.floor(z) >> 4, w = (int) Math.ceil(reach / 16) + 1;
+        Nearest best = null;
+        for (int dx = -w; dx <= w; dx++)
+            for (int dz = -w; dz <= w; dz++) {
                 List<Spot> l = BY_CHUNK.get(net.minecraft.world.level.ChunkPos.pack(cx + dx, cz + dz));
                 if (l == null) continue;
                 for (Spot e : l) {

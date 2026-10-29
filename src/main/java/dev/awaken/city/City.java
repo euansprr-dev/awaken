@@ -114,9 +114,17 @@ public final class City {
         return true;
     }
 
+    /**
+     * Spots named after cities were already built (plan x, ry, z, as in the plan's own). They live here, not in plan.json:
+     * the plan's hash covers its spots, and a world whose city was built from another hash gets no citizens (SPEC §43.1).
+     */
+    private static final java.util.Map<String, int[]> LATER_SPOTS = java.util.Map.of(
+            "hettie", new int[]{-18, -1, -4});   // the market square (its floor is 2 below the street) by the cloth and produce stalls
+
     /** A named spot the plan lays out for other modules (SPEC §16.9, decision 29), or null if the plan has none. */
     public static @Nullable BlockPos spot(CityLayout l, String id) {
         int[] s = l.plan.spots.get(id);
+        if (s == null) s = LATER_SPOTS.get(id);
         return s == null ? null : new BlockPos(l.cx + s[0], l.streetY + s[1], l.cz + s[2]);
     }
 }

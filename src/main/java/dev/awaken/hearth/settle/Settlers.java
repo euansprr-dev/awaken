@@ -66,13 +66,12 @@ public final class Settlers {
 
     // ---- who you know --------------------------------------------------------------------------------------------
 
-    /** The Wayfarers who settle, by the chain of theirs that makes you known to them. */
-    private static final Map<String, String> CHAINS = Map.of("ilse", "moth_lights", "hettie", "ten_sheep_short", "wren", "wrens_rope",
-            "pell", "pells_message");
+    /** The Wayfarers an admin can still make known (their chains are gone, SPEC §43.1: nobody settles from the wild now). */
+    private static final Set<String> WAYFARERS = Set.of("ilse", "hettie", "wren", "pell");
 
     static Folk.Person wayfarer(String who) {
         return switch (who) {
-            case "ilse" -> new Folk.Person("ilse", "Ilse", "", "ilse", "healer", "wayfarer/ilse", true, "the Wayfarer camp");
+            case "ilse" -> new Folk.Person("ilse", "Ilse", "", "ilse", "healer", "wayfarer/ilse", true, "the Last Fire");
             case "hettie" -> new Folk.Person("hettie", "Hettie", "", "hettie", "farmer", "wayfarer/hettie", true, "her flock's hills");
             case "wren" -> new Folk.Person("wren", "Wren", "", "wren", "resident", "wayfarer/wren", true, "the high roads");
             default -> new Folk.Person("pell", "Pell", "", "pell", "runner", "wayfarer/pell", false, "the roads");
@@ -134,9 +133,6 @@ public final class Settlers {
             Rank r = Progression.rank(p);
             if (best == null || r.ordinal() > best.ordinal()) best = r;
             trusted |= RenownHooks.tier(p) >= RenownHooks.KNOWN;
-            // the Wayfarers whose chain you finished
-            var quests = p.getData(dev.awaken.living.LivingContent.QUESTS.get()).done();
-            for (var e : CHAINS.entrySet()) if (quests.contains(e.getValue())) know(f, wayfarer(e.getKey()));
             // a village where you're a Friend sends someone
             for (var v : dev.awaken.village.api.Villages.all(level)) {
                 if (dev.awaken.village.api.Villages.standing(p, v.key()) < dev.awaken.village.api.Villages.FRIEND) continue;
@@ -173,7 +169,7 @@ public final class Settlers {
     public static Folk.@Nullable Person forceKnow(ServerLevel level, HearthRecord h, String id) {
         Folk.Person p = null;
         for (var e : Townsfolk.all().keySet()) if (e.equals(id) || Townsfolk.skin(e).equals(id)) p = townsperson(e);
-        if (p == null && CHAINS.containsKey(id)) p = wayfarer(id);
+        if (p == null && WAYFARERS.contains(id)) p = wayfarer(id);
         if (p == null && id.startsWith("village:")) p = outsider(id, id.substring(8), id.hashCode());
         if (p == null && (id.equals("carillon") || id.equals("miner"))) {
             Folk.Person o = outsider(id.equals("miner") ? "carillon:miner" : "carillon", "Carillon", id.hashCode() ^ h.owner.hashCode());
@@ -349,44 +345,36 @@ public final class Settlers {
 
     // ---- every ten seconds ------------------------------------------------------------------------------------------
 
-    /** Learns who's known, keeps beds honest, lets the next one in, and keeps their people engine in step. */
+    /** (SPEC §43.6) Nobody lives at a Hearth any more: anyone an older world moved in goes to Carillon. */
+    public static final String MOVED = "The people who lived at your Hearth have moved into Carillon.";
+
+    /**
+     * Keeps a Hearth free of people (SPEC §43.6: the beasts run it). An older world's settlers move to the city once a
+     * member is online to be told; what Oren or Ilse still had in hand is finished and put in the home's chests first
+     * (or set down by the fire), so nothing a player handed over is lost.
+     */
     public static void upkeep(ServerLevel level, HearthRecord h, long now) {
-        if (h.hearthfire()) {
-            HomePeople.stop(h);
-            return;
+        HomePeople.stop(h);
+        Folk f = h.folk;
+        if (f.settlers.isEmpty() && f.known.isEmpty() && f.commissions.isEmpty() && f.brews.isEmpty() && f.stash.isEmpty()) return;
+        List<ServerPlayer> home = Household.online(level.getServer(), h);
+        if (home.isEmpty()) return;
+        boolean lived = !f.settlers.isEmpty();
+        Work.deliver(level, h, Long.MAX_VALUE);
+        for (Folk.Stack st : List.copyOf(f.stash)) {
+            var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse(st.item()));
+            if (item != net.minecraft.world.item.Items.AIR) Chests.store(level, h, new net.minecraft.world.item.ItemStack(item, Math.max(1, st.count())), h.pos.above());
         }
-        learn(level, h);
-        if (h.lastScan < 0) return; // the rooms come back with the next scan: nobody moves until they're read
-        List<Bedroom> rooms = bedrooms(level, h);
-        boolean changed = false;
-        Folk.Settler coming = null;
-        for (Folk.Settler s : h.folk.settlers) {
-            if (s.state == Folk.Settler.COMING) coming = s;
-            // a bed taken away (broken, or the room no longer a bedroom): they wait for one again, at home
-            if (s.bed != null && roomOf(rooms, s.bed) == null) {
-                s.bed = null;
-                changed = true;
-            }
+        f.stash.clear();
+        for (Folk.Settler st : f.settlers) Arrival.cancel(level, st.who.id());
+        f.settlers.clear();
+        f.known.clear();
+        HearthService.dirty(level.getServer());
+        if (!lived) return;
+        for (ServerPlayer p : home) {
+            Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(MOVED)).ttl(20 * 10).build());
+            HearthViews.refresh(p);
         }
-        // a settler between rooms takes a spare before anyone new comes
-        for (Folk.Settler s : h.folk.settlers) {
-            if (s.bed != null || !s.home()) continue;
-            List<Bedroom> spare = spare(level, h);
-            if (spare.isEmpty()) break;
-            s.bed = spare.getFirst().bed;
-            changed = true;
-        }
-        if (coming != null && !Arrival.walking(coming.who.id()) && now - Arrival.startedAt(coming.who.id()) > 20 * 30) {
-            // the walk ended without them (a restart, unloaded land): they're in
-            Arrival.movedIn(level, h, coming, false);
-            changed = true;
-        }
-        if (coming == null) changed |= invite(level, h, null);
-        if (changed) {
-            HearthService.dirty(level.getServer());
-            HomePeople.changed(h);
-        }
-        HomePeople.sync(level, h, now);
     }
 
     /**

@@ -365,7 +365,7 @@ public final class Progression {
     // ---- counters ---------------------------------------------------------------------------------------------------
 
     private static final java.util.Set<String> LOGGED = java.util.Set.of(Counters.GATES_CLEARED, Counters.FLOORS_CLEARED,
-            "awaken:bosses_killed", Counters.LUCID_DREAMS, Counters.DREAMS, Counters.ECHOES_BOUND, Counters.MACHINES_BUILT,
+            "awaken:bosses_killed", Counters.LUCID_DREAMS, Counters.DREAMS, Counters.MACHINES_BUILT,
             "awaken:waystones_lit", Counters.NIGHTMARES_BEATEN, "awaken:gates_scouted", Counters.SECRETS_FOUND);
 
     public static void count(ServerPlayer player, String counter, long amount) {

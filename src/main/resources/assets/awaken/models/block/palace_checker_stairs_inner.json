@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "awaken:block/palace_checker",
+    "top": "awaken:block/palace_checker",
+    "side": "awaken:block/palace_checker"
+  }
+}

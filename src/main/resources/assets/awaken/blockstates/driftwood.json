@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "awaken:block/caves/driftwood",
+      "y": 90
+    },
+    "axis=z": {
+      "model": "awaken:block/caves/driftwood"
+    }
+  }
+}

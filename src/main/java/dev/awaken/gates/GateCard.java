@@ -100,6 +100,7 @@ public final class GateCard {
             } else if (!g.scripted) {
                 // a scripted gate never breaks and has no clock to show: its card tells its story instead
                 w.row("Breaks in", g.neverBreaks(p.level().getServer()) ? "never · the gates are calm"
+                        : g.waiting(p.level().getServer()) ? "not yet · it starts once someone comes close"
                         : in == 0 ? "today" : in + " play-day" + (in > 1 ? "s" : ""));
             }
         }

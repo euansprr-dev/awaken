@@ -1,0 +1,157 @@
+{
+ "schemaVersion": 1,
+ "id": "sovereign_hunger",
+ "moves": "sovereign_hunger",
+ "intro": {
+  "pose": "kneel",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "slap",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "slap_b"
+      ],
+      [
+       "slap_b",
+       "slap"
+      ]
+     ]
+    },
+    {
+     "move": "devour",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "slap"
+      ]
+     ]
+    },
+    {
+     "move": "gnaw",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "slap",
+       "slap_b"
+      ]
+     ]
+    },
+    {
+     "move": "sweep",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "hounds",
+   "pool": [
+    {
+     "move": "slap",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "slap_b"
+      ],
+      [
+       "slap_b",
+       "gorge"
+      ]
+     ]
+    },
+    {
+     "move": "gorge",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "devour",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "slap"
+      ]
+     ]
+    },
+    {
+     "move": "gnaw",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "gorge"
+      ]
+     ]
+    },
+    {
+     "move": "hounds",
+     "weight": 1
+    },
+    {
+     "move": "sweep",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "frenzy",
+   "pool": [
+    {
+     "move": "famine",
+     "weight": 2
+    },
+    {
+     "move": "frenzy",
+     "weight": 1
+    },
+    {
+     "move": "slap",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "slap_b",
+       "gorge"
+      ]
+     ]
+    },
+    {
+     "move": "gorge",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "devour",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "slap",
+       "slap_b"
+      ]
+     ]
+    },
+    {
+     "move": "sweep",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.25
+ }
+}

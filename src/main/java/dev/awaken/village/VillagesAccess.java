@@ -158,6 +158,21 @@ final class VillagesAccess implements Villages.Access {
         return false;
     }
 
+    @Override
+    public List<Villages.Empty> emptyNear(net.minecraft.server.level.ServerLevel level, BlockPos pos, int within) {
+        if (level.dimension() != Level.OVERWORLD || !VillageService.enabled(level.getServer())) return List.of();
+        List<SettlementGrid.Anchor> near = new ArrayList<>(SettlementGrid.near(level.getSeed(), pos.getX(), pos.getZ(), within, SettlementGrid.centre(), false));
+        near.removeIf(a -> dev.awaken.village.road.Holdfasts.isKey(a.key()));
+        near.sort(java.util.Comparator.comparingDouble(a -> Math.hypot(a.x() - pos.getX(), a.z() - pos.getZ())));
+        List<Villages.Empty> out = new ArrayList<>(near.size());
+        for (SettlementGrid.Anchor a : near) {
+            VillagePlan p = Plans.cached(a.key());
+            if (p == null && !Plans.known(a.key())) VillageService.planSoon(level, a);
+            out.add(new Villages.Empty(a.key(), new BlockPos(a.x(), 0, a.z()), p == null ? null : p.name, p == null ? null : p.ground(p.well[0], p.well[1])));
+        }
+        return out;
+    }
+
     /** The furthest a settlement's ground reaches from its anchor (search 32, then up to 88 out from its middle). */
     static final class VillagePlannerReach {
         static final int FAR = 124;

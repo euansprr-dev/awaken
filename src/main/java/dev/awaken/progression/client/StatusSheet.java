@@ -209,7 +209,7 @@ final class StatusSheet {
     private static final String[] NAME = {"STRENGTH", "AGILITY", "VITALITY", "INTELLIGENCE", "PERCEPTION", "SPIRIT"};
     private static final String[] SAYS = {"Harder hits, and stronger Kinetic powers.", "You move faster, and Flow builds sooner.",
             "More health, and you shrug off more harm.", "More energy for Energy and Tech powers.",
-            "More critical hits, and you notice secrets and omens.", "Stronger in the Veil, in dreams and with Echoes."};
+            "More critical hits, and you notice secrets and omens.", "Stronger in the Veil and in dreams."};
 
     /** Points placed but not yet confirmed, in the order they were placed (kept while the band is shut). */
     static final List<Stat> PLACED = new ArrayList<>();

@@ -53,9 +53,12 @@ public final class FpSwings {
      * off hand's own way into it from where it waited, the main's after the hit. {@code far} (round 5): a double
      * weapon led by its other end, turned end for end (the Twin Blades' figure-eight): its trail runs along that end.
      * {@code set} (round 8; -1 for none): when the drive begins, the strike's set, where a press still down waits.
+     * {@code trailFrom}..{@code trailTo} (round 14; -1 for the old rule round the blow): the clip ticks its blade lays
+     * its ribbon, the stroke alone, never the way back (traced, the way home closed each stroke into a loop).
      */
     public record Clip(float[] keys, Hand hand, float[] wristRight, float[] wristLeft, float[] straightRight, float[] straightLeft,
-                       float swish, @Nullable String swishSound, float biteRate, float biteTicks, float[] idle, boolean far, float set) {
+                       float swish, @Nullable String swishSound, float biteRate, float biteTicks, float[] idle, boolean far, float set,
+                       float trailFrom, float trailTo) {
         public int size() {
             return keys.length / STRIDE;
         }
@@ -66,10 +69,13 @@ public final class FpSwings {
      * and a vanilla item's swing turn about) and where the hand closes on its weapon (hand space, from vanilla's rest: the
      * arm drawn to it, FirstPerson.View's grips); a two-handed weapon's off hand down the handle below it (null: one hand),
      * on the forged weapon and on a vanilla item. {@code guard} (round 8; null: the old block turn): the hand's move and
-     * turn [dx, dy, dz, qx, qy, qz, qw] with the forged weapon up in guard, across the body in view.
+     * turn [dx, dy, dz, qx, qy, qz, qw] with the forged weapon up in guard, across the body in view. {@code trail}
+     * (round 14; null: the ribbon as every style's) [root, light]: in first person the ribbon from that far along the
+     * blade to its point, its light scaled (the Daggers' a thin streak at the point, not a band from mid-blade).
      */
     public record Style(Map<Archetype.Move, Clip> moves, Quaternionf vanilla, Vector3f grip, Vector3f vanillaGrip, boolean twin,
-                        Vector3f hand, @Nullable Vector3f offHand, @Nullable Vector3f vanillaOffHand, float @Nullable [] guard) {}
+                        Vector3f hand, @Nullable Vector3f offHand, @Nullable Vector3f vanillaOffHand, float @Nullable [] guard,
+                        float @Nullable [] trail) {}
 
     /**
      * One whole read of the file: its schema, the studio's round, the key steps, every style, and third person's flipped
@@ -137,14 +143,17 @@ public final class FpSwings {
                 moves.put(m, new Clip(k, h, floats(wrist, "right"), floats(wrist, "left"), floats(straight, "right"),
                         floats(straight, "left"), swish, sound, bite == null ? 1F : bite.get(0).getAsFloat(),
                         bite == null ? 0F : bite.get(1).getAsFloat(), idle, row.has("far") && row.get("far").getAsBoolean(),
-                        row.has("set") ? row.get("set").getAsFloat() : -1F));
+                        row.has("set") ? row.get("set").getAsFloat() : -1F,
+                        row.has("trail") ? row.getAsJsonArray("trail").get(0).getAsFloat() : -1F,
+                        row.has("trail") ? row.getAsJsonArray("trail").get(1).getAsFloat() : -1F));
             }
             Vector3f grip = vec(st.getAsJsonArray("grip"));
             styles.put(e.getKey(), new Style(moves, quat(st.getAsJsonArray("vanilla")), grip, vec(st.getAsJsonArray("vanillaGrip")),
                     st.has("twin") && st.get("twin").getAsBoolean(), st.has("handGrip") ? vec(st.getAsJsonArray("handGrip")) : grip,
                     st.has("offHand") ? vec(st.getAsJsonArray("offHand")) : null,
                     st.has("vanillaOffHand") ? vec(st.getAsJsonArray("vanillaOffHand")) : null,
-                    st.has("guard") ? floats(st.getAsJsonArray("guard"), 7) : null));
+                    st.has("guard") ? floats(st.getAsJsonArray("guard"), 7) : null,
+                    st.has("trail") ? floats(st.getAsJsonArray("trail"), 2) : null));
         }
         return new Data(schema, root.has("round") ? root.get("round").getAsInt() : 0, dt, wristDt, Map.copyOf(styles),
                 java.util.Set.copyOf(flipped), Map.copyOf(grip3));
@@ -203,6 +212,11 @@ public final class FpSwings {
 
     public static @Nullable Style style(String id) {
         return data.styles().get(id);
+    }
+
+    /** A move's clip in a style (null: none). */
+    public static @Nullable Clip clip(@Nullable Style st, Archetype.@Nullable Move m) {
+        return st == null || m == null ? null : st.moves().get(m);
     }
 
     /** The hand a move strikes with (MAIN without keys). */

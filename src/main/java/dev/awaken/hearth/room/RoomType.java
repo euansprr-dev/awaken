@@ -16,7 +16,6 @@ import static dev.awaken.hearth.room.Furniture.HAY;
 import static dev.awaken.hearth.room.Furniture.LECTERN;
 import static dev.awaken.hearth.room.Furniture.MACHINE;
 import static dev.awaken.hearth.room.Furniture.MAT;
-import static dev.awaken.hearth.room.Furniture.PAD;
 import static dev.awaken.hearth.room.Furniture.SEAT;
 import static dev.awaken.hearth.room.Furniture.STAND;
 import static dev.awaken.hearth.room.Furniture.TABLE;
@@ -54,16 +53,14 @@ public enum RoomType {
             "Your own bell: it rings at dawn and dusk, warns of gate breaks two play-days early, and Deep Tide nights stay calm on your land.",
             "Your bell keeps watch."),
     LOOKOUT("Lookout", "lookout", List.of(), "12 or more above the ground, windows on three sides", 9, 3, "the Atlas fills in round home",
-            "From up here the Atlas fills in 256 blocks round home, and Mira hears one more rumour a play-day.", "You see far from here."),
+            "From up here the Atlas fills in 256 blocks round home.", "You see far from here."),
     TROPHY_HALL("Trophy Hall", "trophy hall", List.of(TROPHY), null, 24, 4, "a bonus for every different boss",
             "Every different Lord's trophy hung here gives +1% damage and +0.5 max health.", "+1% damage for each Lord."),
     WORKSHOP("Workshop", "workshop", List.of(MACHINE), null, 16, 3, "machines spend a quarter less",
             "Precursor machines in this room spend a quarter less essence.", "Machines spend less here."),
-    BARRACKS("Barracks", "barracks", List.of(PAD), null, 20, 3, "Echoes on duty rest and train better",
-            "Echoes on role pads here heal four times faster, and Train pads train twice as fast.", "Echoes here heal and train."),
     /** (W6, PLAN 7.7) a hatch (a trapdoor in the floor) over a shaft you dug, with something to climb down it. */
-    MINE_HEAD("Mine head", "mine head", List.of(), "a hatch over a shaft 16 or more deep, with a ladder", 9, 3, "a miner works your shaft",
-            "A miner, or your Mine Echo, works the shaft: each evening the ore of its depth comes up, and a lode's if the shaft cut one.",
+    MINE_HEAD("Mine head", "mine head", List.of(), "a hatch over a shaft 16 or more deep, with a ladder", 9, 3, "your own way down",
+            "A hatch over a shaft you dug, with a way down: your own way to the ore below home.",
             "Your own mine.");
 
     /** How deep a Mine head's shaft must go from its floor (PLAN 4.6). */
@@ -71,7 +68,7 @@ public enum RoomType {
 
     /** The order a room takes its purpose (and its name) in: the most particular first, a plain shelter last. */
     public static final List<RoomType> PURPOSE = List.of(SANCTUARY, HALL, KITCHEN, ARMORY, STUDY, GREENHOUSE, STABLE, BELL_TOWER,
-            LOOKOUT, MINE_HEAD, TROPHY_HALL, WORKSHOP, BARRACKS, BEDROOM, SHELTER);
+            LOOKOUT, MINE_HEAD, TROPHY_HALL, WORKSHOP, BEDROOM, SHELTER);
 
     public final String label;
     /** "bedroom": the last word of a room's name. */

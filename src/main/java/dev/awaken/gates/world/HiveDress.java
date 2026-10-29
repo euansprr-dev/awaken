@@ -12,6 +12,8 @@ import java.util.List;
  */
 final class HiveDress extends Dress {
     final BlockState wax, waxDark, comb, capped, honey, floor, pollen, drip, drum, royal, petals, candle;
+    /** Shaped ground (SPEC §38.14): wax banks in bands, floor slabs and stairs, pollen drifted, wax crumbs. */
+    final BlockState floorSlab, floorStairs, drift, crumbs, waxStairs;
     final boolean theComb, brood, lake, swarm;
 
     HiveDress(CaveEngine.Cave c) {
@@ -28,6 +30,11 @@ final class HiveDress extends Dress {
         royal = mat("royal", "awaken:hive_royal");
         petals = mat("petals", "awaken:hive_petals");
         candle = mat("candle", "awaken:hive_candle");
+        floorSlab = mat("ground_slab", "awaken:hive_floor_slab");
+        floorStairs = mat("ground_stairs", "awaken:hive_floor_stairs");
+        drift = mat("ground_drift", "awaken:hive_pollen_drift");
+        crumbs = mat("ground_bits", "awaken:hive_wax_crumbs");
+        waxStairs = mat("roof_stairs", "awaken:hive_wax_stairs");
         String n = name();
         theComb = n.equals("the_comb");
         brood = n.equals("brood_hall");
@@ -67,6 +74,76 @@ final class HiveDress extends Dress {
     }
 
     @Override
+    boolean depth() {
+        return true;
+    }
+
+    @Override
+    BlockState ground(int part, int x, int y, int z) {
+        boolean pollenHere = Hash.noise(seed + 3, x, z, 4) > 0.62;
+        return switch (part) {
+            // a raised floor is wax laid down in bands, dark every third
+            case Relief.BANK -> Math.floorMod(y - W, 3) == 2 ? waxDark : wax;
+            // on the pollen a half step is pollen heaped half a block deep
+            case Relief.SLAB -> pollenHere ? drift.trySetValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LAYERS, 4) : floorSlab;
+            case Relief.STAIRS -> pollenHere ? null : floorStairs;
+            case Relief.DRIFT -> drift;
+            case Relief.BITS -> crumbs;
+            // the roof steps down in wax
+            case Relief.ROOF -> waxStairs;
+            default -> null;
+        };
+    }
+
+    @Override
+    double pad(Room r, CaveEngine.Kind k) {
+        // the Comb's honey pools
+        return theComb && k != CaveEngine.Kind.ARRIVAL ? 3.4 : 0;
+    }
+
+    @Override
+    double bits() {
+        return 0.083;
+    }
+
+    @Override
+    double lumps() {
+        // the comb bulges out of the walls and hangs from the roof in masses
+        return 1.3;
+    }
+
+    @Override
+    BlockState creep(int x, int y, int z) {
+        // capped comb creeping over floor and wall
+        return capped;
+    }
+
+    @Override
+    BlockState formation(int part, int x, int y, int z) {
+        return switch (part) {
+            // wax pillars, banded dark, a cell of honey glowing here and there
+            case Formations.PILLAR -> Hash.noise3(seed + 61, x, y, z, 2.2) > 0.72 ? comb : Math.floorMod(y - W, 4) == 0 ? waxDark : wax;
+            // mounds of wax crusted with capped comb
+            case Formations.ROCK -> Hash.noise3(seed + 63, x, y, z, 1.6) > 0.6 ? capped : Math.floorMod(y - W, 3) == 2 ? waxDark : wax;
+            // a piece of comb fallen from the roof, its cells broken open
+            case Formations.FALLEN -> switch (cell(x, y, z)) {
+                case 0 -> waxDark;
+                case 2 -> comb;
+                default -> capped;
+            };
+            // a heap of old dark wax
+            case Formations.HEAP -> Hash.unit(seed + 65, x + y * 31, z) < 0.3 ? wax : waxDark;
+            default -> null;
+        };
+    }
+
+    @Override
+    double headroom(Room r, CaveEngine.Kind k, int x, int z) {
+        // the Brood Hall's lowest ledge rings its wall six over the floor
+        return brood && k == CaveEngine.Kind.GREAT && c.d(r.id, x + 0.5, z + 0.5) > -3.5 ? 6 : 999;
+    }
+
+    @Override
     BlockState screen(int lat, int rise, int side) {
         return switch (cell(lat, rise, 0)) {
             case 0 -> waxDark;
@@ -84,7 +161,11 @@ final class HiveDress extends Dress {
     void cavern(Room r, CaveEngine.Kind k) {
         int id = r.id;
         PassageEngine.Shape sh = c.shapes.get(id);
-        hang(r, 0.07, 3, 3, 11, (x, y, z, len, i) -> drip);
+        // shaped ground (38.14) hangs thicker and longer: the eye has a roof to look up at
+        if (c.relief != null) {
+            hang(r, 0.12, 5, 3, 11, (x, y, z, len, i) -> drip);
+            if (r.type != Room.Type.BOSS) sheets(r, theComb ? 0.75 : swarm ? 0.55 : 0.4);
+        } else hang(r, 0.07, 3, 3, 11, (x, y, z, len, i) -> drip);
         grow(r, 0.02, 13, (x, y, z, len, i) -> candle);
         if (brood && k == CaveEngine.Kind.GREAT) ledges(r);
         if (swarm && k != CaveEngine.Kind.ARRIVAL) slides(r);
@@ -109,6 +190,47 @@ final class HiveDress extends Dress {
     }
 
     /** The Brood Hall's ledges: rings of wax round its wall every seven blocks up, as deep as a step is wide. */
+    /**
+     * Comb hanging from the roof in sheets, as a real hive's does (shaped places, 38.14): each a wall of cells a block thick,
+     * 4 to 9 long, deepest in its middle, its lower edge dark wax. Never within four blocks of where you stand, nor at
+     * the walls (four blocks off them round the Brood Hall's ledges).
+     */
+    void sheets(Room r, double share) {
+        int[] b = box(r);
+        int id = r.id;
+        boolean ringed = brood && c.kinds.get(id) == CaveEngine.Kind.GREAT;
+        c.s.op(b[0], W, b[1], b[2], W, b[3], (buf, x, y, z) -> {
+            if (c.d(id, x + 0.5, z + 0.5) > (ringed ? -4 : -1.5)) return;
+            // one sheet at most in each six by six patch
+            int gx = Math.floorDiv(x, 6), gz = Math.floorDiv(z, 6);
+            long h = Hash.of(seed + 41, gx, gz);
+            if (Hash.unit(h) >= share) return;
+            boolean alongX = (h & 1) == 0;
+            int ox = gx * 6 + 1 + (int) (Hash.unit(Hash.mix(h ^ 3)) * 4), oz = gz * 6 + 1 + (int) (Hash.unit(Hash.mix(h ^ 7)) * 4);
+            int half = 2 + (int) (Hash.unit(Hash.mix(h ^ 13)) * 3);
+            int along = alongX ? x - ox : z - oz, across = alongX ? z - oz : x - ox;
+            if (across != 0 || Math.abs(along) > half) return;
+            int feet = W + Math.max(0, c.relief.stand(x, z));
+            int roof = -1;
+            for (int yy = feet + 1; yy < feet + 48 && roof < 0; yy++) {
+                if (solid(buf, x, yy, z)) roof = yy;
+                else if (!buf.open(x, yy, z)) return;
+            }
+            if (roof < 0) return;
+            double t = 1 - Math.abs(along) / (half + 1.0);
+            int drop = Math.min(1 + (int) Math.round(t * (2 + Hash.unit(Hash.mix(h ^ 29)) * 4)), roof - feet - 4);
+            for (int i = 1; i <= drop; i++) {
+                int cy = roof - i;
+                buf.set(x, cy, z, i == drop ? waxDark : switch (cell(x, cy, z)) {
+                    case 0 -> waxDark;
+                    case 2 -> comb;
+                    case 3 -> royal;
+                    default -> capped;
+                });
+            }
+        });
+    }
+
     void ledges(Room r) {
         int[] b = box(r);
         int id = r.id;

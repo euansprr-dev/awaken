@@ -4,6 +4,7 @@ import dev.awaken.arms.Archetype;
 import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.ArmsData;
 import dev.awaken.arms.ArmsItems;
+import dev.awaken.arms.FpSwings;
 import dev.awaken.core.api.BodyMaterial;
 import dev.awaken.powers.client.fx.FxClient;
 import dev.awaken.powers.fx.FxStyle;
@@ -82,7 +83,10 @@ final class ArmsFx {
         if (BladeTrail.ownRibbon(e, !held.isEmpty() && ArmsItems.of(held.getItem()) != null)) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null || e.getId() != mc.player.getId() || !mc.options.getCameraType().isFirstPerson()) {
-                BladeTrail.open(e.getId(), (def.active() + 1) * 50 + 30, argb);
+                // our own off-hand strike seen from outside: the twin lays its own ring (round 14), as in first person
+                boolean twin = mc.player != null && e.getId() == mc.player.getId()
+                        && FpSwings.hand(FpSwings.style(p.style.id()), p.move) == FpSwings.Hand.OFF;
+                BladeTrail.open(e.getId(), twin ? 1 : 0, (def.active() + 1) * 50 + 30, argb, 1F);
             }
             if (def.art().isPresent()) artWave(e, def);
             return;

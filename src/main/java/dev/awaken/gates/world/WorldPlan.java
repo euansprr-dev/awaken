@@ -278,6 +278,14 @@ final class WorldPlan {
         }
     }
 
+    /**
+     * Where you stand over each column, blocks above the base (SPEC §38.14), set by an engine that gives its places
+     * ground before {@link #finish}; null for a flat floor. Spawns and features read it through the floor.
+     */
+    byte[] ground;
+    /** The columns of the high ledges and their stairs (SPEC §38.14, stage 4), null if none: nothing is placed there. */
+    java.util.BitSet high;
+
     /** Places that are a world of their own (a secret world reached from this one): world room id → world id. */
     final Map<Integer, String> placeWorlds = new HashMap<>(), placeBiomes = new HashMap<>();
     /** What the live layer needs to find again (SPEC §38.8): bells, secrets, a basin the Flood fills. */
@@ -480,7 +488,7 @@ final class WorldPlan {
             for (Room L : ls) {
                 for (Room.Feature ft : L.features) {
                     int x = clamp(a[0] + ft.x() - L.centerX(), w.x0(), w.x1()), z = clamp(a[1] + ft.z() - L.centerZ(), w.z0(), w.z1());
-                    int[] q = ground(w, walk, x, z, taken);
+                    int[] q = ground(w, walk, x, z, taken, ctx.plan().contentVersion() >= 7, high);
                     taken.add(((long) q[0] << 32) ^ (q[1] & 0xFFFFFFFFL));
                     w.features.add(new Room.Feature(ft.kind(), q[0], ft.y(), q[1], ft.index()));
                 }
@@ -511,8 +519,11 @@ final class WorldPlan {
             }
         }
         Plots.Plot plot = ctx.plot();
-        return new FloorLayout(ctx.area(), ctx.floor(), look.baseY(), plot.slotX(), plot.slotZ(), b.w, b.h, ctx.theme(), logic.bossFloor,
+        FloorLayout f = new FloorLayout(ctx.area(), ctx.floor(), look.baseY(), plot.slotX(), plot.slotZ(), b.w, b.h, ctx.theme(), logic.bossFloor,
                 b.rooms, b.start, b.end, new FloorLayout.Frame(plot, plot.minY(), plot.maxY(), null, ctx.worldId(), ctx.mood(), look.biome(), look.air(), look.model(), look.yaw(), placeWorlds, placeBiomes, marks, look.sky()));
+        f.ground = ground;
+        f.high = high;
+        return f;
     }
 
     private void spots(Room r, Walk walk) {
@@ -532,14 +543,19 @@ final class WorldPlan {
     }
 
     /** The nearest free walkable block to (x, z) in the place (a cache never floats over water), or (x, z) itself. */
-    private static int[] ground(Room w, Walk walk, int x, int z, java.util.Set<Long> taken) {
-        for (int r = 0; r <= 10; r++) {
-            for (int dx = -r; dx <= r; dx++) {
-                for (int dz = -r; dz <= r; dz++) {
-                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
-                    int qx = x + dx, qz = z + dz;
-                    if (qx < w.x0() || qx > w.x1() || qz < w.z0() || qz > w.z1()) continue;
-                    if (walk.ok(w, qx, qz) && !taken.contains(((long) qx << 32) ^ (qz & 0xFFFFFFFFL))) return new int[]{qx, qz};
+    private static int[] ground(Room w, Walk walk, int x, int z, java.util.Set<Long> taken, boolean clear, java.util.BitSet high) {
+        // shaped ground (content 7) can leave no level spot near: then the nearest free one (never up on a high ledge),
+        // so a vault's bars never close round a touchstone or a handbell
+        for (int pass = 0; pass < (clear ? 2 : 1); pass++) {
+            for (int r = 0; r <= 10; r++) {
+                for (int dx = -r; dx <= r; dx++) {
+                    for (int dz = -r; dz <= r; dz++) {
+                        if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+                        int qx = x + dx, qz = z + dz;
+                        if (qx < w.x0() || qx > w.x1() || qz < w.z0() || qz > w.z1()) continue;
+                        if ((pass == 1 ? high == null || qx < 0 || qz < 0 || qx >= Plots.SIDE || qz >= Plots.SIDE || !high.get(qx + qz * Plots.SIDE) : walk.ok(w, qx, qz))
+                                && !taken.contains(((long) qx << 32) ^ (qz & 0xFFFFFFFFL))) return new int[]{qx, qz};
+                    }
                 }
             }
         }

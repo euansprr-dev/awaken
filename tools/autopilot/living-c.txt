@@ -1,7 +1,6 @@
 # The Living Wilds, Phase C (SPEC §21.5) and plates on the Holo's glass (§12 HoloWorld). Plates at 6, 12 and 20 blocks
-# and beside the open K panel; the Wayfarer camp up the High Gate road (Ilse and Hettie), a chain offered, taken and in
-# the Journal; Wren stranded on a cliff with her flare and the step that needs the Tether; the Caravan Road's raiders;
-# Hale's bounty board; the relics in hand.
+# and beside the open K panel; the Last Fire up the High Gate road (Ilse alone, her own line: SPEC §43.1 retired the
+# found scenes and their chains, Wren's and the Caravan Road's among them); Hale's bounty board; the relics in hand.
 # Run: SLOT_WHO=living-wilds slot.sh light tools/autopilot.sh tools/autopilot/living-c.txt 900
 world autopilot_living_c2 creative 20261025
 waitworld
@@ -56,58 +55,7 @@ wait 120
 shot living_c01_camp
 cmd awaken living talk
 wait 30
-shot living_c02_ask
-wait 30
-shot living_c03_card
-key accept
-wait 20
-shot living_c04_taken
-key status
-wait 40
-shot living_c05_journal
-screen close
-wait 10
-# ---- Wren ----
-cmd awaken living scene wrens_rope
-wait 120
-# the flare: 20 s in every 90, so six looks 18 s apart catch it from 70 blocks off
-cmd awaken living view 70
-wait 60
-shot living_c06a_flare
-wait 360
-shot living_c06b_flare
-wait 360
-shot living_c06c_flare
-wait 360
-shot living_c06d_flare
-wait 360
-shot living_c06e_flare
-wait 360
-shot living_c06f_flare
-cmd awaken living view 5
-wait 60
-shot living_c06_wren_scene
-cmd awaken living talk
-wait 40
-shot living_c07_wren_card
-key accept
-wait 20
-cmd awaken living talk
-wait 20
-shot living_c08_needs_tether
-# ---- the Caravan Road ----
-cmd awaken living camp
-wait 40
-cmd awaken living scene caravan_road
-wait 60
-cmd awaken living view 8
-wait 40
-cmd awaken living talk
-wait 40
-key accept
-wait 40
-shot living_c09_raiders
-cmd kill @e[type=minecraft:pillager]
+shot living_c02_ilse_line
 # ---- Hale ----
 cmd awaken living wayfarer hale
 wait 30

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "awaken:block/sky_rock",
+    "top": "awaken:block/sky_rock",
+    "side": "awaken:block/sky_rock"
+  }
+}
