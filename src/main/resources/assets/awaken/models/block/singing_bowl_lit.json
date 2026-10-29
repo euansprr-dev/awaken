@@ -1,0 +1,141 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/singing_bowl",
+    "bowl": "awaken:block/singing_bowl",
+    "inside": "awaken:block/singing_bowl_inside",
+    "cushion": "awaken:block/frost_timber",
+    "glow": "awaken:block/singing_bowl_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        0,
+        4
+      ],
+      "to": [
+        12,
+        1,
+        12
+      ],
+      "faces": {
+        "down": {
+          "texture": "#cushion"
+        },
+        "up": {
+          "texture": "#cushion"
+        },
+        "north": {
+          "texture": "#cushion"
+        },
+        "south": {
+          "texture": "#cushion"
+        },
+        "west": {
+          "texture": "#cushion"
+        },
+        "east": {
+          "texture": "#cushion"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        1,
+        3
+      ],
+      "to": [
+        13,
+        6,
+        13
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bowl"
+        },
+        "south": {
+          "texture": "#bowl"
+        },
+        "west": {
+          "texture": "#bowl"
+        },
+        "east": {
+          "texture": "#bowl"
+        },
+        "down": {
+          "texture": "#bowl"
+        }
+      }
+    },
+    {
+      "from": [
+        3.5,
+        5.5,
+        3.5
+      ],
+      "to": [
+        12.5,
+        5.5,
+        12.5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#inside"
+        }
+      }
+    },
+    {
+      "from": [
+        2.98,
+        5,
+        2.98
+      ],
+      "to": [
+        13.02,
+        6,
+        13.02
+      ],
+      "faces": {
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "west": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "east": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}

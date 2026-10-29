@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "theme": "drowned_archive",
+  "name": "The Library of Doors",
+  "line": "A library where a doorway stands in every room. Walk through one and you come out of another.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {},
+  "biome": "awaken:gate_world/the_library_of_doors",
+  "moods": [
+    {
+      "id": "quiet_hours",
+      "name": "Quiet hours",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "dust",
+        "paper"
+      ]
+    },
+    {
+      "id": "closing_time",
+      "name": "Closing time",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_library_of_doors_closing_time",
+      "life": [
+        "dust"
+      ]
+    }
+  ],
+  "blocks": {},
+  "hero": [],
+  "life": [
+    "dust",
+    "paper"
+  ],
+  "sound": "awaken:gate.world.dream_hall",
+  "events": [
+    "the_doors_open"
+  ],
+  "rule": "reading",
+  "secrets": [
+    {
+      "id": "the_door_to_nowhere",
+      "name": "The door to nowhere"
+    }
+  ],
+  "keepsake": "door_key",
+  "keepsake_name": "A Key to No Door in Particular",
+  "keepsake_from": "the_door_to_nowhere"
+}

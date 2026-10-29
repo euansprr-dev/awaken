@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "theme": "lantern_night_market",
+  "name": "The Rooftops",
+  "line": "The market's moved up onto the roofs. Bridges join them, and the streets are a long way down.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "open",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "night": 1,
+    "lid": 18,
+    "deep": 14
+  },
+  "biome": "awaken:gate_world/rooftops",
+  "moods": [
+    {
+      "id": "market_night",
+      "name": "Market night",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "fireworks",
+      "name": "Fireworks",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/rooftops_fireworks",
+      "life": [
+        "fireflies"
+      ]
+    },
+    {
+      "id": "rain",
+      "name": "Rain",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/rooftops_rain",
+      "life": [
+        "rain"
+      ]
+    },
+    {
+      "id": "ghost_market",
+      "name": "Ghost market",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/rooftops_ghost_market",
+      "life": [
+        "procession",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "floor": "awaken:market_cobbles",
+    "boards": "awaken:market_boards",
+    "wall": "awaken:market_plaster",
+    "trim": "awaken:market_timber",
+    "timber": "awaken:market_timber",
+    "roof": "awaken:market_roof",
+    "wall_glow": "awaken:market_paper_wall",
+    "lantern": "awaken:market_lantern",
+    "lights": "awaken:market_lights",
+    "cloth": "awaken:market_cloth",
+    "goods": "awaken:market_goods",
+    "boat_lamp": "awaken:market_boat_lamp",
+    "touch": "awaken:market_wish_lantern",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "streets",
+    "the_pavilion"
+  ],
+  "life": [
+    "fireflies",
+    "moths",
+    "smoke"
+  ],
+  "sound": "awaken:gate.world.market_street",
+  "events": [
+    "fireworks"
+  ],
+  "rule": "wishes",
+  "secrets": [
+    {
+      "id": "the_first_wish",
+      "name": "The first wish"
+    },
+    {
+      "id": "the_highest_roof",
+      "name": "The highest roof"
+    },
+    {
+      "id": "the_red_door",
+      "name": "The red door",
+      "leads_to": "awaken:lantern_night_market/brokers_vault"
+    }
+  ],
+  "keepsake": "weathervane",
+  "keepsake_name": "The Market's Weathervane",
+  "keepsake_from": "the_highest_roof",
+  "tall": true
+}

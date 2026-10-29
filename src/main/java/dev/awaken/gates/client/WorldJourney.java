@@ -59,7 +59,7 @@ public final class WorldJourney {
     /** The floor below has arrived: its world told, the ground under you loaded and (for a while) meshed. */
     private static boolean ready(long age) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null || mc.level.dimension() != GatesRegistry.GATES) return false;
+        if (mc.level == null || mc.player == null || !GatesRegistry.isGateDim(mc.level.dimension())) return false;
         WorldPayloads.Arrival a = GateWorldClient.current();
         if (a == null || !a.world().equals(world)) return false;
         if (!mc.level.hasChunk(mc.player.getBlockX() >> 4, mc.player.getBlockZ() >> 4)) return false;

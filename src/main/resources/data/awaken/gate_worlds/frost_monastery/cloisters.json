@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "theme": "frost_monastery",
+  "name": "The Cloisters",
+  "line": "Courtyards of a monastery high on a mountain, snow on every roof and prayer flags strung between them.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "open",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "lid": 16,
+    "slope": 0.15,
+    "square": 1,
+    "tunnel": 2.6
+  },
+  "biome": "awaken:gate_world/cloisters",
+  "moods": [
+    {
+      "id": "still",
+      "name": "Still",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "blizzard",
+      "name": "Blizzard",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/cloisters_blizzard",
+      "life": [
+        "snow",
+        "mist"
+      ]
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/cloisters_aurora",
+      "life": [
+        "snow"
+      ]
+    },
+    {
+      "id": "thaw",
+      "name": "Thaw",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/cloisters_thaw",
+      "life": [
+        "drips",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:frost_stone",
+    "wall_glow": "awaken:frost_stone_carved",
+    "trim": "awaken:frost_stone_carved",
+    "floor": "awaken:frost_tiles",
+    "snow": "awaken:frost_snow",
+    "plaster": "awaken:frost_plaster",
+    "timber": "awaken:frost_timber",
+    "ice": "awaken:frost_ice",
+    "ice_glow": "awaken:frost_ice_glowing",
+    "icicles": "awaken:frost_icicles",
+    "flags": "awaken:frost_flags",
+    "lamp": "awaken:frost_butter_lamp",
+    "crystal": "awaken:frost_crystal",
+    "cloud": "awaken:frost_cloud",
+    "touch": "awaken:frost_prayer_wheel",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "cloister_walks",
+    "prayer_flags"
+  ],
+  "life": [
+    "snow",
+    "mist",
+    "far_toll"
+  ],
+  "sound": "awaken:gate.world.frost_chant",
+  "events": [
+    "the_bells"
+  ],
+  "rule": "prayer",
+  "secrets": [
+    {
+      "id": "the_first_prayer",
+      "name": "The first prayer"
+    },
+    {
+      "id": "the_bell_rope",
+      "name": "The bell rope"
+    },
+    {
+      "id": "the_cold_draught",
+      "name": "The cold draught",
+      "leads_to": "awaken:frost_monastery/frozen_choir"
+    }
+  ],
+  "keepsake": "prayer_bead",
+  "keepsake_name": "A Prayer Bead",
+  "keepsake_from": "the_bell_rope",
+  "tall": true
+}

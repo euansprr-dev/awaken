@@ -1,0 +1,261 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/temple_stone",
+    "stone": "awaken:block/temple_stone",
+    "face": "awaken:block/temple_idol_face",
+    "eyes": "awaken:block/temple_idol_eyes",
+    "leaf": "awaken:block/temple_canopy"
+  },
+  "elements": [
+    {
+      "from": [
+        3.5,
+        0.0,
+        3.5
+      ],
+      "to": [
+        12.5,
+        2.7,
+        12.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#stone"
+        },
+        "up": {
+          "texture": "#stone"
+        },
+        "north": {
+          "texture": "#stone"
+        },
+        "south": {
+          "texture": "#stone"
+        },
+        "west": {
+          "texture": "#stone"
+        },
+        "east": {
+          "texture": "#stone"
+        }
+      }
+    },
+    {
+      "from": [
+        4.4,
+        2.7,
+        4.4
+      ],
+      "to": [
+        11.6,
+        8.1,
+        11.6
+      ],
+      "faces": {
+        "down": {
+          "texture": "#stone"
+        },
+        "up": {
+          "texture": "#stone"
+        },
+        "north": {
+          "texture": "#stone"
+        },
+        "south": {
+          "texture": "#stone"
+        },
+        "west": {
+          "texture": "#stone"
+        },
+        "east": {
+          "texture": "#stone"
+        }
+      }
+    },
+    {
+      "from": [
+        4.85,
+        8.1,
+        4.85
+      ],
+      "to": [
+        11.15,
+        13.5,
+        11.15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#face",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#face",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#face",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#face",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        4.85,
+        8.1,
+        4.85
+      ],
+      "to": [
+        11.15,
+        13.5,
+        11.15
+      ],
+      "faces": {
+        "up": {
+          "texture": "#stone"
+        },
+        "down": {
+          "texture": "#stone"
+        }
+      }
+    },
+    {
+      "from": [
+        4.832000000000001,
+        8.1,
+        4.832000000000001
+      ],
+      "to": [
+        11.168,
+        13.5,
+        11.168
+      ],
+      "faces": {
+        "north": {
+          "texture": "#eyes",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#eyes",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#eyes",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#eyes",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        4.4,
+        13.5,
+        4.4
+      ],
+      "to": [
+        11.6,
+        14.4,
+        11.6
+      ],
+      "faces": {
+        "down": {
+          "texture": "#leaf"
+        },
+        "up": {
+          "texture": "#leaf"
+        },
+        "north": {
+          "texture": "#leaf"
+        },
+        "south": {
+          "texture": "#leaf"
+        },
+        "west": {
+          "texture": "#leaf"
+        },
+        "east": {
+          "texture": "#leaf"
+        }
+      }
+    },
+    {
+      "from": [
+        6.2,
+        13.950000000000001,
+        3.95
+      ],
+      "to": [
+        9.8,
+        14.4,
+        12.05
+      ],
+      "faces": {
+        "down": {
+          "texture": "#leaf"
+        },
+        "up": {
+          "texture": "#leaf"
+        },
+        "north": {
+          "texture": "#leaf"
+        },
+        "south": {
+          "texture": "#leaf"
+        },
+        "west": {
+          "texture": "#leaf"
+        },
+        "east": {
+          "texture": "#leaf"
+        }
+      }
+    }
+  ]
+}

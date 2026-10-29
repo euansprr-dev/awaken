@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/dream_music_box"
+    },
+    "lit=true": {
+      "model": "awaken:block/dream_music_box_lit"
+    }
+  }
+}

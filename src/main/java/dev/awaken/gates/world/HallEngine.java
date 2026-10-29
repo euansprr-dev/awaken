@@ -653,8 +653,7 @@ final class HallEngine implements WorldEngine {
                         double R = i == 2 ? 3.1 : 2.4 + Hash.unit(seed, gz, 50 + i) * 0.6;
                         int lip = W + 19 + Hash.range(seed, gz, 60 + i, 6);
                         double vt = vault(Math.abs(bx - AXIS));
-                        BellPieces.bell(s, bx, lip, zc + (i == 2 ? 0 : 0.5), R, R > 2.7 ? 6 : 5, W + (int) Math.ceil(vt) - 1, bronze, lamp, chain, false);
-                        p.bell(bx, lip - W, zc + (i == 2 ? 0 : 0.5), R, R > 2.7 ? 6 : 5);
+                        p.hungBell(s, "", bx, lip, W, zc + (i == 2 ? 0 : 0.5), R, R > 2.7 ? 6 : 5, W + (int) Math.ceil(vt) - 1, bronze, lamp, chain);
                         lights.add(new FloorAir.Light((int) Math.floor(bx), lip - W + 2, zc, 0x7fc8ff, 9f, 0.7f));
                     }
                 }
@@ -800,8 +799,7 @@ final class HallEngine implements WorldEngine {
             // three small bells high in the tower, lamps in them
             for (int k = 0; k < 3; k++) {
                 double bx = x0 + 3.5 + 2.5 * k, bz = z0 + 3.5 + (k == 1 ? 5 : 0);
-                BellPieces.bell(s, bx, W + 40 + 3 * k, bz, 1.8, 4, W + ROPES_H - 1, bronze, lamp, chain, false);
-                p.bell(bx, 40 + 3 * k, bz, 1.8, 4);
+                p.hungBell(s, "", bx, W + 40 + 3 * k, W, bz, 1.8, 4, W + ROPES_H - 1, bronze, lamp, chain);
                 lights.add(new FloorAir.Light((int) bx, 42 + 3 * k, (int) bz, 0x7fc8ff, 7f, 0.6f));
             }
             s.putOpen(x0 + 6, W + 1, z0 + 6, WorldMats.light(7));

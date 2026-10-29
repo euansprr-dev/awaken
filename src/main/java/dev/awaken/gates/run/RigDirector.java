@@ -137,11 +137,13 @@ public final class RigDirector {
             scanSaved(server);
         }
         for (Live l : LIVE.values()) l.here.clear();
-        for (ServerPlayer p : level.players()) {
-            if (!p.isAlive() || p.isSpectator()) continue;
-            Where w = Where.at(server, p.blockPosition());
-            if (w == null || w.room() == null || w.room().rig == null) continue;
-            live(w.gate(), w.floor(), w.room()).here.add(p);
+        for (ServerLevel lv : GateService.levels(server)) {
+            for (ServerPlayer p : lv.players()) {
+                if (!p.isAlive() || p.isSpectator()) continue;
+                Where w = Where.at(server, p.blockPosition());
+                if (w == null || w.room() == null || w.room().rig == null) continue;
+                live(w.gate(), w.floor(), w.room()).here.add(p);
+            }
         }
         if (!LIVE.isEmpty()) {
             for (Live l : List.copyOf(LIVE.values())) {
@@ -149,7 +151,9 @@ public final class RigDirector {
                     LIVE.values().remove(l);
                     continue;
                 }
-                tickRoom(level, l, now);
+                // a Rig room runs in its floor's level (an open land's under the sky)
+                ServerLevel at = GateService.levelOf(server, l.f);
+                tickRoom(at != null ? at : level, l, now);
             }
             LIVE.values().removeIf(Live::idle);
         }

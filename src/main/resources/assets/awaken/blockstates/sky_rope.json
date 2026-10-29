@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/sky_rope"
+    },
+    "axis=z": {
+      "model": "awaken:block/sky_rope",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "awaken:block/sky_rope",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

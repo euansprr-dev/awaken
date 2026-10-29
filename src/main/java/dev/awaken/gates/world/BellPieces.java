@@ -37,17 +37,10 @@ final class BellPieces {
             double th = t < 0.2 ? 1.6 : 1.05;
             if (d < r && d >= r - th) b.set(x, y, z, bronze);
         });
+        hanger(s, cx, lipY, cz, H, chainTo, bronze, lamp, chain);
         boolean corner = Math.abs(cx - Math.floor(cx)) < 0.25;
         int ax = (int) Math.floor(cx - (corner ? 0.5 : 0)), az = (int) Math.floor(cz - (corner ? 0.5 : 0));
         int top = lipY + H;
-        // the canon and its chains up to the vault (a pair of chains each way under a big corner-hung bell)
-        for (int i = 0; i < (corner ? 2 : 1); i++) {
-            for (int k = 0; k < (corner ? 2 : 1); k++) {
-                s.put(ax + i, top, az + k, bronze);
-                if (chainTo > top) s.box(ax + i, top + 1, az + k, ax + i, chainTo, az + k, chain);
-            }
-        }
-        s.put(ax, top - (corner ? 3 : 2), az, lamp);
         if (clapper) {
             s.box(ax, lipY + 3, az, ax, top - (corner ? 4 : 3), az, chain);
             double bx = ax + 0.5, bz = az + 0.5;
@@ -56,6 +49,23 @@ final class BellPieces {
                 if (ex * ex + ey * ey + ez * ez < 1.45 * 1.45) b.set(x, y, z, bronze);
             });
         }
+    }
+
+    /**
+     * What a bell hangs by: its canon and the chains up to {@code chainTo} (a pair each way under a big corner-hung bell),
+     * and its lamp inside. A swinging bell (a prop, 38.6) keeps these and loses its body: {@code lamp} is then a light.
+     */
+    static void hanger(Sculpt s, double cx, int lipY, double cz, int H, int chainTo, BlockState bronze, BlockState lamp, BlockState chain) {
+        boolean corner = Math.abs(cx - Math.floor(cx)) < 0.25;
+        int ax = (int) Math.floor(cx - (corner ? 0.5 : 0)), az = (int) Math.floor(cz - (corner ? 0.5 : 0));
+        int top = lipY + H;
+        for (int i = 0; i < (corner ? 2 : 1); i++) {
+            for (int k = 0; k < (corner ? 2 : 1); k++) {
+                s.put(ax + i, top, az + k, bronze);
+                if (chainTo > top) s.box(ax + i, top + 1, az + k, ax + i, chainTo, az + k, chain);
+            }
+        }
+        s.put(ax, top - (corner ? 3 : 2), az, lamp);
     }
 
     /** A stone singer of a drowned choir, standing in the water from {@code footY}, robed on the side it faces. */

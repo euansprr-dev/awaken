@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "theme": "hive",
+  "name": "The Brood Hall",
+  "line": "A hive so tall you have to climb it, one ledge at a time.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "tower": 40,
+    "roof": 14
+  },
+  "biome": "awaken:gate_world/brood_hall",
+  "moods": [
+    {
+      "id": "drowsy",
+      "name": "Drowsy",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "swarming",
+      "name": "Swarming",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/brood_hall_swarming",
+      "life": [
+        "fireflies",
+        "dust"
+      ]
+    },
+    {
+      "id": "harvest",
+      "name": "Harvest",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/brood_hall_harvest",
+      "life": [
+        "drips",
+        "petals"
+      ]
+    },
+    {
+      "id": "wax_moon",
+      "name": "Wax moon",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/brood_hall_wax_moon",
+      "life": [
+        "fireflies",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:hive_wax",
+    "rim": "awaken:hive_wax_dark",
+    "wall_glow": "awaken:hive_comb",
+    "capped": "awaken:hive_comb_capped",
+    "honey": "awaken:hive_honey_glow",
+    "floor": "awaken:hive_floor",
+    "floor_soft": "awaken:hive_pollen",
+    "trim": "awaken:hive_wax_dark",
+    "drip": "awaken:hive_drip",
+    "touch": "awaken:hive_drum",
+    "royal": "awaken:hive_royal",
+    "petals": "awaken:hive_petals",
+    "candle": "awaken:hive_candle",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "ledges"
+  ],
+  "life": [
+    "drips",
+    "dust",
+    "fireflies"
+  ],
+  "sound": "awaken:gate.world.hive_brood",
+  "events": [
+    "the_hum"
+  ],
+  "rule": "hum",
+  "secrets": [
+    {
+      "id": "humming_drum",
+      "name": "The humming drum"
+    },
+    {
+      "id": "the_nursery",
+      "name": "The nursery"
+    },
+    {
+      "id": "the_sweet_air",
+      "name": "The sweet air",
+      "leads_to": "awaken:hive/queens_garden"
+    }
+  ],
+  "keepsake": "nursery_cell",
+  "keepsake_name": "A Nursery Cell",
+  "keepsake_from": "the_nursery"
+}

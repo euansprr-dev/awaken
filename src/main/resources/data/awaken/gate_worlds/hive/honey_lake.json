@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "theme": "hive",
+  "name": "The Honey Lake",
+  "line": "Wax islands on a lake of honey. It's sweeter than it is safe.",
+  "tier": "deep",
+  "rarity": "uncommon",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "sea": 1,
+    "sky": 34
+  },
+  "biome": "awaken:gate_world/honey_lake",
+  "moods": [
+    {
+      "id": "drowsy",
+      "name": "Drowsy",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "swarming",
+      "name": "Swarming",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/honey_lake_swarming",
+      "life": [
+        "fireflies",
+        "dust"
+      ]
+    },
+    {
+      "id": "harvest",
+      "name": "Harvest",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/honey_lake_harvest",
+      "life": [
+        "drips",
+        "petals"
+      ]
+    },
+    {
+      "id": "wax_moon",
+      "name": "Wax moon",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/honey_lake_wax_moon",
+      "life": [
+        "fireflies",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:hive_wax",
+    "rim": "awaken:hive_wax_dark",
+    "wall_glow": "awaken:hive_comb",
+    "capped": "awaken:hive_comb_capped",
+    "honey": "awaken:hive_honey_glow",
+    "floor": "awaken:hive_floor",
+    "floor_soft": "awaken:hive_pollen",
+    "trim": "awaken:hive_wax_dark",
+    "drip": "awaken:hive_drip",
+    "touch": "awaken:hive_drum",
+    "royal": "awaken:hive_royal",
+    "petals": "awaken:hive_petals",
+    "candle": "awaken:hive_candle",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "honey_sea"
+  ],
+  "life": [
+    "drips",
+    "dust",
+    "fireflies"
+  ],
+  "sound": "awaken:gate.world.hive_lake",
+  "events": [
+    "the_hum",
+    "the_wakening"
+  ],
+  "rule": "hum",
+  "secrets": [
+    {
+      "id": "humming_drum",
+      "name": "The humming drum"
+    },
+    {
+      "id": "drowned_comb",
+      "name": "The drowned comb"
+    }
+  ],
+  "keepsake": "drowned_comb",
+  "keepsake_name": "The Drowned Comb",
+  "keepsake_from": "drowned_comb"
+}

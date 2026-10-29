@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/ember_bellows"
+    },
+    "lit=true": {
+      "model": "awaken:block/ember_bellows_lit"
+    }
+  }
+}

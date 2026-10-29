@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "theme": "precursor_lab",
+  "name": "The Server Abyss",
+  "line": "Racks of humming machines in rows, going up into the dark further than your light reaches.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "square": 1,
+    "roof": 12,
+    "tower": 40,
+    "wobble": 0.4
+  },
+  "biome": "awaken:gate_world/server_abyss",
+  "moods": [
+    {
+      "id": "running",
+      "name": "Running",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "lockdown",
+      "name": "Lockdown",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/server_abyss_lockdown",
+      "life": [
+        "steam"
+      ]
+    },
+    {
+      "id": "breach",
+      "name": "Breach",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/server_abyss_breach",
+      "life": [
+        "mist",
+        "drips"
+      ]
+    },
+    {
+      "id": "reboot",
+      "name": "Reboot",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/server_abyss_reboot",
+      "life": [
+        "dust"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:lab_panel",
+    "wall_glow": "awaken:lab_panel_lit",
+    "floor": "awaken:lab_floor",
+    "trim": "awaken:lab_frame",
+    "frame": "awaken:lab_frame",
+    "glass": "awaken:lab_glass",
+    "rack": "awaken:lab_rack",
+    "tank": "awaken:lab_tank",
+    "cables": "awaken:lab_cables",
+    "lamp": "awaken:lab_light",
+    "holo": "awaken:lab_hologram",
+    "moss": "awaken:lab_moss",
+    "sketch": "awaken:lab_sketch",
+    "touch": "awaken:lab_console",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "server_racks",
+    "the_core"
+  ],
+  "life": [
+    "dust",
+    "steam"
+  ],
+  "sound": "awaken:gate.world.lab_servers",
+  "events": [
+    "breach"
+  ],
+  "rule": "power",
+  "secrets": [
+    {
+      "id": "the_first_login",
+      "name": "The first login"
+    },
+    {
+      "id": "the_cold_drive",
+      "name": "The cold drive"
+    },
+    {
+      "id": "the_open_vent",
+      "name": "The open vent",
+      "leads_to": "awaken:precursor_lab/garden_dome"
+    }
+  ],
+  "keepsake": "cold_drive",
+  "keepsake_name": "A Cold Drive",
+  "keepsake_from": "the_cold_drive"
+}

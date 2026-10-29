@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "theme": "ember_mines",
+  "name": "The Open Chasm",
+  "line": "A river of lava runs along the bottom of this chasm. Cross where the bridges let you.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "lake": 1,
+    "tower": 34,
+    "roof": 14
+  },
+  "biome": "awaken:gate_world/open_chasm",
+  "moods": [
+    {
+      "id": "banked",
+      "name": "Banked",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "eruption",
+      "name": "Eruption",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/open_chasm_eruption",
+      "life": [
+        "embers",
+        "smoke"
+      ]
+    },
+    {
+      "id": "ashfall",
+      "name": "Ashfall",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/open_chasm_ashfall",
+      "life": [
+        "ash"
+      ]
+    },
+    {
+      "id": "shift_change",
+      "name": "Shift change",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/open_chasm_shift_change",
+      "life": [
+        "embers",
+        "dust"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:ember_basalt",
+    "wall_glow": "awaken:ember_basalt_cracked",
+    "floor": "awaken:ember_ash",
+    "slag": "awaken:ember_slag",
+    "trim": "awaken:mine_planks",
+    "timber": "awaken:mine_timber",
+    "planks": "awaken:mine_planks",
+    "lamp": "awaken:mine_lamp",
+    "crust": "awaken:magma_crust",
+    "crystal": "awaken:ember_crystal",
+    "fall": "awaken:ember_moltenfall",
+    "touch": "awaken:ember_bellows",
+    "fluid": "minecraft:lava"
+  },
+  "hero": [
+    "bridges"
+  ],
+  "life": [
+    "embers",
+    "dust",
+    "smoke",
+    "bats"
+  ],
+  "sound": "awaken:gate.world.mine_chasm",
+  "events": [
+    "tremor"
+  ],
+  "rule": "embers",
+  "secrets": [
+    {
+      "id": "foremans_bellows",
+      "name": "The foreman's bellows"
+    },
+    {
+      "id": "the_dropped_lamp",
+      "name": "The dropped lamp"
+    },
+    {
+      "id": "the_warm_wall",
+      "name": "The warm wall",
+      "leads_to": "awaken:ember_mines/heart_seam"
+    }
+  ],
+  "keepsake": "dropped_lamp",
+  "keepsake_name": "The Dropped Lamp",
+  "keepsake_from": "the_dropped_lamp"
+}

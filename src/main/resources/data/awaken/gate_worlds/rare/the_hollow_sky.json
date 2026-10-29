@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "theme": "sky_archipelago",
+  "name": "The Hollow Sky",
+  "line": "Islands in an empty sky, and the biggest one is resting in the open hand of a giant made of stone.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "open",
+  "tall": true,
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "lid": 18,
+    "isles": 1,
+    "clouds": 24,
+    "under": 30,
+    "tunnel": 1.6
+  },
+  "biome": "awaken:gate_world/the_hollow_sky",
+  "moods": [
+    {
+      "id": "still_air",
+      "name": "Still air",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "wind"
+      ]
+    },
+    {
+      "id": "evening",
+      "name": "Evening",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_hollow_sky_evening",
+      "life": [
+        "wind",
+        "stars"
+      ]
+    }
+  ],
+  "blocks": {},
+  "hero": [],
+  "life": [
+    "wind",
+    "dust"
+  ],
+  "sound": "awaken:gate.world.sky_high",
+  "events": [
+    "gale",
+    "sunburst"
+  ],
+  "rule": "winds",
+  "secrets": [
+    {
+      "id": "the_palm",
+      "name": "The giant's palm"
+    }
+  ],
+  "keepsake": "stone_finger",
+  "keepsake_name": "A Stone Fingertip",
+  "keepsake_from": "the_palm"
+}

@@ -46,6 +46,12 @@ public final class WorldRules {
 
     static void clear() {
         LAST.clear();
+        WorldThemes.clear();
+    }
+
+    /** A touchstone (a theme's rule block, SPEC §38.10) was hit or used. True when a world's rule answered. */
+    public static boolean touch(ServerPlayer p, BlockPos pos) {
+        return WorldThemes.touch(p, pos);
     }
 
     /** Bronze was struck. True when a world's rule answered (the bell rang). */
@@ -70,6 +76,7 @@ public final class WorldRules {
             boolean hand = bell != null && bell.id().equals(FloorLayout.Mark.HANDBELL);
             level.playSound(null, pos, bell == null ? GatesRegistry.SND_WORLD_STRIKE.get() : WorldLive.voice(bell), SoundSource.BLOCKS,
                     hand ? 1.4F : 2.5F, bell == null ? 1F : WorldLive.pitch(bell) * (0.96F + p.getRandom().nextFloat() * 0.08F));
+            if (bell != null && !hand) WorldProps.swing(g, f, bell, 0.7F);
         }
         List<ServerPlayer> near = WorldLive.near(level, g, f, pos, SHOW_R);
         if (!near.contains(p)) near.add(p);
@@ -92,6 +99,12 @@ public final class WorldRules {
 
     /** The way on, shown for a moment: a run of glints from the bell through the next few doorways toward the end. */
     static void show(ServerLevel level, GateRecord g, FloorLayout f, Room from, BlockPos pos, List<ServerPlayer> to) {
+        show(level, g, f, from, pos, to, GatesRegistry.P_GLINT.get());
+    }
+
+    /** The way on in a world's own light (spores, cinders, pollen, fireflies). */
+    static void show(ServerLevel level, GateRecord g, FloorLayout f, Room from, BlockPos pos, List<ServerPlayer> to,
+                     net.minecraft.core.particles.ParticleOptions mote) {
         List<Vec3> pts = way(g, f, from, pos);
         List<Vec3> trail = new ArrayList<>();
         for (int i = 0; i + 1 < pts.size() && trail.size() < SHOW_POINTS; i++) {
@@ -104,7 +117,7 @@ public final class WorldRules {
             WorldLive.later(i / 3, () -> {
                 for (ServerPlayer p : to) {
                     if (!p.isAlive()) continue;
-                    for (Vec3 v : batch) level.sendParticles(p, GatesRegistry.P_GLINT.get(), true, false, v.x, v.y, v.z, 1, 0.08, 0.08, 0.08, 0.005);
+                    for (Vec3 v : batch) level.sendParticles(p, mote, true, false, v.x, v.y, v.z, 1, 0.08, 0.08, 0.08, 0.005);
                 }
             });
         }

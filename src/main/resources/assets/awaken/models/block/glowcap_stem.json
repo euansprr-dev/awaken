@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "awaken:block/glowcap_stem",
+    "end": "awaken:block/glowcap_stem_top"
+  }
+}

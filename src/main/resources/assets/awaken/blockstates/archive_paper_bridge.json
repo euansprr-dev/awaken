@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "open=false": {
+      "model": "awaken:block/archive_paper_bridge"
+    },
+    "open=true": {
+      "model": "awaken:block/archive_paper_bridge_open"
+    }
+  }
+}

@@ -163,6 +163,11 @@ final class GateEvents {
             return;
         }
         if (!GateService.isGateLevel(e.getLevel())) return;
+        // a swinging bell is made again when someone comes near; one saved with its chunk leaves (SPEC §38.6)
+        if (e.loadedFromDisk() && dev.awaken.gates.worlds.WorldProps.prop(e.getEntity())) {
+            e.setCanceled(true);
+            return;
+        }
         if (e.getLevel() instanceof ServerLevel gl && staleInCell(gl, e.getEntity(), e.loadedFromDisk())) {
             e.setCanceled(true);
             return;

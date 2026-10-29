@@ -138,6 +138,19 @@ public final class Rooms {
         return e;
     }
 
+    /**
+     * A world's signature creature (SPEC §38.8) with a body of its own from the mobs module, made a monster of this
+     * floor like any other; null when the mobs module has no such creature yet (the caller makes do with an elite).
+     */
+    public static LivingEntity signature(ServerLevel level, GateRecord g, FloorLayout f, int roomKey, String creature, BlockPos pos) {
+        int lv = g.scripted ? 0 : Progression.contentLevel(g.plan.rank());
+        LivingEntity e = MobHooks.spawnCreature(level, creature, pos, lv, g.key());
+        if (e == null) return null;
+        GateMobs.register(e, new GateMobs.Key(g.id, f.area, f.floor, roomKey));
+        Modifiers.onSpawn(g, e);
+        return e;
+    }
+
     /** A Lord met by a party: +50% health per extra player (the hoard is already one per player). */
     static void partyLord(LivingEntity e, int party) {
         if (party <= 1) return;
@@ -214,6 +227,16 @@ public final class Rooms {
         return n;
     }
 
+    /**
+     * A calm world (a rare world whose recipe says {@code calm}, SPEC §38.13): nothing in it to fight. Its rooms wake empty
+     * and stand open, and the gate's clock doesn't press you there.
+     */
+    public static boolean calm(FloorLayout f, Room r) {
+        String id = f.worldOf(r);
+        dev.awaken.gates.worlds.GateWorld w = id == null || id.isEmpty() ? null : dev.awaken.gates.worlds.GateWorlds.get(id);
+        return w != null && w.param("calm", 0) > 0;
+    }
+
     // ---- triggers ---------------------------------------------------------------------------------------------------
 
     /** Populate the current room and its connected neighbours before a player reaches their doorways. */
@@ -259,7 +282,7 @@ public final class Rooms {
             for (int zone = 0; zone < r.area(); zone++) {
                 int key = cavernKey(r, zone);
                 if (fs.prepared.contains(key) || fs.clearedRooms.contains(key)) continue;
-                int count = Hash.unit(r.seed, zone, 3) < 0.6 ? Math.max(1, Math.round(r.normals * 1.6F / r.area())) : 0;
+                int count = calm(f, r) ? 0 : Hash.unit(r.seed, zone, 3) < 0.6 ? Math.max(1, Math.round(r.normals * 1.6F / r.area())) : 0;
                 spawnGroup(level, g, f, r, key, count, count > 0 && zone % 7 == 3 ? 1 : 0, zone * 3);
                 if (fs.pendingCompanies.containsKey(key)) complete = false;
                 else fs.prepared.add(key);
@@ -269,7 +292,7 @@ public final class Rooms {
             if (r.type == Room.Type.BOSS) {
                 Twists.prepareBoss(level, g, f, r);
                 resumeGroup(level, g, f, r, r.id);
-            } else if (r.type.combat()) {
+            } else if (r.type.combat() && !calm(f, r)) {
                 if (r.type == Room.Type.ARENA) fs.waves.putIfAbsent(r.id, 1);
                 spawnGroup(level, g, f, r, r.id, r.normals, r.elites, 0);
             }
@@ -300,7 +323,8 @@ public final class Rooms {
             return;
         }
         GateRegistry.get(level.getServer()).setDirty();
-        switch (r.type) {
+        Room.Type type = r.type == Room.Type.ARENA && calm(f, r) ? Room.Type.NORMAL : r.type;
+        switch (type) {
             case ARENA -> {
                 if (GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) == 0 && fs.pendingCompanies.containsKey(r.id)) break;
                 gatherParty(level, p, g, f, r);
@@ -417,9 +441,11 @@ public final class Rooms {
             String[] af = e.getKey().split(":");
             FloorLayout f = l.floor(Integer.parseInt(af[0]), Integer.parseInt(af[1]));
             if (f == null) continue;
+            // each floor in its own level (an open land's bars stand under the sky)
+            ServerLevel at = GateService.levelOf(level.getServer(), f);
             for (int id : List.copyOf(fs.locked)) {
                 Room r = f.room(id);
-                if (r != null) lock(level, g, f, r, false);
+                if (r != null) lock(at != null ? at : level, g, f, r, false);
                 else fs.locked.remove(id);
             }
         }
@@ -479,7 +505,7 @@ public final class Rooms {
         }
         if (r.type == Room.Type.ARENA) {
             int wave = fs.waves.getOrDefault(r.id, 1);
-            if (wave == 1 && r.wave2Normals + r.wave2Elites > 0) {
+            if (wave == 1 && r.wave2Normals + r.wave2Elites > 0 && !calm(f, r)) {
                 fs.waves.put(r.id, 2);
                 GateRegistry.get(level.getServer()).setDirty();
                 // Capacity-delayed members remain pending; a wave with no spawnable bodies must never leave an empty sealed arena.

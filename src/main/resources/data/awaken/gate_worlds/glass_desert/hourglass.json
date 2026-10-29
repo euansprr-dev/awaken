@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "theme": "glass_desert",
+  "name": "The Hourglass",
+  "line": "A little city at the bottom of an hourglass, with sand falling on it from the neck above.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "roof": 16
+  },
+  "biome": "awaken:gate_world/hourglass",
+  "moods": [],
+  "blocks": {
+    "floor": "awaken:desert_sand",
+    "floor_rippled": "awaken:desert_sand_rippled",
+    "wall": "awaken:desert_sandstone",
+    "wall_glow": "awaken:desert_sandstone_carved",
+    "trim": "awaken:desert_sandstone_carved",
+    "brick": "awaken:desert_brick",
+    "tile": "awaken:desert_tile",
+    "column": "awaken:desert_column",
+    "glass": "awaken:desert_glass",
+    "glass_glow": "awaken:desert_glass_glowing",
+    "crystal": "awaken:desert_crystal",
+    "grass": "awaken:desert_grass",
+    "fall": "awaken:desert_sandfall",
+    "touch": "awaken:desert_mirror",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_neck"
+  ],
+  "life": [
+    "sand",
+    "dust"
+  ],
+  "sound": "awaken:gate.world.desert_city",
+  "events": [],
+  "rule": "sun",
+  "secrets": [
+    {
+      "id": "the_neck",
+      "name": "Under the neck"
+    }
+  ],
+  "keepsake": "hourglass_sand",
+  "keepsake_name": "A Pinch of the Hourglass's Sand",
+  "keepsake_from": "the_neck"
+}

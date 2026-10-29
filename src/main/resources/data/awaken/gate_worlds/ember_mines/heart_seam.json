@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "theme": "ember_mines",
+  "name": "The Heart Seam",
+  "line": "You're inside a geode of living ember. It's warm, like standing next to a heartbeat.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "roof": 10,
+    "wobble": 2.6
+  },
+  "biome": "awaken:gate_world/heart_seam",
+  "moods": [],
+  "blocks": {
+    "wall": "awaken:ember_basalt",
+    "wall_glow": "awaken:ember_basalt_cracked",
+    "floor": "awaken:ember_ash",
+    "slag": "awaken:ember_slag",
+    "trim": "awaken:mine_planks",
+    "timber": "awaken:mine_timber",
+    "planks": "awaken:mine_planks",
+    "lamp": "awaken:mine_lamp",
+    "crust": "awaken:magma_crust",
+    "crystal": "awaken:ember_crystal",
+    "fall": "awaken:ember_moltenfall",
+    "touch": "awaken:ember_bellows",
+    "fluid": "minecraft:lava"
+  },
+  "hero": [
+    "ember_geode"
+  ],
+  "life": [
+    "embers",
+    "smoke"
+  ],
+  "sound": "awaken:gate.world.mine_sea",
+  "events": [],
+  "rule": "embers",
+  "secrets": [
+    {
+      "id": "the_heart",
+      "name": "The heart of the seam"
+    }
+  ],
+  "keepsake": "ember_heart",
+  "keepsake_name": "The Ember Heart",
+  "keepsake_from": "the_heart"
+}

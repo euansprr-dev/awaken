@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "theme": "hive",
+  "name": "The Comb",
+  "line": "Six-sided tunnels, and honey dripping from every roof.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "hex": 1,
+    "roof": 10,
+    "wobble": 0.4
+  },
+  "biome": "awaken:gate_world/the_comb",
+  "moods": [
+    {
+      "id": "drowsy",
+      "name": "Drowsy",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "swarming",
+      "name": "Swarming",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/the_comb_swarming",
+      "life": [
+        "fireflies",
+        "dust"
+      ]
+    },
+    {
+      "id": "harvest",
+      "name": "Harvest",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/the_comb_harvest",
+      "life": [
+        "drips",
+        "petals"
+      ]
+    },
+    {
+      "id": "wax_moon",
+      "name": "Wax moon",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/the_comb_wax_moon",
+      "life": [
+        "fireflies",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:hive_wax",
+    "rim": "awaken:hive_wax_dark",
+    "wall_glow": "awaken:hive_comb",
+    "capped": "awaken:hive_comb_capped",
+    "honey": "awaken:hive_honey_glow",
+    "floor": "awaken:hive_floor",
+    "floor_soft": "awaken:hive_pollen",
+    "trim": "awaken:hive_wax_dark",
+    "drip": "awaken:hive_drip",
+    "touch": "awaken:hive_drum",
+    "royal": "awaken:hive_royal",
+    "petals": "awaken:hive_petals",
+    "candle": "awaken:hive_candle",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "honey_pools"
+  ],
+  "life": [
+    "drips",
+    "dust",
+    "fireflies"
+  ],
+  "sound": "awaken:gate.world.hive_comb",
+  "events": [
+    "the_hum"
+  ],
+  "rule": "hum",
+  "secrets": [
+    {
+      "id": "humming_drum",
+      "name": "The humming drum"
+    },
+    {
+      "id": "sealed_cell",
+      "name": "The sealed cell"
+    },
+    {
+      "id": "the_sweet_air",
+      "name": "The sweet air",
+      "leads_to": "awaken:hive/queens_garden"
+    }
+  ],
+  "keepsake": "sealed_honey",
+  "keepsake_name": "A Jar of Sealed Honey",
+  "keepsake_from": "sealed_cell"
+}

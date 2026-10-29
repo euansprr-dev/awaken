@@ -2,6 +2,7 @@ package dev.awaken.gates.worlds;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.AwakenConfig;
+import dev.awaken.gates.GateService;
 import dev.awaken.gates.GatesRegistry;
 import dev.awaken.gates.content.FloorWorld;
 import dev.awaken.gates.content.GatePlan;
@@ -46,10 +47,10 @@ public final class GateWorlds {
         return defs.get(id);
     }
 
-    /** A theme's worlds in id order. */
+    /** A theme's worlds in id order (a rare world belongs to no theme's set, whatever its recipe names: SPEC §38.13). */
     public static List<String> ofTheme(Theme t) {
         List<String> out = new ArrayList<>();
-        for (var e : defs.entrySet()) if (e.getValue().theme() == t) out.add(e.getKey());
+        for (var e : defs.entrySet()) if (e.getValue().theme() == t && e.getValue().tier() != GateWorld.Tier.RARE) out.add(e.getKey());
         return out;
     }
 
@@ -90,7 +91,10 @@ public final class GateWorlds {
             ServerPlayer p = server.getPlayerList().getPlayer(owner.get());
             if (p != null) atlas = p.getData(GatesRegistry.ATLAS.get());
         }
-        return dress(plan, atlas, Set.copyOf(AwakenConfig.GATE_WORLDS_OFF.get()));
+        Set<String> off = new HashSet<>(AwakenConfig.GATE_WORLDS_OFF.get());
+        // open lands need the open-sky gate dimension (SPEC 38.11); a server without it never picks them
+        if (!GateService.hasSky(server)) for (var e : defs.entrySet()) if (e.getValue().open()) off.add(e.getKey());
+        return dress(plan, atlas, off);
     }
 
     /**
@@ -113,12 +117,25 @@ public final class GateWorlds {
             // the annex's second floor is always a Lord's (the inner gate's keeper, or the Double Gate's echo)
             floors.add(new int[]{1, 2, 1});
         }
+        // an open land (38.11) takes a whole quadrant column, so no other floor stands over its sky: only while the gate
+        // has columns to spare (tall floors get them earliest first, as Plots.assign grants them)
+        int columns = Math.min(4, 8 - floors.size()), talls = 0;
+        Set<String> noOpen = null;
         for (int[] af : floors) {
             Theme theme = af[0] == 0 ? plan.theme() : plan.annexTheme();
             boolean boss = af[2] == 1;
-            String id = pickWorld(plan, theme, boss, atlas, off, used, prev, rng);
+            Set<String> offHere = off;
+            if (talls >= columns) {
+                if (noOpen == null) {
+                    noOpen = new HashSet<>(off);
+                    for (var e : defs.entrySet()) if (e.getValue().open()) noOpen.add(e.getKey());
+                }
+                offHere = noOpen;
+            }
+            String id = pickWorld(plan, theme, boss, atlas, offHere, used, prev, rng);
             if (id == null) continue;
             GateWorld w = defs.get(id);
+            if (w.tall()) talls++;
             out.add(new FloorWorld(af[0], af[1], id, pickMood(id, w, atlas, rng), w.tall()));
             used.add(id);
             prev = id;

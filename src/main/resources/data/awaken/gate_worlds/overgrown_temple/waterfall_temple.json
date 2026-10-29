@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "theme": "overgrown_temple",
+  "name": "The Waterfall Temple",
+  "line": "A temple built beside a waterfall sixty blocks high.",
+  "tier": "deep",
+  "rarity": "uncommon",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "tower": 60,
+    "roof": 14
+  },
+  "biome": "awaken:gate_world/waterfall_temple",
+  "moods": [
+    {
+      "id": "still",
+      "name": "Still",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "monsoon",
+      "name": "Monsoon",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/waterfall_temple_monsoon",
+      "life": [
+        "rain"
+      ]
+    },
+    {
+      "id": "fireflies",
+      "name": "Fireflies",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/waterfall_temple_fireflies",
+      "life": [
+        "fireflies"
+      ]
+    },
+    {
+      "id": "overgrowth",
+      "name": "Overgrowth",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/waterfall_temple_overgrowth",
+      "life": [
+        "petals",
+        "spores"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:temple_stone",
+    "wall_mossy": "awaken:temple_stone_mossy",
+    "carving": "awaken:temple_carving",
+    "floor": "awaken:temple_tiles",
+    "trim": "awaken:temple_carving",
+    "root": "awaken:temple_root",
+    "vines": "awaken:temple_vines",
+    "moss": "awaken:temple_moss",
+    "touch": "awaken:temple_brazier",
+    "idol": "awaken:temple_idol",
+    "fern": "awaken:temple_fern",
+    "bulb": "awaken:temple_lantern_bulb",
+    "canopy": "awaken:temple_canopy",
+    "fall": "awaken:temple_waterfall",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_fall"
+  ],
+  "life": [
+    "drips",
+    "mist",
+    "fireflies",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.temple_falls",
+  "events": [
+    "the_rains",
+    "the_wakening"
+  ],
+  "rule": "offerings",
+  "secrets": [
+    {
+      "id": "first_offering",
+      "name": "The first offering"
+    },
+    {
+      "id": "behind_the_water",
+      "name": "Behind the water"
+    }
+  ],
+  "keepsake": "falls_pearl",
+  "keepsake_name": "A Pearl from Behind the Falls",
+  "keepsake_from": "behind_the_water"
+}

@@ -62,6 +62,7 @@ public final class GateWorldTests {
     }
 
     public static void register() {
+        registerRare();
         AwakenTests.register("gateworlds_plots", 600, h -> {
             for (int i = 0; i < PLANS; i++) {
                 GatePlan p = plan(i, GatePlan.CONTENT_VERSION);
@@ -184,7 +185,8 @@ public final class GateWorldTests {
             for (var e : GateWorlds.all().entrySet()) {
                 GateWorld w = e.getValue();
                 h.assertTrue(w.problem().isEmpty() && w.schema() == GateWorld.SCHEMA, e.getKey() + ": " + w.problem());
-                h.assertTrue(e.getKey().contains(w.theme().id + "/"), e.getKey() + " lives in its theme's folder");
+                h.assertTrue(e.getKey().contains((w.tier() == GateWorld.Tier.RARE ? "rare" : w.theme().id) + "/"),
+                        e.getKey() + " lives in its theme's folder (a rare world in rare/)");
                 List<String> ids = new ArrayList<>();
                 ids.add(w.biome());
                 for (GateWorld.Mood m : w.moods()) ids.add(w.biomeFor(m.id()));
@@ -268,6 +270,111 @@ public final class GateWorldTests {
             }
             h.succeed();
         });
+    }
+
+    /** The rare worlds (SPEC §38.13): the director's rare pool, the looks they wear, the turned colours and the calm. */
+    static void registerRare() {
+        AwakenTests.register("gateworlds_rare", 600, h -> {
+            List<String> rare = new ArrayList<>();
+            for (var e : GateWorlds.all().entrySet()) if (e.getValue().tier() == GateWorld.Tier.RARE) rare.add(e.getKey());
+            h.assertTrue(rare.size() == 15, "fifteen rare worlds load (" + rare.size() + ")");
+            for (String id : rare) {
+                GateWorld w = GateWorlds.get(id);
+                h.assertTrue(w.group().equals("rare_worlds") && !GateWorlds.ofTheme(w.theme()).contains(id), id + " is in the rare group, in no theme's set");
+                h.assertTrue(!w.boss() && w.rankFrom() == Rank.B.ordinal(), id + " holds no Lord and opens at B");
+            }
+            // rolled on about one floor in 25 of any theme's gate from rank B, never below it, never a Lord's floor
+            int floors = 0, rares = 0, low = 0;
+            Set<Theme> seenIn = new HashSet<>();
+            for (int g = 0; g < 600; g++) {
+                Theme t = Theme.values()[g % Theme.values().length];
+                Rank rank = Rank.of(g % 5);
+                GatePlan p = new GatePlan(0x8A3EL + g * 7919L, GatePlan.CONTENT_VERSION, rank, t, Layout.LABYRINTH, List.of(), Twist.NONE, 4,
+                        t.bossId(), Theme.HIVE, 0);
+                for (FloorWorld fw : GateWorlds.dress(p, new GateAtlas(), Set.of()).worlds()) {
+                    boolean isRare = rare.contains(fw.world());
+                    if (rank.ordinal() < Rank.B.ordinal()) {
+                        if (isRare) low++;
+                        continue;
+                    }
+                    h.assertTrue(!isRare || fw.floor() < 4, "a rare world never takes the Lord's floor: " + p);
+                    if (fw.floor() == 4) continue;
+                    floors++;
+                    if (isRare) {
+                        rares++;
+                        seenIn.add(t);
+                    }
+                }
+            }
+            h.assertTrue(low == 0, low + " rare worlds below rank B");
+            h.assertTrue(rares >= floors / 100 && rares <= floors / 10, "about one floor in 25 is rare: " + rares + " of " + floors);
+            h.assertTrue(seenIn.size() >= 4, "rare worlds turn up in many themes' gates: " + seenIn);
+            // the looks: the Reflection wears the gate it's in (a cave theme's, else the Mirror Palace's); the Other Gate
+            // wears a cave theme that isn't the gate's; the twisted worlds wear their theme's world
+            String refl = "awaken:rare/the_reflection", other = "awaken:rare/the_other_gate";
+            for (Theme t : Theme.values()) {
+                String look = Dress.look(refl, GateWorlds.get(refl), t, 7);
+                Theme want = Dress.BORROWS.contains(t) ? t : Theme.MIRROR_PALACE;
+                h.assertTrue(look != null && GateWorlds.get(look).theme() == want && GateWorlds.get(look).kind().equals("caves"),
+                        "the Reflection in a " + t.id + " gate wears " + look);
+                for (long seed = 0; seed < 12; seed++) {
+                    String o = Dress.look(other, GateWorlds.get(other), t, seed);
+                    h.assertTrue(o != null && GateWorlds.get(o).theme() != t && Dress.BORROWS.contains(GateWorlds.get(o).theme()),
+                            "the Other Gate in a " + t.id + " gate wears " + o);
+                }
+            }
+            for (var e : Dress.TWISTS.entrySet())
+                h.assertTrue(GateWorlds.get(e.getValue()) != null && rare.contains("awaken:rare/" + e.getKey()), e.getKey() + " wears " + e.getValue());
+            h.assertTrue(Dress.look("awaken:rare/the_quiet", GateWorlds.get("awaken:rare/the_quiet"), Theme.HIVE, 1) == null, "the Quiet wears its own look");
+            // a calm world has nothing to fight and no clock: the Quiet and the Campfire, and no other world
+            for (String id : List.of("awaken:rare/the_quiet", "awaken:rare/the_last_campfire", "awaken:rare/upward_rain", "awaken:hive/the_comb")) {
+                GateWorld w = GateWorlds.get(id);
+                GatePlan p = GateWorldBellTests.dressed(GateWorldBellTests.plan(0xCA1L, 3, w.theme()), id, w.moods().get(0).id());
+                boolean calm = id.endsWith("the_quiet") || id.endsWith("the_last_campfire");
+                int seen = 0;
+                for (FloorLayout f : FloorBuilder.build(p).main) {
+                    if (!f.isWorld()) continue;
+                    seen++;
+                    h.assertTrue(dev.awaken.gates.run.Rooms.calm(f, null) == calm, id + (calm ? " is calm" : " isn't calm"));
+                    for (Room r : f.rooms) h.assertTrue(dev.awaken.gates.run.Rooms.calm(f, r) == calm, id + "'s room " + r.id + " is as calm as its floor");
+                }
+                h.assertTrue(seen > 0, id + " was built");
+            }
+            h.succeed();
+        });
+        AwakenTests.register("gateworlds_tint", 40, h -> {
+            // the Reflection greys every full block by its brightness and turns its lights red; the Other Gate turns colours
+            // round the wheel into concrete and terracotta; the kept patch and anything not a full block pass untouched
+            var grey = new Tint(Tint.Way.GREY);
+            var red = net.minecraft.world.level.block.Blocks.RED_MUSHROOM_BLOCK.defaultBlockState();
+            var torch = net.minecraft.world.level.block.Blocks.TORCH.defaultBlockState();
+            Set<String> greys = Set.of("minecraft:white_concrete", "minecraft:light_gray_concrete", "minecraft:gray_concrete", "minecraft:black_concrete");
+            h.assertTrue(greys.contains(key(grey.at(40, 70, 40, red))), "a red block goes grey: " + key(grey.at(40, 70, 40, red)));
+            h.assertTrue(key(grey.at(40, 70, 40, net.minecraft.world.level.block.Blocks.SNOW_BLOCK.defaultBlockState())).equals("minecraft:white_concrete"),
+                    "snow goes white");
+            h.assertTrue(key(grey.at(40, 70, 40, net.minecraft.world.level.block.Blocks.GLOWSTONE.defaultBlockState())).equals("awaken:rare_red_light"),
+                    "a light goes red");
+            h.assertTrue(grey.at(40, 70, 40, torch) == torch, "a torch isn't a full block: it stays");
+            grey.keep(10.5, 10.5, 4.5);
+            h.assertTrue(grey.at(10, 70, 12, red) == red && grey.at(10, 0, 10, red) == red, "the kept patch keeps its colours, all the way up");
+            h.assertTrue(grey.at(16, 70, 10, red) != red, "outside it they're grey");
+            var turn = new Tint(Tint.Way.TURN);
+            var grass = net.minecraft.world.level.block.Blocks.MOSS_BLOCK.defaultBlockState();
+            String turned = key(turn.at(0, 0, 0, grass));
+            h.assertTrue((turned.endsWith("_concrete") || turned.endsWith("_terracotta")) && !turned.contains("green") && !turned.contains("lime"),
+                    "moss turns to another colour: " + turned);
+            h.assertTrue(turn.at(5, 9, 5, grass) == turn.at(0, 0, 0, grass), "the same block always turns the same");
+            String light = key(turn.at(0, 0, 0, net.minecraft.world.level.block.Blocks.GLOWSTONE.defaultBlockState()));
+            h.assertTrue(turn.at(0, 0, 0, net.minecraft.world.level.block.Blocks.GLOWSTONE.defaultBlockState()).getLightEmission() > 0,
+                    "a light stays a light: " + light);
+            int c = Tint.turn(0xff0000, 150);
+            h.assertTrue((c & 0xff) > (c >> 16 & 0xff) && (c >> 8 & 0xff) > (c >> 16 & 0xff), "red turns towards blue-green: " + Integer.toHexString(c));
+            h.succeed();
+        });
+    }
+
+    static String key(BlockState s) {
+        return BuiltInRegistries.BLOCK.getKey(s.getBlock()).toString();
     }
 
     static GateWorld world(GateWorld.Tier tier, List<String> roles, boolean tall) {

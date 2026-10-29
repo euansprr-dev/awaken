@@ -29,13 +29,20 @@
       "id": "requiem",
       "name": "Requiem",
       "weight": 1.5,
-      "biome": "awaken:gate_world/ossuary_ways_requiem"
+      "biome": "awaken:gate_world/ossuary_ways_requiem",
+      "life": [
+        "procession"
+      ]
     },
     {
       "id": "storm",
       "name": "Storm",
       "weight": 1.5,
-      "biome": "awaken:gate_world/ossuary_ways_storm"
+      "biome": "awaken:gate_world/ossuary_ways_storm",
+      "life": [
+        "rain",
+        "lightning"
+      ]
     }
   ],
   "blocks": {
@@ -62,7 +69,9 @@
   "life": [
     "moths",
     "rats",
-    "drips"
+    "drips",
+    "smoke",
+    "shaft_dust"
   ],
   "residents": "niche_watchers",
   "sound": "awaken:gate.world.ossuary",

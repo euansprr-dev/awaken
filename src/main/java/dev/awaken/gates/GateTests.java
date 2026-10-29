@@ -261,25 +261,29 @@ final class GateTests {
         AwakenTests.register("gates_dimension_json", 20, h -> {
             var server = h.getLevel().getServer();
             var ops = RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE, server.registryAccess());
-            var res = server.getResourceManager().getResource(dev.awaken.Awaken.id("dimension/gates.json"));
-            h.assertTrue(res.isPresent(), "dimension/gates.json is in the mod's data");
-            try (var reader = res.get().openAsReader()) {
-                var json = com.google.gson.JsonParser.parseReader(reader);
-                var stem = net.minecraft.world.level.dimension.LevelStem.CODEC.parse(ops, json).getOrThrow();
-                h.assertTrue(stem.generator() instanceof dev.awaken.gates.world.GateChunkGenerator, "generator is the gate cell generator");
-                var source = stem.generator().getBiomeSource();
-                h.assertTrue(source instanceof dev.awaken.gates.world.GateBiomeSource, "biome source is cell-aware");
-                // one biome per theme, the void, and every world's own and its moods' (SPEC §38.6)
-                java.util.Set<String> worlds = new java.util.HashSet<>();
-                for (var w : dev.awaken.gates.worlds.GateWorlds.all().values()) {
-                    if (!w.biome().isEmpty()) worlds.add(w.biome());
-                    for (var m : w.moods()) if (!m.biome().isEmpty()) worlds.add(m.biome());
+            // the gates' own dimension, and the open sky's (38.11) with the same generator and biomes under a real sky
+            for (String dim : List.of("gates", "gates_sky")) {
+                var res = server.getResourceManager().getResource(dev.awaken.Awaken.id("dimension/" + dim + ".json"));
+                h.assertTrue(res.isPresent(), "dimension/" + dim + ".json is in the mod's data");
+                try (var reader = res.get().openAsReader()) {
+                    var json = com.google.gson.JsonParser.parseReader(reader);
+                    var stem = net.minecraft.world.level.dimension.LevelStem.CODEC.parse(ops, json).getOrThrow();
+                    h.assertTrue(stem.generator() instanceof dev.awaken.gates.world.GateChunkGenerator, "generator is the gate cell generator");
+                    var source = stem.generator().getBiomeSource();
+                    h.assertTrue(source instanceof dev.awaken.gates.world.GateBiomeSource, "biome source is cell-aware");
+                    // one biome per theme, the void, and every world's own and its moods' (SPEC §38.6)
+                    java.util.Set<String> worlds = new java.util.HashSet<>();
+                    for (var w : dev.awaken.gates.worlds.GateWorlds.all().values()) {
+                        if (!w.biome().isEmpty()) worlds.add(w.biome());
+                        for (var m : w.moods()) if (!m.biome().isEmpty()) worlds.add(m.biome());
+                    }
+                    h.assertTrue(source.possibleBiomes().size() == Theme.values().length + 1 + worlds.size(),
+                            "one biome per theme, the void and each world's, was " + source.possibleBiomes().size());
+                    h.assertTrue(stem.type().value().minY() == 0 && stem.type().value().height() == 256, "dimension height");
+                    h.assertTrue(stem.type().value().hasSkyLight() == dim.equals("gates_sky"), dim + " has sky light only under the open sky");
+                } catch (java.io.IOException e) {
+                    h.fail("could not read the dimension " + dim + ": " + e);
                 }
-                h.assertTrue(source.possibleBiomes().size() == Theme.values().length + 1 + worlds.size(),
-                        "one biome per theme, the void and each world's, was " + source.possibleBiomes().size());
-                h.assertTrue(stem.type().value().minY() == 0 && stem.type().value().height() == 256, "dimension height");
-            } catch (java.io.IOException e) {
-                h.fail("could not read the dimension: " + e);
             }
             h.succeed();
         });

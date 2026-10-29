@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=false": {
+      "model": "awaken:block/pocket_engine"
+    },
+    "powered=true": {
+      "model": "awaken:block/pocket_engine_on"
+    }
+  }
+}

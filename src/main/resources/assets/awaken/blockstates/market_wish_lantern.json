@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/market_wish_lantern"
+    },
+    "lit=true": {
+      "model": "awaken:block/market_wish_lantern_lit"
+    }
+  }
+}

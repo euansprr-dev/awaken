@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/archive_lectern"
+    },
+    "lit=true": {
+      "model": "awaken:block/archive_lectern_lit"
+    }
+  }
+}

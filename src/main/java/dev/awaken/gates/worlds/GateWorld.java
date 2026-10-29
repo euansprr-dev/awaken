@@ -7,6 +7,7 @@ import dev.awaken.gates.content.Theme;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * One world's recipe (SPEC §38, "Recipes"): {@code data/awaken/gate_worlds/<theme>/<world>.json}, read by its engine.
@@ -18,6 +19,13 @@ public record GateWorld(int schema, Theme theme, String name, String line, Tier 
                         List<String> roles, int mastery, double weight, boolean enabled, String biome, List<Mood> moods,
                         Map<String, Double> params, Dressing dressing) {
     public static final int SCHEMA = 1;
+    /**
+     * Every kind of life and air a recipe or a mood may name (SPEC §38.9): creatures the client keeps near you, and the
+     * air's own sprites and sounds.
+     */
+    public static final Set<String> LIFE = Set.of("moths", "bats", "pale_fish", "rats", "dust", "drips",
+            "shaft_dust", "mist", "smoke", "rain", "lightning", "procession", "far_toll",
+            "ash", "snow", "petals", "paper", "sand", "spores", "embers", "fireflies", "steam", "wind", "stars", "rain_up");
 
     /** Where a world sits in its theme: two everyday worlds, a deep one, a wonder, a secret one; rare ones in any gate. */
     public enum Tier {
@@ -58,13 +66,19 @@ public record GateWorld(int schema, Theme theme, String name, String line, Tier 
     }
 
     /** One mood: its id, how it's named on the title card, how often it's picked, and the biome it shows ("" = the world's). */
-    public record Mood(String id, String name, double weight, String biome) {
+    /** A mood: its own biome, and the air and life it adds to the world's (rain in a Storm, ghost lights in a Requiem). */
+    public record Mood(String id, String name, double weight, String biome, List<String> life) {
         public static final Codec<Mood> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("id").forGetter(Mood::id),
                 Codec.STRING.optionalFieldOf("name", "").forGetter(Mood::name),
                 Codec.DOUBLE.optionalFieldOf("weight", 1.0).forGetter(Mood::weight),
-                Codec.STRING.optionalFieldOf("biome", "").forGetter(Mood::biome)
+                Codec.STRING.optionalFieldOf("biome", "").forGetter(Mood::biome),
+                Codec.STRING.listOf().optionalFieldOf("life", List.of()).forGetter(Mood::life)
         ).apply(i, Mood::new));
+
+        public Mood(String id, String name, double weight, String biome) {
+            this(id, name, weight, biome, List.of());
+        }
     }
 
     /** A secret: what the Atlas calls it once found, and where it leads (a secret world's id, or ""). */
@@ -145,14 +159,24 @@ public record GateWorld(int schema, Theme theme, String name, String line, Tier 
         return roles.contains("boss");
     }
 
+    /** An open land under the sky: built in the open-sky gate dimension (SPEC 38.11). */
+    public boolean open() {
+        return kind.equals("open");
+    }
+
     /** Floors of the theme you need to have cleared before the director picks it below its rank (mastery). */
     public int masteryFloors() {
         return mastery >= 0 ? mastery : tier.masteryFloors();
     }
 
-    /** The lowest gate rank it turns up in without mastery. */
+    /** The lowest gate rank it turns up in without mastery (a rare world: rank B in a gate of any theme, SPEC §38.13). */
     public int rankFrom() {
-        return theme.minRank + tier.rankStep();
+        return tier == Tier.RARE ? tier.rankStep() : theme.minRank + tier.rankStep();
+    }
+
+    /** The Atlas group it's shown in: its theme's id, or the rare worlds' own. */
+    public String group() {
+        return tier == Tier.RARE ? "rare_worlds" : theme.id;
     }
 
     public double param(String key, double fallback) {

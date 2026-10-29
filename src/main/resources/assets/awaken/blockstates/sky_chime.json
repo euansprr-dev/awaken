@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/sky_chime"
+    },
+    "lit=true": {
+      "model": "awaken:block/sky_chime_lit"
+    }
+  }
+}

@@ -120,6 +120,19 @@ final class WorldPlan {
         anchors.put(worldRoom, new int[]{x, z});
     }
 
+    /** Within {@code r} of any place's anchor (where its features stand: nothing grows over them). */
+    /** Where the handbells and touchstones asked for so far want to stand (x, z), a copy: they're set last of the carve. */
+    List<int[]> handSpots() {
+        List<int[]> l = new ArrayList<>();
+        for (Hand hd : hands) l.add(new int[]{hd.x(), hd.z()});
+        return l;
+    }
+
+    boolean nearAnchor(double x, double z, double r) {
+        for (int[] a : anchors.values()) if (Math.hypot(x - a[0] - 0.5, z - a[1] - 0.5) < r) return true;
+        return false;
+    }
+
     int[] anchorOf(Room w) {
         int[] a = anchors.get(w.id);
         return a != null ? a : new int[]{w.centerX(), w.centerZ()};
@@ -189,6 +202,11 @@ final class WorldPlan {
      * floor to the top of the world, becomes {@code screen} (stone with grilles, a rood screen), except its doorways.
      */
     void screens(Sculpt s, int baseY, ScreenLook look) {
+        screens(s, baseY, look, s.yHi);
+    }
+
+    /** As {@link #screens(Sculpt, int, ScreenLook)}, up to {@code topY} (an open land's: under its lid). */
+    void screens(Sculpt s, int baseY, ScreenLook look, int topY) {
         for (Room w : b.rooms) {
             if (!sealable(w) || built(w)) continue;
             for (int gx = w.gx; gx < w.gx + w.gw; gx++) {
@@ -198,7 +216,7 @@ final class WorldPlan {
                         if (b.at(nx, nz) == w.id) continue;
                         Room.Door door = null;
                         for (Room.Door d : w.doors) if (d.gx == gx && d.gz == gz && d.side == side) door = d;
-                        screen(s, baseY, w, gx, gz, side, door, look);
+                        screen(s, baseY, w, gx, gz, side, door, look, topY);
                     }
                 }
             }
@@ -210,7 +228,7 @@ final class WorldPlan {
         BlockState at(int lat, int rise, int side);
     }
 
-    private void screen(Sculpt s, int baseY, Room w, int gx, int gz, int side, Room.Door door, ScreenLook look) {
+    private void screen(Sculpt s, int baseY, Room w, int gx, int gz, int side, Room.Door door, ScreenLook look, int topY) {
         int floorY = baseY + w.dy;
         int x0, z0, x1, z1;
         switch (side) {
@@ -220,7 +238,7 @@ final class WorldPlan {
             default -> { z0 = gz * 16; z1 = z0 + 15; x0 = x1 = gx * 16; }
         }
         int dy0 = door == null ? 0 : door.y - w.dy;
-        s.op(x0, floorY - 4, z0, x1, s.yHi, z1, (bb, x, y, z) -> {
+        s.op(x0, floorY - 4, z0, x1, topY, z1, (bb, x, y, z) -> {
             // water is open too: nothing swims under a screen
             if (bb.get(x, y, z) != Sculpt.OPEN && !bb.water(x, y, z)) return;
             int lat = side == 0 || side == 2 ? x - gx * 16 : z - gz * 16;
@@ -254,7 +272,11 @@ final class WorldPlan {
     // ---- finishing ---------------------------------------------------------------------------------------------------
 
     /** What the world adds to the floor beyond its rooms. */
-    record Look(int baseY, String biome, FloorAir air, WorldModel model, float yaw) {}
+    record Look(int baseY, String biome, FloorAir air, WorldModel model, float yaw, boolean sky) {
+        Look(int baseY, String biome, FloorAir air, WorldModel model, float yaw) {
+            this(baseY, biome, air, model, yaw, false);
+        }
+    }
 
     /** Places that are a world of their own (a secret world reached from this one): world room id → world id. */
     final Map<Integer, String> placeWorlds = new HashMap<>(), placeBiomes = new HashMap<>();
@@ -277,8 +299,42 @@ final class WorldPlan {
                 (int) Math.ceil(cz + r) - 1);
     }
 
+    /** Swinging bells a floor holds at most (display entities, SPEC §38.6), and the biggest that swings. */
+    static final int PROPS = 32;
+    static final double PROP_R = 3.2;
+    private int props;
+
+    /**
+     * A hung bell (lip at absolute {@code lipY}, the floor's base {@code base}): while the floor has room for one and it's
+     * small enough it's a prop the live layer swings (a {@code prop} mark, "bell:" + ten times its radius; only its
+     * canon, chains and a light are carved), else it's carved whole. Either way it's a bell mark.
+     */
+    void hungBell(Sculpt s, String id, double cx, int lipY, int base, double cz, double R, int H, int chainTo,
+                  BlockState bronze, BlockState lamp, BlockState chain) {
+        bell(id, cx, lipY - base, cz, R, H);
+        if (props >= PROPS || R > PROP_R) {
+            BellPieces.bell(s, cx, lipY, cz, R, H, chainTo, bronze, lamp, chain, false);
+            return;
+        }
+        props++;
+        mark(FloorLayout.Mark.PROP, "bell:" + Math.round(R * 10), (int) Math.floor(cx - R), lipY - base, (int) Math.floor(cz - R),
+                (int) Math.ceil(cx + R) - 1, lipY - base + H - 1, (int) Math.ceil(cz + R) - 1);
+        BellPieces.hanger(s, cx, lipY, cz, H, chainTo, bronze, WorldMats.light(10), chain);
+    }
+
+    /**
+     * A prop the live layer moves (a gear turning, a planet on its orbit: SPEC §38.11), sharing the floor's budget with the
+     * swinging bells; false when the floor has no room left for one.
+     */
+    boolean prop(String id, int x0, int y0, int z0, int x1, int y1, int z1) {
+        if (props >= PROPS) return false;
+        props++;
+        mark(FloorLayout.Mark.PROP, id, x0, y0, z0, x1, y1, z1);
+        return true;
+    }
+
     /** A handbell waiting for {@link #handbells}: where it's wanted, its turned state, the secret it keeps and that box. */
-    private record Hand(int base, int x, int h, int z, BlockState state, String secret, int[] with) {}
+    private record Hand(int base, int x, int h, int z, BlockState state, String secret, int[] with, boolean touch) {}
 
     private final List<Hand> hands = new ArrayList<>();
 
@@ -292,7 +348,15 @@ final class WorldPlan {
      * y above the base: a niche it opens), or the bell alone when that's null.
      */
     void handbell(BlockState hb, int base, int x, int h, int z, net.minecraft.core.Direction face, String secret, int[] with) {
-        hands.add(new Hand(base, x, h, z, WorldMats.facing(hb, face), secret, with));
+        hands.add(new Hand(base, x, h, z, WorldMats.facing(hb, face), secret, with, false));
+    }
+
+    /**
+     * A world's rule block (a touchstone: SPEC §38.10) set like a handbell, marked {@code touch}; one that keeps a secret
+     * marks it as a handbell does.
+     */
+    void touch(BlockState st, int base, int x, int h, int z, String secret, int[] with) {
+        hands.add(new Hand(base, x, h, z, st, secret, with, true));
     }
 
     /**
@@ -305,8 +369,10 @@ final class WorldPlan {
         for (Hand hd : hands) {
             int[] at = handSpot(s, hd);
             if (at == null) continue;
-            s.putOpen(at[0], hd.base() + hd.h(), at[1], hd.state());
-            mark(FloorLayout.Mark.BELL, FloorLayout.Mark.HANDBELL, at[0], hd.h(), at[1], at[0], hd.h(), at[1]);
+            if (hd.touch()) s.putOverGrowth(at[0], hd.base() + hd.h(), at[1], hd.state());
+            else s.putOpen(at[0], hd.base() + hd.h(), at[1], hd.state());
+            if (hd.touch()) mark(FloorLayout.Mark.TOUCH, "", at[0], hd.h(), at[1], at[0], hd.h(), at[1]);
+            else mark(FloorLayout.Mark.BELL, FloorLayout.Mark.HANDBELL, at[0], hd.h(), at[1], at[0], hd.h(), at[1]);
             if (hd.secret().isEmpty()) continue;
             int[] w = hd.with() != null ? hd.with() : new int[]{at[0], hd.h(), at[1], at[0], hd.h(), at[1]};
             mark(FloorLayout.Mark.SECRET, hd.secret(), Math.min(at[0], Math.min(w[0], w[3])), Math.min(hd.h(), Math.min(w[1], w[4])),
@@ -408,7 +474,7 @@ final class WorldPlan {
             java.util.Set<Long> taken = new java.util.HashSet<>();
             // a feature stands a block clear of every handbell (a vault's bars would close round one)
             for (FloorLayout.Mark m : marks) {
-                if (!m.id().equals(FloorLayout.Mark.HANDBELL)) continue;
+                if (!m.id().equals(FloorLayout.Mark.HANDBELL) && !m.kind().equals(FloorLayout.Mark.TOUCH)) continue;
                 for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) taken.add(((long) (m.x0() + dx) << 32) ^ ((m.z0() + dz) & 0xFFFFFFFFL));
             }
             for (Room L : ls) {
@@ -425,8 +491,11 @@ final class WorldPlan {
             if (L.rig == null) continue;
             Room w = b.rooms.get(host[i]);
             if (w.gw == L.gw && w.gh == L.gh && w.onPath && w.pathIn != null && w.pathOut != null && w.type == L.type) {
+                // the Gravity Wells measure the room's height (38.12), so they're planned again at the programme room's
+                int h0 = w.height;
+                if (L.rig.kind == RigRoom.Kind.GRAVITY_WELLS) w.height = L.height;
                 w.rig = RigRooms.rebuild(b, w, L.rig.kind);
-                if (w.rig != null) w.height = L.height;
+                w.height = w.rig != null ? L.height : h0;
             }
             RigRooms.finish(w);
         }
@@ -443,7 +512,7 @@ final class WorldPlan {
         }
         Plots.Plot plot = ctx.plot();
         return new FloorLayout(ctx.area(), ctx.floor(), look.baseY(), plot.slotX(), plot.slotZ(), b.w, b.h, ctx.theme(), logic.bossFloor,
-                b.rooms, b.start, b.end, new FloorLayout.Frame(plot, plot.minY(), plot.maxY(), null, ctx.worldId(), ctx.mood(), look.biome(), look.air(), look.model(), look.yaw(), placeWorlds, placeBiomes, marks));
+                b.rooms, b.start, b.end, new FloorLayout.Frame(plot, plot.minY(), plot.maxY(), null, ctx.worldId(), ctx.mood(), look.biome(), look.air(), look.model(), look.yaw(), placeWorlds, placeBiomes, marks, look.sky()));
     }
 
     private void spots(Room r, Walk walk) {
@@ -484,18 +553,24 @@ final class WorldPlan {
     // ---- the model -----------------------------------------------------------------------------------------------------
 
     /** A world floor carved from one {@link Sculpt}, its built rooms painted as today and its places' features stamped. */
-    record SculptModel(Sculpt sculpt) implements WorldModel {
+    /** A sculpted floor, its carve passed through a rare world's {@link Tint} when it has one (38.13). */
+    record SculptModel(Sculpt sculpt, Tint tint) implements WorldModel {
+        SculptModel(Sculpt sculpt) {
+            this(sculpt, null);
+        }
+
         @Override
         public void carve(GatePlan plan, FloorLayout f, int slotX, int slotZ, GatePainter.Sink out) {
             int gx = slotX - f.originSlotX, gz = slotZ - f.originSlotZ;
             Room r = f.roomAtSlot(gx, gz);
+            GatePainter.Sink to = tint == null ? out : (x, y, z, s) -> out.set(x, y, z, tint.at(gx * 16 + x, y, gz * 16 + z, s));
             if (r != null && built(r)) {
                 int floorY = f.baseY + r.dy;
-                sculpt.carve(gx, gz, out, floorY - Cells.BAND_BELOW, floorY + Cells.BAND_ABOVE - 1);
+                sculpt.carve(gx, gz, to, floorY - Cells.BAND_BELOW, floorY + Cells.BAND_ABOVE - 1);
                 GatePainter.paintBuilt(plan, f, r, gx, gz, out);
                 return;
             }
-            sculpt.carve(gx, gz, out, 1, 0);
+            sculpt.carve(gx, gz, to, 1, 0);
             if (r != null) GatePainter.paintFeatures(plan, f, r, gx, gz, out);
         }
     }

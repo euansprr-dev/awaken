@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=false": {
+      "model": "awaken:block/humming_cube"
+    },
+    "powered=true": {
+      "model": "awaken:block/humming_cube_on"
+    }
+  }
+}

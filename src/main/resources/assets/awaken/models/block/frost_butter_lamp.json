@@ -1,0 +1,195 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/frost_butter_lamp",
+    "brass": "awaken:block/frost_butter_lamp",
+    "flame": "awaken:block/frost_butter_lamp_flame"
+  },
+  "elements": [
+    {
+      "from": [
+        6.5,
+        0,
+        6.5
+      ],
+      "to": [
+        9.5,
+        1,
+        9.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#brass"
+        },
+        "up": {
+          "texture": "#brass"
+        },
+        "north": {
+          "texture": "#brass"
+        },
+        "south": {
+          "texture": "#brass"
+        },
+        "west": {
+          "texture": "#brass"
+        },
+        "east": {
+          "texture": "#brass"
+        }
+      }
+    },
+    {
+      "from": [
+        7.25,
+        1,
+        7.25
+      ],
+      "to": [
+        8.75,
+        2.5,
+        8.75
+      ],
+      "faces": {
+        "down": {
+          "texture": "#brass"
+        },
+        "up": {
+          "texture": "#brass"
+        },
+        "north": {
+          "texture": "#brass"
+        },
+        "south": {
+          "texture": "#brass"
+        },
+        "west": {
+          "texture": "#brass"
+        },
+        "east": {
+          "texture": "#brass"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        2.5,
+        5
+      ],
+      "to": [
+        11,
+        5,
+        11
+      ],
+      "faces": {
+        "down": {
+          "texture": "#brass"
+        },
+        "up": {
+          "texture": "#brass"
+        },
+        "north": {
+          "texture": "#brass"
+        },
+        "south": {
+          "texture": "#brass"
+        },
+        "west": {
+          "texture": "#brass"
+        },
+        "east": {
+          "texture": "#brass"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        3,
+        8
+      ],
+      "to": [
+        12,
+        13,
+        8
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "y",
+        "angle": 45,
+        "rescale": true
+      },
+      "shade_direction_override": "up",
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            1,
+            12,
+            12
+          ],
+          "texture": "#flame"
+        },
+        "south": {
+          "uv": [
+            4,
+            1,
+            12,
+            12
+          ],
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        8,
+        3,
+        4
+      ],
+      "to": [
+        8,
+        13,
+        12
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "y",
+        "angle": 45,
+        "rescale": true
+      },
+      "shade_direction_override": "up",
+      "faces": {
+        "west": {
+          "uv": [
+            4,
+            1,
+            12,
+            12
+          ],
+          "texture": "#flame"
+        },
+        "east": {
+          "uv": [
+            4,
+            1,
+            12,
+            12
+          ],
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}

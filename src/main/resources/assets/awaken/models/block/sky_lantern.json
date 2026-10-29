@@ -1,0 +1,266 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/sky_lantern",
+    "l": "awaken:block/sky_lantern",
+    "glow": "awaken:block/sky_lantern_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        0,
+        5
+      ],
+      "to": [
+        11,
+        8,
+        11
+      ],
+      "faces": {
+        "down": {
+          "texture": "#l",
+          "uv": [
+            2,
+            4,
+            14,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#l",
+          "uv": [
+            2,
+            4,
+            14,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#l",
+          "uv": [
+            2,
+            4,
+            14,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#l",
+          "uv": [
+            2,
+            4,
+            14,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#l",
+          "uv": [
+            2,
+            4,
+            14,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#l",
+          "uv": [
+            2,
+            4,
+            14,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        0,
+        5
+      ],
+      "to": [
+        11,
+        8,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            2,
+            4,
+            14,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            2,
+            4,
+            14,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#glow",
+          "uv": [
+            2,
+            4,
+            14,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#glow",
+          "uv": [
+            2,
+            4,
+            14,
+            16
+          ]
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "from": [
+        4.5,
+        8,
+        4.5
+      ],
+      "to": [
+        11.5,
+        9.5,
+        11.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#l",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "up": {
+          "texture": "#l",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "north": {
+          "texture": "#l",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#l",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "west": {
+          "texture": "#l",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "east": {
+          "texture": "#l",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        9.5,
+        7
+      ],
+      "to": [
+        9,
+        12,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#l",
+          "uv": [
+            7,
+            0,
+            9,
+            3
+          ]
+        },
+        "up": {
+          "texture": "#l",
+          "uv": [
+            7,
+            0,
+            9,
+            3
+          ]
+        },
+        "north": {
+          "texture": "#l",
+          "uv": [
+            7,
+            0,
+            9,
+            3
+          ]
+        },
+        "south": {
+          "texture": "#l",
+          "uv": [
+            7,
+            0,
+            9,
+            3
+          ]
+        },
+        "west": {
+          "texture": "#l",
+          "uv": [
+            7,
+            0,
+            9,
+            3
+          ]
+        },
+        "east": {
+          "texture": "#l",
+          "uv": [
+            7,
+            0,
+            9,
+            3
+          ]
+        }
+      }
+    }
+  ]
+}

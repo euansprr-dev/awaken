@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "theme": "nightmare",
+  "name": "The Nursery",
+  "line": "A nursery with the night light still on, and the music box still playing to an empty cot.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "roof": 10
+  },
+  "biome": "awaken:gate_world/nursery",
+  "moods": [],
+  "blocks": {
+    "wall": "awaken:dream_wallpaper",
+    "torn": "awaken:dream_wallpaper_torn",
+    "floor": "awaken:dream_boards",
+    "trim": "awaken:dream_wood",
+    "wood": "awaken:dream_wood",
+    "plush": "awaken:dream_plush",
+    "sheet": "awaken:dream_sheet",
+    "dark": "awaken:dream_dark",
+    "lamp": "awaken:dream_lamp",
+    "candle": "awaken:dream_candle",
+    "motes": "awaken:dream_motes",
+    "toy": "awaken:dream_toy",
+    "wall_glow": "awaken:dream_window",
+    "touch": "awaken:dream_music_box",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_cot"
+  ],
+  "life": [
+    "dust",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.dream_house",
+  "events": [],
+  "rule": "lullaby",
+  "secrets": [
+    {
+      "id": "the_lullaby",
+      "name": "The lullaby"
+    }
+  ],
+  "keepsake": "music_box_key",
+  "keepsake_name": "The Music Box Key",
+  "keepsake_from": "the_lullaby"
+}

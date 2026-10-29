@@ -1,0 +1,142 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/mirror_stand",
+    "face": "awaken:block/mirror_stand",
+    "frame": "awaken:block/palace_gilt"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        0,
+        6
+      ],
+      "to": [
+        12,
+        1,
+        10
+      ],
+      "faces": {
+        "down": {
+          "texture": "#frame"
+        },
+        "up": {
+          "texture": "#frame"
+        },
+        "north": {
+          "texture": "#frame"
+        },
+        "south": {
+          "texture": "#frame"
+        },
+        "west": {
+          "texture": "#frame"
+        },
+        "east": {
+          "texture": "#frame"
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        1,
+        7.25
+      ],
+      "to": [
+        9,
+        3,
+        8.75
+      ],
+      "faces": {
+        "down": {
+          "texture": "#frame"
+        },
+        "up": {
+          "texture": "#frame"
+        },
+        "north": {
+          "texture": "#frame"
+        },
+        "south": {
+          "texture": "#frame"
+        },
+        "west": {
+          "texture": "#frame"
+        },
+        "east": {
+          "texture": "#frame"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        3,
+        7.5
+      ],
+      "to": [
+        13,
+        16,
+        8.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#face",
+          "uv": [
+            1.5,
+            0,
+            14.5,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#face",
+          "uv": [
+            1.5,
+            0,
+            14.5,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#face",
+          "uv": [
+            1.5,
+            0,
+            14.5,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#face",
+          "uv": [
+            1.5,
+            0,
+            14.5,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#face",
+          "uv": [
+            1.5,
+            0,
+            14.5,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#face",
+          "uv": [
+            1.5,
+            0,
+            14.5,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "awaken:block/dream_wood",
+    "end": "awaken:block/dream_wood_top"
+  }
+}

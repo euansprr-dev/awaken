@@ -52,6 +52,8 @@ public final class FloorLayout {
 
     /** Spots a world's live layer finds again (SPEC §38.8), floor-local x/z and y above the base like Gate Air. */
     public final List<Mark> marks;
+    /** An open land under the real sky (SPEC §38.11): built in the open sky's dimension, not the gates'. */
+    public final boolean sky;
 
     /**
      * One spot or box: a bell (its lip's centre ± its radius, lip to crown), a secret (where it's found; {@code id} the
@@ -59,6 +61,22 @@ public final class FloorLayout {
      */
     public record Mark(String kind, String id, int x0, int y0, int z0, int x1, int y1, int z1) {
         public static final String BELL = "bell", SECRET = "secret", BASIN = "basin", TRIGGER = "trigger";
+        /** Something the live layer shows as a display entity and moves (a swinging bell: id "bell:" + 10 x radius). */
+        public static final String PROP = "prop";
+        /** Where a world's rule block stands (a puffball, a vent, a drum, a brazier: SPEC §38.10), like a handbell. */
+        public static final String TOUCH = "touch";
+        /** A hidden nook whose secret ({@code id}) is found by standing in it (SPEC §38.10). */
+        public static final String NOOK = "nook";
+        /**
+         * A hall's fold (SPEC §38.12): its three slots' blocks. Walk on through its middle and you're back at its start;
+         * turn round after going through twice and the hall turns round with you, so you come out at its far end.
+         */
+        public static final String FOLD = "fold";
+        /**
+         * A doorway of the Library of Doors (SPEC §38.13): its shimmer's blocks, {@code id} the way out of it ("dx,dz").
+         * Step into one and you step out of the next on the floor.
+         */
+        public static final String DOOR = "door";
         /** A bell mark's id for a handbell on the floor (the rest are hung bells; "still" and "lowest" are named ones). */
         public static final String HANDBELL = "handbell";
 
@@ -73,7 +91,8 @@ public final class FloorLayout {
 
     /** What a floor is framed by beyond its rooms: where it stands, how it's found, what it is. */
     record Frame(Plots.Plot plot, int yLo, int yHi, PlaceMap places, String world, String mood, String biome, FloorAir air,
-                 WorldModel model, float arrivalYaw, Map<Integer, String> placeWorlds, Map<Integer, String> placeBiomes, List<Mark> marks) {
+                 WorldModel model, float arrivalYaw, Map<Integer, String> placeWorlds, Map<Integer, String> placeBiomes, List<Mark> marks,
+                 boolean sky) {
         Frame {
             placeWorlds = Map.copyOf(placeWorlds);
             placeBiomes = Map.copyOf(placeBiomes);
@@ -82,7 +101,7 @@ public final class FloorLayout {
 
         static Frame band(Plots.Plot plot, int baseY) {
             return new Frame(plot, baseY - Cells.BAND_BELOW, baseY + Cells.BAND_ABOVE - 1, null, "", "", "", FloorAir.NONE, null, Float.NaN, Map.of(), Map.of(),
-                    List.of());
+                    List.of(), false);
         }
     }
 
@@ -133,6 +152,7 @@ public final class FloorLayout {
         this.placeWorlds = frame.placeWorlds();
         this.placeBiomes = frame.placeBiomes();
         this.marks = frame.marks();
+        this.sky = frame.sky();
     }
 
     /** The world a place belongs to: its own (a secret world inside this floor's) or the floor's. */

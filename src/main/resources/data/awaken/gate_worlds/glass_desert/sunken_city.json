@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "theme": "glass_desert",
+  "name": "The Sunken City",
+  "line": "The rooftops of a whole city poke out of a basin of sand. Most of it is still down there.",
+  "tier": "deep",
+  "rarity": "uncommon",
+  "kind": "open",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "lid": 18,
+    "slope": 0.2,
+    "square": 1
+  },
+  "biome": "awaken:gate_world/sunken_city",
+  "moods": [
+    {
+      "id": "high_sun",
+      "name": "High sun",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "golden_hour",
+      "name": "Golden hour",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/sunken_city_golden_hour",
+      "life": [
+        "sand"
+      ]
+    },
+    {
+      "id": "sandstorm",
+      "name": "Sandstorm",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/sunken_city_sandstorm",
+      "life": [
+        "sand",
+        "dust"
+      ]
+    },
+    {
+      "id": "night",
+      "name": "Night",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/sunken_city_night",
+      "life": [
+        "fireflies"
+      ]
+    }
+  ],
+  "blocks": {
+    "floor": "awaken:desert_sand",
+    "floor_rippled": "awaken:desert_sand_rippled",
+    "wall": "awaken:desert_sandstone",
+    "wall_glow": "awaken:desert_sandstone_carved",
+    "trim": "awaken:desert_sandstone_carved",
+    "brick": "awaken:desert_brick",
+    "tile": "awaken:desert_tile",
+    "column": "awaken:desert_column",
+    "glass": "awaken:desert_glass",
+    "glass_glow": "awaken:desert_glass_glowing",
+    "crystal": "awaken:desert_crystal",
+    "grass": "awaken:desert_grass",
+    "fall": "awaken:desert_sandfall",
+    "touch": "awaken:desert_mirror",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "rooftops",
+    "fallen_columns"
+  ],
+  "life": [
+    "sand",
+    "dust",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.desert_city",
+  "events": [
+    "sandstorm",
+    "the_wakening"
+  ],
+  "rule": "sun",
+  "secrets": [
+    {
+      "id": "the_first_mirror",
+      "name": "The first mirror"
+    },
+    {
+      "id": "the_buried_door",
+      "name": "The buried door"
+    }
+  ],
+  "keepsake": "door_key",
+  "keepsake_name": "The Key to the Buried Door",
+  "keepsake_from": "the_buried_door",
+  "tall": true
+}

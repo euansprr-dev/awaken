@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "theme": "mirror_palace",
+  "name": "The Room Behind the Glass",
+  "line": "The room behind every mirror in the palace. Everything in it is the wrong way round.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "roof": 10
+  },
+  "biome": "awaken:gate_world/room_behind_glass",
+  "moods": [],
+  "blocks": {
+    "wall": "awaken:palace_marble",
+    "wall_glow": "awaken:palace_marble_veined",
+    "floor": "awaken:palace_checker",
+    "trim": "awaken:palace_gilt",
+    "mirror": "awaken:palace_mirror",
+    "mirror_cracked": "awaken:palace_mirror_cracked",
+    "glass": "awaken:palace_glass_floor",
+    "white": "awaken:palace_white",
+    "shadow": "awaken:palace_shadow",
+    "curtain": "awaken:palace_curtain",
+    "chandelier": "awaken:palace_chandelier",
+    "candelabra": "awaken:palace_candelabra",
+    "crystal": "awaken:palace_crystal",
+    "touch": "awaken:mirror_stand",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "backwards_room"
+  ],
+  "life": [
+    "dust",
+    "moths"
+  ],
+  "sound": "awaken:gate.world.palace_under",
+  "events": [],
+  "rule": "reflections",
+  "secrets": [
+    {
+      "id": "the_backwards_clock",
+      "name": "The backwards clock"
+    }
+  ],
+  "keepsake": "backwards_clock",
+  "keepsake_name": "A Clock That Runs Backwards",
+  "keepsake_from": "the_backwards_clock"
+}

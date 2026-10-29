@@ -1,0 +1,113 @@
+{
+  "schema": 1,
+  "theme": "sky_archipelago",
+  "name": "Above the Clouds",
+  "line": "The highest islands of all, other islands drifting round them, and the Wind Well where the great wind comes up.",
+  "tier": "wonder",
+  "rarity": "rare",
+  "kind": "open",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "lid": 20,
+    "isles": 1,
+    "clouds": 26,
+    "under": 32,
+    "tunnel": 1.6
+  },
+  "biome": "awaken:gate_world/above_the_clouds",
+  "moods": [
+    {
+      "id": "clear",
+      "name": "Clear skies",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "wind"
+      ]
+    },
+    {
+      "id": "gale",
+      "name": "A gale",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/above_the_clouds_gale",
+      "life": [
+        "wind",
+        "mist"
+      ]
+    },
+    {
+      "id": "sunset",
+      "name": "Sunset",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/above_the_clouds_sunset",
+      "life": [
+        "wind"
+      ]
+    },
+    {
+      "id": "starlight",
+      "name": "Starlight",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/above_the_clouds_starlight",
+      "life": [
+        "stars",
+        "wind"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:sky_rock",
+    "floor": "awaken:sky_turf",
+    "marble": "awaken:sky_marble",
+    "wall_glow": "awaken:sky_marble_carved",
+    "trim": "awaken:sky_gold",
+    "planks": "awaken:sky_planks",
+    "rope": "awaken:sky_rope",
+    "fall": "awaken:sky_fall",
+    "vines": "awaken:sky_vines",
+    "crystal": "awaken:sky_crystal",
+    "banner": "awaken:sky_banner",
+    "lamp": "awaken:sky_lantern",
+    "hide": "awaken:sky_hide",
+    "barnacle": "awaken:sky_barnacle",
+    "touch": "awaken:sky_chime",
+    "cloud": "awaken:frost_cloud",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "far_isles",
+    "the_wind_well"
+  ],
+  "life": [
+    "wind",
+    "dust"
+  ],
+  "sound": "awaken:gate.world.sky_high",
+  "events": [
+    "gale",
+    "the_great_wind"
+  ],
+  "rule": "winds",
+  "secrets": [
+    {
+      "id": "the_first_chime",
+      "name": "The first chime"
+    },
+    {
+      "id": "the_highest_isle",
+      "name": "The highest island"
+    },
+    {
+      "id": "the_great_wind",
+      "name": "The great wind"
+    }
+  ],
+  "keepsake": "roc_feather",
+  "keepsake_name": "A Feather from the Storm Roc",
+  "keepsake_from": "storm_roc",
+  "tall": true,
+  "signature": "storm_roc"
+}

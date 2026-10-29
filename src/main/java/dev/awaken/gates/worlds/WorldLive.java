@@ -10,6 +10,7 @@ import dev.awaken.gates.GateRecord;
 import dev.awaken.gates.GateRegistry;
 import dev.awaken.gates.GateService;
 import dev.awaken.gates.GatesRegistry;
+import dev.awaken.gates.block.ThemeBlocks;
 import dev.awaken.gates.net.WorldPayloads;
 import dev.awaken.gates.run.RunState;
 import dev.awaken.gates.run.Rooms;
@@ -27,6 +28,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Relative;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
@@ -38,6 +40,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +73,7 @@ public final class WorldLive {
     static final int QUIET = Block.UPDATE_CLIENTS | Block.UPDATE_SKIP_ALL_SIDEEFFECTS;
 
     // what FloorState.world remembers
-    static final String FLOOD = "flood", FLOOD_DONE = "flood_done", RINGER = "ringer";
+    static final String FLOOD = "flood", FLOOD_DONE = "flood_done", RINGER = "ringer", POD = "pod";
 
     record Key(int gate, int area, int floor) {
         static Key of(GateRecord g, FloorLayout f) {
@@ -92,17 +95,39 @@ public final class WorldLive {
     /** Where a player last stood safely on a drop world's floor. */
     static final class Ledge {
         Key floor;
-        boolean drop;
+        /** A drop world's shaft, or the Rooftops' streets (38.11): the same catch, its own words. */
+        boolean drop, lava, streets, isles;
         Vec3 pos;
         float yaw;
     }
+
+    /**
+     * A player on a world that repeats (SPEC §38.12): a hall's fold (its slots, how often you've gone through, whether
+     * it has turned round for you) or an endless plain's band (in blocks).
+     */
+    static final class Repeat {
+        Key floor;
+        BlockPos origin;
+        FloorLayout.Mark fold;
+        int band, loops;
+        boolean opened;
+        double lastX = Double.NaN;
+    }
+
+    /** An endless plain turns you round this far from its edge, by this much (its band repeats every {@code WRAP}). */
+    static final double WRAP_AT = 24, WRAP = 32;
+    /** A fold's slot: you go back one each time you walk through its middle. */
+    static final double FOLD_SLOT = 16;
 
     record Timed(long at, long seq, Runnable run) {}
 
     static final Map<Key, Live> LIVE = new HashMap<>();
     static final Map<UUID, Ledge> LEDGES = new HashMap<>();
+    static final Map<UUID, Repeat> REPEATS = new HashMap<>();
     /** The room of the place world each player stands in, if any. */
     static final Map<UUID, Integer> PLACE = new HashMap<>();
+    /** The doorway each player last stepped out of (38.13): it doesn't take them back until they've left it. */
+    static final Map<UUID, Integer> DOORS = new HashMap<>();
     static final PriorityQueue<Timed> LATER = new PriorityQueue<>(Comparator.comparingLong(Timed::at).thenComparingLong(Timed::seq));
     private static long now, seq;
 
@@ -110,9 +135,12 @@ public final class WorldLive {
     public static void clear() {
         LIVE.clear();
         LEDGES.clear();
+        REPEATS.clear();
         PLACE.clear();
+        DOORS.clear();
         LATER.clear();
         WorldRules.clear();
+        WorldProps.clear();
     }
 
     static void later(int ticks, Runnable r) {
@@ -133,13 +161,18 @@ public final class WorldLive {
         while (!LATER.isEmpty() && LATER.peek().at() <= now) LATER.poll().run().run();
         ServerLevel gl = GateService.gateLevel(server);
         if (gl == null) return;
+        // the Flood is the Belfry's (never under the open sky); ledges and props are wherever their floor is
         for (Live l : LIVE.values()) if (l.flood != null && l.flood.step(gl)) l.flood = null;
-        if (!LEDGES.isEmpty()) for (ServerPlayer p : gl.players()) ledge(gl, p);
+        if (!LEDGES.isEmpty()) for (ServerLevel lv : GateService.levels(server)) for (ServerPlayer p : lv.players()) ledge(lv, p);
+        if (!REPEATS.isEmpty()) for (ServerLevel lv : GateService.levels(server)) for (ServerPlayer p : lv.players()) repeat(lv, p);
+        WorldProps.tick(gl, now);
     }
 
     /** A player stepped onto a floor (WorldsLive.arrive): nothing carries over from the last one. */
     static void left(ServerPlayer p) {
         PLACE.remove(p.getUUID());
+        DOORS.remove(p.getUUID());
+        REPEATS.remove(p.getUUID());
         Ledge l = LEDGES.get(p.getUUID());
         if (l != null) l.pos = null;
     }
@@ -155,6 +188,7 @@ public final class WorldLive {
         UUID id = p.getUUID();
         if (f.world.isEmpty()) {
             LEDGES.remove(id);
+            REPEATS.remove(id);
             PLACE.remove(id);
             return;
         }
@@ -166,8 +200,14 @@ public final class WorldLive {
             ledge.floor = key;
             ledge.pos = null;
         }
-        ledge.drop = w.kind().equals("drop");
+        ledge.streets = w.param("deep", 0) > 0;
+        // a drop world's shaft, the streets, and the air under an island (38.12) all catch a fall
+        ledge.isles = w.kind().equals("isles") || w.param("isles", 0) > 0;
+        ledge.drop = w.kind().equals("drop") || ledge.streets || ledge.isles;
+        repeats(p, g, f, w, key);
+        ledge.lava = w.dressing().blocks().getOrDefault("fluid", "").equals("minecraft:lava");
         places(p, g, f, r);
+        nooks(p, g, f, r);
         Live live = live(g, f);
         FloorState fs = g.floor(f.area, f.floor);
         int at = live.path.indexOf(r.id);
@@ -190,6 +230,69 @@ public final class WorldLive {
         // a Flood the server stopped halfway rises the rest of the way; water it couldn't reach (an unloaded chunk) when it can
         if (fs.world.contains(FLOOD) && !fs.world.contains(FLOOD_DONE) && live.flood == null) live.flood = Flood.of(g, f, false);
         hum(level, p, g, f, live);
+        WorldProps.near(level, p, g, f);
+        if (f.world.endsWith("/inkwell") && (level.getGameTime() + p.getId()) % 4 == 0) unfold(level, p);
+        if (f.world.endsWith("/simulation")) draw(level, p);
+        if (f.world.endsWith("/the_library_of_doors")) doors(level, p, g, f);
+        if (f.world.endsWith("/the_glass_sea") && (now + p.getId()) % 200 < 10) fish(level, p);
+        // the cloud whales come once a floor, when the mobs module has a body for them (asked every ten seconds till then)
+        if (f.world.endsWith("/above_the_clouds") && !fs.world.contains(POD) && (now + p.getId()) % 200 < 10 && WorldThemes.pod(level, g, f, p)) {
+            fs.world.add(POD);
+            GateRegistry.get(level.getServer()).setDirty();
+        }
+    }
+
+    // ---- the rare worlds (38.13) ----------------------------------------------------------------------------------------
+
+    /**
+     * The Library of Doors: stand in a doorway's shimmer and you step out of the next doorway on the floor, facing out of
+     * it. The one you came out of doesn't take you back until you've stepped clear of it.
+     */
+    static void doors(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f) {
+        List<FloorLayout.Mark> doors = f.marks(FloorLayout.Mark.DOOR);
+        if (doors.size() < 2) return;
+        BlockPos o = GateService.world(g, f, 0, 0, 0);
+        int x = p.getBlockX() - o.getX(), y = p.getBlockY() - o.getY(), z = p.getBlockZ() - o.getZ();
+        int in = -1;
+        for (int i = 0; i < doors.size(); i++) if (doors.get(i).contains(x, y, z)) in = i;
+        Integer came = DOORS.get(p.getUUID());
+        if (in < 0) {
+            DOORS.remove(p.getUUID());
+            return;
+        }
+        if (came != null && came == in) return;
+        int to = (in + 1) % doors.size();
+        FloorLayout.Mark d = doors.get(to);
+        String[] way = d.id().split(",");
+        int dx = Integer.parseInt(way[0]), dz = Integer.parseInt(way[1]);
+        double tx = o.getX() + d.cx() + dx * 1.5, tz = o.getZ() + d.cz() + dz * 1.5;
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        WorldThemes.play(level, p.blockPosition(), "doorway", 0.8F, 1F);
+        p.teleportTo(level, tx, o.getY() + d.y0() + 0.05, tz, java.util.Set.of(), yaw, 0F, false);
+        DOORS.put(p.getUUID(), to);
+        WorldThemes.play(level, p.blockPosition(), "doorway", 0.8F, 1.2F);
+    }
+
+    /** The Glass Sea: fish swimming under the ice near you, a few at a time (vanilla cod and tropical fish). */
+    static void fish(ServerLevel level, ServerPlayer p) {
+        if (level.getEntitiesOfClass(net.minecraft.world.entity.animal.fish.AbstractFish.class, p.getBoundingBox().inflate(24)).size() >= 8) return;
+        var r = p.getRandom();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int t = 0; t < 4; t++) {
+            int x = p.getBlockX() + r.nextInt(25) - 12, z = p.getBlockZ() + r.nextInt(25) - 12;
+            for (int y = p.getBlockY() + 2; y > p.getBlockY() - 10; y--) {
+                m.set(x, y, z);
+                if (!level.getBlockState(m).is(GatesRegistry.theme("frost_ice"))) continue;
+                m.set(x, y - 2, z);
+                if (!level.getFluidState(m).is(net.minecraft.tags.FluidTags.WATER)) break;
+                var e = (r.nextInt(3) == 0 ? net.minecraft.world.entity.EntityTypes.TROPICAL_FISH : net.minecraft.world.entity.EntityTypes.COD)
+                        .create(level, net.minecraft.world.entity.EntitySpawnReason.NATURAL);
+                if (e == null) return;
+                e.snapTo(x + 0.5, y - 1.5, z + 0.5, r.nextFloat() * 360, 0);
+                level.addFreshEntity(e);
+                return;
+            }
+        }
     }
 
     /** A hung bell over you hums softly as you pass under it (within its rim, 32 below it at most). */
@@ -224,7 +327,7 @@ public final class WorldLive {
             }
             // the Flood waits on the first key (a cache, a solved puzzle, the shrine), or rises behind you three quarters down
             case "flood" -> Math.min(n - 1, (3 * n) / 4);
-            default -> -1;
+            default -> WorldThemes.trigger(ev, n);
         };
     }
 
@@ -237,7 +340,7 @@ public final class WorldLive {
             case "bone_fall" -> boneFall(level, p, g, f, r);
             case "the_silence" -> silence(level, g, f);
             case "the_swing" -> swing(level, g, f, p.blockPosition());
-            default -> {}
+            default -> WorldThemes.run(ev, level, p, g, f, r);
         }
     }
 
@@ -320,6 +423,7 @@ public final class WorldLive {
         SoundEvent s = voice(m);
         BlockPos pos = hand ? at(g, f, m) : at(g, f, m).above((m.y1() - m.y0()) / 2);
         level.playSound(null, pos, s, SoundSource.BLOCKS, hand ? 1.2F : (float) (2.5 + m.r() * 0.3), pitch(m) * pitchBy);
+        if (!hand) WorldProps.swing(g, f, m, 1F);
     }
 
     /** Dust shaken down round each player within reach. */
@@ -517,6 +621,18 @@ public final class WorldLive {
 
     // ---- places that are worlds of their own -----------------------------------------------------------------------
 
+    /** A hidden nook (SPEC §38.10): its secret is found by standing in it. */
+    static void nooks(ServerPlayer p, GateRecord g, FloorLayout f, Room r) {
+        String world = r == null ? f.world : f.worldOf(r);
+        BlockPos o = GateService.world(g, f, 0, 0, 0);
+        int x = p.getBlockX() - o.getX(), y = p.getBlockY() - o.getY(), z = p.getBlockZ() - o.getZ();
+        for (FloorLayout.Mark m : f.marks) {
+            if (!m.kind().equals(FloorLayout.Mark.NOOK) || !m.contains(x, y, z)) continue;
+            GateAtlas.Entry e = p.getData(GatesRegistry.ATLAS.get()).entry(world);
+            if (e == null || !e.secrets.contains(m.id())) found(p, world, m.id());
+        }
+    }
+
     static void places(ServerPlayer p, GateRecord g, FloorLayout f, Room r) {
         UUID id = p.getUUID();
         String inner = f.placeWorlds.get(r.id);
@@ -565,6 +681,7 @@ public final class WorldLive {
         ItemStack s = HearthHooks.keepsake(w.dressing().keepsake(), name, PlayDays.current(p.level().getServer()));
         if (!s.isEmpty() && !p.addItem(s)) p.drop(s, false, net.minecraft.util.Prediction.SERVER_ONLY);
         p.sendSystemMessage(Component.literal("A keepsake from " + w.name() + ": " + name + ". Hang it in your Trophy Hall at home."));
+        WorldSets.after(p, w);
         WorldsLive.sync(p);
     }
 
@@ -585,18 +702,20 @@ public final class WorldLive {
         for (int i = 0; i < 3; i++) later(i * 25, () -> level.playSound(null, pos, GatesRegistry.SND_WORLD_RINGER.get(), SoundSource.HOSTILE, 3F, 0.7F));
         Room in = r;
         later(75, () -> {
-            List<BlockPos> spots = in == null ? List.of() : Rooms.spots(level, g, f, in);
-            BlockPos far = null;
-            for (BlockPos s : spots) if (far == null || Math.abs(s.distSqr(pos) - 64) < Math.abs(far.distSqr(pos) - 64)) far = s;
-            if (far == null) far = p.blockPosition();
-            LivingEntity e = Rooms.spawn(level, g, f, -1, MobRole.Role.ELITE, far);
-            if (e == null) return;
-            e.setCustomName(Component.literal("The Ringer"));
-            e.setCustomNameVisible(true);
-            AttributeInstance hp = e.getAttribute(Attributes.MAX_HEALTH);
-            if (hp != null) {
-                hp.setBaseValue(hp.getBaseValue() * 2);
-                e.setHealth(e.getMaxHealth());
+            // where there's room for it, in the bell's room or next door (SPEC §38.13)
+            BlockPos far = in == null ? p.blockPosition() : WorldThemes.roomy(level, g, f, in, pos);
+            // its own body when the mobs module has one (the Creature Kit), else an elite of the theme in its name
+            LivingEntity e = Rooms.signature(level, g, f, -1, WorldLook.id(w.dressing().signature()), far);
+            if (e == null) {
+                e = Rooms.spawn(level, g, f, -1, MobRole.Role.ELITE, far);
+                if (e == null) return;
+                e.setCustomName(Component.literal("The Ringer"));
+                e.setCustomNameVisible(true);
+                AttributeInstance hp = e.getAttribute(Attributes.MAX_HEALTH);
+                if (hp != null) {
+                    hp.setBaseValue(hp.getBaseValue() * 2);
+                    e.setHealth(e.getMaxHealth());
+                }
             }
             e.getPersistentData().putString(RINGER_TAG, f.world);
             WorldsLive.dressSignature(e, f.world, w.dressing().signature());
@@ -628,11 +747,107 @@ public final class WorldLive {
         return !e.getPersistentData().getStringOr(RINGER_TAG, "").isEmpty();
     }
 
+    // ---- worlds that repeat (38.12) -----------------------------------------------------------------------------------
+
+    /** Keeps a player's place on a floor that repeats (a fold, an endless plain), or forgets it on one that doesn't. */
+    static void repeats(ServerPlayer p, GateRecord g, FloorLayout f, GateWorld w, Key key) {
+        List<FloorLayout.Mark> folds = f.marks(FloorLayout.Mark.FOLD);
+        int band = (int) w.param("band", 0) * 16;
+        if (folds.isEmpty() && band <= 0) {
+            REPEATS.remove(p.getUUID());
+            return;
+        }
+        Repeat rp = REPEATS.computeIfAbsent(p.getUUID(), k -> new Repeat());
+        if (!key.equals(rp.floor)) {
+            rp.floor = key;
+            rp.loops = 0;
+            rp.opened = false;
+            rp.lastX = Double.NaN;
+        }
+        rp.origin = GateService.world(g, f, 0, 0, 0);
+        rp.fold = folds.isEmpty() ? null : folds.get(0);
+        rp.band = band;
+    }
+
+    /**
+     * Every tick for a player on a floor that repeats. An endless plain turns you round before its edge: a step from the
+     * band's outer part puts you one repeat in, the same white all round. A fold: walk on through its middle slot and you
+     * step back to that slot's start, as if the hall went on; go through twice, turn round and walk back, and the hall
+     * turns round with you (its slots are the same turned about their middle), so you come out going on toward its end.
+     * Only the walker moves; monsters never cross.
+     */
+    static void repeat(ServerLevel level, ServerPlayer p) {
+        Repeat rp = REPEATS.get(p.getUUID());
+        if (rp == null || rp.origin == null || !p.isAlive() || p.isSpectator()) return;
+        double lx = p.getX() - rp.origin.getX(), ly = p.getY() - rp.origin.getY(), lz = p.getZ() - rp.origin.getZ();
+        if (lx < 0 || lz < 0 || lx > dev.awaken.gates.world.Plots.SIDE || lz > dev.awaken.gates.world.Plots.SIDE) {
+            rp.lastX = Double.NaN;
+            return;
+        }
+        if (rp.band > 0) {
+            double side = dev.awaken.gates.world.Plots.SIDE;
+            double dx = lx < WRAP_AT ? WRAP : lx > side - WRAP_AT ? -WRAP : 0, dz = lz < WRAP_AT ? WRAP : lz > side - WRAP_AT ? -WRAP : 0;
+            if (dx != 0 || dz != 0) p.teleportTo(level, dx, 0, dz, Relative.ALL, 0F, 0F, false);
+            return;
+        }
+        FloorLayout.Mark m = rp.fold;
+        if (m == null) return;
+        double last = rp.lastX;
+        rp.lastX = lx;
+        boolean in = lz >= m.z0() && lz <= m.z1() + 1 && ly >= m.y0() - 1 && ly <= m.y1() + 1;
+        if (!in || Double.isNaN(last) || rp.opened) return;
+        double mid = (m.x0() + m.x1() + 1) / 2.0, on = mid + FOLD_SLOT / 2, back = mid - FOLD_SLOT / 2;
+        if (last <= on && lx > on) {
+            rp.loops++;
+            rp.lastX = lx - FOLD_SLOT;
+            p.teleportTo(level, -FOLD_SLOT, 0, 0, Relative.ALL, 0F, 0F, false);
+            if (rp.loops == 3) p.sendOverlayMessage(Component.literal("This hall doesn't seem to end."));
+        } else if (last >= back && lx < back && rp.loops >= 2) {
+            rp.opened = true;
+            double nx = rp.origin.getX() + 2 * mid - lx, nz = rp.origin.getZ() + (m.z0() + m.z1() + 1) - lz;
+            p.teleportTo(level, nx, 0, nz, EnumSet.of(Relative.Y, Relative.Y_ROT, Relative.X_ROT, Relative.DELTA_X, Relative.DELTA_Y,
+                    Relative.DELTA_Z, Relative.ROTATE_DELTA), 180F, 0F, false);
+            p.sendOverlayMessage(Component.literal("You turned round, and the hall turned round with you. Its end is just ahead."));
+            WorldThemes.play(level, p.blockPosition(), "fold", 1.2F, 1F);
+        }
+    }
+
+    /** The Simulation draws itself where you look (38.12): its sketched blocks within a few of your line of sight fill in. */
+    static void draw(ServerLevel level, ServerPlayer p) {
+        Vec3 eye = p.getEyePosition(), look = p.getLookAngle();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        boolean any = false;
+        for (int step = 0; step < 5; step++) {
+            double t = 2 + step * 3;
+            int cx = (int) Math.floor(eye.x + look.x * t), cy = (int) Math.floor(eye.y + look.y * t), cz = (int) Math.floor(eye.z + look.z * t);
+            for (int dx = -3; dx <= 3; dx++) {
+                for (int dy = -3; dy <= 3; dy++) {
+                    for (int dz = -3; dz <= 3; dz++) {
+                        m.set(cx + dx, cy + dy, cz + dz);
+                        BlockState s = level.getBlockState(m);
+                        if (!(s.getBlock() instanceof ThemeBlocks.Folding) || s.getValue(ThemeBlocks.Folding.OPEN)) continue;
+                        ThemeBlocks.Folding.open(level, m.immutable(), s);
+                        any = true;
+                    }
+                }
+            }
+        }
+        if (any && (level.getGameTime() + p.getId()) % 3 == 0) WorldThemes.play(level, p.blockPosition(), "draw", 0.35F, 1F);
+    }
+
     // ---- the catch on a drop world -----------------------------------------------------------------------------------
 
     static void ledge(ServerLevel level, ServerPlayer p) {
         Ledge l = LEDGES.get(p.getUUID());
-        if (l == null || !l.drop || !p.isAlive() || p.isSpectator() || p.getAbilities().flying || p.isFallFlying()) return;
+        if (l == null || !(l.drop || l.lava) || !p.isAlive() || p.isSpectator() || p.getAbilities().flying || p.isFallFlying()) return;
+        if (l.lava && l.pos != null && p.isInLava()) {
+            // a magma world gives you back too: on the last ground you stood on, the fire put out
+            caught(level, p, l);
+            p.clearFire();
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 100, 0));
+            p.sendOverlayMessage(Component.literal("The magma spat you back out onto the last ground you stood on."));
+            return;
+        }
         if (p.onGround()) {
             if (p.isInWater() || p.isInLava() || (now + p.getId()) % 4 != 0) return;
             Where w = Where.at(level.getServer(), p.blockPosition());
@@ -642,7 +857,7 @@ public final class WorldLive {
             }
             return;
         }
-        if (l.pos == null || p.isInWater() || p.fallDistance <= CATCH_FALL || p.getY() > l.pos.y - 4) return;
+        if (!l.drop || l.pos == null || p.isInWater() || p.fallDistance <= CATCH_FALL || p.getY() > l.pos.y - 4) return;
         caught(level, p, l);
     }
 
@@ -654,7 +869,28 @@ public final class WorldLive {
         p.hurtServer(level, level.damageSources().fall(), CATCH_DAMAGE);
         level.playSound(null, BlockPos.containing(l.pos), GatesRegistry.SND_WORLD_CATCH.get(), SoundSource.PLAYERS, 1F, 1F);
         level.sendParticles(GatesRegistry.P_GLINT.get(), l.pos.x, l.pos.y + 1, l.pos.z, 16, 0.4, 0.6, 0.4, 0.02);
-        p.sendOverlayMessage(Component.literal("You fell, and the shaft gave you back to the last ledge you stood on."));
+        p.sendOverlayMessage(Component.literal(l.streets ? "You fell into the streets, and the market lifted you back up onto the roofs."
+                : l.isles ? "You fell, and the air carried you back to the last ground you stood on."
+                : "You fell, and the shaft gave you back to the last ledge you stood on."));
+    }
+
+    /** The Inkwell's paper bridges open out under anyone who comes near (SPEC §38.11), and fold again once nobody is. */
+    static void unfold(ServerLevel level, ServerPlayer p) {
+        BlockPos at = p.blockPosition();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        boolean any = false;
+        for (int dx = -4; dx <= 4; dx++) {
+            for (int dz = -4; dz <= 4; dz++) {
+                for (int dy = -2; dy <= 0; dy++) {
+                    m.set(at.getX() + dx, at.getY() + dy, at.getZ() + dz);
+                    BlockState s = level.getBlockState(m);
+                    if (!(s.getBlock() instanceof ThemeBlocks.Folding) || s.getValue(ThemeBlocks.Folding.OPEN)) continue;
+                    ThemeBlocks.Folding.open(level, m.immutable(), s);
+                    any = true;
+                }
+            }
+        }
+        if (any) WorldThemes.play(level, at, "page", 0.6F, 1.3F);
     }
 
     /** The floor a world position's in, for code that has only a position. */

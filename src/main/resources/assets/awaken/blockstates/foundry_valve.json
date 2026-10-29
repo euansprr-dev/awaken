@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/foundry_valve"
+    },
+    "lit=true": {
+      "model": "awaken:block/foundry_valve_lit"
+    }
+  }
+}

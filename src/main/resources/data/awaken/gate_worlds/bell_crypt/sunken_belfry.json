@@ -29,13 +29,20 @@
       "id": "requiem",
       "name": "Requiem",
       "weight": 1.5,
-      "biome": "awaken:gate_world/sunken_belfry_requiem"
+      "biome": "awaken:gate_world/sunken_belfry_requiem",
+      "life": [
+        "procession"
+      ]
     },
     {
       "id": "storm",
       "name": "Storm",
       "weight": 1.5,
-      "biome": "awaken:gate_world/sunken_belfry_storm"
+      "biome": "awaken:gate_world/sunken_belfry_storm",
+      "life": [
+        "rain",
+        "lightning"
+      ]
     }
   ],
   "blocks": {
@@ -64,7 +71,11 @@
     "bats",
     "pale_fish",
     "moths",
-    "drips"
+    "drips",
+    "shaft_dust",
+    "mist",
+    "smoke",
+    "far_toll"
   ],
   "residents": "drowned_vestments",
   "sound": "awaken:gate.world.belfry",

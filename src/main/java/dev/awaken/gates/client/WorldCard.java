@@ -68,9 +68,13 @@ final class WorldCard {
             from = Util.getMillis();
             lines = List.of();
             n.hold(HOLD, true);
-            // a low bell under the name; a first find rings higher and brighter
+            // the theme's sting under the name (a low bell in the crypt); a first find rings higher and brighter
+            String w = showing.world();
+            String theme = w.contains(":") && w.contains("/") ? w.substring(w.indexOf(':') + 1, w.indexOf('/')) : "";
+            net.minecraft.sounds.SoundEvent sting = dev.awaken.gates.GatesRegistry.worldSound("arrive_" + theme);
             Minecraft.getInstance().getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                    dev.awaken.gates.GatesRegistry.SND_WORLD_ARRIVE.get(), showing.first() ? 1.12F : 0.94F, showing.first() ? 0.9F : 0.6F));
+                    sting != null ? sting : dev.awaken.gates.GatesRegistry.SND_WORLD_ARRIVE.get(), showing.first() ? 1.12F : 0.94F,
+                    showing.first() ? 0.9F : 0.6F));
         } else if (ticks - since > (pending.first() ? FIRST_WAIT : WAIT)) {
             n.file(Notices.Tier.AMBIENT, Component.literal("Arrived · " + pending.name()), Component.literal(pending.line()));
             pending = null;

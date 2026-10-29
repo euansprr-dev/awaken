@@ -1,0 +1,148 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/lucky_cat",
+    "body": "awaken:block/lucky_cat",
+    "face": "awaken:block/lucky_cat_face",
+    "coin": "awaken:block/lucky_cat_coin"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        0,
+        5
+      ],
+      "to": [
+        12,
+        8,
+        11
+      ],
+      "faces": {
+        "down": {
+          "texture": "#body"
+        },
+        "up": {
+          "texture": "#body"
+        },
+        "north": {
+          "texture": "#body"
+        },
+        "south": {
+          "texture": "#body"
+        },
+        "west": {
+          "texture": "#body"
+        },
+        "east": {
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "from": [
+        4.5,
+        8,
+        5.5
+      ],
+      "to": [
+        11.5,
+        13,
+        10.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#body"
+        },
+        "up": {
+          "texture": "#body"
+        },
+        "north": {
+          "texture": "#body"
+        },
+        "south": {
+          "texture": "#body"
+        },
+        "west": {
+          "texture": "#body"
+        },
+        "east": {
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "from": [
+        4.49,
+        8,
+        5.49
+      ],
+      "to": [
+        11.51,
+        13,
+        5.49
+      ],
+      "faces": {
+        "north": {
+          "texture": "#face",
+          "uv": [
+            2,
+            1,
+            14,
+            15
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        10.5,
+        9,
+        7
+      ],
+      "to": [
+        12.5,
+        13,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#body"
+        },
+        "up": {
+          "texture": "#body"
+        },
+        "north": {
+          "texture": "#body"
+        },
+        "south": {
+          "texture": "#body"
+        },
+        "west": {
+          "texture": "#body"
+        },
+        "east": {
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        2,
+        4.5
+      ],
+      "to": [
+        11,
+        6,
+        5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#coin"
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}

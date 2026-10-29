@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "theme": "ember_mines",
+  "name": "The Forge Below",
+  "line": "Lava pours from the roof here into forges nobody has worked for years.",
+  "tier": "deep",
+  "rarity": "uncommon",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "tower": 36,
+    "roof": 12
+  },
+  "biome": "awaken:gate_world/forge_below",
+  "moods": [
+    {
+      "id": "banked",
+      "name": "Banked",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "eruption",
+      "name": "Eruption",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/forge_below_eruption",
+      "life": [
+        "embers",
+        "smoke"
+      ]
+    },
+    {
+      "id": "ashfall",
+      "name": "Ashfall",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/forge_below_ashfall",
+      "life": [
+        "ash"
+      ]
+    },
+    {
+      "id": "shift_change",
+      "name": "Shift change",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/forge_below_shift_change",
+      "life": [
+        "embers",
+        "dust"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:ember_basalt",
+    "wall_glow": "awaken:ember_basalt_cracked",
+    "floor": "awaken:ember_ash",
+    "slag": "awaken:ember_slag",
+    "trim": "awaken:mine_planks",
+    "timber": "awaken:mine_timber",
+    "planks": "awaken:mine_planks",
+    "lamp": "awaken:mine_lamp",
+    "crust": "awaken:magma_crust",
+    "crystal": "awaken:ember_crystal",
+    "fall": "awaken:ember_moltenfall",
+    "touch": "awaken:ember_bellows",
+    "fluid": "minecraft:lava"
+  },
+  "hero": [
+    "molten_falls"
+  ],
+  "life": [
+    "embers",
+    "dust",
+    "smoke",
+    "bats"
+  ],
+  "sound": "awaken:gate.world.mine_chasm",
+  "events": [
+    "tremor",
+    "the_wakening"
+  ],
+  "rule": "embers",
+  "secrets": [
+    {
+      "id": "foremans_bellows",
+      "name": "The foreman's bellows"
+    },
+    {
+      "id": "first_anvil",
+      "name": "The first anvil"
+    }
+  ],
+  "keepsake": "first_hammer",
+  "keepsake_name": "The First Hammer",
+  "keepsake_from": "first_anvil"
+}

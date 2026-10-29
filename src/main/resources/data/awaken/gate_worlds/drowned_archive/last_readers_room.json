@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "theme": "drowned_archive",
+  "name": "The Last Reader's Room",
+  "line": "A dry room in a bubble under the sea. The last reader left a book open on the desk.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "roof": 9
+  },
+  "biome": "awaken:gate_world/last_readers_room",
+  "moods": [],
+  "blocks": {
+    "wall": "awaken:archive_stone",
+    "wall_glow": "awaken:archive_stone_carved",
+    "floor": "awaken:archive_tiles",
+    "trim": "awaken:archive_stone_carved",
+    "shelf": "awaken:archive_shelf",
+    "shelf_lit": "awaken:archive_shelf_lit",
+    "planks": "awaken:archive_planks",
+    "lamp": "awaken:archive_lamp",
+    "paper": "awaken:archive_paper",
+    "kelp": "awaken:archive_kelp",
+    "glass": "awaken:archive_sea_glass",
+    "fall": "awaken:archive_inkfall",
+    "touch": "awaken:archive_lectern",
+    "bridge": "awaken:archive_paper_bridge",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "sea_glass_skylight"
+  ],
+  "life": [
+    "paper",
+    "dust"
+  ],
+  "sound": "awaken:gate.world.archive_ink",
+  "events": [],
+  "rule": "reading",
+  "secrets": [
+    {
+      "id": "the_last_page",
+      "name": "The last page"
+    }
+  ],
+  "keepsake": "last_page",
+  "keepsake_name": "The Last Page",
+  "keepsake_from": "the_last_page"
+}

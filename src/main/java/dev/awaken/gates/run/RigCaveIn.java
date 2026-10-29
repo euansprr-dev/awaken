@@ -38,7 +38,7 @@ final class RigCaveIn {
     static final double GRAVITY = 0.04;
 
     /** {@code keep}: it stays where it lands as rubble (never on a door axis, a doorway or a feature). */
-    private record Drop(long at, boolean landing, BlockPos ceiling, BlockState state, BlockPos land, boolean keep, int theme) {}
+    private record Drop(ServerLevel level, long at, boolean landing, BlockPos ceiling, BlockState state, BlockPos land, boolean keep, int theme) {}
 
     private static final List<Drop> DROPS = new ArrayList<>();
 
@@ -70,7 +70,7 @@ final class RigCaveIn {
                     List.of(ceil.asLong()), List.of(Block.getId(s)), WARN, 0));
             if (k == 0) RigDirector.sound(level, Vec3.atCenterOf(ceil), GatesRegistry.SND_RIG_CAVE.get(), 1F, 0.8F + 0.3F * level.getRandom().nextFloat());
             boolean keep = !RoomGeometry.onDoorAxis(r, x, z, 2) && RoomGeometry.tunnel(r, x, z) == null && !nearFeature(r, x, z);
-            DROPS.add(new Drop(now + WARN, false, ceil, s, land, keep, f.theme.ordinal()));
+            DROPS.add(new Drop(level, now + WARN, false, ceil, s, land, keep, f.theme.ordinal()));
         }
     }
 
@@ -87,9 +87,10 @@ final class RigCaveIn {
             due.add(d);
             return true;
         });
+        // each in the level it was made in (an open land's under the sky)
         for (Drop d : due) {
-            if (!d.landing) fall(level, d, now);
-            else land(level, d);
+            if (!d.landing) fall(d.level(), d, now);
+            else land(d.level(), d);
         }
     }
 
@@ -101,7 +102,7 @@ final class RigCaveIn {
         int ticks = (int) Math.ceil(Math.sqrt(2 * h / GRAVITY));
         RigDirector.sendNear(level, Vec3.atCenterOf(d.ceiling), new RigPayloads.Cue(RigPayloads.Cue.DROP, d.theme, List.of(d.ceiling.asLong()),
                 List.of(Block.getId(d.state)), ticks, (float) h));
-        DROPS.add(new Drop(now + ticks, true, d.ceiling, d.state, d.land, d.keep, d.theme));
+        DROPS.add(new Drop(d.level(), now + ticks, true, d.ceiling, d.state, d.land, d.keep, d.theme));
     }
 
     /** It lands: whatever stands there is struck, and the block stays as rubble where the floor can take it. */

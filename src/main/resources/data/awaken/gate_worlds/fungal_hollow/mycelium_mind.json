@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "theme": "fungal_hollow",
+  "name": "The Mycelium Mind",
+  "line": "Every thread in this room is joined to every other. Say something and watch them light up.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "roof": 9
+  },
+  "biome": "awaken:gate_world/mycelium_mind",
+  "moods": [],
+  "blocks": {
+    "wall": "awaken:fungal_rock",
+    "wall_glow": "awaken:fungal_rock_veined",
+    "floor": "awaken:fungal_loam",
+    "floor_glow": "awaken:fungal_moss",
+    "trim": "awaken:fungal_rock_veined",
+    "stem": "awaken:glowcap_stem",
+    "cap": "awaken:glowcap_cap",
+    "gills": "awaken:glowcap_gills",
+    "roots": "awaken:lumen_roots",
+    "sprouts": "awaken:glowcap_sprouts",
+    "threads": "awaken:mycelium_threads",
+    "fall": "awaken:fungal_glowfall",
+    "touch": "awaken:spore_puffball",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_threads"
+  ],
+  "life": [
+    "spores",
+    "mist"
+  ],
+  "sound": "awaken:gate.world.hollow_bloom",
+  "events": [],
+  "rule": "spores",
+  "secrets": [
+    {
+      "id": "the_mind",
+      "name": "The middle of the mind"
+    },
+    {
+      "id": "the_thought",
+      "name": "A thought it shared with you"
+    }
+  ],
+  "keepsake": "thought_thread",
+  "keepsake_name": "A Thread That Remembers",
+  "keepsake_from": "the_thought"
+}

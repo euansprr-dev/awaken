@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "theme": "hive",
+  "name": "The Queen's Garden",
+  "line": "A sunlit meadow of flowers, right in the middle of the hive.",
+  "tier": "secret",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "roof": 14
+  },
+  "biome": "awaken:gate_world/queens_garden",
+  "moods": [],
+  "blocks": {
+    "wall": "awaken:hive_wax",
+    "rim": "awaken:hive_wax_dark",
+    "wall_glow": "awaken:hive_comb",
+    "capped": "awaken:hive_comb_capped",
+    "honey": "awaken:hive_honey_glow",
+    "floor": "awaken:hive_floor",
+    "floor_soft": "awaken:hive_pollen",
+    "trim": "awaken:hive_wax_dark",
+    "drip": "awaken:hive_drip",
+    "touch": "awaken:hive_drum",
+    "royal": "awaken:hive_royal",
+    "petals": "awaken:hive_petals",
+    "candle": "awaken:hive_candle",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "honey_skylight"
+  ],
+  "life": [
+    "petals",
+    "fireflies"
+  ],
+  "sound": "awaken:gate.world.hive_lake",
+  "events": [],
+  "rule": "hum",
+  "secrets": [
+    {
+      "id": "the_queens_seat",
+      "name": "The queen's seat"
+    }
+  ],
+  "keepsake": "queens_crown",
+  "keepsake_name": "The Queen's Wax Crown",
+  "keepsake_from": "the_queens_seat"
+}

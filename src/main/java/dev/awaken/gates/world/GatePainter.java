@@ -40,11 +40,19 @@ public final class GatePainter {
 
     /** Paints every floor band that covers this chunk. */
     public static void paint(GateLayout layout, int cell, int chunkX, int chunkZ, Sink out) {
+        paint(layout, cell, chunkX, chunkZ, out, false);
+    }
+
+    /**
+     * Paints the floors of one dimension: the gates' ({@code sky} false) or the open sky's (true, only the open lands:
+     * SPEC §38.11). The two share cells and plots, so each floor stands in exactly one of them.
+     */
+    public static void paint(GateLayout layout, int cell, int chunkX, int chunkZ, Sink out, boolean sky) {
         int lcx = chunkX * 16 - Cells.originX(cell), lcz = chunkZ * 16 - Cells.originZ(cell);
         if (lcx < 0 || lcz < 0 || lcx >= Cells.SIZE || lcz >= Cells.SIZE) return;
         int slotX = lcx >> 4, slotZ = lcz >> 4;
-        for (FloorLayout f : layout.main) paintAny(layout.plan, f, slotX, slotZ, out);
-        for (FloorLayout f : layout.annex) paintAny(layout.plan, f, slotX, slotZ, out);
+        for (FloorLayout f : layout.main) if (f.sky == sky) paintAny(layout.plan, f, slotX, slotZ, out);
+        for (FloorLayout f : layout.annex) if (f.sky == sky) paintAny(layout.plan, f, slotX, slotZ, out);
     }
 
     /** A world floor carves its own plot (SPEC §38); a rooms floor paints its grid plus a slot of rock around it. */

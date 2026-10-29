@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "theme": "drowned_archive",
+  "name": "The Inkwell",
+  "line": "A sea of ink, and bridges made of paper that fold out under your feet as you walk.",
+  "tier": "wonder",
+  "rarity": "rare",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "sea": 1,
+    "sky": 34
+  },
+  "biome": "awaken:gate_world/inkwell",
+  "moods": [
+    {
+      "id": "quiet",
+      "name": "Quiet",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "high_tide",
+      "name": "High tide",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/inkwell_high_tide",
+      "life": [
+        "drips",
+        "mist"
+      ]
+    },
+    {
+      "id": "lamplit",
+      "name": "Lamplit",
+      "weight": 2.0,
+      "biome": "awaken:gate_world/inkwell_lamplit",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "paper_storm",
+      "name": "Paper storm",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/inkwell_paper_storm",
+      "life": [
+        "paper"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:archive_stone",
+    "wall_glow": "awaken:archive_stone_carved",
+    "floor": "awaken:archive_tiles",
+    "trim": "awaken:archive_stone_carved",
+    "shelf": "awaken:archive_shelf",
+    "shelf_lit": "awaken:archive_shelf_lit",
+    "planks": "awaken:archive_planks",
+    "lamp": "awaken:archive_lamp",
+    "paper": "awaken:archive_paper",
+    "kelp": "awaken:archive_kelp",
+    "glass": "awaken:archive_sea_glass",
+    "fall": "awaken:archive_inkfall",
+    "touch": "awaken:archive_lectern",
+    "bridge": "awaken:archive_paper_bridge",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "inkfalls",
+    "paper_bridges"
+  ],
+  "life": [
+    "paper",
+    "drips",
+    "pale_fish",
+    "dust"
+  ],
+  "sound": "awaken:gate.world.archive_ink",
+  "events": [
+    "page_storm",
+    "bookworm"
+  ],
+  "rule": "reading",
+  "secrets": [
+    {
+      "id": "the_open_book",
+      "name": "The open book"
+    },
+    {
+      "id": "the_ink_well",
+      "name": "The bottom of the well"
+    }
+  ],
+  "keepsake": "bookworm_tooth",
+  "keepsake_name": "The Bookworm's Tooth",
+  "keepsake_from": "bookworm",
+  "signature": "bookworm"
+}

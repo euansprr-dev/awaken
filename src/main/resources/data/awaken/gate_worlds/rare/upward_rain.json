@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "theme": "overgrown_temple",
+  "name": "Upward Rain",
+  "line": "Wet green hills where the rain falls the wrong way, up out of the puddles and into the sky.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "open",
+  "tall": true,
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "lid": 16,
+    "slope": 0.3,
+    "tunnel": 2.8
+  },
+  "biome": "awaken:gate_world/upward_rain",
+  "moods": [
+    {
+      "id": "drizzle",
+      "name": "Drizzle",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "rain_up",
+        "drips"
+      ]
+    },
+    {
+      "id": "downpour",
+      "name": "A downpour",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/upward_rain_downpour",
+      "life": [
+        "rain_up",
+        "mist"
+      ]
+    }
+  ],
+  "blocks": {
+    "floor": "minecraft:grass_block",
+    "wall": "minecraft:stone"
+  },
+  "hero": [],
+  "life": [
+    "rain_up",
+    "drips"
+  ],
+  "sound": "awaken:gate.world.rare_rain",
+  "events": [
+    "the_downpour"
+  ],
+  "rule": "",
+  "secrets": [
+    {
+      "id": "the_dry_patch",
+      "name": "The dry patch"
+    }
+  ],
+  "keepsake": "upside_umbrella",
+  "keepsake_name": "An Upside-Down Umbrella",
+  "keepsake_from": "the_dry_patch"
+}

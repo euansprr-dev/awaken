@@ -127,9 +127,12 @@ public final class Runs {
         GateService.setState(server, g, GateState.ACTIVE);
         GateRegistry.get(server).setDirty();
         BlockPos e = GateService.entrance(g, 0, 1);
-        p.teleport(new TeleportTransition(gl, GateService.center(e), Vec3.ZERO, GateService.entranceYaw(g, 0, 1), 0F,
+        // the first floor's level: the open sky's when it's an open land
+        ServerLevel to = GateService.levelOf(server, g, 0, 1);
+        if (to == null) to = gl;
+        p.teleport(new TeleportTransition(to, GateService.center(e), Vec3.ZERO, GateService.entranceYaw(g, 0, 1), 0F,
                 TeleportTransition.PLAY_PORTAL_SOUND));
-        gl.playSound(null, e, GatesRegistry.SND_ENTER.get(), SoundSource.PLAYERS, 1F, 1F);
+        to.playSound(null, e, GatesRegistry.SND_ENTER.get(), SoundSource.PLAYERS, 1F, 1F);
         GatePlan plan = g.plan;
         if (plan.ritual()) {
             // the story's hall: no floors, no Shrine, nothing to plan for. The story speaks from here on.
@@ -173,7 +176,7 @@ public final class Runs {
         run.noise = 0;
         FloorLayout f = GateLayout.of(g.plan).floor(area, floor);
         FloorState fs = g.floor(area, floor);
-        ServerLevel gl = GateService.gateLevel(server);
+        ServerLevel gl = GateService.levelOf(server, f);
         if (!fs.entered()) {
             fs.enteredAt = now(server);
             if (gl != null && f != null) Rooms.floorFirstEntered(gl, g, f);
@@ -224,7 +227,8 @@ public final class Runs {
             // fell out of the dungeon (or noclip): put them back at the floor's entrance
             if (p.getY() < Cells.floorY(6) - 40 || w == null || w.gate().id != g.id) {
                 BlockPos e = GateService.entrance(g, run.area, run.floor);
-                p.teleportTo(gl, e.getX() + 0.5, e.getY(), e.getZ() + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);
+                ServerLevel back = GateService.levelOf(server, g, run.area, run.floor);
+                p.teleportTo(back != null ? back : gl, e.getX() + 0.5, e.getY(), e.getZ() + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);
             }
             return;
         }
@@ -247,13 +251,16 @@ public final class Runs {
     /** Per gate, once a second: pressure, rising water, collapse, twist actors, room bookkeeping. */
     static void tickGates(MinecraftServer server) {
         if (server.getTickCount() % 20 != 0) return;
-        ServerLevel gl = GateService.gateLevel(server);
-        if (gl == null) return;
+        List<ServerLevel> levels = GateService.levels(server);
+        if (levels.isEmpty()) return;
         for (GateRecord g : List.copyOf(GateRegistry.get(server).all())) {
             if (g.state != GateState.ACTIVE && !(g.state == GateState.CLEARED && !g.inside.isEmpty())) continue;
-            Pressure.tick(gl, g);
-            Modifiers.tickGate(gl, g);
-            Twists.tickGate(gl, g);
+            // each level's players (an open land's are under the sky): every tick groups them by their floor
+            for (ServerLevel gl : levels) {
+                Pressure.tick(gl, g);
+                Modifiers.tickGate(gl, g);
+                Twists.tickGate(gl, g);
+            }
         }
     }
 
@@ -321,7 +328,9 @@ public final class Runs {
         BlockPos e = GateService.entrance(g, run.area, next);
         gl.playSound(null, p.blockPosition(), GatesRegistry.SND_SEAL.get(), SoundSource.PLAYERS, 1F, 1F);
         dev.awaken.gates.worlds.WorldsLive.journey(p, f);
-        p.teleportTo(gl, e.getX() + 0.5, e.getY(), e.getZ() + 0.5, Set.of(), GateService.entranceYaw(g, run.area, next), 0F, true);
+        // the next floor may stand under the open sky (or come back from it): its own level
+        ServerLevel to = GateService.levelOf(p.level().getServer(), f);
+        p.teleportTo(to != null ? to : gl, e.getX() + 0.5, e.getY(), e.getZ() + 0.5, Set.of(), GateService.entranceYaw(g, run.area, next), 0F, true);
         if (run.area == 0 && next > p.getData(GatesRegistry.MEMORY.get()).comfortFloor()) {
             DirectorLog.log(p, "gate", "deeper than your usual (" + p.getData(GatesRegistry.MEMORY.get()).comfortFloor() + ")");
         }

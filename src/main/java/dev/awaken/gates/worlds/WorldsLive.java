@@ -62,8 +62,17 @@ public final class WorldsLive {
         AwakenNet.send(p, new WorldPayloads.Arrival(g.id, f.area, f.floor, world, w == null ? "" : w.name(), mood,
                 m == null || m.name().isEmpty() ? "" : m.name(), w == null ? "" : w.rarity().label(),
                 w == null ? "" : w.tier().name().toLowerCase(Locale.ROOT), w == null ? "" : w.line(), where(g, f),
-                w == null ? "" : w.dressing().sound(), w == null ? List.of() : w.dressing().life(), first, card,
+                w == null ? "" : w.dressing().sound(), life(w, m), first, card,
                 GateService.world(g, f, 0, 0, 0), WorldLive.air(g, f)));
+    }
+
+    /** The world's life and air, with its mood's added (at most what the arrival carries). */
+    static List<String> life(GateWorld w, GateWorld.Mood m) {
+        if (w == null) return List.of();
+        if (m == null || m.life().isEmpty()) return w.dressing().life();
+        List<String> all = new ArrayList<>(w.dressing().life());
+        for (String k : m.life()) if (!all.contains(k)) all.add(k);
+        return all.size() > 16 ? all.subList(0, 16) : all;
     }
 
     /** The title card's floor line: the toast it replaces on a world floor. */
@@ -128,7 +137,9 @@ public final class WorldsLive {
     public static WorldPayloads.AtlasView view(GateAtlas atlas) {
         List<java.util.Map.Entry<String, GateWorld>> all = new ArrayList<>();
         for (var e : GateWorlds.all().entrySet()) if (e.getValue().enabled() || atlas.entry(e.getKey()) != null) all.add(e);
-        all.sort(Comparator.<java.util.Map.Entry<String, GateWorld>>comparingInt(e -> e.getValue().theme().ordinal())
+        // the rare worlds last, a group of their own
+        all.sort(Comparator.<java.util.Map.Entry<String, GateWorld>>comparingInt(
+                        e -> e.getValue().tier() == GateWorld.Tier.RARE ? Integer.MAX_VALUE : e.getValue().theme().ordinal())
                 .thenComparingInt(e -> e.getValue().tier().ordinal()).thenComparing(e -> e.getValue().name()));
         List<WorldPayloads.Card> cards = new ArrayList<>();
         int found = 0;
@@ -138,7 +149,7 @@ public final class WorldsLive {
             String tier = w.tier().name().toLowerCase(Locale.ROOT);
             if (a == null) {
                 if (w.tier() != GateWorld.Tier.SECRET) {
-                    cards.add(new WorldPayloads.Card(e.getKey(), w.theme().id, tier, w.rarity().label(), false, "", "", List.of(),
+                    cards.add(new WorldPayloads.Card(e.getKey(), w.group(), tier, w.rarity().label(), false, "", "", List.of(),
                             w.moods().size(), List.of(), w.dressing().secrets().size(), "", 0, false));
                 }
                 continue;
@@ -150,7 +161,7 @@ public final class WorldsLive {
             for (GateWorld.Secret s : w.dressing().secrets()) if (a.secrets.contains(s.id())) secrets.add(s.name());
             String sig = w.dressing().signature();
             String met = !sig.isEmpty() && atlas.creatures.contains(sig) ? pretty(sig) : "";
-            cards.add(new WorldPayloads.Card(e.getKey(), w.theme().id, tier, w.rarity().label(), true, w.name(), w.line(), moods,
+            cards.add(new WorldPayloads.Card(e.getKey(), w.group(), tier, w.rarity().label(), true, w.name(), w.line(), moods,
                     w.moods().size(), secrets, w.dressing().secrets().size(), met, a.visits, a.keepsake));
         }
         return new WorldPayloads.AtlasView(found, all.size(), cards);

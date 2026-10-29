@@ -27,6 +27,15 @@ public final class MobHooks {
         /** A named boss (e.g. "awaken:bell_warden"). */
         LivingEntity spawnBoss(ServerLevel level, String bossId, BlockPos pos, int contentLevel, String gateId);
 
+        /**
+         * A gate world's signature creature by id (e.g. "awaken:the_ringer", SPEC §38.8): a creature of the floor with a
+         * body of its own, an elite to the gate (never a Lord), or a peaceful spectacle. Null when there's no such creature
+         * yet, and the world makes do without it.
+         */
+        default LivingEntity spawnCreature(ServerLevel level, String creatureId, BlockPos pos, int contentLevel, String gateId) {
+            return null;
+        }
+
         /** Whether this is a peaceful overworld creature (ambient or grazing) that powers' waves shouldn't hurt unprovoked. */
         default boolean peaceful(net.minecraft.world.entity.Entity e) { return false; }
 
@@ -46,6 +55,10 @@ public final class MobHooks {
 
     public static LivingEntity spawnBoss(ServerLevel level, String bossId, BlockPos pos, int contentLevel, String gateId) {
         return spawner.spawnBoss(level, bossId, pos, contentLevel, gateId);
+    }
+
+    public static LivingEntity spawnCreature(ServerLevel level, String creatureId, BlockPos pos, int contentLevel, String gateId) {
+        return spawner.spawnCreature(level, creatureId, pos, contentLevel, gateId);
     }
 
     public static boolean peaceful(net.minecraft.world.entity.Entity e) {

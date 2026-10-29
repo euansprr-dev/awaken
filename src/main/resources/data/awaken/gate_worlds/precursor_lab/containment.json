@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "theme": "precursor_lab",
+  "name": "Containment",
+  "line": "Rows of tanks with things asleep in them. Some of the tanks are empty, and some of them are broken.",
+  "tier": "deep",
+  "rarity": "uncommon",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "square": 1,
+    "roof": 12
+  },
+  "biome": "awaken:gate_world/containment",
+  "moods": [
+    {
+      "id": "running",
+      "name": "Running",
+      "weight": 3.0,
+      "biome": ""
+    },
+    {
+      "id": "lockdown",
+      "name": "Lockdown",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/containment_lockdown",
+      "life": [
+        "steam"
+      ]
+    },
+    {
+      "id": "breach",
+      "name": "Breach",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/containment_breach",
+      "life": [
+        "mist",
+        "drips"
+      ]
+    },
+    {
+      "id": "reboot",
+      "name": "Reboot",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/containment_reboot",
+      "life": [
+        "dust"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:lab_panel",
+    "wall_glow": "awaken:lab_panel_lit",
+    "floor": "awaken:lab_floor",
+    "trim": "awaken:lab_frame",
+    "frame": "awaken:lab_frame",
+    "glass": "awaken:lab_glass",
+    "rack": "awaken:lab_rack",
+    "tank": "awaken:lab_tank",
+    "cables": "awaken:lab_cables",
+    "lamp": "awaken:lab_light",
+    "holo": "awaken:lab_hologram",
+    "moss": "awaken:lab_moss",
+    "sketch": "awaken:lab_sketch",
+    "touch": "awaken:lab_console",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "containment_tanks"
+  ],
+  "life": [
+    "dust",
+    "steam"
+  ],
+  "sound": "awaken:gate.world.lab_hum",
+  "events": [
+    "breach",
+    "the_wakening"
+  ],
+  "rule": "power",
+  "secrets": [
+    {
+      "id": "the_first_login",
+      "name": "The first login"
+    },
+    {
+      "id": "the_empty_tank",
+      "name": "The empty tank"
+    }
+  ],
+  "keepsake": "specimen_tag",
+  "keepsake_name": "Specimen Tag Zero",
+  "keepsake_from": "the_empty_tank"
+}

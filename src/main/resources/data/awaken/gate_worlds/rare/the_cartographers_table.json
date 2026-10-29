@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "theme": "drowned_archive",
+  "name": "The Cartographer's Table",
+  "line": "You're standing on a map, and the map goes on for ever. The hills on it are real if you walk far enough.",
+  "tier": "rare",
+  "rarity": "rare",
+  "kind": "plain",
+  "roles": [
+    "floor"
+  ],
+  "params": {
+    "band": 4
+  },
+  "biome": "awaken:gate_world/the_cartographers_table",
+  "moods": [
+    {
+      "id": "by_lamplight",
+      "name": "By lamplight",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "fresh_ink",
+      "name": "Fresh ink",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/the_cartographers_table_fresh_ink",
+      "life": [
+        "paper"
+      ]
+    }
+  ],
+  "blocks": {
+    "floor": "awaken:rare_map",
+    "wall": "minecraft:dark_oak_planks"
+  },
+  "hero": [],
+  "life": [
+    "dust",
+    "paper"
+  ],
+  "sound": "awaken:gate.world.archive_stacks",
+  "events": [
+    "the_ink_runs"
+  ],
+  "rule": "",
+  "secrets": [
+    {
+      "id": "the_compass_rose",
+      "name": "The compass rose"
+    },
+    {
+      "id": "the_ink_runs",
+      "name": "The ink running"
+    }
+  ],
+  "keepsake": "cartographers_pen",
+  "keepsake_name": "The Cartographer's Pen",
+  "keepsake_from": "the_compass_rose"
+}

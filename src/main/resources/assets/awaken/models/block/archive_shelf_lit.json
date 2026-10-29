@@ -1,0 +1,88 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/archive_shelf_lit",
+    "side": "awaken:block/archive_shelf_lit",
+    "end": "awaken:block/archive_shelf_top",
+    "glow": "awaken:block/archive_shelf_lit_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#end",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#end",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#side",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#side",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#side",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#side",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#glow",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#glow",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#glow",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#glow",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#glow",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#glow",
+          "cullface": "east"
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}

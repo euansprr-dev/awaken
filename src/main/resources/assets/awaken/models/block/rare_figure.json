@@ -1,0 +1,286 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/rare_figure",
+    "f": "awaken:block/rare_figure"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        0,
+        5
+      ],
+      "to": [
+        12,
+        4,
+        12
+      ],
+      "faces": {
+        "down": {
+          "texture": "#f",
+          "uv": [
+            2,
+            12,
+            14,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#f",
+          "uv": [
+            2,
+            12,
+            14,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#f",
+          "uv": [
+            2,
+            12,
+            14,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#f",
+          "uv": [
+            2,
+            12,
+            14,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#f",
+          "uv": [
+            2,
+            12,
+            14,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#f",
+          "uv": [
+            2,
+            12,
+            14,
+            16
+          ]
+        }
+      },
+      "light_emission": 6
+    },
+    {
+      "from": [
+        5,
+        4,
+        7
+      ],
+      "to": [
+        11,
+        11,
+        11
+      ],
+      "faces": {
+        "down": {
+          "texture": "#f",
+          "uv": [
+            3,
+            5,
+            13,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#f",
+          "uv": [
+            3,
+            5,
+            13,
+            12
+          ]
+        },
+        "north": {
+          "texture": "#f",
+          "uv": [
+            3,
+            5,
+            13,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#f",
+          "uv": [
+            3,
+            5,
+            13,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#f",
+          "uv": [
+            3,
+            5,
+            13,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#f",
+          "uv": [
+            3,
+            5,
+            13,
+            12
+          ]
+        }
+      },
+      "light_emission": 6
+    },
+    {
+      "from": [
+        5.5,
+        11,
+        6.5
+      ],
+      "to": [
+        10.5,
+        15,
+        10.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#f",
+          "uv": [
+            5,
+            2,
+            11,
+            6
+          ]
+        },
+        "up": {
+          "texture": "#f",
+          "uv": [
+            5,
+            2,
+            11,
+            6
+          ]
+        },
+        "north": {
+          "texture": "#f",
+          "uv": [
+            5,
+            2,
+            11,
+            6
+          ]
+        },
+        "south": {
+          "texture": "#f",
+          "uv": [
+            5,
+            2,
+            11,
+            6
+          ]
+        },
+        "west": {
+          "texture": "#f",
+          "uv": [
+            5,
+            2,
+            11,
+            6
+          ]
+        },
+        "east": {
+          "texture": "#f",
+          "uv": [
+            5,
+            2,
+            11,
+            6
+          ]
+        }
+      },
+      "light_emission": 9
+    },
+    {
+      "from": [
+        4,
+        5,
+        4
+      ],
+      "to": [
+        12,
+        8,
+        7
+      ],
+      "faces": {
+        "down": {
+          "texture": "#f",
+          "uv": [
+            2,
+            6,
+            14,
+            9
+          ]
+        },
+        "up": {
+          "texture": "#f",
+          "uv": [
+            2,
+            6,
+            14,
+            9
+          ]
+        },
+        "north": {
+          "texture": "#f",
+          "uv": [
+            2,
+            6,
+            14,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#f",
+          "uv": [
+            2,
+            6,
+            14,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#f",
+          "uv": [
+            2,
+            6,
+            14,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#f",
+          "uv": [
+            2,
+            6,
+            14,
+            9
+          ]
+        }
+      },
+      "light_emission": 6
+    }
+  ]
+}

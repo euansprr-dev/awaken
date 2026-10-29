@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "theme": "abyssal_shrine",
+  "name": "The Black Mirror",
+  "line": "A still black lake that shows you the sky, except there isn't one up there.",
+  "tier": "everyday",
+  "rarity": "common",
+  "kind": "caves",
+  "roles": [
+    "floor",
+    "boss"
+  ],
+  "params": {
+    "sea": 1,
+    "sky": 30
+  },
+  "biome": "awaken:gate_world/black_mirror",
+  "moods": [
+    {
+      "id": "vigil",
+      "name": "The vigil",
+      "weight": 3.0,
+      "biome": "",
+      "life": [
+        "dust"
+      ]
+    },
+    {
+      "id": "silence",
+      "name": "Silence",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/black_mirror_silence",
+      "life": [
+        "mist"
+      ]
+    },
+    {
+      "id": "starfall",
+      "name": "Falling stars",
+      "weight": 1.5,
+      "biome": "awaken:gate_world/black_mirror_starfall",
+      "life": [
+        "stars"
+      ]
+    },
+    {
+      "id": "hunger",
+      "name": "Hunger",
+      "weight": 1.0,
+      "biome": "awaken:gate_world/black_mirror_hunger",
+      "life": [
+        "mist",
+        "drips"
+      ]
+    }
+  ],
+  "blocks": {
+    "wall": "awaken:shrine_stone",
+    "floor": "awaken:abyss_tiles",
+    "trim": "awaken:abyss_pale",
+    "wall_glow": "awaken:abyss_rune",
+    "glass": "awaken:abyss_glass",
+    "candles": "awaken:abyss_candles",
+    "star": "awaken:abyss_star",
+    "veil": "awaken:abyss_veil",
+    "iris": "awaken:abyss_iris",
+    "pupil": "awaken:abyss_pupil",
+    "sclera": "awaken:abyss_sclera",
+    "touch": "awaken:abyss_offering",
+    "fluid": "minecraft:water"
+  },
+  "hero": [
+    "the_still_lake"
+  ],
+  "life": [
+    "dust",
+    "drips"
+  ],
+  "sound": "awaken:gate.world.abyss_lake",
+  "events": [
+    "the_hush"
+  ],
+  "rule": "vigil",
+  "secrets": [
+    {
+      "id": "the_first_offering",
+      "name": "The first offering"
+    },
+    {
+      "id": "the_still_reflection",
+      "name": "The still reflection"
+    },
+    {
+      "id": "the_open_eye",
+      "name": "The eye in the dark",
+      "leads_to": "awaken:abyssal_shrine/the_eye"
+    }
+  ],
+  "keepsake": "black_pearl",
+  "keepsake_name": "A Black Pearl",
+  "keepsake_from": "the_still_reflection"
+}

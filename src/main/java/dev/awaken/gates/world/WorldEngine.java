@@ -36,6 +36,10 @@ public interface WorldEngine {
             case "passages" -> new PassageEngine();
             case "void" -> new VoidEngine();
             case "drop" -> new ShaftEngine();
+            // open land (38.11) is the cave engine under the sky
+            case "caves", "open" -> new CaveEngine();
+            // Stage 4 (38.12): islands in the dark, an endless plain and a hall with a fold are the cave engine's shapes too
+            case "isles", "plain", "fold" -> new CaveEngine();
             default -> null;
         };
     }

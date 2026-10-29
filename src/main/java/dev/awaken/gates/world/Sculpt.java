@@ -106,6 +106,17 @@ final class Sculpt {
         });
     }
 
+    /**
+     * A block where the place is open or only a plant stands there (a touchstone over the sprouts grown before it: the
+     * plan-time probe can't see a plant that needs the floor under it).
+     */
+    void putOverGrowth(int x, int y, int z, BlockState s) {
+        op(x, y, z, x, y, z, (b, xx, yy, zz) -> {
+            BlockState there = b.state(xx, yy, zz);
+            if (b.get(xx, yy, zz) == OPEN || (there != null && !there.isSolid() && !b.water(xx, yy, zz))) b.set(xx, yy, zz, s);
+        });
+    }
+
     /** A pre-made shape (a bell, a statue) at an origin: offsets and states side by side. */
     void stamp(int ox, int oy, int oz, Stamp st) {
         if (st.size() == 0) return;

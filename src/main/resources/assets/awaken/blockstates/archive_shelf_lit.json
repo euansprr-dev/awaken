@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/archive_shelf_lit"
+    },
+    "axis=z": {
+      "model": "awaken:block/archive_shelf_lit",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "awaken:block/archive_shelf_lit",
+      "x": 90,
+      "y": 90
+    }
+  }
+}
