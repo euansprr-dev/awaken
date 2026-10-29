@@ -2,6 +2,7 @@
 # armour stand beside a vanilla netherite stand (the old look, for scale), close, from behind (the cape) and the side;
 # by night (the molten seams and the eye-slit); worn by the player from the front, from behind and walking (the cape
 # swings); the gauntlet in first person. A studio at y 200, noon, a sandstone wall behind.
+# ci knobs: LENS=cinematic
 world armourprobe creative 4242
 waitworld
 wait 60

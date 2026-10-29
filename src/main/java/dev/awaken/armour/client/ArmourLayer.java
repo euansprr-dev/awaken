@@ -33,14 +33,11 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
 
     @Override
     public void submit(PoseStack ps, SubmitNodeCollector out, int light, S state, float yRot, float xRot) {
-        if (state.isInvisible) return;
+        ItemStack[] worn = state.getRenderData(ArmourClient.WORN);
+        if (state.isInvisible || worn == null) return;
         for (ArmorType slot : SLOTS) {
-            ItemStack stack = switch (slot) {
-                case HELMET -> state.headEquipment;
-                case CHESTPLATE -> state.chestEquipment;
-                case LEGGINGS -> state.legsEquipment;
-                default -> state.feetEquipment;
-            };
+            ItemStack stack = worn[slot.ordinal()];
+            if (stack == null) continue;
             ArmourLooks.Look look = ArmourLooks.of(stack);
             if (look == null || look.piece() != slot) continue;
             ArmourMesh[][] set = ArmourMeshes.of(look.set());
