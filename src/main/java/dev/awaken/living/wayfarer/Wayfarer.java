@@ -139,7 +139,7 @@ public class Wayfarer extends PathfinderMob implements Npc {
 
     /** A risen Stilled: a step at a time toward the bells, gone once nobody is within 48 or it's nearly there. */
     private void risen(ServerLevel level) {
-        if (walkTo == null || (tickCount > 200 && tickCount % 100 == 0 && level.getNearestPlayer(this, 48) == null)) {
+        if (walkTo == null || (tickCount > 200 && tickCount % 100 == 0 && !watched(level, 48))) {
             discard();
             return;
         }
@@ -154,6 +154,12 @@ public class Wayfarer extends PathfinderMob implements Npc {
         getNavigation().moveTo(step.x, getY(), step.z, 0.6);
     }
 
+    /** Anyone within {@code reach}, a spectator too (one watching shouldn't see them vanish). */
+    private boolean watched(ServerLevel level, double reach) {
+        for (net.minecraft.server.level.ServerPlayer p : level.players()) if (p.distanceToSqr(this) < reach * reach) return true;
+        return false;
+    }
+
     /** Ilse visiting: walks to the fire and stays by it; at dusk (or after a long while with nobody about) she goes home. */
     private void visiting(ServerLevel level) {
         if (walkTo == null) {
@@ -161,7 +167,7 @@ public class Wayfarer extends PathfinderMob implements Npc {
             return;
         }
         long tod = Math.floorMod(level.getOverworldClockTime(), 24000L);
-        boolean alone = level.getNearestPlayer(this, 24) == null;
+        boolean alone = !watched(level, 24);
         if (tickCount % 100 == 0 && alone && (tod >= 12500 || tickCount > 20 * 60 * 20)) {
             discard();
             return;

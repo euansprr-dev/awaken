@@ -161,7 +161,7 @@ cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
 cmd awaken admin bells ilse
 wait 300
 cmd gamemode spectator
-cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~9 ~14 180 30
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~7 ~6 180 35
 wait 40
 shot j7_19_ilse_visits
 quit

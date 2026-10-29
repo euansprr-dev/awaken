@@ -199,6 +199,7 @@ final class BellBookSection extends UiSection {
         long lo = Long.parseLong(head.get(3)), hi = Long.parseLong(head.get(4));
         boolean frame = head.get(5).equals("1");
         String what = !frame ? "No bell frame set down yet." : switch (stage) {
+            case 3 -> "The Great Belfry.";
             case 2 -> "A stone bell tower.";
             case 1 -> "A timber belfry.";
             default -> "A bell frame.";
