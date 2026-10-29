@@ -32,6 +32,12 @@ public final class HeroRig {
 
     public record Look(String bone, float yaw, float pitch) {}
 
+    /**
+     * A secondary part that trails the body (kit bodies, SPEC §35.10): how much of its parents' turn it lags behind
+     * (gain), how fast it swings back (hz) and how quickly the swing dies (damping, 0..1).
+     */
+    public record Spring(String bone, float gain, float hz, float damping) {}
+
     public final String id;
     public final int texW, texH;
     public final boolean translucent;
@@ -45,10 +51,11 @@ public final class HeroRig {
     /** Ability name (as in the bestiary) to move name; the clips are {@code <move>_windup} and {@code <move>_strike}. */
     public final Map<String, String> moves;
     public final List<Look> look;
+    public final List<Spring> springs;
     private final Map<String, Integer> boneIndex;
 
     private HeroRig(String id, int texW, int texH, boolean translucent, float walkStride, float runStride, float runFrom, float runFull,
-                    float shadow, List<Bone> bones, Map<String, Clip> clips, Map<String, String> moves, List<Look> look) {
+                    float shadow, List<Bone> bones, Map<String, Clip> clips, Map<String, String> moves, List<Look> look, List<Spring> springs) {
         this.id = id;
         this.texW = texW;
         this.texH = texH;
@@ -62,6 +69,7 @@ public final class HeroRig {
         this.clips = clips;
         this.moves = moves;
         this.look = List.copyOf(look);
+        this.springs = List.copyOf(springs);
         this.boneIndex = new HashMap<>();
         for (int i = 0; i < bones.size(); i++) boneIndex.put(bones.get(i).name(), i);
     }
@@ -122,6 +130,7 @@ public final class HeroRig {
         Map<String, Clip> clips = new LinkedHashMap<>();
         Map<String, String> moves = new LinkedHashMap<>();
         List<Look> look = new ArrayList<>();
+        List<Spring> springs = new ArrayList<>();
         String clipName = null;
         float clipLen = 0;
         boolean clipLoop = false;
@@ -154,6 +163,7 @@ public final class HeroRig {
                             Integer.parseInt(t[6]), Integer.parseInt(t[7]), Integer.parseInt(t[8]), t[9].equals("1"), f(t[10])));
                     case "look" -> look.add(new Look(t[1], f(t[2]), f(t[3])));
                     case "move" -> moves.put(t[1].replace('_', ' '), t[2]);
+                    case "spring" -> springs.add(new Spring(t[1], f(t[2]), f(t[3]), f(t[4])));
                     case "clip" -> {
                         if (clipName != null) clips.put(clipName, new Clip(clipName, clipLen, clipLoop, List.copyOf(tracks)));
                         clipName = t[1];
@@ -189,7 +199,7 @@ public final class HeroRig {
                     List.copyOf(cubes.get(i))));
         }
         return new HeroRig(id, tw, th, translucent, walk, run, runFrom, runFull, shadow, bones, java.util.Collections.unmodifiableMap(clips),
-                java.util.Collections.unmodifiableMap(moves), look);
+                java.util.Collections.unmodifiableMap(moves), look, springs);
     }
 
     private static float f(String s) {
@@ -217,6 +227,10 @@ public final class HeroRig {
             }
         }
         for (Look l : look) if (bone(l.bone()) < 0) out.add(id + ": look bone " + l.bone() + " missing");
+        for (Spring sp : springs) {
+            if (bone(sp.bone()) < 0) out.add(id + ": spring bone " + sp.bone() + " missing");
+            if (sp.hz() <= 0 || sp.damping() < 0 || sp.damping() > 1) out.add(id + ": spring " + sp.bone() + " needs hz > 0 and damping 0..1");
+        }
         for (Bone b : bones) {
             for (Cube c : b.cubes()) {
                 int fw = 2 * (c.d() + c.w()), fh = c.d() + c.h();

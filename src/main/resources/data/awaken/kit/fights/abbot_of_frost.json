@@ -1,0 +1,145 @@
+{
+ "schemaVersion": 1,
+ "id": "abbot_of_frost",
+ "moves": "abbot_of_frost",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "swat",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "hammer"
+      ]
+     ]
+    },
+    {
+     "move": "hymn",
+     "weight": 3
+    },
+    {
+     "move": "spikes",
+     "weight": 2
+    },
+    {
+     "move": "avalanche",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "swat"
+      ]
+     ]
+    },
+    {
+     "move": "crush",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "choir",
+   "pool": [
+    {
+     "move": "swat",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "hammer"
+      ]
+     ]
+    },
+    {
+     "move": "hymn",
+     "weight": 2
+    },
+    {
+     "move": "spikes",
+     "weight": 2
+    },
+    {
+     "move": "blizzard",
+     "weight": 2
+    },
+    {
+     "move": "choir",
+     "weight": 1
+    },
+    {
+     "move": "avalanche",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "swat"
+      ]
+     ]
+    },
+    {
+     "move": "crush",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "vow",
+   "pool": [
+    {
+     "move": "vow",
+     "weight": 1
+    },
+    {
+     "move": "nova",
+     "weight": 2
+    },
+    {
+     "move": "spikes",
+     "weight": 3
+    },
+    {
+     "move": "hymn",
+     "weight": 2
+    },
+    {
+     "move": "swat",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "hammer"
+      ]
+     ]
+    },
+    {
+     "move": "avalanche",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "swat",
+       "hammer"
+      ]
+     ]
+    },
+    {
+     "move": "crush",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

@@ -1,0 +1,171 @@
+{
+ "schemaVersion": 1,
+ "id": "gearwright_colossus",
+ "moves": "gearwright_colossus",
+ "intro": {
+  "pose": "idle",
+  "move": "chime"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "sweep",
+     "weight": 3,
+     "then": [
+      [
+       "chop"
+      ],
+      [
+       "chop",
+       "slam"
+      ]
+     ]
+    },
+    {
+     "move": "chop",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "slam",
+     "weight": 3
+    },
+    {
+     "move": "stride",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "halo",
+     "weight": 2
+    }
+   ]
+  },
+  {
+   "transition": "drones",
+   "pool": [
+    {
+     "move": "sweep",
+     "weight": 3,
+     "then": [
+      [
+       "chop"
+      ],
+      [
+       "chop",
+       "slam"
+      ]
+     ]
+    },
+    {
+     "move": "chop",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "sweep"
+      ]
+     ]
+    },
+    {
+     "move": "slam",
+     "weight": 3
+    },
+    {
+     "move": "stride",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "slam"
+      ]
+     ]
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "halo",
+     "weight": 2
+    },
+    {
+     "move": "drones",
+     "weight": 1
+    }
+   ]
+  },
+  {
+   "transition": "strikes",
+   "pool": [
+    {
+     "move": "sweep",
+     "weight": 3,
+     "then": [
+      [
+       "chop",
+       "slam"
+      ]
+     ]
+    },
+    {
+     "move": "chop",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "sweep"
+      ]
+     ]
+    },
+    {
+     "move": "slam",
+     "weight": 3,
+     "then": [
+      [
+       "kick"
+      ]
+     ]
+    },
+    {
+     "move": "stride",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "overload"
+      ]
+     ]
+    },
+    {
+     "move": "kick",
+     "weight": 3,
+     "when": "BEHIND"
+    },
+    {
+     "move": "halo",
+     "weight": 2
+    },
+    {
+     "move": "overload",
+     "weight": 2
+    },
+    {
+     "move": "strikes",
+     "weight": 1
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.25
+ }
+}

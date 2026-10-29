@@ -1,0 +1,795 @@
+{
+ "schemaVersion": 1,
+ "id": "lantern_broker",
+ "moves": [
+  {
+   "id": "lash",
+   "class": "LIGHT",
+   "time": {
+    "windup": 12,
+    "active": 4,
+    "recover": 16,
+    "track": 10.0,
+    "lock": 8,
+    "link": 4
+   },
+   "range": [
+    0,
+    1.79
+   ],
+   "damage": 0.9,
+   "knock": 0.8,
+   "title": "Chain Lash",
+   "kinds": [
+    "near"
+   ],
+   "hits": [
+    [
+     [
+      0.141,
+      3.287,
+      -1.479,
+      -0.072,
+      3.375,
+      -1.268,
+      0.306
+     ],
+     [
+      0.637,
+      3.294,
+      -1.604,
+      0.405,
+      3.222,
+      -1.664,
+      0.275
+     ]
+    ],
+    [
+     [
+      -0.943,
+      2.75,
+      1.004,
+      -0.736,
+      2.91,
+      1.175,
+      0.306
+     ],
+     [
+      -1.198,
+      2.69,
+      0.553,
+      -1.148,
+      2.619,
+      0.788,
+      0.275
+     ],
+     [
+      -0.072,
+      3.375,
+      -1.268,
+      -0.736,
+      2.91,
+      1.175,
+      0.306
+     ],
+     [
+      0.405,
+      3.222,
+      -1.664,
+      -1.148,
+      2.619,
+      0.788,
+      0.275
+     ]
+    ],
+    [
+     [
+      0.539,
+      3.495,
+      2.597,
+      0.436,
+      3.759,
+      2.729,
+      0.306
+     ],
+     [
+      0.608,
+      3.064,
+      2.261,
+      0.627,
+      3.231,
+      2.445,
+      0.275
+     ],
+     [
+      -0.736,
+      2.91,
+      1.175,
+      0.436,
+      3.759,
+      2.729,
+      0.306
+     ],
+     [
+      -1.148,
+      2.619,
+      0.788,
+      0.627,
+      3.231,
+      2.445,
+      0.275
+     ]
+    ],
+    [
+     [
+      -1.434,
+      1.011,
+      1.28,
+      -1.64,
+      0.843,
+      1.444,
+      0.306
+     ],
+     [
+      -1.076,
+      1.338,
+      0.997,
+      -1.231,
+      1.183,
+      1.117,
+      0.275
+     ],
+     [
+      0.436,
+      3.759,
+      2.729,
+      -1.64,
+      0.843,
+      1.444,
+      0.306
+     ],
+     [
+      0.627,
+      3.231,
+      2.445,
+      -1.231,
+      1.183,
+      1.117,
+      0.275
+     ]
+    ]
+   ],
+   "marks": {
+    "peak": 12,
+    "contact": 12,
+    "whoosh": 12
+   }
+  },
+  {
+   "id": "crook",
+   "class": "LIGHT",
+   "time": {
+    "windup": 9,
+    "active": 4,
+    "recover": 16,
+    "track": 8.0,
+    "lock": 5,
+    "link": 4
+   },
+   "range": [
+    0,
+    3.68
+   ],
+   "damage": 1.0,
+   "knock": 1.0,
+   "title": "Crook Sweep",
+   "kinds": [
+    "combo"
+   ],
+   "hits": [
+    [
+     [
+      -0.133,
+      2.807,
+      1.052,
+      1.401,
+      1.675,
+      -1.404,
+      0.4
+     ],
+     [
+      -0.133,
+      2.807,
+      1.052,
+      0.98,
+      1.85,
+      -0.528,
+      0.306
+     ]
+    ],
+    [
+     [
+      -0.72,
+      2.628,
+      1.088,
+      -1.167,
+      5.233,
+      2.726,
+      0.4
+     ],
+     [
+      -0.72,
+      2.628,
+      1.088,
+      -1.17,
+      4.494,
+      2.069,
+      0.306
+     ],
+     [
+      1.401,
+      1.675,
+      -1.404,
+      -1.167,
+      5.233,
+      2.726,
+      0.4
+     ],
+     [
+      0.98,
+      1.85,
+      -0.528,
+      -1.17,
+      4.494,
+      2.069,
+      0.306
+     ]
+    ],
+    [
+     [
+      -1.066,
+      2.496,
+      0.615,
+      -2.56,
+      0.393,
+      2.351,
+      0.4
+     ],
+     [
+      -1.066,
+      2.496,
+      0.615,
+      -2.119,
+      1.192,
+      1.971,
+      0.306
+     ],
+     [
+      -1.167,
+      5.233,
+      2.726,
+      -2.56,
+      0.393,
+      2.351,
+      0.4
+     ],
+     [
+      -1.17,
+      4.494,
+      2.069,
+      -2.119,
+      1.192,
+      1.971,
+      0.306
+     ]
+    ],
+    [
+     [
+      -1.197,
+      2.439,
+      0.312,
+      -3.718,
+      1.002,
+      1.429,
+      0.4
+     ],
+     [
+      -1.197,
+      2.439,
+      0.312,
+      -3.021,
+      1.639,
+      1.137,
+      0.306
+     ],
+     [
+      -2.56,
+      0.393,
+      2.351,
+      -3.718,
+      1.002,
+      1.429,
+      0.4
+     ],
+     [
+      -2.119,
+      1.192,
+      1.971,
+      -3.021,
+      1.639,
+      1.137,
+      0.306
+     ]
+    ]
+   ],
+   "marks": {
+    "peak": 9,
+    "contact": 9,
+    "whoosh": 9
+   }
+  },
+  {
+   "id": "pack",
+   "class": "LIGHT",
+   "time": {
+    "windup": 12,
+    "active": 4,
+    "recover": 16,
+    "track": 0.0,
+    "lock": 8,
+    "link": 4
+   },
+   "range": [
+    0,
+    0.5
+   ],
+   "damage": 1.0,
+   "knock": 1.2,
+   "kinds": [
+    "behind"
+   ],
+   "hits": [
+    [
+     [
+      -0.103,
+      2.81,
+      -0.205,
+      -0.514,
+      5.265,
+      -0.817,
+      0.525
+     ],
+     [
+      -0.103,
+      2.81,
+      -0.205,
+      0.312,
+      3.674,
+      -1.113,
+      0.4
+     ]
+    ],
+    [
+     [
+      0.213,
+      2.809,
+      -0.033,
+      0.884,
+      5.277,
+      0.117,
+      0.525
+     ],
+     [
+      0.213,
+      2.809,
+      -0.033,
+      1.055,
+      3.552,
+      0.661,
+      0.4
+     ],
+     [
+      -0.514,
+      5.265,
+      -0.817,
+      0.884,
+      5.277,
+      0.117,
+      0.525
+     ],
+     [
+      0.312,
+      3.674,
+      -1.113,
+      1.055,
+      3.552,
+      0.661,
+      0.4
+     ]
+    ],
+    [
+     [
+      0.189,
+      2.794,
+      0.152,
+      0.537,
+      5.197,
+      0.972,
+      0.525
+     ],
+     [
+      0.189,
+      2.794,
+      0.152,
+      0.161,
+      3.45,
+      1.297,
+      0.4
+     ],
+     [
+      0.884,
+      5.277,
+      0.117,
+      0.537,
+      5.197,
+      0.972,
+      0.525
+     ],
+     [
+      1.055,
+      3.552,
+      0.661,
+      0.161,
+      3.45,
+      1.297,
+      0.4
+     ]
+    ],
+    [
+     [
+      0.19,
+      2.795,
+      0.151,
+      0.533,
+      5.195,
+      0.981,
+      0.525
+     ],
+     [
+      0.19,
+      2.795,
+      0.151,
+      0.132,
+      3.451,
+      1.295,
+      0.4
+     ],
+     [
+      0.537,
+      5.197,
+      0.972,
+      0.533,
+      5.195,
+      0.981,
+      0.525
+     ],
+     [
+      0.161,
+      3.45,
+      1.297,
+      0.132,
+      3.451,
+      1.295,
+      0.4
+     ]
+    ]
+   ],
+   "marks": {
+    "peak": 12,
+    "contact": 12,
+    "whoosh": 12
+   }
+  },
+  {
+   "id": "bolts",
+   "class": "LIGHT",
+   "time": {
+    "windup": 12,
+    "active": 14,
+    "recover": 14,
+    "track": 9.0,
+    "lock": 8,
+    "link": 4
+   },
+   "range": [
+    4,
+    18
+   ],
+   "damage": 0,
+   "knock": 0,
+   "title": "Lantern Bolts",
+   "kinds": [
+    "ranged"
+   ],
+   "ability": "Lantern Bolts",
+   "origin": [
+    -0.65,
+    4.85,
+    2.8
+   ],
+   "marks": {
+    "peak": 12,
+    "contact": 12,
+    "whoosh": 12
+   },
+   "sounds": {
+    "swing": "cast"
+   }
+  },
+  {
+   "id": "step",
+   "class": "NONE",
+   "time": {
+    "windup": 12,
+    "active": 10,
+    "recover": 14,
+    "track": 6.0,
+    "lock": 8,
+    "link": 4
+   },
+   "range": [
+    4,
+    16
+   ],
+   "damage": 0,
+   "knock": 0,
+   "title": "Market Step",
+   "kinds": [
+    "gap"
+   ],
+   "ability": "Market Step",
+   "marks": {
+    "peak": 12,
+    "contact": 12,
+    "whoosh": 12
+   },
+   "sounds": {
+    "swing": "cast",
+    "impact": ""
+   }
+  },
+  {
+   "id": "moths",
+   "class": "NONE",
+   "time": {
+    "windup": 14,
+    "active": 18,
+    "recover": 14,
+    "track": 0.0,
+    "lock": 10,
+    "link": 4
+   },
+   "range": [
+    0,
+    99
+   ],
+   "damage": 0,
+   "knock": 0,
+   "title": "Release the Moths",
+   "kinds": [
+    "summon"
+   ],
+   "ability": "Release the Moths",
+   "marks": {
+    "peak": 14,
+    "contact": 14,
+    "whoosh": 14
+   },
+   "sounds": {
+    "swing": "cast",
+    "impact": ""
+   }
+  },
+  {
+   "id": "paper",
+   "class": "HEAVY",
+   "time": {
+    "windup": 16,
+    "active": 12,
+    "recover": 18,
+    "track": 0.0,
+    "lock": 11,
+    "link": 4,
+    "hold": 6
+   },
+   "range": [
+    0,
+    8
+   ],
+   "damage": 0,
+   "knock": 0,
+   "title": "Paper Lanterns",
+   "kinds": [
+    "area"
+   ],
+   "ability": "Paper Lanterns",
+   "marks": {
+    "peak": 16,
+    "contact": 16,
+    "whoosh": 16
+   },
+   "sounds": {
+    "swing": "cast"
+   }
+  },
+  {
+   "id": "lights_out",
+   "class": "PERILOUS",
+   "time": {
+    "windup": 34,
+    "active": 12,
+    "recover": 26,
+    "track": 0.0,
+    "lock": 23,
+    "link": 6
+   },
+   "range": [
+    0,
+    99
+   ],
+   "damage": 0,
+   "knock": 0,
+   "title": "Lights Out",
+   "signature": true,
+   "kinds": [
+    "area"
+   ],
+   "ability": "Lights Out",
+   "marks": {
+    "peak": 34,
+    "contact": 34,
+    "whoosh": 34
+   },
+   "sounds": {
+    "swing": "roar",
+    "impact": ""
+   }
+  },
+  {
+   "id": "wake",
+   "class": "NONE",
+   "time": {
+    "windup": 16,
+    "active": 28,
+    "recover": 16,
+    "track": 0.0,
+    "lock": 11,
+    "link": 4
+   },
+   "range": [
+    0,
+    99
+   ],
+   "damage": 0,
+   "knock": 0,
+   "kinds": [
+    "intro"
+   ],
+   "marks": {
+    "peak": 16,
+    "contact": 16,
+    "whoosh": 16
+   }
+  }
+ ],
+ "sounds": {
+  "tell_light": [
+   {
+    "sound": "block.chain.step",
+    "volume": 1.0,
+    "pitch": 1.2
+   },
+   {
+    "sound": "block.lantern.hit",
+    "volume": 1.0,
+    "pitch": 1.0
+   }
+  ],
+  "tell_heavy": [
+   {
+    "sound": "block.lantern.place",
+    "volume": 1.4,
+    "pitch": 0.7
+   },
+   {
+    "sound": "item.armor.equip_leather",
+    "volume": 1.2,
+    "pitch": 0.8
+   }
+  ],
+  "tell_perilous": [
+   {
+    "sound": "block.candle.extinguish",
+    "volume": 2.0,
+    "pitch": 0.6
+   },
+   {
+    "sound": "block.bell.resonate",
+    "volume": 1.2,
+    "pitch": 1.4
+   }
+  ],
+  "swing_light": [
+   {
+    "sound": "entity.player.attack.sweep",
+    "volume": 1.0,
+    "pitch": 1.3
+   },
+   {
+    "sound": "block.chain.break",
+    "volume": 1.0,
+    "pitch": 1.4
+   }
+  ],
+  "swing_heavy": [
+   {
+    "sound": "entity.player.attack.sweep",
+    "volume": 1.4,
+    "pitch": 0.8
+   },
+   {
+    "sound": "block.lantern.break",
+    "volume": 1.2,
+    "pitch": 0.8
+   }
+  ],
+  "cast": [
+   {
+    "sound": "item.firecharge.use",
+    "volume": 1.2,
+    "pitch": 1.2
+   },
+   {
+    "sound": "block.lantern.hit",
+    "volume": 1.0,
+    "pitch": 1.4
+   }
+  ],
+  "impact": [
+   {
+    "sound": "block.chain.hit",
+    "volume": 1.4,
+    "pitch": 0.8
+   },
+   {
+    "sound": "block.lantern.fall",
+    "volume": 1.2,
+    "pitch": 0.9
+   }
+  ],
+  "roar": [
+   {
+    "sound": "block.candle.extinguish",
+    "volume": 2.4,
+    "pitch": 0.5
+   },
+   {
+    "sound": "entity.illusioner.cast_spell",
+    "volume": 1.6,
+    "pitch": 0.7
+   }
+  ],
+  "step": [
+   {
+    "sound": "block.wood.step",
+    "volume": 0.6,
+    "pitch": 1.1
+   },
+   {
+    "sound": "block.chain.step",
+    "volume": 0.4,
+    "pitch": 1.3
+   }
+  ]
+ }
+}

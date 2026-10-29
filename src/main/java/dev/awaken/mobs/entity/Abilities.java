@@ -251,7 +251,7 @@ final class Abilities {
         if (extra > 0) Hazards.strike(level, mob, new Vec3(x, y, z), 0.9F, delay + 2, extra, bolt(mob, a), effect(a));
     }
 
-    static void blink(ServerLevel level, AwakenMob mob, Ability a, @Nullable LivingEntity target, Vec3 dest) {
+    static void blink(ServerLevel level, AwakenMob mob, Ability a, @Nullable LivingEntity target, Vec3 dest, boolean strike) {
         Vec3 old = mob.position();
         AABB moved = mob.getBoundingBox().move(dest.subtract(old));
         if (!level.noCollision(mob, moved)) {
@@ -266,7 +266,7 @@ final class Abilities {
         if (target != null) {
             mob.getLookControl().setLookAt(target);
             double reach = mob.getBbWidth() + target.getBbWidth() + 1.5;
-            if (mob.distanceToSqr(target) < reach * reach) {
+            if (strike && mob.distanceToSqr(target) < reach * reach) {
                 hurt(level, mob, target, damage(mob, a), bolt(mob, a), effect(a));
                 mob.swingForAttack(net.minecraft.world.InteractionHand.MAIN_HAND);
             }

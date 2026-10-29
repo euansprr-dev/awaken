@@ -33,6 +33,7 @@ final class FightRunner {
 
     /** The move playing (an index into the table, -1 none), its tick, and its stretched timings. */
     private int move = -1, t, windup, hold, active, recover;
+    private KitMoves.@Nullable Played played;
     private float yaw;
     private @Nullable Ability ability;
     private final ArrayDeque<String> string = new ArrayDeque<>(4);
@@ -80,6 +81,13 @@ final class FightRunner {
         string.clear();
         introduced = true;
         return begin(level, id, boss.getTarget());
+    }
+
+    /** Plays a string now: its first move, then the rest as the fight script would (tests). */
+    boolean play(ServerLevel level, String first, java.util.List<String> then) {
+        if (!play(level, first)) return false;
+        string.addAll(then);
+        return true;
     }
 
     /** The move playing now, or null. */
@@ -178,15 +186,21 @@ final class FightRunner {
         if (navTicks-- > 0) return;
         navTicks = 10;
         // it stops where its close moves reach (at most 3.5 blocks out): Unit Zero's cuts reach 1.6, not 3.5
+        double reach = closeReach();
+        double stop = reach > 0 ? Math.min(3.5, Math.max(0.5, reach - 0.3)) : 3.5;
+        if (edgeDistance(target) > stop) boss.getNavigation().moveTo(target, 1.0);
+        else boss.getNavigation().stop();
+    }
+
+    /** How far its close moves reach in this phase (those usable from 0, not kept for far or behind), or 0. */
+    private double closeReach() {
         double reach = 0;
         for (FightScripts.Entry e : fight.phase(boss.phase()).pool()) {
             int i = moves.index(e.move());
             if (i < 0 || moves.get(i).minRange() > 0 || e.when() == FightScripts.When.FAR || e.when() == FightScripts.When.BEHIND) continue;
             reach = Math.max(reach, moves.get(i).maxRange());
         }
-        double stop = reach > 0 ? Math.min(3.5, Math.max(0.5, reach - 0.3)) : 3.5;
-        if (edgeDistance(target) > stop) boss.getNavigation().moveTo(target, 1.0);
-        else boss.getNavigation().stop();
+        return reach;
     }
 
     private FightScripts.@Nullable Entry pick(LivingEntity target) {
@@ -270,6 +284,7 @@ final class FightRunner {
         // the enrage is speed, never damage: the wind-up and recovery shrink, but never under its class's tell
         int held = m.kind() == Strikes.Kind.HEAVY && m.time().hold() > 0 && boss.getRandom().nextInt(3) == 0 ? m.time().hold() : 0;
         KitMoves.Played p = KitMoves.played(m, boss.kitSpeed(), held);
+        played = p;
         windup = p.windup();
         hold = p.hold();
         active = p.active();
@@ -285,7 +300,9 @@ final class FightRunner {
         boss.syncKit(i, hold, 0);
         if (m.kind() != Strikes.Kind.NONE) {
             boss.setTell(windup + hold, m.kind(), m.kind() == Strikes.Kind.HEAVY);
-            boss.playTell(m.kind(), m.kind() == Strikes.Kind.HEAVY, 1.0F);
+            // the body's own voice for the class when it has one (the glow still tells the class), else Arms' one
+            if (!sound(m, "tell", "tell_" + m.kind().name().toLowerCase(java.util.Locale.ROOT)))
+                boss.playTell(m.kind(), m.kind() == Strikes.Kind.HEAVY, 1.0F);
         }
         if (m.signature() && !m.title().isEmpty() && boss.bar() != null) BossPlates.line(boss.bar(), m.title(), BossPlates.Line.SIGNATURE, boss.def().glow);
         return true;
@@ -313,7 +330,26 @@ final class FightRunner {
         if (k < active) {
             if (k == 0) {
                 boss.setTelegraph(0, false);
-                if (ability != null) boss.abilityRunner().fire(level, ability, world(m.origin()), m.kind() != Strikes.Kind.NONE ? m.kind() : ability.strike());
+                if (ability != null) {
+                    boss.abilityRunner().fire(level, ability, world(m.origin()), m.kind() != Strikes.Kind.NONE ? m.kind() : ability.strike());
+                    // a step that didn't close the gap (a wall where it would land) doesn't cut the air far from you:
+                    // it ends there, string and all
+                    if (ability.kind() == Ability.Kind.BLINK && !m.hits().isEmpty()) {
+                        if (target == null || !target.isAlive() || edgeDistance(target) > closeReach() + 1) {
+                            stop();
+                            string.clear();
+                            gap = 10;
+                            return;
+                        }
+                        // it lands behind you facing you, so the cut meets you and not the air where it came from
+                        yaw = (float) (Mth.atan2(target.getZ() - boss.getZ(), target.getX() - boss.getX()) * Mth.RAD_TO_DEG) - 90;
+                    }
+                }
+                // a roar for an intro or transition, a cast for an ability alone (a blow's whoosh plays on its mark)
+                if (m.kind() == Strikes.Kind.NONE) {
+                    if (!sound(m, "swing", "roar")) boss.roar();
+                } else if (m.hits().isEmpty()) sound(m, "swing", "cast");
+                if (m.is("area") && firstHit(m) < 0) sound(m, "impact", "impact");
             }
             face();
             float adv = m.motion().advance() / active, up = m.motion().rise() / active;
@@ -322,16 +358,67 @@ final class FightRunner {
                 boss.move(MoverType.SELF, new Vec3(-Mth.sin((float) r) * adv, up, Mth.cos((float) r) * adv));
             }
             if (k < m.hits().size()) strike(level, m, m.hits().get(k));
+            marks(m);
             return;
         }
-        if (t < wind + active + recover) return; // the recovery: no turning, the opening
+        marks(m);
+        if (t < wind + active + recover) {
+            // the recovery: no turning, the opening; in a string the next move links on at the end of the
+            // follow-through instead of the body going back to rest first (SPEC §35.10)
+            if (played != null && played.link() < recover && t == wind + active + played.link()) link(level, target);
+            return;
+        }
         stop();
         gap = !studio.isEmpty() ? 30 : string.isEmpty() ? 6 + boss.getRandom().nextInt(9) : 0;
+    }
+
+    /**
+     * The sounds on the move's marks, each at the tick its base-timed mark plays at: the blow's whoosh, its impact (an
+     * area move meeting the ground) and the steps its feet take where it doesn't travel (travel steps are the walk's).
+     */
+    private void marks(KitMoves.Move m) {
+        if (played == null || m.kind() == Strikes.Kind.NONE) return;
+        KitMoves.Time base = m.time();
+        if (!m.hits().isEmpty()) {
+            int whoosh = Math.max(1, Math.round(played.at(base, m.mark("whoosh", base.windup())))) + 1;
+            if (t == whoosh) sound(m, "swing", m.kind() == Strikes.Kind.LIGHT ? "swing_light" : "swing_heavy");
+            if (m.is("area") && firstHit(m) >= 0 && t == Math.round(played.at(base, m.mark("contact", base.windup() + firstHit(m)))) + 1)
+                sound(m, "impact", "impact"); // the blow meets the ground
+        }
+        if (m.motion().advance() != 0) return;
+        for (int i = 0; i < 8; i++) {
+            int st = m.mark("step" + i, -1);
+            if (st < 0) break;
+            if (t == Math.round(played.at(base, st)) + 1) dev.awaken.mobs.boss.KitSounds.play(boss, moves, "step", 0.8F);
+        }
+    }
+
+    /** A string's next step begins now if it is due and in range; false leaves the recovery to play out. */
+    private boolean link(ServerLevel level, @Nullable LivingEntity target) {
+        if (string.isEmpty() || pendingPhase >= 0 || !studio.isEmpty() || target == null || !target.isAlive()) return false;
+        int i = moves.index(string.peek());
+        if (i < 0 || !inRange(moves.get(i), target)) return false;
+        String next = string.poll();
+        stop();
+        return begin(level, next, target);
+    }
+
+    /** The move's own set for this moment ("" silences it), else the default; false when the body has neither. */
+    private boolean sound(KitMoves.Move m, String moment, String fallback) {
+        String set = m.sounds().getOrDefault(moment, fallback);
+        return set.isEmpty() || dev.awaken.mobs.boss.KitSounds.play(boss, moves, set, 1F);
+    }
+
+    /** The first active tick with a capsule, or -1. */
+    private static int firstHit(KitMoves.Move m) {
+        for (int i = 0; i < m.hits().size(); i++) if (!m.hits().get(i).isEmpty()) return i;
+        return -1;
     }
 
     private void stop() {
         if (move >= 0) boss.setTelegraph(0, false);
         move = -1;
+        played = null;
         ability = null;
         boss.syncKit(-1, 0, 0);
     }
