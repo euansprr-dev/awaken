@@ -12,7 +12,9 @@ import java.util.List;
  * ticks). CRITICAL goes straight out. Everything else waits for a quiet moment: a gap since the last message (longer
  * in calm exploration), at most {@link Rules#burst} in a {@link Rules#window}, never while held (a fight, a screen, a
  * cinematic). Waiting items of the same topic merge into one. What the density doesn't show, and what waited too long
- * to still be news, is filed in the Journal instead: a find is never lost, it just doesn't interrupt.
+ * to still be news, is filed in the Journal instead: a find is never lost, it just doesn't interrupt. An immediate
+ * message answers something the player just did on purpose (a find they looked at): it skips the gap and the burst
+ * limit and goes first, held only while nothing can show at all.
  */
 public final class Pace<T> {
     public enum Density { MINIMAL, STANDARD, GUIDED }
@@ -43,14 +45,15 @@ public final class Pace<T> {
     private static final class Waiting<T> {
         final Tier tier;
         final String topic;
-        final boolean moment;
+        final boolean moment, immediate;
         final long since;
         final List<T> items = new ArrayList<>(2);
 
-        Waiting(Tier tier, String topic, boolean moment, long since) {
+        Waiting(Tier tier, String topic, boolean moment, boolean immediate, long since) {
             this.tier = tier;
             this.topic = topic;
             this.moment = moment;
+            this.immediate = immediate;
             this.since = since;
         }
     }
@@ -75,6 +78,11 @@ public final class Pace<T> {
 
     /** A message arrives. {@code topic} merges waiting messages ("" never merges). */
     public void offer(long now, T item, Tier tier, String topic, boolean moment) {
+        offer(now, item, tier, topic, moment, false);
+    }
+
+    /** {@code immediate}: it answers what the player just did (the density still decides whether it shows at all). */
+    public void offer(long now, T item, Tier tier, String topic, boolean moment, boolean immediate) {
         if (tier == Tier.CRITICAL) {
             ready.add(new Out<>(Act.SHOW, tier, moment, List.of(item)));
             return;
@@ -86,22 +94,28 @@ public final class Pace<T> {
         }
         if (!moment && !topic.isEmpty()) {
             for (Waiting<T> w : queue) {
-                if (!w.moment && w.tier == tier && w.topic.equals(topic)) {
+                if (!w.moment && w.immediate == immediate && w.tier == tier && w.topic.equals(topic)) {
                     w.items.add(item);
                     return;
                 }
             }
         }
-        Waiting<T> w = new Waiting<>(tier, topic, moment, now);
+        Waiting<T> w = new Waiting<>(tier, topic, moment, immediate, now);
         w.items.add(item);
         queue.add(w);
     }
 
+    /** {@link #poll(long, boolean, boolean, boolean)} where whatever holds holds everything. */
+    public List<Out<T>> poll(long now, boolean held, boolean calm) {
+        return poll(now, held, held, calm);
+    }
+
     /**
      * What happens now: everything ready (criticals, filings), anything that waited too long (filed), and at most one
-     * paced message if the moment is free. {@code held}: nothing paced shows. {@code calm}: the longer gap applies.
+     * paced message if the moment is free. {@code blocked}: nothing paced shows (a screen, a fight, a card up).
+     * {@code held}: only immediate ones may (a world still settling). {@code calm}: the longer gap applies.
      */
-    public List<Out<T>> poll(long now, boolean held, boolean calm) {
+    public List<Out<T>> poll(long now, boolean blocked, boolean held, boolean calm) {
         List<Out<T>> out = new ArrayList<>();
         for (Out<T> o : ready) {
             out.add(o);
@@ -116,17 +130,26 @@ public final class Pace<T> {
             }
         }
         while (!shown.isEmpty() && now - shown.peekFirst() >= rules.window) shown.removeFirst();
-        if (held || queue.isEmpty()) return out;
-        if (now - lastShown < (calm ? rules.calmGap : rules.gap) || shown.size() >= rules.burst) return out;
-        Waiting<T> next = null;
-        for (Waiting<T> w : queue) {
-            // moments first, then the more important tier, then the oldest
-            if (next == null || (w.moment && !next.moment) || (w.moment == next.moment && w.tier.ordinal() < next.tier.ordinal())) next = w;
+        if (blocked || queue.isEmpty()) return out;
+        Waiting<T> next = next(true);
+        if (next == null) {
+            if (held || now - lastShown < (calm ? rules.calmGap : rules.gap) || shown.size() >= rules.burst) return out;
+            next = next(false);
         }
         queue.remove(next);
         out.add(new Out<>(Act.SHOW, next.tier, next.moment, List.copyOf(next.items)));
         mark(now);
         return out;
+    }
+
+    /** The next to show: moments first, then the more important tier, then the oldest. */
+    private Waiting<T> next(boolean immediateOnly) {
+        Waiting<T> next = null;
+        for (Waiting<T> w : queue) {
+            if (immediateOnly && !w.immediate) continue;
+            if (next == null || (w.moment && !next.moment) || (w.moment == next.moment && w.tier.ordinal() < next.tier.ordinal())) next = w;
+        }
+        return next;
     }
 
     /** Something took the screen outside the queue (a critical card, a caption that claimed its moment). */

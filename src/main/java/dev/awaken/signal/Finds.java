@@ -14,9 +14,10 @@ import net.minecraft.server.level.ServerPlayer;
  *   <li>the player's first find ever, made on purpose, is a moment that teaches the system: what a discovery is,
  *       where it's kept and why it matters;</li>
  *   <li>a big one (a named beast, a wonder, the first rift) is a moment of its own;</li>
- *   <li>the first find of each kind is a paced toast that says where these go;</li>
+ *   <li>the first find of each kind is a toast that says where these go;</li>
  *   <li>every later one is ambient: filed in the Journal with a soft cue, no toast (at the default density).</li>
  * </ul>
+ * A find made on purpose is immediate: it shows the moment it's made, not after the director's gap.
  */
 public final class Finds {
     private Finds() {}
@@ -73,20 +74,25 @@ public final class Finds {
         }
         if (firstOfKind) {
             String line = (f.hint.isEmpty() ? "" : f.hint + " · ") + "kept in your Journal (K)";
-            Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(f.title).withColor(f.colour))
+            Signal.send(p, now(SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(f.title).withColor(f.colour))
                     .body(Component.literal(line)).presentation(SignalWindow.Presentation.TOAST)
-                    .tier(Notices.Tier.IMPORTANT).topic(f.kind).ttl(20 * 6).build());
+                    .tier(Notices.Tier.IMPORTANT).topic(f.kind).ttl(20 * 6), f));
             return Told.FIRST_OF_KIND;
         }
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(f.title).withColor(f.colour))
+        Signal.send(p, now(SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(f.title).withColor(f.colour))
                 .body(Component.literal(f.hint)).presentation(SignalWindow.Presentation.TOAST)
-                .tier(Notices.Tier.AMBIENT).topic(f.kind).ttl(20 * 6).build());
+                .tier(Notices.Tier.AMBIENT).topic(f.kind).ttl(20 * 6), f));
         return Told.FILED;
     }
 
     private static void moment(ServerPlayer p, Find f, String label, String body) {
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(f.name).withColor(f.colour))
+        Signal.send(p, now(SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(f.name).withColor(f.colour))
                 .body(Component.literal(body)).footer(Component.literal(label))
-                .presentation(SignalWindow.Presentation.TOAST).tier(Notices.Tier.IMPORTANT).moment().topic(f.kind).ttl(20 * 8).build());
+                .presentation(SignalWindow.Presentation.TOAST).tier(Notices.Tier.IMPORTANT).moment().topic(f.kind).ttl(20 * 8), f));
+    }
+
+    /** A find made on purpose answers what the player just did: it shows the moment it's made (Euan, 2026-10-29). */
+    static SignalWindow now(SignalWindow.Builder b, Find f) {
+        return (f.intent ? b.immediate() : b).build();
     }
 }
