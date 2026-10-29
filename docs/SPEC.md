@@ -13093,7 +13093,16 @@ here as it goes.
 Built (stage 1, `dev.awaken.world.stilled`): blocks `awaken:stilled` (a block entity, drawn by its own jointed model:
 knees, elbows, the body pivoting at the hips; twelve hand-set poses: milestone, walking, grave, a pair on a cart's
 tail, a lead with no dog, reaching, looking back, waiting, a lantern, a parent with a child, curled, sat on a bundle;
-five looks, man, woman, old man, old woman, girl; textures from `tools/art/stilled.py`) and `awaken:left_chest` (a
+six looks, man, woman, old man, old woman, girl, child. Rebuilt 29 Oct after the first tour read as a mob with a
+stone skin: they are Carillon's own people turned to stone, on the citizens' player-shaped body with split elbows and
+knees and joint fillers; each look has six stone skins made from real citizens' closed-eyes skins (their own light and
+dark and a ghost of their colours under weathered stone, moss where the sky fell on them, damp moss at the feet, lichen
+on the back, cracks), the block's place picking one (no save change). Props are their own material: what they carried
+in their stone, the milestone the road's sandstone, the headstone slate, the cart and the pack the world's own. One rig,
+`assets/awaken/rigs/stilled.json`, holds parts, poses and the second figure of two; `tools/art/stilled.py` writes it
+(each pose lifted so its lowest point meets the ground) and the textures, `tools/art/rig.py` draws it as the game does
+(`python3 tools/art/stilled.py preview OUT.png [pose...]`), and `StilledModel` reads the same file). The named figures on the north road are never dropped for standing near another (a winding road once dropped
+the second beside Aldo); only the land's own figures keep 150 apart and `awaken:left_chest` (a
 locked trunk), both bedrock-hard, immovable, dragon- and wither-immune, cancelled on any break (only `/awaken stilled
 remove`, which also keeps the spot from ever being used again). Spots (`StilledSpots`, pure from the seed and the
 centre): the north road's three at the ridge +12, +170 and +330 (Aldo's letter to Ilse is letter 0); the first

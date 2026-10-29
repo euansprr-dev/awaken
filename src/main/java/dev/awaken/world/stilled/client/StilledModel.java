@@ -1,5 +1,9 @@
 package dev.awaken.world.stilled.client;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import dev.awaken.Awaken;
 import dev.awaken.world.stilled.StilledText;
 import net.minecraft.client.model.Model;
@@ -12,295 +16,177 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.util.Mth;
+import org.jspecify.annotations.Nullable;
+
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * A Stilled's figure (SPEC §43.3): its own jointed skeleton (knees and elbows, the body pivoting at the hips with the
- * head and arms on it) so each of the twelve poses is set by hand, and the props they sat down with: a pack, a
- * milestone, a grave marker, a bundle, a lantern, a dog's lead, a cart's tail. 128 x 128 texture, its own layout
- * (tools/art/stilled.py paints it). A pair or a parent with a child is this model submitted twice.
+ * A Stilled's figure (SPEC §43.3): one of Carillon's people gone to stone, on the citizens' own body with the elbows and
+ * knees split so a pose can bend, and the props they sat down with. Everything comes from one rig,
+ * {@code assets/awaken/rigs/stilled.json}, written by tools/art/stilled.py and drawn the same way by tools/art/rig.py:
+ * the parts (pivot, rotation, box-UV cubes on a 128 x 128 texture), and each pose (rotations in degrees, moves in
+ * pixels, the props it hides, the second figure of two). A pair or a parent with a child is this model drawn twice.
  */
 public final class StilledModel extends Model<StilledModel.Figure> {
     public static final ModelLayerLocation LAYER = new ModelLayerLocation(Awaken.id("stilled"), "main");
+    static final String RIG = "/assets/awaken/rigs/stilled.json";
 
-    /** Which figure of a block is drawn: the first (with the props), or the second of a pair or the child. */
+    /** Which figure of a block is drawn: the first (with its props), or the second of two (no props). */
     public record Figure(StilledText.Pose pose, boolean second) {}
 
-    private final ModelPart figure, body, head, rightArm, rightFore, leftArm, leftFore, rightLeg, rightShin, leftLeg, leftShin;
-    private final ModelPart pack, lantern, milestone, packGround, grave, bundle, lead, cart;
+    /** The other figure of two, in the first's model space: moved (pixels), turned, and scaled about its feet. */
+    public record Second(String pose, float x, float z, float yaw, float scale) {}
+
+    /** A pose set on every part: where each sits, whether it shows, and the second figure if there is one. */
+    private record Posed(PartPose[] poses, boolean[] hidden, @Nullable Second second) {}
+
+    private static @Nullable JsonObject rig;
+
+    private final ModelPart[] parts;
+    private final boolean[] prop;
+    private final Map<StilledText.Pose, Posed> first = new EnumMap<>(StilledText.Pose.class), second = new EnumMap<>(StilledText.Pose.class);
 
     public StilledModel(ModelPart root) {
         super(root, RenderTypes::entityCutout);
-        figure = root.getChild("figure");
-        body = figure.getChild("body");
-        head = body.getChild("head");
-        rightArm = body.getChild("right_arm");
-        rightFore = rightArm.getChild("right_fore");
-        lantern = rightFore.getChild("lantern");
-        leftArm = body.getChild("left_arm");
-        leftFore = leftArm.getChild("left_fore");
-        pack = body.getChild("pack");
-        rightLeg = figure.getChild("right_leg");
-        rightShin = rightLeg.getChild("right_shin");
-        leftLeg = figure.getChild("left_leg");
-        leftShin = leftLeg.getChild("left_shin");
-        milestone = root.getChild("milestone");
-        packGround = root.getChild("pack_ground");
-        grave = root.getChild("grave");
-        bundle = root.getChild("bundle");
-        lead = root.getChild("lead");
-        cart = root.getChild("cart");
+        JsonObject r = rig();
+        JsonArray defs = r.getAsJsonArray("parts");
+        parts = new ModelPart[defs.size()];
+        prop = new boolean[defs.size()];
+        Map<String, Integer> index = new HashMap<>();
+        Map<String, String> parent = new HashMap<>();
+        for (int i = 0; i < defs.size(); i++) {
+            JsonObject d = defs.get(i).getAsJsonObject();
+            String name = d.get("name").getAsString();
+            index.put(name, i);
+            parent.put(name, d.get("parent").getAsString());
+            prop[i] = "props".equals(d.get("group").getAsString());
+        }
+        for (int i = 0; i < defs.size(); i++) parts[i] = find(root, defs.get(i).getAsJsonObject().get("name").getAsString(), parent);
+        JsonObject poses = r.getAsJsonObject("poses");
+        for (StilledText.Pose p : StilledText.Pose.values()) {
+            String key = p.name().toLowerCase(java.util.Locale.ROOT);
+            JsonObject q = poses.getAsJsonObject(key);
+            if (q == null) {
+                Awaken.LOG.warn("[stilled] the rig has no pose {}", key);
+                continue;
+            }
+            Posed one = set(defs, index, q);
+            first.put(p, one);
+            if (one.second() != null && poses.has(one.second().pose())) second.put(p, set(defs, index, poses.getAsJsonObject(one.second().pose())));
+        }
     }
 
-    public static LayerDefinition createLayer() {
-        MeshDefinition mesh = new MeshDefinition();
-        PartDefinition root = mesh.getRoot();
-        PartDefinition fig = root.addOrReplaceChild("figure", CubeListBuilder.create(), PartPose.ZERO);
-        PartDefinition body = fig.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 16).addBox(-4, -12, -2, 8, 12, 4)
-                .texOffs(24, 16).addBox(-4, -12, -2, 8, 12, 4, new CubeDeformation(0.3F)), PartPose.offset(0, 12, 0));
-        body.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0).addBox(-4, -8, -4, 8, 8, 8)
-                .texOffs(32, 0).addBox(-4, -8, -4, 8, 8, 8, new CubeDeformation(0.4F)), PartPose.offset(0, -12, 0));
-        PartDefinition ra = body.addOrReplaceChild("right_arm", CubeListBuilder.create().texOffs(48, 16).addBox(-3, -2, -2, 4, 6, 4),
-                PartPose.offset(-5, -10, 0));
-        PartDefinition rf = ra.addOrReplaceChild("right_fore", CubeListBuilder.create().texOffs(48, 26).addBox(-2, 0, -2, 4, 6, 4),
-                PartPose.offset(-1, 4, 0));
-        rf.addOrReplaceChild("lantern", CubeListBuilder.create().texOffs(88, 0).addBox(-2, 0, -2, 4, 6, 4), PartPose.offset(0, 6, 0));
-        PartDefinition la = body.addOrReplaceChild("left_arm", CubeListBuilder.create().texOffs(48, 16).mirror().addBox(-1, -2, -2, 4, 6, 4),
-                PartPose.offset(5, -10, 0));
-        la.addOrReplaceChild("left_fore", CubeListBuilder.create().texOffs(48, 26).mirror().addBox(-2, 0, -2, 4, 6, 4), PartPose.offset(1, 4, 0));
-        body.addOrReplaceChild("pack", CubeListBuilder.create().texOffs(64, 0).addBox(-4, 0, 0, 8, 10, 4), PartPose.offset(0, -11, 2));
-        PartDefinition rl = fig.addOrReplaceChild("right_leg", CubeListBuilder.create().texOffs(0, 32).addBox(-2, 0, -2, 4, 6, 4),
-                PartPose.offset(-1.9F, 12, 0));
-        rl.addOrReplaceChild("right_shin", CubeListBuilder.create().texOffs(0, 42).addBox(-2, 0, -2, 4, 6, 4), PartPose.offset(0, 6, 0));
-        PartDefinition ll = fig.addOrReplaceChild("left_leg", CubeListBuilder.create().texOffs(0, 32).mirror().addBox(-2, 0, -2, 4, 6, 4),
-                PartPose.offset(1.9F, 12, 0));
-        ll.addOrReplaceChild("left_shin", CubeListBuilder.create().texOffs(0, 42).mirror().addBox(-2, 0, -2, 4, 6, 4), PartPose.offset(0, 6, 0));
+    private static ModelPart find(ModelPart root, String name, Map<String, String> parent) {
+        String up = parent.get(name);
+        return (up == null || up.isEmpty() ? root : find(root, up, parent)).getChild(name);
+    }
 
-        root.addOrReplaceChild("milestone", CubeListBuilder.create().texOffs(64, 28).addBox(-4, -7, -3, 8, 7, 6), PartPose.offset(0, 24, 2));
-        root.addOrReplaceChild("pack_ground", CubeListBuilder.create().texOffs(64, 0).addBox(-4, -10, -2, 8, 10, 4),
-                PartPose.offsetAndRotation(10, 24, 1, 0, 0.35F, 0));
-        root.addOrReplaceChild("grave", CubeListBuilder.create().texOffs(96, 16).addBox(-3, -10, -1, 6, 10, 2), PartPose.offset(0, 24, -12));
-        root.addOrReplaceChild("bundle", CubeListBuilder.create().texOffs(64, 44).addBox(-5, -6, -4, 10, 6, 8), PartPose.offset(0, 24, 2));
-        root.addOrReplaceChild("lead", CubeListBuilder.create().texOffs(100, 44).addBox(-0.5F, -1, -12, 1, 1, 12),
-                PartPose.offsetAndRotation(-7, 24, -3, 0, 0.3F, 0));
-        root.addOrReplaceChild("cart", CubeListBuilder.create().texOffs(0, 64).addBox(-12, -10, -4, 24, 10, 8), PartPose.offset(0, 24, 3));
-        return LayerDefinition.create(mesh, 128, 128);
+    private static Posed set(JsonArray defs, Map<String, Integer> index, JsonObject q) {
+        JsonObject rot = q.has("rot") ? q.getAsJsonObject("rot") : new JsonObject();
+        JsonObject move = q.has("move") ? q.getAsJsonObject("move") : new JsonObject();
+        PartPose[] poses = new PartPose[defs.size()];
+        boolean[] hidden = new boolean[defs.size()];
+        for (int i = 0; i < defs.size(); i++) {
+            JsonObject d = defs.get(i).getAsJsonObject();
+            String name = d.get("name").getAsString();
+            float[] piv = floats(d.getAsJsonArray("pivot"));
+            float[] m = move.has(name) ? floats(move.getAsJsonArray(name)) : new float[3];
+            float[] a = rot.has(name) ? floats(rot.getAsJsonArray(name)) : floats(d.getAsJsonArray("rot"));
+            poses[i] = PartPose.offsetAndRotation(piv[0] + m[0], piv[1] + m[1], piv[2] + m[2],
+                    a[0] * Mth.DEG_TO_RAD, a[1] * Mth.DEG_TO_RAD, a[2] * Mth.DEG_TO_RAD);
+        }
+        if (q.has("hide")) for (JsonElement e : q.getAsJsonArray("hide")) {
+            Integer i = index.get(e.getAsString());
+            if (i != null) hidden[i] = true;
+        }
+        Second two = null;
+        if (q.has("second")) {
+            JsonObject s = q.getAsJsonObject("second");
+            two = new Second(s.get("pose").getAsString(), f(s, "x", 0), f(s, "z", 0), f(s, "yaw", 0), f(s, "scale", 1));
+        }
+        return new Posed(poses, hidden, two);
+    }
+
+    private static float f(JsonObject o, String k, float def) {
+        return o.has(k) ? o.get(k).getAsFloat() : def;
+    }
+
+    private static float[] floats(JsonArray a) {
+        return new float[]{a.get(0).getAsFloat(), a.get(1).getAsFloat(), a.get(2).getAsFloat()};
+    }
+
+    /** The second figure of this pose, or null when it stands alone. */
+    @Nullable Second second(StilledText.Pose pose) {
+        Posed s = first.get(pose);
+        return s == null ? null : s.second();
     }
 
     @Override
     public void setupAnim(Figure f) {
         super.setupAnim(f);
-        for (ModelPart p : new ModelPart[]{pack, lantern, milestone, packGround, grave, bundle, lead, cart}) p.visible = false;
-        if (f.second()) {
-            if (f.pose() == StilledText.Pose.CHILD) kid();
-            else pairB();
-            return;
-        }
-        switch (f.pose()) {
-            case MILESTONE -> {
-                milestone.visible = packGround.visible = true;
-                sit(4, -1.2F, 0.12F);
-                body.xRot = 0.3F;
-                head.xRot = 0.45F;
-                head.zRot = 0.08F;
-                arms(-0.85F, 0.12F, -0.5F);
-            }
-            case WALKING -> {
-                pack.visible = true;
-                body.xRot = 0.3F;
-                head.xRot = -0.25F;
-                rightLeg.xRot = 0.55F;
-                rightShin.xRot = 0.5F;
-                leftLeg.xRot = -0.65F;
-                leftShin.xRot = 0.2F;
-                figure.y = 0.8F;
-                rightArm.xRot = -0.7F;
-                rightFore.xRot = -0.5F;
-                leftArm.xRot = 0.55F;
-                leftFore.xRot = -0.3F;
-            }
-            case GRAVE -> {
-                grave.visible = true;
-                kneel();
-                body.xRot = 0.32F;
-                head.xRot = 0.6F;
-                rightArm.xRot = -1.05F;
-                rightFore.xRot = -0.25F;
-                leftArm.xRot = 0.15F;
-                leftArm.zRot = -0.08F;
-                leftFore.xRot = -0.9F;
-                leftFore.yRot = 0.6F;
-            }
-            case PAIR -> {
-                cart.visible = true;
-                figure.x = -6.5F;
-                sit(0, -1.45F, 0.08F);
-                rightShin.xRot = 1.2F;
-                leftShin.xRot = 1.25F;
-                body.xRot = 0.12F;
-                head.xRot = 0.2F;
-                head.zRot = -0.12F;
-                arms(-0.6F, 0.1F, -0.3F);
-            }
-            case LEAD -> {
-                pack.visible = lead.visible = true;
-                figure.y = 10;
-                rightLeg.xRot = leftLeg.xRot = -1.57F;
-                rightLeg.yRot = 0.1F;
-                leftLeg.yRot = -0.15F;
-                body.xRot = -0.55F;
-                head.xRot = 0.15F;
-                head.zRot = 0.4F;
-                rightArm.xRot = 0.35F;
-                rightArm.zRot = 0.35F;
-                rightFore.xRot = -0.7F;
-                leftArm.xRot = 0.25F;
-                leftArm.zRot = -0.1F;
-                leftFore.xRot = -1.1F;
-                leftFore.yRot = -0.5F;
-            }
-            case REACHING -> {
-                kneel();
-                body.xRot = 0.75F;
-                head.xRot = -0.55F;
-                rightArm.xRot = -2.35F;
-                rightFore.xRot = -0.15F;
-                leftArm.xRot = -1.15F;
-                leftArm.zRot = -0.15F;
-                leftFore.xRot = -0.2F;
-            }
-            case LOOKING_BACK -> {
-                body.yRot = 0.3F;
-                head.yRot = 1.15F;
-                head.xRot = 0.05F;
-                rightLeg.xRot = 0.22F;
-                rightShin.xRot = 0.25F;
-                leftLeg.xRot = -0.18F;
-                rightArm.xRot = 0.1F;
-                rightArm.zRot = 0.05F;
-                leftArm.xRot = -0.2F;
-                leftArm.zRot = -0.08F;
-                leftFore.xRot = -0.35F;
-            }
-            case WAITING -> {
-                figure.y = 10;
-                rightLeg.xRot = leftLeg.xRot = -2.2F;
-                rightLeg.yRot = 0.1F;
-                leftLeg.yRot = -0.1F;
-                rightShin.xRot = leftShin.xRot = 1.8F;
-                body.xRot = 0.45F;
-                head.xRot = 0.65F;
-                rightArm.xRot = leftArm.xRot = -1.05F;
-                rightArm.zRot = 0.3F;
-                leftArm.zRot = -0.3F;
-                rightFore.xRot = leftFore.xRot = -0.5F;
-                rightFore.yRot = -0.7F;
-                leftFore.yRot = 0.7F;
-            }
-            case LANTERN -> {
-                lantern.visible = true;
-                head.xRot = -0.25F;
-                rightArm.xRot = -2.3F;
-                rightArm.zRot = 0.1F;
-                rightFore.xRot = -0.1F;
-                lantern.xRot = 2.4F;
-                rightLeg.xRot = 0.25F;
-                leftLeg.xRot = -0.25F;
-                leftShin.xRot = 0.15F;
-                leftArm.xRot = 0.1F;
-                leftArm.zRot = -0.1F;
-            }
-            case CHILD -> {
-                rightLeg.xRot = 0.2F;
-                leftLeg.xRot = -0.2F;
-                leftShin.xRot = 0.15F;
-                head.yRot = -0.35F;
-                head.xRot = 0.35F;
-                leftArm.zRot = -0.32F;
-                leftArm.xRot = 0.05F;
-                leftFore.xRot = -0.15F;
-                rightArm.xRot = 0.15F;
-                rightFore.xRot = -0.3F;
-            }
-            case CURLED -> {
-                figure.zRot = 1.5708F;
-                figure.x = 9;
-                figure.y = 20;
-                head.xRot = 0.35F;
-                body.xRot = 0.25F;
-                rightLeg.xRot = leftLeg.xRot = -1.35F;
-                rightShin.xRot = leftShin.xRot = 1.7F;
-                rightArm.xRot = leftArm.xRot = -1.2F;
-                rightFore.xRot = leftFore.xRot = -1.1F;
-            }
-            case BUNDLE -> {
-                bundle.visible = true;
-                sit(5, -1.3F, 0.18F);
-                body.xRot = 0.55F;
-                head.xRot = -0.35F;
-                rightArm.xRot = leftArm.xRot = -0.55F;
-                rightArm.zRot = 0.08F;
-                leftArm.zRot = -0.08F;
-                rightFore.xRot = leftFore.xRot = -1.9F;
-                rightFore.yRot = 0.25F;
-                leftFore.yRot = -0.25F;
-            }
+        Posed s = (f.second() ? second : first).get(f.pose());
+        if (s == null) return;
+        for (int i = 0; i < parts.length; i++) {
+            parts[i].loadPose(s.poses()[i]);
+            parts[i].visible = !s.hidden()[i] && !(f.second() && prop[i]);
         }
     }
 
-    /** Sat on a seat: the hips lowered, thighs forward, shins back to hanging straight, knees a little apart. */
-    private void sit(float drop, float thigh, float apart) {
-        figure.y = drop;
-        rightLeg.xRot = leftLeg.xRot = thigh;
-        rightLeg.yRot = apart;
-        leftLeg.yRot = -apart;
-        rightShin.xRot = leftShin.xRot = -thigh;
+    /** The rig file, read once from the mod's own resources (the same file tools/art/rig.py draws). */
+    static synchronized JsonObject rig() {
+        if (rig == null) {
+            try (InputStream in = StilledModel.class.getResourceAsStream(RIG)) {
+                if (in == null) throw new IllegalStateException("missing " + RIG);
+                try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+                    rig = JsonParser.parseReader(reader).getAsJsonObject();
+                }
+            } catch (java.io.IOException e) {
+                throw new IllegalStateException("can't read " + RIG, e);
+            }
+        }
+        return rig;
     }
 
-    /** Down on both knees, the shins along the ground behind. */
-    private void kneel() {
-        figure.y = 4;
-        rightShin.xRot = leftShin.xRot = 1.57F;
-        rightLeg.yRot = 0.06F;
-        leftLeg.yRot = -0.06F;
-    }
-
-    /** Both forearms resting forward (on the knees, in the lap). */
-    private void arms(float upper, float out, float fore) {
-        rightArm.xRot = leftArm.xRot = upper;
-        rightArm.zRot = out;
-        leftArm.zRot = -out;
-        rightFore.xRot = leftFore.xRot = fore;
-    }
-
-    /** The woman of a pair: beside him on the cart's tail, her head on his shoulder. */
-    private void pairB() {
-        figure.x = 6.5F;
-        sit(0, -1.45F, 0.08F);
-        rightShin.xRot = 1.3F;
-        leftShin.xRot = 1.15F;
-        body.zRot = 0.12F;
-        body.xRot = 0.1F;
-        head.zRot = 0.42F;
-        head.x = -1.2F;
-        head.xRot = 0.15F;
-        rightArm.xRot = -0.75F;
-        rightArm.zRot = -0.25F;
-        rightFore.xRot = -0.45F;
-        rightFore.yRot = 0.5F;
-        leftArm.xRot = -0.55F;
-        leftFore.xRot = -0.4F;
-    }
-
-    /** The child, a step to the side, holding the grown-up's hand and looking up at them. */
-    private void kid() {
-        rightArm.zRot = 0.55F;
-        rightArm.xRot = -0.25F;
-        rightFore.xRot = -0.2F;
-        head.yRot = 0.35F;
-        head.xRot = -0.35F;
-        rightLeg.xRot = -0.25F;
-        leftLeg.xRot = 0.25F;
-        leftShin.xRot = 0.3F;
-        leftArm.xRot = 0.3F;
+    public static LayerDefinition createLayer() {
+        JsonObject r = rig();
+        MeshDefinition mesh = new MeshDefinition();
+        Map<String, PartDefinition> made = new HashMap<>();
+        List<JsonObject> left = new ArrayList<>();
+        for (JsonElement e : r.getAsJsonArray("parts")) left.add(e.getAsJsonObject());
+        // parents come before their children in the file, but don't rely on it
+        while (!left.isEmpty()) {
+            int before = left.size();
+            for (var it = left.iterator(); it.hasNext(); ) {
+                JsonObject d = it.next();
+                String up = d.get("parent").getAsString();
+                PartDefinition parent = up.isEmpty() ? mesh.getRoot() : made.get(up);
+                if (parent == null) continue;
+                CubeListBuilder cubes = CubeListBuilder.create();
+                for (JsonElement ce : d.getAsJsonArray("cubes")) {
+                    JsonObject c = ce.getAsJsonObject();
+                    JsonArray uv = c.getAsJsonArray("uv");
+                    float[] from = floats(c.getAsJsonArray("from")), size = floats(c.getAsJsonArray("size"));
+                    cubes.texOffs(uv.get(0).getAsInt(), uv.get(1).getAsInt()).mirror(c.has("mirror") && c.get("mirror").getAsBoolean())
+                            .addBox(from[0], from[1], from[2], size[0], size[1], size[2], new CubeDeformation(f(c, "inflate", 0)));
+                }
+                float[] piv = floats(d.getAsJsonArray("pivot")), a = floats(d.getAsJsonArray("rot"));
+                String name = d.get("name").getAsString();
+                made.put(name, parent.addOrReplaceChild(name, cubes, PartPose.offsetAndRotation(piv[0], piv[1], piv[2],
+                        a[0] * Mth.DEG_TO_RAD, a[1] * Mth.DEG_TO_RAD, a[2] * Mth.DEG_TO_RAD)));
+                it.remove();
+            }
+            if (left.size() == before) throw new IllegalStateException(RIG + ": parts whose parent is missing: " + left);
+        }
+        JsonArray tex = r.getAsJsonArray("texture");
+        return LayerDefinition.create(mesh, tex.get(0).getAsInt(), tex.get(1).getAsInt());
     }
 }

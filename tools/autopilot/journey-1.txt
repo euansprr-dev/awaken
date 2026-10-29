@@ -115,22 +115,26 @@ shot j1_13_walking_side
 cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~6.5 ~ ~-2.6 0 14
 wait 30
 shot j1_14_walking_back
-# the row from the south
+# the row from the south (a spectator, so the camera holds in the air)
+cmd gamemode spectator
 cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~33 ~3 ~22 180 8
 wait 40
 shot j1_15_the_row
+cmd gamemode creative
 
 # ---- 2. what they carry, in the inventory ----
 cmd clear @s
 cmd give @s awaken:stilled_letter
 cmd give @s awaken:stilled_key
 cmd give @s awaken:stilled_keepsake
+cmd gamemode survival
 hud on
 compat inventory
 wait 20
 shotnow j1_16_their_things
 screen close
 hud off
+cmd gamemode creative
 cmd clear @s
 
 # ---- 3. the first hamlet up the north road, standing empty ----
@@ -156,6 +160,10 @@ hud on
 use
 wait 80
 shot j1_21_aldo_read
+screen close
+cmd clear @s awaken:stilled_letter
+cmd clear @s awaken:stilled_keepsake
+cmd item replace entity @s weapon.mainhand with minecraft:air
 hud off
 cmd awaken stilled view north1
 wait 400
@@ -171,6 +179,10 @@ hud on
 use
 wait 80
 shot j1_24_north1_read
+screen close
+cmd clear @s awaken:stilled_letter
+cmd clear @s awaken:stilled_keepsake
+cmd item replace entity @s weapon.mainhand with minecraft:air
 hud off
 cmd awaken stilled view north2
 wait 400
@@ -183,6 +195,10 @@ hud on
 use
 wait 80
 shot j1_26_north2_read
+screen close
+cmd clear @s awaken:stilled_letter
+cmd clear @s awaken:stilled_keepsake
+cmd item replace entity @s weapon.mainhand with minecraft:air
 hud off
 # (only when the first hamlet lies off the road: its own figure at its edge)
 cmd awaken stilled view hamlet
@@ -203,10 +219,13 @@ hud on
 use
 wait 80
 shot j1_29_left_chest_opened
+screen close
+cmd gamemode survival
 compat inventory
 wait 20
 shotnow j1_30_what_was_inside
 screen close
+cmd gamemode creative
 hud off
 
 # ---- 6. the Last Fire: Ilse alone ----

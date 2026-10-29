@@ -16,7 +16,7 @@ public final class StilledText {
         OLD_MAN("old_man", "an old man", "he", "his", "him"),
         OLD_WOMAN("old_woman", "an old woman", "she", "her", "her"),
         YOUNG("young", "a girl", "she", "her", "her"),
-        CHILD("young", "a child", "they", "their", "them");
+        CHILD("child", "a child", "they", "their", "them");
 
         final String texture, who, he, his, him;
 
@@ -39,7 +39,7 @@ public final class StilledText {
     }
 
     /**
-     * The poses (about twelve, each posed by hand in {@code StilledModel}): what the System sees. {@code {who}} is the
+     * The poses (twelve, each posed by hand in tools/art/stilled.py and drawn from the rig): what the System sees. {@code {who}} is the
      * figure ("a man"), {@code {he}}/{@code {his}}/{@code {him}} their pronouns.
      */
     public enum Pose {

@@ -190,13 +190,16 @@ final class StilledPlacer {
             skip(data, id);
             return;
         }
-        if (r.spot().where() == StilledSpots.Where.CELL)
+        // Only the land's own figures keep apart: the named ones on the north road stand where the story puts them,
+        // however close the road brings them together (a winding road once dropped the second for standing near Aldo).
+        if (r.spot().where() == StilledSpots.Where.CELL) {
             for (StilledSpots.Spot f : fixed)
                 if (!data.placed.containsKey(f.id()) && Math.hypot(f.x() - at.getX(), f.z() - at.getZ()) < StilledSpots.APART + 120) {
                     skip(data, id);
                     return;
                 }
-        for (Map.Entry<String, Long> e : data.placed.entrySet()) {
+        }
+        if (r.spot().where() == StilledSpots.Where.CELL) for (Map.Entry<String, Long> e : data.placed.entrySet()) {
             if (e.getValue() == Stilled.SKIPPED) continue;
             BlockPos o = BlockPos.of(e.getValue());
             if (Math.hypot(o.getX() - at.getX(), o.getZ() - at.getZ()) < StilledSpots.APART) {
