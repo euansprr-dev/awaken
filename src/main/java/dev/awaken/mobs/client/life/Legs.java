@@ -29,8 +29,8 @@ public final class Legs {
     private final float[] u, dur, rise, prevQ;
     /** This frame's spot for each foot, model px (the leg reaches for it). */
     final float[] tx, ty, tz;
-    /** 0..1: how much the feet own the legs over the clips; how much the front pair has let go to them (a rear). */
-    float weight, rear;
+    /** 0..1: how much the feet own the legs over the clips; how much the front pair, and the second, have let go to them (a rear). */
+    float weight, rear, rear2;
     /** The body over its feet: px it sinks (the ground under them, a step's share), pitch and roll (radians, model). */
     float groundY, groundPitch, groundRoll, gaitY, gaitRoll;
     private boolean init, fast;
@@ -69,15 +69,16 @@ public final class Legs {
     }
 
     /**
-     * Steps the feet to this frame. {@code on}: the feet may own the legs (on the ground, nothing else holds them);
+     * Steps the feet to this frame. {@code bodyScale}: the renderer's scale on top of the entity's; {@code on}: the feet
+     * may own the legs (on the ground, nothing else holds them);
      * {@code stride}: blocks a gait cycle covers; {@code run} 0..1 how much it runs; {@code calm}: it may re-grip.
      */
-    void update(LivingEntityRenderState s, float dt, boolean on, float stride, float run, boolean calm) {
+    void update(LivingEntityRenderState s, float dt, float bodyScale, boolean on, float stride, float run, boolean calm) {
         t += dt;
         MotionProfile.Gait g = rig.gait;
         float want = on ? 1.0F : 0.0F;
         weight += (want - weight) * Math.min(1.0F, dt / (want > weight ? 0.15F : 0.12F));
-        float sc = Math.max(0.05F, s.scale);
+        float sc = Math.max(0.05F, s.scale * bodyScale);
         double x = s.x, y = s.y, z = s.z;
         float yaw = s.bodyRot;
         if (!on) {

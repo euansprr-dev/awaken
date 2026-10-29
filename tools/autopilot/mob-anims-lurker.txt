@@ -5,6 +5,10 @@
 # ci knobs: PACK=perf,feel
 world lurkerfa creative 779
 waitworld
+wait 40
+# the opening's sky flight holds the camera: skip it first
+cmd awaken opening skip
+wait 30
 gui 0
 cmd gamerule send_command_feedback false
 cmd gamerule awaken:fauna_spawning false

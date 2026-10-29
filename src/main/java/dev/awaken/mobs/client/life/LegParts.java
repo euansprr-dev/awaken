@@ -77,7 +77,7 @@ final class LegParts {
         if (all <= 0.001F) return;
         last = null;
         for (int i = 0; i < rig.n; i++) {
-            float wgt = rig.rank[i] == 0 ? all * (1.0F - legs.rear) : all;
+            float wgt = rig.rank[i] == 0 ? all * (1.0F - legs.rear) : rig.rank[i] == 1 ? all * (1.0F - legs.rear2) : all;
             if (wgt <= 0.001F) continue;
             ModelPart[] chain = up[i];
             if (chain != last) {

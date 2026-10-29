@@ -5590,7 +5590,8 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   when the body stops), `crouch` (px the body sinks on its legs), `radius` and `fan` (where each foot stands: px out
   from its hip, the front ones fanned forward and the back ones back by `fan` degrees), `regrip` (seconds between a calm
   creature's idle re-grips of one foot), `swing` (the longest a step takes), `bob` (px the body sinks while feet are up),
-  `roll` (radians it leans off a lifted foot), `rear` (how far the front pair lets go to the clips during a wind-up).
+  `roll` (radians it leans off a lifted foot), `rear` (how far the front pair lets go to the clips while the body rears:
+  a wind-up, a strike or a cue, a roar, or a still threat; a roar lets the second pair go too).
   `body`: `headLevel` (the head holds level against the gait's and the ground's pitch and roll), `twist` (the body turns
   this share of its look, at most 0.35 rad), `slope` (it pitches and rolls with the ground under its planted feet),
   `land` (a landing squashes it by how far it fell: a spring at 3 Hz kicked by the fall speed), `still` (a stalking
@@ -5615,7 +5616,9 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   sinking `bob` × the share of feet in the air and leaning off a lifted one. Off the ground (the `P_AIR` pose bit),
   hanging, resting, sleeping, beached, deflated, swimming or dying, the clips own the legs (the weight eases out over
   0.12 s, the feet held planted meanwhile); landing, the feet stand at home again and ease back in over 0.15 s. A
-  first sight or a jump of more than 3 blocks stands them at home.
+  first sight or a jump of more than 3 blocks stands them at home. Inputs from the renderer: `grounded` (the feet may
+  plant), `legsFree` (a pose that holds the legs), `stalking`, `gaitRun` (0..1) and `bodyScale` (a renderer's own scale on
+  top of the entity's, so the feet's world spots match the drawn body: the cave spider's 0.7).
 - **Clips** of a profiled body move the body over its feet, the head, the tail, the jaw, and own the legs only when the
   feet let go (hanging, leaping, dying, a wind-up's front pair). Their walk and run legs stay for anything drawn without
   a life (the clip is what shows if nothing plants the feet).
@@ -5630,13 +5633,20 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   the lunge throws the body forward with the fangs snapping shut, overshoots and settles; Spike Drop rears high then
   crashes cone-first, the body squashing and the cone whipping after; a blow jerks the body up and back over its planted
   feet with the cone lagging; it dies rearing with its legs flung out, drops on its side and the legs curl up over it
-  and twitch one by one; hanging, each leg flexes on its own breath round the cone.
+  and twitch one by one; hanging, each leg flexes on its own breath round the cone. Its rest pose stands the front pair
+  forward and the back pair back (the rig had the front legs raked backward).
+- **Form spiders** (`form_spider_2`..`_5`, the forms' C-and-up bodies, SPEC 21.13; eight two-bone legs, coxa fan then
+  femur and shin): they replace the spider Fresh Animations draws below C, so they must beat it. Alternating tetrapods
+  (L1 R2 L3 R4, then the others) on their rest stance, duty 0.62/0.5, steps from 3/5 px (C) to 4.5/7 px (S) high, reach
+  0.5 to 0.7 blocks, quick swings (0.22 to 0.28 s), bob 0.35 to 0.5 px, `rear` 1 (angry, its front pair spread off the
+  ground; a roar, both front pairs); head level 0.5, twist 0.25, slope 0.85, land 1. The renderer plants the feet while it
+  stands on the ground and not on a wall (`onGround` and not climbing); the cave spider's body is 0.7 of the spider's.
 - Test: `creature_motion_feet` (every motion.json entry names a rig; every gait finds two-bone legs on a body bone that
   carries the head; every foot can reach its stance standing and crouched; the IK lands each foot within 0.05 px of its
   home, a step ahead and behind, the top of a step's arc and the crouch, checked by forward kinematics; the hip's turn
-  survives its ZYX Euler angles). Tour: `tools/autopilot/mob-anims-lurker.txt` on CI (PACK=perf,feel; clips in
-  run-autopilot/clips/lurk_*: idle, a walk into a run, a stop and a turn, a blow, a death, the hunt; a vanilla spider
-  under Fresh Animations beside it).
+  survives its ZYX Euler angles; the forms' rigs are looked up too). Tours on CI (PACK=perf,feel; a vanilla spider under
+  Fresh Animations beside each): `tools/autopilot/mob-anims-lurker.txt` (clips run-autopilot/clips/lurk_*: idle, a walk
+  into a run, a stop and a turn, a blow, a death, the hunt) and `tools/autopilot/mob-anims-spiders.txt` (spid_*).
 
 ## 24. Hands: the first-person system (plan docs/anims/PLAN.md, page https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy; approved 2026-10-25)
 

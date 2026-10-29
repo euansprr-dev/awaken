@@ -58,6 +58,8 @@ public final class Life {
     public boolean stalking;
     /** 0..1 how much it runs (the run clip's weight), for the feet's gait. */
     public float gaitRun;
+    /** The renderer's own scale on top of the entity's (a cave spider's 0.7), so the feet land where the body is drawn. */
+    public float bodyScale = 1;
 
     // ---- what the layer works out ----------------------------------------------------------------------------------
     final LifeRig rig;
@@ -304,9 +306,13 @@ public final class Life {
             float st = g.strideWalk() > 0 ? Mth.lerp(gaitRun, g.strideWalk(), g.strideRun() > 0 ? g.strideRun() : g.strideWalk())
                     : stride > 0 ? stride : 1.0F;
             boolean calmFeet = !busy && !far && tension < 0.05F && !hold;
-            float rear = windup >= 0 && !dead ? g.rear() : 0.0F; // a wind-up lifts the front pair: its clip rears them
-            legs.rear += (rear - legs.rear) * Math.min(1.0F, dt / 0.12F);
-            legs.update(s, dt, grounded && !legsFree && !dead && !swimming, st, gaitRun, calmFeet);
+            // a wind-up, a strike, a roar or a still threat lifts the front pair: their clips rear and strike with them
+            boolean front = windup >= 0 || roar || (busy && hurt <= 0.01F) || (aggressive && walk < 0.1F);
+            float rear = front && !dead ? g.rear() : 0.0F, k = Math.min(1.0F, dt / 0.12F);
+            legs.rear += (rear - legs.rear) * k;
+            // a roar lifts the second pair too
+            legs.rear2 += ((roar && !dead ? g.rear() : 0.0F) - legs.rear2) * k;
+            legs.update(s, dt, bodyScale, grounded && !legsFree && !dead && !swimming, st, gaitRun, calmFeet);
         }
         // a boss on a body with no fall clip topples its whole weight (root level)
         deathFall(dead);

@@ -1,6 +1,7 @@
 package dev.awaken.mobs.entity;
 
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.living.forms.FormRigs;
 import dev.awaken.mobs.client.anim.HeroRig;
 import dev.awaken.mobs.client.life.LegRig;
 import dev.awaken.mobs.client.life.LifeBones;
@@ -142,7 +143,8 @@ public final class LifeTests {
             Matrix3f hr = new Matrix3f(), kr = new Matrix3f(), back = new Matrix3f();
             Vector3f e = new Vector3f(), want = new Vector3f();
             for (MotionProfile mp : MotionProfile.all().values()) {
-                HeroRig r = HeroRig.get(mp.id());
+                // our bodies' rigs, or the forms' (the living module's, SPEC 21.13)
+                HeroRig r = HeroRig.get(mp.id()) != null ? HeroRig.get(mp.id()) : FormRigs.all().get(mp.id());
                 if (r == null) {
                     problems.add("motion.json names no rig " + mp.id());
                     continue;
@@ -197,7 +199,7 @@ public final class LifeTests {
                     checked++;
                 }
             }
-            h.assertTrue(checked >= 6, "the drip lurker's six legs (and every other gait's) are checked (" + checked + ")");
+            h.assertTrue(checked >= 6 + 4 * 8, "the drip lurker's six legs and the form spiders' eight (and every other gait's) are checked (" + checked + ")");
             h.assertTrue(problems.isEmpty(), String.join("; ", problems));
             h.succeed();
         });

@@ -1292,7 +1292,7 @@ def drip_lurker():
         head.bone("fang_" + nm, (side * 1, 2, -2), (-20, 0, side * -10)).cube("fang_" + nm, -0.5, 0, -0.5, 1, 3, 1, mirror=side < 0, share=None if side > 0 else "fang_l")
     for side, nm in ((1, "l"), (-1, "r")):
         mir = side < 0
-        for k, (z, ry) in enumerate(((-3, -35), (0, 0), (3, 35))):
+        for k, (z, ry) in enumerate(((-3, 35), (0, 0), (3, -35))):   # the front pair reaches forward, the back pair back
             leg = body.bone(f"dleg{k}_" + nm, (side * 4, 1, z), (0, side * ry, side * -32))
             leg.cube(f"dthigh{k}_" + nm, 0 if side > 0 else -6, -0.5, -0.5, 6, 1, 1, mirror=mir, share="dthigh0_l" if (k or side < 0) else None)
             leg.bone(f"dshin{k}_" + nm, (side * 6, 0, 0), (0, 0, side * 112)).cube(
@@ -1354,15 +1354,15 @@ def lurker_clips(r):
     def rear(clip, t0, t1, quiver=True):
         """The front pair lifts off the ground and spreads, poised (the profile lets them go during a wind-up)."""
         for leg, shin, sg in front:
-            keys = [(0, 0, 0, 0), (t0, 0, sg * 55, sg * -38)]
+            keys = [(0, 0, 0, 0), (t0, 0, sg * 15, sg * -38)]
             sk = [(0, 0, 0, 0), (t0, 0, 0, sg * -50)]
             if quiver:
                 q = t0
                 while q + 0.1 < t1:
-                    keys.append((q + 0.05, 0, sg * 57, sg * -41))
-                    keys.append((q + 0.1, 0, sg * 55, sg * -38))
+                    keys.append((q + 0.05, 0, sg * 17, sg * -41))
+                    keys.append((q + 0.1, 0, sg * 15, sg * -38))
                     q += 0.1
-            keys.append((t1, 0, sg * 55, sg * -38))
+            keys.append((t1, 0, sg * 15, sg * -38))
             sk.append((t1, 0, 0, sg * -50))
             clip.rot(leg, keys)
             clip.rot(shin, sk)
@@ -1379,7 +1379,7 @@ def lurker_clips(r):
     ss.scale("body", [(0, 1, 1, 1), (0.1, 1.12, 0.82, 1.12), (0.22, 0.96, 1.05, 0.96), (0.6, 1, 1, 1)])
     ss.rot("cone", [(0, -6, 0, 0), (0.13, 12, 0, 0), (0.3, -4, 0, 0), (0.6, 0, 0, 0)])
     for leg, shin, sg in front:
-        ss.rot(leg, [(0, 0, sg * 55, sg * -38), (0.1, 0, sg * 30, sg * 12), (0.6, 0, 0, 0)])
+        ss.rot(leg, [(0, 0, sg * 15, sg * -38), (0.1, 0, sg * -5, sg * 12), (0.6, 0, 0, 0)])
         ss.rot(shin, [(0, 0, 0, sg * -50), (0.1, 0, 0, sg * -10), (0.6, 0, 0, 0)])
     # Lunge: it gathers back and low, the front pair rising and spreading, fangs wide; then throws itself forward and
     # the fangs snap shut, the body overshoots and settles
@@ -1399,7 +1399,7 @@ def lurker_clips(r):
     for nm, sg in fangs:
         lsk.rot(nm, [(0, 0, 0, sg * 38), (0.08, 0, 0, sg * -12), (0.16, 0, 0, sg * -8), (0.5, 0, 0, 0)])
     for leg, shin, sg in front:
-        lsk.rot(leg, [(0, 0, sg * 55, sg * -38), (0.08, 0, sg * 65, sg * 5), (0.5, 0, 0, 0)])
+        lsk.rot(leg, [(0, 0, sg * 15, sg * -38), (0.08, 0, sg * 25, sg * 5), (0.5, 0, 0, 0)])
         lsk.rot(shin, [(0, 0, 0, sg * -50), (0.08, 0, 0, sg * -30), (0.5, 0, 0, 0)])
     w = r.clip("windup", 0.6)
     w.pos("body", [(0, 0, 0, 0), (0.45, 0, -1.5, 1.5), (0.6, 0, -1.5, 1.6)])
