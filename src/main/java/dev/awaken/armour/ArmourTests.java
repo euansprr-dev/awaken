@@ -195,6 +195,7 @@ final class ArmourTests {
         p.setGameMode(GameType.SURVIVAL);
         Progression.awaken(p);
         while (Progression.rank(p).ordinal() < rank.ordinal()) Progression.passReassessment(p);
+        p.getInventory().clearContent(); // awakening and rank gifts leave things in the pack; the tests count what they give
         p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 1.5, 0F, 0F);
         return p;
     }

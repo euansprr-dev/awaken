@@ -223,6 +223,7 @@ final class DelveTests {
         // every gear piece from D up needs its metal with nothing to stand in; foci need gold; Veilwoven needs amethyst
         for (HunterTier tier : HunterTier.values()) {
             for (Piece piece : Piece.values()) {
+                if (piece.isArmour()) continue; // forged at a Fitting Stand from the tier's metal (SPEC §44.4, armour_forge_rules)
                 ShapedRecipe r = shaped(level, GearItems.get(tier, piece));
                 h.assertTrue(r != null, "recipe for " + tier.itemId(piece));
                 boolean metal = metalSlot(r, tier.metalTag());

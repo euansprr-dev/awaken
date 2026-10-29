@@ -203,7 +203,7 @@ public final class ForgeSong {
                     m[i][1] = (float) -Math.cos(a) * 0.62F;
                 }
                 case CHESTPLATE -> { // down the two sides of the breast, the keel last
-                    int pair = i / 2, pairs = n / 2;
+                    int pair = i / 2, pairs = (n + 1) / 2;
                     float z = -0.75F + 1.5F * pair / Math.max(1, pairs - 1);
                     float w = 0.62F - 0.22F * Math.max(0F, z);
                     m[i][0] = side * w;
@@ -211,11 +211,11 @@ public final class ForgeSong {
                 }
                 case LEGGINGS -> { // two long rows, the greaves
                     m[i][0] = side * 0.45F;
-                    m[i][1] = -0.8F + 1.6F * (i / 2) / Math.max(1, n / 2 - 1);
+                    m[i][1] = -0.8F + 1.6F * (i / 2) / Math.max(1, (n + 1) / 2 - 1);
                 }
                 default -> { // the two sabatons, toe then heel
                     m[i][0] = side * 0.42F;
-                    m[i][1] = -0.6F + 1.2F * (i / 2) / Math.max(1, n / 2 - 1);
+                    m[i][1] = -0.6F + 1.2F * (i / 2) / Math.max(1, (n + 1) / 2 - 1);
                 }
             }
             if (m[i][1] != m[i][1]) m[i][1] = t; // never NaN
