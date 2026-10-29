@@ -1,5 +1,7 @@
 """The Forge Song's sounds (SPEC §44.4): the hammer on each metal, the fire and bellows, the pull, the quench, the
-count-in, the set's melody bell, a cut of hide, a piece set on the Fitting Stand, a set waking, a missed beat.
+count-in, the set's melody bell, a cut of hide, a piece set on the Fitting Stand, a set waking, a missed beat. And the
+set abilities' (SPEC §44.5): a charge full, the Bulwark's burst, the Strider's afterimage, the Duelist's edge, a
+Channeler's rune and its overchannel, and the twists (Bellguard's ring, Rootwarden's stand, Hornlord's gore).
 
 Built like arms' (audio_arms.py, whose helpers it borrows): a CC0 recording for the physical transient (Kenney's Impact
 Sounds and RPG Audio, tools/art/sources/kenney, CC0 1.0), the audio kit for each metal's own ring and the air around
@@ -7,8 +9,9 @@ it. Each metal rings in its own way: copper a short warm bar, iron the anvil's b
 glassy ping, Deepglass a singing glass tone with a slow beat, netherite a dark heavy ring under a deep thud, starmetal
 a shimmering bell with a high halo. Seeded variants so a song never repeats one sample.
 
-Mono, mastered to the arms loudness (audio_mix.py). Written to src/main/resources/assets/awaken/sounds/forge/ and
-registered in src/main/merge/armour/assets/awaken/ (sounds.json; subtitles in lang/en_us.json).
+Mono, mastered to the arms loudness (audio_mix.py). Written to src/main/resources/assets/awaken/sounds/forge/ (and
+sounds/armour/ for the abilities) and registered in src/main/merge/armour/assets/awaken/ (sounds.json; subtitles in
+lang/en_us.json).
 
     python3 tools/art/specs/audio_forge.py          render everything and write the JSON
     python3 tools/art/specs/audio_forge.py --json   only the JSON
@@ -31,7 +34,7 @@ import audio_arms as A  # noqa: E402  (rec, shift, ring, spark, sub)
 from audio_mix import TARGETS  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
-SND = os.path.join(ROOT, "src/main/resources/assets/awaken/sounds/forge")
+SOUNDS = os.path.join(ROOT, "src/main/resources/assets/awaken/sounds")
 MERGE = os.path.join(ROOT, "src/main/merge/armour/assets/awaken")
 SR = K.SR
 
@@ -192,6 +195,85 @@ def miss(k):
     return room(mix((t, 0.7), (A.ring(300, 0.15, 0.3, 1110 + k, 0.2), 0.2)), 0.08)
 
 
+# ---- the set abilities (SPEC §44.5) --------------------------------------------------------------------------------
+
+def charged(k):
+    """A set's charge full: a breath drawn in through the plates, then a soft ping of light."""
+    n = K.ns(1.3)
+    breath = unit(K.bandpass(K.noise(n, "pink", 1200 + k), 1800, 0.8)) * K.line(n, [(0, 0), (0.55, 0.8), (0.7, 0), (1, 0)])
+    ping = np.zeros(n)
+    at = K.ns(0.7)
+    ping[at:] += R.pk(K.glass(1320, n - at, bright=0.6, t60=0.9, seed=1210 + k))
+    return room(mix((breath, 0.35), (unit(ping), 0.5)), 0.2)
+
+
+def bastion(k):
+    """The Bulwark's burst: the plates thrown out as one, a slam and a wall of air, the ground answering."""
+    t = A.shift(A.rec(A.pick(["impactPlate_heavy_001", "impactPlate_heavy_002"], K.rng(1300 + k))), 0.8)
+    n = K.ns(1.6)
+    air = unit(K.lowpass(K.noise(n, "pink", 1310 + k), 700, 2)) * K.perc(n, 0.01, 0.9)
+    return room(mix((t, 0.9), (A.sub(1.2, 72, 38, 0.5, drive=1.9), 0.7), (air, 0.4),
+                    (A.ring(330, 0.8, 1.2, 1320 + k, 0.4), 0.25)), 0.25)
+
+
+def flow(k):
+    """The Strider's afterimage: a blow passing through where they were, a fast swish and a glassy flutter."""
+    n = K.ns(0.8)
+    sw = unit(K.bandpass(K.noise(n, "white", 1400 + k), 2400, 0.7)) * K.line(n, [(0, 0), (0.15, 1), (0.6, 0.2), (1, 0)])
+    trem = 0.5 + 0.5 * np.sin(np.arange(n) / SR * 2 * np.pi * 28)
+    flutter = R.pk(K.glass(1980 + 60 * k, n, bright=0.5, t60=0.5, seed=1410 + k)) * trem
+    return room(mix((sw, 0.7), (flutter, 0.3)), 0.12)
+
+
+def edge(k):
+    """The Duelist's edge: a wave of the blade's edge thrown out, steel singing along it."""
+    n = K.ns(1.0)
+    sweep = unit(K.bandpass(K.noise(n, "white", 1510 + k), 3200, 1.2)) * K.line(n, [(0, 0), (0.1, 1), (0.5, 0.3), (1, 0)])
+    return room(mix((A.scrape(0.5, 1500 + k, fc=4200), 0.6), (sweep, 0.5),
+                    (A.ring(1560 + 40 * k, 0.6, 1.0, 1520 + k, 0.8), 0.4)), 0.15)
+
+
+def rune(k):
+    """A Channeler's rune joining the circle: a small clear chime, three notes of one chord between the variants."""
+    return room(R.pk(K.glass(K.hz(79 + (0, 4, 7)[k % 3]), K.ns(1.2), bright=0.7, t60=0.9, seed=1600 + k)), 0.22)
+
+
+def overchannel(k):
+    """Three runes spent at once: a glassy swell drawn in, a bright bloom thrown out, a weight under it."""
+    n = K.ns(2.0)
+    rise = unit(K.bandpass(K.noise(n, "white", 1700 + k), 2600, 1.0)) * K.line(n, [(0, 0), (0.25, 0.8), (0.3, 0), (1, 0)])
+    at = K.ns(0.55)
+    bloom = np.zeros(n)
+    for m, g in ((79, 1.0), (86, 0.7), (91, 0.5)):
+        bloom[at:] += R.pk(K.fm_bell(K.hz(m), n - at, t60=1.2, index=1.6, ratio=2.76, seed=1710 + m)) * g
+    boom = np.zeros(n)
+    bm = A.sub(0.9, 80, 45, 0.35)
+    boom[at:at + len(bm)] += bm[: n - at]
+    return room(mix((rise, 0.35), (unit(bloom), 0.55), (boom, 0.5)), 0.25)
+
+
+def ring_out(k):
+    """Bellguard's ring: the wearer's bell-plate struck, a great bronze note going out."""
+    t = A.shift(A.rec("impactMetal_heavy_001"), 0.7)
+    b = R.pk(K.bell(K.hz(50 + k), K.ns(3.0), t60=2.6, bright=0.45, seed=1800 + k))
+    return room(mix((t, 0.6), (b, 0.6), (A.sub(0.6, 70, 50, 0.3), 0.35)), 0.3)
+
+
+def rooted(k):
+    """Rootwarden's stand: wood creaking as roots take hold, a low thud into the earth, the ground rumbling."""
+    n = K.ns(1.4)
+    creak = unit(K.bandpass(K.crackle(n, 40.0, 1900 + k, 0.4, 0.8), 650, 2.0)) * K.line(n, [(0, 0), (0.15, 1), (0.7, 0.4), (1, 0)])
+    thud = A.rec(A.pick(["impactSoft_heavy_000", "impactSoft_heavy_002"], K.rng(1910 + k)))
+    rumble = unit(K.lowpass(K.noise(n, "pink", 1920 + k), 150, 2)) * K.perc(n, 0.02, 1.0)
+    return room(mix((creak, 0.45), (thud, 0.7), (rumble, 0.45), (A.sub(0.5, 60, 40, 0.25), 0.4)), 0.15)
+
+
+def gore(k):
+    """Hornlord's gore: a charge ending in horns, iron meeting bone, embers thrown off."""
+    t = A.shift(A.rec(A.pick(["impactPlate_heavy_001", "impactMetal_heavy_004"], K.rng(2000 + k))), 0.72)
+    return room(mix((t, 0.9), (A.sub(0.9, 64, 36, 0.4, drive=2.0), 0.7), (sizzle(0.5, 2010 + k), 0.3)), 0.2)
+
+
 # name: (render(k), variants, attenuation, subtitle)
 EVENTS = OrderedDict([
     ("strike_hide", (lambda k: strike("copper", k), 3, 16, "Hammer on hide")),
@@ -211,21 +293,35 @@ EVENTS = OrderedDict([
     ("wake", (wake, 1, 32, "A set wakes")),
     ("miss", (miss, 2, 10, "A missed beat")),
 ])
+ABILITIES = OrderedDict([
+    ("charged", (charged, 2, 12, "Armour gathers its strength")),
+    ("bastion", (bastion, 2, 24, "Armour bursts outward")),
+    ("flow", (flow, 2, 12, "An afterimage takes the blow")),
+    ("edge", (edge, 2, 16, "An edge cuts through the air")),
+    ("rune", (rune, 3, 12, "A rune gathers")),
+    ("overchannel", (overchannel, 2, 24, "Runes break loose")),
+    ("ring", (ring_out, 2, 32, "A bronze bell rings out")),
+    ("rooted", (rooted, 2, 16, "Roots take hold")),
+    ("gore", (gore, 2, 20, "Horns strike home")),
+])
+# each group's events: sound ids <group>.<event>, files sounds/<group>/<group>_<event>_<k>.ogg
+GROUPS = OrderedDict([("forge", EVENTS), ("armour", ABILITIES)])
 
 
 def write_json():
     sounds, lang = OrderedDict(), OrderedDict()
-    for event, (_, variants, att, subtitle) in EVENTS.items():
-        sounds["forge." + event] = OrderedDict(subtitle="subtitles.awaken.forge." + event, sounds=[
-            OrderedDict(name=f"awaken:forge/forge_{event}_{k}", attenuation_distance=att) for k in range(variants)])
-        lang["subtitles.awaken.forge." + event] = subtitle
+    for g, events in GROUPS.items():
+        for event, (_, variants, att, subtitle) in events.items():
+            sounds[f"{g}.{event}"] = OrderedDict(subtitle=f"subtitles.awaken.{g}.{event}", sounds=[
+                OrderedDict(name=f"awaken:{g}/{g}_{event}_{k}", attenuation_distance=att) for k in range(variants)])
+            lang[f"subtitles.awaken.{g}.{event}"] = subtitle
     os.makedirs(os.path.join(MERGE, "lang"), exist_ok=True)
     with open(os.path.join(MERGE, "sounds.json"), "w") as f:
         json.dump(sounds, f, indent=2)
         f.write("\n")
     lpath = os.path.join(MERGE, "lang/en_us.json")
     cur = json.load(open(lpath)) if os.path.exists(lpath) else {}
-    cur = OrderedDict((k, v) for k, v in cur.items() if not k.startswith("subtitles.awaken.forge."))
+    cur = OrderedDict((k, v) for k, v in cur.items() if not k.startswith(tuple(f"subtitles.awaken.{g}." for g in GROUPS)))
     cur.update(lang)
     with open(lpath, "w") as f:
         json.dump(cur, f, indent=2, ensure_ascii=False)
@@ -239,18 +335,21 @@ def build(out):  # build_all.py makes textures; audio is rendered on demand (mai
 
 def main(argv):
     only = [a for a in argv if not a.startswith("--")]
-    os.makedirs(SND, exist_ok=True)
     rms, _, ceil, q = TARGETS["arms"]
+    quiet = ("bellows", "count", "cut", "miss", "charged", "rune")
     if "--json" not in argv:
-        for event, (render, variants, *_) in EVENTS.items():
-            if only and not any(event.startswith(p) for p in only):
-                continue
-            for k in range(variants):
-                y = render(k)
-                y, took = R.master(y, rms - (4.0 if event in ("bellows", "count", "cut", "miss") else 0.0), ceil, 6.0)
-                path = os.path.join(SND, f"forge_{event}_{k}.ogg")
-                K.write_ogg(path, y, q, None)
-                print(f"  forge_{event}_{k}  {len(y) / SR:5.2f} s  RMS {K.gated_rms(y):6.1f}  TP {K.true_peak(y):5.1f}  {os.path.getsize(path) // 1024} KB")
+        for g, events in GROUPS.items():
+            out = os.path.join(SOUNDS, g)
+            os.makedirs(out, exist_ok=True)
+            for event, (render, variants, *_) in events.items():
+                if only and not any(event.startswith(p) for p in only):
+                    continue
+                for k in range(variants):
+                    y = render(k)
+                    y, took = R.master(y, rms - (4.0 if event in quiet else 0.0), ceil, 6.0)
+                    path = os.path.join(out, f"{g}_{event}_{k}.ogg")
+                    K.write_ogg(path, y, q, None)
+                    print(f"  {g}_{event}_{k}  {len(y) / SR:5.2f} s  RMS {K.gated_rms(y):6.1f}  TP {K.true_peak(y):5.1f}  {os.path.getsize(path) // 1024} KB")
     write_json()
     return 0
 
