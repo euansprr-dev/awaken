@@ -1,6 +1,6 @@
 # Creatures hand-over: every remaining custom mob to the Fresh Animations bar
 
-Written 2026-10-29 by the mob-anims session (branch `claude/mob-anims-6d4ff0`, handed back at `ec1d3b97`) for the next
+Written 2026-10-29 by the mob-anims session (branch `claude/mob-anims-6d4ff0`, merged into build/awaken-v1 as `a093757a`) for the next
 session, on another account, that finishes the job. You start with none of that session's memory. Everything it knew
 that isn't already in the code is on this page. SPEC §23 (the life layer, near line 5608) and §23.1 (Motion: the mechanism, then
 one bullet per finished creature, from near line 5705) are the record of what's built. Read this page first, then §23.1 end to end, then the
@@ -59,11 +59,11 @@ Where we are still honestly behind FA:
 - **Body sway:** FA's cow sways its body more continuously.
 - **Idles:** ours (graze, look, sniff, scratch) are busier than FA's.
 
-## Where it stands (all in `claude/mob-anims-6d4ff0`; handed back for merge at `ec1d3b97`)
+## Where it stands (merged: build/awaken-v1 `a093757a` has everything below)
 
 `ec1d3b97` has green GameTests (run 40861874180). Its tours, all reviewed: crawlers 40861893343, walkers 40861937903,
-beasts close-up 40861988876. It merges cleanly onto build/awaken-v1 `f5480733`. First check whether it was merged:
-`git fetch origin && git merge-base --is-ancestor ec1d3b97 origin/build/awaken-v1 && echo merged`. The old
+beasts close-up 40861988876. The orchestrator merged it into build/awaken-v1 as `a093757a` on 29 Oct, after reviewing
+the walkers and beasts shots. This page and `tools/creatures/` came in a later docs-only commit. The old
 session's running notes, batch by batch, with every tour run id: `/Users/euanspencer/Library/Application Support/Claude/side-session-notes/local_460b18dc-28ec-4e59-8e59-ed73535cf750/mob-anims.md`
 (local to Euan's Mac; read it if you can).
 
@@ -172,8 +172,7 @@ choose about 0.9 of the most it allows.
 
 ## The workflow, per batch
 
-1. **Branch.** Make a branch from build/awaken-v1 if `ec1d3b97` is merged; otherwise from
-   `origin/claude/mob-anims-6d4ff0`. Push only your own branch, and never force-push.
+1. **Branch.** Make a fresh branch from the latest build/awaken-v1. Push only your own branch, and never force-push.
 2. **Read the body.** Read its model or spec and its current clips, and look at the FA animal you'll compare it with.
 3. **Make the change.** Profile, or code what the body needs. Client code only. No allocation per frame, so nothing
    new in `tick` or `apply`. Verify every Minecraft or NeoForge API against `/Volumes/MEDIA/Awaken/.ref/src`,
