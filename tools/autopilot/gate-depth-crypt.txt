@@ -155,3 +155,4 @@ wait 160
 shot depth_field_of_bells_v7_b
 cmd awaken gate leave
 wait 100
+quit
