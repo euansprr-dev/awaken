@@ -42,6 +42,10 @@ public final class CavesModule {
     /** The regions' sounds (SPEC §42.7): the Rootways' roots; the Ochre Deep's rock, chime crickets and hum. */
     public static final DeferredHolder<SoundEvent, SoundEvent> ROOT_CREAK = sound("caves.root_creak"), ROCK_TICK = sound("caves.rock_tick"),
             CHIME_CRICKET = sound("caves.chime_cricket"), WARM_HUM = sound("caves.warm_hum");
+    /** The other six's (SPEC §42.8). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> POOL_DRIP = sound("caves.pool_drip"), WIND_MOAN = sound("caves.wind_moan"),
+            PEBBLE_FALL = sound("caves.pebble_fall"), LAKE_LAP = sound("caves.lake_lap"), CRYSTAL_RING = sound("caves.crystal_ring"),
+            VAULT_RUMBLE = sound("caves.vault_rumble"), VIOLET_HUM = sound("caves.violet_hum");
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Awaken.id(name)));

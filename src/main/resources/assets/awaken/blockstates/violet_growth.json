@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "variant=0": {
+      "model": "awaken:block/caves/violet_growth_0"
+    },
+    "variant=1": {
+      "model": "awaken:block/caves/violet_growth_1"
+    },
+    "variant=2": {
+      "model": "awaken:block/caves/violet_growth_2"
+    }
+  }
+}

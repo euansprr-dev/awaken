@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "awaken:rootstone_copper_ore"
+    "awaken:rootstone_copper_ore",
+    "awaken:siltstone_copper_ore"
   ]
 }

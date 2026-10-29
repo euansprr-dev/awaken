@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/caves/glimmerstone_redstone_ore"
+    },
+    "lit=true": {
+      "model": "awaken:block/caves/glimmerstone_redstone_ore"
+    }
+  }
+}

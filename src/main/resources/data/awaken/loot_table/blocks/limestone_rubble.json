@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "awaken:blocks/limestone_rubble",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:limestone_rubble"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

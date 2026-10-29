@@ -1,0 +1,25 @@
+{
+  "type": "lithostitched:replace_partially",
+  "dimension": "minecraft:overworld",
+  "priority": -11,
+  "targets": "#awaken:caves/hosts",
+  "replacement": "awaken:glimmer_hollows",
+  "parameters": {
+    "awaken:caves/y": {
+      "min_inclusive": 0.0,
+      "max_inclusive": 59.0
+    },
+    "depth": {
+      "min_inclusive": 0.34
+    },
+    "awaken:caves/middle": {
+      "max_inclusive": 0.1248
+    },
+    "temperature": {
+      "max_inclusive": -0.45
+    },
+    "continentalness": {
+      "min_inclusive": -0.19
+    }
+  }
+}

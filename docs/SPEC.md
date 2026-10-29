@@ -12288,8 +12288,12 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
   or fall). For every cave: **`cave_lichen_shallows`**, **`_middle`**, **`_deep`** (the band's colour), **`mineral_crust`**,
   **`wet_streaks`** (multiface, like glow lichen), **`cave_puddle`** (a skin of water, no collision, tinted by the biome's
   water colour, drops nothing), **`dusty_web`** (a cobweb that drops string or itself). Rubble, the formations and the
-  regions' rocks are in **`#minecraft:blocks_motion_no_leaves`**: 26.3 reads heightmaps, suffocation, rain and fire
-  spread from that tag, not from a block's shape.
+  regions' rocks (P3: and the drifts and driftwood) are in **`#minecraft:blocks_motion_no_leaves`**: 26.3 reads
+  heightmaps, suffocation, rain and fire spread from that tag, not from a block's shape.
+  The same file carries the other modules' natural rock and ground that no vanilla tag takes in (the Lands' frostspar,
+  sunshard, fused and scorched glass, faultstone, fault seam and riven shale; the wild's salt lick and wallow; the Singing
+  Deep's deepglass; their logs, planks, dirt and slabs come in through `#logs`, `#planks`, `#dirt` and `#slabs`): it is the
+  only Awaken file in that tag, and without them the heightmaps looked straight through those blocks.
 - **The feature** `awaken:cave_skin` (`CaveSkinFeature`, placed `awaken:caves/skin`, every `#minecraft:is_overworld` biome
   at `top_layer_modification`, so it comes after every structure and feature): per chunk, every column bottom to top below
   the ground less **6**, section by section from the palettes; only cells where air meets natural rock are looked at.
@@ -12338,7 +12342,7 @@ overworld caves only (the gates' worlds keep their own life).
   heard to 24 blocks, a little of the rock in each); one new voice a second at most, crickets three seconds apart; quieter
   where the Soundscape hushes.
 - **Settings** (`config/awaken-caves-client.toml`): `underlife` and `cave_particles` (the drips), both on;
-  `drawn_cave_light` comes with the drawn light in P3. `/awaken underlife [on|off|count|lineup|clear]` (client).
+  `drawn_cave_light` (on) came with the drawn light in P3 (§42.8). `/awaken underlife [on|off|count|lineup|clear]` (client).
 - **Later**: each region brings its own (the Rootways' glow-worm threads, the Ochre Deep's rust beetles and chime crickets in
   P2; glass and ash moths, cave swifts, crayfish, chitin crawlers in P3), drawn from the same sheet.
 
@@ -12424,17 +12428,136 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   the Ochre Deep's beetles are **rust beetles** and its crickets sing the chime crickets' song. `/awaken underlife lineup`
   shows a rust beetle and a glow-worm cluster with the rest.
 - **Finding one** (admin, `caves.RegionCommands`): `/awaken caves goto <region> [pick]` finds the nearest cell of the
-  region's biome as `/locate biome` does (within **3,200** blocks), generates the 7 × 7 chunks round it, and takes you to
-  the dry floor there with the most room (eight rays of up to 16 blocks at head height), facing the longest. `pick` 1 to 9
+  region's biome as `/locate biome` does (within **3,200** blocks), makes the 3 × 3 chunks round it in a passage (§28.9,
+  "Arrivals": generating 7 × 7 on the server thread stopped it for 27 s on the CI runner, and a tour's shots ran ahead of
+  the move), and takes you to the dry floor there with the most room (eight rays of up to 16 blocks at head height, each
+  stopping where the loaded land or the region ends, so a room inside the region wins), facing the longest; no floor with
+  lava within **4** blocks across (from a block under it to two over: it flows in once the land is live). `pick` 1 to 9
   is the next-best floor, each at least **14** blocks from the better ones. For tours (`tools/autopilot/caves-regions.txt`)
   and for finding a region to play in.
-- **Test** `caves_region_rock`: eight filled chunks of seed 777 (the census's), four told they are all Rootways and four all
-  Ochre Deep, with coal, copper, iron and gold ore planted in host rock: under the land's last 10 blocks no host rock is
+- **Test** `caves_region_rock`: ten filled chunks of seed 777 (the census's), five told they are all Rootways and five all
+  Ochre Deep (the first two of each only warm the code, each dressed **6** times on fresh copies: cold, the rock rule took
+  2.4 to 5.7 ms a chunk, warm 0.5 to 1.3; on the CI runner two warm dressings left it at 3 to 5 times its Mac cost, 25 to
+  30% of the fill, run 40845508580),
+  with coal, copper, iron and gold ore planted in host rock: under the land's last 10 blocks no host rock is
   left but the untwinned ores' shells, each twin is placed and each untwinned ore keeps its shell as it was; above, the
   rock is untouched; glowcaps stand on rock and only in the Rootways, root curtains hang from rock or root with the tip
   last, rust, flowstone and ember only in the Ochre Deep (and no mineral crust or wet streaks there); every piece is laid;
   glowcaps on at most **6%** of open floors; the skin with the regions at most **25%** of the fill (each chunk against its own
-  fill, the middle of the six; the rock rule reads each section once).
+  fill, the middle of the six, each the fastest of five fills and five dressings of fresh copies, as a pause or a busy
+  machine only adds; the rock rule reads each section once).
 - **Measured 2026-10-29**: 91,828 cells of region rock on 8 chunks, 46 glowcaps (2.0% of 2,273 open floors), 83 root
   curtain blocks, 137 rust crust, 37 rust flowstone, 32 ember lichen; 2.2 ms a chunk against 34.2 ms to fill it (6%; the
-  skin alone 0.5 ms).
+  skin alone 0.5 ms). Re-measured as the fastest of three: 1.2 to 1.9 ms a chunk against 11 to 19 ms (10 to 13%); one
+  timing each had swung from 6% to 28% between runs (on CI 27%).
+
+### 42.8 The other six regions (P3)
+- **The table** (`CaveRegion`; the pack's injectors from `tools/content/caves_content.py`; a region joins the pack, its
+  `injected` flag, once its shape and kit are in). The land boxes, on vanilla's band edges:
+
+  | Region | Band | Priority | Slot of the cover | Land above |
+  |---|---|---|---|---|
+  | The Rootways | Shallows | -10 | all | humid inland, not frozen or desert (P0) |
+  | **The Pale Halls** | Shallows | -9 | all | dry land (humidity under -0.1, temperature -0.45 to 0.55, inland), and the shore (continents -0.19 to -0.11) |
+  | **The Windcleft** | Middle | -13 | all | hills, mountains and peaks: erosion -0.375 or less, inland, any climate |
+  | **The Drowned Galleries** | Middle | -12 | all | the shore, and the flattest land (erosion 0.55 or more, inland, not frozen or hot) |
+  | **The Glimmer Hollows** | Middle | -11 | all | frozen land (temperature -0.45 or less), hot land (0.55 or more), warm dry land |
+  | The Ochre Deep | Middle | -10 | all | temperate land, warm wet land (P0) |
+  | **The Black Vaults** | Deep | -10 | 0 to 0.55 | any land, coast or inland |
+  | **The Violet Deep** | Deep | -10 | 0.55 to 1 | any land, coast or inland |
+
+  The Windcleft is the Middle Dark's, not the Shallows' as the plan drew it: under hills and mountains the Shallows lie over
+  y 59, where no region goes, so the cracks take the Middle Dark there (y 0 to 59, 20 to 55 blocks of height). Hot and
+  frozen land keeps plain Shallows (the Frost Spires' frostspar caves); under the sea every band stays plain.
+- **The shapes** (`CaveShapes`; densities as §42.3, corner-sampled, nothing under 5 wide or 6 high):
+  - **Halls** (the Pale Halls): wide halls with flat roofs and floors on one bedding plane, 7.5 high (passages 5.5), their
+    middle 10 to 13 blocks under the seal, where `shape_flat` at 0.7 scale is over **0.08** (about 45%), joined by passages
+    along `shape_a`'s zero lines (half-width **0.03**).
+  - **Fissures** (the Windcleft): along the zero lines of `shape_a` at 0.55 scale (long, straight-ish cracks), half-width
+    **0.022** (5 to 6 blocks) and **0.012** more in a ledge band every 24 blocks (phase by `shape_flat`), from y 56 down to
+    about y 4, closing over the last 8 blocks.
+  - **Lakes** (the Drowned Galleries): wide low caverns 8 high round y 8 to 16 (`shape_flat`), where `shape_flat` at 0.6 is
+    over **0.13** (about 35%), joined by low passages along `shape_b`'s zero lines (half-width **0.03**); the aquifers flood
+    what lies under their water.
+  - **Geodes** (the Glimmer Hollows): round rooms 5 to 8 in radius (squashed a quarter in height) in **70%** of the cells of
+    a jittered **28**-block 3D grid, off throats along `shape_a` at 1.1 scale (half-width **0.03**) 5.5 high round y 7 to 21.
+  - **Vaults** (the Black Vaults): halls on the Deep's floor (from about y -55, over the lava sea) where `shape_flat` at 0.5
+    is over **0** (half), their roof rising from 12 high at the edge to **48** in the middle, held up by rock columns 7
+    across on a jittered **16**-block grid.
+  - **Warped** (the Violet Deep): tunnels winding in 3D where `shape_a` and `shape_b` at 0.9 × 1.4 × 0.9 are both within
+    **0.06** of zero (vanilla's noodles, wider), and vaulted chambers 16 high round y -30 where `shape_flat` at 0.8 is over
+    **0.22**.
+  - **Shafts** join the bands: one in **40%** of the cells of a **160**-block grid, 7 across, from the seal (held off the
+    ground like every shape) down to y **-14**, only in a column whose Middle Dark is a region and whose Shallows or Deep is
+    one too; never above y 59.
+  - **Chasms**, by the same rule and to the same depth: in another **30%** of those cells, a slot as wide as a shaft, 24 to
+    48 long at any heading, through the cell's point (over the Black Vaults they open into the halls' roofs).
+- **Rock and ores** (as §42.7: the rock rule, a twin's vanilla drops and XP, an ore without a twin in its own pocket):
+  **`limestone`** (pale, wandering bedding planes, solution pits; the Pale Halls), **`banded_slate`** (blue-grey bands with
+  mica; the Windcleft), **`siltstone`** (green-grey damp laminae; the Drowned Galleries), **`glimmerstone`** (sandy, amber
+  flecks; the Glimmer Hollows), **`column_basalt`** (the side of a rank of columns; the Black Vaults), **`seepstone`**
+  (violet, a slanting Deepglass vein; the Violet Deep), each with the skin's kit. Twins: `limestone_iron_ore`,
+  `banded_slate_gold_ore`, `siltstone_lapis_ore`, `siltstone_copper_ore`, `glimmerstone_redstone_ore` (lights when touched,
+  as redstone ore), `column_basalt_diamond_ore` (deepslate diamond's drops).
+- **Each region's own pieces** (`CaveSkinFeature`; rolls per cell as §42.4; a drift is a low floor layer that needs a sturdy
+  floor and can be walked over; every piece is in `#minecraft:blocks_motion_no_leaves` if it has a collision box):
+  - **The Pale Halls**: drips from any roof (not only wet ones) at **0.3**; the puddle under them holds **`cave_pearls`** at
+    **0.4**; **`rimstone`** (3 px high, terraced pool dams; pickaxe) on open floor at **0.1** where a 3D field at 6 passes
+    **0.15**: in fields.
+  - **The Windcleft**: rubble along walls at **0.35** (scree; plain caves 0.18); **`rime`** (frost overlay, both cells over a
+    floor by a wall) where a field at 5 passes **0.3**, in place of lichen; **`old_rope`** (a Delvers' rope, climbable, wool
+    sound) from a roof at **0.012**, 3 to **12** blocks, its last block the frayed tip, never reaching the floor.
+  - **The Drowned Galleries**: **`silt`** (4 px; shovel) on open floor at **0.35** by water or where a field at 6 passes
+    **0.35**; **`driftwood`** (a log on its side, axe) at **0.012**; **`cave_weed`** (pale seagrass, no bone meal) on a lake
+    floor under still water at **0.3**; **`glow_algae`** (overlay, light **4**) on the rock at the waterline at **0.5**.
+  - **The Glimmer Hollows**: a crystal on floors, walls (both cells, facing out of the rock) and roofs (hanging) at **0.07**
+    each: **`amber_crystal`** (light **4**, amethyst's sound), or **`glacial_crystal`** (pale ice blue) under land colder than **0.3** base
+    temperature (read once a chunk at the land's top).
+  - **The Black Vaults**: **`ash`** (2 px, shovel) on open floor at **0.3**, in fields.
+  - **The Violet Deep**: **`violet_growth`** (three shapes, light **4**, no collision) on open floor at **0.08** where a
+    field at 5 passes **0.1**; **`shed_chitin`** (the crawlers' cast plates, pebble-like) at **0.03**.
+  - Driftwood and shed chitin have their own band of the roll, under silt's and the growth's: a roll in silt's or the
+    growth's band that misses its field lays nothing (it once fell through to driftwood, on a third of the floor).
+  - **Test** `caves_region_pieces`: two filled chunks of seed 777 for each of the six, told they are all that region: each
+    lays its floor's piece (rimstone, rime, silt, a crystal, ash, violet growth) and none of another region's; driftwood
+    and shed chitin at most twice their rate of the open floors. **Measured 2026-10-29**: the Pale Halls 20 rimstone and
+    18 pearls on 504 open floors; the Windcleft 149 rime and 31 rope blocks on 1,277; the Drowned Galleries 26 silt, 10
+    driftwood (1.2%), 87 weed and 32 algae on 830; the Glimmer Hollows 186 amber crystals on 825 (seed 777's land is warm:
+    no glacial); the Black Vaults 115 ash on 825; the Violet Deep 23 growths and 23 chitin (2.4%) on 952.
+- **The air** (`RegionClient`, as §42.7: 2 motes tried a tick, off with `cave_particles`): the Pale Halls' and the Drowned
+  Galleries' `awaken:cave_mist` (a wisp 0.2 to 0.8 over still water one or two blocks under the spot, hanging); the
+  Windcleft's `cave_mica` (a glint of 8 to 17 ticks on a wall face beside the spot, three sprites there and back); the
+  Glimmer Hollows' `cave_glitter` (the same glint, smaller, in the air); the Black Vaults' `cave_ash` (flakes sinking, one in
+  three dark); the Violet Deep's `cave_seep` (violet motes rising 0.005 a tick).
+- **Sound** (`tools/art/specs/audio_underlife.py`, as §42.7): the Pale Halls' `caves.pool_drip` (a drop into a pool under a
+  roof within 12 blocks, every 4.5 to 9 seconds, each place its own pitch of eight); the Windcleft's `caves.pebble_fall` (6 to
+  18 blocks off and over you, every 20 to 40 seconds); the Glimmer Hollows' `caves.crystal_ring` (a crystal within **6**
+  blocks rings while you move faster than **0.08** blocks a tick, every 1.5 to 3 seconds; glacial higher); the Black Vaults'
+  `caves.vault_rumble` (16 to 32 blocks off and under you, every 35 to 70 seconds). Beds (8-second seamless loops, filtered
+  round the loop so the seam doesn't click; the old bed fades as the new one comes in): the Windcleft's `caves.wind_moan`
+  (**0.5**), the Drowned Galleries' `caves.lake_lap` (**0.4**), the Violet Deep's `caves.violet_hum` (**0.4**), with the
+  Ochre Deep's warm hum.
+- **The underlife's own** (§42.5's director): glow-worm threads in the Pale Halls as in the Rootways; the Windcleft's
+  **cave swifts** (half its roosts, **0.5**: never seen to hang, they wheel about the roost from the start, 3 to 11 blocks
+  round it and up to 7 under, faster and on longer glides than bats, wings beating in bursts); the Drowned Galleries'
+  **crayfish** (half its pools, **0.5**, where the bottom is rock within 6: they creep on the lake floor at 0.01 a tick and
+  shoot off backwards when you lean over); the Glimmer Hollows' **glass moths** (its moths, and a crystal, light **4**, brings
+  two or three, as a torch on the wall does elsewhere); the Black Vaults' **ash moths** (up to 4) and 7 bats; the
+  Violet Deep's **chitin crawlers** (its beetles, up to 5, bigger). `/awaken underlife lineup` adds a second row of them.
+- **The Lens looks** (`looks_caves.json`, exposure 1.0 for all): the Pale Halls cool and clean (blue-grey shadows, saturation
+  0.92, haze tint 0.7/0.78/0.84); the Windcleft cold and crisp (contrast 1.14, warmth -0.1, haze 0.22); the Drowned Galleries
+  wet and green (haze 0.46 toward 0.28/0.6/0.58, water 0.8); the Glimmer Hollows' amber light on violet shadows (bloom 1.2 from
+  0.42, fog glow 1.15); the Black Vaults vast and black (contrast 1.18, haze toward 0.56/0.3/0.2, fog glow 1.2); the Violet
+  Deep uncanny (violet shadows, haze toward 0.5/0.34/0.7, vignette 0.3).
+- **Drawn light** (`caves.client.DrawnLight`; setting `drawn_cave_light`; never a light block, so spawns are untouched):
+  **6** columns a tick looked at within **40** blocks of the camera, at most **400** lights, drawn to **48** in one additive
+  pass (the lightning blend, depth-tested, no depth written, as `citizens.client.CityGlow`; its own pipeline
+  `awaken:pipeline/cave_glow`, the game's lightning type if that fails), fading in and out over 60 ticks and over the last
+  8 blocks of the reach; a region's lights fade once you've left it. The Pale Halls' **glow-worm stars**: a roof **6** or
+  more over its floor gets two or three pale blue-green points on its underside (a core and a faint halo, a few pixels
+  across at any distance: 0.035 + 0.0022 a block), brightening and dimming slowly, living 15 to 30 seconds. The Drowned
+  Galleries' **lake light**: over still water, two soft teal discs 1.6 to 2.8 across on the roof, drifting against each
+  other (none closer than 2.5). The Black Vaults' **heat**: over lava (looked for 48 down) a red-orange glow 2.6 to 4.2 across
+  hangs 1.4 to 2.6 over it, flickering (none closer than 4). Budget ≤ 0.1 ms a frame (§42.6), not yet measured.
+- **A jump** (a teleport, a respawn): the region at the camera is read again at once, not on the next second, and what
+  belongs to the region you left (glow-worms, rust beetles, swifts, crayfish, glass and ash moths, crawlers) fades away.

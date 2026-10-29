@@ -2,6 +2,9 @@
   "replace": false,
   "values": [
     "awaken:rootstone_copper_ore",
-    "awaken:ochre_iron_ore"
+    "awaken:ochre_iron_ore",
+    "awaken:limestone_iron_ore",
+    "awaken:siltstone_lapis_ore",
+    "awaken:siltstone_copper_ore"
   ]
 }

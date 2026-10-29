@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "awaken:ochre_iron_ore"
+    "awaken:ochre_iron_ore",
+    "awaken:limestone_iron_ore"
   ]
 }

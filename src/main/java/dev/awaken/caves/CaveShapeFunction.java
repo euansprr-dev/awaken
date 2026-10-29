@@ -141,25 +141,32 @@ public record CaveShapeFunction(DensityFunction input, DensityFunction depth, De
         private float shaped(SamplerContext context, float in, int x, int y, int z) {
             Column c = column(context, x, z);
             float d = c.d0 + c.slope * y;
-            if (d < SEAL || y > CaveRegion.MAX_Y) return in;
-            CaveRegion r = region(c, y, d);
-            if (r == null || r.shape == CaveRegion.Shape.NONE) return in;
-            float s = CaveShapes.density(r.shape, c.shape, a, b, flat, x, y, z, (d - SEAL) * 128f);
+            if (d < SEAL) return in;
+            if (y > CaveRegion.MAX_Y) return in;
+            float s = 1f;
+            CaveRegion r = region(c, CaveRegion.Band.at(y, d));
+            if (r != null && r.shape != CaveRegion.Shape.NONE) s = CaveShapes.density(r.shape, c.shape, a, b, flat, x, y, z, (d - SEAL) * 128f);
+            // a shaft joins the bands where the Middle Dark and a band over or under it are regions
+            if (y >= CaveShapes.SHAFT_FLOOR && shafted(c)) s = Math.min(s, CaveShapes.shaft(c.shape, x, z));
+            if (s >= 1f) return in;
             // held off the ground: past the seal the shape eases in over SEAL_FADE
             s += Math.max(0f, (SEAL + SEAL_FADE - d) / SEAL_FADE);
             return Math.min(in, Math.max(FLOOR, s));
         }
 
-        private @Nullable CaveRegion region(Column c, int y, float d) {
-            if (y > CaveRegion.MAX_Y) return null;
-            CaveRegion.Band band = CaveRegion.Band.at(y, d);
+        /** The band's region in this column (worked out once a column); the seal and the cap are checked per corner. */
+        private @Nullable CaveRegion region(Column c, CaveRegion.Band band) {
             int i = band.ordinal();
             if (!c.known[i]) {
-                // the band's region for this column; the depth gate is the seal and the cap, checked per corner above
                 c.region[i] = CaveRegion.in(band, c.field[i], c.humidity, c.temperature, c.continents, c.erosion);
                 c.known[i] = true;
             }
             return c.region[i];
+        }
+
+        private boolean shafted(Column c) {
+            return region(c, CaveRegion.Band.MIDDLE) != null
+                    && (region(c, CaveRegion.Band.SHALLOWS) != null || region(c, CaveRegion.Band.DEEP) != null);
         }
 
         private Column column(SamplerContext context, int x, int z) {

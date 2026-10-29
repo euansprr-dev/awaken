@@ -1,0 +1,55 @@
+{
+  "variants": {
+    "variant=0": [
+      {
+        "model": "awaken:block/caves/limestone_pebbles_0"
+      },
+      {
+        "model": "awaken:block/caves/limestone_pebbles_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/limestone_pebbles_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/limestone_pebbles_0",
+        "y": 270
+      }
+    ],
+    "variant=1": [
+      {
+        "model": "awaken:block/caves/limestone_pebbles_1"
+      },
+      {
+        "model": "awaken:block/caves/limestone_pebbles_1",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/limestone_pebbles_1",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/limestone_pebbles_1",
+        "y": 270
+      }
+    ],
+    "variant=2": [
+      {
+        "model": "awaken:block/caves/limestone_pebbles_2"
+      },
+      {
+        "model": "awaken:block/caves/limestone_pebbles_2",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/limestone_pebbles_2",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/limestone_pebbles_2",
+        "y": 270
+      }
+    ]
+  }
+}

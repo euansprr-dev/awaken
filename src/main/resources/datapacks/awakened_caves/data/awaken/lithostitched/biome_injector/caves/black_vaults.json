@@ -1,0 +1,21 @@
+{
+  "type": "lithostitched:replace_partially",
+  "dimension": "minecraft:overworld",
+  "priority": -10,
+  "targets": "#awaken:caves/hosts",
+  "replacement": "awaken:black_vaults",
+  "parameters": {
+    "awaken:caves/y": {
+      "max_inclusive": -0.5
+    },
+    "depth": {
+      "min_inclusive": 0.16
+    },
+    "awaken:caves/deep": {
+      "max_inclusive": -0.19
+    },
+    "continentalness": {
+      "min_inclusive": -0.19
+    }
+  }
+}

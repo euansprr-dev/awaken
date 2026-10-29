@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "awaken:block/caves/column_basalt_diamond_ore"
+  }
+}

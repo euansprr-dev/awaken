@@ -11,12 +11,14 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.AmethystClusterBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.MultifaceBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -66,6 +68,17 @@ public final class CaveSkinFeature implements Feature {
     /** The regions' own (SPEC §42.7): their rock stops this far under the ground; growth and glow by these chances. */
     public static final int REGION_UNDER = 10;
     static final float GLOWCAP = 0.12F, GLOW_FIELD = 0.2F, ROOTS = 0.14F, ROOT_FIELD = 0.1F, EMBER = 0.1F, RUST = 0.2F;
+    /**
+     * The six P3 regions' own (SPEC §42.8): the Pale Halls drip everywhere (straws) and grow rimstone in patches, a drop's
+     * landing a pearl now and then; the Windcleft's scree, rime and ropes; the Drowned Galleries' silt, driftwood, weed
+     * and algae; the Glimmer Hollows' crystals on every face; the Black Vaults' ash; the Violet Deep's growths and husks.
+     */
+    public static final float PALE_DRIP = 0.3F, RIMSTONE = 0.1F, RIM_FIELD = 0.15F, PEARLS = 0.4F, SCREE = 0.35F, RIME_FIELD = 0.3F,
+            ROPE = 0.012F, SILT = 0.35F, SILT_FIELD = 0.35F, DRIFTWOOD = 0.012F, WEED = 0.3F, WEED_FIELD = 0F, ALGAE = 0.5F,
+            CRYSTAL = 0.07F, ASH = 0.3F, ASH_FIELD = 0F, VIOLET = 0.08F, VIOLET_FIELD = 0.1F, CHITIN = 0.03F;
+    /** The longest old rope down a crack, and the Glimmer Hollows' frost line (the land's base temperature). */
+    static final int ROPE_MAX = 12;
+    static final float FROST = 0.3F;
 
     /** Which region a cell is in, or null (the chunk's biomes in the game; a test may say). */
     public interface Regions {
@@ -168,6 +181,7 @@ public final class CaveSkinFeature implements Feature {
             below[i] = c.get(x, minY - 1, z);
         }
         if (regions != Regions.NONE) regionRock(chunk, cx, cz, tops, maxTop, regions);
+        Block crystal = crystal(chunk, cx, cz, maxTop + UNDER_GROUND);
         for (int si = 0; si < chunk.getSectionsCount(); si++) {
             int baseY = SectionPos.sectionToBlockCoord(chunk.getSectionYFromSectionIndex(si));
             if (baseY + 15 < minY) continue;
@@ -185,14 +199,16 @@ public final class CaveSkinFeature implements Feature {
                     if (y < tops[i]) {
                         int x = cx + (i & 15), z = cz + (i >> 4);
                         if (here.isAir()) {
-                            if (rock(below[i]) != null) placed += floor(c, seed, x, y, z, tops[i] + UNDER_GROUND, wet[i], below[i], regions.at(x, y, z));
-                        } else if (below[i].isAir() && rock(here) != null) {
-                            if (regions.at(x, y - 1, z) == CaveRegion.ROOTWAYS && chance(seed, x, y - 1, z, 9) < ROOTS
-                                    && field(seed, x, z, 7, 0x2007) > ROOT_FIELD) {
-                                placed += roots(c, seed, x, y - 1, z);
-                            } else if (wet[i] > WET && chance(seed, x, y - 1, z, 1) < DRIP_ROOF) {
-                                placed += roof(c, seed, x, y - 1, z, here);
+                            if (rock(below[i]) != null) {
+                                placed += floor(c, seed, x, y, z, tops[i] + UNDER_GROUND, wet[i], below[i], regions.at(x, y, z), crystal);
+                            } else if (below[i].is(Blocks.WATER) && regions.at(x, y, z) == CaveRegion.DROWNED_GALLERIES
+                                    && chance(seed, x, y, z, 13) < ALGAE && clean(c, x, y, z)) {
+                                placed += overlay(c, x, y, z, CaveSkin.GLOW_ALGAE.get());
                             }
+                        } else if (here.is(Blocks.WATER) && rock(below[i]) != null) {
+                            if (regions.at(x, y, z) == CaveRegion.DROWNED_GALLERIES) placed += weed(c, seed, x, y, z, here);
+                        } else if (below[i].isAir() && rock(here) != null) {
+                            placed += ceiling(c, seed, x, y - 1, z, here, regions.at(x, y - 1, z), wet[i], crystal);
                         }
                     }
                     below[i] = here;
@@ -204,7 +220,8 @@ public final class CaveSkinFeature implements Feature {
 
     // ---- floors and the walls above them -------------------------------------------------------------------------
 
-    private static int floor(Cells c, long seed, int x, int y, int z, int ground, float wet, BlockState floorRock, @Nullable CaveRegion region) {
+    private static int floor(Cells c, long seed, int x, int y, int z, int ground, float wet, BlockState floorRock, @Nullable CaveRegion region,
+                             Block crystal) {
         if (!clean(c, x, y, z)) return 0;
         int placed = 0;
         Direction wall = null;
@@ -218,21 +235,51 @@ public final class CaveSkinFeature implements Feature {
         CaveSkin.Kit kit = CaveSkin.KITS.get(r);
         float roll = chance(seed, x, y, z, 2);
         int variant = (int) (chance(seed, x, y, z, 3) * 3);
-        if (wall != null && roll < RUBBLE) {
+        if (wall != null && roll < (region == CaveRegion.WINDCLEFT ? SCREE : RUBBLE)) {
             c.set(x, y, z, kit.rubble().get().defaultBlockState().setValue(SkinBlocks.Rubble.FACING, wall).setValue(SkinBlocks.VARIANT, variant));
             placed++;
         } else if (wall == null && roll < PEBBLES) {
             c.set(x, y, z, kit.pebbles().get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant));
             placed++;
-        } else if (region == CaveRegion.ROOTWAYS && roll > 1 - GLOWCAP && field3(seed, x, y, z, 5, 0x6C0A) > GLOW_FIELD) {
-            c.set(x, y, z, CaveSkin.GLOWCAP.get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant));
+        } else if (region != null && floorOwn(c, seed, x, y, z, region, roll, variant, crystal)) {
             placed++;
         } else if (wall != null && wet < DRY && roll > 1 - WEB && corner(c, x, y + 1, z)) {
             c.set(x, y + 1, z, CaveSkin.DUSTY_WEB.get().defaultBlockState());
             return placed + 1;
         }
-        if (wall != null) placed += walls(c, seed, x, y, z, ground, wet, region);
+        if (wall != null) placed += walls(c, seed, x, y, z, ground, wet, region, crystal);
         return placed;
+    }
+
+    /** A region's own piece on a floor cell (SPEC §42.7, §42.8); true if one went down. */
+    private static boolean floorOwn(Cells c, long seed, int x, int y, int z, CaveRegion region, float roll, int variant, Block crystal) {
+        BlockState s = switch (region) {
+            case ROOTWAYS -> roll > 1 - GLOWCAP && field3(seed, x, y, z, 5, 0x6C0A) > GLOW_FIELD
+                    ? CaveSkin.GLOWCAP.get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant) : null;
+            case PALE_HALLS -> roll > 1 - RIMSTONE && field3(seed, x, y, z, 6, 0x9A1E) > RIM_FIELD
+                    ? CaveSkin.RIMSTONE.get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant) : null;
+            case DROWNED_GALLERIES -> roll > 1 - SILT && (shore(c, x, y, z) || field3(seed, x, y, z, 6, 0x5117) > SILT_FIELD)
+                    ? CaveSkin.SILT.get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant)
+                    // its own band of the roll: a silt roll that missed the field lays nothing (it laid driftwood on a third of the floor)
+                    : roll > 1 - SILT - DRIFTWOOD && roll <= 1 - SILT ? CaveSkin.DRIFTWOOD.get().defaultBlockState()
+                    .setValue(SkinBlocks.Driftwood.AXIS, variant == 0 ? Direction.Axis.Z : Direction.Axis.X) : null;
+            case GLIMMER_HOLLOWS -> roll > 1 - CRYSTAL ? crystal.defaultBlockState().setValue(AmethystClusterBlock.FACING, Direction.UP) : null;
+            case BLACK_VAULTS -> roll > 1 - ASH && field3(seed, x, y, z, 8, 0x0A5E) > ASH_FIELD
+                    ? CaveSkin.ASH.get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant) : null;
+            case VIOLET_DEEP -> roll > 1 - VIOLET && field3(seed, x, y, z, 5, 0x7101) > VIOLET_FIELD
+                    ? CaveSkin.VIOLET_GROWTH.get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant)
+                    : roll > 1 - VIOLET - CHITIN && roll <= 1 - VIOLET ? CaveSkin.SHED_CHITIN.get().defaultBlockState().setValue(SkinBlocks.VARIANT, variant) : null;
+            default -> null;
+        };
+        if (s == null) return false;
+        c.set(x, y, z, s);
+        return true;
+    }
+
+    /** Water beside the cell: a lake's or a sump's shore. */
+    private static boolean shore(Cells c, int x, int y, int z) {
+        for (Direction d : Direction.Plane.HORIZONTAL) if (c.get(x + d.getStepX(), y, z + d.getStepZ()).is(Blocks.WATER)) return true;
+        return false;
     }
 
     /**
@@ -240,13 +287,23 @@ public final class CaveSkinFeature implements Feature {
      * Ochre Deep a patch of lichen is now and then ember lichen, the crust is rust (dry or not) and the streaks are rust
      * flowstone, down both cells.
      */
-    private static int walls(Cells c, long seed, int x, int y0, int z, int ground, float wet, @Nullable CaveRegion region) {
+    private static int walls(Cells c, long seed, int x, int y0, int z, int ground, float wet, @Nullable CaveRegion region, Block crystal) {
         int placed = 0;
         boolean ochre = region == CaveRegion.OCHRE_DEEP;
         for (int y = y0 + 1; y <= y0 + 2; y++) {
             if (!c.get(x, y, z).isAir()) return placed;
+            if (region == CaveRegion.GLIMMER_HOLLOWS && chance(seed, x, y, z, 12) < CRYSTAL) {
+                for (Direction d : Direction.Plane.HORIZONTAL) {
+                    if (rock(c.get(x + d.getStepX(), y, z + d.getStepZ())) == null) continue;
+                    placed += crystal(c, x, y, z, d.getOpposite(), crystal);
+                    break;
+                }
+                continue;
+            }
             MultifaceBlock kind = null;
-            if (field3(seed, x, y, z, 6, 0x11C4) > LICHEN) {
+            if (region == CaveRegion.WINDCLEFT && field3(seed, x, y, z, 5, 0x041E) > RIME_FIELD) {
+                kind = CaveSkin.RIME.get();
+            } else if (field3(seed, x, y, z, 6, 0x11C4) > LICHEN) {
                 kind = ochre && field3(seed, x, y, z, 4, 0x0E3B) > EMBER ? CaveSkin.EMBER_LICHEN.get() : lichen(y, ground);
             } else if (ochre && field3(seed, x, y, z, 5, 0xC0A5) > RUST) {
                 kind = CaveSkin.RUST_CRUST.get();
@@ -255,21 +312,25 @@ public final class CaveSkinFeature implements Feature {
             } else if (wet > WET && (y == y0 + 2 || ochre) && field3(seed, x, y, z, 3, 0x57EA) > STREAKS) {
                 kind = ochre ? CaveSkin.RUST_FLOWSTONE.get() : CaveSkin.WET_STREAKS.get();
             }
-            if (kind == null) continue;
-            BlockState s = kind.defaultBlockState();
-            boolean any = false;
-            for (Direction d : Direction.Plane.HORIZONTAL) {
-                if (rock(c.get(x + d.getStepX(), y, z + d.getStepZ())) != null) {
-                    s = s.setValue(MultifaceBlock.getFaceProperty(d), true);
-                    any = true;
-                }
-            }
-            if (any && clean(c, x, y, z)) {
-                c.set(x, y, z, s);
-                placed++;
-            }
+            if (kind == null || !clean(c, x, y, z)) continue;
+            placed += overlay(c, x, y, z, kind);
         }
         return placed;
+    }
+
+    /** An overlay on every rock face round the cell (sides only); 1 if there was one. */
+    private static int overlay(Cells c, int x, int y, int z, MultifaceBlock kind) {
+        BlockState s = kind.defaultBlockState();
+        boolean any = false;
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            if (rock(c.get(x + d.getStepX(), y, z + d.getStepZ())) != null) {
+                s = s.setValue(MultifaceBlock.getFaceProperty(d), true);
+                any = true;
+            }
+        }
+        if (!any) return 0;
+        c.set(x, y, z, s);
+        return 1;
     }
 
     static MultifaceBlock lichen(int y, int ground) {
@@ -287,7 +348,18 @@ public final class CaveSkinFeature implements Feature {
 
     // ---- roofs: stalactites, the stalagmites under them, the puddle where the drops land --------------------------
 
-    private static int roof(Cells c, long seed, int x, int y, int z, BlockState roofRock) {
+    /** What hangs from a roof cell: a region's own first (roots, ropes, crystals), else the drips where it's wet (anywhere in the Pale Halls). */
+    private static int ceiling(Cells c, long seed, int x, int y, int z, BlockState roofRock, @Nullable CaveRegion r, float wet, Block crystal) {
+        float roll = chance(seed, x, y, z, 9);
+        if (r == CaveRegion.ROOTWAYS && roll < ROOTS && field(seed, x, z, 7, 0x2007) > ROOT_FIELD) return roots(c, seed, x, y, z);
+        if (r == CaveRegion.WINDCLEFT && roll < ROPE) return rope(c, seed, x, y, z);
+        if (r == CaveRegion.GLIMMER_HOLLOWS && roll < CRYSTAL) return clean(c, x, y, z) ? crystal(c, x, y, z, Direction.DOWN, crystal) : 0;
+        boolean pale = r == CaveRegion.PALE_HALLS;
+        if ((pale || wet > WET) && chance(seed, x, y, z, 1) < (pale ? PALE_DRIP : DRIP_ROOF)) return roof(c, seed, x, y, z, roofRock, pale);
+        return 0;
+    }
+
+    private static int roof(Cells c, long seed, int x, int y, int z, BlockState roofRock, boolean pearls) {
         if (!clean(c, x, y, z)) return 0;
         int floor = Integer.MIN_VALUE;
         for (int yy = y - 1; yy >= y - 14 && yy > c.minY() + 1; yy--) {
@@ -309,9 +381,9 @@ public final class CaveSkinFeature implements Feature {
             if (clean(c, x, floor, z)) placed += column(c, x, floor, z, rock(c.get(x, floor - 1, z)), Direction.UP, up);
             // the drops land round its foot
             Direction d = AROUND[(int) (chance(seed, x, y, z, 7) * 4)];
-            placed += puddle(c, seed, x + d.getStepX(), floor, z + d.getStepZ());
+            placed += puddle(c, seed, x + d.getStepX(), floor, z + d.getStepZ(), pearls);
         } else {
-            placed += puddle(c, seed, x, floor, z);
+            placed += puddle(c, seed, x, floor, z, pearls);
         }
         return placed;
     }
@@ -334,10 +406,13 @@ public final class CaveSkinFeature implements Feature {
         return n;
     }
 
-    private static int puddle(Cells c, long seed, int x, int y, int z) {
+    /** Where the drops land: a puddle, or in the Pale Halls now and then a nest of cave pearls. */
+    private static int puddle(Cells c, long seed, int x, int y, int z, boolean pearls) {
         if (chance(seed, x, y, z, 8) >= PUDDLE) return 0;
         if (!c.get(x, y, z).isAir() || rock(c.get(x, y - 1, z)) == null || !clean(c, x, y, z)) return 0;
-        c.set(x, y, z, CaveSkin.PUDDLE.get().defaultBlockState());
+        c.set(x, y, z, pearls && chance(seed, x, y, z, 15) < PEARLS
+                ? CaveSkin.CAVE_PEARLS.get().defaultBlockState().setValue(SkinBlocks.VARIANT, (int) (chance(seed, x, y, z, 16) * 3))
+                : CaveSkin.PUDDLE.get().defaultBlockState());
         return 1;
     }
 
@@ -353,6 +428,41 @@ public final class CaveSkinFeature implements Feature {
         BlockState root = CaveSkin.ROOT_CURTAIN.get().defaultBlockState();
         for (int k = 0; k < n; k++) c.set(x, y - k, z, root.setValue(SkinBlocks.RootCurtain.TIP, k == n - 1));
         return n;
+    }
+
+    /** An old Delvers' rope down a Windcleft crack: three to {@link #ROPE_MAX} blocks, never quite to the floor. */
+    private static int rope(Cells c, long seed, int x, int y, int z) {
+        if (!clean(c, x, y, z)) return 0;
+        int room = 0;
+        while (room < ROPE_MAX + 2 && c.get(x, y - room, z).isAir()) room++;
+        if (room < 5) return 0;
+        int n = Math.min(3 + (int) (chance(seed, x, y, z, 11) * (ROPE_MAX - 2)), room - 2);
+        BlockState rope = CaveSkin.OLD_ROPE.get().defaultBlockState();
+        for (int k = 0; k < n; k++) c.set(x, y - k, z, rope.setValue(SkinBlocks.RootCurtain.TIP, k == n - 1));
+        return n;
+    }
+
+    /** A Glimmer Hollows crystal growing from the face behind it ({@code facing} points away from that face). */
+    private static int crystal(Cells c, int x, int y, int z, Direction facing, Block crystal) {
+        if (!c.get(x, y, z).isAir()) return 0;
+        c.set(x, y, z, crystal.defaultBlockState().setValue(AmethystClusterBlock.FACING, facing));
+        return 1;
+    }
+
+    /** The Glimmer Hollows' crystal for this chunk: glacial under the cold lands, amber under the rest. */
+    private static Block crystal(ChunkAccess chunk, int cx, int cz, int top) {
+        // a chunk filled without its biomes (the tests' bench) has no land to read
+        if (!chunk.getHighestGeneratedStatus().isOrAfter(ChunkStatus.BIOMES)) return CaveSkin.AMBER_CRYSTAL.get();
+        Holder<Biome> land = chunk.getNoiseBiome(QuartPos.fromBlock(cx + 8), QuartPos.fromBlock(top), QuartPos.fromBlock(cz + 8));
+        return land.value().getBaseTemperature() < FROST ? CaveSkin.GLACIAL_CRYSTAL.get() : CaveSkin.AMBER_CRYSTAL.get();
+    }
+
+    /** Pale cave weed on a Drowned Galleries lake's floor, in patches. */
+    private static int weed(Cells c, long seed, int x, int y, int z, BlockState here) {
+        if (!here.getFluidState().isSource() || chance(seed, x, y, z, 14) >= WEED || field3(seed, x, y, z, 4, 0x3EED) <= WEED_FIELD) return 0;
+        if (!clean(c, x, y, z)) return 0;
+        c.set(x, y, z, CaveSkin.CAVE_WEED.get().defaultBlockState());
+        return 1;
     }
 
     /** Host rock a region turns to its own: the stone family and tuff (deepslate stays, the Deep's floor under it). */
@@ -424,7 +534,7 @@ public final class CaveSkinFeature implements Feature {
                             if (baseY + y >= tops[z << 4 | x] + UNDER_GROUND - REGION_UNDER) continue;
                             BlockState s = read ? states[y << 8 | z << 4 | x] : section.getBlockState(x, y, z);
                             Block b = s.getBlock();
-                            if (host(b)) {
+                            if (host(b) || kit.deep() && b == Blocks.DEEPSLATE) {
                                 int bit = y << 8 | z << 4 | x;
                                 if (shells && (keep[bit >> 6] & 1L << (bit & 63)) != 0) continue;
                                 section.setBlockState(x, y, z, rock, false);
@@ -467,6 +577,8 @@ public final class CaveSkinFeature implements Feature {
     public static boolean skin(Block b) {
         return b instanceof SkinBlocks.Rubble || b instanceof SkinBlocks.Pebbles || b instanceof SkinBlocks.Formation
                 || b instanceof SkinBlocks.Puddle || b instanceof SkinBlocks.Glowcap || b instanceof SkinBlocks.RootCurtain
+                || b instanceof SkinBlocks.Drift || b instanceof SkinBlocks.Driftwood || b instanceof SkinBlocks.CaveWeed
+                || b == CaveSkin.AMBER_CRYSTAL.get() || b == CaveSkin.GLACIAL_CRYSTAL.get()
                 || b == CaveSkin.DUSTY_WEB.get() || b instanceof MultifaceBlock && b != Blocks.GLOW_LICHEN
                 && b != Blocks.SCULK_VEIN && b != Blocks.RESIN_CLUMP;
     }

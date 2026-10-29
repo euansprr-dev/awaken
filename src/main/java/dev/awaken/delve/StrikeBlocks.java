@@ -30,8 +30,11 @@ public final class StrikeBlocks {
             "mud", "packed_mud", "soul_sand", "soul_soil", "moss_block");
 
     /** The cave regions' rock and ore twins (SPEC §42.7). */
-    private static final Set<String> REGION_ROCK = Set.of("rootstone", "ochre_stone"),
-            REGION_ORES = Set.of("rootstone_coal_ore", "rootstone_copper_ore", "ochre_iron_ore");
+    private static final Set<String> REGION_ROCK = Set.of("rootstone", "ochre_stone", "limestone", "banded_slate", "siltstone",
+            "glimmerstone", "column_basalt", "seepstone"),
+            REGION_ORES = Set.of("rootstone_coal_ore", "rootstone_copper_ore", "ochre_iron_ore", "limestone_iron_ore",
+                    "banded_slate_gold_ore", "siltstone_lapis_ore", "siltstone_copper_ore", "glimmerstone_redstone_ore",
+                    "column_basalt_diamond_ore");
 
     /** The family of a block (null: not ours to draw). */
     public static Family family(Block b) {

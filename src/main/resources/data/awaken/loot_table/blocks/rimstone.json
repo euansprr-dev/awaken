@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "awaken:blocks/rimstone",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:rimstone"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}
