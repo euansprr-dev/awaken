@@ -10722,6 +10722,11 @@ now, fought-on second storeys in a later plan.
   a block where it's gentle (the way's margin and a fought middle); the rises and the hollows are each only lowered
   toward the floor line until no step is too steep (eight neighbours), and where a rise meets a hollow each comes to
   within half the step of the line, so nothing is ever raised to meet a pad.
+- **The walk guarantee** (plan time, `Relief.ease`): every doorway and the anchor must be joined over the place's
+  ground (round what the dress blocked) with no step over half a block. Where they aren't, the place's ground is
+  halved, and if that's still not enough, flat; either is logged (`[gates] <world> place <id>: no way through without a
+  jump`). On the Hive it never has to (`gateworlds_depth_ease` holds the rule on a ridge a block high, halved, and two
+  blocks high, flattened).
 - **Tunnels** swell slowly along the way, up to a block, never a step over half a block (a slab between), flat 2.5 round
   each doorway; their arch rises with the floor and vaults and dips along the way (-0.7 to +3).
 - **Laying it** (`Relief.column`): under a raised floor full blocks of the theme's bank (`Dress.ground(BANK)`, the
@@ -10737,7 +10742,8 @@ now, fought-on second storeys in a later plan.
   holds no fluid (a slab, a drift, crumbs, a carpet) gets the shell's skin under or over it as floor or ceiling, as air
   does.
 - **Lights** over shaped ground hang at head height over where you stand, and a place's lights reach 2 blocks into its
-  wall's foot. **Spots** a live thing is put on (`walk`) need their 3 x 3 level on shaped ground.
+  wall's foot. **Spots** a live thing is put on (`walk`) need their 3 x 3 level on shaped ground, on a whole
+  block (never a half step).
 - **Depth blocks** (`gates.block.DepthBlocks`, art `tools/art/specs/gate_depth.py`, the same table): slabs and stairs
   cut from a theme's blocks wearing their texture (soft when cut from a soft block, else they want the stone's tool),
   a drift that piles in layers like snow (you stand a layer under its top, mobs path over four layers or fewer), and

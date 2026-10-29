@@ -838,9 +838,10 @@ final class CaveEngine implements WorldEngine {
             double px = x + 0.5, pz = z + 0.5;
             if (d(r.id, px, pz) > -2.2 || inLake(r.id, px, pz) || !dress.walk(r, x, z)) return false;
             for (double[] bl : blocked) if (Math.hypot(px - bl[0], pz - bl[1]) < bl[2] + 1.2) return false;
-            // on shaped ground a spot (a spawn, a feature) is level across the three by three round it
+            // on shaped ground a spot (a spawn, a feature) is level across the three by three round it, on a whole block
             if (relief != null) {
                 int g0 = relief.half(x, z);
+                if ((g0 & 1) != 0) return false;
                 for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) if (relief.half(x + dx, z + dz) != g0) return false;
             }
             return true;

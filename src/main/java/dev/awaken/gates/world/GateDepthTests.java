@@ -288,6 +288,24 @@ public final class GateDepthTests {
             h.assertTrue(short_.isEmpty(), "places short of their depth: " + short_);
             h.succeed();
         });
+        // the walk guarantee (38.14): a ridge you'd have to jump is halved, one still too steep halved is flattened
+        AwakenTests.register("gateworlds_depth_ease", 20, h -> {
+            int w = 12, hh = 6;
+            boolean[] in = new boolean[w * hh];
+            java.util.Arrays.fill(in, true);
+            int[] goals = {0, w - 1};
+            for (int ridge : new int[]{2, 4}) {
+                int[] v = new int[w * hh];
+                for (int z = 0; z < hh; z++) v[6 + z * w] = ridge;
+                int eased = Relief.ease(v, in, goals, w, hh, i -> false);
+                h.assertTrue(eased == ridge / 2, "a ridge " + ridge + " half blocks high was eased " + eased + " times");
+                h.assertTrue(Relief.joined(v, in, goals, w, hh, i -> false), "a ridge " + ridge + " still cuts the way");
+            }
+            int[] gentle = new int[w * hh];
+            for (int i = 0; i < gentle.length; i++) gentle[i] = (i % w) / 3;
+            h.assertTrue(Relief.ease(gentle, in, goals, w, hh, i -> false) == 0, "gentle ground was eased");
+            h.succeed();
+        });
         AwakenTests.register("gateworlds_depth_v6_golden", 2400, h -> {
             // a gate made before the ground came keeps the rooms it was made with, block for block (38.14)
             List<String> wrong = new ArrayList<>();

@@ -303,13 +303,73 @@ final class Relief {
             }
             if (!changed) break;
         }
-        for (int i = 0; i < w * h; i++) v[i] = up[i] - dn[i];
+        for (int i = 0; i < w * h; i++) v[i] = pin[i] ? 0 : up[i] - dn[i];
+        // the walk guarantee: every doorway and the anchor joined by ground with no step over half a block; where they
+        // aren't, the place's ground is halved, then flat
+        int[] goals = goals(r, sh, anchor, b, w, h, in);
+        int eased = ease(v, in, goals, w, h, i -> obstacle(b[0] + i % w + 0.5, b[1] + i / w + 0.5));
+        if (eased > 0) dev.awaken.Awaken.LOG.info("[gates] {} place {}: no way through without a jump, its ground {}", c.lookId, id, eased == 1 ? "halved" : "flat");
         for (int lz = 0; lz < h; lz++) {
             for (int lx = 0; lx < w; lx++) {
                 int i = lx + lz * w;
-                if (in[i]) g[b[0] + lx + (b[1] + lz) * Plots.SIDE] = (byte) (pin[i] ? 0 : v[i]);
+                if (in[i]) g[b[0] + lx + (b[1] + lz) * Plots.SIDE] = (byte) v[i];
             }
         }
+    }
+
+    /** The cells a place's way must join (box-local): just inside each doorway, and the anchor. */
+    private int[] goals(Room r, PassageEngine.Shape sh, int[] anchor, int[] b, int w, int h, boolean[] in) {
+        List<double[]> at = new ArrayList<>();
+        for (Room.Door dr : r.doors) at.add(new double[]{dr.centerX() + 0.5, dr.centerZ() + 0.5});
+        at.add(new double[]{anchor[0] + 0.5, anchor[1] + 0.5});
+        int[] out = new int[at.size()];
+        for (int k = 0; k < out.length; k++) {
+            // from the point toward the middle until it's in the place
+            double[] p = at.get(k);
+            out[k] = -1;
+            for (double t = 0; t <= 1 && out[k] < 0; t += 0.05) {
+                int lx = (int) Math.floor(p[0] + (sh.cx() - p[0]) * t) - b[0], lz = (int) Math.floor(p[1] + (sh.cz() - p[1]) * t) - b[1];
+                if (lx >= 0 && lz >= 0 && lx < w && lz < h && in[lx + lz * w] && !obstacle(b[0] + lx + 0.5, b[1] + lz + 0.5)) out[k] = lx + lz * w;
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Eases a place's ground (half blocks, box-local) until its goals are joined: 0 as it was, 1 halved, 2 flat.
+     */
+    static int ease(int[] v, boolean[] in, int[] goals, int w, int h, java.util.function.IntPredicate obstacle) {
+        int eased = 0;
+        while (eased < 2 && !joined(v, in, goals, w, h, obstacle)) {
+            for (int i = 0; i < v.length; i++) v[i] = eased == 0 ? v[i] / 2 : 0;
+            eased++;
+        }
+        return eased;
+    }
+
+    /** Whether all the goals are joined over open ground (not an obstacle) with no step over half a block. */
+    static boolean joined(int[] v, boolean[] in, int[] goals, int w, int h, java.util.function.IntPredicate obstacle) {
+        if (goals.length < 2 || goals[0] < 0) return true;
+        boolean[] seen = new boolean[w * h];
+        java.util.ArrayDeque<Integer> q = new java.util.ArrayDeque<>();
+        seen[goals[0]] = true;
+        q.add(goals[0]);
+        while (!q.isEmpty()) {
+            int i = q.poll(), lx = i % w, lz = i / w;
+            for (int[] d : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+                int nx = lx + d[0], nz = lz + d[1], n = nx + nz * w;
+                if (nx < 0 || nz < 0 || nx >= w || nz >= h || seen[n] || !in[n] || Math.abs(v[n] - v[i]) > 1 || obstacle.test(n)) continue;
+                seen[n] = true;
+                q.add(n);
+            }
+        }
+        for (int gl : goals) if (gl >= 0 && !seen[gl]) return false;
+        return true;
+    }
+
+    private boolean obstacle(double x, double z) {
+        for (double[] bl : c.blocked) if (Math.hypot(x - bl[0], z - bl[1]) < bl[2]) return true;
+        return false;
     }
 
     /** Ground that stays at the floor line: doorways, the middle, the anchor, lakes, and whatever the dress set down. */
