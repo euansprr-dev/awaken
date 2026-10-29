@@ -130,7 +130,7 @@ final class DeepBestiary {
                 .phase(1.0F, "The Choirmaster takes a breath.", a(BOLT, "Hymn of Salt").n(4).bolt(BoltKind.WATER), a(HEAL, "Refrain").power(0.1F))
                 .phase(0.5F, "The water rises.", a(AURA, "Rising Tide").radius(9).bolt(BoltKind.WATER).fx(MobEffects.SLOWNESS, 40, 1).heavy(), a(SUMMON, "The Choir").summon("choir_drowned").n(2), a(PULL, "Undertow"))
                 .parts(P("choirmaster_pearl", "Choirmaster's Pearl", "water")).build());
-        out.add(m("guardian_orchard", "The Ossuary King", Theme.ORCHARD, Tier.GUARDIAN, Model.WITHER_SKELETON, "Rib Spikes and a court of the dead; he gets up once").hp(28).dmg(5).spd(0.26).scale(2.0F).tint(0xF0E8D8).hold(Items.STONE_SWORD).traits(RISES).bar(BossBarColor.WHITE).arena(22)
+        out.add(m("guardian_orchard", "The Ossuary King", Theme.ORCHARD, Tier.GUARDIAN, Model.WITHER_SKELETON, "Rib Spikes and a court of the dead; he gets up once").hp(28).dmg(5).spd(0.26).scale(2.0F).size(0.8F, 2.3F).tint(0xF0E8D8).hold(Items.STONE_SWORD).traits(RISES).bar(BossBarColor.WHITE).arena(22)
                 .intro("The orchard grew from his ribs.")
                 .phase(1.0F, "The Ossuary King stands.", a(SLAM, "Bone Crush").radius(4).heavy(), a(NOVA, "Rib Spikes").n(12).bolt(BoltKind.SPIRIT))
                 .phase(0.5F, "The dead get up.", a(SUMMON, "Rise").summon("orchard_dead").n(3), a(CHARGE, "Royal March"), a(SLAM, "Bone Crush").radius(4))

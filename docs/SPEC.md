@@ -10021,6 +10021,47 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   - **Wind-ups.** The kit's readability check averages every posed bone, and 42 of hers are standing arms. Their brace,
     and her body and other arm wound further, carry every blow's wind-up past it (at least 14 degrees).
   - **Meter.** Worst kink outside a strike 4.1°; held at most 11% on every move; dips at most 38%.
+- **The Ossuary King, the Orchard King** (body and motion, `kit/bosses/guardian_orchard.py`). "The orchard grew from his
+  ribs." A giant crowned skeleton, gaunt and tall (5.1 blocks to the top of his leaves), with an apple tree grown up
+  through him: its roots grip his hips, its trunk rises out of his pelvis through his ribcage and throat into his
+  skull, and its boughs break out of the top of his skull inside a tarnished crown and spread over him to his left,
+  hung with glowing red apples. One apple hangs inside his ribs where his heart was. A rotten fur mantle and a royal
+  cloak gone to rags hang from his shoulders, and he carries a bone greatsword, serrated down one edge with a small
+  skull for its pommel, on his right shoulder. Old ivory bone mossed at the joints; the apples, his heart and his eyes
+  are the only warm things on him and the brightest. 137 cubes (822 faces) on 56 bones. The hitbox is 0.8 x 2.3 at the
+  def's scale 2 (1.6 x 4.6 blocks), round his body to his skull.
+  - **The idle.** He stands tall with the sword on his shoulder, his dead weight swaying; his skull tilts to look you
+    over, his jaw falls open and clacks shut, the finger bones of his left hand curl and loosen, and now and then the
+    blade lifts off his shoulder and taps back down. He walks like a king in procession, long slow steps landing heavy,
+    the cloak swinging and his left arm a beat behind; he runs leaning, the sword bouncing on his shoulder.
+  - **His blows.** The Royal Cleave draws the blade back high over his shoulder and brings it over and down across in
+    front of him in one long diagonal, ending low on his left; the backhand brings it back up across him to high over
+    his right shoulder (a string, then Bone Crush). Bone Crush takes the hilt in both hands, swings the blade back to
+    hang down his back as he rises tall, holds, and brings it over into the floor before him in a lunge. Whoever is
+    behind gets the sword swept low round behind him from his right, his arm straight and the blade on along it, as he
+    turns into it looking back over his right shoulder. The Royal March trails the blade low behind him, strides 7 blocks at you with his left arm pumping, and
+    heaves it up through you in both hands. Rise drives the sword into the floor and leans on it while his left hand
+    lifts slowly, palm up, its fingers spreading, and closes. Rib Spikes (the signature) flings his arms wide, arching
+    back: his ribs crack open from his breastbone and tremble, the heart blazing between them, and burst wide like
+    doors as the spikes fly. He waits kneeling on his left knee with both hands on the planted sword's hilt, his head
+    bowed; his intro gets up off it, swings the sword out wide round in front of him, and lays it back with a clack.
+  - **The arms.** Each cut is keyed along its own arc (the blade's line turned through the plane of the cut), so it
+    never swings out of the cut between keys. Each hand is solved with its elbow and its blade's roll free: of 12 ways
+    round the shoulder-to-hand line and 12 rolls, a key takes the one that leaves the wrist and shoulder least turned
+    from rest (a steep cost past 150 and 160 degrees, what a joint does) and least moved from the key before. Then every
+    turn track with three keys or more is resampled each tick along the shortest way between its keys (quaternions eased
+    through the keys either side), written as the angles nearest the tick before; a track that would end a whole turn
+    from its own last key is left as it was. A
+    turn up his spine of + yaw turns him to his right (his front toward his right, his right side back). The ground pass keeps the blade and both hands out of the floor in every
+    clip but the death, the collapse and the kneel and rise (its point is driven into the floor there, `r.under`).
+  - **Getting up once.** Struck down, his skull snaps back, his knees go and his hips drop, his ribcage falls back over
+    his splayed legs and the sword clatters down; his skull comes down last onto the heap, bounces, and settles upright
+    with the tree standing out of it (1.4 s). He puts himself back together in 1 s: the heap shudders, his legs draw in
+    and his hips rise, his ribcage swings up onto them and the sword comes up off the floor into his hand, his skull
+    hangs over his neck and drops onto it with a twist, and his jaw clacks shut. His death staggers, the sword slides off
+    his shoulder, he drops to his knees and looks up into his tree; his ribs fall open, he comes down into the heap, and
+    the tree bows over his bones (4.6 s).
+  - **Meter.** Worst kink outside a strike 5.1°; held at most 12% on every move; dips at most 33%.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
