@@ -761,10 +761,9 @@ def wildhide():
 
 
 def beastbound():
-    """Beastbound (D, Bulwark): iron hammered over beast hide. A boar's skull worn as the visor, slanted sockets under a
-    heavy brow, its tusks curving up past your cheeks, a bristled mane down the helm; a riveted breastplate with a
-    diamond boss and a horn; great riveted pauldrons on a hide pad, a curved tusk on each; mail on the arms; chain
-    skirts that swing as you walk."""
+    """Beastbound (D, Bulwark): iron hammered over beast hide. A boar's skull worn as the visor, its tusks curving up
+    past your cheeks and a bristled mane down the helm; a riveted breastplate with a diamond boss and a horn; great
+    riveted pauldrons on a hide pad, a tusk on each; mail on the arms; chain skirts that swing as you walk."""
     mats = {
         "iron": AW.Mat("flint", 4, 0.75, 0.7),
         "iron_riv": AW.Mat("flint", 4, 0.75, 0.7, details=(rivets("flint", 7, 3),)),
@@ -775,10 +774,9 @@ def beastbound():
         "bristle": AW.Mat("rust", 2, 0.0, 0.1, details=(fur(-1, 2),)),
         "chain": AW.Mat("flint", 4, 0.85, 0.8, details=(chainmail(),)),
         "skirt": AW.Mat("flint", 4, 0.85, 0.8, details=(chainmail(), hem("rust", 4))),
-        "brow": AW.Mat("flint", 5, 0.8, 0.8, details=(rivets("flint", 7, 2),)),
-        "snout": AW.Mat("flint", 4, 0.75, 0.7, details=(marks([(-2, 2), (-2, 0), (1, 2), (1, 0)], "pelt", 0),)),
+        "skull": AW.Mat("bone", 5, 0.05, 0.45),
+        "snout": AW.Mat("bone", 5, 0.05, 0.45, details=(marks([(-2, 1), (1, 1)], "bone", 0),)),
         "socket": AW.Mat("pelt", 0, 0.0, 0.2, bevel=False),
-        "skull": AW.Mat("bone", 4, 0.05, 0.45),
         "tusk": AW.Mat("bone", 6, 0.1, 0.6),
         "tusk_tip": AW.Mat("bone", 7, 0.1, 0.7),
     }
@@ -786,20 +784,17 @@ def beastbound():
         B(-5, 5, 8, 9, -5, 5, "iron_riv", "helm"),
         B(-5, -4, -1, 8, -5, 4, "iron", "helm"), B(4, 5, -1, 8, -5, 4, "iron", "helm"),
         B(-4, 4, -1, 8, -5, -4, "iron_lames", "helm"),
-        # the visor: a boar's snout hammered in iron (a hounskull), a heavy brow over a dark slit, breathing holes
-        B(-4, 4, 6, 8, 4, 6, "brow", "visor"),
-        B(-4, 4, 5, 6, 4, 5, "socket", "slit"),
-        B(-4, 4, -1, 5, 4, 5, "iron", "visor"),
-        B(-3, 3, -1, 5, 5, 6, "iron", "visor"),
-        B(-2, 2, 0, 4, 6, 7, "snout", "visor"),
-        B(-1, 1, 1, 3, 7, 9, "iron_riv", "visor"),
+        B(-4, 4, 6, 8, 4, 6, "skull", "skull"),                         # the skull's brow ridge
+        B(-4, -3, 3, 6, 4, 6, "skull", "skull"), B(3, 4, 3, 6, 4, 6, "skull", "skull"),
+        B(-1, 1, 3, 6, 4, 6, "skull", "skull"),
+        B(-3, -1, 3, 6, 4, 5, "socket", "socket"), B(1, 3, 3, 6, 4, 5, "socket", "socket"),
+        B(-3, 3, 0, 3, 4, 7, "snout", "skull"),                         # the boar's snout
+        B(-4, 4, -1, 0, 4, 6, "iron", "chin"),
+        B(-1, 1, 9, 11, -2, 4, "bristle", "mane"), B(-1, 1, 9, 10, -5, -2, "bristle", "mane"),
+        B(-1, 1, 4, 8, -6, -5, "bristle", "mane"),
     ]
-    for z0, h in ((3, 2), (1, 3), (-1, 4), (-3, 3), (-5, 2)):            # the bristled mane, tufts front to back
-        head.append(B(-1, 0, 9, 9 + h, z0, z0 + 1, "bristle", "mane"))
-        head.append(B(0, 1, 9, 8 + h, z0 + 1, z0 + 2, "bristle", "mane"))
-    head += [B(-1, 1, 6, 9, -6, -5, "bristle", "mane"), B(-1, 1, 2, 5, -6, -5, "bristle", "mane")]
-    tusk = chain((2.0, 0.5, 6.5), [((1.0, 0.1, 0.3), 3, 2, 2, "tusk"), ((0.7, 1.0, 0.2), 3, 2, 2, "tusk"),
-                                   ((0.1, 1.0, -0.2), 3, 2, 1, "tusk"), ((-0.3, 1.0, -0.4), 2, 1, 1, "tusk_tip")], "tusk")
+    tusk = chain((3.0, 1.0, 6.0), [((1.0, 0.3, 0.3), 3, 2, 2, "tusk"), ((0.5, 1.0, 0.1), 3, 2, 2, "tusk"),
+                                   ((-0.1, 1.0, -0.2), 3, 1, 1, "tusk_tip")], "tusk")
     head += tusk + mirror(tusk)
     body = [
         B(-5, 5, -10, 0, -3, 3, "hide", "jerkin"),
@@ -807,8 +802,8 @@ def beastbound():
         B(-4, 4, -8, 0, -4, -3, "iron_riv", "back"),
         B(-6, 6, -10, -8, -4, 4, "iron_lames", "fauld"),
         VX.rbox((0, -4, 4.5), (4, 4, 1), 45, "iron_boss", "boss"),
+        B(-1, 1, -5, -3, 5, 6, "tusk", "boss_horn"),
     ]
-    body += chain((0.0, -4.0, 5.0), [((0, 0.0, 1.0), 2, 2, 2, "iron"), ((0, 0.0, 1.0), 2, 1, 1, "iron")], "boss_spike", up=(0, 1, 0))
     right_arm = [
         B(-5, 1, -1, 2, -4, 4, "fur", "pad"),
         VX.Box((-2.5, 3.0, 0.0), (4.0, 1.5, 4.5), "iron_riv", "pauldron", rot(0, 0, -12)),
@@ -817,7 +812,7 @@ def beastbound():
         B(-5, -4, -8, -6, -3, 3, "hide", "strap"),
         B(-4, 2, -11, -10, -3, 3, "iron", "gauntlet"),
     ]
-    right_arm += [B(-6, -5, 3, 5, -3, -2, "iron", "studs"), B(-6, -5, 3, 5, 2, 3, "iron", "studs")]
+    right_arm += chain((-5.0, 4.5, 0.0), [((-0.4, 1.0, 0.0), 3, 2, 2, "tusk"), ((0.1, 1.0, 0.0), 2, 1, 1, "tusk_tip")], "ptusk")
     belt = [B(-5, 5, -13, -10, -3, 3, "hide", "belt"), B(-2, 2, -13, -10, 3, 4, "iron_riv", "buckle")]
     right_leg = [
         B(-3, 2, -6, 0, -3, 3, "chain", "mail"),
@@ -1015,7 +1010,7 @@ def veilwoven():
 
 def sovereign():
     """Sovereign Weave (S, Lord-forged): the Hollow Court's own. Black lacquered plate traced in silver; a smooth mask
-    with narrow violet eyes under a hollow silver crown, its tallest spires lit; a high collar of two fins behind the
+    with violet eyes under a hollow silver crown of spires lit at their tips; a high collar of two fins behind the
     head and fins sweeping back from the pauldrons; the Court's hollow sigil on the breast; a long court cape lined in
     violet, cut to a point, the hollow crown stitched on it."""
     crown_sig = ["#..#..#",
@@ -1023,49 +1018,46 @@ def sovereign():
                  "#######",
                  "#.....#",
                  "#######"]
-    eyes = [(-3, 5), (-2, 5), (1, 5), (2, 5)]
+    eyes = [(-3, 5), (-2, 4), (-1, 4), (0, 4), (1, 4), (2, 5)]
     mats = {
         "lacquer": AW.Mat("lacquer", 3, 0.6, 0.95),
         "lacquer_fil": AW.Mat("lacquer", 3, 0.6, 0.95, details=(inset_ring("mirror", 5, 1, 1, metal=0.9, gloss=0.95),)),
         "lacquer_lames": AW.Mat("lacquer", 3, 0.6, 0.95, details=(lames(2, -1),)),
         "lacquer_hem": AW.Mat("lacquer", 3, 0.6, 0.95, details=(hem("mirror", 5),)),
-        "mask": AW.Mat("mirror", 5, 0.9, 0.95, details=(marks(eyes, "veil", 4, emit=1.0),)),
+        "mask": AW.Mat("lacquer", 4, 0.6, 0.95, details=(marks(eyes, "veil", 7, emit=1.0),)),
         "silver": AW.Mat("mirror", 5, 0.9, 0.95),
-        "spire": AW.Mat("mirror", 5, 0.9, 0.95),
-        "spire_lit": AW.Mat("mirror", 5, 0.9, 0.95, details=(glow_tip("veil", 5, 1.0, 1),)),
+        "spire": AW.Mat("mirror", 5, 0.9, 0.95, details=(glow_tip("veil", 7, 0.9, 1),)),
         "fin": AW.Mat("lacquer", 3, 0.6, 0.95, details=(rims("mirror", 5),)),
         "vambrace": AW.Mat("lacquer", 3, 0.6, 0.95, details=(lames(2, -1), edge_columns("mirror", 5), side_seam("veil", 0.9))),
-        "glow": AW.Mat("veil", 5, 0.0, 0.5, emit=1.0, bevel=False),
-        "cape": AW.Mat("lacquer", 2, 0.1, 0.35, details=(folds(3), lining("veil", 3))),
-        "cape_sigil": AW.Mat("lacquer", 2, 0.1, 0.35, details=(folds(3), sigil("mirror", 5), lining("veil", 3))),
-        "cape_tongue": AW.Mat("lacquer", 2, 0.1, 0.35, details=(folds(3), hem("mirror", 5), lining("veil", 3))),
+        "glow": AW.Mat("veil", 7, 0.0, 0.5, emit=0.9, bevel=False),
+        "cape": AW.Mat("lacquer", 2, 0.1, 0.35, details=(folds(3), gold_hem_cloth("mirror", 5, width=6.0), lining("veil", 3))),
+        "cape_sigil": AW.Mat("lacquer", 2, 0.1, 0.35, details=(folds(3), gold_hem_cloth("mirror", 5, width=6.0), sigil("mirror", 5), lining("veil", 3))),
         "tabard": AW.Mat("veil", 3, 0.0, 0.25, details=(folds(3), gold_hem_cloth("mirror", 5, width=2.0))),
         "tabard_wide": AW.Mat("veil", 3, 0.0, 0.25, details=(folds(3), gold_hem_cloth("mirror", 5, width=3.0))),
     }
     head = [
         B(-5, 5, 8, 9, -5, 5, "lacquer", "helm"),
-        B(-5, -4, -1, 8, -5, 4, "lacquer_hem", "helm"), B(4, 5, -1, 8, -5, 4, "lacquer_hem", "helm"),
+        B(-5, -4, -1, 8, -5, 4, "lacquer_fil", "helm"), B(4, 5, -1, 8, -5, 4, "lacquer_fil", "helm"),
         B(-4, 4, -1, 8, -5, -4, "lacquer_lames", "helm"),
-        B(-4, 4, 0, 8, 4, 5, "mask", "mask"),                            # a silver court mask, a texel off the face
-        B(-4, 4, 6, 7, 5, 6, "silver", "mask"),                          # its brow, shading the eyes
-        B(-1, 1, 2, 6, 5, 6, "silver", "mask"),                          # its nose
-        B(-4, -2, 2, 4, 5, 6, "silver", "mask"), B(2, 4, 2, 4, 5, 6, "silver", "mask"),   # its cheeks
-        B(-4, 4, -1, 0, 4, 5, "lacquer", "helm"),
-        # the hollow crown: a thin silver circlet, rays rising from the brow, the middle three lit
+        B(-4, 4, -1, 8, 4, 5, "mask", "mask"),
+        B(-1, 1, 5, 8, 5, 6, "silver", "nasal"),
+        # the hollow crown: a silver ring on the helm with spires, the tallest at the brow
         B(-5, 5, 9, 10, 4, 5, "silver", "crown"), B(-5, 5, 9, 10, -5, -4, "silver", "crown"),
         B(-5, -4, 9, 10, -4, 4, "silver", "crown"), B(4, 5, 9, 10, -4, 4, "silver", "crown"),
     ]
-    for x, ang, ln, lit in ((-4, 34, 3, False), (-2, 16, 4, True), (0, 0, 5, True), (2, -16, 4, True), (4, -34, 3, False)):
-        d = np.array([-math.sin(math.radians(ang)), math.cos(math.radians(ang)), 0.0])
-        head.append(VX.Box(np.array([x, 9.5, 5.0]) + d * (ln / 2), (0.5, ln / 2, 0.5), "spire_lit" if lit else "spire",
-                           "crown", rot(0, 0, ang)))
+    for x0, h in ((-5, 2), (-3, 3), (2, 3), (4, 2)):
+        head.append(B(x0, x0 + 1, 10, 10 + h, 4, 5, "spire", f"spire{x0}"))
+    head.append(B(-1, 1, 10, 14, 4, 5, "spire", "spire_mid"))
+    for x0, h in ((-3, 2), (-1, 3), (2, 2)):
+        head.append(B(x0, x0 + 1 if x0 != -1 else 1, 10, 10 + h, -5, -4, "spire", f"spire_b{x0}"))
+    head += [B(-5, -4, 10, 13, -1, 1, "spire", "spire_side"), B(4, 5, 10, 13, -1, 1, "spire", "spire_side")]
     body = [
         B(-5, 5, -10, 0, -3, 3, "lacquer_lames", "cuirass"),
         B(-4, 4, -9, -1, 3, 4, "lacquer_fil", "breast"),
         B(-6, 6, -1, 1, -6, -4, "silver", "yoke"),
-        VX.rbox((0, -4.5, 4.5), (1, 1, 1), 45, "glow", "heart"),
+        B(-1, 1, -5, -3, 4, 5, "glow", "heart"),
     ]
-    body += AW.frame((0, -4.5, 4.5), 5, 3, 1, 45, "silver", "sigil")
+    body += AW.frame((0, -4, 4.5), 4, 2, 1, 0, "silver", "sigil")
     collar = [VX.Box((-5.5, 3.0, -5.5), (1.5, 3.5, 0.5), "fin", "collar", rot(-10, 0, 25))]
     body += collar + mirror(collar)
     right_arm = [
@@ -1078,12 +1070,12 @@ def sovereign():
     ]
     cape0 = [B(-6, 6, -6, 0, -1, 0, "cape", "cape")]
     cape1 = [B(-6, 6, -6, 0, -1, 0, "cape_sigil", "cape", sigil=crown_sig, sigil_top=0)]
-    cape2 = [B(x0, x0 + 2, -ln, 0, -1, 0, "cape_tongue", f"cape_t{x0}", hem=True)
+    cape2 = [B(x0, x0 + 2, -ln, 0, -1, 0, "cape", f"cape_t{x0}", hem=True)
              for x0, ln in ((-6, 7), (-4, 8), (-2, 9), (0, 9), (2, 8), (4, 7))]
     belt = [B(-5, 5, -13, -10, -3, 3, "lacquer_hem", "belt"), B(-1, 1, -12, -11, 3, 4, "glow", "clasp")]
     right_leg = [
         B(-3, 2, -6, 0, -3, 3, "lacquer_lames", "cuisse"),
-        B(-4, -3, -5, 1, -3, 3, "lacquer_hem", "tasset"),
+        B(-4, -3, -5, 1, -3, 3, "lacquer_fil", "tasset"),
         B(-3, 2, -8, -6, 3, 4, "silver", "poleyn"),
     ]
     right_boot = [
