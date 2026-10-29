@@ -5671,14 +5671,27 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
   and `<id>_glow_blink.png` (the eyes' light out); the renderer draws them while the eyes are shut. 14 creatures have
   them; existing textures are byte-identical.
 - **The look reaches the model** (fixed 2026-10-29): NeoForge clears a render state's data right after
-  `extractRenderState` (`RenderStateExtensions.onUpdateEntityRenderState`), so the `AwLook` our renderers set there was
-  gone by `setupAnim`: `Life.from` was null and the layer's pose (legs, flight, springs, blinks), tint, glow and flash
-  never drew on the Hero, Wild and hand-built (`AwMobRenderer`) bodies; only form bodies (extracted from a modifier)
-  had it. `MobsClient` registers a render state modifier that puts the entity's same look back after the clear. Since
-  2026-10-29 (the boss work) it covers bosses too: the kit's renderer (so a kit body's springs, breath, blinks and
-  wind-up glow draw, SPEC §35), `AwMobRenderer`'s boss tiers, and the humanoid and skinned renderers
-  (`AwHumanoidRenderer`, `AwSkinRenderer`), which set the same look and had lost their tint, see-through and flash.
-  Modifiers match by renderer class, so each renderer that doesn't extend another is registered by name.
+  `extractRenderState` (`RenderStateExtensions.onUpdateEntityRenderState`), so the `AwLook` our renderers set there
+  was gone by `setupAnim`: `Life.from` was null and the layer's pose (legs, flight, springs, blinks), tint, glow and
+  flash never drew on the Hero, Wild and hand-built (`AwMobRenderer`) bodies; only form bodies (extracted from a
+  modifier) had it. `MobsClient` registers a render state modifier that puts the entity's same look back after the
+  clear, on every Hero and Wild body, the gate wardens among them (Euan: the weaver queen spun and the thousandfoot
+  glided, their feet never planted). Since 2026-10-29 (the boss work) it covers bosses too: the kit's renderer (so a
+  kit body's springs, breath, blinks and wind-up glow draw, SPEC §35), `AwMobRenderer`'s boss tiers, and the humanoid
+  and skinned renderers (`AwHumanoidRenderer`, `AwSkinRenderer`), which set the same look and had lost their tint,
+  see-through and flash. Modifiers match by renderer class, so each renderer that doesn't extend another is registered
+  by name.
+- **The neck's reach** (Euan 2026-10-29: the Briar Sow swung its head round almost backwards in a second): the head
+  turns no further from the body than its temperament's `neck` (radians; default 1.15, cute 1.3, grazer 1.0, hunter
+  1.2, beast 0.8, lord 0.75, monster 1.1, spirit 1.4, insect 0.6, swimmer 0.45, citizen 1.2), its spring's overshoot
+  included; a look that passes behind it (beyond 115°) holds the side the head already turned to, so the face never
+  swings across the back. It was ±172°, and every body's look code draws `Life`'s head.
+- **Hanging plates** (Euan 2026-10-29: the Stonehorn's fleece came off its barrel): a DANGLE spring whose own cubes are
+  a plane with height (a skirt, a beard, a curtain of moss) swings only about the edge it hangs from, the plane's level
+  axis: one along the body flares out, one across it flaps fore and aft. Turned any other way, a plate hinged at one
+  end of its top edge lifts the other end off what it hangs from. The Stonehorn's own clips did that too (its side
+  skirts pitched 6° walking and 22° running about their front corners, 2-8 px off the barrel at the back): they flare
+  out now (2.5±2.5° walking, 7±5° running) and only the front skirt and the beard swing fore and aft.
 - **Cost and limits**: client only; nothing allocated per frame (render states carry a reference); springs and fidgets
   off past 32 blocks (springs settle), blinks off past 32; breath and the slow head everywhere (cheap). Reduced motion
   (`awaken-client` `reducedMotion`, the body module's) turns idle fidgets off and halves springs, tremble and stagger;
@@ -5732,7 +5745,23 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   it). Applied last in `LifeRig.apply` (after the clips, the look and the springs), blended over the clips by the feet's
   weight; out of reach the leg points straight at its target. Only bodies whose body bone carries the head (the feet
   ride the body bone; a pose-stack body would carry them off their spots), or that have no head bone at all and a motion
-  profile (the weaver queen's face is on its thorax; a headless body without one keeps its old pose-stack motion).
+  profile (the weaver queen's face is on its thorax; a headless body without one keeps its old pose-stack motion), or
+  hand-built bodies the root carries (below). A gait with `arms` walks on its arms too: ARM-role chains are found as
+  legs are (the Hushling's long arms plant like forelegs).
+- **One-bone legs and the root's carry** (batch 4, 2026-10-29: the hand-built walkers): a rigid gait also takes a
+  one-bone leg, a LEG-role bone with cubes and no leg below it (a vanilla-shaped body's block of a leg), its own block
+  the whole leg (`knee` -1), swung as any rigid leg. A hand-built body (`LifeModel`, no hero rig) with a gait whose legs
+  don't all hang from its body bone, or whose body bone doesn't carry its head (the stag's legs and neck hang off the
+  model root), has its body's motions carried by the root part (`LifeRig.rootCarries`): the dip, lean and roll the pose
+  stack had, and the gait's crouch, ground, step, vault, drift and twist, turned about the body bone's pivot (the root
+  translated by pivot − R·pivot), so the legs' tops ride the body and the feet's solve, which starts from the root, sees
+  it; `Life.rootPose` skips them then. `AwMobRenderer` feeds the feet: grounded unless `P_AIR`, legs free in the body's
+  own held poses (`LifeModel.legsHeld`: resting and burrowing; the mossback tucked or guarding, the scarab and marmot
+  digging in, the marmot up on its haunches, the basilisk sprinting upright), and how much it runs from its pace: a
+  mob's ground pace goes nearly as its speed squared (1.6·speed² blocks a tick at a goal's 1.0), so it runs from
+  1.25× that to 2.3×. A body's own walk bob and roll give way to the feet (`Life.feet()`: the shroomlet's waddle, the
+  mossback's shell bob). The feet test checks the hand-built walkers from plain data mirroring their models
+  (`LifeTests.HAND_FEET`; keep in sync).
 - **Rigid legs** (`knees: rigid`; Euan 2026-10-29, the form cow's shins came off its thighs): a blocky leg whose shin
   pivots right on the thigh's end face opens a wedge at any knee bend, so it has no knee, as Fresh Animations' cows,
   pigs, sheep, chickens and horses have none. Its knee holds its rest whatever the clips do; the whole leg turns toward
@@ -5810,9 +5839,12 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   steps (1/1.6 px high, stride 0.35/0.6 blocks, 0.15 s swings, reach 0.18), its spine wave from the clip bending over the
   planted feet, a lizard's roll (0.04); head level 0.4, twist 0.4, shift 0.25. Ripening it rears on its hind feet and its
   forefeet, drawn up off the ground, knead the air in turn while the tail braces.
-- **Hushling** (`hushling`; two two-bone hind legs, long arms swung by its clips): a crouched biped's alternating steps,
-  duty 0.6/0.4, 2/3.5 px, stride 0.9/1.5 blocks; its body rises (bob -0.6) while a foot is up, as a biped's does, and
-  rolls off it (0.05); a hunter: `still`, creep 1.5; head level 0.5, twist 0.3, shift 0.5.
+- **Hushling** (`hushling`; two two-bone hind legs and long two-bone arms it lopes on, `arms`): its hands plant like
+  forefeet (Euan 2026-10-29: swung by its clips alone they sank into the floor under its crouch and never stepped); its
+  upper arm runs a px past the elbow over the thinner forearm, so the elbow bends to plant a hand without opening (it
+  hid none: a straight arm whose block ends on its elbow's pivot must not bend, and a stiff one couldn't reach the floor
+  under the crouch), a diagonal lope, duty 0.6/0.4, 2/3.5 px, stride 0.9/1.5 blocks; its body rises (bob -0.6) while a foot is up and rolls
+  off it (0.05); a hunter: `still`, creep 1.5; head level 0.5, twist 0.3, shift 0.5.
 - **Weaver Queen** (`weaver_queen`, named beast; eight three-bone legs, femur 12, tibia 14, tarsus 6 px, no head bone):
   an alternating tetrapod on long reaching steps (4/7 px high, stride 1.4/2.6 blocks, reach 0.9, 0.32 s swings), bob 0.5;
   twist 0.15, slope 0.85, shift 0.9 (the heaviest drift: a big body settling over eight feet).
@@ -5852,6 +5884,22 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   (head level 0.45, nod 0.05); the **Stonehorn** (`stonehorn`; 12 px legs) a ram's sure-footed walk (0.96/1.79 blocks,
   2.5/4.5 px) that pitches and rolls with the rock under it (slope 0.9), nod 0.07, shift 0.8. All `rear` 1: a still
   threat or a wind-up hands the front pair to the clip (the sow's snort and paw, the ram's stamp).
+- **Hand-built walkers** (batch 4; one-bone legs, rigid, the root's carry where their legs hang off it; strides from the
+  longest planted sweep a vault of a quarter leg allows, at about 0.9 of it): the **Frost Stag** (`frost_stag`; 12 px
+  legs off the root) the Old Antler's walk scaled to its legs (0.85/1.4 blocks, 2/3.6 px high, 0.28 s swings), about
+  1.5 steps a second at its wander; the **Mossback** (`mossback`; 5 px legs under its shell) a tortoise's slow
+  lateral sequence, three feet always down (duty 0.8/0.6, 0.3/0.42 blocks, 1/1.5 px, 0.35 s swings), a step about every
+  two seconds, nodding (0.05); the **Crested Basilisk** (`crested_basilisk`; 4 px sprawled legs on its body) a
+  lizard's diagonal trot (0.2/0.32 blocks, crouch 1 so its sprawled feet reach the ground, quick 0.12 s swings) with its
+  own clip's spine wiggle over planted feet, its upright sprint left to the clip; the **Glass Scarab** (`glass_scarab`;
+  six 3 px legs, the front and back pairs splayed 0.25 rad fore and aft, was 0.5: a stiff leg pointing forward can't
+  reach further forward without the body dropping) an insect's alternating tripod (0.22/0.28 blocks, 0.08 s swings),
+  about six steps a second; the
+  **Shroomlet** (`shroomlet`; two 3 px legs off the root) a toddler's waddle (0.22/0.32 blocks, roll 0.08); the
+  **Listener** (`listener`; two 16 px legs off the root) a long stalking stride (1.2/1.9 blocks, 2.5/4.5 px, shoulder
+  0.3, `still`, creep 1). The Scree Marmot (2 px legs) and the Mudskipper (the lizard body at 0.75) are left on their
+  own swing: planted, their legs would step eight or nine times a second; the snail and the breathbell have no legs; the
+  chime cricket hops.
 - **Flight** (`Flight`, plain math checked on the server; a `fly` block, by rig id or, for a hand-built body, by its
   creature id): while airborne or swimming (or `always`, for a body always under way: serpents, the ray) the body noses
   into a cruise (`tilt` at `fast` blocks a second) and pitches along its path's climb or dive (`climb`, the share), banks

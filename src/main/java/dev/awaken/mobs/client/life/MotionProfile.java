@@ -56,11 +56,13 @@ public record MotionProfile(String id, @Nullable Gait gait, Body body, @Nullable
      * stand; it trails that much less: the leg reaches forward more than back),
      * {@code knees} which way a leg straight at rest bends (one bent at rest keeps its own way), or {@code rigid}: the
      * leg moves as one piece, swung from a pivot {@code shoulder} (a share of the leg's length) above its hip, as a
-     * shoulder blade and a pelvis swing a real leg, its top sliding inside the body.
+     * shoulder blade and a pelvis swing a real leg, its top sliding inside the body. {@code arms}: the arms walk too
+     * (a knuckle-walker's long arms plant like forelegs).
      */
     public record Gait(Pattern pattern, float dutyWalk, float dutyRun, float liftWalk, float liftRun, float reach, float settle,
                        float crouch, float radius, float fan, float regripMin, float regripMax, float swing, float strideWalk,
-                       float strideRun, float bob, float roll, float rock, float rear, int rearPairs, float lag, float lead, Knees knees, float shoulder) {}
+                       float strideRun, float bob, float roll, float rock, float rear, int rearPairs, float lag, float lead, Knees knees, float shoulder,
+                       boolean arms) {}
 
     /**
      * The body. {@code headLevel} (0..1) how much the head holds level against the gait's pitch and roll,
@@ -96,7 +98,7 @@ public record MotionProfile(String id, @Nullable Gait gait, Body body, @Nullable
     private static final Set<String> FLY = Set.of("always", "wings", "tips", "spine", "fins", "flap", "heave", "glide", "fast", "bank", "climb",
             "tilt", "level", "bend", "wave", "tuck");
     private static final Set<String> GAIT = Set.of("pattern", "duty", "lift", "reach", "settle", "crouch", "radius", "fan", "regrip", "swing",
-            "stride", "bob", "roll", "rock", "rear", "rearPairs", "lag", "lead", "knees", "shoulder");
+            "stride", "bob", "roll", "rock", "rear", "rearPairs", "lag", "lead", "knees", "shoulder", "arms");
     private static final Set<String> BODY = Set.of("headLevel", "twist", "slope", "land", "still", "creep", "shift", "nod");
 
     private static @Nullable Map<String, MotionProfile> all;
@@ -141,7 +143,7 @@ public record MotionProfile(String id, @Nullable Gait gait, Body body, @Nullable
                 num(o, "radius", 0), num(o, "fan", 0), regrip[0], regrip[1], num(o, "swing", 0.35F), stride[0], stride[1],
                 num(o, "bob", 0.3F), num(o, "roll", 0.02F), num(o, "rock", 0), Math.clamp(num(o, "rear", 0), 0.0F, 1.0F), (int) num(o, "rearPairs", 1),
                 Math.clamp(num(o, "lag", 0), -0.5F, 0.5F), Math.clamp(num(o, "lead", 0), 0.0F, 0.4F), Knees.valueOf(str(o, "knees", "auto").toUpperCase(Locale.ROOT)),
-                Math.clamp(num(o, "shoulder", 0), 0.0F, 2.0F));
+                Math.clamp(num(o, "shoulder", 0), 0.0F, 2.0F), o.has("arms") && o.get("arms").getAsBoolean());
     }
 
     private static Fly fly(String id, JsonObject o) {
