@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "awaken:blocks/tuff_rubble",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:tuff_rubble"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

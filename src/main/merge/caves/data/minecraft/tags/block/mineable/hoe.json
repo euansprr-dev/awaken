@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "awaken:cave_lichen_shallows",
+    "awaken:cave_lichen_middle",
+    "awaken:cave_lichen_deep",
+    "awaken:mineral_crust",
+    "awaken:wet_streaks"
+  ]
+}

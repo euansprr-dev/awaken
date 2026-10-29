@@ -562,8 +562,10 @@ def build(out):
     out.block("caves/wet_streaks", wet_streaks())
     out.block("caves/puddle", puddle_frames(), frametime=4)
     out.block("caves/dusty_web", dusty_web())
-    out.particle("caves/drip", drip_frames())
-    out.particle("caves/splash", splash_frames())
+    for i, f in enumerate(drip_frames()):
+        out.particle(f"caves/drip_{i}", f)
+    for i, f in enumerate(splash_frames()):
+        out.particle(f"caves/splash_{i}", f)
     for i, s in enumerate((1.4, 2.0, 2.6)):
         out.particle(f"caves/mote_{i}", mote("#d6d2c8", s))
     for i in range(3):
@@ -662,7 +664,7 @@ def pebbles_model(rock, variant):
 
 
 def overlay_model(name):
-    return {"ambientocclusion": False, "textures": {"particle": f"awaken:block/caves/{name}", "t": f"awaken:block/caves/{name}"},
+    return {"ambientocclusion": False, "render_type": "minecraft:cutout", "textures": {"particle": f"awaken:block/caves/{name}", "t": f"awaken:block/caves/{name}"},
             "elements": [{"from": [0, 0, 0.1], "to": [16, 16, 0.1],
                           "faces": {"north": {"uv": [16, 0, 0, 16], "texture": "#t"}, "south": {"uv": [0, 0, 16, 16], "texture": "#t"}}}]}
 
@@ -678,9 +680,9 @@ def model_dict():
             out[f"{rock}_pebbles_{v}"] = pebbles_model(rock, v)
     for name in ["lichen_" + b for b in LICHEN] + ["mineral_crust", "wet_streaks"]:
         out[name] = overlay_model(name)
-    out["puddle"] = {"ambientocclusion": False, "textures": {"particle": "awaken:block/caves/puddle", "t": "awaken:block/caves/puddle"},
+    out["puddle"] = {"ambientocclusion": False, "render_type": "minecraft:translucent", "textures": {"particle": "awaken:block/caves/puddle", "t": "awaken:block/caves/puddle"},
                      "elements": [box((0, 0.2, 0), (16, 0.2, 16), "#t", faces=("up",), tint=0)]}
-    out["dusty_web"] = {"parent": "minecraft:block/cross", "textures": {"cross": "awaken:block/caves/dusty_web"}}
+    out["dusty_web"] = {"parent": "minecraft:block/cross", "render_type": "minecraft:cutout", "textures": {"cross": "awaken:block/caves/dusty_web"}}
     return out
 
 

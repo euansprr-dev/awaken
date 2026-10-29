@@ -11930,7 +11930,38 @@ and chasms; P4 the mining ties. Each phase adds its numbers here. The pack's dat
   each layer's footprint a slice of a 3D noise (`shape_a` at 0.8 scale, a slice per layer) above **0.17**, so neighbouring
   layers differ and their edges make ledges and drops.
 
-### 42.6 Budgets and tests (P0)
+### 42.4 The skin (P1; every cave, region or not)
+The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/style.html`, pictures from
+`tools/art/cave_diorama.py`); its textures go in only after Euan's OK.
+- **Blocks** (`caves.skin`, in every world; only the pack's feature lays them): per rock (`SkinRock`: stone, which dresses
+  stone, andesite, diorite and granite; deepslate; tuff) **`<rock>_rubble`** (a heap, its high side to the wall it faces,
+  three variants; shape 15 × 5 × 15, a half step underfoot), **`<rock>_pebbles`** (two or three loose stones, no collision)
+  and **`pointed_<rock>`** (a stalagmite `up` or stalactite `down` in four thicknesses, tip, frustum, middle, base: tapered
+  columns of stacked boxes; held by the rock or the next piece behind it, else it breaks; decoration only, it doesn't grow
+  or fall). For every cave: **`cave_lichen_shallows`**, **`_middle`**, **`_deep`** (the band's colour), **`mineral_crust`**,
+  **`wet_streaks`** (multiface, like glow lichen), **`cave_puddle`** (a skin of water, no collision, tinted by the biome's
+  water colour, drops nothing), **`dusty_web`** (a cobweb that drops string or itself).
+- **The feature** `awaken:cave_skin` (`CaveSkinFeature`, placed `awaken:caves/skin`, every `#minecraft:is_overworld` biome
+  at `top_layer_modification`, so it comes after every structure and feature): per chunk, every column bottom to top below
+  the ground less **6**, section by section from the palettes; only cells where air meets natural rock are looked at.
+  - A **floor** (air on rock): rubble against a wall at **0.18**, pebbles in the open at **0.045**; in a dry place (the wet
+    field under **-0.3**) a dusty web in a dead end (rock on three sides and over it) at **0.2**. The two cells over a
+    floor by a wall take overlays: lichen where a 3D field at 6 blocks passes **0.4** (shallows lichen within 43 blocks of
+    the ground, middle below, deep under y 0), else crust where it's dry and a field at 5 blocks passes **0.45**, else wet
+    streaks two up where it's wet and a field at 3 blocks passes **0.25**.
+  - A **roof** in a wet place (a 2D field at 12 blocks over **0.22**) at **0.16**: a stalactite one to three long (at most
+    half the room), a stalagmite under it at **0.6** (one to three, always a gap of one or more between them), and a puddle
+    at **0.75** beside the stalagmite's foot or under the stalactite.
+  - Every choice is a hash of the seed and the cell, so a chunk comes out the same whichever neighbours exist; only the
+    chunk's own cells are written. A cell is used only if it and its six neighbours are natural (air, water, lava, the stone
+    family, gravel, dirt, clay, sand, calcite, dripstone, moss, glow lichen, magma, bedrock, the skin): never next to a
+    structure's blocks, a mine's timber, an ore or a web.
+- **Drips**: a stalactite's tip drips (`animateTick`, 1 in 9 a tick): `awaken:cave_drip` swells for 14 to 30 ticks, falls,
+  and throws `awaken:cave_splash` where it lands.
+- **Moved to the regions**: drawn light (glow-worm fields, caustics, mica glints, lava's heat) is the regions' own (Pale
+  Halls, Drowned Galleries, Windcleft, Black Vaults) and comes with them in P3; plain caves stay dark (decision 4).
+
+### 42.6 Budgets and tests (P0, P1)
 - **The gate**: filling a chunk with the shapes costs at most **20%** more than without (`caves_gen_cost`: 24 chunks round the
   origin of seed 777, best of three rounds, warmed); the land on top never moves; structures stay whole by construction (the
   wrapped caves sit under the beardifier, which still carves and fills around every structure piece).
@@ -11940,7 +11971,13 @@ and chasms; P4 the mining ties. Each phase adds its numbers here. The pack's dat
   fields' deciles; each region takes its slot's share of its land in its band, within 12 points), `caves_surface_untouched`
   (the wrapper spliced into vanilla's entrances as Lithostitched would: surface and sea floor equal on a 25 × 25 grid per seed;
   in whole chunks over each region nothing changes above y 64 or in the top 12 blocks under the ground, and the shapes open
-  new cave), `caves_gen_cost`.
+  new cave), `caves_gen_cost`, `caves_skin_census` (16 chunks of seed 777 with the shapes, dressed as the feature dresses
+  them: at least **30%** of cave floor cells have a piece on them, beside them or on the wall over them; every floor piece
+  lies on natural rock and every formation grows from rock; the same chunk dresses the same twice; the skin costs at most
+  **15%** of filling the chunk).
+- **Measured 2026-10-29** (the skin): 1,873 pieces on 16 chunks (599 rubble, 322 formation pieces, 81 puddles, 824
+  overlays), **72%** of 3,642 floor cells dressed, 0.82 ms a chunk against 24.7 ms to fill it (3%; 0.53 ms once the chunk is
+  in the cache).
 - **Measured 2026-10-29** (GameTests, vanilla generator): chunk fill (noise, surface, carvers) 12.89 ms plain, 13.07 ms with
   the shapes (**+1.4%**, gate 20%); the land on top: 0 of 6,250 grid columns moved, 0 blocks changed above y 64 or in the top
   12 under the ground; under y 59 in region chunks the shapes take open cave from 13.5% to 18.7% (Rootways) and 12.4% to

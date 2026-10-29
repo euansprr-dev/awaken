@@ -92,7 +92,112 @@ def biome(rid, r):
     return d
 
 
+# ---- the skin (SPEC §42.4): its blocks' assets, loot, tags and lang, and the feature that lays it -------------------------
+RES = os.path.join(ROOT, 'src/main/resources')
+MERGE = os.path.join(ROOT, 'src/main/merge/caves')
+SKIN_ROCKS = ('stone', 'deepslate', 'tuff')
+OVERLAYS = {'cave_lichen_shallows': ('lichen_shallows', 'Grey-Green Cave Lichen'), 'cave_lichen_middle': ('lichen_middle', 'Gold Cave Lichen'),
+            'cave_lichen_deep': ('lichen_deep', 'Blue Cave Lichen'), 'mineral_crust': ('mineral_crust', 'Mineral Crust'),
+            'wet_streaks': ('wet_streaks', 'Wet Streaks')}
+
+
+def put(root, rel, data):
+    path = os.path.join(root, rel)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=2)
+        f.write('\n')
+
+
+def turns(model, **extra):
+    return [{'model': model, 'y': y, **extra} if y else {'model': model, **extra} for y in (0, 90, 180, 270)]
+
+
+def self_loot(bid, condition=None):
+    entry = {'type': 'minecraft:item', 'name': f'awaken:{bid}'}
+    if condition:
+        entry['conditions'] = [condition]
+    return {'type': 'minecraft:block', 'random_sequence': f'awaken:blocks/{bid}',
+            'pools': [{'rolls': 1, 'entries': [entry], 'conditions': [{'condition': 'minecraft:survives_explosion'}]}]}
+
+
+def skin():
+    sys.path.insert(0, os.path.join(ROOT, 'tools/art/specs'))
+    sys.path.insert(0, os.path.join(ROOT, 'tools/art'))
+    import deep_skin
+    models = deep_skin.model_dict()
+    A = 'assets/awaken'
+    old = os.path.join(RES, A, 'models/block/caves')
+    for f in os.listdir(old) if os.path.isdir(old) else []:
+        os.remove(os.path.join(old, f))
+    for name, m in models.items():
+        put(RES, f'{A}/models/block/caves/{name}.json', m)
+    lang, pickaxe = {}, []
+    facing = {'north': 0, 'east': 90, 'south': 180, 'west': 270}
+    for rock in SKIN_ROCKS:
+        nice = rock.capitalize()
+        bid = f'{rock}_rubble'
+        put(RES, f'{A}/blockstates/{bid}.json', {'variants': {
+            f'facing={f},variant={v}': {'model': f'awaken:block/caves/{rock}_rubble_{v}', **({'y': y} if y else {})}
+            for f, y in facing.items() for v in range(3)}})
+        put(RES, f'{A}/items/{bid}.json', {'model': {'type': 'minecraft:model', 'model': f'awaken:block/caves/{rock}_rubble_0'}})
+        put(RES, f'data/awaken/loot_table/blocks/{bid}.json', self_loot(bid))
+        lang[f'block.awaken.{bid}'] = f'{nice} Rubble'
+        pickaxe.append(f'awaken:{bid}')
+        bid = f'{rock}_pebbles'
+        put(RES, f'{A}/blockstates/{bid}.json', {'variants': {f'variant={v}': turns(f'awaken:block/caves/{rock}_pebbles_{v}') for v in range(3)}})
+        put(RES, f'{A}/items/{bid}.json', {'model': {'type': 'minecraft:model', 'model': f'awaken:block/caves/{rock}_pebbles_2'}})
+        put(RES, f'data/awaken/loot_table/blocks/{bid}.json', self_loot(bid))
+        lang[f'block.awaken.{bid}'] = f'{nice} Pebbles'
+        bid = f'pointed_{rock}'
+        put(RES, f'{A}/blockstates/{bid}.json', {'variants': {
+            f'thickness={t},vertical_direction={d}': turns(f'awaken:block/caves/{rock}_formation_{d}_{t}')
+            for d in ('up', 'down') for t in ('tip', 'frustum', 'middle', 'base')}})
+        put(RES, f'{A}/items/{bid}.json', {'model': {'type': 'minecraft:model', 'model': f'awaken:block/caves/{rock}_formation_up_frustum'}})
+        put(RES, f'data/awaken/loot_table/blocks/{bid}.json', self_loot(bid))
+        lang[f'block.awaken.{bid}'] = f'Pointed {nice}'
+        pickaxe.append(f'awaken:{bid}')
+    for bid, (model, nice) in OVERLAYS.items():
+        parts = []
+        for face, rot in (('north', {}), ('east', {'y': 90}), ('south', {'y': 180}), ('west', {'y': 270}), ('up', {'x': 270}), ('down', {'x': 90})):
+            parts.append({'when': {face: 'true'}, 'apply': {'model': f'awaken:block/caves/{model}', **rot, **({'uvlock': True} if rot else {})}})
+        put(RES, f'{A}/blockstates/{bid}.json', {'multipart': parts})
+        put(RES, f'{A}/models/item/caves/{model}.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': f'awaken:block/caves/{model}'}})
+        put(RES, f'{A}/items/{bid}.json', {'model': {'type': 'minecraft:model', 'model': f'awaken:item/caves/{model}'}})
+        put(RES, f'data/awaken/loot_table/blocks/{bid}.json', self_loot(bid, {'condition': 'minecraft:match_tool', 'predicate': {'items': 'minecraft:shears'}}))
+        lang[f'block.awaken.{bid}'] = nice
+    put(RES, f'{A}/blockstates/cave_puddle.json', {'variants': {'': turns('awaken:block/caves/puddle')}})
+    put(RES, f'{A}/models/item/caves/puddle.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': 'awaken:block/caves/puddle'}})
+    put(RES, f'{A}/items/cave_puddle.json', {'model': {'type': 'minecraft:model', 'model': 'awaken:item/caves/puddle',
+                                                       'tints': [{'type': 'minecraft:constant', 'value': -12618012}]}})
+    put(RES, 'data/awaken/loot_table/blocks/cave_puddle.json', {'type': 'minecraft:block', 'random_sequence': 'awaken:blocks/cave_puddle', 'pools': []})
+    lang['block.awaken.cave_puddle'] = 'Puddle'
+    put(RES, f'{A}/blockstates/dusty_web.json', {'variants': {'': {'model': 'awaken:block/caves/dusty_web'}}})
+    put(RES, f'{A}/models/item/caves/dusty_web.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': 'awaken:block/caves/dusty_web'}})
+    put(RES, f'{A}/items/dusty_web.json', {'model': {'type': 'minecraft:model', 'model': 'awaken:item/caves/dusty_web'}})
+    put(RES, 'data/awaken/loot_table/blocks/dusty_web.json', {'type': 'minecraft:block', 'random_sequence': 'awaken:blocks/dusty_web', 'pools': [
+        {'rolls': 1, 'entries': [{'type': 'minecraft:alternatives', 'children': [
+            {'type': 'minecraft:item', 'name': 'awaken:dusty_web', 'condition': {'type': 'minecraft:any_of', 'terms': ['minecraft:tool/can_shear', 'minecraft:tool/can_silk_touch']}},
+            {'type': 'minecraft:item', 'name': 'minecraft:string', 'condition': {'type': 'minecraft:survives_explosion'}}]}]}]})
+    lang['block.awaken.dusty_web'] = 'Dusty Web'
+    for p, n in (('cave_drip', 4), ('cave_splash', 4)):
+        put(RES, f'{A}/particles/{p}.json', {'textures': [f'awaken:caves/{p[5:]}_{i}' for i in range(n)]})
+    put(MERGE, 'data/minecraft/tags/block/mineable/pickaxe.json', {'replace': False, 'values': pickaxe})
+    put(MERGE, 'data/minecraft/tags/block/mineable/hoe.json', {'replace': False, 'values': [f'awaken:{b}' for b in OVERLAYS]})
+    put(MERGE, 'data/minecraft/tags/block/sword_efficient.json', {'replace': False, 'values': ['awaken:dusty_web']})
+    lang_path = os.path.join(MERGE, f'{A}/lang/en_us.json')
+    have = json.load(open(lang_path)) if os.path.exists(lang_path) else {}
+    have.update(lang)
+    put(MERGE, f'{A}/lang/en_us.json', dict(sorted(have.items())))
+    # the feature, last of all in every overworld biome (the region biomes are in is_overworld)
+    write('data/awaken/worldgen/feature/caves/skin.json', {'type': 'awaken:cave_skin'})
+    write('data/awaken/worldgen/placed_feature/caves/skin.json', {'feature': 'awaken:caves/skin', 'placement': []})
+    write('data/awaken/neoforge/biome_modifier/caves/skin.json', {'type': 'neoforge:add_features', 'biomes': '#minecraft:is_overworld',
+                                                                  'features': 'awaken:caves/skin', 'step': 'top_layer_modification'})
+
+
 def main():
+    skin()
     write('pack.mcmeta', {'features': {'enabled': ['awaken:awakened_caves']},
                           'pack': {'description': 'Awakened Caves: the Living Deep, cave regions with their own shapes, rock and life (new worlds only)',
                                    'max_format': 121, 'min_format': 121}})

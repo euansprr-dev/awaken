@@ -6,9 +6,14 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.JsonOps;
 import dev.awaken.Awaken;
+import dev.awaken.caves.skin.CaveSkin;
+import dev.awaken.caves.skin.CaveSkinFeature;
+import dev.awaken.caves.skin.SkinBlocks;
+import dev.awaken.caves.skin.SkinRock;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.terrain.api.BiomeTable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -83,6 +88,7 @@ final class CavesTests {
         AwakenTests.register("caves_region_shares", 2400, CavesTests::shares);
         AwakenTests.register("caves_surface_untouched", 2400, CavesTests::surface);
         AwakenTests.register("caves_gen_cost", 2400, CavesTests::cost);
+        AwakenTests.register("caves_skin_census", 2400, CavesTests::skin);
     }
 
     // ---------------------------------------------------------------- the regions
@@ -402,6 +408,147 @@ final class CavesTests {
                 String.format(Locale.ROOT, "%.3f", ratio), COST_MAX);
         h.assertTrue(ratio <= COST_MAX, "the shapes cost " + String.format(Locale.ROOT, "%.0f", (ratio - 1) * 100) + "% more per chunk fill (gate "
                 + Math.round((COST_MAX - 1) * 100) + "%)");
+        h.succeed();
+    }
+
+    /** The skin's gate (SPEC §42.4): at least this share of cave floor is dressed. */
+    static final double SKIN_DRESSED = 0.30;
+    /**
+     * The skin's budget, as a share of filling the same chunk (noise, surface, carvers), so it holds on any machine: on the
+     * Mac 2026-10-29 the fill was about 13 ms a chunk and the skin 1.2 ms on a freshly filled chunk (0.5 ms once it's in
+     * the cache: most of the cost is the first read of the chunk's sections).
+     */
+    static final double SKIN_SHARE = 0.15;
+
+    /**
+     * The skin on real caves (SPEC §42.4): chunks of seed 777 filled with the caves pack's shapes are dressed as the
+     * feature dresses them; at least {@link #SKIN_DRESSED} of the cave floor cells have a piece on them or beside them
+     * (a floor reads by its pieces, not every cell), every piece rests on or hangs from natural rock, a chunk comes out
+     * the same dressed twice, and dressing costs at most {@link #SKIN_SHARE} of filling the chunk.
+     */
+    private static void skin(GameTestHelper h) {
+        Pair p = pair(h);
+        var level = h.getLevel();
+        h.assertTrue(level.registryAccess().lookupOrThrow(Registries.PLACED_FEATURE)
+                .get(ResourceKey.create(Registries.PLACED_FEATURE, Awaken.id("caves/skin"))).isPresent(), "the skin is a loaded placed feature");
+        LevelHeightAccessor heights = LevelHeightAccessor.create(-64, 384);
+        long seed = STUDIO_SEEDS[0];
+        RandomState rs = p.random(h, seed, true);
+        int floors = 0, dressed = 0, pieces = 0, rubble = 0, formations = 0, puddles = 0, overlays = 0;
+        long nanos = 0, fillNanos = 0;
+        int n = 0;
+        BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                ChunkPos pos = new ChunkPos(-40 + i * 21, -30 + j * 19);
+                long f0 = System.nanoTime();
+                ProtoChunk chunk = build(level, p.shaped(), rs, pos, heights);
+                if (i > 0) fillNanos += System.nanoTime() - f0;
+                int cx = pos.getMinBlockX(), cz = pos.getMinBlockZ();
+                BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+                CaveSkinFeature.Cells cells = new CaveSkinFeature.Cells() {
+                    @Override
+                    public BlockState get(int x, int y, int z) {
+                        if ((x & ~15) != cx || (z & ~15) != cz || y < -64 || y >= 320) return stone;
+                        return chunk.getSection(chunk.getSectionIndex(y)).getBlockState(x & 15, y & 15, z & 15);   // as the feature reads
+                    }
+
+                    @Override
+                    public void set(int x, int y, int z, BlockState state) {
+                        chunk.setBlockState(m.set(x, y, z), state, 0);
+                    }
+
+                    @Override
+                    public int top(int x, int z) {
+                        return chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x & 15, z & 15);
+                    }
+
+                    @Override
+                    public int minY() {
+                        return -64;
+                    }
+                };
+                // the floor cells before dressing
+                List<BlockPos> floor = new ArrayList<>();
+                for (int dx = 1; dx < 15; dx++) for (int dz = 1; dz < 15; dz++) {
+                    int x = cx + dx, z = cz + dz, top = cells.top(x, z) - CaveSkinFeature.UNDER_GROUND;
+                    for (int y = -60; y < top; y++) {
+                        if (cells.get(x, y, z).isAir() && SkinRock.of(cells.get(x, y - 1, z).getBlock()) != null) floor.add(new BlockPos(x, y, z));
+                    }
+                }
+                long t = System.nanoTime();
+                int placed = CaveSkinFeature.dress(cells, cx, cz, seed, chunk);
+                if (i > 0) {                // the first row warms the code
+                    nanos += System.nanoTime() - t;
+                    n++;
+                }
+                pieces += placed;
+                for (BlockPos f : floor) {
+                    boolean near = false;
+                    for (int dx = -1; dx <= 1 && !near; dx++) for (int dz = -1; dz <= 1 && !near; dz++) for (int dy = 0; dy <= 2 && !near; dy++) {
+                        near = CaveSkinFeature.skin(cells.get(f.getX() + dx, f.getY() + dy, f.getZ() + dz).getBlock());
+                    }
+                    if (near) dressed++;
+                }
+                floors += floor.size();
+                // every piece rests on or hangs from natural rock
+                for (int dx = 0; dx < 16; dx++) for (int dz = 0; dz < 16; dz++) for (int y = -62; y < 300; y++) {
+                    BlockState s = cells.get(cx + dx, y, cz + dz);
+                    if (!CaveSkinFeature.skin(s.getBlock())) continue;
+                    BlockState under = cells.get(cx + dx, y - 1, cz + dz);
+                    if (s.getBlock() instanceof SkinBlocks.Formation) {
+                        formations++;
+                        Direction from = s.getValue(SkinBlocks.Formation.DIRECTION).getOpposite();
+                        BlockState behind = cells.get(cx + dx, y + from.getStepY(), cz + dz);
+                        h.assertTrue(behind.getBlock() instanceof SkinBlocks.Formation || SkinRock.of(behind.getBlock()) != null,
+                                "a formation grows from rock at " + (cx + dx) + " " + y + " " + (cz + dz) + ": " + behind);
+                    } else if (s.getBlock() instanceof net.minecraft.world.level.block.MultifaceBlock) {
+                        overlays++;
+                    } else if (s.getBlock() != CaveSkin.DUSTY_WEB.get()) {
+                        if (s.getBlock() instanceof SkinBlocks.Rubble) rubble++;
+                        if (s.getBlock() instanceof SkinBlocks.Puddle) puddles++;
+                        h.assertTrue(SkinRock.of(under.getBlock()) != null, "a floor piece lies on natural rock at " + (cx + dx) + " " + y + " "
+                                + (cz + dz) + ": " + s + " on " + under);
+                    }
+                }
+                if (i == 0 && j == 0) {
+                    // the same chunk again comes out the same
+                    ProtoChunk again = build(level, p.shaped(), rs, pos, heights);
+                    CaveSkinFeature.Cells twice = new CaveSkinFeature.Cells() {
+                        @Override
+                        public BlockState get(int x, int y, int z) {
+                            if ((x & ~15) != cx || (z & ~15) != cz || y < -64 || y >= 320) return stone;
+                            return again.getBlockState(m.set(x, y, z));
+                        }
+
+                        @Override
+                        public void set(int x, int y, int z, BlockState state) {
+                            again.setBlockState(m.set(x, y, z), state, 0);
+                        }
+
+                        @Override
+                        public int top(int x, int z) {
+                            return again.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x & 15, z & 15);
+                        }
+
+                        @Override
+                        public int minY() {
+                            return -64;
+                        }
+                    };
+                    h.assertTrue(CaveSkinFeature.dress(twice, cx, cz, seed, again) == placed, "a chunk dresses the same twice");
+                }
+            }
+        }
+        double share = dressed / (double) Math.max(1, floors), ms = nanos / 1e6 / n, fill = fillNanos / 1e6 / n;
+        Awaken.LOG.info("[caves] skin on {} timed chunks of 16: {} pieces ({} rubble, {} formation pieces, {} puddles, {} overlays), {} of {} floor cells dressed ({}), {} ms a chunk against {} ms to fill it",
+                n, pieces, rubble, formations, puddles, overlays, dressed, floors, String.format(Locale.ROOT, "%.2f", share), String.format(Locale.ROOT, "%.3f", ms),
+                String.format(Locale.ROOT, "%.2f", fill));
+        h.assertTrue(floors > 500, "the chunks have cave floors: " + floors);
+        h.assertTrue(share >= SKIN_DRESSED, "the skin dresses " + Math.round(share * 100) + "% of cave floors (gate " + Math.round(SKIN_DRESSED * 100) + "%)");
+        h.assertTrue(formations > 0 && puddles > 0 && rubble > 0 && overlays > 0, "every kind of piece is laid");
+        h.assertTrue(ms <= fill * SKIN_SHARE, "the skin costs " + String.format(Locale.ROOT, "%.2f", ms) + " ms a chunk, "
+                + Math.round(ms / fill * 100) + "% of the fill (budget " + Math.round(SKIN_SHARE * 100) + "%)");
         h.succeed();
     }
 

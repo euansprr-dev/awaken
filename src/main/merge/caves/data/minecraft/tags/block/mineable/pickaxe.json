@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "awaken:stone_rubble",
+    "awaken:pointed_stone",
+    "awaken:deepslate_rubble",
+    "awaken:pointed_deepslate",
+    "awaken:tuff_rubble",
+    "awaken:pointed_tuff"
+  ]
+}

@@ -1,4 +1,20 @@
 {
+  "biome.awaken.ochre_deep": "The Ochre Deep",
   "biome.awaken.rootways": "The Rootways",
-  "biome.awaken.ochre_deep": "The Ochre Deep"
+  "block.awaken.cave_lichen_deep": "Blue Cave Lichen",
+  "block.awaken.cave_lichen_middle": "Gold Cave Lichen",
+  "block.awaken.cave_lichen_shallows": "Grey-Green Cave Lichen",
+  "block.awaken.cave_puddle": "Puddle",
+  "block.awaken.deepslate_pebbles": "Deepslate Pebbles",
+  "block.awaken.deepslate_rubble": "Deepslate Rubble",
+  "block.awaken.dusty_web": "Dusty Web",
+  "block.awaken.mineral_crust": "Mineral Crust",
+  "block.awaken.pointed_deepslate": "Pointed Deepslate",
+  "block.awaken.pointed_stone": "Pointed Stone",
+  "block.awaken.pointed_tuff": "Pointed Tuff",
+  "block.awaken.stone_pebbles": "Stone Pebbles",
+  "block.awaken.stone_rubble": "Stone Rubble",
+  "block.awaken.tuff_pebbles": "Tuff Pebbles",
+  "block.awaken.tuff_rubble": "Tuff Rubble",
+  "block.awaken.wet_streaks": "Wet Streaks"
 }
