@@ -7,7 +7,7 @@ import java.util.Optional;
 
 /**
  * Plain-word explanations of AWAKEN's own words, shown on hover in the Status screen. A word matches its term plus a
- * simple ending ("Echoes", "Fractured", "play-days", "Extraction").
+ * simple ending ("Seals", "Fractured", "play-days", "Extraction").
  */
 public final class Glossary {
     private Glossary() {}

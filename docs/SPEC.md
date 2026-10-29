@@ -12443,8 +12443,8 @@ here as it goes.
   patterns (Spear, Glaive, Rapier, Chain-blade, Twinblades) and six relics are found in left chests instead (43.3); old
   Journals drop retired chains at login; the scenes record is schema 2.
 - **The Last Fire** is the Wayfarer camp (450 blocks up the north road), Ilse alone; Hettie moves into the city's market
-  square (spot `hettie`). Ilse's
-  scene and lines are JOURNEY part 1, verbatim, in plain speech. She never gives a task. She comes to the player's home
+  square (spot `hettie`; it lives in `City`'s later spots, not in plan.json, because the plan's hash covers its spots and
+  a world whose city was built from another hash gets no citizens). Ilse's scene and lines are JOURNEY part 1, verbatim, in plain speech. She never gives a task. She comes to the player's home
   exactly once, after the Wake ending. The Ember sets only past the Last Fire's ridge and outside any holdfast's sound.
 - Vael meets the player only in the city and in gates. Townsfolk that lived at the Hearth (Oren, Mira, Teodor, Sun, Vael)
   live in Carillon in their roles.

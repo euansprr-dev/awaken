@@ -186,7 +186,7 @@ happens).
   Iron in the Ranks, Crowns in the Dark, Marta's Wheel, the Caravan Road, Pell's Message, Silk on the Road, the Bell at
   the Crossing), Ilse's Moth Lights and Hettie's Ten Sheep Short (people never give tasks outside the opening).
 - **Hettie** lives in Carillon now, in the market square by the cloth and produce stalls (city spot `hettie`, on the
-  square's floor two below the street), with her own lines about the hills and the walk in (never a task). A classic
+  square's floor two below the street; kept out of plan.json so worlds built before keep their plan hash and citizens), with her own lines about the hills and the walk in (never a task). A classic
   world has no city and no Hettie.
 - **Hale** stays at the High Gate's quartermaster spot (in the city).
 - **Ilse's lines** after her scene: four of her own (the kettle, what it looks like out there, Aldo, watch before you
