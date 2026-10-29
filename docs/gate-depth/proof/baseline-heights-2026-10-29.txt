@@ -1,0 +1,75 @@
+abyssal_shrine/black_mirror {-3=10664, 0=7222, 1=34}
+abyssal_shrine/dark_steps {-3=21, -2=53, -1=82, 0=7593, 1=629}
+abyssal_shrine/starfall {-3=21, -2=50, -1=81, 0=6333, 1=629}
+abyssal_shrine/the_last_room {0=6049, 1=57, 2=72, 3=49}
+bell_crypt/bell_shaft {0=9290, 1=134, 2=92, 3=92}
+bell_crypt/field_of_bells {-3=9166, 0=4405, 1=186, 2=67}
+bell_crypt/ossuary_ways {-3=2, 0=3752, 1=183, 2=155, 3=48}
+bell_crypt/sunken_belfry {-3=4384, -2=232, -1=240, 0=11856, 1=706, 2=50}
+clockwork_foundry/great_engine {0=5157, 1=60, 2=527, 3=84}
+clockwork_foundry/pipe_maze {0=6177, 1=62, 2=68, 3=89}
+clockwork_foundry/stopped_hour {0=5157, 1=60, 2=527, 3=84}
+clockwork_foundry/works_floor {0=6858, 1=50, 2=527, 3=52}
+drowned_archive/atrium {0=6186, 1=684, 2=64, 3=74}
+drowned_archive/inkwell {-3=11220, 0=4519, 1=133}
+drowned_archive/stacks {0=6662, 1=700, 2=62, 3=49}
+drowned_archive/sunken_shelves {-3=9851, 0=5888, 1=133}
+ember_mines/cooling_sea {0=6159, 1=86, 2=67, 3=19}
+ember_mines/forge_below {0=5168, 1=72, 2=64, 3=72}
+ember_mines/open_chasm {0=6431, 1=74, 2=67, 3=74}
+ember_mines/working_mine {0=6334, 1=80, 2=70, 3=67}
+frost_monastery/cliff_stair {-3=4, -2=3, -1=8, 0=6274, 1=629, 3=2}
+frost_monastery/cloisters {0=7697, 1=353, 2=221, 3=248}
+frost_monastery/ice_caves {0=6828, 1=61, 2=91, 3=84}
+frost_monastery/still_snow {0=5721, 1=814, 2=940, 3=833}
+fungal_hollow/glowing_deep {0=6007, 1=840, 2=77, 3=94}
+fungal_hollow/inside_the_bloom {0=4848, 1=177, 2=74, 3=86}
+fungal_hollow/root_warrens {0=5850, 1=805, 2=89, 3=108}
+fungal_hollow/spore_canopy {0=5413, 1=200, 2=74, 3=92}
+glass_desert/buried_colossus {0=6612, 1=1312, 2=1113, 3=1336}
+glass_desert/glass_caves {0=6305, 1=155, 2=130, 3=139}
+glass_desert/mirage {0=5384, 1=803, 2=884, 3=803}
+glass_desert/sunken_city {0=5923, 1=376, 2=292, 3=422}
+hive/brood_hall {0=6217, 1=715, 2=63, 3=86}
+hive/honey_lake {-3=9853, 0=5985, 1=34}
+hive/the_comb {0=5928, 1=671, 2=64, 3=86}
+hive/the_swarm {0=5376, 1=73, 2=61, 3=79}
+lantern_night_market/festival {0=7303, 1=117, 2=2}
+lantern_night_market/floating_market {-3=10384, 0=6968, 1=54, 2=2}
+lantern_night_market/lantern_street {-2=392, 0=8087, 1=264, 2=134, 3=138}
+lantern_night_market/rooftops {0=7795, 1=1117, 2=6}
+mirror_palace/gallery {0=6928, 1=129, 2=56, 3=46}
+mirror_palace/inverted_palace {-3=19, -2=53, 0=5793, 1=112, 3=37}
+mirror_palace/mirror_maze {0=6499, 1=77, 2=56, 3=47}
+mirror_palace/the_white {0=13721, 1=103}
+nightmare/endless_hall {0=4930, 1=68, 2=59, 3=1}
+nightmare/sleepers_dream {-2=4, -1=9, 0=5939, 1=620, 2=7, 3=1}
+nightmare/the_house {0=6843, 1=80, 2=100, 3=47}
+nightmare/upside_down {0=5877, 1=48, 2=53, 3=37}
+overgrown_temple/great_tree {0=5495, 1=194, 2=60, 3=84}
+overgrown_temple/jungle_courts {0=6972, 1=184, 2=60, 3=49}
+overgrown_temple/root_halls {0=6529, 1=189, 2=63, 3=81}
+overgrown_temple/waterfall_temple {0=5495, 1=194, 2=60, 3=84}
+precursor_lab/containment {0=5837, 1=48, 2=53, 3=37}
+precursor_lab/facility {0=6912, 1=82, 2=54, 3=47}
+precursor_lab/server_abyss {0=6951, 1=51, 2=54, 3=46}
+precursor_lab/simulation {0=5171, 1=102, 2=135, 3=67}
+rare/the_aurora_steppe {0=6232, 1=520, 2=747, 3=542}
+rare/the_cartographers_table {0=15842, 1=28, 2=2}
+rare/the_dollhouse {0=5746, 1=48, 2=52, 3=44}
+rare/the_endless_stair {-3=31, -2=78, -1=98, 0=6364, 1=632, 2=33, 3=18}
+rare/the_gates_heart {-3=21, -2=50, -1=81, 0=6305, 1=629, 2=14, 3=12}
+rare/the_glass_sea {-3=9224, 0=6614, 1=34}
+rare/the_hollow_sky {-3=4, -2=3, -1=27, 0=6135, 1=706, 2=13, 3=14}
+rare/the_lantern_orchard {0=5800, 1=204, 2=203, 3=260}
+rare/the_last_campfire {0=5899, 1=296, 2=326, 3=401}
+rare/the_library_of_doors {0=6872, 1=370, 2=60, 3=44}
+rare/the_other_gate {0=5502, 1=79, 2=54, 3=60}
+rare/the_quiet {0=5894, 1=377, 2=449, 3=496}
+rare/the_reflection {-3=13, -2=52, 0=5735, 1=101, 3=44}
+rare/the_tide_room {-3=295, -1=2, 0=6040, 1=345, 2=55, 3=403}
+rare/upward_rain {-1=34, 0=5772, 1=407, 2=574, 3=565}
+sky_archipelago/above_the_clouds {-3=3, -2=3, -1=7, 0=5948, 1=610, 2=20, 3=10}
+sky_archipelago/sky_ruins {-3=6, -2=19, -1=72, 0=7237, 1=656, 2=1, 3=7}
+sky_archipelago/the_isles {-3=6, -2=19, -1=90, 0=7167, 1=605, 3=3}
+sky_archipelago/wind_stair {-3=4, -2=112, -1=7, 0=5993, 1=574, 2=90, 3=7}
