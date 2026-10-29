@@ -1,0 +1,390 @@
+<title>The Forged Armour</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column for the plan, wide bands for the shots; forge-dark first, iron and ember. */
+:root {
+  --bg: #15130f; --panel: #1e1b16; --line: #3a342a; --fg: #ece4d4; --muted: #a99f8c;
+  --ember: #ff7a2e; --brass: #d8b46a; --yes: #6fcf8e; --no: #ef6b5b;
+  --display: "Alegreya SC", "Iowan Old Style", Georgia, serif;
+  --body: "Alegreya Sans", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f3efe6; --panel: #e9e2d4; --line: #cfc4ae; --fg: #1d1a15; --muted: #625a4b;
+  --ember: #c4501a; --brass: #8a6a24; --yes: #2f8a50; --no: #b23a2c; color-scheme: light } }
+:root[data-theme="light"] {
+  --bg: #f3efe6; --panel: #e9e2d4; --line: #cfc4ae; --fg: #1d1a15; --muted: #625a4b;
+  --ember: #c4501a; --brass: #8a6a24; --yes: #2f8a50; --no: #b23a2c; color-scheme: light }
+body { background: var(--bg); color: var(--fg); font: 17px/1.55 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 60px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 6vw, 56px); letter-spacing: .01em; }
+h2 { font-size: 28px; margin-top: 52px; padding-top: 18px; border-top: 1px solid var(--line); }
+h3 { font-size: 20px; margin-top: 26px; }
+p { margin: 10px 0 0; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--brass); }
+.lede { font-size: 20px; color: var(--fg); margin-top: 14px; }
+.muted { color: var(--muted); }
+code { font: 14px var(--mono); color: var(--brass); }
+.hero { display: grid; gap: 14px; margin-top: 22px; }
+figure { margin: 0; }
+figure img { display: block; width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+figcaption { font-size: 14px; color: var(--muted); margin-top: 6px; }
+.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 16px; }
+.quote { border-left: 3px solid var(--ember); padding: 4px 0 4px 16px; margin-top: 16px; font-style: italic; color: var(--muted); }
+ul.plain { margin: 10px 0 0; padding-left: 20px; }
+ul.plain li + li { margin-top: 6px; }
+.tablewrap { overflow-x: auto; margin-top: 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+td b { color: var(--fg); }
+.tag { display: inline-block; font: 500 11px/1 var(--mono); letter-spacing: .06em; padding: 4px 6px; border-radius: 3px;
+  border: 1px solid var(--line); color: var(--brass); white-space: nowrap; }
+.tag.hunter { color: var(--ember); border-color: var(--ember); }
+.ranks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.ranks button { font: 500 14px var(--mono); padding: 8px 14px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--panel); color: var(--fg); cursor: pointer; }
+.ranks button[aria-pressed="true"] { border-color: var(--ember); color: var(--ember); }
+.ranks button:focus-visible, .ans button:focus-visible, textarea:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.rankinfo { margin-top: 10px; color: var(--muted); font-size: 15px; }
+.song { font: 14px/1.6 var(--mono); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px;
+  overflow-x: auto; white-space: pre; color: var(--fg); margin-top: 14px; }
+.acts { display: grid; gap: 10px; margin-top: 14px; }
+.act { display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: baseline; }
+.act .n { font: 500 13px var(--mono); color: var(--ember); letter-spacing: .08em; text-transform: uppercase; }
+.phases { display: grid; gap: 10px; margin-top: 14px; }
+.phase { display: grid; grid-template-columns: 54px 1fr; gap: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 6px; }
+.phase .p { font: 500 15px var(--mono); color: var(--ember); }
+.phase h3 { margin: 0; font-size: 18px; }
+.phase p { font-size: 15px; }
+.phase .see { color: var(--brass); }
+.decisions { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 12px; counter-reset: d; }
+.dec { border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; background: var(--panel); counter-increment: d; }
+.dec.yes { border-color: var(--yes); }
+.dec.no { border-color: var(--no); }
+.dec .q { font-weight: 700; }
+.dec .q::before { content: counter(d) ". "; color: var(--ember); font-family: var(--mono); font-weight: 500; }
+.dec .why { color: var(--muted); font-size: 15px; margin-top: 4px; }
+.dec .rec { font: 500 12px var(--mono); color: var(--brass); letter-spacing: .06em; text-transform: uppercase; margin-top: 8px; }
+.ans { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.ans button { font: 500 14px var(--body); padding: 7px 18px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg); cursor: pointer; min-width: 64px; }
+.ans button.y[aria-pressed="true"] { background: var(--yes); border-color: var(--yes); color: #10140f; }
+.ans button.n[aria-pressed="true"] { background: var(--no); border-color: var(--no); color: #170d0b; }
+.ans button:disabled { opacity: .5; cursor: default; }
+.ans .state { font: 12px var(--mono); color: var(--muted); }
+.dec textarea { display: block; width: 100%; box-sizing: border-box; margin-top: 8px; min-height: 40px; resize: vertical;
+  font: 15px var(--body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; }
+.tally { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; margin-top: 16px; padding: 10px 14px; border-radius: 6px;
+  background: var(--panel); border: 1px solid var(--line); font: 14px var(--mono); display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.tally button { font: 500 13px var(--body); padding: 6px 12px; border-radius: 4px; border: 1px solid var(--yes); color: var(--yes); background: transparent; cursor: pointer; }
+.foot { margin-top: 48px; font-size: 14px; color: var(--muted); display: grid; gap: 6px; }
+@media (max-width: 560px) { .act { grid-template-columns: 1fr; gap: 2px; } .phase { grid-template-columns: 1fr; gap: 4px; } body { font-size: 16px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="col">
+    <div class="eyebrow">Awaken · armour plan · waiting for your yes</div>
+    <h1>The Forged Armour</h1>
+    <p class="lede">Armour you forge yourself at your Forge, in 29 sets across the ranks, each with its own shape, its own
+      way to fight and a look that wakes as you master it. Below is the first set, Lordscale, already drawn in the real game.</p>
+  </div>
+
+  <div class="hero">
+    <figure>
+      <img src="shots/armour_stand_close.jpg" alt="Lordscale on an armour stand, close: a horned helm with a glowing eye slit under a gold brow, a chevron breastplate with a red gem, rising shoulder plates" width="1280" height="720">
+      <figcaption>Lordscale on a stand, in the game, at noon. Shot on GitHub's Mac runner with the CI tour <code>armour-probe</code>.</figcaption>
+    </figure>
+  </div>
+
+  <div class="col">
+    <h2>What you asked for</h2>
+    <p class="quote">"It should make really awesome armor... Looking really cool is the biggest one: really epic, not the boring flat vanilla look."</p>
+    <ul class="plain">
+      <li><b>The look first.</b> Every set is sculpted in 3D with its own silhouette, metal that shines, seams that glow, a cape and cloth that swing. It looks the same on you, on a stand and on other players.</li>
+      <li><b>Made at your Forge, as a game.</b> Heat the metal, strike it on the beat, quench it, fit it on the stand. Skill makes it better, never makes it fail.</li>
+      <li><b>Powers, never cheats.</b> Abilities change how you fight and move. Nothing shows creatures, ores or blocks through walls.</li>
+      <li><b>On par with weapons.</b> Four sets at E, five at every rank from D to S.</li>
+    </ul>
+
+    <h2>Why today's armour feels flat</h2>
+    <ul class="plain">
+      <li>Vanilla armour is a picture wrapped on a box half a pixel off the body. Painting it better can't add depth. The horns and crowns on Lordscale and Sovereign Weave today are plain boxes stuck on.</li>
+      <li>One set a rank is a stat ladder. There is nothing to choose.</li>
+      <li>Armour comes from a crafting grid. The Forge only tempers.</li>
+      <li>Most set bonuses are invisible numbers, and the one you can feel, Hunter's Sense, shows creatures through walls.</li>
+    </ul>
+    <p>The weapons had the same problem and were fixed by sculpted meshes and their own shader. The armour gets that path, with its own kit.</p>
+  </div>
+
+  <h2>The look, proven in the game</h2>
+  <div class="col">
+    <p>One hero set, Lordscale (the A set), made in the new armour kit and drawn in the real game: on a stand beside vanilla
+      netherite, from behind, from the side, by night, worn by a player, walking, and the gauntlet in first person.
+      1,024 triangles for the whole set. No mixin; nothing about the renderer changed.</p>
+  </div>
+  <div class="shots" id="shots">
+    <figure><img src="shots/armour_stands.jpg" alt="Lordscale beside vanilla netherite armour on stands" loading="lazy"><figcaption>Beside vanilla netherite, for scale.</figcaption></figure>
+    <figure><img src="shots/armour_stand_back.jpg" alt="Lordscale from behind showing the cape" loading="lazy"><figcaption>From behind: the cape hangs in three links from the yoke.</figcaption></figure>
+    <figure><img src="shots/armour_stand_side.jpg" alt="Lordscale from the side" loading="lazy"><figcaption>From the side: the horns sweep back, the plates stand proud.</figcaption></figure>
+    <figure><img src="shots/armour_stand_night.jpg" alt="Lordscale at night with glowing seams" loading="lazy"><figcaption>By night: the eye slit, the heart-stone and the forearm seams glow.</figcaption></figure>
+    <figure><img src="shots/armour_player_front.jpg" alt="A player wearing Lordscale from the front" loading="lazy"><figcaption>Worn, from the front.</figcaption></figure>
+    <figure><img src="shots/armour_player_back.jpg" alt="A player wearing Lordscale from behind" loading="lazy"><figcaption>Worn, from behind: the set's cape replaces the player's own.</figcaption></figure>
+    <figure><img src="shots/armour_player_walk.jpg" alt="A player walking in Lordscale" loading="lazy"><figcaption>Walking: the cape swings and the cloth moves with the stride.</figcaption></figure>
+    <figure><img src="shots/armour_fp_gauntlet.jpg" alt="First person view showing the armoured forearm with gold corners and a glowing line" loading="lazy"><figcaption>First person: your forearm, gold at its corners, a molten line down it.</figcaption></figure>
+  </div>
+  <figure style="margin-top:14px"><img src="shots/lordscale_kit.jpg" alt="The armour kit's preview of Lordscale from five sides, a close-up of the helm and by night" loading="lazy">
+    <figcaption>The kit's own preview, before the game: five turns, the helm close, by night. Every set gets one before it goes in.</figcaption></figure>
+  <div class="col">
+    <p>It took four rounds in the game to get here. The first drew nothing but a flat hat, because the game only hands its
+      own kind of armour to the body; that's fixed. The second worked but looked squat and toy-like next to netherite:
+      the helm was twice the size of the head, the shoulders drooped and gold rings lined up across the waist. So the helm
+      now sits close to the head and gets its height from the horns, the shoulders rise, and the gold is kept for edges
+      that lead the eye. The last round gave the forearm, the part you see most, its gold corners and molten line.</p>
+  </div>
+
+  <div class="col">
+    <h2>29 sets, four ways to fight</h2>
+    <p>Every rank has one set for each way to fight, plus, from D up, one set forged from a gate Lord's heart.
+      Today's six sets keep their names and items and become one set each in their rank, re-made in the new look.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Way to fight</th><th>You wear it to</th><th>Its power (full set)</th></tr></thead>
+      <tbody>
+        <tr><td><b>Bulwark</b></td><td>stand your ground</td><td>Blows you guard fill Bastion. Full, your next deflect or heavy bursts a shockwave around you.</td></tr>
+        <tr><td><b>Strider</b></td><td>move: dodge, run walls, dash</td><td>Perfect dodges fill Flow. Full, a dodge leaves an afterimage that takes the next blow, and the next dodge is a long rush.</td></tr>
+        <tr><td><b>Channeler</b></td><td>fight with your powers</td><td>Each cast leaves a rune circling you. With three, your next power hits harder and wider.</td></tr>
+        <tr><td><b>Duelist</b></td><td>fight with the blade</td><td>Deflects and rhythm fill Edge. Full, your next strike sends a cutting wave.</td></tr>
+        <tr><td><b>Lord-forged</b></td><td>wear a Lord's power</td><td>The Lord's own move, made from its heart.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="ranks" role="group" aria-label="Pick a rank">
+    <button type="button" data-rank="E">E</button><button type="button" data-rank="D">D</button><button type="button" data-rank="C">C</button>
+    <button type="button" data-rank="B">B</button><button type="button" data-rank="A" aria-pressed="true">A</button><button type="button" data-rank="S">S</button>
+  </div>
+  <p class="rankinfo" id="rankinfo"></p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Set</th><th>Way</th><th>What it looks like</th><th>Colours</th></tr></thead>
+    <tbody id="sets"></tbody>
+  </table></div>
+
+  <div class="col">
+    <h2>Powers you feel, never cheats</h2>
+    <p>The rule: armour may change your body, your blows and your movement, and what everyone in front of you can see.
+      It never shows you anything hidden. No outlines, no glowing creatures, no ores through stone.</p>
+    <ul class="plain">
+      <li><b>Two pieces</b> of a set give its way's smaller bonus. <b>Four</b> give its power plus the set's own twist. Sets still mix.</li>
+      <li><b>Each set has a twist.</b> Wildhide's Pounce (a long leap from sneaking that lands hard) replaces Hunter's Sense. Bellguard rings like a bell when you guard perfectly and staggers those close. Rootwarden roots you while you cast.</li>
+      <li><b>Mastery I to V.</b> A set grows as you fight in it. II: its trims brighten. III: its seams glow, and pulse with your heartbeat when you're hurt. IV: it grows (longer horns, a longer cape, an extra crest). V: its own aura, like embers rising off Lordscale. Others see it.</li>
+    </ul>
+
+    <h2>The Forge Song: making armour</h2>
+    <p>From D up you make armour at your Forge. The Emberkits keep the fire hot and work the bellows; the hammer is yours.
+      At E, before the Forge, you make it by hand at the works table.</p>
+    <div class="acts">
+      <div class="act"><span class="n">Lay</span><span>Pick the piece. The materials leave your pack and land on the bench.</span></div>
+      <div class="act"><span class="n">Heat</span><span>The bar glows dull red, orange, yellow. Let go when it's in the gold band. Too early, your strikes count for less. Too late, a scale flaw shows on the finished piece.</span></div>
+      <div class="act"><span class="n">Shape</span><span>The piece's outline glows on the bar. Strike the marks on the beat of the set's own rhythm, 6 to 12 strikes. The metal takes the shape strike by strike, and every clean strike plays a note of the set's melody.</span></div>
+      <div class="act"><span class="n">Quench</span><span>Plunge it in the trough on the cue. Steam and a hiss.</span></div>
+      <div class="act"><span class="n">Fit</span><span>It goes on the Fitting Stand. The last piece of a set completes the suit, and the set wakes: the seams light, the cape unfurls, the camera circles once.</span></div>
+    </div>
+    <div class="song">HEAT    dull ▓▓▓▓▓▓▓▓[ GOLD ]▓▓ white      let go in the gold        3-5 s
+SHAPE   beat |  x  .  x  .  x  x  .  x |   strike the glowing marks   6-12 strikes
+        blank ─▶ rough ─▶ the piece         each clean strike adds a note
+QUENCH  plunge on the cue                                              1 s
+FIT     on the stand; the last piece wakes the set                     2 s</div>
+    <ul class="plain">
+      <li><b>Each rank adds a move:</b> C inlay a crystal (picks the accent colour), B tune Deepglass by its ring, A fold netherite with paired strikes, S starfire's fast fading marks.</li>
+      <li><b>Quality:</b> Plain, Fine, Masterwork, Flawless. It sets the piece's starting temper, and the Forge tempers on from there as today.</li>
+      <li><b>Still fun the 20th time:</b> a piece takes 20 to 40 seconds, each set has its own rhythm to learn, and a piece you've made at Masterwork can be forged from memory in 6 seconds. A friend at your anvil can take the off-beats.</li>
+      <li><b>Cinematic camera</b> by default (wide, over the shoulder, close on the metal, low for the quench, around the stand), first person in settings.</li>
+      <li><b>Never lost:</b> leave or log out mid-piece and the work stays on the anvil.</li>
+    </ul>
+
+    <h2>Where it all comes from</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Rank</th><th>Hours</th><th>Metal</th><th>Also</th></tr></thead>
+      <tbody>
+        <tr><td><b>E</b></td><td>0-4</td><td>copper</td><td>hide, bone, resin and wood from the wilds; made by hand</td></tr>
+        <tr><td><b>D</b></td><td>4-17</td><td>iron, from the caves</td><td>the Forge opens; gate patterns; a D Lord's heart for Hornlord</td></tr>
+        <tr><td><b>C</b></td><td>17-45</td><td>diamond</td><td>frost pelts, crystals to inlay; Shardcrown</td></tr>
+        <tr><td><b>B</b></td><td>45-70</td><td>amethyst and Deepglass</td><td>Veil thread, Living Deep carapace; Hollowheart</td></tr>
+        <tr><td><b>A</b></td><td>70-88</td><td>netherite</td><td>sky feathers; Lords' scales for Lordscale</td></tr>
+        <tr><td><b>S</b></td><td>88-100</td><td>starmetal</td><td>the Hollow Court for Sovereign Weave</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted">Hours from the approved Journey. The Provings' gifts stay exactly as approved. Every item says what it is, what it's for and where to get more.</p>
+
+    <h2>Your saves</h2>
+    <p>Today's six sets keep their items, so every piece in a chest or on you stays itself and simply gains its new look and
+      its temper. Wildhide's Hunter's Sense becomes Pounce. Vanilla armour stays as vanilla made it.</p>
+
+    <h2>How it gets built</h2>
+  </div>
+  <div class="phases">
+    <div class="phase"><span class="p">P0</span><div><h3>The look, everywhere</h3><p>The probe made real on all six of today's sets, on you, on stands, on mobs, at a distance; the gauntlet in every first-person pose; Hunter's Sense becomes Pounce.</p><p class="see">You see: your current sets transformed. About a day.</p></div></div>
+    <div class="phase"><span class="p">P1</span><div><h3>The Forge Song</h3><p>Heat, shape, quench, fit; the Fitting Stand; the camera and sounds; quality; the Armoury lists armour; the works table for E. Today's recipes move to the Forge.</p><p class="see">You see: forging Beastbound at your Forge.</p></div></div>
+    <div class="phase"><span class="p">P2</span><div><h3>E and D</h3><p>Seven new sets, the four powers, mastery I to III.</p><p class="see">You see: four or five sets to choose from in the first 17 hours.</p></div></div>
+    <div class="phase"><span class="p">P3</span><div><h3>C and B</h3><p>Eight sets, inlay and tuning, mastery IV and V (sets grow and get auras), Looks and accents.</p><p class="see">You see: the middle game's sets and the first auras.</p></div></div>
+    <div class="phase"><span class="p">P4</span><div><h3>A and S</h3><p>Eight sets, folding and starfire, the Lord-forged sets with the bosses' Lords.</p><p class="see">You see: the end game's sets.</p></div></div>
+    <div class="phase"><span class="p">P5</span><div><h3>Polish</h3><p>A Hall of Arms in the Hearth, a frame-time pass on your Mac, far detail, pacing, sound.</p><p class="see">You see: the finished ladder.</p></div></div>
+  </div>
+
+  <div class="col">
+    <h2>Decisions for you</h2>
+    <p>Tap Yes or No on each. Your answers save as you tap and I read them from here. Add a note to change anything.</p>
+  </div>
+  <div class="tally" id="tally"><span id="tallytext">Loading your answers…</span><button type="button" id="allyes" hidden>Yes to all I haven't answered</button></div>
+  <ol class="decisions" id="decisions"></ol>
+
+  <div class="foot">
+    <span>Plan: <code>docs/armour/PLAN.md</code> on the branch <code>claude/armour-forge-plan-c98ed9</code>. The probe's code is on that branch too; it is there to show the look, not to merge.</span>
+    <span>All art is ours, made by the kit in <code>tools/art/specs/armour_sets.py</code>. Your reference pictures set the bar only.</span>
+    <span>Nothing beyond the probe is built until you say yes.</span>
+  </div>
+</div>
+
+<script>
+const SETS = {
+  E: { info: "0-4 hours. Made by hand at the works table, before the Forge.", rows: [
+    ["Wildhide", "Strider", "layered hide, bone toggles, a hood with a fang brow, fur on one shoulder", "tan, ochre, bone", true],
+    ["Bellguard", "Bulwark", "copper hammered like bell bronze: a bell-mouthed helm, round pauldrons, a plated skirt", "verdigris, bronze"],
+    ["Rootwarden", "Channeler", "bark plates bound with living root, an antler-wood crown, glowing sap", "bark, moss, amber"],
+    ["Amberwing", "Duelist", "light leather with resin-hard wing cases on the shoulders and back, a long sash", "amber, black"]]},
+  D: { info: "4-17 hours. The Forge opens. Iron from the caves, gate patterns.", rows: [
+    ["Beastbound", "Bulwark", "iron over beast hide, a skull visor with tusks, chain skirts", "iron, rust, bone", true],
+    ["Cleftrunner", "Strider", "slim iron lamellar, a half mask and a long scarf that streams behind you", "iron, dusk blue"],
+    ["Lanternlight", "Channeler", "a robe under an iron collar, lantern cages on the shoulders burning in your Force's colour", "soot, brass, glow"],
+    ["Bladeward", "Duelist", "a fencer's brigandine, high collar, one great pauldron, a half cape", "oxblood, steel"],
+    ["Hornlord", "Lord-forged", "the horns and hide of a D gate's beast Lord on blackened iron", "black iron, horn, ember"]]},
+  C: { info: "17-45 hours. Diamond. Inlay arrives.", rows: [
+    ["Gatewrought", "Duelist", "gate-stone plates with the Five Forces in a ring on the chest, a split tabard", "slate, the five Force colours", true],
+    ["Vaultbreaker", "Bulwark", "massive studded plate, a ram-headed helm, a shield-like left pauldron", "steel, diamond white"],
+    ["Frostwalker", "Strider", "pelts and clear crystal plates, an icicle crest, a cape that frosts at the hem", "white, ice blue"],
+    ["Sunshard", "Channeler", "gold and diamond plates with a sun disc behind the head", "gold, sunlit white"],
+    ["Shardcrown", "Lord-forged", "crystal growing out of the plates, a crown of shards", "violet crystal, dark steel"]]},
+  B: { info: "45-70 hours. Amethyst and Deepglass. Tuning arrives.", rows: [
+    ["Veilwoven", "Channeler", "layered veils over fine plate, a hooded mantle, hems that drift as if under water", "pale violet, silver", true],
+    ["Deepcarapace", "Bulwark", "Deepglass chitin like a cave beetle, a ridged dome helm, glowing seams", "black glass, cave cyan"],
+    ["Cloudrunner", "Strider", "airy plates with feathered fins at the heels and shoulders", "sky white, slate"],
+    ["Tidebreaker", "Duelist", "amethyst-edged scale, a fin crest, a cape cut like a breaking wave", "sea green, amethyst"],
+    ["Hollowheart", "Lord-forged", "a Lord's hollowed heart worn in an open cage on the chest", "bone, deep red"]]},
+  A: { info: "70-88 hours. Netherite. Folding arrives. Lordscale is the probe above.", rows: [
+    ["Lordscale", "Lord-forged", "a horned helm with a burning slit, a chevron breast, rising pauldrons, a three-link cape, an ember heart", "red-black, gold, ember", true],
+    ["Leviathan", "Bulwark", "deep-sea netherite with fin spines down the back and a jaw-like helm", "abyss blue, bone"],
+    ["Galewing", "Strider", "feathered netherite whose cape opens like wings when you fly", "storm grey, white"],
+    ["Halo Choir", "Channeler", "bell-shaped skirts and a winged halo that rings when you cast", "ivory, gold"],
+    ["Dreamsteel", "Duelist", "mirror-thin plate with fragments drifting a finger's width off it", "pearl, night blue"]]},
+  S: { info: "88-100 hours. Starmetal. Starfire arrives.", rows: [
+    ["Sovereign Weave", "Lord-forged", "the Hollow Court's crown, collar and fins, a long court cape", "black, silver, court violet", true],
+    ["Starfall", "Bulwark", "starmetal plate with a burning star in the chest", "starmetal, white fire"],
+    ["Riftwalker", "Strider", "plates floating apart with darkness between them", "void black, rift violet"],
+    ["Nightcourt", "Duelist", "a court duelist's high collar, long tails, a mask", "midnight, silver"],
+    ["Signal's Echo", "Channeler", "robes that glitch like the opening's big moments: the System's own look", "white, signal cyan"]]}
+};
+const tbody = document.getElementById("sets"), info = document.getElementById("rankinfo");
+function showRank(r) {
+  document.querySelectorAll(".ranks button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.rank === r)));
+  info.textContent = r + " rank · " + SETS[r].info;
+  tbody.replaceChildren(...SETS[r].rows.map(([name, way, look, colours, hunter]) => {
+    const tr = document.createElement("tr");
+    const td0 = document.createElement("td"); const b = document.createElement("b"); b.textContent = name; td0.append(b);
+    if (hunter) { const t = document.createElement("span"); t.className = "tag hunter"; t.textContent = "today's set"; td0.append(" ", t); }
+    const td1 = document.createElement("td"); const t1 = document.createElement("span"); t1.className = "tag"; t1.textContent = way; td1.append(t1);
+    const td2 = document.createElement("td"); td2.textContent = look;
+    const td3 = document.createElement("td"); td3.textContent = colours;
+    tr.append(td0, td1, td2, td3); return tr;
+  }));
+}
+document.querySelectorAll(".ranks button").forEach(b => b.addEventListener("click", () => showRank(b.dataset.rank)));
+showRank("A");
+
+const DECISIONS = [
+  ["The look: sculpted 3D armour on the body's bones, drawn with our own shader, as in the shots.", "It's the only way to get real depth, shine, glow and a moving cape. No renderer changes needed."],
+  ["29 sets: four ways to fight (Bulwark, Strider, Channeler, Duelist) at every rank, plus a Lord-forged set at each rank from D.", "A real choice at every rank, on par with the weapons."],
+  ["Today's six sets keep their items and names and become one set each in their rank, re-made in the new look.", "Nothing in your world is lost, and the new look reaches you first."],
+  ["Hunter's Sense goes (it shows creatures through walls); Wildhide gets Pounce instead.", "Your rule: no seeing mobs, ores or blocks."],
+  ["The pick's Ore Sense and Vein Sight show ores through stone too. Should the mining owner take them out as well?", "Not armour, so not built here: the caves session would do it if you say yes."],
+  ["The Forge Song: heat, strike on the beat, quench, fit. Skill sets the quality, never success.", "A short game with your hands that a new set turns into a new song."],
+  ["Each rank adds a new move at the anvil (inlay, tune, fold, starfire).", "So the forging grows with you instead of repeating."],
+  ["Forge from memory: once you've made a piece at Masterwork, remake it in 6 seconds.", "The 20th piece never becomes a chore."],
+  ["Today's armour recipes move from the crafting grid to the Forge when the Forge Song lands (E sets by hand at the works table).", "Making armour becomes a moment in the Hearth, not a grid."],
+  ["Quality sets a piece's starting temper (Plain 0 up to Flawless III); tempering goes on as today.", "One system, not two, and skill is worth chasing."],
+  ["Mastery I to V, with the set's look waking as it grows (brighter trims, glowing seams, new parts, an aura).", "You look more powerful as you become more powerful, and others see it."],
+  ["Looks and accent colours: wear any set you've forged as the look of another. Earned in play, never stats.", "Keep a favourite look; on a future server it is the only thing that could ever be sold."],
+  ["The cinematic camera on by default when forging, first person in settings.", "It's the 'cinematic crafting' you asked for."],
+  ["Build P0 first: the new look on today's six sets, before the Forge Song.", "You see the biggest change in your game soonest."]
+];
+const list = document.getElementById("decisions"), tallyText = document.getElementById("tallytext"), allYes = document.getElementById("allyes");
+const answers = {};
+let db = null, canWrite = true;
+const cards = DECISIONS.map(([q, why], i) => {
+  const id = "d" + String(i + 1).padStart(2, "0");
+  const li = document.createElement("li"); li.className = "dec";
+  const pq = document.createElement("div"); pq.className = "q"; pq.textContent = q;
+  const pw = document.createElement("div"); pw.className = "why"; pw.textContent = why;
+  const pr = document.createElement("div"); pr.className = "rec"; pr.textContent = "My recommendation: yes";
+  const ans = document.createElement("div"); ans.className = "ans";
+  const y = document.createElement("button"); y.type = "button"; y.className = "y"; y.textContent = "Yes"; y.id = id + "-yes";
+  const n = document.createElement("button"); n.type = "button"; n.className = "n"; n.textContent = "No"; n.id = id + "-no";
+  const st = document.createElement("span"); st.className = "state";
+  ans.append(y, n, st);
+  const note = document.createElement("textarea"); note.id = id + "-note"; note.placeholder = "A note, if you want to change something (optional)";
+  note.setAttribute("aria-label", "Note on decision " + (i + 1));
+  li.append(pq, pw, pr, ans, note); list.append(li);
+  y.addEventListener("click", () => save(id, { answer: "yes" }));
+  n.addEventListener("click", () => save(id, { answer: "no" }));
+  note.addEventListener("change", () => save(id, { note: note.value.trim() }));
+  return { id, li, y, n, st, note };
+});
+function render() {
+  let yes = 0, no = 0;
+  for (const c of cards) {
+    const a = answers[c.id] || {};
+    c.y.setAttribute("aria-pressed", String(a.answer === "yes"));
+    c.n.setAttribute("aria-pressed", String(a.answer === "no"));
+    c.li.classList.toggle("yes", a.answer === "yes"); c.li.classList.toggle("no", a.answer === "no");
+    if (document.activeElement !== c.note && typeof a.note === "string") c.note.value = a.note;
+    if (a.answer === "yes") yes++; else if (a.answer === "no") no++;
+    c.y.disabled = c.n.disabled = c.note.disabled = !db || !canWrite;
+  }
+  const left = cards.length - yes - no;
+  tallyText.textContent = !db ? "Answers can't be saved in this view. Reply in chat with the numbers you'd change."
+    : yes + " yes · " + no + " no · " + left + " to answer";
+  allYes.hidden = !db || !canWrite || left === 0;
+}
+async function save(id, patch) {
+  if (!db) return;
+  const c = cards.find(x => x.id === id);
+  const next = Object.assign({ answer: null, note: "" }, answers[id], patch, { at: new Date().toISOString() });
+  answers[id] = next; render(); c.st.textContent = "saving…";
+  try { await db.doc("decisions/" + id).set(next); c.st.textContent = "saved"; }
+  catch (e) {
+    if (e && e.code === "invalid_argument") { canWrite = false; c.st.textContent = "only the owner can answer"; render(); }
+    else c.st.textContent = "not saved, try again";
+  }
+}
+allYes.addEventListener("click", async () => {
+  for (const c of cards) if (!(answers[c.id] && answers[c.id].answer)) await save(c.id, { answer: "yes" });
+});
+render();
+(async () => {
+  try { db = await claude.use("db"); } catch (e) { db = null; }
+  if (!db) { render(); return; }
+  try { const user = await claude.use("user"); if (user && (await user.can("data.write")) === false) canWrite = false; } catch (e) {}
+  db.collection("decisions").onSnapshot(snap => {
+    for (const d of snap.docs) if (d.exists) answers[d.id] = Object.assign({}, d.data());
+    render();
+  }, () => { render(); });
+  render();
+})();
+</script>
