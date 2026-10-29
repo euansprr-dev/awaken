@@ -40,6 +40,8 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
     /** Held poses a clip owns (no idle fidgets on top). */
     private static final int HELD = WildPose.S_HANG | WildPose.S_CHIRP | WildPose.S_RIPEN | WildPose.S_LISTEN | WildPose.S_DEFLATE
             | WildPose.S_CARRY | WildPose.S_REST | WildPose.S_BEACHED | WildPose.S_RIDDEN | WildPose.S_SLEEP;
+    /** The poses whose clips fold or lift the legs (the rest stand on their feet). */
+    private static final int LEGS_HELD = WildPose.S_HANG | WildPose.S_REST | WildPose.S_BEACHED | WildPose.S_SLEEP | WildPose.S_DEFLATE;
 
     private final Identifier texture;
     /** The closed-eyes skin (tools/art: {@code <id>_blink.png}) a blink draws, or null if the creature has none. */
@@ -215,6 +217,11 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         life.swimming = swim;
         life.walk = swim || (s.wild & (WildPose.S_HANG | WildPose.S_BEACHED)) != 0 ? 0.0F : s.walk;
         life.busy |= (s.wild & HELD) != 0;
+        // the feet (bodies with a motion profile): planted on the ground, let go to a pose's clip
+        life.grounded = (l.fauna & FaunaMob.P_AIR) == 0;
+        life.legsFree = (s.wild & LEGS_HELD) != 0;
+        life.stalking = (l.fauna & FaunaMob.P_STALK) != 0;
+        life.gaitRun = s.run;
         life.tick(s, true);
         s.pitch = life.ease(11, s.pitch, 0.2F); // into and out of the water the body levels off, it doesn't snap
     }

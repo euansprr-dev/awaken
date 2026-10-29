@@ -96,7 +96,7 @@
     "weaver_queen": {"blink": [0, 0]},
     "thousandfoot": {"blink": [0, 0]},
     "seep_heart": {"temperament": "beast", "blink": [0, 0], "breath": 0.15, "breathDepth": 0.7, "bob": 0.2, "sway": 0.4, "lean": 0.2, "headSpeed": 2.2, "mass": 4.0, "fidget": [5.0, 10.0], "idles": {"look": 3, "settle": 1}},
-    "drip_lurker": {"blink": [0, 0]},
+    "drip_lurker": {"blink": [0, 0], "bob": 0.0, "sway": 0.3, "idles": {"look": 3, "sniff": 1, "stretch": 1, "settle": 1}},
     "listener": {"springGain": 1.5, "blink": [0, 0]},
     "guardian_silent": {"springGain": 1.5, "blink": [0, 0]},
     "sovereign_silence": {"springGain": 1.5, "blink": [0, 0]},

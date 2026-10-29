@@ -50,6 +50,9 @@ public final class LifeRig {
     final boolean hasEars, hasTail;
     /** Seconds into the death clip when the body comes to rest on the ground (its thud), or 0 when there's no clip. */
     final float impact;
+    /** The body's motion profile (SPEC §23, "Motion") and its legs bound for the feet, or null: it moves as before. */
+    final @Nullable MotionProfile motion;
+    final @Nullable LegParts legs;
 
     private LifeRig(LifeProfile p) {
         this.p = p;
@@ -69,6 +72,8 @@ public final class LifeRig {
         idleClip = false;
         hasEars = hasTail = false;
         impact = 0;
+        motion = null;
+        legs = null;
     }
 
     /**
@@ -107,7 +112,7 @@ public final class LifeRig {
             parts[i] = part(root, path);
             pivots[i] = pivot(root, path);
         }
-        return new LifeRig(p, LifeBones.bind(bones), parts, pivots, geo, paths, rig, idleClip);
+        return new LifeRig(p, LifeBones.bind(bones), root, parts, pivots, geo, paths, rig, idleClip);
     }
 
     private static void addPath(String path, List<String> paths, Map<String, Integer> index) {
@@ -137,8 +142,8 @@ public final class LifeRig {
         return new float[]{v.x, v.y, v.z};
     }
 
-    private LifeRig(LifeProfile p, LifeBones.Binding b, ModelPart[] parts, float[][] pivots, Map<String, float[]> geo, List<String> paths,
-                    @Nullable HeroRig rig, boolean idleClip) {
+    private LifeRig(LifeProfile p, LifeBones.Binding b, ModelPart root, ModelPart[] parts, float[][] pivots, Map<String, float[]> geo,
+                    List<String> paths, @Nullable HeroRig rig, boolean idleClip) {
         this.p = p;
         this.bones = true;
         this.binding = b;
@@ -263,15 +268,18 @@ public final class LifeRig {
         hasEars = ears;
         hasTail = tail;
         impact = rig != null && b.body() >= 0 ? landing(rig, b.bones().get(b.body()).name()) : 0;
+        // the feet ride a body that carries its head (its body bone moves over them); else the pose stack would carry them
+        motion = rig != null ? MotionProfile.of(rig.id) : null;
+        legs = motion != null && motion.gait() != null && !rootMotion ? LegParts.of(motion.gait(), b, root, parts) : null;
         // which fidgets this body can play
-        boolean springs = n > 0, legs = countRole(b, Role.LEG) >= 2;
+        boolean springs = n > 0, limbs = countRole(b, Role.LEG) >= 2;
         can[Idle.LOOK.ordinal()] = head != null;
         can[Idle.SNIFF.ordinal()] = head != null;
         can[Idle.FLICK.ordinal()] = springs;
         can[Idle.SHAKE.ordinal()] = body != null && (springs || head != null);
-        can[Idle.STRETCH.ordinal()] = body != null && head != null && legs;
+        can[Idle.STRETCH.ordinal()] = body != null && head != null && limbs;
         can[Idle.YAWN.ordinal()] = jaw != null;
-        can[Idle.SCRATCH.ordinal()] = head != null && hind.length > 0;
+        can[Idle.SCRATCH.ordinal()] = head != null && hind.length > 0 && this.legs == null; // planted feet don't kick
         can[Idle.PERK.ordinal()] = head != null;
         can[Idle.SETTLE.ordinal()] = body != null || rootMotion;
     }
@@ -389,6 +397,27 @@ public final class LifeRig {
                 body.zRot += life.bodyRoll;
             }
         }
+        // the motion profile: the body sits on its feet, rides the ground and the step, turns a little toward its look,
+        // and the head holds level against the gait
+        Legs lg = life.legs;
+        float levelPitch = 0, levelRoll = life.swayRoll;
+        if (body != null && !rootMotion && motion != null) {
+            MotionProfile.Body mb = motion.body();
+            if (lg != null) {
+                float wgt = lg.weight;
+                float pitch = lg.groundPitch * mb.slope() * wgt, roll = (lg.groundRoll * mb.slope() + lg.gaitRoll) * wgt;
+                body.y += (lg.rig.gait.crouch() + life.creep + lg.groundY + lg.gaitY) * wgt;
+                body.xRot += pitch;
+                body.zRot += roll;
+                levelPitch += pitch;
+                levelRoll += roll;
+            }
+            body.yRot += life.twist;
+            if (head != null && mb.headLevel() > 0) {
+                head.xRot -= levelPitch * mb.headLevel();
+                head.zRot -= levelRoll * mb.headLevel();
+            }
+        }
         for (ModelPart c : chests) {
             c.xScale += 0.04F * b;
             c.yScale += 0.03F * b;
@@ -431,5 +460,7 @@ public final class LifeRig {
             q.yRot += ay[j];
             q.zRot += az[j];
         }
+        // last: the legs reach for where the feet stand, whatever the body above them did
+        if (legs != null && lg != null && lg.rig == legs.rig) legs.apply(lg);
     }
 }

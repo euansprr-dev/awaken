@@ -5574,6 +5574,70 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
   gets springs on them, every creature that blinks has lids, eye bones or a closed-eye skin). Tour:
   `tools/autopilot/creature-life.txt` (PACK=perf,feel; clips in run-autopilot/clips/life_*).
 
+### 23.1 Motion: feet on the ground, weight over them (Euan 2026-10-29: "on par with Fresh Animations")
+
+Every Awaken creature on our own bodies (not bosses, not people) moves to the bar Fresh Animations sets for vanilla's
+mobs. The principles are learned from it, never its files: a stride driven by ground speed, weight that shifts over the
+feet, overlap and follow-through, idles with variety, head and eye life, reactions to hits and turns, anticipation and
+follow-through on attacks, and every creature moving the way its body and nature say. The life layer above already gives
+breath, springs, fidgets, the look, the stagger and the fall; the motion layer adds the feet and the carriage.
+
+- **Data**: `assets/awaken/life/motion.json` (schemaVersion 1), by rig id. A body not listed moves exactly as before (the
+  kit's bosses have no entry). `gait`: `pattern` (`ripple`: one foot at a time from the back forward; `alternate`:
+  opposite sets; `ripple-alternate`: the first walking, the second once it runs, 0.45 in and 0.25 out), `duty` (share of
+  a cycle a foot stands, walking and running), `lift` (px a step rises), `stride` (blocks a cycle covers; 0 the rig's
+  own), `reach` (blocks a planted foot may trail before it steps at once), `settle` (blocks from home a foot may rest
+  when the body stops), `crouch` (px the body sinks on its legs), `radius` and `fan` (where each foot stands: px out
+  from its hip, the front ones fanned forward and the back ones back by `fan` degrees), `regrip` (seconds between a calm
+  creature's idle re-grips of one foot), `swing` (the longest a step takes), `bob` (px the body sinks while feet are up),
+  `roll` (radians it leans off a lifted foot), `rear` (how far the front pair lets go to the clips during a wind-up).
+  `body`: `headLevel` (the head holds level against the gait's and the ground's pitch and roll), `twist` (the body turns
+  this share of its look, at most 0.35 rad), `slope` (it pitches and rolls with the ground under its planted feet),
+  `land` (a landing squashes it by how far it fell: a spring at 3 Hz kicked by the fall speed), `still` (a stalking
+  hunter holds its breath to a quarter, plays no fidgets and no re-grips), `creep` (px it sinks while stalking).
+- **Legs** (`LegRig`, plain data, checked on the server): a leg is a LEG-role bone that hangs from a non-leg with exactly
+  one LEG-role child and nothing below it (hip and knee). Each is posed by two-bone IK in the hip's parent frame: the
+  knee goes where the two lengths meet on the side it bulged at rest (its pole), the hip's rest frame is turned onto the
+  new thigh frame, and the knee only bends about its own hinge (the shortest turn between two directions both square to
+  it). Applied last in `LifeRig.apply` (after the clips, the look and the springs), blended over the clips by the feet's
+  weight; out of reach the leg points straight at its target. Only bodies whose body bone carries the head (the feet
+  ride the body bone; a pose-stack body would carry them off their spots).
+- **Feet** (`Legs`, per creature, from the render extraction once a frame; nothing allocated): a planted foot keeps its
+  world position while the body moves over it. A gait clock runs with the ground covered plus the arc the feet sweep
+  when it turns on the spot (yaw × the feet's mean distance from the middle), so a turn steps too. A foot lifts when the
+  clock reaches its place in the pattern, swings for (1 - duty) of a cycle (0.08 s to `swing`) on an arc that peaks
+  before the middle, and lands where its home will be halfway through its next stand (velocity and turn rate ahead,
+  capped at 80% of `reach`), on the ground under that spot (collision tops from a block above the feet to three below,
+  never more than a block up or down). A foot left beyond `reach` steps at once unless a neighbour (same side, next
+  rank, or its opposite) is up. Stopped for 0.3 s, the foot furthest out of place (beyond `settle`) steps back under the
+  body, one at a time; a calm one re-grips. The body rides its feet: half the planted feet's mean height (±4 px), nose
+  up a rise and leaning across a slope (front against back feet, left against right, ±0.35 rad, eased over 0.12 s),
+  sinking `bob` × the share of feet in the air and leaning off a lifted one. Off the ground (the `P_AIR` pose bit),
+  hanging, resting, sleeping, beached, deflated, swimming or dying, the clips own the legs (the weight eases out over
+  0.12 s, the feet held planted meanwhile); landing, the feet stand at home again and ease back in over 0.15 s. A
+  first sight or a jump of more than 3 blocks stands them at home.
+- **Clips** of a profiled body move the body over its feet, the head, the tail, the jaw, and own the legs only when the
+  feet let go (hanging, leaping, dying, a wind-up's front pair). Their walk and run legs stay for anything drawn without
+  a life (the clip is what shows if nothing plants the feet).
+- **Drip Lurker** (`drip_lurker`; six two-bone legs, hunter): ripple-alternate, duty 0.78/0.55, steps 3/4.5 px high, feet
+  10 px out from the hips fanned 42°, crouch 1 px, reach 0.55, re-grips every 3-8 s, `rear` 0.9; head level 0.6, twist
+  0.2, slope 0.8, land 1, `still` with a 2.5 px creep; temperament: no step bob, sway 0.3, look/sniff/stretch/settle
+  fidgets. Its rig strides 1.0 blocks walking and 1.8 running (were 1.6/3.0, too long for its legs). Motion: it waits on
+  planted feet with the cone swaying like a stalactite in a draught and the fangs tasting the air one at a time; it
+  creeps low on a slow ripple of single steps, holding its breath and its fidgets while it stalks; it glides level over
+  its feet when it walks (no bob), cone lagging, and leans into a run on alternating sets; angry and still it sinks, head
+  down, fangs spread and quivering; every wind-up lets its front pair go so it rears them, spread and trembling, before
+  the lunge throws the body forward with the fangs snapping shut, overshoots and settles; Spike Drop rears high then
+  crashes cone-first, the body squashing and the cone whipping after; a blow jerks the body up and back over its planted
+  feet with the cone lagging; it dies rearing with its legs flung out, drops on its side and the legs curl up over it
+  and twitch one by one; hanging, each leg flexes on its own breath round the cone.
+- Test: `creature_motion_feet` (every motion.json entry names a rig; every gait finds two-bone legs on a body bone that
+  carries the head; every foot can reach its stance standing and crouched; the IK lands each foot within 0.05 px of its
+  home, a step ahead and behind, the top of a step's arc and the crouch, checked by forward kinematics; the hip's turn
+  survives its ZYX Euler angles). Tour: `tools/autopilot/mob-anims-lurker.txt` on CI (PACK=perf,feel; clips in
+  run-autopilot/clips/lurk_*: idle, a walk into a run, a stop and a turn, a blow, a death, the hunt; a vanilla spider
+  under Fresh Animations beside it).
+
 ## 24. Hands: the first-person system (plan docs/anims/PLAN.md, page https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy; approved 2026-10-25)
 
 Euan: "right now for basically everything there is no first-person animation". One owner for everything drawn in first

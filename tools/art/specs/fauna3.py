@@ -1275,7 +1275,7 @@ def paint_wickling(r, P):
 
 def drip_lurker():
     r = Rig("drip_lurker", (64, 64))
-    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 1.6, 3.0, (0.16, 0.32), 0.6
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 1.0, 1.8, (0.16, 0.32), 0.6
     body = r.bone("body", (0, 16, 0))
     body.cube("dbody", -4, -1, -4, 8, 3, 8)
     cone = body.bone("cone", (0, -1, 0))
@@ -1305,76 +1305,145 @@ def drip_lurker():
 
 
 def lurker_clips(r):
-    idle = r.clip("idle", 3.0, loop=True)
-    # it waits: legs shift their grip one by one, the fangs twitch
-    for k in range(3):
-        for nm, sg in (("dleg%d_l" % k, 1), ("dleg%d_r" % k, -1)):
-            cycle(idle, nm, "rot", lambda p, k=k, sg=sg: (0, 0, sg * 4 * max(0.0, s(p, k / 3 + (0.5 if sg < 0 else 0)))), 8)
-    for nm, sg in (("fang_l", 1), ("fang_r", -1)):
-        idle.rot(nm, [(0, 0, 0, 0), (1.2, 0, 0, 0), (1.3, 0, 0, sg * 15), (1.4, 0, 0, 0), (3.0, 0, 0, 0)])
-    cycle(idle, "body", "pos", lambda p: (0, 0.3 * s(p), 0), 8)
+    """On the ground its feet are planted by the motion layer (SPEC 23, Motion: assets/awaken/life/motion.json); the clips
+    move the body over them, the cone, the head and the fangs, and own the legs only when it hangs, leaps or dies. A
+    wind-up lets the front pair go (the profile's rear) so it rears them before it strikes."""
+    L = (("dleg0_l", "dshin0_l", 1), ("dleg1_l", "dshin1_l", 1), ("dleg2_l", "dshin2_l", 1),
+         ("dleg0_r", "dshin0_r", -1), ("dleg1_r", "dshin1_r", -1), ("dleg2_r", "dshin2_r", -1))
+    fangs = (("fang_l", 1), ("fang_r", -1))
+    idle = r.clip("idle", 6.0, loop=True)
+    # it waits: the cone sways like a stalactite in a draught, the fangs taste the air now and then (never together)
+    cycle(idle, "cone", "rot", lambda p: (1.2 * s(p), 0, 1.6 * s(p, 0.3)), 8)
+    for nm, sg in fangs:
+        lead = 1.1 if sg > 0 else 4.2
+        idle.rot(nm, [(0, 0, 0, 0), (lead, 0, 0, 0), (lead + 0.08, 0, 0, sg * 14), (lead + 0.16, 0, 0, sg * 2),
+                      (lead + 0.24, 0, 0, sg * 10), (lead + 0.4, 0, 0, 0), (6.0, 0, 0, 0)])
+    idle.rot("dhead", [(0, 0, 0, 0), (2.4, 0, 0, 0), (2.6, 4, 0, 3), (3.4, 4, 0, 3), (3.7, 0, 0, 0), (6.0, 0, 0, 0)])
+    # walking and running: the legs here are only for when nothing plants them; the body glides level over its feet
+    # (they carry it), the cone lags the gait like a weight on a stalk
     walk = r.clip("walk", 0.9, loop=True)
-    # a harvestman's walk: alternating triangles of legs, knees rising high, the body gliding level
-    for k in range(3):
-        for nm, side in (("dleg%d_l" % k, 1), ("dleg%d_r" % k, -1)):
-            ph = (k % 2) * 0.5 + (0.5 if side < 0 else 0)
-            cycle(walk, nm, "rot", lambda p, ph=ph, side=side: (0, side * 22 * s(p, ph), side * -14 * max(0.0, c(p, ph))), 8)
-    cycle(walk, "body", "pos", lambda p: (0, 0.4 * abs(s(p * 2)), 0), 8)
-    cycle(walk, "cone", "rot", lambda p: (2 * s(p * 2), 0, 3 * s(p)), 8)
     run = r.clip("run", 0.55, loop=True)
-    for k in range(3):
-        for nm, side in (("dleg%d_l" % k, 1), ("dleg%d_r" % k, -1)):
-            ph = (k % 2) * 0.5 + (0.5 if side < 0 else 0)
-            cycle(run, nm, "rot", lambda p, ph=ph, side=side: (0, side * 32 * s(p, ph), side * -20 * max(0.0, c(p, ph))), 8)
-    cycle(run, "body", "pos", lambda p: (0, 0.8 * abs(s(p * 2)), 0), 8)
+    for clip, swing, lift in ((walk, 22, 14), (run, 32, 20)):
+        for k in range(3):
+            for nm, side in (("dleg%d_l" % k, 1), ("dleg%d_r" % k, -1)):
+                ph = (k % 2) * 0.5 + (0.5 if side < 0 else 0)
+                cycle(clip, nm, "rot", lambda p, ph=ph, side=side, a=swing, b=lift: (0, side * a * s(p, ph), side * -b * max(0.0, c(p, ph))), 8)
+    cycle(walk, "cone", "rot", lambda p: (1.5 + 1.5 * s(p * 2, 0.1), 0, 2.5 * s(p, 0.15)), 8)
+    cycle(run, "cone", "rot", lambda p: (4 + 2 * s(p * 2, 0.1), 0, 3.5 * s(p, 0.15)), 8)
+    run.rot("body", [(0, 5, 0, 0), (0.55, 5, 0, 0)])
+    run.rot("dhead", [(0, -4, 0, 0), (0.55, -4, 0, 0)])
+    # angry and still: low, the head down at its prey, fangs spread and quivering, the cone tipped forward
+    angry = r.clip("angry", 2.0, loop=True)
+    angry.pos("body", [(0, 0, -1, 0), (2.0, 0, -1, 0)])
+    angry.rot("body", [(0, 5, 0, 0), (2.0, 5, 0, 0)])
+    angry.rot("dhead", [(0, 8, 0, 0), (2.0, 8, 0, 0)])
+    for nm, sg in fangs:
+        cycle(angry, nm, "rot", lambda p, sg=sg: (0, 0, sg * (22 + 5 * s(p * 8, 0.25 if sg < 0 else 0))), 16)
+    cycle(angry, "cone", "rot", lambda p: (6 + 1.0 * s(p), 0, 1.2 * s(p, 0.3)), 8)
     hang = r.clip("hang", 4.0, loop=True)
-    # hanging (the renderer turns it over): legs drawn in tight round the cone's base, it sways like a drip about to fall
-    for k in range(3):
-        for nm, sg in (("dleg%d_l" % k, 1), ("dleg%d_r" % k, -1)):
-            hang.rot(nm, [(0, 0, 0, sg * 40), (4.0, 0, 0, sg * 40)])
-        for nm, sg in (("dshin%d_l" % k, 1), ("dshin%d_r" % k, -1)):
-            hang.rot(nm, [(0, 0, 0, sg * 30), (4.0, 0, 0, sg * 30)])
+    # hanging (the renderer turns it over): legs drawn in round the cone's base, each flexing on its own breath; it sways
+    # like a drip about to fall and the head hangs, watching the floor
+    for k, (leg, shin, sg) in enumerate(L):
+        ph = k / 6 + (0.5 if sg < 0 else 0)
+        cycle(hang, leg, "rot", lambda p, sg=sg, ph=ph: (0, 0, sg * (40 + 3 * s(p, ph))), 8)
+        cycle(hang, shin, "rot", lambda p, sg=sg, ph=ph: (0, 0, sg * (30 + 5 * s(p, ph + 0.15))), 8)
     cycle(hang, "cone", "rot", lambda p: (3 * s(p), 0, 3 * s(p, 0.25)), 8)
     hang.rot("dhead", [(0, 30, 0, 0), (4.0, 30, 0, 0)])
-    # Spike Drop: it rears high on its legs, cone first, then crashes down
+    front = (("dleg0_l", "dshin0_l", 1), ("dleg0_r", "dshin0_r", -1))
+
+    def rear(clip, t0, t1, quiver=True):
+        """The front pair lifts off the ground and spreads, poised (the profile lets them go during a wind-up)."""
+        for leg, shin, sg in front:
+            keys = [(0, 0, 0, 0), (t0, 0, sg * 55, sg * -38)]
+            sk = [(0, 0, 0, 0), (t0, 0, 0, sg * -50)]
+            if quiver:
+                q = t0
+                while q + 0.1 < t1:
+                    keys.append((q + 0.05, 0, sg * 57, sg * -41))
+                    keys.append((q + 0.1, 0, sg * 55, sg * -38))
+                    q += 0.1
+            keys.append((t1, 0, sg * 55, sg * -38))
+            sk.append((t1, 0, 0, sg * -50))
+            clip.rot(leg, keys)
+            clip.rot(shin, sk)
+    # Spike Drop: it rears high on its legs, front pair up, cone back; then crashes down cone-first and the cone whips
     sw = r.clip("slam_windup", 1.0)
-    sw.pos("body", [(0, 0, 0, 0), (1.0, 0, 4, 0)])
-    sw.rot("body", [(0, 0, 0, 0), (1.0, -20, 0, 0)])
-    for k in range(3):
-        for nm, sg in (("dleg%d_l" % k, 1), ("dleg%d_r" % k, -1)):
-            sw.rot(nm, [(0, 0, 0, 0), (1.0, 0, 0, sg * 25)])
+    sw.pos("body", [(0, 0, 0, 0), (0.25, 0, -1, 0.5), (1.0, 0, 4, 1)])
+    sw.rot("body", [(0, 0, 0, 0), (0.25, 3, 0, 0), (1.0, -20, 0, 0)])
+    sw.rot("cone", [(0, 0, 0, 0), (1.0, -6, 0, 0)])
+    sw.rot("dhead", [(0, 0, 0, 0), (1.0, 12, 0, 0)])
+    rear(sw, 0.5, 1.0)
     ss = r.clip("slam_strike", 0.6)
-    ss.pos("body", [(0, 0, 4, 0), (0.1, 0, -2, 0), (0.6, 0, 0, 0)])
-    ss.rot("body", [(0, -20, 0, 0), (0.1, 15, 0, 0), (0.6, 0, 0, 0)])
-    ss.scale("body", [(0, 1, 1, 1), (0.12, 1.1, 0.85, 1.1), (0.6, 1, 1, 1)])
-    # Lunge: low crouch, fangs open, then a spring forward
+    ss.pos("body", [(0, 0, 4, 1), (0.1, 0, -3, -1), (0.24, 0, 0.6, 0), (0.6, 0, 0, 0)])
+    ss.rot("body", [(0, -20, 0, 0), (0.1, 15, 0, 0), (0.24, -3, 0, 0), (0.6, 0, 0, 0)])
+    ss.scale("body", [(0, 1, 1, 1), (0.1, 1.12, 0.82, 1.12), (0.22, 0.96, 1.05, 0.96), (0.6, 1, 1, 1)])
+    ss.rot("cone", [(0, -6, 0, 0), (0.13, 12, 0, 0), (0.3, -4, 0, 0), (0.6, 0, 0, 0)])
+    for leg, shin, sg in front:
+        ss.rot(leg, [(0, 0, sg * 55, sg * -38), (0.1, 0, sg * 30, sg * 12), (0.6, 0, 0, 0)])
+        ss.rot(shin, [(0, 0, 0, sg * -50), (0.1, 0, 0, sg * -10), (0.6, 0, 0, 0)])
+    # Lunge: it gathers back and low, the front pair rising and spreading, fangs wide; then throws itself forward and
+    # the fangs snap shut, the body overshoots and settles
     lw = r.clip("lunge_windup", 0.6)
-    lw.pos("body", [(0, 0, 0, 0), (0.6, 0, -2, 1)])
-    for nm, sg in (("fang_l", 1), ("fang_r", -1)):
-        lw.rot(nm, [(0, 0, 0, 0), (0.6, 0, 0, sg * 30)])
+    lw.pos("body", [(0, 0, 0, 0), (0.4, 0, -2.5, 2), (0.6, 0, -2.5, 2.2)])
+    lw.rot("body", [(0, 0, 0, 0), (0.4, -10, 0, 0), (0.6, -11, 0, 0)])
+    lw.rot("cone", [(0, 0, 0, 0), (0.45, -5, 0, 0), (0.6, -5, 0, 0)])
+    lw.rot("dhead", [(0, 0, 0, 0), (0.4, -8, 0, 0), (0.6, -8, 0, 0)])
+    for nm, sg in fangs:
+        lw.rot(nm, [(0, 0, 0, 0), (0.35, 0, 0, sg * 36), (0.6, 0, 0, sg * 38)])
+    rear(lw, 0.35, 0.6)
     lsk = r.clip("lunge_strike", 0.5)
-    lsk.pos("body", [(0, 0, -2, 1), (0.1, 0, 1, -3), (0.5, 0, 0, 0)])
-    for nm, sg in (("fang_l", 1), ("fang_r", -1)):
-        lsk.rot(nm, [(0, 0, 0, sg * 30), (0.12, 0, 0, sg * -10), (0.5, 0, 0, 0)])
+    lsk.pos("body", [(0, 0, -2.5, 2.2), (0.08, 0, 1, -4), (0.2, 0, -0.5, -1), (0.5, 0, 0, 0)])
+    lsk.rot("body", [(0, -11, 0, 0), (0.08, 12, 0, 0), (0.22, -2, 0, 0), (0.5, 0, 0, 0)])
+    lsk.rot("cone", [(0, -5, 0, 0), (0.1, 9, 0, 0), (0.26, -3, 0, 0), (0.5, 0, 0, 0)])
+    lsk.rot("dhead", [(0, -8, 0, 0), (0.08, 10, 0, 0), (0.5, 0, 0, 0)])
+    for nm, sg in fangs:
+        lsk.rot(nm, [(0, 0, 0, sg * 38), (0.08, 0, 0, sg * -12), (0.16, 0, 0, sg * -8), (0.5, 0, 0, 0)])
+    for leg, shin, sg in front:
+        lsk.rot(leg, [(0, 0, sg * 55, sg * -38), (0.08, 0, sg * 65, sg * 5), (0.5, 0, 0, 0)])
+        lsk.rot(shin, [(0, 0, 0, sg * -50), (0.08, 0, 0, sg * -30), (0.5, 0, 0, 0)])
     w = r.clip("windup", 0.6)
-    w.pos("body", [(0, 0, 0, 0), (0.6, 0, -1.5, 0)])
+    w.pos("body", [(0, 0, 0, 0), (0.45, 0, -1.5, 1.5), (0.6, 0, -1.5, 1.6)])
+    w.rot("body", [(0, 0, 0, 0), (0.45, -6, 0, 0), (0.6, -6, 0, 0)])
+    for nm, sg in fangs:
+        w.rot(nm, [(0, 0, 0, 0), (0.4, 0, 0, sg * 28), (0.6, 0, 0, sg * 30)])
+    rear(w, 0.35, 0.6, quiver=False)
     st = r.clip("strike", 0.4)
-    st.pos("body", [(0, 0, -1.5, 0), (0.1, 0, 0.5, -2), (0.4, 0, 0, 0)])
+    st.pos("body", [(0, 0, -1.5, 1.6), (0.08, 0, 0.5, -2.5), (0.2, 0, 0, -0.5), (0.4, 0, 0, 0)])
+    st.rot("body", [(0, -6, 0, 0), (0.08, 9, 0, 0), (0.4, 0, 0, 0)])
+    for nm, sg in fangs:
+        st.rot(nm, [(0, 0, 0, sg * 30), (0.08, 0, 0, sg * -10), (0.4, 0, 0, 0)])
+    # the bite: a flick back, a drive in head-down with the fangs snapping shut, a recoil
     bite = r.clip("bite", 0.4)
-    for nm, sg in (("fang_l", 1), ("fang_r", -1)):
-        bite.rot(nm, [(0, 0, 0, 0), (0.1, 0, 0, sg * 30), (0.2, 0, 0, sg * -10), (0.4, 0, 0, 0)])
-    bite.pos("body", [(0, 0, 0, 0), (0.15, 0, 0, -2), (0.4, 0, 0, 0)])
+    for nm, sg in fangs:
+        bite.rot(nm, [(0, 0, 0, 0), (0.07, 0, 0, sg * 32), (0.14, 0, 0, sg * -12), (0.22, 0, 0, sg * -6), (0.4, 0, 0, 0)])
+    bite.pos("body", [(0, 0, 0, 0), (0.07, 0, 0.3, 0.8), (0.14, 0, -0.5, -2.5), (0.26, 0, 0, -0.6), (0.4, 0, 0, 0)])
+    bite.rot("body", [(0, 0, 0, 0), (0.07, -5, 0, 0), (0.14, 8, 0, 0), (0.4, 0, 0, 0)])
+    bite.rot("dhead", [(0, 0, 0, 0), (0.07, -10, 0, 0), (0.14, 14, 0, 0), (0.4, 0, 0, 0)])
+    bite.rot("cone", [(0, 0, 0, 0), (0.12, -3, 0, 0), (0.22, 5, 0, 0), (0.4, 0, 0, 0)])
+    # a blow: the body jerks up and back over its planted feet, fangs flare, the cone lags and swings back through
     hurt = r.clip("hurt", 0.4)
-    hurt.pos("body", [(0, 0, 0, 0), (0.06, 0, -1.5, 0), (0.4, 0, 0, 0)])
-    for k in range(3):
-        for nm, sg in (("dleg%d_l" % k, 1), ("dleg%d_r" % k, -1)):
-            hurt.rot(nm, [(0, 0, 0, 0), (0.06, 0, 0, sg * 15), (0.4, 0, 0, 0)])
-    death = r.clip("death", 1.2)
-    death.pos("body", [(0, 0, 0, 0), (0.6, 0, -5, 0), (1.2, 0, -6, 0)])
-    death.rot("body", [(0, 0, 0, 0), (1.2, 0, 0, 25)])
-    for k in range(3):
-        for nm, sg in (("dshin%d_l" % k, 1), ("dshin%d_r" % k, -1)):
-            death.rot(nm, [(0, 0, 0, 0), (1.2, 0, 0, sg * 50)])
+    hurt.pos("body", [(0, 0, 0, 0), (0.05, 0, 1.5, 1.5), (0.15, 0, -1, 0.5), (0.4, 0, 0, 0)])
+    hurt.rot("body", [(0, 0, 0, 0), (0.05, -8, 0, 0), (0.18, 3, 0, 0), (0.4, 0, 0, 0)])
+    hurt.rot("cone", [(0, 0, 0, 0), (0.1, 6, 0, 0), (0.22, -2, 0, 0), (0.4, 0, 0, 0)])
+    for nm, sg in fangs:
+        hurt.rot(nm, [(0, 0, 0, 0), (0.05, 0, 0, sg * 24), (0.4, 0, 0, 0)])
+    for leg, shin, sg in L:
+        hurt.rot(leg, [(0, 0, 0, 0), (0.06, 0, 0, sg * 15), (0.4, 0, 0, 0)])
+    # the death: it rears with its legs flung out, drops onto its side, the legs curl up over it the way a harvestman's
+    # do, and twitch one by one before they still
+    death = r.clip("death", 1.0)
+    death.pos("body", [(0, 0, 0, 0), (0.1, 0, 2, 0), (0.42, 0, -6, 0), (0.5, 0, -5.4, 0), (1.0, 0, -6, 0)])
+    death.rot("body", [(0, 0, 0, 0), (0.1, -12, 0, 0), (0.45, 6, 0, 18), (1.0, 5, 0, 20)])
+    death.rot("cone", [(0, 0, 0, 0), (0.12, -6, 0, 0), (0.5, 8, 0, 4), (0.65, 3, 0, 2), (1.0, 4, 0, 3)])
+    death.rot("dhead", [(0, 0, 0, 0), (0.1, -15, 0, 0), (0.5, 20, 0, 0), (1.0, 18, 0, 0)])
+    for nm, sg in fangs:
+        death.rot(nm, [(0, 0, 0, 0), (0.1, 0, 0, sg * 30), (0.5, 0, 0, sg * 5), (0.72, 0, 0, sg * 14), (0.8, 0, 0, sg * 4), (1.0, 0, 0, sg * 4)])
+    for k, (leg, shin, sg) in enumerate(L):
+        tw = 0.55 + 0.07 * ((k * 5) % 6)  # each leg's last twitch at its own moment
+        death.rot(leg, [(0, 0, 0, 0), (0.1, 0, 0, sg * -22), (0.45, 0, 0, sg * -50), (tw, 0, 0, sg * -54),
+                        (tw + 0.05, 0, 0, sg * -44), (tw + 0.1, 0, 0, sg * -52), (1.0, 0, 0, sg * -54)])
+        death.rot(shin, [(0, 0, 0, 0), (0.1, 0, 0, sg * -30), (0.45, 0, 0, sg * 55), (tw, 0, 0, sg * 62),
+                         (tw + 0.05, 0, 0, sg * 40), (tw + 0.1, 0, 0, sg * 58), (1.0, 0, 0, sg * 64)])
 
 
 def paint_drip_lurker(r, P):

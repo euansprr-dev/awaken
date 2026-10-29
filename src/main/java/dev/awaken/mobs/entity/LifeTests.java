@@ -2,12 +2,17 @@ package dev.awaken.mobs.entity;
 
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.mobs.client.anim.HeroRig;
+import dev.awaken.mobs.client.life.LegRig;
 import dev.awaken.mobs.client.life.LifeBones;
 import dev.awaken.mobs.client.life.LifeBones.Role;
 import dev.awaken.mobs.client.life.LifeProfile;
+import dev.awaken.mobs.client.life.MotionProfile;
 import dev.awaken.mobs.def.Bestiary;
 import dev.awaken.mobs.def.MobDef;
 import dev.awaken.mobs.def.Model;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +23,9 @@ import java.util.Map;
 /**
  * The life layer's data (SPEC §23), checked on plain data like the hero rigs: every creature on one of our own bodies
  * gets a temperament, every body with ears or a tail gets springs on them (the rigs, and the naming of our hand-built
- * bodies), and every creature that blinks has a way to: eyelid bones, eye bones, or a closed-eye texture.
+ * bodies), and every creature that blinks has a way to: eyelid bones, eye bones, or a closed-eye texture. The motion
+ * layer's feet: every body with a gait finds its two-bone legs, can reach where they stand, and its IK puts each foot
+ * where it's asked.
  */
 public final class LifeTests {
     private LifeTests() {}
@@ -127,5 +134,87 @@ public final class LifeTests {
             h.assertTrue(problems.isEmpty(), String.join("; ", problems));
             h.succeed();
         });
+
+        AwakenTests.register("creature_motion_feet", 20, h -> {
+            List<String> problems = new ArrayList<>();
+            int checked = 0;
+            Matrix4f m = new Matrix4f(), toParent = new Matrix4f();
+            Matrix3f hr = new Matrix3f(), kr = new Matrix3f(), back = new Matrix3f();
+            Vector3f e = new Vector3f(), want = new Vector3f();
+            for (MotionProfile mp : MotionProfile.all().values()) {
+                HeroRig r = HeroRig.get(mp.id());
+                if (r == null) {
+                    problems.add("motion.json names no rig " + mp.id());
+                    continue;
+                }
+                if (mp.gait() == null) continue;
+                LifeBones.Binding b = bind(r);
+                // the feet ride a body bone that carries the head (LifeRig binds legs only then)
+                boolean carries = false;
+                for (int k = b.head(); k >= 0 && b.body() >= 0; k = b.bones().get(k).parent()) if (k == b.body()) carries = true;
+                if (!carries) problems.add(mp.id() + ": its body bone doesn't carry its head, so its feet can't plant");
+                float[][] pose = new float[r.bones.size()][];
+                for (int i = 0; i < pose.length; i++) {
+                    HeroRig.Bone bone = r.bones.get(i);
+                    pose[i] = new float[]{bone.px(), bone.py(), bone.pz(), bone.rx(), bone.ry(), bone.rz()};
+                }
+                LegRig legs = LegRig.of(mp.gait(), b, pose, i -> box(r.bones.get(i)));
+                if (legs == null) {
+                    problems.add(mp.id() + ": a gait but fewer than two two-bone legs");
+                    continue;
+                }
+                float lift = Math.max(mp.gait().liftWalk(), mp.gait().liftRun());
+                for (int i = 0; i < legs.n; i++) {
+                    LegRig.rest(legs.chain(i), pose, m);
+                    m.invertAffine(toParent);
+                    float[] hp = pose[legs.hipBone(i)];
+                    float hx = legs.homeX[i], hz = legs.homeZ[i];
+                    // home, a step's reach ahead and behind, the top of a step's arc, home with the body crouched
+                    float c = mp.gait().crouch() + mp.body().creep();
+                    float[][] targets = {{hx, 24, hz}, {hx, 24, hz - 5}, {hx, 24, hz + 5}, {hx, 24 - lift, hz - 2}, {hx, 24 - c, hz}};
+                    for (int k = 0; k < targets.length; k++) {
+                        float[] tg = targets[k];
+                        toParent.transformPosition(tg[0], tg[1], tg[2], want);
+                        float dist = want.distance(hp[0], hp[1], hp[2]);
+                        if (k == 0 || k == 4) {
+                            if (dist > legs.reach(i) * 0.98F) problems.add(mp.id() + " leg " + i + ": can't reach its stance (" + dist + " of " + legs.reach(i) + " px)");
+                        }
+                        if (!legs.solve(i, toParent, hp[0], hp[1], hp[2], tg[0], tg[1], tg[2], hr, kr)) {
+                            problems.add(mp.id() + " leg " + i + ": no solve");
+                            continue;
+                        }
+                        // forward again: the hip's turn carries the knee, the knee's the shin, to the foot
+                        Vector3f knee = hr.transform(legs.kneePivot(i)).add(hp[0], hp[1], hp[2]);
+                        Vector3f foot = hr.transform(kr.transform(legs.shinTip(i))).add(knee);
+                        if (dist > legs.fold(i) + 0.2F && dist < legs.reach(i) - 0.2F && foot.distance(want) > 0.05F) {
+                            problems.add(mp.id() + " leg " + i + ": the foot lands " + foot.distance(want) + " px off its target");
+                        }
+                        // the rotations survive the trip through the part's Euler angles (ZYX, as ModelPart draws them)
+                        hr.getEulerAnglesZYX(e);
+                        back.rotationZYX(e.z, e.y, e.x);
+                        if (!back.equals(hr, 1e-3F)) problems.add(mp.id() + " leg " + i + ": the hip's turn doesn't survive its Euler angles");
+                    }
+                    checked++;
+                }
+            }
+            h.assertTrue(checked >= 6, "the drip lurker's six legs (and every other gait's) are checked (" + checked + ")");
+            h.assertTrue(problems.isEmpty(), String.join("; ", problems));
+            h.succeed();
+        });
+    }
+
+    /** A bone's own cubes' box (min xyz, max xyz), or null. */
+    static float[] box(HeroRig.Bone bone) {
+        if (bone.cubes().isEmpty()) return null;
+        float[] box = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+        for (HeroRig.Cube c : bone.cubes()) {
+            box[0] = Math.min(box[0], c.x());
+            box[1] = Math.min(box[1], c.y());
+            box[2] = Math.min(box[2], c.z());
+            box[3] = Math.max(box[3], c.x() + c.w());
+            box[4] = Math.max(box[4], c.y() + c.h());
+            box[5] = Math.max(box[5], c.z() + c.d());
+        }
+        return box;
     }
 }
