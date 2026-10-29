@@ -60,7 +60,7 @@ import java.util.Map;
  * perfstart &lt;label&gt; ... perfend                 the same around the lines in between (a flight, a fight)
  * info                                           logs the renderer, device, framebuffer, heap, GC and loaded mods
  * window &lt;width&gt; &lt;height&gt;                       windowed at that size in points (Retina doubles the pixels)
- * opt renderDistance|simulationDistance &lt;n&gt;     changes a video option for the following scenes
+ * opt renderDistance|simulationDistance|volume &lt;n&gt;  changes an option for the following scenes (volume: master %)
  * lens off|swift|cinematic|ultra                switches Awaken's light layer, for same-moment A/B shots
  * lens chain <probe>|off                       measurement: awaken:lens_probe_<probe> (tools/lens/probes.py) in place of the Look's chain
  * lens temporal on|off|setting                  Lens 2's clouds and light spread over frames, or every pixel every frame
@@ -624,7 +624,8 @@ public final class Autopilot {
                 dev.awaken.compat.client.CompatClient.shareFarDepthEverywhere("share".equals(arg.trim()));
                 waitTicks = 10;
             }
-            case "opt" -> { // opt renderDistance|simulationDistance|guiScale|gamma <n> (guiScale 0: auto; gamma in %, 100: Bright)
+            case "opt" -> { // opt renderDistance|simulationDistance|guiScale|gamma|volume <n> (guiScale 0: auto; gamma in %, 100:
+                // Bright; volume: master in %, so sounds play (and sound mods do their work) where 0 skips them)
                 String[] o = arg.trim().split("\\s+");
                 int v = Integer.parseInt(o[1]);
                 switch (o[0]) {
@@ -635,6 +636,7 @@ public final class Autopilot {
                         mc.resizeGui();
                     }
                     case "gamma" -> mc.options.gamma().set(v / 100.0);
+                    case "volume" -> mc.options.getSoundSourceOptionInstance(SoundSource.MASTER).set(v / 100.0);
                     default -> Awaken.LOG.warn("[autopilot] unknown option {}", o[0]);
                 }
                 waitTicks = 20;

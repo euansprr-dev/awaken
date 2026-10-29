@@ -1,0 +1,53 @@
+# The Rolling Storm's frame cost (Euan, 29 Oct: "loses a good 10 fps when it's happening and stutters"; SPEC §21.6
+# "Its cost"). One spot and one view, measured with the storm and without it:
+#   storm_on   60 s: a storm forced, the camera 70 blocks from its centre on the edge of its rain (local weather, close
+#              strikes, flashes), looking up at it, still (so Far Sight may serve its cached horizon);
+#   storm_off  30 s: the same camera and view once the storm is calmed away and its weather handed back.
+# The storm comes first because only `happen` (random spot) and `near` (the camera relative to it) can place it, and
+# both builds have them; the clear sky is measured at the camera the storm left. Each perf line logs avg_fps, p50,
+# p95, p99 (the 1% low) and max (the worst frame), and the server tick.
+# Sound: tours mute the master volume, and a sound at zero volume is skipped before Sound Physics sees it. `opt volume
+# 1` (1%, near silent) lets sounds play so its work is in the numbers; a build without that option (before pack/storm-perf)
+# warns and stays muted, so its numbers carry less work than the after run's.
+# Run alone on the Mac, before (build/awaken-v1 68d3f77b) and after (pack/storm-perf), Euan's pack without comfort
+# (Dynamic FPS would cap a background window):
+#   PACK=perf,feel,sound,world TECTONIC=awakened RD=24 LENS=cinematic SLOT_WHO=perf-storm \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/perf-storm.txt 900
+# Read: grep "perf storm_" run-autopilot/logs/latest.log
+world autopilot_perfstorm creative 20261029
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+wait 100
+screen close
+window 1280 720
+info
+hud off
+lens cinematic
+opt volume 1
+cmd gamemode spectator
+cmd awaken living calm
+# open land away from the city and its gate pillars, at noon
+cmd awaken living goto greenwild_woods
+wait 200
+cmd tp @s ~400 ~ ~300
+wait 300
+cmd time set 6000
+# ---- the storm: built (12 s), the camera on the edge of its rain, looking up at it
+cmd awaken living happen rolling_storm
+wait 300
+cmd awaken living near 70
+wait 200
+cmd tp @s ~ ~ ~ ~ -25
+wait 300
+perf storm_on 60
+# ---- the same camera and view, the storm calmed away and its weather handed back
+cmd awaken living calm
+wait 400
+perf storm_off 30
+info
+quit
