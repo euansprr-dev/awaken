@@ -90,7 +90,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | Sovereign of Roots | Sovereign | Court | Caster | kit | A, the Hearthstone Toad | ✓ 7008ed48 | ✓ 7008ed48 | — |
 | Sovereign of Ash | Sovereign | Court | Flier | kit | A, the Cinder Wyrm | ✓ d3b188fd | ✓ d3b188fd | — |
 | The Signal's Shadow | Final | Seed | Duelist | kit | A, the Signal Cuttlefish | ✓ df6001890 | ✓ df6001890 | — |
-| The Long Drop | Nightmare | Fear | Flier | kit | A, the Hand from Above | — | — | — |
+| The Long Drop | Nightmare | Fear | Flier | kit | A, the Hand from Above | ✓ cf9d617d | ✓ cf9d617d | — |
 | The Pyre | Nightmare | Fear | Flier | blaze ×2 | — | — | — | — |
 | The Undertow | Nightmare | Fear | Caster | drowned ×2 | — | — | — | — |
 | The Hollow Crowd | Nightmare | Fear | Brute (a crowd) | zombie ×1.7 | — | — | — | — |
