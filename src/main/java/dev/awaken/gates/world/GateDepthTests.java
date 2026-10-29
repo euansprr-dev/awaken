@@ -144,6 +144,12 @@ public final class GateDepthTests {
         GOLDEN_V6.put("awaken:rare/the_glass_sea", 0x2d8f262633250380L);
     }
 
+    /**
+     * The same carves as Linux on x86 (CI) makes them, where they differ from the Mac's: FrostDress places by Math.sin and
+     * cos, which the two can round differently in the last digit, enough to move a block. Either hash is version 6 unchanged.
+     */
+    static final Map<String, Long> GOLDEN_V6_X86 = Map.of("awaken:frost_monastery/cloisters", 0xea1d0bb95632b0a3L);
+
     /** How deep a world's places are (SPEC §38.14, "How we'll know"), over its first two world floors. */
     record Depth(int cols, double flat, int heights, double partial, double plumb, double roofSpread, double detail, double planMs) {
         @Override
@@ -277,7 +283,7 @@ public final class GateDepthTests {
                 long got = carveHash(id, 6);
                 log.append("DEPTHGOLD ").append(id).append(' ').append(Long.toHexString(got)).append('\n');
                 Long want = GOLDEN_V6.get(id);
-                if (want == null || want != got) wrong.add(id);
+                if ((want == null || want != got) && !Long.valueOf(got).equals(GOLDEN_V6_X86.get(id))) wrong.add(id);
             }
             Awaken.LOG.info("[gates] version 6 carves:\n{}", log);
             h.assertTrue(wrong.isEmpty(), "version 6 floors carve differently now: " + wrong);

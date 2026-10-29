@@ -10685,8 +10685,9 @@ blocks with no style-sheet stop; the Hive first with CI shots, then every theme 
 now, fought-on second storeys in a later plan.
 - **Content version 7** (`GatePlan.CONTENT_VERSION`). A version 6 floor carves exactly the blocks it always did:
   `gateworlds_depth_v6_golden` hashes the first world floor of a version 6 plan in each of the 75 worlds (secret
-  worlds are places on other floors), block for block, against the hashes taken from the build before version 7. A
-  gate someone entered keeps its version; READY gates nobody entered are rebuilt at 7 on the next start, as with every
+  worlds are places on other floors), block for block, against the hashes taken from the build before version 7 (the
+  Frost Cloisters also has CI's hash: Linux on x86 rounds FrostDress's sines a digit apart from the Mac, enough to move
+  a block, in version 6 as before). A gate someone entered keeps its version; READY gates nobody entered are rebuilt at 7 on the next start, as with every
   version. **`gateWorldsDepth`** (server config, on): off, new gates are made at 6 (`GatePlan.current()`) and no gate
   is rebuilt for 7, so the server can roll back without touching a save.
 - **The ground grid.** An engine that gives its places ground sets `WorldPlan.ground` before `finish`: where you stand
