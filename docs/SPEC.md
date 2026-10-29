@@ -255,7 +255,17 @@ the rank's glow added as light, a wide haze in the rank's colour alpha-blended (
 thinning to nothing with height; no world fog (it counts height as distance and cut the column off flat), the top kept
 inside the far plane. Drawn after the level in a pass of its own (depth-tested, no depth written), never through the
 level's translucent passes (with improved transparency their composite writes a translucent's depth wherever it shows,
-so Lens took each ribbon's whole quad for solid and left its clouds out there: a hard-edged slab). Admin `/awaken gate frame <dist> <lift>` puts the camera on the line from the nearest gate toward
+so Lens took each ribbon's whole quad for solid and left its clouds out there: a hard-edged slab). Hidden by any land
+in front of where the gate really stands, near or far (Euan, 29 Oct: "One of the gate beams is showing on top of the
+cliff here even tho the gate is behind it"): a pillar drawn pulled in along its sight line was tested at the depth it was
+drawn at, so chunks between there and the gate never hid it, and Far Sight's land isn't in the game's depth at all. The
+pillars' own pipelines (`RigPipelines.PILLAR_HAZE`/`PILLAR_LIGHT`, shader `gate_pillar`) carry each pillar's stretch (how
+many times further off it really stands), write its real depth (at the far plane past it) for the game's depth test, and
+discard where far land is nearer (`compat.client.FarTerrain`'s depth and planes, while it draws and shares one; never
+under Distant Horizons). A driver that can't build them draws the pillars as before. Tour `pillars-ridge` (render
+distance 6; the camera due south of gate 1 at fixed spots 120 and 300 blocks off, lifted over the roofs; a stone wall 31
+wide 84-87 blocks ahead to 2 under its eyes). CI runs 40815747360 (before) and 40814281481 (after) at 300 blocks: before,
+the beam crosses the wall's face down to the gate; after, it shows only above the wall's top. Admin `/awaken gate frame <dist> <lift>` puts the camera on the line from the nearest gate toward
 Carillon's centre, facing the pillar (tours).
 Gate card shows rank, breaks-in, omen; PER ≥20 adds layout, ≥40 modifiers, ≥60 floor count; Veil scouting shows all.
 A gate of another rank than the hunter's says so in a "For you" row: "above your rank", or "below your rank · pays less"
@@ -298,6 +308,36 @@ States: BUILDING → READY → ACTIVE ⇄ OPEN → CLEARED | BROKEN → RELEASED
 Break: spill wave + roaming Gate Lord with boss bar at the gate; blight (desaturation + grey fog) within 96 blocks until
 cleared; better loot. Warning one play-day ahead when within 256 blocks of a Hearth. The Gate Stabiliser pushes a break
 back by play-days. After the "Break the Signal" ending no gate breaks; after "Wake up" there is no blight.
+**Seen first** (Euan, 29 Oct 2026: "way too many gates breaking that I haven't even seen yet... a gate should only start
+the timer if you've been close to it"): a gate's break clock starts the first time any player comes within 64 blocks
+(`Breaks.SEEN_RADIUS`, about where the vortex reads clearly over the land; 3D distance from its ground block, checked once
+a second). Any player's approach starts it, owner or not (the gate stands in everyone's world and whoever is near can
+clear it); a spectator's never does, and Spirit Sight or a Gate Scanner reading from afar doesn't count. The clock then
+runs the play-days it was rolled with (1-4 by rank, plus any Stabiliser days): `breaksOnPlayDay = seen day + (rolled break
+day − created day)`. Until then the gate waits: it never warns or breaks, `GateRecord.waiting`/`counting` say so, and
+every reader shows no clock (`GateView.breaksOnPlayDay` is `Long.MAX_VALUE`, `GateHooks.waiting(level, id)` tells a
+waiting gate from a calm one; the Hearth's and a village's bells, the Grey Fields, Spirit Sight's card ("Not until
+someone goes near it"), the Gate Scanner and its Atlas marks, the gate card, the Atlas's gate marks (beacon flag
+`WAITING`), Jade and `/awaken gate info`'s timer line ("waits to be seen"). The Director's cap (4 standing gates per owner
+within 1,500 blocks) counts waiting gates, so a waiting gate nobody visits folds away quietly after 7 play-days unseen
+(`Breaks.UNSEEN_DAYS`, `GateRecord.foldsOnPlayDay`): no break, no Lord, no message. Saved as `seen_day` and `folds_on`
+(gate registry schema 4); loading an older save sends every standing gate that can break back to unseen, folding 7
+play-days from that load, and leaves broken ones as they are.
+**Where a gate stands** (29 Oct 2026, Euan's save: gates 41-46 failed in a row, gate 40 showed a beam over nothing):
+a gate replaces natural ground only, and that now includes the Awakened Lands' own (fused and scorched glass, sunshard,
+riven shale, faultstone, fault seam, hoarfrost, frostspar, mirepeat, the Wild Lands' trodden earth, salt licks and
+wallows) and the Soft Land's step slabs (`#awaken:gates_ground`). A bottom slab of a ground material lying on a natural
+block is a soft step, never a build, so it no longer refuses the spot (every Soft Land footprint has some); a top slab,
+or any other slab, still is someone's build. A step is good ground to stand on. The vortex's own column (the anchor
+and its cores) always forms over whatever grew there unless it is a block entity or unbreakable. A gate stands when its
+anchor core holds the vortex (`Overworld.stands`); a build whose vortex can't stand fails and comes down, with the real
+reason in the trace ("a Hearth within 64 blocks", "someone's build in the footprint", "wet or open ground", "its vortex
+had no room"). A loaded gate whose vortex is missing (an old doorway, or the anchor that Lands ground blocked before
+this) is rebuilt once per server run, checked every 10 s; if it still can't stand it folds away quietly (a broken one,
+or one with someone inside, is hidden instead). Every surface that shows a gate shows only one that stands (built, not
+released, not fallen: `GateExterior.shown`): the pillar and the Atlas marks (beacons), Far Sight's pillars, the Now line,
+the Horizon's first gate, `GateHooks.near` (Spirit Sight, the Gate Scanner, the bells, the villages) and `Gates.near`.
+The first gate's "A gate has opened N m" waits until it stands, so a failed build never announced anything.
 
 Themes (15), layouts (8), modifiers (14), twists (8), bosses: exactly as in `docs/plan.html` gate generator.
 
@@ -7589,7 +7629,8 @@ checklist titled "Your home", not Now lines (which leave the HUD, §27.11):
   hint; from afar: home on the Now line; an Anchor's guide; then the next room at home only).
 
 **Setting it down** (use on the top of a block). Refused, each with its reason: soft ground or no room, the city reserve
-(`CityBasin.reserved`), a Precursor ward (`WardHooks.at`), any gate not released within 64 (`GateHooks.near`), another
+(`CityBasin.reserved`), a Precursor ward (`WardHooks.at`), any gate that stands within 64 (`GateHooks.near`; one still
+forming fails its build on the Hearth instead, §7), another
 Hearth's radius, a household rule (`Household.refusesOwnAnchor`). Founds a **Tier 0 Hearthfire** (`awaken:hearthfire`,
 `HearthfireBlock` + an empty block entity that lists loaded fires for the client's glow; light 14; strength 2 / 1200,
 immovable, owner-only to break; loot table empty: the code returns the coal). `HearthRecord.tier` 0, radius 24
@@ -10487,7 +10528,12 @@ Built 2026-10-28. Four themes, twenty worlds, on the cave engine (38.10) with a 
   - **Foundry**: brick-gridded iron floors, brass-banded walls with pipes and furnaces; the Works Floor's machine pits
     (four deep under a grate, furnaces at the bottom, gears turning in them); the Great Engine's gear (radius up to 10,
     its axle on two iron pillars, high enough to walk under); the Stopped Hour's 70 pieces hanging in the air round a clock
-    face on the back wall; pipe runs along every tunnel and steam curtains across the Pipe Maze's.
+    face on the back wall; pipe runs along every tunnel and steam curtains across the Pipe Maze's. A tunnel's wall pipes
+    stop short of a doorway's middle (its two inner blocks, four blocks in: `Dress.inDoorway`), so where the way bends
+    hard by a door and its wall swings across the doorway no pipe closes it (29 Oct, Euan: "fix the Pipe Maze doorway
+    block"; GameTest `gateworlds_pipe_maze_doorways`). This changes the carve by a few blocks of pipe at such doorways, so a
+    Foundry gate already open shows a seam there where old chunks meet new ones (Euan: "a seam in Foundry gates already
+    open is fine").
   - **Desert**: dunes; the Buried Colossus's head (radius 15, rising 6 to 36 out of the sand, its eyes glowing glass)
     placed in the first free corner, and a colonnade along its tunnels; glass only on faces you can see (the Glass Caves;
     elsewhere carved sandstone, so no glass ever shows the void through the shell); the Sunken City's lots (12 square, a
@@ -10795,8 +10841,8 @@ Built 2026-10-29. Two themes (ten worlds) and fifteen rare worlds, all on the ca
     concrete or terracotta, a light into the nearest light block. One patch on a calm cavern's floor keeps its true
     colours: the_true_colour or the_right_colour. Built rooms keep theirs.
   - A worn theme meets rooms it never meets at home (the gate's own Rig rooms), so `BorrowedDress` keeps the middle of
-    every doorway open at foot and head height, four blocks in, after the theme's dress (a Pipe Maze pipe can otherwise
-    cross a Rig room's way out). The theme's own worlds are untouched.
+    every doorway open at foot and head height, four blocks in, after the theme's dress (a piece of it can otherwise
+    cross a Rig room's way out). The Foundry's own tunnels keep their pipes out of doorways themselves (38.11).
   - The secrets an event gives that aren't named after it are listed in `WorldThemes.GIVES`.
 - **Calm** (a recipe's `calm` param, `Rooms.calm`; the Quiet and the Last Campfire): its rooms wake empty, an arena is an
   ordinary room, and the gate's clock doesn't press you there.
@@ -10818,6 +10864,36 @@ Built 2026-10-29. Two themes (ten worlds) and fifteen rare worlds, all on the ca
   and the Other Gate's looks for every gate theme, the twisted worlds' looks, and calm floors and rooms);
   `gateworlds_tint` (grey and turned colours, lights, the kept patch, what passes untouched); `gateworlds_sets` covers
   every theme's piece and keepsakes.
+
+### 38.14 Depth inside the places (content version 7; page https://claude.ai/artifact/MZoFfNZsNBLpFqJhEj8dE4, plan docs/gate-depth/page.html; Euan approved it as written 2026-10-29: "Go ahead with the full plan after fixing this current issue")
+Euan, after playing a Hive gate: the rooms still read as walls, a floor and a roof. Every place gets ground that rises
+and falls in half steps, walls that change as they go up, a roof at more than one height, things standing in the space,
+and growth that thickens the further a spot is from the way you walk. The five decisions as recommended: new and
+unentered gates only; gentle on the way and on fight floors, bold at the edges (up to four blocks); about 120 new
+blocks with no style-sheet stop; the Hive first with CI shots, then every theme unless he says stop; climbable ledges
+now, fought-on second storeys in a later plan.
+- **Content version 7** (`GatePlan.CONTENT_VERSION`). A version 6 floor carves exactly the blocks it always did:
+  `gateworlds_depth_v6_golden` hashes the first world floor of a version 6 plan in each of the 75 worlds (secret
+  worlds are places on other floors), block for block, against the hashes taken from the build before version 7 (the
+  Frost Cloisters also has CI's hash: Linux on x86 rounds FrostDress's sines a digit apart from the Mac, enough to move
+  a block, in version 6 as before). A gate someone entered keeps its version; READY gates nobody entered are rebuilt at 7 on the next start, as with every
+  version. **`gateWorldsDepth`** (server config, on): off, new gates are made at 6 (`GatePlan.current()`) and no gate
+  is rebuilt for 7, so the server can roll back without touching a save.
+- **The ground grid.** An engine that gives its places ground sets `WorldPlan.ground` before `finish`: where you stand
+  over each of the plot's 256 x 256 columns, in whole blocks above the floor line (a half slab's column counts the
+  block over it). The floor keeps it (`FloorLayout.ground(x, z)`, 64 KB a floor, rebuilt from the saved plan like the
+  rest of the layout; nothing new is saved). Null on a flat floor, so every version 6 floor and every room floor reads
+  0.
+- **Spawns and features stand on the ground.** `GateService.roomFloor` adds the ground, so every monster, spot, Lord,
+  NPC, flood and fallback that asks for a room's floor stands on it; the entrance and the vault bars read their
+  feature's column; the painter sets shrines, seals, caches, runes, lanterns, sigils and updrafts on it. Features keep
+  their own heights over it.
+- **Tests.** `gateworlds_depth` measures every world's places as the plan page measured them (columns you can stand
+  in, the share at the floor line, half-step heights per place as the median of places a chunk or more big, surfaces
+  that aren't full blocks, walls plumb from feet to head, the roof's spread, what stands per 100 floor blocks, and the
+  plan's cost) and logs them; worlds whose ground is built (`GateDepthTests.DEEP`) are held to the dry caves' targets
+  (flat 55% or less, 8 heights or more, 12% partial, 65% plumb or less, roof spread 6, detail 35). The world tests'
+  reach checks read the ground.
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 

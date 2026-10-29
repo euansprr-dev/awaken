@@ -25,10 +25,12 @@ import java.util.UUID;
  * erased while the server runs (once out of memory) or their region files are deleted while the level is closed, then
  * return to {@code freeCells}. Schema 2 adds each cell's generation (how often it was reused while running): entities
  * saved with an older generation are stale and leave when loaded. Schema 3 adds prepared encounters and the saved
- * live-member roster, so chunk/entity load order cannot restart a fight.
+ * live-member roster, so chunk/entity load order cannot restart a fight. Schema 4 adds each gate's {@code seen_day} and
+ * {@code folds_on} (a gate's break clock waits until someone comes close): loading an older file sends every standing
+ * gate back to unseen ({@link GateService#onStarted}).
  */
 public final class GateRegistry extends SavedData {
-    public static final int SCHEMA = 3;
+    public static final int SCHEMA = 4;
 
     private int nextId = 1;
     private int nextCell = 0;
@@ -38,8 +40,19 @@ public final class GateRegistry extends SavedData {
     private final Map<String, Claim> pending = new LinkedHashMap<>();
     private final Set<String> done = new LinkedHashSet<>();
     private final Map<Integer, Integer> cellGen = new java.util.HashMap<>();
+    /** The schema the file was saved with (a new registry is current); the server's start migrates and raises it. */
+    private int loadedSchema = SCHEMA;
 
     public GateRegistry() {}
+
+    int loadedSchema() {
+        return loadedSchema;
+    }
+
+    void migrated() {
+        loadedSchema = SCHEMA;
+        setDirty();
+    }
 
     private record Data(int schema, int nextId, int nextCell, List<Integer> free, List<Integer> released, List<GateRecord> gates,
                         List<Claim> pending, List<String> done, Map<String, Integer> gens) {
@@ -58,6 +71,7 @@ public final class GateRegistry extends SavedData {
 
     public static final Codec<GateRegistry> CODEC = Data.CODEC.xmap(d -> {
         GateRegistry r = new GateRegistry();
+        r.loadedSchema = d.schema;
         r.nextId = d.nextId;
         r.nextCell = d.nextCell;
         r.freeCells.addAll(d.free);

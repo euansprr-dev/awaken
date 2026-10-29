@@ -83,7 +83,8 @@ public final class LookAt {
         var preview = Gates.preview(s, g.id());
         int per = Progression.stat(p, Stat.PER);
         boolean scouted = Gates.isScouted(p, g.id());
-        int breaksIn = g.state().standing() && !g.scripted() ? (int) Math.min(Integer.MAX_VALUE - 1, Math.max(0, g.breaksInDays())) : -1;
+        // -1: no clock to show (scripted, calm, or nobody has come close yet)
+        int breaksIn = g.state().standing() && !g.scripted() && g.breaksInDays() >= 0 ? (int) Math.min(Integer.MAX_VALUE - 1, g.breaksInDays()) : -1;
         return Optional.of(gateFor(g.rank(), g.state(), breaksIn, g.scripted(), preview.orElse(null), per, scouted));
     }
 

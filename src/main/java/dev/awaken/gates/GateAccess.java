@@ -28,7 +28,7 @@ final class GateAccess implements GateHooks.Access {
         GatePlan p = g.plan;
         return new GateHooks.GateView(g.key(), g.pos, p.rank().ordinal(), p.theme().themeId(), p.theme().displayName, p.theme().omen,
                 p.layout().displayName, p.modifiers().stream().map(m -> m.displayName).toList(), p.twist().displayName, p.floors(),
-                p.boss(), g.state.name(), g.neverBreaks(level.getServer()) ? Long.MAX_VALUE : g.breaksOnPlayDay, g.mouth());
+                p.boss(), g.state.name(), g.counting(level.getServer()) ? g.breaksOnPlayDay : Long.MAX_VALUE, g.mouth());
     }
 
     private static GateRecord record(ServerLevel level, String id) {
@@ -42,7 +42,7 @@ final class GateAccess implements GateHooks.Access {
     @Override
     public List<GateHooks.GateView> near(ServerLevel level, BlockPos pos, int radius) {
         GateRegistry reg = GateRegistry.get(level.getServer());
-        return Gates.near(level, pos, radius).stream().map(i -> reg.gate(i.id())).filter(g -> g != null && g.state != GateState.RELEASED)
+        return Gates.near(level, pos, radius).stream().map(i -> reg.gate(i.id())).filter(g -> g != null && GateExterior.shown(g))
                 .map(g -> view(level, g)).toList();
     }
 
@@ -89,7 +89,7 @@ final class GateAccess implements GateHooks.Access {
         // the story's Bell Crypt: one floor asks for the Ritual of the Bell's hall, more for today's three-floor crypt
         GatePlan plan = t == Theme.BELL_CRYPT && r == Rank.E
                 ? (floors == 1 ? Gates.ritualPlan(seed) : withFloors(Gates.prologuePlan(seed), n))
-                : new GatePlan(seed, GatePlan.CONTENT_VERSION, r, t, Layout.LABYRINTH, List.<Modifier>of(), Twist.NONE, n, t.bossId(),
+                : new GatePlan(seed, GatePlan.current(), r, t, Layout.LABYRINTH, List.<Modifier>of(), Twist.NONE, n, t.bossId(),
                         Theme.OVERGROWN_TEMPLE, 0);
         int id = Gates.openScripted(player, plan, near);
         return id < 0 ? Optional.empty() : Optional.of(Integer.toString(id));
@@ -105,6 +105,12 @@ final class GateAccess implements GateHooks.Access {
     public void release(ServerLevel level, String id) {
         GateRecord g = record(level, id);
         if (g != null) GateService.release(level.getServer(), g);
+    }
+
+    @Override
+    public boolean waiting(ServerLevel level, String id) {
+        GateRecord g = record(level, id);
+        return g != null && g.waiting(level.getServer());
     }
 
     @Override

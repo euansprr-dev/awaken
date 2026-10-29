@@ -913,12 +913,14 @@ public final class GatePainter {
             for (Room.Feature ft : r.features) {
                 if (ft.kind() == Room.FeatureKind.INNER_GATE) innerGate(ft, x0, z0);
                 if (ft.kind() == Room.FeatureKind.RIFT_WALL) riftWall(ft, x0, z0);
+                // on a world floor's ground (38.14) a feature stands where you'd stand over its column
+                int up = f.ground(ft.x(), ft.z());
                 if (ft.kind() == Room.FeatureKind.VAULT_CACHE) {
-                    for (int[] b : FeatureBlocks.vaultBars(ft)) put(b[0], floorY + b[1], b[2], x0, z0, GatesRegistry.BARS.get().defaultBlockState());
+                    for (int[] b : FeatureBlocks.vaultBars(ft)) put(b[0], floorY + up + b[1], b[2], x0, z0, GatesRegistry.BARS.get().defaultBlockState());
                 }
                 int bx = ft.x() - x0, bz = ft.z() - z0;
                 if (bx < 0 || bx > 15 || bz < 0 || bz > 15) continue;
-                int y = floorY + ft.y();
+                int y = floorY + up + ft.y();
                 switch (ft.kind()) {
                     case SHRINE -> set(bx, y, bz, GatesRegistry.SHRINE.get().defaultBlockState());
                     case SEAL -> set(bx, y, bz, GatesRegistry.SEAL.get().defaultBlockState());
@@ -929,7 +931,7 @@ public final class GatePainter {
                     }
                     case ENTRANCE -> set(bx, y - 1, bz, GatesRegistry.ENTRANCE.get().defaultBlockState());
                     case LANTERN -> set(bx, y, bz, GatesRegistry.LANTERN.get().defaultBlockState());
-                    case UPDRAFT -> set(bx, floorY - 4, bz, GatesRegistry.UPDRAFT.get().defaultBlockState());
+                    case UPDRAFT -> set(bx, y, bz, GatesRegistry.UPDRAFT.get().defaultBlockState());
                     default -> {}
                 }
             }

@@ -57,8 +57,10 @@ public final class AboveNet {
         @Override public Type<PanelAction> type() { return TYPE; }
     }
 
-    /** A gate the Gate Scanner found, for the Gate Map. */
+    /** A gate the Gate Scanner found, for the Gate Map. {@code breaksIn}: play-days, or {@link #WAITING} / {@link #NEVER}. */
     public record GateMark(String id, int x, int z, int rank, String name, String omen, int breaksIn) {
+        /** Its clock waits for someone to come close (SPEC §7); it never breaks. */
+        public static final int WAITING = -1, NEVER = -2;
         public static final Codec<GateMark> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("id").forGetter(GateMark::id),
                 Codec.INT.fieldOf("x").forGetter(GateMark::x),
