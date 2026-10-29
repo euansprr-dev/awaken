@@ -5613,6 +5613,17 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   weight; out of reach the leg points straight at its target. Only bodies whose body bone carries the head (the feet
   ride the body bone; a pose-stack body would carry them off their spots), or that have no head bone at all and a motion
   profile (the weaver queen's face is on its thorax; a headless body without one keeps its old pose-stack motion).
+- **Rigid legs** (`knees: rigid`; Euan 2026-10-29, the form cow's shins came off its thighs): a blocky leg whose shin
+  pivots right on the thigh's end face opens a wedge at any knee bend, so it has no knee, as Fresh Animations' cows,
+  pigs, sheep, chickens and horses have none. Its knee holds its rest whatever the clips do; the whole leg turns toward
+  its foot's spot about a point `shoulder` × its length above the hip (a shoulder blade's or a pelvis's swing: the
+  leg's top slides fore and aft inside the body, as far as the body's own cubes have room ahead of and behind it, so
+  the leg reaches far at a modest angle), then its pivot slides straight up into the body (at most half the leg) or a
+  touch down (the depth the leg's top sits inside the body, less 1 px for its tilted corners) until the foot stands on
+  its spot. The vault reaches from that turned pivot. The check: every leg straight at rest whose thigh doesn't reach
+  past the knee's pivot by enough to hide 20° of bend (the thigh's overreach against the shin's half-thickness) must be
+  rigid. Rigid: the forms' pigs, cows, sheep (shoulder 0.5) and chickens (0), the sow, the stag and the ram (0.5);
+  their steps lift 0.65 of what the knees had (the leg slides up into the body to clear the ground).
 - **Feet** (`Legs`, per creature, from the render extraction once a frame; nothing allocated): a planted foot keeps its
   world position while the body moves over it. A gait clock runs with the ground covered plus the arc the feet sweep
   when it turns on the spot (yaw × the feet's mean distance from the middle), so a turn steps too. A foot lifts when the
@@ -5724,8 +5735,10 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
 - Test: `creature_motion_feet` (every motion.json entry with a gait names a rig; every gait finds two-bone legs on a body bone that
   carries the head; every foot can reach its stance on its crouch and sunk to stalk; the IK lands each foot within 0.05 px of its
   home, a step ahead and behind, the top of a step's arc and the crouch, checked by forward kinematics; the hip's turn
-  survives its ZYX Euler angles; a four-legged walker's (the form grazers', the sow's, the stag's, the ram's) forelegs' knees break forward and
-  its hind legs' back; every gait's stride, walking and running,
+  survives its ZYX Euler angles; a straight leg whose knee can't hide 20° of bend is rigid (the four-legged walkers all
+  are, so no knee of theirs breaks either way), and a rigid leg's foot lands within 0.05 px of each spot within 97% of
+  its length with its top kept inside the body (no further fore, aft or down than its room, no more than 70% of its
+  length up); at least 68 rigid legs; every gait's stride, walking and running,
   sweeps its planted feet no further than the hips can vault to; the forms' rigs
   are looked up too); `creature_motion_flight` (every flight names a creature and, on a rig, bones it has, wings with a
   side; the beat sweeps down in under half a cycle and never jumps; a right turn banks right and curves the spine right;
@@ -5739,7 +5752,10 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   row from vanilla's rungs to S, a walk side by side, a blow, a death, a hunt) and `tools/autopilot/mob-anims-crawlers.txt`
   (crawl_*: the thousandfoot, wickling, hushling and weaver queen); `tools/autopilot/mob-anims-fliers.txt` (fly_*, swim_*:
   each flier on a set course, NoGravity, beside a parrot, a bee or a cod under Fresh Animations: a cruise, a U-turn
-  each way, a climb, a dive, a hover; a blow and a death in the air; the swimmers in a tank).
+  each way, a climb, a dive, a hover; a blow and a death in the air; the swimmers in a tank);
+  `tools/autopilot/mob-anims-close.txt` (close_*: each grazer and the spider side on at leg height, a spectator camera
+  gliding beside it, first vanilla's under Fresh Animations then ours at rung 3 on the same walk, trot, stop and half
+  turn; then the two at rest side by side for half a minute).
 
 ## 24. Hands: the first-person system (plan docs/anims/PLAN.md, page https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy; approved 2026-10-25)
 

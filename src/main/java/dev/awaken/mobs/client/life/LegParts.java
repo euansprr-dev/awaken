@@ -11,8 +11,8 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * A model's parts for its {@link LegRig} (SPEC §23, "Motion"): every frame, after every other layer, each leg is posed
- * so its foot reaches the spot {@link Legs} holds for it, blended over the clips' pose by the feet's weight. Made once
- * per model; nothing allocated per frame.
+ * so its foot reaches the spot {@link Legs} holds for it, blended over the clips' pose by the feet's weight (a rigid
+ * leg's pivot slides with it, and its knee always keeps its rest). Made once per model; nothing allocated per frame.
  */
 final class LegParts {
     final LegRig rig;
@@ -22,7 +22,7 @@ final class LegParts {
     private final Matrix4f fk = new Matrix4f(), inv = new Matrix4f();
     private final Matrix3f hr = new Matrix3f(), kr = new Matrix3f();
     private final Quaternionf q = new Quaternionf(), qc = new Quaternionf();
-    private final Vector3f e = new Vector3f();
+    private final Vector3f e = new Vector3f(), pv = new Vector3f();
     private ModelPart @Nullable [] last;
 
     private LegParts(LegRig rig, ModelPart root, ModelPart[] parts) {
@@ -74,6 +74,8 @@ final class LegParts {
 
     void apply(Legs legs) {
         float all = legs.weight;
+        // a rigid leg has no knee, whatever its clips do (a bent shin on a blocky leg opens its joint)
+        if (rig.rigid) for (int i = 0; i < rig.n; i++) set(knee[i], rig.restKnee(i), 1.0F);
         if (all <= 0.001F) return;
         last = null;
         for (int i = 0; i < rig.n; i++) {
@@ -89,6 +91,14 @@ final class LegParts {
                 last = chain;
             }
             ModelPart h = hip[i], k = knee[i];
+            if (rig.rigid) {
+                if (!rig.solveRigid(i, inv, h.x, h.y, h.z, legs.tx[i], legs.ty[i], legs.tz[i], hr, pv)) continue;
+                set(h, hr, wgt);
+                h.x += (pv.x - h.x) * wgt;
+                h.y += (pv.y - h.y) * wgt;
+                h.z += (pv.z - h.z) * wgt;
+                continue;
+            }
             if (!rig.solve(i, inv, h.x, h.y, h.z, legs.tx[i], legs.ty[i], legs.tz[i], hr, kr)) continue;
             set(h, hr, wgt);
             set(k, kr, wgt);

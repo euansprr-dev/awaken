@@ -53,6 +53,17 @@ public final class LegRig {
     /** Each hip at rest, model px; the most (px) the body sinks to keep a long step's planted feet in reach (its vault). */
     public final float[] hipX, hipY, hipZ;
     public final float vaultMax;
+    /**
+     * Rigid legs ({@link MotionProfile.Knees#RIGID}): the rest leg (hip to foot) in the hip's parent frame, a unit
+     * direction and its length; how far (px) above the hip it swings from; how far its pivot may slide forward, back
+     * and down and still stay inside the body's cubes (its top never shows), in that frame. The same leg in model space.
+     */
+    final boolean rigid;
+    /** How far (radians) each knee can bend before its joint opens (the thigh's end must cover the shin's top); pi bent at rest. */
+    private final float[] hides;
+    private final Vector3f[] g0;
+    final float[] len, lift, fore, aft, drop;
+    private final float[] gmx, gmy, gmz;
 
     private LegRig(MotionProfile.Gait gait, List<int[]> legs, List<int[]> chains, float[][] pose, IntFunction<float @Nullable []> box) {
         this.gait = gait;
@@ -76,6 +87,17 @@ public final class LegRig {
         hipX = new float[n];
         hipY = new float[n];
         hipZ = new float[n];
+        rigid = gait.knees() == MotionProfile.Knees.RIGID;
+        hides = new float[n];
+        g0 = new Vector3f[n];
+        len = new float[n];
+        lift = new float[n];
+        fore = new float[n];
+        aft = new float[n];
+        drop = new float[n];
+        gmx = new float[n];
+        gmy = new float[n];
+        gmz = new float[n];
         Matrix4f m = new Matrix4f();
         for (int i = 0; i < n; i++) {
             hip[i] = legs.get(i)[0];
@@ -124,6 +146,23 @@ public final class LegRig {
             homeX[i] = footM.x;
             homeY[i] = 24.0F;
             homeZ[i] = footM.z;
+            hides[i] = u.angle(w) > 10.0F * Mth.DEG_TO_RAD ? Mth.PI : hides(box.apply(hip[i]), v1[i], box.apply(knee[i]), tip);
+            Vector3f leg = new Vector3f(ft).sub(hp);
+            len[i] = Math.max(0.5F, leg.length());
+            g0[i] = leg.div(len[i]);
+            lift[i] = gait.shoulder() * len[i];
+            Vector3f gm = new Matrix3f().set(m).transform(new Vector3f(g0[i]));
+            gmx[i] = gm.x;
+            gmy[i] = gm.y;
+            gmz[i] = gm.z;
+            // the room the leg's top has inside the body above it (its parent's own cubes), the hip's cubes at rest
+            float[] top = box.apply(hip[i]), body = chains.get(i).length > 0 ? box.apply(chains.get(i)[chains.get(i).length - 1]) : null;
+            if (top != null && body != null && hp.x + top[0] >= body[0] - 0.01F && hp.x + top[3] <= body[3] + 0.01F
+                    && hp.z + top[2] >= body[2] - 0.01F && hp.z + top[5] <= body[5] + 0.01F && hp.y + top[1] < body[4]) {
+                fore[i] = hp.z + top[2] - body[2];
+                aft[i] = body[5] - (hp.z + top[5]);
+                drop[i] = Math.max(0.0F, body[4] - (hp.y + top[1]) - 1.0F); // a px stays hidden for the top's tilted corners
+            }
         }
         // ranks from the front (-z) on each side
         int most = 0;
@@ -238,6 +277,30 @@ public final class LegRig {
     }
 
     /**
+     * The bend (radians) a straight leg's knee hides: how far the thigh's cubes reach past the knee pivot along the
+     * thigh, against the shin's half-thickness (a shin pivoting right on the thigh's end face opens a wedge at any bend).
+     */
+    private static float hides(float @Nullable [] thigh, Vector3f pivot, float @Nullable [] shin, Vector3f tip) {
+        if (thigh == null || shin == null) return 0.0F;
+        Vector3f along = new Vector3f(pivot).normalize();
+        float past = -Float.MAX_VALUE;
+        for (int c = 0; c < 8; c++) {
+            float x = (c & 1) == 0 ? thigh[0] : thigh[3], y = (c & 2) == 0 ? thigh[1] : thigh[4], z = (c & 4) == 0 ? thigh[2] : thigh[5];
+            past = Math.max(past, x * along.x + y * along.y + z * along.z);
+        }
+        past -= pivot.length();
+        if (past <= 0) return 0.0F;
+        // the shin's half-thickness across its own length (its widest side opens first)
+        Vector3f ax = new Vector3f(tip).normalize();
+        float half = 0;
+        for (int a = 0; a < 3; a++) {
+            if (Math.abs(ax.get(a)) > 0.7F) continue;
+            half = Math.max(half, (shin[a + 3] - shin[a]) / 2);
+        }
+        return half <= 0 ? Mth.HALF_PI : (float) Math.atan2(past, half);
+    }
+
+    /**
      * The legs of a body: each LEG-role bone that hangs from a non-leg and has exactly one LEG-role child, which has at
      * most one leg below it (a foot, held as it stands at rest) with none below that (a two-bone leg, or three). {@code pose}: each bone's rest (x, y, z px; x, y, z rotation radians);
      * {@code box}: each bone's own cubes' box, or null. Null when the body has fewer than two such legs.
@@ -321,9 +384,65 @@ public final class LegRig {
         return true;
     }
 
+    /**
+     * Rigid leg i (as {@link #solve}): the whole leg turns toward the target about a point {@code lift} px above its hip
+     * (its top slides fore and aft inside the body, as far as the body has room), then its pivot slides straight up into
+     * the body (or a touch down) so the foot stands on the target. Writes the hip's rotation into {@code hipOut} and its new
+     * pivot into {@code pivot}; the knee keeps its rest. False if the target sits on the hip. Nothing allocated.
+     */
+    public boolean solveRigid(int i, Matrix4fc toParent, float hx, float hy, float hz, float tx, float ty, float tz, Matrix3f hipOut, Vector3f pivot) {
+        toParent.transformPosition(tx, ty, tz, t);
+        Vector3f g = g0[i];
+        float k = lift[i];
+        d.set(t).sub(hx - g.x * k, hy - g.y * k, hz - g.z * k);
+        float far = d.length();
+        if (far < 1e-3F) return false;
+        d.div(far);
+        pivot.set(hx, hy + (d.y - g.y) * k, Mth.clamp(hz + (d.z - g.z) * k, hz - fore[i], hz + aft[i]));
+        // straight up or down (the top never slides out of the body's side) to where the leg's length meets the target
+        float dx = t.x - pivot.x, dz = t.z - pivot.z, flat = len[i] * len[i] - dx * dx - dz * dz;
+        float want = flat > 0 ? t.y - Mth.sqrt(flat) : t.y;
+        pivot.y += Mth.clamp(want - pivot.y, -0.5F * len[i], drop[i]);
+        d.set(t).sub(pivot);
+        float dist = d.length();
+        if (dist < 1e-3F) return false;
+        d.div(dist);
+        q.rotationTo(g.x, g.y, g.z, d.x, d.y, d.z);
+        hipOut.rotation(q).mul(r0[i]);
+        return true;
+    }
+
+    /** The knee's rest rotation (a rigid leg holds it). Not to be changed. */
+    Matrix3f restKnee(int i) {
+        return s0[i];
+    }
+
+    /** For checks: whether the legs are rigid, and how far (radians) leg i's knee can bend before its joint opens. */
+    public boolean rigid() {
+        return rigid;
+    }
+
+    public float hides(int i) {
+        return hides[i];
+    }
+
+    /** For checks: rigid leg i's length (hip to foot), and how far (px) its pivot may slide forward, back and down. */
+    public float length(int i) {
+        return len[i];
+    }
+
+    public float room(int i, int way) {
+        return way < 0 ? fore[i] : way > 0 ? aft[i] : drop[i];
+    }
+
     /** For checks: the knee's pivot in the hip frame, and the shin's tip in the knee frame (px). */
     public Vector3f kneePivot(int i) {
         return new Vector3f(v1[i]);
+    }
+
+    /** For checks: the shin's tip from the knee pivot, in the hip frame at rest (px). */
+    public Vector3f restShin(int i) {
+        return new Vector3f(tip0[i]).mul(l2[i]);
     }
 
     public Vector3f shinTip(int i) {
@@ -339,6 +458,15 @@ public final class LegRig {
      * length: a straight leg reaches only a little forward or back at full height, so a long step pulls the hips down.
      */
     public float sink(int i, float x, float y, float z) {
+        if (rigid) { // as solveRigid has it: the pivot turned about its point above the hip, the leg and its drop the reach
+            float k = lift[i], vx = hipX[i] - gmx[i] * k, vy = hipY[i] - gmy[i] * k, vz = hipZ[i] - gmz[i] * k;
+            float ex = x - vx, ey = y - vy, ez = z - vz, el = Mth.sqrt(ex * ex + ey * ey + ez * ez);
+            float py = el > 1e-3F ? hipY[i] + (ey / el - gmy[i]) * k : hipY[i];
+            float pz = el > 1e-3F ? Mth.clamp(hipZ[i] + (ez / el - gmz[i]) * k, hipZ[i] - fore[i], hipZ[i] + aft[i]) : hipZ[i];
+            float dx = x - hipX[i], dz = z - pz, r = 0.97F * len[i];
+            float flat = r * r - dx * dx - dz * dz;
+            return y - py - (flat > 0 ? Mth.sqrt(flat) : 0.0F) - drop[i];
+        }
         float dx = x - hipX[i], dz = z - hipZ[i], r = 0.97F * (l1[i] + l2[i]);
         float flat = r * r - dx * dx - dz * dz;
         return y - hipY[i] - (flat > 0 ? Mth.sqrt(flat) : 0.0F);

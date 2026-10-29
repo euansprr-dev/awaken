@@ -12,6 +12,7 @@ import dev.awaken.mobs.client.life.MotionProfile;
 import dev.awaken.mobs.def.Bestiary;
 import dev.awaken.mobs.def.MobDef;
 import dev.awaken.mobs.def.Model;
+import net.minecraft.util.Mth;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -21,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * The life layer's data (SPEC §23), checked on plain data like the hero rigs: every creature on one of our own bodies
@@ -34,7 +34,6 @@ public final class LifeTests {
     private LifeTests() {}
 
     /** Four-legged walkers (the forms' grazers, the hoofed beasts): forelegs break forward, hind legs back (SPEC §23.1). */
-    private static final Pattern FOUR_LEGS = Pattern.compile("form_(pig|cow|sheep)_\\d|briar_sow|old_antler|stonehorn");
 
     /** Our hand-built bodies' part names (mobs.client.model: AwModels, FaunaModels, WildModels), "name:parent". */
     static final Map<Model, String> HAND_BUILT = Map.ofEntries(
@@ -146,7 +145,8 @@ public final class LifeTests {
             int checked = 0;
             Matrix4f m = new Matrix4f(), toParent = new Matrix4f();
             Matrix3f hr = new Matrix3f(), kr = new Matrix3f(), back = new Matrix3f();
-            Vector3f e = new Vector3f(), want = new Vector3f();
+            Vector3f e = new Vector3f(), want = new Vector3f(), pivot = new Vector3f();
+            int rigid = 0;
             for (MotionProfile mp : MotionProfile.all().values()) {
                 if (mp.gait() == null) continue; // flight alone: creature_motion_flight
                 // our bodies' rigs, or the forms' (the living module's, SPEC 21.13)
@@ -172,6 +172,11 @@ public final class LifeTests {
                 }
                 float lift = Math.max(mp.gait().liftWalk(), mp.gait().liftRun());
                 for (int i = 0; i < legs.n; i++) {
+                    // a straight leg whose thigh ends on its knee's pivot opens a wedge at any bend: it moves as one piece
+                    if (!legs.rigid() && legs.hides(i) < 20.0F * Mth.DEG_TO_RAD) {
+                        problems.add(mp.id() + " leg " + i + ": its knee hides only " + Math.round(legs.hides(i) * Mth.RAD_TO_DEG)
+                                + " degrees of bend before its joint opens, so its legs must be rigid");
+                    }
                     LegRig.rest(legs.chain(i), pose, m);
                     m.invertAffine(toParent);
                     float[] hp = pose[legs.hipBone(i)];
@@ -201,6 +206,25 @@ public final class LifeTests {
                         if (k == 0 || k == 4) {
                             if (dist > legs.reach(i) * 0.98F) problems.add(mp.id() + " leg " + i + ": can't reach its stance (" + dist + " of " + legs.reach(i) + " px)");
                         }
+                        if (legs.rigid()) { // one piece: the foot on its target, the leg's top inside the body
+                            if (!legs.solveRigid(i, toParent, hp[0], hp[1], hp[2], tg[0], tg[1], tg[2], hr, pivot)) {
+                                problems.add(mp.id() + " leg " + i + ": no solve");
+                                continue;
+                            }
+                            Vector3f foot = hr.transform(legs.kneePivot(i).add(legs.restShin(i))).add(pivot);
+                            float slid = pivot.distance(hp[0], hp[1], hp[2]);
+                            if (dist < legs.length(i) * 0.97F && foot.distance(want) > 0.05F) {
+                                problems.add(mp.id() + " leg " + i + ": its foot lands " + foot.distance(want) + " px off its target");
+                            }
+                            if (pivot.z < hp[2] - legs.room(i, -1) - 0.01F || pivot.z > hp[2] + legs.room(i, 1) + 0.01F
+                                    || pivot.y > hp[1] + legs.room(i, 0) + 0.01F || slid > legs.length(i) * 0.7F) {
+                                problems.add(mp.id() + " leg " + i + ": its top slides out of the body (" + (pivot.y - hp[1]) + ", " + (pivot.z - hp[2]) + " px)");
+                            }
+                            hr.getEulerAnglesZYX(e);
+                            back.rotationZYX(e.z, e.y, e.x);
+                            if (!back.equals(hr, 1e-3F)) problems.add(mp.id() + " leg " + i + ": the hip's turn doesn't survive its Euler angles");
+                            continue;
+                        }
                         if (!legs.solve(i, toParent, hp[0], hp[1], hp[2], tg[0], tg[1], tg[2], hr, kr)) {
                             problems.add(mp.id() + " leg " + i + ": no solve");
                             continue;
@@ -211,24 +235,16 @@ public final class LifeTests {
                         if (dist > legs.fold(i) + 0.2F && dist < legs.reach(i) - 0.2F && foot.distance(want) > 0.05F) {
                             problems.add(mp.id() + " leg " + i + ": the foot lands " + foot.distance(want) + " px off its target");
                         }
-                        // four legs on their crouch: the forelegs' knees break forward, the hocks back
-                        if (k == 0 && FOUR_LEGS.matcher(mp.id()).matches()) {
-                            Vector3f kneeM = m.transformPosition(new Vector3f(knee)), hipM = m.transformPosition(new Vector3f(hp[0], hp[1], hp[2]));
-                            Vector3f footM = m.transformPosition(new Vector3f(foot));
-                            float t = (kneeM.y - hipM.y) / Math.max(0.01F, footM.y - hipM.y);
-                            float bulge = kneeM.z - (hipM.z + (footM.z - hipM.z) * t);
-                            if (hipM.z < 0 ? bulge > -0.1F : bulge < 0.1F) {
-                                problems.add(mp.id() + " leg " + i + ": its knee breaks " + (bulge < 0 ? "forward" : "back") + " (" + bulge + " px)");
-                            }
-                        }
                         // the rotations survive the trip through the part's Euler angles (ZYX, as ModelPart draws them)
                         hr.getEulerAnglesZYX(e);
                         back.rotationZYX(e.z, e.y, e.x);
                         if (!back.equals(hr, 1e-3F)) problems.add(mp.id() + " leg " + i + ": the hip's turn doesn't survive its Euler angles");
                     }
                     checked++;
+                    if (legs.rigid()) rigid++;
                 }
             }
+            h.assertTrue(rigid >= 12 * 4 + 4 * 2 + 3 * 4, "the grazers', chickens' and hoofed beasts' legs are rigid (" + rigid + ")");
             h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 2 + 8 + 12 * 4 + 4 * 2 + 3 * 4, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's two, the weaver queen's eight, the form grazers' four and chickens' two, the sow's, the stag's and the ram's four (and every other gait's) are checked (" + checked + ")");
             h.assertTrue(problems.isEmpty(), String.join("; ", problems));
             h.succeed();
