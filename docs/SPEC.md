@@ -10146,6 +10146,44 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     the difference between two solves, as the Hush Bat's limbs do; the ground pass flexes the fetlock for what is left.
     The cowcatcher folds back off the floor on its hinge (lying down, kneeling).
   - **Meter.** Worst kink outside a strike 4.3°; held at most 13% on every move; dips at most 36%.
+- **The Drowned Moon, the Moon Angler** (body and motion, `kit/bosses/guardian_inverted.py`). "The sea above you has a
+  moon in it." The moon is bait. It hangs on a long rod from the brow of an anglerfish as big as a house, swimming in
+  the dark behind it with its mouth open: a domed black head that is nearly all mouth, the lower jaw thrust out past
+  the upper and lined with long glassy fangs standing up outside its lips, more hanging from the upper lip, a red-black
+  throat inside; two small pale eyes high on its head; ragged gill covers behind its cheeks; fans of rays either side
+  that scull; a short tail flattened side to side with a ragged fan; threads hanging from its chin. Its skin is rough
+  and black-blue, a shade paler on the jaw and grey under the belly, with rows of pale cyan lights down its flanks. The
+  moon is the brightest thing on it, pale and cratered and lit, with kelp hanging off it; it always hangs plumb below
+  the rod's tip, whatever the rod does. 81 cubes (486 faces) on 27 bones; 3 blocks wide and 6 long at true size from
+  the moon to the tail fan. Its middle hangs 26 px over the floor, its chin threads just clear of it. The hitbox is
+  2.0 x 2.8 at the def's scale 1.6 (3.2 x 4.5 blocks), round its head.
+  - **The idle.** It hangs in the deep: its fins scull in figures of eight, its tail sweeps slow strokes and its body
+    bobs and yaws against them; it breathes, its jaw working open and shut and its gill covers flaring after it; the
+    rod sways and the moon swells and settles. Swimming, it lowers its nose, lays its fins back and drives its tail
+    harder; it banks into its turns.
+  - **Its moves.** The bite draws back with its head turned aside and its jaw gaping, then lunges and snaps it shut,
+    the head tossing across (LIGHT; a string, the other side, then the Tide Turn). The Engulf (HEAVY, a gap closer)
+    brakes with its fins, coils its tail and unhinges its jaw wider than its head, surges at you mouth first on two
+    great strokes and slams it shut (8 blocks). Whoever is behind gets the lash: it bends into a curve and whips its
+    tail fan across. The Moonbeam (HEAVY) lifts the rod straight up until the moon hangs high over its head, swelling,
+    then tips it down at you and the beam comes out of the moon. The Tide Turn sinks with its fins pressed down, sweeps
+    them up and rises with them, and holds the sea up off the floor, beating them. The Undertow (the signature) backs
+    away, lifts the moon out of the way and opens its jaw wider and wider, trembling, its gill covers flared; it gulps
+    the sea in three great heaves, the covers clapping and its fins stroking back, and shuts its mouth (then it bites).
+    The Tide Halo (into the second phase) curls round its moon with the rod bowed until the moon hangs before its mouth
+    and its fins cupped about it; the moon blazes and it flings itself open. It waits sunk in the dark with its jaw
+    hanging and the moon dim; its intro lifts the rod first, the moon brightening, then rises on great strokes of its
+    tail and opens its jaw and calls. Its death convulses with its mouth stretched and the moon flaring, gasps once
+    more, then sinks nose first onto the floor and lists over, its jaw falling open on the stones and its rod bowing
+    until the moon lies before it, going dim (5 s). The moon's swells are scale tracks.
+  - **The swim layer.** A fish never stops swimming: under every move, after it is made, its tail keeps stroking, its
+    fins sculling, its gill covers pumping and its spines working, faded in and out over a quarter second at each end so
+    it hands back to the idle exactly as it was.
+  - **On the floor.** Every clip is checked tick by tick: where a pose would put a part under the floor, the body is
+    lifted by as much, spread three ticks either side, so it comes to rest on its jaw rather than through it. The chin
+    threads and the kelp may lie on the floor.
+  - **Meter.** No kinks outside a strike (worst 2.8°); held at most 3% on every move; dips at most 42%. Through a snap its
+    gill covers stay flared, its spines up and its rod lifted, so the whole body never crosses rest at once.
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 

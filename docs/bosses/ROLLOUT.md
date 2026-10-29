@@ -182,3 +182,9 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   the Crucible (a walking ladle of molten iron on spider legs). **Picked A**, 2026-10-29: an engine is what a foundry's
   heart would wake into, its door opening on the fire is the Arc Weld's tell, and nothing else on the roster walks on
   four legs like a horse. B is the Living Forge's and the Gearwright's build again; C's spider legs are the Long-Legs'.
+- **The Drowned Moon** (`guardian_inverted`): A the Moon Angler (an anglerfish as big as a house whose lure is the moon
+  you see in the sea above: a black head that is nearly all mouth, glassy fangs, the moon on a rod from its brow), B the
+  Drowned Moon itself (a cratered sphere trailing a tide of weed), C the Moon Jelly (a bell with a moon inside, trailing
+  veils). **Picked A**, 2026-10-29: the intro line becomes a trap, the moon is bait, and the mouth gives it a face and
+  real blows. B has no face or limbs to fight with; C drifts like the Sleeper's veils. Nothing else on the roster is a
+  fish (the Sky Leviathan is a ray, the Glass Serpent a serpent).

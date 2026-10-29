@@ -145,7 +145,7 @@ final class DeepBestiary {
                 .phase(1.0F, "The Furnace Engine powers up.", a(SLAM, "Engine Slam").radius(4.5F).heavy(), a(BEAM, "Arc Weld").bolt(BoltKind.CHARGE))
                 .phase(0.5F, "Machines wake.", a(SUMMON, "Wake the Drones").summon("arc_drone").n(3), a(RAIN, "Rivet Rain").n(5).bolt(BoltKind.CHARGE), a(SLAM, "Engine Slam").radius(4.5F))
                 .parts(P("furnace_engine_core", "Furnace Engine Core", "precursor")).build());
-        out.add(m("guardian_inverted", "The Drowned Moon", Theme.INVERTED, Tier.GUARDIAN, Model.ELDER_GUARDIAN, "Moonbeams and the tide-turn that lifts you off the floor").hp(30).dmg(5).spd(0.22).scale(1.6F).tint(0x9CB8F0).bar(BossBarColor.BLUE).arena(26)
+        out.add(m("guardian_inverted", "The Drowned Moon", Theme.INVERTED, Tier.GUARDIAN, Model.ELDER_GUARDIAN, "Moonbeams and the tide-turn that lifts you off the floor").hp(30).dmg(5).spd(0.22).scale(1.6F).size(2.0F, 2.8F).tint(0x9CB8F0).bar(BossBarColor.BLUE).arena(26)
                 .intro("The sea above you has a moon in it.")
                 .phase(1.0F, "The Drowned Moon rises.", a(BEAM, "Moonbeam").bolt(BoltKind.WATER).power(1.8F).heavy(), a(LIFT, "Tide Turn").radius(4))
                 .phase(0.5F, "The tide turns.", a(PULL, "Undertow").radius(14), a(NOVA, "Tide Halo").n(14).bolt(BoltKind.WATER), a(LIFT, "Tide Turn").radius(5))
