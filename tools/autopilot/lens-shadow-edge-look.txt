@@ -1,0 +1,77 @@
+# Lens shadow edge (Euan 2026-10-29: "Also shadows break in the corner of my screen as you can see on that block here"):
+# a one-block snow step in a low morning sun, its shadow falling toward the camera, Lens Cinematic. The step's shadow
+# came in two strengths: full beside its corner, faded and cut off in a stepped edge across the rest. Seen from three
+# turns of the head (the corner a little left as Euan saw it, the shadow at the screen's left edge, the corner centred),
+# each with the light buffer (lensdebug 5).
+#   tools/tour-ci.sh tools/autopilot/lens-shadow-edge-look.txt 900 PACK=perf,feel LENS=cinematic
+world lensedge creative 20261029
+waitworld
+wait 40
+# the new-world sky shot holds the camera on the sky until it is skipped
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule awaken:living_herds false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+lookswitch cinematic
+# a morning sun about 28 degrees up in the east (+x)
+cmd time set 1000
+# ---- in the open sky, one chunk column: a 16x16 snow floor (top at y 201) and a one-block plateau to the east of
+# x 600, north of z 599, so its west face looks at the camera and its south face runs along the sun
+cmd tp @s 600 230 600
+wait 160
+cmd fill 592 199 592 607 200 607 minecraft:snow_block
+wait 60
+cmd fill 592 199 592 607 200 607 minecraft:snow_block
+cmd fill 592 201 592 607 215 607 minecraft:air
+cmd fill 600 201 592 607 201 598 minecraft:snow_block
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd item replace entity @s weapon.offhand with minecraft:air
+cmd tp @s 596.5 201 601.5 -90 45
+wait 60
+camera first
+# the heightfield re-reads the camera's chunks every half second; the light buffer settles over a few frames
+wait 120
+# ---- the corner is at yaw -125 from here: a little left of centre (as Euan saw it), the shadow on the left edge, centred
+look -100 45
+wait 60
+shot edge_a
+lensdebug 5
+wait 10
+shot edge_a_light
+lensdebug 0
+wait 30
+look -80 45
+wait 60
+shot edge_b
+lensdebug 5
+wait 10
+shot edge_b_light
+lensdebug 0
+wait 30
+look -125 45
+wait 60
+shot edge_c
+lensdebug 5
+wait 10
+shot edge_c_light
+lensdebug 0
+wait 30
+# the game's own frame, for the shapes
+look -100 45
+wait 30
+lensdebug 1
+shot edge_a_game
+lensdebug 0
+quit
