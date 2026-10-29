@@ -1,0 +1,148 @@
+# The caves today (caves plan, Euan 2026-10-29: "it still feels extremely vanilla ... the cave generation feels very
+# boring. There's no depth"). His own New World (9) remade from its seed with the pack's terrain (Tectonic, the Awakened
+# preset, every Awaken data pack on), so these are the caves he flew past. Ordinary caves at spots read from his saved
+# chunks (docs/caves/proof/spots.py): the first shallow cave by spawn, a middle-dark tunnel and cavern, the deep in
+# deepslate, caves under the Elderwood (the Singing Deep's roots style), a lush cave and a sulfur cave (vanilla's cave
+# biomes); then the Singing Deep's own way in (the nearest mouth) and its best place (the first sinkhole), and the
+# Elderwood's surface for the bar the caves are held to.
+# Each cave twice: as a player sees it (a torch in the off hand, Lens Cinematic, Bright gamma), then with night vision to
+# show its shape and what it is made of.
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
+#   tools/tour-ci.sh tools/autopilot/caves-today.txt 3000
+world caves_today creative -9010908364552097449
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+camera first
+hud off
+cmd time set 6000
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+cmd item replace entity @s weapon.offhand with minecraft:torch
+
+# ---- 1. the first cave by spawn: the Shallows under the jungle (y 40), a typical tunnel ----
+cmd tp @s -145.5 40 -274.5 337.5 8
+wait 200
+shot cv01_shallow_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot cv01_shallow_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 2. the Shallows under the Elderwood (the roots style should dress it) ----
+cmd tp @s -190.5 40 150.5 45 8
+wait 200
+shot cv02_elder_shallow_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot cv02_elder_shallow_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 3. a big cavern in the Middle Dark under the jungle (y 29) ----
+cmd tp @s -463.5 29 -475.5 292.5 6
+wait 200
+shot cv03_middle_cavern_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot cv03_middle_cavern_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 4. the Middle Dark under the Elderwood, a big room (y 32) ----
+cmd tp @s -124.5 32 435.5 0 6
+wait 200
+shot cv04_elder_middle_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot cv04_elder_middle_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 5. the Deep in deepslate, a typical passage (y -38) ----
+cmd tp @s -163.5 -38 192.5 90 6
+wait 200
+shot cv05_deep_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot cv05_deep_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 6. the Deep, a big cavern near the bottom (y -52) ----
+cmd tp @s -448.5 -52 81.5 67.5 6
+wait 200
+shot cv06_deep_cavern_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot cv06_deep_cavern_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 7. vanilla's lush caves (y 13) ----
+cmd tp @s -154.5 13 -151.5 45 6
+wait 200
+shot cv07_lush_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot cv07_lush_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 8. vanilla 26.3's sulfur caves (y 4) ----
+cmd tp @s -280.5 4 96.5 67.5 6
+wait 200
+shot cv08_sulfur_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot cv08_sulfur_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 9. the Singing Deep's way in: the nearest mouth from spawn, outside, at its lip, at its joint into the cave ----
+cmd tp @s -330 110 -407
+wait 100
+look 0 10
+cmd awaken delve goto mouth
+wait 220
+shot cv09_mouth_outside
+cmd awaken delve place go mouth goal
+wait 60
+shot cv10_mouth_throat
+cmd awaken delve place go goal
+wait 60
+shot cv11_mouth_joint_torch
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot cv11_mouth_joint_nv
+cmd effect clear @s minecraft:night_vision
+
+# ---- 10. the first sinkhole, "The Opening" (the strong existing result), from its rim and at its grotto's lode ----
+look 0 32
+cmd awaken delve goto sinkhole
+wait 220
+shot cv12_sinkhole_rim
+cmd awaken delve place go goal heart
+wait 60
+shot cv13_sinkhole_grotto
+
+# ---- 11. the bar: the Elderwood's ground over cave 2, at noon ----
+cmd tp @s -190.5 200 150.5 45 10
+wait 160
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
+wait 120
+look 45 10
+shot cv14_surface_elderwood
+quit
