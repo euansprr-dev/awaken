@@ -1,4 +1,4 @@
-"""Swing Studio's choreography (rounds 11-15): a style's moves set by hand, both hands at once, as a few key poses on a
+"""Swing Studio's choreography (rounds 11-16): a style's moves set by hand, both hands at once, as a few key poses on a
 timeline, in place of the rules that worked each pose out (anim_lab.rig_pose, swing_studio's give-way, haul and pull).
 
 Euan 2026-10-29, after round 10: "it still feels like it's going to unnecessary distances sometimes... the right arm
@@ -30,6 +30,9 @@ also names its ribbon's ticks (`trail`): the stroke alone, never the way home.
 After the round 14 film: "keep the fist lower in the jab, so the forearm doesn't swing into the corner". Round 15 aims
 each jab at a mark deep in the target and stops it short (`line`'s short and reach): the blade tips onto its line with
 the fist where it holds, then drives 6 cm along the blade, so the fist rises 0.2 of the screen.
+After round 15: "now he's barely moving his hands forward anymore". Round 16 drives the fist 28-34 cm out and a little
+in (`drive`), the blade aimed up from it at the target's chest, so the fist goes well away from the eye and shrinks
+while the forearm, drawn from under the corner toward it, points away instead of swinging up into the corner.
 
 A spot is where the grip sits on the screen (ndc), how far ahead of the eye, which way the blade points on the screen
 (degrees from the left, as the guard's), how far its tip leans away along the eye's ray, and its roll. Each hand's track
@@ -70,6 +73,15 @@ def line(tip, depth, src, roll=0.0, short=0.0, reach=0.0):
                 short=short, reach=reach)
 
 
+def drive(mark, depth, go, roll=0.0):
+    """A jab's drive (round 16): the fist {@code go} (view space) out from the stance's grip, the blade aimed from it at
+    the point at ndc {@code mark}, {@code depth} ahead of the eye, by the least turn from the stance. A key on it is
+    (name, how far along the drive): 0 the fist at the stance, the blade tipped onto the mark; 1 the hit. The drive goes
+    out and a little in, and the point rides a little above it, so the fist goes deep (the forearm points away) without
+    climbing the screen as a drive along the blade to the crosshair does."""
+    return dict(kind="drive", tip=mark, depth=depth, go=np.array(go, dtype=float), roll=roll)
+
+
 def arc(way, target=(0.0, -0.20, -1.15), pivot=(0.62, -0.52, -0.30), mid=L.MID, eye=1.0):
     """A cut's lever (round 13, the longsword's: swing_studio.cut_pose): the blade's middle swept on a circle about the
     eye through {@code target} (view space) in the plane the screen sees along {@code way}, the blade pointing out from
@@ -90,15 +102,16 @@ LOW = (0.62, -0.85, -0.30)  # a slash's lever from low at the shoulder: the hand
 # jab out from the stance with no pull-back, and a slash a short sweep in front at chest height that ends just past the
 # middle, on its own side of the other blade
 DAGGERS = {
-    # the jabs: out from the stance's grip along the line to a mark just under the crosshair (the grip goes away from
-    # the eye, never toward it), on the hand's own side of it. Round 15 (Euan: "keep the fist lower in the jab, so the
-    # forearm doesn't swing into the corner"): the mark lies deep in the target, and the drive stops short of it, so
-    # the fist rises 0.2 of the screen and no more (the forearm is drawn up to it from under the corner)
-    "jab_1": line((0.05, -0.10), 1.5, STANCE, short=0.494, reach=0.063),
-    "jab_2": line((0.04, -0.15), 1.5, STANCE, short=0.481, reach=0.064),
-    "jab_pair": line((0.09, -0.10), 1.5, STANCE, short=0.461, reach=0.065),
-    "jab_deep": line((0.06, -0.07), 1.5, STANCE, short=0.500, reach=0.063),
-    "jab_rip": line((0.03, -0.08), 1.5, STANCE, short=0.521, reach=0.062),
+    # the jabs: out from the stance's grip, the point aimed at the target's chest (the grip goes away from the eye,
+    # never toward it), on the hand's own side of it. Round 15 (Euan: "keep the fist lower in the jab, so the forearm
+    # doesn't swing into the corner") stopped the drive at 6 cm; round 16 (Euan: "now he's barely moving his hands
+    # forward anymore") drives it 28-34 cm out and 9-13 in, a little down, so the fist rises a third of the screen at
+    # most and the forearm covers half what round 14's did (swing_chain.py calm: rise, arm, drive)
+    "jab_1": drive((0.0, 0.05), 2.6, (-0.12, -0.03, -0.28)),
+    "jab_2": drive((-0.01, 0.0), 2.6, (-0.11, -0.04, -0.27)),
+    "jab_pair": drive((0.04, 0.05), 2.6, (-0.09, -0.03, -0.28)),
+    "jab_deep": drive((0.01, 0.05), 2.6, (-0.13, -0.04, -0.34)),
+    "jab_rip": drive((0.0, 0.03), 2.6, (-0.12, -0.03, -0.30)),
     # the slashes: set back on the hand's own side, one sweep through the target at chest height, stopping just past
     # the middle (the Undercut rises from low on its side; the chops fall from above it)
     "cut_3": arc((-1.0, -0.15), (0.06, -0.22, -1.0), LOW, eye=0.5),
@@ -111,17 +124,22 @@ DAGGERS = {
 }
 
 # per move: the striking hand's track and the other's, (tick, pose, ease into it[, bulge[, turn ease]]); a pose is REST,
-# a spot's name, (a line's name, drawn back) or (a lever's name, degrees, lag, roll). The eases: "io" in and out (leaves
-# and settles), "in" gathering speed into it (the drive), "out" losing it (the carry, the snap back), "lin"; "late" (the
-# turn only): a way home that keeps the blade on the line it came out on and turns it into the stance last.
+# a spot's name, (a line's name, drawn back), (a drive's name, how far out) or (a lever's name, degrees, lag, roll).
+# The eases: "io" in and out (leaves and settles), "in" gathering speed into it (the drive), "out" losing it (the carry,
+# the snap back), "lin"; "late" (the turn only): a way home that keeps the blade on the line it came out on and turns
+# it into the stance last.
 
 
 def JAB(ln, hit=1.0, hold=0.33, back=1.2):
     """A jab on line {@code ln} landing at {@code hit}: straight out from the stance to its mark, gathering speed into
     it (the point aimed early, so it drives along the blade), a hair past it for {@code hold}, then back into the stance
     in {@code back}, the way it went. A line with a reach (round 15) is aimed first, the fist where it holds, by half
-    the wind-up, then driven its reach along the blade to stop short of its mark."""
+    the wind-up, then driven its reach along the blade to stop short of its mark; a drive (round 16) the same, the
+    fist driven its whole way out."""
     p = DAGGERS[ln]
+    if p["kind"] == "drive":
+        return [(0.0, REST, "io"), (hit * 0.5, (ln, 0.0), "io"), (hit, (ln, 1.0), "in"),
+                (hit + hold, (ln, 1.06), "out"), (hit + hold + back, REST, "io")]
     if p["reach"] > 0:
         s = p["short"]
         return [(0.0, REST, "io"), (hit * 0.5, (ln, s + p["reach"]), "io"), (hit, (ln, s), "in"),
@@ -165,13 +183,18 @@ CHORE = {
 TRAIL_LOOK = {"daggers": [0.8, 0.6]}
 
 
+def _hit_at(p):
+    """Where a key on line, drive or lever {@code p} lands its hit."""
+    return 1.0 if p["kind"] == "drive" else p.get("short", 0.0)
+
+
 def trail(sid, mv):
     """[from, to] clip ticks a set move's blade lays its ribbon, or None."""
     if not has(sid, mv):
         return None
     keys, poses = CHORE[sid]["moves"][mv]["strike"], CHORE[sid]["poses"]
-    # the hit: the key on a lever's target (0 degrees) or at a line's drive end (its short of the mark)
-    hit = next(k[0] for k in keys if isinstance(k[1], tuple) and k[1][1] == poses[k[1][0]].get("short", 0.0))
+    # the hit: the key on a lever's target (0 degrees), at a line's drive end (its short of the mark) or a drive's end
+    hit = next(k[0] for k in keys if isinstance(k[1], tuple) and k[1][1] == _hit_at(poses[k[1][0]]))
     after = next(k[0] for k in keys if k[0] > hit)
     lever = CHORE[sid]["poses"][keys[1][1][0]]["kind"] == "arc"
     return [round(max(0.0, hit - (0.45 if lever else 0.4)), 3), round(after if lever else hit + 0.12, 3)]
@@ -227,6 +250,15 @@ def _on_line(held, p, back):
     return G - H0 - R @ held.grip, R
 
 
+def _on_drive(held, p, f):
+    z = p["depth"]
+    T = np.array([p["tip"][0] * ASP / F_ * z, p["tip"][1] / F_ * z, -z])
+    G = H0 + held.grip + p["go"] * f
+    a = (T - G) / np.linalg.norm(T - G)
+    R = L.axis_rot(a, p["roll"]) @ L.turn_to(held.axis, a)
+    return G - H0 - R @ held.grip, R
+
+
 _LEVERS = {}
 
 
@@ -265,20 +297,20 @@ def _on_arc(held, p, theta, lag=0.0, roll=0.0):
 
 
 def _key_pose(held, poses, ref):
-    """(the pose, the line or lever it lies on, its place there) for a track's pose: REST, a spot's name, or (a line's
-    or a lever's name, its place on it...)."""
+    """(the pose, the line or lever it lies on, its place there) for a track's pose: REST, a spot's name, or (a line's,
+    a drive's or a lever's name, its place on it...)."""
     if ref is None:
         return build(held, None), None, None
     if isinstance(ref, str):
         return build(held, poses[ref]), None, None
     p = poses[ref[0]]
-    at = np.zeros(1 if p["kind"] == "line" else 3)
+    at = np.zeros(3 if p["kind"] == "arc" else 1)
     at[:len(ref) - 1] = ref[1:]
     return _place(held, p, at), ref[0], at
 
 
 def _place(held, p, at):
-    return _on_line(held, p, *at) if p["kind"] == "line" else _on_arc(held, p, *at)
+    return {"line": _on_line, "drive": _on_drive, "arc": _on_arc}[p["kind"]](held, p, *at)
 
 
 def _track(sid, mv, held, which):

@@ -436,9 +436,11 @@ def like(styles=None, swings=None):
 # the forearm doesn't swing into the corner"): a stab's fist rises no more than `rise` of the screen over its stance's,
 # the forearm drawn up to it covers no more than `arm` of the screen (`forearm`), the blade drives away (its size on
 # the screen at the hit at most `go` of the stance's) and its point still lands on the target, within `point` of the
-# crosshair. The rise and the forearm are shown for every move.
-CALM = {"daggers": dict(still=0.03, near=0.04, pull=1.05, rise=0.22, arm=0.11, go=0.85, point=0.5, past=0.25, gap=0.2,
-                        after=0.45)}
+# crosshair. The rise and the forearm are shown for every move. Round 16 (Euan, after round 15: "now he's barely moving
+# his hands forward anymore"): a stab's grip goes at least `drive` further from the eye at the hit than the stance's,
+# and the fist may rise to `rise` and the forearm cover `arm` (half round 14's), as the fist goes out and a little in.
+CALM = {"daggers": dict(still=0.03, near=0.04, pull=1.05, rise=0.36, arm=0.15, drive=0.22, go=0.85, point=0.5,
+                        past=0.25, gap=0.2, after=0.45)}
 
 # Hands' first-person forearm (anims WorldBody.drawFist): drawn REACH up to the fist from under the corner at ANCHOR
 # (view space, a right arm), THICK across, at its true size: a fist risen into the view brings the forearm with it
@@ -502,6 +504,7 @@ def calm(styles=None, swings=None):
                 got["pull"] = max(size[:k]) if k else 1.0
                 got["go"] = size[k]
                 got["point"] = float(np.linalg.norm(fr[k][1]))
+                got["drive"] = fr[k][2] - rest[2]
             else:
                 e = min(len(fr) - 1, int(round((tr[1] if tr else hit) / DT)))
                 got["past"] = -float(fr[e][1][0])
@@ -509,12 +512,12 @@ def calm(styles=None, swings=None):
             for key, v in got.items():
                 if form != "stab" and key in ("rise", "arm"):
                     continue  # shown, held for the jabs (round 15)
-                if (v < bars[key]) if key == "gap" else (v > bars[key]):
+                if (v < bars[key]) if key in ("gap", "drive") else (v > bars[key]):
                     miss.append(key)
             print(f"  {mv:10s} {form:5s} " + "  ".join(f"{key} {v:.2f}{' !' if key in miss else ''}" for key, v in got.items()))
             if miss:
                 bad.append((sid, mv, miss))
-    print(f"{len(bad)} set moves out of the calm rules (rounds 14-15)")
+    print(f"{len(bad)} set moves out of the calm rules (rounds 14-16)")
     return bad
 
 
