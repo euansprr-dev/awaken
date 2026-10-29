@@ -1,0 +1,134 @@
+{
+ "schemaVersion": 1,
+ "id": "sovereign_machines",
+ "moves": "sovereign_machines",
+ "intro": {
+  "pose": "idle",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "punch",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "punch_b"
+      ],
+      [
+       "punch_b",
+       "slam"
+      ]
+     ]
+    },
+    {
+     "move": "slam",
+     "weight": 3,
+     "then": [
+      [
+       "punch"
+      ]
+     ]
+    },
+    {
+     "move": "lance",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "turntable",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "drones",
+   "pool": [
+    {
+     "move": "punch",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "punch_b"
+      ],
+      [
+       "punch_b",
+       "slam"
+      ]
+     ]
+    },
+    {
+     "move": "slam",
+     "weight": 3,
+     "then": [
+      [
+       "punch"
+      ]
+     ]
+    },
+    {
+     "move": "lance",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "orbit",
+     "weight": 2
+    },
+    {
+     "move": "turntable",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "shutdown",
+   "pool": [
+    {
+     "move": "shutdown",
+     "weight": 2
+    },
+    {
+     "move": "lattice",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "punch",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "punch_b",
+       "slam"
+      ]
+     ]
+    },
+    {
+     "move": "slam",
+     "weight": 3,
+     "then": [
+      [
+       "punch",
+       "punch_b"
+      ]
+     ]
+    },
+    {
+     "move": "turntable",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

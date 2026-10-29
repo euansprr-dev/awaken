@@ -186,7 +186,7 @@ final class DeepBestiary {
                 .phase(0.66F, "You feel heavy.", a(SUMMON, "Lullabies").summon("lullaby_phantom").n(3), a(RAIN, "Dream Fall").n(5).bolt(BoltKind.DREAM), a(CHARGE, "Night Dive"))
                 .phase(0.33F, "Never wake.", a(BURST, "Never Wake").radius(15).inner(4).bolt(BoltKind.DREAM).heavy(), a(CHARGE, "Night Dive"), a(DARKNESS, "Lullaby").radius(16).fx(MobEffects.SLOWNESS, 80, 2))
                 .parts(P("sleep_feather", "Feather of Sleep", "dream")).build());
-        out.add(m("sovereign_machines", "Sovereign of Machines", Theme.COURT, Tier.SOVEREIGN, Model.IRON_GOLEM, "The Above gone wrong: every move calculated, every strike from orbit").hp(36).dmg(5.5).spd(0.24).scale(1.9F).tint(0xB8C8E0).glow(0xFFD060).bar(BossBarColor.YELLOW).arena(26)
+        out.add(m("sovereign_machines", "Sovereign of Machines", Theme.COURT, Tier.SOVEREIGN, Model.IRON_GOLEM, "The Above gone wrong: every move calculated, every strike from orbit").hp(36).dmg(5.5).spd(0.24).scale(1.9F).size(1.2F, 3.05F).tint(0xB8C8E0).glow(0xFFD060).bar(BossBarColor.YELLOW).arena(26)
                 .intro("It built until nothing was left to build with.")
                 .phase(1.0F, "The Sovereign of Machines computes you.", a(BEAM, "Calculated Lance").bolt(BoltKind.CHARGE).power(1.8F), a(SLAM, "Hydraulic Slam").radius(4.5F).heavy())
                 .phase(0.66F, "Subroutines.", a(SUMMON, "Drones").summon("arc_drone").n(3), a(RAIN, "Orbital Strike").n(6).bolt(BoltKind.CHARGE), a(BEAM, "Calculated Lance").bolt(BoltKind.CHARGE))

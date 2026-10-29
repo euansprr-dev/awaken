@@ -10497,6 +10497,59 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     clip (it lies there only in its death); nothing goes into it by more than 1.5 px.
   - **Meter.** Worst kink outside a strike 4.8° (Lullabies, as it shakes), every other move under 3.7°; held at most 25%
     (the Lullaby, which rocks slowly on purpose); the talon strings dip 36 to 40%.
+- **The Sovereign of Machines, the Armillary** (body and motion, `kit/bosses/sovereign_machines.py`). "It built until
+  nothing was left to build with." A hulking engine of deep pale-blue enamel plates over a nearly black iron frame,
+  broad in the chest and narrow at the waist, with long heavy arms like a great ape's. Its forearms are sleeved
+  gauntlets on chrome rams that drive the clamp fists out 6 px along the forearm when it punches; each clamp is a palm,
+  knuckles, a thumb and three fingers on one bone. Brass at the knees, the elbows, the shoulder caps, the turntable of
+  its waist and five short prongs round its collar. It has no head: on a short axle above its shoulders sits an
+  armillary sphere, a gold core like a small sun (white-hot at its middle, glowing) with one dark lens and a white
+  pupil, three bronze rings round it marked like dials (the inner ring's marks glow gold), each ring on its own tilt,
+  and two pale moons on long arms going round them. A furnace grille glows gold between its chest plates and a gold
+  seam runs along each plate's inner edge; three satellites ride docked in a row on a rack on its back, their eyes
+  lit. The core and the lens are bones of their own so each can swell and dim. 88 cubes (528 faces) on 39 bones; the
+  top of its outer ring 93 px up (5.8 blocks), 4.2 blocks across the arms. The hitbox is 1.2 x 3.05 at its scale of
+  1.9 (2.3 x 5.8 blocks), round its chest.
+  - **Its idle.** It stands heavy and still, working (6 s): its chest pumps like a slow engine; the sphere turns to one
+    side in a quick mechanical sweep and stops dead, holds, sweeps to the other side, stops and comes back; one clamp
+    closes and opens as if testing its grip, then the other; a ram twitches out and back with a hiss. It walks as a
+    stomp (1.6 s), heavy flat-footed strides with the body dropping onto each foot and the chest jolting, the long arms
+    swinging late, the sphere held level and square to the way it goes; it runs the same, longer and lower (0.9 s).
+  - **Its moves.** The punch and its mirror (LIGHT, a string): it draws one fist back with the off hand up on guard,
+    then drives it out with the ram firing. Hydraulic Slam (HEAVY, its gap closer, 6 blocks, held 10 ticks): it crouches
+    with both fists high and leaps at you, bringing them down together. Calculated Lance (HEAVY, ranged, held 8 ticks):
+    it plants its feet and points at you while its rings whirl and stop and turn to face you, lined up into a sight round
+    the lens by the end of the wind-up; the lens swells to 1.5 and the core to 1.25 and the beam leaves the lens.
+    Drones (into the second phase): it rolls its shoulders and the three satellites lift off its back one after another
+    and are gone; they fold out of the rack again as it recovers. Orbital Strike (ranged and area): it raises one open
+    hand to the sky, its rings and moons whirling, and brings it down to point at you. Spark Lattice: it strikes its
+    fists together twice like flints. Whoever is behind it gets the Turntable (LIGHT): its waist turns right round on
+    its own track with its arms out. Shutdown (the signature, into the third phase): everything stops, its core dims to
+    0.6, its arms drop and its sphere sags; then it jolts awake, the core blazing to 1.55 and its rings whipping round
+    three times, and throws its arms wide. Its intro: it stands dark and still, then its rings start one after another
+    and the core flickers on. Broken, it drops onto its right knee and its right fist, the right foot lifting back off
+    the floor first so it never sweeps through it; it rises with a push off the fist. Its death is a shutdown: its rings
+    slow and stop one after another and its core dims, its arms drop, its legs give way (both feet fold up off the
+    floor as it drops onto its knees), it sags and tips forward and falls on its face, and its rings close round the
+    lens into one plane, which lies flat on the floor when the sphere faces it (4.6 s; the outer ring is wider than the
+    sphere and would dig in on any other tilt).
+  - **How its keys are written.** One pose function over its parts (its hips, waist, chest, axle and sphere, each wrist
+    by two-bone IK to a point in the body or on a bone, how the hands lie, the clamps' curl, the rams' reach, and how
+    far the rings turn toward the sight). The clamps' bind pose is their resting curl, so nothing snaps at a clip's end.
+    The rings work like clockwork, because the idle plays under everything at partial weight (0.45 under the walk) and
+    a spin under it would show as part of a turn and snap: in the idle they rock to and fro like a balance wheel (the
+    inner ring 50 degrees each way every 2 s, the outer 26 every 6 s, the moons swinging round and back); in a move,
+    which plays at full weight, each whirls round a whole number of turns in one smooth flick and is set back the instant
+    the flick ends (a whole turn is no turn), so the move adds nothing to them between flicks and ends on nothing; the
+    walk and the run key none. The core's swell and dimming are scale tracks on its own bone.
+  - **On the floor.** Its hands and clamps are kept out of the floor by the ground pass in every clip, its feet in the
+    kneel, the rise, the walk and the run, and in its death its hands, feet, core, lens, rings and moons too; nothing
+    goes into it by more than 1.5 px in any clip. The keys are written to clear the floor themselves, so the ground pass
+    only trims: the kneel's lift plants the right foot 12 px up and 12 px back, the death's buckle folds both feet 15 px
+    up, the kneeling feet stand on their toes at 76 degrees, and the landing key is set 1.5 px high because the curve
+    carries the weight a little past it.
+  - **Meter.** Worst kink outside a strike 4.0° (the Spark Lattice), every other move under 3.9°; held at most 33% (the
+    Turntable); the punch strings dip 40 to 41%.
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

@@ -82,7 +82,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | Sovereign of Hunger | Sovereign | Court | Beast | kit | A, the Gorged King | ✓ 7a319255 | ✓ 7a319255 | — |
 | Sovereign of Silence | Sovereign | Court | Brute | kit | A, the Stone Ear | ✓ 8559df31 | ✓ 8559df31 | — |
 | Sovereign of Sleep | Sovereign | Court | Flier | kit | A, the Night Owl | ✓ 8d12f035 | ✓ 8d12f035 | — |
-| Sovereign of Machines | Sovereign | Court | Brute | iron golem ×1.9 | — | — | — | — |
+| Sovereign of Machines | Sovereign | Court | Brute | kit | A, the Armillary | — | — | — |
 | Sovereign of Mirrors | Sovereign | Court | Duelist | player ×1.8 | — | — | — | — |
 | Sovereign of Storms | Sovereign | Court | Flier | breeze ×2.4 | — | — | — | — |
 | Sovereign of Roots | Sovereign | Court | Caster | creaking ×1.9 | — | — | — | — |
@@ -230,3 +230,11 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   itself asleep, the Lullaby is an owl hooting with its wings wrapped round it, Never Wake is the one time it opens its
   eyes, and no other boss is a bird. B has the Hive Regent's four wings and banded fur again; C is one more robed
   figure, and one more piece of the bedroom after the Sleeper.
+- **The Sovereign of Machines** (`sovereign_machines`): A the Armillary (a hulking engine of pale blue enamel on an
+  iron frame with long ape arms and ram-driven fists, and in place of a head an armillary sphere: a gold core with one
+  lens, three brass rings and two moons), B the Orrery (a planetary orrery walking on three long legs, its planets on
+  arms), C the Hollow Engineer (a tall crowned automaton in a long coat of plates). **Picked A**, 2026-10-29: "It built
+  until nothing was left to build with" is a machine that is all working parts, the Calculated Lance is its rings
+  turning to line up into a sight round the lens, the Shutdown is everything on it stopping and starting again, and no
+  other boss has a head that is an instrument. B is a fourth object on legs after the Bell, the Clock Tower and the
+  Iron Horse; C is one more crowned figure after the Gorged King, and Unit Zero's ceramic automaton again.
