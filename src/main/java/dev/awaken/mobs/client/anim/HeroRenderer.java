@@ -197,6 +197,11 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
         life.stride = rig.walkStride + (rig.runStride - rig.walkStride) * s.run;
         life.walk = s.airborne ? 0.0F : s.walk;
         life.airborne = s.airborne;
+        // the motion layer's feet (SPEC §23.1): planted on the ground, let go when it rests or burrows
+        life.grounded = !s.airborne;
+        life.legsFree = (l.fauna & (FaunaMob.P_REST | FaunaMob.P_BURROW)) != 0;
+        life.stalking = (l.fauna & FaunaMob.P_STALK) != 0;
+        life.gaitRun = s.run;
         life.tick(s, true);
     }
 

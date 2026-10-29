@@ -62,6 +62,8 @@ final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel> {
     /** Which way the body's own death clip falls, in its frame (x its left, -z its front); zero for a fall in place. */
     private final float fallX, fallZ;
     private static final float[] BLOW = new float[2];
+    /** The cave spider's body: the spider's, smaller. */
+    private static final float CAVE = 0.7F;
     /** The chains from the root to each eye (empty: no eyes to light). */
     final ModelPart[][] eyes;
     final float scale;
@@ -305,6 +307,10 @@ final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel> {
         life.walk = s.airborne ? 0.0F : s.walk;
         life.airborne = s.airborne;
         life.swimming = mob.isInWater();
+        // the motion layer's feet (SPEC §23.1): planted while it stands on the ground, not on a wall or a web
+        life.grounded = mob.onGround() && !mob.onClimbable();
+        life.gaitRun = s.run;
+        life.bodyScale = b.species == Species.CAVE_SPIDER ? CAVE : 1.0F;
         life.tick(s, true);
     }
 
@@ -335,7 +341,7 @@ final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel> {
     @Override
     protected void scale(HeroRenderState s, PoseStack pose) {
         FormBody b = s.getRenderData(FormBodies.BODY);
-        float k = b != null && b.species == Species.CAVE_SPIDER ? 0.7F : 1.0F;
+        float k = b != null && b.species == Species.CAVE_SPIDER ? CAVE : 1.0F;
         if (b != null && b.look.swell > 0) {
             float swell = b.look.swell;
             float wobble = 1.0F + Mth.sin(swell * 100.0F) * swell * 0.01F;

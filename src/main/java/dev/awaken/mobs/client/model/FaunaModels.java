@@ -3,6 +3,8 @@ package dev.awaken.mobs.client.model;
 import dev.awaken.Awaken;
 import dev.awaken.mobs.entity.AwLook;
 import dev.awaken.mobs.entity.FaunaMob;
+import dev.awaken.mobs.client.life.Flight;
+import dev.awaken.mobs.client.life.Life;
 import dev.awaken.mobs.client.life.LifeModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -82,8 +84,12 @@ public final class FaunaModels {
         @Override
         protected void pose(LivingEntityRenderState s) {
             float age = s.ageInTicks;
-            float flap = Mth.sin(age * 1.45F);
-            float hind = Mth.sin(age * 1.45F - 0.6F);
+            // its own beat clock: quicker climbing or hovering, slower in a cruise, never a jump in phase (SPEC §23,
+            // "Flight"); down fast, up slow, the hind wings a little behind the fore
+            Life l = Life.from(s);
+            float u = l != null ? l.clock(3, 4.6F * l.pace()) : age * 0.23F;
+            float flap = Flight.stroke(u);
+            float hind = Flight.stroke(u - 0.1F);
             wingL.zRot = -0.15F - flap * 0.75F;
             wingR.zRot = 0.15F + flap * 0.75F;
             hindL.zRot = -0.1F - hind * 0.6F;
@@ -290,8 +296,11 @@ public final class FaunaModels {
         protected void pose(LivingEntityRenderState s) {
             float age = s.ageInTicks;
             float speed = has(s, FaunaMob.P_ANGRY) ? 0.42F : 0.24F;
-            float a = Mth.sin(age * speed);
-            float b = Mth.sin(age * speed - 0.9F);
+            // the ripple's own clock: calm to angry and a climb quicken it without a jump in phase
+            Life l = Life.from(s);
+            float ph = l != null ? l.clock(3, speed * 20.0F * l.pace()) : age * speed;
+            float a = Mth.sin(ph);
+            float b = Mth.sin(ph - 0.9F);
             wingL.zRot = a * 0.42F;
             wingR.zRot = -a * 0.42F;
             tipL.zRot = b * 0.5F;

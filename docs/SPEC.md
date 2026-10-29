@@ -5642,7 +5642,13 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
 - **Idle fidgets**, only when still, calm and within 32 blocks, chosen by weight from what the body has: look around (the
   head lags the eyes), sniff (head down, quick nods), flick (an ear, a tail, a feeler or a wing), shake (body roll at
   7.5 Hz, everything loose flops; a creature fresh out of water shakes itself dry once it stops), stretch, yawn (eyes
-  squint shut), scratch (a hind leg kicks), perk (head up, alert), settle (a weight shift). Herds never move in step:
+  squint shut), scratch (a hind leg kicks), perk (head up, alert), settle (a weight shift), graze (a walker on planted
+  feet only: 5-9 s; the forequarters dip 0.07 rad and sink 0.8 px, the neck bends 0.65 rad and sinks 3 px in front of the
+  chest (the head 0.55 rad without a neck), the head looks 0.55 rad down and drifts side to side, a tug and a jaw snap
+  at each bite (1.4 a second for a cow's 14 px legs, quicker for shorter legs, up to 3.2: a chicken pecks), then 1.6 s
+  head up chewing; the grazer temperament weighs it 6, the beast 3; Euan 2026-10-29). A fidget it walks out of is
+  over once it has faded (a pause later in the walk dropped the second close tour's sheep back into the middle of a
+  graze). Herds never move in step:
   each creature's timers, breath phase and rate (±10%) and idle clock start from its own seed.
 - **Graph blending, no pops**: the angry stance, held poses, swimming and the glide ease in and out (0.05-0.3 s); swim
   and wing loops run on integrated clocks (age × speed jumped their phase when the speed changed); one-shot clips (bite,
@@ -5661,6 +5667,12 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
   inside `with P.eyes():` (`fauna_rig.EyeRec`) and writes `<id>_blink.png` (the skin under the eye with a lash line)
   and `<id>_glow_blink.png` (the eyes' light out); the renderer draws them while the eyes are shut. 14 creatures have
   them; existing textures are byte-identical.
+- **The look reaches the model** (fixed 2026-10-29): NeoForge clears a render state's data right after
+  `extractRenderState` (`RenderStateExtensions.onUpdateEntityRenderState`), so the `AwLook` our renderers set there was
+  gone by `setupAnim`: `Life.from` was null and the layer's pose (legs, flight, springs, blinks), tint, glow and flash
+  never drew on the Hero, Wild and hand-built (`AwMobRenderer`) bodies; only form bodies (extracted from a modifier)
+  had it. `MobsClient` registers a render state modifier that puts the entity's same look back after the clear. Bosses
+  (the kit's renderer, and `AwMobRenderer`'s boss tiers) are left out until the boss work takes it.
 - **Cost and limits**: client only; nothing allocated per frame (render states carry a reference); springs and fidgets
   off past 32 blocks (springs settle), blinks off past 32; breath and the slow head everywhere (cheap). Reduced motion
   (`awaken-client` `reducedMotion`, the body module's) turns idle fidgets off and halves springs, tremble and stagger;
@@ -5673,6 +5685,232 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
 - Test: `creature_life_binds` (every body of ours gets a temperament, every rig and hand-built naming with ears or a tail
   gets springs on them, every creature that blinks has lids, eye bones or a closed-eye skin). Tour:
   `tools/autopilot/creature-life.txt` (PACK=perf,feel; clips in run-autopilot/clips/life_*).
+
+### 23.1 Motion: feet on the ground, weight over them (Euan 2026-10-29: "on par with Fresh Animations")
+
+Every Awaken creature on our own bodies (not bosses, not people) moves to the bar Fresh Animations sets for vanilla's
+mobs. The principles are learned from it, never its files: a stride driven by ground speed, weight that shifts over the
+feet, overlap and follow-through, idles with variety, head and eye life, reactions to hits and turns, anticipation and
+follow-through on attacks, and every creature moving the way its body and nature say. The life layer above already gives
+breath, springs, fidgets, the look, the stagger and the fall; the motion layer adds the feet and the carriage.
+
+- **Data**: `assets/awaken/life/motion.json` (schemaVersion 1), by rig id. A body not listed moves exactly as before (the
+  kit's bosses have no entry). `gait`: `pattern` (`ripple`: one pair at a time from the back forward, each `lag` of a
+  cycle after the pair behind it, the two sides half a cycle apart (`lag` 0: one wave over the side); `alternate`:
+  opposite sets; `ripple-alternate`: the first walking, the second once it runs, 0.45 in and 0.25 out), `duty` (share of
+  a cycle a foot stands, walking and running), `lift` (px a step rises), `stride` (blocks a cycle covers; 0 the rig's
+  own), `reach` (blocks a planted foot may trail before it steps at once), `settle` (blocks from home a foot may rest
+  when the body stops), `crouch` (px the body sinks on its legs), `radius` and `fan` (where each foot stands: px out
+  from its hip, the front ones fanned forward and the back ones back by `fan` degrees), `regrip` (seconds between a calm
+  creature's idle re-grips of one foot), `swing` (the longest a step takes), `bob` (px the body sinks while feet are up),
+  `roll` (radians it leans off a lifted foot; a four-legged body's hind foot counts 0.6, so a trot's diagonal pair
+  still tips it off the forefoot), `rock` (radians it noses down while forefeet are up and up while hind feet are,
+  twice a stride on a walk), `rear` (how far the front `rearPairs` pairs, 1 unless set, let go to the
+  clips while the body rears: a wind-up, a strike or a cue, a roar, or a still threat; a roar lets one pair more go),
+  `knees` (`auto`, `forward`, `back`: which way a leg that stands straight at rest bends; `auto` breaks the forelegs of a
+  body with legs one behind another forward and every other leg back, a bird's and a biped's back; a leg bent at rest
+  keeps its own bulge).
+  `body`: `headLevel` (the head holds level against the gait's and the ground's pitch and roll), `twist` (the body turns
+  this share of its look, at most 0.35 rad), `slope` (it pitches and rolls with the ground under its planted feet),
+  `land` (a landing squashes it by how far it fell: a spring at 3 Hz kicked by the fall speed), `still` (a stalking
+  hunter holds its breath to a quarter, plays no fidgets and no re-grips), `creep` (px it sinks while stalking), `shift`
+  (px its weight drifts over its planted feet while it stands, on two slow unrelated beats in its own phase, leaning a
+  little over the side it moves to; the legs give and take under it; gone in 0.6 s once it walks, stalks or lets go),
+  `nod` (radians the neck, or the head without one, dips while a forefoot is up: a grazer's head bobbing with its steps).
+- **Legs** (`LegRig`, plain data, checked on the server): a leg is a LEG-role bone that hangs from a non-leg with exactly
+  one LEG-role child (hip and knee), which has at most one LEG-role child of its own (a foot, the tarsus of a long
+  spider leg: it rides the shin as it stands at rest, the IK reaching with its tip) and nothing below that. Each is posed
+  by two-bone IK in the hip's parent frame: the
+  knee goes where the two lengths meet on the side it bulged at rest (its pole), the hip's rest frame is turned onto the
+  new thigh frame, and the knee only bends about its own hinge (the shortest turn between two directions both square to
+  it). Applied last in `LifeRig.apply` (after the clips, the look and the springs), blended over the clips by the feet's
+  weight; out of reach the leg points straight at its target. Only bodies whose body bone carries the head (the feet
+  ride the body bone; a pose-stack body would carry them off their spots), or that have no head bone at all and a motion
+  profile (the weaver queen's face is on its thorax; a headless body without one keeps its old pose-stack motion).
+- **Rigid legs** (`knees: rigid`; Euan 2026-10-29, the form cow's shins came off its thighs): a blocky leg whose shin
+  pivots right on the thigh's end face opens a wedge at any knee bend, so it has no knee, as Fresh Animations' cows,
+  pigs, sheep, chickens and horses have none. Its knee holds its rest whatever the clips do; the whole leg turns toward
+  its foot's spot about a point `shoulder` × its length above the hip (a shoulder blade's or a pelvis's swing: the
+  leg's top slides fore and aft inside the body, as far as the body's own cubes have room ahead of and behind it, so
+  the leg reaches far at a modest angle), then its pivot slides straight up into the body (at most half the leg) or a
+  touch down (the depth the leg's top sits inside the body, less 1 px for its tilted corners) until the foot stands on
+  its spot. The vault reaches from that turned pivot. The check: every leg straight at rest whose thigh doesn't reach
+  past the knee's pivot by enough to hide 20° of bend (the thigh's overreach against the shin's half-thickness) must be
+  rigid. Rigid: the forms' pigs, cows, sheep (shoulder 0.5) and chickens (0), the sow, the stag and the ram (0.5);
+  their steps lift 0.65 of what the knees had (the leg slides up into the body to clear the ground), and a rigid hoof's
+  swing runs a touch past its spot and settles back onto it (its path's ease plus 0.25·u·sin(πu), about 4%).
+- **Fresh Animations' walk, read close up** (2026-10-29, `mob-anims-close`: vanilla's cow, pig, sheep beside ours side
+  on): their forefoot steps before the hind foot on its side (ours stepped hind first, so the near feet met in a V under
+  the belly), their legs reach forward more than they trail, and the cow and sheep step shorter. So the four-legged
+  walkers (the form grazers, the sow, the stag, the ram) ripple from the front (`lag` -0.25), land 0.2 of a stand
+  further ahead (`lead`), roll 0.045 off a lifted foot (a trot's diagonal pair too), rock 0.035 fore and aft, hold the
+  head 0.7 level, and the forms' cows and sheep walk 0.8 of their old stride.
+- **Starts** (2026-10-29, the second close tour: our cow, pig and spider did the splits setting off and breaking into
+  a trot, and FA's never do, its swing growing with the pace): from a stand, or into a new gait, the stride starts at
+  0.4 of its length and grows to the whole of it over 0.9 s (a change of gait starts at 0.7), so the first steps are
+  short and quick and the feet still waiting their turn are never left far behind. A landing is never further ahead of
+  its home than its place in a steady stride (duty × stride × (0.5 + lead), plus 5% of a stride), and a planted foot
+  trailing more than its steady lift point (duty × stride × (0.5 - lead)) plus 30% of a stride steps at once (a
+  catch-up, 0.75 of a swing, 0.12 s to `swing`; past 38% it steps even while a neighbour is up).
+- **Turns** (2026-10-29, the orchestrator's read of the close tour: a cow and a pig turned on the spot crossed their
+  legs in an X and were still leaning a second and a half later): a planted foot's trail is read along its own home's
+  path, the body's turn included (its home 0.1 s on, from the body's way and turn), and the landing's cap counts the
+  turn's speed at the feet too. Swinging round on the spot (the turn's speed at the feet over the body's way), a foot
+  steps as soon as it is three `settle`s off its spot and slides after the body past four (FA's feet slide through a
+  turn; a quick one outruns any steps). A rigid leg's planted foot slides rather than lean more than 40° from its
+  shoulder (`Legs.SLIP`). Standing, feet off their spots step back the furthest first, up to half of them at once but
+  never two neighbours (one at a time left the last leg leaning for 1.5 s). The feet stand and step under the body
+  bone's twist toward its look (`Legs.face`; vanilla keeps a standing mob's body 50° behind its facing after a turn,
+  so the head stays round and the twist stays), though they are handed to the legs in the root's model space.
+- **Feet** (`Legs`, per creature, from the render extraction once a frame; nothing allocated): a planted foot keeps its
+  world position while the body moves over it. A gait clock runs with the ground covered plus the arc the feet sweep
+  when it turns on the spot (yaw × the feet's mean distance from the middle), so a turn steps too. A foot lifts when the
+  clock reaches its place in the pattern, swings for (1 - duty) of a cycle (0.08 s to `swing`) on an arc that peaks
+  before the middle, and lands where its home will be halfway through its next stand (velocity and turn rate ahead,
+  capped at 80% of `reach`), on the ground under that spot (collision tops from a block above the feet to three below,
+  never more than a block up or down). A foot left beyond `reach` steps at once unless a neighbour (same side, next
+  rank, or its opposite) is up. Stopped for 0.3 s, the foot furthest out of place (beyond `settle`) steps back under the
+  body, one at a time; a calm one re-grips. The body rides its feet: half the planted feet's mean height (±4 px), nose
+  up a rise and leaning across a slope (front against back feet, left against right, ±0.35 rad, eased over 0.12 s),
+  sinking `bob` × the share of feet in the air and leaning off a lifted one. The hips vault: a straight leg at full
+  height reaches only a little forward or back, so the body drops as far as its furthest planted foot needs (past what
+  the crouch and the ground sink it, at most a quarter of the mean leg, eased over 0.05 s), which gives a long-legged
+  walk its dip at every step. Off the ground (the `P_AIR` pose bit),
+  hanging, resting, sleeping, beached, deflated, swimming or dying, the clips own the legs (the weight eases out over
+  0.12 s, the feet held planted meanwhile); landing, the feet stand at home again and ease back in over 0.15 s. A
+  first sight or a jump of more than 3 blocks stands them at home. Inputs from the renderer: `grounded` (the feet may
+  plant), `legsFree` (a pose that holds the legs), `stalking`, `rearing` (a held pose that rears it on its hind feet: the
+  front pairs go to the clip), `gaitRun` (0..1) and `bodyScale` (a renderer's own scale on top of the entity's, so the
+  feet's world spots match the drawn body: the cave spider's 0.7). WildRenderer: grounded unless `P_AIR`, legs free while
+  hanging, resting, beached, asleep or deflated, rearing while it ripens. HeroRenderer (the named beasts): grounded unless
+  `P_AIR`, legs free while it rests or burrows. FormRenderer: on the ground and not climbing.
+- **Clips** of a profiled body move the body over its feet, the head, the tail, the jaw, and own the legs only when the
+  feet let go (hanging, leaping, dying, a wind-up's front pair). Their walk and run legs stay for anything drawn without
+  a life (the clip is what shows if nothing plants the feet).
+- **Drip Lurker** (`drip_lurker`; six two-bone legs, hunter): ripple-alternate, duty 0.78/0.55, steps 3/4.5 px high, feet
+  10 px out from the hips fanned 42°, crouch 1 px, reach 0.55, re-grips every 3-8 s, `rear` 0.9; head level 0.6, twist
+  0.2, slope 0.8, land 1, `still` with a 2.5 px creep; temperament: no step bob, sway 0.3, look/sniff/stretch/settle
+  fidgets. It strides 1.0 blocks walking and 1.3 running (its rig's 1.0/1.8; were 1.6/3.0, too long for its legs). Motion: it waits on
+  planted feet with the cone swaying like a stalactite in a draught and the fangs tasting the air one at a time; it
+  creeps low on a slow ripple of single steps, holding its breath and its fidgets while it stalks; it glides level over
+  its feet when it walks (no bob), cone lagging, and leans into a run on alternating sets; angry and still it sinks, head
+  down, fangs spread and quivering; every wind-up lets its front pair go so it rears them, spread and trembling, before
+  the lunge throws the body forward with the fangs snapping shut, overshoots and settles; Spike Drop rears high then
+  crashes cone-first, the body squashing and the cone whipping after; a blow jerks the body up and back over its planted
+  feet with the cone lagging; it dies rearing with its legs flung out, drops on its side and the legs curl up over it
+  and twitch one by one; hanging, each leg flexes on its own breath round the cone. Its rest pose stands the front pair
+  forward and the back pair back (the rig had the front legs raked backward).
+- **Wickling** (`wickling`; four two-bone legs): a salamander's diagonal trot (`alternate`) at every speed on tiny quick
+  steps (1/1.6 px high, stride 0.35/0.6 blocks, 0.15 s swings, reach 0.18), its spine wave from the clip bending over the
+  planted feet, a lizard's roll (0.04); head level 0.4, twist 0.4, shift 0.25. Ripening it rears on its hind feet and its
+  forefeet, drawn up off the ground, knead the air in turn while the tail braces.
+- **Hushling** (`hushling`; two two-bone hind legs, long arms swung by its clips): a crouched biped's alternating steps,
+  duty 0.6/0.4, 2/3.5 px, stride 0.9/1.5 blocks; its body rises (bob -0.6) while a foot is up, as a biped's does, and
+  rolls off it (0.05); a hunter: `still`, creep 1.5; head level 0.5, twist 0.3, shift 0.5.
+- **Weaver Queen** (`weaver_queen`, named beast; eight three-bone legs, femur 12, tibia 14, tarsus 6 px, no head bone):
+  an alternating tetrapod on long reaching steps (4/7 px high, stride 1.4/2.6 blocks, reach 0.9, 0.32 s swings), bob 0.5;
+  twist 0.15, slope 0.85, shift 0.9 (the heaviest drift: a big body settling over eight feet).
+- **Form spiders** (`form_spider_2`..`_5`, the forms' C-and-up bodies, SPEC 21.13; eight two-bone legs, coxa fan then
+  femur and shin): they replace the spider Fresh Animations draws below C, so they must beat it. Alternating tetrapods
+  (L1 R2 L3 R4, then the others) on their rest stance, duty 0.62/0.5, steps from 3/5 px (C) to 4.5/7 px (S) high, reach
+  0.5 to 0.7 blocks, quick swings (0.22 to 0.28 s), bob 0.35 to 0.5 px, `rear` 1 (angry, its front pair spread off the
+  ground; a roar, both front pairs); head level 0.5, twist 0.25, slope 0.85, land 1. The renderer plants the feet while it
+  stands on the ground and not on a wall (`onGround` and not climbing); the cave spider's body is 0.7 of the spider's.
+- **Thousandfoot** (`thousandfoot`, named beast; fourteen two-bone legs, seven segments): a centipede's ripple, back to
+  front with each pair a fifth of a cycle behind (two waves down each side), the sides in opposition; duty 0.65/0.55,
+  steps 2.5/3.5 px, stride 1.0/1.6 blocks (its clips' 2.6/5.0 are far past its legs' reach), reach 0.5, quick 0.22 s
+  swings, almost no bob (0.1 px) or roll; its walk's sideways spine wave bends the segments over the planted feet; a wind-up
+  lets its front three pairs go (`rearPairs` 3: the Coil Strike's S rears them), a roar four. Head level 0.3, twist 0.3,
+  slope 0.7, land 0.8. Its rest pose sits a pixel lower with the legs out flatter (thigh -10°, shin 84°) so every foot
+  reaches the ground (they hung 3 px above it).
+- **Form grazers** (`form_pig_2`..`_5`, `form_cow_2`..`_5`, `form_sheep_2`..`_5`, SPEC 21.13; four straight two-bone
+  legs, thigh and shin): a lateral walk (`ripple-alternate`: right hind, right fore, left hind, left fore, a quarter of a
+  cycle apart) into a trot of diagonal pairs; they stand sunk 2.2-2.5% of a leg on their crouch so the forelegs'
+  knees break forward and the hocks back (about 25° at rest, deep while a foot is up), and the neck nods with the
+  forefeet (`nod`). Strides come from the leg (L px): a planted foot sweeps ±0.45 L walking and ±0.5 L running, so
+  stride = 0.45 L / (8 × duty) walking and 0.5 L / (8 × duty) running (a pig's 0.66/1.19 blocks at rung 2 to a cow's
+  1.56/2.78 at 5; the rigs' clip strides were past their legs). Pig: duty 0.68/0.42, steps a fifth of a leg high (a third running), quick 0.22 s swings, bob 0.35,
+  roll 0.035, nod 0.07, shift 0.35-0.5. Cow: duty 0.72/0.45, steps 17%/28% of a leg, 0.3 s swings, bob 0.5, nod 0.09,
+  shift 0.6-0.9 (a heavy body settling). Sheep between them, nod 0.08. All `rear` 1: angry and still, its front pair
+  goes to the clip so it paws; a charge's wind-up rocks back on planted hind feet. Head level 0.3-0.35, twist 0.2-0.25,
+  slope 0.8-0.85.
+- **Form chickens** (`form_chicken_2`..`_5`; two straight legs from the base, the foot drawn on the shank): a bird's
+  alternating strut, duty 0.62/0.4, stride from the leg as the grazers', steps 28%/40% of a leg high, quick 0.16 s swings, sunk 5% of a leg so the ankles
+  break back; the head holds still in space against the body (head level 0.7) while the clip thrusts the neck; bob
+  0.4, roll 0.05, land 1.2, shift 0.2.
+- **Hoofed beasts** (named beasts on four two-bone legs, by HeroRenderer; strides from the foreleg as the grazers'):
+  the **Briar Sow** (`briar_sow`; short forelegs, 10 px, under a heavy chest, long bent hind legs) walks a lateral
+  sequence on short quick steps (0.8/1.49 blocks, 2/3.5 px high, 0.26 s swings) into a trot when she charges, sunk
+  0.3 px, bob 0.4, nod 0.06, a heavy drift (shift 0.7), land 1.2; the **Old Antler** (`old_antler`; 18 px legs) a
+  stag's high-stepping walk (1.41/2.81 blocks, 3.5/6.5 px high, 0.32 s swings, reach 0.7), the head carried high
+  (head level 0.45, nod 0.05); the **Stonehorn** (`stonehorn`; 12 px legs) a ram's sure-footed walk (0.96/1.79 blocks,
+  2.5/4.5 px) that pitches and rolls with the rock under it (slope 0.9), nod 0.07, shift 0.8. All `rear` 1: a still
+  threat or a wind-up hands the front pair to the clip (the sow's snort and paw, the ram's stamp).
+- **Flight** (`Flight`, plain math checked on the server; a `fly` block, by rig id or, for a hand-built body, by its
+  creature id): while airborne or swimming (or `always`, for a body always under way: serpents, the ray) the body noses
+  into a cruise (`tilt` at `fast` blocks a second) and pitches along its path's climb or dive (`climb`, the share), banks
+  into a turn (`bank`, radians per radian a second of turn at a full cruise, capped 0.7), and rides its wings: the wings'
+  height above their own mean (read from the pose, the roots named in `wings`) lifts the body as they sweep down
+  (`heave` px per radian, 50 ms behind). A flier keeps all of its stroke climbing or hovering, glides down a dive
+  (`glide`, the stroke's share kept, about the wings' mean), and at a cruise beats and glides by turns on a slow wave of
+  its own (about six seconds). A body whose clips only glide (the owl's `air`) gets the layer's own beat (`flap`: radians,
+  cycles a second, the tips' trailing share): down in 40% of the cycle, up in 60%, quicker climbing and hovering (x1.15,
+  +0.4 per radian of climb), slower in a cruise (-0.35); the tips (`tips`) trail it by an eighth of a beat. The spine
+  (`spine`, the links behind the body, front first) carries its swim stroke stronger with speed (`wave`: the stroke's
+  scale at rest and at a full cruise, about each link's mean) and curves into a turn (`bend`, radians over the whole
+  spine per radian a second, the tail to the inside of the turn); fins (`fins`) fold back at speed (`tuck`); the head
+  holds level against the pitch and bank (`level`). Hand-built bodies beat on the life layer's paced clock (the moth's
+  wings, the ray's ripple, the serpent's wave), so a change of pace never jumps the phase.
+  The **Hollow Owl** beats 0.7 rad at 2.4 a second (tips 0.5) round its glide pose, heave 2, glide 0.12, banks 0.18,
+  climb 0.6. In the air its body lies forward along the line of flight (75° off its upright stance, a 2° rock), and a
+  cube-less `yoke` at the shoulders turns back by as much under the head and wings: the face still looks ahead, the wings
+  still spread level and beat up and down about the line of flight (a wing hung from a pitched body would row); the legs
+  trail under the tail, which fans straight back. Before this it flew upright, a perched owl hung in the air; the **Bogwick** (clip beat) heave 0.6, glide 0.6, tilt 0.25; the **Empress Moth** (its clip heaves) glide
+  0.45, bank 0.16; the **Plumed Coil** wings heave 0.8, glide 0.4, spine of ten bending 0.25, wave 0.7/1.2; the **Dune
+  Wyrm** spine of nine bending 0.3, climb 0.7, wave 0.7/1.25; the **Glimmerfin** tail and caudal fin wave 0.55/1.3, bend
+  0.3, pectorals tucking 0.6, climb 0.7; the **Lantern Maw** wave 0.6/1.2, bend 0.25, bank 0.12; the **Tidesteed** tail
+  and fluke wave 0.6/1.3, bend 0.25; the **Brook Otter** swimming, tail wave 0.6/1.3, bend 0.3; the **Lumen Moth** and
+  **Petalwing** heave 0.9, glide 0.7 and 0.4, tilt 0.3 and 0.25, bank 0.25; the **Dune Ray** heave 0.8, bank 0.3, its
+  tail bending 0.35; the eels (**Deep Eel**, **Tide Eel**, **Cord-Eater**) bend 0.45 over six segments, climb 0.6.
+  The Breathbell's bell pulses as its clip has it (a jelly drifts; no bank or pitch).
+- Test: `creature_motion_feet` (every motion.json entry with a gait names a rig; every gait finds two-bone legs on a body bone that
+  carries the head; every foot can reach its stance on its crouch and sunk to stalk; the IK lands each foot within 0.05 px of its
+  home, a step ahead and behind, the top of a step's arc and the crouch, checked by forward kinematics; the hip's turn
+  survives its ZYX Euler angles; a straight leg whose knee can't hide 20° of bend is rigid (the four-legged walkers all
+  are, so no knee of theirs breaks either way), and a rigid leg's foot lands within 0.05 px of each spot within 97% of
+  its length with its top kept inside the body (no further fore, aft or down than its room, no more than 70% of its
+  length up); at least 68 rigid legs; every gait's stride, walking and running,
+  sweeps its planted feet no further than the hips can vault to; every gait's feet, on flat ground through a stand, a
+  sudden walk (a cycle a second), a sudden run and a stop, never plant further ahead of home than a steady stride's
+  landing plus 10% of a stride or trail further than its lift point plus 40%, and a rigid leg never swings past 35°
+  walking or 45° running (about its pivot `shoulder` above the hip); then turned on the spot at 120° a second as a
+  client sees it (the body held until its facing is 50° ahead, then dragged along 50° behind, the body bone twisted its
+  share of that look), no planted foot is more than four `settle`s (+1 px) off its spot under the twisted body nor a
+  rigid leg past 25°, and stood 1.5 s after it every foot is back within a `settle` (+0.75 px) (the old feet failed 22
+  gaits); the forms' rigs
+  are looked up too); `creature_motion_flight` (every flight names a creature and, on a rig, bones it has, wings with a
+  side; the beat sweeps down in under half a cycle and never jumps; a right turn banks right and curves the spine right;
+  a climb noses up and keeps every beat, a dive noses down and glides, a hover beats, a cruise glides between beats; a
+  climb beats faster than a cruise; the body rises as the wings sweep below their mean). Tours walk still (NoAI) creatures with
+  `/awaken admin stroll <targets> <blocks per tick> <ticks> [degrees per tick] [climb, blocks per tick]` (each call queues a leg; the server moves
+  them every tick, so a busy runner can't turn a scripted walk into a crawl the way a tp a command did), load the studio's
+  chunks first (`forceload`) and fill its floor twice. Tours on CI (PACK=perf,feel; a vanilla spider under
+  Fresh Animations beside each): `tools/autopilot/mob-anims-lurker.txt` (clips run-autopilot/clips/lurk_*: idle, a walk
+  into a run, a stop and a turn, a blow, a death, the hunt), `tools/autopilot/mob-anims-spiders.txt` (spid_*: the forms'
+  row from vanilla's rungs to S, a walk side by side, a blow, a death, a hunt) and `tools/autopilot/mob-anims-crawlers.txt`
+  (crawl_*: the thousandfoot, wickling, hushling and weaver queen); `tools/autopilot/mob-anims-fliers.txt` (fly_*, swim_*:
+  each flier on a set course, NoGravity, beside a parrot, a bee or a cod under Fresh Animations: a cruise, a U-turn
+  each way, a climb, a dive, a hover; a blow and a death in the air; the swimmers in a tank);
+  `tools/autopilot/mob-anims-close.txt` (close_*: each grazer and the spider side on at leg height, a spectator camera
+  gliding beside it, first vanilla's under Fresh Animations then ours at rung 3 on the same walk, trot, stop and half
+  turn; then the two at rest side by side for half a minute); `tools/autopilot/mob-anims-beastclose.txt` (bclose_*:
+  the sow, the stag and the ram the same way, after vanilla's pig under Fresh Animations, each then half a minute at
+  rest); `tools/autopilot/mob-anims-flyclose.txt` (fly_*, swim_*
+  close and at half speed (`/tick rate 10`): each flier hovers, then circles a spectator camera at its own distance, a
+  cruise lap and half a slower one, the camera's eye at the body's middle turning with it from the circle's middle,
+  a parrot, a bee or a cod a little further round the same circle). A NoAI fauna creature refreshes its pose
+  bits every tick (`FaunaMob.tick`), so a tour's still flier shows itself aloft (the first fliers tour's owls hung
+  upright in the air, perched).
 
 ## 24. Hands: the first-person system (plan docs/anims/PLAN.md, page https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy; approved 2026-10-25)
 

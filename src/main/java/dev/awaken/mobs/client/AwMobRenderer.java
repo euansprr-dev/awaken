@@ -52,7 +52,7 @@ class AwMobRenderer<S extends LivingEntityRenderState, M extends EntityModel<? s
         addLayer(new AwLayers.Glow<>(this, def));
         LifeProfile p = LifeProfile.of(def.id, def.fauna != null ? def.fauna.name() : null, def.tier.name());
         this.ours = model instanceof LifeModel;
-        this.life = model instanceof LifeModel lm ? lm.bindLife(p) : boss(def) ? LifeRig.rootOnly(p) : null;
+        this.life = model instanceof LifeModel lm ? lm.bindLife(p, def.id) : boss(def) ? LifeRig.rootOnly(p) : null;
         this.blink = ours ? AwRender.exists(AwRender.blink(def)) : null;
     }
 

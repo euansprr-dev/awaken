@@ -1,0 +1,322 @@
+# Creatures to the Fresh Animations bar (SPEC 23.1): the forms' grazers (pig, cow, sheep, chicken; rungs 2 to 5 on
+# our bodies) beside vanilla's under Fresh Animations (rungs 0 and 1). Each row at rest (feet planted, weight drifting,
+# a re-grip now and then), then rung 3 and vanilla's side by side through a walk into a trot, a stop and a turn on the
+# spot (knees break forward, hocks back, the head nods with the forefeet), then a blow and a death.
+# Clips: run-autopilot/clips/<name> (python3 -I tools/ascent/clip.py <dir> makes an mp4 and a contact sheet).
+# ci knobs: PACK=perf,feel
+world grazersfa creative 779
+waitworld
+wait 40
+# the opening's sky flight holds the camera: skip it first
+cmd awaken opening skip
+wait 30
+# the studio's chunks first: a busy runner's server can fall seconds behind the script
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -32 -32 32 48
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+camera first
+hud off
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd effect give @s minecraft:regeneration infinite 4 true
+cmd effect give @s minecraft:saturation infinite 0 true
+cmd effect give @s minecraft:night_vision infinite 0 true
+info
+cmd tp @s 0.5 201 0.5 0 0
+wait 100
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 1. the cows at rest: 0 and 1 vanilla's under Fresh Animations, 2 to 5 ours
+cmd tp @s 0.5 201 -6.0 0 0
+wait 5
+cmd awaken living formrow cow
+wait 5
+cmd execute as @e[type=minecraft:cow] run data merge entity @s {OnGround:1b,Invulnerable:0b,PersistenceRequired:1b}
+cmd fill 0 201 -8 0 201 -8 minecraft:barrier
+cmd tp @s 0.5 202 -7.5 0 12
+look 0 12
+wait 40
+shot graze_cow_row
+cmd awaken ascent pilot rec graze_cow_row 160 2
+wait 165
+cmd fill 0 201 -8 0 201 -8 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 1. the pigs at rest: 0 and 1 vanilla's under Fresh Animations, 2 to 5 ours
+cmd tp @s 0.5 201 -6.0 0 0
+wait 5
+cmd awaken living formrow pig
+wait 5
+cmd execute as @e[type=minecraft:pig] run data merge entity @s {OnGround:1b,Invulnerable:0b,PersistenceRequired:1b}
+cmd fill 0 201 -8 0 201 -8 minecraft:barrier
+cmd tp @s 0.5 202 -7.5 0 12
+look 0 12
+wait 40
+shot graze_pig_row
+cmd awaken ascent pilot rec graze_pig_row 120 2
+wait 125
+cmd fill 0 201 -8 0 201 -8 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 1. the sheeps at rest: 0 and 1 vanilla's under Fresh Animations, 2 to 5 ours
+cmd tp @s 0.5 201 -6.0 0 0
+wait 5
+cmd awaken living formrow sheep
+wait 5
+cmd execute as @e[type=minecraft:sheep] run data merge entity @s {OnGround:1b,Invulnerable:0b,PersistenceRequired:1b}
+cmd fill 0 201 -8 0 201 -8 minecraft:barrier
+cmd tp @s 0.5 202 -7.5 0 12
+look 0 12
+wait 40
+shot graze_sheep_row
+cmd awaken ascent pilot rec graze_sheep_row 100 2
+wait 105
+cmd fill 0 201 -8 0 201 -8 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 1. the chickens at rest: 0 and 1 vanilla's under Fresh Animations, 2 to 5 ours
+cmd tp @s 0.5 201 -6.0 0 0
+wait 5
+cmd awaken living formrow chicken
+wait 5
+cmd execute as @e[type=minecraft:chicken] run data merge entity @s {OnGround:1b,Invulnerable:0b,PersistenceRequired:1b}
+cmd fill 0 201 -8 0 201 -8 minecraft:barrier
+cmd tp @s 0.5 202 -7.5 0 12
+look 0 12
+wait 40
+shot graze_chicken_row
+cmd awaken ascent pilot rec graze_chicken_row 100 2
+wait 105
+cmd fill 0 201 -8 0 201 -8 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 2. a cow walk into a trot, a stop, a half turn on the spot, a creep back: rung 3 in front, vanilla's behind
+cmd tp @s -4.1 201 -2.5 0 0
+wait 5
+cmd awaken living form cow 3
+wait 5
+cmd tag @e[type=minecraft:cow,limit=1,sort=nearest] add walker
+cmd tp @e[tag=walker] -4.1 201 1.5 -90 0
+cmd summon minecraft:cow -4.1 201 5.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd execute as @e[tag=walker] run data merge entity @s {OnGround:1b,Invulnerable:0b,PersistenceRequired:1b}
+cmd fill 0 201 -5 0 202 -5 minecraft:barrier
+cmd tp @s 0.5 203 -4.5 0 26
+look 0 26
+wait 30
+cmd awaken ascent pilot rec graze_cow_walk 200 2
+cmd awaken admin stroll @e[tag=walker] 0.04 40
+cmd awaken admin stroll @e[tag=walker] 0.072 16
+cmd awaken admin stroll @e[tag=walker] 0.128 6
+cmd awaken admin stroll @e[tag=walker] 0.16 16
+cmd awaken admin stroll @e[tag=walker] 0.08 4
+cmd awaken admin stroll @e[tag=walker] 0.04 4
+cmd awaken admin stroll @e[tag=walker] 0.0 26
+cmd awaken admin stroll @e[tag=walker] 0.0 30 6
+cmd awaken admin stroll @e[tag=walker] 0.0 10
+cmd awaken admin stroll @e[tag=walker] 0.032 30
+wait 45
+shot graze_cow_walk_mid
+wait 30
+shot graze_cow_run
+wait 30
+shot graze_cow_stop
+wait 45
+shot graze_cow_turned
+wait 45
+cmd fill 0 201 -5 0 202 -5 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 2. a pig walk into a trot, a stop, a half turn on the spot, a creep back: rung 3 in front, vanilla's behind
+cmd tp @s -4.5 201 -2.5 0 0
+wait 5
+cmd awaken living form pig 3
+wait 5
+cmd tag @e[type=minecraft:pig,limit=1,sort=nearest] add walker
+cmd tp @e[tag=walker] -4.5 201 1.5 -90 0
+cmd summon minecraft:pig -4.5 201 4.5 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd execute as @e[tag=walker] run data merge entity @s {OnGround:1b,Invulnerable:0b,PersistenceRequired:1b}
+cmd fill 0 201 -4 0 202 -4 minecraft:barrier
+cmd tp @s 0.5 203 -3.5 0 28
+look 0 28
+wait 30
+cmd awaken ascent pilot rec graze_pig_walk 200 2
+cmd awaken admin stroll @e[tag=walker] 0.045 40
+cmd awaken admin stroll @e[tag=walker] 0.081 16
+cmd awaken admin stroll @e[tag=walker] 0.144 6
+cmd awaken admin stroll @e[tag=walker] 0.18 16
+cmd awaken admin stroll @e[tag=walker] 0.09 4
+cmd awaken admin stroll @e[tag=walker] 0.045 4
+cmd awaken admin stroll @e[tag=walker] 0.0 26
+cmd awaken admin stroll @e[tag=walker] 0.0 30 6
+cmd awaken admin stroll @e[tag=walker] 0.0 10
+cmd awaken admin stroll @e[tag=walker] 0.036 30
+wait 45
+shot graze_pig_walk_mid
+wait 30
+shot graze_pig_run
+wait 30
+shot graze_pig_stop
+wait 45
+shot graze_pig_turned
+wait 45
+cmd fill 0 201 -4 0 202 -4 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 2. a sheep walk into a trot, a stop, a half turn on the spot, a creep back: rung 3 in front, vanilla's behind
+cmd tp @s -4.3 201 -2.5 0 0
+wait 5
+cmd awaken living form sheep 3
+wait 5
+cmd tag @e[type=minecraft:sheep,limit=1,sort=nearest] add walker
+cmd tp @e[tag=walker] -4.3 201 1.5 -90 0
+cmd summon minecraft:sheep -4.3 201 4.5 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd execute as @e[tag=walker] run data merge entity @s {OnGround:1b,Invulnerable:0b,PersistenceRequired:1b}
+cmd fill 0 201 -4 0 202 -4 minecraft:barrier
+cmd tp @s 0.5 203 -3.5 0 28
+look 0 28
+wait 30
+cmd awaken ascent pilot rec graze_sheep_walk 200 2
+cmd awaken admin stroll @e[tag=walker] 0.043 40
+cmd awaken admin stroll @e[tag=walker] 0.076 16
+cmd awaken admin stroll @e[tag=walker] 0.136 6
+cmd awaken admin stroll @e[tag=walker] 0.17 16
+cmd awaken admin stroll @e[tag=walker] 0.085 4
+cmd awaken admin stroll @e[tag=walker] 0.043 4
+cmd awaken admin stroll @e[tag=walker] 0.0 26
+cmd awaken admin stroll @e[tag=walker] 0.0 30 6
+cmd awaken admin stroll @e[tag=walker] 0.0 10
+cmd awaken admin stroll @e[tag=walker] 0.034 30
+wait 45
+shot graze_sheep_walk_mid
+wait 30
+shot graze_sheep_run
+wait 30
+shot graze_sheep_stop
+wait 45
+shot graze_sheep_turned
+wait 45
+cmd fill 0 201 -4 0 202 -4 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 2. a chicken walk into a trot, a stop, a half turn on the spot, a creep back: rung 3 in front, vanilla's behind
+cmd tp @s -3.1 201 -2.5 0 0
+wait 5
+cmd awaken living form chicken 3
+wait 5
+cmd tag @e[type=minecraft:chicken,limit=1,sort=nearest] add walker
+cmd tp @e[tag=walker] -3.1 201 1.5 -90 0
+cmd summon minecraft:chicken -3.1 201 4.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd execute as @e[tag=walker] run data merge entity @s {OnGround:1b,Invulnerable:0b,PersistenceRequired:1b}
+cmd fill 0 201 -3 0 201 -3 minecraft:barrier
+cmd tp @s 0.5 202 -2.5 0 28
+look 0 28
+wait 30
+cmd awaken ascent pilot rec graze_chicken_walk 200 2
+cmd awaken admin stroll @e[tag=walker] 0.03 40
+cmd awaken admin stroll @e[tag=walker] 0.054 16
+cmd awaken admin stroll @e[tag=walker] 0.096 6
+cmd awaken admin stroll @e[tag=walker] 0.12 16
+cmd awaken admin stroll @e[tag=walker] 0.06 4
+cmd awaken admin stroll @e[tag=walker] 0.03 4
+cmd awaken admin stroll @e[tag=walker] 0.0 26
+cmd awaken admin stroll @e[tag=walker] 0.0 30 6
+cmd awaken admin stroll @e[tag=walker] 0.0 10
+cmd awaken admin stroll @e[tag=walker] 0.024 30
+wait 45
+shot graze_chicken_walk_mid
+wait 30
+shot graze_chicken_run
+wait 30
+shot graze_chicken_stop
+wait 45
+shot graze_chicken_turned
+wait 45
+cmd fill 0 201 -3 0 201 -3 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# 3. a blow (the body jerks over its planted feet), a heavier one, then the deaths
+cmd tp @s 0.5 201 -3.0 0 0
+wait 5
+cmd tp @s -3.0 201 -2.5 0 0
+cmd awaken living form cow 3
+wait 5
+cmd tag @e[type=minecraft:cow,limit=1,sort=nearest] add ours
+cmd tp @e[type=minecraft:cow,tag=ours] -3.0 201 2.0 180 0
+cmd summon minecraft:cow -0.6000000000000001 201 2.2 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["theirs"],Rotation:[180f,0f]}
+cmd tp @s 1.5 201 -2.5 0 0
+cmd awaken living form pig 3
+wait 5
+cmd tag @e[type=minecraft:pig,limit=1,sort=nearest] add ours
+cmd tp @e[type=minecraft:pig,tag=ours] 1.5 201 2.0 180 0
+cmd summon minecraft:pig 3.9 201 2.2 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["theirs"],Rotation:[180f,0f]}
+cmd execute as @e[tag=ours] run data merge entity @s {OnGround:1b,Invulnerable:0b,PersistenceRequired:1b}
+cmd execute as @e[tag=theirs] run data merge entity @s {OnGround:1b,Invulnerable:0b,PersistenceRequired:1b}
+cmd fill 0 201 -5 0 202 -5 minecraft:barrier
+cmd tp @s 0.5 203 -4.5 0 26
+look 0 26
+wait 30
+cmd awaken ascent pilot rec graze_hit 90 2
+cmd execute as @e[tag=ours] run damage @s 1 minecraft:player_attack by @p
+cmd execute as @e[tag=theirs] run damage @s 1 minecraft:player_attack by @p
+wait 3
+shot graze_hit
+wait 37
+cmd execute as @e[tag=ours] run damage @s 2 minecraft:player_attack by @p
+cmd execute as @e[tag=theirs] run damage @s 2 minecraft:player_attack by @p
+wait 50
+cmd awaken ascent pilot rec graze_death 50 2
+cmd kill @e[tag=ours]
+cmd kill @e[tag=theirs]
+wait 12
+shot graze_death_mid
+wait 40
+cmd fill 0 201 -5 0 202 -5 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+info
+quit

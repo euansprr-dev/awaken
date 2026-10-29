@@ -1,6 +1,7 @@
 package dev.awaken.mobs.client.model;
 
 import dev.awaken.Awaken;
+import dev.awaken.mobs.client.life.Life;
 import dev.awaken.mobs.client.life.LifeModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -90,10 +91,13 @@ public final class AwModels {
             jaw.xRot = 0.15F + 0.25F * (0.5F + 0.5F * Mth.sin(age * 0.2F)) + tele * 0.6F;
             // the swim quickens with speed and the wave travels down the body; struck, the whole length shudders
             float speed = 0.25F + s.walkAnimationSpeed * 0.4F;
+            // the wave's own clock, so a change of speed never jumps its phase
+            Life l = Life.from(s);
+            float ph = l != null ? l.clock(3, speed * 20.0F) : age * speed;
             float fl = Motion.flinch(s);
             for (int i = 0; i < segments.length; i++) {
-                segments[i].yRot = Mth.sin(age * speed - i * 0.9F) * (0.32F + s.walkAnimationSpeed * 0.12F) + Motion.shudder(s, 0.25F) * (i % 2 == 0 ? 1 : -1);
-                segments[i].xRot = Mth.cos(age * speed * 0.7F - i * 0.7F) * 0.08F;
+                segments[i].yRot = Mth.sin(ph - i * 0.9F) * (0.32F + s.walkAnimationSpeed * 0.12F) + Motion.shudder(s, 0.25F) * (i % 2 == 0 ? 1 : -1);
+                segments[i].xRot = Mth.cos(ph * 0.7F - i * 0.7F) * 0.08F;
             }
             // breathing swells the forebody (segments are chained, so only the first one scales)
             float breath = Motion.breathe(s, 0.12F, 0.03F);
