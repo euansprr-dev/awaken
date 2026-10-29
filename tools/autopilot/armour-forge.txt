@@ -21,8 +21,10 @@ screen close
 window 1280 720
 cmd gamemode creative
 cmd awaken admin rankup
+# the smithy's chunks first: a busy runner's server can fall seconds behind the script (fills there fail unloaded)
 cmd tp @s 0.5 201 0.5 0 0
-wait 100
+cmd forceload add -16 -16 16 16
+wait 300
 # the smithy: a deepslate floor, timber walls and roof, three lanterns; open to the north
 cmd fill -6 200 -3 6 200 9 minecraft:polished_deepslate
 cmd fill -6 201 9 6 205 9 minecraft:spruce_planks

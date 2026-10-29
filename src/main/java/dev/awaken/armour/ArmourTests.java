@@ -34,8 +34,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Armour GameTests (SPEC §44): the roster's shape, the Hunter items' looks, the Hunter sets' art shipped; the Forge Song's
- * rules, its saves, a piece made by hand start to finish and one at the Forge with a helper.
+ * Armour GameTests (SPEC §44): the roster's shape, the Hunter items' looks, every made set's art shipped; the Forge Song's
+ * rules, its saves, a piece made by hand start to finish and one at the Forge with a helper; the made sets' numbers,
+ * patterns, and what wearing a set does (abilities, mastery).
  */
 final class ArmourTests {
     private ArmourTests() {}
@@ -43,11 +44,14 @@ final class ArmourTests {
     static void register() {
         AwakenTests.register("armour_roster_shape", 20, ArmourTests::roster);
         AwakenTests.register("armour_hunter_looks", 20, ArmourTests::looks);
-        AwakenTests.register("armour_hunter_art_shipped", 20, ArmourTests::art);
+        AwakenTests.register("armour_art_shipped", 20, ArmourTests::art);
         AwakenTests.register("armour_forge_rules", 20, ArmourTests::forgeRules);
         AwakenTests.register("armour_forge_saves", 20, ArmourTests::forgeSaves);
         AwakenTests.register("armour_forge_by_hand", 40, ArmourTests::byHand);
         AwakenTests.register("armour_forge_at_the_forge", 40, ArmourTests::atTheForge);
+        AwakenTests.register("armour_numbers", 20, ArmourTests::numbers);
+        AwakenTests.register("armour_patterns", 20, ArmourTests::patterns);
+        AwakenTests.register("armour_set_abilities", 40, ArmourTests::abilities);
     }
 
     private static final List<Rank> RANKS = List.of(Rank.E, Rank.D, Rank.C, Rank.B, Rank.A, Rank.S);
@@ -98,12 +102,21 @@ final class ArmourTests {
         h.succeed();
     }
 
-    /** Each Hunter set ships a texture and a mesh for every piece on its main bone, so none falls back to the shell. */
+    /**
+     * Each made set ships a texture and a mesh for every piece on its main bone, so none falls back to the shell; a
+     * Channeler its rune; a set with items of its own an icon for each.
+     */
     private static void art(GameTestHelper h) {
         String[][] main = {{"helmet", "head"}, {"chestplate", "body"}, {"leggings", "right_leg"}, {"boots", "right_leg"}};
-        for (HunterTier tier : HunterTier.values()) {
-            ArmourSet s = ArmourSet.of(tier);
+        for (ArmourSet s : ArmourSet.values()) {
+            if (!s.made()) continue;
             h.assertTrue(exists("/assets/awaken/textures/entity/armour/" + s.id + ".png"), s.id + " has its texture");
+            if (s.archetype == Archetype.CHANNELER) h.assertTrue(exists("/assets/awaken/armour/" + s.id + "/rune.mesh"), s.id + " has its rune");
+            if (s.hunter == null) {
+                for (ArmorType type : ForgeSong.PIECES)
+                    h.assertTrue(exists("/assets/awaken/textures/item/armour/" + s.id + "_" + ArmourItems.suffix(type) + ".png"), s.id + " " + type + " has its icon");
+                if (s.rank != Rank.E) h.assertTrue(exists("/assets/awaken/textures/item/armour/" + s.id + "_pattern.png"), s.id + "'s pattern has its icon");
+            }
             for (String[] pb : main) {
                 String file = "/assets/awaken/armour/" + s.id + "/" + pb[0] + "_" + pb[1] + ".mesh";
                 h.assertTrue(exists(file), s.id + " ships " + file);
@@ -141,7 +154,7 @@ final class ArmourTests {
             }
             for (ArmorType piece : ForgeSong.PIECES) {
                 List<ForgeSong.Need> cost = ForgeSong.cost(set, piece);
-                if (set.hunter == null) {
+                if (!set.made()) {
                     h.assertTrue(cost == null, set.id + " isn't forged yet");
                     continue;
                 }
@@ -191,13 +204,19 @@ final class ArmourTests {
     }
 
     private static ServerPlayer smith(GameTestHelper h, Rank rank, BlockPos at) {
-        ServerPlayer p = h.makeMockServerPlayerInLevel();
-        p.setGameMode(GameType.SURVIVAL);
+        ServerPlayer p = survivor(h);
         Progression.awaken(p);
         while (Progression.rank(p).ordinal() < rank.ordinal()) Progression.passReassessment(p);
         p.getInventory().clearContent(); // awakening and rank gifts leave things in the pack; the tests count what they give
         p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 1.5, 0F, 0F);
         return p;
+    }
+
+    /** A survival player (a mock player is always creative, and creative makes anything for nothing), gone at the end. */
+    private static ServerPlayer survivor(GameTestHelper h) {
+        AwakenTests.Live live = AwakenTests.survivalPlayer(h, "armour-test", BlockPos.ZERO);
+        AwakenTests.onEnd(h, live::leave);
+        return live.player();
     }
 
     private static FittingStandBlockEntity stand(GameTestHelper h, BlockPos rel) {
@@ -334,5 +353,114 @@ final class ArmourTests {
         h.assertTrue(w.quench < 0.5F && f.quality() == ForgeSong.Quality.FLAWLESS.ordinal() && f.twin(),
                 "quenched too soon, yet Flawless and twin-struck, got " + f + " quench " + w.quench);
         h.succeed();
+    }
+
+    // ---- the made sets (P2) ------------------------------------------------------------------------------------------
+
+    private record Row(ArmourSet set, int helm, int chest, int legs, int boots, float tough, float kb, double speed, double power) {}
+
+    /** The made sets' numbers are SPEC §44.3's table; each has its four pieces, and above E its pattern. */
+    private static void numbers(GameTestHelper h) {
+        List<Row> table = List.of(
+                new Row(ArmourSet.BELLGUARD, 2, 5, 4, 1, 0.5F, 0.05F, 0, 0),
+                new Row(ArmourSet.ROOTWARDEN, 2, 3, 3, 1, 0F, 0F, 0, 0.03),
+                new Row(ArmourSet.AMBERWING, 2, 4, 3, 1, 0F, 0F, 0, 0),
+                new Row(ArmourSet.CLEFTRUNNER, 2, 5, 5, 2, 0.5F, 0F, 0.05, 0),
+                new Row(ArmourSet.LANTERNLIGHT, 2, 5, 5, 2, 0.5F, 0F, 0, 0.03),
+                new Row(ArmourSet.BLADEWARD, 2, 6, 5, 2, 0.5F, 0F, 0, 0),
+                new Row(ArmourSet.HORNLORD, 2, 7, 5, 2, 0.5F, 0F, 0, 0));
+        for (Row r : table) {
+            ArmourItems.Numbers n = ArmourItems.numbers(r.set());
+            h.assertTrue(n.helm() == r.helm() && n.chest() == r.chest() && n.legs() == r.legs() && n.boots() == r.boots()
+                    && Math.abs(n.toughness() - r.tough()) < 1e-6 && Math.abs(n.knockback() - r.kb()) < 1e-6
+                    && Math.abs(n.speed() - r.speed()) < 1e-9 && Math.abs(n.power() - r.power()) < 1e-9, r.set().id + " is " + r + ", got " + n);
+            for (ArmorType type : ForgeSong.PIECES) {
+                h.assertTrue(ArmourItems.item(r.set(), type) instanceof ForgedArmourItem, r.set().id + " " + type + " is an item of its own");
+                ArmourLooks.Look look = ArmourLooks.of(ArmourItems.stack(r.set(), type));
+                h.assertTrue(look != null && look.set() == r.set() && look.piece() == type, r.set().id + " " + type + " is drawn as itself");
+            }
+            h.assertTrue((ArmourItems.pattern(r.set()) == null) == (r.set().rank == Rank.E), r.set().id + ": a pattern above E only");
+        }
+        h.succeed();
+    }
+
+    /** A gate's kill gives a pattern of its rank you don't know; a Lord its Lord-forged set first; using one learns it. */
+    private static void patterns(GameTestHelper h) {
+        ArmouryMemory m = ArmouryMemory.fresh();
+        net.minecraft.util.RandomSource r = net.minecraft.util.RandomSource.create(7);
+        h.assertTrue(ArmourPatterns.pick(m, Rank.E, true, r) == null, "the E sets need no pattern");
+        h.assertTrue(ArmourPatterns.pick(m, Rank.D, true, r) == ArmourSet.HORNLORD, "a D Lord gives Hornlord's first");
+        for (int i = 0; i < 40; i++) {
+            ArmourSet s = ArmourPatterns.pick(m, Rank.D, false, r);
+            h.assertTrue(s != null && s.rank == Rank.D && s.hunter == null && s.archetype != Archetype.LORD, "a D creature gives a D set's, never the Lord's: " + s);
+        }
+        m.patterns.add("hornlord");
+        ArmourSet next = ArmourPatterns.pick(m, Rank.D, true, r);
+        h.assertTrue(next != null && next != ArmourSet.HORNLORD, "a known Lord pattern isn't given again");
+        m.patterns.addAll(List.of("cleftrunner", "lanternlight", "bladeward"));
+        h.assertTrue(ArmourPatterns.pick(m, Rank.D, true, r) == null && ArmourPatterns.pick(m, Rank.D, false, r) == null, "none once all are known");
+        h.assertTrue(ArmourPatterns.pick(ArmouryMemory.fresh(), Rank.C, true, r) == null, "C isn't made yet");
+
+        ServerPlayer p = survivor(h);
+        ArmouryMemory mine = ArmouryMemory.of(p);
+        h.assertTrue(ArmourForge.known(mine, ArmourSet.AMBERWING) && ArmourForge.known(mine, ArmourSet.BEASTBOUND)
+                && !ArmourForge.known(mine, ArmourSet.BLADEWARD), "E and Hunter sets known from the start, the others not");
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(ArmourItems.pattern(ArmourSet.BLADEWARD), 2));
+        ArmourItems.pattern(ArmourSet.BLADEWARD).use(h.getLevel(), p, net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(ArmourForge.known(ArmouryMemory.of(p), ArmourSet.BLADEWARD) && p.getMainHandItem().getCount() == 1, "using a pattern learns it");
+        ArmourItems.pattern(ArmourSet.BLADEWARD).use(h.getLevel(), p, net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(p.getMainHandItem().getCount() == 1, "a known pattern stays to be given away");
+        h.succeed();
+    }
+
+    /**
+     * Wearing sets: two Bellguard pieces give a heart; four fill Bastion from guards and a deflect bursts it on a zombie
+     * close by; blows earn mastery written onto every worn piece; a full Cleftrunner's afterimage takes a blow whole.
+     */
+    private static void abilities(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = survivor(h);
+        BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
+        p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0F, 0F);
+        ArmourAbilities.State s = ArmourAbilities.state(p);
+        double base = p.getMaxHealth();
+        wear(p, ArmourSet.BELLGUARD, 2);
+        h.assertTrue(s.full() == null && Math.abs(p.getMaxHealth() - base - ArmourAbilities.HALF_HEALTH) < 1e-6, "two pieces: a heart, no whole set");
+        wear(p, ArmourSet.BELLGUARD, 4);
+        h.assertTrue(s.full() == ArmourSet.BELLGUARD && Math.abs(p.getMaxHealth() - base - ArmourAbilities.HALF_HEALTH) < 1e-6, "four: whole, the heart once");
+        for (int i = 0; i < 5; i++) dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.GUARD, null);
+        h.assertTrue(s.charge() == ArmourAbilities.FULL, "five guards fill Bastion, got " + s.charge());
+        net.minecraft.world.entity.monster.zombie.Zombie z = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(2, 1, 1));
+        float before = z.getHealth();
+        dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.DEFLECT, z);
+        h.assertTrue(s.charge() == 0 && z.getHealth() < before, "a deflect bursts it: the zombie hurt (" + before + " -> " + z.getHealth() + ")");
+        for (int i = 0; i < 12; i++) dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.HIT, z);
+        ArmourAbilities.flush(p, s);
+        for (net.minecraft.world.entity.EquipmentSlot slot : List.of(net.minecraft.world.entity.EquipmentSlot.HEAD, net.minecraft.world.entity.EquipmentSlot.FEET)) {
+            Forged f = p.getItemBySlot(slot).get(ArmourContent.FORGED.get());
+            h.assertTrue(f != null && f.mastery() == 12, "twelve blows of mastery on the " + slot + ", got " + f);
+        }
+        h.assertTrue(new Forged(Forged.SCHEMA, "bellguard", 0, 299, false, false, "").masteryStep() == 0
+                && new Forged(Forged.SCHEMA, "bellguard", 0, 300, false, false, "").masteryStep() == 1
+                && new Forged(Forged.SCHEMA, "bellguard", 0, 99999, false, false, "").masteryStep() == Forged.MASTERY_BUILT, "the mastery steps");
+        z.discard();
+
+        wear(p, ArmourSet.CLEFTRUNNER, 4);
+        h.assertTrue(s.full() == ArmourSet.CLEFTRUNNER && s.charge() == 0, "another set: its own charge, empty");
+        s.charge = ArmourAbilities.FULL;
+        net.minecraft.world.entity.monster.zombie.Zombie z2 = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(1, 1, 2));
+        float hp = p.getHealth();
+        p.hurtServer(level, p.damageSources().mobAttack(z2), 4F);
+        h.assertTrue(p.getHealth() == hp && s.charge() == 0, "the afterimage takes the blow whole");
+        h.succeed();
+    }
+
+    /** Puts the first n pieces of a set on (helm, cuirass, greaves, boots) and the rest off, and counts them. */
+    private static void wear(ServerPlayer p, ArmourSet set, int n) {
+        for (int i = 0; i < 4; i++) {
+            ArmorType type = ForgeSong.PIECES[i];
+            p.setItemSlot(type.getSlot(), i < n ? ArmourItems.stack(set, type) : ItemStack.EMPTY);
+        }
+        ArmourAbilities.count(p, ArmourAbilities.state(p));
     }
 }
