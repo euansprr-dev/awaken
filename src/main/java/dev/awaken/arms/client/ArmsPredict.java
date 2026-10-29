@@ -128,6 +128,7 @@ public final class ArmsPredict {
         ArmsRules.Attack a = ArmsRules.attack(attackHeld, mineHeld, ticks - Math.max(fightAt, hurtAt), cuts(mc, p));
         if (a == ArmsRules.Attack.MINE) {
             mineHeld = true;
+            ArmsChop.want(mc); // the weapon's own chop while vanilla mines (SPEC §40 "The chop")
             return;
         }
         e.setCanceled(true);
@@ -299,6 +300,7 @@ public final class ArmsPredict {
      */
     static void frame() {
         Minecraft mc = Minecraft.getInstance();
+        ArmsChop.frame(mc);
         if (pressHeld && holdOpen && !charging && mc.player != null && !mc.options.keyAttack.isDown()) {
             pressHeld = false;
             tapped(mc.player);
@@ -403,6 +405,7 @@ public final class ArmsPredict {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
+        ArmsChop.tick(mc, p);
         if (plunging) {
             Archetypes.Loaded st = Arms.styleOf(p.getMainHandItem());
             if (st == null || p.isInLiquid() || p.getAbilities().flying) plunging = false;
@@ -822,5 +825,6 @@ public final class ArmsPredict {
         ArmsFx.reset();
         ArmsStances.reset();
         ArmsBodies.reset();
+        ArmsChop.reset();
     }
 }

@@ -75,7 +75,14 @@ public final class FpSwings {
      */
     public record Style(Map<Archetype.Move, Clip> moves, Quaternionf vanilla, Vector3f grip, Vector3f vanillaGrip, boolean twin,
                         Vector3f hand, @Nullable Vector3f offHand, @Nullable Vector3f vanillaOffHand, float @Nullable [] guard,
-                        float @Nullable [] trail) {}
+                        float @Nullable [] trail, @Nullable Loop chop, @Nullable Loop hack) {}
+
+    /**
+     * The weapon's own cutting motion while vanilla mines with it (SPEC §40 "The chop"; tools/art/swing_chop.py): the chop
+     * (an axe on wood) and the hack (a blade on a web, bamboo, leaves), each a loop of {@code period} ticks that starts and
+     * ends on its impact, laid out like a clip's keys; the game enters it {@code enter} ticks in, on the way up.
+     */
+    public record Loop(float period, float enter, float[] keys) {}
 
     /**
      * One whole read of the file: its schema, the studio's round, the key steps, every style, and third person's flipped
@@ -153,7 +160,7 @@ public final class FpSwings {
                     st.has("offHand") ? vec(st.getAsJsonArray("offHand")) : null,
                     st.has("vanillaOffHand") ? vec(st.getAsJsonArray("vanillaOffHand")) : null,
                     st.has("guard") ? floats(st.getAsJsonArray("guard"), 7) : null,
-                    st.has("trail") ? floats(st.getAsJsonArray("trail"), 2) : null));
+                    st.has("trail") ? floats(st.getAsJsonArray("trail"), 2) : null, loop(st, "chop"), loop(st, "hack")));
         }
         return new Data(schema, root.has("round") ? root.get("round").getAsInt() : 0, dt, wristDt, Map.copyOf(styles),
                 java.util.Set.copyOf(flipped), Map.copyOf(grip3));
@@ -172,6 +179,14 @@ public final class FpSwings {
     /** Puts a whole set in use (Swing Studio's tuning, client thread, between moves); null puts the jar's back. */
     public static void swap(@Nullable Data d) {
         data = d == null ? JAR : d;
+    }
+
+    private static @Nullable Loop loop(JsonObject st, String kind) {
+        if (!st.has(kind)) return null;
+        JsonObject o = st.getAsJsonObject(kind);
+        float period = o.get("period").getAsFloat();
+        if (period <= 0) throw new IllegalArgumentException(kind + " period " + period);
+        return new Loop(period, o.get("enter").getAsFloat(), keys(o.getAsJsonArray("keys")));
     }
 
     /** Rows of [t, the key's floats...] into STRIDE floats a key (missing ones 0: an idle hand leans no view). */
@@ -345,6 +360,22 @@ public final class FpSwings {
         Clip c = st == null || m == null ? null : st.moves().get(m);
         if (c == null || c.idle().length == 0) return false;
         return sample(st, c.idle(), t, ours, d, q);
+    }
+
+    /** A style's chop ({@code chop} true) or hack (Style's), or null. */
+    public static @Nullable Loop loop(@Nullable Style st, boolean chop) {
+        return st == null ? null : chop ? st.chop() : st.hack();
+    }
+
+    /**
+     * The chop or the hack {@code t} ticks into its loop (wrapped by its period), as {@link #sample} gives a move. False
+     * without one.
+     */
+    public static boolean cut(@Nullable Style st, boolean chop, float t, boolean ours, Vector3f d, Quaternionf q) {
+        Loop l = loop(st, chop);
+        if (l == null || l.keys().length == 0) return false;
+        float w = t % l.period();
+        return sample(st, l.keys(), w < 0 ? w + l.period() : w, ours, d, q);
     }
 
     private static boolean sample(Style st, float[] k, float t, boolean ours, Vector3f d, Quaternionf q) {
