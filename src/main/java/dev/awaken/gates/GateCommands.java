@@ -187,7 +187,11 @@ final class GateCommands {
             c.getSource().sendFailure(Component.literal("The gate dimension isn't loaded in this world."));
             return 0;
         }
-        GateRecord g = Director.spawnFor(c.getSource().getServer(), p, rank, theme, 18, 30, rig);
+        GateRecord near = Director.spawnFor(c.getSource().getServer(), p, rank, theme, 18, 30, rig);
+        // water or another gate close by: look further out before giving up (a tour's hop can land on a coast)
+        if (near == null) near = Director.spawnFor(c.getSource().getServer(), p, rank, theme, 30, 120, rig);
+        if (near == null) near = Director.spawnFor(c.getSource().getServer(), p, rank, theme, 120, 300, rig);
+        GateRecord g = near;
         if (g == null) {
             c.getSource().sendFailure(Component.literal("No dry ground nearby for a gate."));
             return 0;

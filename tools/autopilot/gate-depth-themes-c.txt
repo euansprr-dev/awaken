@@ -1,0 +1,141 @@
+# Gate depth stage 2 (SPEC 38.14): Dream, Abyss and Fungal's cave worlds with shaped ground (content version 7) on the depth test's
+# plan: on floor 1 of each, the biggest place and the second, from just inside where you walk in, a block over the
+# ground. Version 6 looks as it always did (the Hive's tour shows the two side by side).
+#
+# Commands it relies on (game master):
+#   /awaken gate open <rank> <theme> world <version> <world id>   every floor in that world, on the depth test's plan
+#   /awaken gate interior enter                                    into the gate opened last (else the newest)
+#   /awaken gate interior goto <place|place2>                      a world floor's biggest place, or its second
+#   /awaken gate leave, /awaken gate hop
+world autopilot_gate_depth creative 20261029
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd gamerule awaken:fauna_spawning false
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+hud off
+# away from Carillon first: gates never form in its reserve, and the first hop (no gates yet) stays close; on CI the
+# land out there takes a while to make, so wait for it before the first gate looks for dry ground
+cmd tp @s 6000 200 6000
+wait 600
+
+# ---- the house -----------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E nightmare world 7 awaken:nightmare/the_house
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_the_house_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_the_house_b
+cmd awaken gate leave
+wait 100
+
+# ---- upside down ---------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E nightmare world 7 awaken:nightmare/upside_down
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_upside_down_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_upside_down_b
+cmd awaken gate leave
+wait 100
+
+# ---- the last room -------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E abyssal_shrine world 7 awaken:abyssal_shrine/the_last_room
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_the_last_room_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_the_last_room_b
+cmd awaken gate leave
+wait 100
+
+# ---- glowing deep --------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E fungal_hollow world 7 awaken:fungal_hollow/glowing_deep
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_glowing_deep_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_glowing_deep_b
+cmd awaken gate leave
+wait 100
+
+# ---- root warrens --------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E fungal_hollow world 7 awaken:fungal_hollow/root_warrens
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_root_warrens_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_root_warrens_b
+cmd awaken gate leave
+wait 100
+
+# ---- spore canopy --------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E fungal_hollow world 7 awaken:fungal_hollow/spore_canopy
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_spore_canopy_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_spore_canopy_b
+cmd awaken gate leave
+wait 100
+
+# ---- inside the bloom ----------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E fungal_hollow world 7 awaken:fungal_hollow/inside_the_bloom
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_inside_the_bloom_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_inside_the_bloom_b
+cmd awaken gate leave
+wait 100
+quit

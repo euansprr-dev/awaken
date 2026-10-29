@@ -10914,7 +10914,11 @@ now, fought-on second storeys in a later plan.
   facing its middle. The tour starts 6,000 blocks out (no gate forms in Carillon's reserve) with the HUD off,
   and waits for the land there before its first gate; a gate made by `gate open ... world` stands where it's opened,
   even over a village's edge (a tour can't pick another spot); `gate interior enter` takes the gate opened last when
-  it's ready (`GateService.lastOpened`, not saved), not a gate that formed by itself beside it since.
+  it's ready (`GateService.lastOpened`, not saved), not a gate that formed by itself beside it since, and while
+  that gate is still forming it says so and enters none (a tour's shots would show another world); `gate open` with no
+  dry ground within 30 looks 30 to 120 out, then 120 to 300 (a tour's hop can land on a coast). Tours
+  `gate-depth-themes-a`, `-b` and `-c` (every other theme's cave worlds at 7), `gate-depth-lands` (seven lands, isles and
+  seas at 6 and 7) and `gate-depth-crypt` (the Bell Crypt's four at 6 and 7) are the same on CI.
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 

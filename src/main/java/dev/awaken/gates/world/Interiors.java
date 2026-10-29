@@ -166,6 +166,11 @@ public final class Interiors {
         // the gate the game master opened last, if it's ready (a tour's: not a gate that formed by itself beside it since)
         GateRecord last = GateRegistry.get(c.getSource().getServer()).gate(GateService.lastOpened);
         if (last != null && last.state.enterable() && last.interiorReady && last.state != GateState.BUILDING) return Runs.enter(p, last) ? last.id : 0;
+        // still forming: say so rather than walk into an older gate (a tour's shots would show the wrong world)
+        if (last != null && (last.state == GateState.BUILDING || last.state.enterable() && !last.interiorReady)) {
+            c.getSource().sendFailure(Component.literal("Gate " + last.id + " is still forming."));
+            return 0;
+        }
         GateRecord best = null;
         for (GateRecord g : GateRegistry.get(c.getSource().getServer()).all()) {
             if (!g.state.enterable() || !g.interiorReady || g.state == GateState.BUILDING) continue;

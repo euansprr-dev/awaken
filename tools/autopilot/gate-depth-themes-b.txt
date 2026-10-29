@@ -1,0 +1,141 @@
+# Gate depth stage 2 (SPEC 38.14): Desert, Frost, Palace and Lab's cave worlds with shaped ground (content version 7) on the depth test's
+# plan: on floor 1 of each, the biggest place and the second, from just inside where you walk in, a block over the
+# ground. Version 6 looks as it always did (the Hive's tour shows the two side by side).
+#
+# Commands it relies on (game master):
+#   /awaken gate open <rank> <theme> world <version> <world id>   every floor in that world, on the depth test's plan
+#   /awaken gate interior enter                                    into the gate opened last (else the newest)
+#   /awaken gate interior goto <place|place2>                      a world floor's biggest place, or its second
+#   /awaken gate leave, /awaken gate hop
+world autopilot_gate_depth creative 20261029
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd gamerule awaken:fauna_spawning false
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+hud off
+# away from Carillon first: gates never form in its reserve, and the first hop (no gates yet) stays close; on CI the
+# land out there takes a while to make, so wait for it before the first gate looks for dry ground
+cmd tp @s 6000 200 6000
+wait 600
+
+# ---- glass caves ---------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E glass_desert world 7 awaken:glass_desert/glass_caves
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_glass_caves_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_glass_caves_b
+cmd awaken gate leave
+wait 100
+
+# ---- ice caves -----------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E frost_monastery world 7 awaken:frost_monastery/ice_caves
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_ice_caves_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_ice_caves_b
+cmd awaken gate leave
+wait 100
+
+# ---- gallery -------------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E mirror_palace world 7 awaken:mirror_palace/gallery
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_gallery_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_gallery_b
+cmd awaken gate leave
+wait 100
+
+# ---- mirror maze ---------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E mirror_palace world 7 awaken:mirror_palace/mirror_maze
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_mirror_maze_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_mirror_maze_b
+cmd awaken gate leave
+wait 100
+
+# ---- facility ------------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E precursor_lab world 7 awaken:precursor_lab/facility
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_facility_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_facility_b
+cmd awaken gate leave
+wait 100
+
+# ---- server abyss --------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E precursor_lab world 7 awaken:precursor_lab/server_abyss
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_server_abyss_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_server_abyss_b
+cmd awaken gate leave
+wait 100
+
+# ---- containment ---------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E precursor_lab world 7 awaken:precursor_lab/containment
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 160
+shot depth_containment_a
+cmd awaken gate interior goto place2
+wait 160
+shot depth_containment_b
+cmd awaken gate leave
+wait 100
+quit
