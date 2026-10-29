@@ -62,23 +62,23 @@ cmd kill @e[type=minecraft:item]
 cmd kill @e[type=minecraft:experience_orb]
 wait 5
 # 2. small: a walk, a run, a stop, a half turn on the spot, a creep back (no AI: strolled every tick)
-cmd summon awaken:wickling -3.6 201 1.5 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
-cmd summon awaken:hushling -3.6 201 3.5 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
-cmd fill 0 201 -3 0 202 -3 minecraft:barrier
-cmd tp @s 0.5 203 -3.0 0 32
-look 0 32
+cmd summon awaken:wickling -2.6 201 1.2 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd summon awaken:hushling -2.6 201 2.8 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd fill 0 201 -1 0 201 -1 minecraft:barrier
+cmd tp @s 0.5 202 -1.0 0 34
+look 0 34
 wait 30
 cmd awaken ascent pilot rec crawl_walk_small 200 2
-cmd awaken admin stroll @e[tag=walker] 0.035 40
-cmd awaken admin stroll @e[tag=walker] 0.063 16
-cmd awaken admin stroll @e[tag=walker] 0.112 6
-cmd awaken admin stroll @e[tag=walker] 0.14 16
-cmd awaken admin stroll @e[tag=walker] 0.07 4
-cmd awaken admin stroll @e[tag=walker] 0.035 4
+cmd awaken admin stroll @e[tag=walker] 0.025 40
+cmd awaken admin stroll @e[tag=walker] 0.045 16
+cmd awaken admin stroll @e[tag=walker] 0.08 6
+cmd awaken admin stroll @e[tag=walker] 0.1 16
+cmd awaken admin stroll @e[tag=walker] 0.05 4
+cmd awaken admin stroll @e[tag=walker] 0.025 4
 cmd awaken admin stroll @e[tag=walker] 0.0 26
 cmd awaken admin stroll @e[tag=walker] 0.0 30 6
 cmd awaken admin stroll @e[tag=walker] 0.0 10
-cmd awaken admin stroll @e[tag=walker] 0.028 30
+cmd awaken admin stroll @e[tag=walker] 0.02 30
 wait 45
 shot crawl_small_walk_mid
 wait 30
@@ -88,7 +88,7 @@ shot crawl_small_stop
 wait 45
 shot crawl_small_turned
 wait 45
-cmd fill 0 201 -3 0 202 -3 minecraft:air
+cmd fill 0 201 -1 0 201 -1 minecraft:air
 cmd kill @e[type=!minecraft:player,distance=..80]
 wait 25
 cmd kill @e[type=minecraft:item]
