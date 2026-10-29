@@ -174,7 +174,8 @@ public final class ArmourForge {
                 default -> "Starmetal";
             };
         }
-        return BuiltInRegistries.ITEM.getValue(n.item()).getName(ItemStack.EMPTY).getString();
+        // the name lives on the stack (an empty stack has none, which left these labels blank)
+        return new ItemStack(BuiltInRegistries.ITEM.getValue(n.item())).getHoverName().getString();
     }
 
     /** An item that shows the need: the tag's first member, or the item. */

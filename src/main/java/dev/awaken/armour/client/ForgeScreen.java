@@ -122,8 +122,9 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
 
     @Override
     protected void init() {
-        pw = Math.min(232, width / 2 - 10);
-        ph = Math.min(height - 36, 290);
+        // tall enough for an S set with its inlay row and two lines of needs; wide enough for "Trophy (S)" two to a line
+        pw = Math.min(256, width / 2 - 10);
+        ph = Math.min(height - 24, 312);
         px = 14;
         py = (height - ph) / 2;
         if (!shot && minecraft != null && minecraft.level != null) {
@@ -281,7 +282,13 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
 
         // the buttons
         boolean memory = o != null && (o.flags() & ArmourPayloads.FROM_MEMORY) != 0;
-        buttonY = Math.min(py + ph - 34, y + (memory ? 14 : 4));
+        int want = y + (memory ? 14 : 4);
+        buttonY = Math.min(py + ph - 34, want);
+        if (want > buttonY && ph < height - 24) {
+            // more than fits (a long note on a small screen): the panel grows from the next frame rather than overlap
+            ph = Math.min(height - 24, want + 34 - py);
+            py = (height - ph) / 2;
+        }
         boolean can = o != null && (o.flags() & ArmourPayloads.CAN) != 0 && busy == null;
         button(g, px + 8, "Forge it", can, mouseX, mouseY);
         if (memory) {
