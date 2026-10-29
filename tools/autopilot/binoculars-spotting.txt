@@ -1,5 +1,5 @@
 # Binoculars spotting (SPEC 39.10): the glass held on something unfound fills its ring over 2 s and the find lands.
-# A creature 60 blocks off across the sky (past the 24/48-block study range), then a gate seen from a hill of glass.
+# A creature 60 blocks off across the sky (past the 24/48-block study range), then a gate seen from 50 blocks off.
 #
 # Commands it relies on (game master):
 #   /awaken spotting aim [creature|place]   faces the nearest thing you could spot
@@ -20,11 +20,11 @@ cmd difficulty peaceful
 cmd gamerule send_command_feedback false
 camera first
 # away from Carillon (nothing inside its walls is a find), and wait for the land out there
-cmd tp @s 6000 200 6000 0 0
+cmd tp @s 6000 160 6000 0 0
 wait 600
 
 # ---- a creature across the sky -----------------------------------------------------------------------------------------
-cmd tp @s 6000 220 6000 0 0
+cmd tp @s 6000 160 6000 0 0
 cmd fill ~-2 ~-1 ~-2 ~2 ~-1 ~2 minecraft:smooth_stone
 cmd fill ~-2 ~-1 ~58 ~2 ~-1 ~62 minecraft:smooth_stone
 cmd kill @e[type=!minecraft:player,distance=..160]
@@ -52,8 +52,10 @@ cmd awaken gate hop
 wait 300
 cmd awaken gate open C
 wait 500
-# up and back from it: a glass hill 30 over the ground
-cmd tp @s ~ ~30 ~
+# up and back from it: a glass perch 40 over the ground and 50 blocks off
+cmd tp @s ~ ~40 ~
+cmd awaken spotting aim place
+cmd tp @s ^ ^ ^-50
 cmd fill ~-1 ~-1 ~-1 ~1 ~-1 ~1 minecraft:glass
 wait 20
 cmd awaken spotting aim place
@@ -62,7 +64,9 @@ shot spot_07_gate_bare
 key binoculars
 wait 25
 shotnow spot_08_gate_filling
-wait 20
+wait 12
+shotnow spot_08b_gate_nearly
+wait 8
 shotnow spot_09_gate_found
 wait 4
 shotnow spot_10_gate_landing
