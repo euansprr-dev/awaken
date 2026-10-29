@@ -216,7 +216,7 @@ final class DeepBestiary {
                 .phase(0.66F, "Ashfall.", a(RAIN, "Ashfall").n(6).bolt(BoltKind.FIRE), a(SUMMON, "Embers").summon("ember_imp").n(2), a(BOLT, "Cinders").n(5).bolt(BoltKind.FIRE))
                 .phase(0.33F, "Burnout.", a(AURA, "Burnout").radius(9).bolt(BoltKind.FIRE).heavy(), a(NOVA, "Last Embers").n(16).bolt(BoltKind.FIRE), a(RAIN, "Ashfall").n(7).bolt(BoltKind.FIRE))
                 .parts(P("ash_heart", "Heart of Ash", "ember")).build());
-        out.add(m("signals_shadow", "The Signal's Shadow", Theme.SEED, Tier.FINAL, Model.SHADE, "It has your voice: every gate, every lance, then the Seed collapses").hp(40).dmg(6).spd(0.3).scale(2.0F).bar(BossBarColor.WHITE).arena(30)
+        out.add(m("signals_shadow", "The Signal's Shadow", Theme.SEED, Tier.FINAL, Model.SHADE, "It has your voice: every gate, every lance, then the Seed collapses").hp(40).dmg(6).spd(0.3).scale(2.0F).size(1.15F, 1.13F).bar(BossBarColor.WHITE).arena(30)
                 .intro("It has your voice.")
                 .phase(1.0F, "The Signal's Shadow speaks.", a(BEAM, "Instruction").bolt(BoltKind.SIGNAL).power(1.8F), a(BLINK, "Signal Step"), a(BOLT, "Directive").n(5).bolt(BoltKind.SIGNAL))
                 .phase(0.66F, "It remembers every gate.", a(SUMMON, "Echoes").summon("signal_echo").n(2), a(RAIN, "Signal Marks").n(6).bolt(BoltKind.SIGNAL), a(DECOY, "Your Echoes").n(2))

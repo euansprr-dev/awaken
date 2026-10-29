@@ -89,7 +89,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | Sovereign of Storms | Sovereign | Court | Flier | kit | A, the Gale Hound | ✓ c7a4c0fd | ✓ c7a4c0fd | — |
 | Sovereign of Roots | Sovereign | Court | Caster | kit | A, the Hearthstone Toad | ✓ 7008ed48 | ✓ 7008ed48 | — |
 | Sovereign of Ash | Sovereign | Court | Flier | kit | A, the Cinder Wyrm | ✓ d3b188fd | ✓ d3b188fd | — |
-| The Signal's Shadow | Final | Seed | Duelist | cube shade ×2 | — | — | — | — |
+| The Signal's Shadow | Final | Seed | Duelist | kit | A, the Signal Cuttlefish | — | — | — |
 | The Long Drop | Nightmare | Fear | Flier | phantom ×2.4 | — | — | — | — |
 | The Pyre | Nightmare | Fear | Flier | blaze ×2 | — | — | — | — |
 | The Undertow | Nightmare | Fear | Caster | drowned ×2 | — | — | — | — |
@@ -267,3 +267,10 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
   own body down, the Heart of Ash is the heart you can see between its burnt-open ribs, Ashfall and Burnout are its
   wings and its last fire, and no other boss is a dragon. B is a second big insect flier after the Hive Regent's
   Empress; C is the Living Forge's burning giant again.
+- **The Signal's Shadow** (`signals_shadow`): A the Signal Cuttlefish (a cuttlefish as long as a cart, its black skin
+  showing the Signal's own windows drifting over it, its two tentacles hidden in its crown of arms), B the Antler Stag
+  (a pale stag whose antlers are the Signal's wiring), C the Glass Mantis (an upright mantis of the Signal's glass).
+  **Picked A**, 2026-10-29: "It has your voice" is a cuttlefish, the animal that talks with its skin, and this one's
+  skin shows the words you have read all game; the Lance is its tentacles, Signal Step its jet and ink, and nothing
+  else in the roster swims like it. B is another big four-legged mammal after the Gale Hound; C is the Hive Regent's
+  upright insect again, with glass wings.

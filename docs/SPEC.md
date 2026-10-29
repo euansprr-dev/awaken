@@ -13589,6 +13589,59 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     breath, burning and shot, a fire's crackle and a lava pop, a ravager's step.
   - **Meter.** Worst kink outside a strike 4.4° (the Claw's rake); held at most 19%; no still spells; the strings dip at
     most 31% (into and after the Bite). Wind-ups 13.4 (the Claw) to 43.9 (Last Embers).
+- **The Signal's Shadow, the Signal Cuttlefish** (body and motion, `kit/bosses/signals_shadow.py`). "It has your
+  voice." The Deep's last boss: a cuttlefish as long as a cart hanging in the dark at the bottom of the Well. A
+  cuttlefish talks with its skin, and this one's skin talks the way the Signal does: over its black mantle drift bands
+  of the Signal's own windows, pale glass with bright corner brackets and lines of writing in them, here and there one
+  in amber, the colour of "NOT TRUE YET". Its fin ripples all down both sides, edged with the Signal's blue. Its eyes are
+  big and pale with a black W across each. Its eight arms are held together in a crown in front of its face, and inside
+  them lie the two long tentacles it shoots out like lances. 73 cubes on 49 bones; it hangs with its eyes at your eye
+  height, 5.1 blocks long. The hitbox is 1.15 x 1.13 at its scale of 2.0 (2.3 x 2.3 blocks), round its mantle.
+  - **Its idle.** It hangs breathing (8 s), its fin rippling down both sides and never still, its arms stirring and its
+    crown slowly opening and closing. It turns side-on to look at you with one eye, then with the other; it lifts its top
+    arms and lowers them; it flares its crown once; its mantle swells as it breathes.
+  - **How it moves.** A quicker ripple runs down its fin as it goes, its arm tips trailing. It cruises on its fin with
+    its arms drawn into a point ahead of it (1.2 s, 1.4 blocks) and runs in jets, squeezing water through its funnel, its
+    fin wrapping down against its sides on each jet and its arms streaming (0.8 s, 2.6 blocks). Turning, the fin on the
+    outside works harder and its arms sweep round.
+  - **Struck, broken and its death.** Struck, it jolts back with its crown flaring and its fin flicking up; from the side
+    it rolls away from the blow. Broken, it sinks to the floor with its arms spread limp round its head, and rises out of
+    it on its fin, pushing off with its arms. Its death (5 s): it convulses with its crown flung open, writhes as it sinks
+    and turns, settles on the floor, its fin slows and stops, its arms curl in under its head one after another and its
+    mantle goes flat.
+  - **Its moves.** The Lash (LIGHT): its crown of arms rises and flares open over its head, the tips hooked down like
+    snakes about to strike, and whips down across you, fanning wide and closing as it comes, the bottom pair kept off the
+    floor. The Grasp (LIGHT, after the Lash): it draws back with its arms curled in under its face, flings them out open
+    and closes them on you like a fist. The Lance (HEAVY, its gap closer, 7 blocks, a 6-tick hold): its fin wraps down
+    and its crown parts wide, the two tentacles pale inside; it holds, then jets at you and the tentacles shoot out to
+    4.6 times their length, their clubs snapping shut, and whip back. The Recoil (for whoever is behind it): it gathers
+    its arms into a point, squeezes and jets backwards hard into them, its mantle squashing. Instruction: it draws its
+    arms into a cone at you and holds you in its eyes while the beam runs from the point, its body trembling. Signal Step:
+    it squeezes, jets backwards and is gone (it shrinks away to nothing). Directive: it lifts its top arms and flicks five
+    bolts. Echoes (into the second phase): it spreads its arms and its skin pulses, and its echoes come. Signal Marks: it
+    rises with its arms hanging like a chandelier and pulses six times. Your Echoes: it jets aside twice. Come Down: it
+    reaches every arm and both tentacles at you and draws them in. Signal Halo: it rises and flares its arms out in a star
+    round its face. Last Instruction: it rears its arms up over its head in a warning display and shudders. Seed Collapse
+    (the signature, into the third phase): it draws every arm in and squeezes itself small and tight, trembling, and
+    bursts open with its arms flung wide. Its intro: it lies on the floor of the Seed as if broken, lifts off it, opens
+    its crown of arms and looks at you.
+  - **Its fight.** First: the Lash into the Grasp (and on into the Lance), the Grasp, the Lance into the Lash,
+    Instruction and the Directive at range, Signal Step, the Recoil behind. After Echoes: the Lash into the Grasp into the
+    Recoil, the Lance into the Lash and the Grasp, Signal Marks, Your Echoes, Instruction, Signal Step. After Seed
+    Collapse: Come Down into the Lash, Signal Halo, the Lash into the Grasp into Signal Halo, the Lance into the Grasp,
+    Last Instruction, Seed Collapse again. It enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over the body (its float, the arch of its mantle's end, its head),
+    its eight arms (spread, droop, curl, bend, reach, a lift of the top pair and a writhe run out along each, a little
+    behind the one before), its fin (a ripple run from head to tail, a lift and a side) and its two tentacles. The
+    tentacles' stretch is a scale track written every tick with their clubs scaled back by the same amount, so a club
+    keeps its size. Under every move a drift layer stirs its arm tips and ripples its fin, so it is never still.
+  - **On the floor.** The ground pass keeps its arm tips, its fin and its tentacles' clubs out of the floor in every clip;
+    on the floor its body rests on its mantle.
+  - **Its sounds** (chosen on paper, not heard in game): a glow squid's voice and a squid's squirt kept low for its
+    jets, the conduit's and the beacon's hum for the Signal, the sculk sensor's clicking like writing, the amethyst's
+    ring, the illusioner's mirror move as it vanishes, the warden's heartbeat under Seed Collapse.
+  - **Meter.** Worst kink outside a strike 3.7° (the Directive); held at most 2%; no still spells; the strings dip at
+    most 35% (Come Down into the Lash). Wind-ups 13.0 (the Recoil) to 17.5 (the Lash).
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
 Module `dev.awaken.binoculars`. You always have a pair: one key brings them up with both hands, and the view zooms through our

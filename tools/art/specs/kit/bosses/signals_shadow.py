@@ -123,7 +123,7 @@ def body():
         c = t.bone(f"club_{nm}", (0, 0, -TENT[1]), (0, 0, 0))
         _box(c, f"club_{nm}", 0, -1.5, -3, 3, 3, 6)
         _box(c, f"clubp_{nm}", 0, -2.5, -3, 4, 1, 5)
-    r.look = ("head", "mantle")
+    r.look = [("head", 0.4, 0.3), ("mantle", 0.2, 0.12)]
     r.shadow = 3.2
     r.size = 1.0
     # secondary parts (SPEC §35.10): the ends of its arms trail
@@ -589,15 +589,20 @@ TIPS = [f"arm{k}c" for k in range(8)]
 TIP = (0.0, 0.0, -7.0)
 
 
+def LOW_ARMS(a):
+    """Its bottom pair of arms held up off the floor by a (degrees, most at the root)."""
+    return {k: ((-a, 0, 0), (-0.6 * a, 0, 0), (-0.4 * a, 0, 0)) for k in (6, 7)}
+
+
 def lash(r):
     """The Lash (LIGHT): it tips its head up and its crown of arms rises and flares open over it, the arm tips hooked
     down like the heads of snakes about to strike; then it whips the whole crown down across you, the arms closing as
     they come and their tips cracking down last."""
     cock = _pose(lift=2, shift=(0, 3), pitch=-12, arch=-4, head=(-8, 0, 0), arms=dict(spread=24, raise_=12, droop=-26, curl=18, bend=-8),
                  fins=dict(up=16), tents=dict(pitch=-6))
-    sweep = _pose(lift=-0.5, shift=(0, -1), pitch=0, head=(1, 0, 0), arms=dict(spread=40, droop=2, curl=-18, bend=-24), fins=dict(up=14))
-    hit = _pose(lift=-1, shift=(0, -5), pitch=9, arch=4, head=(9, 0, 0), arms=dict(spread=6, droop=24, curl=28, bend=14), fins=dict(up=10))
-    held = _pose(lift=-1.1, shift=(0, -5), pitch=9.5, arch=4, head=(9, 0, 0), arms=dict(spread=6, droop=25, curl=29, bend=15), fins=dict(up=10))
+    sweep = _pose(lift=-0.5, shift=(0, -1), pitch=0, head=(1, 0, 0), arms=dict(spread=42, droop=4, curl=8, bend=-26, each=LOW_ARMS(14)), fins=dict(up=14))
+    hit = _pose(lift=-1, shift=(0, -5), pitch=9, arch=4, head=(9, 0, 0), arms=dict(spread=6, droop=24, curl=28, bend=14, each=LOW_ARMS(16)), fins=dict(up=10))
+    held = _pose(lift=-1.1, shift=(0, -5), pitch=9.5, arch=4, head=(9, 0, 0), arms=dict(spread=6, droop=25, curl=29, bend=15, each=LOW_ARMS(16)), fins=dict(up=10))
     return Move("lash", "LIGHT", 10, 5, 14, through=held, title="Lash", track=8.0, rng=(0, 4.5), kinds=("combo", "near"), damage=1.0, knock=0.7, plant=(),
                 hit=[(b, TIP, 6.0) for b in TIPS], stages={"windup": [(0.2, _mix(REST, cock, 0.55)), (0.55, _mix(REST, cock, 0.88)), (1.0, cock)],
                                                            "active": [(0.35, sweep), (1.0, hit)],
