@@ -78,7 +78,9 @@ happens).
 - **Links**: the wildness field (a tamer, as a town), the Ember (refused within 768 of its bell), the Bell Book (stage
   4: Rung on first standing inside).
 - **Edges**: no troubles, no notice-board requests and no runners ever (holdfast people never give tasks); festivals
-  still happen. A region whose land takes no town gives no holdfast (the next cell's still can). Old worlds: the choice
+  still happen. A square whose pick's land takes no town has no holdfast (its heart is still tamed); a camp's raid
+  never becomes a holdfast's (or any village's) Burning. Its notice board: "[The board has the bell's shift list and a
+  few notes they've left each other. Nothing on it is for you.]" Test: `village_holdfasts`. Old worlds: the choice
   is pure from the seed, so an old world's towns are holdfasts or empty the same way. Several players each hear and
   file it for themselves. The bell rings only while a player is within its reach (no cost otherwise).
 

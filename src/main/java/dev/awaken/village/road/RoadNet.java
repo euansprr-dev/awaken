@@ -75,6 +75,7 @@ public final class RoadNet {
         PORTS.clear();
         PIECES.clear();
         SITES.clear();
+        Holdfasts.clear();
         LEGS.clear();
         LATER.clear();
         BY_CHUNK.clear();
@@ -204,13 +205,13 @@ public final class RoadNet {
         return out;
     }
 
-    private static boolean sitesKnown(int gx, int gz) {
+    static boolean sitesKnown(int gx, int gz) {
         var f = SITES.get(cellKey(gx, gz));
         return f != null && f.isDone();
     }
 
     /** A region's sites, found by the road planners (nothing if another thread is already finding them). */
-    private static void sitesSoon(RoadWorld w, int gx, int gz) {
+    static void sitesSoon(RoadWorld w, int gx, int gz) {
         long key = cellKey(gx, gz);
         if (!SITES.containsKey(key)) RoadPlanners.job("S" + gx + "," + gz, RoadPlanners.SOON, 0, () -> {
             if (!SITES.containsKey(key)) sites(w, gx, gz);

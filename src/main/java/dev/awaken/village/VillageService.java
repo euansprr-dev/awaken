@@ -133,8 +133,16 @@ public final class VillageService {
         });
     }
 
-    /** Its people start (or its saved ones go on), once its ground is seen to be painted. */
+    /**
+     * Its people start (or its saved ones go on), once its ground is seen to be painted. Only a holdfast's (SPEC §43.1,
+     * §43.2): every other settlement stands empty, and one whose people an older world saved never starts again.
+     */
     static @Nullable Live start(ServerLevel level, VillagePlan plan) {
+        if (!dev.awaken.village.road.Holdfasts.isKey(plan.key)) {
+            ABSENT.add(plan.key);
+            Awaken.LOG.info("[village] {} ({}) is left empty (SPEC §43.1)", plan.name, plan.key);
+            return null;
+        }
         BlockPos well = plan.ground(plan.well[0], plan.well[1]);
         if (!level.isLoaded(well)) return null;
         if (!level.getBlockState(well).is(Blocks.WATER)) {

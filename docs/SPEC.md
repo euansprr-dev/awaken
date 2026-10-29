@@ -12150,6 +12150,25 @@ here as it goes.
 - Inside: citizens with the city's dialogue rules (they talk, react and carry rumours, never give tasks), a small market
   (emeralds), a bed, a ringer on shift. A tamer on the wildness field (§41) to the bell's reach. Its people never leave
   and never come to a Hearth.
+- **Built (stage 1)**: `village.road.Holdfasts` chooses them, pure from the seed (old worlds alike). The first is the
+  lowest-rolled town region (its own salt) whose heart is 1,500 to 2,500 blocks past the ridge (ridge = `TheLull`'s 510
+  with Carillon, 360 without) and whose land takes a town, found at server start after the first town (`RoadWorld`).
+  Then each 3,000-block square, counted from the centre, picks its lowest-rolled town region whose heart lies 1,500 or
+  more past the ridge; the pick stands unless its heart is within 2,000 of the first's or within 1,500 of a
+  neighbouring square's lower-rolled pick. A pick whose land takes no town leaves its square without one (its heart
+  is still tamed). With 1,600-block regions that's about half the walled towns. `VillageService.start` starts only a
+  holdfast's people; any other settlement is left empty (logged once). `village.Holdfast` rings the bell
+  (`awaken:holdfast.bell`, the city's hour and district bells at pitch 0.78 and 0.72): one toll on the in-game hour,
+  three 50 ticks apart at dawn (0), noon (6000) and dusk (12000), only while a player is within 768; a player more than
+  32 blocks off hears it played 32 blocks away along its bearing, its volume falling to 0.3 at 768. The first toll a
+  player hears gives "[A bell. A real one, ringing, somewhere to the north-east.]" (eight bearings) and keeps the
+  bell's place; standing inside its walls is kept too (saved data `village_holdfasts`, schema 1, per player, for stage
+  4's Map shading and Rung). The Ember is refused within 768 of one (`TheLull.holdfastHeard`). Its notice board reads
+  "[The board has the bell's shift list and a few notes they've left each other. Nothing on it is for you.]";
+  an empty settlement's reads "[The notices are years old. The last one says the chime has stopped and they're all
+  going to the city.]" Village troubles never start by themselves any more (commands still start one; festivals go
+  on), and a camp's raid never becomes a village's Burning (it raids a Hearth instead). The wildness field's tamers are
+  the city, the holdfasts' regions and the roads (§41.1); empty settlements no longer tame their land.
 
 ### 43.3 The stone people (the Stilled)
 - Not mobs: unbreakable, unmovable, unmineable posed figures (about twelve hand-made poses, their own look), untouched by
