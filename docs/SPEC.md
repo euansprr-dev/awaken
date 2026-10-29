@@ -6249,6 +6249,49 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       the worst 0.29 -> 0.26, the nearest the blades come 0.26 -> 0.27; held mashing with every blow landing, the worst
       0.24 -> 0.14. The chain judge passes every strike; every dagger move leads with its point (0.99-1.00) or edge
       (0.70-0.99). Left: every other style's twist (the shared rules, `anim_lab.rig_pose`); unseen in game.
+  - *Round 13, stabs and swipes like the other weapons* (Euan 2026-10-29, after round 12: "it's less about turning the
+    wrist, and more about the weapon not doing clean stabs and swipes like other weapons do"). The cause, measured
+    against the moves that read clean in game: rounds 11-12 kept every stroke small and slow to pass the smoothness
+    judges. A dagger stab never drew back (its size on the screen 1.00 of the stance before the hit, the rapier's 1.64),
+    went from the stance up across the screen to the crosshair (its point 0.13-0.18 off the blade's own line, the
+    rapier's 0.01) and hung there 2.3 ticks (the rapier's is back in 0.67). A dagger cut turned in the lower right corner:
+    its point swept 0.65 of the screen's width at 0.37 a frame (the longsword's 1.67 at 0.65), its set below the middle.
+    - `swing_chain.py like` (new) holds every set move to its form's model: a stab to the rapier's opening (drawn back
+      at least 1.3 of the stance's size, out at most 0.8, back as big as the stance within a tick, its point within 0.08
+      of the blade's line through the drive, within 0.15 of the crosshair at the hit); a slash to the longsword's opening,
+      a rising cut to its strike 2, a chop to its overhead (a sweep 0.75-1.35 of the model's width and its fastest frame
+      0.7-1.35 of the model's, fastest within a frame of the hit, set no lower, or for a rising cut no higher, than the
+      model's by 0.25, the blade's middle within 0.25 of the crosshair at the hit). Round 12 missed it on all twelve
+      dagger moves; round 13 passes all twelve.
+    - A stab is a line (`swing_choreo.line`): the point's mark just under the crosshair and the line to it from low on the
+      hand's side (the rule's thrust starts: high 0.34,-0.40,-0.30 view space, low 0.22,-0.66,-0.34). The blade is drawn
+      back along it toward the eye by half the wind-up (the hand drops off the bottom of the view, the blade grows to
+      1.34-1.78 of the stance), driven out along it in the wind-up's last frame (0.39-0.71), held a frame, snapped back
+      along it in two (as big as the stance in 0.67-1 tick), then home: between two keys on one line it only slides, its
+      point on its mark. Strike 1 draws back 0.46 blocks, strike 2 (the left hand, from below) 0.33, the twin push 0.42
+      with each point on its own side, the heavy 0.55 (its first pose, shown while it charges) to a mark deeper on the
+      aim, the riposte 0.58 deeper still.
+    - A cut is a lever (`swing_choreo.arc`, the Swing Studio cut's: the blade's middle about the eye through the target,
+      the blade out from a shoulder at 0.62,-0.52,-0.30, its edge leading, the wrist trailing 6-8 degrees in the set). It
+      is set 32-46 degrees back high on its hand's side by two-thirds of the wind-up (a cut landing a tick in has no time
+      for more: a higher set flung the blade 0.7 of the screen in a frame), driven through the target on the hit,
+      carried 44-48 degrees past it in half a tick, and comes home in 2.4-3.6 ticks bowed low under the view. Strike 3 and
+      the finisher fall right to left (way -0.85,-0.52), the Slipcut is level, the Undercut rises (way -0.8,0.6, set low),
+      the Art is the widest; the Plunge (held at its set while it falls) and the Execution chop from overhead (the blade's
+      middle half about the eye, as the Swing Studio's chops). The blade's roll follows the longsword's frame by frame
+      (turned some 30 degrees a frame through the set and the stroke, back through the way home): 226-271 a cut, the
+      longsword's opening about 200; a stab turns none.
+    - The other hand is out of a cut's way before it sweeps past: out to its own side and up for a falling cut, which
+      ends under it (`aside`), a little down for the Slipcut (`low`); the Undercut and the chops pass clear of the
+      stance, so it only gives. It is back by the next press for the hand that strikes next, as every chain strike is
+      (strike 1 by 3 ticks, 2 by 3.8, 3 by 4, the twin push by 4.33).
+    - Clicked at every speed (round 11's sweep: a press every 2-12 ticks, held 0.3-2.5, with and without hits), round
+      12 -> 13: steps over 0.2 of the screen a frame off the blow 2 -> 582 (mastery 19 -> 635), over 0.3 0 -> 120, the
+      worst 0.25 -> 0.34, the nearest the blades come 0.27 -> 0.13. The strokes are bigger and faster on purpose, so
+      they step more (most over 0.3: strike 3's way home, the twin push's snap back); the same sweep steps the rapier
+      over 0.3 264 times (worst 0.55) and the longsword 549 (worst 1.05). The chain judge passes every
+      strike mashed and in time; every dagger move leads with its point (1.00) or edge (0.85-0.99); `arms_chain_flow`
+      passes. Unseen in game.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
