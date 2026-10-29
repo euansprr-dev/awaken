@@ -61,17 +61,34 @@ final class ArmsHands {
         FirstPerson.View.add(v.main, 1, MOVE[0], MOVE[1], MOVE[2], MOVE[3], MOVE[4], MOVE[5]);
     }
 
-    /** The blade lays its ribbon through the blow, on the hands' own clock: from just before it starts to just after. */
+    /**
+     * The blade lays its ribbon through the blow, on the hands' own clock: from just before it starts to just after, or
+     * (round 14) over the clip's own trail ticks, the stroke alone. The striking hand's blade lays it, each blade of a
+     * pair its own ring; a both-hands strike with its own ticks lays both.
+     */
     private static void trace(LocalPlayer p) {
         Archetypes.Loaded style = ArmsPredict.style;
         Archetype.Move m = ArmsPredict.move;
         if (style == null || m == null || ArmsPredict.charging || preview != null) return;
         Archetype.MoveDef def = style.move(m);
         if (def == null) return;
+        FpSwings.Style fs = FpSwings.style(style.id());
+        FpSwings.Clip clip = FpSwings.clip(fs, m);
+        boolean own = clip != null && clip.trailTo() >= 0;
         float t = ArmsPredict.viewTime(), b = blowStart(def);
-        if (t >= b - 0.15F && t <= b + def.active() + 0.6F) {
-            BladeTrail.open(p.getId(), 60, ArmsFx.colour(p.getMainHandItem(), ArmsPredict.cadence, ArmsPredict.perfectHeavy, m));
-        }
+        if (own ? t < clip.trailFrom() || t > clip.trailTo() : t < b - 0.15F || t > b + def.active() + 0.6F) return;
+        int argb = ArmsFx.colour(p.getMainHandItem(), ArmsPredict.cadence, ArmsPredict.perfectHeavy, m);
+        float light = fs != null && fs.trail() != null ? fs.trail()[1] : 1F;
+        FpSwings.Hand h = clip == null ? FpSwings.Hand.MAIN : clip.hand();
+        if (h != FpSwings.Hand.OFF) BladeTrail.open(p.getId(), 0, 60, argb, light);
+        if (h == FpSwings.Hand.OFF || h == FpSwings.Hand.BOTH && own) BladeTrail.open(p.getId(), 1, 60, argb, light);
+    }
+
+    /** Where the ribbon starts along the blade in first person (a style's own, else from mid-blade). */
+    static float trailRoot() {
+        var style = ArmsPredict.style;
+        FpSwings.Style fs = style == null ? null : FpSwings.style(style.id());
+        return fs != null && fs.trail() != null ? fs.trail()[0] : 0.5F;
     }
 
     // vanilla's handheld first-person display (item/handheld.json) and where a sword's blade runs on its sprite:
@@ -360,6 +377,12 @@ final class ArmsHands {
     static boolean offStrikes() {
         var style = ArmsPredict.style;
         return style != null && ArmsPredict.move != null && FpSwings.hand(FpSwings.style(style.id()), ArmsPredict.move) == FpSwings.Hand.OFF;
+    }
+
+    /** Whether the off hand's twin strikes in the move on the hands now, alone or with the main. */
+    static boolean twinStrikes() {
+        var style = ArmsPredict.style;
+        return style != null && ArmsPredict.move != null && FpSwings.hand(FpSwings.style(style.id()), ArmsPredict.move) != FpSwings.Hand.MAIN;
     }
 
     /** Autopilot only: hold the hands at a fraction (0..1) through a move, for a still review frame. */

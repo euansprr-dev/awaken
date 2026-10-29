@@ -6580,6 +6580,99 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       the worst 0.29 -> 0.26, the nearest the blades come 0.26 -> 0.27; held mashing with every blow landing, the worst
       0.24 -> 0.14. The chain judge passes every strike; every dagger move leads with its point (0.99-1.00) or edge
       (0.70-0.99). Left: every other style's twist (the shared rules, `anim_lab.rig_pose`); unseen in game.
+  - *Round 13, stabs and swipes like the other weapons* (Euan 2026-10-29, after round 12: "it's less about turning the
+    wrist, and more about the weapon not doing clean stabs and swipes like other weapons do"). The cause, measured
+    against the moves that read clean in game: rounds 11-12 kept every stroke small and slow to pass the smoothness
+    judges. A dagger stab never drew back (its size on the screen 1.00 of the stance before the hit, the rapier's 1.64),
+    went from the stance up across the screen to the crosshair (its point 0.13-0.18 off the blade's own line, the
+    rapier's 0.01) and hung there 2.3 ticks (the rapier's is back in 0.67). A dagger cut turned in the lower right corner:
+    its point swept 0.65 of the screen's width at 0.37 a frame (the longsword's 1.67 at 0.65), its set below the middle.
+    - `swing_chain.py like` (new) holds every set move to its form's model: a stab to the rapier's opening (drawn back
+      at least 1.3 of the stance's size, out at most 0.8, back as big as the stance within a tick, its point within 0.08
+      of the blade's line through the drive, within 0.15 of the crosshair at the hit); a slash to the longsword's opening,
+      a rising cut to its strike 2, a chop to its overhead (a sweep 0.75-1.35 of the model's width and its fastest frame
+      0.7-1.35 of the model's, fastest within a frame of the hit, set no lower, or for a rising cut no higher, than the
+      model's by 0.25, the blade's middle within 0.25 of the crosshair at the hit). Round 12 missed it on all twelve
+      dagger moves; round 13 passes all twelve.
+    - A stab is a line (`swing_choreo.line`): the point's mark just under the crosshair and the line to it from low on the
+      hand's side (the rule's thrust starts: high 0.34,-0.40,-0.30 view space, low 0.22,-0.66,-0.34). The blade is drawn
+      back along it toward the eye by half the wind-up (the hand drops off the bottom of the view, the blade grows to
+      1.34-1.78 of the stance), driven out along it in the wind-up's last frame (0.39-0.71), held a frame, snapped back
+      along it in two (as big as the stance in 0.67-1 tick), then home: between two keys on one line it only slides, its
+      point on its mark. Strike 1 draws back 0.46 blocks, strike 2 (the left hand, from below) 0.33, the twin push 0.42
+      with each point on its own side, the heavy 0.55 (its first pose, shown while it charges) to a mark deeper on the
+      aim, the riposte 0.58 deeper still.
+    - A cut is a lever (`swing_choreo.arc`, the Swing Studio cut's: the blade's middle about the eye through the target,
+      the blade out from a shoulder at 0.62,-0.52,-0.30, its edge leading, the wrist trailing 6-8 degrees in the set). It
+      is set 32-46 degrees back high on its hand's side by two-thirds of the wind-up (a cut landing a tick in has no time
+      for more: a higher set flung the blade 0.7 of the screen in a frame), driven through the target on the hit,
+      carried 44-48 degrees past it in half a tick, and comes home in 2.4-3.6 ticks bowed low under the view. Strike 3 and
+      the finisher fall right to left (way -0.85,-0.52), the Slipcut is level, the Undercut rises (way -0.8,0.6, set low),
+      the Art is the widest; the Plunge (held at its set while it falls) and the Execution chop from overhead (the blade's
+      middle half about the eye, as the Swing Studio's chops). The blade's roll follows the longsword's frame by frame
+      (turned some 30 degrees a frame through the set and the stroke, back through the way home): 226-271 a cut, the
+      longsword's opening about 200; a stab turns none.
+    - The other hand is out of a cut's way before it sweeps past: out to its own side and up for a falling cut, which
+      ends under it (`aside`), a little down for the Slipcut (`low`); the Undercut and the chops pass clear of the
+      stance, so it only gives. It is back by the next press for the hand that strikes next, as every chain strike is
+      (strike 1 by 3 ticks, 2 by 3.8, 3 by 4, the twin push by 4.33).
+    - Clicked at every speed (round 11's sweep: a press every 2-12 ticks, held 0.3-2.5, with and without hits), round
+      12 -> 13: steps over 0.2 of the screen a frame off the blow 2 -> 582 (mastery 19 -> 635), over 0.3 0 -> 120, the
+      worst 0.25 -> 0.34, the nearest the blades come 0.27 -> 0.13. The strokes are bigger and faster on purpose, so
+      they step more (most over 0.3: strike 3's way home, the twin push's snap back); the same sweep steps the rapier
+      over 0.3 264 times (worst 0.55) and the longsword 549 (worst 1.05). The chain judge passes every
+      strike mashed and in time; every dagger move leads with its point (1.00) or edge (0.85-0.99); `arms_chain_flow`
+      passes. Unseen in game.
+  - *Round 14, calm daggers and one ribbon a blade* (Euan 2026-10-29, after playing round 13: "figures of eight
+    arriving everywhere", "when you slash, your left hand goes up", "it arrives, like, under your left arm", "too much
+    going on at once"). Read from his own clip of the game (the offline renders drew neither arms nor ribbons): both
+    daggers shared one ribbon, so a band ran between them; the ribbon traced the whole move, pull-back and way home
+    included, so a stab drew a loop and fast clicks drew figures of eight; it was screen-wide and bright; the other hand
+    rose out of each cut's way; the slash took the longsword's diagonal and ended low under the other hand; a stab's
+    pull-back brought the arm at the camera.
+    - The ribbons (`BladeTrail`): one per hand (a ring per wielder and side; the off hand's twin lays side 1). A move
+      may name its ribbon's ticks (`trail` [from, to] in fp_swings.json) and a style its look (`trail` [root, light]: where
+      the band starts on the blade, grip 0 to point 1, and how bright it is). The daggers' ribbon is the stroke alone: a
+      stab's from 0.4 tick before the hit to 0.12 after, a cut's from 0.45 before to the end of its carry (0.4 after),
+      from 0.8 of the blade to the point at 0.6 brightness. A move without its own ticks keeps the old window (0.15 before
+      the blow to 0.6 after its active ticks), so the other weapons are as they were. `arms_feel_rules` holds a move's
+      own ticks around its hit and no more than half a tick past it, every dagger move to have them, and every look to
+      be a band toward the point. A ribbon's times (its life, its blow's window, a kill's flare) run at the world's own
+      pace: real time at 20 ticks a second, slowed with it under `/tick rate`, so a slowed film shows it as long as play.
+    - A jab is a line from the stance's own grip (no pull-back: never bigger on the screen than the stance), out to its
+      mark under the crosshair on the hit, held a third of a tick, eased home in 1.2-1.8 ticks.
+    - A slash is a lever from low at the shoulder (0.62,-0.85,-0.30): set 42-48 degrees back on its hand's side by two
+      thirds of the wind-up, through the target on the hit, stopped 8-12 degrees past it, in front (its point ends just
+      over the middle, level or a little falling). The Undercut rises from low; the Plunge and the Execution stay chops
+      from overhead.
+    - The hand not striking stays still in its stance (`STILL`); only the twin push and the heavy move both hands.
+    - `swing_chain.py calm` (new) holds the daggers to this: the other hand's point moves at most 0.03 of the screen, no
+      grip comes nearer the camera than the stance's by more than 0.04 block, the ribbon ends at most 0.45 tick past
+      the hit; a stab is no bigger than 1.05 of the stance before the hit and within 0.15 of the crosshair on it; a cut's
+      point ends no more than 0.25 past the middle and at least 0.2 from the other hand's. Round 14 passes all twelve
+      (stabs: still 0, near 0, size 1.00, mark 0.05-0.09; cuts: past 0.08-0.14, gap 0.24-0.38). The daggers leave
+      round 13's `like` rules, which ask for big strokes.
+    - Clicked at every speed (round 11's sweep), round 13 -> 14: steps over 0.2 of the screen a frame 582 -> 0, the
+      worst 0.34 -> 0.15, the nearest the blades come 0.13 -> 0.16. The chain judge passes mashed and in time; every
+      first-person dagger move leads with its point (0.99-1.00) or edge (0.98-0.99); the cuts turn 229-279 degrees,
+      the Plunge 77, the Execution 129. The four third-person dagger lead misses are round 13's, unchanged. Filmed in
+      the game before Euan plays it (`tools/autopilot/arms-daggers-r14.txt`, the clip recorder, day and night).
+  - *Round 15, a jab that keeps its fist low* (Euan 2026-10-29, after the round 14 film: "Keep the fist lower in the
+    jab before I play, so the forearm doesn't swing into the corner"). The forearm is Hands' (`WorldBody.drawFist`: drawn
+    0.6 block up to the fist from under the corner, at its true size), and the dagger stance holds the fist below the
+    frame, so a jab that slid its grip up the line to a mark under the crosshair lifted the fist 0.47-0.60 of the screen
+    and brought 0.23-0.28 of the screen's area in forearm with it (0.04 at rest).
+    - A jab's line runs to a mark deep in the target (1.5 ahead of the eye, the same place on the screen) and stops
+      short of it (`line`'s short and reach): aimed by half the wind-up with the fist where it holds (the blade tips onto
+      its line, so it points into the target), then driven its reach (6 cm) along the blade to the hit. The fist rises
+      0.20, the forearm covers 0.10, the blade shrinks to 0.77-0.81 of its stance size as it goes in, and the point lands
+      0.45-0.48 from the crosshair, on the target at fighting range.
+    - `swing_chain.py calm` holds a stab to it: the fist risen at most 0.22, the forearm (its own model of Hands') at
+      most 0.11, the blade at the hit at most 0.85 of the stance's size, the point within 0.5 of the crosshair (in place
+      of round 14's within 0.15 of the mark). The rise and the forearm are shown for every move: the slashes rise
+      0.30-0.45 (forearm 0.16-0.25), the chops 0.71-0.73 (0.36-0.37), unchanged this round.
+    - Every jab leads with its point (1.00), the chain judge passes mashed and in time, the click sweep steps nothing
+      over 0.2 (worst 0.15), and the blades come no nearer than 0.26 (round 14: 0.16). Filmed in game again.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
@@ -8155,8 +8248,9 @@ for watchers); the line drawn steel-grey or with a violet glint, the reel at the
 
 **The senses** (`delve.client`): **sound** (`CaveSound`, `DeepHum`, a Conductor `Source` in its voice budget, honouring
 its hushes, ducking and `natureLevel()`; played beside AmbientSounds, whose cave ambience it doesn't double; and
-`soundscape/family/hollows.json` for players without it). Underground ("under": no sky, real ground 3-12 over you; full
-at sky light ≤ 4, none at 10; eases over ~2.5 s): drips at real dripstone tips and wet roofs (4 + 2.5 a tip found, capped
+`soundscape/family/hollows.json` for players without it). Underground ("under": no sky, real ground 3-12 over you,
+the land's own block (under a house or a town the first one down through what's built over the column, so a cave under
+Carillon's roofs and streets is under); full at sky light ≤ 4, none at 10; eases over ~2.5 s): drips at real dripstone tips and wet roofs (4 + 2.5 a tip found, capped
 at 4; dripstone x1.3, lush x1.1, deep dark x0.35; 40% fall again from the same tip 1.2-3.5 s later), stone settling (0.45
 a minute, 6-26 off, lower with depth), far water toward real water 8-32 off (a loop), a breath of air from the brightest
 sky-lit air 3-32 off at least 4 brighter than you (a loop, lower with depth); sulfur caves add a vent's hiss and acid's
@@ -12114,3 +12208,233 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
 - **Tests**: `wild_hunt` (zones on the body; a tenth on the head doesn't break the horns, a sixth does: they drop, it staggers;
   at a third it limps and bleeds its herd's trail toward its bed; its body lies still, a stranger can't carve, three carves,
   then it's gone and its bones stay).
+
+## 42. The Living Deep (cave regions; plan docs/caves/PLAN.md, page https://claude.ai/artifact/22qoPjWycfwhdxYxH8xGsR; Euan approved all eleven recommendations 2026-10-29: "Go with the full plan")
+
+Caves get their own geography: cave regions with their own shapes, rock, skin, light, life and air, and a skin for every
+cave. Module `caves` (package `dev.awaken.caves`); its worldgen lives in the built-in data pack `awakened_caves` behind the
+feature flag `awaken:awakened_caves`, so only worlds created with it change (old worlds and Euan's current world keep their
+caves). Phases: P0 ground truth (42.1-42.3, 42.6); P1 the skin, drawn light, underlife and cave particles (style sheet to Euan
+first); P2 the Rootways and the Ochre Deep with their full kit, then Euan plays a new world; P3 the other six regions, shafts
+and chasms; P4 the mining ties. Each phase adds its numbers here. The pack's data is written by
+`tools/content/caves_content.py`, from tables that mirror `CaveRegion` (the GameTests hold them to it).
+
+### 42.1 The bands
+- **Tiers follow the ground** (decided in P0; the plan's fixed y 40 would leave lowland, ground near y 64, almost no Shallows):
+  the climate's depth (vanilla's: about 1/128 per block under the land's preliminary surface) decides. A point is a cave
+  region only where the depth is at least **0.16** (about 20 blocks down) and y is at most **59**.
+  - **The Shallows**: depth 0.16 to 0.34 (about 20 to 43 blocks under the ground), y 0 or more.
+  - **The Middle Dark**: depth 0.34 or more, y 0 to 59.
+  - **The Deep**: below y 0 (the Singing Deep's band).
+- **The cap at y 59**: the game and Awaken read the land's biome at about sea level (lairs at y 67, the wide world's region
+  names at y 63, gate spots at y 64), so under hills that must stay the land's own biome. Biomes are read on 4-block corners:
+  the highest region corner is y 56. Under hills the first caves above y 59 stay plain caves (with the skin from P1).
+
+### 42.2 The regions
+- **A region is a cave biome** (`awaken:<id>`) that Lithostitched `replace_partially` injectors put in place of the land's
+  biome underground: targets `#awaken:caves/hosts` (every vanilla overworld biome but its cave biomes: dripstone, lush and
+  sulfur caves and the deep dark keep their places, the deep dark its ancient cities), **priority -10** (before the Lands'
+  injectors at 0, so a region wins under an Awakened biome too), parameters: the band (`depth`, and `awaken:caves/y`, the y as a
+  density function), the band's region field, and the land's climate (`humidity`, `temperature`, `continentalness`). A region
+  with several boxes of land has one injector per box.
+- **The region fields** `awaken:caves/shallows`, `middle`, `deep`: a 2D noise each (base octave -9, two octaves: patches of
+  about 500 blocks). `CaveRegion.Fields` holds each field's measured deciles (`caves_region_shares` checks them on the studio
+  seeds to 0.03); a region's slot is a range of quantiles of the band's **cover**: regions take **two thirds of the Shallows
+  and the Middle Dark** and **half of the Deep**; the rest stays plain caves.
+- **The land boxes** follow vanilla's climate band edges (temperature -0.45 / 0.2 / 0.55, humidity -0.1, continents -0.19 the
+  coast and -0.11 inland), so they line up with the biomes on top. The rule reads the climate, not the biome above: the cave
+  density can't see biomes, and shapes and biome must agree.
+- **Built in P0, kitted in P2:**
+  - **The Rootways** (`awaken:rootways`, archetype lush caves): the Shallows, its whole cover, under humid land (humidity -0.1
+    or more), not frozen and not desert (temperature -0.45 to 0.55), inland (continents -0.11 or more): forests, birch and dark
+    forest, taiga, jungle, the Elderwood and Lumen Forest.
+  - **The Ochre Deep** (`awaken:ochre_deep`, archetype dripstone caves): the Middle Dark, its whole cover, under temperate land
+    (temperature -0.45 to 0.2) or warm wet land (0.2 to 0.55 with humidity -0.1 or more), coast or inland (continents -0.19 or
+    more). Frozen, hot and warm-dry land (the Frost Spires, deserts, badlands, savanna and the Glass Steppe) is the Glimmer
+    Hollows' in P3 and keeps today's crystal caves (`CaveStyle`) until then; under the sea stays plain.
+  - P3 shares the bands among all eight regions (slots of the cover by the land above).
+- **The biomes**: vanilla's dripstone caves' features, carvers and spawns without its dripstone or the surface plants (a
+  region never reaches the surface), the region's water colour (Rootways `#3b6f62`, Ochre `#a8622c`) and music (lush caves',
+  dripstone caves'). Tags: `#minecraft:is_overworld` (lodes, Deepglass, lamps, ore thinning, the Hollows' bands reach them;
+  never `#c:is_underground`), `#awaken:archetype/<vanilla>`, `#awaken:caves/regions`, and vanilla's underground structure
+  tags (`has_structure/mineshaft`, `trial_chambers`, `ruined_portal_standard`, `stronghold_biased_to`) so structures that
+  start underground still find a good biome.
+
+### 42.3 The shapes
+- `awaken:cave_shape` (`CaveShapeFunction`) wraps the overworld's cave density with Lithostitched's `wrap_density_function`:
+  Tectonic's `tectonic:caves` when Tectonic is loaded, vanilla's `minecraft:overworld/caves/entrances` without it. It returns
+  **min(input, shape)**: every cave that was there stays; a region adds its own. The region at a corner is `CaveRegion.at`, read
+  from the same fields and climate the injectors read.
+- **Held off the ground**: a shape opens only past depth **0.22** (about 28 blocks under the preliminary surface) and fades in
+  over the next **0.06** (about 8 blocks); never above y 59; a shape never lowers the density below -1.
+- **Cost**: it sits inside the router's interpolation (sampled on the 4 × 8 × 4 cell corners, 5 × 49 × 5 a chunk); everything
+  2D (the fields, the climate, the depth as a line in y, each shape's column values) is read once per column, so a corner costs
+  a few multiplications.
+- **The Rootways' tubes**: two crossing families of channels along the zero lines of two 2D noises (`awaken:caves/shape_a`,
+  `shape_b`, about 128 blocks), half-width 0.035 in noise units, 0.095 in a hall (where `shape_flat`, about 256 blocks, rises),
+  about 5 to 9 blocks wide; galleries 5.5 to 8 high, their middle 7 to 11 blocks under the seal, held 3 blocks under the cap.
+- **The Ochre Deep's terraces**: a gallery 9 high in every 16-block layer (from y -64, tilted up to 4 blocks by `shape_flat`),
+  each layer's footprint a slice of a 3D noise (`shape_a` at 0.8 scale, a slice per layer) above **0.17**, so neighbouring
+  layers differ and their edges make ledges and drops.
+
+### 42.4 The skin (P1; every cave, region or not)
+The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/style.html`, pictures from
+`tools/art/cave_diorama.py`); its textures go in only after Euan's OK.
+- **Blocks** (`caves.skin`, in every world; only the pack's feature lays them): per rock (`SkinRock`: stone, which dresses
+  stone, andesite, diorite and granite; deepslate; tuff) **`<rock>_rubble`** (a heap, its high side to the wall it faces,
+  three variants; shape 15 × 5 × 15, a half step underfoot), **`<rock>_pebbles`** (two or three loose stones, no collision)
+  and **`pointed_<rock>`** (a stalagmite `up` or stalactite `down` in four thicknesses, tip, frustum, middle, base: tapered
+  columns of stacked boxes; held by the rock or the next piece behind it, else it breaks; decoration only, it doesn't grow
+  or fall). For every cave: **`cave_lichen_shallows`**, **`_middle`**, **`_deep`** (the band's colour), **`mineral_crust`**,
+  **`wet_streaks`** (multiface, like glow lichen), **`cave_puddle`** (a skin of water, no collision, tinted by the biome's
+  water colour, drops nothing), **`dusty_web`** (a cobweb that drops string or itself). Rubble, the formations and the
+  regions' rocks are in **`#minecraft:blocks_motion_no_leaves`**: 26.3 reads heightmaps, suffocation, rain and fire
+  spread from that tag, not from a block's shape.
+- **The feature** `awaken:cave_skin` (`CaveSkinFeature`, placed `awaken:caves/skin`, every `#minecraft:is_overworld` biome
+  at `top_layer_modification`, so it comes after every structure and feature): per chunk, every column bottom to top below
+  the ground less **6**, section by section from the palettes; only cells where air meets natural rock are looked at.
+  - A **floor** (air on rock): rubble against a wall at **0.18**, pebbles in the open at **0.045**; in a dry place (the wet
+    field under **-0.3**) a dusty web in a dead end (rock on three sides and over it) at **0.2**. The two cells over a
+    floor by a wall take overlays: lichen where a 3D field at 6 blocks passes **0.4** (shallows lichen within 43 blocks of
+    the ground, middle below, deep under y 0), else crust where it's dry and a field at 5 blocks passes **0.45**, else wet
+    streaks two up where it's wet and a field at 3 blocks passes **0.25**.
+  - A **roof** in a wet place (a 2D field at 12 blocks over **0.22**) at **0.16**: a stalactite one to three long (at most
+    half the room), a stalagmite under it at **0.6** (one to three, always a gap of one or more between them), and a puddle
+    at **0.75** beside the stalagmite's foot or under the stalactite.
+  - Every choice is a hash of the seed and the cell, so a chunk comes out the same whichever neighbours exist; only the
+    chunk's own cells are written. A cell is used only if it and its six neighbours are natural (air, water, lava, the stone
+    family, gravel, dirt, clay, sand, calcite, dripstone, moss, glow lichen, magma, bedrock, the skin): never next to a
+    structure's blocks, a mine's timber, an ore or a web.
+- **Drips**: a stalactite's tip drips (`animateTick`, 1 in 9 a tick): `awaken:cave_drip` swells for 14 to 30 ticks, falls,
+  and throws `awaken:cave_splash` where it lands.
+- **Moved to the regions**: drawn light (glow-worm fields, caustics, mica glints, lava's heat) is the regions' own (Pale
+  Halls, Drowned Galleries, Windcleft, Black Vaults) and comes with them in P3; plain caves stay dark (decision 4).
+
+### 42.5 The underlife (P1; client only)
+`caves.client.Underlife` (simulation, flat arrays, nothing allocated after start), `UnderlifeRender` (quads from
+`textures/entity/caves/underlife.png`, `tools/art/specs/deep_life.py`, as the wild's insects are drawn), the sites from
+`caves.life.UnderSites` (pure block reads, shared with the test). Never saved, never sent, nothing to hit; every world,
+overworld caves only (the gates' worlds keep their own life).
+- **Under the rock**: sky light 2 or less at the eye and the land's top 5 or more above. Out of it, everything fades away.
+- **The director** (every 10 ticks): 28 cells sampled within **22** blocks (none closer than 6), at most 2 new lives a pass;
+  nothing appears in plain sight within 14 blocks (moths may: they fly in out of the dark). Each fades in over 25 ticks and
+  fades out once you're **28** away. At most **40** bodies: moths 6, beetles 5, millipedes 3, bats 14, fish 6, crickets 5.
+  The Middle Dark holds 4 moths and 7 bats; the Deep only 3 beetles and 3 fish (its own life comes with its regions).
+- **Moths** (the dusk moth): a light in your hand brings up to 2 + its level / 4 (a torch: 5) in from 6 to 12 blocks off,
+  fluttering round your hand and now and then bumping it; a light on the walls (level 12 or more) gets 2 or 3 of its own.
+- **Beetles and millipedes** walk the face of the rock (floor, wall or roof) at 0.028 and 0.013 blocks a tick in spells,
+  turning at its edges, never more than 4 blocks from where they came; still while you're within 2.2.
+- **Bats**: a roost of 4 to 8 forms under a roof with 5 open cells below it, 10 or more blocks from you. Within 6.5 blocks
+  (7.5 with a light in hand) the whole roost lets go one after another with one flurry of wings (`caves.bats`), drops,
+  and flits from point to point 2 to 7 blocks round the roost and away from you; once you're 10 blocks off each heads home
+  after 2 to 4 more flits and hangs again. Half a minute about with you still there, now and then one leaves for good.
+- **Fish** (pale, blind): 1 to 3 in a pool (a source with open air over it and water on two sides or more), drifting just
+  under the surface; within 3.2 blocks they dart off.
+- **Crickets** sit on floors by a wall and chirp (`caves.cricket`) every 5 to 16 s when you're 5 to 22 blocks away, quiet
+  nearer; within 3.2 blocks, or now and then anyway, they hop 1 to 3 blocks (away from you when it's you).
+- **Light**: the block light where each one is, or the light in your hand there (its level less the distance, eased out
+  over three quarters of its level), whichever is brighter, so your torch shows what's round you.
+- **Voices**: `caves.cricket` (4 variants) and `caves.bats` (3), from `tools/art/specs/audio_underlife.py` (-28 and -27 dBFS,
+  heard to 24 blocks, a little of the rock in each); one new voice a second at most, crickets three seconds apart; quieter
+  where the Soundscape hushes.
+- **Settings** (`config/awaken-caves-client.toml`): `underlife` and `cave_particles` (the drips), both on;
+  `drawn_cave_light` comes with the drawn light in P3. `/awaken underlife [on|off|count|lineup|clear]` (client).
+- **Later**: each region brings its own (the Rootways' glow-worm threads, the Ochre Deep's rust beetles and chime crickets in
+  P2; glass and ash moths, cave swifts, crayfish, chitin crawlers in P3), drawn from the same sheet.
+
+### 42.6 Budgets and tests (P0, P1)
+- **The gate**: filling a chunk with the shapes costs at most **20%** more than without (`caves_gen_cost`: 24 chunks round the
+  origin of seed 777, best of three rounds, warmed); the land on top never moves; structures stay whole by construction (the
+  wrapped caves sit under the beardifier, which still carves and fills around every structure piece).
+- **Tests** (vanilla generator; no Lithostitched or Tectonic in GameTests, so the pack is read as data and applied as they
+  would): `caves_region_shares` (the region biomes and their tags; the hosts; one injector per box; the injectors and
+  `CaveRegion` agree point by point on the five studio seeds with the climate quantised as a biome target point holds it; the
+  fields' deciles; each region takes its slot's share of its land in its band, within 12 points), `caves_surface_untouched`
+  (the wrapper spliced into vanilla's entrances as Lithostitched would: surface and sea floor equal on a 25 × 25 grid per seed;
+  in whole chunks over each region nothing changes above y 64 or in the top 12 blocks under the ground, and the shapes open
+  new cave), `caves_gen_cost`, `caves_skin_census` (16 chunks of seed 777 with the shapes, dressed as the feature dresses
+  them: at least **30%** of cave floor cells have a piece on them, beside them or on the wall over them; every floor piece
+  lies on natural rock and every formation grows from rock; the same chunk dresses the same twice; the skin costs at most
+  **15%** of filling the chunk), `caves_underlife_sites` (a stone room with a high roof, a low alcove, a pool, a lone source
+  and lichen on a wall: each cell reads as its site; a crawler stays on the wall, floor and roof, not past them or on water).
+- **Client budget**: the underlife at most **0.2 ms** a frame (40 bodies of 2 to 4 quads); measured on the Mac's perf tour at
+  the end of the plan, not yet.
+- **Measured 2026-10-29** (the skin): 1,873 pieces on 16 chunks (599 rubble, 322 formation pieces, 81 puddles, 824
+  overlays), **72%** of 3,642 floor cells dressed, 0.82 ms a chunk against 24.7 ms to fill it (3%; 0.53 ms once the chunk is
+  in the cache).
+- **Measured 2026-10-29** (GameTests, vanilla generator): chunk fill (noise, surface, carvers) 12.89 ms plain, 13.07 ms with
+  the shapes (**+1.4%**, gate 20%); the land on top: 0 of 6,250 grid columns moved, 0 blocks changed above y 64 or in the top
+  12 under the ground; under y 59 in region chunks the shapes take open cave from 13.5% to 18.7% (Rootways) and 12.4% to
+  14.5% (Ochre Deep); the regions take 66% (Rootways) and 64% (Ochre Deep) of their land in their band, 24% of all the
+  Shallows and 46% of all the Middle Dark; the injectors and `CaveRegion` agree at all but 34 of 155,148 points (the climate's
+  quantisation at the edges).
+
+### 42.7 The Rootways and the Ochre Deep (P2)
+The first two regions get their own rock, ores, growth, light, air, look, life and sound; P3 brings the other six the same
+way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan's style-sheet OK.
+- **Rock** (`caves.skin`, mined like stone: pickaxe, 1.5 hardness, drops itself; `#minecraft:base_stone_overworld`, and the
+  stone tool and crafting materials): **`rootstone`** (brown and earthy, threaded with old roots; packed-mud sound) and
+  **`ochre_stone`** (warm red-orange in bands). Each gets the skin's kit (`SkinRock` ROOTSTONE, OCHRE): `rootstone_rubble`,
+  `_pebbles`, `pointed_rootstone`, `ochre_rubble`, `_pebbles`, `pointed_ochre`.
+- **The rock rule**: the skin feature, before it dresses, reads the chunk's biomes once a quart (4 × 4 × 4); in every quart a
+  region with a kit holds, deeper than **10** blocks under the ground, the host rock (stone, andesite, diorite, granite,
+  tuff; deepslate stays, the Deep's floor under the Middle Dark) becomes the region's rock, so a wall mined into is the
+  region's all the way. Written straight to the sections, rock for rock: nothing the heightmaps or the light see changes.
+- **Ore twins** (the ores that live there, drawn with the region's rock behind them; the same drops through vanilla's own
+  loot table, the same XP, tags and tools): **`rootstone_coal_ore`**, **`rootstone_copper_ore`** (the Rootways),
+  **`ochre_iron_ore`** (the Ochre Deep: dark hematite with iron's peach rim). An ore without a twin there keeps the 26 cells
+  round it as they were (within its section): it sits in a pocket of the stone it grew in, never on a background that isn't
+  its own. Lodes, Deepglass and the Hollows' veins are placed earlier and keep their own blocks the same way.
+- **The Rootways' growth**: **`glowcap`** (a cluster of teal mushrooms, light **5**, on a floor, open or by a wall, at
+  **0.12** where a 3D field at 5 blocks passes **0.2**: in patches, about 2% of open floor, a teal point down the gallery;
+  instant break, drops itself) and **`root_curtain`** (old roots hanging through a roof at **0.14** where a 2D field at 7
+  blocks passes **0.1**: one to three blocks, at most half the room under them, the last block its frayed tip; no
+  collision, held by the rock or root above, drops itself to shears).
+- **The Ochre Deep's walls**: the overlays of the two cells over a floor by a wall are the region's own: a lichen patch is
+  **`ember_lichen`** (light **3**, embers that glow in the dark) where a 3D field at 4 blocks passes **0.1**; where the
+  plain caves would have no lichen, **`rust_crust`** where a field at 5 passes **0.2**, dry or wet; plain caves' wet streaks
+  are **`rust_flowstone`**, down both cells. Mineral crust and wet streaks never come in the Ochre Deep.
+- **The air**: each region's biome has its fog colour (Rootways `#6f9a84`, Ochre Deep `#c08050`); delve's `Depths` reads it
+  at the camera once a second and leans the cave air **75%** of the way from the band's colour to it (in place of a land's
+  style).
+- **Caption and discovery**: the first time in a play-day you enter a region, `CaveHud` shows its name and words (`biome.<id>`,
+  `caves.region.<id>`: "THE ROOTWAYS · where the forest's roots come down", "THE OCHRE DEEP · iron country"), over the band's.
+  The first time ever is the Wilds' biome discovery (`biome/awaken/<id>`, SPEC §17); the Journal line and Codex page are P4's.
+- **The plain cave's look** stays off in a region (delve's `SenseState.REGION`, from `#awaken:caves/regions`), so the
+  region's own Lens look plays.
+- **Mining**: the strike draws its chips and sparks on the region rock (rock) and the twins (ore) as on stone and ores
+  (`StrikeBlocks`, by name).
+- **The Lens looks** (`assets/awaken/lens/looks_caves.json`, `biome:awaken:rootways`, `biome:awaken:ochre_deep`): the Rootways
+  earthy and damp (moss-green shadows, the glowcaps' teal blooming into wet air: haze tint 0.3/0.62/0.52, fog glow 0.95);
+  the Ochre Deep iron country (rust-brown shadows, warm dust hanging: warmth 0.16, haze tint 0.86/0.48/0.24, fog glow 1.1).
+  Exposure 1.0: the dark stays dark.
+- **The air** (client, `caves.client.RegionClient`; the region read from the camera's biome once a second): **2** motes tried
+  a tick in a 20 × 10 × 20 box round the camera, each in an air cell: the Rootways' `awaken:cave_spore` (sinking slowly) and,
+  one in four, `cave_pollen`; the Ochre Deep's `cave_warm_dust` (hanging). Each drifts with a little sway for 100 to 180
+  ticks, fading in and out, its light never under 2 or 3 so a torch shows the air full of it. Off with `cave_particles`.
+- **Sound** (synthesised, `tools/art/specs/audio_underlife.py`; under the Soundscape's nature level and hush): the
+  Rootways' `caves.root_creak` (old roots' stick-slip creak through the wood's resonances, from the roof up to 10 blocks
+  round, every 25 to 50 seconds); the Ochre Deep's `caves.rock_tick` (dry ticks of settling rock 3 to 12 blocks off, every 7
+  to 14 seconds), `caves.chime_cricket` (a chorus of bell-like pings, 10 to 20 blocks off, every 26 to 52 seconds) and
+  `caves.warm_hum` (an 8-second seamless loop on 52 Hz round the listener, eased in at **0.45**, out as you leave;
+  subtitle "Warm hum in the rock"). Both regions sit in the world sound family `hollows` with the vanilla cave biomes
+  (`#awaken:soundscape/hollows`, from the pack), so the Soundscape plays the caves' bed under these.
+- **The underlife's own** (SPEC §42.5's director): **glow-worm threads** in the Rootways (up to **10**, clusters of two to
+  four under a roof, at full light so they shine in the dark; a curtain of beaded silk from the sheet, swaying slowly);
+  the Ochre Deep's beetles are **rust beetles** and its crickets sing the chime crickets' song. `/awaken underlife lineup`
+  shows a rust beetle and a glow-worm cluster with the rest.
+- **Finding one** (admin, `caves.RegionCommands`): `/awaken caves goto <region> [pick]` finds the nearest cell of the
+  region's biome as `/locate biome` does (within **3,200** blocks), generates the 7 × 7 chunks round it, and takes you to
+  the dry floor there with the most room (eight rays of up to 16 blocks at head height), facing the longest. `pick` 1 to 9
+  is the next-best floor, each at least **14** blocks from the better ones. For tours (`tools/autopilot/caves-regions.txt`)
+  and for finding a region to play in.
+- **Test** `caves_region_rock`: eight filled chunks of seed 777 (the census's), four told they are all Rootways and four all
+  Ochre Deep, with coal, copper, iron and gold ore planted in host rock: under the land's last 10 blocks no host rock is
+  left but the untwinned ores' shells, each twin is placed and each untwinned ore keeps its shell as it was; above, the
+  rock is untouched; glowcaps stand on rock and only in the Rootways, root curtains hang from rock or root with the tip
+  last, rust, flowstone and ember only in the Ochre Deep (and no mineral crust or wet streaks there); every piece is laid;
+  glowcaps on at most **6%** of open floors; the skin with the regions at most **25%** of the fill (each chunk against its own
+  fill, the middle of the six; the rock rule reads each section once).
+- **Measured 2026-10-29**: 91,828 cells of region rock on 8 chunks, 46 glowcaps (2.0% of 2,273 open floors), 83 root
+  curtain blocks, 137 rust crust, 37 rust flowstone, 32 ember lichen; 2.2 ms a chunk against 34.2 ms to fill it (6%; the
+  skin alone 0.5 ms).

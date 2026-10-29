@@ -9,8 +9,9 @@ import java.util.Set;
 
 /**
  * The blocks whose hit and break particles the strike draws (SPEC §34.3): the rock, ore, dirt, gravel, sand and
- * deepslate families of the overworld and the deep's own blocks, by name, so it can be decided before tags load (the
- * client claims them while mods register their client extensions, and only those no mod has claimed).
+ * deepslate families of the overworld, the deep's own blocks and the cave regions' rock and ore twins, by name, so it
+ * can be decided before tags load (the client claims them while mods register their client extensions, and only those no
+ * mod has claimed).
  */
 public final class StrikeBlocks {
     private StrikeBlocks() {}
@@ -28,6 +29,10 @@ public final class StrikeBlocks {
             "dirt", "coarse_dirt", "rooted_dirt", "grass_block", "podzol", "mycelium", "gravel", "sand", "red_sand", "clay",
             "mud", "packed_mud", "soul_sand", "soul_soil", "moss_block");
 
+    /** The cave regions' rock and ore twins (SPEC §42.7). */
+    private static final Set<String> REGION_ROCK = Set.of("rootstone", "ochre_stone"),
+            REGION_ORES = Set.of("rootstone_coal_ore", "rootstone_copper_ore", "ochre_iron_ore");
+
     /** The family of a block (null: not ours to draw). */
     public static Family family(Block b) {
         Identifier id = BuiltInRegistries.BLOCK.getKey(b);
@@ -39,7 +44,8 @@ public final class StrikeBlocks {
             return null;
         }
         if (id.getNamespace().equals(dev.awaken.Awaken.MODID)) {
-            if (path.equals("deepglass") || path.endsWith("_lode_heart")) return Family.ORE;
+            if (path.equals("deepglass") || path.endsWith("_lode_heart") || REGION_ORES.contains(path)) return Family.ORE;
+            if (REGION_ROCK.contains(path)) return Family.ROCK;
         }
         return null;
     }

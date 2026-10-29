@@ -1,0 +1,140 @@
+{
+  "variants": {
+    "thickness=tip,vertical_direction=up": [
+      {
+        "model": "awaken:block/caves/tuff_formation_up_tip"
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_up_tip",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_up_tip",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_up_tip",
+        "y": 270
+      }
+    ],
+    "thickness=frustum,vertical_direction=up": [
+      {
+        "model": "awaken:block/caves/tuff_formation_up_frustum"
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_up_frustum",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_up_frustum",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_up_frustum",
+        "y": 270
+      }
+    ],
+    "thickness=middle,vertical_direction=up": [
+      {
+        "model": "awaken:block/caves/tuff_formation_up_middle"
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_up_middle",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_up_middle",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_up_middle",
+        "y": 270
+      }
+    ],
+    "thickness=base,vertical_direction=up": [
+      {
+        "model": "awaken:block/caves/tuff_formation_up_base"
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_up_base",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_up_base",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_up_base",
+        "y": 270
+      }
+    ],
+    "thickness=tip,vertical_direction=down": [
+      {
+        "model": "awaken:block/caves/tuff_formation_down_tip"
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_down_tip",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_down_tip",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_down_tip",
+        "y": 270
+      }
+    ],
+    "thickness=frustum,vertical_direction=down": [
+      {
+        "model": "awaken:block/caves/tuff_formation_down_frustum"
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_down_frustum",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_down_frustum",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_down_frustum",
+        "y": 270
+      }
+    ],
+    "thickness=middle,vertical_direction=down": [
+      {
+        "model": "awaken:block/caves/tuff_formation_down_middle"
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_down_middle",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_down_middle",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_down_middle",
+        "y": 270
+      }
+    ],
+    "thickness=base,vertical_direction=down": [
+      {
+        "model": "awaken:block/caves/tuff_formation_down_base"
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_down_base",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_down_base",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/tuff_formation_down_base",
+        "y": 270
+      }
+    ]
+  }
+}
