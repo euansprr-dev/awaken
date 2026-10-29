@@ -5583,26 +5583,32 @@ follow-through on attacks, and every creature moving the way its body and nature
 breath, springs, fidgets, the look, the stagger and the fall; the motion layer adds the feet and the carriage.
 
 - **Data**: `assets/awaken/life/motion.json` (schemaVersion 1), by rig id. A body not listed moves exactly as before (the
-  kit's bosses have no entry). `gait`: `pattern` (`ripple`: one foot at a time from the back forward; `alternate`:
+  kit's bosses have no entry). `gait`: `pattern` (`ripple`: one pair at a time from the back forward, each `lag` of a
+  cycle after the pair behind it, the two sides half a cycle apart (`lag` 0: one wave over the side); `alternate`:
   opposite sets; `ripple-alternate`: the first walking, the second once it runs, 0.45 in and 0.25 out), `duty` (share of
   a cycle a foot stands, walking and running), `lift` (px a step rises), `stride` (blocks a cycle covers; 0 the rig's
   own), `reach` (blocks a planted foot may trail before it steps at once), `settle` (blocks from home a foot may rest
   when the body stops), `crouch` (px the body sinks on its legs), `radius` and `fan` (where each foot stands: px out
   from its hip, the front ones fanned forward and the back ones back by `fan` degrees), `regrip` (seconds between a calm
   creature's idle re-grips of one foot), `swing` (the longest a step takes), `bob` (px the body sinks while feet are up),
-  `roll` (radians it leans off a lifted foot), `rear` (how far the front pair lets go to the clips while the body rears:
-  a wind-up, a strike or a cue, a roar, or a still threat; a roar lets the second pair go too).
+  `roll` (radians it leans off a lifted foot), `rear` (how far the front `rearPairs` pairs, 1 unless set, let go to the
+  clips while the body rears: a wind-up, a strike or a cue, a roar, or a still threat; a roar lets one pair more go).
   `body`: `headLevel` (the head holds level against the gait's and the ground's pitch and roll), `twist` (the body turns
   this share of its look, at most 0.35 rad), `slope` (it pitches and rolls with the ground under its planted feet),
   `land` (a landing squashes it by how far it fell: a spring at 3 Hz kicked by the fall speed), `still` (a stalking
-  hunter holds its breath to a quarter, plays no fidgets and no re-grips), `creep` (px it sinks while stalking).
+  hunter holds its breath to a quarter, plays no fidgets and no re-grips), `creep` (px it sinks while stalking), `shift`
+  (px its weight drifts over its planted feet while it stands, on two slow unrelated beats in its own phase, leaning a
+  little over the side it moves to; the legs give and take under it; gone in 0.6 s once it walks, stalks or lets go).
 - **Legs** (`LegRig`, plain data, checked on the server): a leg is a LEG-role bone that hangs from a non-leg with exactly
-  one LEG-role child and nothing below it (hip and knee). Each is posed by two-bone IK in the hip's parent frame: the
+  one LEG-role child (hip and knee), which has at most one LEG-role child of its own (a foot, the tarsus of a long
+  spider leg: it rides the shin as it stands at rest, the IK reaching with its tip) and nothing below that. Each is posed
+  by two-bone IK in the hip's parent frame: the
   knee goes where the two lengths meet on the side it bulged at rest (its pole), the hip's rest frame is turned onto the
   new thigh frame, and the knee only bends about its own hinge (the shortest turn between two directions both square to
   it). Applied last in `LifeRig.apply` (after the clips, the look and the springs), blended over the clips by the feet's
   weight; out of reach the leg points straight at its target. Only bodies whose body bone carries the head (the feet
-  ride the body bone; a pose-stack body would carry them off their spots).
+  ride the body bone; a pose-stack body would carry them off their spots), or that have no head bone at all and a motion
+  profile (the weaver queen's face is on its thorax; a headless body without one keeps its old pose-stack motion).
 - **Feet** (`Legs`, per creature, from the render extraction once a frame; nothing allocated): a planted foot keeps its
   world position while the body moves over it. A gait clock runs with the ground covered plus the arc the feet sweep
   when it turns on the spot (yaw × the feet's mean distance from the middle), so a turn steps too. A foot lifts when the
@@ -5617,8 +5623,11 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   hanging, resting, sleeping, beached, deflated, swimming or dying, the clips own the legs (the weight eases out over
   0.12 s, the feet held planted meanwhile); landing, the feet stand at home again and ease back in over 0.15 s. A
   first sight or a jump of more than 3 blocks stands them at home. Inputs from the renderer: `grounded` (the feet may
-  plant), `legsFree` (a pose that holds the legs), `stalking`, `gaitRun` (0..1) and `bodyScale` (a renderer's own scale on
-  top of the entity's, so the feet's world spots match the drawn body: the cave spider's 0.7).
+  plant), `legsFree` (a pose that holds the legs), `stalking`, `rearing` (a held pose that rears it on its hind feet: the
+  front pairs go to the clip), `gaitRun` (0..1) and `bodyScale` (a renderer's own scale on top of the entity's, so the
+  feet's world spots match the drawn body: the cave spider's 0.7). WildRenderer: grounded unless `P_AIR`, legs free while
+  hanging, resting, beached, asleep or deflated, rearing while it ripens. HeroRenderer (the named beasts): grounded unless
+  `P_AIR`, legs free while it rests or burrows. FormRenderer: on the ground and not climbing.
 - **Clips** of a profiled body move the body over its feet, the head, the tail, the jaw, and own the legs only when the
   feet let go (hanging, leaping, dying, a wind-up's front pair). Their walk and run legs stay for anything drawn without
   a life (the clip is what shows if nothing plants the feet).
@@ -5635,18 +5644,40 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   feet with the cone lagging; it dies rearing with its legs flung out, drops on its side and the legs curl up over it
   and twitch one by one; hanging, each leg flexes on its own breath round the cone. Its rest pose stands the front pair
   forward and the back pair back (the rig had the front legs raked backward).
+- **Wickling** (`wickling`; four two-bone legs): a salamander's diagonal trot (`alternate`) at every speed on tiny quick
+  steps (1/1.6 px high, stride 0.35/0.6 blocks, 0.15 s swings, reach 0.18), its spine wave from the clip bending over the
+  planted feet, a lizard's roll (0.04); head level 0.4, twist 0.4, shift 0.25. Ripening it rears on its hind feet and its
+  forefeet, drawn up off the ground, knead the air in turn while the tail braces.
+- **Hushling** (`hushling`; two two-bone hind legs, long arms swung by its clips): a crouched biped's alternating steps,
+  duty 0.6/0.4, 2/3.5 px, stride 0.9/1.6 blocks; its body rises (bob -0.6) while a foot is up, as a biped's does, and
+  rolls off it (0.05); a hunter: `still`, creep 1.5; head level 0.5, twist 0.3, shift 0.5.
+- **Weaver Queen** (`weaver_queen`, named beast; eight three-bone legs, femur 12, tibia 14, tarsus 6 px, no head bone):
+  an alternating tetrapod on long reaching steps (4/7 px high, stride 1.4/2.6 blocks, reach 0.9, 0.32 s swings), bob 0.5;
+  twist 0.15, slope 0.85, shift 0.9 (the heaviest drift: a big body settling over eight feet).
 - **Form spiders** (`form_spider_2`..`_5`, the forms' C-and-up bodies, SPEC 21.13; eight two-bone legs, coxa fan then
   femur and shin): they replace the spider Fresh Animations draws below C, so they must beat it. Alternating tetrapods
   (L1 R2 L3 R4, then the others) on their rest stance, duty 0.62/0.5, steps from 3/5 px (C) to 4.5/7 px (S) high, reach
   0.5 to 0.7 blocks, quick swings (0.22 to 0.28 s), bob 0.35 to 0.5 px, `rear` 1 (angry, its front pair spread off the
   ground; a roar, both front pairs); head level 0.5, twist 0.25, slope 0.85, land 1. The renderer plants the feet while it
   stands on the ground and not on a wall (`onGround` and not climbing); the cave spider's body is 0.7 of the spider's.
+- **Thousandfoot** (`thousandfoot`, named beast; fourteen two-bone legs, seven segments): a centipede's ripple, back to
+  front with each pair a fifth of a cycle behind (two waves down each side), the sides in opposition; duty 0.65/0.55,
+  steps 2.5/3.5 px, stride 1.0/1.6 blocks (its clips' 2.6/5.0 are far past its legs' reach), reach 0.5, quick 0.22 s
+  swings, almost no bob (0.1 px) or roll; its walk's sideways spine wave bends the segments over the planted feet; a wind-up
+  lets its front three pairs go (`rearPairs` 3: the Coil Strike's S rears them), a roar four. Head level 0.3, twist 0.3,
+  slope 0.7, land 0.8. Its rest pose sits a pixel lower with the legs out flatter (thigh -10°, shin 84°) so every foot
+  reaches the ground (they hung 3 px above it).
 - Test: `creature_motion_feet` (every motion.json entry names a rig; every gait finds two-bone legs on a body bone that
   carries the head; every foot can reach its stance standing and crouched; the IK lands each foot within 0.05 px of its
   home, a step ahead and behind, the top of a step's arc and the crouch, checked by forward kinematics; the hip's turn
-  survives its ZYX Euler angles; the forms' rigs are looked up too). Tours on CI (PACK=perf,feel; a vanilla spider under
+  survives its ZYX Euler angles; the forms' rigs are looked up too). Tours walk still (NoAI) creatures with
+  `/awaken admin stroll <targets> <blocks per tick> <ticks> [degrees per tick]` (each call queues a leg; the server moves
+  them every tick, so a busy runner can't turn a scripted walk into a crawl the way a tp a command did), load the studio's
+  chunks first (`forceload`) and fill its floor twice. Tours on CI (PACK=perf,feel; a vanilla spider under
   Fresh Animations beside each): `tools/autopilot/mob-anims-lurker.txt` (clips run-autopilot/clips/lurk_*: idle, a walk
-  into a run, a stop and a turn, a blow, a death, the hunt) and `tools/autopilot/mob-anims-spiders.txt` (spid_*).
+  into a run, a stop and a turn, a blow, a death, the hunt), `tools/autopilot/mob-anims-spiders.txt` (spid_*: the forms'
+  row from vanilla's rungs to S, a walk side by side, a blow, a death, a hunt) and `tools/autopilot/mob-anims-crawlers.txt`
+  (crawl_*: the thousandfoot, wickling, hushling and weaver queen).
 
 ## 24. Hands: the first-person system (plan docs/anims/PLAN.md, page https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy; approved 2026-10-25)
 

@@ -38,25 +38,28 @@ public record MotionProfile(String id, @Nullable Gait gait, Body body) {
      * (least, most) between idle re-grips of one foot, {@code swing} the longest a step takes (seconds), {@code stride}
      * the blocks one cycle covers (walking, running; 0: the rig's), {@code bob} how far (px) the body sinks while a foot
      * is up (shared by the feet), {@code roll} how far (radians) it leans off a lifted foot, {@code rear} (0..1) how far
-     * the front pair lets go to the clips during a wind-up (a spider rearing its forelegs before it strikes).
+     * the front pairs let go to the clips during a wind-up (a spider rearing its forelegs before it strikes),
+     * {@code rearPairs} how many pairs that is (a roar lets one more go), {@code lag} the share of a cycle each pair's
+     * ripple step follows the pair behind it (0: one wave over the side; a centipede's legs run in several).
      */
     public record Gait(Pattern pattern, float dutyWalk, float dutyRun, float liftWalk, float liftRun, float reach, float settle,
                        float crouch, float radius, float fan, float regripMin, float regripMax, float swing, float strideWalk,
-                       float strideRun, float bob, float roll, float rear) {}
+                       float strideRun, float bob, float roll, float rear, int rearPairs, float lag) {}
 
     /**
      * The body. {@code headLevel} (0..1) how much the head holds level against the gait's pitch and roll,
      * {@code twist} (0..1) the share of its look the body turns, {@code slope} (0..1) how much it pitches and rolls with
      * the ground under its feet, {@code land} how hard a landing squashes it, {@code still}: a hunter that freezes
-     * while it stalks (no fidgets, no re-grips, a held breath), {@code creep} how far (px) it sinks on its legs then.
+     * while it stalks (no fidgets, no re-grips, a held breath), {@code creep} how far (px) it sinks on its legs then,
+     * {@code shift} how far (px) its weight drifts over its planted feet while it stands.
      */
-    public record Body(float headLevel, float twist, float slope, float land, boolean still, float creep) {
-        static final Body NONE = new Body(0, 0, 0, 0, false, 0);
+    public record Body(float headLevel, float twist, float slope, float land, boolean still, float creep, float shift) {
+        static final Body NONE = new Body(0, 0, 0, 0, false, 0, 0);
     }
 
     private static final Set<String> GAIT = Set.of("pattern", "duty", "lift", "reach", "settle", "crouch", "radius", "fan", "regrip", "swing",
-            "stride", "bob", "roll", "rear");
-    private static final Set<String> BODY = Set.of("headLevel", "twist", "slope", "land", "still", "creep");
+            "stride", "bob", "roll", "rear", "rearPairs", "lag");
+    private static final Set<String> BODY = Set.of("headLevel", "twist", "slope", "land", "still", "creep", "shift");
 
     private static @Nullable Map<String, MotionProfile> all;
 
@@ -97,13 +100,14 @@ public record MotionProfile(String id, @Nullable Gait gait, Body body) {
         if (duty[0] <= 0.2F || duty[0] >= 0.95F || duty[1] <= 0.2F || duty[1] >= 0.95F) throw new IllegalStateException(PATH + ": " + id + ": duty out of 0.2..0.95");
         return new Gait(p, duty[0], duty[1], lift[0], lift[1], num(o, "reach", 0.6F), num(o, "settle", 0.1F), num(o, "crouch", 0),
                 num(o, "radius", 0), num(o, "fan", 0), regrip[0], regrip[1], num(o, "swing", 0.35F), stride[0], stride[1],
-                num(o, "bob", 0.3F), num(o, "roll", 0.02F), Math.clamp(num(o, "rear", 0), 0.0F, 1.0F));
+                num(o, "bob", 0.3F), num(o, "roll", 0.02F), Math.clamp(num(o, "rear", 0), 0.0F, 1.0F), (int) num(o, "rearPairs", 1),
+                Math.clamp(num(o, "lag", 0), 0.0F, 0.5F));
     }
 
     private static Body body(String id, JsonObject o) {
         for (String k : o.keySet()) if (!BODY.contains(k)) throw new IllegalStateException(PATH + ": " + id + ": unknown body field " + k);
         return new Body(num(o, "headLevel", 0), num(o, "twist", 0), num(o, "slope", 0), num(o, "land", 0),
-                o.has("still") && o.get("still").getAsBoolean(), num(o, "creep", 0));
+                o.has("still") && o.get("still").getAsBoolean(), num(o, "creep", 0), num(o, "shift", 0));
     }
 
     private static float num(JsonObject o, String k, float d) {

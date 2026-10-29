@@ -827,6 +827,11 @@ public final class Fauna3Data {
                 track body rot 2 0 -35 0 0 1 1.5 -35 0 0 1
                 track body pos 2 0 0 1.5 0 1 1.5 0 1.5 0 1
                 track whead rot 3 0 -15 0 0 1 0.75 -25 0 0 1 1.5 -15 0 0 1
+                track wleg0_l rot 9 0 0 35 -30 1 0.1875 0 45 -42 1 0.375 0 35 -30 1 0.5625 0 25 -30 1 0.75 0 35 -30 1 0.9375 0 45 -42 1 1.125 0 35 -30 1 1.3125 0 25 -30 1 1.5 0 35 -30 1
+                track wfoot0_l rot 9 0 -11.7557 0 0 1 0.1875 -16.1803 0 0 1 0.375 0 0 0 1 0.5625 0 0 0 1 0.75 -11.7557 0 0 1 0.9375 -16.1803 0 0 1 1.125 0 0 0 1 1.3125 0 0 0 1 1.5 -11.7557 0 0 1
+                track wleg0_r rot 9 0 0 -35 30 1 0.1875 0 -25 30 1 0.375 0 -35 30 1 0.5625 0 -45 42 1 0.75 0 -35 30 1 0.9375 0 -25 30 1 1.125 0 -35 30 1 1.3125 0 -45 42 1 1.5 0 -35 30 1
+                track wfoot0_r rot 9 0 0 0 0 1 0.1875 0 0 0 1 0.375 -11.7557 0 0 1 0.5625 -16.1803 0 0 1 0.75 0 0 0 1 0.9375 0 0 0 1 1.125 -11.7557 0 0 1 1.3125 -16.1803 0 0 1 1.5 0 0 0 1
+                track wtail1 rot 2 0 15 0 0 1 1.5 15 0 0 1
                 track crest0 scale 3 0 1.3 1.5 1.3 1 0.75 1.3 1.8 1.3 1 1.5 1.3 1.5 1.3 1
                 track crest1 scale 3 0 1.3 1.5 1.3 1 0.75 1.3 1.8 1.3 1 1.5 1.3 1.5 1.3 1
                 track crest2 scale 3 0 1.3 1.5 1.3 1 0.75 1.3 1.8 1.3 1 1.5 1.3 1.5 1.3 1
@@ -1131,7 +1136,7 @@ public final class Fauna3Data {
             new String[] {
                 """
                 rig thousandfoot 256 128 0 2.6 5 0.16 0.34 1.4
-                bone seg3 - 0 15.5 2 0 0 0
+                bone seg3 - 0 16.5 2 0 0 0
                 cube 0 0 -6 -4 -3.5 12 7 7 0 0
                 bone seg2 seg3 0 0 -7 0 0 0
                 cube 0 0 -6 -4 -3.5 12 7 7 0 0
@@ -1169,77 +1174,77 @@ public final class Fauna3Data {
                 cube 162 0 -0.5 -0.5 -8 1 1 8 1 0
                 bone tant2_r tant_r 0 0 -8 0.3491 0 0
                 cube 196 0 -0.5 -0.5 -7 1 1 7 1 0
-                bone tleg0_l seg0 6 2 0 0 0.3142 -0.4363
+                bone tleg0_l seg0 6 2 0 0 0.3142 -0.1745
                 cube 222 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tfoot0_l tleg0_l 7 0 0 0 0 1.6581
+                bone tfoot0_l tleg0_l 7 0 0 0 0 1.4661
                 cube 238 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tleg0_r seg0 -6 2 0 0 -0.3142 0.4363
+                bone tleg0_r seg0 -6 2 0 0 -0.3142 0.1745
                 cube 222 7 -7 -0.5 -0.5 7 1 1 1 0
-                bone tfoot0_r tleg0_r -7 0 0 0 0 -1.6581
+                bone tfoot0_r tleg0_r -7 0 0 0 0 -1.4661
                 cube 238 7 -7 -0.5 -0.5 7 1 1 1 0
                 bone spike0_l seg0 3 -4 0 -0.1745 0 -0.2618
                 cube 244 0 -1 -5 -1 2 5 2 0 0
                 bone spike0_r seg0 -3 -4 0 -0.1745 0 0.2618
                 cube 244 0 -1 -5 -1 2 5 2 0 0
-                bone tleg1_l seg1 6 2 0 0 0.2094 -0.4363
+                bone tleg1_l seg1 6 2 0 0 0.2094 -0.1745
                 cube 222 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tfoot1_l tleg1_l 7 0 0 0 0 1.6581
+                bone tfoot1_l tleg1_l 7 0 0 0 0 1.4661
                 cube 238 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tleg1_r seg1 -6 2 0 0 -0.2094 0.4363
+                bone tleg1_r seg1 -6 2 0 0 -0.2094 0.1745
                 cube 222 7 -7 -0.5 -0.5 7 1 1 1 0
-                bone tfoot1_r tleg1_r -7 0 0 0 0 -1.6581
+                bone tfoot1_r tleg1_r -7 0 0 0 0 -1.4661
                 cube 238 7 -7 -0.5 -0.5 7 1 1 1 0
                 bone spike1_l seg1 3 -4 0 -0.1745 0 -0.2618
                 cube 244 0 -1 -5 -1 2 5 2 0 0
                 bone spike1_r seg1 -3 -4 0 -0.1745 0 0.2618
                 cube 244 0 -1 -5 -1 2 5 2 0 0
-                bone tleg2_l seg2 6 2 0 0 0.1047 -0.4363
+                bone tleg2_l seg2 6 2 0 0 0.1047 -0.1745
                 cube 222 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tfoot2_l tleg2_l 7 0 0 0 0 1.6581
+                bone tfoot2_l tleg2_l 7 0 0 0 0 1.4661
                 cube 238 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tleg2_r seg2 -6 2 0 0 -0.1047 0.4363
+                bone tleg2_r seg2 -6 2 0 0 -0.1047 0.1745
                 cube 222 7 -7 -0.5 -0.5 7 1 1 1 0
-                bone tfoot2_r tleg2_r -7 0 0 0 0 -1.6581
+                bone tfoot2_r tleg2_r -7 0 0 0 0 -1.4661
                 cube 238 7 -7 -0.5 -0.5 7 1 1 1 0
-                bone tleg3_l seg3 6 2 0 0 0 -0.4363
+                bone tleg3_l seg3 6 2 0 0 0 -0.1745
                 cube 222 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tfoot3_l tleg3_l 7 0 0 0 0 1.6581
+                bone tfoot3_l tleg3_l 7 0 0 0 0 1.4661
                 cube 238 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tleg3_r seg3 -6 2 0 0 0 0.4363
+                bone tleg3_r seg3 -6 2 0 0 0 0.1745
                 cube 222 7 -7 -0.5 -0.5 7 1 1 1 0
-                bone tfoot3_r tleg3_r -7 0 0 0 0 -1.6581
+                bone tfoot3_r tleg3_r -7 0 0 0 0 -1.4661
                 cube 238 7 -7 -0.5 -0.5 7 1 1 1 0
                 bone spike3_l seg3 3 -4 0 -0.1745 0 -0.2618
                 cube 244 0 -1 -5 -1 2 5 2 0 0
                 bone spike3_r seg3 -3 -4 0 -0.1745 0 0.2618
                 cube 244 0 -1 -5 -1 2 5 2 0 0
-                bone tleg4_l seg4 5 2 0 0 -0.1047 -0.4363
+                bone tleg4_l seg4 5 2 0 0 -0.1047 -0.1745
                 cube 222 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tfoot4_l tleg4_l 7 0 0 0 0 1.6581
+                bone tfoot4_l tleg4_l 7 0 0 0 0 1.4661
                 cube 238 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tleg4_r seg4 -5 2 0 0 0.1047 0.4363
+                bone tleg4_r seg4 -5 2 0 0 0.1047 0.1745
                 cube 222 7 -7 -0.5 -0.5 7 1 1 1 0
-                bone tfoot4_r tleg4_r -7 0 0 0 0 -1.6581
+                bone tfoot4_r tleg4_r -7 0 0 0 0 -1.4661
                 cube 238 7 -7 -0.5 -0.5 7 1 1 1 0
-                bone tleg5_l seg5 4 2 0 0 -0.2094 -0.4363
+                bone tleg5_l seg5 4 2 0 0 -0.2094 -0.1745
                 cube 222 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tfoot5_l tleg5_l 7 0 0 0 0 1.6581
+                bone tfoot5_l tleg5_l 7 0 0 0 0 1.4661
                 cube 238 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tleg5_r seg5 -4 2 0 0 0.2094 0.4363
+                bone tleg5_r seg5 -4 2 0 0 0.2094 0.1745
                 cube 222 7 -7 -0.5 -0.5 7 1 1 1 0
-                bone tfoot5_r tleg5_r -7 0 0 0 0 -1.6581
+                bone tfoot5_r tleg5_r -7 0 0 0 0 -1.4661
                 cube 238 7 -7 -0.5 -0.5 7 1 1 1 0
                 bone spike5_l seg5 3 -4 0 -0.1745 0 -0.2618
                 cube 244 0 -1 -5 -1 2 5 2 0 0
                 bone spike5_r seg5 -3 -4 0 -0.1745 0 0.2618
                 cube 244 0 -1 -5 -1 2 5 2 0 0
-                bone tleg6_l seg6 3 2 0 0 -0.3142 -0.4363
+                bone tleg6_l seg6 3 2 0 0 -0.3142 -0.1745
                 cube 222 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tfoot6_l tleg6_l 7 0 0 0 0 1.6581
+                bone tfoot6_l tleg6_l 7 0 0 0 0 1.4661
                 cube 238 7 0 -0.5 -0.5 7 1 1 0 0
-                bone tleg6_r seg6 -3 2 0 0 0.3142 0.4363
+                bone tleg6_r seg6 -3 2 0 0 0.3142 0.1745
                 cube 222 7 -7 -0.5 -0.5 7 1 1 1 0
-                bone tfoot6_r tleg6_r -7 0 0 0 0 -1.6581
+                bone tfoot6_r tleg6_r -7 0 0 0 0 -1.4661
                 cube 238 7 -7 -0.5 -0.5 7 1 1 1 0
                 look thead 0.6 0.5
                 move Coil_Strike coil

@@ -56,6 +56,8 @@ public final class Life {
     public boolean legsFree;
     /** It creeps up on a target (a hunter's stalk): a still body holds its breath and its fidgets, and sinks low. */
     public boolean stalking;
+    /** A held pose rears it on its hind feet (a wickling reaching for its vine): the front pairs let go to the clip. */
+    public boolean rearing;
     /** 0..1 how much it runs (the run clip's weight), for the feet's gait. */
     public float gaitRun;
     /** The renderer's own scale on top of the entity's (a cave spider's 0.7), so the feet land where the body is drawn. */
@@ -91,9 +93,9 @@ public final class Life {
     float bodyPitch, bodyRoll, dip, headNod, headRoll, neckPitch, jawOpen, scratch;
     int scratchSide;
     // the motion profile's: the gait's roll (the head holds level against it), the body's turn toward its look, a
-    // stalker's crouch (px), a landing's squash (px) and how fast it springs back
-    float swayRoll, twist, creep, land;
-    private float landV, airFall;
+    // stalker's crouch (px), a landing's squash (px) and how fast it springs back, its weight drifting over its feet (px)
+    float swayRoll, twist, creep, land, shiftX, shiftZ;
+    private float landV, airFall, shiftT, shiftW;
     private boolean wasAirborne;
     // idle fidgets
     private int idle = -1, idleSide;
@@ -307,10 +309,10 @@ public final class Life {
                     : stride > 0 ? stride : 1.0F;
             boolean calmFeet = !busy && !far && tension < 0.05F && !hold;
             // a wind-up, a strike, a roar or a still threat lifts the front pair: their clips rear and strike with them
-            boolean front = windup >= 0 || roar || (busy && hurt <= 0.01F) || (aggressive && walk < 0.1F);
+            boolean front = windup >= 0 || roar || rearing || (busy && hurt <= 0.01F) || (aggressive && walk < 0.1F);
             float rear = front && !dead ? g.rear() : 0.0F, k = Math.min(1.0F, dt / 0.12F);
             legs.rear += (rear - legs.rear) * k;
-            // a roar lifts the second pair too
+            // a roar lifts one pair more
             legs.rear2 += ((roar && !dead ? g.rear() : 0.0F) - legs.rear2) * k;
             legs.update(s, dt, bodyScale, grounded && !legsFree && !dead && !swimming, st, gaitRun, calmFeet);
         }
@@ -336,6 +338,16 @@ public final class Life {
         }
         float want = stalking && !dead ? motion.creep() : 0.0F;
         creep += (want - creep) * Math.min(1.0F, dt / 0.4F);
+        // standing, its weight drifts over its planted feet on two slow, unrelated beats (its own phase), so the legs
+        // keep giving and taking; a held breath stills it, walking hands the weight to the gait
+        if (motion.shift() > 0) {
+            boolean calm = !dead && grounded && !legsFree && walk < 0.1F && !(motion.still() && stalking);
+            shiftW += ((calm ? 1.0F : 0.0F) - shiftW) * Math.min(1.0F, dt / 0.6F);
+            shiftT += dt;
+            float ph = (seed & 1023) * 0.0061F;
+            shiftX = motion.shift() * shiftW * Mth.sin(shiftT * 1.31F + ph) * (0.7F + 0.3F * Mth.sin(shiftT * 0.23F + ph * 2));
+            shiftZ = motion.shift() * shiftW * 0.6F * Mth.sin(shiftT * 0.83F + ph * 1.7F);
+        }
     }
 
     private void writeHead(LivingEntityRenderState s) {

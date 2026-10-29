@@ -9,6 +9,9 @@ wait 40
 # the opening's sky flight holds the camera: skip it first
 cmd awaken opening skip
 wait 30
+# the studio's chunks first: a busy runner's server can fall seconds behind the script
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -32 -32 32 48
 gui 0
 cmd gamerule send_command_feedback false
 cmd gamerule awaken:fauna_spawning false
@@ -29,6 +32,9 @@ cmd effect give @s minecraft:night_vision infinite 0 true
 info
 cmd tp @s 0.5 201 0.5 0 0
 wait 100
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
 cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
 cmd fill -24 201 -16 24 214 40 minecraft:air
 cmd kill @e[type=!minecraft:player,distance=..80]
@@ -53,253 +59,32 @@ cmd awaken ascent pilot rec lurk_idle_close 120 2
 wait 125
 cmd kill @e[type=!minecraft:player,distance=..80]
 wait 10
-# 2. a walk, a run, a stop, a turn on the spot, a creep back (no AI: moved a little every tick, so the feet must keep up)
+# 2. a walk, a run, a stop, a turn on the spot, a creep back (no AI: strolled by the server every tick, so the feet must keep up)
 cmd tp @s 0.5 203.2 -5.5 0 16
 look 0 16
-cmd summon awaken:drip_lurker -4.5 201 1.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
-cmd summon minecraft:spider -4.5 201 3.6 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd summon awaken:drip_lurker -6.0 201 1.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd summon minecraft:spider -6.0 201 3.6 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
 wait 30
 cmd awaken ascent pilot rec lurk_walk 230 2
-wait 4
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
+cmd awaken admin stroll @e[tag=walker] 0.06 40
+cmd awaken admin stroll @e[tag=walker] 0.1 20
+cmd awaken admin stroll @e[tag=walker] 0.16 6
+cmd awaken admin stroll @e[tag=walker] 0.28 22
+cmd awaken admin stroll @e[tag=walker] 0.14 4
+cmd awaken admin stroll @e[tag=walker] 0.06 4
+cmd awaken admin stroll @e[tag=walker] 0 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+cmd awaken admin stroll @e[tag=walker] 0 10
+cmd awaken admin stroll @e[tag=walker] 0.03 30
+wait 50
 shot lurk_walk_mid
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.08
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.14
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.14
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.14
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.14
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.14
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.14
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
+wait 42
 shot lurk_run
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.2
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.12
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.12
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.12
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.05
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.05
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.05
-wait 1
-wait 30
+wait 34
 shot lurk_stop
-cmd execute as @e[tag=walker] at @s run tp @s ~ ~ ~ ~15 ~
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ~ ~ ~ ~15 ~
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ~ ~ ~ ~15 ~
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ~ ~ ~ ~15 ~
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ~ ~ ~ ~15 ~
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ~ ~ ~ ~15 ~
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ~ ~ ~ ~15 ~
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ~ ~ ~ ~15 ~
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ~ ~ ~ ~15 ~
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ~ ~ ~ ~15 ~
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ~ ~ ~ ~15 ~
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ~ ~ ~ ~15 ~
-wait 1
-shot lurk_turned
 wait 30
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.04
-wait 1
-wait 40
+shot lurk_walk_turned
+wait 60
 cmd kill @e[type=!minecraft:player,distance=..80]
 wait 10
 # 3. a blow: the body jerks over its planted feet, the cone lags; then a heavier one from the other side
@@ -326,13 +111,12 @@ shot lurk_death_mid
 wait 33
 cmd kill @e[type=!minecraft:player,distance=..80]
 wait 10
-# 5. the hunt (AI, at night): it creeps low and still-breathed, rears its front legs, lunges, bites
+# 5. the hunt (AI, at night, alone: a charging spider filled the frame): it creeps low and still-breathed, rears, lunges, bites
 cmd time set 18000
 cmd tp @s 0.5 201 -6.0 0 12
 look 0 12
 cmd gamemode survival
 cmd summon awaken:drip_lurker -1.0 201 7.0 {PersistenceRequired:1b,Rotation:[180f,0f]}
-cmd summon minecraft:spider 3.0 201 9.0 {PersistenceRequired:1b,Rotation:[180f,0f]}
 wait 10
 cmd damage @e[type=awaken:drip_lurker,limit=1] 1 minecraft:player_attack by @s
 cmd awaken ascent pilot rec lurk_hunt 240 2

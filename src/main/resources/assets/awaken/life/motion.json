@@ -18,7 +18,72 @@
         "roll": 0.025,
         "rear": 0.9
       },
-      "body": {"headLevel": 0.6, "twist": 0.2, "slope": 0.8, "land": 1.0, "still": true, "creep": 2.5}
+      "body": {"headLevel": 0.6, "twist": 0.2, "slope": 0.8, "land": 1.0, "still": true, "creep": 2.5, "shift": 0.6}
+    },
+    "thousandfoot": {
+      "gait": {
+        "pattern": "ripple",
+        "lag": 0.2,
+        "duty": [0.65, 0.55],
+        "lift": [2.5, 3.5],
+        "stride": [1.0, 1.6],
+        "reach": 0.5,
+        "settle": 0.08,
+        "regrip": [5.0, 12.0],
+        "swing": 0.22,
+        "bob": 0.1,
+        "roll": 0.01,
+        "rear": 1.0,
+        "rearPairs": 3
+      },
+      "body": {"headLevel": 0.3, "twist": 0.3, "slope": 0.7, "land": 0.8, "shift": 0.4}
+    },
+    "wickling": {
+      "gait": {
+        "pattern": "alternate",
+        "duty": [0.6, 0.45],
+        "lift": [1.0, 1.6],
+        "stride": [0.35, 0.6],
+        "reach": 0.18,
+        "settle": 0.04,
+        "regrip": [3.0, 7.0],
+        "swing": 0.15,
+        "bob": 0.1,
+        "roll": 0.04,
+        "rear": 1.0
+      },
+      "body": {"headLevel": 0.4, "twist": 0.4, "slope": 0.8, "land": 1.0, "shift": 0.25}
+    },
+    "hushling": {
+      "gait": {
+        "pattern": "alternate",
+        "duty": [0.6, 0.4],
+        "lift": [2.0, 3.5],
+        "stride": [0.9, 1.6],
+        "reach": 0.35,
+        "settle": 0.08,
+        "regrip": [4.0, 9.0],
+        "swing": 0.3,
+        "bob": -0.6,
+        "roll": 0.05
+      },
+      "body": {"headLevel": 0.5, "twist": 0.3, "slope": 0.6, "land": 1.0, "still": true, "creep": 1.5, "shift": 0.5}
+    },
+    "weaver_queen": {
+      "gait": {
+        "pattern": "alternate",
+        "duty": [0.62, 0.5],
+        "lift": [4.0, 7.0],
+        "stride": [1.4, 2.6],
+        "reach": 0.9,
+        "settle": 0.12,
+        "regrip": [4.0, 10.0],
+        "swing": 0.32,
+        "bob": 0.5,
+        "roll": 0.02,
+        "rear": 1.0
+      },
+      "body": {"twist": 0.15, "slope": 0.85, "land": 1.0, "shift": 0.9}
     },
     "form_spider_2": {
       "gait": {
@@ -33,7 +98,7 @@
         "roll": 0.02,
         "rear": 1.0
       },
-      "body": {"headLevel": 0.5, "twist": 0.25, "slope": 0.85, "land": 1.0}
+      "body": {"headLevel": 0.5, "twist": 0.25, "slope": 0.85, "land": 1.0, "shift": 0.5}
     },
     "form_spider_3": {
       "gait": {
@@ -48,7 +113,7 @@
         "roll": 0.02,
         "rear": 1.0
       },
-      "body": {"headLevel": 0.5, "twist": 0.25, "slope": 0.85, "land": 1.0}
+      "body": {"headLevel": 0.5, "twist": 0.25, "slope": 0.85, "land": 1.0, "shift": 0.6}
     },
     "form_spider_4": {
       "gait": {
@@ -63,7 +128,7 @@
         "roll": 0.02,
         "rear": 1.0
       },
-      "body": {"headLevel": 0.5, "twist": 0.25, "slope": 0.85, "land": 1.0}
+      "body": {"headLevel": 0.5, "twist": 0.25, "slope": 0.85, "land": 1.0, "shift": 0.7}
     },
     "form_spider_5": {
       "gait": {
@@ -78,7 +143,7 @@
         "roll": 0.02,
         "rear": 1.0
       },
-      "body": {"headLevel": 0.5, "twist": 0.25, "slope": 0.85, "land": 1.0}
+      "body": {"headLevel": 0.5, "twist": 0.25, "slope": 0.85, "land": 1.0, "shift": 0.8}
     }
   }
 }

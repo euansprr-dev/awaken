@@ -152,7 +152,7 @@ public final class LifeTests {
                 if (mp.gait() == null) continue;
                 LifeBones.Binding b = bind(r);
                 // the feet ride a body bone that carries the head (LifeRig binds legs only then)
-                boolean carries = false;
+                boolean carries = b.head() < 0 && b.body() >= 0; // a headless body carries it all
                 for (int k = b.head(); k >= 0 && b.body() >= 0; k = b.bones().get(k).parent()) if (k == b.body()) carries = true;
                 if (!carries) problems.add(mp.id() + ": its body bone doesn't carry its head, so its feet can't plant");
                 float[][] pose = new float[r.bones.size()][];
@@ -199,7 +199,7 @@ public final class LifeTests {
                     checked++;
                 }
             }
-            h.assertTrue(checked >= 6 + 4 * 8, "the drip lurker's six legs and the form spiders' eight (and every other gait's) are checked (" + checked + ")");
+            h.assertTrue(checked >= 6 + 4 * 8 + 14 + 4 + 2 + 8, "the drip lurker's six legs, the form spiders' eight, the thousandfoot's fourteen, the wickling's four, the hushling's two, the weaver queen's eight (and every other gait's) are checked (" + checked + ")");
             h.assertTrue(problems.isEmpty(), String.join("; ", problems));
             h.succeed();
         });

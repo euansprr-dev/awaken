@@ -221,6 +221,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         life.grounded = (l.fauna & FaunaMob.P_AIR) == 0;
         life.legsFree = (s.wild & LEGS_HELD) != 0;
         life.stalking = (l.fauna & FaunaMob.P_STALK) != 0;
+        life.rearing = (s.wild & WildPose.S_RIPEN) != 0;
         life.gaitRun = s.run;
         life.tick(s, true);
         s.pitch = life.ease(11, s.pitch, 0.2F); // into and out of the water the body levels off, it doesn't snap

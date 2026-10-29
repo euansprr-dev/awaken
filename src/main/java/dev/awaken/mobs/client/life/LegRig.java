@@ -77,7 +77,12 @@ public final class LegRig {
             r0[i] = new Matrix3f().rotationZYX(h[5], h[4], h[3]);
             s0[i] = new Matrix3f().rotationZYX(k[5], k[4], k[3]);
             v1[i] = new Vector3f(k[0], k[1], k[2]);
+            int fb = legs.get(i)[2];
             Vector3f tip = tip(box.apply(knee[i]));
+            if (fb >= 0) { // the foot's far end, through its rest pose
+                float[] f = pose[fb];
+                tip = new Matrix3f().rotationZYX(f[5], f[4], f[3]).transform(tip(box.apply(fb))).add(f[0], f[1], f[2]);
+            }
             l1[i] = Math.max(0.5F, v1[i].length());
             l2[i] = Math.max(0.5F, tip.length());
             tip0[i] = s0[i].transform(new Vector3f(tip)).normalize();
@@ -129,8 +134,11 @@ public final class LegRig {
         offRipple = new float[n];
         offAlternate = new float[n];
         float reachSum = 0;
+        // the ripple runs from the back forward: a pair steps a lag after the pair behind it (the larger offset steps first)
+        float lag = gait.lag() > 0 ? gait.lag() : 0.5F / perSide;
         for (int i = 0; i < n; i++) {
-            offRipple[i] = (side[i] < 0 ? 0.5F : 0.0F) + (perSide - 1 - rank[i]) * (0.5F / perSide);
+            float o = (side[i] < 0 ? 0.5F : 0.0F) + rank[i] * lag;
+            offRipple[i] = o - (float) Math.floor(o);
             offAlternate[i] = ((rank[i] + (side[i] < 0 ? 1 : 0)) % 2) * 0.5F;
             reachSum += Mth.sqrt(homeX[i] * homeX[i] + homeZ[i] * homeZ[i]) / 16.0F;
         }
@@ -194,8 +202,8 @@ public final class LegRig {
     }
 
     /**
-     * The legs of a body: each LEG-role bone that hangs from a non-leg and has exactly one LEG-role child, which has no
-     * leg below it (a two-bone leg). {@code pose}: each bone's rest (x, y, z px; x, y, z rotation radians);
+     * The legs of a body: each LEG-role bone that hangs from a non-leg and has exactly one LEG-role child, which has at
+     * most one leg below it (a foot, held as it stands at rest) with none below that (a two-bone leg, or three). {@code pose}: each bone's rest (x, y, z px; x, y, z rotation radians);
      * {@code box}: each bone's own cubes' box, or null. Null when the body has fewer than two such legs.
      */
     public static @Nullable LegRig of(MotionProfile.Gait gait, LifeBones.Binding b, float[][] pose, IntFunction<float @Nullable []> box) {
@@ -214,12 +222,21 @@ public final class LegRig {
                 }
             }
             if (kids != 1) continue;
+            // below the knee at most a foot (a tarsus that rides the shin as it stands at rest), with nothing below it
+            int foot = -1, feet = 0;
+            for (int j = 0; j < count; j++) {
+                if (bones.get(j).parent() == child && b.roles()[j] == Role.LEG) {
+                    foot = j;
+                    feet++;
+                }
+            }
+            if (feet > 1) continue;
             boolean deeper = false;
-            for (int j = 0; j < count; j++) if (bones.get(j).parent() == child && b.roles()[j] == Role.LEG) deeper = true;
+            for (int j = 0; j < count && foot >= 0; j++) if (bones.get(j).parent() == foot && b.roles()[j] == Role.LEG) deeper = true;
             if (deeper) continue;
             List<Integer> chain = new ArrayList<>();
             for (int k = p; k >= 0; k = bones.get(k).parent()) chain.addFirst(k);
-            legs.add(new int[]{i, child});
+            legs.add(new int[]{i, child, foot});
             chains.add(chain.stream().mapToInt(Integer::intValue).toArray());
         }
         return legs.size() >= 2 ? new LegRig(gait, legs, chains, pose, box) : null;

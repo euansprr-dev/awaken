@@ -191,6 +191,8 @@ public final class LifeRig {
         if (b.body() >= 0 && b.head() >= 0) {
             for (int k = b.head(); k >= 0; k = b.bones().get(k).parent()) if (k == b.body()) carries = true;
         }
+        // a headless body that walks on the motion layer's feet (the weaver queen's face is on its thorax) carries it all
+        if (b.body() >= 0 && b.head() < 0 && rig != null && MotionProfile.of(rig.id) != null) carries = true;
         rootMotion = !carries;
         // springs
         int[] s = b.springs();
@@ -407,6 +409,11 @@ public final class LifeRig {
                 float wgt = lg.weight;
                 float pitch = lg.groundPitch * mb.slope() * wgt, roll = (lg.groundRoll * mb.slope() + lg.gaitRoll) * wgt;
                 body.y += (lg.rig.gait.crouch() + life.creep + lg.groundY + lg.gaitY) * wgt;
+                body.x += life.shiftX * wgt;
+                body.z += life.shiftZ * wgt;
+                // leaning into the drift: the side it moves over sinks a little
+                pitch += life.shiftZ * 0.02F * wgt;
+                roll += life.shiftX * 0.03F * wgt;
                 body.xRot += pitch;
                 body.zRot += roll;
                 levelPitch += pitch;

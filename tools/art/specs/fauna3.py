@@ -1213,6 +1213,11 @@ def wickling_clips(r):
     ripen.rot("body", [(0, -35, 0, 0), (1.5, -35, 0, 0)])
     ripen.pos("body", [(0, 0, 1.5, 0), (1.5, 0, 1.5, 0)])
     ripen.rot("whead", [(0, -15, 0, 0), (0.75, -25, 0, 0), (1.5, -15, 0, 0)])
+    # the forefeet off the ground, drawn up and kneading the air in turn; the tail braced
+    for nm, sg, ph in (("wleg0_l", 1, 0.0), ("wleg0_r", -1, 0.5)):
+        cycle(ripen, nm, "rot", lambda p, sg=sg, ph=ph: (0, sg * (35 + 10 * s(p * 2, ph)), sg * (-30 - 12 * max(0.0, s(p * 2, ph)))), 8)
+        cycle(ripen, nm.replace("wleg", "wfoot"), "rot", lambda p, sg=sg, ph=ph: (-20 * max(0.0, s(p * 2, ph + 0.1)), 0, 0), 8)
+    ripen.rot("wtail1", [(0, 15, 0, 0), (1.5, 15, 0, 0)])
     for k in range(3):
         ripen.scale(f"crest{k}", [(0, 1.3, 1.5, 1.3), (0.75, 1.3, 1.8, 1.3), (1.5, 1.3, 1.5, 1.3)])
     hurt = r.clip("hurt", 0.35)
@@ -1642,7 +1647,7 @@ SEGMENTS = 7
 def thousandfoot():
     r = Rig("thousandfoot", (256, 128))
     r.walk_stride, r.run_stride, r.run_speed, r.shadow = 2.6, 5.0, (0.16, 0.34), 1.4
-    mid = r.bone("seg3", (0, 15.5, 2))
+    mid = r.bone("seg3", (0, 16.5, 2))   # low on its legs: every foot reaches the ground at rest (SPEC 23.1)
     mid.cube("seg3", -6, -4, -3.5, 12, 7, 7)
     chain_f, chain_b = ["seg3"], ["seg3"]
     prev = mid
@@ -1675,9 +1680,9 @@ def thousandfoot():
         seg = r.by_name[f"seg{k}"]
         w = 12 - max(0, k - 3) * 2
         for side, nm in ((1, "l"), (-1, "r")):
-            leg = seg.bone(f"tleg{k}_" + nm, (side * w / 2, 2, 0), (0, side * (k - 3) * -6, side * -25))
+            leg = seg.bone(f"tleg{k}_" + nm, (side * w / 2, 2, 0), (0, side * (k - 3) * -6, side * -10))
             leg.cube(f"tleg{k}_" + nm, 0 if side > 0 else -7, -0.5, -0.5, 7, 1, 1, mirror=side < 0, share=None if (k == 0 and side > 0) else "tleg0_l")
-            leg.bone(f"tfoot{k}_" + nm, (side * 7, 0, 0), (0, 0, side * 95)).cube(
+            leg.bone(f"tfoot{k}_" + nm, (side * 7, 0, 0), (0, 0, side * 84)).cube(
                 f"tfoot{k}_" + nm, 0 if side > 0 else -7, -0.5, -0.5, 7, 1, 1, mirror=side < 0, share=None if (k == 0 and side > 0) else "tfoot0_l")
         if k % 2 == 1 or k == 0:
             for side in (1, -1):

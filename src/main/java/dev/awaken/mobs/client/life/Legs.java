@@ -29,7 +29,7 @@ public final class Legs {
     private final float[] u, dur, rise, prevQ;
     /** This frame's spot for each foot, model px (the leg reaches for it). */
     final float[] tx, ty, tz;
-    /** 0..1: how much the feet own the legs over the clips; how much the front pair, and the second, have let go to them (a rear). */
+    /** 0..1: how much the feet own the legs over the clips; how much the front pairs, and one more in a roar, have let go to them (a rear). */
     float weight, rear, rear2;
     /** The body over its feet: px it sinks (the ground under them, a step's share), pitch and roll (radians, model). */
     float groundY, groundPitch, groundRoll, gaitY, gaitRoll;
