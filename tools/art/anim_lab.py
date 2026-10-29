@@ -454,7 +454,11 @@ def axis_rot(axis, deg):
 def rig_pose(style_row, m, held, t):
     """(d, R) at t ticks of a move: its form, weighted by its style."""
     import swing_studio as SS  # the feel specs (tools/arms/feel): with none, every move bakes as before
+    import swing_choreo as SC
     sid = style_row["id"]
+    set_pose = SC.pose(sid, SS.move_name(style_row, m), held, t)  # a chain set by hand (Swing Studio round 11)
+    if set_pose is not None:
+        return set_pose
     wt = SS.weight(sid)
     form, u, variant = form_of(m)
     F, side = held_frame(held)
@@ -902,6 +906,7 @@ def bake(out=SWINGS, solve=False, round_=None):
     import arms_weapons as AW
     import arms_rig4 as R4
     import swing_studio as SS
+    import swing_choreo as SC
     before = json.load(open(SWINGS)) if os.path.exists(SWINGS) else {}  # the game's file: its wrists and round
     rig = R4.load()  # third person from first person's blade: its styles' wrists come with their arms
     if solve or not before:
@@ -930,15 +935,18 @@ def bake(out=SWINGS, solve=False, round_=None):
                 cam = camera(st, m, float(tt))
                 keys.append([round(float(tt), 3)] + [round(float(v), 4) for v in d] + [round(float(v), 5) for v in q]
                             + [round(float(v), 3) for v in cam])
+            chore = SC.has(sid, mv)
             moves[mv] = {"form": form_of(m)[0], "weight": SS.weight_class(sid), "hand": m["swing"].get("hand", "main"),
-                         "keys": keys, "bite": SS.bite_of(sid, mv)}
-            twin = SS.twin_from(st, mv, held) is not None
-            if SS.idle_next(st, mv) or SS.gives_way(st, mv, held) or twin:
+                         "keys": keys, "bite": SC.bite(sid, mv) or SS.bite_of(sid, mv)}
+            twin = not chore and SS.twin_from(st, mv, held) is not None
+            if chore or SS.idle_next(st, mv) or SS.gives_way(st, mv, held) or twin:
                 # the hand not striking: drawn back to the next strike's set (Swing Studio round 4), out of the
-                # striking blade's way (round 7); in a both-hands push, the off hand's own way into it (round 9)
+                # striking blade's way (round 7); in a both-hands push, the off hand's own way into it (round 9); in a
+                # chain set by hand, its own track (round 11)
                 idle = []
                 for tt in np.arange(0, total + 1e-6, KEY_DT):
-                    d, R = SS.twin_pose(st, mv, held, float(tt)) if twin else SS.idle_pose(st, mv, held, float(tt))
+                    d, R = SC.pose(sid, mv, held, float(tt), "other") if chore else \
+                        SS.twin_pose(st, mv, held, float(tt)) if twin else SS.idle_pose(st, mv, held, float(tt))
                     idle.append([round(float(tt), 3)] + [round(float(v), 4) for v in d] + [round(float(v), 5) for v in mat_quat(R)])
                 moves[mv]["idle"] = idle
             if SS.far_led(st, mv):  # led by a double weapon's other end: its trail follows that end (Swing Studio round 5)

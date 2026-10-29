@@ -6186,6 +6186,42 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
       its hit-stop), the nearest the blades come off the both-hands push 0.26 -> 0.31. Steps of 0.2-0.3 rise 364 ->
       425 (strike 2's left hand draws further back to clear strike 3). Left: strike 5's own jump (0.34, as in round
       9), and all of it unseen in game.
+  - *Round 11, the daggers' chain set by hand* (Euan 2026-10-29, after round 10: "it still feels like it's going to
+    unnecessary distances sometimes... the right arm goes way to the left for some reason, or sometimes it's just not
+    aligned... maybe the entire approach is wrong?"; "Do it"). The rounds before worked every pose out from rules (a
+    cut edge to edge, the idle hand giving way until clear, hauled back to the next set), each fixing one complaint and
+    moving something else, and the hand not striking had no place of its own: in round 10 strike 3's right dagger swept
+    from the right edge to 18% from the left, and the left one dropped out of the view under it.
+    - The daggers' five chain strikes are set by hand in `tools/art/swing_choreo.py`: per strike, each hand's track as
+      a few key poses on a timeline (the grip's place on the screen, how far ahead of the eye, the blade's angle on the
+      screen, its lean along the eye's ray, the way its edge faces), the grip run through them on a centripetal
+      Catmull-Rom curve, each stretch on its own ease (in and out, into the drive, out of the carry). `anim_lab.rig_pose`
+      and the bake take a set move from there before any rule; every other move and style bakes as before.
+    - Every strike starts in the holding stance and both hands are back in it before the chain's next strike can start
+      (strikes 1-3 by 2.6-2.7 ticks, the twin push by 4.6, its next press at 6), so the next strike always takes over
+      from the pose it was set from. A blow's freeze or a held click that leaves the hands behind is carried the rest of
+      the way home by the blend, along the way they were going.
+    - The stabs: a slight draw, straight in under the crosshair, a beat at full reach, home. The cut (strike 3; the
+      finisher mirrors it, raised a little higher): the blade turned upright on its own side, then down across the
+      middle on a diagonal, square to the eye so its length reads, its carry ending low in the middle, 0.38 of the
+      screen from the other blade at the nearest. The twin push: both drawn in, then together under the crosshair, each
+      tip on its own side (it used to cross the other). The hand not striking gives a little as the other drives, and
+      leans out a little from a cut coming its way: never a dodge worked out from the other blade.
+    - A set move has no bite (its hands never slow after the hit: the freeze is the hit-stop's alone). A held press
+      still waits at the strike's set (round 8: so a held click never strikes before the charge takes it), now a set
+      pose: the stab drawn, the cut raised.
+    - Tried and dropped: a longer blend for the hand not striking (2-3 ticks): it carried a stab's way home a little
+      smoother (0.24 -> 0.16 of the screen a frame) but brought the blades nearer (0.26 -> 0.18). Nothing in the game's
+      code changed this round.
+    - `swing_clicks` reads a release from the key every frame, as `ArmsPredict.frame` does (it took the release as an
+      event, so a click begun and let go between two ticks was never let go). `swing_clicks film` renders a video of
+      slow, then fast clicking, files one above the other; `swing_choreo describe` lists every pose on the screen and
+      when each strike is home.
+    - Measured at 60 fps, clicks every 2-12 ticks held 0.3-2.5, with and without landed blows, mastery on: steps over
+      0.3 of the screen a frame 125 -> 0, over 0.2 1055 -> 359 (the stabs' own way home), the worst 0.55 -> 0.29, the
+      nearest the blades come 0.15 -> 0.26. The chain judge passes every strike (strike 5's jump 0.34 -> 0.25). Left:
+      the daggers' other moves (heavy, riposte, Art, slipcut, undercut, plunge, execution) still come from the rules;
+      unseen in game.
   - *The runtime*: a change of source (a chained strike, a move ending or refused, the charge taken up) never jumps:
     `SwingBlend` carries each hand's shown pose and the view's lean into the new one (inertialization, Bollo GDC 2018:
     the gap and the old motion along it decay on a quintic over at most 1-2.5 ticks for a strike, 3 to rest, never past
