@@ -81,7 +81,7 @@ Round: drawn / the pick. Body, motion, fight: — not started, ✓ built (commit
 | The Seed Warden | Guardian | Seed | Caster | kit | A, the Husk That Opens | ✓ a6726d89 | ✓ a6726d89 | — |
 | Sovereign of Hunger | Sovereign | Court | Beast | kit | A, the Gorged King | ✓ 7a319255 | ✓ 7a319255 | — |
 | Sovereign of Silence | Sovereign | Court | Brute | kit | A, the Stone Ear | ✓ 8559df31 | ✓ 8559df31 | — |
-| Sovereign of Sleep | Sovereign | Court | Flier | kit | A, the Night Owl | — | — | — |
+| Sovereign of Sleep | Sovereign | Court | Flier | kit | A, the Night Owl | ✓ 8d12f035 | ✓ 8d12f035 | — |
 | Sovereign of Machines | Sovereign | Court | Brute | iron golem ×1.9 | — | — | — | — |
 | Sovereign of Mirrors | Sovereign | Court | Duelist | player ×1.8 | — | — | — | — |
 | Sovereign of Storms | Sovereign | Court | Flier | breeze ×2.4 | — | — | — | — |
