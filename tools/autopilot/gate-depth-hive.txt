@@ -4,7 +4,7 @@
 #
 # Commands it relies on (game master):
 #   /awaken gate open <rank> <theme> world <version> <world id>   every floor in that world, on the depth test's plan
-#   /awaken gate interior enter                                    into the newest standing gate
+#   /awaken gate interior enter                                    into the gate opened last (else the newest)
 #   /awaken gate interior goto <place|place2>                      a world floor's biggest place, or its second
 #   /awaken gate leave, /awaken gate hop
 world autopilot_gate_depth creative 20261029
@@ -26,12 +26,10 @@ hud off
 # land out there takes a while to make, so wait for it before the first gate looks for dry ground
 cmd tp @s 6000 200 6000
 wait 600
-cmd awaken gate hop
-wait 300
 
 # ---- The Comb ----------------------------------------------------------------------------------------------------------
 cmd awaken gate hop
-wait 160
+wait 400
 cmd awaken gate open E hive world 6 awaken:hive/the_comb
 wait 400
 cmd awaken gate interior enter

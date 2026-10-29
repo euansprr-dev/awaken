@@ -10789,7 +10789,8 @@ now, fought-on second storeys in a later plan.
   just inside a world floor's biggest (or second) place where you walk in (else a doorway), a block over the ground,
   facing its middle. The tour starts 6,000 blocks out (no gate forms in Carillon's reserve) with the HUD off,
   and waits for the land there before its first gate; a gate made by `gate open ... world` stands where it's opened,
-  even over a village's edge (a tour can't pick another spot).
+  even over a village's edge (a tour can't pick another spot); `gate interior enter` takes the gate opened last when
+  it's ready (`GateService.lastOpened`, not saved), not a gate that formed by itself beside it since.
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 

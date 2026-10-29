@@ -194,6 +194,7 @@ final class GateCommands {
         }
         c.getSource().sendSuccess(() -> Component.literal("Gate " + g.id + " forming: " + g.plan.rank().label + " " + g.plan.theme().displayName
                 + " at " + g.pos.getX() + " " + g.pos.getY() + " " + g.pos.getZ()), true);
+        GateService.lastOpened = g.id;
         return g.id;
     }
 

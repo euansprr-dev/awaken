@@ -163,6 +163,9 @@ public final class Interiors {
 
     private static int enter(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = c.getSource().getPlayerOrException();
+        // the gate the game master opened last, if it's ready (a tour's: not a gate that formed by itself beside it since)
+        GateRecord last = GateRegistry.get(c.getSource().getServer()).gate(GateService.lastOpened);
+        if (last != null && last.state.enterable() && last.interiorReady && last.state != GateState.BUILDING) return Runs.enter(p, last) ? last.id : 0;
         GateRecord best = null;
         for (GateRecord g : GateRegistry.get(c.getSource().getServer()).all()) {
             if (!g.state.enterable() || !g.interiorReady || g.state == GateState.BUILDING) continue;
