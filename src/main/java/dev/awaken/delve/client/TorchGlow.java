@@ -257,7 +257,15 @@ public final class TorchGlow {
             l.y = y + (p.isCrouching() ? 0.78 : 0.98);
             l.z = z + fz * 0.3 + lz * side * 0.38;
         }
+        // at a wall the hand's point is inside the block: the flame shines from its open side
+        if (HeldLightFlood.clear(level, x, l.y, z, l.x, l.y, l.z, OUT, M)) {
+            l.x = OUT[0];
+            l.y = OUT[1];
+            l.z = OUT[2];
+        }
     }
+
+    private static final double[] OUT = new double[3];
 
     // ---- the flood -----------------------------------------------------------------------------------------------------
 
@@ -292,7 +300,7 @@ public final class TorchGlow {
         int ox = Mth.floor(l.x), oy = Mth.floor(l.y), oz = Mth.floor(l.z);
         M.set(ox, oy, oz);
         if (level.getBlockState(M).isSolidRender()) {
-            // the hand is in a wall: start from the cell above the feet
+            // the holder is in rock too (flame() found no open side): start from the cell above the feet
             oy = Mth.floor(l.feet + 0.5);
             M.set(ox, oy, oz);
             if (level.getBlockState(M).isSolidRender()) return;
@@ -334,9 +342,9 @@ public final class TorchGlow {
     /**
      * Held light reaches what stands in it (SPEC §28.3): an entity's render state (a dropped item, a mob, a player, and
      * through yours your hands and what they hold in first person) takes the block light a held light gives where it
-     * stands, the flame's level less its distance, eased out over the reach as the lit faces are, when that is brighter
-     * than the light already there. A straight line, so through a thin wall too (rare, and out of sight); the flames are
-     * last frame's (entities are gathered before the world is drawn).
+     * stands, the flame's level less its distance (its bearer, holding it, the whole level), eased out over the reach as
+     * the lit faces are, when that is brighter than the light already there. A straight line, so through a thin wall too
+     * (rare, and out of sight); the flames are last frame's (entities are gathered before the world is drawn).
      */
     static void lightEntity(Entity e, EntityRenderState s) {
         if (!live) return;
@@ -345,7 +353,8 @@ public final class TorchGlow {
         for (Light l : LIGHTS) {
             if (l.id < 0 || !l.seen) continue;
             double dx = l.x - x, dy = l.y - y, dz = l.z - z;
-            float d = (float) Math.sqrt(dx * dx + dy * dy + dz * dz), r = l.kind.reach();
+            // its bearer holds the flame: their hands and what they hold take its whole level, not their middle's
+            float d = l.id == e.getId() ? 0F : (float) Math.sqrt(dx * dx + dy * dy + dz * dz), r = l.kind.reach();
             if (d >= r) continue;
             float fade = Mth.clamp((r - d) / (r * FADE), 0F, 1F);
             best = Math.max(best, (l.kind.emission() - d) * fade * fade * (3 - 2 * fade));

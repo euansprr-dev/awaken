@@ -22,6 +22,8 @@ public final class HeldLightFlood {
     public static final float STEP = 0.55F;
     /** No cap stopped the flood: it ran out of reach first. */
     public static final int NO_EDGE = 127;
+    /** Points along the holder-to-flame line {@link #clear} tries, flame first: a hand's reach in about 3 cm steps. */
+    private static final int PULL = 16;
 
     private static final Direction[] DIRS = Direction.values();
 
@@ -66,6 +68,24 @@ public final class HeldLightFlood {
         tail = 1;
         n = 0;
         edge = NO_EDGE;
+    }
+
+    /**
+     * Where a flame held against rock shines from: at a wall the hand's point is inside the block, and a flood from in
+     * there finds nothing in front of it (the face looking at you stays black). The point on the line from where the
+     * holder stands ({@code a}) to the flame ({@code f}) just before the line enters rock, into {@code out}: the flame
+     * itself when its cell is open. False when the holder's own cell is rock.
+     */
+    public static boolean clear(Level level, double ax, double ay, double az, double fx, double fy, double fz, double[] out, BlockPos.MutableBlockPos m) {
+        for (int i = 0; i <= PULL; i++) {
+            double back = i / (double) PULL, x = fx + (ax - fx) * back, y = fy + (ay - fy) * back, z = fz + (az - fz) * back;
+            if (level.getBlockState(m.set(x, y, z)).isSolidRender()) continue;
+            out[0] = x;
+            out[1] = y;
+            out[2] = z;
+            return true;
+        }
+        return false;
     }
 
     /** True once the flood has walked everything in reach or kept its cap of surfaces. */

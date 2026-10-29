@@ -5255,6 +5255,17 @@ magic.
   street does count; not the open sky, far terrain or Holo plates; not past the heightfield's trusted reach); Swift by the
   camera (texel 21 r: the client's MOTION_BLOCKING_NO_LEAVES top above the eye + 0.5, eased over about a sixth of a
   second). The open land, by day and by night, is untouched.
+- **Within arm's reach, never darker than the game at all** (Euan, 2026-10-29, "some more shadow issues with
+  underground torches held here": the torch in his hand was dark): every tier, right after the cover floor, a pixel
+  within 1.25 blocks of the eye (your hand and what it holds, a wall at your nose) keeps at least what the game drew
+  there, whatever its brightness, easing out by 1.45 blocks as Lens's light eases in (Lens 2's light already leaves that
+  reach alone). The cover floor's 85% eases out by luma 0.22, so a handle lit by its own flame (about 0.15) still took
+  the cave look's grade, about 35% darker than the game drew it. Lens may still lift it (the grade's highlights), never
+  lower it. Not the sky or far terrain. With it the held light gives its bearer its whole level (§28.3), so the torch,
+  the hand and the tool in the other hand read as lit by the flame they hold. The black faces in the same report were
+  the held light's, not Lens's (a torch pressed to a block flooded from inside it, so the face looking at you kept the
+  game's light 0; §28.3); Lens's shade and ambient occlusion take a face to about 45% at most, never to black. Tour
+  `tools/autopilot/held-light-faces-look.txt` (a block row at arm's length, a cave mouth at sunset and a sealed room).
 - **Look fields** (looks*.json, inherited from `default`; texels 17-19): `light` 1.0, `shade` 0.32, `shadeTint`
   [0.86, 0.93, 1.14], `keyWarmth` 0.8, `ao` 0.65, `filmic` 1.0; L2: `mist` 0.5, `mistHeight` 48 (blocks), `fogGlow`
   0.15, `skyGlow` 0.3. Texel 19: r mist, g mistHeight/256, b fogGlow/2, a skyGlow.
@@ -7694,7 +7705,12 @@ steady. The Ember and the miner's lamp aren't block items, so they never get a s
 torch in the hand are two lights and add. Players holding one within 48 (at most 8 lights, yours first) carry theirs,
 read from their synced hands, so it is the same for everyone in multiplayer. The flame sits in the hand at the side
 (0.98 up, 0.3 ahead, 0.38 out; 0.78 crouching), or in your own first person 0.32 under the eye, 0.4 ahead and 0.3 to
-the holding side, following your look.
+the holding side, following your look. Held against a wall (that point inside a block: you stand within 0.4 of it)
+the flame shines from the block's open side, the point on the line from the holder's middle at the flame's height to
+the flame just before it enters rock, in 16 steps of about 3 cm (`HeldLightFlood.clear`; Euan 2026-10-29, "some more
+shadow issues with underground torches held here": the flood started inside the block, so the face looking straight
+at you stayed black while its neighbours lit). Only a holder whose own cell is rock falls back to the cell above the
+feet.
 - *Finding the surfaces* (`delve.HeldLightFlood`, common and pure, walked by `delve.client.TorchGlow`): a flood from the
   flame's cell through every cell that isn't a full opaque block (as the game's light spreads: round corners, never
   through rock), within a sphere of the reach, each step costing 1 plus the cell's light dampening (leaves and water dim
@@ -7709,14 +7725,16 @@ the holding side, following your look.
   (so a face a break opens lights a frame or two later, not up to half a second), or every 10 ticks (changes out of
   sight). A light standing where the light is already as bright as its own (noon) floods and draws no surfaces.
   GameTest `delve_held_light_faces` holds every face of a room with a standing block and a step, once each, and the
-  cap's edge.
+  cap's edge; `delve_held_light_wall` a torch pressed to a block at chest height (its front face lit, an open flame
+  left where it is, a holder in rock with no open side).
 - *What stands in the light* (`TorchGlow.lightEntity`, a NeoForge render-state modifier on every entity renderer, no
   mixin): a dropped item, a mob, a player, and through your own render state your first-person hands, what they hold
   and your body's limbs, take the block light a held light gives where they stand: the flame's level less the straight
   distance to the entity's middle, eased out over the reach's last 30% as the faces are, when that beats the light
-  already there (a torch's bearer and the pick in their other hand at 13). Last frame's flames (entities are gathered
-  before the world is drawn); a straight line, so through a thin wall too (out of sight). Before, the hand, the tool and
-  a dropped block drew at the game's light 0 beside lit rock and read black under Lens.
+  already there. Its bearer holds the flame, so they take its whole level (a torch's 14 for the torch, the hand and the
+  pick in the other hand; 13 by the middle's distance before, which read dark, Euan 2026-10-29). Last frame's flames
+  (entities are gathered before the world is drawn); a straight line, so through a thin wall too (out of sight).
+  Before, the hand, the tool and a dropped block drew at the game's light 0 beside lit rock and read black under Lens.
 - *Drawing them*: each surface is drawn again over itself with its own model quads (as the miner's lamp does, and
   tinted as the world tints it, so grass and leaves come up green), additively in the light's colour, by how much the
   game's light curve (`v / (4 - 3v)`) at the flame's level less the distance would brighten it over the light already
