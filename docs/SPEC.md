@@ -12119,7 +12119,8 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
 
 Source of truth for the rules below; `docs/director/JOURNEY.md` has the detail, the lines and the hour-by-hour journey.
 Where this section and an earlier one disagree, this one wins (each change is listed in 43.9). Built in seven stages
-(43.10), each by one builder that adds its numbers here as it goes.
+(43.10) by the game director session itself (Euan, 29 Oct: "do all the work yourself"), which adds each stage's numbers
+here as it goes.
 
 ### 43.1 The world rule
 - About nine-tenths of the world is wild and empty of people. Outside Carillon the only living people are players (the

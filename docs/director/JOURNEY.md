@@ -738,10 +738,11 @@ Recasting stays cosmetic.
 
 ## 10. Order
 
-Euan approved the whole plan on 29 Oct ("Go ahead with the entire plan"), so each stage is one builder session, built
-straight from this file and SPEC §43 with no new approval page. Each builder writes its stage's numbers and decisions
-into §43 as it goes. One look check stays, as part 2 says: the beasts' style sheet and the Lampwing go to Euan in game
-before any other kind is built. Builders run no tours; they build, test, push for CI and hand back.
+Euan approved the whole plan on 29 Oct ("Go ahead with the entire plan"), and when three builders were started he
+said "Stop them and do all the work yourself". So the director session builds every stage itself, in this order,
+straight from this file and SPEC §43 with no new approval page, writing each stage's numbers into §43 as it goes. One
+look check stays, as part 2 says: the beasts' style sheet and the Lampwing go to Euan in game before any other kind is
+built. No tours: build, test, push for CI, and hand each stage to the orchestrator to merge.
 1. **The world rule.** The Lull; the Last Fire and Ilse's scene; the stone people (the first three on the north road,
    then the rare ones); empty settlements and the rare holdfasts; the city taking the people; Echoes removed; the Mine
    head becoming the Ore Shed's frame (its Pebblepups come in stage 2); the wildness changes.
