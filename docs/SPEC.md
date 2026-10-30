@@ -4566,7 +4566,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
    the odds (21.2).
 2. A Hearth calms its land: within its radius + 96 blocks the level is min(region, the household's highest level).
 3. XP: every creature pays by its own level and role (a sheep too); crafts, quests, bounties and camps pay; gate floor
-   rewards ×0.80 (`Curve.WILDS_TRIM`); the balanced player's length holds (sim, 21.3).
+   rewards ×0.80 (`Curve.WILDS_TRIM`; 0.94 since §27.13); the balanced player's length holds (sim, 21.3).
 4. Plates, damage numbers and the XP stream are on by default (client settings to reduce or turn off).
 5. Level-up is a System moment, compact in a fight, seen by players nearby (never their pane).
 6. Elites in the wild: 5% of neutral and hunter spawns.
@@ -4642,7 +4642,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   below / 8). Paid via `Progression.worldXp(player, "hunt", raw, after)`; the old home kill XP is off while the
   living module pays (`LivingHooks`). Party sharing as before.
 - Budgets registered by modules: `XpBudget.register(source, perTenMinutes)`.
-- Gate floor rewards × `Curve.WILDS_TRIM` (0.80; everything priced from a floor reward follows: anomalies, camps).
+- Gate floor rewards × `Curve.WILDS_TRIM` (0.80; 0.94 since §27.13, which retired the Regimen and the daily Directives; everything priced from a floor reward follows: anomalies, camps).
   Hunting, crafts and camps pay × `LivingModule.wildsRank(rank)` after the budget: 1.0, except C 0.55 (C is the long
   climb in gates too). tools/sim/pacing_sim.py carries the same model; balanced player: level 5 0.99 h, 10 3.9 h,
   25 16.8 h, 50 51.3 h (the v2 target 55-60 moved to 50-60: the open world now pays through D and C), 135 101.9 h (elites by rank, §21.10);
@@ -8264,6 +8264,11 @@ each piece comes from is said plainly; what the world holds beyond it is still f
 - **Track is Pin on the kin list too** (phase 3): a kind with a step on the Tasks page (`kin/need/<id>` or
   `kin/want/<id>`) pins it; one without falls back to the rough bearing as before. A kin step's place is that rough
   bearing (`KinSpawner.rough`), never the spot. The Armoury's weapon Track stays its own (no weapon steps yet).
+- **Pacing** (phase 4, `tools/sim/pacing_sim.py`): without the Regimen and the daily Directives (about a sixth of a level
+  a play-day) the balanced player reached level 50 at 62 h and 135 at 115 h (targets 50-60 and 95-105). Gate floors make
+  it back: `Curve.WILDS_TRIM` 0.80 → 0.94 (0.90-0.94 keep every target; anomalies and camps priced from a floor follow).
+  Now level 10 at 3.8 h, 25 at 17 h, 50 at 57 h, 135 at 101-105 h (the sim varies a few hours run to run); the first
+  hour, power mastery and the gate death targets hold.
 - **Tests:** `tasks_book_rules` (order, the top rule, covers, merge, NowMap, the saved state), `tasks_choose_and_pin`
   (the first armour's sets, one row per need, a refused pin, chosen and pinned: the card lists that set's needs),
   `tasks_next_step_follows_path` (Euan's moment in a real home: the Armoury on top, then the armour, then the gate, the
