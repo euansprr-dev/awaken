@@ -8261,7 +8261,9 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   `ProgressionModule.OreXp`, found once mined, with what each is for) and YOUR STORY last (the log, Records, the chains,
   Saved for later, Recent; its tab says "n NEW" while the log has unread lines). A fixed category shows every slot numbered; one not
   found is a "?" with its number and nothing else, never a name, a picture or a hint; click a found one for what you've
-  learned. A section says its category (`Section.shelf()`, YOUR STORY by default); a note link to the Journal opens on
+  learned. A category with nothing to show yet says in one line what it keeps (`Catalogue.Empty`). The Hundred's board
+  shows from the start; a bell you know nothing of hovers as its number only (no name, no rank). A section says its
+  category (`Section.shelf()`, YOUR STORY by default); a note link to the Journal opens on
   the linking section's category (`StatusSections.follow`: the Status page's "ALL n ›" opens Your story). The Now list
   leaves the Journal (Tasks has it; Recent's links go to Tasks). Autopilot: `journal <category>`. Not moved: the chains
   and Saved for later stay under Your story rather than on Tasks.

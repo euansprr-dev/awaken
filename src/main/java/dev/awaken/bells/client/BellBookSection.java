@@ -86,7 +86,8 @@ final class BellBookSection extends UiSection {
         boolean any = false;
         for (List<String> r : p.hundred()) if (!r.get(3).isEmpty()) any = true;
         return switch (part) {
-            case HUNDRED, TOWER -> any;
+            case HUNDRED -> true; // the Journal's Bells: the hundred numbered slots, lit as you find them
+            case TOWER -> any;
             case LEADS -> any && !p.leads().isEmpty();
         };
     }
@@ -151,7 +152,8 @@ final class BellBookSection extends UiSection {
             two = "Dim: a housemate has it. Ringed: you have a lead.";
         } else {
             String rank = Rank.valueOf(over.get(2)).label + "-rank";
-            one = over.get(0) + " · " + (over.get(1).isEmpty() ? "unknown" : over.get(1)) + " · " + rank;
+            // a bell you know nothing of is its number and nothing else (SPEC §27.13: a "?" never hints)
+            one = over.get(3).isEmpty() ? over.get(0) : over.get(0) + " · " + (over.get(1).isEmpty() ? "unknown" : over.get(1)) + " · " + rank;
             two = switch (over.get(3)) {
                 case "held" -> "Rung home " + over.get(4) + ".";
                 case "hung" -> "Someone you live with rang it home. It hangs in your tower.";

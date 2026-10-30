@@ -46,6 +46,7 @@ final class CoreSections {
         StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.Hero());
         StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.StatLine());
         StatusSections.add(StatusSections.Tab.JOURNAL, new JournalFilters());
+        StatusSections.add(StatusSections.Tab.JOURNAL, new Catalogue.Empty());
         StatusSections.add(StatusSections.Tab.JOURNAL, new WaitingSection());
         dev.awaken.core.api.MapMarks.register(WaitingSection::marks);
         // (SPEC §27.13) the Truths page's sections stand on Status until they become Status's own

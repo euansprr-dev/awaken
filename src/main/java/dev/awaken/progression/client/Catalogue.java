@@ -33,6 +33,45 @@ public final class Catalogue {
     private static final java.util.Set<String> OWN_SHELF = new java.util.HashSet<>();
     private static final Map<StatusSections.Shelf, java.util.function.IntSupplier> FRESH = new EnumMap<>(StatusSections.Shelf.class);
 
+    /** What an empty category says: what's kept there, so the page is never blank. */
+    private static String emptyLine(StatusSections.Shelf shelf) {
+        return switch (shelf) {
+            case CREATURES -> "Every creature you see in the world is kept here.";
+            case KIN -> "Every kind of beast you meet is kept here.";
+            case LANDS -> "Each new land you walk into is counted here.";
+            case PLACES -> "Landmarks, lairs, wonders and secrets you find are counted here.";
+            case GATES -> "Each gate world you enter is kept here.";
+            case CAVES -> "Each cave region you stand in is kept here.";
+            case BELLS -> "The hundred bells are kept here as you find them.";
+            case LORE -> "What you learn about the world is kept here: rumours, visions, machines and more.";
+            case HAPPENINGS -> "Big events you witness out in the world are kept here.";
+            case ORES -> "Each ore you mine is kept here, with what it's for.";
+            case STORY -> "What happens to you is written here.";
+        };
+    }
+
+    /** Under a category with nothing to show yet: one line on what it keeps. */
+    static final class Empty extends UiSection {
+        @Override public String title() { return ""; }
+        @Override public int order() { return -80; }
+        @Override public StatusSections.@Nullable Shelf shelf() { return null; }
+
+        @Override
+        public boolean visible() {
+            StatusSections.Shelf on = StatusSections.journalFilter();
+            for (StatusSections.Section s : StatusSections.of(StatusSections.Tab.JOURNAL)) {
+                if (s == this || s.shelf() != on) continue; // the strip and this line stand under every category
+                if (s.visible()) return false;
+            }
+            return true;
+        }
+
+        @Override
+        protected void build(Ui ui) {
+            ui.text(emptyLine(StatusSections.journalFilter()), Glass.LABEL);
+        }
+    }
+
     /** A category with a fixed set: every slot in order, found or not. Adds its slot grid to the Journal. */
     public static void fixed(StatusSections.Shelf shelf, Supplier<List<Slot>> slots) {
         FIXED.put(shelf, slots);
