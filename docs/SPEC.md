@@ -8098,7 +8098,8 @@ suggestion, a rumour, a lead, a decision waiting or a destination.
   arriving within 16 blocks, so a Lampwing met or homed anywhere else left it there for good. **A destination now carries
   its goal** (`Destinations.set(p, target, goal)`; saved as `goal` in `signal.Destination.Saved`, an optional field,
   schema 1), and the signal module drops it quietly (no "Destination reached") within a second of its owner saying the
-  goal is met (`Destinations.doneWhen`). Goals: `kin/<kind>` (one met anywhere, or one living with you), `kin/<kind>/home`
+  goal is met (`Destinations.doneWhen`). Goals: `kin/<kind>` (one met anywhere, or one living with you; one that settles
+  at your fire is filed as met there and then, `KinHome.settle`, so the goal holds if the home later ends), `kin/<kind>/home`
   (back to where you met one: one living with you), `bell/<n>` (the bell held), `metal/<metal>` (the Delvers' mouth: the
   home no longer short of that metal), `raid/<pos>` (the raid's chest emptied or gone), `stilled/opened:<settlement>` (the
   key's chest opened), `stilled/done:<figure>` (the keepsake shown to its family). A place picked on the Atlas has no goal
@@ -8119,7 +8120,8 @@ suggestion, a rumour, a lead, a decision waiting or a destination.
   `bells` (the Bell Book's leads). Tests: `trail_done_never_shows` (every source is swept; the fire set as the coal sets
   it finishes Set Your Fire and nothing anywhere still asks for the Ember), `kin_done_never_shows` (a Track is done on
   meeting one anywhere; the lesson Lampwing has no Track; once it lives with you its Track goes by itself and nothing asks
-  for a Lampwing).
+  for a Lampwing). Its test home stands on a real Anchor block: Hearth upkeep drops a record whose Anchor is gone (every
+  20 ticks, at an offset from the owner's id), which made the test pass or fail by the mock player's random id.
 - **The Hearth guide's green is true** (Euan, the same day: "the door isn't green ... kitchen already has a crafting
   table and furnace green, but that's not even in the kitchen"). A room card ticks only the pieces standing together in
   one closed room, the one holding the most of that kind (`Guide.card`; before, any piece anywhere in the radius lit

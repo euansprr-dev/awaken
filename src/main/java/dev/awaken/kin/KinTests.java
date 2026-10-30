@@ -101,6 +101,7 @@ final class KinTests {
         java.util.UUID owner = java.util.UUID.randomUUID();
         BlockPos anchor = h.absolutePos(new BlockPos(0, 2, 0));
         dev.awaken.hearth.HearthData homes = dev.awaken.hearth.HearthService.data(level.getServer());
+        level.setBlock(anchor, dev.awaken.hearth.HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3); // upkeep drops an Anchor-less home
         homes.put(new dev.awaken.hearth.HearthRecord(owner, "test", anchor, dev.awaken.hearth.HearthService.OVERWORLD));
         b.settle(anchor, h.absolutePos(new BlockPos(3, 2, 3)), owner);
         h.succeedWhen(() -> {
@@ -149,6 +150,9 @@ final class KinTests {
         dev.awaken.hearth.HearthData homes = dev.awaken.hearth.HearthService.data(level.getServer());
         dev.awaken.hearth.HearthRecord rec = new dev.awaken.hearth.HearthRecord(p.getUUID(), "test", anchor, dev.awaken.hearth.HearthService.OVERWORLD);
         rec.name = "Ashford";
+        // upkeep drops any Hearth whose Anchor block is gone (every 20 ticks, at an offset from the owner's id): without a
+        // real Anchor the home could go before the Track's check, and the Lampwing with it
+        level.setBlock(anchor, dev.awaken.hearth.HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3);
         homes.put(rec);
         // met before its rumour was followed: the Track's job is done wherever one was met
         h.assertFalse(dev.awaken.core.api.Destinations.done(p, "kin/burrowbun"), "a Burrowbun not met yet: still to find");
@@ -172,8 +176,10 @@ final class KinTests {
         b.addTag("awaken_kin_lesson");
         KinHome.settle(level, b, anchor, nook, p);
         h.assertTrue(Kinship.of(p).lesson == 2, "settling it ends the lesson");
+        h.assertTrue(Kinship.of(p).kind(KinKind.LAMPWING).met, "one that comes to live with you is met: the Track's goal holds even if the home ends");
         h.succeedWhen(() -> {
-            h.assertTrue(dev.awaken.core.api.Destinations.get(p).isEmpty(), "the Track went on its own once a Lampwing lives with you");
+            h.assertTrue(dev.awaken.core.api.Destinations.get(p).isEmpty(), "the Track went on its own once a Lampwing lives with you: "
+                    + dev.awaken.core.api.Destinations.get(p) + " for '" + dev.awaken.core.api.Destinations.goal(p) + "'");
             for (String gone : new String[] {"Lampwing", "Nothing lights your yard", "watching your fire"})
                 h.assertTrue(dev.awaken.core.api.Shown.mentioning(p, gone).isEmpty(), "'" + gone + "' still shows: " + dev.awaken.core.api.Shown.mentioning(p, gone));
             KinWorld.get(level.getServer()).leave(anchor, b.getUUID());

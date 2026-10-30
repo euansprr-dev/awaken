@@ -213,10 +213,16 @@ public final class KinHome {
         KinWorld.get(level.getServer()).home(anchor, new KinWorld.Homed(b.getUUID(), b.kind(), nook, level.getGameTime()));
         Progression.count(p, "awaken:kin_homed");
         Kinship ks = Kinship.of(p);
-        if (b.kind() == KinKind.LAMPWING && ks.lesson == 1) {
-            ks.lesson = 2;
-            Kinship.save(p, ks);
+        Kinship.Kind s = ks.kind(b.kind());
+        if (!s.met) { // one that comes to live with you is met, quietly (a Track's goal holds even if the home later ends)
+            s.met = true;
+            s.heard = true;
+            s.metDay = level.getOverworldClockTime() / 24000L;
+            s.metX = nook.getX();
+            s.metZ = nook.getZ();
         }
+        if (b.kind() == KinKind.LAMPWING && ks.lesson == 1) ks.lesson = 2;
+        Kinship.save(p, ks);
     }
 
     // ---- the first fire's Lampwing (the lesson) -----------------------------------------------------------------------
